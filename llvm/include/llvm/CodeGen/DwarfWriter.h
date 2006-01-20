@@ -438,6 +438,15 @@ namespace llvm {
   };
   
   //===--------------------------------------------------------------------===//
+  // Forward declarations.
+  //
+  class AsmPrinter;
+  class DIE;
+  class DwarfWriter; 
+  class DWContext;
+  class MachineDebugInfo;
+  
+  //===--------------------------------------------------------------------===//
   // DWLabel - Labels are used to track locations in the assembler file.
   // Labels appear in the form <prefix>debug_<Tag><Number>, where the tag is a
   // category of label (Ex. location) and number is a value unique in that
@@ -445,57 +454,89 @@ namespace llvm {
   struct DWLabel {
     const char *Tag;                    // Label category tag. Should always be
                                         // a staticly declared C string.
-    unsigned    Number;                 // Unique number
+    unsigned    Number;                 // Unique number.
 
-    DWLabel() : Tag(NULL), Number(0) {}
     DWLabel(const char *T, unsigned N) : Tag(T), Number(N) {}
   };
-
+  
+  //===--------------------------------------------------------------------===//
+  // DIEAbbrevData - Dwarf abbreviation data, describes the one attribute of a
+  // Dwarf abbreviation.
+  class DIEAbbrevData {
+  private:
+    unsigned Attribute;                 // Dwarf attribute code.
+    unsigned Form;                      // Dwarf form code.
+    
+  public:
+    DIEAbbrevData(unsigned A, unsigned F)
+    : Attribute(A)
+    , Form(F)
+    {}
+    
+    // Accessors
+    unsigned getAttribute() const { return Attribute; }
+    unsigned getForm()      const { return Form; }
+  };
+  
   //===--------------------------------------------------------------------===//
   // DIEAbbrev - Dwarf abbreviation, describes the organization of a debug
   // information object.
-  //
   class DIEAbbrev {
   private:
-    const unsigned char *Data;          // Static array of bytes containing the
-                                        // image of the raw abbreviation data.
+    unsigned Tag;                       // Dwarf tag code.
+    unsigned ChildrenFlag;              // Dwarf children flag.
+    std::vector<DIEAbbrevData> Data;    // Raw data bytes for abbreviation.
 
   public:
   
-    DIEAbbrev(const unsigned char *D)
-    : Data(D)
+    DIEAbbrev(unsigned T, unsigned C)
+    : Tag(T)
+    , ChildrenFlag(C)
+    , Data()
     {}
+    ~DIEAbbrev() {}
     
+    // Accessors
+    unsigned getTag()                           const { return Tag; }
+    unsigned getChildrenFlag()                  const { return ChildrenFlag; }
+    const std::vector<DIEAbbrevData> &getData() const { return Data; }
+
     /// operator== - Used by UniqueVector to locate entry.
     ///
-    bool operator==(const DIEAbbrev &DA) const {
-      return Data == DA.Data;
-    }
+    bool operator==(const DIEAbbrev &DA) const;
 
     /// operator< - Used by UniqueVector to locate entry.
     ///
-    bool operator<(const DIEAbbrev &DA) const {
-      return Data < DA.Data;
-    }
+    bool operator<(const DIEAbbrev &DA) const;
 
-    // Accessors
-    unsigned getTag()                 const { return Data[0]; }
-    unsigned getChildrenFlag()        const { return Data[1]; }
-    unsigned getAttribute(unsigned i) const { return Data[2 + 2 * i + 0]; }
-    unsigned getForm(unsigned i)      const { return Data[2 + 2 * i + 1]; }
+    /// AddAttribute - Adds another set of attribute information to the
+    /// abbreviation.
+    void AddAttribute(unsigned Attribute, unsigned Form) {
+      Data.push_back(DIEAbbrevData(Attribute, Form));
+    }
+    
+    /// Emit - Print the abbreviation using the specified Dwarf writer.
+    ///
+    void Emit(const DwarfWriter &DW) const; 
+        
+#ifndef NDEBUG
+    void print(std::ostream &O);
+    void dump();
+#endif
   };
 
   //===--------------------------------------------------------------------===//
   // DIEValue - A debug information entry value.
   //
-  class DwarfWriter; 
   class DIEValue {
   public:
     enum {
       isInteger,
       isString,
       isLabel,
-      isDelta
+      isAsIsLabel,
+      isDelta,
+      isEntry
     };
     
     unsigned Type;                      // Type of the value
@@ -520,14 +561,14 @@ namespace llvm {
   // 
   class DIEInteger : public DIEValue {
   private:
-    int Value;
+    int Integer;
     
   public:
-    DIEInteger(int V) : DIEValue(isInteger), Value(V) {}
+    DIEInteger(int I) : DIEValue(isInteger), Integer(I) {}
 
     // Implement isa/cast/dyncast.
     static bool classof(const DIEInteger *) { return true; }
-    static bool classof(const DIEValue *V)  { return V->Type == isInteger; }
+    static bool classof(const DIEValue *I)  { return I->Type == isInteger; }
     
     /// EmitValue - Emit integer of appropriate size.
     ///
@@ -542,13 +583,13 @@ namespace llvm {
   // DIEString - A string value DIE.
   // 
   struct DIEString : public DIEValue {
-    const std::string Value;
+    const std::string String;
     
-    DIEString(const std::string &V) : DIEValue(isString), Value(V) {}
+    DIEString(const std::string &S) : DIEValue(isString), String(S) {}
 
     // Implement isa/cast/dyncast.
     static bool classof(const DIEString *) { return true; }
-    static bool classof(const DIEValue *V) { return V->Type == isString; }
+    static bool classof(const DIEValue *S) { return S->Type == isString; }
     
     /// EmitValue - Emit string value.
     ///
@@ -563,13 +604,35 @@ namespace llvm {
   // DIELabel - A simple label expression DIE.
   //
   struct DIELabel : public DIEValue {
-    const DWLabel Value;
+    const DWLabel Label;
     
-    DIELabel(const DWLabel &V) : DIEValue(isLabel), Value(V) {}
+    DIELabel(const DWLabel &L) : DIEValue(isLabel), Label(L) {}
 
     // Implement isa/cast/dyncast.
-    static bool classof(const DWLabel *)   { return true; }
-    static bool classof(const DIEValue *V) { return V->Type == isLabel; }
+    static bool classof(const DIELabel *)  { return true; }
+    static bool classof(const DIEValue *L) { return L->Type == isLabel; }
+    
+    /// EmitValue - Emit label value.
+    ///
+    virtual void EmitValue(const DwarfWriter &DW, unsigned Form) const;
+    
+    /// SizeOf - Determine size of label value in bytes.
+    ///
+    virtual unsigned SizeOf(const DwarfWriter &DW, unsigned Form) const;
+  };
+
+
+  //===--------------------------------------------------------------------===//
+  // DIEAsIsLabel - An exact name of a label.
+  //
+  struct DIEAsIsLabel : public DIEValue {
+    const std::string Label;
+    
+    DIEAsIsLabel(const std::string &L) : DIEValue(isAsIsLabel), Label(L) {}
+
+    // Implement isa/cast/dyncast.
+    static bool classof(const DIEAsIsLabel *) { return true; }
+    static bool classof(const DIEValue *L)    { return L->Type == isAsIsLabel; }
     
     /// EmitValue - Emit label value.
     ///
@@ -584,15 +647,36 @@ namespace llvm {
   // DIEDelta - A simple label difference DIE.
   // 
   struct DIEDelta : public DIEValue {
-    const DWLabel Value1;
-    const DWLabel Value2;
+    const DWLabel LabelHi;
+    const DWLabel LabelLo;
     
-    DIEDelta(const DWLabel &V1, const DWLabel &V2)
-    : DIEValue(isDelta), Value1(V1), Value2(V2) {}
+    DIEDelta(const DWLabel &Hi, const DWLabel &Lo)
+    : DIEValue(isDelta), LabelHi(Hi), LabelLo(Lo) {}
 
     // Implement isa/cast/dyncast.
     static bool classof(const DIEDelta *)  { return true; }
-    static bool classof(const DIEValue *V) { return V->Type == isDelta; }
+    static bool classof(const DIEValue *D) { return D->Type == isDelta; }
+    
+    /// EmitValue - Emit delta value.
+    ///
+    virtual void EmitValue(const DwarfWriter &DW, unsigned Form) const;
+    
+    /// SizeOf - Determine size of delta value in bytes.
+    ///
+    virtual unsigned SizeOf(const DwarfWriter &DW, unsigned Form) const;
+  };
+  
+  //===--------------------------------------------------------------------===//
+  // DIEntry - A pointer to a debug information entry.
+  // 
+  struct DIEntry : public DIEValue {
+    DIE *Entry;
+    
+    DIEntry(DIE *E) : DIEValue(isEntry), Entry(E) {}
+
+    // Implement isa/cast/dyncast.
+    static bool classof(const DIEntry *)   { return true; }
+    static bool classof(const DIEValue *E) { return E->Type == isEntry; }
     
     /// EmitValue - Emit delta value.
     ///
@@ -608,70 +692,106 @@ namespace llvm {
   // describes it's organization.
   class DIE {
   private:
+    DIEAbbrev *Abbrev;                    // Temporary buffer for abbreviation.
     unsigned AbbrevID;                    // Decribing abbreviation ID.
-    unsigned Offset;                      // Offset in debug info section
-    unsigned Size;                        // Size of instance + children
-    std::vector<DIE *> Children;          // Children DIEs
-    std::vector<DIEValue *> Values;       // Attributes values
+    unsigned Offset;                      // Offset in debug info section.
+    unsigned Size;                        // Size of instance + children.
+    DWContext *Context;                   // Context for types and values.
+    std::vector<DIE *> Children;          // Children DIEs.
+    std::vector<DIEValue *> Values;       // Attributes values.
     
   public:
-    DIE(unsigned AbbrevID)
-    : AbbrevID(AbbrevID)
-    , Offset(0)
-    , Size(0)
-    , Children()
-    , Values()
-    {}
-    ~DIE() {
-      for (unsigned i = 0, N = Children.size(); i < N; i++) {
-        delete Children[i];
-      }
-
-      for (unsigned j = 0, M = Children.size(); j < M; j++) {
-        delete Children[j];
-      }
-    }
+    DIE(unsigned Tag, unsigned ChildrenFlag);
+    ~DIE();
     
     // Accessors
-    unsigned getAbbrevID()                     const { return AbbrevID; }
-    unsigned getOffset()                       const { return Offset; }
-    unsigned getSize()                         const { return Size; }
+    unsigned   getAbbrevID()                   const { return AbbrevID; }
+    unsigned   getOffset()                     const { return Offset; }
+    unsigned   getSize()                       const { return Size; }
+    DWContext *getContext()                    const { return Context; }
     const std::vector<DIE *> &getChildren()    const { return Children; }
     const std::vector<DIEValue *> &getValues() const { return Values; }
     void setOffset(unsigned O)                 { Offset = O; }
     void setSize(unsigned S)                   { Size = S; }
-    
-    /// AddValue - Add an attribute value of appropriate type.
-    ///
-    void AddValue(int Value) {
-      Values.push_back(new DIEInteger(Value));
-    }
-    void AddValue(const std::string &Value) {
-      Values.push_back(new DIEString(Value));
-    }
-    void AddValue(const DWLabel &Value) {
-      Values.push_back(new DIELabel(Value));
-    }
-    void AddValue(const DWLabel &Value1, const DWLabel &Value2) {
-      Values.push_back(new DIEDelta(Value1, Value2));
-    }
+    void setContext(DWContext *C)              { Context = C; }
     
     /// SiblingOffset - Return the offset of the debug information entry's
     /// sibling.
     unsigned SiblingOffset() const { return Offset + Size; }
+
+    /// AddInt - Add a simple integer attribute data and value.
+    ///
+    void AddInt(unsigned Attribute, unsigned Form,  int Integer);
+        
+    /// AddString - Add a std::string attribute data and value.
+    ///
+    void AddString(unsigned Attribute, unsigned Form,
+                   const std::string &String);
+        
+    /// AddLabel - Add a Dwarf label attribute data and value.
+    ///
+    void AddLabel(unsigned Attribute, unsigned Form, const DWLabel &Label);
+        
+    /// AddAsIsLabel - Add a non-Dwarf label attribute data and value.
+    ///
+    void AddAsIsLabel(unsigned Attribute, unsigned Form,
+                      const std::string &Label);
+        
+    /// AddDelta - Add a label delta attribute data and value.
+    ///
+    void AddDelta(unsigned Attribute, unsigned Form,
+                  const DWLabel &Hi, const DWLabel &Lo);
+        
+    ///  AddDIEntry - Add a DIE attribute data and value.
+    ///
+    void AddDIEntry(unsigned Attribute, unsigned Form, DIE *Entry);
+
+    /// Complete - Indicate that all attributes have been added and
+    /// ready to get an abbreviation ID.
+    ///
+    void Complete(DwarfWriter &DW);
+    
+    /// AddChild - Add a child to the DIE.
+    void AddChild(DIE *Child);
+  };
+  
+  //===--------------------------------------------------------------------===//
+  /// DWContext - Name context for types and values.
+  ///
+  class DWContext {
+  private:
+    DwarfWriter &DW;                    // DwarfWriter for global information.
+    DIE *Owner;                         // Owning debug information entry.
+    std::map<std::string, DIE*> Types;  // Named types in context.
+    std::map<std::string, DIE*> Variables;// Named variables in context.
+    
+  public:
+    DWContext(DwarfWriter &D, DIE *O)
+    : DW(D)
+    , Owner(O)
+    , Types()
+    , Variables()
+    {
+      Owner->setContext(this);
+    }
+    ~DWContext() {}
+    
+    /// NewBasicType - Creates a new basic type, if necessary, then adds in the
+    /// context and owner.
+    DIE *NewBasicType(const std::string &Name, unsigned Size,
+                                               unsigned Encoding);
+                                               
+    /// NewVariable - Creates a basic variable, if necessary, then adds in the
+    /// context and owner.
+    DIE *NewVariable(const std::string &Name,
+                     unsigned SourceFileID, unsigned Line,
+                     DIE *Type, bool IsExternal);
   };
 
   //===--------------------------------------------------------------------===//
-  // Forward declarations.
-  //
-  class AsmPrinter;
-  class MachineDebugInfo;
-  
-  //===--------------------------------------------------------------------===//
-  // DwarfWriter - emits Dwarf debug and exception handling directives.
+  // DwarfWriter - Emits Dwarf debug and exception handling directives.
   //
   class DwarfWriter {
-  
   protected:
   
     //===------------------------------------------------------------------===//
@@ -706,6 +826,18 @@ namespace llvm {
     /// Abbreviations - A UniqueVector of TAG structure abbreviations.
     ///
     UniqueVector<DIEAbbrev> Abbreviations;
+    
+    /// GlobalTypes - A map of globally visible named types.
+    ///
+    std::map<std::string, DIE *> GlobalTypes;
+    
+    /// GlobalEntities - A map of globally visible named entities.
+    ///
+    std::map<std::string, DIE *> GlobalEntities;
+     
+    /// StringPool - A UniqueVector of strings used by indirect references.
+    ///
+    UniqueVector<std::string> StringPool;
     
     //===------------------------------------------------------------------===//
     // Properties to be set by the derived class ctor, used to configure the
@@ -861,21 +993,34 @@ public:
       EmitReference(Label.Tag, Label.Number);
     }
     void EmitReference(const char *Tag, unsigned Number) const;
+    void EmitReference(const std::string Name) const;
 
     /// EmitDifference - Emit the difference between two labels.  Some
     /// assemblers do not behave with absolute expressions with data directives,
     /// so there is an option (needsSet) to use an intermediary set expression.
-    void EmitDifference(DWLabel Label1, DWLabel Label2) const {
-      EmitDifference(Label1.Tag, Label1.Number, Label2.Tag, Label2.Number);
+    void EmitDifference(DWLabel LabelHi, DWLabel LabelLo) const {
+      EmitDifference(LabelHi.Tag, LabelHi.Number, LabelLo.Tag, LabelLo.Number);
     }
-    void EmitDifference(const char *Tag1, unsigned Number1,
-                        const char *Tag2, unsigned Number2) const;
+    void EmitDifference(const char *TagHi, unsigned NumberHi,
+                        const char *TagLo, unsigned NumberLo) const;
                                    
-private:
-    /// NewDIE - Construct a new structured debug information entry.
+    /// NewAbbreviation - Add the abbreviation to the Abbreviation vector.
     ///  
-    DIE *NewDIE(const unsigned char *AbbrevData);
+    unsigned NewAbbreviation(DIEAbbrev *Abbrev);
+    
+    /// NewString - Add a string to the constant pool and returns a label.
+    ///
+    DWLabel NewString(const std::string &String);
+    
+    /// NewGlobalType - Make the type visible globally using the given name.
+    ///
+    void NewGlobalType(const std::string &Name, DIE *Type);
+    
+    /// NewGlobalEntity - Make the entity visible globally using the given name.
+    ///
+    void NewGlobalEntity(const std::string &Name, DIE *Entity);
 
+private:
     /// NewCompileUnit - Create new compile unit information.
     ///
     DIE *NewCompileUnit(const std::string &Directory,
@@ -956,7 +1101,7 @@ private:
     void SetDebugInfo(MachineDebugInfo *di) { DebugInfo = di; }
     
     //===------------------------------------------------------------------===//
-    // Main enties.
+    // Main entry points.
     //
     
     /// BeginModule - Emit all Dwarf sections that should come prior to the

@@ -27,84 +27,6 @@ DwarfVerbose("dwarf-verbose", cl::Hidden,
                                 cl::desc("Add comments to Dwarf directives."));
 
 //===----------------------------------------------------------------------===//
-// Dwarf abbreviations used by this emitter.
-//
-
-static const unsigned char AbbrevTAG_compile_unit[] = {
-  DW_TAG_compile_unit,     DW_CHILDREN_yes,
-  DW_AT_stmt_list,         DW_FORM_data4,
-  DW_AT_high_pc,           DW_FORM_addr,
-  DW_AT_low_pc,            DW_FORM_addr,
-  DW_AT_producer,          DW_FORM_string,
-  DW_AT_language,          DW_FORM_data1,
-  DW_AT_name,              DW_FORM_string,
-  DW_AT_comp_dir,          DW_FORM_string,
-  0,                       0
-};
-  
-static const unsigned char AbbrevTAG_subprogram[] = {
-  DW_TAG_subprogram,       DW_CHILDREN_yes,
-  DW_AT_sibling,           DW_FORM_ref4,
-  DW_AT_external,          DW_FORM_flag,
-  DW_AT_name,              DW_FORM_string,
-  DW_AT_decl_file,         DW_FORM_data1,
-  DW_AT_decl_line,         DW_FORM_data1,
-  DW_AT_prototyped,        DW_FORM_flag,
-  DW_AT_type,              DW_FORM_ref4,
-  DW_AT_low_pc,            DW_FORM_addr,
-  DW_AT_high_pc,           DW_FORM_addr,
-  DW_AT_frame_base,        DW_FORM_block1,
-  0,                       0
-};
-  
-static const unsigned char AbbrevTAG_formal_parameter[] = {
-  DW_TAG_formal_parameter, DW_CHILDREN_no,
-  DW_AT_name,              DW_FORM_string,
-  DW_AT_decl_file,         DW_FORM_data1,
-  DW_AT_decl_line,         DW_FORM_data1,
-  DW_AT_type,              DW_FORM_ref4,
-  DW_AT_location,          DW_FORM_block1,
-  0,                       0
-};
-  
-static const unsigned char AbbrevTAG_base_type[] = {
-  DW_TAG_base_type,        DW_CHILDREN_no,
-  DW_AT_name,              DW_FORM_string,
-  DW_AT_byte_size,         DW_FORM_data1,
-  DW_AT_encoding,          DW_FORM_data1,
-  0,                       0
-};
-  
-static const unsigned char AbbrevTAG_pointer_type[] = {
-  DW_TAG_pointer_type,     DW_CHILDREN_no,
-  DW_AT_byte_size,         DW_FORM_data1,
-  DW_AT_type,              DW_FORM_ref4,
-  0,                       0
-};
-  
-static const unsigned char AbbrevTAG_array_type[] = {
-  DW_TAG_array_type,       DW_CHILDREN_yes,
-  DW_AT_sibling,           DW_FORM_ref4,
-  DW_AT_type,              DW_FORM_ref4,
-  0,                       0
-};
-  
-static const unsigned char AbbrevTAG_subrange_type[] = {
-  DW_TAG_subrange_type,    DW_CHILDREN_no,
-  0,                       0
-};
-  
-static const unsigned char AbbrevTAG_variable[] = {
-  DW_TAG_variable,         DW_CHILDREN_no,
-  DW_AT_name,              DW_FORM_string,
-  DW_AT_type,              DW_FORM_ref4,
-  DW_AT_external,          DW_FORM_flag,
-  DW_AT_artificial,        DW_FORM_flag,
-  DW_AT_declaration,       DW_FORM_flag,
-  0,                       0
-};
-
-//===----------------------------------------------------------------------===//
 
 /// TagString - Return the string for the specified tag.
 ///
@@ -659,13 +581,102 @@ static const char *CallFrameString(unsigned Encoding) {
 
 //===----------------------------------------------------------------------===//
 
+/// operator== - Used by UniqueVector to locate entry.
+///
+bool DIEAbbrev::operator==(const DIEAbbrev &DA) const {
+  if (Tag != DA.Tag) return false;
+  if (ChildrenFlag != DA.ChildrenFlag) return false;
+  if (Data.size() != DA.Data.size()) return false;
+  
+  for (unsigned i = 0, N = Data.size(); i < N; i++) {
+    const DIEAbbrevData &AttrData = Data[i];
+    const DIEAbbrevData &DAAttrData = Data[i];
+    if (AttrData.getAttribute() != DAAttrData.getAttribute()) return false;
+    if (AttrData.getForm() != DAAttrData.getForm()) return false;
+  }
+  
+  return true;
+}
+
+/// operator< - Used by UniqueVector to locate entry.
+///
+bool DIEAbbrev::operator<(const DIEAbbrev &DA) const {
+  if (Tag != DA.Tag) return Tag < DA.Tag;
+  if (ChildrenFlag != DA.ChildrenFlag) return ChildrenFlag < DA.ChildrenFlag;
+  if (Data.size() != DA.Data.size()) return Data.size() < DA.Data.size();
+  
+  for (unsigned i = 0, N = Data.size(); i < N; i++) {
+    const DIEAbbrevData &AttrData = Data[i];
+    const DIEAbbrevData &DAAttrData = DA.Data[i];
+    if (AttrData.getAttribute() != DAAttrData.getAttribute())
+      return AttrData.getAttribute() < DAAttrData.getAttribute();
+    if (AttrData.getForm() != DAAttrData.getForm())
+      return AttrData.getForm() < DAAttrData.getForm();
+  }
+  
+  return false;
+}
+    
+/// Emit - Print the abbreviation using the specified Dwarf writer.
+///
+void DIEAbbrev::Emit(const DwarfWriter &DW) const {
+  // Emit its Dwarf tag type.
+  DW.EmitULEB128Bytes(Tag);
+  DW.EOL(TagString(Tag));
+  
+  // Emit whether it has children DIEs.
+  DW.EmitULEB128Bytes(ChildrenFlag);
+  DW.EOL(ChildrenString(ChildrenFlag));
+  
+  // For each attribute description.
+  for (unsigned i = 0, N = Data.size(); i < N; i++) {
+    const DIEAbbrevData &AttrData = Data[i];
+    
+    // Emit attribute type.
+    DW.EmitULEB128Bytes(AttrData.getAttribute());
+    DW.EOL(AttributeString(AttrData.getAttribute()));
+    
+    // Emit form type.
+    DW.EmitULEB128Bytes(AttrData.getForm());
+    DW.EOL(FormEncodingString(AttrData.getForm()));
+  }
+
+  // Mark end of abbreviation.
+  DW.EmitULEB128Bytes(0); DW.EOL("EOM(1)");
+  DW.EmitULEB128Bytes(0); DW.EOL("EOM(2)");
+}
+
+#ifndef NDEBUG
+  void DIEAbbrev::print(std::ostream &O) {
+    O << "Abbreviation @"
+      << std::hex << (unsigned)this << std::dec
+      << "  "
+      << TagString(Tag)
+      << " "
+      << ChildrenString(ChildrenFlag)
+      << "\n";
+    
+    for (unsigned i = 0, N = Data.size(); i < N; i++) {
+      O << "  "
+        << AttributeString(Data[i].getAttribute())
+        << "  "
+        << FormEncodingString(Data[i].getForm())
+        << "\n";
+    }
+  }
+  void DIEAbbrev::dump() { print(std::cerr); }
+#endif
+
+//===----------------------------------------------------------------------===//
+
 /// EmitValue - Emit integer of appropriate size.
 ///
 void DIEInteger::EmitValue(const DwarfWriter &DW, unsigned Form) const {
   switch (Form) {
-  case DW_FORM_data1: DW.EmitByte(Value);  break;
-  case DW_FORM_data2: DW.EmitShort(Value); break;
-  case DW_FORM_data4: DW.EmitLong(Value);  break;
+  case DW_FORM_data1: // Fall thru
+  case DW_FORM_flag:  DW.EmitByte(Integer);  break;
+  case DW_FORM_data2: DW.EmitShort(Integer); break;
+  case DW_FORM_data4: DW.EmitLong(Integer);  break;
   default: assert(0 && "DIE Value form not supported yet"); break;
   }
 }
@@ -674,6 +685,7 @@ void DIEInteger::EmitValue(const DwarfWriter &DW, unsigned Form) const {
 ///
 unsigned DIEInteger::SizeOf(const DwarfWriter &DW, unsigned Form) const {
   switch (Form) {
+  case DW_FORM_flag:  // Fall thru
   case DW_FORM_data1: return sizeof(int8_t);
   case DW_FORM_data2: return sizeof(int16_t);
   case DW_FORM_data4: return sizeof(int32_t);
@@ -687,13 +699,13 @@ unsigned DIEInteger::SizeOf(const DwarfWriter &DW, unsigned Form) const {
 /// EmitValue - Emit string value.
 ///
 void DIEString::EmitValue(const DwarfWriter &DW, unsigned Form) const {
-  DW.EmitString(Value);
+  DW.EmitString(String);
 }
 
 /// SizeOf - Determine size of string value in bytes.
 ///
 unsigned DIEString::SizeOf(const DwarfWriter &DW, unsigned Form) const {
-  return Value.size() + sizeof(int8_t);
+  return String.size() + sizeof('\0');
 }
 
 //===----------------------------------------------------------------------===//
@@ -701,7 +713,7 @@ unsigned DIEString::SizeOf(const DwarfWriter &DW, unsigned Form) const {
 /// EmitValue - Emit label value.
 ///
 void DIELabel::EmitValue(const DwarfWriter &DW, unsigned Form) const {
-  DW.EmitReference(Value);
+  DW.EmitReference(Label);
 }
 
 /// SizeOf - Determine size of label value in bytes.
@@ -712,16 +724,195 @@ unsigned DIELabel::SizeOf(const DwarfWriter &DW, unsigned Form) const {
     
 //===----------------------------------------------------------------------===//
 
+/// EmitValue - Emit label value.
+///
+void DIEAsIsLabel::EmitValue(const DwarfWriter &DW, unsigned Form) const {
+  DW.EmitReference(Label);
+}
+
+/// SizeOf - Determine size of label value in bytes.
+///
+unsigned DIEAsIsLabel::SizeOf(const DwarfWriter &DW, unsigned Form) const {
+  return DW.getAddressSize();
+}
+    
+//===----------------------------------------------------------------------===//
+
 /// EmitValue - Emit delta value.
 ///
 void DIEDelta::EmitValue(const DwarfWriter &DW, unsigned Form) const {
-  DW.EmitDifference(Value1, Value2);
+  DW.EmitDifference(LabelHi, LabelLo);
 }
 
 /// SizeOf - Determine size of delta value in bytes.
 ///
 unsigned DIEDelta::SizeOf(const DwarfWriter &DW, unsigned Form) const {
   return DW.getAddressSize();
+}
+
+//===----------------------------------------------------------------------===//
+/// EmitValue - Emit extry offset.
+///
+void DIEntry::EmitValue(const DwarfWriter &DW, unsigned Form) const {
+  DW.EmitLong(Entry->getOffset());
+}
+
+/// SizeOf - Determine size of label value in bytes.
+///
+unsigned DIEntry::SizeOf(const DwarfWriter &DW, unsigned Form) const {
+  return sizeof(int32_t);
+}
+    
+//===----------------------------------------------------------------------===//
+
+DIE::DIE(unsigned Tag, unsigned ChildrenFlag)
+: Abbrev(new DIEAbbrev(Tag, ChildrenFlag))
+, AbbrevID(0)
+, Offset(0)
+, Size(0)
+, Context(NULL)
+, Children()
+, Values()
+{}
+
+DIE::~DIE() {
+  if (Abbrev) delete Abbrev;
+  
+  for (unsigned i = 0, N = Children.size(); i < N; i++) {
+    delete Children[i];
+  }
+
+  for (unsigned j = 0, M = Values.size(); j < M; j++) {
+    delete Values[j];
+  }
+  
+  if (Context) delete Context;
+}
+    
+/// AddInt - Add a simple integer attribute data and value.
+///
+void DIE::AddInt(unsigned Attribute, unsigned Form,
+                 int Integer) {
+  Abbrev->AddAttribute(Attribute, Form);
+  Values.push_back(new DIEInteger(Integer));
+}
+    
+/// AddString - Add a std::string attribute data and value.
+///
+void DIE::AddString(unsigned Attribute, unsigned Form,
+                    const std::string &String) {
+  Abbrev->AddAttribute(Attribute, Form);
+  Values.push_back(new DIEString(String));
+}
+    
+/// AddLabel - Add a Dwarf label attribute data and value.
+///
+void DIE::AddLabel(unsigned Attribute, unsigned Form,
+                   const DWLabel &Label) {
+  Abbrev->AddAttribute(Attribute, Form);
+  Values.push_back(new DIELabel(Label));
+}
+    
+/// AddAsIsLabel - Add an non-Dwarf label attribute data and value.
+///
+void DIE::AddAsIsLabel(unsigned Attribute, unsigned Form,
+                       const std::string &Label) {
+  Abbrev->AddAttribute(Attribute, Form);
+  Values.push_back(new DIEAsIsLabel(Label));
+}
+    
+/// AddDelta - Add a label delta attribute data and value.
+///
+void DIE::AddDelta(unsigned Attribute, unsigned Form,
+                   const DWLabel &Hi, const DWLabel &Lo) {
+  Abbrev->AddAttribute(Attribute, Form);
+  Values.push_back(new DIEDelta(Hi, Lo));
+}
+    
+/// AddDIEntry - Add a DIE attribute data and value.
+///
+void DIE::AddDIEntry(unsigned Attribute,
+                     unsigned Form, DIE *Entry) {
+  Abbrev->AddAttribute(Attribute, Form);
+  Values.push_back(new DIEntry(Entry));
+}
+
+/// Complete - Indicate that all attributes have been added and ready to get an
+/// abbreviation ID.
+void DIE::Complete(DwarfWriter &DW) {
+  AbbrevID = DW.NewAbbreviation(Abbrev);
+  delete Abbrev;
+  Abbrev = NULL;
+}
+
+/// AddChild - Add a child to the DIE.
+///
+void DIE::AddChild(DIE *Child) {
+  Children.push_back(Child);
+}
+
+//===----------------------------------------------------------------------===//
+
+/// NewBasicType - Creates a new basic type if necessary, then adds in the
+/// context and owner.
+DIE *DWContext::NewBasicType(const std::string &Name, unsigned Size,
+                                                      unsigned Encoding) {
+  // FIXME - Just a prototype.
+  DIE *Type = Types[Name];
+  
+  // If first occurance of type.
+  if (!Type) {
+    // construct the type DIE.
+    Type = new DIE(DW_TAG_base_type, DW_CHILDREN_no);
+    Type->AddString(DW_AT_name,      DW_FORM_string, Name);
+    Type->AddInt   (DW_AT_byte_size, DW_FORM_data1,  Size);
+    Type->AddInt   (DW_AT_encoding,  DW_FORM_data1,  Encoding);
+    Type->Complete(DW);
+    
+    // Add to context owner.
+    Owner->AddChild(Type);
+
+    // Add to map.
+    Types[Name] = Type;
+  }
+  
+  return Type;
+}
+
+/// NewVariable - Creates a basic variable, if necessary, then adds in the
+/// context and owner.
+DIE *DWContext::NewVariable(const std::string &Name,
+                            unsigned SourceFileID, unsigned Line,
+                            DIE *Type, bool IsExternal) {
+  // FIXME - Just a prototype.
+  DIE *Variable = Variables[Name];
+  
+  // If first occurance of variable.
+  if (!Variable) {
+    assert(IsExternal && "Internal variables not handled yet");
+    Variable = new DIE(DW_TAG_variable, DW_CHILDREN_no);
+    Variable->AddString   (DW_AT_name,      DW_FORM_string, Name);
+    Variable->AddInt      (DW_AT_decl_file, DW_FORM_data1,  SourceFileID);
+    Variable->AddInt      (DW_AT_decl_line, DW_FORM_data1,  Line);
+    Variable->AddDIEntry  (DW_AT_type,      DW_FORM_ref4,   Type);
+    Variable->AddInt      (DW_AT_external,  DW_FORM_flag,   (int)IsExternal);
+    Variable->AddAsIsLabel(DW_AT_location,  DW_FORM_block1,
+                           std::string("_")+Name+".b");
+    Variable->Complete(DW);
+ 
+    // Add to context owner.
+    Owner->AddChild(Variable);
+    
+    // Add to map.
+    Variables[Name] = Variable;
+    
+    // If external add to visible names.
+    if (IsExternal) {
+      DW.NewGlobalEntity(Name, Variable);
+    }
+  }
+  
+  return Variable;
 }
 
 //===----------------------------------------------------------------------===//
@@ -903,20 +1094,29 @@ void DwarfWriter::EmitReference(const char *Tag, unsigned Number) const {
     
   PrintLabelName(Tag, Number);
 }
+void DwarfWriter::EmitReference(const std::string Name) const {
+  if (AddressSize == 4)
+    O << Asm->Data32bitsDirective;
+  else
+    O << Asm->Data64bitsDirective;
+    
+  O << Name;
+}
 
 /// EmitDifference - Emit an label difference as sizeof(pointer) value.  Some
 /// assemblers do not accept absolute expressions with data directives, so there 
 /// is an option (needsSet) to use an intermediary 'set' expression.
-void DwarfWriter::EmitDifference(const char *Tag1, unsigned Number1,
-                                 const char *Tag2, unsigned Number2) const {
+void DwarfWriter::EmitDifference(const char *TagHi, unsigned NumberHi,
+                                 const char *TagLo, unsigned NumberLo) const {
   if (needsSet) {
     static unsigned SetCounter = 0;
+    
     O << "\t.set\t";
     PrintLabelName("set", SetCounter);
     O << ",";
-    PrintLabelName(Tag1, Number1);
+    PrintLabelName(TagHi, NumberHi);
     O << "-";
-    PrintLabelName(Tag2, Number2);
+    PrintLabelName(TagLo, NumberLo);
     O << "\n";
     
     if (AddressSize == sizeof(int32_t))
@@ -933,40 +1133,58 @@ void DwarfWriter::EmitDifference(const char *Tag1, unsigned Number1,
     else
       O << Asm->Data64bitsDirective;
       
-    PrintLabelName(Tag1, Number1);
+    PrintLabelName(TagHi, NumberHi);
     O << "-";
-    PrintLabelName(Tag2, Number2);
+    PrintLabelName(TagLo, NumberLo);
   }
 }
 
-/// NewDIE - Construct a new structured debug information entry.
+/// NewAbbreviation - Add the abbreviation to the Abbreviation vector.
 ///  
-DIE *DwarfWriter::NewDIE(const unsigned char *AbbrevData) {
-  // Get the abbreviation ID.
-  unsigned AbbrevID = Abbreviations.insert(DIEAbbrev(AbbrevData));
-  // Allocate new new structured DIE.
-  DIE *Die = new DIE(AbbrevID);
-  // Return  structured DIE.
-  return Die;
+unsigned DwarfWriter::NewAbbreviation(DIEAbbrev *Abbrev) {
+  return Abbreviations.insert(*Abbrev);
+}
+
+/// NewString - Add a string to the constant pool and returns a label.
+///
+DWLabel DwarfWriter::NewString(const std::string &String) {
+  unsigned StringID = StringPool.insert(String);
+  return DWLabel("string", StringID);
+}
+
+/// NewGlobalType - Make the type visible globally using the given name.
+///
+void DwarfWriter::NewGlobalType(const std::string &Name, DIE *Type) {
+  // FIXME - check for duplication.
+  GlobalTypes[Name] = Type;
+}
+
+/// NewGlobalEntity - Make the entity visible globally using the given name.
+///
+void DwarfWriter::NewGlobalEntity(const std::string &Name, DIE *Entity) {
+  // FIXME - check for duplication.
+  GlobalEntities[Name] = Entity;
 }
 
 /// NewCompileUnit - Create new compile unit information.
 ///
 DIE *DwarfWriter::NewCompileUnit(const std::string &Directory,
                                  const std::string &SourceName) {
-  DIE *Die = NewDIE(AbbrevTAG_compile_unit);
+  DIE *Unit = new DIE(DW_TAG_compile_unit, DW_CHILDREN_yes);
   // FIXME - use the correct line set.
-  Die->AddValue(DWLabel("line", 0));
-  Die->AddValue(DWLabel("text_end", 0));
-  Die->AddValue(DWLabel("text_begin", 0));
+  Unit->AddLabel (DW_AT_stmt_list, DW_FORM_data4,  DWLabel("line", 0));
+  Unit->AddLabel (DW_AT_high_pc,   DW_FORM_addr,   DWLabel("text_end", 0));
+  Unit->AddLabel (DW_AT_low_pc,    DW_FORM_addr,   DWLabel("text_begin", 0));
   // FIXME - The producer needs to be in this form, but should come from
   // an appropriate source.
-  Die->AddValue("llvm 3.4.x (LLVM Research Group)");
-  Die->AddValue(DW_LANG_C89);
-  Die->AddValue(SourceName);
-  Die->AddValue(Directory);
+  Unit->AddString(DW_AT_producer,  DW_FORM_string,
+                  "llvm 3.4.x (LLVM Research Group)");
+  Unit->AddInt   (DW_AT_language,  DW_FORM_data1,  DW_LANG_C89);
+  Unit->AddString(DW_AT_name,      DW_FORM_string, SourceName);
+  Unit->AddString(DW_AT_comp_dir,  DW_FORM_string, Directory);
+  Unit->Complete(*this);
   
-  return Die;
+  return Unit;
 }
 
 /// EmitInitial - Emit initial Dwarf declarations.  This is necessary for cc
@@ -1003,11 +1221,12 @@ void DwarfWriter::EmitDIE(DIE *Die) const {
       " ");
   
   const std::vector<DIEValue *> &Values = Die->getValues();
+  const std::vector<DIEAbbrevData> &AbbrevData = Abbrev.getData();
   
   // Emit the DIE attribute values.
   for (unsigned i = 0, N = Values.size(); i < N; i++) {
-    unsigned Attr = Abbrev.getAttribute(i);
-    unsigned Form = Abbrev.getForm(i);
+    unsigned Attr = AbbrevData[i].getAttribute();
+    unsigned Form = AbbrevData[i].getForm();
     assert(Form && "Too many attributes for DIE (check abbreviation)");
     
     switch (Attr) {
@@ -1053,11 +1272,12 @@ unsigned DwarfWriter::SizeAndOffsetDie(DIE *Die, unsigned Offset) const {
   Offset += SizeULEB128(AbbrevID);
   
   const std::vector<DIEValue *> &Values = Die->getValues();
+  const std::vector<DIEAbbrevData> &AbbrevData = Abbrev.getData();
 
   // Emit the DIE attribute values.
   for (unsigned i = 0, N = Values.size(); i < N; i++) {
     // Size attribute value.
-    Offset += Values[i]->SizeOf(*this, Abbrev.getForm(i));
+    Offset += Values[i]->SizeOf(*this, AbbrevData[i].getForm());
   }
   
   // Emit the DIE children if any.
@@ -1085,7 +1305,7 @@ void DwarfWriter::SizeAndOffsets() {
   unsigned Offset = sizeof(int32_t) + // Length of Compilation Unit Info
                     sizeof(int16_t) + // DWARF version number
                     sizeof(int32_t) + // Offset Into Abbrev. Section
-                    sizeof(int8_t);  // Pointer Size (in bytes)
+                    sizeof(int8_t);   // Pointer Size (in bytes)
   
   // Process each compile unit.
   for (unsigned i = 0, N = CompileUnits.size(); i < N; i++) {
@@ -1104,6 +1324,8 @@ void DwarfWriter::EmitDebugInfo() const {
   
   // If there are any compile units.
   if (N) {
+    EmitLabel("info_begin", 0);
+    
     // Emit the compile units header.
 
     // Emit size of content not including length itself
@@ -1113,7 +1335,7 @@ void DwarfWriter::EmitDebugInfo() const {
     
     EmitShort(DWARF_VERSION); EOL("DWARF version number");
 
-    EmitReference("abbrev", 0); EOL("Offset Into Abbrev. Section");
+    EmitReference("abbrev_begin", 0); EOL("Offset Into Abbrev. Section");
 
     EmitByte(AddressSize); EOL("Address Size (in bytes)");
     
@@ -1121,52 +1343,35 @@ void DwarfWriter::EmitDebugInfo() const {
     for (unsigned i = 0; i < N; i++) {
       EmitDIE(CompileUnits[i]);
     }
+    
+    EmitLabel("info_end", 0);
   }
 }
 
 /// EmitAbbreviations - Emit the abbreviation section.
 ///
 void DwarfWriter::EmitAbbreviations() const {
-  // Start the debug abbrev section.
-  Asm->SwitchSection(DwarfAbbrevSection, 0);
-  
-  // For each abbrevation.
-  for (unsigned AbbrevID = 1, NAID = Abbreviations.size();
-                AbbrevID <= NAID; AbbrevID++) {
-    // Get abbreviation data
-    const DIEAbbrev &Abbrev = Abbreviations[AbbrevID];
+  // Check to see if it is worth the effort.
+  if (!Abbreviations.empty()) {
+    // Start the debug abbrev section.
+    Asm->SwitchSection(DwarfAbbrevSection, 0);
     
-    // Emit the abbrevations code (base 1 index.)
-    EmitULEB128Bytes(AbbrevID); EOL("Abbreviation Code");
+    EmitLabel("abbrev_begin", 0);
     
-    // Emit its Dwarf tag type.
-    EmitULEB128Bytes(Abbrev.getTag());
-    EOL(TagString(Abbrev.getTag()));
-    
-    // Emit whether it has children DIEs.
-    EmitULEB128Bytes(Abbrev.getChildrenFlag());
-    EOL(ChildrenString(Abbrev.getChildrenFlag()));
-    
-    // For each attribute description.
-    for (unsigned i = 0; ; i++) {
-      unsigned Attr = Abbrev.getAttribute(i);
-      unsigned Form = Abbrev.getForm(i);
+    // For each abbrevation.
+    for (unsigned AbbrevID = 1, NAID = Abbreviations.size();
+                  AbbrevID <= NAID; AbbrevID++) {
+      // Get abbreviation data
+      const DIEAbbrev &Abbrev = Abbreviations[AbbrevID];
       
-      // Attributes are null terminated.
-      if (!Attr) break;
+      // Emit the abbrevations code (base 1 index.)
+      EmitULEB128Bytes(AbbrevID); EOL("Abbreviation Code");
       
-      // Emit attribute type.
-      EmitULEB128Bytes(Attr);
-      EOL(AttributeString(Attr));
-      
-      // Emit form type.
-      EmitULEB128Bytes(Form);
-      EOL(FormEncodingString(Form));
+      // Emit the abbreviations data.
+      Abbrev.Emit(*this);
     }
-
-    // Mark end of abbreviation.
-    EmitULEB128Bytes(0); EOL("EOM(1)");
-    EmitULEB128Bytes(0); EOL("EOM(2)");
+    
+    EmitLabel("abbrev_end", 0);
   }
 }
 
@@ -1303,22 +1508,67 @@ void DwarfWriter::EmitDebugFrame() {
 /// EmitDebugPubNames - Emit visible names into a debug pubnames section.
 ///
 void DwarfWriter::EmitDebugPubNames() {
-  // Start the dwarf pubnames section.
-  Asm->SwitchSection(DwarfPubNamesSection, 0);
+  // Check to see if it is worth the effort.
+  if (!GlobalEntities.empty()) {
+    // Start the dwarf pubnames section.
+    Asm->SwitchSection(DwarfPubNamesSection, 0);
+    
+    EmitDifference("pubnames_end", 0, "pubnames_begin", 0);
+    EOL("Length of Public Names Info");
+    
+    EmitLabel("pubnames_begin", 0);
+    
+    EmitShort(DWARF_VERSION); EOL("DWARF Version");
+    
+    EmitReference("info_begin", 0); EOL("Offset of Compilation Unit Info");
+
+    EmitDifference("info_end", 0, "info_begin", 0);
+    EOL("Compilation Unit Length");
+    
+    for (std::map<std::string, DIE *>::iterator G = GlobalTypes.begin(),
+                                                GE = GlobalTypes.begin();
+         G != GE; G++) {
+      const std::string &Name = (*G).first;
+      DIE * Entity = (*G).second;
+      
+      EmitLong(Entity->getOffset()); EOL("DIE offset");
+      EmitString(Name); EOL("External Name");
+      
+    }
+  
+    EmitLong(0); EOL("End Mark");
+    EmitLabel("pubnames_end", 0);
+  }
 }
 
 /// EmitDebugPubTypes - Emit visible names into a debug pubtypes section.
 ///
 void DwarfWriter::EmitDebugPubTypes() {
-  // Start the dwarf pubtypes section.
-  Asm->SwitchSection(DwarfPubTypesSection, 0);
+  // Check to see if it is worth the effort.
+  if (!GlobalTypes.empty()) {
+    // Start the dwarf pubtypes section.
+    Asm->SwitchSection(DwarfPubTypesSection, 0);
+  }
 }
 
 /// EmitDebugStr - Emit visible names into a debug str section.
 ///
 void DwarfWriter::EmitDebugStr() {
-  // Start the dwarf str section.
-  Asm->SwitchSection(DwarfStrSection, 0);
+  // Check to see if it is worth the effort.
+  if (!StringPool.empty()) {
+    // Start the dwarf str section.
+    Asm->SwitchSection(DwarfStrSection, 0);
+    
+    // For each of strings in teh string pool.
+    for (unsigned StringID = 1, N = StringPool.size();
+         StringID <= N; StringID++) {
+      // Emit a label for reference from debug information entries.
+      EmitLabel("string", StringID);
+      // Emit the string itself.
+      const std::string &String = StringPool[StringID];
+      EmitString(String); O << "\n";
+    }
+  }
 }
 
 /// EmitDebugLoc - Emit visible names into a debug loc section.
@@ -1341,7 +1591,7 @@ void DwarfWriter::EmitDebugARanges() {
   
   EmitShort(DWARF_VERSION); EOL("Dwarf Version");
   
-  EmitReference("info", 0); EOL("Offset of Compilation Unit Info");
+  EmitReference("info_begin", 0); EOL("Offset of Compilation Unit Info");
 
   EmitByte(AddressSize); EOL("Size of Address");
 
@@ -1389,7 +1639,7 @@ bool DwarfWriter::ShouldEmitDwarf() {
 }
 
 //===----------------------------------------------------------------------===//
-// Main enties.
+// Main entry points.
 //
     
   DwarfWriter::DwarfWriter(std::ostream &o, AsmPrinter *ap)
@@ -1399,6 +1649,9 @@ bool DwarfWriter::ShouldEmitDwarf() {
   , didInitial(false)
   , CompileUnits()
   , Abbreviations()
+  , GlobalTypes()
+  , GlobalEntities()
+  , StringPool()
   , AddressSize(sizeof(int32_t))
   , hasLEB128(false)
   , hasDotLoc(false)
@@ -1419,6 +1672,9 @@ bool DwarfWriter::ShouldEmitDwarf() {
   , DataSection(".data")
   {}
   DwarfWriter::~DwarfWriter() {
+    for (unsigned i = 0, N = CompileUnits.size(); i < N; i++) {
+      delete CompileUnits[i];
+    }
   }
 
 /// BeginModule - Emit all Dwarf sections that should come prior to the content.
@@ -1439,7 +1695,7 @@ void DwarfWriter::EndModule() {
   EmitLabel("text_end", 0);
   Asm->SwitchSection(DataSection, 0);
   EmitLabel("data_end", 0);
-
+  
   // Get directory and source information.
   const UniqueVector<std::string> &Directories = DebugInfo->getDirectories();
   const UniqueVector<SourceFileInfo> &SourceFiles = DebugInfo->getSourceFiles();
@@ -1450,8 +1706,16 @@ void DwarfWriter::EndModule() {
     const SourceFileInfo &SourceFile = SourceFiles[SourceID];
     const std::string &Directory = Directories[SourceFile.getDirectoryID()];
     const std::string &SourceName = SourceFile.getName();
-    DIE *CompileUnit = NewCompileUnit(Directory, SourceName);
-    CompileUnits.push_back(CompileUnit);
+    DIE *Unit = NewCompileUnit(Directory, SourceName);
+    
+#if 0
+    // FIXME - just testing.
+    DWContext *Context = new DWContext(*this, Unit);
+    DIE *TypeInt = Context->NewBasicType("int", sizeof(int32_t), DW_ATE_signed);
+    Context->NewVariable("MyGlobal", SourceID, 1, TypeInt, true);
+#endif
+
+    CompileUnits.push_back(Unit);
   }
 
   // Compute DIE offsets and sizes.
