@@ -721,7 +721,8 @@ namespace llvm {
 
     /// AddInt - Add a simple integer attribute data and value.
     ///
-    void AddInt(unsigned Attribute, unsigned Form,  int Integer);
+    void AddInt(unsigned Attribute, unsigned Form,
+                int Integer, bool IsSigned = false);
         
     /// AddString - Add a std::string attribute data and value.
     ///

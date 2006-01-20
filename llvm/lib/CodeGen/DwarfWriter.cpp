@@ -673,10 +673,12 @@ void DIEAbbrev::Emit(const DwarfWriter &DW) const {
 ///
 void DIEInteger::EmitValue(const DwarfWriter &DW, unsigned Form) const {
   switch (Form) {
-  case DW_FORM_data1: // Fall thru
-  case DW_FORM_flag:  DW.EmitByte(Integer);  break;
-  case DW_FORM_data2: DW.EmitShort(Integer); break;
-  case DW_FORM_data4: DW.EmitLong(Integer);  break;
+  case DW_FORM_flag:  // Fall thru
+  case DW_FORM_data1: DW.EmitByte(Integer);         break;
+  case DW_FORM_data2: DW.EmitShort(Integer);        break;
+  case DW_FORM_data4: DW.EmitLong(Integer);         break;
+  case DW_FORM_udata: DW.EmitULEB128Bytes(Integer); break;
+  case DW_FORM_sdata: DW.EmitSLEB128Bytes(Integer); break;
   default: assert(0 && "DIE Value form not supported yet"); break;
   }
 }
@@ -689,6 +691,8 @@ unsigned DIEInteger::SizeOf(const DwarfWriter &DW, unsigned Form) const {
   case DW_FORM_data1: return sizeof(int8_t);
   case DW_FORM_data2: return sizeof(int16_t);
   case DW_FORM_data4: return sizeof(int32_t);
+  case DW_FORM_udata: return DW.SizeULEB128(Integer);
+  case DW_FORM_sdata: return DW.SizeSLEB128(Integer);
   default: assert(0 && "DIE Value form not supported yet"); break;
   }
   return 0;
@@ -705,7 +709,7 @@ void DIEString::EmitValue(const DwarfWriter &DW, unsigned Form) const {
 /// SizeOf - Determine size of string value in bytes.
 ///
 unsigned DIEString::SizeOf(const DwarfWriter &DW, unsigned Form) const {
-  return String.size() + sizeof('\0');
+  return String.size() + sizeof(char); // sizeof('\0');
 }
 
 //===----------------------------------------------------------------------===//
@@ -792,7 +796,18 @@ DIE::~DIE() {
 /// AddInt - Add a simple integer attribute data and value.
 ///
 void DIE::AddInt(unsigned Attribute, unsigned Form,
-                 int Integer) {
+                 int Integer, bool IsSigned) {
+  if (Form == 0) {
+    if (IsSigned) {
+      if ((char)Integer == Integer)       Form = DW_FORM_data1;
+      else if ((short)Integer == Integer) Form = DW_FORM_data2;
+      else                                Form = DW_FORM_data4;
+    } else {
+      if ((unsigned char)Integer == Integer)       Form = DW_FORM_data1;
+      else if ((unsigned short)Integer == Integer) Form = DW_FORM_data2;
+      else                                         Form = DW_FORM_data4;
+    }
+  }
   Abbrev->AddAttribute(Attribute, Form);
   Values.push_back(new DIEInteger(Integer));
 }
@@ -892,10 +907,11 @@ DIE *DWContext::NewVariable(const std::string &Name,
     assert(IsExternal && "Internal variables not handled yet");
     Variable = new DIE(DW_TAG_variable, DW_CHILDREN_no);
     Variable->AddString   (DW_AT_name,      DW_FORM_string, Name);
-    Variable->AddInt      (DW_AT_decl_file, DW_FORM_data1,  SourceFileID);
-    Variable->AddInt      (DW_AT_decl_line, DW_FORM_data1,  Line);
+    Variable->AddInt      (DW_AT_decl_file, 0,              SourceFileID);
+    Variable->AddInt      (DW_AT_decl_line, 0,              Line);
     Variable->AddDIEntry  (DW_AT_type,      DW_FORM_ref4,   Type);
     Variable->AddInt      (DW_AT_external,  DW_FORM_flag,   (int)IsExternal);
+    // FIXME - needs to be an expression.
     Variable->AddAsIsLabel(DW_AT_location,  DW_FORM_block1,
                            std::string("_")+Name+".b");
     Variable->Complete(DW);
