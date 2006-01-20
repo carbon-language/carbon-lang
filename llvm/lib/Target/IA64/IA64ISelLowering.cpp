@@ -475,6 +475,8 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
     switch (RetTyVT) {
     default: assert(0 && "Unknown value type to return!");
     case MVT::i1: { // bools are just like other integers (returned in r8)
+      // we *could* fall through to the truncate below, but this saves a
+      // few redundant predicate ops
       SDOperand boolInR8 = DAG.getCopyFromReg(Chain, IA64::r8, MVT::i64, InFlag);
       InFlag = boolInR8.getValue(2);
       Chain = boolInR8.getValue(1);
@@ -492,8 +494,10 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
       Chain = RetVal.getValue(1);
       
       // keep track of whether it is sign or zero extended (todo: bools?)
+/* XXX
       RetVal = DAG.getNode(RetTy->isSigned() ? ISD::AssertSext :ISD::AssertZext,
                            MVT::i64, RetVal, DAG.getValueType(RetTyVT));
+*/
       RetVal = DAG.getNode(ISD::TRUNCATE, RetTyVT, RetVal);
       break;
     case MVT::i64:

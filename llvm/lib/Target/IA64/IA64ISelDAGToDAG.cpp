@@ -494,7 +494,7 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
 */
 
   case ISD::LOAD:
-  case ISD::EXTLOAD:
+  case ISD::EXTLOAD: // FIXME: load -1, not 1, for bools?
   case ISD::ZEXTLOAD: {
     SDOperand Chain = Select(N->getOperand(0));
     SDOperand Address = Select(N->getOperand(1));
