@@ -166,8 +166,8 @@ Instruction* llvm::UpgradeIntrinsicCall(CallInst *CI) {
 bool llvm::UpgradeCallsToIntrinsic(Function* F) {
   if (Function* newF = UpgradeIntrinsicFunction(F)) {
     for (Value::use_iterator UI = F->use_begin(), UE = F->use_end();
-         UI != UE; ++UI) {
-      if (CallInst* CI = dyn_cast<CallInst>(*UI)) {
+         UI != UE; UI) {
+      if (CallInst* CI = dyn_cast<CallInst>(*UI++)) {
         std::vector<Value*> Oprnds;
         User::op_iterator OI = CI->op_begin();
         ++OI;
