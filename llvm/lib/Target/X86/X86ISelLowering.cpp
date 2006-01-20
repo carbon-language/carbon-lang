@@ -283,8 +283,6 @@ SDOperand X86TargetLowering::LowerReturnTo(SDOperand Chain, SDOperand Op,
     case MVT::f32:
     case MVT::f64:
       if (!X86ScalarSSE) {
-        if (OpVT == MVT::f32)
-          Op = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Op);
         std::vector<MVT::ValueType> Tys;
         Tys.push_back(MVT::Other);
         Tys.push_back(MVT::Flag);
