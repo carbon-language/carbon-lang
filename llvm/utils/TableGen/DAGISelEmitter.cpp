@@ -1907,18 +1907,21 @@ public:
 
     // Emit code to load the child nodes and match their contents recursively.
     unsigned OpNo = 0;
-    bool HasChain = NodeHasProperty(N, SDNodeInfo::SDNPHasChain, ISE);
+    bool NodeHasChain = NodeHasProperty(N, SDNodeInfo::SDNPHasChain, ISE);
+    bool HasChain = PatternHasProperty(N, SDNodeInfo::SDNPHasChain, ISE);
     if (HasChain) {
-      OpNo = 1;
+      if (NodeHasChain)
+        OpNo = 1;
       if (!isRoot) {
         const SDNodeInfo &CInfo = ISE.getSDNodeInfo(N->getOperator());
         OS << "      if (!" << RootName << ".hasOneUse()) goto P"
            << PatternNo << "Fail;   // Multiple uses of actual result?\n";
-        OS << "      if (CodeGenMap.count(" << RootName
-           << ".getValue(" << CInfo.getNumResults() << "))) goto P"
-           << PatternNo << "Fail;   // Already selected for a chain use?\n";
+        if (NodeHasChain)
+          OS << "      if (CodeGenMap.count(" << RootName
+             << ".getValue(" << CInfo.getNumResults() << "))) goto P"
+             << PatternNo << "Fail;   // Already selected for a chain use?\n";
       }
-      if (!FoundChain) {
+      if (NodeHasChain && !FoundChain) {
         OS << "      SDOperand Chain = " << RootName << ".getOperand(0);\n";
         FoundChain = true;
       }
