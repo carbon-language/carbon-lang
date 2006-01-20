@@ -21,6 +21,10 @@ include "IA64InstrFormats.td"
 
 def IA64getfd : SDNode<"IA64ISD::GETFD", SDTFPToIntOp, []>;
 
+def SDT_IA64RetFlag : SDTypeProfile<0, 0, []>;
+def retflag         : SDNode<"IA64ISD::RET_FLAG", SDT_IA64RetFlag,
+	                   [SDNPHasChain, SDNPOptInFlag]>;
+
 //===---------
 
 def u2imm : Operand<i8>;
@@ -717,7 +721,9 @@ let isCall = 1, noResults = 1, /* isTerminator = 1, isBranch = 1, */
     "($qp) br.cond.call.sptk $dst;;">;
 }
 
+// Return branch:
 let isTerminator = 1, isReturn = 1, noResults = 1 in
-  def RET : RawForm<0x03, 0xb0, (ops), "br.ret.sptk.many rp;;">; // return
-
-
+  def RET : AForm_DAG<0x03, 0x0b, (ops),
+            "br.ret.sptk.many rp;;",
+            [(retflag)]>; // return
+def : Pat<(ret), (RET)>;

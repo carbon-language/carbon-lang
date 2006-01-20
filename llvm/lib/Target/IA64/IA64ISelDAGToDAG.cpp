@@ -585,57 +585,6 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
                                 getI64Imm(Amt), Select(N->getOperand(0)));
   }
 
-  case ISD::RET: {
-    SDOperand Chain = Select(N->getOperand(0));     // Token chain.
-    SDOperand InFlag;
-
-    switch (N->getNumOperands()) {
-    default:
-      assert(0 && "Unknown return instruction!");
-    case 2: {
-      SDOperand RetVal = Select(N->getOperand(1));
-      switch (RetVal.getValueType()) {
-      default: assert(0 && "I don't know how to return this type! (promote?)");
-               // FIXME: do I need to add support for bools here?
-               // (return '0' or '1' in r8, basically...)
-               //
-               // FIXME: need to round floats - 80 bits is bad, the tester
-               // told me so
-      case MVT::i64:
-        // we mark r8 as live on exit up above in LowerArguments()
-        // BuildMI(BB, IA64::MOV, 1, IA64::r8).addReg(Tmp1);
-        Chain = CurDAG->getCopyToReg(Chain, IA64::r8, RetVal);
-	InFlag = Chain.getValue(1);
-	break;
-      case MVT::f64:
-        // we mark F8 as live on exit up above in LowerArguments()
-        // BuildMI(BB, IA64::FMOV, 1, IA64::F8).addReg(Tmp1);
-        Chain = CurDAG->getCopyToReg(Chain, IA64::F8, RetVal);
-	InFlag = Chain.getValue(1);
-        break;
-      }
-      break;
-      }
-    case 1:
-      break;
-    }
-
-    // we need to copy VirtGPR (the vreg (to become a real reg)) that holds
-    // the output of this function's alloc instruction back into ar.pfs
-    // before we return. this copy must not float up above the last 
-    // outgoing call in this function!!!
-    SDOperand AR_PFSVal = CurDAG->getCopyFromReg(Chain, IA64Lowering.VirtGPR,
-		                                  MVT::i64);
-    Chain = AR_PFSVal.getValue(1);
-    Chain = CurDAG->getCopyToReg(Chain, IA64::AR_PFS, AR_PFSVal);
-
-    // and then just emit a 'ret' instruction
-    // before returning, restore the ar.pfs register (set by the 'alloc' up top)
-    // BuildMI(BB, IA64::MOV, 1).addReg(IA64::AR_PFS).addReg(IA64Lowering.VirtGPR);
-    //
-    return CurDAG->SelectNodeTo(N, IA64::RET, MVT::Other, Chain);
-  }
-  
   case ISD::BR:
 		 // FIXME: we don't need long branches all the time!
     return CurDAG->SelectNodeTo(N, IA64::BRL_NOTCALL, MVT::Other, 

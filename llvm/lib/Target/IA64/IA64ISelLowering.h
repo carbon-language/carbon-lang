@@ -30,7 +30,10 @@ namespace llvm {
       GETFD,
 
       // TODO: explain this hack
-      BRCALL
+      BRCALL,
+      
+      // RET_FLAG - Return with a flag operand
+      RET_FLAG
     };
   }  
   
@@ -64,9 +67,18 @@ namespace llvm {
                   bool isTailCall, SDOperand Callee, ArgListTy &Args,
                   SelectionDAG &DAG);
     
+    /// LowerReturnTo - This spits out restore-previous-frame-state+br.ret
+    /// instructions
+    virtual SDOperand LowerReturnTo(SDOperand Chain, SDOperand Op,
+                                    SelectionDAG &DAG);
+    
+    /// LowerOperation - for custom lowering specific ops
+    /// (currently, only "ret void")
+    virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
+    
     virtual SDOperand LowerVAStart(SDOperand Chain, SDOperand VAListP,
                                    Value *VAListV, SelectionDAG &DAG);
-    
+
     virtual std::pair<SDOperand,SDOperand>
       LowerVAArg(SDOperand Chain, SDOperand VAListP, Value *VAListV,
                  const Type *ArgTy, SelectionDAG &DAG);

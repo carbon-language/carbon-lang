@@ -39,6 +39,11 @@ IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
       setOperationAction(ISD::BRTWOWAY_CC      , MVT::Other, Expand);
       setOperationAction(ISD::FP_ROUND_INREG   , MVT::f32  , Expand);
 
+      // We need to handle ISD::RET for void functions ourselves,
+      // so we get a chance to restore ar.pfs before adding a
+      // br.ret insn
+      setOperationAction(ISD::RET, MVT::Other, Custom);
+
       setSetCCResultType(MVT::i1);
       setShiftAmountType(MVT::i64);
 
@@ -101,6 +106,7 @@ const char *IA64TargetLowering::getTargetNodeName(unsigned Opcode) const {
   default: return 0;
   case IA64ISD::GETFD:  return "IA64ISD::GETFD";
   case IA64ISD::BRCALL: return "IA64ISD::BRCALL";  
+  case IA64ISD::RET_FLAG: return "IA64ISD::RET_FLAG";
   }
 }
   
@@ -524,6 +530,44 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
   return std::make_pair(RetVal, Chain);
 }
 
+SDOperand IA64TargetLowering::LowerReturnTo(SDOperand Chain, SDOperand Op,
+                                               SelectionDAG &DAG) {
+  SDOperand Copy, InFlag;
+  SDOperand AR_PFSVal = DAG.getCopyFromReg(Chain, this->VirtGPR,
+	                                       MVT::i64);
+  Chain = AR_PFSVal.getValue(1);
+
+  switch (Op.getValueType()) {
+  default: assert(0 && "Unknown type to return! (promote?)");
+  case MVT::i64:
+    Copy = DAG.getCopyToReg(Chain, IA64::r8, Op, InFlag);
+    break;
+  case MVT::f64:
+    Copy = DAG.getCopyToReg(Chain, IA64::F8, Op, InFlag);
+    break;
+  }
+
+  Chain = Copy.getValue(0);
+  InFlag = Copy.getValue(1);
+  // we need to copy VirtGPR (the vreg (to become a real reg)) that holds
+  // the output of this function's alloc instruction back into ar.pfs
+  // before we return. this copy must not float up above the last 
+  // outgoing call in this function - we flag this to the ret instruction
+  Chain = DAG.getCopyToReg(Chain, IA64::AR_PFS, AR_PFSVal, InFlag);
+  InFlag = Chain.getValue(1);
+  
+  // and then just emit a 'ret' instruction
+  std::vector<MVT::ValueType> NodeTys;
+  std::vector<SDOperand> RetOperands;
+  NodeTys.push_back(MVT::Other);
+  NodeTys.push_back(MVT::Flag);
+  RetOperands.push_back(Chain);
+  RetOperands.push_back(InFlag);
+
+  return DAG.getNode(IA64ISD::RET_FLAG, NodeTys, RetOperands);
+//  return DAG.getNode(IA64ISD::RET_FLAG, MVT::Other, MVT::Other, Copy, Chain, InFlag);
+}
+
 SDOperand
 IA64TargetLowering::LowerVAStart(SDOperand Chain, SDOperand VAListP,
                                  Value *VAListV, SelectionDAG &DAG) {
@@ -566,3 +610,25 @@ LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
   abort();
 }
 
+SDOperand IA64TargetLowering::
+LowerOperation(SDOperand Op, SelectionDAG &DAG) {
+  switch (Op.getOpcode()) {
+  default: assert(0 && "Should not custom lower this!");
+  case ISD::RET: { // the DAGgy stuff takes care of
+    // restoring ar.pfs before adding a br.ret for functions
+    // that return something, but we need to take care of stuff
+    // that returns void manually, so here it is:
+    assert(Op.getNumOperands()==1 &&
+      "trying to custom lower a return other than void! (numops!=1)");
+    
+    SDOperand Chain = Op.getOperand(0);
+    SDOperand AR_PFSVal = DAG.getCopyFromReg(Chain, this->VirtGPR,
+		                                  MVT::i64);
+    Chain = AR_PFSVal.getValue(1);
+    Chain = DAG.getCopyToReg(Chain, IA64::AR_PFS, AR_PFSVal);
+
+    // and then just emit a 'ret' instruction
+    return DAG.getNode(IA64ISD::RET_FLAG, MVT::Other, Chain);
+  }
+  }
+}
