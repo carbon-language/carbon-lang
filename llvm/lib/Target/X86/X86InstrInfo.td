@@ -3073,17 +3073,33 @@ def : Pat<(or (srl R32:$src1, CL:$amt),
               (shl R32:$src2, (sub 32, CL:$amt))),
           (SHRD32rrCL R32:$src1, R32:$src2)>;
 
+def : Pat<(store (or (srl (loadi32 addr:$dst), CL:$amt),
+                     (shl R32:$src2, (sub 32, CL:$amt))), addr:$dst),
+          (SHRD32mrCL addr:$dst, R32:$src2)>;
+
 // (or (x << c) | (y >> (32 - c))) ==> (shld32 x, y, c)
 def : Pat<(or (shl R32:$src1, CL:$amt),
               (srl R32:$src2, (sub 32, CL:$amt))),
           (SHLD32rrCL R32:$src1, R32:$src2)>;
+
+def : Pat<(store (or (shl (loadi32 addr:$dst), CL:$amt),
+                     (srl R32:$src2, (sub 32, CL:$amt))), addr:$dst),
+          (SHLD32mrCL addr:$dst, R32:$src2)>;
 
 // (or (x >> c) | (y << (16 - c))) ==> (shrd16 x, y, c)
 def : Pat<(or (srl R16:$src1, CL:$amt),
               (shl R16:$src2, (sub 16, CL:$amt))),
           (SHRD16rrCL R16:$src1, R16:$src2)>;
 
+def : Pat<(store (or (srl (loadi16 addr:$dst), CL:$amt),
+                     (shl R16:$src2, (sub 16, CL:$amt))), addr:$dst),
+          (SHRD16mrCL addr:$dst, R16:$src2)>;
+
 // (or (x << c) | (y >> (16 - c))) ==> (shld16 x, y, c)
 def : Pat<(or (shl R16:$src1, CL:$amt),
               (srl R16:$src2, (sub 16, CL:$amt))),
           (SHLD16rrCL R16:$src1, R16:$src2)>;
+
+def : Pat<(store (or (shl (loadi16 addr:$dst), CL:$amt),
+                     (srl R16:$src2, (sub 16, CL:$amt))), addr:$dst),
+          (SHLD16mrCL addr:$dst, R16:$src2)>;
