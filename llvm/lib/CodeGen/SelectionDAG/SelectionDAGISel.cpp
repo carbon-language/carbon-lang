@@ -490,6 +490,10 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
       Op1 = DAG.getNode(ISD::ZERO_EXTEND, TmpVT, Op1);
     break;
   case MVT::f32:
+    // If this is a machine where f32 is promoted to f64, do so now.
+    if (TLI.getTypeAction(MVT::f32) == TargetLowering::Promote)
+      Op1 = DAG.getNode(ISD::FP_EXTEND, TLI.getTypeToTransformTo(MVT::f32),Op1);
+    break;
   case MVT::i64:
   case MVT::f64:
     break; // No extension needed!

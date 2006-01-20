@@ -3377,7 +3377,8 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
 /// Found.
 static void FindLatestCallSeqStart(SDNode *Node, SDNode *&Found,
                                    std::set<SDNode*> &Visited) {
-  if (Node->getNodeDepth() <= Found->getNodeDepth() ||
+  if (/*Node->getNodeDepth() <= Found->getNodeDepth() ||*/
+      Node->getNumOperands() == 0 ||
       !Visited.insert(Node).second) return;
   
   // If we found an CALLSEQ_START, we already know this node occurs later
@@ -3404,7 +3405,7 @@ static void FindLatestCallSeqStart(SDNode *Node, SDNode *&Found,
 /// than Found.
 static void FindEarliestCallSeqEnd(SDNode *Node, SDNode *&Found,
                                    std::set<SDNode*> &Visited) {
-  if ((Found && Node->getNodeDepth() >= Found->getNodeDepth()) ||
+  if (/*(Found && Node->getNodeDepth() >= Found->getNodeDepth()) ||*/
       !Visited.insert(Node).second) return;
 
   // If we found an CALLSEQ_END, we already know this node occurs earlier
