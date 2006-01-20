@@ -457,6 +457,12 @@ GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
 void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
   if (isa<UndefValue>(Init)) {
     return;
+  } else if (const ConstantPacked *CP = dyn_cast<ConstantPacked>(Init)) {
+    unsigned ElementSize =
+      getTargetData().getTypeSize(CP->getType()->getElementType());
+    for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
+      InitializeMemory(CP->getOperand(i), (char*)Addr+i*ElementSize);
+    return;
   } else if (Init->getType()->isFirstClassType()) {
     GenericValue Val = getConstantValue(Init);
     StoreValueToMemory(Val, (GenericValue*)Addr, Init->getType());
