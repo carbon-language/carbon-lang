@@ -52,7 +52,7 @@ public:
 protected:
   /// Pick a safe ordering and emit instructions for each target node in the
   /// graph.
-  void ScheduleAndEmitDAG(SelectionDAG &SD);
+  void ScheduleAndEmitDAG(SelectionDAG &DAG);
   
 private:
   SDOperand CopyValueToVirtualRegister(SelectionDAGLowering &SDL,

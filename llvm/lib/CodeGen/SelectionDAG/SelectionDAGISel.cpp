@@ -13,6 +13,7 @@
 
 #define DEBUG_TYPE "isel"
 #include "llvm/CodeGen/SelectionDAGISel.h"
+#include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -43,10 +44,14 @@ using namespace llvm;
 
 #ifndef NDEBUG
 static cl::opt<bool>
-ViewDAGs("view-isel-dags", cl::Hidden,
-         cl::desc("Pop up a window to show isel dags as they are selected"));
+ViewISelDAGs("view-isel-dags", cl::Hidden,
+          cl::desc("Pop up a window to show isel dags as they are selected"));
+static cl::opt<bool>
+ViewSchedDAGs("view-sched-dags", cl::Hidden,
+          cl::desc("Pop up a window to show sched dags as they are processed"));
 #else
-static const bool ViewDAGs = 0;
+static const bool ViewISelDAGs = 0;
+static const bool ViewSchedDAGs = 0;
 #endif
 
 namespace llvm {
@@ -1708,7 +1713,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
   // Run the DAG combiner in post-legalize mode.
   DAG.Combine(true);
   
-  if (ViewDAGs) DAG.viewGraph();
+  if (ViewISelDAGs) DAG.viewGraph();
   
   // Third, instruction select all of the operations to machine code, adding the
   // code to the MachineBasicBlock.
@@ -1734,4 +1739,13 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
     MachineBasicBlock *Succ0MBB = FuncInfo.MBBMap[TI->getSuccessor(i)];
     BB->addSuccessor(Succ0MBB);
   }
+}
+
+//===----------------------------------------------------------------------===//
+/// ScheduleAndEmitDAG - Pick a safe ordering and emit instructions for each
+/// target node in the graph.
+void SelectionDAGISel::ScheduleAndEmitDAG(SelectionDAG &DAG) {
+  if (ViewSchedDAGs) DAG.viewGraph();
+  ScheduleDAG *SL = createSimpleDAGScheduler(DAG, BB);
+  SL->Run();
 }
