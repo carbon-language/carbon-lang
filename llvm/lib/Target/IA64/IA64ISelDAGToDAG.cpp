@@ -464,7 +464,8 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
     if (N->hasOneUse())
       return CurDAG->SelectNodeTo(N, IA64::MOV, MVT::i64,
                                   CurDAG->getTargetFrameIndex(FI, MVT::i64));
-    return CurDAG->getTargetNode(IA64::MOV, MVT::i64,
+    else
+      return CodeGenMap[Op] = CurDAG->getTargetNode(IA64::MOV, MVT::i64,
                                 CurDAG->getTargetFrameIndex(FI, MVT::i64));
   }
 
