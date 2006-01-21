@@ -1747,5 +1747,5 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
 void SelectionDAGISel::ScheduleAndEmitDAG(SelectionDAG &DAG) {
   if (ViewSchedDAGs) DAG.viewGraph();
   ScheduleDAG *SL = createSimpleDAGScheduler(DAG, BB);
-  SL->Run();
+  BB = SL->Run();
 }
