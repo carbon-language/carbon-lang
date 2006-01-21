@@ -758,7 +758,7 @@ void ISel::EmitSelectCC(SDOperand Cond, SDOperand True, SDOperand False,
   static const unsigned CMOVTABFP[] = {
     X86::FpCMOVE,  X86::FpCMOVNE, /*missing*/0, /*missing*/0,
     /*missing*/0,  /*missing*/ 0, X86::FpCMOVB, X86::FpCMOVBE,
-    X86::FpCMOVA,  X86::FpCMOVAE, X86::FpCMOVP, X86::FpCMOVNP
+    X86::FpCMOVNBE,X86::FpCMOVNB, X86::FpCMOVP, X86::FpCMOVNP
   };
   static const int SSE_CMOVTAB[] = {
     /*CMPEQ*/   0, /*CMPNEQ*/   4, /*missing*/  0, /*missing*/  0,

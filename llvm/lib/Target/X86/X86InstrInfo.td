@@ -2862,10 +2862,10 @@ let isTwoAddress = 1 in {
   def FpCMOVP  : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), CondMovFP,
                      [(set RFP:$dst, (X86cmov RFP:$src1, RFP:$src2,
                                       X86_COND_P, STATUS))]>;
-  def FpCMOVAE : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), CondMovFP,
+  def FpCMOVNB : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), CondMovFP,
                      [(set RFP:$dst, (X86cmov RFP:$src1, RFP:$src2,
                                       X86_COND_AE, STATUS))]>;
-  def FpCMOVA  : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), CondMovFP,
+  def FpCMOVNBE: FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), CondMovFP,
                      [(set RFP:$dst, (X86cmov RFP:$src1, RFP:$src2,
                                       X86_COND_A, STATUS))]>;
   def FpCMOVNE : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), CondMovFP,
@@ -2884,10 +2884,10 @@ def FCMOVE  : FPI<0xC8, AddRegFrm, (ops RST:$op),
                   "fcmove {$op, %ST(0)|%ST(0), $op}">, DA;
 def FCMOVP  : FPI<0xD8, AddRegFrm, (ops RST:$op),
                   "fcmovu  {$op, %ST(0)|%ST(0), $op}">, DA;
-def FCMOVAE : FPI<0xC0, AddRegFrm, (ops RST:$op),
-                  "fcmovae {$op, %ST(0)|%ST(0), $op}">, DB;
-def FCMOVA  : FPI<0xD0, AddRegFrm, (ops RST:$op),
-                  "fcmova {$op, %ST(0)|%ST(0), $op}">, DB;
+def FCMOVNB : FPI<0xC0, AddRegFrm, (ops RST:$op),
+                  "fcmovnb {$op, %ST(0)|%ST(0), $op}">, DB;
+def FCMOVNBE  : FPI<0xD0, AddRegFrm, (ops RST:$op),
+                  "fcmovnbe {$op, %ST(0)|%ST(0), $op}">, DB;
 def FCMOVNE : FPI<0xC8, AddRegFrm, (ops RST:$op),
                   "fcmovne {$op, %ST(0)|%ST(0), $op}">, DB;
 def FCMOVNP : FPI<0xD8, AddRegFrm, (ops RST:$op),
