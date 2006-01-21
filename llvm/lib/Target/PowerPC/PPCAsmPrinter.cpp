@@ -517,7 +517,6 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
     if (I->hasAppendingLinkage() && EmitSpecialLLVMGlobal(I))
       continue;
     
-    O << '\n';
     std::string name = Mang->getValueName(I);
     Constant *C = I->getInitializer();
     unsigned Size = TD.getTypeSize(C->getType());
@@ -559,6 +558,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
       EmitAlignment(Align, I);
       O << name << ":\t\t\t\t; '" << I->getName() << "'\n";
       EmitGlobalConstant(C);
+      O << '\n';
     }
   }
 
