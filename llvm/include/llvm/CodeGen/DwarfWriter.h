@@ -476,6 +476,25 @@ namespace llvm {
     // Accessors
     unsigned getAttribute() const { return Attribute; }
     unsigned getForm()      const { return Form; }
+    
+    /// operator== - Used by DIEAbbrev to locate entry.
+    ///
+    bool operator==(const DIEAbbrevData &DAD) const {
+      return Attribute == DAD.Attribute && Form == DAD.Form;
+    }
+
+    /// operator!= - Used by DIEAbbrev to locate entry.
+    ///
+    bool operator!=(const DIEAbbrevData &DAD) const {
+      return Attribute != DAD.Attribute || Form != DAD.Form;
+    }
+    
+    /// operator< - Used by DIEAbbrev to locate entry.
+    ///
+    bool operator<(const DIEAbbrevData &DAD) const {
+      return Attribute < DAD.Attribute ||
+            (Attribute == DAD.Attribute && Form < DAD.Form);
+    }
   };
   
   //===--------------------------------------------------------------------===//

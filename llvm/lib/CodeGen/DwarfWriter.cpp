@@ -589,10 +589,7 @@ bool DIEAbbrev::operator==(const DIEAbbrev &DA) const {
   if (Data.size() != DA.Data.size()) return false;
   
   for (unsigned i = 0, N = Data.size(); i < N; i++) {
-    const DIEAbbrevData &AttrData = Data[i];
-    const DIEAbbrevData &DAAttrData = DA.Data[i];
-    if (AttrData.getAttribute() != DAAttrData.getAttribute()) return false;
-    if (AttrData.getForm() != DAAttrData.getForm()) return false;
+    if (Data[i] != DA.Data[i]) return false;
   }
   
   return true;
@@ -606,12 +603,7 @@ bool DIEAbbrev::operator<(const DIEAbbrev &DA) const {
   if (Data.size() != DA.Data.size()) return Data.size() < DA.Data.size();
   
   for (unsigned i = 0, N = Data.size(); i < N; i++) {
-    const DIEAbbrevData &AttrData = Data[i];
-    const DIEAbbrevData &DAAttrData = DA.Data[i];
-    if (AttrData.getAttribute() != DAAttrData.getAttribute())
-      return AttrData.getAttribute() < DAAttrData.getAttribute();
-    if (AttrData.getForm() != DAAttrData.getForm())
-      return AttrData.getForm() < DAAttrData.getForm();
+    if (Data[i] != DA.Data[i]) return Data[i] < DA.Data[i];
   }
   
   return false;
