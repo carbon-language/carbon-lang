@@ -994,7 +994,7 @@ public:
       EmitReference(Label.Tag, Label.Number);
     }
     void EmitReference(const char *Tag, unsigned Number) const;
-    void EmitReference(const std::string Name) const;
+    void EmitReference(const std::string &Name) const;
 
     /// EmitDifference - Emit the difference between two labels.  Some
     /// assemblers do not behave with absolute expressions with data directives,

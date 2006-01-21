@@ -590,7 +590,7 @@ bool DIEAbbrev::operator==(const DIEAbbrev &DA) const {
   
   for (unsigned i = 0, N = Data.size(); i < N; i++) {
     const DIEAbbrevData &AttrData = Data[i];
-    const DIEAbbrevData &DAAttrData = Data[i];
+    const DIEAbbrevData &DAAttrData = DA.Data[i];
     if (AttrData.getAttribute() != DAAttrData.getAttribute()) return false;
     if (AttrData.getForm() != DAAttrData.getForm()) return false;
   }
@@ -1110,7 +1110,7 @@ void DwarfWriter::EmitReference(const char *Tag, unsigned Number) const {
     
   PrintLabelName(Tag, Number);
 }
-void DwarfWriter::EmitReference(const std::string Name) const {
+void DwarfWriter::EmitReference(const std::string &Name) const {
   if (AddressSize == 4)
     O << Asm->Data32bitsDirective;
   else
