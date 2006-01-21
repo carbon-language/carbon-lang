@@ -3710,9 +3710,9 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   NeedsAnotherIteration = true;
 
   switch (Node->getOpcode()) {
-   case ISD::CopyFromReg:
-      assert(0 && "CopyFromReg must be legal!");
-   default:
+  case ISD::CopyFromReg:
+    assert(0 && "CopyFromReg must be legal!");
+  default:
     std::cerr << "NODE: "; Node->dump(); std::cerr << "\n";
     assert(0 && "Do not know how to expand this operator!");
     abort();
@@ -4161,9 +4161,10 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
 
   case ISD::SHL: {
     // If the target wants custom lowering, do so.
+    SDOperand ShiftAmt = LegalizeOp(Node->getOperand(1));
     if (TLI.getOperationAction(ISD::SHL, VT) == TargetLowering::Custom) {
       SDOperand Op = DAG.getNode(ISD::SHL, VT, Node->getOperand(0),
-                                 LegalizeOp(Node->getOperand(1)));
+                                 ShiftAmt);
       Op = TLI.LowerOperation(Op, DAG);
       if (Op.Val) {
         // Now that the custom expander is done, expand the result, which is
@@ -4174,7 +4175,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     }
     
     // If we can emit an efficient shift operation, do so now.
-    if (ExpandShift(ISD::SHL, Node->getOperand(0), Node->getOperand(1), Lo, Hi))
+    if (ExpandShift(ISD::SHL, Node->getOperand(0), ShiftAmt, Lo, Hi))
       break;
 
     // If this target supports SHL_PARTS, use it.
@@ -4182,8 +4183,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       TLI.getOperationAction(ISD::SHL_PARTS, NVT);
     if ((Action == TargetLowering::Legal && TLI.isTypeLegal(NVT)) ||
         Action == TargetLowering::Custom) {
-      ExpandShiftParts(ISD::SHL_PARTS, Node->getOperand(0), Node->getOperand(1),
-                       Lo, Hi);
+      ExpandShiftParts(ISD::SHL_PARTS, Node->getOperand(0), ShiftAmt, Lo, Hi);
       break;
     }
 
@@ -4194,9 +4194,10 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
 
   case ISD::SRA: {
     // If the target wants custom lowering, do so.
+    SDOperand ShiftAmt = LegalizeOp(Node->getOperand(1));
     if (TLI.getOperationAction(ISD::SRA, VT) == TargetLowering::Custom) {
       SDOperand Op = DAG.getNode(ISD::SRA, VT, Node->getOperand(0),
-                                 LegalizeOp(Node->getOperand(1)));
+                                 ShiftAmt);
       Op = TLI.LowerOperation(Op, DAG);
       if (Op.Val) {
         // Now that the custom expander is done, expand the result, which is
@@ -4207,7 +4208,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     }
     
     // If we can emit an efficient shift operation, do so now.
-    if (ExpandShift(ISD::SRA, Node->getOperand(0), Node->getOperand(1), Lo, Hi))
+    if (ExpandShift(ISD::SRA, Node->getOperand(0), ShiftAmt, Lo, Hi))
       break;
 
     // If this target supports SRA_PARTS, use it.
@@ -4215,8 +4216,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       TLI.getOperationAction(ISD::SRA_PARTS, NVT);
     if ((Action == TargetLowering::Legal && TLI.isTypeLegal(NVT)) ||
         Action == TargetLowering::Custom) {
-      ExpandShiftParts(ISD::SRA_PARTS, Node->getOperand(0), Node->getOperand(1),
-                       Lo, Hi);
+      ExpandShiftParts(ISD::SRA_PARTS, Node->getOperand(0), ShiftAmt, Lo, Hi);
       break;
     }
 
@@ -4227,9 +4227,10 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
 
   case ISD::SRL: {
     // If the target wants custom lowering, do so.
+    SDOperand ShiftAmt = LegalizeOp(Node->getOperand(1));
     if (TLI.getOperationAction(ISD::SRL, VT) == TargetLowering::Custom) {
       SDOperand Op = DAG.getNode(ISD::SRL, VT, Node->getOperand(0),
-                                 LegalizeOp(Node->getOperand(1)));
+                                 ShiftAmt);
       Op = TLI.LowerOperation(Op, DAG);
       if (Op.Val) {
         // Now that the custom expander is done, expand the result, which is
@@ -4240,7 +4241,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     }
 
     // If we can emit an efficient shift operation, do so now.
-    if (ExpandShift(ISD::SRL, Node->getOperand(0), Node->getOperand(1), Lo, Hi))
+    if (ExpandShift(ISD::SRL, Node->getOperand(0), ShiftAmt, Lo, Hi))
       break;
 
     // If this target supports SRL_PARTS, use it.
@@ -4248,8 +4249,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       TLI.getOperationAction(ISD::SRL_PARTS, NVT);
     if ((Action == TargetLowering::Legal && TLI.isTypeLegal(NVT)) ||
         Action == TargetLowering::Custom) {
-      ExpandShiftParts(ISD::SRL_PARTS, Node->getOperand(0), Node->getOperand(1),
-                       Lo, Hi);
+      ExpandShiftParts(ISD::SRL_PARTS, Node->getOperand(0), ShiftAmt, Lo, Hi);
       break;
     }
 
