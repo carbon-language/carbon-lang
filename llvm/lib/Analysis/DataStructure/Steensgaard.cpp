@@ -20,6 +20,7 @@
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Module.h"
 #include "llvm/Support/Debug.h"
+#include <iostream>
 using namespace llvm;
 
 namespace {

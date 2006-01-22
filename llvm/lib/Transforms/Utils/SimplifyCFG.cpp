@@ -23,6 +23,7 @@
 #include <functional>
 #include <set>
 #include <map>
+#include <iostream>
 using namespace llvm;
 
 /// SafeToMergeTerminators - Return true if it is safe to merge these two

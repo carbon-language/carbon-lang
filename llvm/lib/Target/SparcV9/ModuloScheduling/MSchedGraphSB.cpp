@@ -13,8 +13,8 @@
 // is provided, a conservative approach of adding dependencies between all
 // loads and stores is taken.
 //===----------------------------------------------------------------------===//
-#define DEBUG_TYPE "ModuloSchedSB"
 
+#define DEBUG_TYPE "ModuloSchedSB"
 #include "MSchedGraphSB.h"
 #include "../SparcV9RegisterInfo.h"
 #include "../MachineCodeForInstruction.h"
@@ -30,7 +30,7 @@
 #include <set>
 #include "llvm/Target/TargetSchedInfo.h"
 #include "../SparcV9Internals.h"
-
+#include <iostream>
 using namespace llvm;
 
 //MSchedGraphSBNode constructor

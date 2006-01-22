@@ -13,8 +13,8 @@
 // is provided, a conservative approach of adding dependencies between all
 // loads and stores is taken.
 //===----------------------------------------------------------------------===//
-#define DEBUG_TYPE "ModuloSched"
 
+#define DEBUG_TYPE "ModuloSched"
 #include "MSchedGraph.h"
 #include "../SparcV9RegisterInfo.h"
 #include "../MachineCodeForInstruction.h"
@@ -28,7 +28,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <set>
-
+#include <iostream>
 using namespace llvm;
 
 //MSchedGraphNode constructor

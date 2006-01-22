@@ -19,6 +19,7 @@
 #include "llvm/Support/FileUtilities.h"
 #include <fstream>
 #include <sstream>
+#include <iostream>
 using namespace llvm;
 
 ToolExecutionError::~ToolExecutionError() throw() { }

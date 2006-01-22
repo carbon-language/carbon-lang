@@ -36,6 +36,7 @@
 #include "SparcV9CodeEmitter.h"
 #include "SparcV9Relocations.h"
 #include "MachineFunctionInfo.h"
+#include <iostream>
 using namespace llvm;
 
 bool SparcV9TargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,

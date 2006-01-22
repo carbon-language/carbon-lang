@@ -17,6 +17,7 @@
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/Config/alloca.h"
 #include "llvm/Support/Debug.h"
+#include <iostream>
 using namespace llvm;
 
 /// JITCompilerFunction - This contains the address of the JIT function used to

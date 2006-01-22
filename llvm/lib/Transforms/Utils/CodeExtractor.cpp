@@ -29,6 +29,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
 #include <set>
+#include <iostream>
 using namespace llvm;
 
 // Provide a command-line option to aggregate function arguments into a struct

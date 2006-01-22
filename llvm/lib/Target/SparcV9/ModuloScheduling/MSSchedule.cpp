@@ -17,7 +17,7 @@
 #include "llvm/Target/TargetSchedInfo.h"
 #include "../SparcV9Internals.h"
 #include "llvm/CodeGen/MachineInstr.h"
-
+#include <iostream>
 using namespace llvm;
 
 //Check if all resources are free

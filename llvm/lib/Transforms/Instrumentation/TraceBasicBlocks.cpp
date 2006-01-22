@@ -23,6 +23,7 @@
 #include "ProfilingUtils.h"
 #include "llvm/Support/Debug.h"
 #include <set>
+#include <iostream>
 using namespace llvm;
 
 namespace {
