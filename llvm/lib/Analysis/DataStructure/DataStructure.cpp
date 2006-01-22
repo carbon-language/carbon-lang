@@ -26,6 +26,7 @@
 #include "llvm/ADT/SCCIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Timer.h"
+#include <iostream>
 #include <algorithm>
 using namespace llvm;
 

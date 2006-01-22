@@ -74,6 +74,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/Statistic.h"
 #include <cmath>
+#include <iostream>
 #include <algorithm>
 using namespace llvm;
 
