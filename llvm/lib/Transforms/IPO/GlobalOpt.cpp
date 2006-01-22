@@ -27,8 +27,9 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
-#include <set>
 #include <algorithm>
+#include <iostream>
+#include <set>
 using namespace llvm;
 
 namespace {

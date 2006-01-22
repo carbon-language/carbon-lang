@@ -44,6 +44,7 @@
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
+#include <iostream>
 #include <set>
 using namespace llvm;
 

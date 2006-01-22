@@ -28,6 +28,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/iterator"
+#include <iostream>
 #include <set>
 using namespace llvm;
 

@@ -32,6 +32,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
 #include <algorithm>
+#include <iostream>
 #include <set>
 using namespace llvm;
 

@@ -33,6 +33,7 @@
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include <algorithm>
+#include <iostream>
 using namespace llvm;
 
 namespace {

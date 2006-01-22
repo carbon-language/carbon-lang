@@ -29,6 +29,7 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/ADT/Statistic.h"
 #include <algorithm>
+#include <iostream>
 using namespace llvm;
 
 namespace {

@@ -27,6 +27,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
+#include <iostream>
 using namespace llvm;
 
 static IncludeFile X((void*)createUnifyFunctionExitNodesPass);

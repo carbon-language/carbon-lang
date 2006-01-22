@@ -36,6 +36,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
+#include <iostream>
 #include <set>
 using namespace llvm;
 

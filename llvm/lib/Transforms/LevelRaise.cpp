@@ -24,6 +24,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
+#include <iostream>
 using namespace llvm;
 
 // StartInst - This enables the -raise-start-inst=foo option to cause the level

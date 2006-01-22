@@ -52,6 +52,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
+#include <iostream>
 using namespace llvm;
 using namespace llvm::PatternMatch;
 

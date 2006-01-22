@@ -20,6 +20,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
 #include <fstream>
+#include <iostream>
 #include <set>
 using namespace llvm;
 
