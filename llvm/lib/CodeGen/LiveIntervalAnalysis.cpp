@@ -34,6 +34,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 using namespace llvm;
 
 namespace {

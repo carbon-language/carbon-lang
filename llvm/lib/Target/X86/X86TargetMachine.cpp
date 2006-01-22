@@ -23,6 +23,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/Statistic.h"
+#include <iostream>
 using namespace llvm;
 
 X86VectorEnum llvm::X86Vector = NoSSE;

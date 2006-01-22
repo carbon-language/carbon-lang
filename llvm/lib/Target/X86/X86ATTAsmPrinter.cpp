@@ -18,6 +18,7 @@
 #include "X86TargetMachine.h"
 #include "llvm/Module.h"
 #include "llvm/Support/Mangler.h"
+#include <iostream>
 using namespace llvm;
 using namespace x86;
 

@@ -26,6 +26,7 @@
 #include "llvm/GlobalValue.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
+#include <iostream>
 using namespace llvm;
 
 namespace {

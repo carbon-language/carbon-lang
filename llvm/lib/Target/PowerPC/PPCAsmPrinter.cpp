@@ -37,6 +37,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
+#include <iostream>
 #include <set>
 using namespace llvm;
 

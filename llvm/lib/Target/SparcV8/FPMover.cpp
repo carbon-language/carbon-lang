@@ -16,6 +16,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
+#include <iostream>
 using namespace llvm;
 
 namespace {

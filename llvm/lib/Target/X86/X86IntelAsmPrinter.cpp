@@ -105,7 +105,7 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
     return;
   }
   case MachineOperand::MO_PCRelativeDisp:
-    std::cerr << "Shouldn't use addPCDisp() when building X86 MachineInstrs";
+    assert(0 && "Shouldn't use addPCDisp() when building X86 MachineInstrs");
     abort ();
     return;
   case MachineOperand::MO_GlobalAddress: {

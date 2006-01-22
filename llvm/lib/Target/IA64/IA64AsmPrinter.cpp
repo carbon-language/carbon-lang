@@ -26,7 +26,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Support/CommandLine.h"
+#include <iostream>
 using namespace llvm;
 
 namespace {

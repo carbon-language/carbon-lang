@@ -16,7 +16,6 @@
 #include "AlphaTargetMachine.h"
 #include "AlphaISelLowering.h"
 #include "llvm/Constants.h"                   // FIXME: REMOVE
-#include "llvm/Function.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineConstantPool.h" // FIXME: REMOVE
@@ -31,8 +30,9 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/CommandLine.h"
-#include <set>
 #include <algorithm>
+#include <iostream>
+#include <set>
 using namespace llvm;
 
 namespace llvm {

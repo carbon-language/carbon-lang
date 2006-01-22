@@ -22,6 +22,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Function.h"
 #include "llvm/ADT/Statistic.h"
+#include <iostream>
 using namespace llvm;
 
 namespace {
