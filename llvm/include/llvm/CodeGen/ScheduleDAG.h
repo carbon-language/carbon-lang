@@ -18,7 +18,7 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 
 namespace llvm {
-  class InstrStage;
+  struct InstrStage;
   class MachineConstantPool;
   class MachineDebugInfo;
   class MachineInstr;
