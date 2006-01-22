@@ -24,7 +24,7 @@
 #ifndef LLVM_ADT_STATISTIC_H
 #define LLVM_ADT_STATISTIC_H
 
-#include <iostream>
+#include <iosfwd>
 
 namespace llvm {
 
