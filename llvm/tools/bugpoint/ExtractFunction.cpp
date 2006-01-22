@@ -28,6 +28,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FileUtilities.h"
 #include <set>
+#include <iostream>
 using namespace llvm;
 
 namespace llvm {

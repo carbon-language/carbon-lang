@@ -19,6 +19,7 @@
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/SystemUtils.h"
 #include <fstream>
+#include <iostream>
 using namespace llvm;
 
 namespace {
