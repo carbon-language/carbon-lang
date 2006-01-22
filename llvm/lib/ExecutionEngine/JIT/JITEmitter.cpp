@@ -26,8 +26,9 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/System/Memory.h"
-#include <list>
 #include <algorithm>
+#include <iostream>
+#include <list>
 using namespace llvm;
 
 namespace {
