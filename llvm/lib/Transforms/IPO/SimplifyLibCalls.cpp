@@ -29,7 +29,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/IPO.h"
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -65,8 +64,7 @@ static hash_map<std::string,LibCallOptimization*> optlist;
 /// generally short-circuit actually calling the function if there's a simpler
 /// way (e.g. strlen(X) can be reduced to a constant if X is a constant global).
 /// @brief Base class for library call optimizations
-class LibCallOptimization
-{
+class LibCallOptimization {
 public:
   /// The \p fname argument must be the name of the library function being
   /// optimized by the subclass.
@@ -135,14 +133,12 @@ private:
 /// validate the call (ValidateLibraryCall). If it is validated, then
 /// the OptimizeCall method is also called.
 /// @brief A ModulePass for optimizing well-known function calls.
-class SimplifyLibCalls : public ModulePass
-{
+class SimplifyLibCalls : public ModulePass {
 public:
   /// We need some target data for accurate signature details that are
   /// target dependent. So we require target data in our AnalysisUsage.
   /// @brief Require TargetData from AnalysisUsage.
-  virtual void getAnalysisUsage(AnalysisUsage& Info) const
-  {
+  virtual void getAnalysisUsage(AnalysisUsage& Info) const {
     // Ask that the TargetData analysis be performed before us so we can use
     // the target data.
     Info.addRequired<TargetData>();
@@ -151,8 +147,7 @@ public:
   /// For this pass, process all of the function calls in the module, calling
   /// ValidateLibraryCall and OptimizeCall as appropriate.
   /// @brief Run all the lib call optimizations on a Module.
-  virtual bool runOnModule(Module &M)
-  {
+  virtual bool runOnModule(Module &M) {
     reset(M);
 
     bool result = false;
@@ -163,11 +158,9 @@ public:
     // handle. It also means we need to keep running over the function calls in
     // the module until we don't get any more optimizations possible.
     bool found_optimization = false;
-    do
-    {
+    do {
       found_optimization = false;
-      for (Module::iterator FI = M.begin(), FE = M.end(); FI != FE; ++FI)
-      {
+      for (Module::iterator FI = M.begin(), FE = M.end(); FI != FE; ++FI) {
         // All the "well-known" functions are external and have external linkage
         // because they live in a runtime library somewhere and were (probably)
         // not compiled by LLVM.  So, we only act on external functions that
@@ -186,14 +179,11 @@ public:
 
         // Loop over each of the uses of the function
         for (Value::use_iterator UI = FI->use_begin(), UE = FI->use_end();
-             UI != UE ; )
-        {
+             UI != UE ; ) {
           // If the use of the function is a call instruction
-          if (CallInst* CI = dyn_cast<CallInst>(*UI++))
-          {
+          if (CallInst* CI = dyn_cast<CallInst>(*UI++)) {
             // Do the optimization on the LibCallOptimization.
-            if (CO->OptimizeCall(CI,*this))
-            {
+            if (CO->OptimizeCall(CI, *this)) {
               ++SimplifiedLibCalls;
               found_optimization = result = true;
 #ifndef NDEBUG
@@ -217,93 +207,60 @@ public:
   const Type* getIntPtrType() const { return TD->getIntPtrType(); }
 
   /// @brief Return a Function* for the fputc libcall
-  Function* get_fputc(const Type* FILEptr_type)
-  {
+  Function* get_fputc(const Type* FILEptr_type) {
     if (!fputc_func)
-    {
-      std::vector<const Type*> args;
-      args.push_back(Type::IntTy);
-      args.push_back(FILEptr_type);
-      FunctionType* fputc_type =
-        FunctionType::get(Type::IntTy, args, false);
-      fputc_func = M->getOrInsertFunction("fputc",fputc_type);
-    }
+      fputc_func = M->getOrInsertFunction("fputc", Type::IntTy, Type::IntTy,
+                                          FILEptr_type, NULL);
     return fputc_func;
   }
 
   /// @brief Return a Function* for the fwrite libcall
-  Function* get_fwrite(const Type* FILEptr_type)
-  {
+  Function* get_fwrite(const Type* FILEptr_type) {
     if (!fwrite_func)
-    {
-      std::vector<const Type*> args;
-      args.push_back(PointerType::get(Type::SByteTy));
-      args.push_back(TD->getIntPtrType());
-      args.push_back(TD->getIntPtrType());
-      args.push_back(FILEptr_type);
-      FunctionType* fwrite_type =
-        FunctionType::get(TD->getIntPtrType(), args, false);
-      fwrite_func = M->getOrInsertFunction("fwrite",fwrite_type);
-    }
+      fwrite_func = M->getOrInsertFunction("fwrite", TD->getIntPtrType(),
+                                           PointerType::get(Type::SByteTy),
+                                           TD->getIntPtrType(),
+                                           TD->getIntPtrType(),
+                                           FILEptr_type, NULL);
     return fwrite_func;
   }
 
   /// @brief Return a Function* for the sqrt libcall
-  Function* get_sqrt()
-  {
+  Function* get_sqrt() {
     if (!sqrt_func)
-    {
-      std::vector<const Type*> args;
-      args.push_back(Type::DoubleTy);
-      FunctionType* sqrt_type =
-        FunctionType::get(Type::DoubleTy, args, false);
-      sqrt_func = M->getOrInsertFunction("sqrt",sqrt_type);
-    }
+      sqrt_func = M->getOrInsertFunction("sqrt", Type::DoubleTy, 
+                                         Type::DoubleTy, NULL);
     return sqrt_func;
   }
 
   /// @brief Return a Function* for the strlen libcall
-  Function* get_strcpy()
-  {
+  Function* get_strcpy() {
     if (!strcpy_func)
-    {
-      std::vector<const Type*> args;
-      args.push_back(PointerType::get(Type::SByteTy));
-      args.push_back(PointerType::get(Type::SByteTy));
-      FunctionType* strcpy_type =
-        FunctionType::get(PointerType::get(Type::SByteTy), args, false);
-      strcpy_func = M->getOrInsertFunction("strcpy",strcpy_type);
-    }
+      strcpy_func = M->getOrInsertFunction("strcpy",
+                                           PointerType::get(Type::SByteTy),
+                                           PointerType::get(Type::SByteTy),
+                                           PointerType::get(Type::SByteTy),
+                                           NULL);
     return strcpy_func;
   }
 
   /// @brief Return a Function* for the strlen libcall
-  Function* get_strlen()
-  {
+  Function* get_strlen() {
     if (!strlen_func)
-    {
-      std::vector<const Type*> args;
-      args.push_back(PointerType::get(Type::SByteTy));
-      FunctionType* strlen_type =
-        FunctionType::get(TD->getIntPtrType(), args, false);
-      strlen_func = M->getOrInsertFunction("strlen",strlen_type);
-    }
+      strlen_func = M->getOrInsertFunction("strlen", TD->getIntPtrType(),
+                                           PointerType::get(Type::SByteTy),
+                                           NULL);
     return strlen_func;
   }
 
   /// @brief Return a Function* for the memchr libcall
-  Function* get_memchr()
-  {
+  Function* get_memchr() {
     if (!memchr_func)
-    {
-      std::vector<const Type*> args;
-      args.push_back(PointerType::get(Type::SByteTy));
-      args.push_back(Type::IntTy);
-      args.push_back(TD->getIntPtrType());
-      FunctionType* memchr_type = FunctionType::get(
-          PointerType::get(Type::SByteTy), args, false);
-      memchr_func = M->getOrInsertFunction("memchr",memchr_type);
-    }
+      memchr_func = M->getOrInsertFunction("memchr",
+                                           PointerType::get(Type::SByteTy),
+                                           PointerType::get(Type::SByteTy),
+                                           Type::IntTy, TD->getIntPtrType(),
+                                           NULL);
     return memchr_func;
   }
 
@@ -312,25 +269,21 @@ public:
     if (!memcpy_func) {
       const Type *SBP = PointerType::get(Type::SByteTy);
       memcpy_func = M->getOrInsertFunction("llvm.memcpy", Type::VoidTy,SBP, SBP,
-                                           Type::UIntTy, Type::UIntTy,
-                                           (Type *)0);
+                                           Type::UIntTy, Type::UIntTy, NULL);
     }
     return memcpy_func;
   }
 
-#ifdef HAVE_FLOORF
   Function* get_floorf() {
     if (!floorf_func)
       floorf_func = M->getOrInsertFunction("floorf", Type::FloatTy,
-                                           Type::FloatTy, (Type *)0);
+                                           Type::FloatTy, NULL);
     return floorf_func;
   }
-#endif
   
 private:
   /// @brief Reset our cached data for a new Module
-  void reset(Module& mod)
-  {
+  void reset(Module& mod) {
     M = &mod;
     TD = &getAnalysis<TargetData>();
     fputc_func = 0;
@@ -340,9 +293,7 @@ private:
     sqrt_func   = 0;
     strcpy_func = 0;
     strlen_func = 0;
-#ifdef HAVE_FLOORF
     floorf_func = 0;
-#endif
   }
 
 private:
@@ -353,9 +304,7 @@ private:
   Function* sqrt_func;   ///< Cached sqrt function
   Function* strcpy_func; ///< Cached strcpy function
   Function* strlen_func; ///< Cached strlen function
-#ifdef HAVE_FLOORF
   Function* floorf_func; ///< Cached floorf function
-#endif
   Module* M;             ///< Cached Module
   TargetData* TD;        ///< Cached TargetData
 };
@@ -367,8 +316,7 @@ X("simplify-libcalls","Simplify well-known library calls");
 } // anonymous namespace
 
 // The only public symbol in this file which just instantiates the pass object
-ModulePass *llvm::createSimplifyLibCallsPass()
-{
+ModulePass *llvm::createSimplifyLibCallsPass() {
   return new SimplifyLibCalls();
 }
 
@@ -387,31 +335,24 @@ Value *CastToCStr(Value *V, Instruction &IP);
 /// the same value passed to the exit function. When this is done, it splits the
 /// basic block at the exit(3) call and deletes the call instruction.
 /// @brief Replace calls to exit in main with a simple return
-struct ExitInMainOptimization : public LibCallOptimization
-{
+struct ExitInMainOptimization : public LibCallOptimization {
   ExitInMainOptimization() : LibCallOptimization("exit",
       "Number of 'exit' calls simplified") {}
 
   // Make sure the called function looks like exit (int argument, int return
   // type, external linkage, not varargs).
-  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC)
-  {
-    if (f->arg_size() >= 1)
-      if (f->arg_begin()->getType()->isInteger())
-        return true;
-    return false;
+  virtual bool ValidateCalledFunction(const Function *F, SimplifyLibCalls &SLC){
+    return F->arg_size() >= 1 && F->arg_begin()->getType()->isInteger();
   }
 
-  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC)
-  {
+  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC) {
     // To be careful, we check that the call to exit is coming from "main", that
     // main has external linkage, and the return type of main and the argument
     // to exit have the same type.
     Function *from = ci->getParent()->getParent();
     if (from->hasExternalLinkage())
       if (from->getReturnType() == ci->getOperand(1)->getType())
-        if (from->getName() == "main")
-        {
+        if (from->getName() == "main") {
           // Okay, time to actually do the optimization. First, get the basic
           // block of the call instruction
           BasicBlock* bb = ci->getParent();
@@ -450,8 +391,7 @@ struct ExitInMainOptimization : public LibCallOptimization
 /// of the constant string. Both of these calls are further reduced, if possible
 /// on subsequent passes.
 /// @brief Simplify the strcat library function.
-struct StrCatOptimization : public LibCallOptimization
-{
+struct StrCatOptimization : public LibCallOptimization {
 public:
   /// @brief Default constructor
   StrCatOptimization() : LibCallOptimization("strcat",
@@ -460,8 +400,7 @@ public:
 public:
 
   /// @brief Make sure that the "strcat" function has the right prototype
-  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC)
-  {
+  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC){
     if (f->getReturnType() == PointerType::get(Type::SByteTy))
       if (f->arg_size() == 2)
       {
@@ -477,8 +416,7 @@ public:
   }
 
   /// @brief Optimize the strcat library function
-  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC)
-  {
+  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC) {
     // Extract some information from the instruction
     Module* M = ci->getParent()->getParent()->getParent();
     Value* dest = ci->getOperand(1);
@@ -492,8 +430,7 @@ public:
       return false;
 
     // Handle the simple, do-nothing case
-    if (len == 0)
-    {
+    if (len == 0) {
       ci->replaceAllUsesWith(dest);
       ci->eraseFromParent();
       return true;
@@ -540,15 +477,13 @@ public:
 /// function.  It optimizes out cases where the arguments are both constant
 /// and the result can be determined statically.
 /// @brief Simplify the strcmp library function.
-struct StrChrOptimization : public LibCallOptimization
-{
+struct StrChrOptimization : public LibCallOptimization {
 public:
   StrChrOptimization() : LibCallOptimization("strchr",
       "Number of 'strchr' calls simplified") {}
 
   /// @brief Make sure that the "strchr" function has the right prototype
-  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC)
-  {
+  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC){
     if (f->getReturnType() == PointerType::get(Type::SByteTy) &&
         f->arg_size() == 2)
       return true;
@@ -556,8 +491,7 @@ public:
   }
 
   /// @brief Perform the strchr optimizations
-  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC)
-  {
+  virtual bool OptimizeCall(CallInst *ci, SimplifyLibCalls &SLC) {
     // If there aren't three operands, bail
     if (ci->getNumOperands() != 3)
       return false;
@@ -572,8 +506,7 @@ public:
     // Check that the second argument to strchr is a constant int, return false
     // if it isn't
     ConstantSInt* CSI = dyn_cast<ConstantSInt>(ci->getOperand(2));
-    if (!CSI)
-    {
+    if (!CSI) {
       // Just lower this to memchr since we know the length of the string as
       // it is constant.
       Function* f = SLC.get_memchr();
@@ -592,15 +525,12 @@ public:
     // Compute the offset
     uint64_t offset = 0;
     bool char_found = false;
-    for (uint64_t i = 0; i < len; ++i)
-    {
-      if (ConstantSInt* CI = dyn_cast<ConstantSInt>(CA->getOperand(i)))
-      {
+    for (uint64_t i = 0; i < len; ++i) {
+      if (ConstantSInt* CI = dyn_cast<ConstantSInt>(CA->getOperand(i))) {
         // Check for the null terminator
         if (CI->isNullValue())
           break; // we found end of string
-        else if (CI->getValue() == chr)
-        {
+        else if (CI->getValue() == chr) {
           char_found = true;
           offset = i;
           break;
@@ -610,18 +540,16 @@ public:
 
     // strchr(s,c)  -> offset_of_in(c,s)
     //    (if c is a constant integer and s is a constant string)
-    if (char_found)
-    {
+    if (char_found) {
       std::vector<Value*> indices;
       indices.push_back(ConstantUInt::get(Type::ULongTy,offset));
       GetElementPtrInst* GEP = new GetElementPtrInst(ci->getOperand(1),indices,
           ci->getOperand(1)->getName()+".strchr",ci);
       ci->replaceAllUsesWith(GEP);
-    }
-    else
+    } else {
       ci->replaceAllUsesWith(
           ConstantPointerNull::get(PointerType::get(Type::SByteTy)));
-
+    }
     ci->eraseFromParent();
     return true;
   }
@@ -631,30 +559,24 @@ public:
 /// function.  It optimizes out cases where one or both arguments are constant
 /// and the result can be determined statically.
 /// @brief Simplify the strcmp library function.
-struct StrCmpOptimization : public LibCallOptimization
-{
+struct StrCmpOptimization : public LibCallOptimization {
 public:
   StrCmpOptimization() : LibCallOptimization("strcmp",
       "Number of 'strcmp' calls simplified") {}
 
   /// @brief Make sure that the "strcmp" function has the right prototype
-  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC)
-  {
-    if (f->getReturnType() == Type::IntTy && f->arg_size() == 2)
-      return true;
-    return false;
+  virtual bool ValidateCalledFunction(const Function *F, SimplifyLibCalls &SLC){
+    return F->getReturnType() == Type::IntTy && F->arg_size() == 2;
   }
 
   /// @brief Perform the strcmp optimization
-  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC)
-  {
+  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC) {
     // First, check to see if src and destination are the same. If they are,
     // then the optimization is to replace the CallInst with a constant 0
     // because the call is a no-op.
     Value* s1 = ci->getOperand(1);
     Value* s2 = ci->getOperand(2);
-    if (s1 == s2)
-    {
+    if (s1 == s2) {
       // strcmp(x,x)  -> 0
       ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,0));
       ci->eraseFromParent();
@@ -664,11 +586,9 @@ public:
     bool isstr_1 = false;
     uint64_t len_1 = 0;
     ConstantArray* A1;
-    if (getConstantStringLength(s1,len_1,&A1))
-    {
+    if (getConstantStringLength(s1,len_1,&A1)) {
       isstr_1 = true;
-      if (len_1 == 0)
-      {
+      if (len_1 == 0) {
         // strcmp("",x) -> *x
         LoadInst* load =
           new LoadInst(CastToCStr(s2,*ci), ci->getName()+".load",ci);
@@ -683,11 +603,9 @@ public:
     bool isstr_2 = false;
     uint64_t len_2 = 0;
     ConstantArray* A2;
-    if (getConstantStringLength(s2,len_2,&A2))
-    {
+    if (getConstantStringLength(s2, len_2, &A2)) {
       isstr_2 = true;
-      if (len_2 == 0)
-      {
+      if (len_2 == 0) {
         // strcmp(x,"") -> *x
         LoadInst* load =
           new LoadInst(CastToCStr(s1,*ci),ci->getName()+".val",ci);
@@ -699,8 +617,7 @@ public:
       }
     }
 
-    if (isstr_1 && isstr_2)
-    {
+    if (isstr_1 && isstr_2) {
       // strcmp(x,y)  -> cnst  (if both x and y are constant strings)
       std::string str1 = A1->getAsString();
       std::string str2 = A2->getAsString();
@@ -717,30 +634,26 @@ public:
 /// function.  It optimizes out cases where one or both arguments are constant
 /// and the result can be determined statically.
 /// @brief Simplify the strncmp library function.
-struct StrNCmpOptimization : public LibCallOptimization
-{
+struct StrNCmpOptimization : public LibCallOptimization {
 public:
   StrNCmpOptimization() : LibCallOptimization("strncmp",
       "Number of 'strncmp' calls simplified") {}
 
   /// @brief Make sure that the "strncmp" function has the right prototype
-  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC)
-  {
+  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC){
     if (f->getReturnType() == Type::IntTy && f->arg_size() == 3)
       return true;
     return false;
   }
 
   /// @brief Perform the strncpy optimization
-  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC)
-  {
+  virtual bool OptimizeCall(CallInst *ci, SimplifyLibCalls &SLC) {
     // First, check to see if src and destination are the same. If they are,
     // then the optimization is to replace the CallInst with a constant 0
     // because the call is a no-op.
     Value* s1 = ci->getOperand(1);
     Value* s2 = ci->getOperand(2);
-    if (s1 == s2)
-    {
+    if (s1 == s2) {
       // strncmp(x,x,l)  -> 0
       ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,0));
       ci->eraseFromParent();
@@ -751,12 +664,10 @@ public:
     // considered equal.
     uint64_t len_arg = 0;
     bool len_arg_is_const = false;
-    if (ConstantInt* len_CI = dyn_cast<ConstantInt>(ci->getOperand(3)))
-    {
+    if (ConstantInt* len_CI = dyn_cast<ConstantInt>(ci->getOperand(3))) {
       len_arg_is_const = true;
       len_arg = len_CI->getRawValue();
-      if (len_arg == 0)
-      {
+      if (len_arg == 0) {
         // strncmp(x,y,0)   -> 0
         ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,0));
         ci->eraseFromParent();
@@ -767,11 +678,9 @@ public:
     bool isstr_1 = false;
     uint64_t len_1 = 0;
     ConstantArray* A1;
-    if (getConstantStringLength(s1,len_1,&A1))
-    {
+    if (getConstantStringLength(s1, len_1, &A1)) {
       isstr_1 = true;
-      if (len_1 == 0)
-      {
+      if (len_1 == 0) {
         // strncmp("",x) -> *x
         LoadInst* load = new LoadInst(s1,ci->getName()+".load",ci);
         CastInst* cast =
@@ -785,11 +694,9 @@ public:
     bool isstr_2 = false;
     uint64_t len_2 = 0;
     ConstantArray* A2;
-    if (getConstantStringLength(s2,len_2,&A2))
-    {
+    if (getConstantStringLength(s2,len_2,&A2)) {
       isstr_2 = true;
-      if (len_2 == 0)
-      {
+      if (len_2 == 0) {
         // strncmp(x,"") -> *x
         LoadInst* load = new LoadInst(s2,ci->getName()+".val",ci);
         CastInst* cast =
@@ -800,8 +707,7 @@ public:
       }
     }
 
-    if (isstr_1 && isstr_2 && len_arg_is_const)
-    {
+    if (isstr_1 && isstr_2 && len_arg_is_const) {
       // strncmp(x,y,const) -> constant
       std::string str1 = A1->getAsString();
       std::string str2 = A2->getAsString();
@@ -819,22 +725,18 @@ public:
 /// (1) If src and dest are the same and not volatile, just return dest
 /// (2) If the src is a constant then we can convert to llvm.memmove
 /// @brief Simplify the strcpy library function.
-struct StrCpyOptimization : public LibCallOptimization
-{
+struct StrCpyOptimization : public LibCallOptimization {
 public:
   StrCpyOptimization() : LibCallOptimization("strcpy",
       "Number of 'strcpy' calls simplified") {}
 
   /// @brief Make sure that the "strcpy" function has the right prototype
-  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC)
-  {
+  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC){
     if (f->getReturnType() == PointerType::get(Type::SByteTy))
-      if (f->arg_size() == 2)
-      {
+      if (f->arg_size() == 2) {
         Function::const_arg_iterator AI = f->arg_begin();
         if (AI++->getType() == PointerType::get(Type::SByteTy))
-          if (AI->getType() == PointerType::get(Type::SByteTy))
-          {
+          if (AI->getType() == PointerType::get(Type::SByteTy)) {
             // Indicate this is a suitable call type.
             return true;
           }
@@ -843,8 +745,7 @@ public:
   }
 
   /// @brief Perform the strcpy optimization
-  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC)
-  {
+  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC) {
     // First, check to see if src and destination are the same. If they are,
     // then the optimization is to replace the CallInst with the destination
     // because the call is a no-op. Note that this corresponds to the
@@ -853,8 +754,7 @@ public:
     // we optimize it as a no-op.
     Value* dest = ci->getOperand(1);
     Value* src = ci->getOperand(2);
-    if (dest == src)
-    {
+    if (dest == src) {
       ci->replaceAllUsesWith(dest);
       ci->eraseFromParent();
       return true;
@@ -870,8 +770,7 @@ public:
 
     // If the constant string's length is zero we can optimize this by just
     // doing a store of 0 at the first byte of the destination
-    if (len == 0)
-    {
+    if (len == 0) {
       new StoreInst(ConstantInt::get(Type::SByteTy,0),ci->getOperand(1),ci);
       ci->replaceAllUsesWith(dest);
       ci->eraseFromParent();
@@ -907,8 +806,7 @@ public:
 /// function by replacing it with a constant value if the string provided to
 /// it is a constant array.
 /// @brief Simplify the strlen library function.
-struct StrLenOptimization : public LibCallOptimization
-{
+struct StrLenOptimization : public LibCallOptimization {
   StrLenOptimization() : LibCallOptimization("strlen",
       "Number of 'strlen' calls simplified") {}
 
@@ -1087,14 +985,9 @@ struct memcmpOptimization : public LibCallOptimization {
       break;
     }
     
-    
-    
     return false;
   }
 } memcmpOptimizer;
-
-
-
 
 
 /// This LibCallOptimization will simplify a call to the memcpy library
@@ -1102,8 +995,7 @@ struct memcmpOptimization : public LibCallOptimization {
 /// bytes depending on the length of the string and the alignment. Additional
 /// optimizations are possible in code generation (sequence of immediate store)
 /// @brief Simplify the memcpy library function.
-struct LLVMMemCpyOptimization : public LibCallOptimization
-{
+struct LLVMMemCpyOptimization : public LibCallOptimization {
   /// @brief Default Constructor
   LLVMMemCpyOptimization() : LibCallOptimization("llvm.memcpy",
       "Number of 'llvm.memcpy' calls simplified") {}
@@ -1115,8 +1007,7 @@ protected:
 public:
 
   /// @brief Make sure that the "memcpy" function has the right prototype
-  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& TD)
-  {
+  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& TD) {
     // Just make sure this has 4 arguments per LLVM spec.
     return (f->arg_size() == 4);
   }
@@ -1127,8 +1018,7 @@ public:
   /// alignment match the sizes of our intrinsic types so we can do a load and
   /// store instead of the memcpy call.
   /// @brief Perform the memcpy optimization.
-  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& TD)
-  {
+  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& TD) {
     // Make sure we have constant int values to work with
     ConstantInt* LEN = dyn_cast<ConstantInt>(ci->getOperand(3));
     if (!LEN)
@@ -1179,8 +1069,7 @@ public:
 /// function. It is identical to MemCopyOptimization except for the name of
 /// the intrinsic.
 /// @brief Simplify the memmove library function.
-struct LLVMMemMoveOptimization : public LLVMMemCpyOptimization
-{
+struct LLVMMemMoveOptimization : public LLVMMemCpyOptimization {
   /// @brief Default Constructor
   LLVMMemMoveOptimization() : LLVMMemCpyOptimization("llvm.memmove",
       "Number of 'llvm.memmove' calls simplified") {}
@@ -1190,19 +1079,16 @@ struct LLVMMemMoveOptimization : public LLVMMemCpyOptimization
 /// This LibCallOptimization will simplify a call to the memset library
 /// function by expanding it out to a single store of size 0, 1, 2, 4, or 8
 /// bytes depending on the length argument.
-struct LLVMMemSetOptimization : public LibCallOptimization
-{
+struct LLVMMemSetOptimization : public LibCallOptimization {
   /// @brief Default Constructor
   LLVMMemSetOptimization() : LibCallOptimization("llvm.memset",
       "Number of 'llvm.memset' calls simplified") {}
-
 public:
 
   /// @brief Make sure that the "memset" function has the right prototype
-  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& TD)
-  {
+  virtual bool ValidateCalledFunction(const Function *F, SimplifyLibCalls &TD) {
     // Just make sure this has 3 arguments per LLVM spec.
-    return (f->arg_size() == 4);
+    return F->arg_size() == 4;
   }
 
   /// Because of alignment and instruction information that we don't have, we
@@ -1212,8 +1098,7 @@ public:
   /// store instead of the memcpy call. Other calls are transformed into the
   /// llvm.memset intrinsic.
   /// @brief Perform the memset optimization.
-  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& TD)
-  {
+  virtual bool OptimizeCall(CallInst *ci, SimplifyLibCalls &TD) {
     // Make sure we have constant int values to work with
     ConstantInt* LEN = dyn_cast<ConstantInt>(ci->getOperand(3));
     if (!LEN)
@@ -1231,8 +1116,7 @@ public:
       alignment = 1;
 
     // If the length is zero, this is a no-op
-    if (len == 0)
-    {
+    if (len == 0) {
       // memset(d,c,0,a) -> noop
       ci->eraseFromParent();
       return true;
@@ -1260,8 +1144,7 @@ public:
     // and the value we will store there.
     Value* dest = ci->getOperand(1);
     Type* castType = 0;
-    switch (len)
-    {
+    switch (len) {
       case 1:
         castType = Type::UByteTy;
         break;
@@ -1296,64 +1179,51 @@ public:
 /// function. It looks for cases where the result of pow is well known and
 /// substitutes the appropriate value.
 /// @brief Simplify the pow library function.
-struct PowOptimization : public LibCallOptimization
-{
+struct PowOptimization : public LibCallOptimization {
 public:
   /// @brief Default Constructor
   PowOptimization() : LibCallOptimization("pow",
       "Number of 'pow' calls simplified") {}
 
   /// @brief Make sure that the "pow" function has the right prototype
-  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC)
-  {
+  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC){
     // Just make sure this has 2 arguments
     return (f->arg_size() == 2);
   }
 
   /// @brief Perform the pow optimization.
-  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC)
-  {
+  virtual bool OptimizeCall(CallInst *ci, SimplifyLibCalls &SLC) {
     const Type *Ty = cast<Function>(ci->getOperand(0))->getReturnType();
     Value* base = ci->getOperand(1);
     Value* expn = ci->getOperand(2);
     if (ConstantFP *Op1 = dyn_cast<ConstantFP>(base)) {
       double Op1V = Op1->getValue();
-      if (Op1V == 1.0)
-      {
+      if (Op1V == 1.0) {
         // pow(1.0,x) -> 1.0
         ci->replaceAllUsesWith(ConstantFP::get(Ty,1.0));
         ci->eraseFromParent();
         return true;
       }
-    }
-    else if (ConstantFP* Op2 = dyn_cast<ConstantFP>(expn))
-    {
+    }  else if (ConstantFP* Op2 = dyn_cast<ConstantFP>(expn)) {
       double Op2V = Op2->getValue();
-      if (Op2V == 0.0)
-      {
+      if (Op2V == 0.0) {
         // pow(x,0.0) -> 1.0
         ci->replaceAllUsesWith(ConstantFP::get(Ty,1.0));
         ci->eraseFromParent();
         return true;
-      }
-      else if (Op2V == 0.5)
-      {
+      } else if (Op2V == 0.5) {
         // pow(x,0.5) -> sqrt(x)
         CallInst* sqrt_inst = new CallInst(SLC.get_sqrt(), base,
             ci->getName()+".pow",ci);
         ci->replaceAllUsesWith(sqrt_inst);
         ci->eraseFromParent();
         return true;
-      }
-      else if (Op2V == 1.0)
-      {
+      } else if (Op2V == 1.0) {
         // pow(x,1.0) -> x
         ci->replaceAllUsesWith(base);
         ci->eraseFromParent();
         return true;
-      }
-      else if (Op2V == -1.0)
-      {
+      } else if (Op2V == -1.0) {
         // pow(x,-1.0)    -> 1.0/x
         BinaryOperator* div_inst= BinaryOperator::createDiv(
           ConstantFP::get(Ty,1.0), base, ci->getName()+".pow", ci);
@@ -1370,23 +1240,20 @@ public:
 /// function. It looks for cases where the result of fprintf is not used and the
 /// operation can be reduced to something simpler.
 /// @brief Simplify the pow library function.
-struct FPrintFOptimization : public LibCallOptimization
-{
+struct FPrintFOptimization : public LibCallOptimization {
 public:
   /// @brief Default Constructor
   FPrintFOptimization() : LibCallOptimization("fprintf",
       "Number of 'fprintf' calls simplified") {}
 
   /// @brief Make sure that the "fprintf" function has the right prototype
-  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC)
-  {
+  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC){
     // Just make sure this has at least 2 arguments
     return (f->arg_size() >= 2);
   }
 
   /// @brief Perform the fprintf optimization.
-  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC)
-  {
+  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC) {
     // If the call has more than 3 operands, we can't optimize it
     if (ci->getNumOperands() > 4 || ci->getNumOperands() <= 2)
       return false;
@@ -1403,19 +1270,16 @@ public:
     if (!getConstantStringLength(ci->getOperand(2), len, &CA))
       return false;
 
-    if (ci->getNumOperands() == 3)
-    {
+    if (ci->getNumOperands() == 3) {
       // Make sure there's no % in the constant array
-      for (unsigned i = 0; i < len; ++i)
-      {
-        if (ConstantInt* CI = dyn_cast<ConstantInt>(CA->getOperand(i)))
-        {
+      for (unsigned i = 0; i < len; ++i) {
+        if (ConstantInt* CI = dyn_cast<ConstantInt>(CA->getOperand(i))) {
           // Check for the null terminator
           if (CI->getRawValue() == '%')
             return false; // we found end of string
-        }
-        else
+        } else {
           return false;
+        }
       }
 
       // fprintf(file,fmt) -> fwrite(fmt,strlen(fmt),file)
@@ -1453,8 +1317,7 @@ public:
 
     // Get the second character and switch on its value
     ConstantInt* CI = dyn_cast<ConstantInt>(CA->getOperand(1));
-    switch (CI->getRawValue())
-    {
+    switch (CI->getRawValue()) {
       case 's':
       {
         uint64_t len = 0;
@@ -1503,23 +1366,20 @@ public:
 /// function. It looks for cases where the result of sprintf is not used and the
 /// operation can be reduced to something simpler.
 /// @brief Simplify the pow library function.
-struct SPrintFOptimization : public LibCallOptimization
-{
+struct SPrintFOptimization : public LibCallOptimization {
 public:
   /// @brief Default Constructor
   SPrintFOptimization() : LibCallOptimization("sprintf",
       "Number of 'sprintf' calls simplified") {}
 
   /// @brief Make sure that the "fprintf" function has the right prototype
-  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC)
-  {
+  virtual bool ValidateCalledFunction(const Function *f, SimplifyLibCalls &SLC){
     // Just make sure this has at least 2 arguments
     return (f->getReturnType() == Type::IntTy && f->arg_size() >= 2);
   }
 
   /// @brief Perform the sprintf optimization.
-  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC)
-  {
+  virtual bool OptimizeCall(CallInst *ci, SimplifyLibCalls &SLC) {
     // If the call has more than 3 operands, we can't optimize it
     if (ci->getNumOperands() > 4 || ci->getNumOperands() < 3)
       return false;
@@ -1531,10 +1391,8 @@ public:
     if (!getConstantStringLength(ci->getOperand(2), len, &CA))
       return false;
 
-    if (ci->getNumOperands() == 3)
-    {
-      if (len == 0)
-      {
+    if (ci->getNumOperands() == 3) {
+      if (len == 0) {
         // If the length is 0, we just need to store a null byte
         new StoreInst(ConstantInt::get(Type::SByteTy,0),ci->getOperand(1),ci);
         ci->replaceAllUsesWith(ConstantSInt::get(Type::IntTy,0));
@@ -1543,16 +1401,14 @@ public:
       }
 
       // Make sure there's no % in the constant array
-      for (unsigned i = 0; i < len; ++i)
-      {
-        if (ConstantInt* CI = dyn_cast<ConstantInt>(CA->getOperand(i)))
-        {
+      for (unsigned i = 0; i < len; ++i) {
+        if (ConstantInt* CI = dyn_cast<ConstantInt>(CA->getOperand(i))) {
           // Check for the null terminator
           if (CI->getRawValue() == '%')
             return false; // we found a %, can't optimize
-        }
-        else
+        } else {
           return false; // initializer is not constant int, can't optimize
+        }
       }
 
       // Increment length because we want to copy the null byte too
@@ -1637,23 +1493,20 @@ public:
 /// function. It looks for cases where the result of fputs is not used and the
 /// operation can be reduced to something simpler.
 /// @brief Simplify the pow library function.
-struct PutsOptimization : public LibCallOptimization
-{
+struct PutsOptimization : public LibCallOptimization {
 public:
   /// @brief Default Constructor
   PutsOptimization() : LibCallOptimization("fputs",
       "Number of 'fputs' calls simplified") {}
 
   /// @brief Make sure that the "fputs" function has the right prototype
-  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC)
-  {
+  virtual bool ValidateCalledFunction(const Function *F, SimplifyLibCalls &SLC){
     // Just make sure this has 2 arguments
-    return (f->arg_size() == 2);
+    return F->arg_size() == 2;
   }
 
   /// @brief Perform the fputs optimization.
-  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC)
-  {
+  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC) {
     // If the result is used, none of these optimizations work
     if (!ci->use_empty())
       return false;
@@ -1664,8 +1517,7 @@ public:
     if (!getConstantStringLength(ci->getOperand(1), len))
       return false;
 
-    switch (len)
-    {
+    switch (len) {
       case 0:
         // fputs("",F) -> noop
         break;
@@ -1713,17 +1565,14 @@ public:
       "Number of 'isdigit' calls simplified") {}
 
   /// @brief Make sure that the "isdigit" function has the right prototype
-  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC)
-  {
+  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC){
     // Just make sure this has 1 argument
     return (f->arg_size() == 1);
   }
 
   /// @brief Perform the toascii optimization.
-  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC)
-  {
-    if (ConstantInt* CI = dyn_cast<ConstantInt>(ci->getOperand(1)))
-    {
+  virtual bool OptimizeCall(CallInst *ci, SimplifyLibCalls &SLC) {
+    if (ConstantInt* CI = dyn_cast<ConstantInt>(ci->getOperand(1))) {
       // isdigit(c)   -> 0 or 1, if 'c' is constant
       uint64_t val = CI->getRawValue();
       if (val >= '0' && val <='9')
@@ -1785,23 +1634,20 @@ public:
 /// function. It simply does the corresponding and operation to restrict the
 /// range of values to the ASCII character set (0-127).
 /// @brief Simplify the toascii library function.
-struct ToAsciiOptimization : public LibCallOptimization
-{
+struct ToAsciiOptimization : public LibCallOptimization {
 public:
   /// @brief Default Constructor
   ToAsciiOptimization() : LibCallOptimization("toascii",
       "Number of 'toascii' calls simplified") {}
 
   /// @brief Make sure that the "fputs" function has the right prototype
-  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC)
-  {
+  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC){
     // Just make sure this has 2 arguments
     return (f->arg_size() == 1);
   }
 
   /// @brief Perform the toascii optimization.
-  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC)
-  {
+  virtual bool OptimizeCall(CallInst *ci, SimplifyLibCalls &SLC) {
     // toascii(c)   -> (c & 0x7f)
     Value* chr = ci->getOperand(1);
     BinaryOperator* and_inst = BinaryOperator::createAnd(chr,
@@ -1890,8 +1736,7 @@ public:
 /// calls. It simply uses FFSOptimization for which the transformation is
 /// identical.
 /// @brief Simplify the ffsl library function.
-struct FFSLOptimization : public FFSOptimization
-{
+struct FFSLOptimization : public FFSOptimization {
 public:
   /// @brief Default Constructor
   FFSLOptimization() : FFSOptimization("ffsl",
@@ -1903,8 +1748,7 @@ public:
 /// calls. It simply uses FFSOptimization for which the transformation is
 /// identical.
 /// @brief Simplify the ffsl library function.
-struct FFSLLOptimization : public FFSOptimization
-{
+struct FFSLLOptimization : public FFSOptimization {
 public:
   /// @brief Default Constructor
   FFSLLOptimization() : FFSOptimization("ffsll",
@@ -1913,7 +1757,6 @@ public:
 } FFSLLOptimizer;
 
 
-#ifdef HAVE_FLOORF
 /// This LibCallOptimization will simplify calls to the "floor" library
 /// function.
 /// @brief Simplify the floor library function.
@@ -1944,7 +1787,10 @@ struct FloorOptimization : public LibCallOptimization {
       }
     return false; // opt failed
   }
-} FloorOptimizer;
+};
+
+#ifdef HAVE_FLOORF
+FloorOptimization FloorOptimizer;
 #endif
 
 
@@ -1959,8 +1805,7 @@ struct FloorOptimization : public LibCallOptimization {
 /// of the null-terminated string. If false is returned, the conditions were
 /// not met and len is set to 0.
 /// @brief Get the length of a constant string (null-terminated array).
-bool getConstantStringLength(Value* V, uint64_t& len, ConstantArray** CA )
-{
+bool getConstantStringLength(Value *V, uint64_t &len, ConstantArray **CA) {
   assert(V != 0 && "Invalid args to getConstantStringLength");
   len = 0; // make sure we initialize this
   User* GEP = 0;
@@ -1983,12 +1828,10 @@ bool getConstantStringLength(Value* V, uint64_t& len, ConstantArray** CA )
 
   // Check to make sure that the first operand of the GEP is an integer and
   // has value 0 so that we are sure we're indexing into the initializer.
-  if (ConstantInt* op1 = dyn_cast<ConstantInt>(GEP->getOperand(1)))
-  {
+  if (ConstantInt* op1 = dyn_cast<ConstantInt>(GEP->getOperand(1))) {
     if (!op1->isNullValue())
       return false;
-  }
-  else
+  } else
     return false;
 
   // Ensure that the second operand is a ConstantInt. If it isn't then this
@@ -2012,8 +1855,7 @@ bool getConstantStringLength(Value* V, uint64_t& len, ConstantArray** CA )
   Constant* INTLZR = GV->getInitializer();
 
   // Handle the ConstantAggregateZero case
-  if (ConstantAggregateZero* CAZ = dyn_cast<ConstantAggregateZero>(INTLZR))
-  {
+  if (ConstantAggregateZero *CAZ = dyn_cast<ConstantAggregateZero>(INTLZR)) {
     // This is a degenerate case. The initializer is constant zero so the
     // length of the string must be zero.
     len = 0;
@@ -2030,17 +1872,15 @@ bool getConstantStringLength(Value* V, uint64_t& len, ConstantArray** CA )
 
   // Traverse the constant array from start_idx (derived above) which is
   // the place the GEP refers to in the array.
-  for ( len = start_idx; len < max_elems; len++)
-  {
-    if (ConstantInt* CI = dyn_cast<ConstantInt>(A->getOperand(len)))
-    {
+  for (len = start_idx; len < max_elems; len++) {
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(A->getOperand(len))) {
       // Check for the null terminator
       if (CI->isNullValue())
         break; // we found end of string
-    }
-    else
+    } else
       return false; // This array isn't suitable, non-int initializer
   }
+  
   if (len >= max_elems)
     return false; // This array isn't null terminated
 
