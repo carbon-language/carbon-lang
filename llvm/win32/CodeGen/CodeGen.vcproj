@@ -190,6 +190,9 @@
 					RelativePath="..\..\lib\CodeGen\SelectionDAG\ScheduleDAG.cpp">
 				</File>
 				<File
+					RelativePath="..\..\lib\CodeGen\SelectionDAG\ScheduleDAGSimple.cpp">
+				</File>
+				<File
 					RelativePath="..\..\lib\CodeGen\SelectionDAG\SelectionDAG.cpp">
 				</File>
 				<File
@@ -263,6 +266,9 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\CodeGen\SchedGraphCommon.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\CodeGen\ScheduleDAG.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\CodeGen\SelectionDAG.h">
