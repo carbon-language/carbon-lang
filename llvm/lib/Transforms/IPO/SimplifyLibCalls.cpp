@@ -42,12 +42,12 @@ Statistic<> SimplifiedLibCalls("simplify-libcalls",
 class LibCallOptimization;
 class SimplifyLibCalls;
 
-/// This hash map is populated by the constructor for LibCallOptimization class.
+/// This list is populated by the constructor for LibCallOptimization class.
 /// Therefore all subclasses are registered here at static initialization time
 /// and this list is what the SimplifyLibCalls pass uses to apply the individual
 /// optimizations to the call sites.
 /// @brief The list of optimizations deriving from LibCallOptimization
-static hash_map<std::string,LibCallOptimization*> optlist;
+static LibCallOptimization *OptList = 0;
 
 /// This class is the abstract base class for the set of optimizations that
 /// corresponds to one library call. The SimplifyLibCalls pass will call the
@@ -65,22 +65,37 @@ static hash_map<std::string,LibCallOptimization*> optlist;
 /// way (e.g. strlen(X) can be reduced to a constant if X is a constant global).
 /// @brief Base class for library call optimizations
 class LibCallOptimization {
+  LibCallOptimization **Prev, *Next;
+  const char *FunctionName; ///< Name of the library call we optimize
+#ifndef NDEBUG
+  Statistic<> occurrences; ///< debug statistic (-debug-only=simplify-libcalls)
+#endif
 public:
   /// The \p fname argument must be the name of the library function being
   /// optimized by the subclass.
   /// @brief Constructor that registers the optimization.
-  LibCallOptimization(const char* fname, const char* description )
-    : func_name(fname)
+  LibCallOptimization(const char *FName, const char *Description)
+    : FunctionName(FName)
 #ifndef NDEBUG
-    , occurrences("simplify-libcalls",description)
+    , occurrences("simplify-libcalls", Description)
 #endif
   {
-    // Register this call optimizer in the optlist (a hash_map)
-    optlist[fname] = this;
+    // Register this optimizer in the list of optimizations.
+    Next = OptList;
+    OptList = this;
+    Prev = &OptList;
+    if (Next) Next->Prev = &Next;
   }
+  
+  /// getNext - All libcall optimizations are chained together into a list,
+  /// return the next one in the list.
+  LibCallOptimization *getNext() { return Next; }
 
   /// @brief Deregister from the optlist
-  virtual ~LibCallOptimization() { optlist.erase(func_name); }
+  virtual ~LibCallOptimization() {
+    *Prev = Next;
+    if (Next) Next->Prev = Prev;
+  }
 
   /// The implementation of this function in subclasses should determine if
   /// \p F is suitable for the optimization. This method is called by
@@ -110,18 +125,14 @@ public:
   ) = 0;
 
   /// @brief Get the name of the library call being optimized
-  const char * getFunctionName() const { return func_name; }
+  const char *getFunctionName() const { return FunctionName; }
 
-#ifndef NDEBUG
   /// @brief Called by SimplifyLibCalls to update the occurrences statistic.
-  void succeeded() { DEBUG(++occurrences); }
-#endif
-
-private:
-  const char* func_name; ///< Name of the library call we optimize
+  void succeeded() {
 #ifndef NDEBUG
-  Statistic<> occurrences; ///< debug statistic (-debug-only=simplify-libcalls)
+    DEBUG(++occurrences);
 #endif
+  }
 };
 
 /// This class is an LLVM Pass that applies each of the LibCallOptimization
@@ -151,6 +162,9 @@ public:
     reset(M);
 
     bool result = false;
+    hash_map<std::string, LibCallOptimization*> OptznMap;
+    for (LibCallOptimization *Optzn = OptList; Optzn; Optzn = Optzn->getNext())
+      OptznMap[Optzn->getFunctionName()] = Optzn;
 
     // The call optimizations can be recursive. That is, the optimization might
     // generate a call to another function which can also be optimized. This way
@@ -169,12 +183,14 @@ public:
           continue;
 
         // Get the optimization class that pertains to this function
-        LibCallOptimization* CO = optlist[FI->getName().c_str()];
-        if (!CO)
-          continue;
+        hash_map<std::string, LibCallOptimization*>::iterator OMI =
+          OptznMap.find(FI->getName());
+        if (OMI == OptznMap.end()) continue;
+        
+        LibCallOptimization *CO = OMI->second;
 
         // Make sure the called function is suitable for the optimization
-        if (!CO->ValidateCalledFunction(FI,*this))
+        if (!CO->ValidateCalledFunction(FI, *this))
           continue;
 
         // Loop over each of the uses of the function
@@ -186,14 +202,13 @@ public:
             if (CO->OptimizeCall(CI, *this)) {
               ++SimplifiedLibCalls;
               found_optimization = result = true;
-#ifndef NDEBUG
               CO->succeeded();
-#endif
             }
           }
         }
       }
     } while (found_optimization);
+    
     return result;
   }
 
