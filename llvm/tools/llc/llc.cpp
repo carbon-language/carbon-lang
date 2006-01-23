@@ -23,7 +23,6 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/PluginLoader.h"
-#include "llvm/Support/PassNameParser.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/System/Signals.h"
