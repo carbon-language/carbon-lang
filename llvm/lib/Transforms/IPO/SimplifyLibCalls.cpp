@@ -1771,27 +1771,27 @@ public:
 
 } FFSLLOptimizer;
 
-
-/// This LibCallOptimization will simplify calls to the "floor" library
-/// function.
-/// @brief Simplify the floor library function.
-struct FloorOptimization : public LibCallOptimization {
-  FloorOptimization()
-    : LibCallOptimization("floor", "Number of 'floor' calls simplified") {}
+/// This optimizes unary functions that take and return doubles.
+struct UnaryDoubleFPOptimizer : public LibCallOptimization {
+  UnaryDoubleFPOptimizer(const char *Fn, const char *Desc)
+  : LibCallOptimization(Fn, Desc) {}
   
-  /// @brief Make sure that the "floor" function has the right prototype
+  // Make sure that this function has the right prototype
   virtual bool ValidateCalledFunction(const Function *F, SimplifyLibCalls &SLC){
     return F->arg_size() == 1 && F->arg_begin()->getType() == Type::DoubleTy &&
            F->getReturnType() == Type::DoubleTy;
   }
-  
-  virtual bool OptimizeCall(CallInst *CI, SimplifyLibCalls &SLC) {
-    // If this is a float argument passed in, convert to floorf.
-    // e.g. floor((double)FLT) -> (double)floorf(FLT).  There can be no loss of
-    // precision due to this.
+
+  /// ShrinkFunctionToFloatVersion - If the input to this function is really a
+  /// float, strength reduce this to a float version of the function,
+  /// e.g. floor((double)FLT) -> (double)floorf(FLT).  This can only be called
+  /// when the target supports the destination function and where there can be
+  /// no precision loss.
+  static bool ShrinkFunctionToFloatVersion(CallInst *CI, SimplifyLibCalls &SLC,
+                                           Function *(SimplifyLibCalls::*FP)()){
     if (CastInst *Cast = dyn_cast<CastInst>(CI->getOperand(1)))
       if (Cast->getOperand(0)->getType() == Type::FloatTy) {
-        Value *New = new CallInst(SLC.get_floorf(), Cast->getOperand(0),
+        Value *New = new CallInst((SLC.*FP)(), Cast->getOperand(0),
                                   CI->getName(), CI);
         New = new CastInst(New, Type::DoubleTy, CI->getName(), CI);
         CI->replaceAllUsesWith(New);
@@ -1800,13 +1800,27 @@ struct FloorOptimization : public LibCallOptimization {
           Cast->eraseFromParent();
         return true;
       }
-    return false; // opt failed
+    return false;
   }
 };
 
+
+/// This LibCallOptimization will simplify calls to the "floor" library
+/// function.
+/// @brief Simplify the floor library function.
+struct FloorOptimization : public UnaryDoubleFPOptimizer {
+  FloorOptimization()
+    : UnaryDoubleFPOptimizer("floor", "Number of 'floor' calls simplified") {}
+  
+  virtual bool OptimizeCall(CallInst *CI, SimplifyLibCalls &SLC) {
 #ifdef HAVE_FLOORF
-FloorOptimization FloorOptimizer;
+    // If this is a float argument passed in, convert to floorf.
+    if (ShrinkFunctionToFloatVersion(CI, SLC, &SimplifyLibCalls::get_floorf))
+      return true;
 #endif
+    return false; // opt failed
+  }
+} FloorOptimizer;
 
 
 
