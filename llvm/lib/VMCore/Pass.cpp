@@ -38,7 +38,7 @@ static std::vector<const PassInfo*> &getCFGOnlyAnalyses() {
 }
 
 void RegisterPassBase::setOnlyUsesCFG() {
-  getCFGOnlyAnalyses().push_back(PIObj);
+  getCFGOnlyAnalyses().push_back(&PIObj);
 }
 
 //===----------------------------------------------------------------------===//
@@ -332,26 +332,25 @@ const PassInfo *Pass::lookupPassInfo(const std::type_info &TI) {
   return (I != PassInfoMap->end()) ? I->second : 0;
 }
 
-void RegisterPassBase::registerPass(PassInfo *PI) {
+void RegisterPassBase::registerPass() {
   if (PassInfoMap == 0)
     PassInfoMap = new std::map<TypeInfo, PassInfo*>();
 
-  assert(PassInfoMap->find(PI->getTypeInfo()) == PassInfoMap->end() &&
+  assert(PassInfoMap->find(PIObj.getTypeInfo()) == PassInfoMap->end() &&
          "Pass already registered!");
-  PIObj = PI;
-  PassInfoMap->insert(std::make_pair(TypeInfo(PI->getTypeInfo()), PI));
+  PassInfoMap->insert(std::make_pair(TypeInfo(PIObj.getTypeInfo()), &PIObj));
 
   // Notify any listeners...
   if (Listeners)
     for (std::vector<PassRegistrationListener*>::iterator
            I = Listeners->begin(), E = Listeners->end(); I != E; ++I)
-      (*I)->passRegistered(PI);
+      (*I)->passRegistered(&PIObj);
 }
 
-void RegisterPassBase::unregisterPass(PassInfo *PI) {
+void RegisterPassBase::unregisterPass() {
   assert(PassInfoMap && "Pass registered but not in map!");
   std::map<TypeInfo, PassInfo*>::iterator I =
-    PassInfoMap->find(PI->getTypeInfo());
+    PassInfoMap->find(PIObj.getTypeInfo());
   assert(I != PassInfoMap->end() && "Pass registered but not in map!");
 
   // Remove pass from the map...
@@ -365,10 +364,7 @@ void RegisterPassBase::unregisterPass(PassInfo *PI) {
   if (Listeners)
     for (std::vector<PassRegistrationListener*>::iterator
            I = Listeners->begin(), E = Listeners->end(); I != E; ++I)
-      (*I)->passUnregistered(PI);
-
-  // Delete the PassInfo object itself...
-  delete PI;
+      (*I)->passUnregistered(&PIObj);
 }
 
 //===----------------------------------------------------------------------===//
@@ -387,14 +383,14 @@ static std::map<const PassInfo *, AnalysisGroupInfo> *AnalysisGroupInfoMap = 0;
 //
 RegisterAGBase::RegisterAGBase(const std::type_info &Interface,
                                const std::type_info *Pass, bool isDefault)
-  : ImplementationInfo(0), isDefaultImplementation(isDefault) {
+  : RegisterPassBase(Interface, PassInfo::AnalysisGroup),
+    ImplementationInfo(0), isDefaultImplementation(isDefault) {
 
   InterfaceInfo = const_cast<PassInfo*>(Pass::lookupPassInfo(Interface));
-  if (InterfaceInfo == 0) {   // First reference to Interface, add it now.
-    InterfaceInfo =   // Create the new PassInfo for the interface...
-      new PassInfo("", "", Interface, PassInfo::AnalysisGroup, 0, 0);
-    registerPass(InterfaceInfo);
-    PIObj = 0;
+  if (InterfaceInfo == 0) {
+    // First reference to Interface, register it now.
+    registerPass();
+    InterfaceInfo = &PIObj;
   }
   assert(InterfaceInfo->getPassType() == PassInfo::AnalysisGroup &&
          "Trying to join an analysis group that is a normal pass!");
@@ -455,10 +451,11 @@ RegisterAGBase::~RegisterAGBase() {
         delete AnalysisGroupInfoMap;
         AnalysisGroupInfoMap = 0;
       }
-
-      unregisterPass(InterfaceInfo);
     }
   }
+  
+  if (InterfaceInfo == &PIObj)
+    unregisterPass();
 }
 
 
