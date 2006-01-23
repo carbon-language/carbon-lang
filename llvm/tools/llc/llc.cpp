@@ -79,11 +79,6 @@ FileType("filetype", cl::init(TargetMachine::AssemblyFile),
                   "  Emit a native dynamic library ('.so') file"),
        clEnumValEnd));
 
-// The LLCPassList is populated with passes that were registered using
-//  PassInfo::LLC by the FilteredPassNameParser:
-cl::list<const PassInfo*, bool, FilteredPassNameParser<PassInfo::LLC> >
-LLCPassList(cl::desc("Passes Available"));
-
 cl::opt<bool> NoVerify("disable-verify", cl::Hidden,
                        cl::desc("Do not verify input module"));
 
@@ -156,19 +151,6 @@ int main(int argc, char **argv) {
     // Build up all of the passes that we want to do to the module...
     PassManager Passes;
     Passes.add(new TargetData(TD));
-
-    // Create a new pass for each one specified on the command line
-    for (unsigned i = 0; i < LLCPassList.size(); ++i) {
-      const PassInfo *aPass = LLCPassList[i];
-
-      if (aPass->getNormalCtor()) {
-        Pass *P = aPass->getNormalCtor()();
-        Passes.add(P);
-      } else {
-        std::cerr << argv[0] << ": cannot create pass: "
-                  << aPass->getPassName() << "\n";
-      }
-    }
 
 #ifndef NDEBUG
     if(!NoVerify)
