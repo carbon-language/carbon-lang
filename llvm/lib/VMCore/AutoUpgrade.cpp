@@ -36,7 +36,7 @@ static inline const char* get_suffix(const Type* Ty) {
   return 0;
 }
 
-static inline const Type* get_type(Function* F) {
+static inline const Type* getTypeFromFunctionName(Function* F) {
   // If there's no function, we can't get the argument type.
   if (!F)
     return 0;
@@ -45,7 +45,7 @@ static inline const Type* get_type(Function* F) {
   const std::string& Name = F->getName();
 
   // Quickly eliminate it, if it's not a candidate.
-  if (Name.length() <= 5 || Name[0] != 'l' || Name[1] != 'l' || Name[2] !=
+  if (Name.length() <= 8 || Name[0] != 'l' || Name[1] != 'l' || Name[2] !=
     'v' || Name[3] != 'm' || Name[4] != '.')
     return 0;
 
@@ -109,10 +109,9 @@ bool llvm::IsUpgradeableIntrinsicName(const std::string& Name) {
 // the argument types.
 Function* llvm::UpgradeIntrinsicFunction(Function* F) {
   // See if its one of the name's we're interested in.
-  if (const Type* Ty = get_type(F)) {
-    const char* suffix = get_suffix(Ty);
-    if (Ty->isSigned())
-      suffix = get_suffix(Ty->getUnsignedVersion());
+  if (const Type* Ty = getTypeFromFunctionName(F)) {
+    const char* suffix = 
+      get_suffix((Ty->isSigned() ? Ty->getUnsignedVersion() : Ty));
     assert(suffix && "Intrinsic parameter type not recognized");
     const std::string& Name = F->getName();
     std::string new_name = Name + suffix;
@@ -143,7 +142,7 @@ Function* llvm::UpgradeIntrinsicFunction(Function* F) {
 
 Instruction* llvm::UpgradeIntrinsicCall(CallInst *CI) {
   Function *F = CI->getCalledFunction();
-  if (const Type* Ty = get_type(F)) {
+  if (const Type* Ty = getTypeFromFunctionName(F)) {
     Function* newF = UpgradeIntrinsicFunction(F);
     std::vector<Value*> Oprnds;
     for (User::op_iterator OI = CI->op_begin(), OE = CI->op_end(); 
