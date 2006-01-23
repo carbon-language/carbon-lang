@@ -152,7 +152,7 @@ void IA64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const
   int FrameIndex = MI.getOperand(i).getFrameIndex();
 
   // choose a base register: ( hasFP? framepointer : stack pointer )
-  unsigned BaseRegister = FP ? IA64::r15 : IA64::r12;
+  unsigned BaseRegister = FP ? IA64::r5 : IA64::r12;
   // Add the base register
   MI.SetMachineOperandReg(i, BaseRegister);
 
@@ -276,10 +276,10 @@ void IA64RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
   // now if we need to, save the old FP and set the new
   if (FP) {
-    MI = BuildMI(IA64::ST8, 2).addReg(IA64::r12).addReg(IA64::r15);
+    MI = BuildMI(IA64::ST8, 2).addReg(IA64::r12).addReg(IA64::r5);
     MBB.insert(MBBI, MI);
     // this must be the last instr in the prolog ?  (XXX: why??)
-    MI = BuildMI(IA64::MOV, 1, IA64::r15).addReg(IA64::r12);
+    MI = BuildMI(IA64::MOV, 1, IA64::r5).addReg(IA64::r12);
     MBB.insert(MBBI, MI);
   }
 
@@ -302,10 +302,10 @@ void IA64RegisterInfo::emitEpilogue(MachineFunction &MF,
   if (FP)
   {
     //copy the FP into the SP (discards allocas)
-    MI=BuildMI(IA64::MOV, 1, IA64::r12).addReg(IA64::r15);
+    MI=BuildMI(IA64::MOV, 1, IA64::r12).addReg(IA64::r5);
     MBB.insert(MBBI, MI);
     //restore the FP
-    MI=BuildMI(IA64::LD8, 1, IA64::r15).addReg(IA64::r15);
+    MI=BuildMI(IA64::LD8, 1, IA64::r5).addReg(IA64::r5);
     MBB.insert(MBBI, MI);
   }
 

@@ -226,7 +226,7 @@ def B6 : GR<0, "b6">;
 //
 
 // these are the scratch (+stacked) general registers
-// FIXME/XXX  we also reserve a frame pointer (r15)
+// FIXME/XXX  we also reserve a frame pointer (r5)
 // FIXME/XXX  we also reserve r2 for spilling/filling predicates
 // in IA64RegisterInfo.cpp
 // FIXME/XXX  we also reserve r22 for calculating addresses
@@ -239,7 +239,7 @@ def GR : RegisterClass<"IA64", [i64], 64,
 //        registers to be the first ones allocated
 
         out7, out6, out5, out4, out3, out2, out1, out0,
-        r3,  r8,  r9,  r10, r11, r14,
+        r3,  r8,  r9,  r10, r11, r14, r15,
         r16, r17, r18, r19, r20, r21, r23,
         r24, r25, r26, r27, r28, r29, r30, r31,
         r32, r33, r34, r35, r36, r37, r38, r39,
@@ -254,7 +254,7 @@ def GR : RegisterClass<"IA64", [i64], 64,
         r104, r105, r106, r107, r108, r109, r110, r111,
         r112, r113, r114, r115, r116, r117, r118, r119,
         r120, r121, r122, r123, r124, r125, r126, r127,
-	r0, r1, r2, r12, r13, r15, r22, rp]> // the last 16 are special (look down)
+	r0, r1, r2, r5, r12, r13, r22, rp]> // the last 16 are special (look down)
   {
     let MethodProtos = [{
     iterator allocation_order_begin(MachineFunction &MF) const;
@@ -269,7 +269,7 @@ def GR : RegisterClass<"IA64", [i64], 64,
 
       GRClass::iterator
       GRClass::allocation_order_end(MachineFunction &MF) const {
-	int numReservedRegs=8; // the 8 special registers r0,r1,r2,r12,r13 etc
+	int numReservedRegs=8; // the 8 special registers r0,r1,r2,r5,r12,r13 etc
 
 	// we also can't allocate registers for use as locals if they're
 	// already required as 'out' registers
