@@ -51,9 +51,6 @@
 /* Does not have bi-directional iterator */
 #undef HAVE_BI_ITERATOR
 
-/* Define to 1 if you have the `ceil' function. */
-#undef HAVE_CEIL
-
 /* Define to 1 if you have the `ceilf' function. */
 #undef HAVE_CEILF
 
@@ -102,9 +99,6 @@
 
 /* Set to 1 if the finite function is found in <ieeefp.h> */
 #undef HAVE_FINITE_IN_IEEEFP_H
-
-/* Define to 1 if you have the `floor' function. */
-#undef HAVE_FLOOR
 
 /* Define to 1 if you have the `floorf' function. */
 #undef HAVE_FLOORF
@@ -240,6 +234,9 @@
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 #undef HAVE_NDIR_H
 
+/* Define to 1 if you have the `nearbyintf' function. */
+#undef HAVE_NEARBYINTF
+
 /* Define to 1 if you have the `opendir' function. */
 #undef HAVE_OPENDIR
 
@@ -267,11 +264,11 @@
 /* Define to 1 if you have the `rindex' function. */
 #undef HAVE_RINDEX
 
-/* Define to 1 if you have the <rw/stdex/hash_map.h> header file. */
-#undef HAVE_RW_STDEX_HASH_MAP_H
+/* Define to 1 if you have the `rintf' function. */
+#undef HAVE_RINTF
 
-/* Define to 1 if you have the <rw/stdex/hash_set.h> header file. */
-#undef HAVE_RW_STDEX_HASH_SET_H
+/* Define to 1 if you have the `roundf' function. */
+#undef HAVE_ROUNDF
 
 /* Define to 1 if you have the `sbrk' function. */
 #undef HAVE_SBRK
