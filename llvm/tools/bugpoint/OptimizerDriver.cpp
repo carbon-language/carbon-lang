@@ -78,8 +78,6 @@ void BugDriver::EmitProgressBytecode(const std::string &ID, bool NoFlyer) {
     std::cout << "analyze";
   else if (PassType & PassInfo::Optimization)
     std::cout << "opt";
-  else if (PassType & PassInfo::LLC)
-    std::cout << "llc";
   else
     std::cout << "bugpoint";
   std::cout << " " << Filename << " ";
