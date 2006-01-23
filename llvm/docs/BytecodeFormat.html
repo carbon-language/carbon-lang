@@ -955,8 +955,7 @@ all functions. The format is shown in the table below:</p>
     </tr>
     <tr>
       <td><a href="#block">block</a></td>
-      <td class="td_left">Module global info identifier (0x05) + size<br>
-      </td>
+      <td class="td_left">Module global info identifier (0x05) + size</td>
     </tr>
     <tr>
       <td><a href="#zlist">zlist</a>(<a href="#globalvar">globalvar</a>)</td>
@@ -969,28 +968,26 @@ definitions occurring in the module.</td>
 occurring in the module.</td>
     </tr>
     <tr>
-      <td><a href="#llist">llist</a>(<a href="#string">string</a>)<br>
-      </td>
+      <td><a href="#llist">llist</a>(<a href="#string">string</a>)</td>
       <td class="td_left">A length list
 of strings that specify the names of the libraries that this module
-depends upon.<br>
-      </td>
+depends upon.</td>
     </tr>
     <tr>
-      <td><a href="#string">string</a><br>
-      </td>
+      <td><a href="#string">string</a></td>
       <td class="td_left">The target
 triple for the module (blank means no target triple specified, i.e. a
-platform independent module).<br>
-      </td>
+platform independent module).</td>
     </tr>
     <tr>
-      <td><a href="#llist">llist</a>(<a href="#string">string</a>)<br>
-      </td>
+      <td><a href="#llist">llist</a>(<a href="#string">string</a>)</td>
       <td class="td_left">A length list
 of strings that defines a table of section strings for globals.  A global's
-SectionID is an index into this table.<br>
-      </td>
+SectionID is an index into this table.</td>
+    </tr>
+    <tr>
+      <td><a href="#string">string</a></td>
+      <td class="td_left">The inline asm block for this module.</td>
     </tr>
   </tbody>
 </table>
