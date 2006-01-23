@@ -2102,12 +2102,16 @@ void BytecodeReader::ParseModuleGlobalInfo() {
     if (Handler)
       Handler->handleTargetTriple(triple);
     
-    if (At != BlockEnd && !hasAlignment) {
+    if (!hasAlignment && At != BlockEnd) {
       // If the file has section info in it, read the section names now.
       unsigned NumSections = read_vbr_uint();
       while (NumSections--)
         SectionNames.push_back(read_str());
     }
+    
+    // If the file has module-level inline asm, read it now.
+    if (!hasAlignment && At != BlockEnd)
+      TheModule->setInlineAsm(read_str());
   }
 
   // If any globals are in specified sections, assign them now.

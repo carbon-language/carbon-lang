@@ -1030,6 +1030,9 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
   output_vbr((unsigned)SectionNames.size());
   for (unsigned i = 0, e = SectionNames.size(); i != e; ++i)
     output(SectionNames[i]);
+  
+  // Output the inline asm string.
+  output(M->getInlineAsm());
 }
 
 void BytecodeWriter::outputInstructions(const Function *F) {
