@@ -967,7 +967,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %token DECLARE GLOBAL CONSTANT SECTION VOLATILE
 %token TO DOTDOTDOT NULL_TOK UNDEF CONST INTERNAL LINKONCE WEAK  APPENDING
 %token OPAQUE NOT EXTERNAL TARGET TRIPLE ENDIAN POINTERSIZE LITTLE BIG ALIGN
-%token DEPLIBS CALL TAIL
+%token DEPLIBS CALL TAIL ASM_TOK
 %token CC_TOK CCC_TOK FASTCC_TOK COLDCC_TOK
 %type <UIntVal> OptCallingConv
 
@@ -1256,11 +1256,12 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
                      " when array has size " + itostr(NumElements) + "!");
     std::vector<Constant*> Vals;
     if (ETy == Type::SByteTy) {
-      for (char *C = $3; C != EndStr; ++C)
+      for (signed char *C = (signed char *)$3; C != (signed char *)EndStr; ++C)
         Vals.push_back(ConstantSInt::get(ETy, *C));
     } else if (ETy == Type::UByteTy) {
-      for (char *C = $3; C != EndStr; ++C)
-        Vals.push_back(ConstantUInt::get(ETy, (unsigned char)*C));
+      for (unsigned char *C = (unsigned char *)$3; 
+           C != (unsigned char*)EndStr; ++C)
+        Vals.push_back(ConstantUInt::get(ETy, *C));
     } else {
       free($3);
       ThrowException("Cannot build string arrays of non byte sized elements!");
@@ -1570,6 +1571,9 @@ FunctionList : FunctionList Function {
   | FunctionList FunctionProto {
     $$ = $1;
   }
+  | FunctionList ASM_TOK AsmBlock {
+    $$ = $1;
+  }  
   | FunctionList IMPLEMENTATION {
     $$ = $1;
   }
@@ -1608,6 +1612,8 @@ ConstPool : ConstPool OptAssign TYPE TypesV {
   }
   | ConstPool FunctionProto {       // Function prototypes can be in const pool
   }
+  | ConstPool ASM_TOK AsmBlock {    // Asm blocks can be in the const pool
+  }
   | ConstPool OptAssign OptLinkage GlobalType ConstVal {
     if ($5 == 0) ThrowException("Global value initializer is not a constant!");
     CurGV = ParseGlobalVariable($2, $3, $4, $5->getType(), $5);
@@ -1629,6 +1635,17 @@ ConstPool : ConstPool OptAssign TYPE TypesV {
   };
 
 
+AsmBlock : STRINGCONSTANT {
+  const std::string &AsmSoFar = CurModule.CurrentModule->getInlineAsm();
+  char *EndStr = UnEscapeLexed($1, true);
+  std::string NewAsm($1, EndStr);
+  free($1);
+
+  if (AsmSoFar.empty())
+    CurModule.CurrentModule->setInlineAsm(NewAsm);
+  else
+    CurModule.CurrentModule->setInlineAsm(AsmSoFar+"\n"+NewAsm);
+};
 
 BigOrLittle : BIG    { $$ = Module::BigEndian; };
 BigOrLittle : LITTLE { $$ = Module::LittleEndian; };
