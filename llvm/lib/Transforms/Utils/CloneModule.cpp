@@ -31,6 +31,7 @@ Module *llvm::CloneModule(const Module *M) {
   New->setEndianness(M->getEndianness());
   New->setPointerSize(M->getPointerSize());
   New->setTargetTriple(M->getTargetTriple());
+  New->setInlineAsm(M->getInlineAsm());
 
   // Copy all of the type symbol table entries over.
   const SymbolTable &SymTab = M->getSymbolTable();
