@@ -2501,14 +2501,16 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     break;
     
   case ISD::BIT_CONVERT:
-    if (!isTypeLegal(Node->getOperand(0).getValueType()))
+    if (!isTypeLegal(Node->getOperand(0).getValueType())) {
       Result = ExpandBIT_CONVERT(Node->getValueType(0), Node->getOperand(0));
-    else {
+      Result = LegalizeOp(Result);
+    } else {
       switch (TLI.getOperationAction(ISD::BIT_CONVERT,
                                      Node->getOperand(0).getValueType())) {
       default: assert(0 && "Unknown operation action!");
       case TargetLowering::Expand:
         Result = ExpandBIT_CONVERT(Node->getValueType(0), Node->getOperand(0));
+        Result = LegalizeOp(Result);
         break;
       case TargetLowering::Legal:
         Tmp1 = LegalizeOp(Node->getOperand(0));
