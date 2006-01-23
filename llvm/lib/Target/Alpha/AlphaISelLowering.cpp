@@ -73,6 +73,14 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
     setOperationAction(ISD::LOAD, MVT::i64, Custom);
     setOperationAction(ISD::LOAD, MVT::f64, Custom);
     setOperationAction(ISD::LOAD, MVT::f32, Custom);
+
+    setOperationAction(ISD::ZEXTLOAD, MVT::i8,  Custom);
+    setOperationAction(ISD::ZEXTLOAD, MVT::i16, Custom);
+    setOperationAction(ISD::SEXTLOAD, MVT::i32, Custom);
+
+    setOperationAction(ISD::EXTLOAD, MVT::i8,  Custom);
+    setOperationAction(ISD::EXTLOAD, MVT::i16, Custom);
+    setOperationAction(ISD::EXTLOAD, MVT::i32, Custom);
   }
 
   setOperationAction(ISD::FREM, MVT::f32, Expand);
@@ -578,6 +586,7 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::LOAD:
   case ISD::SEXTLOAD:
   case ISD::ZEXTLOAD:
+  case ISD::EXTLOAD:
     {
       SDOperand Chain   = Op.getOperand(0);
       SDOperand Address = Op.getOperand(1);
@@ -612,13 +621,13 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       VTS.push_back(Op.Val->getValueType(0));
       VTS.push_back(MVT::Other);
       std::vector<SDOperand> ARGS;
+      ARGS.push_back(Chain);
       ARGS.push_back(Zero);
       ARGS.push_back(Address);
       ARGS.push_back(DAG.getConstant(i, MVT::i64));
       ARGS.push_back(DAG.getConstant(j, MVT::i64));
       ARGS.push_back(DAG.getConstant(k, MVT::i64));
       ARGS.push_back(DAG.getConstant(getUID(), MVT::i64));
-      ARGS.push_back(Chain);
       return DAG.getNode(Opc, VTS, ARGS);
     }
 

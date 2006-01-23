@@ -31,12 +31,12 @@ def Alpha_cvttq   : SDNode<"AlphaISD::CVTTQ_"  ,  SDTFPUnaryOp, []>;
 def Alpha_gprello : SDNode<"AlphaISD::GPRelLo",   SDTIntBinOp, []>;
 def Alpha_gprelhi : SDNode<"AlphaISD::GPRelHi",   SDTIntBinOp, []>;
 def Alpha_rellit  : SDNode<"AlphaISD::RelLit",    SDTIntBinOp, []>;
-def Alpha_ldq     : SDNode<"AlphaISD::LDQ_",      SDTLoadA, [SDNPInFlag]>;
-def Alpha_ldt     : SDNode<"AlphaISD::LDT_",      SDTLoadA, [SDNPInFlag]>;
-def Alpha_lds     : SDNode<"AlphaISD::LDS_",      SDTLoadA, [SDNPInFlag]>;
-def Alpha_ldl     : SDNode<"AlphaISD::LDL_",      SDTLoadA, [SDNPInFlag]>;
-def Alpha_ldwu    : SDNode<"AlphaISD::LDWU_",     SDTLoadA, [SDNPInFlag]>;
-def Alpha_ldbu    : SDNode<"AlphaISD::LDBU_",     SDTLoadA, [SDNPInFlag]>;
+def Alpha_ldq     : SDNode<"AlphaISD::LDQ_",      SDTLoadA, [SDNPHasChain]>;
+def Alpha_ldt     : SDNode<"AlphaISD::LDT_",      SDTLoadA, [SDNPHasChain]>;
+def Alpha_lds     : SDNode<"AlphaISD::LDS_",      SDTLoadA, [SDNPHasChain]>;
+def Alpha_ldl     : SDNode<"AlphaISD::LDL_",      SDTLoadA, [SDNPHasChain]>;
+def Alpha_ldwu    : SDNode<"AlphaISD::LDWU_",     SDTLoadA, [SDNPHasChain]>;
+def Alpha_ldbu    : SDNode<"AlphaISD::LDBU_",     SDTLoadA, [SDNPHasChain]>;
 
 // These are target-independent nodes, but have target-specific formats.
 def SDT_AlphaCallSeq : SDTypeProfile<0, 1, [ SDTCisVT<0, i64> ]>;
@@ -123,7 +123,6 @@ def ADJUSTSTACKDOWN : PseudoInstAlpha<(ops s64imm:$amt), "; ADJDOWN $amt",
 }
 def ALTENT : PseudoInstAlpha<(ops s64imm:$TARGET), "$$$TARGET..ng:\n", []>;
 def PCLABEL : PseudoInstAlpha<(ops s64imm:$num), "PCMARKER_$num:\n",[]>;
-let noResults = 1 in
 def MEMLABEL : PseudoInstAlpha<(ops s64imm:$i, s64imm:$j, s64imm:$k, s64imm:$m),
          "LSMARKER$$$i$$$j$$$k$$$m:", []>;
 
@@ -584,6 +583,12 @@ let OperandList = (ops GPRC:$RA, s64imm:$DISP, GPRC:$RB,
 		   s64imm:$i, s64imm:$j, s64imm:$k, s64imm:$m) in {
 def LDQlbl   : MForm<0x29, 0, 1, "LSMARKER$$$i$$$j$$$k$$$m:\n\t ldq $RA,$DISP($RB)",
                  [(set GPRC:$RA, (Alpha_ldq  imm:$DISP, GPRC:$RB, imm:$i, imm:$j, imm:$k, imm:$m))]>;
+def LDLlbl   : MForm<0x29, 0, 1, "LSMARKER$$$i$$$j$$$k$$$m:\n\t ldl $RA,$DISP($RB)",
+                 [(set GPRC:$RA, (Alpha_ldl  imm:$DISP, GPRC:$RB, imm:$i, imm:$j, imm:$k, imm:$m))]>;
+def LDBUlbl  : MForm<0x0A, 0, 1, "LSMARKER$$$i$$$j$$$k$$$m:\n\t ldbu $RA,$DISP($RB)",
+                 [(set GPRC:$RA, (Alpha_ldwu  imm:$DISP, GPRC:$RB, imm:$i, imm:$j, imm:$k, imm:$m))]>;
+def LDWUlbl  : MForm<0x0C, 0, 1, "LSMARKER$$$i$$$j$$$k$$$m:\n\t ldwu $RA,$DISP($RB)",
+                 [(set GPRC:$RA, (Alpha_ldbu  imm:$DISP, GPRC:$RB, imm:$i, imm:$j, imm:$k, imm:$m))]>;
 }
 
 let OperandList = (ops F8RC:$RA, s64imm:$DISP, GPRC:$RB, 
@@ -595,13 +600,6 @@ let OperandList = (ops F4RC:$RA, s64imm:$DISP, GPRC:$RB,
 		   s64imm:$i, s64imm:$j, s64imm:$k, s64imm:$m) in 
 def LDSlbl   : MForm<0x29, 0, 1, "LSMARKER$$$i$$$j$$$k$$$m:\n\t lds $RA,$DISP($RB)",
                  [(set F4RC:$RA, (Alpha_lds  imm:$DISP, GPRC:$RB, imm:$i, imm:$j, imm:$k, imm:$m))]>;
-
-//def LDLlbl   : MForm<0x29, 0, 1, "ldl $RA,$DISP($RB)",
-//                 [(set GPRC:$RA, (sextload (add GPRC:$RB, immSExt16:$DISP), i32))]>;
-//def LDBUlbl  : MForm<0x0A, 0, 1, "ldbu $RA,$DISP($RB)",
-//                 [(set GPRC:$RA, (zextload (add GPRC:$RB, immSExt16:$DISP), i8))]>;
-//def LDWUlbl  : MForm<0x0C, 0, 1, "ldwu $RA,$DISP($RB)",
-//                 [(set GPRC:$RA, (zextload (add GPRC:$RB, immSExt16:$DISP), i16))]>;
 
 def RPCC : MfcForm<0x18, 0xC000, "rpcc $RA">; //Read process cycle counter
 
