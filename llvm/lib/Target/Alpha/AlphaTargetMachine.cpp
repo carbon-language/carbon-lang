@@ -28,12 +28,6 @@ namespace {
   RegisterTarget<AlphaTargetMachine> X("alpha", "  Alpha (incomplete)");
 }
 
-namespace llvm {
-  cl::opt<bool> DisableAlphaDAG("disable-alpha-dag-isel",
-                             cl::desc("Disable DAG ISEL for Alpha"),
-                             cl::Hidden);
-}
-
 unsigned AlphaTargetMachine::getModuleMatchQuality(const Module &M) {
   // We strongly match "alpha*".
   std::string TT = M.getTargetTriple();
@@ -94,10 +88,7 @@ bool AlphaTargetMachine::addPassesToEmitFile(PassManager &PM,
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
 
-  if (!DisableAlphaDAG)
-    PM.add(createAlphaISelDag(*this));
-  else
-    PM.add(createAlphaPatternInstructionSelector(*this));
+  PM.add(createAlphaISelDag(*this));
 
   if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(&std::cerr));
@@ -135,7 +126,7 @@ void AlphaJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
 
-  PM.add(createAlphaPatternInstructionSelector(TM));
+  PM.add(createAlphaISelDag(TM));
 
   if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(&std::cerr));

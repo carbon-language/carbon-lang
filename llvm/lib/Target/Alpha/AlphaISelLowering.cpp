@@ -27,9 +27,9 @@
 using namespace llvm;
 
 namespace llvm {
-  extern cl::opt<bool> EnableAlphaIDIV;
-  extern cl::opt<bool> EnableAlphaCount;
-  extern cl::opt<bool> EnableAlphaLSMark;
+  cl::opt<bool> EnableAlphaLSMark("enable-alpha-lsmark",
+    cl::desc("Emit symbols to correlate Mem ops to LLVM Values"),
+    cl::Hidden);
 }
 
 /// AddLiveIn - This helper function adds the specified physical register to the
