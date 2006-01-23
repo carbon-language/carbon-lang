@@ -1043,10 +1043,11 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     DAG.setRoot(Tmp.getValue(1));
     return 0;
   }
-  case Intrinsic::stackrestore:
-    DAG.setRoot(DAG.getNode(ISD::STACKRESTORE, MVT::Other, DAG.getRoot(),
-                            getValue(I.getOperand(1))));
+  case Intrinsic::stackrestore: {
+    SDOperand Tmp = getValue(I.getOperand(1));
+    DAG.setRoot(DAG.getNode(ISD::STACKRESTORE, MVT::Other, getRoot(), Tmp));
     return 0;
+  }
   case Intrinsic::prefetch:
     // FIXME: Currently discarding prefetches.
     return 0;
