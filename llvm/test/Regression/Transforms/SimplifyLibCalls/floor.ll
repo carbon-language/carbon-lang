@@ -1,4 +1,7 @@
-; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | not grep 'call.*floor('
+; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | not grep 'call.*floor(' &&
+; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | grep 'call.*floorf('
+
+; XFAIL: sparc
 
 declare double %floor(double)
 
