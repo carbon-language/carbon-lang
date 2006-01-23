@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
+#include "llvm/Module.h"
 #include "llvm/Support/CommandLine.h"
 #include <iostream>
 
@@ -67,6 +68,12 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   setOperationAction(ISD::SEXTLOAD, MVT::i16, Expand);
   
   setOperationAction(ISD::TRUNCSTORE, MVT::i1, Promote);
+
+  if (EnableAlphaLSMark) {
+    setOperationAction(ISD::LOAD, MVT::i64, Custom);
+    setOperationAction(ISD::LOAD, MVT::f64, Custom);
+    setOperationAction(ISD::LOAD, MVT::f32, Custom);
+  }
 
   setOperationAction(ISD::FREM, MVT::f32, Expand);
   setOperationAction(ISD::FREM, MVT::f64, Expand);
@@ -145,6 +152,12 @@ const char *AlphaTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case AlphaISD::RelLit: return "Alpha::RelLit";
   case AlphaISD::GlobalBaseReg: return "Alpha::GlobalBaseReg";
   case AlphaISD::DivCall: return "Alpha::DivCall";
+  case AlphaISD::LDQ_: return "Alpha::LDQ_";
+  case AlphaISD::LDT_: return "Alpha::LDT_";
+  case AlphaISD::LDS_: return "Alpha::LDS_";
+  case AlphaISD::LDL_: return "Alpha::LDL_";
+  case AlphaISD::LDWU_: return "Alpha::LDWU_";
+  case AlphaISD::LDBU_:  return "Alpha::LDBU_";
   }
 }
 
@@ -396,7 +409,6 @@ LowerVAArg(SDOperand Chain, SDOperand VAListP, Value *VAListV,
   return std::make_pair(Result, Update);
 }
 
-
 SDOperand AlphaTargetLowering::
 LowerVACopy(SDOperand Chain, SDOperand SrcP, Value *SrcV, SDOperand DestP,
             Value *DestV, SelectionDAG &DAG) {
@@ -424,6 +436,53 @@ void AlphaTargetLowering::restoreRA(MachineBasicBlock* BB)
   BuildMI(BB, Alpha::BIS, 2, Alpha::R26).addReg(RA).addReg(RA);
 }
 
+
+
+static void getValueInfo(const Value* v, int& type, int& fun, int& offset)
+{
+  fun = type = offset = 0;
+  if (v == NULL) {
+    type = 0;
+  } else if (const GlobalValue* GV = dyn_cast<GlobalValue>(v)) {
+    type = 1;
+    const Module* M = GV->getParent();
+    for(Module::const_global_iterator ii = M->global_begin(); &*ii != GV; ++ii)
+      ++offset;
+  } else if (const Argument* Arg = dyn_cast<Argument>(v)) {
+    type = 2;
+    const Function* F = Arg->getParent();
+    const Module* M = F->getParent();
+    for(Module::const_iterator ii = M->begin(); &*ii != F; ++ii)
+      ++fun;
+    for(Function::const_arg_iterator ii = F->arg_begin(); &*ii != Arg; ++ii)
+      ++offset;
+  } else if (const Instruction* I = dyn_cast<Instruction>(v)) {
+    assert(dyn_cast<PointerType>(I->getType()));
+    type = 3;
+    const BasicBlock* bb = I->getParent();
+    const Function* F = bb->getParent();
+    const Module* M = F->getParent();
+    for(Module::const_iterator ii = M->begin(); &*ii != F; ++ii)
+      ++fun;
+    for(Function::const_iterator ii = F->begin(); &*ii != bb; ++ii)
+      offset += ii->size();
+    for(BasicBlock::const_iterator ii = bb->begin(); &*ii != I; ++ii)
+      ++offset;
+  } else if (const Constant* C = dyn_cast<Constant>(v)) {
+    //Don't know how to look these up yet
+    type = 0;
+  } else {
+    assert(0 && "Error in value marking");
+  }
+  //type = 4: register spilling
+  //type = 5: global address loading or constant loading
+}
+
+static int getUID()
+{
+  static int id = 0;
+  return ++id;
+}
 
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
@@ -515,6 +574,53 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       return DAG.getNode(AlphaISD::DivCall, MVT::i64, Addr, Tmp1, Tmp2);
     }
     break;
+
+  case ISD::LOAD:
+  case ISD::SEXTLOAD:
+  case ISD::ZEXTLOAD:
+    {
+      SDOperand Chain   = Op.getOperand(0);
+      SDOperand Address = Op.getOperand(1);
+
+      unsigned Opc;
+      unsigned opcode = Op.getOpcode();
+
+      if (opcode == ISD::LOAD)
+        switch (Op.Val->getValueType(0)) {
+        default: Op.Val->dump(); assert(0 && "Bad load!");
+        case MVT::i64: Opc = AlphaISD::LDQ_; break;
+        case MVT::f64: Opc = AlphaISD::LDT_; break;
+        case MVT::f32: Opc = AlphaISD::LDS_; break;
+        }
+      else
+        switch (cast<VTSDNode>(Op.getOperand(3))->getVT()) {
+        default: Op.Val->dump(); assert(0 && "Bad sign extend!");
+        case MVT::i32: Opc = AlphaISD::LDL_;
+          assert(opcode != ISD::ZEXTLOAD && "Not sext"); break;
+        case MVT::i16: Opc = AlphaISD::LDWU_;
+          assert(opcode != ISD::SEXTLOAD && "Not zext"); break;
+        case MVT::i1: //FIXME: Treat i1 as i8 since there are problems otherwise
+        case MVT::i8: Opc = AlphaISD::LDBU_;
+          assert(opcode != ISD::SEXTLOAD && "Not zext"); break;
+        }
+
+      int i, j, k;
+      getValueInfo(dyn_cast<SrcValueSDNode>(Op.getOperand(2))->getValue(), i, j, k);
+
+      SDOperand Zero = DAG.getConstant(0, MVT::i64);
+      std::vector<MVT::ValueType> VTS;
+      VTS.push_back(Op.Val->getValueType(0));
+      VTS.push_back(MVT::Other);
+      std::vector<SDOperand> ARGS;
+      ARGS.push_back(Zero);
+      ARGS.push_back(Address);
+      ARGS.push_back(DAG.getConstant(i, MVT::i64));
+      ARGS.push_back(DAG.getConstant(j, MVT::i64));
+      ARGS.push_back(DAG.getConstant(k, MVT::i64));
+      ARGS.push_back(DAG.getConstant(getUID(), MVT::i64));
+      ARGS.push_back(Chain);
+      return DAG.getNode(Opc, VTS, ARGS);
+    }
 
   }
 
