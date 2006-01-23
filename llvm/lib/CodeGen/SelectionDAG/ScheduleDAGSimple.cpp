@@ -18,9 +18,7 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
-#include <iostream>
 using namespace llvm;
 
 namespace {
