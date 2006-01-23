@@ -23,7 +23,8 @@
       <li><a href="#linkage">Linkage Types</a></li>
       <li><a href="#callingconv">Calling Conventions</a></li>
       <li><a href="#globalvars">Global Variables</a></li>
-      <li><a href="#functionstructure">Function Structure</a></li>
+      <li><a href="#functionstructure">Functions</a></li>
+      <li><a href="#moduleasm">Module-Level Inline Assembly</a></li>
     </ol>
   </li>
   <li><a href="#typesystem">Type System</a>
@@ -580,6 +581,34 @@ a power of 2.</p>
 
 </div>
 
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="moduleasm">Module-Level Inline Assembly</a></li>
+</div>
+
+<div class="doc_text">
+<p>
+Modules may contain "module-level inline asm" blocks, which corresponds to the
+GCC "file scope inline asm" blocks.  These blocks are internally concatenated by
+LLVM and treated as a single unit, but may be separated in the .ll file if
+desired.  The syntax is very simple:
+</p>
+
+<div class="doc_code"><pre>
+  asm "inline asm code goes here"
+  asm "more can go here"
+</pre></div>
+
+<p>The strings can contain any character by escaping non-printable characters.
+   The escape sequence used is simply "\xx" where "xx" is the two digit hex code
+   for the number.
+</p>
+
+<p>
+  The inline asm code is simply printed to the machine code .s file when
+  assembly code is generated.
+</p>
+</div>
 
 
 <!-- *********************************************************************** -->
