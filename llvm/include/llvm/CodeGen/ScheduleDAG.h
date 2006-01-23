@@ -35,6 +35,14 @@ namespace llvm {
   typedef std::vector<NodeInfoPtr>::iterator NIIterator;
 
 
+  // Scheduling heuristics
+  enum SchedHeuristics {
+    noScheduling,
+    simpleScheduling,
+    simpleNoItinScheduling
+  };
+
+
   //===--------------------------------------------------------------------===//
   ///
   /// Node group -  This struct is used to manage flagged node groups.
@@ -45,7 +53,7 @@ namespace llvm {
     NodeInfo      *Dominator;             // Node with highest latency
     unsigned      Latency;                // Total latency of the group
     int           Pending;                // Number of visits pending before
-    //    adding to order  
+                                          // adding to order  
 
   public:
     // Ctor.
@@ -76,7 +84,6 @@ namespace llvm {
     }
 
     static void Add(NodeInfo *D, NodeInfo *U);
-    static unsigned CountInternalUses(NodeInfo *D, NodeInfo *U);
   };
 
   //===--------------------------------------------------------------------===//
@@ -232,6 +239,7 @@ namespace llvm {
 
   class ScheduleDAG {
   public:
+    SchedHeuristics Heuristic;            // Scheduling heuristic
     SelectionDAG &DAG;                    // DAG of the current basic block
     MachineBasicBlock *BB;                // Current basic block
     const TargetMachine &TM;              // Target processor
@@ -240,10 +248,15 @@ namespace llvm {
     SSARegMap *RegMap;                    // Virtual/real register map
     MachineConstantPool *ConstPool;       // Target constant pool
     std::map<SDNode *, NodeInfo *> Map;   // Map nodes to info
+    unsigned NodeCount;                   // Number of nodes in DAG
+    bool HasGroups;                       // True if there are any groups
+    NodeInfo *Info;                       // Info for nodes being scheduled
+    NIVector Ordering;                    // Emit ordering of nodes
 
-    ScheduleDAG(SelectionDAG &dag, MachineBasicBlock *bb,
+    ScheduleDAG(SchedHeuristics hstc, SelectionDAG &dag, MachineBasicBlock *bb,
                 const TargetMachine &tm)
-      : DAG(dag), BB(bb), TM(tm) {}
+      : Heuristic(hstc), DAG(dag), BB(bb), TM(tm),
+        NodeCount(0), HasGroups(false), Info(NULL) {}
 
     virtual ~ScheduleDAG() {};
 
@@ -263,25 +276,61 @@ namespace llvm {
       return NI->VRBase + Op.ResNo;
     }
 
+    /// isPassiveNode - Return true if the node is a non-scheduled leaf.
+    ///
+    bool isPassiveNode(SDNode *Node) {
+      if (isa<ConstantSDNode>(Node))       return true;
+      if (isa<RegisterSDNode>(Node))       return true;
+      if (isa<GlobalAddressSDNode>(Node))  return true;
+      if (isa<BasicBlockSDNode>(Node))     return true;
+      if (isa<FrameIndexSDNode>(Node))     return true;
+      if (isa<ConstantPoolSDNode>(Node))   return true;
+      if (isa<ExternalSymbolSDNode>(Node)) return true;
+      return false;
+    }
+
+    /// EmitNode - Generate machine code for an node and needed dependencies.
+    ///
     void EmitNode(NodeInfo *NI);
 
+    /// EmitAll - Emit all nodes in schedule sorted order.
+    ///
+    void EmitAll();
+
+    /// Schedule - Order nodes according to selected style.
+    ///
     virtual void Schedule() {};
 
-    virtual void print(std::ostream &O) const {};
+    /// printNI - Print node info.
+    ///
+    void printNI(std::ostream &O, NodeInfo *NI) const;
+
+    /// printChanges - Hilight changes in order caused by scheduling.
+    ///
+    void printChanges(unsigned Index) const;
+
+    /// print - Print ordering to specified output stream.
+    ///
+    void print(std::ostream &O) const;
 
     void dump(const char *tag) const;
 
     void dump() const;
 
   private:
-    unsigned CreateVirtualRegisters(MachineInstr *MI,
-                                    unsigned NumResults,
-                                    const TargetInstrDescriptor &II);
+    /// PrepareNodeInfo - Set up the basic minimum node info for scheduling.
+    /// 
+    void PrepareNodeInfo();
+
+    /// IdentifyGroups - Put flagged nodes into groups.
+    ///
+    void IdentifyGroups();
   };
 
   /// createSimpleDAGScheduler - This creates a simple two pass instruction
   /// scheduler.
-  ScheduleDAG* createSimpleDAGScheduler(SelectionDAG &DAG,
+  ScheduleDAG* createSimpleDAGScheduler(SchedHeuristics Heuristic,
+                                        SelectionDAG &DAG,
                                         MachineBasicBlock *BB);
 }
 

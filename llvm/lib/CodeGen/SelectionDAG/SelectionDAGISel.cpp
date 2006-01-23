@@ -54,6 +54,25 @@ static const bool ViewISelDAGs = 0;
 static const bool ViewSchedDAGs = 0;
 #endif
 
+namespace {
+  cl::opt<SchedHeuristics>
+  ISHeuristic(
+    "sched",
+    cl::desc("Choose scheduling style"),
+    cl::init(noScheduling),
+    cl::values(
+      clEnumValN(noScheduling, "none",
+                 "No scheduling: breath first sequencing"),
+      clEnumValN(simpleScheduling, "simple",
+                 "Simple two pass scheduling: minimize critical path "
+                 "and maximize processor utilization"),
+      clEnumValN(simpleNoItinScheduling, "simple-noitin",
+                 "Simple two pass scheduling: Same as simple "
+                 "except using generic latency"),
+      clEnumValEnd));
+} // namespace
+
+
 namespace llvm {
   //===--------------------------------------------------------------------===//
   /// FunctionLoweringInfo - This contains information that is global to a
@@ -1747,6 +1766,15 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
 /// target node in the graph.
 void SelectionDAGISel::ScheduleAndEmitDAG(SelectionDAG &DAG) {
   if (ViewSchedDAGs) DAG.viewGraph();
-  ScheduleDAG *SL = createSimpleDAGScheduler(DAG, BB);
+  ScheduleDAG *SL = NULL;
+
+  switch (ISHeuristic) {
+  default: assert(0 && "Unrecognized scheduling heuristic");
+  case noScheduling:
+  case simpleScheduling:
+  case simpleNoItinScheduling:
+    SL = createSimpleDAGScheduler(ISHeuristic, DAG, BB);
+    break;
+  }
   BB = SL->Run();
 }

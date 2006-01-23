@@ -51,11 +51,51 @@ static unsigned CountOperands(SDNode *Node) {
   return N;
 }
 
-/// CreateVirtualRegisters - Add result register values for things that are
-/// defined by this instruction.
-unsigned ScheduleDAG::CreateVirtualRegisters(MachineInstr *MI,
-                                             unsigned NumResults,
-                                             const TargetInstrDescriptor &II) {
+/// PrepareNodeInfo - Set up the basic minimum node info for scheduling.
+/// 
+void ScheduleDAG::PrepareNodeInfo() {
+  // Allocate node information
+  Info = new NodeInfo[NodeCount];
+
+  unsigned i = 0;
+  for (SelectionDAG::allnodes_iterator I = DAG.allnodes_begin(),
+       E = DAG.allnodes_end(); I != E; ++I, ++i) {
+    // Fast reference to node schedule info
+    NodeInfo* NI = &Info[i];
+    // Set up map
+    Map[I] = NI;
+    // Set node
+    NI->Node = I;
+    // Set pending visit count
+    NI->setPending(I->use_size());
+  }
+}
+
+/// IdentifyGroups - Put flagged nodes into groups.
+///
+void ScheduleDAG::IdentifyGroups() {
+  for (unsigned i = 0, N = NodeCount; i < N; i++) {
+    NodeInfo* NI = &Info[i];
+    SDNode *Node = NI->Node;
+
+    // For each operand (in reverse to only look at flags)
+    for (unsigned N = Node->getNumOperands(); 0 < N--;) {
+      // Get operand
+      SDOperand Op = Node->getOperand(N);
+      // No more flags to walk
+      if (Op.getValueType() != MVT::Flag) break;
+      // Add to node group
+      NodeGroup::Add(getNI(Op.Val), NI);
+      // Let evryone else know
+      HasGroups = true;
+    }
+  }
+}
+
+static unsigned CreateVirtualRegisters(MachineInstr *MI,
+                                       unsigned NumResults,
+                                       SSARegMap *RegMap,
+                                       const TargetInstrDescriptor &II) {
   // Create the result registers for this node and add the result regs to
   // the machine instruction.
   const TargetOperandInfo *OpInfo = II.OpInfo;
@@ -114,7 +154,7 @@ void ScheduleDAG::EmitNode(NodeInfo *NI) {
     
     // Otherwise, create new virtual registers.
     if (NumResults && VRBase == 0)
-      VRBase = CreateVirtualRegisters(MI, NumResults, II);
+      VRBase = CreateVirtualRegisters(MI, NumResults, RegMap, II);
     
     // Emit all of the actual operands of this instruction, adding them to the
     // instruction as appropriate.
@@ -250,6 +290,112 @@ void ScheduleDAG::EmitNode(NodeInfo *NI) {
   NI->VRBase = VRBase;
 }
 
+/// EmitAll - Emit all nodes in schedule sorted order.
+///
+void ScheduleDAG::EmitAll() {
+  // For each node in the ordering
+  for (unsigned i = 0, N = Ordering.size(); i < N; i++) {
+    // Get the scheduling info
+    NodeInfo *NI = Ordering[i];
+    if (NI->isInGroup()) {
+      NodeGroupIterator NGI(Ordering[i]);
+      while (NodeInfo *NI = NGI.next()) EmitNode(NI);
+    } else {
+      EmitNode(NI);
+    }
+  }
+}
+
+/// isFlagDefiner - Returns true if the node defines a flag result.
+static bool isFlagDefiner(SDNode *A) {
+  unsigned N = A->getNumValues();
+  return N && A->getValueType(N - 1) == MVT::Flag;
+}
+
+/// isFlagUser - Returns true if the node uses a flag result.
+///
+static bool isFlagUser(SDNode *A) {
+  unsigned N = A->getNumOperands();
+  return N && A->getOperand(N - 1).getValueType() == MVT::Flag;
+}
+
+/// printNI - Print node info.
+///
+void ScheduleDAG::printNI(std::ostream &O, NodeInfo *NI) const {
+#ifndef NDEBUG
+  SDNode *Node = NI->Node;
+  O << " "
+    << std::hex << Node << std::dec
+    << ", Lat=" << NI->Latency
+    << ", Slot=" << NI->Slot
+    << ", ARITY=(" << Node->getNumOperands() << ","
+                   << Node->getNumValues() << ")"
+    << " " << Node->getOperationName(&DAG);
+  if (isFlagDefiner(Node)) O << "<#";
+  if (isFlagUser(Node)) O << ">#";
+#endif
+}
+
+/// printChanges - Hilight changes in order caused by scheduling.
+///
+void ScheduleDAG::printChanges(unsigned Index) const {
+#ifndef NDEBUG
+  // Get the ordered node count
+  unsigned N = Ordering.size();
+  // Determine if any changes
+  unsigned i = 0;
+  for (; i < N; i++) {
+    NodeInfo *NI = Ordering[i];
+    if (NI->Preorder != i) break;
+  }
+  
+  if (i < N) {
+    std::cerr << Index << ". New Ordering\n";
+    
+    for (i = 0; i < N; i++) {
+      NodeInfo *NI = Ordering[i];
+      std::cerr << "  " << NI->Preorder << ". ";
+      printNI(std::cerr, NI);
+      std::cerr << "\n";
+      if (NI->isGroupDominator()) {
+        NodeGroup *Group = NI->Group;
+        for (NIIterator NII = Group->group_begin(), E = Group->group_end();
+             NII != E; NII++) {
+          std::cerr << "          ";
+          printNI(std::cerr, *NII);
+          std::cerr << "\n";
+        }
+      }
+    }
+  } else {
+    std::cerr << Index << ". No Changes\n";
+  }
+#endif
+}
+
+/// print - Print ordering to specified output stream.
+///
+void ScheduleDAG::print(std::ostream &O) const {
+#ifndef NDEBUG
+  using namespace std;
+  O << "Ordering\n";
+  for (unsigned i = 0, N = Ordering.size(); i < N; i++) {
+    NodeInfo *NI = Ordering[i];
+    printNI(O, NI);
+    O << "\n";
+    if (NI->isGroupDominator()) {
+      NodeGroup *Group = NI->Group;
+      for (NIIterator NII = Group->group_begin(), E = Group->group_end();
+           NII != E; NII++) {
+        O << "    ";
+        printNI(O, *NII);
+        O << "\n";
+      }
+    }
+  }
+#endif
+}
+
 void ScheduleDAG::dump(const char *tag) const {
   std::cerr << tag; dump();
 }
@@ -265,6 +411,88 @@ MachineBasicBlock *ScheduleDAG::Run() {
   MRI = TM.getRegisterInfo();
   RegMap = BB->getParent()->getSSARegMap();
   ConstPool = BB->getParent()->getConstantPool();
+
+  // Number the nodes
+  NodeCount = std::distance(DAG.allnodes_begin(), DAG.allnodes_end());
+  // Set up minimum info for scheduling
+  PrepareNodeInfo();
+  // Construct node groups for flagged nodes
+  IdentifyGroups();
+
   Schedule();
   return BB;
+}
+
+
+/// CountInternalUses - Returns the number of edges between the two nodes.
+///
+static unsigned CountInternalUses(NodeInfo *D, NodeInfo *U) {
+  unsigned N = 0;
+  for (unsigned M = U->Node->getNumOperands(); 0 < M--;) {
+    SDOperand Op = U->Node->getOperand(M);
+    if (Op.Val == D->Node) N++;
+  }
+
+  return N;
+}
+
+//===----------------------------------------------------------------------===//
+/// Add - Adds a definer and user pair to a node group.
+///
+void NodeGroup::Add(NodeInfo *D, NodeInfo *U) {
+  // Get current groups
+  NodeGroup *DGroup = D->Group;
+  NodeGroup *UGroup = U->Group;
+  // If both are members of groups
+  if (DGroup && UGroup) {
+    // There may have been another edge connecting 
+    if (DGroup == UGroup) return;
+    // Add the pending users count
+    DGroup->addPending(UGroup->getPending());
+    // For each member of the users group
+    NodeGroupIterator UNGI(U);
+    while (NodeInfo *UNI = UNGI.next() ) {
+      // Change the group
+      UNI->Group = DGroup;
+      // For each member of the definers group
+      NodeGroupIterator DNGI(D);
+      while (NodeInfo *DNI = DNGI.next() ) {
+        // Remove internal edges
+        DGroup->addPending(-CountInternalUses(DNI, UNI));
+      }
+    }
+    // Merge the two lists
+    DGroup->group_insert(DGroup->group_end(),
+                         UGroup->group_begin(), UGroup->group_end());
+  } else if (DGroup) {
+    // Make user member of definers group
+    U->Group = DGroup;
+    // Add users uses to definers group pending
+    DGroup->addPending(U->Node->use_size());
+    // For each member of the definers group
+    NodeGroupIterator DNGI(D);
+    while (NodeInfo *DNI = DNGI.next() ) {
+      // Remove internal edges
+      DGroup->addPending(-CountInternalUses(DNI, U));
+    }
+    DGroup->group_push_back(U);
+  } else if (UGroup) {
+    // Make definer member of users group
+    D->Group = UGroup;
+    // Add definers uses to users group pending
+    UGroup->addPending(D->Node->use_size());
+    // For each member of the users group
+    NodeGroupIterator UNGI(U);
+    while (NodeInfo *UNI = UNGI.next() ) {
+      // Remove internal edges
+      UGroup->addPending(-CountInternalUses(D, UNI));
+    }
+    UGroup->group_insert(UGroup->group_begin(), D);
+  } else {
+    D->Group = U->Group = DGroup = new NodeGroup();
+    DGroup->addPending(D->Node->use_size() + U->Node->use_size() -
+                       CountInternalUses(D, U));
+    DGroup->group_push_back(D);
+    DGroup->group_push_back(U);
+  }
 }

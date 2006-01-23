@@ -21,31 +21,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include <iostream>
-#include <ios>
-#include <algorithm>
 using namespace llvm;
-
-namespace {
-  // Style of scheduling to use.
-  enum ScheduleChoices {
-    noScheduling,
-    simpleScheduling,
-    simpleNoItinScheduling
-  };
-} // namespace
-
-cl::opt<ScheduleChoices> ScheduleStyle("sched",
-  cl::desc("Choose scheduling style"),
-  cl::init(noScheduling),
-  cl::values(
-    clEnumValN(noScheduling, "none",
-              "Trivial emission with no analysis"),
-    clEnumValN(simpleScheduling, "simple",
-              "Minimize critical path and maximize processor utilization"),
-    clEnumValN(simpleNoItinScheduling, "simple-noitin",
-              "Same as simple except using generic latency"),
-   clEnumValEnd));
-
 
 namespace {
 //===----------------------------------------------------------------------===//
@@ -212,10 +188,6 @@ public:
 ///
 class ScheduleDAGSimple : public ScheduleDAG {
 private:
-  unsigned NodeCount;                   // Number of nodes in DAG
-  bool HasGroups;                       // True if there are any groups
-  NodeInfo *Info;                       // Info for nodes being scheduled
-  NIVector Ordering;                    // Emit ordering of nodes
   ResourceTally<unsigned> Tally;        // Resource usage tally
   unsigned NSlots;                      // Total latency
   static const unsigned NotFound = ~0U; // Search marker
@@ -223,10 +195,9 @@ private:
 public:
 
   // Ctor.
-  ScheduleDAGSimple(SelectionDAG &dag, MachineBasicBlock *bb,
-                    const TargetMachine &tm)
-    : ScheduleDAG(dag, bb, tm),
-      NodeCount(0), HasGroups(false), Info(NULL), Tally(), NSlots(0) {
+  ScheduleDAGSimple(SchedHeuristics hstc, SelectionDAG &dag,
+                    MachineBasicBlock *bb, const TargetMachine &tm)
+    : ScheduleDAG(hstc, dag, bb, tm), Tally(), NSlots(0) {
     assert(&TII && "Target doesn't provide instr info?");
     assert(&MRI && "Target doesn't provide register info?");
   }
@@ -234,28 +205,17 @@ public:
   virtual ~ScheduleDAGSimple() {};
 
 private:
-  static bool isFlagDefiner(SDNode *A);
-  static bool isFlagUser(SDNode *A);
   static bool isDefiner(NodeInfo *A, NodeInfo *B);
-  static bool isPassiveNode(SDNode *Node);
   void IncludeNode(NodeInfo *NI);
   void VisitAll();
   void Schedule();
-  void IdentifyGroups();
   void GatherSchedulingInfo();
   void FakeGroupDominators(); 
-  void PrepareNodeInfo();
   bool isStrongDependency(NodeInfo *A, NodeInfo *B);
   bool isWeakDependency(NodeInfo *A, NodeInfo *B);
   void ScheduleBackward();
   void ScheduleForward();
-  void EmitAll();
-
-  void printChanges(unsigned Index);
-  void printSI(std::ostream &O, NodeInfo *NI) const;
-  void print(std::ostream &O) const;
 };
-
 
 //===----------------------------------------------------------------------===//
 /// Special case itineraries.
@@ -275,103 +235,12 @@ static InstrStage IntStage   = { 2, RSInteger };
 static InstrStage FloatStage = { 3, RSFloat };
 //===----------------------------------------------------------------------===//
 
-
-//===----------------------------------------------------------------------===//
-
 } // namespace
 
 //===----------------------------------------------------------------------===//
 
 
 //===----------------------------------------------------------------------===//
-/// Add - Adds a definer and user pair to a node group.
-///
-void NodeGroup::Add(NodeInfo *D, NodeInfo *U) {
-  // Get current groups
-  NodeGroup *DGroup = D->Group;
-  NodeGroup *UGroup = U->Group;
-  // If both are members of groups
-  if (DGroup && UGroup) {
-    // There may have been another edge connecting 
-    if (DGroup == UGroup) return;
-    // Add the pending users count
-    DGroup->addPending(UGroup->getPending());
-    // For each member of the users group
-    NodeGroupIterator UNGI(U);
-    while (NodeInfo *UNI = UNGI.next() ) {
-      // Change the group
-      UNI->Group = DGroup;
-      // For each member of the definers group
-      NodeGroupIterator DNGI(D);
-      while (NodeInfo *DNI = DNGI.next() ) {
-        // Remove internal edges
-        DGroup->addPending(-CountInternalUses(DNI, UNI));
-      }
-    }
-    // Merge the two lists
-    DGroup->group_insert(DGroup->group_end(),
-                         UGroup->group_begin(), UGroup->group_end());
-  } else if (DGroup) {
-    // Make user member of definers group
-    U->Group = DGroup;
-    // Add users uses to definers group pending
-    DGroup->addPending(U->Node->use_size());
-    // For each member of the definers group
-    NodeGroupIterator DNGI(D);
-    while (NodeInfo *DNI = DNGI.next() ) {
-      // Remove internal edges
-      DGroup->addPending(-CountInternalUses(DNI, U));
-    }
-    DGroup->group_push_back(U);
-  } else if (UGroup) {
-    // Make definer member of users group
-    D->Group = UGroup;
-    // Add definers uses to users group pending
-    UGroup->addPending(D->Node->use_size());
-    // For each member of the users group
-    NodeGroupIterator UNGI(U);
-    while (NodeInfo *UNI = UNGI.next() ) {
-      // Remove internal edges
-      UGroup->addPending(-CountInternalUses(D, UNI));
-    }
-    UGroup->group_insert(UGroup->group_begin(), D);
-  } else {
-    D->Group = U->Group = DGroup = new NodeGroup();
-    DGroup->addPending(D->Node->use_size() + U->Node->use_size() -
-                       CountInternalUses(D, U));
-    DGroup->group_push_back(D);
-    DGroup->group_push_back(U);
-  }
-}
-
-/// CountInternalUses - Returns the number of edges between the two nodes.
-///
-unsigned NodeGroup::CountInternalUses(NodeInfo *D, NodeInfo *U) {
-  unsigned N = 0;
-  for (unsigned M = U->Node->getNumOperands(); 0 < M--;) {
-    SDOperand Op = U->Node->getOperand(M);
-    if (Op.Val == D->Node) N++;
-  }
-
-  return N;
-}
-//===----------------------------------------------------------------------===//
-
-
-//===----------------------------------------------------------------------===//
-/// isFlagDefiner - Returns true if the node defines a flag result.
-bool ScheduleDAGSimple::isFlagDefiner(SDNode *A) {
-  unsigned N = A->getNumValues();
-  return N && A->getValueType(N - 1) == MVT::Flag;
-}
-
-/// isFlagUser - Returns true if the node uses a flag result.
-///
-bool ScheduleDAGSimple::isFlagUser(SDNode *A) {
-  unsigned N = A->getNumOperands();
-  return N && A->getOperand(N - 1).getValueType() == MVT::Flag;
-}
-
 /// isDefiner - Return true if node A is a definer for B.
 ///
 bool ScheduleDAGSimple::isDefiner(NodeInfo *A, NodeInfo *B) {
@@ -388,19 +257,6 @@ bool ScheduleDAGSimple::isDefiner(NodeInfo *A, NodeInfo *B) {
       if (Node == Op.Val) return true;
     }
   }
-  return false;
-}
-
-/// isPassiveNode - Return true if the node is a non-scheduled leaf.
-///
-bool ScheduleDAGSimple::isPassiveNode(SDNode *Node) {
-  if (isa<ConstantSDNode>(Node))       return true;
-  if (isa<RegisterSDNode>(Node))       return true;
-  if (isa<GlobalAddressSDNode>(Node))  return true;
-  if (isa<BasicBlockSDNode>(Node))     return true;
-  if (isa<FrameIndexSDNode>(Node))     return true;
-  if (isa<ConstantPoolSDNode>(Node))   return true;
-  if (isa<ExternalSymbolSDNode>(Node)) return true;
   return false;
 }
 
@@ -432,62 +288,6 @@ void ScheduleDAGSimple::IncludeNode(NodeInfo *NI) {
   NI->setPending(Count);
 }
 
-/// VisitAll - Visit each node breadth-wise to produce an initial ordering.
-/// Note that the ordering in the Nodes vector is reversed.
-void ScheduleDAGSimple::VisitAll() {
-  // Add first element to list
-  NodeInfo *NI = getNI(DAG.getRoot().Val);
-  if (NI->isInGroup()) {
-    Ordering.push_back(NI->Group->getDominator());
-  } else {
-    Ordering.push_back(NI);
-  }
-
-  // Iterate through all nodes that have been added
-  for (unsigned i = 0; i < Ordering.size(); i++) { // note: size() varies
-    // Visit all operands
-    NodeGroupOpIterator NGI(Ordering[i]);
-    while (!NGI.isEnd()) {
-      // Get next operand
-      SDOperand Op = NGI.next();
-      // Get node
-      SDNode *Node = Op.Val;
-      // Ignore passive nodes
-      if (isPassiveNode(Node)) continue;
-      // Check out node
-      IncludeNode(getNI(Node));
-    }
-  }
-
-  // Add entry node last (IncludeNode filters entry nodes)
-  if (DAG.getEntryNode().Val != DAG.getRoot().Val)
-    Ordering.push_back(getNI(DAG.getEntryNode().Val));
-    
-  // Reverse the order
-  std::reverse(Ordering.begin(), Ordering.end());
-}
-
-/// IdentifyGroups - Put flagged nodes into groups.
-///
-void ScheduleDAGSimple::IdentifyGroups() {
-  for (unsigned i = 0, N = NodeCount; i < N; i++) {
-    NodeInfo* NI = &Info[i];
-    SDNode *Node = NI->Node;
-
-    // For each operand (in reverse to only look at flags)
-    for (unsigned N = Node->getNumOperands(); 0 < N--;) {
-      // Get operand
-      SDOperand Op = Node->getOperand(N);
-      // No more flags to walk
-      if (Op.getValueType() != MVT::Flag) break;
-      // Add to node group
-      NodeGroup::Add(getNI(Op.Val), NI);
-      // Let evryone else know
-      HasGroups = true;
-    }
-  }
-}
-
 /// GatherSchedulingInfo - Get latency and resource information about each node.
 ///
 void ScheduleDAGSimple::GatherSchedulingInfo() {
@@ -501,7 +301,7 @@ void ScheduleDAGSimple::GatherSchedulingInfo() {
     SDNode *Node = NI->Node;
     
     // If there are itineraries and it is a machine instruction
-    if (InstrItins.isEmpty() || ScheduleStyle == simpleNoItinScheduling) {
+    if (InstrItins.isEmpty() || Heuristic == simpleNoItinScheduling) {
       // If machine opcode
       if (Node->isTargetOpcode()) {
         // Get return type to guess which processing unit 
@@ -572,6 +372,41 @@ void ScheduleDAGSimple::GatherSchedulingInfo() {
   }
 }
 
+/// VisitAll - Visit each node breadth-wise to produce an initial ordering.
+/// Note that the ordering in the Nodes vector is reversed.
+void ScheduleDAGSimple::VisitAll() {
+  // Add first element to list
+  NodeInfo *NI = getNI(DAG.getRoot().Val);
+  if (NI->isInGroup()) {
+    Ordering.push_back(NI->Group->getDominator());
+  } else {
+    Ordering.push_back(NI);
+  }
+
+  // Iterate through all nodes that have been added
+  for (unsigned i = 0; i < Ordering.size(); i++) { // note: size() varies
+    // Visit all operands
+    NodeGroupOpIterator NGI(Ordering[i]);
+    while (!NGI.isEnd()) {
+      // Get next operand
+      SDOperand Op = NGI.next();
+      // Get node
+      SDNode *Node = Op.Val;
+      // Ignore passive nodes
+      if (isPassiveNode(Node)) continue;
+      // Check out node
+      IncludeNode(getNI(Node));
+    }
+  }
+
+  // Add entry node last (IncludeNode filters entry nodes)
+  if (DAG.getEntryNode().Val != DAG.getRoot().Val)
+    Ordering.push_back(getNI(DAG.getEntryNode().Val));
+    
+  // Reverse the order
+  std::reverse(Ordering.begin(), Ordering.end());
+}
+
 /// FakeGroupDominators - Set dominators for non-scheduling.
 /// 
 void ScheduleDAGSimple::FakeGroupDominators() {
@@ -585,26 +420,6 @@ void ScheduleDAGSimple::FakeGroupDominators() {
         Group->setDominator(NI);
       }
     }
-  }
-}
-
-/// PrepareNodeInfo - Set up the basic minimum node info for scheduling.
-/// 
-void ScheduleDAGSimple::PrepareNodeInfo() {
-  // Allocate node information
-  Info = new NodeInfo[NodeCount];
-
-  unsigned i = 0;
-  for (SelectionDAG::allnodes_iterator I = DAG.allnodes_begin(),
-       E = DAG.allnodes_end(); I != E; ++I, ++i) {
-    // Fast reference to node schedule info
-    NodeInfo* NI = &Info[i];
-    // Set up map
-    Map[I] = NI;
-    // Set node
-    NI->Node = I;
-    // Set pending visit count
-    NI->setPending(I->use_size());
   }
 }
 
@@ -742,34 +557,11 @@ void ScheduleDAGSimple::ScheduleForward() {
   }
 }
 
-/// EmitAll - Emit all nodes in schedule sorted order.
-///
-void ScheduleDAGSimple::EmitAll() {
-  // For each node in the ordering
-  for (unsigned i = 0, N = Ordering.size(); i < N; i++) {
-    // Get the scheduling info
-    NodeInfo *NI = Ordering[i];
-    if (NI->isInGroup()) {
-      NodeGroupIterator NGI(Ordering[i]);
-      while (NodeInfo *NI = NGI.next()) EmitNode(NI);
-    } else {
-      EmitNode(NI);
-    }
-  }
-}
-
 /// Schedule - Order nodes according to selected style.
 ///
 void ScheduleDAGSimple::Schedule() {
-  // Number the nodes
-  NodeCount = std::distance(DAG.allnodes_begin(), DAG.allnodes_end());
   // Test to see if scheduling should occur
-  bool ShouldSchedule = NodeCount > 3 && ScheduleStyle != noScheduling;
-  // Set up minimum info for scheduling
-  PrepareNodeInfo();
-  // Construct node groups for flagged nodes
-  IdentifyGroups();
-
+  bool ShouldSchedule = NodeCount > 3 && Heuristic != noScheduling;
   // Don't waste time if is only entry and return
   if (ShouldSchedule) {
     // Get latency and resource requirements
@@ -806,86 +598,11 @@ void ScheduleDAGSimple::Schedule() {
   EmitAll();
 }
 
-/// printChanges - Hilight changes in order caused by scheduling.
-///
-void ScheduleDAGSimple::printChanges(unsigned Index) {
-#ifndef NDEBUG
-  // Get the ordered node count
-  unsigned N = Ordering.size();
-  // Determine if any changes
-  unsigned i = 0;
-  for (; i < N; i++) {
-    NodeInfo *NI = Ordering[i];
-    if (NI->Preorder != i) break;
-  }
-  
-  if (i < N) {
-    std::cerr << Index << ". New Ordering\n";
-    
-    for (i = 0; i < N; i++) {
-      NodeInfo *NI = Ordering[i];
-      std::cerr << "  " << NI->Preorder << ". ";
-      printSI(std::cerr, NI);
-      std::cerr << "\n";
-      if (NI->isGroupDominator()) {
-        NodeGroup *Group = NI->Group;
-        for (NIIterator NII = Group->group_begin(), E = Group->group_end();
-             NII != E; NII++) {
-          std::cerr << "          ";
-          printSI(std::cerr, *NII);
-          std::cerr << "\n";
-        }
-      }
-    }
-  } else {
-    std::cerr << Index << ". No Changes\n";
-  }
-#endif
-}
-
-/// printSI - Print schedule info.
-///
-void ScheduleDAGSimple::printSI(std::ostream &O, NodeInfo *NI) const {
-#ifndef NDEBUG
-  SDNode *Node = NI->Node;
-  O << " "
-    << std::hex << Node << std::dec
-    << ", Lat=" << NI->Latency
-    << ", Slot=" << NI->Slot
-    << ", ARITY=(" << Node->getNumOperands() << ","
-                   << Node->getNumValues() << ")"
-    << " " << Node->getOperationName(&DAG);
-  if (isFlagDefiner(Node)) O << "<#";
-  if (isFlagUser(Node)) O << ">#";
-#endif
-}
-
-/// print - Print ordering to specified output stream.
-///
-void ScheduleDAGSimple::print(std::ostream &O) const {
-#ifndef NDEBUG
-  using namespace std;
-  O << "Ordering\n";
-  for (unsigned i = 0, N = Ordering.size(); i < N; i++) {
-    NodeInfo *NI = Ordering[i];
-    printSI(O, NI);
-    O << "\n";
-    if (NI->isGroupDominator()) {
-      NodeGroup *Group = NI->Group;
-      for (NIIterator NII = Group->group_begin(), E = Group->group_end();
-           NII != E; NII++) {
-        O << "    ";
-        printSI(O, *NII);
-        O << "\n";
-      }
-    }
-  }
-#endif
-}
 
 /// createSimpleDAGScheduler - This creates a simple two pass instruction
 /// scheduler.
-llvm::ScheduleDAG* llvm::createSimpleDAGScheduler(SelectionDAG &DAG,
+llvm::ScheduleDAG* llvm::createSimpleDAGScheduler(SchedHeuristics Heuristic,
+                                                  SelectionDAG &DAG,
                                                   MachineBasicBlock *BB) {
-  return new ScheduleDAGSimple(DAG, BB, DAG.getTarget());
+  return new ScheduleDAGSimple(Heuristic, DAG, BB,  DAG.getTarget());
 }
