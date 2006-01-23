@@ -70,10 +70,10 @@ private:
   GlobalListType GlobalList;     // The Global Variables in the module
   FunctionListType FunctionList; // The Functions in the module
   LibraryListType LibraryList;   // The Libraries needed by the module
+  std::string GlobalScopeAsm;    // Inline Asm at global scope.
   SymbolTable *SymTab;           // Symbol Table for the module
   std::string ModuleID;          // Human readable identifier for the module
   std::string TargetTriple;      // Platform target triple Module compiled on
-
   Endianness  Endian;     // Endianness assumed in the module
   PointerSize PtrSize;    // Pointer size assumed in the module
 
@@ -97,6 +97,10 @@ public:
   PointerSize getPointerSize() const { return PtrSize; }
   void setPointerSize(PointerSize PS) { PtrSize = PS; }
 
+  // Access to any module-scope inline asm blocks.
+  const std::string &getInlineAsm() const { return GlobalScopeAsm; }
+  void setInlineAsm(const std::string &Asm) { GlobalScopeAsm = Asm; }
+  
   //===--------------------------------------------------------------------===//
   // Methods for easy access to the functions in the module.
   //
