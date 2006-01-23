@@ -318,6 +318,10 @@ public:
                          SDOperand Op1, SDOperand Op2, SDOperand Op3,
                          SDOperand Op4, SDOperand Op5, SDOperand Op6,
 			 SDOperand Op7);
+  SDOperand SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT, 
+                         SDOperand Op1, SDOperand Op2, SDOperand Op3,
+                         SDOperand Op4, SDOperand Op5, SDOperand Op6,
+			 SDOperand Op7, SDOperand Op8);
   SDOperand SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT1, 
                          MVT::ValueType VT2, SDOperand Op1, SDOperand Op2);
   SDOperand SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT1,
@@ -381,6 +385,22 @@ public:
     Ops.push_back(Op5);
     Ops.push_back(Op6);
     Ops.push_back(Op7);
+    return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Ops);
+  }
+  SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT,
+                          SDOperand Op1, SDOperand Op2, SDOperand Op3,
+                          SDOperand Op4, SDOperand Op5, SDOperand Op6,
+                          SDOperand Op7, SDOperand Op8) {
+    std::vector<SDOperand> Ops;
+    Ops.reserve(8);
+    Ops.push_back(Op1);
+    Ops.push_back(Op2);
+    Ops.push_back(Op3);
+    Ops.push_back(Op4);
+    Ops.push_back(Op5);
+    Ops.push_back(Op6);
+    Ops.push_back(Op7);
+    Ops.push_back(Op8);
     return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Ops);
   }
   SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT,

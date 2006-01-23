@@ -856,6 +856,24 @@ protected:
     Op4.Val->Uses.push_back(this); Op5.Val->Uses.push_back(this);
     Op6.Val->Uses.push_back(this);
   }
+  void setOperands(SDOperand Op0, SDOperand Op1, SDOperand Op2, SDOperand Op3,
+                   SDOperand Op4, SDOperand Op5, SDOperand Op6, SDOperand Op7) {
+    assert(NumOperands == 0 && "Should not have operands yet!");
+    OperandList = new SDOperand[8];
+    OperandList[0] = Op0;
+    OperandList[1] = Op1;
+    OperandList[2] = Op2;
+    OperandList[3] = Op3;
+    OperandList[4] = Op4;
+    OperandList[5] = Op5;
+    OperandList[6] = Op6;
+    OperandList[7] = Op7;
+    NumOperands = 8;
+    Op0.Val->Uses.push_back(this); Op1.Val->Uses.push_back(this);
+    Op2.Val->Uses.push_back(this); Op3.Val->Uses.push_back(this);
+    Op4.Val->Uses.push_back(this); Op5.Val->Uses.push_back(this);
+    Op6.Val->Uses.push_back(this); Op7.Val->Uses.push_back(this);
+  }
 
   void addUser(SDNode *User) {
     Uses.push_back(User);
