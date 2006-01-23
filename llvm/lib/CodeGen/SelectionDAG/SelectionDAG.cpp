@@ -1649,6 +1649,29 @@ SDOperand SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
   return SDOperand(N, 0);
 }
 
+SDOperand SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
+                                     MVT::ValueType VT, SDOperand Op1,
+                                     SDOperand Op2, SDOperand Op3,SDOperand Op4,
+                                     SDOperand Op5, SDOperand Op6,
+				     SDOperand Op7) {
+  // If an identical node already exists, use it.
+  std::vector<SDOperand> OpList;
+  OpList.push_back(Op1); OpList.push_back(Op2); OpList.push_back(Op3);
+  OpList.push_back(Op4); OpList.push_back(Op5); OpList.push_back(Op6);
+  OpList.push_back(Op7);
+  SDNode *&ON = OneResultNodes[std::make_pair(ISD::BUILTIN_OP_END+TargetOpc,
+                                              std::make_pair(VT, OpList))];
+  if (ON) return SDOperand(ON, 0);
+
+  RemoveNodeFromCSEMaps(N);
+  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
+  N->setValueTypes(VT);
+  N->setOperands(Op1, Op2, Op3, Op4, Op5, Op6, Op7);
+  
+  ON = N;   // Memoize the new node.
+  return SDOperand(N, 0);
+}
+
 SDOperand SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc, 
                                      MVT::ValueType VT1, MVT::ValueType VT2,
                                      SDOperand Op1, SDOperand Op2) {
