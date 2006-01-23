@@ -833,6 +833,13 @@ Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
       Dest->getTargetTriple() != Src->getTargetTriple())
     std::cerr << "WARNING: Linking two modules of different target triples!\n";
 
+  if (!Src->getInlineAsm().empty()) {
+    if (Dest->getInlineAsm().empty())
+      Dest->setInlineAsm(Src->getInlineAsm());
+    else
+      Dest->setInlineAsm(Dest->getInlineAsm()+"\n"+Src->getInlineAsm());
+  }
+  
   // Update the destination module's dependent libraries list with the libraries
   // from the source module. There's no opportunity for duplicates here as the
   // Module ensures that duplicate insertions are discarded.
