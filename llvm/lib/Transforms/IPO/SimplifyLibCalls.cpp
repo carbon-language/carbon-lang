@@ -289,13 +289,18 @@ public:
     return memcpy_func;
   }
 
-  Function* get_floorf() {
-    if (!floorf_func)
-      floorf_func = M->getOrInsertFunction("floorf", Type::FloatTy,
-                                           Type::FloatTy, NULL);
-    return floorf_func;
+  Function *getUnaryFloatFunction(const char *Name, Function *&Cache) {
+    if (!Cache)
+      Cache = M->getOrInsertFunction(Name, Type::FloatTy, Type::FloatTy, NULL);
+    return Cache;
   }
   
+  Function *get_floorf() { return getUnaryFloatFunction("floorf", floorf_func);}
+  Function *get_ceilf()  { return getUnaryFloatFunction( "ceilf",  ceilf_func);}
+  Function *get_roundf() { return getUnaryFloatFunction("roundf", roundf_func);}
+  Function *get_rintf()  { return getUnaryFloatFunction( "rintf",  rintf_func);}
+  Function *get_nearbyintf() { return getUnaryFloatFunction("nearbyintf",
+                                                            nearbyintf_func); }
 private:
   /// @brief Reset our cached data for a new Module
   void reset(Module& mod) {
@@ -309,19 +314,22 @@ private:
     strcpy_func = 0;
     strlen_func = 0;
     floorf_func = 0;
+    ceilf_func = 0;
+    roundf_func = 0;
+    rintf_func = 0;
+    nearbyintf_func = 0;
   }
 
 private:
-  Function* fputc_func;  ///< Cached fputc function
-  Function* fwrite_func; ///< Cached fwrite function
-  Function* memcpy_func; ///< Cached llvm.memcpy function
-  Function* memchr_func; ///< Cached memchr function
-  Function* sqrt_func;   ///< Cached sqrt function
-  Function* strcpy_func; ///< Cached strcpy function
-  Function* strlen_func; ///< Cached strlen function
-  Function* floorf_func; ///< Cached floorf function
-  Module* M;             ///< Cached Module
-  TargetData* TD;        ///< Cached TargetData
+  /// Caches for function pointers.
+  Function *fputc_func, *fwrite_func;
+  Function *memcpy_func, *memchr_func;
+  Function* sqrt_func;
+  Function *strcpy_func, *strlen_func;
+  Function *floorf_func, *ceilf_func, *roundf_func;
+  Function *rintf_func, *nearbyintf_func;
+  Module *M;             ///< Cached Module
+  TargetData *TD;        ///< Cached TargetData
 };
 
 // Register the pass
@@ -1805,9 +1813,6 @@ struct UnaryDoubleFPOptimizer : public LibCallOptimization {
 };
 
 
-/// This LibCallOptimization will simplify calls to the "floor" library
-/// function.
-/// @brief Simplify the floor library function.
 struct FloorOptimization : public UnaryDoubleFPOptimizer {
   FloorOptimization()
     : UnaryDoubleFPOptimizer("floor", "Number of 'floor' calls simplified") {}
@@ -1822,7 +1827,62 @@ struct FloorOptimization : public UnaryDoubleFPOptimizer {
   }
 } FloorOptimizer;
 
+struct CeilOptimization : public UnaryDoubleFPOptimizer {
+  CeilOptimization()
+  : UnaryDoubleFPOptimizer("ceil", "Number of 'ceil' calls simplified") {}
+  
+  virtual bool OptimizeCall(CallInst *CI, SimplifyLibCalls &SLC) {
+#ifdef HAVE_CEILF
+    // If this is a float argument passed in, convert to ceilf.
+    if (ShrinkFunctionToFloatVersion(CI, SLC, &SimplifyLibCalls::get_ceilf))
+      return true;
+#endif
+    return false; // opt failed
+  }
+} CeilOptimizer;
 
+struct RoundOptimization : public UnaryDoubleFPOptimizer {
+  RoundOptimization()
+  : UnaryDoubleFPOptimizer("round", "Number of 'round' calls simplified") {}
+  
+  virtual bool OptimizeCall(CallInst *CI, SimplifyLibCalls &SLC) {
+#ifdef HAVE_ROUNDF
+    // If this is a float argument passed in, convert to roundf.
+    if (ShrinkFunctionToFloatVersion(CI, SLC, &SimplifyLibCalls::get_roundf))
+      return true;
+#endif
+    return false; // opt failed
+  }
+} RoundOptimizer;
+
+struct RintOptimization : public UnaryDoubleFPOptimizer {
+  RintOptimization()
+  : UnaryDoubleFPOptimizer("rint", "Number of 'rint' calls simplified") {}
+  
+  virtual bool OptimizeCall(CallInst *CI, SimplifyLibCalls &SLC) {
+#ifdef HAVE_RINTF
+    // If this is a float argument passed in, convert to rintf.
+    if (ShrinkFunctionToFloatVersion(CI, SLC, &SimplifyLibCalls::get_rintf))
+      return true;
+#endif
+    return false; // opt failed
+  }
+} RintOptimizer;
+
+struct NearByIntOptimization : public UnaryDoubleFPOptimizer {
+  NearByIntOptimization()
+  : UnaryDoubleFPOptimizer("nearbyint",
+                           "Number of 'nearbyint' calls simplified") {}
+  
+  virtual bool OptimizeCall(CallInst *CI, SimplifyLibCalls &SLC) {
+#ifdef HAVE_NEARBYINTF
+    // If this is a float argument passed in, convert to nearbyintf.
+    if (ShrinkFunctionToFloatVersion(CI, SLC,&SimplifyLibCalls::get_nearbyintf))
+      return true;
+#endif
+    return false; // opt failed
+  }
+} NearByIntOptimizer;
 
 /// A function to compute the length of a null-terminated constant array of
 /// integers.  This function can't rely on the size of the constant array
