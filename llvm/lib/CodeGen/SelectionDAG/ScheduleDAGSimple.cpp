@@ -202,11 +202,12 @@ public:
 
   virtual ~ScheduleDAGSimple() {};
 
+  void Schedule();
+
 private:
   static bool isDefiner(NodeInfo *A, NodeInfo *B);
   void IncludeNode(NodeInfo *NI);
   void VisitAll();
-  void Schedule();
   void GatherSchedulingInfo();
   void FakeGroupDominators(); 
   bool isStrongDependency(NodeInfo *A, NodeInfo *B);
