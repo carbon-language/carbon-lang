@@ -27,10 +27,6 @@ using namespace llvm;
 namespace {
   // Register the target.
   RegisterTarget<SparcV8TargetMachine> X("sparcv8","  SPARC V8 (experimental)");
-
-  cl::opt<bool> EnableV8DAGDAG("enable-v8-dag-isel", cl::Hidden,
-                                cl::desc("Enable DAG-to-DAG isel for V8"),
-                                cl::init(0));
 }
 
 /// SparcV8TargetMachine ctor - Create an ILP32 architecture model
@@ -83,18 +79,10 @@ bool SparcV8TargetMachine::addPassesToEmitFile(PassManager &PM,
   if (PrintMachineCode)
     PM.add(new PrintFunctionPass());
 
-  if (!EnableV8DAGDAG) {
-    // Replace malloc and free instructions with library calls.
-    PM.add(createLowerAllocationsPass());
-    PM.add(createLowerSelectPass());
-    // Make sure that no unreachable blocks are instruction selected.
-    PM.add(createUnreachableBlockEliminationPass());
-    PM.add(createSparcV8SimpleInstructionSelector(*this));
-  } else {
-    // Make sure that no unreachable blocks are instruction selected.
-    PM.add(createUnreachableBlockEliminationPass());
-    PM.add(createSparcV8ISelDag(*this));
-  }
+  // Make sure that no unreachable blocks are instruction selected.
+  PM.add(createUnreachableBlockEliminationPass());
+  
+  PM.add(createSparcV8ISelDag(*this));
 
   // Print machine instructions as they were initially generated.
   if (PrintMachineCode)
