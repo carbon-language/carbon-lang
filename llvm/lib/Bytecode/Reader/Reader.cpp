@@ -1033,13 +1033,6 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
 
   BB->getInstList().push_back(Result);
 
-  if (this->hasUpgradedIntrinsicFunctions && isCall)
-    if (Instruction* inst = UpgradeIntrinsicCall(cast<CallInst>(Result))) {
-      Result->replaceAllUsesWith(inst);
-      Result->eraseFromParent();
-      Result = inst;
-    }
-
   unsigned TypeSlot;
   if (Result->getType() == InstTy)
     TypeSlot = iType;
@@ -2032,13 +2025,6 @@ void BytecodeReader::ParseModuleGlobalInfo() {
     Function *Func = new Function(FTy, GlobalValue::ExternalLinkage,
                                   "", TheModule);
 
-    // Replace with upgraded intrinsic function, if applicable.
-    if (Function* upgrdF = UpgradeIntrinsicFunction(Func)) {
-      hasUpgradedIntrinsicFunctions = true;
-      Func->eraseFromParent();
-      Func = upgrdF;
-    }
-
     insertValue(Func, (FnSignature & (~0U >> 1)) >> 5, ModuleValues);
 
     // Flags are not used yet.
@@ -2401,6 +2387,11 @@ void BytecodeReader::ParseBytecode(BufPtr Buf, unsigned Length,
 
     // Parse the module contents
     this->ParseModule();
+
+    // Look for intrinsic functions and CallInst that need to be upgraded
+    for (Module::iterator FI = TheModule->begin(), FE = TheModule->end();
+         FI != FE; ++FI)
+      UpgradeCallsToIntrinsic(FI);
 
     // Check for missing functions
     if (hasFunctions())
