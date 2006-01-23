@@ -166,6 +166,12 @@ const char *AlphaTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case AlphaISD::LDL_: return "Alpha::LDL_";
   case AlphaISD::LDWU_: return "Alpha::LDWU_";
   case AlphaISD::LDBU_:  return "Alpha::LDBU_";
+  case AlphaISD::STQ_: return "Alpha::STQ_";
+  case AlphaISD::STT_: return "Alpha::STT_";
+  case AlphaISD::STS_: return "Alpha::STS_";
+  case AlphaISD::STL_: return "Alpha::STL_";
+  case AlphaISD::STW_: return "Alpha::STW_";
+  case AlphaISD::STB_:  return "Alpha::STB_";
   }
 }
 
@@ -630,6 +636,51 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       ARGS.push_back(DAG.getConstant(getUID(), MVT::i64));
       return DAG.getNode(Opc, VTS, ARGS);
     }
+
+  case ISD::TRUNCSTORE:
+  case ISD::STORE:
+    {
+      SDOperand Chain   = Op.getOperand(0);
+      SDOperand Value = Op.getOperand(1);
+      SDOperand Address = Op.getOperand(2);
+
+      unsigned Opc;
+      unsigned opcode = Op.getOpcode();
+
+      if (opcode == ISD::STORE) {
+        switch(Value.getValueType()) {
+        default: assert(0 && "unknown Type in store");
+        case MVT::i64: Opc = AlphaISD::STQ_; break;
+        case MVT::f64: Opc = AlphaISD::STT_; break;
+        case MVT::f32: Opc = AlphaISD::STS_; break;
+        }
+      } else { //ISD::TRUNCSTORE
+        switch(cast<VTSDNode>(Op.getOperand(4))->getVT()) {
+        default: assert(0 && "unknown Type in store");
+        case MVT::i8: Opc = AlphaISD::STB_; break;
+        case MVT::i16: Opc = AlphaISD::STW_; break;
+        case MVT::i32: Opc = AlphaISD::STL_; break;
+        }
+      }
+
+      int i, j, k;
+      getValueInfo(cast<SrcValueSDNode>(Op.getOperand(3))->getValue(), i, j, k);
+
+      SDOperand Zero = DAG.getConstant(0, MVT::i64);
+      std::vector<MVT::ValueType> VTS;
+      VTS.push_back(MVT::Other);
+      std::vector<SDOperand> ARGS;
+      ARGS.push_back(Chain);
+      ARGS.push_back(Value);
+      ARGS.push_back(Zero);
+      ARGS.push_back(Address);
+      ARGS.push_back(DAG.getConstant(i, MVT::i64));
+      ARGS.push_back(DAG.getConstant(j, MVT::i64));
+      ARGS.push_back(DAG.getConstant(k, MVT::i64));
+      ARGS.push_back(DAG.getConstant(getUID(), MVT::i64));
+      return DAG.getNode(Opc, VTS, ARGS);
+    }
+
 
   }
 

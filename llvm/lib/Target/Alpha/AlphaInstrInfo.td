@@ -22,6 +22,9 @@ def SDTFPUnaryOpUnC  : SDTypeProfile<1, 1, [
 def SDTLoadA : SDTypeProfile<1, 6, [ // load
   SDTCisInt<1>, SDTCisPtrTy<2>, SDTCisInt<3>, SDTCisInt<4>, SDTCisInt<5>, SDTCisInt<6>
 ]>;
+def SDTStoreA : SDTypeProfile<0, 7, [ // load
+  SDTCisInt<1>, SDTCisPtrTy<2>, SDTCisInt<3>, SDTCisInt<4>, SDTCisInt<5>, SDTCisInt<6>
+]>;
 
 def Alpha_itoft   : SDNode<"AlphaISD::ITOFT_",    SDTIntToFPOp, []>;
 def Alpha_ftoit   : SDNode<"AlphaISD::FTOIT_",    SDTFPToIntOp, []>;
@@ -37,6 +40,12 @@ def Alpha_lds     : SDNode<"AlphaISD::LDS_",      SDTLoadA, [SDNPHasChain]>;
 def Alpha_ldl     : SDNode<"AlphaISD::LDL_",      SDTLoadA, [SDNPHasChain]>;
 def Alpha_ldwu    : SDNode<"AlphaISD::LDWU_",     SDTLoadA, [SDNPHasChain]>;
 def Alpha_ldbu    : SDNode<"AlphaISD::LDBU_",     SDTLoadA, [SDNPHasChain]>;
+def Alpha_stq     : SDNode<"AlphaISD::STQ_",      SDTStoreA, [SDNPHasChain]>;
+def Alpha_stl     : SDNode<"AlphaISD::STL_",      SDTStoreA, [SDNPHasChain]>;
+def Alpha_stw     : SDNode<"AlphaISD::STW_",      SDTStoreA, [SDNPHasChain]>;
+def Alpha_stb     : SDNode<"AlphaISD::STB_",      SDTStoreA, [SDNPHasChain]>;
+def Alpha_sts     : SDNode<"AlphaISD::STS_",      SDTStoreA, [SDNPHasChain]>;
+def Alpha_stt     : SDNode<"AlphaISD::STT_",      SDTStoreA, [SDNPHasChain]>;
 
 // These are target-independent nodes, but have target-specific formats.
 def SDT_AlphaCallSeq : SDTypeProfile<0, 1, [ SDTCisVT<0, i64> ]>;
@@ -442,9 +451,9 @@ def LDQ   : MForm<0x29, 0, 1, "ldq $RA,$DISP($RB)",
                  [(set GPRC:$RA, (load (add GPRC:$RB, immSExt16:$DISP)))]>;
 def LDQr  : MForm<0x29, 0, 1, "ldq $RA,$DISP($RB)\t\t!gprellow",
                  [(set GPRC:$RA, (load (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB)))]>;
-def LDL   : MForm<0x29, 0, 1, "ldl $RA,$DISP($RB)",
+def LDL   : MForm<0x28, 0, 1, "ldl $RA,$DISP($RB)",
                  [(set GPRC:$RA, (sextload (add GPRC:$RB, immSExt16:$DISP), i32))]>;
-def LDLr  : MForm<0x29, 0, 1, "ldl $RA,$DISP($RB)\t\t!gprellow",
+def LDLr  : MForm<0x28, 0, 1, "ldl $RA,$DISP($RB)\t\t!gprellow",
                  [(set GPRC:$RA, (sextload (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB), i32))]>;
 def LDBU  : MForm<0x0A, 0, 1, "ldbu $RA,$DISP($RB)",
                  [(set GPRC:$RA, (zextload (add GPRC:$RB, immSExt16:$DISP), i8))]>;
@@ -579,16 +588,26 @@ def : Pat<(Alpha_rellit texternalsym:$ext, GPRC:$RB),
           (LDQl texternalsym:$ext, GPRC:$RB)>;
 
 
+//Various tracked versions
 let OperandList = (ops GPRC:$RA, s64imm:$DISP, GPRC:$RB, 
 		   s64imm:$i, s64imm:$j, s64imm:$k, s64imm:$m) in {
 def LDQlbl   : MForm<0x29, 0, 1, "LSMARKER$$$i$$$j$$$k$$$m:\n\t ldq $RA,$DISP($RB)",
                  [(set GPRC:$RA, (Alpha_ldq  imm:$DISP, GPRC:$RB, imm:$i, imm:$j, imm:$k, imm:$m))]>;
-def LDLlbl   : MForm<0x29, 0, 1, "LSMARKER$$$i$$$j$$$k$$$m:\n\t ldl $RA,$DISP($RB)",
+def LDLlbl   : MForm<0x28, 0, 1, "LSMARKER$$$i$$$j$$$k$$$m:\n\t ldl $RA,$DISP($RB)",
                  [(set GPRC:$RA, (Alpha_ldl  imm:$DISP, GPRC:$RB, imm:$i, imm:$j, imm:$k, imm:$m))]>;
 def LDBUlbl  : MForm<0x0A, 0, 1, "LSMARKER$$$i$$$j$$$k$$$m:\n\t ldbu $RA,$DISP($RB)",
                  [(set GPRC:$RA, (Alpha_ldwu  imm:$DISP, GPRC:$RB, imm:$i, imm:$j, imm:$k, imm:$m))]>;
 def LDWUlbl  : MForm<0x0C, 0, 1, "LSMARKER$$$i$$$j$$$k$$$m:\n\t ldwu $RA,$DISP($RB)",
                  [(set GPRC:$RA, (Alpha_ldbu  imm:$DISP, GPRC:$RB, imm:$i, imm:$j, imm:$k, imm:$m))]>;
+
+def STBlbl   : MForm<0x0E, 1, 0, "LSMARKER$$$i$$$j$$$k$$$m:\n\t stb $RA,$DISP($RB)",
+		 [(Alpha_stb GPRC:$RA, imm:$DISP, GPRC:$RB, imm:$i, imm:$j, imm:$k, imm:$m)]>;
+def STWlbl   : MForm<0x0D, 1, 0, "LSMARKER$$$i$$$j$$$k$$$m:\n\t stw $RA,$DISP($RB)",
+		 [(Alpha_stw GPRC:$RA, imm:$DISP, GPRC:$RB, imm:$i, imm:$j, imm:$k, imm:$m)]>;
+def STLlbl   : MForm<0x2C, 1, 0, "LSMARKER$$$i$$$j$$$k$$$m:\n\t stl $RA,$DISP($RB)",
+		 [(Alpha_stl GPRC:$RA, imm:$DISP, GPRC:$RB, imm:$i, imm:$j, imm:$k, imm:$m)]>;
+def STQlbl   : MForm<0x2D, 1, 0, "LSMARKER$$$i$$$j$$$k$$$m:\n\t stq $RA,$DISP($RB)",
+		 [(Alpha_stq GPRC:$RA, imm:$DISP, GPRC:$RB, imm:$i, imm:$j, imm:$k, imm:$m)]>;
 }
 
 let OperandList = (ops F8RC:$RA, s64imm:$DISP, GPRC:$RB, 

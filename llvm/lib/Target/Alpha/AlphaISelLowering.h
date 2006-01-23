@@ -43,7 +43,7 @@ namespace llvm {
 
       ///LD, ST
       LDQ_, LDT_, LDS_, LDL_, LDWU_, LDBU_, 
-
+      STQ_, STT_, STS_, STL_, STW_, STB_, 
     };
   }
 
