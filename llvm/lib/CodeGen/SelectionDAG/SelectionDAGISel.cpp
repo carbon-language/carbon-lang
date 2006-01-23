@@ -69,6 +69,8 @@ namespace {
       clEnumValN(simpleNoItinScheduling, "simple-noitin",
                  "Simple two pass scheduling: Same as simple "
                  "except using generic latency"),
+      clEnumValN(listSchedulingBURR, "list-BURR",
+                 "Bottom up register reduction list scheduling"),
       clEnumValEnd));
 } // namespace
 
@@ -1775,6 +1777,8 @@ void SelectionDAGISel::ScheduleAndEmitDAG(SelectionDAG &DAG) {
   case simpleNoItinScheduling:
     SL = createSimpleDAGScheduler(ISHeuristic, DAG, BB);
     break;
+  case listSchedulingBURR:
+    SL = createBURRListDAGScheduler(DAG, BB);
   }
   BB = SL->Run();
 }

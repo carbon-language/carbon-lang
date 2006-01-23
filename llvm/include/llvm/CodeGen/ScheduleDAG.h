@@ -37,9 +37,10 @@ namespace llvm {
 
   // Scheduling heuristics
   enum SchedHeuristics {
-    noScheduling,
-    simpleScheduling,
-    simpleNoItinScheduling
+    noScheduling,           // No scheduling, emit breath first sequence.
+    simpleScheduling,       // Two pass, min. critical path, max. utilization.
+    simpleNoItinScheduling, // Same as above exact using generic latency.
+    listSchedulingBURR,     // Bottom up reg reduction list scheduling.
   };
 
 
@@ -332,6 +333,11 @@ namespace llvm {
   ScheduleDAG* createSimpleDAGScheduler(SchedHeuristics Heuristic,
                                         SelectionDAG &DAG,
                                         MachineBasicBlock *BB);
+
+  /// createBURRListDAGScheduler - This creates a bottom up register usage
+  /// reduction list scheduler.
+  ScheduleDAG* createBURRListDAGScheduler(SelectionDAG &DAG,
+                                          MachineBasicBlock *BB);
 }
 
 #endif
