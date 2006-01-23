@@ -62,7 +62,7 @@ namespace {
     cl::init(noScheduling),
     cl::values(
       clEnumValN(noScheduling, "none",
-                 "No scheduling: breath first sequencing"),
+                 "No scheduling: breadth first sequencing"),
       clEnumValN(simpleScheduling, "simple",
                  "Simple two pass scheduling: minimize critical path "
                  "and maximize processor utilization"),
