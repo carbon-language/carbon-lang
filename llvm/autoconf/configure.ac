@@ -523,9 +523,9 @@ dnl=== SECTION 8: Check for specific functions needed
 dnl===
 dnl===-----------------------------------------------------------------------===
 
-AC_CHECK_FUNCS([backtrace ceil ceilf floor floorf getcwd getpagesize getrusage])
-AC_CHECK_FUNCS([gettimeofday isatty mkdtemp mkstemp mktemp ])
-AC_CHECK_FUNCS([realpath sbrk setrlimit strdup strerror strerror_r ])
+AC_CHECK_FUNCS([backtrace ceilf floorf roundf rintf nearbyintf getcwd ])
+AC_CHECK_FUNCS([getpagesize getrusage gettimeofday isatty mkdtemp mkstemp ])
+AC_CHECK_FUNCS([mktemp realpath sbrk setrlimit strdup strerror strerror_r ])
 AC_CHECK_FUNCS([strtoll strtoq sysconf malloc_zone_statistics ])
 AC_C_PRINTF_A
 AC_FUNC_ALLOCA
