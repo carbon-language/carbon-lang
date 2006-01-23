@@ -398,6 +398,21 @@ std::ostream &llvm::WriteTypeSymbolic(std::ostream &Out, const Type *Ty,
   }
 }
 
+// PrintEscapedString - Print each character of the specified string, escaping
+// it if it is not printable or if it is an escape char.
+static void PrintEscapedString(const std::string &Str, std::ostream &Out) {
+  for (unsigned i = 0, e = Str.size(); i != e; ++i) {
+    unsigned char C = Str[i];
+    if (isprint(C) && C != '"' && C != '\\') {
+      Out << C;
+    } else {
+      Out << '\\'
+          << (char) ((C/16  < 10) ? ( C/16 +'0') : ( C/16 -10+'A'))
+          << (char)(((C&15) < 10) ? ((C&15)+'0') : ((C&15)-10+'A'));
+    }
+  }
+}
+
 /// @brief Internal constant writer.
 static void WriteConstantInt(std::ostream &Out, const Constant *CV,
                              bool PrintName,
@@ -443,29 +458,9 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
     // ubytes or an array of sbytes with positive values.
     //
     const Type *ETy = CA->getType()->getElementType();
-    bool isString = (ETy == Type::SByteTy || ETy == Type::UByteTy);
-
-    if (ETy == Type::SByteTy)
-      for (unsigned i = 0; i < CA->getNumOperands(); ++i)
-        if (cast<ConstantSInt>(CA->getOperand(i))->getValue() < 0) {
-          isString = false;
-          break;
-        }
-
-    if (isString) {
+    if (CA->isString()) {
       Out << "c\"";
-      for (unsigned i = 0; i < CA->getNumOperands(); ++i) {
-        unsigned char C =
-          (unsigned char)cast<ConstantInt>(CA->getOperand(i))->getRawValue();
-
-        if (isprint(C) && C != '"' && C != '\\') {
-          Out << C;
-        } else {
-          Out << '\\'
-              << (char) ((C/16  < 10) ? ( C/16 +'0') : ( C/16 -10+'A'))
-              << (char)(((C&15) < 10) ? ((C&15)+'0') : ((C&15)-10+'A'));
-        }
-      }
+      PrintEscapedString(CA->getAsString(), Out);
       Out << "\"";
 
     } else {                // Cannot output in string format...
@@ -780,6 +775,12 @@ void AssemblyWriter::printModule(const Module *M) {
   if (!M->getTargetTriple().empty())
     Out << "target triple = \"" << M->getTargetTriple() << "\"\n";
 
+  if (!M->getInlineAsm().empty()) {
+    Out << "asm \"";
+    PrintEscapedString(M->getInlineAsm(), Out);
+    Out << "\"\n";
+  }
+  
   // Loop over the dependent libraries and emit them.
   Module::lib_iterator LI = M->lib_begin();
   Module::lib_iterator LE = M->lib_end();
