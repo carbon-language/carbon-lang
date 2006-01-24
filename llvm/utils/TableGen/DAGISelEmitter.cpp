@@ -2224,7 +2224,7 @@ public:
         for (unsigned i = 0, e = Ops.size(); i != e; ++i)
           OS << ", Tmp" << Ops[i];
         if (HasChain)  OS << ", Chain";
-        if (HasInFlag || HasImpInputs) OS << ", InFlag";
+        if (HasInFlag || HasOptInFlag || HasImpInputs) OS << ", InFlag";
         OS << ");\n";
 
         unsigned ValNo = 0;
