@@ -88,7 +88,7 @@ def X86callseq_start :
                         [SDNPHasChain]>;
 def X86callseq_end :
                  SDNode<"ISD::CALLSEQ_END",   SDT_X86CallSeqEnd,
-                        [SDNPHasChain]>;
+                        [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
 
 def X86call    : SDNode<"X86ISD::CALL",     SDT_X86Call,
                         [SDNPHasChain, SDNPOutFlag, SDNPOptInFlag]>;

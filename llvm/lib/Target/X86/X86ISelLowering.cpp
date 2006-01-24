@@ -521,6 +521,17 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
     Chain = DAG.getNode(X86ISD::CALL, NodeTys, Ops);
     SDOperand InFlag = Chain.getValue(1);
 
+    NodeTys.clear();
+    NodeTys.push_back(MVT::Other);   // Returns a chain
+    NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
+    Ops.clear();
+    Ops.push_back(Chain);
+    Ops.push_back(DAG.getConstant(NumBytes, getPointerTy()));
+    Ops.push_back(DAG.getConstant(0, getPointerTy()));
+    Ops.push_back(InFlag);
+    Chain = DAG.getNode(ISD::CALLSEQ_END, NodeTys, Ops);
+    InFlag = Chain.getValue(1);
+    
     SDOperand RetVal;
     if (RetTyVT != MVT::isVoid) {
       switch (RetTyVT) {
@@ -591,9 +602,6 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
       }
     }
 
-    Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
-                        DAG.getConstant(NumBytes, getPointerTy()),
-                        DAG.getConstant(0, getPointerTy()));
     return std::make_pair(RetVal, Chain);
   } else {
     std::vector<SDOperand> Ops;
@@ -1049,6 +1057,17 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
     Chain = DAG.getNode(X86ISD::CALL, NodeTys, Ops);
     InFlag = Chain.getValue(1);
 
+    NodeTys.clear();
+    NodeTys.push_back(MVT::Other);   // Returns a chain
+    NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
+    Ops.clear();
+    Ops.push_back(Chain);
+    Ops.push_back(DAG.getConstant(ArgOffset, getPointerTy()));
+    Ops.push_back(DAG.getConstant(ArgOffset, getPointerTy()));
+    Ops.push_back(InFlag);
+    Chain = DAG.getNode(ISD::CALLSEQ_END, NodeTys, Ops);
+    InFlag = Chain.getValue(1);
+    
     SDOperand RetVal;
     if (RetTyVT != MVT::isVoid) {
       switch (RetTyVT) {
@@ -1119,9 +1138,6 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
       }
     }
 
-    Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
-                        DAG.getConstant(ArgOffset, getPointerTy()),
-                        DAG.getConstant(ArgOffset, getPointerTy()));
     return std::make_pair(RetVal, Chain);
   } else {
     std::vector<SDOperand> Ops;
