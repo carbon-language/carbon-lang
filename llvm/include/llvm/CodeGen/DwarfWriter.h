@@ -445,13 +445,17 @@ namespace llvm {
   class DwarfWriter; 
   class DWContext;
   class MachineDebugInfo;
+  class MachineFunction;
+  class Module;
+  class Type;
   
   //===--------------------------------------------------------------------===//
   // DWLabel - Labels are used to track locations in the assembler file.
   // Labels appear in the form <prefix>debug_<Tag><Number>, where the tag is a
   // category of label (Ex. location) and number is a value unique in that
   // category.
-  struct DWLabel {
+  class DWLabel {
+  public:
     const char *Tag;                    // Label category tag. Should always be
                                         // a staticly declared C string.
     unsigned    Number;                 // Unique number.
@@ -620,15 +624,15 @@ namespace llvm {
   };
 
   //===--------------------------------------------------------------------===//
-  // DIELabel - A simple label expression DIE.
+  // DIEDwarfLabel - A Dwarf internal label expression DIE.
   //
-  struct DIELabel : public DIEValue {
+  struct DIEDwarfLabel : public DIEValue {
     const DWLabel Label;
     
-    DIELabel(const DWLabel &L) : DIEValue(isLabel), Label(L) {}
+    DIEDwarfLabel(const DWLabel &L) : DIEValue(isLabel), Label(L) {}
 
     // Implement isa/cast/dyncast.
-    static bool classof(const DIELabel *)  { return true; }
+    static bool classof(const DIEDwarfLabel *)  { return true; }
     static bool classof(const DIEValue *L) { return L->Type == isLabel; }
     
     /// EmitValue - Emit label value.
@@ -642,15 +646,15 @@ namespace llvm {
 
 
   //===--------------------------------------------------------------------===//
-  // DIEAsIsLabel - An exact name of a label.
+  // DIEObjectLabel - A label to an object in code or data.
   //
-  struct DIEAsIsLabel : public DIEValue {
+  struct DIEObjectLabel : public DIEValue {
     const std::string Label;
     
-    DIEAsIsLabel(const std::string &L) : DIEValue(isAsIsLabel), Label(L) {}
+    DIEObjectLabel(const std::string &L) : DIEValue(isAsIsLabel), Label(L) {}
 
     // Implement isa/cast/dyncast.
-    static bool classof(const DIEAsIsLabel *) { return true; }
+    static bool classof(const DIEObjectLabel *) { return true; }
     static bool classof(const DIEValue *L)    { return L->Type == isAsIsLabel; }
     
     /// EmitValue - Emit label value.
@@ -752,10 +756,10 @@ namespace llvm {
     ///
     void AddLabel(unsigned Attribute, unsigned Form, const DWLabel &Label);
         
-    /// AddAsIsLabel - Add a non-Dwarf label attribute data and value.
+    /// AddObjectLabel - Add a non-Dwarf label attribute data and value.
     ///
-    void AddAsIsLabel(unsigned Attribute, unsigned Form,
-                      const std::string &Label);
+    void AddObjectLabel(unsigned Attribute, unsigned Form,
+                        const std::string &Label);
         
     /// AddDelta - Add a label delta attribute data and value.
     ///
@@ -781,13 +785,15 @@ namespace llvm {
   class DWContext {
   private:
     DwarfWriter &DW;                    // DwarfWriter for global information.
+    DWContext *Parent;                  // Next context level searched.
     DIE *Owner;                         // Owning debug information entry.
-    std::map<std::string, DIE*> Types;  // Named types in context.
+    std::map<const Type *, DIE*> Types; // Named types in context.
     std::map<std::string, DIE*> Variables;// Named variables in context.
     
   public:
-    DWContext(DwarfWriter &D, DIE *O)
+    DWContext(DwarfWriter &D, DWContext *P, DIE *O)
     : DW(D)
+    , Parent(P)
     , Owner(O)
     , Types()
     , Variables()
@@ -796,16 +802,15 @@ namespace llvm {
     }
     ~DWContext() {}
     
-    /// NewBasicType - Creates a new basic type, if necessary, then adds in the
+    /// NewBasicType - Creates a new basic type, if necessary, then adds to the
     /// context and owner.
-    DIE *NewBasicType(const std::string &Name, unsigned Size,
-                                               unsigned Encoding);
+    DIE *NewBasicType(const Type *Ty, unsigned Size, unsigned Align);
                                                
-    /// NewVariable - Creates a basic variable, if necessary, then adds in the
+    /// NewVariable - Creates a basic variable, if necessary, then adds to the
     /// context and owner.
-    DIE *NewVariable(const std::string &Name,
-                     unsigned SourceFileID, unsigned Line,
-                     DIE *Type, bool IsExternal);
+    DIE *NewGlobalVariable(const std::string &Name,
+                           const std::string &MangledName,
+                           DIE *Type);
   };
 
   //===--------------------------------------------------------------------===//
@@ -1039,6 +1044,14 @@ public:
     /// NewGlobalEntity - Make the entity visible globally using the given name.
     ///
     void NewGlobalEntity(const std::string &Name, DIE *Entity);
+    
+    /// NewGlobalVariable - Add a new global variable DIE to the context.
+    ///
+    void NewGlobalVariable(DWContext *Context,
+                           const std::string &Name,
+                           const std::string &MangledName,
+                           const Type *Ty,
+                           unsigned Size, unsigned Align);
 
 private:
     /// NewCompileUnit - Create new compile unit information.
@@ -1106,39 +1119,47 @@ private:
     ///
     void EmitDebugMacInfo();
     
+    /// ConstructCompileUnitDIEs - Create a compile unit DIE for each source and
+    /// header file.
+    void ConstructCompileUnitDIEs();
+    
+    /// ConstructGlobalDIEs - Create DIEs for each of the externally visible global
+    /// variables.
+    void ConstructGlobalDIEs(Module &M);
+
     /// ShouldEmitDwarf - Returns true if Dwarf declarations should be made.
     /// When called it also checks to see if debug info is newly available.  if
     /// so the initial Dwarf headers are emitted.
     bool ShouldEmitDwarf();
-    
+  
   public:
     
-    DwarfWriter(std::ostream &o, AsmPrinter *ap);
+    DwarfWriter(std::ostream &OS, AsmPrinter *A);
     virtual ~DwarfWriter();
     
     /// SetDebugInfo - Set DebugInfo when it's known that pass manager has
     /// created it.  Set by the target AsmPrinter.
-    void SetDebugInfo(MachineDebugInfo *di) { DebugInfo = di; }
-    
+    void SetDebugInfo(MachineDebugInfo *DI) { DebugInfo = DI; }
+
     //===------------------------------------------------------------------===//
     // Main entry points.
     //
     
     /// BeginModule - Emit all Dwarf sections that should come prior to the
     /// content.
-    void BeginModule();
+    void BeginModule(Module &M);
     
     /// EndModule - Emit all Dwarf sections that should come after the content.
     ///
-    void EndModule();
+    void EndModule(Module &M);
     
     /// BeginFunction - Gather pre-function debug information.
     ///
-    void BeginFunction();
+    void BeginFunction(MachineFunction &MF);
     
     /// EndFunction - Gather and emit post-function debug information.
     ///
-    void EndFunction();
+    void EndFunction(MachineFunction &MF);
   };
 
 } // end llvm namespace

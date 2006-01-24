@@ -438,7 +438,7 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   O << "\n\n";
   
   // Emit pre-function debug information.
-  DW.BeginFunction();
+  DW.BeginFunction(MF);
 
   // Print out constants referenced by the function
   EmitConstantPool(MF.getConstantPool());
@@ -486,7 +486,7 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   }
 
   // Emit post-function debug information.
-  DW.EndFunction();
+  DW.EndFunction(MF);
 
   // We didn't modify anything.
   return false;
@@ -502,7 +502,7 @@ bool DarwinAsmPrinter::doInitialization(Module &M) {
   Mang->setUseQuotes(true);
   
   // Emit initial debug information.
-  DW.BeginModule();
+  DW.BeginModule(M);
   return false;
 }
 
@@ -619,7 +619,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
   }
 
   // Emit initial debug information.
-  DW.EndModule();
+  DW.EndModule(M);
 
   // Funny Darwin hack: This flag tells the linker that no global symbols
   // contain code that falls through to other global symbols (e.g. the obvious
