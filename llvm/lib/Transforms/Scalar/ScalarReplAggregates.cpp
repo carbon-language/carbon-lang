@@ -554,9 +554,7 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
       // Convert the stored type to the actual type, shift it left to insert
       // then 'or' into place.
       Value *SV = SI->getOperand(0);
-      if (SV->getType() == NewAI->getType()->getElementType()) {
-        assert(Offset == 0 && "Store out of bounds!");
-      } else {
+      if (SV->getType() != NewAI->getType()->getElementType() || Offset != 0) {
         Value *Old = new LoadInst(NewAI, NewAI->getName()+".in", SI);
         // If SV is signed, convert it to unsigned, so that the next cast zero
         // extends the value.
