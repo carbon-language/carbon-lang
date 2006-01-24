@@ -875,9 +875,6 @@ void DIE::AddChild(DIE *Child) {
 DIE *DWContext::NewBasicType(const Type *Ty, unsigned Size, unsigned Align) {
   DIE *TypeDie = Types[Ty];
   
-  char *Name;
-  unsigned Encoding;
-  
   // If first occurance of type.
   if (!TypeDie) {
     const char *Name;
