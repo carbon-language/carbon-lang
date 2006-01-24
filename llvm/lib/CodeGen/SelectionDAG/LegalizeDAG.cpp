@@ -823,6 +823,13 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp2 = Node->getOperand(0);
     if (Tmp1 != Tmp2)
       Node->setAdjCallChain(Tmp1);
+    
+    // If this has a flag input, do legalize it.
+    if (Node->getOperand(Node->getNumOperands()-1).getValueType() == MVT::Flag){
+      Tmp1 = LegalizeOp(Node->getOperand(Node->getNumOperands()-1));
+      if (Tmp1 != Node->getOperand(Node->getNumOperands()-1))
+        Node->setAdjCallFlag(Tmp1);
+    }
       
     // Note that we do not create new CALLSEQ_DOWN/UP nodes here.  These
     // nodes are treated specially and are mutated in place.  This makes the dag
@@ -1365,7 +1372,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                              Tmp2,
                              Node->getOperand(3));
       }
-      Node = Result.Val;
+      Result = LegalizeOp(Result);
+      break;
     }
 
     switch (getTypeAction(Node->getOperand(1).getValueType())) {

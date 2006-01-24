@@ -1276,6 +1276,19 @@ void SDNode::setAdjCallChain(SDOperand N) {
   OperandList[0].Val->Uses.push_back(this);
 }
 
+// setAdjCallFlag - This method changes the flag input of an
+// CALLSEQ_START/END node to be the specified operand.
+void SDNode::setAdjCallFlag(SDOperand N) {
+  assert(N.getValueType() == MVT::Flag);
+  assert((getOpcode() == ISD::CALLSEQ_START ||
+          getOpcode() == ISD::CALLSEQ_END) && "Cannot adjust this node!");
+  
+  SDOperand &FlagOp = OperandList[getNumOperands()-1];
+  assert(FlagOp.getValueType() == MVT::Flag);
+  FlagOp.Val->removeUser(this);
+  FlagOp = N;
+  FlagOp.Val->Uses.push_back(this);
+}
 
 
 SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
