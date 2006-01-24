@@ -1636,15 +1636,15 @@ ConstPool : ConstPool OptAssign TYPE TypesV {
 
 
 AsmBlock : STRINGCONSTANT {
-  const std::string &AsmSoFar = CurModule.CurrentModule->getInlineAsm();
+  const std::string &AsmSoFar = CurModule.CurrentModule->getModuleInlineAsm();
   char *EndStr = UnEscapeLexed($1, true);
   std::string NewAsm($1, EndStr);
   free($1);
 
   if (AsmSoFar.empty())
-    CurModule.CurrentModule->setInlineAsm(NewAsm);
+    CurModule.CurrentModule->setModuleInlineAsm(NewAsm);
   else
-    CurModule.CurrentModule->setInlineAsm(AsmSoFar+"\n"+NewAsm);
+    CurModule.CurrentModule->setModuleInlineAsm(AsmSoFar+"\n"+NewAsm);
 };
 
 BigOrLittle : BIG    { $$ = Module::BigEndian; };

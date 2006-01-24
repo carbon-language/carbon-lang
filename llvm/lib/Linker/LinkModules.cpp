@@ -833,11 +833,12 @@ Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
       Dest->getTargetTriple() != Src->getTargetTriple())
     std::cerr << "WARNING: Linking two modules of different target triples!\n";
 
-  if (!Src->getInlineAsm().empty()) {
-    if (Dest->getInlineAsm().empty())
-      Dest->setInlineAsm(Src->getInlineAsm());
+  if (!Src->getModuleInlineAsm().empty()) {
+    if (Dest->getModuleInlineAsm().empty())
+      Dest->setModuleInlineAsm(Src->getModuleInlineAsm());
     else
-      Dest->setInlineAsm(Dest->getInlineAsm()+"\n"+Src->getInlineAsm());
+      Dest->setModuleInlineAsm(Dest->getModuleInlineAsm()+"\n"+
+                               Src->getModuleInlineAsm());
   }
   
   // Update the destination module's dependent libraries list with the libraries

@@ -2111,7 +2111,7 @@ void BytecodeReader::ParseModuleGlobalInfo() {
     
     // If the file has module-level inline asm, read it now.
     if (!hasAlignment && At != BlockEnd)
-      TheModule->setInlineAsm(read_str());
+      TheModule->setModuleInlineAsm(read_str());
   }
 
   // If any globals are in specified sections, assign them now.

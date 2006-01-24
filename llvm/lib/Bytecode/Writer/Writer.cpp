@@ -1032,7 +1032,7 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
     output(SectionNames[i]);
   
   // Output the inline asm string.
-  output(M->getInlineAsm());
+  output(M->getModuleInlineAsm());
 }
 
 void BytecodeWriter::outputInstructions(const Function *F) {
