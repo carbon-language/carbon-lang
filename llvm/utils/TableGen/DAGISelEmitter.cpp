@@ -2206,26 +2206,71 @@ public:
              << NumResults << ");\n";
         }
       } else if (HasChain || HasOutFlag) {
-        OS << "      SDOperand Result = CurDAG->getTargetNode("
-           << II.Namespace << "::" << II.TheDef->getName();
+        if (HasOptInFlag) {
+          OS << "      SDOperand Result = SDOperand(0, 0);\n";
+          unsigned FlagNo = (unsigned) NodeHasChain + Pattern->getNumChildren();
+          OS << "      if (N.getNumOperands() == " << FlagNo+1 << ")\n";
+          OS << "        Result = CurDAG->getTargetNode("
+             << II.Namespace << "::" << II.TheDef->getName();
 
-        // Output order: results, chain, flags
-        // Result types.
-        if (NumResults > 0) { 
-          if (N->getTypeNum(0) != MVT::isVoid)
-            OS << ", MVT::" << getEnumName(N->getTypeNum(0));
+          // Output order: results, chain, flags
+          // Result types.
+          if (NumResults > 0) { 
+            if (N->getTypeNum(0) != MVT::isVoid)
+              OS << ", MVT::" << getEnumName(N->getTypeNum(0));
+          }
+          if (HasChain)
+            OS << ", MVT::Other";
+          if (HasOutFlag)
+            OS << ", MVT::Flag";
+
+          // Inputs.
+          for (unsigned i = 0, e = Ops.size(); i != e; ++i)
+            OS << ", Tmp" << Ops[i];
+          if (HasChain)  OS << ", Chain";
+          OS << ", InFlag);\n";
+
+          OS << "      else\n";
+          OS << "        Result = CurDAG->getTargetNode("
+             << II.Namespace << "::" << II.TheDef->getName();
+
+          // Output order: results, chain, flags
+          // Result types.
+          if (NumResults > 0) { 
+            if (N->getTypeNum(0) != MVT::isVoid)
+              OS << ", MVT::" << getEnumName(N->getTypeNum(0));
+          }
+          if (HasChain)
+            OS << ", MVT::Other";
+          if (HasOutFlag)
+            OS << ", MVT::Flag";
+
+          // Inputs.
+          for (unsigned i = 0, e = Ops.size(); i != e; ++i)
+            OS << ", Tmp" << Ops[i];
+          if (HasChain)  OS << ", Chain);\n";
+        } else {
+          OS << "      SDOperand Result = CurDAG->getTargetNode("
+             << II.Namespace << "::" << II.TheDef->getName();
+
+          // Output order: results, chain, flags
+          // Result types.
+          if (NumResults > 0) { 
+            if (N->getTypeNum(0) != MVT::isVoid)
+              OS << ", MVT::" << getEnumName(N->getTypeNum(0));
+          }
+          if (HasChain)
+            OS << ", MVT::Other";
+          if (HasOutFlag)
+            OS << ", MVT::Flag";
+
+          // Inputs.
+          for (unsigned i = 0, e = Ops.size(); i != e; ++i)
+            OS << ", Tmp" << Ops[i];
+          if (HasChain)  OS << ", Chain";
+          if (HasInFlag || HasImpInputs) OS << ", InFlag";
+          OS << ");\n";
         }
-        if (HasChain)
-          OS << ", MVT::Other";
-        if (HasOutFlag)
-          OS << ", MVT::Flag";
-
-        // Inputs.
-        for (unsigned i = 0, e = Ops.size(); i != e; ++i)
-          OS << ", Tmp" << Ops[i];
-        if (HasChain)  OS << ", Chain";
-        if (HasInFlag || HasOptInFlag || HasImpInputs) OS << ", InFlag";
-        OS << ");\n";
 
         unsigned ValNo = 0;
         for (unsigned i = 0; i < NumResults; i++) {
