@@ -776,8 +776,22 @@ void AssemblyWriter::printModule(const Module *M) {
     Out << "target triple = \"" << M->getTargetTriple() << "\"\n";
 
   if (!M->getInlineAsm().empty()) {
+    // Split the string into lines, to make it easier to read the .ll file.
+    std::string Asm = M->getInlineAsm();
+    size_t CurPos = 0;
+    size_t NewLine = Asm.find_first_of('\n', CurPos);
+    while (NewLine != std::string::npos) {
+      // We found a newline, print the portion of the asm string from the
+      // last newline up to this newline.
+      Out << "module asm \"";
+      PrintEscapedString(std::string(Asm.begin()+CurPos, Asm.begin()+NewLine),
+                         Out);
+      Out << "\"\n";
+      CurPos = NewLine+1;
+      NewLine = Asm.find_first_of('\n', CurPos);
+    }
     Out << "module asm \"";
-    PrintEscapedString(M->getInlineAsm(), Out);
+    PrintEscapedString(std::string(Asm.begin()+CurPos, Asm.end()), Out);
     Out << "\"\n";
   }
   
