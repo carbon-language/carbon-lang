@@ -923,8 +923,7 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
 
   // Arguments go on the stack in reverse order, as specified by the ABI.
   unsigned ArgOffset = 0;
-  SDOperand StackPtr = DAG.getCopyFromReg(DAG.getEntryNode(),
-                                          X86::ESP, MVT::i32);
+  SDOperand StackPtr = DAG.getRegister(X86::ESP, MVT::i32);
   NumIntRegs = 0;
   std::vector<SDOperand> Stores;
   std::vector<SDOperand> RegValuesToPass;
