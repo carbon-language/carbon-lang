@@ -136,6 +136,9 @@
 				RelativePath="..\..\lib\VMCore\Globals.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\VMCore\InlineAsm.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\VMCore\Instruction.cpp">
 			</File>
 			<File
@@ -220,6 +223,9 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\GlobalVariable.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\InlineAsm.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\InstrTypes.h">

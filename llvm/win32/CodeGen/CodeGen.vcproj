@@ -190,6 +190,9 @@
 					RelativePath="..\..\lib\CodeGen\SelectionDAG\ScheduleDAG.cpp">
 				</File>
 				<File
+					RelativePath="..\..\lib\CodeGen\SelectionDAG\ScheduleDAGList.cpp">
+				</File>
+				<File
 					RelativePath="..\..\lib\CodeGen\SelectionDAG\ScheduleDAGSimple.cpp">
 				</File>
 				<File
