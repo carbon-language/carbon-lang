@@ -72,9 +72,10 @@ void AsmPrinter::SwitchSection(const char *NewSection, const GlobalValue *GV) {
 bool AsmPrinter::doInitialization(Module &M) {
   Mang = new Mangler(M, GlobalPrefix);
   
-  if (!M.getInlineAsm().empty())
-    O << CommentString << " Start File Scope Asm Blocks:\n" << M.getInlineAsm()
-      << "\n" << CommentString << " End File Scope Asm Blocks\n";
+  if (!M.getModuleInlineAsm().empty())
+    O << CommentString << " Start of file scope inline assembly\n"
+      << M.getModuleInlineAsm()
+      << "\n" << CommentString << " End of file scope inline assembly\n";
 
   SwitchSection("", 0);   // Reset back to no section.
   return false;
