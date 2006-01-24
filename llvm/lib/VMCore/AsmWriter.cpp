@@ -776,7 +776,7 @@ void AssemblyWriter::printModule(const Module *M) {
     Out << "target triple = \"" << M->getTargetTriple() << "\"\n";
 
   if (!M->getInlineAsm().empty()) {
-    Out << "asm \"";
+    Out << "module asm \"";
     PrintEscapedString(M->getInlineAsm(), Out);
     Out << "\"\n";
   }

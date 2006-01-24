@@ -967,7 +967,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %token DECLARE GLOBAL CONSTANT SECTION VOLATILE
 %token TO DOTDOTDOT NULL_TOK UNDEF CONST INTERNAL LINKONCE WEAK  APPENDING
 %token OPAQUE NOT EXTERNAL TARGET TRIPLE ENDIAN POINTERSIZE LITTLE BIG ALIGN
-%token DEPLIBS CALL TAIL ASM_TOK
+%token DEPLIBS CALL TAIL ASM_TOK MODULE
 %token CC_TOK CCC_TOK FASTCC_TOK COLDCC_TOK
 %type <UIntVal> OptCallingConv
 
@@ -1571,7 +1571,7 @@ FunctionList : FunctionList Function {
   | FunctionList FunctionProto {
     $$ = $1;
   }
-  | FunctionList ASM_TOK AsmBlock {
+  | FunctionList MODULE ASM_TOK AsmBlock {
     $$ = $1;
   }  
   | FunctionList IMPLEMENTATION {
@@ -1612,7 +1612,7 @@ ConstPool : ConstPool OptAssign TYPE TypesV {
   }
   | ConstPool FunctionProto {       // Function prototypes can be in const pool
   }
-  | ConstPool ASM_TOK AsmBlock {    // Asm blocks can be in the const pool
+  | ConstPool MODULE ASM_TOK AsmBlock {  // Asm blocks can be in the const pool
   }
   | ConstPool OptAssign OptLinkage GlobalType ConstVal {
     if ($5 == 0) ThrowException("Global value initializer is not a constant!");

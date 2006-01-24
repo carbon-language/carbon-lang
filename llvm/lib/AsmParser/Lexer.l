@@ -212,6 +212,7 @@ big             { return BIG; }
 volatile        { return VOLATILE; }
 align           { return ALIGN;  }
 section         { return SECTION; }
+module          { return MODULE; }
 asm             { return ASM_TOK; }
 
 cc              { return CC_TOK; }
