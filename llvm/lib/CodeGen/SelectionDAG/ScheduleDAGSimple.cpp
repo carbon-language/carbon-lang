@@ -19,6 +19,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/Debug.h"
+#include <algorithm>
 using namespace llvm;
 
 namespace {
