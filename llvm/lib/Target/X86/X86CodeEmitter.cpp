@@ -399,7 +399,6 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
       if (MO.isMachineBasicBlock()) {
         emitPCRelativeBlockAddress(MO.getMachineBasicBlock());
       } else if (MO.isGlobalAddress()) {
-        assert(MO.isPCRelative() && "Call target is not PC Relative?");
         bool isTailCall = Opcode == X86::TAILJMPd ||
                           Opcode == X86::TAILJMPr || Opcode == X86::TAILJMPm;
         emitGlobalAddressForCall(MO.getGlobal(), isTailCall);
