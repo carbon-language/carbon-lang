@@ -1,4 +1,4 @@
-//===-- Globals.cpp - Implement the Global object classes -----------------===//
+//===-- Globals.cpp - Implement the GlobalValue & GlobalVariable class ----===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/DerivedTypes.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Support/LeakDetector.h"

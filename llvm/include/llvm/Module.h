@@ -21,6 +21,7 @@
 
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/InlineAsm.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/Support/DataTypes.h"
 
@@ -45,11 +46,19 @@ template<> struct ilist_traits<GlobalVariable>
   static void destroySentinel(GlobalVariable *GV) { delete GV; }
   static iplist<GlobalVariable> &getList(Module *M);
 };
+template<> struct ilist_traits<InlineAsm>
+: public SymbolTableListTraits<InlineAsm, Module, Module> {
+  // createSentinel is used to create a node that marks the end of the list.
+  static InlineAsm *createSentinel();
+  static void destroySentinel(InlineAsm *GV) { delete GV; }
+  static iplist<InlineAsm> &getList(Module *M);
+};
 
 class Module {
 public:
   typedef iplist<GlobalVariable> GlobalListType;
   typedef iplist<Function> FunctionListType;
+  typedef iplist<InlineAsm> InlineAsmListType;
   typedef SetVector<std::string> LibraryListType;
 
   // Global Variable iterators.
@@ -60,6 +69,10 @@ public:
   typedef FunctionListType::iterator                          iterator;
   typedef FunctionListType::const_iterator              const_iterator;
 
+  // Inline Asm iterators.
+  typedef InlineAsmListType::iterator               inlineasm_iterator;
+  typedef InlineAsmListType::const_iterator   const_inlineasm_iterator;
+  
   // Library list iterators.
   typedef LibraryListType::const_iterator lib_iterator;
 
@@ -69,6 +82,7 @@ public:
 private:
   GlobalListType GlobalList;     // The Global Variables in the module
   FunctionListType FunctionList; // The Functions in the module
+  InlineAsmListType InlineAsmList; // The inline asm objects in the module.
   LibraryListType LibraryList;   // The Libraries needed by the module
   std::string GlobalScopeAsm;    // Inline Asm at global scope.
   SymbolTable *SymTab;           // Symbol Table for the module
@@ -98,8 +112,8 @@ public:
   void setPointerSize(PointerSize PS) { PtrSize = PS; }
 
   // Access to any module-scope inline asm blocks.
-  const std::string &getInlineAsm() const { return GlobalScopeAsm; }
-  void setInlineAsm(const std::string &Asm) { GlobalScopeAsm = Asm; }
+  const std::string &getModuleInlineAsm() const { return GlobalScopeAsm; }
+  void setModuleInlineAsm(const std::string &Asm) { GlobalScopeAsm = Asm; }
   
   //===--------------------------------------------------------------------===//
   // Methods for easy access to the functions in the module.
@@ -174,17 +188,19 @@ public:
   // table.
   //
 
-  /// Get the underlying elements of the Module...
-  inline const GlobalListType &getGlobalList() const  { return GlobalList; }
-  inline       GlobalListType &getGlobalList()        { return GlobalList; }
-  inline const FunctionListType &getFunctionList() const { return FunctionList;}
-  inline       FunctionListType &getFunctionList()       { return FunctionList;}
+  // Get the underlying elements of the Module.
+  const GlobalListType &getGlobalList() const       { return GlobalList; }
+        GlobalListType &getGlobalList()             { return GlobalList; }
+  const FunctionListType &getFunctionList() const   { return FunctionList; }
+        FunctionListType &getFunctionList()         { return FunctionList; }
+  const InlineAsmListType &getInlineAsmList() const { return InlineAsmList; }
+        InlineAsmListType &getInlineAsmList()       { return InlineAsmList; }
 
   /// getSymbolTable() - Get access to the symbol table for the module, where
   /// global variables and functions are identified.
   ///
-  inline       SymbolTable &getSymbolTable()       { return *SymTab; }
-  inline const SymbolTable &getSymbolTable() const { return *SymTab; }
+        SymbolTable &getSymbolTable()       { return *SymTab; }
+  const SymbolTable &getSymbolTable() const { return *SymTab; }
 
 
   //===--------------------------------------------------------------------===//
@@ -198,14 +214,29 @@ public:
   bool                  global_empty() const { return GlobalList.empty(); }
 
   // FunctionList interface
-  inline iterator                begin()       { return FunctionList.begin(); }
-  inline const_iterator          begin() const { return FunctionList.begin(); }
-  inline iterator                end  ()       { return FunctionList.end();   }
-  inline const_iterator          end  () const { return FunctionList.end();   }
+  iterator                begin()       { return FunctionList.begin(); }
+  const_iterator          begin() const { return FunctionList.begin(); }
+  iterator                end  ()       { return FunctionList.end();   }
+  const_iterator          end  () const { return FunctionList.end();   }
 
-  inline size_t                   size() const { return FunctionList.size(); }
-  inline bool                    empty() const { return FunctionList.empty(); }
+  size_t                   size() const { return FunctionList.size(); }
+  bool                    empty() const { return FunctionList.empty(); }
 
+  // Inline Asm list interface
+  inlineasm_iterator inlineasm_begin() {
+    return InlineAsmList.begin();
+  }
+  const_inlineasm_iterator inlineasm_begin() const {
+    return InlineAsmList.begin();
+  }
+  inlineasm_iterator inlineasm_end() {
+    return InlineAsmList.end();
+  }
+  const_inlineasm_iterator inlineasm_end() const {
+    return InlineAsmList.end();
+  }
+  bool inlineasm_empty() const { return InlineAsmList.empty(); }
+  
   //===--------------------------------------------------------------------===//
   // List of dependent library access functions
 

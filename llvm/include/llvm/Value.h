@@ -155,6 +155,7 @@ public:
     ConstantStructVal,        // This is an instance of ConstantStruct
     ConstantPackedVal,        // This is an instance of ConstantPacked
     ConstantPointerNullVal,   // This is an instance of ConstantPointerNull
+    InlineAsmVal,             // This is an instance of InlineAsm
     InstructionVal,           // This is an instance of Instruction
     
     // Markers:
@@ -166,7 +167,7 @@ public:
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const Value * /*V*/) {
+  static inline bool classof(const Value *) {
     return true; // Values are always values.
   }
 

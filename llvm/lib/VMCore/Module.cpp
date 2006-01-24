@@ -44,17 +44,30 @@ GlobalVariable *ilist_traits<GlobalVariable>::createSentinel() {
   return Ret;
 }
 
+InlineAsm *ilist_traits<InlineAsm>::createSentinel() {
+  InlineAsm *Ret = new InlineAsm(FunctionType::get(Type::VoidTy, 
+                                    std::vector<const Type*>(), false), "", "",
+                                 false);
+  // This should not be garbage monitored.
+  LeakDetector::removeGarbageObject(Ret);
+  return Ret;
+}
+
 iplist<Function> &ilist_traits<Function>::getList(Module *M) {
   return M->getFunctionList();
 }
 iplist<GlobalVariable> &ilist_traits<GlobalVariable>::getList(Module *M) {
   return M->getGlobalList();
 }
+iplist<InlineAsm> &ilist_traits<InlineAsm>::getList(Module *M) {
+  return M->getInlineAsmList();
+}
 
 // Explicit instantiations of SymbolTableListTraits since some of the methods
-// are not in the public header file...
+// are not in the public header file.
 template class SymbolTableListTraits<GlobalVariable, Module, Module>;
 template class SymbolTableListTraits<Function, Module, Module>;
+template class SymbolTableListTraits<InlineAsm, Module, Module>;
 
 //===----------------------------------------------------------------------===//
 // Primitive Module methods.
@@ -66,6 +79,8 @@ Module::Module(const std::string &MID)
   FunctionList.setParent(this);
   GlobalList.setItemParent(this);
   GlobalList.setParent(this);
+  InlineAsmList.setItemParent(this);
+  InlineAsmList.setParent(this);
   SymTab = new SymbolTable();
 }
 
@@ -75,6 +90,8 @@ Module::~Module() {
   GlobalList.setParent(0);
   FunctionList.clear();
   FunctionList.setParent(0);
+  InlineAsmList.clear();
+  InlineAsmList.setParent(0);
   LibraryList.clear();
   delete SymTab;
 }

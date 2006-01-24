@@ -775,9 +775,9 @@ void AssemblyWriter::printModule(const Module *M) {
   if (!M->getTargetTriple().empty())
     Out << "target triple = \"" << M->getTargetTriple() << "\"\n";
 
-  if (!M->getInlineAsm().empty()) {
+  if (!M->getModuleInlineAsm().empty()) {
     // Split the string into lines, to make it easier to read the .ll file.
-    std::string Asm = M->getInlineAsm();
+    std::string Asm = M->getModuleInlineAsm();
     size_t CurPos = 0;
     size_t NewLine = Asm.find_first_of('\n', CurPos);
     while (NewLine != std::string::npos) {
@@ -1267,6 +1267,14 @@ void Function::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
   AssemblyWriter W(o, SlotTable, getParent(), AAW);
 
   W.write(this);
+}
+
+void InlineAsm::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
+  SlotMachine SlotTable(getParent());
+  AssemblyWriter W(o, SlotTable, getParent(), AAW);
+  
+  assert(0 && "Inline asm printing unimplemented!");
+  //W.write(this);
 }
 
 void BasicBlock::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
