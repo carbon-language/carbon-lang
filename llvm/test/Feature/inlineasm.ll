@@ -3,6 +3,6 @@
 ; RUN: diff Output/t1.ll Output/t2.ll
 
 
-asm "this is an inline asm block"
-asm "this is another inline asm block"
+module asm "this is an inline asm block"
+module asm "this is another inline asm block"
 
