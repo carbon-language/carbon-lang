@@ -19,7 +19,7 @@
 
 namespace llvm {
 
-class AssemblyAnnotationWriter;
+struct AssemblyAnnotationWriter;
 class PointerType;
 class FunctionType;
 class Module;
