@@ -2903,13 +2903,21 @@ static SDOperand GetAdjustedArgumentStores(SDOperand Chain, int Offset,
   if (OrigDest.getOpcode() == ISD::CopyFromReg) {
     OrigOffset = 0;
     assert(cast<RegisterSDNode>(OrigDest.getOperand(1))->getReg() == X86::ESP);
-  } else {
+  } else if (OrigDest.getOpcode() == ISD::ADD &&
+             isa<ConstantSDNode>(OrigDest.getOperand(1)) &&
+             OrigDest.getOperand(0).getOpcode() == ISD::CopyFromReg &&
+             cast<RegisterSDNode>(OrigDest.getOperand(0).getOperand(1))->getReg()
+                   == X86::ESP) {
     // We expect only (ESP+C)
+    OrigOffset = cast<ConstantSDNode>(OrigDest.getOperand(1))->getValue();
+  } else if (OrigDest.getOpcode() == ISD::Register) {
+    // We expect only (ESP+C)
+    OrigOffset = 0;
+  } else {
     assert(OrigDest.getOpcode() == ISD::ADD &&
            isa<ConstantSDNode>(OrigDest.getOperand(1)) &&
-           OrigDest.getOperand(0).getOpcode() == ISD::CopyFromReg &&
-           cast<RegisterSDNode>(OrigDest.getOperand(0).getOperand(1))->getReg()
-                 == X86::ESP);
+           OrigDest.getOperand(0).getOpcode() == ISD::Register &&
+           cast<RegisterSDNode>(OrigDest.getOperand(0))->getReg() == X86::ESP);
     OrigOffset = cast<ConstantSDNode>(OrigDest.getOperand(1))->getValue();
   }
 
