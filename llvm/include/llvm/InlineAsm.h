@@ -52,6 +52,9 @@ public:
   /// getFunctionType - InlineAsm's are always pointers to functions.
   ///
   const FunctionType *getFunctionType() const;
+  
+  const std::string &getAsmString() const { return AsmString; }
+  const std::string &getConstraintString() const { return Constraints; }
 
   virtual void print(std::ostream &O) const { print(O, 0); }
   void print(std::ostream &OS, AssemblyAnnotationWriter *AAW) const;
