@@ -556,9 +556,18 @@ static void WriteAsOperandInternal(std::ostream &Out, const Value *V,
     Out << getLLVMName(V->getName());
   else {
     const Constant *CV = dyn_cast<Constant>(V);
-    if (CV && !isa<GlobalValue>(CV))
+    if (CV && !isa<GlobalValue>(CV)) {
       WriteConstantInt(Out, CV, PrintName, TypeTable, Machine);
-    else {
+    } else if (const InlineAsm *IA = dyn_cast<InlineAsm>(V)) {
+      Out << "asm ";
+      if (IA->hasSideEffects())
+        Out << "sideeffect ";
+      Out << '"';
+      PrintEscapedString(IA->getAsmString(), Out);
+      Out << "\", \"";
+      PrintEscapedString(IA->getConstraintString(), Out);
+      Out << '"';
+    } else {
       int Slot;
       if (Machine) {
         Slot = Machine->getSlot(V);
@@ -1271,8 +1280,7 @@ void Function::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
 }
 
 void InlineAsm::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
-  assert(0 && "Inline asm printing unimplemented!");
-  //W.write(this);
+  WriteAsOperand(o, this, true, true, 0);
 }
 
 void BasicBlock::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
