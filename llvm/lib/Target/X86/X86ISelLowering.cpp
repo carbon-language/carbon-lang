@@ -39,6 +39,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setShiftAmountType(MVT::i8);
   setSetCCResultType(MVT::i8);
   setSetCCResultContents(ZeroOrOneSetCCResult);
+  setSchedulingPreference(SchedulingForRegPressure);
   setShiftAmountFlavor(Mask);   // shl X, 32 == shl X, 0
   setStackPointerRegisterToSaveRestore(X86::ESP);
 
