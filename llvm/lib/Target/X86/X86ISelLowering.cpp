@@ -1696,9 +1696,14 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       // If the X86ISD::SETCC has more than one use, then it's probably better
       // to use a test instead of duplicating the X86ISD::CMP (for register
       // pressure reason).
+      // FIXME: Check number of live Op0 uses since we are in the middle of 
+      // legalization process.
       if (Op0.hasOneUse() && Op0.getOperand(1).getOpcode() == X86ISD::CMP) {
         CC   = Op0.getOperand(0);
         Cond = Op0.getOperand(1);
+        // Make a copy as flag result cannot be used by more than one.
+        Cond = DAG.getNode(X86ISD::CMP, MVT::Flag,
+                           Cond.getOperand(0), Cond.getOperand(1));
         addTest =
           isFPStack && !hasFPCMov(cast<ConstantSDNode>(CC)->getSignExtended());
       } else
@@ -1742,11 +1747,14 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       // If the X86ISD::SETCC has more than one use, then it's probably better
       // to use a test instead of duplicating the X86ISD::CMP (for register
       // pressure reason).
+      // FIXME: Check number of live Cond uses since we are in the middle of 
+      // legalization process.
       if (Cond.hasOneUse() && Cond.getOperand(1).getOpcode() == X86ISD::CMP) {
         CC   = Cond.getOperand(0);
+        Cond = Cond.getOperand(1);
+        // Make a copy as flag result cannot be used by more than one.
         Cond = DAG.getNode(X86ISD::CMP, MVT::Flag,
-                           Cond.getOperand(1).getOperand(0),
-                           Cond.getOperand(1).getOperand(1));
+                           Cond.getOperand(0), Cond.getOperand(1));
       } else
         addTest = true;
     } else if (Cond.getOpcode() == ISD::SETCC) {
