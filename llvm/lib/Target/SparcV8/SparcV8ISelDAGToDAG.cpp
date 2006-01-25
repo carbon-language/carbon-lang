@@ -167,7 +167,6 @@ SparcV8TargetLowering::SparcV8TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::STACKRESTORE      , MVT::Other, Expand);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
 
-  setSchedulingPreference(SchedulingForLatency);
   setStackPointerRegisterToSaveRestore(V8::O6);
 
   computeRegisterProperties();

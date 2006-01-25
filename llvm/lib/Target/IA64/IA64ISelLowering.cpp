@@ -100,7 +100,6 @@ IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
       setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
       setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64, Expand);
 
-      setSchedulingPreference(SchedulingForLatency);
       setStackPointerRegisterToSaveRestore(IA64::r12);
 
       computeRegisterProperties();

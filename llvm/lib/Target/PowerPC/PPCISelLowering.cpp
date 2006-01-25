@@ -150,7 +150,6 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   }
   
   setSetCCResultContents(ZeroOrOneSetCCResult);
-  setSchedulingPreference(SchedulingForLatency);
   setStackPointerRegisterToSaveRestore(PPC::R1);
   
   computeRegisterProperties();

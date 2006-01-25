@@ -32,6 +32,7 @@ TargetLowering::TargetLowering(TargetMachine &tm)
   UseUnderscoreSetJmpLongJmp = false;
   IntDivIsCheap = false;
   Pow2DivIsCheap = false;
+  SchedPreferenceInfo = SchedulingForLatency;
 }
 
 TargetLowering::~TargetLowering() {}
