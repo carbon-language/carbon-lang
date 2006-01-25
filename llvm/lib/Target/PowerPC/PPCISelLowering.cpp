@@ -110,7 +110,13 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
   setOperationAction(ISD::ConstantPool,  MVT::i32, Custom);
 
+  // VASTART needs to be custom lowered to use the VarArgsFrameIndex
+  setOperationAction(ISD::VASTART           , MVT::Other, Custom);
+  
   // Use the default implementation.
+  setOperationAction(ISD::VAARG             , MVT::Other, Expand);
+  setOperationAction(ISD::VACOPY            , MVT::Other, Expand);
+  setOperationAction(ISD::VAEND             , MVT::Other, Expand);
   setOperationAction(ISD::STACKSAVE         , MVT::Other, Expand); 
   setOperationAction(ISD::STACKRESTORE      , MVT::Other, Expand);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32  , Expand);
@@ -426,6 +432,14 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     // If the global is weak or external, we have to go through the lazy
     // resolution stub.
     return DAG.getLoad(MVT::i32, DAG.getEntryNode(), Lo, DAG.getSrcValue(0));
+  }
+  case ISD::VASTART: {
+    // vastart just stores the address of the VarArgsFrameIndex slot into the
+    // memory location argument.
+    // FIXME: Replace MVT::i32 with PointerTy
+    SDOperand FR = DAG.getFrameIndex(VarArgsFrameIndex, MVT::i32);
+    return DAG.getNode(ISD::STORE, MVT::Other, Op.getOperand(0), FR, 
+                       Op.getOperand(1), Op.getOperand(2));
   }
   }
   return SDOperand();
@@ -845,40 +859,6 @@ SDOperand PPCTargetLowering::LowerReturnTo(SDOperand Chain, SDOperand Op,
   }
   return DAG.getNode(PPCISD::RET_FLAG, MVT::Other, Copy, Copy.getValue(1));
 }
-
-SDOperand PPCTargetLowering::LowerVAStart(SDOperand Chain, SDOperand VAListP,
-                                          Value *VAListV, SelectionDAG &DAG) {
-  // vastart just stores the address of the VarArgsFrameIndex slot into the
-  // memory location argument.
-  SDOperand FR = DAG.getFrameIndex(VarArgsFrameIndex, MVT::i32);
-  return DAG.getNode(ISD::STORE, MVT::Other, Chain, FR, VAListP,
-                     DAG.getSrcValue(VAListV));
-}
-
-std::pair<SDOperand,SDOperand>
-PPCTargetLowering::LowerVAArg(SDOperand Chain,
-                              SDOperand VAListP, Value *VAListV,
-                              const Type *ArgTy, SelectionDAG &DAG) {
-  MVT::ValueType ArgVT = getValueType(ArgTy);
-  
-  SDOperand VAList =
-    DAG.getLoad(MVT::i32, Chain, VAListP, DAG.getSrcValue(VAListV));
-  SDOperand Result = DAG.getLoad(ArgVT, Chain, VAList, DAG.getSrcValue(NULL));
-  unsigned Amt;
-  if (ArgVT == MVT::i32 || ArgVT == MVT::f32)
-    Amt = 4;
-  else {
-    assert((ArgVT == MVT::i64 || ArgVT == MVT::f64) &&
-           "Other types should have been promoted for varargs!");
-    Amt = 8;
-  }
-  VAList = DAG.getNode(ISD::ADD, VAList.getValueType(), VAList,
-                       DAG.getConstant(Amt, VAList.getValueType()));
-  Chain = DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                      VAList, VAListP, DAG.getSrcValue(VAListV));
-  return std::make_pair(Result, Chain);
-}
-
 
 std::pair<SDOperand, SDOperand> PPCTargetLowering::
 LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,

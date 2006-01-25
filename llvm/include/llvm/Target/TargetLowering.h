@@ -366,31 +366,6 @@ public:
   virtual SDOperand LowerReturnTo(SDOperand Chain, SDOperand Op, 
                                   SelectionDAG &DAG);
   
-  /// LowerVAStart - This lowers the llvm.va_start intrinsic.  If not
-  /// implemented, this method prints a message and aborts.  This method should
-  /// return the modified chain value.  Note that VAListPtr* correspond to the
-  /// llvm.va_start operand.
-  virtual SDOperand LowerVAStart(SDOperand Chain, SDOperand VAListP,
-                                 Value *VAListV, SelectionDAG &DAG);
-
-  /// LowerVAEnd - This lowers llvm.va_end and returns the resultant chain.  If
-  /// not implemented, this defaults to a noop.
-  virtual SDOperand LowerVAEnd(SDOperand Chain, SDOperand LP, Value *LV,
-                               SelectionDAG &DAG);
-
-  /// LowerVACopy - This lowers llvm.va_copy and returns the resultant chain.
-  /// If not implemented, this defaults to loading a pointer from the input and
-  /// storing it to the output.
-  virtual SDOperand LowerVACopy(SDOperand Chain, SDOperand SrcP, Value *SrcV,
-                                SDOperand DestP, Value *DestV,
-                                SelectionDAG &DAG);
-
-  /// LowerVAArg - This lowers the vaarg instruction.  If not implemented, this
-  /// prints a message and aborts.
-  virtual std::pair<SDOperand,SDOperand>
-  LowerVAArg(SDOperand Chain, SDOperand VAListP, Value *VAListV,
-             const Type *ArgTy, SelectionDAG &DAG);
-
   /// LowerFrameReturnAddress - This hook lowers a call to llvm.returnaddress or
   /// llvm.frameaddress (depending on the value of the first argument).  The
   /// return values are the result pointer and the resultant token chain.  If

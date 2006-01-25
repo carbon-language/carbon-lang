@@ -1348,6 +1348,20 @@ SDOperand SelectionDAG::getSrcValue(const Value *V, int Offset) {
   return SDOperand(N, 0);
 }
 
+SDOperand SelectionDAG::getVAArg(MVT::ValueType VT,
+                                 SDOperand Chain, SDOperand Ptr,
+                                 SDOperand SV) {
+  std::vector<SDOperand> Ops;
+  Ops.reserve(3);
+  Ops.push_back(Chain);
+  Ops.push_back(Ptr);
+  Ops.push_back(SV);
+  std::vector<MVT::ValueType> VTs;
+  VTs.reserve(2);
+  VTs.push_back(VT); VTs.push_back(MVT::Other);  // Add token chain.
+  return getNode(ISD::VAARG, VTs, Ops);
+}
+
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
                                 std::vector<SDOperand> &Ops) {
   switch (Ops.size()) {
@@ -2087,14 +2101,17 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::CALLSEQ_END:    return "callseq_end";
 
     // Other operators
-  case ISD::LOAD:    return "load";
-  case ISD::STORE:   return "store";
-  case ISD::VLOAD:   return "vload";
-  case ISD::EXTLOAD:    return "extload";
-  case ISD::SEXTLOAD:   return "sextload";
-  case ISD::ZEXTLOAD:   return "zextload";
-  case ISD::TRUNCSTORE: return "truncstore";
-
+  case ISD::LOAD:               return "load";
+  case ISD::STORE:              return "store";
+  case ISD::VLOAD:              return "vload";
+  case ISD::EXTLOAD:            return "extload";
+  case ISD::SEXTLOAD:           return "sextload";
+  case ISD::ZEXTLOAD:           return "zextload";
+  case ISD::TRUNCSTORE:         return "truncstore";
+  case ISD::VAARG:              return "vaarg";
+  case ISD::VACOPY:             return "vacopy";
+  case ISD::VAEND:              return "vaend";
+  case ISD::VASTART:            return "vastart";
   case ISD::DYNAMIC_STACKALLOC: return "dynamic_stackalloc";
   case ISD::EXTRACT_ELEMENT:    return "extract_element";
   case ISD::BUILD_PAIR:         return "build_pair";

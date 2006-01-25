@@ -75,15 +75,6 @@ namespace llvm {
                 bool isTailCall, SDOperand Callee, ArgListTy &Args,
                 SelectionDAG &DAG);
 
-    virtual SDOperand LowerVAStart(SDOperand Chain, SDOperand VAListP,
-                                   Value *VAListV, SelectionDAG &DAG);
-    virtual SDOperand LowerVACopy(SDOperand Chain, SDOperand SrcP, Value *SrcV,
-                                  SDOperand DestP, Value *DestV,
-                                  SelectionDAG &DAG);
-    virtual std::pair<SDOperand,SDOperand>
-      LowerVAArg(SDOperand Chain, SDOperand VAListP, Value *VAListV,
-                 const Type *ArgTy, SelectionDAG &DAG);
-
     void restoreGP(MachineBasicBlock* BB);
     void restoreRA(MachineBasicBlock* BB);
     unsigned getVRegGP() { return GP; }

@@ -76,13 +76,6 @@ namespace llvm {
     /// (currently, only "ret void")
     virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
     
-    virtual SDOperand LowerVAStart(SDOperand Chain, SDOperand VAListP,
-                                   Value *VAListV, SelectionDAG &DAG);
-
-    virtual std::pair<SDOperand,SDOperand>
-      LowerVAArg(SDOperand Chain, SDOperand VAListP, Value *VAListV,
-                 const Type *ArgTy, SelectionDAG &DAG);
-    
     virtual std::pair<SDOperand, SDOperand>
       LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain, unsigned Depth,
                               SelectionDAG &DAG);

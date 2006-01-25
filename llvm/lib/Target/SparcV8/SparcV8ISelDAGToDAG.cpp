@@ -66,11 +66,6 @@ namespace {
     
     virtual SDOperand LowerReturnTo(SDOperand Chain, SDOperand Op,
                                     SelectionDAG &DAG);
-    virtual SDOperand LowerVAStart(SDOperand Chain, SDOperand VAListP,
-                                   Value *VAListV, SelectionDAG &DAG);
-    virtual std::pair<SDOperand,SDOperand>
-      LowerVAArg(SDOperand Chain, SDOperand VAListP, Value *VAListV,
-                 const Type *ArgTy, SelectionDAG &DAG);
     virtual std::pair<SDOperand, SDOperand>
       LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain, unsigned Depth,
                               SelectionDAG &DAG);
@@ -161,9 +156,15 @@ SparcV8TargetLowering::SparcV8TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
   setOperationAction(ISD::DEBUG_LABEL, MVT::Other, Expand);
 
-  // Expand these to their default code.
-  setOperationAction(ISD::STACKSAVE, MVT::Other, Expand); 
-  setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
+  // VASTART needs to be custom lowered to use the VarArgsFrameIndex
+  setOperationAction(ISD::VASTART           , MVT::Other, Custom);
+  
+  // Use the default implementation.
+  setOperationAction(ISD::VAARG             , MVT::Other, Expand);
+  setOperationAction(ISD::VACOPY            , MVT::Other, Expand);
+  setOperationAction(ISD::VAEND             , MVT::Other, Expand);
+  setOperationAction(ISD::STACKSAVE         , MVT::Other, Expand); 
+  setOperationAction(ISD::STACKRESTORE      , MVT::Other, Expand);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
 
   setSchedulingPreference(SchedulingForLatency);
@@ -602,35 +603,6 @@ SDOperand SparcV8TargetLowering::LowerReturnTo(SDOperand Chain, SDOperand Op,
   return DAG.getNode(V8ISD::RET_FLAG, MVT::Other, Copy, Copy.getValue(1));
 }
 
-SDOperand SparcV8TargetLowering::
-LowerVAStart(SDOperand Chain, SDOperand VAListP, Value *VAListV, 
-             SelectionDAG &DAG) {
-             
-  SDOperand Offset = DAG.getNode(ISD::ADD, MVT::i32,
-                                 DAG.getRegister(V8::I6, MVT::i32),
-                                 DAG.getConstant(VarArgsFrameOffset, MVT::i32));
-  return DAG.getNode(ISD::STORE, MVT::Other, Chain, Offset, 
-                     VAListP, DAG.getSrcValue(VAListV));
-}
-
-std::pair<SDOperand,SDOperand> SparcV8TargetLowering::
-LowerVAArg(SDOperand Chain, SDOperand VAListP, Value *VAListV,
-           const Type *ArgTy, SelectionDAG &DAG) {
-  // Load the pointer out of the valist.
-  SDOperand Ptr = DAG.getLoad(MVT::i32, Chain,
-                              VAListP, DAG.getSrcValue(VAListV));
-  MVT::ValueType ArgVT = getValueType(ArgTy);
-  SDOperand Val = DAG.getLoad(ArgVT, Ptr.getValue(1),
-                              Ptr, DAG.getSrcValue(NULL));
-  // Increment the pointer.
-  Ptr = DAG.getNode(ISD::ADD, MVT::i32, Ptr, 
-                    DAG.getConstant(MVT::getSizeInBits(ArgVT)/8, MVT::i32));
-  // Store it back to the valist.
-  Chain = DAG.getNode(ISD::STORE, MVT::Other, Chain, Ptr, 
-                      VAListP, DAG.getSrcValue(VAListV));
-  return std::make_pair(Val, Chain);
-}
-
 std::pair<SDOperand, SDOperand> SparcV8TargetLowering::
 LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain, unsigned Depth,
                         SelectionDAG &DAG) {
@@ -713,6 +685,15 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     }
     return DAG.getNode(Opc, TrueVal.getValueType(), TrueVal, FalseVal, 
                        DAG.getConstant(CC, MVT::i32), CompareFlag);
+  }
+  case ISD::VASTART: {
+    // vastart just stores the address of the VarArgsFrameIndex slot into the
+    // memory location argument.
+    SDOperand Offset = DAG.getNode(ISD::ADD, MVT::i32,
+                                   DAG.getRegister(V8::I6, MVT::i32),
+                                   DAG.getConstant(VarArgsFrameOffset, MVT::i32));
+    return DAG.getNode(ISD::STORE, MVT::Other, Op.getOperand(0), Offset, 
+                       Op.getOperand(1), Op.getOperand(2));
   }
   }
 }

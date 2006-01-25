@@ -169,7 +169,13 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
   setOperationAction(ISD::DEBUG_LABEL, MVT::Other, Expand);
 
-  // Expand to the default code.
+  // VASTART needs to be custom lowered to use the VarArgsFrameIndex
+  setOperationAction(ISD::VASTART           , MVT::Other, Custom);
+  
+  // Use the default implementation.
+  setOperationAction(ISD::VAARG             , MVT::Other, Expand);
+  setOperationAction(ISD::VACOPY            , MVT::Other, Expand);
+  setOperationAction(ISD::VAEND             , MVT::Other, Expand);
   setOperationAction(ISD::STACKSAVE,          MVT::Other, Expand); 
   setOperationAction(ISD::STACKRESTORE,       MVT::Other, Expand);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32  , Expand);
@@ -639,40 +645,6 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
     Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, TheCall);
     return std::make_pair(ResultVal, Chain);
   }
-}
-
-SDOperand
-X86TargetLowering::LowerVAStart(SDOperand Chain, SDOperand VAListP,
-                                Value *VAListV, SelectionDAG &DAG) {
-  // vastart just stores the address of the VarArgsFrameIndex slot.
-  SDOperand FR = DAG.getFrameIndex(VarArgsFrameIndex, MVT::i32);
-  return DAG.getNode(ISD::STORE, MVT::Other, Chain, FR, VAListP,
-                     DAG.getSrcValue(VAListV));
-}
-
-
-std::pair<SDOperand,SDOperand>
-X86TargetLowering::LowerVAArg(SDOperand Chain, SDOperand VAListP,
-                              Value *VAListV, const Type *ArgTy,
-                              SelectionDAG &DAG) {
-  MVT::ValueType ArgVT = getValueType(ArgTy);
-  SDOperand Val = DAG.getLoad(MVT::i32, Chain,
-                              VAListP, DAG.getSrcValue(VAListV));
-  SDOperand Result = DAG.getLoad(ArgVT, Chain, Val,
-                                 DAG.getSrcValue(NULL));
-  unsigned Amt;
-  if (ArgVT == MVT::i32)
-    Amt = 4;
-  else {
-    assert((ArgVT == MVT::i64 || ArgVT == MVT::f64) &&
-           "Other types should have been promoted for varargs!");
-    Amt = 8;
-  }
-  Val = DAG.getNode(ISD::ADD, Val.getValueType(), Val,
-                    DAG.getConstant(Amt, Val.getValueType()));
-  Chain = DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                      Val, VAListP, DAG.getSrcValue(VAListV));
-  return std::make_pair(Result, Chain);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1897,6 +1869,14 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
                            DAG.getTargetGlobalAddress(GV, getPointerTy()),
                            DAG.getSrcValue(NULL));
     return Result;
+  }
+  case ISD::VASTART: {
+    // vastart just stores the address of the VarArgsFrameIndex slot into the
+    // memory location argument.
+    // FIXME: Replace MVT::i32 with PointerTy
+    SDOperand FR = DAG.getFrameIndex(VarArgsFrameIndex, MVT::i32);
+    return DAG.getNode(ISD::STORE, MVT::Other, Op.getOperand(0), FR, 
+                       Op.getOperand(1), Op.getOperand(2));
   }
   }
 }

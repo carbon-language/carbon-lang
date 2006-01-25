@@ -278,6 +278,11 @@ public:
     Ops.push_back(False);
     return getNode(ISD::BRTWOWAY_CC, MVT::Other, Ops);
   }
+  
+  /// getVAArg - VAArg produces a result and token chain, and takes a pointer
+  /// and a source value as input.
+  SDOperand getVAArg(MVT::ValueType VT, SDOperand Chain, SDOperand Ptr,
+                     SDOperand SV);
 
   /// getLoad - Loads are not normal binary operators: their result type is not
   /// determined by their operands, and they produce a value AND a token chain.

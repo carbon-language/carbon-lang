@@ -1115,13 +1115,12 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     switch (TLI.getOperationAction(Node->getOpcode(), VT)) {
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Custom: {
-      SDOperand Op = DAG.getLoad(Node->getValueType(0),
-                                 Tmp1, Tmp2, Node->getOperand(2));
+      SDOperand Op = DAG.getLoad(VT, Tmp1, Tmp2, Node->getOperand(2));
       SDOperand Tmp = TLI.LowerOperation(Op, DAG);
       if (Tmp.Val) {
         Result = LegalizeOp(Tmp);
-        // Since loads produce two values, make sure to remember that we legalized
-        // both of them.
+        // Since loads produce two values, make sure to remember that we 
+        // legalized both of them.
         AddLegalizedOperand(SDOperand(Node, 0), Result);
         AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
         return Result.getValue(Op.ResNo);
@@ -1131,8 +1130,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case TargetLowering::Legal:
       if (Tmp1 != Node->getOperand(0) ||
           Tmp2 != Node->getOperand(1))
-        Result = DAG.getLoad(Node->getValueType(0), Tmp1, Tmp2,
-                             Node->getOperand(2));
+        Result = DAG.getLoad(VT, Tmp1, Tmp2, Node->getOperand(2));
       else
         Result = SDOperand(Node, 0);
 
@@ -2222,6 +2220,140 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
 
+  case ISD::VAARG: {
+    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+    Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
+
+    MVT::ValueType VT = Node->getValueType(0);
+    switch (TLI.getOperationAction(Node->getOpcode(), MVT::Other)) {
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Custom: {
+      SDOperand Op = DAG.getVAArg(VT, Tmp1, Tmp2, Node->getOperand(2));
+      SDOperand Tmp = TLI.LowerOperation(Op, DAG);
+      if (Tmp.Val) {
+        Result = LegalizeOp(Tmp);
+        break;
+      }
+      // FALLTHROUGH if the target thinks it is legal.
+    }
+    case TargetLowering::Legal:
+      if (Tmp1 != Node->getOperand(0) ||
+          Tmp2 != Node->getOperand(1))
+        Result = DAG.getVAArg(VT, Tmp1, Tmp2, Node->getOperand(2));
+      else
+        Result = SDOperand(Node, 0);
+      break;
+    case TargetLowering::Expand: {
+      SDOperand VAList = DAG.getLoad(TLI.getPointerTy(), Tmp1, Tmp2,
+                                     Node->getOperand(2));
+      // Increment the pointer, VAList, to the next vaarg
+      Tmp3 = DAG.getNode(ISD::ADD, TLI.getPointerTy(), VAList, 
+                         DAG.getConstant(MVT::getSizeInBits(VT)/8, 
+                                         TLI.getPointerTy()));
+      // Store the incremented VAList to the legalized pointer
+      Tmp3 = DAG.getNode(ISD::STORE, MVT::Other, VAList.getValue(1), Tmp3, Tmp2, 
+                         Node->getOperand(2));
+      // Load the actual argument out of the pointer VAList
+      Result = DAG.getLoad(VT, Tmp3, VAList, DAG.getSrcValue(0));
+      Result = LegalizeOp(Result);
+      break;
+    }
+    }
+    // Since VAARG produces two values, make sure to remember that we 
+    // legalized both of them.
+    AddLegalizedOperand(SDOperand(Node, 0), Result);
+    AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
+    return Result.getValue(Op.ResNo);
+  }
+    
+  case ISD::VACOPY: 
+    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+    Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the dest pointer.
+    Tmp3 = LegalizeOp(Node->getOperand(2));  // Legalize the source pointer.
+
+    switch (TLI.getOperationAction(ISD::VACOPY, MVT::Other)) {
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Custom: {
+      SDOperand Op = DAG.getNode(ISD::VACOPY, MVT::Other, Tmp1, Tmp2, Tmp3,
+                                 Node->getOperand(3), Node->getOperand(4));
+      SDOperand Tmp = TLI.LowerOperation(Op, DAG);
+      if (Tmp.Val) {
+        Result = LegalizeOp(Tmp);
+        break;
+      }
+      // FALLTHROUGH if the target thinks it is legal.
+    }
+    case TargetLowering::Legal:
+      if (Tmp1 != Node->getOperand(0) ||
+          Tmp2 != Node->getOperand(1) ||
+          Tmp3 != Node->getOperand(2))
+        Result = DAG.getNode(ISD::VACOPY, MVT::Other, Tmp1, Tmp2, Tmp3,
+                             Node->getOperand(3), Node->getOperand(4));
+      break;
+    case TargetLowering::Expand:
+      // This defaults to loading a pointer from the input and storing it to the
+      // output, returning the chain.
+      Tmp4 = DAG.getLoad(TLI.getPointerTy(), Tmp1, Tmp3, Node->getOperand(3));
+      Result = DAG.getNode(ISD::STORE, MVT::Other, Tmp4.getValue(1), Tmp4, Tmp2,
+                           Node->getOperand(4));
+      Result = LegalizeOp(Result);
+      break;
+    }
+    break;
+
+  case ISD::VAEND: 
+    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+    Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
+
+    switch (TLI.getOperationAction(ISD::VAEND, MVT::Other)) {
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Custom: {
+      SDOperand Op = DAG.getNode(ISD::VAEND, MVT::Other, Tmp1, Tmp2, 
+                                 Node->getOperand(2));
+      SDOperand Tmp = TLI.LowerOperation(Op, DAG);
+      if (Tmp.Val) {
+        Result = LegalizeOp(Tmp);
+        break;
+      }
+      // FALLTHROUGH if the target thinks it is legal.
+    }
+    case TargetLowering::Legal:
+      if (Tmp1 != Node->getOperand(0) ||
+          Tmp2 != Node->getOperand(1))
+        Result = DAG.getNode(ISD::VAEND, MVT::Other, Tmp1, Tmp2, 
+                             Node->getOperand(2));
+      break;
+    case TargetLowering::Expand:
+      Result = Tmp1; // Default to a no-op, return the chain
+      break;
+    }
+    break;
+    
+  case ISD::VASTART: 
+    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+    Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
+
+    switch (TLI.getOperationAction(ISD::VASTART, MVT::Other)) {
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Custom: {
+      SDOperand Op = DAG.getNode(ISD::VASTART, MVT::Other, Tmp1, Tmp2, 
+                                 Node->getOperand(2));
+      SDOperand Tmp = TLI.LowerOperation(Op, DAG);
+      if (Tmp.Val) {
+        Result = LegalizeOp(Tmp);
+        break;
+      }
+      // FALLTHROUGH if the target thinks it is legal.
+    }
+    case TargetLowering::Legal:
+      if (Tmp1 != Node->getOperand(0) ||
+          Tmp2 != Node->getOperand(1))
+        Result = DAG.getNode(ISD::VASTART, MVT::Other, Tmp1, Tmp2, 
+                             Node->getOperand(2));
+      break;
+    }
+    break;
+    
   case ISD::ROTL:
   case ISD::ROTR:
     Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
@@ -3823,6 +3955,19 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     break;
   }
 
+  case ISD::VAARG: {
+    SDOperand Ch = LegalizeOp(Node->getOperand(0));   // Legalize the chain.
+    SDOperand Ptr = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
+    Lo = DAG.getVAArg(NVT, Ch, Ptr, Node->getOperand(2));
+    Hi = DAG.getVAArg(NVT, Lo.getValue(1), Ptr, Node->getOperand(2));
+
+    // Remember that we legalized the chain.
+    AddLegalizedOperand(Op.getValue(1), Hi.getValue(1));
+    if (!TLI.isLittleEndian())
+      std::swap(Lo, Hi);
+    break;
+  }
+    
   case ISD::LOAD: {
     SDOperand Ch = LegalizeOp(Node->getOperand(0));   // Legalize the chain.
     SDOperand Ptr = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.

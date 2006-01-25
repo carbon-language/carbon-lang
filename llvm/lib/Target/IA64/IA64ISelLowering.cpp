@@ -89,6 +89,13 @@ IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
       setOperationAction(ISD::ROTR , MVT::i64  , Expand);
       setOperationAction(ISD::BSWAP, MVT::i64  , Expand);  // mux @rev
 
+      // VASTART needs to be custom lowered to use the VarArgsFrameIndex
+      setOperationAction(ISD::VAARG             , MVT::Other, Custom);
+      setOperationAction(ISD::VASTART           , MVT::Other, Custom);
+      
+      // Use the default implementation.
+      setOperationAction(ISD::VACOPY            , MVT::Other, Expand);
+      setOperationAction(ISD::VAEND             , MVT::Other, Expand);
       setOperationAction(ISD::STACKSAVE, MVT::Other, Expand);
       setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
       setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64, Expand);
@@ -569,41 +576,6 @@ SDOperand IA64TargetLowering::LowerReturnTo(SDOperand Chain, SDOperand Op,
 //  return DAG.getNode(IA64ISD::RET_FLAG, MVT::Other, MVT::Other, Copy, Chain, InFlag);
 }
 
-SDOperand
-IA64TargetLowering::LowerVAStart(SDOperand Chain, SDOperand VAListP,
-                                 Value *VAListV, SelectionDAG &DAG) {
-  // vastart just stores the address of the VarArgsFrameIndex slot.
-  SDOperand FR = DAG.getFrameIndex(VarArgsFrameIndex, MVT::i64);
-  return DAG.getNode(ISD::STORE, MVT::Other, Chain, FR,
-                     VAListP, DAG.getSrcValue(VAListV));
-}
-
-std::pair<SDOperand,SDOperand> IA64TargetLowering::
-LowerVAArg(SDOperand Chain, SDOperand VAListP, Value *VAListV,
-           const Type *ArgTy, SelectionDAG &DAG) {
-
-  MVT::ValueType ArgVT = getValueType(ArgTy);
-  SDOperand Val = DAG.getLoad(MVT::i64, Chain,
-                              VAListP, DAG.getSrcValue(VAListV));
-  SDOperand Result = DAG.getLoad(ArgVT, DAG.getEntryNode(), Val,
-                                 DAG.getSrcValue(NULL));
-  unsigned Amt;
-  if (ArgVT == MVT::i32 || ArgVT == MVT::f32)
-    Amt = 8;
-  else {
-    assert((ArgVT == MVT::i64 || ArgVT == MVT::f64) &&
-           "Other types should have been promoted for varargs!");
-    Amt = 8;
-  }
-  Val = DAG.getNode(ISD::ADD, Val.getValueType(), Val,
-                    DAG.getConstant(Amt, Val.getValueType()));
-  Chain = DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                      Val, VAListP, DAG.getSrcValue(VAListV));
-  return std::make_pair(Result, Chain);
-}
-
-
-
 std::pair<SDOperand, SDOperand> IA64TargetLowering::
 LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
                         SelectionDAG &DAG) {
@@ -630,6 +602,27 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
 
     // and then just emit a 'ret' instruction
     return DAG.getNode(IA64ISD::RET_FLAG, MVT::Other, Chain);
+  }
+  case ISD::VAARG: {
+    MVT::ValueType VT = getPointerTy();
+    SDOperand VAList = DAG.getLoad(VT, Op.getOperand(0), Op.getOperand(1), 
+                                   Op.getOperand(2));
+    // Increment the pointer, VAList, to the next vaarg
+    SDOperand VAIncr = DAG.getNode(ISD::ADD, VT, VAList, 
+                                   DAG.getConstant(MVT::getSizeInBits(VT)/8, 
+                                                   VT));
+    // Store the incremented VAList to the legalized pointer
+    VAIncr = DAG.getNode(ISD::STORE, MVT::Other, VAList.getValue(1), VAIncr,
+                         Op.getOperand(1), Op.getOperand(2));
+    // Load the actual argument out of the pointer VAList
+    return DAG.getLoad(VT, VAIncr, VAList, DAG.getSrcValue(0));
+  }
+  case ISD::VASTART: {
+    // vastart just stores the address of the VarArgsFrameIndex slot into the
+    // memory location argument.
+    SDOperand FR = DAG.getFrameIndex(VarArgsFrameIndex, MVT::i64);
+    return DAG.getNode(ISD::STORE, MVT::Other, Op.getOperand(0), FR, 
+                       Op.getOperand(1), Op.getOperand(2));
   }
   }
 }

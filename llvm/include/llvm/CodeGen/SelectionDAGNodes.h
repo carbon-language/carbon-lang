@@ -335,6 +335,19 @@ namespace ISD {
     // target and not touched by the DAG optimizers.
     CALLSEQ_START,  // Beginning of a call sequence
     CALLSEQ_END,    // End of a call sequence
+    
+    // VAARG - VAARG has three operands: an input chain, a pointer, and a 
+    // SRCVALUE.  It returns a pair of values: the vaarg value and a new chain.
+    VAARG,
+    
+    // VACOPY - VACOPY has five operands: an input chain, a destination pointer,
+    // a source pointer, a SRCVALUE for the destination, and a SRCVALUE for the
+    // source.
+    VACOPY,
+    
+    // VAEND, VASTART - VAEND and VASTART have three operands: an input chain, a
+    // pointer, and a SRCVALUE.
+    VAEND, VASTART,
 
     // SRCVALUE - This corresponds to a Value*, and is used to associate memory
     // locations with their value.  This allows one use alias analysis
