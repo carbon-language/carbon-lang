@@ -55,6 +55,11 @@
       <li><a href="#constantexprs">Constant Expressions</a>
     </ol>
   </li>
+  <li><a href="#othervalues">Other Values</a>
+    <ol>
+      <li><a href="#inlineasm">Inline Assembler Expressions</a>
+    </ol>
+  </li>
   <li><a href="#instref">Instruction Reference</a>
     <ol>
       <li><a href="#terminators">Terminator Instructions</a>
@@ -1142,6 +1147,56 @@ following is the syntax for constant expressions:</p>
   the corresponding instruction (e.g. no bitwise operations on floating point
   values are allowed).</dd>
 </dl>
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section"> <a name="othervalues">Other Values</a> </div>
+<!-- *********************************************************************** -->
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+<a name="inlineasm">Inline Assembler Expressions</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+LLVM supports inline assembler expressions (as opposed to <a href="#moduleasm">
+Module-Level Inline Assembly</a>) through the use of a special value.  This
+value represents the inline assembler as a string (containing the instructions
+to emit), a list of operand constraints (stored as a string), and a flag that 
+indicates whether or not the inline asm expression has side effects.  An example
+inline assembler expression is:
+</p>
+
+<pre>
+  int(int) asm "bswap $0", "=r,r"
+</pre>
+
+<p>
+Inline assembler expressions may <b>only</b> be used as the callee operand of
+a <a href="#i_call"><tt>call</tt> instruction</a>.  Thus, typically we have:
+</p>
+
+<pre>
+  %X = call int asm "<a href="#i_bswap">bswap</a> $0", "=r,r"(int %Y)
+</pre>
+
+<p>
+Inline asms with side effects not visible in the constraint list must be marked
+as having side effects.  This is done through the use of the
+'<tt>sideeffect</tt>' keyword, like so:
+</p>
+
+<pre>
+  call void asm sideeffect "eieio", ""()
+</pre>
+
+<p>TODO: The format of the asm and constraints string still need to be
+documented here.  Constraints on what can be done (e.g. duplication, moving, etc
+need to be documented).
+</p>
+
 </div>
 
 <!-- *********************************************************************** -->
