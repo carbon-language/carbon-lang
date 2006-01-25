@@ -138,7 +138,7 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   setOperationAction(ISD::ExternalSymbol, MVT::i64, Custom);
 
   setOperationAction(ISD::VASTART, MVT::Other, Custom);
-  setOperationAction(ISD::VAEND,   MVT::Other, Custom);
+  setOperationAction(ISD::VAEND,   MVT::Other, Expand);
   setOperationAction(ISD::VACOPY,  MVT::Other, Custom);
   setOperationAction(ISD::VAARG,   MVT::Other, Custom);
 
