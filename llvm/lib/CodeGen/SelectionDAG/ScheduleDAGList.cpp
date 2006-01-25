@@ -270,8 +270,8 @@ void ScheduleDAGList::ListSchedule() {
       std::cerr << " has not been scheduled!\n";
       assert(0);
     }
-#endif
   }
+#endif
 
 
   // Reverse the order if it is bottom up.
