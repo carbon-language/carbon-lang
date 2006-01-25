@@ -1275,16 +1275,21 @@ for the details. </p>
   </tbody>
 </table>
 </div>
+
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="constant">Constant Field</a></div>
+<div class="doc_subsubsection"><a name="constant">Simple Constant Pool
+Entries</a></div>
+
 <div class="doc_text">
-<p>Constants come in many shapes and flavors. The sections that follow
-define the format for each of them. All constants start with a <a
+
+<p>Constant pool entries come in many shapes and flavors. The sections that
+follow define the format for each of them. All constants start with a <a
  href="#uint32_vbr">uint32_vbr</a> encoded integer that provides the
 number of operands for the constant. For primitive, structure, and
-array constants, this will always be zero since those types of
-constants have no operands. In this case, we have the following field
-definitions:</p>
+array constants, this will always be zero to indicate that the form of the 
+constant is solely determined by its type. In this case, we have the following
+field definitions, based on type:</p>
+
 <ul>
   <li><b>Bool</b>. This is written as an <a href="#uint32_vbr">uint32_vbr</a>
 of value 1U or 0U.</li>
@@ -1303,12 +1308,59 @@ element values.</li>
 field values of the structure.</li>
 </ul>
 
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">Undef Entries</a></div>
+
+<div class="doc_text">
 <p>When the number of operands to the constant is one, we have an 'undef' value
 of the specified type.</p>
+</div>
 
-<p>When the number of operands to the constant is greater than one, we have a
-constant expression and its field format is provided in the table below, and the
-number is equal to the number of operands+1.</p>
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">Inline Assembler Entries</a></div>
+
+<div class="doc_text">
+<p>Inline Assembler entries are stored in the constant pool, though they are not
+   officially LLVM constants.  These entries are marked with a value of
+   "4294967295" (all ones) for the number of operands.  They are encoded as
+   follows:</p>
+   
+<table>
+  <tbody>
+    <tr>
+      <th><b>Type</b></th>
+      <th class="td_left"><b>Field Description</b></th>
+    </tr>
+    <tr>
+      <td><a href="#string">string</a></td>
+      <td class="td_left">The asm string.</td>
+    </tr>
+    <tr>
+      <td><a href="#string">string</a></td>
+      <td class="td_left">The constraints string.</td>
+    </tr>
+    <tr>
+      <td><a href="#uint32_vbr">uint32_vbr</a></td>
+      <td class="td_left">Flags</sup></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Currently, the only defined flag, the low bit, indicates whether or not the
+   inline assembler has side effects.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">Constant Expression Entries</a></div>
+
+<div class="doc_text">
+
+<p>Otherwise, we have a constant expression.  The format of the constant
+expression is specified in the table below, and the number is equal to the
+number of operands+1.</p>
 <table>
   <tbody>
     <tr>
