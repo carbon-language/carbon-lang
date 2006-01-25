@@ -257,6 +257,7 @@ AlphaRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
         " for stack size: " << MF.getFrameInfo()->getStackSize() << "\n");
 
   if (Offset > IMM_HIGH || Offset < IMM_LOW) {
+    std::cerr << "Unconditionally using R28 for evil purposes\n";
     //so in this case, we need to use a temporary register, and move the original
     //inst off the SP/FP
     //fix up the old:
@@ -310,6 +311,9 @@ void AlphaRegisterInfo::emitPrologue(MachineFunction &MF) const {
 
   // Do we need to allocate space on the stack?
   if (NumBytes == 0) return;
+
+  unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
+  NumBytes = (NumBytes+Align-1)/Align*Align;
 
   // Update frame info to pretend that this is part of the stack...
   MFI->setStackSize(NumBytes);
