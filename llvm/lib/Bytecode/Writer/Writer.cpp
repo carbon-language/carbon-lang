@@ -22,6 +22,7 @@
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
@@ -387,6 +388,19 @@ void BytecodeWriter::outputConstant(const Constant *CPV) {
     break;
   }
   return;
+}
+
+/// outputInlineAsm - InlineAsm's get emitted to the constant pool, so they can
+/// be shared by multiple uses.
+void BytecodeWriter::outputInlineAsm(const InlineAsm *IA) {
+  // Output a marker, so we know when we have one one parsing the constant pool.
+  // Note that this encoding is 5 bytes: not very efficient for a marker.  Since
+  // unique inline asms are rare, this should hardly matter.
+  output_vbr(~0U);
+  
+  output(IA->getAsmString());
+  output(IA->getConstraintString());
+  output_vbr(unsigned(IA->hasSideEffects()));
 }
 
 void BytecodeWriter::outputConstantStrings() {
@@ -847,7 +861,8 @@ void BytecodeWriter::outputConstantsInPlane(const std::vector<const Value*>
     /*empty*/;
 
   unsigned NC = ValNo;              // Number of constants
-  for (; NC < Plane.size() && (isa<Constant>(Plane[NC])); NC++)
+  for (; NC < Plane.size() && (isa<Constant>(Plane[NC]) || 
+                               isa<InlineAsm>(Plane[NC])); NC++)
     /*empty*/;
   NC -= ValNo;                      // Convert from index into count
   if (NC == 0) return;              // Skip empty type planes...
@@ -866,9 +881,10 @@ void BytecodeWriter::outputConstantsInPlane(const std::vector<const Value*>
 
   for (unsigned i = ValNo; i < ValNo+NC; ++i) {
     const Value *V = Plane[i];
-    if (const Constant *C = dyn_cast<Constant>(V)) {
+    if (const Constant *C = dyn_cast<Constant>(V))
       outputConstant(C);
-    }
+    else
+      outputInlineAsm(cast<InlineAsm>(V));
   }
 }
 

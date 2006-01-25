@@ -24,6 +24,7 @@
 #include <vector>
 
 namespace llvm {
+  class InlineAsm;
 
 class BytecodeWriter {
   std::vector<unsigned char> &Out;
@@ -68,6 +69,7 @@ private:
   void outputConstantsInPlane(const std::vector<const Value*> &Plane,
                               unsigned StartNo);
   void outputConstant(const Constant *CPV);
+  void outputInlineAsm(const InlineAsm *IA);
   void outputType(const Type *T);
 
   /// @brief Unsigned integer output primitive
@@ -88,7 +90,7 @@ private:
   /// @brief Signed 32-bit variable bit rate output primitive.
   inline void output_vbr(int i);
 
-  inline void output(const std::string &s );
+  inline void output(const std::string &s);
 
   inline void output_data(const void *Ptr, const void *End);
 

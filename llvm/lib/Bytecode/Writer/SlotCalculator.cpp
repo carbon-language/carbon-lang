@@ -18,6 +18,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
+#include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
@@ -27,7 +28,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
 #include <functional>
-
 using namespace llvm;
 
 #if 0
@@ -181,11 +181,13 @@ void SlotCalculator::processModule() {
   SC_DEBUG("Inserting function constants:\n");
   for (Module::const_iterator F = TheModule->begin(), E = TheModule->end();
        F != E; ++F) {
-    for (const_inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I){
-      for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op)
-        if (isa<Constant>(I->getOperand(op)) &&
-            !isa<GlobalValue>(I->getOperand(op)))
-          getOrCreateSlot(I->getOperand(op));
+    for (const_inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
+      for (User::const_op_iterator OI = I->op_begin(), E = I->op_end(); 
+           OI != E; ++OI) {
+        if ((isa<Constant>(*OI) && !isa<GlobalValue>(*OI)) ||
+            isa<InlineAsm>(*OI))
+          getOrCreateSlot(*OI);
+      }
       getOrCreateSlot(I->getType());
     }
     processSymbolTableConstants(&F->getSymbolTable());
@@ -286,7 +288,7 @@ void SlotCalculator::incorporateFunction(const Function *F) {
   for(Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
     getOrCreateSlot(I);
 
-  if ( !ModuleContainsAllFunctionConstants ) {
+  if (!ModuleContainsAllFunctionConstants) {
     // Iterate over all of the instructions in the function, looking for
     // constant values that are referenced.  Add these to the value pools
     // before any nonconstant values.  This will be turned into the constant
@@ -295,12 +297,9 @@ void SlotCalculator::incorporateFunction(const Function *F) {
 
     // Emit all of the constants that are being used by the instructions in
     // the function...
-    constant_iterator CI = constant_begin(F);
-    constant_iterator CE = constant_end(F);
-    while ( CI != CE ) {
-      this->getOrCreateSlot(*CI);
-      ++CI;
-    }
+    for (constant_iterator CI = constant_begin(F), CE = constant_end(F);
+         CI != CE; ++CI)
+      getOrCreateSlot(*CI);
 
     // If there is a symbol table, it is possible that the user has names for
     // constants that are not being used.  In this case, we will have problems

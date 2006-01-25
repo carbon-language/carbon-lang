@@ -229,8 +229,8 @@ protected:
   void ParseConstantPool(ValueTable& Values, TypeListTy& Types,
                          bool isFunction);
 
-  /// @brief Parse a single constant value
-  Constant* ParseConstantValue(unsigned TypeID);
+  /// @brief Parse a single constant pool value
+  Value *ParseConstantPoolValue(unsigned TypeID);
 
   /// @brief Parse a block of types constants
   void ParseTypes(TypeListTy &Tab, unsigned NumEntries);

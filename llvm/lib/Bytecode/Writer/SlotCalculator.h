@@ -74,9 +74,9 @@ class SlotCalculator {
   SlotCalculator(const SlotCalculator &);  // DO NOT IMPLEMENT
   void operator=(const SlotCalculator &);  // DO NOT IMPLEMENT
 public:
-  SlotCalculator(const Module *M );
+  SlotCalculator(const Module *M);
   // Start out in incorp state
-  SlotCalculator(const Function *F );
+  SlotCalculator(const Function *F);
 
   /// getSlot - Return the slot number of the specified value in it's type
   /// plane.  This returns < 0 on error!
@@ -146,19 +146,19 @@ private:
   // they haven't been inserted already, they get inserted, otherwise
   // they are ignored.
   //
-  int getOrCreateSlot(const Value *D);
-  int getOrCreateSlot(const Type* T);
+  int getOrCreateSlot(const Value *V);
+  int getOrCreateSlot(const Type *T);
 
   // insertValue - Insert a value into the value table... Return the
   // slot that it occupies, or -1 if the declaration is to be ignored
   // because of the IgnoreNamedNodes flag.
   //
   int insertValue(const Value *D, bool dontIgnore = false);
-  int insertType(const Type* T, bool dontIgnore = false );
+  int insertType(const Type *T, bool dontIgnore = false);
 
   // doInsertValue - Small helper function to be called only be insertVal.
-  int doInsertValue(const Value *D);
-  int doInsertType(const Type*T);
+  int doInsertValue(const Value *V);
+  int doInsertType(const Type *T);
 
   // processModule - Process all of the module level function declarations and
   // types that are available.

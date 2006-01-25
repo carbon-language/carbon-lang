@@ -22,6 +22,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
+#include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Bytecode/Format.h"
@@ -1404,7 +1405,7 @@ void BytecodeReader::ParseTypes(TypeListTy &Tab, unsigned NumEntries){
 }
 
 /// Parse a single constant value
-Constant *BytecodeReader::ParseConstantValue(unsigned TypeID) {
+Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
   // We must check for a ConstantExpr before switching by type because
   // a ConstantExpr can be of any type, and has no explicit value.
   //
@@ -1412,10 +1413,31 @@ Constant *BytecodeReader::ParseConstantValue(unsigned TypeID) {
   unsigned isExprNumArgs = read_vbr_uint();
 
   if (isExprNumArgs) {
-    // 'undef' is encoded with 'exprnumargs' == 1.
-    if (!hasNoUndefValue)
-      if (--isExprNumArgs == 0)
+    if (!hasNoUndefValue) {
+      // 'undef' is encoded with 'exprnumargs' == 1.
+      if (isExprNumArgs == 1)
         return UndefValue::get(getType(TypeID));
+
+      // Inline asm is encoded with exprnumargs == ~0U.
+      if (isExprNumArgs == ~0U) {
+        std::string AsmStr = read_str();
+        std::string ConstraintStr = read_str();
+        unsigned Flags = read_vbr_uint();
+        
+        const PointerType *PTy = dyn_cast<PointerType>(getType(TypeID));
+        const FunctionType *FTy = 
+          PTy ? dyn_cast<FunctionType>(PTy->getElementType()) : 0;
+
+        if (!FTy || !InlineAsm::Verify(FTy, ConstraintStr))
+          error("Invalid constraints for inline asm");
+        if (Flags & ~1U)
+          error("Invalid flags for inline asm");
+        bool HasSideEffects = Flags & 1;
+        return InlineAsm::get(FTy, AsmStr, ConstraintStr, HasSideEffects);
+      }
+      
+      --isExprNumArgs;
+    }
 
     // FIXME: Encoding of constant exprs could be much more compact!
     std::vector<Constant*> ArgVec;
@@ -1695,9 +1717,9 @@ void BytecodeReader::ParseConstantPool(ValueTable &Tab,
       ParseStringConstants(NumEntries, Tab);
     } else {
       for (unsigned i = 0; i < NumEntries; ++i) {
-        Constant *C = ParseConstantValue(Typ);
-        assert(C && "ParseConstantValue returned NULL!");
-        unsigned Slot = insertValue(C, Typ, Tab);
+        Value *V = ParseConstantPoolValue(Typ);
+        assert(V && "ParseConstantPoolValue returned NULL!");
+        unsigned Slot = insertValue(V, Typ, Tab);
 
         // If we are reading a function constant table, make sure that we adjust
         // the slot number to be the real global constant number.
@@ -1705,7 +1727,8 @@ void BytecodeReader::ParseConstantPool(ValueTable &Tab,
         if (&Tab != &ModuleValues && Typ < ModuleValues.size() &&
             ModuleValues[Typ])
           Slot += ModuleValues[Typ]->size();
-        ResolveReferencesToConstant(C, Typ, Slot);
+        if (Constant *C = dyn_cast<Constant>(V))
+          ResolveReferencesToConstant(C, Typ, Slot);
       }
     }
   }
