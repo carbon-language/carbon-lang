@@ -645,7 +645,7 @@ void DIEAbbrev::Emit(const DwarfWriter &DW) const {
 #ifndef NDEBUG
   void DIEAbbrev::print(std::ostream &O) {
     O << "Abbreviation @"
-      << std::hex << (unsigned long)this << std::dec
+      << std::hex << (size_t)this << std::dec
       << "  "
       << TagString(Tag)
       << " "

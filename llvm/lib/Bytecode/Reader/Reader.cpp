@@ -79,7 +79,7 @@ inline void BytecodeReader::checkPastBlockEnd(const char * block_name) {
 inline void BytecodeReader::align32() {
   if (hasAlignment) {
     BufPtr Save = At;
-    At = (const unsigned char *)((unsigned long)(At+3) & (~3UL));
+    At = (const unsigned char *)((size_t)(At+3) & (~3UL));
     if (At > Save)
       if (Handler) Handler->handleAlignment(At - Save);
     if (At > BlockEnd)
