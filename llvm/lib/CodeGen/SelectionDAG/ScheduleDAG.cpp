@@ -464,7 +464,6 @@ void NodeGroup::Add(NodeInfo *D, NodeInfo *U) {
     // Merge the two lists
     DGroup->group_insert(DGroup->group_end(),
                          UGroup->group_begin(), UGroup->group_end());
-    DGroup->Bottom = UGroup->Bottom;
   } else if (DGroup) {
     // Make user member of definers group
     U->Group = DGroup;
@@ -477,7 +476,6 @@ void NodeGroup::Add(NodeInfo *D, NodeInfo *U) {
       DGroup->addPending(-CountInternalUses(DNI, U));
     }
     DGroup->group_push_back(U);
-    DGroup->Bottom = U;
   } else if (UGroup) {
     // Make definer member of users group
     D->Group = UGroup;
@@ -490,14 +488,11 @@ void NodeGroup::Add(NodeInfo *D, NodeInfo *U) {
       UGroup->addPending(-CountInternalUses(D, UNI));
     }
     UGroup->group_insert(UGroup->group_begin(), D);
-    UGroup->Top    = D;
   } else {
     D->Group = U->Group = DGroup = new NodeGroup();
     DGroup->addPending(D->Node->use_size() + U->Node->use_size() -
                        CountInternalUses(D, U));
     DGroup->group_push_back(D);
     DGroup->group_push_back(U);
-    DGroup->Top    = D;
-    DGroup->Bottom = U;
   }
 }

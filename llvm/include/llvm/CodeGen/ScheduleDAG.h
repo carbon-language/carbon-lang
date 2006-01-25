@@ -52,8 +52,6 @@ namespace llvm {
   class NodeGroup {
   private:
     NIVector      Members;                // Group member nodes
-    NodeInfo      *Top;
-    NodeInfo      *Bottom;
     NodeInfo      *Dominator;             // Node with highest latency
     unsigned      Latency;                // Total latency of the group
     int           Pending;                // Number of visits pending before
@@ -61,12 +59,12 @@ namespace llvm {
 
   public:
     // Ctor.
-    NodeGroup() : Top(NULL), Bottom(NULL), Dominator(NULL), Pending(0) {}
+    NodeGroup() : Dominator(NULL), Pending(0) {}
   
     // Accessors
     inline void setDominator(NodeInfo *D) { Dominator = D; }
-    inline NodeInfo *getTop() { return Top; }
-    inline NodeInfo *getBottom() { return Bottom; }
+    inline NodeInfo *getTop() { return Members[0]; }
+    inline NodeInfo *getBottom() { return Members[Members.size()-1]; }
     inline NodeInfo *getDominator() { return Dominator; }
     inline void setLatency(unsigned L) { Latency = L; }
     inline unsigned getLatency() { return Latency; }
