@@ -37,6 +37,7 @@ namespace llvm {
 
   // Scheduling heuristics
   enum SchedHeuristics {
+    defaultScheduling,      // Let the target specify its preference.
     noScheduling,           // No scheduling, emit breath first sequence.
     simpleScheduling,       // Two pass, min. critical path, max. utilization.
     simpleNoItinScheduling, // Same as above exact using generic latency.
@@ -51,6 +52,8 @@ namespace llvm {
   class NodeGroup {
   private:
     NIVector      Members;                // Group member nodes
+    NodeInfo      *Top;
+    NodeInfo      *Bottom;
     NodeInfo      *Dominator;             // Node with highest latency
     unsigned      Latency;                // Total latency of the group
     int           Pending;                // Number of visits pending before
@@ -58,10 +61,12 @@ namespace llvm {
 
   public:
     // Ctor.
-    NodeGroup() : Dominator(NULL), Pending(0) {}
+    NodeGroup() : Top(NULL), Bottom(NULL), Dominator(NULL), Pending(0) {}
   
     // Accessors
     inline void setDominator(NodeInfo *D) { Dominator = D; }
+    inline NodeInfo *getTop() { return Top; }
+    inline NodeInfo *getBottom() { return Bottom; }
     inline NodeInfo *getDominator() { return Dominator; }
     inline void setLatency(unsigned L) { Latency = L; }
     inline unsigned getLatency() { return Latency; }
@@ -94,7 +99,7 @@ namespace llvm {
   class NodeInfo {
   private:
     int           Pending;                // Number of visits pending before
-    //    adding to order
+                                          // adding to order
   public:
     SDNode        *Node;                  // DAG node
     InstrStage    *StageBegin;            // First stage in itinerary
@@ -279,7 +284,7 @@ namespace llvm {
 
     /// isPassiveNode - Return true if the node is a non-scheduled leaf.
     ///
-    bool isPassiveNode(SDNode *Node) {
+    static bool isPassiveNode(SDNode *Node) {
       if (isa<ConstantSDNode>(Node))       return true;
       if (isa<RegisterSDNode>(Node))       return true;
       if (isa<GlobalAddressSDNode>(Node))  return true;
@@ -316,7 +321,7 @@ namespace llvm {
 
     void dump(const char *tag) const;
 
-    void dump() const;
+    virtual void dump() const;
 
   private:
     /// PrepareNodeInfo - Set up the basic minimum node info for scheduling.
