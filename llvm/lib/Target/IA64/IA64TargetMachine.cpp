@@ -106,7 +106,7 @@ bool IA64TargetMachine::addPassesToEmitFile(PassManager &PM,
   // Add an instruction selector
 // FIXME: reap this option one day:  if(EnableDAGIsel)
   PM.add(createIA64DAGToDAGInstructionSelector(*this));
-
+  
 /* XXX not yet. ;)
   // Run optional SSA-based machine code optimizations next...
   if (!NoSSAPeephole)
@@ -131,6 +131,9 @@ bool IA64TargetMachine::addPassesToEmitFile(PassManager &PM,
 
 /* XXX no, not just yet */
 //  PM.add(createIA64PeepholeOptimizerPass());
+
+  // Make sure everything is bundled happily
+  PM.add(createIA64BundlingPass(*this));
 
   if (PrintMachineCode)  // Print the register-allocated code
     PM.add(createIA64CodePrinterPass(std::cerr, *this));

@@ -84,7 +84,7 @@ void IA64RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
 
   if(RC == IA64::PRRegisterClass ) // if a bool, we use pseudocode
     // (SrcReg) DestReg = cmp.eq.unc(r0, r0)
-    BuildMI(MBB, MI, IA64::PCMPEQUNC, 1, DestReg).addReg(IA64::r0).addReg(IA64::r0).addReg(SrcReg);
+    BuildMI(MBB, MI, IA64::PCMPEQUNC, 3, DestReg).addReg(IA64::r0).addReg(IA64::r0).addReg(SrcReg);
   else // otherwise, MOV works (for both gen. regs and FP regs)
     BuildMI(MBB, MI, IA64::MOV, 1, DestReg).addReg(SrcReg);
 }
@@ -168,6 +168,8 @@ void IA64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const
   if ( Offset <= 8191 && Offset >= -8192) { // smallish offset
     //fix up the old:
     MI.SetMachineOperandReg(i, IA64::r22);
+    MachineOperand &MO = MI.getOperand(i);
+    MO.setUse(); // mark r22 as being used (the bundler wants to know this)
     //insert the new
     MachineInstr* nMI=BuildMI(IA64::ADDIMM22, 2, IA64::r22)
       .addReg(BaseRegister).addSImm(Offset);
@@ -175,6 +177,8 @@ void IA64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const
   } else { // it's big
     //fix up the old:
     MI.SetMachineOperandReg(i, IA64::r22);
+    MachineOperand &MO = MI.getOperand(i);
+    MO.setUse(); // mark r22 as being used (the bundler wants to know this)
     MachineInstr* nMI;
     nMI=BuildMI(IA64::MOVLIMM64, 1, IA64::r22).addSImm(Offset);
     MBB.insert(II, nMI);

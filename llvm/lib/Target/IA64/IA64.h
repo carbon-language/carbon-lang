@@ -27,10 +27,10 @@ class IntrinsicLowering;
 ///
 FunctionPass *createIA64DAGToDAGInstructionSelector(TargetMachine &TM);
 
-/// createIA64PatternInstructionSelector - This pass converts an LLVM function
-/// into a machine code representation in a more aggressive way.
+/// createIA64BundlingPass - This pass adds stop bits and bundles
+/// instructions.
 ///
-FunctionPass *createIA64PatternInstructionSelector(TargetMachine &TM);
+FunctionPass *createIA64BundlingPass(TargetMachine &TM);
 
 /// createIA64CodePrinterPass - Returns a pass that prints the IA64
 /// assembly code for a MachineFunction to the given output stream,

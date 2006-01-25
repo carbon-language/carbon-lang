@@ -106,49 +106,49 @@ def imm64  : PatLeaf<(i64 imm), [{
 }]>;
 
 def ADD  : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-           "add $dst = $src1, $src2;;",
+           "add $dst = $src1, $src2",
 	   [(set GR:$dst, (add GR:$src1, GR:$src2))]>;
 
 def ADD1 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-           "add $dst = $src1, $src2, 1;;",
+           "add $dst = $src1, $src2, 1",
 	   [(set GR:$dst, (add (add GR:$src1, GR:$src2), 1))]>;
 
 def ADDS : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, s14imm:$imm),
-           "adds $dst = $imm, $src1;;",
+           "adds $dst = $imm, $src1",
 	   [(set GR:$dst, (add GR:$src1, immSExt14:$imm))]>;
  
 def MOVL : AForm_DAG<0x03, 0x0b, (ops GR:$dst, s64imm:$imm),
-           "movl $dst = $imm;;",
+           "movl $dst = $imm",
 	   [(set GR:$dst, imm64:$imm)]>;
 
 def ADDL_GA : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, globaladdress:$imm),
-           "addl $dst = $imm, $src1;;",
+           "addl $dst = $imm, $src1",
 	   []>;
 
 // hmm 
 def ADDL_EA : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, calltarget:$imm),
-           "addl $dst = $imm, $src1;;",
+           "addl $dst = $imm, $src1",
 	   []>;
  
 def SUB  : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-           "sub $dst = $src1, $src2;;",
+           "sub $dst = $src1, $src2",
 	   [(set GR:$dst, (sub GR:$src1, GR:$src2))]>;
 
 def SUB1 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-           "sub $dst = $src1, $src2, 1;;",
+           "sub $dst = $src1, $src2, 1",
 	   [(set GR:$dst, (add (sub GR: $src1, GR:$src2), -1))]>;
 
 let isTwoAddress = 1 in {
 def TPCADDIMM22 : AForm<0x03, 0x0b,
   (ops GR:$dst, GR:$src1, s22imm:$imm, PR:$qp),
-    "($qp) add $dst = $imm, $dst;;">;
+    "($qp) add $dst = $imm, $dst">;
 def TPCADDS : AForm_DAG<0x03, 0x0b,
   (ops GR:$dst, GR:$src1, s14imm:$imm, PR:$qp),
-    "($qp) adds $dst = $imm, $dst;;",
+    "($qp) adds $dst = $imm, $dst",
     []>;
 def TPCMPIMM8NE : AForm<0x03, 0x0b,
   (ops PR:$dst, PR:$src1, s22imm:$imm, GR:$src2, PR:$qp),
-    "($qp) cmp.ne $dst , p0 = $imm, $src2;;">;
+    "($qp) cmp.ne $dst , p0 = $imm, $src2">;
 }
 
 // zero extend a bool (predicate reg) into an integer reg
@@ -156,66 +156,66 @@ def ZXTb : Pat<(zext PR:$src),
           (TPCADDIMM22 (ADDS r0, 0), 1, PR:$src)>;
 
 // normal sign/zero-extends
-def SXT1 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "sxt1 $dst = $src;;",
+def SXT1 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "sxt1 $dst = $src",
            [(set GR:$dst, (sext_inreg GR:$src, i8))]>;
-def ZXT1 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "zxt1 $dst = $src;;",
+def ZXT1 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "zxt1 $dst = $src",
            [(set GR:$dst, (and GR:$src, 255))]>;
-def SXT2 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "sxt2 $dst = $src;;",
+def SXT2 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "sxt2 $dst = $src",
            [(set GR:$dst, (sext_inreg GR:$src, i16))]>;
-def ZXT2 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "zxt2 $dst = $src;;",
+def ZXT2 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "zxt2 $dst = $src",
            [(set GR:$dst, (and GR:$src, 65535))]>;
-def SXT4 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "sxt4 $dst = $src;;",
+def SXT4 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "sxt4 $dst = $src",
            [(set GR:$dst, (sext_inreg GR:$src, i32))]>;
-def ZXT4 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "zxt4 $dst = $src;;",
+def ZXT4 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "zxt4 $dst = $src",
            [(set GR:$dst, (and GR:$src, is32ones))]>;
 
 // fixme: shrs vs shru?
 def MIX1L : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-          "mix1.l $dst = $src1, $src2;;",
+          "mix1.l $dst = $src1, $src2",
 	  [(set GR:$dst, (or (and GR:$src1, isMIX1Lable),
 	                     (and (srl GR:$src2, (i64 8)), isMIX1Lable)))]>;
 
 def MIX2L : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-          "mix2.l $dst = $src1, $src2;;",
+          "mix2.l $dst = $src1, $src2",
 	  [(set GR:$dst, (or (and GR:$src1, isMIX2Lable),
 	                     (and (srl GR:$src2, (i64 16)), isMIX2Lable)))]>;
 
 def MIX4L : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-          "mix4.l $dst = $src1, $src2;;",
+          "mix4.l $dst = $src1, $src2",
 	  [(set GR:$dst, (or (and GR:$src1, isMIX4Lable),
 	                     (and (srl GR:$src2, (i64 32)), isMIX4Lable)))]>;
 
 def MIX1R : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-          "mix1.r $dst = $src1, $src2;;",
+          "mix1.r $dst = $src1, $src2",
 	  [(set GR:$dst, (or (and (shl GR:$src1, (i64 8)), isMIX1Rable),
 	                     (and GR:$src2, isMIX1Rable)))]>;
 
 def MIX2R : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-          "mix2.r $dst = $src1, $src2;;",
+          "mix2.r $dst = $src1, $src2",
 	  [(set GR:$dst, (or (and (shl GR:$src1, (i64 16)), isMIX2Rable),
 	                     (and GR:$src2, isMIX2Rable)))]>;
 
 def MIX4R : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-          "mix4.r $dst = $src1, $src2;;",
+          "mix4.r $dst = $src1, $src2",
 	  [(set GR:$dst, (or (and (shl GR:$src1, (i64 32)), isMIX4Rable),
 	                     (and GR:$src2, isMIX4Rable)))]>;
 
 def GETFSIGD : AForm_DAG<0x03, 0x0b, (ops GR:$dst, FP:$src),
-  "getf.sig $dst = $src;;",
+  "getf.sig $dst = $src",
   []>;
 
 def SETFSIGD : AForm_DAG<0x03, 0x0b, (ops FP:$dst, GR:$src),
-  "setf.sig $dst = $src;;",
+  "setf.sig $dst = $src",
   []>;
 
 def XMALD : AForm_DAG<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3),
-  "xma.l $dst = $src1, $src2, $src3;;",
+  "xma.l $dst = $src1, $src2, $src3",
   []>;
 def XMAHD : AForm_DAG<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3),
-  "xma.h $dst = $src1, $src2, $src3;;",
+  "xma.h $dst = $src1, $src2, $src3",
   []>;
 def XMAHUD : AForm_DAG<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3),
-  "xma.hu $dst = $src1, $src2, $src3;;",
+  "xma.hu $dst = $src1, $src2, $src3",
   []>;
 
 // pseudocode for integer multiplication 
@@ -230,98 +230,98 @@ def : Pat<(mulhu GR:$src1, GR:$src2),
 // has imm form, too
 
 // def ADDS : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, s14imm:$imm),
-//   "adds $dst = $imm, $src1;;">;
+//   "adds $dst = $imm, $src1">;
 
 def AND   : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-          "and $dst = $src1, $src2;;",
+          "and $dst = $src1, $src2",
 	  [(set GR:$dst, (and GR:$src1, GR:$src2))]>;
 def ANDCM : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-          "andcm $dst = $src1, $src2;;",
+          "andcm $dst = $src1, $src2",
 	  [(set GR:$dst, (and GR:$src1, (not GR:$src2)))]>;
 // TODO: and/andcm/or/xor/add/sub/shift immediate forms
 def OR    : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-          "or $dst = $src1, $src2;;",
+          "or $dst = $src1, $src2",
 	  [(set GR:$dst, (or GR:$src1, GR:$src2))]>;
 
 def pOR   : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2, PR:$qp),
-          "($qp) or $dst = $src1, $src2;;">;
+          "($qp) or $dst = $src1, $src2">;
 
 // the following are all a bit unfortunate: we throw away the complement
 // of the compare!
 def CMPEQ : AForm_DAG<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-          "cmp.eq $dst, p0 = $src1, $src2;;",
+          "cmp.eq $dst, p0 = $src1, $src2",
 	  [(set PR:$dst, (seteq GR:$src1, GR:$src2))]>;
 def CMPGT : AForm_DAG<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-          "cmp.gt $dst, p0 = $src1, $src2;;",
+          "cmp.gt $dst, p0 = $src1, $src2",
 	  [(set PR:$dst, (setgt GR:$src1, GR:$src2))]>;
 def CMPGE : AForm_DAG<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-          "cmp.ge $dst, p0 = $src1, $src2;;",
+          "cmp.ge $dst, p0 = $src1, $src2",
 	  [(set PR:$dst, (setge GR:$src1, GR:$src2))]>;
 def CMPLT : AForm_DAG<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-          "cmp.lt $dst, p0 = $src1, $src2;;",
+          "cmp.lt $dst, p0 = $src1, $src2",
 	  [(set PR:$dst, (setlt GR:$src1, GR:$src2))]>;
 def CMPLE : AForm_DAG<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-          "cmp.le $dst, p0 = $src1, $src2;;",
+          "cmp.le $dst, p0 = $src1, $src2",
 	  [(set PR:$dst, (setle GR:$src1, GR:$src2))]>;
 def CMPNE : AForm_DAG<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-          "cmp.ne $dst, p0 = $src1, $src2;;",
+          "cmp.ne $dst, p0 = $src1, $src2",
 	  [(set PR:$dst, (setne GR:$src1, GR:$src2))]>;
 def CMPLTU: AForm_DAG<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-          "cmp.ltu $dst, p0 = $src1, $src2;;",
+          "cmp.ltu $dst, p0 = $src1, $src2",
 	  [(set PR:$dst, (setult GR:$src1, GR:$src2))]>;
 def CMPGTU: AForm_DAG<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-          "cmp.gtu $dst, p0 = $src1, $src2;;",
+          "cmp.gtu $dst, p0 = $src1, $src2",
 	  [(set PR:$dst, (setugt GR:$src1, GR:$src2))]>;
 def CMPLEU: AForm_DAG<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-          "cmp.leu $dst, p0 = $src1, $src2;;",
+          "cmp.leu $dst, p0 = $src1, $src2",
 	  [(set PR:$dst, (setule GR:$src1, GR:$src2))]>;
 def CMPGEU: AForm_DAG<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-          "cmp.geu $dst, p0 = $src1, $src2;;",
+          "cmp.geu $dst, p0 = $src1, $src2",
 	  [(set PR:$dst, (setuge GR:$src1, GR:$src2))]>;
 
 // and we do the whole thing again for FP compares!
 def FCMPEQ : AForm_DAG<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
-          "fcmp.eq $dst, p0 = $src1, $src2;;",
+          "fcmp.eq $dst, p0 = $src1, $src2",
           [(set PR:$dst, (seteq FP:$src1, FP:$src2))]>;
 def FCMPGT : AForm_DAG<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
-          "fcmp.gt $dst, p0 = $src1, $src2;;",
+          "fcmp.gt $dst, p0 = $src1, $src2",
 	  [(set PR:$dst, (setgt FP:$src1, FP:$src2))]>;
 def FCMPGE : AForm_DAG<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
-          "fcmp.ge $dst, p0 = $src1, $src2;;",
+          "fcmp.ge $dst, p0 = $src1, $src2",
 	  [(set PR:$dst, (setge FP:$src1, FP:$src2))]>;
 def FCMPLT : AForm_DAG<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
-          "fcmp.lt $dst, p0 = $src1, $src2;;",
+          "fcmp.lt $dst, p0 = $src1, $src2",
 	  [(set PR:$dst, (setlt FP:$src1, FP:$src2))]>;
 def FCMPLE : AForm_DAG<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
-          "fcmp.le $dst, p0 = $src1, $src2;;",
+          "fcmp.le $dst, p0 = $src1, $src2",
 	  [(set PR:$dst, (setle FP:$src1, FP:$src2))]>;
 def FCMPNE : AForm_DAG<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
-          "fcmp.neq $dst, p0 = $src1, $src2;;",
+          "fcmp.neq $dst, p0 = $src1, $src2",
 	  [(set PR:$dst, (setne FP:$src1, FP:$src2))]>;
 def FCMPLTU: AForm_DAG<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
-          "fcmp.ltu $dst, p0 = $src1, $src2;;",
+          "fcmp.ltu $dst, p0 = $src1, $src2",
 	  [(set PR:$dst, (setult FP:$src1, FP:$src2))]>;
 def FCMPGTU: AForm_DAG<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
-          "fcmp.gtu $dst, p0 = $src1, $src2;;",
+          "fcmp.gtu $dst, p0 = $src1, $src2",
 	  [(set PR:$dst, (setugt FP:$src1, FP:$src2))]>;
 def FCMPLEU: AForm_DAG<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
-          "fcmp.leu $dst, p0 = $src1, $src2;;",
+          "fcmp.leu $dst, p0 = $src1, $src2",
 	  [(set PR:$dst, (setule FP:$src1, FP:$src2))]>;
 def FCMPGEU: AForm_DAG<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
-          "fcmp.geu $dst, p0 = $src1, $src2;;",
+          "fcmp.geu $dst, p0 = $src1, $src2",
 	  [(set PR:$dst, (setuge FP:$src1, FP:$src2))]>;
 
 def PCMPEQUNCR0R0 : AForm<0x03, 0x0b, (ops PR:$dst, PR:$qp),
-    "($qp) cmp.eq.unc $dst, p0 = r0, r0;;">;
+    "($qp) cmp.eq.unc $dst, p0 = r0, r0">;
 
 def : Pat<(trunc GR:$src),  // truncate i64 to i1
           (CMPNE GR:$src, r0)>; // $src!=0? If so, PR:$dst=true
 	  
 let isTwoAddress=1 in {
   def TPCMPEQR0R0 : AForm<0x03, 0x0b, (ops PR:$dst, PR:$bogus, PR:$qp),
-    "($qp) cmp.eq $dst, p0 = r0, r0;;">;
+    "($qp) cmp.eq $dst, p0 = r0, r0">;
   def TPCMPNER0R0 : AForm<0x03, 0x0b, (ops PR:$dst, PR:$bogus, PR:$qp),
-    "($qp) cmp.ne $dst, p0 = r0, r0;;">;
+    "($qp) cmp.ne $dst, p0 = r0, r0">;
 }
 
 /* our pseudocode for OR on predicates is:
@@ -385,47 +385,47 @@ def bXOR  : Pat<(xor PR:$src1, PR:$src2),
                         PR:$src1)>;
 
 def XOR   : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-          "xor $dst = $src1, $src2;;",
+          "xor $dst = $src1, $src2",
 	  [(set GR:$dst, (xor GR:$src1, GR:$src2))]>;
 
 def SHLADD: AForm_DAG<0x03, 0x0b, (ops GR:$dst,GR:$src1,s64imm:$imm,GR:$src2),
-          "shladd $dst = $src1, $imm, $src2;;",
+          "shladd $dst = $src1, $imm, $src2",
           [(set GR:$dst, (add GR:$src2, (shl GR:$src1, isSHLADDimm:$imm)))]>;
 
 def SHL   : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-          "shl $dst = $src1, $src2;;",
+          "shl $dst = $src1, $src2",
 	  [(set GR:$dst, (shl GR:$src1, GR:$src2))]>;
 
 def SHRU  : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-          "shr.u $dst = $src1, $src2;;",
+          "shr.u $dst = $src1, $src2",
 	  [(set GR:$dst, (srl GR:$src1, GR:$src2))]>;
 
 def SHRS  : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-          "shr $dst = $src1, $src2;;",
+          "shr $dst = $src1, $src2",
 	  [(set GR:$dst, (sra GR:$src1, GR:$src2))]>;
 
-def MOV : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src), "mov $dst = $src;;">;
+def MOV : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src), "mov $dst = $src">;
 def FMOV : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src),
-  "mov $dst = $src;;">; // XXX: there _is_ no fmov
+  "mov $dst = $src">; // XXX: there _is_ no fmov
 def PMOV : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src, PR:$qp),
-  "($qp) mov $dst = $src;;">;
+  "($qp) mov $dst = $src">;
 
 def SPILL_ALL_PREDICATES_TO_GR : AForm<0x03, 0x0b, (ops GR:$dst),
-  "mov $dst = pr;;">;
+  "mov $dst = pr">;
 def FILL_ALL_PREDICATES_FROM_GR : AForm<0x03, 0x0b, (ops GR:$src),
-  "mov pr = $src;;">;
+  "mov pr = $src">;
 
 let isTwoAddress = 1 in {
   def CMOV : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src2, GR:$src, PR:$qp),
-    "($qp) mov $dst = $src;;">;
+    "($qp) mov $dst = $src">;
 }
 
 def PFMOV : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src, PR:$qp),
-  "($qp) mov $dst = $src;;">;
+  "($qp) mov $dst = $src">;
 
 let isTwoAddress = 1 in {
   def CFMOV : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src2, FP:$src, PR:$qp),
-    "($qp) mov $dst = $src;;">;
+    "($qp) mov $dst = $src">;
 }
 
 def SELECTINT : Pat<(select PR:$which, GR:$src1, GR:$src2),
@@ -467,203 +467,203 @@ def PSEUDO_ALLOC : PseudoInstIA64<(ops GR:$foo), "// PSEUDO_ALLOC">;
 
 def ALLOC : AForm<0x03, 0x0b,
   (ops GR:$dst, i8imm:$inputs, i8imm:$locals, i8imm:$outputs, i8imm:$rotating),
-    "alloc $dst = ar.pfs,$inputs,$locals,$outputs,$rotating;;">;
+    "alloc $dst = ar.pfs,$inputs,$locals,$outputs,$rotating">;
 
 let isTwoAddress = 1 in {
   def TCMPNE : AForm<0x03, 0x0b,
   (ops PR:$dst, PR:$src2, GR:$src3, GR:$src4),
-    "cmp.ne $dst, p0 = $src3, $src4;;">;
+    "cmp.ne $dst, p0 = $src3, $src4">;
   
   def TPCMPEQOR : AForm<0x03, 0x0b,
   (ops PR:$dst, PR:$src2, GR:$src3, GR:$src4, PR:$qp),
-    "($qp) cmp.eq.or $dst, p0 = $src3, $src4;;">;
+    "($qp) cmp.eq.or $dst, p0 = $src3, $src4">;
   
   def TPCMPNE : AForm<0x03, 0x0b,
   (ops PR:$dst, PR:$src2, GR:$src3, GR:$src4, PR:$qp),
-    "($qp) cmp.ne $dst, p0 = $src3, $src4;;">;
+    "($qp) cmp.ne $dst, p0 = $src3, $src4">;
   
   def TPCMPEQ : AForm<0x03, 0x0b,
   (ops PR:$dst, PR:$src2, GR:$src3, GR:$src4, PR:$qp),
-    "($qp) cmp.eq $dst, p0 = $src3, $src4;;">;
+    "($qp) cmp.eq $dst, p0 = $src3, $src4">;
 }
 
 def MOVSIMM14 : AForm<0x03, 0x0b, (ops GR:$dst, s14imm:$imm),
-  "mov $dst = $imm;;">;
+  "mov $dst = $imm">;
 def MOVSIMM22 : AForm<0x03, 0x0b, (ops GR:$dst, s22imm:$imm),
-  "mov $dst = $imm;;">;
+  "mov $dst = $imm">;
 def MOVLIMM64 : AForm<0x03, 0x0b, (ops GR:$dst, s64imm:$imm),
-  "movl $dst = $imm;;">;
+  "movl $dst = $imm">;
 
 def SHLI : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, u6imm:$imm), 
-  "shl $dst = $src1, $imm;;">;
+  "shl $dst = $src1, $imm">;
 def SHRUI : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, u6imm:$imm),
-  "shr.u $dst = $src1, $imm;;">;
+  "shr.u $dst = $src1, $imm">;
 def SHRSI : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, u6imm:$imm),
-  "shr $dst = $src1, $imm;;">;
+  "shr $dst = $src1, $imm">;
 
 def EXTRU : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, u6imm:$imm1, u6imm:$imm2),
-  "extr.u $dst = $src1, $imm1, $imm2;;">;
+  "extr.u $dst = $src1, $imm1, $imm2">;
 
-def DEPZ : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, u6imm:$imm1, u6imm:$imm2),	  "dep.z $dst = $src1, $imm1, $imm2;;">;
+def DEPZ : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, u6imm:$imm1, u6imm:$imm2),	  "dep.z $dst = $src1, $imm1, $imm2">;
 
 def PCMPEQOR : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2, PR:$qp),
-  "($qp) cmp.eq.or $dst, p0 = $src1, $src2;;">;
+  "($qp) cmp.eq.or $dst, p0 = $src1, $src2">;
 def PCMPEQUNC : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2, PR:$qp),
-  "($qp) cmp.eq.unc $dst, p0 = $src1, $src2;;">;
+  "($qp) cmp.eq.unc $dst, p0 = $src1, $src2">;
 def PCMPNE : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2, PR:$qp),
-  "($qp) cmp.ne $dst, p0 = $src1, $src2;;">;
+  "($qp) cmp.ne $dst, p0 = $src1, $src2">;
 
 // two destinations! 
 def BCMPEQ : AForm<0x03, 0x0b, (ops PR:$dst1, PR:$dst2, GR:$src1, GR:$src2),
-  "cmp.eq $dst1, dst2 = $src1, $src2;;">;
+  "cmp.eq $dst1, dst2 = $src1, $src2">;
 
 def ADDIMM14 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, s14imm:$imm),
-  "adds $dst = $imm, $src1;;">;
+  "adds $dst = $imm, $src1">;
 
 def ADDIMM22 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, s22imm:$imm),
-  "add $dst = $imm, $src1;;">;
+  "add $dst = $imm, $src1">;
 def CADDIMM22 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, s22imm:$imm, PR:$qp),
-  "($qp) add $dst = $imm, $src1;;">;
+  "($qp) add $dst = $imm, $src1">;
 
 def SUBIMM8 : AForm<0x03, 0x0b, (ops GR:$dst, s8imm:$imm, GR:$src2),
-  "sub $dst = $imm, $src2;;">;
+  "sub $dst = $imm, $src2">;
 
 let isStore = 1, noResults = 1 in {
   def ST1 : AForm<0x03, 0x0b, (ops GR:$dstPtr, GR:$value),
-    "st1 [$dstPtr] = $value;;">;
+    "st1 [$dstPtr] = $value">;
   def ST2 : AForm<0x03, 0x0b, (ops GR:$dstPtr, GR:$value),
-    "st2 [$dstPtr] = $value;;">;
+    "st2 [$dstPtr] = $value">;
   def ST4 : AForm<0x03, 0x0b, (ops GR:$dstPtr, GR:$value),
-    "st4 [$dstPtr] = $value;;">;
+    "st4 [$dstPtr] = $value">;
   def ST8 : AForm<0x03, 0x0b, (ops GR:$dstPtr, GR:$value),
-    "st8 [$dstPtr] = $value;;">;
+    "st8 [$dstPtr] = $value">;
   def STF4 : AForm<0x03, 0x0b, (ops GR:$dstPtr, FP:$value),
-    "stfs [$dstPtr] = $value;;">;
+    "stfs [$dstPtr] = $value">;
   def STF8 : AForm<0x03, 0x0b, (ops GR:$dstPtr, FP:$value),
-    "stfd [$dstPtr] = $value;;">;
+    "stfd [$dstPtr] = $value">;
   def STF_SPILL : AForm<0x03, 0x0b, (ops GR:$dstPtr, FP:$value),
-    "stf.spill [$dstPtr] = $value;;">;
+    "stf.spill [$dstPtr] = $value">;
 }
 
 let isLoad = 1 in {
   def LD1 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$srcPtr),
-    "ld1 $dst = [$srcPtr];;">;
+    "ld1 $dst = [$srcPtr]">;
   def LD2 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$srcPtr),
-    "ld2 $dst = [$srcPtr];;">;
+    "ld2 $dst = [$srcPtr]">;
   def LD4 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$srcPtr),
-    "ld4 $dst = [$srcPtr];;">;
+    "ld4 $dst = [$srcPtr]">;
   def LD8 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$srcPtr),
-    "ld8 $dst = [$srcPtr];;">;
+    "ld8 $dst = [$srcPtr]">;
   def LDF4 : AForm<0x03, 0x0b, (ops FP:$dst, GR:$srcPtr),
-    "ldfs $dst = [$srcPtr];;">;
+    "ldfs $dst = [$srcPtr]">;
   def LDF8 : AForm<0x03, 0x0b, (ops FP:$dst, GR:$srcPtr),
-    "ldfd $dst = [$srcPtr];;">;
+    "ldfd $dst = [$srcPtr]">;
   def LDF_FILL : AForm<0x03, 0x0b, (ops FP:$dst, GR:$srcPtr),
-    "ldf.fill $dst = [$srcPtr];;">;
+    "ldf.fill $dst = [$srcPtr]">;
 }
 
 def POPCNT : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src),
-  "popcnt $dst = $src;;",
+  "popcnt $dst = $src",
   [(set GR:$dst, (ctpop GR:$src))]>;
 
 // some FP stuff:  // TODO: single-precision stuff?
 def FADD : AForm_DAG<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2),
-  "fadd $dst = $src1, $src2;;",
+  "fadd $dst = $src1, $src2",
   [(set FP:$dst, (fadd FP:$src1, FP:$src2))]>;
 def FADDS: AForm<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2),
-  "fadd.s $dst = $src1, $src2;;">;
+  "fadd.s $dst = $src1, $src2">;
 def FSUB : AForm_DAG<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2),
-  "fsub $dst = $src1, $src2;;",
+  "fsub $dst = $src1, $src2",
   [(set FP:$dst, (fsub FP:$src1, FP:$src2))]>;
 def FMPY : AForm_DAG<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2),
-  "fmpy $dst = $src1, $src2;;",
+  "fmpy $dst = $src1, $src2",
   [(set FP:$dst, (fmul FP:$src1, FP:$src2))]>;
 def FMA : AForm_DAG<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3),
-  "fma $dst = $src1, $src2, $src3;;",
+  "fma $dst = $src1, $src2, $src3",
   [(set FP:$dst, (fadd (fmul FP:$src1, FP:$src2), FP:$src3))]>;
 def FMS : AForm_DAG<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3),
-  "fms $dst = $src1, $src2, $src3;;",
+  "fms $dst = $src1, $src2, $src3",
   [(set FP:$dst, (fsub (fmul FP:$src1, FP:$src2), FP:$src3))]>;
 def FNMA : AForm_DAG<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3),
-  "fnma $dst = $src1, $src2, $src3;;",
+  "fnma $dst = $src1, $src2, $src3",
   [(set FP:$dst, (fneg (fadd (fmul FP:$src1, FP:$src2), FP:$src3)))]>;
 def FABS : AForm_DAG<0x03, 0x0b, (ops FP:$dst, FP:$src),
-  "fabs $dst = $src;;",
+  "fabs $dst = $src",
   [(set FP:$dst, (fabs FP:$src))]>;
 def FNEG : AForm_DAG<0x03, 0x0b, (ops FP:$dst, FP:$src),
-  "fneg $dst = $src;;",
+  "fneg $dst = $src",
   [(set FP:$dst, (fneg FP:$src))]>;
 def FNEGABS : AForm_DAG<0x03, 0x0b, (ops FP:$dst, FP:$src),
-  "fnegabs $dst = $src;;",
+  "fnegabs $dst = $src",
   [(set FP:$dst, (fneg (fabs FP:$src)))]>;
 
 let isTwoAddress=1 in {
 def TCFMAS1 : AForm<0x03, 0x0b,
   (ops FP:$dst, FP:$bogussrc, FP:$src1, FP:$src2, FP:$src3, PR:$qp),
-    "($qp) fma.s1 $dst = $src1, $src2, $src3;;">;
+    "($qp) fma.s1 $dst = $src1, $src2, $src3">;
 def TCFMADS0 : AForm<0x03, 0x0b,
   (ops FP:$dst, FP:$bogussrc, FP:$src1, FP:$src2, FP:$src3, PR:$qp),
-    "($qp) fma.d.s0 $dst = $src1, $src2, $src3;;">;
+    "($qp) fma.d.s0 $dst = $src1, $src2, $src3">;
 }
 
 def CFMAS1 : AForm<0x03, 0x0b,
   (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3, PR:$qp),
-    "($qp) fma.s1 $dst = $src1, $src2, $src3;;">;
+    "($qp) fma.s1 $dst = $src1, $src2, $src3">;
 def CFNMAS1 : AForm<0x03, 0x0b,
   (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3, PR:$qp),
-    "($qp) fnma.s1 $dst = $src1, $src2, $src3;;">;
+    "($qp) fnma.s1 $dst = $src1, $src2, $src3">;
 
 def CFMADS1 : AForm<0x03, 0x0b,
   (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3, PR:$qp),
-    "($qp) fma.d.s1 $dst = $src1, $src2, $src3;;">;
+    "($qp) fma.d.s1 $dst = $src1, $src2, $src3">;
 def CFMADS0 : AForm<0x03, 0x0b,
   (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3, PR:$qp),
-    "($qp) fma.d.s0 $dst = $src1, $src2, $src3;;">;
+    "($qp) fma.d.s0 $dst = $src1, $src2, $src3">;
 def CFNMADS1 : AForm<0x03, 0x0b,
   (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3, PR:$qp),
-    "($qp) fnma.d.s1 $dst = $src1, $src2, $src3;;">;
+    "($qp) fnma.d.s1 $dst = $src1, $src2, $src3">;
 
 def FRCPAS0 : AForm<0x03, 0x0b, (ops FP:$dstFR, PR:$dstPR, FP:$src1, FP:$src2),
-  "frcpa.s0 $dstFR, $dstPR = $src1, $src2;;">;
+  "frcpa.s0 $dstFR, $dstPR = $src1, $src2">;
 def FRCPAS1 : AForm<0x03, 0x0b, (ops FP:$dstFR, PR:$dstPR, FP:$src1, FP:$src2),
-  "frcpa.s1 $dstFR, $dstPR = $src1, $src2;;">;
+  "frcpa.s1 $dstFR, $dstPR = $src1, $src2">;
 
 def XMAL : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3),
-  "xma.l $dst = $src1, $src2, $src3;;">;
+  "xma.l $dst = $src1, $src2, $src3">;
 
 def FCVTXF : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src),
-  "fcvt.xf $dst = $src;;">;
+  "fcvt.xf $dst = $src">;
 def FCVTXUF : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src),
-  "fcvt.xuf $dst = $src;;">;
+  "fcvt.xuf $dst = $src">;
 def FCVTXUFS1 : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src),
-  "fcvt.xuf.s1 $dst = $src;;">;
+  "fcvt.xuf.s1 $dst = $src">;
 def FCVTFX : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src),
-  "fcvt.fx $dst = $src;;">;
+  "fcvt.fx $dst = $src">;
 def FCVTFXU : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src),
-  "fcvt.fxu $dst = $src;;">;
+  "fcvt.fxu $dst = $src">;
 
 def FCVTFXTRUNC : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src),
-  "fcvt.fx.trunc $dst = $src;;">;
+  "fcvt.fx.trunc $dst = $src">;
 def FCVTFXUTRUNC : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src),
-  "fcvt.fxu.trunc $dst = $src;;">;
+  "fcvt.fxu.trunc $dst = $src">;
 
 def FCVTFXTRUNCS1 : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src),
-  "fcvt.fx.trunc.s1 $dst = $src;;">;
+  "fcvt.fx.trunc.s1 $dst = $src">;
 def FCVTFXUTRUNCS1 : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src),
-  "fcvt.fxu.trunc.s1 $dst = $src;;">;
+  "fcvt.fxu.trunc.s1 $dst = $src">;
 
 def FNORMD : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src),
-  "fnorm.d $dst = $src;;">;
+  "fnorm.d $dst = $src">;
 
 def GETFD : AForm<0x03, 0x0b, (ops GR:$dst, FP:$src),
-  "getf.d $dst = $src;;">;
+  "getf.d $dst = $src">;
 def SETFD : AForm<0x03, 0x0b, (ops FP:$dst, GR:$src),
-  "setf.d $dst = $src;;">;
+  "setf.d $dst = $src">;
 
 def GETFSIG : AForm<0x03, 0x0b, (ops GR:$dst, FP:$src),
-  "getf.sig $dst = $src;;">;
+  "getf.sig $dst = $src">;
 def SETFSIG : AForm<0x03, 0x0b, (ops FP:$dst, GR:$src),
-  "setf.sig $dst = $src;;">;
+  "setf.sig $dst = $src">;
 
 // these four FP<->int conversion patterns need checking/cleaning
 def SINT_TO_FP : Pat<(sint_to_fp GR:$src),
@@ -678,11 +678,11 @@ def FP_TO_UINT : Pat<(i64 (fp_to_uint FP:$src)),
 
 let isTerminator = 1, isBranch = 1, noResults = 1 in {
   def BRL_NOTCALL : RawForm<0x03, 0xb0, (ops i64imm:$dst),
-    "(p0) brl.cond.sptk $dst;;">;
+    "(p0) brl.cond.sptk $dst">;
   def BRLCOND_NOTCALL : RawForm<0x03, 0xb0, (ops PR:$qp, i64imm:$dst),
-    "($qp) brl.cond.sptk $dst;;">;
+    "($qp) brl.cond.sptk $dst">;
   def BRCOND_NOTCALL : RawForm<0x03, 0xb0, (ops PR:$qp, GR:$dst),
-    "($qp) br.cond.sptk $dst;;">;
+    "($qp) br.cond.sptk $dst">;
 }
 
 let isCall = 1, noResults = 1, /* isTerminator = 1, isBranch = 1, */
@@ -703,27 +703,31 @@ let isCall = 1, noResults = 1, /* isTerminator = 1, isBranch = 1, */
   out0,out1,out2,out3,out4,out5,out6,out7] in {
 // old pattern call
   def BRCALL: RawForm<0x03, 0xb0, (ops calltarget:$dst),
-  "br.call.sptk rp = $dst;;">;       // FIXME: teach llvm about branch regs?
+  "br.call.sptk rp = $dst">;       // FIXME: teach llvm about branch regs?
 // new daggy stuff!  
 
 // calls a globaladdress
   def BRCALL_IPREL_GA : RawForm<0x03, 0xb0, (ops calltarget:$dst),
-  "br.call.sptk rp = $dst;;">;       // FIXME: teach llvm about branch regs?
+  "br.call.sptk rp = $dst">;       // FIXME: teach llvm about branch regs?
 // calls an externalsymbol
   def BRCALL_IPREL_ES : RawForm<0x03, 0xb0, (ops calltarget:$dst),
-  "br.call.sptk rp = $dst;;">;       // FIXME: teach llvm about branch regs?
+  "br.call.sptk rp = $dst">;       // FIXME: teach llvm about branch regs?
 // calls through a function descriptor
   def BRCALL_INDIRECT : RawForm<0x03, 0xb0, (ops GR:$branchreg),
-  "br.call.sptk rp = $branchreg;;">; // FIXME: teach llvm about branch regs?
+  "br.call.sptk rp = $branchreg">; // FIXME: teach llvm about branch regs?
   def BRLCOND_CALL : RawForm<0x03, 0xb0, (ops PR:$qp, i64imm:$dst),
-    "($qp) brl.cond.call.sptk $dst;;">;
+    "($qp) brl.cond.call.sptk $dst">;
   def BRCOND_CALL : RawForm<0x03, 0xb0, (ops PR:$qp, GR:$dst),
-    "($qp) br.cond.call.sptk $dst;;">;
+    "($qp) br.cond.call.sptk $dst">;
 }
 
 // Return branch:
 let isTerminator = 1, isReturn = 1, noResults = 1 in
   def RET : AForm_DAG<0x03, 0x0b, (ops),
-            "br.ret.sptk.many rp;;",
+            "br.ret.sptk.many rp",
             [(retflag)]>; // return
 def : Pat<(ret), (RET)>;
+
+// the evil stop bit of despair
+def STOP : PseudoInstIA64<(ops variable_ops), ";;">;
+
