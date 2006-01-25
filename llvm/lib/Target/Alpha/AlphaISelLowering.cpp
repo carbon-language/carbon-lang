@@ -137,6 +137,10 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   setOperationAction(ISD::ConstantPool,   MVT::i64, Custom);
   setOperationAction(ISD::ExternalSymbol, MVT::i64, Custom);
 
+  setOperationAction(ISD::VASTART, MVT::Other, Custom);
+  setOperationAction(ISD::VAEND,   MVT::Other, Custom);
+  setOperationAction(ISD::VACOPY,  MVT::Other, Custom);
+
   setStackPointerRegisterToSaveRestore(Alpha::R30);
 
   addLegalFPImmediate(+0.0); //F31
