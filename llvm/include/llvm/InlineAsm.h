@@ -59,6 +59,13 @@ public:
   virtual void print(std::ostream &O) const { print(O, 0); }
   void print(std::ostream &OS, AssemblyAnnotationWriter *AAW) const;
 
+  /// Verify - This static method can be used by the parser to check to see if
+  /// the specified constraint string is legal for the type.  This returns true
+  /// if legal, false if not.
+  ///
+  static bool Verify(const FunctionType *Ty, const std::string &Constraints);
+
+  
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const InlineAsm *) { return true; }
   static inline bool classof(const Value *V) {
