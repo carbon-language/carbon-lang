@@ -140,6 +140,7 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   setOperationAction(ISD::VASTART, MVT::Other, Custom);
   setOperationAction(ISD::VAEND,   MVT::Other, Custom);
   setOperationAction(ISD::VACOPY,  MVT::Other, Custom);
+  setOperationAction(ISD::VAARG,   MVT::Other, Custom);
 
   setStackPointerRegisterToSaveRestore(Alpha::R30);
 
