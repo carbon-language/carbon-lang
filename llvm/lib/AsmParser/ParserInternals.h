@@ -72,6 +72,17 @@ static inline void ThrowException(const std::string &message,
   throw ParseException(CurFilename, message, LineNo);
 }
 
+/// InlineAsmDescriptor - This is a simple class that holds info about inline
+/// asm blocks, for use by ValID.
+struct InlineAsmDescriptor {
+  std::string AsmString, Constraints;
+  bool HasSideEffects;
+  
+  InlineAsmDescriptor(const std::string &as, const std::string &c, bool HSE)
+    : AsmString(as), Constraints(c), HasSideEffects(HSE) {}
+};
+
+
 // ValID - Represents a reference of a definition of some sort.  This may either
 // be a numeric reference or a symbolic (%var) reference.  This is just a
 // discriminated union.
@@ -82,7 +93,7 @@ static inline void ThrowException(const std::string &message,
 struct ValID {
   enum {
     NumberVal, NameVal, ConstSIntVal, ConstUIntVal, ConstFPVal, ConstNullVal,
-    ConstUndefVal, ConstZeroVal, ConstantVal,
+    ConstUndefVal, ConstZeroVal, ConstantVal, InlineAsmVal
   } Type;
 
   union {
@@ -92,6 +103,7 @@ struct ValID {
     uint64_t UConstPool64;// Unsigned constant pool reference.
     double   ConstPoolFP; // Floating point constant pool reference
     Constant *ConstantValue; // Fully resolved constant for ConstantVal case.
+    InlineAsmDescriptor *IAD;
   };
 
   static ValID create(int Num) {
@@ -129,10 +141,21 @@ struct ValID {
   static ValID create(Constant *Val) {
     ValID D; D.Type = ConstantVal; D.ConstantValue = Val; return D;
   }
+  
+  static ValID createInlineAsm(const std::string &AsmString,
+                               const std::string &Constraints,
+                               bool HasSideEffects) {
+    ValID D;
+    D.Type = InlineAsmVal;
+    D.IAD = new InlineAsmDescriptor(AsmString, Constraints, HasSideEffects);
+    return D;
+  }
 
   inline void destroy() const {
     if (Type == NameVal)
-      free(Name);    // Free this strdup'd memory...
+      free(Name);    // Free this strdup'd memory.
+    else if (Type == InlineAsmVal)
+      delete IAD;
   }
 
   inline ValID copy() const {

@@ -214,6 +214,7 @@ align           { return ALIGN;  }
 section         { return SECTION; }
 module          { return MODULE; }
 asm             { return ASM_TOK; }
+sideeffect      { return SIDEEFFECT; }
 
 cc              { return CC_TOK; }
 ccc             { return CCC_TOK; }

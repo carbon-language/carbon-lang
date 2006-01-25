@@ -14,6 +14,7 @@
 %{
 #include "ParserInternals.h"
 #include "llvm/CallingConv.h"
+#include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
@@ -316,6 +317,17 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
       ThrowException("Constant expression type different from required type!");
     return D.ConstantValue;
 
+  case ValID::InlineAsmVal: {    // Inline asm expression
+    const PointerType *PTy = dyn_cast<PointerType>(Ty);
+    const FunctionType *FTy =
+      PTy ? dyn_cast<FunctionType>(PTy->getElementType()) : 0;
+    if (!FTy || !InlineAsm::Verify(FTy, D.IAD->Constraints))
+      ThrowException("Invalid type for asm constraint string!");
+    InlineAsm *IA = InlineAsm::get(FTy, D.IAD->AsmString, D.IAD->Constraints,
+                                   D.IAD->HasSideEffects);
+    D.destroy();   // Free InlineAsmDescriptor.
+    return IA;
+  }
   default:
     assert(0 && "Unhandled case!");
     return 0;
@@ -932,6 +944,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %type <BoolVal>       GlobalType                  // GLOBAL or CONSTANT?
 %type <BoolVal>       OptVolatile                 // 'volatile' or not
 %type <BoolVal>       OptTailCall                 // TAIL CALL or plain CALL.
+%type <BoolVal>       OptSideEffect               // 'sideeffect' or not.
 %type <Linkage>       OptLinkage
 %type <Endianness>    BigOrLittle
 
@@ -967,7 +980,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %token DECLARE GLOBAL CONSTANT SECTION VOLATILE
 %token TO DOTDOTDOT NULL_TOK UNDEF CONST INTERNAL LINKONCE WEAK  APPENDING
 %token OPAQUE NOT EXTERNAL TARGET TRIPLE ENDIAN POINTERSIZE LITTLE BIG ALIGN
-%token DEPLIBS CALL TAIL ASM_TOK MODULE
+%token DEPLIBS CALL TAIL ASM_TOK MODULE SIDEEFFECT
 %token CC_TOK CCC_TOK FASTCC_TOK COLDCC_TOK
 %type <UIntVal> OptCallingConv
 
@@ -1831,6 +1844,13 @@ FunctionProto : DECLARE { CurFun.isDeclare = true; } FunctionHeaderH {
 //                        Rules to match Basic Blocks
 //===----------------------------------------------------------------------===//
 
+OptSideEffect : /* empty */ {
+    $$ = false;
+  }
+  | SIDEEFFECT {
+    $$ = true;
+  };
+
 ConstValueRef : ESINT64VAL {    // A reference to a direct constant
     $$ = ValID::create($1);
   }
@@ -1881,6 +1901,15 @@ ConstValueRef : ESINT64VAL {    // A reference to a direct constant
   }
   | ConstExpr {
     $$ = ValID::create($1);
+  }
+  | ASM_TOK OptSideEffect STRINGCONSTANT ',' STRINGCONSTANT {
+    char *End = UnEscapeLexed($3, true);
+    std::string AsmStr = std::string($3, End);
+    End = UnEscapeLexed($5, true);
+    std::string Constraints = std::string($5, End);
+    $$ = ValID::createInlineAsm(AsmStr, Constraints, $2);
+    free($3);
+    free($5);
   };
 
 // SymbolicValueRef - Reference to one of two ways of symbolically refering to
