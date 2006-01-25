@@ -70,6 +70,11 @@ public:
     ZeroOrNegativeOneSetCCResult,  // SetCC returns a sign extended result.
   };
 
+  enum SchedPreference {
+    SchedulingForLatency,          // Scheduling for shortest total latency.
+    SchedulingForRegPressure,      // Scheduling for lowest register pressure.
+  };
+
   TargetLowering(TargetMachine &TM);
   virtual ~TargetLowering();
 
@@ -101,6 +106,11 @@ public:
   /// returns information about the contents of the high-bits in the setcc
   /// result register.
   SetCCResultValue getSetCCResultContents() const { return SetCCResultContents;}
+
+  /// getSchedulingPreference - Return target scheduling preference.
+  SchedPreference getSchedulingPreference() const {
+    return SchedPreferenceInfo;
+  }
 
   /// getRegClassFor - Return the register class that should be used for the
   /// specified value type.  This may only be called on legal types.
@@ -260,6 +270,11 @@ protected:
   /// setSetCCResultContents - Specify how the target extends the result of a
   /// setcc operation in a register.
   void setSetCCResultContents(SetCCResultValue Ty) { SetCCResultContents = Ty; }
+
+  /// setSchedulingPreference - Specify the target scheduling preference.
+  void setSchedulingPreference(SchedPreference Pref) {
+    SchedPreferenceInfo = Pref;
+  }
 
   /// setShiftAmountFlavor - Describe how the target handles out of range shift
   /// amounts.
@@ -453,6 +468,10 @@ private:
   /// SetCCResultContents - Information about the contents of the high-bits in
   /// the result of a setcc comparison operation.
   SetCCResultValue SetCCResultContents;
+
+  /// SchedPreferenceInfo - The target scheduling preference: shortest possible
+  /// total cycles or lowest register usage.
+  SchedPreference SchedPreferenceInfo;
   
   /// UseUnderscoreSetJmpLongJmp - This target prefers to use _setjmp and
   /// _longjmp to implement llvm.setjmp/llvm.longjmp.  Defaults to false.
