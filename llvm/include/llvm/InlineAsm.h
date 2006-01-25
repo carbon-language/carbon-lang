@@ -8,7 +8,8 @@
 //===----------------------------------------------------------------------===//
 //
 // This class represents the inline asm strings, which are Value*'s that are
-// used as the callee operand of call instructions.
+// used as the callee operand of call instructions.  InlineAsm's are uniqued
+// like constants, and created via InlineAsm::get(...).
 //
 //===----------------------------------------------------------------------===//
 
@@ -23,35 +24,24 @@ struct AssemblyAnnotationWriter;
 class PointerType;
 class FunctionType;
 class Module;
-template<typename SC> struct ilist_traits;
-template<typename ValueSubClass, typename ItemParentClass, typename SymTabClass,
-         typename SubClass> class SymbolTableListTraits;
 
 class InlineAsm : public Value {
-  friend class SymbolTableListTraits<InlineAsm, Module, Module,
-                                     ilist_traits<InlineAsm> >;
   InlineAsm(const InlineAsm &);             // do not implement
   void operator=(const InlineAsm&);         // do not implement
 
-  void setParent(Module *Parent);
-  InlineAsm *Prev, *Next;
-  void setNext(InlineAsm *N) { Next = N; }
-  void setPrev(InlineAsm *N) { Prev = N; }
-        InlineAsm *getNext()       { return Next; }
-  const InlineAsm *getNext() const { return Next; }
-        InlineAsm *getPrev()       { return Prev; }
-  const InlineAsm *getPrev() const { return Prev; }
-  
-  Module *Parent;
   std::string AsmString, Constraints;
-  bool AsmHasSideEffects;
-public:
-  InlineAsm(const FunctionType *Ty, const std::string &AsmString,
-            const std::string &Constraints, bool hasSideEffects,
-            const std::string &Name = "", Module *ParentModule = 0);
+  bool HasSideEffects;
   
-  bool getHasSideEffects() const { return AsmHasSideEffects; }
-  void setSideEffects(bool X) { AsmHasSideEffects = X; }
+  InlineAsm(const FunctionType *Ty, const std::string &AsmString,
+            const std::string &Constraints, bool hasSideEffects);
+public:
+
+  /// InlineAsm::get - Return the the specified uniqued inline asm string.
+  ///
+  static InlineAsm *get(const FunctionType *Ty, const std::string &AsmString,
+                        const std::string &Constraints, bool hasSideEffects);
+  
+  bool hasSideEffects() const { return HasSideEffects; }
   
   /// getType - InlineAsm's are always pointers.
   ///
@@ -63,17 +53,6 @@ public:
   ///
   const FunctionType *getFunctionType() const;
 
-  /// getParent - Get the module that this global value is contained inside
-  /// of...
-  Module *getParent() { return Parent; }
-  const Module *getParent() const { return Parent; }
-
-  
-  /// removeFromParent/eraseFromParent - Unlink and unlink/delete this object
-  /// from the module it is embedded into.
-  void removeFromParent();
-  void eraseFromParent();
-  
   virtual void print(std::ostream &O) const { print(O, 0); }
   void print(std::ostream &OS, AssemblyAnnotationWriter *AAW) const;
 

@@ -21,6 +21,7 @@
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/InlineAsm.h"
 #include "llvm/Instruction.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
@@ -1270,9 +1271,6 @@ void Function::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
 }
 
 void InlineAsm::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
-  SlotMachine SlotTable(getParent());
-  AssemblyWriter W(o, SlotTable, getParent(), AAW);
-  
   assert(0 && "Inline asm printing unimplemented!");
   //W.write(this);
 }

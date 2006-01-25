@@ -18,33 +18,15 @@
 using namespace llvm;
 
 InlineAsm::InlineAsm(const FunctionType *Ty, const std::string &asmString,
-                     const std::string &constraints, bool hasSideEffects,
-                     const std::string &name, Module *ParentModule)
-  : Value(PointerType::get(Ty), Value::InlineAsmVal, name), 
-    Parent(0), AsmString(asmString), Constraints(constraints), 
-    AsmHasSideEffects(hasSideEffects) {
+                     const std::string &constraints, bool hasSideEffects)
+  : Value(PointerType::get(Ty), Value::InlineAsmVal), AsmString(asmString), 
+    Constraints(constraints), HasSideEffects(hasSideEffects) {
   LeakDetector::addGarbageObject(this);
 
-  if (ParentModule)
-    ParentModule->getInlineAsmList().push_back(this);
+  // FIXME: do various checks on the constraint string and type.
+      
 }
 
 const FunctionType *InlineAsm::getFunctionType() const {
   return cast<FunctionType>(getType()->getElementType());
-}
-
-void InlineAsm::setParent(Module *parent) {
-  if (getParent())
-    LeakDetector::addGarbageObject(this);
-  Parent = parent;
-  if (getParent())
-    LeakDetector::removeGarbageObject(this);
-}
-
-void InlineAsm::removeFromParent() {
-  getParent()->getInlineAsmList().remove(this);
-}
-
-void InlineAsm::eraseFromParent() {
-  getParent()->getInlineAsmList().erase(this);
 }
