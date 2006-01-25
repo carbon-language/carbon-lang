@@ -341,7 +341,7 @@ static bool isChainUse(SDNode *N, SDNode *UseN) {
 }
 
 void ScheduleDAGList::BuildSchedUnits() {
-  for (unsigned i = 0, N = NodeCount; i < N; i++) {
+  for (unsigned i = 0, NC = NodeCount; i < NC; i++) {
     NodeInfo *NI = &Info[i];
     SDNode *N = NI->Node;
     if (!isPassiveNode(N)) {
