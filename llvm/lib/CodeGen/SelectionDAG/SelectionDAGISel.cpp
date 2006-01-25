@@ -59,8 +59,10 @@ namespace {
   ISHeuristic(
     "sched",
     cl::desc("Choose scheduling style"),
-    cl::init(noScheduling),
+    cl::init(defaultScheduling),
     cl::values(
+      clEnumValN(defaultScheduling, "default",
+                 "Target preferred scheduling style"),
       clEnumValN(noScheduling, "none",
                  "No scheduling: breadth first sequencing"),
       clEnumValN(simpleScheduling, "simple",
@@ -69,7 +71,7 @@ namespace {
       clEnumValN(simpleNoItinScheduling, "simple-noitin",
                  "Simple two pass scheduling: Same as simple "
                  "except using generic latency"),
-      clEnumValN(listSchedulingBURR, "list-BURR",
+      clEnumValN(listSchedulingBURR, "list-burr",
                  "Bottom up register reduction list scheduling"),
       clEnumValEnd));
 } // namespace
@@ -1772,6 +1774,12 @@ void SelectionDAGISel::ScheduleAndEmitDAG(SelectionDAG &DAG) {
 
   switch (ISHeuristic) {
   default: assert(0 && "Unrecognized scheduling heuristic");
+  case defaultScheduling:
+    if (TLI.getSchedulingPreference() == TargetLowering::SchedulingForLatency)
+      SL = createSimpleDAGScheduler(noScheduling, DAG, BB);
+    else /* TargetLowering::SchedulingForRegPressure */
+      SL = createBURRListDAGScheduler(DAG, BB);
+    break;
   case noScheduling:
   case simpleScheduling:
   case simpleNoItinScheduling:
