@@ -90,7 +90,7 @@ class BFormD<bits<6> opcode, string asmstr, list<dag> pattern>
   let Inst{20-0} = disp;
 }
 let isBranch = 1, isTerminator = 1 in
-class BFormDG<bits<6> opcode, string asmstr, list<dag> pattern> 
+class BForm<bits<6> opcode, string asmstr, list<dag> pattern> 
     : InstAlpha<opcode, (ops GPRC:$RA, target:$DISP), asmstr> {
   let Pattern = pattern;
 

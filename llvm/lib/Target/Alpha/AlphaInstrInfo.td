@@ -764,21 +764,21 @@ let Ra = 31 in
 def BR : BFormD<0x30, "br $$31,$DISP", [(br bb:$DISP)]>;
 
 //Branches, int
-def BEQ  : BFormDG<0x39, "beq $RA,$DISP", 
-                   [(brcond (seteq GPRC:$RA, 0), bb:$DISP)]>;
-def BGE  : BFormDG<0x3E, "bge $RA,$DISP", 
-                   [(brcond (setge GPRC:$RA, 0), bb:$DISP)]>;
-def BGT  : BFormDG<0x3F, "bgt $RA,$DISP",
-                   [(brcond (setgt GPRC:$RA, 0), bb:$DISP)]>;
-def BLBC : BFormDG<0x38, "blbc $RA,$DISP", []>; //TODO: Low bit clear
-def BLBS : BFormDG<0x3C, "blbs $RA,$DISP",
-                   [(brcond (and GPRC:$RA, 1), bb:$DISP)]>;
-def BLE  : BFormDG<0x3B, "ble $RA,$DISP",
-                   [(brcond (setle GPRC:$RA, 0), bb:$DISP)]>;
-def BLT  : BFormDG<0x3A, "blt $RA,$DISP",
-                   [(brcond (setlt GPRC:$RA, 0), bb:$DISP)]>;
-def BNE  : BFormDG<0x3D, "bne $RA,$DISP",
-                   [(brcond (setne GPRC:$RA, 0), bb:$DISP)]>;
+def BEQ  : BForm<0x39, "beq $RA,$DISP", 
+                 [(brcond (seteq GPRC:$RA, 0), bb:$DISP)]>;
+def BGE  : BForm<0x3E, "bge $RA,$DISP", 
+                 [(brcond (setge GPRC:$RA, 0), bb:$DISP)]>;
+def BGT  : BForm<0x3F, "bgt $RA,$DISP",
+                 [(brcond (setgt GPRC:$RA, 0), bb:$DISP)]>;
+def BLBC : BForm<0x38, "blbc $RA,$DISP", []>; //TODO: Low bit clear
+def BLBS : BForm<0x3C, "blbs $RA,$DISP",
+                 [(brcond (and GPRC:$RA, 1), bb:$DISP)]>;
+def BLE  : BForm<0x3B, "ble $RA,$DISP",
+                 [(brcond (setle GPRC:$RA, 0), bb:$DISP)]>;
+def BLT  : BForm<0x3A, "blt $RA,$DISP",
+                 [(brcond (setlt GPRC:$RA, 0), bb:$DISP)]>;
+def BNE  : BForm<0x3D, "bne $RA,$DISP",
+                 [(brcond (setne GPRC:$RA, 0), bb:$DISP)]>;
 
 //Branches, float
 def FBEQ : FBForm<0x31, "fbeq $RA,$DISP", 
