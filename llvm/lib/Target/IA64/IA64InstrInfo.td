@@ -501,10 +501,13 @@ def SHRUI : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, u6imm:$imm),
 def SHRSI : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, u6imm:$imm),
   "shr $dst = $src1, $imm">;
 
-def EXTRU : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, u6imm:$imm1, u6imm:$imm2),
+def EXTRU : AForm<0x03, 0x0b,
+  (ops GR:$dst, GR:$src1, u6imm:$imm1, u6imm:$imm2),
   "extr.u $dst = $src1, $imm1, $imm2">;
 
-def DEPZ : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, u6imm:$imm1, u6imm:$imm2),	  "dep.z $dst = $src1, $imm1, $imm2">;
+def DEPZ : AForm<0x03, 0x0b,
+  (ops GR:$dst, GR:$src1, u6imm:$imm1, u6imm:$imm2),
+  "dep.z $dst = $src1, $imm1, $imm2">;
 
 def PCMPEQOR : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2, PR:$qp),
   "($qp) cmp.eq.or $dst, p0 = $src1, $src2">;

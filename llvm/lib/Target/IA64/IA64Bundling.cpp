@@ -2,8 +2,8 @@
 //
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by the LLVM research group and is distributed under
-// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// This file was developed by Duraid Madina and is distributed under the
+// University of Illinois Open Source License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 //
@@ -56,7 +56,8 @@ namespace {
 
     std::set<unsigned> PendingRegWrites; // XXX: ugly global, but
                          // pending writes can cross basic blocks. Note that
-                         // taken branches end instruction groups.
+                         // taken branches end instruction groups. So we
+			 // only need to worry about 'fallthrough' code
   };
 } // end of anonymous namespace
 
