@@ -39,6 +39,113 @@
 
 namespace llvm {
 
+// Forward declarations.
+class ConstantStruct;
+class GlobalVariable;
+class Module;
+
+//===----------------------------------------------------------------------===//
+/// DebugInfoWrapper - This class is the base class for debug info wrappers.
+///
+class DebugInfoWrapper {
+protected:
+  GlobalVariable *GV;                   // "llvm.db" global
+  ConstantStruct *IC;                   // Initializer constant.
+  
+public:
+  DebugInfoWrapper(GlobalVariable *G);
+  
+  /// getGlobal - Return the "llvm.db" global.
+  ///
+  GlobalVariable *getGlobal() const { return GV; }
+
+  /// operator== - Used by Uniquevector to locate entry.
+  ///
+  bool operator==(const DebugInfoWrapper &DI) const { return IC == DI.IC; }
+
+  /// operator< - Used by Uniquevector to locate entry.
+  ///
+  bool operator<(const DebugInfoWrapper &DI) const { return IC < DI.IC; }
+};
+
+
+//===----------------------------------------------------------------------===//
+/// CompileUnitWrapper - This class wraps a "lldb.compile_unit" global to
+/// provide easy access to its attributes.
+class CompileUnitWrapper : public DebugInfoWrapper {
+public:
+  CompileUnitWrapper(GlobalVariable *G);
+  
+  /// getGlobal - Return the "lldb.compile_unit" global.
+  ///
+  GlobalVariable *getGlobal() const { return GV; }
+
+  /// getTag - Return the compile unit's tag number.  Currently DW_TAG_variable,
+  /// DW_TAG_subprogram or DW_TAG_compile_unit.
+  unsigned getTag() const;
+
+  /// isCorrectDebugVersion - Return true if is the correct llvm debug version.
+  /// Currently the value is 0 (zero.)  If the value is is not correct then
+  /// ignore all debug information.
+  bool isCorrectDebugVersion() const;
+  
+  /// getLanguage - Return the compile unit's language number (ex. DW_LANG_C89.)
+  ///
+  unsigned getLanguage() const;
+  
+  /// getFileName - Return the compile unit's file name.
+  ///
+  const std::string getFileName() const;
+  
+  /// getDirectory - Return the compile unit's file directory.
+  ///
+  const std::string getDirectory() const;
+  
+  /// getProducer - Return the compile unit's generator name.
+  ///
+  const std::string getProducer() const;
+};
+
+//===----------------------------------------------------------------------===//
+/// GlobalWrapper - This class wraps a "lldb.global" global to provide easy
+/// access to its attributes.
+class GlobalWrapper : public DebugInfoWrapper {
+public:
+  GlobalWrapper(GlobalVariable *G);
+  
+  /// getGlobal - Return the "lldb.global" global.
+  ///
+  GlobalVariable *getGlobal() const { return GV; }
+
+  /// getContext - Return the "lldb.compile_unit" context global.
+  ///
+  GlobalVariable *getContext() const;
+
+  /// getTag - Return the global's tag number.  Currently should be 
+  /// DW_TAG_variable or DW_TAG_subprogram.
+  unsigned getTag() const;
+  
+  /// getName - Return the name of the global.
+  ///
+  const std::string getName() const;
+  
+  /// getType - Return the type of the global.
+  ///
+  const GlobalVariable *getType() const;
+ 
+  /// isStatic - Return true if the global is static.
+  ///
+  bool isStatic() const;
+
+  /// isDefinition - Return true if the global is a definition.
+  ///
+  bool isDefinition() const;
+  
+  /// getGlobalVariable - Return the global variable (tag == DW_TAG_variable.)
+  ///
+  GlobalVariable *getGlobalVariable() const;
+};
+
 //===----------------------------------------------------------------------===//
 /// SourceLineInfo - This class is used to record source line correspondence.
 ///
@@ -94,36 +201,37 @@ public:
 ///
 class MachineDebugInfo : public ImmutablePass {
 private:
-  // DirectoryMap - UniqueVector for directories.
+  // CompileUnits - Uniquing vector for compile units.
+  UniqueVector<CompileUnitWrapper> CompileUnits;
+  
+  // Directories - Uniquing vector for directories.
   UniqueVector<std::string> Directories;
                                          
-  // SourceMap - UniqueVector for source files.
+  // SourceFiles - Uniquing vector for source files.
   UniqueVector<SourceFileInfo> SourceFiles;
 
   // Lines - List of of source line correspondence.
   std::vector<SourceLineInfo *> Lines;
 
 public:
-  MachineDebugInfo()
-  : Directories()
-  , SourceFiles()
-  , Lines()
-  {}
-  ~MachineDebugInfo() { }
+  MachineDebugInfo();
+  ~MachineDebugInfo();
   
   /// doInitialization - Initialize the debug state for a new module.
   ///
   bool doInitialization();
   
-  
   /// doFinalization - Tear down the debug state after completion of a module.
   ///
   bool doFinalization();
   
-  /// hasInfo - Returns true if debug info is present.
+  /// AnalyzeModule - Scan the module for global debug information.
   ///
-  // FIXME - need proper scheme to suppress debug output.
-  bool hasInfo() const { return !SourceFiles.empty(); }
+  void AnalyzeModule(Module &M);
+  
+  /// hasInfo - Returns true if valid debug info is present.
+  ///
+  bool hasInfo() const { return !CompileUnits.empty(); }
   
   /// RecordLabel - Records location information and associates it with a
   /// debug label.  Returns a unique label ID used to generate a label and 
@@ -159,6 +267,14 @@ public:
     return Lines;
   }
   
+  /// SetupCompileUnits - Set up the unique vector of compile units.
+  ///
+  void MachineDebugInfo::SetupCompileUnits(Module &M);
+
+  /// getGlobalVariables - Return a vector of debug global variables.
+  ///
+  static std::vector<GlobalWrapper> getGlobalVariables(Module &M);
+
 }; // End class MachineDebugInfo
 
 } // End llvm namespace

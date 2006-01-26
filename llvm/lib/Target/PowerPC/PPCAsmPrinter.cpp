@@ -431,7 +431,7 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 /// method to print assembly for each instruction.
 ///
 bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  // FIXME - is this the earliest this can be set.
+  // FIXME - is this the earliest this can be set?
   DW.SetDebugInfo(&getAnalysis<MachineDebugInfo>());
 
   SetupMachineFunction(MF);

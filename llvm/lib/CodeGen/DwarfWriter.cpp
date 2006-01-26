@@ -18,6 +18,7 @@
 #include "llvm/Type.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineDebugInfo.h"
+#include "llvm/Support/Dwarf.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Target/TargetMachine.h"
@@ -1719,28 +1720,26 @@ void DwarfWriter::ConstructCompileUnitDIEs() {
 /// variables.
 void DwarfWriter::ConstructGlobalDIEs(Module &M) {
   const TargetData &TD = Asm->TM.getTargetData();
-
-  // Iterate throu each of the globals.
-  for (Module::const_global_iterator GI = M.global_begin(), GE = M.global_end();
-       GI != GE; ++GI) {
-    if (!GI->hasInitializer()) continue;   // External global require no code
+  
+  std::vector<GlobalWrapper> GlobalVariables = DebugInfo->getGlobalVariables(M);
+  
+  for (unsigned i = 0, N = GlobalVariables.size(); i < N; ++i) {
+    GlobalWrapper &GW = GlobalVariables[i];
+    GlobalVariable *GV = GW.getGlobalVariable();
     
-    // Check to see if this is a special global used by LLVM, if so, emit it.
-    if (GI->hasAppendingLinkage() && (GI->getName() == "llvm.global_ctors" ||
-                                      GI->getName() == "llvm.global_dtors"))
-      continue;
+    if (!GV->hasInitializer()) continue;   // External global require no code
     
-    std::string Name = Asm->Mang->getValueName(GI);
-    Constant *C = GI->getInitializer();
+    // FIXME - Use global info type information when available.
+    std::string Name = Asm->Mang->getValueName(GV);
+    Constant *C = GV->getInitializer();
     const Type *Ty = C->getType();
     unsigned Size = TD.getTypeSize(Ty);
     unsigned Align = TD.getTypeAlignmentShift(Ty);
 
     if (C->isNullValue() && /* FIXME: Verify correct */
-        (GI->hasInternalLinkage() || GI->hasWeakLinkage() ||
-         GI->hasLinkOnceLinkage())) {
+        (GV->hasInternalLinkage() || GV->hasWeakLinkage() ||
+         GV->hasLinkOnceLinkage())) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
-      
     }
 
     /// FIXME - Get correct compile unit context.
@@ -1748,7 +1747,7 @@ void DwarfWriter::ConstructGlobalDIEs(Module &M) {
     DWContext *Context = CompileUnits[0]->getContext();
     
     /// Create new global.
-    NewGlobalVariable(Context, GI->getName(), Name, Ty, Size, Align);
+    NewGlobalVariable(Context, GV->getName(), Name, Ty, Size, Align);
   }
 }
 

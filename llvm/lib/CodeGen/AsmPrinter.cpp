@@ -78,6 +78,11 @@ bool AsmPrinter::doInitialization(Module &M) {
       << "\n" << CommentString << " End of file scope inline assembly\n";
 
   SwitchSection("", 0);   // Reset back to no section.
+  
+  if (MachineDebugInfo *DebugInfo = getAnalysisToUpdate<MachineDebugInfo>()) {
+    DebugInfo->AnalyzeModule(M);
+  }
+  
   return false;
 }
 
