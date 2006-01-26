@@ -52,6 +52,19 @@ public:
     return ID;
   }
   
+  /// idFor - return the ID for an existing entry.  Returns 0 if the entry is
+  /// not found.
+  unsigned idFor(const T &Entry) const {
+    // Search for entry in the map.
+    typename std::map<T, unsigned>::iterator MI = Map.lower_bound(Entry);
+    
+    // See if entry exists, if so return ID.
+    if (MI != Map.end() && MI->first == Entry) return MI->second;
+    
+    // No luck.
+    return 0;
+  }
+
   /// operator[] - Returns a reference to the entry with the specified ID.
   ///
   const T &operator[](unsigned ID) const { return *Vector[ID - 1]; }
@@ -63,6 +76,13 @@ public:
   /// empty - Returns true if the vector is empty.
   ///
   bool empty() const { return Vector.empty(); }
+  
+  /// reset - Clears all the entries.
+  ///
+  void reset() {
+    Map.clear();
+    Vector.resize(0, 0);
+  }
 };
 
 } // End of namespace llvm
