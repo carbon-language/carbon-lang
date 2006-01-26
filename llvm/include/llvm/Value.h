@@ -31,6 +31,7 @@ class BasicBlock;
 class GlobalValue;
 class Function;
 class GlobalVariable;
+class InlineAsm;
 class SymbolTable;
 
 //===----------------------------------------------------------------------===//
@@ -212,6 +213,9 @@ template <> inline bool isa_impl<Constant, Value>(const Value &Val) {
 }
 template <> inline bool isa_impl<Argument, Value>(const Value &Val) {
   return Val.getValueType() == Value::ArgumentVal;
+}
+template <> inline bool isa_impl<InlineAsm, Value>(const Value &Val) {
+  return Val.getValueType() == Value::InlineAsmVal;
 }
 template <> inline bool isa_impl<Instruction, Value>(const Value &Val) {
   return Val.getValueType() >= Value::InstructionVal;
