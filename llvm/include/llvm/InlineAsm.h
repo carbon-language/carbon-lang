@@ -17,6 +17,7 @@
 #define LLVM_INLINEASM_H
 
 #include "llvm/Value.h"
+#include <vector>
 
 namespace llvm {
 
@@ -65,6 +66,24 @@ public:
   ///
   static bool Verify(const FunctionType *Ty, const std::string &Constraints);
 
+  // Constraint String Parsing 
+  enum ConstraintPrefix {
+    isInput,            // 'x'
+    isOutput,           // '=x'
+    isIndirectOutput,   // '==x'
+    isClobber,          // '~x'
+  };
+  
+  /// ParseConstraints - Split up the constraint string into the specific
+  /// constraints and their prefixes.  If this returns an empty vector, and if
+  /// the constraint string itself isn't empty, there was an error parsing.
+  static std::vector<std::pair<ConstraintPrefix, std::string> > 
+    ParseConstraints(const std::string &ConstraintString);
+  
+  std::vector<std::pair<ConstraintPrefix, std::string> > 
+  ParseConstraints() const {
+    return ParseConstraints(Constraints);
+  }
   
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const InlineAsm *) { return true; }
