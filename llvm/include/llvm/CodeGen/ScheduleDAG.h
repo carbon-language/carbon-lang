@@ -63,8 +63,8 @@ namespace llvm {
   
     // Accessors
     inline void setDominator(NodeInfo *D) { Dominator = D; }
-    inline NodeInfo *getTop() { return Members[0]; }
-    inline NodeInfo *getBottom() { return Members[Members.size()-1]; }
+    inline NodeInfo *getTop() { return Members.front(); }
+    inline NodeInfo *getBottom() { return Members.back(); }
     inline NodeInfo *getDominator() { return Dominator; }
     inline void setLatency(unsigned L) { Latency = L; }
     inline unsigned getLatency() { return Latency; }
