@@ -30,6 +30,10 @@
 #include "llvm/System/Path.h"
 #include "llvm/System/Program.h"
 #include "llvm/Config/alloca.h"
+
+#define DONT_GET_PLUGIN_LOADER_OPTION
+#include "llvm/Support/PluginLoader.h"
+
 #include <fstream>
 using namespace llvm;
 
@@ -149,13 +153,18 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
 
   // setup the child process' arguments
   const char** args = (const char**)
-    alloca(sizeof(const char*)*(Passes.size()+10));
+    alloca(sizeof(const char*) * 
+	   (Passes.size()+10+2*PluginLoader::getNumPlugins()));
   int n = 0;
   args[n++] = ToolName.c_str();
   args[n++] = "-as-child";
   args[n++] = "-child-output";
   args[n++] = OutputFilename.c_str();
   std::vector<std::string> pass_args;
+  for (unsigned i = 0, e = PluginLoader::getNumPlugins(); i != e; ++i) {
+    pass_args.push_back( std::string("-load"));
+    pass_args.push_back( PluginLoader::getPlugin(i));
+  }
   for (std::vector<const PassInfo*>::const_iterator I = Passes.begin(),
        E = Passes.end(); I != E; ++I )
     pass_args.push_back( std::string("-") + (*I)->getPassArgument() );
