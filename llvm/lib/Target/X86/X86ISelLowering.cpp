@@ -1669,9 +1669,17 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       // If the X86ISD::SETCC has more than one use, then it's probably better
       // to use a test instead of duplicating the X86ISD::CMP (for register
       // pressure reason).
-      // FIXME: Check number of live Op0 uses since we are in the middle of 
-      // legalization process.
-      if (Op0.hasOneUse() && Op0.getOperand(1).getOpcode() == X86ISD::CMP) {
+      if (Op0.getOperand(1).getOpcode() == X86ISD::CMP) {
+        if (!Op0.hasOneUse()) {
+          std::vector<MVT::ValueType> Tys;
+          for (unsigned i = 0; i < Op0.Val->getNumValues(); ++i)
+            Tys.push_back(Op0.Val->getValueType(i));
+          std::vector<SDOperand> Ops;
+          for (unsigned i = 0; i < Op0.getNumOperands(); ++i)
+            Ops.push_back(Op0.getOperand(i));
+          Op0 = DAG.getNode(X86ISD::SETCC, Tys, Ops);
+        }
+
         CC   = Op0.getOperand(0);
         Cond = Op0.getOperand(1);
         // Make a copy as flag result cannot be used by more than one.
@@ -1720,9 +1728,17 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       // If the X86ISD::SETCC has more than one use, then it's probably better
       // to use a test instead of duplicating the X86ISD::CMP (for register
       // pressure reason).
-      // FIXME: Check number of live Cond uses since we are in the middle of 
-      // legalization process.
-      if (Cond.hasOneUse() && Cond.getOperand(1).getOpcode() == X86ISD::CMP) {
+      if (Cond.getOperand(1).getOpcode() == X86ISD::CMP) {
+        if (!Cond.hasOneUse()) {
+          std::vector<MVT::ValueType> Tys;
+          for (unsigned i = 0; i < Cond.Val->getNumValues(); ++i)
+            Tys.push_back(Cond.Val->getValueType(i));
+          std::vector<SDOperand> Ops;
+          for (unsigned i = 0; i < Cond.getNumOperands(); ++i)
+            Ops.push_back(Cond.getOperand(i));
+          Cond = DAG.getNode(X86ISD::SETCC, Tys, Ops);
+        }
+
         CC   = Cond.getOperand(0);
         Cond = Cond.getOperand(1);
         // Make a copy as flag result cannot be used by more than one.
