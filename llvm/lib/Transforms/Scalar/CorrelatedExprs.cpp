@@ -135,7 +135,8 @@ namespace {
     Relation &getRelation(Value *V) {
       // Binary search for V's entry...
       std::vector<Relation>::iterator I =
-        std::lower_bound(Relationships.begin(), Relationships.end(), V);
+        std::lower_bound(Relationships.begin(), Relationships.end(),
+                         Relation(V));
 
       // If we found the entry, return it...
       if (I != Relationships.end() && I->getValue() == V)
@@ -148,7 +149,8 @@ namespace {
     const Relation *requestRelation(Value *V) const {
       // Binary search for V's entry...
       std::vector<Relation>::const_iterator I =
-        std::lower_bound(Relationships.begin(), Relationships.end(), V);
+        std::lower_bound(Relationships.begin(), Relationships.end(),
+                         Relation(V));
       if (I != Relationships.end() && I->getValue() == V)
         return &*I;
       return 0;

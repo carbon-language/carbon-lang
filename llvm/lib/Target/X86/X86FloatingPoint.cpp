@@ -281,7 +281,12 @@ namespace {
     unsigned from;
     unsigned to;
     bool operator<(const TableEntry &TE) const { return from < TE.from; }
-    bool operator<(unsigned V) const { return from < V; }
+    friend bool operator<(const TableEntry &TE, unsigned V) {
+      return TE.from < V;
+    }
+    friend bool operator<(unsigned V, const TableEntry &TE) {
+      return V < TE.from;
+    }
   };
 }
 

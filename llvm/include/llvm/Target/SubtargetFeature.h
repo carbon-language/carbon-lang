@@ -36,8 +36,8 @@ struct SubtargetFeatureKV {
   uint32_t Value;                       // K-V integer value
   
   // Compare routine for std binary search
-  bool operator<(const std::string &S) const {
-    return strcmp(Key, S.c_str()) < 0;
+  bool operator<(const SubtargetFeatureKV &S) const {
+    return strcmp(Key, S.Key) < 0;
   }
 };
   
@@ -51,8 +51,8 @@ struct SubtargetInfoKV {
   void *Value;                          // K-V pointer value
   
   // Compare routine for std binary search
-  bool operator<(const std::string &S) const {
-    return strcmp(Key, S.c_str()) < 0;
+  bool operator<(const SubtargetInfoKV &S) const {
+    return strcmp(Key, S.Key) < 0;
   }
 };
   

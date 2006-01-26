@@ -64,6 +64,9 @@ namespace llvm {
     return V < LR.start;
   }
 
+  inline bool operator<(const LiveRange &LR, unsigned V) {
+    return LR.start < V;
+  }
 
   /// LiveInterval - This class represents some number of live ranges for a
   /// register or value.  This class also contains a bit of register allocator

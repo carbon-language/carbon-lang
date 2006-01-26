@@ -112,10 +112,13 @@ void SubtargetFeatures::AddFeature(const std::string &String,
 
 /// Find KV in array using binary search.
 template<typename T> const T *Find(const std::string &S, const T *A, size_t L) {
+  // Make the lower bound element we're looking for
+  T KV;
+  KV.Key = S.c_str();
   // Determine the end of the array
   const T *Hi = A + L;
   // Binary search the array
-  const T *F = std::lower_bound(A, Hi, S);
+  const T *F = std::lower_bound(A, Hi, KV);
   // If not found then return NULL
   if (F == Hi || std::string(F->Key) != S) return NULL;
   // Return the found array item
