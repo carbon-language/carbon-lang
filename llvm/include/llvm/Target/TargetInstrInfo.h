@@ -125,8 +125,11 @@ public:
   TargetInstrInfo(const TargetInstrDescriptor *desc, unsigned NumOpcodes);
   virtual ~TargetInstrInfo();
 
-  // Invariant: All instruction sets use opcode #0 as the PHI instruction
-  enum { PHI = 0 };
+  // Invariant opcodes: All instruction sets have these as their low opcodes.
+  enum { 
+    PHI = 0,
+    INLINEASM = 1
+  };
 
   unsigned getNumOpcodes() const { return NumOpcodes; }
 
