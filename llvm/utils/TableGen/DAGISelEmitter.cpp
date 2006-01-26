@@ -1909,6 +1909,7 @@ public:
     unsigned OpNo = 0;
     bool NodeHasChain = NodeHasProperty(N, SDNodeInfo::SDNPHasChain, ISE);
     bool HasChain = PatternHasProperty(N, SDNodeInfo::SDNPHasChain, ISE);
+    bool EmittedCheck = false;
     if (HasChain) {
       if (NodeHasChain)
         OpNo = 1;
@@ -1916,6 +1917,7 @@ public:
         const SDNodeInfo &CInfo = ISE.getSDNodeInfo(N->getOperator());
         OS << "      if (!" << RootName << ".hasOneUse()) goto P"
            << PatternNo << "Fail;   // Multiple uses of actual result?\n";
+        EmittedCheck = true;
         if (NodeHasChain)
           OS << "      if (CodeGenMap.count(" << RootName
              << ".getValue(" << CInfo.getNumResults() << "))) goto P"
@@ -1924,6 +1926,20 @@ public:
       if (NodeHasChain && !FoundChain) {
         OS << "      SDOperand Chain = " << RootName << ".getOperand(0);\n";
         FoundChain = true;
+      }
+    }
+
+    // Don't fold any node which reads or writes a flag and has multiple uses.
+    // FIXME: we really need to separate the concepts of flag and "glue". Those
+    // real flag results, e.g. X86CMP output, can have multiple uses.
+    if (!EmittedCheck &&
+        (PatternHasProperty(N, SDNodeInfo::SDNPInFlag, ISE) ||
+         PatternHasProperty(N, SDNodeInfo::SDNPOptInFlag, ISE) ||
+         PatternHasProperty(N, SDNodeInfo::SDNPOutFlag, ISE))) {
+      if (!isRoot) {
+        const SDNodeInfo &CInfo = ISE.getSDNodeInfo(N->getOperator());
+        OS << "      if (!" << RootName << ".hasOneUse()) goto P"
+           << PatternNo << "Fail;   // Multiple uses of actual result?\n";
       }
     }
 
@@ -2116,19 +2132,21 @@ public:
       const DAGInstruction &Inst = ISE.getInstruction(Op);
       bool HasImpInputs  = Inst.getNumImpOperands() > 0;
       bool HasImpResults = Inst.getNumImpResults() > 0;
-      bool HasOptInFlag  = isRoot &&
-        NodeHasProperty(Pattern, SDNodeInfo::SDNPOptInFlag, ISE);
+      bool HasOptInFlag = isRoot &&
+        PatternHasProperty(Pattern, SDNodeInfo::SDNPOptInFlag, ISE);
       bool HasInFlag  = isRoot &&
-        NodeHasProperty(Pattern, SDNodeInfo::SDNPInFlag, ISE);
-      bool HasOutFlag = HasImpResults ||
+        PatternHasProperty(Pattern, SDNodeInfo::SDNPInFlag, ISE);
+      bool NodeHasOutFlag = HasImpResults ||
         (isRoot && PatternHasProperty(Pattern, SDNodeInfo::SDNPOutFlag, ISE));
       bool NodeHasChain =
         NodeHasProperty(Pattern, SDNodeInfo::SDNPHasChain, ISE);
       bool HasChain   = II.hasCtrlDep ||
         (isRoot && PatternHasProperty(Pattern, SDNodeInfo::SDNPHasChain, ISE));
 
-      if (HasOutFlag || HasInFlag || HasOptInFlag || HasImpInputs)
+      if (HasInFlag || NodeHasOutFlag || HasOptInFlag || HasImpInputs)
         OS << "      SDOperand InFlag = SDOperand(0, 0);\n";
+      if (HasOptInFlag)
+        OS << "      bool HasOptInFlag = false;\n";
 
       // How many results is this pattern expected to produce?
       unsigned NumExpectedResults = 0;
@@ -2173,16 +2191,8 @@ public:
       bool ChainEmitted = HasChain;
       if (HasChain)
         OS << "      Chain = Select(Chain);\n";
-      if (HasImpInputs)
-        EmitCopyToRegs(Pattern, "N", ChainEmitted, true);
-      if (HasInFlag || HasOptInFlag) {
-        unsigned FlagNo = (unsigned) NodeHasChain + Pattern->getNumChildren();
-        if (HasOptInFlag)
-          OS << "      if (N.getNumOperands() == " << FlagNo+1 << ") ";
-        else
-          OS << "      ";
-        OS << "InFlag = Select(N.getOperand(" << FlagNo << "));\n";
-      }
+      if (HasInFlag || HasOptInFlag || HasImpInputs)
+        EmitInFlagSelectCode(Pattern, "N", ChainEmitted, true);
 
       unsigned NumResults = Inst.getNumResults();    
       unsigned ResNo = TmpNo++;
@@ -2191,7 +2201,7 @@ public:
            << II.Namespace << "::" << II.TheDef->getName();
         if (N->getTypeNum(0) != MVT::isVoid)
           OS << ", MVT::" << getEnumName(N->getTypeNum(0));
-        if (HasOutFlag)
+        if (NodeHasOutFlag)
           OS << ", MVT::Flag";
 
         unsigned LastOp = 0;
@@ -2205,11 +2215,11 @@ public:
           OS << "      Chain = Tmp" << LastOp << ".getValue("
              << NumResults << ");\n";
         }
-      } else if (HasChain || HasOutFlag) {
+      } else if (HasChain || NodeHasOutFlag) {
         if (HasOptInFlag) {
           OS << "      SDOperand Result = SDOperand(0, 0);\n";
           unsigned FlagNo = (unsigned) NodeHasChain + Pattern->getNumChildren();
-          OS << "      if (N.getNumOperands() == " << FlagNo+1 << ")\n";
+          OS << "      if (HasOptInFlag)\n";
           OS << "        Result = CurDAG->getTargetNode("
              << II.Namespace << "::" << II.TheDef->getName();
 
@@ -2221,7 +2231,7 @@ public:
           }
           if (HasChain)
             OS << ", MVT::Other";
-          if (HasOutFlag)
+          if (NodeHasOutFlag)
             OS << ", MVT::Flag";
 
           // Inputs.
@@ -2242,7 +2252,7 @@ public:
           }
           if (HasChain)
             OS << ", MVT::Other";
-          if (HasOutFlag)
+          if (NodeHasOutFlag)
             OS << ", MVT::Flag";
 
           // Inputs.
@@ -2261,7 +2271,7 @@ public:
           }
           if (HasChain)
             OS << ", MVT::Other";
-          if (HasOutFlag)
+          if (NodeHasOutFlag)
             OS << ", MVT::Flag";
 
           // Inputs.
@@ -2282,7 +2292,7 @@ public:
         if (HasChain)
           OS << "      Chain = Result.getValue(" << ValNo << ");\n";
 
-        if (HasOutFlag)
+        if (NodeHasOutFlag)
           OS << "      InFlag = Result.getValue("
              << ValNo + (unsigned)HasChain << ");\n";
 
@@ -2307,10 +2317,10 @@ public:
           OS << "Chain;\n";
         }
 
-        if (HasOutFlag)
+        if (NodeHasOutFlag)
           OS << "      CodeGenMap[N.getValue(" << ValNo << ")] = InFlag;\n";
 
-        if (AddedChain && HasOutFlag) {
+        if (AddedChain && NodeHasOutFlag) {
           if (NumExpectedResults == 0) {
             OS << "      return Result.getValue(N.ResNo+1);\n";
           } else {
@@ -2330,7 +2340,7 @@ public:
            << II.Namespace << "::" << II.TheDef->getName();
         if (N->getTypeNum(0) != MVT::isVoid)
           OS << ", MVT::" << getEnumName(N->getTypeNum(0));
-        if (HasOutFlag)
+        if (NodeHasOutFlag)
           OS << ", MVT::Flag";
         for (unsigned i = 0, e = Ops.size(); i != e; ++i)
           OS << ", Tmp" << Ops[i];
@@ -2342,7 +2352,7 @@ public:
            << II.Namespace << "::" << II.TheDef->getName();
         if (N->getTypeNum(0) != MVT::isVoid)
           OS << ", MVT::" << getEnumName(N->getTypeNum(0));
-        if (HasOutFlag)
+        if (NodeHasOutFlag)
           OS << ", MVT::Flag";
         for (unsigned i = 0, e = Ops.size(); i != e; ++i)
           OS << ", Tmp" << Ops[i];
@@ -2396,17 +2406,19 @@ public:
   }
 
 private:
-  /// EmitCopyToRegs - Emit the flag operands for the DAG that is
+  /// EmitInFlagSelectCode - Emit the flag operands for the DAG that is
   /// being built.
-  void EmitCopyToRegs(TreePatternNode *N, const std::string &RootName,
-                      bool &ChainEmitted, bool isRoot = false) {
+  void EmitInFlagSelectCode(TreePatternNode *N, const std::string &RootName,
+                            bool &ChainEmitted, bool isRoot = false) {
     const CodeGenTarget &T = ISE.getTargetInfo();
     unsigned OpNo =
       (unsigned) NodeHasProperty(N, SDNodeInfo::SDNPHasChain, ISE);
+    bool HasInFlag = NodeHasProperty(N, SDNodeInfo::SDNPInFlag, ISE);
+    bool HasOptInFlag = NodeHasProperty(N, SDNodeInfo::SDNPOptInFlag, ISE);
     for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i, ++OpNo) {
       TreePatternNode *Child = N->getChild(i);
       if (!Child->isLeaf()) {
-        EmitCopyToRegs(Child, RootName + utostr(OpNo), ChainEmitted);
+        EmitInFlagSelectCode(Child, RootName + utostr(OpNo), ChainEmitted);
       } else {
         if (DefInit *DI = dynamic_cast<DefInit*>(Child->getLeafValue())) {
           if (!Child->getName().empty()) {
@@ -2439,6 +2451,20 @@ private:
             }
           }
         }
+      }
+    }
+
+    if (HasInFlag || HasOptInFlag) {
+      if (HasOptInFlag) {
+        OS << "      if (" << RootName << ".getNumOperands() == "
+           << OpNo+1 << ") {\n";
+        OS << "  ";
+      }
+      OS << "      InFlag = Select(" << RootName << ".getOperand("
+         << OpNo << "));\n";
+      if (HasOptInFlag) {
+        OS << "        HasOptInFlag = true;\n";
+      OS << "      }\n";
       }
     }
   }
