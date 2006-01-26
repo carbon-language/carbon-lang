@@ -15,13 +15,17 @@
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/System/DynamicLibrary.h"
 #include <iostream>
+#include <vector>
 
 using namespace llvm;
+
+std::vector<std::string> plugins;
 
 void PluginLoader::operator=(const std::string &Filename) {
   std::string ErrorMessage;
   try {
     sys::DynamicLibrary::LoadLibraryPermanently(Filename.c_str());
+    plugins.push_back(Filename);
   } catch (const std::string& errmsg) {
     if (errmsg.empty()) {
       ErrorMessage = "Unknown";
@@ -32,4 +36,15 @@ void PluginLoader::operator=(const std::string &Filename) {
   if (!ErrorMessage.empty())
     std::cerr << "Error opening '" << Filename << "': " << ErrorMessage
               << "\n  -load request ignored.\n";
+}
+
+unsigned PluginLoader::getNumPlugins()
+{
+  return plugins.size();
+}
+
+std::string& PluginLoader::getPlugin(unsigned num)
+{
+  assert(num < plugins.size() && "Asking for an out of bounds plugin");
+  return plugins[num];
 }
