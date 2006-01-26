@@ -881,6 +881,28 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     AddLegalizedOperand(SDOperand(Node, 1), Tmp2);
     return Op.ResNo ? Tmp2 : Tmp1;
   }
+  case ISD::INLINEASM:
+    Tmp1 = LegalizeOp(Node->getOperand(0));   // Legalize Chain.
+    Tmp2 = Node->getOperand(Node->getNumOperands()-1);
+    if (Tmp2.getValueType() != MVT::Flag)     // Legalize Flag if it exists.
+      Tmp2 = Tmp3 = SDOperand(0, 0);
+    else
+      Tmp3 = LegalizeOp(Tmp2);
+    
+    if (Tmp1 != Node->getOperand(0) || Tmp2 != Tmp3) {
+      std::vector<SDOperand> Ops(Node->op_begin(), Node->op_end());
+      Ops[0] = Tmp1;
+      Ops.back() = Tmp3;
+      std::vector<MVT::ValueType> VTs(Node->value_begin(), Node->value_end());
+      Result = DAG.getNode(ISD::INLINEASM, VTs, Ops);
+    } else {
+      Result = SDOperand(Node, 0);
+    }
+      
+    // INLINE asm returns a chain and flag, make sure to add both to the map.
+    AddLegalizedOperand(SDOperand(Node, 0), Result);
+    AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
+    return Result.getValue(Op.ResNo);
   case ISD::TAILCALL:
   case ISD::CALL: {
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.

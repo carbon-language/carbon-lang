@@ -19,6 +19,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"
@@ -468,6 +469,7 @@ public:
   void visitStore(StoreInst &I);
   void visitPHI(PHINode &I) { } // PHI nodes are handled specially.
   void visitCall(CallInst &I);
+  void visitInlineAsm(CallInst &I);
   const char *visitIntrinsicCall(CallInst &I, unsigned Intrinsic);
 
   void visitVAStart(CallInst &I);
@@ -1122,6 +1124,9 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
           }
         }
       }
+  } else if (isa<InlineAsm>(I.getOperand(0))) {
+    visitInlineAsm(I);
+    return;
   }
 
   SDOperand Callee;
@@ -1147,6 +1152,51 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
     setValue(&I, Result.first);
   DAG.setRoot(Result.second);
 }
+
+/// visitInlineAsm - Handle a call to an InlineAsm object.
+///
+void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
+  InlineAsm *IA = cast<InlineAsm>(I.getOperand(0));
+  
+  SDOperand AsmStr = DAG.getTargetExternalSymbol(IA->getAsmString().c_str(),
+                                                 MVT::Other);
+
+  // Note, we treat inline asms both with and without side-effects as the same.
+  // If an inline asm doesn't have side effects and doesn't access memory, we
+  // could not choose to not chain it.
+  bool hasSideEffects = IA->hasSideEffects();
+
+  std::vector<std::pair<InlineAsm::ConstraintPrefix, std::string> > 
+    Constraints = IA->ParseConstraints();
+
+  
+  /// AsmNodeOperands - A list of pairs.  The first element is a register, the
+  /// second is a bitfield where bit #0 is set if it is a use and bit #1 is set
+  /// if it is a def of that register.
+  std::vector<SDOperand> AsmNodeOperands;
+  AsmNodeOperands.push_back(SDOperand());  // reserve space for input chain
+  AsmNodeOperands.push_back(AsmStr);
+  
+  SDOperand Chain = getRoot();
+  SDOperand Flag;
+  
+  // FIXME: input copies.
+  
+  // Finish up input operands.
+  AsmNodeOperands[0] = Chain;
+  if (Flag.Val) AsmNodeOperands.push_back(Flag);
+  
+  std::vector<MVT::ValueType> VTs;
+  VTs.push_back(MVT::Other);
+  VTs.push_back(MVT::Flag);
+  Chain = DAG.getNode(ISD::INLINEASM, VTs, AsmNodeOperands);
+  Flag = Chain.getValue(1);
+
+  // FIXME: Copies out of registers here, setValue(CI).
+  
+  DAG.setRoot(Chain);
+}
+
 
 void SelectionDAGLowering::visitMalloc(MallocInst &I) {
   SDOperand Src = getValue(I.getOperand(0));
