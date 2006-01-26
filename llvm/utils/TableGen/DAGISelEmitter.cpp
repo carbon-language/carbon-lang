@@ -2662,6 +2662,21 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
   }
   
   // Emit boilerplate.
+  OS << "SDOperand Select_INLINEASM(SDOperand N) {\n"
+     << "  std::vector<SDOperand> Ops(N.Val->op_begin(), N.Val->op_end());\n"
+     << "  Ops[0] = Select(N.getOperand(0)); // Select the chain.\n\n"
+     << "  // Select the flag operand.\n"
+     << "  if (Ops.back().getValueType() == MVT::Flag)\n"
+     << "    Ops.back() = Select(Ops.back());\n"
+     << "  std::vector<MVT::ValueType> VTs;\n"
+     << "  VTs.push_back(MVT::Other);\n"
+     << "  VTs.push_back(MVT::Flag);\n"
+     << "  SDOperand New = CurDAG->getNode(ISD::INLINEASM, VTs, Ops);\n"
+     << "  CodeGenMap[N.getValue(0)] = New;\n"
+     << "  CodeGenMap[N.getValue(1)] = New.getValue(1);\n"
+     << "  return New.getValue(N.ResNo);\n"
+     << "}\n\n";
+  
   OS << "// The main instruction selector code.\n"
      << "SDOperand SelectCode(SDOperand N) {\n"
      << "  if (N.getOpcode() >= ISD::BUILTIN_OP_END &&\n"
@@ -2737,7 +2752,9 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "      CodeGenMap[N.getValue(1)] = Result.getValue(1);\n"
      << "      return Result.getValue(N.ResNo);\n"
      << "    }\n"
-     << "  }\n";
+     << "  }\n"
+     << "  case ISD::INLINEASM:           return Select_INLINEASM(N);\n";
+
     
   // Loop over all of the case statements, emiting a call to each method we
   // emitted above.
