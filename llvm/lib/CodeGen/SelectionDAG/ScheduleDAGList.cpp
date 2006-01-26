@@ -32,10 +32,10 @@ namespace {
 struct SUnit {
   SDNode *Node;                       // Representative node.
   std::vector<SDNode*> FlaggedNodes;  // All nodes flagged to Node.
-  std::vector<SDNode*> Preds;         // All real predecessors.
-  std::vector<SDNode*> ChainPreds;    // All chain predecessors.
-  std::vector<SDNode*> Succs;         // All real successors.
-  std::vector<SDNode*> ChainSuccs;    // All chain successors.
+  std::vector<SUnit*> Preds;         // All real predecessors.
+  std::vector<SUnit*> ChainPreds;    // All chain predecessors.
+  std::vector<SUnit*> Succs;         // All real successors.
+  std::vector<SUnit*> ChainSuccs;    // All chain successors.
   int NumPredsLeft;                   // # of preds not scheduled.
   int NumSuccsLeft;                   // # of succs not scheduled.
   int Priority1;                      // Scheduling priority 1.
@@ -43,67 +43,60 @@ struct SUnit {
   unsigned Latency;                   // Node latency.
   unsigned CycleBound;                // Upper/lower cycle to be scheduled at.
   unsigned Slot;                      // Cycle node is scheduled at.
+  SUnit *Next;
 
   SUnit(SDNode *node)
     : Node(node), NumPredsLeft(0), NumSuccsLeft(0),
       Priority1(INT_MIN), Priority2(INT_MIN), Latency(0),
-      CycleBound(0), Slot(0) {}
+      CycleBound(0), Slot(0), Next(NULL) {}
 
   void dump(const SelectionDAG *G, bool All=true) const;
 };
 
 void SUnit::dump(const SelectionDAG *G, bool All) const {
-  std::cerr << "SU:  ";
+  std::cerr << "SU: ";
   Node->dump(G);
   std::cerr << "\n";
-  if (All) {
-    std::cerr << "# preds left  : " << NumPredsLeft << "\n";
-    std::cerr << "# succs left  : " << NumSuccsLeft << "\n";
-    std::cerr << "Latency       : " << Latency << "\n";
-    std::cerr << "Priority      : " << Priority1 << " , " << Priority2 << "\n";
-  }
-
   if (FlaggedNodes.size() != 0) {
-    if (All)
-      std::cerr << "Flagged nodes :\n";
     for (unsigned i = 0, e = FlaggedNodes.size(); i != e; i++) {
-      std::cerr << "     ";
+      std::cerr << "    ";
       FlaggedNodes[i]->dump(G);
       std::cerr << "\n";
     }
   }
 
   if (All) {
+    std::cerr << "# preds left  : " << NumPredsLeft << "\n";
+    std::cerr << "# succs left  : " << NumSuccsLeft << "\n";
+    std::cerr << "Latency       : " << Latency << "\n";
+    std::cerr << "Priority      : " << Priority1 << " , " << Priority2 << "\n";
+
     if (Preds.size() != 0) {
       std::cerr << "Predecessors  :\n";
       for (unsigned i = 0, e = Preds.size(); i != e; i++) {
         std::cerr << "    ";
-        Preds[i]->dump(G);
-        std::cerr << "\n";
+        Preds[i]->dump(G, false);
       }
     }
     if (ChainPreds.size() != 0) {
       std::cerr << "Chained Preds :\n";
       for (unsigned i = 0, e = ChainPreds.size(); i != e; i++) {
         std::cerr << "    ";
-        ChainPreds[i]->dump(G);
-        std::cerr << "\n";
+        ChainPreds[i]->dump(G, false);
       }
     }
     if (Succs.size() != 0) {
       std::cerr << "Successors    :\n";
       for (unsigned i = 0, e = Succs.size(); i != e; i++) {
         std::cerr << "    ";
-        Succs[i]->dump(G);
-        std::cerr << "\n";
+        Succs[i]->dump(G, false);
       }
     }
     if (ChainSuccs.size() != 0) {
       std::cerr << "Chained succs :\n";
       for (unsigned i = 0, e = ChainSuccs.size(); i != e; i++) {
         std::cerr << "    ";
-        ChainSuccs[i]->dump(G);
-        std::cerr << "\n";
+        ChainSuccs[i]->dump(G, false);
       }
     }
   }
@@ -146,21 +139,21 @@ private:
   std::vector<SUnit*> Sequence;
   // Current scheduling cycle.
   unsigned CurrCycle;
+  // First and last SUnit created.
+  SUnit *HeadSUnit, *TailSUnit;
 
 public:
   ScheduleDAGList(SelectionDAG &dag, MachineBasicBlock *bb,
                   const TargetMachine &tm)
-    : ScheduleDAG(listSchedulingBURR, dag, bb, tm), CurrCycle(0) {};
+    : ScheduleDAG(listSchedulingBURR, dag, bb, tm),
+      CurrCycle(0), HeadSUnit(NULL), TailSUnit(NULL) {};
 
   ~ScheduleDAGList() {
-    for (std::map<SDNode*, SUnit*>::iterator I = SUnitMap.begin(),
-           E = SUnitMap.end(); I != E; ++I) {
-      SUnit *SU = I->second;
-      // Multiple SDNode* can point to one SUnit. Do ref counting, sort of.
-      if (SU->FlaggedNodes.size() == 0)
-        delete SU;
-      else
-        SU->FlaggedNodes.pop_back();
+    SUnit *SU = HeadSUnit;
+    while (SU) {
+      SUnit *NextSU = SU->Next;
+      delete SU;
+      SU = NextSU;
     }
   }
 
@@ -169,6 +162,7 @@ public:
   void dump() const;
 
 private:
+  SUnit *NewSUnit(SDNode *N);
   void ReleasePred(SUnit *PredSU);
   void ScheduleNode(SUnit *SU);
   int  CalcNodePriority(SUnit *SU);
@@ -179,6 +173,22 @@ private:
 };
 }  // end namespace
 
+
+/// NewSUnit - Creates a new SUnit and return a ptr to it.
+SUnit *ScheduleDAGList::NewSUnit(SDNode *N) {
+  SUnit *CurrSUnit = new SUnit(N);
+
+  if (HeadSUnit == NULL)
+    HeadSUnit = CurrSUnit;
+  if (TailSUnit != NULL)
+    TailSUnit->Next = CurrSUnit;
+  TailSUnit = CurrSUnit;
+
+  return CurrSUnit;
+}
+
+/// ReleasePred - Decrement the NumSuccsLeft count of a predecessor. Add it to
+/// the Available queue is the count reaches zero. Also update its cycle bound.
 void ScheduleDAGList::ReleasePred(SUnit *PredSU) {
   SDNode *PredNode = PredSU->Node;
 
@@ -212,9 +222,9 @@ void ScheduleDAGList::ScheduleNode(SUnit *SU) {
 
   // Bottom up: release predecessors
   for (unsigned i = 0, e = SU->Preds.size(); i != e; i++) 
-    ReleasePred(SUnitMap[SU->Preds[i]]);
+    ReleasePred(SU->Preds[i]);
   for (unsigned i = 0, e = SU->ChainPreds.size(); i != e; i++) 
-    ReleasePred(SUnitMap[SU->ChainPreds[i]]);
+    ReleasePred(SU->ChainPreds[i]);
 
   CurrCycle++;
 }
@@ -261,16 +271,17 @@ void ScheduleDAGList::ListSchedule() {
   }
 
 #ifndef NDEBUG
-  for (std::map<SDNode*, SUnit*>::iterator I = SUnitMap.begin(),
-         E = SUnitMap.end(); I != E; ++I) {
-    SUnit *SU = I->second;
+  bool AnyNotSched = false;
+  for (SUnit *SU = HeadSUnit; SU != NULL; SU = SU->Next) {
     if (SU->NumSuccsLeft != 0) {
-      std::cerr << "*** List scheduling failed! ***\n";
+      if (!AnyNotSched)
+        std::cerr << "*** List scheduling failed! ***\n";
       SU->dump(&DAG);
-      std::cerr << " has not been scheduled!\n";
-      assert(0);
+      std::cerr << "has not been scheduled!\n";
+      AnyNotSched = true;
     }
   }
+  assert(!AnyNotSched);
 #endif
 
 
@@ -279,6 +290,7 @@ void ScheduleDAGList::ListSchedule() {
 
   DEBUG(std::cerr << "*** Final schedule ***\n");
   DEBUG(dump());
+  DEBUG(std::cerr << "\n");
 }
 
 /// CalcNodePriority - Priority 1 is just the number of live range genned - number
@@ -296,8 +308,7 @@ int ScheduleDAGList::CalcNodePriority(SUnit *SU) {
   } else {
     int Extra = 0;
     for (unsigned i = 0, e = SU->Preds.size(); i != e; i++) {
-      SDNode *PredN  = SU->Preds[i];
-      SUnit  *PredSU = SUnitMap[PredN];
+      SUnit *PredSU = SU->Preds[i];
       int PredPriority = CalcNodePriority(PredSU);
       if (PredPriority > SU->Priority2) {
         SU->Priority2 = PredPriority;
@@ -317,132 +328,98 @@ int ScheduleDAGList::CalcNodePriority(SUnit *SU) {
 
 /// CalculatePriorities - Calculate priorities of all scheduling units.
 void ScheduleDAGList::CalculatePriorities() {
-  for (std::map<SDNode*, SUnit*>::iterator I = SUnitMap.begin(),
-         E = SUnitMap.end(); I != E; ++I) {
-    SUnit *SU = I->second;
+  for (SUnit *SU = HeadSUnit; SU != NULL; SU = SU->Next) {
     // FIXME: assumes uniform latency for now.
     SU->Latency = 1;
     (void)CalcNodePriority(SU);
-    DEBUG(I->second->dump(&DAG));
+    DEBUG(SU->dump(&DAG));
     DEBUG(std::cerr << "\n");
   }
-}
-
-static bool isChainUse(SDNode *N, SDNode *UseN) {
-  for (unsigned i = 0, e = UseN->getNumOperands(); i != e; i++) {
-    SDOperand Op = UseN->getOperand(i);
-    if (Op.Val == N) {
-      MVT::ValueType VT = N->getValueType(Op.ResNo);
-      if (VT == MVT::Other)
-        return true;
-    }
-  }
-  return false;
 }
 
 void ScheduleDAGList::BuildSchedUnits() {
+  // Pass 1: create the SUnit's.
   for (unsigned i = 0, NC = NodeCount; i < NC; i++) {
     NodeInfo *NI = &Info[i];
     SDNode *N = NI->Node;
-    if (!isPassiveNode(N)) {
-      SUnit *SU;
-      if (NI->isInGroup()) {
-        if (NI != NI->Group->getBottom())  // Bottom up, so only look at bottom
-          continue;                        // node of the NodeGroup
+    if (isPassiveNode(N))
+      continue;
 
-        SU = new SUnit(N);
+    SUnit *SU;
+    if (NI->isInGroup()) {
+      if (NI != NI->Group->getBottom())  // Bottom up, so only look at bottom
+        continue;                        // node of the NodeGroup
 
-        // Find the flagged nodes.
-        SDOperand  FlagOp = N->getOperand(N->getNumOperands() - 1);
-        SDNode    *Flag   = FlagOp.Val;
-        unsigned   ResNo  = FlagOp.ResNo;
-        while (Flag->getValueType(ResNo) == MVT::Flag) {
-          NodeInfo *FNI = getNI(Flag);
-          assert(FNI->Group == NI->Group);
-          SU->FlaggedNodes.insert(SU->FlaggedNodes.begin(), Flag);
-          SUnitMap[Flag] = SU;
+      SU = NewSUnit(N);
+      // Find the flagged nodes.
+      SDOperand  FlagOp = N->getOperand(N->getNumOperands() - 1);
+      SDNode    *Flag   = FlagOp.Val;
+      unsigned   ResNo  = FlagOp.ResNo;
+      while (Flag->getValueType(ResNo) == MVT::Flag) {
+        NodeInfo *FNI = getNI(Flag);
+        assert(FNI->Group == NI->Group);
+        SU->FlaggedNodes.insert(SU->FlaggedNodes.begin(), Flag);
+        SUnitMap[Flag] = SU;
 
-          FlagOp = Flag->getOperand(Flag->getNumOperands() - 1);
-          Flag   = FlagOp.Val;
-          ResNo  = FlagOp.ResNo;
-        }
+        FlagOp = Flag->getOperand(Flag->getNumOperands() - 1);
+        Flag   = FlagOp.Val;
+        ResNo  = FlagOp.ResNo;
+      }
+    } else {
+      SU = NewSUnit(N);
+    }
+    SUnitMap[N] = SU;
+  }
 
-        // Find all predecessors (of the group).
-        NodeGroupOpIterator NGOI(NI);
-        while (!NGOI.isEnd()) {
-          SDOperand Op  = NGOI.next();
-          SDNode   *OpN = Op.Val;
-          MVT::ValueType VT = OpN->getValueType(Op.ResNo);
-          NodeInfo *OpNI = getNI(OpN);
-          if (OpNI->Group != NI->Group && !isPassiveNode(OpN)) {
-            assert(VT != MVT::Flag);
-            if (VT == MVT::Other)
-              SU->ChainPreds.push_back(OpN);
-            else
-              SU->Preds.push_back(OpN);
-            SU->NumPredsLeft++;
+  // Pass 2: add the preds, succs, etc.
+  for (SUnit *SU = HeadSUnit; SU != NULL; SU = SU->Next) {
+    SDNode   *N  = SU->Node;
+    NodeInfo *NI = getNI(N);
+
+    if (NI->isInGroup()) {
+      // Find all predecessors (of the group).
+      NodeGroupOpIterator NGOI(NI);
+      while (!NGOI.isEnd()) {
+        SDOperand Op  = NGOI.next();
+        SDNode   *OpN = Op.Val;
+        MVT::ValueType VT = OpN->getValueType(Op.ResNo);
+        NodeInfo *OpNI = getNI(OpN);
+        if (OpNI->Group != NI->Group && !isPassiveNode(OpN)) {
+          assert(VT != MVT::Flag);
+          SUnit *OpSU = SUnitMap[OpN];
+          if (VT == MVT::Other) {
+            SU  ->ChainPreds.push_back(OpSU);
+            OpSU->ChainSuccs.push_back(SU);
+          } else {
+            SU  ->Preds.push_back(OpSU);
+            OpSU->Succs.push_back(SU);
           }
-        }
-
-        // Find all successors (of the group).
-        NodeGroupIterator NGI(NI);
-        while (NodeInfo *GNI = NGI.next()) {
-          SDNode *GN = GNI->Node;
-          for (SDNode::use_iterator ui = GN->use_begin(), e = GN->use_end();
-               ui != e; ++ui) {
-            SDNode *UseN = *ui;
-            NodeInfo *UseNI = getNI(UseN);
-            if (UseNI->Group != NI->Group) {
-              if (isChainUse(GN, UseN))
-                SU->ChainSuccs.push_back(UseN);
-              else
-                SU->Succs.push_back(UseN);
-              SU->NumSuccsLeft++;
-            }
-          }
-        }
-      } else {
-        SU = new SUnit(N);
-
-        // Find node predecessors.
-        for (unsigned j = 0, e = N->getNumOperands(); j != e; j++) {
-          SDOperand Op  = N->getOperand(j);
-          SDNode   *OpN = Op.Val;
-          MVT::ValueType VT = OpN->getValueType(Op.ResNo);
-          if (!isPassiveNode(OpN)) {
-            assert(VT != MVT::Flag);
-            if (VT == MVT::Other)
-              SU->ChainPreds.push_back(OpN);
-            else
-              SU->Preds.push_back(OpN);
-            SU->NumPredsLeft++;
-          }
-        }
-
-        // Find node successors.
-        for (SDNode::use_iterator ui = N->use_begin(), e = N->use_end();
-             ui != e; ++ui) {
-          SDNode *UseN = *ui;
-          if (isChainUse(N, UseN))
-            SU->ChainSuccs.push_back(UseN);
-          else
-            SU->Succs.push_back(UseN);
-          SU->NumSuccsLeft++;
+          SU->NumPredsLeft++;
+          OpSU->NumSuccsLeft++;
         }
       }
-
-      SUnitMap[N] = SU;
+    } else {
+      // Find node predecessors.
+      for (unsigned j = 0, e = N->getNumOperands(); j != e; j++) {
+        SDOperand Op  = N->getOperand(j);
+        SDNode   *OpN = Op.Val;
+        MVT::ValueType VT = OpN->getValueType(Op.ResNo);
+        if (!isPassiveNode(OpN)) {
+          assert(VT != MVT::Flag);
+          SUnit *OpSU = SUnitMap[OpN];
+          if (VT == MVT::Other) {
+            SU  ->ChainPreds.push_back(OpSU);
+            OpSU->ChainSuccs.push_back(SU);
+          } else {
+            SU  ->Preds.push_back(OpSU);
+            OpSU->Succs.push_back(SU);
+          }
+          SU->NumPredsLeft++;
+          OpSU->NumSuccsLeft++;
+        }
+      }
     }
   }
-
-#ifndef NDEBUG
-  for (std::map<SDNode*, SUnit*>::iterator I = SUnitMap.begin(),
-         E = SUnitMap.end(); I != E; ++I) {
-    SUnit *SU = I->second;
-    DEBUG(I->second->dump(&DAG));
-    DEBUG(std::cerr << "\n");
-  }
-#endif
 }
 
 /// EmitSchedule - Emit the machine code in scheduled order.
