@@ -38,25 +38,17 @@ const FunctionType *InlineAsm::getFunctionType() const {
   return cast<FunctionType>(getType()->getElementType());
 }
 
-/// Verify - Verify that the specified constraint string is reasonable for the
-/// specified function type, and otherwise validate the constraint string.
-bool InlineAsm::Verify(const FunctionType *Ty, const std::string &Constraints) {
-  if (Ty->isVarArg()) return false;
-  
-  unsigned NumOutputs = 0, NumInputs = 0, NumClobbers = 0;
+std::vector<std::pair<InlineAsm::ConstraintPrefix, std::string> >
+InlineAsm::ParseConstraints(const std::string &Constraints) {
+  std::vector<std::pair<InlineAsm::ConstraintPrefix, std::string> > Result;
   
   // Scan the constraints string.
   for (std::string::const_iterator I = Constraints.begin(), 
-         E = Constraints.end(); I != E; ) {
-    if (*I == ',') return false;  // Empty constraint like ",,"
+       E = Constraints.end(); I != E; ) {
+    if (*I == ',') { Result.clear(); break; } // Empty constraint like ",,"
     
     // Parse the prefix.
-    enum {
-      isInput,            // 'x'
-      isOutput,           // '=x'
-      isIndirectOutput,   // '==x'
-      isClobber,          // '~x'
-    } ConstraintType = isInput;
+    ConstraintPrefix ConstraintType = isInput;
     
     if (*I == '~') {
       ConstraintType = isClobber;
@@ -71,9 +63,49 @@ bool InlineAsm::Verify(const FunctionType *Ty, const std::string &Constraints) {
       }
     }
     
-    if (I == E) return false;   // Just a prefix, like "==" or "~".
+    if (I == E) { Result.clear(); break; }  // Just a prefix, like "==" or "~".
     
-    switch (ConstraintType) {
+    std::string::const_iterator IdStart = I;
+      
+    // Parse the id.  We accept [a-zA-Z0-9] currently.
+    while (I != E && isalnum(*I)) ++I;
+    
+    if (IdStart == I) {                    // Requires more than just a prefix
+      Result.clear();
+      break;
+    }
+    
+    // Remember this constraint.
+    Result.push_back(std::make_pair(ConstraintType, std::string(IdStart, I)));
+    
+    // If we reached the end of the ID, we must have the end of the string or a
+    // comma, which we skip now.
+    if (I != E) {
+      if (*I != ',') { Result.clear(); break; }
+      ++I;
+      if (I == E) { Result.clear(); break; }    // don't allow "xyz,"
+    }
+  }
+  
+  return Result;
+}
+
+
+/// Verify - Verify that the specified constraint string is reasonable for the
+/// specified function type, and otherwise validate the constraint string.
+bool InlineAsm::Verify(const FunctionType *Ty, const std::string &ConstStr) {
+  if (Ty->isVarArg()) return false;
+  
+  std::vector<std::pair<ConstraintPrefix, std::string> >
+  Constraints = ParseConstraints(ConstStr);
+  
+  // Error parsing constraints.
+  if (Constraints.empty() && !ConstStr.empty()) return false;
+  
+  unsigned NumOutputs = 0, NumInputs = 0, NumClobbers = 0;
+  
+  for (unsigned i = 0, e = Constraints.size(); i != e; ++i) {
+    switch (Constraints[i].first) {
     case isOutput:
       if (NumInputs || NumClobbers) return false;  // outputs come first.
       ++NumOutputs;
@@ -87,20 +119,9 @@ bool InlineAsm::Verify(const FunctionType *Ty, const std::string &Constraints) {
       ++NumClobbers;
       break;
     }
-    
-    // Parse the id.  We accept [a-zA-Z0-9] currently.
-    while (I != E && isalnum(*I)) ++I;
-    
-    // If we reached the end of the ID, we must have the end of the string or a
-    // comma, which we skip now.
-    if (I != E) {
-      if (*I != ',') return false;
-      ++I;
-      if (I == E) return false;    // don't allow "xyz,"
-    }
   }
-  
-  if (NumOutputs > 1) return false;  // Only one result allowed.
+    
+  if (NumOutputs > 1) return false;  // Only one result allowed so far.
   
   if ((Ty->getReturnType() != Type::VoidTy) != NumOutputs)
     return false;   // NumOutputs = 1 iff has a result type.
