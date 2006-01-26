@@ -113,6 +113,27 @@ static inline std::string LowercaseString(const std::string &S) {
   return result;
 }
 
+/// StringsEqualNoCase - Return true if the two strings are equal, ignoring
+/// case.
+static inline bool StringsEqualNoCase(const std::string &LHS, 
+                                      const std::string &RHS) {
+  if (LHS.size() != RHS.size()) return false;
+  for (unsigned i = 0, e = LHS.size(); i != e; ++i)
+    if (tolower(LHS[i]) != tolower(RHS[i])) return false;
+  return true;
+}
+
+/// StringsEqualNoCase - Return true if the two strings are equal, ignoring
+/// case.
+static inline bool StringsEqualNoCase(const std::string &LHS, 
+                                      const char *RHS) {
+  for (unsigned i = 0, e = LHS.size(); i != e; ++i) {
+    if (RHS[i] == 0) return false;  // RHS too short.
+    if (tolower(LHS[i]) != tolower(RHS[i])) return false;
+  }
+  return RHS[LHS.size()] == 0;  // Not too long?
+}
+
 /// getToken - This function extracts one token from source, ignoring any
 /// leading characters that appear in the Delimiters string, and ending the
 /// token at any of the characters that appear in the Delimiters string.  If
