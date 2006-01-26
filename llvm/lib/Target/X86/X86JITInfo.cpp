@@ -20,6 +20,11 @@
 #include <iostream>
 using namespace llvm;
 
+#ifdef _MSC_VER
+  extern "C" void *_AddressOfReturnAddress(void);
+  #pragma intrinsic(_AddressOfReturnAddress)
+#endif
+
 void X86JITInfo::replaceMachineCodeForFunction(void *Old, void *New) {
   unsigned char *OldByte = (unsigned char *)Old;
   *OldByte++ = 0xE9;                // Emit JMP opcode.
@@ -64,9 +69,6 @@ extern "C" {
     "popl    %ebp\n"
     "ret\n");
 #else
-  extern "C" void *_AddressOfReturnAddress(void);
-  #pragma intrinsic(_AddressOfReturnAddress)
-
   void X86CompilationCallback2(void);
 
   _declspec(naked) void X86CompilationCallback(void) {
