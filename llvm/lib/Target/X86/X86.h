@@ -26,7 +26,7 @@ class IntrinsicLowering;
 class MachineCodeEmitter;
 
 enum X86VectorEnum {
-  NoSSE, SSE, SSE2, SSE3
+  AutoDetect, NoSSE, SSE, SSE2, SSE3
 };
 
 extern X86VectorEnum X86Vector;

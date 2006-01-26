@@ -17,6 +17,75 @@
 include "../Target.td"
 
 //===----------------------------------------------------------------------===//
+// X86 Subtarget features.
+//
+ 
+def Feature64Bit     : SubtargetFeature<"64bit", "bool", "Is64Bit",
+                                        "Enable 64-bit instructions">;
+def FeatureMMX       : SubtargetFeature<"mmx", "bool", "HasMMX",
+                                        "Enable MMX instructions">;
+def FeatureSSE       : SubtargetFeature<"sse", "bool", "HasSSE",
+                                        "Enable SSE instructions">;
+def FeatureSSE2      : SubtargetFeature<"sse2", "bool", "HasSSE2",
+                                        "Enable SSE2 instructions">;
+def FeatureSSE3      : SubtargetFeature<"sse3", "bool", "HasSSE3",
+                                        "Enable SSE3 instructions">;
+def Feature3DNow     : SubtargetFeature<"3dnow", "bool", "Has3DNow",
+                                        "Enable 3DNow! instructions">;
+def Feature3DNowA    : SubtargetFeature<"3dnowa", "bool", "Has3DNowA",
+                                        "Enable 3DNow! Athlon instructions">;
+
+//===----------------------------------------------------------------------===//
+// X86 processors supported.
+//===----------------------------------------------------------------------===//
+
+class Proc<string Name, list<SubtargetFeature> Features>
+ : Processor<Name, NoItineraries, Features>;
+
+def : Proc<"generic",         []>;
+def : Proc<"i386",            []>;
+def : Proc<"i486",            []>;
+def : Proc<"i586",            []>;
+def : Proc<"pentium",         []>;
+def : Proc<"pentium-mmx",     [FeatureMMX]>;
+def : Proc<"i686",            []>;
+def : Proc<"pentiumpro",      []>;
+def : Proc<"pentium2",        [FeatureMMX]>;
+def : Proc<"celeron",         [FeatureMMX]>;
+def : Proc<"pentium3",        [FeatureMMX, FeatureSSE]>;
+def : Proc<"pentium3m",       [FeatureMMX, FeatureSSE]>;
+def : Proc<"pentium-m",       [FeatureMMX, FeatureSSE, FeatureSSE2]>;
+def : Proc<"pentium4",        [FeatureMMX, FeatureSSE, FeatureSSE2]>;
+def : Proc<"pentium4m",       [FeatureMMX, FeatureSSE, FeatureSSE2]>;
+def : Proc<"prescott",        [FeatureMMX, FeatureSSE, FeatureSSE2,
+                               FeatureSSE3]>;
+def : Proc<"x86-64",          [FeatureMMX, FeatureSSE, FeatureSSE2, Feature64Bit]>;
+def : Proc<"nocona",          [FeatureMMX, FeatureSSE, FeatureSSE2,
+                               FeatureSSE3, Feature64Bit]>;
+
+def : Proc<"k6",              [FeatureMMX]>;
+def : Proc<"k6-2",            [FeatureMMX, Feature3DNow]>;
+def : Proc<"k6-3",            [FeatureMMX, Feature3DNow]>;
+def : Proc<"athlon",          [FeatureMMX, Feature3DNow, Feature3DNowA]>;
+def : Proc<"athlon-tbird",    [FeatureMMX, Feature3DNow, Feature3DNowA]>;
+def : Proc<"athlon-4",        [FeatureMMX, FeatureSSE, Feature3DNow, Feature3DNowA]>;
+def : Proc<"athlon-xp",       [FeatureMMX, FeatureSSE, Feature3DNow, Feature3DNowA]>;
+def : Proc<"athlon-mp",       [FeatureMMX, FeatureSSE, Feature3DNow, Feature3DNowA]>;
+def : Proc<"k8",              [FeatureMMX, FeatureSSE, FeatureSSE2, Feature3DNow,
+                               Feature3DNowA, Feature64Bit]>;
+def : Proc<"opteron",         [FeatureMMX, FeatureSSE, FeatureSSE2, Feature3DNow,
+                               Feature3DNowA, Feature64Bit]>;
+def : Proc<"athlon64",        [FeatureMMX, FeatureSSE, FeatureSSE2, Feature3DNow,
+                               Feature3DNowA, Feature64Bit]>;
+def : Proc<"athlon-fx",       [FeatureMMX, FeatureSSE, FeatureSSE2, Feature3DNow,
+                               Feature3DNowA, Feature64Bit]>;
+
+def : Proc<"winchip-c6",      [FeatureMMX]>;
+def : Proc<"winchip2",        [FeatureMMX, Feature3DNow]>;
+def : Proc<"c3",              [FeatureMMX, Feature3DNow]>;
+def : Proc<"c3-2",            [FeatureMMX, FeatureSSE]>;
+
+//===----------------------------------------------------------------------===//
 // Register File Description
 //===----------------------------------------------------------------------===//
 

@@ -26,7 +26,7 @@
 #include <iostream>
 using namespace llvm;
 
-X86VectorEnum llvm::X86Vector = NoSSE;
+X86VectorEnum llvm::X86Vector = AutoDetect;
 bool llvm::X86ScalarSSE = false;
 bool llvm::X86DAGIsel = false;
 
@@ -61,7 +61,7 @@ namespace {
        clEnumValN(SSE2, "sse2", "  Enable SSE and SSE2 support"),
        clEnumValN(SSE3, "sse3", "  Enable SSE, SSE2, and SSE3 support"),
        clEnumValEnd),
-    cl::location(X86Vector), cl::init(NoSSE));
+    cl::location(X86Vector), cl::init(AutoDetect));
 
   // Register the target.
   RegisterTarget<X86TargetMachine> X("x86", "  IA-32 (Pentium and above)");
@@ -102,6 +102,16 @@ X86TargetMachine::X86TargetMachine(const Module &M,
     FrameInfo(TargetFrameInfo::StackGrowsDown,
               Subtarget.getStackAlignment(), -4),
     JITInfo(*this) {
+  if (X86Vector == AutoDetect) {
+      X86Vector = NoSSE;
+    if (Subtarget.hasSSE())
+      X86Vector = SSE;
+    if (Subtarget.hasSSE2())
+      X86Vector = SSE2;
+    if (Subtarget.hasSSE3())
+      X86Vector = SSE3;
+  }
+
   // Scalar SSE FP requires at least SSE2
   X86ScalarSSE &= X86Vector >= SSE2;
 
