@@ -1909,7 +1909,8 @@ public:
     unsigned OpNo = 0;
     bool NodeHasChain = NodeHasProperty(N, SDNodeInfo::SDNPHasChain, ISE);
     bool HasChain = PatternHasProperty(N, SDNodeInfo::SDNPHasChain, ISE);
-    bool EmittedCheck = false;
+    bool EmittedUseCheck = false;
+    bool EmittedSlctedCheck = false;
     if (HasChain) {
       if (NodeHasChain)
         OpNo = 1;
@@ -1917,7 +1918,14 @@ public:
         const SDNodeInfo &CInfo = ISE.getSDNodeInfo(N->getOperator());
         OS << "      if (!" << RootName << ".hasOneUse()) goto P"
            << PatternNo << "Fail;   // Multiple uses of actual result?\n";
-        EmittedCheck = true;
+        EmittedUseCheck = true;
+        // hasOneUse() check is not strong enough. If the original node has
+        // already been selected, it may have been replaced with another.
+        for (unsigned j = 0; j < CInfo.getNumResults(); j++)
+          OS << "      if (CodeGenMap.count(" << RootName
+             << ".getValue(" << j << "))) goto P"
+             << PatternNo << "Fail;   // Already selected?\n";
+        EmittedSlctedCheck = true;
         if (NodeHasChain)
           OS << "      if (CodeGenMap.count(" << RootName
              << ".getValue(" << CInfo.getNumResults() << "))) goto P"
@@ -1933,15 +1941,22 @@ public:
     // FIXME: we really need to separate the concepts of flag and "glue". Those
     // real flag results, e.g. X86CMP output, can have multiple uses.
     // FIXME: If the incoming flag is optional. Then it is ok to fold it.
-    if (!EmittedCheck &&
+    if (!isRoot &&
         (PatternHasProperty(N, SDNodeInfo::SDNPInFlag, ISE) ||
          PatternHasProperty(N, SDNodeInfo::SDNPOptInFlag, ISE) ||
          PatternHasProperty(N, SDNodeInfo::SDNPOutFlag, ISE))) {
-      if (!isRoot) {
-        const SDNodeInfo &CInfo = ISE.getSDNodeInfo(N->getOperator());
+      const SDNodeInfo &CInfo = ISE.getSDNodeInfo(N->getOperator());
+      if (!EmittedUseCheck) {
         OS << "      if (!" << RootName << ".hasOneUse()) goto P"
            << PatternNo << "Fail;   // Multiple uses of actual result?\n";
       }
+      if (!EmittedSlctedCheck)
+        // hasOneUse() check is not strong enough. If the original node has
+        // already been selected, it may have been replaced with another.
+        for (unsigned j = 0; j < CInfo.getNumResults(); j++)
+          OS << "      if (CodeGenMap.count(" << RootName
+             << ".getValue(" << j << "))) goto P"
+             << PatternNo << "Fail;   // Already selected?\n";
     }
 
     for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i, ++OpNo) {
