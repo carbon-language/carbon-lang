@@ -283,6 +283,35 @@ void ScheduleDAG::EmitNode(NodeInfo *NI) {
       MRI->copyRegToReg(*BB, BB->end(), VRBase, SrcReg, TRC);
       break;
     }
+    case ISD::INLINEASM: {
+      unsigned NumOps = Node->getNumOperands();
+      if (Node->getOperand(NumOps-1).getValueType() == MVT::Flag)
+        --NumOps;  // Ignore the flag operand.
+      
+      // Create the inline asm machine instruction.
+      MachineInstr *MI =
+        new MachineInstr(BB, TargetInstrInfo::INLINEASM, (NumOps-2)/2+1);
+
+      // Add the asm string as an external symbol operand.
+      const char *AsmStr =
+        cast<ExternalSymbolSDNode>(Node->getOperand(1))->getSymbol();
+      MI->addExternalSymbolOperand(AsmStr, false);
+      
+      // Add all of the operand registers to the instruction.
+      for (unsigned i = 2; i != NumOps; i += 2) {
+        unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();
+        unsigned Flags = cast<ConstantSDNode>(Node->getOperand(i))->getValue();
+        MachineOperand::UseType UseTy;
+        switch (Flags) {
+        default: assert(0 && "Bad flags!");
+        case 1: UseTy = MachineOperand::Use; break;
+        case 2: UseTy = MachineOperand::Def; break;
+        case 3: UseTy = MachineOperand::UseAndDef; break;
+        }
+        MI->addMachineRegOperand(Reg, UseTy);
+      }
+      break;
+    }
     }
   }
 
