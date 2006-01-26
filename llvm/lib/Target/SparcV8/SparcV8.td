@@ -17,12 +17,18 @@
 include "../Target.td"
 
 //===----------------------------------------------------------------------===//
-// PowerPC Subtarget features.
+// SPARC Subtarget features.
 //
  
-def Feature64Bit     : SubtargetFeature<"64bit", "bool", "Is64Bit",
-                                        "Enable 64-bit instructions">;
-
+def FeatureV9
+  : SubtargetFeature<"v9", "bool", "IsV9",
+                     "Enable SPARC-V9 instructions">;
+def FeatureV8Deprecated
+  : SubtargetFeature<"deprecated-v8", "bool", "V8DeprecatedInsts",
+                     "Enable deprecated V8 instructions in V9 mode">;
+def FeatureVIS
+  : SubtargetFeature<"vis", "bool", "IsVIS",
+                     "Enable UltraSPARC Visual Instruction Set extensions">;
 
 //===----------------------------------------------------------------------===//
 // Register File Description
@@ -48,9 +54,23 @@ def SparcV8InstrInfo : InstrInfo {
 // SPARC processors supported.
 //===----------------------------------------------------------------------===//
 
-def : Processor<"generic", NoItineraries, []>;
-def : Processor<"v8", NoItineraries, []>;
-def : Processor<"v9", NoItineraries, [Feature64Bit]>;
+class Proc<string Name, list<SubtargetFeature> Features>
+ : Processor<Name, NoItineraries, Features>;
+
+def : Proc<"generic",         []>;
+def : Proc<"v8",              []>;
+def : Proc<"supersparc",      []>;
+def : Proc<"sparclite",       []>;
+def : Proc<"f934",            []>;
+def : Proc<"hypersparc",      []>;
+def : Proc<"sparclite86x",    []>;
+def : Proc<"sparclet",        []>;
+def : Proc<"tsc701",          []>;
+def : Proc<"v9",              [FeatureV9]>;
+def : Proc<"ultrasparc",      [FeatureV9, FeatureV8Deprecated]>;
+def : Proc<"ultrasparc3",     [FeatureV9, FeatureV8Deprecated]>;
+def : Proc<"ultrasparc3-vis", [FeatureV9, FeatureV8Deprecated, FeatureVIS]>;
+
 
 //===----------------------------------------------------------------------===//
 // Declare the target which we are implementing
