@@ -56,10 +56,10 @@ public:
   /// not found.
   unsigned idFor(const T &Entry) const {
     // Search for entry in the map.
-    typename std::map<T, unsigned>::iterator MI = Map.lower_bound(Entry);
+    typename std::map<T, unsigned>::iterator MI = Map.find(Entry);
     
     // See if entry exists, if so return ID.
-    if (MI != Map.end() && MI->first == Entry) return MI->second;
+    if (MI != Map.end()) return MI->second;
     
     // No luck.
     return 0;
