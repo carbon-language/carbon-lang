@@ -271,6 +271,10 @@ public:
   ///
   void MachineDebugInfo::SetupCompileUnits(Module &M);
 
+  /// getCompileUnits - Return a vector of debug compile units.
+  ///
+  const UniqueVector<CompileUnitWrapper> getCompileUnits() const;
+
   /// getGlobalVariables - Return a vector of debug global variables.
   ///
   static std::vector<GlobalWrapper> getGlobalVariables(Module &M);

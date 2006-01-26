@@ -1242,20 +1242,16 @@ void DwarfWriter::NewGlobalVariable(DWContext *Context,
 
 /// NewCompileUnit - Create new compile unit information.
 ///
-DIE *DwarfWriter::NewCompileUnit(const std::string &Directory,
-                                 const std::string &SourceName) {
+DIE *DwarfWriter::NewCompileUnit(const CompileUnitWrapper &CompileUnit) {
   DIE *Unit = new DIE(DW_TAG_compile_unit, DW_CHILDREN_yes);
   // FIXME - use the correct line set.
   Unit->AddLabel (DW_AT_stmt_list, DW_FORM_data4,  DWLabel("line", 0));
   Unit->AddLabel (DW_AT_high_pc,   DW_FORM_addr,   DWLabel("text_end", 0));
   Unit->AddLabel (DW_AT_low_pc,    DW_FORM_addr,   DWLabel("text_begin", 0));
-  // FIXME - The producer needs to be in this form, but should come from
-  // an appropriate source.
-  Unit->AddString(DW_AT_producer,  DW_FORM_string,
-                  "llvm 3.4.x (LLVM Research Group)");
-  Unit->AddInt   (DW_AT_language,  DW_FORM_data1,  DW_LANG_C89);
-  Unit->AddString(DW_AT_name,      DW_FORM_string, SourceName);
-  Unit->AddString(DW_AT_comp_dir,  DW_FORM_string, Directory);
+  Unit->AddString(DW_AT_producer,  DW_FORM_string, CompileUnit.getProducer());
+  Unit->AddInt   (DW_AT_language,  DW_FORM_data1,  CompileUnit.getLanguage());
+  Unit->AddString(DW_AT_name,      DW_FORM_string, CompileUnit.getFileName());
+  Unit->AddString(DW_AT_comp_dir,  DW_FORM_string, CompileUnit.getDirectory());
   Unit->Complete(*this);
   
   return Unit;
@@ -1700,17 +1696,11 @@ void DwarfWriter::EmitDebugMacInfo() {
 /// ConstructCompileUnitDIEs - Create a compile unit DIE for each source and
 /// header file.
 void DwarfWriter::ConstructCompileUnitDIEs() {
-  // Get directory and source information.
-  const UniqueVector<std::string> &Directories = DebugInfo->getDirectories();
-  const UniqueVector<SourceFileInfo> &SourceFiles = DebugInfo->getSourceFiles();
-
-  // Construct compile unit DIEs for each source.
-  for (unsigned SourceID = 1, NSID = SourceFiles.size();
-                SourceID <=  NSID; ++SourceID) {
-    const SourceFileInfo &SourceFile = SourceFiles[SourceID];
-    const std::string &Directory = Directories[SourceFile.getDirectoryID()];
-    const std::string &SourceName = SourceFile.getName();
-    DIE *Unit = NewCompileUnit(Directory, SourceName);
+  const UniqueVector<CompileUnitWrapper> CUW = DebugInfo->getCompileUnits();
+  
+  for (unsigned i = 1, N = CUW.size(); i <= N; ++i) {
+    const CompileUnitWrapper &CompileUnit = CUW[i];
+    DIE *Unit = NewCompileUnit(CompileUnit);
     DWContext *Context = new DWContext(*this, NULL, Unit);
     CompileUnits.push_back(Unit);
   }

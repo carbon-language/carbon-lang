@@ -32,6 +32,7 @@ namespace llvm {
   // Forward declarations.
   //
   class AsmPrinter;
+  class CompileUnitWrapper;
   class DIE;
   class DwarfWriter; 
   class DWContext;
@@ -645,10 +646,10 @@ public:
                            unsigned Size, unsigned Align);
 
 private:
+
     /// NewCompileUnit - Create new compile unit information.
     ///
-    DIE *NewCompileUnit(const std::string &Directory,
-                        const std::string &SourceName);
+    DIE *DwarfWriter::NewCompileUnit(const CompileUnitWrapper &CompileUnit);
 
     /// EmitInitial - Emit initial Dwarf declarations.
     ///

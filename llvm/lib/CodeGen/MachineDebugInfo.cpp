@@ -180,7 +180,7 @@ unsigned GlobalWrapper::getTag() const {
 /// getContext - Return the "lldb.compile_unit" context global.
 ///
 GlobalVariable *GlobalWrapper::getContext() const {
-  return dyn_cast<GlobalVariable>(IC->getOperand(1));
+  return cast<GlobalVariable>(IC->getOperand(1));
 }
 
 /// getName - Return the name of the global.
@@ -192,7 +192,7 @@ const std::string GlobalWrapper::getName() const {
 /// getType - Return the type of the global.
 ///
 const GlobalVariable *GlobalWrapper::getType() const {
-  return dyn_cast<GlobalVariable>(IC->getOperand(4));
+  return cast<GlobalVariable>(IC->getOperand(4));
 }
 
 /// isStatic - Return true if the global is static.
@@ -272,6 +272,12 @@ void MachineDebugInfo::SetupCompileUnits(Module &M) {
   
   // If there any bad compile units then suppress debug information
   if (CompileUnits.size() != Globals.size()) CompileUnits.reset();
+}
+
+/// getCompileUnits - Return a vector of debug compile units.
+///
+const UniqueVector<CompileUnitWrapper> MachineDebugInfo::getCompileUnits()const{
+  return CompileUnits;
 }
 
 /// getGlobalVariables - Return a vector of debug global variables.
