@@ -92,7 +92,6 @@
 		CF490CDF0903C9260072DB1C /* PPCISelDAGToDAG.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPCISelDAGToDAG.cpp; sourceTree = "<group>"; };
 		CF490CE00903C9260072DB1C /* PPCISelLowering.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPCISelLowering.cpp; sourceTree = "<group>"; };
 		CF490CE10903C9260072DB1C /* PPCISelLowering.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PPCISelLowering.h; sourceTree = "<group>"; };
-		CF490CE20903C9260072DB1C /* PPCISelPattern.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPCISelPattern.cpp; sourceTree = "<group>"; };
 		CF490CE30903C9260072DB1C /* PPCJITInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPCJITInfo.cpp; sourceTree = "<group>"; };
 		CF490CE40903C9260072DB1C /* PPCJITInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PPCJITInfo.h; sourceTree = "<group>"; };
 		CF490CE50903C9260072DB1C /* PPCRegisterInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPCRegisterInfo.cpp; sourceTree = "<group>"; };
@@ -116,6 +115,10 @@
 		CF6529A6095B21A8007F884E /* MachineDebugInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MachineDebugInfo.cpp; sourceTree = "<group>"; };
 		CF6B5AFD095C82C300D1EA42 /* DAGCombiner.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DAGCombiner.cpp; sourceTree = "<group>"; };
 		CF6F487109505E1500BC9E82 /* MachineDebugInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachineDebugInfo.h; sourceTree = "<group>"; };
+		CF7FFA1F0985081C008B0087 /* ScheduleDAGList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ScheduleDAGList.cpp; sourceTree = "<group>"; };
+		CF7FFA200985081C008B0087 /* ScheduleDAGSimple.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ScheduleDAGSimple.cpp; sourceTree = "<group>"; };
+		CF7FFA2109850864008B0087 /* ScheduleDAG.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ScheduleDAG.h; sourceTree = "<group>"; };
+		CF8E00490989162500DA2399 /* Dwarf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Dwarf.h; sourceTree = "<group>"; };
 		CF9BCD0808C74DE0001E7011 /* SubtargetFeature.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SubtargetFeature.h; sourceTree = "<group>"; };
 		CF9BCD1508C75070001E7011 /* SubtargetFeature.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SubtargetFeature.cpp; sourceTree = "<group>"; };
 		CFBD8B1A090E76540020B107 /* AlphaISelDAGToDAG.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AlphaISelDAGToDAG.cpp; sourceTree = "<group>"; };
@@ -150,7 +153,6 @@
 		DE4DA04A091147ED0012D44B /* PPCISelDAGToDAG.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = PPCISelDAGToDAG.cpp; path = ../lib/Target/PowerPC/PPCISelDAGToDAG.cpp; sourceTree = SOURCE_ROOT; };
 		DE4DA04B091147ED0012D44B /* PPCISelLowering.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = PPCISelLowering.cpp; path = ../lib/Target/PowerPC/PPCISelLowering.cpp; sourceTree = SOURCE_ROOT; };
 		DE4DA04C091147ED0012D44B /* PPCISelLowering.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = PPCISelLowering.h; path = ../lib/Target/PowerPC/PPCISelLowering.h; sourceTree = SOURCE_ROOT; };
-		DE4DA04D091147ED0012D44B /* PPCISelPattern.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = PPCISelPattern.cpp; path = ../lib/Target/PowerPC/PPCISelPattern.cpp; sourceTree = SOURCE_ROOT; };
 		DE4DA04E091147ED0012D44B /* PPCJITInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = PPCJITInfo.cpp; path = ../lib/Target/PowerPC/PPCJITInfo.cpp; sourceTree = SOURCE_ROOT; };
 		DE4DA04F091147ED0012D44B /* PPCJITInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = PPCJITInfo.h; path = ../lib/Target/PowerPC/PPCJITInfo.h; sourceTree = SOURCE_ROOT; };
 		DE4DA050091147ED0012D44B /* PPCRegisterInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = PPCRegisterInfo.cpp; path = ../lib/Target/PowerPC/PPCRegisterInfo.cpp; sourceTree = SOURCE_ROOT; };
@@ -1164,6 +1166,8 @@
 			children = (
 				CF6B5AFD095C82C300D1EA42 /* DAGCombiner.cpp */,
 				DE66ED9008ABEC2B00323D32 /* LegalizeDAG.cpp */,
+				CF7FFA1F0985081C008B0087 /* ScheduleDAGList.cpp */,
+				CF7FFA200985081C008B0087 /* ScheduleDAGSimple.cpp */,
 				DE694D9F08B51E0C0039C106 /* ScheduleDAG.cpp */,
 				DE66ED9208ABEC2B00323D32 /* SelectionDAG.cpp */,
 				DE66ED9308ABEC2B00323D32 /* SelectionDAGISel.cpp */,
@@ -1458,7 +1462,6 @@
 				CF490CDF0903C9260072DB1C /* PPCISelDAGToDAG.cpp */,
 				CF490CE00903C9260072DB1C /* PPCISelLowering.cpp */,
 				CF490CE10903C9260072DB1C /* PPCISelLowering.h */,
-				CF490CE20903C9260072DB1C /* PPCISelPattern.cpp */,
 				CF490CE30903C9260072DB1C /* PPCJITInfo.cpp */,
 				CF490CE40903C9260072DB1C /* PPCJITInfo.h */,
 				CF490CE50903C9260072DB1C /* PPCRegisterInfo.cpp */,
@@ -1489,7 +1492,6 @@
 				DE4DA04A091147ED0012D44B /* PPCISelDAGToDAG.cpp */,
 				DE4DA04B091147ED0012D44B /* PPCISelLowering.cpp */,
 				DE4DA04C091147ED0012D44B /* PPCISelLowering.h */,
-				DE4DA04D091147ED0012D44B /* PPCISelPattern.cpp */,
 				DE4DA04E091147ED0012D44B /* PPCJITInfo.cpp */,
 				DE4DA04F091147ED0012D44B /* PPCJITInfo.h */,
 				DE4DA050091147ED0012D44B /* PPCRegisterInfo.cpp */,
@@ -1997,6 +1999,7 @@
 				DE66F24308ABF03100323D32 /* MachineRelocation.h */,
 				DE66F24408ABF03100323D32 /* Passes.h */,
 				DE66F24508ABF03100323D32 /* SchedGraphCommon.h */,
+				CF7FFA2109850864008B0087 /* ScheduleDAG.h */,
 				DE66F24608ABF03100323D32 /* SelectionDAG.h */,
 				DE66F24708ABF03100323D32 /* SelectionDAGISel.h */,
 				DE66F24808ABF03100323D32 /* SelectionDAGNodes.h */,
@@ -2054,6 +2057,7 @@
 				DE66F27B08ABF03200323D32 /* DOTGraphTraits.h */,
 				DE66F27C08ABF03200323D32 /* DynamicLinker.h */,
 				DE66F27D08ABF03200323D32 /* ELF.h */,
+				CF8E00490989162500DA2399 /* Dwarf.h */,
 				DE66F27E08ABF03200323D32 /* FileUtilities.h */,
 				DE66F27F08ABF03200323D32 /* GetElementPtrTypeIterator.h */,
 				DE66F28008ABF03200323D32 /* GraphWriter.h */,
@@ -2423,7 +2427,7 @@
 		};
 		CF0329BB08D1BE5D0030FD33 /* LLVM llc */ = {
 			isa = PBXLegacyTarget;
-			buildArgumentsString = "$(ACTION) -j 4 ";
+			buildArgumentsString = "$(ACTION) -j 4";
 			buildConfigurationList = CF0329C308D1BEC40030FD33 /* Build configuration list for PBXLegacyTarget "LLVM llc" */;
 			buildPhases = (
 			);
