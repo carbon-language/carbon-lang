@@ -649,7 +649,7 @@ private:
 
     /// NewCompileUnit - Create new compile unit information.
     ///
-    DIE *DwarfWriter::NewCompileUnit(const CompileUnitWrapper &CompileUnit);
+    DIE *NewCompileUnit(const CompileUnitWrapper &CompileUnit);
 
     /// EmitInitial - Emit initial Dwarf declarations.
     ///
