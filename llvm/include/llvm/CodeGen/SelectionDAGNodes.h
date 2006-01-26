@@ -311,6 +311,15 @@ namespace ISD {
     // the callee is known not to access the stack of the caller.
     CALL,
     TAILCALL,
+    
+    // INLINEASM - Represents an inline asm block.  This node always has two
+    // return values: a chain and a flag result.  The inputs are as follows:
+    //   Operand #0   : Input chain.
+    //   Operand #1   : a ExternalSymbolSDNode with a pointer to the asm string.
+    //   Operand #2n+2: A RegisterNode.
+    //   Operand #2n+3: A TargetConstant, indicating if the reg is a use/def
+    //   Operand #last: Optional, an incoming flag.
+    INLINEASM,
 
     // STACKSAVE - STACKSAVE has one operand, an input chain.  It produces a
     // value, the same type as the pointer type for the system, and an output
