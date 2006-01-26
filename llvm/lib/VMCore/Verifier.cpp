@@ -47,6 +47,7 @@
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/PassManager.h"
@@ -663,6 +664,9 @@ void Verifier::visitInstruction(Instruction &I) {
                 !EF->dominates(&BB->getParent()->getEntryBlock(), PredBB),
                 "Instruction does not dominate all uses!", Op, &I);
       }
+    } else if (isa<InlineAsm>(I.getOperand(i))) {
+      Assert1(i == 0 && isa<CallInst>(I),
+              "Cannot take the address of an inline asm!", &I);
     }
   }
   InstsInThisBlock.insert(&I);
