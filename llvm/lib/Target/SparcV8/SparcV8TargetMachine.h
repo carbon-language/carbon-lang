@@ -18,6 +18,7 @@
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/PassManager.h"
 #include "SparcV8InstrInfo.h"
+#include "SparcV8Subtarget.h"
 
 namespace llvm {
 
@@ -25,6 +26,7 @@ class IntrinsicLowering;
 class Module;
 
 class SparcV8TargetMachine : public TargetMachine {
+  SparcV8Subtarget Subtarget;
   SparcV8InstrInfo InstrInfo;
   TargetFrameInfo FrameInfo;
 public:
@@ -33,6 +35,7 @@ public:
 
   virtual const SparcV8InstrInfo *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }
+  virtual const TargetSubtarget  *getSubtargetImpl() const{ return &Subtarget; }
   virtual const MRegisterInfo *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }

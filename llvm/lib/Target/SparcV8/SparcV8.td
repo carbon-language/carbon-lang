@@ -17,6 +17,14 @@
 include "../Target.td"
 
 //===----------------------------------------------------------------------===//
+// PowerPC Subtarget features.
+//
+ 
+def Feature64Bit     : SubtargetFeature<"64bit", "bool", "Is64Bit",
+                                        "Enable 64-bit instructions">;
+
+
+//===----------------------------------------------------------------------===//
 // Register File Description
 //===----------------------------------------------------------------------===//
 
@@ -35,6 +43,14 @@ def SparcV8InstrInfo : InstrInfo {
   let TSFlagsFields = [];
   let TSFlagsShifts = [];
 }
+
+//===----------------------------------------------------------------------===//
+// SPARC processors supported.
+//===----------------------------------------------------------------------===//
+
+def : Processor<"generic", NoItineraries, []>;
+def : Processor<"v8", NoItineraries, []>;
+def : Processor<"v9", NoItineraries, [Feature64Bit]>;
 
 //===----------------------------------------------------------------------===//
 // Declare the target which we are implementing

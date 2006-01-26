@@ -35,6 +35,7 @@ SparcV8TargetMachine::SparcV8TargetMachine(const Module &M,
                                            IntrinsicLowering *IL,
                                            const std::string &FS)
   : TargetMachine("SparcV8", IL, false, 4, 4),
+    Subtarget(M, FS),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 8, 0) {
 }
 
