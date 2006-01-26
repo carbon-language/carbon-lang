@@ -257,7 +257,7 @@ AlphaRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
         " for stack size: " << MF.getFrameInfo()->getStackSize() << "\n");
 
   if (Offset > IMM_HIGH || Offset < IMM_LOW) {
-    std::cerr << "Unconditionally using R28 for evil purposes\n";
+    DEBUG(std::cerr << "Unconditionally using R28 for evil purposes Offset: " << Offset << "\n");
     //so in this case, we need to use a temporary register, and move the original
     //inst off the SP/FP
     //fix up the old:

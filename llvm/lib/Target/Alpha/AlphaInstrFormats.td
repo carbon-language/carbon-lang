@@ -45,6 +45,7 @@ class MForm<bits<6> opcode, bit store, bit load, string asmstr, list<dag> patter
   let Pattern = pattern;
   let isStore = store;
   let isLoad = load;
+  let Defs = [R28]; //We may use this for frame index calculations, so reserve it here
 
   bits<5> Ra;
   bits<16> disp;
@@ -54,16 +55,7 @@ class MForm<bits<6> opcode, bit store, bit load, string asmstr, list<dag> patter
   let Inst{20-16} = Rb;
   let Inst{15-0} = disp;
 }
-class MFormAlt<bits<6> opcode, string asmstr> 
-        : InstAlphaAlt<opcode, asmstr> {
-  bits<5> Ra;
-  bits<16> disp;
-  bits<5> Rb;
 
-  let Inst{25-21} = Ra;
-  let Inst{20-16} = Rb;
-  let Inst{15-0} = disp;
-}
 class MfcForm<bits<6> opcode, bits<16> fc, string asmstr> 
         : InstAlpha<opcode, (ops GPRC:$RA), asmstr> {
   bits<5> Ra;
@@ -85,15 +77,6 @@ class MbrForm<bits<6> opcode, bits<2> TB, dag OL, string asmstr> : InstAlpha<opc
 }
 
 //3.3.2
-let isBranch = 1, isTerminator = 1 in
-class BForm<bits<6> opcode, string asmstr> 
-    : InstAlpha<opcode, (ops GPRC:$RA, s21imm:$DISP), asmstr> {
-  bits<5> Ra;
-  bits<21> disp;
-
-  let Inst{25-21} = Ra;
-  let Inst{20-0} = disp;
-}
 def target : Operand<OtherVT> {}
 let isBranch = 1, isTerminator = 1 in
 class BFormD<bits<6> opcode, string asmstr, list<dag> pattern> 

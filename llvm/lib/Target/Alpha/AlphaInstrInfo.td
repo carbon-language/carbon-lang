@@ -576,8 +576,8 @@ def : Pat<(truncstore GPRC:$DATA, GPRC:$addr, i8),
 
 //load address, rellocated gpdist form
 let OperandList = (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB, s16imm:$NUM) in {
-def LDAg : MFormAlt<0x08,  "lda $RA,0($RB)\t\t!gpdisp!$NUM">;  //Load address
-def LDAHg : MFormAlt<0x09, "ldah $RA,0($RB)\t\t!gpdisp!$NUM">;  //Load address
+def LDAg  : MForm<0x08, 0, 1, "lda $RA,0($RB)\t\t!gpdisp!$NUM", []>;  //Load address
+def LDAHg : MForm<0x09, 0, 1, "ldah $RA,0($RB)\t\t!gpdisp!$NUM", []>;  //Load address
 }
 
 //Load quad, rellocated literal form
