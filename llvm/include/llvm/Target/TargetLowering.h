@@ -391,6 +391,17 @@ public:
                                               uint64_t Mask) const;
 
   //===--------------------------------------------------------------------===//
+  // Inline Asm Support hooks
+  //
+  
+  /// getRegForInlineAsmConstraint - Given a constraint letter or register
+  /// name (e.g. "r" or "edx"), return a list of registers that can be used to
+  /// satisfy the constraint.  If the constraint isn't supported, or isn't a
+  /// register constraint, return an empty list.
+  virtual std::vector<unsigned> 
+  getRegForInlineAsmConstraint(const std::string &Constraint) const;
+  
+  //===--------------------------------------------------------------------===//
   // Scheduler hooks
   //
   
