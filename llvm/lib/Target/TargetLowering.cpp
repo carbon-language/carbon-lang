@@ -13,7 +13,9 @@
 
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/MRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
 TargetLowering::TargetLowering(TargetMachine &tm)
@@ -132,3 +134,18 @@ bool TargetLowering::isMaskedValueZeroForTargetNode(const SDOperand &Op,
                                                     uint64_t Mask) const {
   return false;
 }
+
+std::vector<unsigned> TargetLowering::
+getRegForInlineAsmConstraint(const std::string &Constraint) const {
+  // Scan to see if this constraint is a register name.
+  const MRegisterInfo *RI = TM.getRegisterInfo();
+  for (unsigned i = 1, e = RI->getNumRegs(); i != e; ++i) {
+    if (const char *Name = RI->get(i).Name)
+      if (StringsEqualNoCase(Constraint, Name))
+        return std::vector<unsigned>(1, i);
+  }
+
+  // Not a physreg, must not be a register reference or something.
+  return std::vector<unsigned>();
+}
+
