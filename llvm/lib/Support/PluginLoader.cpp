@@ -19,13 +19,17 @@
 
 using namespace llvm;
 
-std::vector<std::string> plugins;
+static std::vector<std::string>* plugins;
 
 void PluginLoader::operator=(const std::string &Filename) {
   std::string ErrorMessage;
+
+  if (!plugins)
+    plugins = new std::vector<std::string>();
+
   try {
     sys::DynamicLibrary::LoadLibraryPermanently(Filename.c_str());
-    plugins.push_back(Filename);
+    plugins->push_back(Filename);
   } catch (const std::string& errmsg) {
     if (errmsg.empty()) {
       ErrorMessage = "Unknown";
@@ -40,11 +44,14 @@ void PluginLoader::operator=(const std::string &Filename) {
 
 unsigned PluginLoader::getNumPlugins()
 {
-  return plugins.size();
+  if(plugins)
+    return plugins->size();
+  else 
+    return 0;
 }
 
 std::string& PluginLoader::getPlugin(unsigned num)
 {
-  assert(num < plugins.size() && "Asking for an out of bounds plugin");
-  return plugins[num];
+  assert(plugins && num < plugins->size() && "Asking for an out of bounds plugin");
+  return (*plugins)[num];
 }
