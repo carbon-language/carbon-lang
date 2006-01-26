@@ -1932,6 +1932,7 @@ public:
     // Don't fold any node which reads or writes a flag and has multiple uses.
     // FIXME: we really need to separate the concepts of flag and "glue". Those
     // real flag results, e.g. X86CMP output, can have multiple uses.
+    // FIXME: If the incoming flag is optional. Then it is ok to fold it.
     if (!EmittedCheck &&
         (PatternHasProperty(N, SDNodeInfo::SDNPInFlag, ISE) ||
          PatternHasProperty(N, SDNodeInfo::SDNPOptInFlag, ISE) ||
