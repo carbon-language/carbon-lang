@@ -16,8 +16,6 @@
 #include "llvm/Constants.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Instruction.h"
-#include <iostream>
-
 using namespace llvm;
 
 Value *llvm::MapValue(const Value *V, std::map<const Value*, Value*> &VM) {
@@ -32,7 +30,7 @@ Value *llvm::MapValue(const Value *V, std::map<const Value*, Value*> &VM) {
   if (Constant *C = const_cast<Constant*>(dyn_cast<Constant>(V))) {
     if (isa<ConstantIntegral>(C) || isa<ConstantFP>(C) ||
         isa<ConstantPointerNull>(C) || isa<ConstantAggregateZero>(C) ||
-        isa<UndefValue>(C))
+        isa<UndefValue>(C) || isa<InlineAsm>(V))
       return VMSlot = C;           // Primitive constants map directly
     else if (ConstantArray *CA = dyn_cast<ConstantArray>(C)) {
       for (unsigned i = 0, e = CA->getNumOperands(); i != e; ++i) {
@@ -112,12 +110,6 @@ void llvm::RemapInstruction(Instruction *I,
   for (unsigned op = 0, E = I->getNumOperands(); op != E; ++op) {
     const Value *Op = I->getOperand(op);
     Value *V = MapValue(Op, ValueMap);
-#ifndef NDEBUG
-    if (!V) {
-      std::cerr << "Val = \n" << *Op << "Addr = " << (void*)Op;
-      std::cerr << "\nInst = " << *I;
-    }
-#endif
     assert(V && "Referenced value not in value map!");
     I->setOperand(op, V);
   }
