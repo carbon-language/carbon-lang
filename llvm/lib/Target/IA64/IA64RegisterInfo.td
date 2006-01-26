@@ -283,10 +283,7 @@ def GR : RegisterClass<"IA64", [i64], 64,
 
 // these are the scratch (+stacked) FP registers
 
-// the 128 here is to make stf.spill/ldf.fill happy,
-// when storing full (82-bit) FP regs to stack slots
-// we need to 16-byte align
-def FP : RegisterClass<"IA64", [f64], 128, 
+def FP : RegisterClass<"IA64", [f64], 64, 
        [F6, F7, 
 	F8, F9, F10, F11, F12, F13, F14, F15, 
 	F32, F33, F34, F35, F36, F37, F38, F39, 
@@ -303,6 +300,12 @@ def FP : RegisterClass<"IA64", [f64], 128,
 	F120, F121, F122, F123, F124, F125, F126, F127,
 	F0, F1]> // these last two are hidden
   {
+// the 128s here are to make stf.spill/ldf.fill happy,
+// when storing full (82-bit) FP regs to stack slots
+// we need to 16-byte align
+    let Size=128;
+    let Alignment=128;
+
     let MethodProtos = [{
     iterator allocation_order_begin(MachineFunction &MF) const;
     iterator allocation_order_end(MachineFunction &MF) const;
