@@ -16,6 +16,13 @@
 #include "X86GenSubtarget.inc"
 using namespace llvm;
 
+// FIXME: temporary.
+#include "llvm/Support/CommandLine.h"
+namespace {
+  cl::opt<bool> EnableSSE("enable-x86-sse", cl::Hidden,
+                          cl::desc("Enable sse on X86"));
+}
+
 static void GetCpuIDAndInfo(unsigned value, unsigned *EAX, unsigned *EBX,
                             unsigned *ECX, unsigned *EDX) {
 #if defined(i386) || defined(__i386__) || defined(__x86__) || defined(_M_IX86)
@@ -96,8 +103,10 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS)
   
   // FIXME: Force these off until they work.  An llc-beta option should turn
   // them back on.
-  X86SSELevel = NoMMXSSE;
-  X863DNowLevel = NoThreeDNow;
+  if (!EnableSSE) {
+    X86SSELevel = NoMMXSSE;
+    X863DNowLevel = NoThreeDNow;
+  }
       
   // Set the boolean corresponding to the current target triple, or the default
   // if one cannot be determined, to true.
