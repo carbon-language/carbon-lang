@@ -205,10 +205,10 @@ void CodeGenTarget::ReadLegalValueTypes() const {
 
 void CodeGenTarget::ReadInstructions() const {
   std::vector<Record*> Insts = Records.getAllDerivedDefinitions("Instruction");
-
-  if (Insts.empty())
+  if (Insts.size() <= 2)
     throw std::string("No 'Instruction' subclasses defined!");
 
+  // Parse the instructions defined in the .td file.
   std::string InstFormatName =
     getAsmWriter()->getValueAsString("InstFormatName");
 
@@ -219,29 +219,25 @@ void CodeGenTarget::ReadInstructions() const {
   }
 }
 
-/// getPHIInstruction - Return the designated PHI instruction.
-///
-const CodeGenInstruction &CodeGenTarget::getPHIInstruction() const {
-  Record *PHI = getInstructionSet()->getValueAsDef("PHIInst");
-  std::map<std::string, CodeGenInstruction>::const_iterator I =
-    getInstructions().find(PHI->getName());
-  if (I == Instructions.end())
-    throw "Could not find PHI instruction named '" + PHI->getName() + "'!";
-  return I->second;
-}
-
 /// getInstructionsByEnumValue - Return all of the instructions defined by the
 /// target, ordered by their enum value.
 void CodeGenTarget::
 getInstructionsByEnumValue(std::vector<const CodeGenInstruction*>
                                                  &NumberedInstructions) {
-
+  std::map<std::string, CodeGenInstruction>::const_iterator I;
+  I = getInstructions().find("PHI");
+  if (I == Instructions.end()) throw "Could not find 'PHI' instruction!";
+  const CodeGenInstruction *PHI = &I->second;
+  
+  I = getInstructions().find("INLINEASM");
+  if (I == Instructions.end()) throw "Could not find 'INLINEASM' instruction!";
+  const CodeGenInstruction *INLINEASM = &I->second;
+  
   // Print out the rest of the instructions now.
-  unsigned i = 0;
-  const CodeGenInstruction *PHI = &getPHIInstruction();
   NumberedInstructions.push_back(PHI);
+  NumberedInstructions.push_back(INLINEASM);
   for (inst_iterator II = inst_begin(), E = inst_end(); II != E; ++II)
-    if (&II->second != PHI)
+    if (&II->second != PHI &&&II->second != INLINEASM)
       NumberedInstructions.push_back(&II->second);
 }
 
