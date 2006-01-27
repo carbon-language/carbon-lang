@@ -2775,22 +2775,22 @@ def FIDIVR32m : FPI<0xDA, MRM7m, (ops i32mem:$src), "fidivr{l} $src">;
 // of some of the 'reverse' forms of the fsub and fdiv instructions.  As such,
 // we have to put some 'r's in and take them out of weird places.
 def FADDST0r   : FPST0rInst <0xC0, "fadd $op">;
-def FADDrST0   : FPrST0Inst <0xC0, "fadd {%ST(0), $op|$op, %ST(0)}">;
+def FADDrST0   : FPrST0Inst <0xC0, "fadd {%st(0), $op|$op, %ST(0)}">;
 def FADDPrST0  : FPrST0PInst<0xC0, "faddp $op">;
 def FSUBRST0r  : FPST0rInst <0xE8, "fsubr $op">;
-def FSUBrST0   : FPrST0Inst <0xE8, "fsub{r} {%ST(0), $op|$op, %ST(0)}">;
+def FSUBrST0   : FPrST0Inst <0xE8, "fsub{r} {%st(0), $op|$op, %ST(0)}">;
 def FSUBPrST0  : FPrST0PInst<0xE8, "fsub{r}p $op">;
 def FSUBST0r   : FPST0rInst <0xE0, "fsub $op">;
-def FSUBRrST0  : FPrST0Inst <0xE0, "fsub{|r} {%ST(0), $op|$op, %ST(0)}">;
+def FSUBRrST0  : FPrST0Inst <0xE0, "fsub{|r} {%st(0), $op|$op, %ST(0)}">;
 def FSUBRPrST0 : FPrST0PInst<0xE0, "fsub{|r}p $op">;
 def FMULST0r   : FPST0rInst <0xC8, "fmul $op">;
-def FMULrST0   : FPrST0Inst <0xC8, "fmul {%ST(0), $op|$op, %ST(0)}">;
+def FMULrST0   : FPrST0Inst <0xC8, "fmul {%st(0), $op|$op, %ST(0)}">;
 def FMULPrST0  : FPrST0PInst<0xC8, "fmulp $op">;
 def FDIVRST0r  : FPST0rInst <0xF8, "fdivr $op">;
-def FDIVrST0   : FPrST0Inst <0xF8, "fdiv{r} {%ST(0), $op|$op, %ST(0)}">;
+def FDIVrST0   : FPrST0Inst <0xF8, "fdiv{r} {%st(0), $op|$op, %ST(0)}">;
 def FDIVPrST0  : FPrST0PInst<0xF8, "fdiv{r}p $op">;
 def FDIVST0r   : FPST0rInst <0xF0, "fdiv $op">;
-def FDIVRrST0  : FPrST0Inst <0xF0, "fdiv{|r} {%ST(0), $op|$op, %ST(0)}">;
+def FDIVRrST0  : FPrST0Inst <0xF0, "fdiv{|r} {%st(0), $op|$op, %ST(0)}">;
 def FDIVRPrST0 : FPrST0PInst<0xF0, "fdiv{|r}p $op">;
 
 
@@ -2845,21 +2845,21 @@ let isTwoAddress = 1 in {
 }
 
 def FCMOVB  : FPI<0xC0, AddRegFrm, (ops RST:$op),
-                  "fcmovb {$op, %ST(0)|%ST(0), $op}">, DA;
+                  "fcmovb {$op, %st(0)|%ST(0), $op}">, DA;
 def FCMOVBE : FPI<0xD0, AddRegFrm, (ops RST:$op),
-                  "fcmovbe {$op, %ST(0)|%ST(0), $op}">, DA;
+                  "fcmovbe {$op, %st(0)|%ST(0), $op}">, DA;
 def FCMOVE  : FPI<0xC8, AddRegFrm, (ops RST:$op),
-                  "fcmove {$op, %ST(0)|%ST(0), $op}">, DA;
+                  "fcmove {$op, %st(0)|%ST(0), $op}">, DA;
 def FCMOVP  : FPI<0xD8, AddRegFrm, (ops RST:$op),
-                  "fcmovu  {$op, %ST(0)|%ST(0), $op}">, DA;
+                  "fcmovu  {$op, %st(0)|%ST(0), $op}">, DA;
 def FCMOVNB : FPI<0xC0, AddRegFrm, (ops RST:$op),
-                  "fcmovnb {$op, %ST(0)|%ST(0), $op}">, DB;
+                  "fcmovnb {$op, %st(0)|%ST(0), $op}">, DB;
 def FCMOVNBE  : FPI<0xD0, AddRegFrm, (ops RST:$op),
-                  "fcmovnbe {$op, %ST(0)|%ST(0), $op}">, DB;
+                  "fcmovnbe {$op, %st(0)|%ST(0), $op}">, DB;
 def FCMOVNE : FPI<0xC8, AddRegFrm, (ops RST:$op),
-                  "fcmovne {$op, %ST(0)|%ST(0), $op}">, DB;
+                  "fcmovne {$op, %st(0)|%ST(0), $op}">, DB;
 def FCMOVNP : FPI<0xD8, AddRegFrm, (ops RST:$op),
-                  "fcmovnu {$op, %ST(0)|%ST(0), $op}">, DB;
+                  "fcmovnu {$op, %st(0)|%ST(0), $op}">, DB;
 
 // Floating point loads & stores.
 def FpLD32m  : FpI<(ops RFP:$dst, f32mem:$src), ZeroArgFP,
@@ -2933,10 +2933,10 @@ def FUCOMPPr  : FPI<0xE9, RawFrm,       // cmp ST(0) with ST(1), pop, pop
 
 def FUCOMIr  : FPI<0xE8, AddRegFrm,     // CC = cmp ST(0) with ST(i)
                    (ops RST:$reg),
-                   "fucomi {$reg, %ST(0)|%ST(0), $reg}">, DB, Imp<[ST0],[]>;
+                   "fucomi {$reg, %st(0)|%ST(0), $reg}">, DB, Imp<[ST0],[]>;
 def FUCOMIPr : FPI<0xE8, AddRegFrm,     // CC = cmp ST(0) with ST(i), pop
                  (ops RST:$reg),
-                 "fucomip {$reg, %ST(0)|%ST(0), $reg}">, DF, Imp<[ST0],[]>;
+                 "fucomip {$reg, %st(0)|%ST(0), $reg}">, DF, Imp<[ST0],[]>;
 
 
 // Floating point flag ops.
