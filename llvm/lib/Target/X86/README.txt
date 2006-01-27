@@ -187,4 +187,13 @@ fn1:
 	ret
 
 The problem is the store's chain operand is not the load X but rather
-a TokenFactor of the load X and load Y. This prevents the folding.
+a TokenFactor of the load X and load Y, which prevents the folding.
+
+There are two ways to fix this:
+
+1. The dag combiner can start using alias analysis to realize that y/x
+   don't alias, making the store to X not dependent on the load from Y.
+2. The generated isel could be made smarter in the case it can't
+   disambiguate the pointers.
+
+Number 1 is the preferred solution.
