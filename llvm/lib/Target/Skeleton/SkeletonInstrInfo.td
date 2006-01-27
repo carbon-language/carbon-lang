@@ -32,7 +32,6 @@ class SkelInst<string nm, bits<6> opcd, dag ops, Format f> : Instruction {
 }
 
 // Pseudo-instructions:
-def PHI : SkelInst<"PHI", 0, (ops), Pseudo>;          // PHI node...
 def NOP : SkelInst<"NOP", 0, (ops), Pseudo>;          // No-op
 def ADJCALLSTACKDOWN : SkelInst<"ADJCALLSTACKDOWN", 0, (ops), Pseudo>;
 def ADJCALLSTACKUP : SkelInst<"ADJCALLSTACKUP", 0, (ops), Pseudo>;

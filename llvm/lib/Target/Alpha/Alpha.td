@@ -38,8 +38,6 @@ include "AlphaRegisterInfo.td"
 include "AlphaInstrInfo.td"
 
 def AlphaInstrInfo : InstrInfo {
-  let PHIInst = PHI;
-
   // Define how we want to layout our target-specific information field.
  // let TSFlagsFields = [];
  // let TSFlagsShifts = [];

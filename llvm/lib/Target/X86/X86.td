@@ -98,7 +98,6 @@ include "X86RegisterInfo.td"
 include "X86InstrInfo.td"
 
 def X86InstrInfo : InstrInfo {
-  let PHIInst  = PHI;
 
   // Define how we want to layout our TargetSpecific information field... This
   // should be kept up-to-date with the fields in the X86InstrInfo.h file.

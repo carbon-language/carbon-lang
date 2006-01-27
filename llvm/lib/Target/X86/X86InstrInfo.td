@@ -378,9 +378,6 @@ class Ii32<bits<8> o, Format f, dag ops, string asm, list<dag> pattern>
 // Instruction list...
 //
 
-// Pseudo-instructions:
-def PHI : I<0, Pseudo, (ops variable_ops), "PHINODE", []>;        // PHI node.
-
 def ADJCALLSTACKDOWN : I<0, Pseudo, (ops i32imm:$amt), "#ADJCALLSTACKDOWN",
                          [(X86callseq_start imm:$amt)]>;
 def ADJCALLSTACKUP   : I<0, Pseudo, (ops i32imm:$amt1, i32imm:$amt2),

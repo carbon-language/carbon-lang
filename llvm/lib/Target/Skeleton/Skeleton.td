@@ -21,9 +21,7 @@ include "../Target.td"
 include "SkeletonRegisterInfo.td"
 include "SkeletonInstrInfo.td"
 
-def SkeletonInstrInfo : InstrInfo {
-  let PHIInst = PHI;
-}
+def SkeletonInstrInfo : InstrInfo { }
 
 def Skeleton : Target {
   // Pointers are 32-bits in size.

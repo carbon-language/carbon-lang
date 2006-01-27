@@ -107,7 +107,6 @@ def retflag       : SDNode<"V8ISD::RET_FLAG", SDT_V8RetFlag,
 class Pseudo<dag ops, string asmstr, list<dag> pattern>
    : InstV8<ops, asmstr, pattern>;
 
-def PHI : Pseudo<(ops variable_ops), "PHI", []>;
 def ADJCALLSTACKDOWN : Pseudo<(ops i32imm:$amt),
                                "!ADJCALLSTACKDOWN $amt",
                                [(callseq_start imm:$amt)]>;

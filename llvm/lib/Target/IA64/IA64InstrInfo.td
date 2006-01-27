@@ -448,7 +448,6 @@ def : Pat<(i1  0), (CMPNE r0, r0)>; // TODO: any instruction actually *using*
 // TODO: support postincrement (reg, imm9) loads+stores - this needs more
 // tablegen support
 
-def PHI : PseudoInstIA64<(ops variable_ops), "PHI">;
 def IDEF : PseudoInstIA64<(ops variable_ops), "// IDEF">;
 
 def IDEF_GR_D : PseudoInstIA64_DAG<(ops GR:$reg), "// $reg = IDEF",

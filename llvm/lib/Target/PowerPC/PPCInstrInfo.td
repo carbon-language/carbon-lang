@@ -194,7 +194,6 @@ def FPContractions : Predicate<"!NoExcessFPPrecision">;
 // PowerPC Instruction Definitions.
 
 // Pseudo-instructions:
-def PHI : Pseudo<(ops variable_ops), "; PHI", []>;
 
 let isLoad = 1, hasCtrlDep = 1 in {
 def ADJCALLSTACKDOWN : Pseudo<(ops u16imm:$amt),
@@ -1087,8 +1086,6 @@ def : Pattern<(xor GPRC:$in, imm:$imm),
 // PowerPCInstrInfo Definition
 //
 def PowerPCInstrInfo : InstrInfo {
-  let PHIInst  = PHI;
-
   let TSFlagsFields = [ "VMX", "PPC64" ];
   let TSFlagsShifts = [ 0, 1 ];
 

@@ -38,9 +38,6 @@ include "SparcV9_F4.td"
 // Instruction list
 //===----------------------------------------------------------------------===//
 
-// Pseudo-instructions
-def PHI     : Pseudo<"phi">;
-
 // Section A.2: Add - p137
 def ADDr    : F3_1<2, 0b000000, "add">;             // add    rs1, rs2, rd
 def ADDi    : F3_2<2, 0b000000, "add">;             // add    rs1, imm, rd

@@ -31,8 +31,6 @@ include "SparcV9RegisterInfo.td"
 include "SparcV9InstrInfo.td"
 
 def SparcV9InstrInfo : InstrInfo {
-  let PHIInst = PHI;
-
   // Define how we want to layout our TargetSpecific information field.
   let TSFlagsFields = [];
   let TSFlagsShifts = [];

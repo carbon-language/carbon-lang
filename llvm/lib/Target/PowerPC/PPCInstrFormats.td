@@ -644,9 +644,8 @@ class VXRForm_1<bits<10> xo, bit rc, dag OL, string asmstr,
 }
 
 //===----------------------------------------------------------------------===//
-def NoItin : InstrItinClass;
 class Pseudo<dag OL, string asmstr, list<dag> pattern>
-    : I<0, OL, asmstr, NoItin> {
+    : I<0, OL, asmstr, NoItinerary> {
   let PPC64 = 0;
   let VMX = 0;
   let Pattern = pattern;

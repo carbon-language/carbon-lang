@@ -28,9 +28,7 @@ include "IA64RegisterInfo.td"
 
 include "IA64InstrInfo.td"
 
-def IA64InstrInfo : InstrInfo {
-    let PHIInst = PHI;
-}
+def IA64InstrInfo : InstrInfo { }
 
 def IA64 : Target {
   // The following registers are always saved across calls:

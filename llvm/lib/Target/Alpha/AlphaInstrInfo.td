@@ -113,8 +113,6 @@ def sub8  : PatFrag<(ops node:$op1, node:$op2),
 
 //Pseudo ops for selection
 
-def PHI : PseudoInstAlpha<(ops variable_ops), "#phi", []>;
-
 def IDEF_I : PseudoInstAlpha<(ops GPRC:$RA), "#idef $RA",
              [(set GPRC:$RA, (undef))]>;
 def IDEF_F32 : PseudoInstAlpha<(ops F4RC:$RA), "#idef $RA",

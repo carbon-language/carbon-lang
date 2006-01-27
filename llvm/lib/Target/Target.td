@@ -171,7 +171,7 @@ class Instruction {
   bit hasCtrlDep   = 0;     // Does this instruction r/w ctrl-flow chains?
   bit noResults    = 0;     // Does this instruction produce no results?
   
-  InstrItinClass Itinerary; // Execution steps used for scheduling. 
+  InstrItinClass Itinerary = NoItinerary;// Execution steps used for scheduling.
 }
 
 /// Predicates - These are extra conditionals which are turned into instruction
@@ -213,8 +213,6 @@ def i64imm : Operand<i64>;
 // which are global to the the target machine.
 //
 class InstrInfo {
-  Instruction PHIInst;
-
   // If the target wants to associate some target-specific information with each
   // instruction, it should provide these two lists to indicate how to assemble
   // the target specific information into the 32 bits available.
@@ -227,6 +225,16 @@ class InstrInfo {
   // Sparc manual specifies its instructions in the format [31..0] (big), while
   // PowerPC specifies them using the format [0..31] (little).
   bit isLittleEndianEncoding = 0;
+}
+
+// Standard Instructions.
+def PHI : Instruction {
+  let OperandList = (ops variable_ops);
+  let AsmString = "PHINODE";
+}
+def INLINEASM : Instruction {
+  let OperandList = (ops variable_ops);
+  let AsmString = "";
 }
 
 //===----------------------------------------------------------------------===//
