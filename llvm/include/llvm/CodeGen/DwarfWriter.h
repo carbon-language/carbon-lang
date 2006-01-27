@@ -21,6 +21,7 @@
 #define LLVM_CODEGEN_DWARFWRITER_H
 
 #include "llvm/ADT/UniqueVector.h"
+#include "llvm/Support/DataTypes.h"
 
 #include <iosfwd>
 #include <string>
