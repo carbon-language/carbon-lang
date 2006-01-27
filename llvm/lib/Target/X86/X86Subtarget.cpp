@@ -94,6 +94,11 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS)
 
   // Default to ELF unless otherwise specified.
   TargetType = isELF;
+  
+  // FIXME: Force these off until they work.  An llc-beta option should turn
+  // them back on.
+  X86SSELevel = NoMMXSSE;
+  X863DNowLevel = NoThreeDNow;
       
   // Set the boolean corresponding to the current target triple, or the default
   // if one cannot be determined, to true.
