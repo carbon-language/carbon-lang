@@ -861,7 +861,6 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
     Result = new CallInst(F, Params);
     if (isTailCall) cast<CallInst>(Result)->setTailCall();
     if (CallingConv) cast<CallInst>(Result)->setCallingConv(CallingConv);
-    isCall = true;
     break;
   }
   case 56:                     // Invoke with encoded CC
@@ -1033,13 +1032,6 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
   }  // end switch(Opcode)
 
   BB->getInstList().push_back(Result);
-
-  if (this->hasUpgradedIntrinsicFunctions && isCall)
-    if (Instruction* inst = UpgradeIntrinsicCall(cast<CallInst>(Result))) {
-      Result->replaceAllUsesWith(inst);
-      Result->eraseFromParent();
-      Result = inst;
-    }
 
   unsigned TypeSlot;
   if (Result->getType() == InstTy)
@@ -1862,6 +1854,25 @@ void BytecodeReader::ParseFunctionBody(Function* F) {
     delete PlaceHolder;
   }
 
+  // If upgraded intrinsic functions were detected during reading of the 
+  // module information, then we need to look for instructions that need to
+  // be upgraded. This can't be done while the instructions are read in because
+  // additional instructions inserted mess up the slot numbering.
+  if (!upgradedFunctions.empty()) {
+    for (Function::iterator BI = F->begin(), BE = F->end(); BI != BE; ++BI) 
+      for (BasicBlock::iterator II = BI->begin(), IE = BI->end(); 
+           II != IE; ++II)
+        if (CallInst* CI = dyn_cast<CallInst>(II)) {
+          std::map<Function*,Function*>::iterator FI = 
+            upgradedFunctions.find(CI->getCalledFunction());
+          if (FI != upgradedFunctions.end()) {
+            Instruction* newI = UpgradeIntrinsicCall(CI,FI->second);
+            CI->replaceAllUsesWith(newI);
+            CI->eraseFromParent();
+          }
+        }
+  }
+
   // Clear out function-level types...
   FunctionTypes.clear();
   CompactionTypes.clear();
@@ -1937,6 +1948,7 @@ void BytecodeReader::ParseAllFunctionBodies() {
     ++Fi;
   }
   LazyFunctionLoadMap.clear();
+
 }
 
 /// Parse the global type list
@@ -2054,13 +2066,6 @@ void BytecodeReader::ParseModuleGlobalInfo() {
     // Insert the place holder.
     Function *Func = new Function(FTy, GlobalValue::ExternalLinkage,
                                   "", TheModule);
-
-    // Replace with upgraded intrinsic function, if applicable.
-    if (Function* upgrdF = UpgradeIntrinsicFunction(Func)) {
-      hasUpgradedIntrinsicFunctions = true;
-      Func->eraseFromParent();
-      Func = upgrdF;
-    }
 
     insertValue(Func, (FnSignature & (~0U >> 1)) >> 5, ModuleValues);
 
@@ -2432,6 +2437,16 @@ void BytecodeReader::ParseBytecode(BufPtr Buf, unsigned Length,
     // Check for missing functions
     if (hasFunctions())
       error("Function expected, but bytecode stream ended!");
+
+    // Look for intrinsic functions to upgrade, upgrade them, and save the
+    // mapping from old function to new for use later when instructions are
+    // converted.
+    for (Module::iterator FI = TheModule->begin(), FE = TheModule->end();
+         FI != FE; ++FI)
+      if (Function* newF = UpgradeIntrinsicFunction(FI)) {
+        upgradedFunctions.insert(std::make_pair(FI,newF));
+        FI->setName("");
+      }
 
     // Tell the handler we're done with the module
     if (Handler)

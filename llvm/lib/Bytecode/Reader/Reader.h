@@ -323,9 +323,9 @@ private:
 
   /// In release 1.7 we changed intrinsic functions to not be overloaded. There
   /// is no bytecode change for this, but to optimize the auto-upgrade of calls
-  /// to intrinsic functions, we set this flag to identify when a module has
-  /// been read that contains intrinsics that were upgraded.
-  bool hasUpgradedIntrinsicFunctions;
+  /// to intrinsic functions, we save a mapping of old function definitions to
+  /// the new ones so call instructions can be upgraded efficiently.
+  std::map<Function*,Function*> upgradedFunctions;
 
   /// CompactionTypes - If a compaction table is active in the current function,
   /// this is the mapping that it contains.  We keep track of what resolved type

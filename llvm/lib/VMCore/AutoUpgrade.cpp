@@ -75,9 +75,26 @@ static inline const Type* getTypeFromFunctionName(Function* F) {
   return 0;
 }
 
+// This assumes the Function is one of the intrinsics we upgraded.
+static inline const Type* getTypeFromFunction(Function *F) {
+  const Type* Ty = F->getReturnType();
+  if (Ty->isFloatingPoint())
+    return Ty;
+  if (Ty->isSigned())
+    return Ty->getUnsignedVersion();
+  if (Ty->isInteger())
+    return Ty;
+  if (Ty == Type::BoolTy) {
+    Function::const_arg_iterator ArgIt = F->arg_begin();
+    if (ArgIt != F->arg_end()) 
+      return ArgIt->getType();
+  }
+  return 0;
+}
+
 bool llvm::IsUpgradeableIntrinsicName(const std::string& Name) {
   // Quickly eliminate it, if it's not a candidate.
-  if (Name.length() <= 5 || Name[0] != 'l' || Name[1] != 'l' || Name[2] !=
+  if (Name.length() <= 8 || Name[0] != 'l' || Name[1] != 'l' || Name[2] !=
     'v' || Name[3] != 'm' || Name[4] != '.')
     return false;
 
@@ -140,23 +157,68 @@ Function* llvm::UpgradeIntrinsicFunction(Function* F) {
   return 0;
 }
 
-Instruction* llvm::UpgradeIntrinsicCall(CallInst *CI) {
-  Function *F = CI->getCalledFunction();
-  if (const Type* Ty = getTypeFromFunctionName(F)) {
-    Function* newF = UpgradeIntrinsicFunction(F);
-    std::vector<Value*> Oprnds;
-    for (User::op_iterator OI = CI->op_begin(), OE = CI->op_end(); 
-         OI != OE; ++OI)
-      Oprnds.push_back(CI);
-    CallInst* newCI = new CallInst(newF,Oprnds,"autoupgrade_call",CI);
-    if (Ty->isSigned()) {
-      const Type* newTy = Ty->getUnsignedVersion();
-      newCI->setOperand(1,new CastInst(newCI->getOperand(1), newTy, 
-                     "autoupgrade_cast", newCI));
-      CastInst* final = new CastInst(newCI, Ty, "autoupgrade_uncast",newCI);
-      newCI->moveBefore(final);
-      return final;
+
+Instruction* llvm::MakeUpgradedCall(
+    Function* F, const std::vector<Value*>& Params, BasicBlock* BB,
+    bool isTailCall, unsigned CallingConv) {
+  assert(F && "Need a Function to make a CallInst");
+  assert(BB && "Need a BasicBlock to make a CallInst");
+
+  // Convert the params
+  bool signedArg = false;
+  std::vector<Value*> Oprnds;
+  for (std::vector<Value*>::const_iterator PI = Params.begin(), 
+       PE = Params.end(); PI != PE; ++PI) {
+    const Type* opTy = (*PI)->getType();
+    if (opTy->isSigned()) {
+      signedArg = true;
+      CastInst* cast = 
+        new CastInst(*PI,opTy->getUnsignedVersion(), "autoupgrade_cast");
+      BB->getInstList().push_back(cast);
+      Oprnds.push_back(cast);
     }
+    else
+      Oprnds.push_back(*PI);
+  }
+
+  Instruction* result = new CallInst(F,Oprnds,"autoupgrade_call");
+  if (isTailCall) cast<CallInst>(result)->setTailCall();
+  if (CallingConv) cast<CallInst>(result)->setCallingConv(CallingConv);
+  if (signedArg) {
+    const Type* newTy = F->getReturnType()->getUnsignedVersion();
+    CastInst* final = new CastInst(result, newTy, "autoupgrade_uncast");
+    BB->getInstList().push_back(result);
+    result = final;
+  }
+  return result;
+}
+
+Instruction* llvm::UpgradeIntrinsicCall(CallInst *CI, Function* newF) {
+  Function *F = CI->getCalledFunction();
+  if (const Type* Ty = 
+      (newF ? getTypeFromFunction(newF) : getTypeFromFunctionName(F))) {
+    std::vector<Value*> Oprnds;
+    User::op_iterator OI = CI->op_begin(); 
+    ++OI;
+    for (User::op_iterator OE = CI->op_end() ; OI != OE; ++OI) {
+      const Type* opTy = OI->get()->getType();
+      if (opTy->isSigned())
+        Oprnds.push_back(
+          new CastInst(OI->get(),opTy->getUnsignedVersion(), 
+            "autoupgrade_cast",CI));
+      else
+        Oprnds.push_back(*OI);
+    }
+    CallInst* newCI = new CallInst((newF?newF:F),Oprnds,"autoupgrade_call",CI);
+    newCI->setTailCall(CI->isTailCall());
+    newCI->setCallingConv(CI->getCallingConv());
+    if (const Type* oldType = CI->getCalledFunction()->getReturnType())
+      if (oldType->isSigned()) {
+        CastInst* final = 
+          new CastInst(newCI, oldType, "autoupgrade_uncast",newCI);
+        newCI->moveBefore(final);
+        return final;
+      }
     return newCI;
   }
   return 0;
@@ -170,20 +232,28 @@ bool llvm::UpgradeCallsToIntrinsic(Function* F) {
         std::vector<Value*> Oprnds;
         User::op_iterator OI = CI->op_begin();
         ++OI;
-        for (User::op_iterator OE = CI->op_end(); OI != OE; ++OI)
-          Oprnds.push_back(*OI);
-        CallInst* newCI = new CallInst(newF,Oprnds,"autoupgrade_call",CI);
-        const Type* Ty = Oprnds[0]->getType();
-        if (Ty->isSigned()) {
-          const Type* newTy = Ty->getUnsignedVersion();
-          newCI->setOperand(1,new CastInst(newCI->getOperand(1), newTy, 
-                         "autoupgrade_cast", newCI));
-          CastInst* final = new CastInst(newCI, Ty, "autoupgrade_uncast",newCI);
-          newCI->moveBefore(final);
-          CI->replaceAllUsesWith(final);
-        } else {
-          CI->replaceAllUsesWith(newCI);
+        for (User::op_iterator OE = CI->op_end(); OI != OE; ++OI) {
+          const Type* opTy = OI->get()->getType();
+          if (opTy->isSigned()) {
+            Oprnds.push_back(
+              new CastInst(OI->get(),opTy->getUnsignedVersion(), 
+                  "autoupgrade_cast",CI));
+          }
+          else
+            Oprnds.push_back(*OI);
         }
+        CallInst* newCI = new CallInst(newF,Oprnds,"autoupgrade_call",CI);
+        newCI->setTailCall(CI->isTailCall());
+        newCI->setCallingConv(CI->getCallingConv());
+        if (const Type* Ty = CI->getCalledFunction()->getReturnType())
+          if (Ty->isSigned()) {
+            CastInst* final = 
+              new CastInst(newCI, Ty, "autoupgrade_uncast",newCI);
+            newCI->moveBefore(final);
+            CI->replaceAllUsesWith(final);
+          } else {
+            CI->replaceAllUsesWith(newCI);
+          }
         CI->eraseFromParent();
       }
     }
