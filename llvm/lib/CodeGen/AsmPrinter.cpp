@@ -452,3 +452,9 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
   EmitConstantValueOnly(CV);
   O << "\n";
 }
+
+/// printInlineAsm - This method formats and prints the specified machine
+/// instruction that is an inline asm.
+void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
+  O << "INLINE ASM NOT EMITTED YET!\n";
+}
