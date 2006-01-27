@@ -230,6 +230,9 @@ namespace llvm {
     ///
     void EmitGlobalConstant(const Constant* CV);
     
+    /// printInlineAsm - This method formats and prints the specified machine
+    /// instruction that is an inline asm.
+    void printInlineAsm(const MachineInstr *MI) const;
   private:
     void EmitXXStructorList(Constant *List);
 
