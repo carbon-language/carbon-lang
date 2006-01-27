@@ -89,9 +89,13 @@ static const char *GetCurrentX86CPU() {
   }
 }
 
-X86Subtarget::X86Subtarget(const Module &M, const std::string &FS)
-  : stackAlignment(8), indirectExternAndWeakGlobals(false) {
-      
+X86Subtarget::X86Subtarget(const Module &M, const std::string &FS) {
+  stackAlignment = 8;
+  indirectExternAndWeakGlobals = false;
+  X86SSELevel = NoMMXSSE;
+  X863DNowLevel = NoThreeDNow;
+  Is64Bit = false;
+
   // Determine default and user specified characteristics
   std::string CPU = GetCurrentX86CPU();
 
