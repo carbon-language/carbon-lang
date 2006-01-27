@@ -47,6 +47,7 @@ class InstrStage<int cycles, list<FuncUnit> units> {
 // instruction information.
 //
 class InstrItinClass;
+def NoItinerary : InstrItinClass;
 
 //===----------------------------------------------------------------------===//
 // Instruction itinerary data - These values provide a runtime map of an 
