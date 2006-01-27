@@ -41,7 +41,7 @@ VPATH=$(PROJ_SRC_DIR)
 # Reset the list of suffixes we know how to build
 #--------------------------------------------------------------------
 .SUFFIXES:
-.SUFFIXES: .c .cpp .cc .h .hpp .y .l .lo .o .a .bc .td .ps .dot 
+.SUFFIXES: .c .cpp .cc .h .hpp .y .l .lo .o .a .bc .td .ps .dot .ll
 .SUFFIXES: $(SHLIBEXT) $(SUFFIXES)
 
 #--------------------------------------------------------------------
@@ -361,13 +361,13 @@ CPP.Flags += -I$(PROJ_OBJ_DIR) -I$(PROJ_SRC_DIR) \
 Compile.C     = $(CC) $(CPP.Flags) $(CompileCommonOpts) -c $(C.Flags)
 LTCompile.C   = $(LIBTOOL) $(LibTool.Flags) --mode=compile $(Compile.C)
 BCCompile.C   = $(LLVMGCCWITHPATH) $(CPP.Flags) $(CompileCommonOpts) \
-                $(C.Flags) -c
+                $(C.Flags)
 Preprocess.C  = $(CC) $(CPP.Flags) $(CompileCommonOpts) -E $(C.Flags)
 
 Compile.CXX   = $(CXX) $(CPP.Flags) $(CompileCommonOpts) $(CXX.Flags) -c
 LTCompile.CXX = $(LIBTOOL) $(LibTool.Flags) --mode=compile $(Compile.CXX)
 BCCompile.CXX = $(LLVMGXXWITHPATH) $(CPP.Flags) $(CompileCommonOpts) \
-                $(CXX.Flags) -c
+                $(CXX.Flags)
 Preprocess.CXX= $(CXX) $(CPP.Flags) $(CompileCommonOpts) $(CXX.Flags) -E
 Link          = $(LIBTOOL) $(LibTool.Flags) --mode=link $(CXX) $(CPP.Flags) \
 	        $(CompileCommonOpts) $(LD.Flags) $(Strip)
@@ -391,34 +391,24 @@ endif
 # Get the list of source files and compute object file 
 # names from them. 
 #----------------------------------------------------------
-ifdef FAKE_SOURCES
-  Sources :=
-  FakeSources := $(FAKE_SOURCES)
-  ifdef BUILT_SOURCES
-  FakeSources += $(filter %.cpp %.c %.cc %.y %.l,$(BUILT_SOURCES))
-  endif
-  BaseNameSources := $(sort $(basename $(FakeSources)))
-  ObjectsO  := $(BaseNameSources:%=$(ObjDir)/%.o)
-  ObjectsLO := $(BaseNameSources:%=$(ObjDir)/%.lo)
-  ObjectsBC := $(BaseNameSources:%=$(ObjDir)/%.bc)
+
+ifndef SOURCES
+  Sources := $(notdir $(wildcard $(PROJ_SRC_DIR)/*.cpp \
+             $(PROJ_SRC_DIR)/*.cc $(PROJ_SRC_DIR)/*.c $(PROJ_SRC_DIR)/*.y \
+             $(PROJ_SRC_DIR)/*.l))
 else
-  ifndef SOURCES
-    Sources := $(notdir $(wildcard $(PROJ_SRC_DIR)/*.cpp \
-               $(PROJ_SRC_DIR)/*.cc $(PROJ_SRC_DIR)/*.c $(PROJ_SRC_DIR)/*.y \
-               $(PROJ_SRC_DIR)/*.l))
-  else
-    Sources := $(SOURCES)
-  endif 
+  Sources := $(SOURCES)
+endif 
 
-  ifdef BUILT_SOURCES
-  Sources += $(filter %.cpp %.c %.cc %.y %.l,$(BUILT_SOURCES))
-  endif
-
-  BaseNameSources := $(sort $(basename $(Sources)))
-  ObjectsO  := $(BaseNameSources:%=$(ObjDir)/%.o)
-  ObjectsLO := $(BaseNameSources:%=$(ObjDir)/%.lo)
-  ObjectsBC := $(BaseNameSources:%=$(ObjDir)/%.bc)
+ifdef BUILT_SOURCES
+Sources += $(filter %.cpp %.c %.cc %.y %.l,$(BUILT_SOURCES))
 endif
+
+BaseNameSources := $(sort $(basename $(Sources)))
+
+ObjectsO  := $(BaseNameSources:%=$(ObjDir)/%.o)
+ObjectsLO := $(BaseNameSources:%=$(ObjDir)/%.lo)
+ObjectsBC := $(BaseNameSources:%=$(ObjDir)/%.bc)
 
 ###############################################################################
 # DIRECTORIES: Handle recursive descent of directory structure
@@ -664,10 +654,10 @@ $(warning Modules require llvm-gcc but no llvm-gcc is available ****)
 else
 
 Module     := $(LibDir)/$(MODULE_NAME).bc
-LinkModule := $(LLVMGCCWITHPATH) -shared -nostdlib
+LinkModule := $(GCCLD)
 
 ifdef EXPORTED_SYMBOL_FILE
-LinkModule += -Xlinker -internalize-public-api-file=$(EXPORTED_SYMBOL_FILE)
+LinkModule += -internalize-public-api-file=$(EXPORTED_SYMBOL_FILE)
 endif
 
 $(Module): $(BUILT_SOURCES) $(ObjectsBC) $(LibDir)/.dir $(GCCLD)
@@ -771,17 +761,10 @@ ifeq ($(strip $(LLVMGCC)),)
 $(warning Bytecode libraries require llvm-gcc which could not be found ****)
 else
 
-# make the C and C++ compilers strip debug info out of bytecode libraries.
-ifndef DEBUG_RUNTIME
-BCCompile.C += -Wa,-strip-debug
-BCCompile.CXX += -Wa,-strip-debug
-endif
-
 all-local:: $(LibName.BCA)
 
 ifdef EXPORTED_SYMBOL_FILE
-BCLinkLib = $(LLVMGCCWITHPATH) -shared -nostdlib -Xlinker \
-	    -internalize-public-api-file=$(EXPORTED_SYMBOL_FILE)
+BCLinkLib = $(GCCLD) -internalize-public-api-file=$(EXPORTED_SYMBOL_FILE)
 
 $(LibName.BCA): $(ObjectsBC) $(LibDir)/.dir $(GCCLD) \
                 $(LLVMToolDir)/llvm-ar
@@ -1035,21 +1018,22 @@ $(BuildMode)/%.ii: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
 #---------------------------------------------------------
 # Create .bc files in the ObjDir directory from .cpp .cc and .c files...
 #---------------------------------------------------------
-$(ObjDir)/%.bc: %.cpp $(ObjDir)/.dir $(GCCAS) $(BUILT_SOURCES)
+
+$(ObjDir)/%.ll: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build (bytecode)"
-	$(Verb) if $(BCCompile.CXX) -MD -MT $@ -MP -MF "$(ObjDir)/$*.BCCXXd" $< -o $@ ; \
+	$(Verb) if $(BCCompile.CXX) -MD -MT $@ -MP -MF "$(ObjDir)/$*.BCCXXd" $< -o $@ -S -emit-llvm ; \
 	then $(MV) -f "$(ObjDir)/$*.BCCXXd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.BCCXXd"; exit 1; fi
 
-$(ObjDir)/%.bc: %.cc $(ObjDir)/.dir $(GCCAS) $(BUILT_SOURCES)
+$(ObjDir)/%.ll: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cc for $(BuildMode) build (bytecode)"
-	$(Verb) if $(BCCompile.CXX) -MD -MT $@ -MP -MF "$(ObjDir)/$*.BCCXXd" $< -o $@ ; \
+	$(Verb) if $(BCCompile.CXX) -MD -MT $@ -MP -MF "$(ObjDir)/$*.BCCXXd" $< -o $@ -S -emit-llvm ; \
 	then $(MV) -f "$(ObjDir)/$*.BCCXXd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.BCCXXd"; exit 1; fi
 
-$(ObjDir)/%.bc: %.c $(ObjDir)/.dir $(GCCAS) $(BUILT_SOURCES)
+$(ObjDir)/%.ll: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.c for $(BuildMode) build (bytecode)"
-	$(Verb) if $(BCCompile.C) -MD -MT $@ -MP -MF "$(ObjDir)/$*.BCCd" $< -o $@ ; \
+	$(Verb) if $(BCCompile.C) -MD -MT $@ -MP -MF "$(ObjDir)/$*.BCCd" $< -o $@ -S -emit-llvm ; \
 	then $(MV) -f "$(ObjDir)/$*.BCCd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.BCCd"; exit 1; fi
 
@@ -1085,19 +1069,31 @@ $(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Compile.C) $< -o $@ 
 endif
 
-$(ObjDir)/%.bc: %.cpp $(ObjDir)/.dir $(GCCAS) $(BUILT_SOURCES)
+$(ObjDir)/%.ll: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build (bytecode)"
-	$(BCCompile.CXX) $< -o $@ 
+	$(BCCompile.CXX) $< -o $@ -S -emit-llvm
 
-$(ObjDir)/%.bc: %.cc $(ObjDir)/.dir $(GCCAS) $(BUILT_SOURCES)
+$(ObjDir)/%.ll: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cc for $(BuildMode) build (bytecode)"
-	$(BCCompile.CXX) $< -o $@ 
+	$(BCCompile.CXX) $< -o $@ -S -emit-llvm
 
-$(ObjDir)/%.bc: %.c $(ObjDir)/.dir $(GCCAS) $(BUILT_SOURCES)
+$(ObjDir)/%.ll: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.c for $(BuildMode) build (bytecode)"
-	$(BCCompile.C) $< -o $@
+	$(BCCompile.C) $< -o $@ -S -emit-llvm
 
 endif
+
+# make the C and C++ compilers strip debug info out of bytecode libraries.
+ifdef DEBUG_RUNTIME
+$(ObjectsBC): $(ObjDir)/%.bc: $(ObjDir)/%.ll $(GCCAS)
+	$(Echo) "Compiling $*.ll to $*.bc for $(BuildMode) build (bytecode)"
+        @$(GCCAS) $< -o $@
+else
+$(ObjectsBC): $(ObjDir)/%.bc: $(ObjDir)/%.ll $(GCCAS)
+	$(Echo) "Compiling $*.ll to $*.bc for $(BuildMode) build (bytecode)"
+	@$(GCCAS) -strip-debug $< -o $@
+endif
+
 
 #---------------------------------------------------------
 # Provide rule to build .bc files from .ll sources,
