@@ -93,7 +93,6 @@ void InstrInfoEmitter::run(std::ostream &OS) {
   CodeGenTarget Target;
   const std::string &TargetName = Target.getName();
   Record *InstrInfo = Target.getInstructionSet();
-  Record *PHI = InstrInfo->getValueAsDef("PHIInst");
 
   // Emit empty implicit uses and defs lists
   OS << "static const unsigned EmptyImpList[] = { 0 };\n";
@@ -144,19 +143,16 @@ void InstrInfoEmitter::run(std::ostream &OS) {
     }
   }
   
-  // Emit all of the TargetInstrDescriptor records.
+  // Emit all of the TargetInstrDescriptor records in their ENUM ordering.
   //
   OS << "\nstatic const TargetInstrDescriptor " << TargetName
      << "Insts[] = {\n";
-  emitRecord(Target.getPHIInstruction(), 0, InstrInfo, EmittedLists,
-             OperandInfosEmitted, OS);
+  std::vector<const CodeGenInstruction*> NumberedInstructions;
+  Target.getInstructionsByEnumValue(NumberedInstructions);
 
-  unsigned i = 0;
-  for (CodeGenTarget::inst_iterator II = Target.inst_begin(),
-         E = Target.inst_end(); II != E; ++II)
-    if (II->second.TheDef != PHI)
-      emitRecord(II->second, ++i, InstrInfo, EmittedLists,
-                 OperandInfosEmitted, OS);
+  for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i)
+    emitRecord(*NumberedInstructions[i], i, InstrInfo, EmittedLists,
+               OperandInfosEmitted, OS);
   OS << "};\n";
   OS << "} // End llvm namespace \n";
 }
@@ -272,8 +268,13 @@ void InstrInfoEmitter::emitShiftedValue(Record *R, StringInit *Val,
   RecordVal *RV = R->getValue(Val->getValue());
   int Shift = ShiftInt->getValue();
 
-  if (RV == 0 || RV->getValue() == 0)
-    throw R->getName() + " doesn't have a field named '" + Val->getValue()+"'!";
+  if (RV == 0 || RV->getValue() == 0) {
+    // This isn't an error if this is a builtin instruction.
+    if (R->getName() != "PHI" && R->getName() != "INLINEASM")
+      throw R->getName() + " doesn't have a field named '" + 
+            Val->getValue() + "'!";
+    return;
+  }
 
   Init *Value = RV->getValue();
   if (BitInit *BI = dynamic_cast<BitInit*>(Value)) {
@@ -284,13 +285,22 @@ void InstrInfoEmitter::emitShiftedValue(Record *R, StringInit *Val,
     Init *I = BI->convertInitializerTo(new IntRecTy());
     if (I)
       if (IntInit *II = dynamic_cast<IntInit*>(I)) {
-        if (II->getValue())
-          OS << "|(" << II->getValue() << "<<" << Shift << ")";
+        if (II->getValue()) {
+          if (Shift)
+            OS << "|(" << II->getValue() << "<<" << Shift << ")";
+          else
+            OS << "|" << II->getValue();
+        }
         return;
       }
 
   } else if (IntInit *II = dynamic_cast<IntInit*>(Value)) {
-    if (II->getValue()) OS << "|(" << II->getValue() << "<<" << Shift << ")";
+    if (II->getValue()) {
+      if (Shift)
+        OS << "|(" << II->getValue() << "<<" << Shift << ")";
+      else
+        OS << II->getValue();
+    }
     return;
   }
 
