@@ -1828,6 +1828,7 @@ private:
   // Matched instruction.
   TreePatternNode *Instruction;
   unsigned PatternNo;
+  bool GotosFail;
   std::ostream &OS;
   // Node to name mapping
   std::map<std::string, std::string> VariableMap;
@@ -1843,7 +1844,9 @@ public:
                      TreePatternNode *pattern, TreePatternNode *instr,
                      unsigned PatNum, std::ostream &os) :
     ISE(ise), Predicates(preds), Pattern(pattern), Instruction(instr),
-    PatternNo(PatNum), OS(os), TmpNo(0) {}
+    PatternNo(PatNum), GotosFail(false), OS(os), TmpNo(0) {}
+
+  bool UsesFailLabel() { return GotosFail; }
 
   /// EmitMatchCode - Emit a matcher for N, going to the label for PatternNo
   /// if the match fails. At this point, we already know that the opcode for N
@@ -1862,8 +1865,10 @@ public:
             else
               OS << " && ";
             OS << "!(" << Def->getValueAsString("CondString") << ")";
-            if (i == e-1)
+            if (i == e-1) {
               OS << ") goto P" << PatternNo << "Fail;\n";
+              GotosFail = true;
+            }
           } else {
             Def->dump();
             assert(0 && "Unknown predicate type!");
@@ -1877,6 +1882,7 @@ public:
         OS << "      if (cast<ConstantSDNode>(" << RootName
            << ")->getSignExtended() != " << II->getValue() << ")\n"
            << "        goto P" << PatternNo << "Fail;\n";
+        GotosFail = true;
         return;
       } else if (!NodeIsComplexPattern(N)) {
         assert(0 && "Cannot match this as a leaf value!");
@@ -1897,6 +1903,7 @@ public:
         // previously named thing.
         OS << "      if (" << VarMapEntry << " != " << RootName
            << ") goto P" << PatternNo << "Fail;\n";
+        GotosFail = true;
         return;
       }
 
@@ -1918,18 +1925,23 @@ public:
         const SDNodeInfo &CInfo = ISE.getSDNodeInfo(N->getOperator());
         OS << "      if (!" << RootName << ".hasOneUse()) goto P"
            << PatternNo << "Fail;   // Multiple uses of actual result?\n";
+        GotosFail = true;
         EmittedUseCheck = true;
         // hasOneUse() check is not strong enough. If the original node has
         // already been selected, it may have been replaced with another.
-        for (unsigned j = 0; j < CInfo.getNumResults(); j++)
+        for (unsigned j = 0; j < CInfo.getNumResults(); j++) {
           OS << "      if (CodeGenMap.count(" << RootName
              << ".getValue(" << j << "))) goto P"
              << PatternNo << "Fail;   // Already selected?\n";
+          GotosFail = true;
+        }
         EmittedSlctedCheck = true;
-        if (NodeHasChain)
+        if (NodeHasChain) {
           OS << "      if (CodeGenMap.count(" << RootName
              << ".getValue(" << CInfo.getNumResults() << "))) goto P"
              << PatternNo << "Fail;   // Already selected for a chain use?\n";
+          GotosFail = true;
+        }
       }
       if (NodeHasChain) {
         if (!FoundChain) {
@@ -1956,14 +1968,17 @@ public:
       if (!EmittedUseCheck) {
         OS << "      if (!" << RootName << ".hasOneUse()) goto P"
            << PatternNo << "Fail;   // Multiple uses of actual result?\n";
+        GotosFail = true;
       }
       if (!EmittedSlctedCheck)
         // hasOneUse() check is not strong enough. If the original node has
         // already been selected, it may have been replaced with another.
-        for (unsigned j = 0; j < CInfo.getNumResults(); j++)
+        for (unsigned j = 0; j < CInfo.getNumResults(); j++) {
           OS << "      if (CodeGenMap.count(" << RootName
              << ".getValue(" << j << "))) goto P"
              << PatternNo << "Fail;   // Already selected?\n";
+          GotosFail = true;
+        }
     }
 
     for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i, ++OpNo) {
@@ -1976,6 +1991,7 @@ public:
         const SDNodeInfo &CInfo = ISE.getSDNodeInfo(Child->getOperator());
         OS << "      if (" << RootName << OpNo << ".getOpcode() != "
            << CInfo.getEnumName() << ") goto P" << PatternNo << "Fail;\n";
+        GotosFail = true;
         EmitMatchCode(Child, RootName + utostr(OpNo), FoundChain);
         if (NodeHasProperty(Child, SDNodeInfo::SDNPHasChain, ISE)) {
           FoldedChains.push_back(std::make_pair(RootName + utostr(OpNo),
@@ -1989,12 +2005,13 @@ public:
           if (VarMapEntry.empty()) {
             VarMapEntry = RootName + utostr(OpNo);
           } else {
-            // If we get here, this is a second reference to a specific name.  Since
-            // we already have checked that the first reference is valid, we don't
-            // have to recursively match it, just check that it's the same as the
-            // previously named thing.
+            // If we get here, this is a second reference to a specific name.
+            // Since we already have checked that the first reference is valid,
+            // we don't have to recursively match it, just check that it's the
+            // same as the previously named thing.
             OS << "      if (" << VarMapEntry << " != " << RootName << OpNo
                << ") goto P" << PatternNo << "Fail;\n";
+            GotosFail = true;
             Duplicates.insert(RootName + utostr(OpNo));
             continue;
           }
@@ -2016,21 +2033,25 @@ public:
             OS << "      if (cast<VTSDNode>(" << RootName << OpNo << ")->getVT() != "
                << "MVT::" << LeafRec->getName() << ") goto P" << PatternNo
                << "Fail;\n";
+            GotosFail = true;
           } else if (LeafRec->isSubClassOf("CondCode")) {
             // Make sure this is the specified cond code.
             OS << "      if (cast<CondCodeSDNode>(" << RootName << OpNo
                << ")->get() != " << "ISD::" << LeafRec->getName()
                << ") goto P" << PatternNo << "Fail;\n";
+            GotosFail = true;
           } else {
             Child->dump();
             std::cerr << " ";
             assert(0 && "Unknown leaf type!");
           }
         } else if (IntInit *II = dynamic_cast<IntInit*>(Child->getLeafValue())) {
-          OS << "      if (!isa<ConstantSDNode>(" << RootName << OpNo << ") ||\n"
+          OS << "      if (!isa<ConstantSDNode>(" << RootName << OpNo
+             << ") ||\n"
              << "          cast<ConstantSDNode>(" << RootName << OpNo
              << ")->getSignExtended() != " << II->getValue() << ")\n"
              << "        goto P" << PatternNo << "Fail;\n";
+          GotosFail = true;
         } else {
           Child->dump();
           assert(0 && "Unknown leaf type!");
@@ -2039,9 +2060,11 @@ public:
     }
 
     // If there is a node predicate for this, emit the call.
-    if (!N->getPredicateFn().empty())
+    if (!N->getPredicateFn().empty()) {
       OS << "      if (!" << N->getPredicateFn() << "(" << RootName
          << ".Val)) goto P" << PatternNo << "Fail;\n";
+      GotosFail = true;
+    }
   }
 
   /// EmitResultCode - Emit the action for a pattern.  Now that it has matched
@@ -2072,7 +2095,8 @@ public:
           case MVT::i32: OS << "      unsigned Tmp"; break;
           case MVT::i64: OS << "      uint64_t Tmp"; break;
         }
-        OS << ResNo << "C = cast<ConstantSDNode>(" << Val << ")->getValue();\n";
+        OS << ResNo << "C = (unsigned)cast<ConstantSDNode>(" << Val
+           << ")->getValue();\n";
         OS << "      SDOperand Tmp" << utostr(ResNo)
            << " = CurDAG->getTargetConstant(Tmp"
            << ResNo << "C, MVT::" << getEnumName(N->getTypeNum(0)) << ");\n";
@@ -2112,6 +2136,7 @@ public:
         for (unsigned i = 0; i < NumRes; i++)
           OS << ", Tmp" << i + ResNo;
         OS << ")) goto P" << PatternNo << "Fail;\n";
+        GotosFail = true;
         TmpNo = ResNo + NumRes;
       } else {
         OS << "      SDOperand Tmp" << ResNo << " = Select(" << Val << ");\n";
@@ -2416,6 +2441,7 @@ public:
       Pat->setTypes(Other->getExtTypes());
       OS << "      if (" << Prefix << ".Val->getValueType(0) != MVT::"
          << getName(Pat->getTypeNum(0)) << ") goto P" << PatternNo << "Fail;\n";
+      GotosFail = true;
       return true;
     }
   
@@ -2528,8 +2554,9 @@ private:
 
 /// EmitCodeForPattern - Given a pattern to match, emit code to the specified
 /// stream to match the pattern, and generate the code for the match if it
-/// succeeds.
-void DAGISelEmitter::EmitCodeForPattern(PatternToMatch &Pattern,
+/// succeeds.  Returns true if execution may jump to the fail label instead of
+/// returning.
+bool DAGISelEmitter::EmitCodeForPattern(PatternToMatch &Pattern,
                                         std::ostream &OS) {
   static unsigned PatternCount = 0;
   unsigned PatternNo = PatternCount++;
@@ -2591,7 +2618,12 @@ void DAGISelEmitter::EmitCodeForPattern(PatternToMatch &Pattern,
 
   delete Pat;
   
-  OS << "    }\n  P" << PatternNo << "Fail:\n";
+  if (Emitter.UsesFailLabel())
+    OS << "    }\n  P" << PatternNo << "Fail:\n";
+  else
+    OS << "    }\n";
+
+  return Emitter.UsesFailLabel();
 }
 
 
@@ -2658,14 +2690,24 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
     std::stable_sort(Patterns.begin(), Patterns.end(),
                      PatternSortingPredicate(*this));
     
-    for (unsigned i = 0, e = Patterns.size(); i != e; ++i)
-      EmitCodeForPattern(*Patterns[i], OS);
+    bool mightNotReturn = true;
+    for (unsigned i = 0, e = Patterns.size(); i != e; ++i) {
+      if (!mightNotReturn) {
+        std::cerr << "Pattern "
+                  << Patterns[i]->getDstPattern()->getOperator()->getName()
+                  << " is impossible to select!\n";
+        exit(1);
+      }
+      mightNotReturn = EmitCodeForPattern(*Patterns[i], OS);
+    }
     
-    OS << "  std::cerr << \"Cannot yet select: \";\n"
-       << "  N.Val->dump(CurDAG);\n"
-       << "  std::cerr << '\\n';\n"
-       << "  abort();\n"
-       << "}\n\n";
+    if (mightNotReturn)
+      OS << "  std::cerr << \"Cannot yet select: \";\n"
+         << "  N.Val->dump(CurDAG);\n"
+         << "  std::cerr << '\\n';\n"
+         << "  abort();\n";
+
+    OS << "}\n\n";
   }
   
   // Emit boilerplate.

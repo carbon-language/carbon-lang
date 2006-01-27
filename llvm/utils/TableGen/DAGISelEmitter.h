@@ -468,7 +468,7 @@ private:
                                    std::map<std::string, Record*> &InstResults,
                                    std::vector<Record*> &InstImpInputs,
                                    std::vector<Record*> &InstImpResults);
-  void EmitCodeForPattern(PatternToMatch &Pattern, std::ostream &OS);
+  bool EmitCodeForPattern(PatternToMatch &Pattern, std::ostream &OS);
   void EmitInstructionSelector(std::ostream &OS);
 };
 
