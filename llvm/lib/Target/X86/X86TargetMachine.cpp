@@ -26,7 +26,7 @@
 #include <iostream>
 using namespace llvm;
 
-bool llvm::X86DAGIsel = false;
+bool llvm::X86PatIsel = true;
 
 /// X86TargetMachineModule - Note that this is used on hosts that cannot link
 /// in a library unless there are references into the library.  In particular,
@@ -39,9 +39,9 @@ namespace {
   cl::opt<bool> DisableOutput("disable-x86-llc-output", cl::Hidden,
                               cl::desc("Disable the X86 asm printer, for use "
                                        "when profiling the code generator."));
-  cl::opt<bool, true> EnableX86DAGDAG("enable-x86-dag-isel", cl::Hidden,
-                      cl::desc("Enable DAG-to-DAG isel for X86"),
-                      cl::location(X86DAGIsel),
+  cl::opt<bool, true> EnableX86PatISel("enable-x86-pattern-isel", cl::Hidden,
+                      cl::desc("Enable the pattern based isel for X86"),
+                      cl::location(X86PatIsel),
                       cl::init(false));
   
   // Register the target.
@@ -106,10 +106,10 @@ bool X86TargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
   PM.add(createUnreachableBlockEliminationPass());
 
   // Install an instruction selector.
-  if (X86DAGIsel)
-    PM.add(createX86ISelDag(*this));
-  else
+  if (X86PatIsel)
     PM.add(createX86ISelPattern(*this));
+  else
+    PM.add(createX86ISelDag(*this));
 
   // Print the instruction selected machine code...
   if (PrintMachineCode)
@@ -173,10 +173,10 @@ void X86JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   PM.add(createUnreachableBlockEliminationPass());
 
   // Install an instruction selector.
-  if (X86DAGIsel)
-    PM.add(createX86ISelDag(TM));
-  else
+  if (X86PatIsel)
     PM.add(createX86ISelPattern(TM));
+  else
+    PM.add(createX86ISelDag(TM));
 
   // FIXME: Add SSA based peephole optimizer here.
 

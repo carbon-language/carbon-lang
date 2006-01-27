@@ -25,7 +25,7 @@ class FunctionPass;
 class IntrinsicLowering;
 class MachineCodeEmitter;
 
-extern bool X86DAGIsel;
+extern bool X86PatIsel;
 
 /// createX86ISelPattern - This pass converts an LLVM function into a 
 /// machine code representation using pattern matching and a machine

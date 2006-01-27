@@ -95,7 +95,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::BIT_CONVERT, MVT::f32, Expand);
   setOperationAction(ISD::BIT_CONVERT, MVT::i32, Expand);
 
-  if (X86DAGIsel) {
+  if (!X86PatIsel) {
     setOperationAction(ISD::BRCOND         , MVT::Other, Custom);
   }
   setOperationAction(ISD::BRCONDTWOWAY     , MVT::Other, Expand);
@@ -118,7 +118,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::CTLZ             , MVT::i32  , Expand);
   setOperationAction(ISD::READCYCLECOUNTER , MVT::i64  , Custom);
 
-  if (!X86DAGIsel) {
+  if (X86PatIsel) {
     setOperationAction(ISD::BSWAP          , MVT::i32  , Expand);
     setOperationAction(ISD::ROTL           , MVT::i8   , Expand);
     setOperationAction(ISD::ROTR           , MVT::i8   , Expand);
@@ -141,7 +141,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   // These should be promoted to a larger select which is supported.
   setOperationAction(ISD::SELECT           , MVT::i1   , Promote);
   setOperationAction(ISD::SELECT           , MVT::i8   , Promote);
-  if (X86DAGIsel) {
+  if (!X86PatIsel) {
     // X86 wants to expand cmov itself.
     setOperationAction(ISD::SELECT         , MVT::i16  , Custom);
     setOperationAction(ISD::SELECT         , MVT::i32  , Custom);
@@ -218,7 +218,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     // Set up the FP register classes.
     addRegisterClass(MVT::f64, X86::RFPRegisterClass);
 
-    if (X86DAGIsel) {
+    if (!X86PatIsel) {
       setOperationAction(ISD::SINT_TO_FP, MVT::i16, Custom);
       setOperationAction(ISD::SINT_TO_FP, MVT::i32, Custom);
     }
@@ -456,7 +456,7 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
     break;
   }
 
-  if (X86DAGIsel) {
+  if (!X86PatIsel) {
     std::vector<MVT::ValueType> NodeTys;
     NodeTys.push_back(MVT::Other);   // Returns a chain
     NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
@@ -932,7 +932,7 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
     break;
   }
 
-  if (X86DAGIsel) {
+  if (!X86PatIsel) {
     // Build a sequence of copy-to-reg nodes chained together with token chain
     // and flag operands which copy the outgoing args into registers.
     SDOperand InFlag;
