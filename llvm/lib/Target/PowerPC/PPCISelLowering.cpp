@@ -862,13 +862,6 @@ PPCTargetLowering::LowerCallTo(SDOperand Chain,
   return std::make_pair(RetVal, Chain);
 }
 
-std::pair<SDOperand, SDOperand> PPCTargetLowering::
-LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
-                        SelectionDAG &DAG) {
-  assert(0 && "LowerFrameReturnAddress unimplemented");
-  abort();
-}
-
 MachineBasicBlock *
 PPCTargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
                                            MachineBasicBlock *BB) {

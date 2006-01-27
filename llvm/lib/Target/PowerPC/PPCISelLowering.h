@@ -91,10 +91,6 @@ namespace llvm {
                   bool isTailCall, SDOperand Callee, ArgListTy &Args,
                   SelectionDAG &DAG);
 
-    virtual std::pair<SDOperand, SDOperand>
-      LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain, unsigned Depth,
-                              SelectionDAG &DAG);
-    
     virtual MachineBasicBlock *InsertAtEndOfBasicBlock(MachineInstr *MI,
                                                        MachineBasicBlock *MBB);
   };
