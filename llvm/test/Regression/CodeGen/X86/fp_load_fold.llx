@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep ST | not grep 'fadd\|fsub\|fdiv\|fmul'
+; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel | grep ST | not grep 'fadd\|fsub\|fdiv\|fmul'
 
 ; Test that the load of the memory location is folded into the operation.
 
