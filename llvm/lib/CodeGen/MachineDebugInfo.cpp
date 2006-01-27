@@ -139,7 +139,7 @@ unsigned CompileUnitWrapper::getTag() const {
 /// Currently the value is 0 (zero.)  If the value is is not correct then
 /// ignore all debug information.
 bool CompileUnitWrapper::isCorrectDebugVersion() const {
-  return cast<ConstantUInt>(IC->getOperand(Version_op))->getValue();
+  return cast<ConstantUInt>(IC->getOperand(Version_op))->getValue() == 0;
 }
 
 /// getLanguage - Return the compile unit's language number (ex. DW_LANG_C89.)
