@@ -436,7 +436,7 @@ void SubtargetEmitter::EmitData(std::ostream &OS) {
   // Enumerate all the itinerary classes
   unsigned NItinClasses = CollectAllItinClasses(OS, ItinClassesMap);
   // Make sure the rest is worth the effort
-  HasItineraries = NItinClasses != 0;
+  HasItineraries = NItinClasses != 1;   // Ignore NoItinerary.
   
   if (HasItineraries) {
     // Emit the stage data
