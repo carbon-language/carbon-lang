@@ -646,14 +646,6 @@
     source files, all built sources, all Makefiles, and most documentation files 
     will be automatically distributed. Use this variable to distribute any 
     files that are not automatically distributed.</dd>
-    <dt><a name="FAKE_SOURCES"><tt>FAKE_SOURCES</tt><small>(optional)</small>
-    </a></dt>
-    <dd>This variable is like <a href="#SOURCES"><tt>SOURCES</tt></a> except that
-    the source files don't need to exist. The makefiles only use
-    <tt>FAKE_SOURCES</tt> to create the names of derived objects that should be
-    included in the directory's result. It is assumed that the project's
-    <tt>Makefile</tt> will define how to build the derived objects
-    necessary.</dd>
     <dt><a name="KEEP_SYMBOLS"><tt>KEEP_SYMBOLS</tt></a></dt>
     <dd>If set to any value, specifies that when linking executables the
     makefiles should retain debug symbols in the executable. Normally, symbols
