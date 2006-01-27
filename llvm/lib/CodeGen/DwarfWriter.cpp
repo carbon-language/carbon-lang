@@ -674,6 +674,7 @@ void DIEInteger::EmitValue(const DwarfWriter &DW, unsigned Form) const {
   case DW_FORM_data1: DW.EmitByte(Integer);         break;
   case DW_FORM_data2: DW.EmitShort(Integer);        break;
   case DW_FORM_data4: DW.EmitLong(Integer);         break;
+  case DW_FORM_data8: DW.EmitLongLong(Integer);     break;
   case DW_FORM_udata: DW.EmitULEB128Bytes(Integer); break;
   case DW_FORM_sdata: DW.EmitSLEB128Bytes(Integer); break;
   default: assert(0 && "DIE Value form not supported yet"); break;
@@ -688,6 +689,7 @@ unsigned DIEInteger::SizeOf(const DwarfWriter &DW, unsigned Form) const {
   case DW_FORM_data1: return sizeof(int8_t);
   case DW_FORM_data2: return sizeof(int16_t);
   case DW_FORM_data4: return sizeof(int32_t);
+  case DW_FORM_data8: return sizeof(int64_t);
   case DW_FORM_udata: return DW.SizeULEB128(Integer);
   case DW_FORM_sdata: return DW.SizeSLEB128(Integer);
   default: assert(0 && "DIE Value form not supported yet"); break;
@@ -796,20 +798,27 @@ DIE::~DIE() {
   if (Context) delete Context;
 }
     
-/// AddInt - Add a simple integer attribute data and value.
+/// AddUInt - Add an unsigned integer attribute data and value.
 ///
-void DIE::AddInt(unsigned Attribute, unsigned Form,
-                 int Integer, bool IsSigned) {
+void DIE::AddUInt(unsigned Attribute, unsigned Form, uint64_t Integer) {
   if (Form == 0) {
-    if (IsSigned) {
-      if ((char)Integer == Integer)       Form = DW_FORM_data1;
-      else if ((short)Integer == Integer) Form = DW_FORM_data2;
-      else                                Form = DW_FORM_data4;
-    } else {
       if ((unsigned char)Integer == Integer)       Form = DW_FORM_data1;
       else if ((unsigned short)Integer == Integer) Form = DW_FORM_data2;
-      else                                         Form = DW_FORM_data4;
-    }
+      else if ((unsigned int)Integer == Integer)   Form = DW_FORM_data4;
+      else                                         Form = DW_FORM_data8;
+  }
+  Abbrev->AddAttribute(Attribute, Form);
+  Values.push_back(new DIEInteger(Integer));
+}
+    
+/// AddSInt - Add an signed integer attribute data and value.
+///
+void DIE::AddSInt(unsigned Attribute, unsigned Form, int64_t Integer) {
+  if (Form == 0) {
+      if ((char)Integer == Integer)       Form = DW_FORM_data1;
+      else if ((short)Integer == Integer) Form = DW_FORM_data2;
+      else if ((int)Integer == Integer)   Form = DW_FORM_data4;
+      else                                Form = DW_FORM_data8;
   }
   Abbrev->AddAttribute(Attribute, Form);
   Values.push_back(new DIEInteger(Integer));
@@ -932,8 +941,8 @@ DIE *DWContext::NewBasicType(const Type *Ty, unsigned Size, unsigned Align) {
     // construct the type DIE.
     TypeDie = new DIE(DW_TAG_base_type, DW_CHILDREN_no);
     TypeDie->AddString(DW_AT_name,      DW_FORM_string, Name);
-    TypeDie->AddInt   (DW_AT_byte_size, DW_FORM_data1,  Size);
-    TypeDie->AddInt   (DW_AT_encoding,  DW_FORM_data1,  Encoding);
+    TypeDie->AddUInt  (DW_AT_byte_size, DW_FORM_data1,  Size);
+    TypeDie->AddUInt  (DW_AT_encoding,  DW_FORM_data1,  Encoding);
     TypeDie->Complete(DW);
     
     // Add to context owner.
@@ -958,10 +967,10 @@ DIE *DWContext::NewGlobalVariable(const std::string &Name,
     // FIXME - need source file name line number.
     VariableDie = new DIE(DW_TAG_variable, DW_CHILDREN_no);
     VariableDie->AddString     (DW_AT_name,      DW_FORM_string, Name);
-    VariableDie->AddInt        (DW_AT_decl_file, 0,              0);
-    VariableDie->AddInt        (DW_AT_decl_line, 0,              0);
+    VariableDie->AddUInt       (DW_AT_decl_file, 0,              0);
+    VariableDie->AddUInt       (DW_AT_decl_line, 0,              0);
     VariableDie->AddDIEntry    (DW_AT_type,      DW_FORM_ref4,   Type);
-    VariableDie->AddInt        (DW_AT_external,  DW_FORM_flag,   1);
+    VariableDie->AddUInt       (DW_AT_external,  DW_FORM_flag,   1);
     // FIXME - needs to be a proper expression.
     VariableDie->AddObjectLabel(DW_AT_location,  DW_FORM_block1, MangledName);
     VariableDie->Complete(DW);
@@ -1094,6 +1103,24 @@ void DwarfWriter::EmitShort(int Value) const {
 void DwarfWriter::EmitLong(int Value) const {
   O << Asm->Data32bitsDirective;
   PrintHex(Value);
+}
+
+/// EmitLongLong - Emit a long long directive and value.
+///
+void DwarfWriter::EmitLongLong(uint64_t Value) const {
+  if (Asm->Data64bitsDirective) {
+    O << Asm->Data64bitsDirective << "0x" << std::hex << Value << std::dec;
+  } else {
+    const TargetData &TD = Asm->TM.getTargetData();
+    
+    if (TD.isBigEndian()) {
+      EmitLong(unsigned(Value >> 32)); O << "\n";
+      EmitLong(unsigned(Value));
+    } else {
+      EmitLong(unsigned(Value)); O << "\n";
+      EmitLong(unsigned(Value >> 32));
+    }
+  }
 }
 
 /// EmitString - Emit a string with quotes and a null terminator.
@@ -1249,7 +1276,7 @@ DIE *DwarfWriter::NewCompileUnit(const CompileUnitWrapper &CompileUnit) {
   Unit->AddLabel (DW_AT_high_pc,   DW_FORM_addr,   DWLabel("text_end", 0));
   Unit->AddLabel (DW_AT_low_pc,    DW_FORM_addr,   DWLabel("text_begin", 0));
   Unit->AddString(DW_AT_producer,  DW_FORM_string, CompileUnit.getProducer());
-  Unit->AddInt   (DW_AT_language,  DW_FORM_data1,  CompileUnit.getLanguage());
+  Unit->AddUInt  (DW_AT_language,  DW_FORM_data1,  CompileUnit.getLanguage());
   Unit->AddString(DW_AT_name,      DW_FORM_string, CompileUnit.getFileName());
   Unit->AddString(DW_AT_comp_dir,  DW_FORM_string, CompileUnit.getDirectory());
   Unit->Complete(*this);

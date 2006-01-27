@@ -97,6 +97,19 @@ const static std::string getStringValue(Value *V, unsigned Offset = 0) {
   }
   return "";
 }
+
+/// getGlobalValue - Return either a direct or cast Global value.
+///
+static GlobalVariable *getGlobalValue(Value *V) {
+  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
+    return GV;
+  } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
+    return CE->getOpcode() == Instruction::Cast ?  dyn_cast<GlobalVariable>(V)
+                                                :  NULL;
+  }
+  return NULL;
+}
+
   
 //===----------------------------------------------------------------------===//
 
@@ -112,51 +125,45 @@ CompileUnitWrapper::CompileUnitWrapper(GlobalVariable *G)
 : DebugInfoWrapper(G)
 {
   // FIXME - should probably ease up on the number of operands (version.)
-  assert(IC->getNumOperands() == 7 &&
+  assert(IC->getNumOperands() == N_op &&
          "Compile unit does not have correct number of operands");
 }
 
 /// getTag - Return the compile unit's tag number.  Currently should be 
 /// DW_TAG_variable.
 unsigned CompileUnitWrapper::getTag() const {
-  ConstantUInt *CI = dyn_cast<ConstantUInt>(IC->getOperand(0));
-  assert(CI && "Compile unit tag not an unsigned integer");
-  return CI->getValue();
+  return cast<ConstantUInt>(IC->getOperand(Tag_op))->getValue();
 }
 
 /// isCorrectDebugVersion - Return true if is the correct llvm debug version.
 /// Currently the value is 0 (zero.)  If the value is is not correct then
 /// ignore all debug information.
 bool CompileUnitWrapper::isCorrectDebugVersion() const {
-  ConstantUInt *CI = dyn_cast<ConstantUInt>(IC->getOperand(1));
-  assert(CI && "Compile unit debug version not an unsigned integer");
-  return CI->getValue() == 0;
+  return cast<ConstantUInt>(IC->getOperand(Version_op))->getValue();
 }
 
 /// getLanguage - Return the compile unit's language number (ex. DW_LANG_C89.)
 ///
 unsigned CompileUnitWrapper::getLanguage() const {
-  ConstantUInt *CI = dyn_cast<ConstantUInt>(IC->getOperand(2));
-  assert(CI && "Compile unit language number not an unsigned integer");
-  return CI->getValue();
+  return cast<ConstantUInt>(IC->getOperand(Language_op))->getValue();
 }
 
 /// getFileName - Return the compile unit's file name.
 ///
 const std::string CompileUnitWrapper::getFileName() const {
-  return getStringValue(IC->getOperand(3));
+  return getStringValue(IC->getOperand(FileName_op));
 }
 
 /// getDirectory - Return the compile unit's file directory.
 ///
 const std::string CompileUnitWrapper::getDirectory() const {
-  return getStringValue(IC->getOperand(4));
+  return getStringValue(IC->getOperand(Directory_op));
 }
   
 /// getProducer - Return the compile unit's generator name.
 ///
 const std::string CompileUnitWrapper::getProducer() const {
-  return getStringValue(IC->getOperand(5));
+  return getStringValue(IC->getOperand(Producer_op));
 }
 
 //===----------------------------------------------------------------------===//
@@ -165,61 +172,50 @@ GlobalWrapper::GlobalWrapper(GlobalVariable *G)
 : DebugInfoWrapper(G)
 {
   // FIXME - should probably ease up on the number of operands (version.)
-  assert(IC->getNumOperands() == 8 &&
+  assert(IC->getNumOperands() == N_op &&
          "Global does not have correct number of operands");
 }
 
 /// getTag - Return the global's tag number.  Currently should be 
 /// DW_TAG_variable or DW_TAG_subprogram.
 unsigned GlobalWrapper::getTag() const {
-  ConstantUInt *CI = dyn_cast<ConstantUInt>(IC->getOperand(0));
-  assert(CI && "Global tag not an unsigned integer");
-  return CI->getValue();
+  return cast<ConstantUInt>(IC->getOperand(Tag_op))->getValue();
 }
 
 /// getContext - Return the "lldb.compile_unit" context global.
 ///
 GlobalVariable *GlobalWrapper::getContext() const {
-  return cast<GlobalVariable>(IC->getOperand(1));
+  return getGlobalValue(IC->getOperand(Context_op));
 }
 
 /// getName - Return the name of the global.
 ///
 const std::string GlobalWrapper::getName() const {
-  return getStringValue(IC->getOperand(2));
+  return getStringValue(IC->getOperand(Name_op));
 }
 
 /// getType - Return the type of the global.
 ///
 const GlobalVariable *GlobalWrapper::getType() const {
-  return cast<GlobalVariable>(IC->getOperand(4));
+  return getGlobalValue(IC->getOperand(Type_op));
 }
 
 /// isStatic - Return true if the global is static.
 ///
 bool GlobalWrapper::isStatic() const {
-  ConstantBool *CB = dyn_cast<ConstantBool>(IC->getOperand(5));
-  assert(CB && "Global static flag is not boolean");
-  return CB->getValue();
+  return cast<ConstantBool>(IC->getOperand(Static_op))->getValue();
 }
 
 /// isDefinition - Return true if the global is a definition.
 ///
 bool GlobalWrapper::isDefinition() const {
-  ConstantBool *CB = dyn_cast<ConstantBool>(IC->getOperand(6));
-  assert(CB && "Global definition flag is not boolean");
-  return CB->getValue();
+  return dyn_cast<ConstantBool>(IC->getOperand(Definition_op))->getValue();
 }
 
 /// getGlobalVariable - Return the global variable (tag == DW_TAG_variable.)
 ///
 GlobalVariable *GlobalWrapper::getGlobalVariable() const {
-  ConstantExpr *CE = dyn_cast<ConstantExpr>(IC->getOperand(7));
-  assert(CE && CE->getOpcode() == Instruction::Cast &&
-         "Global location is not a cast of GlobalVariable");
-  GlobalVariable *GV = dyn_cast<GlobalVariable>(CE->getOperand(0));
-  assert(GV && "Global location is not a cast of GlobalVariable");
-  return GV;
+  return getGlobalValue(IC->getOperand(GlobalVariable_op));
 }
 
 //===----------------------------------------------------------------------===//

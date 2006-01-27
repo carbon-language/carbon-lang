@@ -73,6 +73,19 @@ public:
 /// CompileUnitWrapper - This class wraps a "lldb.compile_unit" global to
 /// provide easy access to its attributes.
 class CompileUnitWrapper : public DebugInfoWrapper {
+private:
+  // Operand indices.
+  enum {
+    Tag_op,
+    Version_op,
+    Language_op,
+    FileName_op,
+    Directory_op,
+    Producer_op,
+    Anchor_op, // ignored
+    N_op
+  };
+  
 public:
   CompileUnitWrapper(GlobalVariable *G);
   
@@ -110,6 +123,20 @@ public:
 /// GlobalWrapper - This class wraps a "lldb.global" global to provide easy
 /// access to its attributes.
 class GlobalWrapper : public DebugInfoWrapper {
+private:
+  // Operand indices.
+  enum {
+    Tag_op,
+    Context_op,
+    Name_op,
+    Anchor_op, // ignored
+    Type_op,
+    Static_op,
+    Definition_op,
+    GlobalVariable_op,
+    N_op
+  };
+  
 public:
   GlobalWrapper(GlobalVariable *G);
   

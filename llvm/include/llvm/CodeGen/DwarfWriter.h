@@ -176,10 +176,10 @@ namespace llvm {
   // 
   class DIEInteger : public DIEValue {
   private:
-    int Integer;
+    uint64_t Integer;
     
   public:
-    DIEInteger(int I) : DIEValue(isInteger), Integer(I) {}
+    DIEInteger(uint64_t I) : DIEValue(isInteger), Integer(I) {}
 
     // Implement isa/cast/dyncast.
     static bool classof(const DIEInteger *) { return true; }
@@ -334,10 +334,13 @@ namespace llvm {
     /// sibling.
     unsigned SiblingOffset() const { return Offset + Size; }
 
-    /// AddInt - Add a simple integer attribute data and value.
+    /// AddUInt - Add an unsigned integer attribute data and value.
     ///
-    void AddInt(unsigned Attribute, unsigned Form,
-                int Integer, bool IsSigned = false);
+    void AddUInt(unsigned Attribute, unsigned Form, uint64_t Integer);
+
+    /// AddSInt - Add an signed integer attribute data and value.
+    ///
+    void AddSInt(unsigned Attribute, unsigned Form, int64_t Integer);
         
     /// AddString - Add a std::string attribute data and value.
     ///
@@ -585,6 +588,10 @@ public:
     /// EmitLong - Emit a long directive and value.
     ///
     void EmitLong(int Value) const;
+    
+    /// EmitLongLong - Emit a long long directive and value.
+    ///
+    void EmitLongLong(uint64_t Value) const;
     
     /// EmitString - Emit a string with quotes and a null terminator.
     /// Special characters are emitted properly. (Eg. '\t')
