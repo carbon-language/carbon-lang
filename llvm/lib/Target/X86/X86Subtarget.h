@@ -23,6 +23,23 @@ class Module;
 
 class X86Subtarget : public TargetSubtarget {
 protected:
+  enum X86SSEEnum {
+    NoMMXSSE, MMX, SSE, SSE2, SSE3
+  };
+
+  enum X863DNowEnum {
+    NoThreeDNow, ThreeDNow, ThreeDNowA
+  };
+
+  /// X86SSELevel - MMX, SSE, SSE2, SSE3, or none supported.
+  X86SSEEnum X86SSELevel;
+
+  /// X863DNowLevel - 3DNow or 3DNow Athlon, or none supported.
+  X863DNowEnum X863DNowLevel;
+
+  /// Is64Bit - True if the processor supports Em64T.
+  bool Is64Bit;
+
   /// stackAlignment - The minimum alignment known to hold of the stack frame on
   /// entry to the function and which must be maintained by every function.
   unsigned stackAlignment;
@@ -30,14 +47,6 @@ protected:
   /// Used by instruction selector
   bool indirectExternAndWeakGlobals;
 
-  /// Arch. features used by isel.
-  bool Is64Bit;
-  bool HasMMX;
-  bool HasSSE;
-  bool HasSSE2;
-  bool HasSSE3;
-  bool Has3DNow;
-  bool Has3DNowA;
 public:
   enum {
     isELF, isCygwin, isDarwin, isWindows
@@ -66,12 +75,12 @@ public:
 
   bool is64Bit() const { return Is64Bit; }
 
-  bool hasMMX() const { return HasMMX; }
-  bool hasSSE() const { return HasSSE; }
-  bool hasSSE2() const { return HasSSE2; }
-  bool hasSSE3() const { return HasSSE3; }
-  bool has3DNow() const { return Has3DNow; }
-  bool has3DNowA() const { return Has3DNowA; }
+  bool hasMMX() const { return X86SSELevel >= MMX; }
+  bool hasSSE() const { return X86SSELevel >= SSE; }
+  bool hasSSE2() const { return X86SSELevel >= SSE2; }
+  bool hasSSE3() const { return X86SSELevel >= SSE3; }
+  bool has3DNow() const { return X863DNowLevel >= ThreeDNow; }
+  bool has3DNowA() const { return X863DNowLevel >= ThreeDNowA; }
 };
 } // End llvm namespace
 

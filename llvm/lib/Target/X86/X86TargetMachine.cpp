@@ -26,8 +26,6 @@
 #include <iostream>
 using namespace llvm;
 
-X86VectorEnum llvm::X86Vector = AutoDetect;
-bool llvm::X86ScalarSSE = false;
 bool llvm::X86DAGIsel = false;
 
 /// X86TargetMachineModule - Note that this is used on hosts that cannot link
@@ -41,28 +39,11 @@ namespace {
   cl::opt<bool> DisableOutput("disable-x86-llc-output", cl::Hidden,
                               cl::desc("Disable the X86 asm printer, for use "
                                        "when profiling the code generator."));
-  cl::opt<bool, true> EnableSSEFP("enable-sse-scalar-fp",
-                cl::desc("Perform FP math in SSE regs instead of the FP stack"),
-                cl::location(X86ScalarSSE),
-                cl::init(false));
-
   cl::opt<bool, true> EnableX86DAGDAG("enable-x86-dag-isel", cl::Hidden,
                       cl::desc("Enable DAG-to-DAG isel for X86"),
                       cl::location(X86DAGIsel),
                       cl::init(false));
   
-  // FIXME: This should eventually be handled with target triples and
-  // subtarget support!
-  cl::opt<X86VectorEnum, true>
-  SSEArg(
-    cl::desc("Enable SSE support in the X86 target:"),
-    cl::values(
-       clEnumValN(SSE,  "sse", "  Enable SSE support"),
-       clEnumValN(SSE2, "sse2", "  Enable SSE and SSE2 support"),
-       clEnumValN(SSE3, "sse3", "  Enable SSE, SSE2, and SSE3 support"),
-       clEnumValEnd),
-    cl::location(X86Vector), cl::init(AutoDetect));
-
   // Register the target.
   RegisterTarget<X86TargetMachine> X("x86", "  IA-32 (Pentium and above)");
 }
@@ -101,23 +82,7 @@ X86TargetMachine::X86TargetMachine(const Module &M,
     Subtarget(M, FS),
     FrameInfo(TargetFrameInfo::StackGrowsDown,
               Subtarget.getStackAlignment(), -4),
-    JITInfo(*this) {
-  if (X86Vector == AutoDetect) {
-      X86Vector = NoSSE;
-    if (Subtarget.hasSSE())
-      X86Vector = SSE;
-    if (Subtarget.hasSSE2())
-      X86Vector = SSE2;
-    if (Subtarget.hasSSE3())
-      X86Vector = SSE3;
-  }
-
-  // Scalar SSE FP requires at least SSE2
-  X86ScalarSSE &= X86Vector >= SSE2;
-
-  // Ignore -enable-sse-scalar-fp if -enable-x86-dag-isel.
-  X86ScalarSSE |= (X86DAGIsel && X86Vector >= SSE2);
-}
+    JITInfo(*this) {}
 
 
 // addPassesToEmitFile - We currently use all of the same passes as the JIT

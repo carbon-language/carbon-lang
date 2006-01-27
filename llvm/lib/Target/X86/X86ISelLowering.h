@@ -15,6 +15,7 @@
 #ifndef X86ISELLOWERING_H
 #define X86ISELLOWERING_H
 
+#include "X86Subtarget.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 
@@ -227,6 +228,13 @@ namespace llvm {
     std::pair<SDOperand, SDOperand>
     LowerFastCCCallTo(SDOperand Chain, const Type *RetTy, bool isTailCall,
                       SDOperand Callee, ArgListTy &Args, SelectionDAG &DAG);
+
+    /// Subtarget - Keep a pointer to the X86Subtarget around so that we can
+    /// make the right decision when generating code for different targets.
+    const X86Subtarget *Subtarget;
+
+    /// X86ScalarSSE - Select between SSE2 or x87 floating point ops.
+    bool X86ScalarSSE;
   };
 }
 

@@ -33,6 +33,9 @@ static cl::opt<bool> EnableFastCC("enable-x86-fastcc", cl::Hidden,
 
 X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   : TargetLowering(TM) {
+  Subtarget = &TM.getSubtarget<X86Subtarget>();
+  X86ScalarSSE = Subtarget->hasSSE2();
+
   // Set up the TargetLowering object.
 
   // X86 is weird, it always uses i8 for shift amounts and setcc results.
@@ -1657,8 +1660,8 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::SELECT: {
     MVT::ValueType VT = Op.getValueType();
     bool isFP      = MVT::isFloatingPoint(VT);
-    bool isFPStack = isFP && (X86Vector < SSE2);
-    bool isFPSSE   = isFP && (X86Vector >= SSE2);
+    bool isFPStack = isFP && !X86ScalarSSE;
+    bool isFPSSE   = isFP && X86ScalarSSE;
     bool addTest   = false;
     SDOperand Op0 = Op.getOperand(0);
     SDOperand Cond, CC;

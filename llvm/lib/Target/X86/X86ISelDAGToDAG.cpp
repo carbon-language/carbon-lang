@@ -161,7 +161,7 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   // If we are emitting FP stack code, scan the basic block to determine if this
   // block defines any FP values.  If so, put an FP_REG_KILL instruction before
   // the terminator of the block.
-  if (X86Vector < SSE2) {
+  if (!Subtarget->hasSSE2()) {
     // Note that FP stack instructions *are* used in SSE code when returning
     // values, but these are not live out of the basic block, so we don't need
     // an FP_REG_KILL in this case either.

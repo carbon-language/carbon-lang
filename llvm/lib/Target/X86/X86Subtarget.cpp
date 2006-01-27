@@ -16,57 +16,78 @@
 #include "X86GenSubtarget.inc"
 using namespace llvm;
 
-#if defined(__APPLE__)
-#include <mach/mach.h>
-#include <mach/mach_host.h>
-#include <mach/host_info.h>
-#include <mach/machine.h>
-
-/// GetCurrentX86CPU - Returns the current CPUs features.
-static const char *GetCurrentX86CPU() {
-  host_basic_info_data_t hostInfo;
-  mach_msg_type_number_t infoCount;
-
-  infoCount = HOST_BASIC_INFO_COUNT;
-  host_info(mach_host_self(), HOST_BASIC_INFO, (host_info_t)&hostInfo, 
-            &infoCount);
-            
-  if (hostInfo.cpu_type != CPU_TYPE_I386) return "generic";
-
-  switch(hostInfo.cpu_subtype) {
-  case CPU_SUBTYPE_386:            return "i386";
-  case CPU_SUBTYPE_486:
-  case CPU_SUBTYPE_486SX:          return "i486";
-  case CPU_SUBTYPE_PENT:           return "pentium";
-  case CPU_SUBTYPE_PENTPRO:        return "pentiumpro";
-  case CPU_SUBTYPE_PENTII_M3:      return "pentium2";
-  case CPU_SUBTYPE_PENTII_M5:      return "pentium2";
-  case CPU_SUBTYPE_CELERON:
-  case CPU_SUBTYPE_CELERON_MOBILE: return "celeron";
-  case CPU_SUBTYPE_PENTIUM_3:      return "pentium3";
-  case CPU_SUBTYPE_PENTIUM_3_M:    return "pentium3m";
-  case CPU_SUBTYPE_PENTIUM_3_XEON: return "pentium3";   // FIXME: not sure.
-  case CPU_SUBTYPE_PENTIUM_M:      return "pentium-m";
-  case CPU_SUBTYPE_PENTIUM_4:      return "pentium4";
-  case CPU_SUBTYPE_PENTIUM_4_M:    return "pentium4m";
-  // FIXME: prescott, yonah? Check CPU_THREADTYPE_INTEL_HTT?
-  case CPU_SUBTYPE_XEON:
-  case CPU_SUBTYPE_XEON_MP:        return "nocona";
-  default: ;
-  }
-  
-  return "generic";
-}
+static void GetCpuIDAndInfo(unsigned value, unsigned *EAX, unsigned *EBX,
+                            unsigned *ECX, unsigned *EDX) {
+#if defined(i386) || defined(__i386__) || defined(__x86__) || defined(_M_IX86)
+#if defined(__GNUC__)
+  asm ("pushl\t%%ebx\n\t"
+       "cpuid\n\t"
+       "popl\t%%ebx"
+       : "=a" (*EAX),
+#if !defined(__DYNAMIC__)  // This works around a gcc -fPIC bug
+         "=b" (*EBX),
 #endif
+         "=c" (*ECX),
+         "=d" (*EDX)
+       :  "a" (value));
+#endif
+#endif
+}
+
+static const char *GetCurrentX86CPU() {
+  unsigned EAX = 0, DUMMY = 0, ECX = 0, EDX = 0;
+  GetCpuIDAndInfo(0x1, &EAX, &DUMMY, &ECX, &EDX);
+  unsigned Family  = (EAX & (0xffffffff >> (32 - 4)) << 8) >> 8; // Bits 8 - 11
+  unsigned Model   = (EAX & (0xffffffff >> (32 - 4)) << 4) >> 4; // Bits 4 - 7
+  GetCpuIDAndInfo(0x80000001, &EAX, &DUMMY, &ECX, &EDX);
+  bool Em64T = EDX & (1 << 29);
+
+  switch (Family) {
+    case 3:
+      return "i386";
+    case 4:
+      return "i486";
+    case 5:
+      switch (Model) {
+      case 4:  return "pentium-mmx";
+      default: return "pentium";
+      }
+      break;
+    case 6:
+      switch (Model) {
+      case 1:  return "pentiumpro";
+      case 3:
+      case 5:
+      case 6:  return "pentium2";
+      case 7:
+      case 8:
+      case 10:
+      case 11: return "pentium3";
+      case 9:
+      case 13: return "pentium-m";
+      case 14: return "yonah";
+      default: return "i686";
+      }
+    case 15: {
+      switch (Model) {
+      case 3:  
+      case 4:
+        return (Em64T) ? "nocona" : "prescott";
+      default:
+        return (Em64T) ? "x86-64" : "pentium4";
+      }
+    }
+      
+  default:
+    return "generic";
+  }
+}
 
 X86Subtarget::X86Subtarget(const Module &M, const std::string &FS)
   : stackAlignment(8), indirectExternAndWeakGlobals(false) {
       
   // Determine default and user specified characteristics
-  std::string CPU = "generic";
-#if defined(__APPLE__)
-  CPU = GetCurrentX86CPU();
-#endif
+  std::string CPU = GetCurrentX86CPU();
 
   // Parse features string.
   ParseSubtargetFeatures(FS, CPU);

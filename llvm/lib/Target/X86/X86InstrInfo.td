@@ -189,10 +189,10 @@ def MRM6m  : Format<30>; def MRM7m  : Format<31>;
 
 //===----------------------------------------------------------------------===//
 // X86 Instruction Predicate Definitions.
-def HasSSE1 : Predicate<"X86Vector >= SSE">;
-def HasSSE2 : Predicate<"X86Vector >= SSE2">;
-def HasSSE3 : Predicate<"X86Vector >= SSE3">;
-def FPStack : Predicate<"X86Vector < SSE2">;
+def HasSSE1 : Predicate<"Subtarget->hasSSE()">;
+def HasSSE2 : Predicate<"Subtarget->hasSSE2()">;
+def HasSSE3 : Predicate<"Subtarget->hasSSE3()">;
+def FPStack : Predicate<"!Subtarget->hasSSE2()">;
 
 //===----------------------------------------------------------------------===//
 // X86 specific pattern fragments.

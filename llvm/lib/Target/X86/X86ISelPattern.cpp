@@ -101,9 +101,13 @@ namespace {
     /// Subtarget - Keep a pointer to the X86Subtarget around so that we can
     /// make the right decision when generating code for different targets.
     const X86Subtarget *Subtarget;
+
+    /// X86ScalarSSE - Select between SSE2 or x87 floating point ops.
+    bool X86ScalarSSE;
   public:
     ISel(TargetMachine &TM) : SelectionDAGISel(X86Lowering), X86Lowering(TM) {
       Subtarget = &TM.getSubtarget<X86Subtarget>();
+      X86ScalarSSE = Subtarget->hasSSE2();
     }
 
     virtual const char *getPassName() const {
