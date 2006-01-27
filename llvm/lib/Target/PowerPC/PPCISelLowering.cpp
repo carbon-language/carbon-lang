@@ -666,7 +666,7 @@ PPCTargetLowering::LowerCallTo(SDOperand Chain,
                                unsigned CallingConv, bool isTailCall,
                                SDOperand Callee, ArgListTy &Args,
                                SelectionDAG &DAG) {
-  // args_to_use will accumulate outgoing args for the ISD::CALL case in
+  // args_to_use will accumulate outgoing args for the PPCISD::CALL case in
   // SelectExpr to use to put the arguments in the appropriate registers.
   std::vector<SDOperand> args_to_use;
   
@@ -844,8 +844,11 @@ PPCTargetLowering::LowerCallTo(SDOperand Chain,
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
     Callee = DAG.getTargetGlobalAddress(G->getGlobal(), MVT::i32);
   
-  SDOperand TheCall = SDOperand(DAG.getCall(RetVals,
-                                            Chain, Callee, args_to_use), 0);
+  std::vector<SDOperand> Ops;
+  Ops.push_back(Chain);
+  Ops.push_back(Callee);
+  Ops.insert(Ops.end(), args_to_use.begin(), args_to_use.end());
+  SDOperand TheCall = DAG.getNode(PPCISD::CALL, RetVals, Ops);
   Chain = TheCall.getValue(RetTyVT != MVT::isVoid);
   Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
                       DAG.getConstant(NumBytes, getPointerTy()));

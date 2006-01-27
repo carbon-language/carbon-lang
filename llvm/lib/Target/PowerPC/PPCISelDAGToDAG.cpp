@@ -821,8 +821,7 @@ SDOperand PPCDAGToDAGISel::Select(SDOperand Op) {
   case ISD::ADD_PARTS:          return SelectADD_PARTS(Op);
   case ISD::SUB_PARTS:          return SelectSUB_PARTS(Op);
   case ISD::SETCC:              return SelectSETCC(Op);
-  case ISD::CALL:               return SelectCALL(Op);
-  case ISD::TAILCALL:           return SelectCALL(Op);
+  case PPCISD::CALL:            return SelectCALL(Op);
   case PPCISD::GlobalBaseReg:   return getGlobalBaseReg();
     
   case ISD::FrameIndex: {

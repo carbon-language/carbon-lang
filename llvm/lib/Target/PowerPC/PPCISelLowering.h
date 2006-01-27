@@ -59,9 +59,12 @@ namespace llvm {
       /// code.
       SRL, SRA, SHL,
 
+      /// CALL - A function call.
+      CALL,
+      
       /// Return with a flag operand, matched by 'blr'
       RET_FLAG,
-};
+    };
   }  
   
   class PPCTargetLowering : public TargetLowering {
