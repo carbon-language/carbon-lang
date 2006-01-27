@@ -16,6 +16,11 @@
 using namespace llvm;
 
 SparcV8Subtarget::SparcV8Subtarget(const Module &M, const std::string &FS) {
+  // Set the default features.
+  IsV9 = false;
+  V8DeprecatedInsts = false;
+  IsVIS = false;
+  
   // Determine default and user specified characteristics
   std::string CPU = "generic";
 
