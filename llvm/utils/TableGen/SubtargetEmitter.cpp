@@ -473,10 +473,11 @@ void SubtargetEmitter::ParseFeaturesFunction(std::ostream &OS) {
     Record *R = Features[i];
     std::string Instance = R->getName();
     std::string Name = R->getValueAsString("Name");
-    std::string Type = R->getValueAsString("Type");
+    std::string Value = R->getValueAsString("Value");
     std::string Attribute = R->getValueAsString("Attribute");
-    
-    OS << "  " << Attribute << " = (Bits & " << Instance << ") != 0;\n";
+
+    OS << "  if ((Bits & " << Instance << ") != 0) "
+       << Attribute << " = " << Value << ";\n";
   }
   
   if (HasItineraries) {

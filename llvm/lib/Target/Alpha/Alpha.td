@@ -20,9 +20,9 @@ include "../Target.td"
 // Subtarget Features
 //===----------------------------------------------------------------------===//
 
-def FeatureCIX : SubtargetFeature<"CIX", "bool", "HasCT",
+def FeatureCIX : SubtargetFeature<"CIX", "HasCT", "true",
                                   "Enable CIX extentions">;
-def FeatureFIX : SubtargetFeature<"FIX", "bool", "HasF2I",
+def FeatureFIX : SubtargetFeature<"FIX", "HasF2I", "true",
                                   "Enable FIX extentions">;
 
 //===----------------------------------------------------------------------===//

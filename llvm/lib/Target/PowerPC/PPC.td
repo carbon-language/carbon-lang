@@ -19,15 +19,15 @@ include "../Target.td"
 // PowerPC Subtarget features.
 //
  
-def Feature64Bit     : SubtargetFeature<"64bit", "bool", "Is64Bit",
+def Feature64Bit     : SubtargetFeature<"64bit","Is64Bit", "true",
                                         "Enable 64-bit instructions">;
-def Feature64BitRegs : SubtargetFeature<"64bitregs", "bool", "Has64BitRegs",
+def Feature64BitRegs : SubtargetFeature<"64bitregs","Has64BitRegs", "true",
                                         "Enable 64-bit registers [beta]">;
-def FeatureAltivec   : SubtargetFeature<"altivec", "bool", "HasAltivec",
+def FeatureAltivec   : SubtargetFeature<"altivec","HasAltivec", "true",
                                         "Enable Altivec instructions">;
-def FeatureGPUL      : SubtargetFeature<"gpul", "bool", "IsGigaProcessor",
+def FeatureGPUL      : SubtargetFeature<"gpul","IsGigaProcessor", "true",
                                         "Enable GPUL instructions">;
-def FeatureFSqrt     : SubtargetFeature<"fsqrt", "bool", "HasFSQRT",
+def FeatureFSqrt     : SubtargetFeature<"fsqrt","HasFSQRT", "true",
                                         "Enable the fsqrt instruction">; 
 
 //===----------------------------------------------------------------------===//
