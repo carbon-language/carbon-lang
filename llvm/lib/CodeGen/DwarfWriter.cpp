@@ -10,7 +10,7 @@
 // This file contains support for writing dwarf debug info into asm files.
 //
 //===----------------------------------------------------------------------===//
-
+#include "llvm/Support/DataTypes.h"
 #include "llvm/CodeGen/DwarfWriter.h"
 
 #include "llvm/ADT/StringExtras.h"
