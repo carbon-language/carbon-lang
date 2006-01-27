@@ -161,8 +161,7 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
   
   switch (N->getOpcode()) {
   default: break;
-  case ISD::TAILCALL:
-  case ISD::CALL: return SelectCALL(Op);
+  case AlphaISD::CALL: return SelectCALL(Op);
 
   case ISD::FrameIndex: {
     int FI = cast<FrameIndexSDNode>(N)->getIndex();

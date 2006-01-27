@@ -37,6 +37,9 @@ namespace llvm {
 
       /// GlobalBaseReg - used to restore the GOT ptr
       GlobalBaseReg,
+      
+      /// CALL - Normal call.
+      CALL,
 
       /// DIVCALL - used for special library calls for div and rem
       DivCall,

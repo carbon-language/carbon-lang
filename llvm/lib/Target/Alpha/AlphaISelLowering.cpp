@@ -164,6 +164,7 @@ const char *AlphaTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case AlphaISD::GPRelLo: return "Alpha::GPRelLo";
   case AlphaISD::RelLit: return "Alpha::RelLit";
   case AlphaISD::GlobalBaseReg: return "Alpha::GlobalBaseReg";
+  case AlphaISD::CALL:   return "Alpha::CALL";
   case AlphaISD::DivCall: return "Alpha::DivCall";
   case AlphaISD::LDQ_: return "Alpha::LDQ_";
   case AlphaISD::LDT_: return "Alpha::LDT_";
@@ -357,8 +358,11 @@ AlphaTargetLowering::LowerCallTo(SDOperand Chain,
     RetVals.push_back(ActualRetTyVT);
   RetVals.push_back(MVT::Other);
 
-  SDOperand TheCall = SDOperand(DAG.getCall(RetVals,
-                                            Chain, Callee, args_to_use), 0);
+  std::vector<SDOperand> Ops;
+  Ops.push_back(Chain);
+  Ops.push_back(Callee);
+  Ops.insert(Ops.end(), args_to_use.begin(), args_to_use.end());
+  SDOperand TheCall = DAG.getNode(AlphaISD::CALL, RetVals, Ops);
   Chain = TheCall.getValue(RetTyVT != MVT::isVoid);
   Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
                       DAG.getConstant(NumBytes, getPointerTy()));
