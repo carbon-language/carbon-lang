@@ -62,7 +62,7 @@ getGlobalVariablesUsing(Module &M, const std::string &RootName) {
 /// getStringValue - Turn an LLVM constant pointer that eventually points to a
 /// global into a string value.  Return an empty string if we can't do it.
 ///
-const static std::string getStringValue(Value *V, unsigned Offset = 0) {
+static const std::string getStringValue(Value *V, unsigned Offset = 0) {
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
     if (GV->hasInitializer() && isa<ConstantArray>(GV->getInitializer())) {
       ConstantArray *Init = cast<ConstantArray>(GV->getInitializer());
