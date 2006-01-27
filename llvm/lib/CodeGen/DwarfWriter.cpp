@@ -671,10 +671,10 @@ void DIEAbbrev::Emit(const DwarfWriter &DW) const {
 void DIEInteger::EmitValue(const DwarfWriter &DW, unsigned Form) const {
   switch (Form) {
   case DW_FORM_flag:  // Fall thru
-  case DW_FORM_data1: DW.EmitByte(Integer);         break;
-  case DW_FORM_data2: DW.EmitShort(Integer);        break;
-  case DW_FORM_data4: DW.EmitLong(Integer);         break;
-  case DW_FORM_data8: DW.EmitLongLong(Integer);     break;
+  case DW_FORM_data1: DW.EmitInt8(Integer);         break;
+  case DW_FORM_data2: DW.EmitInt16(Integer);        break;
+  case DW_FORM_data4: DW.EmitInt32(Integer);        break;
+  case DW_FORM_data8: DW.EmitInt64(Integer);        break;
   case DW_FORM_udata: DW.EmitULEB128Bytes(Integer); break;
   case DW_FORM_sdata: DW.EmitSLEB128Bytes(Integer); break;
   default: assert(0 && "DIE Value form not supported yet"); break;
@@ -730,10 +730,10 @@ unsigned DIEDwarfLabel::SizeOf(const DwarfWriter &DW, unsigned Form) const {
 /// EmitValue - Emit label value.
 ///
 void DIEObjectLabel::EmitValue(const DwarfWriter &DW, unsigned Form) const {
-  DW.EmitByte(sizeof(int8_t) + DW.getAddressSize());
+  DW.EmitInt8(sizeof(int8_t) + DW.getAddressSize());
   DW.EOL("DW_FORM_block1 length");
   
-  DW.EmitByte(DW_OP_addr);
+  DW.EmitInt8(DW_OP_addr);
   DW.EOL("DW_OP_addr");
   
   DW.EmitReference(Label);
@@ -763,7 +763,7 @@ unsigned DIEDelta::SizeOf(const DwarfWriter &DW, unsigned Form) const {
 /// EmitValue - Emit extry offset.
 ///
 void DIEntry::EmitValue(const DwarfWriter &DW, unsigned Form) const {
-  DW.EmitLong(Entry->getOffset());
+  DW.EmitInt32(Entry->getOffset());
 }
 
 /// SizeOf - Determine size of label value in bytes.
@@ -1084,41 +1084,41 @@ unsigned DwarfWriter::SizeSLEB128(int Value) {
   return Size;
 }
 
-/// EmitByte - Emit a byte directive and value.
+/// EmitInt8 - Emit a byte directive and value.
 ///
-void DwarfWriter::EmitByte(int Value) const {
+void DwarfWriter::EmitInt8(int Value) const {
   O << Asm->Data8bitsDirective;
   PrintHex(Value);
 }
 
-/// EmitShort - Emit a short directive and value.
+/// EmitInt16 - Emit a short directive and value.
 ///
-void DwarfWriter::EmitShort(int Value) const {
+void DwarfWriter::EmitInt16(int Value) const {
   O << Asm->Data16bitsDirective;
   PrintHex(Value);
 }
 
-/// EmitLong - Emit a long directive and value.
+/// EmitInt32 - Emit a long directive and value.
 ///
-void DwarfWriter::EmitLong(int Value) const {
+void DwarfWriter::EmitInt32(int Value) const {
   O << Asm->Data32bitsDirective;
   PrintHex(Value);
 }
 
-/// EmitLongLong - Emit a long long directive and value.
+/// EmitInt64 - Emit a long long directive and value.
 ///
-void DwarfWriter::EmitLongLong(uint64_t Value) const {
+void DwarfWriter::EmitInt64(uint64_t Value) const {
   if (Asm->Data64bitsDirective) {
     O << Asm->Data64bitsDirective << "0x" << std::hex << Value << std::dec;
   } else {
     const TargetData &TD = Asm->TM.getTargetData();
     
     if (TD.isBigEndian()) {
-      EmitLong(unsigned(Value >> 32)); O << "\n";
-      EmitLong(unsigned(Value));
+      EmitInt32(unsigned(Value >> 32)); O << "\n";
+      EmitInt32(unsigned(Value));
     } else {
-      EmitLong(unsigned(Value)); O << "\n";
-      EmitLong(unsigned(Value >> 32));
+      EmitInt32(unsigned(Value)); O << "\n";
+      EmitInt32(unsigned(Value >> 32));
     }
   }
 }
@@ -1329,7 +1329,7 @@ void DwarfWriter::EmitDIE(DIE *Die) const {
     
     switch (Attr) {
     case DW_AT_sibling: {
-      EmitLong(Die->SiblingOffset());
+      EmitInt32(Die->SiblingOffset());
       break;
     }
     default: {
@@ -1352,7 +1352,7 @@ void DwarfWriter::EmitDIE(DIE *Die) const {
       EmitDIE(Children[j]);
     }
     
-    EmitByte(0); EOL("End Of Children Mark");
+    EmitInt8(0); EOL("End Of Children Mark");
   }
 }
 
@@ -1428,14 +1428,14 @@ void DwarfWriter::EmitDebugInfo() const {
 
     // Emit size of content not including length itself
     unsigned ContentSize = CompileUnits[N - 1]->SiblingOffset();
-    EmitLong(ContentSize - sizeof(int32_t));
+    EmitInt32(ContentSize - sizeof(int32_t));
     EOL("Length of Compilation Unit Info");
     
-    EmitShort(DWARF_VERSION); EOL("DWARF version number");
+    EmitInt16(DWARF_VERSION); EOL("DWARF version number");
 
     EmitReference("abbrev_begin", 0); EOL("Offset Into Abbrev. Section");
 
-    EmitByte(AddressSize); EOL("Address Size (in bytes)");
+    EmitInt8(AddressSize); EOL("Address Size (in bytes)");
     
     // Process each compile unit.
     for (unsigned i = 0; i < N; ++i) {
@@ -1490,32 +1490,32 @@ void DwarfWriter::EmitDebugLines() const {
   EOL("Length of Source Line Info");
   EmitLabel("line_begin", 0);
   
-  EmitShort(DWARF_VERSION); EOL("DWARF version number");
+  EmitInt16(DWARF_VERSION); EOL("DWARF version number");
   
   EmitDifference("line_prolog_end", 0, "line_prolog_begin", 0);
   EOL("Prolog Length");
   EmitLabel("line_prolog_begin", 0);
   
-  EmitByte(1); EOL("Minimum Instruction Length");
+  EmitInt8(1); EOL("Minimum Instruction Length");
 
-  EmitByte(1); EOL("Default is_stmt_start flag");
+  EmitInt8(1); EOL("Default is_stmt_start flag");
 
-  EmitByte(MinLineDelta);  EOL("Line Base Value (Special Opcodes)");
+  EmitInt8(MinLineDelta);  EOL("Line Base Value (Special Opcodes)");
   
-  EmitByte(MaxLineDelta); EOL("Line Range Value (Special Opcodes)");
+  EmitInt8(MaxLineDelta); EOL("Line Range Value (Special Opcodes)");
 
-  EmitByte(-MinLineDelta); EOL("Special Opcode Base");
+  EmitInt8(-MinLineDelta); EOL("Special Opcode Base");
   
   // Line number standard opcode encodings argument count
-  EmitByte(0); EOL("DW_LNS_copy arg count");
-  EmitByte(1); EOL("DW_LNS_advance_pc arg count");
-  EmitByte(1); EOL("DW_LNS_advance_line arg count");
-  EmitByte(1); EOL("DW_LNS_set_file arg count");
-  EmitByte(1); EOL("DW_LNS_set_column arg count");
-  EmitByte(0); EOL("DW_LNS_negate_stmt arg count");
-  EmitByte(0); EOL("DW_LNS_set_basic_block arg count");
-  EmitByte(0); EOL("DW_LNS_const_add_pc arg count");
-  EmitByte(1); EOL("DW_LNS_fixed_advance_pc arg count");
+  EmitInt8(0); EOL("DW_LNS_copy arg count");
+  EmitInt8(1); EOL("DW_LNS_advance_pc arg count");
+  EmitInt8(1); EOL("DW_LNS_advance_line arg count");
+  EmitInt8(1); EOL("DW_LNS_set_file arg count");
+  EmitInt8(1); EOL("DW_LNS_set_column arg count");
+  EmitInt8(0); EOL("DW_LNS_negate_stmt arg count");
+  EmitInt8(0); EOL("DW_LNS_set_basic_block arg count");
+  EmitInt8(0); EOL("DW_LNS_const_add_pc arg count");
+  EmitInt8(1); EOL("DW_LNS_fixed_advance_pc arg count");
 
   const UniqueVector<std::string> &Directories = DebugInfo->getDirectories();
   const UniqueVector<SourceFileInfo> &SourceFiles = DebugInfo->getSourceFiles();
@@ -1525,7 +1525,7 @@ void DwarfWriter::EmitDebugLines() const {
                 DirectoryID <= NDID; ++DirectoryID) {
     EmitString(Directories[DirectoryID]); EOL("Directory");
   }
-  EmitByte(0); EOL("End of directories");
+  EmitInt8(0); EOL("End of directories");
   
   // Emit files.
   for (unsigned SourceID = 1, NSID = SourceFiles.size();
@@ -1536,7 +1536,7 @@ void DwarfWriter::EmitDebugLines() const {
     EmitULEB128Bytes(0);  EOL("Mod date");
     EmitULEB128Bytes(0);  EOL("File size");
   }
-  EmitByte(0); EOL("End of files");
+  EmitInt8(0); EOL("End of files");
   
   EmitLabel("line_prolog_end", 0);
   
@@ -1552,15 +1552,15 @@ void DwarfWriter::EmitDebugLines() const {
     SourceLineInfo *LineInfo = LineInfos[i];
 
     // Define the line address.
-    EmitByte(0); EOL("Extended Op");
-    EmitByte(4 + 1); EOL("Op size");
-    EmitByte(DW_LNE_set_address); EOL("DW_LNE_set_address");
+    EmitInt8(0); EOL("Extended Op");
+    EmitInt8(4 + 1); EOL("Op size");
+    EmitInt8(DW_LNE_set_address); EOL("DW_LNE_set_address");
     EmitReference("loc", i + 1); EOL("Location label");
     
     // If change of source, then switch to the new source.
     if (Source != LineInfo->getSourceID()) {
       Source = LineInfo->getSourceID();
-      EmitByte(DW_LNS_set_file); EOL("DW_LNS_set_file");
+      EmitInt8(DW_LNS_set_file); EOL("DW_LNS_set_file");
       EmitULEB128Bytes(0); EOL("New Source");
     }
     
@@ -1576,23 +1576,23 @@ void DwarfWriter::EmitDebugLines() const {
       // If delta is small enough and in range...
       if (Delta >= 0 && Delta < (MaxLineDelta - 1)) {
         // ... then use fast opcode.
-        EmitByte(Delta - MinLineDelta); EOL("Line Delta");
+        EmitInt8(Delta - MinLineDelta); EOL("Line Delta");
       } else {
         // ... otherwise use long hand.
-        EmitByte(DW_LNS_advance_line); EOL("DW_LNS_advance_line");
+        EmitInt8(DW_LNS_advance_line); EOL("DW_LNS_advance_line");
         EmitSLEB128Bytes(Offset); EOL("Line Offset");
-        EmitByte(DW_LNS_copy); EOL("DW_LNS_copy");
+        EmitInt8(DW_LNS_copy); EOL("DW_LNS_copy");
       }
     } else {
       // Copy the previous row (different address or source)
-      EmitByte(DW_LNS_copy); EOL("DW_LNS_copy");
+      EmitInt8(DW_LNS_copy); EOL("DW_LNS_copy");
     }
   }
 
   // Mark end of matrix.
-  EmitByte(0); EOL("DW_LNE_end_sequence");
+  EmitInt8(0); EOL("DW_LNE_end_sequence");
   EmitULEB128Bytes(1);  O << "\n";
-  EmitByte(1); O << "\n";
+  EmitInt8(1); O << "\n";
   
   EmitLabel("line_end", 0);
 }
@@ -1616,7 +1616,7 @@ void DwarfWriter::EmitDebugPubNames() {
     
     EmitLabel("pubnames_begin", 0);
     
-    EmitShort(DWARF_VERSION); EOL("DWARF Version");
+    EmitInt16(DWARF_VERSION); EOL("DWARF Version");
     
     EmitReference("info_begin", 0); EOL("Offset of Compilation Unit Info");
 
@@ -1629,12 +1629,12 @@ void DwarfWriter::EmitDebugPubNames() {
       const std::string &Name = GI->first;
       DIE * Entity = GI->second;
       
-      EmitLong(Entity->getOffset()); EOL("DIE offset");
+      EmitInt32(Entity->getOffset()); EOL("DIE offset");
       EmitString(Name); EOL("External Name");
       
     }
   
-    EmitLong(0); EOL("End Mark");
+    EmitInt32(0); EOL("End Mark");
     EmitLabel("pubnames_end", 0);
   }
 }
@@ -1685,25 +1685,25 @@ void DwarfWriter::EmitDebugARanges() {
   // FIXME - Mock up
 
   // Don't include size of length
-  EmitLong(0x1c); EOL("Length of Address Ranges Info");
+  EmitInt32(0x1c); EOL("Length of Address Ranges Info");
   
-  EmitShort(DWARF_VERSION); EOL("Dwarf Version");
+  EmitInt16(DWARF_VERSION); EOL("Dwarf Version");
   
   EmitReference("info_begin", 0); EOL("Offset of Compilation Unit Info");
 
-  EmitByte(AddressSize); EOL("Size of Address");
+  EmitInt8(AddressSize); EOL("Size of Address");
 
-  EmitByte(0); EOL("Size of Segment Descriptor");
+  EmitInt8(0); EOL("Size of Segment Descriptor");
 
-  EmitShort(0);  EOL("Pad (1)");
-  EmitShort(0);  EOL("Pad (2)");
+  EmitInt16(0);  EOL("Pad (1)");
+  EmitInt16(0);  EOL("Pad (2)");
 
   // Range 1
   EmitReference("text_begin", 0); EOL("Address");
   EmitDifference("text_end", 0, "text_begin", 0); EOL("Length");
 
-  EmitLong(0); EOL("EOM (1)");
-  EmitLong(0); EOL("EOM (2)");
+  EmitInt32(0); EOL("EOM (1)");
+  EmitInt32(0); EOL("EOM (2)");
 }
 
 /// EmitDebugRanges - Emit visible names into a debug ranges section.

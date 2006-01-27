@@ -578,21 +578,21 @@ public:
     /// value.
     static unsigned SizeSLEB128(int Value);
     
-    /// EmitByte - Emit a byte directive and value.
+    /// EmitInt8 - Emit a byte directive and value.
     ///
-    void EmitByte(int Value) const;
+    void EmitInt8(int Value) const;
 
-    /// EmitShort - Emit a short directive and value.
+    /// EmitInt16 - Emit a short directive and value.
     ///
-    void EmitShort(int Value) const;
+    void EmitInt16(int Value) const;
 
-    /// EmitLong - Emit a long directive and value.
+    /// EmitInt32 - Emit a long directive and value.
     ///
-    void EmitLong(int Value) const;
+    void EmitInt32(int Value) const;
     
-    /// EmitLongLong - Emit a long long directive and value.
+    /// EmitInt64 - Emit a long long directive and value.
     ///
-    void EmitLongLong(uint64_t Value) const;
+    void EmitInt64(uint64_t Value) const;
     
     /// EmitString - Emit a string with quotes and a null terminator.
     /// Special characters are emitted properly. (Eg. '\t')
