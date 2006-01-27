@@ -89,6 +89,8 @@ void CodeEmitterGen::run(std::ostream &o) {
   for (std::vector<Record*>::iterator I = Insts.begin(), E = Insts.end();
        I != E; ++I) {
     Record *R = *I;
+    if (R->getName() == "PHI" || R->getName() == "INLINEASM") continue;
+    
     o << "    case " << Namespace << R->getName() << ": {\n"
       << "      DEBUG(std::cerr << \"Emitting " << R->getName() << "\\n\");\n";
 
