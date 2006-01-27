@@ -166,3 +166,25 @@ http://gcc.gnu.org/ml/gcc-patches/2004-08/msg02011.html
 
 Combine: a = sin(x), b = cos(x) into a,b = sincos(x).
 
+//===---------------------------------------------------------------------===//
+
+Solve this DAG isel folding deficiency:
+
+int X, Y;
+
+void fn1(void)
+{
+  X = X | (Y << 3);
+}
+
+compiles to
+
+fn1:
+	movl Y, %eax
+	shll $3, %eax
+	orl X, %eax
+	movl %eax, X
+	ret
+
+The problem is the store's chain operand is not the load X but rather
+a TokenFactor of the load X and load Y. This prevents the folding.
