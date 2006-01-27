@@ -48,10 +48,6 @@ namespace llvm {
     unsigned VirtGPR; // this is public so it can be accessed in the selector
                       // for ISD::RET. add an accessor instead? FIXME
 	    
-    /// LowerOperation - Provide custom lowering hooks for some operations.
-    ///
-// XXX    virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
-    
     const char *getTargetNodeName(unsigned Opcode) const;
       
     /// LowerArguments - This hook must be implemented to indicate how we should
@@ -66,11 +62,6 @@ namespace llvm {
                   unsigned CC,
                   bool isTailCall, SDOperand Callee, ArgListTy &Args,
                   SelectionDAG &DAG);
-    
-    /// LowerReturnTo - This spits out restore-previous-frame-state+br.ret
-    /// instructions
-    virtual SDOperand LowerReturnTo(SDOperand Chain, SDOperand Op,
-                                    SelectionDAG &DAG);
     
     /// LowerOperation - for custom lowering specific ops
     /// (currently, only "ret void")

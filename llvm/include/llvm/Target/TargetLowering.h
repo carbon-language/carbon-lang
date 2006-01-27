@@ -360,12 +360,6 @@ public:
               unsigned CallingConv, bool isTailCall, SDOperand Callee,
               ArgListTy &Args, SelectionDAG &DAG) = 0;
 
-  /// LowerReturnTo - This hook lowers a return instruction into the appropriate
-  /// legal ISD::RET node for the target's current ABI.  This method is optional
-  /// and is intended for targets that need non-standard behavior.
-  virtual SDOperand LowerReturnTo(SDOperand Chain, SDOperand Op, 
-                                  SelectionDAG &DAG);
-  
   /// LowerFrameReturnAddress - This hook lowers a call to llvm.returnaddress or
   /// llvm.frameaddress (depending on the value of the first argument).  The
   /// return values are the result pointer and the resultant token chain.  If

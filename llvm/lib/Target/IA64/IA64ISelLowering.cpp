@@ -537,44 +537,6 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
   return std::make_pair(RetVal, Chain);
 }
 
-SDOperand IA64TargetLowering::LowerReturnTo(SDOperand Chain, SDOperand Op,
-                                               SelectionDAG &DAG) {
-  SDOperand Copy, InFlag;
-  SDOperand AR_PFSVal = DAG.getCopyFromReg(Chain, this->VirtGPR,
-	                                       MVT::i64);
-  Chain = AR_PFSVal.getValue(1);
-
-  switch (Op.getValueType()) {
-  default: assert(0 && "Unknown type to return! (promote?)");
-  case MVT::i64:
-    Copy = DAG.getCopyToReg(Chain, IA64::r8, Op, InFlag);
-    break;
-  case MVT::f64:
-    Copy = DAG.getCopyToReg(Chain, IA64::F8, Op, InFlag);
-    break;
-  }
-
-  Chain = Copy.getValue(0);
-  InFlag = Copy.getValue(1);
-  // we need to copy VirtGPR (the vreg (to become a real reg)) that holds
-  // the output of this function's alloc instruction back into ar.pfs
-  // before we return. this copy must not float up above the last 
-  // outgoing call in this function - we flag this to the ret instruction
-  Chain = DAG.getCopyToReg(Chain, IA64::AR_PFS, AR_PFSVal, InFlag);
-  InFlag = Chain.getValue(1);
-  
-  // and then just emit a 'ret' instruction
-  std::vector<MVT::ValueType> NodeTys;
-  std::vector<SDOperand> RetOperands;
-  NodeTys.push_back(MVT::Other);
-  NodeTys.push_back(MVT::Flag);
-  RetOperands.push_back(Chain);
-  RetOperands.push_back(InFlag);
-
-  return DAG.getNode(IA64ISD::RET_FLAG, NodeTys, RetOperands);
-//  return DAG.getNode(IA64ISD::RET_FLAG, MVT::Other, MVT::Other, Copy, Chain, InFlag);
-}
-
 std::pair<SDOperand, SDOperand> IA64TargetLowering::
 LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
                         SelectionDAG &DAG) {
@@ -586,21 +548,38 @@ SDOperand IA64TargetLowering::
 LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default: assert(0 && "Should not custom lower this!");
-  case ISD::RET: { // the DAGgy stuff takes care of
-    // restoring ar.pfs before adding a br.ret for functions
-    // that return something, but we need to take care of stuff
-    // that returns void manually, so here it is:
-    assert(Op.getNumOperands()==1 &&
-      "trying to custom lower a return other than void! (numops!=1)");
+  case ISD::RET: {
+    SDOperand AR_PFSVal, Copy;
     
-    SDOperand Chain = Op.getOperand(0);
-    SDOperand AR_PFSVal = DAG.getCopyFromReg(Chain, this->VirtGPR,
-		                                  MVT::i64);
-    Chain = AR_PFSVal.getValue(1);
-    Chain = DAG.getCopyToReg(Chain, IA64::AR_PFS, AR_PFSVal);
+    switch(Op.getNumOperands()) {
+     default:
+      assert(0 && "Do not know how to return this many arguments!");
+      abort();
+    case 1: 
+      AR_PFSVal = DAG.getCopyFromReg(Op.getOperand(0), VirtGPR, MVT::i64);
+      AR_PFSVal = DAG.getCopyToReg(AR_PFSVal.getValue(1), IA64::AR_PFS, 
+                                   AR_PFSVal);
+      return DAG.getNode(IA64ISD::RET_FLAG, MVT::Other, AR_PFSVal);
+    case 2: {
+      // Copy the result into the output register & restore ar.pfs
+      MVT::ValueType ArgVT = Op.getOperand(1).getValueType();
+      unsigned ArgReg = MVT::isInteger(ArgVT) ? IA64::r8 : IA64::F8;
 
-    // and then just emit a 'ret' instruction
-    return DAG.getNode(IA64ISD::RET_FLAG, MVT::Other, Chain);
+      AR_PFSVal = DAG.getCopyFromReg(Op.getOperand(0), VirtGPR, MVT::i64);
+      Copy = DAG.getCopyToReg(AR_PFSVal.getValue(1), ArgReg, Op.getOperand(1),
+                              SDOperand());
+      AR_PFSVal = DAG.getCopyToReg(Copy.getValue(0), IA64::AR_PFS, AR_PFSVal,
+                                   Copy.getValue(1));
+      std::vector<MVT::ValueType> NodeTys;
+      std::vector<SDOperand> RetOperands;
+      NodeTys.push_back(MVT::Other);
+      NodeTys.push_back(MVT::Flag);
+      RetOperands.push_back(AR_PFSVal);
+      RetOperands.push_back(AR_PFSVal.getValue(1));
+      return DAG.getNode(IA64ISD::RET_FLAG, NodeTys, RetOperands);
+    }
+    }
+    return SDOperand();
   }
   case ISD::VAARG: {
     MVT::ValueType VT = getPointerTy();

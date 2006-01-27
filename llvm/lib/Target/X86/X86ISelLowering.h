@@ -193,9 +193,6 @@ namespace llvm {
                 bool isTailCall, SDOperand Callee, ArgListTy &Args,
                 SelectionDAG &DAG);
 
-    virtual SDOperand LowerReturnTo(SDOperand Chain, SDOperand Op,
-                                    SelectionDAG &DAG);
-    
     virtual std::pair<SDOperand, SDOperand>
     LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain, unsigned Depth,
                             SelectionDAG &DAG);

@@ -63,9 +63,6 @@ namespace {
                   unsigned CC,
                   bool isTailCall, SDOperand Callee, ArgListTy &Args,
                   SelectionDAG &DAG);
-    
-    virtual SDOperand LowerReturnTo(SDOperand Chain, SDOperand Op,
-                                    SelectionDAG &DAG);
     virtual std::pair<SDOperand, SDOperand>
       LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain, unsigned Depth,
                               SelectionDAG &DAG);
@@ -156,6 +153,9 @@ SparcV8TargetLowering::SparcV8TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
   setOperationAction(ISD::DEBUG_LABEL, MVT::Other, Expand);
 
+  // RET must be custom lowered, to meet ABI requirements
+  setOperationAction(ISD::RET               , MVT::Other, Custom);
+  
   // VASTART needs to be custom lowered to use the VarArgsFrameIndex
   setOperationAction(ISD::VASTART           , MVT::Other, Custom);
   
@@ -576,32 +576,6 @@ SparcV8TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   return std::make_pair(RetVal, Chain);
 }
 
-SDOperand SparcV8TargetLowering::LowerReturnTo(SDOperand Chain, SDOperand Op,
-                                               SelectionDAG &DAG) {
-  SDOperand Copy;
-  switch (Op.getValueType()) {
-  default: assert(0 && "Unknown type to return!");
-  case MVT::i32:
-    Copy = DAG.getCopyToReg(Chain, V8::I0, Op, SDOperand());
-    break;
-  case MVT::f32:
-    Copy = DAG.getCopyToReg(Chain, V8::F0, Op, SDOperand());
-    break;
-  case MVT::f64:
-    Copy = DAG.getCopyToReg(Chain, V8::D0, Op, SDOperand());
-    break;
-  case MVT::i64:
-    SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op, 
-                               DAG.getConstant(1, MVT::i32));
-    SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op,
-                               DAG.getConstant(0, MVT::i32));
-    Copy = DAG.getCopyToReg(Chain, V8::I0, Hi, SDOperand());
-    Copy = DAG.getCopyToReg(Copy, V8::I1, Lo, Copy.getValue(1));
-    break;
-  }
-  return DAG.getNode(V8ISD::RET_FLAG, MVT::Other, Copy, Copy.getValue(1));
-}
-
 std::pair<SDOperand, SDOperand> SparcV8TargetLowering::
 LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain, unsigned Depth,
                         SelectionDAG &DAG) {
@@ -693,6 +667,35 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
                                    DAG.getConstant(VarArgsFrameOffset, MVT::i32));
     return DAG.getNode(ISD::STORE, MVT::Other, Op.getOperand(0), Offset, 
                        Op.getOperand(1), Op.getOperand(2));
+  }
+  case ISD::RET: {
+    SDOperand Copy;
+    
+    switch(Op.getNumOperands()) {
+    default:
+      assert(0 && "Do not know how to return this many arguments!");
+      abort();
+    case 1: 
+      return SDOperand(); // ret void is legal
+    case 2: {
+      unsigned ArgReg;
+      switch(Op.getOperand(1).getValueType()) {
+      default: assert(0 && "Unknown type to return!");
+      case MVT::i32: ArgReg = V8::I0; break;
+      case MVT::f32: ArgReg = V8::F0; break;
+      case MVT::f64: ArgReg = V8::D0; break;
+      }
+      Copy = DAG.getCopyToReg(Op.getOperand(0), ArgReg, Op.getOperand(1),
+                              SDOperand());
+      break;
+    }
+    case 3:
+      Copy = DAG.getCopyToReg(Op.getOperand(0), V8::I0, Op.getOperand(2), 
+                              SDOperand());
+      Copy = DAG.getCopyToReg(Copy, V8::I1, Op.getOperand(1), Copy.getValue(1));
+      break;
+    }
+    return DAG.getNode(V8ISD::RET_FLAG, MVT::Other, Copy, Copy.getValue(1));
   }
   }
 }

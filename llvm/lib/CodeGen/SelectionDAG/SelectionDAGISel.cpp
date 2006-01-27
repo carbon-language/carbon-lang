@@ -496,40 +496,30 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
     DAG.setRoot(DAG.getNode(ISD::RET, MVT::Other, getRoot()));
     return;
   }
+  std::vector<SDOperand> NewValues;
+  NewValues.push_back(getRoot());
+  for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
+    SDOperand RetOp = getValue(I.getOperand(i));
+    
+    // If this is an integer return value, we need to promote it ourselves to
+    // the full width of a register, since LegalizeOp will use ANY_EXTEND rather
+    // than sign/zero.
+    if (MVT::isInteger(RetOp.getValueType()) && 
+        RetOp.getValueType() < MVT::i64) {
+      MVT::ValueType TmpVT;
+      if (TLI.getTypeAction(MVT::i32) == TargetLowering::Promote)
+        TmpVT = TLI.getTypeToTransformTo(MVT::i32);
+      else
+        TmpVT = MVT::i32;
 
-  SDOperand Op1 = getValue(I.getOperand(0));
-  MVT::ValueType TmpVT;
-
-  switch (Op1.getValueType()) {
-  default: assert(0 && "Unknown value type!");
-  case MVT::i1:
-  case MVT::i8:
-  case MVT::i16:
-  case MVT::i32:
-    // If this is a machine where 32-bits is legal or expanded, promote to
-    // 32-bits, otherwise, promote to 64-bits.
-    if (TLI.getTypeAction(MVT::i32) == TargetLowering::Promote)
-      TmpVT = TLI.getTypeToTransformTo(MVT::i32);
-    else
-      TmpVT = MVT::i32;
-
-    // Extend integer types to result type.
-    if (I.getOperand(0)->getType()->isSigned())
-      Op1 = DAG.getNode(ISD::SIGN_EXTEND, TmpVT, Op1);
-    else
-      Op1 = DAG.getNode(ISD::ZERO_EXTEND, TmpVT, Op1);
-    break;
-  case MVT::f32:
-    // If this is a machine where f32 is promoted to f64, do so now.
-    if (TLI.getTypeAction(MVT::f32) == TargetLowering::Promote)
-      Op1 = DAG.getNode(ISD::FP_EXTEND, TLI.getTypeToTransformTo(MVT::f32),Op1);
-    break;
-  case MVT::i64:
-  case MVT::f64:
-    break; // No extension needed!
+      if (I.getOperand(i)->getType()->isSigned())
+        RetOp = DAG.getNode(ISD::SIGN_EXTEND, TmpVT, RetOp);
+      else
+        RetOp = DAG.getNode(ISD::ZERO_EXTEND, TmpVT, RetOp);
+    }
+    NewValues.push_back(RetOp);
   }
-  // Allow targets to lower this further to meet ABI requirements
-  DAG.setRoot(TLI.LowerReturnTo(getRoot(), Op1, DAG));
+  DAG.setRoot(DAG.getNode(ISD::RET, MVT::Other, NewValues));
 }
 
 void SelectionDAGLowering::visitBr(BranchInst &I) {
@@ -1247,11 +1237,6 @@ MachineBasicBlock *TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
                "TargetLowering::InsertAtEndOfBasicBlock!\n";
   abort();
   return 0;  
-}
-
-SDOperand TargetLowering::LowerReturnTo(SDOperand Chain, SDOperand Op,
-                                        SelectionDAG &DAG) {
-  return DAG.getNode(ISD::RET, MVT::Other, Chain, Op);
 }
 
 void SelectionDAGLowering::visitVAStart(CallInst &I) {

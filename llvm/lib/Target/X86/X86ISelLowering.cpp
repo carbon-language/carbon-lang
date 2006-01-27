@@ -269,69 +269,6 @@ X86TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   return  LowerCCCCallTo(Chain, RetTy, isVarArg, isTailCall, Callee, Args, DAG);
 }
 
-SDOperand X86TargetLowering::LowerReturnTo(SDOperand Chain, SDOperand Op,
-                                           SelectionDAG &DAG) {
-  if (!X86DAGIsel)
-    return DAG.getNode(ISD::RET, MVT::Other, Chain, Op);
-
-  SDOperand Copy;
-  MVT::ValueType OpVT = Op.getValueType();
-  switch (OpVT) {
-    default: assert(0 && "Unknown type to return!");
-    case MVT::i32:
-      Copy = DAG.getCopyToReg(Chain, X86::EAX, Op, SDOperand());
-      break;
-    case MVT::i64: {
-      SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op, 
-                                 DAG.getConstant(1, MVT::i32));
-      SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op,
-                                 DAG.getConstant(0, MVT::i32));
-      Copy = DAG.getCopyToReg(Chain, X86::EDX, Hi, SDOperand());
-      Copy = DAG.getCopyToReg(Copy,  X86::EAX, Lo, Copy.getValue(1));
-      break;
-    }
-    case MVT::f32:
-    case MVT::f64:
-      if (!X86ScalarSSE) {
-        std::vector<MVT::ValueType> Tys;
-        Tys.push_back(MVT::Other);
-        Tys.push_back(MVT::Flag);
-        std::vector<SDOperand> Ops;
-        Ops.push_back(Chain);
-        Ops.push_back(Op);
-        Copy = DAG.getNode(X86ISD::FP_SET_RESULT, Tys, Ops);
-      } else {
-        // Spill the value to memory and reload it into top of stack.
-        unsigned Size = MVT::getSizeInBits(OpVT)/8;
-        MachineFunction &MF = DAG.getMachineFunction();
-        int SSFI = MF.getFrameInfo()->CreateStackObject(Size, Size);
-        SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
-        Chain = DAG.getNode(ISD::STORE, MVT::Other, Chain, Op,
-                            StackSlot, DAG.getSrcValue(NULL));
-        std::vector<MVT::ValueType> Tys;
-        Tys.push_back(MVT::f64);
-        Tys.push_back(MVT::Other);
-        std::vector<SDOperand> Ops;
-        Ops.push_back(Chain);
-        Ops.push_back(StackSlot);
-        Ops.push_back(DAG.getValueType(OpVT));
-        Copy = DAG.getNode(X86ISD::FLD, Tys, Ops);
-        Tys.clear();
-        Tys.push_back(MVT::Other);
-        Tys.push_back(MVT::Flag);
-        Ops.clear();
-        Ops.push_back(Copy.getValue(1));
-        Ops.push_back(Copy);
-        Copy = DAG.getNode(X86ISD::FP_SET_RESULT, Tys, Ops);
-      }
-      break;
-  }
-
-  return DAG.getNode(X86ISD::RET_FLAG, MVT::Other,
-                     Copy, DAG.getConstant(getBytesToPopOnReturn(), MVT::i16),
-                     Copy.getValue(1));
-}
-
 //===----------------------------------------------------------------------===//
 //                    C Calling Convention implementation
 //===----------------------------------------------------------------------===//
@@ -1766,11 +1703,6 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     return DAG.getNode(X86ISD::BRCOND, Op.getValueType(),
                        Op.getOperand(0), Op.getOperand(2), CC, Cond);
   }
-  case ISD::RET: {
-    // Can only be return void.
-    return DAG.getNode(X86ISD::RET_FLAG, MVT::Other, Op.getOperand(0),
-                       DAG.getConstant(getBytesToPopOnReturn(), MVT::i16));
-  }
   case ISD::MEMSET: {
     SDOperand InFlag;
     SDOperand Chain = Op.getOperand(0);
@@ -1896,6 +1828,66 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand FR = DAG.getFrameIndex(VarArgsFrameIndex, MVT::i32);
     return DAG.getNode(ISD::STORE, MVT::Other, Op.getOperand(0), FR, 
                        Op.getOperand(1), Op.getOperand(2));
+  }
+  case ISD::RET: {
+    SDOperand Copy;
+    
+    switch(Op.getNumOperands()) {
+    default:
+      assert(0 && "Do not know how to return this many arguments!");
+      abort();
+    case 1: 
+      return DAG.getNode(X86ISD::RET_FLAG, MVT::Other, Op.getOperand(0),
+                         DAG.getConstant(getBytesToPopOnReturn(), MVT::i16));
+    case 2: {
+      MVT::ValueType ArgVT = Op.getOperand(1).getValueType();
+      if (MVT::isInteger(ArgVT))
+        Copy = DAG.getCopyToReg(Op.getOperand(0), X86::EAX, Op.getOperand(1),
+                                SDOperand());
+      else if (!X86ScalarSSE) {
+        std::vector<MVT::ValueType> Tys;
+        Tys.push_back(MVT::Other);
+        Tys.push_back(MVT::Flag);
+        std::vector<SDOperand> Ops;
+        Ops.push_back(Op.getOperand(0));
+        Ops.push_back(Op.getOperand(1));
+        Copy = DAG.getNode(X86ISD::FP_SET_RESULT, Tys, Ops);
+      } else {
+        // Spill the value to memory and reload it into top of stack.
+        unsigned Size = MVT::getSizeInBits(ArgVT)/8;
+        MachineFunction &MF = DAG.getMachineFunction();
+        int SSFI = MF.getFrameInfo()->CreateStackObject(Size, Size);
+        SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
+        SDOperand Chain = DAG.getNode(ISD::STORE, MVT::Other, Op.getOperand(0), 
+                                      Op.getOperand(1), StackSlot, 
+                                      DAG.getSrcValue(0));
+        std::vector<MVT::ValueType> Tys;
+        Tys.push_back(MVT::f64);
+        Tys.push_back(MVT::Other);
+        std::vector<SDOperand> Ops;
+        Ops.push_back(Chain);
+        Ops.push_back(StackSlot);
+        Ops.push_back(DAG.getValueType(ArgVT));
+        Copy = DAG.getNode(X86ISD::FLD, Tys, Ops);
+        Tys.clear();
+        Tys.push_back(MVT::Other);
+        Tys.push_back(MVT::Flag);
+        Ops.clear();
+        Ops.push_back(Copy.getValue(1));
+        Ops.push_back(Copy);
+        Copy = DAG.getNode(X86ISD::FP_SET_RESULT, Tys, Ops);
+      }
+      break;
+    }
+    case 3:
+      Copy = DAG.getCopyToReg(Op.getOperand(0), X86::EDX, Op.getOperand(2), 
+                              SDOperand());
+      Copy = DAG.getCopyToReg(Copy, X86::EAX,Op.getOperand(1),Copy.getValue(1));
+      break;
+    }
+    return DAG.getNode(X86ISD::RET_FLAG, MVT::Other,
+                       Copy, DAG.getConstant(getBytesToPopOnReturn(), MVT::i16),
+                       Copy.getValue(1));
   }
   }
 }
