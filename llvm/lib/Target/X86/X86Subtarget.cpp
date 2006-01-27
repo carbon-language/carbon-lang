@@ -22,11 +22,10 @@ static void GetCpuIDAndInfo(unsigned value, unsigned *EAX, unsigned *EBX,
 #if defined(__GNUC__)
   asm ("pushl\t%%ebx\n\t"
        "cpuid\n\t"
+       "movl\t%%ebx, %%esi\n\t"
        "popl\t%%ebx"
        : "=a" (*EAX),
-#if !defined(__DYNAMIC__)  // This works around a gcc -fPIC bug
-         "=b" (*EBX),
-#endif
+         "=S" (*EBX),
          "=c" (*ECX),
          "=d" (*EDX)
        :  "a" (value));
@@ -35,11 +34,11 @@ static void GetCpuIDAndInfo(unsigned value, unsigned *EAX, unsigned *EBX,
 }
 
 static const char *GetCurrentX86CPU() {
-  unsigned EAX = 0, DUMMY = 0, ECX = 0, EDX = 0;
-  GetCpuIDAndInfo(0x1, &EAX, &DUMMY, &ECX, &EDX);
+  unsigned EAX = 0, EBX = 0, ECX = 0, EDX = 0;
+  GetCpuIDAndInfo(0x1, &EAX, &EBX, &ECX, &EDX);
   unsigned Family  = (EAX & (0xffffffff >> (32 - 4)) << 8) >> 8; // Bits 8 - 11
   unsigned Model   = (EAX & (0xffffffff >> (32 - 4)) << 4) >> 4; // Bits 4 - 7
-  GetCpuIDAndInfo(0x80000001, &EAX, &DUMMY, &ECX, &EDX);
+  GetCpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
   bool Em64T = EDX & (1 << 29);
 
   switch (Family) {
