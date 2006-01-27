@@ -1931,9 +1931,16 @@ public:
              << ".getValue(" << CInfo.getNumResults() << "))) goto P"
              << PatternNo << "Fail;   // Already selected for a chain use?\n";
       }
-      if (NodeHasChain && !FoundChain) {
-        OS << "      SDOperand Chain = " << RootName << ".getOperand(0);\n";
-        FoundChain = true;
+      if (NodeHasChain) {
+        if (!FoundChain) {
+          OS << "      SDOperand Chain = " << RootName << ".getOperand(0);\n";
+          FoundChain = true;
+        } else {
+          OS << "      if (Chain.Val == " << RootName << ".Val)\n";
+          OS << "        Chain = " << RootName << ".getOperand(0);\n";
+          OS << "      else\n";
+          OS << "        goto P" << PatternNo << "Fail;\n";
+        }
       }
     }
 
