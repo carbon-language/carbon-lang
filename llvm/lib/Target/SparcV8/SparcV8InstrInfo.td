@@ -92,7 +92,7 @@ def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_V8CallSeq, [SDNPHasChain]>;
 def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_V8CallSeq, [SDNPHasChain]>;
 
 def SDT_V8Call    : SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
-def call          : SDNode<"ISD::CALL", SDT_V8Call,
+def call          : SDNode<"V8ISD::CALL", SDT_V8Call,
 	                   [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
 def SDT_V8RetFlag : SDTypeProfile<0, 0, []>;

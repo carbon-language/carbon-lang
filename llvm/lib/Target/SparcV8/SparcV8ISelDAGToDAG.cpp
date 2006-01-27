@@ -46,6 +46,7 @@ namespace V8ISD {
     SELECT_ICC, // Select between two values using the current ICC flags.
     SELECT_FCC, // Select between two values using the current FCC flags.
     
+    CALL,       // A V8 call instruction.
     RET_FLAG,   // Return with a flag operand.
   };
 }
@@ -185,6 +186,7 @@ const char *SparcV8TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case V8ISD::ITOF:       return "V8ISD::ITOF";
   case V8ISD::SELECT_ICC: return "V8ISD::SELECT_ICC";
   case V8ISD::SELECT_FCC: return "V8ISD::SELECT_FCC";
+  case V8ISD::CALL:       return "V8ISD::CALL";
   case V8ISD::RET_FLAG:   return "V8ISD::RET_FLAG";
   }
 }
@@ -526,10 +528,12 @@ SparcV8TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   std::vector<MVT::ValueType> NodeTys;
   NodeTys.push_back(MVT::Other);   // Returns a chain
   NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
+  std::vector<SDOperand> Ops;
+  Ops.push_back(Chain);
+  Ops.push_back(Callee);
   if (InFlag.Val)
-    Chain = SDOperand(DAG.getCall(NodeTys, Chain, Callee, InFlag), 0);
-  else
-    Chain = SDOperand(DAG.getCall(NodeTys, Chain, Callee), 0);
+    Ops.push_back(InFlag);
+  Chain = DAG.getNode(V8ISD::CALL, NodeTys, Ops);
   InFlag = Chain.getValue(1);
   
   MVT::ValueType RetTyVT = getValueType(RetTy);
@@ -981,7 +985,7 @@ SDOperand SparcV8DAGToDAGISel::Select(SDOperand Op) {
     // The high part is in the Y register.
     return CurDAG->SelectNodeTo(N, V8::RDY, MVT::i32, Mul.getValue(1));
   }
-  case ISD::CALL:
+  case V8ISD::CALL:
     // FIXME: This is a workaround for a bug in tblgen.
   { // Pattern #47: (call:Flag (tglobaladdr:i32):$dst, ICC:Flag)
     // Emits: (CALL:void (tglobaladdr:i32):$dst)
