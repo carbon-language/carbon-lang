@@ -345,6 +345,9 @@ void AsmWriterEmitter::run(std::ostream &O) {
       break;
     }
 
+  std::vector<const CodeGenInstruction*> NumberedInstructions;
+  Target.getInstructionsByEnumValue(NumberedInstructions);
+  
   if (AllStartWithString) {
     // Compute the CodeGenInstruction -> AsmWriterInst mapping.  Note that not
     // all machine instructions are necessarily being printed, so there may be
@@ -354,9 +357,6 @@ void AsmWriterEmitter::run(std::ostream &O) {
       CGIAWIMap.insert(std::make_pair(Instructions[i].CGI, &Instructions[i]));
 
     // Emit a table of constant strings.
-    std::vector<const CodeGenInstruction*> NumberedInstructions;
-    Target.getInstructionsByEnumValue(NumberedInstructions);
-
     O << "  static const char * const OpStrs[] = {\n";
     for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i) {
       AsmWriterInst *AWI = CGIAWIMap[NumberedInstructions[i]];
@@ -380,8 +380,11 @@ void AsmWriterEmitter::run(std::ostream &O) {
   // elements in the vector.
   std::reverse(Instructions.begin(), Instructions.end());
 
+  // Find the opcode # of inline asm
   O << "  switch (MI->getOpcode()) {\n"
-       "  default: return false;\n";
+       "  default: return false;\n"
+       "  case " << NumberedInstructions.back()->Namespace
+    << "::INLINEASM: printInlineAsm(MI); break;\n";
 
   while (!Instructions.empty())
     EmitInstructions(Instructions, O);
