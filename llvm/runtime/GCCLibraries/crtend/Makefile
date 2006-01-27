@@ -17,7 +17,6 @@
 
 LEVEL = ../../..
 DONT_BUILD_RELINKED = 1
-BYTECODE_LIBRARY = 1
 LIBRARYNAME = crtend
 BYTECODE_DESTINATION = $(CFERuntimeLibDir)
 
@@ -27,8 +26,6 @@ BYTECODE_DESTINATION = $(CFERuntimeLibDir)
 # FAKE_SOURCES to determine a list of things to build, but doesn't use 
 # FAKE_SOURCES for dependencies, distribution, etc. It is assumed the makefile
 # will know how to build the objects eventhough the sources don't exist.
-
-FAKE_SOURCES := comp_main.c comp_genericeh.c comp_sjljeh.c
 
 MainSrc      := crtend.c listend.ll
 GenericEHSrc := Exception.cpp
@@ -63,3 +60,14 @@ $(ObjDir)/comp_sjljeh.bc: $(SJLJEHObj)
 	$(Verb) $(GCCLD) -link-as-library \
 	-internalize-public-api-file=$(PROJ_SRC_DIR)/comp_sjljeh.lst \
 	$(SJLJEHObj) -o $@
+
+SYMBOLHACKEDOBJS := $(ObjDir)/comp_main.bc $(ObjDir)/comp_genericeh.bc \
+                    $(ObjDir)/comp_sjljeh.bc
+
+all-local:: $(LibName.BCA)
+
+$(LibName.BCA): $(SYMBOLHACKEDOBJS) $(LibDir)/.dir $(LLVMToolDir)/llvm-ar
+	$(Echo) Building $(BuildMode) Bytecode Archive $(notdir $@)
+	$(Verb) $(RM) -f $@
+	$(Verb) $(LArchive) $@ $(SYMBOLHACKEDOBJS)
+
