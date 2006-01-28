@@ -72,7 +72,8 @@ static bool isExtIntegerInVTs(std::vector<unsigned char> EVTs) {
 /// vector contains isFP or a FP value type.
 static bool isExtFloatingPointInVTs(std::vector<unsigned char> EVTs) {
   assert(!EVTs.empty() && "Cannot check for integer in empty ExtVT list!");
-  return EVTs[0] == MVT::isFP || !(FilterEVTs(EVTs, MVT::isFloatingPoint).empty());
+  return EVTs[0] == MVT::isFP ||
+         !(FilterEVTs(EVTs, MVT::isFloatingPoint).empty());
 }
 
 //===----------------------------------------------------------------------===//
@@ -339,7 +340,8 @@ bool TreePatternNode::UpdateNodeType(const std::vector<unsigned char> &ExtVTs,
   }
   if (ExtVTs[0] == MVT::isFP  && isExtFloatingPointInVTs(getExtTypes())) {
     assert(hasTypeSet() && "should be handled above!");
-    std::vector<unsigned char> FVTs = FilterEVTs(getExtTypes(), MVT::isFloatingPoint);
+    std::vector<unsigned char> FVTs =
+      FilterEVTs(getExtTypes(), MVT::isFloatingPoint);
     if (getExtTypes() == FVTs)
       return false;
     setTypes(FVTs);
@@ -1290,8 +1292,8 @@ void DAGISelEmitter::ParseInstructions() {
         Record *InRec = static_cast<DefInit*>(InVal->getLeafValue())->getDef();
         if (CGI.OperandList[i].Rec != InRec &&
             !InRec->isSubClassOf("ComplexPattern"))
-          I->error("Operand $" + OpName +
-                   "'s register class disagrees between the operand and pattern");
+          I->error("Operand $" + OpName + "'s register class disagrees"
+                   " between the operand and pattern");
       }
       Operands.push_back(CGI.OperandList[i].Rec);
       
@@ -1890,7 +1892,7 @@ public:
       }
     }
   
-    // If this node has a name associated with it, capture it in VariableMap.  If
+    // If this node has a name associated with it, capture it in VariableMap. If
     // we already saw this in the pattern, emit code to verify dagness.
     if (!N->getName().empty()) {
       std::string &VarMapEntry = VariableMap[N->getName()];
@@ -1998,7 +2000,7 @@ public:
                                                 CInfo.getNumResults()));
         }
       } else {
-        // If this child has a name associated with it, capture it in VarMap.  If
+        // If this child has a name associated with it, capture it in VarMap. If
         // we already saw this in the pattern, emit code to verify dagness.
         if (!Child->getName().empty()) {
           std::string &VarMapEntry = VariableMap[Child->getName()];
@@ -2030,7 +2032,8 @@ public:
             // Place holder for SRCVALUE nodes. Nothing to do here.
           } else if (LeafRec->isSubClassOf("ValueType")) {
             // Make sure this is the specified value type.
-            OS << "      if (cast<VTSDNode>(" << RootName << OpNo << ")->getVT() != "
+            OS << "      if (cast<VTSDNode>(" << RootName << OpNo
+               << ")->getVT() != "
                << "MVT::" << LeafRec->getName() << ") goto P" << PatternNo
                << "Fail;\n";
             GotosFail = true;
@@ -2045,7 +2048,8 @@ public:
             std::cerr << " ";
             assert(0 && "Unknown leaf type!");
           }
-        } else if (IntInit *II = dynamic_cast<IntInit*>(Child->getLeafValue())) {
+        } else if (IntInit *II =
+                       dynamic_cast<IntInit*>(Child->getLeafValue())) {
           OS << "      if (!isa<ConstantSDNode>(" << RootName << OpNo
              << ") ||\n"
              << "          cast<ConstantSDNode>(" << RootName << OpNo
@@ -2429,8 +2433,8 @@ public:
     }
   }
 
-  /// InsertOneTypeCheck - Insert a type-check for an unresolved type in 'Pat' and
-  /// add it to the tree.  'Pat' and 'Other' are isomorphic trees except that 
+  /// InsertOneTypeCheck - Insert a type-check for an unresolved type in 'Pat'
+  /// and add it to the tree. 'Pat' and 'Other' are isomorphic trees except that 
   /// 'Pat' may be missing types.  If we find an unresolved type to add a check
   /// for, this returns true otherwise false if Pat has all types.
   bool InsertOneTypeCheck(TreePatternNode *Pat, TreePatternNode *Other,
@@ -2602,7 +2606,8 @@ bool DAGISelEmitter::EmitCodeForPattern(PatternToMatch &Pattern,
     try {
       bool MadeChange = true;
       while (MadeChange)
-        MadeChange = Pat->ApplyTypeConstraints(TP,true/*Ignore reg constraints*/);
+        MadeChange = Pat->ApplyTypeConstraints(TP,
+                                               true/*Ignore reg constraints*/);
     } catch (...) {
       assert(0 && "Error: could not find consistent types for something we"
              " already decided was ok!");
@@ -2659,14 +2664,15 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
       } else if ((CP = NodeGetComplexPattern(Node, *this))) {
         std::vector<Record*> OpNodes = CP->getRootNodes();
         for (unsigned j = 0, e = OpNodes.size(); j != e; j++) {
-          PatternsByOpcode[OpNodes[j]].insert(PatternsByOpcode[OpNodes[j]].begin(),
-                                              &PatternsToMatch[i]);
+          PatternsByOpcode[OpNodes[j]]
+            .insert(PatternsByOpcode[OpNodes[j]].begin(), &PatternsToMatch[i]);
         }
       } else {
         std::cerr << "Unrecognized opcode '";
         Node->dump();
         std::cerr << "' on tree pattern '";
-        std::cerr << PatternsToMatch[i].getDstPattern()->getOperator()->getName();
+        std::cerr << 
+           PatternsToMatch[i].getDstPattern()->getOperator()->getName();
         std::cerr << "'!\n";
         exit(1);
       }
