@@ -1880,8 +1880,8 @@ public:
             assert(0 && "Unknown predicate type!");
           }
           if (!PredicateCheck.empty())
-            PredicateCheck += " && ";
-          PredicateCheck += "!(" + Def->getValueAsString("CondString") + ")";
+            PredicateCheck += " || ";
+          PredicateCheck += "(" + Def->getValueAsString("CondString") + ")";
         }
       }
       
@@ -1891,7 +1891,7 @@ public:
     if (N->isLeaf()) {
       if (IntInit *II = dynamic_cast<IntInit*>(N->getLeafValue())) {
         emitCheck("cast<ConstantSDNode>(" + RootName +
-                  ")->getSignExtended() != " + itostr(II->getValue()));
+                  ")->getSignExtended() == " + itostr(II->getValue()));
         return;
       } else if (!NodeIsComplexPattern(N)) {
         assert(0 && "Cannot match this as a leaf value!");
@@ -1910,7 +1910,7 @@ public:
         // we already have checked that the first reference is valid, we don't
         // have to recursively match it, just check that it's the same as the
         // previously named thing.
-        emitCheck(VarMapEntry + " != " + RootName);
+        emitCheck(VarMapEntry + " == " + RootName);
         return;
       }
 
@@ -1931,17 +1931,17 @@ public:
       if (!isRoot) {
         const SDNodeInfo &CInfo = ISE.getSDNodeInfo(N->getOperator());
         // Multiple uses of actual result?
-        emitCheck("!" + RootName + ".hasOneUse()");
+        emitCheck(RootName + ".hasOneUse()");
         EmittedUseCheck = true;
         // hasOneUse() check is not strong enough. If the original node has
         // already been selected, it may have been replaced with another.
         for (unsigned j = 0; j != CInfo.getNumResults(); j++)
-          emitCheck("CodeGenMap.count(" + RootName + ".getValue(" + utostr(j) +
+          emitCheck("!CodeGenMap.count(" + RootName + ".getValue(" + utostr(j) +
                     "))");
         
         EmittedSlctedCheck = true;
         if (NodeHasChain)
-          emitCheck("CodeGenMap.count(" + RootName + ".getValue(" +
+          emitCheck("!CodeGenMap.count(" + RootName + ".getValue(" +
                     utostr(CInfo.getNumResults()) + "))");
       }
       if (NodeHasChain) {
@@ -1949,7 +1949,7 @@ public:
           emitCode("SDOperand Chain = " + RootName + ".getOperand(0);");
           FoundChain = true;
         } else {
-          emitCheck("Chain.Val != " + RootName + ".Val");
+          emitCheck("Chain.Val == " + RootName + ".Val");
           emitCode("Chain = " + RootName + ".getOperand(0);");
         }
       }
@@ -1966,13 +1966,13 @@ public:
       const SDNodeInfo &CInfo = ISE.getSDNodeInfo(N->getOperator());
       if (!EmittedUseCheck) {
         // Multiple uses of actual result?
-        emitCheck("!" + RootName + ".hasOneUse()");
+        emitCheck(RootName + ".hasOneUse()");
       }
       if (!EmittedSlctedCheck)
         // hasOneUse() check is not strong enough. If the original node has
         // already been selected, it may have been replaced with another.
         for (unsigned j = 0; j < CInfo.getNumResults(); j++)
-          emitCheck("CodeGenMap.count(" + RootName + ".getValue(" + utostr(j) +
+          emitCheck("!CodeGenMap.count(" + RootName + ".getValue(" + utostr(j) +
                     "))");
     }
 
@@ -1984,7 +1984,7 @@ public:
       if (!Child->isLeaf()) {
         // If it's not a leaf, recursively match.
         const SDNodeInfo &CInfo = ISE.getSDNodeInfo(Child->getOperator());
-        emitCheck(RootName + utostr(OpNo) + ".getOpcode() != " +
+        emitCheck(RootName + utostr(OpNo) + ".getOpcode() == " +
                   CInfo.getEnumName());
         EmitMatchCode(Child, RootName + utostr(OpNo), FoundChain);
         if (NodeHasProperty(Child, SDNodeInfo::SDNPHasChain, ISE))
@@ -2002,7 +2002,7 @@ public:
             // Since we already have checked that the first reference is valid,
             // we don't have to recursively match it, just check that it's the
             // same as the previously named thing.
-            emitCheck(VarMapEntry + " != " + RootName + utostr(OpNo));
+            emitCheck(VarMapEntry + " == " + RootName + utostr(OpNo));
             Duplicates.insert(RootName + utostr(OpNo));
             continue;
           }
@@ -2022,11 +2022,11 @@ public:
           } else if (LeafRec->isSubClassOf("ValueType")) {
             // Make sure this is the specified value type.
             emitCheck("cast<VTSDNode>(" + RootName + utostr(OpNo) +
-                      ")->getVT() != MVT::" + LeafRec->getName());
+                      ")->getVT() == MVT::" + LeafRec->getName());
           } else if (LeafRec->isSubClassOf("CondCode")) {
             // Make sure this is the specified cond code.
             emitCheck("cast<CondCodeSDNode>(" + RootName + utostr(OpNo) +
-                      ")->get() != ISD::" + LeafRec->getName());
+                      ")->get() == ISD::" + LeafRec->getName());
           } else {
             Child->dump();
             std::cerr << " ";
@@ -2034,9 +2034,9 @@ public:
           }
         } else if (IntInit *II =
                        dynamic_cast<IntInit*>(Child->getLeafValue())) {
-          emitCheck("!isa<ConstantSDNode>(" + RootName + utostr(OpNo) +
-                    ") || cast<ConstantSDNode>(" + RootName + utostr(OpNo) +
-                    ")->getSignExtended() != " + itostr(II->getValue()));
+          emitCheck("isa<ConstantSDNode>(" + RootName + utostr(OpNo) +
+                    ") && cast<ConstantSDNode>(" + RootName + utostr(OpNo) +
+                    ")->getSignExtended() == " + itostr(II->getValue()));
         } else {
           Child->dump();
           assert(0 && "Unknown leaf type!");
@@ -2046,7 +2046,7 @@ public:
 
     // If there is a node predicate for this, emit the call.
     if (!N->getPredicateFn().empty())
-      emitCheck("!" + N->getPredicateFn() + "(" + RootName + ".Val)");
+      emitCheck(N->getPredicateFn() + "(" + RootName + ".Val)");
   }
 
   /// EmitResultCode - Emit the action for a pattern.  Now that it has matched
@@ -2117,7 +2117,7 @@ public:
           Code += "Tmp" + utostr(i+ResNo) + ", ";
         emitCode(Code + "Tmp" + utostr(NumRes - 1 + ResNo) + ";");
 
-        Code = "!" + Fn + "(" + Val;
+        Code = Fn + "(" + Val;
         for (unsigned i = 0; i < NumRes; i++)
           Code += ", Tmp" + utostr(i + ResNo);
         emitCheck(Code + ")");
@@ -2417,7 +2417,7 @@ public:
     if (!Pat->hasTypeSet()) {
       // Move a type over from 'other' to 'pat'.
       Pat->setTypes(Other->getExtTypes());
-      emitCheck(Prefix + ".Val->getValueType(0) != MVT::" +
+      emitCheck(Prefix + ".Val->getValueType(0) == MVT::" +
                 getName(Pat->getTypeNum(0)));
       return true;
     }
@@ -2601,21 +2601,22 @@ bool DAGISelEmitter::EmitCodeForPattern(PatternToMatch &Pattern,
   
   // Actually output the generated code now.
   bool CanFail = false;
+  unsigned Indent = 4;
   for (unsigned i = 0, e = GeneratedCode.size(); i != e; ++i) {
     if (!GeneratedCode[i].first) {
       // Normal code.
-      OS << "    " << GeneratedCode[i].second << "\n";
+      OS << std::string(Indent, ' ') << GeneratedCode[i].second << "\n";
     } else {
-      OS << "    if (" << GeneratedCode[i].second << ") goto P"
-         << PatternNo << "Fail;\n";
       CanFail = true;
+      OS << std::string(Indent, ' ')
+         << "if (" << GeneratedCode[i].second << ") {\n";
+      Indent += 2;
     }
   }
+  for (; Indent != 4; Indent -= 2)
+    OS << std::string(Indent-2, ' ') << "}\n";
   
   OS << "  }\n";
-  if (CanFail)
-    OS << "P" << PatternNo << "Fail:\n";
-
   return CanFail;
 }
 
