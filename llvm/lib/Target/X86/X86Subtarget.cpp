@@ -67,11 +67,15 @@ static const char *GetCurrentX86CPU() {
   GetCpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
   bool Em64T = EDX & (1 << 29);
 
-  unsigned text[12];
-  GetCpuIDAndInfo(0x80000002, text+0, text+1, text+2, text+3);
-  GetCpuIDAndInfo(0x80000003, text+4, text+5, text+6, text+7);
-  GetCpuIDAndInfo(0x80000004, text+8, text+9, text+10, text+11);
-  char *t = reinterpret_cast<char *>(&text[0]);
+  union {
+    unsigned u[12];
+    char     c[48];
+  } text;
+
+  GetCpuIDAndInfo(0x80000002, text.u+0, text.u+1, text.u+2, text.u+3);
+  GetCpuIDAndInfo(0x80000003, text.u+4, text.u+5, text.u+6, text.u+7);
+  GetCpuIDAndInfo(0x80000004, text.u+8, text.u+9, text.u+10, text.u+11);
+  char *t = text.c;
   while (*t == ' ')
 	  t++;
 
