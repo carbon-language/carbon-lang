@@ -215,7 +215,7 @@ SDOperand SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
      // if f32 then cast to f32
       Result = DAG.getNode(ISD::FP_ROUND, MVT::f32, Sub);
     }
-    return LegalizeOp(Result);
+    return Result;
   }
   assert(!isSigned && "Legalize cannot Expand SINT_TO_FP for i64 yet");
   SDOperand Tmp1 = DAG.getNode(ISD::SINT_TO_FP, DestVT, Op0);
@@ -254,7 +254,7 @@ SDOperand SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
                                            DAG.getSrcValue(NULL), MVT::f32));
   }
 
-  return LegalizeOp(DAG.getNode(ISD::FADD, DestVT, Tmp1, FudgeInReg));
+  return DAG.getNode(ISD::FADD, DestVT, Tmp1, FudgeInReg);
 }
 
 /// PromoteLegalINT_TO_FP - This function is responsible for legalizing a
@@ -307,11 +307,9 @@ SDOperand SelectionDAGLegalize::PromoteLegalINT_TO_FP(SDOperand LegalOp,
 
   // Okay, we found the operation and type to use.  Zero extend our input to the
   // desired type then run the operation on it.
-  SDOperand N = DAG.getNode(OpToUse, DestVT,
+  return DAG.getNode(OpToUse, DestVT,
                      DAG.getNode(isSigned ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND,
                                  NewInTy, LegalOp));
-  // Make sure to legalize any nodes we create here.
-  return LegalizeOp(N);
 }
 
 /// PromoteLegalFP_TO_INT - This function is responsible for legalizing a
@@ -363,10 +361,8 @@ SDOperand SelectionDAGLegalize::PromoteLegalFP_TO_INT(SDOperand LegalOp,
 
   // Okay, we found the operation and type to use.  Truncate the result of the
   // extended FP_TO_*INT operation to the desired size.
-  SDOperand N = DAG.getNode(ISD::TRUNCATE, DestVT,
-                            DAG.getNode(OpToUse, NewOutTy, LegalOp));
-  // Make sure to legalize any nodes we create here in the next pass.
-  return LegalizeOp(N);
+  return DAG.getNode(ISD::TRUNCATE, DestVT,
+                     DAG.getNode(OpToUse, NewOutTy, LegalOp));
 }
 
 /// ExpandBSWAP - Open code the operations for BSWAP of the specified operation.
