@@ -317,7 +317,8 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
     Erased = ExternalSymbols.erase(cast<ExternalSymbolSDNode>(N)->getSymbol());
     break;
   case ISD::TargetExternalSymbol:
-    Erased = TargetExternalSymbols.erase(cast<ExternalSymbolSDNode>(N)->getSymbol());
+    Erased =
+      TargetExternalSymbols.erase(cast<ExternalSymbolSDNode>(N)->getSymbol());
     break;
   case ISD::VALUETYPE:
     Erased = ValueTypeNodes[cast<VTSDNode>(N)->getVT()] != 0;
@@ -416,7 +417,7 @@ SDNode *SelectionDAG::AddNonLeafNodeToCSEMaps(SDNode *N) {
     } else {
       std::vector<SDOperand> Ops(N->op_begin(), N->op_end());
       SDNode *&ORN = OneResultNodes[std::make_pair(N->getOpcode(),
-                                                   std::make_pair(N->getValueType(0), Ops))];
+                                      std::make_pair(N->getValueType(0), Ops))];
       if (ORN) return ORN;
       ORN = N;
     }
@@ -687,7 +688,8 @@ SDOperand SelectionDAG::getExternalSymbol(const char *Sym, MVT::ValueType VT) {
   return SDOperand(N, 0);
 }
 
-SDOperand SelectionDAG::getTargetExternalSymbol(const char *Sym, MVT::ValueType VT) {
+SDOperand SelectionDAG::getTargetExternalSymbol(const char *Sym,
+                                                MVT::ValueType VT) {
   SDNode *&N = TargetExternalSymbols[Sym];
   if (N) return SDOperand(N, 0);
   N = new ExternalSymbolSDNode(true, Sym, VT);
@@ -1726,6 +1728,19 @@ UpdateNodeOperands(SDOperand N, SDOperand Op1, SDOperand Op2,
   Ops.push_back(Op4);
   return UpdateNodeOperands(N, Ops);
 }
+
+SDOperand SelectionDAG::
+UpdateNodeOperands(SDOperand N, SDOperand Op1, SDOperand Op2,
+                   SDOperand Op3, SDOperand Op4, SDOperand Op5) {
+  std::vector<SDOperand> Ops;
+  Ops.push_back(Op1);
+  Ops.push_back(Op2);
+  Ops.push_back(Op3);
+  Ops.push_back(Op4);
+  Ops.push_back(Op5);
+  return UpdateNodeOperands(N, Ops);
+}
+
 
 SDOperand SelectionDAG::
 UpdateNodeOperands(SDOperand InN, const std::vector<SDOperand> &Ops) {
