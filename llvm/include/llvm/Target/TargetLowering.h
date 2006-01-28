@@ -380,12 +380,6 @@ public:
   /// whose type needs to be promoted.
   virtual SDOperand CustomPromoteOperation(SDOperand Op, SelectionDAG &DAG);
   
-  /// CustomExpandOperation - This callback is invoked for operations that are
-  /// unsupported by the target, are registered to use 'custom' lowering, and
-  /// whose type needs to be expanded.
-  virtual void CustomExpandOperation(SDOperand Op, SDOperand &Lo, SDOperand &Hi,
-                                     SelectionDAG &DAG);
-  
   /// getTargetNodeName() - This method returns the name of a target specific
   /// DAG node.
   virtual const char *getTargetNodeName(unsigned Opcode) const;
