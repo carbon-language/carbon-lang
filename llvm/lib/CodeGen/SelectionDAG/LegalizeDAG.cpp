@@ -2208,7 +2208,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         // Floating point mod -> fmod libcall.
         const char *FnName = Node->getValueType(0) == MVT::f32 ? "fmodf":"fmod";
         SDOperand Dummy;
-        Result = LegalizeOp(ExpandLibCall(FnName, Node, Dummy));
+        Result = ExpandLibCall(FnName, Node, Dummy);
       }
       break;
     }
@@ -2624,7 +2624,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         default: assert(0 && "Unreachable!");
         }
         SDOperand Dummy;
-        Result = LegalizeOp(ExpandLibCall(FnName, Node, Dummy));
+        Result = ExpandLibCall(FnName, Node, Dummy);
         break;
       }
       default:
@@ -3700,16 +3700,17 @@ SDOperand SelectionDAGLegalize::ExpandLibCall(const char *Name, SDNode *Node,
   switch (getTypeAction(CallInfo.first.getValueType())) {
   default: assert(0 && "Unknown thing");
   case Legal:
-    Result = CallInfo.first;
+    // If the result is legal, make sure that we relegalize the inserted result.
+    Result = LegalizeOp(CallInfo.first);
     break;
   case Promote:
     assert(0 && "Cannot promote this yet!");
   case Expand:
     ExpandOp(CallInfo.first, Result, Hi);
-    CallInfo.second = LegalizeOp(CallInfo.second);
     break;
   }
-  
+
+  CallInfo.second = LegalizeOp(CallInfo.second);
   SpliceCallInto(CallInfo.second, OutChain);
   return Result;
 }
@@ -4415,7 +4416,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       }
       Lo = DAG.getNode(ISD::MUL, NVT, LL, RL);
     } else {
-      Lo = ExpandLibCall("__muldi3" , Node, Hi); break;
+      Lo = ExpandLibCall("__muldi3" , Node, Hi);
     }
     break;
   }
