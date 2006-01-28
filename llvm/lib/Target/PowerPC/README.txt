@@ -194,6 +194,59 @@ currently only commutes to avoid inserting a copy BEFORE the two addr instr.
 
 ===-------------------------------------------------------------------------===
 
+176.gcc contains a bunch of code like this (this occurs dozens of times):
+
+int %test(uint %mode.0.i.0) {
+        %tmp.79 = cast uint %mode.0.i.0 to sbyte        ; <sbyte> [#uses=1]
+        %tmp.80 = cast sbyte %tmp.79 to int             ; <int> [#uses=1]
+        %tmp.81 = shl int %tmp.80, ubyte 16             ; <int> [#uses=1]
+        %tmp.82 = and int %tmp.81, 16711680
+        ret int %tmp.82
+}
+
+which we compile to:
+
+_test:
+        extsb r2, r3
+        rlwinm r3, r2, 16, 8, 15
+        blr
+
+The extsb is obviously dead.  This can be handled by a future thing like 
+MaskedValueIsZero that checks to see if bits are ever demanded (in this case, 
+the sign bits are never used, so we can fold the sext_inreg to nothing).
+
+I'm seeing code like this:
+
+        srwi r3, r3, 16
+        extsb r3, r3
+        rlwimi r4, r3, 16, 8, 15
+
+in which the extsb is preventing the srwi from being nuked.
+
+===-------------------------------------------------------------------------===
+
+Another example that occurs is:
+
+uint %test(int %specbits.6.1) {
+        %tmp.2540 = shr int %specbits.6.1, ubyte 11     ; <int> [#uses=1]
+        %tmp.2541 = cast int %tmp.2540 to uint          ; <uint> [#uses=1]
+        %tmp.2542 = shl uint %tmp.2541, ubyte 13        ; <uint> [#uses=1]
+        %tmp.2543 = and uint %tmp.2542, 8192            ; <uint> [#uses=1]
+        ret uint %tmp.2543
+}
+
+which we codegen as:
+
+l1_test:
+        srawi r2, r3, 11
+        rlwinm r3, r2, 13, 18, 18
+        blr
+
+the srawi can be nuked by turning the SAR into a logical SHR (the sext bits are 
+dead), which I think can then be folded into the rlwinm.
+
+===-------------------------------------------------------------------------===
+
 Compile offsets from allocas:
 
 int *%test() {
