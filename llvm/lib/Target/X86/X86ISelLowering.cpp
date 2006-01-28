@@ -1293,6 +1293,7 @@ X86TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
     // Get the X86 opcode to use.
     unsigned Opc;
     switch (MI->getOpcode()) {
+    default: assert(0 && "illegal opcode!");
     case X86::FP_TO_INT16_IN_MEM: Opc = X86::FpIST16m; break;
     case X86::FP_TO_INT32_IN_MEM: Opc = X86::FpIST32m; break;
     case X86::FP_TO_INT64_IN_MEM: Opc = X86::FpIST64m; break;
