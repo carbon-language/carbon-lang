@@ -173,6 +173,7 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::SRL:           return "PPCISD::SRL";
   case PPCISD::SRA:           return "PPCISD::SRA";
   case PPCISD::SHL:           return "PPCISD::SHL";
+  case PPCISD::CALL:          return "PPCISD::CALL";
   case PPCISD::RET_FLAG:      return "PPCISD::RET_FLAG";
   }
 }
@@ -835,8 +836,12 @@ PPCTargetLowering::LowerCallTo(SDOperand Chain,
   if (RetTyVT >= MVT::i1 && RetTyVT <= MVT::i16)
     ActualRetTyVT = MVT::i32;   // Promote result to i32.
     
-  if (RetTyVT != MVT::isVoid)
+  if (RetTyVT == MVT::i64) {
+    RetVals.push_back(MVT::i32);
+    RetVals.push_back(MVT::i32);
+  } else if (RetTyVT != MVT::isVoid) {
     RetVals.push_back(ActualRetTyVT);
+  }
   RetVals.push_back(MVT::Other);
   
   // If the callee is a GlobalAddress node (quite common, every direct call is)
@@ -849,7 +854,7 @@ PPCTargetLowering::LowerCallTo(SDOperand Chain,
   Ops.push_back(Callee);
   Ops.insert(Ops.end(), args_to_use.begin(), args_to_use.end());
   SDOperand TheCall = DAG.getNode(PPCISD::CALL, RetVals, Ops);
-  Chain = TheCall.getValue(RetTyVT != MVT::isVoid);
+  Chain = TheCall.getValue(TheCall.Val->getNumValues()-1);
   Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
                       DAG.getConstant(NumBytes, getPointerTy()));
   SDOperand RetVal = TheCall;
@@ -860,6 +865,8 @@ PPCTargetLowering::LowerCallTo(SDOperand Chain,
     RetVal = DAG.getNode(RetTy->isSigned() ? ISD::AssertSext : ISD::AssertZext,
                          MVT::i32, RetVal, DAG.getValueType(RetTyVT));
     RetVal = DAG.getNode(ISD::TRUNCATE, RetTyVT, RetVal);
+  } else if (RetTyVT == MVT::i64) {
+    RetVal = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, RetVal, RetVal.getValue(1));
   }
   
   return std::make_pair(RetVal, Chain);
