@@ -23,7 +23,9 @@ namespace {
                           cl::desc("Enable sse on X86"));
 }
 
-static void GetCpuIDAndInfo(unsigned value, unsigned *EAX, unsigned *EBX,
+/// GetCpuIDAndInfo - Execute the specified cpuid and return the 4 values in the
+/// specified arguments.  If we can't run cpuid on the host, return true.
+static bool GetCpuIDAndInfo(unsigned value, unsigned *EAX, unsigned *EBX,
                             unsigned *ECX, unsigned *EDX) {
 #if defined(i386) || defined(__i386__) || defined(__x86__) || defined(_M_IX86)
 #if defined(__GNUC__)
@@ -36,13 +38,16 @@ static void GetCpuIDAndInfo(unsigned value, unsigned *EAX, unsigned *EBX,
          "=c" (*ECX),
          "=d" (*EDX)
        :  "a" (value));
+  return false;
 #endif
 #endif
+  return true;
 }
 
 static const char *GetCurrentX86CPU() {
   unsigned EAX = 0, EBX = 0, ECX = 0, EDX = 0;
-  GetCpuIDAndInfo(0x1, &EAX, &EBX, &ECX, &EDX);
+  if (GetCpuIDAndInfo(0x1, &EAX, &EBX, &ECX, &EDX))
+    return "generic";
   unsigned Family  = (EAX & (0xffffffff >> (32 - 4)) << 8) >> 8; // Bits 8 - 11
   unsigned Model   = (EAX & (0xffffffff >> (32 - 4)) << 4) >> 4; // Bits 4 - 7
   GetCpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
@@ -58,7 +63,6 @@ static const char *GetCurrentX86CPU() {
       case 4:  return "pentium-mmx";
       default: return "pentium";
       }
-      break;
     case 6:
       switch (Model) {
       case 1:  return "pentiumpro";
