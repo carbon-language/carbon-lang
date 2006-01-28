@@ -62,6 +62,7 @@ namespace llvm {
     /// LowerOperation - Provide custom lowering hooks for some operations.
     ///
     virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
+    virtual SDOperand CustomPromoteOperation(SDOperand Op, SelectionDAG &DAG);
 
     //Friendly names for dumps
     const char *getTargetNodeName(unsigned Opcode) const;

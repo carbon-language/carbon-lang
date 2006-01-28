@@ -588,7 +588,7 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     VAIncr = DAG.getNode(ISD::STORE, MVT::Other, VAList.getValue(1), VAIncr,
                          Op.getOperand(1), Op.getOperand(2));
     // Load the actual argument out of the pointer VAList
-    return DAG.getLoad(VT, VAIncr, VAList, DAG.getSrcValue(0));
+    return DAG.getLoad(Op.getValueType(), VAIncr, VAList, DAG.getSrcValue(0));
   }
   case ISD::VASTART: {
     // vastart just stores the address of the VarArgsFrameIndex slot into the

@@ -369,11 +369,16 @@ public:
                           SelectionDAG &DAG);
 
   /// LowerOperation - For operations that are unsupported by the target, and
-  /// which are registered to use 'custom' lowering.  This callback is invoked.
+  /// which are registered to use 'custom' lowering, this callback is invoked.
   /// If the target has no operations that require custom lowering, it need not
   /// implement this.  The default implementation of this aborts.
   virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
 
+  /// CustomPromoteOperation - For operations that are unsupported by the
+  /// target, are registered to use 'custom' lowering, and whose type needs to
+  /// be promoted, this callback is invoked.
+  virtual SDOperand CustomPromoteOperation(SDOperand Op, SelectionDAG &DAG);
+  
   /// getTargetNodeName() - This method returns the name of a target specific
   /// DAG node.
   virtual const char *getTargetNodeName(unsigned Opcode) const;

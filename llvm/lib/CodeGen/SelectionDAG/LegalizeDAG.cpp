@@ -3209,7 +3209,31 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     Tmp2 = LegalizeOp(Node->getOperand(1));
     Result = DAG.getNode(ISD::SRL, NVT, Tmp1, Tmp2);
     break;
-    
+
+  case ISD::VAARG:
+    Tmp1 = LegalizeOp(Node->getOperand(0));   // Legalize the chain.
+    Tmp2 = LegalizeOp(Node->getOperand(1));   // Legalize the pointer.
+    if (TLI.getOperationAction(ISD::VAARG, VT) == TargetLowering::Custom) {
+      Tmp3 = DAG.getVAArg(VT, Tmp1, Tmp2, Node->getOperand(2));
+      Result = TLI.CustomPromoteOperation(Tmp3, DAG);
+    } else {
+      SDOperand VAList = DAG.getLoad(TLI.getPointerTy(), Tmp1, Tmp2,
+                                     Node->getOperand(2));
+      // Increment the pointer, VAList, to the next vaarg
+      Tmp3 = DAG.getNode(ISD::ADD, TLI.getPointerTy(), VAList, 
+                         DAG.getConstant(MVT::getSizeInBits(VT)/8, 
+                                         TLI.getPointerTy()));
+      // Store the incremented VAList to the legalized pointer
+      Tmp3 = DAG.getNode(ISD::STORE, MVT::Other, VAList.getValue(1), Tmp3, Tmp2, 
+                         Node->getOperand(2));
+      // Load the actual argument out of the pointer VAList
+      Result = DAG.getExtLoad(ISD::EXTLOAD, NVT, Tmp3, VAList,
+                              DAG.getSrcValue(0), VT);
+    }
+    // Remember that we legalized the chain.
+    AddLegalizedOperand(Op.getValue(1), Result.getValue(1));
+    break;
+
   case ISD::LOAD:
     Tmp1 = LegalizeOp(Node->getOperand(0));   // Legalize the chain.
     Tmp2 = LegalizeOp(Node->getOperand(1));   // Legalize the pointer.

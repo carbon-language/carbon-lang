@@ -141,6 +141,7 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   setOperationAction(ISD::VAEND,   MVT::Other, Expand);
   setOperationAction(ISD::VACOPY,  MVT::Other, Custom);
   setOperationAction(ISD::VAARG,   MVT::Other, Custom);
+  setOperationAction(ISD::VAARG,   MVT::i32,   Custom);
 
   setStackPointerRegisterToSaveRestore(Alpha::R30);
 
@@ -690,4 +691,14 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   }
 
   return SDOperand();
+}
+
+SDOperand AlphaTargetLowering::CustomPromoteOperation(SDOperand Op, 
+                                                      SelectionDAG &DAG) {
+  assert(Op.getValueType() == MVT::i32 && 
+         Op.getOpcode() == ISD::VAARG &&
+         "Unknown node to custom promote!");
+  
+  // The code in LowerOperation already handles i32 vaarg
+  return LowerOperation(Op, DAG);
 }
