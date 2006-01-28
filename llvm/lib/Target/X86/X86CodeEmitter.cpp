@@ -394,10 +394,21 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
   switch (Desc.TSFlags & X86II::FormMask) {
   default: assert(0 && "Unknown FormMask value in X86 MachineCodeEmitter!");
   case X86II::Pseudo:
-    if (Opcode != X86::IMPLICIT_USE &&
-        Opcode != X86::IMPLICIT_DEF &&
-        Opcode != X86::FP_REG_KILL)
-      std::cerr << "X86 Machine Code Emitter: No 'form', not emitting: " << MI;
+#ifndef NDEBUG
+    switch (Opcode) {
+    default: 
+      assert(0 && "psuedo instructions should be removed before code emission");
+    case X86::IMPLICIT_USE:
+    case X86::IMPLICIT_DEF:
+    case X86::IMPLICIT_DEF_R8:
+    case X86::IMPLICIT_DEF_R16:
+    case X86::IMPLICIT_DEF_R32:
+    case X86::IMPLICIT_DEF_FR32:
+    case X86::IMPLICIT_DEF_FR64:
+    case X86::FP_REG_KILL:
+      break;
+    }
+#endif
     break;
 
   case X86II::RawFrm:
