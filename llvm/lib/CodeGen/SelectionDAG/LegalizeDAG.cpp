@@ -54,12 +54,6 @@ class SelectionDAGLegalize {
   /// This can be queried with "getTypeAction(VT)".
   unsigned long long ValueTypeActions;
 
-  /// NeedsAnotherIteration - This is set when we expand a large integer
-  /// operation into smaller integer operations, but the smaller operations are
-  /// not set.  This occurs only rarely in practice, for targets that don't have
-  /// 32-bit or larger integer registers.
-  bool NeedsAnotherIteration;
-
   /// LegalizedNodes - For nodes that are of legal width, and that have more
   /// than one use, this map indicates what regularized operand to use.  This
   /// allows us to avoid legalizing the same thing more than once.
@@ -93,18 +87,6 @@ public:
 
   SelectionDAGLegalize(SelectionDAG &DAG);
 
-  /// Run - While there is still lowering to do, perform a pass over the DAG.
-  /// Most regularization can be done in a single pass, but targets that require
-  /// large values to be split into registers multiple times (e.g. i64 -> 4x
-  /// i16) require iteration for these values (the first iteration will demote
-  /// to i32, the second will demote to i16).
-  void Run() {
-    do {
-      NeedsAnotherIteration = false;
-      LegalizeDAG();
-    } while (NeedsAnotherIteration);
-  }
-
   /// getTypeAction - Return how we should legalize values of this type, either
   /// it is already legal or we need to expand it into multiple registers of
   /// smaller integer type, or we need to promote it to a larger type.
@@ -118,8 +100,9 @@ public:
     return getTypeAction(VT) == Legal;
   }
 
-private:
   void LegalizeDAG();
+
+private:
 
   SDOperand LegalizeOp(SDOperand O);
   void ExpandOp(SDOperand O, SDOperand &Lo, SDOperand &Hi);
@@ -139,6 +122,8 @@ private:
   SDOperand PromoteLegalFP_TO_INT(SDOperand LegalOp, MVT::ValueType DestVT,
                                   bool isSigned);
 
+  SDOperand ExpandBSWAP(SDOperand Op);
+  SDOperand ExpandBitCount(unsigned Opc, SDOperand Op);
   bool ExpandShift(unsigned Opc, SDOperand Op, SDOperand Amt,
                    SDOperand &Lo, SDOperand &Hi);
   void ExpandShiftParts(unsigned NodeOp, SDOperand Op, SDOperand Amt,
@@ -384,6 +369,119 @@ SDOperand SelectionDAGLegalize::PromoteLegalFP_TO_INT(SDOperand LegalOp,
   return LegalizeOp(N);
 }
 
+/// ExpandBSWAP - Open code the operations for BSWAP of the specified operation.
+///
+SDOperand SelectionDAGLegalize::ExpandBSWAP(SDOperand Op) {
+  MVT::ValueType VT = Op.getValueType();
+  MVT::ValueType SHVT = TLI.getShiftAmountTy();
+  SDOperand Tmp1, Tmp2, Tmp3, Tmp4, Tmp5, Tmp6, Tmp7, Tmp8;
+  switch (VT) {
+  default: assert(0 && "Unhandled Expand type in BSWAP!"); abort();
+  case MVT::i16:
+    Tmp2 = DAG.getNode(ISD::SHL, VT, Op, DAG.getConstant(8, SHVT));
+    Tmp1 = DAG.getNode(ISD::SRL, VT, Op, DAG.getConstant(8, SHVT));
+    return DAG.getNode(ISD::OR, VT, Tmp1, Tmp2);
+  case MVT::i32:
+    Tmp4 = DAG.getNode(ISD::SHL, VT, Op, DAG.getConstant(24, SHVT));
+    Tmp3 = DAG.getNode(ISD::SHL, VT, Op, DAG.getConstant(8, SHVT));
+    Tmp2 = DAG.getNode(ISD::SRL, VT, Op, DAG.getConstant(8, SHVT));
+    Tmp1 = DAG.getNode(ISD::SRL, VT, Op, DAG.getConstant(24, SHVT));
+    Tmp3 = DAG.getNode(ISD::AND, VT, Tmp3, DAG.getConstant(0xFF0000, VT));
+    Tmp2 = DAG.getNode(ISD::AND, VT, Tmp2, DAG.getConstant(0xFF00, VT));
+    Tmp4 = DAG.getNode(ISD::OR, VT, Tmp4, Tmp3);
+    Tmp2 = DAG.getNode(ISD::OR, VT, Tmp2, Tmp1);
+    return DAG.getNode(ISD::OR, VT, Tmp4, Tmp2);
+  case MVT::i64:
+    Tmp8 = DAG.getNode(ISD::SHL, VT, Op, DAG.getConstant(56, SHVT));
+    Tmp7 = DAG.getNode(ISD::SHL, VT, Op, DAG.getConstant(40, SHVT));
+    Tmp6 = DAG.getNode(ISD::SHL, VT, Op, DAG.getConstant(24, SHVT));
+    Tmp5 = DAG.getNode(ISD::SHL, VT, Op, DAG.getConstant(8, SHVT));
+    Tmp4 = DAG.getNode(ISD::SRL, VT, Op, DAG.getConstant(8, SHVT));
+    Tmp3 = DAG.getNode(ISD::SRL, VT, Op, DAG.getConstant(24, SHVT));
+    Tmp2 = DAG.getNode(ISD::SRL, VT, Op, DAG.getConstant(40, SHVT));
+    Tmp1 = DAG.getNode(ISD::SRL, VT, Op, DAG.getConstant(56, SHVT));
+    Tmp7 = DAG.getNode(ISD::AND, VT, Tmp7, DAG.getConstant(255ULL<<48, VT));
+    Tmp6 = DAG.getNode(ISD::AND, VT, Tmp6, DAG.getConstant(255ULL<<40, VT));
+    Tmp5 = DAG.getNode(ISD::AND, VT, Tmp5, DAG.getConstant(255ULL<<32, VT));
+    Tmp4 = DAG.getNode(ISD::AND, VT, Tmp4, DAG.getConstant(255ULL<<24, VT));
+    Tmp3 = DAG.getNode(ISD::AND, VT, Tmp3, DAG.getConstant(255ULL<<16, VT));
+    Tmp2 = DAG.getNode(ISD::AND, VT, Tmp2, DAG.getConstant(255ULL<<8 , VT));
+    Tmp8 = DAG.getNode(ISD::OR, VT, Tmp8, Tmp7);
+    Tmp6 = DAG.getNode(ISD::OR, VT, Tmp6, Tmp5);
+    Tmp4 = DAG.getNode(ISD::OR, VT, Tmp4, Tmp3);
+    Tmp2 = DAG.getNode(ISD::OR, VT, Tmp2, Tmp1);
+    Tmp8 = DAG.getNode(ISD::OR, VT, Tmp8, Tmp6);
+    Tmp4 = DAG.getNode(ISD::OR, VT, Tmp4, Tmp2);
+    return DAG.getNode(ISD::OR, VT, Tmp8, Tmp4);
+  }
+}
+
+/// ExpandBitCount - Expand the specified bitcount instruction into operations.
+///
+SDOperand SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDOperand Op) {
+  switch (Opc) {
+  default: assert(0 && "Cannot expand this yet!");
+  case ISD::CTPOP: {
+    static const uint64_t mask[6] = {
+      0x5555555555555555ULL, 0x3333333333333333ULL,
+      0x0F0F0F0F0F0F0F0FULL, 0x00FF00FF00FF00FFULL,
+      0x0000FFFF0000FFFFULL, 0x00000000FFFFFFFFULL
+    };
+    MVT::ValueType VT = Op.getValueType();
+    MVT::ValueType ShVT = TLI.getShiftAmountTy();
+    unsigned len = getSizeInBits(VT);
+    for (unsigned i = 0; (1U << i) <= (len / 2); ++i) {
+      //x = (x & mask[i][len/8]) + (x >> (1 << i) & mask[i][len/8])
+      SDOperand Tmp2 = DAG.getConstant(mask[i], VT);
+      SDOperand Tmp3 = DAG.getConstant(1ULL << i, ShVT);
+      Op = DAG.getNode(ISD::ADD, VT, DAG.getNode(ISD::AND, VT, Op, Tmp2),
+                       DAG.getNode(ISD::AND, VT,
+                                   DAG.getNode(ISD::SRL, VT, Op, Tmp3),Tmp2));
+    }
+    return Op;
+  }
+  case ISD::CTLZ: {
+    // for now, we do this:
+    // x = x | (x >> 1);
+    // x = x | (x >> 2);
+    // ...
+    // x = x | (x >>16);
+    // x = x | (x >>32); // for 64-bit input
+    // return popcount(~x);
+    //
+    // but see also: http://www.hackersdelight.org/HDcode/nlz.cc
+    MVT::ValueType VT = Op.getValueType();
+    MVT::ValueType ShVT = TLI.getShiftAmountTy();
+    unsigned len = getSizeInBits(VT);
+    for (unsigned i = 0; (1U << i) <= (len / 2); ++i) {
+      SDOperand Tmp3 = DAG.getConstant(1ULL << i, ShVT);
+      Op = DAG.getNode(ISD::OR, VT, Op, DAG.getNode(ISD::SRL, VT, Op, Tmp3));
+    }
+    Op = DAG.getNode(ISD::XOR, VT, Op, DAG.getConstant(~0ULL, VT));
+    return DAG.getNode(ISD::CTPOP, VT, Op);
+  }
+  case ISD::CTTZ: {
+    // for now, we use: { return popcount(~x & (x - 1)); }
+    // unless the target has ctlz but not ctpop, in which case we use:
+    // { return 32 - nlz(~x & (x-1)); }
+    // see also http://www.hackersdelight.org/HDcode/ntz.cc
+    MVT::ValueType VT = Op.getValueType();
+    SDOperand Tmp2 = DAG.getConstant(~0ULL, VT);
+    SDOperand Tmp3 = DAG.getNode(ISD::AND, VT,
+                       DAG.getNode(ISD::XOR, VT, Op, Tmp2),
+                       DAG.getNode(ISD::SUB, VT, Op, DAG.getConstant(1, VT)));
+    // If ISD::CTLZ is legal and CTPOP isn't, then do that instead.
+    if (!TLI.isOperationLegal(ISD::CTPOP, VT) &&
+        TLI.isOperationLegal(ISD::CTLZ, VT))
+      return DAG.getNode(ISD::SUB, VT,
+                         DAG.getConstant(getSizeInBits(VT), VT),
+                         DAG.getNode(ISD::CTLZ, VT, Tmp3));
+    return DAG.getNode(ISD::CTPOP, VT, Tmp3);
+  }
+  }
+}
+
+
 /// ComputeTopDownOrdering - Add the specified node to the Order list if it has
 /// not been visited yet and if all of its operands have already been visited.
 static void ComputeTopDownOrdering(SDNode *N, std::vector<SDNode*> &Order,
@@ -483,7 +581,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       case Promote:
         PromoteOp(Op.getValue(i));
         assert(LegalizedNodes.count(Op) &&
-               "Expansion didn't add legal operands!");
+               "Promotion didn't add legal operands!");
         return LegalizedNodes[Op];
       }
   }
@@ -494,9 +592,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   if (I != LegalizedNodes.end()) return I->second;
 
   SDOperand Tmp1, Tmp2, Tmp3, Tmp4;
-
   SDOperand Result = Op;
-
+  bool isCustom = false;
+  
   switch (Node->getOpcode()) {
   default:
     if (Node->getOpcode() >= ISD::BUILTIN_OP_END) {
@@ -546,7 +644,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case TargetLowering::Custom: {
       SDOperand Tmp = TLI.LowerOperation(Op, DAG);
       if (Tmp.Val) {
-        Result = LegalizeOp(Tmp);
+        Result = Tmp;
         break;
       }
     } // FALLTHROUGH if the target doesn't want to lower this op after all.
@@ -563,7 +661,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                            Node->getOperand(1));
     break;
   case ISD::MERGE_VALUES:
-    return LegalizeOp(Node->getOperand(Op.ResNo));
+    Result = Node->getOperand(Op.ResNo);
+    break;
   case ISD::CopyFromReg:
     Tmp1 = LegalizeOp(Node->getOperand(0));
     Result = Op.getValue(0);
@@ -593,7 +692,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     switch (TLI.getOperationAction(ISD::UNDEF, VT)) {
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Expand:
-    case TargetLowering::Promote:
       if (MVT::isInteger(VT))
         Result = DAG.getConstant(0, VT);
       else if (MVT::isFloatingPoint(VT))
@@ -646,7 +744,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       } else {
         Result = Tmp1;  // chain
       }
-      Result = LegalizeOp(Result);  // Relegalize new nodes.
       break;
     }
     case TargetLowering::Legal:
@@ -673,8 +770,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::DEBUG_LOC:
     assert(Node->getNumOperands() == 4 && "Invalid DEBUG_LOC node!");
     switch (TLI.getOperationAction(ISD::DEBUG_LOC, MVT::Other)) {
-    case TargetLowering::Promote:
-    case TargetLowering::Expand:
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Legal:
       Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
@@ -695,8 +790,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::DEBUG_LABEL:
     assert(Node->getNumOperands() == 2 && "Invalid DEBUG_LABEL node!");
     switch (TLI.getOperationAction(ISD::DEBUG_LABEL, MVT::Other)) {
-    case TargetLowering::Promote:
-    case TargetLowering::Expand:
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Legal:
       Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
@@ -722,7 +815,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     // codegen them.  Targets often have some immediate values that can be
     // efficiently generated into an FP register without a load.  We explicitly
     // leave these constants as ConstantFP nodes for the target to deal with.
-
     ConstantFPSDNode *CFP = cast<ConstantFPSDNode>(Node);
 
     // Check to see if this FP immediate is already legal.
@@ -738,9 +830,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // Otherwise we need to spill the constant to memory.
       bool Extend = false;
 
-      // If a FP immediate is precise when represented as a float, we put it
-      // into the constant pool as a float, even if it's is statically typed
-      // as a double.
+      // If a FP immediate is precise when represented as a float and if the
+      // target can do an extending load from float to double, we put it into
+      // the constant pool as a float, even if it's is statically typed as a
+      // double.
       MVT::ValueType VT = CFP->getValueType(0);
       bool isDouble = VT == MVT::f64;
       ConstantFP *LLVMC = ConstantFP::get(isDouble ? Type::DoubleTy :
@@ -754,8 +847,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Extend = true;
       }
 
-      SDOperand CPIdx = 
-        LegalizeOp(DAG.getConstantPool(LLVMC, TLI.getPointerTy()));
+      SDOperand CPIdx = DAG.getConstantPool(LLVMC, TLI.getPointerTy());
       if (Extend) {
         Result = DAG.getExtLoad(ISD::EXTLOAD, MVT::f64, DAG.getEntryNode(),
                                 CPIdx, DAG.getSrcValue(NULL), MVT::f32);
@@ -770,9 +862,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     // We assume that vector constants are not legal, and will be immediately
     // spilled to the constant pool.
     //
-    // FIXME: revisit this when we have some kind of mechanism by which targets
-    // can decided legality of vector constants, of which there may be very
-    // many.
+    // FIXME: Allow custom lowering to TargetConstantVec's.
     //
     // Create a ConstantPacked, and put it in the constant pool.
     std::vector<Constant*> CV;
@@ -788,7 +878,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                                        cast<ConstantSDNode>(OpN)->getValue()));
     }
     Constant *CP = ConstantPacked::get(CV);
-    SDOperand CPIdx = LegalizeOp(DAG.getConstantPool(CP, TLI.getPointerTy()));
+    SDOperand CPIdx = DAG.getConstantPool(CP, TLI.getPointerTy());
     Result = DAG.getLoad(VT, DAG.getEntryNode(), CPIdx, DAG.getSrcValue(NULL));
     break;
   }
@@ -865,8 +955,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case TargetLowering::Custom:
       Tmp3 = TLI.LowerOperation(Tmp1, DAG);
       if (Tmp3.Val) {
-        Tmp1 = LegalizeOp(Tmp3);
-        Tmp2 = LegalizeOp(Tmp3.getValue(1));
+        Tmp1 = Tmp3;
+        Tmp2 = Tmp3.getValue(1);
       }
       break;
     case TargetLowering::Legal:
@@ -874,8 +964,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     // Since this op produce two values, make sure to remember that we
     // legalized both of them.
-    AddLegalizedOperand(SDOperand(Node, 0), Tmp1);
-    AddLegalizedOperand(SDOperand(Node, 1), Tmp2);
+    AddLegalizedOperand(SDOperand(Node, 0), LegalizeOp(Tmp1));
+    AddLegalizedOperand(SDOperand(Node, 1), LegalizeOp(Tmp2));
     return Op.ResNo ? Tmp2 : Tmp1;
   }
   case ISD::INLINEASM:
@@ -918,9 +1008,19 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Tmp2 = PromoteOp(Node->getOperand(1));  // Promote the condition.
       break;
     }
+
+    // Basic block destination (Op#2) is always legal.
+    if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
+      Result = DAG.getNode(ISD::BRCOND, MVT::Other, Tmp1, Tmp2,
+                           Node->getOperand(2));
       
     switch (TLI.getOperationAction(ISD::BRCOND, MVT::Other)) {  
     default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Legal: break;
+    case TargetLowering::Custom:
+      Tmp1 = TLI.LowerOperation(Result, DAG);
+      if (Tmp1.Val) Result = Tmp1;
+      break;
     case TargetLowering::Expand:
       // Expand brcond's setcc into its constituent parts and create a BR_CC
       // Node.
@@ -938,24 +1038,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                              DAG.getConstant(0, Tmp2.getValueType()),
                              Node->getOperand(2));
       }
-      Result = LegalizeOp(Result);  // Relegalize new nodes.
       break;
-    case TargetLowering::Custom: {
-      SDOperand Tmp =
-        TLI.LowerOperation(DAG.getNode(ISD::BRCOND, Node->getValueType(0),
-                                       Tmp1, Tmp2, Node->getOperand(2)), DAG);
-      if (Tmp.Val) {
-        Result = LegalizeOp(Tmp);
-        break;
-      }
-      // FALLTHROUGH if the target thinks it is legal.
-    }
-    case TargetLowering::Legal:
-      // Basic block destination (Op#2) is always legal.
-      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
-        Result = DAG.getNode(ISD::BRCOND, MVT::Other, Tmp1, Tmp2,
-                             Node->getOperand(2));
-        break;
     }
     break;
   case ISD::BR_CC:
@@ -985,23 +1068,18 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp2 = LegalizeOp(Node->getOperand(2));   // LHS
     Tmp3 = LegalizeOp(Node->getOperand(3));   // RHS
 
+    if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(2) ||
+        Tmp3 != Node->getOperand(3)) {
+      Result = DAG.getNode(ISD::BR_CC, MVT::Other, Tmp1, Node->getOperand(1),
+                           Tmp2, Tmp3, Node->getOperand(4));
+    }
+      
     switch (TLI.getOperationAction(ISD::BR_CC, Tmp3.getValueType())) {
     default: assert(0 && "Unexpected action for BR_CC!");
-    case TargetLowering::Custom: {
-      Tmp4 = DAG.getNode(ISD::BR_CC, MVT::Other, Tmp1, Node->getOperand(1),
-                         Tmp2, Tmp3, Node->getOperand(4));
-      Tmp4 = TLI.LowerOperation(Tmp4, DAG);
-      if (Tmp4.Val) {
-        Result = LegalizeOp(Tmp4);
-        break;
-      }
-    } // FALLTHROUGH if the target doesn't want to lower this op after all.
-    case TargetLowering::Legal:
-      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(2) ||
-          Tmp3 != Node->getOperand(3)) {
-        Result = DAG.getNode(ISD::BR_CC, MVT::Other, Tmp1, Node->getOperand(1),
-                             Tmp2, Tmp3, Node->getOperand(4));
-      }
+    case TargetLowering::Legal: break;
+    case TargetLowering::Custom:
+      Tmp4 = TLI.LowerOperation(Result, DAG);
+      if (Tmp4.Val) Result = Tmp4;
       break;
     }
     break;
@@ -1016,6 +1094,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Tmp2 = PromoteOp(Node->getOperand(1));  // Promote the condition.
       break;
     }
+      
+      
     // If this target does not support BRCONDTWOWAY, lower it to a BRCOND/BR
     // pair.
     switch (TLI.getOperationAction(ISD::BRCONDTWOWAY, MVT::Other)) {
@@ -1047,10 +1127,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         }
       } else {
         Result = DAG.getNode(ISD::BRCOND, MVT::Other, Tmp1, Tmp2,
-                           Node->getOperand(2));
+                             Node->getOperand(2));
         Result = DAG.getNode(ISD::BR, MVT::Other, Result, Node->getOperand(3));
       }
-      Result = LegalizeOp(Result);  // Relegalize new nodes.
       break;
     }
     break;
@@ -1095,7 +1174,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Result = DAG.getNode(ISD::BR, MVT::Other, Result, Node->getOperand(5));
         break;
       }
-      Result = LegalizeOp(Result);  // Relegalize new nodes.
     }
     break;
   case ISD::LOAD: {
@@ -1103,28 +1181,24 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
 
     MVT::ValueType VT = Node->getValueType(0);
+    if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
+      Result = DAG.getLoad(VT, Tmp1, Tmp2, Node->getOperand(2));
+    else
+      Result = SDOperand(Node, 0);
+    
     switch (TLI.getOperationAction(Node->getOpcode(), VT)) {
     default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Custom: {
-      SDOperand Op = DAG.getLoad(VT, Tmp1, Tmp2, Node->getOperand(2));
-      SDOperand Tmp = TLI.LowerOperation(Op, DAG);
-      if (Tmp.Val) {
-        Result = LegalizeOp(Tmp);
+    case TargetLowering::Custom:
+      Tmp1 = TLI.LowerOperation(Result, DAG);
+      if (Tmp1.Val) {
         // Since loads produce two values, make sure to remember that we 
         // legalized both of them.
-        AddLegalizedOperand(SDOperand(Node, 0), Result);
-        AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
-        return Result.getValue(Op.ResNo);
+        AddLegalizedOperand(SDOperand(Node, 0), LegalizeOp(Tmp1));
+        AddLegalizedOperand(SDOperand(Node, 1), LegalizeOp(Tmp1.getValue(1)));
+        return Tmp1.getValue(Op.ResNo);
       }
       // FALLTHROUGH if the target thinks it is legal.
-    }
     case TargetLowering::Legal:
-      if (Tmp1 != Node->getOperand(0) ||
-          Tmp2 != Node->getOperand(1))
-        Result = DAG.getLoad(VT, Tmp1, Tmp2, Node->getOperand(2));
-      else
-        Result = SDOperand(Node, 0);
-
       // Since loads produce two values, make sure to remember that we legalized
       // both of them.
       AddLegalizedOperand(SDOperand(Node, 0), Result);
@@ -1152,34 +1226,30 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
       return Result.getValue(Op.ResNo);
 
-    case TargetLowering::Custom: {
-      SDOperand Op = DAG.getExtLoad(Node->getOpcode(), Node->getValueType(0),
-                                    Tmp1, Tmp2, Node->getOperand(2),
-                                    SrcVT);
-      SDOperand Tmp = TLI.LowerOperation(Op, DAG);
-      if (Tmp.Val) {
-        Result = LegalizeOp(Tmp);
-        // Since loads produce two values, make sure to remember that we legalized
-        // both of them.
-        AddLegalizedOperand(SDOperand(Node, 0), Result);
-        AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
-        return Result.getValue(Op.ResNo);
-      }
-      // FALLTHROUGH if the target thinks it is legal.
-    }
+    case TargetLowering::Custom:
+      isCustom = true;
+      // FALLTHROUGH
     case TargetLowering::Legal:
-      if (Tmp1 != Node->getOperand(0) ||
-          Tmp2 != Node->getOperand(1))
+      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
         Result = DAG.getExtLoad(Node->getOpcode(), Node->getValueType(0),
                                 Tmp1, Tmp2, Node->getOperand(2), SrcVT);
       else
         Result = SDOperand(Node, 0);
+      Tmp1 = Result.getValue(1);
+      
+      if (isCustom) {
+        Tmp3 = TLI.LowerOperation(Tmp3, DAG);
+        if (Tmp3.Val) {
+          Result = LegalizeOp(Tmp3);
+          Tmp1 = LegalizeOp(Tmp3.getValue(1));
+        }
+      }
 
       // Since loads produce two values, make sure to remember that we legalized
       // both of them.
       AddLegalizedOperand(SDOperand(Node, 0), Result);
-      AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
-      return Result.getValue(Op.ResNo);
+      AddLegalizedOperand(SDOperand(Node, 1), Tmp1);
+      return Op.ResNo ? Tmp1 : Result;
     case TargetLowering::Expand:
       // f64 = EXTLOAD f32 should expand to LOAD, FP_EXTEND
       if (SrcVT == MVT::f32 && Node->getValueType(0) == MVT::f64) {
@@ -1189,9 +1259,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Load = LegalizeOp(Load);
         AddLegalizedOperand(SDOperand(Node, 0), Result);
         AddLegalizedOperand(SDOperand(Node, 1), Load.getValue(1));
-        if (Op.ResNo)
-          return Load.getValue(1);
-        return Result;
+        return Op.ResNo ? Load.getValue(1) : Result;
       }
       assert(Node->getOpcode() != ISD::EXTLOAD &&
              "EXTLOAD should always be supported!");
@@ -1209,9 +1277,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       ValRes = LegalizeOp(ValRes);  // Relegalize new nodes.
       AddLegalizedOperand(SDOperand(Node, 0), ValRes);
       AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
-      if (Op.ResNo)
-        return Result.getValue(1);
-      return ValRes;
+      return Op.ResNo ? Result.getValue(1) : ValRes;
     }
     assert(0 && "Unreachable");
   }
@@ -1233,7 +1299,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Result = DAG.getNode(ISD::TRUNCATE, Node->getValueType(0), 
                              Node->getOperand(0));
       }
-      Result = LegalizeOp(Result);
       break;
     case Expand:
       // Get both the low and high parts.
@@ -1328,16 +1393,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     switch (TLI.getOperationAction(Node->getOpcode(),
                                    Node->getValueType(0))) {
     default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Custom: {
-      SDOperand Tmp = TLI.LowerOperation(Result, DAG);
-      if (Tmp.Val) {
-        Result = LegalizeOp(Tmp);
-        break;
-      }
-      // FALLTHROUGH if the target thinks it is legal.
-    }
-    case TargetLowering::Legal:
-      // Nothing to do.
+    case TargetLowering::Legal: break;
+    case TargetLowering::Custom:
+      Tmp1 = TLI.LowerOperation(Result, DAG);
+      if (Tmp1.Val) Result = Tmp1;
       break;
     }
     break;
@@ -1346,47 +1405,39 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp2 = LegalizeOp(Node->getOperand(2));  // Legalize the pointer.
 
     // Turn 'store float 1.0, Ptr' -> 'store int 0x12345678, Ptr'
+    // FIXME: We shouldn't do this for TargetConstantFP's.
     if (ConstantFPSDNode *CFP =dyn_cast<ConstantFPSDNode>(Node->getOperand(1))){
       if (CFP->getValueType(0) == MVT::f32) {
         Result = DAG.getNode(ISD::STORE, MVT::Other, Tmp1,
                              DAG.getConstant(FloatToBits(CFP->getValue()),
                                              MVT::i32),
-                             Tmp2,
-                             Node->getOperand(3));
+                             Tmp2, Node->getOperand(3));
       } else {
         assert(CFP->getValueType(0) == MVT::f64 && "Unknown FP type!");
         Result = DAG.getNode(ISD::STORE, MVT::Other, Tmp1,
                              DAG.getConstant(DoubleToBits(CFP->getValue()),
                                              MVT::i64),
-                             Tmp2,
-                             Node->getOperand(3));
+                             Tmp2, Node->getOperand(3));
       }
-      Result = LegalizeOp(Result);
       break;
     }
 
     switch (getTypeAction(Node->getOperand(1).getValueType())) {
     case Legal: {
       SDOperand Val = LegalizeOp(Node->getOperand(1));
-      if (Val != Node->getOperand(1) || Tmp1 != Node->getOperand(0) ||
+      if (Tmp1 != Node->getOperand(0) || Val != Node->getOperand(1) ||
           Tmp2 != Node->getOperand(2))
         Result = DAG.getNode(ISD::STORE, MVT::Other, Tmp1, Val, Tmp2,
                              Node->getOperand(3));
 
       MVT::ValueType VT = Result.Val->getOperand(1).getValueType();
-      switch (TLI.getOperationAction(Result.Val->getOpcode(), VT)) {
-        default: assert(0 && "This action is not supported yet!");
-        case TargetLowering::Custom: {
-          SDOperand Tmp = TLI.LowerOperation(Result, DAG);
-          if (Tmp.Val) {
-            Result = LegalizeOp(Tmp);
-            break;
-          }
-          // FALLTHROUGH if the target thinks it is legal.
-        }
-        case TargetLowering::Legal:
-          // Nothing to do.
-          break;
+      switch (TLI.getOperationAction(ISD::STORE, VT)) {
+      default: assert(0 && "This action is not supported yet!");
+      case TargetLowering::Legal:  break;
+      case TargetLowering::Custom:
+        Tmp1 = TLI.LowerOperation(Result, DAG);
+        if (Tmp1.Val) Result = Tmp1;
+        break;
       }
       break;
     }
@@ -1400,7 +1451,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
     case Expand:
       SDOperand Lo, Hi;
-      unsigned IncrementSize;
       ExpandOp(Node->getOperand(1), Lo, Hi);
 
       if (!TLI.isLittleEndian())
@@ -1411,6 +1461,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // If this is a vector type, then we have to calculate the increment as
       // the product of the element size in bytes, and the number of elements
       // in the high half of the vector.
+      unsigned IncrementSize;
       if (MVT::Vector == Hi.getValueType()) {
         unsigned NumElems = cast<ConstantSDNode>(Hi.getOperand(2))->getValue();
         MVT::ValueType EVT = cast<VTSDNode>(Hi.getOperand(3))->getVT();
@@ -1422,7 +1473,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                          getIntPtrConstant(IncrementSize));
       assert(isTypeLegal(Tmp2.getValueType()) &&
              "Pointers must be legal!");
-      //Again, claiming both parts of the store came form the same Instr
+      // FIXME: This sets the srcvalue of both halves to be the same, which is
+      // wrong.
       Hi = DAG.getNode(ISD::STORE, MVT::Other, Tmp1, Hi, Tmp2,
                        Node->getOperand(3));
       Result = DAG.getNode(ISD::TokenFactor, MVT::Other, Lo, Hi);
@@ -1445,40 +1497,40 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Ops.push_back(Tmp1);
       Result = DAG.getNode(ISD::STACKSAVE, VTs, Ops);
     }
-      
+    
+    Tmp1 = Result.getValue(1);
+    
     switch (TLI.getOperationAction(ISD::STACKSAVE, MVT::Other)) {
     default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Custom: {
-      SDOperand Tmp = TLI.LowerOperation(Result, DAG);
-      if (Tmp.Val) {
-        Result = LegalizeOp(Tmp);
-        break;
+    case TargetLowering::Legal: break;
+    case TargetLowering::Custom:
+      Tmp2 = TLI.LowerOperation(Result, DAG);
+      if (Tmp2.Val) {
+        Result = LegalizeOp(Tmp2);
+        Tmp1 = LegalizeOp(Tmp2.getValue(1));
       }
-      // FALLTHROUGH if the target thinks it is legal.
-    }
-    case TargetLowering::Legal:
-      // Since stacksave produce two values, make sure to remember that we
-      // legalized both of them.
-      AddLegalizedOperand(SDOperand(Node, 0), Result);
-      AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
-      return Result.getValue(Op.ResNo);
+      break;
     case TargetLowering::Expand:
       // Expand to CopyFromReg if the target set 
       // StackPointerRegisterToSaveRestore.
       if (unsigned SP = TLI.getStackPointerRegisterToSaveRestore()) {
-        Tmp1 = DAG.getCopyFromReg(Tmp1, SP, 
+        Tmp2 = DAG.getCopyFromReg(Result.getOperand(0), SP,
                                   Node->getValueType(0));
-        AddLegalizedOperand(SDOperand(Node, 0), Tmp1);
-        AddLegalizedOperand(SDOperand(Node, 1), Tmp1.getValue(1));
-        return Tmp1.getValue(Op.ResNo);
+        Result = Tmp2;
+        Tmp1 = Tmp2.getValue(1);
       } else {
-        Tmp1 = DAG.getNode(ISD::UNDEF, Node->getValueType(0));
-        AddLegalizedOperand(SDOperand(Node, 0), Tmp1);
-        AddLegalizedOperand(SDOperand(Node, 1), Node->getOperand(0));
-        return Op.ResNo ? Node->getOperand(0) : Tmp1;
+        Result = DAG.getNode(ISD::UNDEF, Node->getValueType(0));
+        Tmp1 = Node->getOperand(0);
       }
+      break;
     }
-    
+
+    // Since stacksave produce two values, make sure to remember that we
+    // legalized both of them.
+    AddLegalizedOperand(SDOperand(Node, 0), Result);
+    AddLegalizedOperand(SDOperand(Node, 1), Tmp1);
+    return Op.ResNo ? Tmp1 : Result;
+
   case ISD::STACKRESTORE:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
@@ -1487,15 +1539,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       
     switch (TLI.getOperationAction(ISD::STACKRESTORE, MVT::Other)) {
     default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Custom: {
-      SDOperand Tmp = TLI.LowerOperation(Result, DAG);
-      if (Tmp.Val) {
-        Result = LegalizeOp(Tmp);
-        break;
-      }
-      // FALLTHROUGH if the target thinks it is legal.
-    }
-    case TargetLowering::Legal:
+    case TargetLowering::Legal: break;
+    case TargetLowering::Custom:
+      Tmp1 = TLI.LowerOperation(Result, DAG);
+      if (Tmp1.Val) Result = Tmp1;
       break;
     case TargetLowering::Expand:
       // Expand to CopyToReg if the target set 
@@ -1530,45 +1577,34 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     Tmp3 = LegalizeOp(Node->getOperand(2));  // Legalize the pointer.
 
-    switch (getTypeAction(Node->getOperand(1).getValueType())) {
-    case Promote:
-    case Expand:
-      assert(0 && "Cannot handle illegal TRUNCSTORE yet!");
-    case Legal:
-      Tmp2 = LegalizeOp(Node->getOperand(1));
-      
-      // The only promote case we handle is TRUNCSTORE:i1 X into
-      //   -> TRUNCSTORE:i8 (and X, 1)
-      if (cast<VTSDNode>(Node->getOperand(4))->getVT() == MVT::i1 &&
-          TLI.getOperationAction(ISD::TRUNCSTORE, MVT::i1) == 
-                TargetLowering::Promote) {
-        // Promote the bool to a mask then store.
-        Tmp2 = DAG.getNode(ISD::AND, Tmp2.getValueType(), Tmp2,
-                           DAG.getConstant(1, Tmp2.getValueType()));
-        Result = DAG.getNode(ISD::TRUNCSTORE, MVT::Other, Tmp1, Tmp2, Tmp3,
-                             Node->getOperand(3), DAG.getValueType(MVT::i8));
+    assert(isTypeLegal(Node->getOperand(1).getValueType()) &&
+           "Cannot handle illegal TRUNCSTORE yet!");
+    Tmp2 = LegalizeOp(Node->getOperand(1));
+    
+    // The only promote case we handle is TRUNCSTORE:i1 X into
+    //   -> TRUNCSTORE:i8 (and X, 1)
+    if (cast<VTSDNode>(Node->getOperand(4))->getVT() == MVT::i1 &&
+        TLI.getOperationAction(ISD::TRUNCSTORE, MVT::i1) == 
+              TargetLowering::Promote) {
+      // Promote the bool to a mask then store.
+      Tmp2 = DAG.getNode(ISD::AND, Tmp2.getValueType(), Tmp2,
+                         DAG.getConstant(1, Tmp2.getValueType()));
+      Result = DAG.getNode(ISD::TRUNCSTORE, MVT::Other, Tmp1, Tmp2, Tmp3,
+                           Node->getOperand(3), DAG.getValueType(MVT::i8));
 
-      } else if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) ||
-                 Tmp3 != Node->getOperand(2)) {
-        Result = DAG.getNode(ISD::TRUNCSTORE, MVT::Other, Tmp1, Tmp2, Tmp3,
-                             Node->getOperand(3), Node->getOperand(4));
-      }
+    } else if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) ||
+               Tmp3 != Node->getOperand(2)) {
+      Result = DAG.getNode(ISD::TRUNCSTORE, MVT::Other, Tmp1, Tmp2, Tmp3,
+                           Node->getOperand(3), Node->getOperand(4));
+    }
 
-      MVT::ValueType StVT = cast<VTSDNode>(Result.Val->getOperand(4))->getVT();
-      switch (TLI.getOperationAction(Result.Val->getOpcode(), StVT)) {
-        default: assert(0 && "This action is not supported yet!");
-        case TargetLowering::Custom: {
-          SDOperand Tmp = TLI.LowerOperation(Result, DAG);
-          if (Tmp.Val) {
-            Result = LegalizeOp(Tmp);
-            break;
-          }
-          // FALLTHROUGH if the target thinks it is legal.
-        }
-        case TargetLowering::Legal:
-          // Nothing to do.
-          break;
-      }
+    MVT::ValueType StVT = cast<VTSDNode>(Result.Val->getOperand(4))->getVT();
+    switch (TLI.getOperationAction(Result.Val->getOpcode(), StVT)) {
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Legal: break;
+    case TargetLowering::Custom:
+      Tmp1 = TLI.LowerOperation(Result, DAG);
+      if (Tmp1.Val) Result = Tmp1;
       break;
     }
     break;
@@ -1586,8 +1622,19 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp2 = LegalizeOp(Node->getOperand(1));   // TrueVal
     Tmp3 = LegalizeOp(Node->getOperand(2));   // FalseVal
 
+    if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) ||
+        Tmp3 != Node->getOperand(2))
+      Result = DAG.getNode(ISD::SELECT, Node->getValueType(0),
+                           Tmp1, Tmp2, Tmp3);
+      
     switch (TLI.getOperationAction(ISD::SELECT, Tmp2.getValueType())) {
     default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Legal: break;
+    case TargetLowering::Custom: {
+      Tmp1 = TLI.LowerOperation(Result, DAG);
+      if (Tmp1.Val) Result = Tmp1;
+      break;
+    }
     case TargetLowering::Expand:
       if (Tmp1.getOpcode() == ISD::SETCC) {
         Result = DAG.getSelectCC(Tmp1.getOperand(0), Tmp1.getOperand(1), 
@@ -1601,34 +1648,17 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                                  DAG.getConstant(0, Tmp1.getValueType()),
                                  Tmp2, Tmp3, ISD::SETNE);
       }
-      Result = LegalizeOp(Result);  // Relegalize new nodes.
-      break;
-    case TargetLowering::Custom: {
-      SDOperand Tmp =
-        TLI.LowerOperation(DAG.getNode(ISD::SELECT, Node->getValueType(0),
-                                       Tmp1, Tmp2, Tmp3), DAG);
-      if (Tmp.Val) {
-        Result = LegalizeOp(Tmp);
-        break;
-      }
-      // FALLTHROUGH if the target thinks it is legal.
-    }
-    case TargetLowering::Legal:
-      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) ||
-          Tmp3 != Node->getOperand(2))
-        Result = DAG.getNode(ISD::SELECT, Node->getValueType(0),
-                             Tmp1, Tmp2, Tmp3);
       break;
     case TargetLowering::Promote: {
       MVT::ValueType NVT =
         TLI.getTypeToPromoteTo(ISD::SELECT, Tmp2.getValueType());
       unsigned ExtOp, TruncOp;
       if (MVT::isInteger(Tmp2.getValueType())) {
-        ExtOp = ISD::ANY_EXTEND;
-        TruncOp  = ISD::TRUNCATE;
+        ExtOp   = ISD::ANY_EXTEND;
+        TruncOp = ISD::TRUNCATE;
       } else {
-        ExtOp = ISD::FP_EXTEND;
-        TruncOp  = ISD::FP_ROUND;
+        ExtOp   = ISD::FP_EXTEND;
+        TruncOp = ISD::FP_ROUND;
       }
       // Promote each of the values to the new type.
       Tmp2 = DAG.getNode(ExtOp, NVT, Tmp2);
@@ -1636,7 +1666,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // Perform the larger operation, then round down.
       Result = DAG.getNode(ISD::SELECT, NVT, Tmp1, Tmp2,Tmp3);
       Result = DAG.getNode(TruncOp, Node->getValueType(0), Result);
-      Result = LegalizeOp(Result);
       break;
     }
     }
@@ -1646,29 +1675,22 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp4 = LegalizeOp(Node->getOperand(3));   // False
     
     if (isTypeLegal(Node->getOperand(0).getValueType())) {
+      Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
+      Tmp2 = LegalizeOp(Node->getOperand(1));   // RHS
+      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) ||
+          Tmp3 != Node->getOperand(2) || Tmp4 != Node->getOperand(3)) {
+        Result = DAG.getNode(ISD::SELECT_CC, Node->getValueType(0), Tmp1,Tmp2, 
+                             Tmp3, Tmp4, Node->getOperand(4));
+      }
+      
       // Everything is legal, see if we should expand this op or something.
       switch (TLI.getOperationAction(ISD::SELECT_CC,
                                      Node->getOperand(0).getValueType())) {
       default: assert(0 && "This action is not supported yet!");
-      case TargetLowering::Custom: {
-        SDOperand Tmp =
-          TLI.LowerOperation(DAG.getNode(ISD::SELECT_CC, Node->getValueType(0),
-                                         Node->getOperand(0),
-                                         Node->getOperand(1), Tmp3, Tmp4,
-                                         Node->getOperand(4)), DAG);
-        if (Tmp.Val) {
-          Result = LegalizeOp(Tmp);
-          break;
-        }
-      } // FALLTHROUGH if the target can't lower this operation after all.
-      case TargetLowering::Legal:
-        Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
-        Tmp2 = LegalizeOp(Node->getOperand(1));   // RHS
-        if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) ||
-            Tmp3 != Node->getOperand(2) || Tmp4 != Node->getOperand(3)) {
-          Result = DAG.getNode(ISD::SELECT_CC, Node->getValueType(0), Tmp1,Tmp2, 
-                               Tmp3, Tmp4, Node->getOperand(4));
-        }
+      case TargetLowering::Legal: break;
+      case TargetLowering::Custom:
+        Tmp1 = TLI.LowerOperation(Result, DAG);
+        if (Tmp1.Val) Result = Tmp1;
         break;
       }
       break;
@@ -1802,10 +1824,20 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       }
     }
 
-    switch(TLI.getOperationAction(ISD::SETCC,
-                                  Node->getOperand(0).getValueType())) {
-    default: 
-      assert(0 && "Cannot handle this action for SETCC yet!");
+    switch (TLI.getOperationAction(ISD::SETCC,
+                                   Node->getOperand(0).getValueType())) {
+    default: assert(0 && "Cannot handle this action for SETCC yet!");
+    case TargetLowering::Custom:
+      isCustom = true;
+      // FALLTHROUGH.
+    case TargetLowering::Legal:
+      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
+        Result = DAG.getNode(ISD::SETCC, Node->getValueType(0), Tmp1, Tmp2,
+                             Node->getOperand(2));
+      if (isCustom) {
+        Tmp3 = TLI.LowerOperation(Result, DAG);
+        if (Tmp3.Val) Result = Tmp3;
+      }
       break;
     case TargetLowering::Promote: {
       // First step, figure out the appropriate operation to use.
@@ -1839,21 +1871,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Result = LegalizeOp(Result);
       break;
     }
-    case TargetLowering::Custom: {
-      SDOperand Tmp =
-        TLI.LowerOperation(DAG.getNode(ISD::SETCC, Node->getValueType(0),
-                                       Tmp1, Tmp2, Node->getOperand(2)), DAG);
-      if (Tmp.Val) {
-        Result = LegalizeOp(Tmp);
-        break;
-      }
-      // FALLTHROUGH if the target thinks it is legal.
-    }
-    case TargetLowering::Legal:
-      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
-        Result = DAG.getNode(ISD::SETCC, Node->getValueType(0), Tmp1, Tmp2,
-                             Node->getOperand(2));
-      break;
     case TargetLowering::Expand:
       // Expand a setcc node into a select_cc of the same condition, lhs, and
       // rhs that selects between const 1 (true) and const 0 (false).
@@ -1865,7 +1882,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       break;
     }
     break;
-
   case ISD::MEMSET:
   case ISD::MEMCPY:
   case ISD::MEMMOVE: {
@@ -1915,16 +1931,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
     switch (TLI.getOperationAction(Node->getOpcode(), MVT::Other)) {
     default: assert(0 && "This action not implemented for this operation!");
-    case TargetLowering::Custom: {
-      SDOperand Tmp =
-        TLI.LowerOperation(DAG.getNode(Node->getOpcode(), MVT::Other, Tmp1, 
-                                       Tmp2, Tmp3, Tmp4, Tmp5), DAG);
-      if (Tmp.Val) {
-        Result = LegalizeOp(Tmp);
-        break;
-      }
-      // FALLTHROUGH if the target thinks it is legal.
-    }
+    case TargetLowering::Custom:
+      isCustom = true;
+      // FALLTHROUGH
     case TargetLowering::Legal:
       if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) ||
           Tmp3 != Node->getOperand(2) || Tmp4 != Node->getOperand(3) ||
@@ -1933,6 +1942,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Ops.push_back(Tmp1); Ops.push_back(Tmp2); Ops.push_back(Tmp3);
         Ops.push_back(Tmp4); Ops.push_back(Tmp5);
         Result = DAG.getNode(Node->getOpcode(), MVT::Other, Ops);
+      }
+      if (isCustom) {
+        Tmp1 = TLI.LowerOperation(Result, DAG);
+        if (Tmp1.Val) Result = Tmp1;
       }
       break;
     case TargetLowering::Expand: {
@@ -1964,7 +1977,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       std::pair<SDOperand,SDOperand> CallResult =
         TLI.LowerCallTo(Tmp1, Type::VoidTy, false, CallingConv::C, false,
                         DAG.getExternalSymbol(FnName, IntPtr), Args, DAG);
-      Result = LegalizeOp(CallResult.second);
+      Result = CallResult.second;
       break;
     }
     }
@@ -2047,7 +2060,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Result = DAG.getNode(ISD::STORE, MVT::Other, Node->getOperand(0),
                            Node->getOperand(1), Node->getOperand(2),
                            DAG.getSrcValue(NULL));
-      Result = LegalizeOp(Result);
       break;
     }
     break;
@@ -2071,12 +2083,13 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     switch (TLI.getOperationAction(Node->getOpcode(),
                                    Node->getValueType(0))) {
     default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Custom: {
-      SDOperand Tmp = TLI.LowerOperation(Result, DAG);
-      if (Tmp.Val) {
-        SDOperand Tmp2, RetVal(0,0);
+    case TargetLowering::Legal: break;
+    case TargetLowering::Custom:
+      Tmp1 = TLI.LowerOperation(Result, DAG);
+      if (Tmp1.Val) {
+        SDOperand Tmp2, RetVal(0, 0);
         for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i) {
-          Tmp2 = LegalizeOp(Tmp.getValue(i));
+          Tmp2 = LegalizeOp(Tmp1.getValue(i));
           AddLegalizedOperand(SDOperand(Node, i), Tmp2);
           if (i == Op.ResNo)
             RetVal = Tmp2;
@@ -2084,10 +2097,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         assert(RetVal.Val && "Illegal result number");
         return RetVal;
       }
-      // FALLTHROUGH if the target thinks it is legal.
-    }
-    case TargetLowering::Legal:
-      // Nothing to do.
       break;
     }
 
@@ -2126,23 +2135,17 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Tmp2 = PromoteOp(Node->getOperand(1));  // Promote the RHS.
       break;
     }
+      
+    if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
+      Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1,Tmp2);
+      
     switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
-    case TargetLowering::Custom: {
-      Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1, Tmp2);
-      SDOperand Tmp = TLI.LowerOperation(Result, DAG);
-      if (Tmp.Val) {
-	Tmp = LegalizeOp(Tmp);  // Relegalize input.
-	AddLegalizedOperand(Op, Tmp);
-	return Tmp;
-      } //else it was considered legal and we fall through
-    }
-    case TargetLowering::Legal:
-      if (Tmp1 != Node->getOperand(0) ||
-	  Tmp2 != Node->getOperand(1))
-	Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1,Tmp2);
+    default: assert(0 && "Operation not supported");
+    case TargetLowering::Legal: break;
+    case TargetLowering::Custom:
+      Tmp1 = TLI.LowerOperation(Result, DAG);
+      if (Tmp1.Val) Result = Tmp1;
       break;
-    default:
-      assert(0 && "Operation not supported");
     }
     break;
 
@@ -2152,20 +2155,20 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp1 = LegalizeOp(Node->getOperand(0));   // Lo
     Tmp2 = LegalizeOp(Node->getOperand(1));   // Hi
     switch (TLI.getOperationAction(ISD::BUILD_PAIR, PairTy)) {
+    case TargetLowering::Promote:
+    case TargetLowering::Custom:
+      assert(0 && "Cannot promote/custom this yet!");
     case TargetLowering::Legal:
       if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
         Result = DAG.getNode(ISD::BUILD_PAIR, PairTy, Tmp1, Tmp2);
       break;
-    case TargetLowering::Promote:
-    case TargetLowering::Custom:
-      assert(0 && "Cannot promote/custom this yet!");
     case TargetLowering::Expand:
       Tmp1 = DAG.getNode(ISD::ZERO_EXTEND, PairTy, Tmp1);
       Tmp2 = DAG.getNode(ISD::ANY_EXTEND, PairTy, Tmp2);
       Tmp2 = DAG.getNode(ISD::SHL, PairTy, Tmp2,
                          DAG.getConstant(MVT::getSizeInBits(PairTy)/2, 
                                          TLI.getShiftAmountTy()));
-      Result = LegalizeOp(DAG.getNode(ISD::OR, PairTy, Tmp1, Tmp2));
+      Result = DAG.getNode(ISD::OR, PairTy, Tmp1, Tmp2);
       break;
     }
     break;
@@ -2176,28 +2179,26 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::FREM:
     Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
     Tmp2 = LegalizeOp(Node->getOperand(1));   // RHS
+
     switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
-    case TargetLowering::Custom: {
-      Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1,Tmp2);
-      SDOperand Tmp = TLI.LowerOperation(Result, DAG);
-      if (Tmp.Val) {
-        Tmp = LegalizeOp(Tmp);  // Relegalize input.
-        AddLegalizedOperand(Op, Tmp);
-        return Tmp;
-      } //else it was considered legal and we fall through
-    }
+    case TargetLowering::Promote: assert(0 && "Cannot promote this yet!");
+    case TargetLowering::Custom:
+      isCustom = true;
+      // FALLTHROUGH
     case TargetLowering::Legal:
-      if (Tmp1 != Node->getOperand(0) ||
-          Tmp2 != Node->getOperand(1))
-        Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1,
-                             Tmp2);
+      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
+        Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), 
+                             Tmp1, Tmp2);
+      if (isCustom) {
+        Tmp1 = TLI.LowerOperation(Result, DAG);
+        if (Tmp1.Val) Result = Tmp1;
+      }
       break;
-    case TargetLowering::Promote:
-      assert(0 && "Cannot promote handle this yet!");
     case TargetLowering::Expand:
       if (MVT::isInteger(Node->getValueType(0))) {
+        // X % Y -> X-X/Y*Y
         MVT::ValueType VT = Node->getValueType(0);
-        unsigned Opc = (Node->getOpcode() == ISD::UREM) ? ISD::UDIV : ISD::SDIV;
+        unsigned Opc = Node->getOpcode() == ISD::UREM ? ISD::UDIV : ISD::SDIV;
         Result = DAG.getNode(Opc, VT, Tmp1, Tmp2);
         Result = DAG.getNode(ISD::MUL, VT, Result, Tmp2);
         Result = DAG.getNode(ISD::SUB, VT, Tmp1, Result);
@@ -2210,29 +2211,31 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       break;
     }
     break;
-
   case ISD::VAARG: {
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
 
-    MVT::ValueType VT = Node->getValueType(0);
+    MVT::ValueType VT;
     switch (TLI.getOperationAction(Node->getOpcode(), MVT::Other)) {
     default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Custom: {
-      SDOperand Op = DAG.getVAArg(VT, Tmp1, Tmp2, Node->getOperand(2));
-      SDOperand Tmp = TLI.LowerOperation(Op, DAG);
-      if (Tmp.Val) {
-        Result = LegalizeOp(Tmp);
-        break;
-      }
-      // FALLTHROUGH if the target thinks it is legal.
-    }
+    case TargetLowering::Custom:
+      isCustom = true;
+      // FALLTHROUGH
     case TargetLowering::Legal:
-      if (Tmp1 != Node->getOperand(0) ||
-          Tmp2 != Node->getOperand(1))
+      VT = Node->getValueType(0);
+      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
         Result = DAG.getVAArg(VT, Tmp1, Tmp2, Node->getOperand(2));
       else
         Result = SDOperand(Node, 0);
+      Tmp1 = Result.getValue(1);
+
+      if (isCustom) {
+        Tmp2 = TLI.LowerOperation(Result, DAG);
+        if (Tmp2.Val) {
+          Result = LegalizeOp(Tmp2);
+          Tmp1 = LegalizeOp(Tmp2.getValue(1));
+        }
+      }
       break;
     case TargetLowering::Expand: {
       SDOperand VAList = DAG.getLoad(TLI.getPointerTy(), Tmp1, Tmp2,
@@ -2246,6 +2249,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                          Node->getOperand(2));
       // Load the actual argument out of the pointer VAList
       Result = DAG.getLoad(VT, Tmp3, VAList, DAG.getSrcValue(0));
+      Tmp1 = LegalizeOp(Result.getValue(1));
       Result = LegalizeOp(Result);
       break;
     }
@@ -2253,8 +2257,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     // Since VAARG produces two values, make sure to remember that we 
     // legalized both of them.
     AddLegalizedOperand(SDOperand(Node, 0), Result);
-    AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
-    return Result.getValue(Op.ResNo);
+    AddLegalizedOperand(SDOperand(Node, 1), Tmp1);
+    return Op.ResNo ? Tmp1 : Result;
   }
     
   case ISD::VACOPY: 
@@ -2264,22 +2268,18 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
     switch (TLI.getOperationAction(ISD::VACOPY, MVT::Other)) {
     default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Custom: {
-      SDOperand Op = DAG.getNode(ISD::VACOPY, MVT::Other, Tmp1, Tmp2, Tmp3,
-                                 Node->getOperand(3), Node->getOperand(4));
-      SDOperand Tmp = TLI.LowerOperation(Op, DAG);
-      if (Tmp.Val) {
-        Result = LegalizeOp(Tmp);
-        break;
-      }
-      // FALLTHROUGH if the target thinks it is legal.
-    }
+    case TargetLowering::Custom:
+      isCustom = true;
+      // FALLTHROUGH
     case TargetLowering::Legal:
-      if (Tmp1 != Node->getOperand(0) ||
-          Tmp2 != Node->getOperand(1) ||
+      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) ||
           Tmp3 != Node->getOperand(2))
         Result = DAG.getNode(ISD::VACOPY, MVT::Other, Tmp1, Tmp2, Tmp3,
                              Node->getOperand(3), Node->getOperand(4));
+      if (isCustom) {
+        Tmp1 = TLI.LowerOperation(Result, DAG);
+        if (Tmp1.Val) Result = Tmp1;
+      }
       break;
     case TargetLowering::Expand:
       // This defaults to loading a pointer from the input and storing it to the
@@ -2287,7 +2287,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Tmp4 = DAG.getLoad(TLI.getPointerTy(), Tmp1, Tmp3, Node->getOperand(3));
       Result = DAG.getNode(ISD::STORE, MVT::Other, Tmp4.getValue(1), Tmp4, Tmp2,
                            Node->getOperand(4));
-      Result = LegalizeOp(Result);
       break;
     }
     break;
@@ -2298,21 +2297,17 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
     switch (TLI.getOperationAction(ISD::VAEND, MVT::Other)) {
     default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Custom: {
-      SDOperand Op = DAG.getNode(ISD::VAEND, MVT::Other, Tmp1, Tmp2, 
-                                 Node->getOperand(2));
-      SDOperand Tmp = TLI.LowerOperation(Op, DAG);
-      if (Tmp.Val) {
-        Result = LegalizeOp(Tmp);
-        break;
-      }
-      // FALLTHROUGH if the target thinks it is legal.
-    }
+    case TargetLowering::Custom:
+      isCustom = true;
+      // FALLTHROUGH
     case TargetLowering::Legal:
-      if (Tmp1 != Node->getOperand(0) ||
-          Tmp2 != Node->getOperand(1))
+      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
         Result = DAG.getNode(ISD::VAEND, MVT::Other, Tmp1, Tmp2, 
                              Node->getOperand(2));
+      if (isCustom) {
+        Tmp1 = TLI.LowerOperation(Tmp1, DAG);
+        if (Tmp1.Val) Result = Tmp1;
+      }
       break;
     case TargetLowering::Expand:
       Result = Tmp1; // Default to a no-op, return the chain
@@ -2324,23 +2319,16 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
 
+    if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
+      Result = DAG.getNode(ISD::VASTART, MVT::Other, Tmp1, Tmp2, 
+                           Node->getOperand(2));
+      
     switch (TLI.getOperationAction(ISD::VASTART, MVT::Other)) {
     default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Custom: {
-      SDOperand Op = DAG.getNode(ISD::VASTART, MVT::Other, Tmp1, Tmp2, 
-                                 Node->getOperand(2));
-      SDOperand Tmp = TLI.LowerOperation(Op, DAG);
-      if (Tmp.Val) {
-        Result = LegalizeOp(Tmp);
-        break;
-      }
-      // FALLTHROUGH if the target thinks it is legal.
-    }
-    case TargetLowering::Legal:
-      if (Tmp1 != Node->getOperand(0) ||
-          Tmp2 != Node->getOperand(1))
-        Result = DAG.getNode(ISD::VASTART, MVT::Other, Tmp1, Tmp2, 
-                             Node->getOperand(2));
+    case TargetLowering::Legal: break;
+    case TargetLowering::Custom:
+      Tmp1 = TLI.LowerOperation(Result, DAG);
+      if (Tmp1.Val) Result = Tmp1;
       break;
     }
     break;
@@ -2349,110 +2337,36 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::ROTR:
     Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
     Tmp2 = LegalizeOp(Node->getOperand(1));   // RHS
-    switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
-    case TargetLowering::Custom:
-    case TargetLowering::Promote:
-    case TargetLowering::Expand:
-      assert(0 && "Cannot handle this yet!");
-    case TargetLowering::Legal:
-      if (Tmp1 != Node->getOperand(0) ||
-          Tmp2 != Node->getOperand(1))
-        Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1,
-                             Tmp2);
-      break;
-    }
+    
+    assert(TLI.isOperationLegal(Node->getOpcode(), Node->getValueType(0)) &&
+           "Cannot handle this yet!");
+    if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
+      Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1,Tmp2);
     break;
     
   case ISD::BSWAP:
     Tmp1 = LegalizeOp(Node->getOperand(0));   // Op
     switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
-      case TargetLowering::Legal:
-        if (Tmp1 != Node->getOperand(0))
-          Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
-        break;
-      case TargetLowering::Promote: {
-        MVT::ValueType OVT = Tmp1.getValueType();
-        MVT::ValueType NVT = TLI.getTypeToPromoteTo(Node->getOpcode(), OVT);
-        unsigned DiffBits = getSizeInBits(NVT) - getSizeInBits(OVT);
+    case TargetLowering::Custom:
+      assert(0 && "Cannot custom legalize this yet!");
+    case TargetLowering::Legal:
+      if (Tmp1 != Node->getOperand(0))
+        Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
+      break;
+    case TargetLowering::Promote: {
+      MVT::ValueType OVT = Tmp1.getValueType();
+      MVT::ValueType NVT = TLI.getTypeToPromoteTo(Node->getOpcode(), OVT);
+      unsigned DiffBits = getSizeInBits(NVT) - getSizeInBits(OVT);
 
-        Tmp1 = DAG.getNode(ISD::ZERO_EXTEND, NVT, Tmp1);
-        Tmp1 = DAG.getNode(ISD::BSWAP, NVT, Tmp1);
-        Result = DAG.getNode(ISD::SRL, NVT, Tmp1,
-                             DAG.getConstant(DiffBits, TLI.getShiftAmountTy()));
-        Result = LegalizeOp(Result);
-        break;
-      }
-      case TargetLowering::Custom:
-        assert(0 && "Cannot custom legalize this yet!");
-      case TargetLowering::Expand: {
-        MVT::ValueType VT = Tmp1.getValueType();
-        switch (VT) {
-        default: assert(0 && "Unhandled Expand type in BSWAP!"); abort();
-        case MVT::i16:
-          Tmp2 = DAG.getNode(ISD::SHL, VT, Tmp1, 
-                             DAG.getConstant(8, TLI.getShiftAmountTy()));
-          Tmp1 = DAG.getNode(ISD::SRL, VT, Tmp1,
-                             DAG.getConstant(8, TLI.getShiftAmountTy()));
-          Result = DAG.getNode(ISD::OR, VT, Tmp1, Tmp2);
-          break;
-        case MVT::i32:
-          Tmp4 = DAG.getNode(ISD::SHL, VT, Tmp1, 
-                             DAG.getConstant(24, TLI.getShiftAmountTy()));
-          Tmp3 = DAG.getNode(ISD::SHL, VT, Tmp1, 
-                             DAG.getConstant(8, TLI.getShiftAmountTy()));
-          Tmp2 = DAG.getNode(ISD::SRL, VT, Tmp1, 
-                             DAG.getConstant(8, TLI.getShiftAmountTy()));
-          Tmp1 = DAG.getNode(ISD::SRL, VT, Tmp1, 
-                             DAG.getConstant(24, TLI.getShiftAmountTy()));
-          Tmp3 = DAG.getNode(ISD::AND, VT, Tmp3, DAG.getConstant(0xFF0000, VT));
-          Tmp2 = DAG.getNode(ISD::AND, VT, Tmp2, DAG.getConstant(0xFF00, VT));
-          Tmp4 = DAG.getNode(ISD::OR, VT, Tmp4, Tmp3);
-          Tmp2 = DAG.getNode(ISD::OR, VT, Tmp2, Tmp1);
-          Result = DAG.getNode(ISD::OR, VT, Tmp4, Tmp2);
-          break;
-        case MVT::i64: {
-          SDOperand Tmp5, Tmp6, Tmp7, Tmp8;
-          Tmp8 = DAG.getNode(ISD::SHL, VT, Tmp1,
-                             DAG.getConstant(56, TLI.getShiftAmountTy()));
-          Tmp7 = DAG.getNode(ISD::SHL, VT, Tmp1,
-                             DAG.getConstant(40, TLI.getShiftAmountTy()));
-          Tmp6 = DAG.getNode(ISD::SHL, VT, Tmp1,
-                             DAG.getConstant(24, TLI.getShiftAmountTy()));
-          Tmp5 = DAG.getNode(ISD::SHL, VT, Tmp1,
-                             DAG.getConstant(8, TLI.getShiftAmountTy()));
-          Tmp4 = DAG.getNode(ISD::SRL, VT, Tmp1,
-                             DAG.getConstant(8, TLI.getShiftAmountTy()));
-          Tmp3 = DAG.getNode(ISD::SRL, VT, Tmp1,
-                             DAG.getConstant(24, TLI.getShiftAmountTy()));
-          Tmp2 = DAG.getNode(ISD::SRL, VT, Tmp1,
-                             DAG.getConstant(40, TLI.getShiftAmountTy()));
-          Tmp1 = DAG.getNode(ISD::SRL, VT, Tmp1,
-                             DAG.getConstant(56, TLI.getShiftAmountTy()));
-          Tmp7 = DAG.getNode(ISD::AND, VT, Tmp7, 
-                             DAG.getConstant(0x00FF000000000000ULL, VT));
-          Tmp6 = DAG.getNode(ISD::AND, VT, Tmp7, 
-                             DAG.getConstant(0x0000FF0000000000ULL, VT));
-          Tmp5 = DAG.getNode(ISD::AND, VT, Tmp7, 
-                             DAG.getConstant(0x000000FF00000000ULL, VT));
-          Tmp4 = DAG.getNode(ISD::AND, VT, Tmp7, 
-                             DAG.getConstant(0x00000000FF000000ULL, VT));
-          Tmp3 = DAG.getNode(ISD::AND, VT, Tmp7, 
-                             DAG.getConstant(0x0000000000FF0000ULL, VT));
-          Tmp2 = DAG.getNode(ISD::AND, VT, Tmp7, 
-                             DAG.getConstant(0x000000000000FF00ULL, VT));
-          Tmp8 = DAG.getNode(ISD::OR, VT, Tmp8, Tmp7);
-          Tmp6 = DAG.getNode(ISD::OR, VT, Tmp6, Tmp5);
-          Tmp4 = DAG.getNode(ISD::OR, VT, Tmp4, Tmp3);
-          Tmp2 = DAG.getNode(ISD::OR, VT, Tmp2, Tmp1);
-          Tmp8 = DAG.getNode(ISD::OR, VT, Tmp8, Tmp6);
-          Tmp4 = DAG.getNode(ISD::OR, VT, Tmp4, Tmp2);
-          Result = DAG.getNode(ISD::OR, VT, Tmp8, Tmp4);
-          break;
-        }
-        }
-        Result = LegalizeOp(Result);
-        break;
-      }
+      Tmp1 = DAG.getNode(ISD::ZERO_EXTEND, NVT, Tmp1);
+      Tmp1 = DAG.getNode(ISD::BSWAP, NVT, Tmp1);
+      Result = DAG.getNode(ISD::SRL, NVT, Tmp1,
+                           DAG.getConstant(DiffBits, TLI.getShiftAmountTy()));
+      break;
+    }
+    case TargetLowering::Expand:
+      Result = ExpandBSWAP(Tmp1);
+      break;
     }
     break;
     
@@ -2461,6 +2375,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::CTLZ:
     Tmp1 = LegalizeOp(Node->getOperand(0));   // Op
     switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
+    case TargetLowering::Custom: assert(0 && "Cannot custom handle this yet!");
     case TargetLowering::Legal:
       if (Tmp1 != Node->getOperand(0))
         Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
@@ -2473,8 +2388,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Tmp1 = DAG.getNode(ISD::ZERO_EXTEND, NVT, Tmp1);
       // Perform the larger operation, then subtract if needed.
       Tmp1 = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
-      switch(Node->getOpcode())
-      {
+      switch (Node->getOpcode()) {
       case ISD::CTPOP:
         Result = Tmp1;
         break;
@@ -2487,90 +2401,16 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                            DAG.getConstant(getSizeInBits(OVT),NVT), Tmp1);
         break;
       case ISD::CTLZ:
-        //Tmp1 = Tmp1 - (sizeinbits(NVT) - sizeinbits(Old VT))
+        // Tmp1 = Tmp1 - (sizeinbits(NVT) - sizeinbits(Old VT))
         Result = DAG.getNode(ISD::SUB, NVT, Tmp1,
                              DAG.getConstant(getSizeInBits(NVT) -
                                              getSizeInBits(OVT), NVT));
         break;
       }
-      Result = LegalizeOp(Result);
       break;
     }
-    case TargetLowering::Custom:
-      assert(0 && "Cannot custom handle this yet!");
     case TargetLowering::Expand:
-      switch(Node->getOpcode())
-      {
-      case ISD::CTPOP: {
-        static const uint64_t mask[6] = {
-          0x5555555555555555ULL, 0x3333333333333333ULL,
-          0x0F0F0F0F0F0F0F0FULL, 0x00FF00FF00FF00FFULL,
-          0x0000FFFF0000FFFFULL, 0x00000000FFFFFFFFULL
-        };
-        MVT::ValueType VT = Tmp1.getValueType();
-        MVT::ValueType ShVT = TLI.getShiftAmountTy();
-        unsigned len = getSizeInBits(VT);
-        for (unsigned i = 0; (1U << i) <= (len / 2); ++i) {
-          //x = (x & mask[i][len/8]) + (x >> (1 << i) & mask[i][len/8])
-          Tmp2 = DAG.getConstant(mask[i], VT);
-          Tmp3 = DAG.getConstant(1ULL << i, ShVT);
-          Tmp1 = DAG.getNode(ISD::ADD, VT,
-                             DAG.getNode(ISD::AND, VT, Tmp1, Tmp2),
-                             DAG.getNode(ISD::AND, VT,
-                                         DAG.getNode(ISD::SRL, VT, Tmp1, Tmp3),
-                                         Tmp2));
-        }
-        Result = LegalizeOp(Tmp1);
-        break;
-      }
-      case ISD::CTLZ: {
-        /* for now, we do this:
-           x = x | (x >> 1);
-           x = x | (x >> 2);
-           ...
-           x = x | (x >>16);
-           x = x | (x >>32); // for 64-bit input
-           return popcount(~x);
-
-           but see also: http://www.hackersdelight.org/HDcode/nlz.cc */
-        MVT::ValueType VT = Tmp1.getValueType();
-        MVT::ValueType ShVT = TLI.getShiftAmountTy();
-        unsigned len = getSizeInBits(VT);
-        for (unsigned i = 0; (1U << i) <= (len / 2); ++i) {
-          Tmp3 = DAG.getConstant(1ULL << i, ShVT);
-          Tmp1 = DAG.getNode(ISD::OR, VT, Tmp1,
-                             DAG.getNode(ISD::SRL, VT, Tmp1, Tmp3));
-        }
-        Tmp3 = DAG.getNode(ISD::XOR, VT, Tmp1, DAG.getConstant(~0ULL, VT));
-        Result = LegalizeOp(DAG.getNode(ISD::CTPOP, VT, Tmp3));
-        break;
-      }
-      case ISD::CTTZ: {
-        // for now, we use: { return popcount(~x & (x - 1)); }
-        // unless the target has ctlz but not ctpop, in which case we use:
-        // { return 32 - nlz(~x & (x-1)); }
-        // see also http://www.hackersdelight.org/HDcode/ntz.cc
-        MVT::ValueType VT = Tmp1.getValueType();
-        Tmp2 = DAG.getConstant(~0ULL, VT);
-        Tmp3 = DAG.getNode(ISD::AND, VT,
-                           DAG.getNode(ISD::XOR, VT, Tmp1, Tmp2),
-                           DAG.getNode(ISD::SUB, VT, Tmp1,
-                                       DAG.getConstant(1, VT)));
-        // If ISD::CTLZ is legal and CTPOP isn't, then do that instead
-        if (!TLI.isOperationLegal(ISD::CTPOP, VT) &&
-            TLI.isOperationLegal(ISD::CTLZ, VT)) {
-          Result = LegalizeOp(DAG.getNode(ISD::SUB, VT,
-                                        DAG.getConstant(getSizeInBits(VT), VT),
-                                        DAG.getNode(ISD::CTLZ, VT, Tmp3)));
-        } else {
-          Result = LegalizeOp(DAG.getNode(ISD::CTPOP, VT, Tmp3));
-        }
-        break;
-      }
-      default:
-        assert(0 && "Cannot expand this yet!");
-        break;
-      }
+      Result = ExpandBitCount(Node->getOpcode(), Tmp1);
       break;
     }
     break;
@@ -2583,22 +2423,21 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::FCOS:
     Tmp1 = LegalizeOp(Node->getOperand(0));
     switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
+    case TargetLowering::Promote:
+    case TargetLowering::Custom:
+      assert(0 && "Cannot promote/custom handle this yet!");
     case TargetLowering::Legal:
       if (Tmp1 != Node->getOperand(0))
         Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
       break;
-    case TargetLowering::Promote:
-    case TargetLowering::Custom:
-      assert(0 && "Cannot promote/custom handle this yet!");
     case TargetLowering::Expand:
-      switch(Node->getOpcode()) {
-      case ISD::FNEG: {
+      switch (Node->getOpcode()) {
+      default: assert(0 && "Unreachable!");
+      case ISD::FNEG:
         // Expand Y = FNEG(X) ->  Y = SUB -0.0, X
         Tmp2 = DAG.getConstantFP(-0.0, Node->getValueType(0));
-        Result = LegalizeOp(DAG.getNode(ISD::FSUB, Node->getValueType(0),
-                                        Tmp2, Tmp1));
+        Result = DAG.getNode(ISD::FSUB, Node->getValueType(0), Tmp2, Tmp1);
         break;
-      }
       case ISD::FABS: {
         // Expand Y = FABS(X) -> Y = (X >u 0.0) ? X : fneg(X).
         MVT::ValueType VT = Node->getValueType(0);
@@ -2606,7 +2445,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Tmp2 = DAG.getSetCC(TLI.getSetCCResultTy(), Tmp1, Tmp2, ISD::SETUGT);
         Tmp3 = DAG.getNode(ISD::FNEG, VT, Tmp1);
         Result = DAG.getNode(ISD::SELECT, VT, Tmp2, Tmp1, Tmp3);
-        Result = LegalizeOp(Result);
         break;
       }
       case ISD::FSQRT:
@@ -2624,8 +2462,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Result = ExpandLibCall(FnName, Node, Dummy);
         break;
       }
-      default:
-        assert(0 && "Unreachable!");
       }
       break;
     }
@@ -2634,14 +2470,12 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::BIT_CONVERT:
     if (!isTypeLegal(Node->getOperand(0).getValueType())) {
       Result = ExpandBIT_CONVERT(Node->getValueType(0), Node->getOperand(0));
-      Result = LegalizeOp(Result);
     } else {
       switch (TLI.getOperationAction(ISD::BIT_CONVERT,
                                      Node->getOperand(0).getValueType())) {
       default: assert(0 && "Unknown operation action!");
       case TargetLowering::Expand:
         Result = ExpandBIT_CONVERT(Node->getValueType(0), Node->getOperand(0));
-        Result = LegalizeOp(Result);
         break;
       case TargetLowering::Legal:
         Tmp1 = LegalizeOp(Node->getOperand(0));
@@ -2660,38 +2494,29 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       switch (TLI.getOperationAction(Node->getOpcode(),
                                      Node->getOperand(0).getValueType())) {
       default: assert(0 && "Unknown operation action!");
+      case TargetLowering::Custom:
+        isCustom = true;
+        // FALLTHROUGH
+      case TargetLowering::Legal:
+        Tmp1 = LegalizeOp(Node->getOperand(0));
+        if (Tmp1 != Node->getOperand(0))
+          Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
+        if (isCustom) {
+          Tmp1 = TLI.LowerOperation(Result, DAG);
+          if (Tmp1.Val) Result = Tmp1;
+        }
+        break;
       case TargetLowering::Expand:
         Result = ExpandLegalINT_TO_FP(isSigned,
                                       LegalizeOp(Node->getOperand(0)),
                                       Node->getValueType(0));
-        AddLegalizedOperand(Op, Result);
-        return Result;
+        break;
       case TargetLowering::Promote:
         Result = PromoteLegalINT_TO_FP(LegalizeOp(Node->getOperand(0)),
                                        Node->getValueType(0),
                                        isSigned);
-        AddLegalizedOperand(Op, Result);
-        return Result;
-      case TargetLowering::Legal:
         break;
-      case TargetLowering::Custom: {
-        Tmp1 = LegalizeOp(Node->getOperand(0));
-        SDOperand Tmp =
-          DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
-        Tmp = TLI.LowerOperation(Tmp, DAG);
-        if (Tmp.Val) {
-          Tmp = LegalizeOp(Tmp);  // Relegalize input.
-          AddLegalizedOperand(Op, Tmp);
-          return Tmp;
-        } else {
-          assert(0 && "Target Must Lower this");
-        }
       }
-      }
-
-      Tmp1 = LegalizeOp(Node->getOperand(0));
-      if (Tmp1 != Node->getOperand(0))
-        Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
       break;
     case Expand:
       Result = ExpandIntToFP(Node->getOpcode() == ISD::SINT_TO_FP,
@@ -2742,6 +2567,22 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
       switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))){
       default: assert(0 && "Unknown operation action!");
+      case TargetLowering::Custom:
+        isCustom = true;
+        // FALLTHROUGH
+      case TargetLowering::Legal:
+        if (Tmp1 != Node->getOperand(0))
+          Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
+
+        if (isCustom) {
+          Tmp1 = TLI.LowerOperation(Result, DAG);
+          if (Tmp1.Val) Result = Tmp1;
+        }
+        break;
+      case TargetLowering::Promote:
+        Result = PromoteLegalFP_TO_INT(Tmp1, Node->getValueType(0),
+                                       Node->getOpcode() == ISD::FP_TO_SINT);
+        break;
       case TargetLowering::Expand:
         if (Node->getOpcode() == ISD::FP_TO_UINT) {
           SDOperand True, False;
@@ -2757,37 +2598,13 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                                           Tmp2));
           False = DAG.getNode(ISD::XOR, NVT, False, 
                               DAG.getConstant(1ULL << ShiftAmt, NVT));
-          Result = LegalizeOp(DAG.getNode(ISD::SELECT, NVT, Tmp3, True, False));
-          AddLegalizedOperand(SDOperand(Node, 0), Result);
-          return Result;
+          Result = DAG.getNode(ISD::SELECT, NVT, Tmp3, True, False);
+          break;
         } else {
           assert(0 && "Do not know how to expand FP_TO_SINT yet!");
         }
         break;
-      case TargetLowering::Promote:
-        Result = PromoteLegalFP_TO_INT(Tmp1, Node->getValueType(0),
-                                       Node->getOpcode() == ISD::FP_TO_SINT);
-        AddLegalizedOperand(Op, Result);
-        return Result;
-      case TargetLowering::Custom: {
-        SDOperand Tmp =
-          DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
-        Tmp = TLI.LowerOperation(Tmp, DAG);
-        if (Tmp.Val) {
-          Tmp = LegalizeOp(Tmp);
-          AddLegalizedOperand(Op, Tmp);
-          return Tmp;
-        } else {
-          // The target thinks this is legal afterall.
-          break;
-        }
       }
-      case TargetLowering::Legal:
-        break;
-      }
-
-      if (Tmp1 != Node->getOperand(0))
-        Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
       break;
     case Expand:
       assert(0 && "Shouldn't need to expand other operators here!");
@@ -2804,14 +2621,12 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::FP_EXTEND:
   case ISD::FP_ROUND:
     switch (getTypeAction(Node->getOperand(0).getValueType())) {
+    case Expand: assert(0 && "Shouldn't need to expand other operators here!");
     case Legal:
       Tmp1 = LegalizeOp(Node->getOperand(0));
       if (Tmp1 != Node->getOperand(0))
         Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
       break;
-    case Expand:
-      assert(0 && "Shouldn't need to expand other operators here!");
-
     case Promote:
       switch (Node->getOpcode()) {
       case ISD::ANY_EXTEND:
@@ -2893,12 +2708,15 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       } else {
         assert(0 && "Unknown op");
       }
-      Result = LegalizeOp(Result);
       break;
     }
     break;
   }
   }
+  
+  // Make sure that the generated code is itself legal.
+  if (Result != Op)
+    Result = LegalizeOp(Result);
 
   // Note that LegalizeOp may be reentered even from single-use nodes, which
   // means that we always must cache transformed nodes.
@@ -2919,17 +2737,11 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
          "Cannot promote to smaller type!");
 
   SDOperand Tmp1, Tmp2, Tmp3;
-
   SDOperand Result;
   SDNode *Node = Op.Val;
 
   std::map<SDOperand, SDOperand>::iterator I = PromotedNodes.find(Op);
   if (I != PromotedNodes.end()) return I->second;
-
-  // Promotion needs an optimization step to clean up after it, and is not
-  // careful to avoid operations the target does not support.  Make sure that
-  // all generated operations are legalized in the next iteration.
-  NeedsAnotherIteration = true;
 
   switch (Node->getOpcode()) {
   case ISD::CopyFromReg:
@@ -2957,7 +2769,6 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     assert(isTypeLegal(TLI.getSetCCResultTy()) && "SetCC type is not legal??");
     Result = DAG.getNode(ISD::SETCC, TLI.getSetCCResultTy(),Node->getOperand(0),
                          Node->getOperand(1), Node->getOperand(2));
-    Result = LegalizeOp(Result);
     break;
 
   case ISD::TRUNCATE:
@@ -2987,8 +2798,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     case Expand: assert(0 && "BUG: Smaller reg should have been promoted!");
     case Legal:
       // Input is legal?  Just do extend all the way to the larger type.
-      Result = LegalizeOp(Node->getOperand(0));
-      Result = DAG.getNode(Node->getOpcode(), NVT, Result);
+      Result = DAG.getNode(Node->getOpcode(), NVT, Node->getOperand(0));
       break;
     case Promote:
       // Promote the reg if it's smaller.
@@ -3016,8 +2826,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     case Promote:  assert(0 && "Unreachable with 2 FP types!");
     case Legal:
       // Input is legal?  Do an FP_ROUND_INREG.
-      Result = LegalizeOp(Node->getOperand(0));
-      Result = DAG.getNode(ISD::FP_ROUND_INREG, NVT, Result,
+      Result = DAG.getNode(ISD::FP_ROUND_INREG, NVT, Node->getOperand(0),
                            DAG.getValueType(VT));
       break;
     }
@@ -3027,9 +2836,8 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   case ISD::UINT_TO_FP:
     switch (getTypeAction(Node->getOperand(0).getValueType())) {
     case Legal:
-      Result = LegalizeOp(Node->getOperand(0));
       // No extra round required here.
-      Result = DAG.getNode(Node->getOpcode(), NVT, Result);
+      Result = DAG.getNode(Node->getOpcode(), NVT, Node->getOperand(0));
       break;
 
     case Promote:
@@ -3064,7 +2872,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   case ISD::FP_TO_UINT:
     switch (getTypeAction(Node->getOperand(0).getValueType())) {
     case Legal:
-      Tmp1 = LegalizeOp(Node->getOperand(0));
+      Tmp1 = Node->getOperand(0);
       break;
     case Promote:
       // The input result is prerounded, so we don't have to do anything
@@ -3105,7 +2913,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     Tmp1 = PromoteOp(Node->getOperand(0));
     assert(Tmp1.getValueType() == NVT);
     Result = DAG.getNode(Node->getOpcode(), NVT, Tmp1);
-    if(NoExcessFPPrecision)
+    if (NoExcessFPPrecision)
       Result = DAG.getNode(ISD::FP_ROUND_INREG, NVT, Result,
                            DAG.getValueType(VT));
     break;
@@ -3127,8 +2935,6 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   case ISD::FADD:
   case ISD::FSUB:
   case ISD::FMUL:
-    // The input may have strange things in the top bits of the registers, but
-    // these operations don't care.
     Tmp1 = PromoteOp(Node->getOperand(0));
     Tmp2 = PromoteOp(Node->getOperand(1));
     assert(Tmp1.getValueType() == NVT && Tmp2.getValueType() == NVT);
@@ -3188,28 +2994,25 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
 
   case ISD::SHL:
     Tmp1 = PromoteOp(Node->getOperand(0));
-    Tmp2 = LegalizeOp(Node->getOperand(1));
-    Result = DAG.getNode(ISD::SHL, NVT, Tmp1, Tmp2);
+    Result = DAG.getNode(ISD::SHL, NVT, Tmp1, Node->getOperand(1));
     break;
   case ISD::SRA:
     // The input value must be properly sign extended.
     Tmp1 = PromoteOp(Node->getOperand(0));
     Tmp1 = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Tmp1,
                        DAG.getValueType(VT));
-    Tmp2 = LegalizeOp(Node->getOperand(1));
-    Result = DAG.getNode(ISD::SRA, NVT, Tmp1, Tmp2);
+    Result = DAG.getNode(ISD::SRA, NVT, Tmp1, Node->getOperand(1));
     break;
   case ISD::SRL:
     // The input value must be properly zero extended.
     Tmp1 = PromoteOp(Node->getOperand(0));
     Tmp1 = DAG.getZeroExtendInReg(Tmp1, VT);
-    Tmp2 = LegalizeOp(Node->getOperand(1));
-    Result = DAG.getNode(ISD::SRL, NVT, Tmp1, Tmp2);
+    Result = DAG.getNode(ISD::SRL, NVT, Tmp1, Node->getOperand(1));
     break;
 
   case ISD::VAARG:
-    Tmp1 = LegalizeOp(Node->getOperand(0));   // Legalize the chain.
-    Tmp2 = LegalizeOp(Node->getOperand(1));   // Legalize the pointer.
+    Tmp1 = Node->getOperand(0);   // Get the chain.
+    Tmp2 = Node->getOperand(1);   // Get the pointer.
     if (TLI.getOperationAction(ISD::VAARG, VT) == TargetLowering::Custom) {
       Tmp3 = DAG.getVAArg(VT, Tmp1, Tmp2, Node->getOperand(2));
       Result = TLI.CustomPromoteOperation(Tmp3, DAG);
@@ -3228,48 +3031,34 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
                               DAG.getSrcValue(0), VT);
     }
     // Remember that we legalized the chain.
-    AddLegalizedOperand(Op.getValue(1), Result.getValue(1));
+    AddLegalizedOperand(Op.getValue(1), LegalizeOp(Result.getValue(1)));
     break;
 
   case ISD::LOAD:
-    Tmp1 = LegalizeOp(Node->getOperand(0));   // Legalize the chain.
-    Tmp2 = LegalizeOp(Node->getOperand(1));   // Legalize the pointer.
-    Result = DAG.getExtLoad(ISD::EXTLOAD, NVT, Tmp1, Tmp2,
-                            Node->getOperand(2), VT);
+    Result = DAG.getExtLoad(ISD::EXTLOAD, NVT, Node->getOperand(0),
+                            Node->getOperand(1), Node->getOperand(2), VT);
     // Remember that we legalized the chain.
-    AddLegalizedOperand(Op.getValue(1), Result.getValue(1));
+    AddLegalizedOperand(Op.getValue(1), LegalizeOp(Result.getValue(1)));
     break;
   case ISD::SEXTLOAD:
   case ISD::ZEXTLOAD:
   case ISD::EXTLOAD:
-    Tmp1 = LegalizeOp(Node->getOperand(0));   // Legalize the chain.
-    Tmp2 = LegalizeOp(Node->getOperand(1));   // Legalize the pointer.
-    Result = DAG.getExtLoad(Node->getOpcode(), NVT, Tmp1, Tmp2,
-                         Node->getOperand(2),
+    Result = DAG.getExtLoad(Node->getOpcode(), NVT, Node->getOperand(0),
+                            Node->getOperand(1), Node->getOperand(2),
                             cast<VTSDNode>(Node->getOperand(3))->getVT());
     // Remember that we legalized the chain.
-    AddLegalizedOperand(Op.getValue(1), Result.getValue(1));
+    AddLegalizedOperand(Op.getValue(1), LegalizeOp(Result.getValue(1)));
     break;
   case ISD::SELECT:
-    switch (getTypeAction(Node->getOperand(0).getValueType())) {
-    case Expand: assert(0 && "It's impossible to expand bools");
-    case Legal:
-      Tmp1 = LegalizeOp(Node->getOperand(0));// Legalize the condition.
-      break;
-    case Promote:
-      Tmp1 = PromoteOp(Node->getOperand(0)); // Promote the condition.
-      break;
-    }
     Tmp2 = PromoteOp(Node->getOperand(1));   // Legalize the op0
     Tmp3 = PromoteOp(Node->getOperand(2));   // Legalize the op1
-    Result = DAG.getNode(ISD::SELECT, NVT, Tmp1, Tmp2, Tmp3);
+    Result = DAG.getNode(ISD::SELECT, NVT, Node->getOperand(0), Tmp2, Tmp3);
     break;
   case ISD::SELECT_CC:
     Tmp2 = PromoteOp(Node->getOperand(2));   // True
     Tmp3 = PromoteOp(Node->getOperand(3));   // False
     Result = DAG.getNode(ISD::SELECT_CC, NVT, Node->getOperand(0),
-                         Node->getOperand(1), Tmp2, Tmp3,
-                         Node->getOperand(4));
+                         Node->getOperand(1), Tmp2, Tmp3, Node->getOperand(4));
     break;
   case ISD::BSWAP:
     Tmp1 = Node->getOperand(0);
@@ -3282,22 +3071,20 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   case ISD::CTPOP:
   case ISD::CTTZ:
   case ISD::CTLZ:
-    Tmp1 = Node->getOperand(0);
-    //Zero extend the argument
-    Tmp1 = DAG.getNode(ISD::ZERO_EXTEND, NVT, Tmp1);
+    // Zero extend the argument
+    Tmp1 = DAG.getNode(ISD::ZERO_EXTEND, NVT, Node->getOperand(0));
     // Perform the larger operation, then subtract if needed.
     Tmp1 = DAG.getNode(Node->getOpcode(), NVT, Tmp1);
-    switch(Node->getOpcode())
-    {
+    switch(Node->getOpcode()) {
     case ISD::CTPOP:
       Result = Tmp1;
       break;
     case ISD::CTTZ:
-      //if Tmp1 == sizeinbits(NVT) then Tmp1 = sizeinbits(Old VT)
+      // if Tmp1 == sizeinbits(NVT) then Tmp1 = sizeinbits(Old VT)
       Tmp2 = DAG.getSetCC(TLI.getSetCCResultTy(), Tmp1,
                           DAG.getConstant(getSizeInBits(NVT), NVT), ISD::SETEQ);
       Result = DAG.getNode(ISD::SELECT, NVT, Tmp2,
-                           DAG.getConstant(getSizeInBits(VT),NVT), Tmp1);
+                           DAG.getConstant(getSizeInBits(VT), NVT), Tmp1);
       break;
     case ISD::CTLZ:
       //Tmp1 = Tmp1 - (sizeinbits(NVT) - sizeinbits(Old VT))
@@ -3310,6 +3097,11 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   }
 
   assert(Result.Val && "Didn't set a result!");
+
+  // Make sure the result is itself legal.
+  Result = LegalizeOp(Result);
+  
+  // Remember that we promoted this!
   AddPromotedOperand(Op, Result);
   return Result;
 }
@@ -3428,62 +3220,7 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
       return true;
     }
   }
-  // FIXME: The following code for expanding shifts using ISD::SELECT is buggy,
-  // so disable it for now.  Currently targets are handling this via SHL_PARTS
-  // and friends.
   return false;
-
-  // If we have an efficient select operation (or if the selects will all fold
-  // away), lower to some complex code, otherwise just emit the libcall.
-  if (!TLI.isOperationLegal(ISD::SELECT, NVT) && !isa<ConstantSDNode>(Amt))
-    return false;
-
-  SDOperand InL, InH;
-  ExpandOp(Op, InL, InH);
-  SDOperand NAmt = DAG.getNode(ISD::SUB, ShTy,           // NAmt = 32-ShAmt
-                               DAG.getConstant(NVTBits, ShTy), ShAmt);
-
-  // Compare the unmasked shift amount against 32.
-  SDOperand Cond = DAG.getSetCC(TLI.getSetCCResultTy(), ShAmt,
-                                DAG.getConstant(NVTBits, ShTy), ISD::SETGE);
-
-  if (TLI.getShiftAmountFlavor() != TargetLowering::Mask) {
-    ShAmt = DAG.getNode(ISD::AND, ShTy, ShAmt,             // ShAmt &= 31
-                        DAG.getConstant(NVTBits-1, ShTy));
-    NAmt  = DAG.getNode(ISD::AND, ShTy, NAmt,              // NAmt &= 31
-                        DAG.getConstant(NVTBits-1, ShTy));
-  }
-
-  if (Opc == ISD::SHL) {
-    SDOperand T1 = DAG.getNode(ISD::OR, NVT,// T1 = (Hi << Amt) | (Lo >> NAmt)
-                               DAG.getNode(ISD::SHL, NVT, InH, ShAmt),
-                               DAG.getNode(ISD::SRL, NVT, InL, NAmt));
-    SDOperand T2 = DAG.getNode(ISD::SHL, NVT, InL, ShAmt); // T2 = Lo << Amt&31
-
-    Hi = DAG.getNode(ISD::SELECT, NVT, Cond, T2, T1);
-    Lo = DAG.getNode(ISD::SELECT, NVT, Cond, DAG.getConstant(0, NVT), T2);
-  } else {
-    SDOperand HiLoPart = DAG.getNode(ISD::SELECT, NVT,
-                                     DAG.getSetCC(TLI.getSetCCResultTy(), NAmt,
-                                                  DAG.getConstant(32, ShTy),
-                                                  ISD::SETEQ),
-                                     DAG.getConstant(0, NVT),
-                                     DAG.getNode(ISD::SHL, NVT, InH, NAmt));
-    SDOperand T1 = DAG.getNode(ISD::OR, NVT,// T1 = (Hi << NAmt) | (Lo >> Amt)
-                               HiLoPart,
-                               DAG.getNode(ISD::SRL, NVT, InL, ShAmt));
-    SDOperand T2 = DAG.getNode(Opc, NVT, InH, ShAmt);  // T2 = InH >> ShAmt&31
-
-    SDOperand HiPart;
-    if (Opc == ISD::SRA)
-      HiPart = DAG.getNode(ISD::SRA, NVT, InH,
-                           DAG.getConstant(NVTBits-1, ShTy));
-    else
-      HiPart = DAG.getConstant(0, NVT);
-    Lo = DAG.getNode(ISD::SELECT, NVT, Cond, T2, T1);
-    Hi = DAG.getNode(ISD::SELECT, NVT, Cond, HiPart, T2);
-  }
-  return true;
 }
 
 /// FindLatestCallSeqStart - Scan up the dag to find the latest (highest
@@ -3677,11 +3414,8 @@ SDOperand SelectionDAGLegalize::ExpandLibCall(const char *Name, SDNode *Node,
   switch (getTypeAction(CallInfo.first.getValueType())) {
   default: assert(0 && "Unknown thing");
   case Legal:
-    // If the result is legal, make sure that we relegalize the inserted result.
-    Result = LegalizeOp(CallInfo.first);
+    Result = CallInfo.first;
     break;
-  case Promote:
-    assert(0 && "Cannot promote this yet!");
   case Expand:
     ExpandOp(CallInfo.first, Result, Hi);
     break;
@@ -4031,21 +3765,11 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     break;
   }
   case ISD::SELECT: {
-    SDOperand C, LL, LH, RL, RH;
-
-    switch (getTypeAction(Node->getOperand(0).getValueType())) {
-    case Expand: assert(0 && "It's impossible to expand bools");
-    case Legal:
-      C = LegalizeOp(Node->getOperand(0)); // Legalize the condition.
-      break;
-    case Promote:
-      C = PromoteOp(Node->getOperand(0));  // Promote the condition.
-      break;
-    }
+    SDOperand LL, LH, RL, RH;
     ExpandOp(Node->getOperand(1), LL, LH);
     ExpandOp(Node->getOperand(2), RL, RH);
-    Lo = DAG.getNode(ISD::SELECT, NVT, C, LL, RL);
-    Hi = DAG.getNode(ISD::SELECT, NVT, C, LH, RH);
+    Lo = DAG.getNode(ISD::SELECT, NVT, Node->getOperand(0), LL, RL);
+    Hi = DAG.getNode(ISD::SELECT, NVT, Node->getOperand(0), LH, RH);
     break;
   }
   case ISD::SELECT_CC: {
@@ -4394,6 +4118,6 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
 void SelectionDAG::Legalize() {
   /// run - This is the main entry point to this class.
   ///
-  SelectionDAGLegalize(*this).Run();
+  SelectionDAGLegalize(*this).LegalizeDAG();
 }
 
