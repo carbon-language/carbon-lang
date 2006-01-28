@@ -72,6 +72,8 @@ static const char *GetCurrentX86CPU() {
   GetCpuIDAndInfo(0x80000003, text+4, text+5, text+6, text+7);
   GetCpuIDAndInfo(0x80000004, text+8, text+9, text+10, text+11);
   char *t = reinterpret_cast<char *>(&text[0]);
+  while (*t == ' ')
+	  t++;
 
   if (memcmp(t, "Intel", 5) == 0) {
     switch (Family) {
