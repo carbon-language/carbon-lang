@@ -1288,6 +1288,13 @@ SDOperand TargetLowering::CustomPromoteOperation(SDOperand Op,
   return SDOperand();
 }
 
+void TargetLowering::CustomExpandOperation(SDOperand Op, SDOperand &Lo,
+                                           SDOperand &Hi, SelectionDAG &DAG) {
+  assert(0 && "CustomExpandOperation not implemented for this target!");
+  abort();
+  return SDOperand();
+}
+
 void SelectionDAGLowering::visitFrameReturnAddress(CallInst &I, bool isFrame) {
   unsigned Depth = (unsigned)cast<ConstantUInt>(I.getOperand(1))->getValue();
   std::pair<SDOperand,SDOperand> Result =

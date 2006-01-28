@@ -368,16 +368,23 @@ public:
   LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain, unsigned Depth,
                           SelectionDAG &DAG);
 
-  /// LowerOperation - For operations that are unsupported by the target, and
-  /// which are registered to use 'custom' lowering, this callback is invoked.
+  /// LowerOperation - This callback is invoked for operations that are 
+  /// unsupported by the target, which are registered to use 'custom' lowering,
+  /// and whose defined values are all legal.
   /// If the target has no operations that require custom lowering, it need not
   /// implement this.  The default implementation of this aborts.
   virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
 
-  /// CustomPromoteOperation - For operations that are unsupported by the
-  /// target, are registered to use 'custom' lowering, and whose type needs to
-  /// be promoted, this callback is invoked.
+  /// CustomPromoteOperation - This callback is invoked for operations that are
+  /// unsupported by the target, are registered to use 'custom' lowering, and
+  /// whose type needs to be promoted.
   virtual SDOperand CustomPromoteOperation(SDOperand Op, SelectionDAG &DAG);
+  
+  /// CustomExpandOperation - This callback is invoked for operations that are
+  /// unsupported by the target, are registered to use 'custom' lowering, and
+  /// whose type needs to be expanded.
+  virtual void CustomExpandOperation(SDOperand Op, SDOperand &Lo, SDOperand &Hi,
+                                     SelectionDAG &DAG);
   
   /// getTargetNodeName() - This method returns the name of a target specific
   /// DAG node.
