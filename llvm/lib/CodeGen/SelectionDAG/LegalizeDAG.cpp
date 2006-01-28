@@ -2215,14 +2215,13 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
 
-    MVT::ValueType VT;
+    MVT::ValueType VT = Node->getValueType(0);
     switch (TLI.getOperationAction(Node->getOpcode(), MVT::Other)) {
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Custom:
       isCustom = true;
       // FALLTHROUGH
     case TargetLowering::Legal:
-      VT = Node->getValueType(0);
       if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
         Result = DAG.getVAArg(VT, Tmp1, Tmp2, Node->getOperand(2));
       else
