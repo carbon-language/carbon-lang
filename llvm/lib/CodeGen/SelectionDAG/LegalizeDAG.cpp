@@ -152,332 +152,6 @@ SelectionDAGLegalize::SelectionDAGLegalize(SelectionDAG &dag)
          "Too many value types for ValueTypeActions to hold!");
 }
 
-/// ExpandLegalINT_TO_FP - This function is responsible for legalizing a
-/// INT_TO_FP operation of the specified operand when the target requests that
-/// we expand it.  At this point, we know that the result and operand types are
-/// legal for the target.
-SDOperand SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
-                                                     SDOperand Op0,
-                                                     MVT::ValueType DestVT) {
-  if (Op0.getValueType() == MVT::i32) {
-    // simple 32-bit [signed|unsigned] integer to float/double expansion
-    
-    // get the stack frame index of a 8 byte buffer
-    MachineFunction &MF = DAG.getMachineFunction();
-    int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
-    // get address of 8 byte buffer
-    SDOperand StackSlot = DAG.getFrameIndex(SSFI, TLI.getPointerTy());
-    // word offset constant for Hi/Lo address computation
-    SDOperand WordOff = DAG.getConstant(sizeof(int), TLI.getPointerTy());
-    // set up Hi and Lo (into buffer) address based on endian
-    SDOperand Hi, Lo;
-    if (TLI.isLittleEndian()) {
-      Hi = DAG.getNode(ISD::ADD, TLI.getPointerTy(), StackSlot, WordOff);
-      Lo = StackSlot;
-    } else {
-      Hi = StackSlot;
-      Lo = DAG.getNode(ISD::ADD, TLI.getPointerTy(), StackSlot, WordOff);
-    }
-    // if signed map to unsigned space
-    SDOperand Op0Mapped;
-    if (isSigned) {
-      // constant used to invert sign bit (signed to unsigned mapping)
-      SDOperand SignBit = DAG.getConstant(0x80000000u, MVT::i32);
-      Op0Mapped = DAG.getNode(ISD::XOR, MVT::i32, Op0, SignBit);
-    } else {
-      Op0Mapped = Op0;
-    }
-    // store the lo of the constructed double - based on integer input
-    SDOperand Store1 = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
-                                   Op0Mapped, Lo, DAG.getSrcValue(NULL));
-    // initial hi portion of constructed double
-    SDOperand InitialHi = DAG.getConstant(0x43300000u, MVT::i32);
-    // store the hi of the constructed double - biased exponent
-    SDOperand Store2 = DAG.getNode(ISD::STORE, MVT::Other, Store1,
-                                   InitialHi, Hi, DAG.getSrcValue(NULL));
-    // load the constructed double
-    SDOperand Load = DAG.getLoad(MVT::f64, Store2, StackSlot,
-                               DAG.getSrcValue(NULL));
-    // FP constant to bias correct the final result
-    SDOperand Bias = DAG.getConstantFP(isSigned ?
-                                            BitsToDouble(0x4330000080000000ULL)
-                                          : BitsToDouble(0x4330000000000000ULL),
-                                     MVT::f64);
-    // subtract the bias
-    SDOperand Sub = DAG.getNode(ISD::FSUB, MVT::f64, Load, Bias);
-    // final result
-    SDOperand Result;
-    // handle final rounding
-    if (DestVT == MVT::f64) {
-      // do nothing
-      Result = Sub;
-    } else {
-     // if f32 then cast to f32
-      Result = DAG.getNode(ISD::FP_ROUND, MVT::f32, Sub);
-    }
-    return Result;
-  }
-  assert(!isSigned && "Legalize cannot Expand SINT_TO_FP for i64 yet");
-  SDOperand Tmp1 = DAG.getNode(ISD::SINT_TO_FP, DestVT, Op0);
-
-  SDOperand SignSet = DAG.getSetCC(TLI.getSetCCResultTy(), Op0,
-                                   DAG.getConstant(0, Op0.getValueType()),
-                                   ISD::SETLT);
-  SDOperand Zero = getIntPtrConstant(0), Four = getIntPtrConstant(4);
-  SDOperand CstOffset = DAG.getNode(ISD::SELECT, Zero.getValueType(),
-                                    SignSet, Four, Zero);
-
-  // If the sign bit of the integer is set, the large number will be treated
-  // as a negative number.  To counteract this, the dynamic code adds an
-  // offset depending on the data type.
-  uint64_t FF;
-  switch (Op0.getValueType()) {
-  default: assert(0 && "Unsupported integer type!");
-  case MVT::i8 : FF = 0x43800000ULL; break;  // 2^8  (as a float)
-  case MVT::i16: FF = 0x47800000ULL; break;  // 2^16 (as a float)
-  case MVT::i32: FF = 0x4F800000ULL; break;  // 2^32 (as a float)
-  case MVT::i64: FF = 0x5F800000ULL; break;  // 2^64 (as a float)
-  }
-  if (TLI.isLittleEndian()) FF <<= 32;
-  static Constant *FudgeFactor = ConstantUInt::get(Type::ULongTy, FF);
-
-  SDOperand CPIdx = DAG.getConstantPool(FudgeFactor, TLI.getPointerTy());
-  CPIdx = DAG.getNode(ISD::ADD, TLI.getPointerTy(), CPIdx, CstOffset);
-  SDOperand FudgeInReg;
-  if (DestVT == MVT::f32)
-    FudgeInReg = DAG.getLoad(MVT::f32, DAG.getEntryNode(), CPIdx,
-                             DAG.getSrcValue(NULL));
-  else {
-    assert(DestVT == MVT::f64 && "Unexpected conversion");
-    FudgeInReg = LegalizeOp(DAG.getExtLoad(ISD::EXTLOAD, MVT::f64,
-                                           DAG.getEntryNode(), CPIdx,
-                                           DAG.getSrcValue(NULL), MVT::f32));
-  }
-
-  return DAG.getNode(ISD::FADD, DestVT, Tmp1, FudgeInReg);
-}
-
-/// PromoteLegalINT_TO_FP - This function is responsible for legalizing a
-/// *INT_TO_FP operation of the specified operand when the target requests that
-/// we promote it.  At this point, we know that the result and operand types are
-/// legal for the target, and that there is a legal UINT_TO_FP or SINT_TO_FP
-/// operation that takes a larger input.
-SDOperand SelectionDAGLegalize::PromoteLegalINT_TO_FP(SDOperand LegalOp,
-                                                      MVT::ValueType DestVT,
-                                                      bool isSigned) {
-  // First step, figure out the appropriate *INT_TO_FP operation to use.
-  MVT::ValueType NewInTy = LegalOp.getValueType();
-
-  unsigned OpToUse = 0;
-
-  // Scan for the appropriate larger type to use.
-  while (1) {
-    NewInTy = (MVT::ValueType)(NewInTy+1);
-    assert(MVT::isInteger(NewInTy) && "Ran out of possibilities!");
-
-    // If the target supports SINT_TO_FP of this type, use it.
-    switch (TLI.getOperationAction(ISD::SINT_TO_FP, NewInTy)) {
-      default: break;
-      case TargetLowering::Legal:
-        if (!TLI.isTypeLegal(NewInTy))
-          break;  // Can't use this datatype.
-        // FALL THROUGH.
-      case TargetLowering::Custom:
-        OpToUse = ISD::SINT_TO_FP;
-        break;
-    }
-    if (OpToUse) break;
-    if (isSigned) continue;
-
-    // If the target supports UINT_TO_FP of this type, use it.
-    switch (TLI.getOperationAction(ISD::UINT_TO_FP, NewInTy)) {
-      default: break;
-      case TargetLowering::Legal:
-        if (!TLI.isTypeLegal(NewInTy))
-          break;  // Can't use this datatype.
-        // FALL THROUGH.
-      case TargetLowering::Custom:
-        OpToUse = ISD::UINT_TO_FP;
-        break;
-    }
-    if (OpToUse) break;
-
-    // Otherwise, try a larger type.
-  }
-
-  // Okay, we found the operation and type to use.  Zero extend our input to the
-  // desired type then run the operation on it.
-  return DAG.getNode(OpToUse, DestVT,
-                     DAG.getNode(isSigned ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND,
-                                 NewInTy, LegalOp));
-}
-
-/// PromoteLegalFP_TO_INT - This function is responsible for legalizing a
-/// FP_TO_*INT operation of the specified operand when the target requests that
-/// we promote it.  At this point, we know that the result and operand types are
-/// legal for the target, and that there is a legal FP_TO_UINT or FP_TO_SINT
-/// operation that returns a larger result.
-SDOperand SelectionDAGLegalize::PromoteLegalFP_TO_INT(SDOperand LegalOp,
-                                                      MVT::ValueType DestVT,
-                                                      bool isSigned) {
-  // First step, figure out the appropriate FP_TO*INT operation to use.
-  MVT::ValueType NewOutTy = DestVT;
-
-  unsigned OpToUse = 0;
-
-  // Scan for the appropriate larger type to use.
-  while (1) {
-    NewOutTy = (MVT::ValueType)(NewOutTy+1);
-    assert(MVT::isInteger(NewOutTy) && "Ran out of possibilities!");
-
-    // If the target supports FP_TO_SINT returning this type, use it.
-    switch (TLI.getOperationAction(ISD::FP_TO_SINT, NewOutTy)) {
-    default: break;
-    case TargetLowering::Legal:
-      if (!TLI.isTypeLegal(NewOutTy))
-        break;  // Can't use this datatype.
-      // FALL THROUGH.
-    case TargetLowering::Custom:
-      OpToUse = ISD::FP_TO_SINT;
-      break;
-    }
-    if (OpToUse) break;
-
-    // If the target supports FP_TO_UINT of this type, use it.
-    switch (TLI.getOperationAction(ISD::FP_TO_UINT, NewOutTy)) {
-    default: break;
-    case TargetLowering::Legal:
-      if (!TLI.isTypeLegal(NewOutTy))
-        break;  // Can't use this datatype.
-      // FALL THROUGH.
-    case TargetLowering::Custom:
-      OpToUse = ISD::FP_TO_UINT;
-      break;
-    }
-    if (OpToUse) break;
-
-    // Otherwise, try a larger type.
-  }
-
-  // Okay, we found the operation and type to use.  Truncate the result of the
-  // extended FP_TO_*INT operation to the desired size.
-  return DAG.getNode(ISD::TRUNCATE, DestVT,
-                     DAG.getNode(OpToUse, NewOutTy, LegalOp));
-}
-
-/// ExpandBSWAP - Open code the operations for BSWAP of the specified operation.
-///
-SDOperand SelectionDAGLegalize::ExpandBSWAP(SDOperand Op) {
-  MVT::ValueType VT = Op.getValueType();
-  MVT::ValueType SHVT = TLI.getShiftAmountTy();
-  SDOperand Tmp1, Tmp2, Tmp3, Tmp4, Tmp5, Tmp6, Tmp7, Tmp8;
-  switch (VT) {
-  default: assert(0 && "Unhandled Expand type in BSWAP!"); abort();
-  case MVT::i16:
-    Tmp2 = DAG.getNode(ISD::SHL, VT, Op, DAG.getConstant(8, SHVT));
-    Tmp1 = DAG.getNode(ISD::SRL, VT, Op, DAG.getConstant(8, SHVT));
-    return DAG.getNode(ISD::OR, VT, Tmp1, Tmp2);
-  case MVT::i32:
-    Tmp4 = DAG.getNode(ISD::SHL, VT, Op, DAG.getConstant(24, SHVT));
-    Tmp3 = DAG.getNode(ISD::SHL, VT, Op, DAG.getConstant(8, SHVT));
-    Tmp2 = DAG.getNode(ISD::SRL, VT, Op, DAG.getConstant(8, SHVT));
-    Tmp1 = DAG.getNode(ISD::SRL, VT, Op, DAG.getConstant(24, SHVT));
-    Tmp3 = DAG.getNode(ISD::AND, VT, Tmp3, DAG.getConstant(0xFF0000, VT));
-    Tmp2 = DAG.getNode(ISD::AND, VT, Tmp2, DAG.getConstant(0xFF00, VT));
-    Tmp4 = DAG.getNode(ISD::OR, VT, Tmp4, Tmp3);
-    Tmp2 = DAG.getNode(ISD::OR, VT, Tmp2, Tmp1);
-    return DAG.getNode(ISD::OR, VT, Tmp4, Tmp2);
-  case MVT::i64:
-    Tmp8 = DAG.getNode(ISD::SHL, VT, Op, DAG.getConstant(56, SHVT));
-    Tmp7 = DAG.getNode(ISD::SHL, VT, Op, DAG.getConstant(40, SHVT));
-    Tmp6 = DAG.getNode(ISD::SHL, VT, Op, DAG.getConstant(24, SHVT));
-    Tmp5 = DAG.getNode(ISD::SHL, VT, Op, DAG.getConstant(8, SHVT));
-    Tmp4 = DAG.getNode(ISD::SRL, VT, Op, DAG.getConstant(8, SHVT));
-    Tmp3 = DAG.getNode(ISD::SRL, VT, Op, DAG.getConstant(24, SHVT));
-    Tmp2 = DAG.getNode(ISD::SRL, VT, Op, DAG.getConstant(40, SHVT));
-    Tmp1 = DAG.getNode(ISD::SRL, VT, Op, DAG.getConstant(56, SHVT));
-    Tmp7 = DAG.getNode(ISD::AND, VT, Tmp7, DAG.getConstant(255ULL<<48, VT));
-    Tmp6 = DAG.getNode(ISD::AND, VT, Tmp6, DAG.getConstant(255ULL<<40, VT));
-    Tmp5 = DAG.getNode(ISD::AND, VT, Tmp5, DAG.getConstant(255ULL<<32, VT));
-    Tmp4 = DAG.getNode(ISD::AND, VT, Tmp4, DAG.getConstant(255ULL<<24, VT));
-    Tmp3 = DAG.getNode(ISD::AND, VT, Tmp3, DAG.getConstant(255ULL<<16, VT));
-    Tmp2 = DAG.getNode(ISD::AND, VT, Tmp2, DAG.getConstant(255ULL<<8 , VT));
-    Tmp8 = DAG.getNode(ISD::OR, VT, Tmp8, Tmp7);
-    Tmp6 = DAG.getNode(ISD::OR, VT, Tmp6, Tmp5);
-    Tmp4 = DAG.getNode(ISD::OR, VT, Tmp4, Tmp3);
-    Tmp2 = DAG.getNode(ISD::OR, VT, Tmp2, Tmp1);
-    Tmp8 = DAG.getNode(ISD::OR, VT, Tmp8, Tmp6);
-    Tmp4 = DAG.getNode(ISD::OR, VT, Tmp4, Tmp2);
-    return DAG.getNode(ISD::OR, VT, Tmp8, Tmp4);
-  }
-}
-
-/// ExpandBitCount - Expand the specified bitcount instruction into operations.
-///
-SDOperand SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDOperand Op) {
-  switch (Opc) {
-  default: assert(0 && "Cannot expand this yet!");
-  case ISD::CTPOP: {
-    static const uint64_t mask[6] = {
-      0x5555555555555555ULL, 0x3333333333333333ULL,
-      0x0F0F0F0F0F0F0F0FULL, 0x00FF00FF00FF00FFULL,
-      0x0000FFFF0000FFFFULL, 0x00000000FFFFFFFFULL
-    };
-    MVT::ValueType VT = Op.getValueType();
-    MVT::ValueType ShVT = TLI.getShiftAmountTy();
-    unsigned len = getSizeInBits(VT);
-    for (unsigned i = 0; (1U << i) <= (len / 2); ++i) {
-      //x = (x & mask[i][len/8]) + (x >> (1 << i) & mask[i][len/8])
-      SDOperand Tmp2 = DAG.getConstant(mask[i], VT);
-      SDOperand Tmp3 = DAG.getConstant(1ULL << i, ShVT);
-      Op = DAG.getNode(ISD::ADD, VT, DAG.getNode(ISD::AND, VT, Op, Tmp2),
-                       DAG.getNode(ISD::AND, VT,
-                                   DAG.getNode(ISD::SRL, VT, Op, Tmp3),Tmp2));
-    }
-    return Op;
-  }
-  case ISD::CTLZ: {
-    // for now, we do this:
-    // x = x | (x >> 1);
-    // x = x | (x >> 2);
-    // ...
-    // x = x | (x >>16);
-    // x = x | (x >>32); // for 64-bit input
-    // return popcount(~x);
-    //
-    // but see also: http://www.hackersdelight.org/HDcode/nlz.cc
-    MVT::ValueType VT = Op.getValueType();
-    MVT::ValueType ShVT = TLI.getShiftAmountTy();
-    unsigned len = getSizeInBits(VT);
-    for (unsigned i = 0; (1U << i) <= (len / 2); ++i) {
-      SDOperand Tmp3 = DAG.getConstant(1ULL << i, ShVT);
-      Op = DAG.getNode(ISD::OR, VT, Op, DAG.getNode(ISD::SRL, VT, Op, Tmp3));
-    }
-    Op = DAG.getNode(ISD::XOR, VT, Op, DAG.getConstant(~0ULL, VT));
-    return DAG.getNode(ISD::CTPOP, VT, Op);
-  }
-  case ISD::CTTZ: {
-    // for now, we use: { return popcount(~x & (x - 1)); }
-    // unless the target has ctlz but not ctpop, in which case we use:
-    // { return 32 - nlz(~x & (x-1)); }
-    // see also http://www.hackersdelight.org/HDcode/ntz.cc
-    MVT::ValueType VT = Op.getValueType();
-    SDOperand Tmp2 = DAG.getConstant(~0ULL, VT);
-    SDOperand Tmp3 = DAG.getNode(ISD::AND, VT,
-                       DAG.getNode(ISD::XOR, VT, Op, Tmp2),
-                       DAG.getNode(ISD::SUB, VT, Op, DAG.getConstant(1, VT)));
-    // If ISD::CTLZ is legal and CTPOP isn't, then do that instead.
-    if (!TLI.isOperationLegal(ISD::CTPOP, VT) &&
-        TLI.isOperationLegal(ISD::CTLZ, VT))
-      return DAG.getNode(ISD::SUB, VT,
-                         DAG.getConstant(getSizeInBits(VT), VT),
-                         DAG.getNode(ISD::CTLZ, VT, Tmp3));
-    return DAG.getNode(ISD::CTPOP, VT, Tmp3);
-  }
-  }
-}
-
-
 /// ComputeTopDownOrdering - Add the specified node to the Order list if it has
 /// not been visited yet and if all of its operands have already been visited.
 static void ComputeTopDownOrdering(SDNode *N, std::vector<SDNode*> &Order,
@@ -3521,6 +3195,330 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
   return CallResult.first;
 }
 
+/// ExpandLegalINT_TO_FP - This function is responsible for legalizing a
+/// INT_TO_FP operation of the specified operand when the target requests that
+/// we expand it.  At this point, we know that the result and operand types are
+/// legal for the target.
+SDOperand SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
+                                                     SDOperand Op0,
+                                                     MVT::ValueType DestVT) {
+  if (Op0.getValueType() == MVT::i32) {
+    // simple 32-bit [signed|unsigned] integer to float/double expansion
+    
+    // get the stack frame index of a 8 byte buffer
+    MachineFunction &MF = DAG.getMachineFunction();
+    int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
+    // get address of 8 byte buffer
+    SDOperand StackSlot = DAG.getFrameIndex(SSFI, TLI.getPointerTy());
+    // word offset constant for Hi/Lo address computation
+    SDOperand WordOff = DAG.getConstant(sizeof(int), TLI.getPointerTy());
+    // set up Hi and Lo (into buffer) address based on endian
+    SDOperand Hi, Lo;
+    if (TLI.isLittleEndian()) {
+      Hi = DAG.getNode(ISD::ADD, TLI.getPointerTy(), StackSlot, WordOff);
+      Lo = StackSlot;
+    } else {
+      Hi = StackSlot;
+      Lo = DAG.getNode(ISD::ADD, TLI.getPointerTy(), StackSlot, WordOff);
+    }
+    // if signed map to unsigned space
+    SDOperand Op0Mapped;
+    if (isSigned) {
+      // constant used to invert sign bit (signed to unsigned mapping)
+      SDOperand SignBit = DAG.getConstant(0x80000000u, MVT::i32);
+      Op0Mapped = DAG.getNode(ISD::XOR, MVT::i32, Op0, SignBit);
+    } else {
+      Op0Mapped = Op0;
+    }
+    // store the lo of the constructed double - based on integer input
+    SDOperand Store1 = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
+                                   Op0Mapped, Lo, DAG.getSrcValue(NULL));
+    // initial hi portion of constructed double
+    SDOperand InitialHi = DAG.getConstant(0x43300000u, MVT::i32);
+    // store the hi of the constructed double - biased exponent
+    SDOperand Store2 = DAG.getNode(ISD::STORE, MVT::Other, Store1,
+                                   InitialHi, Hi, DAG.getSrcValue(NULL));
+    // load the constructed double
+    SDOperand Load = DAG.getLoad(MVT::f64, Store2, StackSlot,
+                               DAG.getSrcValue(NULL));
+    // FP constant to bias correct the final result
+    SDOperand Bias = DAG.getConstantFP(isSigned ?
+                                            BitsToDouble(0x4330000080000000ULL)
+                                          : BitsToDouble(0x4330000000000000ULL),
+                                     MVT::f64);
+    // subtract the bias
+    SDOperand Sub = DAG.getNode(ISD::FSUB, MVT::f64, Load, Bias);
+    // final result
+    SDOperand Result;
+    // handle final rounding
+    if (DestVT == MVT::f64) {
+      // do nothing
+      Result = Sub;
+    } else {
+     // if f32 then cast to f32
+      Result = DAG.getNode(ISD::FP_ROUND, MVT::f32, Sub);
+    }
+    return Result;
+  }
+  assert(!isSigned && "Legalize cannot Expand SINT_TO_FP for i64 yet");
+  SDOperand Tmp1 = DAG.getNode(ISD::SINT_TO_FP, DestVT, Op0);
+
+  SDOperand SignSet = DAG.getSetCC(TLI.getSetCCResultTy(), Op0,
+                                   DAG.getConstant(0, Op0.getValueType()),
+                                   ISD::SETLT);
+  SDOperand Zero = getIntPtrConstant(0), Four = getIntPtrConstant(4);
+  SDOperand CstOffset = DAG.getNode(ISD::SELECT, Zero.getValueType(),
+                                    SignSet, Four, Zero);
+
+  // If the sign bit of the integer is set, the large number will be treated
+  // as a negative number.  To counteract this, the dynamic code adds an
+  // offset depending on the data type.
+  uint64_t FF;
+  switch (Op0.getValueType()) {
+  default: assert(0 && "Unsupported integer type!");
+  case MVT::i8 : FF = 0x43800000ULL; break;  // 2^8  (as a float)
+  case MVT::i16: FF = 0x47800000ULL; break;  // 2^16 (as a float)
+  case MVT::i32: FF = 0x4F800000ULL; break;  // 2^32 (as a float)
+  case MVT::i64: FF = 0x5F800000ULL; break;  // 2^64 (as a float)
+  }
+  if (TLI.isLittleEndian()) FF <<= 32;
+  static Constant *FudgeFactor = ConstantUInt::get(Type::ULongTy, FF);
+
+  SDOperand CPIdx = DAG.getConstantPool(FudgeFactor, TLI.getPointerTy());
+  CPIdx = DAG.getNode(ISD::ADD, TLI.getPointerTy(), CPIdx, CstOffset);
+  SDOperand FudgeInReg;
+  if (DestVT == MVT::f32)
+    FudgeInReg = DAG.getLoad(MVT::f32, DAG.getEntryNode(), CPIdx,
+                             DAG.getSrcValue(NULL));
+  else {
+    assert(DestVT == MVT::f64 && "Unexpected conversion");
+    FudgeInReg = LegalizeOp(DAG.getExtLoad(ISD::EXTLOAD, MVT::f64,
+                                           DAG.getEntryNode(), CPIdx,
+                                           DAG.getSrcValue(NULL), MVT::f32));
+  }
+
+  return DAG.getNode(ISD::FADD, DestVT, Tmp1, FudgeInReg);
+}
+
+/// PromoteLegalINT_TO_FP - This function is responsible for legalizing a
+/// *INT_TO_FP operation of the specified operand when the target requests that
+/// we promote it.  At this point, we know that the result and operand types are
+/// legal for the target, and that there is a legal UINT_TO_FP or SINT_TO_FP
+/// operation that takes a larger input.
+SDOperand SelectionDAGLegalize::PromoteLegalINT_TO_FP(SDOperand LegalOp,
+                                                      MVT::ValueType DestVT,
+                                                      bool isSigned) {
+  // First step, figure out the appropriate *INT_TO_FP operation to use.
+  MVT::ValueType NewInTy = LegalOp.getValueType();
+
+  unsigned OpToUse = 0;
+
+  // Scan for the appropriate larger type to use.
+  while (1) {
+    NewInTy = (MVT::ValueType)(NewInTy+1);
+    assert(MVT::isInteger(NewInTy) && "Ran out of possibilities!");
+
+    // If the target supports SINT_TO_FP of this type, use it.
+    switch (TLI.getOperationAction(ISD::SINT_TO_FP, NewInTy)) {
+      default: break;
+      case TargetLowering::Legal:
+        if (!TLI.isTypeLegal(NewInTy))
+          break;  // Can't use this datatype.
+        // FALL THROUGH.
+      case TargetLowering::Custom:
+        OpToUse = ISD::SINT_TO_FP;
+        break;
+    }
+    if (OpToUse) break;
+    if (isSigned) continue;
+
+    // If the target supports UINT_TO_FP of this type, use it.
+    switch (TLI.getOperationAction(ISD::UINT_TO_FP, NewInTy)) {
+      default: break;
+      case TargetLowering::Legal:
+        if (!TLI.isTypeLegal(NewInTy))
+          break;  // Can't use this datatype.
+        // FALL THROUGH.
+      case TargetLowering::Custom:
+        OpToUse = ISD::UINT_TO_FP;
+        break;
+    }
+    if (OpToUse) break;
+
+    // Otherwise, try a larger type.
+  }
+
+  // Okay, we found the operation and type to use.  Zero extend our input to the
+  // desired type then run the operation on it.
+  return DAG.getNode(OpToUse, DestVT,
+                     DAG.getNode(isSigned ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND,
+                                 NewInTy, LegalOp));
+}
+
+/// PromoteLegalFP_TO_INT - This function is responsible for legalizing a
+/// FP_TO_*INT operation of the specified operand when the target requests that
+/// we promote it.  At this point, we know that the result and operand types are
+/// legal for the target, and that there is a legal FP_TO_UINT or FP_TO_SINT
+/// operation that returns a larger result.
+SDOperand SelectionDAGLegalize::PromoteLegalFP_TO_INT(SDOperand LegalOp,
+                                                      MVT::ValueType DestVT,
+                                                      bool isSigned) {
+  // First step, figure out the appropriate FP_TO*INT operation to use.
+  MVT::ValueType NewOutTy = DestVT;
+
+  unsigned OpToUse = 0;
+
+  // Scan for the appropriate larger type to use.
+  while (1) {
+    NewOutTy = (MVT::ValueType)(NewOutTy+1);
+    assert(MVT::isInteger(NewOutTy) && "Ran out of possibilities!");
+
+    // If the target supports FP_TO_SINT returning this type, use it.
+    switch (TLI.getOperationAction(ISD::FP_TO_SINT, NewOutTy)) {
+    default: break;
+    case TargetLowering::Legal:
+      if (!TLI.isTypeLegal(NewOutTy))
+        break;  // Can't use this datatype.
+      // FALL THROUGH.
+    case TargetLowering::Custom:
+      OpToUse = ISD::FP_TO_SINT;
+      break;
+    }
+    if (OpToUse) break;
+
+    // If the target supports FP_TO_UINT of this type, use it.
+    switch (TLI.getOperationAction(ISD::FP_TO_UINT, NewOutTy)) {
+    default: break;
+    case TargetLowering::Legal:
+      if (!TLI.isTypeLegal(NewOutTy))
+        break;  // Can't use this datatype.
+      // FALL THROUGH.
+    case TargetLowering::Custom:
+      OpToUse = ISD::FP_TO_UINT;
+      break;
+    }
+    if (OpToUse) break;
+
+    // Otherwise, try a larger type.
+  }
+
+  // Okay, we found the operation and type to use.  Truncate the result of the
+  // extended FP_TO_*INT operation to the desired size.
+  return DAG.getNode(ISD::TRUNCATE, DestVT,
+                     DAG.getNode(OpToUse, NewOutTy, LegalOp));
+}
+
+/// ExpandBSWAP - Open code the operations for BSWAP of the specified operation.
+///
+SDOperand SelectionDAGLegalize::ExpandBSWAP(SDOperand Op) {
+  MVT::ValueType VT = Op.getValueType();
+  MVT::ValueType SHVT = TLI.getShiftAmountTy();
+  SDOperand Tmp1, Tmp2, Tmp3, Tmp4, Tmp5, Tmp6, Tmp7, Tmp8;
+  switch (VT) {
+  default: assert(0 && "Unhandled Expand type in BSWAP!"); abort();
+  case MVT::i16:
+    Tmp2 = DAG.getNode(ISD::SHL, VT, Op, DAG.getConstant(8, SHVT));
+    Tmp1 = DAG.getNode(ISD::SRL, VT, Op, DAG.getConstant(8, SHVT));
+    return DAG.getNode(ISD::OR, VT, Tmp1, Tmp2);
+  case MVT::i32:
+    Tmp4 = DAG.getNode(ISD::SHL, VT, Op, DAG.getConstant(24, SHVT));
+    Tmp3 = DAG.getNode(ISD::SHL, VT, Op, DAG.getConstant(8, SHVT));
+    Tmp2 = DAG.getNode(ISD::SRL, VT, Op, DAG.getConstant(8, SHVT));
+    Tmp1 = DAG.getNode(ISD::SRL, VT, Op, DAG.getConstant(24, SHVT));
+    Tmp3 = DAG.getNode(ISD::AND, VT, Tmp3, DAG.getConstant(0xFF0000, VT));
+    Tmp2 = DAG.getNode(ISD::AND, VT, Tmp2, DAG.getConstant(0xFF00, VT));
+    Tmp4 = DAG.getNode(ISD::OR, VT, Tmp4, Tmp3);
+    Tmp2 = DAG.getNode(ISD::OR, VT, Tmp2, Tmp1);
+    return DAG.getNode(ISD::OR, VT, Tmp4, Tmp2);
+  case MVT::i64:
+    Tmp8 = DAG.getNode(ISD::SHL, VT, Op, DAG.getConstant(56, SHVT));
+    Tmp7 = DAG.getNode(ISD::SHL, VT, Op, DAG.getConstant(40, SHVT));
+    Tmp6 = DAG.getNode(ISD::SHL, VT, Op, DAG.getConstant(24, SHVT));
+    Tmp5 = DAG.getNode(ISD::SHL, VT, Op, DAG.getConstant(8, SHVT));
+    Tmp4 = DAG.getNode(ISD::SRL, VT, Op, DAG.getConstant(8, SHVT));
+    Tmp3 = DAG.getNode(ISD::SRL, VT, Op, DAG.getConstant(24, SHVT));
+    Tmp2 = DAG.getNode(ISD::SRL, VT, Op, DAG.getConstant(40, SHVT));
+    Tmp1 = DAG.getNode(ISD::SRL, VT, Op, DAG.getConstant(56, SHVT));
+    Tmp7 = DAG.getNode(ISD::AND, VT, Tmp7, DAG.getConstant(255ULL<<48, VT));
+    Tmp6 = DAG.getNode(ISD::AND, VT, Tmp6, DAG.getConstant(255ULL<<40, VT));
+    Tmp5 = DAG.getNode(ISD::AND, VT, Tmp5, DAG.getConstant(255ULL<<32, VT));
+    Tmp4 = DAG.getNode(ISD::AND, VT, Tmp4, DAG.getConstant(255ULL<<24, VT));
+    Tmp3 = DAG.getNode(ISD::AND, VT, Tmp3, DAG.getConstant(255ULL<<16, VT));
+    Tmp2 = DAG.getNode(ISD::AND, VT, Tmp2, DAG.getConstant(255ULL<<8 , VT));
+    Tmp8 = DAG.getNode(ISD::OR, VT, Tmp8, Tmp7);
+    Tmp6 = DAG.getNode(ISD::OR, VT, Tmp6, Tmp5);
+    Tmp4 = DAG.getNode(ISD::OR, VT, Tmp4, Tmp3);
+    Tmp2 = DAG.getNode(ISD::OR, VT, Tmp2, Tmp1);
+    Tmp8 = DAG.getNode(ISD::OR, VT, Tmp8, Tmp6);
+    Tmp4 = DAG.getNode(ISD::OR, VT, Tmp4, Tmp2);
+    return DAG.getNode(ISD::OR, VT, Tmp8, Tmp4);
+  }
+}
+
+/// ExpandBitCount - Expand the specified bitcount instruction into operations.
+///
+SDOperand SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDOperand Op) {
+  switch (Opc) {
+  default: assert(0 && "Cannot expand this yet!");
+  case ISD::CTPOP: {
+    static const uint64_t mask[6] = {
+      0x5555555555555555ULL, 0x3333333333333333ULL,
+      0x0F0F0F0F0F0F0F0FULL, 0x00FF00FF00FF00FFULL,
+      0x0000FFFF0000FFFFULL, 0x00000000FFFFFFFFULL
+    };
+    MVT::ValueType VT = Op.getValueType();
+    MVT::ValueType ShVT = TLI.getShiftAmountTy();
+    unsigned len = getSizeInBits(VT);
+    for (unsigned i = 0; (1U << i) <= (len / 2); ++i) {
+      //x = (x & mask[i][len/8]) + (x >> (1 << i) & mask[i][len/8])
+      SDOperand Tmp2 = DAG.getConstant(mask[i], VT);
+      SDOperand Tmp3 = DAG.getConstant(1ULL << i, ShVT);
+      Op = DAG.getNode(ISD::ADD, VT, DAG.getNode(ISD::AND, VT, Op, Tmp2),
+                       DAG.getNode(ISD::AND, VT,
+                                   DAG.getNode(ISD::SRL, VT, Op, Tmp3),Tmp2));
+    }
+    return Op;
+  }
+  case ISD::CTLZ: {
+    // for now, we do this:
+    // x = x | (x >> 1);
+    // x = x | (x >> 2);
+    // ...
+    // x = x | (x >>16);
+    // x = x | (x >>32); // for 64-bit input
+    // return popcount(~x);
+    //
+    // but see also: http://www.hackersdelight.org/HDcode/nlz.cc
+    MVT::ValueType VT = Op.getValueType();
+    MVT::ValueType ShVT = TLI.getShiftAmountTy();
+    unsigned len = getSizeInBits(VT);
+    for (unsigned i = 0; (1U << i) <= (len / 2); ++i) {
+      SDOperand Tmp3 = DAG.getConstant(1ULL << i, ShVT);
+      Op = DAG.getNode(ISD::OR, VT, Op, DAG.getNode(ISD::SRL, VT, Op, Tmp3));
+    }
+    Op = DAG.getNode(ISD::XOR, VT, Op, DAG.getConstant(~0ULL, VT));
+    return DAG.getNode(ISD::CTPOP, VT, Op);
+  }
+  case ISD::CTTZ: {
+    // for now, we use: { return popcount(~x & (x - 1)); }
+    // unless the target has ctlz but not ctpop, in which case we use:
+    // { return 32 - nlz(~x & (x-1)); }
+    // see also http://www.hackersdelight.org/HDcode/ntz.cc
+    MVT::ValueType VT = Op.getValueType();
+    SDOperand Tmp2 = DAG.getConstant(~0ULL, VT);
+    SDOperand Tmp3 = DAG.getNode(ISD::AND, VT,
+                       DAG.getNode(ISD::XOR, VT, Op, Tmp2),
+                       DAG.getNode(ISD::SUB, VT, Op, DAG.getConstant(1, VT)));
+    // If ISD::CTLZ is legal and CTPOP isn't, then do that instead.
+    if (!TLI.isOperationLegal(ISD::CTPOP, VT) &&
+        TLI.isOperationLegal(ISD::CTLZ, VT))
+      return DAG.getNode(ISD::SUB, VT,
+                         DAG.getConstant(getSizeInBits(VT), VT),
+                         DAG.getNode(ISD::CTLZ, VT, Tmp3));
+    return DAG.getNode(ISD::CTPOP, VT, Tmp3);
+  }
+  }
+}
 
 
 /// ExpandOp - Expand the specified SDOperand into its two component pieces
