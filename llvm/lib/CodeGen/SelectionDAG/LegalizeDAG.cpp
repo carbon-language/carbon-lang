@@ -2208,7 +2208,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         // Floating point mod -> fmod libcall.
         const char *FnName = Node->getValueType(0) == MVT::f32 ? "fmodf":"fmod";
         SDOperand Dummy;
-        Result = ExpandLibCall(FnName, Node, Dummy);
+        Result = LegalizeOp(ExpandLibCall(FnName, Node, Dummy));
       }
       break;
     }
@@ -2624,7 +2624,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         default: assert(0 && "Unreachable!");
         }
         SDOperand Dummy;
-        Result = ExpandLibCall(FnName, Node, Dummy);
+        Result = LegalizeOp(ExpandLibCall(FnName, Node, Dummy));
         break;
       }
       default:
@@ -3711,7 +3711,6 @@ SDOperand SelectionDAGLegalize::ExpandLibCall(const char *Name, SDNode *Node,
   }
   
   SpliceCallInto(CallInfo.second, OutChain);
-  NeedsAnotherIteration = true;
   return Result;
 }
 
