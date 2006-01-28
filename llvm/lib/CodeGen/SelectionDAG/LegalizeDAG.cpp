@@ -266,6 +266,23 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   bool isCustom = false;
   
   switch (Node->getOpcode()) {
+  case ISD::FrameIndex:
+  case ISD::EntryToken:
+  case ISD::Register:
+  case ISD::BasicBlock:
+  case ISD::TargetFrameIndex:
+  case ISD::TargetConstant:
+  case ISD::TargetConstantPool:
+  case ISD::TargetGlobalAddress:
+  case ISD::TargetExternalSymbol:
+  case ISD::VALUETYPE:
+  case ISD::SRCVALUE:
+  case ISD::STRING:
+  case ISD::CONDCODE:
+    // Primitives must all be legal.
+    assert(TLI.isOperationLegal(Node->getValueType(0), Node->getValueType(0)) &&
+           "This must be legal!");
+    break;
   default:
     if (Node->getOpcode() >= ISD::BUILTIN_OP_END) {
       // If this is a target node, legalize it by legalizing the operands then
@@ -293,33 +310,16 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     std::cerr << "NODE: "; Node->dump(); std::cerr << "\n";
     assert(0 && "Do not know how to legalize this operator!");
     abort();
-  case ISD::EntryToken:
-  case ISD::FrameIndex:
-  case ISD::TargetFrameIndex:
-  case ISD::Register:
-  case ISD::TargetConstant:
-  case ISD::TargetConstantPool:
   case ISD::GlobalAddress:
-  case ISD::TargetGlobalAddress:
   case ISD::ExternalSymbol:
-  case ISD::TargetExternalSymbol:
   case ISD::ConstantPool:           // Nothing to do.
-  case ISD::BasicBlock:
-  case ISD::CONDCODE:
-  case ISD::VALUETYPE:
-  case ISD::SRCVALUE:
-  case ISD::STRING:
     switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
     default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Custom: {
-      SDOperand Tmp = TLI.LowerOperation(Op, DAG);
-      if (Tmp.Val) {
-        Result = Tmp;
-        break;
-      }
-    } // FALLTHROUGH if the target doesn't want to lower this op after all.
+    case TargetLowering::Custom:
+      Tmp1 = TLI.LowerOperation(Op, DAG);
+      if (Tmp1.Val) Result = Tmp1;
+      // FALLTHROUGH if the target doesn't want to lower this op after all.
     case TargetLowering::Legal:
-      assert(isTypeLegal(Node->getValueType(0)) && "This must be legal!");
       break;
     }
     break;
