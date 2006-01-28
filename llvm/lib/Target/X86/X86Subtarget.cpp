@@ -139,12 +139,6 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS) {
   // Parse features string.
   ParseSubtargetFeatures(FS, CPU);
 
-  // FIXME: Just because the CPU supports 64-bit operation doesn't mean it isn't
-  // currently running a 32-bit operating system.  This must be taken into account.
-  // This hack will do for now, though obviously it breaks cross-compilation.
-  if (sizeof(void *) == 4)
-    Is64Bit = false;
-
   // Default to ELF unless otherwise specified.
   TargetType = isELF;
   
