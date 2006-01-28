@@ -113,10 +113,35 @@ static const char *GetCurrentX86CPU() {
       return "generic";
     }
   } else if (memcmp(text.c, "AuthenticAMD", 12) == 0) {
-    // FIXME: fill in remaining family/model combinations
+    // FIXME: this poorly matches the generated SubtargetFeatureKV table.  There
+    // appears to be no way to generate the wide variety of AMD-specific targets
+    // from the information returned from CPUID.
     switch (Family) {
+      case 4:
+        return "i486";
+      case 5:
+        switch (Model) {
+        case 6:
+        case 7:  return "k6";
+        case 8:  return "k6-2";
+        case 9:
+        case 13: return "k6-3";
+        default: return "pentium";
+        }
+      case 6:
+        switch (Model) {
+        case 4:  return "athlon-tbird";
+        case 6:
+        case 7:
+        case 8:  return "athlon-mp";
+        case 10: return "athlon-xp";
+        default: return "athlon";
+        }
       case 15:
-        return (Em64T) ? "athlon64" : "athlon";
+        switch (Model) {
+        case 5:  return "athlon-fx"; // also opteron
+        default: return "athlon64";
+        }
 
     default:
       return "generic";
