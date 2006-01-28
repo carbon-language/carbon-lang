@@ -274,6 +274,8 @@ public:
                                SDOperand Op3);
   SDOperand UpdateNodeOperands(SDOperand N, SDOperand Op1, SDOperand Op2,
                                SDOperand Op3, SDOperand Op4);
+  SDOperand UpdateNodeOperands(SDOperand N, SDOperand Op1, SDOperand Op2,
+                               SDOperand Op3, SDOperand Op4, SDOperand Op5);
   SDOperand UpdateNodeOperands(SDOperand N, const std::vector<SDOperand> &Op);
   
   /// SelectNodeTo - These are used for target selectors to *mutate* the
