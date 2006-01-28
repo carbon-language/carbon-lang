@@ -903,34 +903,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     AddLegalizedOperand(SDOperand(Node, 0), Result);
     AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
     return Result.getValue(Op.ResNo);
-  case ISD::TAILCALL:
-  case ISD::CALL: {
-    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
-    Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the callee.
-
-    bool Changed = false;
-    std::vector<SDOperand> Ops;
-    for (unsigned i = 2, e = Node->getNumOperands(); i != e; ++i) {
-      Ops.push_back(LegalizeOp(Node->getOperand(i)));
-      Changed |= Ops.back() != Node->getOperand(i);
-    }
-
-    if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) || Changed) {
-      std::vector<MVT::ValueType> RetTyVTs;
-      RetTyVTs.reserve(Node->getNumValues());
-      for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
-        RetTyVTs.push_back(Node->getValueType(i));
-      Result = SDOperand(DAG.getCall(RetTyVTs, Tmp1, Tmp2, Ops,
-                                     Node->getOpcode() == ISD::TAILCALL), 0);
-    } else {
-      Result = Result.getValue(0);
-    }
-    // Since calls produce multiple values, make sure to remember that we
-    // legalized all of them.
-    for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
-      AddLegalizedOperand(SDOperand(Node, i), Result.getValue(i));
-    return Result.getValue(Op.ResNo);
-  }
   case ISD::BR:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     if (Tmp1 != Node->getOperand(0))
@@ -3278,29 +3250,6 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
                          Node->getOperand(1), Tmp2, Tmp3,
                          Node->getOperand(4));
     break;
-  case ISD::TAILCALL:
-  case ISD::CALL: {
-    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
-    Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the callee.
-
-    std::vector<SDOperand> Ops;
-    for (unsigned i = 2, e = Node->getNumOperands(); i != e; ++i)
-      Ops.push_back(LegalizeOp(Node->getOperand(i)));
-
-    assert(Node->getNumValues() == 2 && Op.ResNo == 0 &&
-           "Can only promote single result calls");
-    std::vector<MVT::ValueType> RetTyVTs;
-    RetTyVTs.reserve(2);
-    RetTyVTs.push_back(NVT);
-    RetTyVTs.push_back(MVT::Other);
-    SDNode *NC = DAG.getCall(RetTyVTs, Tmp1, Tmp2, Ops,
-                             Node->getOpcode() == ISD::TAILCALL);
-    Result = SDOperand(NC, 0);
-
-    // Insert the new chain mapping.
-    AddLegalizedOperand(Op.getValue(1), Result.getValue(1));
-    break;
-  }
   case ISD::BSWAP:
     Tmp1 = Node->getOperand(0);
     Tmp1 = DAG.getNode(ISD::ZERO_EXTEND, NVT, Tmp1);
@@ -4077,35 +4026,6 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       Hi = DAG.getNode(Node->getOpcode(), MVT::Vector, LH, RH, LH.getOperand(2),
                        LH.getOperand(3));
     }
-    break;
-  }
-  case ISD::TAILCALL:
-  case ISD::CALL: {
-    SDOperand Chain  = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
-    SDOperand Callee = LegalizeOp(Node->getOperand(1));  // Legalize the callee.
-
-    bool Changed = false;
-    std::vector<SDOperand> Ops;
-    for (unsigned i = 2, e = Node->getNumOperands(); i != e; ++i) {
-      Ops.push_back(LegalizeOp(Node->getOperand(i)));
-      Changed |= Ops.back() != Node->getOperand(i);
-    }
-
-    assert(Node->getNumValues() == 2 && Op.ResNo == 0 &&
-           "Can only expand a call once so far, not i64 -> i16!");
-
-    std::vector<MVT::ValueType> RetTyVTs;
-    RetTyVTs.reserve(3);
-    RetTyVTs.push_back(NVT);
-    RetTyVTs.push_back(NVT);
-    RetTyVTs.push_back(MVT::Other);
-    SDNode *NC = DAG.getCall(RetTyVTs, Chain, Callee, Ops,
-                             Node->getOpcode() == ISD::TAILCALL);
-    Lo = SDOperand(NC, 0);
-    Hi = SDOperand(NC, 1);
-
-    // Insert the new chain mapping.
-    AddLegalizedOperand(Op.getValue(1), Hi.getValue(2));
     break;
   }
   case ISD::AND:

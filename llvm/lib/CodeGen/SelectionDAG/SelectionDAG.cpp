@@ -374,7 +374,7 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
   // flag result (which cannot be CSE'd) or is one of the special cases that are
   // not subject to CSE.
   if (!Erased && N->getValueType(N->getNumValues()-1) != MVT::Flag &&
-      N->getOpcode() != ISD::CALL && N->getOpcode() != ISD::CALLSEQ_START &&
+      N->getOpcode() != ISD::CALLSEQ_START &&
       N->getOpcode() != ISD::CALLSEQ_END && !N->isTargetOpcode()) {
     
     N->dump();
@@ -2096,8 +2096,6 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::BR_CC:  return "br_cc";
   case ISD::BRTWOWAY_CC:  return "brtwoway_cc";
   case ISD::RET:     return "ret";
-  case ISD::CALL:    return "call";
-  case ISD::TAILCALL:return "tailcall";
   case ISD::CALLSEQ_START:  return "callseq_start";
   case ISD::CALLSEQ_END:    return "callseq_end";
 
