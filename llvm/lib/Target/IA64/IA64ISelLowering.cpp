@@ -461,11 +461,6 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
   else
     assert(0 && "this should never happen!\n");
 
-/* out with the old...
-    Chain = SDOperand(DAG.getCall(NodeTys, Chain, Callee, InFlag), 0);
-  else
-    Chain = SDOperand(DAG.getCall(NodeTys, Chain, Callee), 0);
-*/
   // to make way for a hack:
   Chain = DAG.getNode(IA64ISD::BRCALL, NodeTys, CallOperands);
   InFlag = Chain.getValue(1);

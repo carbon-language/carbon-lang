@@ -413,36 +413,6 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
     return Result;
   } 
   
-  case ISD::CALL:
-  case ISD::TAILCALL: { {
-        // FIXME: This is a workaround for a bug in tblgen.
-    // Pattern #47: (call:Flag (tglobaladdr:i32):$dst, ICC:Flag)
-    // Emits: (CALL:void (tglobaladdr:i32):$dst)
-    // Pattern complexity = 2  cost = 1
-    SDOperand N1 = N->getOperand(1);
-    if (N1.getOpcode() != ISD::TargetGlobalAddress &&
-        N1.getOpcode() != ISD::ExternalSymbol) goto P47Fail;
-    SDOperand InFlag = SDOperand(0, 0);
-    SDOperand Chain = N->getOperand(0);
-    SDOperand Tmp0 = N1;
-    Chain = Select(Chain);
-    SDOperand Result;
-    if (N->getNumOperands() == 3) {
-      InFlag = Select(N->getOperand(2));
-      Result = CurDAG->getTargetNode(IA64::BRCALL, MVT::Other, MVT::Flag, Tmp0, 
-                                     Chain, InFlag);
-    } else {
-      Result = CurDAG->getTargetNode(IA64::BRCALL, MVT::Other, MVT::Flag, Tmp0, 
-                                     Chain);
-    }
-    Chain = CodeGenMap[SDOperand(N, 0)] = Result.getValue(0);
-    CodeGenMap[SDOperand(N, 1)] = Result.getValue(1);
-    return Result.getValue(Op.ResNo);
-  }
-    P47Fail:;
-    
-  }
-
   case ISD::FDIV:
   case ISD::SDIV:
   case ISD::UDIV:
