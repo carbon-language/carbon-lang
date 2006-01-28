@@ -262,6 +262,19 @@ public:
   // getSrcValue - construct a node to track a Value* through the backend
   SDOperand getSrcValue(const Value* I, int offset = 0);
 
+  /// UpdateNodeOperands - *Mutate* the specified node in-place to have the
+  /// specified operands.  If the resultant node already exists in the DAG,
+  /// this does not modify the specified node, instead it returns the node that
+  /// already exists.  If the resultant node does not exist in the DAG, the
+  /// input node is returned.  As a degenerate case, if you specify the same
+  /// input operands as the node already has, the input node is returned.
+  SDOperand UpdateNodeOperands(SDOperand N, SDOperand Op);
+  SDOperand UpdateNodeOperands(SDOperand N, SDOperand Op1, SDOperand Op2);
+  SDOperand UpdateNodeOperands(SDOperand N, SDOperand Op1, SDOperand Op2,
+                               SDOperand Op3);
+  SDOperand UpdateNodeOperands(SDOperand N, SDOperand Op1, SDOperand Op2,
+                               SDOperand Op3, SDOperand Op4);
+  SDOperand UpdateNodeOperands(SDOperand N, const std::vector<SDOperand> &Op);
   
   /// SelectNodeTo - These are used for target selectors to *mutate* the
   /// specified node to have the specified return type, Target opcode, and
@@ -551,6 +564,10 @@ public:
 private:
   void RemoveNodeFromCSEMaps(SDNode *N);
   SDNode *AddNonLeafNodeToCSEMaps(SDNode *N);
+  SDNode **FindModifiedNodeSlot(SDNode *N, SDOperand Op);
+  SDNode **FindModifiedNodeSlot(SDNode *N, SDOperand Op1, SDOperand Op2);
+  SDNode **FindModifiedNodeSlot(SDNode *N, const std::vector<SDOperand> &Ops);
+
   void DestroyDeadNode(SDNode *N);
   void DeleteNodeNotInCSEMaps(SDNode *N);
   void setNodeValueTypes(SDNode *N, std::vector<MVT::ValueType> &RetVals);
