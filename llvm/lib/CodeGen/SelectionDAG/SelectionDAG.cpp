@@ -440,6 +440,107 @@ SDNode *SelectionDAG::AddNonLeafNodeToCSEMaps(SDNode *N) {
   return 0;
 }
 
+/// FindModifiedNodeSlot - Find a slot for the specified node if its operands
+/// were replaced with those specified.  If this node is never memoized, 
+/// return null, otherwise return a pointer to the slot it would take.  If a
+/// node already exists with these operands, the slot will be non-null.
+SDNode **SelectionDAG::FindModifiedNodeSlot(SDNode *N, SDOperand Op) {
+  if (N->getOpcode() == ISD::CALLSEQ_START || 
+      N->getOpcode() == ISD::CALLSEQ_END ||
+      N->getOpcode() == ISD::HANDLENODE || N->getValueType(0) == MVT::Flag)
+    return 0;    // Never add these nodes.
+  
+  // Check that remaining values produced are not flags.
+  for (unsigned i = 1, e = N->getNumValues(); i != e; ++i)
+    if (N->getValueType(i) == MVT::Flag)
+      return 0;   // Never CSE anything that produces a flag.
+  
+  if (N->getNumValues() == 1) {
+    return &UnaryOps[std::make_pair(N->getOpcode(),
+                                    std::make_pair(Op, N->getValueType(0)))];
+  } else {  
+    // Remove the node from the ArbitraryNodes map.
+    std::vector<MVT::ValueType> RV(N->value_begin(), N->value_end());
+    std::vector<SDOperand> Ops;
+    Ops.push_back(Op);
+    return &ArbitraryNodes[std::make_pair(N->getOpcode(),
+                                          std::make_pair(RV, Ops))];
+  }
+  return 0;
+}
+
+/// FindModifiedNodeSlot - Find a slot for the specified node if its operands
+/// were replaced with those specified.  If this node is never memoized, 
+/// return null, otherwise return a pointer to the slot it would take.  If a
+/// node already exists with these operands, the slot will be non-null.
+SDNode **SelectionDAG::FindModifiedNodeSlot(SDNode *N, 
+                                            SDOperand Op1, SDOperand Op2) {
+  if (N->getOpcode() == ISD::CALLSEQ_START || 
+      N->getOpcode() == ISD::CALLSEQ_END ||
+      N->getOpcode() == ISD::HANDLENODE || N->getValueType(0) == MVT::Flag)
+    return 0;    // Never add these nodes.
+  
+  // Check that remaining values produced are not flags.
+  for (unsigned i = 1, e = N->getNumValues(); i != e; ++i)
+    if (N->getValueType(i) == MVT::Flag)
+      return 0;   // Never CSE anything that produces a flag.
+  
+  if (N->getNumValues() == 1) {
+    return &BinaryOps[std::make_pair(N->getOpcode(),
+                                     std::make_pair(Op1, Op2))];
+  } else {  
+    std::vector<MVT::ValueType> RV(N->value_begin(), N->value_end());
+    std::vector<SDOperand> Ops;
+    Ops.push_back(Op1);
+    Ops.push_back(Op2);
+    return &ArbitraryNodes[std::make_pair(N->getOpcode(),
+                                          std::make_pair(RV, Ops))];
+  }
+  return 0;
+}
+
+
+/// FindModifiedNodeSlot - Find a slot for the specified node if its operands
+/// were replaced with those specified.  If this node is never memoized, 
+/// return null, otherwise return a pointer to the slot it would take.  If a
+/// node already exists with these operands, the slot will be non-null.
+SDNode **SelectionDAG::FindModifiedNodeSlot(SDNode *N, 
+                                            const std::vector<SDOperand> &Ops) {
+  if (N->getOpcode() == ISD::CALLSEQ_START || 
+      N->getOpcode() == ISD::CALLSEQ_END ||
+      N->getOpcode() == ISD::HANDLENODE || N->getValueType(0) == MVT::Flag)
+    return 0;    // Never add these nodes.
+  
+  // Check that remaining values produced are not flags.
+  for (unsigned i = 1, e = N->getNumValues(); i != e; ++i)
+    if (N->getValueType(i) == MVT::Flag)
+      return 0;   // Never CSE anything that produces a flag.
+  
+  if (N->getNumValues() == 1) {
+    if (N->getNumOperands() == 1) {
+      return &UnaryOps[std::make_pair(N->getOpcode(),
+                                      std::make_pair(Ops[0],
+                                                     N->getValueType(0)))];
+    } else if (N->getNumOperands() == 2) {
+      return &BinaryOps[std::make_pair(N->getOpcode(),
+                                       std::make_pair(Ops[0], Ops[1]))];
+    } else {
+      return &OneResultNodes[std::make_pair(N->getOpcode(),
+                                            std::make_pair(N->getValueType(0),
+                                                           Ops))];
+    }
+  } else {  
+    if (N->getOpcode() == ISD::LOAD) {
+      return &Loads[std::make_pair(Ops[1],
+                                   std::make_pair(Ops[0], N->getValueType(0)))];
+    } else {
+      std::vector<MVT::ValueType> RV(N->value_begin(), N->value_end());
+      return &ArbitraryNodes[std::make_pair(N->getOpcode(),
+                                            std::make_pair(RV, Ops))];
+    }
+  }
+  return 0;
+}
 
 
 SelectionDAG::~SelectionDAG() {
@@ -1536,6 +1637,139 @@ void SelectionDAG::setNodeValueTypes(SDNode *N, MVT::ValueType VT1,
   VTList.push_front(V);
   N->setValueTypes(&(*VTList.begin())[0], 2);
 }
+
+/// UpdateNodeOperands - *Mutate* the specified node in-place to have the
+/// specified operands.  If the resultant node already exists in the DAG,
+/// this does not modify the specified node, instead it returns the node that
+/// already exists.  If the resultant node does not exist in the DAG, the
+/// input node is returned.  As a degenerate case, if you specify the same
+/// input operands as the node already has, the input node is returned.
+SDOperand SelectionDAG::
+UpdateNodeOperands(SDOperand InN, SDOperand Op) {
+  SDNode *N = InN.Val;
+  assert(N->getNumOperands() == 1 && "Update with wrong number of operands");
+  
+  // Check to see if there is no change.
+  if (Op == N->getOperand(0)) return InN;
+  
+  // See if the modified node already exists.
+  SDNode **NewSlot = FindModifiedNodeSlot(N, Op);
+  if (NewSlot && *NewSlot)
+    return SDOperand(*NewSlot, InN.ResNo);
+  
+  // Nope it doesn't.  Remove the node from it's current place in the maps.
+  if (NewSlot)
+    RemoveNodeFromCSEMaps(N);
+  
+  // Now we update the operands.
+  N->OperandList[0].Val->removeUser(N);
+  Op.Val->addUser(N);
+  N->OperandList[0] = Op;
+  
+  // If this gets put into a CSE map, add it.
+  if (NewSlot) *NewSlot = N;
+  return InN;
+}
+
+SDOperand SelectionDAG::
+UpdateNodeOperands(SDOperand InN, SDOperand Op1, SDOperand Op2) {
+  SDNode *N = InN.Val;
+  assert(N->getNumOperands() == 2 && "Update with wrong number of operands");
+  
+  // Check to see if there is no change.
+  bool AnyChange = false;
+  if (Op1 == N->getOperand(0) && Op2 == N->getOperand(1))
+    return InN;   // No operands changed, just return the input node.
+  
+  // See if the modified node already exists.
+  SDNode **NewSlot = FindModifiedNodeSlot(N, Op1, Op2);
+  if (NewSlot && *NewSlot)
+    return SDOperand(*NewSlot, InN.ResNo);
+  
+  // Nope it doesn't.  Remove the node from it's current place in the maps.
+  if (NewSlot)
+    RemoveNodeFromCSEMaps(N);
+  
+  // Now we update the operands.
+  if (N->OperandList[0] != Op1) {
+    N->OperandList[0].Val->removeUser(N);
+    Op1.Val->addUser(N);
+    N->OperandList[0] = Op1;
+  }
+  if (N->OperandList[1] != Op2) {
+    N->OperandList[1].Val->removeUser(N);
+    Op2.Val->addUser(N);
+    N->OperandList[1] = Op2;
+  }
+  
+  // If this gets put into a CSE map, add it.
+  if (NewSlot) *NewSlot = N;
+  return InN;
+}
+
+SDOperand SelectionDAG::
+UpdateNodeOperands(SDOperand N, SDOperand Op1, SDOperand Op2, SDOperand Op3) {
+  std::vector<SDOperand> Ops;
+  Ops.push_back(Op1);
+  Ops.push_back(Op2);
+  Ops.push_back(Op3);
+  return UpdateNodeOperands(N, Ops);
+}
+
+SDOperand SelectionDAG::
+UpdateNodeOperands(SDOperand N, SDOperand Op1, SDOperand Op2, 
+                   SDOperand Op3, SDOperand Op4) {
+  std::vector<SDOperand> Ops;
+  Ops.push_back(Op1);
+  Ops.push_back(Op2);
+  Ops.push_back(Op3);
+  Ops.push_back(Op4);
+  return UpdateNodeOperands(N, Ops);
+}
+
+SDOperand SelectionDAG::
+UpdateNodeOperands(SDOperand InN, const std::vector<SDOperand> &Ops) {
+  SDNode *N = InN.Val;
+  assert(N->getNumOperands() == Ops.size() &&
+         "Update with wrong number of operands");
+  
+  // Check to see if there is no change.
+  unsigned NumOps = Ops.size();
+  bool AnyChange = false;
+  for (unsigned i = 0; i != NumOps; ++i) {
+    if (Ops[i] != N->getOperand(i)) {
+      AnyChange = true;
+      break;
+    }
+  }
+  
+  // No operands changed, just return the input node.
+  if (!AnyChange) return InN;
+  
+  // See if the modified node already exists.
+  SDNode **NewSlot = FindModifiedNodeSlot(N, Ops);
+  if (NewSlot && *NewSlot)
+    return SDOperand(*NewSlot, InN.ResNo);
+  
+  // Nope it doesn't.  Remove the node from it's current place in the maps.
+  if (NewSlot)
+    RemoveNodeFromCSEMaps(N);
+  
+  // Now we update the operands.
+  for (unsigned i = 0; i != NumOps; ++i) {
+    if (N->OperandList[i] != Ops[i]) {
+      N->OperandList[i].Val->removeUser(N);
+      Ops[i].Val->addUser(N);
+      N->OperandList[i] = Ops[i];
+    }
+  }
+
+  // If this gets put into a CSE map, add it.
+  if (NewSlot) *NewSlot = N;
+  return InN;
+}
+
+
 
 
 /// SelectNodeTo - These are used for target selectors to *mutate* the
