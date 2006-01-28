@@ -143,9 +143,6 @@ private:
                    SDOperand &Lo, SDOperand &Hi);
   void ExpandShiftParts(unsigned NodeOp, SDOperand Op, SDOperand Amt,
                         SDOperand &Lo, SDOperand &Hi);
-  void ExpandByParts(unsigned NodeOp, SDOperand LHS, SDOperand RHS,
-                     SDOperand &Lo, SDOperand &Hi);
-
   void SpliceCallInto(const SDOperand &CallResult, SDNode *OutChain);
 
   SDOperand getIntPtrConstant(uint64_t Val) {
@@ -3335,26 +3332,6 @@ SDOperand SelectionDAGLegalize::ExpandBIT_CONVERT(MVT::ValueType DestVT,
   return DAG.getLoad(DestVT, Store, FIPtr, DAG.getSrcValue(0));
 }
 
-/// ExpandAddSub - Find a clever way to expand this add operation into
-/// subcomponents.
-void SelectionDAGLegalize::
-ExpandByParts(unsigned NodeOp, SDOperand LHS, SDOperand RHS,
-              SDOperand &Lo, SDOperand &Hi) {
-  // Expand the subcomponents.
-  SDOperand LHSL, LHSH, RHSL, RHSH;
-  ExpandOp(LHS, LHSL, LHSH);
-  ExpandOp(RHS, RHSL, RHSH);
-
-  std::vector<SDOperand> Ops;
-  Ops.push_back(LHSL);
-  Ops.push_back(LHSH);
-  Ops.push_back(RHSL);
-  Ops.push_back(RHSH);
-  std::vector<MVT::ValueType> VTs(2, LHSL.getValueType());
-  Lo = DAG.getNode(NodeOp, VTs, Ops);
-  Hi = Lo.getValue(1);
-}
-
 void SelectionDAGLegalize::ExpandShiftParts(unsigned NodeOp,
                                             SDOperand Op, SDOperand Amt,
                                             SDOperand &Lo, SDOperand &Hi) {
@@ -3841,11 +3818,6 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     return;
   }
 
-  // Expanding to multiple registers needs to perform an optimization step, and
-  // is not careful to avoid operations the target does not support.  Make sure
-  // that all generated operations are legalized in the next iteration.
-  NeedsAnotherIteration = true;
-
   switch (Node->getOpcode()) {
   case ISD::CopyFromReg:
     assert(0 && "CopyFromReg must be legal!");
@@ -3887,11 +3859,9 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   }
 
   case ISD::BUILD_PAIR:
-    // Legalize both operands.  FIXME: in the future we should handle the case
-    // where the two elements are not legal.
-    assert(isTypeLegal(NVT) && "Cannot expand this multiple times yet!");
-    Lo = LegalizeOp(Node->getOperand(0));
-    Hi = LegalizeOp(Node->getOperand(1));
+    // Return the operands.
+    Lo = Node->getOperand(0);
+    Hi = Node->getOperand(1);
     break;
     
   case ISD::SIGN_EXTEND_INREG:
@@ -3951,12 +3921,13 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   }
 
   case ISD::VAARG: {
-    SDOperand Ch = LegalizeOp(Node->getOperand(0));   // Legalize the chain.
-    SDOperand Ptr = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
+    SDOperand Ch = Node->getOperand(0);   // Legalize the chain.
+    SDOperand Ptr = Node->getOperand(1);  // Legalize the pointer.
     Lo = DAG.getVAArg(NVT, Ch, Ptr, Node->getOperand(2));
     Hi = DAG.getVAArg(NVT, Lo.getValue(1), Ptr, Node->getOperand(2));
 
     // Remember that we legalized the chain.
+    Hi = LegalizeOp(Hi);
     AddLegalizedOperand(Op.getValue(1), Hi.getValue(1));
     if (!TLI.isLittleEndian())
       std::swap(Lo, Hi);
@@ -3964,16 +3935,15 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   }
     
   case ISD::LOAD: {
-    SDOperand Ch = LegalizeOp(Node->getOperand(0));   // Legalize the chain.
-    SDOperand Ptr = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
+    SDOperand Ch = Node->getOperand(0);   // Legalize the chain.
+    SDOperand Ptr = Node->getOperand(1);  // Legalize the pointer.
     Lo = DAG.getLoad(NVT, Ch, Ptr, Node->getOperand(2));
 
     // Increment the pointer to the other half.
     unsigned IncrementSize = MVT::getSizeInBits(Lo.getValueType())/8;
     Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
                       getIntPtrConstant(IncrementSize));
-    //Is this safe?  declaring that the two parts of the split load
-    //are from the same instruction?
+    // FIXME: This creates a bogus srcvalue!
     Hi = DAG.getLoad(NVT, Ch, Ptr, Node->getOperand(2));
 
     // Build a factor node to remember that this load is independent of the
@@ -3982,14 +3952,14 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
                                Hi.getValue(1));
 
     // Remember that we legalized the chain.
-    AddLegalizedOperand(Op.getValue(1), TF);
+    AddLegalizedOperand(Op.getValue(1), LegalizeOp(TF));
     if (!TLI.isLittleEndian())
       std::swap(Lo, Hi);
     break;
   }
   case ISD::VLOAD: {
-    SDOperand Ch = LegalizeOp(Node->getOperand(0));   // Legalize the chain.
-    SDOperand Ptr = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
+    SDOperand Ch = Node->getOperand(0);   // Legalize the chain.
+    SDOperand Ptr = Node->getOperand(1);  // Legalize the pointer.
     unsigned NumElements =cast<ConstantSDNode>(Node->getOperand(2))->getValue();
     MVT::ValueType EVT = cast<VTSDNode>(Node->getOperand(3))->getVT();
     
@@ -4002,8 +3972,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       unsigned IncrementSize = MVT::getSizeInBits(EVT)/8;
       Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
                         getIntPtrConstant(IncrementSize));
-      //Is this safe?  declaring that the two parts of the split load
-      //are from the same instruction?
+      // FIXME: This creates a bogus srcvalue!
       Hi = DAG.getLoad(EVT, Ch, Ptr, Node->getOperand(4));
     } else {
       NumElements /= 2; // Split the vector in half
@@ -4011,8 +3980,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       unsigned IncrementSize = NumElements * MVT::getSizeInBits(EVT)/8;
       Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
                         getIntPtrConstant(IncrementSize));
-      //Is this safe?  declaring that the two parts of the split load
-      //are from the same instruction?
+      // FIXME: This creates a bogus srcvalue!
       Hi = DAG.getVecLoad(NumElements, EVT, Ch, Ptr, Node->getOperand(4));
     }
     
@@ -4022,7 +3990,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
                                Hi.getValue(1));
     
     // Remember that we legalized the chain.
-    AddLegalizedOperand(Op.getValue(1), TF);
+    AddLegalizedOperand(Op.getValue(1), LegalizeOp(TF));
     if (!TLI.isLittleEndian())
       std::swap(Lo, Hi);
     break;
@@ -4088,13 +4056,11 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
                      Node->getOperand(1), TL, FL, Node->getOperand(4));
     Hi = DAG.getNode(ISD::SELECT_CC, NVT, Node->getOperand(0),
                      Node->getOperand(1), TH, FH, Node->getOperand(4));
-    Lo = LegalizeOp(Lo);
-    Hi = LegalizeOp(Hi);
     break;
   }
   case ISD::SEXTLOAD: {
-    SDOperand Chain = LegalizeOp(Node->getOperand(0));
-    SDOperand Ptr   = LegalizeOp(Node->getOperand(1));
+    SDOperand Chain = Node->getOperand(0);
+    SDOperand Ptr   = Node->getOperand(1);
     MVT::ValueType EVT = cast<VTSDNode>(Node->getOperand(3))->getVT();
     
     if (EVT == NVT)
@@ -4104,20 +4070,18 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
                           EVT);
     
     // Remember that we legalized the chain.
-    AddLegalizedOperand(SDOperand(Node, 1), Lo.getValue(1));
+    AddLegalizedOperand(SDOperand(Node, 1), LegalizeOp(Lo.getValue(1)));
     
     // The high part is obtained by SRA'ing all but one of the bits of the lo
     // part.
     unsigned LoSize = MVT::getSizeInBits(Lo.getValueType());
     Hi = DAG.getNode(ISD::SRA, NVT, Lo, DAG.getConstant(LoSize-1,
                                                        TLI.getShiftAmountTy()));
-    Lo = LegalizeOp(Lo);
-    Hi = LegalizeOp(Hi);
     break;
   }
   case ISD::ZEXTLOAD: {
-    SDOperand Chain = LegalizeOp(Node->getOperand(0));
-    SDOperand Ptr   = LegalizeOp(Node->getOperand(1));
+    SDOperand Chain = Node->getOperand(0);
+    SDOperand Ptr   = Node->getOperand(1);
     MVT::ValueType EVT = cast<VTSDNode>(Node->getOperand(3))->getVT();
     
     if (EVT == NVT)
@@ -4127,16 +4091,15 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
                           EVT);
     
     // Remember that we legalized the chain.
-    AddLegalizedOperand(SDOperand(Node, 1), Lo.getValue(1));
+    AddLegalizedOperand(SDOperand(Node, 1), LegalizeOp(Lo.getValue(1)));
 
     // The high part is just a zero.
-    Hi = LegalizeOp(DAG.getConstant(0, NVT));
-    Lo = LegalizeOp(Lo);
+    Hi = DAG.getConstant(0, NVT);
     break;
   }
   case ISD::EXTLOAD: {
-    SDOperand Chain = LegalizeOp(Node->getOperand(0));
-    SDOperand Ptr   = LegalizeOp(Node->getOperand(1));
+    SDOperand Chain = Node->getOperand(0);
+    SDOperand Ptr   = Node->getOperand(1);
     MVT::ValueType EVT = cast<VTSDNode>(Node->getOperand(3))->getVT();
     
     if (EVT == NVT)
@@ -4146,73 +4109,38 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
                           EVT);
     
     // Remember that we legalized the chain.
-    AddLegalizedOperand(SDOperand(Node, 1), Lo.getValue(1));
+    AddLegalizedOperand(SDOperand(Node, 1), LegalizeOp(Lo.getValue(1)));
     
-    // The high part is undefined.
-    Hi = LegalizeOp(DAG.getNode(ISD::UNDEF, NVT));
-    Lo = LegalizeOp(Lo);
-    break;
-  }
-  case ISD::ANY_EXTEND: {
-    SDOperand In;
-    switch (getTypeAction(Node->getOperand(0).getValueType())) {
-    case Expand: assert(0 && "expand-expand not implemented yet!");
-    case Legal: In = LegalizeOp(Node->getOperand(0)); break;
-    case Promote:
-      In = PromoteOp(Node->getOperand(0));
-      break;
-    }
-    
-    // The low part is any extension of the input (which degenerates to a copy).
-    Lo = DAG.getNode(ISD::ANY_EXTEND, NVT, In);
     // The high part is undefined.
     Hi = DAG.getNode(ISD::UNDEF, NVT);
     break;
   }
+  case ISD::ANY_EXTEND:
+    // The low part is any extension of the input (which degenerates to a copy).
+    Lo = DAG.getNode(ISD::ANY_EXTEND, NVT, Node->getOperand(0));
+    // The high part is undefined.
+    Hi = DAG.getNode(ISD::UNDEF, NVT);
+    break;
   case ISD::SIGN_EXTEND: {
-    SDOperand In;
-    switch (getTypeAction(Node->getOperand(0).getValueType())) {
-    case Expand: assert(0 && "expand-expand not implemented yet!");
-    case Legal: In = LegalizeOp(Node->getOperand(0)); break;
-    case Promote:
-      In = PromoteOp(Node->getOperand(0));
-      // Emit the appropriate sign_extend_inreg to get the value we want.
-      In = DAG.getNode(ISD::SIGN_EXTEND_INREG, In.getValueType(), In,
-                       DAG.getValueType(Node->getOperand(0).getValueType()));
-      break;
-    }
-
     // The low part is just a sign extension of the input (which degenerates to
     // a copy).
-    Lo = DAG.getNode(ISD::SIGN_EXTEND, NVT, In);
+    Lo = DAG.getNode(ISD::SIGN_EXTEND, NVT, Node->getOperand(0));
 
     // The high part is obtained by SRA'ing all but one of the bits of the lo
     // part.
     unsigned LoSize = MVT::getSizeInBits(Lo.getValueType());
-    Hi = DAG.getNode(ISD::SRA, NVT, Lo, DAG.getConstant(LoSize-1,
-                                                       TLI.getShiftAmountTy()));
+    Hi = DAG.getNode(ISD::SRA, NVT, Lo,
+                     DAG.getConstant(LoSize-1, TLI.getShiftAmountTy()));
     break;
   }
-  case ISD::ZERO_EXTEND: {
-    SDOperand In;
-    switch (getTypeAction(Node->getOperand(0).getValueType())) {
-    case Expand: assert(0 && "expand-expand not implemented yet!");
-    case Legal: In = LegalizeOp(Node->getOperand(0)); break;
-    case Promote:
-      In = PromoteOp(Node->getOperand(0));
-      // Emit the appropriate zero_extend_inreg to get the value we want.
-      In = DAG.getZeroExtendInReg(In, Node->getOperand(0).getValueType());
-      break;
-    }
-
+  case ISD::ZERO_EXTEND:
     // The low part is just a zero extension of the input (which degenerates to
     // a copy).
-    Lo = DAG.getNode(ISD::ZERO_EXTEND, NVT, In);
+    Lo = DAG.getNode(ISD::ZERO_EXTEND, NVT, Node->getOperand(0));
 
     // The high part is just a zero.
     Hi = DAG.getConstant(0, NVT);
     break;
-  }
     
   case ISD::BIT_CONVERT: {
     SDOperand Tmp = ExpandBIT_CONVERT(Node->getValueType(0), 
@@ -4221,18 +4149,16 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     break;
   }
 
-  case ISD::READCYCLECOUNTER: {
+  case ISD::READCYCLECOUNTER:
     assert(TLI.getOperationAction(ISD::READCYCLECOUNTER, VT) == 
                  TargetLowering::Custom &&
            "Must custom expand ReadCycleCounter");
-    SDOperand T = TLI.LowerOperation(Op, DAG);
-    assert(T.Val && "Node must be custom expanded!");
-    Lo = LegalizeOp(T.getValue(0));
-    Hi = LegalizeOp(T.getValue(1));
+    Lo = TLI.LowerOperation(Op, DAG);
+    assert(Lo.Val && "Node must be custom expanded!");
+    Hi = Lo.getValue(1);
     AddLegalizedOperand(SDOperand(Node, 1), // Remember we legalized the chain.
-                        LegalizeOp(T.getValue(2)));
+                        LegalizeOp(Lo.getValue(2)));
     break;
-  }
 
     // These operators cannot be expanded directly, emit them as calls to
     // library functions.
@@ -4241,8 +4167,8 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       SDOperand Op;
       switch (getTypeAction(Node->getOperand(0).getValueType())) {
       case Expand: assert(0 && "cannot expand FP!");
-      case Legal: Op = LegalizeOp(Node->getOperand(0)); break;
-      case Promote: Op = PromoteOp(Node->getOperand(0)); break;
+      case Legal:   Op = LegalizeOp(Node->getOperand(0)); break;
+      case Promote: Op = PromoteOp (Node->getOperand(0)); break;
       }
 
       Op = TLI.LowerOperation(DAG.getNode(ISD::FP_TO_SINT, VT, Op), DAG);
@@ -4263,11 +4189,16 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
 
   case ISD::FP_TO_UINT:
     if (TLI.getOperationAction(ISD::FP_TO_UINT, VT) == TargetLowering::Custom) {
-      SDOperand Op = DAG.getNode(ISD::FP_TO_UINT, VT,
-                                 LegalizeOp(Node->getOperand(0)));
-      // Now that the custom expander is done, expand the result, which is still
-      // VT.
-      Op = TLI.LowerOperation(Op, DAG);
+      SDOperand Op;
+      switch (getTypeAction(Node->getOperand(0).getValueType())) {
+        case Expand: assert(0 && "cannot expand FP!");
+        case Legal:   Op = LegalizeOp(Node->getOperand(0)); break;
+        case Promote: Op = PromoteOp (Node->getOperand(0)); break;
+      }
+        
+      Op = TLI.LowerOperation(DAG.getNode(ISD::FP_TO_UINT, VT, Op), DAG);
+
+      // Now that the custom expander is done, expand the result.
       if (Op.Val) {
         ExpandOp(Op, Lo, Hi);
         break;
@@ -4284,8 +4215,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     // If the target wants custom lowering, do so.
     SDOperand ShiftAmt = LegalizeOp(Node->getOperand(1));
     if (TLI.getOperationAction(ISD::SHL, VT) == TargetLowering::Custom) {
-      SDOperand Op = DAG.getNode(ISD::SHL, VT, Node->getOperand(0),
-                                 ShiftAmt);
+      SDOperand Op = DAG.getNode(ISD::SHL, VT, Node->getOperand(0), ShiftAmt);
       Op = TLI.LowerOperation(Op, DAG);
       if (Op.Val) {
         // Now that the custom expander is done, expand the result, which is
@@ -4317,8 +4247,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     // If the target wants custom lowering, do so.
     SDOperand ShiftAmt = LegalizeOp(Node->getOperand(1));
     if (TLI.getOperationAction(ISD::SRA, VT) == TargetLowering::Custom) {
-      SDOperand Op = DAG.getNode(ISD::SRA, VT, Node->getOperand(0),
-                                 ShiftAmt);
+      SDOperand Op = DAG.getNode(ISD::SRA, VT, Node->getOperand(0), ShiftAmt);
       Op = TLI.LowerOperation(Op, DAG);
       if (Op.Val) {
         // Now that the custom expander is done, expand the result, which is
@@ -4350,8 +4279,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     // If the target wants custom lowering, do so.
     SDOperand ShiftAmt = LegalizeOp(Node->getOperand(1));
     if (TLI.getOperationAction(ISD::SRL, VT) == TargetLowering::Custom) {
-      SDOperand Op = DAG.getNode(ISD::SRL, VT, Node->getOperand(0),
-                                 ShiftAmt);
+      SDOperand Op = DAG.getNode(ISD::SRL, VT, Node->getOperand(0), ShiftAmt);
       Op = TLI.LowerOperation(Op, DAG);
       if (Op.Val) {
         // Now that the custom expander is done, expand the result, which is
@@ -4380,13 +4308,34 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   }
 
   case ISD::ADD:
-    ExpandByParts(ISD::ADD_PARTS, Node->getOperand(0), Node->getOperand(1),
-                  Lo, Hi);
+  case ISD::SUB: {
+    // If the target wants to custom expand this, let them.
+    if (TLI.getOperationAction(Node->getOpcode(), VT) ==
+            TargetLowering::Custom) {
+      Op = TLI.LowerOperation(Op, DAG);
+      if (Op.Val) {
+        ExpandOp(Op, Lo, Hi);
+        break;
+      }
+    }
+    
+    // Expand the subcomponents.
+    SDOperand LHSL, LHSH, RHSL, RHSH;
+    ExpandOp(Node->getOperand(0), LHSL, LHSH);
+    ExpandOp(Node->getOperand(1), RHSL, RHSH);
+    
+    std::vector<SDOperand> Ops;
+    Ops.push_back(LHSL);
+    Ops.push_back(LHSH);
+    Ops.push_back(RHSL);
+    Ops.push_back(RHSH);
+    std::vector<MVT::ValueType> VTs(2, LHSL.getValueType());
+    unsigned Opc = 
+      Node->getOpcode() == ISD::ADD ? ISD::ADD_PARTS : ISD::SUB_PARTS;
+    Lo = DAG.getNode(Opc, VTs, Ops);
+    Hi = Lo.getValue(1);
     break;
-  case ISD::SUB:
-    ExpandByParts(ISD::SUB_PARTS, Node->getOperand(0), Node->getOperand(1),
-                  Lo, Hi);
-    break;
+  }
   case ISD::MUL: {
     if (TLI.isOperationLegal(ISD::MULHU, NVT)) {
       SDOperand LL, LH, RL, RH;
