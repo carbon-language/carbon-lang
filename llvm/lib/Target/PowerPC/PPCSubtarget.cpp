@@ -1,4 +1,4 @@
-//===- PowerPCSubtarget.cpp - PPC Subtarget Information ---------*- C++ -*-===//
+//===- PowerPCSubtarget.cpp - PPC Subtarget Information -------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

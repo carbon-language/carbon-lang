@@ -396,3 +396,9 @@ of the GOT on targets with one).
 
 Generate lwbrx and other byteswapping load/store instructions when reasonable.
 
+===-------------------------------------------------------------------------===
+
+Implement TargetConstantVec, and set up PPC to custom lower ConstantVec into
+TargetConstantVec's if it's one of the many forms that are algorithmically
+computable using the spiffy altivec instructions.
+
