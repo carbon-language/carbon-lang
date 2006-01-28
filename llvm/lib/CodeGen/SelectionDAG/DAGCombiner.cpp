@@ -1035,9 +1035,10 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
     WorkList.push_back(ANDNode.Val);
     return DAG.getNode(ISD::ZERO_EXTEND, VT, ANDNode);
   }
-  // fold (and (shl/srl x), (shl/srl y)) -> (shl/srl (and x, y))
+  // fold (and (shl/srl/sra x), (shl/srl/sra y)) -> (shl/srl/sra (and x, y))
   if (((N0.getOpcode() == ISD::SHL && N1.getOpcode() == ISD::SHL) ||
-       (N0.getOpcode() == ISD::SRL && N1.getOpcode() == ISD::SRL)) &&
+       (N0.getOpcode() == ISD::SRL && N1.getOpcode() == ISD::SRL) ||
+       (N0.getOpcode() == ISD::SRA && N1.getOpcode() == ISD::SRA)) &&
       N0.getOperand(1) == N1.getOperand(1)) {
     SDOperand ANDNode = DAG.getNode(ISD::AND, N0.getOperand(0).getValueType(),
                                     N0.getOperand(0), N1.getOperand(0));
