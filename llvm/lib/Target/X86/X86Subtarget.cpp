@@ -68,18 +68,12 @@ static const char *GetCurrentX86CPU() {
   bool Em64T = EDX & (1 << 29);
 
   union {
-    unsigned u[12];
-    char     c[48];
+    unsigned u[3];
+    char     c[12];
   } text;
 
-  GetCpuIDAndInfo(0x80000002, text.u+0, text.u+1, text.u+2, text.u+3);
-  GetCpuIDAndInfo(0x80000003, text.u+4, text.u+5, text.u+6, text.u+7);
-  GetCpuIDAndInfo(0x80000004, text.u+8, text.u+9, text.u+10, text.u+11);
-  char *t = text.c;
-  while (*t == ' ')
-	  t++;
-
-  if (memcmp(t, "Intel", 5) == 0) {
+  GetCpuIDAndInfo(0, &EAX, text.u+0, text.u+2, text.u+1);
+  if (memcmp(text.c, "GenuineIntel", 12) == 0) {
     switch (Family) {
       case 3:
         return "i386";
@@ -118,7 +112,7 @@ static const char *GetCurrentX86CPU() {
     default:
       return "generic";
     }
-  } else if (memcmp(t, "AMD", 3) == 0) {
+  } else if (memcmp(text.c, "AuthenticAMD", 12) == 0) {
     // FIXME: fill in remaining family/model combinations
     switch (Family) {
       case 15:
