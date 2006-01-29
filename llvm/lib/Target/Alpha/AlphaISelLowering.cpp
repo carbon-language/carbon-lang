@@ -145,6 +145,8 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
 
   setStackPointerRegisterToSaveRestore(Alpha::R30);
 
+  setOperationAction(ISD::ConstantFP, MVT::f64, Expand);
+  setOperationAction(ISD::ConstantFP, MVT::f32, Expand);
   addLegalFPImmediate(+0.0); //F31
   addLegalFPImmediate(-0.0); //-F31
 

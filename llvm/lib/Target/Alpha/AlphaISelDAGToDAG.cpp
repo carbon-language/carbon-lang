@@ -237,23 +237,23 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
     return CurDAG->SelectNodeTo(N, Alpha::LDQr, MVT::i64, MVT::Other, 
 				CPI, Tmp, CurDAG->getEntryNode());
   }
-  case ISD::ConstantFP:
-    if (ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(N)) {
-      bool isDouble = N->getValueType(0) == MVT::f64;
-      MVT::ValueType T = isDouble ? MVT::f64 : MVT::f32;
-      if (CN->isExactlyValue(+0.0)) {
-        return CurDAG->SelectNodeTo(N, isDouble ? Alpha::CPYST : Alpha::CPYSS,
-                                    T, CurDAG->getRegister(Alpha::F31, T),
-                                    CurDAG->getRegister(Alpha::F31, T));
-      } else if ( CN->isExactlyValue(-0.0)) {
-        return CurDAG->SelectNodeTo(N, isDouble ? Alpha::CPYSNT : Alpha::CPYSNS,
-                                    T, CurDAG->getRegister(Alpha::F31, T),
-                                    CurDAG->getRegister(Alpha::F31, T));
-      } else {
-        abort();
-      }
-      break;
+  case ISD::TargetConstantFP: {
+    ConstantFPSDNode *CN = cast<ConstantFPSDNode>(N);
+    bool isDouble = N->getValueType(0) == MVT::f64;
+    MVT::ValueType T = isDouble ? MVT::f64 : MVT::f32;
+    if (CN->isExactlyValue(+0.0)) {
+      return CurDAG->SelectNodeTo(N, isDouble ? Alpha::CPYST : Alpha::CPYSS,
+                                  T, CurDAG->getRegister(Alpha::F31, T),
+                                  CurDAG->getRegister(Alpha::F31, T));
+    } else if ( CN->isExactlyValue(-0.0)) {
+      return CurDAG->SelectNodeTo(N, isDouble ? Alpha::CPYSNT : Alpha::CPYSNS,
+                                  T, CurDAG->getRegister(Alpha::F31, T),
+                                  CurDAG->getRegister(Alpha::F31, T));
+    } else {
+      abort();
     }
+    break;
+  }
 
   case ISD::SETCC:
     if (MVT::isFloatingPoint(N->getOperand(0).Val->getValueType(0))) {
