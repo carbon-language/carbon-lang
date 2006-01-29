@@ -168,6 +168,13 @@ Combine: a = sin(x), b = cos(x) into a,b = sincos(x).
 
 //===---------------------------------------------------------------------===//
 
+For all targets, not just X86:
+When llvm.memcpy, llvm.memset, or llvm.memmove are lowered, they should be 
+optimized to a few store instructions if the source is constant and the length
+is smallish (< 8). This will greatly help some tests like Shootout/strcat.c
+
+//===---------------------------------------------------------------------===//
+
 Solve this DAG isel folding deficiency:
 
 int X, Y;
