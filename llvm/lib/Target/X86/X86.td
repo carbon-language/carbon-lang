@@ -21,7 +21,7 @@ include "../Target.td"
 //
  
 def Feature64Bit     : SubtargetFeature<"64bit", "Is64Bit", "true",
-                                        "Enabl e 64-bit instructions">;
+                                        "Enable 64-bit instructions">;
 def FeatureMMX       : SubtargetFeature<"mmx","X86SSELevel", "MMX",
                                         "Enable MMX instructions">;
 def FeatureSSE       : SubtargetFeature<"sse", "X86SSELevel", "SSE",
