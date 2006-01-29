@@ -155,7 +155,9 @@ namespace llvm {
       : Types(), Operator(Op), Val(0), TransformFn(0),
       Children(Ch) { Types.push_back(MVT::isUnknown); }
     TreePatternNode(Init *val)    // leaf ctor
-      : Types(), Operator(0), Val(val), TransformFn(0) { Types.push_back(MVT::isUnknown); }
+      : Types(), Operator(0), Val(val), TransformFn(0) {
+      Types.push_back(MVT::isUnknown);
+    }
     ~TreePatternNode();
     
     const std::string &getName() const { return Name; }
@@ -468,7 +470,8 @@ private:
                                    std::map<std::string, Record*> &InstResults,
                                    std::vector<Record*> &InstImpInputs,
                                    std::vector<Record*> &InstImpResults);
-  bool EmitCodeForPattern(PatternToMatch &Pattern, std::ostream &OS);
+  void EmitCodeForPattern(PatternToMatch &Pattern,
+                    std::vector<std::pair<bool, std::string> > &GeneratedCode);
   void EmitInstructionSelector(std::ostream &OS);
 };
 

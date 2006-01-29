@@ -1829,7 +1829,6 @@ private:
   TreePatternNode *Pattern;
   // Matched instruction.
   TreePatternNode *Instruction;
-  unsigned PatternNo;
   
   // Node to name mapping
   std::map<std::string, std::string> VariableMap;
@@ -1858,10 +1857,9 @@ private:
 public:
   PatternCodeEmitter(DAGISelEmitter &ise, ListInit *preds,
                      TreePatternNode *pattern, TreePatternNode *instr,
-                     unsigned PatNum, 
                      std::vector<std::pair<bool, std::string> > &gc)
   : ISE(ise), Predicates(preds), Pattern(pattern), Instruction(instr),
-    PatternNo(PatNum), GeneratedCode(gc), TmpNo(0) {}
+    GeneratedCode(gc), TmpNo(0) {}
 
   /// EmitMatchCode - Emit a matcher for N, going to the label for PatternNo
   /// if the match fails. At this point, we already know that the opcode for N
@@ -2531,17 +2529,12 @@ private:
 
 /// EmitCodeForPattern - Given a pattern to match, emit code to the specified
 /// stream to match the pattern, and generate the code for the match if it
-/// succeeds.  Returns true if execution may jump to the fail label instead of
-/// returning.
-bool DAGISelEmitter::EmitCodeForPattern(PatternToMatch &Pattern,
-                                        std::ostream &OS) {
-  static unsigned PatternCount = 0;
-  unsigned PatternNo = PatternCount++;
-
-  std::vector<std::pair<bool, std::string> > GeneratedCode;
+/// succeeds.  Returns true if the pattern is not guaranteed to match.
+void DAGISelEmitter::EmitCodeForPattern(PatternToMatch &Pattern,
+                    std::vector<std::pair<bool, std::string> > &GeneratedCode) {
   PatternCodeEmitter Emitter(*this, Pattern.getPredicates(),
                              Pattern.getSrcPattern(), Pattern.getDstPattern(),
-                             PatternNo, GeneratedCode);
+                             GeneratedCode);
 
   // Emit the matcher, capturing named arguments in VariableMap.
   bool FoundChain = false;
@@ -2585,39 +2578,7 @@ bool DAGISelEmitter::EmitCodeForPattern(PatternToMatch &Pattern,
   } while (Emitter.InsertOneTypeCheck(Pat, Pattern.getSrcPattern(), "N"));
 
   Emitter.EmitResultCode(Pattern.getDstPattern(), true /*the root*/);
-
   delete Pat;
-  
-  
-  OS << "  { // Pattern #" << PatternNo << ": ";
-  Pattern.getSrcPattern()->print(OS);
-  OS << "\n    // Emits: ";
-  Pattern.getDstPattern()->print(OS);
-  OS << "\n";
-  OS << "    // Pattern complexity = "
-    << getPatternSize(Pattern.getSrcPattern(), *this)
-    << "  cost = "
-    << getResultPatternCost(Pattern.getDstPattern()) << "\n";
-  
-  // Actually output the generated code now.
-  bool CanFail = false;
-  unsigned Indent = 4;
-  for (unsigned i = 0, e = GeneratedCode.size(); i != e; ++i) {
-    if (!GeneratedCode[i].first) {
-      // Normal code.
-      OS << std::string(Indent, ' ') << GeneratedCode[i].second << "\n";
-    } else {
-      CanFail = true;
-      OS << std::string(Indent, ' ')
-         << "if (" << GeneratedCode[i].second << ") {\n";
-      Indent += 2;
-    }
-  }
-  for (; Indent != 4; Indent -= 2)
-    OS << std::string(Indent-2, ' ') << "}\n";
-  
-  OS << "  }\n";
-  return CanFail;
 }
 
 
@@ -2678,6 +2639,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
     
     const SDNodeInfo &OpcodeInfo = getSDNodeInfo(PBOI->first);
     std::vector<PatternToMatch*> &Patterns = PBOI->second;
+    assert(!Patterns.empty() && "No patterns but map has entry?");
     
     // We want to emit all of the matching code now.  However, we want to emit
     // the matches in order of minimal cost.  Sort the patterns so the least
@@ -2685,18 +2647,52 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
     std::stable_sort(Patterns.begin(), Patterns.end(),
                      PatternSortingPredicate(*this));
     
-    bool mightNotReturn = true;
+    bool mightNotMatch = true;
     for (unsigned i = 0, e = Patterns.size(); i != e; ++i) {
-      if (!mightNotReturn) {
+      PatternToMatch &Pattern = *Patterns[i];
+      std::vector<std::pair<bool, std::string> > GeneratedCode;
+      EmitCodeForPattern(Pattern, GeneratedCode);
+
+      static unsigned PatternCount = 0;
+      unsigned PatternNo = PatternCount++;
+      
+      OS << "  { // Pattern #" << PatternNo << ": ";
+      Pattern.getSrcPattern()->print(OS);
+      OS << "\n    // Emits: ";
+      Pattern.getDstPattern()->print(OS);
+      OS << "\n";
+      OS << "    // Pattern complexity = "
+         << getPatternSize(Pattern.getSrcPattern(), *this) << "  cost = "
+         << getResultPatternCost(Pattern.getDstPattern()) << "\n";
+      
+      // Actually output the generated code now.
+      mightNotMatch = false;
+      unsigned Indent = 4;
+      for (unsigned j = 0, e = GeneratedCode.size(); j != e; ++j) {
+        if (!GeneratedCode[j].first) {
+          // Normal code.
+          OS << std::string(Indent, ' ') << GeneratedCode[j].second << "\n";
+        } else {
+          mightNotMatch = true;
+          OS << std::string(Indent, ' ')
+            << "if (" << GeneratedCode[j].second << ") {\n";
+          Indent += 2;
+        }
+      }
+      for (; Indent != 4; Indent -= 2)
+        OS << std::string(Indent-2, ' ') << "}\n";
+      
+      OS << "  }\n";
+      
+      if (!mightNotMatch && i != Patterns.size()-1) {
         std::cerr << "Pattern "
-                  << Patterns[i]->getDstPattern()->getOperator()->getName()
-                  << " is impossible to select!\n";
+        << Patterns[i+1]->getDstPattern()->getOperator()->getName()
+        << " is impossible to select!\n";
         exit(1);
       }
-      mightNotReturn = EmitCodeForPattern(*Patterns[i], OS);
     }
     
-    if (mightNotReturn)
+    if (mightNotMatch)
       OS << "  std::cerr << \"Cannot yet select: \";\n"
          << "  N.Val->dump(CurDAG);\n"
          << "  std::cerr << '\\n';\n"
