@@ -3022,10 +3022,6 @@ def : Pat<(X86fst RFP:$src, addr:$op, f64), (FpST64m addr:$op, RFP:$src)>;
 def : Pat<(f64 fp64immneg0), (FpCHS (FpLD0))>, Requires<[FPStack]>;
 def : Pat<(f64 fp64immneg1), (FpCHS (FpLD1))>, Requires<[FPStack]>;
 
-// RFP undef
-def : Pat<(f64 (undef)), (FpLD0)>,  Requires<[FPStack]>;
-
-
 //===----------------------------------------------------------------------===//
 // Some peepholes
 //===----------------------------------------------------------------------===//

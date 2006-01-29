@@ -221,7 +221,9 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   } else {
     // Set up the FP register classes.
     addRegisterClass(MVT::f64, X86::RFPRegisterClass);
-
+    
+    setOperationAction(ISD::UNDEF, MVT::f64, Expand);
+    
     if (!X86PatIsel) {
       setOperationAction(ISD::SINT_TO_FP, MVT::i16, Custom);
       setOperationAction(ISD::SINT_TO_FP, MVT::i32, Custom);
