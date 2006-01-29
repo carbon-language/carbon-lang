@@ -1353,12 +1353,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     BuildMI(BB, Opc, 1,Result).addImm(cast<ConstantSDNode>(N)->getValue());
     return Result;
   case ISD::UNDEF:
-    if (Node->getValueType(0) == MVT::f64) {
-      // FIXME: SHOULD TEACH STACKIFIER ABOUT UNDEF VALUES!
-      BuildMI(BB, X86::FpLD0, 0, Result);
-    } else {
-      BuildMI(BB, X86::IMPLICIT_DEF, 0, Result);
-    }
+    BuildMI(BB, X86::IMPLICIT_DEF, 0, Result);
     return Result;
   case ISD::GlobalAddress: {
     GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
