@@ -2034,7 +2034,7 @@ public:
                        dynamic_cast<IntInit*>(Child->getLeafValue())) {
           emitCheck("isa<ConstantSDNode>(" + RootName + utostr(OpNo) + ")");
           unsigned CTmp = TmpNo++;
-          emitCode("int CN"+utostr(CTmp)+" = cast<ConstantSDNode>("+
+          emitCode("int64_t CN"+utostr(CTmp)+" = cast<ConstantSDNode>("+
                    RootName + utostr(OpNo) + ")->getSignExtended();");
 
           emitCheck("CN" + utostr(CTmp) + " == " +itostr(II->getValue()));
