@@ -153,6 +153,11 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   if (TM.getSubtarget<PPCSubtarget>().hasAltivec()) {
     addRegisterClass(MVT::v4f32, PPC::VRRCRegisterClass);
     addRegisterClass(MVT::v4i32, PPC::VRRCRegisterClass);
+    
+    // FIXME: We don't support any ConstantVec's yet.  We should custom expand
+    // the ones we do!
+    setOperationAction(ISD::ConstantVec, MVT::v4f32, Expand);
+    setOperationAction(ISD::ConstantVec, MVT::v4i32, Expand);
   }
   
   setSetCCResultContents(ZeroOrOneSetCCResult);
