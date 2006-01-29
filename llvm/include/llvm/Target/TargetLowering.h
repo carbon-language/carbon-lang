@@ -127,14 +127,41 @@ public:
     return RegClassForVT[VT] != 0;
   }
 
+  class ValueTypeActionImpl {
+    /// ValueTypeActions - This is a bitvector that contains two bits for each
+    /// value type, where the two bits correspond to the LegalizeAction enum.
+    /// This can be queried with "getTypeAction(VT)".
+    uint32_t ValueTypeActions[2];
+  public:
+    ValueTypeActionImpl() {
+      ValueTypeActions[0] = ValueTypeActions[1] = 0;
+    }
+    ValueTypeActionImpl(const ValueTypeActionImpl &RHS) {
+      ValueTypeActions[0] = RHS.ValueTypeActions[0];
+      ValueTypeActions[1] = RHS.ValueTypeActions[1];
+    }
+    
+    LegalizeAction getTypeAction(MVT::ValueType VT) const {
+      return (LegalizeAction)((ValueTypeActions[VT>>4] >> ((2*VT) & 31)) & 3);
+    }
+    void setTypeAction(MVT::ValueType VT, LegalizeAction Action) {
+      assert(unsigned(VT >> 4) < 
+             sizeof(ValueTypeActions)/sizeof(ValueTypeActions[0]));
+      ValueTypeActions[VT>>4] |= Action << ((VT*2) & 31);
+    }
+  };
+  
+  const ValueTypeActionImpl &getValueTypeActions() const {
+    return ValueTypeActions;
+  }
+  
   /// getTypeAction - Return how we should legalize values of this type, either
   /// it is already legal (return 'Legal') or we need to promote it to a larger
   /// type (return 'Promote'), or we need to expand it into multiple registers
   /// of smaller integer type (return 'Expand').  'Custom' is not an option.
   LegalizeAction getTypeAction(MVT::ValueType VT) const {
-    return (LegalizeAction)((ValueTypeActions >> (2*VT)) & 3);
+    return ValueTypeActions.getTypeAction(VT);
   }
-  unsigned long long getValueTypeActions() const { return ValueTypeActions; }
 
   /// getTypeToTransformTo - For types supported by the target, this is an
   /// identity function.  For types that must be promoted to larger types, this
@@ -236,8 +263,9 @@ public:
   /// such replacements don't generate code that causes an alignment error 
   /// (trap) on the target machine. 
   /// @brief Determine if the target supports unaligned memory accesses.
-  bool allowsUnalignedMemoryAccesses() const 
-    { return allowUnalignedMemoryAccesses; }
+  bool allowsUnalignedMemoryAccesses() const {
+    return allowUnalignedMemoryAccesses;
+  }
   
   /// usesUnderscoreSetJmpLongJmp - Determine if we should use _setjmp or setjmp
   /// to implement llvm.setjmp.
@@ -327,7 +355,7 @@ protected:
   /// with the specified type and indicate what to do about it.
   void setOperationAction(unsigned Op, MVT::ValueType VT,
                           LegalizeAction Action) {
-    assert(VT < 16 && Op < sizeof(OpActions)/sizeof(OpActions[0]) &&
+    assert(VT < 32 && Op < sizeof(OpActions)/sizeof(OpActions[0]) &&
            "Table isn't big enough!");
     OpActions[Op] |= Action << VT*2;
   }
@@ -473,11 +501,6 @@ private:
   TargetRegisterClass *RegClassForVT[MVT::LAST_VALUETYPE];
   unsigned char NumElementsForVT[MVT::LAST_VALUETYPE];
 
-  /// ValueTypeActions - This is a bitvector that contains two bits for each
-  /// value type, where the two bits correspond to the LegalizeAction enum.
-  /// This can be queried with "getTypeAction(VT)".
-  unsigned long long ValueTypeActions;
-
   /// TransformToType - For any value types we are promoting or expanding, this
   /// contains the value type that we are changing to.  For Expanded types, this
   /// contains one step of the expand (e.g. i64 -> i32), even if there are
@@ -490,7 +513,9 @@ private:
   /// Most operations are Legal (aka, supported natively by the target), but
   /// operations that are not should be described.  Note that operations on
   /// non-legal value types are not described here.
-  unsigned OpActions[128];
+  uint64_t OpActions[128];
+  
+  ValueTypeActionImpl ValueTypeActions;
 
   std::vector<double> LegalFPImmediates;
 
