@@ -380,9 +380,7 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
   // flag result (which cannot be CSE'd) or is one of the special cases that are
   // not subject to CSE.
   if (!Erased && N->getValueType(N->getNumValues()-1) != MVT::Flag &&
-      N->getOpcode() != ISD::CALLSEQ_START &&
-      N->getOpcode() != ISD::CALLSEQ_END && !N->isTargetOpcode()) {
-    
+      !N->isTargetOpcode()) {
     N->dump();
     assert(0 && "Node is not in map!");
   }
@@ -396,9 +394,7 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
 ///
 SDNode *SelectionDAG::AddNonLeafNodeToCSEMaps(SDNode *N) {
   assert(N->getNumOperands() && "This is a leaf node!");
-  if (N->getOpcode() == ISD::CALLSEQ_START || 
-      N->getOpcode() == ISD::CALLSEQ_END ||
-      N->getOpcode() == ISD::HANDLENODE || N->getValueType(0) == MVT::Flag)
+  if (N->getOpcode() == ISD::HANDLENODE || N->getValueType(0) == MVT::Flag)
     return 0;    // Never add these nodes.
   
   // Check that remaining values produced are not flags.
@@ -451,9 +447,7 @@ SDNode *SelectionDAG::AddNonLeafNodeToCSEMaps(SDNode *N) {
 /// return null, otherwise return a pointer to the slot it would take.  If a
 /// node already exists with these operands, the slot will be non-null.
 SDNode **SelectionDAG::FindModifiedNodeSlot(SDNode *N, SDOperand Op) {
-  if (N->getOpcode() == ISD::CALLSEQ_START || 
-      N->getOpcode() == ISD::CALLSEQ_END ||
-      N->getOpcode() == ISD::HANDLENODE || N->getValueType(0) == MVT::Flag)
+  if (N->getOpcode() == ISD::HANDLENODE || N->getValueType(0) == MVT::Flag)
     return 0;    // Never add these nodes.
   
   // Check that remaining values produced are not flags.
@@ -481,9 +475,7 @@ SDNode **SelectionDAG::FindModifiedNodeSlot(SDNode *N, SDOperand Op) {
 /// node already exists with these operands, the slot will be non-null.
 SDNode **SelectionDAG::FindModifiedNodeSlot(SDNode *N, 
                                             SDOperand Op1, SDOperand Op2) {
-  if (N->getOpcode() == ISD::CALLSEQ_START || 
-      N->getOpcode() == ISD::CALLSEQ_END ||
-      N->getOpcode() == ISD::HANDLENODE || N->getValueType(0) == MVT::Flag)
+  if (N->getOpcode() == ISD::HANDLENODE || N->getValueType(0) == MVT::Flag)
     return 0;    // Never add these nodes.
   
   // Check that remaining values produced are not flags.
@@ -512,9 +504,7 @@ SDNode **SelectionDAG::FindModifiedNodeSlot(SDNode *N,
 /// node already exists with these operands, the slot will be non-null.
 SDNode **SelectionDAG::FindModifiedNodeSlot(SDNode *N, 
                                             const std::vector<SDOperand> &Ops) {
-  if (N->getOpcode() == ISD::CALLSEQ_START || 
-      N->getOpcode() == ISD::CALLSEQ_END ||
-      N->getOpcode() == ISD::HANDLENODE || N->getValueType(0) == MVT::Flag)
+  if (N->getOpcode() == ISD::HANDLENODE || N->getValueType(0) == MVT::Flag)
     return 0;    // Never add these nodes.
   
   // Check that remaining values produced are not flags.
@@ -1296,8 +1286,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 
   // Memoize this node if possible.
   SDNode *N;
-  if (Opcode != ISD::CALLSEQ_START && Opcode != ISD::CALLSEQ_END &&
-      VT != MVT::Flag) {
+  if (VT != MVT::Flag) {
     SDNode *&BON = BinaryOps[std::make_pair(Opcode, std::make_pair(N1, N2))];
     if (BON) return SDOperand(BON, 0);
 
@@ -1386,33 +1375,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   Ops.push_back(N5);
   return getNode(Opcode, VT, Ops);
 }
-
-// setAdjCallChain - This method changes the token chain of an
-// CALLSEQ_START/END node to be the specified operand.
-void SDNode::setAdjCallChain(SDOperand N) {
-  assert(N.getValueType() == MVT::Other);
-  assert((getOpcode() == ISD::CALLSEQ_START ||
-          getOpcode() == ISD::CALLSEQ_END) && "Cannot adjust this node!");
-
-  OperandList[0].Val->removeUser(this);
-  OperandList[0] = N;
-  OperandList[0].Val->Uses.push_back(this);
-}
-
-// setAdjCallFlag - This method changes the flag input of an
-// CALLSEQ_START/END node to be the specified operand.
-void SDNode::setAdjCallFlag(SDOperand N) {
-  assert(N.getValueType() == MVT::Flag);
-  assert((getOpcode() == ISD::CALLSEQ_START ||
-          getOpcode() == ISD::CALLSEQ_END) && "Cannot adjust this node!");
-  
-  SDOperand &FlagOp = OperandList[getNumOperands()-1];
-  assert(FlagOp.getValueType() == MVT::Flag);
-  FlagOp.Val->removeUser(this);
-  FlagOp = N;
-  FlagOp.Val->Uses.push_back(this);
-}
-
 
 SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
                                 SDOperand Chain, SDOperand Ptr,

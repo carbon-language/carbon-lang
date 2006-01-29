@@ -589,22 +589,24 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::CALLSEQ_START:
   case ISD::CALLSEQ_END:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
-    // Do not try to legalize the target-specific arguments (#1+)
-    Tmp2 = Node->getOperand(0);
-    if (Tmp1 != Tmp2)
-      Node->setAdjCallChain(Tmp1);
-    
-    // If this has a flag input, do legalize it.
-    if (Node->getOperand(Node->getNumOperands()-1).getValueType() == MVT::Flag){
-      Tmp1 = LegalizeOp(Node->getOperand(Node->getNumOperands()-1));
-      if (Tmp1 != Node->getOperand(Node->getNumOperands()-1))
-        Node->setAdjCallFlag(Tmp1);
+    // Do not try to legalize the target-specific arguments (#1+), except for
+    // an optional flag input.
+    if (Node->getOperand(Node->getNumOperands()-1).getValueType() != MVT::Flag){
+      if (Tmp1 != Node->getOperand(0)) {
+        std::vector<SDOperand> Ops(Node->op_begin(), Node->op_end());
+        Ops[0] = Tmp1;
+        Result = DAG.UpdateNodeOperands(Result, Ops);
+      }
+    } else {
+      Tmp2 = LegalizeOp(Node->getOperand(Node->getNumOperands()-1));
+      if (Tmp1 != Node->getOperand(0) ||
+          Tmp2 != Node->getOperand(Node->getNumOperands()-1)) {
+        std::vector<SDOperand> Ops(Node->op_begin(), Node->op_end());
+        Ops[0] = Tmp1;
+        Ops.back() = Tmp2;
+        Result = DAG.UpdateNodeOperands(Result, Ops);
+      }
     }
-      
-    // Note that we do not create new CALLSEQ_DOWN/UP nodes here.  These
-    // nodes are treated specially and are mutated in place.  This makes the dag
-    // legalization process more efficient and also makes libcall insertion
-    // easier.
     break;
   case ISD::DYNAMIC_STACKALLOC: {
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
@@ -2964,7 +2966,10 @@ void SelectionDAGLegalize::SpliceCallInto(const SDOperand &CallResult,
   SDOperand InToken = DAG.getNode(ISD::TokenFactor, MVT::Other, CallResult,
                                   OutChain->getOperand(0));
   // Change the node to refer to the new token.
-  OutChain->setAdjCallChain(InToken);
+  std::vector<SDOperand> Ops(OutChain->op_begin(), OutChain->op_end());
+  Ops[0] = InToken;
+  SDOperand Res = DAG.UpdateNodeOperands(SDOperand(OutChain, 0), Ops);
+  assert(Res.Val == OutChain && "Didn't update in place!");
 }
 
 
