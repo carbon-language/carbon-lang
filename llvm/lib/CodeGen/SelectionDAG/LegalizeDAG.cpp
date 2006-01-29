@@ -41,18 +41,16 @@ class SelectionDAGLegalize {
   TargetLowering &TLI;
   SelectionDAG &DAG;
 
-  /// LegalizeAction - This enum indicates what action we should take for each
-  /// value type the can occur in the program.
   enum LegalizeAction {
-    Legal,            // The target natively supports this value type.
-    Promote,          // This should be promoted to the next larger type.
-    Expand,           // This integer type should be broken into smaller pieces.
+    Legal,      // The target natively supports this operation.
+    Promote,    // This operation should be executed in a larger type.
+    Expand,     // Try to expand this to other ops, otherwise use a libcall.
   };
 
   /// ValueTypeActions - This is a bitvector that contains two bits for each
   /// value type, where the two bits correspond to the LegalizeAction enum.
   /// This can be queried with "getTypeAction(VT)".
-  unsigned long long ValueTypeActions;
+  TargetLowering::ValueTypeActionImpl ValueTypeActions;
 
   /// LegalizedNodes - For nodes that are of legal width, and that have more
   /// than one use, this map indicates what regularized operand to use.  This
@@ -91,7 +89,7 @@ public:
   /// it is already legal or we need to expand it into multiple registers of
   /// smaller integer type, or we need to promote it to a larger type.
   LegalizeAction getTypeAction(MVT::ValueType VT) const {
-    return (LegalizeAction)((ValueTypeActions >> (2*VT)) & 3);
+    return (LegalizeAction)ValueTypeActions.getTypeAction(VT);
   }
 
   /// isTypeLegal - Return true if this type is legal on this target.
