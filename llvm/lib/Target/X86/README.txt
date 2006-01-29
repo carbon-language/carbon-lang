@@ -248,3 +248,37 @@ This should be a high-priority to fix.  With the fp-stack, this is a single
 instruction.  With SSE it could be far better than this.  Why is the sequence
 above using 'setp'?  It shouldn't care about nan's.
 
+//===---------------------------------------------------------------------===//
+
+Is there a better way to implement Y = -X (fneg) than the literal code:
+
+float %test(float %X) {
+        %Y = sub float -0.0, %X
+        ret float %Y
+}
+
+        movss LCPI1_0, %xmm0   ;; load -0.0
+        subss 8(%esp), %xmm0   ;; subtract
+
+//===---------------------------------------------------------------------===//
+
+None of the SSE instructions are handled in X86RegisterInfo::foldMemoryOperand,
+which prevents the spiller from folding spill code into the instructions.
+
+This leads to code like this:
+
+mov %eax, 8(%esp)
+cvtsi2sd %eax, %xmm0
+instead of:
+cvtsi2sd 8(%esp), %xmm0
+
+//===---------------------------------------------------------------------===//
+
+This instruction selector selects 'int X = 0' as 'mov Reg, 0' not 'xor Reg,Reg'
+This is bigger and slower.
+
+//===---------------------------------------------------------------------===//
+
+LSR should be turned on for the X86 backend and tuned to take advantage of its
+addressing modes.
+
