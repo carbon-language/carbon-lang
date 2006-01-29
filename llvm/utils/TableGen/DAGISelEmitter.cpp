@@ -2079,7 +2079,7 @@ public:
         case MVT::i32: Code = "unsigned Tmp"; break;
         case MVT::i64: Code = "uint64_t Tmp"; break;
         }
-        emitCode(Code + utostr(ResNo) + "C = (unsigned)cast<ConstantSDNode>(" +
+        emitCode(Code + utostr(ResNo) + "C = (uint64_t)cast<ConstantSDNode>(" +
                  Val + ")->getValue();");
         emitCode("SDOperand Tmp" + utostr(ResNo) + 
                  " = CurDAG->getTargetConstant(Tmp" + utostr(ResNo) + 
