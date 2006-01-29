@@ -1056,14 +1056,15 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     }
 
-    switch (TLI.getOperationAction(Node->getOpcode(),
-                                   Node->getValueType(0))) {
-    default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Legal: break;
-    case TargetLowering::Custom:
-      Tmp1 = TLI.LowerOperation(Result, DAG);
-      if (Tmp1.Val) Result = Tmp1;
-      break;
+    if (Result.getOpcode() == ISD::RET) {
+      switch (TLI.getOperationAction(Result.getOpcode(), MVT::Other)) {
+      default: assert(0 && "This action is not supported yet!");
+      case TargetLowering::Legal: break;
+      case TargetLowering::Custom:
+        Tmp1 = TLI.LowerOperation(Result, DAG);
+        if (Tmp1.Val) Result = Tmp1;
+        break;
+      }
     }
     break;
   case ISD::STORE: {
