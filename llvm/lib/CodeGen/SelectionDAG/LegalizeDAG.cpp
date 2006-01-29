@@ -530,30 +530,43 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
   }
-  case ISD::ConstantVec: {
-    // We assume that vector constants are not legal, and will be immediately
-    // spilled to the constant pool.
-    //
-    // FIXME: Allow custom lowering to TargetConstantVec's.
-    //
-    // Create a ConstantPacked, and put it in the constant pool.
-    std::vector<Constant*> CV;
-    MVT::ValueType VT = Node->getValueType(0);
-    for (unsigned I = 0, E = Node->getNumOperands(); I < E; ++I) {
-      SDOperand OpN = Node->getOperand(I);
-      const Type* OpNTy = MVT::getTypeForValueType(OpN.getValueType());
-      if (MVT::isFloatingPoint(VT))
-        CV.push_back(ConstantFP::get(OpNTy, 
-                                     cast<ConstantFPSDNode>(OpN)->getValue()));
-      else
-        CV.push_back(ConstantUInt::get(OpNTy,
-                                       cast<ConstantSDNode>(OpN)->getValue()));
+  case ISD::ConstantVec:
+    switch (TLI.getOperationAction(ISD::ConstantVec, Node->getValueType(0))) {
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Custom:
+      Tmp3 = TLI.LowerOperation(Result, DAG);
+      if (Tmp3.Val) {
+        Result = Tmp3;
+        break;
+      }
+      // FALLTHROUGH
+    case TargetLowering::Expand:
+      // We assume that vector constants are not legal, and will be immediately
+      // spilled to the constant pool.
+      //
+      // Create a ConstantPacked, and put it in the constant pool.
+      MVT::ValueType VT = Node->getValueType(0);
+      const Type *OpNTy = 
+        MVT::getTypeForValueType(Node->getOperand(0).getValueType());
+      std::vector<Constant*> CV;
+      if (MVT::isFloatingPoint(VT)) {
+        for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
+          double V = cast<ConstantFPSDNode>(Node->getOperand(i))->getValue();
+          CV.push_back(ConstantFP::get(OpNTy, V));
+        }
+      } else {
+        for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
+          uint64_t V = cast<ConstantSDNode>(Node->getOperand(i))->getValue();
+          CV.push_back(ConstantUInt::get(OpNTy, V));
+        }
+      }
+      Constant *CP = ConstantPacked::get(CV);
+      SDOperand CPIdx = DAG.getConstantPool(CP, TLI.getPointerTy());
+      Result = DAG.getLoad(VT, DAG.getEntryNode(), CPIdx,
+                           DAG.getSrcValue(NULL));
+      break;
     }
-    Constant *CP = ConstantPacked::get(CV);
-    SDOperand CPIdx = DAG.getConstantPool(CP, TLI.getPointerTy());
-    Result = DAG.getLoad(VT, DAG.getEntryNode(), CPIdx, DAG.getSrcValue(NULL));
     break;
-  }
   case ISD::TokenFactor:
     if (Node->getNumOperands() == 2) {
       Tmp1 = LegalizeOp(Node->getOperand(0));
