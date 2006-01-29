@@ -45,7 +45,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setSchedulingPreference(SchedulingForRegPressure);
   setShiftAmountFlavor(Mask);   // shl X, 32 == shl X, 0
   setStackPointerRegisterToSaveRestore(X86::ESP);
-
+  
   // Set up the register classes.
   addRegisterClass(MVT::i8, X86::R8RegisterClass);
   addRegisterClass(MVT::i16, X86::R16RegisterClass);
@@ -213,6 +213,10 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::FNEG , MVT::f32, Expand);
     setOperationAction(ISD::FREM , MVT::f32, Expand);
 
+    // Expand FP immediates into loads from the stack, except for the special
+    // cases we handle.
+    setOperationAction(ISD::ConstantFP, MVT::f64, Expand);
+    setOperationAction(ISD::ConstantFP, MVT::f32, Expand);
     addLegalFPImmediate(+0.0); // xorps / xorpd
   } else {
     // Set up the FP register classes.
@@ -228,6 +232,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
       setOperationAction(ISD::FCOS           , MVT::f64  , Expand);
     }
 
+    setOperationAction(ISD::ConstantFP, MVT::f64, Expand);
     addLegalFPImmediate(+0.0); // FLD0
     addLegalFPImmediate(+1.0); // FLD1
     addLegalFPImmediate(-0.0); // FLD0/FCHS

@@ -419,7 +419,7 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
   case ISD::SREM:
   case ISD::UREM: return SelectDIV(Op);
  
-  case ISD::ConstantFP: {
+  case ISD::TargetConstantFP: {
     SDOperand Chain = CurDAG->getEntryNode(); // this is a constant, so..
 
     if (cast<ConstantFPSDNode>(N)->isExactlyValue(+0.0))

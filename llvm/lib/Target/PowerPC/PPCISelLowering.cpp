@@ -37,6 +37,9 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   addRegisterClass(MVT::f32, PPC::F4RCRegisterClass);
   addRegisterClass(MVT::f64, PPC::F8RCRegisterClass);
   
+  setOperationAction(ISD::ConstantFP, MVT::f64, Expand);
+  setOperationAction(ISD::ConstantFP, MVT::f32, Expand);
+
   // PowerPC has no intrinsics for these particular operations
   setOperationAction(ISD::MEMMOVE, MVT::Other, Expand);
   setOperationAction(ISD::MEMSET, MVT::Other, Expand);
