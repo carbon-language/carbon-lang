@@ -2647,16 +2647,43 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
     std::stable_sort(Patterns.begin(), Patterns.end(),
                      PatternSortingPredicate(*this));
     
-    bool mightNotMatch = true;
+    typedef std::vector<std::pair<bool, std::string> > CodeList;
+    
+    std::vector<std::pair<PatternToMatch*, CodeList> > CodeForPatterns;
     for (unsigned i = 0, e = Patterns.size(); i != e; ++i) {
-      PatternToMatch &Pattern = *Patterns[i];
-      std::vector<std::pair<bool, std::string> > GeneratedCode;
-      EmitCodeForPattern(Pattern, GeneratedCode);
+      CodeList GeneratedCode;
+      EmitCodeForPattern(*Patterns[i], GeneratedCode);
+      CodeForPatterns.push_back(std::make_pair(Patterns[i], GeneratedCode));
+    }
+    
+    // Scan the code to see if all of the patterns are reachable and if it is
+    // possible that the last one might not match.
+    bool mightNotMatch = true;
+    for (unsigned i = 0, e = CodeForPatterns.size(); i != e; ++i) {
+      CodeList &GeneratedCode = CodeForPatterns[i].second;
+      mightNotMatch = false;
 
-      static unsigned PatternCount = 0;
-      unsigned PatternNo = PatternCount++;
+      for (unsigned j = 0, e = GeneratedCode.size(); j != e; ++j) {
+        if (GeneratedCode[j].first) { // predicate.
+          mightNotMatch = true;
+          break;
+        }
+      }
       
-      OS << "  { // Pattern #" << PatternNo << ": ";
+      // If this pattern definitely matches, and if it isn't the last one, the
+      // patterns after it CANNOT ever match.  Error out.
+      if (mightNotMatch == false && i != CodeForPatterns.size()-1) {
+        std::cerr << "Pattern '";
+        CodeForPatterns[i+1].first->getSrcPattern()->print(OS);
+        std::cerr << "' is impossible to select!\n";
+        exit(1);
+      }
+    }
+      
+    for (unsigned i = 0, e = CodeForPatterns.size(); i != e; ++i) {
+      CodeList &GeneratedCode = CodeForPatterns[i].second;
+      PatternToMatch &Pattern = *CodeForPatterns[i].first;
+      OS << "  { // Pattern: ";
       Pattern.getSrcPattern()->print(OS);
       OS << "\n    // Emits: ";
       Pattern.getDstPattern()->print(OS);
@@ -2683,15 +2710,10 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
         OS << std::string(Indent-2, ' ') << "}\n";
       
       OS << "  }\n";
-      
-      if (!mightNotMatch && i != Patterns.size()-1) {
-        std::cerr << "Pattern "
-        << Patterns[i+1]->getDstPattern()->getOperator()->getName()
-        << " is impossible to select!\n";
-        exit(1);
-      }
     }
     
+    // If the last pattern has predicates (which could fail) emit code to catch
+    // the case where nothing handles a pattern.
     if (mightNotMatch)
       OS << "  std::cerr << \"Cannot yet select: \";\n"
          << "  N.Val->dump(CurDAG);\n"
