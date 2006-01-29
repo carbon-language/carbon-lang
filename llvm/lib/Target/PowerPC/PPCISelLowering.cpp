@@ -156,8 +156,8 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
     
     // FIXME: We don't support any ConstantVec's yet.  We should custom expand
     // the ones we do!
-    setOperationAction(ISD::ConstantVec, MVT::v4f32, Expand);
-    setOperationAction(ISD::ConstantVec, MVT::v4i32, Expand);
+    //setOperationAction(ISD::ConstantVec, MVT::v4f32, Expand);
+    //setOperationAction(ISD::ConstantVec, MVT::v4i32, Expand);
   }
   
   setSetCCResultContents(ZeroOrOneSetCCResult);
