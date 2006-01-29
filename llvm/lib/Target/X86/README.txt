@@ -282,3 +282,7 @@ This is bigger and slower.
 LSR should be turned on for the X86 backend and tuned to take advantage of its
 addressing modes.
 
+//===---------------------------------------------------------------------===//
+
+When compiled with unsafemath enabled, "main" should enable SSE DAZ mode and
+other fast SSE modes.
