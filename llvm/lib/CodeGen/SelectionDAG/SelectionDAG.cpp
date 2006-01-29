@@ -277,6 +277,11 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
     Erased = ConstantFPs.erase(std::make_pair(V, N->getValueType(0)));
     break;
   }
+  case ISD::TargetConstantFP: {
+    uint64_t V = DoubleToBits(cast<ConstantFPSDNode>(N)->getValue());
+    Erased = TargetConstantFPs.erase(std::make_pair(V, N->getValueType(0)));
+    break;
+  }
   case ISD::STRING:
     Erased = StringNodes.erase(cast<StringSDNode>(N)->getValue());
     break;
@@ -606,7 +611,22 @@ SDOperand SelectionDAG::getConstantFP(double Val, MVT::ValueType VT) {
   // we don't have issues with SNANs.
   SDNode *&N = ConstantFPs[std::make_pair(DoubleToBits(Val), VT)];
   if (N) return SDOperand(N, 0);
-  N = new ConstantFPSDNode(Val, VT);
+  N = new ConstantFPSDNode(false, Val, VT);
+  AllNodes.push_back(N);
+  return SDOperand(N, 0);
+}
+
+SDOperand SelectionDAG::getTargetConstantFP(double Val, MVT::ValueType VT) {
+  assert(MVT::isFloatingPoint(VT) && "Cannot create integer FP constant!");
+  if (VT == MVT::f32)
+    Val = (float)Val;  // Mask out extra precision.
+  
+  // Do the map lookup using the actual bit pattern for the floating point
+  // value, so that we don't have problems with 0.0 comparing equal to -0.0, and
+  // we don't have issues with SNANs.
+  SDNode *&N = TargetConstantFPs[std::make_pair(DoubleToBits(Val), VT)];
+  if (N) return SDOperand(N, 0);
+  N = new ConstantFPSDNode(true, Val, VT);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }

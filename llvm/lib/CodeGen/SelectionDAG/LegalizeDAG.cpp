@@ -272,6 +272,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::BasicBlock:
   case ISD::TargetFrameIndex:
   case ISD::TargetConstant:
+  case ISD::TargetConstantFP:
+  case ISD::TargetConstantVec:
   case ISD::TargetConstantPool:
   case ISD::TargetGlobalAddress:
   case ISD::TargetExternalSymbol:
@@ -481,7 +483,22 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         break;
       }
 
-    if (!isLegal) {
+    // If this is a legal constant, turn it into a TargetConstantFP node.
+    if (isLegal) {
+      Result = DAG.getTargetConstantFP(CFP->getValue(), CFP->getValueType(0));
+      break;
+    }
+
+    switch (TLI.getOperationAction(ISD::ConstantFP, CFP->getValueType(0))) {
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Custom:
+      Tmp3 = TLI.LowerOperation(Result, DAG);
+      if (Tmp3.Val) {
+        Result = Tmp3;
+        break;
+      }
+      // FALLTHROUGH
+    case TargetLowering::Expand:
       // Otherwise we need to spill the constant to memory.
       bool Extend = false;
 
