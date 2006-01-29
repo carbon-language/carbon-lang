@@ -19,7 +19,7 @@
 using namespace llvm;
 
 TargetLowering::TargetLowering(TargetMachine &tm)
-  : TM(tm), TD(TM.getTargetData()), ValueTypeActions(0) {
+  : TM(tm), TD(TM.getTargetData()) {
   assert(ISD::BUILTIN_OP_END <= 128 &&
          "Fixed size array in TargetLowering is not large enough!");
   // All operations default to being supported.
@@ -46,8 +46,8 @@ static void SetValueTypeAction(MVT::ValueType VT,
                                TargetLowering::LegalizeAction Action,
                                TargetLowering &TLI,
                                MVT::ValueType *TransformToType,
-                               unsigned long long &ValueTypeActions) {
-  ValueTypeActions |= (unsigned long long)Action << (VT*2);
+                        TargetLowering::ValueTypeActionImpl &ValueTypeActions) {
+  ValueTypeActions.setTypeAction(VT, Action);
   if (Action == TargetLowering::Promote) {
     MVT::ValueType PromoteTo;
     if (VT == MVT::f32)
