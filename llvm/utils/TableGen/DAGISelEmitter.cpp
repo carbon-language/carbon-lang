@@ -2584,6 +2584,24 @@ void DAGISelEmitter::GenerateCodeForPattern(PatternToMatch &Pattern,
   delete Pat;
 }
 
+/// EraseCodeLine - Erase one code line from all of the patterns.  If removing
+/// a line causes any of them to be empty, remove them and return true when
+/// done.
+static bool EraseCodeLine(std::vector<std::pair<PatternToMatch*, 
+                          std::vector<std::pair<bool, std::string> > > >
+                          &Patterns) {
+  bool ErasedPatterns = false;
+  for (unsigned i = 0, e = Patterns.size(); i != e; ++i) {
+    Patterns[i].second.pop_back();
+    if (Patterns[i].second.empty()) {
+      Patterns.erase(Patterns.begin()+i);
+      --i; --e;
+      ErasedPatterns = true;
+    }
+  }
+  return ErasedPatterns;
+}
+
 /// EmitPatterns - Emit code for at least one pattern, but try to group common
 /// code together between the patterns.
 void DAGISelEmitter::EmitPatterns(std::vector<std::pair<PatternToMatch*, 
@@ -2596,8 +2614,10 @@ void DAGISelEmitter::EmitPatterns(std::vector<std::pair<PatternToMatch*,
   
   if (Patterns.empty()) return;
   
-  // Figure out how many patterns share the next code line:
-  const CodeLine &FirstCodeLine = Patterns.back().second.back();
+  // Figure out how many patterns share the next code line.  Explicitly copy
+  // FirstCodeLine so that we don't invalidate a reference when changing
+  // Patterns.
+  const CodeLine FirstCodeLine = Patterns.back().second.back();
   unsigned LastMatch = Patterns.size()-1;
   while (LastMatch != 0 && Patterns[LastMatch-1].second.back() == FirstCodeLine)
     --LastMatch;
@@ -2645,6 +2665,9 @@ void DAGISelEmitter::EmitPatterns(std::vector<std::pair<PatternToMatch*,
     return;
   }
   
+  // Remove this code from all of the patterns that share it.
+  bool ErasedPatterns = EraseCodeLine(Patterns);
+  
   bool isPredicate = FirstCodeLine.first;
   
   // Otherwise, every pattern in the list has this line.  Emit it.
@@ -2652,18 +2675,30 @@ void DAGISelEmitter::EmitPatterns(std::vector<std::pair<PatternToMatch*,
     // Normal code.
     OS << std::string(Indent, ' ') << FirstCodeLine.second << "\n";
   } else {
-    OS << std::string(Indent, ' ')
-       << "if (" << FirstCodeLine.second << ") {\n";
-    Indent += 2;
-  }
-  
-  // Remove this code from all of the patterns that share it.
-  for (unsigned i = 0, e = Patterns.size(); i != e; ++i) {
-    Patterns[i].second.pop_back();
-    if (Patterns[i].second.empty()) {
-      Patterns.erase(Patterns.begin()+i);
-      --i; --e;
+    OS << std::string(Indent, ' ') << "if (" << FirstCodeLine.second;
+    
+    // If the next code line is another predicate, and if all of the pattern
+    // in this group share the same next line, emit it inline now.  Do this
+    // until we run out of common predicates.
+    while (!ErasedPatterns && Patterns.back().second.back().first) {
+      // Check that all of fhe patterns in Patterns end with the same predicate.
+      bool AllEndWithSamePredicate = true;
+      for (unsigned i = 0, e = Patterns.size(); i != e; ++i)
+        if (Patterns[i].second.back() != Patterns.back().second.back()) {
+          AllEndWithSamePredicate = false;
+          break;
+        }
+      // If all of the predicates aren't the same, we can't share them.
+      if (!AllEndWithSamePredicate) break;
+      
+      // Otherwise we can.  Emit it shared now.
+      OS << " &&\n" << std::string(Indent+4, ' ')
+         << Patterns.back().second.back().second;
+      ErasedPatterns = EraseCodeLine(Patterns);
     }
+    
+    OS << ") {\n";
+    Indent += 2;
   }
   
   EmitPatterns(Patterns, Indent, OS);
