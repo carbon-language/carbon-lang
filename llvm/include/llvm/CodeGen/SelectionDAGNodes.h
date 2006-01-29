@@ -71,9 +71,11 @@ namespace ISD {
     // leaf node.  All operands are either Constant or ConstantFP nodes.
     ConstantVec,
     
-    // TargetConstant - Like Constant, but the DAG does not do any folding or
-    // simplification of the constant.  This is used by the DAG->DAG selector.
+    // TargetConstant* - Like Constant*, but the DAG does not do any folding or
+    // simplification of the constant.
     TargetConstant,
+    TargetConstantFP,
+    TargetConstantVec, 
     
     // TargetGlobalAddress - Like GlobalAddress, but the DAG does no folding or
     // anything else with this node, and this is valid in the target-specific
@@ -997,8 +999,9 @@ class ConstantFPSDNode : public SDNode {
   double Value;
 protected:
   friend class SelectionDAG;
-  ConstantFPSDNode(double val, MVT::ValueType VT)
-    : SDNode(ISD::ConstantFP, VT), Value(val) {
+  ConstantFPSDNode(bool isTarget, double val, MVT::ValueType VT)
+    : SDNode(isTarget ? ISD::TargetConstantFP : ISD::ConstantFP, VT), 
+      Value(val) {
   }
 public:
 
@@ -1012,7 +1015,8 @@ public:
 
   static bool classof(const ConstantFPSDNode *) { return true; }
   static bool classof(const SDNode *N) {
-    return N->getOpcode() == ISD::ConstantFP;
+    return N->getOpcode() == ISD::ConstantFP || 
+           N->getOpcode() == ISD::TargetConstantFP;
   }
 };
 
