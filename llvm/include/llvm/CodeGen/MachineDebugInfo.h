@@ -296,7 +296,7 @@ public:
   
   /// SetupCompileUnits - Set up the unique vector of compile units.
   ///
-  void MachineDebugInfo::SetupCompileUnits(Module &M);
+  void SetupCompileUnits(Module &M);
 
   /// getCompileUnits - Return a vector of debug compile units.
   ///
