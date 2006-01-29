@@ -184,7 +184,7 @@ def CMOVGE   : OForm4<  0x11, 0x46, "cmovge $RCOND,$RTRUE,$RDEST",
 def CMOVGT   : OForm4<  0x11, 0x66, "cmovgt $RCOND,$RTRUE,$RDEST",
                 [(set GPRC:$RDEST, (select (setgt GPRC:$RCOND, 0), GPRC:$RTRUE, GPRC:$RFALSE))]>;
 def CMOVLE   : OForm4<  0x11, 0x64, "cmovle $RCOND,$RTRUE,$RDEST",
-                [(set GPRC:$RDEST, (select (setlt GPRC:$RCOND, 0), GPRC:$RTRUE, GPRC:$RFALSE))]>;
+                [(set GPRC:$RDEST, (select (setle GPRC:$RCOND, 0), GPRC:$RTRUE, GPRC:$RFALSE))]>;
 def CMOVLT   : OForm4<  0x11, 0x44, "cmovlt $RCOND,$RTRUE,$RDEST",
                 [(set GPRC:$RDEST, (select (setlt GPRC:$RCOND, 0), GPRC:$RTRUE, GPRC:$RFALSE))]>;
 def CMOVNE   : OForm4<  0x11, 0x26, "cmovne $RCOND,$RTRUE,$RDEST",
