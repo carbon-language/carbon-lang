@@ -658,11 +658,6 @@ public:
 
   static bool classof(const SDNode *) { return true; }
 
-
-  /// setAdjCallChain - This method should only be used by the legalizer.
-  void setAdjCallChain(SDOperand N);
-  void setAdjCallFlag(SDOperand N);
-
 protected:
   friend class SelectionDAG;
   
