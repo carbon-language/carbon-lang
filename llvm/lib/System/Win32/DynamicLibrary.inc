@@ -92,12 +92,12 @@ void DynamicLibrary::LoadLibraryPermanently(const char* filename) {
   if (filename) {
     HMODULE a_handle = LoadLibrary(filename);
 
-  if (a_handle == 0)
-    ThrowError(std::string(filename) + ": Can't open : ");
+    if (a_handle == 0)
+      ThrowError(std::string(filename) + ": Can't open : ");
 
-  OpenedHandles.push_back(a_handle);
+    OpenedHandles.push_back(a_handle);
   } else {
-  // When no file is specified, enumerate all DLLs and EXEs in the
+    // When no file is specified, enumerate all DLLs and EXEs in the
     // process.
     EnumerateLoadedModules(GetCurrentProcess(), ELM_Callback, 0);
   }
