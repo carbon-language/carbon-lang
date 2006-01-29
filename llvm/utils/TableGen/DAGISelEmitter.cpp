@@ -2032,9 +2032,12 @@ public:
           }
         } else if (IntInit *II =
                        dynamic_cast<IntInit*>(Child->getLeafValue())) {
-          emitCheck("isa<ConstantSDNode>(" + RootName + utostr(OpNo) +
-                    ") && cast<ConstantSDNode>(" + RootName + utostr(OpNo) +
-                    ")->getSignExtended() == " + itostr(II->getValue()));
+          emitCheck("isa<ConstantSDNode>(" + RootName + utostr(OpNo) + ")");
+          unsigned CTmp = TmpNo++;
+          emitCode("int CN"+utostr(CTmp)+" = cast<ConstantSDNode>("+
+                   RootName + utostr(OpNo) + ")->getSignExtended();");
+
+          emitCheck("CN" + utostr(CTmp) + " == " +itostr(II->getValue()));
         } else {
           Child->dump();
           assert(0 && "Unknown leaf type!");
@@ -2530,7 +2533,7 @@ private:
 /// EmitCodeForPattern - Given a pattern to match, emit code to the specified
 /// stream to match the pattern, and generate the code for the match if it
 /// succeeds.  Returns true if the pattern is not guaranteed to match.
-void DAGISelEmitter::EmitCodeForPattern(PatternToMatch &Pattern,
+void DAGISelEmitter::GenerateCodeForPattern(PatternToMatch &Pattern,
                     std::vector<std::pair<bool, std::string> > &GeneratedCode) {
   PatternCodeEmitter Emitter(*this, Pattern.getPredicates(),
                              Pattern.getSrcPattern(), Pattern.getDstPattern(),
@@ -2580,6 +2583,95 @@ void DAGISelEmitter::EmitCodeForPattern(PatternToMatch &Pattern,
   Emitter.EmitResultCode(Pattern.getDstPattern(), true /*the root*/);
   delete Pat;
 }
+
+/// EmitPatterns - Emit code for at least one pattern, but try to group common
+/// code together between the patterns.
+void DAGISelEmitter::EmitPatterns(std::vector<std::pair<PatternToMatch*, 
+                                  std::vector<std::pair<bool, std::string> > > >
+                                  &Patterns, unsigned Indent,
+                                  std::ostream &OS) {
+  typedef std::pair<bool, std::string> CodeLine;
+  typedef std::vector<CodeLine> CodeList;
+  typedef std::vector<std::pair<PatternToMatch*, CodeList> > PatternList;
+  
+  if (Patterns.empty()) return;
+  
+  // Figure out how many patterns share the next code line:
+  const CodeLine &FirstCodeLine = Patterns.back().second.back();
+  unsigned LastMatch = Patterns.size()-1;
+  while (LastMatch != 0 && Patterns[LastMatch-1].second.back() == FirstCodeLine)
+    --LastMatch;
+  
+  // If not all patterns share this line, split the list into two pieces.  The
+  // first chunk will use this line, the second chunk won't.
+  if (LastMatch != 0) {
+    PatternList Shared(Patterns.begin()+LastMatch, Patterns.end());
+    PatternList Other(Patterns.begin(), Patterns.begin()+LastMatch);
+    
+    // FIXME: Emit braces?
+    if (Shared.size() == 1) {
+      PatternToMatch &Pattern = *Shared.back().first;
+      OS << "\n" << std::string(Indent, ' ') << "// Pattern: ";
+      Pattern.getSrcPattern()->print(OS);
+      OS << "\n" << std::string(Indent, ' ') << "// Emits: ";
+      Pattern.getDstPattern()->print(OS);
+      OS << "\n";
+      OS << std::string(Indent, ' ') << "// Pattern complexity = "
+         << getPatternSize(Pattern.getSrcPattern(), *this) << "  cost = "
+         << getResultPatternCost(Pattern.getDstPattern()) << "\n";
+    }
+    if (!FirstCodeLine.first) {
+      OS << std::string(Indent, ' ') << "{\n";
+      Indent += 2;
+    }
+    EmitPatterns(Shared, Indent, OS);
+    if (!FirstCodeLine.first) {
+      Indent -= 2;
+      OS << std::string(Indent, ' ') << "}\n";
+    }
+    
+    if (Other.size() == 1) {
+      PatternToMatch &Pattern = *Other.back().first;
+      OS << "\n" << std::string(Indent, ' ') << "// Pattern: ";
+      Pattern.getSrcPattern()->print(OS);
+      OS << "\n" << std::string(Indent, ' ') << "// Emits: ";
+      Pattern.getDstPattern()->print(OS);
+      OS << "\n";
+      OS << std::string(Indent, ' ') << "// Pattern complexity = "
+         << getPatternSize(Pattern.getSrcPattern(), *this) << "  cost = "
+         << getResultPatternCost(Pattern.getDstPattern()) << "\n";
+    }
+    EmitPatterns(Other, Indent, OS);
+    return;
+  }
+  
+  bool isPredicate = FirstCodeLine.first;
+  
+  // Otherwise, every pattern in the list has this line.  Emit it.
+  if (!isPredicate) {
+    // Normal code.
+    OS << std::string(Indent, ' ') << FirstCodeLine.second << "\n";
+  } else {
+    OS << std::string(Indent, ' ')
+       << "if (" << FirstCodeLine.second << ") {\n";
+    Indent += 2;
+  }
+  
+  // Remove this code from all of the patterns that share it.
+  for (unsigned i = 0, e = Patterns.size(); i != e; ++i) {
+    Patterns[i].second.pop_back();
+    if (Patterns[i].second.empty()) {
+      Patterns.erase(Patterns.begin()+i);
+      --i; --e;
+    }
+  }
+  
+  EmitPatterns(Patterns, Indent, OS);
+  
+  if (isPredicate)
+    OS << std::string(Indent-2, ' ') << "}\n";
+}
+
 
 
 namespace {
@@ -2652,7 +2744,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
     std::vector<std::pair<PatternToMatch*, CodeList> > CodeForPatterns;
     for (unsigned i = 0, e = Patterns.size(); i != e; ++i) {
       CodeList GeneratedCode;
-      EmitCodeForPattern(*Patterns[i], GeneratedCode);
+      GenerateCodeForPattern(*Patterns[i], GeneratedCode);
       CodeForPatterns.push_back(std::make_pair(Patterns[i], GeneratedCode));
     }
     
@@ -2679,38 +2771,20 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
         exit(1);
       }
     }
-      
+    
+    // Loop through and reverse all of the CodeList vectors, as we will be
+    // accessing them from their logical front, but accessing the end of a
+    // vector is more efficient.
     for (unsigned i = 0, e = CodeForPatterns.size(); i != e; ++i) {
       CodeList &GeneratedCode = CodeForPatterns[i].second;
-      PatternToMatch &Pattern = *CodeForPatterns[i].first;
-      OS << "  { // Pattern: ";
-      Pattern.getSrcPattern()->print(OS);
-      OS << "\n    // Emits: ";
-      Pattern.getDstPattern()->print(OS);
-      OS << "\n";
-      OS << "    // Pattern complexity = "
-         << getPatternSize(Pattern.getSrcPattern(), *this) << "  cost = "
-         << getResultPatternCost(Pattern.getDstPattern()) << "\n";
-      
-      // Actually output the generated code now.
-      mightNotMatch = false;
-      unsigned Indent = 4;
-      for (unsigned j = 0, e = GeneratedCode.size(); j != e; ++j) {
-        if (!GeneratedCode[j].first) {
-          // Normal code.
-          OS << std::string(Indent, ' ') << GeneratedCode[j].second << "\n";
-        } else {
-          mightNotMatch = true;
-          OS << std::string(Indent, ' ')
-            << "if (" << GeneratedCode[j].second << ") {\n";
-          Indent += 2;
-        }
-      }
-      for (; Indent != 4; Indent -= 2)
-        OS << std::string(Indent-2, ' ') << "}\n";
-      
-      OS << "  }\n";
+      std::reverse(GeneratedCode.begin(), GeneratedCode.end());
     }
+    
+    // Next, reverse the list of patterns itself for the same reason.
+    std::reverse(CodeForPatterns.begin(), CodeForPatterns.end());
+    
+    // Emit all of the patterns now, grouped together to share code.
+    EmitPatterns(CodeForPatterns, 2, OS);
     
     // If the last pattern has predicates (which could fail) emit code to catch
     // the case where nothing handles a pattern.

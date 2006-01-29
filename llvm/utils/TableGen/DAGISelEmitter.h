@@ -470,8 +470,11 @@ private:
                                    std::map<std::string, Record*> &InstResults,
                                    std::vector<Record*> &InstImpInputs,
                                    std::vector<Record*> &InstImpResults);
-  void EmitCodeForPattern(PatternToMatch &Pattern,
+  void GenerateCodeForPattern(PatternToMatch &Pattern,
                     std::vector<std::pair<bool, std::string> > &GeneratedCode);
+  void EmitPatterns(std::vector<std::pair<PatternToMatch*, 
+                    std::vector<std::pair<bool, std::string> > > > &Patterns, 
+                    unsigned Indent, std::ostream &OS);
   void EmitInstructionSelector(std::ostream &OS);
 };
 
