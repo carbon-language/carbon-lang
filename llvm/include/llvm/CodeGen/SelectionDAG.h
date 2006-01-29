@@ -229,21 +229,6 @@ public:
     return getNode(ISD::SELECT_CC, VT, LHS, RHS, True, False,getCondCode(Cond));
   }
   
-  /// getBR2Way_CC - Helper function to make it easier to build BRTWOWAY_CC
-  /// nodes.
-  ///
-  SDOperand getBR2Way_CC(SDOperand Chain, SDOperand CCNode, SDOperand LHS, 
-                         SDOperand RHS, SDOperand True, SDOperand False) {
-    std::vector<SDOperand> Ops;
-    Ops.push_back(Chain);
-    Ops.push_back(CCNode);
-    Ops.push_back(LHS);
-    Ops.push_back(RHS);
-    Ops.push_back(True);
-    Ops.push_back(False);
-    return getNode(ISD::BRTWOWAY_CC, MVT::Other, Ops);
-  }
-  
   /// getVAArg - VAArg produces a result and token chain, and takes a pointer
   /// and a source value as input.
   SDOperand getVAArg(MVT::ValueType VT, SDOperand Chain, SDOperand Ptr,
