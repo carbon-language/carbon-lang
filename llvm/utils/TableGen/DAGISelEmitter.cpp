@@ -2069,20 +2069,17 @@ public:
       unsigned ResNo = TmpNo++;
       unsigned NumRes = 1;
       if (!N->isLeaf() && N->getOperator()->getName() == "imm") {
-        const char* CastType;
         assert(N->getExtTypes().size() == 1 && "Multiple types not handled!");
-        const char *Code;
+        std::string CastType;
         switch (N->getTypeNum(0)) {
         default: assert(0 && "Unknown type for constant node!");
-        case MVT::i1:  CastType = "bool"; Code = "bool Tmp"; break;
-        case MVT::i8: 
-          CastType = "unsigned char"; Code = "unsigned char Tmp"; break;
-        case MVT::i16:
-          CastType = "unsigned short"; Code = "unsigned short Tmp"; break;
-        case MVT::i32: CastType = "unsigned"; Code = "unsigned Tmp"; break;
-        case MVT::i64: CastType = "uint64_t"; Code = "uint64_t Tmp"; break;
+        case MVT::i1:  CastType = "bool"; break;
+        case MVT::i8:  CastType = "unsigned char"; break;
+        case MVT::i16: CastType = "unsigned short"; break;
+        case MVT::i32: CastType = "unsigned"; break;
+        case MVT::i64: CastType = "uint64_t"; break;
         }
-        emitCode(Code + utostr(ResNo) + "C = (" + CastType + 
+        emitCode(CastType + " Tmp" + utostr(ResNo) + "C = (" + CastType + 
                  ")cast<ConstantSDNode>(" + Val + ")->getValue();");
         emitCode("SDOperand Tmp" + utostr(ResNo) + 
                  " = CurDAG->getTargetConstant(Tmp" + utostr(ResNo) + 
