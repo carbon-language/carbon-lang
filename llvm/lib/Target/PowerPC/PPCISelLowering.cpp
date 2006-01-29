@@ -437,7 +437,8 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand Lo = DAG.getNode(PPCISD::Lo, MVT::i32, GA, Zero);
     Lo = DAG.getNode(ISD::ADD, MVT::i32, Hi, Lo);
                                    
-    if (!GV->hasWeakLinkage() && !GV->hasLinkOnceLinkage() && !GV->isExternal())
+    if (!GV->hasWeakLinkage() && !GV->hasLinkOnceLinkage() &&
+        (!GV->isExternal() || GV->hasNotBeenReadFromBytecode()))
       return Lo;
 
     // If the global is weak or external, we have to go through the lazy
