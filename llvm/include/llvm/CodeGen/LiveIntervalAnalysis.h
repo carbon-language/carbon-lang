@@ -148,9 +148,7 @@ namespace llvm {
     /// handleVirtualRegisterDef)
     void handleRegisterDef(MachineBasicBlock* mbb,
                            MachineBasicBlock::iterator mi,
-                           unsigned reg,
-                           std::map<std::pair<unsigned,unsigned>, 
-                                    unsigned> &PhysRegValueMap);
+                           unsigned reg);
 
     /// handleVirtualRegisterDef - update intervals for a virtual
     /// register def
@@ -167,8 +165,6 @@ namespace llvm {
                                    MachineBasicBlock::iterator mi,
                                    LiveInterval& interval,
                                    unsigned SrcReg, unsigned DestReg,
-                                   std::map<std::pair<unsigned,unsigned>, 
-                                            unsigned> *PhysRegValueMap,
                                    bool isLiveIn = false);
 
     /// Return true if the two specified registers belong to different
