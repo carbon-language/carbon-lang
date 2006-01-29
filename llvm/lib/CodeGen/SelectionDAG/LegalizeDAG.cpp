@@ -749,14 +749,22 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // BRCOND/BR pair.
       if (TLI.isOperationLegal(ISD::BRTWOWAY_CC, MVT::Other)) {
         if (Tmp2.getOpcode() == ISD::SETCC) {
-          Result = DAG.getBR2Way_CC(Tmp1, Tmp2.getOperand(2),
-                                    Tmp2.getOperand(0), Tmp2.getOperand(1),
-                                    Node->getOperand(2), Node->getOperand(3));
+          Tmp3 = Tmp2.getOperand(0);
+          Tmp4 = Tmp2.getOperand(1);
+          Tmp2 = Tmp2.getOperand(2);
         } else {
-          Result = DAG.getBR2Way_CC(Tmp1, DAG.getCondCode(ISD::SETNE), Tmp2, 
-                                    DAG.getConstant(0, Tmp2.getValueType()),
-                                    Node->getOperand(2), Node->getOperand(3));
+          Tmp3 = Tmp2;
+          Tmp4 = DAG.getConstant(0, Tmp2.getValueType());
+          Tmp2 = DAG.getCondCode(ISD::SETNE);
         }
+        std::vector<SDOperand> Ops;
+        Ops.push_back(Tmp1);
+        Ops.push_back(Tmp2);
+        Ops.push_back(Tmp3);
+        Ops.push_back(Tmp4);
+        Ops.push_back(Node->getOperand(2));
+        Ops.push_back(Node->getOperand(3));
+        Result = DAG.getNode(ISD::BRTWOWAY_CC, MVT::Other, Ops);
       } else {
         Result = DAG.getNode(ISD::BRCOND, MVT::Other, Tmp1, Tmp2,
                              Node->getOperand(2));

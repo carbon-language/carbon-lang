@@ -2092,9 +2092,16 @@ SDOperand DAGCombiner::visitBRTWOWAY_CC(SDNode *N) {
   if (SCCC && SCCC->isNullValue())
     return DAG.getNode(ISD::BR, MVT::Other, Chain, N5);
   // fold to a simpler setcc
-  if (SCC.Val && SCC.getOpcode() == ISD::SETCC)
-    return DAG.getBR2Way_CC(Chain, SCC.getOperand(2), SCC.getOperand(0), 
-                            SCC.getOperand(1), N4, N5);
+  if (SCC.Val && SCC.getOpcode() == ISD::SETCC) {
+    std::vector<SDOperand> Ops;
+    Ops.push_back(Chain);
+    Ops.push_back(SCC.getOperand(2));
+    Ops.push_back(SCC.getOperand(0));
+    Ops.push_back(SCC.getOperand(1));
+    Ops.push_back(N4);
+    Ops.push_back(N5);
+    return DAG.getNode(ISD::BRTWOWAY_CC, MVT::Other, Ops);
+  }
   return SDOperand();
 }
 
