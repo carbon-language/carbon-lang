@@ -62,8 +62,7 @@ namespace {
     /// be zero. Op is expected to be a target specific node. Used by DAG
     /// combiner.
     virtual bool isMaskedValueZeroForTargetNode(const SDOperand &Op,
-                                                uint64_t Mask,
-                                                MVIZFnPtr MVIZ) const;
+                                                uint64_t Mask) const;
     
     virtual std::vector<SDOperand>
       LowerArguments(Function &F, SelectionDAG &DAG);
@@ -203,16 +202,15 @@ const char *SparcV8TargetLowering::getTargetNodeName(unsigned Opcode) const {
 /// be zero. Op is expected to be a target specific node. Used by DAG
 /// combiner.
 bool SparcV8TargetLowering::
-isMaskedValueZeroForTargetNode(const SDOperand &Op, uint64_t Mask,
-                               MVIZFnPtr MVIZ) const {
+isMaskedValueZeroForTargetNode(const SDOperand &Op, uint64_t Mask) const {
   switch (Op.getOpcode()) {
   default: return false; 
   case V8ISD::SELECT_ICC:
   case V8ISD::SELECT_FCC:
     assert(MVT::isInteger(Op.getValueType()) && "Not an integer select!");
     // These operations are masked zero if both the left and the right are zero.
-    return MVIZ(Op.getOperand(0), Mask, *this) &&
-           MVIZ(Op.getOperand(1), Mask, *this);
+    return MaskedValueIsZero(Op.getOperand(0), Mask) &&
+           MaskedValueIsZero(Op.getOperand(1), Mask);
   }
 }
 

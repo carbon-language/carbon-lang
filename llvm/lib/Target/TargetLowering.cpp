@@ -16,6 +16,7 @@
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/MathExtras.h"
 using namespace llvm;
 
 TargetLowering::TargetLowering(TargetMachine &tm)
@@ -130,9 +131,113 @@ const char *TargetLowering::getTargetNodeName(unsigned Opcode) const {
   return NULL;
 }
 
+
+
+/// MaskedValueIsZero - Return true if 'Op & Mask' is known to be zero.  We use
+/// this predicate to simplify operations downstream.  Op and Mask are known to
+/// be the same type.
+bool TargetLowering::MaskedValueIsZero(const SDOperand &Op,
+                                       uint64_t Mask) const {
+  unsigned SrcBits;
+  if (Mask == 0) return true;
+  
+  // If we know the result of a setcc has the top bits zero, use this info.
+  switch (Op.getOpcode()) {
+  case ISD::Constant:
+    return (cast<ConstantSDNode>(Op)->getValue() & Mask) == 0;
+  case ISD::SETCC:
+    return ((Mask & 1) == 0) &&
+      getSetCCResultContents() == TargetLowering::ZeroOrOneSetCCResult;
+  case ISD::ZEXTLOAD:
+    SrcBits = MVT::getSizeInBits(cast<VTSDNode>(Op.getOperand(3))->getVT());
+    return (Mask & ((1ULL << SrcBits)-1)) == 0; // Returning only the zext bits.
+  case ISD::ZERO_EXTEND:
+    SrcBits = MVT::getSizeInBits(Op.getOperand(0).getValueType());
+    return MaskedValueIsZero(Op.getOperand(0),Mask & (~0ULL >> (64-SrcBits)));
+  case ISD::AssertZext:
+    SrcBits = MVT::getSizeInBits(cast<VTSDNode>(Op.getOperand(1))->getVT());
+    return (Mask & ((1ULL << SrcBits)-1)) == 0; // Returning only the zext bits.
+  case ISD::AND:
+    // If either of the operands has zero bits, the result will too.
+    if (MaskedValueIsZero(Op.getOperand(1), Mask) ||
+        MaskedValueIsZero(Op.getOperand(0), Mask))
+      return true;
+    // (X & C1) & C2 == 0   iff   C1 & C2 == 0.
+    if (ConstantSDNode *AndRHS = dyn_cast<ConstantSDNode>(Op.getOperand(1)))
+      return MaskedValueIsZero(Op.getOperand(0),AndRHS->getValue() & Mask);
+    return false;
+  case ISD::OR:
+  case ISD::XOR:
+    return MaskedValueIsZero(Op.getOperand(0), Mask) &&
+           MaskedValueIsZero(Op.getOperand(1), Mask);
+  case ISD::SELECT:
+    return MaskedValueIsZero(Op.getOperand(1), Mask) &&
+           MaskedValueIsZero(Op.getOperand(2), Mask);
+  case ISD::SELECT_CC:
+    return MaskedValueIsZero(Op.getOperand(2), Mask) &&
+           MaskedValueIsZero(Op.getOperand(3), Mask);
+  case ISD::SRL:
+    // (ushr X, C1) & C2 == 0   iff  X & (C2 << C1) == 0
+    if (ConstantSDNode *ShAmt = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
+      uint64_t NewVal = Mask << ShAmt->getValue();
+      SrcBits = MVT::getSizeInBits(Op.getValueType());
+      if (SrcBits != 64) NewVal &= (1ULL << SrcBits)-1;
+      return MaskedValueIsZero(Op.getOperand(0), NewVal);
+    }
+    return false;
+  case ISD::SHL:
+    // (ushl X, C1) & C2 == 0   iff  X & (C2 >> C1) == 0
+    if (ConstantSDNode *ShAmt = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
+      uint64_t NewVal = Mask >> ShAmt->getValue();
+      return MaskedValueIsZero(Op.getOperand(0), NewVal);
+    }
+    return false;
+  case ISD::ADD:
+    // (add X, Y) & C == 0 iff (X&C)|(Y&C) == 0 and all bits are low bits.
+    if ((Mask&(Mask+1)) == 0) {  // All low bits
+      if (MaskedValueIsZero(Op.getOperand(0), Mask) &&
+          MaskedValueIsZero(Op.getOperand(1), Mask))
+        return true;
+    }
+    break;
+  case ISD::SUB:
+    if (ConstantSDNode *CLHS = dyn_cast<ConstantSDNode>(Op.getOperand(0))) {
+      // We know that the top bits of C-X are clear if X contains less bits
+      // than C (i.e. no wrap-around can happen).  For example, 20-X is
+      // positive if we can prove that X is >= 0 and < 16.
+      unsigned Bits = MVT::getSizeInBits(CLHS->getValueType(0));
+      if ((CLHS->getValue() & (1 << (Bits-1))) == 0) {  // sign bit clear
+        unsigned NLZ = CountLeadingZeros_64(CLHS->getValue()+1);
+        uint64_t MaskV = (1ULL << (63-NLZ))-1;
+        if (MaskedValueIsZero(Op.getOperand(1), ~MaskV)) {
+          // High bits are clear this value is known to be >= C.
+          unsigned NLZ2 = CountLeadingZeros_64(CLHS->getValue());
+          if ((Mask & ((1ULL << (64-NLZ2))-1)) == 0)
+            return true;
+        }
+      }
+    }
+    break;
+  case ISD::CTTZ:
+  case ISD::CTLZ:
+  case ISD::CTPOP:
+    // Bit counting instructions can not set the high bits of the result
+    // register.  The max number of bits sets depends on the input.
+    return (Mask & (MVT::getSizeInBits(Op.getValueType())*2-1)) == 0;
+  default:
+    // Allow the target to implement this method for its nodes.
+    if (Op.getOpcode() >= ISD::BUILTIN_OP_END)
+      return isMaskedValueZeroForTargetNode(Op, Mask);
+    break;
+  }
+  return false;
+}
+
 bool TargetLowering::isMaskedValueZeroForTargetNode(const SDOperand &Op,
-                                                    uint64_t Mask,
-                                                     MVIZFnPtr MVIZ) const {
+                                                    uint64_t Mask) const {
+  assert(Op.getOpcode() >= ISD::BUILTIN_OP_END &&
+         "Should use MaskedValueIsZero if you don't know whether Op"
+         " is a target node!");
   return false;
 }
 

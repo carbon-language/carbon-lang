@@ -369,105 +369,6 @@ static mu magicu64(uint64_t d)
   return magu;
 }
 
-/// MaskedValueIsZero - Return true if 'Op & Mask' is known to be zero.  We use
-/// this predicate to simplify operations downstream.  Op and Mask are known to
-/// be the same type.
-static bool MaskedValueIsZero(const SDOperand &Op, uint64_t Mask,
-                              const TargetLowering &TLI) {
-  unsigned SrcBits;
-  if (Mask == 0) return true;
-  
-  // If we know the result of a setcc has the top bits zero, use this info.
-  switch (Op.getOpcode()) {
-  case ISD::Constant:
-    return (cast<ConstantSDNode>(Op)->getValue() & Mask) == 0;
-  case ISD::SETCC:
-    return ((Mask & 1) == 0) &&
-    TLI.getSetCCResultContents() == TargetLowering::ZeroOrOneSetCCResult;
-  case ISD::ZEXTLOAD:
-    SrcBits = MVT::getSizeInBits(cast<VTSDNode>(Op.getOperand(3))->getVT());
-    return (Mask & ((1ULL << SrcBits)-1)) == 0; // Returning only the zext bits.
-  case ISD::ZERO_EXTEND:
-    SrcBits = MVT::getSizeInBits(Op.getOperand(0).getValueType());
-    return MaskedValueIsZero(Op.getOperand(0),Mask & (~0ULL >> (64-SrcBits)),TLI);
-  case ISD::AssertZext:
-    SrcBits = MVT::getSizeInBits(cast<VTSDNode>(Op.getOperand(1))->getVT());
-    return (Mask & ((1ULL << SrcBits)-1)) == 0; // Returning only the zext bits.
-  case ISD::AND:
-    // If either of the operands has zero bits, the result will too.
-    if (MaskedValueIsZero(Op.getOperand(1), Mask, TLI) ||
-        MaskedValueIsZero(Op.getOperand(0), Mask, TLI))
-      return true;
-    // (X & C1) & C2 == 0   iff   C1 & C2 == 0.
-    if (ConstantSDNode *AndRHS = dyn_cast<ConstantSDNode>(Op.getOperand(1)))
-      return MaskedValueIsZero(Op.getOperand(0),AndRHS->getValue() & Mask, TLI);
-    return false;
-  case ISD::OR:
-  case ISD::XOR:
-    return MaskedValueIsZero(Op.getOperand(0), Mask, TLI) &&
-    MaskedValueIsZero(Op.getOperand(1), Mask, TLI);
-  case ISD::SELECT:
-    return MaskedValueIsZero(Op.getOperand(1), Mask, TLI) &&
-    MaskedValueIsZero(Op.getOperand(2), Mask, TLI);
-  case ISD::SELECT_CC:
-    return MaskedValueIsZero(Op.getOperand(2), Mask, TLI) &&
-    MaskedValueIsZero(Op.getOperand(3), Mask, TLI);
-  case ISD::SRL:
-    // (ushr X, C1) & C2 == 0   iff  X & (C2 << C1) == 0
-    if (ConstantSDNode *ShAmt = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
-      uint64_t NewVal = Mask << ShAmt->getValue();
-      SrcBits = MVT::getSizeInBits(Op.getValueType());
-      if (SrcBits != 64) NewVal &= (1ULL << SrcBits)-1;
-      return MaskedValueIsZero(Op.getOperand(0), NewVal, TLI);
-    }
-    return false;
-  case ISD::SHL:
-    // (ushl X, C1) & C2 == 0   iff  X & (C2 >> C1) == 0
-    if (ConstantSDNode *ShAmt = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
-      uint64_t NewVal = Mask >> ShAmt->getValue();
-      return MaskedValueIsZero(Op.getOperand(0), NewVal, TLI);
-    }
-    return false;
-  case ISD::ADD:
-    // (add X, Y) & C == 0 iff (X&C)|(Y&C) == 0 and all bits are low bits.
-    if ((Mask&(Mask+1)) == 0) {  // All low bits
-      if (MaskedValueIsZero(Op.getOperand(0), Mask, TLI) &&
-          MaskedValueIsZero(Op.getOperand(1), Mask, TLI))
-        return true;
-    }
-    break;
-  case ISD::SUB:
-    if (ConstantSDNode *CLHS = dyn_cast<ConstantSDNode>(Op.getOperand(0))) {
-      // We know that the top bits of C-X are clear if X contains less bits
-      // than C (i.e. no wrap-around can happen).  For example, 20-X is
-      // positive if we can prove that X is >= 0 and < 16.
-      unsigned Bits = MVT::getSizeInBits(CLHS->getValueType(0));
-      if ((CLHS->getValue() & (1 << (Bits-1))) == 0) {  // sign bit clear
-        unsigned NLZ = CountLeadingZeros_64(CLHS->getValue()+1);
-        uint64_t MaskV = (1ULL << (63-NLZ))-1;
-        if (MaskedValueIsZero(Op.getOperand(1), ~MaskV, TLI)) {
-          // High bits are clear this value is known to be >= C.
-          unsigned NLZ2 = CountLeadingZeros_64(CLHS->getValue());
-          if ((Mask & ((1ULL << (64-NLZ2))-1)) == 0)
-            return true;
-        }
-      }
-    }
-    break;
-  case ISD::CTTZ:
-  case ISD::CTLZ:
-  case ISD::CTPOP:
-    // Bit counting instructions can not set the high bits of the result
-    // register.  The max number of bits sets depends on the input.
-    return (Mask & (MVT::getSizeInBits(Op.getValueType())*2-1)) == 0;
-  default:
-    if (Op.getOpcode() >= ISD::BUILTIN_OP_END)
-      return TLI.isMaskedValueZeroForTargetNode(Op, Mask, MaskedValueIsZero);
-    break;
-  }
-  return false;
-}
-
 // isSetCCEquivalent - Return true if this node is a setcc, or is a select_cc
 // that selects between the values 1 and 0, making it equivalent to a setcc.
 // Also, set the incoming LHS, RHS, and CC references to the appropriate 
@@ -812,8 +713,8 @@ SDOperand DAGCombiner::visitSDIV(SDNode *N) {
   // If we know the sign bits of both operands are zero, strength reduce to a
   // udiv instead.  Handles (X&15) /s 4 -> X&15 >> 2
   uint64_t SignBit = 1ULL << (MVT::getSizeInBits(VT)-1);
-  if (MaskedValueIsZero(N1, SignBit, TLI) &&
-      MaskedValueIsZero(N0, SignBit, TLI))
+  if (TLI.MaskedValueIsZero(N1, SignBit) &&
+      TLI.MaskedValueIsZero(N0, SignBit))
     return DAG.getNode(ISD::UDIV, N1.getValueType(), N0, N1);
   // fold (sdiv X, pow2) -> (add (sra X, log(pow2)), (srl X, sizeof(X)-1))
   if (N1C && N1C->getValue() && !TLI.isIntDivCheap() && 
@@ -888,8 +789,8 @@ SDOperand DAGCombiner::visitSREM(SDNode *N) {
   // If we know the sign bits of both operands are zero, strength reduce to a
   // urem instead.  Handles (X & 0x0FFFFFFF) %s 16 -> X&15
   uint64_t SignBit = 1ULL << (MVT::getSizeInBits(VT)-1);
-  if (MaskedValueIsZero(N1, SignBit, TLI) &&
-      MaskedValueIsZero(N0, SignBit, TLI))
+  if (TLI.MaskedValueIsZero(N1, SignBit) &&
+      TLI.MaskedValueIsZero(N0, SignBit))
     return DAG.getNode(ISD::UREM, VT, N0, N1);
   return SDOperand();
 }
@@ -959,11 +860,11 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
   if (N1C && N1C->isAllOnesValue())
     return N0;
   // if (and x, c) is known to be zero, return 0
-  if (N1C && MaskedValueIsZero(SDOperand(N, 0), ~0ULL >> (64-OpSizeInBits),TLI))
+  if (N1C && TLI.MaskedValueIsZero(SDOperand(N, 0), ~0ULL >> (64-OpSizeInBits)))
     return DAG.getConstant(0, VT);
   // fold (and x, c) -> x iff (x & ~c) == 0
-  if (N1C && MaskedValueIsZero(N0,~N1C->getValue() & (~0ULL>>(64-OpSizeInBits)),
-                               TLI))
+  if (N1C && 
+      TLI.MaskedValueIsZero(N0, ~N1C->getValue() & (~0ULL>>(64-OpSizeInBits))))
     return N0;
   // fold (and (and x, c1), c2) -> (and x, c1^c2)
   if (N1C && N0.getOpcode() == ISD::AND) {
@@ -1050,8 +951,8 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
     if (ConstantSDNode *N01C = dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
       // If the RHS of the AND has zeros where the sign bits of the SRA will
       // land, turn the SRA into an SRL.
-      if (MaskedValueIsZero(N1, (~0ULL << (OpSizeInBits-N01C->getValue())) &
-                            (~0ULL>>(64-OpSizeInBits)), TLI)) {
+      if (TLI.MaskedValueIsZero(N1, (~0ULL << (OpSizeInBits-N01C->getValue())) &
+                                (~0ULL>>(64-OpSizeInBits)))) {
         WorkList.push_back(N);
         CombineTo(N0.Val, DAG.getNode(ISD::SRL, VT, N0.getOperand(0),
                                       N0.getOperand(1)));
@@ -1064,7 +965,7 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
     MVT::ValueType EVT = cast<VTSDNode>(N0.getOperand(3))->getVT();
     // If we zero all the possible extended bits, then we can turn this into
     // a zextload if we are running before legalize or the operation is legal.
-    if (MaskedValueIsZero(N1, ~0ULL << MVT::getSizeInBits(EVT), TLI) &&
+    if (TLI.MaskedValueIsZero(N1, ~0ULL << MVT::getSizeInBits(EVT)) &&
         (!AfterLegalize || TLI.isOperationLegal(ISD::ZEXTLOAD, EVT))) {
       SDOperand ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, N0.getOperand(0),
                                          N0.getOperand(1), N0.getOperand(2),
@@ -1079,7 +980,7 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
     MVT::ValueType EVT = cast<VTSDNode>(N0.getOperand(3))->getVT();
     // If we zero all the possible extended bits, then we can turn this into
     // a zextload if we are running before legalize or the operation is legal.
-    if (MaskedValueIsZero(N1, ~0ULL << MVT::getSizeInBits(EVT), TLI) &&
+    if (TLI.MaskedValueIsZero(N1, ~0ULL << MVT::getSizeInBits(EVT)) &&
         (!AfterLegalize || TLI.isOperationLegal(ISD::ZEXTLOAD, EVT))) {
       SDOperand ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, N0.getOperand(0),
                                          N0.getOperand(1), N0.getOperand(2),
@@ -1114,8 +1015,8 @@ SDOperand DAGCombiner::visitOR(SDNode *N) {
   if (N1C && N1C->isAllOnesValue())
     return N1;
   // fold (or x, c) -> c iff (x & ~c) == 0
-  if (N1C && MaskedValueIsZero(N0,~N1C->getValue() & (~0ULL>>(64-OpSizeInBits)),
-                               TLI))
+  if (N1C && 
+      TLI.MaskedValueIsZero(N0,~N1C->getValue() & (~0ULL>>(64-OpSizeInBits))))
     return N1;
   // fold (or (or x, c1), c2) -> (or x, c1|c2)
   if (N1C && N0.getOpcode() == ISD::OR) {
@@ -1319,7 +1220,7 @@ SDOperand DAGCombiner::visitSHL(SDNode *N) {
   if (N1C && N1C->isNullValue())
     return N0;
   // if (shl x, c) is known to be zero, return 0
-  if (N1C && MaskedValueIsZero(SDOperand(N, 0), ~0ULL >> (64-OpSizeInBits),TLI))
+  if (N1C && TLI.MaskedValueIsZero(SDOperand(N, 0), ~0ULL >> (64-OpSizeInBits)))
     return DAG.getConstant(0, VT);
   // fold (shl (shl x, c1), c2) -> 0 or (shl x, c1+c2)
   if (N1C && N0.getOpcode() == ISD::SHL && 
@@ -1377,7 +1278,7 @@ SDOperand DAGCombiner::visitSRA(SDNode *N) {
   if (N1C && N1C->isNullValue())
     return N0;
   // If the sign bit is known to be zero, switch this to a SRL.
-  if (MaskedValueIsZero(N0, (1ULL << (OpSizeInBits-1)), TLI))
+  if (TLI.MaskedValueIsZero(N0, (1ULL << (OpSizeInBits-1))))
     return DAG.getNode(ISD::SRL, VT, N0, N1);
   return SDOperand();
 }
@@ -1403,7 +1304,7 @@ SDOperand DAGCombiner::visitSRL(SDNode *N) {
   if (N1C && N1C->isNullValue())
     return N0;
   // if (srl x, c) is known to be zero, return 0
-  if (N1C && MaskedValueIsZero(SDOperand(N, 0), ~0ULL >> (64-OpSizeInBits),TLI))
+  if (N1C && TLI.MaskedValueIsZero(SDOperand(N, 0), ~0ULL >> (64-OpSizeInBits)))
     return DAG.getConstant(0, VT);
   // fold (srl (srl x, c1), c2) -> 0 or (srl x, c1+c2)
   if (N1C && N0.getOpcode() == ISD::SRL && 
@@ -1544,7 +1445,7 @@ SDOperand DAGCombiner::visitADD_PARTS(SDNode *N) {
   MVT::ValueType VT = LHSLo.getValueType();
   
   // fold (a_Hi, 0) + (b_Hi, b_Lo) -> (b_Hi + a_Hi, b_Lo)
-  if (MaskedValueIsZero(LHSLo, (1ULL << MVT::getSizeInBits(VT))-1, TLI)) {
+  if (TLI.MaskedValueIsZero(LHSLo, (1ULL << MVT::getSizeInBits(VT))-1)) {
     SDOperand Hi = DAG.getNode(ISD::ADD, VT, N->getOperand(1),
                                N->getOperand(3));
     WorkList.push_back(Hi.Val);
@@ -1552,7 +1453,7 @@ SDOperand DAGCombiner::visitADD_PARTS(SDNode *N) {
     return SDOperand();
   }
   // fold (a_Hi, a_Lo) + (b_Hi, 0) -> (a_Hi + b_Hi, a_Lo)
-  if (MaskedValueIsZero(RHSLo, (1ULL << MVT::getSizeInBits(VT))-1, TLI)) {
+  if (TLI.MaskedValueIsZero(RHSLo, (1ULL << MVT::getSizeInBits(VT))-1)) {
     SDOperand Hi = DAG.getNode(ISD::ADD, VT, N->getOperand(1),
                                N->getOperand(3));
     WorkList.push_back(Hi.Val);
@@ -1568,7 +1469,7 @@ SDOperand DAGCombiner::visitSUB_PARTS(SDNode *N) {
   MVT::ValueType VT = LHSLo.getValueType();
   
   // fold (a_Hi, a_Lo) - (b_Hi, 0) -> (a_Hi - b_Hi, a_Lo)
-  if (MaskedValueIsZero(RHSLo, (1ULL << MVT::getSizeInBits(VT))-1, TLI)) {
+  if (TLI.MaskedValueIsZero(RHSLo, (1ULL << MVT::getSizeInBits(VT))-1)) {
     SDOperand Hi = DAG.getNode(ISD::SUB, VT, N->getOperand(1),
                                N->getOperand(3));
     WorkList.push_back(Hi.Val);
@@ -1704,7 +1605,7 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
         TargetLowering::ZeroOrNegativeOneSetCCResult)
     return N0;
   // fold (sext_in_reg x) -> (zext_in_reg x) if the sign bit is zero
-  if (MaskedValueIsZero(N0, 1ULL << (EVTBits-1), TLI))
+  if (TLI.MaskedValueIsZero(N0, 1ULL << (EVTBits-1)))
     return DAG.getNode(ISD::AND, N0.getValueType(), N0,
                        DAG.getConstant(~0ULL >> (64-EVTBits), VT));
   // fold (sext_in_reg (srl x)) -> sra x
@@ -2683,7 +2584,7 @@ SDOperand DAGCombiner::SimplifySetCC(MVT::ValueType VT, SDOperand N0,
           if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(N1)) {
             // If we know that all of the inverted bits are zero, don't bother
             // performing the inversion.
-            if (MaskedValueIsZero(N0.getOperand(0), ~XORC->getValue(), TLI))
+            if (TLI.MaskedValueIsZero(N0.getOperand(0), ~XORC->getValue()))
               return DAG.getSetCC(VT, N0.getOperand(0),
                               DAG.getConstant(XORC->getValue()^RHSC->getValue(),
                                               N0.getValueType()), Cond);
