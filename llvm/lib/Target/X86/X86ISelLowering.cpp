@@ -67,15 +67,29 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   // this operation.
   setOperationAction(ISD::SINT_TO_FP       , MVT::i1   , Promote);
   setOperationAction(ISD::SINT_TO_FP       , MVT::i8   , Promote);
+  if (X86ScalarSSE)
+    // SSE has no i16 to fp conversion, only i32
+    setOperationAction(ISD::SINT_TO_FP     , MVT::i16  , Promote);
+  else if (!X86PatIsel) {
+    setOperationAction(ISD::SINT_TO_FP     , MVT::i16  , Custom);
+    setOperationAction(ISD::SINT_TO_FP     , MVT::i32  , Custom);
+  }
 
   // We can handle SINT_TO_FP and FP_TO_SINT from/to i64 even though i64
   // isn't legal.
   setOperationAction(ISD::SINT_TO_FP       , MVT::i64  , Custom);
   setOperationAction(ISD::FP_TO_SINT       , MVT::i64  , Custom);
 
-  if (!X86ScalarSSE) {
-    setOperationAction(ISD::FP_TO_SINT     , MVT::i32  , Custom);
+  // Promote i1/i8 FP_TO_SINT to larger FP_TO_SINTS's, as X86 doesn't have
+  // this operation.
+  setOperationAction(ISD::FP_TO_SINT       , MVT::i1   , Promote);
+  setOperationAction(ISD::FP_TO_SINT       , MVT::i8   , Promote);
+
+  if (X86ScalarSSE) {
+    setOperationAction(ISD::FP_TO_SINT     , MVT::i16  , Promote);
+  } else {
     setOperationAction(ISD::FP_TO_SINT     , MVT::i16  , Custom);
+    setOperationAction(ISD::FP_TO_SINT     , MVT::i32  , Custom);
   }
 
   // Handle FP_TO_UINT by promoting the destination to a larger signed
@@ -84,17 +98,16 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::FP_TO_UINT       , MVT::i8   , Promote);
   setOperationAction(ISD::FP_TO_UINT       , MVT::i16  , Promote);
 
-  if (!X86ScalarSSE)
+  if (X86ScalarSSE)
+    // Expand FP_TO_UINT into a select.
+    // FIXME: We would like to use a Custom expander here eventually to do
+    // the optimal thing for SSE vs. the default expansion in the legalizer.
+    setOperationAction(ISD::FP_TO_UINT     , MVT::i32  , Expand);
+  else
     setOperationAction(ISD::FP_TO_UINT     , MVT::i32  , Promote);
 
-  // Promote i1/i8 FP_TO_SINT to larger FP_TO_SINTS's, as X86 doesn't have
-  // this operation.
-  setOperationAction(ISD::FP_TO_SINT       , MVT::i1   , Promote);
-  setOperationAction(ISD::FP_TO_SINT       , MVT::i8   , Promote);
-  setOperationAction(ISD::FP_TO_SINT       , MVT::i16  , Promote);
-
-  setOperationAction(ISD::BIT_CONVERT, MVT::f32, Expand);
-  setOperationAction(ISD::BIT_CONVERT, MVT::i32, Expand);
+  setOperationAction(ISD::BIT_CONVERT      , MVT::f32  , Expand);
+  setOperationAction(ISD::BIT_CONVERT      , MVT::i32  , Expand);
 
   if (!X86PatIsel) {
     setOperationAction(ISD::BRCOND         , MVT::Other, Custom);
@@ -193,15 +206,6 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::EXTLOAD,  MVT::f32, Expand);
     setOperationAction(ISD::ZEXTLOAD, MVT::f32, Expand);
 
-    // SSE has no i16 to fp conversion, only i32
-    setOperationAction(ISD::SINT_TO_FP, MVT::i16, Promote);
-    setOperationAction(ISD::FP_TO_SINT, MVT::i16, Promote);
-
-    // Expand FP_TO_UINT into a select.
-    // FIXME: We would like to use a Custom expander here eventually to do
-    // the optimal thing for SSE vs. the default expansion in the legalizer.
-    setOperationAction(ISD::FP_TO_UINT       , MVT::i32  , Expand);
-        
     // We don't support sin/cos/sqrt/fmod
     setOperationAction(ISD::FSIN , MVT::f64, Expand);
     setOperationAction(ISD::FCOS , MVT::f64, Expand);
@@ -225,11 +229,6 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     
     setOperationAction(ISD::UNDEF, MVT::f64, Expand);
     
-    if (!X86PatIsel) {
-      setOperationAction(ISD::SINT_TO_FP, MVT::i16, Custom);
-      setOperationAction(ISD::SINT_TO_FP, MVT::i32, Custom);
-    }
-
     if (!UnsafeFPMath) {
       setOperationAction(ISD::FSIN           , MVT::f64  , Expand);
       setOperationAction(ISD::FCOS           , MVT::f64  , Expand);
@@ -1442,8 +1441,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     return DAG.getNode(ISD::MERGE_VALUES, Tys, Ops);
   }
   case ISD::SINT_TO_FP: {
-    assert(Op.getValueType() == MVT::f64 &&
-           Op.getOperand(0).getValueType() <= MVT::i64 &&
+    assert(Op.getOperand(0).getValueType() <= MVT::i64 &&
            Op.getOperand(0).getValueType() >= MVT::i16 &&
            "Unknown SINT_TO_FP to lower!");
 
@@ -1469,7 +1467,6 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     Result = DAG.getNode(X86ISD::FILD, Tys, Ops);
 
     if (X86ScalarSSE) {
-      assert(Op.getValueType() == MVT::f64 && "Invalid SINT_TO_FP to lower!");
       Chain = Result.getValue(1);
       SDOperand InFlag = Result.getValue(2);
 
@@ -1485,7 +1482,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       Ops.push_back(Chain);
       Ops.push_back(Result);
       Ops.push_back(StackSlot);
-      Ops.push_back(DAG.getValueType(MVT::f64));
+      Ops.push_back(DAG.getValueType(Op.getValueType()));
       Ops.push_back(InFlag);
       Chain = DAG.getNode(X86ISD::FST, Tys, Ops);
       Result = DAG.getLoad(Op.getValueType(), Chain, StackSlot,
@@ -1496,7 +1493,6 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   }
   case ISD::FP_TO_SINT: {
     assert(Op.getValueType() <= MVT::i64 && Op.getValueType() >= MVT::i16 &&
-           Op.getOperand(0).getValueType() == MVT::f64 &&
            "Unknown FP_TO_SINT to lower!");
     // We lower FP->sint64 into FISTP64, followed by a load, all to a temporary
     // stack slot.
@@ -1525,7 +1521,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       std::vector<SDOperand> Ops;
       Ops.push_back(Chain);
       Ops.push_back(StackSlot);
-      Ops.push_back(DAG.getValueType(MVT::f64));
+      Ops.push_back(DAG.getValueType(Op.getOperand(0).getValueType()));
       Value = DAG.getNode(X86ISD::FLD, Tys, Ops);
       Chain = Value.getValue(1);
       SSFI = MF.getFrameInfo()->CreateStackObject(MemSize, MemSize);
