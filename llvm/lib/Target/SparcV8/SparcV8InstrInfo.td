@@ -25,6 +25,11 @@ include "SparcV8InstrFormats.td"
 // instructions.  Note that the machine may be running in 32-bit mode.
 def HasV9   : Predicate<"Subtarget.isV9()">;
 
+// HasNoV9 - This predicate is true when the target doesn't have V9
+// instructions.  Use of this is just a hack for the isel not having proper
+// costs for V8 instructions that are more expensive than their V9 ones.
+def HasNoV9 : Predicate<"!Subtarget.isV9()">;
+
 // HasVIS - This is true when the target processor has VIS extensions.
 def HasVIS : Predicate<"Subtarget.isVIS()">;
 
@@ -140,14 +145,16 @@ def IMPLICIT_DEF_DFP : Pseudo<(ops DFPRegs:$dst), "!IMPLICIT_DEF $dst",
                               
 // FpMOVD/FpNEGD/FpABSD - These are lowered to single-precision ops by the 
 // fpmover pass.
-def FpMOVD : Pseudo<(ops DFPRegs:$dst, DFPRegs:$src),
-                    "!FpMOVD $src, $dst", []>;   // pseudo 64-bit double move
-def FpNEGD : Pseudo<(ops DFPRegs:$dst, DFPRegs:$src),
-                    "!FpNEGD $src, $dst",
-                    [(set DFPRegs:$dst, (fneg DFPRegs:$src))]>;
-def FpABSD : Pseudo<(ops DFPRegs:$dst, DFPRegs:$src),
-                    "!FpABSD $src, $dst",
-                    [(set DFPRegs:$dst, (fabs DFPRegs:$src))]>;
+let Predicates = [HasNoV9] in {  // Only emit these in V8 mode.
+  def FpMOVD : Pseudo<(ops DFPRegs:$dst, DFPRegs:$src),
+                      "!FpMOVD $src, $dst", []>;
+  def FpNEGD : Pseudo<(ops DFPRegs:$dst, DFPRegs:$src),
+                      "!FpNEGD $src, $dst",
+                      [(set DFPRegs:$dst, (fneg DFPRegs:$src))]>;
+  def FpABSD : Pseudo<(ops DFPRegs:$dst, DFPRegs:$src),
+                      "!FpABSD $src, $dst",
+                      [(set DFPRegs:$dst, (fabs DFPRegs:$src))]>;
+}
 
 // SELECT_CC_* - Used to implement the SELECT_CC DAG operation.  Expanded by the
 // scheduler into a branch sequence.  This has to handle all permutations of
@@ -740,6 +747,21 @@ let Predicates = [HasV9], isTwoAddress = 1 in {
                      "move %icc, $F, $dst",
                      [(set IntRegs:$dst,
                            (V8selecticc IntRegs:$F, IntRegs:$T, 17, ICC))]>;
+}
+
+// Floating-Point Move Instructions, p. 164 of the V9 manual.
+let Predicates = [HasV9] in {
+  def FMOVD : F3_3<2, 0b110100, 0b000000010,
+                   (ops DFPRegs:$dst, DFPRegs:$src),
+                   "fmovd $src, $dst", []>;
+  def FNEGD : F3_3<2, 0b110100, 0b000000110, 
+                   (ops DFPRegs:$dst, DFPRegs:$src),
+                   "fnegd $src, $dst",
+                   [(set DFPRegs:$dst, (fneg DFPRegs:$src))]>;
+  def FABSD : F3_3<2, 0b110100, 0b000001010, 
+                   (ops DFPRegs:$dst, DFPRegs:$src),
+                   "fabsd $src, $dst",
+                   [(set DFPRegs:$dst, (fabs DFPRegs:$src))]>;
 }
 
 //===----------------------------------------------------------------------===//
