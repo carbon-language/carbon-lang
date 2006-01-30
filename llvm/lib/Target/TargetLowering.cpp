@@ -131,7 +131,8 @@ const char *TargetLowering::getTargetNodeName(unsigned Opcode) const {
 }
 
 bool TargetLowering::isMaskedValueZeroForTargetNode(const SDOperand &Op,
-                                                    uint64_t Mask) const {
+                                                    uint64_t Mask,
+                                                     MVIZFnPtr MVIZ) const {
   return false;
 }
 

@@ -1932,7 +1932,8 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
 }
 
 bool X86TargetLowering::isMaskedValueZeroForTargetNode(const SDOperand &Op,
-                                                       uint64_t Mask) const {
+                                                       uint64_t Mask,
+                                                        MVIZFnPtr MVIZ) const {
 
   unsigned Opc = Op.getOpcode();
 
