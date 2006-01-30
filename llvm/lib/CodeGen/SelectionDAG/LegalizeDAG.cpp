@@ -1465,8 +1465,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       }
     }
 
-    switch (TLI.getOperationAction(ISD::SETCC,
-                                   Node->getOperand(0).getValueType())) {
+    switch (TLI.getOperationAction(ISD::SETCC, Tmp1.getValueType())) {
     default: assert(0 && "Cannot handle this action for SETCC yet!");
     case TargetLowering::Custom:
       isCustom = true;
