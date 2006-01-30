@@ -68,11 +68,12 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SINT_TO_FP       , MVT::i1   , Promote);
   setOperationAction(ISD::SINT_TO_FP       , MVT::i8   , Promote);
 
+  // We can handle SINT_TO_FP and FP_TO_SINT from/to i64 even though i64
+  // isn't legal.
+  setOperationAction(ISD::SINT_TO_FP       , MVT::i64  , Custom);
+  setOperationAction(ISD::FP_TO_SINT       , MVT::i64  , Custom);
+
   if (!X86ScalarSSE) {
-    // We can handle SINT_TO_FP and FP_TO_SINT from/TO i64 even though i64
-    // isn't legal.
-    setOperationAction(ISD::SINT_TO_FP     , MVT::i64  , Custom);
-    setOperationAction(ISD::FP_TO_SINT     , MVT::i64  , Custom);
     setOperationAction(ISD::FP_TO_SINT     , MVT::i32  , Custom);
     setOperationAction(ISD::FP_TO_SINT     , MVT::i16  , Custom);
   }
@@ -526,12 +527,11 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
         Chain  = RetVal.getValue(1);
         InFlag = RetVal.getValue(2);
         if (X86ScalarSSE) {
-          // FIXME:Currently the FST is flagged to the FP_GET_RESULT. This
-          // shouldn't be necessary except for RFP cannot be live across
+          // FIXME: Currently the FST is flagged to the FP_GET_RESULT. This
+          // shouldn't be necessary except that RFP cannot be live across
           // multiple blocks. When stackifier is fixed, they can be uncoupled.
-          unsigned Size = MVT::getSizeInBits(MVT::f64)/8;
           MachineFunction &MF = DAG.getMachineFunction();
-          int SSFI = MF.getFrameInfo()->CreateStackObject(Size, Size);
+          int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
           SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
           Tys.clear();
           Tys.push_back(MVT::Other);
@@ -1027,12 +1027,11 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
         Chain  = RetVal.getValue(1);
         InFlag = RetVal.getValue(2);
         if (X86ScalarSSE) {
-          // FIXME:Currently the FST is flagged to the FP_GET_RESULT. This
-          // shouldn't be necessary except for RFP cannot be live across
+          // FIXME: Currently the FST is flagged to the FP_GET_RESULT. This
+          // shouldn't be necessary except that RFP cannot be live across
           // multiple blocks. When stackifier is fixed, they can be uncoupled.
-          unsigned Size = MVT::getSizeInBits(MVT::f64)/8;
           MachineFunction &MF = DAG.getMachineFunction();
-          int SSFI = MF.getFrameInfo()->CreateStackObject(Size, Size);
+          int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
           SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
           Tys.clear();
           Tys.push_back(MVT::Other);
@@ -1461,12 +1460,38 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     // Build the FILD
     std::vector<MVT::ValueType> Tys;
     Tys.push_back(MVT::f64);
+    Tys.push_back(MVT::Other);
     Tys.push_back(MVT::Flag);
     std::vector<SDOperand> Ops;
     Ops.push_back(Chain);
     Ops.push_back(StackSlot);
     Ops.push_back(DAG.getValueType(SrcVT));
     Result = DAG.getNode(X86ISD::FILD, Tys, Ops);
+
+    if (X86ScalarSSE) {
+      assert(Op.getValueType() == MVT::f64 && "Invalid SINT_TO_FP to lower!");
+      Chain = Result.getValue(1);
+      SDOperand InFlag = Result.getValue(2);
+
+      // FIXME: Currently the FST is flagged to the FILD. This
+      // shouldn't be necessary except that RFP cannot be live across
+      // multiple blocks. When stackifier is fixed, they can be uncoupled.
+      MachineFunction &MF = DAG.getMachineFunction();
+      int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
+      SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
+      std::vector<MVT::ValueType> Tys;
+      Tys.push_back(MVT::Other);
+      std::vector<SDOperand> Ops;
+      Ops.push_back(Chain);
+      Ops.push_back(Result);
+      Ops.push_back(StackSlot);
+      Ops.push_back(DAG.getValueType(MVT::f64));
+      Ops.push_back(InFlag);
+      Chain = DAG.getNode(X86ISD::FST, Tys, Ops);
+      Result = DAG.getLoad(Op.getValueType(), Chain, StackSlot,
+                           DAG.getSrcValue(NULL));
+    }
+
     return Result;
   }
   case ISD::FP_TO_SINT: {
@@ -1488,10 +1513,29 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     case MVT::i64: Opc = X86ISD::FP_TO_INT64_IN_MEM; break;
     }
 
+    SDOperand Chain = DAG.getEntryNode();
+    SDOperand Value = Op.getOperand(0);
+    if (X86ScalarSSE) {
+      assert(Op.getValueType() == MVT::i64 && "Invalid FP_TO_SINT to lower!");
+      Chain = DAG.getNode(ISD::STORE, MVT::Other, Chain, Value, StackSlot, 
+                          DAG.getSrcValue(0));
+      std::vector<MVT::ValueType> Tys;
+      Tys.push_back(MVT::f64);
+      Tys.push_back(MVT::Other);
+      std::vector<SDOperand> Ops;
+      Ops.push_back(Chain);
+      Ops.push_back(StackSlot);
+      Ops.push_back(DAG.getValueType(MVT::f64));
+      Value = DAG.getNode(X86ISD::FLD, Tys, Ops);
+      Chain = Value.getValue(1);
+      SSFI = MF.getFrameInfo()->CreateStackObject(MemSize, MemSize);
+      StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
+    }
+
     // Build the FP_TO_INT*_IN_MEM
     std::vector<SDOperand> Ops;
-    Ops.push_back(DAG.getEntryNode());
-    Ops.push_back(Op.getOperand(0));
+    Ops.push_back(Chain);
+    Ops.push_back(Value);
     Ops.push_back(StackSlot);
     SDOperand FIST = DAG.getNode(Opc, MVT::Other, Ops);
 

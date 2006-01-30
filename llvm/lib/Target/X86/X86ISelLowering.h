@@ -44,7 +44,7 @@ namespace llvm {
       /// FILD - This instruction implements SINT_TO_FP with the integer source
       /// in memory and FP reg result.  This corresponds to the X86::FILD*m
       /// instructions. It has three inputs (token chain, address, and source
-      /// type) and two outputs (FP value and token chain).
+      /// type) and three outputs (FP value, token chain, and a flag).
       FILD,
 
       /// FP_TO_INT*_IN_MEM - This instruction implements FP_TO_SINT with the
