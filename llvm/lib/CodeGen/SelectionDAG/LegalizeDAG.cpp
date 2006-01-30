@@ -1284,7 +1284,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       } else {
         // Make sure the condition is either zero or one.  It may have been
         // promoted from something else.
-        Tmp1 = DAG.getZeroExtendInReg(Tmp1, MVT::i1);
+        unsigned NumBits = MVT::getSizeInBits(Tmp1.getValueType());
+        if (!TLI.MaskedValueIsZero(Tmp1, (~0ULL >> (64-NumBits))^1))
+          Tmp1 = DAG.getZeroExtendInReg(Tmp1, MVT::i1);
         Result = DAG.getSelectCC(Tmp1, 
                                  DAG.getConstant(0, Tmp1.getValueType()),
                                  Tmp2, Tmp3, ISD::SETNE);
