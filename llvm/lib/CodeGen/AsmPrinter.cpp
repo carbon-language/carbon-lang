@@ -456,5 +456,16 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
 /// printInlineAsm - This method formats and prints the specified machine
 /// instruction that is an inline asm.
 void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
-  O << "INLINE ASM NOT EMITTED YET!\n";
+  unsigned NumOperands = MI->getNumOperands();
+  
+  // Count the number of register definitions.
+  unsigned NumDefs = 0;
+  for (; MI->getOperand(NumDefs).isDef(); ++NumDefs)
+    assert(NumDefs != NumOperands-1 && "No asm string?");
+  
+  assert(MI->getOperand(NumDefs).isExternalSymbol() && "No asm string?");
+  
+  const char *AsmStr = MI->getOperand(NumDefs).getSymbolName();
+  
+  O << AsmStr << "\n";
 }
