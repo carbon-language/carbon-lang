@@ -291,6 +291,9 @@ SparcV8TargetLowering::SparcV8TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::STACKRESTORE      , MVT::Other, Expand);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32  , Expand);
 
+  setOperationAction(ISD::ConstantFP, MVT::f64, Expand);
+  setOperationAction(ISD::ConstantFP, MVT::f32, Expand);
+  
   setStackPointerRegisterToSaveRestore(V8::O6);
 
   if (TM.getSubtarget<SparcV8Subtarget>().isV9()) {
