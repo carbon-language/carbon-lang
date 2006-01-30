@@ -1,10 +1,4 @@
 
-Meta TODO list:
-1. Create a new DAG -> DAG instruction selector, by adding patterns to the
-   instructions.
-2. ???
-3. profit!
-
 To-do
 -----
 
@@ -12,4 +6,5 @@ To-do
   address all of the time.
 * We can fold small constant offsets into the %hi/%lo references to constant
   pool addresses as well.
+* When in V9 mode, register allocate %icc[0-3].
 

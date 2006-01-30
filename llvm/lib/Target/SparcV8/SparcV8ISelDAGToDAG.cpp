@@ -850,9 +850,15 @@ SparcV8TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
 namespace {
 class SparcV8DAGToDAGISel : public SelectionDAGISel {
   SparcV8TargetLowering V8Lowering;
+
+  /// Subtarget - Keep a pointer to the Sparc Subtarget around so that we can
+  /// make the right decision when generating code for different targets.
+  const SparcV8Subtarget &Subtarget;
 public:
   SparcV8DAGToDAGISel(TargetMachine &TM)
-    : SelectionDAGISel(V8Lowering), V8Lowering(TM) {}
+    : SelectionDAGISel(V8Lowering), V8Lowering(TM),
+      Subtarget(TM.getSubtarget<SparcV8Subtarget>()) {
+  }
 
   SDOperand Select(SDOperand Op);
 

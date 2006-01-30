@@ -18,6 +18,23 @@
 include "SparcV8InstrFormats.td"
 
 //===----------------------------------------------------------------------===//
+// Feature predicates.
+//===----------------------------------------------------------------------===//
+
+// HasV9 - This predicate is true when the target processor supports V9
+// instructions.  Note that the machine may be running in 32-bit mode.
+def HasV9   : Predicate<"Subtarget.isV9()">;
+
+// HasVIS - This is true when the target processor has VIS extensions.
+def HasVIS : Predicate<"Subtarget.isVIS()">;
+
+// UseDeprecatedInsts - This predicate is true when the target processor is a
+// V8, or when it is V9 but the V8 deprecated instructions are efficient enough
+// to use when appropriate.  In either of these cases, the instruction selector
+// will pick deprecated instructions.
+def UseDeprecatedInsts : Predicate<"Subtarget.useDeprecatedV8Instructions()">;
+
+//===----------------------------------------------------------------------===//
 // Instruction Pattern Stuff
 //===----------------------------------------------------------------------===//
 
@@ -167,6 +184,7 @@ let usesCustomDAGSchedInserter = 1 in {  // Expanded by the scheduler.
             [(set DFPRegs:$dst, (V8selectfcc DFPRegs:$T, DFPRegs:$F,
                                              imm:$Cond, FCC))]>;
 }
+
 
 // Section A.3 - Synthetic Instructions, p. 85
 // special cases of JMPL:
@@ -705,6 +723,24 @@ def FCMPD  : F3_3<2, 0b110101, 0b001010010,
                   (ops DFPRegs:$src1, DFPRegs:$src2),
                   "fcmpd $src1, $src2\n\tnop",
                   [(set FCC, (V8cmpfcc DFPRegs:$src1, DFPRegs:$src2))]>;
+
+
+//===----------------------------------------------------------------------===//
+// V9 Instructions
+//===----------------------------------------------------------------------===//
+
+// V9 Conditional Moves.
+let Predicates = [HasV9], isTwoAddress = 1 in {
+  // FIXME: Add instruction encodings for the JIT some day.
+  def MOVNE : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+                     "movne %icc, $F, $dst",
+                     [(set IntRegs:$dst,
+                           (V8selecticc IntRegs:$F, IntRegs:$T, 22, ICC))]>;
+  def MOVEQ : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+                     "move %icc, $F, $dst",
+                     [(set IntRegs:$dst,
+                           (V8selecticc IntRegs:$F, IntRegs:$T, 17, ICC))]>;
+}
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
