@@ -1152,12 +1152,14 @@ static unsigned getCondBrOpcodeForX86CC(unsigned X86CC) {
   }
 }
 
-/// getX86CC - do a one to one translation of a ISD::CondCode to the X86
-/// specific condition code. It returns a X86ISD::COND_INVALID if it cannot
-/// do a direct translation.
-static unsigned getX86CC(SDOperand CC, bool isFP) {
+/// translateX86CC - do a one to one translation of a ISD::CondCode to the X86
+/// specific condition code. It returns a false if it cannot do a direct
+/// translation. X86CC is the translated CondCode. Flip is set to true if the
+/// the order of comparison operands should be flipped.
+static bool translateX86CC(SDOperand CC, bool isFP, unsigned &X86CC, bool &Flip) {
   ISD::CondCode SetCCOpcode = cast<CondCodeSDNode>(CC)->get();
-  unsigned X86CC = X86ISD::COND_INVALID;
+  Flip = false;
+  X86CC = X86ISD::COND_INVALID;
   if (!isFP) {
     switch (SetCCOpcode) {
     default: break;
@@ -1183,12 +1185,16 @@ static unsigned getX86CC(SDOperand CC, bool isFP) {
     default: break;
     case ISD::SETUEQ:
     case ISD::SETEQ: X86CC = X86ISD::COND_E;  break;
+    case ISD::SETOLE: Flip = true; // Fallthrough
     case ISD::SETOGT:
     case ISD::SETGT: X86CC = X86ISD::COND_A;  break;
+    case ISD::SETOLT: Flip = true; // Fallthrough
     case ISD::SETOGE:
     case ISD::SETGE: X86CC = X86ISD::COND_AE; break;
+    case ISD::SETUGE: Flip = true; // Fallthrough
     case ISD::SETULT:
     case ISD::SETLT: X86CC = X86ISD::COND_B;  break;
+    case ISD::SETUGT: Flip = true; // Fallthrough
     case ISD::SETULE:
     case ISD::SETLE: X86CC = X86ISD::COND_BE; break;
     case ISD::SETONE:
@@ -1197,7 +1203,8 @@ static unsigned getX86CC(SDOperand CC, bool isFP) {
     case ISD::SETO:  X86CC = X86ISD::COND_NP; break;
     }
   }
-  return X86CC;
+
+  return X86CC != X86ISD::COND_INVALID;
 }
 
 /// hasFPCMov - is there a floating point cmov for the specific X86 condition
@@ -1557,18 +1564,26 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   }
   case ISD::SETCC: {
     assert(Op.getValueType() == MVT::i8 && "SetCC type must be 8-bit integer");
-    SDOperand CC   = Op.getOperand(2);
-    SDOperand Cond = DAG.getNode(X86ISD::CMP, MVT::Flag,
-                                 Op.getOperand(0), Op.getOperand(1));
+    SDOperand Cond;
+    SDOperand CC = Op.getOperand(2);
     ISD::CondCode SetCCOpcode = cast<CondCodeSDNode>(CC)->get();
     bool isFP = MVT::isFloatingPoint(Op.getOperand(1).getValueType());
-    unsigned X86CC = getX86CC(CC, isFP);
-    if (X86CC != X86ISD::COND_INVALID) {
+    bool Flip;
+    unsigned X86CC;
+    if (translateX86CC(CC, isFP, X86CC, Flip)) {
+      if (Flip)
+        Cond = DAG.getNode(X86ISD::CMP, MVT::Flag,
+                           Op.getOperand(1), Op.getOperand(0));
+      else
+        Cond = DAG.getNode(X86ISD::CMP, MVT::Flag,
+                           Op.getOperand(0), Op.getOperand(1));
       return DAG.getNode(X86ISD::SETCC, MVT::i8, 
                          DAG.getConstant(X86CC, MVT::i8), Cond);
     } else {
       assert(isFP && "Illegal integer SetCC!");
 
+      Cond = DAG.getNode(X86ISD::CMP, MVT::Flag,
+                         Op.getOperand(0), Op.getOperand(1));
       std::vector<MVT::ValueType> Tys;
       std::vector<SDOperand> Ops;
       switch (SetCCOpcode) {
@@ -1583,50 +1598,6 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
                                      DAG.getConstant(X86ISD::COND_E, MVT::i8),
                                      Tmp1.getValue(1));
         return DAG.getNode(ISD::AND, MVT::i8, Tmp1, Tmp2);
-      }
-      case ISD::SETOLT: {  // !PF & CF
-        Tys.push_back(MVT::i8);
-        Tys.push_back(MVT::Flag);
-        Ops.push_back(DAG.getConstant(X86ISD::COND_NP, MVT::i8));
-        Ops.push_back(Cond);
-        SDOperand Tmp1 = DAG.getNode(X86ISD::SETCC, Tys, Ops);
-        SDOperand Tmp2 = DAG.getNode(X86ISD::SETCC, MVT::i8,
-                                     DAG.getConstant(X86ISD::COND_B, MVT::i8),
-                                     Tmp1.getValue(1));
-        return DAG.getNode(ISD::AND, MVT::i8, Tmp1, Tmp2);
-      }
-      case ISD::SETOLE: {  // !PF & (CF || ZF)
-        Tys.push_back(MVT::i8);
-        Tys.push_back(MVT::Flag);
-        Ops.push_back(DAG.getConstant(X86ISD::COND_NP, MVT::i8));
-        Ops.push_back(Cond);
-        SDOperand Tmp1 = DAG.getNode(X86ISD::SETCC, Tys, Ops);
-        SDOperand Tmp2 = DAG.getNode(X86ISD::SETCC, MVT::i8,
-                                     DAG.getConstant(X86ISD::COND_BE, MVT::i8),
-                                     Tmp1.getValue(1));
-        return DAG.getNode(ISD::AND, MVT::i8, Tmp1, Tmp2);
-      }
-      case ISD::SETUGT: {  // PF | (!ZF & !CF)
-        Tys.push_back(MVT::i8);
-        Tys.push_back(MVT::Flag);
-        Ops.push_back(DAG.getConstant(X86ISD::COND_P, MVT::i8));
-        Ops.push_back(Cond);
-        SDOperand Tmp1 = DAG.getNode(X86ISD::SETCC, Tys, Ops);
-        SDOperand Tmp2 = DAG.getNode(X86ISD::SETCC, MVT::i8,
-                                     DAG.getConstant(X86ISD::COND_A, MVT::i8),
-                                     Tmp1.getValue(1));
-        return DAG.getNode(ISD::OR, MVT::i8, Tmp1, Tmp2);
-      }
-      case ISD::SETUGE: {  // PF | !CF
-        Tys.push_back(MVT::i8);
-        Tys.push_back(MVT::Flag);
-        Ops.push_back(DAG.getConstant(X86ISD::COND_P, MVT::i8));
-        Ops.push_back(Cond);
-        SDOperand Tmp1 = DAG.getNode(X86ISD::SETCC, Tys, Ops);
-        SDOperand Tmp2 = DAG.getNode(X86ISD::SETCC, MVT::i8,
-                                     DAG.getConstant(X86ISD::COND_AE, MVT::i8),
-                                     Tmp1.getValue(1));
-        return DAG.getNode(ISD::OR, MVT::i8, Tmp1, Tmp2);
       }
       case ISD::SETUNE: {  // PF | !ZF
         Tys.push_back(MVT::i8);
@@ -1650,6 +1621,9 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     bool addTest   = false;
     SDOperand Op0 = Op.getOperand(0);
     SDOperand Cond, CC;
+    if (Op0.getOpcode() == ISD::SETCC)
+      Op0 = LowerOperation(Op0, DAG);
+
     if (Op0.getOpcode() == X86ISD::SETCC) {
       // If condition flag is set by a X86ISD::CMP, then make a copy of it
       // (since flag operand cannot be shared). If the X86ISD::SETCC does not
@@ -1677,13 +1651,6 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
           isFPStack && !hasFPCMov(cast<ConstantSDNode>(CC)->getSignExtended());
       } else
         addTest = true;
-    } else if (Op0.getOpcode() == ISD::SETCC) {
-      CC = Op0.getOperand(2);
-      bool isFP = MVT::isFloatingPoint(Op0.getOperand(1).getValueType());
-      unsigned X86CC = getX86CC(CC, isFP);
-      CC = DAG.getConstant(X86CC, MVT::i8);
-      Cond = DAG.getNode(X86ISD::CMP, MVT::Flag,
-                         Op0.getOperand(0), Op0.getOperand(1));
     } else
       addTest = true;
 
@@ -1709,6 +1676,9 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand Cond  = Op.getOperand(1);
     SDOperand Dest  = Op.getOperand(2);
     SDOperand CC;
+    if (Cond.getOpcode() == ISD::SETCC)
+      Cond = LowerOperation(Cond, DAG);
+
     if (Cond.getOpcode() == X86ISD::SETCC) {
       // If condition flag is set by a X86ISD::CMP, then make a copy of it
       // (since flag operand cannot be shared). If the X86ISD::SETCC does not
@@ -1734,13 +1704,6 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
                            Cond.getOperand(0), Cond.getOperand(1));
       } else
         addTest = true;
-    } else if (Cond.getOpcode() == ISD::SETCC) {
-      CC = Cond.getOperand(2);
-      bool isFP = MVT::isFloatingPoint(Cond.getOperand(1).getValueType());
-      unsigned X86CC = getX86CC(CC, isFP);
-      CC = DAG.getConstant(X86CC, MVT::i8);
-      Cond = DAG.getNode(X86ISD::CMP, MVT::Flag,
-                         Cond.getOperand(0), Cond.getOperand(1));
     } else
       addTest = true;
 
