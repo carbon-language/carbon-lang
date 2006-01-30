@@ -414,9 +414,11 @@ public:
 
   /// isMaskedValueZeroForTargetNode - Return true if 'Op & Mask' is known to
   /// be zero. Op is expected to be a target specific node. Used by DAG
-  /// combiner.
-  virtual bool isMaskedValueZeroForTargetNode(const SDOperand &Op,
-                                              uint64_t Mask) const;
+  /// combiner.  MVIZ is a function pointer to the main MaskedValueIsZero
+  /// function.
+  typedef bool (*MVIZFnPtr)(const SDOperand&, uint64_t, const TargetLowering &);
+  virtual bool isMaskedValueZeroForTargetNode(const SDOperand &Op,uint64_t Mask,
+                                              MVIZFnPtr MVIZ) const;
 
   //===--------------------------------------------------------------------===//
   // Inline Asm Support hooks
