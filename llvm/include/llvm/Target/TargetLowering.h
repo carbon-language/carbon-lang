@@ -281,6 +281,17 @@ public:
   }
 
   //===--------------------------------------------------------------------===//
+  // TargetLowering Optimization Methods
+  //
+  
+  /// MaskedValueIsZero - Return true if 'Op & Mask' is known to be zero.  We
+  /// use this predicate to simplify operations downstream.  Op and Mask are
+  /// known to be the same type.  Targets can implement the 
+  /// isMaskedValueZeroForTargetNode method, to allow target nodes to be
+  /// understood.
+  bool MaskedValueIsZero(const SDOperand &Op, uint64_t Mask) const;
+
+  //===--------------------------------------------------------------------===//
   // TargetLowering Configuration Methods - These methods should be invoked by
   // the derived class constructor to configure this object for the target.
   //
@@ -413,12 +424,9 @@ public:
   virtual const char *getTargetNodeName(unsigned Opcode) const;
 
   /// isMaskedValueZeroForTargetNode - Return true if 'Op & Mask' is known to
-  /// be zero. Op is expected to be a target specific node. Used by DAG
-  /// combiner.  MVIZ is a function pointer to the main MaskedValueIsZero
-  /// function.
-  typedef bool (*MVIZFnPtr)(const SDOperand&, uint64_t, const TargetLowering &);
-  virtual bool isMaskedValueZeroForTargetNode(const SDOperand &Op,uint64_t Mask,
-                                              MVIZFnPtr MVIZ) const;
+  /// be zero. Op is expected to be a target specific node.
+  virtual bool isMaskedValueZeroForTargetNode(const SDOperand &Op,
+                                              uint64_t Mask) const;
 
   //===--------------------------------------------------------------------===//
   // Inline Asm Support hooks
