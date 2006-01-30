@@ -26,6 +26,9 @@ namespace sys {
   /// operating system interface, this class provides a portable interface that
   /// allows dynamic libraries to be loaded and and searched for externally
   /// defined symbols. This is typically used to provide "plug-in" support.
+  /// It also allows for symbols to be defined which don't live in any library,
+  /// but rather the main program itself, useful on Windows where the main
+  /// executable cannot be searched.
   /// @since 1.4
   /// @brief Portable dynamic library abstraction.
   class DynamicLibrary {
@@ -79,6 +82,17 @@ namespace sys {
       /// @brief Convenience function for C++ophiles.
       static void* SearchForAddressOfSymbol(const std::string& symbolName) {
         return SearchForAddressOfSymbol(symbolName.c_str());
+      }
+
+      /// This functions permanently adds the symbol \p symbolName with the
+      /// value \p symbolValue.  These symbols are searched before any
+      /// libraries.
+      /// @brief Add searchable symbol/value pair.
+      static void AddSymbol(const char* symbolName, void *symbolValue);
+
+      /// @brief Convenience function for C++ophiles.
+      static void AddSymbol(const std::string& symbolName, void *symbolValue) {
+        AddSymbol(symbolName.c_str(), symbolValue);
       }
 
     /// @}

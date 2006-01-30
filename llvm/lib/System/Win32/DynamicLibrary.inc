@@ -107,6 +107,12 @@ void DynamicLibrary::LoadLibraryPermanently(const char* filename) {
 }
 
 void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
+  // First check symbols added via AddSymbol().
+  std::map<std::string, void *>::iterator I = g_symbols.find(symbolName);
+  if (I != g_symbols.end())
+    return I->second;
+
+  // Now search the libraries.
   for (std::vector<HMODULE>::iterator I = OpenedHandles.begin(),
        E = OpenedHandles.end(); I != E; ++I) {
     FARPROC ptr = GetProcAddress((HMODULE)*I, symbolName);

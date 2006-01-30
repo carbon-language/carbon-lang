@@ -13,6 +13,14 @@
 
 #include "llvm/System/DynamicLibrary.h"
 #include "llvm/Config/config.h"
+#include <map>
+
+// Collection of symbol name/value pairs to be searched prior to any libraries.
+static std::map<std::string, void *> g_symbols;
+
+void llvm::sys::DynamicLibrary::AddSymbol(const char* symbolName, void *symbolValue) {
+  g_symbols[symbolName] = symbolValue;
+}
 
 // It is not possible to use ltdl.c on VC++ builds as the terms of its LGPL
 // license and special exception would cause all of LLVM to be placed under
@@ -107,6 +115,13 @@ void DynamicLibrary::LoadLibraryPermanently(const char* filename) {
 
 void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
   check_ltdl_initialization();
+
+  // First check symbols added via AddSymbol().
+  std::map<std::string, void *>::iterator I = g_symbols.find(symbolName);
+  if (I != g_symbols.end())
+    return I->second;
+
+  // Now search the libraries.
   for (std::vector<lt_dlhandle>::iterator I = OpenedHandles.begin(),
        E = OpenedHandles.end(); I != E; ++I) {
     lt_ptr ptr = lt_dlsym(*I, symbolName);
