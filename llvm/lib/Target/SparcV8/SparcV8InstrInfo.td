@@ -764,6 +764,14 @@ let Predicates = [HasV9] in {
                    [(set DFPRegs:$dst, (fabs DFPRegs:$src))]>;
 }
 
+// POPCrr - This does a ctpop of a 64-bit register.  As such, we have to clear
+// the top 32-bits before using it.  To do this clearing, we use a SLLri X,0.
+def POPCrr : F3_1<2, 0b101110, 
+                  (ops IntRegs:$dst, IntRegs:$src),
+                  "popc $src, $dst", []>, Requires<[HasV9]>;
+def : Pat<(ctpop IntRegs:$src),
+          (POPCrr (SLLri IntRegs:$src, 0))>;
+
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
 //===----------------------------------------------------------------------===//

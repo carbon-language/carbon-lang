@@ -33,21 +33,20 @@ using namespace llvm;
 namespace V8ISD {
   enum {
     FIRST_NUMBER = ISD::BUILTIN_OP_END+V8::INSTRUCTION_LIST_END,
-    CMPICC,   // Compare two GPR operands, set icc.
-    CMPFCC,   // Compare two FP operands, set fcc.
-    BRICC,    // Branch to dest on icc condition
-    BRFCC,    // Branch to dest on fcc condition
+    CMPICC,      // Compare two GPR operands, set icc.
+    CMPFCC,      // Compare two FP operands, set fcc.
+    BRICC,       // Branch to dest on icc condition
+    BRFCC,       // Branch to dest on fcc condition
+    SELECT_ICC,  // Select between two values using the current ICC flags.
+    SELECT_FCC,  // Select between two values using the current FCC flags.
     
-    Hi, Lo,   // Hi/Lo operations, typically on a global address.
+    Hi, Lo,      // Hi/Lo operations, typically on a global address.
     
-    FTOI,     // FP to Int within a FP register.
-    ITOF,     // Int to FP within a FP register.
-    
-    SELECT_ICC, // Select between two values using the current ICC flags.
-    SELECT_FCC, // Select between two values using the current FCC flags.
-    
-    CALL,       // A V8 call instruction.
-    RET_FLAG,   // Return with a flag operand.
+    FTOI,        // FP to Int within a FP register.
+    ITOF,        // Int to FP within a FP register.
+
+    CALL,        // A V8 call instruction.
+    RET_FLAG,    // Return with a flag operand.
   };
 }
 
@@ -173,10 +172,14 @@ SparcV8TargetLowering::SparcV8TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::VAEND             , MVT::Other, Expand);
   setOperationAction(ISD::STACKSAVE         , MVT::Other, Expand); 
   setOperationAction(ISD::STACKRESTORE      , MVT::Other, Expand);
-  setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
+  setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32  , Expand);
 
   setStackPointerRegisterToSaveRestore(V8::O6);
 
+  if (TM.getSubtarget<SparcV8Subtarget>().isV9()) {
+    setOperationAction(ISD::CTPOP, MVT::i32, Legal);
+  }
+  
   computeRegisterProperties();
 }
 
@@ -187,12 +190,12 @@ const char *SparcV8TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case V8ISD::CMPFCC:     return "V8ISD::CMPFCC";
   case V8ISD::BRICC:      return "V8ISD::BRICC";
   case V8ISD::BRFCC:      return "V8ISD::BRFCC";
+  case V8ISD::SELECT_ICC: return "V8ISD::SELECT_ICC";
+  case V8ISD::SELECT_FCC: return "V8ISD::SELECT_FCC";
   case V8ISD::Hi:         return "V8ISD::Hi";
   case V8ISD::Lo:         return "V8ISD::Lo";
   case V8ISD::FTOI:       return "V8ISD::FTOI";
   case V8ISD::ITOF:       return "V8ISD::ITOF";
-  case V8ISD::SELECT_ICC: return "V8ISD::SELECT_ICC";
-  case V8ISD::SELECT_FCC: return "V8ISD::SELECT_FCC";
   case V8ISD::CALL:       return "V8ISD::CALL";
   case V8ISD::RET_FLAG:   return "V8ISD::RET_FLAG";
   }
