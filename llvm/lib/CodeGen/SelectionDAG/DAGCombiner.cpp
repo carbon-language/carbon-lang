@@ -462,7 +462,7 @@ static bool MaskedValueIsZero(const SDOperand &Op, uint64_t Mask,
     return (Mask & (MVT::getSizeInBits(Op.getValueType())*2-1)) == 0;
   default:
     if (Op.getOpcode() >= ISD::BUILTIN_OP_END)
-      return TLI.isMaskedValueZeroForTargetNode(Op, Mask);
+      return TLI.isMaskedValueZeroForTargetNode(Op, Mask, MaskedValueIsZero);
     break;
   }
   return false;
