@@ -15,6 +15,13 @@
 #include "SparcV8GenSubtarget.inc"
 using namespace llvm;
 
+// FIXME: temporary.
+#include "llvm/Support/CommandLine.h"
+namespace {
+  cl::opt<bool> EnableV9("enable-sparc-v9-insts", cl::Hidden,
+                          cl::desc("Enable V9 instructions in the V8 target"));
+}
+
 SparcV8Subtarget::SparcV8Subtarget(const Module &M, const std::string &FS) {
   // Set the default features.
   IsV9 = false;
@@ -25,8 +32,12 @@ SparcV8Subtarget::SparcV8Subtarget(const Module &M, const std::string &FS) {
   std::string CPU = "generic";
 
   // FIXME: autodetect host here!
+  CPU = "v9";   // What is a good way to detect V9?
   
   // Parse features string.
   ParseSubtargetFeatures(FS, CPU);
 
+  // Unless explicitly enabled, disable the V9 instructions.
+  if (!EnableV9)
+    IsV9 = false;
 };
