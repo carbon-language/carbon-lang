@@ -57,6 +57,14 @@ namespace {
   public:
     SparcV8TargetLowering(TargetMachine &TM);
     virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
+    
+    /// isMaskedValueZeroForTargetNode - Return true if 'Op & Mask' is known to
+    /// be zero. Op is expected to be a target specific node. Used by DAG
+    /// combiner.
+    virtual bool isMaskedValueZeroForTargetNode(const SDOperand &Op,
+                                                uint64_t Mask,
+                                                MVIZFnPtr MVIZ) const;
+    
     virtual std::vector<SDOperand>
       LowerArguments(Function &F, SelectionDAG &DAG);
     virtual std::pair<SDOperand, SDOperand>
@@ -190,6 +198,24 @@ const char *SparcV8TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case V8ISD::RET_FLAG:   return "V8ISD::RET_FLAG";
   }
 }
+
+/// isMaskedValueZeroForTargetNode - Return true if 'Op & Mask' is known to
+/// be zero. Op is expected to be a target specific node. Used by DAG
+/// combiner.
+bool SparcV8TargetLowering::
+isMaskedValueZeroForTargetNode(const SDOperand &Op, uint64_t Mask,
+                               MVIZFnPtr MVIZ) const {
+  switch (Op.getOpcode()) {
+  default: return false; 
+  case V8ISD::SELECT_ICC:
+  case V8ISD::SELECT_FCC:
+    assert(MVT::isInteger(Op.getValueType()) && "Not an integer select!");
+    // These operations are masked zero if both the left and the right are zero.
+    return MVIZ(Op.getOperand(0), Mask, *this) &&
+           MVIZ(Op.getOperand(1), Mask, *this);
+  }
+}
+
 
 /// LowerArguments - V8 uses a very simple ABI, where all values are passed in
 /// either one or two GPRs, including FP values.  TODO: we should pass FP values
