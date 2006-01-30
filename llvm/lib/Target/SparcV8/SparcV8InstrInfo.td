@@ -84,7 +84,7 @@ def calltarget : Operand<i32>;
 def SDTV8cmpfcc : 
 SDTypeProfile<1, 2, [SDTCisVT<0, FlagVT>, SDTCisFP<1>, SDTCisSameAs<1, 2>]>;
 def SDTV8brcc : 
-SDTypeProfile<0, 3, [SDTCisVT<0, OtherVT>, SDTCisVT<1, OtherVT>,
+SDTypeProfile<0, 3, [SDTCisVT<0, OtherVT>, SDTCisVT<1, i32>,
                      SDTCisVT<2, FlagVT>]>;
 def SDTV8selectcc :
 SDTypeProfile<1, 4, [SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>, 
@@ -120,6 +120,43 @@ def call          : SDNode<"V8ISD::CALL", SDT_V8Call,
 def SDT_V8RetFlag : SDTypeProfile<0, 0, []>;
 def retflag       : SDNode<"V8ISD::RET_FLAG", SDT_V8RetFlag,
 	                   [SDNPHasChain, SDNPOptInFlag]>;
+
+//===----------------------------------------------------------------------===//
+// SPARC Flag Conditions
+//===----------------------------------------------------------------------===//
+
+// Note that these values must be kept in sync with the V8CC::CondCode enum
+// values.
+def ICC_NE  : PatLeaf<(i32  9)>;  // Not Equal
+def ICC_E   : PatLeaf<(i32  1)>;  // Equal
+def ICC_G   : PatLeaf<(i32 10)>;  // Greater
+def ICC_LE  : PatLeaf<(i32  2)>;  // Less or Equal
+def ICC_GE  : PatLeaf<(i32 11)>;  // Greater or Equal
+def ICC_L   : PatLeaf<(i32  3)>;  // Less
+def ICC_GU  : PatLeaf<(i32 12)>;  // Greater Unsigned
+def ICC_LEU : PatLeaf<(i32  4)>;  // Less or Equal Unsigned
+def ICC_CC  : PatLeaf<(i32 13)>;  // Carry Clear/Great or Equal Unsigned
+def ICC_CS  : PatLeaf<(i32  5)>;  // Carry Set/Less Unsigned
+def ICC_POS : PatLeaf<(i32 14)>;  // Positive
+def ICC_NEG : PatLeaf<(i32  6)>;  // Negative
+def ICC_VC  : PatLeaf<(i32 15)>;  // Overflow Clear
+def ICC_VS  : PatLeaf<(i32  7)>;  // Overflow Set
+
+def FCC_U   : PatLeaf<(i32 23)>;  // Unordered
+def FCC_G   : PatLeaf<(i32 22)>;  // Greater
+def FCC_UG  : PatLeaf<(i32 21)>;  // Unordered or Greater
+def FCC_L   : PatLeaf<(i32 20)>;  // Less
+def FCC_UL  : PatLeaf<(i32 19)>;  // Unordered or Less
+def FCC_LG  : PatLeaf<(i32 18)>;  // Less or Greater
+def FCC_NE  : PatLeaf<(i32 17)>;  // Not Equal
+def FCC_E   : PatLeaf<(i32 25)>;  // Equal
+def FCC_UE  : PatLeaf<(i32 24)>;  // Unordered or Equal
+def FCC_GE  : PatLeaf<(i32 25)>;  // Greater or Equal
+def FCC_UGE : PatLeaf<(i32 26)>;  // Unordered or Greater or Equal
+def FCC_LE  : PatLeaf<(i32 27)>;  // Less or Equal
+def FCC_ULE : PatLeaf<(i32 28)>;  // Unordered or Less or Equal
+def FCC_O   : PatLeaf<(i32 29)>;  // Ordered
+
 
 //===----------------------------------------------------------------------===//
 // Instructions
@@ -498,34 +535,48 @@ let isBarrier = 1 in
                       [(br bb:$dst)]>;
 def BNE  : BranchV8<0b1001, (ops brtarget:$dst),
                     "bne $dst",
-                    [(V8bricc bb:$dst, SETNE, ICC)]>;
+                    [(V8bricc bb:$dst, ICC_NE, ICC)]>;
 def BE   : BranchV8<0b0001, (ops brtarget:$dst),
                     "be $dst",
-                    [(V8bricc bb:$dst, SETEQ, ICC)]>;
+                    [(V8bricc bb:$dst, ICC_E, ICC)]>;
 def BG   : BranchV8<0b1010, (ops brtarget:$dst),
                     "bg $dst",
-                    [(V8bricc bb:$dst, SETGT, ICC)]>;
+                    [(V8bricc bb:$dst, ICC_G, ICC)]>;
 def BLE  : BranchV8<0b0010, (ops brtarget:$dst),
                     "ble $dst",
-                    [(V8bricc bb:$dst, SETLE, ICC)]>;
+                    [(V8bricc bb:$dst, ICC_LE, ICC)]>;
 def BGE  : BranchV8<0b1011, (ops brtarget:$dst),
                     "bge $dst",
-                    [(V8bricc bb:$dst, SETGE, ICC)]>;
+                    [(V8bricc bb:$dst, ICC_GE, ICC)]>;
 def BL   : BranchV8<0b0011, (ops brtarget:$dst),
                     "bl $dst",
-                    [(V8bricc bb:$dst, SETLT, ICC)]>;
+                    [(V8bricc bb:$dst, ICC_L, ICC)]>;
 def BGU  : BranchV8<0b1100, (ops brtarget:$dst),
                     "bgu $dst",
-                    [(V8bricc bb:$dst, SETUGT, ICC)]>;
+                    [(V8bricc bb:$dst, ICC_GU, ICC)]>;
 def BLEU : BranchV8<0b0100, (ops brtarget:$dst),
                     "bleu $dst",
-                    [(V8bricc bb:$dst, SETULE, ICC)]>;
+                    [(V8bricc bb:$dst, ICC_LEU, ICC)]>;
 def BCC  : BranchV8<0b1101, (ops brtarget:$dst),
                     "bcc $dst",
-                    [(V8bricc bb:$dst, SETUGE, ICC)]>;
+                    [(V8bricc bb:$dst, ICC_CC, ICC)]>;
 def BCS  : BranchV8<0b0101, (ops brtarget:$dst),
                     "bcs $dst",
-                    [(V8bricc bb:$dst, SETULT, ICC)]>;
+                    [(V8bricc bb:$dst, ICC_CS, ICC)]>;
+def BPOS : BranchV8<0b1110, (ops brtarget:$dst),
+                    "bpos $dst",
+                    [(V8bricc bb:$dst, ICC_POS, ICC)]>;
+def BNEG : BranchV8<0b0110, (ops brtarget:$dst),
+                    "bneg $dst",
+                    [(V8bricc bb:$dst, ICC_NEG, ICC)]>;
+def BVC  : BranchV8<0b1111, (ops brtarget:$dst),
+                    "bvc $dst",
+                    [(V8bricc bb:$dst, ICC_VC, ICC)]>;
+def BVS  : BranchV8<0b0111, (ops brtarget:$dst),
+                    "bvs $dst",
+                    [(V8bricc bb:$dst, ICC_VS, ICC)]>;
+
+
 
 // Section B.22 - Branch on Floating-point Condition Codes Instructions, p. 121
 
@@ -540,46 +591,46 @@ class FPBranchV8<bits<4> cc, dag ops, string asmstr, list<dag> pattern>
 
 def FBU  : FPBranchV8<0b0111, (ops brtarget:$dst),
                       "fbu $dst",
-                      [(V8brfcc bb:$dst, SETUO, FCC)]>;
+                      [(V8brfcc bb:$dst, FCC_U, FCC)]>;
 def FBG  : FPBranchV8<0b0110, (ops brtarget:$dst),
                       "fbg $dst",
-                      [(V8brfcc bb:$dst, SETGT, FCC)]>;
+                      [(V8brfcc bb:$dst, FCC_G, FCC)]>;
 def FBUG : FPBranchV8<0b0101, (ops brtarget:$dst),
                       "fbug $dst",
-                      [(V8brfcc bb:$dst, SETUGT, FCC)]>;
+                      [(V8brfcc bb:$dst, FCC_UG, FCC)]>;
 def FBL  : FPBranchV8<0b0100, (ops brtarget:$dst),
                       "fbl $dst",
-                      [(V8brfcc bb:$dst, SETLT, FCC)]>;
+                      [(V8brfcc bb:$dst, FCC_L, FCC)]>;
 def FBUL : FPBranchV8<0b0011, (ops brtarget:$dst),
                       "fbul $dst",
-                      [(V8brfcc bb:$dst, SETULT, FCC)]>;
+                      [(V8brfcc bb:$dst, FCC_UL, FCC)]>;
 def FBLG : FPBranchV8<0b0010, (ops brtarget:$dst),
                       "fblg $dst",
-                      [(V8brfcc bb:$dst, SETONE, FCC)]>;
+                      [(V8brfcc bb:$dst, FCC_LG, FCC)]>;
 def FBNE : FPBranchV8<0b0001, (ops brtarget:$dst),
                       "fbne $dst",
-                      [(V8brfcc bb:$dst, SETNE, FCC)]>;
+                      [(V8brfcc bb:$dst, FCC_NE, FCC)]>;
 def FBE  : FPBranchV8<0b1001, (ops brtarget:$dst),
                       "fbe $dst",
-                      [(V8brfcc bb:$dst, SETEQ, FCC)]>;
+                      [(V8brfcc bb:$dst, FCC_E, FCC)]>;
 def FBUE : FPBranchV8<0b1010, (ops brtarget:$dst),
                       "fbue $dst",
-                      [(V8brfcc bb:$dst, SETUEQ, FCC)]>;
+                      [(V8brfcc bb:$dst, FCC_UE, FCC)]>;
 def FBGE : FPBranchV8<0b1011, (ops brtarget:$dst),
                       "fbge $dst",
-                      [(V8brfcc bb:$dst, SETGE, FCC)]>;
+                      [(V8brfcc bb:$dst, FCC_GE, FCC)]>;
 def FBUGE: FPBranchV8<0b1100, (ops brtarget:$dst),
                       "fbuge $dst",
-                      [(V8brfcc bb:$dst, SETUGE, FCC)]>;
+                      [(V8brfcc bb:$dst, FCC_UGE, FCC)]>;
 def FBLE : FPBranchV8<0b1101, (ops brtarget:$dst),
                       "fble $dst",
-                      [(V8brfcc bb:$dst, SETLE, FCC)]>;
+                      [(V8brfcc bb:$dst, FCC_LE, FCC)]>;
 def FBULE: FPBranchV8<0b1110, (ops brtarget:$dst),
                       "fbule $dst",
-                      [(V8brfcc bb:$dst, SETULE, FCC)]>;
+                      [(V8brfcc bb:$dst, FCC_ULE, FCC)]>;
 def FBO  : FPBranchV8<0b1111, (ops brtarget:$dst),
                       "fbo $dst",
-                      [(V8brfcc bb:$dst, SETO, FCC)]>;
+                      [(V8brfcc bb:$dst, FCC_O, FCC)]>;
 
 
 
@@ -742,11 +793,11 @@ let Predicates = [HasV9], isTwoAddress = 1 in {
   def MOVNE : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
                      "movne %icc, $F, $dst",
                      [(set IntRegs:$dst,
-                           (V8selecticc IntRegs:$F, IntRegs:$T, 22, ICC))]>;
-  def MOVEQ : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
-                     "move %icc, $F, $dst",
-                     [(set IntRegs:$dst,
-                           (V8selecticc IntRegs:$F, IntRegs:$T, 17, ICC))]>;
+                           (V8selecticc IntRegs:$F, IntRegs:$T, ICC_NE, ICC))]>;
+  def MOVE : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+                    "move %icc, $F, $dst",
+                    [(set IntRegs:$dst,
+                          (V8selecticc IntRegs:$F, IntRegs:$T, ICC_E, ICC))]>;
 }
 
 // Floating-Point Move Instructions, p. 164 of the V9 manual.

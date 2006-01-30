@@ -50,6 +50,123 @@ namespace V8ISD {
   };
 }
 
+// Enums corresponding to SparcV8 condition codes, both icc's and fcc's.  These
+// values must be kept in sync with the ones in the .td file.
+namespace V8CC {
+  enum CondCodes {
+  //ICC_A   =  8   ,  // Always
+  //ICC_N   =  0   ,  // Never
+    ICC_NE  =  9   ,  // Not Equal
+    ICC_E   =  1   ,  // Equal
+    ICC_G   = 10   ,  // Greater
+    ICC_LE  =  2   ,  // Less or Equal
+    ICC_GE  = 11   ,  // Greater or Equal
+    ICC_L   =  3   ,  // Less
+    ICC_GU  = 12   ,  // Greater Unsigned
+    ICC_LEU =  4   ,  // Less or Equal Unsigned
+    ICC_CC  = 13   ,  // Carry Clear/Great or Equal Unsigned
+    ICC_CS  =  5   ,  // Carry Set/Less Unsigned
+    ICC_POS = 14   ,  // Positive
+    ICC_NEG =  6   ,  // Negative
+    ICC_VC  = 15   ,  // Overflow Clear
+    ICC_VS  =  7   ,  // Overflow Set
+    
+  //FCC_A   =  8+16,  // Always
+  //FCC_N   =  0+16,  // Never
+    FCC_U   =  7+16,  // Unordered
+    FCC_G   =  6+16,  // Greater
+    FCC_UG  =  5+16,  // Unordered or Greater
+    FCC_L   =  4+16,  // Less
+    FCC_UL  =  3+16,  // Unordered or Less
+    FCC_LG  =  2+16,  // Less or Greater
+    FCC_NE  =  1+16,  // Not Equal
+    FCC_E   =  9+16,  // Equal
+    FCC_UE  = 10+16,  // Unordered or Equal
+    FCC_GE  = 11+16,  // Greater or Equal
+    FCC_UGE = 12+16,  // Unordered or Greater or Equal
+    FCC_LE  = 13+16,  // Less or Equal
+    FCC_ULE = 14+16,  // Unordered or Less or Equal
+    FCC_O   = 15+16,  // Ordered
+  };
+}
+
+
+/// IntCondCCodeToICC - Convert a DAG integer condition code to a SPARC ICC
+/// condition.
+static V8CC::CondCodes IntCondCCodeToICC(ISD::CondCode CC) {
+  switch (CC) {
+  default: assert(0 && "Unknown integer condition code!");
+  case ISD::SETEQ:  return V8CC::ICC_E;
+  case ISD::SETNE:  return V8CC::ICC_NE;
+  case ISD::SETLT:  return V8CC::ICC_L;
+  case ISD::SETGT:  return V8CC::ICC_G;
+  case ISD::SETLE:  return V8CC::ICC_LE;
+  case ISD::SETGE:  return V8CC::ICC_GE;
+  case ISD::SETULT: return V8CC::ICC_CS;
+  case ISD::SETULE: return V8CC::ICC_LEU;
+  case ISD::SETUGT: return V8CC::ICC_GU;
+  case ISD::SETUGE: return V8CC::ICC_CC;
+  }
+}
+
+/// FPCondCCodeToFCC - Convert a DAG floatingp oint condition code to a SPARC
+/// FCC condition.
+static V8CC::CondCodes FPCondCCodeToFCC(ISD::CondCode CC) {
+  switch (CC) {
+  default: assert(0 && "Unknown fp condition code!");
+  case ISD::SETEQ:  return V8CC::FCC_E;
+  case ISD::SETNE:  return V8CC::FCC_NE;
+  case ISD::SETLT:  return V8CC::FCC_L;
+  case ISD::SETGT:  return V8CC::FCC_G;
+  case ISD::SETLE:  return V8CC::FCC_LE;
+  case ISD::SETGE:  return V8CC::FCC_GE;
+  case ISD::SETULT: return V8CC::FCC_UL;
+  case ISD::SETULE: return V8CC::FCC_ULE;
+  case ISD::SETUGT: return V8CC::FCC_UG;
+  case ISD::SETUGE: return V8CC::FCC_UGE;
+  case ISD::SETUO:  return V8CC::FCC_U;
+  case ISD::SETO:   return V8CC::FCC_O;
+  case ISD::SETONE: return V8CC::FCC_LG;
+  case ISD::SETUEQ: return V8CC::FCC_UE;
+  }
+}
+  
+
+static unsigned SPARCCondCodeToBranchInstr(V8CC::CondCodes CC) {
+  switch (CC) {
+  default: assert(0 && "Unknown condition code");
+  case V8CC::ICC_NE:  return V8::BNE;
+  case V8CC::ICC_E:   return V8::BE;
+  case V8CC::ICC_G:   return V8::BG;
+  case V8CC::ICC_LE:  return V8::BLE;
+  case V8CC::ICC_GE:  return V8::BGE;
+  case V8CC::ICC_L:   return V8::BL;
+  case V8CC::ICC_GU:  return V8::BGU;
+  case V8CC::ICC_LEU: return V8::BLEU;
+  case V8CC::ICC_CC:  return V8::BCC;
+  case V8CC::ICC_CS:  return V8::BCS;
+  case V8CC::ICC_POS: return V8::BPOS;
+  case V8CC::ICC_NEG: return V8::BNEG;
+  case V8CC::ICC_VC:  return V8::BVC;
+  case V8CC::ICC_VS:  return V8::BVS;
+  case V8CC::FCC_U:   return V8::FBU;
+  case V8CC::FCC_G:   return V8::FBG;
+  case V8CC::FCC_UG:  return V8::FBUG;
+  case V8CC::FCC_L:   return V8::FBL;
+  case V8CC::FCC_UL:  return V8::FBUL;
+  case V8CC::FCC_LG:  return V8::FBLG;
+  case V8CC::FCC_NE:  return V8::FBNE;
+  case V8CC::FCC_E:   return V8::FBE;
+  case V8CC::FCC_UE:  return V8::FBUE;
+  case V8CC::FCC_GE:  return V8::FBGE;
+  case V8CC::FCC_UGE: return V8::FBUGE;
+  case V8CC::FCC_LE:  return V8::FBLE;
+  case V8CC::FCC_ULE: return V8::FBULE;
+  case V8CC::FCC_O:   return V8::FBO;
+  }       
+}
+
+
 namespace {
   class SparcV8TargetLowering : public TargetLowering {
     int VarArgsFrameOffset;   // Frame offset to start of varargs area.
@@ -645,7 +762,7 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   }
   case ISD::BR_CC: {
     SDOperand Chain = Op.getOperand(0);
-    SDOperand CC = Op.getOperand(1);
+    ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(1))->get();
     SDOperand LHS = Op.getOperand(2);
     SDOperand RHS = Op.getOperand(3);
     SDOperand Dest = Op.getOperand(4);
@@ -659,19 +776,22 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       Ops.push_back(LHS);
       Ops.push_back(RHS);
       SDOperand Cond = DAG.getNode(V8ISD::CMPICC, VTs, Ops).getValue(1);
-      return DAG.getNode(V8ISD::BRICC, MVT::Other, Chain, Dest, CC, Cond);
+      SDOperand CCN = DAG.getConstant(IntCondCCodeToICC(CC), MVT::i32);
+      return DAG.getNode(V8ISD::BRICC, MVT::Other, Chain, Dest, CCN, Cond);
     } else {
       SDOperand Cond = DAG.getNode(V8ISD::CMPFCC, MVT::Flag, LHS, RHS);
-      return DAG.getNode(V8ISD::BRFCC, MVT::Other, Chain, Dest, CC, Cond);
+      SDOperand CCN = DAG.getConstant(FPCondCCodeToFCC(CC), MVT::i32);
+      return DAG.getNode(V8ISD::BRFCC, MVT::Other, Chain, Dest, CCN, Cond);
     }
   }
   case ISD::SELECT_CC: {
     SDOperand LHS = Op.getOperand(0);
     SDOperand RHS = Op.getOperand(1);
-    unsigned CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
+    ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
     SDOperand TrueVal = Op.getOperand(2);
     SDOperand FalseVal = Op.getOperand(3);
-    
+    unsigned Opc, V8CC = ~0U;
+
     // If this is a select_cc of a "setcc", and if the setcc got lowered into
     // an CMP[IF]CC/SELECT_[IF]CC pair, find the original compared values.
     if (isa<ConstantSDNode>(RHS) && cast<ConstantSDNode>(RHS)->getValue() == 0&&
@@ -685,13 +805,12 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
         cast<ConstantSDNode>(LHS.getOperand(0))->getValue() == 1 &&
         cast<ConstantSDNode>(LHS.getOperand(1))->getValue() == 0) {
       SDOperand CMPCC = LHS.getOperand(3);
-      CC = cast<ConstantSDNode>(LHS.getOperand(2))->getValue();
+      V8CC = cast<ConstantSDNode>(LHS.getOperand(2))->getValue();
       LHS = CMPCC.getOperand(0);
       RHS = CMPCC.getOperand(1);
     }
     
     SDOperand CompareFlag;
-    unsigned Opc;
     if (LHS.getValueType() == MVT::i32) {
       std::vector<MVT::ValueType> VTs;
       VTs.push_back(LHS.getValueType());   // subcc returns a value
@@ -701,12 +820,14 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       Ops.push_back(RHS);
       CompareFlag = DAG.getNode(V8ISD::CMPICC, VTs, Ops).getValue(1);
       Opc = V8ISD::SELECT_ICC;
+      if (V8CC == ~0U) V8CC = IntCondCCodeToICC(CC);
     } else {
       CompareFlag = DAG.getNode(V8ISD::CMPFCC, MVT::Flag, LHS, RHS);
       Opc = V8ISD::SELECT_FCC;
+      if (V8CC == ~0U) V8CC = FPCondCCodeToFCC(CC);
     }
     return DAG.getNode(Opc, TrueVal.getValueType(), TrueVal, FalseVal, 
-                       DAG.getConstant(CC, MVT::i32), CompareFlag);
+                       DAG.getConstant(V8CC, MVT::i32), CompareFlag);
   }
   case ISD::VASTART: {
     // vastart just stores the address of the VarArgsFrameIndex slot into the
@@ -759,42 +880,11 @@ SparcV8TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
   case V8::SELECT_CC_Int_ICC:
   case V8::SELECT_CC_FP_ICC:
   case V8::SELECT_CC_DFP_ICC:
-    // Integer compare.
-    switch ((ISD::CondCode)MI->getOperand(3).getImmedValue()) {
-    default: assert(0 && "Unknown integer condition code!");
-    case ISD::SETEQ:  BROpcode = V8::BE; break;
-    case ISD::SETNE:  BROpcode = V8::BNE; break;
-    case ISD::SETLT:  BROpcode = V8::BL; break;
-    case ISD::SETGT:  BROpcode = V8::BG; break;
-    case ISD::SETLE:  BROpcode = V8::BLE; break;
-    case ISD::SETGE:  BROpcode = V8::BGE; break;
-    case ISD::SETULT: BROpcode = V8::BCS; break;
-    case ISD::SETULE: BROpcode = V8::BLEU; break;
-    case ISD::SETUGT: BROpcode = V8::BGU; break;
-    case ISD::SETUGE: BROpcode = V8::BCC; break;
-    }
-    break;
   case V8::SELECT_CC_Int_FCC:
   case V8::SELECT_CC_FP_FCC:
   case V8::SELECT_CC_DFP_FCC:
-    // FP compare.
-    switch ((ISD::CondCode)MI->getOperand(3).getImmedValue()) {
-    default: assert(0 && "Unknown fp condition code!");
-    case ISD::SETEQ:  BROpcode = V8::FBE; break;
-    case ISD::SETNE:  BROpcode = V8::FBNE; break;
-    case ISD::SETLT:  BROpcode = V8::FBL; break;
-    case ISD::SETGT:  BROpcode = V8::FBG; break;
-    case ISD::SETLE:  BROpcode = V8::FBLE; break;
-    case ISD::SETGE:  BROpcode = V8::FBGE; break;
-    case ISD::SETULT: BROpcode = V8::FBUL; break;
-    case ISD::SETULE: BROpcode = V8::FBULE; break;
-    case ISD::SETUGT: BROpcode = V8::FBUG; break;
-    case ISD::SETUGE: BROpcode = V8::FBUGE; break;
-    case ISD::SETUO:  BROpcode = V8::FBU; break;
-    case ISD::SETO:   BROpcode = V8::FBO; break;
-    case ISD::SETONE: BROpcode = V8::FBLG; break;
-    case ISD::SETUEQ: BROpcode = V8::FBUE; break;
-    }
+    V8CC::CondCodes CC = (V8CC::CondCodes)MI->getOperand(3).getImmedValue();
+    BROpcode = SPARCCondCodeToBranchInstr(CC);
     break;
   }
   
