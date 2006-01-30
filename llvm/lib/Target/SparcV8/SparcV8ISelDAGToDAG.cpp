@@ -669,6 +669,24 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand TrueVal = Op.getOperand(2);
     SDOperand FalseVal = Op.getOperand(3);
     
+    // If this is a select_cc of a "setcc", and if the setcc got lowered into
+    // an CMP[IF]CC/SELECT_[IF]CC pair, find the original compared values.
+    if (isa<ConstantSDNode>(RHS) && cast<ConstantSDNode>(RHS)->getValue() == 0&&
+        CC == ISD::SETNE && 
+        ((LHS.getOpcode() == V8ISD::SELECT_ICC &&
+          LHS.getOperand(3).getOpcode() == V8ISD::CMPICC) ||
+         (LHS.getOpcode() == V8ISD::SELECT_FCC &&
+          LHS.getOperand(3).getOpcode() == V8ISD::CMPFCC)) &&
+        isa<ConstantSDNode>(LHS.getOperand(0)) &&
+        isa<ConstantSDNode>(LHS.getOperand(1)) &&
+        cast<ConstantSDNode>(LHS.getOperand(0))->getValue() == 1 &&
+        cast<ConstantSDNode>(LHS.getOperand(1))->getValue() == 0) {
+      SDOperand CMPCC = LHS.getOperand(3);
+      CC = cast<ConstantSDNode>(LHS.getOperand(2))->getValue();
+      LHS = CMPCC.getOperand(0);
+      RHS = CMPCC.getOperand(1);
+    }
+    
     SDOperand CompareFlag;
     unsigned Opc;
     if (LHS.getValueType() == MVT::i32) {
