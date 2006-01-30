@@ -12,8 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "SparcV8.h"
+#include "SparcV8Subtarget.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
 #include <iostream>
@@ -36,14 +38,7 @@ namespace {
     }
 
     bool runOnMachineBasicBlock(MachineBasicBlock &MBB);
-    bool runOnMachineFunction(MachineFunction &F) {
-      bool Changed = false;
-      for (MachineFunction::iterator FI = F.begin(), FE = F.end();
-           FI != FE; ++FI)
-        Changed |= runOnMachineBasicBlock(*FI);
-      return Changed;
-    }
-
+    bool runOnMachineFunction(MachineFunction &F);
   };
 } // end of anonymous namespace
 
@@ -120,5 +115,18 @@ bool FPMover::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
       ++NumFpDs;
     }
   }
+  return Changed;
+}
+
+bool FPMover::runOnMachineFunction(MachineFunction &F) {
+  // If the target has V9 instructions, the fp-mover pseudos will never be
+  // emitted.  Avoid a scan of the instructions to improve compile time.
+  if (TM.getSubtarget<SparcV8Subtarget>().isV9())
+    return false;
+  
+  bool Changed = false;
+  for (MachineFunction::iterator FI = F.begin(), FE = F.end();
+       FI != FE; ++FI)
+    Changed |= runOnMachineBasicBlock(*FI);
   return Changed;
 }
