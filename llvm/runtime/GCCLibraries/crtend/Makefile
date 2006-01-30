@@ -59,8 +59,27 @@ SYMBOLHACKEDOBJS := $(ObjDir)/comp_main.bc $(ObjDir)/comp_genericeh.bc \
 
 all-local:: $(LibName.BCA)
 
+ifdef BYTECODE_DESTINATION
+BytecodeDestDir := $(BYTECODE_DESTINATION)
+else
+BytecodeDestDir := $(PROJ_libdir)
+endif
+
+DestBytecodeLib = $(BytecodeDestDir)/lib$(LIBRARYNAME).a
+install-bytecode-local:: $(DestBytecodeLib)
+install-local:: $(DestBytecodeLib)
+
 $(LibName.BCA): $(SYMBOLHACKEDOBJS) $(LibDir)/.dir $(LLVMToolDir)/llvm-ar
 	$(Echo) Building $(BuildMode) Bytecode Archive $(notdir $@)
 	$(Verb) $(RM) -f $@
 	$(Verb) $(LArchive) $@ $(SYMBOLHACKEDOBJS)
+
+$(DestBytecodeLib): $(BytecodeDestDir) $(LibName.BCA) 
+	$(Echo) Installing $(BuildMode) Bytecode Archive $(DestBytecodeLib)
+	$(Verb) $(DataInstall) $(LibName.BCA) $(DestBytecodeLib)
+
+uninstall-local::
+	$(Echo) Uninstalling $(BuildMode) Bytecode Archive $(DestBytecodeLib)
+	-$(Verb) $(RM) -f $(DestBytecodeLib)
+
 
