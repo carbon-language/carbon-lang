@@ -207,19 +207,18 @@ let Predicates = [HasNoV9] in {  // Only emit these in V8 mode.
 // SELECT_CC_* - Used to implement the SELECT_CC DAG operation.  Expanded by the
 // scheduler into a branch sequence.  This has to handle all permutations of
 // selection between i32/f32/f64 on ICC and FCC.
-let usesCustomDAGSchedInserter = 1 in {  // Expanded by the scheduler.
+let usesCustomDAGSchedInserter = 1,    // Expanded by the scheduler.
+    Predicates = [HasNoV9] in {        // V9 has conditional moves
   def SELECT_CC_Int_ICC
    : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F, i32imm:$Cond),
             "; SELECT_CC_Int_ICC PSEUDO!",
             [(set IntRegs:$dst, (V8selecticc IntRegs:$T, IntRegs:$F,
-                                             imm:$Cond, ICC))]>, 
-                                             Requires<[HasNoV9]>;
+                                             imm:$Cond, ICC))]>;
   def SELECT_CC_Int_FCC
    : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F, i32imm:$Cond),
             "; SELECT_CC_Int_FCC PSEUDO!",
             [(set IntRegs:$dst, (V8selectfcc IntRegs:$T, IntRegs:$F,
-                                             imm:$Cond, FCC))]>, 
-                                             Requires<[HasNoV9]>;
+                                             imm:$Cond, FCC))]>;
   def SELECT_CC_FP_ICC
    : Pseudo<(ops FPRegs:$dst, FPRegs:$T, FPRegs:$F, i32imm:$Cond),
             "; SELECT_CC_FP_ICC PSEUDO!",
@@ -566,7 +565,7 @@ class FPBranchV8<bits<4> cc, dag ops, string asmstr, list<dag> pattern>
 
 // FIXME: the encoding for the JIT should look at the condition field.
 def FBCOND  : FPBranchV8<0, (ops brtarget:$dst, V8CC:$cc),
-                      "f$cc $dst",
+                      "fb$cc $dst",
                       [(V8brfcc bb:$dst, imm:$cc, FCC)]>;
 
 
@@ -748,6 +747,28 @@ let Predicates = [HasV9], isTwoAddress = 1 in {
              "movf$cc %fcc, $F, $dst",
              [(set IntRegs:$dst,
                           (V8selectfcc simm11:$F, IntRegs:$T, imm:$cc, FCC))]>;
+
+  def FMOVS_ICC
+    : Pseudo<(ops FPRegs:$dst, FPRegs:$T, FPRegs:$F, V8CC:$cc),
+             "fmovs$cc %icc, $F, $dst",
+             [(set FPRegs:$dst,
+                         (V8selecticc FPRegs:$F, FPRegs:$T, imm:$cc, ICC))]>;
+  def FMOVD_ICC
+    : Pseudo<(ops DFPRegs:$dst, DFPRegs:$T, DFPRegs:$F, V8CC:$cc),
+             "fmovd$cc %icc, $F, $dst",
+             [(set DFPRegs:$dst,
+                         (V8selecticc DFPRegs:$F, DFPRegs:$T, imm:$cc, ICC))]>;
+  def FMOVS_FCC
+    : Pseudo<(ops FPRegs:$dst, FPRegs:$T, FPRegs:$F, V8CC:$cc),
+             "fmovs$cc %fcc, $F, $dst",
+             [(set FPRegs:$dst,
+                         (V8selectfcc FPRegs:$F, FPRegs:$T, imm:$cc, FCC))]>;
+  def FMOVD_FCC
+    : Pseudo<(ops DFPRegs:$dst, DFPRegs:$T, DFPRegs:$F, V8CC:$cc),
+             "fmovd$cc %fcc, $F, $dst",
+             [(set DFPRegs:$dst,
+                         (V8selectfcc DFPRegs:$F, DFPRegs:$T, imm:$cc, FCC))]>;
+
 }
 
 // Floating-Point Move Instructions, p. 164 of the V9 manual.
