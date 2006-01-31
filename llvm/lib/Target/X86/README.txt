@@ -310,3 +310,7 @@ _cmp:
    before prolog-epilog rewriting.
 2) We shouldn't load into XMM regs only to store it back.
 
+//===---------------------------------------------------------------------===//
+
+Think about doing i64 math in SSE regs.
+
