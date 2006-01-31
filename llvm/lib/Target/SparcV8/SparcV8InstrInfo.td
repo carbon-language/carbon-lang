@@ -86,6 +86,10 @@ def MEMri : Operand<i32> {
 def brtarget : Operand<OtherVT>;
 def calltarget : Operand<i32>;
 
+// Operand for printing out a condition code.
+let PrintMethod = "printV8CCOperand" in
+  def V8CC : Operand<i32>;
+
 def SDTV8cmpfcc : 
 SDTypeProfile<1, 2, [SDTCisVT<0, FlagVT>, SDTCisFP<1>, SDTCisSameAs<1, 2>]>;
 def SDTV8brcc : 
@@ -212,12 +216,14 @@ let usesCustomDAGSchedInserter = 1 in {  // Expanded by the scheduler.
    : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F, i32imm:$Cond),
             "; SELECT_CC_Int_ICC PSEUDO!",
             [(set IntRegs:$dst, (V8selecticc IntRegs:$T, IntRegs:$F,
-                                             imm:$Cond, ICC))]>;
+                                             imm:$Cond, ICC))]>, 
+                                             Requires<[HasNoV9]>;
   def SELECT_CC_Int_FCC
    : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F, i32imm:$Cond),
             "; SELECT_CC_Int_FCC PSEUDO!",
             [(set IntRegs:$dst, (V8selectfcc IntRegs:$T, IntRegs:$F,
-                                             imm:$Cond, FCC))]>;
+                                             imm:$Cond, FCC))]>, 
+                                             Requires<[HasNoV9]>;
   def SELECT_CC_FP_ICC
    : Pseudo<(ops FPRegs:$dst, FPRegs:$T, FPRegs:$F, i32imm:$Cond),
             "; SELECT_CC_FP_ICC PSEUDO!",
@@ -802,96 +808,27 @@ def FCMPD  : F3_3<2, 0b110101, 0b001010010,
 let Predicates = [HasV9], isTwoAddress = 1 in {
   // Move Integer Register on Condition (MOVcc) p. 194 of the V9 manual.
   // FIXME: Add instruction encodings for the JIT some day.
-  class IntCMOVICCrr<string asmstr, ICC_VAL CC>
-    : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F), asmstr,
+  def MOVICCrr
+    : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F, V8CC:$cc),
+             "mov$cc %icc, $F, $dst",
              [(set IntRegs:$dst,
-                          (V8selecticc IntRegs:$F, IntRegs:$T, CC, ICC))]> {
-    int CondBits = CC.ICCVal;
-  }
-  class IntCMOVICCri<string asmstr, ICC_VAL CC>
-    : Pseudo<(ops IntRegs:$dst, IntRegs:$T, i32imm:$F), asmstr,
+                         (V8selecticc IntRegs:$F, IntRegs:$T, imm:$cc, ICC))]>;
+  def MOVICCri
+    : Pseudo<(ops IntRegs:$dst, IntRegs:$T, i32imm:$F, V8CC:$cc),
+             "mov$cc %icc, $F, $dst",
              [(set IntRegs:$dst,
-                          (V8selecticc simm11:$F, IntRegs:$T, CC, ICC))]> {
-    int CondBits = CC.ICCVal;
-  }
-  
-  // MOV*rr instructions.
-  def MOVNErr   : IntCMOVICCrr< "movne %icc, $F, $dst", ICC_NE>;
-  def MOVErr    : IntCMOVICCrr<  "move %icc, $F, $dst", ICC_E>; 
-  def MOVGrr    : IntCMOVICCrr<  "movg %icc, $F, $dst", ICC_G>;
-  def MOVLErr   : IntCMOVICCrr< "movle %icc, $F, $dst", ICC_LE>;
-  def MOVGErr   : IntCMOVICCrr< "movge %icc, $F, $dst", ICC_GE>;
-  def MOVLrr    : IntCMOVICCrr<  "movl %icc, $F, $dst", ICC_L>;
-  def MOVGUrr   : IntCMOVICCrr< "movgu %icc, $F, $dst", ICC_GU>;
-  def MOVLEUrr  : IntCMOVICCrr<"movleu %icc, $F, $dst", ICC_LEU>;
-  def MOVCCrr   : IntCMOVICCrr< "movcc %icc, $F, $dst", ICC_CC>;
-  def MOVCSrr   : IntCMOVICCrr< "movcs %icc, $F, $dst", ICC_CS>;
-  def MOVPOSrr  : IntCMOVICCrr<"movpos %icc, $F, $dst", ICC_POS>;
-  def MOVNEGrr  : IntCMOVICCrr<"movneg %icc, $F, $dst", ICC_NEG>;
-  def MOVVCrr   : IntCMOVICCrr< "movvc %icc, $F, $dst", ICC_VC>;
-  def MOVVSrr   : IntCMOVICCrr< "movvs %icc, $F, $dst", ICC_VS>;
-  
-  // MOV*ri instructions.
-  def MOVNEri   : IntCMOVICCri< "movne %icc, $F, $dst", ICC_NE>;
-  def MOVEri    : IntCMOVICCri<  "move %icc, $F, $dst", ICC_E>; 
-  def MOVGri    : IntCMOVICCri<  "movg %icc, $F, $dst", ICC_G>;
-  def MOVLEri   : IntCMOVICCri< "movle %icc, $F, $dst", ICC_LE>;
-  def MOVGEri   : IntCMOVICCri< "movge %icc, $F, $dst", ICC_GE>;
-  def MOVLri    : IntCMOVICCri<  "movl %icc, $F, $dst", ICC_L>;
-  def MOVGUri   : IntCMOVICCri< "movgu %icc, $F, $dst", ICC_GU>;
-  def MOVLEUri  : IntCMOVICCri<"movleu %icc, $F, $dst", ICC_LEU>;
-  def MOVCCri   : IntCMOVICCri< "movcc %icc, $F, $dst", ICC_CC>;
-  def MOVCSri   : IntCMOVICCri< "movcs %icc, $F, $dst", ICC_CS>;
-  def MOVPOSri  : IntCMOVICCri<"movpos %icc, $F, $dst", ICC_POS>;
-  def MOVNEGri  : IntCMOVICCri<"movneg %icc, $F, $dst", ICC_NEG>;
-  def MOVVCri   : IntCMOVICCri< "movvc %icc, $F, $dst", ICC_VC>;
-  def MOVVSri   : IntCMOVICCri< "movvs %icc, $F, $dst", ICC_VS>;
+                          (V8selecticc simm11:$F, IntRegs:$T, imm:$cc, ICC))]>;
 
-  // FIXME: Allow regalloc of the fcc condition code some day.
-  class IntCMOVFCCrr<string asmstr, FCC_VAL CC>
-    : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F), asmstr,
+  def MOVFCCrr
+    : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F, V8CC:$cc),
+             "movf$cc %fcc, $F, $dst",
              [(set IntRegs:$dst,
-                          (V8selectfcc IntRegs:$F, IntRegs:$T, CC, FCC))]> {
-    int CondBits = CC.FCCVal;
-  }
-  class IntCMOVFCCri<string asmstr, FCC_VAL CC>
-    : Pseudo<(ops IntRegs:$dst, IntRegs:$T, i32imm:$F), asmstr,
+                         (V8selectfcc IntRegs:$F, IntRegs:$T, imm:$cc, FCC))]>;
+  def MOVFCCri
+    : Pseudo<(ops IntRegs:$dst, IntRegs:$T, i32imm:$F, V8CC:$cc),
+             "movf$cc %fcc, $F, $dst",
              [(set IntRegs:$dst,
-                          (V8selectfcc simm11:$F, IntRegs:$T, CC, FCC))]> {
-    int CondBits = CC.FCCVal;
-  }
-
-  // MOVF*rr instructions.
-  def MOVFUrr   : IntCMOVFCCrr<  "movfu %fcc, $F, $dst", FCC_U>;
-  def MOVFGrr   : IntCMOVFCCrr<  "movfg %fcc, $F, $dst", FCC_G>;
-  def MOVFUGrr  : IntCMOVFCCrr< "movfug %fcc, $F, $dst", FCC_UG>;
-  def MOVFLrr   : IntCMOVFCCrr<  "movfl %fcc, $F, $dst", FCC_L>;
-  def MOVFULrr  : IntCMOVFCCrr< "movful %fcc, $F, $dst", FCC_UL>;
-  def MOVFLGrr  : IntCMOVFCCrr< "movflg %fcc, $F, $dst", FCC_LG>;
-  def MOVFNErr  : IntCMOVFCCrr< "movfne %fcc, $F, $dst", FCC_NE>;
-  def MOVFErr   : IntCMOVFCCrr<  "movfe %fcc, $F, $dst", FCC_E>;
-  def MOVFUErr  : IntCMOVFCCrr< "movfue %fcc, $F, $dst", FCC_UE>;
-  def MOVFGErr  : IntCMOVFCCrr< "movfge %fcc, $F, $dst", FCC_GE>;
-  def MOVFUGErr : IntCMOVFCCrr<"movfuge %fcc, $F, $dst", FCC_UGE>;
-  def MOVFLErr  : IntCMOVFCCrr< "movfle %fcc, $F, $dst", FCC_LE>;
-  def MOVFULErr : IntCMOVFCCrr<"movfule %fcc, $F, $dst", FCC_ULE>;
-  def MOVFOrr   : IntCMOVFCCrr<  "movfo %fcc, $F, $dst", FCC_O>;
-  
-   // MOVF*ri instructions.
-  def MOVFUri   : IntCMOVFCCri<  "movfu %fcc, $F, $dst", FCC_U>;
-  def MOVFGri   : IntCMOVFCCri<  "movfg %fcc, $F, $dst", FCC_G>;
-  def MOVFUGri  : IntCMOVFCCri< "movfug %fcc, $F, $dst", FCC_UG>;
-  def MOVFLri   : IntCMOVFCCri<  "movfl %fcc, $F, $dst", FCC_L>;
-  def MOVFULri  : IntCMOVFCCri< "movful %fcc, $F, $dst", FCC_UL>;
-  def MOVFLGri  : IntCMOVFCCri< "movflg %fcc, $F, $dst", FCC_LG>;
-  def MOVFNEri  : IntCMOVFCCri< "movfne %fcc, $F, $dst", FCC_NE>;
-  def MOVFEri   : IntCMOVFCCri<  "movfe %fcc, $F, $dst", FCC_E>;
-  def MOVFUEri  : IntCMOVFCCri< "movfue %fcc, $F, $dst", FCC_UE>;
-  def MOVFGEri  : IntCMOVFCCri< "movfge %fcc, $F, $dst", FCC_GE>;
-  def MOVFUGEri : IntCMOVFCCri<"movfuge %fcc, $F, $dst", FCC_UGE>;
-  def MOVFLEri  : IntCMOVFCCri< "movfle %fcc, $F, $dst", FCC_LE>;
-  def MOVFULEri : IntCMOVFCCri<"movfule %fcc, $F, $dst", FCC_ULE>;
-  def MOVFOri   : IntCMOVFCCri<  "movfo %fcc, $F, $dst", FCC_O>;
+                          (V8selectfcc simm11:$F, IntRegs:$T, imm:$cc, FCC))]>;
 }
 
 // Floating-Point Move Instructions, p. 164 of the V9 manual.
