@@ -826,7 +826,11 @@ public:
       ArgNames.push_back(args[i].second);
     }
   }
-
+  DagInit(Record *D, const std::vector<Init*> &args, 
+          const std::vector<std::string> &argNames)
+  : NodeTypeDef(D), Args(args), ArgNames(argNames) {
+  }
+  
   virtual Init *convertInitializerTo(RecTy *Ty) {
     return Ty->convertValue(this);
   }
@@ -847,6 +851,8 @@ public:
     assert(Num < Args.size() && "Arg number out of range!");
     Args[Num] = I;
   }
+  
+  virtual Init *resolveReferences(Record &R, const RecordVal *RV);
 
   virtual void print(std::ostream &OS) const;
 };

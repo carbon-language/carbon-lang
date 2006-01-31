@@ -554,6 +554,17 @@ Init *FieldInit::resolveReferences(Record &R, const RecordVal *RV) {
   return this;
 }
 
+Init *DagInit::resolveReferences(Record &R, const RecordVal *RV) {
+  std::vector<Init*> NewArgs;
+  for (unsigned i = 0, e = Args.size(); i != e; ++i)
+    NewArgs.push_back(Args[i]->resolveReferences(R, RV));
+  
+  if (Args != NewArgs)
+    return new DagInit(NodeTypeDef, NewArgs, ArgNames);
+    
+  return this;
+}
+
 
 void DagInit::print(std::ostream &OS) const {
   OS << "(" << NodeTypeDef->getName();

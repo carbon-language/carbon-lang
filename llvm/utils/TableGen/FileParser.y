@@ -68,7 +68,7 @@ static void addSuperClass(Record *SC) {
 }
 
 static void setValue(const std::string &ValName, 
-		     std::vector<unsigned> *BitList, Init *V) {
+                     std::vector<unsigned> *BitList, Init *V) {
   if (!V) return;
 
   RecordVal *RV = CurRec->getValue(ValName);
