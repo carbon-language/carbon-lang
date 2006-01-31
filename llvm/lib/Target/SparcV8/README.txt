@@ -37,3 +37,4 @@ t1:
 
 1) should be replaced with a brz in V9 mode.
 
+* Same as above, but emit conditional move on register zero (p192) in V9 mode.
