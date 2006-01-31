@@ -735,6 +735,28 @@ LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain, unsigned Depth,
   abort();
 }
 
+// Look at LHS/RHS/CC and see if they are a lowered V8 setcc instruction.  If so
+// set LHS/RHS and V8CC to the LHS/RHS of the setcc and V8CC to the condition.
+static void LookThroughSetCC(SDOperand &LHS, SDOperand &RHS,
+                             ISD::CondCode CC, unsigned &V8CC) {
+  if (isa<ConstantSDNode>(RHS) && cast<ConstantSDNode>(RHS)->getValue() == 0 &&
+      CC == ISD::SETNE && 
+      ((LHS.getOpcode() == V8ISD::SELECT_ICC &&
+        LHS.getOperand(3).getOpcode() == V8ISD::CMPICC) ||
+       (LHS.getOpcode() == V8ISD::SELECT_FCC &&
+        LHS.getOperand(3).getOpcode() == V8ISD::CMPFCC)) &&
+      isa<ConstantSDNode>(LHS.getOperand(0)) &&
+      isa<ConstantSDNode>(LHS.getOperand(1)) &&
+      cast<ConstantSDNode>(LHS.getOperand(0))->getValue() == 1 &&
+      cast<ConstantSDNode>(LHS.getOperand(1))->getValue() == 0) {
+    SDOperand CMPCC = LHS.getOperand(3);
+    V8CC = cast<ConstantSDNode>(LHS.getOperand(2))->getValue();
+    LHS = CMPCC.getOperand(0);
+    RHS = CMPCC.getOperand(1);
+  }
+}
+
+
 SDOperand SparcV8TargetLowering::
 LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
@@ -770,8 +792,14 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand LHS = Op.getOperand(2);
     SDOperand RHS = Op.getOperand(3);
     SDOperand Dest = Op.getOperand(4);
+    unsigned Opc, V8CC = ~0U;
+    
+    // If this is a br_cc of a "setcc", and if the setcc got lowered into
+    // an CMP[IF]CC/SELECT_[IF]CC pair, find the original compared values.
+    LookThroughSetCC(LHS, RHS, CC, V8CC);
     
     // Get the condition flag.
+    SDOperand CompareFlag;
     if (LHS.getValueType() == MVT::i32) {
       std::vector<MVT::ValueType> VTs;
       VTs.push_back(MVT::i32);
@@ -779,14 +807,16 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       std::vector<SDOperand> Ops;
       Ops.push_back(LHS);
       Ops.push_back(RHS);
-      SDOperand Cond = DAG.getNode(V8ISD::CMPICC, VTs, Ops).getValue(1);
-      SDOperand CCN = DAG.getConstant(IntCondCCodeToICC(CC), MVT::i32);
-      return DAG.getNode(V8ISD::BRICC, MVT::Other, Chain, Dest, CCN, Cond);
+      CompareFlag = DAG.getNode(V8ISD::CMPICC, VTs, Ops).getValue(1);
+      if (V8CC == ~0U) V8CC = IntCondCCodeToICC(CC);
+      Opc = V8ISD::BRICC;
     } else {
-      SDOperand Cond = DAG.getNode(V8ISD::CMPFCC, MVT::Flag, LHS, RHS);
-      SDOperand CCN = DAG.getConstant(FPCondCCodeToFCC(CC), MVT::i32);
-      return DAG.getNode(V8ISD::BRFCC, MVT::Other, Chain, Dest, CCN, Cond);
+      CompareFlag = DAG.getNode(V8ISD::CMPFCC, MVT::Flag, LHS, RHS);
+      if (V8CC == ~0U) V8CC = FPCondCCodeToFCC(CC);
+      Opc = V8ISD::BRFCC;
     }
+    return DAG.getNode(Opc, MVT::Other, Chain, Dest,
+                       DAG.getConstant(V8CC, MVT::i32), CompareFlag);
   }
   case ISD::SELECT_CC: {
     SDOperand LHS = Op.getOperand(0);
@@ -798,21 +828,7 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
 
     // If this is a select_cc of a "setcc", and if the setcc got lowered into
     // an CMP[IF]CC/SELECT_[IF]CC pair, find the original compared values.
-    if (isa<ConstantSDNode>(RHS) && cast<ConstantSDNode>(RHS)->getValue() == 0&&
-        CC == ISD::SETNE && 
-        ((LHS.getOpcode() == V8ISD::SELECT_ICC &&
-          LHS.getOperand(3).getOpcode() == V8ISD::CMPICC) ||
-         (LHS.getOpcode() == V8ISD::SELECT_FCC &&
-          LHS.getOperand(3).getOpcode() == V8ISD::CMPFCC)) &&
-        isa<ConstantSDNode>(LHS.getOperand(0)) &&
-        isa<ConstantSDNode>(LHS.getOperand(1)) &&
-        cast<ConstantSDNode>(LHS.getOperand(0))->getValue() == 1 &&
-        cast<ConstantSDNode>(LHS.getOperand(1))->getValue() == 0) {
-      SDOperand CMPCC = LHS.getOperand(3);
-      V8CC = cast<ConstantSDNode>(LHS.getOperand(2))->getValue();
-      LHS = CMPCC.getOperand(0);
-      RHS = CMPCC.getOperand(1);
-    }
+    LookThroughSetCC(LHS, RHS, CC, V8CC);
     
     SDOperand CompareFlag;
     if (LHS.getValueType() == MVT::i32) {
