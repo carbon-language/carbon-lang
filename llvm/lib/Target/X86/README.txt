@@ -247,21 +247,19 @@ llvm-as < setuge.ll | llc -march=x86 -mcpu=yonah -enable-x86-sse
 
 _cmp:
         subl $4, %esp
-1)      leal 20(%esp), %eax
+        leal 20(%esp), %eax
         movss 12(%esp), %xmm0
-1)      leal 16(%esp), %ecx
+        leal 16(%esp), %ecx
         ucomiss 8(%esp), %xmm0
         cmovb %ecx, %eax
-2)      movss (%eax), %xmm0
-2)      movss %xmm0, (%esp)
+1)      movss (%eax), %xmm0
+1)      movss %xmm0, (%esp)
         flds (%esp)
         addl $4, %esp
         ret
 
 
-1) These LEA's should be adds.  This is tricky because they are FrameIndex's
-   before prolog-epilog rewriting.
-2) We shouldn't load into XMM regs only to store it back.
+1) We shouldn't load into XMM regs only to store it back.
 
 //===---------------------------------------------------------------------===//
 
