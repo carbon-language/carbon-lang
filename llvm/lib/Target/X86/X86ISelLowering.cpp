@@ -1912,20 +1912,27 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
         Ops.push_back(Op.getOperand(1));
         Copy = DAG.getNode(X86ISD::FP_SET_RESULT, Tys, Ops);
       } else {
-        // Spill the value to memory and reload it into top of stack.
-        unsigned Size = MVT::getSizeInBits(ArgVT)/8;
-        MachineFunction &MF = DAG.getMachineFunction();
-        int SSFI = MF.getFrameInfo()->CreateStackObject(Size, Size);
-        SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
-        SDOperand Chain = DAG.getNode(ISD::STORE, MVT::Other, Op.getOperand(0), 
-                                      Op.getOperand(1), StackSlot, 
-                                      DAG.getSrcValue(0));
+        SDOperand MemLoc, Chain;
+        SDOperand Value = Op.getOperand(1);
+
+        if (Value.getOpcode() == ISD::LOAD) {
+          Chain  = Value.getOperand(0);
+          MemLoc = Value.getOperand(1);
+        } else {
+          // Spill the value to memory and reload it into top of stack.
+          unsigned Size = MVT::getSizeInBits(ArgVT)/8;
+          MachineFunction &MF = DAG.getMachineFunction();
+          int SSFI = MF.getFrameInfo()->CreateStackObject(Size, Size);
+          MemLoc = DAG.getFrameIndex(SSFI, getPointerTy());
+          Chain = DAG.getNode(ISD::STORE, MVT::Other, Op.getOperand(0), 
+                              Value, MemLoc, DAG.getSrcValue(0));
+        }
         std::vector<MVT::ValueType> Tys;
         Tys.push_back(MVT::f64);
         Tys.push_back(MVT::Other);
         std::vector<SDOperand> Ops;
         Ops.push_back(Chain);
-        Ops.push_back(StackSlot);
+        Ops.push_back(MemLoc);
         Ops.push_back(DAG.getValueType(ArgVT));
         Copy = DAG.getNode(X86ISD::FLD, Tys, Ops);
         Tys.clear();
