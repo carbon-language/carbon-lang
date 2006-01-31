@@ -194,7 +194,8 @@ void ScheduleDAG::EmitNode(NodeInfo *NI) {
         MI->addFrameIndexOperand(FI->getIndex());
       } else if (ConstantPoolSDNode *CP = 
                     dyn_cast<ConstantPoolSDNode>(Node->getOperand(i))) {
-        unsigned Idx = ConstPool->getConstantPoolIndex(CP->get());
+        unsigned Idx = ConstPool->getConstantPoolIndex(CP->get(),
+                                                       CP->getAlignment());
         MI->addConstantPoolIndexOperand(Idx);
       } else if (ExternalSymbolSDNode *ES = 
                  dyn_cast<ExternalSymbolSDNode>(Node->getOperand(i))) {

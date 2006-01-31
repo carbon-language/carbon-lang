@@ -389,8 +389,9 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, OutLo, OutHi);
   }
   case ISD::ConstantPool: {
-    Constant *C = cast<ConstantPoolSDNode>(Op)->get();
-    SDOperand CPI = DAG.getTargetConstantPool(C, MVT::i32);
+    ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);
+    Constant *C = CP->get();
+    SDOperand CPI = DAG.getTargetConstantPool(C, MVT::i32, CP->getAlignment());
     SDOperand Zero = DAG.getConstant(0, MVT::i32);
     
     if (PPCGenerateStaticCode) {

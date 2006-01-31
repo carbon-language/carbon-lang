@@ -442,8 +442,10 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
 
   case ISD::ConstantPool: { // TODO: nuke the constant pool
 			    //       (ia64 doesn't need one)
-    Constant *C = cast<ConstantPoolSDNode>(N)->get();
-    SDOperand CPI = CurDAG->getTargetConstantPool(C, MVT::i64);
+    ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(N);
+    Constant *C = CP->get();
+    SDOperand CPI = CurDAG->getTargetConstantPool(C, MVT::i64,
+                                                  CP->getAlignment());
     return CurDAG->getTargetNode(IA64::ADDL_GA, MVT::i64, // ?
 	                      CurDAG->getRegister(IA64::r1, MVT::i64), CPI);
   }

@@ -482,8 +482,9 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       }
   }
   case ISD::ConstantPool: {
-    Constant *C = cast<ConstantPoolSDNode>(Op)->get();
-    SDOperand CPI = DAG.getTargetConstantPool(C, MVT::i64);
+    ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);
+    Constant *C = CP->get();
+    SDOperand CPI = DAG.getTargetConstantPool(C, MVT::i64, CP->getAlignment());
     
     SDOperand Hi = DAG.getNode(AlphaISD::GPRelHi,  MVT::i64, CPI,
 			       DAG.getNode(AlphaISD::GlobalBaseReg, MVT::i64));

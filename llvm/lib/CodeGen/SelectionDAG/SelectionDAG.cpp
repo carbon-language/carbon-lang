@@ -310,10 +310,14 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
     Erased = TargetFrameIndices.erase(cast<FrameIndexSDNode>(N)->getIndex());
     break;
   case ISD::ConstantPool:
-    Erased = ConstantPoolIndices.erase(cast<ConstantPoolSDNode>(N)->get());
+    Erased = ConstantPoolIndices.
+      erase(std::make_pair(cast<ConstantPoolSDNode>(N)->get(),
+                           cast<ConstantPoolSDNode>(N)->getAlignment()));
     break;
   case ISD::TargetConstantPool:
-    Erased =TargetConstantPoolIndices.erase(cast<ConstantPoolSDNode>(N)->get());
+    Erased = TargetConstantPoolIndices.
+      erase(std::make_pair(cast<ConstantPoolSDNode>(N)->get(),
+                           cast<ConstantPoolSDNode>(N)->getAlignment()));
     break;
   case ISD::BasicBlock:
     Erased = BBNodes.erase(cast<BasicBlockSDNode>(N)->getBasicBlock());
@@ -655,18 +659,20 @@ SDOperand SelectionDAG::getTargetFrameIndex(int FI, MVT::ValueType VT) {
   return SDOperand(N, 0);
 }
 
-SDOperand SelectionDAG::getConstantPool(Constant *C, MVT::ValueType VT) {
-  SDNode *&N = ConstantPoolIndices[C];
+SDOperand SelectionDAG::getConstantPool(Constant *C, MVT::ValueType VT,
+                                        unsigned Alignment) {
+  SDNode *&N = ConstantPoolIndices[std::make_pair(C, Alignment)];
   if (N) return SDOperand(N, 0);
-  N = new ConstantPoolSDNode(C, VT, false);
+  N = new ConstantPoolSDNode(C, VT, Alignment, false);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
 
-SDOperand SelectionDAG::getTargetConstantPool(Constant *C, MVT::ValueType VT) {
-  SDNode *&N = TargetConstantPoolIndices[C];
+SDOperand SelectionDAG::getTargetConstantPool(Constant *C, MVT::ValueType VT,
+                                              unsigned Alignment) {
+  SDNode *&N = TargetConstantPoolIndices[std::make_pair(C, Alignment)];
   if (N) return SDOperand(N, 0);
-  N = new ConstantPoolSDNode(C, VT, true);
+  N = new ConstantPoolSDNode(C, VT, Alignment, true);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }

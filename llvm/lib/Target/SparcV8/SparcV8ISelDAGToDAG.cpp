@@ -693,7 +693,8 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   }
   case ISD::ConstantPool: {
     Constant *C = cast<ConstantPoolSDNode>(Op)->get();
-    SDOperand CP = DAG.getTargetConstantPool(C, MVT::i32);
+    SDOperand CP = DAG.getTargetConstantPool(C, MVT::i32,
+                                  cast<ConstantPoolSDNode>(Op)->getAlignment());
     SDOperand Hi = DAG.getNode(V8ISD::Hi, MVT::i32, CP);
     SDOperand Lo = DAG.getNode(V8ISD::Lo, MVT::i32, CP);
     return DAG.getNode(ISD::ADD, MVT::i32, Lo, Hi);

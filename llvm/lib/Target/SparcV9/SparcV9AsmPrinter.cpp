@@ -209,11 +209,14 @@ namespace {
     // Print a constant (which may be an aggregate) prefixed by all the
     // appropriate directives.  Uses printConstantValueOnly() to print the
     // value or values.
-    void printConstant(const Constant* CV, std::string valID = "") {
+    void printConstant(const Constant* CV, unsigned Alignment,
+                       std::string valID = "") {
       if (valID.length() == 0)
         valID = getID(CV);
 
-      O << "\t.align\t" << ConstantToAlignment(CV, TM) << "\n";
+      if (Alignment == 0)
+        Alignment = ConstantToAlignment(CV, TM);
+      O << "\t.align\t" << Alignment << "\n";
 
       // Print .size and .type only if it is not a string.
       if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV))
@@ -721,12 +724,12 @@ void SparcV9AsmPrinter::emitFunction(const Function &F) {
 
   // Emit constant pool for this function
   const MachineConstantPool *MCP = MF.getConstantPool();
-  const std::vector<Constant*> &CP = MCP->getConstants();
+  const std::vector<std::pair<Constant*, unsigned> > &CP = MCP->getConstants();
 
   enterSection(ReadOnlyData);
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     std::string cpiName = ".CPI_" + CurrentFnName + "_" + utostr(i);
-    printConstant(CP[i], cpiName);
+    printConstant(CP[i].first, CP[i].second, cpiName);
   }
 
   enterSection(Text);
@@ -755,7 +758,7 @@ void SparcV9AsmPrinter::printGlobalVariable(const GlobalVariable* GV) {
   if (GV->hasInitializer() &&
       !(GV->getInitializer()->isNullValue() ||
         isa<UndefValue>(GV->getInitializer()))) {
-    printConstant(GV->getInitializer(), getID(GV));
+    printConstant(GV->getInitializer(), 0, getID(GV));
   } else {
     O << "\t.align\t" << TypeToAlignment(GV->getType()->getElementType(),
                                                 TM) << "\n";

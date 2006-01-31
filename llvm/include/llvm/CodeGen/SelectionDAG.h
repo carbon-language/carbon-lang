@@ -120,8 +120,10 @@ public:
                                    int offset = 0);
   SDOperand getFrameIndex(int FI, MVT::ValueType VT);
   SDOperand getTargetFrameIndex(int FI, MVT::ValueType VT);
-  SDOperand getConstantPool(Constant *C, MVT::ValueType VT);
-  SDOperand getTargetConstantPool(Constant *C, MVT::ValueType VT);
+  SDOperand getConstantPool(Constant *C, MVT::ValueType VT,
+                            unsigned Alignment=0);
+  SDOperand getTargetConstantPool(Constant *C, MVT::ValueType VT,
+                                  unsigned Alignment=0);
   SDOperand getBasicBlock(MachineBasicBlock *MBB);
   SDOperand getExternalSymbol(const char *Sym, MVT::ValueType VT);
   SDOperand getTargetExternalSymbol(const char *Sym, MVT::ValueType VT);
@@ -606,8 +608,8 @@ private:
   std::map<std::pair<uint64_t, MVT::ValueType>, SDNode*> ConstantFPs;
   std::map<std::pair<uint64_t, MVT::ValueType>, SDNode*> TargetConstantFPs;
   std::map<int, SDNode*> FrameIndices, TargetFrameIndices;
-  std::map<Constant *, SDNode*> ConstantPoolIndices;
-  std::map<Constant *, SDNode*> TargetConstantPoolIndices;
+  std::map<std::pair<Constant *, unsigned>, SDNode*> ConstantPoolIndices;
+  std::map<std::pair<Constant *, unsigned>, SDNode*> TargetConstantPoolIndices;
   std::map<MachineBasicBlock *, SDNode*> BBNodes;
   std::vector<SDNode*> ValueTypeNodes;
   std::map<std::string, SDNode*> ExternalSymbols;

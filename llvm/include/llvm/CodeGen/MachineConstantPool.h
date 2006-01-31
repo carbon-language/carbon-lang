@@ -30,20 +30,23 @@ namespace llvm {
 class Constant;
 
 class MachineConstantPool {
-  std::vector<Constant*> Constants;
+  std::vector<std::pair<Constant*,unsigned> > Constants;
 public:
 
   /// getConstantPoolIndex - Create a new entry in the constant pool or return
-  /// an existing one.
+  /// an existing one. User may specify an alignment that is greater than the
+  /// default alignment. If one is not specified, it will be 0.
   ///
-  unsigned getConstantPoolIndex(Constant *C) {
+  unsigned getConstantPoolIndex(Constant *C, unsigned Alignment = 0) {
     // Check to see if we already have this constant.
     //
     // FIXME, this could be made much more efficient for large constant pools.
     for (unsigned i = 0, e = Constants.size(); i != e; ++i)
-      if (Constants[i] == C)
+      if (Constants[i].first == C) {
+        Constants[i].second = std::max(Constants[i].second, Alignment);
         return i;
-    Constants.push_back(C);
+      }
+    Constants.push_back(std::make_pair(C, Alignment));
     return Constants.size()-1;
   }
 
@@ -51,7 +54,9 @@ public:
   ///
   bool isEmpty() const { return Constants.empty(); }
 
-  const std::vector<Constant*> &getConstants() const { return Constants; }
+  const std::vector<std::pair<Constant*,unsigned> > &getConstants() const {
+    return Constants;
+  }
 
   /// print - Used by the MachineFunction printer to print information about
   /// stack objects.  Implemented in MachineFunction.cpp

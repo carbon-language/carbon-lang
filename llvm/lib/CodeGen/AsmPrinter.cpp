@@ -103,7 +103,7 @@ void AsmPrinter::SetupMachineFunction(MachineFunction &MF) {
 /// the code generator.
 ///
 void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
-  const std::vector<Constant*> &CP = MCP->getConstants();
+  const std::vector<std::pair<Constant*, unsigned> > &CP = MCP->getConstants();
   if (CP.empty()) return;
   const TargetData &TD = TM.getTargetData();
   
@@ -111,13 +111,17 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     // FIXME: force doubles to be naturally aligned.  We should handle this
     // more correctly in the future.
-    unsigned Alignment = TD.getTypeAlignmentShift(CP[i]->getType());
-    if (CP[i]->getType() == Type::DoubleTy && Alignment < 3) Alignment = 3;
+    unsigned Alignment = CP[i].second;
+    if (Alignment == 0) {
+      Alignment = TD.getTypeAlignmentShift(CP[i].first->getType());
+      if (CP[i].first->getType() == Type::DoubleTy && Alignment < 3)
+        Alignment = 3;
+    }
     
     EmitAlignment(Alignment);
     O << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << '_' << i
-      << ":\t\t\t\t\t" << CommentString << *CP[i] << '\n';
-    EmitGlobalConstant(CP[i]);
+      << ":\t\t\t\t\t" << CommentString << *CP[i].first << '\n';
+    EmitGlobalConstant(CP[i].first);
   }
 }
 

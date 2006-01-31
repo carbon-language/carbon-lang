@@ -1058,14 +1058,20 @@ public:
 
 class ConstantPoolSDNode : public SDNode {
   Constant *C;
+  unsigned Alignment;
 protected:
   friend class SelectionDAG;
   ConstantPoolSDNode(Constant *c, MVT::ValueType VT, bool isTarget)
     : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool, VT),
-    C(c) {}
+    C(c), Alignment(0) {}
+  ConstantPoolSDNode(Constant *c, MVT::ValueType VT, unsigned Align,
+                     bool isTarget)
+    : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool, VT),
+    C(c), Alignment(Align) {}
 public:
 
   Constant *get() const { return C; }
+  unsigned getAlignment() const { return Alignment; }
 
   static bool classof(const ConstantPoolSDNode *) { return true; }
   static bool classof(const SDNode *N) {
