@@ -53,3 +53,5 @@ int %t1(int %a, int %b) {
 
 * Implement frame pointer elimination, e.g. eliminate save/restore for 
   leaf fns.
+* Fill delay slots
+
