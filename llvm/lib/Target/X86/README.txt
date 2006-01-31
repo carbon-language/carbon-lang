@@ -215,53 +215,6 @@ when it can invert the result of the compare for free.
 
 //===---------------------------------------------------------------------===//
 
-The code generated for 'abs' is truly aweful:
-
-float %foo(float %tmp.38) {
-       %tmp.39 = setgt float %tmp.38, 0.000000e+00
-        %tmp.45 = sub float -0.000000e+00, %tmp.38
-        %mem_tmp.0.0 = select bool %tmp.39, float %tmp.38, float %tmp.45
-        ret float %mem_tmp.0.0
-}
-
-_foo:
-        subl $4, %esp
-        movss LCPI1_0, %xmm0
-        movss 8(%esp), %xmm1
-        subss %xmm1, %xmm0
-        xorps %xmm2, %xmm2
-        ucomiss %xmm2, %xmm1
-        setp %al
-        seta %cl
-        orb %cl, %al
-        testb %al, %al
-        jne LBB_foo_2   # 
-LBB_foo_1:      # 
-        movss %xmm0, %xmm1
-LBB_foo_2:      # 
-        movss %xmm1, (%esp)
-        flds (%esp)
-        addl $4, %esp
-        ret
-
-This should be a high-priority to fix.  With the fp-stack, this is a single
-instruction.  With SSE it could be far better than this.  Why is the sequence
-above using 'setp'?  It shouldn't care about nan's.
-
-//===---------------------------------------------------------------------===//
-
-Is there a better way to implement Y = -X (fneg) than the literal code:
-
-float %test(float %X) {
-        %Y = sub float -0.0, %X
-        ret float %Y
-}
-
-        movss LCPI1_0, %xmm0   ;; load -0.0
-        subss 8(%esp), %xmm0   ;; subtract
-
-//===---------------------------------------------------------------------===//
-
 None of the SSE instructions are handled in X86RegisterInfo::foldMemoryOperand,
 which prevents the spiller from folding spill code into the instructions.
 
@@ -358,5 +311,3 @@ _test:
 
 This is bad for register pressure, though the dag isel is producing a 
 better schedule. :)
-
-
