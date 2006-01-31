@@ -314,3 +314,49 @@ _cmp:
 
 Think about doing i64 math in SSE regs.
 
+//===---------------------------------------------------------------------===//
+
+The DAG Isel doesn't fold the loads into the adds in this testcase.  The
+pattern selector does.  This is because the chain value of the load gets 
+selected first, and the loads aren't checking to see if they are only used by
+and add.
+
+.ll:
+
+int %test(int* %x, int* %y, int* %z) {
+        %X = load int* %x
+        %Y = load int* %y
+        %Z = load int* %z
+        %a = add int %X, %Y
+        %b = add int %a, %Z
+        ret int %b
+}
+
+dag isel:
+
+_test:
+        movl 4(%esp), %eax
+        movl (%eax), %eax
+        movl 8(%esp), %ecx
+        movl (%ecx), %ecx
+        addl %ecx, %eax
+        movl 12(%esp), %ecx
+        movl (%ecx), %ecx
+        addl %ecx, %eax
+        ret
+
+pattern isel:
+
+_test:
+        movl 12(%esp), %ecx
+        movl 4(%esp), %edx
+        movl 8(%esp), %eax
+        movl (%eax), %eax
+        addl (%edx), %eax
+        addl (%ecx), %eax
+        ret
+
+This is bad for register pressure, though the dag isel is producing a 
+better schedule. :)
+
+
