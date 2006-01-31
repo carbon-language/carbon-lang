@@ -192,7 +192,7 @@ def MRM6m  : Format<30>; def MRM7m  : Format<31>;
 
 //===----------------------------------------------------------------------===//
 // X86 Instruction Predicate Definitions.
-def HasSSE1 : Predicate<"Subtarget->hasSSE()">;
+def HasSSE1 : Predicate<"Subtarget->hasSSE1()">;
 def HasSSE2 : Predicate<"Subtarget->hasSSE2()">;
 def HasSSE3 : Predicate<"Subtarget->hasSSE3()">;
 def FPStack : Predicate<"!Subtarget->hasSSE2()">;

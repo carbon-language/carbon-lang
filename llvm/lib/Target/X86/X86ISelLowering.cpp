@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/ADT/VectorExtras.h"
 using namespace llvm;
 
 // FIXME: temporary.
@@ -564,7 +565,7 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
     Ops.push_back(DAG.getConstant(NumBytes, getPointerTy()));
     Ops.push_back(DAG.getConstant(0, getPointerTy()));
 
-    SDOperand TheCall = DAG.getNode(isTailCall ? X86ISD::TAILCALL : X86ISD::CALL,
+    SDOperand TheCall = DAG.getNode(isTailCall ? X86ISD::TAILCALL :X86ISD::CALL,
                                     RetVals, Ops);
 
     SDOperand ResultVal;
@@ -1068,7 +1069,7 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
     // Pass register arguments as needed.
     Ops.insert(Ops.end(), RegValuesToPass.begin(), RegValuesToPass.end());
 
-    SDOperand TheCall = DAG.getNode(isTailCall ? X86ISD::TAILCALL : X86ISD::CALL,
+    SDOperand TheCall = DAG.getNode(isTailCall ? X86ISD::TAILCALL :X86ISD::CALL,
                                     RetVals, Ops);
     Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, TheCall);
 
@@ -1157,7 +1158,8 @@ static unsigned getCondBrOpcodeForX86CC(unsigned X86CC) {
 /// specific condition code. It returns a false if it cannot do a direct
 /// translation. X86CC is the translated CondCode. Flip is set to true if the
 /// the order of comparison operands should be flipped.
-static bool translateX86CC(SDOperand CC, bool isFP, unsigned &X86CC, bool &Flip) {
+static bool translateX86CC(SDOperand CC, bool isFP, unsigned &X86CC,
+                           bool &Flip) {
   ISD::CondCode SetCCOpcode = cast<CondCodeSDNode>(CC)->get();
   Flip = false;
   X86CC = X86ISD::COND_INVALID;
@@ -1234,10 +1236,10 @@ X86TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
   default: assert(false && "Unexpected instr type to insert");
   case X86::CMOV_FR32:
   case X86::CMOV_FR64: {
-    // To "insert" a SELECT_CC instruction, we actually have to insert the diamond
-    // control-flow pattern.  The incoming instruction knows the destination vreg
-    // to set, the condition code register to branch on, the true/false values to
-    // select between, and a branch opcode to use.
+    // To "insert" a SELECT_CC instruction, we actually have to insert the
+    // diamond control-flow pattern.  The incoming instruction knows the
+    // destination vreg to set, the condition code register to branch on, the
+    // true/false values to select between, and a branch opcode to use.
     const BasicBlock *LLVM_BB = BB->getBasicBlock();
     ilist<MachineBasicBlock>::iterator It = BB;
     ++It;
@@ -1956,4 +1958,40 @@ bool X86TargetLowering::isMaskedValueZeroForTargetNode(const SDOperand &Op,
   }
 
   return false;
+}
+
+std::vector<unsigned> X86TargetLowering::
+getRegForInlineAsmConstraint(const std::string &Constraint) const {
+  if (Constraint.size() == 1) {
+    // FIXME: not handling fp-stack yet!
+    // FIXME: not handling MMX registers yet ('y' constraint).
+    switch (Constraint[0]) {      // GCC X86 Constraint Letters
+    default: break;  // Unknown constriant letter
+    case 'r':   // GENERAL_REGS
+    case 'R':   // LEGACY_REGS
+      return make_vector<unsigned>(X86::EAX, X86::EBX, X86::ECX, X86::EDX,
+                                   X86::ESI, X86::EDI, X86::EBP, X86::ESP, 0);
+    case 'l':   // INDEX_REGS
+      return make_vector<unsigned>(X86::EAX, X86::EBX, X86::ECX, X86::EDX,
+                                   X86::ESI, X86::EDI, X86::EBP, 0);
+    case 'q':   // Q_REGS (GENERAL_REGS in 64-bit mode)
+    case 'Q':   // Q_REGS
+      return make_vector<unsigned>(X86::EAX, X86::EBX, X86::ECX, X86::EDX, 0);
+    case 'x':   // SSE_REGS if SSE1 allowed
+      if (Subtarget->hasSSE1())
+        return make_vector<unsigned>(X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3,
+                                     X86::XMM4, X86::XMM5, X86::XMM6, X86::XMM7,
+                                     0);
+      return std::vector<unsigned>();
+    case 'Y':   // SSE_REGS if SSE2 allowed
+      if (Subtarget->hasSSE2())
+        return make_vector<unsigned>(X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3,
+                                     X86::XMM4, X86::XMM5, X86::XMM6, X86::XMM7,
+                                     0);
+      return std::vector<unsigned>();
+    }
+  }
+  
+  // Handle explicit register names.
+  return TargetLowering::getRegForInlineAsmConstraint(Constraint);
 }

@@ -24,14 +24,14 @@ class Module;
 class X86Subtarget : public TargetSubtarget {
 protected:
   enum X86SSEEnum {
-    NoMMXSSE, MMX, SSE, SSE2, SSE3
+    NoMMXSSE, MMX, SSE1, SSE2, SSE3
   };
 
   enum X863DNowEnum {
     NoThreeDNow, ThreeDNow, ThreeDNowA
   };
 
-  /// X86SSELevel - MMX, SSE, SSE2, SSE3, or none supported.
+  /// X86SSELevel - MMX, SSE1, SSE2, SSE3, or none supported.
   X86SSEEnum X86SSELevel;
 
   /// X863DNowLevel - 3DNow or 3DNow Athlon, or none supported.
@@ -76,7 +76,7 @@ public:
   bool is64Bit() const { return Is64Bit; }
 
   bool hasMMX() const { return X86SSELevel >= MMX; }
-  bool hasSSE() const { return X86SSELevel >= SSE; }
+  bool hasSSE1() const { return X86SSELevel >= SSE1; }
   bool hasSSE2() const { return X86SSELevel >= SSE2; }
   bool hasSSE3() const { return X86SSELevel >= SSE3; }
   bool has3DNow() const { return X863DNowLevel >= ThreeDNow; }

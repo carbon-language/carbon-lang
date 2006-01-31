@@ -216,6 +216,8 @@ namespace llvm {
 
     SDOperand getReturnAddressFrameIndex(SelectionDAG &DAG);
 
+    std::vector<unsigned> 
+      getRegForInlineAsmConstraint(const std::string &Constraint) const;
   private:
     // C Calling Convention implementation.
     std::vector<SDOperand> LowerCCCArguments(Function &F, SelectionDAG &DAG);

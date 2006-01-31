@@ -24,7 +24,7 @@ def Feature64Bit     : SubtargetFeature<"64bit", "Is64Bit", "true",
                                         "Enable 64-bit instructions">;
 def FeatureMMX       : SubtargetFeature<"mmx","X86SSELevel", "MMX",
                                         "Enable MMX instructions">;
-def FeatureSSE       : SubtargetFeature<"sse", "X86SSELevel", "SSE",
+def FeatureSSE1      : SubtargetFeature<"sse", "X86SSELevel", "SSE1",
                                         "Enable SSE instructions">;
 def FeatureSSE2      : SubtargetFeature<"sse2", "X86SSELevel", "SSE2",
                                         "Enable SSE2 instructions">;
@@ -50,16 +50,16 @@ def : Proc<"pentium-mmx",     [FeatureMMX]>;
 def : Proc<"i686",            []>;
 def : Proc<"pentiumpro",      []>;
 def : Proc<"pentium2",        [FeatureMMX]>;
-def : Proc<"pentium3",        [FeatureMMX, FeatureSSE]>;
-def : Proc<"pentium-m",       [FeatureMMX, FeatureSSE, FeatureSSE2]>;
-def : Proc<"pentium4",        [FeatureMMX, FeatureSSE, FeatureSSE2]>;
-def : Proc<"x86-64",          [FeatureMMX, FeatureSSE, FeatureSSE2,
+def : Proc<"pentium3",        [FeatureMMX, FeatureSSE1]>;
+def : Proc<"pentium-m",       [FeatureMMX, FeatureSSE1, FeatureSSE2]>;
+def : Proc<"pentium4",        [FeatureMMX, FeatureSSE1, FeatureSSE2]>;
+def : Proc<"x86-64",          [FeatureMMX, FeatureSSE1, FeatureSSE2,
                                Feature64Bit]>;
-def : Proc<"yonah",           [FeatureMMX, FeatureSSE, FeatureSSE2,
+def : Proc<"yonah",           [FeatureMMX, FeatureSSE1, FeatureSSE2,
                                FeatureSSE3]>;
-def : Proc<"prescott",        [FeatureMMX, FeatureSSE, FeatureSSE2,
+def : Proc<"prescott",        [FeatureMMX, FeatureSSE1, FeatureSSE2,
                                FeatureSSE3]>;
-def : Proc<"nocona",          [FeatureMMX, FeatureSSE, FeatureSSE2,
+def : Proc<"nocona",          [FeatureMMX, FeatureSSE1, FeatureSSE2,
                                FeatureSSE3, Feature64Bit]>;
 
 def : Proc<"k6",              [FeatureMMX]>;
@@ -67,25 +67,25 @@ def : Proc<"k6-2",            [FeatureMMX, Feature3DNow]>;
 def : Proc<"k6-3",            [FeatureMMX, Feature3DNow]>;
 def : Proc<"athlon",          [FeatureMMX, Feature3DNow, Feature3DNowA]>;
 def : Proc<"athlon-tbird",    [FeatureMMX, Feature3DNow, Feature3DNowA]>;
-def : Proc<"athlon-4",        [FeatureMMX, FeatureSSE, Feature3DNow,
+def : Proc<"athlon-4",        [FeatureMMX, FeatureSSE1, Feature3DNow,
                                Feature3DNowA]>;
-def : Proc<"athlon-xp",       [FeatureMMX, FeatureSSE, Feature3DNow,
+def : Proc<"athlon-xp",       [FeatureMMX, FeatureSSE1, Feature3DNow,
                                Feature3DNowA]>;
-def : Proc<"athlon-mp",       [FeatureMMX, FeatureSSE, Feature3DNow,
+def : Proc<"athlon-mp",       [FeatureMMX, FeatureSSE1, Feature3DNow,
                                Feature3DNowA]>;
-def : Proc<"k8",              [FeatureMMX, FeatureSSE, FeatureSSE2,
+def : Proc<"k8",              [FeatureMMX, FeatureSSE1, FeatureSSE2,
                                Feature3DNow, Feature3DNowA, Feature64Bit]>;
-def : Proc<"opteron",         [FeatureMMX, FeatureSSE, FeatureSSE2,
+def : Proc<"opteron",         [FeatureMMX, FeatureSSE1, FeatureSSE2,
                                Feature3DNow, Feature3DNowA, Feature64Bit]>;
-def : Proc<"athlon64",        [FeatureMMX, FeatureSSE, FeatureSSE2,
+def : Proc<"athlon64",        [FeatureMMX, FeatureSSE1, FeatureSSE2,
                                Feature3DNow, Feature3DNowA, Feature64Bit]>;
-def : Proc<"athlon-fx",       [FeatureMMX, FeatureSSE, FeatureSSE2,
+def : Proc<"athlon-fx",       [FeatureMMX, FeatureSSE1, FeatureSSE2,
                                Feature3DNow, Feature3DNowA, Feature64Bit]>;
 
 def : Proc<"winchip-c6",      [FeatureMMX]>;
 def : Proc<"winchip2",        [FeatureMMX, Feature3DNow]>;
 def : Proc<"c3",              [FeatureMMX, Feature3DNow]>;
-def : Proc<"c3-2",            [FeatureMMX, FeatureSSE]>;
+def : Proc<"c3-2",            [FeatureMMX, FeatureSSE1]>;
 
 //===----------------------------------------------------------------------===//
 // Register File Description
