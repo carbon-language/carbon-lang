@@ -825,6 +825,7 @@ SparcV8TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
   case V8::SELECT_CC_FP_ICC:
   case V8::SELECT_CC_DFP_ICC:
     BROpcode = V8::BCOND;
+    break;
   case V8::SELECT_CC_Int_FCC:
   case V8::SELECT_CC_FP_FCC:
   case V8::SELECT_CC_DFP_FCC:
