@@ -847,7 +847,10 @@ my $TestFinishTime = gmtime() . " GMT<br>" . localtime() . " (local)";
 my $TestPlatform = `uname -a`;
 eval "\$Output = <<ENDOFFILE;$TemplateContents\nENDOFFILE\n";
 WriteFile "$DATE.html", $Output;
-system ( "ln -sf $DATE.html index.html" );
+
+# Remove the symlink before creating it for systems that don't have "ln -sf".
+system ("rm index.html");
+system ("ln -s $DATE.html index.html");
 
 # Change the index.html symlink...
 
