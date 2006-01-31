@@ -1158,7 +1158,6 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
 
   std::vector<std::pair<InlineAsm::ConstraintPrefix, std::string> > 
     Constraints = IA->ParseConstraints();
-
   
   /// AsmNodeOperands - A list of pairs.  The first element is a register, the
   /// second is a bitfield where bit #0 is set if it is a use and bit #1 is set
@@ -1170,7 +1169,69 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
   SDOperand Chain = getRoot();
   SDOperand Flag;
   
-  // FIXME: input copies.
+  // Loop over all of the inputs, copying the operand values into the
+  // appropriate registers and processing the output regs.
+  unsigned RetValReg = 0;
+  std::vector<std::pair<unsigned, Value*> > IndirectStoresToEmit;
+  unsigned OpNum = 1;
+  bool FoundOutputConstraint = false;
+  for (unsigned i = 0, e = Constraints.size(); i != e; ++i) {
+    switch (Constraints[i].first) {
+      case InlineAsm::isOutput: {
+      assert(!FoundOutputConstraint &&
+             "Cannot have multiple output constraints yet!");
+      FoundOutputConstraint = true;
+      assert(I.getType() != Type::VoidTy && "Bad inline asm!");
+      // Copy the output from the appropriate register.
+      std::vector<unsigned> Regs =
+      TLI.getRegForInlineAsmConstraint(Constraints[i].second);
+      assert(Regs.size() == 1 && "Only handle simple regs right now!");
+      RetValReg = Regs[0];
+      
+      // Add information to the INLINEASM node to know that this register is
+      // set.
+      AsmNodeOperands.push_back(DAG.getRegister(RetValReg,
+                                                TLI.getValueType(I.getType())));
+      AsmNodeOperands.push_back(DAG.getConstant(2, MVT::i32)); // ISDEF
+      break;
+    }
+    case InlineAsm::isIndirectOutput: {
+      // Copy the output from the appropriate register.
+      std::vector<unsigned> Regs =
+        TLI.getRegForInlineAsmConstraint(Constraints[i].second);
+      assert(Regs.size() == 1 && "Only handle simple regs right now!");
+      IndirectStoresToEmit.push_back(std::make_pair(Regs[0],
+                                                    I.getOperand(OpNum)));
+      OpNum++;  // Consumes a call operand.
+      
+      // Add information to the INLINEASM node to know that this register is
+      // set.
+      AsmNodeOperands.push_back(DAG.getRegister(Regs[0],
+                                                TLI.getValueType(I.getType())));
+      AsmNodeOperands.push_back(DAG.getConstant(2, MVT::i32)); // ISDEF
+      break;
+    }
+    case InlineAsm::isInput: {
+      // Copy the input into the appropriate register.
+      std::vector<unsigned> Regs =
+        TLI.getRegForInlineAsmConstraint(Constraints[i].second);
+      assert(Regs.size() == 1 && "Only handle simple regs right now!");
+      Chain = DAG.getCopyToReg(Chain, Regs[0], 
+                               getValue(I.getOperand(OpNum)), Flag);
+      Flag = Chain.getValue(1);
+      
+      // Add information to the INLINEASM node to know that this register is
+      // read.
+      AsmNodeOperands.push_back(DAG.getRegister(Regs[0],
+                                                TLI.getValueType(I.getType())));
+      AsmNodeOperands.push_back(DAG.getConstant(1, MVT::i32)); // ISUSE
+      break;
+    }
+    case InlineAsm::isClobber:
+      // Nothing to do.
+      break;
+    }
+  }
   
   // Finish up input operands.
   AsmNodeOperands[0] = Chain;
@@ -1182,8 +1243,40 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
   Chain = DAG.getNode(ISD::INLINEASM, VTs, AsmNodeOperands);
   Flag = Chain.getValue(1);
 
-  // FIXME: Copies out of registers here, setValue(CI).
+  // If this asm returns a register value, copy the result from that register
+  // and set it as the value of the call.
+  if (RetValReg) {
+    SDOperand Val = DAG.getCopyFromReg(Chain, RetValReg,
+                                       TLI.getValueType(I.getType()), Flag);
+    Chain = Val.getValue(1);
+    Flag  = Val.getValue(2);
+    setValue(&I, Val);
+  }
   
+  std::vector<std::pair<SDOperand, Value*> > StoresToEmit;
+  
+  // Process indirect outputs, first output all of the flagged copies out of
+  // physregs.
+  for (unsigned i = 0, e = IndirectStoresToEmit.size(); i != e; ++i) {
+    Value *Ptr = IndirectStoresToEmit[i].second;
+    const Type *Ty = cast<PointerType>(Ptr->getType())->getElementType();
+    SDOperand Val = DAG.getCopyFromReg(Chain, IndirectStoresToEmit[i].first, 
+                                       TLI.getValueType(Ty), Flag);
+    Chain = Val.getValue(1);
+    Flag  = Val.getValue(2);
+    StoresToEmit.push_back(std::make_pair(Val, Ptr));
+    OpNum++;  // Consumes a call operand.
+  }
+  
+  // Emit the non-flagged stores from the physregs.
+  std::vector<SDOperand> OutChains;
+  for (unsigned i = 0, e = StoresToEmit.size(); i != e; ++i)
+    OutChains.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain, 
+                                    StoresToEmit[i].first,
+                                    getValue(StoresToEmit[i].second),
+                                    DAG.getSrcValue(StoresToEmit[i].second)));
+  if (!OutChains.empty())
+    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, OutChains);
   DAG.setRoot(Chain);
 }
 
