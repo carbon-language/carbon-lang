@@ -790,14 +790,122 @@ def FCMPD  : F3_3<2, 0b110101, 0b001010010,
 // V9 Conditional Moves.
 let Predicates = [HasV9], isTwoAddress = 1 in {
   // FIXME: Add instruction encodings for the JIT some day.
-  def MOVNE : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
-                     "movne %icc, $F, $dst",
-                     [(set IntRegs:$dst,
-                           (V8selecticc IntRegs:$F, IntRegs:$T, ICC_NE, ICC))]>;
-  def MOVE : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
-                    "move %icc, $F, $dst",
-                    [(set IntRegs:$dst,
+  // FIXME: Allow regalloc of the condition code some day.
+  
+  // Move Integer Register on Condition (MOVcc) p. 194 of the V9 manual.
+  def MOVNE  : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+                      "movne %icc, $F, $dst",
+                      [(set IntRegs:$dst,
+                          (V8selecticc IntRegs:$F, IntRegs:$T, ICC_NE, ICC))]>;
+  def MOVE   : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+                      "move %icc, $F, $dst",
+                      [(set IntRegs:$dst,
                           (V8selecticc IntRegs:$F, IntRegs:$T, ICC_E, ICC))]>;
+  def MOVG   : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+                      "movg %icc, $F, $dst",
+                      [(set IntRegs:$dst,
+                           (V8selecticc IntRegs:$F, IntRegs:$T, ICC_G, ICC))]>;
+  def MOVLE  : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+                      "movle %icc, $F, $dst",
+                      [(set IntRegs:$dst,
+                          (V8selecticc IntRegs:$F, IntRegs:$T, ICC_LE, ICC))]>;
+  def MOVGE  : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+                      "movge %icc, $F, $dst",
+                      [(set IntRegs:$dst,
+                           (V8selecticc IntRegs:$F, IntRegs:$T, ICC_GE, ICC))]>;
+  def MOVL   : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+                      "movl %icc, $F, $dst",
+                      [(set IntRegs:$dst,
+                           (V8selecticc IntRegs:$F, IntRegs:$T, ICC_L, ICC))]>;
+  def MOVGU   : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+                      "movgu %icc, $F, $dst",
+                      [(set IntRegs:$dst,
+                           (V8selecticc IntRegs:$F, IntRegs:$T, ICC_GU, ICC))]>;
+  def MOVLEU  : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+                      "movleu %icc, $F, $dst",
+                      [(set IntRegs:$dst,
+                          (V8selecticc IntRegs:$F, IntRegs:$T, ICC_LEU, ICC))]>;
+  def MOVCC  : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+                      "movcc %icc, $F, $dst",
+                      [(set IntRegs:$dst,
+                           (V8selecticc IntRegs:$F, IntRegs:$T, ICC_CC, ICC))]>;
+  def MOVCS  : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+                      "movcs %icc, $F, $dst",
+                      [(set IntRegs:$dst,
+                           (V8selecticc IntRegs:$F, IntRegs:$T, ICC_CS, ICC))]>;
+  def MOVPOS : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+                      "movpos %icc, $F, $dst",
+                      [(set IntRegs:$dst,
+                          (V8selecticc IntRegs:$F, IntRegs:$T, ICC_POS, ICC))]>;
+  def MOVNEG : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+                      "movneg %icc, $F, $dst",
+                      [(set IntRegs:$dst,
+                          (V8selecticc IntRegs:$F, IntRegs:$T, ICC_NEG, ICC))]>;
+  def MOVVC  : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+                      "movvc %icc, $F, $dst",
+                      [(set IntRegs:$dst,
+                           (V8selecticc IntRegs:$F, IntRegs:$T, ICC_VC, ICC))]>;
+  def MOVVS  : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+                      "movvs %icc, $F, $dst",
+                      [(set IntRegs:$dst,
+                           (V8selecticc IntRegs:$F, IntRegs:$T, ICC_CS, ICC))]>;
+
+  def MOVFU  : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+                      "movfu %fcc, $F, $dst",
+                      [(set IntRegs:$dst,
+                         (V8selectfcc IntRegs:$F, IntRegs:$T, FCC_U, FCC))]>;
+  def MOVFG  : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+                      "movfg %fcc, $F, $dst",
+                      [(set IntRegs:$dst,
+                         (V8selectfcc IntRegs:$F, IntRegs:$T, FCC_G, FCC))]>;
+  def MOVFUG : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+                      "movfug %fcc, $F, $dst",
+                      [(set IntRegs:$dst,
+                         (V8selectfcc IntRegs:$F, IntRegs:$T, FCC_UG, FCC))]>;
+  def MOVFL  : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+                      "movfl %fcc, $F, $dst",
+                      [(set IntRegs:$dst,
+                         (V8selectfcc IntRegs:$F, IntRegs:$T, FCC_L, FCC))]>;
+  def MOVFUL : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+                      "movful %fcc, $F, $dst",
+                      [(set IntRegs:$dst,
+                         (V8selectfcc IntRegs:$F, IntRegs:$T, FCC_UL, FCC))]>;
+  def MOVFLG : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+                      "movflg %fcc, $F, $dst",
+                      [(set IntRegs:$dst,
+                         (V8selectfcc IntRegs:$F, IntRegs:$T, FCC_LG, FCC))]>;
+  def MOVFNE : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+                      "movfne %fcc, $F, $dst",
+                      [(set IntRegs:$dst,
+                         (V8selectfcc IntRegs:$F, IntRegs:$T, FCC_NE, FCC))]>;
+  def MOVFE  : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+                      "movfe %fcc, $F, $dst",
+                      [(set IntRegs:$dst,
+                         (V8selectfcc IntRegs:$F, IntRegs:$T, FCC_E, FCC))]>;
+  def MOVFUE  : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+                      "movfue %fcc, $F, $dst",
+                      [(set IntRegs:$dst,
+                         (V8selectfcc IntRegs:$F, IntRegs:$T, FCC_UE, FCC))]>;
+  def MOVFGE : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+                      "movfge %fcc, $F, $dst",
+                      [(set IntRegs:$dst,
+                         (V8selectfcc IntRegs:$F, IntRegs:$T, FCC_GE, FCC))]>;
+  def MOVFUGE: Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+                      "movfuge %fcc, $F, $dst",
+                      [(set IntRegs:$dst,
+                         (V8selectfcc IntRegs:$F, IntRegs:$T, FCC_UGE, FCC))]>;
+  def MOVFLE : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+                      "movfle %fcc, $F, $dst",
+                      [(set IntRegs:$dst,
+                         (V8selectfcc IntRegs:$F, IntRegs:$T, FCC_LE, FCC))]>;
+  def MOVFULE: Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+                      "movfule %fcc, $F, $dst",
+                      [(set IntRegs:$dst,
+                         (V8selectfcc IntRegs:$F, IntRegs:$T, FCC_ULE, FCC))]>;
+  def MOVFO  : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+                      "movfo %fcc, $F, $dst",
+                      [(set IntRegs:$dst,
+                         (V8selectfcc IntRegs:$F, IntRegs:$T, FCC_O, FCC))]>;
 }
 
 // Floating-Point Move Instructions, p. 164 of the V9 manual.
