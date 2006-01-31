@@ -51,4 +51,5 @@ int %t1(int %a, int %b) {
 
 * Codegen bswap(load)/store(bswap) -> load/store ASI
 
-
+* Implement frame pointer elimination, e.g. eliminate save/restore for 
+  leaf fns.
