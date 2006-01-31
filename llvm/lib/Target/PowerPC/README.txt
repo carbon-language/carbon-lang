@@ -427,3 +427,36 @@ _test:
 
 without the lwz/stw's.
 
+===-------------------------------------------------------------------------===
+
+Compile this:
+
+int foo(int a) {
+  int b = (a < 8);
+  if (b) {
+    return b * 3;     // ignore the fact that this is always 3.
+  } else {
+    return 2;
+  }
+}
+
+into something not this:
+
+_foo:
+1)      cmpwi cr7, r3, 8
+        mfcr r2, 1
+        rlwinm r2, r2, 29, 31, 31
+1)      cmpwi cr0, r3, 7
+        bgt cr0, LBB1_2 ; UnifiedReturnBlock
+LBB1_1: ; then
+        rlwinm r2, r2, 0, 31, 31
+        mulli r3, r2, 3
+        blr
+LBB1_2: ; UnifiedReturnBlock
+        li r3, 2
+        blr
+
+In particular, the two compares (marked 1) could be shared by reversing one.
+This could be done in the dag combiner, by swapping a BR_CC when a SETCC of the
+same operands (but backwards) exists.  In this case, this wouldn't save us 
+anything though, because the compares still wouldn't be shared.
