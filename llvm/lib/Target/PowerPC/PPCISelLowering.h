@@ -96,6 +96,10 @@ namespace llvm {
 
     virtual MachineBasicBlock *InsertAtEndOfBasicBlock(MachineInstr *MI,
                                                        MachineBasicBlock *MBB);
+    
+    std::vector<unsigned> 
+      getRegForInlineAsmConstraint(const std::string &Constraint) const;
+
   };
 }
 
