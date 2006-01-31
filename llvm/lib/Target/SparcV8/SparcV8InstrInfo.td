@@ -43,6 +43,11 @@ def UseDeprecatedInsts : Predicate<"Subtarget.useDeprecatedV8Instructions()">;
 // Instruction Pattern Stuff
 //===----------------------------------------------------------------------===//
 
+def simm11  : PatLeaf<(imm), [{
+  // simm11 predicate - True if the imm fits in a 11-bit sign extended field.
+  return (((int)N->getValue() << (32-11)) >> (32-11)) == (int)N->getValue();
+}]>;
+
 def simm13  : PatLeaf<(imm), [{
   // simm13 predicate - True if the imm fits in a 13-bit sign extended field.
   return (((int)N->getValue() << (32-13)) >> (32-13)) == (int)N->getValue();
@@ -127,35 +132,41 @@ def retflag       : SDNode<"V8ISD::RET_FLAG", SDT_V8RetFlag,
 
 // Note that these values must be kept in sync with the V8CC::CondCode enum
 // values.
-def ICC_NE  : PatLeaf<(i32  9)>;  // Not Equal
-def ICC_E   : PatLeaf<(i32  1)>;  // Equal
-def ICC_G   : PatLeaf<(i32 10)>;  // Greater
-def ICC_LE  : PatLeaf<(i32  2)>;  // Less or Equal
-def ICC_GE  : PatLeaf<(i32 11)>;  // Greater or Equal
-def ICC_L   : PatLeaf<(i32  3)>;  // Less
-def ICC_GU  : PatLeaf<(i32 12)>;  // Greater Unsigned
-def ICC_LEU : PatLeaf<(i32  4)>;  // Less or Equal Unsigned
-def ICC_CC  : PatLeaf<(i32 13)>;  // Carry Clear/Great or Equal Unsigned
-def ICC_CS  : PatLeaf<(i32  5)>;  // Carry Set/Less Unsigned
-def ICC_POS : PatLeaf<(i32 14)>;  // Positive
-def ICC_NEG : PatLeaf<(i32  6)>;  // Negative
-def ICC_VC  : PatLeaf<(i32 15)>;  // Overflow Clear
-def ICC_VS  : PatLeaf<(i32  7)>;  // Overflow Set
+class ICC_VAL<int N> : PatLeaf<(i32 N)> {
+ int ICCVal = N;
+}
+def ICC_NE  : ICC_VAL< 9>;  // Not Equal
+def ICC_E   : ICC_VAL< 1>;  // Equal
+def ICC_G   : ICC_VAL<10>;  // Greater
+def ICC_LE  : ICC_VAL< 2>;  // Less or Equal
+def ICC_GE  : ICC_VAL<11>;  // Greater or Equal
+def ICC_L   : ICC_VAL< 3>;  // Less
+def ICC_GU  : ICC_VAL<12>;  // Greater Unsigned
+def ICC_LEU : ICC_VAL< 4>;  // Less or Equal Unsigned
+def ICC_CC  : ICC_VAL<13>;  // Carry Clear/Great or Equal Unsigned
+def ICC_CS  : ICC_VAL< 5>;  // Carry Set/Less Unsigned
+def ICC_POS : ICC_VAL<14>;  // Positive
+def ICC_NEG : ICC_VAL< 6>;  // Negative
+def ICC_VC  : ICC_VAL<15>;  // Overflow Clear
+def ICC_VS  : ICC_VAL< 7>;  // Overflow Set
 
-def FCC_U   : PatLeaf<(i32 23)>;  // Unordered
-def FCC_G   : PatLeaf<(i32 22)>;  // Greater
-def FCC_UG  : PatLeaf<(i32 21)>;  // Unordered or Greater
-def FCC_L   : PatLeaf<(i32 20)>;  // Less
-def FCC_UL  : PatLeaf<(i32 19)>;  // Unordered or Less
-def FCC_LG  : PatLeaf<(i32 18)>;  // Less or Greater
-def FCC_NE  : PatLeaf<(i32 17)>;  // Not Equal
-def FCC_E   : PatLeaf<(i32 25)>;  // Equal
-def FCC_UE  : PatLeaf<(i32 24)>;  // Unordered or Equal
-def FCC_GE  : PatLeaf<(i32 25)>;  // Greater or Equal
-def FCC_UGE : PatLeaf<(i32 26)>;  // Unordered or Greater or Equal
-def FCC_LE  : PatLeaf<(i32 27)>;  // Less or Equal
-def FCC_ULE : PatLeaf<(i32 28)>;  // Unordered or Less or Equal
-def FCC_O   : PatLeaf<(i32 29)>;  // Ordered
+class FCC_VAL<int N> : PatLeaf<(i32 N)> {
+  int FCCVal = N;
+}
+def FCC_U   : FCC_VAL<23>;  // Unordered
+def FCC_G   : FCC_VAL<22>;  // Greater
+def FCC_UG  : FCC_VAL<21>;  // Unordered or Greater
+def FCC_L   : FCC_VAL<20>;  // Less
+def FCC_UL  : FCC_VAL<19>;  // Unordered or Less
+def FCC_LG  : FCC_VAL<18>;  // Less or Greater
+def FCC_NE  : FCC_VAL<17>;  // Not Equal
+def FCC_E   : FCC_VAL<25>;  // Equal
+def FCC_UE  : FCC_VAL<24>;  // Unordered or Equal
+def FCC_GE  : FCC_VAL<25>;  // Greater or Equal
+def FCC_UGE : FCC_VAL<26>;  // Unordered or Greater or Equal
+def FCC_LE  : FCC_VAL<27>;  // Less or Equal
+def FCC_ULE : FCC_VAL<28>;  // Unordered or Less or Equal
+def FCC_O   : FCC_VAL<29>;  // Ordered
 
 
 //===----------------------------------------------------------------------===//
@@ -790,122 +801,54 @@ def FCMPD  : F3_3<2, 0b110101, 0b001010010,
 // V9 Conditional Moves.
 let Predicates = [HasV9], isTwoAddress = 1 in {
   // FIXME: Add instruction encodings for the JIT some day.
-  // FIXME: Allow regalloc of the condition code some day.
+  class IntCMOVICCrr<string asmstr, ICC_VAL CC>
+    : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+             asmstr,
+             [(set IntRegs:$dst,
+                          (V8selecticc IntRegs:$F, IntRegs:$T, CC, ICC))]> {
+    int CondBits = CC.ICCVal;
+  }
+  
   
   // Move Integer Register on Condition (MOVcc) p. 194 of the V9 manual.
-  def MOVNE  : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
-                      "movne %icc, $F, $dst",
-                      [(set IntRegs:$dst,
-                          (V8selecticc IntRegs:$F, IntRegs:$T, ICC_NE, ICC))]>;
-  def MOVE   : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
-                      "move %icc, $F, $dst",
-                      [(set IntRegs:$dst,
-                          (V8selecticc IntRegs:$F, IntRegs:$T, ICC_E, ICC))]>;
-  def MOVG   : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
-                      "movg %icc, $F, $dst",
-                      [(set IntRegs:$dst,
-                           (V8selecticc IntRegs:$F, IntRegs:$T, ICC_G, ICC))]>;
-  def MOVLE  : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
-                      "movle %icc, $F, $dst",
-                      [(set IntRegs:$dst,
-                          (V8selecticc IntRegs:$F, IntRegs:$T, ICC_LE, ICC))]>;
-  def MOVGE  : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
-                      "movge %icc, $F, $dst",
-                      [(set IntRegs:$dst,
-                           (V8selecticc IntRegs:$F, IntRegs:$T, ICC_GE, ICC))]>;
-  def MOVL   : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
-                      "movl %icc, $F, $dst",
-                      [(set IntRegs:$dst,
-                           (V8selecticc IntRegs:$F, IntRegs:$T, ICC_L, ICC))]>;
-  def MOVGU   : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
-                      "movgu %icc, $F, $dst",
-                      [(set IntRegs:$dst,
-                           (V8selecticc IntRegs:$F, IntRegs:$T, ICC_GU, ICC))]>;
-  def MOVLEU  : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
-                      "movleu %icc, $F, $dst",
-                      [(set IntRegs:$dst,
-                          (V8selecticc IntRegs:$F, IntRegs:$T, ICC_LEU, ICC))]>;
-  def MOVCC  : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
-                      "movcc %icc, $F, $dst",
-                      [(set IntRegs:$dst,
-                           (V8selecticc IntRegs:$F, IntRegs:$T, ICC_CC, ICC))]>;
-  def MOVCS  : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
-                      "movcs %icc, $F, $dst",
-                      [(set IntRegs:$dst,
-                           (V8selecticc IntRegs:$F, IntRegs:$T, ICC_CS, ICC))]>;
-  def MOVPOS : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
-                      "movpos %icc, $F, $dst",
-                      [(set IntRegs:$dst,
-                          (V8selecticc IntRegs:$F, IntRegs:$T, ICC_POS, ICC))]>;
-  def MOVNEG : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
-                      "movneg %icc, $F, $dst",
-                      [(set IntRegs:$dst,
-                          (V8selecticc IntRegs:$F, IntRegs:$T, ICC_NEG, ICC))]>;
-  def MOVVC  : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
-                      "movvc %icc, $F, $dst",
-                      [(set IntRegs:$dst,
-                           (V8selecticc IntRegs:$F, IntRegs:$T, ICC_VC, ICC))]>;
-  def MOVVS  : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
-                      "movvs %icc, $F, $dst",
-                      [(set IntRegs:$dst,
-                           (V8selecticc IntRegs:$F, IntRegs:$T, ICC_CS, ICC))]>;
+  def MOVNErr   : IntCMOVICCrr< "movne %icc, $F, $dst", ICC_NE>;
+  def MOVErr    : IntCMOVICCrr<  "move %icc, $F, $dst", ICC_E>; 
+  def MOVGrr    : IntCMOVICCrr<  "movg %icc, $F, $dst", ICC_G>;
+  def MOVLErr   : IntCMOVICCrr< "movle %icc, $F, $dst", ICC_LE>;
+  def MOVGErr   : IntCMOVICCrr< "movge %icc, $F, $dst", ICC_GE>;
+  def MOVLrr    : IntCMOVICCrr<  "movl %icc, $F, $dst", ICC_L>;
+  def MOVGUrr   : IntCMOVICCrr< "movgu %icc, $F, $dst", ICC_GU>;
+  def MOVLEUrr  : IntCMOVICCrr<"movleu %icc, $F, $dst", ICC_LEU>;
+  def MOVCCrr   : IntCMOVICCrr< "movcc %icc, $F, $dst", ICC_CC>;
+  def MOVCSrr   : IntCMOVICCrr< "movcs %icc, $F, $dst", ICC_CS>;
+  def MOVPOSrr  : IntCMOVICCrr<"movpos %icc, $F, $dst", ICC_POS>;
+  def MOVNEGrr  : IntCMOVICCrr<"movneg %icc, $F, $dst", ICC_NEG>;
+  def MOVVCrr   : IntCMOVICCrr< "movvc %icc, $F, $dst", ICC_VC>;
+  def MOVVSrr   : IntCMOVICCrr< "movvs %icc, $F, $dst", ICC_VS>;
 
-  def MOVFU  : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
-                      "movfu %fcc, $F, $dst",
-                      [(set IntRegs:$dst,
-                         (V8selectfcc IntRegs:$F, IntRegs:$T, FCC_U, FCC))]>;
-  def MOVFG  : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
-                      "movfg %fcc, $F, $dst",
-                      [(set IntRegs:$dst,
-                         (V8selectfcc IntRegs:$F, IntRegs:$T, FCC_G, FCC))]>;
-  def MOVFUG : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
-                      "movfug %fcc, $F, $dst",
-                      [(set IntRegs:$dst,
-                         (V8selectfcc IntRegs:$F, IntRegs:$T, FCC_UG, FCC))]>;
-  def MOVFL  : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
-                      "movfl %fcc, $F, $dst",
-                      [(set IntRegs:$dst,
-                         (V8selectfcc IntRegs:$F, IntRegs:$T, FCC_L, FCC))]>;
-  def MOVFUL : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
-                      "movful %fcc, $F, $dst",
-                      [(set IntRegs:$dst,
-                         (V8selectfcc IntRegs:$F, IntRegs:$T, FCC_UL, FCC))]>;
-  def MOVFLG : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
-                      "movflg %fcc, $F, $dst",
-                      [(set IntRegs:$dst,
-                         (V8selectfcc IntRegs:$F, IntRegs:$T, FCC_LG, FCC))]>;
-  def MOVFNE : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
-                      "movfne %fcc, $F, $dst",
-                      [(set IntRegs:$dst,
-                         (V8selectfcc IntRegs:$F, IntRegs:$T, FCC_NE, FCC))]>;
-  def MOVFE  : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
-                      "movfe %fcc, $F, $dst",
-                      [(set IntRegs:$dst,
-                         (V8selectfcc IntRegs:$F, IntRegs:$T, FCC_E, FCC))]>;
-  def MOVFUE  : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
-                      "movfue %fcc, $F, $dst",
-                      [(set IntRegs:$dst,
-                         (V8selectfcc IntRegs:$F, IntRegs:$T, FCC_UE, FCC))]>;
-  def MOVFGE : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
-                      "movfge %fcc, $F, $dst",
-                      [(set IntRegs:$dst,
-                         (V8selectfcc IntRegs:$F, IntRegs:$T, FCC_GE, FCC))]>;
-  def MOVFUGE: Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
-                      "movfuge %fcc, $F, $dst",
-                      [(set IntRegs:$dst,
-                         (V8selectfcc IntRegs:$F, IntRegs:$T, FCC_UGE, FCC))]>;
-  def MOVFLE : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
-                      "movfle %fcc, $F, $dst",
-                      [(set IntRegs:$dst,
-                         (V8selectfcc IntRegs:$F, IntRegs:$T, FCC_LE, FCC))]>;
-  def MOVFULE: Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
-                      "movfule %fcc, $F, $dst",
-                      [(set IntRegs:$dst,
-                         (V8selectfcc IntRegs:$F, IntRegs:$T, FCC_ULE, FCC))]>;
-  def MOVFO  : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
-                      "movfo %fcc, $F, $dst",
-                      [(set IntRegs:$dst,
-                         (V8selectfcc IntRegs:$F, IntRegs:$T, FCC_O, FCC))]>;
+  // FIXME: Allow regalloc of the fcc condition code some day.
+  class IntCMOVFCCrr<string asmstr, FCC_VAL CC>
+    : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F),
+             asmstr,
+             [(set IntRegs:$dst,
+                          (V8selectfcc IntRegs:$F, IntRegs:$T, CC, FCC))]> {
+    int CondBits = CC.FCCVal;
+  }
+
+  def MOVFUrr   : IntCMOVFCCrr<  "movfu %fcc, $F, $dst", FCC_U>;
+  def MOVFGrr   : IntCMOVFCCrr<  "movfg %fcc, $F, $dst", FCC_G>;
+  def MOVFUGrr  : IntCMOVFCCrr< "movfug %fcc, $F, $dst", FCC_UG>;
+  def MOVFLrr   : IntCMOVFCCrr<  "movfl %fcc, $F, $dst", FCC_L>;
+  def MOVFULrr  : IntCMOVFCCrr< "movful %fcc, $F, $dst", FCC_UL>;
+  def MOVFLGrr  : IntCMOVFCCrr< "movflg %fcc, $F, $dst", FCC_LG>;
+  def MOVFNErr  : IntCMOVFCCrr< "movfne %fcc, $F, $dst", FCC_NE>;
+  def MOVFErr   : IntCMOVFCCrr<  "movfe %fcc, $F, $dst", FCC_E>;
+  def MOVFUErr  : IntCMOVFCCrr< "movfue %fcc, $F, $dst", FCC_UE>;
+  def MOVFGErr  : IntCMOVFCCrr< "movfge %fcc, $F, $dst", FCC_GE>;
+  def MOVFUGErr : IntCMOVFCCrr<"movfuge %fcc, $F, $dst", FCC_UGE>;
+  def MOVFLErr  : IntCMOVFCCrr< "movfle %fcc, $F, $dst", FCC_LE>;
+  def MOVFULErr : IntCMOVFCCrr<"movfule %fcc, $F, $dst", FCC_ULE>;
+  def MOVFOrr   : IntCMOVFCCrr<  "movfo %fcc, $F, $dst", FCC_O>;
 }
 
 // Floating-Point Move Instructions, p. 164 of the V9 manual.
