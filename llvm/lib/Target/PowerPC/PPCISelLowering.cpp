@@ -83,6 +83,9 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   // PowerPC wants to turn select_cc of FP into fsel when possible.
   setOperationAction(ISD::SELECT_CC, MVT::f32, Custom);
   setOperationAction(ISD::SELECT_CC, MVT::f64, Custom);
+
+  // PowerPC wants to optimize setcc i32, imm a bit.
+  setOperationAction(ISD::SETCC, MVT::i32, Custom);
   
   // PowerPC does not have BRCOND* which requires SetCC
   setOperationAction(ISD::BRCOND,       MVT::Other, Expand);
@@ -444,6 +447,19 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     // If the global is weak or external, we have to go through the lazy
     // resolution stub.
     return DAG.getLoad(MVT::i32, DAG.getEntryNode(), Lo, DAG.getSrcValue(0));
+  }
+  case ISD::SETCC: {
+    ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(2))->get();
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op.getOperand(1)))
+      if (C->getValue() && !C->isAllOnesValue())
+        if (CC == ISD::SETEQ || CC == ISD::SETNE || 
+            CC == ISD::SETLT || CC == ISD::SETGT) {
+          MVT::ValueType VT = Op.getValueType();
+          SDOperand SUB = DAG.getNode(ISD::SUB, Op.getOperand(0).getValueType(),
+                                      Op.getOperand(0), Op.getOperand(1));
+          return DAG.getSetCC(VT, SUB, DAG.getConstant(0, VT), CC);
+        }
+    break;
   }
   case ISD::VASTART: {
     // vastart just stores the address of the VarArgsFrameIndex slot into the
