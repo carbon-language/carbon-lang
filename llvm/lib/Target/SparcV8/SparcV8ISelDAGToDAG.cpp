@@ -817,19 +817,22 @@ MachineBasicBlock *
 SparcV8TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
                                                MachineBasicBlock *BB) {
   unsigned BROpcode;
+  unsigned CC;
   // Figure out the conditional branch opcode to use for this select_cc.
   switch (MI->getOpcode()) {
   default: assert(0 && "Unknown SELECT_CC!");
   case V8::SELECT_CC_Int_ICC:
   case V8::SELECT_CC_FP_ICC:
   case V8::SELECT_CC_DFP_ICC:
+    BROpcode = V8::BCOND;
   case V8::SELECT_CC_Int_FCC:
   case V8::SELECT_CC_FP_FCC:
   case V8::SELECT_CC_DFP_FCC:
-    V8CC::CondCodes CC = (V8CC::CondCodes)MI->getOperand(3).getImmedValue();
-    BROpcode = SPARCCondCodeToBranchInstr(CC);
+    BROpcode = V8::FBCOND;
     break;
   }
+
+  CC = (V8CC::CondCodes)MI->getOperand(3).getImmedValue();
   
   // To "insert" a SELECT_CC instruction, we actually have to insert the diamond
   // control-flow pattern.  The incoming instruction knows the destination vreg
@@ -847,7 +850,7 @@ SparcV8TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
   MachineBasicBlock *thisMBB = BB;
   MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
   MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
-  BuildMI(BB, BROpcode, 1).addMBB(sinkMBB);
+  BuildMI(BB, BROpcode, 2).addMBB(sinkMBB).addImm(CC);
   MachineFunction *F = BB->getParent();
   F->getBasicBlockList().insert(It, copy0MBB);
   F->getBasicBlockList().insert(It, sinkMBB);

@@ -136,9 +136,7 @@ def retflag       : SDNode<"V8ISD::RET_FLAG", SDT_V8RetFlag,
 
 // Note that these values must be kept in sync with the V8CC::CondCode enum
 // values.
-class ICC_VAL<int N> : PatLeaf<(i32 N)> {
- int ICCVal = N;
-}
+class ICC_VAL<int N> : PatLeaf<(i32 N)>;
 def ICC_NE  : ICC_VAL< 9>;  // Not Equal
 def ICC_E   : ICC_VAL< 1>;  // Equal
 def ICC_G   : ICC_VAL<10>;  // Greater
@@ -154,9 +152,7 @@ def ICC_NEG : ICC_VAL< 6>;  // Negative
 def ICC_VC  : ICC_VAL<15>;  // Overflow Clear
 def ICC_VS  : ICC_VAL< 7>;  // Overflow Set
 
-class FCC_VAL<int N> : PatLeaf<(i32 N)> {
-  int FCCVal = N;
-}
+class FCC_VAL<int N> : PatLeaf<(i32 N)>;
 def FCC_U   : FCC_VAL<23>;  // Unordered
 def FCC_G   : FCC_VAL<22>;  // Greater
 def FCC_UG  : FCC_VAL<21>;  // Unordered or Greater
@@ -550,49 +546,11 @@ let isBarrier = 1 in
   def BA   : BranchV8<0b1000, (ops brtarget:$dst),
                       "ba $dst",
                       [(br bb:$dst)]>;
-def BNE  : BranchV8<0b1001, (ops brtarget:$dst),
-                    "bne $dst",
-                    [(V8bricc bb:$dst, ICC_NE, ICC)]>;
-def BE   : BranchV8<0b0001, (ops brtarget:$dst),
-                    "be $dst",
-                    [(V8bricc bb:$dst, ICC_E, ICC)]>;
-def BG   : BranchV8<0b1010, (ops brtarget:$dst),
-                    "bg $dst",
-                    [(V8bricc bb:$dst, ICC_G, ICC)]>;
-def BLE  : BranchV8<0b0010, (ops brtarget:$dst),
-                    "ble $dst",
-                    [(V8bricc bb:$dst, ICC_LE, ICC)]>;
-def BGE  : BranchV8<0b1011, (ops brtarget:$dst),
-                    "bge $dst",
-                    [(V8bricc bb:$dst, ICC_GE, ICC)]>;
-def BL   : BranchV8<0b0011, (ops brtarget:$dst),
-                    "bl $dst",
-                    [(V8bricc bb:$dst, ICC_L, ICC)]>;
-def BGU  : BranchV8<0b1100, (ops brtarget:$dst),
-                    "bgu $dst",
-                    [(V8bricc bb:$dst, ICC_GU, ICC)]>;
-def BLEU : BranchV8<0b0100, (ops brtarget:$dst),
-                    "bleu $dst",
-                    [(V8bricc bb:$dst, ICC_LEU, ICC)]>;
-def BCC  : BranchV8<0b1101, (ops brtarget:$dst),
-                    "bcc $dst",
-                    [(V8bricc bb:$dst, ICC_CC, ICC)]>;
-def BCS  : BranchV8<0b0101, (ops brtarget:$dst),
-                    "bcs $dst",
-                    [(V8bricc bb:$dst, ICC_CS, ICC)]>;
-def BPOS : BranchV8<0b1110, (ops brtarget:$dst),
-                    "bpos $dst",
-                    [(V8bricc bb:$dst, ICC_POS, ICC)]>;
-def BNEG : BranchV8<0b0110, (ops brtarget:$dst),
-                    "bneg $dst",
-                    [(V8bricc bb:$dst, ICC_NEG, ICC)]>;
-def BVC  : BranchV8<0b1111, (ops brtarget:$dst),
-                    "bvc $dst",
-                    [(V8bricc bb:$dst, ICC_VC, ICC)]>;
-def BVS  : BranchV8<0b0111, (ops brtarget:$dst),
-                    "bvs $dst",
-                    [(V8bricc bb:$dst, ICC_VS, ICC)]>;
-
+                      
+// FIXME: the encoding for the JIT should look at the condition field.
+def BCOND : BranchV8<0, (ops brtarget:$dst, V8CC:$cc),
+                     "b$cc $dst",
+                     [(V8bricc bb:$dst, imm:$cc, ICC)]>;
 
 
 // Section B.22 - Branch on Floating-point Condition Codes Instructions, p. 121
@@ -606,49 +564,10 @@ class FPBranchV8<bits<4> cc, dag ops, string asmstr, list<dag> pattern>
   let noResults = 1;
 }
 
-def FBU  : FPBranchV8<0b0111, (ops brtarget:$dst),
-                      "fbu $dst",
-                      [(V8brfcc bb:$dst, FCC_U, FCC)]>;
-def FBG  : FPBranchV8<0b0110, (ops brtarget:$dst),
-                      "fbg $dst",
-                      [(V8brfcc bb:$dst, FCC_G, FCC)]>;
-def FBUG : FPBranchV8<0b0101, (ops brtarget:$dst),
-                      "fbug $dst",
-                      [(V8brfcc bb:$dst, FCC_UG, FCC)]>;
-def FBL  : FPBranchV8<0b0100, (ops brtarget:$dst),
-                      "fbl $dst",
-                      [(V8brfcc bb:$dst, FCC_L, FCC)]>;
-def FBUL : FPBranchV8<0b0011, (ops brtarget:$dst),
-                      "fbul $dst",
-                      [(V8brfcc bb:$dst, FCC_UL, FCC)]>;
-def FBLG : FPBranchV8<0b0010, (ops brtarget:$dst),
-                      "fblg $dst",
-                      [(V8brfcc bb:$dst, FCC_LG, FCC)]>;
-def FBNE : FPBranchV8<0b0001, (ops brtarget:$dst),
-                      "fbne $dst",
-                      [(V8brfcc bb:$dst, FCC_NE, FCC)]>;
-def FBE  : FPBranchV8<0b1001, (ops brtarget:$dst),
-                      "fbe $dst",
-                      [(V8brfcc bb:$dst, FCC_E, FCC)]>;
-def FBUE : FPBranchV8<0b1010, (ops brtarget:$dst),
-                      "fbue $dst",
-                      [(V8brfcc bb:$dst, FCC_UE, FCC)]>;
-def FBGE : FPBranchV8<0b1011, (ops brtarget:$dst),
-                      "fbge $dst",
-                      [(V8brfcc bb:$dst, FCC_GE, FCC)]>;
-def FBUGE: FPBranchV8<0b1100, (ops brtarget:$dst),
-                      "fbuge $dst",
-                      [(V8brfcc bb:$dst, FCC_UGE, FCC)]>;
-def FBLE : FPBranchV8<0b1101, (ops brtarget:$dst),
-                      "fble $dst",
-                      [(V8brfcc bb:$dst, FCC_LE, FCC)]>;
-def FBULE: FPBranchV8<0b1110, (ops brtarget:$dst),
-                      "fbule $dst",
-                      [(V8brfcc bb:$dst, FCC_ULE, FCC)]>;
-def FBO  : FPBranchV8<0b1111, (ops brtarget:$dst),
-                      "fbo $dst",
-                      [(V8brfcc bb:$dst, FCC_O, FCC)]>;
-
+// FIXME: the encoding for the JIT should look at the condition field.
+def FBCOND  : FPBranchV8<0, (ops brtarget:$dst, V8CC:$cc),
+                      "f$cc $dst",
+                      [(V8brfcc bb:$dst, imm:$cc, FCC)]>;
 
 
 // Section B.24 - Call and Link Instruction, p. 125

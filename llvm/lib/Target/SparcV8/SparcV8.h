@@ -82,40 +82,6 @@ namespace llvm {
     };
   }
   
-  static unsigned SPARCCondCodeToBranchInstr(V8CC::CondCodes CC) {
-    switch (CC) {
-    default: assert(0 && "Unknown condition code");
-    case V8CC::ICC_NE:  return V8::BNE;
-    case V8CC::ICC_E:   return V8::BE;
-    case V8CC::ICC_G:   return V8::BG;
-    case V8CC::ICC_LE:  return V8::BLE;
-    case V8CC::ICC_GE:  return V8::BGE;
-    case V8CC::ICC_L:   return V8::BL;
-    case V8CC::ICC_GU:  return V8::BGU;
-    case V8CC::ICC_LEU: return V8::BLEU;
-    case V8CC::ICC_CC:  return V8::BCC;
-    case V8CC::ICC_CS:  return V8::BCS;
-    case V8CC::ICC_POS: return V8::BPOS;
-    case V8CC::ICC_NEG: return V8::BNEG;
-    case V8CC::ICC_VC:  return V8::BVC;
-    case V8CC::ICC_VS:  return V8::BVS;
-    case V8CC::FCC_U:   return V8::FBU;
-    case V8CC::FCC_G:   return V8::FBG;
-    case V8CC::FCC_UG:  return V8::FBUG;
-    case V8CC::FCC_L:   return V8::FBL;
-    case V8CC::FCC_UL:  return V8::FBUL;
-    case V8CC::FCC_LG:  return V8::FBLG;
-    case V8CC::FCC_NE:  return V8::FBNE;
-    case V8CC::FCC_E:   return V8::FBE;
-    case V8CC::FCC_UE:  return V8::FBUE;
-    case V8CC::FCC_GE:  return V8::FBGE;
-    case V8CC::FCC_UGE: return V8::FBUGE;
-    case V8CC::FCC_LE:  return V8::FBLE;
-    case V8CC::FCC_ULE: return V8::FBULE;
-    case V8CC::FCC_O:   return V8::FBO;
-    }       
-  }
-  
   static const char *SPARCCondCodeToString(V8CC::CondCodes CC) {
     switch (CC) {
     default: assert(0 && "Unknown condition code");
