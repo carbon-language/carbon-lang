@@ -68,6 +68,9 @@ def X86sbb     : SDNode<"X86ISD::SBB" ,     SDTIntBinOp,
 def X86shld    : SDNode<"X86ISD::SHLD",     SDTIntShiftDOp>;
 def X86shrd    : SDNode<"X86ISD::SHRD",     SDTIntShiftDOp>;
 
+def X86fand    : SDNode<"X86ISD::FAND",     SDTFPBinOp,
+                        [SDNPCommutative, SDNPAssociative]>;
+
 def X86cmp     : SDNode<"X86ISD::CMP" ,     SDTX86CmpTest,
                         [SDNPOutFlag]>;
 def X86test    : SDNode<"X86ISD::TEST",     SDTX86CmpTest,
@@ -2549,10 +2552,12 @@ def SUBSDrm : I<0x5C, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f64mem:$src2),
 // SSE Logical
 let isCommutable = 1 in {
 def ANDPSrr : I<0x54, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
-                "andps {$src2, $dst|$dst, $src2}", []>,
+                "andps {$src2, $dst|$dst, $src2}",
+                [(set FR32:$dst, (X86fand FR32:$src1, FR32:$src2))]>,
               Requires<[HasSSE1]>, TB;
 def ANDPDrr : I<0x54, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
-                "andpd {$src2, $dst|$dst, $src2}", []>,
+                "andpd {$src2, $dst|$dst, $src2}",
+                [(set FR64:$dst, (X86fand FR64:$src1, FR64:$src2))]>,
               Requires<[HasSSE2]>, TB, OpSize;
 def ORPSrr : I<0x56, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
                 "orps {$src2, $dst|$dst, $src2}", []>,
@@ -2567,10 +2572,37 @@ def XORPDrr : I<0x57, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
                 "xorpd {$src2, $dst|$dst, $src2}", []>,
               Requires<[HasSSE2]>, TB, OpSize;
 }
+def ANDPSrm : I<0x54, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f32mem:$src2),
+                "andps {$src2, $dst|$dst, $src2}",
+                []>,
+              Requires<[HasSSE1]>, TB;
+def ANDPDrm : I<0x54, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f64mem:$src2),
+                "andpd {$src2, $dst|$dst, $src2}",
+                []>,
+              Requires<[HasSSE2]>, TB, OpSize;
+def ORPSrm : I<0x56, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f32mem:$src2),
+                "orps {$src2, $dst|$dst, $src2}", []>,
+             Requires<[HasSSE1]>, TB;
+def ORPDrm : I<0x56, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f64mem:$src2),
+                "orpd {$src2, $dst|$dst, $src2}", []>,
+             Requires<[HasSSE2]>, TB, OpSize;
+def XORPSrm : I<0x57, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f32mem:$src2),
+                "xorps {$src2, $dst|$dst, $src2}", []>,
+              Requires<[HasSSE1]>, TB;
+def XORPDrm : I<0x57, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f64mem:$src2),
+                "xorpd {$src2, $dst|$dst, $src2}", []>,
+              Requires<[HasSSE2]>, TB, OpSize;
+
 def ANDNPSrr : I<0x55, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
                 "andnps {$src2, $dst|$dst, $src2}", []>,
                Requires<[HasSSE1]>, TB;
+def ANDNPSrm : I<0x55, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f32mem:$src2),
+                "andnps {$src2, $dst|$dst, $src2}", []>,
+               Requires<[HasSSE1]>, TB;
 def ANDNPDrr : I<0x55, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
+                "andnpd {$src2, $dst|$dst, $src2}", []>,
+               Requires<[HasSSE2]>, TB, OpSize;
+def ANDNPDrm : I<0x55, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f64mem:$src2),
                 "andnpd {$src2, $dst|$dst, $src2}", []>,
                Requires<[HasSSE2]>, TB, OpSize;
 

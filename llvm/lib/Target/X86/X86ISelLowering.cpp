@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SSARegMap.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
@@ -209,12 +210,12 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     // We don't support sin/cos/sqrt/fmod
     setOperationAction(ISD::FSIN , MVT::f64, Expand);
     setOperationAction(ISD::FCOS , MVT::f64, Expand);
-    setOperationAction(ISD::FABS , MVT::f64, Expand);
+    setOperationAction(ISD::FABS , MVT::f64, Custom);
     setOperationAction(ISD::FNEG , MVT::f64, Expand);
     setOperationAction(ISD::FREM , MVT::f64, Expand);
     setOperationAction(ISD::FSIN , MVT::f32, Expand);
     setOperationAction(ISD::FCOS , MVT::f32, Expand);
-    setOperationAction(ISD::FABS , MVT::f32, Expand);
+    setOperationAction(ISD::FABS , MVT::f32, Custom);
     setOperationAction(ISD::FNEG , MVT::f32, Expand);
     setOperationAction(ISD::FREM , MVT::f32, Expand);
 
@@ -1562,6 +1563,13 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     Tys.push_back(MVT::Other);
     return DAG.getNode(ISD::MERGE_VALUES, Tys, Ops);
   }
+  case ISD::FABS: {
+    MVT::ValueType VT = Op.getValueType();
+    SDOperand Mask = (VT == MVT::f64)
+      ? DAG.getConstantFP(BitsToDouble(~(1ULL << 63)), MVT::f64)
+      : DAG.getConstantFP(BitsToFloat (~(1U   << 31)), MVT::f32);
+    return DAG.getNode(X86ISD::FAND, VT, Op.getOperand(0), Mask);
+  }
   case ISD::SETCC: {
     assert(Op.getValueType() == MVT::i8 && "SetCC type must be 8-bit integer");
     SDOperand Cond;
@@ -1912,6 +1920,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::SBB:                return "X86ISD::SBB";
   case X86ISD::SHLD:               return "X86ISD::SHLD";
   case X86ISD::SHRD:               return "X86ISD::SHRD";
+  case X86ISD::FAND:               return "X86ISD::FAND";
   case X86ISD::FILD:               return "X86ISD::FILD";
   case X86ISD::FP_TO_INT16_IN_MEM: return "X86ISD::FP_TO_INT16_IN_MEM";
   case X86ISD::FP_TO_INT32_IN_MEM: return "X86ISD::FP_TO_INT32_IN_MEM";

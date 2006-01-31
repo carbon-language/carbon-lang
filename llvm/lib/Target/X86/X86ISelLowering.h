@@ -41,6 +41,10 @@ namespace llvm {
       SHLD,
       SHRD,
 
+      /// FAND - Bitwise logical AND of floating point values. This corresponds
+      /// to X86::ANDPS or X86::ANDPD.
+      FAND,
+
       /// FILD - This instruction implements SINT_TO_FP with the integer source
       /// in memory and FP reg result.  This corresponds to the X86::FILD*m
       /// instructions. It has three inputs (token chain, address, and source
