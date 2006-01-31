@@ -431,7 +431,8 @@ SparcV8TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         if (CurArgReg < ArgRegEnd) ++CurArgReg;
         if (CurArgReg < ArgRegEnd) ++CurArgReg;
         ArgValues.push_back(DAG.getNode(ISD::UNDEF, ObjectVT));
-      } else if (CurArgReg == ArgRegEnd && ObjectVT == MVT::f64 &&
+      } else if (/* FIXME: Apparently this isn't safe?? */
+                 0 && CurArgReg == ArgRegEnd && ObjectVT == MVT::f64 &&
                  ((CurArgReg-ArgRegs) & 1) == 0) {
         // If this is a double argument and the whole thing lives on the stack,
         // and the argument is aligned, load the double straight from the stack.
