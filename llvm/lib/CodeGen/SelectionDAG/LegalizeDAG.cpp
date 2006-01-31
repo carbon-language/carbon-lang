@@ -2022,9 +2022,14 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
     case TargetLowering::Promote:
     case TargetLowering::Custom:
-      assert(0 && "Cannot promote/custom handle this yet!");
+     isCustom = true;
+     // FALLTHROUGH
     case TargetLowering::Legal:
       Result = DAG.UpdateNodeOperands(Result, Tmp1);
+      if (isCustom) {
+        Tmp1 = TLI.LowerOperation(Result, DAG);
+        if (Tmp1.Val) Result = Tmp1;
+      }
       break;
     case TargetLowering::Expand:
       switch (Node->getOpcode()) {
