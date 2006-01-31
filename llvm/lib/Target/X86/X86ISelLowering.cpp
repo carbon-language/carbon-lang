@@ -17,6 +17,7 @@
 #include "X86ISelLowering.h"
 #include "X86TargetMachine.h"
 #include "llvm/CallingConv.h"
+#include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -208,16 +209,20 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::EXTLOAD,  MVT::f32, Expand);
     setOperationAction(ISD::ZEXTLOAD, MVT::f32, Expand);
 
+    // Use ANDPD to simulate FABS.
+    setOperationAction(ISD::FABS , MVT::f64, Custom);
+    setOperationAction(ISD::FABS , MVT::f32, Custom);
+
+    // Use XORP to simulate FNEG.
+    setOperationAction(ISD::FNEG , MVT::f64, Custom);
+    setOperationAction(ISD::FNEG , MVT::f32, Custom);
+
     // We don't support sin/cos/sqrt/fmod
     setOperationAction(ISD::FSIN , MVT::f64, Expand);
     setOperationAction(ISD::FCOS , MVT::f64, Expand);
-    setOperationAction(ISD::FABS , MVT::f64, Custom);
-    setOperationAction(ISD::FNEG , MVT::f64, Expand);
     setOperationAction(ISD::FREM , MVT::f64, Expand);
     setOperationAction(ISD::FSIN , MVT::f32, Expand);
     setOperationAction(ISD::FCOS , MVT::f32, Expand);
-    setOperationAction(ISD::FABS , MVT::f32, Custom);
-    setOperationAction(ISD::FNEG , MVT::f32, Expand);
     setOperationAction(ISD::FREM , MVT::f32, Expand);
 
     // Expand FP immediates into loads from the stack, except for the special
@@ -1567,10 +1572,43 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   }
   case ISD::FABS: {
     MVT::ValueType VT = Op.getValueType();
-    SDOperand Mask = (VT == MVT::f64)
-      ? DAG.getConstantFP(BitsToDouble(~(1ULL << 63)), MVT::f64)
-      : DAG.getConstantFP(BitsToFloat (~(1U   << 31)), MVT::f32);
+    const Type *OpNTy =  MVT::getTypeForValueType(VT);
+    std::vector<Constant*> CV;
+    if (VT == MVT::f64) {
+      CV.push_back(ConstantFP::get(OpNTy, BitsToDouble(~(1ULL << 63))));
+      CV.push_back(ConstantFP::get(OpNTy, 0.0));
+    } else {
+      CV.push_back(ConstantFP::get(OpNTy, BitsToFloat(~(1U << 31))));
+      CV.push_back(ConstantFP::get(OpNTy, 0.0));
+      CV.push_back(ConstantFP::get(OpNTy, 0.0));
+      CV.push_back(ConstantFP::get(OpNTy, 0.0));
+    }
+    Constant *CS = ConstantStruct::get(CV);
+    SDOperand CPIdx = DAG.getConstantPool(CS, getPointerTy(), 4);
+    SDOperand Mask 
+      = DAG.getNode(X86ISD::LOAD_PACK,
+                    VT, DAG.getEntryNode(), CPIdx, DAG.getSrcValue(NULL));
     return DAG.getNode(X86ISD::FAND, VT, Op.getOperand(0), Mask);
+  }
+  case ISD::FNEG: {
+    MVT::ValueType VT = Op.getValueType();
+    const Type *OpNTy =  MVT::getTypeForValueType(VT);
+    std::vector<Constant*> CV;
+    if (VT == MVT::f64) {
+      CV.push_back(ConstantFP::get(OpNTy, BitsToDouble(1ULL << 63)));
+      CV.push_back(ConstantFP::get(OpNTy, 0.0));
+    } else {
+      CV.push_back(ConstantFP::get(OpNTy, BitsToFloat(1U << 31)));
+      CV.push_back(ConstantFP::get(OpNTy, 0.0));
+      CV.push_back(ConstantFP::get(OpNTy, 0.0));
+      CV.push_back(ConstantFP::get(OpNTy, 0.0));
+    }
+    Constant *CS = ConstantStruct::get(CV);
+    SDOperand CPIdx = DAG.getConstantPool(CS, getPointerTy(), 4);
+    SDOperand Mask 
+      = DAG.getNode(X86ISD::LOAD_PACK,
+                    VT, DAG.getEntryNode(), CPIdx, DAG.getSrcValue(NULL));
+    return DAG.getNode(X86ISD::FXOR, VT, Op.getOperand(0), Mask);
   }
   case ISD::SETCC: {
     assert(Op.getValueType() == MVT::i8 && "SetCC type must be 8-bit integer");
@@ -1923,6 +1961,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::SHLD:               return "X86ISD::SHLD";
   case X86ISD::SHRD:               return "X86ISD::SHRD";
   case X86ISD::FAND:               return "X86ISD::FAND";
+  case X86ISD::FXOR:               return "X86ISD::FXOR";
   case X86ISD::FILD:               return "X86ISD::FILD";
   case X86ISD::FP_TO_INT16_IN_MEM: return "X86ISD::FP_TO_INT16_IN_MEM";
   case X86ISD::FP_TO_INT32_IN_MEM: return "X86ISD::FP_TO_INT32_IN_MEM";
@@ -1942,6 +1981,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::RET_FLAG:           return "X86ISD::RET_FLAG";
   case X86ISD::REP_STOS:           return "X86ISD::RET_STOS";
   case X86ISD::REP_MOVS:           return "X86ISD::RET_MOVS";
+  case X86ISD::LOAD_PACK:          return "X86ISD::LOAD_PACK";
   }
 }
 

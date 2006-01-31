@@ -253,7 +253,8 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM) {
     if (AM.BaseType == X86ISelAddressMode::RegBase && AM.Base.Reg.Val == 0) {
       if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N)) {
         AM.BaseType = X86ISelAddressMode::ConstantPoolBase;
-        AM.Base.Reg = CurDAG->getTargetConstantPool(CP->get(), MVT::i32);
+        AM.Base.Reg = CurDAG->getTargetConstantPool(CP->get(), MVT::i32,
+                                                    CP->getAlignment());
         return false;
       }
     }

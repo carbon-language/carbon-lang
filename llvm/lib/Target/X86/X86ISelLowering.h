@@ -45,6 +45,10 @@ namespace llvm {
       /// to X86::ANDPS or X86::ANDPD.
       FAND,
 
+      /// FXOR - Bitwise logical XOR of floating point values. This corresponds
+      /// to X86::XORPS or X86::XORPD.
+      FXOR,
+
       /// FILD - This instruction implements SINT_TO_FP with the integer source
       /// in memory and FP reg result.  This corresponds to the X86::FILD*m
       /// instructions. It has three inputs (token chain, address, and source
@@ -137,6 +141,10 @@ namespace llvm {
 
       /// REP_MOVS - Repeat move, corresponds to X86::REP_MOVSx.
       REP_MOVS,
+
+      /// LOAD_PACK Load a 128-bit packed float / double value. It has the same
+      /// operands as a normal load.
+      LOAD_PACK,
     };
 
     // X86 specific condition code. These correspond to X86_*_COND in
