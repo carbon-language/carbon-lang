@@ -106,6 +106,8 @@ private:
   void ExpandOp(SDOperand O, SDOperand &Lo, SDOperand &Hi);
   SDOperand PromoteOp(SDOperand O);
 
+  void LegalizeSetCCOperands(SDOperand &LHS, SDOperand &RHS, SDOperand &CC);
+    
   SDOperand ExpandLibCall(const char *Name, SDNode *Node,
                           SDOperand &Hi);
   SDOperand ExpandIntToFP(bool isSigned, MVT::ValueType DestTy,
@@ -717,33 +719,22 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     break;
   case ISD::BR_CC:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
-    if (!isTypeLegal(Node->getOperand(2).getValueType())) {
-      Tmp2 = LegalizeOp(DAG.getNode(ISD::SETCC, TLI.getSetCCResultTy(),
-                                    Node->getOperand(2),  // LHS
-                                    Node->getOperand(3),  // RHS
-                                    Node->getOperand(1)));
-      // If we get a SETCC back from legalizing the SETCC node we just
-      // created, then use its LHS, RHS, and CC directly in creating a new
-      // node.  Otherwise, select between the true and false value based on
-      // comparing the result of the legalized with zero.
-      if (Tmp2.getOpcode() == ISD::SETCC) {
-        Result = DAG.getNode(ISD::BR_CC, MVT::Other, Tmp1, Tmp2.getOperand(2),
-                             Tmp2.getOperand(0), Tmp2.getOperand(1),
-                             Node->getOperand(4));
-      } else {
-        Result = DAG.getNode(ISD::BR_CC, MVT::Other, Tmp1, 
-                             DAG.getCondCode(ISD::SETNE),
-                             Tmp2, DAG.getConstant(0, Tmp2.getValueType()), 
-                             Node->getOperand(4));
-      }
-      break;
+    Tmp2 = Node->getOperand(2);              // LHS 
+    Tmp3 = Node->getOperand(3);              // RHS
+    Tmp4 = Node->getOperand(1);              // CC
+
+    LegalizeSetCCOperands(Tmp2, Tmp3, Tmp4);
+    
+    // If we didn't get both a LHS and RHS back from LegalizeSetCCOperands,
+    // the LHS is a legal SETCC itself.  In this case, we need to compare
+    // the result against zero to select between true and false values.
+    if (Tmp3.Val == 0) {
+      Tmp3 = DAG.getConstant(0, Tmp2.getValueType());
+      Tmp4 = DAG.getCondCode(ISD::SETNE);
     }
-
-    Tmp2 = LegalizeOp(Node->getOperand(2));   // LHS
-    Tmp3 = LegalizeOp(Node->getOperand(3));   // RHS
-
-    Result = DAG.UpdateNodeOperands(Result, Tmp1, Node->getOperand(1), Tmp2,
-                                    Tmp3, Node->getOperand(4));
+    
+    Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp4, Tmp2, Tmp3, 
+                                    Node->getOperand(4));
       
     switch (TLI.getOperationAction(ISD::BR_CC, Tmp3.getValueType())) {
     default: assert(0 && "Unexpected action for BR_CC!");
@@ -805,61 +796,44 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       break;
     }
     break;
-  case ISD::BRTWOWAY_CC:
+  case ISD::BRTWOWAY_CC: {
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
-    if (isTypeLegal(Node->getOperand(2).getValueType())) {
-      Tmp2 = LegalizeOp(Node->getOperand(2));   // LHS
-      Tmp3 = LegalizeOp(Node->getOperand(3));   // RHS
-      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(2) ||
-          Tmp3 != Node->getOperand(3)) {
-        std::vector<SDOperand> Ops;
-        Ops.push_back(Tmp1);
-        Ops.push_back(Node->getOperand(1));
-        Ops.push_back(Tmp2);
-        Ops.push_back(Tmp3);
-        Ops.push_back(Node->getOperand(4));
-        Ops.push_back(Node->getOperand(5));
-        Result = DAG.UpdateNodeOperands(Result, Ops);
-      }
+    Tmp2 = Node->getOperand(2);              // LHS 
+    Tmp3 = Node->getOperand(3);              // RHS
+    Tmp4 = Node->getOperand(1);              // CC
+    
+    LegalizeSetCCOperands(Tmp2, Tmp3, Tmp4);
+    
+    // If we didn't get both a LHS and RHS back from LegalizeSetCCOperands,
+    // the LHS is a legal SETCC itself.  In this case, we need to compare
+    // the result against zero to select between true and false values.
+    if (Tmp3.Val == 0) {
+      Tmp3 = DAG.getConstant(0, Tmp2.getValueType());
+      Tmp4 = DAG.getCondCode(ISD::SETNE);
+    }
+    std::vector<SDOperand> Ops;
+    Ops.push_back(Tmp1);
+    Ops.push_back(Tmp4);
+    Ops.push_back(Tmp2);
+    Ops.push_back(Tmp3);
+    Ops.push_back(Node->getOperand(4));
+    Ops.push_back(Node->getOperand(5));
+    Result = DAG.UpdateNodeOperands(Result, Ops);
+
+    // Everything is legal, see if we should expand this op or something.
+    switch (TLI.getOperationAction(ISD::BRTWOWAY_CC, MVT::Other)) {
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Legal: break;
+    case TargetLowering::Expand: 
+      Result = DAG.getNode(ISD::BRCOND, MVT::Other, Tmp1,
+                           DAG.getNode(ISD::SETCC, TLI.getSetCCResultTy(), Tmp2,
+                                       Tmp3, Tmp4), 
+                           Result.getOperand(4));
+      Result = DAG.getNode(ISD::BR, MVT::Other, Result, Result.getOperand(5));
       break;
-    } else {
-      Tmp2 = LegalizeOp(DAG.getNode(ISD::SETCC, TLI.getSetCCResultTy(),
-                                    Node->getOperand(2),  // LHS
-                                    Node->getOperand(3),  // RHS
-                                    Node->getOperand(1)));
-      // If this target does not support BRTWOWAY_CC, lower it to a BRCOND/BR
-      // pair.
-      switch (TLI.getOperationAction(ISD::BRTWOWAY_CC, MVT::Other)) {
-      default: assert(0 && "This action is not supported yet!");
-      case TargetLowering::Legal: {
-        // If we get a SETCC back from legalizing the SETCC node we just
-        // created, then use its LHS, RHS, and CC directly in creating a new
-        // node.  Otherwise, select between the true and false value based on
-        // comparing the result of the legalized with zero.
-        std::vector<SDOperand> Ops;
-        Ops.push_back(Tmp1);
-        if (Tmp2.getOpcode() == ISD::SETCC) {
-          Ops.push_back(Tmp2.getOperand(2));
-          Ops.push_back(Tmp2.getOperand(0));
-          Ops.push_back(Tmp2.getOperand(1));
-        } else {
-          Ops.push_back(DAG.getCondCode(ISD::SETNE));
-          Ops.push_back(Tmp2);
-          Ops.push_back(DAG.getConstant(0, Tmp2.getValueType()));
-        }
-        Ops.push_back(Node->getOperand(4));
-        Ops.push_back(Node->getOperand(5));
-        Result = DAG.UpdateNodeOperands(Result, Ops);
-        break;
-      }
-      case TargetLowering::Expand: 
-        Result = DAG.getNode(ISD::BRCOND, MVT::Other, Tmp1, Tmp2,
-                             Node->getOperand(4));
-        Result = DAG.getNode(ISD::BR, MVT::Other, Result, Node->getOperand(5));
-        break;
-      }
     }
     break;
+  }
   case ISD::LOAD: {
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
@@ -1315,156 +1289,47 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     }
     break;
-  case ISD::SELECT_CC:
+  case ISD::SELECT_CC: {
+    Tmp1 = Node->getOperand(0);               // LHS
+    Tmp2 = Node->getOperand(1);               // RHS
     Tmp3 = LegalizeOp(Node->getOperand(2));   // True
     Tmp4 = LegalizeOp(Node->getOperand(3));   // False
+    SDOperand CC = Node->getOperand(4);
     
-    if (isTypeLegal(Node->getOperand(0).getValueType())) {
-      Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
-      Tmp2 = LegalizeOp(Node->getOperand(1));   // RHS
-      
-      Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3, Tmp4, 
-                                      Node->getOperand(4));
-      
-      // Everything is legal, see if we should expand this op or something.
-      switch (TLI.getOperationAction(ISD::SELECT_CC,
-                                     Node->getOperand(0).getValueType())) {
-      default: assert(0 && "This action is not supported yet!");
-      case TargetLowering::Legal: break;
-      case TargetLowering::Custom:
-        Tmp1 = TLI.LowerOperation(Result, DAG);
-        if (Tmp1.Val) Result = Tmp1;
-        break;
-      }
+    LegalizeSetCCOperands(Tmp1, Tmp2, CC);
+    
+    // If we didn't get both a LHS and RHS back from LegalizeSetCCOperands,
+    // the LHS is a legal SETCC itself.  In this case, we need to compare
+    // the result against zero to select between true and false values.
+    if (Tmp2.Val == 0) {
+      Tmp2 = DAG.getConstant(0, Tmp1.getValueType());
+      CC = DAG.getCondCode(ISD::SETNE);
+    }
+    Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3, Tmp4, CC);
+
+    // Everything is legal, see if we should expand this op or something.
+    switch (TLI.getOperationAction(ISD::SELECT_CC, Tmp3.getValueType())) {
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Legal: break;
+    case TargetLowering::Custom:
+      Tmp1 = TLI.LowerOperation(Result, DAG);
+      if (Tmp1.Val) Result = Tmp1;
       break;
-    } else {
-      Tmp1 = LegalizeOp(DAG.getNode(ISD::SETCC, TLI.getSetCCResultTy(),
-                                    Node->getOperand(0),  // LHS
-                                    Node->getOperand(1),  // RHS
-                                    Node->getOperand(4)));
-      // If we get a SETCC back from legalizing the SETCC node we just
-      // created, then use its LHS, RHS, and CC directly in creating a new
-      // node.  Otherwise, select between the true and false value based on
-      // comparing the result of the legalized with zero.
-      if (Tmp1.getOpcode() == ISD::SETCC) {
-        Result = DAG.getNode(ISD::SELECT_CC, Tmp3.getValueType(),
-                             Tmp1.getOperand(0), Tmp1.getOperand(1),
-                             Tmp3, Tmp4, Tmp1.getOperand(2));
-      } else {
-        Result = DAG.getSelectCC(Tmp1,
-                                 DAG.getConstant(0, Tmp1.getValueType()), 
-                                 Tmp3, Tmp4, ISD::SETNE);
-      }
     }
     break;
+  }
   case ISD::SETCC:
-    switch (getTypeAction(Node->getOperand(0).getValueType())) {
-    case Legal:
-      Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
-      Tmp2 = LegalizeOp(Node->getOperand(1));   // RHS
+    Tmp1 = Node->getOperand(0);
+    Tmp2 = Node->getOperand(1);
+    Tmp3 = Node->getOperand(2);
+    LegalizeSetCCOperands(Tmp1, Tmp2, Tmp3);
+    
+    // If we had to Expand the SetCC operands into a SELECT node, then it may 
+    // not always be possible to return a true LHS & RHS.  In this case, just 
+    // return the value we legalized, returned in the LHS
+    if (Tmp2.Val == 0) {
+      Result = Tmp1;
       break;
-    case Promote:
-      Tmp1 = PromoteOp(Node->getOperand(0));   // LHS
-      Tmp2 = PromoteOp(Node->getOperand(1));   // RHS
-
-      // If this is an FP compare, the operands have already been extended.
-      if (MVT::isInteger(Node->getOperand(0).getValueType())) {
-        MVT::ValueType VT = Node->getOperand(0).getValueType();
-        MVT::ValueType NVT = TLI.getTypeToTransformTo(VT);
-
-        // Otherwise, we have to insert explicit sign or zero extends.  Note
-        // that we could insert sign extends for ALL conditions, but zero extend
-        // is cheaper on many machines (an AND instead of two shifts), so prefer
-        // it.
-        switch (cast<CondCodeSDNode>(Node->getOperand(2))->get()) {
-        default: assert(0 && "Unknown integer comparison!");
-        case ISD::SETEQ:
-        case ISD::SETNE:
-        case ISD::SETUGE:
-        case ISD::SETUGT:
-        case ISD::SETULE:
-        case ISD::SETULT:
-          // ALL of these operations will work if we either sign or zero extend
-          // the operands (including the unsigned comparisons!).  Zero extend is
-          // usually a simpler/cheaper operation, so prefer it.
-          Tmp1 = DAG.getZeroExtendInReg(Tmp1, VT);
-          Tmp2 = DAG.getZeroExtendInReg(Tmp2, VT);
-          break;
-        case ISD::SETGE:
-        case ISD::SETGT:
-        case ISD::SETLT:
-        case ISD::SETLE:
-          Tmp1 = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Tmp1,
-                             DAG.getValueType(VT));
-          Tmp2 = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Tmp2,
-                             DAG.getValueType(VT));
-          break;
-        }
-      }
-      break;
-    case Expand:
-      SDOperand LHSLo, LHSHi, RHSLo, RHSHi;
-      ExpandOp(Node->getOperand(0), LHSLo, LHSHi);
-      ExpandOp(Node->getOperand(1), RHSLo, RHSHi);
-      switch (cast<CondCodeSDNode>(Node->getOperand(2))->get()) {
-      case ISD::SETEQ:
-      case ISD::SETNE:
-        if (RHSLo == RHSHi)
-          if (ConstantSDNode *RHSCST = dyn_cast<ConstantSDNode>(RHSLo))
-            if (RHSCST->isAllOnesValue()) {
-              // Comparison to -1.
-              Tmp1 = DAG.getNode(ISD::AND, LHSLo.getValueType(), LHSLo, LHSHi);
-              Tmp2 = RHSLo;
-              break;
-            }
-
-        Tmp1 = DAG.getNode(ISD::XOR, LHSLo.getValueType(), LHSLo, RHSLo);
-        Tmp2 = DAG.getNode(ISD::XOR, LHSLo.getValueType(), LHSHi, RHSHi);
-        Tmp1 = DAG.getNode(ISD::OR, Tmp1.getValueType(), Tmp1, Tmp2);
-        Tmp2 = DAG.getConstant(0, Tmp1.getValueType());
-        break;
-      default:
-        // If this is a comparison of the sign bit, just look at the top part.
-        // X > -1,  x < 0
-        if (ConstantSDNode *CST = dyn_cast<ConstantSDNode>(Node->getOperand(1)))
-          if ((cast<CondCodeSDNode>(Node->getOperand(2))->get() == ISD::SETLT &&
-               CST->getValue() == 0) ||              // X < 0
-              (cast<CondCodeSDNode>(Node->getOperand(2))->get() == ISD::SETGT &&
-               (CST->isAllOnesValue()))) {            // X > -1
-            Tmp1 = LHSHi;
-            Tmp2 = RHSHi;
-            break;
-          }
-
-        // FIXME: This generated code sucks.
-        ISD::CondCode LowCC;
-        switch (cast<CondCodeSDNode>(Node->getOperand(2))->get()) {
-        default: assert(0 && "Unknown integer setcc!");
-        case ISD::SETLT:
-        case ISD::SETULT: LowCC = ISD::SETULT; break;
-        case ISD::SETGT:
-        case ISD::SETUGT: LowCC = ISD::SETUGT; break;
-        case ISD::SETLE:
-        case ISD::SETULE: LowCC = ISD::SETULE; break;
-        case ISD::SETGE:
-        case ISD::SETUGE: LowCC = ISD::SETUGE; break;
-        }
-
-        // Tmp1 = lo(op1) < lo(op2)   // Always unsigned comparison
-        // Tmp2 = hi(op1) < hi(op2)   // Signedness depends on operands
-        // dest = hi(op1) == hi(op2) ? Tmp1 : Tmp2;
-
-        // NOTE: on targets without efficient SELECT of bools, we can always use
-        // this identity: (B1 ? B2 : B3) --> (B1 & B2)|(!B1&B3)
-        Tmp1 = DAG.getSetCC(Node->getValueType(0), LHSLo, RHSLo, LowCC);
-        Tmp2 = DAG.getNode(ISD::SETCC, Node->getValueType(0), LHSHi, RHSHi,
-                           Node->getOperand(2));
-        Result = DAG.getSetCC(Node->getValueType(0), LHSHi, RHSHi, ISD::SETEQ);
-        Result = LegalizeOp(DAG.getNode(ISD::SELECT, Tmp1.getValueType(),
-                                        Result, Tmp1, Tmp2));
-        AddLegalizedOperand(SDOperand(Node, 0), Result);
-        return Result;
-      }
     }
 
     switch (TLI.getOperationAction(ISD::SETCC, Tmp1.getValueType())) {
@@ -2697,6 +2562,127 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   // Remember that we promoted this!
   AddPromotedOperand(Op, Result);
   return Result;
+}
+
+/// LegalizeSetCCOperands - Attempts to create a legal LHS and RHS for a SETCC
+/// with condition CC on the current target.  This usually involves legalizing
+/// or promoting the arguments.  In the case where LHS and RHS must be expanded,
+/// there may be no choice but to create a new SetCC node to represent the
+/// legalized value of setcc lhs, rhs.  In this case, the value is returned in
+/// LHS, and the SDOperand returned in RHS has a nil SDNode value.
+void SelectionDAGLegalize::LegalizeSetCCOperands(SDOperand &LHS,
+                                                 SDOperand &RHS,
+                                                 SDOperand &CC) {
+  SDOperand Tmp1, Tmp2, Result;    
+  
+  switch (getTypeAction(LHS.getValueType())) {
+  case Legal:
+    Tmp1 = LegalizeOp(LHS);   // LHS
+    Tmp2 = LegalizeOp(RHS);   // RHS
+    break;
+  case Promote:
+    Tmp1 = PromoteOp(LHS);   // LHS
+    Tmp2 = PromoteOp(RHS);   // RHS
+
+    // If this is an FP compare, the operands have already been extended.
+    if (MVT::isInteger(LHS.getValueType())) {
+      MVT::ValueType VT = LHS.getValueType();
+      MVT::ValueType NVT = TLI.getTypeToTransformTo(VT);
+
+      // Otherwise, we have to insert explicit sign or zero extends.  Note
+      // that we could insert sign extends for ALL conditions, but zero extend
+      // is cheaper on many machines (an AND instead of two shifts), so prefer
+      // it.
+      switch (cast<CondCodeSDNode>(CC)->get()) {
+      default: assert(0 && "Unknown integer comparison!");
+      case ISD::SETEQ:
+      case ISD::SETNE:
+      case ISD::SETUGE:
+      case ISD::SETUGT:
+      case ISD::SETULE:
+      case ISD::SETULT:
+        // ALL of these operations will work if we either sign or zero extend
+        // the operands (including the unsigned comparisons!).  Zero extend is
+        // usually a simpler/cheaper operation, so prefer it.
+        Tmp1 = DAG.getZeroExtendInReg(Tmp1, VT);
+        Tmp2 = DAG.getZeroExtendInReg(Tmp2, VT);
+        break;
+      case ISD::SETGE:
+      case ISD::SETGT:
+      case ISD::SETLT:
+      case ISD::SETLE:
+        Tmp1 = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Tmp1,
+                           DAG.getValueType(VT));
+        Tmp2 = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Tmp2,
+                           DAG.getValueType(VT));
+        break;
+      }
+    }
+    break;
+  case Expand:
+    SDOperand LHSLo, LHSHi, RHSLo, RHSHi;
+    ExpandOp(LHS, LHSLo, LHSHi);
+    ExpandOp(RHS, RHSLo, RHSHi);
+    switch (cast<CondCodeSDNode>(CC)->get()) {
+    case ISD::SETEQ:
+    case ISD::SETNE:
+      if (RHSLo == RHSHi)
+        if (ConstantSDNode *RHSCST = dyn_cast<ConstantSDNode>(RHSLo))
+          if (RHSCST->isAllOnesValue()) {
+            // Comparison to -1.
+            Tmp1 = DAG.getNode(ISD::AND, LHSLo.getValueType(), LHSLo, LHSHi);
+            Tmp2 = RHSLo;
+            break;
+          }
+
+      Tmp1 = DAG.getNode(ISD::XOR, LHSLo.getValueType(), LHSLo, RHSLo);
+      Tmp2 = DAG.getNode(ISD::XOR, LHSLo.getValueType(), LHSHi, RHSHi);
+      Tmp1 = DAG.getNode(ISD::OR, Tmp1.getValueType(), Tmp1, Tmp2);
+      Tmp2 = DAG.getConstant(0, Tmp1.getValueType());
+      break;
+    default:
+      // If this is a comparison of the sign bit, just look at the top part.
+      // X > -1,  x < 0
+      if (ConstantSDNode *CST = dyn_cast<ConstantSDNode>(RHS))
+        if ((cast<CondCodeSDNode>(CC)->get() == ISD::SETLT && 
+             CST->getValue() == 0) ||             // X < 0
+            (cast<CondCodeSDNode>(CC)->get() == ISD::SETGT &&
+             CST->isAllOnesValue())) {            // X > -1
+          Tmp1 = LHSHi;
+          Tmp2 = RHSHi;
+          break;
+        }
+
+      // FIXME: This generated code sucks.
+      ISD::CondCode LowCC;
+      switch (cast<CondCodeSDNode>(CC)->get()) {
+      default: assert(0 && "Unknown integer setcc!");
+      case ISD::SETLT:
+      case ISD::SETULT: LowCC = ISD::SETULT; break;
+      case ISD::SETGT:
+      case ISD::SETUGT: LowCC = ISD::SETUGT; break;
+      case ISD::SETLE:
+      case ISD::SETULE: LowCC = ISD::SETULE; break;
+      case ISD::SETGE:
+      case ISD::SETUGE: LowCC = ISD::SETUGE; break;
+      }
+
+      // Tmp1 = lo(op1) < lo(op2)   // Always unsigned comparison
+      // Tmp2 = hi(op1) < hi(op2)   // Signedness depends on operands
+      // dest = hi(op1) == hi(op2) ? Tmp1 : Tmp2;
+
+      // NOTE: on targets without efficient SELECT of bools, we can always use
+      // this identity: (B1 ? B2 : B3) --> (B1 & B2)|(!B1&B3)
+      Tmp1 = DAG.getSetCC(TLI.getSetCCResultTy(), LHSLo, RHSLo, LowCC);
+      Tmp2 = DAG.getNode(ISD::SETCC, TLI.getSetCCResultTy(), LHSHi, RHSHi, CC);
+      Result = DAG.getSetCC(TLI.getSetCCResultTy(), LHSHi, RHSHi, ISD::SETEQ);
+      Result = LegalizeOp(DAG.getNode(ISD::SELECT, Tmp1.getValueType(),
+                                      Result, Tmp1, Tmp2));
+      Tmp1 = Result;
+    }
+  }
+  LHS = Tmp1;
+  RHS = Tmp2;
 }
 
 /// ExpandBIT_CONVERT - Expand a BIT_CONVERT node into a store/load combination.

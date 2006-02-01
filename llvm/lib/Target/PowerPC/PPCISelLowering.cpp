@@ -13,6 +13,7 @@
 
 #include "PPCISelLowering.h"
 #include "PPCTargetMachine.h"
+#include "llvm/ADT/VectorExtras.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -20,7 +21,7 @@
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
-#include "llvm/ADT/VectorExtras.h"
+#include "llvm/Support/MathExtras.h"
 using namespace llvm;
 
 PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
@@ -85,7 +86,7 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SELECT_CC, MVT::f32, Custom);
   setOperationAction(ISD::SELECT_CC, MVT::f64, Custom);
 
-  // PowerPC wants to optimize setcc i32, imm a bit.
+  // PowerPC wants to optimize integer setcc a bit
   setOperationAction(ISD::SETCC, MVT::i32, Custom);
   
   // PowerPC does not have BRCOND* which requires SetCC
@@ -452,15 +453,41 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   }
   case ISD::SETCC: {
     ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(2))->get();
-    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op.getOperand(1)))
-      if (C->getValue() && !C->isAllOnesValue())
-        if (CC == ISD::SETEQ || CC == ISD::SETNE || 
-            CC == ISD::SETLT || CC == ISD::SETGT) {
-          MVT::ValueType VT = Op.getValueType();
-          SDOperand SUB = DAG.getNode(ISD::SUB, Op.getOperand(0).getValueType(),
-                                      Op.getOperand(0), Op.getOperand(1));
-          return DAG.getSetCC(VT, SUB, DAG.getConstant(0, VT), CC);
-        }
+    
+    // If we're comparing for equality to zero, expose the fact that this is
+    // implented as a ctlz/srl pair on ppc, so that the dag combiner can
+    // fold the new nodes.
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
+      if (C->isNullValue() && CC == ISD::SETEQ) {
+        MVT::ValueType VT = Op.getOperand(0).getValueType();
+        SDOperand Zext = Op.getOperand(0);
+        if (VT < MVT::i32) {
+          VT = MVT::i32;
+          Zext = DAG.getNode(ISD::ZERO_EXTEND, VT, Op.getOperand(0));
+        } 
+        unsigned Log2b = Log2_32(MVT::getSizeInBits(VT));
+        SDOperand Clz = DAG.getNode(ISD::CTLZ, VT, Zext);
+        SDOperand Scc = DAG.getNode(ISD::SRL, VT, Clz,
+                                    DAG.getConstant(Log2b, getShiftAmountTy()));
+        return DAG.getNode(ISD::TRUNCATE, getSetCCResultTy(), Scc);
+      }
+      // Leave comparisons against 0 and -1 alone for now, since they're usually 
+      // optimized.  FIXME: revisit this when we can custom lower all setcc
+      // optimizations.
+      if (C->isAllOnesValue() || C->isNullValue())
+        break;
+    }
+        
+    // If we have an integer seteq/setne, turn it into a compare against zero
+    // by subtracting the rhs from the lhs, which is faster than setting a
+    // condition register, reading it back out, and masking the correct bit.
+    MVT::ValueType LHSVT = Op.getOperand(0).getValueType();
+    if (MVT::isInteger(LHSVT) && (CC == ISD::SETEQ || CC == ISD::SETNE)) {
+      MVT::ValueType VT = Op.getValueType();
+      SDOperand Sub = DAG.getNode(ISD::SUB, LHSVT, Op.getOperand(0), 
+                                  Op.getOperand(1));
+      return DAG.getSetCC(VT, Sub, DAG.getConstant(0, LHSVT), CC);
+    }
     break;
   }
   case ISD::VASTART: {

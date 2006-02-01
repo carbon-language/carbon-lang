@@ -35,10 +35,14 @@ IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
       // register class for predicate registers
       addRegisterClass(MVT::i1, IA64::PRRegisterClass);
 
+      setOperationAction(ISD::BR_CC            , MVT::Other, Expand);
       setOperationAction(ISD::BRCONDTWOWAY     , MVT::Other, Expand);
       setOperationAction(ISD::BRTWOWAY_CC      , MVT::Other, Expand);
       setOperationAction(ISD::FP_ROUND_INREG   , MVT::f32  , Expand);
 
+      // ia64 uses SELECT not SELECT_CC
+      setOperationAction(ISD::SELECT_CC        , MVT::Other,  Expand);
+      
       // We need to handle ISD::RET for void functions ourselves,
       // so we get a chance to restore ar.pfs before adding a
       // br.ret insn

@@ -117,6 +117,8 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   }
   setOperationAction(ISD::BRCONDTWOWAY     , MVT::Other, Expand);
   setOperationAction(ISD::BRTWOWAY_CC      , MVT::Other, Expand);
+  setOperationAction(ISD::BR_CC            , MVT::Other, Expand);
+  setOperationAction(ISD::SELECT_CC        , MVT::Other, Expand);
   setOperationAction(ISD::MEMMOVE          , MVT::Other, Expand);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16  , Expand);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8   , Expand);

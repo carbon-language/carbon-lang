@@ -1081,6 +1081,16 @@ SDOperand DAGCombiner::visitOR(SDNode *N) {
     WorkList.push_back(ORNode.Val);
     return DAG.getNode(ISD::ZERO_EXTEND, VT, ORNode);
   }
+  // fold (or (shl/srl/sra x), (shl/srl/sra y)) -> (shl/srl/sra (or x, y))
+  if (((N0.getOpcode() == ISD::SHL && N1.getOpcode() == ISD::SHL) ||
+       (N0.getOpcode() == ISD::SRL && N1.getOpcode() == ISD::SRL) ||
+       (N0.getOpcode() == ISD::SRA && N1.getOpcode() == ISD::SRA)) &&
+      N0.getOperand(1) == N1.getOperand(1)) {
+    SDOperand ORNode = DAG.getNode(ISD::OR, N0.getOperand(0).getValueType(),
+                                   N0.getOperand(0), N1.getOperand(0));
+    WorkList.push_back(ORNode.Val);
+    return DAG.getNode(N0.getOpcode(), VT, ORNode, N0.getOperand(1));
+  }
   // canonicalize shl to left side in a shl/srl pair, to match rotate
   if (N0.getOpcode() == ISD::SRL && N1.getOpcode() == ISD::SHL)
     std::swap(N0, N1);
@@ -1195,6 +1205,16 @@ SDOperand DAGCombiner::visitXOR(SDNode *N) {
                                    N0.getOperand(0), N1.getOperand(0));
     WorkList.push_back(XORNode.Val);
     return DAG.getNode(ISD::ZERO_EXTEND, VT, XORNode);
+  }
+  // fold (xor (shl/srl/sra x), (shl/srl/sra y)) -> (shl/srl/sra (xor x, y))
+  if (((N0.getOpcode() == ISD::SHL && N1.getOpcode() == ISD::SHL) ||
+       (N0.getOpcode() == ISD::SRL && N1.getOpcode() == ISD::SRL) ||
+       (N0.getOpcode() == ISD::SRA && N1.getOpcode() == ISD::SRA)) &&
+      N0.getOperand(1) == N1.getOperand(1)) {
+    SDOperand XORNode = DAG.getNode(ISD::XOR, N0.getOperand(0).getValueType(),
+                                    N0.getOperand(0), N1.getOperand(0));
+    WorkList.push_back(XORNode.Val);
+    return DAG.getNode(N0.getOpcode(), VT, XORNode, N0.getOperand(1));
   }
   return SDOperand();
 }
@@ -1396,14 +1416,20 @@ SDOperand DAGCombiner::visitSELECT(SDNode *N) {
   // fold X ? Y : X --> X ? Y : 0 --> X & Y
   if (MVT::i1 == VT && N0 == N2)
     return DAG.getNode(ISD::AND, VT, N0, N1);
-  
   // If we can fold this based on the true/false value, do so.
   if (SimplifySelectOps(N, N1, N2))
     return SDOperand();
-  
   // fold selects based on a setcc into other things, such as min/max/abs
   if (N0.getOpcode() == ISD::SETCC)
-    return SimplifySelect(N0, N1, N2);
+    // FIXME:
+    // Check against MVT::Other for SELECT_CC, which is a workaround for targets
+    // having to say they don't support SELECT_CC on every type the DAG knows
+    // about, since there is no way to mark an opcode illegal at all value types
+    if (TLI.isOperationLegal(ISD::SELECT_CC, MVT::Other))
+      return DAG.getNode(ISD::SELECT_CC, VT, N0.getOperand(0), N0.getOperand(1),
+                         N1, N2, N0.getOperand(2));
+    else
+      return SimplifySelect(N0, N1, N2);
   return SDOperand();
 }
 
@@ -1927,6 +1953,13 @@ SDOperand DAGCombiner::visitBRCOND(SDNode *N) {
   // unconditional branch
   if (N1C && N1C->getValue() == 1)
     return DAG.getNode(ISD::BR, MVT::Other, Chain, N2);
+  // fold a brcond with a setcc condition into a BR_CC node if BR_CC is legal
+  // on the target.
+  if (N1.getOpcode() == ISD::SETCC && 
+      TLI.isOperationLegal(ISD::BR_CC, MVT::Other)) {
+    return DAG.getNode(ISD::BR_CC, MVT::Other, Chain, N1.getOperand(2),
+                       N1.getOperand(0), N1.getOperand(1), N2);
+  }
   return SDOperand();
 }
 
@@ -1943,6 +1976,19 @@ SDOperand DAGCombiner::visitBRCONDTWOWAY(SDNode *N) {
   // unconditional branch to false mbb
   if (N1C && N1C->isNullValue())
     return DAG.getNode(ISD::BR, MVT::Other, Chain, N3);
+  // fold a brcondtwoway with a setcc condition into a BRTWOWAY_CC node if 
+  // BRTWOWAY_CC is legal on the target.
+  if (N1.getOpcode() == ISD::SETCC && 
+      TLI.isOperationLegal(ISD::BRTWOWAY_CC, MVT::Other)) {
+    std::vector<SDOperand> Ops;
+    Ops.push_back(Chain);
+    Ops.push_back(N1.getOperand(2));
+    Ops.push_back(N1.getOperand(0));
+    Ops.push_back(N1.getOperand(1));
+    Ops.push_back(N2);
+    Ops.push_back(N3);
+    return DAG.getNode(ISD::BRTWOWAY_CC, MVT::Other, Ops);
+  }
   return SDOperand();
 }
 
