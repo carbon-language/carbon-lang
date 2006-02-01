@@ -2406,14 +2406,6 @@ def MOVSDmr : I<0x11, MRMDestMem, (ops f64mem:$dst, FR64:$src),
                 [(store FR64:$src, addr:$dst)]>,
               Requires<[HasSSE2]>, XD;
 
-def CVTTSD2SIrr: I<0x2C, MRMSrcReg, (ops R32:$dst, FR64:$src),
-                   "cvttsd2si {$src, $dst|$dst, $src}",
-                   [(set R32:$dst, (fp_to_sint FR64:$src))]>,
-                 Requires<[HasSSE2]>, XD;
-def CVTTSD2SIrm: I<0x2C, MRMSrcMem, (ops R32:$dst, f64mem:$src),
-                   "cvttsd2si {$src, $dst|$dst, $src}",
-                   [(set R32:$dst, (fp_to_sint (loadf64 addr:$src)))]>,
-                 Requires<[HasSSE2]>, XD;
 def CVTTSS2SIrr: I<0x2C, MRMSrcReg, (ops R32:$dst, FR32:$src),
                    "cvttss2si {$src, $dst|$dst, $src}",
                    [(set R32:$dst, (fp_to_sint FR32:$src))]>,
@@ -2422,14 +2414,14 @@ def CVTTSS2SIrm: I<0x2C, MRMSrcMem, (ops R32:$dst, f32mem:$src),
                    "cvttss2si {$src, $dst|$dst, $src}",
                    [(set R32:$dst, (fp_to_sint (loadf32 addr:$src)))]>,
                  Requires<[HasSSE1]>, XS;
-def CVTSD2SSrr: I<0x5A, MRMSrcReg, (ops FR32:$dst, FR64:$src),
-                  "cvtsd2ss {$src, $dst|$dst, $src}",
-                  [(set FR32:$dst, (fround FR64:$src))]>,
-                Requires<[HasSSE2]>, XS;
-def CVTSD2SSrm: I<0x5A, MRMSrcMem, (ops FR32:$dst, f64mem:$src), 
-                  "cvtsd2ss {$src, $dst|$dst, $src}",
-                  [(set FR32:$dst, (fround (loadf64 addr:$src)))]>,
-                Requires<[HasSSE2]>, XS;
+def CVTTSD2SIrr: I<0x2C, MRMSrcReg, (ops R32:$dst, FR64:$src),
+                   "cvttsd2si {$src, $dst|$dst, $src}",
+                   [(set R32:$dst, (fp_to_sint FR64:$src))]>,
+                 Requires<[HasSSE2]>, XD;
+def CVTTSD2SIrm: I<0x2C, MRMSrcMem, (ops R32:$dst, f64mem:$src),
+                   "cvttsd2si {$src, $dst|$dst, $src}",
+                   [(set R32:$dst, (fp_to_sint (loadf64 addr:$src)))]>,
+                 Requires<[HasSSE2]>, XD;
 def CVTSS2SDrr: I<0x5A, MRMSrcReg, (ops FR64:$dst, FR32:$src),
                   "cvtss2sd {$src, $dst|$dst, $src}",
                   [(set FR64:$dst, (fextend FR32:$src))]>,
@@ -2438,6 +2430,14 @@ def CVTSS2SDrm: I<0x5A, MRMSrcMem, (ops FR64:$dst, f32mem:$src),
                   "cvtss2sd {$src, $dst|$dst, $src}",
                   [(set FR64:$dst, (fextend (loadf32 addr:$src)))]>,
                 Requires<[HasSSE2]>, XD;
+def CVTSD2SSrr: I<0x5A, MRMSrcReg, (ops FR32:$dst, FR64:$src),
+                  "cvtsd2ss {$src, $dst|$dst, $src}",
+                  [(set FR32:$dst, (fround FR64:$src))]>,
+                Requires<[HasSSE2]>, XS;
+def CVTSD2SSrm: I<0x5A, MRMSrcMem, (ops FR32:$dst, f64mem:$src), 
+                  "cvtsd2ss {$src, $dst|$dst, $src}",
+                  [(set FR32:$dst, (fround (loadf64 addr:$src)))]>,
+                Requires<[HasSSE2]>, XS;
 def CVTSI2SSrr: I<0x2A, MRMSrcReg, (ops FR32:$dst, R32:$src),
                   "cvtsi2ss {$src, $dst|$dst, $src}",
                   [(set FR32:$dst, (sint_to_fp R32:$src))]>,
@@ -2455,31 +2455,23 @@ def CVTSI2SDrm: I<0x2A, MRMSrcMem, (ops FR64:$dst, i32mem:$src),
                   [(set FR64:$dst, (sint_to_fp (loadi32 addr:$src)))]>,
                 Requires<[HasSSE2]>, XD;
 
-def SQRTSSrm : I<0x51, MRMSrcMem, (ops FR32:$dst, f32mem:$src),
-                 "sqrtss {$src, $dst|$dst, $src}",
-                 [(set FR32:$dst, (fsqrt (loadf32 addr:$src)))]>,
-               Requires<[HasSSE1]>, XS;
 def SQRTSSrr : I<0x51, MRMSrcReg, (ops FR32:$dst, FR32:$src),
                  "sqrtss {$src, $dst|$dst, $src}",
                  [(set FR32:$dst, (fsqrt FR32:$src))]>,
                Requires<[HasSSE1]>, XS;
-def SQRTSDrm : I<0x51, MRMSrcMem, (ops FR64:$dst, f64mem:$src),
-                 "sqrtsd {$src, $dst|$dst, $src}",
-                 [(set FR64:$dst, (fsqrt (loadf64 addr:$src)))]>,
-               Requires<[HasSSE2]>, XD;
+def SQRTSSrm : I<0x51, MRMSrcMem, (ops FR32:$dst, f32mem:$src),
+                 "sqrtss {$src, $dst|$dst, $src}",
+                 [(set FR32:$dst, (fsqrt (loadf32 addr:$src)))]>,
+               Requires<[HasSSE1]>, XS;
 def SQRTSDrr : I<0x51, MRMSrcReg, (ops FR64:$dst, FR64:$src),
                  "sqrtsd {$src, $dst|$dst, $src}",
                  [(set FR64:$dst, (fsqrt FR64:$src))]>,
                Requires<[HasSSE2]>, XD;
+def SQRTSDrm : I<0x51, MRMSrcMem, (ops FR64:$dst, f64mem:$src),
+                 "sqrtsd {$src, $dst|$dst, $src}",
+                 [(set FR64:$dst, (fsqrt (loadf64 addr:$src)))]>,
+               Requires<[HasSSE2]>, XD;
 
-def UCOMISDrr: I<0x2E, MRMSrcReg, (ops FR64:$src1, FR64:$src2),
-                 "ucomisd {$src2, $src1|$src1, $src2}",
-                 [(X86cmp FR64:$src1, FR64:$src2)]>,
-               Requires<[HasSSE2]>, TB, OpSize;
-def UCOMISDrm: I<0x2E, MRMSrcMem, (ops FR64:$src1, f64mem:$src2),
-                 "ucomisd {$src2, $src1|$src1, $src2}",
-                 [(X86cmp FR64:$src1, (loadf64 addr:$src2))]>,
-               Requires<[HasSSE2]>, TB, OpSize;
 def UCOMISSrr: I<0x2E, MRMSrcReg, (ops FR32:$src1, FR32:$src2),
                  "ucomiss {$src2, $src1|$src1, $src2}",
                  [(X86cmp FR32:$src1, FR32:$src2)]>,
@@ -2488,6 +2480,14 @@ def UCOMISSrm: I<0x2E, MRMSrcMem, (ops FR32:$src1, f32mem:$src2),
                  "ucomiss {$src2, $src1|$src1, $src2}",
                  [(X86cmp FR32:$src1, (loadf32 addr:$src2))]>,
                Requires<[HasSSE1]>, TB;
+def UCOMISDrr: I<0x2E, MRMSrcReg, (ops FR64:$src1, FR64:$src2),
+                 "ucomisd {$src2, $src1|$src1, $src2}",
+                 [(X86cmp FR64:$src1, FR64:$src2)]>,
+               Requires<[HasSSE2]>, TB, OpSize;
+def UCOMISDrm: I<0x2E, MRMSrcMem, (ops FR64:$src1, f64mem:$src2),
+                 "ucomisd {$src2, $src1|$src1, $src2}",
+                 [(X86cmp FR64:$src1, (loadf64 addr:$src2))]>,
+               Requires<[HasSSE2]>, TB, OpSize;
 
 // Pseudo-instructions that map fld0 to xorps/xorpd for sse.
 // FIXME: remove when we can teach regalloc that xor reg, reg is ok.
@@ -2570,7 +2570,25 @@ def SUBSDrm : I<0x5C, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f64mem:$src2),
                 [(set FR64:$dst, (fsub FR64:$src1, (loadf64 addr:$src2)))]>,
               Requires<[HasSSE2]>, XD;
 
-// SSE Logical
+// SSE compare
+def CMPSSrr : I<0xC2, MRMSrcReg, 
+                (ops FR32:$dst, FR32:$src1, FR32:$src, SSECC:$cc),
+                "cmp${cc}ss {$src, $dst|$dst, $src}", []>,
+              Requires<[HasSSE1]>, XS;
+def CMPSSrm : I<0xC2, MRMSrcMem, 
+                (ops FR32:$dst, FR32:$src1, f32mem:$src, SSECC:$cc),
+                "cmp${cc}ss {$src, $dst|$dst, $src}", []>,
+              Requires<[HasSSE1]>, XS;
+def CMPSDrr : I<0xC2, MRMSrcReg, 
+                (ops FR64:$dst, FR64:$src1, FR64:$src, SSECC:$cc),
+                "cmp${cc}sd {$src, $dst|$dst, $src}", []>,
+              Requires<[HasSSE1]>, XD;
+def CMPSDrm : I<0xC2, MRMSrcMem, 
+                (ops FR64:$dst, FR64:$src1, f64mem:$src, SSECC:$cc),
+                "cmp${cc}sd {$src, $dst|$dst, $src}", []>,
+              Requires<[HasSSE2]>, XD;
+
+// SSE Logical - these all operate on packed values
 let isCommutable = 1 in {
 def ANDPSrr : I<0x54, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
                 "andps {$src2, $dst|$dst, $src2}",
@@ -2634,23 +2652,6 @@ def ANDNPDrr : I<0x55, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
 def ANDNPDrm : I<0x55, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f128mem:$src2),
                 "andnpd {$src2, $dst|$dst, $src2}", []>,
                Requires<[HasSSE2]>, TB, OpSize;
-
-def CMPSSrr : I<0xC2, MRMSrcReg, 
-                (ops FR32:$dst, FR32:$src1, FR32:$src, SSECC:$cc),
-                "cmp${cc}ss {$src, $dst|$dst, $src}", []>,
-              Requires<[HasSSE1]>, XS;
-def CMPSSrm : I<0xC2, MRMSrcMem, 
-                (ops FR32:$dst, FR32:$src1, f32mem:$src, SSECC:$cc),
-                "cmp${cc}ss {$src, $dst|$dst, $src}", []>,
-              Requires<[HasSSE1]>, XS;
-def CMPSDrr : I<0xC2, MRMSrcReg, 
-                (ops FR64:$dst, FR64:$src1, FR64:$src, SSECC:$cc),
-                "cmp${cc}sd {$src, $dst|$dst, $src}", []>,
-              Requires<[HasSSE1]>, XD;
-def CMPSDrm : I<0xC2, MRMSrcMem, 
-                (ops FR64:$dst, FR64:$src1, f64mem:$src, SSECC:$cc),
-                "cmp${cc}sd {$src, $dst|$dst, $src}", []>,
-              Requires<[HasSSE2]>, XD;
 }
 
 //===----------------------------------------------------------------------===//
