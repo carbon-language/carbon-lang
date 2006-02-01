@@ -148,7 +148,7 @@ class OForm2<bits<6> opcode, bits<7> fun, string asmstr, list<dag> pattern>
 }
 
 class OForm4<bits<6> opcode, bits<7> fun, string asmstr, list<dag> pattern> 
-        : InstAlphaAlt<opcode, asmstr> {
+        : InstAlpha<opcode, (ops GPRC:$RDEST, GPRC:$RFALSE, GPRC:$RTRUE, GPRC:$RCOND), asmstr> {
   let Pattern = pattern;
 
   bits<5> Rc;
@@ -182,8 +182,10 @@ class OFormL<bits<6> opcode, bits<7> fun, string asmstr, list<dag> pattern>
   let Inst{4-0} = Rc;
 }
 
-class OForm4L<bits<6> opcode, bits<7> fun, string asmstr> 
-        : InstAlpha<opcode, (ops GPRC:$RDEST, GPRC:$RSRC2, u8imm:$L, GPRC:$RCOND), asmstr> {
+class OForm4L<bits<6> opcode, bits<7> fun, string asmstr, list<dag> pattern> 
+        : InstAlpha<opcode, (ops GPRC:$RDEST, GPRC:$RFALSE, s64imm:$RTRUE, GPRC:$RCOND), asmstr> {
+  let Pattern = pattern;
+
   bits<5> Rc;
   bits<8> LIT;
   bits<5> Ra;

@@ -134,28 +134,6 @@ def MEMLABEL : PseudoInstAlpha<(ops s64imm:$i, s64imm:$j, s64imm:$k, s64imm:$m),
          "LSMARKER$$$i$$$j$$$k$$$m:", []>;
 
 
-
-//An even better improvement on the Int = SetCC(FP):  SelectCC!
-//These are evil because they hide control flow in a MBB
-//really the ISel should emit multiple MBB
-let isTwoAddress = 1 in {
-//Conditional move of an int based on a FP CC
-  def CMOVEQ_FP : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, GPRC:$RSRC_T, F8RC:$RCOND),
-                                  "fbne $RCOND, 42f\n\tbis $RSRC_T,$RSRC_T,$RDEST\n42:\n", []>;
-  def CMOVEQi_FP : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, u8imm:$L, F8RC:$RCOND),
-                                  "fbne $RCOND, 42f\n\taddq $$31,$L,$RDEST\n42:\n", []>;
-
-  def CMOVNE_FP : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, GPRC:$RSRC_T, F8RC:$RCOND),
-                                  "fbeq $RCOND, 42f\n\tbis $RSRC_T,$RSRC_T,$RDEST\n42:\n", []>;
-  def CMOVNEi_FP : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, u8imm:$L, F8RC:$RCOND),
-                                  "fbeq $RCOND, 42f\n\taddq $$31,$L,$RDEST\n42:\n", []>;
-//Conditional move of an FP based on a Int CC
-  def FCMOVEQ_INT : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, GPRC:$RSRC_T, F8RC:$RCOND),
-                                  "bne $RCOND, 42f\n\tcpys $RSRC_T,$RSRC_T,$RDEST\n42:\n", []>;
-  def FCMOVNE_INT : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, GPRC:$RSRC_T, F8RC:$RCOND),
-                                  "beq $RCOND, 42f\n\tcpys $RSRC_T,$RSRC_T,$RDEST\n42:\n", []>;
-}
-
 //***********************
 //Real instructions
 //***********************
@@ -163,16 +141,7 @@ let isTwoAddress = 1 in {
 //Operation Form:
 
 //conditional moves, int
-def CMOVEQi  : OForm4L< 0x11, 0x24, "cmoveq $RCOND,$L,$RDEST">; //CMOVE if RCOND =  zero
-def CMOVGEi  : OForm4L< 0x11, 0x46, "cmovge $RCOND,$L,$RDEST">; //CMOVE if RCOND >= zero
-def CMOVGTi  : OForm4L< 0x11, 0x66, "cmovgt $RCOND,$L,$RDEST">; //CMOVE if RCOND > zero
-def CMOVLBCi : OForm4L< 0x11, 0x16, "cmovlbc $RCOND,$L,$RDEST">; //CMOVE if RCOND low bit clear
-def CMOVLBSi : OForm4L< 0x11, 0x14, "cmovlbs $RCOND,$L,$RDEST">; //CMOVE if RCOND low bit set
-def CMOVLEi  : OForm4L< 0x11, 0x64, "cmovle $RCOND,$L,$RDEST">; //CMOVE if RCOND <= zero
-def CMOVLTi  : OForm4L< 0x11, 0x44, "cmovlt $RCOND,$L,$RDEST">; //CMOVE if RCOND < zero
-def CMOVNEi  : OForm4L< 0x11, 0x26, "cmovne $RCOND,$L,$RDEST">; //CMOVE if RCOND != zero
 
-let OperandList = (ops GPRC:$RDEST, GPRC:$RFALSE, GPRC:$RTRUE, GPRC:$RCOND) in {
 def CMOVLBC  : OForm4<  0x11, 0x16, "cmovlbc $RCOND,$RTRUE,$RDEST",
                 [(set GPRC:$RDEST, (select (xor GPRC:$RCOND, 1), GPRC:$RTRUE, GPRC:$RFALSE))]>;
 def CMOVLBS  : OForm4<  0x11, 0x14, "cmovlbs $RCOND,$RTRUE,$RDEST",
@@ -189,13 +158,32 @@ def CMOVLT   : OForm4<  0x11, 0x44, "cmovlt $RCOND,$RTRUE,$RDEST",
                 [(set GPRC:$RDEST, (select (setlt GPRC:$RCOND, 0), GPRC:$RTRUE, GPRC:$RFALSE))]>;
 def CMOVNE   : OForm4<  0x11, 0x26, "cmovne $RCOND,$RTRUE,$RDEST",
                 [(set GPRC:$RDEST, (select (setne GPRC:$RCOND, 0), GPRC:$RTRUE, GPRC:$RFALSE))]>;
-}
+
+def CMOVEQi  : OForm4L< 0x11, 0x24, "cmoveq $RCOND,$RTRUE,$RDEST",
+                [(set GPRC:$RDEST, (select (setne GPRC:$RCOND, 0), GPRC:$RFALSE, immUExt8:$RTRUE))]>;
+def CMOVGEi  : OForm4L< 0x11, 0x46, "cmovge $RCOND,$RTRUE,$RDEST",
+                [(set GPRC:$RDEST, (select (setlt GPRC:$RCOND, 0), GPRC:$RFALSE, immUExt8:$RTRUE))]>;
+def CMOVGTi  : OForm4L< 0x11, 0x66, "cmovgt $RCOND,$RTRUE,$RDEST",
+                [(set GPRC:$RDEST, (select (setle GPRC:$RCOND, 0), GPRC:$RFALSE, immUExt8:$RTRUE))]>;
+def CMOVLEi  : OForm4L< 0x11, 0x64, "cmovle $RCOND,$RTRUE,$RDEST",
+                [(set GPRC:$RDEST, (select (setgt GPRC:$RCOND, 0), GPRC:$RFALSE, immUExt8:$RTRUE))]>;
+def CMOVLTi  : OForm4L< 0x11, 0x44, "cmovlt $RCOND,$RTRUE,$RDEST",
+                [(set GPRC:$RDEST, (select (setge GPRC:$RCOND, 0), GPRC:$RFALSE, immUExt8:$RTRUE))]>;
+def CMOVNEi  : OForm4L< 0x11, 0x26, "cmovne $RCOND,$RTRUE,$RDEST",
+                [(set GPRC:$RDEST, (select (seteq GPRC:$RCOND, 0), GPRC:$RFALSE, immUExt8:$RTRUE))]>;
+def CMOVLBCi : OForm4L< 0x11, 0x16, "cmovlbc $RCOND,$RTRUE,$RDEST",
+                [(set GPRC:$RDEST, (select (and GPRC:$RCOND, 1), GPRC:$RFALSE, immUExt8:$RTRUE))]>;
+def CMOVLBSi : OForm4L< 0x11, 0x14, "cmovlbs $RCOND,$RTRUE,$RDEST",
+                [(set GPRC:$RDEST, (select (xor GPRC:$RCOND, 1), GPRC:$RFALSE, immUExt8:$RTRUE))]>;
+
 
 //FIXME: fold setcc with select for all cases.  clearly I need patterns for inverted conditions
 //       and constants (which require inverted conditions as legalize puts the constant in the
 //       wrong field for the instruction definition
 def : Pat<(select GPRC:$which, GPRC:$src1, GPRC:$src2),
       (CMOVNE GPRC:$src2, GPRC:$src1, GPRC:$which)>;
+def : Pat<(select GPRC:$which, GPRC:$src1, immUExt8:$src2),
+      (CMOVEQi GPRC:$src1, immUExt8:$src2, GPRC:$which)>;
 
 
 def ADDL     : OForm< 0x10, 0x00, "addl $RA,$RB,$RC",
@@ -413,9 +401,6 @@ def : Pat<(setune GPRC:$X, GPRC:$Y), (CMPEQi (CMPEQ GPRC:$X, GPRC:$Y), 0)>;
 def : Pat<(setune GPRC:$X, immUExt8:$Y), (CMPEQi (CMPEQ GPRC:$X, immUExt8:$Y), 0)>;
 
 
-let isReturn = 1, isTerminator = 1, noResults = 1 in 
-  def RET : MbrForm< 0x1A, 0x02, (ops GPRC:$RD, GPRC:$RS, s64imm:$DISP), "ret $RD,($RS),$DISP">; //Return from subroutine
-//DAG Version:
 let isReturn = 1, isTerminator = 1, noResults = 1, Ra = 31, Rb = 26, disp = 1, Uses = [R26] in 
   def RETDAG : MbrForm< 0x1A, 0x02, (ops), "ret $$31,($$26),1">; //Return from subroutine
 
