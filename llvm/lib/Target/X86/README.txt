@@ -227,11 +227,6 @@ cvtsi2sd 8(%esp), %xmm0
 
 //===---------------------------------------------------------------------===//
 
-This instruction selector selects 'int X = 0' as 'mov Reg, 0' not 'xor Reg,Reg'
-This is bigger and slower.
-
-//===---------------------------------------------------------------------===//
-
 LSR should be turned on for the X86 backend and tuned to take advantage of its
 addressing modes.
 
