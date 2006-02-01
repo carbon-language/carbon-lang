@@ -288,3 +288,19 @@ _test:
 
 This is bad for register pressure, though the dag isel is producing a 
 better schedule. :)
+
+//===---------------------------------------------------------------------===//
+
+This testcase should have no SSE instructions in it, and only one load from
+a constant pool:
+
+double %test3(bool %B) {
+        %C = select bool %B, double 123.412, double 523.01123123
+        ret double %C
+}
+
+Currently, the select is being lowered, which prevents the dag combiner from
+turning 'select (load CPI1), (load CPI2)' -> 'load (select CPI1, CPI2)'
+
+The pattern isel got this one right.
+
