@@ -96,6 +96,9 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
   this->CGI = &CGI;
   bool inVariant = false;  // True if we are inside a {.|.|.} region.
 
+  // NOTE: Any extensions to this code need to be mirrored in the 
+  // AsmPrinter::printInlineAsm code that executes as compile time (assuming
+  // that inline asm strings should also get the new feature)!
   const std::string &AsmString = CGI.AsmString;
   std::string::size_type LastEmitted = 0;
   while (LastEmitted != AsmString.size()) {
