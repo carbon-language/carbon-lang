@@ -1709,6 +1709,10 @@ static unsigned getPatternSize(TreePatternNode *P, DAGISelEmitter &ISE) {
          P->getExtTypeNum(0) == MVT::Flag && 
          "Not a valid pattern node to size!");
   unsigned Size = 2;  // The node itself.
+  // If the root node is a ConstantSDNode, increases its size.
+  // e.g. (set R32:$dst, 0).
+  if (P->isLeaf() && dynamic_cast<IntInit*>(P->getLeafValue()))
+    Size++;
 
   // FIXME: This is a hack to statically increase the priority of patterns
   // which maps a sub-dag to a complex pattern. e.g. favors LEA over ADD.
