@@ -12,8 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Target/MRegisterInfo.h"
-
-namespace llvm {
+using namespace llvm;
 
 MRegisterInfo::MRegisterInfo(const TargetRegisterDesc *D, unsigned NR,
                              regclass_iterator RCB, regclass_iterator RCE,
@@ -39,5 +38,3 @@ std::vector<bool> MRegisterInfo::getAllocatableSet(MachineFunction &MF) const {
   }
   return Allocatable;
 }
-
-} // End llvm namespace
