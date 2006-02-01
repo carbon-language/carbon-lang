@@ -1912,10 +1912,11 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
         Ops.push_back(Op.getOperand(1));
         Copy = DAG.getNode(X86ISD::FP_SET_RESULT, Tys, Ops);
       } else {
-        SDOperand MemLoc, Chain;
+        SDOperand MemLoc;
+        SDOperand Chain = Op.getOperand(0);
         SDOperand Value = Op.getOperand(1);
 
-        if (Value.getOpcode() == ISD::LOAD) {
+        if (Value.getOpcode() == ISD::LOAD && Chain == Value.getOperand(0)) {
           Chain  = Value.getOperand(0);
           MemLoc = Value.getOperand(1);
         } else {
