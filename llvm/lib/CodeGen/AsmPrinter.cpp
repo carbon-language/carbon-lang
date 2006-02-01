@@ -20,6 +20,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetMachine.h"
 #include <iostream>
+#include <cerrno>
 using namespace llvm;
 
 AsmPrinter::AsmPrinter(std::ostream &o, TargetMachine &tm)
@@ -468,12 +469,118 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
     assert(NumDefs != NumOperands-1 && "No asm string?");
   
   assert(MI->getOperand(NumDefs).isExternalSymbol() && "No asm string?");
-  
+
+  // Disassemble the AsmStr, printing out the literal pieces, the operands, etc.
   const char *AsmStr = MI->getOperand(NumDefs).getSymbolName();
+
+  // The variant of the current asmprinter: FIXME: change.
+  int AsmPrinterVariant = 0;
   
-  O << AsmStr << "\n";
+  int CurVariant = -1;            // The number of the {.|.|.} region we are in.
+  const char *LastEmitted = AsmStr; // One past the last character emitted.
   
-  // Use a virtual "printAsmOperand" method, which takes the constraint
-  // string?  Must pass the constraint string to here if needed.
-  
+  while (*LastEmitted) {
+    switch (*LastEmitted) {
+    default: {
+      // Not a special case, emit the string section literally.
+      const char *LiteralEnd = LastEmitted+1;
+      while (*LiteralEnd && *LiteralEnd != '{' && *LiteralEnd != '|' &&
+             *LiteralEnd != '}' && *LiteralEnd != '$')
+        ++LiteralEnd;
+      if (CurVariant == -1 || CurVariant == AsmPrinterVariant)
+        O.write(LastEmitted, LiteralEnd-LastEmitted);
+      LastEmitted = LiteralEnd;
+      break;
+    }
+    case '$': {
+      ++LastEmitted;   // Consume '$' character.
+      if (*LastEmitted == '$') { // $$ -> $
+        if (CurVariant == -1 || CurVariant == AsmPrinterVariant)
+          O << '$';
+        ++LastEmitted;  // Consume second '$' character.
+        break;
+      }
+      
+      bool HasCurlyBraces = false;
+      if (*LastEmitted == '{') {     // ${variable}
+        ++LastEmitted;               // Consume '{' character.
+        HasCurlyBraces = true;
+      }
+      
+      const char *IDStart = LastEmitted;
+      char *IDEnd;
+      long Val = strtol(IDStart, &IDEnd, 10); // We only accept numbers for IDs.
+      if (!isdigit(*IDStart) || (Val == 0 && errno == EINVAL)) {
+        std::cerr << "Bad $ operand number in inline asm string: '" 
+                  << AsmStr << "'\n";
+        exit(1);
+      }
+      LastEmitted = IDEnd;
+      
+      if (HasCurlyBraces) {
+        if (*LastEmitted != '}') {
+          std::cerr << "Bad ${} expression in inline asm string: '" 
+                    << AsmStr << "'\n";
+          exit(1);
+        }
+        ++LastEmitted;    // Consume '}' character.
+      }
+      
+      if ((unsigned)Val >= NumOperands-1) {
+        std::cerr << "Invalid $ operand number in inline asm string: '" 
+                  << AsmStr << "'\n";
+        exit(1);
+      }
+      
+      // Okay, we finally have an operand number.  Ask the target to print this
+      // operand!
+      if (CurVariant == -1 || CurVariant == AsmPrinterVariant)
+        if (const_cast<AsmPrinter*>(this)->
+                PrintAsmOperand(MI, Val+1, AsmPrinterVariant)) {
+          std::cerr << "Invalid operand found in inline asm: '"
+                    << AsmStr << "'\n";
+          MI->dump();
+          exit(1);
+        }
+      break;
+    }
+    case '{':
+      ++LastEmitted;      // Consume '{' character.
+      if (CurVariant != -1) {
+        std::cerr << "Nested variants found in inline asm string: '"
+                  << AsmStr << "'\n";
+        exit(1);
+      }
+      CurVariant = 0;     // We're in the first variant now.
+      break;
+    case '|':
+      ++LastEmitted;  // consume '|' character.
+      if (CurVariant == -1) {
+        std::cerr << "Found '|' character outside of variant in inline asm "
+                  << "string: '" << AsmStr << "'\n";
+        exit(1);
+      }
+      ++CurVariant;   // We're in the next variant.
+      break;
+    case '}':
+      ++LastEmitted;  // consume '}' character.
+      if (CurVariant == -1) {
+        std::cerr << "Found '}' character outside of variant in inline asm "
+                  << "string: '" << AsmStr << "'\n";
+        exit(1);
+      }
+      CurVariant = -1;
+      break;
+    }
+  }
+  O << "\n";
+}
+
+/// PrintAsmOperand - Print the specified operand of MI, an INLINEASM
+/// instruction, using the specified assembler variant.  Targets should
+/// overried this to format as appropriate.
+bool AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
+                                 unsigned AsmVariant) {
+  // Target doesn't support this yet!
+  return true;
 }
