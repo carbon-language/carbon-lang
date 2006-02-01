@@ -70,17 +70,41 @@ public:
   enum ConstraintPrefix {
     isInput,            // 'x'
     isOutput,           // '=x'
-    isIndirectOutput,   // '==x'
     isClobber,          // '~x'
+  };
+  
+  struct ConstraintInfo {
+    /// Type - The basic type of the constraint: input/output/clobber
+    ///
+    ConstraintPrefix Type;
+    
+    /// isEarlyClobber - "&": output operand writes result before inputs are all
+    /// read.  This is only ever set for an output operand.
+    bool isEarlyClobber; 
+    
+    /// isIndirectOutput - If this is true for an output constraint, the address
+    /// to store the output result is passed as an operand to the call.
+    bool isIndirectOutput;
+    
+    /// Code - The constraint code, either the register name (in braces) or the
+    /// constraint letter/number.
+    std::vector<std::string> Codes;
+    
+    /// Parse - Analyze the specified string (e.g. "==&{eax}") and fill in the
+    /// fields in this structure.  If the constraint string is not understood,
+    /// return true, otherwise return false.
+    bool Parse(const std::string &Str);
   };
   
   /// ParseConstraints - Split up the constraint string into the specific
   /// constraints and their prefixes.  If this returns an empty vector, and if
   /// the constraint string itself isn't empty, there was an error parsing.
-  static std::vector<std::pair<ConstraintPrefix, std::string> > 
+  static std::vector<ConstraintInfo> 
     ParseConstraints(const std::string &ConstraintString);
   
-  std::vector<std::pair<ConstraintPrefix, std::string> > 
+  /// ParseConstraints - Parse the constraints of this inlineasm object, 
+  /// returning them the same way that ParseConstraints(str) does.
+  std::vector<ConstraintInfo> 
   ParseConstraints() const {
     return ParseConstraints(Constraints);
   }
