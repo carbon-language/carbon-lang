@@ -110,11 +110,11 @@ def X86InstrInfo : InstrInfo {
                        "FPFormBits",
                        "Opcode"];
   let TSFlagsShifts = [0,
-                       5,
                        6,
-                       10,
-                       12,
-                       16];
+                       7,
+                       11,
+                       13,
+                       17];
 }
 
 // The X86 target supports two different syntaxes for emitting machine code.

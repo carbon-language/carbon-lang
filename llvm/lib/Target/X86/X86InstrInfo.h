@@ -75,7 +75,11 @@ namespace X86II {
     MRM0m = 24,  MRM1m = 25,  MRM2m = 26,  MRM3m = 27, // Format /0 /1 /2 /3
     MRM4m = 28,  MRM5m = 29,  MRM6m = 30,  MRM7m = 31, // Format /4 /5 /6 /7
 
-    FormMask       = 31,
+    // MRMInitReg - This form is used for instructions whose source and
+    // destinations are the same register.
+    MRMInitReg = 32,
+
+    FormMask       = 63,
 
     //===------------------------------------------------------------------===//
     // Actual flags...
@@ -83,14 +87,14 @@ namespace X86II {
     // OpSize - Set if this instruction requires an operand size prefix (0x66),
     // which most often indicates that the instruction operates on 16 bit data
     // instead of 32 bit data.
-    OpSize      = 1 << 5,
+    OpSize      = 1 << 6,
 
     // Op0Mask - There are several prefix bytes that are used to form two byte
     // opcodes.  These are currently 0x0F, 0xF3, and 0xD8-0xDF.  This mask is
     // used to obtain the setting of this field.  If no bits in this field is
     // set, there is no prefix byte for obtaining a multibyte opcode.
     //
-    Op0Shift    = 6,
+    Op0Shift    = 7,
     Op0Mask     = 0xF << Op0Shift,
 
     // TB - TwoByte - Set if this instruction has a two byte opcode, which
@@ -115,7 +119,7 @@ namespace X86II {
     //===------------------------------------------------------------------===//
     // This two-bit field describes the size of an immediate operand.  Zero is
     // unused so that we can tell if we forgot to set a value.
-    ImmShift = 10,
+    ImmShift = 11,
     ImmMask  = 7 << ImmShift,
     Imm8     = 1 << ImmShift,
     Imm16    = 2 << ImmShift,
@@ -125,7 +129,7 @@ namespace X86II {
     // FP Instruction Classification...  Zero is non-fp instruction.
 
     // FPTypeMask - Mask for all of the FP types...
-    FPTypeShift = 12,
+    FPTypeShift = 13,
     FPTypeMask  = 7 << FPTypeShift,
 
     // NotFP - The default, set for instructions that do not use FP registers.
@@ -158,9 +162,9 @@ namespace X86II {
     SpecialFP  = 7 << FPTypeShift,
 
     // Bit 15 is unused.
-    OpcodeShift   = 16,
+    OpcodeShift   = 17,
     OpcodeMask    = 0xFF << OpcodeShift,
-    // Bits 24 -> 31 are unused
+    // Bits 25 -> 31 are unused
   };
 }
 

@@ -473,7 +473,6 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
 
   case X86II::MRMSrcReg:
     MCE.emitByte(BaseOpcode);
-
     emitRegModRMByte(MI.getOperand(1).getReg(),
                      getX86RegNum(MI.getOperand(0).getReg()));
     if (MI.getNumOperands() == 3)
@@ -517,6 +516,12 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
       else
         assert(0 && "Unknown operand!");
     }
+    break;
+
+  case X86II::MRMInitReg:
+    MCE.emitByte(BaseOpcode);
+    emitRegModRMByte(MI.getOperand(0).getReg(),
+                     getX86RegNum(MI.getOperand(0).getReg()));
     break;
   }
 }

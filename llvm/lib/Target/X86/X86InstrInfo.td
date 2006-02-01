@@ -180,8 +180,8 @@ def leaaddr : ComplexPattern<i32, 4, "SelectLEAAddr",
 // Format specifies the encoding used by the instruction.  This is part of the
 // ad-hoc solution used to emit machine instruction encodings by our machine
 // code emitter.
-class Format<bits<5> val> {
-  bits<5> Value = val;
+class Format<bits<6> val> {
+  bits<6> Value = val;
 }
 
 def Pseudo     : Format<0>; def RawFrm     : Format<1>;
@@ -194,6 +194,7 @@ def MRM6r  : Format<22>; def MRM7r  : Format<23>;
 def MRM0m  : Format<24>; def MRM1m  : Format<25>; def MRM2m  : Format<26>;
 def MRM3m  : Format<27>; def MRM4m  : Format<28>; def MRM5m  : Format<29>;
 def MRM6m  : Format<30>; def MRM7m  : Format<31>;
+def MRMInitReg : Format<32>;
 
 //===----------------------------------------------------------------------===//
 // X86 Instruction Predicate Definitions.
@@ -238,7 +239,7 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag ops, string AsmStr>
 
   bits<8> Opcode = opcod;
   Format Form = f;
-  bits<5> FormBits = Form.Value;
+  bits<6> FormBits = Form.Value;
   ImmType ImmT = i;
   bits<2> ImmTypeBits = ImmT.Value;
 
@@ -708,6 +709,18 @@ def MOV32mr : I<0x89, MRMDestMem, (ops i32mem:$dst, R32:$src),
                 "mov{l} {$src, $dst|$dst, $src}",
                 [(store R32:$src, addr:$dst)]>;
                 
+// Pseudo-instructions that map movr0 to xor.
+// FIXME: remove when we can teach regalloc that xor reg, reg is ok.
+def MOV8r0   : I<0x30, MRMInitReg, (ops R8 :$dst),
+                 "xor{b} $dst, $dst",
+                 [(set R8:$dst, 0)]>;
+def MOV16r0  : I<0x31, MRMInitReg,  (ops R16:$dst), 
+                 "xor{w} $dst, $dst",
+                 [(set R16:$dst, 0)]>, OpSize;
+def MOV32r0  : I<0x31, MRMInitReg,  (ops R32:$dst), 
+                 "xor{l} $dst, $dst",
+                 [(set R32:$dst, 0)]>;
+
 //===----------------------------------------------------------------------===//
 //  Fixed-Register Multiplication and Division Instructions...
 //
@@ -2478,10 +2491,10 @@ def UCOMISSrm: I<0x2E, MRMSrcMem, (ops FR32:$src1, f32mem:$src2),
 
 // Pseudo-instructions that map fld0 to xorps/xorpd for sse.
 // FIXME: remove when we can teach regalloc that xor reg, reg is ok.
-def FLD0SS : I<0x57, MRMSrcReg, (ops FR32:$dst),
+def FLD0SS : I<0x57, MRMInitReg, (ops FR32:$dst),
                "xorps $dst, $dst", [(set FR32:$dst, fp32imm0)]>,
              Requires<[HasSSE1]>, TB;
-def FLD0SD : I<0x57, MRMSrcReg, (ops FR64:$dst),
+def FLD0SD : I<0x57, MRMInitReg, (ops FR64:$dst),
                "xorpd $dst, $dst", [(set FR64:$dst, fp64imm0)]>,
              Requires<[HasSSE2]>, TB, OpSize;
 
