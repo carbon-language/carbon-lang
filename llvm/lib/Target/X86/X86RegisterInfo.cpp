@@ -328,6 +328,16 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr* MI,
     case X86::CMP8ri:    return MakeMIInst(X86::CMP8mi , FrameIndex, MI);
     case X86::CMP16ri:   return MakeMIInst(X86::CMP16mi, FrameIndex, MI);
     case X86::CMP32ri:   return MakeMIInst(X86::CMP32mi, FrameIndex, MI);
+    // Scalar SSE instructions
+    case X86::MOVSSrr:   return MakeMRInst(X86::MOVSSmr, FrameIndex, MI);
+    case X86::MOVSDrr:   return MakeMRInst(X86::MOVSDmr, FrameIndex, MI);
+#if 0
+    // Packed SSE instructions
+    // FIXME: Can't use these until we are spilling XMM registers to
+    // 128-bit locations.
+    case X86::MOVAPSrr:  return MakeMRInst(X86::MOVAPSmr, FrameIndex, MI);
+    case X86::MOVAPDrr:  return MakeMRInst(X86::MOVAPDmr, FrameIndex, MI);
+#endif
     }
   } else if (i == 1) {
     switch(MI->getOpcode()) {
@@ -396,8 +406,46 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr* MI,
     case X86::MOVSX32rr8:return MakeRMInst(X86::MOVSX32rm8, FrameIndex, MI);
     case X86::MOVSX32rr16:return MakeRMInst(X86::MOVSX32rm16, FrameIndex, MI);
     case X86::MOVZX16rr8:return MakeRMInst(X86::MOVZX16rm8 , FrameIndex, MI);
-    case X86::MOVZX32rr8:  return MakeRMInst(X86::MOVZX32rm8, FrameIndex, MI);
+    case X86::MOVZX32rr8:return MakeRMInst(X86::MOVZX32rm8, FrameIndex, MI);
     case X86::MOVZX32rr16:return MakeRMInst(X86::MOVZX32rm16, FrameIndex, MI);
+    // Scalar SSE instructions
+    case X86::MOVSSrr:   return MakeRMInst(X86::MOVSSrm, FrameIndex, MI);
+    case X86::MOVSDrr:   return MakeRMInst(X86::MOVSDrm, FrameIndex, MI);
+    case X86::CVTTSS2SIrr:return MakeRMInst(X86::CVTTSS2SIrm, FrameIndex, MI);
+    case X86::CVTTSD2SIrr:return MakeRMInst(X86::CVTTSD2SIrm, FrameIndex, MI);
+    case X86::CVTSS2SDrr:return MakeRMInst(X86::CVTSS2SDrm, FrameIndex, MI);
+    case X86::CVTSD2SSrr:return MakeRMInst(X86::CVTSD2SSrm, FrameIndex, MI);
+    case X86::CVTSI2SSrr:return MakeRMInst(X86::CVTSI2SSrm, FrameIndex, MI);
+    case X86::CVTSI2SDrr:return MakeRMInst(X86::CVTSI2SDrm, FrameIndex, MI);
+    case X86::SQRTSSrr:  return MakeRMInst(X86::SQRTSSrm, FrameIndex, MI);
+    case X86::SQRTSDrr:  return MakeRMInst(X86::SQRTSDrm, FrameIndex, MI);
+    case X86::UCOMISSrr: return MakeRMInst(X86::UCOMISSrm, FrameIndex, MI);
+    case X86::UCOMISDrr: return MakeRMInst(X86::UCOMISDrm, FrameIndex, MI);
+    case X86::ADDSSrr:   return MakeRMInst(X86::ADDSSrm, FrameIndex, MI);
+    case X86::ADDSDrr:   return MakeRMInst(X86::ADDSDrm, FrameIndex, MI);
+    case X86::MULSSrr:   return MakeRMInst(X86::MULSSrm, FrameIndex, MI);
+    case X86::MULSDrr:   return MakeRMInst(X86::MULSDrm, FrameIndex, MI);
+    case X86::DIVSSrr:   return MakeRMInst(X86::DIVSSrm, FrameIndex, MI);
+    case X86::DIVSDrr:   return MakeRMInst(X86::DIVSDrm, FrameIndex, MI);
+    case X86::SUBSSrr:   return MakeRMInst(X86::SUBSSrm, FrameIndex, MI);
+    case X86::SUBSDrr:   return MakeRMInst(X86::SUBSDrm, FrameIndex, MI);
+    case X86::CMPSSrr:   return MakeRMInst(X86::CMPSSrm, FrameIndex, MI);
+    case X86::CMPSDrr:   return MakeRMInst(X86::CMPSDrm, FrameIndex, MI);
+#if 0
+    // Packed SSE instructions
+    // FIXME: Can't use these until we are spilling XMM registers to
+    // 128-bit locations.
+    case X86::ANDPSrr:   return MakeRMInst(X86::ANDPSrm, FrameIndex, MI);
+    case X86::ANDPDrr:   return MakeRMInst(X86::ANDPDrm, FrameIndex, MI);
+    case X86::ORPSrr:    return MakeRMInst(X86::ORPSrm, FrameIndex, MI);
+    case X86::ORPDrr:    return MakeRMInst(X86::ORPDrm, FrameIndex, MI);
+    case X86::XORPSrr:   return MakeRMInst(X86::XORPSrm, FrameIndex, MI);
+    case X86::XORPDrr:   return MakeRMInst(X86::XORPDrm, FrameIndex, MI);
+    case X86::ANDNPSrr:  return MakeRMInst(X86::ANDNPSrm, FrameIndex, MI);
+    case X86::ANDNPDrr:  return MakeRMInst(X86::ANDNPDrm, FrameIndex, MI);
+    case X86::MOVAPSrr:  return MakeRMInst(X86::MOVAPSrm, FrameIndex, MI);
+    case X86::MOVAPDrr:  return MakeRMInst(X86::MOVAPDrm, FrameIndex, MI);
+#endif
     }
   }
   if (PrintFailedFusing)
