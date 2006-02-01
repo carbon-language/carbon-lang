@@ -309,3 +309,7 @@ bool %X(int %X) {
         ret bool %Z
 }
 
+//===---------------------------------------------------------------------===//
+
+We need to lower switch statements to tablejumps when appropriate instead of
+always into binary branch trees.
