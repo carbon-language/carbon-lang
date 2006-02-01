@@ -1916,7 +1916,8 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
         SDOperand Chain = Op.getOperand(0);
         SDOperand Value = Op.getOperand(1);
 
-        if (Value.getOpcode() == ISD::LOAD && Chain == Value.getOperand(0)) {
+        if (Value.getOpcode() == ISD::LOAD &&
+            (Chain == Value.getValue(1) || Chain == Value.getOperand(0))) {
           Chain  = Value.getOperand(0);
           MemLoc = Value.getOperand(1);
         } else {
