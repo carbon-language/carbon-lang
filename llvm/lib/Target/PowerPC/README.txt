@@ -435,3 +435,32 @@ This could be done in the dag combiner, by swapping a BR_CC when a SETCC of the
 same operands (but backwards) exists.  In this case, this wouldn't save us 
 anything though, because the compares still wouldn't be shared.
 
+===-------------------------------------------------------------------------===
+
+The legalizer should lower this:
+
+bool %test(ulong %x) {
+  %tmp = setlt ulong %x, 4294967296
+  ret bool %tmp
+}
+
+into "if x.high == 0", not:
+
+_test:
+        addi r2, r3, -1
+        cntlzw r2, r2
+        cntlzw r3, r3
+        srwi r2, r2, 5
+        srwi r3, r3, 5
+        li r4, 0
+        cmpwi cr0, r2, 0
+        bne cr0, LBB1_2 ; 
+LBB1_1:
+        or r4, r3, r3
+LBB1_2:
+        cmplw cr7, r4, r3
+        mfcr r2, 1
+        rlwinm r3, r2, 29, 31, 31
+        blr
+
+noticed in 2005-05-11-Popcount-ffs-fls.c.
