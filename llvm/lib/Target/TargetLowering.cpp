@@ -243,15 +243,22 @@ bool TargetLowering::isMaskedValueZeroForTargetNode(const SDOperand &Op,
 
 std::vector<unsigned> TargetLowering::
 getRegForInlineAsmConstraint(const std::string &Constraint) const {
+  // Not a physreg, must not be a register reference or something.
+  if (Constraint[0] != '{') return std::vector<unsigned>();
+  assert(*(Constraint.end()-1) == '}' && "Not a brace enclosed constraint?");
+
+  // Remove the braces from around the name.
+  std::string RegName(Constraint.begin()+1, Constraint.end()-1);
+  
   // Scan to see if this constraint is a register name.
   const MRegisterInfo *RI = TM.getRegisterInfo();
   for (unsigned i = 1, e = RI->getNumRegs(); i != e; ++i) {
     if (const char *Name = RI->get(i).Name)
-      if (StringsEqualNoCase(Constraint, Name))
+      if (StringsEqualNoCase(RegName, Name))
         return std::vector<unsigned>(1, i);
   }
-
-  // Not a physreg, must not be a register reference or something.
+  
+  // Unknown physreg.
   return std::vector<unsigned>();
 }
 
