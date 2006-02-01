@@ -83,7 +83,7 @@ namespace {
     void printMachineInstruction(const MachineInstr *MI);
     void printOp(const MachineOperand &MO);
 
-    void printOperand(const MachineInstr *MI, unsigned OpNo){
+    void printOperand(const MachineInstr *MI, unsigned OpNo) {
       const MachineOperand &MO = MI->getOperand(OpNo);
       if (MO.getType() == MachineOperand::MO_MachineRegister) {
         assert(MRegisterInfo::isPhysicalRegister(MO.getReg())&&"Not physreg??");
@@ -94,7 +94,13 @@ namespace {
         printOp(MO);
       }
     }
-
+    
+    bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
+                         unsigned AsmVariant) {
+       printOperand(MI, OpNo);
+       return false;
+    }
+    
     void printU5ImmOperand(const MachineInstr *MI, unsigned OpNo) {
       unsigned char value = MI->getOperand(OpNo).getImmedValue();
       assert(value <= 31 && "Invalid u5imm argument!");
