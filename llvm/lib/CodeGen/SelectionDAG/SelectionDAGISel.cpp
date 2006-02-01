@@ -1156,8 +1156,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
   // could not choose to not chain it.
   bool hasSideEffects = IA->hasSideEffects();
 
-  std::vector<std::pair<InlineAsm::ConstraintPrefix, std::string> > 
-    Constraints = IA->ParseConstraints();
+  std::vector<InlineAsm::ConstraintInfo> Constraints = IA->ParseConstraints();
   
   /// AsmNodeOperands - A list of pairs.  The first element is a register, the
   /// second is a bitfield where bit #0 is set if it is a use and bit #1 is set
@@ -1175,55 +1174,62 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
   std::vector<std::pair<unsigned, Value*> > IndirectStoresToEmit;
   unsigned OpNum = 1;
   bool FoundOutputConstraint = false;
+  //std::set<unsigned> OutputRegs;
+  //std::set<unsigned> InputRegs;
+  
   for (unsigned i = 0, e = Constraints.size(); i != e; ++i) {
-    switch (Constraints[i].first) {
-      case InlineAsm::isOutput: {
-      assert(!FoundOutputConstraint &&
-             "Cannot have multiple output constraints yet!");
-      FoundOutputConstraint = true;
-      assert(I.getType() != Type::VoidTy && "Bad inline asm!");
+    assert(Constraints[i].Codes.size() == 1 && "Only handles one code so far!");
+    std::string &ConstraintCode = Constraints[i].Codes[0];
+    switch (Constraints[i].Type) {
+    case InlineAsm::isOutput: {
+      bool isEarlyClobber = Constraints[i].isEarlyClobber;
+      
       // Copy the output from the appropriate register.
       std::vector<unsigned> Regs =
-      TLI.getRegForInlineAsmConstraint(Constraints[i].second);
+        TLI.getRegForInlineAsmConstraint(ConstraintCode);
       assert(Regs.size() == 1 && "Only handle simple regs right now!");
-      RetValReg = Regs[0];
+      unsigned DestReg = Regs[0];
+
+      const Type *OpTy;
+      if (!Constraints[i].isIndirectOutput) {
+        assert(!FoundOutputConstraint &&
+               "Cannot have multiple output constraints yet!");
+        FoundOutputConstraint = true;
+        assert(I.getType() != Type::VoidTy && "Bad inline asm!");
+        
+        RetValReg = DestReg;
+        OpTy = I.getType();
+      } else {
+        IndirectStoresToEmit.push_back(std::make_pair(DestReg,
+                                                      I.getOperand(OpNum)));
+        OpTy = I.getOperand(OpNum)->getType();
+        OpTy = cast<PointerType>(OpTy)->getElementType();
+        OpNum++;  // Consumes a call operand.
+      }
       
       // Add information to the INLINEASM node to know that this register is
       // set.
-      AsmNodeOperands.push_back(DAG.getRegister(RetValReg,
-                                                TLI.getValueType(I.getType())));
+      AsmNodeOperands.push_back(DAG.getRegister(DestReg,
+                                                TLI.getValueType(OpTy)));
       AsmNodeOperands.push_back(DAG.getConstant(2, MVT::i32)); // ISDEF
-      break;
-    }
-    case InlineAsm::isIndirectOutput: {
-      // Copy the output from the appropriate register.
-      std::vector<unsigned> Regs =
-        TLI.getRegForInlineAsmConstraint(Constraints[i].second);
-      assert(Regs.size() == 1 && "Only handle simple regs right now!");
-      IndirectStoresToEmit.push_back(std::make_pair(Regs[0],
-                                                    I.getOperand(OpNum)));
-      OpNum++;  // Consumes a call operand.
       
-      // Add information to the INLINEASM node to know that this register is
-      // set.
-      AsmNodeOperands.push_back(DAG.getRegister(Regs[0],
-                                                TLI.getValueType(I.getType())));
-      AsmNodeOperands.push_back(DAG.getConstant(2, MVT::i32)); // ISDEF
       break;
     }
     case InlineAsm::isInput: {
+      Value *Operand = I.getOperand(OpNum);
+      const Type *OpTy = Operand->getType();
+      
       // Copy the input into the appropriate register.
       std::vector<unsigned> Regs =
-        TLI.getRegForInlineAsmConstraint(Constraints[i].second);
+        TLI.getRegForInlineAsmConstraint(ConstraintCode);
       assert(Regs.size() == 1 && "Only handle simple regs right now!");
-      Chain = DAG.getCopyToReg(Chain, Regs[0], 
-                               getValue(I.getOperand(OpNum)), Flag);
+      unsigned SrcReg = Regs[0];
+      Chain = DAG.getCopyToReg(Chain, SrcReg, getValue(Operand), Flag);
       Flag = Chain.getValue(1);
       
       // Add information to the INLINEASM node to know that this register is
       // read.
-      AsmNodeOperands.push_back(DAG.getRegister(Regs[0],
-                                                TLI.getValueType(I.getType())));
+      AsmNodeOperands.push_back(DAG.getRegister(SrcReg,TLI.getValueType(OpTy)));
       AsmNodeOperands.push_back(DAG.getConstant(1, MVT::i32)); // ISUSE
       break;
     }

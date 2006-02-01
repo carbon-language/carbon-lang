@@ -472,4 +472,8 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
   const char *AsmStr = MI->getOperand(NumDefs).getSymbolName();
   
   O << AsmStr << "\n";
+  
+  // Use a virtual "printAsmOperand" method, which takes the constraint
+  // string?  Must pass the constraint string to here if needed.
+  
 }
