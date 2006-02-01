@@ -178,15 +178,6 @@ namespace llvm {
     void SwitchSection(const char *NewSection, const GlobalValue *GV);
 
   protected:
-    /// getFunctionNumber - Return a unique ID for the current function.
-    ///
-    unsigned getFunctionNumber() const { return FunctionNumber; }
-    
-    /// IncrementFunctionNumber - Increase Function Number.  AsmPrinters should
-    /// not normally call this, as the counter is automatically bumped by
-    /// SetupMachineFunction.
-    void IncrementFunctionNumber() { FunctionNumber++; }
-    
     /// doInitialization - Set up the AsmPrinter when we are working on a new
     /// module.  If your pass overrides this, it must make sure to explicitly
     /// call this implementation.
@@ -195,10 +186,26 @@ namespace llvm {
     /// doFinalization - Shut down the asmprinter.  If you override this in your
     /// pass, you must make sure to call it explicitly.
     bool doFinalization(Module &M);
+
+    /// PrintAsmOperand - Print the specified operand of MI, an INLINEASM
+    /// instruction, using the specified assembler variant.  Targets should
+    /// overried this to format as appropriate.  This method can return true if
+    /// the operand is erroneous.
+    virtual bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
+                                 unsigned AsmVariant);
     
     /// SetupMachineFunction - This should be called when a new MachineFunction
     /// is being processed from runOnMachineFunction.
     void SetupMachineFunction(MachineFunction &MF);
+    
+    /// getFunctionNumber - Return a unique ID for the current function.
+    ///
+    unsigned getFunctionNumber() const { return FunctionNumber; }
+    
+    /// IncrementFunctionNumber - Increase Function Number.  AsmPrinters should
+    /// not normally call this, as the counter is automatically bumped by
+    /// SetupMachineFunction.
+    void IncrementFunctionNumber() { FunctionNumber++; }
     
     /// EmitConstantPool - Print to the current output stream assembly
     /// representations of the constants in the constant pool MCP. This is
