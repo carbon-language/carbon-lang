@@ -242,27 +242,6 @@ other fast SSE modes.
 
 //===---------------------------------------------------------------------===//
 
-cd Regression/CodeGen/X86
-llvm-as < setuge.ll | llc -march=x86 -mcpu=yonah -enable-x86-sse
-
-_cmp:
-        subl $4, %esp
-        leal 20(%esp), %eax
-        movss 12(%esp), %xmm0
-        leal 16(%esp), %ecx
-        ucomiss 8(%esp), %xmm0
-        cmovb %ecx, %eax
-1)      movss (%eax), %xmm0
-1)      movss %xmm0, (%esp)
-        flds (%esp)
-        addl $4, %esp
-        ret
-
-
-1) We shouldn't load into XMM regs only to store it back.
-
-//===---------------------------------------------------------------------===//
-
 Think about doing i64 math in SSE regs.
 
 //===---------------------------------------------------------------------===//
