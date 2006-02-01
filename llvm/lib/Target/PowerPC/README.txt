@@ -460,3 +460,20 @@ In particular, the two compares (marked 1) could be shared by reversing one.
 This could be done in the dag combiner, by swapping a BR_CC when a SETCC of the
 same operands (but backwards) exists.  In this case, this wouldn't save us 
 anything though, because the compares still wouldn't be shared.
+
+===-------------------------------------------------------------------------===
+
+A simple case we generate suboptimal code on:
+
+int test(int X) {
+  return X == 0 ? 32 : 0;
+}
+
+_test:
+        cntlzw r2, r3
+        srwi r2, r2, 5
+        slwi r3, r2, 5
+        blr
+
+The shifts should be one 'andi'.
+
