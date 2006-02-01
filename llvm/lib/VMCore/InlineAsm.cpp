@@ -13,6 +13,7 @@
 
 #include "llvm/InlineAsm.h"
 #include "llvm/DerivedTypes.h"
+#include <algorithm>
 #include <cctype>
 using namespace llvm;
 
