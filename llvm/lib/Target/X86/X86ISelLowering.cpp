@@ -219,7 +219,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::FNEG , MVT::f64, Custom);
     setOperationAction(ISD::FNEG , MVT::f32, Custom);
 
-    // We don't support sin/cos/sqrt/fmod
+    // We don't support sin/cos/fmod
     setOperationAction(ISD::FSIN , MVT::f64, Expand);
     setOperationAction(ISD::FCOS , MVT::f64, Expand);
     setOperationAction(ISD::FREM , MVT::f64, Expand);
