@@ -739,12 +739,12 @@ let Predicates = [HasV9], isTwoAddress = 1 in {
 
   def MOVFCCrr
     : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F, V8CC:$cc),
-             "movf$cc %fcc, $F, $dst",
+             "mov$cc %fcc, $F, $dst",
              [(set IntRegs:$dst,
                          (V8selectfcc IntRegs:$F, IntRegs:$T, imm:$cc, FCC))]>;
   def MOVFCCri
     : Pseudo<(ops IntRegs:$dst, IntRegs:$T, i32imm:$F, V8CC:$cc),
-             "movf$cc %fcc, $F, $dst",
+             "mov$cc %fcc, $F, $dst",
              [(set IntRegs:$dst,
                           (V8selectfcc simm11:$F, IntRegs:$T, imm:$cc, FCC))]>;
 
