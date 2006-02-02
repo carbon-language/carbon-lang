@@ -42,3 +42,22 @@ bool AlphaInstrInfo::isMoveInstr(const MachineInstr& MI,
   }
   return false;
 }
+
+unsigned 
+AlphaInstrInfo::isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const {
+  switch (MI->getOpcode()) {
+  case Alpha::LDL:
+  case Alpha::LDQ:
+  case Alpha::LDBU:
+  case Alpha::LDWU:
+  case Alpha::LDS:
+  case Alpha::LDT:
+    if (MI->getOperand(1).isFrameIndex()) {
+      FrameIndex = MI->getOperand(1).getFrameIndex();
+      return MI->getOperand(0).getReg();
+    }
+    break;
+  }
+  return 0;
+}
+

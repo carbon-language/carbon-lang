@@ -35,8 +35,6 @@ struct AlphaRegisterInfo : public AlphaGenRegisterInfo {
                             unsigned DestReg, int FrameIndex,
                             const TargetRegisterClass *RC) const;
   
-  virtual unsigned isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const;
-
   MachineInstr* foldMemoryOperand(MachineInstr *MI, unsigned OpNum, 
                                   int FrameIndex) const;
 

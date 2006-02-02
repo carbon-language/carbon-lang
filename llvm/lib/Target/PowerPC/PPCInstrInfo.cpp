@@ -79,6 +79,25 @@ bool PPCInstrInfo::isMoveInstr(const MachineInstr& MI,
   return false;
 }
 
+unsigned PPCInstrInfo::isLoadFromStackSlot(MachineInstr *MI, 
+                                              int &FrameIndex) const {
+  switch (MI->getOpcode()) {
+  default: break;
+  case PPC::LD:
+  case PPC::LWZ:
+  case PPC::LFS:
+  case PPC::LFD:
+    if (MI->getOperand(1).isImmediate() && !MI->getOperand(1).getImmedValue() &&
+        MI->getOperand(2).isFrameIndex()) {
+      FrameIndex = MI->getOperand(2).getFrameIndex();
+      return MI->getOperand(0).getReg();
+    }
+    break;
+  }
+  return 0;
+                                              }
+
+
 // commuteInstruction - We can commute rlwimi instructions, but only if the
 // rotate amt is zero.  We also have to munge the immediates a bit.
 MachineInstr *PPCInstrInfo::commuteInstruction(MachineInstr *MI) const {

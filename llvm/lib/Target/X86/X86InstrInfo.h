@@ -179,14 +179,14 @@ public:
   ///
   virtual const MRegisterInfo &getRegisterInfo() const { return RI; }
 
-  //
   // Return true if the instruction is a register to register move and
   // leave the source and dest operands in the passed parameters.
   //
-  virtual bool isMoveInstr(const MachineInstr& MI,
-                           unsigned& sourceReg,
-                           unsigned& destReg) const;
-
+  bool isMoveInstr(const MachineInstr& MI, unsigned& sourceReg,
+                   unsigned& destReg) const;
+  unsigned isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const;
+  unsigned isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const;
+  
   /// convertToThreeAddress - This method must be implemented by targets that
   /// set the M_CONVERTIBLE_TO_3_ADDR flag.  When this flag is set, the target
   /// may be able to convert a two-address instruction into a true

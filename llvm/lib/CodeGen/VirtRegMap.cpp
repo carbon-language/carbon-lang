@@ -490,8 +490,9 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
       // straight load from the virt reg slot.
       if ((MR & VirtRegMap::isRef) && !(MR & VirtRegMap::isMod)) {
         int FrameIdx;
-        if (unsigned DestReg = MRI->isLoadFromStackSlot(&MI, FrameIdx)) {
-          // If this spill slot is available, insert a copy for it!
+        if (unsigned DestReg = TII->isLoadFromStackSlot(&MI, FrameIdx)) {
+          // If this spill slot is available, turn it into a copy (or nothing)
+          // instead of leaving it as a load!
           std::map<int, unsigned>::iterator It = SpillSlotsAvailable.find(SS);
           if (FrameIdx == SS && It != SpillSlotsAvailable.end()) {
             DEBUG(std::cerr << "Promoted Load To Copy: " << MI);

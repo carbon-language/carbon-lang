@@ -35,6 +35,8 @@ public:
   ///
   virtual bool isMoveInstr(const MachineInstr &MI,
                            unsigned &SrcReg, unsigned &DstReg) const;
+  
+  virtual unsigned isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const;
 };
 
 }
