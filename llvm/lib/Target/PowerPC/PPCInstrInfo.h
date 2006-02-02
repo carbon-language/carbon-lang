@@ -40,6 +40,7 @@ public:
                            unsigned& destReg) const;
 
   unsigned isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const;
+  unsigned isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const;
 
   // commuteInstruction - We can commute rlwimi instructions, but only if the
   // rotate amt is zero.  We also have to munge the immediates a bit.
