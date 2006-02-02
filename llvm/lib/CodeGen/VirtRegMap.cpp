@@ -284,7 +284,7 @@ namespace {
 void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
 
   // SpillSlotsAvailable - This map keeps track of all of the spilled virtual
-  // register values that are still available, due to being loaded to stored to,
+  // register values that are still available, due to being loaded or stored to,
   // but not invalidated yet.
   std::map<int, unsigned> SpillSlotsAvailable;
 
@@ -534,6 +534,36 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
         if (It != SpillSlotsAvailable.end()) {
           PhysRegsAvailable.erase(It->second);
           SpillSlotsAvailable.erase(It);
+        }
+        
+        // If this is *just* a mod of the value, check to see if this is just a
+        // store to the spill slot (i.e. the spill got merged into the copy). If
+        // so, realize that the vreg is available now, and add the store to the
+        // MaybeDeadStore info.
+        int StackSlot;
+        if (!(MR & VirtRegMap::isRef)) {
+          if (unsigned SrcReg = TII->isStoreToStackSlot(&MI, StackSlot)) {
+            assert(MRegisterInfo::isPhysicalRegister(SrcReg) &&
+                   "Src hasn't been allocated yet?");
+            // Okay, this is certainly a store of SrcReg to [FrameIdx].  Mark
+            // this as a potentially dead store in case there is a subsequent
+            // store into the stack slot without a read from it.
+            MaybeDeadStores[StackSlot] = &MI;
+
+            // FIXME: PhysRegsAvailable is a 1-1 map, not a N-1 map, which means
+            // that we have to *forget* that SrcReg contains the old value it
+            // does.
+            ClobberPhysRegOnly(SrcReg, SpillSlotsAvailable, PhysRegsAvailable);
+            
+            // If the stack slot value was previously available in some other
+            // register, change it now.  Otherwise, make the register available,
+            // in PhysReg.
+            SpillSlotsAvailable[StackSlot] = SrcReg;
+            PhysRegsAvailable[SrcReg] = StackSlot;
+            DEBUG(std::cerr << "Updating SS#" << StackSlot << " in physreg "
+                            << MRI->getName(SrcReg) << " for virtreg #"
+                            << VirtReg << "\n" << MI);
+          }
         }
       }
     }
