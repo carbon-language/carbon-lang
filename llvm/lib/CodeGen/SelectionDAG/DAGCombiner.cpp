@@ -889,6 +889,19 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
     if (ConstantSDNode *ORI = dyn_cast<ConstantSDNode>(N0.getOperand(1)))
       if ((ORI->getValue() & N1C->getValue()) == N1C->getValue())
         return N1;
+  // fold (and (any_ext V), c) -> (zero_ext V) if 'and' only clears top bits.
+  if (N1C && N0.getOpcode() == ISD::ANY_EXTEND) {
+    unsigned InBits = MVT::getSizeInBits(N0.getOperand(0).getValueType());
+    if (TLI.MaskedValueIsZero(N0.getOperand(0),
+                              ~N1C->getValue() & ((1ULL << InBits)-1))) {
+      // We actually want to replace all uses of the any_extend with the
+      // zero_extend, to avoid duplicating things.  This will later cause this
+      // AND to be folded.
+      CombineTo(N0.Val, DAG.getNode(ISD::ZERO_EXTEND, N0.getValueType(),
+                                    N0.getOperand(0)));
+      return SDOperand();
+    }
+  }
   // fold (and (setcc x), (setcc y)) -> (setcc (and x, y))
   if (isSetCCEquivalent(N0, LL, LR, CC0) && isSetCCEquivalent(N1, RL, RR, CC1)){
     ISD::CondCode Op0 = cast<CondCodeSDNode>(CC0)->get();
