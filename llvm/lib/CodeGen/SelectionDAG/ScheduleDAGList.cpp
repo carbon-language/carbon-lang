@@ -257,9 +257,8 @@ void ScheduleDAGList::ListSchedule() {
     for (unsigned i = 0, e = NotReady.size(); i != e; ++i)
       Available.push(NotReady[i]);
 
-    DEBUG(std::cerr << "\n*** Scheduling: ");
+    DEBUG(std::cerr << "*** Scheduling: ");
     DEBUG(CurrNode->dump(&DAG, false));
-    DEBUG(std::cerr << "\n");
     ScheduleNode(CurrNode);
   }
 
