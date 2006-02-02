@@ -448,3 +448,22 @@ LBB1_2:
         blr
 
 noticed in 2005-05-11-Popcount-ffs-fls.c.
+
+
+===-------------------------------------------------------------------------===
+
+We should custom expand setcc instead of pretending that we have it.  That
+would allow us to expose the access of the crbit after the mfcr, allowing
+that access to be trivially folded into other ops.  A simple example:
+
+int foo(int a, int b) { return (a < b) << 4; }
+
+compiles into:
+
+_foo:
+        cmpw cr7, r3, r4
+        mfcr r2, 1
+        rlwinm r2, r2, 29, 31, 31
+        slwi r3, r2, 4
+        blr
+
