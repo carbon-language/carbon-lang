@@ -42,13 +42,15 @@ const FunctionType *InlineAsm::getFunctionType() const {
 /// Parse - Analyze the specified string (e.g. "==&{eax}") and fill in the
 /// fields in this structure.  If the constraint string is not understood,
 /// return true, otherwise return false.
-bool InlineAsm::ConstraintInfo::Parse(const std::string &Str) {
+bool InlineAsm::ConstraintInfo::Parse(const std::string &Str,
+                     std::vector<InlineAsm::ConstraintInfo> &ConstraintsSoFar) {
   std::string::const_iterator I = Str.begin(), E = Str.end();
   
   // Initialize
   Type = isInput;
   isEarlyClobber = false;
-  isIndirectOutput =false;
+  isIndirectOutput = false;
+  hasMatchingInput = false;
   
   // Parse the prefix.
   if (*I == '~') {
@@ -94,12 +96,20 @@ bool InlineAsm::ConstraintInfo::Parse(const std::string &Str) {
       if (ConstraintEnd == E) return true;  // "{foo"
       Codes.push_back(std::string(I, ConstraintEnd+1));
       I = ConstraintEnd+1;
-    } else if (isdigit(*I)) {
+    } else if (isdigit(*I)) {     // Matching Constraint
       // Maximal munch numbers.
       std::string::const_iterator NumStart = I;
       while (I != E && isdigit(*I))
         ++I;
       Codes.push_back(std::string(NumStart, I));
+      unsigned N = atoi(Codes.back().c_str());
+      // Check that this is a valid matching constraint!
+      if (N >= ConstraintsSoFar.size() || ConstraintsSoFar[N].Type != isOutput||
+          Type != isInput)
+        return true;  // Invalid constraint number.
+      
+      // Note that operand #n has a matching input.
+      ConstraintsSoFar[N].hasMatchingInput = true;
     } else {
       // Single letter constraint.
       Codes.push_back(std::string(I, I+1));
@@ -123,8 +133,8 @@ InlineAsm::ParseConstraints(const std::string &Constraints) {
     std::string::const_iterator ConstraintEnd = std::find(I, E, ',');
 
     if (ConstraintEnd == I ||  // Empty constraint like ",,"
-        Info.Parse(std::string(I, ConstraintEnd))) {   // Erroneous constraint?
-      Result.clear();
+        Info.Parse(std::string(I, ConstraintEnd), Result)) {
+      Result.clear();          // Erroneous constraint?
       break;
     }
 
