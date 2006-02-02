@@ -1232,6 +1232,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
   for (unsigned i = 0, e = Constraints.size(); i != e; ++i) {
     assert(Constraints[i].Codes.size() == 1 && "Only handles one code so far!");
     std::string &ConstraintCode = Constraints[i].Codes[0];
+    
     std::vector<unsigned> Regs =
       TLI.getRegForInlineAsmConstraint(ConstraintCode);
     if (Regs.size() != 1) continue;  // Not assigned a fixed reg.
@@ -1243,7 +1244,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
       OutputRegs.insert(TheReg);
       // If this is an early-clobber output, it cannot be assigned to the same
       // value as the input reg.
-      if (Constraints[i].isEarlyClobber)
+      if (Constraints[i].isEarlyClobber || Constraints[i].hasMatchingInput)
         InputRegs.insert(TheReg);
       break;
     case InlineAsm::isClobber:
@@ -1263,7 +1264,6 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
     std::string &ConstraintCode = Constraints[i].Codes[0];
     switch (Constraints[i].Type) {
     case InlineAsm::isOutput: {
-      
       // Copy the output from the appropriate register.
       std::vector<unsigned> Regs =
         TLI.getRegForInlineAsmConstraint(ConstraintCode);
@@ -1272,10 +1272,17 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
       unsigned DestReg;
       if (Regs.size() == 1)
         DestReg = Regs[0];
-      else
-        DestReg = GetAvailableRegister(true, Constraints[i].isEarlyClobber, 
+      else {
+        bool UsesInputRegister = false;
+        // If this is an early-clobber output, or if there is an input
+        // constraint that matches this, we need to reserve the input register
+        // so no other inputs allocate to it.
+        if (Constraints[i].isEarlyClobber || Constraints[i].hasMatchingInput)
+          UsesInputRegister = true;
+        DestReg = GetAvailableRegister(true, UsesInputRegister, 
                                        Regs, OutputRegs, InputRegs);
-
+      }
+      
       assert(DestReg && "Couldn't allocate output reg!");
 
       const Type *OpTy;
@@ -1307,17 +1314,23 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
       Value *Operand = I.getOperand(OpNum);
       const Type *OpTy = Operand->getType();
       OpNum++;  // Consumes a call operand.
-      
-      // Copy the input into the appropriate register.
-      std::vector<unsigned> Regs =
-        TLI.getRegForInlineAsmConstraint(ConstraintCode);
+
       unsigned SrcReg;
-      if (Regs.size() == 1)
-        SrcReg = Regs[0];
-      else
-        SrcReg = GetAvailableRegister(false, true, Regs,
-                                             OutputRegs, InputRegs);
-      
+      if (isdigit(ConstraintCode[0])) {    // Matching constraint?
+        // If this is required to match an output register we have already set,
+        // just use its register.
+        unsigned OperandNo = atoi(ConstraintCode.c_str());
+        SrcReg = cast<RegisterSDNode>(AsmNodeOperands[OperandNo*2+2])->getReg();
+      } else {
+        // Copy the input into the appropriate register.
+        std::vector<unsigned> Regs =
+          TLI.getRegForInlineAsmConstraint(ConstraintCode);
+        if (Regs.size() == 1)
+          SrcReg = Regs[0];
+        else
+          SrcReg = GetAvailableRegister(false, true, Regs, 
+                                        OutputRegs, InputRegs);
+      }
       assert(SrcReg && "Couldn't allocate input reg!");
       
       Chain = DAG.getCopyToReg(Chain, SrcReg, getValue(Operand), Flag);
