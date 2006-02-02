@@ -215,18 +215,6 @@ when it can invert the result of the compare for free.
 
 //===---------------------------------------------------------------------===//
 
-None of the SSE instructions are handled in X86RegisterInfo::foldMemoryOperand,
-which prevents the spiller from folding spill code into the instructions.
-
-This leads to code like this:
-
-mov %eax, 8(%esp)
-cvtsi2sd %eax, %xmm0
-instead of:
-cvtsi2sd 8(%esp), %xmm0
-
-//===---------------------------------------------------------------------===//
-
 LSR should be turned on for the X86 backend and tuned to take advantage of its
 addressing modes.
 
@@ -367,3 +355,8 @@ We currently emit:
 This is a bugpoint reduced testcase, which is why the testcase doesn't make
 much sense (e.g. its an infinite loop). :)
 
+//===---------------------------------------------------------------------===//
+
+None of the FPStack instructions are handled in
+X86RegisterInfo::foldMemoryOperand, which prevents the spiller from
+folding spill code into the instructions.
