@@ -94,19 +94,6 @@ more than one use.  Itanium will want this too.
 
 ===-------------------------------------------------------------------------===
 
-int foo(int a, int b) { return a == b ? 16 : 0; }
-_foo:
-        cmpw cr7, r3, r4
-        mfcr r2
-        rlwinm r2, r2, 31, 31, 31
-        slwi r3, r2, 4
-        blr
-
-If we exposed the srl & mask ops after the MFCR that we are doing to select
-the correct CR bit, then we could fold the slwi into the rlwinm before it.
-
-===-------------------------------------------------------------------------===
-
 #define  ARRAY_LENGTH  16
 
 union bitfield {
@@ -451,16 +438,13 @@ _test:
         cntlzw r2, r2
         cntlzw r3, r3
         srwi r2, r2, 5
-        srwi r3, r3, 5
-        li r4, 0
+        srwi r4, r3, 5
+        li r3, 0
         cmpwi cr0, r2, 0
         bne cr0, LBB1_2 ; 
 LBB1_1:
-        or r4, r3, r3
+        or r3, r4, r4
 LBB1_2:
-        cmplw cr7, r4, r3
-        mfcr r2, 1
-        rlwinm r3, r2, 29, 31, 31
         blr
 
 noticed in 2005-05-11-Popcount-ffs-fls.c.
