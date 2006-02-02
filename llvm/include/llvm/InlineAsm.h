@@ -86,6 +86,10 @@ public:
     /// to store the output result is passed as an operand to the call.
     bool isIndirectOutput;
     
+    /// hasMatchingInput - This is set to true for an output constraint iff
+    /// there is an input constraint that is required to match it (e.g. "0").
+    bool hasMatchingInput;
+    
     /// Code - The constraint code, either the register name (in braces) or the
     /// constraint letter/number.
     std::vector<std::string> Codes;
@@ -93,7 +97,8 @@ public:
     /// Parse - Analyze the specified string (e.g. "==&{eax}") and fill in the
     /// fields in this structure.  If the constraint string is not understood,
     /// return true, otherwise return false.
-    bool Parse(const std::string &Str);
+    bool Parse(const std::string &Str, 
+               std::vector<InlineAsm::ConstraintInfo> &ConstraintsSoFar);
   };
   
   /// ParseConstraints - Split up the constraint string into the specific
