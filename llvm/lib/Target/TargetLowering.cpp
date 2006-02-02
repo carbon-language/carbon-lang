@@ -154,6 +154,11 @@ bool TargetLowering::MaskedValueIsZero(const SDOperand &Op,
   case ISD::ZERO_EXTEND:
     SrcBits = MVT::getSizeInBits(Op.getOperand(0).getValueType());
     return MaskedValueIsZero(Op.getOperand(0),Mask & (~0ULL >> (64-SrcBits)));
+  case ISD::ANY_EXTEND:
+    // If the mask only includes bits in the low part, recurse.
+    SrcBits = MVT::getSizeInBits(Op.getOperand(0).getValueType());
+    if (Mask >> SrcBits) return false;  // Use of unknown top bits.
+    return MaskedValueIsZero(Op.getOperand(0), Mask);
   case ISD::AssertZext:
     SrcBits = MVT::getSizeInBits(cast<VTSDNode>(Op.getOperand(1))->getVT());
     return (Mask & ((1ULL << SrcBits)-1)) == 0; // Returning only the zext bits.
