@@ -101,7 +101,7 @@ unsigned PPCInstrInfo::isStoreToStackSlot(MachineInstr *MI,
                                           int &FrameIndex) const {
   switch (MI->getOpcode()) {
   default: break;
-  //case PPC::ST:  ?
+  case PPC::STD:
   case PPC::STW:
   case PPC::STFS:
   case PPC::STFD:
