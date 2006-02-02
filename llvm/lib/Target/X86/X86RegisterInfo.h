@@ -42,6 +42,7 @@ struct X86RegisterInfo : public X86GenRegisterInfo {
                     const TargetRegisterClass *RC) const;
 
   unsigned isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const;
+  unsigned isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const;
 
 
   /// foldMemoryOperand - If this target supports it, fold a load or store of
