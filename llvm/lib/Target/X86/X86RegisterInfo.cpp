@@ -139,6 +139,29 @@ unsigned X86RegisterInfo::isLoadFromStackSlot(MachineInstr *MI,
   return 0;
 }
 
+unsigned X86RegisterInfo::isStoreToStackSlot(MachineInstr *MI, 
+                                             int &FrameIndex) const {
+  switch (MI->getOpcode()) {
+  default: break;
+  case X86::MOV8mr:
+  case X86::MOV16mr:
+  case X86::MOV32mr:
+  case X86::FpSTP64m:
+  case X86::MOVSSmr:
+  case X86::MOVSDmr:
+    if (MI->getOperand(0).isFrameIndex() && MI->getOperand(1).isImmediate() &&
+        MI->getOperand(2).isRegister() && MI->getOperand(3).isImmediate() &&
+        MI->getOperand(3).getImmedValue() == 1 &&
+        MI->getOperand(4).getReg() == 0 &&
+        MI->getOperand(5).getImmedValue() == 0) {
+      FrameIndex = MI->getOperand(1).getFrameIndex();
+      return MI->getOperand(4).getReg();
+    }
+    break;
+  }
+  return 0;
+}
+
 
 static MachineInstr *MakeMInst(unsigned Opcode, unsigned FrameIndex,
                                MachineInstr *MI) {
