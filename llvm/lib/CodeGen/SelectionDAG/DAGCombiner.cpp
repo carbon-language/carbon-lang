@@ -2623,19 +2623,36 @@ SDOperand DAGCombiner::SimplifySetCC(MVT::ValueType VT, SDOperand N0,
             return DAG.getSetCC(VT, N0.getOperand(0), N1.getOperand(1), Cond);
         }
       }
-
-      // Turn (X^C1) == C2 into X == C1^C2 iff X&~C1 = 0.  Common for condcodes.
-      if (N0.getOpcode() == ISD::XOR)
-        if (ConstantSDNode *XORC = dyn_cast<ConstantSDNode>(N0.getOperand(1)))
-          if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(N1)) {
+      
+      if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(N1)) {
+        if (ConstantSDNode *LHSR = dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
+          // Turn (X+C1) == C2 --> X == C2-C1
+          if (N0.getOpcode() == ISD::ADD && N0.Val->hasOneUse()) {
+            return DAG.getSetCC(VT, N0.getOperand(0),
+                              DAG.getConstant(RHSC->getValue()-LHSR->getValue(),
+                                N0.getValueType()), Cond);
+          }
+          
+          // Turn (X^C1) == C2 into X == C1^C2 iff X&~C1 = 0.
+          if (N0.getOpcode() == ISD::XOR)
             // If we know that all of the inverted bits are zero, don't bother
             // performing the inversion.
-            if (TLI.MaskedValueIsZero(N0.getOperand(0), ~XORC->getValue()))
+            if (TLI.MaskedValueIsZero(N0.getOperand(0), ~LHSR->getValue()))
               return DAG.getSetCC(VT, N0.getOperand(0),
-                              DAG.getConstant(XORC->getValue()^RHSC->getValue(),
+                              DAG.getConstant(LHSR->getValue()^RHSC->getValue(),
                                               N0.getValueType()), Cond);
+        }
+        
+        // Turn (C1-X) == C2 --> X == C1-C2
+        if (ConstantSDNode *SUBC = dyn_cast<ConstantSDNode>(N0.getOperand(0))) {
+          if (N0.getOpcode() == ISD::SUB && N0.Val->hasOneUse()) {
+            return DAG.getSetCC(VT, N0.getOperand(1),
+                             DAG.getConstant(SUBC->getValue()-RHSC->getValue(),
+                                             N0.getValueType()), Cond);
           }
-      
+        }          
+      }
+
       // Simplify (X+Z) == X -->  Z == 0
       if (N0.getOperand(0) == N1)
         return DAG.getSetCC(VT, N0.getOperand(1),
