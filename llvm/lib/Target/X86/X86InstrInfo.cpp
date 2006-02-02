@@ -76,10 +76,10 @@ unsigned X86InstrInfo::isStoreToStackSlot(MachineInstr *MI,
   case X86::MOVSDmr:
     if (MI->getOperand(0).isFrameIndex() && MI->getOperand(1).isImmediate() &&
         MI->getOperand(2).isRegister() && MI->getOperand(3).isImmediate() &&
-        MI->getOperand(3).getImmedValue() == 1 &&
-        MI->getOperand(4).getReg() == 0 &&
-        MI->getOperand(5).getImmedValue() == 0) {
-      FrameIndex = MI->getOperand(1).getFrameIndex();
+        MI->getOperand(1).getImmedValue() == 1 &&
+        MI->getOperand(2).getReg() == 0 &&
+        MI->getOperand(3).getImmedValue() == 0) {
+      FrameIndex = MI->getOperand(0).getFrameIndex();
       return MI->getOperand(4).getReg();
     }
     break;
