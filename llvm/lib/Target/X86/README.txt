@@ -289,16 +289,6 @@ The pattern isel got this one right.
 
 //===---------------------------------------------------------------------===//
 
-This shouldn't have an explicit ADD (target independent dag combiner hack):
-
-bool %X(int %X) {
-        %Y = add int %X, 14
-        %Z = setne int %Y, 12345
-        ret bool %Z
-}
-
-//===---------------------------------------------------------------------===//
-
 We need to lower switch statements to tablejumps when appropriate instead of
 always into binary branch trees.
 
