@@ -350,3 +350,27 @@ much sense (e.g. its an infinite loop). :)
 None of the FPStack instructions are handled in
 X86RegisterInfo::foldMemoryOperand, which prevents the spiller from
 folding spill code into the instructions.
+
+//===---------------------------------------------------------------------===//
+
+In many cases, LLVM generates code like this:
+
+_test:
+        movl 8(%esp), %eax
+        cmpl %eax, 4(%esp)
+        setl %al
+        movzbl %al, %eax
+        ret
+
+on some processors (which ones?), it is more efficient to do this:
+
+_test:
+        movl 8(%esp), %ebx
+	xor %eax, %eax
+        cmpl %ebx, 4(%esp)
+        setl %al
+        ret
+
+Doing this correctly is tricky though, as the xor clobbers the flags.
+
+
