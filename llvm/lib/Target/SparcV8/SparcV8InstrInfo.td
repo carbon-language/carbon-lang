@@ -739,12 +739,12 @@ let Predicates = [HasV9], isTwoAddress = 1 in {
 
   def MOVFCCrr
     : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F, V8CC:$cc),
-             "mov$cc %fcc, $F, $dst",
+             "mov$cc %fcc0, $F, $dst",
              [(set IntRegs:$dst,
                          (V8selectfcc IntRegs:$F, IntRegs:$T, imm:$cc, FCC))]>;
   def MOVFCCri
     : Pseudo<(ops IntRegs:$dst, IntRegs:$T, i32imm:$F, V8CC:$cc),
-             "mov$cc %fcc, $F, $dst",
+             "mov$cc %fcc0, $F, $dst",
              [(set IntRegs:$dst,
                           (V8selectfcc simm11:$F, IntRegs:$T, imm:$cc, FCC))]>;
 
@@ -760,12 +760,12 @@ let Predicates = [HasV9], isTwoAddress = 1 in {
                          (V8selecticc DFPRegs:$F, DFPRegs:$T, imm:$cc, ICC))]>;
   def FMOVS_FCC
     : Pseudo<(ops FPRegs:$dst, FPRegs:$T, FPRegs:$F, V8CC:$cc),
-             "fmovs$cc %fcc, $F, $dst",
+             "fmovs$cc %fcc0, $F, $dst",
              [(set FPRegs:$dst,
                          (V8selectfcc FPRegs:$F, FPRegs:$T, imm:$cc, FCC))]>;
   def FMOVD_FCC
     : Pseudo<(ops DFPRegs:$dst, DFPRegs:$T, DFPRegs:$F, V8CC:$cc),
-             "fmovd$cc %fcc, $F, $dst",
+             "fmovd$cc %fcc0, $F, $dst",
              [(set DFPRegs:$dst,
                          (V8selectfcc DFPRegs:$F, DFPRegs:$T, imm:$cc, FCC))]>;
 
