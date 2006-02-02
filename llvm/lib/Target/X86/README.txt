@@ -373,4 +373,56 @@ _test:
 
 Doing this correctly is tricky though, as the xor clobbers the flags.
 
+//===---------------------------------------------------------------------===//
+
+We should generate 'test' instead of 'cmp' in various cases, e.g.:
+
+bool %test(int %X) {
+        %Y = shl int %X, ubyte 1
+        %C = seteq int %Y, 0
+        ret bool %C
+}
+bool %test(int %X) {
+        %Y = and int %X, 8
+        %C = seteq int %Y, 0
+        ret bool %C
+}
+
+This may just be a matter of using 'test' to write bigger patterns for X86cmp.
+
+//===---------------------------------------------------------------------===//
+
+Evaluate whether using movapd for SSE reg-reg moves is faster than using
+movsd/movss for them.  It may eliminate false partial register dependences by
+writing the whole result register.
+
+//===---------------------------------------------------------------------===//
+
+SSE should implement 'select_cc' using 'emulated conditional moves' that use
+pcmp/pand/pandn/por to do a selection instead of a conditional branch:
+
+double %X(double %Y, double %Z, double %A, double %B) {
+        %C = setlt double %A, %B
+        %z = add double %Z, 0.0    ;; select operand is not a load
+        %D = select bool %C, double %Y, double %z
+        ret double %D
+}
+
+We currently emit:
+
+_X:
+        subl $12, %esp
+        xorpd %xmm0, %xmm0
+        addsd 24(%esp), %xmm0
+        movsd 32(%esp), %xmm1
+        movsd 16(%esp), %xmm2
+        ucomisd 40(%esp), %xmm1
+        jb LBB_X_2
+LBB_X_1:
+        movsd %xmm0, %xmm2
+LBB_X_2:
+        movsd %xmm2, (%esp)
+        fldl (%esp)
+        addl $12, %esp
+        ret
 
