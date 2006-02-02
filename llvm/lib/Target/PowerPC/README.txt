@@ -86,6 +86,9 @@ It would be better to materialize .CPI_X into a register, then use immediates
 off of the register to avoid the lis's.  This is even more important in PIC 
 mode.
 
+Note that this (and the static variable version) is discussed here for GCC:
+http://gcc.gnu.org/ml/gcc-patches/2006-02/msg00133.html
+
 ===-------------------------------------------------------------------------===
 
 Implement Newton-Rhapson method for improving estimate instructions to the
