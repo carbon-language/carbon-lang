@@ -64,4 +64,8 @@ Number 1 is the preferred solution.
 
 //===---------------------------------------------------------------------===//
 
+For dag combiner and instcombine:
+Fold: "A / (B << N)" where B is a power of 2, to "A >> (N + log2(B))".
+Fold: "A % (B << N)" where B is a power of 2, to "A & ((B << N) - 1)".
 
+//===---------------------------------------------------------------------===//
