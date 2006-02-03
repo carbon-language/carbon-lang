@@ -467,9 +467,11 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
         // factor out the amount the callee already popped.
         unsigned CalleeAmt = Old->getOperand(1).getImmedValue();
         Amount -= CalleeAmt;
-        if (Amount)
-          New = BuildMI(X86::ADD32ri, 1, X86::ESP,
+        if (Amount) {
+          unsigned Opc = Amount < 128 ? X86::ADD32ri8 : X86::ADD32ri;
+          New = BuildMI(Opc, 1, X86::ESP,
                         MachineOperand::UseAndDef).addZImm(Amount);
+        }
       }
 
       // Replace the pseudo instruction with a new instruction...
@@ -480,8 +482,9 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
     // something off the stack pointer, add it back.  We do this until we have
     // more advanced stack pointer tracking ability.
     if (unsigned CalleeAmt = I->getOperand(1).getImmedValue()) {
+      unsigned Opc = CalleeAmt < 128 ? X86::SUB32ri8 : X86::SUB32ri;
       MachineInstr *New =
-        BuildMI(X86::SUB32ri, 1, X86::ESP,
+        BuildMI(Opc, 1, X86::ESP,
                 MachineOperand::UseAndDef).addZImm(CalleeAmt);
       MBB.insert(I, New);
     }
@@ -541,8 +544,8 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     int EBPOffset = MFI->getObjectOffset(MFI->getObjectIndexBegin())+4;
 
     if (NumBytes) {   // adjust stack pointer: ESP -= numbytes
-      MI= BuildMI(X86::SUB32ri, 1, X86::ESP, MachineOperand::UseAndDef)
-            .addZImm(NumBytes);
+      unsigned Opc = NumBytes < 128 ? X86::SUB32ri8 : X86::SUB32ri;
+      MI = BuildMI(Opc, 1, X86::ESP,MachineOperand::UseAndDef).addImm(NumBytes);
       MBB.insert(MBBI, MI);
     }
 
@@ -578,8 +581,8 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
     if (NumBytes) {
       // adjust stack pointer: ESP -= numbytes
-      MI= BuildMI(X86::SUB32ri, 1, X86::ESP, MachineOperand::UseAndDef)
-            .addZImm(NumBytes);
+      unsigned Opc = NumBytes < 128 ? X86::SUB32ri8 : X86::SUB32ri;
+      MI= BuildMI(Opc, 1, X86::ESP, MachineOperand::UseAndDef).addImm(NumBytes);
       MBB.insert(MBBI, MI);
     }
   }
@@ -619,11 +622,13 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
       // instruction, merge the two instructions.
       if (MBBI != MBB.begin()) {
         MachineBasicBlock::iterator PI = prior(MBBI);
-        if (PI->getOpcode() == X86::ADD32ri &&
+        if ((PI->getOpcode() == X86::ADD32ri || 
+             PI->getOpcode() == X86::ADD32ri8) &&
             PI->getOperand(0).getReg() == X86::ESP) {
           NumBytes += PI->getOperand(1).getImmedValue();
           MBB.erase(PI);
-        } else if (PI->getOpcode() == X86::SUB32ri &&
+        } else if ((PI->getOpcode() == X86::SUB32ri ||
+                    PI->getOpcode() == X86::SUB32ri8) &&
                    PI->getOperand(0).getReg() == X86::ESP) {
           NumBytes -= PI->getOperand(1).getImmedValue();
           MBB.erase(PI);
@@ -633,12 +638,15 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
         }
       }
 
-      if (NumBytes > 0)
-        BuildMI(MBB, MBBI, X86::ADD32ri, 2)
+      if (NumBytes > 0) {
+        unsigned Opc = NumBytes < 128 ? X86::ADD32ri8 : X86::ADD32ri;
+        BuildMI(MBB, MBBI, Opc, 2)
           .addReg(X86::ESP, MachineOperand::UseAndDef).addZImm(NumBytes);
-      else if ((int)NumBytes < 0)
-        BuildMI(MBB, MBBI, X86::SUB32ri, 2)
+      } else if ((int)NumBytes < 0) {
+        unsigned Opc = -NumBytes < 128 ? X86::SUB32ri8 : X86::SUB32ri;
+        BuildMI(MBB, MBBI, Opc, 2)
           .addReg(X86::ESP, MachineOperand::UseAndDef).addZImm(-NumBytes);
+      }
     }
   }
 }
