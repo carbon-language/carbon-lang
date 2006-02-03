@@ -38,6 +38,7 @@ namespace {
   Statistic<> NumLoads ("spiller", "Number of loads added");
   Statistic<> NumReused("spiller", "Number of values reused");
   Statistic<> NumDSE   ("spiller", "Number of dead stores elided");
+  Statistic<> NumDCE   ("spiller", "Number of copies elided");
 
   enum SpillerName { simple, local };
 
@@ -656,6 +657,18 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
           ++NumStores;
           VirtReg = PhysReg;
         }
+      }
+    }
+     
+    // Okay, the instruction has been completely processed, input and output 
+    // registers have been added.  As a final sanity check, make sure this is
+    // not a noop-copy.  If it is, nuke it.
+    {
+      unsigned Src, Dst;
+      if (TII->isMoveInstr(MI, Src, Dst) && Src == Dst) {
+        ++NumDCE;
+        DEBUG(std::cerr << "Removing now-noop copy: " << MI);
+        MBB.erase(&MI);
       }
     }
   ProcessNextInst:
