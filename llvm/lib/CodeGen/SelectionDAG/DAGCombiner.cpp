@@ -33,7 +33,6 @@
 // FIXME: divide by zero is currently left unfolded.  do we want to turn this
 //        into an undef?
 // FIXME: select ne (select cc, 1, 0), 0, true, false -> select cc, true, false
-// FIXME: reassociate (X+C)+Y  into (X+Y)+C  if the inner expression has one use
 // 
 //===----------------------------------------------------------------------===//
 
@@ -179,6 +178,8 @@ namespace {
     SDOperand visitLOCATION(SDNode *N);
     SDOperand visitDEBUGLOC(SDNode *N);
 
+    SDOperand ReassociateOps(unsigned Opc, SDOperand LHS, SDOperand RHS);
+    
     bool SimplifySelectOps(SDNode *SELECT, SDOperand LHS, SDOperand RHS);
     SDOperand SimplifySelect(SDOperand N0, SDOperand N1, SDOperand N2);
     SDOperand SimplifySelectCC(SDOperand N0, SDOperand N1, SDOperand N2, 
@@ -418,6 +419,37 @@ static bool isCommutativeBinOp(unsigned Opcode) {
   }
 }
 
+SDOperand DAGCombiner::ReassociateOps(unsigned Opc, SDOperand N0, SDOperand N1){
+  MVT::ValueType VT = N0.getValueType();
+  // reassoc. (op (op x, c1), y) -> (op (op x, y), c1) iff x+c1 has one use
+  // reassoc. (op (op x, c1), c2) -> (op x, (op c1, c2))
+  if (N0.getOpcode() == Opc && isa<ConstantSDNode>(N0.getOperand(1))) {
+    if (isa<ConstantSDNode>(N1)) {
+      SDOperand OpNode = DAG.getNode(Opc, VT, N0.getOperand(1), N1);
+      WorkList.push_back(OpNode.Val);
+      return DAG.getNode(Opc, VT, OpNode, N0.getOperand(0));
+    } else if (N0.hasOneUse()) {
+      SDOperand OpNode = DAG.getNode(Opc, VT, N0.getOperand(0), N1);
+      WorkList.push_back(OpNode.Val);
+      return DAG.getNode(Opc, VT, OpNode, N0.getOperand(1));
+    }
+  }
+  // reassoc. (op y, (op x, c1)) -> (op (op x, y), c1) iff x+c1 has one use
+  // reassoc. (op c2, (op x, c1)) -> (op x, (op c1, c2))
+  if (N1.getOpcode() == Opc && isa<ConstantSDNode>(N1.getOperand(1))) {
+    if (isa<ConstantSDNode>(N0)) {
+      SDOperand OpNode = DAG.getNode(Opc, VT, N1.getOperand(1), N0);
+      WorkList.push_back(OpNode.Val);
+      return DAG.getNode(Opc, VT, OpNode, N1.getOperand(0));
+    } else if (N1.hasOneUse()) {
+      SDOperand OpNode = DAG.getNode(Opc, VT, N1.getOperand(0), N0);
+      WorkList.push_back(OpNode.Val);
+      return DAG.getNode(Opc, VT, OpNode, N1.getOperand(1));
+    }
+  }
+  return SDOperand();
+}
+
 void DAGCombiner::Run(bool RunningAfterLegalize) {
   // set the instance variable, so that the various visit routines may use it.
   AfterLegalize = RunningAfterLegalize;
@@ -587,25 +619,16 @@ SDOperand DAGCombiner::visitADD(SDNode *N) {
   // fold (add x, 0) -> x
   if (N1C && N1C->isNullValue())
     return N0;
-  // fold (add (add x, c1), c2) -> (add x, c1+c2)
-  if (N1C && N0.getOpcode() == ISD::ADD) {
-    ConstantSDNode *N00C = dyn_cast<ConstantSDNode>(N0.getOperand(0));
-    ConstantSDNode *N01C = dyn_cast<ConstantSDNode>(N0.getOperand(1));
-    if (N00C)
-      return DAG.getNode(ISD::ADD, VT, N0.getOperand(1),
-                         DAG.getConstant(N1C->getValue()+N00C->getValue(), VT));
-    if (N01C)
-      return DAG.getNode(ISD::ADD, VT, N0.getOperand(0),
-                         DAG.getConstant(N1C->getValue()+N01C->getValue(), VT));
-  }
-  
   // fold ((c1-A)+c2) -> (c1+c2)-A
   if (N1C && N0.getOpcode() == ISD::SUB)
     if (ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0.getOperand(0)))
       return DAG.getNode(ISD::SUB, VT,
                          DAG.getConstant(N1C->getValue()+N0C->getValue(), VT),
                          N0.getOperand(1));
-  
+  // reassociate add
+  SDOperand RADD = ReassociateOps(ISD::ADD, N0, N1);
+  if (RADD.Val != 0)
+    return RADD;
   // fold ((0-A) + B) -> B-A
   if (N0.getOpcode() == ISD::SUB && isa<ConstantSDNode>(N0.getOperand(0)) &&
       cast<ConstantSDNode>(N0.getOperand(0))->isNullValue())
@@ -678,19 +701,10 @@ SDOperand DAGCombiner::visitMUL(SDNode *N) {
                             DAG.getConstant(Log2_64(-N1C->getSignExtended()),
                                             TLI.getShiftAmountTy())));
   }
-  
-  
-  // fold (mul (mul x, c1), c2) -> (mul x, c1*c2)
-  if (N1C && N0.getOpcode() == ISD::MUL) {
-    ConstantSDNode *N00C = dyn_cast<ConstantSDNode>(N0.getOperand(0));
-    ConstantSDNode *N01C = dyn_cast<ConstantSDNode>(N0.getOperand(1));
-    if (N00C)
-      return DAG.getNode(ISD::MUL, VT, N0.getOperand(1),
-                         DAG.getConstant(N1C->getValue()*N00C->getValue(), VT));
-    if (N01C)
-      return DAG.getNode(ISD::MUL, VT, N0.getOperand(0),
-                         DAG.getConstant(N1C->getValue()*N01C->getValue(), VT));
-  }
+  // reassociate mul
+  SDOperand RMUL = ReassociateOps(ISD::MUL, N0, N1);
+  if (RMUL.Val != 0)
+    return RMUL;
   return SDOperand();
 }
 
@@ -866,17 +880,10 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
   if (N1C && 
       TLI.MaskedValueIsZero(N0, ~N1C->getValue() & (~0ULL>>(64-OpSizeInBits))))
     return N0;
-  // fold (and (and x, c1), c2) -> (and x, c1^c2)
-  if (N1C && N0.getOpcode() == ISD::AND) {
-    ConstantSDNode *N00C = dyn_cast<ConstantSDNode>(N0.getOperand(0));
-    ConstantSDNode *N01C = dyn_cast<ConstantSDNode>(N0.getOperand(1));
-    if (N00C)
-      return DAG.getNode(ISD::AND, VT, N0.getOperand(1),
-                         DAG.getConstant(N1C->getValue()&N00C->getValue(), VT));
-    if (N01C)
-      return DAG.getNode(ISD::AND, VT, N0.getOperand(0),
-                         DAG.getConstant(N1C->getValue()&N01C->getValue(), VT));
-  }
+  // reassociate and
+  SDOperand RAND = ReassociateOps(ISD::AND, N0, N1);
+  if (RAND.Val != 0)
+    return RAND;
   // fold (and (sign_extend_inreg x, i16 to i32), 1) -> (and x, 1)
   if (N1C && N0.getOpcode() == ISD::SIGN_EXTEND_INREG) {
     unsigned ExtendBits =
@@ -1031,19 +1038,13 @@ SDOperand DAGCombiner::visitOR(SDNode *N) {
   if (N1C && 
       TLI.MaskedValueIsZero(N0,~N1C->getValue() & (~0ULL>>(64-OpSizeInBits))))
     return N1;
-  // fold (or (or x, c1), c2) -> (or x, c1|c2)
-  if (N1C && N0.getOpcode() == ISD::OR) {
-    ConstantSDNode *N00C = dyn_cast<ConstantSDNode>(N0.getOperand(0));
-    ConstantSDNode *N01C = dyn_cast<ConstantSDNode>(N0.getOperand(1));
-    if (N00C)
-      return DAG.getNode(ISD::OR, VT, N0.getOperand(1),
-                         DAG.getConstant(N1C->getValue()|N00C->getValue(), VT));
-    if (N01C)
-      return DAG.getNode(ISD::OR, VT, N0.getOperand(0),
-                         DAG.getConstant(N1C->getValue()|N01C->getValue(), VT));
-  } else if (N1C && N0.getOpcode() == ISD::AND && N0.Val->hasOneUse() &&
+  // reassociate or
+  SDOperand ROR = ReassociateOps(ISD::OR, N0, N1);
+  if (ROR.Val != 0)
+    return ROR;
+  // Canonicalize (or (and X, c1), c2) -> (and (or X, c2), c1|c2)
+  if (N1C && N0.getOpcode() == ISD::AND && N0.Val->hasOneUse() &&
              isa<ConstantSDNode>(N0.getOperand(1))) {
-    // Canonicalize (or (and X, c1), c2) -> (and (or X, c2), c1|c2)
     ConstantSDNode *C1 = cast<ConstantSDNode>(N0.getOperand(1));
     return DAG.getNode(ISD::AND, VT, DAG.getNode(ISD::OR, VT, N0.getOperand(0),
                                                  N1),
@@ -1160,6 +1161,10 @@ SDOperand DAGCombiner::visitXOR(SDNode *N) {
   // fold (xor x, 0) -> x
   if (N1C && N1C->isNullValue())
     return N0;
+  // reassociate xor
+  SDOperand RXOR = ReassociateOps(ISD::XOR, N0, N1);
+  if (RXOR.Val != 0)
+    return RXOR;
   // fold !(x cc y) -> (x !cc y)
   if (N1C && N1C->getValue() == 1 && isSetCCEquivalent(N0, LHS, RHS, CC)) {
     bool isInt = MVT::isInteger(LHS.getValueType());
