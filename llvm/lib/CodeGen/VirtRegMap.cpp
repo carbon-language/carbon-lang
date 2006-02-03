@@ -234,7 +234,7 @@ namespace {
 void LocalSpiller::ClobberPhysRegOnly(unsigned PhysReg,
                                       std::map<int, unsigned> &SpillSlots,
                               std::multimap<unsigned, int> &PhysRegsAvailable) {
-  std::map<unsigned, int>::iterator I = PhysRegsAvailable.lower_bound(PhysReg);
+  std::multimap<unsigned, int>::iterator I = PhysRegsAvailable.lower_bound(PhysReg);
   while (I != PhysRegsAvailable.end() && I->first == PhysReg) {
     int Slot = I->second;
     PhysRegsAvailable.erase(I++);
