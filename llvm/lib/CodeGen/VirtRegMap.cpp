@@ -607,6 +607,15 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
           }
 
           if (!OpTakenCareOf) {
+            // Check to see if this is a noop copy.  If so, eliminate the
+            // instruction before considering the dest reg to be changed.
+            unsigned Src, Dst;
+            if (TII->isMoveInstr(MI, Src, Dst) && Src == Dst) {
+              ++NumDCE;
+              DEBUG(std::cerr << "Removing now-noop copy: " << MI);
+              MBB.erase(&MI);
+              goto ProcessNextInst;
+            }
             ClobberPhysReg(VirtReg, SpillSlotsAvailable, PhysRegsAvailable);
             continue;
           }
@@ -631,6 +640,18 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
         DEBUG(std::cerr << "Store:\t" << *next(MII));
         MI.SetMachineOperandReg(i, PhysReg);
 
+        // Check to see if this is a noop copy.  If so, eliminate the
+        // instruction before considering the dest reg to be changed.
+        {
+          unsigned Src, Dst;
+          if (TII->isMoveInstr(MI, Src, Dst) && Src == Dst) {
+            ++NumDCE;
+            DEBUG(std::cerr << "Removing now-noop copy: " << MI);
+            MBB.erase(&MI);
+            goto ProcessNextInst;
+          }
+        }
+        
         // If there is a dead store to this stack slot, nuke it now.
         MachineInstr *&LastStore = MaybeDeadStores[StackSlot];
         if (LastStore) {
@@ -652,18 +673,6 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
                         << MRI->getName(PhysReg) << " for virtreg #"
                         << VirtReg << "\n");
         ++NumStores;
-      }
-    }
-     
-    // Okay, the instruction has been completely processed, input and output 
-    // registers have been added.  As a final sanity check, make sure this is
-    // not a noop-copy.  If it is, nuke it.
-    {
-      unsigned Src, Dst;
-      if (TII->isMoveInstr(MI, Src, Dst) && Src == Dst) {
-        ++NumDCE;
-        DEBUG(std::cerr << "Removing now-noop copy: " << MI);
-        MBB.erase(&MI);
       }
     }
   ProcessNextInst:
