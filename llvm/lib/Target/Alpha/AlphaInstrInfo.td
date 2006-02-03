@@ -177,9 +177,7 @@ def CMOVLBSi : OForm4L< 0x11, 0x14, "cmovlbs $RCOND,$RTRUE,$RDEST",
                 [(set GPRC:$RDEST, (select (xor GPRC:$RCOND, 1), GPRC:$RFALSE, immUExt8:$RTRUE))]>;
 
 
-//FIXME: fold setcc with select for all cases.  clearly I need patterns for inverted conditions
-//       and constants (which require inverted conditions as legalize puts the constant in the
-//       wrong field for the instruction definition
+//General pattern for cmov
 def : Pat<(select GPRC:$which, GPRC:$src1, GPRC:$src2),
       (CMOVNE GPRC:$src2, GPRC:$src1, GPRC:$which)>;
 def : Pat<(select GPRC:$which, GPRC:$src1, immUExt8:$src2),

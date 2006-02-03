@@ -61,3 +61,21 @@ AlphaInstrInfo::isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const {
   return 0;
 }
 
+unsigned 
+AlphaInstrInfo::isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const {
+  switch (MI->getOpcode()) {
+  case Alpha::STL:
+  case Alpha::STQ:
+  case Alpha::STB:
+  case Alpha::STW:
+  case Alpha::STS:
+  case Alpha::STT:
+    if (MI->getOperand(1).isFrameIndex()) {
+      FrameIndex = MI->getOperand(1).getFrameIndex();
+      return MI->getOperand(0).getReg();
+    }
+    break;
+  }
+  return 0;
+}
+

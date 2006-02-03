@@ -37,6 +37,7 @@ public:
                            unsigned &SrcReg, unsigned &DstReg) const;
   
   virtual unsigned isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const;
+  virtual unsigned isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const;
 };
 
 }
