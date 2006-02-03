@@ -470,3 +470,8 @@ _foo:
         slwi r3, r2, 4
         blr
 
+===-------------------------------------------------------------------------===
+
+Get the C front-end to expand hypot(x,y) -> llvm.sqrt(x*x+y*y) when errno and
+precision don't matter (ffastmath).  Misc/mandel will like this. :)
+
