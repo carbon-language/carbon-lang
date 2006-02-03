@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains a peephole optimizer for the X86.
+// This file contains an immediate shrinker for the X86.  FIXME: Remove when
+// the dag isel makes this obsolete!
 //
 //===----------------------------------------------------------------------===//
 
@@ -61,15 +62,6 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
   MachineInstr *Next = (NextI != MBB.end()) ? &*NextI : (MachineInstr*)0;
   unsigned Size = 0;
   switch (MI->getOpcode()) {
-  case X86::MOV8rr:
-  case X86::MOV16rr:
-  case X86::MOV32rr:   // Destroy X = X copies...
-    if (MI->getOperand(0).getReg() == MI->getOperand(1).getReg()) {
-      I = MBB.erase(I);
-      return true;
-    }
-    return false;
-
     // A large number of X86 instructions have forms which take an 8-bit
     // immediate despite the fact that the operands are 16 or 32 bits.  Because
     // this can save three bytes of code size (and icache space), we want to
