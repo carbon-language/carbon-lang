@@ -39,6 +39,8 @@ unconditional branch, so we don't end up with things like:
 	b .LBBl42__2E_expand_function_8_42	; NewDefault
 	b .LBBl42__2E_expand_function_8_42	; NewDefault
 
+This occurs in SPASS.
+
 ===-------------------------------------------------------------------------===
 
 * Codegen this:
