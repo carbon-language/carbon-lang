@@ -43,17 +43,6 @@ static bool isCommutativeBinOp(unsigned Opcode) {
   }
 }
 
-static bool isAssociativeBinOp(unsigned Opcode) {
-  switch (Opcode) {
-  case ISD::ADD:
-  case ISD::MUL:
-  case ISD::AND:
-  case ISD::OR:
-  case ISD::XOR: return true;
-  default: return false; // FIXME: Need associative info for user ops!
-  }
-}
-
 // isInvertibleForFree - Return true if there is no cost to emitting the logical
 // inverse of this node.
 static bool isInvertibleForFree(SDOperand N) {
