@@ -1722,7 +1722,12 @@ static unsigned getPatternSize(TreePatternNode *P, DAGISelEmitter &ISE) {
   const ComplexPattern *AM = NodeGetComplexPattern(P, ISE);
   if (AM)
     Size += AM->getNumOperands() * 2;
-    
+
+  // If this node has some predicate function that must match, it adds to the
+  // complexity of this node.
+  if (!P->getPredicateFn().empty())
+    ++Size;
+  
   // Count children in the count if they are also nodes.
   for (unsigned i = 0, e = P->getNumChildren(); i != e; ++i) {
     TreePatternNode *Child = P->getChild(i);
@@ -1730,9 +1735,11 @@ static unsigned getPatternSize(TreePatternNode *P, DAGISelEmitter &ISE) {
       Size += getPatternSize(Child, ISE);
     else if (Child->isLeaf()) {
       if (dynamic_cast<IntInit*>(Child->getLeafValue())) 
-        Size += 3;  // Matches a ConstantSDNode.
+        Size += 3;  // Matches a ConstantSDNode (+2) and a specific value (+1).
       else if (NodeIsComplexPattern(Child))
         Size += getPatternSize(Child, ISE);
+      else if (!Child->getPredicateFn().empty())
+        ++Size;
     }
   }
   
