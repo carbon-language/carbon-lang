@@ -131,7 +131,63 @@ const char *TargetLowering::getTargetNodeName(unsigned Opcode) const {
   return NULL;
 }
 
-
+/// DemandedBitsAreZero - Return true if 'Op & Mask' demands no bits from a bit
+/// set operation such as a sign extend or or/xor with constant whose only
+/// use is Op.  If it returns true, the old node that sets bits which are
+/// not demanded is returned in Old, and its replacement node is returned in
+/// New, such that callers of SetBitsAreZero may call CombineTo on them if
+/// desired.
+bool TargetLowering::DemandedBitsAreZero(const SDOperand &Op, uint64_t Mask, 
+                                         SDOperand &Old, SDOperand &New,
+                                         SelectionDAG &DAG) {
+  // If the operation has more than one use, we're not interested in it.
+  // Tracking down and checking all uses would be problematic and slow.
+  if (!Op.hasOneUse())
+    return false;
+  
+  switch (Op.getOpcode()) {
+  case ISD::AND:
+    // (X & C1) & C2 == 0   iff   C1 & C2 == 0.
+    if (ConstantSDNode *AndRHS = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
+      uint64_t NewVal = Mask & AndRHS->getValue();
+      return DemandedBitsAreZero(Op.getOperand(0), NewVal, Old, New, DAG);
+    }
+    break;
+  case ISD::SHL:
+    // (ushl X, C1) & C2 == 0   iff  X & (C2 >> C1) == 0
+    if (ConstantSDNode *ShAmt = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
+      uint64_t NewVal = Mask >> ShAmt->getValue();
+      return DemandedBitsAreZero(Op.getOperand(0), NewVal, Old, New, DAG);
+    }
+    break;
+  case ISD::SIGN_EXTEND_INREG: {
+    MVT::ValueType EVT = cast<VTSDNode>(Op.getOperand(1))->getVT();
+    unsigned ExtendBits = MVT::getSizeInBits(EVT);
+    // If we're extending from something smaller than MVT::i64 and all of the
+    // sign extension bits are masked, return true and set New to be a zero
+    // extend inreg from the same type.
+    if (ExtendBits < 64 && ((Mask & (~0ULL << ExtendBits)) == 0)) {
+      Old = Op;
+      New = DAG.getZeroExtendInReg(Op.getOperand(0), EVT);
+      return true;
+    }
+    break;
+  }
+  case ISD::SRA:
+    if (ConstantSDNode *ShAmt = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
+      unsigned OpBits = MVT::getSizeInBits(Op.getValueType());
+      unsigned SH = ShAmt->getValue();
+      if (SH && ((Mask & (~0ULL << (OpBits-SH))) == 0)) {
+        Old = Op;
+        New = DAG.getNode(ISD::SRL, Op.getValueType(), Op.getOperand(0), 
+                          Op.getOperand(1));
+        return true;
+      }
+    }
+    break;
+  }
+  return false;
+}
 
 /// MaskedValueIsZero - Return true if 'Op & Mask' is known to be zero.  We use
 /// this predicate to simplify operations downstream.  Op and Mask are known to

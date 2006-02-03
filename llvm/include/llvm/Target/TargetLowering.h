@@ -290,6 +290,15 @@ public:
   /// isMaskedValueZeroForTargetNode method, to allow target nodes to be
   /// understood.
   bool MaskedValueIsZero(const SDOperand &Op, uint64_t Mask) const;
+  
+  /// DemandedBitsAreZero - Return true if 'Op & Mask' demands no bits from a 
+  /// bit set operation such as a sign extend or or/xor with constant whose only
+  /// use is Op.  If it returns true, the old node that sets bits which are
+  /// not demanded is returned in Old, and its replacement node is returned in
+  /// New, such that callers of SetBitsAreZero may call CombineTo on them if
+  /// desired.
+  bool DemandedBitsAreZero(const SDOperand &Op, uint64_t Mask, SDOperand &Old,
+                           SDOperand &New, SelectionDAG &DAG);
 
   //===--------------------------------------------------------------------===//
   // TargetLowering Configuration Methods - These methods should be invoked by

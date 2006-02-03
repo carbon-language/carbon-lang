@@ -858,7 +858,7 @@ SDOperand DAGCombiner::visitMULHU(SDNode *N) {
 SDOperand DAGCombiner::visitAND(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   SDOperand N1 = N->getOperand(1);
-  SDOperand LL, LR, RL, RR, CC0, CC1;
+  SDOperand LL, LR, RL, RR, CC0, CC1, Old, New;
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
   MVT::ValueType VT = N1.getValueType();
@@ -884,13 +884,6 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
   SDOperand RAND = ReassociateOps(ISD::AND, N0, N1);
   if (RAND.Val != 0)
     return RAND;
-  // fold (and (sign_extend_inreg x, i16 to i32), 1) -> (and x, 1)
-  if (N1C && N0.getOpcode() == ISD::SIGN_EXTEND_INREG) {
-    unsigned ExtendBits =
-        MVT::getSizeInBits(cast<VTSDNode>(N0.getOperand(1))->getVT());
-    if (ExtendBits == 64 || ((N1C->getValue() & (~0ULL << ExtendBits)) == 0))
-      return DAG.getNode(ISD::AND, VT, N0.getOperand(0), N1);
-  }
   // fold (and (or x, 0xFFFF), 0xFF) -> 0xFF
   if (N1C && N0.getOpcode() == ISD::OR)
     if (ConstantSDNode *ORI = dyn_cast<ConstantSDNode>(N0.getOperand(1)))
@@ -966,6 +959,26 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
     WorkList.push_back(ANDNode.Val);
     return DAG.getNode(N0.getOpcode(), VT, ANDNode, N0.getOperand(1));
   }
+  // fold (and (sign_extend_inreg x, i16 to i32), 1) -> (and x, 1)
+  // fold (and (sra)) -> (and (srl)) when possible.
+  if (TLI.DemandedBitsAreZero(SDOperand(N, 0), ~0ULL >> (64-OpSizeInBits), Old, 
+                              New, DAG)) {
+    WorkList.push_back(N);
+    CombineTo(Old.Val, New);
+    return SDOperand();
+  }
+  // FIXME: DemandedBitsAreZero cannot currently handle AND with non-constant
+  // RHS and propagate known cleared bits to LHS.  For this reason, we must keep
+  // this fold, for now, for the following testcase:
+  //
+  //int %test2(uint %mode.0.i.0) {
+  //  %tmp.79 = cast uint %mode.0.i.0 to int
+  //  %tmp.80 = shr int %tmp.79, ubyte 15
+  //  %tmp.81 = shr uint %mode.0.i.0, ubyte 16
+  //  %tmp.82 = cast uint %tmp.81 to int
+  //  %tmp.83 = and int %tmp.80, %tmp.82
+  //  ret int %tmp.83
+  //}
   // fold (and (sra)) -> (and (srl)) when possible.
   if (N0.getOpcode() == ISD::SRA && N0.Val->hasOneUse()) {
     if (ConstantSDNode *N01C = dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
@@ -1240,6 +1253,8 @@ SDOperand DAGCombiner::visitXOR(SDNode *N) {
 SDOperand DAGCombiner::visitSHL(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   SDOperand N1 = N->getOperand(1);
+  SDOperand Old = SDOperand();
+  SDOperand New = SDOperand();
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
   MVT::ValueType VT = N0.getValueType();
@@ -1260,6 +1275,12 @@ SDOperand DAGCombiner::visitSHL(SDNode *N) {
   // if (shl x, c) is known to be zero, return 0
   if (N1C && TLI.MaskedValueIsZero(SDOperand(N, 0), ~0ULL >> (64-OpSizeInBits)))
     return DAG.getConstant(0, VT);
+  if (N1C && TLI.DemandedBitsAreZero(SDOperand(N,0), ~0ULL >> (64-OpSizeInBits),
+                                     Old, New, DAG)) {
+    WorkList.push_back(N);
+    CombineTo(Old.Val, New);
+    return SDOperand();
+  }
   // fold (shl (shl x, c1), c2) -> 0 or (shl x, c1+c2)
   if (N1C && N0.getOpcode() == ISD::SHL && 
       N0.getOperand(1).getOpcode() == ISD::Constant) {
@@ -1650,8 +1671,7 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
     return N0;
   // fold (sext_in_reg x) -> (zext_in_reg x) if the sign bit is zero
   if (TLI.MaskedValueIsZero(N0, 1ULL << (EVTBits-1)))
-    return DAG.getNode(ISD::AND, N0.getValueType(), N0,
-                       DAG.getConstant(~0ULL >> (64-EVTBits), VT));
+    return DAG.getZeroExtendInReg(N0, EVT);
   // fold (sext_in_reg (srl x)) -> sra x
   if (N0.getOpcode() == ISD::SRL && 
       N0.getOperand(1).getOpcode() == ISD::Constant &&
