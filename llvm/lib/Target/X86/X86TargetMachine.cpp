@@ -82,7 +82,8 @@ X86TargetMachine::X86TargetMachine(const Module &M,
     Subtarget(M, FS),
     FrameInfo(TargetFrameInfo::StackGrowsDown,
               Subtarget.getStackAlignment(), -4),
-    JITInfo(*this) {}
+    JITInfo(*this) {
+}
 
 
 // addPassesToEmitFile - We currently use all of the same passes as the JIT
@@ -175,8 +176,6 @@ void X86JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
     PM.add(createX86ISelPattern(TM));
   else
     PM.add(createX86ISelDag(TM));
-
-  // FIXME: Add SSA based peephole optimizer here.
 
   // Print the instruction selected machine code...
   if (PrintMachineCode)
