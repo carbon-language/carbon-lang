@@ -274,6 +274,10 @@ public:
   /// specified physreg.  If CanClobber is true, the physreg can be modified at
   /// any time without changing the semantics of the program.
   void addAvailable(int Slot, unsigned Reg, bool CanClobber = true) {
+    // If this stack slot is thought to be available in some other physreg, 
+    // remove its record.
+    ModifyStackSlot(Slot);
+    
     PhysRegsAvailable.insert(std::make_pair(Reg, Slot));
     SpillSlotsAvailable[Slot] = (Reg << 1) | CanClobber;
   
