@@ -27,34 +27,29 @@ SparcV8RegisterInfo::SparcV8RegisterInfo()
 
 void SparcV8RegisterInfo::
 storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
-                    unsigned SrcReg, int FrameIdx,
+                    unsigned SrcReg, int FI,
                     const TargetRegisterClass *RC) const {
   // On the order of operands here: think "[FrameIdx + 0] = SrcReg".
   if (RC == V8::IntRegsRegisterClass)
-    BuildMI (MBB, I, V8::STri, 3).addFrameIndex (FrameIdx).addSImm (0)
-      .addReg (SrcReg);
+    BuildMI(MBB, I, V8::STri, 3).addFrameIndex(FI).addImm(0).addReg(SrcReg);
   else if (RC == V8::FPRegsRegisterClass)
-    BuildMI (MBB, I, V8::STFri, 3).addFrameIndex (FrameIdx).addSImm (0)
-      .addReg (SrcReg);
+    BuildMI(MBB, I, V8::STFri, 3).addFrameIndex(FI).addImm(0).addReg(SrcReg);
   else if (RC == V8::DFPRegsRegisterClass)
-    BuildMI (MBB, I, V8::STDFri, 3).addFrameIndex (FrameIdx).addSImm (0)
-      .addReg (SrcReg);
+    BuildMI(MBB, I, V8::STDFri, 3).addFrameIndex(FI).addImm(0).addReg(SrcReg);
   else
-    assert (0 && "Can't store this register to stack slot");
+    assert(0 && "Can't store this register to stack slot");
 }
 
 void SparcV8RegisterInfo::
 loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
-                     unsigned DestReg, int FrameIdx,
+                     unsigned DestReg, int FI,
                      const TargetRegisterClass *RC) const {
   if (RC == V8::IntRegsRegisterClass)
-    BuildMI (MBB, I, V8::LDri, 2, DestReg).addFrameIndex (FrameIdx).addSImm (0);
+    BuildMI(MBB, I, V8::LDri, 2, DestReg).addFrameIndex(FI).addImm(0);
   else if (RC == V8::FPRegsRegisterClass)
-    BuildMI (MBB, I, V8::LDFri, 2, DestReg).addFrameIndex (FrameIdx)
-      .addSImm (0);
+    BuildMI(MBB, I, V8::LDFri, 2, DestReg).addFrameIndex(FI).addImm (0);
   else if (RC == V8::DFPRegsRegisterClass)
-    BuildMI (MBB, I, V8::LDDFri, 2, DestReg).addFrameIndex (FrameIdx)
-      .addSImm (0);
+    BuildMI(MBB, I, V8::LDDFri, 2, DestReg).addFrameIndex(FI).addImm(0);
   else
     assert(0 && "Can't load this register from stack slot");
 }
@@ -64,13 +59,44 @@ void SparcV8RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
                                        unsigned DestReg, unsigned SrcReg,
                                        const TargetRegisterClass *RC) const {
   if (RC == V8::IntRegsRegisterClass)
-    BuildMI (MBB, I, V8::ORrr, 2, DestReg).addReg (V8::G0).addReg (SrcReg);
+    BuildMI(MBB, I, V8::ORrr, 2, DestReg).addReg(V8::G0).addReg(SrcReg);
   else if (RC == V8::FPRegsRegisterClass)
-    BuildMI (MBB, I, V8::FMOVS, 1, DestReg).addReg (SrcReg);
+    BuildMI(MBB, I, V8::FMOVS, 1, DestReg).addReg(SrcReg);
   else if (RC == V8::DFPRegsRegisterClass)
-    BuildMI (MBB, I, V8::FpMOVD, 1, DestReg).addReg (SrcReg);
+    BuildMI(MBB, I, V8::FpMOVD, 1, DestReg).addReg(SrcReg);
   else
     assert (0 && "Can't copy this register");
+}
+
+MachineInstr *SparcV8RegisterInfo::foldMemoryOperand(MachineInstr* MI,
+                                                     unsigned OpNum,
+                                                     int FI) const {
+  bool isFloat = false;
+  switch (MI->getOpcode()) {
+  case V8::ORrr:
+    if (MI->getOperand(1).isRegister() && MI->getOperand(1).getReg() == V8::G0&&
+        MI->getOperand(0).isRegister() && MI->getOperand(2).isRegister()) {
+      if (OpNum == 0)    // COPY -> STORE
+        return BuildMI(V8::STri, 3).addFrameIndex(FI).addImm(0)
+                                   .addReg(MI->getOperand(2).getReg());
+      else               // COPY -> LOAD
+        return BuildMI(V8::LDri, 2, MI->getOperand(0).getReg())
+                      .addFrameIndex(FI).addImm(0);
+    }
+    break;
+  case V8::FMOVS:
+    isFloat = true;
+    // FALLTHROUGH
+  case V8::FMOVD:
+    if (OpNum == 0)  // COPY -> STORE
+      return BuildMI(isFloat ? V8::STFri : V8::STDFri, 3)
+               .addFrameIndex(FI).addImm(0).addReg(MI->getOperand(1).getReg());
+    else             // COPY -> LOAD
+      return BuildMI(isFloat ? V8::LDFri : V8::LDDFri, 2, 
+                     MI->getOperand(0).getReg()).addFrameIndex(FI).addImm(0);
+    break;
+  }
+  return 0;
 }
 
 void SparcV8RegisterInfo::
@@ -171,23 +197,4 @@ void SparcV8RegisterInfo::emitEpilogue(MachineFunction &MF,
 }
 
 #include "SparcV8GenRegisterInfo.inc"
-
-const TargetRegisterClass*
-SparcV8RegisterInfo::getRegClassForType(const Type* Ty) const {
-  switch (Ty->getTypeID()) {
-  case Type::FloatTyID:  return V8::FPRegsRegisterClass;
-  case Type::DoubleTyID: return V8::DFPRegsRegisterClass;
-  case Type::LongTyID:
-  case Type::ULongTyID:  assert(0 && "Long values do not fit in registers!");
-  default:               assert(0 && "Invalid type to getClass!");
-  case Type::BoolTyID:
-  case Type::SByteTyID:
-  case Type::UByteTyID:
-  case Type::ShortTyID:
-  case Type::UShortTyID:
-  case Type::IntTyID:
-  case Type::UIntTyID:
-  case Type::PointerTyID: return V8::IntRegsRegisterClass;
-  }
-}
 

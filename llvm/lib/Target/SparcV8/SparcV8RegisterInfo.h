@@ -23,7 +23,6 @@ class Type;
 
 struct SparcV8RegisterInfo : public SparcV8GenRegisterInfo {
   SparcV8RegisterInfo();
-  const TargetRegisterClass* getRegClassForType(const Type* Ty) const;
 
   /// Code Generation virtual methods...
   void storeRegToStackSlot(MachineBasicBlock &MBB,
@@ -39,6 +38,10 @@ struct SparcV8RegisterInfo : public SparcV8GenRegisterInfo {
   void copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
                     unsigned DestReg, unsigned SrcReg,
                     const TargetRegisterClass *RC) const;
+  
+  virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
+                                          unsigned OpNum,
+                                          int FrameIndex) const;
 
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
                                      MachineBasicBlock &MBB,
