@@ -231,38 +231,92 @@ namespace {
   };
 }
 
-void LocalSpiller::ClobberPhysRegOnly(unsigned PhysReg,
-                                      std::map<int, unsigned> &SpillSlots,
-                              std::multimap<unsigned, int> &PhysRegsAvailable) {
-  std::multimap<unsigned, int>::iterator I = PhysRegsAvailable.lower_bound(PhysReg);
+/// AvailableSpills - As the local spiller is scanning and rewriting an MBB from
+/// top down, keep track of which spills slots are available in each register.
+class AvailableSpills {
+  const MRegisterInfo *MRI;
+  const TargetInstrInfo *TII;
+
+  // SpillSlotsAvailable - This map keeps track of all of the spilled virtual
+  // register values that are still available, due to being loaded or stored to,
+  // but not invalidated yet.
+  std::map<int, unsigned> SpillSlotsAvailable;
+    
+  // PhysRegsAvailable - This is the inverse of SpillSlotsAvailable, indicating
+  // which stack slot values are currently held by a physreg.  This is used to
+  // invalidate entries in SpillSlotsAvailable when a physreg is modified.
+  std::multimap<unsigned, int> PhysRegsAvailable;
+  
+  void ClobberPhysRegOnly(unsigned PhysReg);
+public:
+  AvailableSpills(const MRegisterInfo *mri, const TargetInstrInfo *tii)
+    : MRI(mri), TII(tii) {
+  }
+  
+  /// getSpillSlotPhysReg - If the specified stack slot is available in a 
+  /// physical register, return that PhysReg, otherwise return 0.
+  unsigned getSpillSlotPhysReg(int Slot) const {
+    std::map<int, unsigned>::const_iterator I = SpillSlotsAvailable.find(Slot);
+    if (I != SpillSlotsAvailable.end())
+      return I->second;
+    return 0;
+  }
+
+  /// addAvailable - Mark that the specified stack slot is available in the
+  /// specified physreg.
+  void addAvailable(int Slot, unsigned Reg) {
+    PhysRegsAvailable.insert(std::make_pair(Reg, Slot));
+    SpillSlotsAvailable[Slot] = Reg;
+  
+    DEBUG(std::cerr << "Remembering SS#" << Slot << " in physreg "
+                    << MRI->getName(Reg) << "\n");
+  }
+  
+  
+  /// ClobberPhysReg - This is called when the specified physreg changes
+  /// value.  We use this to invalidate any info about stuff we thing lives in
+  /// it and any of its aliases.
+  void ClobberPhysReg(unsigned PhysReg);
+
+  /// ModifyStackSlot - This method is called when the value in a stack slot
+  /// changes.  This removes information about which register the previous value
+  /// for this slot lives in (as the previous value is dead now).
+  void ModifyStackSlot(int Slot);
+};
+
+/// ClobberPhysRegOnly - This is called when the specified physreg changes
+/// value.  We use this to invalidate any info about stuff we thing lives in it.
+void AvailableSpills::ClobberPhysRegOnly(unsigned PhysReg) {
+  std::multimap<unsigned, int>::iterator I =
+    PhysRegsAvailable.lower_bound(PhysReg);
   while (I != PhysRegsAvailable.end() && I->first == PhysReg) {
     int Slot = I->second;
     PhysRegsAvailable.erase(I++);
-    assert(SpillSlots[Slot] == PhysReg && "Bidirectional map mismatch!");
-    SpillSlots.erase(Slot);
+    assert(SpillSlotsAvailable[Slot] == PhysReg &&
+           "Bidirectional map mismatch!");
+    SpillSlotsAvailable.erase(Slot);
     DEBUG(std::cerr << "PhysReg " << MRI->getName(PhysReg)
                     << " clobbered, invalidating SS#" << Slot << "\n");
-
   }
 }
 
-void LocalSpiller::ClobberPhysReg(unsigned PhysReg,
-                                  std::map<int, unsigned> &SpillSlots,
-                              std::multimap<unsigned, int> &PhysRegsAvailable) {
+/// ClobberPhysReg - This is called when the specified physreg changes
+/// value.  We use this to invalidate any info about stuff we thing lives in
+/// it and any of its aliases.
+void AvailableSpills::ClobberPhysReg(unsigned PhysReg) {
   for (const unsigned *AS = MRI->getAliasSet(PhysReg); *AS; ++AS)
-    ClobberPhysRegOnly(*AS, SpillSlots, PhysRegsAvailable);
-  ClobberPhysRegOnly(PhysReg, SpillSlots, PhysRegsAvailable);
+    ClobberPhysRegOnly(*AS);
+  ClobberPhysRegOnly(PhysReg);
 }
 
 /// ModifyStackSlot - This method is called when the value in a stack slot
 /// changes.  This removes information about which register the previous value
 /// for this slot lives in (as the previous value is dead now).
-void LocalSpiller::ModifyStackSlot(int Slot, std::map<int,unsigned> &SpillSlots,
-                              std::multimap<unsigned, int> &PhysRegsAvailable) {
-  std::map<int, unsigned>::iterator It = SpillSlots.find(Slot);
-  if (It == SpillSlots.end()) return;
+void AvailableSpills::ModifyStackSlot(int Slot) {
+  std::map<int, unsigned>::iterator It = SpillSlotsAvailable.find(Slot);
+  if (It == SpillSlotsAvailable.end()) return;
   unsigned Reg = It->second;
-  SpillSlots.erase(It);
+  SpillSlotsAvailable.erase(It);
   
   // This register may hold the value of multiple stack slots, only remove this
   // stack slot from the set of values the register contains.
@@ -308,18 +362,12 @@ namespace {
 /// register allocator is done with them.  If possible, avoid reloading vregs.
 void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
 
-  // SpillSlotsAvailable - This map keeps track of all of the spilled virtual
-  // register values that are still available, due to being loaded or stored to,
-  // but not invalidated yet.
-  std::map<int, unsigned> SpillSlotsAvailable;
-
-  // PhysRegsAvailable - This is the inverse of SpillSlotsAvailable, indicating
-  // which stack slot values are currently held by a physreg.  This is used to
-  // invalidate entries in SpillSlotsAvailable when a physreg is modified.
-  std::multimap<unsigned, int> PhysRegsAvailable;
-
   DEBUG(std::cerr << MBB.getBasicBlock()->getName() << ":\n");
 
+  // Spills - Keep track of which spilled values are available in physregs so
+  // that we can choose to reuse the physregs instead of emitting reloads.
+  AvailableSpills Spills(MRI, TII);
+  
   std::vector<ReusedOp> ReusedOperands;
 
   // DefAndUseVReg - When we see a def&use operand that is spilled, keep track
@@ -387,15 +435,12 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
       unsigned PhysReg;
 
       // Check to see if this stack slot is available.
-      std::map<int, unsigned>::iterator SSI =
-        SpillSlotsAvailable.find(StackSlot);
-      if (SSI != SpillSlotsAvailable.end()) {
+      if ((PhysReg = Spills.getSpillSlotPhysReg(StackSlot))) {
+        // If this stack slot value is already available, reuse it!
         DEBUG(std::cerr << "Reusing SS#" << StackSlot << " from physreg "
-                        << MRI->getName(SSI->second) << " for vreg"
+                        << MRI->getName(PhysReg) << " for vreg"
                         << VirtReg <<" instead of reloading into physreg "
                         << MRI->getName(VRM.getPhys(VirtReg)) << "\n");
-        // If this stack slot value is already available, reuse it!
-        PhysReg = SSI->second;
         MI.SetMachineOperandReg(i, PhysReg);
 
         // The only technical detail we have is that we don't know that
@@ -446,20 +491,15 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
                 MBB.getParent()->getSSARegMap()->getRegClass(Op.VirtReg);
               MRI->loadRegFromStackSlot(MBB, &MI, Op.AssignedPhysReg,
                                         Op.StackSlot, AliasRC);
-              ClobberPhysReg(Op.AssignedPhysReg, SpillSlotsAvailable,
-                             PhysRegsAvailable);
-
+              Spills.ClobberPhysReg(Op.AssignedPhysReg);
+              Spills.ClobberPhysReg(Op.PhysRegReused);
+              
               // Any stores to this stack slot are not dead anymore.
               MaybeDeadStores.erase(Op.StackSlot);
 
               MI.SetMachineOperandReg(Op.Operand, Op.AssignedPhysReg);
-              PhysRegsAvailable.insert(std::make_pair(Op.AssignedPhysReg,
-                                                      Op.StackSlot));
-              SpillSlotsAvailable[Op.StackSlot] = Op.AssignedPhysReg;
-              PhysRegsAvailable.erase(Op.PhysRegReused);
-              DEBUG(std::cerr << "Remembering SS#" << Op.StackSlot
-                              << " in physreg "
-                              << MRI->getName(Op.AssignedPhysReg) << "\n");
+              
+              Spills.addAvailable(Op.StackSlot, Op.AssignedPhysReg);
               ++NumLoads;
               DEBUG(std::cerr << '\t' << *prior(MII));
 
@@ -473,17 +513,13 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
       PhysRegsUsed[PhysReg] = true;
       MRI->loadRegFromStackSlot(MBB, &MI, PhysReg, StackSlot, RC);
       // This invalidates PhysReg.
-      ClobberPhysReg(PhysReg, SpillSlotsAvailable, PhysRegsAvailable);
+      Spills.ClobberPhysReg(PhysReg);
 
       // Any stores to this stack slot are not dead anymore.
       MaybeDeadStores.erase(StackSlot);
-
-      MI.SetMachineOperandReg(i, PhysReg);
-      PhysRegsAvailable.insert(std::make_pair(PhysReg, StackSlot));
-      SpillSlotsAvailable[StackSlot] = PhysReg;
-      DEBUG(std::cerr << "Remembering SS#" << StackSlot <<" in physreg "
-                      << MRI->getName(PhysReg) << "\n");
+      Spills.addAvailable(StackSlot, PhysReg);
       ++NumLoads;
+      MI.SetMachineOperandReg(i, PhysReg);
       DEBUG(std::cerr << '\t' << *prior(MII));
     }
 
@@ -492,7 +528,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
     for (const unsigned *ImpDef = TII->getImplicitDefs(MI.getOpcode());
          *ImpDef; ++ImpDef) {
       PhysRegsUsed[*ImpDef] = true;
-      ClobberPhysReg(*ImpDef, SpillSlotsAvailable, PhysRegsAvailable);
+      Spills.ClobberPhysReg(*ImpDef);
     }
 
     DEBUG(std::cerr << '\t' << MI);
@@ -520,12 +556,12 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
         if (unsigned DestReg = TII->isLoadFromStackSlot(&MI, FrameIdx)) {
           // If this spill slot is available, turn it into a copy (or nothing)
           // instead of leaving it as a load!
-          std::map<int, unsigned>::iterator It = SpillSlotsAvailable.find(SS);
-          if (FrameIdx == SS && It != SpillSlotsAvailable.end()) {
+          unsigned InReg;
+          if (FrameIdx == SS && (InReg = Spills.getSpillSlotPhysReg(SS))) {
             DEBUG(std::cerr << "Promoted Load To Copy: " << MI);
             MachineFunction &MF = *MBB.getParent();
-            if (DestReg != It->second) {
-              MRI->copyRegToReg(MBB, &MI, DestReg, It->second,
+            if (DestReg != InReg) {
+              MRI->copyRegToReg(MBB, &MI, DestReg, InReg,
                                 MF.getSSARegMap()->getRegClass(VirtReg));
               // Revisit the copy so we make sure to notice the effects of the
               // operation on the destreg (either needing to RA it if it's 
@@ -558,7 +594,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
       // the value, the value is not available anymore.
       if (MR & VirtRegMap::isMod) {
         // Notice that the value in this stack slot has been modified.
-        ModifyStackSlot(SS, SpillSlotsAvailable, PhysRegsAvailable);
+        Spills.ModifyStackSlot(SS);
         
         // If this is *just* a mod of the value, check to see if this is just a
         // store to the spill slot (i.e. the spill got merged into the copy). If
@@ -577,11 +613,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
             // If the stack slot value was previously available in some other
             // register, change it now.  Otherwise, make the register available,
             // in PhysReg.
-            SpillSlotsAvailable[StackSlot] = SrcReg;
-            PhysRegsAvailable.insert(std::make_pair(SrcReg, StackSlot));
-            DEBUG(std::cerr << "Updating SS#" << StackSlot << " in physreg "
-                            << MRI->getName(SrcReg) << " for virtreg #"
-                            << VirtReg << "\n" << MI);
+            Spills.addAvailable(StackSlot, SrcReg);
           }
         }
       }
@@ -616,7 +648,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
               MBB.erase(&MI);
               goto ProcessNextInst;
             }
-            ClobberPhysReg(VirtReg, SpillSlotsAvailable, PhysRegsAvailable);
+            Spills.ClobberPhysReg(VirtReg);
             continue;
           }
         }
@@ -664,14 +696,10 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
         // If the stack slot value was previously available in some other
         // register, change it now.  Otherwise, make the register available,
         // in PhysReg.
-        ModifyStackSlot(StackSlot, SpillSlotsAvailable, PhysRegsAvailable);
-        ClobberPhysReg(PhysReg, SpillSlotsAvailable, PhysRegsAvailable);
+        Spills.ModifyStackSlot(StackSlot);
+        Spills.ClobberPhysReg(PhysReg);
 
-        PhysRegsAvailable.insert(std::make_pair(PhysReg, StackSlot));
-        SpillSlotsAvailable[StackSlot] = PhysReg;
-        DEBUG(std::cerr << "Updating SS#" << StackSlot <<" in physreg "
-                        << MRI->getName(PhysReg) << " for virtreg #"
-                        << VirtReg << "\n");
+        Spills.addAvailable(StackSlot, PhysReg);
         ++NumStores;
       }
     }
