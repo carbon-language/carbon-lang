@@ -2,20 +2,17 @@ TODO:
 * gpr0 allocation
 * implement do-loop -> bdnz transform
 * implement powerpc-64 for darwin
-* use stfiwx in float->int
 
-* Fold add and sub with constant into non-extern, non-weak addresses so this:
-	lis r2, ha16(l2__ZTV4Cell)
-	la r2, lo16(l2__ZTV4Cell)(r2)
-	addi r2, r2, 8
-becomes:
-	lis r2, ha16(l2__ZTV4Cell+8)
-	la r2, lo16(l2__ZTV4Cell+8)(r2)
+===-------------------------------------------------------------------------===
 
+Use the stfiwx instruction for:
 
-* Teach LLVM how to codegen this:
+void foo(float a, int *b) { *b = a; }
+
+===-------------------------------------------------------------------------===
+
 unsigned short foo(float a) { return a; }
-as:
+should be:
 _foo:
         fctiwz f0,f1
         stfd f0,-8(r1)
@@ -29,11 +26,15 @@ _foo:
         rlwinm r3, r2, 0, 16, 31
         blr
 
-* Support 'update' load/store instructions.  These are cracked on the G5, but
-  are still a codesize win.
+===-------------------------------------------------------------------------===
 
-* should hint to the branch select pass that it doesn't need to print the
-  second unconditional branch, so we don't end up with things like:
+Support 'update' load/store instructions.  These are cracked on the G5, but are
+still a codesize win.
+
+===-------------------------------------------------------------------------===
+
+Should hint to the branch select pass that it doesn't need to print the second
+unconditional branch, so we don't end up with things like:
 	b .LBBl42__2E_expand_function_8_674	; loopentry.24
 	b .LBBl42__2E_expand_function_8_42	; NewDefault
 	b .LBBl42__2E_expand_function_8_42	; NewDefault
@@ -475,3 +476,29 @@ _foo:
 Get the C front-end to expand hypot(x,y) -> llvm.sqrt(x*x+y*y) when errno and
 precision don't matter (ffastmath).  Misc/mandel will like this. :)
 
+===-------------------------------------------------------------------------===
+
+Fold add and sub with constant into non-extern, non-weak addresses so this:
+
+static int a;
+void bar(int b) { a = b; }
+void foo(unsigned char *c) {
+  *c = a;
+}
+
+So that 
+
+_foo:
+        lis r2, ha16(_a)
+        la r2, lo16(_a)(r2)
+        lbz r2, 3(r2)
+        stb r2, 0(r3)
+        blr
+
+Becomes
+
+_foo:
+        lis r2, ha16(_a+3)
+        lbz r2, lo16(_a+3)(r2)
+        stb r2, 0(r3)
+        blr
