@@ -76,11 +76,6 @@ Another useful one would be  ~0ULL >> X and ~0ULL << X.
 
 //===---------------------------------------------------------------------===//
 
-Should support emission of the bswap instruction, probably by adding a new
-DAG node for byte swapping.  Also useful on PPC which has byte-swapping loads.
-
-//===---------------------------------------------------------------------===//
-
 Compile this:
 _Bool f(_Bool a) { return a!=1; }
 
@@ -165,45 +160,6 @@ http://gcc.gnu.org/ml/gcc-patches/2004-08/msg02011.html
 //===---------------------------------------------------------------------===//
 
 Combine: a = sin(x), b = cos(x) into a,b = sincos(x).
-
-//===---------------------------------------------------------------------===//
-
-For all targets, not just X86:
-When llvm.memcpy, llvm.memset, or llvm.memmove are lowered, they should be 
-optimized to a few store instructions if the source is constant and the length
-is smallish (< 8). This will greatly help some tests like Shootout/strcat.c
-
-//===---------------------------------------------------------------------===//
-
-Solve this DAG isel folding deficiency:
-
-int X, Y;
-
-void fn1(void)
-{
-  X = X | (Y << 3);
-}
-
-compiles to
-
-fn1:
-	movl Y, %eax
-	shll $3, %eax
-	orl X, %eax
-	movl %eax, X
-	ret
-
-The problem is the store's chain operand is not the load X but rather
-a TokenFactor of the load X and load Y, which prevents the folding.
-
-There are two ways to fix this:
-
-1. The dag combiner can start using alias analysis to realize that y/x
-   don't alias, making the store to X not dependent on the load from Y.
-2. The generated isel could be made smarter in the case it can't
-   disambiguate the pointers.
-
-Number 1 is the preferred solution.
 
 //===---------------------------------------------------------------------===//
 

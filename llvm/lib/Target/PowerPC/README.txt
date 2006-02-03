@@ -92,6 +92,17 @@ http://gcc.gnu.org/ml/gcc-patches/2006-02/msg00133.html
 
 ===-------------------------------------------------------------------------===
 
+PIC Code Gen IPO optimization:
+
+Squish small scalar globals together into a single global struct, allowing the 
+address of the struct to be CSE'd, avoiding PIC accesses (also reduces the size
+of the GOT on targets with one).
+
+Note that this is discussed here for GCC:
+http://gcc.gnu.org/ml/gcc-patches/2006-02/msg00133.html
+
+===-------------------------------------------------------------------------===
+
 Implement Newton-Rhapson method for improving estimate instructions to the
 correct accuracy, and implementing divide as multiply by reciprocal when it has
 more than one use.  Itanium will want this too.
@@ -351,14 +362,6 @@ just fastcc.
 
 ===-------------------------------------------------------------------------===
 
-Code Gen IPO optimization:
-
-Squish small scalar globals together into a single global struct, allowing the 
-address of the struct to be CSE'd, avoiding PIC accesses (also reduces the size
-of the GOT on targets with one).
-
-===-------------------------------------------------------------------------===
-
 Generate lwbrx and other byteswapping load/store instructions when reasonable.
 
 ===-------------------------------------------------------------------------===
@@ -470,11 +473,6 @@ _foo:
         rlwinm r2, r2, 29, 31, 31
         slwi r3, r2, 4
         blr
-
-===-------------------------------------------------------------------------===
-
-Get the C front-end to expand hypot(x,y) -> llvm.sqrt(x*x+y*y) when errno and
-precision don't matter (ffastmath).  Misc/mandel will like this. :)
 
 ===-------------------------------------------------------------------------===
 
