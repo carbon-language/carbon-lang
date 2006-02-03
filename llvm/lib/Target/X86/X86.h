@@ -38,11 +38,6 @@ FunctionPass *createX86ISelPattern(TargetMachine &TM);
 ///
 FunctionPass *createX86ISelDag(TargetMachine &TM);
 
-/// createX86PeepholeOptimizer - Create a pass to perform X86 specific peephole
-/// optimizations.
-///
-FunctionPass *createX86PeepholeOptimizerPass();
-
 /// createX86FloatingPointStackifierPass - This function returns a pass which
 /// converts floating point register references and pseudo instructions into
 /// floating point stack references and physical instructions.

@@ -129,8 +129,6 @@ bool X86TargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
   // Insert prolog/epilog code.  Eliminate abstract frame index references...
   PM.add(createPrologEpilogCodeInserter());
 
-  PM.add(createX86PeepholeOptimizerPass());
-
   if (PrintMachineCode)  // Print the register-allocated code
     PM.add(createX86CodePrinterPass(std::cerr, *this));
 
@@ -197,8 +195,6 @@ void X86JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
 
   // Insert prolog/epilog code.  Eliminate abstract frame index references...
   PM.add(createPrologEpilogCodeInserter());
-
-  PM.add(createX86PeepholeOptimizerPass());
 
   if (PrintMachineCode)  // Print the register-allocated code
     PM.add(createX86CodePrinterPass(std::cerr, TM));
