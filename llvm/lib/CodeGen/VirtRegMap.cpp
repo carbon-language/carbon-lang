@@ -593,7 +593,6 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
       if (MO.isRegister() && MO.getReg() && MO.isDef()) {
         unsigned VirtReg = MO.getReg();
 
-        bool TakenCareOf = false;
         if (!MRegisterInfo::isVirtualRegister(VirtReg)) {
           // Check to see if this is a def-and-use vreg operand that we do need
           // to insert a store for.
@@ -609,54 +608,50 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
 
           if (!OpTakenCareOf) {
             ClobberPhysReg(VirtReg, SpillSlotsAvailable, PhysRegsAvailable);
-            TakenCareOf = true;
+            continue;
           }
         }
 
-        if (!TakenCareOf) {
-          // The only vregs left are stack slot definitions.
-          int StackSlot = VRM.getStackSlot(VirtReg);
-          const TargetRegisterClass *RC =
-            MBB.getParent()->getSSARegMap()->getRegClass(VirtReg);
-          unsigned PhysReg;
+        // The only vregs left are stack slot definitions.
+        int StackSlot = VRM.getStackSlot(VirtReg);
+        const TargetRegisterClass *RC =
+          MBB.getParent()->getSSARegMap()->getRegClass(VirtReg);
+        unsigned PhysReg;
 
-          // If this is a def&use operand, and we used a different physreg for
-          // it than the one assigned, make sure to execute the store from the
-          // correct physical register.
-          if (MO.getReg() == VirtReg)
-            PhysReg = VRM.getPhys(VirtReg);
-          else
-            PhysReg = MO.getReg();
+        // If this is a def&use operand, and we used a different physreg for
+        // it than the one assigned, make sure to execute the store from the
+        // correct physical register.
+        if (MO.getReg() == VirtReg)
+          PhysReg = VRM.getPhys(VirtReg);
+        else
+          PhysReg = MO.getReg();
 
-          PhysRegsUsed[PhysReg] = true;
-          MRI->storeRegToStackSlot(MBB, next(MII), PhysReg, StackSlot, RC);
-          DEBUG(std::cerr << "Store:\t" << *next(MII));
-          MI.SetMachineOperandReg(i, PhysReg);
+        PhysRegsUsed[PhysReg] = true;
+        MRI->storeRegToStackSlot(MBB, next(MII), PhysReg, StackSlot, RC);
+        DEBUG(std::cerr << "Store:\t" << *next(MII));
+        MI.SetMachineOperandReg(i, PhysReg);
 
-          // If there is a dead store to this stack slot, nuke it now.
-          MachineInstr *&LastStore = MaybeDeadStores[StackSlot];
-          if (LastStore) {
-            DEBUG(std::cerr << " Killed store:\t" << *LastStore);
-            ++NumDSE;
-            MBB.erase(LastStore);
-          }
-          LastStore = next(MII);
-
-          // If the stack slot value was previously available in some other
-          // register, change it now.  Otherwise, make the register available,
-          // in PhysReg.
-          ModifyStackSlot(StackSlot, SpillSlotsAvailable, PhysRegsAvailable);
-          ClobberPhysReg(PhysReg, SpillSlotsAvailable, PhysRegsAvailable);
-
-          PhysRegsAvailable.insert(std::make_pair(PhysReg, StackSlot));
-          SpillSlotsAvailable[StackSlot] = PhysReg;
-          DEBUG(std::cerr << "Updating SS#" << StackSlot <<" in physreg "
-                          << MRI->getName(PhysReg) << " for virtreg #"
-                          << VirtReg << "\n");
-
-          ++NumStores;
-          VirtReg = PhysReg;
+        // If there is a dead store to this stack slot, nuke it now.
+        MachineInstr *&LastStore = MaybeDeadStores[StackSlot];
+        if (LastStore) {
+          DEBUG(std::cerr << " Killed store:\t" << *LastStore);
+          ++NumDSE;
+          MBB.erase(LastStore);
         }
+        LastStore = next(MII);
+
+        // If the stack slot value was previously available in some other
+        // register, change it now.  Otherwise, make the register available,
+        // in PhysReg.
+        ModifyStackSlot(StackSlot, SpillSlotsAvailable, PhysRegsAvailable);
+        ClobberPhysReg(PhysReg, SpillSlotsAvailable, PhysRegsAvailable);
+
+        PhysRegsAvailable.insert(std::make_pair(PhysReg, StackSlot));
+        SpillSlotsAvailable[StackSlot] = PhysReg;
+        DEBUG(std::cerr << "Updating SS#" << StackSlot <<" in physreg "
+                        << MRI->getName(PhysReg) << " for virtreg #"
+                        << VirtReg << "\n");
+        ++NumStores;
       }
     }
      
