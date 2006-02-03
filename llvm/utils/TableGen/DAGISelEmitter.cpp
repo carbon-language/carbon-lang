@@ -1848,6 +1848,7 @@ private:
   /// [when false].
   std::vector<std::pair<bool, std::string> > &GeneratedCode;
 
+  std::string ChainName;
   unsigned TmpNo;
   
   void emitCheck(const std::string &S) {
@@ -1869,7 +1870,8 @@ public:
   /// if the match fails. At this point, we already know that the opcode for N
   /// matches, and the SDNode for the result has the RootName specified name.
   void EmitMatchCode(TreePatternNode *N, const std::string &RootName,
-                     bool &FoundChain, bool isRoot = false) {
+                     const std::string &ChainSuffix, bool &FoundChain,
+                     bool isRoot = false) {
 
     // Emit instruction predicates. Each predicate is just a string for now.
     if (isRoot) {
@@ -1947,13 +1949,13 @@ public:
                     utostr(CInfo.getNumResults()) + "))");
       }
       if (NodeHasChain) {
-        if (!FoundChain) {
-          emitCode("SDOperand Chain = " + RootName + ".getOperand(0);");
-          FoundChain = true;
-        } else {
+        if (FoundChain)
           emitCheck("Chain.Val == " + RootName + ".Val");
-          emitCode("Chain = " + RootName + ".getOperand(0);");
-        }
+        else
+          FoundChain = true;
+        ChainName = "Chain" + ChainSuffix;
+        emitCode("SDOperand " + ChainName + " = " + RootName +
+                 ".getOperand(0);");
       }
     }
 
@@ -1988,7 +1990,8 @@ public:
         const SDNodeInfo &CInfo = ISE.getSDNodeInfo(Child->getOperator());
         emitCheck(RootName + utostr(OpNo) + ".getOpcode() == " +
                   CInfo.getEnumName());
-        EmitMatchCode(Child, RootName + utostr(OpNo), FoundChain);
+        EmitMatchCode(Child, RootName + utostr(OpNo), ChainSuffix + utostr(OpNo),
+                      FoundChain);
         if (NodeHasProperty(Child, SDNodeInfo::SDNPHasChain, ISE))
           FoldedChains.push_back(std::make_pair(RootName + utostr(OpNo),
                                                 CInfo.getNumResults()));
@@ -2225,7 +2228,7 @@ public:
       // Emit all the chain and CopyToReg stuff.
       bool ChainEmitted = HasChain;
       if (HasChain)
-        emitCode("Chain = Select(Chain);");
+        emitCode(ChainName + " = Select(" + ChainName + ");");
       if (HasInFlag || HasOptInFlag || HasImpInputs)
         EmitInFlagSelectCode(Pattern, "N", ChainEmitted, true);
 
@@ -2248,7 +2251,7 @@ public:
         emitCode(Code + ");");
         if (HasChain) {
           // Must have at least one result
-          emitCode("Chain = Tmp" + utostr(LastOp) + ".getValue(" +
+          emitCode(ChainName + " = Tmp" + utostr(LastOp) + ".getValue(" +
                    utostr(NumResults) + ");");
         }
       } else if (HasChain || NodeHasOutFlag) {
@@ -2273,7 +2276,7 @@ public:
           // Inputs.
           for (unsigned i = 0, e = Ops.size(); i != e; ++i)
             Code += ", Tmp" + utostr(Ops[i]);
-          if (HasChain)  Code += ", Chain";
+          if (HasChain)  Code += ", " + ChainName;
           emitCode(Code + ", InFlag);");
 
           emitCode("else");
@@ -2292,7 +2295,7 @@ public:
           // Inputs.
           for (unsigned i = 0, e = Ops.size(); i != e; ++i)
             Code += ", Tmp" + utostr(Ops[i]);
-          if (HasChain) Code += ", Chain);";
+          if (HasChain) Code += ", " + ChainName + ");";
           emitCode(Code);
         } else {
           std::string Code = "SDOperand Result = CurDAG->getTargetNode(" +
@@ -2310,7 +2313,7 @@ public:
           // Inputs.
           for (unsigned i = 0, e = Ops.size(); i != e; ++i)
             Code += ", Tmp" + utostr(Ops[i]);
-          if (HasChain) Code += ", Chain";
+          if (HasChain) Code += ", " + ChainName;
           if (HasInFlag || HasImpInputs) Code += ", InFlag";
           emitCode(Code + ");");
         }
@@ -2323,7 +2326,7 @@ public:
         }
 
         if (HasChain)
-          emitCode("Chain = Result.getValue(" + utostr(ValNo) + ");");
+          emitCode(ChainName + " = Result.getValue(" + utostr(ValNo) + ");");
 
         if (NodeHasOutFlag)
           emitCode("InFlag = Result.getValue(" + 
@@ -2338,14 +2341,15 @@ public:
         // User does not expect that the instruction produces a chain!
         bool AddedChain = HasChain && !NodeHasChain;
         if (NodeHasChain)
-          emitCode("CodeGenMap[N.getValue(" + utostr(ValNo++) + ")] = Chain;");
+          emitCode("CodeGenMap[N.getValue(" + utostr(ValNo++) + ")] = " +
+                   ChainName + ";");
 
         if (FoldedChains.size() > 0) {
           std::string Code;
           for (unsigned j = 0, e = FoldedChains.size(); j < e; j++)
             Code += "CodeGenMap[" + FoldedChains[j].first + ".getValue(" +
               utostr(FoldedChains[j].second) + ")] = ";
-          emitCode(Code + "Chain;");
+          emitCode(Code + ChainName + ";");
         }
 
         if (NodeHasOutFlag)
@@ -2467,14 +2471,16 @@ private:
             } else {
               if (!ChainEmitted) {
                 emitCode("SDOperand Chain = CurDAG->getEntryNode();");
+                ChainName = "Chain";
                 ChainEmitted = true;
               }
               emitCode("SDOperand " + RootName + "CR" + utostr(i) + ";");
               emitCode(RootName + "CR" + utostr(i) +
-                       "  = CurDAG->getCopyToReg(Chain, CurDAG->getRegister(" +
-                       ISE.getQualifiedName(RR) + ", MVT::" + getEnumName(RVT) +
-                       "), Select(" + RootName + utostr(OpNo) + "), InFlag);");
-              emitCode("Chain  = " + RootName + "CR" + utostr(i) + 
+                       "  = CurDAG->getCopyToReg(" + ChainName +
+                       ", CurDAG->getRegister(" + ISE.getQualifiedName(RR) +
+                       ", MVT::" + getEnumName(RVT) + "), Select(" + RootName +
+                       utostr(OpNo) + "), InFlag);");
+              emitCode(ChainName + " = " + RootName + "CR" + utostr(i) + 
                        ".getValue(0);");
               emitCode("InFlag = " + RootName + "CR" + utostr(i) +
                        ".getValue(1);");
@@ -2519,11 +2525,12 @@ private:
             if (!ChainEmitted) {
               emitCode("SDOperand Chain = CurDAG->getEntryNode();");
               ChainEmitted = true;
+              ChainName = "Chain";
             }
-            emitCode("Result = CurDAG->getCopyFromReg(Chain, " +
+            emitCode("Result = CurDAG->getCopyFromReg(" + ChainName + ", " +
                      ISE.getQualifiedName(RR) + ", MVT::" + getEnumName(RVT) +
                      ", InFlag);");
-            emitCode("Chain  = Result.getValue(1);");
+            emitCode(ChainName + " = Result.getValue(1);");
             emitCode("InFlag = Result.getValue(2);");
             RetVal = true;
           }
@@ -2545,7 +2552,7 @@ void DAGISelEmitter::GenerateCodeForPattern(PatternToMatch &Pattern,
 
   // Emit the matcher, capturing named arguments in VariableMap.
   bool FoundChain = false;
-  Emitter.EmitMatchCode(Pattern.getSrcPattern(), "N", FoundChain,
+  Emitter.EmitMatchCode(Pattern.getSrcPattern(), "N", "", FoundChain,
                         true /*the root*/);
 
   // TP - Get *SOME* tree pattern, we don't care which.
