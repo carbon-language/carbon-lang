@@ -2266,6 +2266,7 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::UNDEF:         return "undef";
   case ISD::MERGE_VALUES:  return "mergevalues";
   case ISD::INLINEASM:     return "inlineasm";
+  case ISD::HANDLENODE:    return "handlenode";
     
   // Unary operators
   case ISD::FABS:   return "fabs";
