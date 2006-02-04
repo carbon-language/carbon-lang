@@ -131,6 +131,10 @@ const char *TargetLowering::getTargetNodeName(unsigned Opcode) const {
   return NULL;
 }
 
+//===----------------------------------------------------------------------===//
+//  Optimization Methods
+//===----------------------------------------------------------------------===//
+
 /// DemandedBitsAreZero - Return true if 'Op & Mask' demands no bits from a bit
 /// set operation such as a sign extend or or/xor with constant whose only
 /// use is Op.  If it returns true, the old node that sets bits which are
@@ -139,7 +143,7 @@ const char *TargetLowering::getTargetNodeName(unsigned Opcode) const {
 /// desired.
 bool TargetLowering::DemandedBitsAreZero(const SDOperand &Op, uint64_t Mask, 
                                          SDOperand &Old, SDOperand &New,
-                                         SelectionDAG &DAG) {
+                                         SelectionDAG &DAG) const {
   // If the operation has more than one use, we're not interested in it.
   // Tracking down and checking all uses would be problematic and slow.
   if (!Op.Val->hasOneUse())
@@ -301,6 +305,42 @@ bool TargetLowering::isMaskedValueZeroForTargetNode(const SDOperand &Op,
          " is a target node!");
   return false;
 }
+
+//===----------------------------------------------------------------------===//
+//  Inline Assembler Implementation Methods
+//===----------------------------------------------------------------------===//
+
+TargetLowering::ConstraintType
+TargetLowering::getConstraintType(char ConstraintLetter) const {
+  // FIXME: lots more standard ones to handle.
+  switch (ConstraintLetter) {
+  default: return C_Unknown;
+  case 'r': return C_RegisterClass;
+  case 'i':    // Simple Integer or Relocatable Constant
+  case 'n':    // Simple Integer
+  case 's':    // Relocatable Constant
+  case 'I':    // Target registers.
+  case 'J':
+  case 'K':
+  case 'L':
+  case 'M':
+  case 'N':
+  case 'O':
+  case 'P':  return C_Other;
+  }
+}
+
+bool TargetLowering::isOperandValidForConstraint(SDOperand Op, 
+                                                 char ConstraintLetter) {
+  switch (ConstraintLetter) {
+  default: return false;
+  case 'i':    // Simple Integer or Relocatable Constant
+  case 'n':    // Simple Integer
+  case 's':    // Relocatable Constant
+    return true;   // FIXME: not right.
+  }
+}
+
 
 std::vector<unsigned> TargetLowering::
 getRegForInlineAsmConstraint(const std::string &Constraint) const {
