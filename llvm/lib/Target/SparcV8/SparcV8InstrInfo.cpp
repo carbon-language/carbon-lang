@@ -17,12 +17,13 @@
 #include "SparcV8GenInstrInfo.inc"
 using namespace llvm;
 
-SparcV8InstrInfo::SparcV8InstrInfo()
-  : TargetInstrInfo(SparcV8Insts, sizeof(SparcV8Insts)/sizeof(SparcV8Insts[0])){
+SparcV8InstrInfo::SparcV8InstrInfo(SparcV8Subtarget &ST)
+  : TargetInstrInfo(SparcV8Insts, sizeof(SparcV8Insts)/sizeof(SparcV8Insts[0])),
+    RI(ST) {
 }
 
-static bool isZeroImmed (const MachineOperand &op) {
-  return (op.isImmediate() && op.getImmedValue() == 0);
+static bool isZeroImm(const MachineOperand &op) {
+  return op.isImmediate() && op.getImmedValue() == 0;
 }
 
 /// Return true if the instruction is a register to register move and
@@ -44,13 +45,13 @@ bool SparcV8InstrInfo::isMoveInstr(const MachineInstr &MI,
       SrcReg = MI.getOperand(1).getReg();
       return true;
     }
-  } else if (MI.getOpcode() == V8::ORri || MI.getOpcode() == V8::ADDri) {
-    if (isZeroImmed(MI.getOperand(2)) && MI.getOperand(1).isRegister()) {
-      DstReg = MI.getOperand(0).getReg();
-      SrcReg = MI.getOperand(1).getReg();
-      return true;
-    }
-  } else if (MI.getOpcode() == V8::FMOVS || MI.getOpcode() == V8::FpMOVD) {
+  } else if (MI.getOpcode() == V8::ORri || MI.getOpcode() == V8::ADDri &&
+             isZeroImm(MI.getOperand(2)) && MI.getOperand(1).isRegister()) {
+    DstReg = MI.getOperand(0).getReg();
+    SrcReg = MI.getOperand(1).getReg();
+    return true;
+  } else if (MI.getOpcode() == V8::FMOVS || MI.getOpcode() == V8::FpMOVD ||
+             MI.getOpcode() == V8::FMOVD) {
     SrcReg = MI.getOperand(1).getReg();
     DstReg = MI.getOperand(0).getReg();
     return true;

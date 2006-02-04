@@ -13,6 +13,7 @@
 
 #include "SparcV8.h"
 #include "SparcV8RegisterInfo.h"
+#include "SparcV8Subtarget.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -21,9 +22,10 @@
 #include <iostream>
 using namespace llvm;
 
-SparcV8RegisterInfo::SparcV8RegisterInfo()
+SparcV8RegisterInfo::SparcV8RegisterInfo(SparcV8Subtarget &st)
   : SparcV8GenRegisterInfo(V8::ADJCALLSTACKDOWN,
-                           V8::ADJCALLSTACKUP) {}
+                           V8::ADJCALLSTACKUP), Subtarget(st) {
+}
 
 void SparcV8RegisterInfo::
 storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
@@ -63,7 +65,8 @@ void SparcV8RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
   else if (RC == V8::FPRegsRegisterClass)
     BuildMI(MBB, I, V8::FMOVS, 1, DestReg).addReg(SrcReg);
   else if (RC == V8::DFPRegsRegisterClass)
-    BuildMI(MBB, I, V8::FpMOVD, 1, DestReg).addReg(SrcReg);
+    BuildMI(MBB, I, Subtarget.isV9() ? V8::FMOVD : V8::FpMOVD,
+            1, DestReg).addReg(SrcReg);
   else
     assert (0 && "Can't copy this register");
 }

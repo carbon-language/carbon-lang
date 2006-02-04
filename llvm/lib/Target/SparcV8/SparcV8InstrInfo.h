@@ -34,7 +34,7 @@ namespace V8II {
 class SparcV8InstrInfo : public TargetInstrInfo {
   const SparcV8RegisterInfo RI;
 public:
-  SparcV8InstrInfo();
+  SparcV8InstrInfo(SparcV8Subtarget &ST);
 
   /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
   /// such, whenever a client has an instance of instruction info, it should

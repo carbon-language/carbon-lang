@@ -19,10 +19,13 @@
 
 namespace llvm {
 
+class SparcV8Subtarget;
 class Type;
 
 struct SparcV8RegisterInfo : public SparcV8GenRegisterInfo {
-  SparcV8RegisterInfo();
+  SparcV8Subtarget &Subtarget;
+  
+  SparcV8RegisterInfo(SparcV8Subtarget &st);
 
   /// Code Generation virtual methods...
   void storeRegToStackSlot(MachineBasicBlock &MBB,
