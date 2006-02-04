@@ -301,7 +301,6 @@ void ScheduleDAG::EmitNode(NodeInfo *NI) {
       // Add all of the operand registers to the instruction.
       for (unsigned i = 2; i != NumOps; i += 2) {
         unsigned Flags =cast<ConstantSDNode>(Node->getOperand(i+1))->getValue();
-        MachineOperand::UseType UseTy;
         switch (Flags) {
         default: assert(0 && "Bad flags!");
         case 1: { // Use of register.
