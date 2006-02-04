@@ -203,11 +203,12 @@ SparcV8TargetLowering::SparcV8TargetLowering(TargetMachine &TM)
   // RET must be custom lowered, to meet ABI requirements
   setOperationAction(ISD::RET               , MVT::Other, Custom);
   
-  // VASTART needs to be custom lowered to use the VarArgsFrameIndex
+  // VASTART needs to be custom lowered to use the VarArgsFrameIndex.
   setOperationAction(ISD::VASTART           , MVT::Other, Custom);
+  // VAARG needs to be lowered to not do unaligned accesses for doubles.
+  setOperationAction(ISD::VAARG             , MVT::Other, Custom);
   
   // Use the default implementation.
-  setOperationAction(ISD::VAARG             , MVT::Other, Expand);
   setOperationAction(ISD::VACOPY            , MVT::Other, Expand);
   setOperationAction(ISD::VAEND             , MVT::Other, Expand);
   setOperationAction(ISD::STACKSAVE         , MVT::Other, Expand); 
@@ -778,9 +779,40 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     // memory location argument.
     SDOperand Offset = DAG.getNode(ISD::ADD, MVT::i32,
                                    DAG.getRegister(V8::I6, MVT::i32),
-                                   DAG.getConstant(VarArgsFrameOffset, MVT::i32));
+                                DAG.getConstant(VarArgsFrameOffset, MVT::i32));
     return DAG.getNode(ISD::STORE, MVT::Other, Op.getOperand(0), Offset, 
                        Op.getOperand(1), Op.getOperand(2));
+  }
+  case ISD::VAARG: {
+    SDNode *Node = Op.Val;
+    MVT::ValueType VT = Node->getValueType(0);
+    SDOperand InChain = Node->getOperand(0);
+    SDOperand VAListPtr = Node->getOperand(1);
+    SDOperand VAList = DAG.getLoad(getPointerTy(), InChain, VAListPtr,
+                                   Node->getOperand(2));
+    // Increment the pointer, VAList, to the next vaarg
+    SDOperand NextPtr = DAG.getNode(ISD::ADD, getPointerTy(), VAList, 
+                                    DAG.getConstant(MVT::getSizeInBits(VT)/8, 
+                                                    getPointerTy()));
+    // Store the incremented VAList to the legalized pointer
+    InChain = DAG.getNode(ISD::STORE, MVT::Other, VAList.getValue(1), NextPtr,
+                          VAListPtr, Node->getOperand(2));
+    // Load the actual argument out of the pointer VAList, unless this is an
+    // f64 load.
+    if (VT != MVT::f64) {
+      return DAG.getLoad(VT, InChain, VAList, DAG.getSrcValue(0));
+    } else {
+      // Otherwise, load it as i64, then do a bitconvert.
+      SDOperand V = DAG.getLoad(MVT::i64, InChain, VAList, DAG.getSrcValue(0));
+      std::vector<MVT::ValueType> Tys;
+      Tys.push_back(MVT::f64);
+      Tys.push_back(MVT::Other);
+      std::vector<SDOperand> Ops;
+      // Bit-Convert the value to f64.
+      Ops.push_back(DAG.getNode(ISD::BIT_CONVERT, MVT::f64, V));
+      Ops.push_back(V.getValue(1));
+      return DAG.getNode(ISD::MERGE_VALUES, Tys, Ops);
+    }
   }
   case ISD::RET: {
     SDOperand Copy;
