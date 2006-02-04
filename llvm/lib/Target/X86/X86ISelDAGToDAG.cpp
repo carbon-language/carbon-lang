@@ -369,11 +369,17 @@ bool X86DAGToDAGISel::SelectAddr(SDOperand N, SDOperand &Base, SDOperand &Scale,
     return false;
 
   if (AM.BaseType == X86ISelAddressMode::RegBase) {
-    if (!AM.Base.Reg.Val)
+    if (AM.Base.Reg.Val) {
+      if (AM.Base.Reg.getOpcode() != ISD::Register)
+        AM.Base.Reg = Select(AM.Base.Reg);
+    } else {
       AM.Base.Reg = CurDAG->getRegister(0, MVT::i32);
+    }
   }
 
-  if (!AM.IndexReg.Val)
+  if (AM.IndexReg.Val)
+    AM.IndexReg = Select(AM.IndexReg);
+  else
     AM.IndexReg = CurDAG->getRegister(0, MVT::i32);
 
   getAddressOperands(AM, Base, Scale, Index, Disp);
@@ -435,6 +441,11 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDOperand N, SDOperand &Base,
         return false;
     }
 
+    if (SelectBase)
+      AM.Base.Reg = Select(AM.Base.Reg);
+    if (SelectIndex)
+      AM.IndexReg = Select(AM.IndexReg);
+
     getAddressOperands(AM, Base, Scale, Index, Disp);
     return true;
   }
@@ -449,11 +460,6 @@ SDOperand X86DAGToDAGISel::Select(SDOperand N) {
 
   if (Opcode >= ISD::BUILTIN_OP_END && Opcode < X86ISD::FIRST_NUMBER)
     return N;   // Already selected.
-
-  // These are probably emitted by SelectAddr().
-  if (Opcode == ISD::TargetConstant || Opcode == ISD::TargetConstantPool ||
-      Opcode == ISD::TargetFrameIndex || Opcode == ISD::TargetGlobalAddress)
-    return N;
 
   std::map<SDOperand, SDOperand>::iterator CGMI = CodeGenMap.find(N);
   if (CGMI != CodeGenMap.end()) return CGMI->second;
