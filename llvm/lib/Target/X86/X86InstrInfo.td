@@ -3123,8 +3123,7 @@ def : Pat<(f64 fp64immneg0), (FpCHS (FpLD0))>, Requires<[FPStack]>;
 def : Pat<(f64 fp64immneg1), (FpCHS (FpLD1))>, Requires<[FPStack]>;
 
 // Used to conv. i64 to f64 since there isn't a SSE version.
-def : Pat<(X86fildflag addr:$src, i64), (FpILD64m addr:$src)>,
-      Requires<[HasSSE2]>;
+def : Pat<(X86fildflag addr:$src, i64), (FpILD64m addr:$src)>;
 
 //===----------------------------------------------------------------------===//
 // Some peepholes
