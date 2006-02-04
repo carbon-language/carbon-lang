@@ -145,7 +145,7 @@ SparcV8RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
     BuildMI(*MI.getParent(), II, V8::ADDrr, 2, 
             V8::G1).addReg(V8::G1).addReg(V8::I6);
     // Insert: G1+%lo(offset) into the user.
-    MI.SetMachineOperandReg(i, V8::I1);
+    MI.SetMachineOperandReg(i, V8::G1);
     MI.SetMachineOperandConst(i+1, MachineOperand::MO_SignExtendedImmed,
                               Offset & ((1 << 10)-1));
   }
