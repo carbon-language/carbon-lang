@@ -124,7 +124,8 @@
 ..\$(IntDir)\TableGen.exe -gen-asm-writer -I ..\..\lib\Target\X86 $(InputPath) -o X86GenAsmWriter.inc
 ..\$(IntDir)\TableGen.exe -gen-asm-writer -asmwriternum=1 -I ..\..\lib\Target\X86 $(InputPath) -o X86GenAsmWriter1.inc
 ..\$(IntDir)\TableGen.exe -gen-dag-isel -I ..\..\lib\Target\X86 $(InputPath) -o X86GenDAGISel.inc
-..\$(IntDir)\TableGen.exe -gen-subtarget -I ..\..\lib\Target\X86 $(InputPath) -o X86GenSubtarget.inc"
+..\$(IntDir)\TableGen.exe -gen-subtarget -I ..\..\lib\Target\X86 $(InputPath) -o X86GenSubtarget.inc
+"
 						AdditionalDependencies="$(InputDir)X86InstrInfo.td;$(InputDir)X86RegisterInfo.td;$(InputDir)..\Target.td;$(ProjectDir)..\$(IntDir)\TableGen.exe"
 						Outputs="X86GenRegisterNames.inc;X86GenRegisterInfo.h.inc;X86GenRegisterInfo.inc;X86GenInstrNames.inc;X86GenInstrInfo.inc;X86GenAsmWriter.inc;X86GenAsmWriter1.inc;X86GenDAGISel.inc;X86GenSubtarget.inc"/>
 				</FileConfiguration>
@@ -141,7 +142,8 @@
 ..\$(IntDir)\TableGen.exe -gen-asm-writer -I ..\..\lib\Target\X86 $(InputPath) -o X86GenAsmWriter.inc
 ..\$(IntDir)\TableGen.exe -gen-asm-writer -asmwriternum=1 -I ..\..\lib\Target\X86 $(InputPath) -o X86GenAsmWriter1.inc
 ..\$(IntDir)\TableGen.exe -gen-dag-isel -I ..\..\lib\Target\X86 $(InputPath) -o X86GenDAGISel.inc
-..\$(IntDir)\TableGen.exe -gen-subtarget -I ..\..\lib\Target\X86 $(InputPath) -o X86GenSubtarget.inc"
+..\$(IntDir)\TableGen.exe -gen-subtarget -I ..\..\lib\Target\X86 $(InputPath) -o X86GenSubtarget.inc
+"
 						AdditionalDependencies="$(InputDir)X86InstrInfo.td;$(InputDir)X86RegisterInfo.td;$(InputDir)..\Target.td;$(ProjectDir)..\$(IntDir)\TableGen.exe"
 						Outputs="X86GenRegisterNames.inc;X86GenRegisterInfo.h.inc;X86GenRegisterInfo.inc;X86GenInstrNames.inc;X86GenInstrInfo.inc;X86GenAsmWriter.inc;X86GenAsmWriter1.inc;X86GenDAGISel.inc;X86GenSubtarget.inc"/>
 				</FileConfiguration>
@@ -178,9 +180,6 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\Target\X86\X86JITInfo.cpp">
-			</File>
-			<File
-				RelativePath="..\..\lib\Target\X86\X86PeepholeOpt.cpp">
 			</File>
 			<File
 				RelativePath="..\..\lib\Target\X86\X86RegisterInfo.cpp">
