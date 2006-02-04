@@ -477,6 +477,10 @@ namespace {
     void RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
                                         SCEVExpander &Rewriter, Loop *L,
                                         Pass *P);
+    
+    Value *InsertCodeForBaseAtPosition(const SCEVHandle &NewBase, 
+                                       SCEVExpander &Rewriter,
+                                       Instruction *IP, Loop *L);
     void dump() const;
   };
 }
@@ -490,6 +494,41 @@ void BasedUser::dump() const {
   std::cerr << "   Inst: " << *Inst;
 }
 
+Value *BasedUser::InsertCodeForBaseAtPosition(const SCEVHandle &NewBase, 
+                                              SCEVExpander &Rewriter,
+                                              Instruction *IP, Loop *L) {
+  // Figure out where we *really* want to insert this code.  In particular, if
+  // the user is inside of a loop that is nested inside of L, we really don't
+  // want to insert this expression before the user, we'd rather pull it out as
+  // many loops as possible.
+  LoopInfo &LI = Rewriter.getLoopInfo();
+  Instruction *BaseInsertPt = IP;
+  
+  // Figure out the most-nested loop that IP is in.
+  Loop *InsertLoop = LI.getLoopFor(IP->getParent());
+  
+  // If InsertLoop is not L, and InsertLoop is nested inside of L, figure out
+  // the preheader of the outer-most loop where NewBase is not loop invariant.
+  while (InsertLoop && NewBase->isLoopInvariant(InsertLoop)) {
+    BaseInsertPt = InsertLoop->getLoopPreheader()->getTerminator();
+    InsertLoop = InsertLoop->getParentLoop();
+  }
+  
+  // If there is no immediate value, skip the next part.
+  if (SCEVConstant *SC = dyn_cast<SCEVConstant>(Imm))
+    if (SC->getValue()->isNullValue())
+      return Rewriter.expandCodeFor(NewBase, BaseInsertPt,
+                                    OperandValToReplace->getType());
+
+  Value *Base = Rewriter.expandCodeFor(NewBase, BaseInsertPt);
+  
+  // Always emit the immediate (if non-zero) into the same block as the user.
+  SCEVHandle NewValSCEV = SCEVAddExpr::get(SCEVUnknown::get(Base), Imm);
+  return Rewriter.expandCodeFor(NewValSCEV, IP,
+                                OperandValToReplace->getType());
+}
+
+
 // Once we rewrite the code to insert the new IVs we want, update the
 // operands of Inst to use the new expression 'NewBase', with 'Imm' added
 // to it.
@@ -497,9 +536,7 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
                                                SCEVExpander &Rewriter,
                                                Loop *L, Pass *P) {
   if (!isa<PHINode>(Inst)) {
-    SCEVHandle NewValSCEV = SCEVAddExpr::get(NewBase, Imm);
-    Value *NewVal = Rewriter.expandCodeFor(NewValSCEV, Inst,
-                                           OperandValToReplace->getType());
+    Value *NewVal = InsertCodeForBaseAtPosition(NewBase, Rewriter, Inst, L);
     // Replace the use of the operand Value with the new Phi we just created.
     Inst->replaceUsesOfWith(OperandValToReplace, NewVal);
     DEBUG(std::cerr << "    CHANGED: IMM =" << *Imm << "  Inst = " << *Inst);
@@ -539,11 +576,8 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
       Value *&Code = InsertedCode[PN->getIncomingBlock(i)];
       if (!Code) {
         // Insert the code into the end of the predecessor block.
-        BasicBlock::iterator InsertPt =PN->getIncomingBlock(i)->getTerminator();
-      
-        SCEVHandle NewValSCEV = SCEVAddExpr::get(NewBase, Imm);
-        Code = Rewriter.expandCodeFor(NewValSCEV, InsertPt,
-                                      OperandValToReplace->getType());
+        Instruction *InsertPt = PN->getIncomingBlock(i)->getTerminator();
+        Code = InsertCodeForBaseAtPosition(NewBase, Rewriter, InsertPt, L);
       }
       
       // Replace the use of the operand Value with the new Phi we just created.
@@ -627,16 +661,18 @@ static void MoveImmediateValues(SCEVHandle &Val, SCEVHandle &Imm,
     std::vector<SCEVHandle> NewOps;
     NewOps.reserve(SAE->getNumOperands());
     
-    for (unsigned i = 0; i != SAE->getNumOperands(); ++i)
-      if (isAddress && isTargetConstant(SAE->getOperand(i))) {
-        Imm = SCEVAddExpr::get(Imm, SAE->getOperand(i));
-      } else if (!SAE->getOperand(i)->isLoopInvariant(L)) {
+    for (unsigned i = 0; i != SAE->getNumOperands(); ++i) {
+      SCEVHandle NewOp = SAE->getOperand(i);
+      MoveImmediateValues(NewOp, Imm, isAddress, L);
+      
+      if (!NewOp->isLoopInvariant(L)) {
         // If this is a loop-variant expression, it must stay in the immediate
         // field of the expression.
-        Imm = SCEVAddExpr::get(Imm, SAE->getOperand(i));
+        Imm = SCEVAddExpr::get(Imm, NewOp);
       } else {
-        NewOps.push_back(SAE->getOperand(i));
+        NewOps.push_back(NewOp);
       }
+    }
 
     if (NewOps.empty())
       Val = SCEVUnknown::getIntegerSCEV(0, Val->getType());
@@ -654,6 +690,31 @@ static void MoveImmediateValues(SCEVHandle &Val, SCEVHandle &Imm,
       Val = SCEVAddRecExpr::get(Ops, SARE->getLoop());
     }
     return;
+  } else if (SCEVMulExpr *SME = dyn_cast<SCEVMulExpr>(Val)) {
+    // Transform "8 * (4 + v)" -> "32 + 8*V" if "32" fits in the immed field.
+    if (isAddress && isTargetConstant(SME->getOperand(0)) &&
+        SME->getNumOperands() == 2 && SME->isLoopInvariant(L)) {
+
+      SCEVHandle SubImm = SCEVUnknown::getIntegerSCEV(0, Val->getType());
+      SCEVHandle NewOp = SME->getOperand(1);
+      MoveImmediateValues(NewOp, SubImm, isAddress, L);
+      
+      // If we extracted something out of the subexpressions, see if we can 
+      // simplify this!
+      if (NewOp != SME->getOperand(1)) {
+        // Scale SubImm up by "8".  If the result is a target constant, we are
+        // good.
+        SubImm = SCEVMulExpr::get(SubImm, SME->getOperand(0));
+        if (isTargetConstant(SubImm)) {
+          // Accumulate the immediate.
+          Imm = SCEVAddExpr::get(Imm, SubImm);
+          
+          // Update what is left of 'Val'.
+          Val = SCEVMulExpr::get(SME->getOperand(0), NewOp);
+          return;
+        }
+      }
+    }
   }
 
   // Loop-variant expressions must stay in the immediate field of the
