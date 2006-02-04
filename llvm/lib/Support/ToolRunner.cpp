@@ -400,6 +400,9 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
 #if defined (HAVE_LINK_R)
   GCCArgs.push_back("-Wl,-R.");            // Search this dir for .so files
 #endif
+#ifdef __sparc__
+  GCCArgs.push_back("-mcpu=v9");
+#endif
   GCCArgs.push_back(0);                    // NULL terminator
 
   std::cout << "<gcc>" << std::flush;
@@ -457,6 +460,9 @@ int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
 
 #if defined(__ia64__) || defined(__alpha__)
     "-fPIC",                     // IA64 requires shared objs to contain PIC
+#endif
+#ifdef __sparc__
+    "-mcpu=v9",
 #endif
     "-o", OutputFile.c_str(),    // Output to the right filename...
     "-O2",                       // Optimize the program a bit...
