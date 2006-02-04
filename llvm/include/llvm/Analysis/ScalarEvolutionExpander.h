@@ -41,6 +41,8 @@ namespace llvm {
   public:
     SCEVExpander(ScalarEvolution &se, LoopInfo &li) : SE(se), LI(li) {}
 
+    LoopInfo &getLoopInfo() const { return LI; }
+
     /// clear - Erase the contents of the InsertedExpressions map so that users
     /// trying to expand the same expression into multiple BasicBlocks or
     /// different places within the same BasicBlock can do so.
