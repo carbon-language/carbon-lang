@@ -1316,29 +1316,56 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
       OpNum++;  // Consumes a call operand.
 
       unsigned SrcReg;
+      SDOperand ResOp;
+      unsigned ResOpType;
+      SDOperand InOperandVal = getValue(Operand);
+      
       if (isdigit(ConstraintCode[0])) {    // Matching constraint?
         // If this is required to match an output register we have already set,
         // just use its register.
         unsigned OperandNo = atoi(ConstraintCode.c_str());
         SrcReg = cast<RegisterSDNode>(AsmNodeOperands[OperandNo*2+2])->getReg();
+        ResOp = DAG.getRegister(SrcReg, TLI.getValueType(OpTy));
+        ResOpType = 1;
+        
+        Chain = DAG.getCopyToReg(Chain, SrcReg, InOperandVal, Flag);
+        Flag = Chain.getValue(1);
       } else {
-        // Copy the input into the appropriate register.
-        std::vector<unsigned> Regs =
-          TLI.getRegForInlineAsmConstraint(ConstraintCode);
-        if (Regs.size() == 1)
-          SrcReg = Regs[0];
-        else
-          SrcReg = GetAvailableRegister(false, true, Regs, 
-                                        OutputRegs, InputRegs);
+        TargetLowering::ConstraintType CTy = TargetLowering::C_RegisterClass;
+        if (ConstraintCode.size() == 1)   // not a physreg name.
+          CTy = TLI.getConstraintType(ConstraintCode[0]);
+        
+        switch (CTy) {
+        default: assert(0 && "Unknown constraint type! FAIL!");
+        case TargetLowering::C_RegisterClass: {
+          // Copy the input into the appropriate register.
+          std::vector<unsigned> Regs =
+            TLI.getRegForInlineAsmConstraint(ConstraintCode);
+          if (Regs.size() == 1)
+            SrcReg = Regs[0];
+          else
+            SrcReg = GetAvailableRegister(false, true, Regs, 
+                                          OutputRegs, InputRegs);
+          // FIXME: should be match fail.
+          assert(SrcReg && "Wasn't able to allocate register!");
+          Chain = DAG.getCopyToReg(Chain, SrcReg, InOperandVal, Flag);
+          Flag = Chain.getValue(1);
+          
+          ResOp = DAG.getRegister(SrcReg, TLI.getValueType(OpTy));
+          ResOpType = 1;
+          break;
+        }
+        case TargetLowering::C_Other:
+          if (!TLI.isOperandValidForConstraint(InOperandVal, ConstraintCode[0]))
+            assert(0 && "MATCH FAIL!");
+          ResOp = InOperandVal;
+          ResOpType = 3;
+          break;
+        }
       }
-      assert(SrcReg && "Couldn't allocate input reg!");
       
-      Chain = DAG.getCopyToReg(Chain, SrcReg, getValue(Operand), Flag);
-      Flag = Chain.getValue(1);
-      
-      // Add information to the INLINEASM node to know that this register is
-      // read.
-      AsmNodeOperands.push_back(DAG.getRegister(SrcReg,TLI.getValueType(OpTy)));
+      // Add information to the INLINEASM node to know about this input.
+      AsmNodeOperands.push_back(ResOp);
       AsmNodeOperands.push_back(DAG.getConstant(1, MVT::i32)); // ISUSE
       break;
     }
