@@ -298,7 +298,7 @@ public:
   /// New, such that callers of SetBitsAreZero may call CombineTo on them if
   /// desired.
   bool DemandedBitsAreZero(const SDOperand &Op, uint64_t Mask, SDOperand &Old,
-                           SDOperand &New, SelectionDAG &DAG);
+                           SDOperand &New, SelectionDAG &DAG) const;
 
   //===--------------------------------------------------------------------===//
   // TargetLowering Configuration Methods - These methods should be invoked by
@@ -442,12 +442,25 @@ public:
   // Inline Asm Support hooks
   //
   
+  enum ConstraintType {
+    C_RegisterClass,       // Constraint represents one or more registers.
+    C_Other,               // Something else.
+    C_Unknown              // Unsupported constraint.
+    // INTEGER, ADDRESS, MEMORY?
+  };
+  
+  /// getConstraintType - Given a constraint letter, return the type of
+  /// constraint it is for this target.
+  ConstraintType getConstraintType(char ConstraintLetter) const;
+  
   /// getRegForInlineAsmConstraint - Given a constraint letter or register
   /// name (e.g. "r" or "edx"), return a list of registers that can be used to
-  /// satisfy the constraint.  If the constraint isn't supported, or isn't a
-  /// register constraint, return an empty list.
+  /// satisfy the constraint.  This should only be used for physregs and 
+  /// C_RegisterClass constraints.
   virtual std::vector<unsigned> 
   getRegForInlineAsmConstraint(const std::string &Constraint) const;
+  
+  virtual bool isOperandValidForConstraint(SDOperand Op, char ConstraintLetter);
   
   //===--------------------------------------------------------------------===//
   // Scheduler hooks
