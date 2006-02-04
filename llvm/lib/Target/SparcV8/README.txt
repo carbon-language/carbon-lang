@@ -2,6 +2,7 @@
 To-do
 -----
 
+* Enable LSR for V8.
 * Keep the address of the constant pool in a register instead of forming its
   address all of the time.
 * We can fold small constant offsets into the %hi/%lo references to constant
