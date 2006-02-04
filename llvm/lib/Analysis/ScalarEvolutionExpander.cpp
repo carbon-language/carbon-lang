@@ -17,6 +17,57 @@
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 using namespace llvm;
 
+/// InsertCastOfTo - Insert a cast of V to the specified type, doing what
+/// we can to share the casts.
+Value *SCEVExpander::InsertCastOfTo(Value *V, const Type *Ty) {
+  // FIXME: keep track of the cast instruction.
+  if (Constant *C = dyn_cast<Constant>(V))
+    return ConstantExpr::getCast(C, Ty);
+  
+  if (Argument *A = dyn_cast<Argument>(V)) {
+    // Check to see if there is already a cast!
+    for (Value::use_iterator UI = A->use_begin(), E = A->use_end();
+         UI != E; ++UI) {
+      if ((*UI)->getType() == Ty)
+        if (CastInst *CI = dyn_cast<CastInst>(cast<Instruction>(*UI))) {
+          // If the cast isn't in the first instruction of the function,
+          // move it.
+          if (BasicBlock::iterator(CI) != 
+              A->getParent()->getEntryBlock().begin()) {
+            CI->moveBefore(A->getParent()->getEntryBlock().begin());
+          }
+          return CI;
+        }
+    }
+    return new CastInst(V, Ty, V->getName(),
+                        A->getParent()->getEntryBlock().begin());
+  }
+    
+  Instruction *I = cast<Instruction>(V);
+  
+  // Check to see if there is already a cast.  If there is, use it.
+  for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
+       UI != E; ++UI) {
+    if ((*UI)->getType() == Ty)
+      if (CastInst *CI = dyn_cast<CastInst>(cast<Instruction>(*UI))) {
+        BasicBlock::iterator It = I; ++It;
+        if (isa<InvokeInst>(I))
+          It = cast<InvokeInst>(I)->getNormalDest()->begin();
+        while (isa<PHINode>(It)) ++It;
+        if (It != BasicBlock::iterator(CI)) {
+          // Splice the cast immediately after the operand in question.
+          CI->moveBefore(It);
+        }
+        return CI;
+      }
+  }
+  BasicBlock::iterator IP = I; ++IP;
+  if (InvokeInst *II = dyn_cast<InvokeInst>(I))
+    IP = II->getNormalDest()->begin();
+  while (isa<PHINode>(IP)) ++IP;
+  return new CastInst(V, Ty, V->getName(), IP);
+}
+
 Value *SCEVExpander::visitMulExpr(SCEVMulExpr *S) {
   const Type *Ty = S->getType();
   int FirstOp = 0;  // Set if we should emit a subtract.
