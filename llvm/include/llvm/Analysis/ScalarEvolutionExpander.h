@@ -86,6 +86,10 @@ namespace llvm {
       return expandInTy(SH, Ty);
     }
 
+    /// InsertCastOfTo - Insert a cast of V to the specified type, doing what
+    /// we can to share the casts.
+    static Value *InsertCastOfTo(Value *V, const Type *Ty);
+    
   protected:
     Value *expand(SCEV *S) {
       // Check to see if we already expanded this.
@@ -100,39 +104,8 @@ namespace llvm {
 
     Value *expandInTy(SCEV *S, const Type *Ty) {
       Value *V = expand(S);
-      if (Ty && V->getType() != Ty) {
-        // FIXME: keep track of the cast instruction.
-        if (Constant *C = dyn_cast<Constant>(V))
-          return ConstantExpr::getCast(C, Ty);
-        else if (Instruction *I = dyn_cast<Instruction>(V)) {
-          // Check to see if there is already a cast.  If there is, use it.
-          for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
-               UI != E; ++UI) {
-            if ((*UI)->getType() == Ty)
-              if (CastInst *CI = dyn_cast<CastInst>(cast<Instruction>(*UI))) {
-                BasicBlock::iterator It = I; ++It;
-                if (isa<InvokeInst>(I))
-                  It = cast<InvokeInst>(I)->getNormalDest()->begin();
-                while (isa<PHINode>(It)) ++It;
-                if (It != BasicBlock::iterator(CI)) {
-                  // Splice the cast immediately after the operand in question.
-                  BasicBlock::InstListType &InstList =
-                    It->getParent()->getInstList();
-                  InstList.splice(It, CI->getParent()->getInstList(), CI);
-                }
-                return CI;
-              }
-          }
-          BasicBlock::iterator IP = I; ++IP;
-          if (InvokeInst *II = dyn_cast<InvokeInst>(I))
-            IP = II->getNormalDest()->begin();
-          while (isa<PHINode>(IP)) ++IP;
-          return new CastInst(V, Ty, V->getName(), IP);
-        } else {
-          // FIXME: check to see if there is already a cast!
-          return new CastInst(V, Ty, V->getName(), InsertPt);
-        }
-      }
+      if (Ty && V->getType() != Ty)
+        return InsertCastOfTo(V, Ty);
       return V;
     }
 
