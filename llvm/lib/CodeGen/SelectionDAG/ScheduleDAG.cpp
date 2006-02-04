@@ -85,7 +85,7 @@ void ScheduleDAG::IdentifyGroups() {
       // No more flags to walk
       if (Op.getValueType() != MVT::Flag) break;
       // Add to node group
-      NodeGroup::Add(getNI(Op.Val), NI);
+      AddToGroup(getNI(Op.Val), NI);
       // Let everyone else know
       HasGroups = true;
     }
@@ -479,7 +479,7 @@ static unsigned CountInternalUses(NodeInfo *D, NodeInfo *U) {
 //===----------------------------------------------------------------------===//
 /// Add - Adds a definer and user pair to a node group.
 ///
-void NodeGroup::Add(NodeInfo *D, NodeInfo *U) {
+void ScheduleDAG::AddToGroup(NodeInfo *D, NodeInfo *U) {
   // Get current groups
   NodeGroup *DGroup = D->Group;
   NodeGroup *UGroup = U->Group;
@@ -534,5 +534,11 @@ void NodeGroup::Add(NodeInfo *D, NodeInfo *U) {
                        CountInternalUses(D, U));
     DGroup->group_push_back(D);
     DGroup->group_push_back(U);
+
+    if (HeadNG == NULL)
+      HeadNG = DGroup;
+    if (TailNG != NULL)
+      TailNG->Next = DGroup;
+    TailNG = DGroup;
   }
 }

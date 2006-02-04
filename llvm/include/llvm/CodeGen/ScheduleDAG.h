@@ -50,6 +50,8 @@ namespace llvm {
   /// Node group -  This struct is used to manage flagged node groups.
   ///
   class NodeGroup {
+  public:
+    NodeGroup     *Next;
   private:
     NIVector      Members;                // Group member nodes
     NodeInfo      *Dominator;             // Node with highest latency
@@ -59,7 +61,7 @@ namespace llvm {
 
   public:
     // Ctor.
-    NodeGroup() : Dominator(NULL), Pending(0) {}
+    NodeGroup() : Next(NULL), Dominator(NULL), Pending(0) {}
   
     // Accessors
     inline void setDominator(NodeInfo *D) { Dominator = D; }
@@ -256,13 +258,24 @@ namespace llvm {
     bool HasGroups;                       // True if there are any groups
     NodeInfo *Info;                       // Info for nodes being scheduled
     NIVector Ordering;                    // Emit ordering of nodes
+    NodeGroup *HeadNG, *TailNG;           // Keep track of allocated NodeGroups
 
     ScheduleDAG(SchedHeuristics hstc, SelectionDAG &dag, MachineBasicBlock *bb,
                 const TargetMachine &tm)
-      : Heuristic(hstc), DAG(dag), BB(bb), TM(tm),
-        NodeCount(0), HasGroups(false), Info(NULL) {}
+      : Heuristic(hstc), DAG(dag), BB(bb), TM(tm), NodeCount(0),
+        HasGroups(false), Info(NULL), HeadNG(NULL), TailNG(NULL) {}
 
-    virtual ~ScheduleDAG() {};
+    virtual ~ScheduleDAG() {
+      if (Info)
+        delete[] Info;
+
+      NodeGroup *NG = HeadNG;
+      while (NG) {
+        NodeGroup *NextSU = NG->Next;
+        delete NG;
+        NG = NextSU;
+      }
+    };
 
     /// Run - perform scheduling.
     ///
@@ -329,6 +342,8 @@ namespace llvm {
     /// IdentifyGroups - Put flagged nodes into groups.
     ///
     void IdentifyGroups();
+
+    void AddToGroup(NodeInfo *D, NodeInfo *U);
   };
 
   /// createSimpleDAGScheduler - This creates a simple two pass instruction

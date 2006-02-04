@@ -1998,4 +1998,5 @@ void SelectionDAGISel::ScheduleAndEmitDAG(SelectionDAG &DAG) {
     SL = createBURRListDAGScheduler(DAG, BB);
   }
   BB = SL->Run();
+  delete SL;
 }
