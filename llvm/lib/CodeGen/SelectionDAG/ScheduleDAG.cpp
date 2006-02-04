@@ -300,16 +300,26 @@ void ScheduleDAG::EmitNode(NodeInfo *NI) {
       
       // Add all of the operand registers to the instruction.
       for (unsigned i = 2; i != NumOps; i += 2) {
-        unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();
         unsigned Flags =cast<ConstantSDNode>(Node->getOperand(i+1))->getValue();
         MachineOperand::UseType UseTy;
         switch (Flags) {
         default: assert(0 && "Bad flags!");
-        case 1: UseTy = MachineOperand::Use; break;
-        case 2: UseTy = MachineOperand::Def; break;
-        case 3: UseTy = MachineOperand::UseAndDef; break;
+        case 1: { // Use of register.
+          unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();
+          MI->addMachineRegOperand(Reg, MachineOperand::Use);
+          break;
         }
-        MI->addMachineRegOperand(Reg, UseTy);
+        case 2: { // Def of register.
+          unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();
+          MI->addMachineRegOperand(Reg, MachineOperand::Def);
+          break;
+        }
+        case 3: { // Immediate.
+          uint64_t Val = cast<ConstantSDNode>(Node->getOperand(i))->getValue();
+          MI->addZeroExtImm64Operand(Val);
+          break;
+        }
+        }
       }
       break;
     }

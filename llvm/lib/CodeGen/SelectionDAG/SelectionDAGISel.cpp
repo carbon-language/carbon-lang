@@ -1366,7 +1366,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
       
       // Add information to the INLINEASM node to know about this input.
       AsmNodeOperands.push_back(ResOp);
-      AsmNodeOperands.push_back(DAG.getConstant(1, MVT::i32)); // ISUSE
+      AsmNodeOperands.push_back(DAG.getConstant(ResOpType, MVT::i32));
       break;
     }
     case InlineAsm::isClobber:
