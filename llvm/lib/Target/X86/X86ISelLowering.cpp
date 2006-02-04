@@ -1476,18 +1476,19 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     std::vector<MVT::ValueType> Tys;
     Tys.push_back(MVT::f64);
     Tys.push_back(MVT::Other);
-    Tys.push_back(MVT::Flag);
+    if (X86ScalarSSE) Tys.push_back(MVT::Flag);
     std::vector<SDOperand> Ops;
     Ops.push_back(Chain);
     Ops.push_back(StackSlot);
     Ops.push_back(DAG.getValueType(SrcVT));
-    Result = DAG.getNode(X86ISD::FILD, Tys, Ops);
+    Result = DAG.getNode(X86ScalarSSE ? X86ISD::FILD_FLAG :X86ISD::FILD,
+                         Tys, Ops);
 
     if (X86ScalarSSE) {
       Chain = Result.getValue(1);
       SDOperand InFlag = Result.getValue(2);
 
-      // FIXME: Currently the FST is flagged to the FILD. This
+      // FIXME: Currently the FST is flagged to the FILD_FLAG. This
       // shouldn't be necessary except that RFP cannot be live across
       // multiple blocks. When stackifier is fixed, they can be uncoupled.
       MachineFunction &MF = DAG.getMachineFunction();
@@ -1974,6 +1975,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::FAND:               return "X86ISD::FAND";
   case X86ISD::FXOR:               return "X86ISD::FXOR";
   case X86ISD::FILD:               return "X86ISD::FILD";
+  case X86ISD::FILD_FLAG:          return "X86ISD::FILD_FLAG";
   case X86ISD::FP_TO_INT16_IN_MEM: return "X86ISD::FP_TO_INT16_IN_MEM";
   case X86ISD::FP_TO_INT32_IN_MEM: return "X86ISD::FP_TO_INT32_IN_MEM";
   case X86ISD::FP_TO_INT64_IN_MEM: return "X86ISD::FP_TO_INT64_IN_MEM";

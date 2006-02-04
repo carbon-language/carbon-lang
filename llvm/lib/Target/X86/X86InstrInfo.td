@@ -108,6 +108,8 @@ def X86fld     : SDNode<"X86ISD::FLD",      SDTX86Fld,
 def X86fst     : SDNode<"X86ISD::FST",      SDTX86Fst,
                         [SDNPHasChain, SDNPInFlag]>;
 def X86fild    : SDNode<"X86ISD::FILD",     SDTX86Fild,
+                        [SDNPHasChain]>;
+def X86fildflag: SDNode<"X86ISD::FILD_FLAG",SDTX86Fild,
                         [SDNPHasChain, SDNPOutFlag]>;
 def X86fp_to_i16mem : SDNode<"X86ISD::FP_TO_INT16_IN_MEM", SDTX86FpToIMem,
                         [SDNPHasChain]>;
@@ -3121,7 +3123,8 @@ def : Pat<(f64 fp64immneg0), (FpCHS (FpLD0))>, Requires<[FPStack]>;
 def : Pat<(f64 fp64immneg1), (FpCHS (FpLD1))>, Requires<[FPStack]>;
 
 // Used to conv. i64 to f64 since there isn't a SSE version.
-def : Pat<(X86fild addr:$src, i64), (FpILD64m addr:$src)>, Requires<[HasSSE2]>;
+def : Pat<(X86fildflag addr:$src, i64), (FpILD64m addr:$src)>,
+      Requires<[HasSSE2]>;
 
 //===----------------------------------------------------------------------===//
 // Some peepholes

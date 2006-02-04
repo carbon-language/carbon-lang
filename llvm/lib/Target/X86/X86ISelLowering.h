@@ -49,11 +49,13 @@ namespace llvm {
       /// to X86::XORPS or X86::XORPD.
       FXOR,
 
-      /// FILD - This instruction implements SINT_TO_FP with the integer source
-      /// in memory and FP reg result.  This corresponds to the X86::FILD*m
-      /// instructions. It has three inputs (token chain, address, and source
-      /// type) and three outputs (FP value, token chain, and a flag).
+      /// FILD, FILD_FLAG - This instruction implements SINT_TO_FP with the
+      /// integer source in memory and FP reg result.  This corresponds to the
+      /// X86::FILD*m instructions. It has three inputs (token chain, address,
+      /// and source type) and two outputs (FP value and token chain). FILD_FLAG
+      /// also produces a flag).
       FILD,
+      FILD_FLAG,
 
       /// FP_TO_INT*_IN_MEM - This instruction implements FP_TO_SINT with the
       /// integer destination in memory and a FP reg source.  This corresponds
