@@ -279,7 +279,7 @@ public:
     ModifyStackSlot(Slot);
     
     PhysRegsAvailable.insert(std::make_pair(Reg, Slot));
-    SpillSlotsAvailable[Slot] = (Reg << 1) | CanClobber;
+    SpillSlotsAvailable[Slot] = (Reg << 1) | (unsigned)CanClobber;
   
     DEBUG(std::cerr << "Remembering SS#" << Slot << " in physreg "
                     << MRI->getName(Reg) << "\n");
