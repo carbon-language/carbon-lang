@@ -173,9 +173,22 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   EmitConstantPool(MF.getConstantPool());
 
   // Print out labels for the function.
-  SwitchSection("\t.section .text", MF.getFunction());
-  EmitAlignment(4);
-  O << "\t.globl " << CurrentFnName << "\n";
+  const Function *F = MF.getFunction();
+  SwitchSection(".text", F);
+  EmitAlignment(4, F);
+  switch (F->getLinkage()) {
+  default: assert(0 && "Unknown linkage type!");
+  case Function::InternalLinkage:  // Symbols default to internal.
+    break;
+   case Function::ExternalLinkage:
+     O << "\t.globl " << CurrentFnName << "\n";
+     break;
+  case Function::WeakLinkage:
+  case Function::LinkOnceLinkage:
+    O << "\t.weak " << CurrentFnName << "\n";
+    break;
+  }
+
   O << "\t.ent " << CurrentFnName << "\n";
 
   O << CurrentFnName << ":\n";
