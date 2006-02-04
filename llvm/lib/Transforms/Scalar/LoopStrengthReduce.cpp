@@ -176,24 +176,7 @@ Value *LoopStrengthReduce::getCastedVersionOf(Value *V) {
   Value *&New = CastedPointers[V];
   if (New) return New;
   
-  BasicBlock::iterator InsertPt;
-  if (Argument *Arg = dyn_cast<Argument>(V)) {
-    // Insert into the entry of the function, after any allocas.
-    InsertPt = Arg->getParent()->begin()->begin();
-    while (isa<AllocaInst>(InsertPt)) ++InsertPt;
-  } else {
-    if (InvokeInst *II = dyn_cast<InvokeInst>(V)) {
-      InsertPt = II->getNormalDest()->begin();
-    } else {
-      InsertPt = cast<Instruction>(V);
-      ++InsertPt;
-    }
-
-    // Do not insert casts into the middle of PHI node blocks.
-    while (isa<PHINode>(InsertPt)) ++InsertPt;
-  }
-  
-  New = new CastInst(V, UIntPtrTy, V->getName(), InsertPt);
+  New = SCEVExpander::InsertCastOfTo(V, UIntPtrTy);
   DeadInsts.insert(cast<Instruction>(New));
   return New;
 }
