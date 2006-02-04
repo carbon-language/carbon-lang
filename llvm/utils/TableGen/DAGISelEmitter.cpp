@@ -2137,9 +2137,10 @@ public:
           Code += ", Tmp" + utostr(i + ResNo);
         emitCheck(Code + ")");
 
-        for (unsigned i = 0; i < NumRes; ++i)
-          emitCode("Tmp" + utostr(i+ResNo) + " = Select(Tmp" +
-                   utostr(i+ResNo) + ");");
+        // This breaks ppc
+        //for (unsigned i = 0; i < NumRes; ++i)
+        //  emitCode("Tmp" + utostr(i+ResNo) + " = Select(Tmp" +
+        //           utostr(i+ResNo) + ");");
 
         TmpNo = ResNo + NumRes;
       } else {
