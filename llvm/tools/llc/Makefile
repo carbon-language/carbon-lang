@@ -38,8 +38,8 @@ USEDLIBS += \
 	LLVMSparcV9LiveVar
 endif
 
-ifneq ($(strip $(filter SparcV8,$(TARGETS_TO_BUILD))),)
-USEDLIBS += LLVMSparcV8
+ifneq ($(strip $(filter Sparc,$(TARGETS_TO_BUILD))),)
+USEDLIBS += LLVMSparc
 endif
 
 
