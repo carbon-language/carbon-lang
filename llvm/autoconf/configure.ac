@@ -258,12 +258,12 @@ AC_ARG_ENABLE([targets],AS_HELP_STRING([--enable-target],
     [Build specific host targets: all,host-only,{target-name} (default=all)]),,
     enableval=all)
 case "$enableval" in
-  all) TARGETS_TO_BUILD="X86 SparcV8 SparcV9 PowerPC Alpha IA64 Skeleton" ;;
+  all) TARGETS_TO_BUILD="X86 Sparc SparcV9 PowerPC Alpha IA64 Skeleton" ;;
   host-only)
     case "$llvm_cv_target_arch" in
       x86)     TARGETS_TO_BUILD="X86" ;;
       x86_64)  TARGETS_TO_BUILD="X86" ;;
-      Sparc)   TARGETS_TO_BUILD="SparcV8 SparcV9" ;;
+      Sparc)   TARGETS_TO_BUILD="Sparc SparcV9" ;;
       PowerPC) TARGETS_TO_BUILD="PowerPC" ;;
       Alpha)   TARGETS_TO_BUILD="Alpha" ;;
       IA64)    TARGETS_TO_BUILD="IA64" ;;
@@ -274,7 +274,7 @@ case "$enableval" in
       case "$a_target" in
         x86)     TARGETS_TO_BUILD="X86 $TARGETS_TO_BUILD" ;;
         x86_64)  TARGETS_TO_BUILD="X86 $TARGETS_TO_BUILD" ;;
-        sparc)   TARGETS_TO_BUILD="SparcV8 SparcV9 $TARGETS_TO_BUILD" ;;
+        sparc)   TARGETS_TO_BUILD="Sparc SparcV9 $TARGETS_TO_BUILD" ;;
         powerpc) TARGETS_TO_BUILD="PowerPC $TARGETS_TO_BUILD" ;;
         alpha)   TARGETS_TO_BUILD="Alpha $TARGETS_TO_BUILD" ;;
         ia64)    TARGETS_TO_BUILD="IA64 $TARGETS_TO_BUILD" ;;
