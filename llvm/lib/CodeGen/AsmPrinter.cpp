@@ -179,11 +179,16 @@ unsigned AsmPrinter::getPreferredAlignmentLog(const GlobalVariable *GV) const {
   if (GV->getAlignment() > (1U << Alignment))
     Alignment = Log2_32(GV->getAlignment());
   
-  if (GV->hasInitializer() && Alignment < 4) {
-    // If the global is not external, see if it is large.  If so, give it a
-    // larger alignment.
-    if (TM.getTargetData().getTypeSize(GV->getType()->getElementType()) > 128)
-      Alignment = 4;    // 16-byte alignment.
+  if (GV->hasInitializer()) {
+    // Always round up alignment of global doubles to 8 bytes.
+    if (GV->getType()->getElementType() == Type::DoubleTy && Alignment < 3)
+      Alignment = 3;
+    if (Alignment < 4) {
+      // If the global is not external, see if it is large.  If so, give it a
+      // larger alignment.
+      if (TM.getTargetData().getTypeSize(GV->getType()->getElementType()) > 128)
+        Alignment = 4;    // 16-byte alignment.
+    }
   }
   return Alignment;
 }
