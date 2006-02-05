@@ -1261,6 +1261,25 @@ Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
       InsertNewInstBefore(Div, I);
       return new CastInst(Div, I.getType());
     }      
+  } else {
+    // Known to be an unsigned division.
+    if (Instruction *RHSI = dyn_cast<Instruction>(I.getOperand(1))) {
+      // Turn A / (C1 << N), where C1 is "1<<C2" into A >> (N+C2) [udiv only].
+      if (RHSI->getOpcode() == Instruction::Shl &&
+          isa<ConstantUInt>(RHSI->getOperand(0))) {
+        unsigned C1 = cast<ConstantUInt>(RHSI->getOperand(0))->getRawValue();
+        if (isPowerOf2_64(C1)) {
+          unsigned C2 = Log2_64(C1);
+          Value *Add = RHSI->getOperand(1);
+          if (C2) {
+            Constant *C2V = ConstantUInt::get(Add->getType(), C2);
+            Add = InsertNewInstBefore(BinaryOperator::createAdd(Add, C2V,
+                                                                "tmp"), I);
+          }
+          return new ShiftInst(Instruction::Shr, Op0, Add);
+        }
+      }
+    }
   }
   
   return 0;
@@ -1352,6 +1371,22 @@ Instruction *InstCombiner::visitRem(BinaryOperator &I) {
     if (LHS->equalsInt(0))
       return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
 
+  
+  if (Instruction *RHSI = dyn_cast<Instruction>(I.getOperand(1))) {
+    // Turn A % (C << N), where C is 2^k, into A & ((C << N)-1) [urem only].
+    if (I.getType()->isUnsigned() && 
+        RHSI->getOpcode() == Instruction::Shl &&
+        isa<ConstantUInt>(RHSI->getOperand(0))) {
+      unsigned C1 = cast<ConstantUInt>(RHSI->getOperand(0))->getRawValue();
+      if (isPowerOf2_64(C1)) {
+        Constant *N1 = ConstantInt::getAllOnesValue(I.getType());
+        Value *Add = InsertNewInstBefore(BinaryOperator::createAdd(RHSI, N1,
+                                                                   "tmp"), I);
+        return BinaryOperator::createAnd(Op0, Add);
+      }
+    }
+  }
+  
   return 0;
 }
 
