@@ -171,6 +171,22 @@ void AsmPrinter::EmitXXStructorList(Constant *List) {
     }
 }
 
+/// getPreferredAlignmentLog - Return the preferred alignment of the
+/// specified global, returned in log form.  This includes an explicitly
+/// requested alignment (if the global has one).
+unsigned AsmPrinter::getPreferredAlignmentLog(const GlobalVariable *GV) const {
+  unsigned Alignment = TM.getTargetData().getTypeAlignmentShift(GV->getType());
+  if (GV->getAlignment() > (1U << Alignment))
+    Alignment = Log2_32(GV->getAlignment());
+  
+  if (GV->hasInitializer() && Alignment < 4) {
+    // If the global is not external, see if it is large.  If so, give it a
+    // larger alignment.
+    if (TM.getTargetData().getTypeSize(GV->getType()->getElementType()) > 128)
+      Alignment = 4;    // 16-byte alignment.
+  }
+  return Alignment;
+}
 
 // EmitAlignment - Emit an alignment directive to the specified power of two.
 void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV) const {
