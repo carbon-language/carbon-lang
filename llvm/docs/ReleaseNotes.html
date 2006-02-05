@@ -74,6 +74,11 @@ out and it is now as well supported as Linux on X86.</p>
 <a name="newfeatures">New Features in LLVM 1.7cvs</a>
 </div>
 
+<div class="doc_text">
+<ul>
+<li>New SPARC backend.</li>
+</ul>
+</div>
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
@@ -138,7 +143,7 @@ components, please contact us on the llvmdev list.</p>
     releases: <tt>-cee</tt></li>
 <li>The <tt>llvm-db</tt> tool is in a very early stage of development, but can
     be used to step through programs and inspect the stack.</li>
-<li>The SparcV8 and IA64 code generators are experimental.</li>
+<li>The IA64 code generator is experimental.</li>
 <li>The Alpha JIT is experimental.</li>
 </ul>
 
@@ -512,14 +517,13 @@ programs.</li>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="sparcv8">Known problems with the SPARC-V8 back-end</a>
+  <a name="sparcv8">Known problems with the SPARC back-end</a>
 </div>
 
 <div class="doc_text">
 
 <ul>
-<li>Many features are still missing (e.g. support for 64-bit integer
-arithmetic).  This back-end is in pre-beta state.</li>
+<li>This backend lacks a JIT compiler.</li>
 </ul>
 </div>
 
