@@ -786,10 +786,11 @@ SDOperand DAGCombiner::visitUDIV(SDNode *N) {
     if (ConstantSDNode *SHC = dyn_cast<ConstantSDNode>(N1.getOperand(0))) {
       if (isPowerOf2_64(SHC->getValue())) {
         MVT::ValueType ADDVT = N1.getOperand(1).getValueType();
-        return DAG.getNode(ISD::SRL, VT, N0, 
-                           DAG.getNode(ISD::ADD, ADDVT, N1.getOperand(1),
-                                       DAG.getConstant(Log2_64(SHC->getValue()),
-                                                       ADDVT)));
+        SDOperand Add = DAG.getNode(ISD::ADD, ADDVT, N1.getOperand(1),
+                                    DAG.getConstant(Log2_64(SHC->getValue()),
+                                                    ADDVT));
+        WorkList.push_back(Add.Val);
+        return DAG.getNode(ISD::SRL, VT, N0, Add);
       }
     }
   }
@@ -833,6 +834,16 @@ SDOperand DAGCombiner::visitUREM(SDNode *N) {
   // fold (urem x, pow2) -> (and x, pow2-1)
   if (N1C && !N1C->isNullValue() && isPowerOf2_64(N1C->getValue()))
     return DAG.getNode(ISD::AND, VT, N0, DAG.getConstant(N1C->getValue()-1,VT));
+  // fold (urem x, (shl pow2, y)) -> (and x, (add (shl pow2, y), -1))
+  if (N1.getOpcode() == ISD::SHL) {
+    if (ConstantSDNode *SHC = dyn_cast<ConstantSDNode>(N1.getOperand(0))) {
+      if (isPowerOf2_64(SHC->getValue())) {
+        SDOperand Add = DAG.getNode(ISD::ADD, VT, N1, DAG.getConstant(-1, VT));
+        WorkList.push_back(Add.Val);
+        return DAG.getNode(ISD::AND, VT, N0, Add);
+      }
+    }
+  }
   return SDOperand();
 }
 
