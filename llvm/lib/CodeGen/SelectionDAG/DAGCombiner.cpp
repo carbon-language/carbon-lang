@@ -1288,12 +1288,6 @@ SDOperand DAGCombiner::visitSHL(SDNode *N) {
   // fold (shl 0, x) -> 0
   if (N0C && N0C->isNullValue())
     return N0;
-  // fold (shl c1, (add x, c2)) -> (shl c1 << c2, x)
-  if (N0C && N1.getOpcode() == ISD::ADD && 
-      N1.getOperand(1).getOpcode() == ISD::Constant) {
-    SDOperand LHS = DAG.getNode(ISD::SHL, VT, N0, N1.getOperand(1));
-    return DAG.getNode(ISD::SHL, VT, LHS, N1.getOperand(0));
-  }
   // fold (shl x, c >= size(x)) -> undef
   if (N1C && N1C->getValue() >= OpSizeInBits)
     return DAG.getNode(ISD::UNDEF, VT);
