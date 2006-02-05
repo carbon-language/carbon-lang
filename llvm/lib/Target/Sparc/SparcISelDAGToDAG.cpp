@@ -24,6 +24,7 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Support/Debug.h"
 #include <iostream>
+#include <set>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -958,7 +959,7 @@ void SparcDAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   DEBUG(BB->dump());
   
   // Select target instructions for the DAG.
-  DAG.setRoot(Select(DAG.getRoot()));
+  DAG.setRoot(SelectRoot(DAG.getRoot()));
   CodeGenMap.clear();
   DAG.RemoveDeadNodes();
   
