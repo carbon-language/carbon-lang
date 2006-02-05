@@ -392,7 +392,7 @@ bool PPCDAGToDAGISel::SelectAddrImm(SDOperand N, SDOperand &Disp,
       if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(N.getOperand(0))) {
         Base = CurDAG->getTargetFrameIndex(FI->getIndex(), MVT::i32);
       } else {
-        Base = Select(N.getOperand(0));
+        Base = N.getOperand(0);
       }
       return true; // [r+i]
     } else if (N.getOperand(1).getOpcode() == PPCISD::Lo) {
@@ -402,7 +402,7 @@ bool PPCDAGToDAGISel::SelectAddrImm(SDOperand N, SDOperand &Disp,
       Disp = N.getOperand(1).getOperand(0);  // The global address.
       assert(Disp.getOpcode() == ISD::TargetGlobalAddress ||
              Disp.getOpcode() == ISD::TargetConstantPool);
-      Base = Select(N.getOperand(0));
+      Base = N.getOperand(0);
       return true;  // [&g+r]
     }
     return false;   // [r+r]
@@ -411,7 +411,7 @@ bool PPCDAGToDAGISel::SelectAddrImm(SDOperand N, SDOperand &Disp,
   if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(N))
     Base = CurDAG->getTargetFrameIndex(FI->getIndex(), MVT::i32);
   else
-    Base = Select(N);
+    Base = N;
   return true;      // [r+0]
 }
 
@@ -427,13 +427,13 @@ bool PPCDAGToDAGISel::SelectAddrIdx(SDOperand N, SDOperand &Base,
     return false;
   
   if (N.getOpcode() == ISD::ADD) {
-    Base = Select(N.getOperand(0));
-    Index = Select(N.getOperand(1));
+    Base = N.getOperand(0);
+    Index = N.getOperand(1);
     return true;
   }
  
   Base = CurDAG->getRegister(PPC::R0, MVT::i32);
-  Index = Select(N);
+  Index = N;
   return true;
 }
 
@@ -442,13 +442,13 @@ bool PPCDAGToDAGISel::SelectAddrIdx(SDOperand N, SDOperand &Base,
 bool PPCDAGToDAGISel::SelectAddrIdxOnly(SDOperand N, SDOperand &Base, 
                                         SDOperand &Index) {
   if (N.getOpcode() == ISD::ADD) {
-    Base = Select(N.getOperand(0));
-    Index = Select(N.getOperand(1));
+    Base = N.getOperand(0);
+    Index = N.getOperand(1);
     return true;
   }
   
   Base = CurDAG->getRegister(PPC::R0, MVT::i32);
-  Index = Select(N);
+  Index = N;
   return true;
 }
 
