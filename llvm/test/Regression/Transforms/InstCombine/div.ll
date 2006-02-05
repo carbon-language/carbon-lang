@@ -61,3 +61,9 @@ uint %test10(uint %X, bool %C) {
         ret uint %R
 }
 
+uint %test10(uint %X, ubyte %B) {
+	%Amt = shl uint 32, ubyte %B
+	%V = div uint %X, %Amt
+	ret uint %V
+}
+

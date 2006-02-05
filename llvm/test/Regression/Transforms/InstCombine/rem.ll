@@ -31,3 +31,10 @@ uint %test4(uint %X, bool %C) {
 	%R = rem uint %X, %V
 	ret uint %R
 }
+
+uint %test5(uint %X, ubyte %B) {
+        %Amt = shl uint 32, ubyte %B
+        %V = rem uint %X, %Amt
+        ret uint %V
+}
+
