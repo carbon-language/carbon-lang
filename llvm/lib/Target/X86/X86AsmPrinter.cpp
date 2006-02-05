@@ -92,7 +92,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     std::string name = Mang->getValueName(I);
     Constant *C = I->getInitializer();
     unsigned Size = TD.getTypeSize(C->getType());
-    unsigned Align = TD.getTypeAlignmentShift(C->getType());
+    unsigned Align = getPreferredAlignmentLog(I);
 
     switch (I->getLinkage()) {
     default: assert(0 && "Unknown linkage type!");
