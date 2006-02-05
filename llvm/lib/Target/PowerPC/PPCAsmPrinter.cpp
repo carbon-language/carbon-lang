@@ -527,7 +527,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
     std::string name = Mang->getValueName(I);
     Constant *C = I->getInitializer();
     unsigned Size = TD.getTypeSize(C->getType());
-    unsigned Align = TD.getTypeAlignmentShift(C->getType());
+    unsigned Align = getPreferredAlignmentLog(I);
 
     if (C->isNullValue() && /* FIXME: Verify correct */
         (I->hasInternalLinkage() || I->hasWeakLinkage() ||
