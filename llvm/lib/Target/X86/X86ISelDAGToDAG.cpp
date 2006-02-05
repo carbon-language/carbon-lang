@@ -369,17 +369,11 @@ bool X86DAGToDAGISel::SelectAddr(SDOperand N, SDOperand &Base, SDOperand &Scale,
     return false;
 
   if (AM.BaseType == X86ISelAddressMode::RegBase) {
-    if (AM.Base.Reg.Val) {
-      if (AM.Base.Reg.getOpcode() != ISD::Register)
-        AM.Base.Reg = Select(AM.Base.Reg);
-    } else {
+    if (!AM.Base.Reg.Val)
       AM.Base.Reg = CurDAG->getRegister(0, MVT::i32);
-    }
   }
 
-  if (AM.IndexReg.Val)
-    AM.IndexReg = Select(AM.IndexReg);
-  else
+  if (!AM.IndexReg.Val)
     AM.IndexReg = CurDAG->getRegister(0, MVT::i32);
 
   getAddressOperands(AM, Base, Scale, Index, Disp);
@@ -440,11 +434,6 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDOperand N, SDOperand &Base,
       if (Complexity <= 1)
         return false;
     }
-
-    if (SelectBase)
-      AM.Base.Reg = Select(AM.Base.Reg);
-    if (SelectIndex)
-      AM.IndexReg = Select(AM.IndexReg);
 
     getAddressOperands(AM, Base, Scale, Index, Disp);
     return true;
