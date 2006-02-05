@@ -29,6 +29,7 @@
 #include "llvm/Support/MathExtras.h"
 #include <algorithm>
 #include <iostream>
+#include <set>
 using namespace llvm;
 
 namespace {
@@ -139,7 +140,7 @@ void AlphaDAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   DEBUG(BB->dump());
   
   // Select target instructions for the DAG.
-  DAG.setRoot(Select(DAG.getRoot()));
+  DAG.setRoot(SelectRoot(DAG.getRoot()));
   CodeGenMap.clear();
   DAG.RemoveDeadNodes();
   

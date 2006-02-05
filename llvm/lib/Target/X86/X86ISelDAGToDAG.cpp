@@ -30,6 +30,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
 #include <iostream>
+#include <set>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -151,7 +152,7 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   MachineFunction::iterator FirstMBB = BB;
 
   // Codegen the basic block.
-  DAG.setRoot(Select(DAG.getRoot()));
+  DAG.setRoot(SelectRoot(DAG.getRoot()));
   CodeGenMap.clear();
   DAG.RemoveDeadNodes();
 

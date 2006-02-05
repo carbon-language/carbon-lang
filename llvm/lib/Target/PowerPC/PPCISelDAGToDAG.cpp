@@ -27,6 +27,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include <iostream>
+#include <set>
 using namespace llvm;
 
 namespace {
@@ -152,7 +153,7 @@ void PPCDAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   }
     
   // Select target instructions for the DAG.
-  DAG.setRoot(Select(DAG.getRoot()));
+  DAG.setRoot(SelectRoot(DAG.getRoot()));
   CodeGenMap.clear();
   DAG.RemoveDeadNodes();
   
