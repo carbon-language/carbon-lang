@@ -983,24 +983,24 @@ bool SparcDAGToDAGISel::SelectADDRri(SDOperand Addr, SDOperand &Base,
           // Constant offset from frame ref.
           Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
         } else {
-          Base = Select(Addr.getOperand(0));
+          Base = Addr.getOperand(0);
         }
         Offset = CurDAG->getTargetConstant(CN->getValue(), MVT::i32);
         return true;
       }
     }
     if (Addr.getOperand(0).getOpcode() == SPISD::Lo) {
-      Base = Select(Addr.getOperand(1));
+      Base = Addr.getOperand(1);
       Offset = Addr.getOperand(0).getOperand(0);
       return true;
     }
     if (Addr.getOperand(1).getOpcode() == SPISD::Lo) {
-      Base = Select(Addr.getOperand(0));
+      Base = Addr.getOperand(0);
       Offset = Addr.getOperand(1).getOperand(0);
       return true;
     }
   }
-  Base = Select(Addr);
+  Base = Addr;
   Offset = CurDAG->getTargetConstant(0, MVT::i32);
   return true;
 }
@@ -1015,12 +1015,12 @@ bool SparcDAGToDAGISel::SelectADDRrr(SDOperand Addr, SDOperand &R1,
     if (Addr.getOperand(0).getOpcode() == SPISD::Lo ||
         Addr.getOperand(1).getOpcode() == SPISD::Lo)
       return false;  // Let the reg+imm pattern catch this!
-    R1 = Select(Addr.getOperand(0));
-    R2 = Select(Addr.getOperand(1));
+    R1 = Addr.getOperand(0);
+    R2 = Addr.getOperand(1);
     return true;
   }
 
-  R1 = Select(Addr);
+  R1 = Addr;
   R2 = CurDAG->getRegister(SP::G0, MVT::i32);
   return true;
 }
