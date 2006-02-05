@@ -2177,7 +2177,7 @@ MVT::ValueType *SDNode::getValueTypeList(MVT::ValueType VT) {
 /// hasNUsesOfValue - Return true if there are exactly NUSES uses of the
 /// indicated value.  This method ignores uses of other values defined by this
 /// operation.
-bool SDNode::hasNUsesOfValue(unsigned NUses, unsigned Value) {
+bool SDNode::hasNUsesOfValue(unsigned NUses, unsigned Value) const {
   assert(Value < getNumValues() && "Bad value!");
 
   // If there is only one value, this is easy.
@@ -2185,11 +2185,11 @@ bool SDNode::hasNUsesOfValue(unsigned NUses, unsigned Value) {
     return use_size() == NUses;
   if (Uses.size() < NUses) return false;
 
-  SDOperand TheValue(this, Value);
+  SDOperand TheValue(const_cast<SDNode *>(this), Value);
 
   std::set<SDNode*> UsersHandled;
 
-  for (std::vector<SDNode*>::iterator UI = Uses.begin(), E = Uses.end();
+  for (std::vector<SDNode*>::const_iterator UI = Uses.begin(), E = Uses.end();
        UI != E; ++UI) {
     SDNode *User = *UI;
     if (User->getNumOperands() == 1 ||
@@ -2204,6 +2204,21 @@ bool SDNode::hasNUsesOfValue(unsigned NUses, unsigned Value) {
 
   // Found exactly the right number of uses?
   return NUses == 0;
+}
+
+
+// isOnlyUse - Return true if this node is the only use of N.
+bool SDNode::isOnlyUse(SDNode *N) const {
+  bool Seen = false;
+  for (SDNode::use_iterator I = N->use_begin(), E = N->use_end(); I != E; ++I) {
+    SDNode *User = *I;
+    if (User == this)
+      Seen = true;
+    else
+      return false;
+  }
+
+  return Seen;
 }
 
 

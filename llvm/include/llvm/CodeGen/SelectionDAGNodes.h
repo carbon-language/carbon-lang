@@ -619,7 +619,10 @@ public:
   /// hasNUsesOfValue - Return true if there are exactly NUSES uses of the
   /// indicated value.  This method ignores uses of other values defined by this
   /// operation.
-  bool hasNUsesOfValue(unsigned NUses, unsigned Value);
+  bool hasNUsesOfValue(unsigned NUses, unsigned Value) const;
+
+  // isOnlyUse - Return true if this node is the only use of N.
+  bool isOnlyUse(SDNode *N) const;
 
   /// getNumOperands - Return the number of values used by this operation.
   ///
