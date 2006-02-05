@@ -449,3 +449,14 @@ _foo:
         lbz r2, lo16(_a+3)(r2)
         stb r2, 0(r3)
         blr
+
+===-------------------------------------------------------------------------===
+
+We generate really bad code for this:
+
+int f(signed char *a, _Bool b, _Bool c) {
+   signed char t = 0;
+  if (b)  t = *a;
+  if (c)  *a = t;
+}
+
