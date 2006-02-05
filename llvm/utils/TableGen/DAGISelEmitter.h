@@ -471,7 +471,8 @@ private:
                                    std::vector<Record*> &InstImpInputs,
                                    std::vector<Record*> &InstImpResults);
   void GenerateCodeForPattern(PatternToMatch &Pattern,
-                    std::vector<std::pair<bool, std::string> > &GeneratedCode);
+                      std::vector<std::pair<bool, std::string> > &GeneratedCode,
+                              bool UseGoto);
   void EmitPatterns(std::vector<std::pair<PatternToMatch*, 
                     std::vector<std::pair<bool, std::string> > > > &Patterns, 
                     unsigned Indent, std::ostream &OS);

@@ -1856,6 +1856,7 @@ private:
   std::vector<std::pair<bool, std::string> > &GeneratedCode;
 
   std::string ChainName;
+  bool DoReplace;
   unsigned TmpNo;
   
   void emitCheck(const std::string &S) {
@@ -1869,17 +1870,17 @@ private:
 public:
   PatternCodeEmitter(DAGISelEmitter &ise, ListInit *preds,
                      TreePatternNode *pattern, TreePatternNode *instr,
-                     std::vector<std::pair<bool, std::string> > &gc)
+                     std::vector<std::pair<bool, std::string> > &gc, bool dorep)
   : ISE(ise), Predicates(preds), Pattern(pattern), Instruction(instr),
-    GeneratedCode(gc), TmpNo(0) {}
+    GeneratedCode(gc), DoReplace(dorep), TmpNo(0) {}
 
   /// EmitMatchCode - Emit a matcher for N, going to the label for PatternNo
   /// if the match fails. At this point, we already know that the opcode for N
   /// matches, and the SDNode for the result has the RootName specified name.
-  void EmitMatchCode(TreePatternNode *N, const std::string &RootName,
-                     const std::string &ChainSuffix, bool &FoundChain,
-                     bool isRoot = false) {
-
+  void EmitMatchCode(TreePatternNode *N, TreePatternNode *P,
+                     const std::string &RootName, const std::string &ParentName,
+                     const std::string &ChainSuffix, bool &FoundChain) {
+    bool isRoot = (P == NULL);
     // Emit instruction predicates. Each predicate is just a string for now.
     if (isRoot) {
       std::string PredicateCheck;
@@ -1932,8 +1933,9 @@ public:
 
     // Emit code to load the child nodes and match their contents recursively.
     unsigned OpNo = 0;
-    bool NodeHasChain = NodeHasProperty(N, SDNodeInfo::SDNPHasChain, ISE);
-    bool HasChain = PatternHasProperty(N, SDNodeInfo::SDNPHasChain, ISE);
+    bool NodeHasChain = NodeHasProperty   (N, SDNodeInfo::SDNPHasChain, ISE);
+    bool HasChain     = PatternHasProperty(N, SDNodeInfo::SDNPHasChain, ISE);
+    bool HasOutFlag   = PatternHasProperty(N, SDNodeInfo::SDNPOutFlag,  ISE);
     bool EmittedUseCheck = false;
     bool EmittedSlctedCheck = false;
     if (HasChain) {
@@ -1951,10 +1953,49 @@ public:
                     "))");
         
         EmittedSlctedCheck = true;
-        if (NodeHasChain)
-          emitCheck("!CodeGenMap.count(" + RootName + ".getValue(" +
-                    utostr(CInfo.getNumResults()) + "))");
+        if (NodeHasChain) {
+          // FIXME: Don't fold if 1) the parent node writes a flag, 2) the node
+          // has a chain use.
+          // This a workaround for this problem:
+          //
+          //          [ch, r : ld]
+          //             ^ ^
+          //             | |
+          //      [XX]--/   \- [flag : cmp]
+          //       ^             ^
+          //       |             |
+          //       \---[br flag]-
+          //
+          // cmp + br should be considered as a single node as they are flagged
+          // together. So, if the ld is folded into the cmp, the XX node in the
+          // graph is now both an operand and a use of the ld/cmp/br node.
+          if (NodeHasProperty(P, SDNodeInfo::SDNPOutFlag, ISE))
+            emitCheck(ParentName + ".Val->isOnlyUse(" +  RootName + ".Val)");
+
+          // If the immediate use can somehow reach this node through another
+          // path, then can't fold it either or it will create a cycle.
+          // e.g. In the following diagram, XX can reach ld through YY. If
+          // ld is folded into XX, then YY is both a predecessor and a successor
+          // of XX.
+          //
+          //         [ld]
+          //         ^  ^
+          //         |  |
+          //        /   \---
+          //      /        [YY]
+          //      |         ^
+          //     [XX]-------|
+          const SDNodeInfo &PInfo = ISE.getSDNodeInfo(P->getOperator());
+          if (PInfo.getNumOperands() > 1 ||
+              PInfo.hasProperty(SDNodeInfo::SDNPHasChain) ||
+              PInfo.hasProperty(SDNodeInfo::SDNPInFlag) ||
+              PInfo.hasProperty(SDNodeInfo::SDNPOptInFlag))
+            emitCheck("(" + ParentName + ".getNumOperands() == 1 || !" +
+                      "isNonImmUse(" + ParentName + ".Val, " + RootName +
+                      ".Val))");
+        }
       }
+
       if (NodeHasChain) {
         if (FoundChain)
           emitCheck("Chain.Val == " + RootName + ".Val");
@@ -1967,9 +2008,10 @@ public:
     }
 
     // Don't fold any node which reads or writes a flag and has multiple uses.
-    // FIXME: we really need to separate the concepts of flag and "glue". Those
+    // FIXME: We really need to separate the concepts of flag and "glue". Those
     // real flag results, e.g. X86CMP output, can have multiple uses.
-    // FIXME: If the incoming flag is optional. Then it is ok to fold it.
+    // FIXME: If the optional incoming flag does not exist. Then it is ok to
+    // fold it.
     if (!isRoot &&
         (PatternHasProperty(N, SDNodeInfo::SDNPInFlag, ISE) ||
          PatternHasProperty(N, SDNodeInfo::SDNPOptInFlag, ISE) ||
@@ -1997,8 +2039,8 @@ public:
         const SDNodeInfo &CInfo = ISE.getSDNodeInfo(Child->getOperator());
         emitCheck(RootName + utostr(OpNo) + ".getOpcode() == " +
                   CInfo.getEnumName());
-        EmitMatchCode(Child, RootName + utostr(OpNo), ChainSuffix + utostr(OpNo),
-                      FoundChain);
+        EmitMatchCode(Child, N, RootName + utostr(OpNo), RootName,
+                      ChainSuffix + utostr(OpNo), FoundChain);
         if (NodeHasProperty(Child, SDNodeInfo::SDNPHasChain, ISE))
           FoldedChains.push_back(std::make_pair(RootName + utostr(OpNo),
                                                 CInfo.getNumResults()));
@@ -2352,9 +2394,15 @@ public:
 
         // User does not expect that the instruction produces a chain!
         bool AddedChain = HasChain && !NodeHasChain;
-        if (NodeHasChain)
-          emitCode("CodeGenMap[N.getValue(" + utostr(ValNo++) + ")] = " +
+        if (NodeHasChain) {
+          emitCode("CodeGenMap[N.getValue(" + utostr(ValNo) + ")] = " +
                    ChainName + ";");
+          if (DoReplace)
+            emitCode("if (N.ResNo == 0) AddReplacement(N.getValue("
+                     + utostr(ValNo) + "), " + ChainName + ");");
+          ValNo++;
+        }
+
 
         if (FoldedChains.size() > 0) {
           std::string Code;
@@ -2362,6 +2410,13 @@ public:
             Code += "CodeGenMap[" + FoldedChains[j].first + ".getValue(" +
               utostr(FoldedChains[j].second) + ")] = ";
           emitCode(Code + ChainName + ";");
+
+          for (unsigned j = 0, e = FoldedChains.size(); j < e; j++) {
+            std::string Code =
+              FoldedChains[j].first + ".getValue(" +
+              utostr(FoldedChains[j].second) + ")";
+            emitCode("AddReplacement(" + Code + ", " + ChainName + ");");
+          }
         }
 
         if (NodeHasOutFlag)
@@ -2557,15 +2612,15 @@ private:
 /// stream to match the pattern, and generate the code for the match if it
 /// succeeds.  Returns true if the pattern is not guaranteed to match.
 void DAGISelEmitter::GenerateCodeForPattern(PatternToMatch &Pattern,
-                    std::vector<std::pair<bool, std::string> > &GeneratedCode) {
+                      std::vector<std::pair<bool, std::string> > &GeneratedCode,
+                                            bool DoReplace) {
   PatternCodeEmitter Emitter(*this, Pattern.getPredicates(),
                              Pattern.getSrcPattern(), Pattern.getDstPattern(),
-                             GeneratedCode);
+                             GeneratedCode, DoReplace);
 
   // Emit the matcher, capturing named arguments in VariableMap.
   bool FoundChain = false;
-  Emitter.EmitMatchCode(Pattern.getSrcPattern(), "N", "", FoundChain,
-                        true /*the root*/);
+  Emitter.EmitMatchCode(Pattern.getSrcPattern(), NULL, "N", "", "", FoundChain);
 
   // TP - Get *SOME* tree pattern, we don't care which.
   TreePattern &TP = *PatternFragments.begin()->second;
@@ -2785,9 +2840,28 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
   for (std::map<Record*, std::vector<PatternToMatch*>,
        CompareByRecordName>::iterator PBOI = PatternsByOpcode.begin(),
        E = PatternsByOpcode.end(); PBOI != E; ++PBOI) {
-    OS << "SDOperand Select_" << PBOI->first->getName() << "(SDOperand N) {\n";
+    const std::string &OpName = PBOI->first->getName();
+    OS << "SDOperand Select_" << OpName << "(SDOperand N) {\n";
     
     const SDNodeInfo &OpcodeInfo = getSDNodeInfo(PBOI->first);
+    bool OptSlctOrder = 
+      (OpcodeInfo.hasProperty(SDNodeInfo::SDNPHasChain) &&
+       OpcodeInfo.getNumResults() > 0);
+
+    if (OptSlctOrder) {
+      OS << "  SDOperand RetVal;\n";
+      OS << "  if (N.ResNo == " << OpcodeInfo.getNumResults()
+         << " && N.getValue(0).hasOneUse()) {\n"
+         << "    SDOperand Dummy = "
+         << "CurDAG->getNode(ISD::HANDLENODE, MVT::Other, N);\n"
+         << "    CodeGenMap[N.getValue(" << OpcodeInfo.getNumResults()
+         << ")] = Dummy;\n"
+         << "    HolderMap[N.getValue(" << OpcodeInfo.getNumResults()
+         << ")] = Dummy;\n"
+         << "    return Dummy;\n"
+         << "  }\n";
+    }
+
     std::vector<PatternToMatch*> &Patterns = PBOI->second;
     assert(!Patterns.empty() && "No patterns but map has entry?");
     
@@ -2802,7 +2876,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
     std::vector<std::pair<PatternToMatch*, CodeList> > CodeForPatterns;
     for (unsigned i = 0, e = Patterns.size(); i != e; ++i) {
       CodeList GeneratedCode;
-      GenerateCodeForPattern(*Patterns[i], GeneratedCode);
+      GenerateCodeForPattern(*Patterns[i], GeneratedCode, OptSlctOrder);
       CodeForPatterns.push_back(std::make_pair(Patterns[i], GeneratedCode));
     }
     
@@ -2984,6 +3058,90 @@ void DAGISelEmitter::run(std::ostream &OS) {
   OS << "// Instance var to keep track of multiply used nodes that have \n"
      << "// already been selected.\n"
      << "std::map<SDOperand, SDOperand> CodeGenMap;\n";
+
+  OS << "// Instance var to keep track of mapping of chain generating nodes\n"
+     << "// and their place holder nodes.\n";
+  OS << "std::map<SDOperand, SDOperand> HolderMap;\n";
+  OS << "// Instance var to keep track of mapping of place holder nodes\n"
+     << "// and their replacement nodes.\n";
+  OS << "std::map<SDOperand, SDOperand> ReplaceMap;\n";
+
+  OS << "\n";
+  OS << "static void findNonImmUse(SDNode* Use, SDNode* Def, bool &found, "
+     << "std::set<SDNode *> &Visited) {\n";
+  OS << "  if (found || !Visited.insert(Use).second) return;\n";
+  OS << "  for (unsigned i = 0, e = Use->getNumOperands(); i != e; ++i) {\n";
+  OS << "    SDNode *N = Use->getOperand(i).Val;\n";
+  OS << "    if (N->getNodeDepth() >= Def->getNodeDepth()) {\n";
+  OS << "      if (N != Def) {\n";
+  OS << "        findNonImmUse(N, Def, found, Visited);\n";
+  OS << "      } else {\n";
+  OS << "        found = true;\n";
+  OS << "        break;\n";
+  OS << "      }\n";
+  OS << "    }\n";
+  OS << "  }\n";
+  OS << "}\n";
+
+  OS << "\n";
+  OS << "static bool isNonImmUse(SDNode* Use, SDNode* Def) {\n";
+  OS << "  std::set<SDNode *> Visited;\n";
+  OS << "  bool found = false;\n";
+  OS << "  for (unsigned i = 0, e = Use->getNumOperands(); i != e; ++i) {\n";
+  OS << "    SDNode *N = Use->getOperand(i).Val;\n";
+  OS << "    if (N != Def) {\n";
+  OS << "      findNonImmUse(N, Def, found, Visited);\n";
+  OS << "      if (found) break;\n";
+  OS << "    }\n";
+  OS << "  }\n";
+  OS << "  return found;\n";
+  OS << "}\n";
+
+  OS << "\n";
+  OS << "// AddReplacement - Note the pending replacement node for a\n"
+     << "// holder node in ReplaceMap.\n";
+  OS << "void AddReplacement(SDOperand N, SDOperand R) {\n";
+  OS << "  std::map<SDOperand, SDOperand>::iterator HMI = HolderMap.find(N);\n";
+  OS << "  if (HMI != HolderMap.end()) {\n";
+  OS << "    ReplaceMap[HMI->second] = R;\n";
+  OS << "    HolderMap.erase(N);\n";
+  OS << "  }\n";
+  OS << "}\n";
+
+  OS << "\n";
+  OS << "// ReplaceHolders - Replace all the holders with the real target\n";
+  OS << "// specific nodes.\n";
+  OS << "void ReplaceHolders() {\n";
+  OS << "  for (std::map<SDOperand, SDOperand>::iterator I = "
+     << "ReplaceMap.begin(),\n"
+     << "        E = ReplaceMap.end(); I != E; ++I) {\n";
+  OS << "    SDOperand From = I->first;\n";
+  OS << "    SDOperand To   = I->second;\n";
+  OS << "    for (SDNode::use_iterator UI = From.Val->use_begin(), "
+     << "E = From.Val->use_end(); UI != E; ++UI) {\n";
+  OS << "      SDNode *Use = *UI;\n";
+  OS << "      std::vector<SDOperand> Ops;\n";
+  OS << "      for (unsigned i = 0, e = Use->getNumOperands(); i != e; ++i) {\n";
+  OS << "        SDOperand O = Use->getOperand(i);\n";
+  OS << "        if (O.Val == From.Val)\n";
+  OS << "          Ops.push_back(To);\n";
+  OS << "        else\n";
+  OS << "          Ops.push_back(O);\n";
+  OS << "      }\n";
+  OS << "      SDOperand U = SDOperand(Use, 0);\n";
+  OS << "      CurDAG->UpdateNodeOperands(U, Ops);\n";
+  OS << "    }\n";
+  OS << "  }\n";
+  OS << "}\n";
+
+  OS << "\n";
+  OS << "// SelectRoot - Top level entry to DAG isel.\n";
+  OS << "SDOperand SelectRoot(SDOperand N) {\n";
+  OS << "  SDOperand RetVal = Select(N);\n";
+  OS << "  ReplaceHolders();\n";
+  OS << "  ReplaceMap.clear();\n";
+  OS << "  return RetVal;\n";
+  OS << "}\n";
   
   ParseNodeInfo();
   ParseNodeTransforms(OS);
