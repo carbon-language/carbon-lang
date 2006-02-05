@@ -2137,10 +2137,9 @@ public:
           Code += ", Tmp" + utostr(i + ResNo);
         emitCheck(Code + ")");
 
-        // This breaks ppc
-        //for (unsigned i = 0; i < NumRes; ++i)
-        //  emitCode("Tmp" + utostr(i+ResNo) + " = Select(Tmp" +
-        //           utostr(i+ResNo) + ");");
+        for (unsigned i = 0; i < NumRes; ++i)
+          emitCode("Tmp" + utostr(i+ResNo) + " = Select(Tmp" +
+                   utostr(i+ResNo) + ");");
 
         TmpNo = ResNo + NumRes;
       } else {
@@ -2885,6 +2884,10 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  case ISD::EntryToken:       // These leaves remain the same.\n"
      << "  case ISD::BasicBlock:\n"
      << "  case ISD::Register:\n"
+     << "  case ISD::TargetConstant:\n"
+     << "  case ISD::TargetConstantPool:\n"
+     << "  case ISD::TargetFrameIndex:\n"
+     << "  case ISD::TargetGlobalAddress:\n"
      << "    return N;\n"
      << "  case ISD::AssertSext:\n"
      << "  case ISD::AssertZext: {\n"
