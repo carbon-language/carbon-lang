@@ -838,7 +838,7 @@ SDOperand DAGCombiner::visitUREM(SDNode *N) {
   if (N1.getOpcode() == ISD::SHL) {
     if (ConstantSDNode *SHC = dyn_cast<ConstantSDNode>(N1.getOperand(0))) {
       if (isPowerOf2_64(SHC->getValue())) {
-        SDOperand Add = DAG.getNode(ISD::ADD, VT, N1, DAG.getConstant(-1, VT));
+        SDOperand Add = DAG.getNode(ISD::ADD, VT, N1,DAG.getConstant(~0ULL,VT));
         WorkList.push_back(Add.Val);
         return DAG.getNode(ISD::AND, VT, N0, Add);
       }
@@ -1288,6 +1288,12 @@ SDOperand DAGCombiner::visitSHL(SDNode *N) {
   // fold (shl 0, x) -> 0
   if (N0C && N0C->isNullValue())
     return N0;
+  // fold (shl c1, (add x, c2)) -> (shl c1 << c2, x)
+  if (N0C && N1.getOpcode() == ISD::ADD && 
+      N1.getOperand(1).getOpcode() == ISD::Constant) {
+    SDOperand LHS = DAG.getNode(ISD::SHL, VT, N0, N1.getOperand(1));
+    return DAG.getNode(ISD::SHL, VT, LHS, N1.getOperand(0));
+  }
   // fold (shl x, c >= size(x)) -> undef
   if (N1C && N1C->getValue() >= OpSizeInBits)
     return DAG.getNode(ISD::UNDEF, VT);
