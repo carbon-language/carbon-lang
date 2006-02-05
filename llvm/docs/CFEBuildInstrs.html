@@ -179,9 +179,9 @@ macros defined for conditional compilation.
 </p>
 
 <p>
-The SPARC V8 backend is still beta quality software.  Unless you are working on
-the SPARC V8 backend, you should specify sparcv9 on the configure command line,
-as shown below. Also,
+The SPARC V8 ABI support is more robust than the V9 ABI support and can generate
+SPARC V9 code.  It is highly recommended that you use the V8 ABI with LLVM, as
+shown below.  Also,
 note that Solaris has trouble with various wide (multibyte) character
 functions from C as referenced from C++, so we typically configure with
 --disable-c-mbchar (cf. <a href="http://llvm.cs.uiuc.edu/PR206">Bug 206</a>).
@@ -190,7 +190,7 @@ functions from C as referenced from C++, so we typically configure with
 <pre>
  % cd build
  % ../src/configure --prefix=$CFEINSTALL --disable-threads --disable-nls \
-   --disable-shared --enable-languages=c,c++ --host=sparcv9-sun-solaris2.8 \
+   --disable-shared --enable-languages=c,c++ --host=sparc-sun-solaris2.8 \
    --disable-c-mbchar --program-prefix=llvm-
  % gmake all; gmake install
 </pre>
