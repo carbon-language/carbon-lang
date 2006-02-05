@@ -177,6 +177,10 @@ namespace llvm {
     ///
     void SwitchSection(const char *NewSection, const GlobalValue *GV);
 
+    /// getPreferredAlignmentLog - Return the preferred alignment of the
+    /// specified global, returned in log form.  This includes an explicitly
+    /// requested alignment (if the global has one).
+    unsigned getPreferredAlignmentLog(const GlobalVariable *GV) const;
   protected:
     /// doInitialization - Set up the AsmPrinter when we are working on a new
     /// module.  If your pass overrides this, it must make sure to explicitly
