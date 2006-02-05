@@ -778,15 +778,26 @@ SDOperand DAGCombiner::visitUDIV(SDNode *N) {
     return DAG.getNode(ISD::UDIV, VT, N0, N1);
   // fold (udiv x, (1 << c)) -> x >>u c
   if (N1C && isPowerOf2_64(N1C->getValue()))
-    return DAG.getNode(ISD::SRL, N->getValueType(0), N0,
+    return DAG.getNode(ISD::SRL, VT, N0, 
                        DAG.getConstant(Log2_64(N1C->getValue()),
                                        TLI.getShiftAmountTy()));
+  // fold (udiv x, (shl c, y)) -> x >>u (log2(c)+y) iff c is power of 2
+  if (N1.getOpcode() == ISD::SHL) {
+    if (ConstantSDNode *SHC = dyn_cast<ConstantSDNode>(N1.getOperand(0))) {
+      if (isPowerOf2_64(SHC->getValue())) {
+        MVT::ValueType ADDVT = N1.getOperand(1).getValueType();
+        return DAG.getNode(ISD::SRL, VT, N0, 
+                           DAG.getNode(ISD::ADD, ADDVT, N1.getOperand(1),
+                                       DAG.getConstant(Log2_64(SHC->getValue()),
+                                                       ADDVT)));
+      }
+    }
+  }
   // fold (udiv x, c) -> alternate
   if (N1C && N1C->getValue() && !TLI.isIntDivCheap()) {
     SDOperand Op = BuildUDIV(N);
     if (Op.Val) return Op;
   }
-      
   return SDOperand();
 }
 
