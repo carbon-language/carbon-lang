@@ -111,7 +111,8 @@ namespace {
                     SDOperand &Index, SDOperand &Disp);
     bool SelectLEAAddr(SDOperand N, SDOperand &Base, SDOperand &Scale,
                        SDOperand &Index, SDOperand &Disp);
-    bool TryFoldLoad(SDOperand N, SDOperand &Base, SDOperand &Scale,
+    bool TryFoldLoad(SDOperand P, SDOperand N,
+                     SDOperand &Base, SDOperand &Scale,
                      SDOperand &Index, SDOperand &Disp);
 
     inline void getAddressOperands(X86ISelAddressMode &AM, SDOperand &Base, 
@@ -381,11 +382,13 @@ bool X86DAGToDAGISel::SelectAddr(SDOperand N, SDOperand &Base, SDOperand &Scale,
   return true;
 }
 
-bool X86DAGToDAGISel::TryFoldLoad(SDOperand N, SDOperand &Base,
-                                  SDOperand &Scale, SDOperand &Index,
-                                  SDOperand &Disp) {
-  if (N.getOpcode() == ISD::LOAD && N.hasOneUse() &&
-      CodeGenMap.count(N.getValue(1)) == 0)
+bool X86DAGToDAGISel::TryFoldLoad(SDOperand P, SDOperand N,
+                                  SDOperand &Base, SDOperand &Scale,
+                                  SDOperand &Index, SDOperand &Disp) {
+  if (N.getOpcode() == ISD::LOAD &&
+      N.hasOneUse() &&
+      !CodeGenMap.count(N.getValue(0)) &&
+      (P.getNumOperands() == 1 || !isNonImmUse(P.Val, N.Val)))
     return SelectAddr(N.getOperand(1), Base, Scale, Index, Disp);
   return false;
 }
@@ -486,10 +489,10 @@ SDOperand X86DAGToDAGISel::Select(SDOperand N) {
 
       bool foldedLoad = false;
       SDOperand Tmp0, Tmp1, Tmp2, Tmp3;
-      foldedLoad = TryFoldLoad(N1, Tmp0, Tmp1, Tmp2, Tmp3);
+      foldedLoad = TryFoldLoad(N, N1, Tmp0, Tmp1, Tmp2, Tmp3);
       // MULHU and MULHS are commmutative
       if (!foldedLoad) {
-        foldedLoad = TryFoldLoad(N0, Tmp0, Tmp1, Tmp2, Tmp3);
+        foldedLoad = TryFoldLoad(N, N0, Tmp0, Tmp1, Tmp2, Tmp3);
         if (foldedLoad) {
           N0 = Node->getOperand(1);
           N1 = Node->getOperand(0);
@@ -505,6 +508,10 @@ SDOperand X86DAGToDAGISel::Select(SDOperand N) {
       InFlag = Chain.getValue(1);
 
       if (foldedLoad) {
+        Tmp0 = Select(Tmp0);
+        Tmp1 = Select(Tmp1);
+        Tmp2 = Select(Tmp2);
+        Tmp3 = Select(Tmp3);
         Chain  = CurDAG->getTargetNode(MOpc, MVT::Other, MVT::Flag, Tmp0, Tmp1,
                                        Tmp2, Tmp3, Chain, InFlag);
         InFlag = Chain.getValue(1);
@@ -514,8 +521,10 @@ SDOperand X86DAGToDAGISel::Select(SDOperand N) {
 
       SDOperand Result = CurDAG->getCopyFromReg(Chain, HiReg, NVT, InFlag);
       CodeGenMap[N.getValue(0)] = Result;
-      if (foldedLoad)
+      if (foldedLoad) {
         CodeGenMap[N1.getValue(1)] = Result.getValue(1);
+        AddHandleReplacement(N1.getValue(1), Result.getValue(1));
+      }
       return Result;
     }
 
@@ -566,7 +575,7 @@ SDOperand X86DAGToDAGISel::Select(SDOperand N) {
 
       bool foldedLoad = false;
       SDOperand Tmp0, Tmp1, Tmp2, Tmp3;
-      foldedLoad = TryFoldLoad(N1, Tmp0, Tmp1, Tmp2, Tmp3);
+      foldedLoad = TryFoldLoad(N, N1, Tmp0, Tmp1, Tmp2, Tmp3);
       SDOperand Chain = foldedLoad ? Select(N1.getOperand(0))
                                    : CurDAG->getEntryNode();
 
@@ -589,6 +598,10 @@ SDOperand X86DAGToDAGISel::Select(SDOperand N) {
       }
 
       if (foldedLoad) {
+        Tmp0 = Select(Tmp0);
+        Tmp1 = Select(Tmp1);
+        Tmp2 = Select(Tmp2);
+        Tmp3 = Select(Tmp3);
         Chain  = CurDAG->getTargetNode(MOpc, MVT::Other, MVT::Flag, Tmp0, Tmp1,
                                        Tmp2, Tmp3, Chain, InFlag);
         InFlag = Chain.getValue(1);
@@ -599,8 +612,10 @@ SDOperand X86DAGToDAGISel::Select(SDOperand N) {
       SDOperand Result = CurDAG->getCopyFromReg(Chain, isDiv ? LoReg : HiReg,
                                                 NVT, InFlag);
       CodeGenMap[N.getValue(0)] = Result;
-      if (foldedLoad)
+      if (foldedLoad) {
         CodeGenMap[N1.getValue(1)] = Result.getValue(1);
+        AddHandleReplacement(N1.getValue(1), Result.getValue(1));
+      }
       return Result;
     }
 
