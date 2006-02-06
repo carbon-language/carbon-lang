@@ -11,10 +11,13 @@
 
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Support/Dwarf.h"
+
+#include <iostream>
 
 using namespace llvm;
 
@@ -25,14 +28,14 @@ namespace {
 
 //===----------------------------------------------------------------------===//
 
-/// getGlobalVariablesUsing - Return all of the global variables which have the
+/// getGlobalVariablesUsing - Return all of the GlobalVariables which have the
 /// specified value in their initializer somewhere.
 static void
 getGlobalVariablesUsing(Value *V, std::vector<GlobalVariable*> &Result) {
   // Scan though value users.
   for (Value::use_iterator I = V->use_begin(), E = V->use_end(); I != E; ++I) {
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(*I)) {
-      // If the user is a global variable then add to result.
+      // If the user is a GlobalVariable then add to result.
       Result.push_back(GV);
     } else if (Constant *C = dyn_cast<Constant>(*I)) {
       // If the user is a constant variable then scan its users
@@ -41,13 +44,13 @@ getGlobalVariablesUsing(Value *V, std::vector<GlobalVariable*> &Result) {
   }
 }
 
-/// getGlobalVariablesUsing - Return all of the global variables that use the
-/// named global variable.
+/// getGlobalVariablesUsing - Return all of the GlobalVariables that use the
+/// named GlobalVariable.
 static std::vector<GlobalVariable*>
 getGlobalVariablesUsing(Module &M, const std::string &RootName) {
-  std::vector<GlobalVariable*> Result;  // Global variables matching criteria.
+  std::vector<GlobalVariable*> Result;  // GlobalVariables matching criteria.
 
-  // Get the global variable root.
+  // Get the GlobalVariable root.
   GlobalVariable *UseRoot = M.getGlobalVariable(RootName,
                                    StructType::get(std::vector<const Type*>()));
 
@@ -98,131 +101,646 @@ static const std::string getStringValue(Value *V, unsigned Offset = 0) {
   return "";
 }
 
+/// isStringValue - Return true if the given value can be coerced to a string.
+///
+static bool isStringValue(Value *V) {
+  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
+    if (GV->hasInitializer() && isa<ConstantArray>(GV->getInitializer())) {
+      ConstantArray *Init = cast<ConstantArray>(GV->getInitializer());
+      return Init->isString();
+    }
+  } else if (Constant *C = dyn_cast<Constant>(V)) {
+    if (GlobalValue *GV = dyn_cast<GlobalValue>(C))
+      return isStringValue(GV);
+    else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
+      if (CE->getOpcode() == Instruction::GetElementPtr) {
+        if (CE->getNumOperands() == 3 &&
+            cast<Constant>(CE->getOperand(1))->isNullValue() &&
+            isa<ConstantInt>(CE->getOperand(2))) {
+          return isStringValue(CE->getOperand(0));
+        }
+      }
+    }
+  }
+  return false;
+}
+
 /// getGlobalValue - Return either a direct or cast Global value.
 ///
 static GlobalVariable *getGlobalValue(Value *V) {
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
     return GV;
   } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
-    return CE->getOpcode() == Instruction::Cast ?  dyn_cast<GlobalVariable>(V)
-                                                :  NULL;
+    if (CE->getOpcode() == Instruction::Cast) {
+      return dyn_cast<GlobalVariable>(CE->getOperand(0));
+    }
   }
   return NULL;
 }
 
+/// isGlobalValue - Return true if the given value can be coerced to a
+/// GlobalVariable.
+static bool isGlobalValue(Value *V) {
+  if (isa<GlobalVariable>(V) || isa<ConstantPointerNull>(V)) {
+    return true;
+  } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
+    if (CE->getOpcode() == Instruction::Cast) {
+      return isa<GlobalVariable>(CE->getOperand(0));
+    }
+  }
+  return false;
+}
+
+/// isUIntOperand - Return true if the ith operand is an unsigned integer.
+///
+static bool isUIntOperand(GlobalVariable *GV, unsigned i) {
+  // Make sure the GlobalVariable has an initializer.
+  if (!GV->hasInitializer()) return false;
   
-//===----------------------------------------------------------------------===//
-
-DebugInfoWrapper::DebugInfoWrapper(GlobalVariable *G)
-: GV(G)
-, IC(dyn_cast<ConstantStruct>(GV->getInitializer())) {
-  assert(IC && "llvm.db.global is missing structured constant");
-}
+  // Get the initializer constant.
+  ConstantStruct *CI = dyn_cast<ConstantStruct>(GV->getInitializer());
+  if (!CI) return false;
   
-//===----------------------------------------------------------------------===//
+  // Check if there is at least i + 1 operands.
+  unsigned N = CI->getNumOperands();
+  if (i >= N) return false;
 
-CompileUnitWrapper::CompileUnitWrapper(GlobalVariable *G)
-: DebugInfoWrapper(G)
-{
-  // FIXME - should probably ease up on the number of operands (version.)
-  assert(IC->getNumOperands() == N_op &&
-         "Compile unit does not have correct number of operands");
-}
-
-/// getTag - Return the compile unit's tag number.  Currently should be 
-/// DW_TAG_variable.
-unsigned CompileUnitWrapper::getTag() const {
-  return cast<ConstantUInt>(IC->getOperand(Tag_op))->getValue();
-}
-
-/// isCorrectDebugVersion - Return true if is the correct llvm debug version.
-/// Currently the value is 0 (zero.)  If the value is is not correct then
-/// ignore all debug information.
-bool CompileUnitWrapper::isCorrectDebugVersion() const {
-  return cast<ConstantUInt>(IC->getOperand(Version_op))->getValue() == 0;
-}
-
-/// getLanguage - Return the compile unit's language number (ex. DW_LANG_C89.)
-///
-unsigned CompileUnitWrapper::getLanguage() const {
-  return cast<ConstantUInt>(IC->getOperand(Language_op))->getValue();
-}
-
-/// getFileName - Return the compile unit's file name.
-///
-const std::string CompileUnitWrapper::getFileName() const {
-  return getStringValue(IC->getOperand(FileName_op));
-}
-
-/// getDirectory - Return the compile unit's file directory.
-///
-const std::string CompileUnitWrapper::getDirectory() const {
-  return getStringValue(IC->getOperand(Directory_op));
-}
-  
-/// getProducer - Return the compile unit's generator name.
-///
-const std::string CompileUnitWrapper::getProducer() const {
-  return getStringValue(IC->getOperand(Producer_op));
+  // Check constant.
+  return isa<ConstantUInt>(CI->getOperand(i));
 }
 
 //===----------------------------------------------------------------------===//
 
-GlobalWrapper::GlobalWrapper(GlobalVariable *G)
-: DebugInfoWrapper(G)
-{
-  // FIXME - should probably ease up on the number of operands (version.)
-  assert(IC->getNumOperands() == N_op &&
-         "Global does not have correct number of operands");
+/// TagFromGlobal - Returns the Tag number from a debug info descriptor
+/// GlobalVariable.  
+unsigned DebugInfoDesc::TagFromGlobal(GlobalVariable *GV, bool Checking) {
+  if (Checking && !isUIntOperand(GV, 0)) return DIInvalid;  
+  ConstantStruct *CI = cast<ConstantStruct>(GV->getInitializer());
+  Constant *C = CI->getOperand(0);
+  return cast<ConstantUInt>(C)->getValue();
 }
 
-/// getTag - Return the global's tag number.  Currently should be 
-/// DW_TAG_variable or DW_TAG_subprogram.
-unsigned GlobalWrapper::getTag() const {
-  return cast<ConstantUInt>(IC->getOperand(Tag_op))->getValue();
+/// DescFactory - Create an instance of debug info descriptor based on Tag.
+/// Return NULL if not a recognized Tag.
+DebugInfoDesc *DebugInfoDesc::DescFactory(unsigned Tag) {
+  switch (Tag) {
+  case DI_TAG_compile_unit:    return new CompileUnitDesc();
+  case DI_TAG_global_variable: return new GlobalVariableDesc();
+  case DI_TAG_subprogram:      return new SubprogramDesc();
+  default: break;
+  }
+  return NULL;
 }
 
-/// getContext - Return the "lldb.compile_unit" context global.
+//===----------------------------------------------------------------------===//
+
+/// ApplyToFields - Target the manager to each field of the debug information
+/// descriptor.
+void DIApplyManager::ApplyToFields(DebugInfoDesc *DD) {
+  DD->ApplyToFields(this);
+}
+
+//===----------------------------------------------------------------------===//
+/// DICountAppMgr - This DIApplyManager counts all the fields in the supplied
+/// debug the supplied DebugInfoDesc.
+class DICountAppMgr : public DIApplyManager {
+private:
+  unsigned Count;                       // Running count of fields.
+  
+public:
+  DICountAppMgr() : DIApplyManager(), Count(1) {}
+  
+  // Accessors.
+  unsigned getCount() const { return Count; }
+  
+  /// Apply - Count each of the fields.
+  ///
+  virtual void Apply(int &Field)             { ++Count; }
+  virtual void Apply(unsigned &Field)        { ++Count; }
+  virtual void Apply(bool &Field)            { ++Count; }
+  virtual void Apply(std::string &Field)     { ++Count; }
+  virtual void Apply(DebugInfoDesc *&Field)  { ++Count; }
+  virtual void Apply(GlobalVariable *&Field) { ++Count; }
+};
+
+//===----------------------------------------------------------------------===//
+/// DIDeserializeAppMgr - This DIApplyManager deserializes all the fields in
+/// the supplied DebugInfoDesc.
+class DIDeserializeAppMgr : public DIApplyManager {
+private:
+  DIDeserializer &DR;                   // Active deserializer.
+  unsigned I;                           // Current operand index.
+  ConstantStruct *CI;                   // GlobalVariable constant initializer.
+
+public:
+  DIDeserializeAppMgr(DIDeserializer &D, GlobalVariable *GV)
+  : DIApplyManager()
+  , DR(D)
+  , I(1)
+  , CI(cast<ConstantStruct>(GV->getInitializer()))
+  {}
+  
+  /// Apply - Set the value of each of the fields.
+  ///
+  virtual void Apply(int &Field) {
+    Constant *C = CI->getOperand(I++);
+    Field = cast<ConstantSInt>(C)->getValue();
+  }
+  virtual void Apply(unsigned &Field) {
+    Constant *C = CI->getOperand(I++);
+    Field = cast<ConstantUInt>(C)->getValue();
+  }
+  virtual void Apply(bool &Field) {
+    Constant *C = CI->getOperand(I++);
+    Field = cast<ConstantBool>(C)->getValue();
+  }
+  virtual void Apply(std::string &Field) {
+    Constant *C = CI->getOperand(I++);
+    Field = getStringValue(C);
+  }
+  virtual void Apply(DebugInfoDesc *&Field) {
+    Constant *C = CI->getOperand(I++);
+    Field = DR.Deserialize(C);
+  }
+  virtual void Apply(GlobalVariable *&Field) {
+    Constant *C = CI->getOperand(I++);
+    Field = getGlobalValue(C);
+  }
+};
+
+//===----------------------------------------------------------------------===//
+/// DISerializeAppMgr - This DIApplyManager serializes all the fields in
+/// the supplied DebugInfoDesc.
+class DISerializeAppMgr : public DIApplyManager {
+private:
+  DISerializer &SR;                     // Active serializer.
+  std::vector<Constant*> &Elements;     // Element accumulator.
+  
+public:
+  DISerializeAppMgr(DISerializer &S, std::vector<Constant*> &E)
+  : DIApplyManager()
+  , SR(S)
+  , Elements(E)
+  {}
+  
+  /// Apply - Set the value of each of the fields.
+  ///
+  virtual void Apply(int &Field) {
+    Elements.push_back(ConstantUInt::get(Type::IntTy, Field));
+  }
+  virtual void Apply(unsigned &Field) {
+    Elements.push_back(ConstantUInt::get(Type::UIntTy, Field));
+  }
+  virtual void Apply(bool &Field) {
+    Elements.push_back(ConstantBool::get(Field));
+  }
+  virtual void Apply(std::string &Field) {
+    Elements.push_back(SR.getString(Field));
+  }
+  virtual void Apply(DebugInfoDesc *&Field) {
+    GlobalVariable *GV = NULL;
+    
+    // If non-NULL the convert to global.
+    if (Field) GV = SR.Serialize(Field);
+    
+    // FIXME - At some point should use specific type.
+    const PointerType *EmptyTy = SR.getEmptyStructPtrType();
+    
+    if (GV) {
+      // Set to pointer to global.
+      Elements.push_back(ConstantExpr::getCast(GV, EmptyTy));
+    } else {
+      // Use NULL.
+      Elements.push_back(ConstantPointerNull::get(EmptyTy));
+    }
+  }
+  virtual void Apply(GlobalVariable *&Field) {
+    const PointerType *EmptyTy = SR.getEmptyStructPtrType();
+    Elements.push_back(ConstantExpr::getCast(Field, EmptyTy));
+  }
+};
+
+//===----------------------------------------------------------------------===//
+/// DIGetTypesAppMgr - This DIApplyManager gathers all the field types in
+/// the supplied DebugInfoDesc.
+class DIGetTypesAppMgr : public DIApplyManager {
+private:
+  DISerializer &SR;                     // Active serializer.
+  std::vector<const Type*> &Fields;     // Type accumulator.
+  
+public:
+  DIGetTypesAppMgr(DISerializer &S, std::vector<const Type*> &F)
+  : DIApplyManager()
+  , SR(S)
+  , Fields(F)
+  {}
+  
+  /// Apply - Set the value of each of the fields.
+  ///
+  virtual void Apply(int &Field) {
+    Fields.push_back(Type::IntTy);
+  }
+  virtual void Apply(unsigned &Field) {
+    Fields.push_back(Type::UIntTy);
+  }
+  virtual void Apply(bool &Field) {
+    Fields.push_back(Type::BoolTy);
+  }
+  virtual void Apply(std::string &Field) {
+    Fields.push_back(SR.getStrPtrType());
+  }
+  virtual void Apply(DebugInfoDesc *&Field) {
+    // FIXME - At some point should use specific type.
+    const PointerType *EmptyTy = SR.getEmptyStructPtrType();
+    Fields.push_back(EmptyTy);
+  }
+  virtual void Apply(GlobalVariable *&Field) {
+    const PointerType *EmptyTy = SR.getEmptyStructPtrType();
+    Fields.push_back(EmptyTy);
+  }
+};
+
+//===----------------------------------------------------------------------===//
+/// DIVerifyAppMgr - This DIApplyManager verifies all the field types against
+/// a constant initializer.
+class DIVerifyAppMgr : public DIApplyManager {
+private:
+  DIVerifier &VR;                       // Active verifier.
+  bool IsValid;                         // Validity status.
+  unsigned I;                           // Current operand index.
+  ConstantStruct *CI;                   // GlobalVariable constant initializer.
+  
+public:
+  DIVerifyAppMgr(DIVerifier &V, GlobalVariable *GV)
+  : DIApplyManager()
+  , VR(V)
+  , IsValid(true)
+  , I(1)
+  , CI(cast<ConstantStruct>(GV->getInitializer()))
+  {
+  }
+  
+  // Accessors.
+  bool isValid() const { return IsValid; }
+  
+  /// Apply - Set the value of each of the fields.
+  ///
+  virtual void Apply(int &Field) {
+    Constant *C = CI->getOperand(I++);
+    IsValid = IsValid && isa<ConstantInt>(C);
+  }
+  virtual void Apply(unsigned &Field) {
+    Constant *C = CI->getOperand(I++);
+    IsValid = IsValid && isa<ConstantInt>(C);
+  }
+  virtual void Apply(bool &Field) {
+    Constant *C = CI->getOperand(I++);
+    IsValid = IsValid && isa<ConstantBool>(C);
+  }
+  virtual void Apply(std::string &Field) {
+    Constant *C = CI->getOperand(I++);
+    IsValid = IsValid && isStringValue(C);
+  }
+  virtual void Apply(DebugInfoDesc *&Field) {
+    // FIXME - Prepare the correct descriptor.
+    Constant *C = CI->getOperand(I++);
+    IsValid = IsValid && isGlobalValue(C);
+  }
+  virtual void Apply(GlobalVariable *&Field) {
+    Constant *C = CI->getOperand(I++);
+    IsValid = IsValid && isGlobalValue(C);
+  }
+};
+
+//===----------------------------------------------------------------------===//
+
+/// DebugVersionFromGlobal - Returns the version number from a compile unit
+/// GlobalVariable.
+unsigned CompileUnitDesc::DebugVersionFromGlobal(GlobalVariable *GV,
+                                                 bool Checking) {
+  if (Checking && !isUIntOperand(GV, 1)) return DIInvalid;  
+  ConstantStruct *CI = cast<ConstantStruct>(GV->getInitializer());
+  Constant *C = CI->getOperand(1);
+  return cast<ConstantUInt>(C)->getValue();
+}
+  
+/// ApplyToFields - Target the apply manager to the fields of the 
+/// CompileUnitDesc.
+void CompileUnitDesc::ApplyToFields(DIApplyManager *Mgr) {
+  Mgr->Apply(DebugVersion);
+  Mgr->Apply(Language);
+  Mgr->Apply(FileName);
+  Mgr->Apply(Directory);
+  Mgr->Apply(Producer);
+  Mgr->Apply(TransUnit);
+}
+
+/// TypeString - Return a string used to compose globalnames and labels.
 ///
-GlobalVariable *GlobalWrapper::getContext() const {
-  return getGlobalValue(IC->getOperand(Context_op));
+const char *CompileUnitDesc::TypeString() const {
+  return "compile_unit";
 }
 
-/// getName - Return the name of the global.
-///
-const std::string GlobalWrapper::getName() const {
-  return getStringValue(IC->getOperand(Name_op));
+#ifndef NDEBUG
+void CompileUnitDesc::dump() {
+  std::cerr << TypeString() << " "
+            << "Tag(" << getTag() << "), "
+            << "Language(" << Language << "), "
+            << "FileName(\"" << FileName << "\"), "
+            << "Directory(\"" << Directory << "\"), "
+            << "Producer(\"" << Producer << "\")\n";
+}
+#endif
+
+//===----------------------------------------------------------------------===//
+
+/// ApplyToFields - Target the apply manager to the fields of the 
+/// GlobalVariableDesc.
+void GlobalVariableDesc::ApplyToFields(DIApplyManager *Mgr) {
+  Mgr->Apply(Context);
+  Mgr->Apply(Name);
+  Mgr->Apply(TransUnit);
+  Mgr->Apply(TyDesc);
+  Mgr->Apply(IsStatic);
+  Mgr->Apply(IsDefinition);
+  Mgr->Apply(Global);
 }
 
-/// getType - Return the type of the global.
+/// TypeString - Return a string used to compose globalnames and labels.
 ///
-const GlobalVariable *GlobalWrapper::getType() const {
-  return getGlobalValue(IC->getOperand(Type_op));
+const char *GlobalVariableDesc::TypeString() const {
+  return "global_variable";
 }
 
-/// isStatic - Return true if the global is static.
-///
-bool GlobalWrapper::isStatic() const {
-  return cast<ConstantBool>(IC->getOperand(Static_op))->getValue();
+#ifndef NDEBUG
+void GlobalVariableDesc::dump() {
+  std::cerr << TypeString() << " "
+            << "Tag(" << getTag() << "), "
+            << "Name(\"" << Name << "\"), "
+            << "Type(" << TyDesc << "), "
+            << "IsStatic(" << (IsStatic ? "true" : "false") << "), "
+            << "IsDefinition(" << (IsDefinition ? "true" : "false") << "), "
+            << "Global(" << Global << ")\n";
+}
+#endif
+
+//===----------------------------------------------------------------------===//
+
+/// ApplyToFields - Target the apply manager to the fields of the 
+/// SubprogramDesc.
+void SubprogramDesc::ApplyToFields(DIApplyManager *Mgr) {
+  Mgr->Apply(Context);
+  Mgr->Apply(Name);
+  Mgr->Apply(TransUnit);
+  Mgr->Apply(TyDesc);
+  Mgr->Apply(IsStatic);
+  Mgr->Apply(IsDefinition);
+  
+  // FIXME - Temp variable until restructured.
+  GlobalVariable *Tmp;
+  Mgr->Apply(Tmp);
 }
 
-/// isDefinition - Return true if the global is a definition.
+/// TypeString - Return a string used to compose globalnames and labels.
 ///
-bool GlobalWrapper::isDefinition() const {
-  return dyn_cast<ConstantBool>(IC->getOperand(Definition_op))->getValue();
+const char *SubprogramDesc::TypeString() const {
+  return "subprogram";
 }
 
-/// getGlobalVariable - Return the global variable (tag == DW_TAG_variable.)
+#ifndef NDEBUG
+void SubprogramDesc::dump() {
+  std::cerr << TypeString() << " "
+            << "Tag(" << getTag() << "), "
+            << "Name(\"" << Name << "\"), "
+            << "Type(" << TyDesc << "), "
+            << "IsStatic(" << (IsStatic ? "true" : "false") << "), "
+            << "IsDefinition(" << (IsDefinition ? "true" : "false") << ")\n";
+}
+#endif
+
+//===----------------------------------------------------------------------===//
+
+DebugInfoDesc *DIDeserializer::Deserialize(Value *V) {
+  return Deserialize(cast<GlobalVariable>(V));
+}
+DebugInfoDesc *DIDeserializer::Deserialize(GlobalVariable *GV) {
+  // Check to see if it has been already deserialized.
+  DebugInfoDesc *&Slot = GlobalDescs[GV];
+  if (Slot) return Slot;
+
+  // Get the Tag from the global.
+  unsigned Tag = DebugInfoDesc::TagFromGlobal(GV);
+  
+  // Get the debug version if a compile unit.
+  if (Tag == DI_TAG_compile_unit) {
+    DebugVersion = CompileUnitDesc::DebugVersionFromGlobal(GV);
+  }
+  
+  // Create an empty instance of the correct sort.
+  Slot = DebugInfoDesc::DescFactory(Tag);
+  assert(Slot && "Unknown Tag");
+  
+  // Deserialize the fields.
+  DIDeserializeAppMgr DRAM(*this, GV);
+  DRAM.ApplyToFields(Slot);
+  
+  return Slot;
+}
+
+//===----------------------------------------------------------------------===//
+
+/// getStrPtrType - Return a "sbyte *" type.
 ///
-GlobalVariable *GlobalWrapper::getGlobalVariable() const {
-  return getGlobalValue(IC->getOperand(GlobalVariable_op));
+const PointerType *DISerializer::getStrPtrType() {
+  // If not already defined.
+  if (!StrPtrTy) {
+    // Construct the pointer to signed bytes.
+    StrPtrTy = PointerType::get(Type::SByteTy);
+  }
+  
+  return StrPtrTy;
+}
+
+/// getEmptyStructPtrType - Return a "{ }*" type.
+///
+const PointerType *DISerializer::getEmptyStructPtrType() {
+  // If not already defined.
+  if (!EmptyStructPtrTy) {
+    // Construct the empty structure type.
+    const StructType *EmptyStructTy =
+                                    StructType::get(std::vector<const Type*>());
+    // Construct the pointer to empty structure type.
+    EmptyStructPtrTy = PointerType::get(EmptyStructTy);
+  }
+  
+  return EmptyStructPtrTy;
+}
+
+/// getTagType - Return the type describing the specified descriptor (via tag.)
+///
+const StructType *DISerializer::getTagType(DebugInfoDesc *DD) {
+  // Attempt to get the previously defined type.
+  StructType *&Ty = TagTypes[DD->getTag()];
+  
+  // If not already defined.
+  if (!Ty) {
+    // Get descriptor type name.
+    const char *TS = DD->TypeString();
+    
+    // Set up fields vector.
+    std::vector<const Type*> Fields;
+    // Add tag field.
+    Fields.push_back(Type::UIntTy);
+    // Get types of remaining fields.
+    DIGetTypesAppMgr GTAM(*this, Fields);
+    GTAM.ApplyToFields(DD);
+
+    // Construct structured type.
+    Ty = StructType::get(Fields);
+    
+    // Construct a name for the type.
+    const std::string Name = std::string("lldb.") + DD->TypeString() + ".type";
+
+    // Register type name with module.
+    M->addTypeName(Name, Ty);
+  }
+  
+  return Ty;
+}
+
+/// getString - Construct the string as constant string global.
+///
+GlobalVariable *DISerializer::getString(const std::string &String) {
+  // Check string cache for previous edition.
+  GlobalVariable *&Slot = StringCache[String];
+  // return GlobalVariable if previously defined.
+  if (Slot) return Slot;
+  // Construct strings as an llvm constant.
+  Constant *ConstStr = ConstantArray::get(String);
+  // Otherwise create and return a new string global.
+  return Slot = new GlobalVariable(ConstStr->getType(), true,
+                                   GlobalVariable::InternalLinkage,
+                                   ConstStr, "str", M);
+}
+
+/// Serialize - Recursively cast the specified descriptor into a GlobalVariable
+/// so that it can be serialized to a .bc or .ll file.
+GlobalVariable *DISerializer::Serialize(DebugInfoDesc *DD) {
+  // Check if the DebugInfoDesc is already in the map.
+  GlobalVariable *&Slot = DescGlobals[DD];
+  
+  // See if DebugInfoDesc exists, if so return prior GlobalVariable.
+  if (Slot) return Slot;
+  
+  // Get DebugInfoDesc type Tag.
+  unsigned Tag = DD->getTag();
+  
+  // Construct name.
+  const std::string Name = std::string("lldb.") +
+                           DD->TypeString();
+  
+  // Get the type associated with the Tag.
+  const StructType *Ty = getTagType(DD);
+
+  // Create the GlobalVariable early to prevent infinite recursion.
+  GlobalVariable *GV = new GlobalVariable(Ty, true,
+                                          GlobalValue::InternalLinkage,
+                                          NULL, Name, M);
+
+  // Insert new GlobalVariable in DescGlobals map.
+  Slot = GV;
+ 
+  // Set up elements vector
+  std::vector<Constant*> Elements;
+  // Add Tag value.
+  Elements.push_back(ConstantUInt::get(Type::UIntTy, Tag));
+  // Add remaining fields.
+  DISerializeAppMgr SRAM(*this, Elements);
+  SRAM.ApplyToFields(DD);
+  
+  // Set the globals initializer.
+  GV->setInitializer(ConstantStruct::get(Ty, Elements));
+  
+  return GV;
+}
+
+//===----------------------------------------------------------------------===//
+
+/// markVisited - Return true if the GlobalVariable hase been "seen" before.
+/// Mark visited otherwise.
+bool DIVerifier::markVisited(GlobalVariable *GV) {
+  // Check if the GlobalVariable is already in the Visited set.
+  std::set<GlobalVariable *>::iterator VI = Visited.lower_bound(GV);
+  
+  // See if GlobalVariable exists.
+  bool Exists = VI != Visited.end() && *VI == GV;
+
+  // Insert in set.
+  if (!Exists) Visited.insert(VI, GV);
+  
+  return Exists;
+}
+
+/// Verify - Return true if the GlobalVariable appears to be a valid
+/// serialization of a DebugInfoDesc.
+bool DIVerifier::Verify(GlobalVariable *GV) {
+  // Check if seen before.
+  if (markVisited(GV)) return true;
+  
+  // Get the Tag
+  unsigned Tag = DebugInfoDesc::TagFromGlobal(GV, true);
+  if (Tag == DIInvalid) return false;
+
+  // If a compile unit we need the debug version.
+  if (Tag == DI_TAG_compile_unit) {
+    DebugVersion = CompileUnitDesc::DebugVersionFromGlobal(GV, true);
+    if (DebugVersion == DIInvalid) return false;
+  }
+
+  // Construct an empty DebugInfoDesc.
+  DebugInfoDesc *DD = DebugInfoDesc::DescFactory(Tag);
+  if (!DD) return false;
+  
+  // Get the initializer constant.
+  ConstantStruct *CI = cast<ConstantStruct>(GV->getInitializer());
+  
+  // Get the operand count.
+  unsigned N = CI->getNumOperands();
+  
+  // Get the field count.
+  unsigned &Slot = Counts[Tag];
+  if (!Slot) {
+    // Check the operand count to the field count
+    DICountAppMgr CTAM;
+    CTAM.ApplyToFields(DD);
+    Slot = CTAM.getCount();
+  }
+  
+  // Field count must equal operand count.
+  if (Slot != N) {
+    delete DD;
+    return false;
+  }
+  
+  // Check each field for valid type.
+  DIVerifyAppMgr VRAM(*this, GV);
+  VRAM.ApplyToFields(DD);
+  
+  // Release empty DebugInfoDesc.
+  delete DD;
+  
+  // Return result of field tests.
+  return VRAM.isValid();
 }
 
 //===----------------------------------------------------------------------===//
 
 
 MachineDebugInfo::MachineDebugInfo()
-: CompileUnits()
+: SR()
+, DR()
+, VR()
+, CompileUnits()
 , Directories()
 , SourceFiles()
 , Lines()
@@ -248,54 +766,56 @@ bool MachineDebugInfo::doFinalization() {
 /// AnalyzeModule - Scan the module for global debug information.
 ///
 void MachineDebugInfo::AnalyzeModule(Module &M) {
+  SR.setModule(&M);
+  DR.setModule(&M);
   SetupCompileUnits(M);
 }
 
 /// SetupCompileUnits - Set up the unique vector of compile units.
 ///
 void MachineDebugInfo::SetupCompileUnits(Module &M) {
+  SR.setModule(&M);
+  DR.setModule(&M);
   // Get vector of all debug compile units.
   std::vector<GlobalVariable*> Globals =
                        getGlobalVariablesUsing(M, "llvm.dbg.translation_units");
   
   // Scan all compile unit globals.
   for (unsigned i = 0, N = Globals.size(); i < N; ++i) {
-    // Create wrapper for compile unit.
-    CompileUnitWrapper CUI(Globals[i]);
-    // Add to result.
-    if (CUI.isCorrectDebugVersion()) CompileUnits.insert(CUI);
+    // Add compile unit to result.
+    CompileUnits.insert(
+                    static_cast<CompileUnitDesc *>(DR.Deserialize(Globals[i])));
   }
-  
-  // If there any bad compile units then suppress debug information
-  if (CompileUnits.size() != Globals.size()) CompileUnits.reset();
 }
 
 /// getCompileUnits - Return a vector of debug compile units.
 ///
-const UniqueVector<CompileUnitWrapper> MachineDebugInfo::getCompileUnits()const{
+const UniqueVector<CompileUnitDesc *> MachineDebugInfo::getCompileUnits()const{
   return CompileUnits;
 }
 
-/// getGlobalVariables - Return a vector of debug global variables.
+/// getGlobalVariables - Return a vector of debug GlobalVariables.
 ///
-std::vector<GlobalWrapper> MachineDebugInfo::getGlobalVariables(Module &M) {
+std::vector<GlobalVariableDesc *>
+MachineDebugInfo::getGlobalVariables(Module &M) {
+  SR.setModule(&M);
+  DR.setModule(&M);
   // Get vector of all debug global objects.
   std::vector<GlobalVariable*> Globals =
                                  getGlobalVariablesUsing(M, "llvm.dbg.globals");
   
-  // Accumulation of global variables.
-  std::vector<GlobalWrapper> GlobalVariables;
+  // Accumulation of GlobalVariables.
+  std::vector<GlobalVariableDesc *> GlobalVariables;
 
-// FIXME - skip until globals have new format
-#if 0
   // Scan all globals.
   for (unsigned i = 0, N = Globals.size(); i < N; ++i) {
-    // Create wrapper for global.
-    GlobalWrapper GW(Globals[i]);
-    // If the global is a variable then add to result.
-    if (GW.getTag() == DW_TAG_variable) GlobalVariables.push_back(GW);
+    GlobalVariable *GV = Globals[i];
+    if (DebugInfoDesc::TagFromGlobal(GV, true) == DI_TAG_global_variable) {
+      GlobalVariableDesc *GVD =
+                          static_cast<GlobalVariableDesc *>(DR.Deserialize(GV));
+      GlobalVariables.push_back(GVD);
+    }
   }
-#endif
 
   return GlobalVariables;
 }

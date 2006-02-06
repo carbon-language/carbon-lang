@@ -1269,16 +1269,16 @@ void DwarfWriter::NewGlobalVariable(DWContext *Context,
 
 /// NewCompileUnit - Create new compile unit information.
 ///
-DIE *DwarfWriter::NewCompileUnit(const CompileUnitWrapper &CompileUnit) {
+DIE *DwarfWriter::NewCompileUnit(const CompileUnitDesc *CompileUnit) {
   DIE *Unit = new DIE(DW_TAG_compile_unit, DW_CHILDREN_yes);
   // FIXME - use the correct line set.
   Unit->AddLabel (DW_AT_stmt_list, DW_FORM_data4,  DWLabel("line", 0));
   Unit->AddLabel (DW_AT_high_pc,   DW_FORM_addr,   DWLabel("text_end", 0));
   Unit->AddLabel (DW_AT_low_pc,    DW_FORM_addr,   DWLabel("text_begin", 0));
-  Unit->AddString(DW_AT_producer,  DW_FORM_string, CompileUnit.getProducer());
-  Unit->AddUInt  (DW_AT_language,  DW_FORM_data1,  CompileUnit.getLanguage());
-  Unit->AddString(DW_AT_name,      DW_FORM_string, CompileUnit.getFileName());
-  Unit->AddString(DW_AT_comp_dir,  DW_FORM_string, CompileUnit.getDirectory());
+  Unit->AddString(DW_AT_producer,  DW_FORM_string, CompileUnit->getProducer());
+  Unit->AddUInt  (DW_AT_language,  DW_FORM_data1,  CompileUnit->getLanguage());
+  Unit->AddString(DW_AT_name,      DW_FORM_string, CompileUnit->getFileName());
+  Unit->AddString(DW_AT_comp_dir,  DW_FORM_string, CompileUnit->getDirectory());
   Unit->Complete(*this);
   
   return Unit;
@@ -1723,11 +1723,10 @@ void DwarfWriter::EmitDebugMacInfo() {
 /// ConstructCompileUnitDIEs - Create a compile unit DIE for each source and
 /// header file.
 void DwarfWriter::ConstructCompileUnitDIEs() {
-  const UniqueVector<CompileUnitWrapper> CUW = DebugInfo->getCompileUnits();
+  const UniqueVector<CompileUnitDesc *> CUW = DebugInfo->getCompileUnits();
   
   for (unsigned i = 1, N = CUW.size(); i <= N; ++i) {
-    const CompileUnitWrapper &CompileUnit = CUW[i];
-    DIE *Unit = NewCompileUnit(CompileUnit);
+    DIE *Unit = NewCompileUnit(CUW[i]);
     DWContext *Context = new DWContext(*this, NULL, Unit);
     CompileUnits.push_back(Unit);
   }
@@ -1738,11 +1737,12 @@ void DwarfWriter::ConstructCompileUnitDIEs() {
 void DwarfWriter::ConstructGlobalDIEs(Module &M) {
   const TargetData &TD = Asm->TM.getTargetData();
   
-  std::vector<GlobalWrapper> GlobalVariables = DebugInfo->getGlobalVariables(M);
+  std::vector<GlobalVariableDesc *> GlobalVariables =
+                                               DebugInfo->getGlobalVariables(M);
   
   for (unsigned i = 0, N = GlobalVariables.size(); i < N; ++i) {
-    GlobalWrapper &GW = GlobalVariables[i];
-    GlobalVariable *GV = GW.getGlobalVariable();
+    GlobalVariableDesc *GVD = GlobalVariables[i];
+    GlobalVariable *GV = GVD->getGlobalVariable();
     
     if (!GV->hasInitializer()) continue;   // External global require no code
     
