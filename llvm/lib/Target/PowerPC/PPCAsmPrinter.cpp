@@ -96,7 +96,7 @@ namespace {
     }
     
     bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
-                         unsigned AsmVariant) {
+                         unsigned AsmVariant, const char *ExtraCode) {
        printOperand(MI, OpNo);
        return false;
     }
