@@ -37,17 +37,23 @@ namespace {
     /// MiOpNo - For isMachineInstrOperand, this is the operand number of the
     /// machine instruction.
     unsigned MIOpNo;
+    
+    /// MiModifier - For isMachineInstrOperand, this is the modifier string for
+    /// an operand, specified with syntax like ${opname:modifier}.
+    std::string MiModifier;
 
     AsmWriterOperand(const std::string &LitStr)
       : OperandType(isLiteralTextOperand), Str(LitStr) {}
 
-    AsmWriterOperand(const std::string &Printer, unsigned OpNo) 
-      : OperandType(isMachineInstrOperand), Str(Printer), MIOpNo(OpNo) {}
+    AsmWriterOperand(const std::string &Printer, unsigned OpNo, 
+                     const std::string &Modifier) 
+      : OperandType(isMachineInstrOperand), Str(Printer), MIOpNo(OpNo),
+      MiModifier(Modifier) {}
 
     bool operator!=(const AsmWriterOperand &Other) const {
       if (OperandType != Other.OperandType || Str != Other.Str) return true;
       if (OperandType == isMachineInstrOperand)
-        return MIOpNo != Other.MIOpNo;
+        return MIOpNo != Other.MIOpNo || MiModifier != Other.MiModifier;
       return false;
     }
     bool operator==(const AsmWriterOperand &Other) const {
@@ -84,8 +90,12 @@ namespace {
 void AsmWriterOperand::EmitCode(std::ostream &OS) const {
   if (OperandType == isLiteralTextOperand)
     OS << "O << \"" << Str << "\"; ";
-  else
-    OS << Str << "(MI, " << MIOpNo << "); ";
+  else {
+    OS << Str << "(MI, " << MIOpNo;
+    if (!MiModifier.empty())
+      OS << ", \"" << MiModifier << '"';
+    OS << "); ";
+  }
 }
 
 
@@ -155,6 +165,10 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
       std::string VarName(AsmString.begin()+DollarPos+1,
                           AsmString.begin()+VarEnd);
 
+      // Modifier - Support ${foo:modifier} syntax, where "modifier" is passed
+      // into printOperand.
+      std::string Modifier;
+      
       // In order to avoid starting the next string at the terminating curly
       // brace, advance the end position past it if we found an opening curly
       // brace.
@@ -162,6 +176,23 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
         if (VarEnd >= AsmString.size())
           throw "Reached end of string before terminating curly brace in '"
                 + CGI.TheDef->getName() + "'";
+        
+        // Look for a modifier string.
+        if (AsmString[VarEnd] == ':') {
+          ++VarEnd;
+          if (VarEnd >= AsmString.size())
+            throw "Reached end of string before terminating curly brace in '"
+              + CGI.TheDef->getName() + "'";
+          
+          unsigned ModifierStart = VarEnd;
+          while (VarEnd < AsmString.size() && isIdentChar(AsmString[VarEnd]))
+            ++VarEnd;
+          Modifier = std::string(AsmString.begin()+ModifierStart,
+                                 AsmString.begin()+VarEnd);
+          if (Modifier.empty())
+            throw "Bad operand modifier name in '"+ CGI.TheDef->getName() + "'";
+        }
+        
         if (AsmString[VarEnd] != '}')
           throw "Variable name beginning with '{' did not end with '}' in '"
                 + CGI.TheDef->getName() + "'";
@@ -185,7 +216,8 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
       }
 
       if (CurVariant == Variant || CurVariant == ~0U) 
-        Operands.push_back(AsmWriterOperand(OpInfo.PrinterMethodName, MIOp));
+        Operands.push_back(AsmWriterOperand(OpInfo.PrinterMethodName, MIOp,
+                                            Modifier));
       LastEmitted = VarEnd;
     }
   }
