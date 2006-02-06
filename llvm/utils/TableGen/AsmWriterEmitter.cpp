@@ -94,7 +94,7 @@ void AsmWriterOperand::EmitCode(std::ostream &OS) const {
 ///
 AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
   this->CGI = &CGI;
-  bool inVariant = false;  // True if we are inside a {.|.|.} region.
+  unsigned CurVariant = ~0U;  // ~0 if we are outside a {.|.|.} region, other #.
 
   // NOTE: Any extensions to this code need to be mirrored in the 
   // AsmPrinter::printInlineAsm code that executes as compile time (assuming
@@ -109,50 +109,32 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
     // Emit a constant string fragment.
     if (DollarPos != LastEmitted) {
       // TODO: this should eventually handle escaping.
-      AddLiteralString(std::string(AsmString.begin()+LastEmitted,
-                                   AsmString.begin()+DollarPos));
+      if (CurVariant == Variant || CurVariant == ~0U)
+        AddLiteralString(std::string(AsmString.begin()+LastEmitted,
+                                     AsmString.begin()+DollarPos));
       LastEmitted = DollarPos;
     } else if (AsmString[DollarPos] == '{') {
-      if (inVariant)
+      if (CurVariant != ~0U)
         throw "Nested variants found for instruction '" +
               CGI.TheDef->getName() + "'!";
       LastEmitted = DollarPos+1;
-      inVariant = true;   // We are now inside of the variant!
-      for (unsigned i = 0; i != Variant; ++i) {
-        // Skip over all of the text for an irrelevant variant here.  The
-        // next variant starts at |, or there may not be text for this
-        // variant if we see a }.
-        std::string::size_type NP =
-          AsmString.find_first_of("|}", LastEmitted);
-        if (NP == std::string::npos)
-          throw "Incomplete variant for instruction '" +
-                CGI.TheDef->getName() + "'!";
-        LastEmitted = NP+1;
-        if (AsmString[NP] == '}') {
-          inVariant = false;        // No text for this variant.
-          break;
-        }
-      }
+      CurVariant = 0;   // We are now inside of the variant!
     } else if (AsmString[DollarPos] == '|') {
-      if (!inVariant)
+      if (CurVariant == ~0U)
         throw "'|' character found outside of a variant in instruction '"
           + CGI.TheDef->getName() + "'!";
-      // Move to the end of variant list.
-      std::string::size_type NP = AsmString.find('}', LastEmitted);
-      if (NP == std::string::npos)
-        throw "Incomplete variant for instruction '" +
-              CGI.TheDef->getName() + "'!";
-      LastEmitted = NP+1;
-      inVariant = false;
+      ++CurVariant;
+      ++LastEmitted;
     } else if (AsmString[DollarPos] == '}') {
-      if (!inVariant)
+      if (CurVariant == ~0U)
         throw "'}' character found outside of a variant in instruction '"
           + CGI.TheDef->getName() + "'!";
-      LastEmitted = DollarPos+1;
-      inVariant = false;
+      ++LastEmitted;
+      CurVariant = ~0U;
     } else if (DollarPos+1 != AsmString.size() &&
                AsmString[DollarPos+1] == '$') {
-      AddLiteralString("$");  // "$$" -> $
+      if (CurVariant == Variant || CurVariant == ~0U) 
+        AddLiteralString("$");  // "$$" -> $
       LastEmitted = DollarPos+2;
     } else {
       // Get the name of the variable.
@@ -181,7 +163,7 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
           throw "Reached end of string before terminating curly brace in '"
                 + CGI.TheDef->getName() + "'";
         if (AsmString[VarEnd] != '}')
-          throw "Variant name beginning with '{' did not end with '}' in '"
+          throw "Variable name beginning with '{' did not end with '}' in '"
                 + CGI.TheDef->getName() + "'";
         ++VarEnd;
       }
@@ -202,7 +184,8 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
         --MIOp;
       }
 
-      Operands.push_back(AsmWriterOperand(OpInfo.PrinterMethodName, MIOp));
+      if (CurVariant == Variant || CurVariant == ~0U) 
+        Operands.push_back(AsmWriterOperand(OpInfo.PrinterMethodName, MIOp));
       LastEmitted = VarEnd;
     }
   }
