@@ -196,7 +196,7 @@ namespace llvm {
     /// overried this to format as appropriate.  This method can return true if
     /// the operand is erroneous.
     virtual bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
-                                 unsigned AsmVariant);
+                                 unsigned AsmVariant, const char *ExtraCode);
     
     /// SetupMachineFunction - This should be called when a new MachineFunction
     /// is being processed from runOnMachineFunction.
