@@ -2398,7 +2398,7 @@ public:
           emitCode("CodeGenMap[N.getValue(" + utostr(ValNo) + ")] = " +
                    ChainName + ";");
           if (DoReplace)
-            emitCode("if (N.ResNo == 0) AddReplacement(N.getValue("
+            emitCode("if (N.ResNo == 0) AddHandleReplacement(N.getValue("
                      + utostr(ValNo) + "), " + ChainName + ");");
           ValNo++;
         }
@@ -2415,7 +2415,7 @@ public:
             std::string Code =
               FoldedChains[j].first + ".getValue(" +
               utostr(FoldedChains[j].second) + ")";
-            emitCode("AddReplacement(" + Code + ", " + ChainName + ");");
+            emitCode("AddHandleReplacement(" + Code + ", " + ChainName + ");");
           }
         }
 
@@ -3099,9 +3099,9 @@ void DAGISelEmitter::run(std::ostream &OS) {
   OS << "}\n";
 
   OS << "\n";
-  OS << "// AddReplacement - Note the pending replacement node for a\n"
+  OS << "// AddHandleReplacement - Note the pending replacement node for a\n"
      << "// holder node in ReplaceMap.\n";
-  OS << "void AddReplacement(SDOperand N, SDOperand R) {\n";
+  OS << "void AddHandleReplacement(SDOperand N, SDOperand R) {\n";
   OS << "  std::map<SDOperand, SDOperand>::iterator HMI = HolderMap.find(N);\n";
   OS << "  if (HMI != HolderMap.end()) {\n";
   OS << "    ReplaceMap[HMI->second] = R;\n";
