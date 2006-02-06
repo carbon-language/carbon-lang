@@ -37,19 +37,16 @@ struct X86IntelAsmPrinter : public X86SharedAsmPrinter {
   bool printInstruction(const MachineInstr *MI);
 
   // This method is used by the tablegen'erated instruction printer.
-  void printOperand(const MachineInstr *MI, unsigned OpNo){
+  void printOperand(const MachineInstr *MI, unsigned OpNo,
+                    const char *Modifier = 0) {
     const MachineOperand &MO = MI->getOperand(OpNo);
     if (MO.getType() == MachineOperand::MO_MachineRegister) {
       assert(MRegisterInfo::isPhysicalRegister(MO.getReg())&&"Not physref??");
       // Bug Workaround: See note in Printer::doInitialization about %.
       O << "%" << TM.getRegisterInfo()->get(MO.getReg()).Name;
     } else {
-      printOp(MO);
+      printOp(MO, Modifier);
     }
-  }
-
-  void printCallOperand(const MachineInstr *MI, unsigned OpNo) {
-    printOp(MI->getOperand(OpNo), true); // Don't print "OFFSET".
   }
 
   void printi8mem(const MachineInstr *MI, unsigned OpNo) {
@@ -82,7 +79,7 @@ struct X86IntelAsmPrinter : public X86SharedAsmPrinter {
   }
 
   void printMachineInstruction(const MachineInstr *MI);
-  void printOp(const MachineOperand &MO, bool elideOffsetKeyword = false);
+  void printOp(const MachineOperand &MO, const char *Modifier = 0);
   void printSSECC(const MachineInstr *MI, unsigned Op);
   void printMemReference(const MachineInstr *MI, unsigned Op);
   bool runOnMachineFunction(MachineFunction &F);

@@ -63,7 +63,9 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   return false;
 }
 
-void X86ATTAsmPrinter::printOp(const MachineOperand &MO, bool isCallOp) {
+void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
+                                    const char *Modifier) {
+  const MachineOperand &MO = MI->getOperand(OpNo);
   const MRegisterInfo &RI = *TM.getRegisterInfo();
   switch (MO.getType()) {
   case MachineOperand::MO_VirtualRegister:
@@ -92,6 +94,7 @@ void X86ATTAsmPrinter::printOp(const MachineOperand &MO, bool isCallOp) {
     abort ();
     return;
   case MachineOperand::MO_GlobalAddress: {
+    bool isCallOp = Modifier && !strcmp(Modifier, "call");
     // Darwin block shameless ripped from PowerPCAsmPrinter.cpp
     if (forDarwin) {
       if (!isCallOp) O << '$';
@@ -132,7 +135,8 @@ void X86ATTAsmPrinter::printOp(const MachineOperand &MO, bool isCallOp) {
       O << Offset;
     return;
   }
-  case MachineOperand::MO_ExternalSymbol:
+  case MachineOperand::MO_ExternalSymbol: {
+    bool isCallOp = Modifier && !strcmp(Modifier, "call");
     if (isCallOp && forDarwin) {
       std::string Name(GlobalPrefix); Name += MO.getSymbolName();
       FnStubs.insert(Name);
@@ -142,6 +146,7 @@ void X86ATTAsmPrinter::printOp(const MachineOperand &MO, bool isCallOp) {
     if (!isCallOp) O << '$';
     O << GlobalPrefix << MO.getSymbolName();
     return;
+  }
   default:
     O << "<unknown operand type>"; return;
   }
@@ -183,7 +188,7 @@ void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
       O << "+" << DispSpec.getImmedValue();
     if (IndexReg.getReg()) {
       O << "(,";
-      printOp(IndexReg);
+      printOperand(MI, Op+2);
       if (ScaleVal != 1)
         O << "," << ScaleVal;
       O << ")";
@@ -192,7 +197,7 @@ void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
   }
 
   if (DispSpec.isGlobalAddress()) {
-    printOp(DispSpec, true);
+    printOperand(MI, Op+3, "call");
   } else {
     int DispVal = DispSpec.getImmedValue();
     if (DispVal || (!IndexReg.getReg() && !BaseReg.getReg()))
@@ -202,11 +207,11 @@ void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
   if (IndexReg.getReg() || BaseReg.getReg()) {
     O << "(";
     if (BaseReg.getReg())
-      printOp(BaseReg);
+      printOperand(MI, Op);
 
     if (IndexReg.getReg()) {
       O << ",";
-      printOp(IndexReg);
+      printOperand(MI, Op+2);
       if (ScaleVal != 1)
         O << "," << ScaleVal;
     }

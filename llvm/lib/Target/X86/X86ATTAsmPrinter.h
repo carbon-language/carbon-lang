@@ -34,13 +34,9 @@ struct X86ATTAsmPrinter : public X86SharedAsmPrinter {
   /// returns false.
   bool printInstruction(const MachineInstr *MI);
 
-  // This method is used by the tablegen'erated instruction printer.
-  void printOperand(const MachineInstr *MI, unsigned OpNo){
-    printOp(MI->getOperand(OpNo));
-  }
-  void printCallOperand(const MachineInstr *MI, unsigned OpNo) {
-    printOp(MI->getOperand(OpNo), true); // Don't print '$' prefix.
-  }
+  // These methods are used by the tablegen'erated instruction printer.
+  void printOperand(const MachineInstr *MI, unsigned OpNo,
+                    const char *Modifier = 0);
   void printi8mem(const MachineInstr *MI, unsigned OpNo) {
     printMemReference(MI, OpNo);
   }
@@ -64,7 +60,6 @@ struct X86ATTAsmPrinter : public X86SharedAsmPrinter {
   }
   
   void printMachineInstruction(const MachineInstr *MI);
-  void printOp(const MachineOperand &MO, bool isCallOperand = false);
   void printSSECC(const MachineInstr *MI, unsigned Op);
   void printMemReference(const MachineInstr *MI, unsigned Op);
   bool runOnMachineFunction(MachineFunction &F);

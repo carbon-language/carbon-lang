@@ -159,10 +159,6 @@ def i16i8imm  : Operand<i16>;
 // 32-bits but only 8 bits are significant.
 def i32i8imm  : Operand<i32>;
 
-// PCRelative calls need special operand formatting.
-let PrintMethod = "printCallOperand" in
-  def calltarget : Operand<i32>;
-
 // Branch targets have OtherVT type.
 def brtarget : Operand<OtherVT>;
 
@@ -516,7 +512,7 @@ let isCall = 1, noResults = 1 in
   // All calls clobber the non-callee saved registers...
   let Defs = [EAX, ECX, EDX, FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0,
               XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7] in {
-    def CALLpcrel32 : I<0xE8, RawFrm, (ops calltarget:$dst), "call $dst",
+    def CALLpcrel32 : I<0xE8, RawFrm, (ops i32imm:$dst), "call ${dst:call}",
                       []>;
     def CALL32r     : I<0xFF, MRM2r, (ops R32:$dst), "call {*}$dst",
                       [(X86call R32:$dst)]>;
@@ -526,7 +522,7 @@ let isCall = 1, noResults = 1 in
 
 // Tail call stuff.
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, noResults = 1 in
-  def TAILJMPd : IBr<0xE9, (ops calltarget:$dst), "jmp $dst  # TAIL CALL", []>;
+  def TAILJMPd : IBr<0xE9, (ops i32imm:$dst), "jmp ${dst:call}  # TAIL CALL", []>;
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, noResults = 1 in
   def TAILJMPr : I<0xFF, MRM4r, (ops R32:$dst), "jmp {*}$dst  # TAIL CALL", []>;
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, noResults = 1 in

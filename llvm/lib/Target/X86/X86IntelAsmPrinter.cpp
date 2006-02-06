@@ -74,8 +74,8 @@ void X86IntelAsmPrinter::printSSECC(const MachineInstr *MI, unsigned Op) {
   }
 }
 
-void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
-                                 bool elideOffsetKeyword /* = false */) {
+void X86IntelAsmPrinter::printOp(const MachineOperand &MO, 
+                                 const char *Modifier) {
   const MRegisterInfo &RI = *TM.getRegisterInfo();
   switch (MO.getType()) {
   case MachineOperand::MO_VirtualRegister:
@@ -109,7 +109,7 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
     abort ();
     return;
   case MachineOperand::MO_GlobalAddress: {
-    if (!elideOffsetKeyword)
+    if (!Modifier || strcmp(Modifier, "call"))
       O << "OFFSET ";
     O << Mang->getValueName(MO.getGlobal());
     int Offset = MO.getOffset();
@@ -161,7 +161,7 @@ void X86IntelAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
   O << "[";
   bool NeedPlus = false;
   if (BaseReg.getReg()) {
-    printOp(BaseReg, true);
+    printOp(BaseReg, "call");
     NeedPlus = true;
   }
 
@@ -176,7 +176,7 @@ void X86IntelAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
   if (DispSpec.isGlobalAddress()) {
     if (NeedPlus)
       O << " + ";
-    printOp(DispSpec, true);
+    printOp(DispSpec, "call");
   } else {
     int DispVal = DispSpec.getImmedValue();
     if (DispVal || (!BaseReg.getReg() && !IndexReg.getReg())) {
