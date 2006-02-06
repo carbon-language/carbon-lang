@@ -175,7 +175,7 @@ static ConstantUInt *getUIntOperand(GlobalVariable *GV, unsigned i) {
 /// GlobalVariable.  
 unsigned DebugInfoDesc::TagFromGlobal(GlobalVariable *GV) {
   ConstantUInt *C = getUIntOperand(GV, 0);
-  return C ? C->getValue() : DIINVALID;
+  return C ? (unsigned)C->getValue() : (unsigned)DIInvalid;
 }
 
 /// DescFactory - Create an instance of debug info descriptor based on Tag.
@@ -416,7 +416,7 @@ public:
 /// GlobalVariable.
 unsigned CompileUnitDesc::DebugVersionFromGlobal(GlobalVariable *GV) {
   ConstantUInt *C = getUIntOperand(GV, 1);
-  return C ? C->getValue() : DIINVALID;
+  return C ? (unsigned)C->getValue() : (unsigned)DIInvalid;
 }
   
 /// ApplyToFields - Target the visitor to the fields of the CompileUnitDesc.
@@ -684,12 +684,12 @@ bool DIVerifier::Verify(GlobalVariable *GV) {
   
   // Get the Tag
   unsigned Tag = DebugInfoDesc::TagFromGlobal(GV);
-  if (Tag == DIINVALID) return false;
+  if (Tag == DIInvalid) return false;
 
   // If a compile unit we need the debug version.
   if (Tag == DI_TAG_compile_unit) {
     DebugVersion = CompileUnitDesc::DebugVersionFromGlobal(GV);
-    if (DebugVersion == DIINVALID) return false;
+    if (DebugVersion == DIInvalid) return false;
   }
 
   // Construct an empty DebugInfoDesc.

@@ -51,11 +51,9 @@ class StructType;
 //===----------------------------------------------------------------------===//
 // Debug info constants.
 
-// Invalid result indicator.
-#define DIINVALID (~0U)
-
 enum {
   LLVMDebugVersion = 1,                 // Current version of debug information.
+  DIInvalid = ~0U,                      // Invalid result indicator.
   
   // DebugInfoDesc type identifying tags.
   // FIXME - Change over with gcc4.
