@@ -2856,7 +2856,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
          << "CurDAG->getNode(ISD::HANDLENODE, MVT::Other, N);\n"
          << "    CodeGenMap[N.getValue(" << OpcodeInfo.getNumResults()
          << ")] = Dummy;\n"
-         << "    HolderMap[N.getValue(" << OpcodeInfo.getNumResults()
+         << "    HandleMap[N.getValue(" << OpcodeInfo.getNumResults()
          << ")] = Dummy;\n"
          << "    return Dummy;\n"
          << "  }\n";
@@ -3061,9 +3061,9 @@ void DAGISelEmitter::run(std::ostream &OS) {
      << "std::map<SDOperand, SDOperand> CodeGenMap;\n";
 
   OS << "// Instance var to keep track of mapping of chain generating nodes\n"
-     << "// and their place holder nodes.\n";
-  OS << "std::map<SDOperand, SDOperand> HolderMap;\n";
-  OS << "// Instance var to keep track of mapping of place holder nodes\n"
+     << "// and their place handle nodes.\n";
+  OS << "std::map<SDOperand, SDOperand> HandleMap;\n";
+  OS << "// Instance var to keep track of mapping of place handle nodes\n"
      << "// and their replacement nodes.\n";
   OS << "std::map<SDOperand, SDOperand> ReplaceMap;\n";
 
@@ -3100,19 +3100,31 @@ void DAGISelEmitter::run(std::ostream &OS) {
 
   OS << "\n";
   OS << "// AddHandleReplacement - Note the pending replacement node for a\n"
-     << "// holder node in ReplaceMap.\n";
+     << "// handle node in ReplaceMap.\n";
   OS << "void AddHandleReplacement(SDOperand N, SDOperand R) {\n";
-  OS << "  std::map<SDOperand, SDOperand>::iterator HMI = HolderMap.find(N);\n";
-  OS << "  if (HMI != HolderMap.end()) {\n";
+  OS << "  std::map<SDOperand, SDOperand>::iterator HMI = HandleMap.find(N);\n";
+  OS << "  if (HMI != HandleMap.end()) {\n";
   OS << "    ReplaceMap[HMI->second] = R;\n";
-  OS << "    HolderMap.erase(N);\n";
+  OS << "    HandleMap.erase(N);\n";
   OS << "  }\n";
   OS << "}\n";
 
   OS << "\n";
-  OS << "// ReplaceHolders - Replace all the holders with the real target\n";
+  OS << "// SelectDanglingHandles - Select replacements for all `dangling`\n";
+  OS << "// handles.Some handles do not yet have replacements because the\n";
+  OS << "// nodes they replacements have only dead readers.\n";
+  OS << "void SelectDanglingHandles() {\n";
+  OS << "  for (std::map<SDOperand, SDOperand>::iterator I = "
+     << "HandleMap.begin(),\n"
+     << "         E = HandleMap.end(); I != E; ++I) {\n";
+  OS << "    SDOperand N = I->first;\n";
+  OS << "    AddHandleReplacement(N, Select(N.getValue(0)));\n";
+  OS << "  }\n";
+  OS << "}\n";
+  OS << "\n";
+  OS << "// ReplaceHandles - Replace all the handles with the real target\n";
   OS << "// specific nodes.\n";
-  OS << "void ReplaceHolders() {\n";
+  OS << "void ReplaceHandles() {\n";
   OS << "  for (std::map<SDOperand, SDOperand>::iterator I = "
      << "ReplaceMap.begin(),\n"
      << "        E = ReplaceMap.end(); I != E; ++I) {\n";
@@ -3139,7 +3151,8 @@ void DAGISelEmitter::run(std::ostream &OS) {
   OS << "// SelectRoot - Top level entry to DAG isel.\n";
   OS << "SDOperand SelectRoot(SDOperand N) {\n";
   OS << "  SDOperand RetVal = Select(N);\n";
-  OS << "  ReplaceHolders();\n";
+  OS << "  SelectDanglingHandles();\n";
+  OS << "  ReplaceHandles();\n";
   OS << "  ReplaceMap.clear();\n";
   OS << "  return RetVal;\n";
   OS << "}\n";
