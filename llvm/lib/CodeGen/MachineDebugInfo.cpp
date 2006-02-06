@@ -125,9 +125,9 @@ static bool isStringValue(Value *V) {
   return false;
 }
 
-/// getGlobalValue - Return either a direct or cast Global value.
+/// getGlobalVariable - Return either a direct or cast Global value.
 ///
-static GlobalVariable *getGlobalValue(Value *V) {
+static GlobalVariable *getGlobalVariable(Value *V) {
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
     return GV;
   } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
@@ -138,9 +138,9 @@ static GlobalVariable *getGlobalValue(Value *V) {
   return NULL;
 }
 
-/// isGlobalValue - Return true if the given value can be coerced to a
+/// isGlobalVariable - Return true if the given value can be coerced to a
 /// GlobalVariable.
-static bool isGlobalValue(Value *V) {
+static bool isGlobalVariable(Value *V) {
   if (isa<GlobalVariable>(V) || isa<ConstantPointerNull>(V)) {
     return true;
   } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
@@ -151,33 +151,31 @@ static bool isGlobalValue(Value *V) {
   return false;
 }
 
-/// isUIntOperand - Return true if the ith operand is an unsigned integer.
+/// getUIntOperand - Return ith operand if it is an unsigned integer.
 ///
-static bool isUIntOperand(GlobalVariable *GV, unsigned i) {
+static ConstantUInt *getUIntOperand(GlobalVariable *GV, unsigned i) {
   // Make sure the GlobalVariable has an initializer.
-  if (!GV->hasInitializer()) return false;
+  if (!GV->hasInitializer()) return NULL;
   
   // Get the initializer constant.
   ConstantStruct *CI = dyn_cast<ConstantStruct>(GV->getInitializer());
-  if (!CI) return false;
+  if (!CI) return NULL;
   
   // Check if there is at least i + 1 operands.
   unsigned N = CI->getNumOperands();
-  if (i >= N) return false;
+  if (i >= N) return NULL;
 
   // Check constant.
-  return isa<ConstantUInt>(CI->getOperand(i));
+  return dyn_cast<ConstantUInt>(CI->getOperand(i));
 }
 
 //===----------------------------------------------------------------------===//
 
 /// TagFromGlobal - Returns the Tag number from a debug info descriptor
 /// GlobalVariable.  
-unsigned DebugInfoDesc::TagFromGlobal(GlobalVariable *GV, bool Checking) {
-  if (Checking && !isUIntOperand(GV, 0)) return DIInvalid;  
-  ConstantStruct *CI = cast<ConstantStruct>(GV->getInitializer());
-  Constant *C = CI->getOperand(0);
-  return cast<ConstantUInt>(C)->getValue();
+unsigned DebugInfoDesc::TagFromGlobal(GlobalVariable *GV) {
+  ConstantUInt *C = getUIntOperand(GV, 0);
+  return C ? C->getValue() : DIINVALID;
 }
 
 /// DescFactory - Create an instance of debug info descriptor based on Tag.
@@ -194,21 +192,21 @@ DebugInfoDesc *DebugInfoDesc::DescFactory(unsigned Tag) {
 
 //===----------------------------------------------------------------------===//
 
-/// ApplyToFields - Target the manager to each field of the debug information
+/// ApplyToFields - Target the visitor to each field of the debug information
 /// descriptor.
-void DIApplyManager::ApplyToFields(DebugInfoDesc *DD) {
+void DIVisitor::ApplyToFields(DebugInfoDesc *DD) {
   DD->ApplyToFields(this);
 }
 
 //===----------------------------------------------------------------------===//
-/// DICountAppMgr - This DIApplyManager counts all the fields in the supplied
-/// debug the supplied DebugInfoDesc.
-class DICountAppMgr : public DIApplyManager {
+/// DICountVisitor - This DIVisitor counts all the fields in the supplied debug
+/// the supplied DebugInfoDesc.
+class DICountVisitor : public DIVisitor {
 private:
   unsigned Count;                       // Running count of fields.
   
 public:
-  DICountAppMgr() : DIApplyManager(), Count(1) {}
+  DICountVisitor() : DIVisitor(), Count(1) {}
   
   // Accessors.
   unsigned getCount() const { return Count; }
@@ -224,17 +222,17 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-/// DIDeserializeAppMgr - This DIApplyManager deserializes all the fields in
-/// the supplied DebugInfoDesc.
-class DIDeserializeAppMgr : public DIApplyManager {
+/// DIDeserializeVisitor - This DIVisitor deserializes all the fields in the
+/// supplied DebugInfoDesc.
+class DIDeserializeVisitor : public DIVisitor {
 private:
   DIDeserializer &DR;                   // Active deserializer.
   unsigned I;                           // Current operand index.
   ConstantStruct *CI;                   // GlobalVariable constant initializer.
 
 public:
-  DIDeserializeAppMgr(DIDeserializer &D, GlobalVariable *GV)
-  : DIApplyManager()
+  DIDeserializeVisitor(DIDeserializer &D, GlobalVariable *GV)
+  : DIVisitor()
   , DR(D)
   , I(1)
   , CI(cast<ConstantStruct>(GV->getInitializer()))
@@ -264,21 +262,21 @@ public:
   }
   virtual void Apply(GlobalVariable *&Field) {
     Constant *C = CI->getOperand(I++);
-    Field = getGlobalValue(C);
+    Field = getGlobalVariable(C);
   }
 };
 
 //===----------------------------------------------------------------------===//
-/// DISerializeAppMgr - This DIApplyManager serializes all the fields in
+/// DISerializeVisitor - This DIVisitor serializes all the fields in
 /// the supplied DebugInfoDesc.
-class DISerializeAppMgr : public DIApplyManager {
+class DISerializeVisitor : public DIVisitor {
 private:
   DISerializer &SR;                     // Active serializer.
   std::vector<Constant*> &Elements;     // Element accumulator.
   
 public:
-  DISerializeAppMgr(DISerializer &S, std::vector<Constant*> &E)
-  : DIApplyManager()
+  DISerializeVisitor(DISerializer &S, std::vector<Constant*> &E)
+  : DIVisitor()
   , SR(S)
   , Elements(E)
   {}
@@ -321,16 +319,16 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-/// DIGetTypesAppMgr - This DIApplyManager gathers all the field types in
+/// DIGetTypesVisitor - This DIVisitor gathers all the field types in
 /// the supplied DebugInfoDesc.
-class DIGetTypesAppMgr : public DIApplyManager {
+class DIGetTypesVisitor : public DIVisitor {
 private:
   DISerializer &SR;                     // Active serializer.
   std::vector<const Type*> &Fields;     // Type accumulator.
   
 public:
-  DIGetTypesAppMgr(DISerializer &S, std::vector<const Type*> &F)
-  : DIApplyManager()
+  DIGetTypesVisitor(DISerializer &S, std::vector<const Type*> &F)
+  : DIVisitor()
   , SR(S)
   , Fields(F)
   {}
@@ -361,9 +359,9 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-/// DIVerifyAppMgr - This DIApplyManager verifies all the field types against
+/// DIVerifyVisitor - This DIVisitor verifies all the field types against
 /// a constant initializer.
-class DIVerifyAppMgr : public DIApplyManager {
+class DIVerifyVisitor : public DIVisitor {
 private:
   DIVerifier &VR;                       // Active verifier.
   bool IsValid;                         // Validity status.
@@ -371,8 +369,8 @@ private:
   ConstantStruct *CI;                   // GlobalVariable constant initializer.
   
 public:
-  DIVerifyAppMgr(DIVerifier &V, GlobalVariable *GV)
-  : DIApplyManager()
+  DIVerifyVisitor(DIVerifier &V, GlobalVariable *GV)
+  : DIVisitor()
   , VR(V)
   , IsValid(true)
   , I(1)
@@ -404,11 +402,11 @@ public:
   virtual void Apply(DebugInfoDesc *&Field) {
     // FIXME - Prepare the correct descriptor.
     Constant *C = CI->getOperand(I++);
-    IsValid = IsValid && isGlobalValue(C);
+    IsValid = IsValid && isGlobalVariable(C);
   }
   virtual void Apply(GlobalVariable *&Field) {
     Constant *C = CI->getOperand(I++);
-    IsValid = IsValid && isGlobalValue(C);
+    IsValid = IsValid && isGlobalVariable(C);
   }
 };
 
@@ -416,23 +414,20 @@ public:
 
 /// DebugVersionFromGlobal - Returns the version number from a compile unit
 /// GlobalVariable.
-unsigned CompileUnitDesc::DebugVersionFromGlobal(GlobalVariable *GV,
-                                                 bool Checking) {
-  if (Checking && !isUIntOperand(GV, 1)) return DIInvalid;  
-  ConstantStruct *CI = cast<ConstantStruct>(GV->getInitializer());
-  Constant *C = CI->getOperand(1);
-  return cast<ConstantUInt>(C)->getValue();
+unsigned CompileUnitDesc::DebugVersionFromGlobal(GlobalVariable *GV) {
+  ConstantUInt *C = getUIntOperand(GV, 1);
+  return C ? C->getValue() : DIINVALID;
 }
   
-/// ApplyToFields - Target the apply manager to the fields of the 
-/// CompileUnitDesc.
-void CompileUnitDesc::ApplyToFields(DIApplyManager *Mgr) {
-  Mgr->Apply(DebugVersion);
-  Mgr->Apply(Language);
-  Mgr->Apply(FileName);
-  Mgr->Apply(Directory);
-  Mgr->Apply(Producer);
-  Mgr->Apply(TransUnit);
+/// ApplyToFields - Target the visitor to the fields of the CompileUnitDesc.
+///
+void CompileUnitDesc::ApplyToFields(DIVisitor *Visitor) {
+  Visitor->Apply(DebugVersion);
+  Visitor->Apply(Language);
+  Visitor->Apply(FileName);
+  Visitor->Apply(Directory);
+  Visitor->Apply(Producer);
+  Visitor->Apply(TransUnit);
 }
 
 /// TypeString - Return a string used to compose globalnames and labels.
@@ -454,16 +449,16 @@ void CompileUnitDesc::dump() {
 
 //===----------------------------------------------------------------------===//
 
-/// ApplyToFields - Target the apply manager to the fields of the 
-/// GlobalVariableDesc.
-void GlobalVariableDesc::ApplyToFields(DIApplyManager *Mgr) {
-  Mgr->Apply(Context);
-  Mgr->Apply(Name);
-  Mgr->Apply(TransUnit);
-  Mgr->Apply(TyDesc);
-  Mgr->Apply(IsStatic);
-  Mgr->Apply(IsDefinition);
-  Mgr->Apply(Global);
+/// ApplyToFields - Target the visitor to the fields of the GlobalVariableDesc.
+///
+void GlobalVariableDesc::ApplyToFields(DIVisitor *Visitor) {
+  Visitor->Apply(Context);
+  Visitor->Apply(Name);
+  Visitor->Apply(TransUnit);
+  Visitor->Apply(TyDesc);
+  Visitor->Apply(IsStatic);
+  Visitor->Apply(IsDefinition);
+  Visitor->Apply(Global);
 }
 
 /// TypeString - Return a string used to compose globalnames and labels.
@@ -486,19 +481,19 @@ void GlobalVariableDesc::dump() {
 
 //===----------------------------------------------------------------------===//
 
-/// ApplyToFields - Target the apply manager to the fields of the 
+/// ApplyToFields - Target the visitor to the fields of the
 /// SubprogramDesc.
-void SubprogramDesc::ApplyToFields(DIApplyManager *Mgr) {
-  Mgr->Apply(Context);
-  Mgr->Apply(Name);
-  Mgr->Apply(TransUnit);
-  Mgr->Apply(TyDesc);
-  Mgr->Apply(IsStatic);
-  Mgr->Apply(IsDefinition);
+void SubprogramDesc::ApplyToFields(DIVisitor *Visitor) {
+  Visitor->Apply(Context);
+  Visitor->Apply(Name);
+  Visitor->Apply(TransUnit);
+  Visitor->Apply(TyDesc);
+  Visitor->Apply(IsStatic);
+  Visitor->Apply(IsDefinition);
   
   // FIXME - Temp variable until restructured.
   GlobalVariable *Tmp;
-  Mgr->Apply(Tmp);
+  Visitor->Apply(Tmp);
 }
 
 /// TypeString - Return a string used to compose globalnames and labels.
@@ -541,7 +536,7 @@ DebugInfoDesc *DIDeserializer::Deserialize(GlobalVariable *GV) {
   assert(Slot && "Unknown Tag");
   
   // Deserialize the fields.
-  DIDeserializeAppMgr DRAM(*this, GV);
+  DIDeserializeVisitor DRAM(*this, GV);
   DRAM.ApplyToFields(Slot);
   
   return Slot;
@@ -592,7 +587,7 @@ const StructType *DISerializer::getTagType(DebugInfoDesc *DD) {
     // Add tag field.
     Fields.push_back(Type::UIntTy);
     // Get types of remaining fields.
-    DIGetTypesAppMgr GTAM(*this, Fields);
+    DIGetTypesVisitor GTAM(*this, Fields);
     GTAM.ApplyToFields(DD);
 
     // Construct structured type.
@@ -655,7 +650,7 @@ GlobalVariable *DISerializer::Serialize(DebugInfoDesc *DD) {
   // Add Tag value.
   Elements.push_back(ConstantUInt::get(Type::UIntTy, Tag));
   // Add remaining fields.
-  DISerializeAppMgr SRAM(*this, Elements);
+  DISerializeVisitor SRAM(*this, Elements);
   SRAM.ApplyToFields(DD);
   
   // Set the globals initializer.
@@ -688,13 +683,13 @@ bool DIVerifier::Verify(GlobalVariable *GV) {
   if (markVisited(GV)) return true;
   
   // Get the Tag
-  unsigned Tag = DebugInfoDesc::TagFromGlobal(GV, true);
-  if (Tag == DIInvalid) return false;
+  unsigned Tag = DebugInfoDesc::TagFromGlobal(GV);
+  if (Tag == DIINVALID) return false;
 
   // If a compile unit we need the debug version.
   if (Tag == DI_TAG_compile_unit) {
-    DebugVersion = CompileUnitDesc::DebugVersionFromGlobal(GV, true);
-    if (DebugVersion == DIInvalid) return false;
+    DebugVersion = CompileUnitDesc::DebugVersionFromGlobal(GV);
+    if (DebugVersion == DIINVALID) return false;
   }
 
   // Construct an empty DebugInfoDesc.
@@ -711,7 +706,7 @@ bool DIVerifier::Verify(GlobalVariable *GV) {
   unsigned &Slot = Counts[Tag];
   if (!Slot) {
     // Check the operand count to the field count
-    DICountAppMgr CTAM;
+    DICountVisitor CTAM;
     CTAM.ApplyToFields(DD);
     Slot = CTAM.getCount();
   }
@@ -723,7 +718,7 @@ bool DIVerifier::Verify(GlobalVariable *GV) {
   }
   
   // Check each field for valid type.
-  DIVerifyAppMgr VRAM(*this, GV);
+  DIVerifyVisitor VRAM(*this, GV);
   VRAM.ApplyToFields(DD);
   
   // Release empty DebugInfoDesc.
@@ -810,7 +805,7 @@ MachineDebugInfo::getGlobalVariables(Module &M) {
   // Scan all globals.
   for (unsigned i = 0, N = Globals.size(); i < N; ++i) {
     GlobalVariable *GV = Globals[i];
-    if (DebugInfoDesc::TagFromGlobal(GV, true) == DI_TAG_global_variable) {
+    if (DebugInfoDesc::TagFromGlobal(GV) == DI_TAG_global_variable) {
       GlobalVariableDesc *GVD =
                           static_cast<GlobalVariableDesc *>(DR.Deserialize(GV));
       GlobalVariables.push_back(GVD);

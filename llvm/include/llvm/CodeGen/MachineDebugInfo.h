@@ -11,7 +11,7 @@
 // neutral form that can be used by different debugging schemes.
 //
 // The organization of information is primarily clustered around the source
-// compile units.  The main exception is source line coorespondence where
+// compile units.  The main exception is source line correspondence where
 // inlining may interleave code from various compile units.
 //
 // The following information can be retrieved from the MachineDebugInfo.
@@ -23,7 +23,7 @@
 //  -- Source line coorespondence - A vector of file ID, line#, column# triples.
 //     A DEBUG_LOCATION instruction is generated  by the DAG Legalizer
 //     corresponding to each entry in the source line list.  This allows a debug
-//     emitter to generate labels referenced by degug information tables.
+//     emitter to generate labels referenced by debug information tables.
 //
 //===----------------------------------------------------------------------===//
 
@@ -50,9 +50,12 @@ class StructType;
 
 //===----------------------------------------------------------------------===//
 // Debug info constants.
+
+// Invalid result indicator.
+#define DIINVALID (~0U)
+
 enum {
   LLVMDebugVersion = 1,                 // Current version of debug information.
-  DIInvalid = ~0U,                      // Invalid result indicator.
   
   // DebugInfoDesc type identifying tags.
   // FIXME - Change over with gcc4.
@@ -68,15 +71,15 @@ enum {
 };
 
 //===----------------------------------------------------------------------===//
-/// DIApplyManager - Subclasses of this class apply steps to each of the fields
-/// in the supplied DebugInfoDesc.
-class DIApplyManager {
+/// DIVisitor - Subclasses of this class apply steps to each of the fields in
+/// the supplied DebugInfoDesc.
+class DIVisitor {
 public:
-  DIApplyManager() {}
-  virtual ~DIApplyManager() {}
+  DIVisitor() {}
+  virtual ~DIVisitor() {}
   
   
-  /// ApplyToFields - Target the manager to each field of the debug information
+  /// ApplyToFields - Target the visitor to each field of the debug information
   /// descriptor.
   void ApplyToFields(DebugInfoDesc *DD);
   
@@ -109,8 +112,8 @@ public:
   unsigned getTag()          const { return Tag; }
   
   /// TagFromGlobal - Returns the Tag number from a debug info descriptor
-  /// GlobalVariable.
-  static unsigned TagFromGlobal(GlobalVariable *GV, bool Checking = false);
+  /// GlobalVariable.  Return DIIValid if operand is not an unsigned int.
+  static unsigned TagFromGlobal(GlobalVariable *GV);
 
   /// DescFactory - Create an instance of debug info descriptor based on Tag.
   /// Return NULL if not a recognized Tag.
@@ -125,9 +128,9 @@ public:
   //===--------------------------------------------------------------------===//
   // Subclasses should supply the following virtual methods.
   
-  /// ApplyToFields - Target the apply manager to the fields of the descriptor.
+  /// ApplyToFields - Target the vistor to the fields of the descriptor.
   ///
-  virtual void ApplyToFields(DIApplyManager *Mgr) = 0;
+  virtual void ApplyToFields(DIVisitor *Visitor) = 0;
 
   /// TypeString - Return a string used to compose globalnames and labels.
   ///
@@ -181,13 +184,12 @@ public:
   }
   
   /// DebugVersionFromGlobal - Returns the version number from a compile unit
-  /// GlobalVariable.
-  static unsigned DebugVersionFromGlobal(GlobalVariable *GV,
-                                         bool Checking = false);
+  /// GlobalVariable.  Return DIIValid if operand is not an unsigned int.
+  static unsigned DebugVersionFromGlobal(GlobalVariable *GV);
   
-  /// ApplyToFields - Target the apply manager to the fields of the 
-  /// CompileUnitDesc.
-  virtual void ApplyToFields(DIApplyManager *Mgr);
+  /// ApplyToFields - Target the visitor to the fields of the CompileUnitDesc.
+  ///
+  virtual void ApplyToFields(DIVisitor *Visitor);
 
   /// TypeString - Return a string used to compose globalnames and labels.
   ///
@@ -242,9 +244,9 @@ public:
     return D->getTag() == DI_TAG_global_variable;
   }
   
-  /// ApplyToFields - Target the apply manager to the fields of the 
+  /// ApplyToFields - Target the visitor to the fields of the
   /// GlobalVariableDesc.
-  virtual void ApplyToFields(DIApplyManager *Mgr);
+  virtual void ApplyToFields(DIVisitor *Visitor);
 
   /// TypeString - Return a string used to compose globalnames and labels.
   ///
@@ -295,9 +297,9 @@ public:
     return D->getTag() == DI_TAG_subprogram;
   }
   
-  /// ApplyToFields - Target the apply manager to the fields of the 
-  /// SubprogramDesc.
-  virtual void ApplyToFields(DIApplyManager *Mgr);
+  /// ApplyToFields - Target the visitor to the fields of the  SubprogramDesc.
+  ///
+  virtual void ApplyToFields(DIVisitor *Visitor);
 
   /// TypeString - Return a string used to compose globalnames and labels.
   ///
@@ -453,7 +455,6 @@ public:
 ///
 class MachineDebugInfo : public ImmutablePass {
 private:
-  // Debug indforma
   // Use the same serializer/deserializer/verifier for the module.
   DISerializer SR;
   DIDeserializer DR;
