@@ -538,7 +538,23 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
       }
       LastEmitted = IDEnd;
       
+      char Modifier[2] = { 0, 0 };
+      
       if (HasCurlyBraces) {
+        // If we have curly braces, check for a modifier character.  This
+        // supports syntax like ${0:u}, which correspond to "%u0" in GCC asm.
+        if (*LastEmitted == ':') {
+          ++LastEmitted;    // Consume ':' character.
+          if (*LastEmitted == 0) {
+            std::cerr << "Bad ${:} expression in inline asm string: '" 
+                      << AsmStr << "'\n";
+            exit(1);
+          }
+          
+          Modifier[0] = *LastEmitted;
+          ++LastEmitted;    // Consume modifier character.
+        }
+        
         if (*LastEmitted != '}') {
           std::cerr << "Bad ${} expression in inline asm string: '" 
                     << AsmStr << "'\n";
@@ -553,11 +569,14 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
         exit(1);
       }
       
+      char ExtraCode = 0;  // FIXME:
+      
       // Okay, we finally have an operand number.  Ask the target to print this
       // operand!
       if (CurVariant == -1 || CurVariant == AsmPrinterVariant)
         if (const_cast<AsmPrinter*>(this)->
-                PrintAsmOperand(MI, Val+1, AsmPrinterVariant)) {
+                PrintAsmOperand(MI, Val+1, AsmPrinterVariant,
+                                Modifier[0] ? Modifier : 0)) {
           std::cerr << "Invalid operand found in inline asm: '"
                     << AsmStr << "'\n";
           MI->dump();
@@ -601,7 +620,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
 /// instruction, using the specified assembler variant.  Targets should
 /// overried this to format as appropriate.
 bool AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
-                                 unsigned AsmVariant) {
+                                 unsigned AsmVariant, const char *ExtraCode) {
   // Target doesn't support this yet!
   return true;
 }
