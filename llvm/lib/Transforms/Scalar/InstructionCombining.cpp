@@ -72,7 +72,7 @@ namespace {
     /// the instruction to the work lists because they might get more simplified
     /// now.
     ///
-    void AddUsersToWorkList(Instruction &I) {
+    void AddUsersToWorkList(Value &I) {
       for (Value::use_iterator UI = I.use_begin(), UE = I.use_end();
            UI != UE; ++UI)
         WorkList.push_back(cast<Instruction>(*UI));
@@ -188,6 +188,21 @@ namespace {
       }
     }
 
+    // UpdateValueUsesWith - This method is to be used when an value is
+    // found to be replacable with another preexisting expression or was
+    // updated.  Here we add all uses of I to the worklist, replace all uses of
+    // I with the new value (unless the instruction was just updated), then
+    // return true, so that the inst combiner will know that I was modified.
+    //
+    bool UpdateValueUsesWith(Value *Old, Value *New) {
+      AddUsersToWorkList(*Old);         // Add all modified instrs to worklist
+      if (Old != New)
+        Old->replaceAllUsesWith(New);
+      if (Instruction *I = dyn_cast<Instruction>(Old))
+        WorkList.push_back(I);
+      return true;
+    }
+    
     // EraseInstFromFunction - When dealing with an instruction that has side
     // effects or produces a void value, we can't rely on DCE to delete the
     // instruction.  Instead, visit methods should return the value returned by
@@ -199,7 +214,6 @@ namespace {
       I.eraseFromParent();
       return 0;  // Don't do anything with FI
     }
-
 
   private:
     /// InsertOperandCastBefore - This inserts a cast of V to DestTy before the
@@ -213,6 +227,7 @@ namespace {
     // operators.
     bool SimplifyCommutative(BinaryOperator &I);
 
+    bool SimplifyDemandedBits(Value *V, uint64_t Mask, unsigned Depth = 0);
 
     // FoldOpIntoPhi - Given a binary operator or cast instruction which has a
     // PHI node as operand #0, see if we can fold the instruction into the PHI
@@ -475,6 +490,122 @@ static bool MaskedValueIsZero(Value *V, ConstantIntegral *Mask,
   
   return false;
 }
+
+/// SimplifyDemandedBits - Look at V.  At this point, we know that only the Mask
+/// bits of the result of V are ever used downstream.  If we can use this
+/// information to simplify V, return V and set NewVal to the new value we
+/// should use in V's place.
+bool InstCombiner::SimplifyDemandedBits(Value *V, uint64_t Mask,
+                                        unsigned Depth) {
+  if (!V->hasOneUse()) {    // Other users may use these bits.
+    if (Depth != 0)         // Not at the root.
+      return false;
+    // If this is the root being simplified, allow it to have multiple uses,
+    // just set the Mask to all bits.
+    Mask = V->getType()->getIntegralTypeMask();
+  } else if (Mask == 0) {   // Not demanding any bits from V.
+    return UpdateValueUsesWith(V, UndefValue::get(V->getType()));
+  } else if (Depth == 6) {        // Limit search depth.
+    return false;
+  }
+  
+  Instruction *I = dyn_cast<Instruction>(V);
+  if (!I) return false;        // Only analyze instructions.
+
+  switch (I->getOpcode()) {
+  default: break;
+  case Instruction::And:
+    if (ConstantInt *RHS = dyn_cast<ConstantInt>(I->getOperand(1))) {
+      // Only demanding an intersection of the bits.
+      if (SimplifyDemandedBits(I->getOperand(0), RHS->getRawValue() & Mask,
+                               Depth+1))
+        return true;
+      if (~Mask & RHS->getRawValue()) {
+        // If this is producing any bits that are not needed, simplify the RHS.
+        if (I->getType()->isSigned()) {
+          int64_t Val = Mask & cast<ConstantSInt>(RHS)->getValue();
+          I->setOperand(1, ConstantSInt::get(I->getType(), Val));
+        } else {
+          uint64_t Val = Mask & cast<ConstantUInt>(RHS)->getValue();
+          I->setOperand(1, ConstantUInt::get(I->getType(), Val));
+        }
+        return UpdateValueUsesWith(I, I);
+      }
+    }
+    // Walk the LHS and the RHS.
+    return SimplifyDemandedBits(I->getOperand(0), Mask, Depth+1) ||
+           SimplifyDemandedBits(I->getOperand(1), Mask, Depth+1);
+  case Instruction::Or:
+  case Instruction::Xor:
+    if (ConstantInt *RHS = dyn_cast<ConstantInt>(I->getOperand(1))) {
+      // If none of the [x]or'd in bits are demanded, don't both with the [x]or.
+      if ((Mask & RHS->getRawValue()) == 0)
+        return UpdateValueUsesWith(I, I->getOperand(0));
+      
+      // Otherwise, for an OR, we only demand those bits not set by the OR.
+      if (I->getOpcode() == Instruction::Or)
+        Mask &= ~RHS->getRawValue();
+      return SimplifyDemandedBits(I->getOperand(0), Mask, Depth+1);
+    }
+    // Walk the LHS and the RHS.
+    return SimplifyDemandedBits(I->getOperand(0), Mask, Depth+1) ||
+           SimplifyDemandedBits(I->getOperand(1), Mask, Depth+1);
+  case Instruction::Cast: {
+    const Type *SrcTy = I->getOperand(0)->getType();
+    if (SrcTy == Type::BoolTy)
+      return SimplifyDemandedBits(I->getOperand(0), Mask&1, Depth+1);
+    
+    if (!SrcTy->isInteger()) return false;
+
+    unsigned SrcBits = SrcTy->getPrimitiveSizeInBits();
+    // If this is a sign-extend, treat specially.
+    if (SrcTy->isSigned() &&
+        SrcBits < I->getType()->getPrimitiveSizeInBits()) {
+      // If none of the top bits are demanded, convert this into an unsigned
+      // extend instead of a sign extend.
+      if ((Mask & ((1ULL << SrcBits)-1)) == 0) {
+        // Convert to unsigned first.
+        Value *NewVal;
+        NewVal = new CastInst(I->getOperand(0), SrcTy->getUnsignedVersion(),
+                              I->getOperand(0)->getName(), I);
+        NewVal = new CastInst(I->getOperand(0), I->getType(), I->getName());
+        return UpdateValueUsesWith(I, NewVal);
+      }
+
+      // Otherwise, the high-bits *are* demanded.  This means that the code
+      // implicitly demands computation of the sign bit of the input, make sure
+      // we explicitly include it in Mask.
+      Mask |= 1ULL << (SrcBits-1);
+    }
+    
+    // If this is an extension, the top bits are ignored.
+    Mask &= SrcTy->getIntegralTypeMask();
+    return SimplifyDemandedBits(I->getOperand(0), Mask, Depth+1);
+  }
+  case Instruction::Select:
+    // Simplify the T and F values if they are not demanded.
+    return SimplifyDemandedBits(I->getOperand(2), Mask, Depth+1) ||
+           SimplifyDemandedBits(I->getOperand(1), Mask, Depth+1);
+  case Instruction::Shl:
+    // We only demand the low bits of the input.
+    if (ConstantUInt *SA = dyn_cast<ConstantUInt>(I->getOperand(1)))
+      return SimplifyDemandedBits(I->getOperand(0), Mask >> SA->getValue(), 
+                                  Depth+1);
+    break;
+  case Instruction::Shr:
+    // We only demand the high bits of the input.
+    if (I->getType()->isUnsigned())
+      if (ConstantUInt *SA = dyn_cast<ConstantUInt>(I->getOperand(1))) {
+        Mask <<= SA->getValue();
+        Mask &= I->getType()->getIntegralTypeMask();
+        return SimplifyDemandedBits(I->getOperand(0), Mask, Depth+1);
+      }
+    // FIXME: handle signed shr, demanding the appropriate bits.  If the top
+    // bits aren't demanded, strength reduce to a logical SHR instead.
+    break;
+  }
+  return false;
+}  
 
 // isTrueWhenEqual - Return true if the specified setcondinst instruction is
 // true when both operands are equal...
@@ -1824,6 +1955,11 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
     if (MaskedValueIsZero(Op0, NotAndRHS))
       return ReplaceInstUsesWith(I, Op0);
 
+    // See if we can simplify any instructions used by the LHS whose sole 
+    // purpose is to compute bits we don't care about.
+    if (SimplifyDemandedBits(Op0, AndRHS->getRawValue()))
+      return &I;
+    
     // Optimize a variety of ((val OP C1) & C2) combinations...
     if (isa<BinaryOperator>(Op0) || isa<ShiftInst>(Op0)) {
       Instruction *Op0I = cast<Instruction>(Op0);
@@ -4122,12 +4258,18 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
       return And;
     }
   }
-
+  
   // If this is a cast to bool, turn it into the appropriate setne instruction.
   if (CI.getType() == Type::BoolTy)
     return BinaryOperator::createSetNE(CI.getOperand(0),
                        Constant::getNullValue(CI.getOperand(0)->getType()));
 
+  // See if we can simplify any instructions used by the LHS whose sole 
+  // purpose is to compute bits we don't care about.
+  if (CI.getType()->isInteger() && CI.getOperand(0)->getType()->isIntegral() &&
+      SimplifyDemandedBits(&CI, CI.getType()->getIntegralTypeMask()))
+    return &CI;
+  
   // If casting the result of a getelementptr instruction with no offset, turn
   // this into a cast of the original pointer!
   //
