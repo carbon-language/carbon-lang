@@ -406,20 +406,19 @@ static ConstantInt *SubOne(ConstantInt *C) {
 }
 
 /// MaskedValueIsZero - Return true if 'V & Mask' is known to be zero.  We use
-/// this predicate to simplify operations downstream.  V and Mask are known to
-/// be the same type.
-static bool MaskedValueIsZero(Value *V, ConstantIntegral *Mask, 
-                              unsigned Depth = 0) {
+/// this predicate to simplify operations downstream.  Mask is known to be zero
+/// for bits that V cannot have.
+static bool MaskedValueIsZero(Value *V, uint64_t Mask, unsigned Depth = 0) {
   // Note, we cannot consider 'undef' to be "IsZero" here.  The problem is that
   // we cannot optimize based on the assumption that it is zero without changing
-  // to to an explicit zero.  If we don't change it to zero, other code could
+  // it to be an explicit zero.  If we don't change it to zero, other code could
   // optimized based on the contradictory assumption that it is non-zero.
   // Because instcombine aggressively folds operations with undef args anyway,
   // this won't lose us code quality.
-  if (Mask->isNullValue())
+  if (Mask == 0)
     return true;
   if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(V))
-    return ConstantExpr::getAnd(CI, Mask)->isNullValue();
+    return (CI->getRawValue() & Mask) == 0;
 
   if (Depth == 6) return false;  // Limit search depth.
   
@@ -427,12 +426,9 @@ static bool MaskedValueIsZero(Value *V, ConstantIntegral *Mask,
     switch (I->getOpcode()) {
     case Instruction::And:
       // (X & C1) & C2 == 0   iff   C1 & C2 == 0.
-      if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(I->getOperand(1))) {
-        ConstantIntegral *C1C2 = 
-          cast<ConstantIntegral>(ConstantExpr::getAnd(CI, Mask));
-        if (MaskedValueIsZero(I->getOperand(0), C1C2, Depth+1))
-          return true;
-      }
+      if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(I->getOperand(1)))
+        return MaskedValueIsZero(I->getOperand(0), CI->getRawValue() & Mask,
+                                 Depth+1);
       // If either the LHS or the RHS are MaskedValueIsZero, the result is zero.
       return MaskedValueIsZero(I->getOperand(1), Mask, Depth+1) ||
              MaskedValueIsZero(I->getOperand(0), Mask, Depth+1);
@@ -448,41 +444,34 @@ static bool MaskedValueIsZero(Value *V, ConstantIntegral *Mask,
     case Instruction::Cast: {
       const Type *SrcTy = I->getOperand(0)->getType();
       if (SrcTy == Type::BoolTy)
-        return (Mask->getRawValue() & 1) == 0;
+        return (Mask & 1) == 0;
+      if (!SrcTy->isInteger()) return false;
       
-      if (SrcTy->isInteger()) {
-        // (cast <ty> X to int) & C2 == 0  iff <ty> could not have contained C2.
-        if (SrcTy->isUnsigned() &&                      // Only handle zero ext.
-            ConstantExpr::getCast(Mask, SrcTy)->isNullValue())
-          return true;
-        
-        // If this is a noop cast, recurse.
-        if ((SrcTy->isSigned() && SrcTy->getUnsignedVersion() == I->getType())||
-            SrcTy->getSignedVersion() == I->getType()) {
-          Constant *NewMask =
-          ConstantExpr::getCast(Mask, I->getOperand(0)->getType());
-          return MaskedValueIsZero(I->getOperand(0),
-                                   cast<ConstantIntegral>(NewMask), Depth+1);
-        }
-      }
+      // (cast <ty> X to int) & C2 == 0  iff <ty> could not have contained C2.
+      if (SrcTy->isUnsigned())                      // Only handle zero ext.
+        return MaskedValueIsZero(I->getOperand(0),
+                                 Mask & SrcTy->getIntegralTypeMask(), Depth+1);
+      
+      // If this is a noop or trunc cast, recurse.
+      if (SrcTy->getPrimitiveSizeInBits() >= 
+               I->getType()->getPrimitiveSizeInBits())
+        return MaskedValueIsZero(I->getOperand(0),
+                                 Mask & SrcTy->getIntegralTypeMask(), Depth+1);
       break;
     }
     case Instruction::Shl:
       // (shl X, C1) & C2 == 0   iff   (X & C2 >>u C1) == 0
       if (ConstantUInt *SA = dyn_cast<ConstantUInt>(I->getOperand(1)))
-        return MaskedValueIsZero(I->getOperand(0),
-                    cast<ConstantIntegral>(ConstantExpr::getUShr(Mask, SA)), 
+        return MaskedValueIsZero(I->getOperand(0), Mask >> SA->getValue(), 
                                  Depth+1);
       break;
     case Instruction::Shr:
       // (ushr X, C1) & C2 == 0   iff  (-1 >> C1) & C2 == 0
       if (ConstantUInt *SA = dyn_cast<ConstantUInt>(I->getOperand(1)))
         if (I->getType()->isUnsigned()) {
-          Constant *C1 = ConstantIntegral::getAllOnesValue(I->getType());
-          C1 = ConstantExpr::getShr(C1, SA);
-          C1 = ConstantExpr::getAnd(C1, Mask);
-          if (C1->isNullValue())
-            return true;
+          Mask <<= SA->getValue();
+          Mask &= I->getType()->getIntegralTypeMask();
+          return MaskedValueIsZero(I->getOperand(0), Mask, Depth+1);
         }
       break;
     }
@@ -877,10 +866,9 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
           }
           if (Found) {
             // This is a sign extend if the top bits are known zero.
-            Constant *Mask = ConstantInt::getAllOnesValue(XorLHS->getType());
-            Mask = ConstantExpr::getShl(Mask, 
-                         ConstantInt::get(Type::UByteTy, 64-(TySizeBits-Size)));
-            if (!MaskedValueIsZero(XorLHS, cast<ConstantInt>(Mask)))
+            uint64_t Mask = XorLHS->getType()->getIntegralTypeMask();
+            Mask <<= 64-(TySizeBits-Size);
+            if (!MaskedValueIsZero(XorLHS, Mask))
               Size = 0;  // Not a sign ext, but can't be any others either.
             goto FoundSExt;
           }
@@ -1375,10 +1363,10 @@ Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
       return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
 
   if (I.getType()->isSigned()) {
-    // If the top bits of both operands are zero (i.e. we can prove they are
+    // If the sign bits of both operands are zero (i.e. we can prove they are
     // unsigned inputs), turn this into a udiv.
-    ConstantIntegral *MaskV = ConstantSInt::getMinValue(I.getType());
-    if (MaskedValueIsZero(Op1, MaskV) && MaskedValueIsZero(Op0, MaskV)) {
+    uint64_t Mask = 1ULL << (I.getType()->getPrimitiveSizeInBits()-1);
+    if (MaskedValueIsZero(Op1, Mask) && MaskedValueIsZero(Op0, Mask)) {
       const Type *NTy = Op0->getType()->getUnsignedVersion();
       Instruction *LHS = new CastInst(Op0, NTy, Op0->getName());
       InsertNewInstBefore(LHS, I);
@@ -1430,8 +1418,8 @@ Instruction *InstCombiner::visitRem(BinaryOperator &I) {
    
     // If the top bits of both operands are zero (i.e. we can prove they are
     // unsigned inputs), turn this into a urem.
-    ConstantIntegral *MaskV = ConstantSInt::getMinValue(I.getType());
-    if (MaskedValueIsZero(Op1, MaskV) && MaskedValueIsZero(Op0, MaskV)) {
+    uint64_t Mask = 1ULL << (I.getType()->getPrimitiveSizeInBits()-1);
+    if (MaskedValueIsZero(Op1, Mask) && MaskedValueIsZero(Op0, Mask)) {
       const Type *NTy = Op0->getType()->getUnsignedVersion();
       Instruction *LHS = new CastInst(Op0, NTy, Op0->getName());
       InsertNewInstBefore(LHS, I);
@@ -1888,11 +1876,9 @@ Value *InstCombiner::FoldLogicalPlusAnd(Value *LHS, Value *RHS,
       // is all N is, ignore it.
       unsigned MB, ME;
       if (isRunOfOnes(Mask, MB, ME)) {  // begin/end bit of run, inclusive
-        Constant *Mask = ConstantInt::getAllOnesValue(RHS->getType());
-        Mask = ConstantExpr::getUShr(Mask,
-                                     ConstantInt::get(Type::UByteTy,
-                                                      (64-MB+1)));
-        if (MaskedValueIsZero(RHS, cast<ConstantIntegral>(Mask)))
+        uint64_t Mask = RHS->getType()->getIntegralTypeMask();
+        Mask >>= 64-MB+1;
+        if (MaskedValueIsZero(RHS, Mask))
           break;
       }
     }
@@ -1939,13 +1925,13 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         return BinaryOperator::createAnd(X, ConstantExpr::getAnd(C1, AndRHS));
     }
 
-    if (MaskedValueIsZero(Op0, AndRHS))        // LHS & RHS == 0
+    if (MaskedValueIsZero(Op0, AndRHS->getZExtValue()))      // LHS & RHS == 0
       return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
 
     // If the mask is not masking out any bits, there is no reason to do the
     // and in the first place.
-    ConstantIntegral *NotAndRHS =
-      cast<ConstantIntegral>(ConstantExpr::getNot(AndRHS));
+    uint64_t NotAndRHS =   // ~ANDRHS
+      AndRHS->getZExtValue()^Op0->getType()->getIntegralTypeMask();
     if (MaskedValueIsZero(Op0, NotAndRHS))
       return ReplaceInstUsesWith(I, Op0);
 
@@ -1964,9 +1950,9 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
       case Instruction::Or:
         // (X ^ V) & C2 --> (X & C2) iff (V & C2) == 0
         // (X | V) & C2 --> (X & C2) iff (V & C2) == 0
-        if (MaskedValueIsZero(Op0LHS, AndRHS))
+        if (MaskedValueIsZero(Op0LHS, AndRHS->getZExtValue()))
           return BinaryOperator::createAnd(Op0RHS, AndRHS);
-        if (MaskedValueIsZero(Op0RHS, AndRHS))
+        if (MaskedValueIsZero(Op0RHS, AndRHS->getZExtValue()))
           return BinaryOperator::createAnd(Op0LHS, AndRHS);
 
         // If the mask is only needed on one incoming arm, push it up.
@@ -1979,7 +1965,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
             return BinaryOperator::create(
                        cast<BinaryOperator>(Op0I)->getOpcode(), Op0LHS, NewRHS);
           }
-          if (!isa<Constant>(NotAndRHS) &&
+          if (!isa<Constant>(Op0RHS) &&
               MaskedValueIsZero(Op0RHS, NotAndRHS)) {
             // Not masking anything out for the RHS, move to LHS.
             Instruction *NewLHS = BinaryOperator::createAnd(Op0LHS, AndRHS,
@@ -1993,8 +1979,8 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         break;
       case Instruction::And:
         // (X & V) & C2 --> 0 iff (V & C2) == 0
-        if (MaskedValueIsZero(Op0LHS, AndRHS) ||
-            MaskedValueIsZero(Op0RHS, AndRHS))
+        if (MaskedValueIsZero(Op0LHS, AndRHS->getZExtValue()) ||
+            MaskedValueIsZero(Op0RHS, AndRHS->getZExtValue()))
           return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
         break;
       case Instruction::Add:
@@ -2239,8 +2225,8 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   if (ConstantIntegral *RHS = dyn_cast<ConstantIntegral>(Op1)) {
     // If X is known to only contain bits that already exist in RHS, just
     // replace this instruction with RHS directly.
-    if (MaskedValueIsZero(Op0,
-                          cast<ConstantIntegral>(ConstantExpr::getNot(RHS))))
+    if (MaskedValueIsZero(Op0, 
+                  RHS->getZExtValue()^RHS->getType()->getIntegralTypeMask()))
       return ReplaceInstUsesWith(I, RHS);
 
     ConstantInt *C1 = 0; Value *X = 0;
@@ -2282,7 +2268,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
 
   // (X^C)|Y -> (X|Y)^C iff Y&C == 0
   if (Op0->hasOneUse() && match(Op0, m_Xor(m_Value(A), m_ConstantInt(C1))) &&
-      MaskedValueIsZero(Op1, C1)) {
+      MaskedValueIsZero(Op1, C1->getZExtValue())) {
     Instruction *NOr = BinaryOperator::createOr(A, Op1, Op0->getName());
     Op0->setName("");
     return BinaryOperator::createXor(InsertNewInstBefore(NOr, I), C1);
@@ -2290,7 +2276,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
 
   // Y|(X^C) -> (X|Y)^C iff Y&C == 0
   if (Op1->hasOneUse() && match(Op1, m_Xor(m_Value(A), m_ConstantInt(C1))) &&
-      MaskedValueIsZero(Op0, C1)) {
+      MaskedValueIsZero(Op0, C1->getZExtValue())) {
     Instruction *NOr = BinaryOperator::createOr(A, Op0, Op1->getName());
     Op0->setName("");
     return BinaryOperator::createXor(InsertNewInstBefore(NOr, I), C1);
@@ -2312,18 +2298,18 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
       if ((C2->getRawValue() & (C2->getRawValue()+1)) == 0 && // C2 == 0+1+
           match(A, m_Add(m_Value(V1), m_Value(V2)))) {
         // Add commutes, try both ways.
-        if (V1 == B && MaskedValueIsZero(V2, C2))
+        if (V1 == B && MaskedValueIsZero(V2, C2->getZExtValue()))
           return ReplaceInstUsesWith(I, A);
-        if (V2 == B && MaskedValueIsZero(V1, C2))
+        if (V2 == B && MaskedValueIsZero(V1, C2->getZExtValue()))
           return ReplaceInstUsesWith(I, A);
       }
       // Or commutes, try both ways.
       if ((C1->getRawValue() & (C1->getRawValue()+1)) == 0 &&
           match(B, m_Add(m_Value(V1), m_Value(V2)))) {
         // Add commutes, try both ways.
-        if (V1 == A && MaskedValueIsZero(V2, C1))
+        if (V1 == A && MaskedValueIsZero(V2, C1->getZExtValue()))
           return ReplaceInstUsesWith(I, B);
-        if (V2 == A && MaskedValueIsZero(V1, C1))
+        if (V2 == A && MaskedValueIsZero(V1, C1->getZExtValue()))
           return ReplaceInstUsesWith(I, B);
       }
     }
@@ -3599,7 +3585,8 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
 
   // See if we can turn a signed shr into an unsigned shr.
   if (!isLeftShift && I.getType()->isSigned()) {
-    if (MaskedValueIsZero(Op0, ConstantInt::getMinValue(I.getType()))) {
+    if (MaskedValueIsZero(Op0,
+                          1ULL << (I.getType()->getPrimitiveSizeInBits()-1))) {
       Value *V = InsertCastBefore(Op0, I.getType()->getUnsignedVersion(), I);
       V = InsertNewInstBefore(new ShiftInst(Instruction::Shr, V, Op1,
                                             I.getName()), I);
@@ -4373,7 +4360,8 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
             Constant *Not1 =
               ConstantExpr::getNot(ConstantInt::get(Op0->getType(), 1));
             // cast (X != 0) to int  --> X if X&~1 == 0
-            if (MaskedValueIsZero(Op0, cast<ConstantIntegral>(Not1))) {
+            if (MaskedValueIsZero(Op0, 
+                               cast<ConstantIntegral>(Not1)->getZExtValue())) {
               if (CI.getType() == Op0->getType())
                 return ReplaceInstUsesWith(CI, Op0);
               else
@@ -4415,7 +4403,8 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
             if (Op1C->getRawValue() == 1) {
               Constant *Not1 =
                 ConstantExpr::getNot(ConstantInt::get(Op0->getType(), 1));
-              if (MaskedValueIsZero(Op0, cast<ConstantIntegral>(Not1))) {
+              if (MaskedValueIsZero(Op0, 
+                              cast<ConstantIntegral>(Not1)->getZExtValue())) {
                 if (CI.getType() == Op0->getType())
                   return ReplaceInstUsesWith(CI, Op0);
                 else
