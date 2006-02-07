@@ -80,7 +80,7 @@ struct ExecutionContext {
 // Interpreter - This class represents the entirety of the interpreter.
 //
 class Interpreter : public ExecutionEngine, public InstVisitor<Interpreter> {
-  int ExitCode;                // The exit code to be returned by the lli util
+  GenericValue ExitValue;          // The return value of the called function
   TargetData TD;
   IntrinsicLowering *IL;
 

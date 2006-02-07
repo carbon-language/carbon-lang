@@ -50,10 +50,11 @@ ExecutionEngine *Interpreter::create(Module *M, IntrinsicLowering *IL) {
 //
 Interpreter::Interpreter(Module *M, bool isLittleEndian, bool isLongPointer,
                          IntrinsicLowering *il)
-  : ExecutionEngine(M), ExitCode(0),
+  : ExecutionEngine(M),
     TD("lli", isLittleEndian, isLongPointer ? 8 : 4, isLongPointer ? 8 : 4,
        isLongPointer ? 8 : 4), IL(il) {
 
+  memset(&ExitValue, 0, sizeof(ExitValue));
   setTargetData(TD);
   // Initialize the "backend"
   initializeExecutionEngine();
@@ -100,8 +101,6 @@ Interpreter::runFunction(Function *F,
   // Start executing the function.
   run();
 
-  GenericValue rv;
-  rv.IntVal = ExitCode;
-  return rv;
+  return ExitValue;
 }
 

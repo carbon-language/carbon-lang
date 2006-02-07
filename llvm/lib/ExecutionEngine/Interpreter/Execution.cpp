@@ -553,7 +553,7 @@ void Interpreter::exitCalled(GenericValue GV) {
 
 /// Pop the last stack frame off of ECStack and then copy the result
 /// back into the result variable if we are not returning void. The
-/// result variable may be the ExitCode, or the Value of the calling
+/// result variable may be the ExitValue, or the Value of the calling
 /// CallInst if there was a previous stack frame. This method may
 /// invalidate any ECStack iterators you have. This method also takes
 /// care of switching to the normal destination BB, if we are returning
@@ -566,9 +566,9 @@ void Interpreter::popStackAndReturnValueToCaller (const Type *RetTy,
 
   if (ECStack.empty()) {  // Finished main.  Put result into exit code...
     if (RetTy && RetTy->isIntegral()) {          // Nonvoid return type?
-      ExitCode = Result.IntVal;   // Capture the exit code of the program
+      ExitValue = Result;   // Capture the exit value of the program
     } else {
-      ExitCode = 0;
+      memset(&ExitValue, 0, sizeof(ExitValue));
     }
   } else {
     // If we have a previous stack frame, and we have a previous call,
