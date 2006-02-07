@@ -844,9 +844,8 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
 
     // X + (signbit) --> X ^ signbit
     if (ConstantInt *CI = dyn_cast<ConstantInt>(RHSC)) {
-      unsigned NumBits = CI->getType()->getPrimitiveSizeInBits();
-      uint64_t Val = CI->getRawValue() & (~0ULL >> (64- NumBits));
-      if (Val == (1ULL << (NumBits-1)))
+      uint64_t Val = CI->getRawValue() & CI->getType()->getIntegralTypeMask();
+      if (Val == (1ULL << (CI->getType()->getPrimitiveSizeInBits()-1)))
         return BinaryOperator::createXor(LHS, RHS);
     }
 
@@ -970,7 +969,7 @@ FoundSExt:
 
         // Form a mask of all bits from the lowest bit added through the top.
         uint64_t AddRHSHighBits = ~((AddRHSV & -AddRHSV)-1);
-        AddRHSHighBits &= ~0ULL >> (64-C2->getType()->getPrimitiveSizeInBits());
+        AddRHSHighBits &= C2->getType()->getIntegralTypeMask();
 
         // See if the and mask includes all of these bits.
         uint64_t AddRHSHighBitsAnd = AddRHSHighBits & C2->getRawValue();
@@ -1523,13 +1522,8 @@ Instruction *InstCombiner::visitRem(BinaryOperator &I) {
 
 // isMaxValueMinusOne - return true if this is Max-1
 static bool isMaxValueMinusOne(const ConstantInt *C) {
-  if (const ConstantUInt *CU = dyn_cast<ConstantUInt>(C)) {
-    // Calculate -1 casted to the right type...
-    unsigned TypeBits = C->getType()->getPrimitiveSizeInBits();
-    uint64_t Val = ~0ULL;                // All ones
-    Val >>= 64-TypeBits;                 // Shift out unwanted 1 bits...
-    return CU->getValue() == Val-1;
-  }
+  if (const ConstantUInt *CU = dyn_cast<ConstantUInt>(C))
+    return CU->getValue() == C->getType()->getIntegralTypeMask()-1;
 
   const ConstantSInt *CS = cast<ConstantSInt>(C);
 
@@ -1709,7 +1703,7 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
       uint64_t AndRHSV = cast<ConstantInt>(AndRHS)->getRawValue();
 
       // Clear bits that are not part of the constant.
-      AndRHSV &= ~0ULL >> (64-AndRHS->getType()->getPrimitiveSizeInBits());
+      AndRHSV &= AndRHS->getType()->getIntegralTypeMask();
 
       // If there is only one bit set...
       if (isOneBitSet(cast<ConstantInt>(AndRHS))) {
@@ -2644,8 +2638,7 @@ static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
   Value *Result = Constant::getNullValue(SIntPtrTy);
 
   // Build a mask for high order bits.
-  uint64_t PtrSizeMask = ~0ULL;
-  PtrSizeMask >>= 64-(TD.getPointerSize()*8);
+  uint64_t PtrSizeMask = ~0ULL >> (64-TD.getPointerSize()*8);
 
   for (unsigned i = 1, e = GEP->getNumOperands(); i != e; ++i, ++GTI) {
     Value *Op = GEP->getOperand(i);
@@ -4245,7 +4238,7 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
               CI.getType()->getPrimitiveSizeInBits()) {
       assert(CSrc->getType() != Type::ULongTy &&
              "Cannot have type bigger than ulong!");
-      uint64_t AndValue = ~0ULL>>(64-CSrc->getType()->getPrimitiveSizeInBits());
+      uint64_t AndValue = CSrc->getType()->getIntegralTypeMask();
       Constant *AndOp = ConstantUInt::get(A->getType()->getUnsignedVersion(),
                                           AndValue);
       AndOp = ConstantExpr::getCast(AndOp, A->getType());
