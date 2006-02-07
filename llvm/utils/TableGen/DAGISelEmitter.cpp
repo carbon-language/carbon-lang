@@ -1854,6 +1854,9 @@ private:
   /// tested, and if true, the match fails) [when true] or normal code to emit
   /// [when false].
   std::vector<std::pair<bool, std::string> > &GeneratedCode;
+  /// GeneratedDecl - This is the set of all SDOperand declarations needed for
+  /// the set of patterns for each top-level opcode.
+  std::set<std::string> &GeneratedDecl;
 
   std::string ChainName;
   bool DoReplace;
@@ -1867,12 +1870,18 @@ private:
     if (!S.empty())
       GeneratedCode.push_back(std::make_pair(false, S));
   }
+  void emitDecl(const std::string &S) {
+    assert(!S.empty() && "Invalid declaration");
+    GeneratedDecl.insert(S);
+  }
 public:
   PatternCodeEmitter(DAGISelEmitter &ise, ListInit *preds,
                      TreePatternNode *pattern, TreePatternNode *instr,
-                     std::vector<std::pair<bool, std::string> > &gc, bool dorep)
+                     std::vector<std::pair<bool, std::string> > &gc,
+                     std::set<std::string> &gd,
+                     bool dorep)
   : ISE(ise), Predicates(preds), Pattern(pattern), Instruction(instr),
-    GeneratedCode(gc), DoReplace(dorep), TmpNo(0) {}
+    GeneratedCode(gc), GeneratedDecl(gd), DoReplace(dorep), TmpNo(0) {}
 
   /// EmitMatchCode - Emit a matcher for N, going to the label for PatternNo
   /// if the match fails. At this point, we already know that the opcode for N
@@ -2002,7 +2011,8 @@ public:
         else
           FoundChain = true;
         ChainName = "Chain" + ChainSuffix;
-        emitCode("SDOperand " + ChainName + " = " + RootName +
+        emitDecl(ChainName);
+        emitCode(ChainName + " = " + RootName +
                  ".getOperand(0);");
       }
     }
@@ -2030,7 +2040,8 @@ public:
     }
 
     for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i, ++OpNo) {
-      emitCode("SDOperand " + RootName + utostr(OpNo) + " = " +
+      emitDecl(RootName + utostr(OpNo));
+      emitCode(RootName + utostr(OpNo) + " = " +
                RootName + ".getOperand(" +utostr(OpNo) + ");");
       TreePatternNode *Child = N->getChild(i);
     
@@ -2137,44 +2148,49 @@ public:
         }
         emitCode(CastType + " Tmp" + utostr(ResNo) + "C = (" + CastType + 
                  ")cast<ConstantSDNode>(" + Val + ")->getValue();");
-        emitCode("SDOperand Tmp" + utostr(ResNo) + 
+        emitDecl("Tmp" + utostr(ResNo));
+        emitCode("Tmp" + utostr(ResNo) + 
                  " = CurDAG->getTargetConstant(Tmp" + utostr(ResNo) + 
                  "C, MVT::" + getEnumName(N->getTypeNum(0)) + ");");
       } else if (!N->isLeaf() && N->getOperator()->getName() == "texternalsym"){
         Record *Op = OperatorMap[N->getName()];
         // Transform ExternalSymbol to TargetExternalSymbol
         if (Op && Op->getName() == "externalsym") {
-          emitCode("SDOperand Tmp" + utostr(ResNo) + " = CurDAG->getTarget"
+          emitDecl("Tmp" + utostr(ResNo));
+          emitCode("Tmp" + utostr(ResNo) + " = CurDAG->getTarget"
                    "ExternalSymbol(cast<ExternalSymbolSDNode>(" +
                    Val + ")->getSymbol(), MVT::" +
                    getEnumName(N->getTypeNum(0)) + ");");
         } else {
-          emitCode("SDOperand Tmp" + utostr(ResNo) + " = " + Val + ";");
+          emitDecl("Tmp" + utostr(ResNo));
+          emitCode("Tmp" + utostr(ResNo) + " = " + Val + ";");
         }
       } else if (!N->isLeaf() && N->getOperator()->getName() == "tglobaladdr") {
         Record *Op = OperatorMap[N->getName()];
         // Transform GlobalAddress to TargetGlobalAddress
         if (Op && Op->getName() == "globaladdr") {
-          emitCode("SDOperand Tmp" + utostr(ResNo) + " = CurDAG->getTarget"
+          emitDecl("Tmp" + utostr(ResNo));
+          emitCode("Tmp" + utostr(ResNo) + " = CurDAG->getTarget"
                    "GlobalAddress(cast<GlobalAddressSDNode>(" + Val +
                    ")->getGlobal(), MVT::" + getEnumName(N->getTypeNum(0)) +
                    ");");
         } else {
-          emitCode("SDOperand Tmp" + utostr(ResNo) + " = " + Val + ";");
+          emitDecl("Tmp" + utostr(ResNo));
+          emitCode("Tmp" + utostr(ResNo) + " = " + Val + ";");
         }
       } else if (!N->isLeaf() && N->getOperator()->getName() == "texternalsym"){
-        emitCode("SDOperand Tmp" + utostr(ResNo) + " = " + Val + ";");
+        emitDecl("Tmp" + utostr(ResNo));
+        emitCode("Tmp" + utostr(ResNo) + " = " + Val + ";");
       } else if (!N->isLeaf() && N->getOperator()->getName() == "tconstpool") {
-        emitCode("SDOperand Tmp" + utostr(ResNo) + " = " + Val + ";");
+        emitDecl("Tmp" + utostr(ResNo));
+        emitCode("Tmp" + utostr(ResNo) + " = " + Val + ";");
       } else if (N->isLeaf() && (CP = NodeGetComplexPattern(N, ISE))) {
         std::string Fn = CP->getSelectFunc();
         NumRes = CP->getNumOperands();
-        std::string Code = "SDOperand ";
-        for (unsigned i = 0; i < NumRes - 1; ++i)
-          Code += "Tmp" + utostr(i+ResNo) + ", ";
-        emitCode(Code + "Tmp" + utostr(NumRes - 1 + ResNo) + ";");
+        for (unsigned i = 0; i < NumRes; ++i)
+          emitDecl("Tmp" + utostr(i+ResNo));
 
-        Code = Fn + "(" + Val;
+        std::string Code = Fn + "(" + Val;
         for (unsigned i = 0; i < NumRes; i++)
           Code += ", Tmp" + utostr(i + ResNo);
         emitCheck(Code + ")");
@@ -2185,7 +2201,8 @@ public:
 
         TmpNo = ResNo + NumRes;
       } else {
-        emitCode("SDOperand Tmp" + utostr(ResNo) + " = Select(" + Val + ");");
+        emitDecl("Tmp" + utostr(ResNo));
+        emitCode("Tmp" + utostr(ResNo) + " = Select(" + Val + ");");
       }
       // Add Tmp<ResNo> to VariableMap, so that we don't multiply select this
       // value if used multiple times by this pattern result.
@@ -2198,7 +2215,8 @@ public:
       if (DefInit *DI = dynamic_cast<DefInit*>(N->getLeafValue())) {
         unsigned ResNo = TmpNo++;
         if (DI->getDef()->isSubClassOf("Register")) {
-          emitCode("SDOperand Tmp" + utostr(ResNo) + " = CurDAG->getRegister(" +
+          emitDecl("Tmp" + utostr(ResNo));
+          emitCode("Tmp" + utostr(ResNo) + " = CurDAG->getRegister(" +
                    ISE.getQualifiedName(DI->getDef()) + ", MVT::" +
                    getEnumName(N->getTypeNum(0)) + ");");
           return std::make_pair(1, ResNo);
@@ -2206,7 +2224,8 @@ public:
       } else if (IntInit *II = dynamic_cast<IntInit*>(N->getLeafValue())) {
         unsigned ResNo = TmpNo++;
         assert(N->getExtTypes().size() == 1 && "Multiple types not handled!");
-        emitCode("SDOperand Tmp" + utostr(ResNo) + 
+        emitDecl("Tmp" + utostr(ResNo));
+        emitCode("Tmp" + utostr(ResNo) + 
                  " = CurDAG->getTargetConstant(" + itostr(II->getValue()) +
                  ", MVT::" + getEnumName(N->getTypeNum(0)) + ");");
         return std::make_pair(1, ResNo);
@@ -2236,7 +2255,7 @@ public:
         (isRoot && PatternHasProperty(Pattern, SDNodeInfo::SDNPHasChain, ISE));
 
       if (HasInFlag || NodeHasOutFlag || HasOptInFlag || HasImpInputs)
-        emitCode("SDOperand InFlag = SDOperand(0, 0);");
+        emitDecl("InFlag");
       if (HasOptInFlag)
         emitCode("bool HasOptInFlag = false;");
 
@@ -2289,8 +2308,9 @@ public:
       unsigned NumResults = Inst.getNumResults();    
       unsigned ResNo = TmpNo++;
       if (!isRoot) {
+        emitDecl("Tmp" + utostr(ResNo));
         std::string Code =
-          "SDOperand Tmp" + utostr(ResNo) + " = CurDAG->getTargetNode(" +
+          "Tmp" + utostr(ResNo) + " = CurDAG->getTargetNode(" +
           II.Namespace + "::" + II.TheDef->getName();
         if (N->getTypeNum(0) != MVT::isVoid)
           Code += ", MVT::" + getEnumName(N->getTypeNum(0));
@@ -2309,8 +2329,9 @@ public:
                    utostr(NumResults) + ");");
         }
       } else if (HasChain || NodeHasOutFlag) {
+        emitDecl("Result");
         if (HasOptInFlag) {
-          emitCode("SDOperand Result = SDOperand(0, 0);");
+          emitCode("Result = SDOperand(0, 0);");
           unsigned FlagNo = (unsigned) NodeHasChain + Pattern->getNumChildren();
           emitCode("if (HasOptInFlag)");
           std::string Code = "  Result = CurDAG->getTargetNode(" +
@@ -2352,7 +2373,7 @@ public:
           if (HasChain) Code += ", " + ChainName + ");";
           emitCode(Code);
         } else {
-          std::string Code = "SDOperand Result = CurDAG->getTargetNode(" +
+          std::string Code = "Result = CurDAG->getTargetNode(" +
             II.Namespace + "::" + II.TheDef->getName();
 
           // Output order: results, chain, flags
@@ -2469,7 +2490,8 @@ public:
       assert(N->getNumChildren() == 1 && "node xform should have one child!");
       unsigned OpVal = EmitResultCode(N->getChild(0)).second;
       unsigned ResNo = TmpNo++;
-      emitCode("SDOperand Tmp" + utostr(ResNo) + " = Transform_" + Op->getName()
+      emitDecl("Tmp" + utostr(ResNo));
+      emitCode("Tmp" + utostr(ResNo) + " = Transform_" + Op->getName()
                + "(Tmp" + utostr(OpVal) + ".Val);");
       if (isRoot) {
         emitCode("CodeGenMap[N] = Tmp" +utostr(ResNo) + ";");
@@ -2537,11 +2559,12 @@ private:
               emitCode("InFlag = Select(" + RootName + utostr(OpNo) + ");");
             } else {
               if (!ChainEmitted) {
-                emitCode("SDOperand Chain = CurDAG->getEntryNode();");
+                emitDecl("Chain");
+                emitCode("Chain = CurDAG->getEntryNode();");
                 ChainName = "Chain";
                 ChainEmitted = true;
               }
-              emitCode("SDOperand " + RootName + "CR" + utostr(i) + ";");
+              emitDecl(RootName + "CR" + utostr(i));
               emitCode(RootName + "CR" + utostr(i) +
                        "  = CurDAG->getCopyToReg(" + ChainName +
                        ", CurDAG->getRegister(" + ISE.getQualifiedName(RR) +
@@ -2590,7 +2613,8 @@ private:
           MVT::ValueType RVT = getRegisterValueType(RR, CGT);
           if (RVT != MVT::Flag) {
             if (!ChainEmitted) {
-              emitCode("SDOperand Chain = CurDAG->getEntryNode();");
+              emitDecl("Chain");
+              emitCode("Chain = CurDAG->getEntryNode();");
               ChainEmitted = true;
               ChainName = "Chain";
             }
@@ -2613,10 +2637,11 @@ private:
 /// succeeds.  Returns true if the pattern is not guaranteed to match.
 void DAGISelEmitter::GenerateCodeForPattern(PatternToMatch &Pattern,
                       std::vector<std::pair<bool, std::string> > &GeneratedCode,
+                                        std::set<std::string> &GeneratedDecl,
                                             bool DoReplace) {
   PatternCodeEmitter Emitter(*this, Pattern.getPredicates(),
                              Pattern.getSrcPattern(), Pattern.getDstPattern(),
-                             GeneratedCode, DoReplace);
+                             GeneratedCode, GeneratedDecl, DoReplace);
 
   // Emit the matcher, capturing named arguments in VariableMap.
   bool FoundChain = false;
@@ -2870,13 +2895,16 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
     // cost one is at the start.
     std::stable_sort(Patterns.begin(), Patterns.end(),
                      PatternSortingPredicate(*this));
-    
+
     typedef std::vector<std::pair<bool, std::string> > CodeList;
+    typedef std::set<std::string> DeclSet;
     
     std::vector<std::pair<PatternToMatch*, CodeList> > CodeForPatterns;
+    std::set<std::string> GeneratedDecl;
     for (unsigned i = 0, e = Patterns.size(); i != e; ++i) {
       CodeList GeneratedCode;
-      GenerateCodeForPattern(*Patterns[i], GeneratedCode, OptSlctOrder);
+      GenerateCodeForPattern(*Patterns[i], GeneratedCode, GeneratedDecl,
+                             OptSlctOrder);
       CodeForPatterns.push_back(std::make_pair(Patterns[i], GeneratedCode));
     }
     
@@ -2903,7 +2931,12 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
         exit(1);
       }
     }
-    
+
+    // Print all declarations.
+    for (std::set<std::string>::iterator I = GeneratedDecl.begin(),
+           E = GeneratedDecl.end(); I != E; ++I)
+      OS << "  SDOperand " << *I << ";\n";
+
     // Loop through and reverse all of the CodeList vectors, as we will be
     // accessing them from their logical front, but accessing the end of a
     // vector is more efficient.

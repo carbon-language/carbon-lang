@@ -16,6 +16,7 @@
 
 #include "TableGenBackend.h"
 #include "CodeGenTarget.h"
+#include <set>
 
 namespace llvm {
   class Record;
@@ -405,12 +406,10 @@ struct PatternToMatch {
 /// and emission of the instruction selector.
 ///
 class DAGISelEmitter : public TableGenBackend {
-public:
-  //typedef std::pair<TreePatternNode*, TreePatternNode*> PatternToMatch;
 private:
   RecordKeeper &Records;
   CodeGenTarget Target;
-
+  
   std::map<Record*, SDNodeInfo> SDNodes;
   std::map<Record*, std::pair<Record*, std::string> > SDNodeXForms;
   std::map<Record*, ComplexPattern> ComplexPatterns;
@@ -472,6 +471,7 @@ private:
                                    std::vector<Record*> &InstImpResults);
   void GenerateCodeForPattern(PatternToMatch &Pattern,
                       std::vector<std::pair<bool, std::string> > &GeneratedCode,
+                              std::set<std::string> &GeneratedDecl,
                               bool UseGoto);
   void EmitPatterns(std::vector<std::pair<PatternToMatch*, 
                     std::vector<std::pair<bool, std::string> > > > &Patterns, 
