@@ -980,6 +980,23 @@ PPCTargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
   return BB;
 }
 
+/// getConstraintType - Given a constraint letter, return the type of
+/// constraint it is for this target.
+PPCTargetLowering::ConstraintType 
+PPCTargetLowering::getConstraintType(char ConstraintLetter) const {
+  switch (ConstraintLetter) {
+  default: break;
+  case 'b':
+  case 'r':
+  case 'f':
+  case 'v':
+  case 'y':
+    return C_RegisterClass;
+  }  
+  return TargetLowering::getConstraintType(ConstraintLetter);
+}
+
+
 std::vector<unsigned> PPCTargetLowering::
 getRegForInlineAsmConstraint(const std::string &Constraint) const {
   if (Constraint.size() == 1) {
