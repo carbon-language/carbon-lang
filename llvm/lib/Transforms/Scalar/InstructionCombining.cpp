@@ -563,10 +563,12 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, uint64_t Mask,
       // extend instead of a sign extend.
       if ((Mask & ((1ULL << SrcBits)-1)) == 0) {
         // Convert to unsigned first.
-        Value *NewVal;
+        Instruction *NewVal;
         NewVal = new CastInst(I->getOperand(0), SrcTy->getUnsignedVersion(),
-                              I->getOperand(0)->getName(), I);
-        NewVal = new CastInst(I->getOperand(0), I->getType(), I->getName());
+                              I->getOperand(0)->getName());
+        InsertNewInstBefore(NewVal, *I);
+        NewVal = new CastInst(NewVal, I->getType(), I->getName());
+        InsertNewInstBefore(NewVal, *I);
         return UpdateValueUsesWith(I, NewVal);
       }
 
