@@ -1035,3 +1035,44 @@ getRegForInlineAsmConstraint(const std::string &Constraint) const {
   // Handle explicit register names.
   return TargetLowering::getRegForInlineAsmConstraint(Constraint);
 }
+
+// isOperandValidForConstraint
+bool PPCTargetLowering::
+isOperandValidForConstraint(SDOperand Op, char Letter) {
+  switch (Letter) {
+  default: break;
+  case 'I':
+  case 'J':
+  case 'K':
+  case 'L':
+  case 'M':
+  case 'N':
+  case 'O':
+  case 'P': {
+    if (!isa<ConstantSDNode>(Op)) return false;  // Must be an immediate.
+    unsigned Value = cast<ConstantSDNode>(Op)->getValue();
+    switch (Letter) {
+    default: assert(0 && "Unknown constraint letter!");
+    case 'I':  // "I" is a signed 16-bit constant.
+      return (short)Value == (int)Value;
+    case 'J':  // "J" is a constant with only the high-order 16 bits nonzero.
+    case 'L':  // "L" is a signed 16-bit constant shifted left 16 bits.
+      return (short)Value == 0;
+    case 'K':  // "K" is a constant with only the low-order 16 bits nonzero.
+      return (Value >> 16) == 0;
+    case 'M':  // "M" is a constant that is greater than 31.
+      return Value > 31;
+    case 'N':  // "N" is a positive constant that is an exact power of two.
+      return (int)Value > 0 && isPowerOf2_32(Value);
+    case 'O':  // "O" is the constant zero. 
+      return Value == 0;
+    case 'P':  // "P" is a constant whose negation is a signed 16-bit constant.
+      return (short)-Value == (int)-Value;
+    }
+    break;
+  }
+  }
+  
+  // Handle standard constraint letters.
+  return TargetLowering::isOperandValidForConstraint(Op, Letter);
+}
