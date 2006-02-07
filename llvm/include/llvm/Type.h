@@ -36,6 +36,7 @@
 
 #include "AbstractTypeUser.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/iterator"
 #include <string>
@@ -232,6 +233,14 @@ public:
   /// getSignedVersion - If this is an integer type, return the signed variant
   /// of this type.  For example uint -> int.
   const Type *getSignedVersion() const;
+  
+  /// getIntegralTypeMask - Return a bitmask with ones set for all of the bits
+  /// that can be set by an unsigned version of this type.  This is 0xFF for
+  /// sbyte/ubyte, 0xFFFF for shorts, etc.
+  uint64_t getIntegralTypeMask() const {
+    assert(isIntegral() && "This only works for integral types!");
+    return ~0ULL >> (64-getPrimitiveSizeInBits());
+  }
 
   /// getForwaredType - Return the type that this type has been resolved to if
   /// it has been resolved to anything.  This is used to implement the
