@@ -97,26 +97,29 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
         (I->hasInternalLinkage() || I->hasWeakLinkage() ||
          I->hasLinkOnceLinkage())) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
-      if (forDarwin) {
-        SwitchSection(".data", I);
-        if (I->hasInternalLinkage())
-          O << LCOMMDirective << name << "," << Size << "," << Align;
-        else
+      SwitchSection(".data", I);
+      if (LCOMMDirective != NULL) {
+        if (I->hasInternalLinkage()) {
+          O << LCOMMDirective << name << "," << Size;
+          if (forDarwin)
+            O << "," << (AlignmentIsInBytes ? (1 << Align) : Align);
+        } else
           O << COMMDirective  << name << "," << Size;
       } else {
-        SwitchSection(".local", I);
+        if (I->hasInternalLinkage())
+          O <<"\t.local\t" << name << "\n";
         O << COMMDirective  << name << "," << Size;
         if (COMMDirectiveTakesAlignment)
           O << "," << (AlignmentIsInBytes ? (1 << Align) : Align);
       }
-      O << "\t\t" << CommentString << " '" << I->getName() << "'\n";
+      O << "\t\t" << CommentString << " " << I->getName() << "\n";
     } else {
       switch (I->getLinkage()) {
       case GlobalValue::LinkOnceLinkage:
       case GlobalValue::WeakLinkage:
         if (forDarwin) {
-          O << "\t.globl " << name << '\n'
-            << "\t.weak_definition " << name << '\n';
+          O << "\t.globl " << name << "\n"
+            << "\t.weak_definition " << name << "\n";
           SwitchSection(".section __DATA,__datacoal_nt,coalesced", I);
         } else {
           O << "\t.section\t.llvm.linkonce.d." << name << ",\"aw\",@progbits\n";
@@ -138,8 +141,11 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
       }
 
       EmitAlignment(Align, I);
-      O << name << ":\t\t\t\t" << CommentString << " '" << I->getName()
-        << "'\n";
+      O << name << ":\t\t\t\t" << CommentString << " " << I->getName()
+        << "\n";
+      if (HasDotTypeDotSizeDirective)
+        O << "\t.size " << name << ", " << Size << "\n";
+
       EmitGlobalConstant(C);
       O << '\n';
     }
