@@ -70,7 +70,7 @@ public:
   enum ConstraintPrefix {
     isInput,            // 'x'
     isOutput,           // '=x'
-    isClobber,          // '~x'
+    isClobber           // '~x'
   };
   
   struct ConstraintInfo {
