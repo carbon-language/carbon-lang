@@ -382,3 +382,7 @@ LBB_X_2:
         addl $12, %esp
         ret
 
+//===---------------------------------------------------------------------===//
+
+The x86 backend currently supports dynamic-no-pic. Need to add asm
+printer support for static and PIC.
