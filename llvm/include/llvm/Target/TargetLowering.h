@@ -451,7 +451,7 @@ public:
   
   /// getConstraintType - Given a constraint letter, return the type of
   /// constraint it is for this target.
-  ConstraintType getConstraintType(char ConstraintLetter) const;
+  virtual ConstraintType getConstraintType(char ConstraintLetter) const;
   
   /// getRegForInlineAsmConstraint - Given a constraint letter or register
   /// name (e.g. "r" or "edx"), return a list of registers that can be used to
@@ -460,6 +460,8 @@ public:
   virtual std::vector<unsigned> 
   getRegForInlineAsmConstraint(const std::string &Constraint) const;
   
+  /// isOperandValidForConstraint - Return true if the specified SDOperand is
+  /// valid for the specified target constraint letter.
   virtual bool isOperandValidForConstraint(SDOperand Op, char ConstraintLetter);
   
   //===--------------------------------------------------------------------===//
