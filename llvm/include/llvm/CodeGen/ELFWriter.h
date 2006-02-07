@@ -256,23 +256,23 @@ namespace llvm {
     }
     void outxword(DataBuffer &Output, uint64_t X) {
       if (isLittleEndian) {
-        Output.push_back((X >>  0) & 255);
-        Output.push_back((X >>  8) & 255);
-        Output.push_back((X >> 16) & 255);
-        Output.push_back((X >> 24) & 255);
-        Output.push_back((X >> 32) & 255);
-        Output.push_back((X >> 40) & 255);
-        Output.push_back((X >> 48) & 255);
-        Output.push_back((X >> 56) & 255);
+        Output.push_back(unsigned(X >>  0) & 255);
+        Output.push_back(unsigned(X >>  8) & 255);
+        Output.push_back(unsigned(X >> 16) & 255);
+        Output.push_back(unsigned(X >> 24) & 255);
+        Output.push_back(unsigned(X >> 32) & 255);
+        Output.push_back(unsigned(X >> 40) & 255);
+        Output.push_back(unsigned(X >> 48) & 255);
+        Output.push_back(unsigned(X >> 56) & 255);
       } else {
-        Output.push_back((X >> 56) & 255);
-        Output.push_back((X >> 48) & 255);
-        Output.push_back((X >> 40) & 255);
-        Output.push_back((X >> 32) & 255);
-        Output.push_back((X >> 24) & 255);
-        Output.push_back((X >> 16) & 255);
-        Output.push_back((X >>  8) & 255);
-        Output.push_back((X >>  0) & 255);
+        Output.push_back(unsigned(X >> 56) & 255);
+        Output.push_back(unsigned(X >> 48) & 255);
+        Output.push_back(unsigned(X >> 40) & 255);
+        Output.push_back(unsigned(X >> 32) & 255);
+        Output.push_back(unsigned(X >> 24) & 255);
+        Output.push_back(unsigned(X >> 16) & 255);
+        Output.push_back(unsigned(X >>  8) & 255);
+        Output.push_back(unsigned(X >>  0) & 255);
       }
     }
     void outaddr32(DataBuffer &Output, unsigned X) {
