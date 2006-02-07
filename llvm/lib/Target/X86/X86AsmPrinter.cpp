@@ -105,7 +105,9 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
           O << COMMDirective  << name << "," << Size;
       } else {
         SwitchSection(".local", I);
-        O << COMMDirective  << name << "," << Size << "," << Align;
+        O << COMMDirective  << name << "," << Size;
+        if (COMMDirectiveTakesAlignment)
+          O << "," << (AlignmentIsInBytes ? (1 << Align) : Align);
       }
       O << "\t\t" << CommentString << " '" << I->getName() << "'\n";
     } else {
