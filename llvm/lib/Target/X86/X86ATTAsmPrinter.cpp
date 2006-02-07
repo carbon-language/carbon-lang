@@ -33,12 +33,32 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   EmitConstantPool(MF.getConstantPool());
 
   // Print out labels for the function.
-  SwitchSection("\t.text\n", MF.getFunction());
-  EmitAlignment(4);     // FIXME: This should be parameterized somewhere.
-  if (!MF.getFunction()->hasInternalLinkage())
+  const Function *F = MF.getFunction();
+  switch (F->getLinkage()) {
+  default: assert(0 && "Unknown linkage type!");
+  case Function::InternalLinkage:  // Symbols default to internal.
+    SwitchSection(".text", F);
+    EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
+    break;
+  case Function::ExternalLinkage:
+    SwitchSection(".text", F);
+    EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
     O << "\t.globl\t" << CurrentFnName << "\n";
-  if (HasDotTypeDotSizeDirective)
-    O << "\t.type\t" << CurrentFnName << ", @function\n";
+    break;
+  case Function::WeakLinkage:
+  case Function::LinkOnceLinkage:
+    if (forDarwin) {
+      SwitchSection(".section __TEXT,__textcoal_nt,coalesced,pure_instructions",
+                    F);
+      O << "\t.weak_definition\t" << CurrentFnName << "\n";
+    } else {
+      EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
+      O << "\t.section\t.llvm.linkonce.t." << CurrentFnName
+        << ",\"ax\",@progbits\n";
+      O << "\t.weak " << CurrentFnName << "\n";
+    }
+    break;
+  }
   O << CurrentFnName << ":\n";
 
   // Print out code for the function.
@@ -95,27 +115,24 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     return;
   case MachineOperand::MO_GlobalAddress: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
-    // Darwin block shameless ripped from PowerPCAsmPrinter.cpp
+    bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
+    // Darwin block shameless ripped from PPCAsmPrinter.cpp
     if (forDarwin) {
-      if (!isCallOp) O << '$';
+      if (!isMemOp && !isCallOp) O << '$';
       GlobalValue *GV = MO.getGlobal();
       std::string Name = Mang->getValueName(GV);
-
-      // Dynamically-resolved functions need a stub for the function.  Be
-      // wary however not to output $stub for external functions whose addresses
-      // are taken.  Those should be emitted as $non_lazy_ptr below.
-      Function *F = dyn_cast<Function>(GV);
-      if (F && isCallOp && F->isExternal()) {
-        FnStubs.insert(Name);
-        O << "L" << Name << "$stub";
-      } else if (GV->hasLinkOnceLinkage()) {
-        // Link-once, External, or Weakly-linked global variables need
-        // non-lazily-resolved stubs
-        LinkOnceStubs.insert(Name);
-        O << "L" << Name << "$non_lazy_ptr";
-      } else if (GV->isExternal() || GV->hasWeakLinkage()) {
-        GVStubs.insert(Name);
-        O << "L" << Name << "$non_lazy_ptr";
+      // Link-once, External, or Weakly-linked global variables need
+      // non-lazily-resolved stubs
+      if (GV->isExternal() || GV->hasWeakLinkage() ||
+          GV->hasLinkOnceLinkage()) {
+        // Dynamically-resolved functions need a stub for the function.
+        if (isCallOp && isa<Function>(GV) && cast<Function>(GV)->isExternal()) {
+          FnStubs.insert(Name);
+          O << "L" << Name << "$stub";
+        } else {
+          GVStubs.insert(Name);
+          O << "L" << Name << "$non_lazy_ptr";
+        }
       } else {
         O << Mang->getValueName(GV);
       }
@@ -126,7 +143,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
         O << Offset;
       return;
     }
-    if (!isCallOp) O << '$';
+    if (!isMemOp && !isCallOp) O << '$';
     O << Mang->getValueName(MO.getGlobal());
     int Offset = MO.getOffset();
     if (Offset > 0)
@@ -137,13 +154,14 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   }
   case MachineOperand::MO_ExternalSymbol: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
+    bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     if (isCallOp && forDarwin) {
       std::string Name(GlobalPrefix); Name += MO.getSymbolName();
       FnStubs.insert(Name);
       O << "L" << Name << "$stub";
       return;
     }
-    if (!isCallOp) O << '$';
+    if (!isMemOp && !isCallOp) O << '$';
     O << GlobalPrefix << MO.getSymbolName();
     return;
   }
@@ -197,7 +215,7 @@ void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
   }
 
   if (DispSpec.isGlobalAddress()) {
-    printOperand(MI, Op+3, "call");
+    printOperand(MI, Op+3, "mem");
   } else {
     int DispVal = DispSpec.getImmedValue();
     if (DispVal || (!IndexReg.getReg() && !BaseReg.getReg()))

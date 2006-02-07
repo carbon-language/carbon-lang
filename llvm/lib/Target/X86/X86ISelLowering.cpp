@@ -1876,11 +1876,13 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     // the GlobalAddress must be in the base or index register of the address,
     // not the GV offset field.
     if (getTargetMachine().
-        getSubtarget<X86Subtarget>().getIndirectExternAndWeakGlobals() &&
-        (GV->hasWeakLinkage() || GV->isExternal()))
-      Result = DAG.getLoad(MVT::i32, DAG.getEntryNode(),
-                           DAG.getTargetGlobalAddress(GV, getPointerTy()),
-                           DAG.getSrcValue(NULL));
+        getSubtarget<X86Subtarget>().getIndirectExternAndWeakGlobals()) {
+      if (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
+          (GV->isExternal() && !GV->hasNotBeenReadFromBytecode()))
+        Result = DAG.getLoad(MVT::i32, DAG.getEntryNode(),
+                             DAG.getTargetGlobalAddress(GV, getPointerTy()),
+                             DAG.getSrcValue(NULL));
+    }
     return Result;
   }
   case ISD::VASTART: {

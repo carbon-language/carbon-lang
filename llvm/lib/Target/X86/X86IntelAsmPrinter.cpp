@@ -109,7 +109,7 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
     abort ();
     return;
   case MachineOperand::MO_GlobalAddress: {
-    if (!Modifier || strcmp(Modifier, "call"))
+    if (!Modifier || strcmp(Modifier, "call") || strcmp(Modifier, "mem"))
       O << "OFFSET ";
     O << Mang->getValueName(MO.getGlobal());
     int Offset = MO.getOffset();
@@ -161,7 +161,7 @@ void X86IntelAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
   O << "[";
   bool NeedPlus = false;
   if (BaseReg.getReg()) {
-    printOp(BaseReg, "call");
+    printOp(BaseReg, "mem");
     NeedPlus = true;
   }
 
@@ -176,7 +176,7 @@ void X86IntelAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
   if (DispSpec.isGlobalAddress()) {
     if (NeedPlus)
       O << " + ";
-    printOp(DispSpec, "call");
+    printOp(DispSpec, "mem");
   } else {
     int DispVal = DispSpec.getImmedValue();
     if (DispVal || (!BaseReg.getReg() && !IndexReg.getReg())) {
