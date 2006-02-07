@@ -171,7 +171,16 @@ void *ExecutionEngine::getPointerToGlobal(const GlobalValue *GV) {
     return getPointerToFunction(F);
 
   MutexGuard locked(lock);
-  assert(state.getGlobalAddressMap(locked)[GV] && "Global hasn't had an address allocated yet?");
+  void *p = state.getGlobalAddressMap(locked)[GV];
+  if (p)
+    return p;
+
+  // Global variable might have been added since interpreter started.
+  if (GlobalVariable *GVar =
+          const_cast<GlobalVariable *>(dyn_cast<GlobalVariable>(GV)))
+    EmitGlobalVariable(GVar);
+  else
+    assert("Global hasn't had an address allocated yet!");
   return state.getGlobalAddressMap(locked)[GV];
 }
 
