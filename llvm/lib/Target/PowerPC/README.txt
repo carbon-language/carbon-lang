@@ -279,6 +279,23 @@ instead of
         cmpwi cr0, r7, 0
         bne cr0, LBB_compare_4  ; loopexit
 
+FreeBench/mason has a basic block that looks like this:
+
+         %tmp.130 = seteq int %p.0__, 5          ; <bool> [#uses=1]
+         %tmp.134 = seteq int %p.1__, 6          ; <bool> [#uses=1]
+         %tmp.139 = seteq int %p.2__, 12         ; <bool> [#uses=1]
+         %tmp.144 = seteq int %p.3__, 13         ; <bool> [#uses=1]
+         %tmp.149 = seteq int %p.4__, 14         ; <bool> [#uses=1]
+         %tmp.154 = seteq int %p.5__, 15         ; <bool> [#uses=1]
+         %bothcond = and bool %tmp.134, %tmp.130         ; <bool> [#uses=1]
+         %bothcond123 = and bool %bothcond, %tmp.139             ; <bool>
+         %bothcond124 = and bool %bothcond123, %tmp.144          ; <bool>
+         %bothcond125 = and bool %bothcond124, %tmp.149          ; <bool>
+         %bothcond126 = and bool %bothcond125, %tmp.154          ; <bool>
+         br bool %bothcond126, label %shortcirc_next.5, label %else.0
+
+This is a particularly important case where handling CRs better will help.
+
 ===-------------------------------------------------------------------------===
 
 Simple IPO for argument passing, change:
