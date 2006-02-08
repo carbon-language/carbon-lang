@@ -15,121 +15,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "bsel"
 #include "PPC.h"
 #include "PPCInstrBuilder.h"
 #include "PPCInstrInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/Support/Debug.h"
 #include <map>
 using namespace llvm;
 
 namespace {
-  struct BSel : public MachineFunctionPass {
+  struct PPCBSel : public MachineFunctionPass {
     // OffsetMap - Mapping between BB and byte offset from start of function
     std::map<MachineBasicBlock*, unsigned> OffsetMap;
 
-    /// bytesForOpcode - A convenience function for totalling up the number of
-    /// bytes in a basic block.
-    ///
-    static unsigned bytesForOpcode(unsigned opcode) {
-      switch (opcode) {
-      case PPC::COND_BRANCH:
-        // while this will be 4 most of the time, if we emit 12 it is just a
-        // minor pessimization that saves us from having to worry about
-        // keeping the offsets up to date later when we emit long branch glue.
-        return 12;
-      case PPC::IMPLICIT_DEF_GPR: // no asm emitted
-      case PPC::IMPLICIT_DEF_F4: // no asm emitted
-      case PPC::IMPLICIT_DEF_F8: // no asm emitted
-        return 0;
-      default:
-        break;
-      }
-      return 4; // PowerPC instructions are all 4 bytes
-    }
-
-    virtual bool runOnMachineFunction(MachineFunction &Fn) {
-      // Running total of instructions encountered since beginning of function
-      unsigned ByteCount = 0;
-
-      // For each MBB, add its offset to the offset map, and count up its
-      // instructions
-      for (MachineFunction::iterator MFI = Fn.begin(), E = Fn.end(); MFI != E;
-           ++MFI) {
-        MachineBasicBlock *MBB = MFI;
-        OffsetMap[MBB] = ByteCount;
-
-        for (MachineBasicBlock::iterator MBBI = MBB->begin(), EE = MBB->end();
-             MBBI != EE; ++MBBI)
-          ByteCount += bytesForOpcode(MBBI->getOpcode());
-      }
-
-      // We're about to run over the MBB's again, so reset the ByteCount
-      ByteCount = 0;
-
-      // For each MBB, find the conditional branch pseudo instructions, and
-      // calculate the difference between the target MBB and the current ICount
-      // to decide whether or not to emit a short or long branch.
-      //
-      // short branch:
-      // bCC .L_TARGET_MBB
-      //
-      // long branch:
-      // bInverseCC $PC+8
-      // b .L_TARGET_MBB
-      // b .L_FALLTHROUGH_MBB
-
-      for (MachineFunction::iterator MFI = Fn.begin(), E = Fn.end(); MFI != E;
-           ++MFI) {
-        MachineBasicBlock *MBB = MFI;
-
-        for (MachineBasicBlock::iterator MBBI = MBB->begin(), EE = MBB->end();
-             MBBI != EE; ++MBBI) {
-          // We may end up deleting the MachineInstr that MBBI points to, so
-          // remember its opcode now so we can refer to it after calling erase()
-          unsigned OpcodeToReplace = MBBI->getOpcode();
-
-          if (OpcodeToReplace == PPC::COND_BRANCH) {
-            MachineBasicBlock::iterator MBBJ = MBBI;
-            ++MBBJ;
-
-            // condbranch operands:
-            // 0. CR0 register
-            // 1. bc opcode
-            // 2. target MBB
-            // 3. fallthrough MBB
-            MachineBasicBlock *trueMBB =
-              MBBI->getOperand(2).getMachineBasicBlock();
-            MachineBasicBlock *falseMBB =
-              MBBI->getOperand(3).getMachineBasicBlock();
-
-            int Displacement = OffsetMap[trueMBB] - ByteCount;
-            unsigned Opcode = MBBI->getOperand(1).getImmedValue();
-            unsigned CRReg = MBBI->getOperand(0).getReg();
-            unsigned Inverted = PPCInstrInfo::invertPPCBranchOpcode(Opcode);
-
-            if (Displacement >= -32768 && Displacement <= 32767) {
-              BuildMI(*MBB, MBBJ, Opcode, 2).addReg(CRReg).addMBB(trueMBB);
-            } else {
-              BuildMI(*MBB, MBBJ, Inverted, 2).addReg(CRReg).addSImm(8);
-              BuildMI(*MBB, MBBJ, PPC::B, 1).addMBB(trueMBB);
-              BuildMI(*MBB, MBBJ, PPC::B, 1).addMBB(falseMBB);
-            }
-
-            // Erase the psuedo COND_BRANCH instruction, and then back up the
-            // iterator so that when the for loop increments it, we end up in
-            // the correct place rather than iterating off the end.
-            MBB->erase(MBBI);
-            MBBI = --MBBJ;
-          }
-          ByteCount += bytesForOpcode(OpcodeToReplace);
-        }
-      }
-
-      OffsetMap.clear();
-      return true;
-    }
+    virtual bool runOnMachineFunction(MachineFunction &Fn);
 
     virtual const char *getPassName() const {
       return "PowerPC Branch Selection";
@@ -141,5 +39,117 @@ namespace {
 /// Pass
 ///
 FunctionPass *llvm::createPPCBranchSelectionPass() {
-  return new BSel();
+  return new PPCBSel();
 }
+
+/// getNumBytesForInstruction - Return the number of bytes of code the specified
+/// instruction may be.  This returns the maximum number of bytes.
+///
+static unsigned getNumBytesForInstruction(MachineInstr *MI) {
+  switch (MI->getOpcode()) {
+  case PPC::COND_BRANCH:
+    // while this will be 4 most of the time, if we emit 12 it is just a
+    // minor pessimization that saves us from having to worry about
+    // keeping the offsets up to date later when we emit long branch glue.
+    return 12;
+  case PPC::IMPLICIT_DEF_GPR: // no asm emitted
+  case PPC::IMPLICIT_DEF_F4: // no asm emitted
+  case PPC::IMPLICIT_DEF_F8: // no asm emitted
+    return 0;
+  case PPC::INLINEASM:    // Inline Asm: Variable size.
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
+      if (MI->getOperand(i).isExternalSymbol()) {
+        const char *AsmStr = MI->getOperand(i).getSymbolName();
+        // Count the number of newline's in the asm string.
+        unsigned NumInstrs = 0;
+        for (; *AsmStr; ++AsmStr)
+          NumInstrs += *AsmStr == '\n';
+        return NumInstrs*4;
+      }
+    assert(0 && "INLINEASM didn't have format string??");
+  default:
+    return 4; // PowerPC instructions are all 4 bytes
+  }
+}
+
+
+bool PPCBSel::runOnMachineFunction(MachineFunction &Fn) {
+  // Running total of instructions encountered since beginning of function
+  unsigned ByteCount = 0;
+  
+  // For each MBB, add its offset to the offset map, and count up its
+  // instructions
+  for (MachineFunction::iterator MFI = Fn.begin(), E = Fn.end(); MFI != E;
+       ++MFI) {
+    MachineBasicBlock *MBB = MFI;
+    OffsetMap[MBB] = ByteCount;
+    
+    for (MachineBasicBlock::iterator MBBI = MBB->begin(), EE = MBB->end();
+         MBBI != EE; ++MBBI)
+      ByteCount += getNumBytesForInstruction(MBBI);
+  }
+  
+  // We're about to run over the MBB's again, so reset the ByteCount
+  ByteCount = 0;
+  
+  // For each MBB, find the conditional branch pseudo instructions, and
+  // calculate the difference between the target MBB and the current ICount
+  // to decide whether or not to emit a short or long branch.
+  //
+  // short branch:
+  // bCC .L_TARGET_MBB
+  //
+  // long branch:
+  // bInverseCC $PC+8
+  // b .L_TARGET_MBB
+  // b .L_FALLTHROUGH_MBB
+  for (MachineFunction::iterator MFI = Fn.begin(), E = Fn.end(); MFI != E;
+       ++MFI) {
+    MachineBasicBlock *MBB = MFI;
+    
+    for (MachineBasicBlock::iterator MBBI = MBB->begin(), EE = MBB->end();
+         MBBI != EE; ++MBBI) {
+      // We may end up deleting the MachineInstr that MBBI points to, so
+      // remember its opcode now so we can refer to it after calling erase()
+      unsigned ByteSize = getNumBytesForInstruction(MBBI);
+      if (MBBI->getOpcode() == PPC::COND_BRANCH) {
+        MachineBasicBlock::iterator MBBJ = MBBI;
+        ++MBBJ;
+        
+        // condbranch operands:
+        // 0. CR0 register
+        // 1. bc opcode
+        // 2. target MBB
+        // 3. fallthrough MBB
+        MachineBasicBlock *trueMBB =
+          MBBI->getOperand(2).getMachineBasicBlock();
+        MachineBasicBlock *falseMBB =
+          MBBI->getOperand(3).getMachineBasicBlock();
+        
+        int Displacement = OffsetMap[trueMBB] - ByteCount;
+        unsigned Opcode = MBBI->getOperand(1).getImmedValue();
+        unsigned CRReg = MBBI->getOperand(0).getReg();
+        unsigned Inverted = PPCInstrInfo::invertPPCBranchOpcode(Opcode);
+        
+        if (Displacement >= -32768 && Displacement <= 32767) {
+          BuildMI(*MBB, MBBJ, Opcode, 2).addReg(CRReg).addMBB(trueMBB);
+        } else {
+          BuildMI(*MBB, MBBJ, Inverted, 2).addReg(CRReg).addSImm(8);
+          BuildMI(*MBB, MBBJ, PPC::B, 1).addMBB(trueMBB);
+          BuildMI(*MBB, MBBJ, PPC::B, 1).addMBB(falseMBB);
+        }
+        
+        // Erase the psuedo COND_BRANCH instruction, and then back up the
+        // iterator so that when the for loop increments it, we end up in
+        // the correct place rather than iterating off the end.
+        MBB->erase(MBBI);
+        MBBI = --MBBJ;
+      }
+      ByteCount += ByteSize;
+    }
+  }
+  
+  OffsetMap.clear();
+  return true;
+}
+
