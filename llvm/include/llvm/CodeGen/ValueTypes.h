@@ -17,6 +17,7 @@
 #define LLVM_CODEGEN_VALUETYPES_H
 
 #include <cassert>
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
   class Type;
@@ -67,7 +68,7 @@ namespace MVT {  // MVT = Machine Value Types
   static inline bool isVector(ValueType VT) {
     return (VT >= v16i8 && VT <= v2f64);
   }
-
+  
   /// getVectorType - Returns the ValueType that represents a vector NumElements
   /// in length, where each element is of type VT.  If there is no ValueType
   /// that represents this vector, a ValueType of Other is returned.
@@ -106,6 +107,19 @@ namespace MVT {  // MVT = Machine Value Types
     case MVT::v4f32:
     case MVT::v2f64: return 128;
     }
+  }
+  
+  /// getIntVTBitMask - Return an integer with 1's every place there are bits
+  /// in the specified integer value type.
+  static inline uint64_t getIntVTBitMask(ValueType VT) {
+    assert(isInteger(VT) && !isVector(VT) && "Only applies to int scalars!");
+    return ~0ULL >> (64-getSizeInBits(VT));
+  }
+  /// getIntVTSignBit - Return an integer with a 1 in the position of the sign
+  /// bit for the specified integer value type.
+  static inline uint64_t getIntVTSignBit(ValueType VT) {
+    assert(isInteger(VT) && !isVector(VT) && "Only applies to int scalars!");
+    return 1ULL << (getSizeInBits(VT)-1);
   }
 
   /// MVT::getValueTypeString - This function returns value type as a string,
