@@ -1,5 +1,6 @@
 ; Verify debugger intrinsics are ignored or accepted.
 ; RUN: llvm-as < %s | llc
+; XFAIL: *
 
 ;; Debugger type declarations
 %lldb.compile_unit = type { uint, ushort, ushort, sbyte*, sbyte*, sbyte*, {}* }
