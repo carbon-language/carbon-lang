@@ -161,6 +161,14 @@ http://gcc.gnu.org/ml/gcc-patches/2004-08/msg02011.html
 
 Combine: a = sin(x), b = cos(x) into a,b = sincos(x).
 
+Expand these to calls of sin/cos and stores:
+      double sincos(double x, double *sin, double *cos);
+      float sincosf(float x, float *sin, float *cos);
+      long double sincosl(long double x, long double *sin, long double *cos);
+
+Doing so could allow SROA of the destination pointers.  See also:
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=17687
+
 //===---------------------------------------------------------------------===//
 
 The instruction selector sometimes misses folding a load into a compare.  The
@@ -386,3 +394,16 @@ LBB_X_2:
 
 The x86 backend currently supports dynamic-no-pic. Need to add asm
 printer support for static and PIC.
+
+//===---------------------------------------------------------------------===//
+
+We should generate bts/btr/etc instructions on targets where they are cheap or
+when codesize is important.  e.g., for:
+
+void setbit(int *target, int bit) {
+    *target |= (1 << bit);
+}
+void clearbit(int *target, int bit) {
+    *target &= ~(1 << bit);
+}
+
