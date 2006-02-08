@@ -246,8 +246,7 @@ namespace {
     DarwinDwarfWriter DW;
 
     DarwinAsmPrinter(std::ostream &O, TargetMachine &TM)
-      : PPCAsmPrinter(O, TM), DW(O, this)      
-      {
+      : PPCAsmPrinter(O, TM), DW(O, this) {
       CommentString = ";";
       GlobalPrefix = "_";
       PrivateGlobalPrefix = "L";     // Marker for constant pool idxs
@@ -258,6 +257,7 @@ namespace {
       LCOMMDirective = "\t.lcomm\t";
       StaticCtorsSection = ".mod_init_func";
       StaticDtorsSection = ".mod_term_func";
+      InlineAsmStart = InlineAsmEnd = "";  // Don't use #APP/#NO_APP
     }
 
     virtual const char *getPassName() const {

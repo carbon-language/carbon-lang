@@ -60,6 +60,7 @@ bool X86SharedAsmPrinter::doInitialization(Module &M) {
     forDarwin = true;
     StaticCtorsSection = ".mod_init_func";
     StaticDtorsSection = ".mod_term_func";
+    InlineAsmStart = InlineAsmEnd = "";  // Don't use #APP/#NO_APP
     break;
   case X86Subtarget::isCygwin:
     GlobalPrefix = "_";
