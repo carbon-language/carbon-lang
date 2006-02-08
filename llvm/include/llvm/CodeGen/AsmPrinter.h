@@ -86,6 +86,11 @@ namespace llvm {
     const char *FunctionAddrPrefix;       // Defaults to ""
     const char *FunctionAddrSuffix;       // Defaults to ""
 
+    /// InlineAsmStart/End - If these are nonempty, they contain a directive to
+    /// emit before and after an inline assmebly statement.
+    const char *InlineAsmStart;           // Defaults to "#APP\n"
+    const char *InlineAsmEnd;             // Defaults to "#NO_APP\n"
+    
     //===--- Data Emission Directives -------------------------------------===//
 
     /// ZeroDirective - this should be set to the directive used to get some

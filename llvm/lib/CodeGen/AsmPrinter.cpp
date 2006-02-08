@@ -32,6 +32,8 @@ AsmPrinter::AsmPrinter(std::ostream &o, TargetMachine &tm)
   GlobalVarAddrSuffix(""),
   FunctionAddrPrefix(""),
   FunctionAddrSuffix(""),
+  InlineAsmStart("#APP\n"),
+  InlineAsmEnd("#NO_APP\n"),
   ZeroDirective("\t.zero\t"),
   AsciiDirective("\t.ascii\t"),
   AscizDirective("\t.asciz\t"),
@@ -482,6 +484,7 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
 /// printInlineAsm - This method formats and prints the specified machine
 /// instruction that is an inline asm.
 void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
+  O << InlineAsmStart;
   unsigned NumOperands = MI->getNumOperands();
   
   // Count the number of register definitions.
@@ -613,7 +616,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
       break;
     }
   }
-  O << "\n";
+  O << "\n" << InlineAsmEnd;
 }
 
 /// PrintAsmOperand - Print the specified operand of MI, an INLINEASM
