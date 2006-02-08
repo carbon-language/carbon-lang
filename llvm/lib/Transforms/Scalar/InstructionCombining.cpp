@@ -60,6 +60,7 @@ namespace {
   Statistic<> NumCombined ("instcombine", "Number of insts combined");
   Statistic<> NumConstProp("instcombine", "Number of constant folds");
   Statistic<> NumDeadInst ("instcombine", "Number of dead inst eliminated");
+  Statistic<> NumDeadStore("instcombine", "Number of dead stores eliminated");
   Statistic<> NumSunkInst ("instcombine", "Number of instructions sunk");
 
   class InstCombiner : public FunctionPass,
@@ -1923,6 +1924,11 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   if (Op0 == Op1)
     return ReplaceInstUsesWith(I, Op1);
 
+  // See if we can simplify any instructions used by the LHS whose sole 
+  // purpose is to compute bits we don't care about.
+  if (SimplifyDemandedBits(&I, I.getType()->getIntegralTypeMask()))
+    return &I;
+  
   if (ConstantIntegral *AndRHS = dyn_cast<ConstantIntegral>(Op1)) {
     // and X, -1 == X
     if (AndRHS->isAllOnesValue())
@@ -1947,11 +1953,6 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
     if (MaskedValueIsZero(Op0, NotAndRHS))
       return ReplaceInstUsesWith(I, Op0);
 
-    // See if we can simplify any instructions used by the LHS whose sole 
-    // purpose is to compute bits we don't care about.
-    if (SimplifyDemandedBits(Op0, AndRHS->getRawValue()))
-      return &I;
-    
     // Optimize a variety of ((val OP C1) & C2) combinations...
     if (isa<BinaryOperator>(Op0) || isa<ShiftInst>(Op0)) {
       Instruction *Op0I = cast<Instruction>(Op0);
@@ -5898,13 +5899,37 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
   Value *Ptr = SI.getOperand(1);
 
   if (isa<UndefValue>(Ptr)) {     // store X, undef -> noop (even if volatile)
-    removeFromWorkList(&SI);
-    SI.eraseFromParent();
+    EraseInstFromFunction(SI);
     ++NumCombined;
     return 0;
   }
 
-  if (SI.isVolatile()) return 0;  // Don't hack volatile loads.
+  // Do really simple DSE, to catch cases where there are several consequtive
+  // stores to the same location, separated by a few arithmetic operations. This
+  // situation often occurs with bitfield accesses.
+  BasicBlock::iterator BBI = &SI;
+  for (unsigned ScanInsts = 6; BBI != SI.getParent()->begin() && ScanInsts;
+       --ScanInsts) {
+    --BBI;
+    
+    if (StoreInst *PrevSI = dyn_cast<StoreInst>(BBI)) {
+      // Prev store isn't volatile, and stores to the same location?
+      if (!PrevSI->isVolatile() && PrevSI->getOperand(1) == SI.getOperand(1)) {
+        ++NumDeadStore;
+        ++BBI;
+        EraseInstFromFunction(*PrevSI);
+        continue;
+      }
+      break;
+    }
+    
+    // Don't skip over loads or things that can modify memory.
+    if (BBI->mayWriteToMemory() || isa<LoadInst>(BBI))
+      break;
+  }
+  
+  
+  if (SI.isVolatile()) return 0;  // Don't hack volatile stores.
 
   // store X, null    -> turns into 'unreachable' in SimplifyCFG
   if (isa<ConstantPointerNull>(Ptr)) {
@@ -5919,8 +5944,7 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
 
   // store undef, Ptr -> noop
   if (isa<UndefValue>(Val)) {
-    removeFromWorkList(&SI);
-    SI.eraseFromParent();
+    EraseInstFromFunction(SI);
     ++NumCombined;
     return 0;
   }
@@ -5938,7 +5962,7 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
   
   // If this store is the last instruction in the basic block, and if the block
   // ends with an unconditional branch, try to move it to the successor block.
-  BasicBlock::iterator BBI = &SI; ++BBI;
+  BBI = &SI; ++BBI;
   if (BranchInst *BI = dyn_cast<BranchInst>(BBI))
     if (BI->isUnconditional()) {
       // Check to see if the successor block has exactly two incoming edges.  If
@@ -5990,10 +6014,8 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
                                               OtherStore->isVolatile()), *BBI);
 
             // Nuke the old stores.
-            removeFromWorkList(&SI);
-            removeFromWorkList(OtherStore);
-            SI.eraseFromParent();
-            OtherStore->eraseFromParent();
+            EraseInstFromFunction(SI);
+            EraseInstFromFunction(*OtherStore);
             ++NumCombined;
             return 0;
           }
