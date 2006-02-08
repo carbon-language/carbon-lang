@@ -36,6 +36,12 @@
 #  -cvstag          Check out a specific CVS tag to build LLVM (useful for
 #                   testing release branches)
 #  -target          Specify the target triplet
+#  -cflags          Next argument specifies that C compilation options that
+#                   override the default.
+#  -cxxflags        Next argument specifies that C++ compilation options that
+#                   override the default.
+#  -ldflags         Next argument specifies that linker options that override
+#                   the default.
 #
 #  ---------------- Options to configure llvm-test ----------------------------
 #  -spec2000path    Path to the benchspec directory in the SPEC 2000 distro
@@ -298,6 +304,15 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   if (/^-cvstag/)          { $CVSCOOPT .= " -r $ARGV[0]"; shift; next; }
   if (/^-target/)          {
     $CONFIGUREARGS .= " --target=$ARGV[0]"; shift; next;
+  }
+  if (/^-cflags/)          {
+    $MAKEOPTS = "$MAKEOPTS C.Flags=\'$ARGV[0]\'"; shift; next;
+  }
+  if (/^-cxxflags/)        {
+    $MAKEOPTS = "$MAKEOPTS CXX.Flags=\'$ARGV[0]\'"; shift; next;
+  }
+  if (/^-ldflags/)         {
+    $MAKEOPTS = "$MAKEOPTS LD.Flags=\'$ARGV[0]\'"; shift; next;
   }
   if (/^-noexternals$/)    { $NOEXTERNALS = 1; next; }
   if (/^-nodejagnu$/)      { $NODEJAGNU = 1; next; }
