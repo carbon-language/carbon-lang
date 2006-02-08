@@ -411,3 +411,19 @@ void clearbit(int *target, int bit) {
     *target &= ~(1 << bit);
 }
 
+//===---------------------------------------------------------------------===//
+
+Easy: Global addresses are not always allowed as immediates.  For this:
+
+int dst = 0; int *ptr = 0;
+void foo() { ptr = &dst; }
+
+we get this:
+
+_foo:
+        movl $_dst, %eax
+        movl %eax, _ptr
+        ret
+
+When: "movl $_dst, _ptr" is sufficient.
+
