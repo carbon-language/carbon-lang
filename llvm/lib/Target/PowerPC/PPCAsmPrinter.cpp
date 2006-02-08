@@ -422,6 +422,15 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
       O << ", " << (unsigned int)SH << "\n";
       return;
     }
+  } else if (MI->getOpcode() == PPC::OR4 || MI->getOpcode() == PPC::OR8) {
+    if (MI->getOperand(1).getReg() == MI->getOperand(2).getReg()) {
+      O << "mr ";
+      printOperand(MI, 0);
+      O << ", ";
+      printOperand(MI, 1);
+      O << "\n";
+      return;
+    }
   }
 
   if (printInstruction(MI))
