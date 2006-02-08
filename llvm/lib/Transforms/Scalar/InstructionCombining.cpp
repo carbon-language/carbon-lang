@@ -464,7 +464,7 @@ static uint64_t ComputeMaskedNonZeroBits(Value *V, uint64_t Mask,
       // (shl X, C1) & C2 == 0   iff   (X & C2 >>u C1) == 0
       if (ConstantUInt *SA = dyn_cast<ConstantUInt>(I->getOperand(1)))
         return ComputeMaskedNonZeroBits(I->getOperand(0),Mask >> SA->getValue(), 
-                                        Depth+1);
+                                        Depth+1) << SA->getValue();
       break;
     case Instruction::Shr:
       // (ushr X, C1) & C2 == 0   iff  (-1 >> C1) & C2 == 0
@@ -472,7 +472,8 @@ static uint64_t ComputeMaskedNonZeroBits(Value *V, uint64_t Mask,
         if (I->getType()->isUnsigned()) {
           Mask <<= SA->getValue();
           Mask &= I->getType()->getIntegralTypeMask();
-          return ComputeMaskedNonZeroBits(I->getOperand(0), Mask, Depth+1);
+          return ComputeMaskedNonZeroBits(I->getOperand(0), Mask, Depth+1)
+                      >> SA->getValue();
         }
       break;
     }
