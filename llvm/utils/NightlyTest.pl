@@ -22,7 +22,6 @@
 #  -nodejagnu       Do not run feature or regression tests
 #  -parallel        Run two parallel jobs with GNU Make.
 #  -release         Build an LLVM Release version
-#  -pedantic        Enable additional GCC warnings to detect possible errors.
 #  -enable-llcbeta  Enable testing of beta features in llc.
 #  -disable-llc     Disable LLC tests in the nightly tester.
 #  -disable-jit     Disable JIT tests in the nightly tester.
@@ -280,10 +279,6 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   if (/^-norunningtests$/) { $NORUNNINGTESTS = 1; next; }
   if (/^-parallel$/)       { $MAKEOPTS = "$MAKEOPTS -j2 -l3.0"; next; }
   if (/^-release$/)        { $MAKEOPTS = "$MAKEOPTS ENABLE_OPTIMIZED=1"; next; }
-  if (/^-pedantic$/)       { 
-      $MAKEOPTS = "$MAKEOPTS CompileOptimizeOpts='-O3 -DNDEBUG -finline-functions -Wpointer-arith -Wcast-align -Wno-deprecated -Wold-style-cast -Wabi -Woverloaded-virtual -ffor-scope'"; 
-      next; 
-  }
   if (/^-enable-llcbeta$/) { $PROGTESTOPTS .= " ENABLE_LLCBETA=1"; next; }
   if (/^-disable-llc$/)    { $PROGTESTOPTS .= " DISABLE_LLC=1";
                              $CONFIGUREARGS .= " --disable-llc_diffs"; next; }
