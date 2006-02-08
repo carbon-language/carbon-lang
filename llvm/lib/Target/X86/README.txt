@@ -93,6 +93,10 @@ Some isel ideas:
 2. Code duplication (addressing mode) during isel.
 3. Other ideas from "Register-Sensitive Selection, Duplication, and
    Sequencing of Instructions".
+4. Scheduling for reduced register pressure.  E.g. "Minimum Register 
+   Instruction Sequence Problem: Revisiting Optimal Code Generation for DAGs" 
+   and other related papers.
+   http://citeseer.ist.psu.edu/govindarajan01minimum.html
 
 //===---------------------------------------------------------------------===//
 
