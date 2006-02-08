@@ -2544,6 +2544,32 @@ SDOperand DAGCombiner::SimplifySetCC(MVT::ValueType VT, SDOperand N0,
                             DAG.getConstant(C1 & (~0ULL>>(64-ExtSrcTyBits)), 
                                             ExtDstTy),
                             Cond);
+      } else if ((N1C->getValue() == 0 || N1C->getValue() == 1) &&
+                 (Cond == ISD::SETEQ || Cond == ISD::SETNE) &&
+                 (N0.getOpcode() == ISD::XOR ||
+                  (N0.getOpcode() == ISD::AND && 
+                   N0.getOperand(0).getOpcode() == ISD::XOR &&
+                   N0.getOperand(1) == N0.getOperand(0).getOperand(1))) &&
+                 isa<ConstantSDNode>(N0.getOperand(1)) &&
+                 cast<ConstantSDNode>(N0.getOperand(1))->getValue() == 1) {
+        // If this is (X^1) == 0/1, swap the RHS and eliminate the xor.  We can
+        // only do this if the top bits are known zero.
+        if (TLI.MaskedValueIsZero(N1, 
+                                  MVT::getIntVTBitMask(N0.getValueType())-1)) {
+          // Okay, get the un-inverted input value.
+          SDOperand Val;
+          if (N0.getOpcode() == ISD::XOR)
+            Val = N0.getOperand(0);
+          else {
+            assert(N0.getOpcode() == ISD::AND && 
+                   N0.getOperand(0).getOpcode() == ISD::XOR);
+            // ((X^1)&1)^1 -> X & 1
+            Val = DAG.getNode(ISD::AND, N0.getValueType(),
+                              N0.getOperand(0).getOperand(0), N0.getOperand(1));
+          }
+          return DAG.getSetCC(VT, Val, N1,
+                              Cond == ISD::SETEQ ? ISD::SETNE : ISD::SETEQ);
+        }
       }
       
       uint64_t MinVal, MaxVal;
