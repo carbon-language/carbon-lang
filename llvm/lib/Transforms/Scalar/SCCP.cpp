@@ -241,6 +241,11 @@ private:
     else if (IV.getConstant() != MergeWithV.getConstant())
       markOverdefined(IV, V);
   }
+  
+  inline void mergeInValue(Value *V, LatticeVal &MergeWithV) {
+    return mergeInValue(ValueState[V], V, MergeWithV);
+  }
+
 
   // getValueState - Return the LatticeVal object that corresponds to the value.
   // This function is necessary because not all values should start out in the
@@ -589,23 +594,38 @@ void SCCPSolver::visitCastInst(CastInst &I) {
 
 void SCCPSolver::visitSelectInst(SelectInst &I) {
   LatticeVal &CondValue = getValueState(I.getCondition());
-  if (CondValue.isOverdefined())
-    markOverdefined(&I);
-  else if (CondValue.isConstant()) {
+  if (CondValue.isUndefined())
+    return;
+  if (CondValue.isConstant()) {
+    Value *InVal = 0;
     if (CondValue.getConstant() == ConstantBool::True) {
-      LatticeVal &Val = getValueState(I.getTrueValue());
-      if (Val.isOverdefined())
-        markOverdefined(&I);
-      else if (Val.isConstant())
-        markConstant(&I, Val.getConstant());
+      mergeInValue(&I, getValueState(I.getTrueValue()));
+      return;
     } else if (CondValue.getConstant() == ConstantBool::False) {
-      LatticeVal &Val = getValueState(I.getFalseValue());
-      if (Val.isOverdefined())
-        markOverdefined(&I);
-      else if (Val.isConstant())
-        markConstant(&I, Val.getConstant());
-    } else
-      markOverdefined(&I);
+      mergeInValue(&I, getValueState(I.getFalseValue()));
+      return;
+    }
+  }
+  
+  // Otherwise, the condition is overdefined or a constant we can't evaluate.
+  // See if we can produce something better than overdefined based on the T/F
+  // value.
+  LatticeVal &TVal = getValueState(I.getTrueValue());
+  LatticeVal &FVal = getValueState(I.getFalseValue());
+  
+  // select ?, C, C -> C.
+  if (TVal.isConstant() && FVal.isConstant() && 
+      TVal.getConstant() == FVal.getConstant()) {
+    markConstant(&I, FVal.getConstant());
+    return;
+  }
+
+  if (TVal.isUndefined()) {  // select ?, undef, X -> X.
+    mergeInValue(&I, FVal);
+  } else if (FVal.isUndefined()) {  // select ?, X, undef -> X.
+    mergeInValue(&I, TVal);
+  } else {
+    markOverdefined(&I);
   }
 }
 
