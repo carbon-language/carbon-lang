@@ -1930,28 +1930,44 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
     return &I;
   
   if (ConstantIntegral *AndRHS = dyn_cast<ConstantIntegral>(Op1)) {
-    // and X, -1 == X
-    if (AndRHS->isAllOnesValue())
+    uint64_t AndRHSMask = AndRHS->getZExtValue();
+    uint64_t TypeMask = Op0->getType()->getIntegralTypeMask();
+
+    if (AndRHSMask == TypeMask)              // and X, -1 == X
       return ReplaceInstUsesWith(I, Op0);
+    else if (AndRHSMask == 0)                // and X, 0 == 0
+      return ReplaceInstUsesWith(I, AndRHS);
     
     // and (and X, c1), c2 -> and (x, c1&c2).  Handle this case here, before
-    // calling MaskedValueIsZero, to avoid inefficient cases where we traipse
-    // through many levels of ands.
+    // calling ComputeMaskedNonZeroBits, to avoid inefficient cases where we
+    // traipse through many levels of ands.
     {
       Value *X = 0; ConstantInt *C1 = 0;
       if (match(Op0, m_And(m_Value(X), m_ConstantInt(C1))))
         return BinaryOperator::createAnd(X, ConstantExpr::getAnd(C1, AndRHS));
     }
 
-    if (MaskedValueIsZero(Op0, AndRHS->getZExtValue()))      // LHS & RHS == 0
-      return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
+    // Figure out which of the input bits are not known to be zero, and which
+    // bits are known to be zero.
+    uint64_t NonZeroBits = ComputeMaskedNonZeroBits(Op0, TypeMask);
+    uint64_t ZeroBits = NonZeroBits^TypeMask;
 
-    // If the mask is not masking out any bits, there is no reason to do the
-    // and in the first place.
-    uint64_t NotAndRHS =   // ~ANDRHS
-      AndRHS->getZExtValue()^Op0->getType()->getIntegralTypeMask();
-    if (MaskedValueIsZero(Op0, NotAndRHS))
+    // If the mask is not masking out any bits (i.e. all of the zeros in the
+    // mask are already known to be zero), there is no reason to do the and in
+    // the first place.
+    uint64_t NotAndRHS = AndRHSMask^TypeMask;
+    if ((NotAndRHS & ZeroBits) == NotAndRHS)
       return ReplaceInstUsesWith(I, Op0);
+    
+    // If the AND mask contains bits that are known zero, remove them.  A
+    // special case is when there are no bits in common, in which case we
+    // implicitly turn this into an AND X, 0, which is later simplified into 0.
+    if ((AndRHSMask & NonZeroBits) != AndRHSMask) {
+      Constant *NewRHS = 
+         ConstantUInt::get(Type::ULongTy, AndRHSMask & NonZeroBits);
+      I.setOperand(1, ConstantExpr::getCast(NewRHS, I.getType()));
+      return &I;
+    }
 
     // Optimize a variety of ((val OP C1) & C2) combinations...
     if (isa<BinaryOperator>(Op0) || isa<ShiftInst>(Op0)) {
@@ -1963,9 +1979,9 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
       case Instruction::Or:
         // (X ^ V) & C2 --> (X & C2) iff (V & C2) == 0
         // (X | V) & C2 --> (X & C2) iff (V & C2) == 0
-        if (MaskedValueIsZero(Op0LHS, AndRHS->getZExtValue()))
+        if (MaskedValueIsZero(Op0LHS, AndRHSMask))
           return BinaryOperator::createAnd(Op0RHS, AndRHS);
-        if (MaskedValueIsZero(Op0RHS, AndRHS->getZExtValue()))
+        if (MaskedValueIsZero(Op0RHS, AndRHSMask))
           return BinaryOperator::createAnd(Op0LHS, AndRHS);
 
         // If the mask is only needed on one incoming arm, push it up.
@@ -1992,8 +2008,8 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         break;
       case Instruction::And:
         // (X & V) & C2 --> 0 iff (V & C2) == 0
-        if (MaskedValueIsZero(Op0LHS, AndRHS->getZExtValue()) ||
-            MaskedValueIsZero(Op0RHS, AndRHS->getZExtValue()))
+        if (MaskedValueIsZero(Op0LHS, AndRHSMask) ||
+            MaskedValueIsZero(Op0RHS, AndRHSMask))
           return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
         break;
       case Instruction::Add:
@@ -2028,7 +2044,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         if (SrcTy->getPrimitiveSizeInBits() >= 
               I.getType()->getPrimitiveSizeInBits() &&
             CastOp->getNumOperands() == 2)
-          if (ConstantInt *AndCI =dyn_cast<ConstantInt>(CastOp->getOperand(1)))
+          if (ConstantInt *AndCI = dyn_cast<ConstantInt>(CastOp->getOperand(1)))
             if (CastOp->getOpcode() == Instruction::And) {
               // Change: and (cast (and X, C1) to T), C2
               // into  : and (cast X to T), trunc(C1)&C2
