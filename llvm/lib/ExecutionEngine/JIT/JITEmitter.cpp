@@ -419,18 +419,19 @@ namespace {
     // save CurBlock and CurByte here.
     unsigned char *SavedCurBlock, *SavedCurByte;
 
-    // ConstantPoolAddresses - Contains the location for each entry in the
-    // constant pool.
-    std::vector<void*> ConstantPoolAddresses;
-
     /// Relocations - These are the relocations that the function needs, as
     /// emitted.
     std::vector<MachineRelocation> Relocations;
 
+    /// ConstantPool - The constant pool for the current function.
+    ///
+    MachineConstantPool *ConstantPool;
+
+    /// ConstantPoolBase - A pointer to the first entry in the constant pool.
+    ///
+    void *ConstantPoolBase;
   public:
-    JITEmitter(JIT &jit)
-      :MemMgr(jit.getJITInfo().needsGOT())
-    {
+    JITEmitter(JIT &jit) : MemMgr(jit.getJITInfo().needsGOT()) {
       TheJIT = &jit;
       DEBUG(std::cerr <<
             (MemMgr.isManagingGOT() ? "JIT is managing GOT\n"
@@ -562,7 +563,6 @@ void JITEmitter::finishFunction(MachineFunction &F) {
                   << ": " << CurByte-CurBlock << " bytes of text, "
                   << Relocations.size() << " relocations\n");
   Relocations.clear();
-  ConstantPoolAddresses.clear();
 }
 
 void JITEmitter::emitConstantPool(MachineConstantPool *MCP) {
@@ -572,14 +572,14 @@ void JITEmitter::emitConstantPool(MachineConstantPool *MCP) {
   unsigned Size = Constants.back().Offset;
   Size += TheJIT->getTargetData().getTypeSize(Constants.back().Val->getType());
 
-  void *Addr = MemMgr.allocateConstant(Size, 
+  ConstantPoolBase = MemMgr.allocateConstant(Size, 
                                        1 << MCP->getConstantPoolAlignment());
-
-  // FIXME: Can eliminate ConstantPoolAddresses!
+  ConstantPool = MCP;
+  
+  // Initialize the memory for all of the constant pool entries.
   for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
-    void *CAddr = (char*)Addr+Constants[i].Offset;
+    void *CAddr = (char*)ConstantPoolBase+Constants[i].Offset;
     TheJIT->InitializeMemory(Constants[i].Val, CAddr);
-    ConstantPoolAddresses.push_back(CAddr);
   }
 }
 
@@ -615,9 +615,10 @@ void JITEmitter::emitWordAt(unsigned W, unsigned *Ptr) {
 // method.
 //
 uint64_t JITEmitter::getConstantPoolEntryAddress(unsigned ConstantNum) {
-  assert(ConstantNum < ConstantPoolAddresses.size() &&
+  assert(ConstantNum < ConstantPool->getConstants().size() &&
          "Invalid ConstantPoolIndex!");
-  return (intptr_t)ConstantPoolAddresses[ConstantNum];
+  return (intptr_t)ConstantPoolBase +
+         ConstantPool->getConstants()[ConstantNum].Offset;
 }
 
 unsigned char* JITEmitter::allocateGlobal(unsigned size, unsigned alignment)
