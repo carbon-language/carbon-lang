@@ -24,6 +24,7 @@
 
 #include <vector>
 #include <iosfwd>
+#include <cassert>
 
 namespace llvm {
 
@@ -37,6 +38,8 @@ public:
   /// an existing one.  User must specify an alignment in bytes for the object.
   ///
   unsigned getConstantPoolIndex(Constant *C, unsigned Alignment) {
+    assert(Alignment && "Alignment must be specified!");
+    
     // Check to see if we already have this constant.
     //
     // FIXME, this could be made much more efficient for large constant pools.
