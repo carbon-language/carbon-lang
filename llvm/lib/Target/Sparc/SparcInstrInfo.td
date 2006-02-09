@@ -493,6 +493,7 @@ def UMULrr  : F3_1<2, 0b001010,
 def UMULri  : F3_2<2, 0b001010,
                    (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
                    "umul $b, $c, $dst", []>;
+                   
 def SMULrr  : F3_1<2, 0b001011, 
                    (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
                    "smul $b, $c, $dst",
@@ -501,6 +502,61 @@ def SMULri  : F3_2<2, 0b001011,
                    (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
                    "smul $b, $c, $dst",
                    [(set IntRegs:$dst, (mul IntRegs:$b, simm13:$c))]>;
+
+/*
+//===-------------------------
+// Sparc Example
+defm intinst<id OPC1, id OPC2, bits Opc, string asmstr, SDNode code> {
+  def OPC1 : F3_1<2, Opc, asmstr, (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
+                  [(set IntRegs:$dst, (code IntRegs:$b, IntRegs:$c))]>;
+  def OPC2 : F3_2<2, Opc, asmstr, (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
+                  [(set IntRegs:$dst, (code IntRegs:$b, simm13:$c))]>;
+}
+defm intinst_np<id OPC1, id OPC2, bits Opc, string asmstr> {
+  def OPC1 : F3_1<2, Opc, asmstr, (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
+                  []>;
+  def OPC2 : F3_2<2, Opc, asmstr, (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
+                  []>;
+}
+
+def intinstnp< ADDXrr,  ADDXri, 0b001000,  "addx $b, $c, $dst">;
+def intinst  <  SUBrr,   SUBri, 0b000100,   "sub $b, $c, $dst",  sub>;
+def intinstnp< SUBXrr,  SUBXri, 0b001100,  "subx $b, $c, $dst">;
+def intinst  <SUBCCrr, SUBCCri, 0b010100, "subcc $b, $c, $dst",  SPcmpicc>;
+def intinst  < SMULrr,  SMULri, 0b001011,  "smul $b, $c, $dst",  mul>;
+
+//===-------------------------
+// X86 Example
+defm cmov32<id OPC1, id OPC2, int opc, string asmstr, PatLeaf cond> {
+  def OPC1 : I<opc, MRMSrcReg, (ops R32:$dst, R32:$src1, R32:$src2),
+               asmstr+" {$src2, $dst|$dst, $src2}",
+               [(set R32:$dst, (X86cmov R32:$src1, R32:$src2, cond))]>, TB;
+  def OPC2 : I<opc, MRMSrcMem, (ops R32:$dst, R32:$src1, i32mem:$src2),
+               asmstr+" {$src2, $dst|$dst, $src2}",
+               [(set R32:$dst, (X86cmov R32:$src1,
+                                        (loadi32 addr:$src2), cond))]>, TB;
+}
+
+def cmov<CMOVL32rr, CMOVL32rm, 0x4C, "cmovl", X86_COND_L>;
+def cmov<CMOVB32rr, CMOVB32rm, 0x4C, "cmovb", X86_COND_B>;
+
+//===-------------------------
+// PPC Example
+
+def fpunop<id OPC1, id OPC2, id FORM, int op1, int op2, int op3, string asmstr, 
+           SDNode code> {
+  def OPC1 : FORM<op1, op3, (ops F4RC:$frD, F4RC:$frB),
+                  asmstr+" $frD, $frB", FPGeneral,
+                  [(set F4RC:$frD, (code F4RC:$frB))]>;
+  def OPC2 : FORM<op2, op3, (ops F8RC:$frD, F8RC:$frB),
+                  asmstr+" $frD, $frB", FPGeneral,
+                  [(set F8RC:$frD, (code F8RC:$frB))]>;
+}
+
+def fpunop< FABSS,  FABSD, XForm_26, 63, 63, 264,  "fabs",  fabs>;
+def fpunop<FNABSS, FNABSD, XForm_26, 63, 63, 136, "fnabs", fnabs>;
+def fpunop< FNEGS,  FNEGD, XForm_26, 63, 63,  40,  "fneg",  fneg>;
+*/
 
 // Section B.19 - Divide Instructions, p. 115
 def UDIVrr   : F3_1<2, 0b001110, 

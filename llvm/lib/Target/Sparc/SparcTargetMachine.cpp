@@ -27,6 +27,8 @@ using namespace llvm;
 namespace {
   // Register the target.
   RegisterTarget<SparcTargetMachine> X("sparc", "  SPARC");
+  
+  cl::opt<bool> EnableLSR("enable-sparc-lsr", cl::Hidden);
 }
 
 /// SparcTargetMachine ctor - Create an ILP32 architecture model
@@ -65,6 +67,9 @@ bool SparcTargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
                                              bool Fast) {
   if (FileType != TargetMachine::AssemblyFile) return true;
 
+  // Run loop strength reduction before anything else.
+  if (EnableLSR && !Fast) PM.add(createLoopStrengthReducePass());
+
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
 
@@ -73,7 +78,7 @@ bool SparcTargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
 
   // FIXME: implement the switch instruction in the instruction selector.
   PM.add(createLowerSwitchPass());
-
+  
   // Print LLVM code input to instruction selector:
   if (PrintMachineCode)
     PM.add(new PrintFunctionPass());
