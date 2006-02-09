@@ -307,242 +307,78 @@ public:
                          MVT::ValueType VT2, SDOperand Op1, SDOperand Op2,
                          SDOperand Op3, SDOperand Op4, SDOperand Op5);
 
-  SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT) {
-    return getNode(ISD::BUILTIN_OP_END+Opcode, VT);
-  }
-  SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT,
-                          SDOperand Op1) {
-    return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Op1);
-  }
-  SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT,
-                          SDOperand Op1, SDOperand Op2) {
-    return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Op1, Op2);
-  }
-  SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT,
-                          SDOperand Op1, SDOperand Op2, SDOperand Op3) {
-    return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Op1, Op2, Op3);
-  }
-  SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT,
-                          SDOperand Op1, SDOperand Op2, SDOperand Op3,
-                          SDOperand Op4) {
-    return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Op1, Op2, Op3, Op4);
-  }
-  SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT,
-                          SDOperand Op1, SDOperand Op2, SDOperand Op3,
-                          SDOperand Op4, SDOperand Op5) {
-    return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Op1, Op2, Op3, Op4, Op5);
-  }
-  SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT,
-                          SDOperand Op1, SDOperand Op2, SDOperand Op3,
-                          SDOperand Op4, SDOperand Op5, SDOperand Op6) {
-    std::vector<SDOperand> Ops;
-    Ops.reserve(6);
-    Ops.push_back(Op1);
-    Ops.push_back(Op2);
-    Ops.push_back(Op3);
-    Ops.push_back(Op4);
-    Ops.push_back(Op5);
-    Ops.push_back(Op6);
-    return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Ops);
-  }
-  SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT,
-                          SDOperand Op1, SDOperand Op2, SDOperand Op3,
-                          SDOperand Op4, SDOperand Op5, SDOperand Op6,
-                          SDOperand Op7) {
-    std::vector<SDOperand> Ops;
-    Ops.reserve(7);
-    Ops.push_back(Op1);
-    Ops.push_back(Op2);
-    Ops.push_back(Op3);
-    Ops.push_back(Op4);
-    Ops.push_back(Op5);
-    Ops.push_back(Op6);
-    Ops.push_back(Op7);
-    return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Ops);
-  }
-  SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT,
-                          SDOperand Op1, SDOperand Op2, SDOperand Op3,
-                          SDOperand Op4, SDOperand Op5, SDOperand Op6,
-                          SDOperand Op7, SDOperand Op8) {
-    std::vector<SDOperand> Ops;
-    Ops.reserve(8);
-    Ops.push_back(Op1);
-    Ops.push_back(Op2);
-    Ops.push_back(Op3);
-    Ops.push_back(Op4);
-    Ops.push_back(Op5);
-    Ops.push_back(Op6);
-    Ops.push_back(Op7);
-    Ops.push_back(Op8);
-    return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Ops);
-  }
-  SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT,
-                          std::vector<SDOperand> &Ops) {
-    return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Ops);
-  }
-  SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT1,
-                          MVT::ValueType VT2, SDOperand Op1) {
-    std::vector<MVT::ValueType> ResultTys;
-    ResultTys.push_back(VT1);
-    ResultTys.push_back(VT2);
-    std::vector<SDOperand> Ops;
-    Ops.push_back(Op1);
-    return getNode(ISD::BUILTIN_OP_END+Opcode, ResultTys, Ops);
-  }
-  SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT1,
-                          MVT::ValueType VT2, SDOperand Op1, SDOperand Op2) {
-    std::vector<MVT::ValueType> ResultTys;
-    ResultTys.push_back(VT1);
-    ResultTys.push_back(VT2);
-    std::vector<SDOperand> Ops;
-    Ops.push_back(Op1);
-    Ops.push_back(Op2);
-    return getNode(ISD::BUILTIN_OP_END+Opcode, ResultTys, Ops);
-  }
-  SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT1,
-                          MVT::ValueType VT2, SDOperand Op1, SDOperand Op2,
-                          SDOperand Op3) {
-    std::vector<MVT::ValueType> ResultTys;
-    ResultTys.push_back(VT1);
-    ResultTys.push_back(VT2);
-    std::vector<SDOperand> Ops;
-    Ops.push_back(Op1);
-    Ops.push_back(Op2);
-    Ops.push_back(Op3);
-    return getNode(ISD::BUILTIN_OP_END+Opcode, ResultTys, Ops);
-  }
-  SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT1,
-                          MVT::ValueType VT2, SDOperand Op1, SDOperand Op2,
-                          SDOperand Op3, SDOperand Op4) {
-    std::vector<MVT::ValueType> ResultTys;
-    ResultTys.push_back(VT1);
-    ResultTys.push_back(VT2);
-    std::vector<SDOperand> Ops;
-    Ops.push_back(Op1);
-    Ops.push_back(Op2);
-    Ops.push_back(Op3);
-    Ops.push_back(Op4);
-    return getNode(ISD::BUILTIN_OP_END+Opcode, ResultTys, Ops);
-  }
-  SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT1,
-                          MVT::ValueType VT2, SDOperand Op1, SDOperand Op2,
-                          SDOperand Op3, SDOperand Op4, SDOperand Op5) {
-    std::vector<MVT::ValueType> ResultTys;
-    ResultTys.push_back(VT1);
-    ResultTys.push_back(VT2);
-    std::vector<SDOperand> Ops;
-    Ops.push_back(Op1);
-    Ops.push_back(Op2);
-    Ops.push_back(Op3);
-    Ops.push_back(Op4);
-    Ops.push_back(Op5);
-    return getNode(ISD::BUILTIN_OP_END+Opcode, ResultTys, Ops);
-  }
-  SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT1,
-                          MVT::ValueType VT2, SDOperand Op1, SDOperand Op2,
-                          SDOperand Op3, SDOperand Op4, SDOperand Op5,
-                          SDOperand Op6) {
-    std::vector<MVT::ValueType> ResultTys;
-    ResultTys.push_back(VT1);
-    ResultTys.push_back(VT2);
-    std::vector<SDOperand> Ops;
-    Ops.push_back(Op1);
-    Ops.push_back(Op2);
-    Ops.push_back(Op3);
-    Ops.push_back(Op4);
-    Ops.push_back(Op5);
-    Ops.push_back(Op6);
-    return getNode(ISD::BUILTIN_OP_END+Opcode, ResultTys, Ops);
-  }
-  SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT1,
-                          MVT::ValueType VT2, SDOperand Op1, SDOperand Op2,
-                          SDOperand Op3, SDOperand Op4, SDOperand Op5,
-                          SDOperand Op6, SDOperand Op7) {
-    std::vector<MVT::ValueType> ResultTys;
-    ResultTys.push_back(VT1);
-    ResultTys.push_back(VT2);
-    std::vector<SDOperand> Ops;
-    Ops.push_back(Op1);
-    Ops.push_back(Op2);
-    Ops.push_back(Op3);
-    Ops.push_back(Op4);
-    Ops.push_back(Op5);
-    Ops.push_back(Op6); 
-    Ops.push_back(Op7);
-   return getNode(ISD::BUILTIN_OP_END+Opcode, ResultTys, Ops);
-  }
-  SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT1,
-                          MVT::ValueType VT2, MVT::ValueType VT3,
-                          SDOperand Op1, SDOperand Op2) {
-    std::vector<MVT::ValueType> ResultTys;
-    ResultTys.push_back(VT1);
-    ResultTys.push_back(VT2);
-    ResultTys.push_back(VT3);
-    std::vector<SDOperand> Ops;
-    Ops.push_back(Op1);
-    Ops.push_back(Op2);
-    return getNode(ISD::BUILTIN_OP_END+Opcode, ResultTys, Ops);
-  }
-  SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT1,
-                          MVT::ValueType VT2, MVT::ValueType VT3,
-                          SDOperand Op1, SDOperand Op2,
-                          SDOperand Op3, SDOperand Op4, SDOperand Op5) {
-    std::vector<MVT::ValueType> ResultTys;
-    ResultTys.push_back(VT1);
-    ResultTys.push_back(VT2);
-    ResultTys.push_back(VT3);
-    std::vector<SDOperand> Ops;
-    Ops.push_back(Op1);
-    Ops.push_back(Op2);
-    Ops.push_back(Op3);
-    Ops.push_back(Op4);
-    Ops.push_back(Op5);
-    return getNode(ISD::BUILTIN_OP_END+Opcode, ResultTys, Ops);
-  }
-  SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT1,
-                          MVT::ValueType VT2, MVT::ValueType VT3,
-                          SDOperand Op1, SDOperand Op2,
-                          SDOperand Op3, SDOperand Op4, SDOperand Op5,
-                          SDOperand Op6) {
-    std::vector<MVT::ValueType> ResultTys;
-    ResultTys.push_back(VT1);
-    ResultTys.push_back(VT2);
-    ResultTys.push_back(VT3);
-    std::vector<SDOperand> Ops;
-    Ops.push_back(Op1);
-    Ops.push_back(Op2);
-    Ops.push_back(Op3);
-    Ops.push_back(Op4);
-    Ops.push_back(Op5);
-    Ops.push_back(Op6);
-    return getNode(ISD::BUILTIN_OP_END+Opcode, ResultTys, Ops);
-  }
-  SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT1,
-                          MVT::ValueType VT2, MVT::ValueType VT3,
-                          SDOperand Op1, SDOperand Op2,
-                          SDOperand Op3, SDOperand Op4, SDOperand Op5,
-                          SDOperand Op6, SDOperand Op7) {
-    std::vector<MVT::ValueType> ResultTys;
-    ResultTys.push_back(VT1);
-    ResultTys.push_back(VT2);
-    ResultTys.push_back(VT3);
-    std::vector<SDOperand> Ops;
-    Ops.push_back(Op1);
-    Ops.push_back(Op2);
-    Ops.push_back(Op3);
-    Ops.push_back(Op4);
-    Ops.push_back(Op5);
-    Ops.push_back(Op6);
-    Ops.push_back(Op7);
-    return getNode(ISD::BUILTIN_OP_END+Opcode, ResultTys, Ops);
-  }
-  SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT1, 
-                          MVT::ValueType VT2, std::vector<SDOperand> &Ops) {
-    std::vector<MVT::ValueType> ResultTys;
-    ResultTys.push_back(VT1);
-    ResultTys.push_back(VT2);
-    return getNode(ISD::BUILTIN_OP_END+Opcode, ResultTys, Ops);
-  }
+  /// getTargetNode - These are used for target selectors to create a new node
+  /// with specified return type(s), target opcode, and operands.
+  ///
+  /// Note that getTargetNode returns the resultant node.  If there is already a
+  /// node of the specified opcode and operands, it returns that node instead of
+  /// the current one.
+  SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT);
+  SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT,
+                        SDOperand Op1);
+  SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT,
+                        SDOperand Op1, SDOperand Op2);
+  SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT,
+                        SDOperand Op1, SDOperand Op2, SDOperand Op3);
+  SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT,
+                        SDOperand Op1, SDOperand Op2, SDOperand Op3,
+                        SDOperand Op4);
+  SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT,
+                        SDOperand Op1, SDOperand Op2, SDOperand Op3,
+                        SDOperand Op4, SDOperand Op5);
+  SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT,
+                        SDOperand Op1, SDOperand Op2, SDOperand Op3,
+                        SDOperand Op4, SDOperand Op5, SDOperand Op6);
+  SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT,
+                        SDOperand Op1, SDOperand Op2, SDOperand Op3,
+                        SDOperand Op4, SDOperand Op5, SDOperand Op6,
+                        SDOperand Op7);
+  SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT,
+                        SDOperand Op1, SDOperand Op2, SDOperand Op3,
+                        SDOperand Op4, SDOperand Op5, SDOperand Op6,
+                        SDOperand Op7, SDOperand Op8);
+  SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT,
+                        std::vector<SDOperand> &Ops);
+  SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT1,
+                        MVT::ValueType VT2, SDOperand Op1);
+  SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT1,
+                        MVT::ValueType VT2, SDOperand Op1, SDOperand Op2);
+  SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT1,
+                        MVT::ValueType VT2, SDOperand Op1, SDOperand Op2,
+                        SDOperand Op3);
+  SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT1,
+                        MVT::ValueType VT2, SDOperand Op1, SDOperand Op2,
+                        SDOperand Op3, SDOperand Op4);
+  SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT1,
+                        MVT::ValueType VT2, SDOperand Op1, SDOperand Op2,
+                        SDOperand Op3, SDOperand Op4, SDOperand Op5);
+  SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT1,
+                        MVT::ValueType VT2, SDOperand Op1, SDOperand Op2,
+                        SDOperand Op3, SDOperand Op4, SDOperand Op5,
+                        SDOperand Op6);
+  SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT1,
+                        MVT::ValueType VT2, SDOperand Op1, SDOperand Op2,
+                        SDOperand Op3, SDOperand Op4, SDOperand Op5,
+                        SDOperand Op6, SDOperand Op7);
+  SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT1,
+                        MVT::ValueType VT2, MVT::ValueType VT3,
+                        SDOperand Op1, SDOperand Op2);
+  SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT1,
+                        MVT::ValueType VT2, MVT::ValueType VT3,
+                        SDOperand Op1, SDOperand Op2,
+                        SDOperand Op3, SDOperand Op4, SDOperand Op5);
+  SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT1,
+                        MVT::ValueType VT2, MVT::ValueType VT3,
+                        SDOperand Op1, SDOperand Op2,
+                        SDOperand Op3, SDOperand Op4, SDOperand Op5,
+                        SDOperand Op6);
+  SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT1,
+                        MVT::ValueType VT2, MVT::ValueType VT3,
+                        SDOperand Op1, SDOperand Op2,
+                        SDOperand Op3, SDOperand Op4, SDOperand Op5,
+                        SDOperand Op6, SDOperand Op7);
+  SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT1, 
+                        MVT::ValueType VT2, std::vector<SDOperand> &Ops);
   
   /// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
   /// This can cause recursive merging of nodes in the DAG.  Use the first
