@@ -566,18 +566,16 @@ void JITEmitter::finishFunction(MachineFunction &F) {
 }
 
 void JITEmitter::emitConstantPool(MachineConstantPool *MCP) {
-  const std::vector<std::pair<Constant*,unsigned> > &Constants = MCP->getConstants();
+  const std::vector<MachineConstantPoolEntry> &Constants = MCP->getConstants();
   if (Constants.empty()) return;
 
   for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
-    const Type *Ty = Constants[i].first->getType();
+    const Type *Ty = Constants[i].Val->getType();
     unsigned Size      = (unsigned)TheJIT->getTargetData().getTypeSize(Ty);
-    unsigned Alignment = (Constants[i].second == 0)
-      ? TheJIT->getTargetData().getTypeAlignment(Ty)
-      : Constants[i].second;
+    unsigned Alignment = Constants[i].Alignment;
 
     void *Addr = MemMgr.allocateConstant(Size, Alignment);
-    TheJIT->InitializeMemory(Constants[i].first, Addr);
+    TheJIT->InitializeMemory(Constants[i].Val, Addr);
     ConstantPoolAddresses.push_back(Addr);
   }
 }

@@ -106,16 +106,16 @@ void AsmPrinter::SetupMachineFunction(MachineFunction &MF) {
 /// the code generator.
 ///
 void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
-  const std::vector<std::pair<Constant*, unsigned> > &CP = MCP->getConstants();
+  const std::vector<MachineConstantPoolEntry> &CP = MCP->getConstants();
   if (CP.empty()) return;
   const TargetData &TD = TM.getTargetData();
   
   SwitchSection(ConstantPoolSection, 0);
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
-    EmitAlignment(CP[i].second);
+    EmitAlignment(CP[i].Alignment);
     O << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << '_' << i
-      << ":\t\t\t\t\t" << CommentString << *CP[i].first << '\n';
-    EmitGlobalConstant(CP[i].first);
+      << ":\t\t\t\t\t" << CommentString << *CP[i].Val << '\n';
+    EmitGlobalConstant(CP[i].Val);
   }
 }
 

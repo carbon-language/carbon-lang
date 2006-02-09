@@ -724,12 +724,12 @@ void SparcV9AsmPrinter::emitFunction(const Function &F) {
 
   // Emit constant pool for this function
   const MachineConstantPool *MCP = MF.getConstantPool();
-  const std::vector<std::pair<Constant*, unsigned> > &CP = MCP->getConstants();
+  const std::vector<MachineConstantPoolEntry> &CP = MCP->getConstants();
 
   enterSection(ReadOnlyData);
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     std::string cpiName = ".CPI_" + CurrentFnName + "_" + utostr(i);
-    printConstant(CP[i].first, CP[i].second, cpiName);
+    printConstant(CP[i].Val, CP[i].Alignment, cpiName);
   }
 
   enterSection(Text);

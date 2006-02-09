@@ -347,8 +347,8 @@ void MachineFrameInfo::dump(const MachineFunction &MF) const {
 
 void MachineConstantPool::print(std::ostream &OS) const {
   for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
-    OS << "  <cp #" << i << "> is" << *(Value*)Constants[i].first;
-    if (Constants[i].second != 0) OS << " , align=" << Constants[i].second;
+    OS << "  <cp #" << i << "> is" << *(Value*)Constants[i].Val;
+    OS << " , align=" << Constants[i].Alignment;
     OS << "\n";
   }
 }
