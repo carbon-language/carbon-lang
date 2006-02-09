@@ -101,11 +101,14 @@ namespace {
     /// Subtarget - Keep a pointer to the X86Subtarget around so that we can
     /// make the right decision when generating code for different targets.
     const X86Subtarget *Subtarget;
+    
+    const TargetData &TD;
 
     /// X86ScalarSSE - Select between SSE2 or x87 floating point ops.
     bool X86ScalarSSE;
   public:
-    ISel(TargetMachine &TM) : SelectionDAGISel(X86Lowering), X86Lowering(TM) {
+    ISel(TargetMachine &TM) : SelectionDAGISel(X86Lowering), 
+                              X86Lowering(TM), TD(TM.getTargetData()) {
       Subtarget = &TM.getSubtarget<X86Subtarget>();
       X86ScalarSSE = Subtarget->hasSSE2();
     }
@@ -1312,11 +1315,17 @@ unsigned ISel::SelectExpr(SDOperand N) {
     Tmp1 = cast<FrameIndexSDNode>(N)->getIndex();
     addFrameReference(BuildMI(BB, X86::LEA32r, 4, Result), (int)Tmp1);
     return Result;
-  case ISD::ConstantPool:
-    Tmp1 = BB->getParent()->getConstantPool()->
-         getConstantPoolIndex(cast<ConstantPoolSDNode>(N)->get());
+  case ISD::ConstantPool: {
+    Constant *C = cast<ConstantPoolSDNode>(N)->get();
+    unsigned Align = cast<ConstantPoolSDNode>(N)->getAlignment();
+    if (Align == 0) {
+      Align = C->getType() == Type::DoubleTy ? 3 : 
+          TD.getTypeAlignmentShift(C->getType());
+    }
+    Tmp1 = BB->getParent()->getConstantPool()->getConstantPoolIndex(C, Align);
     addConstantPoolReference(BuildMI(BB, X86::LEA32r, 4, Result), Tmp1);
     return Result;
+  }
   case ISD::ConstantFP:
     if (X86ScalarSSE) {
       assert(cast<ConstantFPSDNode>(N)->isExactlyValue(+0.0) &&
@@ -2240,8 +2249,15 @@ unsigned ISel::SelectExpr(SDOperand N) {
     }
 
     if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N.getOperand(1))){
+      Constant *C = CP->get();
+      unsigned Align = CP->getAlignment();
+      if (Align == 0) {
+        Align = C->getType() == Type::DoubleTy ? 3 : 
+              TD.getTypeAlignmentShift(C->getType());
+      }
+      
       unsigned CPIdx = BB->getParent()->getConstantPool()->
-         getConstantPoolIndex(CP->get());
+        getConstantPoolIndex(C, Align);
       Select(N.getOperand(0));
       addConstantPoolReference(BuildMI(BB, Opc, 4, Result), CPIdx);
     } else {
@@ -2296,7 +2312,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
         assert(cast<VTSDNode>(Node->getOperand(3))->getVT() == MVT::f32 &&
                "Bad EXTLOAD!");
         unsigned CPIdx = BB->getParent()->getConstantPool()->
-          getConstantPoolIndex(CP->get());
+          getConstantPoolIndex(CP->get(), 2);
 
         addConstantPoolReference(BuildMI(BB, X86::FpLD32m, 4, Result), CPIdx);
         return Result;
