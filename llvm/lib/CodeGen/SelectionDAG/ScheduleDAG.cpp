@@ -23,6 +23,7 @@
 #include "llvm/Target/TargetInstrItineraries.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Constant.h"
 #include <iostream>
 using namespace llvm;
 
@@ -194,8 +195,17 @@ void ScheduleDAG::EmitNode(NodeInfo *NI) {
         MI->addFrameIndexOperand(FI->getIndex());
       } else if (ConstantPoolSDNode *CP = 
                     dyn_cast<ConstantPoolSDNode>(Node->getOperand(i))) {
-        unsigned Idx = ConstPool->getConstantPoolIndex(CP->get(),
-                                                       CP->getAlignment());
+        unsigned Align = CP->getAlignment();
+        // MachineConstantPool wants an explicit alignment.
+        if (Align == 0) {
+          if (CP->get()->getType() == Type::DoubleTy)
+            Align = 3;  // always 8-byte align doubles.
+          else
+            Align = TM.getTargetData()
+              .getTypeAlignmentShift(CP->get()->getType());
+        }
+        
+        unsigned Idx = ConstPool->getConstantPoolIndex(CP->get(), Align);
         MI->addConstantPoolIndexOperand(Idx);
       } else if (ExternalSymbolSDNode *ES = 
                  dyn_cast<ExternalSymbolSDNode>(Node->getOperand(i))) {
