@@ -536,7 +536,7 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
       CodeGenMap[N.getValue(0)] = Result;
       if (foldedLoad) {
         CodeGenMap[N1.getValue(1)] = Result.getValue(1);
-        AddHandleReplacement(N1.getValue(1), Result.getValue(1));
+        AddHandleReplacement(N1.Val, 1, Result.Val, 1);
       }
 
       return;
@@ -637,7 +637,7 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
       CodeGenMap[N.getValue(0)] = Result;
       if (foldedLoad) {
         CodeGenMap[N1.getValue(1)] = Result.getValue(1);
-        AddHandleReplacement(N1.getValue(1), Result.getValue(1));
+        AddHandleReplacement(N1.Val, 1, Result.Val, 1);
       }
       return;
     }
