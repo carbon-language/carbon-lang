@@ -20,15 +20,12 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Support/CommandLine.h"
 #include <iostream>
 using namespace llvm;
 
 namespace {
   // Register the target.
   RegisterTarget<SparcTargetMachine> X("sparc", "  SPARC");
-  
-  cl::opt<bool> EnableLSR("enable-sparc-lsr", cl::Hidden);
 }
 
 /// SparcTargetMachine ctor - Create an ILP32 architecture model
@@ -68,7 +65,7 @@ bool SparcTargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
   if (FileType != TargetMachine::AssemblyFile) return true;
 
   // Run loop strength reduction before anything else.
-  if (EnableLSR && !Fast) PM.add(createLoopStrengthReducePass());
+  if (!Fast) PM.add(createLoopStrengthReducePass());
 
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
