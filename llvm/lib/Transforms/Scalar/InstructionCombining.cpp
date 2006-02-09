@@ -3819,9 +3819,9 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantUInt *Op1,
                                             Op0BO->getOperand(0), Op1,
                                             Op0BO->getName());
             InsertNewInstBefore(YS, I); // (Y << C)
-            Instruction *X = BinaryOperator::create(Op0BO->getOpcode(), YS,
-                                                    V1,
-                                                    Op0BO->getOperand(1)->getName());
+            Instruction *X = 
+              BinaryOperator::create(Op0BO->getOpcode(), YS, V1,
+                                     Op0BO->getOperand(1)->getName());
             InsertNewInstBefore(X, I);  // (X + (Y << C))
             Constant *C2 = ConstantInt::getAllOnesValue(X->getType());
             C2 = ConstantExpr::getShl(C2, Op1);
@@ -3833,7 +3833,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantUInt *Op1,
               match(Op0BO->getOperand(1),
                     m_And(m_Shr(m_Value(V1), m_Value(V2)),
                           m_ConstantInt(CC))) && V2 == Op1 &&
-              cast<BinaryOperator>(Op0BO->getOperand(1))->getOperand(0)->hasOneUse()) {
+      cast<BinaryOperator>(Op0BO->getOperand(1))->getOperand(0)->hasOneUse()) {
             Instruction *YS = new ShiftInst(Instruction::Shl, 
                                             Op0BO->getOperand(0), Op1,
                                             Op0BO->getName());
@@ -3856,9 +3856,9 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantUInt *Op1,
                                             Op0BO->getOperand(1), Op1,
                                             Op0BO->getName());
             InsertNewInstBefore(YS, I); // (Y << C)
-            Instruction *X = BinaryOperator::create(Op0BO->getOpcode(), YS,
-                                                    V1,
-                                                    Op0BO->getOperand(0)->getName());
+            Instruction *X =
+              BinaryOperator::create(Op0BO->getOpcode(), YS, V1,
+                                     Op0BO->getOperand(0)->getName());
             InsertNewInstBefore(X, I);  // (X + (Y << C))
             Constant *C2 = ConstantInt::getAllOnesValue(X->getType());
             C2 = ConstantExpr::getShl(C2, Op1);
@@ -3869,7 +3869,8 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantUInt *Op1,
               match(Op0BO->getOperand(0),
                     m_And(m_Shr(m_Value(V1), m_Value(V2)),
                           m_ConstantInt(CC))) && V2 == Op1 &&
-              cast<BinaryOperator>(Op0BO->getOperand(0))->getOperand(0)->hasOneUse()) {
+              cast<BinaryOperator>(Op0BO->getOperand(0))
+                  ->getOperand(0)->hasOneUse()) {
             Instruction *YS = new ShiftInst(Instruction::Shl, 
                                             Op0BO->getOperand(1), Op1,
                                             Op0BO->getName());
