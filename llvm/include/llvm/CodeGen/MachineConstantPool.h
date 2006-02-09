@@ -24,42 +24,39 @@
 
 #include <vector>
 #include <iosfwd>
-#include <cassert>
 
 namespace llvm {
 
 class Constant;
+class TargetData;
 
 /// MachineConstantPoolEntry - One entry in the constant pool.
 ///
 struct MachineConstantPoolEntry {
   /// Val - The constant itself.
   Constant *Val;
-  /// Alignment - The alignment of the constant.
-  unsigned Alignment;
+  /// Offset - The offset of the constant from the start of the constant pool.
+  unsigned Offset;
   
-  MachineConstantPoolEntry(Constant *V, unsigned A) : Val(V), Alignment(A) {}
+  MachineConstantPoolEntry(Constant *V, unsigned O) : Val(V), Offset(O) {}
 };
   
 class MachineConstantPool {
+  const TargetData &TD;
+  unsigned PoolAlignment;
   std::vector<MachineConstantPoolEntry> Constants;
 public:
+  MachineConstantPool(const TargetData &td) : TD(td), PoolAlignment(1) {}
+    
+  /// getConstantPoolAlignment - Return the log2 of the alignment required by
+  /// the whole constant pool, of which the first element must be aligned.
+  unsigned getConstantPoolAlignment() const { return PoolAlignment; }
+  
   /// getConstantPoolIndex - Create a new entry in the constant pool or return
   /// an existing one.  User must specify an alignment in bytes for the object.
   ///
-  unsigned getConstantPoolIndex(Constant *C, unsigned Alignment) {
-    assert(Alignment && "Alignment must be specified!");
-    
-    // Check to see if we already have this constant.
-    //
-    // FIXME, this could be made much more efficient for large constant pools.
-    for (unsigned i = 0, e = Constants.size(); i != e; ++i)
-      if (Constants[i].Val == C && Constants[i].Alignment >= Alignment)
-        return i;
-    Constants.push_back(MachineConstantPoolEntry(C, Alignment));
-    return Constants.size()-1;
-  }
-
+  unsigned getConstantPoolIndex(Constant *C, unsigned Alignment);
+  
   /// isEmpty - Return true if this constant pool contains no constants.
   ///
   bool isEmpty() const { return Constants.empty(); }
@@ -74,6 +71,7 @@ public:
   void print(std::ostream &OS) const;
 
   /// dump - Call print(std::cerr) to be called from the debugger.
+  ///
   void dump() const;
 };
 
