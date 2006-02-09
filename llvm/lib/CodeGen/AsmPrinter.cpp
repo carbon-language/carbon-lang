@@ -111,11 +111,17 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
   const TargetData &TD = TM.getTargetData();
   
   SwitchSection(ConstantPoolSection, 0);
+  EmitAlignment(MCP->getConstantPoolAlignment());
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
-    EmitAlignment(CP[i].Alignment);
     O << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << '_' << i
       << ":\t\t\t\t\t" << CommentString << *CP[i].Val << '\n';
     EmitGlobalConstant(CP[i].Val);
+    if (i != e-1) {
+      unsigned EntSize = TM.getTargetData().getTypeSize(CP[i].Val->getType());
+      unsigned ValEnd = CP[i].Offset + EntSize;
+      // Emit inter-object padding for alignment.
+      EmitZeros(CP[i+1].Offset-ValEnd);
+    }
   }
 }
 

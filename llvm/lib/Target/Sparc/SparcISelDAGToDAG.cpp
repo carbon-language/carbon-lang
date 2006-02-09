@@ -968,7 +968,7 @@ void SparcDAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
 }
 
 bool SparcDAGToDAGISel::SelectADDRri(SDOperand Addr, SDOperand &Base,
-                                       SDOperand &Offset) {
+                                     SDOperand &Offset) {
   if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
     Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
     Offset = CurDAG->getTargetConstant(0, MVT::i32);

@@ -216,7 +216,8 @@ namespace {
 
       if (Alignment == 0)
         Alignment = ConstantToAlignment(CV, TM);
-      O << "\t.align\t" << Alignment << "\n";
+      if (Alignment != 1)
+        O << "\t.align\t" << Alignment << "\n";
 
       // Print .size and .type only if it is not a string.
       if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV))
@@ -727,9 +728,18 @@ void SparcV9AsmPrinter::emitFunction(const Function &F) {
   const std::vector<MachineConstantPoolEntry> &CP = MCP->getConstants();
 
   enterSection(ReadOnlyData);
+  O << "\t.align\t" << (1 << MCP->getConstantPoolAlignment()) << "\n";
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     std::string cpiName = ".CPI_" + CurrentFnName + "_" + utostr(i);
-    printConstant(CP[i].Val, CP[i].Alignment, cpiName);
+    printConstant(CP[i].Val, 1, cpiName);
+    
+    if (i != e-1) {
+      unsigned EntSize = TM.getTargetData().getTypeSize(CP[i].Val->getType());
+      unsigned ValEnd = CP[i].Offset + EntSize;
+      // Emit inter-object padding for alignment.
+      for (unsigned NumZeros = CP[i+1].Offset-ValEnd; NumZeros; --NumZeros)
+        O << "\t.byte 0\n";
+    }
   }
 
   enterSection(Text);

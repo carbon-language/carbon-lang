@@ -112,7 +112,7 @@ MachineFunction::MachineFunction(const Function *F,
   SSARegMapping = new SSARegMap();
   MFInfo = 0;
   FrameInfo = new MachineFrameInfo();
-  ConstantPool = new MachineConstantPool();
+  ConstantPool = new MachineConstantPool(TM.getTargetData());
   BasicBlocks.Parent = this;
 }
 
@@ -345,10 +345,38 @@ void MachineFrameInfo::dump(const MachineFunction &MF) const {
 //  MachineConstantPool implementation
 //===----------------------------------------------------------------------===//
 
+/// getConstantPoolIndex - Create a new entry in the constant pool or return
+/// an existing one.  User must specify an alignment in bytes for the object.
+///
+unsigned MachineConstantPool::getConstantPoolIndex(Constant *C, 
+                                                   unsigned Alignment) {
+  assert(Alignment && "Alignment must be specified!");
+  if (Alignment > PoolAlignment) PoolAlignment = Alignment;
+  
+  // Check to see if we already have this constant.
+  //
+  // FIXME, this could be made much more efficient for large constant pools.
+  unsigned AlignMask = (1 << Alignment)-1;
+  for (unsigned i = 0, e = Constants.size(); i != e; ++i)
+    if (Constants[i].Val == C && (Constants[i].Offset & AlignMask) == 0)
+      return i;
+  
+  unsigned Offset = 0;
+  if (!Constants.empty()) {
+    Offset = Constants.back().Offset;
+    Offset += TD.getTypeSize(Constants.back().Val->getType());
+    Offset = (Offset+AlignMask)&~AlignMask;
+  }
+  
+  Constants.push_back(MachineConstantPoolEntry(C, Offset));
+  return Constants.size()-1;
+}
+
+
 void MachineConstantPool::print(std::ostream &OS) const {
   for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
     OS << "  <cp #" << i << "> is" << *(Value*)Constants[i].Val;
-    OS << " , align=" << Constants[i].Alignment;
+    OS << " , offset=" << Constants[i].Offset;
     OS << "\n";
   }
 }
