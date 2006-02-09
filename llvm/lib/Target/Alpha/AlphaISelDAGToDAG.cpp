@@ -194,10 +194,11 @@ void AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
 				 Chain.getValue(1));
     Chain = CurDAG->getCopyToReg(Chain, Alpha::R27, N0, 
 				 Chain.getValue(1));
-    Chain = CurDAG->getTargetNode(Alpha::JSRs, MVT::Other, MVT::Flag, 
-				  Chain, Chain.getValue(1));
+    SDNode *CNode =
+      CurDAG->getTargetNode(Alpha::JSRs, MVT::Other, MVT::Flag, 
+                            Chain, Chain.getValue(1));
     Chain = CurDAG->getCopyFromReg(Chain, Alpha::R27, MVT::i64, 
-				  Chain.getValue(1));
+				  SDOperand(CNode, 1));
     Result = CurDAG->SelectNodeTo(N, Alpha::BIS, MVT::i64, Chain, Chain);
     return;
   }
@@ -255,10 +256,11 @@ void AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     MachineConstantPool *CP = BB->getParent()->getConstantPool();
     ConstantUInt *C =
       ConstantUInt::get(Type::getPrimitiveType(Type::ULongTyID) , uval);
-    SDOperand Tmp, CPI = CurDAG->getTargetConstantPool(C, MVT::i64);
-    Tmp = CurDAG->getTargetNode(Alpha::LDAHr, MVT::i64, CPI, getGlobalBaseReg());
+    SDOperand CPI = CurDAG->getTargetConstantPool(C, MVT::i64);
+    SDNode *Tmp = CurDAG->getTargetNode(Alpha::LDAHr, MVT::i64, CPI,
+                                        getGlobalBaseReg());
     Result = CurDAG->SelectNodeTo(N, Alpha::LDQr, MVT::i64, MVT::Other, 
-                                  CPI, Tmp, CurDAG->getEntryNode());
+                                  CPI, SDOperand(Tmp, 0), CurDAG->getEntryNode());
     return;
   }
   case ISD::TargetConstantFP: {
@@ -299,30 +301,31 @@ void AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
       SDOperand tmp1, tmp2;
       Select(tmp1, N->getOperand(0));
       Select(tmp2, N->getOperand(1));
-      SDOperand cmp = CurDAG->getTargetNode(Opc, MVT::f64, 
-                                            rev?tmp2:tmp1,
-                                            rev?tmp1:tmp2);
+      SDNode *cmp = CurDAG->getTargetNode(Opc, MVT::f64, 
+                                          rev?tmp2:tmp1,
+                                          rev?tmp1:tmp2);
       if (isNE) 
-        cmp = CurDAG->getTargetNode(Alpha::CMPTEQ, MVT::f64, cmp, 
+        cmp = CurDAG->getTargetNode(Alpha::CMPTEQ, MVT::f64, SDOperand(cmp, 0), 
                                     CurDAG->getRegister(Alpha::F31, MVT::f64));
       
       SDOperand LD;
       if (AlphaLowering.hasITOF()) {
-        LD = CurDAG->getNode(AlphaISD::FTOIT_, MVT::i64, cmp);
+        LD = CurDAG->getNode(AlphaISD::FTOIT_, MVT::i64, SDOperand(cmp, 0));
       } else {
         int FrameIdx =
           CurDAG->getMachineFunction().getFrameInfo()->CreateStackObject(8, 8);
         SDOperand FI = CurDAG->getFrameIndex(FrameIdx, MVT::i64);
-        SDOperand ST = CurDAG->getTargetNode(Alpha::STT, MVT::Other, 
-                                             cmp, FI, CurDAG->getRegister(Alpha::R31, MVT::i64));
-        LD = CurDAG->getTargetNode(Alpha::LDQ, MVT::i64, FI, 
-                                   CurDAG->getRegister(Alpha::R31, MVT::i64),
-                                   ST);
+        SDOperand ST =
+          SDOperand(CurDAG->getTargetNode(Alpha::STT, MVT::Other, 
+                                          SDOperand(cmp, 0), FI,
+                                          CurDAG->getRegister(Alpha::R31, MVT::i64)), 0);
+        LD = SDOperand(CurDAG->getTargetNode(Alpha::LDQ, MVT::i64, FI, 
+                                             CurDAG->getRegister(Alpha::R31, MVT::i64),
+                                             ST), 0);
       }
-      SDOperand FP = CurDAG->getTargetNode(Alpha::CMPULT, MVT::i64, 
-                                           CurDAG->getRegister(Alpha::R31, MVT::i64),
-                                           LD);
-      Result = FP;
+      Result = SDOperand(CurDAG->getTargetNode(Alpha::CMPULT, MVT::i64, 
+                                               CurDAG->getRegister(Alpha::R31, MVT::i64),
+                                               LD), 0);
       return;
     }
     break;
@@ -347,15 +350,15 @@ void AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
 	int FrameIdx =
 	  CurDAG->getMachineFunction().getFrameInfo()->CreateStackObject(8, 8);
 	SDOperand FI = CurDAG->getFrameIndex(FrameIdx, MVT::i64);
-	SDOperand ST = CurDAG->getTargetNode(Alpha::STQ, MVT::Other,
-					     cond, FI, CurDAG->getRegister(Alpha::R31, MVT::i64));
-	LD = CurDAG->getTargetNode(Alpha::LDT, MVT::f64, FI,
-				   CurDAG->getRegister(Alpha::R31, MVT::i64),
-				   ST);
+	SDOperand ST =
+          SDOperand(CurDAG->getTargetNode(Alpha::STQ, MVT::Other,
+                                          cond, FI, CurDAG->getRegister(Alpha::R31, MVT::i64)), 0);
+	LD = SDOperand(CurDAG->getTargetNode(Alpha::LDT, MVT::f64, FI,
+                                             CurDAG->getRegister(Alpha::R31, MVT::i64),
+                                             ST), 0);
       }
-      SDOperand FP = CurDAG->getTargetNode(isDouble?Alpha::FCMOVNET:Alpha::FCMOVNES,
-					   MVT::f64, FV, TV, LD);
-      Result = FP;
+      Result = SDOperand(CurDAG->getTargetNode(isDouble?Alpha::FCMOVNET:Alpha::FCMOVNES,
+                                               MVT::f64, FV, TV, LD), 0);
       return;
     }
     break;
@@ -401,10 +404,10 @@ SDOperand AlphaDAGToDAGISel::SelectCALL(SDOperand Op) {
        Opc = Alpha::STT;
      } else
        assert(0 && "Unknown operand"); 
-     Chain = CurDAG->getTargetNode(Opc, MVT::Other, CallOperands[i], 
-                                   getI64Imm((i - 6) * 8), 
-                                   CurDAG->getCopyFromReg(Chain, Alpha::R30, MVT::i64),
-                                   Chain);
+     Chain = SDOperand(CurDAG->getTargetNode(Opc, MVT::Other, CallOperands[i], 
+                                             getI64Imm((i - 6) * 8), 
+                                             CurDAG->getCopyFromReg(Chain, Alpha::R30, MVT::i64),
+                                             Chain), 0);
    }
    for (int i = 0; i < std::min(6, count); ++i) {
      if (MVT::isInteger(TypeOperands[i])) {
@@ -424,14 +427,14 @@ SDOperand AlphaDAGToDAGISel::SelectCALL(SDOperand Op) {
      SDOperand GOT = getGlobalBaseReg();
      Chain = CurDAG->getCopyToReg(Chain, Alpha::R29, GOT, InFlag);
      InFlag = Chain.getValue(1);
-     Chain = CurDAG->getTargetNode(Alpha::BSR, MVT::Other, MVT::Flag, 
-				   Addr.getOperand(0), Chain, InFlag);
+     Chain = SDOperand(CurDAG->getTargetNode(Alpha::BSR, MVT::Other, MVT::Flag, 
+                                             Addr.getOperand(0), Chain, InFlag), 0);
    } else {
      Select(Addr, Addr);
      Chain = CurDAG->getCopyToReg(Chain, Alpha::R27, Addr, InFlag);
      InFlag = Chain.getValue(1);
-     Chain = CurDAG->getTargetNode(Alpha::JSR, MVT::Other, MVT::Flag, 
-				   Chain, InFlag );
+     Chain = SDOperand(CurDAG->getTargetNode(Alpha::JSR, MVT::Other, MVT::Flag, 
+                                             Chain, InFlag), 0);
    }
    InFlag = Chain.getValue(1);
 

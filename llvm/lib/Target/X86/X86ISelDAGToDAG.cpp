@@ -521,12 +521,15 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
         Select(Tmp1, Tmp1);
         Select(Tmp2, Tmp2);
         Select(Tmp3, Tmp3);
-        Chain  = CurDAG->getTargetNode(MOpc, MVT::Other, MVT::Flag, Tmp0, Tmp1,
-                                       Tmp2, Tmp3, Chain, InFlag);
-        InFlag = Chain.getValue(1);
+        SDNode *CNode =
+          CurDAG->getTargetNode(MOpc, MVT::Other, MVT::Flag, Tmp0, Tmp1,
+                                Tmp2, Tmp3, Chain, InFlag);
+        Chain  = SDOperand(CNode, 0);
+        InFlag = SDOperand(CNode, 1);
       } else {
         Select(N1, N1);
-        InFlag = CurDAG->getTargetNode(Opc, MVT::Flag, N1, InFlag);
+        InFlag =
+          SDOperand(CurDAG->getTargetNode(Opc, MVT::Flag, N1, InFlag), 0);
       }
 
       Result = CurDAG->getCopyFromReg(Chain, HiReg, NVT, InFlag);
@@ -601,12 +604,13 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
 
       if (isSigned) {
         // Sign extend the low part into the high part.
-        InFlag = CurDAG->getTargetNode(SExtOpcode, MVT::Flag, InFlag);
+        InFlag =
+          SDOperand(CurDAG->getTargetNode(SExtOpcode, MVT::Flag, InFlag), 0);
       } else {
         // Zero out the high part, effectively zero extending the input.
         SDOperand ClrNode =
-          CurDAG->getTargetNode(ClrOpcode, NVT,
-                                CurDAG->getTargetConstant(0, NVT));
+          SDOperand(CurDAG->getTargetNode(ClrOpcode, NVT,
+                                         CurDAG->getTargetConstant(0, NVT)), 0);
         Chain  = CurDAG->getCopyToReg(Chain, CurDAG->getRegister(HiReg, NVT),
                                       ClrNode, InFlag);
         InFlag = Chain.getValue(1);
@@ -617,12 +621,15 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
         Select(Tmp1, Tmp1);
         Select(Tmp2, Tmp2);
         Select(Tmp3, Tmp3);
-        Chain  = CurDAG->getTargetNode(MOpc, MVT::Other, MVT::Flag, Tmp0, Tmp1,
-                                       Tmp2, Tmp3, Chain, InFlag);
-        InFlag = Chain.getValue(1);
+        SDNode *CNode =
+          CurDAG->getTargetNode(MOpc, MVT::Other, MVT::Flag, Tmp0, Tmp1,
+                                Tmp2, Tmp3, Chain, InFlag);
+        Chain  = SDOperand(CNode, 0);
+        InFlag = SDOperand(CNode, 1);
       } else {
         Select(N1, N1);
-        InFlag = CurDAG->getTargetNode(Opc, MVT::Flag, N1, InFlag);
+        InFlag =
+          SDOperand(CurDAG->getTargetNode(Opc, MVT::Flag, N1, InFlag), 0);
       }
 
       Result = CurDAG->getCopyFromReg(Chain, isDiv ? LoReg : HiReg,
@@ -645,7 +652,7 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
       }
       SDOperand Tmp0, Tmp1;
       Select(Tmp0, Node->getOperand(0));
-      Select(Tmp1, CurDAG->getTargetNode(Opc, VT, Tmp0));
+      Select(Tmp1, SDOperand(CurDAG->getTargetNode(Opc, VT, Tmp0), 0));
       SDOperand InFlag = SDOperand(0,0);
       Result = CurDAG->getCopyToReg(CurDAG->getEntryNode(), Reg, Tmp1, InFlag);
       SDOperand Chain = Result.getValue(0);
@@ -659,9 +666,10 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
 
       Result = CurDAG->getCopyFromReg(Chain, Reg, VT, InFlag);
       if (N.Val->hasOneUse())
-        Result =CurDAG->SelectNodeTo(N.Val, Opc, VT, Result);
+        Result = CurDAG->SelectNodeTo(N.Val, Opc, VT, Result);
       else
-        Result = CodeGenMap[N] = CurDAG->getTargetNode(Opc, VT, Result);
+        Result = CodeGenMap[N] =
+          SDOperand(CurDAG->getTargetNode(Opc, VT, Result), 0);
       return;
     }
   }

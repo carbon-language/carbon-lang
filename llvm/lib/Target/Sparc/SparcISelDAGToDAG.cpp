@@ -1052,9 +1052,9 @@ void SparcDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     }
 
     Result = CodeGenMap[Op] = 
-      CurDAG->getTargetNode(SP::ADDri, MVT::i32,
-                            CurDAG->getTargetFrameIndex(FI, MVT::i32),
-                            CurDAG->getTargetConstant(0, MVT::i32));
+      SDOperand(CurDAG->getTargetNode(SP::ADDri, MVT::i32,
+                                      CurDAG->getTargetFrameIndex(FI, MVT::i32),
+                                    CurDAG->getTargetConstant(0, MVT::i32)), 0);
     return;
   }
   case ISD::ADD_PARTS: {
@@ -1064,10 +1064,12 @@ void SparcDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     Select(RHSL, N->getOperand(2));
     Select(RHSH, N->getOperand(3));
     // FIXME, handle immediate RHS.
-    SDOperand Low = CurDAG->getTargetNode(SP::ADDCCrr, MVT::i32, MVT::Flag,
-                                          LHSL, RHSL);
-    SDOperand Hi  = CurDAG->getTargetNode(SP::ADDXrr, MVT::i32, LHSH, RHSH, 
-                                          Low.getValue(1));
+    SDOperand Low =
+      SDOperand(CurDAG->getTargetNode(SP::ADDCCrr, MVT::i32, MVT::Flag,
+                                      LHSL, RHSL), 0);
+    SDOperand Hi =
+      SDOperand(CurDAG->getTargetNode(SP::ADDXrr, MVT::i32, LHSH, RHSH, 
+                                      Low.getValue(1)), 0);
     CodeGenMap[SDOperand(N, 0)] = Low;
     CodeGenMap[SDOperand(N, 1)] = Hi;
     Result = Op.ResNo ? Hi : Low;
@@ -1079,10 +1081,12 @@ void SparcDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     Select(LHSH, N->getOperand(1));
     Select(RHSL, N->getOperand(2));
     Select(RHSH, N->getOperand(3));
-    SDOperand Low = CurDAG->getTargetNode(SP::SUBCCrr, MVT::i32, MVT::Flag,
-                                          LHSL, RHSL);
-    SDOperand Hi  = CurDAG->getTargetNode(SP::SUBXrr, MVT::i32, LHSH, RHSH, 
-                                          Low.getValue(1));
+    SDOperand Low =
+      SDOperand(CurDAG->getTargetNode(SP::SUBCCrr, MVT::i32, MVT::Flag,
+                                      LHSL, RHSL), 0);
+    SDOperand Hi =
+      SDOperand(CurDAG->getTargetNode(SP::SUBXrr, MVT::i32, LHSH, RHSH, 
+                                      Low.getValue(1)), 0);
     CodeGenMap[SDOperand(N, 0)] = Low;
     CodeGenMap[SDOperand(N, 1)] = Hi;
     Result = Op.ResNo ? Hi : Low;
@@ -1098,13 +1102,13 @@ void SparcDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     // Set the Y register to the high-part.
     SDOperand TopPart;
     if (N->getOpcode() == ISD::SDIV) {
-      TopPart = CurDAG->getTargetNode(SP::SRAri, MVT::i32, DivLHS,
-                                      CurDAG->getTargetConstant(31, MVT::i32));
+      TopPart = SDOperand(CurDAG->getTargetNode(SP::SRAri, MVT::i32, DivLHS,
+                                   CurDAG->getTargetConstant(31, MVT::i32)), 0);
     } else {
       TopPart = CurDAG->getRegister(SP::G0, MVT::i32);
     }
-    TopPart = CurDAG->getTargetNode(SP::WRYrr, MVT::Flag, TopPart,
-                                    CurDAG->getRegister(SP::G0, MVT::i32));
+    TopPart = SDOperand(CurDAG->getTargetNode(SP::WRYrr, MVT::Flag, TopPart,
+                                     CurDAG->getRegister(SP::G0, MVT::i32)), 0);
 
     // FIXME: Handle div by immediate.
     unsigned Opcode = N->getOpcode() == ISD::SDIV ? SP::SDIVrr : SP::UDIVrr;
@@ -1118,10 +1122,10 @@ void SparcDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     Select(MulLHS, N->getOperand(0));
     Select(MulRHS, N->getOperand(1));
     unsigned Opcode = N->getOpcode() == ISD::MULHU ? SP::UMULrr : SP::SMULrr;
-    SDOperand Mul = CurDAG->getTargetNode(Opcode, MVT::i32, MVT::Flag,
+    SDNode *Mul = CurDAG->getTargetNode(Opcode, MVT::i32, MVT::Flag,
                                           MulLHS, MulRHS);
     // The high part is in the Y register.
-    Result = CurDAG->SelectNodeTo(N, SP::RDY, MVT::i32, Mul.getValue(1));
+    Result = CurDAG->SelectNodeTo(N, SP::RDY, MVT::i32, SDOperand(Mul, 1));
     return;
   }
   case SPISD::CALL:
@@ -1136,17 +1140,18 @@ void SparcDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     SDOperand Chain = N->getOperand(0);
     SDOperand Tmp0 = N1;
     Select(Chain, Chain);
+    SDNode *ResNode;
     if (N->getNumOperands() == 3) {
       Select(InFlag, N->getOperand(2));
-      Result = CurDAG->getTargetNode(SP::CALL, MVT::Other, MVT::Flag, Tmp0, 
-                                     Chain, InFlag);
+      ResNode = CurDAG->getTargetNode(SP::CALL, MVT::Other, MVT::Flag, Tmp0, 
+                                      Chain, InFlag);
     } else {
-      Result = CurDAG->getTargetNode(SP::CALL, MVT::Other, MVT::Flag, Tmp0, 
-                                     Chain);
+      ResNode = CurDAG->getTargetNode(SP::CALL, MVT::Other, MVT::Flag, Tmp0, 
+                                      Chain);
     }
-    Chain = CodeGenMap[SDOperand(N, 0)] = Result.getValue(0);
-     CodeGenMap[SDOperand(N, 1)] = Result.getValue(1);
-    Result = Result.getValue(Op.ResNo);
+    Chain = CodeGenMap[SDOperand(N, 0)] = SDOperand(ResNode, 0);
+     CodeGenMap[SDOperand(N, 1)] = SDOperand(ResNode, 1);
+    Result = SDOperand(ResNode, Op.ResNo);
     return;
   }
     P47Fail:;
