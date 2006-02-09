@@ -59,12 +59,13 @@ namespace {
     ///
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequiredID(LoopSimplifyID);
+      AU.addPreservedID(LoopSimplifyID);
       AU.addRequired<LoopInfo>();
       AU.addPreserved<LoopInfo>();
     }
 
   private:
-    void VersionLoop(Value *LIC, Loop *L);
+    void VersionLoop(Value *LIC, Loop *L, Loop *&Out1, Loop *&Out2);
     BasicBlock *SplitBlock(BasicBlock *BB, bool SplitAtTop);
     void RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC, bool Val);
   };
@@ -172,11 +173,13 @@ bool LoopUnswitch::visitLoop(Loop *L) {
     }
       
     //std::cerr << "BEFORE:\n"; LI->dump();
-    VersionLoop(BI->getCondition(), L);
+    Loop *First = 0, *Second = 0;
+    VersionLoop(BI->getCondition(), L, First, Second);
     //std::cerr << "AFTER:\n"; LI->dump();
     
-    // FIXME: Why return here?  What if we have:
-    // "for () { if (iv1) { if (iv2) { } } }" ?
+    // Try to unswitch each of our new loops now!
+    if (First)  visitLoop(First);
+    if (Second) visitLoop(Second);
     return true;
   }
 
@@ -247,8 +250,9 @@ static Loop *CloneLoop(Loop *L, Loop *PL, std::map<const Value*, Value*> &VM,
 
 /// VersionLoop - We determined that the loop is profitable to unswitch and
 /// contains a branch on a loop invariant condition.  Split it into loop
-/// versions and test the condition outside of either loop.
-void LoopUnswitch::VersionLoop(Value *LIC, Loop *L) {
+/// versions and test the condition outside of either loop.  Return the loops
+/// created as Out1/Out2.
+void LoopUnswitch::VersionLoop(Value *LIC, Loop *L, Loop *&Out1, Loop *&Out2) {
   Function *F = L->getHeader()->getParent();
 
   DEBUG(std::cerr << "loop-unswitch: Unswitching loop %"
@@ -324,10 +328,8 @@ void LoopUnswitch::VersionLoop(Value *LIC, Loop *L) {
   RewriteLoopBodyWithConditionConstant(L, LIC, true);
   RewriteLoopBodyWithConditionConstant(NewLoop, LIC, false);
   ++NumUnswitched;
-
-  // Try to unswitch each of our new loops now!
-  visitLoop(L);
-  visitLoop(NewLoop);
+  Out1 = L;
+  Out2 = NewLoop;
 }
 
 // RewriteLoopBodyWithConditionConstant - We know that the boolean value LIC has
