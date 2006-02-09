@@ -34,18 +34,15 @@ class MachineConstantPool {
 public:
 
   /// getConstantPoolIndex - Create a new entry in the constant pool or return
-  /// an existing one. User may specify an alignment that is greater than the
-  /// default alignment. If one is not specified, it will be 0.
+  /// an existing one.  User must specify an alignment in bytes for the object.
   ///
-  unsigned getConstantPoolIndex(Constant *C, unsigned Alignment = 0) {
+  unsigned getConstantPoolIndex(Constant *C, unsigned Alignment) {
     // Check to see if we already have this constant.
     //
     // FIXME, this could be made much more efficient for large constant pools.
     for (unsigned i = 0, e = Constants.size(); i != e; ++i)
-      if (Constants[i].first == C) {
-        Constants[i].second = std::max(Constants[i].second, Alignment);
+      if (Constants[i].first == C && Constants[i].second >= Alignment)
         return i;
-      }
     Constants.push_back(std::make_pair(C, Alignment));
     return Constants.size()-1;
   }
