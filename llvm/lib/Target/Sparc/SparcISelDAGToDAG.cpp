@@ -934,7 +934,7 @@ public:
       Subtarget(TM.getSubtarget<SparcSubtarget>()) {
   }
 
-  SDOperand Select(SDOperand Op);
+  void Select(SDOperand &Result, SDOperand Op);
 
   // Complex Pattern Selectors.
   bool SelectADDRrr(SDOperand N, SDOperand &R1, SDOperand &R2);
@@ -1025,33 +1025,44 @@ bool SparcDAGToDAGISel::SelectADDRrr(SDOperand Addr, SDOperand &R1,
   return true;
 }
 
-SDOperand SparcDAGToDAGISel::Select(SDOperand Op) {
+void SparcDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
   SDNode *N = Op.Val;
   if (N->getOpcode() >= ISD::BUILTIN_OP_END &&
-      N->getOpcode() < SPISD::FIRST_NUMBER)
-    return Op;   // Already selected.
+      N->getOpcode() < SPISD::FIRST_NUMBER) {
+    Result = Op;
+    return;   // Already selected.
+  }
+
                  // If this has already been converted, use it.
   std::map<SDOperand, SDOperand>::iterator CGMI = CodeGenMap.find(Op);
-  if (CGMI != CodeGenMap.end()) return CGMI->second;
+  if (CGMI != CodeGenMap.end()) {
+    Result = CGMI->second;
+    return;
+  }
   
   switch (N->getOpcode()) {
   default: break;
   case ISD::FrameIndex: {
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
-    if (N->hasOneUse())
-      return CurDAG->SelectNodeTo(N, SP::ADDri, MVT::i32,
-                                  CurDAG->getTargetFrameIndex(FI, MVT::i32),
-                                  CurDAG->getTargetConstant(0, MVT::i32));
-    return CodeGenMap[Op] = 
+    if (N->hasOneUse()) {
+      Result = CurDAG->SelectNodeTo(N, SP::ADDri, MVT::i32,
+                                    CurDAG->getTargetFrameIndex(FI, MVT::i32),
+                                    CurDAG->getTargetConstant(0, MVT::i32));
+      return;
+    }
+
+    Result = CodeGenMap[Op] = 
       CurDAG->getTargetNode(SP::ADDri, MVT::i32,
                             CurDAG->getTargetFrameIndex(FI, MVT::i32),
                             CurDAG->getTargetConstant(0, MVT::i32));
+    return;
   }
   case ISD::ADD_PARTS: {
-    SDOperand LHSL = Select(N->getOperand(0));
-    SDOperand LHSH = Select(N->getOperand(1));
-    SDOperand RHSL = Select(N->getOperand(2));
-    SDOperand RHSH = Select(N->getOperand(3));
+    SDOperand LHSL, LHSH, RHSL, RHSH;
+    Select(LHSL, N->getOperand(0));
+    Select(LHSH, N->getOperand(1));
+    Select(RHSL, N->getOperand(2));
+    Select(RHSH, N->getOperand(3));
     // FIXME, handle immediate RHS.
     SDOperand Low = CurDAG->getTargetNode(SP::ADDCCrr, MVT::i32, MVT::Flag,
                                           LHSL, RHSL);
@@ -1059,27 +1070,30 @@ SDOperand SparcDAGToDAGISel::Select(SDOperand Op) {
                                           Low.getValue(1));
     CodeGenMap[SDOperand(N, 0)] = Low;
     CodeGenMap[SDOperand(N, 1)] = Hi;
-    return Op.ResNo ? Hi : Low;
+    Result = Op.ResNo ? Hi : Low;
+    return;
   }
   case ISD::SUB_PARTS: {
-    SDOperand LHSL = Select(N->getOperand(0));
-    SDOperand LHSH = Select(N->getOperand(1));
-    SDOperand RHSL = Select(N->getOperand(2));
-    SDOperand RHSH = Select(N->getOperand(3));
-    // FIXME, handle immediate RHS.
+    SDOperand LHSL, LHSH, RHSL, RHSH;
+    Select(LHSL, N->getOperand(0));
+    Select(LHSH, N->getOperand(1));
+    Select(RHSL, N->getOperand(2));
+    Select(RHSH, N->getOperand(3));
     SDOperand Low = CurDAG->getTargetNode(SP::SUBCCrr, MVT::i32, MVT::Flag,
                                           LHSL, RHSL);
     SDOperand Hi  = CurDAG->getTargetNode(SP::SUBXrr, MVT::i32, LHSH, RHSH, 
                                           Low.getValue(1));
     CodeGenMap[SDOperand(N, 0)] = Low;
     CodeGenMap[SDOperand(N, 1)] = Hi;
-    return Op.ResNo ? Hi : Low;
+    Result = Op.ResNo ? Hi : Low;
+    return;
   }
   case ISD::SDIV:
   case ISD::UDIV: {
     // FIXME: should use a custom expander to expose the SRA to the dag.
-    SDOperand DivLHS = Select(N->getOperand(0));
-    SDOperand DivRHS = Select(N->getOperand(1));
+    SDOperand DivLHS, DivRHS;
+    Select(DivLHS, N->getOperand(0));
+    Select(DivRHS, N->getOperand(1));
     
     // Set the Y register to the high-part.
     SDOperand TopPart;
@@ -1094,18 +1108,21 @@ SDOperand SparcDAGToDAGISel::Select(SDOperand Op) {
 
     // FIXME: Handle div by immediate.
     unsigned Opcode = N->getOpcode() == ISD::SDIV ? SP::SDIVrr : SP::UDIVrr;
-    return CurDAG->SelectNodeTo(N, Opcode, MVT::i32, DivLHS, DivRHS, TopPart);
+    Result = CurDAG->SelectNodeTo(N, Opcode, MVT::i32, DivLHS, DivRHS, TopPart);
+    return;
   }    
   case ISD::MULHU:
   case ISD::MULHS: {
     // FIXME: Handle mul by immediate.
-    SDOperand MulLHS = Select(N->getOperand(0));
-    SDOperand MulRHS = Select(N->getOperand(1));
+    SDOperand MulLHS, MulRHS;
+    Select(MulLHS, N->getOperand(0));
+    Select(MulRHS, N->getOperand(1));
     unsigned Opcode = N->getOpcode() == ISD::MULHU ? SP::UMULrr : SP::SMULrr;
     SDOperand Mul = CurDAG->getTargetNode(Opcode, MVT::i32, MVT::Flag,
                                           MulLHS, MulRHS);
     // The high part is in the Y register.
-    return CurDAG->SelectNodeTo(N, SP::RDY, MVT::i32, Mul.getValue(1));
+    Result = CurDAG->SelectNodeTo(N, SP::RDY, MVT::i32, Mul.getValue(1));
+    return;
   }
   case SPISD::CALL:
     // FIXME: This is a workaround for a bug in tblgen.
@@ -1118,10 +1135,9 @@ SDOperand SparcDAGToDAGISel::Select(SDOperand Op) {
     SDOperand InFlag = SDOperand(0, 0);
     SDOperand Chain = N->getOperand(0);
     SDOperand Tmp0 = N1;
-    Chain = Select(Chain);
-    SDOperand Result;
+    Select(Chain, Chain);
     if (N->getNumOperands() == 3) {
-      InFlag = Select(N->getOperand(2));
+      Select(InFlag, N->getOperand(2));
       Result = CurDAG->getTargetNode(SP::CALL, MVT::Other, MVT::Flag, Tmp0, 
                                      Chain, InFlag);
     } else {
@@ -1130,13 +1146,14 @@ SDOperand SparcDAGToDAGISel::Select(SDOperand Op) {
     }
     Chain = CodeGenMap[SDOperand(N, 0)] = Result.getValue(0);
      CodeGenMap[SDOperand(N, 1)] = Result.getValue(1);
-    return Result.getValue(Op.ResNo);
+    Result = Result.getValue(Op.ResNo);
+    return;
   }
     P47Fail:;
     
   }
   
-  return SelectCode(Op);
+  SelectCode(Result, Op);
 }
 
 

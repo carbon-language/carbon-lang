@@ -63,7 +63,7 @@ namespace {
     
     // Select - Convert the specified operand from a target-independent to a
     // target-specific node if it hasn't already been changed.
-    SDOperand Select(SDOperand Op);
+    void Select(SDOperand &Result, SDOperand N);
     
     SDNode *SelectIntImmediateExpr(SDOperand LHS, SDOperand RHS,
                                    unsigned OCHi, unsigned OCLo,
@@ -143,7 +143,8 @@ void IA64DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
     }
 
     // Finally, legalize this node.
-    Select(Node);
+    SDOperand Dummy;
+    Select(Dummy, Node);
   }
     
   // Select target instructions for the DAG.
@@ -157,10 +158,11 @@ void IA64DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
 
 SDOperand IA64DAGToDAGISel::SelectDIV(SDOperand Op) {
   SDNode *N = Op.Val;
-  SDOperand Chain = Select(N->getOperand(0));
+  SDOperand Chain, Tmp1, Tmp2;
+  Select(Chain, N->getOperand(0));
 
-  SDOperand Tmp1 = Select(N->getOperand(0));
-  SDOperand Tmp2 = Select(N->getOperand(1));
+  Select(Tmp1, N->getOperand(0));
+  Select(Tmp2, N->getOperand(1));
 
   bool isFP=false;
 
@@ -328,25 +330,31 @@ SDOperand IA64DAGToDAGISel::SelectDIV(SDOperand Op) {
 
 // Select - Convert the specified operand from a target-independent to a
 // target-specific node if it hasn't already been changed.
-SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
+void IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
   SDNode *N = Op.Val;
   if (N->getOpcode() >= ISD::BUILTIN_OP_END &&
-      N->getOpcode() < IA64ISD::FIRST_NUMBER)
-    return Op;   // Already selected.
+      N->getOpcode() < IA64ISD::FIRST_NUMBER) {
+    Result = Op;
+    return;   // Already selected.
+  }
 
   // If this has already been converted, use it.
   std::map<SDOperand, SDOperand>::iterator CGMI = CodeGenMap.find(Op);
-  if (CGMI != CodeGenMap.end()) return CGMI->second;
+  if (CGMI != CodeGenMap.end()) {
+    Result = CGMI->second;
+    return;
+  }
   
   switch (N->getOpcode()) {
   default: break;
 
   case IA64ISD::BRCALL: { // XXX: this is also a hack!
-    SDOperand Chain = Select(N->getOperand(0));
+    SDOperand Chain;
     SDOperand InFlag;  // Null incoming flag value.
 
+    Select(Chain, N->getOperand(0));
     if(N->getNumOperands()==3) // we have an incoming chain, callee and flag
-      InFlag = Select(N->getOperand(2));
+      Select(InFlag, N->getOperand(2));
 
     unsigned CallOpcode;
     SDOperand CallOperand;
@@ -367,7 +375,8 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
     // otherwise we need to load the function descriptor,
     // load the branch target (function)'s entry point and GP,
     // branch (call) then restore the GP
-    SDOperand FnDescriptor = Select(N->getOperand(1));
+    SDOperand FnDescriptor;
+    Select(FnDescriptor, N->getOperand(1));
    
     // load the branch target's entry point [mem] and 
     // GP value [mem+8]
@@ -404,41 +413,47 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
 
    for (unsigned i = 0, e = CallResults.size(); i != e; ++i)
      CodeGenMap[Op.getValue(i)] = CallResults[i];
-   return CallResults[Op.ResNo];
+   Result = CallResults[Op.ResNo];
+   return;
   }
   
   case IA64ISD::GETFD: {
-    SDOperand Input = Select(N->getOperand(0));
-    SDOperand Result = CurDAG->getTargetNode(IA64::GETFD, MVT::i64, Input);
+    SDOperand Input;
+    Select(Input, N->getOperand(0));
+    Result = CurDAG->getTargetNode(IA64::GETFD, MVT::i64, Input);
     CodeGenMap[Op] = Result;
-    return Result;
+    return;
   } 
   
   case ISD::FDIV:
   case ISD::SDIV:
   case ISD::UDIV:
   case ISD::SREM:
-  case ISD::UREM: return SelectDIV(Op);
+  case ISD::UREM:
+    Result = SelectDIV(Op);
+    return;
  
   case ISD::TargetConstantFP: {
     SDOperand Chain = CurDAG->getEntryNode(); // this is a constant, so..
 
-    if (cast<ConstantFPSDNode>(N)->isExactlyValue(+0.0))
-      return CurDAG->getCopyFromReg(Chain, IA64::F0, MVT::f64);
-    else if (cast<ConstantFPSDNode>(N)->isExactlyValue(+1.0))
-      return CurDAG->getCopyFromReg(Chain, IA64::F1, MVT::f64);
-    else
+    if (cast<ConstantFPSDNode>(N)->isExactlyValue(+0.0)) {
+      Result = CurDAG->getCopyFromReg(Chain, IA64::F0, MVT::f64);
+    } else if (cast<ConstantFPSDNode>(N)->isExactlyValue(+1.0)) {
+      Result = CurDAG->getCopyFromReg(Chain, IA64::F1, MVT::f64);
+    } else
       assert(0 && "Unexpected FP constant!");
+    return;
   }
 
   case ISD::FrameIndex: { // TODO: reduce creepyness
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
     if (N->hasOneUse())
-      return CurDAG->SelectNodeTo(N, IA64::MOV, MVT::i64,
+      Result = CurDAG->SelectNodeTo(N, IA64::MOV, MVT::i64,
                                   CurDAG->getTargetFrameIndex(FI, MVT::i64));
     else
-      return CodeGenMap[Op] = CurDAG->getTargetNode(IA64::MOV, MVT::i64,
+      Result = CodeGenMap[Op] = CurDAG->getTargetNode(IA64::MOV, MVT::i64,
                                 CurDAG->getTargetFrameIndex(FI, MVT::i64));
+    return;
   }
 
   case ISD::ConstantPool: { // TODO: nuke the constant pool
@@ -447,8 +462,9 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
     Constant *C = CP->get();
     SDOperand CPI = CurDAG->getTargetConstantPool(C, MVT::i64,
                                                   CP->getAlignment());
-    return CurDAG->getTargetNode(IA64::ADDL_GA, MVT::i64, // ?
+    Result = CurDAG->getTargetNode(IA64::ADDL_GA, MVT::i64, // ?
 	                      CurDAG->getRegister(IA64::r1, MVT::i64), CPI);
+    return;
   }
 
   case ISD::GlobalAddress: {
@@ -456,7 +472,8 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
     SDOperand GA = CurDAG->getTargetGlobalAddress(GV, MVT::i64);
     SDOperand Tmp = CurDAG->getTargetNode(IA64::ADDL_GA, MVT::i64, 
 	                          CurDAG->getRegister(IA64::r1, MVT::i64), GA);
-    return CurDAG->getTargetNode(IA64::LD8, MVT::i64, Tmp);
+    Result = CurDAG->getTargetNode(IA64::LD8, MVT::i64, Tmp);
+    return;
   }
   
 /* XXX  case ISD::ExternalSymbol: {
@@ -471,8 +488,9 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
   case ISD::LOAD:
   case ISD::EXTLOAD: // FIXME: load -1, not 1, for bools?
   case ISD::ZEXTLOAD: {
-    SDOperand Chain = Select(N->getOperand(0));
-    SDOperand Address = Select(N->getOperand(1));
+    SDOperand Chain, Address;
+    Select(Chain, N->getOperand(0));
+    Select(Address, N->getOperand(1));
 
     MVT::ValueType TypeBeingLoaded = (N->getOpcode() == ISD::LOAD) ?
       N->getValueType(0) : cast<VTSDNode>(N->getOperand(3))->getVT();
@@ -481,11 +499,13 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
     default: N->dump(); assert(0 && "Cannot load this type!");
     case MVT::i1: { // this is a bool
       Opc = IA64::LD1; // first we load a byte, then compare for != 0
-      if(N->getValueType(0) == MVT::i1) // XXX: early exit!
-        return CurDAG->SelectNodeTo(N, IA64::CMPNE, MVT::i1, MVT::Other, 
+      if(N->getValueType(0) == MVT::i1) { // XXX: early exit!
+        Result = CurDAG->SelectNodeTo(N, IA64::CMPNE, MVT::i1, MVT::Other, 
                                   CurDAG->getTargetNode(Opc, MVT::i64, Address),
                                   CurDAG->getRegister(IA64::r0, MVT::i64), 
                                   Chain).getValue(Op.ResNo);
+        return;
+      }
       /* otherwise, we want to load a bool into something bigger: LD1
          will do that for us, so we just fall through */
     }
@@ -499,14 +519,16 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
     }
 
     // TODO: comment this
-    return CurDAG->SelectNodeTo(N, Opc, N->getValueType(0), MVT::Other,
+    Result = CurDAG->SelectNodeTo(N, Opc, N->getValueType(0), MVT::Other,
                                 Address, Chain).getValue(Op.ResNo);
+    return;
   }
   
   case ISD::TRUNCSTORE:
   case ISD::STORE: {
-    SDOperand Address = Select(N->getOperand(2));
-    SDOperand Chain = Select(N->getOperand(0));
+    SDOperand Address, Chain;
+    Select(Address, N->getOperand(2));
+    Select(Chain, N->getOperand(0));
    
     unsigned Opc;
     if (N->getOpcode() == ISD::STORE) {
@@ -518,11 +540,13 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
 	SDOperand Initial = CurDAG->getCopyFromReg(Chain, IA64::r0, MVT::i64);
 	Chain = Initial.getValue(1);
 	// then load 1 into the same reg iff the predicate to store is 1
-        SDOperand Tmp = 
-          CurDAG->getTargetNode(IA64::TPCADDS, MVT::i64, Initial,
-                                CurDAG->getConstant(1, MVT::i64),
-                                Select(N->getOperand(1)));
-        return CurDAG->SelectNodeTo(N, Opc, MVT::Other, Address, Tmp, Chain);
+        SDOperand Tmp;
+        Select(Tmp, N->getOperand(1));
+        CurDAG->getTargetNode(IA64::TPCADDS, MVT::i64, Initial,
+                              CurDAG->getConstant(1, MVT::i64),
+                              Tmp);
+        Result = CurDAG->SelectNodeTo(N, Opc, MVT::Other, Address, Tmp, Chain);
+        return;
       }
       case MVT::i64: Opc = IA64::ST8;  break;
       case MVT::f64: Opc = IA64::STF8; break;
@@ -537,18 +561,23 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
       }
     }
     
-    return CurDAG->SelectNodeTo(N, Opc, MVT::Other, Select(N->getOperand(2)),
-                                Select(N->getOperand(1)), Chain);
+    SDOperand N1, N2;
+    Select(N1, N->getOperand(1));
+    Select(N2, N->getOperand(2));
+    Result = CurDAG->SelectNodeTo(N, Opc, MVT::Other, N2, N1, Chain);
+    return;
   }
 
   case ISD::BRCOND: {
-    SDOperand Chain = Select(N->getOperand(0));
-    SDOperand CC = Select(N->getOperand(1));
+    SDOperand Chain, CC;
+    Select(Chain, N->getOperand(0));
+    Select(CC, N->getOperand(1));
     MachineBasicBlock *Dest =
       cast<BasicBlockSDNode>(N->getOperand(2))->getBasicBlock();
     //FIXME - we do NOT need long branches all the time
-    return CurDAG->SelectNodeTo(N, IA64::BRLCOND_NOTCALL, MVT::Other, CC, 
+    Result = CurDAG->SelectNodeTo(N, IA64::BRLCOND_NOTCALL, MVT::Other, CC, 
                                 CurDAG->getBasicBlock(Dest), Chain);
+    return;
   }
 
   case ISD::CALLSEQ_START:
@@ -556,17 +585,22 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
     int64_t Amt = cast<ConstantSDNode>(N->getOperand(1))->getValue();
     unsigned Opc = N->getOpcode() == ISD::CALLSEQ_START ?
                        IA64::ADJUSTCALLSTACKDOWN : IA64::ADJUSTCALLSTACKUP;
-    return CurDAG->SelectNodeTo(N, Opc, MVT::Other,
-                                getI64Imm(Amt), Select(N->getOperand(0)));
+    SDOperand N0;
+    Select(N0, N->getOperand(0));
+    Result = CurDAG->SelectNodeTo(N, Opc, MVT::Other, getI64Imm(Amt), N0);
+    return;
   }
 
   case ISD::BR:
 		 // FIXME: we don't need long branches all the time!
-    return CurDAG->SelectNodeTo(N, IA64::BRL_NOTCALL, MVT::Other, 
-                                N->getOperand(1), Select(N->getOperand(0)));
+    SDOperand N0;
+    Select(N0, N->getOperand(0));
+    Result = CurDAG->SelectNodeTo(N, IA64::BRL_NOTCALL, MVT::Other, 
+                                N->getOperand(1), N0);
+    return;
   }
   
-  return SelectCode(Op);
+  SelectCode(Result, Op);
 }
 
 
