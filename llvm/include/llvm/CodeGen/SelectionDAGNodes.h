@@ -1074,6 +1074,9 @@ protected:
 public:
 
   Constant *get() const { return C; }
+  
+  // Return the alignment of this constant pool object, which is either 0 (for
+  // default alignment) or log2 of the desired value.
   unsigned getAlignment() const { return Alignment; }
 
   static bool classof(const ConstantPoolSDNode *) { return true; }
