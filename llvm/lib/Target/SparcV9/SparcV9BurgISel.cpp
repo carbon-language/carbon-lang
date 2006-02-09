@@ -1139,7 +1139,8 @@ void CreateCodeToLoadConst(const TargetMachine& target, Function* F,
     // Get the constant pool index for this constant
     MachineConstantPool *CP = MachineFunction::get(F).getConstantPool();
     Constant *C = cast<Constant>(val);
-    unsigned CPI = CP->getConstantPoolIndex(C);
+    unsigned Align = target.getTargetData().getTypeAlignmentShift(C->getType());
+    unsigned CPI = CP->getConstantPoolIndex(C, Align);
 
     // Put the address of the constant into a register
     MachineInstr* MI;
