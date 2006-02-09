@@ -30,10 +30,20 @@ namespace llvm {
 
 class Constant;
 
+/// MachineConstantPoolEntry - One entry in the constant pool.
+///
+struct MachineConstantPoolEntry {
+  /// Val - The constant itself.
+  Constant *Val;
+  /// Alignment - The alignment of the constant.
+  unsigned Alignment;
+  
+  MachineConstantPoolEntry(Constant *V, unsigned A) : Val(V), Alignment(A) {}
+};
+  
 class MachineConstantPool {
-  std::vector<std::pair<Constant*,unsigned> > Constants;
+  std::vector<MachineConstantPoolEntry> Constants;
 public:
-
   /// getConstantPoolIndex - Create a new entry in the constant pool or return
   /// an existing one.  User must specify an alignment in bytes for the object.
   ///
@@ -44,9 +54,9 @@ public:
     //
     // FIXME, this could be made much more efficient for large constant pools.
     for (unsigned i = 0, e = Constants.size(); i != e; ++i)
-      if (Constants[i].first == C && Constants[i].second >= Alignment)
+      if (Constants[i].Val == C && Constants[i].Alignment >= Alignment)
         return i;
-    Constants.push_back(std::make_pair(C, Alignment));
+    Constants.push_back(MachineConstantPoolEntry(C, Alignment));
     return Constants.size()-1;
   }
 
@@ -54,7 +64,7 @@ public:
   ///
   bool isEmpty() const { return Constants.empty(); }
 
-  const std::vector<std::pair<Constant*,unsigned> > &getConstants() const {
+  const std::vector<MachineConstantPoolEntry> &getConstants() const {
     return Constants;
   }
 
