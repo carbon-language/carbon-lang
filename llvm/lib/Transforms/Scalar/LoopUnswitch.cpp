@@ -31,7 +31,6 @@
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
-#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
@@ -39,6 +38,7 @@
 #include "llvm/ADT/Statistic.h"
 #include <algorithm>
 #include <iostream>
+#include <set>
 using namespace llvm;
 
 namespace {
@@ -46,7 +46,6 @@ namespace {
 
   class LoopUnswitch : public FunctionPass {
     LoopInfo *LI;  // Loop information
-    DominatorSet *DS;
   public:
     virtual bool runOnFunction(Function &F);
     bool visitLoop(Loop *L);
@@ -56,7 +55,6 @@ namespace {
     ///
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequiredID(LoopSimplifyID);
-      //AU.addRequired<DominatorSet>();
       AU.addRequired<LoopInfo>();
       AU.addPreserved<LoopInfo>();
     }
@@ -74,7 +72,6 @@ FunctionPass *llvm::createLoopUnswitchPass() { return new LoopUnswitch(); }
 bool LoopUnswitch::runOnFunction(Function &F) {
   bool Changed = false;
   LI = &getAnalysis<LoopInfo>();
-  DS = 0; //&getAnalysis<DominatorSet>();
 
   // Transform all the top-level loops.  Copy the loop list so that the child
   // can update the loop tree if it needs to delete the loop.
@@ -83,6 +80,36 @@ bool LoopUnswitch::runOnFunction(Function &F) {
     Changed |= visitLoop(SubLoops[i]);
 
   return Changed;
+}
+
+
+/// InsertPHINodesForUsesOutsideLoop - If this instruction is used outside of
+/// the specified loop, insert a PHI node in the appropriate exit block to merge
+/// the values in the two different loop versions.
+///
+/// Most values are not used outside of the loop they are defined in, so be
+/// efficient for this case.
+///
+static bool LoopValuesUsedOutsideLoop(Loop *L) {
+  // We will be doing lots of "loop contains block" queries.  Loop::contains is
+  // linear time, use a set to speed this up.
+  std::set<BasicBlock*> LoopBlocks;
+
+  for (Loop::block_iterator BB = L->block_begin(), E = L->block_end();
+       BB != E; ++BB)
+    LoopBlocks.insert(*BB);
+  
+  for (Loop::block_iterator BB = L->block_begin(), E = L->block_end();
+       BB != E; ++BB) {
+    for (BasicBlock::iterator I = (*BB)->begin(), E = (*BB)->end(); I != E; ++I)
+      for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;
+           ++UI) {
+        BasicBlock *UserBB = cast<Instruction>(*UI)->getParent();
+        if (!LoopBlocks.count(UserBB))
+          return true;
+      }
+  }
+  return false;
 }
 
 bool LoopUnswitch::visitLoop(Loop *L) {
@@ -103,27 +130,50 @@ bool LoopUnswitch::visitLoop(Loop *L) {
     TerminatorInst *TI = (*I)->getTerminator();
     if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
       if (!isa<Constant>(SI) && L->isLoopInvariant(SI->getCondition()))
-        DEBUG(std::cerr << "Can't unswitching 'switch' loop %"
+        DEBUG(std::cerr << "TODO: Implement unswitching 'switch' loop %"
               << L->getHeader()->getName() << ", cost = "
               << L->getBlocks().size() << "\n" << **I);
-    } else if (BranchInst *BI = dyn_cast<BranchInst>(TI))
-      if (BI->isConditional() && !isa<Constant>(BI->getCondition()) &&
-          L->isLoopInvariant(BI->getCondition())) {
-        // Check to see if it would be profitable to unswitch this loop.
-        if (L->getBlocks().size() > 10) {
-          DEBUG(std::cerr << "NOT unswitching loop %"
-                << L->getHeader()->getName() << ", cost too high: "
-                << L->getBlocks().size() << "\n");
-        } else {
-          // FIXME: check for profitability.
-          //std::cerr << "BEFORE:\n"; LI->dump();
-
-          VersionLoop(BI->getCondition(), L);
-
-          //std::cerr << "AFTER:\n"; LI->dump();
-          return true;
-        }
-      }
+      continue;
+    }
+    
+    BranchInst *BI = dyn_cast<BranchInst>(TI);
+    if (!BI) continue;
+    
+    // If this isn't branching on an invariant condition, we can't unswitch it.
+    if (!BI->isConditional() || isa<Constant>(BI->getCondition()) ||
+        !L->isLoopInvariant(BI->getCondition()))
+      continue;
+    
+    // Check to see if it would be profitable to unswitch this loop.
+    if (L->getBlocks().size() > 10) {
+      // FIXME: this should estimate growth by the amount of code shared by the
+      // resultant unswitched loops.  This should have no code growth:
+      //    for () { if (iv) {...} }
+      // as one copy of the loop will be empty.
+      //
+      DEBUG(std::cerr << "NOT unswitching loop %"
+            << L->getHeader()->getName() << ", cost too high: "
+            << L->getBlocks().size() << "\n");
+      continue;
+    }
+    
+    // If this loop has live-out values, we can't unswitch it. We need something
+    // like loop-closed SSA form in order to know how to insert PHI nodes for
+    // these values.
+    if (LoopValuesUsedOutsideLoop(L)) {
+      DEBUG(std::cerr << "NOT unswitching loop %"
+                      << L->getHeader()->getName()
+                      << ", a loop value is used outside loop!\n");
+      continue;
+    }
+      
+    //std::cerr << "BEFORE:\n"; LI->dump();
+    VersionLoop(BI->getCondition(), L);
+    //std::cerr << "AFTER:\n"; LI->dump();
+    
+    // FIXME: Why return here?  What if we have:
+    // "for () { if (iv1) { if (iv2) { } } }" ?
+    return true;
   }
 
   return Changed;
@@ -191,52 +241,6 @@ static Loop *CloneLoop(Loop *L, Loop *PL, std::map<const Value*, Value*> &VM,
 }
 
 
-/// InsertPHINodesForUsesOutsideLoop - If this instruction is used outside of
-/// the specified loop, insert a PHI node in the appropriate exit block to merge
-/// the values in the two different loop versions.
-///
-/// Most values are not used outside of the loop they are defined in, so be
-/// efficient for this case.
-///
-static AllocaInst *
-InsertPHINodesForUsesOutsideLoop(Instruction *OI, Instruction *NI,
-                                 DominatorSet &DS, Loop *OL, Loop *NL,
-                                 std::vector<BasicBlock*> &OldExitBlocks,
-                                 std::map<const Value*, Value*> &ValueMap) {
-  assert(OI->getType() == NI->getType() && OI->getOpcode() == NI->getOpcode() &&
-         "Hrm, should be mapping between identical instructions!");
-  for (Value::use_iterator UI = OI->use_begin(), E = OI->use_end(); UI != E;
-       ++UI)
-    if (!OL->contains(cast<Instruction>(*UI)->getParent()) &&
-        !NL->contains(cast<Instruction>(*UI)->getParent()))
-      goto UsedOutsideOfLoop;
-  return 0;
-
-UsedOutsideOfLoop:
-  // Okay, this instruction is used outside of the current loop.  Insert a PHI
-  // nodes for the instruction merging the values together.
-
-  // FIXME: For now we just spill the object to the stack, assuming that a
-  // subsequent mem2reg pass will clean up after us.  This should be improved in
-  // two ways:
-  //  1. If there is only one exit block, trivially insert the PHI nodes
-  //  2. Once we update domfrontier, we should do the promotion after everything
-  //     is stable again.
-  AllocaInst *Result = DemoteRegToStack(*OI);
-
-  // Store to the stack location right after the new instruction.
-  BasicBlock::iterator InsertPoint = NI;
-  if (InvokeInst *II = dyn_cast<InvokeInst>(NI))
-    InsertPoint = II->getNormalDest()->begin();
-  else
-    ++InsertPoint;
-  while (isa<PHINode>(InsertPoint)) ++InsertPoint;
-  new StoreInst(NI, Result, InsertPoint);
-  return Result;
-}
-
-
-
 /// VersionLoop - We determined that the loop is profitable to unswitch and
 /// contains a branch on a loop invariant condition.  Split it into loop
 /// versions and test the condition outside of either loop.
@@ -298,23 +302,7 @@ void LoopUnswitch::VersionLoop(Value *LIC, Loop *L) {
     for (BasicBlock::iterator I = NewBlocks[i]->begin(),
            E = NewBlocks[i]->end(); I != E; ++I)
       RemapInstruction(I, ValueMap);
-
-  // If the instructions are used outside of the loop, insert a PHI node in any
-  // exit blocks dominated by the instruction.
-  for (unsigned i = 0, e = NewBlocks.size(); i != e; ++i)
-    for (BasicBlock::iterator OI = LoopBlocks[i]->begin(),
-           E = LoopBlocks[i]->end(); OI != E; ++OI)
-      if (!OI->use_empty()) {
-        std::map<const Value*,Value*>::iterator OII = ValueMap.find(OI);
-        // The PHINode rewriting stuff can insert stores that are not in the
-        // mapping.  Don't mess around with them.
-        if (OII != ValueMap.end()) {
-          Instruction *NI = cast<Instruction>(OII->second);
-          InsertPHINodesForUsesOutsideLoop(OI, NI, *DS, L, NewLoop,
-                                           ExitBlocks, ValueMap);
-        }
-      }
-
+  
   // Rewrite the original preheader to select between versions of the loop.
   assert(isa<BranchInst>(OrigPreheader->getTerminator()) &&
          cast<BranchInst>(OrigPreheader->getTerminator())->isUnconditional() &&
