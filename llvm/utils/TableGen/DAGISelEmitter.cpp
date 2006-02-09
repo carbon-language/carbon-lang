@@ -2395,32 +2395,29 @@ public:
 
         unsigned ValNo = 0;
         for (unsigned i = 0; i < NumResults; i++) {
-          emitCode("CodeGenMap[N.getValue(" + utostr(ValNo) +
-                   ")] = SDOperand(ResNode, " + utostr(ValNo) + ");");
+          emitCode("SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, " +
+                   utostr(ValNo) + ", ResNode, " + utostr(ValNo) + ");");
           ValNo++;
         }
-
-        if (HasChain)
-          emitCode(ChainName + " = SDOperand(ResNode, " + utostr(ValNo) + ");");
 
         if (NodeHasOutFlag)
           emitCode("InFlag = SDOperand(ResNode, " + 
                    utostr(ValNo + (unsigned)HasChain) + ");");
 
         if (HasImpResults && EmitCopyFromRegs(N, ChainEmitted)) {
-          emitCode("CodeGenMap[N.getValue(" + utostr(ValNo) + ")] = "
-                   "SDOperand(ResNode, " + utostr(ValNo) + ");");
+          emitCode("SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, " +
+                   utostr(ValNo) + ", ResNode, " + utostr(ValNo) + ");");
           ValNo++;
         }
 
         // User does not expect the instruction would produce a chain!
         bool AddedChain = HasChain && !NodeHasChain;
         if (NodeHasChain) {
-          emitCode("CodeGenMap[N.getValue(" + utostr(ValNo) + ")] = " +
-                   ChainName + ";");
+          emitCode("SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, " + 
+                   utostr(ValNo) + ", ResNode, " + utostr(ValNo) + ");");
           if (DoReplace)
-            emitCode("if (N.ResNo == 0) AddHandleReplacement(N.getValue("
-                     + utostr(ValNo) + "), " + ChainName + ");");
+            emitCode("if (N.ResNo == 0) AddHandleReplacement(N.Val, "
+                     + utostr(ValNo) + ", " + "ResNode, " + utostr(ValNo) + ");");
           ValNo++;
         }
 
@@ -2428,20 +2425,23 @@ public:
         if (FoldedChains.size() > 0) {
           std::string Code;
           for (unsigned j = 0, e = FoldedChains.size(); j < e; j++)
-            Code += "CodeGenMap[" + FoldedChains[j].first + ".getValue(" +
-              utostr(FoldedChains[j].second) + ")] = ";
-          emitCode(Code + ChainName + ";");
+            emitCode("SelectionDAG::InsertISelMapEntry(CodeGenMap, " +
+                     FoldedChains[j].first + ".Val, " + 
+                     utostr(FoldedChains[j].second) + ", ResNode, " +
+                     utostr(ValNo) + ");");
 
           for (unsigned j = 0, e = FoldedChains.size(); j < e; j++) {
             std::string Code =
-              FoldedChains[j].first + ".getValue(" +
-              utostr(FoldedChains[j].second) + ")";
-            emitCode("AddHandleReplacement(" + Code + ", " + ChainName + ");");
+              FoldedChains[j].first + ".Val, " +
+              utostr(FoldedChains[j].second) + ", ";
+            emitCode("AddHandleReplacement(" + Code + "ResNode, " +
+                     utostr(ValNo) + ");");
           }
         }
 
         if (NodeHasOutFlag)
-          emitCode("CodeGenMap[N.getValue(" + utostr(ValNo) + ")] = InFlag;");
+          emitCode("SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, " +
+                   utostr(ValNo) + ", InFlag.Val, InFlag.ResNo);");
 
         if (AddedChain && NodeHasOutFlag) {
           if (NumExpectedResults == 0) {
@@ -2483,7 +2483,9 @@ public:
         if (HasInFlag || HasImpInputs)
           Code += ", InFlag";
         emitCode(Code + ");");
-        emitCode("  Result = CodeGenMap[N] = SDOperand(ResNode, 0);");
+        emitCode("  SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, N.ResNo, "
+                 "ResNode, 0);");
+        emitCode("  Result = SDOperand(ResNode, 0);");
         emitCode("}");
       }
 
@@ -2498,7 +2500,9 @@ public:
       emitCode("Tmp" + utostr(ResNo) + " = Transform_" + Op->getName()
                + "(Tmp" + utostr(OpVal) + ".Val);");
       if (isRoot) {
-        emitCode("CodeGenMap[N] = Tmp" +utostr(ResNo) + ";");
+        emitCode("SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val,"
+                 "N.ResNo, Tmp" + utostr(ResNo) + ".Val, Tmp" +
+                 utostr(ResNo) + ".ResNo);");
         emitCode("Result = Tmp" + utostr(ResNo) + ";");
         emitCode("return;");
       }
@@ -2571,13 +2575,12 @@ private:
               }
               emitCode("Select(" + RootName + utostr(OpNo) + ", " +
                        RootName + utostr(OpNo) + ");");
-              emitDecl("Copy", true);
-              emitCode("Copy = CurDAG->getCopyToReg(" + ChainName +
+              emitCode("ResNode = CurDAG->getCopyToReg(" + ChainName +
                        ", CurDAG->getRegister(" + ISE.getQualifiedName(RR) +
                        ", MVT::" + getEnumName(RVT) + "), " +
                        RootName + utostr(OpNo) + ", InFlag).Val;");
-              emitCode(ChainName + " = SDOperand(Copy, 0);");
-              emitCode("InFlag = SDOperand(Copy, 1);");
+              emitCode(ChainName + " = SDOperand(ResNode, 0);");
+              emitCode("InFlag = SDOperand(ResNode, 1);");
             }
           }
         }
@@ -2882,10 +2885,10 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
          << " && N.getValue(0).hasOneUse()) {\n"
          << "    SDOperand Dummy = "
          << "CurDAG->getNode(ISD::HANDLENODE, MVT::Other, N);\n"
-         << "    CodeGenMap[N.getValue(" << OpcodeInfo.getNumResults()
-         << ")] = Dummy;\n"
-         << "    HandleMap[N.getValue(" << OpcodeInfo.getNumResults()
-         << ")] = Dummy;\n"
+         << "    SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, "
+         << OpcodeInfo.getNumResults() << ", Dummy.Val, 0);\n"
+         << "    SelectionDAG::InsertISelMapEntry(HandleMap, N.Val, "
+         << OpcodeInfo.getNumResults() << ", Dummy.Val, 0);\n"
          << "    Result = Dummy;\n"
          << "    return;\n"
          << "  }\n";
@@ -2980,8 +2983,8 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  VTs.push_back(MVT::Other);\n"
      << "  VTs.push_back(MVT::Flag);\n"
      << "  SDOperand New = CurDAG->getNode(ISD::INLINEASM, VTs, Ops);\n"
-     << "  CodeGenMap[N.getValue(0)] = New;\n"
-     << "  CodeGenMap[N.getValue(1)] = New.getValue(1);\n"
+    << "  SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 0, New.Val, 0);\n"
+    << "  SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 1, New.Val, 1);\n"
      << "  Result = New.getValue(N.ResNo);\n"
      << "  return;\n"
      << "}\n\n";
@@ -3016,7 +3019,9 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  case ISD::AssertZext: {\n"
      << "    SDOperand Tmp0;\n"
      << "    Select(Tmp0, N.getOperand(0));\n"
-     << "    if (!N.Val->hasOneUse()) CodeGenMap[N] = Tmp0;\n"
+     << "    if (!N.Val->hasOneUse())\n"
+     << "      SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, N.ResNo, "
+     << "Tmp0.Val, Tmp0.ResNo);\n"
      << "    Result = Tmp0;\n"
      << "    return;\n"
      << "  }\n"
@@ -3025,8 +3030,10 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "      SDOperand Op0, Op1;\n"
      << "      Select(Op0, N.getOperand(0));\n"
      << "      Select(Op1, N.getOperand(1));\n"
-     << "      Result = CodeGenMap[N] =\n"
+     << "      Result = \n"
      << "          CurDAG->getNode(ISD::TokenFactor, MVT::Other, Op0, Op1);\n"
+     << "      SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, N.ResNo, "
+     << "Result.Val, Result.ResNo);\n"
      << "    } else {\n"
      << "      std::vector<SDOperand> Ops;\n"
      << "      for (unsigned i = 0, e = N.getNumOperands(); i != e; ++i) {\n"
@@ -3034,8 +3041,10 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "        Select(Val, N.getOperand(i));\n"
      << "        Ops.push_back(Val);\n"
      << "      }\n"
-     << "      Result = CodeGenMap[N] = \n"
-     << "               CurDAG->getNode(ISD::TokenFactor, MVT::Other, Ops);\n"
+     << "      Result = \n"
+     << "          CurDAG->getNode(ISD::TokenFactor, MVT::Other, Ops);\n"
+     << "      SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, N.ResNo, "
+     << "Result.Val, Result.ResNo);\n"
      << "    }\n"
      << "    return;\n"
      << "  case ISD::CopyFromReg: {\n"
@@ -3049,8 +3058,10 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "        return;\n"
      << "      }\n"
      << "      SDOperand New = CurDAG->getCopyFromReg(Chain, Reg, VT);\n"
-     << "      CodeGenMap[N.getValue(0)] = New;\n"
-     << "      CodeGenMap[N.getValue(1)] = New.getValue(1);\n"
+     << "      SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 0, "
+     << "New.Val, 0);\n"
+     << "      SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 1, "
+     << "New.Val, 1);\n"
      << "      Result = New.getValue(N.ResNo);\n"
      << "      return;\n"
      << "    } else {\n"
@@ -3062,9 +3073,12 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "        return;\n"
      << "      }\n"
      << "      SDOperand New = CurDAG->getCopyFromReg(Chain, Reg, VT, Flag);\n"
-     << "      CodeGenMap[N.getValue(0)] = New;\n"
-     << "      CodeGenMap[N.getValue(1)] = New.getValue(1);\n"
-     << "      CodeGenMap[N.getValue(2)] = New.getValue(2);\n"
+     << "      SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 0, "
+     << "New.Val, 0);\n"
+     << "      SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 1, "
+     << "New.Val, 1);\n"
+     << "      SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 2, "
+     << "New.Val, 2);\n"
      << "      Result = New.getValue(N.ResNo);\n"
      << "      return;\n"
      << "    }\n"
@@ -3079,15 +3093,18 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "    if (N.Val->getNumValues() == 1) {\n"
      << "      if (Chain != N.getOperand(0) || Val != N.getOperand(2))\n"
      << "        Result = CurDAG->getCopyToReg(Chain, Reg, Val);\n"
-     << "      CodeGenMap[N] = Result;\n"
+     << "      SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 0, "
+     << "Result.Val, 0);\n"
      << "    } else {\n"
      << "      SDOperand Flag(0, 0);\n"
      << "      if (N.getNumOperands() == 4) Select(Flag, N.getOperand(3));\n"
      << "      if (Chain != N.getOperand(0) || Val != N.getOperand(2) ||\n"
      << "          (N.getNumOperands() == 4 && Flag != N.getOperand(3)))\n"
      << "        Result = CurDAG->getCopyToReg(Chain, Reg, Val, Flag);\n"
-     << "      CodeGenMap[N.getValue(0)] = Result;\n"
-     << "      CodeGenMap[N.getValue(1)] = Result.getValue(1);\n"
+     << "      SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 0, "
+     << "Result.Val, 0);\n"
+     << "      SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 1, "
+     << "Result.Val, 1);\n"
      << "      Result = Result.getValue(N.ResNo);\n"
      << "    }\n"
      << "    return;\n"
@@ -3167,10 +3184,12 @@ void DAGISelEmitter::run(std::ostream &OS) {
   OS << "\n";
   OS << "// AddHandleReplacement - Note the pending replacement node for a\n"
      << "// handle node in ReplaceMap.\n";
-  OS << "void AddHandleReplacement(SDOperand N, SDOperand R) {\n";
+  OS << "void AddHandleReplacement(SDNode *H, unsigned HNum, SDNode *R, "
+     << "unsigned RNum) {\n";
+  OS << "  SDOperand N(H, HNum);\n";
   OS << "  std::map<SDOperand, SDOperand>::iterator HMI = HandleMap.find(N);\n";
   OS << "  if (HMI != HandleMap.end()) {\n";
-  OS << "    ReplaceMap[HMI->second] = R;\n";
+  OS << "    ReplaceMap[HMI->second] = SDOperand(R, RNum);\n";
   OS << "    HandleMap.erase(N);\n";
   OS << "  }\n";
   OS << "}\n";
@@ -3186,7 +3205,7 @@ void DAGISelEmitter::run(std::ostream &OS) {
   OS << "    SDOperand N = I->first;\n";
   OS << "    SDOperand R;\n";
   OS << "    Select(R, N.getValue(0));\n";
-  OS << "    AddHandleReplacement(N, R);\n";
+  OS << "    AddHandleReplacement(N.Val, N.ResNo, R.Val, R.ResNo);\n";
   OS << "  }\n";
   OS << "}\n";
   OS << "\n";
