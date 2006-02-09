@@ -34,8 +34,9 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/CommandLine.h"
 #include <algorithm>
 #include <iostream>
 #include <set>
@@ -43,7 +44,10 @@ using namespace llvm;
 
 namespace {
   Statistic<> NumUnswitched("loop-unswitch", "Number of loops unswitched");
-
+  cl::opt<unsigned>
+  Threshold("loop-unswitch-threshold", cl::desc("Max loop size to unswitch"),
+            cl::init(10), cl::Hidden);
+  
   class LoopUnswitch : public FunctionPass {
     LoopInfo *LI;  // Loop information
   public:
@@ -145,7 +149,7 @@ bool LoopUnswitch::visitLoop(Loop *L) {
       continue;
     
     // Check to see if it would be profitable to unswitch this loop.
-    if (L->getBlocks().size() > 10) {
+    if (L->getBlocks().size() > Threshold) {
       // FIXME: this should estimate growth by the amount of code shared by the
       // resultant unswitched loops.  This should have no code growth:
       //    for () { if (iv) {...} }
