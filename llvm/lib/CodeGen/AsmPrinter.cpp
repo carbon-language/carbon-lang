@@ -112,16 +112,7 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
   
   SwitchSection(ConstantPoolSection, 0);
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
-    // FIXME: force doubles to be naturally aligned.  We should handle this
-    // more correctly in the future.
-    unsigned Alignment = CP[i].second;
-    if (Alignment == 0) {
-      Alignment = TD.getTypeAlignmentShift(CP[i].first->getType());
-      if (CP[i].first->getType() == Type::DoubleTy && Alignment < 3)
-        Alignment = 3;
-    }
-    
-    EmitAlignment(Alignment);
+    EmitAlignment(CP[i].second);
     O << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << '_' << i
       << ":\t\t\t\t\t" << CommentString << *CP[i].first << '\n';
     EmitGlobalConstant(CP[i].first);
