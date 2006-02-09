@@ -1856,7 +1856,7 @@ private:
   std::vector<std::pair<bool, std::string> > &GeneratedCode;
   /// GeneratedDecl - This is the set of all SDOperand declarations needed for
   /// the set of patterns for each top-level opcode.
-  std::set<std::string> &GeneratedDecl;
+  std::set<std::pair<bool, std::string> > &GeneratedDecl;
 
   std::string ChainName;
   bool DoReplace;
@@ -1870,15 +1870,15 @@ private:
     if (!S.empty())
       GeneratedCode.push_back(std::make_pair(false, S));
   }
-  void emitDecl(const std::string &S) {
+  void emitDecl(const std::string &S, bool isSDNode=false) {
     assert(!S.empty() && "Invalid declaration");
-    GeneratedDecl.insert(S);
+    GeneratedDecl.insert(std::make_pair(isSDNode, S));
   }
 public:
   PatternCodeEmitter(DAGISelEmitter &ise, ListInit *preds,
                      TreePatternNode *pattern, TreePatternNode *instr,
                      std::vector<std::pair<bool, std::string> > &gc,
-                     std::set<std::string> &gd,
+                     std::set<std::pair<bool, std::string> > &gd,
                      bool dorep)
   : ISE(ise), Predicates(preds), Pattern(pattern), Instruction(instr),
     GeneratedCode(gc), GeneratedDecl(gd), DoReplace(dorep), TmpNo(0) {}
@@ -2310,7 +2310,7 @@ public:
       if (!isRoot) {
         emitDecl("Tmp" + utostr(ResNo));
         std::string Code =
-          "Tmp" + utostr(ResNo) + " = CurDAG->getTargetNode(" +
+          "Tmp" + utostr(ResNo) + " = SDOperand(CurDAG->getTargetNode(" +
           II.Namespace + "::" + II.TheDef->getName();
         if (N->getTypeNum(0) != MVT::isVoid)
           Code += ", MVT::" + getEnumName(N->getTypeNum(0));
@@ -2322,7 +2322,7 @@ public:
           LastOp = Ops[i];
           Code += ", Tmp" + utostr(LastOp);
         }
-        emitCode(Code + ");");
+        emitCode(Code + "), 0);");
         if (HasChain) {
           // Must have at least one result
           emitCode(ChainName + " = Tmp" + utostr(LastOp) + ".getValue(" +
@@ -2331,8 +2331,9 @@ public:
       } else if (HasChain || NodeHasOutFlag) {
         if (HasOptInFlag) {
           unsigned FlagNo = (unsigned) NodeHasChain + Pattern->getNumChildren();
+          emitDecl("ResNode", true);
           emitCode("if (HasOptInFlag)");
-          std::string Code = "  Result = CurDAG->getTargetNode(" +
+          std::string Code = "  ResNode = CurDAG->getTargetNode(" +
              II.Namespace + "::" + II.TheDef->getName();
 
           // Output order: results, chain, flags
@@ -2353,7 +2354,7 @@ public:
           emitCode(Code + ", InFlag);");
 
           emitCode("else");
-          Code = "  Result = CurDAG->getTargetNode(" + II.Namespace + "::" +
+          Code = "  ResNode = CurDAG->getTargetNode(" + II.Namespace + "::" +
                  II.TheDef->getName();
 
           // Output order: results, chain, flags
@@ -2371,7 +2372,8 @@ public:
           if (HasChain) Code += ", " + ChainName + ");";
           emitCode(Code);
         } else {
-          std::string Code = "Result = CurDAG->getTargetNode(" +
+          emitDecl("ResNode", true);
+          std::string Code = "ResNode = CurDAG->getTargetNode(" +
             II.Namespace + "::" + II.TheDef->getName();
 
           // Output order: results, chain, flags
@@ -2393,25 +2395,25 @@ public:
 
         unsigned ValNo = 0;
         for (unsigned i = 0; i < NumResults; i++) {
-          emitCode("CodeGenMap[N.getValue(" + utostr(ValNo) + ")] = Result"
-                   ".getValue(" + utostr(ValNo) + ");");
+          emitCode("CodeGenMap[N.getValue(" + utostr(ValNo) +
+                   ")] = SDOperand(ResNode, " + utostr(ValNo) + ");");
           ValNo++;
         }
 
         if (HasChain)
-          emitCode(ChainName + " = Result.getValue(" + utostr(ValNo) + ");");
+          emitCode(ChainName + " = SDOperand(ResNode, " + utostr(ValNo) + ");");
 
         if (NodeHasOutFlag)
-          emitCode("InFlag = Result.getValue(" + 
+          emitCode("InFlag = SDOperand(ResNode, " + 
                    utostr(ValNo + (unsigned)HasChain) + ");");
 
         if (HasImpResults && EmitCopyFromRegs(N, ChainEmitted)) {
           emitCode("CodeGenMap[N.getValue(" + utostr(ValNo) + ")] = "
-                   "Result.getValue(" + utostr(ValNo) + ");");
+                   "SDOperand(ResNode, " + utostr(ValNo) + ");");
           ValNo++;
         }
 
-        // User does not expect that the instruction produces a chain!
+        // User does not expect the instruction would produce a chain!
         bool AddedChain = HasChain && !NodeHasChain;
         if (NodeHasChain) {
           emitCode("CodeGenMap[N.getValue(" + utostr(ValNo) + ")] = " +
@@ -2443,15 +2445,15 @@ public:
 
         if (AddedChain && NodeHasOutFlag) {
           if (NumExpectedResults == 0) {
-            emitCode("Result = Result.getValue(N.ResNo+1);");
+            emitCode("Result = SDOperand(ResNode, N.ResNo+1);");
           } else {
             emitCode("if (N.ResNo < " + utostr(NumExpectedResults) + ")");
-            emitCode("  Result = Result.getValue(N.ResNo);");
+            emitCode("  Result = SDOperand(ResNode, N.ResNo);");
             emitCode("else");
-            emitCode("  Result = Result.getValue(N.ResNo+1);");
+            emitCode("  Result = SDOperand(ResNode, N.ResNo+1);");
           }
         } else {
-          emitCode("Result = Result.getValue(N.ResNo);");
+          emitCode("Result = SDOperand(ResNode, N.ResNo);");
         }
       } else {
         // If this instruction is the root, and if there is only one use of it,
@@ -2469,7 +2471,8 @@ public:
           Code += ", InFlag";
         emitCode(Code + ");");
         emitCode("} else {");
-        Code = "  Result = CodeGenMap[N] = CurDAG->getTargetNode(" +
+        emitDecl("ResNode", true);
+        Code = "  ResNode = CurDAG->getTargetNode(" +
                II.Namespace + "::" + II.TheDef->getName();
         if (N->getTypeNum(0) != MVT::isVoid)
           Code += ", MVT::" + getEnumName(N->getTypeNum(0));
@@ -2480,6 +2483,7 @@ public:
         if (HasInFlag || HasImpInputs)
           Code += ", InFlag";
         emitCode(Code + ");");
+        emitCode("  Result = CodeGenMap[N] = SDOperand(ResNode, 0);");
         emitCode("}");
       }
 
@@ -2567,13 +2571,13 @@ private:
               }
               emitCode("Select(" + RootName + utostr(OpNo) + ", " +
                        RootName + utostr(OpNo) + ");");
-              emitDecl("Copy");
+              emitDecl("Copy", true);
               emitCode("Copy = CurDAG->getCopyToReg(" + ChainName +
                        ", CurDAG->getRegister(" + ISE.getQualifiedName(RR) +
                        ", MVT::" + getEnumName(RVT) + "), " +
-                       RootName + utostr(OpNo) + ", InFlag);");
-              emitCode(ChainName + " = Copy.getValue(0);");
-              emitCode("InFlag = Copy.getValue(1);");
+                       RootName + utostr(OpNo) + ", InFlag).Val;");
+              emitCode(ChainName + " = SDOperand(Copy, 0);");
+              emitCode("InFlag = SDOperand(Copy, 1);");
             }
           }
         }
@@ -2618,11 +2622,11 @@ private:
               ChainEmitted = true;
               ChainName = "Chain";
             }
-            emitCode("Result = CurDAG->getCopyFromReg(" + ChainName + ", " +
+            emitCode("ResNode = CurDAG->getCopyFromReg(" + ChainName + ", " +
                      ISE.getQualifiedName(RR) + ", MVT::" + getEnumName(RVT) +
-                     ", InFlag);");
-            emitCode(ChainName + " = Result.getValue(1);");
-            emitCode("InFlag = Result.getValue(2);");
+                     ", InFlag).Val;");
+            emitCode(ChainName + " = SDOperand(ResNode, 1);");
+            emitCode("InFlag = SDOperand(ResNode, 2);");
             RetVal = true;
           }
         }
@@ -2637,7 +2641,7 @@ private:
 /// succeeds.  Returns true if the pattern is not guaranteed to match.
 void DAGISelEmitter::GenerateCodeForPattern(PatternToMatch &Pattern,
                       std::vector<std::pair<bool, std::string> > &GeneratedCode,
-                                        std::set<std::string> &GeneratedDecl,
+                         std::set<std::pair<bool, std::string> > &GeneratedDecl,
                                             bool DoReplace) {
   PatternCodeEmitter Emitter(*this, Pattern.getPredicates(),
                              Pattern.getSrcPattern(), Pattern.getDstPattern(),
@@ -2900,7 +2904,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
     typedef std::set<std::string> DeclSet;
     
     std::vector<std::pair<PatternToMatch*, CodeList> > CodeForPatterns;
-    std::set<std::string> GeneratedDecl;
+    std::set<std::pair<bool, std::string> > GeneratedDecl;
     for (unsigned i = 0, e = Patterns.size(); i != e; ++i) {
       CodeList GeneratedCode;
       GenerateCodeForPattern(*Patterns[i], GeneratedCode, GeneratedDecl,
@@ -2933,9 +2937,12 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
     }
 
     // Print all declarations.
-    for (std::set<std::string>::iterator I = GeneratedDecl.begin(),
+    for (std::set<std::pair<bool, std::string> >::iterator I = GeneratedDecl.begin(),
            E = GeneratedDecl.end(); I != E; ++I)
-      OS << "  SDOperand " << *I << "(0, 0);\n";
+      if (I->first)
+        OS << "  SDNode *" << I->second << ";\n";
+      else
+        OS << "  SDOperand " << I->second << "(0, 0);\n";
 
     // Loop through and reverse all of the CodeList vectors, as we will be
     // accessing them from their logical front, but accessing the end of a
@@ -3068,20 +3075,20 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "    unsigned Reg = cast<RegisterSDNode>(N.getOperand(1))->getReg();\n"
      << "    SDOperand Val;\n"
      << "    Select(Val, N.getOperand(2));\n"
-     << "    SDOperand ResNode = N;\n"
+     << "    Result = N;\n"
      << "    if (N.Val->getNumValues() == 1) {\n"
      << "      if (Chain != N.getOperand(0) || Val != N.getOperand(2))\n"
-     << "        ResNode = CurDAG->getCopyToReg(Chain, Reg, Val);\n"
-     << "      Result = CodeGenMap[N] = ResNode;\n"
+     << "        Result = CurDAG->getCopyToReg(Chain, Reg, Val);\n"
+     << "      CodeGenMap[N] = Result;\n"
      << "    } else {\n"
      << "      SDOperand Flag(0, 0);\n"
      << "      if (N.getNumOperands() == 4) Select(Flag, N.getOperand(3));\n"
      << "      if (Chain != N.getOperand(0) || Val != N.getOperand(2) ||\n"
      << "          (N.getNumOperands() == 4 && Flag != N.getOperand(3)))\n"
-     << "        ResNode = CurDAG->getCopyToReg(Chain, Reg, Val, Flag);\n"
-     << "      CodeGenMap[N.getValue(0)] = ResNode;\n"
-     << "      CodeGenMap[N.getValue(1)] = ResNode.getValue(1);\n"
-     << "      Result = ResNode.getValue(N.ResNo);\n"
+     << "        Result = CurDAG->getCopyToReg(Chain, Reg, Val, Flag);\n"
+     << "      CodeGenMap[N.getValue(0)] = Result;\n"
+     << "      CodeGenMap[N.getValue(1)] = Result.getValue(1);\n"
+     << "      Result = Result.getValue(N.ResNo);\n"
      << "    }\n"
      << "    return;\n"
      << "  }\n"
