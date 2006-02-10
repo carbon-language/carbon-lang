@@ -68,7 +68,7 @@ def SETHIimm : PatLeaf<(imm), [{
 
 // Addressing modes.
 def ADDRrr : ComplexPattern<i32, 2, "SelectADDRrr", []>;
-def ADDRri : ComplexPattern<i32, 2, "SelectADDRri", []>;
+def ADDRri : ComplexPattern<i32, 2, "SelectADDRri", [frameindex]>;
 
 // Address operands
 def MEMrr : Operand<i32> {
@@ -444,6 +444,13 @@ def ADDri   : F3_2<2, 0b000000,
                    (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
                    "add $b, $c, $dst",
                    [(set IntRegs:$dst, (add IntRegs:$b, simm13:$c))]>;
+
+// "LEA" forms of add (patterns to make tblgen happy)
+def LEA_ADDri   : F3_2<2, 0b000000,
+                   (ops IntRegs:$dst, MEMri:$addr),
+                   "add ${addr:arith}, $dst",
+                   [(set IntRegs:$dst, ADDRri:$addr)]>;
+                   
 def ADDCCrr : F3_1<2, 0b010000, 
                    (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
                    "addcc $b, $c, $dst", []>;
@@ -871,12 +878,11 @@ def : Pat<(add IntRegs:$r, (SPlo tglobaladdr:$in)),
 def : Pat<(add IntRegs:$r, (SPlo tconstpool:$in)),
           (ADDri IntRegs:$r, tconstpool:$in)>;
 
-
 // Calls: 
 def : Pat<(call tglobaladdr:$dst),
           (CALL tglobaladdr:$dst)>;
-def : Pat<(call externalsym:$dst),
-          (CALL externalsym:$dst)>;
+def : Pat<(call texternalsym:$dst),
+          (CALL texternalsym:$dst)>;
 
 def : Pat<(ret), (RETL)>;
 

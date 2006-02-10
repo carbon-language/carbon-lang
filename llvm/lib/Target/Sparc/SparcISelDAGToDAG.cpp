@@ -111,9 +111,6 @@ namespace {
                   unsigned CC,
                   bool isTailCall, SDOperand Callee, ArgListTy &Args,
                   SelectionDAG &DAG);
-    virtual std::pair<SDOperand, SDOperand>
-      LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain, unsigned Depth,
-                              SelectionDAG &DAG);
     virtual MachineBasicBlock *InsertAtEndOfBasicBlock(MachineInstr *MI,
                                                        MachineBasicBlock *MBB);
     
@@ -595,8 +592,11 @@ SparcTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
 
   // If the callee is a GlobalAddress node (quite common, every direct call is)
   // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
+  // Likewise ExternalSymbol -> TargetExternalSymbol.
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
     Callee = DAG.getTargetGlobalAddress(G->getGlobal(), MVT::i32);
+  else if (ExternalSymbolSDNode *E = dyn_cast<ExternalSymbolSDNode>(Callee))
+    Callee = DAG.getTargetExternalSymbol(E->getSymbol(), MVT::i32);
 
   std::vector<MVT::ValueType> NodeTys;
   NodeTys.push_back(MVT::Other);   // Returns a chain
@@ -651,13 +651,6 @@ SparcTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
                       DAG.getConstant(ArgsSize, getPointerTy()));
   
   return std::make_pair(RetVal, Chain);
-}
-
-std::pair<SDOperand, SDOperand> SparcTargetLowering::
-LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain, unsigned Depth,
-                        SelectionDAG &DAG) {
-  assert(0 && "Unimp");
-  abort();
 }
 
 // Look at LHS/RHS/CC and see if they are a lowered setcc instruction.  If so
@@ -974,6 +967,9 @@ bool SparcDAGToDAGISel::SelectADDRri(SDOperand Addr, SDOperand &Base,
     Offset = CurDAG->getTargetConstant(0, MVT::i32);
     return true;
   }
+  if (Addr.getOpcode() == ISD::TargetExternalSymbol ||
+      Addr.getOpcode() == ISD::TargetGlobalAddress)
+    return false;  // direct calls.
   
   if (Addr.getOpcode() == ISD::ADD) {
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1))) {
@@ -1007,7 +1003,11 @@ bool SparcDAGToDAGISel::SelectADDRri(SDOperand Addr, SDOperand &Base,
 
 bool SparcDAGToDAGISel::SelectADDRrr(SDOperand Addr, SDOperand &R1, 
                                      SDOperand &R2) {
-  if (Addr.getOpcode() == ISD::FrameIndex) return false; 
+  if (Addr.getOpcode() == ISD::FrameIndex) return false;
+  if (Addr.getOpcode() == ISD::TargetExternalSymbol ||
+      Addr.getOpcode() == ISD::TargetGlobalAddress)
+    return false;  // direct calls.
+  
   if (Addr.getOpcode() == ISD::ADD) {
     if (isa<ConstantSDNode>(Addr.getOperand(1)) &&
         Predicate_simm13(Addr.getOperand(1).Val))
@@ -1042,21 +1042,6 @@ void SparcDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
   
   switch (N->getOpcode()) {
   default: break;
-  case ISD::FrameIndex: {
-    int FI = cast<FrameIndexSDNode>(N)->getIndex();
-    if (N->hasOneUse()) {
-      Result = CurDAG->SelectNodeTo(N, SP::ADDri, MVT::i32,
-                                    CurDAG->getTargetFrameIndex(FI, MVT::i32),
-                                    CurDAG->getTargetConstant(0, MVT::i32));
-      return;
-    }
-
-    Result = CodeGenMap[Op] = 
-      SDOperand(CurDAG->getTargetNode(SP::ADDri, MVT::i32,
-                                      CurDAG->getTargetFrameIndex(FI, MVT::i32),
-                                    CurDAG->getTargetConstant(0, MVT::i32)), 0);
-    return;
-  }
   case ISD::ADD_PARTS: {
     SDOperand LHSL, LHSH, RHSL, RHSH;
     Select(LHSL, N->getOperand(0));
@@ -1123,39 +1108,11 @@ void SparcDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     Select(MulRHS, N->getOperand(1));
     unsigned Opcode = N->getOpcode() == ISD::MULHU ? SP::UMULrr : SP::SMULrr;
     SDNode *Mul = CurDAG->getTargetNode(Opcode, MVT::i32, MVT::Flag,
-                                          MulLHS, MulRHS);
+                                        MulLHS, MulRHS);
     // The high part is in the Y register.
     Result = CurDAG->SelectNodeTo(N, SP::RDY, MVT::i32, SDOperand(Mul, 1));
     return;
   }
-  case SPISD::CALL:
-    // FIXME: This is a workaround for a bug in tblgen.
-  { // Pattern #47: (call:Flag (tglobaladdr:i32):$dst, ICC:Flag)
-    // Emits: (CALL:void (tglobaladdr:i32):$dst)
-    // Pattern complexity = 2  cost = 1
-    SDOperand N1 = N->getOperand(1);
-    if (N1.getOpcode() != ISD::TargetGlobalAddress &&
-        N1.getOpcode() != ISD::ExternalSymbol) goto P47Fail;
-    SDOperand InFlag = SDOperand(0, 0);
-    SDOperand Chain = N->getOperand(0);
-    SDOperand Tmp0 = N1;
-    Select(Chain, Chain);
-    SDNode *ResNode;
-    if (N->getNumOperands() == 3) {
-      Select(InFlag, N->getOperand(2));
-      ResNode = CurDAG->getTargetNode(SP::CALL, MVT::Other, MVT::Flag, Tmp0, 
-                                      Chain, InFlag);
-    } else {
-      ResNode = CurDAG->getTargetNode(SP::CALL, MVT::Other, MVT::Flag, Tmp0, 
-                                      Chain);
-    }
-    Chain = CodeGenMap[SDOperand(N, 0)] = SDOperand(ResNode, 0);
-     CodeGenMap[SDOperand(N, 1)] = SDOperand(ResNode, 1);
-    Result = SDOperand(ResNode, Op.ResNo);
-    return;
-  }
-    P47Fail:;
-    
   }
   
   SelectCode(Result, Op);
