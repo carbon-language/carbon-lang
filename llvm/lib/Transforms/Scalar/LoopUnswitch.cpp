@@ -346,6 +346,11 @@ static Loop *CloneLoop(Loop *L, Loop *PL, std::map<const Value*, Value*> &VM,
 /// moving the conditional branch outside of the loop and updating loop info.
 void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond, 
                                             ConstantBool *LoopCond) {
+  DEBUG(std::cerr << "loop-unswitch: Trivial-Unswitch loop %"
+        << L->getHeader()->getName() << " [" << L->getBlocks().size()
+        << " blocks] in Function " << L->getHeader()->getParent()->getName()
+        << " on cond:" << *Cond << "\n");
+  
   // First step, split the preahder, so that we know that there is a safe place
   // to insert the conditional branch.  We will change 'OrigPH' to have a
   // conditional branch on Cond.
@@ -373,6 +378,8 @@ void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond,
   // particular value, rewrite the loop with this info.  We know that this will
   // at least eliminate the old branch.
   RewriteLoopBodyWithConditionConstant(L, Cond, EnterOnTrue);
+  
+  ++NumUnswitched;
 }
 
 
