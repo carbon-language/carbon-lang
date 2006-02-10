@@ -34,6 +34,7 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/CommandLine.h"
@@ -255,6 +256,8 @@ bool LoopUnswitch::visitLoop(Loop *L) {
   // loop.
   for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
        I != E; ++I) {
+    for (BasicBlock::iterator BBI = (*I)->begin(), E = (*I)->end(); 
+         BBI != E; ++BBI)
     TerminatorInst *TI = (*I)->getTerminator();
     // FIXME: Handle invariant select instructions.
     
@@ -415,7 +418,27 @@ void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond,
   
   // Split this block now, so that the loop maintains its exit block.
   assert(!L->contains(ExitBlock) && "Exit block is in the loop?");
-  BasicBlock *NewExit = SplitBlock(ExitBlock, true);
+  BasicBlock *NewExit;
+  if (BasicBlock *SinglePred = ExitBlock->getSinglePredecessor()) {
+    assert(SinglePred == L->getLoopLatch() && "Unexpected case");
+    NewExit = SplitBlock(ExitBlock, true);
+  } else {
+    // Otherwise, this is a critical edge.  Split block would split the wrong
+    // edge here, so we use SplitCriticalEdge, which allows us to specify the
+    // edge to split, not just the block.
+    TerminatorInst *LatchTerm = L->getLoopLatch()->getTerminator();
+    unsigned SuccNum = 0;
+    for (unsigned i = 0, e = LatchTerm->getNumSuccessors(); ; ++i) {
+      assert(i != e && "Didn't find edge?");
+      if (LatchTerm->getSuccessor(i) == ExitBlock) {
+        SuccNum = i;
+        break;
+      }
+    }
+    SplitCriticalEdge(LatchTerm, SuccNum, this);
+    NewExit = LatchTerm->getSuccessor(SuccNum);
+    assert(NewExit != ExitBlock && "Edge not split!");
+  }
   
   // Okay, now we have a position to branch from and a position to branch to, 
   // insert the new conditional branch.
