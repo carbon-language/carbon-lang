@@ -65,9 +65,11 @@ namespace {
     }
 
   private:
+    unsigned getLoopUnswitchCost(Loop *L, Value *LIC);
     void VersionLoop(Value *LIC, Loop *L, Loop *&Out1, Loop *&Out2);
     BasicBlock *SplitBlock(BasicBlock *BB, bool SplitAtTop);
     void RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC, bool Val);
+    void UnswitchTrivialCondition(Loop *L, Value *Cond, ConstantBool *LoopCond);
   };
   RegisterOpt<LoopUnswitch> X("loop-unswitch", "Unswitch loops");
 }
@@ -88,13 +90,8 @@ bool LoopUnswitch::runOnFunction(Function &F) {
 }
 
 
-/// InsertPHINodesForUsesOutsideLoop - If this instruction is used outside of
-/// the specified loop, insert a PHI node in the appropriate exit block to merge
-/// the values in the two different loop versions.
-///
-/// Most values are not used outside of the loop they are defined in, so be
-/// efficient for this case.
-///
+/// LoopValuesUsedOutsideLoop - Return true if there are any values defined in
+/// the loop that are used by instructions outside of it.
 static bool LoopValuesUsedOutsideLoop(Loop *L) {
   // We will be doing lots of "loop contains block" queries.  Loop::contains is
   // linear time, use a set to speed this up.
@@ -115,6 +112,89 @@ static bool LoopValuesUsedOutsideLoop(Loop *L) {
       }
   }
   return false;
+}
+
+/// IsTrivialUnswitchCondition - Check to see if this unswitch condition is
+/// trivial: that is, that the condition controls whether or not the loop does
+/// anything at all.  If this is a trivial condition, unswitching produces no
+/// code duplications (equivalently, it produces a simpler loop and a new empty
+/// loop, which gets deleted).
+///
+/// If this is a trivial condition, return ConstantBool::True if the loop body
+/// runs when the condition is true, False if the loop body executes when the
+/// condition is false.  Otherwise, return null to indicate a complex condition.
+static ConstantBool *IsTrivialUnswitchCondition(Loop *L, Value *Cond) {
+  BasicBlock *Header = L->getHeader();
+  BranchInst *HeaderTerm = dyn_cast<BranchInst>(Header->getTerminator());
+  ConstantBool *RetVal = 0;
+  
+  // If the header block doesn't end with a conditional branch on Cond, we can't
+  // handle it.
+  if (!HeaderTerm || !HeaderTerm->isConditional() ||
+      HeaderTerm->getCondition() != Cond)
+    return 0;
+  
+  // Check to see if the conditional branch goes to the latch block.  If not,
+  // it's not trivial.  This also determines the value of Cond that will execute
+  // the loop.
+  BasicBlock *Latch = L->getLoopLatch();
+  if (HeaderTerm->getSuccessor(1) == Latch)
+    RetVal = ConstantBool::True;
+  else if (HeaderTerm->getSuccessor(0) == Latch)
+    RetVal = ConstantBool::False;
+  else
+    return 0;  // Doesn't branch to latch block.
+  
+  // The latch block must end with a conditional branch where one edge goes to
+  // the header (this much we know) and one edge goes OUT of the loop.
+  BranchInst *LatchBranch = dyn_cast<BranchInst>(Latch->getTerminator());
+  if (!LatchBranch || !LatchBranch->isConditional()) return 0;
+
+  if (LatchBranch->getSuccessor(0) == Header) {
+    if (L->contains(LatchBranch->getSuccessor(1))) return 0;
+  } else {
+    assert(LatchBranch->getSuccessor(1) == Header);
+    if (L->contains(LatchBranch->getSuccessor(0))) return 0;
+  }
+  
+  // We already know that nothing uses any scalar values defined inside of this
+  // loop.  As such, we just have to check to see if this loop will execute any
+  // side-effecting instructions (e.g. stores, calls, volatile loads) in the
+  // part of the loop that the code *would* execute.
+  for (BasicBlock::iterator I = Header->begin(), E = Header->end(); I != E; ++I)
+    if (I->mayWriteToMemory())
+      return 0;
+  for (BasicBlock::iterator I = Latch->begin(), E = Latch->end(); I != E; ++I)
+    if (I->mayWriteToMemory())
+      return 0;
+  return RetVal;
+}
+
+/// getLoopUnswitchCost - Return the cost (code size growth) that will happen if
+/// we choose to unswitch the specified loop on the specified value.
+///
+unsigned LoopUnswitch::getLoopUnswitchCost(Loop *L, Value *LIC) {
+  // If the condition is trivial, always unswitch.  There is no code growth for
+  // this case.
+  if (IsTrivialUnswitchCondition(L, LIC))
+    return 0;
+  
+  unsigned Cost = 0;
+  // FIXME: this is brain dead.  It should take into consideration code
+  // shrinkage.
+  for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
+       I != E; ++I) {
+    BasicBlock *BB = *I;
+    // Do not include empty blocks in the cost calculation.  This happen due to
+    // loop canonicalization and will be removed.
+    if (BB->begin() == BasicBlock::iterator(BB->getTerminator()))
+      continue;
+    
+    // Count basic blocks.
+    ++Cost;
+  }
+
+  return Cost;
 }
 
 bool LoopUnswitch::visitLoop(Loop *L) {
@@ -150,7 +230,7 @@ bool LoopUnswitch::visitLoop(Loop *L) {
       continue;
     
     // Check to see if it would be profitable to unswitch this loop.
-    if (L->getBlocks().size() > Threshold) {
+    if (getLoopUnswitchCost(L, BI->getCondition()) > Threshold) {
       // FIXME: this should estimate growth by the amount of code shared by the
       // resultant unswitched loops.  This should have no code growth:
       //    for () { if (iv) {...} }
@@ -173,13 +253,22 @@ bool LoopUnswitch::visitLoop(Loop *L) {
     }
       
     //std::cerr << "BEFORE:\n"; LI->dump();
-    Loop *First = 0, *Second = 0;
-    VersionLoop(BI->getCondition(), L, First, Second);
+    Loop *NewLoop1 = 0, *NewLoop2 = 0;
+ 
+    // If this is a trivial condition to unswitch (which results in no code
+    // duplication), do it now.
+    if (ConstantBool *V = IsTrivialUnswitchCondition(L, BI->getCondition())) {
+      UnswitchTrivialCondition(L, BI->getCondition(), V);
+      NewLoop1 = L;
+    } else {
+      VersionLoop(BI->getCondition(), L, NewLoop1, NewLoop2);
+    }
+    
     //std::cerr << "AFTER:\n"; LI->dump();
     
     // Try to unswitch each of our new loops now!
-    if (First)  visitLoop(First);
-    if (Second) visitLoop(Second);
+    if (NewLoop1) visitLoop(NewLoop1);
+    if (NewLoop2) visitLoop(NewLoop2);
     return true;
   }
 
@@ -193,6 +282,9 @@ bool LoopUnswitch::visitLoop(Loop *L) {
 ///
 /// This method updates the LoopInfo for this function to correctly reflect the
 /// CFG changes made.
+///
+/// This routine returns the new basic block that was inserted, which is always
+/// the later part of the block.
 BasicBlock *LoopUnswitch::SplitBlock(BasicBlock *BB, bool SplitAtTop) {
   BasicBlock::iterator SplitPoint;
   if (!SplitAtTop)
@@ -201,12 +293,12 @@ BasicBlock *LoopUnswitch::SplitBlock(BasicBlock *BB, bool SplitAtTop) {
     SplitPoint = BB->begin();
     while (isa<PHINode>(SplitPoint)) ++SplitPoint;
   }
-
+  
   BasicBlock *New = BB->splitBasicBlock(SplitPoint, BB->getName()+".tail");
   // New now lives in whichever loop that BB used to.
   if (Loop *L = LI->getLoopFor(BB))
     L->addBasicBlockToLoop(New, *LI);
-  return SplitAtTop ? BB : New;
+  return New;
 }
 
 
@@ -247,6 +339,42 @@ static Loop *CloneLoop(Loop *L, Loop *PL, std::map<const Value*, Value*> &VM,
   return New;
 }
 
+/// UnswitchTrivialCondition - Given a loop that has a trivial unswitchable
+/// condition in it (a cond branch from its header block to its latch block,
+/// where the path through the loop that doesn't execute its body has no 
+/// side-effects), unswitch it.  This doesn't involve any code duplication, just
+/// moving the conditional branch outside of the loop and updating loop info.
+void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond, 
+                                            ConstantBool *LoopCond) {
+  // First step, split the preahder, so that we know that there is a safe place
+  // to insert the conditional branch.  We will change 'OrigPH' to have a
+  // conditional branch on Cond.
+  BasicBlock *OrigPH = L->getLoopPreheader();
+  BasicBlock *NewPH = SplitBlock(OrigPH, false);
+
+  // Now that we have a place to insert the conditional branch, create a place
+  // to branch to: this is the non-header successor of the latch block.
+  BranchInst *LatchBranch =cast<BranchInst>(L->getLoopLatch()->getTerminator());
+  BasicBlock *ExitBlock = 
+    LatchBranch->getSuccessor(LatchBranch->getSuccessor(0) == L->getHeader());
+  assert(!L->contains(ExitBlock) && "Exit block is in the loop?");
+  
+  // Split this block now, so that the loop maintains its exit block.
+  BasicBlock *NewExit = SplitBlock(ExitBlock, true);
+  
+  // Okay, now we have a position to branch from and a position to branch to, 
+  // insert the new conditional branch.
+  bool EnterOnTrue = LoopCond->getValue();
+  new BranchInst(EnterOnTrue ? NewPH : NewExit, EnterOnTrue ? NewExit : NewPH,
+                 Cond, OrigPH->getTerminator());
+  OrigPH->getTerminator()->eraseFromParent();
+
+  // Now that we know that the loop is never entered when this condition is a
+  // particular value, rewrite the loop with this info.  We know that this will
+  // at least eliminate the old branch.
+  RewriteLoopBodyWithConditionConstant(L, Cond, EnterOnTrue);
+}
+
 
 /// VersionLoop - We determined that the loop is profitable to unswitch and
 /// contains a branch on a loop invariant condition.  Split it into loop
@@ -254,7 +382,7 @@ static Loop *CloneLoop(Loop *L, Loop *PL, std::map<const Value*, Value*> &VM,
 /// created as Out1/Out2.
 void LoopUnswitch::VersionLoop(Value *LIC, Loop *L, Loop *&Out1, Loop *&Out2) {
   Function *F = L->getHeader()->getParent();
-
+  
   DEBUG(std::cerr << "loop-unswitch: Unswitching loop %"
         << L->getHeader()->getName() << " [" << L->getBlocks().size()
         << " blocks] in Function " << F->getName()
@@ -275,8 +403,10 @@ void LoopUnswitch::VersionLoop(Value *LIC, Loop *L, Loop *&Out1, Loop *&Out2) {
   std::sort(ExitBlocks.begin(), ExitBlocks.end());
   ExitBlocks.erase(std::unique(ExitBlocks.begin(), ExitBlocks.end()),
                    ExitBlocks.end());
-  for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
-    LoopBlocks.push_back(ExitBlocks[i] = SplitBlock(ExitBlocks[i], true));
+  for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
+    SplitBlock(ExitBlocks[i], true);
+    LoopBlocks.push_back(ExitBlocks[i]);
+  }
 
   // Next step, clone all of the basic blocks that make up the loop (including
   // the loop preheader and exit blocks), keeping track of the mapping between
@@ -337,6 +467,7 @@ void LoopUnswitch::VersionLoop(Value *LIC, Loop *L, Loop *&Out1, Loop *&Out2) {
 // of properties correlated to it.
 void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
                                                         bool Val) {
+  assert(!isa<Constant>(LIC) && "Why are we unswitching on a constant?");
   // FIXME: Support correlated properties, like:
   //  for (...)
   //    if (li1 < li2)
@@ -347,7 +478,7 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
 
   std::vector<User*> Users(LIC->use_begin(), LIC->use_end());
   for (unsigned i = 0, e = Users.size(); i != e; ++i)
-    if (Instruction *U = dyn_cast<Instruction>(Users[i]))
+    if (Instruction *U = cast<Instruction>(Users[i]))
       if (L->contains(U->getParent()))
         U->replaceUsesOfWith(LIC, BoolVal);
 }
