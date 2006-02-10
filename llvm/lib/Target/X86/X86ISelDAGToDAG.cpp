@@ -145,7 +145,9 @@ namespace {
       return CurDAG->getTargetConstant(Imm, MVT::i32);
     }
 
-    std::string Indent;
+#ifndef NDEBUG
+    unsigned Indent;
+#endif
   };
 }
 
@@ -158,7 +160,7 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   // Codegen the basic block.
 #ifndef NDEBUG
   DEBUG(std::cerr << "===== Instruction selection begins:\n");
-  Indent = "";
+  Indent = 0;
 #endif
   DAG.setRoot(SelectRoot(DAG.getRoot()));
 #ifndef NDEBUG
@@ -462,22 +464,21 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
   unsigned Opcode = Node->getOpcode();
 
 #ifndef NDEBUG
-  std::string IndentSave = Indent;
-  DEBUG(std::cerr << Indent);
+  DEBUG(std::cerr << std::string(Indent, ' '));
   DEBUG(std::cerr << "Selecting: ");
   DEBUG(Node->dump(CurDAG));
   DEBUG(std::cerr << "\n");
-  Indent += "  ";
+  Indent += 2;
 #endif
 
   if (Opcode >= ISD::BUILTIN_OP_END && Opcode < X86ISD::FIRST_NUMBER) {
     Result = N;
 #ifndef NDEBUG
-    DEBUG(std::cerr << Indent);
+    DEBUG(std::cerr << std::string(Indent, ' '));
     DEBUG(std::cerr << "== ");
     DEBUG(Node->dump(CurDAG));
     DEBUG(std::cerr << "\n");
-    Indent = IndentSave;
+    Indent -= 2;
 #endif
     return;   // Already selected.
   }
@@ -486,11 +487,11 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
   if (CGMI != CodeGenMap.end()) {
     Result = CGMI->second;
 #ifndef NDEBUG
-    DEBUG(std::cerr << Indent);
+    DEBUG(std::cerr << std::string(Indent, ' '));
     DEBUG(std::cerr << "== ");
     DEBUG(Result.Val->dump(CurDAG));
     DEBUG(std::cerr << "\n");
-    Indent = IndentSave;
+    Indent -= 2;
 #endif
     return;
   }
@@ -573,11 +574,11 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
       }
 
 #ifndef NDEBUG
-      DEBUG(std::cerr << Indent);
+      DEBUG(std::cerr << std::string(Indent, ' '));
       DEBUG(std::cerr << "== ");
       DEBUG(Result.Val->dump(CurDAG));
       DEBUG(std::cerr << "\n");
-      Indent = IndentSave;
+      Indent -= 2;
 #endif
       return;
     }
@@ -681,11 +682,11 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
       }
 
 #ifndef NDEBUG
-      DEBUG(std::cerr << Indent);
+      DEBUG(std::cerr << std::string(Indent, ' '));
       DEBUG(std::cerr << "== ");
       DEBUG(Result.Val->dump(CurDAG));
       DEBUG(std::cerr << "\n");
-      Indent = IndentSave;
+      Indent -= 2;
 #endif
       return;
     }
@@ -720,11 +721,11 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
           SDOperand(CurDAG->getTargetNode(Opc, VT, Result), 0);
 
 #ifndef NDEBUG
-      DEBUG(std::cerr << Indent);
+      DEBUG(std::cerr << std::string(Indent, ' '));
       DEBUG(std::cerr << "== ");
       DEBUG(Result.Val->dump(CurDAG));
       DEBUG(std::cerr << "\n");
-      Indent = IndentSave;
+      Indent -= 2;
 #endif
       return;
     }
@@ -732,11 +733,11 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
 
   SelectCode(Result, N);
 #ifndef NDEBUG
-  DEBUG(std::cerr << Indent);
+  DEBUG(std::cerr << std::string(Indent, ' '));
   DEBUG(std::cerr << "=> ");
   DEBUG(Result.Val->dump(CurDAG));
   DEBUG(std::cerr << "\n");
-  Indent = IndentSave;
+  Indent -= 2;
 #endif
 }
 
