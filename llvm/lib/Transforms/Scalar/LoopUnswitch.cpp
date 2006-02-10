@@ -68,7 +68,7 @@ namespace {
   private:
     unsigned getLoopUnswitchCost(Loop *L, Value *LIC);
     void VersionLoop(Value *LIC, Loop *L, Loop *&Out1, Loop *&Out2);
-    BasicBlock *SplitBlock(BasicBlock *BB, bool SplitAtTop);
+    BasicBlock *SplitEdge(BasicBlock *From, BasicBlock *To);
     void RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC, bool Val);
     void UnswitchTrivialCondition(Loop *L, Value *Cond, bool EntersLoopOnCond,
                                   BasicBlock *ExitBlock);
@@ -256,8 +256,6 @@ bool LoopUnswitch::visitLoop(Loop *L) {
   // loop.
   for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
        I != E; ++I) {
-    for (BasicBlock::iterator BBI = (*I)->begin(), E = (*I)->end(); 
-         BBI != E; ++BBI)
     TerminatorInst *TI = (*I)->getTerminator();
     // FIXME: Handle invariant select instructions.
     
@@ -329,31 +327,49 @@ bool LoopUnswitch::visitLoop(Loop *L) {
   return Changed;
 }
 
-/// SplitBlock - Split the specified basic block into two pieces.  If SplitAtTop
-/// is false, this splits the block so the second half only has an unconditional
-/// branch.  If SplitAtTop is true, it makes it so the first half of the block
-/// only has an unconditional branch in it.
-///
-/// This method updates the LoopInfo for this function to correctly reflect the
-/// CFG changes made.
-///
-/// This routine returns the new basic block that was inserted, which is always
-/// the later part of the block.
-BasicBlock *LoopUnswitch::SplitBlock(BasicBlock *BB, bool SplitAtTop) {
-  BasicBlock::iterator SplitPoint;
-  if (!SplitAtTop)
-    SplitPoint = BB->getTerminator();
-  else {
-    SplitPoint = BB->begin();
-    while (isa<PHINode>(SplitPoint)) ++SplitPoint;
+BasicBlock *LoopUnswitch::SplitEdge(BasicBlock *BB, BasicBlock *Succ) {
+  TerminatorInst *LatchTerm = BB->getTerminator();
+  unsigned SuccNum = 0;
+  for (unsigned i = 0, e = LatchTerm->getNumSuccessors(); ; ++i) {
+    assert(i != e && "Didn't find edge?");
+    if (LatchTerm->getSuccessor(i) == Succ) {
+      SuccNum = i;
+      break;
+    }
   }
   
-  BasicBlock *New = BB->splitBasicBlock(SplitPoint, BB->getName()+".tail");
+  // If this is a critical edge, let SplitCriticalEdge do it.
+  if (SplitCriticalEdge(BB->getTerminator(), SuccNum, this))
+    return LatchTerm->getSuccessor(SuccNum);
+
+  // If the edge isn't critical, then BB has a single successor or Succ has a
+  // single pred.  Split the block.
+  BasicBlock *BlockToSplit;
+  BasicBlock::iterator SplitPoint;
+  if (BasicBlock *SP = Succ->getSinglePredecessor()) {
+    // If the successor only has a single pred, split the top of the successor
+    // block.
+    assert(SP == BB && "CFG broken");
+    BlockToSplit = Succ;
+    SplitPoint = Succ->begin();
+  } else {
+    // Otherwise, if BB has a single successor, split it at the bottom of the
+    // block.
+    assert(BB->getTerminator()->getNumSuccessors() == 1 &&
+           "Should have a single succ!"); 
+    BlockToSplit = BB;
+    SplitPoint = BB->getTerminator();
+  }
+
+  BasicBlock *New =
+    BlockToSplit->splitBasicBlock(SplitPoint, 
+                                  BlockToSplit->getName()+".tail");
   // New now lives in whichever loop that BB used to.
-  if (Loop *L = LI->getLoopFor(BB))
+  if (Loop *L = LI->getLoopFor(BlockToSplit))
     L->addBasicBlockToLoop(New, *LI);
   return New;
 }
+  
 
 
 // RemapInstruction - Convert the instruction operands from referencing the
@@ -406,40 +422,21 @@ void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond,
         << " blocks] in Function " << L->getHeader()->getParent()->getName()
         << " on cond:" << *Cond << "\n");
   
-  // First step, split the preahder, so that we know that there is a safe place
+  // First step, split the preheader, so that we know that there is a safe place
   // to insert the conditional branch.  We will change 'OrigPH' to have a
   // conditional branch on Cond.
   BasicBlock *OrigPH = L->getLoopPreheader();
-  BasicBlock *NewPH = SplitBlock(OrigPH, false);
+  BasicBlock *NewPH = SplitEdge(OrigPH, L->getHeader());
 
   // Now that we have a place to insert the conditional branch, create a place
   // to branch to: this is the exit block out of the loop that we should
   // short-circuit to.
   
-  // Split this block now, so that the loop maintains its exit block.
+  // Split this edge now, so that the loop maintains its exit block.
   assert(!L->contains(ExitBlock) && "Exit block is in the loop?");
-  BasicBlock *NewExit;
-  if (BasicBlock *SinglePred = ExitBlock->getSinglePredecessor()) {
-    assert(SinglePred == L->getLoopLatch() && "Unexpected case");
-    NewExit = SplitBlock(ExitBlock, true);
-  } else {
-    // Otherwise, this is a critical edge.  Split block would split the wrong
-    // edge here, so we use SplitCriticalEdge, which allows us to specify the
-    // edge to split, not just the block.
-    TerminatorInst *LatchTerm = L->getLoopLatch()->getTerminator();
-    unsigned SuccNum = 0;
-    for (unsigned i = 0, e = LatchTerm->getNumSuccessors(); ; ++i) {
-      assert(i != e && "Didn't find edge?");
-      if (LatchTerm->getSuccessor(i) == ExitBlock) {
-        SuccNum = i;
-        break;
-      }
-    }
-    SplitCriticalEdge(LatchTerm, SuccNum, this);
-    NewExit = LatchTerm->getSuccessor(SuccNum);
-    assert(NewExit != ExitBlock && "Edge not split!");
-  }
-  
+  BasicBlock *NewExit = SplitEdge(L->getLoopLatch(), ExitBlock);
+  assert(NewExit != ExitBlock && "Edge not split!");
+    
   // Okay, now we have a position to branch from and a position to branch to, 
   // insert the new conditional branch.
   new BranchInst(EnterOnCond ? NewPH : NewExit, EnterOnCond ? NewExit : NewPH,
@@ -467,12 +464,15 @@ void LoopUnswitch::VersionLoop(Value *LIC, Loop *L, Loop *&Out1, Loop *&Out2) {
         << " blocks] in Function " << F->getName()
         << " on cond:" << *LIC << "\n");
 
+  // LoopBlocks contains all of the basic blocks of the loop, including the
+  // preheader of the loop, the body of the loop, and the exit blocks of the 
+  // loop, in that order.
   std::vector<BasicBlock*> LoopBlocks;
 
   // First step, split the preheader and exit blocks, and add these blocks to
   // the LoopBlocks list.
   BasicBlock *OrigPreheader = L->getLoopPreheader();
-  LoopBlocks.push_back(SplitBlock(OrigPreheader, false));
+  LoopBlocks.push_back(SplitEdge(OrigPreheader, L->getHeader()));
 
   // We want the loop to come after the preheader, but before the exit blocks.
   LoopBlocks.insert(LoopBlocks.end(), L->block_begin(), L->block_end());
@@ -482,10 +482,28 @@ void LoopUnswitch::VersionLoop(Value *LIC, Loop *L, Loop *&Out1, Loop *&Out2) {
   std::sort(ExitBlocks.begin(), ExitBlocks.end());
   ExitBlocks.erase(std::unique(ExitBlocks.begin(), ExitBlocks.end()),
                    ExitBlocks.end());
+  // Split all of the edges from inside the loop to their exit blocks.  This
+  // unswitching trivial: no phi nodes to update.
   for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
-    SplitBlock(ExitBlocks[i], true);
-    LoopBlocks.push_back(ExitBlocks[i]);
+    BasicBlock *ExitBlock = ExitBlocks[i];
+    std::vector<BasicBlock*> Preds(pred_begin(ExitBlock), pred_end(ExitBlock));
+
+    for (unsigned j = 0, e = Preds.size(); j != e; ++j) {
+      assert(L->contains(Preds[j]) &&
+             "All preds of loop exit blocks must be the same loop!");
+      SplitEdge(Preds[j], ExitBlock);
+    }
   }
+  
+  // The exit blocks may have been changed due to edge splitting, recompute.
+  ExitBlocks.clear();
+  L->getExitBlocks(ExitBlocks);
+  std::sort(ExitBlocks.begin(), ExitBlocks.end());
+  ExitBlocks.erase(std::unique(ExitBlocks.begin(), ExitBlocks.end()),
+                   ExitBlocks.end());
+  
+  // Add exit blocks to the loop blocks.
+  LoopBlocks.insert(LoopBlocks.end(), ExitBlocks.begin(), ExitBlocks.end());
 
   // Next step, clone all of the basic blocks that make up the loop (including
   // the loop preheader and exit blocks), keeping track of the mapping between
