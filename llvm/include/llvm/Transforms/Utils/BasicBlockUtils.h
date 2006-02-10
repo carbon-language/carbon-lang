@@ -76,20 +76,19 @@ inline bool SplitCriticalEdge(BasicBlock *BB, succ_iterator SI, Pass *P = 0) {
 /// This updates all of the same analyses as the other SplitCriticalEdge
 /// function.
 inline bool SplitCriticalEdge(BasicBlock *Succ, pred_iterator PI, Pass *P = 0) {
-  BasicBlock *Pred = *PI;
   bool MadeChange = false;
-  for (succ_iterator SI = succ_begin(Pred), E = succ_end(Pred); SI != E; ++SI)
-    if (*SI == Succ)
-      MadeChange |= SplitCriticalEdge(Pred, SI, P);
+  TerminatorInst *TI = (*PI)->getTerminator();
+  for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
+    if (TI->getSuccessor(i) == Succ)
+      MadeChange |= SplitCriticalEdge(TI, i, P);
   return MadeChange;
 }
 
 inline bool SplitCriticalEdge(BasicBlock *Src, BasicBlock *Dst, Pass *P = 0) {
-  for (succ_iterator SI = succ_begin(Src); ; ++SI) {
-    assert(SI != succ_end(Src) && "Edge doesn't exist");
-    if (*SI == Dst)
-      return SplitCriticalEdge(Src, SI, P);
-  }
+  TerminatorInst *TI = Src->getTerminator();
+  for (unsigned i = 0, e = TI->getNumSuccessors(); ; ++i)
+    if (TI->getSuccessor(i) == Dst)
+      return SplitCriticalEdge(TI, i, P);
 }
 } // End llvm namespace
 
