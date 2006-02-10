@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "isel"
 #include "X86.h"
 #include "X86InstrBuilder.h"
 #include "X86RegisterInfo.h"
@@ -143,6 +144,8 @@ namespace {
     inline SDOperand getI32Imm(unsigned Imm) {
       return CurDAG->getTargetConstant(Imm, MVT::i32);
     }
+
+    std::string Indent;
   };
 }
 
@@ -153,7 +156,14 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   MachineFunction::iterator FirstMBB = BB;
 
   // Codegen the basic block.
+#ifndef NDEBUG
+  DEBUG(std::cerr << "===== Instruction selection begins:\n");
+  Indent = "";
+#endif
   DAG.setRoot(SelectRoot(DAG.getRoot()));
+#ifndef NDEBUG
+  DEBUG(std::cerr << "===== Instruction selection ends:\n");
+#endif
   CodeGenMap.clear();
   DAG.RemoveDeadNodes();
 
@@ -451,14 +461,37 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
   unsigned Opc, MOpc;
   unsigned Opcode = Node->getOpcode();
 
+#ifndef NDEBUG
+  std::string IndentSave = Indent;
+  DEBUG(std::cerr << Indent);
+  DEBUG(std::cerr << "Selecting: ");
+  DEBUG(Node->dump(CurDAG));
+  DEBUG(std::cerr << "\n");
+  Indent += "  ";
+#endif
+
   if (Opcode >= ISD::BUILTIN_OP_END && Opcode < X86ISD::FIRST_NUMBER) {
     Result = N;
+#ifndef NDEBUG
+    DEBUG(std::cerr << Indent);
+    DEBUG(std::cerr << "== ");
+    DEBUG(Node->dump(CurDAG));
+    DEBUG(std::cerr << "\n");
+    Indent = IndentSave;
+#endif
     return;   // Already selected.
   }
 
   std::map<SDOperand, SDOperand>::iterator CGMI = CodeGenMap.find(N);
   if (CGMI != CodeGenMap.end()) {
     Result = CGMI->second;
+#ifndef NDEBUG
+    DEBUG(std::cerr << Indent);
+    DEBUG(std::cerr << "== ");
+    DEBUG(Result.Val->dump(CurDAG));
+    DEBUG(std::cerr << "\n");
+    Indent = IndentSave;
+#endif
     return;
   }
   
@@ -539,6 +572,13 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
         AddHandleReplacement(N1.Val, 1, Result.Val, 1);
       }
 
+#ifndef NDEBUG
+      DEBUG(std::cerr << Indent);
+      DEBUG(std::cerr << "== ");
+      DEBUG(Result.Val->dump(CurDAG));
+      DEBUG(std::cerr << "\n");
+      Indent = IndentSave;
+#endif
       return;
     }
 
@@ -639,6 +679,14 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
         CodeGenMap[N1.getValue(1)] = Result.getValue(1);
         AddHandleReplacement(N1.Val, 1, Result.Val, 1);
       }
+
+#ifndef NDEBUG
+      DEBUG(std::cerr << Indent);
+      DEBUG(std::cerr << "== ");
+      DEBUG(Result.Val->dump(CurDAG));
+      DEBUG(std::cerr << "\n");
+      Indent = IndentSave;
+#endif
       return;
     }
 
@@ -670,11 +718,26 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
       else
         Result = CodeGenMap[N] =
           SDOperand(CurDAG->getTargetNode(Opc, VT, Result), 0);
+
+#ifndef NDEBUG
+      DEBUG(std::cerr << Indent);
+      DEBUG(std::cerr << "== ");
+      DEBUG(Result.Val->dump(CurDAG));
+      DEBUG(std::cerr << "\n");
+      Indent = IndentSave;
+#endif
       return;
     }
   }
 
   SelectCode(Result, N);
+#ifndef NDEBUG
+  DEBUG(std::cerr << Indent);
+  DEBUG(std::cerr << "=> ");
+  DEBUG(Result.Val->dump(CurDAG));
+  DEBUG(std::cerr << "\n");
+  Indent = IndentSave;
+#endif
 }
 
 /// createX86ISelDag - This pass converts a legalized DAG into a 
