@@ -114,10 +114,6 @@ FP_TO_SINT when the source operand is already in memory.
 
 //===---------------------------------------------------------------------===//
 
-Check if load folding would add a cycle in the dag.
-
-//===---------------------------------------------------------------------===//
-
 Model X86 EFLAGS as a real register to avoid redudant cmp / test. e.g.
 
 	cmpl $1, %eax
@@ -427,3 +423,6 @@ _foo:
 
 When: "movl $_dst, _ptr" is sufficient.
 
+//===---------------------------------------------------------------------===//
+
+Use fisttp to do FP to integer conversion whenever it is available.
