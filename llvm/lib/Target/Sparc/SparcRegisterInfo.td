@@ -68,15 +68,6 @@ def D10 : Rd<20, "F20", [F20, F21]>; def D11 : Rd<22, "F22", [F22, F23]>;
 def D12 : Rd<24, "F24", [F24, F25]>; def D13 : Rd<26, "F26", [F26, F27]>; 
 def D14 : Rd<28, "F28", [F28, F29]>; def D15 : Rd<30, "F30", [F30, F31]>;
 
-/// Integer and FP Condition codes.
-let Namespace = "SP" in {
-  def ICC : Register<"ICC">;
-  def FCC : Register<"FCC">;
-}
-def FLAGS_REGS : RegisterClass<"SP", [FlagVT], 32, [ICC, FCC]> {
-    let Size = 32;
-}
-
 // Register classes.
 //
 // FIXME: the register order should be defined in terms of the preferred

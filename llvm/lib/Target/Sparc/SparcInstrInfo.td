@@ -91,13 +91,11 @@ let PrintMethod = "printCCOperand" in
   def CCOp : Operand<i32>;
 
 def SDTSPcmpfcc : 
-SDTypeProfile<1, 2, [SDTCisVT<0, FlagVT>, SDTCisFP<1>, SDTCisSameAs<1, 2>]>;
+SDTypeProfile<0, 2, [SDTCisFP<0>, SDTCisSameAs<0, 1>]>;
 def SDTSPbrcc : 
-SDTypeProfile<0, 3, [SDTCisVT<0, OtherVT>, SDTCisVT<1, i32>,
-                     SDTCisVT<2, FlagVT>]>;
+SDTypeProfile<0, 2, [SDTCisVT<0, OtherVT>, SDTCisVT<1, i32>]>;
 def SDTSPselectcc :
-SDTypeProfile<1, 4, [SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>, 
-                     SDTCisVT<3, i32>, SDTCisVT<4, FlagVT>]>;
+SDTypeProfile<1, 3, [SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>, SDTCisVT<3, i32>]>;
 def SDTSPFTOI :
 SDTypeProfile<1, 1, [SDTCisVT<0, f32>, SDTCisFP<1>]>;
 def SDTSPITOF :
@@ -105,8 +103,8 @@ SDTypeProfile<1, 1, [SDTCisFP<0>, SDTCisVT<1, f32>]>;
 
 def SPcmpicc : SDNode<"SPISD::CMPICC", SDTIntBinOp, [SDNPOutFlag]>;
 def SPcmpfcc : SDNode<"SPISD::CMPFCC", SDTSPcmpfcc, [SDNPOutFlag]>;
-def SPbricc : SDNode<"SPISD::BRICC", SDTSPbrcc, [SDNPHasChain]>;
-def SPbrfcc : SDNode<"SPISD::BRFCC", SDTSPbrcc, [SDNPHasChain]>;
+def SPbricc : SDNode<"SPISD::BRICC", SDTSPbrcc, [SDNPHasChain, SDNPInFlag]>;
+def SPbrfcc : SDNode<"SPISD::BRFCC", SDTSPbrcc, [SDNPHasChain, SDNPInFlag]>;
 
 def SPhi    : SDNode<"SPISD::Hi", SDTIntUnaryOp>;
 def SPlo    : SDNode<"SPISD::Lo", SDTIntUnaryOp>;
@@ -114,8 +112,8 @@ def SPlo    : SDNode<"SPISD::Lo", SDTIntUnaryOp>;
 def SPftoi  : SDNode<"SPISD::FTOI", SDTSPFTOI>;
 def SPitof  : SDNode<"SPISD::ITOF", SDTSPITOF>;
 
-def SPselecticc : SDNode<"SPISD::SELECT_ICC", SDTSPselectcc>;
-def SPselectfcc : SDNode<"SPISD::SELECT_FCC", SDTSPselectcc>;
+def SPselecticc : SDNode<"SPISD::SELECT_ICC", SDTSPselectcc, [SDNPInFlag]>;
+def SPselectfcc : SDNode<"SPISD::SELECT_FCC", SDTSPselectcc, [SDNPInFlag]>;
 
 // These are target-independent nodes, but have target-specific formats.
 def SDT_SPCallSeq : SDTypeProfile<0, 1, [ SDTCisVT<0, i32> ]>;
@@ -213,32 +211,32 @@ let usesCustomDAGSchedInserter = 1,    // Expanded by the scheduler.
    : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F, i32imm:$Cond),
             "; SELECT_CC_Int_ICC PSEUDO!",
             [(set IntRegs:$dst, (SPselecticc IntRegs:$T, IntRegs:$F,
-                                             imm:$Cond, ICC))]>;
+                                             imm:$Cond))]>;
   def SELECT_CC_Int_FCC
    : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F, i32imm:$Cond),
             "; SELECT_CC_Int_FCC PSEUDO!",
             [(set IntRegs:$dst, (SPselectfcc IntRegs:$T, IntRegs:$F,
-                                             imm:$Cond, FCC))]>;
+                                             imm:$Cond))]>;
   def SELECT_CC_FP_ICC
    : Pseudo<(ops FPRegs:$dst, FPRegs:$T, FPRegs:$F, i32imm:$Cond),
             "; SELECT_CC_FP_ICC PSEUDO!",
             [(set FPRegs:$dst, (SPselecticc FPRegs:$T, FPRegs:$F,
-                                            imm:$Cond, ICC))]>;
+                                            imm:$Cond))]>;
   def SELECT_CC_FP_FCC
    : Pseudo<(ops FPRegs:$dst, FPRegs:$T, FPRegs:$F, i32imm:$Cond),
             "; SELECT_CC_FP_FCC PSEUDO!",
             [(set FPRegs:$dst, (SPselectfcc FPRegs:$T, FPRegs:$F,
-                                            imm:$Cond, FCC))]>;
+                                            imm:$Cond))]>;
   def SELECT_CC_DFP_ICC
    : Pseudo<(ops DFPRegs:$dst, DFPRegs:$T, DFPRegs:$F, i32imm:$Cond),
             "; SELECT_CC_DFP_ICC PSEUDO!",
             [(set DFPRegs:$dst, (SPselecticc DFPRegs:$T, DFPRegs:$F,
-                                             imm:$Cond, ICC))]>;
+                                             imm:$Cond))]>;
   def SELECT_CC_DFP_FCC
    : Pseudo<(ops DFPRegs:$dst, DFPRegs:$T, DFPRegs:$F, i32imm:$Cond),
             "; SELECT_CC_DFP_FCC PSEUDO!",
             [(set DFPRegs:$dst, (SPselectfcc DFPRegs:$T, DFPRegs:$F,
-                                             imm:$Cond, FCC))]>;
+                                             imm:$Cond))]>;
 }
 
 
@@ -605,7 +603,7 @@ let isBarrier = 1 in
 // FIXME: the encoding for the JIT should look at the condition field.
 def BCOND : BranchSP<0, (ops brtarget:$dst, CCOp:$cc),
                      "b$cc $dst",
-                     [(SPbricc bb:$dst, imm:$cc, ICC)]>;
+                     [(SPbricc bb:$dst, imm:$cc)]>;
 
 
 // Section B.22 - Branch on Floating-point Condition Codes Instructions, p. 121
@@ -622,7 +620,7 @@ class FPBranchSP<bits<4> cc, dag ops, string asmstr, list<dag> pattern>
 // FIXME: the encoding for the JIT should look at the condition field.
 def FBCOND  : FPBranchSP<0, (ops brtarget:$dst, CCOp:$cc),
                       "fb$cc $dst",
-                      [(SPbrfcc bb:$dst, imm:$cc, FCC)]>;
+                      [(SPbrfcc bb:$dst, imm:$cc)]>;
 
 
 // Section B.24 - Call and Link Instruction, p. 125
@@ -767,11 +765,11 @@ def FDIVD  : F3_3<2, 0b110100, 0b001001110,
 def FCMPS  : F3_3<2, 0b110101, 0b001010001,
                   (ops FPRegs:$src1, FPRegs:$src2),
                   "fcmps $src1, $src2\n\tnop",
-                  [(set FCC, (SPcmpfcc FPRegs:$src1, FPRegs:$src2))]>;
+                  [(SPcmpfcc FPRegs:$src1, FPRegs:$src2)]>;
 def FCMPD  : F3_3<2, 0b110101, 0b001010010,
                   (ops DFPRegs:$src1, DFPRegs:$src2),
                   "fcmpd $src1, $src2\n\tnop",
-                  [(set FCC, (SPcmpfcc DFPRegs:$src1, DFPRegs:$src2))]>;
+                  [(SPcmpfcc DFPRegs:$src1, DFPRegs:$src2)]>;
 
 
 //===----------------------------------------------------------------------===//
@@ -786,44 +784,44 @@ let Predicates = [HasV9], isTwoAddress = 1 in {
     : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F, CCOp:$cc),
              "mov$cc %icc, $F, $dst",
              [(set IntRegs:$dst,
-                         (SPselecticc IntRegs:$F, IntRegs:$T, imm:$cc, ICC))]>;
+                         (SPselecticc IntRegs:$F, IntRegs:$T, imm:$cc))]>;
   def MOVICCri
     : Pseudo<(ops IntRegs:$dst, IntRegs:$T, i32imm:$F, CCOp:$cc),
              "mov$cc %icc, $F, $dst",
              [(set IntRegs:$dst,
-                          (SPselecticc simm11:$F, IntRegs:$T, imm:$cc, ICC))]>;
+                          (SPselecticc simm11:$F, IntRegs:$T, imm:$cc))]>;
 
   def MOVFCCrr
     : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F, CCOp:$cc),
              "mov$cc %fcc0, $F, $dst",
              [(set IntRegs:$dst,
-                         (SPselectfcc IntRegs:$F, IntRegs:$T, imm:$cc, FCC))]>;
+                         (SPselectfcc IntRegs:$F, IntRegs:$T, imm:$cc))]>;
   def MOVFCCri
     : Pseudo<(ops IntRegs:$dst, IntRegs:$T, i32imm:$F, CCOp:$cc),
              "mov$cc %fcc0, $F, $dst",
              [(set IntRegs:$dst,
-                          (SPselectfcc simm11:$F, IntRegs:$T, imm:$cc, FCC))]>;
+                          (SPselectfcc simm11:$F, IntRegs:$T, imm:$cc))]>;
 
   def FMOVS_ICC
     : Pseudo<(ops FPRegs:$dst, FPRegs:$T, FPRegs:$F, CCOp:$cc),
              "fmovs$cc %icc, $F, $dst",
              [(set FPRegs:$dst,
-                         (SPselecticc FPRegs:$F, FPRegs:$T, imm:$cc, ICC))]>;
+                         (SPselecticc FPRegs:$F, FPRegs:$T, imm:$cc))]>;
   def FMOVD_ICC
     : Pseudo<(ops DFPRegs:$dst, DFPRegs:$T, DFPRegs:$F, CCOp:$cc),
              "fmovd$cc %icc, $F, $dst",
              [(set DFPRegs:$dst,
-                         (SPselecticc DFPRegs:$F, DFPRegs:$T, imm:$cc, ICC))]>;
+                         (SPselecticc DFPRegs:$F, DFPRegs:$T, imm:$cc))]>;
   def FMOVS_FCC
     : Pseudo<(ops FPRegs:$dst, FPRegs:$T, FPRegs:$F, CCOp:$cc),
              "fmovs$cc %fcc0, $F, $dst",
              [(set FPRegs:$dst,
-                         (SPselectfcc FPRegs:$F, FPRegs:$T, imm:$cc, FCC))]>;
+                         (SPselectfcc FPRegs:$F, FPRegs:$T, imm:$cc))]>;
   def FMOVD_FCC
     : Pseudo<(ops DFPRegs:$dst, DFPRegs:$T, DFPRegs:$F, CCOp:$cc),
              "fmovd$cc %fcc0, $F, $dst",
              [(set DFPRegs:$dst,
-                         (SPselectfcc DFPRegs:$F, DFPRegs:$T, imm:$cc, FCC))]>;
+                         (SPselectfcc DFPRegs:$F, DFPRegs:$T, imm:$cc))]>;
 
 }
 
