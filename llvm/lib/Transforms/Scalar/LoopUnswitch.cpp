@@ -256,6 +256,16 @@ bool LoopUnswitch::visitLoop(Loop *L) {
   // loop.
   for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
        I != E; ++I) {
+    for (BasicBlock::iterator BBI = (*I)->begin(), E = (*I)->end(); 
+         BBI != E; ++BBI)
+      if (SelectInst *SI = dyn_cast<SelectInst>(BBI)) {
+        Value *LoopCond = FindLIVLoopCondition(SI->getCondition(), L, Changed);
+        if (LoopCond == 0) continue;
+        
+        //if (UnswitchIfProfitable(LoopCond, 
+        std::cerr << "LOOP INVARIANT SELECT: " << *SI;
+      }
+        
     TerminatorInst *TI = (*I)->getTerminator();
     // FIXME: Handle invariant select instructions.
     
@@ -523,13 +533,32 @@ void LoopUnswitch::VersionLoop(Value *LIC, Loop *L, Loop *&Out1, Loop *&Out2) {
 
   // Now we create the new Loop object for the versioned loop.
   Loop *NewLoop = CloneLoop(L, L->getParentLoop(), ValueMap, LI);
-  if (Loop *Parent = L->getParentLoop()) {
+  Loop *ParentLoop = L->getParentLoop();
+  if (ParentLoop) {
     // Make sure to add the cloned preheader and exit blocks to the parent loop
     // as well.
-    Parent->addBasicBlockToLoop(NewBlocks[0], *LI);
-    for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
-      Parent->addBasicBlockToLoop(cast<BasicBlock>(ValueMap[ExitBlocks[i]]),
-                                  *LI);
+    ParentLoop->addBasicBlockToLoop(NewBlocks[0], *LI);
+  }
+  
+  for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
+    BasicBlock *NewExit = cast<BasicBlock>(ValueMap[ExitBlocks[i]]);
+    if (ParentLoop)
+      ParentLoop->addBasicBlockToLoop(cast<BasicBlock>(NewExit), *LI);
+    
+    assert(NewExit->getTerminator()->getNumSuccessors() == 1 &&
+           "Exit block should have been split to have one successor!");
+    BasicBlock *ExitSucc = NewExit->getTerminator()->getSuccessor(0);
+    
+    // If the successor of the exit block had PHI nodes, add an entry for
+    // NewExit.
+    PHINode *PN;
+    for (BasicBlock::iterator I = ExitSucc->begin();
+         (PN = dyn_cast<PHINode>(I)); ++I) {
+      Value *V = PN->getIncomingValueForBlock(ExitBlocks[i]);
+      std::map<const Value *, Value*>::iterator It = ValueMap.find(V);
+      if (It != ValueMap.end()) V = It->second;
+      PN->addIncoming(V, NewExit);
+    }
   }
 
   // Rewrite the code to refer to itself.
