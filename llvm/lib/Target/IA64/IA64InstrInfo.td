@@ -99,11 +99,9 @@ def immSExt14  : PatLeaf<(i64 imm), [{
   return (v <= 8191 && v >= -8192);
 }]>;
 
-def imm64  : PatLeaf<(i64 imm), [{
-  // imm64 predicate - True if the immediate fits in a 64-bit 
-  // field - i.e., true. used to keep movl happy
-  return true;
-}]>;
+// imm64 predicate - True if the immediate fits in a 64-bit 
+// field - i.e., true. used to keep movl happy
+def imm64  : PatLeaf<(i64 imm)>; 
 
 def ADD  : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
            "add $dst = $src1, $src2",
