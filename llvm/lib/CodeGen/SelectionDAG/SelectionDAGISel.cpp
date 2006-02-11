@@ -941,33 +941,30 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     if (TLI.getTargetMachine().getIntrinsicLowering().EmitDebugFunctions())
       return "llvm_debugger_stop";
     
-    std::string fname = "<unknown>";
-    std::vector<SDOperand> Ops;
+    MachineDebugInfo *DebugInfo = DAG.getMachineDebugInfo();
+    if (DebugInfo &&  DebugInfo->Verify(I.getOperand(4))) {
+      std::vector<SDOperand> Ops;
 
-    // Input Chain
-    Ops.push_back(getRoot());
-    
-    // line number
-    Ops.push_back(getValue(I.getOperand(2)));
-   
-    // column
-    Ops.push_back(getValue(I.getOperand(3)));
+      // Input Chain
+      Ops.push_back(getRoot());
+      
+      // line number
+      Ops.push_back(getValue(I.getOperand(2)));
+     
+      // column
+      Ops.push_back(getValue(I.getOperand(3)));
 
-    // filename/working dir
-    // Pull the filename out of the the compilation unit.
-    const GlobalVariable *cunit = dyn_cast<GlobalVariable>(I.getOperand(4));
-    if (cunit && cunit->hasInitializer()) {
-      if (ConstantStruct *CS = 
-            dyn_cast<ConstantStruct>(cunit->getInitializer())) {
-        if (CS->getNumOperands() > 0) {
-          Ops.push_back(DAG.getString(getStringValue(CS->getOperand(3))));
-          Ops.push_back(DAG.getString(getStringValue(CS->getOperand(4))));
-        }
-      }
+      DebugInfoDesc *DD = DebugInfo->Deserialize(I.getOperand(4));
+      assert(DD && "Not a debug information descriptor");
+      CompileUnitDesc *CompileUnit = dyn_cast<CompileUnitDesc>(DD);
+      assert(CompileUnit && "Not a compile unit");
+      Ops.push_back(DAG.getString(CompileUnit->getFileName()));
+      Ops.push_back(DAG.getString(CompileUnit->getDirectory()));
+      
+      if (Ops.size() == 5)  // Found filename/workingdir.
+        DAG.setRoot(DAG.getNode(ISD::LOCATION, MVT::Other, Ops));
     }
     
-    if (Ops.size() == 5)  // Found filename/workingdir.
-      DAG.setRoot(DAG.getNode(ISD::LOCATION, MVT::Other, Ops));
     setValue(&I, DAG.getNode(ISD::UNDEF, TLI.getValueType(I.getType())));
     return 0;
   }

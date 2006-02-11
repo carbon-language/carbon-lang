@@ -32,6 +32,7 @@
 
 #include "llvm/Support/Dwarf.h"
 #include "llvm/ADT/UniqueVector.h"
+#include "llvm/GlobalValue.h"
 #include "llvm/Pass.h"
 #include "llvm/User.h"
 
@@ -42,6 +43,7 @@ namespace llvm {
 
 //===----------------------------------------------------------------------===//
 // Forward declarations.
+class Constant;
 class DebugInfoDesc;
 class GlobalVariable;
 class Module;
@@ -57,12 +59,13 @@ enum {
   
   // DebugInfoDesc type identifying tags.
   // FIXME - Change over with gcc4.
+  DI_TAG_anchor = 0,
 #if 1
   DI_TAG_compile_unit = DW_TAG_compile_unit,
   DI_TAG_global_variable = DW_TAG_variable,
   DI_TAG_subprogram = DW_TAG_subprogram
 #else
-  DI_TAG_compile_unit = 1,
+  DI_TAG_compile_unit,
   DI_TAG_global_variable,
   DI_TAG_subprogram
 #endif
@@ -117,6 +120,10 @@ public:
   /// Return NULL if not a recognized Tag.
   static DebugInfoDesc *DescFactory(unsigned Tag);
   
+  /// getLinkage - get linkage appropriate for this type of descriptor.
+  ///
+  virtual GlobalValue::LinkageTypes getLinkage() const;
+    
   //===--------------------------------------------------------------------===//
   // Subclasses should supply the following static methods.
   
@@ -128,11 +135,15 @@ public:
   
   /// ApplyToFields - Target the vistor to the fields of the descriptor.
   ///
-  virtual void ApplyToFields(DIVisitor *Visitor) = 0;
+  virtual void ApplyToFields(DIVisitor *Visitor);
 
-  /// TypeString - Return a string used to compose globalnames and labels.
+  /// getDescString - Return a string used to compose global names and labels.
   ///
-  virtual const char *TypeString() const = 0;
+  virtual const char *getDescString() const = 0;
+  
+  /// getTypeString - Return a string used to label this descriptor's type.
+  ///
+  virtual const char *getTypeString() const = 0;
   
 #ifndef NDEBUG
   virtual void dump() = 0;
@@ -141,27 +152,90 @@ public:
 
 
 //===----------------------------------------------------------------------===//
+/// AnchorDesc - Descriptors of this class act as markers for identifying
+/// descriptors of certain groups.
+class AnchorDesc : public DebugInfoDesc {
+private:  
+  std::string Name;                     // Anchor type string.
+  
+public:
+  AnchorDesc()
+  : DebugInfoDesc(DI_TAG_anchor)
+  , Name("")
+  {}
+  AnchorDesc(const std::string &N)
+  : DebugInfoDesc(DI_TAG_anchor)
+  , Name(N)
+  {}
+  
+  // Accessors
+  const std::string &getName() const { return Name; }
+
+  // Implement isa/cast/dyncast.
+  static bool classof(const AnchorDesc *) { return true; }
+  static bool classof(const DebugInfoDesc *D) {
+    return D->getTag() == DI_TAG_anchor;
+  }
+
+  /// getLinkage - get linkage appropriate for this type of descriptor.
+  ///
+  virtual GlobalValue::LinkageTypes getLinkage() const;
+
+  /// ApplyToFields - Target the visitor to the fields of the AnchorDesc.
+  ///
+  virtual void ApplyToFields(DIVisitor *Visitor);
+
+  /// getDescString - Return a string used to compose global names and labels.
+  ///
+  virtual const char *getDescString() const;
+    
+  /// getTypeString - Return a string used to label this descriptor's type.
+  ///
+  virtual const char *getTypeString() const;
+    
+#ifndef NDEBUG
+  virtual void dump();
+#endif
+};
+
+//===----------------------------------------------------------------------===//
+/// AnchoredDesc - This class manages anchors for a variety of top level
+/// descriptors.
+class AnchoredDesc : public DebugInfoDesc {
+private:  
+  AnchorDesc *Anchor;                   // Anchor for all descriptors of the
+                                        // same type.
+
+protected:
+
+  AnchoredDesc(unsigned T);
+
+public:  
+  // Accessors.
+  AnchorDesc *getAnchor() const { return Anchor; }
+  void setAnchor(AnchorDesc *A) { Anchor = A; }
+
+  //===--------------------------------------------------------------------===//
+  // Subclasses should supply the following virtual methods.
+  
+  /// ApplyToFields - Target the visitor to the fields of the AnchoredDesc.
+  ///
+  virtual void ApplyToFields(DIVisitor *Visitor);
+};
+
+//===----------------------------------------------------------------------===//
 /// CompileUnitDesc - This class packages debug information associated with a 
 /// source/header file.
-class CompileUnitDesc : public DebugInfoDesc {
+class CompileUnitDesc : public AnchoredDesc {
 private:  
   unsigned DebugVersion;                // LLVM debug version when produced.
   unsigned Language;                    // Language number (ex. DW_LANG_C89.)
   std::string FileName;                 // Source file name.
   std::string Directory;                // Source file directory.
   std::string Producer;                 // Compiler string.
-  GlobalVariable *TransUnit;            // Translation unit - ignored.
   
 public:
-  CompileUnitDesc()
-  : DebugInfoDesc(DI_TAG_compile_unit)
-  , DebugVersion(LLVMDebugVersion)
-  , Language(0)
-  , FileName("")
-  , Directory("")
-  , Producer("")
-  , TransUnit(NULL)
-  {}
+  CompileUnitDesc();
   
   // Accessors
   unsigned getDebugVersion()              const { return DebugVersion; }
@@ -173,6 +247,7 @@ public:
   void setFileName(const std::string &FN)       { FileName = FN; }
   void setDirectory(const std::string &D)       { Directory = D; }
   void setProducer(const std::string &P)        { Producer = P; }
+  
   // FIXME - Need translation unit getter/setter.
 
   // Implement isa/cast/dyncast.
@@ -189,9 +264,17 @@ public:
   ///
   virtual void ApplyToFields(DIVisitor *Visitor);
 
-  /// TypeString - Return a string used to compose globalnames and labels.
+  /// getDescString - Return a string used to compose global names and labels.
   ///
-  virtual const char *TypeString() const;
+  virtual const char *getDescString() const;
+    
+  /// getTypeString - Return a string used to label this descriptor's type.
+  ///
+  virtual const char *getTypeString() const;
+  
+  /// getAnchorString - Return a string used to label this descriptor's anchor.
+  ///
+  virtual const char *getAnchorString() const;
     
 #ifndef NDEBUG
   virtual void dump();
@@ -199,42 +282,49 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-/// GlobalVariableDesc - This class packages debug information associated with a
-/// GlobalVariable.
-class GlobalVariableDesc : public DebugInfoDesc {
+/// GlobalDesc - This class is the base descriptor for global functions and
+/// variables.
+class GlobalDesc : public AnchoredDesc {
 private:
   DebugInfoDesc *Context;               // Context debug descriptor.
   std::string Name;                     // Global name.
-  GlobalVariable *TransUnit;            // Translation unit - ignored.
   // FIXME - Use a descriptor.
   GlobalVariable *TyDesc;               // Type debug descriptor.
   bool IsStatic;                        // Is the global a static.
   bool IsDefinition;                    // Is the global defined in context.
-  GlobalVariable *Global;               // llvm global.
   
+protected:
+  GlobalDesc(unsigned T);
+
 public:
-  GlobalVariableDesc()
-  : DebugInfoDesc(DI_TAG_global_variable)
-  , Context(0)
-  , Name("")
-  , TransUnit(NULL)
-  , TyDesc(NULL)
-  , IsStatic(false)
-  , IsDefinition(false)
-  , Global(NULL)
-  {}
-  
   // Accessors
   DebugInfoDesc *getContext()                const { return Context; }
   const std::string &getName()               const { return Name; }
   bool isStatic()                            const { return IsStatic; }
   bool isDefinition()                        const { return IsDefinition; }
-  GlobalVariable *getGlobalVariable()        const { return Global; }
+  void setContext(DebugInfoDesc *C)                { Context = C; }
   void setName(const std::string &N)               { Name = N; }
   void setIsStatic(bool IS)                        { IsStatic = IS; }
   void setIsDefinition(bool ID)                    { IsDefinition = ID; }
+
+  /// ApplyToFields - Target the visitor to the fields of the GlobalDesc.
+  ///
+  virtual void ApplyToFields(DIVisitor *Visitor);
+};
+
+//===----------------------------------------------------------------------===//
+/// GlobalVariableDesc - This class packages debug information associated with a
+/// GlobalVariable.
+class GlobalVariableDesc : public GlobalDesc {
+private:
+  GlobalVariable *Global;               // llvm global.
+  
+public:
+  GlobalVariableDesc();
+
+  // Accessors.
+  GlobalVariable *getGlobalVariable()        const { return Global; }
   void setGlobalVariable(GlobalVariable *GV)       { Global = GV; }
-  // FIXME - Other getters/setters.
   
   // Implement isa/cast/dyncast.
   static bool classof(const GlobalVariableDesc *)  { return true; }
@@ -246,10 +336,18 @@ public:
   /// GlobalVariableDesc.
   virtual void ApplyToFields(DIVisitor *Visitor);
 
-  /// TypeString - Return a string used to compose globalnames and labels.
+  /// getDescString - Return a string used to compose global names and labels.
   ///
-  virtual const char *TypeString() const;
+  virtual const char *getDescString() const;
 
+  /// getTypeString - Return a string used to label this descriptor's type.
+  ///
+  virtual const char *getTypeString() const;
+  
+  /// getAnchorString - Return a string used to label this descriptor's anchor.
+  ///
+  virtual const char *getAnchorString() const;
+    
 #ifndef NDEBUG
   virtual void dump();
 #endif
@@ -258,32 +356,24 @@ public:
 //===----------------------------------------------------------------------===//
 /// SubprogramDesc - This class packages debug information associated with a
 /// subprogram/function.
-class SubprogramDesc : public DebugInfoDesc {
+class SubprogramDesc : public GlobalDesc {
 private:
   DebugInfoDesc *Context;               // Context debug descriptor.
   std::string Name;                     // Subprogram name.
-  GlobalVariable *TransUnit;            // Translation unit - ignored.
   // FIXME - Use a descriptor.
   GlobalVariable *TyDesc;               // Type debug descriptor.
   bool IsStatic;                        // Is the subprogram a static.
   bool IsDefinition;                    // Is the subprogram defined in context.
   
 public:
-  SubprogramDesc()
-  : DebugInfoDesc(DI_TAG_subprogram)
-  , Context(0)
-  , Name("")
-  , TransUnit(NULL)
-  , TyDesc(NULL)
-  , IsStatic(false)
-  , IsDefinition(false)
-  {}
+  SubprogramDesc();
   
   // Accessors
   DebugInfoDesc *getContext()                const { return Context; }
   const std::string &getName()               const { return Name; }
   bool isStatic()                            const { return IsStatic; }
   bool isDefinition()                        const { return IsDefinition; }
+  void setContext(DebugInfoDesc *C)                { Context = C; }
   void setName(const std::string &N)               { Name = N; }
   void setIsStatic(bool IS)                        { IsStatic = IS; }
   void setIsDefinition(bool ID)                    { IsDefinition = ID; }
@@ -299,10 +389,18 @@ public:
   ///
   virtual void ApplyToFields(DIVisitor *Visitor);
 
-  /// TypeString - Return a string used to compose globalnames and labels.
+  /// getDescString - Return a string used to compose global names and labels.
   ///
-  virtual const char *TypeString() const;
+  virtual const char *getDescString() const;
 
+  /// getTypeString - Return a string used to label this descriptor's type.
+  ///
+  virtual const char *getTypeString() const;
+  
+  /// getAnchorString - Return a string used to label this descriptor's anchor.
+  ///
+  virtual const char *getAnchorString() const;
+    
 #ifndef NDEBUG
   virtual void dump();
 #endif
@@ -313,18 +411,15 @@ public:
 /// into DebugInfoDesc objects.
 class DIDeserializer {
 private:
-  Module *M;                            // Definition space module.
   unsigned DebugVersion;                // Version of debug information in use.
   std::map<GlobalVariable *, DebugInfoDesc *> GlobalDescs;
                                         // Previously defined gloabls.
   
 public:
-  DIDeserializer() : M(NULL), DebugVersion(LLVMDebugVersion) {}
+  DIDeserializer() : DebugVersion(LLVMDebugVersion) {}
   ~DIDeserializer() {}
   
   // Accessors
-  Module *getModule()        const { return M; };
-  void setModule(Module *module)   { M = module; }
   unsigned getDebugVersion() const { return DebugVersion; }
   
   /// Deserialize - Reconstitute a GlobalVariable into it's component
@@ -345,10 +440,18 @@ private:
                                         // Types per Tag.  Created lazily.
   std::map<DebugInfoDesc *, GlobalVariable *> DescGlobals;
                                         // Previously defined descriptors.
-  std::map<const std::string, GlobalVariable*> StringCache;
+  std::map<const std::string, Constant *> StringCache;
                                         // Previously defined strings.
+                                          
 public:
-  DISerializer() : M(NULL) {}
+  DISerializer()
+  : M(NULL)
+  , StrPtrTy(NULL)
+  , EmptyStructPtrTy(NULL)
+  , TagTypes()
+  , DescGlobals()
+  , StringCache()
+  {}
   ~DISerializer() {}
   
   // Accessors
@@ -369,7 +472,7 @@ public:
   
   /// getString - Construct the string as constant string global.
   ///
-  GlobalVariable *getString(const std::string &String);
+  Constant *getString(const std::string &String);
   
   /// Serialize - Recursively cast the specified descriptor into a
   /// GlobalVariable so that it can be serialized to a .bc or .ll file.
@@ -395,6 +498,7 @@ public:
   
   /// Verify - Return true if the GlobalVariable appears to be a valid
   /// serialization of a DebugInfoDesc.
+  bool Verify(Value *V);
   bool Verify(GlobalVariable *GV);
 };
 
@@ -454,9 +558,7 @@ public:
 class MachineDebugInfo : public ImmutablePass {
 private:
   // Use the same serializer/deserializer/verifier for the module.
-  DISerializer SR;
   DIDeserializer DR;
-  DIVerifier VR;
 
   // CompileUnits - Uniquing vector for compile units.
   UniqueVector<CompileUnitDesc *> CompileUnits;
@@ -481,6 +583,14 @@ public:
   /// doFinalization - Tear down the debug state after completion of a module.
   ///
   bool doFinalization();
+  
+  /// Deserialize - Convert a Value to a debug information descriptor.
+  ///
+  DebugInfoDesc *Deserialize(Value *V);
+  
+  /// Verify - Verify that a Value is debug information descriptor.
+  ///
+  bool Verify(Value *V);
   
   /// AnalyzeModule - Scan the module for global debug information.
   ///

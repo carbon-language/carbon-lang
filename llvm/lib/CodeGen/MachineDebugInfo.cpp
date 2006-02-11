@@ -49,10 +49,14 @@ getGlobalVariablesUsing(Value *V, std::vector<GlobalVariable*> &Result) {
 static std::vector<GlobalVariable*>
 getGlobalVariablesUsing(Module &M, const std::string &RootName) {
   std::vector<GlobalVariable*> Result;  // GlobalVariables matching criteria.
+  
+  std::vector<const Type*> FieldTypes;
+  FieldTypes.push_back(Type::UIntTy);
+  FieldTypes.push_back(PointerType::get(Type::SByteTy));
 
   // Get the GlobalVariable root.
   GlobalVariable *UseRoot = M.getGlobalVariable(RootName,
-                                   StructType::get(std::vector<const Type*>()));
+                                                StructType::get(FieldTypes));
 
   // If present and linkonce then scan for users.
   if (UseRoot && UseRoot->hasLinkOnceLinkage()) {
@@ -168,28 +172,6 @@ static ConstantUInt *getUIntOperand(GlobalVariable *GV, unsigned i) {
   // Check constant.
   return dyn_cast<ConstantUInt>(CI->getOperand(i));
 }
-
-//===----------------------------------------------------------------------===//
-
-/// TagFromGlobal - Returns the Tag number from a debug info descriptor
-/// GlobalVariable.  
-unsigned DebugInfoDesc::TagFromGlobal(GlobalVariable *GV) {
-  ConstantUInt *C = getUIntOperand(GV, 0);
-  return C ? (unsigned)C->getValue() : (unsigned)DIInvalid;
-}
-
-/// DescFactory - Create an instance of debug info descriptor based on Tag.
-/// Return NULL if not a recognized Tag.
-DebugInfoDesc *DebugInfoDesc::DescFactory(unsigned Tag) {
-  switch (Tag) {
-  case DI_TAG_compile_unit:    return new CompileUnitDesc();
-  case DI_TAG_global_variable: return new GlobalVariableDesc();
-  case DI_TAG_subprogram:      return new SubprogramDesc();
-  default: break;
-  }
-  return NULL;
-}
-
 //===----------------------------------------------------------------------===//
 
 /// ApplyToFields - Target the visitor to each field of the debug information
@@ -206,7 +188,7 @@ private:
   unsigned Count;                       // Running count of fields.
   
 public:
-  DICountVisitor() : DIVisitor(), Count(1) {}
+  DICountVisitor() : DIVisitor(), Count(0) {}
   
   // Accessors.
   unsigned getCount() const { return Count; }
@@ -234,7 +216,7 @@ public:
   DIDeserializeVisitor(DIDeserializer &D, GlobalVariable *GV)
   : DIVisitor()
   , DR(D)
-  , I(1)
+  , I(0)
   , CI(cast<ConstantStruct>(GV->getInitializer()))
   {}
   
@@ -284,7 +266,7 @@ public:
   /// Apply - Set the value of each of the fields.
   ///
   virtual void Apply(int &Field) {
-    Elements.push_back(ConstantUInt::get(Type::IntTy, Field));
+    Elements.push_back(ConstantSInt::get(Type::IntTy, Field));
   }
   virtual void Apply(unsigned &Field) {
     Elements.push_back(ConstantUInt::get(Type::UIntTy, Field));
@@ -314,7 +296,11 @@ public:
   }
   virtual void Apply(GlobalVariable *&Field) {
     const PointerType *EmptyTy = SR.getEmptyStructPtrType();
-    Elements.push_back(ConstantExpr::getCast(Field, EmptyTy));
+    if (Field) {
+      Elements.push_back(ConstantExpr::getCast(Field, EmptyTy));
+    } else {
+      Elements.push_back(ConstantPointerNull::get(EmptyTy));
+    }
   }
 };
 
@@ -373,7 +359,7 @@ public:
   : DIVisitor()
   , VR(V)
   , IsValid(true)
-  , I(1)
+  , I(0)
   , CI(cast<ConstantStruct>(GV->getInitializer()))
   {
   }
@@ -410,36 +396,146 @@ public:
   }
 };
 
+
 //===----------------------------------------------------------------------===//
+
+/// TagFromGlobal - Returns the Tag number from a debug info descriptor
+/// GlobalVariable.  
+unsigned DebugInfoDesc::TagFromGlobal(GlobalVariable *GV) {
+  ConstantUInt *C = getUIntOperand(GV, 0);
+  return C ? (unsigned)C->getValue() : (unsigned)DIInvalid;
+}
+
+/// DescFactory - Create an instance of debug info descriptor based on Tag.
+/// Return NULL if not a recognized Tag.
+DebugInfoDesc *DebugInfoDesc::DescFactory(unsigned Tag) {
+  switch (Tag) {
+  case DI_TAG_anchor:          return new AnchorDesc();
+  case DI_TAG_compile_unit:    return new CompileUnitDesc();
+  case DI_TAG_global_variable: return new GlobalVariableDesc();
+  case DI_TAG_subprogram:      return new SubprogramDesc();
+  default: break;
+  }
+  return NULL;
+}
+
+/// getLinkage - get linkage appropriate for this type of descriptor.
+///
+GlobalValue::LinkageTypes DebugInfoDesc::getLinkage() const {
+  return GlobalValue::InternalLinkage;
+}
+
+/// ApplyToFields - Target the vistor to the fields of the descriptor.
+///
+void DebugInfoDesc::ApplyToFields(DIVisitor *Visitor) {
+  Visitor->Apply(Tag);
+}
+
+//===----------------------------------------------------------------------===//
+
+/// getLinkage - get linkage appropriate for this type of descriptor.
+///
+GlobalValue::LinkageTypes AnchorDesc::getLinkage() const {
+  return GlobalValue::LinkOnceLinkage;
+}
+
+/// ApplyToFields - Target the visitor to the fields of the TransUnitDesc.
+///
+void AnchorDesc::ApplyToFields(DIVisitor *Visitor) {
+  DebugInfoDesc::ApplyToFields(Visitor);
+  
+  Visitor->Apply(Name);
+}
+
+/// getDescString - Return a string used to compose global names and labels.
+///
+const char *AnchorDesc::getDescString() const {
+  return Name.c_str();
+}
+
+/// getTypeString - Return a string used to label this descriptors type.
+///
+const char *AnchorDesc::getTypeString() const {
+  return "llvm.dbg.anchor.type";
+}
+
+#ifndef NDEBUG
+void AnchorDesc::dump() {
+  std::cerr << getDescString() << " "
+            << "Tag(" << getTag() << "), "
+            << "Name(" << Name << ")\n";
+}
+#endif
+
+//===----------------------------------------------------------------------===//
+
+AnchoredDesc::AnchoredDesc(unsigned T)
+: DebugInfoDesc(T)
+, Anchor(NULL)
+{}
+
+/// ApplyToFields - Target the visitor to the fields of the AnchoredDesc.
+///
+void AnchoredDesc::ApplyToFields(DIVisitor *Visitor) {
+  DebugInfoDesc::ApplyToFields(Visitor);
+
+  Visitor->Apply((DebugInfoDesc *&)Anchor);
+}
+
+//===----------------------------------------------------------------------===//
+
+CompileUnitDesc::CompileUnitDesc()
+: AnchoredDesc(DI_TAG_compile_unit)
+, DebugVersion(LLVMDebugVersion)
+, Language(0)
+, FileName("")
+, Directory("")
+, Producer("")
+{}
 
 /// DebugVersionFromGlobal - Returns the version number from a compile unit
 /// GlobalVariable.
 unsigned CompileUnitDesc::DebugVersionFromGlobal(GlobalVariable *GV) {
-  ConstantUInt *C = getUIntOperand(GV, 1);
+  ConstantUInt *C = getUIntOperand(GV, 2);
   return C ? (unsigned)C->getValue() : (unsigned)DIInvalid;
 }
   
 /// ApplyToFields - Target the visitor to the fields of the CompileUnitDesc.
 ///
 void CompileUnitDesc::ApplyToFields(DIVisitor *Visitor) {
+  AnchoredDesc::ApplyToFields(Visitor);
+
   Visitor->Apply(DebugVersion);
   Visitor->Apply(Language);
   Visitor->Apply(FileName);
   Visitor->Apply(Directory);
   Visitor->Apply(Producer);
-  Visitor->Apply(TransUnit);
 }
 
-/// TypeString - Return a string used to compose globalnames and labels.
+/// getDescString - Return a string used to compose global names and labels.
 ///
-const char *CompileUnitDesc::TypeString() const {
-  return "compile_unit";
+const char *CompileUnitDesc::getDescString() const {
+  return "llvm.dbg.compile_unit";
+}
+
+/// getTypeString - Return a string used to label this descriptors type.
+///
+const char *CompileUnitDesc::getTypeString() const {
+  return "llvm.dbg.compile_unit.type";
+}
+
+/// getAnchorString - Return a string used to label this descriptor's anchor.
+///
+const char *CompileUnitDesc::getAnchorString() const {
+  return "llvm.dbg.compile_units";
 }
 
 #ifndef NDEBUG
 void CompileUnitDesc::dump() {
-  std::cerr << TypeString() << " "
+  std::cerr << getDescString() << " "
             << "Tag(" << getTag() << "), "
+            << "Anchor(" << getAnchor() << "), "
+            << "DebugVersion(" << DebugVersion << "), "
             << "Language(" << Language << "), "
             << "FileName(\"" << FileName << "\"), "
             << "Directory(\"" << Directory << "\"), "
@@ -449,76 +545,122 @@ void CompileUnitDesc::dump() {
 
 //===----------------------------------------------------------------------===//
 
-/// ApplyToFields - Target the visitor to the fields of the GlobalVariableDesc.
+GlobalDesc::GlobalDesc(unsigned T)
+: AnchoredDesc(T)
+, Context(0)
+, Name("")
+, TyDesc(NULL)
+, IsStatic(false)
+, IsDefinition(false)
+{}
+
+/// ApplyToFields - Target the visitor to the fields of the global.
 ///
-void GlobalVariableDesc::ApplyToFields(DIVisitor *Visitor) {
+void GlobalDesc::ApplyToFields(DIVisitor *Visitor) {
+  AnchoredDesc::ApplyToFields(Visitor);
+
   Visitor->Apply(Context);
   Visitor->Apply(Name);
-  Visitor->Apply(TransUnit);
   Visitor->Apply(TyDesc);
   Visitor->Apply(IsStatic);
   Visitor->Apply(IsDefinition);
+}
+
+//===----------------------------------------------------------------------===//
+
+GlobalVariableDesc::GlobalVariableDesc()
+: GlobalDesc(DI_TAG_global_variable)
+, Global(NULL)
+{}
+
+/// ApplyToFields - Target the visitor to the fields of the GlobalVariableDesc.
+///
+void GlobalVariableDesc::ApplyToFields(DIVisitor *Visitor) {
+  GlobalDesc::ApplyToFields(Visitor);
+
   Visitor->Apply(Global);
 }
 
-/// TypeString - Return a string used to compose globalnames and labels.
+/// getDescString - Return a string used to compose global names and labels.
 ///
-const char *GlobalVariableDesc::TypeString() const {
-  return "global_variable";
+const char *GlobalVariableDesc::getDescString() const {
+  return "llvm.dbg.global_variable";
+}
+
+/// getTypeString - Return a string used to label this descriptors type.
+///
+const char *GlobalVariableDesc::getTypeString() const {
+  return "llvm.dbg.global_variable.type";
+}
+
+/// getAnchorString - Return a string used to label this descriptor's anchor.
+///
+const char *GlobalVariableDesc::getAnchorString() const {
+  return "llvm.dbg.global_variables";
 }
 
 #ifndef NDEBUG
 void GlobalVariableDesc::dump() {
-  std::cerr << TypeString() << " "
+  std::cerr << getDescString() << " "
             << "Tag(" << getTag() << "), "
-            << "Name(\"" << Name << "\"), "
-            << "Type(" << TyDesc << "), "
-            << "IsStatic(" << (IsStatic ? "true" : "false") << "), "
-            << "IsDefinition(" << (IsDefinition ? "true" : "false") << "), "
+            << "Anchor(" << getAnchor() << "), "
+            << "Name(\"" << getName() << "\"), "
+            << "IsStatic(" << (isStatic() ? "true" : "false") << "), "
+            << "IsDefinition(" << (isDefinition() ? "true" : "false") << "), "
             << "Global(" << Global << ")\n";
 }
 #endif
 
 //===----------------------------------------------------------------------===//
 
+SubprogramDesc::SubprogramDesc()
+: GlobalDesc(DI_TAG_subprogram)
+{}
+
 /// ApplyToFields - Target the visitor to the fields of the
 /// SubprogramDesc.
 void SubprogramDesc::ApplyToFields(DIVisitor *Visitor) {
-  Visitor->Apply(Context);
-  Visitor->Apply(Name);
-  Visitor->Apply(TransUnit);
-  Visitor->Apply(TyDesc);
-  Visitor->Apply(IsStatic);
-  Visitor->Apply(IsDefinition);
-  
-  // FIXME - Temp variable until restructured.
-  GlobalVariable *Tmp;
-  Visitor->Apply(Tmp);
+  GlobalDesc::ApplyToFields(Visitor);
 }
 
-/// TypeString - Return a string used to compose globalnames and labels.
+/// getDescString - Return a string used to compose global names and labels.
 ///
-const char *SubprogramDesc::TypeString() const {
-  return "subprogram";
+const char *SubprogramDesc::getDescString() const {
+  return "llvm.dbg.subprogram";
+}
+
+/// getTypeString - Return a string used to label this descriptors type.
+///
+const char *SubprogramDesc::getTypeString() const {
+  return "llvm.dbg.subprogram.type";
+}
+
+/// getAnchorString - Return a string used to label this descriptor's anchor.
+///
+const char *SubprogramDesc::getAnchorString() const {
+  return "llvm.dbg.subprograms";
 }
 
 #ifndef NDEBUG
 void SubprogramDesc::dump() {
-  std::cerr << TypeString() << " "
+  std::cerr << getDescString() << " "
             << "Tag(" << getTag() << "), "
-            << "Name(\"" << Name << "\"), "
-            << "Type(" << TyDesc << "), "
-            << "IsStatic(" << (IsStatic ? "true" : "false") << "), "
-            << "IsDefinition(" << (IsDefinition ? "true" : "false") << ")\n";
+            << "Anchor(" << getAnchor() << "), "
+            << "Name(\"" << getName() << "\"), "
+            << "IsStatic(" << (isStatic() ? "true" : "false") << "), "
+            << "IsDefinition(" << (isDefinition() ? "true" : "false") << ")\n";
 }
 #endif
 
 //===----------------------------------------------------------------------===//
 
 DebugInfoDesc *DIDeserializer::Deserialize(Value *V) {
-  return Deserialize(cast<GlobalVariable>(V));
+  return Deserialize(getGlobalVariable(V));
 }
 DebugInfoDesc *DIDeserializer::Deserialize(GlobalVariable *GV) {
+  // Handle NULL.
+  if (!GV) return NULL;
+
   // Check to see if it has been already deserialized.
   DebugInfoDesc *&Slot = GlobalDescs[GV];
   if (Slot) return Slot;
@@ -579,25 +721,17 @@ const StructType *DISerializer::getTagType(DebugInfoDesc *DD) {
   
   // If not already defined.
   if (!Ty) {
-    // Get descriptor type name.
-    const char *TS = DD->TypeString();
-    
     // Set up fields vector.
     std::vector<const Type*> Fields;
-    // Add tag field.
-    Fields.push_back(Type::UIntTy);
-    // Get types of remaining fields.
+    // Get types of fields.
     DIGetTypesVisitor GTAM(*this, Fields);
     GTAM.ApplyToFields(DD);
 
     // Construct structured type.
     Ty = StructType::get(Fields);
     
-    // Construct a name for the type.
-    const std::string Name = std::string("lldb.") + DD->TypeString() + ".type";
-
     // Register type name with module.
-    M->addTypeName(Name, Ty);
+    M->addTypeName(DD->getTypeString(), Ty);
   }
   
   return Ty;
@@ -605,17 +739,21 @@ const StructType *DISerializer::getTagType(DebugInfoDesc *DD) {
 
 /// getString - Construct the string as constant string global.
 ///
-GlobalVariable *DISerializer::getString(const std::string &String) {
+Constant *DISerializer::getString(const std::string &String) {
   // Check string cache for previous edition.
-  GlobalVariable *&Slot = StringCache[String];
-  // return GlobalVariable if previously defined.
+  Constant *&Slot = StringCache[String];
+  // return Constant if previously defined.
   if (Slot) return Slot;
-  // Construct strings as an llvm constant.
+  // Construct string as an llvm constant.
   Constant *ConstStr = ConstantArray::get(String);
   // Otherwise create and return a new string global.
-  return Slot = new GlobalVariable(ConstStr->getType(), true,
-                                   GlobalVariable::InternalLinkage,
-                                   ConstStr, "str", M);
+  GlobalVariable *StrGV = new GlobalVariable(ConstStr->getType(), true,
+                                             GlobalVariable::InternalLinkage,
+                                             ConstStr, "str", M);
+  // Convert to generic string pointer.
+  Slot = ConstantExpr::getCast(StrGV, getStrPtrType());
+  return Slot;
+  
 }
 
 /// Serialize - Recursively cast the specified descriptor into a GlobalVariable
@@ -627,29 +765,19 @@ GlobalVariable *DISerializer::Serialize(DebugInfoDesc *DD) {
   // See if DebugInfoDesc exists, if so return prior GlobalVariable.
   if (Slot) return Slot;
   
-  // Get DebugInfoDesc type Tag.
-  unsigned Tag = DD->getTag();
-  
-  // Construct name.
-  const std::string Name = std::string("lldb.") +
-                           DD->TypeString();
-  
   // Get the type associated with the Tag.
   const StructType *Ty = getTagType(DD);
 
   // Create the GlobalVariable early to prevent infinite recursion.
-  GlobalVariable *GV = new GlobalVariable(Ty, true,
-                                          GlobalValue::InternalLinkage,
-                                          NULL, Name, M);
+  GlobalVariable *GV = new GlobalVariable(Ty, true, DD->getLinkage(),
+                                          NULL, DD->getDescString(), M);
 
   // Insert new GlobalVariable in DescGlobals map.
   Slot = GV;
  
   // Set up elements vector
   std::vector<Constant*> Elements;
-  // Add Tag value.
-  Elements.push_back(ConstantUInt::get(Type::UIntTy, Tag));
-  // Add remaining fields.
+  // Add fields.
   DISerializeVisitor SRAM(*this, Elements);
   SRAM.ApplyToFields(DD);
   
@@ -678,6 +806,9 @@ bool DIVerifier::markVisited(GlobalVariable *GV) {
 
 /// Verify - Return true if the GlobalVariable appears to be a valid
 /// serialization of a DebugInfoDesc.
+bool DIVerifier::Verify(Value *V) {
+  return Verify(getGlobalVariable(V));
+}
 bool DIVerifier::Verify(GlobalVariable *GV) {
   // Check if seen before.
   if (markVisited(GV)) return true;
@@ -732,9 +863,7 @@ bool DIVerifier::Verify(GlobalVariable *GV) {
 
 
 MachineDebugInfo::MachineDebugInfo()
-: SR()
-, DR()
-, VR()
+: DR()
 , CompileUnits()
 , Directories()
 , SourceFiles()
@@ -758,22 +887,32 @@ bool MachineDebugInfo::doFinalization() {
   return false;
 }
 
+/// Deserialize - Convert a Value to a debug information descriptor.
+///
+DebugInfoDesc *MachineDebugInfo::Deserialize(Value *V) {
+  return DR.Deserialize(V);
+}
+
+/// Verify - Verify that a Value is debug information descriptor.
+///
+bool MachineDebugInfo::Verify(Value *V) {
+  DIVerifier VR;
+  return VR.Verify(V);
+}
+
 /// AnalyzeModule - Scan the module for global debug information.
 ///
 void MachineDebugInfo::AnalyzeModule(Module &M) {
-  SR.setModule(&M);
-  DR.setModule(&M);
   SetupCompileUnits(M);
 }
 
 /// SetupCompileUnits - Set up the unique vector of compile units.
 ///
 void MachineDebugInfo::SetupCompileUnits(Module &M) {
-  SR.setModule(&M);
-  DR.setModule(&M);
   // Get vector of all debug compile units.
+  CompileUnitDesc CompileUnit;
   std::vector<GlobalVariable*> Globals =
-                       getGlobalVariablesUsing(M, "llvm.dbg.translation_units");
+                      getGlobalVariablesUsing(M, CompileUnit.getAnchorString());
   
   // Scan all compile unit globals.
   for (unsigned i = 0, N = Globals.size(); i < N; ++i) {
@@ -793,11 +932,10 @@ const UniqueVector<CompileUnitDesc *> MachineDebugInfo::getCompileUnits()const{
 ///
 std::vector<GlobalVariableDesc *>
 MachineDebugInfo::getGlobalVariables(Module &M) {
-  SR.setModule(&M);
-  DR.setModule(&M);
   // Get vector of all debug global objects.
+  GlobalVariableDesc Global;
   std::vector<GlobalVariable*> Globals =
-                                 getGlobalVariablesUsing(M, "llvm.dbg.globals");
+                           getGlobalVariablesUsing(M, Global.getAnchorString());
   
   // Accumulation of GlobalVariables.
   std::vector<GlobalVariableDesc *> GlobalVariables;
@@ -805,11 +943,9 @@ MachineDebugInfo::getGlobalVariables(Module &M) {
   // Scan all globals.
   for (unsigned i = 0, N = Globals.size(); i < N; ++i) {
     GlobalVariable *GV = Globals[i];
-    if (DebugInfoDesc::TagFromGlobal(GV) == DI_TAG_global_variable) {
-      GlobalVariableDesc *GVD =
-                          static_cast<GlobalVariableDesc *>(DR.Deserialize(GV));
-      GlobalVariables.push_back(GVD);
-    }
+    GlobalVariableDesc *GVD =
+                        static_cast<GlobalVariableDesc *>(DR.Deserialize(GV));
+    GlobalVariables.push_back(GVD);
   }
 
   return GlobalVariables;
