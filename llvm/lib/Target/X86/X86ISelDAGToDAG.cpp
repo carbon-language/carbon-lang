@@ -107,7 +107,7 @@ namespace {
   private:
     void Select(SDOperand &Result, SDOperand N);
 
-    bool MatchAddress(SDOperand N, X86ISelAddressMode &AM);
+    bool MatchAddress(SDOperand N, X86ISelAddressMode &AM, bool isRoot = true);
     bool SelectAddr(SDOperand N, SDOperand &Base, SDOperand &Scale,
                     SDOperand &Index, SDOperand &Disp);
     bool SelectLEAAddr(SDOperand N, SDOperand &Base, SDOperand &Scale,
@@ -252,7 +252,26 @@ void X86DAGToDAGISel::EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {
 /// MatchAddress - Add the specified node to the specified addressing mode,
 /// returning true if it cannot be done.  This just pattern matches for the
 /// addressing mode
-bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM) {
+bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
+                                   bool isRoot) {
+  bool StopHere = false;
+  // If N has already been selected, we may or may not want to fold its
+  // operands into the addressing mode. It will result in code duplication!
+  // FIXME: Right now we do. That is, as long as the selected target node
+  // does not produce a chain. This may require a more sophisticated heuristics.
+  std::map<SDOperand, SDOperand>::iterator CGMI= CodeGenMap.find(N.getValue(0));
+  if (CGMI != CodeGenMap.end()) {
+    if (isRoot)
+      // Stop here if it is a root. It's probably not profitable to go deeper.
+      StopHere = true;
+    else {
+      for (unsigned i = 0, e = CGMI->second.Val->getNumValues(); i != e; ++i) {
+        if (CGMI->second.Val->getValueType(i) == MVT::Other)
+          StopHere = true;
+      }
+    }
+  }
+
   switch (N.getOpcode()) {
   default: break;
   case ISD::FrameIndex:
@@ -287,7 +306,7 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM) {
     return false;
 
   case ISD::SHL:
-    if (AM.IndexReg.Val == 0 && AM.Scale == 1)
+    if (!StopHere && AM.IndexReg.Val == 0 && AM.Scale == 1)
       if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.Val->getOperand(1))) {
         unsigned Val = CN->getValue();
         if (Val == 1 || Val == 2 || Val == 3) {
@@ -313,7 +332,7 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM) {
 
   case ISD::MUL:
     // X*[3,5,9] -> X+X*[2,4,8]
-    if (AM.IndexReg.Val == 0 && AM.BaseType == X86ISelAddressMode::RegBase &&
+    if (!StopHere && AM.IndexReg.Val == 0 && AM.BaseType == X86ISelAddressMode::RegBase &&
         AM.Base.Reg.Val == 0)
       if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.Val->getOperand(1)))
         if (CN->getValue() == 3 || CN->getValue() == 5 || CN->getValue() == 9) {
@@ -341,15 +360,17 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM) {
     break;
 
   case ISD::ADD: {
-    X86ISelAddressMode Backup = AM;
-    if (!MatchAddress(N.Val->getOperand(0), AM) &&
-        !MatchAddress(N.Val->getOperand(1), AM))
-      return false;
-    AM = Backup;
-    if (!MatchAddress(N.Val->getOperand(1), AM) &&
-        !MatchAddress(N.Val->getOperand(0), AM))
-      return false;
-    AM = Backup;
+    if (!StopHere) {
+      X86ISelAddressMode Backup = AM;
+      if (!MatchAddress(N.Val->getOperand(0), AM, false) &&
+          !MatchAddress(N.Val->getOperand(1), AM, false))
+        return false;
+      AM = Backup;
+      if (!MatchAddress(N.Val->getOperand(1), AM, false) &&
+          !MatchAddress(N.Val->getOperand(0), AM, false))
+        return false;
+      AM = Backup;
+    }
     break;
   }
   }
@@ -474,7 +495,7 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
   if (Opcode >= ISD::BUILTIN_OP_END && Opcode < X86ISD::FIRST_NUMBER) {
     Result = N;
 #ifndef NDEBUG
-    DEBUG(std::cerr << std::string(Indent, ' '));
+    DEBUG(std::cerr << std::string(Indent-2, ' '));
     DEBUG(std::cerr << "== ");
     DEBUG(Node->dump(CurDAG));
     DEBUG(std::cerr << "\n");
@@ -487,7 +508,7 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
   if (CGMI != CodeGenMap.end()) {
     Result = CGMI->second;
 #ifndef NDEBUG
-    DEBUG(std::cerr << std::string(Indent, ' '));
+    DEBUG(std::cerr << std::string(Indent-2, ' '));
     DEBUG(std::cerr << "== ");
     DEBUG(Result.Val->dump(CurDAG));
     DEBUG(std::cerr << "\n");
@@ -574,7 +595,7 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
       }
 
 #ifndef NDEBUG
-      DEBUG(std::cerr << std::string(Indent, ' '));
+      DEBUG(std::cerr << std::string(Indent-2, ' '));
       DEBUG(std::cerr << "== ");
       DEBUG(Result.Val->dump(CurDAG));
       DEBUG(std::cerr << "\n");
@@ -682,7 +703,7 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
       }
 
 #ifndef NDEBUG
-      DEBUG(std::cerr << std::string(Indent, ' '));
+      DEBUG(std::cerr << std::string(Indent-2, ' '));
       DEBUG(std::cerr << "== ");
       DEBUG(Result.Val->dump(CurDAG));
       DEBUG(std::cerr << "\n");
@@ -721,7 +742,7 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
           SDOperand(CurDAG->getTargetNode(Opc, VT, Result), 0);
 
 #ifndef NDEBUG
-      DEBUG(std::cerr << std::string(Indent, ' '));
+      DEBUG(std::cerr << std::string(Indent-2, ' '));
       DEBUG(std::cerr << "== ");
       DEBUG(Result.Val->dump(CurDAG));
       DEBUG(std::cerr << "\n");
@@ -733,7 +754,7 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
 
   SelectCode(Result, N);
 #ifndef NDEBUG
-  DEBUG(std::cerr << std::string(Indent, ' '));
+  DEBUG(std::cerr << std::string(Indent-2, ' '));
   DEBUG(std::cerr << "=> ");
   DEBUG(Result.Val->dump(CurDAG));
   DEBUG(std::cerr << "\n");
