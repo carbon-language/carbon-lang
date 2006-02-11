@@ -556,9 +556,9 @@ void IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
 	// then load 1 into the same reg iff the predicate to store is 1
         SDOperand Tmp;
         Select(Tmp, N->getOperand(1));
-        CurDAG->getTargetNode(IA64::TPCADDS, MVT::i64, Initial,
-                              CurDAG->getConstant(1, MVT::i64),
-                              Tmp);
+        Tmp = SDOperand(CurDAG->getTargetNode(IA64::TPCADDS, MVT::i64, Initial,
+                                              CurDAG->getConstant(1, MVT::i64),
+                                              Tmp), 0);
         Result = CurDAG->SelectNodeTo(N, Opc, MVT::Other, Address, Tmp, Chain);
         return;
       }
