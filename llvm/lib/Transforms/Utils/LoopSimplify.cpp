@@ -195,7 +195,6 @@ bool LoopSimplify::ProcessLoop(Loop *L) {
   // incoming values (the loop is canonicalized), we may have simplified the PHI
   // down to 'X = phi [X, Y]', which should be replaced with 'Y'.
   PHINode *PN;
-  DominatorSet &DS = getAnalysis<DominatorSet>();
   for (BasicBlock::iterator I = L->getHeader()->begin();
        (PN = dyn_cast<PHINode>(I++)); )
     if (Value *V = PN->hasConstantValue()) {
