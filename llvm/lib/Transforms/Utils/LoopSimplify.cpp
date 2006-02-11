@@ -109,7 +109,6 @@ bool LoopSimplify::runOnFunction(Function &F) {
   return Changed;
 }
 
-
 /// ProcessLoop - Walk the loop structure in depth first order, ensuring that
 /// all loops have preheaders.
 ///
@@ -162,12 +161,15 @@ bool LoopSimplify::ProcessLoop(Loop *L) {
   L->getExitBlocks(ExitBlocks);
 
   SetVector<BasicBlock*> ExitBlockSet(ExitBlocks.begin(), ExitBlocks.end());
+  LoopInfo &LI = getAnalysis<LoopInfo>();
   for (SetVector<BasicBlock*>::iterator I = ExitBlockSet.begin(),
          E = ExitBlockSet.end(); I != E; ++I) {
     BasicBlock *ExitBlock = *I;
     for (pred_iterator PI = pred_begin(ExitBlock), PE = pred_end(ExitBlock);
          PI != PE; ++PI)
-      if (!L->contains(*PI)) {
+      // Must be exactly this loop: no subloops, parent loops, or non-loop preds
+      // allowed.
+      if (LI.getLoopFor(*PI) != L) {
         RewriteLoopExitBlock(L, ExitBlock);
         NumInserted++;
         Changed = true;
@@ -178,6 +180,7 @@ bool LoopSimplify::ProcessLoop(Loop *L) {
   // If the header has more than two predecessors at this point (from the
   // preheader and from multiple backedges), we must adjust the loop.
   if (L->getNumBackEdges() != 1) {
+    
     // If this is really a nested loop, rip it out into a child loop.
     if (Loop *NL = SeparateNestedLoop(L)) {
       ++NumNested;
@@ -310,8 +313,8 @@ void LoopSimplify::InsertPreheaderForLoop(Loop *L) {
   std::vector<BasicBlock*> OutsideBlocks;
   for (pred_iterator PI = pred_begin(Header), PE = pred_end(Header);
        PI != PE; ++PI)
-      if (!L->contains(*PI))           // Coming in from outside the loop?
-        OutsideBlocks.push_back(*PI);  // Keep track of it...
+    if (!L->contains(*PI))           // Coming in from outside the loop?
+      OutsideBlocks.push_back(*PI);  // Keep track of it...
 
   // Split out the loop pre-header
   BasicBlock *NewBB =
