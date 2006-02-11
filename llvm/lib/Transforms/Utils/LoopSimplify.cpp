@@ -169,7 +169,7 @@ bool LoopSimplify::ProcessLoop(Loop *L) {
          PI != PE; ++PI)
       // Must be exactly this loop: no subloops, parent loops, or non-loop preds
       // allowed.
-      if (LI.getLoopFor(*PI) != L) {
+      if (!L->contains(*PI)) {
         RewriteLoopExitBlock(L, ExitBlock);
         NumInserted++;
         Changed = true;
