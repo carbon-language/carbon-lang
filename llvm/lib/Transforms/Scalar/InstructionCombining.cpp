@@ -201,6 +201,8 @@ namespace {
         Old->replaceAllUsesWith(New);
       if (Instruction *I = dyn_cast<Instruction>(Old))
         WorkList.push_back(I);
+      if (Instruction *I = dyn_cast<Instruction>(New))
+        WorkList.push_back(I);
       return true;
     }
     
@@ -729,9 +731,13 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, uint64_t DemandedMask,
       return UpdateValueUsesWith(I, I->getOperand(0));
     if ((DemandedMask & ~KnownZero & KnownOne2) == (DemandedMask & ~KnownZero))
       return UpdateValueUsesWith(I, I->getOperand(1));
-        
+    
+    // If all of the demanded bits in the inputs are known zeros, return zero.
+    if ((DemandedMask & (KnownZero|KnownZero2)) == DemandedMask)
+      return UpdateValueUsesWith(I, Constant::getNullValue(I->getType()));
+      
     // If the RHS is a constant, see if we can simplify it.
-    if (ShrinkDemandedConstant(I, 1, DemandedMask))
+    if (ShrinkDemandedConstant(I, 1, DemandedMask & ~KnownZero2))
       return UpdateValueUsesWith(I, I);
       
     // Output known-1 bits are only known if set in both the LHS & RHS.
@@ -755,6 +761,15 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, uint64_t DemandedMask,
       return UpdateValueUsesWith(I, I->getOperand(0));
     if ((DemandedMask & ~KnownOne & KnownZero2) == DemandedMask & ~KnownOne)
       return UpdateValueUsesWith(I, I->getOperand(1));
+
+    // If all of the potentially set bits on one side are known to be set on
+    // the other side, just use the 'other' side.
+    if ((DemandedMask & (~KnownZero) & KnownOne2) == 
+        (DemandedMask & (~KnownZero)))
+      return UpdateValueUsesWith(I, I->getOperand(0));
+      if ((DemandedMask & (~KnownZero2) & KnownOne) == 
+          (DemandedMask & (~KnownZero2)))
+        return UpdateValueUsesWith(I, I->getOperand(1));
         
     // If the RHS is a constant, see if we can simplify it.
     if (ShrinkDemandedConstant(I, 1, DemandedMask))
@@ -789,6 +804,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, uint64_t DemandedMask,
     
     // If all of the unknown bits are known to be zero on one side or the other
     // (but not both) turn this into an *inclusive* or.
+    //    e.g. (A & C1)^(B & C2) -> (A & C1)|(B & C2) iff C1&C2 == 0
     if (uint64_t UnknownBits = DemandedMask & ~(KnownZeroOut|KnownOneOut)) {
       if ((UnknownBits & (KnownZero|KnownZero2)) == UnknownBits) {
         Instruction *Or =
@@ -796,6 +812,21 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, uint64_t DemandedMask,
                                    I->getName());
         InsertNewInstBefore(Or, *I);
         return UpdateValueUsesWith(I, Or);
+      }
+    }
+    
+    // If all of the demanded bits on one side are known, and all of the set
+    // bits on that side are also known to be set on the other side, turn this
+    // into an AND, as we know the bits will be cleared.
+    //    e.g. (X | C1) ^ C2 --> (X | C1) & ~C2 iff (C1&C2) == C2
+    if ((DemandedMask & (KnownZero|KnownOne)) == DemandedMask) { // all known
+      if ((KnownOne & KnownOne2) == KnownOne) {
+        Constant *AndC = GetConstantInType(I->getType(), 
+                                           ~KnownOne & DemandedMask);
+        Instruction *And = 
+          BinaryOperator::createAnd(I->getOperand(0), AndC, "tmp");
+        InsertNewInstBefore(And, *I);
+        return UpdateValueUsesWith(I, And);
       }
     }
     
@@ -2276,7 +2307,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   if (Op0 == Op1)
     return ReplaceInstUsesWith(I, Op1);
 
-  // See if we can simplify any instructions used by the LHS whose sole 
+  // See if we can simplify any instructions used by the instruction whose sole 
   // purpose is to compute bits we don't care about.
   uint64_t KnownZero, KnownOne;
   if (SimplifyDemandedBits(&I, I.getType()->getIntegralTypeMask(),
@@ -2286,49 +2317,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   if (ConstantIntegral *AndRHS = dyn_cast<ConstantIntegral>(Op1)) {
     uint64_t AndRHSMask = AndRHS->getZExtValue();
     uint64_t TypeMask = Op0->getType()->getIntegralTypeMask();
-
-    if (AndRHSMask == TypeMask)              // and X, -1 == X
-      return ReplaceInstUsesWith(I, Op0);
-    else if (AndRHSMask == 0)                // and X, 0 == 0
-      return ReplaceInstUsesWith(I, AndRHS);
-    
-    // and (and X, c1), c2 -> and (x, c1&c2).  Handle this case here, before
-    // calling ComputeMaskedNonZeroBits, to avoid inefficient cases where we
-    // traipse through many levels of ands.
-    {
-      Value *X = 0; ConstantInt *C1 = 0;
-      if (match(Op0, m_And(m_Value(X), m_ConstantInt(C1))))
-        return BinaryOperator::createAnd(X, ConstantExpr::getAnd(C1, AndRHS));
-    }
-
-    // Figure out which of the input bits are not known to be zero, and which
-    // bits are known to be zero.
-    uint64_t KnownZeroBits, KnownOneBits;
-    ComputeMaskedBits(Op0, TypeMask, KnownZeroBits, KnownOneBits);
-
-    // If the mask is not masking out any bits (i.e. all of the zeros in the
-    // mask are already known to be zero), there is no reason to do the and in
-    // the first place.
     uint64_t NotAndRHS = AndRHSMask^TypeMask;
-    if ((NotAndRHS & KnownZeroBits) == NotAndRHS)
-      return ReplaceInstUsesWith(I, Op0);
-    
-    // If the AND'd bits are all known, turn this AND into a constant.
-    if ((AndRHSMask & (KnownOneBits|KnownZeroBits)) == AndRHSMask) {
-      Constant *NewRHS = ConstantUInt::get(Type::ULongTy, 
-                                           AndRHSMask & KnownOneBits);
-      return ReplaceInstUsesWith(I, ConstantExpr::getCast(NewRHS, I.getType()));
-    }
-    
-    // If the AND mask contains bits that are known zero, remove them.  A
-    // special case is when there are no bits in common, in which case we
-    // implicitly turn this into an AND X, 0, which is later simplified into 0.
-    if ((AndRHSMask & ~KnownZeroBits) != AndRHSMask) {
-      Constant *NewRHS = 
-         ConstantUInt::get(Type::ULongTy, AndRHSMask & ~KnownZeroBits);
-      I.setOperand(1, ConstantExpr::getCast(NewRHS, I.getType()));
-      return &I;
-    }
 
     // Optimize a variety of ((val OP C1) & C2) combinations...
     if (isa<BinaryOperator>(Op0) || isa<ShiftInst>(Op0)) {
@@ -2338,13 +2327,6 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
       switch (Op0I->getOpcode()) {
       case Instruction::Xor:
       case Instruction::Or:
-        // (X ^ V) & C2 --> (X & C2) iff (V & C2) == 0
-        // (X | V) & C2 --> (X & C2) iff (V & C2) == 0
-        if (MaskedValueIsZero(Op0LHS, AndRHSMask))
-          return BinaryOperator::createAnd(Op0RHS, AndRHS);
-        if (MaskedValueIsZero(Op0RHS, AndRHSMask))
-          return BinaryOperator::createAnd(Op0LHS, AndRHS);
-
         // If the mask is only needed on one incoming arm, push it up.
         if (Op0I->hasOneUse()) {
           if (MaskedValueIsZero(Op0LHS, NotAndRHS)) {
@@ -2366,12 +2348,6 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
           }
         }
 
-        break;
-      case Instruction::And:
-        // (X & V) & C2 --> 0 iff (V & C2) == 0
-        if (MaskedValueIsZero(Op0LHS, AndRHSMask) ||
-            MaskedValueIsZero(Op0RHS, AndRHSMask))
-          return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
         break;
       case Instruction::Add:
         // ((A & N) + B) & AndRHS -> (A + B) & AndRHS iff N&AndRHS == AndRHS.
@@ -2426,54 +2402,6 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
               if (ConstantExpr::getAnd(C3, AndRHS) == AndRHS)   // trunc(C1)&C2
                 return ReplaceInstUsesWith(I, AndRHS);
             }
-      }
-
-
-      // If this is an integer sign or zero extension instruction.
-      if (SrcTy->isIntegral() &&
-          SrcTy->getPrimitiveSizeInBits() <
-          CI->getType()->getPrimitiveSizeInBits()) {
-
-        if (SrcTy->isUnsigned()) {
-          // See if this and is clearing out bits that are known to be zero
-          // anyway (due to the zero extension).
-          Constant *Mask = ConstantIntegral::getAllOnesValue(SrcTy);
-          Mask = ConstantExpr::getZeroExtend(Mask, CI->getType());
-          Constant *Result = ConstantExpr::getAnd(Mask, AndRHS);
-          if (Result == Mask)  // The "and" isn't doing anything, remove it.
-            return ReplaceInstUsesWith(I, CI);
-          if (Result != AndRHS) { // Reduce the and RHS constant.
-            I.setOperand(1, Result);
-            return &I;
-          }
-
-        } else {
-          if (CI->hasOneUse() && SrcTy->isInteger()) {
-            // We can only do this if all of the sign bits brought in are masked
-            // out.  Compute this by first getting 0000011111, then inverting
-            // it.
-            Constant *Mask = ConstantIntegral::getAllOnesValue(SrcTy);
-            Mask = ConstantExpr::getZeroExtend(Mask, CI->getType());
-            Mask = ConstantExpr::getNot(Mask);    // 1's in the new bits.
-            if (ConstantExpr::getAnd(Mask, AndRHS)->isNullValue()) {
-              // If the and is clearing all of the sign bits, change this to a
-              // zero extension cast.  To do this, cast the cast input to
-              // unsigned, then to the requested size.
-              Value *CastOp = CI->getOperand(0);
-              Instruction *NC =
-                new CastInst(CastOp, CastOp->getType()->getUnsignedVersion(),
-                             CI->getName()+".uns");
-              NC = InsertNewInstBefore(NC, I);
-              // Finally, insert a replacement for CI.
-              NC = new CastInst(NC, CI->getType(), CI->getName());
-              CI->setName("");
-              NC = InsertNewInstBefore(NC, I);
-              WorkList.push_back(CI);  // Delete CI later.
-              I.setOperand(0, NC);
-              return &I;               // The AND operand was modified.
-            }
-          }
-        }
       }
     }
 
@@ -2607,18 +2535,19 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     return ReplaceInstUsesWith(I,                         // X | undef -> -1
                                ConstantIntegral::getAllOnesValue(I.getType()));
 
-  // or X, X = X   or X, 0 == X
-  if (Op0 == Op1 || Op1 == Constant::getNullValue(I.getType()))
+  // or X, X = X
+  if (Op0 == Op1)
     return ReplaceInstUsesWith(I, Op0);
 
+  // See if we can simplify any instructions used by the instruction whose sole 
+  // purpose is to compute bits we don't care about.
+  uint64_t KnownZero, KnownOne;
+  if (SimplifyDemandedBits(&I, I.getType()->getIntegralTypeMask(),
+                           KnownZero, KnownOne))
+    return &I;
+  
   // or X, -1 == -1
   if (ConstantIntegral *RHS = dyn_cast<ConstantIntegral>(Op1)) {
-    // If X is known to only contain bits that already exist in RHS, just
-    // replace this instruction with RHS directly.
-    if (MaskedValueIsZero(Op0, 
-                  RHS->getZExtValue()^RHS->getType()->getIntegralTypeMask()))
-      return ReplaceInstUsesWith(I, RHS);
-
     ConstantInt *C1 = 0; Value *X = 0;
     // (X & C1) | C2 --> (X | C2) & (C1|C2)
     if (match(Op0, m_And(m_Value(X), m_ConstantInt(C1))) && isOnlyUse(Op0)) {
@@ -2846,12 +2775,15 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
     assert(Result == &I && "AssociativeOpt didn't work?");
     return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
   }
+  
+  // See if we can simplify any instructions used by the instruction whose sole 
+  // purpose is to compute bits we don't care about.
+  uint64_t KnownZero, KnownOne;
+  if (SimplifyDemandedBits(&I, I.getType()->getIntegralTypeMask(),
+                           KnownZero, KnownOne))
+    return &I;
 
   if (ConstantIntegral *RHS = dyn_cast<ConstantIntegral>(Op1)) {
-    // xor X, 0 == X
-    if (RHS->isNullValue())
-      return ReplaceInstUsesWith(I, Op0);
-
     if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0)) {
       // xor (setcc A, B), true = not (setcc A, B) = setncc A, B
       if (SetCondInst *SCI = dyn_cast<SetCondInst>(Op0I))
@@ -2881,8 +2813,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
       }
 
       if (ConstantInt *Op0CI = dyn_cast<ConstantInt>(Op0I->getOperand(1)))
-        switch (Op0I->getOpcode()) {
-        case Instruction::Add:
+        if (Op0I->getOpcode() == Instruction::Add) {
           // ~(X-c) --> (-c-1)-X
           if (RHS->isAllOnesValue()) {
             Constant *NegOp0CI = ConstantExpr::getNeg(Op0CI);
@@ -2891,18 +2822,6 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
                                              ConstantInt::get(I.getType(), 1)),
                                           Op0I->getOperand(0));
           }
-          break;
-        case Instruction::And:
-          // (X & C1) ^ C2 --> (X & C1) | C2 iff (C1&C2) == 0
-          if (ConstantExpr::getAnd(RHS, Op0CI)->isNullValue())
-            return BinaryOperator::createOr(Op0, RHS);
-          break;
-        case Instruction::Or:
-          // (X | C1) ^ C2 --> (X | C1) & ~C2 iff (C1&C2) == C2
-          if (ConstantExpr::getAnd(RHS, Op0CI) == RHS)
-            return BinaryOperator::createAnd(Op0, ConstantExpr::getNot(RHS));
-          break;
-        default: break;
         }
     }
 
@@ -2957,13 +2876,6 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
       else if (Op1 == Op0I->getOperand(1))                   // (B^A)^A == B
         return ReplaceInstUsesWith(I, Op0I->getOperand(0));
     }
-
-  // (A & C1)^(B & C2) -> (A & C1)|(B & C2) iff C1&C2 == 0
-  ConstantInt *C1 = 0, *C2 = 0;
-  if (match(Op0, m_And(m_Value(), m_ConstantInt(C1))) &&
-      match(Op1, m_And(m_Value(), m_ConstantInt(C2))) &&
-      ConstantExpr::getAnd(C1, C2)->isNullValue())
-    return BinaryOperator::createOr(Op0, Op1);
 
   // (setcc1 A, B) ^ (setcc2 A, B) --> (setcc3 A, B)
   if (SetCondInst *RHS = dyn_cast<SetCondInst>(I.getOperand(1)))
