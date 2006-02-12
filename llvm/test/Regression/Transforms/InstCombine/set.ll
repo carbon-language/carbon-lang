@@ -1,6 +1,6 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
-
+; RUN: llvm-as < %s | opt -instcombine -disable-output &&
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep set
 
 %X = uninitialized global int
@@ -121,3 +121,11 @@ int %test21(int %a) {
         ret int %retval
 }
 
+bool %test22(uint %A, int %X) {
+        %B = and uint %A, 100663295
+        %C = setlt uint %B, 268435456
+	%Y = and int %X, 7
+	%Z = setgt int %Y, -1
+	%R = or bool %C, %Z
+	ret bool %R
+}
