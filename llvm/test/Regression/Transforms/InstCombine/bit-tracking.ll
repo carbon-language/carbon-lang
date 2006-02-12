@@ -1,6 +1,7 @@
 ; This file contains various testcases that require tracking whether bits are
 ; set or cleared by various instructions.
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep %ELIM
+; RUN: llvm-as < %s | opt -instcombine -instcombine -disable-output &&
+; RUN: llvm-as < %s | opt -instcombine -instcombine | llvm-dis | not grep %ELIM
 
 ; Reduce down to a single XOR
 int %test3(int %B) {

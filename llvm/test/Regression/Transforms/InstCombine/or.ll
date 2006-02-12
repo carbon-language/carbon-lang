@@ -141,3 +141,11 @@ uint %test21(uint %tmp.1) {
         %tmp.6 = or uint %tmp.5, %tmp.3   ;; add tmp.1, 2
 	ret uint %tmp.6
 }
+
+int %test22(int %B) {
+        %ELIM41 = and int %B, 1         ; <int> [#uses=1]
+        %ELIM7 = and int %B, -2         ; <int> [#uses=1]
+        %ELIM5 = or int %ELIM41, %ELIM7         ; <int> [#uses=1]
+	ret int %ELIM5
+}
+ 
