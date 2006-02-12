@@ -344,10 +344,12 @@ def STWU : DForm_3<37, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
 }
 def ANDIo : DForm_4<28, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                     "andi. $dst, $src1, $src2", IntGeneral,
-                    []>, isDOT;
+                    [(set GPRC:$dst, (and GPRC:$src1, immZExt16:$src2))]>,
+                    isDOT;
 def ANDISo : DForm_4<29, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                     "andis. $dst, $src1, $src2", IntGeneral,
-                    []>, isDOT;
+                    [(set GPRC:$dst, (and GPRC:$src1, imm16Shifted:$src2))]>,
+                    isDOT;
 def ORI   : DForm_4<24, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                     "ori $dst, $src1, $src2", IntGeneral,
                     [(set GPRC:$dst, (or GPRC:$src1, immZExt16:$src2))]>;
