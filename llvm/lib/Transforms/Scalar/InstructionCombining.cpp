@@ -410,9 +410,11 @@ static ConstantInt *SubOne(ConstantInt *C) {
 
 /// GetConstantInType - Return a ConstantInt with the specified type and value.
 ///
-static ConstantInt *GetConstantInType(const Type *Ty, uint64_t Val) {
+static ConstantIntegral *GetConstantInType(const Type *Ty, uint64_t Val) {
   if (Ty->isUnsigned())
     return ConstantUInt::get(Ty, Val);
+  else if (Ty->getTypeID() == Type::BoolTyID)
+    return ConstantBool::get(Val);
   int64_t SVal = Val;
   SVal <<= 64-Ty->getPrimitiveSizeInBits();
   SVal >>= 64-Ty->getPrimitiveSizeInBits();
@@ -619,6 +621,52 @@ static bool ShrinkDemandedConstant(Instruction *I, unsigned OpNo,
   return true;
 }
 
+// ComputeSignedMinMaxValuesFromKnownBits - Given a signed integer type and a 
+// set of known zero and one bits, compute the maximum and minimum values that
+// could have the specified known zero and known one bits, returning them in
+// min/max.
+static void ComputeSignedMinMaxValuesFromKnownBits(const Type *Ty,
+                                                   uint64_t KnownZero,
+                                                   uint64_t KnownOne,
+                                                   int64_t &Min, int64_t &Max) {
+  uint64_t TypeBits = Ty->getIntegralTypeMask();
+  uint64_t UnknownBits = ~(KnownZero|KnownOne) & TypeBits;
+
+  uint64_t SignBit = 1ULL << (Ty->getPrimitiveSizeInBits()-1);
+  
+  // The minimum value is when all unknown bits are zeros, EXCEPT for the sign
+  // bit if it is unknown.
+  Min = KnownOne;
+  Max = KnownOne|UnknownBits;
+  
+  if (SignBit & UnknownBits) { // Sign bit is unknown
+    Min |= SignBit;
+    Max &= ~SignBit;
+  }
+  
+  // Sign extend the min/max values.
+  int ShAmt = 64-Ty->getPrimitiveSizeInBits();
+  Min = (Min << ShAmt) >> ShAmt;
+  Max = (Max << ShAmt) >> ShAmt;
+}
+
+// ComputeUnsignedMinMaxValuesFromKnownBits - Given an unsigned integer type and
+// a set of known zero and one bits, compute the maximum and minimum values that
+// could have the specified known zero and known one bits, returning them in
+// min/max.
+static void ComputeUnsignedMinMaxValuesFromKnownBits(const Type *Ty,
+                                                     uint64_t KnownZero,
+                                                     uint64_t KnownOne,
+                                                     uint64_t &Min,
+                                                     uint64_t &Max) {
+  uint64_t TypeBits = Ty->getIntegralTypeMask();
+  uint64_t UnknownBits = ~(KnownZero|KnownOne) & TypeBits;
+  
+  // The minimum value is when the unknown bits are all zeros.
+  Min = KnownOne;
+  // The maximum value is when the unknown bits are all ones.
+  Max = KnownOne|UnknownBits;
+}
 
 
 /// SimplifyDemandedBits - Look at V.  At this point, we know that only the
@@ -3264,6 +3312,69 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
     if (I.getOpcode() == Instruction::SetGE)
       return BinaryOperator::createSetGT(Op0, SubOne(CI));
 
+    
+    // See if we can fold the comparison based on bits known to be zero or one
+    // in the input.
+    uint64_t KnownZero, KnownOne;
+    if (SimplifyDemandedBits(Op0, Ty->getIntegralTypeMask(),
+                             KnownZero, KnownOne, 0))
+      return &I;
+        
+    // Given the known and unknown bits, compute a range that the LHS could be
+    // in.
+    if (KnownOne | KnownZero) {
+      if (Ty->isUnsigned()) {   // Unsigned comparison.
+        uint64_t Min, Max;
+        uint64_t RHSVal = CI->getZExtValue();
+        ComputeUnsignedMinMaxValuesFromKnownBits(Ty, KnownZero, KnownOne,
+                                                 Min, Max);
+        switch (I.getOpcode()) {  // LE/GE have been folded already.
+        default: assert(0 && "Unknown setcc opcode!");
+        case Instruction::SetEQ:
+          if (Max < RHSVal || Min > RHSVal)
+            return ReplaceInstUsesWith(I, ConstantBool::False);
+          break;
+        case Instruction::SetNE:
+          if (Max < RHSVal || Min > RHSVal)
+            return ReplaceInstUsesWith(I, ConstantBool::True);
+          break;
+        case Instruction::SetLT:
+          if (Max < RHSVal) return ReplaceInstUsesWith(I, ConstantBool::True);
+          if (Min > RHSVal) return ReplaceInstUsesWith(I, ConstantBool::False);
+          break;
+        case Instruction::SetGT:
+          if (Min > RHSVal) return ReplaceInstUsesWith(I, ConstantBool::True);
+          if (Max < RHSVal) return ReplaceInstUsesWith(I, ConstantBool::False);
+          break;
+        }
+      } else {              // Signed comparison.
+        int64_t Min, Max;
+        int64_t RHSVal = CI->getSExtValue();
+        ComputeSignedMinMaxValuesFromKnownBits(Ty, KnownZero, KnownOne,
+                                               Min, Max);
+        switch (I.getOpcode()) {  // LE/GE have been folded already.
+        default: assert(0 && "Unknown setcc opcode!");
+        case Instruction::SetEQ:
+          if (Max < RHSVal || Min > RHSVal)
+            return ReplaceInstUsesWith(I, ConstantBool::False);
+          break;
+        case Instruction::SetNE:
+          if (Max < RHSVal || Min > RHSVal)
+            return ReplaceInstUsesWith(I, ConstantBool::True);
+          break;
+        case Instruction::SetLT:
+          if (Max < RHSVal) return ReplaceInstUsesWith(I, ConstantBool::True);
+          if (Min > RHSVal) return ReplaceInstUsesWith(I, ConstantBool::False);
+          break;
+        case Instruction::SetGT:
+          if (Min > RHSVal) return ReplaceInstUsesWith(I, ConstantBool::True);
+          if (Max < RHSVal) return ReplaceInstUsesWith(I, ConstantBool::False);
+          break;
+        }
+      }
+    }
+          
+    
     if (Instruction *LHSI = dyn_cast<Instruction>(Op0))
       switch (LHSI->getOpcode()) {
       case Instruction::And:
@@ -3274,17 +3385,28 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
           // happens a LOT in code produced by the C front-end, for bitfield
           // access.
           ShiftInst *Shift = dyn_cast<ShiftInst>(LHSI->getOperand(0));
+          ConstantInt *AndCST = cast<ConstantInt>(LHSI->getOperand(1));
+
+          // Check to see if there is a noop-cast between the shift and the and.
+          if (!Shift) {
+            if (CastInst *CI = dyn_cast<CastInst>(LHSI->getOperand(0)))
+              if (CI->getOperand(0)->getType()->isIntegral() &&
+                  CI->getOperand(0)->getType()->getPrimitiveSizeInBits() ==
+                     CI->getType()->getPrimitiveSizeInBits())
+                Shift = dyn_cast<ShiftInst>(CI->getOperand(0));
+          }
+          
           ConstantUInt *ShAmt;
           ShAmt = Shift ? dyn_cast<ConstantUInt>(Shift->getOperand(1)) : 0;
-          ConstantInt *AndCST = cast<ConstantInt>(LHSI->getOperand(1));
-          const Type *Ty = LHSI->getType();
+          const Type *Ty = Shift ? Shift->getType() : 0;  // Type of the shift.
+          const Type *AndTy = AndCST->getType();          // Type of the and.
 
           // We can fold this as long as we can't shift unknown bits
           // into the mask.  This can only happen with signed shift
           // rights, as they sign-extend.
           if (ShAmt) {
             bool CanFold = Shift->getOpcode() != Instruction::Shr ||
-                           Shift->getType()->isUnsigned();
+                           Ty->isUnsigned();
             if (!CanFold) {
               // To test for the bad case of the signed shr, see if any
               // of the bits shifted in could be tested after the mask.
@@ -3293,7 +3415,8 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
 
               Constant *OShAmt = ConstantUInt::get(Type::UByteTy, ShAmtVal);
               Constant *ShVal =
-                ConstantExpr::getShl(ConstantInt::getAllOnesValue(Ty), OShAmt);
+                ConstantExpr::getShl(ConstantInt::getAllOnesValue(AndTy), 
+                                     OShAmt);
               if (ConstantExpr::getAnd(ShVal, AndCST)->isNullValue())
                 CanFold = true;
             }
@@ -3323,7 +3446,13 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
                 else
                   NewAndCST = ConstantExpr::getShl(AndCST, ShAmt);
                 LHSI->setOperand(1, NewAndCST);
-                LHSI->setOperand(0, Shift->getOperand(0));
+                if (AndTy == Ty) 
+                  LHSI->setOperand(0, Shift->getOperand(0));
+                else {
+                  Value *NewCast = InsertCastBefore(Shift->getOperand(0), AndTy,
+                                                    *Shift);
+                  LHSI->setOperand(0, NewCast);
+                }
                 WorkList.push_back(Shift); // Shift is dead.
                 AddUsesToWorkList(I);
                 return &I;
