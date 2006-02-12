@@ -3940,7 +3940,7 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
   if (Op1 == Constant::getNullValue(Type::UByteTy) ||
       Op0 == Constant::getNullValue(Op0->getType()))
     return ReplaceInstUsesWith(I, Op0);
-
+  
   if (isa<UndefValue>(Op0)) {            // undef >>s X -> undef
     if (!isLeftShift && I.getType()->isSigned())
       return ReplaceInstUsesWith(I, Op0);
@@ -3989,6 +3989,13 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantUInt *Op1,
   bool isSignedShift = Op0->getType()->isSigned();
   bool isUnsignedShift = !isSignedShift;
 
+  // See if we can simplify any instructions used by the instruction whose sole 
+  // purpose is to compute bits we don't care about.
+  uint64_t KnownZero, KnownOne;
+  if (SimplifyDemandedBits(&I, I.getType()->getIntegralTypeMask(),
+                           KnownZero, KnownOne))
+    return &I;
+  
   // shl uint X, 32 = 0 and shr ubyte Y, 9 = 0, ... just don't eliminate shr
   // of a signed value.
   //
@@ -4018,40 +4025,6 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantUInt *Op1,
       return NV;
   
   if (Op0->hasOneUse()) {
-    // If this is a SHL of a sign-extending cast, see if we can turn the input
-    // into a zero extending cast (a simple strength reduction).
-    if (CastInst *CI = dyn_cast<CastInst>(Op0)) {
-      const Type *SrcTy = CI->getOperand(0)->getType();
-      if (isLeftShift && SrcTy->isInteger() && SrcTy->isSigned() &&
-          SrcTy->getPrimitiveSizeInBits() <
-          CI->getType()->getPrimitiveSizeInBits()) {
-        // We can change it to a zero extension if we are shifting out all of
-        // the sign extended bits.  To check this, form a mask of all of the
-        // sign extend bits, then shift them left and see if we have anything
-        // left.
-        Constant *Mask = ConstantIntegral::getAllOnesValue(SrcTy); //     1111
-        Mask = ConstantExpr::getZeroExtend(Mask, CI->getType());   // 00001111
-        Mask = ConstantExpr::getNot(Mask);   // 1's in the sign bits: 11110000
-        if (ConstantExpr::getShl(Mask, Op1)->isNullValue()) {
-          // If the shift is nuking all of the sign bits, change this to a
-          // zero extension cast.  To do this, cast the cast input to
-          // unsigned, then to the requested size.
-          Value *CastOp = CI->getOperand(0);
-          Instruction *NC =
-            new CastInst(CastOp, CastOp->getType()->getUnsignedVersion(),
-                         CI->getName()+".uns");
-          NC = InsertNewInstBefore(NC, I);
-          // Finally, insert a replacement for CI.
-          NC = new CastInst(NC, CI->getType(), CI->getName());
-          CI->setName("");
-          NC = InsertNewInstBefore(NC, I);
-          WorkList.push_back(CI);  // Delete CI later.
-          I.setOperand(0, NC);
-          return &I;               // The SHL operand was modified.
-        }
-      }
-    }
-    
     if (BinaryOperator *Op0BO = dyn_cast<BinaryOperator>(Op0)) {
       // Turn ((X >> C) + Y) << C  ->  (X + (Y << C)) & (~0 << C)
       Value *V1, *V2;
