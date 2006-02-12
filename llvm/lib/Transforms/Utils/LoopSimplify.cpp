@@ -156,18 +156,12 @@ bool LoopSimplify::ProcessLoop(Loop *L) {
   // Next, check to make sure that all exit nodes of the loop only have
   // predecessors that are inside of the loop.  This check guarantees that the
   // loop preheader/header will dominate the exit blocks.  If the exit block has
-  // predecessors from outside of the loop, split the edge now.  Note that we
-  // only want to consider the exit blocks of *this* loop, not of any subloops,
-  // so we can't use Loop::getExitBlocks().
+  // predecessors from outside of the loop, split the edge now.
+  std::vector<BasicBlock*> ExitBlocks;
+  L->getExitBlocks(ExitBlocks);
+
+  SetVector<BasicBlock*> ExitBlockSet(ExitBlocks.begin(), ExitBlocks.end());
   LoopInfo &LI = getAnalysis<LoopInfo>();
-  SetVector<BasicBlock*> ExitBlockSet;
-  for (Loop::block_iterator BI = L->block_begin(),
-       BE = L->block_end(); BI != BE; ++BI)
-    if (LI.getLoopFor(*BI) == L)   // not a subloop.
-      for (succ_iterator I = succ_begin(*BI), E = succ_end(*BI); I != E; ++I)
-        if (!L->contains(*I))            // Not in current loop?
-          ExitBlockSet.insert(*I);       // It must be an exit block.
-    
   for (SetVector<BasicBlock*>::iterator I = ExitBlockSet.begin(),
          E = ExitBlockSet.end(); I != E; ++I) {
     BasicBlock *ExitBlock = *I;
@@ -175,7 +169,7 @@ bool LoopSimplify::ProcessLoop(Loop *L) {
          PI != PE; ++PI)
       // Must be exactly this loop: no subloops, parent loops, or non-loop preds
       // allowed.
-      if (LI.getLoopFor(*PI) != L) {
+      if (!L->contains(*PI)) {
         RewriteLoopExitBlock(L, ExitBlock);
         NumInserted++;
         Changed = true;
