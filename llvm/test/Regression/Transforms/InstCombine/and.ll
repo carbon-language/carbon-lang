@@ -220,3 +220,9 @@ uint %test33(uint %b) {   ;; Code corresponding to one-bit bitfield ^1.
         ret uint %tmp.13
 }
 
+int %test34(int %A, int %B) {
+        %tmp.2 = or int %B, %A
+        %tmp.4 = and int %tmp.2, %B
+        ret int %tmp.4
+}
+
