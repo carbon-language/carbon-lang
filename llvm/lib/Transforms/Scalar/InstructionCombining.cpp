@@ -939,20 +939,26 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, uint64_t DemandedMask,
       // Compute the new bits that are at the top now.
       uint64_t HighBits = (1ULL << ShAmt)-1;
       HighBits <<= I->getType()->getPrimitiveSizeInBits() - ShAmt;
-      
+      uint64_t TypeMask = I->getType()->getIntegralTypeMask();
       if (I->getType()->isUnsigned()) {   // Unsigned shift right.
-        if (SimplifyDemandedBits(I->getOperand(0), DemandedMask << ShAmt, 
+        if (SimplifyDemandedBits(I->getOperand(0),
+                                 (DemandedMask << ShAmt) & TypeMask,
                                  KnownZero, KnownOne, Depth+1))
           return true;
         assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
+        KnownZero &= TypeMask;
+        KnownOne  &= TypeMask;
         KnownZero >>= ShAmt;
         KnownOne  >>= ShAmt;
         KnownZero |= HighBits;  // high bits known zero.
       } else {                            // Signed shift right.
-        if (SimplifyDemandedBits(I->getOperand(0), DemandedMask << ShAmt,
+        if (SimplifyDemandedBits(I->getOperand(0),
+                                 (DemandedMask << ShAmt) & TypeMask,
                                  KnownZero, KnownOne, Depth+1))
           return true;
         assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
+        KnownZero &= TypeMask;
+        KnownOne  &= TypeMask;
         KnownZero >>= SA->getValue();
         KnownOne  >>= SA->getValue();
         
