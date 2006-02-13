@@ -130,8 +130,8 @@ inline BinaryOp_match<LHS, RHS, Instruction::And> m_And(const LHS &L,
 }
 
 template<typename LHS, typename RHS>
-inline BinaryOp_match<LHS, RHS, Instruction::Rem> m_Or(const LHS &L,
-                                                       const RHS &R) {
+inline BinaryOp_match<LHS, RHS, Instruction::Or> m_Or(const LHS &L,
+                                                      const RHS &R) {
   return BinaryOp_match<LHS, RHS, Instruction::Or>(L, R);
 }
 
