@@ -2439,6 +2439,18 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
     InsertNewInstBefore(Or, I);
     return BinaryOperator::createNot(Or);
   }
+  
+  {
+    Value *A = 0, *B = 0;
+    ConstantInt *C1 = 0, *C2 = 0;
+    if (match(Op0, m_Or(m_Value(A), m_Value(B))))
+      if (A == Op1 || B == Op1)    // (A | ?) & A  --> A
+        return ReplaceInstUsesWith(I, Op1);
+    if (match(Op1, m_Or(m_Value(A), m_Value(B))))
+      if (A == Op0 || B == Op0)    // A & (A | ?)  --> A
+        return ReplaceInstUsesWith(I, Op0);
+  }
+  
 
   if (SetCondInst *RHS = dyn_cast<SetCondInst>(Op1)) {
     // (setcc1 A, B) & (setcc2 A, B) --> (setcc3 A, B)
