@@ -382,8 +382,7 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
 
   if (Args.empty()) {
     // Save zero bytes.
-    Chain = DAG.getNode(ISD::CALLSEQ_START, MVT::Other, Chain,
-                        DAG.getConstant(0, getPointerTy()));
+    Chain = DAG.getCALLSEQ_START(Chain, DAG.getConstant(0, getPointerTy()));
   } else {
     for (unsigned i = 0, e = Args.size(); i != e; ++i)
       switch (getValueType(Args[i].second)) {
@@ -401,8 +400,8 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
         break;
       }
 
-    Chain = DAG.getNode(ISD::CALLSEQ_START, MVT::Other, Chain,
-                        DAG.getConstant(NumBytes, getPointerTy()));
+    Chain = DAG.getCALLSEQ_START(Chain,
+                                 DAG.getConstant(NumBytes, getPointerTy()));
 
     // Arguments go on the stack in reverse order, as specified by the ABI.
     unsigned ArgOffset = 0;
@@ -846,8 +845,7 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
   if ((NumBytes & 7) == 0)
     NumBytes += 4;
 
-  Chain = DAG.getNode(ISD::CALLSEQ_START, MVT::Other, Chain,
-                      DAG.getConstant(NumBytes, getPointerTy()));
+  Chain = DAG.getCALLSEQ_START(Chain,DAG.getConstant(NumBytes, getPointerTy()));
 
   // Arguments go on the stack in reverse order, as specified by the ABI.
   unsigned ArgOffset = 0;

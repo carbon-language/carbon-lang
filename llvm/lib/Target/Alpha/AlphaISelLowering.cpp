@@ -327,8 +327,8 @@ AlphaTargetLowering::LowerCallTo(SDOperand Chain,
   if (Args.size() > 6)
     NumBytes = (Args.size() - 6) * 8;
 
-  Chain = DAG.getNode(ISD::CALLSEQ_START, MVT::Other, Chain,
-                      DAG.getConstant(NumBytes, getPointerTy()));
+  Chain = DAG.getCALLSEQ_START(Chain,
+                               DAG.getConstant(NumBytes, getPointerTy()));
   std::vector<SDOperand> args_to_use;
   for (unsigned i = 0, e = Args.size(); i != e; ++i)
   {

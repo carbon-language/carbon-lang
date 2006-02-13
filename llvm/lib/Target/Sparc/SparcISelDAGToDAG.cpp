@@ -481,8 +481,7 @@ SparcTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   // Keep stack frames 8-byte aligned.
   ArgsSize = (ArgsSize+7) & ~7;
 
-  Chain = DAG.getNode(ISD::CALLSEQ_START, MVT::Other, Chain,
-                      DAG.getConstant(ArgsSize, getPointerTy()));
+  Chain = DAG.getCALLSEQ_START(Chain,DAG.getConstant(ArgsSize, getPointerTy()));
   
   SDOperand StackPtr, NullSV;
   std::vector<SDOperand> Stores;

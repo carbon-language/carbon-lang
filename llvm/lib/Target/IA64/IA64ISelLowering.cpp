@@ -323,8 +323,7 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
   //assert(NumBytes==((NumBytes+15) & ~15) && "stack frame not 16-byte aligned!");
   NumBytes = (NumBytes+15) & ~15;
   
-  Chain = DAG.getNode(ISD::CALLSEQ_START, MVT::Other, Chain,
-                        DAG.getConstant(NumBytes, getPointerTy()));
+  Chain = DAG.getCALLSEQ_START(Chain,DAG.getConstant(NumBytes, getPointerTy()));
 
   SDOperand StackPtr, NullSV;
   std::vector<SDOperand> Stores;
