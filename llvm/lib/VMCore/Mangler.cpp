@@ -161,6 +161,10 @@ void Mangler::InsertName(GlobalValue *GV,
     if (GV->hasExternalLinkage() && !ExistingValue->hasExternalLinkage()) {
       MangledGlobals.insert(ExistingValue);
       ExistingValue = GV;
+    } else if (GV->hasExternalLinkage() && ExistingValue->hasExternalLinkage()&&
+               GV->isExternal() && ExistingValue->isExternal()) {
+      // If the two globals both have external inkage, and are both external,
+      // don't mangle either of them, we just have some silly type mismatch.
     } else {
       // Otherwise, mangle GV
       MangledGlobals.insert(GV);
