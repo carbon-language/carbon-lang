@@ -47,10 +47,11 @@ namespace {
   // Register the target.
   RegisterTarget<CTargetMachine> X("c", "  C backend");
 
-  /// NameAllUsedStructs - This pass inserts names for any unnamed structure
-  /// types that are used by the program.
+  /// CBackendNameAllUsedStructsAndMergeFunctions - This pass inserts names for
+  /// any unnamed structure types that are used by the program, and merges
+  /// external functions with the same name.
   ///
-  class CBackendNameAllUsedStructs : public ModulePass {
+  class CBackendNameAllUsedStructsAndMergeFunctions : public ModulePass {
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<FindUsedTypes>();
     }
@@ -119,7 +120,6 @@ namespace {
   private :
     void lowerIntrinsics(Function &F);
 
-    bool nameAllUsedStructureTypes(Module &M);
     void printModule(Module *M);
     void printModuleTypes(const SymbolTable &ST);
     void printContainedStructs(const Type *Ty, std::set<const StructType *> &);
@@ -224,7 +224,7 @@ namespace {
 /// the program, and removes names from structure types that are not used by the
 /// program.
 ///
-bool CBackendNameAllUsedStructs::runOnModule(Module &M) {
+bool CBackendNameAllUsedStructsAndMergeFunctions::runOnModule(Module &M) {
   // Get a set of types that are used by the program...
   std::set<const Type *> UT = getAnalysis<FindUsedTypes>().getTypes();
 
@@ -256,6 +256,44 @@ bool CBackendNameAllUsedStructs::runOnModule(Module &M) {
         ++RenameCounter;
       Changed = true;
     }
+      
+      
+  // Loop over all external functions and globals.  If we have two with
+  // identical names, merge them.
+  // FIXME: This code should disappear when we don't allow values with the same
+  // names when they have different types!
+  std::map<std::string, GlobalValue*> ExtSymbols;
+  for (Module::iterator I = M.begin(), E = M.end(); I != E;) {
+    Function *GV = I++;
+    if (GV->isExternal() && GV->hasName()) {
+      std::pair<std::map<std::string, GlobalValue*>::iterator, bool> X
+        = ExtSymbols.insert(std::make_pair(GV->getName(), GV));
+      if (!X.second) {
+        // Found a conflict, replace this global with the previous one.
+        GlobalValue *OldGV = X.first->second;
+        GV->replaceAllUsesWith(ConstantExpr::getCast(OldGV, GV->getType()));
+        GV->eraseFromParent();
+        Changed = true;
+      }
+    }
+  }
+  // Do the same for globals.
+  for (Module::global_iterator I = M.global_begin(), E = M.global_end();
+       I != E;) {
+    GlobalVariable *GV = I++;
+    if (GV->isExternal() && GV->hasName()) {
+      std::pair<std::map<std::string, GlobalValue*>::iterator, bool> X
+        = ExtSymbols.insert(std::make_pair(GV->getName(), GV));
+      if (!X.second) {
+        // Found a conflict, replace this global with the previous one.
+        GlobalValue *OldGV = X.first->second;
+        GV->replaceAllUsesWith(ConstantExpr::getCast(OldGV, GV->getType()));
+        GV->eraseFromParent();
+        Changed = true;
+      }
+    }
+  }
+  
   return Changed;
 }
 
@@ -845,7 +883,8 @@ static void generateCompilerSpecificCode(std::ostream& Out) {
       << "#define LLVM_NANSF(NanStr) __builtin_nansf(NanStr) /* Float */\n"
       << "#define LLVM_INF           __builtin_inf()         /* Double */\n"
       << "#define LLVM_INFF          __builtin_inff()        /* Float */\n"
-      << "#define LLVM_PREFETCH(addr,rw,locality)          __builtin_prefetch(addr,rw,locality)\n"
+      << "#define LLVM_PREFETCH(addr,rw,locality) "
+                              "__builtin_prefetch(addr,rw,locality)\n"
       << "#else\n"
       << "#define LLVM_NAN(NanStr)   ((double)0.0)           /* Double */\n"
       << "#define LLVM_NANF(NanStr)  0.0F                    /* Float */\n"
@@ -905,7 +944,8 @@ bool CWriter::doInitialization(Module &M) {
   // Global variable declarations...
   if (!M.global_empty()) {
     Out << "\n/* External Global Variable Declarations */\n";
-    for (Module::global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I) {
+    for (Module::global_iterator I = M.global_begin(), E = M.global_end();
+         I != E; ++I) {
       if (I->hasExternalLinkage()) {
         Out << "extern ";
         printType(Out, I->getType()->getElementType(), Mang->getValueName(I));
@@ -935,7 +975,8 @@ bool CWriter::doInitialization(Module &M) {
   // Output the global variable declarations
   if (!M.global_empty()) {
     Out << "\n\n/* Global Variable Declarations */\n";
-    for (Module::global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I)
+    for (Module::global_iterator I = M.global_begin(), E = M.global_end();
+         I != E; ++I)
       if (!I->isExternal()) {
         if (I->hasInternalLinkage())
           Out << "static ";
@@ -954,7 +995,8 @@ bool CWriter::doInitialization(Module &M) {
   // Output the global variable definitions and contents...
   if (!M.global_empty()) {
     Out << "\n\n/* Global Variable Definitions and Initialization */\n";
-    for (Module::global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I)
+    for (Module::global_iterator I = M.global_begin(), E = M.global_end(); 
+         I != E; ++I)
       if (!I->isExternal()) {
         if (I->hasInternalLinkage())
           Out << "static ";
@@ -1507,7 +1549,6 @@ void CWriter::visitCallInst(CallInst &I) {
       case Intrinsic::vastart:
         Out << "0; ";
 
-        //        Out << "va_start(*(va_list*)&" << Mang->getValueName(&I) << ", ";
         Out << "va_start(*(va_list*)";
         writeOperand(I.getOperand(1));
         Out << ", ";
@@ -1772,7 +1813,7 @@ bool CTargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &o,
   PM.add(createLowerAllocationsPass(true));
   PM.add(createLowerInvokePass());
   PM.add(createCFGSimplificationPass());   // clean up after lower invoke.
-  PM.add(new CBackendNameAllUsedStructs());
+  PM.add(new CBackendNameAllUsedStructsAndMergeFunctions());
   PM.add(new CWriter(o, getIntrinsicLowering()));
   return false;
 }
