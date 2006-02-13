@@ -1,13 +1,15 @@
 ; RUN: llvm-as < %s | llc
+%G = external global int
 
-	%typedef.InputParameters = type { int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, [8 x [2 x int]], [8 x [2 x int]], int, int, int, int, [200 x sbyte], [200 x sbyte], [200 x sbyte], [200 x sbyte], [200 x sbyte], int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, [1024 x sbyte], int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, double, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, [200 x sbyte], [200 x sbyte], int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, [200 x sbyte], int, int, int*, int*, ubyte*, int*, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, [8 x int], int, int, int, int, int, int, int, int, int, int, int, [6 x double], [200 x sbyte], int, int, int, int, [2 x [5 x int]], int, int, int, int }
-
-%inputs = external global %typedef.InputParameters		; <%typedef.InputParameters*> [#uses=1]
-
-void %encode_one_frame() {
+void %encode_one_frame(long %tmp.2i) {
 entry:
 	%tmp.9 = seteq int 0, 0		; <bool> [#uses=1]
 	br bool %tmp.9, label %endif.0, label %shortcirc_next.0
+
+then.5.i:		; preds = %shortcirc_next.i
+	%tmp.114.i = div long %tmp.2i, 3		; <long> [#uses=1]
+	%tmp.111.i = call long %lseek( int 0, long %tmp.114.i, int 1 )		; <long> [#uses=0]
+	ret void
 
 shortcirc_next.0:		; preds = %entry
 	ret void
@@ -40,8 +42,7 @@ then.1.i52:		; preds = %then.0.i40
 	ret void
 
 else.1.i56:		; preds = %then.0.i40
-	%tmp.25.i = cast int 0 to long		; <long> [#uses=1]
-	%tmp.28.i = load int* getelementptr (%typedef.InputParameters* %inputs, int 0, uint 152)		; <int> [#uses=1]
+	%tmp.28.i = load int* %G
 	%tmp.29.i = seteq int %tmp.28.i, 1		; <bool> [#uses=1]
 	br bool %tmp.29.i, label %shortcirc_next.i, label %shortcirc_done.i
 
@@ -50,11 +51,6 @@ shortcirc_next.i:		; preds = %else.1.i56
 	br bool %tmp.34.i, label %then.5.i, label %endif.5.i
 
 shortcirc_done.i:		; preds = %else.1.i56
-	ret void
-
-then.5.i:		; preds = %shortcirc_next.i
-	%tmp.114.i = div long %tmp.25.i, 3		; <long> [#uses=1]
-	%tmp.111.i = call long %lseek( int 0, long %tmp.114.i, int 1 )		; <long> [#uses=0]
 	ret void
 
 endif.5.i:		; preds = %shortcirc_next.i
