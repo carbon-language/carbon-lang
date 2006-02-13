@@ -196,6 +196,18 @@ public:
   /// getZeroExtendInReg - Return the expression required to zero extend the Op
   /// value assuming it was the smaller SrcTy value.
   SDOperand getZeroExtendInReg(SDOperand Op, MVT::ValueType SrcTy);
+  
+  /// getCALLSEQ_START - Return a new CALLSEQ_START node, which always must have
+  /// a flag result (to ensure it's not CSE'd).
+  SDOperand getCALLSEQ_START(SDOperand Chain, SDOperand Op) {
+    std::vector<MVT::ValueType> ResultTys;
+    ResultTys.push_back(MVT::Other);
+    ResultTys.push_back(MVT::Flag);
+    std::vector<SDOperand> Ops;
+    Ops.push_back(Chain);
+    Ops.push_back(Op);
+    return getNode(ISD::CALLSEQ_START, ResultTys, Ops);
+  }
 
   /// getNode - Gets or creates the specified node.
   ///
