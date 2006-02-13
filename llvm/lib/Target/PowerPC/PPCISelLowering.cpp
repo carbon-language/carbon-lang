@@ -730,8 +730,8 @@ PPCTargetLowering::LowerCallTo(SDOperand Chain,
   unsigned NumBytes = 24;
   
   if (Args.empty()) {
-    Chain = DAG.getNode(ISD::CALLSEQ_START, MVT::Other, Chain,
-                        DAG.getConstant(NumBytes, getPointerTy()));
+    Chain = DAG.getCALLSEQ_START(Chain,
+                                 DAG.getConstant(NumBytes, getPointerTy()));
   } else {
     for (unsigned i = 0, e = Args.size(); i != e; ++i) {
       switch (getValueType(Args[i].second)) {
@@ -757,8 +757,8 @@ PPCTargetLowering::LowerCallTo(SDOperand Chain,
     
     // Adjust the stack pointer for the new arguments...
     // These operations are automatically eliminated by the prolog/epilog pass
-    Chain = DAG.getNode(ISD::CALLSEQ_START, MVT::Other, Chain,
-                        DAG.getConstant(NumBytes, getPointerTy()));
+    Chain = DAG.getCALLSEQ_START(Chain,
+                                 DAG.getConstant(NumBytes, getPointerTy()));
     
     // Set up a copy of the stack pointer for use loading and storing any
     // arguments that may not fit in the registers available for argument
