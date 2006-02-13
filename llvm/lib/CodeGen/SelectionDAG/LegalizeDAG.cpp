@@ -41,12 +41,24 @@ class SelectionDAGLegalize {
   TargetLowering &TLI;
   SelectionDAG &DAG;
 
+  // Libcall insertion helpers.
+  
+  /// LastCALLSEQ_END - This keeps track of the CALLSEQ_END node that has been
+  /// legalized.  We use this to ensure that calls are properly serialized
+  /// against each other, including inserted libcalls.
+  SDOperand LastCALLSEQ_END;
+  
+  /// IsLegalizingCall - This member is used *only* for purposes of providing
+  /// helpful assertions that a libcall isn't created while another call is 
+  /// being legalized (which could lead to non-serialized call sequences).
+  bool IsLegalizingCall;
+  
   enum LegalizeAction {
     Legal,      // The target natively supports this operation.
     Promote,    // This operation should be executed in a larger type.
     Expand,     // Try to expand this to other ops, otherwise use a libcall.
   };
-
+  
   /// ValueTypeActions - This is a bitvector that contains two bits for each
   /// value type, where the two bits correspond to the LegalizeAction enum.
   /// This can be queried with "getTypeAction(VT)".
@@ -106,6 +118,8 @@ private:
   void ExpandOp(SDOperand O, SDOperand &Lo, SDOperand &Hi);
   SDOperand PromoteOp(SDOperand O);
 
+  bool LegalizeAllNodesNotLeadingTo(SDNode *N, SDNode *Dest);
+
   void LegalizeSetCCOperands(SDOperand &LHS, SDOperand &RHS, SDOperand &CC);
     
   SDOperand ExpandLibCall(const char *Name, SDNode *Node,
@@ -128,7 +142,6 @@ private:
                    SDOperand &Lo, SDOperand &Hi);
   void ExpandShiftParts(unsigned NodeOp, SDOperand Op, SDOperand Amt,
                         SDOperand &Lo, SDOperand &Hi);
-  void SpliceCallInto(const SDOperand &CallResult, SDNode *OutChain);
 
   SDOperand getIntPtrConstant(uint64_t Val) {
     return DAG.getConstant(Val, TLI.getPointerTy());
@@ -174,6 +187,9 @@ static void ComputeTopDownOrdering(SDNode *N, std::vector<SDNode*> &Order,
 
 
 void SelectionDAGLegalize::LegalizeDAG() {
+  LastCALLSEQ_END = DAG.getEntryNode();
+  IsLegalizingCall = false;
+  
   // The legalize process is inherently a bottom-up recursive process (users
   // legalize their uses before themselves).  Given infinite stack space, we
   // could just start legalizing on the root and traverse the whole graph.  In
@@ -229,6 +245,107 @@ void SelectionDAGLegalize::LegalizeDAG() {
   // Remove dead nodes now.
   DAG.RemoveDeadNodes(OldRoot.Val);
 }
+
+
+/// FindCallEndFromCallStart - Given a chained node that is part of a call
+/// sequence, find the CALLSEQ_END node that terminates the call sequence.
+static SDNode *FindCallEndFromCallStart(SDNode *Node) {
+  if (Node->getOpcode() == ISD::CALLSEQ_END)
+    return Node;
+  if (Node->use_empty())
+    return 0;   // No CallSeqEnd
+  
+  // The chain is usually at the end.
+  SDOperand TheChain(Node, Node->getNumValues()-1);
+  if (TheChain.getValueType() != MVT::Other) {
+    // Sometimes it's at the beginning.
+    TheChain = SDOperand(Node, 0);
+    if (TheChain.getValueType() != MVT::Other) {
+      // Otherwise, hunt for it.
+      for (unsigned i = 1, e = Node->getNumValues(); i != e; ++i)
+        if (Node->getValueType(i) == MVT::Other) {
+          TheChain = SDOperand(Node, i);
+          break;
+        }
+          
+      // Otherwise, we walked into a node without a chain.  
+      if (TheChain.getValueType() != MVT::Other)
+        return 0;
+    }
+  }
+  
+  for (SDNode::use_iterator UI = Node->use_begin(),
+       E = Node->use_end(); UI != E; ++UI) {
+    
+    // Make sure to only follow users of our token chain.
+    SDNode *User = *UI;
+    for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i)
+      if (User->getOperand(i) == TheChain)
+        if (SDNode *Result = FindCallEndFromCallStart(User))
+          return Result;
+  }
+  return 0;
+}
+
+/// FindCallStartFromCallEnd - Given a chained node that is part of a call 
+/// sequence, find the CALLSEQ_START node that initiates the call sequence.
+static SDNode *FindCallStartFromCallEnd(SDNode *Node) {
+  assert(Node && "Didn't find callseq_start for a call??");
+  if (Node->getOpcode() == ISD::CALLSEQ_START) return Node;
+  
+  assert(Node->getOperand(0).getValueType() == MVT::Other &&
+         "Node doesn't have a token chain argument!");
+  return FindCallStartFromCallEnd(Node->getOperand(0).Val);
+}
+
+/// LegalizeAllNodesNotLeadingTo - Recursively walk the uses of N, looking to
+/// see if any uses can reach Dest.  If no dest operands can get to dest, 
+/// legalize them, legalize ourself, and return false, otherwise, return true.
+bool SelectionDAGLegalize::LegalizeAllNodesNotLeadingTo(SDNode *N, 
+                                                        SDNode *Dest) {
+  if (N == Dest) return true;  // N certainly leads to Dest :)
+  
+  // If the first result of this node has been already legalized, then it cannot
+  // reach N.
+  switch (getTypeAction(N->getValueType(0))) {
+  case Legal: 
+    if (LegalizedNodes.count(SDOperand(N, 0))) return false;
+    break;
+  case Promote:
+    if (PromotedNodes.count(SDOperand(N, 0))) return false;
+    break;
+  case Expand:
+    if (ExpandedNodes.count(SDOperand(N, 0))) return false;
+    break;
+  }
+  
+  // Okay, this node has not already been legalized.  Check and legalize all
+  // operands.  If none lead to Dest, then we can legalize this node.
+  bool OperandsLeadToDest = false;
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
+    OperandsLeadToDest |=     // If an operand leads to Dest, so do we.
+      LegalizeAllNodesNotLeadingTo(N->getOperand(i).Val, Dest);
+
+  if (OperandsLeadToDest) return true;
+
+  // Okay, this node looks safe, legalize it and return false.
+  switch (getTypeAction(N->getValueType(0))) {
+  case Legal:
+    LegalizeOp(SDOperand(N, 0));
+    break;
+  case Promote:
+    PromoteOp(SDOperand(N, 0));
+    break;
+  case Expand: {
+    SDOperand X, Y;
+    ExpandOp(SDOperand(N, 0), X, Y);
+    break;
+  }
+  }
+  return false;
+}
+
+
 
 SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   assert(isTypeLegal(Op.getValueType()) &&
@@ -586,8 +703,62 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
 
-  case ISD::CALLSEQ_START:
+  case ISD::CALLSEQ_START: {
+    SDNode *CallEnd = FindCallEndFromCallStart(Node);
+    
+    // Recursively Legalize all of the inputs of the call end that do not lead
+    // to this call start.  This ensures that any libcalls that need be inserted
+    // are inserted *before* the CALLSEQ_START.
+    for (unsigned i = 0, e = CallEnd->getNumOperands(); i != e; ++i)
+      LegalizeAllNodesNotLeadingTo(CallEnd->getOperand(i).Val, Node);
+
+    // Now that we legalized all of the inputs (which may have inserted
+    // libcalls) create the new CALLSEQ_START node.
+    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+
+    // Merge in the last call, to ensure that this call start after the last
+    // call ended.
+    Tmp1 = DAG.getNode(ISD::TokenFactor, MVT::Other, Tmp1, LastCALLSEQ_END);
+    Tmp1 = LegalizeOp(Tmp1);
+      
+    // Do not try to legalize the target-specific arguments (#1+).
+    if (Tmp1 != Node->getOperand(0)) {
+      std::vector<SDOperand> Ops(Node->op_begin(), Node->op_end());
+      Ops[0] = Tmp1;
+      Result = DAG.UpdateNodeOperands(Result, Ops);
+    }
+    
+    // Remember that the CALLSEQ_START is legalized.
+    AddLegalizedOperand(Op, Result);
+
+    // Now that the callseq_start and all of the non-call nodes above this call
+    // sequence have been legalized, legalize the call itself.  During this 
+    // process, no libcalls can/will be inserted, guaranteeing that no calls
+    // can overlap.
+    assert(!IsLegalizingCall && "Inconsistent sequentialization of calls!");
+    SDOperand InCallSEQ = LastCALLSEQ_END;
+    // Note that we are selecting this call!
+    LastCALLSEQ_END = SDOperand(CallEnd, 0);
+    IsLegalizingCall = true;
+    
+    // Legalize the call, starting from the CALLSEQ_END.
+    LegalizeOp(LastCALLSEQ_END);
+    assert(!IsLegalizingCall && "CALLSEQ_END should have cleared this!");
+    return Result;
+  }
   case ISD::CALLSEQ_END:
+    // If the CALLSEQ_START node hasn't been legalized first, legalize it.  This
+    // will cause this node to be legalized as well as handling libcalls right.
+    if (LastCALLSEQ_END.Val != Node) {
+      LegalizeOp(SDOperand(FindCallStartFromCallEnd(Node), 0));
+      std::map<SDOperand, SDOperand>::iterator I = LegalizedNodes.find(Op);
+      assert(I != LegalizedNodes.end() &&
+             "Legalizing the call start should have legalized this node!");
+      return I->second;
+    }
+    
+    // Otherwise, the call start has been legalized and everything is going 
+    // according to plan.  Just legalize ourselves normally here.
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     // Do not try to legalize the target-specific arguments (#1+), except for
     // an optional flag input.
@@ -607,6 +778,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Result = DAG.UpdateNodeOperands(Result, Ops);
       }
     }
+    assert(IsLegalizingCall && "imbalance between START/END?");
+    // This finishes up call legalization.
+    IsLegalizingCall = false;
     break;
   case ISD::DYNAMIC_STACKALLOC: {
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
@@ -669,12 +843,21 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     return Result.getValue(Op.ResNo);
   case ISD::BR:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+    // Ensure that libcalls are emitted before a branch.
+    Tmp1 = DAG.getNode(ISD::TokenFactor, MVT::Other, Tmp1, LastCALLSEQ_END);
+    Tmp1 = LegalizeOp(Tmp1);
+    LastCALLSEQ_END = DAG.getEntryNode();
+    
     Result = DAG.UpdateNodeOperands(Result, Tmp1, Node->getOperand(1));
     break;
 
   case ISD::BRCOND:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
-    
+    // Ensure that libcalls are emitted before a return.
+    Tmp1 = DAG.getNode(ISD::TokenFactor, MVT::Other, Tmp1, LastCALLSEQ_END);
+    Tmp1 = LegalizeOp(Tmp1);
+    LastCALLSEQ_END = DAG.getEntryNode();
+
     switch (getTypeAction(Node->getOperand(1).getValueType())) {
     case Expand: assert(0 && "It's impossible to expand bools");
     case Legal:
@@ -719,6 +902,11 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     break;
   case ISD::BR_CC:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+    // Ensure that libcalls are emitted before a branch.
+    Tmp1 = DAG.getNode(ISD::TokenFactor, MVT::Other, Tmp1, LastCALLSEQ_END);
+    Tmp1 = LegalizeOp(Tmp1);
+    LastCALLSEQ_END = DAG.getEntryNode();
+    
     Tmp2 = Node->getOperand(2);              // LHS 
     Tmp3 = Node->getOperand(3);              // RHS
     Tmp4 = Node->getOperand(1);              // CC
@@ -798,6 +986,11 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     break;
   case ISD::BRTWOWAY_CC: {
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+    // Ensure that libcalls are emitted before a branch.
+    Tmp1 = DAG.getNode(ISD::TokenFactor, MVT::Other, Tmp1, LastCALLSEQ_END);
+    Tmp1 = LegalizeOp(Tmp1);
+    LastCALLSEQ_END = DAG.getEntryNode();
+    
     Tmp2 = Node->getOperand(2);              // LHS 
     Tmp3 = Node->getOperand(3);              // RHS
     Tmp4 = Node->getOperand(1);              // CC
@@ -982,6 +1175,12 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
   case ISD::RET:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+
+    // Ensure that libcalls are emitted before a return.
+    Tmp1 = DAG.getNode(ISD::TokenFactor, MVT::Other, Tmp1, LastCALLSEQ_END);
+    Tmp1 = LegalizeOp(Tmp1);
+    LastCALLSEQ_END = DAG.getEntryNode();
+    
     switch (Node->getNumOperands()) {
     case 2:  // ret val
       switch (getTypeAction(Node->getOperand(1).getValueType())) {
@@ -2803,169 +3002,6 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
   return false;
 }
 
-/// FindLatestCallSeqStart - Scan up the dag to find the latest (highest
-/// NodeDepth) node that is an CallSeqStart operation and occurs later than
-/// Found.
-static void FindLatestCallSeqStart(SDNode *Node, SDNode *&Found,
-                                   std::set<SDNode*> &Visited) {
-  if (Node->getNodeDepth() <= Found->getNodeDepth() ||
-      !Visited.insert(Node).second) return;
-  
-  // If we found an CALLSEQ_START, we already know this node occurs later
-  // than the Found node. Just remember this node and return.
-  if (Node->getOpcode() == ISD::CALLSEQ_START) {
-    Found = Node;
-    return;
-  }
-
-  // Otherwise, scan the operands of Node to see if any of them is a call.
-  assert(Node->getNumOperands() != 0 &&
-         "All leaves should have depth equal to the entry node!");
-  for (unsigned i = 0, e = Node->getNumOperands()-1; i != e; ++i)
-    FindLatestCallSeqStart(Node->getOperand(i).Val, Found, Visited);
-
-  // Tail recurse for the last iteration.
-  FindLatestCallSeqStart(Node->getOperand(Node->getNumOperands()-1).Val,
-                         Found, Visited);
-}
-
-
-/// FindEarliestCallSeqEnd - Scan down the dag to find the earliest (lowest
-/// NodeDepth) node that is an CallSeqEnd operation and occurs more recent
-/// than Found.
-static void FindEarliestCallSeqEnd(SDNode *Node, SDNode *&Found,
-                                   std::set<SDNode*> &Visited) {
-  if ((Found && Node->getNodeDepth() >= Found->getNodeDepth()) ||
-      !Visited.insert(Node).second) return;
-
-  // If we found an CALLSEQ_END, we already know this node occurs earlier
-  // than the Found node. Just remember this node and return.
-  if (Node->getOpcode() == ISD::CALLSEQ_END) {
-    Found = Node;
-    return;
-  }
-
-  // Otherwise, scan the operands of Node to see if any of them is a call.
-  SDNode::use_iterator UI = Node->use_begin(), E = Node->use_end();
-  if (UI == E) return;
-  for (--E; UI != E; ++UI)
-    FindEarliestCallSeqEnd(*UI, Found, Visited);
-
-  // Tail recurse for the last iteration.
-  FindEarliestCallSeqEnd(*UI, Found, Visited);
-}
-
-/// FindCallSeqEnd - Given a chained node that is part of a call sequence,
-/// find the CALLSEQ_END node that terminates the call sequence.
-static SDNode *FindCallSeqEnd(SDNode *Node) {
-  if (Node->getOpcode() == ISD::CALLSEQ_END)
-    return Node;
-  if (Node->use_empty())
-    return 0;   // No CallSeqEnd
-
-  // The chain is usually at the end.
-  SDOperand TheChain(Node, Node->getNumValues()-1);
-  if (TheChain.getValueType() != MVT::Other) {
-    // Sometimes it's at the beginning.
-    TheChain = SDOperand(Node, 0);
-    if (TheChain.getValueType() != MVT::Other) {
-      // Otherwise, hunt for it.
-      for (unsigned i = 1, e = Node->getNumValues(); i != e; ++i)
-        if (Node->getValueType(i) == MVT::Other) {
-          TheChain = SDOperand(Node, i);
-          break;
-        }
-
-      // Otherwise, we walked into a node without a chain.  
-      if (TheChain.getValueType() != MVT::Other)
-        return 0;
-    }
-  }
-
-  for (SDNode::use_iterator UI = Node->use_begin(),
-         E = Node->use_end(); UI != E; ++UI) {
-
-    // Make sure to only follow users of our token chain.
-    SDNode *User = *UI;
-    for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i)
-      if (User->getOperand(i) == TheChain)
-        if (SDNode *Result = FindCallSeqEnd(User))
-          return Result;
-  }
-  return 0;
-}
-
-/// FindCallSeqStart - Given a chained node that is part of a call sequence,
-/// find the CALLSEQ_START node that initiates the call sequence.
-static SDNode *FindCallSeqStart(SDNode *Node) {
-  assert(Node && "Didn't find callseq_start for a call??");
-  if (Node->getOpcode() == ISD::CALLSEQ_START) return Node;
-
-  assert(Node->getOperand(0).getValueType() == MVT::Other &&
-         "Node doesn't have a token chain argument!");
-  return FindCallSeqStart(Node->getOperand(0).Val);
-}
-
-
-/// FindInputOutputChains - If we are replacing an operation with a call we need
-/// to find the call that occurs before and the call that occurs after it to
-/// properly serialize the calls in the block.  The returned operand is the
-/// input chain value for the new call (e.g. the entry node or the previous
-/// call), and OutChain is set to be the chain node to update to point to the
-/// end of the call chain.
-static SDOperand FindInputOutputChains(SDNode *OpNode, SDNode *&OutChain,
-                                       SDOperand Entry) {
-  SDNode *LatestCallSeqStart = Entry.Val;
-  SDNode *LatestCallSeqEnd = 0;
-  std::set<SDNode*> Visited;
-  FindLatestCallSeqStart(OpNode, LatestCallSeqStart, Visited);
-  Visited.clear();
-  //std::cerr<<"Found node: "; LatestCallSeqStart->dump(); std::cerr <<"\n";
-
-  // It is possible that no ISD::CALLSEQ_START was found because there is no
-  // previous call in the function.  LatestCallStackDown may in that case be
-  // the entry node itself.  Do not attempt to find a matching CALLSEQ_END
-  // unless LatestCallStackDown is an CALLSEQ_START.
-  if (LatestCallSeqStart->getOpcode() == ISD::CALLSEQ_START) {
-    LatestCallSeqEnd = FindCallSeqEnd(LatestCallSeqStart);
-    //std::cerr<<"Found end node: "; LatestCallSeqEnd->dump(); std::cerr <<"\n";
-  } else {
-    LatestCallSeqEnd = Entry.Val;
-  }
-  assert(LatestCallSeqEnd && "NULL return from FindCallSeqEnd");
-
-  // Finally, find the first call that this must come before, first we find the
-  // CallSeqEnd that ends the call.
-  OutChain = 0;
-  FindEarliestCallSeqEnd(OpNode, OutChain, Visited);
-  Visited.clear();
-
-  // If we found one, translate from the adj up to the callseq_start.
-  if (OutChain)
-    OutChain = FindCallSeqStart(OutChain);
-
-  return SDOperand(LatestCallSeqEnd, 0);
-}
-
-/// SpliceCallInto - Given the result chain of a libcall (CallResult), and a
-void SelectionDAGLegalize::SpliceCallInto(const SDOperand &CallResult,
-                                          SDNode *OutChain) {
-  // Nothing to splice it into?
-  if (OutChain == 0) return;
-
-  assert(OutChain->getOperand(0).getValueType() == MVT::Other);
-  //OutChain->dump();
-
-  // Form a token factor node merging the old inval and the new inval.
-  SDOperand InToken = DAG.getNode(ISD::TokenFactor, MVT::Other, CallResult,
-                                  OutChain->getOperand(0));
-  // Change the node to refer to the new token.
-  std::vector<SDOperand> Ops(OutChain->op_begin(), OutChain->op_end());
-  Ops[0] = InToken;
-  SDOperand Res = DAG.UpdateNodeOperands(SDOperand(OutChain, 0), Ops);
-  assert(Res.Val == OutChain && "Didn't update in place!");
-}
-
 
 // ExpandLibCall - Expand a node into a call to a libcall.  If the result value
 // does not fit into a register, return the lo part and set the hi part to the
@@ -2973,12 +3009,12 @@ void SelectionDAGLegalize::SpliceCallInto(const SDOperand &CallResult,
 // and leave the Hi part unset.
 SDOperand SelectionDAGLegalize::ExpandLibCall(const char *Name, SDNode *Node,
                                               SDOperand &Hi) {
-  SDNode *OutChain;
-  SDOperand InChain = FindInputOutputChains(Node, OutChain,
-                                            DAG.getEntryNode());
-  if (InChain.Val == 0)
-    InChain = DAG.getEntryNode();
-
+  assert(!IsLegalizingCall && "Cannot overlap legalization of calls!");
+  // The input chain to this libcall is the entry node of the function. 
+  // Legalizing the call will automatically add the previous call to the
+  // dependence.
+  SDOperand InChain = DAG.getEntryNode();
+  
   TargetLowering::ArgListTy Args;
   for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
     MVT::ValueType ArgVT = Node->getOperand(i).getValueType();
@@ -2993,6 +3029,10 @@ SDOperand SelectionDAGLegalize::ExpandLibCall(const char *Name, SDNode *Node,
     TLI.LowerCallTo(InChain, RetTy, false, CallingConv::C, false,
                     Callee, Args, DAG);
 
+  // Legalize the call sequence, starting with the chain.  This will advance
+  // the LastCALLSEQ_END to the legalized version of the CALLSEQ_END node that
+  // was added by LowerCallTo (guaranteeing proper serialization of calls).
+  LegalizeOp(CallInfo.second);
   SDOperand Result;
   switch (getTypeAction(CallInfo.first.getValueType())) {
   default: assert(0 && "Unknown thing");
@@ -3003,9 +3043,6 @@ SDOperand SelectionDAGLegalize::ExpandLibCall(const char *Name, SDNode *Node,
     ExpandOp(CallInfo.first, Result, Hi);
     break;
   }
-
-  CallInfo.second = LegalizeOp(CallInfo.second);
-  SpliceCallInto(CallInfo.second, OutChain);
   return Result;
 }
 
@@ -3078,9 +3115,6 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
   ExpandOp(Source, SrcLo, SrcHi);
   Source = DAG.getNode(ISD::BUILD_PAIR, Source.getValueType(), SrcLo, SrcHi);
 
-  SDNode *OutChain = 0;
-  SDOperand InChain = FindInputOutputChains(Source.Val, OutChain,
-                                            DAG.getEntryNode());
   const char *FnName = 0;
   if (DestTy == MVT::f32)
     FnName = "__floatdisf";
@@ -3088,25 +3122,10 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
     assert(DestTy == MVT::f64 && "Unknown fp value type!");
     FnName = "__floatdidf";
   }
-
-  SDOperand Callee = DAG.getExternalSymbol(FnName, TLI.getPointerTy());
-
-  TargetLowering::ArgListTy Args;
-  const Type *ArgTy = MVT::getTypeForValueType(Source.getValueType());
-
-  Args.push_back(std::make_pair(Source, ArgTy));
-
-  // We don't care about token chains for libcalls.  We just use the entry
-  // node as our input and ignore the output chain.  This allows us to place
-  // calls wherever we need them to satisfy data dependences.
-  const Type *RetTy = MVT::getTypeForValueType(DestTy);
-
-  std::pair<SDOperand,SDOperand> CallResult =
-    TLI.LowerCallTo(InChain, RetTy, false, CallingConv::C, true,
-                    Callee, Args, DAG);
-
-  SpliceCallInto(CallResult.second, OutChain);
-  return CallResult.first;
+  
+  Source = DAG.getNode(ISD::SINT_TO_FP, DestTy, Source);
+  SDOperand UnusedHiPart;
+  return ExpandLibCall("__floatdidf", Source.Val, UnusedHiPart);
 }
 
 /// ExpandLegalINT_TO_FP - This function is responsible for legalizing a
