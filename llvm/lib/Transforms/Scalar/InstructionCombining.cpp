@@ -889,15 +889,21 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, uint64_t DemandedMask,
       KnownZero |= NewBits;
     } else {
       // Sign extension.
-      if (SimplifyDemandedBits(I->getOperand(0),
-                               DemandedMask & SrcTy->getIntegralTypeMask(),
+      uint64_t InSignBit = 1ULL << (SrcTy->getPrimitiveSizeInBits()-1);
+      int64_t InputDemandedBits = DemandedMask & SrcTy->getIntegralTypeMask();
+
+      // If any of the sign extended bits are demanded, we know that the sign
+      // bit is demanded.
+      if (NewBits & DemandedMask)
+        InputDemandedBits |= InSignBit;
+      
+      if (SimplifyDemandedBits(I->getOperand(0), InputDemandedBits,
                                KnownZero, KnownOne, Depth+1))
         return true;
       assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
       
       // If the sign bit of the input is known set or clear, then we know the
       // top bits of the result.
-      uint64_t InSignBit = 1ULL << (SrcTy->getPrimitiveSizeInBits()-1);
 
       // If the input sign bit is known zero, or if the NewBits are not demanded
       // convert this into a zero extension.
