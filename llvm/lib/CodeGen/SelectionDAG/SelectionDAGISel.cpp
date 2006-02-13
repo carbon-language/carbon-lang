@@ -954,7 +954,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       // column
       Ops.push_back(getValue(I.getOperand(3)));
 
-      DebugInfoDesc *DD = DebugInfo->Deserialize(I.getOperand(4));
+      DebugInfoDesc *DD = DebugInfo->getDescFor(I.getOperand(4));
       assert(DD && "Not a debug information descriptor");
       CompileUnitDesc *CompileUnit = dyn_cast<CompileUnitDesc>(DD);
       assert(CompileUnit && "Not a compile unit");

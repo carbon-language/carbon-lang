@@ -584,9 +584,10 @@ public:
   ///
   bool doFinalization();
   
-  /// Deserialize - Convert a Value to a debug information descriptor.
+  /// getDescFor - Convert a Value to a debug information descriptor.
   ///
-  DebugInfoDesc *Deserialize(Value *V);
+  // FIXME - use new Value type when available.
+  DebugInfoDesc *getDescFor(Value *V);
   
   /// Verify - Verify that a Value is debug information descriptor.
   ///

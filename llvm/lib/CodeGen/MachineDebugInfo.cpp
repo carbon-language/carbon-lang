@@ -887,9 +887,10 @@ bool MachineDebugInfo::doFinalization() {
   return false;
 }
 
-/// Deserialize - Convert a Value to a debug information descriptor.
+/// getDescFor - Convert a Value to a debug information descriptor.
 ///
-DebugInfoDesc *MachineDebugInfo::Deserialize(Value *V) {
+// FIXME - use new Value type when available.
+DebugInfoDesc *MachineDebugInfo::getDescFor(Value *V) {
   return DR.Deserialize(V);
 }
 
