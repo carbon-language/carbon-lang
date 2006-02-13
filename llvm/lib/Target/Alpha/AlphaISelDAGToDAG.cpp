@@ -363,6 +363,39 @@ void AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     }
     break;
 
+  case ISD::AND: {
+    ConstantSDNode* SC;
+    ConstantSDNode* MC;
+    if (N->getOperand(0).getOpcode() == ISD::SRL &&
+	(MC = dyn_cast<ConstantSDNode>(N->getOperand(1))) &&
+	(SC = dyn_cast<ConstantSDNode>(N->getOperand(0).getOperand(1))))
+      {
+	uint64_t sval = SC->getValue();
+	uint64_t mval = MC->getValue();
+	if (get_zapImm(mval)) //the result is a zap, let the autogened stuff deal
+	  break;
+	// given mask X, and shift S, we want to see if there is any zap in the mask
+	// if we play around with the botton S bits
+	uint64_t dontcare = (~0ULL) >> (64 - sval);
+	uint64_t mask = mval << sval;
+
+	if (get_zapImm(mask | dontcare))
+	  mask = mask | dontcare;
+
+	if (get_zapImm(mask)) {
+	  SDOperand Src;
+	  Select(Src, N->getOperand(0).getOperand(0));
+	  SDOperand Z = 
+	    SDOperand(CurDAG->getTargetNode(Alpha::ZAPNOTi, MVT::i64, Src, 
+					    getI64Imm(get_zapImm(mask))), 0);
+	  Result = SDOperand(CurDAG->getTargetNode(Alpha::SRL, MVT::i64, Z, 
+						   getI64Imm(sval)), 0);
+	  return;
+	}
+      }
+    break;
+  }
+
   }
 
   SelectCode(Result, Op);
