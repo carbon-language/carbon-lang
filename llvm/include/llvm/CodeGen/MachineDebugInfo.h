@@ -58,17 +58,10 @@ enum {
   DIInvalid = ~0U,                      // Invalid result indicator.
   
   // DebugInfoDesc type identifying tags.
-  // FIXME - Change over with gcc4.
   DI_TAG_anchor = 0,
-#if 1
-  DI_TAG_compile_unit = DW_TAG_compile_unit,
-  DI_TAG_global_variable = DW_TAG_variable,
-  DI_TAG_subprogram = DW_TAG_subprogram
-#else
   DI_TAG_compile_unit,
   DI_TAG_global_variable,
   DI_TAG_subprogram
-#endif
 };
 
 //===----------------------------------------------------------------------===//
@@ -78,8 +71,7 @@ class DIVisitor {
 public:
   DIVisitor() {}
   virtual ~DIVisitor() {}
-  
-  
+
   /// ApplyToFields - Target the visitor to each field of the debug information
   /// descriptor.
   void ApplyToFields(DebugInfoDesc *DD);
