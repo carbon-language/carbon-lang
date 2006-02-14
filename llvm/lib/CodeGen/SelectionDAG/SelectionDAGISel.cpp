@@ -1598,7 +1598,7 @@ static bool MeetsMaxMemopRequirement(std::vector<MVT::ValueType> &MemOps,
   if (VT > LVT)
     VT = LVT;
 
-  unsigned NumMemOps;
+  unsigned NumMemOps = 0;
   while (Size != 0) {
     unsigned VTSize = getSizeInBits(VT) / 8;
     while (VTSize > Size) {
