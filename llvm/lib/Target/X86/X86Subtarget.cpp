@@ -160,9 +160,6 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS) {
   // Default to ELF unless otherwise specified.
   TargetType = isELF;
   
-  X86SSELevel = NoMMXSSE;
-  X863DNowLevel = NoThreeDNow;
-      
   // Set the boolean corresponding to the current target triple, or the default
   // if one cannot be determined, to true.
   const std::string& TT = M.getTargetTriple();
