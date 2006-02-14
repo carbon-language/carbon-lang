@@ -16,12 +16,6 @@
 #include "X86GenSubtarget.inc"
 using namespace llvm;
 
-#include "llvm/Support/CommandLine.h"
-namespace {
-  cl::opt<bool> DisableSSE("disable-x86-sse", cl::Hidden,
-                          cl::desc("Disable sse on X86"));
-}
-
 /// GetCpuIDAndInfo - Execute the specified cpuid and return the 4 values in the
 /// specified arguments.  If we can't run cpuid on the host, return true.
 static bool GetCpuIDAndInfo(unsigned value, unsigned *rEAX, unsigned *rEBX,
@@ -166,10 +160,8 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS) {
   // Default to ELF unless otherwise specified.
   TargetType = isELF;
   
-  if (DisableSSE) {
-    X86SSELevel = NoMMXSSE;
-    X863DNowLevel = NoThreeDNow;
-  }
+  X86SSELevel = NoMMXSSE;
+  X863DNowLevel = NoThreeDNow;
       
   // Set the boolean corresponding to the current target triple, or the default
   // if one cannot be determined, to true.
