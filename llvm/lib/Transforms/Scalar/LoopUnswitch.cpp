@@ -44,7 +44,11 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumUnswitched("loop-unswitch", "Number of loops unswitched");
+  Statistic<> NumBranches("loop-unswitch", "Number of branches unswitched");
+  Statistic<> NumSwitches("loop-unswitch", "Number of switches unswitched");
+  Statistic<> NumSelects ("loop-unswitch", "Number of selects unswitched");
+  Statistic<> NumTrivial ("loop-unswitch",
+                          "Number of unswitches that are trivial");
   cl::opt<unsigned>
   Threshold("loop-unswitch-threshold", cl::desc("Max loop size to unswitch"),
             cl::init(10), cl::Hidden);
@@ -267,8 +271,10 @@ bool LoopUnswitch::visitLoop(Loop *L) {
         // See if this, or some part of it, is loop invariant.  If so, we can
         // unswitch on it if we desire.
         Value *LoopCond = FindLIVLoopCondition(BI->getCondition(), L, Changed);
-        if (LoopCond && UnswitchIfProfitable(LoopCond, ConstantBool::True, L))
+        if (LoopCond && UnswitchIfProfitable(LoopCond, ConstantBool::True, L)) {
+          ++NumBranches;
           return true;
+        }
       }      
     } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
       Value *LoopCond = FindLIVLoopCondition(SI->getCondition(), L, Changed);
@@ -276,8 +282,10 @@ bool LoopUnswitch::visitLoop(Loop *L) {
         // Find a value to unswitch on:
         // FIXME: this should chose the most expensive case!
         Constant *UnswitchVal = SI->getCaseValue(1);
-        if (UnswitchIfProfitable(LoopCond, UnswitchVal, L))
+        if (UnswitchIfProfitable(LoopCond, UnswitchVal, L)) {
+          ++NumSwitches;
           return true;
+        }
       }
     }
     
@@ -286,8 +294,10 @@ bool LoopUnswitch::visitLoop(Loop *L) {
          BBI != E; ++BBI)
       if (SelectInst *SI = dyn_cast<SelectInst>(BBI)) {
         Value *LoopCond = FindLIVLoopCondition(SI->getCondition(), L, Changed);
-        if (LoopCond && UnswitchIfProfitable(LoopCond, ConstantBool::True, L))
+        if (LoopCond && UnswitchIfProfitable(LoopCond, ConstantBool::True, L)) {
+          ++NumSelects;
           return true;
+        }
       }
   }
     
@@ -331,7 +341,6 @@ bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val,Loop *L){
   } else {
     VersionLoop(LoopCond, Val, L, NewLoop1, NewLoop2);
   }
-  ++NumUnswitched;
   
   //std::cerr << "AFTER:\n"; LI->dump();
   
@@ -462,6 +471,7 @@ void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond,
   // at least eliminate the old branch.
   RewriteLoopBodyWithConditionConstant(L, Cond, ConstantBool::get(EnterOnCond),
                                        true);
+  ++NumTrivial;
 }
 
 
@@ -497,6 +507,7 @@ void LoopUnswitch::VersionLoop(Value *LIC, Constant *Val, Loop *L,
                    ExitBlocks.end());
   // Split all of the edges from inside the loop to their exit blocks.  This
   // unswitching trivial: no phi nodes to update.
+  unsigned NumBlocks = L->getBlocks().size();
   for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
     BasicBlock *ExitBlock = ExitBlocks[i];
     std::vector<BasicBlock*> Preds(pred_begin(ExitBlock), pred_end(ExitBlock));
@@ -525,8 +536,9 @@ void LoopUnswitch::VersionLoop(Value *LIC, Constant *Val, Loop *L,
   NewBlocks.reserve(LoopBlocks.size());
   std::map<const Value*, Value*> ValueMap;
   for (unsigned i = 0, e = LoopBlocks.size(); i != e; ++i) {
-    NewBlocks.push_back(CloneBasicBlock(LoopBlocks[i], ValueMap, ".us", F));
-    ValueMap[LoopBlocks[i]] = NewBlocks.back();  // Keep the BB mapping.
+    BasicBlock *New = CloneBasicBlock(LoopBlocks[i], ValueMap, ".us", F);
+    NewBlocks.push_back(New);
+    ValueMap[LoopBlocks[i]] = New;  // Keep the BB mapping.
   }
 
   // Splice the newly inserted blocks into the function right before the
