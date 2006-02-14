@@ -16,5 +16,5 @@ exit
 
 :noflex
 echo Flex not found.  Using pre-generated files.
-copy %~pn3.cpp %2.cpp
+copy %~pn3.cpp.cvs %2.cpp
 exit
