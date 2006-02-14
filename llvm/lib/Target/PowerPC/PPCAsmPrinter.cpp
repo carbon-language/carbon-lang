@@ -539,13 +539,20 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
 
     if (C->isNullValue() && /* FIXME: Verify correct */
         (I->hasInternalLinkage() || I->hasWeakLinkage() ||
-         I->hasLinkOnceLinkage())) {
-      SwitchSection(".data", I);
+         I->hasLinkOnceLinkage() ||
+         (I->hasExternalLinkage() && !I->hasSection()))) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
-      if (I->hasInternalLinkage())
+      if (I->hasExternalLinkage()) {
+        O << "\t.globl " << name << '\n';
+        O << "\t.zerofill __DATA, __common, " << name << ", "
+          << Size << ", " << Align;
+      } else if (I->hasInternalLinkage()) {
+        SwitchSection(".data", I);
         O << LCOMMDirective << name << "," << Size << "," << Align;
-      else
+      } else {
+        SwitchSection(".data", I);
         O << ".comm " << name << "," << Size;
+      }
       O << "\t\t; '" << I->getName() << "'\n";
     } else {
       switch (I->getLinkage()) {
