@@ -464,11 +464,9 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   default: assert(0 && "Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
     SwitchSection(".text", F);
-    EmitAlignment(4, F);
     break;
   case Function::ExternalLinkage:
     SwitchSection(".text", F);
-    EmitAlignment(4, F);
     O << "\t.globl\t" << CurrentFnName << "\n";
     break;
   case Function::WeakLinkage:
@@ -479,6 +477,7 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     O << "\t.weak_definition\t" << CurrentFnName << "\n";
     break;
   }
+  EmitAlignment(4, F);
   O << CurrentFnName << ":\n";
 
   // Print out code for the function.
