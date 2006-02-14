@@ -57,6 +57,7 @@ namespace {
     // AA - If we have an alias analysis object to update, this is it, otherwise
     // this is null.
     AliasAnalysis *AA;
+    LoopInfo *LI;
 
     virtual bool runOnFunction(Function &F);
 
@@ -100,10 +101,10 @@ FunctionPass *llvm::createLoopSimplifyPass() { return new LoopSimplify(); }
 ///
 bool LoopSimplify::runOnFunction(Function &F) {
   bool Changed = false;
-  LoopInfo &LI = getAnalysis<LoopInfo>();
+  LI = &getAnalysis<LoopInfo>();
   AA = getAnalysisToUpdate<AliasAnalysis>();
 
-  for (LoopInfo::iterator I = LI.begin(), E = LI.end(); I != E; ++I)
+  for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I)
     Changed |= ProcessLoop(*I);
 
   return Changed;
@@ -159,9 +160,8 @@ bool LoopSimplify::ProcessLoop(Loop *L) {
   // predecessors from outside of the loop, split the edge now.
   std::vector<BasicBlock*> ExitBlocks;
   L->getExitBlocks(ExitBlocks);
-
+    
   SetVector<BasicBlock*> ExitBlockSet(ExitBlocks.begin(), ExitBlocks.end());
-  LoopInfo &LI = getAnalysis<LoopInfo>();
   for (SetVector<BasicBlock*>::iterator I = ExitBlockSet.begin(),
          E = ExitBlockSet.end(); I != E; ++I) {
     BasicBlock *ExitBlock = *I;
@@ -326,7 +326,7 @@ void LoopSimplify::InsertPreheaderForLoop(Loop *L) {
 
   // We know that we have loop information to update... update it now.
   if (Loop *Parent = L->getParentLoop())
-    Parent->addBasicBlockToLoop(NewBB, getAnalysis<LoopInfo>());
+    Parent->addBasicBlockToLoop(NewBB, *LI);
 
   DominatorSet &DS = getAnalysis<DominatorSet>();  // Update dominator info
   DominatorTree &DT = getAnalysis<DominatorTree>();
@@ -414,8 +414,6 @@ void LoopSimplify::InsertPreheaderForLoop(Loop *L) {
 /// blocks.  This method is used to split exit blocks that have predecessors
 /// outside of the loop.
 BasicBlock *LoopSimplify::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
-  DominatorSet &DS = getAnalysis<DominatorSet>();
-
   std::vector<BasicBlock*> LoopBlocks;
   for (pred_iterator I = pred_begin(Exit), E = pred_end(Exit); I != E; ++I)
     if (L->contains(*I))
@@ -424,10 +422,16 @@ BasicBlock *LoopSimplify::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
   assert(!LoopBlocks.empty() && "No edges coming in from outside the loop?");
   BasicBlock *NewBB = SplitBlockPredecessors(Exit, ".loopexit", LoopBlocks);
 
-  // Update Loop Information - we know that the new block will be in the parent
-  // loop of L.
-  if (Loop *Parent = L->getParentLoop())
-    Parent->addBasicBlockToLoop(NewBB, getAnalysis<LoopInfo>());
+  // Update Loop Information - we know that the new block will be in whichever
+  // loop the Exit block is in.  Note that it may not be in that immediate loop,
+  // if the successor is some other loop header.  In that case, we continue 
+  // walking up the loop tree to find a loop that contains both the successor
+  // block and the predecessor block.
+  Loop *SuccLoop = LI->getLoopFor(Exit);
+  while (SuccLoop && !SuccLoop->contains(L->getHeader()))
+    SuccLoop = SuccLoop->getParentLoop();
+  if (SuccLoop)
+    SuccLoop->addBasicBlockToLoop(NewBB, *LI);
 
   // Update dominator information (set, immdom, domtree, and domfrontier)
   UpdateDomInfoForRevectoredPreds(NewBB, LoopBlocks);
@@ -511,17 +515,15 @@ Loop *LoopSimplify::SeparateNestedLoop(Loop *L) {
   // Create the new outer loop.
   Loop *NewOuter = new Loop();
 
-  LoopInfo &LI = getAnalysis<LoopInfo>();
-
   // Change the parent loop to use the outer loop as its child now.
   if (Loop *Parent = L->getParentLoop())
     Parent->replaceChildLoopWith(L, NewOuter);
   else
-    LI.changeTopLevelLoop(L, NewOuter);
+    LI->changeTopLevelLoop(L, NewOuter);
 
   // This block is going to be our new header block: add it to this loop and all
   // parent loops.
-  NewOuter->addBasicBlockToLoop(NewBB, getAnalysis<LoopInfo>());
+  NewOuter->addBasicBlockToLoop(NewBB, *LI);
 
   // L is now a subloop of our outer loop.
   NewOuter->addChildLoop(L);
@@ -553,8 +555,8 @@ Loop *LoopSimplify::SeparateNestedLoop(Loop *L) {
     if (!BlocksInL.count(BB)) {
       // Move this block to the parent, updating the exit blocks sets
       L->removeBlockFromLoop(BB);
-      if (LI[BB] == L)
-        LI.changeLoopFor(BB, NewOuter);
+      if ((*LI)[BB] == L)
+        LI->changeLoopFor(BB, NewOuter);
       --i;
     }
   }
@@ -656,7 +658,7 @@ void LoopSimplify::InsertUniqueBackedgeBlock(Loop *L) {
 
   // Update Loop Information - we know that this block is now in the current
   // loop and all parent loops.
-  L->addBasicBlockToLoop(BEBlock, getAnalysis<LoopInfo>());
+  L->addBasicBlockToLoop(BEBlock, *LI);
 
   // Update dominator information (set, immdom, domtree, and domfrontier)
   UpdateDomInfoForRevectoredPreds(BEBlock, BackedgeBlocks);
