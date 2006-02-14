@@ -367,7 +367,8 @@ BasicBlock *Loop::getLoopPreheader() const {
       Out = *PI;
     }
 
-  // Make sure there is only one exit out of the preheader...
+  // Make sure there is only one exit out of the preheader.
+  assert(Out && "Header of loop has no predecessors from outside loop?");
   succ_iterator SI = succ_begin(Out);
   ++SI;
   if (SI != succ_end(Out))
