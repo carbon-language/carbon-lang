@@ -1,0 +1,355 @@
+/*===-- Lexer.l - Scanner for llvm assembly files --------------*- C++ -*--===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+//  This file implements the flex scanner for LLVM assembly languages files.
+//
+//===----------------------------------------------------------------------===*/
+
+%option prefix="llvmAsm"
+%option yylineno
+%option nostdinit
+%option never-interactive
+%option batch
+%option noyywrap
+%option nodefault
+%option 8bit
+%option outfile="Lexer.cpp"
+%option ecs
+%option noreject
+%option noyymore
+
+%{
+#include "ParserInternals.h"
+#include "llvm/Module.h"
+#include <list>
+#include "llvmAsmParser.h"
+#include <cctype>
+#include <cstdlib>
+
+void set_scan_file(FILE * F){
+  yy_switch_to_buffer(yy_create_buffer( F, YY_BUF_SIZE ) );
+}
+void set_scan_string (const char * str) {
+  yy_scan_string (str);
+}
+
+#define RET_TOK(type, Enum, sym) \
+  llvmAsmlval.type = Instruction::Enum; return sym
+
+namespace llvm {
+
+// TODO: All of the static identifiers are figured out by the lexer,
+// these should be hashed to reduce the lexer size
+
+
+// atoull - Convert an ascii string of decimal digits into the unsigned long
+// long representation... this does not have to do input error checking,
+// because we know that the input will be matched by a suitable regex...
+//
+static uint64_t atoull(const char *Buffer) {
+  uint64_t Result = 0;
+  for (; *Buffer; Buffer++) {
+    uint64_t OldRes = Result;
+    Result *= 10;
+    Result += *Buffer-'0';
+    if (Result < OldRes)   // Uh, oh, overflow detected!!!
+      ThrowException("constant bigger than 64 bits detected!");
+  }
+  return Result;
+}
+
+static uint64_t HexIntToVal(const char *Buffer) {
+  uint64_t Result = 0;
+  for (; *Buffer; ++Buffer) {
+    uint64_t OldRes = Result;
+    Result *= 16;
+    char C = *Buffer;
+    if (C >= '0' && C <= '9')
+      Result += C-'0';
+    else if (C >= 'A' && C <= 'F')
+      Result += C-'A'+10;
+    else if (C >= 'a' && C <= 'f')
+      Result += C-'a'+10;
+
+    if (Result < OldRes)   // Uh, oh, overflow detected!!!
+      ThrowException("constant bigger than 64 bits detected!");
+  }
+  return Result;
+}
+
+
+// HexToFP - Convert the ascii string in hexidecimal format to the floating
+// point representation of it.
+//
+static double HexToFP(const char *Buffer) {
+  // Behave nicely in the face of C TBAA rules... see:
+  // http://www.nullstone.com/htmls/category/aliastyp.htm
+  union {
+    uint64_t UI;
+    double FP;
+  } UIntToFP;
+  UIntToFP.UI = HexIntToVal(Buffer);
+
+  assert(sizeof(double) == sizeof(uint64_t) &&
+         "Data sizes incompatible on this target!");
+  return UIntToFP.FP;   // Cast Hex constant to double
+}
+
+
+// UnEscapeLexed - Run through the specified buffer and change \xx codes to the
+// appropriate character.  If AllowNull is set to false, a \00 value will cause
+// an exception to be thrown.
+//
+// If AllowNull is set to true, the return value of the function points to the
+// last character of the string in memory.
+//
+char *UnEscapeLexed(char *Buffer, bool AllowNull) {
+  char *BOut = Buffer;
+  for (char *BIn = Buffer; *BIn; ) {
+    if (BIn[0] == '\\' && isxdigit(BIn[1]) && isxdigit(BIn[2])) {
+      char Tmp = BIn[3]; BIn[3] = 0;     // Terminate string
+      *BOut = (char)strtol(BIn+1, 0, 16);  // Convert to number
+      if (!AllowNull && !*BOut)
+        ThrowException("String literal cannot accept \\00 escape!");
+
+      BIn[3] = Tmp;                  // Restore character
+      BIn += 3;                      // Skip over handled chars
+      ++BOut;
+    } else {
+      *BOut++ = *BIn++;
+    }
+  }
+
+  return BOut;
+}
+
+} // End llvm namespace
+
+using namespace llvm;
+
+#define YY_NEVER_INTERACTIVE 1
+%}
+
+
+
+/* Comments start with a ; and go till end of line */
+Comment    ;.*
+
+/* Variable(Value) identifiers start with a % sign */
+VarID       %[-a-zA-Z$._][-a-zA-Z$._0-9]*
+
+/* Label identifiers end with a colon */
+Label       [-a-zA-Z$._0-9]+:
+QuoteLabel \"[^\"]+\":
+
+/* Quoted names can contain any character except " and \ */
+StringConstant \"[^\"]*\"
+
+
+/* [PN]Integer: match positive and negative literal integer values that
+ * are preceeded by a '%' character.  These represent unnamed variable slots.
+ */
+EPInteger     %[0-9]+
+ENInteger    %-[0-9]+
+
+
+/* E[PN]Integer: match positive and negative literal integer values */
+PInteger   [0-9]+
+NInteger  -[0-9]+
+
+/* FPConstant - A Floating point constant.
+ */
+FPConstant [-+]?[0-9]+[.][0-9]*([eE][-+]?[0-9]+)?
+
+/* HexFPConstant - Floating point constant represented in IEEE format as a
+ *  hexadecimal number for when exponential notation is not precise enough.
+ */
+HexFPConstant 0x[0-9A-Fa-f]+
+
+/* HexIntConstant - Hexadecimal constant generated by the CFE to avoid forcing
+ * it to deal with 64 bit numbers.
+ */
+HexIntConstant [us]0x[0-9A-Fa-f]+
+%%
+
+{Comment}       { /* Ignore comments for now */ }
+
+begin           { return BEGINTOK; }
+end             { return ENDTOK; }
+true            { return TRUETOK;  }
+false           { return FALSETOK; }
+declare         { return DECLARE; }
+global          { return GLOBAL; }
+constant        { return CONSTANT; }
+internal        { return INTERNAL; }
+linkonce        { return LINKONCE; }
+weak            { return WEAK; }
+appending       { return APPENDING; }
+uninitialized   { return EXTERNAL; }    /* Deprecated, turn into external */
+external        { return EXTERNAL; }
+implementation  { return IMPLEMENTATION; }
+zeroinitializer { return ZEROINITIALIZER; }
+\.\.\.          { return DOTDOTDOT; }
+undef           { return UNDEF; }
+null            { return NULL_TOK; }
+to              { return TO; }
+except          { RET_TOK(TermOpVal, Unwind, UNWIND); }
+not             { return NOT; }  /* Deprecated, turned into XOR */
+tail            { return TAIL; }
+target          { return TARGET; }
+triple          { return TRIPLE; }
+deplibs         { return DEPLIBS; }
+endian          { return ENDIAN; }
+pointersize     { return POINTERSIZE; }
+little          { return LITTLE; }
+big             { return BIG; }
+volatile        { return VOLATILE; }
+align           { return ALIGN;  }
+section         { return SECTION; }
+module          { return MODULE; }
+asm             { return ASM_TOK; }
+sideeffect      { return SIDEEFFECT; }
+
+cc              { return CC_TOK; }
+ccc             { return CCC_TOK; }
+fastcc          { return FASTCC_TOK; }
+coldcc          { return COLDCC_TOK; }
+
+void            { llvmAsmlval.PrimType = Type::VoidTy  ; return VOID;   }
+bool            { llvmAsmlval.PrimType = Type::BoolTy  ; return BOOL;   }
+sbyte           { llvmAsmlval.PrimType = Type::SByteTy ; return SBYTE;  }
+ubyte           { llvmAsmlval.PrimType = Type::UByteTy ; return UBYTE;  }
+short           { llvmAsmlval.PrimType = Type::ShortTy ; return SHORT;  }
+ushort          { llvmAsmlval.PrimType = Type::UShortTy; return USHORT; }
+int             { llvmAsmlval.PrimType = Type::IntTy   ; return INT;    }
+uint            { llvmAsmlval.PrimType = Type::UIntTy  ; return UINT;   }
+long            { llvmAsmlval.PrimType = Type::LongTy  ; return LONG;   }
+ulong           { llvmAsmlval.PrimType = Type::ULongTy ; return ULONG;  }
+float           { llvmAsmlval.PrimType = Type::FloatTy ; return FLOAT;  }
+double          { llvmAsmlval.PrimType = Type::DoubleTy; return DOUBLE; }
+label           { llvmAsmlval.PrimType = Type::LabelTy ; return LABEL;  }
+type            { return TYPE;   }
+opaque          { return OPAQUE; }
+
+add             { RET_TOK(BinaryOpVal, Add, ADD); }
+sub             { RET_TOK(BinaryOpVal, Sub, SUB); }
+mul             { RET_TOK(BinaryOpVal, Mul, MUL); }
+div             { RET_TOK(BinaryOpVal, Div, DIV); }
+rem             { RET_TOK(BinaryOpVal, Rem, REM); }
+and             { RET_TOK(BinaryOpVal, And, AND); }
+or              { RET_TOK(BinaryOpVal, Or , OR ); }
+xor             { RET_TOK(BinaryOpVal, Xor, XOR); }
+setne           { RET_TOK(BinaryOpVal, SetNE, SETNE); }
+seteq           { RET_TOK(BinaryOpVal, SetEQ, SETEQ); }
+setlt           { RET_TOK(BinaryOpVal, SetLT, SETLT); }
+setgt           { RET_TOK(BinaryOpVal, SetGT, SETGT); }
+setle           { RET_TOK(BinaryOpVal, SetLE, SETLE); }
+setge           { RET_TOK(BinaryOpVal, SetGE, SETGE); }
+
+phi             { RET_TOK(OtherOpVal, PHI, PHI_TOK); }
+call            { RET_TOK(OtherOpVal, Call, CALL); }
+cast            { RET_TOK(OtherOpVal, Cast, CAST); }
+select          { RET_TOK(OtherOpVal, Select, SELECT); }
+shl             { RET_TOK(OtherOpVal, Shl, SHL); }
+shr             { RET_TOK(OtherOpVal, Shr, SHR); }
+vanext          { return VANEXT_old; }
+vaarg           { return VAARG_old; }
+va_arg          { RET_TOK(OtherOpVal, VAArg , VAARG); }
+ret             { RET_TOK(TermOpVal, Ret, RET); }
+br              { RET_TOK(TermOpVal, Br, BR); }
+switch          { RET_TOK(TermOpVal, Switch, SWITCH); }
+invoke          { RET_TOK(TermOpVal, Invoke, INVOKE); }
+unwind          { RET_TOK(TermOpVal, Unwind, UNWIND); }
+unreachable     { RET_TOK(TermOpVal, Unreachable, UNREACHABLE); }
+
+malloc          { RET_TOK(MemOpVal, Malloc, MALLOC); }
+alloca          { RET_TOK(MemOpVal, Alloca, ALLOCA); }
+free            { RET_TOK(MemOpVal, Free, FREE); }
+load            { RET_TOK(MemOpVal, Load, LOAD); }
+store           { RET_TOK(MemOpVal, Store, STORE); }
+getelementptr   { RET_TOK(MemOpVal, GetElementPtr, GETELEMENTPTR); }
+
+extractelement  { RET_TOK(OtherOpVal, ExtractElement, EXTRACTELEMENT); }
+insertelement   { RET_TOK(OtherOpVal, InsertElement, INSERTELEMENT); }
+
+
+{VarID}         {
+                  UnEscapeLexed(yytext+1);
+                  llvmAsmlval.StrVal = strdup(yytext+1);             // Skip %
+                  return VAR_ID;
+                }
+{Label}         {
+                  yytext[strlen(yytext)-1] = 0;  // nuke colon
+                  UnEscapeLexed(yytext);
+                  llvmAsmlval.StrVal = strdup(yytext);
+                  return LABELSTR;
+                }
+{QuoteLabel}    {
+                  yytext[strlen(yytext)-2] = 0;  // nuke colon, end quote
+                  UnEscapeLexed(yytext+1);
+                  llvmAsmlval.StrVal = strdup(yytext+1);
+                  return LABELSTR;
+                }
+
+{StringConstant} { // Note that we cannot unescape a string constant here!  The
+                   // string constant might contain a \00 which would not be
+                   // understood by the string stuff.  It is valid to make a
+                   // [sbyte] c"Hello World\00" constant, for example.
+                   //
+                   yytext[strlen(yytext)-1] = 0;           // nuke end quote
+                   llvmAsmlval.StrVal = strdup(yytext+1);  // Nuke start quote
+                   return STRINGCONSTANT;
+                 }
+
+
+{PInteger}      { llvmAsmlval.UInt64Val = atoull(yytext); return EUINT64VAL; }
+{NInteger}      {
+                  uint64_t Val = atoull(yytext+1);
+                  // +1:  we have bigger negative range
+                  if (Val > (uint64_t)INT64_MAX+1)
+                    ThrowException("Constant too large for signed 64 bits!");
+                  llvmAsmlval.SInt64Val = -Val;
+                  return ESINT64VAL;
+                }
+{HexIntConstant} {
+                   llvmAsmlval.UInt64Val = HexIntToVal(yytext+3);
+                   return yytext[0] == 's' ? ESINT64VAL : EUINT64VAL;
+                 }
+
+{EPInteger}     {
+                  uint64_t Val = atoull(yytext+1);
+                  if ((unsigned)Val != Val)
+                    ThrowException("Invalid value number (too large)!");
+                  llvmAsmlval.UIntVal = unsigned(Val);
+                  return UINTVAL;
+                }
+{ENInteger}     {
+                  uint64_t Val = atoull(yytext+2);
+                  // +1:  we have bigger negative range
+                  if (Val > (uint64_t)INT32_MAX+1)
+                    ThrowException("Constant too large for signed 32 bits!");
+                  llvmAsmlval.SIntVal = (int)-Val;
+                  return SINTVAL;
+                }
+
+{FPConstant}    { llvmAsmlval.FPVal = atof(yytext); return FPVAL; }
+{HexFPConstant} { llvmAsmlval.FPVal = HexToFP(yytext); return FPVAL; }
+
+<<EOF>>         {
+                  /* Make sure to free the internal buffers for flex when we are
+                   * done reading our input!
+                   */
+                  yy_delete_buffer(YY_CURRENT_BUFFER);
+                  return EOF;
+                }
+
+[ \r\t\n]       { /* Ignore whitespace */ }
+.               { return yytext[0]; }
+
+%%
