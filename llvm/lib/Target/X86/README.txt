@@ -426,3 +426,20 @@ When: "movl $_dst, _ptr" is sufficient.
 //===---------------------------------------------------------------------===//
 
 Use fisttp to do FP to integer conversion whenever it is available.
+
+//===---------------------------------------------------------------------===//
+
+Instead of the following for memset char*, 1, 10:
+
+	movl $16843009, 4(%edx)
+	movl $16843009, (%edx)
+	movw $257, 8(%edx)
+
+It might be better to generate
+
+	movl $16843009, %eax
+	movl %eax, 4(%edx)
+	movl %eax, (%edx)
+	movw al, 8(%edx)
+	
+when we can spare a register. It reduces code size.
