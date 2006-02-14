@@ -16,11 +16,10 @@
 #include "X86GenSubtarget.inc"
 using namespace llvm;
 
-// FIXME: temporary.
 #include "llvm/Support/CommandLine.h"
 namespace {
-  cl::opt<bool> EnableSSE("enable-x86-sse", cl::Hidden,
-                          cl::desc("Enable sse on X86"));
+  cl::opt<bool> DisableSSE("disable-x86-sse", cl::Hidden,
+                          cl::desc("Disable sse on X86"));
 }
 
 /// GetCpuIDAndInfo - Execute the specified cpuid and return the 4 values in the
@@ -167,9 +166,7 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS) {
   // Default to ELF unless otherwise specified.
   TargetType = isELF;
   
-  // FIXME: Force these off until they work.  An llc-beta option should turn
-  // them back on.
-  if (!EnableSSE) {
+  if (DisableSSE) {
     X86SSELevel = NoMMXSSE;
     X863DNowLevel = NoThreeDNow;
   }
