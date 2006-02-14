@@ -930,7 +930,8 @@ $(ToolBuildPath): $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths)
 	$(Echo) Linking $(BuildMode) executable $(TOOLNAME) $(StripWarnMsg)
 	$(Verb) $(Link) -o $@ $(TOOLLINKOPTS) $(ObjectsO) $(ProjLibsOptions) \
           $(LLVMLibsOptions) $(ExtraLibs) $(TOOLLINKOPTSB) $(LIBS)
-	$(Echo) ======= Finished Linking $(BuildMode) Executable $(TOOLNAME) $(StripWarnMsg) 
+	$(Echo) ======= Finished Linking $(BuildMode) Executable $(TOOLNAME) \
+          $(StripWarnMsg) 
 
 DestTool = $(PROJ_bindir)/$(TOOLNAME)
 
@@ -1021,19 +1022,22 @@ $(BuildMode)/%.ii: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
 
 $(ObjDir)/%.ll: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build (bytecode)"
-	$(Verb) if $(BCCompile.CXX) -MD -MT $@ -MP -MF "$(ObjDir)/$*.BCCXXd" $< -o $@ -S -emit-llvm ; \
+	$(Verb) if $(BCCompile.CXX) -MD -MT $@ -MP -MF "$(ObjDir)/$*.BCCXXd" \
+                              $< -o $@ -S -emit-llvm ; \
 	then $(MV) -f "$(ObjDir)/$*.BCCXXd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.BCCXXd"; exit 1; fi
 
 $(ObjDir)/%.ll: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cc for $(BuildMode) build (bytecode)"
-	$(Verb) if $(BCCompile.CXX) -MD -MT $@ -MP -MF "$(ObjDir)/$*.BCCXXd" $< -o $@ -S -emit-llvm ; \
+	$(Verb) if $(BCCompile.CXX) -MD -MT $@ -MP -MF "$(ObjDir)/$*.BCCXXd" \
+                              $< -o $@ -S -emit-llvm ; \
 	then $(MV) -f "$(ObjDir)/$*.BCCXXd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.BCCXXd"; exit 1; fi
 
 $(ObjDir)/%.ll: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.c for $(BuildMode) build (bytecode)"
-	$(Verb) if $(BCCompile.C) -MD -MT $@ -MP -MF "$(ObjDir)/$*.BCCd" $< -o $@ -S -emit-llvm ; \
+	$(Verb) if $(BCCompile.C) -MD -MT $@ -MP -MF "$(ObjDir)/$*.BCCd" \
+                            $< -o $@ -S -emit-llvm ; \
 	then $(MV) -f "$(ObjDir)/$*.BCCd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.BCCd"; exit 1; fi
 
@@ -1109,7 +1113,9 @@ $(ObjDir)/%.bc: %.ll $(ObjDir)/.dir $(LLVMAS)
 
 ifdef TARGET
 
-TDFiles := $(strip $(wildcard $(PROJ_SRC_DIR)/*.td) $(LLVM_SRC_ROOT)/lib/Target/Target.td $(LLVM_SRC_ROOT)/lib/Target/TargetSelectionDAG.td)
+TDFiles := $(strip $(wildcard $(PROJ_SRC_DIR)/*.td) \
+           $(LLVM_SRC_ROOT)/lib/Target/Target.td \
+           $(LLVM_SRC_ROOT)/lib/Target/TargetSelectionDAG.td)
 INCFiles := $(filter %.inc,$(BUILT_SOURCES))
 INCTMPFiles := $(INCFiles:%=$(ObjDir)/%.tmp)
 .PRECIOUS: $(INCTMPFiles) $(INCFiles)
@@ -1578,11 +1584,12 @@ uninstall-local::
 	$(Verb) if [ -d "$(PROJ_SRC_ROOT)/include" ] ; then \
 	  cd $(PROJ_SRC_ROOT)/include && \
 	    $(RM) -f `find . -path '*/Internal' -prune -o '(' -type f \
-	      '!' '(' -name '*~' -o -name '.cvsignore' -o -name '.#*' -o -name '*.in' ')' \
-	      -print ')' | grep -v CVS | sed 's#^#$(PROJ_includedir)/#'` ; \
+	      '!' '(' -name '*~' -o -name '.cvsignore' -o -name '.#*' \
+        -o -name '*.in' ')' -print ')' | \
+        grep -v CVS | sed 's#^#$(PROJ_includedir)/#'` ; \
 	  cd $(PROJ_SRC_ROOT)/include && \
-	    $(RM) -f `find . -path '*/Internal' -prune -o '(' -type f -name '*.in' -print ')' \
-	    | sed 's#\.in$$##;s#^#$(PROJ_includedir)/#'` ; \
+	    $(RM) -f `find . -path '*/Internal' -prune -o '(' -type f -name '*.in' \
+      -print ')' | sed 's#\.in$$##;s#^#$(PROJ_includedir)/#'` ; \
 	fi
 
 endif
