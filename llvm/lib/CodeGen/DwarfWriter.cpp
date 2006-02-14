@@ -941,7 +941,7 @@ DIE *DWContext::NewBasicType(const Type *Ty, unsigned Size, unsigned Align) {
     // construct the type DIE.
     TypeDie = new DIE(DW_TAG_base_type, DW_CHILDREN_no);
     TypeDie->AddString(DW_AT_name,      DW_FORM_string, Name);
-    TypeDie->AddUInt  (DW_AT_byte_size, DW_FORM_data1,  Size);
+    TypeDie->AddUInt  (DW_AT_byte_size, 0,              Size);
     TypeDie->AddUInt  (DW_AT_encoding,  DW_FORM_data1,  Encoding);
     TypeDie->Complete(DW);
     
