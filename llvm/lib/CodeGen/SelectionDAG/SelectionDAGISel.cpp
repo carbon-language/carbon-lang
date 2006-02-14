@@ -1523,13 +1523,136 @@ void SelectionDAGLowering::visitFrameReturnAddress(CallInst &I, bool isFrame) {
   DAG.setRoot(Result.second);
 }
 
+/// getMemSetValue - Vectorized representation of the memset value
+/// operand.
+static SDOperand getMemsetValue(SDOperand Value, MVT::ValueType VT,
+                                SelectionDAG &DAG) {
+  if (VT == MVT::i8)
+    return Value;
+
+  MVT::ValueType CurVT = VT;
+  if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Value)) {
+    uint64_t Val   = C->getValue() & 255;
+    unsigned Shift = 8;
+    while (CurVT != MVT::i8) {
+      Val = (Val << Shift) | Val;
+      Shift <<= 1;
+      CurVT = (MVT::ValueType)((unsigned)CurVT - 1);
+      assert(MVT::isInteger(CurVT));
+    }
+    return DAG.getConstant(Val, VT);
+  } else {
+    Value = DAG.getNode(ISD::ZERO_EXTEND, VT, Value);
+    unsigned Shift = 8;
+    while (CurVT != MVT::i8) {
+      Value =
+        DAG.getNode(ISD::OR, VT,
+                    DAG.getNode(ISD::SHL, VT, Value,
+                                DAG.getConstant(Shift, MVT::i8)), Value);
+      Shift <<= 1;
+      CurVT = (MVT::ValueType)((unsigned)CurVT - 1);
+      assert(MVT::isInteger(CurVT));
+    }
+
+    return Value;
+  }
+}
+
+/// getMemBasePlusOffset - Returns base and offset node for the 
+static SDOperand getMemBasePlusOffset(SDOperand Base, unsigned Offset,
+                                      SelectionDAG &DAG, TargetLowering &TLI) {
+  MVT::ValueType VT = Base.getValueType();
+  return DAG.getNode(ISD::ADD, VT, Base, DAG.getConstant(Offset, VT));
+}
+
+/// getMemOpTypes - Determines the types of the sequence of 
+/// memory ops to perform memset / memcpy.
+static void getMemOpTypes(std::vector<MVT::ValueType> &MemOps,
+                          uint64_t Size, unsigned Align, TargetLowering &TLI) {
+  MVT::ValueType VT;
+
+  if (TLI.allowsUnalignedMemoryAccesses()) {
+    VT = MVT::i64;
+  } else {
+    switch (Align & 7) {
+    case 0:
+      VT = MVT::i64;
+      break;
+    case 4:
+      VT = MVT::i32;
+      break;
+    case 2:
+      VT = MVT::i16;
+      break;
+    default:
+      VT = MVT::i8;
+      break;
+    }
+  }
+
+  while (!TLI.isTypeLegal(VT)) {
+    VT = (MVT::ValueType)((unsigned)VT - 1);
+    assert(MVT::isInteger(VT));
+  }
+
+  while (Size != 0) {
+    unsigned VTSize = getSizeInBits(VT) / 8;
+    while (VTSize > Size) {
+      VT = (MVT::ValueType)((unsigned)VT - 1);
+      assert(MVT::isInteger(VT));
+      VTSize >>= 1;
+    }
+    MemOps.push_back(VT);
+    Size -= VTSize;
+  }
+}
+
 void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
+  SDOperand Op1 = getValue(I.getOperand(1));
+  SDOperand Op2 = getValue(I.getOperand(2));
+  SDOperand Op3 = getValue(I.getOperand(3));
+  SDOperand Op4 = getValue(I.getOperand(4));
+  unsigned Align = (unsigned)cast<ConstantSDNode>(Op4)->getValue();
+  if (Align == 0) Align = 1;
+
+  if (ConstantSDNode *Size = dyn_cast<ConstantSDNode>(Op3)) {
+    std::vector<MVT::ValueType> MemOps;
+    getMemOpTypes(MemOps, Size->getValue(), Align, TLI);
+    unsigned NumMemOps = MemOps.size();
+
+    // Expand memset / memcpy to a series of load / store ops
+    // if the size operand falls below a certain threshold.
+    std::vector<SDOperand> OutChains;
+    switch (Op) {
+    default: ;  // Do nothing for now.
+    case ISD::MEMSET: {
+      if (NumMemOps <= TLI.getMaxStoresPerMemSet()) {
+        unsigned Offset = 0;
+        for (unsigned i = 0; i < NumMemOps; i++) {
+          MVT::ValueType VT = MemOps[i];
+          unsigned VTSize = getSizeInBits(VT) / 8;
+          SDOperand Value = getMemsetValue(Op2, VT, DAG);
+          OutChains.
+            push_back(DAG.getNode(ISD::STORE, MVT::Other, getRoot(),
+                                  Value,
+                                  getMemBasePlusOffset(Op1, Offset, DAG, TLI),
+                                  DAG.getSrcValue(NULL)));
+          Offset += VTSize;
+        }
+
+        DAG.setRoot(DAG.getNode(ISD::TokenFactor, MVT::Other, OutChains));
+        return;
+      }
+    }
+    }
+  }
+
   std::vector<SDOperand> Ops;
   Ops.push_back(getRoot());
-  Ops.push_back(getValue(I.getOperand(1)));
-  Ops.push_back(getValue(I.getOperand(2)));
-  Ops.push_back(getValue(I.getOperand(3)));
-  Ops.push_back(getValue(I.getOperand(4)));
+  Ops.push_back(Op1);
+  Ops.push_back(Op2);
+  Ops.push_back(Op3);
+  Ops.push_back(Op4);
   DAG.setRoot(DAG.getNode(Op, MVT::Other, Ops));
 }
 
