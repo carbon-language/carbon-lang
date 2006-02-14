@@ -1204,6 +1204,8 @@ ifneq ($(LexFiles),)
 %.c: %.l
 %.cpp: %.l
 
+all:: $(LexFiles:%.l=$(PROJ_SRC_DIR)/%.cpp.cvs)
+
 # Note the extra sed filtering here, used to cut down on the warnings emited 
 # by GCC.  The last line is a gross hack to work around flex aparently not 
 # being able to resize the buffer on a large token input.  Currently, for 
@@ -1217,10 +1219,18 @@ $(PROJ_SRC_DIR)/%.cpp: $(PROJ_SRC_DIR)/%.l
 	$(SED) 's/void \*yy_flex_realloc/inline void *yy_flex_realloc/' | \
 	$(SED) 's/#define YY_BUF_SIZE 16384/#define YY_BUF_SIZE (16384*64)/' \
 	  > $(PROJ_SRC_DIR)/$*.cpp
-	$(Echo) "*** DON'T FORGET TO CHECK IN $*.cpp (generated file)"
+    
+# IFF the .l file has changed since it was last checked into CVS, copy the .l
+# file to .l.cvs and the generated .cpp file to .cpp.cvs.  We use this mechanism
+# so that people without flex can build LLVM by copying the .cvs files to the 
+# source location and building them.
+$(LexFiles:%.l=$(PROJ_SRC_DIR)/%.cpp.cvs): \
+$(PROJ_SRC_DIR)/%.cpp.cvs: $(PROJ_SRC_DIR)/%.cpp
+	$(Verb) $(CMP) -s $@ $< || \
+      ($(CP) $< $@; $(CP) $(PROJ_SRC_DIR)/$*.l $(PROJ_SRC_DIR)/$*.l.cvs)
 
-LexObjs := $(patsubst %.l,$(ObjDir)/%.o,$(LexFiles))
-$(LexObjs): $(ObjDir)/%.o : $(PROJ_SRC_DIR)/%.cpp
+$(LexFiles:%.l=$(ObjDir)/%.o) : \
+$(ObjDir)/%.o : $(PROJ_SRC_DIR)/%.cpp
 
 clean-local::
 	-$(Verb) $(RM) -f $(LexOutput)
@@ -1323,7 +1333,7 @@ ifneq ($strip($(filter-out clean clean-local dist-clean,$(MAKECMDGOALS))),)
 
 # Get the list of dependency files
 DependFiles := $(basename $(filter %.cpp %.c %.cc, $(Sources)))
-DependFiles := $(patsubst %,$(PROJ_OBJ_DIR)/$(BuildMode)/%.d,$(DependFiles))
+DependFiles := $(DependFiles:%=$(PROJ_OBJ_DIR)/$(BuildMode)/%.d)
 
 -include /dev/null $(DependFiles)
 
