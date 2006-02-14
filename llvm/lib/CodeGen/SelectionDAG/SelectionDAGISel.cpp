@@ -1563,12 +1563,12 @@ static SDOperand getMemBasePlusOffset(SDOperand Base, unsigned Offset,
   return DAG.getNode(ISD::ADD, VT, Base, DAG.getConstant(Offset, VT));
 }
 
-/// MeetMaxMemopRequirement - Determines if the number of memory ops required
+/// MeetsMaxMemopRequirement - Determines if the number of memory ops required
 /// to replace the memset / memcpy is below the threshold. It also returns the
 /// types of the sequence of  memory ops to perform memset / memcpy.
-static bool MeetMaxMemopRequirement(std::vector<MVT::ValueType> &MemOps,
-                                    unsigned Limit,
-                                    uint64_t Size, unsigned Align, TargetLowering &TLI) {
+static bool MeetsMaxMemopRequirement(std::vector<MVT::ValueType> &MemOps,
+                                     unsigned Limit, uint64_t Size,
+                                     unsigned Align, TargetLowering &TLI) {
   MVT::ValueType VT;
 
   if (TLI.allowsUnalignedMemoryAccesses()) {
@@ -1633,8 +1633,8 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
     switch (Op) {
     default: break;  // Do nothing for now.
     case ISD::MEMSET: {
-      if (MeetMaxMemopRequirement(MemOps, TLI.getMaxStoresPerMemset(),
-                                  Size->getValue(), Align, TLI)) {
+      if (MeetsMaxMemopRequirement(MemOps, TLI.getMaxStoresPerMemset(),
+                                   Size->getValue(), Align, TLI)) {
         unsigned NumMemOps = MemOps.size();
         unsigned Offset = 0;
         for (unsigned i = 0; i < NumMemOps; i++) {
