@@ -1538,7 +1538,6 @@ static SDOperand getMemsetValue(SDOperand Value, MVT::ValueType VT,
       Val = (Val << Shift) | Val;
       Shift <<= 1;
       CurVT = (MVT::ValueType)((unsigned)CurVT - 1);
-      assert(MVT::isInteger(CurVT));
     }
     return DAG.getConstant(Val, VT);
   } else {
@@ -1551,7 +1550,6 @@ static SDOperand getMemsetValue(SDOperand Value, MVT::ValueType VT,
                                 DAG.getConstant(Shift, MVT::i8)), Value);
       Shift <<= 1;
       CurVT = (MVT::ValueType)((unsigned)CurVT - 1);
-      assert(MVT::isInteger(CurVT));
     }
 
     return Value;
@@ -1565,10 +1563,12 @@ static SDOperand getMemBasePlusOffset(SDOperand Base, unsigned Offset,
   return DAG.getNode(ISD::ADD, VT, Base, DAG.getConstant(Offset, VT));
 }
 
-/// getMemOpTypes - Determines the types of the sequence of 
-/// memory ops to perform memset / memcpy.
-static void getMemOpTypes(std::vector<MVT::ValueType> &MemOps,
-                          uint64_t Size, unsigned Align, TargetLowering &TLI) {
+/// MeetMaxMemopRequirement - Determines if the number of memory ops required
+/// to replace the memset / memcpy is below the threshold. It also returns the
+/// types of the sequence of  memory ops to perform memset / memcpy.
+static bool MeetMaxMemopRequirement(std::vector<MVT::ValueType> &MemOps,
+                                    unsigned Limit,
+                                    uint64_t Size, unsigned Align, TargetLowering &TLI) {
   MVT::ValueType VT;
 
   if (TLI.allowsUnalignedMemoryAccesses()) {
@@ -1590,21 +1590,30 @@ static void getMemOpTypes(std::vector<MVT::ValueType> &MemOps,
     }
   }
 
-  while (!TLI.isTypeLegal(VT)) {
-    VT = (MVT::ValueType)((unsigned)VT - 1);
-    assert(MVT::isInteger(VT));
-  }
+  MVT::ValueType LVT = MVT::i64;
+  while (!TLI.isTypeLegal(LVT))
+    LVT = (MVT::ValueType)((unsigned)LVT - 1);
+  assert(MVT::isInteger(LVT));
 
+  if (VT > LVT)
+    VT = LVT;
+
+  unsigned NumMemOps;
   while (Size != 0) {
     unsigned VTSize = getSizeInBits(VT) / 8;
     while (VTSize > Size) {
       VT = (MVT::ValueType)((unsigned)VT - 1);
-      assert(MVT::isInteger(VT));
       VTSize >>= 1;
     }
+    assert(MVT::isInteger(VT));
+
+    if (++NumMemOps > Limit)
+      return false;
     MemOps.push_back(VT);
     Size -= VTSize;
   }
+
+  return true;
 }
 
 void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
@@ -1617,8 +1626,6 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
 
   if (ConstantSDNode *Size = dyn_cast<ConstantSDNode>(Op3)) {
     std::vector<MVT::ValueType> MemOps;
-    getMemOpTypes(MemOps, Size->getValue(), Align, TLI);
-    unsigned NumMemOps = MemOps.size();
 
     // Expand memset / memcpy to a series of load / store ops
     // if the size operand falls below a certain threshold.
@@ -1626,7 +1633,9 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
     switch (Op) {
     default: ;  // Do nothing for now.
     case ISD::MEMSET: {
-      if (NumMemOps <= TLI.getMaxStoresPerMemset()) {
+      if (MeetMaxMemopRequirement(MemOps, TLI.getMaxStoresPerMemset(),
+                                  Size->getValue(), Align, TLI)) {
+        unsigned NumMemOps = MemOps.size();
         unsigned Offset = 0;
         for (unsigned i = 0; i < NumMemOps; i++) {
           MVT::ValueType VT = MemOps[i];
