@@ -243,19 +243,19 @@ public:
   /// to replace a call to llvm.memset. The value is set by the target at the
   /// performance threshold for such a replacement.
   /// @brief Get maximum # of store operations permitted for llvm.memset
-  unsigned getMaxStoresPerMemSet() const { return maxStoresPerMemSet; }
+  unsigned getMaxStoresPerMemset() const { return maxStoresPerMemset; }
 
   /// This function returns the maximum number of store operations permitted
   /// to replace a call to llvm.memcpy. The value is set by the target at the
   /// performance threshold for such a replacement.
   /// @brief Get maximum # of store operations permitted for llvm.memcpy
-  unsigned getMaxStoresPerMemCpy() const { return maxStoresPerMemCpy; }
+  unsigned getMaxStoresPerMemcpy() const { return maxStoresPerMemcpy; }
 
   /// This function returns the maximum number of store operations permitted
   /// to replace a call to llvm.memmove. The value is set by the target at the
   /// performance threshold for such a replacement.
   /// @brief Get maximum # of store operations permitted for llvm.memmove
-  unsigned getMaxStoresPerMemMove() const { return maxStoresPerMemMove; }
+  unsigned getMaxStoresPerMemmove() const { return maxStoresPerMemmove; }
 
   /// This function returns true if the target allows unaligned memory accesses.
   /// This is used, for example, in situations where an array copy/move/set is 
@@ -567,7 +567,7 @@ protected:
   /// with 16-bit alignment would result in four 2-byte stores and one 1-byte
   /// store.  This only applies to setting a constant array of a constant size.
   /// @brief Specify maximum number of store instructions per memset call.
-  unsigned maxStoresPerMemSet;
+  unsigned maxStoresPerMemset;
 
   /// When lowering %llvm.memcpy this field specifies the maximum number of
   /// store operations that may be substituted for a call to memcpy. Targets
@@ -579,7 +579,7 @@ protected:
   /// and one 1-byte store. This only applies to copying a constant array of
   /// constant size.
   /// @brief Specify maximum bytes of store instructions per memcpy call.
-  unsigned maxStoresPerMemCpy;
+  unsigned maxStoresPerMemcpy;
 
   /// When lowering %llvm.memmove this field specifies the maximum number of
   /// store instructions that may be substituted for a call to memmove. Targets
@@ -590,7 +590,7 @@ protected:
   /// with 8-bit alignment would result in nine 1-byte stores.  This only
   /// applies to copying a constant array of constant size.
   /// @brief Specify maximum bytes of store instructions per memmove call.
-  unsigned maxStoresPerMemMove;
+  unsigned maxStoresPerMemmove;
 
   /// This field specifies whether the target machine permits unaligned memory
   /// accesses.  This is used, for example, to determine the size of store 

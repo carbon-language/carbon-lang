@@ -1626,7 +1626,7 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
     switch (Op) {
     default: ;  // Do nothing for now.
     case ISD::MEMSET: {
-      if (NumMemOps <= TLI.getMaxStoresPerMemSet()) {
+      if (NumMemOps <= TLI.getMaxStoresPerMemset()) {
         unsigned Offset = 0;
         for (unsigned i = 0; i < NumMemOps; i++) {
           MVT::ValueType VT = MemOps[i];

@@ -30,7 +30,7 @@ TargetLowering::TargetLowering(TargetMachine &tm)
   ShiftAmountTy = SetCCResultTy = PointerTy = getValueType(TD.getIntPtrType());
   ShiftAmtHandling = Undefined;
   memset(RegClassForVT, 0,MVT::LAST_VALUETYPE*sizeof(TargetRegisterClass*));
-  maxStoresPerMemSet = maxStoresPerMemCpy = maxStoresPerMemMove = 8;
+  maxStoresPerMemset = maxStoresPerMemcpy = maxStoresPerMemmove = 8;
   allowUnalignedMemoryAccesses = false;
   UseUnderscoreSetJmpLongJmp = false;
   IntDivIsCheap = false;

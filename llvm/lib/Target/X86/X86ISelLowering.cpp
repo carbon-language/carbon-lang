@@ -253,9 +253,9 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
 
   // FIXME: These should be based on subtarget info. Plus, the values should
   // be smaller when we are in optimizing for size mode.
-  maxStoresPerMemSet = 16; // For %llvm.memset -> sequence of stores
-  maxStoresPerMemCpy = 16; // For %llvm.memcpy -> sequence of stores
-  maxStoresPerMemMove = 16; // For %llvm.memmove -> sequence of stores
+  maxStoresPerMemset = 16; // For %llvm.memset -> sequence of stores
+  maxStoresPerMemcpy = 16; // For %llvm.memcpy -> sequence of stores
+  maxStoresPerMemmove = 16; // For %llvm.memmove -> sequence of stores
   allowUnalignedMemoryAccesses = true; // x86 supports it!
 }
 
