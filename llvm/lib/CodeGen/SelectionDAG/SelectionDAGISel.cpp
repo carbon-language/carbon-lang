@@ -1631,7 +1631,7 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
     // if the size operand falls below a certain threshold.
     std::vector<SDOperand> OutChains;
     switch (Op) {
-    default: ;  // Do nothing for now.
+    default: break;  // Do nothing for now.
     case ISD::MEMSET: {
       if (MeetMaxMemopRequirement(MemOps, TLI.getMaxStoresPerMemset(),
                                   Size->getValue(), Align, TLI)) {
