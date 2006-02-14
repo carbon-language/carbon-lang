@@ -186,6 +186,11 @@ static unsigned getX86RegNum(unsigned RegNo) {
   case X86::ST0: case X86::ST1: case X86::ST2: case X86::ST3:
   case X86::ST4: case X86::ST5: case X86::ST6: case X86::ST7:
     return RegNo-X86::ST0;
+
+  case X86::XMM0: case X86::XMM1: case X86::XMM2: case X86::XMM3:
+  case X86::XMM4: case X86::XMM5: case X86::XMM6: case X86::XMM7:
+    return RegNo-X86::XMM0;
+
   default:
     assert(MRegisterInfo::isVirtualRegister(RegNo) &&
            "Unknown physical register!");
@@ -371,21 +376,16 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
   case X86II::TB:
     MCE.emitByte(0x0F);   // Two-byte opcode prefix
     break;
-  case X86II::REP: break; // already handled.
-  case X86II::XS:   // F3 0F
-    MCE.emitByte(0xF3);
-    MCE.emitByte(0x0F);
-    break;
-  case X86II::XD:   // F2 0F
-    MCE.emitByte(0xF2);
-    MCE.emitByte(0x0F);
-    break;
   case X86II::D8: case X86II::D9: case X86II::DA: case X86II::DB:
   case X86II::DC: case X86II::DD: case X86II::DE: case X86II::DF:
     MCE.emitByte(0xD8+
                  (((Desc.TSFlags & X86II::Op0Mask)-X86II::D8)
                                    >> X86II::Op0Shift));
     break; // Two-byte opcode prefix
+  case X86II::REP:
+  case X86II::XS:
+  case X86II::XD:
+    break; // already handled.
   default: assert(0 && "Invalid prefix!");
   case 0: break;  // No prefix!
   }
