@@ -729,8 +729,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     
     // Remember that the CALLSEQ_START is legalized.
-    AddLegalizedOperand(Op, Result);
-
+    AddLegalizedOperand(Op.getValue(0), Result);
+    if (Node->getNumValues() == 2)    // If this has a flag result, remember it.
+      AddLegalizedOperand(Op.getValue(1), Result.getValue(1));
+    
     // Now that the callseq_start and all of the non-call nodes above this call
     // sequence have been legalized, legalize the call itself.  During this 
     // process, no libcalls can/will be inserted, guaranteeing that no calls
@@ -778,10 +780,15 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Result = DAG.UpdateNodeOperands(Result, Ops);
       }
     }
-    assert(IsLegalizingCall && "imbalance between START/END?");
+    assert(IsLegalizingCall && "Call sequence imbalance between start/end?");
     // This finishes up call legalization.
     IsLegalizingCall = false;
-    break;
+    
+    // If the CALLSEQ_END node has a flag, remember that we legalized it.
+    AddLegalizedOperand(SDOperand(Node, 0), Result.getValue(0));
+    if (Node->getNumValues() == 2)
+      AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
+    return Result.getValue(Op.ResNo);
   case ISD::DYNAMIC_STACKALLOC: {
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the size.
