@@ -115,7 +115,11 @@ bool LoopSimplify::runOnFunction(Function &F) {
 ///
 bool LoopSimplify::ProcessLoop(Loop *L) {
   bool Changed = false;
-
+  // Canonicalize inner loops before outer loops.  Inner loop canonicalization
+  // can provide work for the outer loop to canonicalize.
+  for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
+    Changed |= ProcessLoop(*I);
+  
   // Check to see that no blocks (other than the header) in the loop have
   // predecessors that are not in the loop.  This is not valid for natural
   // loops, but can occur if the blocks are unreachable.  Since they are
@@ -204,9 +208,6 @@ bool LoopSimplify::ProcessLoop(Loop *L) {
         PN->replaceAllUsesWith(V);
         PN->eraseFromParent();
       }
-
-  for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
-    Changed |= ProcessLoop(*I);
 
   return Changed;
 }
