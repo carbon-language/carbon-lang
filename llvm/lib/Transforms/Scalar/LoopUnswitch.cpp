@@ -442,7 +442,7 @@ static void EmitPreheaderBranchOnCondition(Value *LIC, Constant *Val,
   // Insert a conditional branch on LIC to the two preheaders.  The original
   // code is the true version and the new code is the false version.
   Value *BranchVal = LIC;
-  if (!isa<ConstantBool>(BranchVal)) {
+  if (!isa<ConstantBool>(Val)) {
     BranchVal = BinaryOperator::createSetEQ(LIC, Val, "tmp", InsertPt);
   } else if (Val != ConstantBool::True) {
     // We want to enter the new loop when the condition is true.
