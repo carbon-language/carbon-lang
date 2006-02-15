@@ -432,6 +432,28 @@ static Loop *CloneLoop(Loop *L, Loop *PL, std::map<const Value*, Value*> &VM,
   return New;
 }
 
+/// EmitPreheaderBranchOnCondition - Emit a conditional branch on two values
+/// if LIC == Val, branch to TrueDst, otherwise branch to FalseDest.  Insert the
+/// code immediately before InsertPt.
+static void EmitPreheaderBranchOnCondition(Value *LIC, Constant *Val,
+                                           BasicBlock *TrueDest,
+                                           BasicBlock *FalseDest,
+                                           Instruction *InsertPt) {
+  // Insert a conditional branch on LIC to the two preheaders.  The original
+  // code is the true version and the new code is the false version.
+  Value *BranchVal = LIC;
+  if (!isa<ConstantBool>(BranchVal)) {
+    BranchVal = BinaryOperator::createSetEQ(LIC, Val, "tmp", InsertPt);
+  } else if (Val != ConstantBool::True) {
+    // We want to enter the new loop when the condition is true.
+    std::swap(TrueDest, FalseDest);
+  }
+
+  // Insert the new branch.
+  new BranchInst(TrueDest, FalseDest, BranchVal, InsertPt);
+}
+
+
 /// UnswitchTrivialCondition - Given a loop that has a trivial unswitchable
 /// condition in it (a cond branch from its header block to its latch block,
 /// where the path through the loop that doesn't execute its body has no 
@@ -505,6 +527,7 @@ void LoopUnswitch::VersionLoop(Value *LIC, Constant *Val, Loop *L,
   std::sort(ExitBlocks.begin(), ExitBlocks.end());
   ExitBlocks.erase(std::unique(ExitBlocks.begin(), ExitBlocks.end()),
                    ExitBlocks.end());
+  
   // Split all of the edges from inside the loop to their exit blocks.  This
   // unswitching trivial: no phi nodes to update.
   unsigned NumBlocks = L->getBlocks().size();
@@ -583,26 +606,13 @@ void LoopUnswitch::VersionLoop(Value *LIC, Constant *Val, Loop *L,
       RemapInstruction(I, ValueMap);
   
   // Rewrite the original preheader to select between versions of the loop.
-  assert(isa<BranchInst>(OrigPreheader->getTerminator()) &&
-         cast<BranchInst>(OrigPreheader->getTerminator())->isUnconditional() &&
-         OrigPreheader->getTerminator()->getSuccessor(0) == LoopBlocks[0] &&
+  BranchInst *OldBR = cast<BranchInst>(OrigPreheader->getTerminator());
+  assert(OldBR->isUnconditional() && OldBR->getSuccessor(0) == LoopBlocks[0] &&
          "Preheader splitting did not work correctly!");
 
-  // Insert a conditional branch on LIC to the two preheaders.  The original
-  // code is the true version and the new code is the false version.
-  Value *BranchVal = LIC;
-  if (!isa<ConstantBool>(BranchVal)) {
-    BranchVal = BinaryOperator::createSetEQ(LIC, Val, "tmp",
-                                            OrigPreheader->getTerminator());
-  } else if (Val != ConstantBool::True) {
-    // We want to enter the new loop when the condition is true.
-    BranchVal = BinaryOperator::createNot(BranchVal, "tmp",
-                                          OrigPreheader->getTerminator());
-  }
-  
-  // Remove the unconditional branch to LoopBlocks[0] and insert the new branch.
-  OrigPreheader->getInstList().pop_back();
-  new BranchInst(NewBlocks[0], LoopBlocks[0], BranchVal, OrigPreheader);
+  // Emit the new branch that selects between the two versions of this loop.
+  EmitPreheaderBranchOnCondition(LIC, Val, NewBlocks[0], LoopBlocks[0], OldBR);
+  OldBR->eraseFromParent();
 
   // Now we rewrite the original code to know that the condition is true and the
   // new code to know that the condition is false.
