@@ -807,36 +807,15 @@ void SelectionDAGLowering::visitAlloca(AllocaInst &I) {
 /// getStringValue - Turn an LLVM constant pointer that eventually points to a
 /// global into a string value.  Return an empty string if we can't do it.
 ///
-static std::string getStringValue(Value *V, unsigned Offset = 0) {
-  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
-    if (GV->hasInitializer() && isa<ConstantArray>(GV->getInitializer())) {
-      ConstantArray *Init = cast<ConstantArray>(GV->getInitializer());
-      if (Init->isString()) {
-        std::string Result = Init->getAsString();
-        if (Offset < Result.size()) {
-          // If we are pointing INTO The string, erase the beginning...
-          Result.erase(Result.begin(), Result.begin()+Offset);
-
-          // Take off the null terminator, and any string fragments after it.
-          std::string::size_type NullPos = Result.find_first_of((char)0);
-          if (NullPos != std::string::npos)
-            Result.erase(Result.begin()+NullPos, Result.end());
-          return Result;
-        }
-      }
-    }
-  } else if (Constant *C = dyn_cast<Constant>(V)) {
-    if (GlobalValue *GV = dyn_cast<GlobalValue>(C))
-      return getStringValue(GV, Offset);
-    else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
-      if (CE->getOpcode() == Instruction::GetElementPtr) {
-        // Turn a gep into the specified offset.
-        if (CE->getNumOperands() == 3 &&
-            cast<Constant>(CE->getOperand(1))->isNullValue() &&
-            isa<ConstantInt>(CE->getOperand(2))) {
-          return getStringValue(CE->getOperand(0),
-                   Offset+cast<ConstantInt>(CE->getOperand(2))->getRawValue());
-        }
+static std::string getStringValue(GlobalVariable *GV, unsigned Offset = 0) {
+  if (GV->hasInitializer() && isa<ConstantArray>(GV->getInitializer())) {
+    ConstantArray *Init = cast<ConstantArray>(GV->getInitializer());
+    if (Init->isString()) {
+      std::string Result = Init->getAsString();
+      if (Offset < Result.size()) {
+        // If we are pointing INTO The string, erase the beginning...
+        Result.erase(Result.begin(), Result.begin()+Offset);
+        return Result;
       }
     }
   }
@@ -1523,13 +1502,10 @@ void SelectionDAGLowering::visitFrameReturnAddress(CallInst &I, bool isFrame) {
   DAG.setRoot(Result.second);
 }
 
-/// getMemSetValue - Vectorized representation of the memset value
+/// getMemsetValue - Vectorized representation of the memset value
 /// operand.
 static SDOperand getMemsetValue(SDOperand Value, MVT::ValueType VT,
-                                SelectionDAG &DAG) {
-  if (VT == MVT::i8)
-    return Value;
-
+                                SelectionDAG &DAG, TargetLowering &TLI) {
   MVT::ValueType CurVT = VT;
   if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Value)) {
     uint64_t Val   = C->getValue() & 255;
@@ -1554,6 +1530,24 @@ static SDOperand getMemsetValue(SDOperand Value, MVT::ValueType VT,
 
     return Value;
   }
+}
+
+/// getMemsetStringVal - Similar to getMemsetValue. Except this is only
+/// used when a memcpy is turned into a memset when the source is a constant
+/// string ptr.
+static SDOperand getMemsetStringVal(MVT::ValueType VT,
+                                    SelectionDAG &DAG, TargetLowering &TLI,
+                                    std::string &Str, unsigned Offset) {
+  MVT::ValueType CurVT = VT;
+  uint64_t Val = 0;
+  unsigned MSB = getSizeInBits(VT) / 8;
+  if (TLI.isLittleEndian())
+    Offset = Offset + MSB - 1;
+  for (unsigned i = 0; i != MSB; ++i) {
+    Val = (Val << 8) | Str[Offset];
+    Offset += TLI.isLittleEndian() ? -1 : 1;
+  }
+  return DAG.getConstant(Val, VT);
 }
 
 /// getMemBasePlusOffset - Returns base and offset node for the 
@@ -1640,7 +1634,7 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
         for (unsigned i = 0; i < NumMemOps; i++) {
           MVT::ValueType VT = MemOps[i];
           unsigned VTSize = getSizeInBits(VT) / 8;
-          SDOperand Value = getMemsetValue(Op2, VT, DAG);
+          SDOperand Value = getMemsetValue(Op2, VT, DAG, TLI);
           SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, getRoot(),
                                         Value,
                                         getMemBasePlusOffset(Op1, Offset, DAG, TLI),
@@ -1655,21 +1649,49 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
       if (MeetsMaxMemopRequirement(MemOps, TLI.getMaxStoresPerMemcpy(),
                                    Size->getValue(), Align, TLI)) {
         unsigned NumMemOps = MemOps.size();
-        unsigned Offset = 0;
+        unsigned SrcOff = 0, DstOff = 0;
+        GlobalAddressSDNode *G = NULL;
+        std::string Str;
+
+        if (Op2.getOpcode() == ISD::GlobalAddress)
+          G = cast<GlobalAddressSDNode>(Op2);
+        else if (Op2.getOpcode() == ISD::ADD &&
+                 Op2.getOperand(0).getOpcode() == ISD::GlobalAddress &&
+                 Op2.getOperand(1).getOpcode() == ISD::Constant) {
+          G = cast<GlobalAddressSDNode>(Op2.getOperand(0));
+          SrcOff += cast<ConstantSDNode>(Op2.getOperand(1))->getValue();
+        }
+        if (G) {
+          GlobalVariable *GV = dyn_cast<GlobalVariable>(G->getGlobal());
+          if (GV)
+            Str = getStringValue(GV);
+        }
+
         for (unsigned i = 0; i < NumMemOps; i++) {
           MVT::ValueType VT = MemOps[i];
           unsigned VTSize = getSizeInBits(VT) / 8;
-          SDOperand Value =
-            DAG.getLoad(VT, getRoot(),
-                        getMemBasePlusOffset(Op2, Offset, DAG, TLI),
-                        DAG.getSrcValue(I.getOperand(2), Offset));
-          SDOperand Store =
-            DAG.getNode(ISD::STORE, MVT::Other, Value.getValue(1),
-                        Value,
-                        getMemBasePlusOffset(Op1, Offset, DAG, TLI),
-                        DAG.getSrcValue(I.getOperand(1), Offset));
+          SDOperand Value, Chain, Store;
+
+          if (!Str.empty()) {
+            Value = getMemsetStringVal(VT, DAG, TLI, Str, SrcOff);
+            Chain = getRoot();
+            Store =
+              DAG.getNode(ISD::STORE, MVT::Other, Chain, Value,
+                          getMemBasePlusOffset(Op1, DstOff, DAG, TLI),
+                          DAG.getSrcValue(I.getOperand(1), DstOff));
+          } else {
+            Value = DAG.getLoad(VT, getRoot(),
+                        getMemBasePlusOffset(Op2, SrcOff, DAG, TLI),
+                        DAG.getSrcValue(I.getOperand(2), SrcOff));
+            Chain = Value.getValue(1);
+            Store =
+              DAG.getNode(ISD::STORE, MVT::Other, Chain, Value,
+                          getMemBasePlusOffset(Op1, DstOff, DAG, TLI),
+                          DAG.getSrcValue(I.getOperand(1), DstOff));
+          }
           OutChains.push_back(Store);
-          Offset += VTSize;
+          SrcOff += VTSize;
+          DstOff += VTSize;
         }
       }
       break;
