@@ -1641,18 +1641,44 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
           MVT::ValueType VT = MemOps[i];
           unsigned VTSize = getSizeInBits(VT) / 8;
           SDOperand Value = getMemsetValue(Op2, VT, DAG);
-          OutChains.
-            push_back(DAG.getNode(ISD::STORE, MVT::Other, getRoot(),
-                                  Value,
-                                  getMemBasePlusOffset(Op1, Offset, DAG, TLI),
-                                  DAG.getSrcValue(NULL)));
+          SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, getRoot(),
+                                        Value,
+                                        getMemBasePlusOffset(Op1, Offset, DAG, TLI),
+                                        DAG.getSrcValue(I.getOperand(1), Offset));
+          OutChains.push_back(Store);
           Offset += VTSize;
         }
-
-        DAG.setRoot(DAG.getNode(ISD::TokenFactor, MVT::Other, OutChains));
-        return;
       }
+      break;
     }
+    case ISD::MEMCPY: {
+      if (MeetsMaxMemopRequirement(MemOps, TLI.getMaxStoresPerMemcpy(),
+                                   Size->getValue(), Align, TLI)) {
+        unsigned NumMemOps = MemOps.size();
+        unsigned Offset = 0;
+        for (unsigned i = 0; i < NumMemOps; i++) {
+          MVT::ValueType VT = MemOps[i];
+          unsigned VTSize = getSizeInBits(VT) / 8;
+          SDOperand Value =
+            DAG.getLoad(VT, getRoot(),
+                        getMemBasePlusOffset(Op2, Offset, DAG, TLI),
+                        DAG.getSrcValue(I.getOperand(2), Offset));
+          SDOperand Store =
+            DAG.getNode(ISD::STORE, MVT::Other, Value.getValue(1),
+                        Value,
+                        getMemBasePlusOffset(Op1, Offset, DAG, TLI),
+                        DAG.getSrcValue(I.getOperand(1), Offset));
+          OutChains.push_back(Store);
+          Offset += VTSize;
+        }
+      }
+      break;
+    }
+    }
+
+    if (!OutChains.empty()) {
+      DAG.setRoot(DAG.getNode(ISD::TokenFactor, MVT::Other, OutChains));
+      return;
     }
   }
 
