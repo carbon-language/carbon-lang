@@ -24870,6 +24870,20 @@ case $CC in
     ;;
 esac
 
+if test "$GCC" != "yes" && test "$ICC" != "yes"
+then
+  { { echo "$as_me:$LINENO: error: gcc|icc required but not found" >&5
+echo "$as_me: error: gcc|icc required but not found" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+if test "$GXX" != "yes" && test "$IXX" != "yes"
+then
+  { { echo "$as_me:$LINENO: error: g++|icc required but not found" >&5
+echo "$as_me: error: g++|icc required but not found" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
 if test "$GCC" = "yes"
 then
   gccmajor=`$CC --version | head -n 1 | sed 's/[^0-9]*\([0-9.]\).*/\1/'`

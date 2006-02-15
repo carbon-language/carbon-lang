@@ -412,6 +412,17 @@ case $CC in
     ;;
 esac
 
+if test "$GCC" != "yes" && test "$ICC" != "yes"
+then
+  AC_MSG_ERROR([gcc|icc required but not found])
+fi
+
+dnl Ensure that compilation tools are GCC; we use GCC specific extensions
+if test "$GXX" != "yes" && test "$IXX" != "yes"
+then
+  AC_MSG_ERROR([g++|icc required but not found])
+fi
+
 dnl Verify that GCC is version 3.0 or higher
 if test "$GCC" = "yes"
 then
