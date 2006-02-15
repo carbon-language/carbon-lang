@@ -3015,34 +3015,34 @@ def FLDCW16m  : I<0xD9, MRM5m,                   // X87 control world = [mem16]
 
 def MOVAPSrr : I<0x28, MRMSrcMem, (ops V4F4:$dst, V4F4:$src),
                 "movaps {$src, $dst|$dst, $src}", []>,
-               Requires<[HasSSE1]>, XS;
+               Requires<[HasSSE1]>, TB;
 def MOVAPDrr : I<0x28, MRMSrcMem, (ops V2F8:$dst, V2F8:$src),
                 "movapd {$src, $dst|$dst, $src}", []>,
-               Requires<[HasSSE2]>, XD;
+               Requires<[HasSSE2]>, TB, OpSize;
 
 def MOVAPSrm : I<0x28, MRMSrcMem, (ops V4F4:$dst, f128mem:$src),
                 "movaps {$src, $dst|$dst, $src}", []>,
-               Requires<[HasSSE1]>, XS;
+               Requires<[HasSSE1]>, TB;
 def MOVAPSmr : I<0x29, MRMDestMem, (ops f128mem:$dst, V4F4:$src),
                 "movaps {$src, $dst|$dst, $src}",[]>,
-               Requires<[HasSSE1]>, XD;
+               Requires<[HasSSE1]>, TB;
 def MOVAPDrm : I<0x28, MRMSrcMem, (ops V2F8:$dst, f128mem:$src),
                 "movapd {$src, $dst|$dst, $src}", []>,
-               Requires<[HasSSE1]>, XD;
+               Requires<[HasSSE1]>, TB, OpSize;
 def MOVAPDmr : I<0x29, MRMDestMem, (ops f128mem:$dst, V2F8:$src),
                 "movapd {$src, $dst|$dst, $src}",[]>,
-               Requires<[HasSSE2]>, XD;
+               Requires<[HasSSE2]>, TB, OpSize;
 
 // Pseudo-instructions to load FR32 / FR64 from f128mem using movaps / movapd.
 // Upper bits are disregarded.
 def MOVSAPSrm : I<0x28, MRMSrcMem, (ops FR32:$dst, f128mem:$src),
                   "movaps {$src, $dst|$dst, $src}",
                   [(set FR32:$dst, (X86loadpf32 addr:$src))]>,
-                Requires<[HasSSE1]>, XS;
+                Requires<[HasSSE1]>, TB;
 def MOVSAPDrm : I<0x28, MRMSrcMem, (ops FR64:$dst, f128mem:$src),
                   "movapd {$src, $dst|$dst, $src}",
                   [(set FR64:$dst, (X86loadpf64 addr:$src))]>,
-                Requires<[HasSSE1]>, XD;
+                Requires<[HasSSE2]>, TB, OpSize;
 
 
 //===----------------------------------------------------------------------===//
