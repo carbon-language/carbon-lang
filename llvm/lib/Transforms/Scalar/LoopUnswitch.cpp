@@ -75,6 +75,7 @@ namespace {
     void VersionLoop(Value *LIC, Constant *OnVal,
                      Loop *L, Loop *&Out1, Loop *&Out2);
     BasicBlock *SplitEdge(BasicBlock *From, BasicBlock *To);
+    BasicBlock *SplitBlock(BasicBlock *Old, Instruction *SplitPt);
     void RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,Constant *Val,
                                               bool isEqual);
     void UnswitchTrivialCondition(Loop *L, Value *Cond, Constant *Val,
@@ -123,26 +124,50 @@ static bool LoopValuesUsedOutsideLoop(Loop *L) {
   return false;
 }
 
-/// FindTrivialLoopExitBlock - We know that we have a branch from the loop
-/// header to the specified latch block.   See if one of the successors of the
-/// latch block is an exit, and if so what block it is.
-static BasicBlock *FindTrivialLoopExitBlock(Loop *L, BasicBlock *Latch) {
+/// isTrivialLoopExitBlock - Check to see if all paths from BB either:
+///   1. Exit the loop with no side effects.
+///   2. Branch to the latch block with no side-effects.
+///
+/// If these conditions are true, we return true and set ExitBB to the block we
+/// exit through.
+///
+static bool isTrivialLoopExitBlockHelper(Loop *L, BasicBlock *BB,
+                                         BasicBlock *&ExitBB,
+                                         std::set<BasicBlock*> &Visited) {
   BasicBlock *Header = L->getHeader();
-  BranchInst *LatchBranch = dyn_cast<BranchInst>(Latch->getTerminator());
-  if (!LatchBranch || !LatchBranch->isConditional()) return 0;
-  
-  // Simple case, the latch block is a conditional branch.  The target that
-  // doesn't go to the loop header is our block if it is not in the loop.
-  if (LatchBranch->getSuccessor(0) == Header) {
-    if (L->contains(LatchBranch->getSuccessor(1))) return false;
-    return LatchBranch->getSuccessor(1);
-  } else {
-    assert(LatchBranch->getSuccessor(1) == Header);
-    if (L->contains(LatchBranch->getSuccessor(0))) return false;
-    return LatchBranch->getSuccessor(0);
+  for (succ_iterator SI = succ_begin(BB), E = succ_end(BB); SI != E; ++SI) {
+    if (!Visited.insert(*SI).second) {
+      // Already visited and Ok, end of recursion.
+    } else if (L->contains(*SI)) {
+      // Check to see if the successor is a trivial loop exit.
+      if (!isTrivialLoopExitBlockHelper(L, *SI, ExitBB, Visited))
+        return false;
+    } else {
+      // Otherwise, this is a loop exit, this is fine so long as this is the
+      // first exit.
+      if (ExitBB != 0) return false;
+      ExitBB = *SI;
+    }
   }
+
+  // Okay, everything after this looks good, check to make sure that this block
+  // doesn't include any side effects.
+  for (BasicBlock::iterator I = Header->begin(), E = Header->end(); I != E; ++I)
+    if (I->mayWriteToMemory())
+      return false;
+  
+  return true;
 }
 
+static BasicBlock *isTrivialLoopExitBlock(Loop *L, BasicBlock *BB) {
+  std::set<BasicBlock*> Visited;
+  Visited.insert(L->getHeader());  // Branches to header are ok.
+  Visited.insert(BB);              // Don't revisit BB after we do.
+  BasicBlock *ExitBB = 0;
+  if (isTrivialLoopExitBlockHelper(L, BB, ExitBB, Visited))
+    return ExitBB;
+  return 0;
+}
 
 /// IsTrivialUnswitchCondition - Check to see if this unswitch condition is
 /// trivial: that is, that the condition controls whether or not the loop does
@@ -165,31 +190,28 @@ static bool IsTrivialUnswitchCondition(Loop *L, Value *Cond,
       HeaderTerm->getCondition() != Cond)
     return false;
   
-  // Check to see if the conditional branch goes to the latch block.  If not,
-  // it's not trivial.  This also determines the value of Cond that will execute
-  // the loop.
-  BasicBlock *Latch = L->getLoopLatch();
-  if (HeaderTerm->getSuccessor(1) == Latch) {
+  // Check to see if a successor of the branch is guaranteed to go to the latch
+  // block or exit through a one exit block without having any side-effects.  If
+  // so, determine the value of Cond that causes it to do this.
+  BasicBlock *LoopExitBlock = 0;
+  if ((LoopExitBlock = isTrivialLoopExitBlock(L, HeaderTerm->getSuccessor(0)))){
     if (Val) *Val = ConstantBool::True;
-  } else if (HeaderTerm->getSuccessor(0) == Latch)
+  } else if ((LoopExitBlock = 
+                  isTrivialLoopExitBlock(L, HeaderTerm->getSuccessor(1)))) {
     if (Val) *Val = ConstantBool::False;
-  else
-    return false;  // Doesn't branch to latch block.
+  }
+
+  if (!LoopExitBlock)
+    return false;   // Can't handle this.
   
-  // The latch block must end with a conditional branch where one edge goes to
-  // the header (this much we know) and one edge goes OUT of the loop.
-  BasicBlock *LoopExitBlock = FindTrivialLoopExitBlock(L, Latch);
-  if (!LoopExitBlock) return 0;
   if (LoopExit) *LoopExit = LoopExitBlock;
   
   // We already know that nothing uses any scalar values defined inside of this
   // loop.  As such, we just have to check to see if this loop will execute any
   // side-effecting instructions (e.g. stores, calls, volatile loads) in the
-  // part of the loop that the code *would* execute.
+  // part of the loop that the code *would* execute.  We already checked the
+  // tail, check the header now.
   for (BasicBlock::iterator I = Header->begin(), E = Header->end(); I != E; ++I)
-    if (I->mayWriteToMemory())
-      return false;
-  for (BasicBlock::iterator I = Latch->begin(), E = Latch->end(); I != E; ++I)
     if (I->mayWriteToMemory())
       return false;
   return true;
@@ -350,6 +372,24 @@ bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val,Loop *L){
   return true;
 }
 
+/// SplitBlock - Split the specified block at the specified instruction - every
+/// thing before SplitPt stays in Old and everything starting with SplitPt moves
+/// to a new block.  The two blocks are joined by an unconditional branch and
+/// the loop info is updated.
+///
+BasicBlock *LoopUnswitch::SplitBlock(BasicBlock *Old, Instruction *SplitPt) {
+  while (isa<PHINode>(SplitPt))
+    ++SplitPt;
+  BasicBlock *New = Old->splitBasicBlock(SplitPt, Old->getName()+".split");
+
+  // The new block lives in whichever loop the old one did.
+  if (Loop *L = LI->getLoopFor(Old))
+    L->addBasicBlockToLoop(New, *LI);
+  
+  return New;
+}
+
+
 BasicBlock *LoopUnswitch::SplitEdge(BasicBlock *BB, BasicBlock *Succ) {
   TerminatorInst *LatchTerm = BB->getTerminator();
   unsigned SuccNum = 0;
@@ -373,24 +413,14 @@ BasicBlock *LoopUnswitch::SplitEdge(BasicBlock *BB, BasicBlock *Succ) {
     // If the successor only has a single pred, split the top of the successor
     // block.
     assert(SP == BB && "CFG broken");
-    BlockToSplit = Succ;
-    SplitPoint = Succ->begin();
+    return SplitBlock(Succ, Succ->begin());
   } else {
     // Otherwise, if BB has a single successor, split it at the bottom of the
     // block.
     assert(BB->getTerminator()->getNumSuccessors() == 1 &&
            "Should have a single succ!"); 
-    BlockToSplit = BB;
-    SplitPoint = BB->getTerminator();
+    return SplitBlock(BB, BB->getTerminator());
   }
-
-  BasicBlock *New =
-    BlockToSplit->splitBasicBlock(SplitPoint, 
-                                  BlockToSplit->getName()+".tail");
-  // New now lives in whichever loop that BB used to.
-  if (Loop *L = LI->getLoopFor(BlockToSplit))
-    L->addBasicBlockToLoop(New, *LI);
-  return New;
 }
   
 
@@ -477,10 +507,12 @@ void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond,
   // to branch to: this is the exit block out of the loop that we should
   // short-circuit to.
   
-  // Split this edge now, so that the loop maintains its exit block.
+  // Split this block now, so that the loop maintains its exit block, and so
+  // that the jump from the preheader can execute the contents of the exit block
+  // without actually branching to it (the exit block should be dominated by the
+  // loop header, not the preheader).
   assert(!L->contains(ExitBlock) && "Exit block is in the loop?");
-  BasicBlock *NewExit = SplitEdge(L->getLoopLatch(), ExitBlock);
-  assert(NewExit != ExitBlock && "Edge not split!");
+  BasicBlock *NewExit = SplitBlock(ExitBlock, ExitBlock->begin());
     
   // Okay, now we have a position to branch from and a position to branch to, 
   // insert the new conditional branch.
