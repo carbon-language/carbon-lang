@@ -64,3 +64,15 @@ Number 1 is the preferred solution.
 
 //===---------------------------------------------------------------------===//
 
+DAG combine this into mul A, 8:
+
+int %test(int %A) {
+  %B = mul int %A, 8  ;; shift
+  %C = add int %B, 7  ;; dead, no demanded bits.
+  %D = and int %C, -8 ;; dead once add is gone.
+  ret int %D
+}
+
+This sort of thing occurs in the alloca lowering code and other places that
+are generating alignment of an already aligned value.
+
