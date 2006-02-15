@@ -2423,19 +2423,19 @@ def CVTTSD2SIrm: I<0x2C, MRMSrcMem, (ops R32:$dst, f64mem:$src),
 def CVTSS2SDrr: I<0x5A, MRMSrcReg, (ops FR64:$dst, FR32:$src),
                   "cvtss2sd {$src, $dst|$dst, $src}",
                   [(set FR64:$dst, (fextend FR32:$src))]>,
-                Requires<[HasSSE2]>, XD;
+                Requires<[HasSSE2]>, XS;
 def CVTSS2SDrm: I<0x5A, MRMSrcMem, (ops FR64:$dst, f32mem:$src),
                   "cvtss2sd {$src, $dst|$dst, $src}",
                   [(set FR64:$dst, (fextend (loadf32 addr:$src)))]>,
-                Requires<[HasSSE2]>, XD;
+                Requires<[HasSSE2]>, XS;
 def CVTSD2SSrr: I<0x5A, MRMSrcReg, (ops FR32:$dst, FR64:$src),
                   "cvtsd2ss {$src, $dst|$dst, $src}",
                   [(set FR32:$dst, (fround FR64:$src))]>,
-                Requires<[HasSSE2]>, XS;
+                Requires<[HasSSE2]>, XD;
 def CVTSD2SSrm: I<0x5A, MRMSrcMem, (ops FR32:$dst, f64mem:$src), 
                   "cvtsd2ss {$src, $dst|$dst, $src}",
                   [(set FR32:$dst, (fround (loadf64 addr:$src)))]>,
-                Requires<[HasSSE2]>, XS;
+                Requires<[HasSSE2]>, XD;
 def CVTSI2SSrr: I<0x2A, MRMSrcReg, (ops FR32:$dst, R32:$src),
                   "cvtsi2ss {$src, $dst|$dst, $src}",
                   [(set FR32:$dst, (sint_to_fp R32:$src))]>,
