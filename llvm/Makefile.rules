@@ -1252,6 +1252,8 @@ ifneq ($(YaccFiles),)
 
 .PRECIOUS: $(YaccOutput)
 
+all:: $(YaccFiles:%.l=$(PROJ_SRC_DIR)/%.cpp.cvs)
+
 # Cancel built-in rules for yacc
 %.c: %.y 
 %.cpp: %.y
@@ -1265,10 +1267,21 @@ $(PROJ_SRC_DIR)/%.cpp $(PROJ_SRC_DIR)/%.h : $(PROJ_SRC_DIR)/%.y
 	$(Verb) $(MV) -f $*.tab.h $(PROJ_SRC_DIR)/$*.h
 	$(Echo) "*** DON'T FORGET TO CHECK IN $*.cpp and $*.h (generated files)"
 
-YaccObjs   := $(patsubst %.y,$(ObjDir)/%.o,$(YaccFiles))
-$(YaccObjs): $(ObjDir)/%.o : $(PROJ_SRC_DIR)/%.cpp
+# IFF the .y file has changed since it was last checked into CVS, copy the .y
+# file to .y.cvs and the generated .cpp/.h file to .cpp.cvs/.h.cvs.  We use this
+# mechanism so that people without flex can build LLVM by copying the .cvs files
+# to the source location and building them.
+$(YaccFiles:%.y=$(PROJ_SRC_DIR)/%.cpp.cvs): \
+$(PROJ_SRC_DIR)/%.cpp.cvs: $(PROJ_SRC_DIR)/%.cpp
+	$(Verb) $(CMP) -s $@ $< || \
+      ($(CP) $< $@; \
+       $(CP) $(PROJ_SRC_DIR)/$*.l $(PROJ_SRC_DIR)/$*.l.cvs; \
+       $(CP) $(PROJ_SRC_DIR)/$*.h $(PROJ_SRC_DIR)/$*.h.cvs)
 
-YaccOutput := $(addprefix $(patsubst %.y,%,$(YaccFiles)),.output)
+
+$(YaccFiles:%.y=$(ObjDir)/%.o): $(ObjDir)/%.o : $(PROJ_SRC_DIR)/%.cpp
+
+YaccOutput := $(YaccFiles:%.y=%.output)
 
 clean-local::
 	-$(Verb) $(RM) -f $(YaccOutput)
