@@ -22,14 +22,6 @@ loads from the static array.
 Get the C front-end to expand hypot(x,y) -> llvm.sqrt(x*x+y*y) when errno and
 precision don't matter (ffastmath).  Misc/mandel will like this. :)
 
-===-------------------------------------------------------------------------===
-
-For all targets, not just X86:
-When llvm.memcpy, llvm.memset, or llvm.memmove are lowered, they should be 
-optimized to a few store instructions if the source is constant and the length
-is smallish (< 8). This will greatly help some tests like Shootout/strcat.c
-and fldry.
-
 //===---------------------------------------------------------------------===//
 
 Solve this DAG isel folding deficiency:
