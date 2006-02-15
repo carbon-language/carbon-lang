@@ -1252,7 +1252,7 @@ ifneq ($(YaccFiles),)
 
 .PRECIOUS: $(YaccOutput)
 
-all:: $(YaccFiles:%.l=$(PROJ_SRC_DIR)/%.cpp.cvs)
+all:: $(YaccFiles:%.y=$(PROJ_SRC_DIR)/%.cpp.cvs)
 
 # Cancel built-in rules for yacc
 %.c: %.y 
@@ -1265,7 +1265,6 @@ $(PROJ_SRC_DIR)/%.cpp $(PROJ_SRC_DIR)/%.h : $(PROJ_SRC_DIR)/%.y
 	$(Verb) $(BISON) -v -d -p $(<F:%Parser.y=%) -o $*.tab.c $<
 	$(Verb) $(MV) -f $*.tab.c $(PROJ_SRC_DIR)/$*.cpp
 	$(Verb) $(MV) -f $*.tab.h $(PROJ_SRC_DIR)/$*.h
-	$(Echo) "*** DON'T FORGET TO CHECK IN $*.cpp and $*.h (generated files)"
 
 # IFF the .y file has changed since it was last checked into CVS, copy the .y
 # file to .y.cvs and the generated .cpp/.h file to .cpp.cvs/.h.cvs.  We use this
@@ -1275,7 +1274,7 @@ $(YaccFiles:%.y=$(PROJ_SRC_DIR)/%.cpp.cvs): \
 $(PROJ_SRC_DIR)/%.cpp.cvs: $(PROJ_SRC_DIR)/%.cpp
 	$(Verb) $(CMP) -s $@ $< || \
       ($(CP) $< $@; \
-       $(CP) $(PROJ_SRC_DIR)/$*.l $(PROJ_SRC_DIR)/$*.l.cvs; \
+       $(CP) $(PROJ_SRC_DIR)/$*.y $(PROJ_SRC_DIR)/$*.y.cvs; \
        $(CP) $(PROJ_SRC_DIR)/$*.h $(PROJ_SRC_DIR)/$*.h.cvs)
 
 
