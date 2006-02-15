@@ -1505,7 +1505,7 @@ void SelectionDAGLowering::visitFrameReturnAddress(CallInst &I, bool isFrame) {
 /// getMemsetValue - Vectorized representation of the memset value
 /// operand.
 static SDOperand getMemsetValue(SDOperand Value, MVT::ValueType VT,
-                                SelectionDAG &DAG, TargetLowering &TLI) {
+                                SelectionDAG &DAG) {
   MVT::ValueType CurVT = VT;
   if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Value)) {
     uint64_t Val   = C->getValue() & 255;
@@ -1634,7 +1634,7 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
         for (unsigned i = 0; i < NumMemOps; i++) {
           MVT::ValueType VT = MemOps[i];
           unsigned VTSize = getSizeInBits(VT) / 8;
-          SDOperand Value = getMemsetValue(Op2, VT, DAG, TLI);
+          SDOperand Value = getMemsetValue(Op2, VT, DAG);
           SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, getRoot(),
                                         Value,
                                         getMemBasePlusOffset(Op1, Offset, DAG, TLI),
