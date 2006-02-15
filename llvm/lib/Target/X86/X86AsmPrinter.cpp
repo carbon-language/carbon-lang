@@ -96,24 +96,31 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
 
     if (C->isNullValue() && /* FIXME: Verify correct */
         (I->hasInternalLinkage() || I->hasWeakLinkage() ||
-         I->hasLinkOnceLinkage())) {
+         I->hasLinkOnceLinkage() ||
+         (forDarwin && I->hasExternalLinkage() && !I->hasSection()))) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
-      SwitchSection(".data", I);
-      if (LCOMMDirective != NULL) {
-        if (I->hasInternalLinkage()) {
-          O << LCOMMDirective << name << "," << Size;
-          if (forDarwin)
-            O << "," << (AlignmentIsInBytes ? (1 << Align) : Align);
-        } else
-          O << COMMDirective  << name << "," << Size;
+      if (I->hasExternalLinkage()) {
+          O << "\t.global\t" << name << "\n";
+          O << "\t.zerofill __DATA__, __common, " << name << ", "
+            << Size << ", " << Align;
       } else {
-        if (I->hasInternalLinkage())
-          O <<"\t.local\t" << name << "\n";
-        O << COMMDirective  << name << "," << Size;
-        if (COMMDirectiveTakesAlignment)
-          O << "," << (AlignmentIsInBytes ? (1 << Align) : Align);
+        SwitchSection(".data", I);
+        if (LCOMMDirective != NULL) {
+          if (I->hasInternalLinkage()) {
+            O << LCOMMDirective << name << "," << Size;
+            if (forDarwin)
+              O << "," << (AlignmentIsInBytes ? (1 << Align) : Align);
+          } else
+            O << COMMDirective  << name << "," << Size;
+        } else {
+          if (I->hasInternalLinkage())
+            O << "\t.local\t" << name << "\n";
+          O << COMMDirective  << name << "," << Size;
+          if (COMMDirectiveTakesAlignment)
+            O << "," << (AlignmentIsInBytes ? (1 << Align) : Align);
+        }
+        O << "\t\t" << CommentString << " " << I->getName() << "\n";
       }
-      O << "\t\t" << CommentString << " " << I->getName() << "\n";
     } else {
       switch (I->getLinkage()) {
       case GlobalValue::LinkOnceLinkage:
