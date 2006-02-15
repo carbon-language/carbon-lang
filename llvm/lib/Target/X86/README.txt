@@ -443,8 +443,3 @@ It might be better to generate
 	movw al, 8(%edx)
 	
 when we can spare a register. It reduces code size.
-
-//===---------------------------------------------------------------------===//
-
-Use .zerofill on x86/darwin when appropriate.
-
