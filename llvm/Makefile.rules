@@ -951,6 +951,11 @@ endif
 # Object Build Rules: Build object files based on sources 
 ###############################################################################
 
+# FIXME: This should be checking for "if not GCC or ICC", not for "if HP-UX"
+ifeq ($(OS),HP-UX)
+  DISABLE_AUTO_DEPENDENCIES=1
+endif
+
 # Provide rule sets for when dependency generation is enabled
 ifndef DISABLE_AUTO_DEPENDENCIES
 
