@@ -519,8 +519,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           Ops.push_back(DAG.getConstant(SrcFile, MVT::i32));  // source file id
           Result = DAG.getNode(ISD::DEBUG_LOC, MVT::Other, Ops);
         } else {
-          unsigned Line = dyn_cast<ConstantSDNode>(LineOp)->getValue();
-          unsigned Col = dyn_cast<ConstantSDNode>(ColOp)->getValue();
+          unsigned Line = cast<ConstantSDNode>(LineOp)->getValue();
+          unsigned Col = cast<ConstantSDNode>(ColOp)->getValue();
           unsigned ID = DebugInfo->RecordLabel(Line, Col, SrcFile);
           Ops.push_back(DAG.getConstant(ID, MVT::i32));
           Result = DAG.getNode(ISD::DEBUG_LABEL, MVT::Other, Ops);

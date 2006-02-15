@@ -175,9 +175,6 @@ namespace {
     SDOperand visitLOAD(SDNode *N);
     SDOperand visitSTORE(SDNode *N);
 
-    SDOperand visitLOCATION(SDNode *N);
-    SDOperand visitDEBUGLOC(SDNode *N);
-
     SDOperand ReassociateOps(unsigned Opc, SDOperand LHS, SDOperand RHS);
     
     bool SimplifySelectOps(SDNode *SELECT, SDOperand LHS, SDOperand RHS);
@@ -568,8 +565,6 @@ SDOperand DAGCombiner::visit(SDNode *N) {
   case ISD::BRTWOWAY_CC:        return visitBRTWOWAY_CC(N);
   case ISD::LOAD:               return visitLOAD(N);
   case ISD::STORE:              return visitSTORE(N);
-  case ISD::LOCATION:           return visitLOCATION(N);
-  case ISD::DEBUG_LOC:          return visitDEBUGLOC(N);
   }
   return SDOperand();
 }
@@ -2158,35 +2153,6 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
   if (0 && Value.getOpcode() == ISD::BIT_CONVERT)
     return DAG.getNode(ISD::STORE, MVT::Other, Chain, Value.getOperand(0),
                        Ptr, SrcValue);
-  
-  return SDOperand();
-}
-
-SDOperand DAGCombiner::visitLOCATION(SDNode *N) {
-  SDOperand Chain    = N->getOperand(0);
-  
-  // Remove redundant locations (last one holds)
-  if (Chain.getOpcode() == ISD::LOCATION && Chain.hasOneUse()) {
-    return DAG.getNode(ISD::LOCATION, MVT::Other, Chain.getOperand(0),
-                                                  N->getOperand(1),
-                                                  N->getOperand(2),
-                                                  N->getOperand(3),
-                                                  N->getOperand(4));
-  }
-  
-  return SDOperand();
-}
-
-SDOperand DAGCombiner::visitDEBUGLOC(SDNode *N) {
-  SDOperand Chain    = N->getOperand(0);
-  
-  // Remove redundant debug locations (last one holds)
-  if (Chain.getOpcode() == ISD::DEBUG_LOC && Chain.hasOneUse()) {
-    return DAG.getNode(ISD::DEBUG_LOC, MVT::Other, Chain.getOperand(0),
-                                                   N->getOperand(1),
-                                                   N->getOperand(2),
-                                                   N->getOperand(3));
-  }
   
   return SDOperand();
 }
