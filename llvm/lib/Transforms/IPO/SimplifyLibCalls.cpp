@@ -284,7 +284,7 @@ public:
     if (!memcpy_func) {
       const Type *SBP = PointerType::get(Type::SByteTy);
       memcpy_func = M->getOrInsertFunction("llvm.memcpy", Type::VoidTy,SBP, SBP,
-                                           Type::UIntTy, Type::UIntTy, NULL);
+                                           TD->getIntPtrType(), Type::UIntTy, NULL);
     }
     return memcpy_func;
   }
@@ -483,7 +483,7 @@ public:
     std::vector<Value*> vals;
     vals.push_back(gep); // destination
     vals.push_back(ci->getOperand(2)); // source
-    vals.push_back(ConstantUInt::get(Type::UIntTy,len)); // length
+    vals.push_back(ConstantUInt::get(SLC.getIntPtrType(),len)); // length
     vals.push_back(ConstantUInt::get(Type::UIntTy,1)); // alignment
     new CallInst(SLC.get_memcpy(), vals, "", ci);
 
@@ -812,7 +812,7 @@ public:
     std::vector<Value*> vals;
     vals.push_back(dest); // destination
     vals.push_back(src); // source
-    vals.push_back(ConstantUInt::get(Type::UIntTy,len)); // length
+    vals.push_back(ConstantUInt::get(SLC.getIntPtrType(),len)); // length
     vals.push_back(ConstantUInt::get(Type::UIntTy,1)); // alignment
     new CallInst(SLC.get_memcpy(), vals, "", ci);
 
@@ -1444,7 +1444,7 @@ public:
       std::vector<Value*> args;
       args.push_back(ci->getOperand(1));
       args.push_back(ci->getOperand(2));
-      args.push_back(ConstantUInt::get(Type::UIntTy,len));
+      args.push_back(ConstantUInt::get(SLC.getIntPtrType(),len));
       args.push_back(ConstantUInt::get(Type::UIntTy,1));
       new CallInst(memcpy_func,args,"",ci);
       ci->replaceAllUsesWith(ConstantSInt::get(Type::IntTy,len));
@@ -1477,8 +1477,8 @@ public:
       Value *Len1 = BinaryOperator::createAdd(Len,
                                             ConstantInt::get(Len->getType(), 1),
                                               Len->getName()+"1", ci);
-      if (Len1->getType() != Type::UIntTy)
-        Len1 = new CastInst(Len1, Type::UIntTy, Len1->getName(), ci);
+      if (Len1->getType() != SLC.getIntPtrType())
+        Len1 = new CastInst(Len1, SLC.getIntPtrType(), Len1->getName(), ci);
       std::vector<Value*> args;
       args.push_back(CastToCStr(ci->getOperand(1), *ci));
       args.push_back(CastToCStr(ci->getOperand(3), *ci));
