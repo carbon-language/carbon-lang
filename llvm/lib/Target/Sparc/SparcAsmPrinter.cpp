@@ -40,7 +40,7 @@ namespace {
       Data16bitsDirective = "\t.half\t";
       Data32bitsDirective = "\t.word\t";
       Data64bitsDirective = 0;  // .xword is only supported by V9.
-      ZeroDirective = 0;  // no .zero or .space!
+      ZeroDirective = "\t.skip\t";
       CommentString = "!";
       ConstantPoolSection = "\t.section \".rodata\",#alloc\n";
     }
