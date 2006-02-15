@@ -211,7 +211,7 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::VAEND             , MVT::Other, Expand);
   setOperationAction(ISD::STACKSAVE         , MVT::Other, Expand); 
   setOperationAction(ISD::STACKRESTORE      , MVT::Other, Expand);
-  setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32  , Expand);
+  setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32  , Custom);
 
   setOperationAction(ISD::ConstantFP, MVT::f64, Expand);
   setOperationAction(ISD::ConstantFP, MVT::f32, Expand);
@@ -806,6 +806,27 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       Ops.push_back(V.getValue(1));
       return DAG.getNode(ISD::MERGE_VALUES, Tys, Ops);
     }
+  }
+  case ISD::DYNAMIC_STACKALLOC: {
+    SDOperand Chain = Op.getOperand(0);  // Legalize the chain.
+    SDOperand Size  = Op.getOperand(1);  // Legalize the size.
+    
+    unsigned SPReg = SP::O6;
+    SDOperand SP = DAG.getCopyFromReg(Chain, SPReg, MVT::i32);
+    SDOperand NewSP = DAG.getNode(ISD::SUB, MVT::i32, SP, Size);    // Value
+    Chain = DAG.getCopyToReg(SP.getValue(1), SPReg, NewSP);      // Output chain
+
+    // The resultant pointer is actually 16 words from the bottom of the stack,
+    // to provide a register spill area.
+    SDOperand NewVal = DAG.getNode(ISD::ADD, MVT::i32, NewSP,
+                                   DAG.getConstant(96, MVT::i32));
+    std::vector<MVT::ValueType> Tys;
+    Tys.push_back(MVT::i32);
+    Tys.push_back(MVT::Other);
+    std::vector<SDOperand> Ops;
+    Ops.push_back(NewVal);
+    Ops.push_back(Chain);
+    return DAG.getNode(ISD::MERGE_VALUES, Tys, Ops);
   }
   case ISD::RET: {
     SDOperand Copy;
