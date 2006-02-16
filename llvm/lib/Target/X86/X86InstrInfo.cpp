@@ -29,6 +29,7 @@ bool X86InstrInfo::isMoveInstr(const MachineInstr& MI,
   MachineOpCode oc = MI.getOpcode();
   if (oc == X86::MOV8rr || oc == X86::MOV16rr || oc == X86::MOV32rr ||
       oc == X86::FpMOV  || oc == X86::MOVSSrr || oc == X86::MOVSDrr ||
+      oc == X86::FsMOVAPSrr || oc == X86::FsMOVAPDrr ||
       oc == X86::MOVAPSrr || oc == X86::MOVAPDrr) {
       assert(MI.getNumOperands() == 2 &&
              MI.getOperand(0).isRegister() &&

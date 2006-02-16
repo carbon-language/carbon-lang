@@ -114,9 +114,9 @@ void X86RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
   } else if (RC == &X86::RFPRegClass || RC == &X86::RSTRegClass) {
     Opc = X86::FpMOV;
   } else if (RC == &X86::FR32RegClass || RC == &X86::V4F4RegClass) {
-    Opc = X86::MOVAPSrr;
+    Opc = X86::FsMOVAPSrr;
   } else if (RC == &X86::FR64RegClass || RC == &X86::V2F8RegClass) {
-    Opc = X86::MOVAPDrr;
+    Opc = X86::FsMOVAPDrr;
   } else {
     assert(0 && "Unknown regclass");
     abort();
@@ -313,6 +313,9 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr* MI,
     case X86::CMP8ri:    return MakeMIInst(X86::CMP8mi , FrameIndex, MI);
     case X86::CMP16ri:   return MakeMIInst(X86::CMP16mi, FrameIndex, MI);
     case X86::CMP32ri:   return MakeMIInst(X86::CMP32mi, FrameIndex, MI);
+    // Alias scalar SSE instructions
+    case X86::FsMOVAPSrr: return MakeMRInst(X86::MOVSSmr, FrameIndex, MI);
+    case X86::FsMOVAPDrr: return MakeMRInst(X86::MOVSDmr, FrameIndex, MI);
     // Scalar SSE instructions
     case X86::MOVSSrr:   return MakeMRInst(X86::MOVSSmr, FrameIndex, MI);
     case X86::MOVSDrr:   return MakeMRInst(X86::MOVSDmr, FrameIndex, MI);
@@ -393,6 +396,9 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr* MI,
     case X86::MOVZX16rr8:return MakeRMInst(X86::MOVZX16rm8 , FrameIndex, MI);
     case X86::MOVZX32rr8:return MakeRMInst(X86::MOVZX32rm8, FrameIndex, MI);
     case X86::MOVZX32rr16:return MakeRMInst(X86::MOVZX32rm16, FrameIndex, MI);
+    // Alias scalar SSE instructions
+    case X86::FsMOVAPSrr:return MakeRMInst(X86::MOVSSrm, FrameIndex, MI);
+    case X86::FsMOVAPDrr:return MakeRMInst(X86::MOVSDrm, FrameIndex, MI);
     // Scalar SSE instructions
     case X86::MOVSSrr:   return MakeRMInst(X86::MOVSSrm, FrameIndex, MI);
     case X86::MOVSDrr:   return MakeRMInst(X86::MOVSDrm, FrameIndex, MI);

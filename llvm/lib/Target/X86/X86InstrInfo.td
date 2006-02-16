@@ -2487,13 +2487,13 @@ def UCOMISDrm: I<0x2E, MRMSrcMem, (ops FR64:$src1, f64mem:$src2),
                  [(X86cmp FR64:$src1, (loadf64 addr:$src2))]>,
                Requires<[HasSSE2]>, TB, OpSize;
 
-// Pseudo-instructions that map fld0 to xorps/xorpd for sse.
+// Pseudo-instructions that map fld0 to pxor for sse.
 // FIXME: remove when we can teach regalloc that xor reg, reg is ok.
-def FLD0SS : I<0x57, MRMInitReg, (ops FR32:$dst),
-               "xorps $dst, $dst", [(set FR32:$dst, fp32imm0)]>,
+def FLD0SS : I<0xEF, MRMInitReg, (ops FR32:$dst),
+               "pxor $dst, $dst", [(set FR32:$dst, fp32imm0)]>,
              Requires<[HasSSE1]>, TB;
-def FLD0SD : I<0x57, MRMInitReg, (ops FR64:$dst),
-               "xorpd $dst, $dst", [(set FR64:$dst, fp64imm0)]>,
+def FLD0SD : I<0xEF, MRMInitReg, (ops FR64:$dst),
+               "pxor $dst, $dst", [(set FR64:$dst, fp64imm0)]>,
              Requires<[HasSSE2]>, TB, OpSize;
 
 let isTwoAddress = 1 in {
@@ -3033,13 +3033,22 @@ def MOVAPDmr : I<0x29, MRMDestMem, (ops f128mem:$dst, V2F8:$src),
                 "movapd {$src, $dst|$dst, $src}",[]>,
                Requires<[HasSSE2]>, TB, OpSize;
 
-// Pseudo-instructions to load FR32 / FR64 from f128mem using movaps / movapd.
+// Alias instructions to do FR32 / FR64 reg-to-reg copy using movaps / movapd.
 // Upper bits are disregarded.
-def MOVSAPSrm : I<0x28, MRMSrcMem, (ops FR32:$dst, f128mem:$src),
-                  "movaps {$src, $dst|$dst, $src}",
-                  [(set FR32:$dst, (X86loadpf32 addr:$src))]>,
-                Requires<[HasSSE1]>, TB;
-def MOVSAPDrm : I<0x28, MRMSrcMem, (ops FR64:$dst, f128mem:$src),
+def FsMOVAPSrr : I<0x28, MRMSrcReg, (ops V4F4:$dst, V4F4:$src),
+                   "movaps {$src, $dst|$dst, $src}", []>,
+                 Requires<[HasSSE1]>, TB;
+def FsMOVAPDrr : I<0x28, MRMSrcReg, (ops V2F8:$dst, V2F8:$src),
+                   "movapd {$src, $dst|$dst, $src}", []>,
+                 Requires<[HasSSE2]>, TB, OpSize;
+
+// Alias instructions to load FR32 / FR64 from f128mem using movaps / movapd.
+// Upper bits are disregarded.
+def FsMOVAPSrm : I<0x28, MRMSrcMem, (ops FR32:$dst, f128mem:$src),
+                   "movaps {$src, $dst|$dst, $src}",
+                   [(set FR32:$dst, (X86loadpf32 addr:$src))]>,
+                 Requires<[HasSSE1]>, TB;
+def FsMOVAPDrm : I<0x28, MRMSrcMem, (ops FR64:$dst, f128mem:$src),
                   "movapd {$src, $dst|$dst, $src}",
                   [(set FR64:$dst, (X86loadpf64 addr:$src))]>,
                 Requires<[HasSSE2]>, TB, OpSize;
