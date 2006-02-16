@@ -197,9 +197,9 @@ static bool IsTrivialUnswitchCondition(Loop *L, Value *Cond,
     // side-effects.  If so, determine the value of Cond that causes it to do
     // this.
     if ((LoopExitBB = isTrivialLoopExitBlock(L, BI->getSuccessor(0)))) {
-      if (Val) *Val = ConstantBool::True;
-    } else if ((LoopExitBB = isTrivialLoopExitBlock(L, BI->getSuccessor(1)))) {
       if (Val) *Val = ConstantBool::False;
+    } else if ((LoopExitBB = isTrivialLoopExitBlock(L, BI->getSuccessor(1)))) {
+      if (Val) *Val = ConstantBool::True;
     }
   } else if (SwitchInst *SI = dyn_cast<SwitchInst>(HeaderTerm)) {
     // If this isn't a switch on Cond, we can't handle it.
