@@ -397,9 +397,10 @@ bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val,Loop *L){
 /// the loop info is updated.
 ///
 BasicBlock *LoopUnswitch::SplitBlock(BasicBlock *Old, Instruction *SplitPt) {
-  while (isa<PHINode>(SplitPt))
-    ++SplitPt;
-  BasicBlock *New = Old->splitBasicBlock(SplitPt, Old->getName()+".split");
+  BasicBlock::iterator SplitIt = SplitPt;
+  while (isa<PHINode>(SplitIt))
+    ++SplitIt;
+  BasicBlock *New = Old->splitBasicBlock(SplitIt, Old->getName()+".split");
 
   // The new block lives in whichever loop the old one did.
   if (Loop *L = LI->getLoopFor(Old))
@@ -703,27 +704,30 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
   // Haha, this loop could be unswitched.  Get it? The unswitch pass could
   // unswitch itself. Amazing.
   for (unsigned i = 0, e = Users.size(); i != e; ++i)
-    if (Instruction *U = cast<Instruction>(Users[i]))
-      if (L->contains(U->getParent()))
-        if (IsEqual) {
-          U->replaceUsesOfWith(LIC, Val);
-        } else if (NotVal) {
-          U->replaceUsesOfWith(LIC, NotVal);
-        } else {
-          // If we know that LIC is not Val, use this info to simplify code.
-          if (SwitchInst *SI = dyn_cast<SwitchInst>(U)) {
-            for (unsigned i = 1, e = SI->getNumCases(); i != e; ++i) {
-              if (SI->getCaseValue(i) == Val) {
-                // Found a dead case value.  Don't remove PHI nodes in the 
-                // successor if they become single-entry, those PHI nodes may
-                // be in the Users list.
-                SI->getSuccessor(i)->removePredecessor(SI->getParent(), true);
-                SI->removeCase(i);
-                break;
-              }
+    if (Instruction *U = cast<Instruction>(Users[i])) {
+      if (!L->contains(U->getParent()))
+        continue;
+  
+      if (IsEqual) {
+        U->replaceUsesOfWith(LIC, Val);
+      } else if (NotVal) {
+        U->replaceUsesOfWith(LIC, NotVal);
+      } else {
+        // If we know that LIC is not Val, use this info to simplify code.
+        if (SwitchInst *SI = dyn_cast<SwitchInst>(U)) {
+          for (unsigned i = 1, e = SI->getNumCases(); i != e; ++i) {
+            if (SI->getCaseValue(i) == Val) {
+              // Found a dead case value.  Don't remove PHI nodes in the 
+              // successor if they become single-entry, those PHI nodes may
+              // be in the Users list.
+              SI->getSuccessor(i)->removePredecessor(SI->getParent(), true);
+              SI->removeCase(i);
+              break;
             }
           }
-
-          // TODO: We could simplify stuff like X == C.
         }
+
+        // TODO: We could simplify stuff like X == C.
+      }
+    }
 }
