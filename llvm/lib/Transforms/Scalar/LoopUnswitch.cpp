@@ -426,7 +426,6 @@ BasicBlock *LoopUnswitch::SplitEdge(BasicBlock *BB, BasicBlock *Succ) {
 
   // If the edge isn't critical, then BB has a single successor or Succ has a
   // single pred.  Split the block.
-  BasicBlock *BlockToSplit;
   BasicBlock::iterator SplitPoint;
   if (BasicBlock *SP = Succ->getSinglePredecessor()) {
     // If the successor only has a single pred, split the top of the successor
