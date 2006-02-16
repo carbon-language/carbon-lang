@@ -1772,6 +1772,25 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       (unsigned)cast<ConstantSDNode>(Op.getOperand(4))->getValue();
     if (Align == 0) Align = 1;
 
+    ConstantSDNode *I = dyn_cast<ConstantSDNode>(Op.getOperand(3));
+    // If not DWORD aligned, call memset if size is less than the threshold.
+    // It knows how to align to the right boundary first.
+    if ((Align & 3) != 0 &&
+        !(I && I->getValue() >= Subtarget->getMinRepStrSizeThreshold())) {
+      MVT::ValueType IntPtr = getPointerTy();
+      const Type *IntPtrTy = getTargetData().getIntPtrType();
+      std::vector<std::pair<SDOperand, const Type*> > Args;
+      Args.push_back(std::make_pair(Op.getOperand(1), IntPtrTy));
+      // Extend the ubyte argument to be an int value for the call.
+      SDOperand Val = DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, Op.getOperand(2));
+      Args.push_back(std::make_pair(Val, IntPtrTy));
+      Args.push_back(std::make_pair(Op.getOperand(3), IntPtrTy));
+      std::pair<SDOperand,SDOperand> CallResult =
+        LowerCallTo(Chain, Type::VoidTy, false, CallingConv::C, false,
+                    DAG.getExternalSymbol("memset", IntPtr), Args, DAG);
+      return CallResult.second;
+    }
+
     MVT::ValueType AVT;
     SDOperand Count;
     if (ConstantSDNode *ValC = dyn_cast<ConstantSDNode>(Op.getOperand(2))) {
@@ -1782,7 +1801,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       switch (Align & 3) {
       case 2:   // WORD aligned
         AVT = MVT::i16;
-        if (ConstantSDNode *I = dyn_cast<ConstantSDNode>(Op.getOperand(3)))
+        if (I)
           Count = DAG.getConstant(I->getValue() / 2, MVT::i32);
         else
           Count = DAG.getNode(ISD::SRL, MVT::i32, Op.getOperand(3),
@@ -1792,7 +1811,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
         break;
       case 0:   // DWORD aligned
         AVT = MVT::i32;
-        if (ConstantSDNode *I = dyn_cast<ConstantSDNode>(Op.getOperand(3)))
+        if (I)
           Count = DAG.getConstant(I->getValue() / 4, MVT::i32);
         else
           Count = DAG.getNode(ISD::SRL, MVT::i32, Op.getOperand(3),
@@ -1812,7 +1831,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
                                 InFlag);
       InFlag = Chain.getValue(1);
     } else {
-      AVT    = MVT::i8;
+      AVT = MVT::i8;
       Count  = Op.getOperand(3);
       Chain  = DAG.getCopyToReg(Chain, X86::AL, Op.getOperand(2), InFlag);
       InFlag = Chain.getValue(1);
@@ -1832,20 +1851,36 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       (unsigned)cast<ConstantSDNode>(Op.getOperand(4))->getValue();
     if (Align == 0) Align = 1;
 
+    ConstantSDNode *I = dyn_cast<ConstantSDNode>(Op.getOperand(3));
+    // If not DWORD aligned, call memcpy if size is less than the threshold.
+    // It knows how to align to the right boundary first.
+    if ((Align & 3) != 0 &&
+        !(I && I->getValue() >= Subtarget->getMinRepStrSizeThreshold())) {
+      MVT::ValueType IntPtr = getPointerTy();
+      const Type *IntPtrTy = getTargetData().getIntPtrType();
+      std::vector<std::pair<SDOperand, const Type*> > Args;
+      Args.push_back(std::make_pair(Op.getOperand(1), IntPtrTy));
+      Args.push_back(std::make_pair(Op.getOperand(2), IntPtrTy));
+      Args.push_back(std::make_pair(Op.getOperand(3), IntPtrTy));
+      std::pair<SDOperand,SDOperand> CallResult =
+        LowerCallTo(Chain, Type::VoidTy, false, CallingConv::C, false,
+                    DAG.getExternalSymbol("memcpy", IntPtr), Args, DAG);
+      return CallResult.second;
+    }
+
     MVT::ValueType AVT;
     SDOperand Count;
     switch (Align & 3) {
     case 2:   // WORD aligned
       AVT = MVT::i16;
-      if (ConstantSDNode *I = dyn_cast<ConstantSDNode>(Op.getOperand(3)))
+      if (I)
         Count = DAG.getConstant(I->getValue() / 2, MVT::i32);
       else
-        Count = DAG.getNode(ISD::SRL, MVT::i32, Op.getOperand(3),
-                            DAG.getConstant(1, MVT::i8));
+        Count = DAG.getConstant(I->getValue() / 2, MVT::i32);
       break;
     case 0:   // DWORD aligned
       AVT = MVT::i32;
-      if (ConstantSDNode *I = dyn_cast<ConstantSDNode>(Op.getOperand(3)))
+      if (I)
         Count = DAG.getConstant(I->getValue() / 4, MVT::i32);
       else
         Count = DAG.getNode(ISD::SRL, MVT::i32, Op.getOperand(3),

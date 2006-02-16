@@ -146,6 +146,8 @@ static const char *GetCurrentX86CPU() {
 
 X86Subtarget::X86Subtarget(const Module &M, const std::string &FS) {
   stackAlignment = 8;
+  // FIXME: this is a known good value for Yonah. Not sure about others.
+  MinRepStrSizeThreshold = 128;
   indirectExternAndWeakGlobals = false;
   X86SSELevel = NoMMXSSE;
   X863DNowLevel = NoThreeDNow;

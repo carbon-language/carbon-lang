@@ -44,6 +44,9 @@ protected:
   /// entry to the function and which must be maintained by every function.
   unsigned stackAlignment;
 
+  /// Min. memset / memcpy size that is turned into rep/movs, rep/stos ops.
+  unsigned MinRepStrSizeThreshold;
+
   /// Used by instruction selector
   bool indirectExternAndWeakGlobals;
 
@@ -62,6 +65,12 @@ public:
   /// function for this subtarget.
   unsigned getStackAlignment() const { return stackAlignment; }
 
+  /// getMinRepStrSizeThreshold - Returns the minimum memset / memcpy size
+  /// required to turn the operation into a X86 rep/movs or rep/stos
+  /// instruction. This is only used if the src / dst alignment is not DWORD
+  /// aligned.
+  unsigned getMinRepStrSizeThreshold() const { return MinRepStrSizeThreshold; }
+ 
   /// Returns true if the instruction selector should treat global values
   /// referencing external or weak symbols as indirect rather than direct
   /// references.
