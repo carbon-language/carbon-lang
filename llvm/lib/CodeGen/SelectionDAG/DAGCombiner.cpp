@@ -98,6 +98,18 @@ namespace {
       DAG.DeleteNode(N);
       return SDOperand(N, 0);
     }
+    
+    bool DemandedBitsAreZero(SDOperand Op, uint64_t DemandedMask,
+                             SDOperand &Old, SDOperand &New) const {
+      TargetLowering::TargetLoweringOpt TLO(DAG);
+      uint64_t KnownZero, KnownOne;
+      if (TLI.SimplifyDemandedBits(Op, DemandedMask, KnownZero, KnownOne, TLO)){
+        Old = TLO.Old;
+        New = TLO.New;
+        return true;
+      }
+      return false;
+    }
 
     SDOperand CombineTo(SDNode *N, SDOperand Res) {
       std::vector<SDOperand> To;
@@ -897,12 +909,8 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
   if (N1C && N1C->isAllOnesValue())
     return N0;
   // if (and x, c) is known to be zero, return 0
-  if (N1C && TLI.MaskedValueIsZero(SDOperand(N, 0), ~0ULL >> (64-OpSizeInBits)))
+  if (N1C && TLI.MaskedValueIsZero(SDOperand(N, 0), MVT::getIntVTBitMask(VT)))
     return DAG.getConstant(0, VT);
-  // fold (and x, c) -> x iff (x & ~c) == 0
-  if (N1C && 
-      TLI.MaskedValueIsZero(N0, ~N1C->getValue() & (~0ULL>>(64-OpSizeInBits))))
-    return N0;
   // reassociate and
   SDOperand RAND = ReassociateOps(ISD::AND, N0, N1);
   if (RAND.Val != 0)
@@ -984,37 +992,11 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
   }
   // fold (and (sign_extend_inreg x, i16 to i32), 1) -> (and x, 1)
   // fold (and (sra)) -> (and (srl)) when possible.
-  if (TLI.DemandedBitsAreZero(SDOperand(N, 0), ~0ULL >> (64-OpSizeInBits), Old, 
-                              New, DAG)) {
+  if (DemandedBitsAreZero(SDOperand(N, 0), MVT::getIntVTBitMask(VT), Old, 
+                          New)) {
     WorkList.push_back(N);
     CombineTo(Old.Val, New);
     return SDOperand();
-  }
-  // FIXME: DemandedBitsAreZero cannot currently handle AND with non-constant
-  // RHS and propagate known cleared bits to LHS.  For this reason, we must keep
-  // this fold, for now, for the following testcase:
-  //
-  //int %test2(uint %mode.0.i.0) {
-  //  %tmp.79 = cast uint %mode.0.i.0 to int
-  //  %tmp.80 = shr int %tmp.79, ubyte 15
-  //  %tmp.81 = shr uint %mode.0.i.0, ubyte 16
-  //  %tmp.82 = cast uint %tmp.81 to int
-  //  %tmp.83 = and int %tmp.80, %tmp.82
-  //  ret int %tmp.83
-  //}
-  // fold (and (sra)) -> (and (srl)) when possible.
-  if (N0.getOpcode() == ISD::SRA && N0.Val->hasOneUse()) {
-    if (ConstantSDNode *N01C = dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
-      // If the RHS of the AND has zeros where the sign bits of the SRA will
-      // land, turn the SRA into an SRL.
-      if (TLI.MaskedValueIsZero(N1, (~0ULL << (OpSizeInBits-N01C->getValue())) &
-                                (~0ULL>>(64-OpSizeInBits)))) {
-        WorkList.push_back(N);
-        CombineTo(N0.Val, DAG.getNode(ISD::SRL, VT, N0.getOperand(0),
-                                      N0.getOperand(1)));
-        return SDOperand();
-      }
-    }
   }
   // fold (zext_inreg (extload x)) -> (zextload x)
   if (N0.getOpcode() == ISD::EXTLOAD) {
@@ -1298,8 +1280,8 @@ SDOperand DAGCombiner::visitSHL(SDNode *N) {
   // if (shl x, c) is known to be zero, return 0
   if (N1C && TLI.MaskedValueIsZero(SDOperand(N, 0), ~0ULL >> (64-OpSizeInBits)))
     return DAG.getConstant(0, VT);
-  if (N1C && TLI.DemandedBitsAreZero(SDOperand(N,0), ~0ULL >> (64-OpSizeInBits),
-                                     Old, New, DAG)) {
+  if (N1C && DemandedBitsAreZero(SDOperand(N,0), ~0ULL >> (64-OpSizeInBits),
+                                 Old, New)) {
     WorkList.push_back(N);
     CombineTo(Old.Val, New);
     return SDOperand();

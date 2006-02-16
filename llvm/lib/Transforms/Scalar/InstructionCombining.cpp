@@ -767,9 +767,9 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, uint64_t DemandedMask,
     if ((DemandedMask & (~KnownZero) & KnownOne2) == 
         (DemandedMask & (~KnownZero)))
       return UpdateValueUsesWith(I, I->getOperand(0));
-      if ((DemandedMask & (~KnownZero2) & KnownOne) == 
-          (DemandedMask & (~KnownZero2)))
-        return UpdateValueUsesWith(I, I->getOperand(1));
+    if ((DemandedMask & (~KnownZero2) & KnownOne) == 
+        (DemandedMask & (~KnownZero2)))
+      return UpdateValueUsesWith(I, I->getOperand(1));
         
     // If the RHS is a constant, see if we can simplify it.
     if (ShrinkDemandedConstant(I, 1, DemandedMask))

@@ -23,6 +23,7 @@
 #define LLVM_TARGET_TARGETLOWERING_H
 
 #include "llvm/Type.h"
+#include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/DataTypes.h"
 #include <vector>
@@ -284,22 +285,55 @@ public:
   // TargetLowering Optimization Methods
   //
   
+  /// TargetLoweringOpt - A convenience struct that encapsulates a DAG, and two
+  /// SDOperands for returning information from TargetLowering to its clients
+  /// that want to combine 
+  struct TargetLoweringOpt {
+    SelectionDAG &DAG;
+    SDOperand Old;
+    SDOperand New;
+
+    TargetLoweringOpt::TargetLoweringOpt(SelectionDAG &InDAG) : DAG(InDAG) {}
+    
+    bool CombineTo(SDOperand O, SDOperand N) { 
+      Old = O; 
+      New = N; 
+      return true;
+    }
+    
+    /// ShrinkDemandedConstant - Check to see if the specified operand of the 
+    /// specified instruction is a constant integer.  If so, check to see if there
+    /// are any bits set in the constant that are not demanded.  If so, shrink the
+    /// constant and return true.
+    bool ShrinkDemandedConstant(SDOperand Op, uint64_t Demanded);
+  };
+                                                
   /// MaskedValueIsZero - Return true if 'Op & Mask' is known to be zero.  We
   /// use this predicate to simplify operations downstream.  Op and Mask are
-  /// known to be the same type.  Targets can implement the 
-  /// isMaskedValueZeroForTargetNode method, to allow target nodes to be
-  /// understood.
-  bool MaskedValueIsZero(const SDOperand &Op, uint64_t Mask) const;
+  /// known to be the same type.
+  bool MaskedValueIsZero(SDOperand Op, uint64_t Mask, unsigned Depth = 0)
+    const;
   
-  /// DemandedBitsAreZero - Return true if 'Op & Mask' demands no bits from a 
-  /// bit set operation such as a sign extend or or/xor with constant whose only
-  /// use is Op.  If it returns true, the old node that sets bits which are
-  /// not demanded is returned in Old, and its replacement node is returned in
-  /// New, such that callers of SetBitsAreZero may call CombineTo on them if
-  /// desired.
-  bool DemandedBitsAreZero(const SDOperand &Op, uint64_t Mask, SDOperand &Old,
-                           SDOperand &New, SelectionDAG &DAG) const;
-
+  /// ComputeMaskedBits - Determine which of the bits specified in Mask are
+  /// known to be either zero or one and return them in the KnownZero/KnownOne
+  /// bitsets.  This code only analyzes bits in Mask, in order to short-circuit
+  /// processing.  Targets can implement the computeMaskedBitsForTargetNode 
+  /// method, to allow target nodes to be understood.
+  void ComputeMaskedBits(SDOperand Op, uint64_t Mask, uint64_t &KnownZero,
+                         uint64_t &KnownOne, unsigned Depth = 0) const;
+    
+  /// SimplifyDemandedBits - Look at Op.  At this point, we know that only the
+  /// DemandedMask bits of the result of Op are ever used downstream.  If we can
+  /// use this information to simplify Op, create a new simplified DAG node and
+  /// return true, returning the original and new nodes in Old and New. 
+  /// Otherwise, analyze the expression and return a mask of KnownOne and 
+  /// KnownZero bits for the expression (used to simplify the caller).  
+  /// The KnownZero/One bits may only be accurate for those bits in the 
+  /// DemandedMask.
+  bool SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask, 
+                            uint64_t &KnownZero, uint64_t &KnownOne,
+                            TargetLoweringOpt &TLO, unsigned Depth = 0) const;
+  
   //===--------------------------------------------------------------------===//
   // TargetLowering Configuration Methods - These methods should be invoked by
   // the derived class constructor to configure this object for the target.
@@ -433,10 +467,14 @@ public:
   /// DAG node.
   virtual const char *getTargetNodeName(unsigned Opcode) const;
 
-  /// isMaskedValueZeroForTargetNode - Return true if 'Op & Mask' is known to
-  /// be zero. Op is expected to be a target specific node.
-  virtual bool isMaskedValueZeroForTargetNode(const SDOperand &Op,
-                                              uint64_t Mask) const;
+  /// computeMaskedBitsForTargetNode - Determine which of the bits specified in
+  /// Mask are known to be either zero or one and return them in the 
+  /// KnownZero/KnownOne bitsets.
+  virtual void computeMaskedBitsForTargetNode(const SDOperand Op,
+                                              uint64_t Mask,
+                                              uint64_t &KnownZero, 
+                                              uint64_t &KnownOne,
+                                              unsigned Depth = 0) const;
 
   //===--------------------------------------------------------------------===//
   // Inline Asm Support hooks

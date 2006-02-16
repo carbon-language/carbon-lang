@@ -98,11 +98,14 @@ namespace {
     SparcTargetLowering(TargetMachine &TM);
     virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
     
-    /// isMaskedValueZeroForTargetNode - Return true if 'Op & Mask' is known to
-    /// be zero. Op is expected to be a target specific node. Used by DAG
-    /// combiner.
-    virtual bool isMaskedValueZeroForTargetNode(const SDOperand &Op,
-                                                uint64_t Mask) const;
+    /// computeMaskedBitsForTargetNode - Determine which of the bits specified 
+    /// in Mask are known to be either zero or one and return them in the 
+    /// KnownZero/KnownOne bitsets.
+    virtual void computeMaskedBitsForTargetNode(const SDOperand Op,
+                                                uint64_t Mask,
+                                                uint64_t &KnownZero, 
+                                                uint64_t &KnownOne,
+                                                unsigned Depth = 0) const;
     
     virtual std::vector<SDOperand>
       LowerArguments(Function &F, SelectionDAG &DAG);
@@ -246,19 +249,29 @@ const char *SparcTargetLowering::getTargetNodeName(unsigned Opcode) const {
 /// isMaskedValueZeroForTargetNode - Return true if 'Op & Mask' is known to
 /// be zero. Op is expected to be a target specific node. Used by DAG
 /// combiner.
-bool SparcTargetLowering::
-isMaskedValueZeroForTargetNode(const SDOperand &Op, uint64_t Mask) const {
+void SparcTargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
+                                                         uint64_t Mask,
+                                                         uint64_t &KnownZero, 
+                                                         uint64_t &KnownOne,
+                                                         unsigned Depth) const {
+  uint64_t KnownZero2, KnownOne2;
+  KnownZero = KnownOne = 0;   // Don't know anything.
+  
   switch (Op.getOpcode()) {
-  default: return false; 
+  default: break;
   case SPISD::SELECT_ICC:
   case SPISD::SELECT_FCC:
-    assert(MVT::isInteger(Op.getValueType()) && "Not an integer select!");
-    // These operations are masked zero if both the left and the right are zero.
-    return MaskedValueIsZero(Op.getOperand(0), Mask) &&
-           MaskedValueIsZero(Op.getOperand(1), Mask);
+    ComputeMaskedBits(Op.getOperand(1), Mask, KnownZero, KnownOne, Depth+1);
+    ComputeMaskedBits(Op.getOperand(0), Mask, KnownZero2, KnownOne2, Depth+1);
+    assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
+    assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?"); 
+    
+    // Only known if known in both the LHS and RHS.
+    KnownOne &= KnownOne2;
+    KnownZero &= KnownZero2;
+    break;
   }
 }
-
 
 /// LowerArguments - V8 uses a very simple ABI, where all values are passed in
 /// either one or two GPRs, including FP values.  TODO: we should pass FP values

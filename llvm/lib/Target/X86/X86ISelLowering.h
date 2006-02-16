@@ -218,12 +218,15 @@ namespace llvm {
     /// DAG node.
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
-    /// isMaskedValueZeroForTargetNode - Return true if 'Op & Mask' is known to
-    /// be zero. Op is expected to be a target specific node. Used by DAG
-    /// combiner.
-    virtual bool isMaskedValueZeroForTargetNode(const SDOperand &Op,
-                                                uint64_t Mask) const;
-
+    /// computeMaskedBitsForTargetNode - Determine which of the bits specified 
+    /// in Mask are known to be either zero or one and return them in the 
+    /// KnownZero/KnownOne bitsets.
+    virtual void computeMaskedBitsForTargetNode(const SDOperand Op,
+                                                uint64_t Mask,
+                                                uint64_t &KnownZero, 
+                                                uint64_t &KnownOne,
+                                                unsigned Depth = 0) const;
+    
     SDOperand getReturnAddressFrameIndex(SelectionDAG &DAG);
 
     std::vector<unsigned> 

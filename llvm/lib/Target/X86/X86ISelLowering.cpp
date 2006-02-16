@@ -2035,19 +2035,23 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   }
 }
 
-bool X86TargetLowering::isMaskedValueZeroForTargetNode(const SDOperand &Op,
-                                                       uint64_t Mask) const {
+void X86TargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
+                                                       uint64_t Mask,
+                                                       uint64_t &KnownZero, 
+                                                       uint64_t &KnownOne,
+                                                       unsigned Depth) const {
 
   unsigned Opc = Op.getOpcode();
+  KnownZero = KnownOne = 0;   // Don't know anything.
 
   switch (Opc) {
   default:
     assert(Opc >= ISD::BUILTIN_OP_END && "Expected a target specific node");
     break;
-  case X86ISD::SETCC: return (Mask & 1) == 0;
+  case X86ISD::SETCC: 
+    KnownZero |= (MVT::getIntVTBitMask(Op.getValueType()) ^ 1ULL);
+    break;
   }
-
-  return false;
 }
 
 std::vector<unsigned> X86TargetLowering::
