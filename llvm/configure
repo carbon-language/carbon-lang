@@ -3078,7 +3078,7 @@ else
   enableval=all
 fi;
 case "$enableval" in
-  all) TARGETS_TO_BUILD="X86 Sparc SparcV9 PowerPC Alpha IA64 Skeleton" ;;
+  all) TARGETS_TO_BUILD="X86 Sparc SparcV9 PowerPC Alpha IA64" ;;
   host-only)
     case "$llvm_cv_target_arch" in
       x86)     TARGETS_TO_BUILD="X86" ;;
@@ -3100,7 +3100,6 @@ echo "$as_me: error: Can not set target to build" >&2;}
         powerpc) TARGETS_TO_BUILD="PowerPC $TARGETS_TO_BUILD" ;;
         alpha)   TARGETS_TO_BUILD="Alpha $TARGETS_TO_BUILD" ;;
         ia64)    TARGETS_TO_BUILD="IA64 $TARGETS_TO_BUILD" ;;
-        skeleton)TARGETS_TO_BUILD="Skeleton $TARGETS_TO_BUILD";;
         *) { { echo "$as_me:$LINENO: error: Unrecognized target $a_target" >&5
 echo "$as_me: error: Unrecognized target $a_target" >&2;}
    { (exit 1); exit 1; }; } ;;
