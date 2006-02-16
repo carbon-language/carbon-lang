@@ -725,7 +725,7 @@ SDOperand DAGCombiner::visitSDIV(SDNode *N) {
   if (TLI.MaskedValueIsZero(N1, SignBit) &&
       TLI.MaskedValueIsZero(N0, SignBit))
     return DAG.getNode(ISD::UDIV, N1.getValueType(), N0, N1);
-  // fold (sdiv X, pow2) -> (add (sra X, log(pow2)), (srl X, sizeof(X)-1))
+  // fold (sdiv X, pow2) -> simple ops.
   if (N1C && N1C->getValue() && !TLI.isIntDivCheap() && 
       (isPowerOf2_64(N1C->getSignExtended()) || 
        isPowerOf2_64(-N1C->getSignExtended()))) {
@@ -735,15 +735,21 @@ SDOperand DAGCombiner::visitSDIV(SDNode *N) {
       return SDOperand();
     int64_t pow2 = N1C->getSignExtended();
     int64_t abs2 = pow2 > 0 ? pow2 : -pow2;
-    SDOperand SRL = DAG.getNode(ISD::SRL, VT, N0,
+    unsigned lg2 = Log2_64(abs2);
+    // Splat the sign bit into the register
+    SDOperand SGN = DAG.getNode(ISD::SRA, VT, N0,
                                 DAG.getConstant(MVT::getSizeInBits(VT)-1,
                                                 TLI.getShiftAmountTy()));
-    WorkList.push_back(SRL.Val);
-    SDOperand SGN = DAG.getNode(ISD::ADD, VT, N0, SRL);
     WorkList.push_back(SGN.Val);
-    SDOperand SRA = DAG.getNode(ISD::SRA, VT, SGN, 
-                                DAG.getConstant(Log2_64(abs2),
+    // Add (N0 < 0) ? abs2 - 1 : 0;
+    SDOperand SRL = DAG.getNode(ISD::SRL, VT, SGN,
+                                DAG.getConstant(MVT::getSizeInBits(VT)-lg2,
                                                 TLI.getShiftAmountTy()));
+    SDOperand ADD = DAG.getNode(ISD::ADD, VT, N0, SRL);
+    WorkList.push_back(SRL.Val);
+    WorkList.push_back(ADD.Val);    // Divide by pow2
+    SDOperand SRA = DAG.getNode(ISD::SRA, VT, ADD,
+                                DAG.getConstant(lg2, TLI.getShiftAmountTy()));
     // If we're dividing by a positive value, we're done.  Otherwise, we must
     // negate the result.
     if (pow2 > 0)
