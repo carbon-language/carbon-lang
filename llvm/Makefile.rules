@@ -1231,7 +1231,7 @@ $(PROJ_SRC_DIR)/%.cpp: $(PROJ_SRC_DIR)/%.l
 # source location and building them.
 $(LexFiles:%.l=$(PROJ_SRC_DIR)/%.cpp.cvs): \
 $(PROJ_SRC_DIR)/%.cpp.cvs: $(PROJ_SRC_DIR)/%.cpp
-	$(Verb) $(CMP) -s $@ $< || \
+	$(Verb) $(CMP) -s $(PROJ_SRC_DIR)/$*.l $(PROJ_SRC_DIR)/$*.l.cvs || \
       ($(CP) $< $@; $(CP) $(PROJ_SRC_DIR)/$*.l $(PROJ_SRC_DIR)/$*.l.cvs)
 
 $(LexFiles:%.l=$(ObjDir)/%.o) : \
@@ -1272,7 +1272,7 @@ $(PROJ_SRC_DIR)/%.cpp $(PROJ_SRC_DIR)/%.h : $(PROJ_SRC_DIR)/%.y
 # to the source location and building them.
 $(YaccFiles:%.y=$(PROJ_SRC_DIR)/%.cpp.cvs): \
 $(PROJ_SRC_DIR)/%.cpp.cvs: $(PROJ_SRC_DIR)/%.cpp
-	$(Verb) $(CMP) -s $@ $< || \
+	$(Verb) $(CMP) -s $(PROJ_SRC_DIR)/$*.y $(PROJ_SRC_DIR)/$*.y.cvs || \
       ($(CP) $< $@; \
        $(CP) $(PROJ_SRC_DIR)/$*.y $(PROJ_SRC_DIR)/$*.y.cvs; \
        $(CP) $(PROJ_SRC_DIR)/$*.h $(PROJ_SRC_DIR)/$*.h.cvs)
