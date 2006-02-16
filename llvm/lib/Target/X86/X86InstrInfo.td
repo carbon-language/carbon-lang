@@ -3013,10 +3013,10 @@ def FLDCW16m  : I<0xD9, MRM5m,                   // X87 control world = [mem16]
 // XMM Packed Floating point support (requires SSE / SSE2)
 //===----------------------------------------------------------------------===//
 
-def MOVAPSrr : I<0x28, MRMSrcMem, (ops V4F4:$dst, V4F4:$src),
+def MOVAPSrr : I<0x28, MRMSrcReg, (ops V4F4:$dst, V4F4:$src),
                 "movaps {$src, $dst|$dst, $src}", []>,
                Requires<[HasSSE1]>, TB;
-def MOVAPDrr : I<0x28, MRMSrcMem, (ops V2F8:$dst, V2F8:$src),
+def MOVAPDrr : I<0x28, MRMSrcReg, (ops V2F8:$dst, V2F8:$src),
                 "movapd {$src, $dst|$dst, $src}", []>,
                Requires<[HasSSE2]>, TB, OpSize;
 
