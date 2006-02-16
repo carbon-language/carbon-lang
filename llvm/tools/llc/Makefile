@@ -23,11 +23,6 @@ ifneq ($(strip $(filter CBackend,$(TARGETS_TO_BUILD))),)
 USEDLIBS += LLVMCBackend
 endif
 
-# Check for Skeleton target
-ifneq ($(strip $(filter Skeleton,$(TARGETS_TO_BUILD))),)
-USEDLIB += LLVMSkeleton
-endif
-
 # Check for Sparc target
 ifneq ($(strip $(filter SparcV9,$(TARGETS_TO_BUILD))),)
 USEDLIBS += \
