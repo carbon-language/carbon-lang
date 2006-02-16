@@ -2491,7 +2491,7 @@ def UCOMISDrm: I<0x2E, MRMSrcMem, (ops FR64:$src1, f64mem:$src2),
 // FIXME: remove when we can teach regalloc that xor reg, reg is ok.
 def FLD0SS : I<0xEF, MRMInitReg, (ops FR32:$dst),
                "pxor $dst, $dst", [(set FR32:$dst, fp32imm0)]>,
-             Requires<[HasSSE1]>, TB;
+             Requires<[HasSSE1]>, TB, OpSize;
 def FLD0SD : I<0xEF, MRMInitReg, (ops FR64:$dst),
                "pxor $dst, $dst", [(set FR64:$dst, fp64imm0)]>,
              Requires<[HasSSE2]>, TB, OpSize;
