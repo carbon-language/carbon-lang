@@ -106,9 +106,9 @@ void X86RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
   } else if (RC == &X86::RFPRegClass || RC == &X86::RSTRegClass) {
     Opc = X86::FpMOV;
   } else if (RC == &X86::FR32RegClass || RC == &X86::V4F4RegClass) {
-    Opc = X86::MOVSSrr;
+    Opc = X86::MOVAPSrr;
   } else if (RC == &X86::FR64RegClass || RC == &X86::V2F8RegClass) {
-    Opc = X86::MOVSDrr;
+    Opc = X86::MOVAPDrr;
   } else {
     assert(0 && "Unknown regclass");
     abort();
