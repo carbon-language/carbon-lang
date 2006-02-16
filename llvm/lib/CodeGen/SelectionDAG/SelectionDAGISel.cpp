@@ -1658,9 +1658,10 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
       if (MeetsMaxMemopRequirement(MemOps, TLI.getMaxStoresPerMemcpy(),
                                    Size->getValue(), Align, TLI)) {
         unsigned NumMemOps = MemOps.size();
-        unsigned SrcOff = 0, DstOff = 0;
+        unsigned SrcOff = 0, DstOff = 0, SrcDelta = 0;
         GlobalAddressSDNode *G = NULL;
         std::string Str;
+        bool CopyFromStr = false;
 
         if (Op2.getOpcode() == ISD::GlobalAddress)
           G = cast<GlobalAddressSDNode>(Op2);
@@ -1668,12 +1669,17 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
                  Op2.getOperand(0).getOpcode() == ISD::GlobalAddress &&
                  Op2.getOperand(1).getOpcode() == ISD::Constant) {
           G = cast<GlobalAddressSDNode>(Op2.getOperand(0));
-          SrcOff += cast<ConstantSDNode>(Op2.getOperand(1))->getValue();
+          SrcDelta = cast<ConstantSDNode>(Op2.getOperand(1))->getValue();
         }
         if (G) {
           GlobalVariable *GV = dyn_cast<GlobalVariable>(G->getGlobal());
-          if (GV)
+          if (GV) {
             Str = getStringValue(GV);
+            if (!Str.empty()) {
+              CopyFromStr = true;
+              SrcOff += SrcDelta;
+            }
+          }
         }
 
         for (unsigned i = 0; i < NumMemOps; i++) {
@@ -1681,7 +1687,7 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
           unsigned VTSize = getSizeInBits(VT) / 8;
           SDOperand Value, Chain, Store;
 
-          if (!Str.empty()) {
+          if (CopyFromStr) {
             Value = getMemsetStringVal(VT, DAG, TLI, Str, SrcOff);
             Chain = getRoot();
             Store =
