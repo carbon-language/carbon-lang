@@ -235,10 +235,16 @@ void IA64AsmPrinter::printOp(const MachineOperand &MO,
     if (Needfptr)
       O << "@fptr(";
     O << Mang->getValueName(MO.getGlobal());
-    if (Needfptr)
-      O << ")"; // close fptr(
-    if (!isBRCALLinsn)
-      O << ")"; // close ltoff(
+    
+    if (Needfptr && !isBRCALLinsn)
+      O << "#))"; // close both fptr( and ltoff(
+    else {
+      if (Needfptr)
+        O << "#)"; // close only fptr(
+      if (!isBRCALLinsn)
+        O << "#)"; // close only ltoff(
+    }
+    
     int Offset = MO.getOffset();
     if (Offset > 0)
       O << " + " << Offset;
@@ -293,11 +299,11 @@ bool IA64AsmPrinter::doFinalization(Module &M) {
            I->hasWeakLinkage() /* FIXME: Verify correct */)) {
         SwitchSection(".data", I);
         if (I->hasInternalLinkage()) {
-          O << "\t.lcomm " << name << "," << TD.getTypeSize(C->getType())
+          O << "\t.lcomm " << name << "#," << TD.getTypeSize(C->getType())
           << "," << (1 << Align);
           O << "\t\t// ";
         } else {
-          O << "\t.common " << name << "," << TD.getTypeSize(C->getType())
+          O << "\t.common " << name << "#," << TD.getTypeSize(C->getType())
           << "," << (1 << Align);
           O << "\t\t// ";
         }
