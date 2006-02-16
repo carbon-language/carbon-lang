@@ -562,6 +562,15 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
     } else {
       std::vector<SDOperand> Ops;
       Ops.push_back(getRoot());
+      // If the false case is the current basic block, then this is a self
+      // loop. We do not want to emit "Loop: ... brcond Out; br Loop", as it
+      // adds an extra instruction in the loop.  Instead, invert the
+      // condition and emit "Loop: ... br!cond Loop; br Out. 
+      if (CurMBB == Succ1MBB) {
+        std::swap(Succ0MBB, Succ1MBB);
+        SDOperand True = DAG.getConstant(1, Cond.getValueType());
+        Cond = DAG.getNode(ISD::XOR, Cond.getValueType(), Cond, True);
+      }
       Ops.push_back(Cond);
       Ops.push_back(DAG.getBasicBlock(Succ0MBB));
       Ops.push_back(DAG.getBasicBlock(Succ1MBB));

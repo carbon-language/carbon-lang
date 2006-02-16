@@ -1046,17 +1046,6 @@ void PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     if (N->getOpcode() == ISD::BRTWOWAY_CC) {
       SDOperand CondTrueBlock = N->getOperand(4);
       SDOperand CondFalseBlock = N->getOperand(5);
-      
-      // If the false case is the current basic block, then this is a self loop.
-      // We do not want to emit "Loop: ... brcond Out; br Loop", as it adds an
-      // extra dispatch group to the loop.  Instead, invert the condition and
-      // emit "Loop: ... br!cond Loop; br Out
-      if (cast<BasicBlockSDNode>(CondFalseBlock)->getBasicBlock() == BB) {
-        std::swap(CondTrueBlock, CondFalseBlock);
-        CC = getSetCCInverse(CC,
-                             MVT::isInteger(N->getOperand(2).getValueType()));
-      }
-      
       unsigned Opc = getBCCForSetCC(CC);
       SDOperand CB =
         SDOperand(CurDAG->getTargetNode(PPC::COND_BRANCH, MVT::Other,
