@@ -176,9 +176,6 @@
 				RelativePath="..\..\lib\Target\X86\X86ISelLowering.cpp">
 			</File>
 			<File
-				RelativePath="..\..\lib\Target\X86\X86ISelPattern.cpp">
-			</File>
-			<File
 				RelativePath="..\..\lib\Target\X86\X86JITInfo.cpp">
 			</File>
 			<File
