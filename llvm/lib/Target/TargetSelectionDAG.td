@@ -238,14 +238,6 @@ def or         : SDNode<"ISD::OR"        , SDTIntBinOp,
                         [SDNPCommutative, SDNPAssociative]>;
 def xor        : SDNode<"ISD::XOR"       , SDTIntBinOp,
                         [SDNPCommutative, SDNPAssociative]>;
-def addc       : SDNode<"ISD::ADDC"      , SDTIntBinOp,
-                        [SDNPCommutative, SDNPOutFlag]>;
-def adde       : SDNode<"ISD::ADDE"      , SDTIntBinOp,
-                        [SDNPCommutative, SDNPOutFlag, SDNPInFlag]>;
-def subc       : SDNode<"ISD::SUBC"      , SDTIntBinOp,
-                        [SDNPOutFlag]>;
-def sube       : SDNode<"ISD::SUBE"      , SDTIntBinOp,
-                        [SDNPOutFlag, SDNPInFlag]>;
                         
 def sext_inreg : SDNode<"ISD::SIGN_EXTEND_INREG", SDTExtInreg>;
 def bswap      : SDNode<"ISD::BSWAP"      , SDTIntUnaryOp>;
