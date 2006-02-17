@@ -443,3 +443,35 @@ when we can spare a register. It reduces code size.
 It's not clear whether we should use pxor or xorps / xorpd to clear XMM
 registers. The choice may depend on subtarget information. We should do some
 more experiments on different x86 machines.
+
+//===---------------------------------------------------------------------===//
+
+Evaluate what the best way to codegen sdiv X, (2^C) is.  For X/8, we currently
+get this:
+
+int %test1(int %X) {
+        %Y = div int %X, 8
+        ret int %Y
+}
+
+_test1:
+        movl 4(%esp), %eax
+        movl %eax, %ecx
+        sarl $31, %ecx
+        shrl $29, %ecx
+        addl %ecx, %eax
+        sarl $3, %eax
+        ret
+
+GCC knows several different ways to codegen it, one of which is this:
+
+_test1:
+        movl    4(%esp), %eax
+        cmpl    $-1, %eax
+        leal    7(%eax), %ecx
+        cmovle  %ecx, %eax
+        sarl    $3, %eax
+        ret
+
+which is probably slower, but it's interesting at least :)
+
