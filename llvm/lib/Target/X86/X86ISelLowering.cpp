@@ -73,6 +73,10 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   // SSE has no i16 to fp conversion, only i32
   if (X86ScalarSSE)
     setOperationAction(ISD::SINT_TO_FP     , MVT::i16  , Promote);
+  else {
+    setOperationAction(ISD::SINT_TO_FP     , MVT::i16  , Custom);
+    setOperationAction(ISD::SINT_TO_FP     , MVT::i32  , Custom);
+  }
 
   // We can handle SINT_TO_FP and FP_TO_SINT from/to i64 even though i64
   // isn't legal.
@@ -108,7 +112,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::BIT_CONVERT      , MVT::f32  , Expand);
   setOperationAction(ISD::BIT_CONVERT      , MVT::i32  , Expand);
 
-  setOperationAction(ISD::BRCOND         , MVT::Other, Custom);
+  setOperationAction(ISD::BRCOND           , MVT::Other, Custom);
   setOperationAction(ISD::BRCONDTWOWAY     , MVT::Other, Expand);
   setOperationAction(ISD::BRTWOWAY_CC      , MVT::Other, Expand);
   setOperationAction(ISD::BR_CC            , MVT::Other, Expand);
@@ -146,26 +150,27 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SELECT           , MVT::i8   , Promote);
 
   // X86 wants to expand cmov itself.
-  setOperationAction(ISD::SELECT         , MVT::i16  , Custom);
-  setOperationAction(ISD::SELECT         , MVT::i32  , Custom);
-  setOperationAction(ISD::SELECT         , MVT::f32  , Custom);
-  setOperationAction(ISD::SELECT         , MVT::f64  , Custom);
-  setOperationAction(ISD::SETCC          , MVT::i8   , Custom);
-  setOperationAction(ISD::SETCC          , MVT::i16  , Custom);
-  setOperationAction(ISD::SETCC          , MVT::i32  , Custom);
-  setOperationAction(ISD::SETCC          , MVT::f32  , Custom);
-  setOperationAction(ISD::SETCC          , MVT::f64  , Custom);
+  setOperationAction(ISD::SELECT          , MVT::i16  , Custom);
+  setOperationAction(ISD::SELECT          , MVT::i32  , Custom);
+  setOperationAction(ISD::SELECT          , MVT::f32  , Custom);
+  setOperationAction(ISD::SELECT          , MVT::f64  , Custom);
+  setOperationAction(ISD::SETCC           , MVT::i8   , Custom);
+  setOperationAction(ISD::SETCC           , MVT::i16  , Custom);
+  setOperationAction(ISD::SETCC           , MVT::i32  , Custom);
+  setOperationAction(ISD::SETCC           , MVT::f32  , Custom);
+  setOperationAction(ISD::SETCC           , MVT::f64  , Custom);
   // X86 ret instruction may pop stack.
-  setOperationAction(ISD::RET            , MVT::Other, Custom);
+  setOperationAction(ISD::RET             , MVT::Other, Custom);
   // Darwin ABI issue.
-  setOperationAction(ISD::GlobalAddress  , MVT::i32  , Custom);
+  setOperationAction(ISD::GlobalAddress   , MVT::i32  , Custom);
   // 64-bit addm sub, shl, sra, srl (iff 32-bit x86)
-  setOperationAction(ISD::SHL_PARTS      , MVT::i32  , Custom);
-  setOperationAction(ISD::SRA_PARTS      , MVT::i32  , Custom);
-  setOperationAction(ISD::SRL_PARTS      , MVT::i32  , Custom);
+  setOperationAction(ISD::SUB_PARTS       , MVT::i32  , Custom);
+  setOperationAction(ISD::SHL_PARTS       , MVT::i32  , Custom);
+  setOperationAction(ISD::SRA_PARTS       , MVT::i32  , Custom);
+  setOperationAction(ISD::SRL_PARTS       , MVT::i32  , Custom);
   // X86 wants to expand memset / memcpy itself.
-  setOperationAction(ISD::MEMSET         , MVT::Other, Custom);
-  setOperationAction(ISD::MEMCPY         , MVT::Other, Custom);
+  setOperationAction(ISD::MEMSET          , MVT::Other, Custom);
+  setOperationAction(ISD::MEMCPY          , MVT::Other, Custom);
 
   // We don't have line number support yet.
   setOperationAction(ISD::LOCATION, MVT::Other, Expand);
