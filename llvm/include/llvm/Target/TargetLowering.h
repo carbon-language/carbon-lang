@@ -293,7 +293,7 @@ public:
     SDOperand Old;
     SDOperand New;
 
-    TargetLoweringOpt::TargetLoweringOpt(SelectionDAG &InDAG) : DAG(InDAG) {}
+    TargetLoweringOpt(SelectionDAG &InDAG) : DAG(InDAG) {}
     
     bool CombineTo(SDOperand O, SDOperand N) { 
       Old = O; 
