@@ -164,7 +164,6 @@ def SDTTruncStore : SDTypeProfile<0, 4, [  // truncstore
   SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>, SDTCisVT<3, OtherVT>
 ]>;
 
-
 //===----------------------------------------------------------------------===//
 // Selection DAG Node Properties.
 //
@@ -239,6 +238,14 @@ def or         : SDNode<"ISD::OR"        , SDTIntBinOp,
                         [SDNPCommutative, SDNPAssociative]>;
 def xor        : SDNode<"ISD::XOR"       , SDTIntBinOp,
                         [SDNPCommutative, SDNPAssociative]>;
+def addc       : SDNode<"ISD::ADDC"      , SDTIntBinOp,
+                        [SDNPCommutative, SDNPOutFlag]>;
+def adde       : SDNode<"ISD::ADDE"      , SDTIntBinOp,
+                        [SDNPCommutative, SDNPOutFlag, SDNPInFlag]>;
+def subc       : SDNode<"ISD::SUBC"      , SDTIntBinOp,
+                        [SDNPOutFlag]>;
+def sube       : SDNode<"ISD::SUBE"      , SDTIntBinOp,
+                        [SDNPOutFlag, SDNPInFlag]>;
                         
 def sext_inreg : SDNode<"ISD::SIGN_EXTEND_INREG", SDTExtInreg>;
 def bswap      : SDNode<"ISD::BSWAP"      , SDTIntUnaryOp>;
@@ -347,7 +354,7 @@ class PatLeaf<dag frag, code pred = [{}], SDNodeXForm xform = NOOP_SDNodeXForm>
 // Leaf fragments.
 
 def immAllOnes : PatLeaf<(imm), [{ return N->isAllOnesValue(); }]>;
-
+def immZero    : PatLeaf<(imm), [{ return N->isNullValue(); }]>;
 def vtInt      : PatLeaf<(vt),  [{ return MVT::isInteger(N->getVT()); }]>;
 def vtFP       : PatLeaf<(vt),  [{ return MVT::isFloatingPoint(N->getVT()); }]>;
 
