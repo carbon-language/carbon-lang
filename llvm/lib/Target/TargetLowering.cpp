@@ -243,9 +243,9 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
     
     // If all of the demanded bits are known zero on one side, return the other.
     // These bits cannot contribute to the result of the 'or'.
-    if ((DemandedMask & ~KnownOne2 & KnownZero) == DemandedMask & ~KnownOne2)
+    if ((DemandedMask & ~KnownOne2 & KnownZero) == (DemandedMask & ~KnownOne2))
       return TLO.CombineTo(Op, Op.getOperand(0));
-    if ((DemandedMask & ~KnownOne & KnownZero2) == DemandedMask & ~KnownOne)
+    if ((DemandedMask & ~KnownOne & KnownZero2) == (DemandedMask & ~KnownOne))
       return TLO.CombineTo(Op, Op.getOperand(1));
     // If all of the potentially set bits on one side are known to be set on
     // the other side, just use the 'other' side.
