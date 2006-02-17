@@ -26,8 +26,6 @@
 #include <iostream>
 using namespace llvm;
 
-bool llvm::X86PatIsel = true;
-
 /// X86TargetMachineModule - Note that this is used on hosts that cannot link
 /// in a library unless there are references into the library.  In particular,
 /// it seems that it is not possible to get things to work on Win32 without
@@ -39,11 +37,6 @@ namespace {
   cl::opt<bool> DisableOutput("disable-x86-llc-output", cl::Hidden,
                               cl::desc("Disable the X86 asm printer, for use "
                                        "when profiling the code generator."));
-  cl::opt<bool, true> EnableX86PatISel("enable-x86-pattern-isel", cl::Hidden,
-                      cl::desc("Enable the pattern based isel for X86"),
-                      cl::location(X86PatIsel),
-                      cl::init(false));
-  
   // Register the target.
   RegisterTarget<X86TargetMachine> X("x86", "  IA-32 (Pentium and above)");
 }
@@ -107,10 +100,7 @@ bool X86TargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
   PM.add(createUnreachableBlockEliminationPass());
 
   // Install an instruction selector.
-  if (X86PatIsel)
-    PM.add(createX86ISelPattern(*this));
-  else
-    PM.add(createX86ISelDag(*this));
+  PM.add(createX86ISelDag(*this));
 
   // Print the instruction selected machine code...
   if (PrintMachineCode)
@@ -172,10 +162,7 @@ void X86JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   PM.add(createUnreachableBlockEliminationPass());
 
   // Install an instruction selector.
-  if (X86PatIsel)
-    PM.add(createX86ISelPattern(TM));
-  else
-    PM.add(createX86ISelDag(TM));
+  PM.add(createX86ISelDag(TM));
 
   // Print the instruction selected machine code...
   if (PrintMachineCode)

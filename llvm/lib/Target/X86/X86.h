@@ -25,14 +25,6 @@ class FunctionPass;
 class IntrinsicLowering;
 class MachineCodeEmitter;
 
-extern bool X86PatIsel;
-
-/// createX86ISelPattern - This pass converts an LLVM function into a 
-/// machine code representation using pattern matching and a machine
-/// description file.
-///
-FunctionPass *createX86ISelPattern(TargetMachine &TM);
-
 /// createX86ISelDag - This pass converts a legalized DAG into a 
 /// X86-specific DAG, ready for instruction scheduling.
 ///

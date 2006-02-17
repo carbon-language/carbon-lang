@@ -70,13 +70,9 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   // this operation.
   setOperationAction(ISD::SINT_TO_FP       , MVT::i1   , Promote);
   setOperationAction(ISD::SINT_TO_FP       , MVT::i8   , Promote);
+  // SSE has no i16 to fp conversion, only i32
   if (X86ScalarSSE)
-    // SSE has no i16 to fp conversion, only i32
     setOperationAction(ISD::SINT_TO_FP     , MVT::i16  , Promote);
-  else if (!X86PatIsel) {
-    setOperationAction(ISD::SINT_TO_FP     , MVT::i16  , Custom);
-    setOperationAction(ISD::SINT_TO_FP     , MVT::i32  , Custom);
-  }
 
   // We can handle SINT_TO_FP and FP_TO_SINT from/to i64 even though i64
   // isn't legal.
@@ -112,9 +108,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::BIT_CONVERT      , MVT::f32  , Expand);
   setOperationAction(ISD::BIT_CONVERT      , MVT::i32  , Expand);
 
-  if (!X86PatIsel) {
-    setOperationAction(ISD::BRCOND         , MVT::Other, Custom);
-  }
+  setOperationAction(ISD::BRCOND         , MVT::Other, Custom);
   setOperationAction(ISD::BRCONDTWOWAY     , MVT::Other, Expand);
   setOperationAction(ISD::BRTWOWAY_CC      , MVT::Other, Expand);
   setOperationAction(ISD::BR_CC            , MVT::Other, Expand);
@@ -136,16 +130,6 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::CTTZ             , MVT::i32  , Expand);
   setOperationAction(ISD::CTLZ             , MVT::i32  , Expand);
   setOperationAction(ISD::READCYCLECOUNTER , MVT::i64  , Custom);
-
-  if (X86PatIsel) {
-    setOperationAction(ISD::BSWAP          , MVT::i32  , Expand);
-    setOperationAction(ISD::ROTL           , MVT::i8   , Expand);
-    setOperationAction(ISD::ROTR           , MVT::i8   , Expand);
-    setOperationAction(ISD::ROTL           , MVT::i16  , Expand);
-    setOperationAction(ISD::ROTR           , MVT::i16  , Expand);
-    setOperationAction(ISD::ROTL           , MVT::i32  , Expand);
-    setOperationAction(ISD::ROTR           , MVT::i32  , Expand);
-  }
   setOperationAction(ISD::BSWAP            , MVT::i16  , Expand);
 
   setOperationAction(ISD::READIO           , MVT::i1   , Expand);
@@ -160,31 +144,30 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   // These should be promoted to a larger select which is supported.
   setOperationAction(ISD::SELECT           , MVT::i1   , Promote);
   setOperationAction(ISD::SELECT           , MVT::i8   , Promote);
-  if (!X86PatIsel) {
-    // X86 wants to expand cmov itself.
-    setOperationAction(ISD::SELECT         , MVT::i16  , Custom);
-    setOperationAction(ISD::SELECT         , MVT::i32  , Custom);
-    setOperationAction(ISD::SELECT         , MVT::f32  , Custom);
-    setOperationAction(ISD::SELECT         , MVT::f64  , Custom);
-    setOperationAction(ISD::SETCC          , MVT::i8   , Custom);
-    setOperationAction(ISD::SETCC          , MVT::i16  , Custom);
-    setOperationAction(ISD::SETCC          , MVT::i32  , Custom);
-    setOperationAction(ISD::SETCC          , MVT::f32  , Custom);
-    setOperationAction(ISD::SETCC          , MVT::f64  , Custom);
-    // X86 ret instruction may pop stack.
-    setOperationAction(ISD::RET            , MVT::Other, Custom);
-    // Darwin ABI issue.
-    setOperationAction(ISD::GlobalAddress  , MVT::i32  , Custom);
-    // 64-bit addm sub, shl, sra, srl (iff 32-bit x86)
-    setOperationAction(ISD::ADD_PARTS      , MVT::i32  , Custom);
-    setOperationAction(ISD::SUB_PARTS      , MVT::i32  , Custom);
-    setOperationAction(ISD::SHL_PARTS      , MVT::i32  , Custom);
-    setOperationAction(ISD::SRA_PARTS      , MVT::i32  , Custom);
-    setOperationAction(ISD::SRL_PARTS      , MVT::i32  , Custom);
-    // X86 wants to expand memset / memcpy itself.
-    setOperationAction(ISD::MEMSET         , MVT::Other, Custom);
-    setOperationAction(ISD::MEMCPY         , MVT::Other, Custom);
-  }
+
+  // X86 wants to expand cmov itself.
+  setOperationAction(ISD::SELECT         , MVT::i16  , Custom);
+  setOperationAction(ISD::SELECT         , MVT::i32  , Custom);
+  setOperationAction(ISD::SELECT         , MVT::f32  , Custom);
+  setOperationAction(ISD::SELECT         , MVT::f64  , Custom);
+  setOperationAction(ISD::SETCC          , MVT::i8   , Custom);
+  setOperationAction(ISD::SETCC          , MVT::i16  , Custom);
+  setOperationAction(ISD::SETCC          , MVT::i32  , Custom);
+  setOperationAction(ISD::SETCC          , MVT::f32  , Custom);
+  setOperationAction(ISD::SETCC          , MVT::f64  , Custom);
+  // X86 ret instruction may pop stack.
+  setOperationAction(ISD::RET            , MVT::Other, Custom);
+  // Darwin ABI issue.
+  setOperationAction(ISD::GlobalAddress  , MVT::i32  , Custom);
+  // 64-bit addm sub, shl, sra, srl (iff 32-bit x86)
+  setOperationAction(ISD::ADD_PARTS      , MVT::i32  , Custom);
+  setOperationAction(ISD::SUB_PARTS      , MVT::i32  , Custom);
+  setOperationAction(ISD::SHL_PARTS      , MVT::i32  , Custom);
+  setOperationAction(ISD::SRA_PARTS      , MVT::i32  , Custom);
+  setOperationAction(ISD::SRL_PARTS      , MVT::i32  , Custom);
+  // X86 wants to expand memset / memcpy itself.
+  setOperationAction(ISD::MEMSET         , MVT::Other, Custom);
+  setOperationAction(ISD::MEMCPY         , MVT::Other, Custom);
 
   // We don't have line number support yet.
   setOperationAction(ISD::LOCATION, MVT::Other, Expand);
@@ -473,134 +456,98 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
     break;
   }
 
-  if (!X86PatIsel) {
-    std::vector<MVT::ValueType> NodeTys;
-    NodeTys.push_back(MVT::Other);   // Returns a chain
-    NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
-    std::vector<SDOperand> Ops;
-    Ops.push_back(Chain);
-    Ops.push_back(Callee);
+  std::vector<MVT::ValueType> NodeTys;
+  NodeTys.push_back(MVT::Other);   // Returns a chain
+  NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
+  std::vector<SDOperand> Ops;
+  Ops.push_back(Chain);
+  Ops.push_back(Callee);
 
-    // FIXME: Do not generate X86ISD::TAILCALL for now.
-    Chain = DAG.getNode(X86ISD::CALL, NodeTys, Ops);
-    SDOperand InFlag = Chain.getValue(1);
+  // FIXME: Do not generate X86ISD::TAILCALL for now.
+  Chain = DAG.getNode(X86ISD::CALL, NodeTys, Ops);
+  SDOperand InFlag = Chain.getValue(1);
 
-    NodeTys.clear();
-    NodeTys.push_back(MVT::Other);   // Returns a chain
-    NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
-    Ops.clear();
-    Ops.push_back(Chain);
-    Ops.push_back(DAG.getConstant(NumBytes, getPointerTy()));
-    Ops.push_back(DAG.getConstant(0, getPointerTy()));
-    Ops.push_back(InFlag);
-    Chain = DAG.getNode(ISD::CALLSEQ_END, NodeTys, Ops);
-    InFlag = Chain.getValue(1);
-    
-    SDOperand RetVal;
-    if (RetTyVT != MVT::isVoid) {
-      switch (RetTyVT) {
-      default: assert(0 && "Unknown value type to return!");
-      case MVT::i1:
-      case MVT::i8:
-        RetVal = DAG.getCopyFromReg(Chain, X86::AL, MVT::i8, InFlag);
-        Chain = RetVal.getValue(1);
-        if (RetTyVT == MVT::i1) 
-          RetVal = DAG.getNode(ISD::TRUNCATE, MVT::i1, RetVal);
-        break;
-      case MVT::i16:
-        RetVal = DAG.getCopyFromReg(Chain, X86::AX, MVT::i16, InFlag);
-        Chain = RetVal.getValue(1);
-        break;
-      case MVT::i32:
-        RetVal = DAG.getCopyFromReg(Chain, X86::EAX, MVT::i32, InFlag);
-        Chain = RetVal.getValue(1);
-        break;
-      case MVT::i64: {
-        SDOperand Lo = DAG.getCopyFromReg(Chain, X86::EAX, MVT::i32, InFlag);
-        SDOperand Hi = DAG.getCopyFromReg(Lo.getValue(1), X86::EDX, MVT::i32, 
-                                          Lo.getValue(2));
-        RetVal = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Lo, Hi);
-        Chain = Hi.getValue(1);
-        break;
-      }
-      case MVT::f32:
-      case MVT::f64: {
-        std::vector<MVT::ValueType> Tys;
-        Tys.push_back(MVT::f64);
-        Tys.push_back(MVT::Other);
-        Tys.push_back(MVT::Flag);
-        std::vector<SDOperand> Ops;
-        Ops.push_back(Chain);
-        Ops.push_back(InFlag);
-        RetVal = DAG.getNode(X86ISD::FP_GET_RESULT, Tys, Ops);
-        Chain  = RetVal.getValue(1);
-        InFlag = RetVal.getValue(2);
-        if (X86ScalarSSE) {
-          // FIXME: Currently the FST is flagged to the FP_GET_RESULT. This
-          // shouldn't be necessary except that RFP cannot be live across
-          // multiple blocks. When stackifier is fixed, they can be uncoupled.
-          MachineFunction &MF = DAG.getMachineFunction();
-          int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
-          SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
-          Tys.clear();
-          Tys.push_back(MVT::Other);
-          Ops.clear();
-          Ops.push_back(Chain);
-          Ops.push_back(RetVal);
-          Ops.push_back(StackSlot);
-          Ops.push_back(DAG.getValueType(RetTyVT));
-          Ops.push_back(InFlag);
-          Chain = DAG.getNode(X86ISD::FST, Tys, Ops);
-          RetVal = DAG.getLoad(RetTyVT, Chain, StackSlot,
-                               DAG.getSrcValue(NULL));
-          Chain = RetVal.getValue(1);
-        }
-
-        if (RetTyVT == MVT::f32 && !X86ScalarSSE)
-          // FIXME: we would really like to remember that this FP_ROUND
-          // operation is okay to eliminate if we allow excess FP precision.
-          RetVal = DAG.getNode(ISD::FP_ROUND, MVT::f32, RetVal);
-        break;
-      }
-      }
-    }
-
-    return std::make_pair(RetVal, Chain);
-  } else {
-    std::vector<SDOperand> Ops;
-    Ops.push_back(Chain);
-    Ops.push_back(Callee);
-    Ops.push_back(DAG.getConstant(NumBytes, getPointerTy()));
-    Ops.push_back(DAG.getConstant(0, getPointerTy()));
-
-    SDOperand TheCall = DAG.getNode(isTailCall ? X86ISD::TAILCALL :X86ISD::CALL,
-                                    RetVals, Ops);
-
-    SDOperand ResultVal;
+  NodeTys.clear();
+  NodeTys.push_back(MVT::Other);   // Returns a chain
+  NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
+  Ops.clear();
+  Ops.push_back(Chain);
+  Ops.push_back(DAG.getConstant(NumBytes, getPointerTy()));
+  Ops.push_back(DAG.getConstant(0, getPointerTy()));
+  Ops.push_back(InFlag);
+  Chain = DAG.getNode(ISD::CALLSEQ_END, NodeTys, Ops);
+  InFlag = Chain.getValue(1);
+  
+  SDOperand RetVal;
+  if (RetTyVT != MVT::isVoid) {
     switch (RetTyVT) {
-    case MVT::isVoid: break;
-    default:
-      ResultVal = TheCall.getValue(1);
-      break;
+    default: assert(0 && "Unknown value type to return!");
     case MVT::i1:
     case MVT::i8:
+      RetVal = DAG.getCopyFromReg(Chain, X86::AL, MVT::i8, InFlag);
+      Chain = RetVal.getValue(1);
+      if (RetTyVT == MVT::i1) 
+        RetVal = DAG.getNode(ISD::TRUNCATE, MVT::i1, RetVal);
+      break;
     case MVT::i16:
-      ResultVal = DAG.getNode(ISD::TRUNCATE, RetTyVT, TheCall.getValue(1));
+      RetVal = DAG.getCopyFromReg(Chain, X86::AX, MVT::i16, InFlag);
+      Chain = RetVal.getValue(1);
       break;
-    case MVT::f32:
-      // FIXME: we would really like to remember that this FP_ROUND operation is
-      // okay to eliminate if we allow excess FP precision.
-      ResultVal = DAG.getNode(ISD::FP_ROUND, MVT::f32, TheCall.getValue(1));
+    case MVT::i32:
+      RetVal = DAG.getCopyFromReg(Chain, X86::EAX, MVT::i32, InFlag);
+      Chain = RetVal.getValue(1);
       break;
-    case MVT::i64:
-      ResultVal = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, TheCall.getValue(1),
-                              TheCall.getValue(2));
+    case MVT::i64: {
+      SDOperand Lo = DAG.getCopyFromReg(Chain, X86::EAX, MVT::i32, InFlag);
+      SDOperand Hi = DAG.getCopyFromReg(Lo.getValue(1), X86::EDX, MVT::i32, 
+                                        Lo.getValue(2));
+      RetVal = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Lo, Hi);
+      Chain = Hi.getValue(1);
       break;
     }
+    case MVT::f32:
+    case MVT::f64: {
+      std::vector<MVT::ValueType> Tys;
+      Tys.push_back(MVT::f64);
+      Tys.push_back(MVT::Other);
+      Tys.push_back(MVT::Flag);
+      std::vector<SDOperand> Ops;
+      Ops.push_back(Chain);
+      Ops.push_back(InFlag);
+      RetVal = DAG.getNode(X86ISD::FP_GET_RESULT, Tys, Ops);
+      Chain  = RetVal.getValue(1);
+      InFlag = RetVal.getValue(2);
+      if (X86ScalarSSE) {
+        // FIXME: Currently the FST is flagged to the FP_GET_RESULT. This
+        // shouldn't be necessary except that RFP cannot be live across
+        // multiple blocks. When stackifier is fixed, they can be uncoupled.
+        MachineFunction &MF = DAG.getMachineFunction();
+        int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
+        SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
+        Tys.clear();
+        Tys.push_back(MVT::Other);
+        Ops.clear();
+        Ops.push_back(Chain);
+        Ops.push_back(RetVal);
+        Ops.push_back(StackSlot);
+        Ops.push_back(DAG.getValueType(RetTyVT));
+        Ops.push_back(InFlag);
+        Chain = DAG.getNode(X86ISD::FST, Tys, Ops);
+        RetVal = DAG.getLoad(RetTyVT, Chain, StackSlot,
+                             DAG.getSrcValue(NULL));
+        Chain = RetVal.getValue(1);
+      }
 
-    Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, TheCall);
-    return std::make_pair(ResultVal, Chain);
+      if (RetTyVT == MVT::f32 && !X86ScalarSSE)
+        // FIXME: we would really like to remember that this FP_ROUND
+        // operation is okay to eliminate if we allow excess FP precision.
+        RetVal = DAG.getNode(ISD::FP_ROUND, MVT::f32, RetVal);
+      break;
+    }
+    }
   }
+
+  return std::make_pair(RetVal, Chain);
 }
 
 //===----------------------------------------------------------------------===//
@@ -947,163 +894,123 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
     break;
   }
 
-  if (!X86PatIsel) {
-    // Build a sequence of copy-to-reg nodes chained together with token chain
-    // and flag operands which copy the outgoing args into registers.
-    SDOperand InFlag;
-    for (unsigned i = 0, e = RegValuesToPass.size(); i != e; ++i) {
-      unsigned CCReg;
-      SDOperand RegToPass = RegValuesToPass[i];
-      switch (RegToPass.getValueType()) {
-      default: assert(0 && "Bad thing to pass in regs");
-      case MVT::i8:
-        CCReg = (i == 0) ? X86::AL  : X86::DL;
-        break;
-      case MVT::i16:
-        CCReg = (i == 0) ? X86::AX  : X86::DX;
-        break;
-      case MVT::i32:
-        CCReg = (i == 0) ? X86::EAX : X86::EDX;
-        break;
-      }
-
-      Chain = DAG.getCopyToReg(Chain, CCReg, RegToPass, InFlag);
-      InFlag = Chain.getValue(1);
-    }
-
-    std::vector<MVT::ValueType> NodeTys;
-    NodeTys.push_back(MVT::Other);   // Returns a chain
-    NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
-    std::vector<SDOperand> Ops;
-    Ops.push_back(Chain);
-    Ops.push_back(Callee);
-    if (InFlag.Val)
-      Ops.push_back(InFlag);
-
-    // FIXME: Do not generate X86ISD::TAILCALL for now.
-    Chain = DAG.getNode(X86ISD::CALL, NodeTys, Ops);
-    InFlag = Chain.getValue(1);
-
-    NodeTys.clear();
-    NodeTys.push_back(MVT::Other);   // Returns a chain
-    NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
-    Ops.clear();
-    Ops.push_back(Chain);
-    Ops.push_back(DAG.getConstant(ArgOffset, getPointerTy()));
-    Ops.push_back(DAG.getConstant(ArgOffset, getPointerTy()));
-    Ops.push_back(InFlag);
-    Chain = DAG.getNode(ISD::CALLSEQ_END, NodeTys, Ops);
-    InFlag = Chain.getValue(1);
-    
-    SDOperand RetVal;
-    if (RetTyVT != MVT::isVoid) {
-      switch (RetTyVT) {
-      default: assert(0 && "Unknown value type to return!");
-      case MVT::i1:
-      case MVT::i8:
-        RetVal = DAG.getCopyFromReg(Chain, X86::AL, MVT::i8, InFlag);
-        Chain = RetVal.getValue(1);
-        if (RetTyVT == MVT::i1) 
-          RetVal = DAG.getNode(ISD::TRUNCATE, MVT::i1, RetVal);
-        break;
-      case MVT::i16:
-        RetVal = DAG.getCopyFromReg(Chain, X86::AX, MVT::i16, InFlag);
-        Chain = RetVal.getValue(1);
-        break;
-      case MVT::i32:
-        RetVal = DAG.getCopyFromReg(Chain, X86::EAX, MVT::i32, InFlag);
-        Chain = RetVal.getValue(1);
-        break;
-      case MVT::i64: {
-        SDOperand Lo = DAG.getCopyFromReg(Chain, X86::EAX, MVT::i32, InFlag);
-        SDOperand Hi = DAG.getCopyFromReg(Lo.getValue(1), X86::EDX, MVT::i32, 
-                                          Lo.getValue(2));
-        RetVal = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Lo, Hi);
-        Chain = Hi.getValue(1);
-        break;
-      }
-      case MVT::f32:
-      case MVT::f64: {
-        std::vector<MVT::ValueType> Tys;
-        Tys.push_back(MVT::f64);
-        Tys.push_back(MVT::Other);
-        Tys.push_back(MVT::Flag);
-        std::vector<SDOperand> Ops;
-        Ops.push_back(Chain);
-        Ops.push_back(InFlag);
-        RetVal = DAG.getNode(X86ISD::FP_GET_RESULT, Tys, Ops);
-        Chain  = RetVal.getValue(1);
-        InFlag = RetVal.getValue(2);
-        if (X86ScalarSSE) {
-          // FIXME: Currently the FST is flagged to the FP_GET_RESULT. This
-          // shouldn't be necessary except that RFP cannot be live across
-          // multiple blocks. When stackifier is fixed, they can be uncoupled.
-          MachineFunction &MF = DAG.getMachineFunction();
-          int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
-          SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
-          Tys.clear();
-          Tys.push_back(MVT::Other);
-          Ops.clear();
-          Ops.push_back(Chain);
-          Ops.push_back(RetVal);
-          Ops.push_back(StackSlot);
-          Ops.push_back(DAG.getValueType(RetTyVT));
-          Ops.push_back(InFlag);
-          Chain = DAG.getNode(X86ISD::FST, Tys, Ops);
-          RetVal = DAG.getLoad(RetTyVT, Chain, StackSlot,
-                               DAG.getSrcValue(NULL));
-          Chain = RetVal.getValue(1);
-        }
-
-        if (RetTyVT == MVT::f32 && !X86ScalarSSE)
-          // FIXME: we would really like to remember that this FP_ROUND
-          // operation is okay to eliminate if we allow excess FP precision.
-          RetVal = DAG.getNode(ISD::FP_ROUND, MVT::f32, RetVal);
-        break;
-      }
-      }
-    }
-
-    return std::make_pair(RetVal, Chain);
-  } else {
-    std::vector<SDOperand> Ops;
-    Ops.push_back(Chain);
-    Ops.push_back(Callee);
-    Ops.push_back(DAG.getConstant(ArgOffset, getPointerTy()));
-    // Callee pops all arg values on the stack.
-    Ops.push_back(DAG.getConstant(ArgOffset, getPointerTy()));
-
-    // Pass register arguments as needed.
-    Ops.insert(Ops.end(), RegValuesToPass.begin(), RegValuesToPass.end());
-
-    SDOperand TheCall = DAG.getNode(isTailCall ? X86ISD::TAILCALL :X86ISD::CALL,
-                                    RetVals, Ops);
-    Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, TheCall);
-
-    SDOperand ResultVal;
-    switch (RetTyVT) {
-    case MVT::isVoid: break;
-    default:
-      ResultVal = TheCall.getValue(1);
+  // Build a sequence of copy-to-reg nodes chained together with token chain
+  // and flag operands which copy the outgoing args into registers.
+  SDOperand InFlag;
+  for (unsigned i = 0, e = RegValuesToPass.size(); i != e; ++i) {
+    unsigned CCReg;
+    SDOperand RegToPass = RegValuesToPass[i];
+    switch (RegToPass.getValueType()) {
+    default: assert(0 && "Bad thing to pass in regs");
+    case MVT::i8:
+      CCReg = (i == 0) ? X86::AL  : X86::DL;
       break;
+    case MVT::i16:
+      CCReg = (i == 0) ? X86::AX  : X86::DX;
+      break;
+    case MVT::i32:
+      CCReg = (i == 0) ? X86::EAX : X86::EDX;
+      break;
+    }
+
+    Chain = DAG.getCopyToReg(Chain, CCReg, RegToPass, InFlag);
+    InFlag = Chain.getValue(1);
+  }
+
+  std::vector<MVT::ValueType> NodeTys;
+  NodeTys.push_back(MVT::Other);   // Returns a chain
+  NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
+  std::vector<SDOperand> Ops;
+  Ops.push_back(Chain);
+  Ops.push_back(Callee);
+  if (InFlag.Val)
+    Ops.push_back(InFlag);
+
+  // FIXME: Do not generate X86ISD::TAILCALL for now.
+  Chain = DAG.getNode(X86ISD::CALL, NodeTys, Ops);
+  InFlag = Chain.getValue(1);
+
+  NodeTys.clear();
+  NodeTys.push_back(MVT::Other);   // Returns a chain
+  NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
+  Ops.clear();
+  Ops.push_back(Chain);
+  Ops.push_back(DAG.getConstant(ArgOffset, getPointerTy()));
+  Ops.push_back(DAG.getConstant(ArgOffset, getPointerTy()));
+  Ops.push_back(InFlag);
+  Chain = DAG.getNode(ISD::CALLSEQ_END, NodeTys, Ops);
+  InFlag = Chain.getValue(1);
+  
+  SDOperand RetVal;
+  if (RetTyVT != MVT::isVoid) {
+    switch (RetTyVT) {
+    default: assert(0 && "Unknown value type to return!");
     case MVT::i1:
     case MVT::i8:
+      RetVal = DAG.getCopyFromReg(Chain, X86::AL, MVT::i8, InFlag);
+      Chain = RetVal.getValue(1);
+      if (RetTyVT == MVT::i1) 
+        RetVal = DAG.getNode(ISD::TRUNCATE, MVT::i1, RetVal);
+      break;
     case MVT::i16:
-      ResultVal = DAG.getNode(ISD::TRUNCATE, RetTyVT, TheCall.getValue(1));
+      RetVal = DAG.getCopyFromReg(Chain, X86::AX, MVT::i16, InFlag);
+      Chain = RetVal.getValue(1);
       break;
-    case MVT::f32:
-      // FIXME: we would really like to remember that this FP_ROUND operation is
-      // okay to eliminate if we allow excess FP precision.
-      ResultVal = DAG.getNode(ISD::FP_ROUND, MVT::f32, TheCall.getValue(1));
+    case MVT::i32:
+      RetVal = DAG.getCopyFromReg(Chain, X86::EAX, MVT::i32, InFlag);
+      Chain = RetVal.getValue(1);
       break;
-    case MVT::i64:
-      ResultVal = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, TheCall.getValue(1),
-                              TheCall.getValue(2));
+    case MVT::i64: {
+      SDOperand Lo = DAG.getCopyFromReg(Chain, X86::EAX, MVT::i32, InFlag);
+      SDOperand Hi = DAG.getCopyFromReg(Lo.getValue(1), X86::EDX, MVT::i32, 
+                                        Lo.getValue(2));
+      RetVal = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Lo, Hi);
+      Chain = Hi.getValue(1);
       break;
     }
+    case MVT::f32:
+    case MVT::f64: {
+      std::vector<MVT::ValueType> Tys;
+      Tys.push_back(MVT::f64);
+      Tys.push_back(MVT::Other);
+      Tys.push_back(MVT::Flag);
+      std::vector<SDOperand> Ops;
+      Ops.push_back(Chain);
+      Ops.push_back(InFlag);
+      RetVal = DAG.getNode(X86ISD::FP_GET_RESULT, Tys, Ops);
+      Chain  = RetVal.getValue(1);
+      InFlag = RetVal.getValue(2);
+      if (X86ScalarSSE) {
+        // FIXME: Currently the FST is flagged to the FP_GET_RESULT. This
+        // shouldn't be necessary except that RFP cannot be live across
+        // multiple blocks. When stackifier is fixed, they can be uncoupled.
+        MachineFunction &MF = DAG.getMachineFunction();
+        int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
+        SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
+        Tys.clear();
+        Tys.push_back(MVT::Other);
+        Ops.clear();
+        Ops.push_back(Chain);
+        Ops.push_back(RetVal);
+        Ops.push_back(StackSlot);
+        Ops.push_back(DAG.getValueType(RetTyVT));
+        Ops.push_back(InFlag);
+        Chain = DAG.getNode(X86ISD::FST, Tys, Ops);
+        RetVal = DAG.getLoad(RetTyVT, Chain, StackSlot,
+                             DAG.getSrcValue(NULL));
+        Chain = RetVal.getValue(1);
+      }
 
-    return std::make_pair(ResultVal, Chain);
+      if (RetTyVT == MVT::f32 && !X86ScalarSSE)
+        // FIXME: we would really like to remember that this FP_ROUND
+        // operation is okay to eliminate if we allow excess FP precision.
+        RetVal = DAG.getNode(ISD::FP_ROUND, MVT::f32, RetVal);
+      break;
+    }
+    }
   }
+
+  return std::make_pair(RetVal, Chain);
 }
 
 SDOperand X86TargetLowering::getReturnAddressFrameIndex(SelectionDAG &DAG) {
