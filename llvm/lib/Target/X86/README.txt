@@ -356,12 +356,6 @@ This may just be a matter of using 'test' to write bigger patterns for X86cmp.
 
 //===---------------------------------------------------------------------===//
 
-Evaluate whether using movapd for SSE reg-reg moves is faster than using
-movsd/movss for them.  It may eliminate false partial register dependences by
-writing the whole result register.
-
-//===---------------------------------------------------------------------===//
-
 SSE should implement 'select_cc' using 'emulated conditional moves' that use
 pcmp/pand/pandn/por to do a selection instead of a conditional branch:
 
