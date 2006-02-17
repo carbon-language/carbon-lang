@@ -136,20 +136,22 @@ static bool LoopValuesUsedOutsideLoop(Loop *L) {
 static bool isTrivialLoopExitBlockHelper(Loop *L, BasicBlock *BB,
                                          BasicBlock *&ExitBB,
                                          std::set<BasicBlock*> &Visited) {
-  BasicBlock *Header = L->getHeader();
+  if (!Visited.insert(BB).second) {
+    // Already visited and Ok, end of recursion.
+    return true;
+  } else if (!L->contains(BB)) {
+    // Otherwise, this is a loop exit, this is fine so long as this is the
+    // first exit.
+    if (ExitBB != 0) return false;
+    ExitBB = BB;
+    return true;
+  }
+  
+  // Otherwise, this is an unvisited intra-loop node.  Check all successors.
   for (succ_iterator SI = succ_begin(BB), E = succ_end(BB); SI != E; ++SI) {
-    if (!Visited.insert(*SI).second) {
-      // Already visited and Ok, end of recursion.
-    } else if (L->contains(*SI)) {
-      // Check to see if the successor is a trivial loop exit.
-      if (!isTrivialLoopExitBlockHelper(L, *SI, ExitBB, Visited))
-        return false;
-    } else {
-      // Otherwise, this is a loop exit, this is fine so long as this is the
-      // first exit.
-      if (ExitBB != 0) return false;
-      ExitBB = *SI;
-    }
+    // Check to see if the successor is a trivial loop exit.
+    if (!isTrivialLoopExitBlockHelper(L, *SI, ExitBB, Visited))
+      return false;
   }
 
   // Okay, everything after this looks good, check to make sure that this block
