@@ -99,15 +99,40 @@ namespace {
       return SDOperand(N, 0);
     }
     
-    bool DemandedBitsAreZero(SDOperand Op, uint64_t DemandedMask) {
+    /// SimplifyDemandedBits - Check the specified integer node value to see if
+    /// it can be simplified or if things is uses can be simplified by bit
+    /// propagation.  If so, return true.
+    bool SimplifyDemandedBits(SDOperand Op) {
       TargetLowering::TargetLoweringOpt TLO(DAG);
       uint64_t KnownZero, KnownOne;
-      if (TLI.SimplifyDemandedBits(Op, DemandedMask, KnownZero, KnownOne, TLO)){
-        WorkList.push_back(Op.Val);
-        CombineTo(TLO.Old.Val, TLO.New);
-        return true;
-      }
-      return false;
+      uint64_t Demanded = MVT::getIntVTBitMask(Op.getValueType());
+      if (!TLI.SimplifyDemandedBits(Op, Demanded, KnownZero, KnownOne, TLO))
+        return false;
+
+      // Revisit the node.
+      WorkList.push_back(Op.Val);
+      
+      // Replace the old value with the new one.
+      ++NodesCombined;
+      DEBUG(std::cerr << "\nReplacing "; TLO.Old.Val->dump();
+            std::cerr << "\nWith: "; TLO.New.Val->dump());
+
+      std::vector<SDNode*> NowDead;
+      DAG.ReplaceAllUsesOfValueWith(TLO.Old, TLO.New, NowDead);
+      
+      // Push the new node and any (now) users onto the worklist.
+      WorkList.push_back(TLO.New.Val);
+      AddUsersToWorkList(TLO.New.Val);
+      
+      // Nodes can end up on the worklist more than once.  Make sure we do
+      // not process a node that has been replaced.
+      removeFromWorkList(TLO.Old.Val);
+      for (unsigned i = 0, e = NowDead.size(); i != e; ++i)
+        removeFromWorkList(NowDead[i]);
+      
+      // Finally, since the node is now dead, remove it from the graph.
+      DAG.DeleteNode(TLO.Old.Val);
+      return true;
     }
 
     SDOperand CombineTo(SDNode *N, SDOperand Res) {
@@ -985,7 +1010,7 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
   }
   // fold (and (sign_extend_inreg x, i16 to i32), 1) -> (and x, 1)
   // fold (and (sra)) -> (and (srl)) when possible.
-  if (DemandedBitsAreZero(SDOperand(N, 0), MVT::getIntVTBitMask(VT)))
+  if (SimplifyDemandedBits(SDOperand(N, 0)))
     return SDOperand();
   // fold (zext_inreg (extload x)) -> (zextload x)
   if (N0.getOpcode() == ISD::EXTLOAD) {
@@ -1267,7 +1292,7 @@ SDOperand DAGCombiner::visitSHL(SDNode *N) {
   // if (shl x, c) is known to be zero, return 0
   if (TLI.MaskedValueIsZero(SDOperand(N, 0), MVT::getIntVTBitMask(VT)))
     return DAG.getConstant(0, VT);
-  if (DemandedBitsAreZero(SDOperand(N,0), MVT::getIntVTBitMask(VT)))
+  if (SimplifyDemandedBits(SDOperand(N, 0)))
     return SDOperand();
   // fold (shl (shl x, c1), c2) -> 0 or (shl x, c1+c2)
   if (N1C && N0.getOpcode() == ISD::SHL && 

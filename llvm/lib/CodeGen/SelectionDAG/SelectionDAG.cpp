@@ -21,6 +21,7 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include <iostream>
 #include <set>
@@ -2399,6 +2400,66 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From,
       // U is now dead.
       if (Deleted) Deleted->push_back(U);
       DeleteNodeNotInCSEMaps(U);
+    }
+  }
+}
+
+/// ReplaceAllUsesOfValueWith - Replace any uses of From with To, leaving
+/// uses of other values produced by From.Val alone.  The Deleted vector is
+/// handled the same was as for ReplaceAllUsesWith.
+void SelectionDAG::ReplaceAllUsesOfValueWith(SDOperand From, SDOperand To,
+                                             std::vector<SDNode*> &Deleted) {
+  assert(From != To && "Cannot replace a value with itself");
+  // Handle the simple, trivial, case efficiently.
+  if (From.Val->getNumValues() == 1 && To.Val->getNumValues() == 1) {
+    ReplaceAllUsesWith(From, To, &Deleted);
+    return;
+  }
+  
+  // Get all of the users in a nice, deterministically ordered, uniqued set.
+  SetVector<SDNode*> Users(From.Val->use_begin(), From.Val->use_end());
+
+  while (!Users.empty()) {
+    // We know that this user uses some value of From.  If it is the right
+    // value, update it.
+    SDNode *User = Users.back();
+    Users.pop_back();
+    
+    for (SDOperand *Op = User->OperandList,
+         *E = User->OperandList+User->NumOperands; Op != E; ++Op) {
+      if (*Op == From) {
+        // Okay, we know this user needs to be updated.  Remove its old self
+        // from the CSE maps.
+        RemoveNodeFromCSEMaps(User);
+        
+        // Update all operands that match "From".
+        for (; Op != E; ++Op) {
+          if (*Op == From) {
+            From.Val->removeUser(User);
+            *Op = To;
+            To.Val->addUser(User);
+          }
+        }
+                   
+        // Now that we have modified User, add it back to the CSE maps.  If it
+        // already exists there, recursively merge the results together.
+        if (SDNode *Existing = AddNonLeafNodeToCSEMaps(User)) {
+          unsigned NumDeleted = Deleted.size();
+          ReplaceAllUsesWith(User, Existing, &Deleted);
+          
+          // User is now dead.
+          Deleted.push_back(User);
+          DeleteNodeNotInCSEMaps(User);
+          
+          // We have to be careful here, because ReplaceAllUsesWith could have
+          // deleted a user of From, which means there may be dangling pointers
+          // in the "Users" setvector.  Scan over the deleted node pointers and
+          // remove them from the setvector.
+          for (unsigned i = NumDeleted, e = Deleted.size(); i != e; ++i)
+            Users.remove(Deleted[i]);
+        }
+        break;   // Exit the operand scanning loop.
+      }
     }
   }
 }
