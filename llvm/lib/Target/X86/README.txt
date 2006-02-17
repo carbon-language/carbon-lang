@@ -437,3 +437,9 @@ It might be better to generate
 	movw al, 8(%edx)
 	
 when we can spare a register. It reduces code size.
+
+//===---------------------------------------------------------------------===//
+
+It's not clear whether we should use pxor or xorps / xorpd to clear XMM
+registers. The choice may depend on subtarget information. We should do some
+more experiments on different x86 machines.
