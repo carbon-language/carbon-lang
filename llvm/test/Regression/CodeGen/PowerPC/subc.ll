@@ -1,4 +1,4 @@
-; All of these ands and shifts should be folded into rlwimi's
+; All of these should be codegen'd without loading immediates
 ; RUN: llvm-as < %s | llc -march=ppc32 | grep subfc | wc -l | grep 1 &&
 ; RUN: llvm-as < %s | llc -march=ppc32 | grep subfe | wc -l | grep 1 &&
 ; RUN: llvm-as < %s | llc -march=ppc32 | grep subfze | wc -l | grep 1 &&
