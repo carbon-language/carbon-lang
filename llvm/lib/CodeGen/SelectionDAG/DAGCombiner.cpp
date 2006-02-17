@@ -731,8 +731,8 @@ SDOperand DAGCombiner::visitSDIV(SDNode *N) {
   if (TLI.MaskedValueIsZero(N1, SignBit) &&
       TLI.MaskedValueIsZero(N0, SignBit))
     return DAG.getNode(ISD::UDIV, N1.getValueType(), N0, N1);
-  // fold (sdiv X, pow2) -> simple ops.
-  if (N1C && N1C->getValue() && !TLI.isIntDivCheap() && 
+  // fold (sdiv X, pow2) -> simple ops after legalize
+  if (N1C && N1C->getValue() && !TLI.isIntDivCheap() && AfterLegalize &&
       (isPowerOf2_64(N1C->getSignExtended()) || 
        isPowerOf2_64(-N1C->getSignExtended()))) {
     // If dividing by powers of two is cheap, then don't perform the following
