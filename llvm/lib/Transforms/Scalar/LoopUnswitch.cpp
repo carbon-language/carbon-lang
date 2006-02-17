@@ -49,6 +49,8 @@ namespace {
   Statistic<> NumSelects ("loop-unswitch", "Number of selects unswitched");
   Statistic<> NumTrivial ("loop-unswitch",
                           "Number of unswitches that are trivial");
+  Statistic<> NumSimplify("loop-unswitch", 
+                          "Number of simplifications of unswitched code");
   cl::opt<unsigned>
   Threshold("loop-unswitch-threshold", cl::desc("Max loop size to unswitch"),
             cl::init(10), cl::Hidden);
@@ -677,6 +679,42 @@ void LoopUnswitch::VersionLoop(Value *LIC, Constant *Val, Loop *L,
   Out2 = NewLoop;
 }
 
+/// RemoveFromWorklist - Remove all instances of I from the worklist vector
+/// specified.
+static void RemoveFromWorklist(Instruction *I, 
+                               std::vector<Instruction*> &Worklist) {
+  std::vector<Instruction*>::iterator WI = std::find(Worklist.begin(),
+                                                     Worklist.end(), I);
+  while (WI != Worklist.end()) {
+    unsigned Offset = WI-Worklist.begin();
+    Worklist.erase(WI);
+    WI = std::find(Worklist.begin()+Offset, Worklist.end(), I);
+  }
+}
+
+/// ReplaceUsesOfWith - When we find that I really equals V, remove I from the
+/// program, replacing all uses with V and update the worklist.
+static void ReplaceUsesOfWith(Instruction *I, Value *V, 
+                              std::vector<Instruction*> &Worklist) {
+  DEBUG(std::cerr << "Replace with '" << *V << "': " << *I);
+
+  // Add uses to the worklist, which may be dead now.
+  for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
+    if (Instruction *Use = dyn_cast<Instruction>(I->getOperand(i)))
+      Worklist.push_back(Use);
+
+  // Add users to the worklist which may be simplified now.
+  for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
+       UI != E; ++UI)
+    Worklist.push_back(cast<Instruction>(*UI));
+  I->replaceAllUsesWith(V);
+  I->eraseFromParent();
+  RemoveFromWorklist(I, Worklist);
+  ++NumSimplify;
+}
+
+
+
 // RewriteLoopBodyWithConditionConstant - We know either that the value LIC has
 // the value specified by Val in the specified loop, or we know it does NOT have
 // that value.  Rewrite any uses of LIC or of properties correlated to it.
@@ -700,19 +738,32 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
   // FOLD boolean conditions (X|LIC), (X&LIC).  Fold conditional branches,
   // selects, switches.
   std::vector<User*> Users(LIC->use_begin(), LIC->use_end());
+
+  std::vector<Instruction*> Worklist;
   
-  // Haha, this loop could be unswitched.  Get it? The unswitch pass could
-  // unswitch itself. Amazing.
-  for (unsigned i = 0, e = Users.size(); i != e; ++i)
-    if (Instruction *U = cast<Instruction>(Users[i])) {
-      if (!L->contains(U->getParent()))
-        continue;
-  
-      if (IsEqual) {
-        U->replaceUsesOfWith(LIC, Val);
-      } else if (NotVal) {
-        U->replaceUsesOfWith(LIC, NotVal);
-      } else {
+  // If we know that LIC == Val, or that LIC == NotVal, just replace uses of LIC
+  // in the loop with the appropriate one directly.
+  if (IsEqual || NotVal) {
+    Value *Replacement = NotVal ? NotVal : Val;
+    
+    for (unsigned i = 0, e = Users.size(); i != e; ++i)
+      if (Instruction *U = cast<Instruction>(Users[i])) {
+        if (!L->contains(U->getParent()))
+          continue;
+        U->replaceUsesOfWith(LIC, Replacement);
+        Worklist.push_back(U);
+      }
+  } else {
+    // Otherwise, we don't know the precise value of LIC, but we do know that it
+    // is certainly NOT "Val".  As such, simplify any uses in the loop that we
+    // can.  This case occurs when we unswitch switch statements.
+    for (unsigned i = 0, e = Users.size(); i != e; ++i)
+      if (Instruction *U = cast<Instruction>(Users[i])) {
+        if (!L->contains(U->getParent()))
+          continue;
+
+        Worklist.push_back(U);
+
         // If we know that LIC is not Val, use this info to simplify code.
         if (SwitchInst *SI = dyn_cast<SwitchInst>(U)) {
           for (unsigned i = 1, e = SI->getNumCases(); i != e; ++i) {
@@ -726,8 +777,104 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
             }
           }
         }
-
-        // TODO: We could simplify stuff like X == C.
+        
+        // TODO: We could do other simplifications, for example, turning 
+        // LIC == Val -> false.
       }
+  }
+    
+  // Okay, now that we have simplified some instructions in the loop, walk over
+  // it and constant prop, dce, and fold control flow where possible.  Note that
+  // this is effectively a very simple loop-structure-aware optimizer.
+  while (!Worklist.empty()) {
+    Instruction *I = Worklist.back();
+    Worklist.pop_back();
+    
+    // Simple constant folding.
+    if (Constant *C = ConstantFoldInstruction(I)) {
+      ReplaceUsesOfWith(I, C, Worklist);
+      continue;
     }
+    
+    // Simple DCE.
+    if (isInstructionTriviallyDead(I)) {
+      DEBUG(std::cerr << "Remove dead instruction '" << *I);
+      
+      // Add uses to the worklist, which may be dead now.
+      for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
+        if (Instruction *Use = dyn_cast<Instruction>(I->getOperand(i)))
+          Worklist.push_back(Use);
+      I->eraseFromParent();
+      RemoveFromWorklist(I, Worklist);
+      ++NumSimplify;
+      continue;
+    }
+    
+    // Special case hacks that appear commonly in unswitched code.
+    switch (I->getOpcode()) {
+    case Instruction::Select:
+      if (ConstantBool *CB = dyn_cast<ConstantBool>(I->getOperand(0))) {
+        ReplaceUsesOfWith(I, I->getOperand(!CB->getValue()+1), Worklist);
+        continue;
+      }
+      break;
+    case Instruction::And:
+      if (isa<ConstantBool>(I->getOperand(0)))   // constant -> RHS
+        cast<BinaryOperator>(I)->swapOperands();
+      if (ConstantBool *CB = dyn_cast<ConstantBool>(I->getOperand(1))) {
+        if (CB->getValue())   // X & 1 -> X
+          ReplaceUsesOfWith(I, I->getOperand(0), Worklist);
+        else                  // X & 0 -> 0
+          ReplaceUsesOfWith(I, I->getOperand(1), Worklist);
+        continue;
+      }
+      break;
+    case Instruction::Or:
+      if (isa<ConstantBool>(I->getOperand(0)))   // constant -> RHS
+        cast<BinaryOperator>(I)->swapOperands();
+      if (ConstantBool *CB = dyn_cast<ConstantBool>(I->getOperand(1))) {
+        if (CB->getValue())   // X | 1 -> 1
+          ReplaceUsesOfWith(I, I->getOperand(1), Worklist);
+        else                  // X | 0 -> X
+          ReplaceUsesOfWith(I, I->getOperand(0), Worklist);
+        continue;
+      }
+      break;
+    case Instruction::Br: {
+      BranchInst *BI = cast<BranchInst>(I);
+      if (BI->isUnconditional()) {
+        // If BI's parent is the only pred of the successor, fold the two blocks
+        // together.
+        BasicBlock *Pred = BI->getParent();
+        BasicBlock *Succ = BI->getSuccessor(0);
+        BasicBlock *SinglePred = Succ->getSinglePredecessor();
+        if (!SinglePred) continue;  // Nothing to do.
+        assert(SinglePred == Pred && "CFG broken");
+
+        DEBUG(std::cerr << "Merging blocks: " << Pred->getName() << " <- " 
+                        << Succ->getName() << "\n");
+        
+        // Resolve any single entry PHI nodes in Succ.
+        while (PHINode *PN = dyn_cast<PHINode>(Succ->begin()))
+          ReplaceUsesOfWith(PN, PN->getIncomingValue(0), Worklist);
+        
+        // Move all of the successor contents from Succ to Pred.
+        Pred->getInstList().splice(BI, Succ->getInstList(), Succ->begin(),
+                                   Succ->end());
+        BI->eraseFromParent();
+        RemoveFromWorklist(BI, Worklist);
+        
+        // If Succ has any successors with PHI nodes, update them to have
+        // entries coming from Pred instead of Succ.
+        Succ->replaceAllUsesWith(Pred);
+        
+        // Remove Succ from the loop tree.
+        LI->removeBlock(Succ);
+        Succ->eraseFromParent();
+        break;
+      }
+      break;
+    }
+    }
+  }
 }
