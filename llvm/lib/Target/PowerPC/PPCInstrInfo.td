@@ -302,7 +302,7 @@ def ADDI   : DForm_2<14, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
                      [(set GPRC:$rD, (add GPRC:$rA, immSExt16:$imm))]>;
 def ADDIC  : DForm_2<12, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
                      "addic $rD, $rA, $imm", IntGeneral,
-                     []>;
+                     [(set GPRC:$rD, (addc GPRC:$rA, immSExt16:$imm))]>;
 def ADDICo : DForm_2<13, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
                      "addic. $rD, $rA, $imm", IntGeneral,
                      []>;
@@ -684,10 +684,10 @@ def ADD8  : XOForm_1<31, 266, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
                      [(set G8RC:$rT, (add G8RC:$rA, G8RC:$rB))]>;
 def ADDC  : XOForm_1<31, 10, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "addc $rT, $rA, $rB", IntGeneral,
-                     []>;
+                     [(set GPRC:$rT, (addc GPRC:$rA, GPRC:$rB))]>;
 def ADDE  : XOForm_1<31, 138, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "adde $rT, $rA, $rB", IntGeneral,
-                     []>;
+                     [(set GPRC:$rT, (adde GPRC:$rA, GPRC:$rB))]>;
 def DIVD  : XOForm_1<31, 489, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
                      "divd $rT, $rA, $rB", IntDivD,
                      [(set G8RC:$rT, (sdiv G8RC:$rA, G8RC:$rB))]>, isPPC64;
@@ -723,22 +723,25 @@ def SUBF  : XOForm_1<31, 40, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      [(set GPRC:$rT, (sub GPRC:$rB, GPRC:$rA))]>;
 def SUBFC : XOForm_1<31, 8, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "subfc $rT, $rA, $rB", IntGeneral,
-                     []>;
+                     [(set GPRC:$rT, (subc GPRC:$rB, GPRC:$rA))]>;
 def SUBFE : XOForm_1<31, 136, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "subfe $rT, $rA, $rB", IntGeneral,
-                     []>;
+                     [(set GPRC:$rT, (sube GPRC:$rB, GPRC:$rA))]>;
 def ADDME  : XOForm_3<31, 234, 0, (ops GPRC:$rT, GPRC:$rA),
                       "addme $rT, $rA", IntGeneral,
-                      []>;
+                      [(set GPRC:$rT, (adde GPRC:$rA, immAllOnes))]>;
 def ADDZE  : XOForm_3<31, 202, 0, (ops GPRC:$rT, GPRC:$rA),
                       "addze $rT, $rA", IntGeneral,
-                      []>;
+                      [(set GPRC:$rT, (adde GPRC:$rA, 0))]>;
 def NEG    : XOForm_3<31, 104, 0, (ops GPRC:$rT, GPRC:$rA),
                       "neg $rT, $rA", IntGeneral,
                       [(set GPRC:$rT, (ineg GPRC:$rA))]>;
+def SUBFME : XOForm_3<31, 232, 0, (ops GPRC:$rT, GPRC:$rA),
+                      "subfme $rT, $rA", IntGeneral,
+                      [(set GPRC:$rT, (sube immAllOnes, GPRC:$rA))]>;
 def SUBFZE : XOForm_3<31, 200, 0, (ops GPRC:$rT, GPRC:$rA),
                       "subfze $rT, $rA", IntGeneral,
-                      []>;
+                      [(set GPRC:$rT, (sube 0, GPRC:$rA))]>;
 
 // A-Form instructions.  Most of the instructions executed in the FPU are of
 // this type.
@@ -983,6 +986,9 @@ def : Pat<(or GPRC:$in, imm:$imm),
 // XOR an arbitrary immediate.
 def : Pat<(xor GPRC:$in, imm:$imm),
           (XORIS (XORI GPRC:$in, (LO16 imm:$imm)), (HI16 imm:$imm))>;
+// SUBFIC
+def : Pat<(subc immSExt16:$imm, GPRC:$in),
+          (SUBFIC GPRC:$in, imm:$imm)>;
 
 // Return void support.
 def : Pat<(ret), (BLR)>;

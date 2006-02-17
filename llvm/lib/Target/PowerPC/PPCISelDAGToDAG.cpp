@@ -535,75 +535,6 @@ static unsigned getCRIdxForSetCC(ISD::CondCode CC, bool& Inv) {
   return 0;
 }
 
-
-SDOperand PPCDAGToDAGISel::SelectADD_PARTS(SDOperand Op) {
-  SDNode *N = Op.Val;
-  SDOperand LHSL, LHSH;
-  Select(LHSL, N->getOperand(0));
-  Select(LHSH, N->getOperand(1));
-  
-  unsigned Imm;
-  bool ME = false, ZE = false;
-  if (isIntImmediate(N->getOperand(3), Imm)) {
-    ME = (signed)Imm == -1;
-    ZE = Imm == 0;
-  }
-  
-  std::vector<SDOperand> Result;
-  SDOperand Tmp;
-  SDNode *CarryFromLo;
-  if (isIntImmediate(N->getOperand(2), Imm) &&
-      ((signed)Imm >= -32768 || (signed)Imm < 32768)) {
-    // Codegen the low 32 bits of the add.  Interestingly, there is no
-    // shifted form of add immediate carrying.
-    CarryFromLo = CurDAG->getTargetNode(PPC::ADDIC, MVT::i32, MVT::Flag,
-                                        LHSL, getI32Imm(Imm));
-  } else {
-    Select(Tmp, N->getOperand(2));
-    CarryFromLo = CurDAG->getTargetNode(PPC::ADDC, MVT::i32, MVT::Flag,
-                                        LHSL, Tmp);
-  }
-  
-  // Codegen the high 32 bits, adding zero, minus one, or the full value
-  // along with the carry flag produced by addc/addic.
-  SDOperand ResultHi;
-  if (ZE)
-    ResultHi = SDOperand(CurDAG->getTargetNode(PPC::ADDZE, MVT::i32, LHSH,
-                                               SDOperand(CarryFromLo, 1)), 0);
-  else if (ME)
-    ResultHi = SDOperand(CurDAG->getTargetNode(PPC::ADDME, MVT::i32, LHSH,
-                                               SDOperand(CarryFromLo, 1)), 0);
-  else {
-    Select(Tmp, N->getOperand(3));
-    ResultHi = SDOperand(CurDAG->getTargetNode(PPC::ADDE, MVT::i32, LHSH,
-                                            Tmp, SDOperand(CarryFromLo, 1)), 0);
-  }
-  Result.push_back(SDOperand(CarryFromLo, 0));
-  Result.push_back(ResultHi);
-  
-  CodeGenMap[Op.getValue(0)] = Result[0];
-  CodeGenMap[Op.getValue(1)] = Result[1];
-  return Result[Op.ResNo];
-}
-SDOperand PPCDAGToDAGISel::SelectSUB_PARTS(SDOperand Op) {
-  SDNode *N = Op.Val;
-  SDOperand LHSL, LHSH, RHSL, RHSH;
-  Select(LHSL, N->getOperand(0));
-  Select(LHSH, N->getOperand(1));
-  Select(RHSL, N->getOperand(2));
-  Select(RHSH, N->getOperand(3));
-  
-  std::vector<SDOperand> Result;
-  Result.push_back(SDOperand(CurDAG->getTargetNode(PPC::SUBFC, MVT::i32,
-                                                   MVT::Flag, RHSL, LHSL), 0));
-  Result.push_back(SDOperand(CurDAG->getTargetNode(PPC::SUBFE, MVT::i32,
-                                                   RHSH, LHSH,
-                                                   Result[0].getValue(1)), 0));
-  CodeGenMap[Op.getValue(0)] = Result[0];
-  CodeGenMap[Op.getValue(1)] = Result[1];
-  return Result[Op.ResNo];
-}
-
 SDOperand PPCDAGToDAGISel::SelectSETCC(SDOperand Op) {
   SDNode *N = Op.Val;
   unsigned Imm;
@@ -846,12 +777,6 @@ void PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
   
   switch (N->getOpcode()) {
   default: break;
-  case ISD::ADD_PARTS:
-    Result = SelectADD_PARTS(Op);
-    return;
-  case ISD::SUB_PARTS:
-    Result = SelectSUB_PARTS(Op);
-    return;
   case ISD::SETCC:
     Result = SelectSETCC(Op);
     return;

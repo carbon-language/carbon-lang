@@ -1075,41 +1075,6 @@ void SparcDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
   
   switch (N->getOpcode()) {
   default: break;
-  case ISD::ADD_PARTS: {
-    SDOperand LHSL, LHSH, RHSL, RHSH;
-    Select(LHSL, N->getOperand(0));
-    Select(LHSH, N->getOperand(1));
-    Select(RHSL, N->getOperand(2));
-    Select(RHSH, N->getOperand(3));
-    // FIXME, handle immediate RHS.
-    SDOperand Low =
-      SDOperand(CurDAG->getTargetNode(SP::ADDCCrr, MVT::i32, MVT::Flag,
-                                      LHSL, RHSL), 0);
-    SDOperand Hi =
-      SDOperand(CurDAG->getTargetNode(SP::ADDXrr, MVT::i32, LHSH, RHSH, 
-                                      Low.getValue(1)), 0);
-    CodeGenMap[SDOperand(N, 0)] = Low;
-    CodeGenMap[SDOperand(N, 1)] = Hi;
-    Result = Op.ResNo ? Hi : Low;
-    return;
-  }
-  case ISD::SUB_PARTS: {
-    SDOperand LHSL, LHSH, RHSL, RHSH;
-    Select(LHSL, N->getOperand(0));
-    Select(LHSH, N->getOperand(1));
-    Select(RHSL, N->getOperand(2));
-    Select(RHSH, N->getOperand(3));
-    SDOperand Low =
-      SDOperand(CurDAG->getTargetNode(SP::SUBCCrr, MVT::i32, MVT::Flag,
-                                      LHSL, RHSL), 0);
-    SDOperand Hi =
-      SDOperand(CurDAG->getTargetNode(SP::SUBXrr, MVT::i32, LHSH, RHSH, 
-                                      Low.getValue(1)), 0);
-    CodeGenMap[SDOperand(N, 0)] = Low;
-    CodeGenMap[SDOperand(N, 1)] = Hi;
-    Result = Op.ResNo ? Hi : Low;
-    return;
-  }
   case ISD::SDIV:
   case ISD::UDIV: {
     // FIXME: should use a custom expander to expose the SRA to the dag.

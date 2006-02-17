@@ -575,7 +575,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
       break;
     }
-    break;    
+    break;
 
   case ISD::Constant:
     // We know we don't need to expand constants here, constants only have one
@@ -1749,8 +1749,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
 
-  case ISD::ADD_PARTS:
-  case ISD::SUB_PARTS:
   case ISD::SHL_PARTS:
   case ISD::SRA_PARTS:
   case ISD::SRL_PARTS: {
@@ -1830,7 +1828,32 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       break;
     }
     break;
+  
+  case ISD::ADDC:
+  case ISD::SUBC:
+    Tmp1 = LegalizeOp(Node->getOperand(0));
+    Tmp2 = LegalizeOp(Node->getOperand(1));
+    Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
+    // Since this produces two values, make sure to remember that we legalized
+    // both of them.
+    AddLegalizedOperand(SDOperand(Node, 0), Result.getValue(0));
+    AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
+    return Result;
+    break;
 
+  case ISD::ADDE:
+  case ISD::SUBE:
+    Tmp1 = LegalizeOp(Node->getOperand(0));
+    Tmp2 = LegalizeOp(Node->getOperand(1));
+    Tmp3 = LegalizeOp(Node->getOperand(2));
+    Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3);
+    // Since this produces two values, make sure to remember that we legalized
+    // both of them.
+    AddLegalizedOperand(SDOperand(Node, 0), Result.getValue(0));
+    AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
+    return Result;
+    break;
+    
   case ISD::BUILD_PAIR: {
     MVT::ValueType PairTy = Node->getValueType(0);
     // TODO: handle the case where the Lo and Hi operands are not of legal type
@@ -3980,17 +4003,23 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     SDOperand LHSL, LHSH, RHSL, RHSH;
     ExpandOp(Node->getOperand(0), LHSL, LHSH);
     ExpandOp(Node->getOperand(1), RHSL, RHSH);
-    
-    std::vector<SDOperand> Ops;
-    Ops.push_back(LHSL);
-    Ops.push_back(LHSH);
-    Ops.push_back(RHSL);
-    Ops.push_back(RHSH);
-    std::vector<MVT::ValueType> VTs(2, LHSL.getValueType());
-    unsigned Opc = 
-      Node->getOpcode() == ISD::ADD ? ISD::ADD_PARTS : ISD::SUB_PARTS;
-    Lo = DAG.getNode(Opc, VTs, Ops);
-    Hi = Lo.getValue(1);
+    std::vector<MVT::ValueType> VTs;
+    std::vector<SDOperand> LoOps, HiOps;
+    VTs.push_back(LHSL.getValueType());
+    VTs.push_back(MVT::Flag);
+    LoOps.push_back(LHSL);
+    LoOps.push_back(RHSL);
+    HiOps.push_back(LHSH);
+    HiOps.push_back(RHSH);
+    if (Node->getOpcode() == ISD::ADD) {
+      Lo = DAG.getNode(ISD::ADDC, VTs, LoOps);
+      HiOps.push_back(Lo.getValue(1));
+      Hi = DAG.getNode(ISD::ADDE, VTs, HiOps);
+    } else {
+      Lo = DAG.getNode(ISD::SUBC, VTs, LoOps);
+      HiOps.push_back(Lo.getValue(1));
+      Hi = DAG.getNode(ISD::SUBE, VTs, HiOps);
+    }
     break;
   }
   case ISD::MUL: {

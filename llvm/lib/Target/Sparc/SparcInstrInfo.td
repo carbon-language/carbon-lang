@@ -453,16 +453,20 @@ def LEA_ADDri   : F3_2<2, 0b000000,
                    
 def ADDCCrr : F3_1<2, 0b010000, 
                    (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                   "addcc $b, $c, $dst", []>;
+                   "addcc $b, $c, $dst",
+                   [(set IntRegs:$dst, (addc IntRegs:$b, IntRegs:$c))]>;
 def ADDCCri : F3_2<2, 0b010000,
                    (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                   "addcc $b, $c, $dst", []>;
+                   "addcc $b, $c, $dst", 
+                   [(set IntRegs:$dst, (addc IntRegs:$b, simm13:$c))]>;
 def ADDXrr  : F3_1<2, 0b001000, 
                    (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                   "addx $b, $c, $dst", []>;
+                   "addx $b, $c, $dst",
+                   [(set IntRegs:$dst, (adde IntRegs:$b, IntRegs:$c))]>;
 def ADDXri  : F3_2<2, 0b001000,
                    (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                   "addx $b, $c, $dst", []>;
+                   "addx $b, $c, $dst",
+                   [(set IntRegs:$dst, (adde IntRegs:$b, simm13:$c))]>;
 
 // Section B.15 - Subtract Instructions, p. 110
 def SUBrr   : F3_1<2, 0b000100, 
@@ -475,10 +479,12 @@ def SUBri   : F3_2<2, 0b000100,
                    [(set IntRegs:$dst, (sub IntRegs:$b, simm13:$c))]>;
 def SUBXrr  : F3_1<2, 0b001100, 
                    (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                   "subx $b, $c, $dst", []>;
+                   "subx $b, $c, $dst",
+                   [(set IntRegs:$dst, (sube IntRegs:$b, IntRegs:$c))]>;
 def SUBXri  : F3_2<2, 0b001100,
                    (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                   "subx $b, $c, $dst", []>;
+                   "subx $b, $c, $dst",
+                   [(set IntRegs:$dst, (sube IntRegs:$b, simm13:$c))]>;
 def SUBCCrr : F3_1<2, 0b010100, 
                    (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
                    "subcc $b, $c, $dst",
@@ -865,6 +871,12 @@ def : Pat<(i32 simm13:$val),
 // Arbitrary immediates.
 def : Pat<(i32 imm:$val),
           (ORri (SETHIi (HI22 imm:$val)), (LO10 imm:$val))>;
+
+// subc
+def : Pat<(subc IntRegs:$b, IntRegs:$c),
+          (SUBCCrr IntRegs:$b, IntRegs:$c)>;
+def : Pat<(subc IntRegs:$b, simm13:$val),
+          (SUBCCri IntRegs:$b, imm:$val)>;
 
 // Global addresses, constant pool entries
 def : Pat<(SPhi tglobaladdr:$in), (SETHIi tglobaladdr:$in)>;

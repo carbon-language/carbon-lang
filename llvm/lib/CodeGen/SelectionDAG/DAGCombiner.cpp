@@ -157,14 +157,11 @@ namespace {
     SDOperand visitSELECT(SDNode *N);
     SDOperand visitSELECT_CC(SDNode *N);
     SDOperand visitSETCC(SDNode *N);
-    SDOperand visitADD_PARTS(SDNode *N);
-    SDOperand visitSUB_PARTS(SDNode *N);
     SDOperand visitSIGN_EXTEND(SDNode *N);
     SDOperand visitZERO_EXTEND(SDNode *N);
     SDOperand visitSIGN_EXTEND_INREG(SDNode *N);
     SDOperand visitTRUNCATE(SDNode *N);
     SDOperand visitBIT_CONVERT(SDNode *N);
-    
     SDOperand visitFADD(SDNode *N);
     SDOperand visitFSUB(SDNode *N);
     SDOperand visitFMUL(SDNode *N);
@@ -183,7 +180,6 @@ namespace {
     SDOperand visitBRCONDTWOWAY(SDNode *N);
     SDOperand visitBR_CC(SDNode *N);
     SDOperand visitBRTWOWAY_CC(SDNode *N);
-
     SDOperand visitLOAD(SDNode *N);
     SDOperand visitSTORE(SDNode *N);
 
@@ -550,8 +546,6 @@ SDOperand DAGCombiner::visit(SDNode *N) {
   case ISD::SELECT:             return visitSELECT(N);
   case ISD::SELECT_CC:          return visitSELECT_CC(N);
   case ISD::SETCC:              return visitSETCC(N);
-  case ISD::ADD_PARTS:          return visitADD_PARTS(N);
-  case ISD::SUB_PARTS:          return visitSUB_PARTS(N);
   case ISD::SIGN_EXTEND:        return visitSIGN_EXTEND(N);
   case ISD::ZERO_EXTEND:        return visitZERO_EXTEND(N);
   case ISD::SIGN_EXTEND_INREG:  return visitSIGN_EXTEND_INREG(N);
@@ -1507,46 +1501,6 @@ SDOperand DAGCombiner::visitSELECT_CC(SDNode *N) {
 SDOperand DAGCombiner::visitSETCC(SDNode *N) {
   return SimplifySetCC(N->getValueType(0), N->getOperand(0), N->getOperand(1),
                        cast<CondCodeSDNode>(N->getOperand(2))->get());
-}
-
-SDOperand DAGCombiner::visitADD_PARTS(SDNode *N) {
-  SDOperand LHSLo = N->getOperand(0);
-  SDOperand RHSLo = N->getOperand(2);
-  MVT::ValueType VT = LHSLo.getValueType();
-  
-  // fold (a_Hi, 0) + (b_Hi, b_Lo) -> (b_Hi + a_Hi, b_Lo)
-  if (TLI.MaskedValueIsZero(LHSLo, (1ULL << MVT::getSizeInBits(VT))-1)) {
-    SDOperand Hi = DAG.getNode(ISD::ADD, VT, N->getOperand(1),
-                               N->getOperand(3));
-    WorkList.push_back(Hi.Val);
-    CombineTo(N, RHSLo, Hi);
-    return SDOperand();
-  }
-  // fold (a_Hi, a_Lo) + (b_Hi, 0) -> (a_Hi + b_Hi, a_Lo)
-  if (TLI.MaskedValueIsZero(RHSLo, (1ULL << MVT::getSizeInBits(VT))-1)) {
-    SDOperand Hi = DAG.getNode(ISD::ADD, VT, N->getOperand(1),
-                               N->getOperand(3));
-    WorkList.push_back(Hi.Val);
-    CombineTo(N, LHSLo, Hi);
-    return SDOperand();
-  }
-  return SDOperand();
-}
-
-SDOperand DAGCombiner::visitSUB_PARTS(SDNode *N) {
-  SDOperand LHSLo = N->getOperand(0);
-  SDOperand RHSLo = N->getOperand(2);
-  MVT::ValueType VT = LHSLo.getValueType();
-  
-  // fold (a_Hi, a_Lo) - (b_Hi, 0) -> (a_Hi - b_Hi, a_Lo)
-  if (TLI.MaskedValueIsZero(RHSLo, (1ULL << MVT::getSizeInBits(VT))-1)) {
-    SDOperand Hi = DAG.getNode(ISD::SUB, VT, N->getOperand(1),
-                               N->getOperand(3));
-    WorkList.push_back(Hi.Val);
-    CombineTo(N, LHSLo, Hi);
-    return SDOperand();
-  }
-  return SDOperand();
 }
 
 SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {

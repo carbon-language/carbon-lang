@@ -2552,8 +2552,10 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::SETCC:       return "setcc";
   case ISD::SELECT:      return "select";
   case ISD::SELECT_CC:   return "select_cc";
-  case ISD::ADD_PARTS:   return "add_parts";
-  case ISD::SUB_PARTS:   return "sub_parts";
+  case ISD::ADDC:        return "addc";
+  case ISD::ADDE:        return "adde";
+  case ISD::SUBC:        return "subc";
+  case ISD::SUBE:        return "sube";
   case ISD::SHL_PARTS:   return "shl_parts";
   case ISD::SRA_PARTS:   return "sra_parts";
   case ISD::SRL_PARTS:   return "srl_parts";

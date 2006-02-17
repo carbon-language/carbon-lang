@@ -160,8 +160,6 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   // Darwin ABI issue.
   setOperationAction(ISD::GlobalAddress  , MVT::i32  , Custom);
   // 64-bit addm sub, shl, sra, srl (iff 32-bit x86)
-  setOperationAction(ISD::ADD_PARTS      , MVT::i32  , Custom);
-  setOperationAction(ISD::SUB_PARTS      , MVT::i32  , Custom);
   setOperationAction(ISD::SHL_PARTS      , MVT::i32  , Custom);
   setOperationAction(ISD::SRA_PARTS      , MVT::i32  , Custom);
   setOperationAction(ISD::SRL_PARTS      , MVT::i32  , Custom);
@@ -1270,30 +1268,6 @@ X86TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
 SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default: assert(0 && "Should not custom lower this!");
-  case ISD::ADD_PARTS:
-  case ISD::SUB_PARTS: {
-    assert(Op.getNumOperands() == 4 && Op.getValueType() == MVT::i32 &&
-           "Not an i64 add/sub!");
-    bool isAdd = Op.getOpcode() == ISD::ADD_PARTS;
-    std::vector<MVT::ValueType> Tys;
-    Tys.push_back(MVT::i32);
-    Tys.push_back(MVT::Flag);
-    std::vector<SDOperand> Ops;
-    Ops.push_back(Op.getOperand(0));
-    Ops.push_back(Op.getOperand(2));
-    SDOperand Lo = DAG.getNode(isAdd ? X86ISD::ADD_FLAG : X86ISD::SUB_FLAG,
-                               Tys, Ops);
-    SDOperand Hi = DAG.getNode(isAdd ? X86ISD::ADC : X86ISD::SBB, MVT::i32,
-                               Op.getOperand(1), Op.getOperand(3),
-                               Lo.getValue(1));
-    Tys.clear();
-    Tys.push_back(MVT::i32);
-    Tys.push_back(MVT::i32);
-    Ops.clear();
-    Ops.push_back(Lo);
-    Ops.push_back(Hi);
-    return DAG.getNode(ISD::MERGE_VALUES, Tys, Ops);
-  }
   case ISD::SHL_PARTS:
   case ISD::SRA_PARTS:
   case ISD::SRL_PARTS: {
@@ -1910,10 +1884,6 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
 const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
   default: return NULL;
-  case X86ISD::ADD_FLAG:           return "X86ISD::ADD_FLAG";
-  case X86ISD::SUB_FLAG:           return "X86ISD::SUB_FLAG";
-  case X86ISD::ADC:                return "X86ISD::ADC";
-  case X86ISD::SBB:                return "X86ISD::SBB";
   case X86ISD::SHLD:               return "X86ISD::SHLD";
   case X86ISD::SHRD:               return "X86ISD::SHRD";
   case X86ISD::FAND:               return "X86ISD::FAND";

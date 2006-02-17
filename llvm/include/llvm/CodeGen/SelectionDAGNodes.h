@@ -118,6 +118,21 @@ namespace ISD {
     // Simple integer binary arithmetic operators.
     ADD, SUB, MUL, SDIV, UDIV, SREM, UREM,
     
+    // Carry-setting nodes for multiple precision addition and subtraction.
+    // These nodes take two operands of the same value type, and produce two
+    // results.  The first result is the normal add or sub result, the second
+    // result is the carry flag result.
+    ADDC, SUBC,
+    
+    // Carry-using nodes for multiple precision addition and subtraction.  These
+    // nodes take three operands: The first two are the normal lhs and rhs to
+    // the add or sub, and the third is the input carry flag.  These nodes
+    // produce two results; the normal result of the add or sub, and the output
+    // carry flag.  These nodes both read and write a carry flag to allow them
+    // to them to be chained together for add and sub of arbitrarily large
+    // values.
+    ADDE, SUBE,
+    
     // Simple binary floating point operators.
     FADD, FSUB, FMUL, FDIV, FREM,
     
@@ -155,13 +170,6 @@ namespace ISD {
     // to compare (ops #0, and #1) and the condition code to compare them with
     // (op #2) as a CondCodeSDNode.
     SETCC,
-
-    // ADD_PARTS/SUB_PARTS - These operators take two logical operands which are
-    // broken into a multiple pieces each, and return the resulting pieces of
-    // doing an atomic add/sub operation.  This is used to handle add/sub of
-    // expanded types.  The operation ordering is:
-    //       [Lo,Hi] = op [LoLHS,HiLHS], [LoRHS,HiRHS]
-    ADD_PARTS, SUB_PARTS,
 
     // SHL_PARTS/SRA_PARTS/SRL_PARTS - These operators are used for expanded
     // integer shift operations, just like ADD/SUB_PARTS.  The operation

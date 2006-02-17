@@ -26,16 +26,6 @@ namespace llvm {
       // Start the numbering where the builtin ops leave off.
       FIRST_NUMBER = ISD::BUILTIN_OP_END+X86::INSTRUCTION_LIST_END,
 
-      /// ADD_FLAG, SUB_FLAG - Same as ISD::ADD and ISD::SUB except it also
-      /// produces a flag result.
-      ADD_FLAG,
-      SUB_FLAG,
-
-      /// ADC, SBB - Add with carry and subtraction with borrow. These
-      /// correspond to X86::ADCxx and X86::SBBxx instructions.
-      ADC,
-      SBB,
-
       /// SHLD, SHRD - Double shift instructions. These correspond to
       /// X86::SHLDxx and X86::SHRDxx instructions.
       SHLD,
