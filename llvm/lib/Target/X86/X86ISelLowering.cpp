@@ -164,7 +164,6 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   // Darwin ABI issue.
   setOperationAction(ISD::GlobalAddress   , MVT::i32  , Custom);
   // 64-bit addm sub, shl, sra, srl (iff 32-bit x86)
-  setOperationAction(ISD::SUB_PARTS       , MVT::i32  , Custom);
   setOperationAction(ISD::SHL_PARTS       , MVT::i32  , Custom);
   setOperationAction(ISD::SRA_PARTS       , MVT::i32  , Custom);
   setOperationAction(ISD::SRL_PARTS       , MVT::i32  , Custom);
