@@ -3132,7 +3132,7 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
   
   Source = DAG.getNode(ISD::SINT_TO_FP, DestTy, Source);
   SDOperand UnusedHiPart;
-  return ExpandLibCall("__floatdidf", Source.Val, UnusedHiPart);
+  return ExpandLibCall(FnName, Source.Val, UnusedHiPart);
 }
 
 /// ExpandLegalINT_TO_FP - This function is responsible for legalizing a
