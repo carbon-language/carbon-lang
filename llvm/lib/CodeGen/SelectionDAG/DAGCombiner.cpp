@@ -99,13 +99,12 @@ namespace {
       return SDOperand(N, 0);
     }
     
-    bool DemandedBitsAreZero(SDOperand Op, uint64_t DemandedMask,
-                             SDOperand &Old, SDOperand &New) const {
+    bool DemandedBitsAreZero(SDOperand Op, uint64_t DemandedMask) {
       TargetLowering::TargetLoweringOpt TLO(DAG);
       uint64_t KnownZero, KnownOne;
       if (TLI.SimplifyDemandedBits(Op, DemandedMask, KnownZero, KnownOne, TLO)){
-        Old = TLO.Old;
-        New = TLO.New;
+        WorkList.push_back(Op.Val);
+        CombineTo(TLO.Old.Val, TLO.New);
         return true;
       }
       return false;
@@ -732,7 +731,7 @@ SDOperand DAGCombiner::visitSDIV(SDNode *N) {
       TLI.MaskedValueIsZero(N0, SignBit))
     return DAG.getNode(ISD::UDIV, N1.getValueType(), N0, N1);
   // fold (sdiv X, pow2) -> simple ops after legalize
-  if (N1C && N1C->getValue() && !TLI.isIntDivCheap() && AfterLegalize &&
+  if (N1C && N1C->getValue() && !TLI.isIntDivCheap() &&
       (isPowerOf2_64(N1C->getSignExtended()) || 
        isPowerOf2_64(-N1C->getSignExtended()))) {
     // If dividing by powers of two is cheap, then don't perform the following
@@ -887,7 +886,7 @@ SDOperand DAGCombiner::visitMULHU(SDNode *N) {
 SDOperand DAGCombiner::visitAND(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   SDOperand N1 = N->getOperand(1);
-  SDOperand LL, LR, RL, RR, CC0, CC1, Old, New;
+  SDOperand LL, LR, RL, RR, CC0, CC1;
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
   MVT::ValueType VT = N1.getValueType();
@@ -986,12 +985,8 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
   }
   // fold (and (sign_extend_inreg x, i16 to i32), 1) -> (and x, 1)
   // fold (and (sra)) -> (and (srl)) when possible.
-  if (DemandedBitsAreZero(SDOperand(N, 0), MVT::getIntVTBitMask(VT), Old, 
-                          New)) {
-    WorkList.push_back(N);
-    CombineTo(Old.Val, New);
+  if (DemandedBitsAreZero(SDOperand(N, 0), MVT::getIntVTBitMask(VT)))
     return SDOperand();
-  }
   // fold (zext_inreg (extload x)) -> (zextload x)
   if (N0.getOpcode() == ISD::EXTLOAD) {
     MVT::ValueType EVT = cast<VTSDNode>(N0.getOperand(3))->getVT();
@@ -1252,8 +1247,6 @@ SDOperand DAGCombiner::visitXOR(SDNode *N) {
 SDOperand DAGCombiner::visitSHL(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   SDOperand N1 = N->getOperand(1);
-  SDOperand Old = SDOperand();
-  SDOperand New = SDOperand();
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
   MVT::ValueType VT = N0.getValueType();
@@ -1272,14 +1265,10 @@ SDOperand DAGCombiner::visitSHL(SDNode *N) {
   if (N1C && N1C->isNullValue())
     return N0;
   // if (shl x, c) is known to be zero, return 0
-  if (N1C && TLI.MaskedValueIsZero(SDOperand(N, 0), ~0ULL >> (64-OpSizeInBits)))
+  if (TLI.MaskedValueIsZero(SDOperand(N, 0), MVT::getIntVTBitMask(VT)))
     return DAG.getConstant(0, VT);
-  if (N1C && DemandedBitsAreZero(SDOperand(N,0), ~0ULL >> (64-OpSizeInBits),
-                                 Old, New)) {
-    WorkList.push_back(N);
-    CombineTo(Old.Val, New);
+  if (DemandedBitsAreZero(SDOperand(N,0), MVT::getIntVTBitMask(VT)))
     return SDOperand();
-  }
   // fold (shl (shl x, c1), c2) -> 0 or (shl x, c1+c2)
   if (N1C && N0.getOpcode() == ISD::SHL && 
       N0.getOperand(1).getOpcode() == ISD::Constant) {
@@ -1318,7 +1307,6 @@ SDOperand DAGCombiner::visitSRA(SDNode *N) {
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
   MVT::ValueType VT = N0.getValueType();
-  unsigned OpSizeInBits = MVT::getSizeInBits(VT);
   
   // fold (sra c1, c2) -> c1>>c2
   if (N0C && N1C)
@@ -1330,13 +1318,29 @@ SDOperand DAGCombiner::visitSRA(SDNode *N) {
   if (N0C && N0C->isAllOnesValue())
     return N0;
   // fold (sra x, c >= size(x)) -> undef
-  if (N1C && N1C->getValue() >= OpSizeInBits)
+  if (N1C && N1C->getValue() >= MVT::getSizeInBits(VT))
     return DAG.getNode(ISD::UNDEF, VT);
   // fold (sra x, 0) -> x
   if (N1C && N1C->isNullValue())
     return N0;
+  // fold (sra (shl x, c1), c1) -> sext_inreg for some c1 and target supports
+  // sext_inreg.
+  if (N1C && N0.getOpcode() == ISD::SHL && N1 == N0.getOperand(1)) {
+    unsigned LowBits = MVT::getSizeInBits(VT) - (unsigned)N1C->getValue();
+    MVT::ValueType EVT;
+    switch (LowBits) {
+    default: EVT = MVT::Other; break;
+    case  1: EVT = MVT::i1;    break;
+    case  8: EVT = MVT::i8;    break;
+    case 16: EVT = MVT::i16;   break;
+    case 32: EVT = MVT::i32;   break;
+    }
+    if (EVT > MVT::Other && TLI.isOperationLegal(ISD::SIGN_EXTEND_INREG, EVT))
+      return DAG.getNode(ISD::SIGN_EXTEND_INREG, VT, N0.getOperand(0),
+                         DAG.getValueType(EVT));
+  }
   // If the sign bit is known to be zero, switch this to a SRL.
-  if (TLI.MaskedValueIsZero(N0, (1ULL << (OpSizeInBits-1))))
+  if (TLI.MaskedValueIsZero(N0, MVT::getIntVTSignBit(VT)))
     return DAG.getNode(ISD::SRL, VT, N0, N1);
   return SDOperand();
 }
