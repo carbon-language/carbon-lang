@@ -408,6 +408,13 @@ public:
   void ReplaceAllUsesWith(SDNode *From, const std::vector<SDOperand> &To,
                           std::vector<SDNode*> *Deleted = 0);
 
+  /// ReplaceAllUsesOfValueWith - Replace any uses of From with To, leaving
+  /// uses of other values produced by From.Val alone.  The Deleted vector is
+  /// handled the same was as for ReplaceAllUsesWith, but it is required for
+  /// this method.
+  void ReplaceAllUsesOfValueWith(SDOperand From, SDOperand To,
+                                 std::vector<SDNode*> &Deleted);
+
   /// DeleteNode - Remove the specified node from the system.  This node must
   /// have no referrers.
   void DeleteNode(SDNode *N);
