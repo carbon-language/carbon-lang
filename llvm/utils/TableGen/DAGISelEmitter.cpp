@@ -1749,12 +1749,19 @@ static unsigned getPatternSize(TreePatternNode *P, DAGISelEmitter &ISE) {
 /// getResultPatternCost - Compute the number of instructions for this pattern.
 /// This is a temporary hack.  We should really include the instruction
 /// latencies in this calculation.
-static unsigned getResultPatternCost(TreePatternNode *P) {
+static unsigned getResultPatternCost(TreePatternNode *P, DAGISelEmitter &ISE) {
   if (P->isLeaf()) return 0;
   
-  unsigned Cost = P->getOperator()->isSubClassOf("Instruction");
+  unsigned Cost = 0;
+  Record *Op = P->getOperator();
+  if (Op->isSubClassOf("Instruction")) {
+    Cost++;
+    CodeGenInstruction &II = ISE.getTargetInfo().getInstruction(Op->getName());
+    if (II.usesCustomDAGSchedInserter)
+      Cost += 10;
+  }
   for (unsigned i = 0, e = P->getNumChildren(); i != e; ++i)
-    Cost += getResultPatternCost(P->getChild(i));
+    Cost += getResultPatternCost(P->getChild(i), ISE);
   return Cost;
 }
 
@@ -1773,8 +1780,8 @@ struct PatternSortingPredicate {
     if (LHSSize < RHSSize) return false;
     
     // If the patterns have equal complexity, compare generated instruction cost
-    return getResultPatternCost(LHS->getDstPattern()) <
-      getResultPatternCost(RHS->getDstPattern());
+    return getResultPatternCost(LHS->getDstPattern(), ISE) <
+      getResultPatternCost(RHS->getDstPattern(), ISE);
   }
 };
 
@@ -2748,7 +2755,7 @@ void DAGISelEmitter::EmitPatterns(std::vector<std::pair<PatternToMatch*,
       OS << "\n";
       OS << std::string(Indent, ' ') << "// Pattern complexity = "
          << getPatternSize(Pattern.getSrcPattern(), *this) << "  cost = "
-         << getResultPatternCost(Pattern.getDstPattern()) << "\n";
+         << getResultPatternCost(Pattern.getDstPattern(), *this) << "\n";
     }
     if (!FirstCodeLine.first) {
       OS << std::string(Indent, ' ') << "{\n";
@@ -2769,7 +2776,7 @@ void DAGISelEmitter::EmitPatterns(std::vector<std::pair<PatternToMatch*,
       OS << "\n";
       OS << std::string(Indent, ' ') << "// Pattern complexity = "
          << getPatternSize(Pattern.getSrcPattern(), *this) << "  cost = "
-         << getResultPatternCost(Pattern.getDstPattern()) << "\n";
+         << getResultPatternCost(Pattern.getDstPattern(), *this) << "\n";
     }
     EmitPatterns(Other, Indent, OS);
     return;
