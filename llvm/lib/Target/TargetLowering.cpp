@@ -459,6 +459,24 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
                                        CountTrailingZeros_64(~KnownZero2));
       KnownZero = (1ULL << KnownZeroOut) - 1;
       KnownOne = 0;
+      
+      SDOperand SH = Op.getOperand(0);
+      // fold (add (shl x, c1), (shl c2, c1)) -> (shl (add x, c2), c1)
+      if (KnownZero && SH.getOpcode() == ISD::SHL && SH.Val->hasOneUse() &&
+          Op.Val->hasOneUse()) {
+        if (ConstantSDNode *SA = dyn_cast<ConstantSDNode>(SH.getOperand(1))) {
+          MVT::ValueType VT = Op.getValueType();
+          unsigned ShiftAmt = SA->getValue();
+          uint64_t AddAmt = AA->getValue();
+          uint64_t AddShr = AddAmt >> ShiftAmt;
+          if (AddAmt == (AddShr << ShiftAmt)) {
+            SDOperand ADD = TLO.DAG.getNode(ISD::ADD, VT, SH.getOperand(0),
+                                            TLO.DAG.getConstant(AddShr, VT));
+            SDOperand SHL = TLO.DAG.getNode(ISD::SHL, VT, ADD,SH.getOperand(1));
+            return TLO.CombineTo(Op, SHL);
+          }
+        }
+      }
     }
     break;
   case ISD::CTTZ:
@@ -577,7 +595,7 @@ void TargetLowering::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
       KnownOne  <<= SA->getValue();
       KnownZero |= (1ULL << SA->getValue())-1;  // low bits known zero.
     }
-    break;
+    return;
   case ISD::SRL:
     // (ushr X, C1) & C2 == 0   iff  (-1 >> C1) & C2 == 0
     if (ConstantSDNode *SA = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
@@ -585,12 +603,12 @@ void TargetLowering::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
       HighBits <<= MVT::getSizeInBits(Op.getValueType())-SA->getValue();
       Mask <<= SA->getValue();
       ComputeMaskedBits(Op.getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
-      assert((KnownZero & KnownOne) == 0&&"Bits known to be one AND zero?"); 
+      assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
       KnownZero >>= SA->getValue();
       KnownOne  >>= SA->getValue();
       KnownZero |= HighBits;  // high bits known zero.
     }
-    break;
+    return;
   case ISD::SRA:
     if (ConstantSDNode *SA = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
       uint64_t HighBits = (1ULL << SA->getValue())-1;
@@ -611,7 +629,7 @@ void TargetLowering::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
         KnownOne |= HighBits;
       }
     }
-    break;
+    return;
   case ISD::CTTZ:
   case ISD::CTLZ:
   case ISD::CTPOP: {
@@ -666,12 +684,12 @@ void TargetLowering::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
     // We know that the top bits of C-X are clear if X contains less bits
     // than C (i.e. no wrap-around can happen).  For example, 20-X is
     // positive if we can prove that X is >= 0 and < 16.
-    break;
+    return;
   default:
     // Allow the target to implement this method for its nodes.
     if (Op.getOpcode() >= ISD::BUILTIN_OP_END)
       computeMaskedBitsForTargetNode(Op, Mask, KnownZero, KnownOne);
-    break;
+    return;
   }
 }
 
