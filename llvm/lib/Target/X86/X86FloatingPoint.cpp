@@ -357,6 +357,9 @@ static const TableEntry OpcodeTable[] = {
   { X86::FpIST16m  , X86::FIST16m  },
   { X86::FpIST32m  , X86::FIST32m  },
   { X86::FpIST64m  , X86::FISTP64m },
+  { X86::FpISTT16m , X86::FISTTP16m},
+  { X86::FpISTT32m , X86::FISTTP32m},
+  { X86::FpISTT64m , X86::FISTTP64m},
   { X86::FpISUB16m , X86::FISUB16m },
   { X86::FpISUB32m , X86::FISUB32m },
   { X86::FpISUBR16m, X86::FISUBR16m},
@@ -502,12 +505,17 @@ void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
   unsigned Reg = getFPReg(MI->getOperand(MI->getNumOperands()-1));
   bool KillsSrc = LV->KillsRegister(MI, X86::FP0+Reg);
 
-  // FISTP64r is strange because there isn't a non-popping versions.
+  // FISTP64m is strange because there isn't a non-popping versions.
   // If we have one _and_ we don't want to pop the operand, duplicate the value
   // on the stack instead of moving it.  This ensure that popping the value is
   // always ok.
+  // Ditto FISTTP16m, FISTTP32m, FISTTP64m.
   //
-  if (MI->getOpcode() == X86::FpIST64m && !KillsSrc) {
+  if (!KillsSrc &&
+      (MI->getOpcode() == X86::FpIST64m ||
+       MI->getOpcode() == X86::FpISTT16m ||
+       MI->getOpcode() == X86::FpISTT32m ||
+       MI->getOpcode() == X86::FpISTT64m)) {
     duplicateToTop(Reg, 7 /*temp register*/, I);
   } else {
     moveToTop(Reg, I);            // Move to the top of the stack...
@@ -517,7 +525,10 @@ void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
   MI->RemoveOperand(MI->getNumOperands()-1);    // Remove explicit ST(0) operand
   MI->setOpcode(getConcreteOpcode(MI->getOpcode()));
 
-  if (MI->getOpcode() == X86::FISTP64m) {
+  if (MI->getOpcode() == X86::FISTP64m ||
+      MI->getOpcode() == X86::FISTTP16m ||
+      MI->getOpcode() == X86::FISTTP32m ||
+      MI->getOpcode() == X86::FISTTP64m) {
     assert(StackTop > 0 && "Stack empty??");
     --StackTop;
   } else if (KillsSrc) { // Last use of operand?

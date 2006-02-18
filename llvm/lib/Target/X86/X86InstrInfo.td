@@ -2957,6 +2957,21 @@ def FISTP16m : FPI<0xDF, MRM3m, (ops i16mem:$dst), "fistp{s} $dst">;
 def FISTP32m : FPI<0xDB, MRM3m, (ops i32mem:$dst), "fistp{l} $dst">;
 def FISTP64m : FPI<0xDF, MRM7m, (ops i64mem:$dst), "fistp{ll} $dst">;
 
+// FISTTP requires SSE3 even though it's a FPStack op.
+def FpISTT16m  : FpI_<(ops i16mem:$op, RFP:$src), OneArgFP,
+                [(X86fp_to_i16mem RFP:$src, addr:$op)]>,
+                Requires<[HasSSE3]>;
+def FpISTT32m  : FpI_<(ops i32mem:$op, RFP:$src), OneArgFP,
+                [(X86fp_to_i32mem RFP:$src, addr:$op)]>,
+                Requires<[HasSSE3]>;
+def FpISTT64m  : FpI_<(ops i64mem:$op, RFP:$src), OneArgFP,
+                [(X86fp_to_i64mem RFP:$src, addr:$op)]>,
+                Requires<[HasSSE3]>;
+
+def FISTTP16m : FPI<0xDF, MRM1m, (ops i16mem:$dst), "fisttp{s} $dst">;
+def FISTTP32m : FPI<0xDB, MRM1m, (ops i32mem:$dst), "fisttp{l} $dst">;
+def FISTTP64m : FPI<0xDD, MRM1m, (ops i64mem:$dst), "fisttp{ll} $dst">;
+
 // FP Stack manipulation instructions.
 def FLDrr   : FPI<0xC0, AddRegFrm, (ops RST:$op), "fld $op">, D9;
 def FSTrr   : FPI<0xD0, AddRegFrm, (ops RST:$op), "fst $op">, DD;
