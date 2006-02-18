@@ -1426,8 +1426,8 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
                   PBI->setSuccessor(1, OldTrue);
                 }
 
-                if (PBI->getSuccessor(0) == TrueDest ||
-                    PBI->getSuccessor(1) == FalseDest) {
+                if ((PBI->getSuccessor(0) == TrueDest && FalseDest != BB) ||
+                    (PBI->getSuccessor(1) == FalseDest && TrueDest != BB)) {
                   // Clone Cond into the predecessor basic block, and or/and the
                   // two conditions together.
                   Instruction *New = Cond->clone();
@@ -1511,6 +1511,12 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
               } else {
                 PBIOp = BIOp = -1;
               }
+              
+              // Check to make sure that the other destination of this branch
+              // isn't BB itself.  If so, this is an infinite loop that will
+              // keep getting unwound.
+              if (PBIOp != -1 && PBI->getSuccessor(PBIOp) == BB)
+                PBIOp = BIOp = -1;
               
               // Finally, if everything is ok, fold the branches to logical ops.
               if (PBIOp != -1) {
