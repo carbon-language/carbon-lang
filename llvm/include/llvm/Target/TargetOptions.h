@@ -40,6 +40,12 @@ namespace llvm {
   /// produce results that are "less precise" than IEEE allows.  This includes
   /// use of X86 instructions like FSIN and FCOS instead of libcalls.
   extern bool UnsafeFPMath;
+
+  /// PICEnabled - This flag is enabled when the -enable-pic flag is specified
+  /// on the command line. When this flag is on, the code generator produces
+  /// position independant code.
+  extern bool PICEnabled;
+
 } // End llvm namespace
 
 #endif
