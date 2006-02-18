@@ -36,6 +36,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/CommandLine.h"
 #include <algorithm>
@@ -57,6 +58,9 @@ namespace {
   
   class LoopUnswitch : public FunctionPass {
     LoopInfo *LI;  // Loop information
+
+    // LoopProcessWorklist - List of loops we need to process.
+    std::vector<Loop*> LoopProcessWorklist;
   public:
     virtual bool runOnFunction(Function &F);
     bool visitLoop(Loop *L);
@@ -72,18 +76,30 @@ namespace {
     }
 
   private:
+    /// RemoveLoopFromWorklist - If the specified loop is on the loop worklist,
+    /// remove it.
+    void RemoveLoopFromWorklist(Loop *L) {
+      std::vector<Loop*>::iterator I = std::find(LoopProcessWorklist.begin(),
+                                                 LoopProcessWorklist.end(), L);
+      if (I != LoopProcessWorklist.end())
+        LoopProcessWorklist.erase(I);
+    }
+      
     bool UnswitchIfProfitable(Value *LoopCond, Constant *Val,Loop *L);
     unsigned getLoopUnswitchCost(Loop *L, Value *LIC);
-    void VersionLoop(Value *LIC, Constant *OnVal,
-                     Loop *L, Loop *&Out1, Loop *&Out2);
     void UnswitchTrivialCondition(Loop *L, Value *Cond, Constant *Val,
                                   bool EntersWhenTrue, BasicBlock *ExitBlock);
+    void UnswitchNontrivialCondition(Value *LIC, Constant *OnVal, Loop *L);
     BasicBlock *SplitEdge(BasicBlock *From, BasicBlock *To);
     BasicBlock *SplitBlock(BasicBlock *Old, Instruction *SplitPt);
-    void RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,Constant *Val,
-                                              bool isEqual);
+
+    void RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
+                                              Constant *Val, bool isEqual);
+    
+    void SimplifyCode(std::vector<Instruction*> &Worklist);
     void RemoveBlockIfDead(BasicBlock *BB,
                            std::vector<Instruction*> &Worklist);
+    void RemoveLoopFromHierarchy(Loop *L);
   };
   RegisterOpt<LoopUnswitch> X("loop-unswitch", "Unswitch loops");
 }
@@ -94,12 +110,95 @@ bool LoopUnswitch::runOnFunction(Function &F) {
   bool Changed = false;
   LI = &getAnalysis<LoopInfo>();
 
-  // Transform all the top-level loops.  Copy the loop list so that the child
-  // can update the loop tree if it needs to delete the loop.
-  std::vector<Loop*> SubLoops(LI->begin(), LI->end());
-  for (unsigned i = 0, e = SubLoops.size(); i != e; ++i)
-    Changed |= visitLoop(SubLoops[i]);
+  // Populate the worklist of loops to process in post-order.
+  for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I)
+    for (po_iterator<Loop*> LI = po_begin(*I), E = po_end(*I); LI != E; ++LI)
+      LoopProcessWorklist.push_back(*LI);
 
+  // Process the loops in worklist order, this is a post-order visitation of
+  // the loops.  We use a worklist of loops so that loops can be removed at any
+  // time if they are deleted (e.g. the backedge of a loop is removed).
+  while (!LoopProcessWorklist.empty()) {
+    Loop *L = LoopProcessWorklist.back();
+    LoopProcessWorklist.pop_back();    
+    Changed |= visitLoop(L);
+  }
+
+  return Changed;
+}
+
+/// FindLIVLoopCondition - Cond is a condition that occurs in L.  If it is
+/// invariant in the loop, or has an invariant piece, return the invariant.
+/// Otherwise, return null.
+static Value *FindLIVLoopCondition(Value *Cond, Loop *L, bool &Changed) {
+  // Constants should be folded, not unswitched on!
+  if (isa<Constant>(Cond)) return false;
+  
+  // TODO: Handle: br (VARIANT|INVARIANT).
+  // TODO: Hoist simple expressions out of loops.
+  if (L->isLoopInvariant(Cond)) return Cond;
+  
+  if (BinaryOperator *BO = dyn_cast<BinaryOperator>(Cond))
+    if (BO->getOpcode() == Instruction::And ||
+        BO->getOpcode() == Instruction::Or) {
+      // If either the left or right side is invariant, we can unswitch on this,
+      // which will cause the branch to go away in one loop and the condition to
+      // simplify in the other one.
+      if (Value *LHS = FindLIVLoopCondition(BO->getOperand(0), L, Changed))
+        return LHS;
+      if (Value *RHS = FindLIVLoopCondition(BO->getOperand(1), L, Changed))
+        return RHS;
+    }
+      
+      return 0;
+}
+
+bool LoopUnswitch::visitLoop(Loop *L) {
+  bool Changed = false;
+  
+  // Loop over all of the basic blocks in the loop.  If we find an interior
+  // block that is branching on a loop-invariant condition, we can unswitch this
+  // loop.
+  for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
+       I != E; ++I) {
+    TerminatorInst *TI = (*I)->getTerminator();
+    if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
+      // If this isn't branching on an invariant condition, we can't unswitch
+      // it.
+      if (BI->isConditional()) {
+        // See if this, or some part of it, is loop invariant.  If so, we can
+        // unswitch on it if we desire.
+        Value *LoopCond = FindLIVLoopCondition(BI->getCondition(), L, Changed);
+        if (LoopCond && UnswitchIfProfitable(LoopCond, ConstantBool::True, L)) {
+          ++NumBranches;
+          return true;
+        }
+      }      
+    } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
+      Value *LoopCond = FindLIVLoopCondition(SI->getCondition(), L, Changed);
+      if (LoopCond && SI->getNumCases() > 1) {
+        // Find a value to unswitch on:
+        // FIXME: this should chose the most expensive case!
+        Constant *UnswitchVal = SI->getCaseValue(1);
+        if (UnswitchIfProfitable(LoopCond, UnswitchVal, L)) {
+          ++NumSwitches;
+          return true;
+        }
+      }
+    }
+    
+    // Scan the instructions to check for unswitchable values.
+    for (BasicBlock::iterator BBI = (*I)->begin(), E = (*I)->end(); 
+         BBI != E; ++BBI)
+      if (SelectInst *SI = dyn_cast<SelectInst>(BBI)) {
+        Value *LoopCond = FindLIVLoopCondition(SI->getCondition(), L, Changed);
+        if (LoopCond && UnswitchIfProfitable(LoopCond, ConstantBool::True, L)) {
+          ++NumSelects;
+          return true;
+        }
+      }
+  }
+    
   return Changed;
 }
 
@@ -165,6 +264,9 @@ static bool isTrivialLoopExitBlockHelper(Loop *L, BasicBlock *BB,
   return true;
 }
 
+/// isTrivialLoopExitBlock - Return true if the specified block unconditionally
+/// leads to an exit from the specified loop, and has no side-effects in the 
+/// process.  If so, return the block that is exited to, otherwise return null.
 static BasicBlock *isTrivialLoopExitBlock(Loop *L, BasicBlock *BB) {
   std::set<BasicBlock*> Visited;
   Visited.insert(L->getHeader());  // Branches to header are ok.
@@ -266,88 +368,6 @@ unsigned LoopUnswitch::getLoopUnswitchCost(Loop *L, Value *LIC) {
   return Cost;
 }
 
-/// FindLIVLoopCondition - Cond is a condition that occurs in L.  If it is
-/// invariant in the loop, or has an invariant piece, return the invariant.
-/// Otherwise, return null.
-static Value *FindLIVLoopCondition(Value *Cond, Loop *L, bool &Changed) {
-  // Constants should be folded, not unswitched on!
-  if (isa<Constant>(Cond)) return false;
-  
-  // TODO: Handle: br (VARIANT|INVARIANT).
-  // TODO: Hoist simple expressions out of loops.
-  if (L->isLoopInvariant(Cond)) return Cond;
-  
-  if (BinaryOperator *BO = dyn_cast<BinaryOperator>(Cond))
-    if (BO->getOpcode() == Instruction::And ||
-        BO->getOpcode() == Instruction::Or) {
-      // If either the left or right side is invariant, we can unswitch on this,
-      // which will cause the branch to go away in one loop and the condition to
-      // simplify in the other one.
-      if (Value *LHS = FindLIVLoopCondition(BO->getOperand(0), L, Changed))
-        return LHS;
-      if (Value *RHS = FindLIVLoopCondition(BO->getOperand(1), L, Changed))
-        return RHS;
-    }
-  
-  return 0;
-}
-
-bool LoopUnswitch::visitLoop(Loop *L) {
-  bool Changed = false;
-
-  // Recurse through all subloops before we process this loop.  Copy the loop
-  // list so that the child can update the loop tree if it needs to delete the
-  // loop.
-  std::vector<Loop*> SubLoops(L->begin(), L->end());
-  for (unsigned i = 0, e = SubLoops.size(); i != e; ++i)
-    Changed |= visitLoop(SubLoops[i]);
-
-  // Loop over all of the basic blocks in the loop.  If we find an interior
-  // block that is branching on a loop-invariant condition, we can unswitch this
-  // loop.
-  for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
-       I != E; ++I) {
-    TerminatorInst *TI = (*I)->getTerminator();
-    if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
-      // If this isn't branching on an invariant condition, we can't unswitch
-      // it.
-      if (BI->isConditional()) {
-        // See if this, or some part of it, is loop invariant.  If so, we can
-        // unswitch on it if we desire.
-        Value *LoopCond = FindLIVLoopCondition(BI->getCondition(), L, Changed);
-        if (LoopCond && UnswitchIfProfitable(LoopCond, ConstantBool::True, L)) {
-          ++NumBranches;
-          return true;
-        }
-      }      
-    } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
-      Value *LoopCond = FindLIVLoopCondition(SI->getCondition(), L, Changed);
-      if (LoopCond && SI->getNumCases() > 1) {
-        // Find a value to unswitch on:
-        // FIXME: this should chose the most expensive case!
-        Constant *UnswitchVal = SI->getCaseValue(1);
-        if (UnswitchIfProfitable(LoopCond, UnswitchVal, L)) {
-          ++NumSwitches;
-          return true;
-        }
-      }
-    }
-    
-    // Scan the instructions to check for unswitchable values.
-    for (BasicBlock::iterator BBI = (*I)->begin(), E = (*I)->end(); 
-         BBI != E; ++BBI)
-      if (SelectInst *SI = dyn_cast<SelectInst>(BBI)) {
-        Value *LoopCond = FindLIVLoopCondition(SI->getCondition(), L, Changed);
-        if (LoopCond && UnswitchIfProfitable(LoopCond, ConstantBool::True, L)) {
-          ++NumSelects;
-          return true;
-        }
-      }
-  }
-    
-  return Changed;
-}
-
 /// UnswitchIfProfitable - We have found that we can unswitch L when
 /// LoopCond == Val to simplify the loop.  If we decide that this is profitable,
 /// unswitch the loop, reprocess the pieces, then return true.
@@ -372,9 +392,6 @@ bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val,Loop *L){
     return false;
   }
       
-  //std::cerr << "BEFORE:\n"; LI->dump();
-  Loop *NewLoop1 = 0, *NewLoop2 = 0;
- 
   // If this is a trivial condition to unswitch (which results in no code
   // duplication), do it now.
   Constant *CondVal;
@@ -383,16 +400,10 @@ bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val,Loop *L){
   if (IsTrivialUnswitchCondition(L, LoopCond, &CondVal,
                                  &EntersWhenTrue, &ExitBlock)) {
     UnswitchTrivialCondition(L, LoopCond, CondVal, EntersWhenTrue, ExitBlock);
-    NewLoop1 = L;
   } else {
-    VersionLoop(LoopCond, Val, L, NewLoop1, NewLoop2);
+    UnswitchNontrivialCondition(LoopCond, Val, L);
   }
-  
-  //std::cerr << "AFTER:\n"; LI->dump();
-  
-  // Try to unswitch each of our new loops now!
-  if (NewLoop1) visitLoop(NewLoop1);
-  if (NewLoop2) visitLoop(NewLoop2);
+ 
   return true;
 }
 
@@ -549,6 +560,9 @@ void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond,
   }
   OrigPH->getTerminator()->eraseFromParent();
 
+  // We need to reprocess this loop, it could be unswitched again.
+  LoopProcessWorklist.push_back(L);
+  
   // Now that we know that the loop is never entered when this condition is a
   // particular value, rewrite the loop with this info.  We know that this will
   // at least eliminate the old branch.
@@ -560,10 +574,9 @@ void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond,
 /// VersionLoop - We determined that the loop is profitable to unswitch when LIC
 /// equal Val.  Split it into loop versions and test the condition outside of
 /// either loop.  Return the loops created as Out1/Out2.
-void LoopUnswitch::VersionLoop(Value *LIC, Constant *Val, Loop *L,
-                               Loop *&Out1, Loop *&Out2) {
+void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val, 
+                                               Loop *L) {
   Function *F = L->getHeader()->getParent();
-  
   DEBUG(std::cerr << "loop-unswitch: Unswitching loop %"
                   << L->getHeader()->getName() << " [" << L->getBlocks().size()
                   << " blocks] in Function " << F->getName()
@@ -675,13 +688,18 @@ void LoopUnswitch::VersionLoop(Value *LIC, Constant *Val, Loop *L,
   // Emit the new branch that selects between the two versions of this loop.
   EmitPreheaderBranchOnCondition(LIC, Val, NewBlocks[0], LoopBlocks[0], OldBR);
   OldBR->eraseFromParent();
+  
+  LoopProcessWorklist.push_back(L);
+  LoopProcessWorklist.push_back(NewLoop);
 
   // Now we rewrite the original code to know that the condition is true and the
   // new code to know that the condition is false.
-  RewriteLoopBodyWithConditionConstant(L, LIC, Val, false);
-  RewriteLoopBodyWithConditionConstant(NewLoop, LIC, Val, true);
-  Out1 = L;
-  Out2 = NewLoop;
+  RewriteLoopBodyWithConditionConstant(L      , LIC, Val, false);
+  
+  // It's possible that simplifying one loop could cause the other to be
+  // deleted.  If so, don't simplify it.
+  if (!LoopProcessWorklist.empty() && LoopProcessWorklist.back() == NewLoop)
+    RewriteLoopBodyWithConditionConstant(NewLoop, LIC, Val, true);
 }
 
 /// RemoveFromWorklist - Remove all instances of I from the worklist vector
@@ -723,39 +741,60 @@ static void ReplaceUsesOfWith(Instruction *I, Value *V,
 ///
 void LoopUnswitch::RemoveBlockIfDead(BasicBlock *BB,
                                      std::vector<Instruction*> &Worklist) {
-  if (pred_begin(BB) != pred_end(BB)) return;  // not dead.
+  if (pred_begin(BB) != pred_end(BB)) {
+    // This block isn't dead, since an edge to BB was just removed, see if there
+    // are any easy simplifications we can do now.
+    if (BasicBlock *Pred = BB->getSinglePredecessor()) {
+      // If it has one pred, fold phi nodes in BB.
+      while (isa<PHINode>(BB->begin()))
+        ReplaceUsesOfWith(BB->begin(), 
+                          cast<PHINode>(BB->begin())->getIncomingValue(0), 
+                          Worklist);
+      
+      // If this is the header of a loop and the only pred is the latch, we now
+      // have an unreachable loop.
+      if (Loop *L = LI->getLoopFor(BB))
+        if (L->getHeader() == BB && L->contains(Pred)) {
+          // Remove the branch from the latch to the header block, this makes
+          // the header dead, which will make the latch dead (because the header
+          // dominates the latch).
+          Pred->getTerminator()->eraseFromParent();
+          new UnreachableInst(Pred);
+          
+          // The loop is now broken, remove it from LI.
+          RemoveLoopFromHierarchy(L);
+          
+          // Reprocess the header, which now IS dead.
+          RemoveBlockIfDead(BB, Worklist);
+          return;
+        }
+      
+      // If pred ends in a uncond branch, add uncond branch to worklist so that
+      // the two blocks will get merged.
+      if (BranchInst *BI = dyn_cast<BranchInst>(Pred->getTerminator()))
+        if (BI->isUnconditional())
+          Worklist.push_back(BI);
+    }
+    return;
+  }
 
   DEBUG(std::cerr << "Nuking dead block: " << *BB);
   
   // Remove the instructions in the basic block from the worklist.
-  for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+  for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
     RemoveFromWorklist(I, Worklist);
+    
+    // Anything that uses the instructions in this basic block should have their
+    // uses replaced with undefs.
+    if (!I->use_empty())
+      I->replaceAllUsesWith(UndefValue::get(I->getType()));
+  }
   
-  // If this is the header block for a loop, remove the loop and all subloops.
-  // We leave all of the blocks that used to be part of this loop in the parent
-  // loop if any.
+  // If this is the edge to the header block for a loop, remove the loop and
+  // promote all subloops.
   if (Loop *BBLoop = LI->getLoopFor(BB)) {
-    if (BBLoop->getHeader() == BB) {
-      if (Loop *ParentLoop = BBLoop->getParentLoop()) { // not a top-level loop.
-        for (Loop::iterator I = ParentLoop->begin(), E = ParentLoop->end();;
-             ++I) {
-          assert(I != E && "Couldn't find loop");
-          if (*I == BBLoop) {
-            ParentLoop->removeChildLoop(I);
-            break;
-          }
-        }
-      } else {
-        for (LoopInfo::iterator I = LI->begin(), E = LI->end();; ++I) {
-          assert(I != E && "Couldn't find loop");
-          if (*I == BBLoop) {
-            LI->removeLoop(I);
-            break;
-          }
-        }
-      }
-      delete BBLoop;
-    }
+    if (BBLoop->getLoopLatch() == BB)
+      RemoveLoopFromHierarchy(BBLoop);
   }
 
   // Remove the block from the loop info, which removes it from any loops it
@@ -771,16 +810,93 @@ void LoopUnswitch::RemoveBlockIfDead(BasicBlock *BB,
     TI->getSuccessor(i)->removePredecessor(BB);
   }
   
-  // Unique the successors.
+  // Unique the successors, remove anything with multiple uses.
   std::sort(Succs.begin(), Succs.end());
   Succs.erase(std::unique(Succs.begin(), Succs.end()), Succs.end());
   
   // Remove the basic block, including all of the instructions contained in it.
   BB->eraseFromParent();
   
+  // Remove successor blocks here that are not dead, so that we know we only
+  // have dead blocks in this list.  Nondead blocks have a way of becoming dead,
+  // then getting removed before we revisit them, which is badness.
+  //
+  for (unsigned i = 0; i != Succs.size(); ++i)
+    if (pred_begin(Succs[i]) != pred_end(Succs[i])) {
+      // One exception is loop headers.  If this block was the preheader for a
+      // loop, then we DO want to visit the loop so the loop gets deleted.
+      // We know that if the successor is a loop header, that this loop had to
+      // be the preheader: the case where this was the latch block was handled
+      // above and headers can only have two predecessors.
+      if (!LI->isLoopHeader(Succs[i])) {
+        Succs.erase(Succs.begin()+i);
+        --i;
+      }
+    }
+  
   for (unsigned i = 0, e = Succs.size(); i != e; ++i)
     RemoveBlockIfDead(Succs[i], Worklist);
 }
+
+/// RemoveLoopFromHierarchy - We have discovered that the specified loop has
+/// become unwrapped, either because the backedge was deleted, or because the
+/// edge into the header was removed.  If the edge into the header from the
+/// latch block was removed, the loop is unwrapped but subloops are still alive,
+/// so they just reparent loops.  If the loops are actually dead, they will be
+/// removed later.
+void LoopUnswitch::RemoveLoopFromHierarchy(Loop *L) {
+  if (Loop *ParentLoop = L->getParentLoop()) { // Not a top-level loop.
+    // Reparent all of the blocks in this loop.  Since BBLoop had a parent,
+    // they are now all in it.
+    for (Loop::block_iterator I = L->block_begin(), E = L->block_end(); 
+         I != E; ++I)
+      if (LI->getLoopFor(*I) == L)    // Don't change blocks in subloops.
+        LI->changeLoopFor(*I, ParentLoop);
+    
+    // Remove the loop from its parent loop.
+    for (Loop::iterator I = ParentLoop->begin(), E = ParentLoop->end();;
+         ++I) {
+      assert(I != E && "Couldn't find loop");
+      if (*I == L) {
+        ParentLoop->removeChildLoop(I);
+        break;
+      }
+    }
+    
+    // Move all subloops into the parent loop.
+    while (L->begin() != L->end())
+      ParentLoop->addChildLoop(L->removeChildLoop(L->end()-1));
+  } else {
+    // Reparent all of the blocks in this loop.  Since BBLoop had no parent,
+    // they no longer in a loop at all.
+    
+    for (unsigned i = 0; i != L->getBlocks().size(); ++i) {
+      // Don't change blocks in subloops.
+      if (LI->getLoopFor(L->getBlocks()[i]) == L) {
+        LI->removeBlock(L->getBlocks()[i]);
+        --i;
+      }
+    }
+
+    // Remove the loop from the top-level LoopInfo object.
+    for (LoopInfo::iterator I = LI->begin(), E = LI->end();; ++I) {
+      assert(I != E && "Couldn't find loop");
+      if (*I == L) {
+        LI->removeLoop(I);
+        break;
+      }
+    }
+
+    // Move all of the subloops to the top-level.
+    while (L->begin() != L->end())
+      LI->addTopLevelLoop(L->removeChildLoop(L->end()-1));
+  }
+
+  delete L;
+  RemoveLoopFromWorklist(L);
+}
+
+
 
 // RewriteLoopBodyWithConditionConstant - We know either that the value LIC has
 // the value specified by Val in the specified loop, or we know it does NOT have
@@ -805,9 +921,8 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
   // FOLD boolean conditions (X|LIC), (X&LIC).  Fold conditional branches,
   // selects, switches.
   std::vector<User*> Users(LIC->use_begin(), LIC->use_end());
-
   std::vector<Instruction*> Worklist;
-  
+
   // If we know that LIC == Val, or that LIC == NotVal, just replace uses of LIC
   // in the loop with the appropriate one directly.
   if (IsEqual || NotVal) {
@@ -849,10 +964,21 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
         // LIC == Val -> false.
       }
   }
-    
-  // Okay, now that we have simplified some instructions in the loop, walk over
-  // it and constant prop, dce, and fold control flow where possible.  Note that
-  // this is effectively a very simple loop-structure-aware optimizer.
+  
+  SimplifyCode(Worklist);
+}
+
+/// SimplifyCode - Okay, now that we have simplified some instructions in the 
+/// loop, walk over it and constant prop, dce, and fold control flow where
+/// possible.  Note that this is effectively a very simple loop-structure-aware
+/// optimizer.  During processing of this loop, L could very well be deleted, so
+/// it must not be used.
+///
+/// FIXME: When the loop optimizer is more mature, separate this out to a new
+/// pass.
+///
+void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist) {
+  Worklist.back()->getParent()->getParent()->viewCFG();
   while (!Worklist.empty()) {
     Instruction *I = Worklist.back();
     Worklist.pop_back();
@@ -940,7 +1066,7 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
         Succ->eraseFromParent();
         ++NumSimplify;
       } else if (ConstantBool *CB = dyn_cast<ConstantBool>(BI->getCondition())){
-        break;        // FIXME: disabled
+        break;   // FIXME: Enable.
         // Conditional branch.  Turn it into an unconditional branch, then
         // remove dead blocks.
         DEBUG(std::cerr << "Folded branch: " << *BI);
