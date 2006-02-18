@@ -76,12 +76,14 @@ namespace {
     unsigned getLoopUnswitchCost(Loop *L, Value *LIC);
     void VersionLoop(Value *LIC, Constant *OnVal,
                      Loop *L, Loop *&Out1, Loop *&Out2);
+    void UnswitchTrivialCondition(Loop *L, Value *Cond, Constant *Val,
+                                  bool EntersWhenTrue, BasicBlock *ExitBlock);
     BasicBlock *SplitEdge(BasicBlock *From, BasicBlock *To);
     BasicBlock *SplitBlock(BasicBlock *Old, Instruction *SplitPt);
     void RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,Constant *Val,
                                               bool isEqual);
-    void UnswitchTrivialCondition(Loop *L, Value *Cond, Constant *Val,
-                                  bool EntersWhenTrue, BasicBlock *ExitBlock);
+    bool TryToRemoveEdge(TerminatorInst *TI, unsigned SuccNo,
+                         std::vector<Instruction*> &Worklist);
   };
   RegisterOpt<LoopUnswitch> X("loop-unswitch", "Unswitch loops");
 }
@@ -717,7 +719,25 @@ static void ReplaceUsesOfWith(Instruction *I, Value *V,
   ++NumSimplify;
 }
 
+/// TryToRemoveEdge - Determine whether this is a case where we're smart enough
+/// to remove the specified edge from the CFG and know how to update loop
+/// information.  If it is, update SSA and the loop information for the future
+/// change, then return true.  If not, return false.
+bool LoopUnswitch::TryToRemoveEdge(TerminatorInst *TI, unsigned DeadSuccNo,
+                                   std::vector<Instruction*> &Worklist) {
+  BasicBlock *BB = TI->getParent(), *Succ = TI->getSuccessor(DeadSuccNo);
+  Loop *BBLoop = LI->getLoopFor(BB);
+  Loop *SuccLoop = LI->getLoopFor(Succ);
 
+  // If this edge is not in a loop, or if this edge is leaving a loop to a 
+  // non-loop area, this is trivial.
+  if (SuccLoop == 0) {
+    Succ->removePredecessor(BB, true);
+    return true;
+  }
+  
+  return false;
+}
 
 // RewriteLoopBodyWithConditionConstant - We know either that the value LIC has
 // the value specified by Val in the specified loop, or we know it does NOT have
@@ -875,7 +895,18 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
         // Remove Succ from the loop tree.
         LI->removeBlock(Succ);
         Succ->eraseFromParent();
+        ++NumSimplify;
         break;
+      } else if (ConstantBool *CB = dyn_cast<ConstantBool>(BI->getCondition())){
+        // Conditional branch.
+        if (TryToRemoveEdge(BI, CB->getValue(), Worklist)) {
+          DEBUG(std::cerr << "Folded branch: " << *BI);
+          new BranchInst(BI->getSuccessor(!CB->getValue()), BI);
+          BI->eraseFromParent();
+          RemoveFromWorklist(BI, Worklist);
+          ++NumSimplify;
+          break;
+        }
       }
       break;
     }
