@@ -22,6 +22,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
 PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
