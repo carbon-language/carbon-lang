@@ -101,12 +101,13 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::FP_TO_UINT       , MVT::i8   , Promote);
   setOperationAction(ISD::FP_TO_UINT       , MVT::i16  , Promote);
 
-  if (X86ScalarSSE)
+  if (X86ScalarSSE && !Subtarget->hasSSE3())
     // Expand FP_TO_UINT into a select.
     // FIXME: We would like to use a Custom expander here eventually to do
     // the optimal thing for SSE vs. the default expansion in the legalizer.
     setOperationAction(ISD::FP_TO_UINT     , MVT::i32  , Expand);
   else
+    // With SSE3 we can use fisttpll to convert to a signed i64.
     setOperationAction(ISD::FP_TO_UINT     , MVT::i32  , Promote);
 
   setOperationAction(ISD::BIT_CONVERT      , MVT::f32  , Expand);
