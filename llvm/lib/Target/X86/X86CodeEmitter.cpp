@@ -22,6 +22,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Function.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Target/TargetOptions.h"
 #include <iostream>
 using namespace llvm;
 
@@ -96,6 +97,7 @@ bool Emitter::runOnMachineFunction(MachineFunction &MF) {
 }
 
 void Emitter::emitBasicBlock(const MachineBasicBlock &MBB) {
+  assert(!PICEnabled && "CodeEmitter does not support PIC!");
   if (uint64_t Addr = MCE.getCurrentPCValue())
     BasicBlockAddrs[&MBB] = Addr;
 
