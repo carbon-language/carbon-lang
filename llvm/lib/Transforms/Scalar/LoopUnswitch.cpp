@@ -82,8 +82,8 @@ namespace {
     BasicBlock *SplitBlock(BasicBlock *Old, Instruction *SplitPt);
     void RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,Constant *Val,
                                               bool isEqual);
-    bool TryToRemoveEdge(TerminatorInst *TI, unsigned SuccNo,
-                         std::vector<Instruction*> &Worklist);
+    void RemoveBlockIfDead(BasicBlock *BB,
+                           std::vector<Instruction*> &Worklist);
   };
   RegisterOpt<LoopUnswitch> X("loop-unswitch", "Unswitch loops");
 }
@@ -718,24 +718,68 @@ static void ReplaceUsesOfWith(Instruction *I, Value *V,
   ++NumSimplify;
 }
 
-/// TryToRemoveEdge - Determine whether this is a case where we're smart enough
-/// to remove the specified edge from the CFG and know how to update loop
-/// information.  If it is, update SSA and the loop information for the future
-/// change, then return true.  If not, return false.
-bool LoopUnswitch::TryToRemoveEdge(TerminatorInst *TI, unsigned DeadSuccNo,
-                                   std::vector<Instruction*> &Worklist) {
-  BasicBlock *BB = TI->getParent(), *Succ = TI->getSuccessor(DeadSuccNo);
-  Loop *BBLoop = LI->getLoopFor(BB);
-  Loop *SuccLoop = LI->getLoopFor(Succ);
+/// RemoveBlockIfDead - If the specified block is dead, remove it, update loop
+/// information, and remove any dead successors it has.
+///
+void LoopUnswitch::RemoveBlockIfDead(BasicBlock *BB,
+                                     std::vector<Instruction*> &Worklist) {
+  if (pred_begin(BB) != pred_end(BB)) return;  // not dead.
 
-  // If this edge is not in a loop, or if this edge is leaving a loop to a 
-  // non-loop area, this is trivial.
-  if (SuccLoop == 0) {
-    Succ->removePredecessor(BB, true);
-    return true;
+  DEBUG(std::cerr << "Nuking dead block: " << *BB);
+  
+  // Remove the instructions in the basic block from the worklist.
+  for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+    RemoveFromWorklist(I, Worklist);
+  
+  // If this is the header block for a loop, remove the loop and all subloops.
+  // We leave all of the blocks that used to be part of this loop in the parent
+  // loop if any.
+  if (Loop *BBLoop = LI->getLoopFor(BB)) {
+    if (BBLoop->getHeader() == BB) {
+      if (Loop *ParentLoop = BBLoop->getParentLoop()) { // not a top-level loop.
+        for (Loop::iterator I = ParentLoop->begin(), E = ParentLoop->end();;
+             ++I) {
+          assert(I != E && "Couldn't find loop");
+          if (*I == BBLoop) {
+            ParentLoop->removeChildLoop(I);
+            break;
+          }
+        }
+      } else {
+        for (LoopInfo::iterator I = LI->begin(), E = LI->end();; ++I) {
+          assert(I != E && "Couldn't find loop");
+          if (*I == BBLoop) {
+            LI->removeLoop(I);
+            break;
+          }
+        }
+      }
+      delete BBLoop;
+    }
+  }
+
+  // Remove the block from the loop info, which removes it from any loops it
+  // was in.
+  LI->removeBlock(BB);
+  
+  
+  // Remove phi node entries in successors for this block.
+  TerminatorInst *TI = BB->getTerminator();
+  std::vector<BasicBlock*> Succs;
+  for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i) {
+    Succs.push_back(TI->getSuccessor(i));
+    TI->getSuccessor(i)->removePredecessor(BB);
   }
   
-  return false;
+  // Unique the successors.
+  std::sort(Succs.begin(), Succs.end());
+  Succs.erase(std::unique(Succs.begin(), Succs.end()), Succs.end());
+  
+  // Remove the basic block, including all of the instructions contained in it.
+  BB->eraseFromParent();
+  
+  for (unsigned i = 0, e = Succs.size(); i != e; ++i)
+    RemoveBlockIfDead(Succs[i], Worklist);
 }
 
 // RewriteLoopBodyWithConditionConstant - We know either that the value LIC has
@@ -895,17 +939,20 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
         LI->removeBlock(Succ);
         Succ->eraseFromParent();
         ++NumSimplify;
-        break;
       } else if (ConstantBool *CB = dyn_cast<ConstantBool>(BI->getCondition())){
-        // Conditional branch.
-        if (TryToRemoveEdge(BI, CB->getValue(), Worklist)) {
-          DEBUG(std::cerr << "Folded branch: " << *BI);
-          new BranchInst(BI->getSuccessor(!CB->getValue()), BI);
-          BI->eraseFromParent();
-          RemoveFromWorklist(BI, Worklist);
-          ++NumSimplify;
-          break;
-        }
+        break;        // FIXME: disabled
+        // Conditional branch.  Turn it into an unconditional branch, then
+        // remove dead blocks.
+        DEBUG(std::cerr << "Folded branch: " << *BI);
+        BasicBlock *DeadSucc = BI->getSuccessor(CB->getValue());
+        BasicBlock *LiveSucc = BI->getSuccessor(!CB->getValue());
+        DeadSucc->removePredecessor(BI->getParent(), true);
+        Worklist.push_back(new BranchInst(LiveSucc, BI));
+        BI->eraseFromParent();
+        RemoveFromWorklist(BI, Worklist);
+        ++NumSimplify;
+
+        RemoveBlockIfDead(DeadSucc, Worklist);
       }
       break;
     }
