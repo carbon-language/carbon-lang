@@ -149,6 +149,9 @@ bool X86TargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
 /// not supported for this target.
 ///
 void X86JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
+  // The JIT does not support or need PIC.
+  PICEnabled = false;
+
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
 
