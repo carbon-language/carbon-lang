@@ -665,6 +665,9 @@ SDOperand DAGCombiner::visitADD(SDNode *N) {
   // fold (A+(B-A)) -> B
   if (N1.getOpcode() == ISD::SUB && N0 == N1.getOperand(1))
     return N1.getOperand(0);
+  // 
+  if (SimplifyDemandedBits(SDOperand(N, 0)))
+    return SDOperand();
   return SDOperand();
 }
 
@@ -2297,13 +2300,16 @@ SDOperand DAGCombiner::SimplifySelectCC(SDOperand N0, SDOperand N1,
     // Get a SetCC of the condition
     // FIXME: Should probably make sure that setcc is legal if we ever have a
     // target where it isn't.
-    SDOperand Temp, SCC = DAG.getSetCC(TLI.getSetCCResultTy(), N0, N1, CC);
-    WorkList.push_back(SCC.Val);
+    SDOperand Temp, SCC;
     // cast from setcc result type to select result type
-    if (AfterLegalize)
+    if (AfterLegalize) {
+      SCC  = DAG.getSetCC(TLI.getSetCCResultTy(), N0, N1, CC);
       Temp = DAG.getZeroExtendInReg(SCC, N2.getValueType());
-    else
+    } else {
+      SCC  = DAG.getSetCC(MVT::i1, N0, N1, CC);
       Temp = DAG.getNode(ISD::ZERO_EXTEND, N2.getValueType(), SCC);
+    }
+    WorkList.push_back(SCC.Val);
     WorkList.push_back(Temp.Val);
     // shl setcc result by log2 n2c
     return DAG.getNode(ISD::SHL, N2.getValueType(), Temp,

@@ -1047,22 +1047,26 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     return Operand;         // Factor of one node?  No factor.
   case ISD::SIGN_EXTEND:
     if (Operand.getValueType() == VT) return Operand;   // noop extension
+    assert(Operand.getValueType() < VT && "Invalid sext node, dst < src!");
     if (OpOpcode == ISD::SIGN_EXTEND || OpOpcode == ISD::ZERO_EXTEND)
       return getNode(OpOpcode, VT, Operand.Val->getOperand(0));
     break;
   case ISD::ZERO_EXTEND:
     if (Operand.getValueType() == VT) return Operand;   // noop extension
+    assert(Operand.getValueType() < VT && "Invalid zext node, dst < src!");
     if (OpOpcode == ISD::ZERO_EXTEND)   // (zext (zext x)) -> (zext x)
       return getNode(ISD::ZERO_EXTEND, VT, Operand.Val->getOperand(0));
     break;
   case ISD::ANY_EXTEND:
     if (Operand.getValueType() == VT) return Operand;   // noop extension
+    assert(Operand.getValueType() < VT && "Invalid anyext node, dst < src!");
     if (OpOpcode == ISD::ZERO_EXTEND || OpOpcode == ISD::SIGN_EXTEND)
       // (ext (zext x)) -> (zext x)  and  (ext (sext x)) -> (sext x)
       return getNode(OpOpcode, VT, Operand.Val->getOperand(0));
     break;
   case ISD::TRUNCATE:
     if (Operand.getValueType() == VT) return Operand;   // noop truncate
+    assert(Operand.getValueType() > VT && "Invalid truncate node, src < dst!");
     if (OpOpcode == ISD::TRUNCATE)
       return getNode(ISD::TRUNCATE, VT, Operand.Val->getOperand(0));
     else if (OpOpcode == ISD::ZERO_EXTEND || OpOpcode == ISD::SIGN_EXTEND ||
