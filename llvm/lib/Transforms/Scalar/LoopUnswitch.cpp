@@ -590,6 +590,7 @@ void LoopUnswitch::VersionLoop(Value *LIC, Constant *Val, Loop *L,
   // Split all of the edges from inside the loop to their exit blocks.  This
   // unswitching trivial: no phi nodes to update.
   unsigned NumBlocks = L->getBlocks().size();
+  
   for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
     BasicBlock *ExitBlock = ExitBlocks[i];
     std::vector<BasicBlock*> Preds(pred_begin(ExitBlock), pred_end(ExitBlock));
@@ -639,8 +640,9 @@ void LoopUnswitch::VersionLoop(Value *LIC, Constant *Val, Loop *L,
   
   for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
     BasicBlock *NewExit = cast<BasicBlock>(ValueMap[ExitBlocks[i]]);
-    if (ParentLoop)
-      ParentLoop->addBasicBlockToLoop(cast<BasicBlock>(NewExit), *LI);
+    // The new exit block should be in the same loop as the old one.
+    if (Loop *ExitBBLoop = LI->getLoopFor(ExitBlocks[i]))
+      ExitBBLoop->addBasicBlockToLoop(NewExit, *LI);
     
     assert(NewExit->getTerminator()->getNumSuccessors() == 1 &&
            "Exit block should have been split to have one successor!");
