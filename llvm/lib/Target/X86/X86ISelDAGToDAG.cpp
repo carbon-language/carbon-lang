@@ -85,12 +85,20 @@ namespace {
     /// Subtarget - Keep a pointer to the X86Subtarget around so that we can
     /// make the right decision when generating code for different targets.
     const X86Subtarget *Subtarget;
+
+    unsigned GlobalBaseReg;
   public:
     X86DAGToDAGISel(TargetMachine &TM)
       : SelectionDAGISel(X86Lowering), X86Lowering(TM) {
       Subtarget = &TM.getSubtarget<X86Subtarget>();
     }
 
+    virtual bool runOnFunction(Function &Fn) {
+      // Make sure we re-emit a set of the global base reg if necessary
+      GlobalBaseReg = 0;
+      return SelectionDAGISel::runOnFunction(Fn);
+    }
+   
     virtual const char *getPassName() const {
       return "X86 DAG->DAG Instruction Selection";
     }
@@ -144,6 +152,10 @@ namespace {
     inline SDOperand getI32Imm(unsigned Imm) {
       return CurDAG->getTargetConstant(Imm, MVT::i32);
     }
+
+    /// getGlobalBaseReg - insert code into the entry mbb to materialize the PIC
+    /// base register.  Return the virtual register that holds this value.
+    SDOperand getGlobalBaseReg();
 
 #ifndef NDEBUG
     unsigned Indent;
@@ -283,6 +295,7 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
     break;
 
   case ISD::ConstantPool:
+  case ISD::TargetConstantPool:
     if (AM.BaseType == X86ISelAddressMode::RegBase && AM.Base.Reg.Val == 0) {
       if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N)) {
         AM.BaseType = X86ISelAddressMode::ConstantPoolBase;
@@ -377,6 +390,10 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
 
   // Is the base register already occupied?
   if (AM.BaseType != X86ISelAddressMode::RegBase || AM.Base.Reg.Val) {
+    // TargetConstantPool cannot be anything but the base.
+    if (N.getOpcode() == ISD::TargetConstantPool)
+      return true;
+
     // If so, check to see if the scale index register is set.
     if (AM.IndexReg.Val == 0) {
       AM.IndexReg = N;
@@ -476,6 +493,24 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDOperand N, SDOperand &Base,
     return true;
   }
   return false;
+}
+
+/// getGlobalBaseReg - Output the instructions required to put the
+/// base address to use for accessing globals into a register.
+///
+SDOperand X86DAGToDAGISel::getGlobalBaseReg() {
+  if (!GlobalBaseReg) {
+    // Insert the set of GlobalBaseReg into the first MBB of the function
+    MachineBasicBlock &FirstMBB = BB->getParent()->front();
+    MachineBasicBlock::iterator MBBI = FirstMBB.begin();
+    SSARegMap *RegMap = BB->getParent()->getSSARegMap();
+    // FIXME: when we get to LP64, we will need to create the appropriate
+    // type of register here.
+    GlobalBaseReg = RegMap->createVirtualRegister(X86::R32RegisterClass);
+    BuildMI(FirstMBB, MBBI, X86::MovePCtoStack, 0);
+    BuildMI(FirstMBB, MBBI, X86::POP32r, 1, GlobalBaseReg);
+  }
+  return CurDAG->getRegister(GlobalBaseReg, MVT::i32);
 }
 
 void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
@@ -603,6 +638,10 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
 #endif
       return;
     }
+      
+    case X86ISD::GlobalBaseReg: 
+      Result = getGlobalBaseReg();
+      return;
 
     case ISD::SDIV:
     case ISD::UDIV:

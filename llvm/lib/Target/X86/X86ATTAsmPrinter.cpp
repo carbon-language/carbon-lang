@@ -18,6 +18,7 @@
 #include "X86TargetMachine.h"
 #include "llvm/Module.h"
 #include "llvm/Support/Mangler.h"
+#include "llvm/Target/TargetOptions.h"
 #include <iostream>
 using namespace llvm;
 using namespace x86;
@@ -116,9 +117,9 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   case MachineOperand::MO_GlobalAddress: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
+    if (!isMemOp && !isCallOp) O << '$';
     // Darwin block shameless ripped from PPCAsmPrinter.cpp
     if (forDarwin) {
-      if (!isMemOp && !isCallOp) O << '$';
       GlobalValue *GV = MO.getGlobal();
       std::string Name = Mang->getValueName(GV);
       // Link-once, External, or Weakly-linked global variables need
@@ -132,19 +133,14 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
         } else {
           GVStubs.insert(Name);
           O << "L" << Name << "$non_lazy_ptr";
+          if (PICEnabled)
+            O << "-\"L" << getFunctionNumber() << "$pb\"";
         }
       } else {
         O << Mang->getValueName(GV);
       }
-      int Offset = MO.getOffset();
-      if (Offset > 0)
-        O << "+" << Offset;
-      else if (Offset < 0)
-        O << Offset;
-      return;
-    }
-    if (!isMemOp && !isCallOp) O << '$';
-    O << Mang->getValueName(MO.getGlobal());
+    } else
+      O << Mang->getValueName(MO.getGlobal());
     int Offset = MO.getOffset();
     if (Offset > 0)
       O << "+" << Offset;
@@ -202,6 +198,8 @@ void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
   } else if (BaseReg.isConstantPoolIndex()) {
     O << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << "_"
       << BaseReg.getConstantPoolIndex();
+    if (forDarwin && PICEnabled)
+      O << "-\"L" << getFunctionNumber() << "$pb\"";
     if (DispSpec.getImmedValue())
       O << "+" << DispSpec.getImmedValue();
     if (IndexReg.getReg()) {
@@ -236,6 +234,11 @@ void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
 
     O << ")";
   }
+}
+
+void X86ATTAsmPrinter::printPICLabel(const MachineInstr *MI, unsigned Op) {
+  O << "\"L" << getFunctionNumber() << "$pb\"\n";
+  O << "\"L" << getFunctionNumber() << "$pb\":";
 }
 
 /// printMachineInstruction -- Print out a single X86 LLVM instruction

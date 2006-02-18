@@ -137,6 +137,10 @@ namespace llvm {
       /// LOAD_PACK Load a 128-bit packed float / double value. It has the same
       /// operands as a normal load.
       LOAD_PACK,
+
+      /// GlobalBaseReg - On Darwin, this node represents the result of the popl
+      /// at function entry, used for PIC code.
+      GlobalBaseReg,
     };
 
     // X86 specific condition code. These correspond to X86_*_COND in

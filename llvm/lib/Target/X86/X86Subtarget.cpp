@@ -148,7 +148,6 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS) {
   stackAlignment = 8;
   // FIXME: this is a known good value for Yonah. Not sure about others.
   MinRepStrSizeThreshold = 128;
-  indirectExternAndWeakGlobals = false;
   X86SSELevel = NoMMXSSE;
   X863DNowLevel = NoThreeDNow;
   Is64Bit = false;
@@ -183,8 +182,6 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS) {
 #endif
   }
 
-  if (TargetType == isDarwin) {
+  if (TargetType == isDarwin)
     stackAlignment = 16;
-    indirectExternAndWeakGlobals = true;
-  }
 }

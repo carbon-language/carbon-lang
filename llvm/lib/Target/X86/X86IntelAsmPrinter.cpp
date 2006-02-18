@@ -18,6 +18,7 @@
 #include "llvm/Module.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/Mangler.h"
+#include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 using namespace x86;
 
@@ -109,9 +110,32 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
     abort ();
     return;
   case MachineOperand::MO_GlobalAddress: {
-    if (!Modifier || strcmp(Modifier, "call") || strcmp(Modifier, "mem"))
-      O << "OFFSET ";
-    O << Mang->getValueName(MO.getGlobal());
+    bool isCallOp = Modifier && !strcmp(Modifier, "call");
+    bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
+    if (!isMemOp && !isCallOp) O << "OFFSET ";
+    if (forDarwin) {
+      GlobalValue *GV = MO.getGlobal();
+      std::string Name = Mang->getValueName(GV);
+      if (!isMemOp && !isCallOp) O << '$';
+      // Link-once, External, or Weakly-linked global variables need
+      // non-lazily-resolved stubs
+      if (GV->isExternal() || GV->hasWeakLinkage() ||
+          GV->hasLinkOnceLinkage()) {
+        // Dynamically-resolved functions need a stub for the function.
+        if (isCallOp && isa<Function>(GV) && cast<Function>(GV)->isExternal()) {
+          FnStubs.insert(Name);
+          O << "L" << Name << "$stub";
+        } else {
+          GVStubs.insert(Name);
+          O << "L" << Name << "$non_lazy_ptr";
+          if (PICEnabled)
+            O << "-\"L" << getFunctionNumber() << "$pb\"";
+        }
+      } else {
+        O << Mang->getValueName(GV);
+      }
+    } else
+      O << Mang->getValueName(MO.getGlobal());
     int Offset = MO.getOffset();
     if (Offset > 0)
       O << " + " << Offset;
@@ -119,9 +143,18 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
       O << Offset;
     return;
   }
-  case MachineOperand::MO_ExternalSymbol:
+  case MachineOperand::MO_ExternalSymbol: {
+    bool isCallOp = Modifier && !strcmp(Modifier, "call");
+    bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
+    if (isCallOp && forDarwin) {
+      std::string Name(GlobalPrefix); Name += MO.getSymbolName();
+      FnStubs.insert(Name);
+      O << "L" << Name << "$stub";
+      return;
+    }
     O << GlobalPrefix << MO.getSymbolName();
     return;
+  }
   default:
     O << "<unknown operand type>"; return;
   }
@@ -144,6 +177,8 @@ void X86IntelAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
   } else if (BaseReg.isConstantPoolIndex()) {
     O << "[" << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << "_"
       << BaseReg.getConstantPoolIndex();
+    if (forDarwin && PICEnabled)
+      O << "-\"L" << getFunctionNumber() << "$pb\"";
 
     if (IndexReg.getReg()) {
       O << " + ";
@@ -193,6 +228,10 @@ void X86IntelAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
   O << "]";
 }
 
+void X86IntelAsmPrinter::printPICLabel(const MachineInstr *MI, unsigned Op) {
+  O << "\"L" << getFunctionNumber() << "$pb\"\n";
+  O << "\"L" << getFunctionNumber() << "$pb\":";
+}
 
 /// printMachineInstruction -- Print out a single X86 LLVM instruction
 /// MI in Intel syntax to the current output stream.

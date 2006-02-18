@@ -144,6 +144,10 @@ def SSECC : Operand<i8> {
   let PrintMethod = "printSSECC";
 }
 
+def piclabel: Operand<i32> {
+  let PrintMethod = "printPICLabel";
+}
+
 // A couple of more descriptive operand definitions.
 // 16-bits but only 8 bits are significant.
 def i16i8imm  : Operand<i16>;
@@ -536,6 +540,9 @@ def LEAVE    : I<0xC9, RawFrm,
                  (ops), "leave", []>, Imp<[EBP,ESP],[EBP,ESP]>;
 def POP32r   : I<0x58, AddRegFrm,
                  (ops R32:$reg), "pop{l} $reg", []>, Imp<[ESP],[ESP]>;
+
+def MovePCtoStack : I<0, Pseudo, (ops piclabel:$label),
+                      "call $label", []>;
 
 let isTwoAddress = 1 in                               // R32 = bswap R32
   def BSWAP32r : I<0xC8, AddRegFrm,

@@ -82,6 +82,7 @@ struct X86IntelAsmPrinter : public X86SharedAsmPrinter {
   void printOp(const MachineOperand &MO, const char *Modifier = 0);
   void printSSECC(const MachineInstr *MI, unsigned Op);
   void printMemReference(const MachineInstr *MI, unsigned Op);
+  void printPICLabel(const MachineInstr *MI, unsigned Op);
   bool runOnMachineFunction(MachineFunction &F);
   bool doInitialization(Module &M);
 };

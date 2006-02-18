@@ -162,6 +162,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   // X86 ret instruction may pop stack.
   setOperationAction(ISD::RET             , MVT::Other, Custom);
   // Darwin ABI issue.
+  setOperationAction(ISD::ConstantPool    , MVT::i32  , Custom);
   setOperationAction(ISD::GlobalAddress   , MVT::i32  , Custom);
   // 64-bit addm sub, shl, sra, srl (iff 32-bit x86)
   setOperationAction(ISD::SHL_PARTS       , MVT::i32  , Custom);
@@ -1788,21 +1789,43 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     return DAG.getNode(X86ISD::REP_MOVS, MVT::Other, Chain,
                        DAG.getValueType(AVT), InFlag);
   }
+  case ISD::ConstantPool: {
+    ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);
+    SDOperand Result =
+      DAG.getTargetConstantPool(CP->get(), getPointerTy(), CP->getAlignment());
+    // Only lower ConstantPool on Darwin.
+    if (getTargetMachine().
+        getSubtarget<X86Subtarget>().isTargetDarwin()) {
+      // With PIC, the address is actually $g + Offset.
+      if (PICEnabled)
+        Result = DAG.getNode(ISD::ADD, getPointerTy(),
+                DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()), Result);    
+    }
+
+    return Result;
+  }
   case ISD::GlobalAddress: {
     SDOperand Result;
-    GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
-    // For Darwin, external and weak symbols are indirect, so we want to load
-    // the value at address GV, not the value of GV itself.  This means that
-    // the GlobalAddress must be in the base or index register of the address,
-    // not the GV offset field.
+    // Only lower GlobalAddress on Darwin.
     if (getTargetMachine().
-        getSubtarget<X86Subtarget>().getIndirectExternAndWeakGlobals()) {
+        getSubtarget<X86Subtarget>().isTargetDarwin()) {
+      GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
+      SDOperand Addr = DAG.getTargetGlobalAddress(GV, getPointerTy());
+      // With PIC, the address is actually $g + Offset.
+      if (PICEnabled)
+        Addr = DAG.getNode(ISD::ADD, getPointerTy(),
+                      DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()), Addr);
+
+      // For Darwin, external and weak symbols are indirect, so we want to load
+      // the value at address GV, not the value of GV itself.  This means that
+      // the GlobalAddress must be in the base or index register of the address,
+      // not the GV offset field.
       if (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
           (GV->isExternal() && !GV->hasNotBeenReadFromBytecode()))
         Result = DAG.getLoad(MVT::i32, DAG.getEntryNode(),
-                             DAG.getTargetGlobalAddress(GV, getPointerTy()),
-                             DAG.getSrcValue(NULL));
+                             Addr, DAG.getSrcValue(NULL));
     }
+
     return Result;
   }
   case ISD::VASTART: {
@@ -1913,6 +1936,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::REP_STOS:           return "X86ISD::RET_STOS";
   case X86ISD::REP_MOVS:           return "X86ISD::RET_MOVS";
   case X86ISD::LOAD_PACK:          return "X86ISD::LOAD_PACK";
+  case X86ISD::GlobalBaseReg:      return "X86ISD::GlobalBaseReg";
   }
 }
 
