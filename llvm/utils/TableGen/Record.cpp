@@ -69,13 +69,13 @@ Init *BitsRecTy::convertValue(IntInit *II) {
     if (Value & ~((1LL << Size)-1))
       return 0;
   } else {
-    if ((Value >> Size) != -1 || ((Value & (1 << (Size-1))) == 0))
+    if ((Value >> Size) != -1 || ((Value & (1LL << (Size-1))) == 0))
       return 0;
   }
 
   BitsInit *Ret = new BitsInit(Size);
   for (unsigned i = 0; i != Size; ++i)
-    Ret->setBit(i, new BitInit(Value & (1 << i)));
+    Ret->setBit(i, new BitInit(Value & (1LL << i)));
 
   return Ret;
 }
