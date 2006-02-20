@@ -34,6 +34,9 @@ const char *MVT::getValueTypeString(MVT::ValueType VT) {
   case MVT::Other: return "ch";
   case MVT::Flag:  return "flag";
   case MVT::Vector:return "vec";
+  case MVT::v8i8:  return "v8i8";
+  case MVT::v4i16: return "v4i16";
+  case MVT::v2i32: return "v2i32";
   case MVT::v16i8: return "v16i8";
   case MVT::v8i16: return "v8i16";
   case MVT::v4i32: return "v4i32";

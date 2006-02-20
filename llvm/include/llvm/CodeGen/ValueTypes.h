@@ -48,13 +48,16 @@ namespace MVT {  // MVT = Machine Value Types
     Vector         =  13,   // This is an abstract vector type, which will
                             // be expanded into a target vector type, or scalars
                             // if no matching vector type is available.
-    v16i8          =  14,   // 16 x i8
-    v8i16          =  15,   //  8 x i16
-    v4i32          =  16,   //  4 x i32
-    v2i64          =  17,   //  2 x i64
+    v8i8           =  14,   //  8 x i8
+    v4i16          =  15,   //  4 x i16
+    v2i32          =  16,   //  2 x i32
+    v16i8          =  17,   // 16 x i8
+    v8i16          =  18,   //  8 x i16
+    v4i32          =  19,   //  4 x i32
+    v2i64          =  20,   //  2 x i64
 
-    v4f32          =  18,   //  4 x f32
-    v2f64          =  19,   //  2 x f64
+    v4f32          =  21,   //  4 x f32
+    v2f64          =  22,   //  2 x f64
 
     LAST_VALUETYPE,         // This always remains at the end of the list.
   };
@@ -96,7 +99,10 @@ namespace MVT {  // MVT = Machine Value Types
     case MVT::f32 :
     case MVT::i32 : return 32;
     case MVT::f64 :
-    case MVT::i64 : return 64;
+    case MVT::i64 :
+    case MVT::v8i8:
+    case MVT::v4i16:
+    case MVT::v2i32:return 64;
     case MVT::f80 : return 80;
     case MVT::f128:
     case MVT::i128: 

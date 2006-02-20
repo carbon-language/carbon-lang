@@ -3026,32 +3026,32 @@ def FLDCW16m  : I<0xD9, MRM5m,                   // X87 control world = [mem16]
 // XMM Packed Floating point support (requires SSE / SSE2)
 //===----------------------------------------------------------------------===//
 
-def MOVAPSrr : I<0x28, MRMSrcReg, (ops V4F4:$dst, V4F4:$src),
+def MOVAPSrr : I<0x28, MRMSrcReg, (ops V4F32:$dst, V4F32:$src),
                 "movaps {$src, $dst|$dst, $src}", []>,
                Requires<[HasSSE1]>, TB;
-def MOVAPDrr : I<0x28, MRMSrcReg, (ops V2F8:$dst, V2F8:$src),
+def MOVAPDrr : I<0x28, MRMSrcReg, (ops V2F64:$dst, V2F64:$src),
                 "movapd {$src, $dst|$dst, $src}", []>,
                Requires<[HasSSE2]>, TB, OpSize;
 
-def MOVAPSrm : I<0x28, MRMSrcMem, (ops V4F4:$dst, f128mem:$src),
+def MOVAPSrm : I<0x28, MRMSrcMem, (ops V4F32:$dst, f128mem:$src),
                 "movaps {$src, $dst|$dst, $src}", []>,
                Requires<[HasSSE1]>, TB;
-def MOVAPSmr : I<0x29, MRMDestMem, (ops f128mem:$dst, V4F4:$src),
+def MOVAPSmr : I<0x29, MRMDestMem, (ops f128mem:$dst, V4F32:$src),
                 "movaps {$src, $dst|$dst, $src}",[]>,
                Requires<[HasSSE1]>, TB;
-def MOVAPDrm : I<0x28, MRMSrcMem, (ops V2F8:$dst, f128mem:$src),
+def MOVAPDrm : I<0x28, MRMSrcMem, (ops V2F64:$dst, f128mem:$src),
                 "movapd {$src, $dst|$dst, $src}", []>,
                Requires<[HasSSE1]>, TB, OpSize;
-def MOVAPDmr : I<0x29, MRMDestMem, (ops f128mem:$dst, V2F8:$src),
+def MOVAPDmr : I<0x29, MRMDestMem, (ops f128mem:$dst, V2F64:$src),
                 "movapd {$src, $dst|$dst, $src}",[]>,
                Requires<[HasSSE2]>, TB, OpSize;
 
 // Alias instructions to do FR32 / FR64 reg-to-reg copy using movaps / movapd.
 // Upper bits are disregarded.
-def FsMOVAPSrr : I<0x28, MRMSrcReg, (ops V4F4:$dst, V4F4:$src),
+def FsMOVAPSrr : I<0x28, MRMSrcReg, (ops V4F32:$dst, V4F32:$src),
                    "movaps {$src, $dst|$dst, $src}", []>,
                  Requires<[HasSSE1]>, TB;
-def FsMOVAPDrr : I<0x28, MRMSrcReg, (ops V2F8:$dst, V2F8:$src),
+def FsMOVAPDrr : I<0x28, MRMSrcReg, (ops V2F64:$dst, V2F64:$src),
                    "movapd {$src, $dst|$dst, $src}", []>,
                  Requires<[HasSSE2]>, TB, OpSize;
 

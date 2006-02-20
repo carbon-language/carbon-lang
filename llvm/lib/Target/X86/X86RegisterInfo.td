@@ -40,6 +40,12 @@ let Namespace = "X86" in {
   def DL : RegisterGroup<"DL", [DX,EDX]>; def BL : RegisterGroup<"BL",[BX,EBX]>;
   def AH : RegisterGroup<"AH", [AX,EAX]>; def CH : RegisterGroup<"CH",[CX,ECX]>;
   def DH : RegisterGroup<"DH", [DX,EDX]>; def BH : RegisterGroup<"BH",[BX,EBX]>;
+
+  // MMX Registers. These are actually aliased to ST0 .. ST7
+  def MM0 : Register<"MM0">; def MM1 : Register<"MM1">;
+  def MM2 : Register<"MM2">; def MM3 : Register<"MM3">;
+  def MM4 : Register<"MM4">; def MM5 : Register<"MM5">;
+  def MM6 : Register<"MM6">; def MM7 : Register<"MM7">;
   
   // Pseudo Floating Point registers
   def FP0 : Register<"FP0">; def FP1 : Register<"FP1">;
@@ -108,12 +114,6 @@ def FR32 : RegisterClass<"X86", [f32], 32,
                          [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>;
 def FR64 : RegisterClass<"X86", [f64], 64,
                          [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>;
-// Vector floating point registers: V4F4, the 4 x f32 class, and V2F8,
-// the 2 x f64 class.
-def V4F4 : RegisterClass<"X86", [f32], 32,
-                         [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>;
-def V2F8 : RegisterClass<"X86", [f64], 64,
-                         [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>;
 
 // FIXME: This sets up the floating point register files as though they are f64
 // values, though they really are f80 values.  This will cause us to spill
@@ -138,3 +138,20 @@ def RST : RegisterClass<"X86", [f64], 32,
     }
   }];
 }
+
+// Vector integer registers: V8I8, the 8 x i8 class, V4I16, the 4 x i16 class,
+// and V2I32, the 2 x i32 class.
+def V8I8  : RegisterClass<"X86", [v8i8],  64, [MM0, MM1, MM2, MM3, MM4, MM5,
+  MM6, MM7]>;
+def V4I16 : RegisterClass<"X86", [v4i16], 64, [MM0, MM1, MM2, MM3, MM4, MM5,
+  MM6, MM7]>;
+def V2I32 : RegisterClass<"X86", [v2i32], 64, [MM0, MM1, MM2, MM3, MM4, MM5,
+  MM6, MM7]>;
+
+// Vector floating point registers: V4F4, the 4 x f32 class, and V2F8,
+// the 2 x f64 class.
+def V4F32 : RegisterClass<"X86", [v4f32], 128,
+                         [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>;
+def V2F64 : RegisterClass<"X86", [v2f64], 128,
+                         [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>;
+
