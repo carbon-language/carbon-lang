@@ -39,6 +39,19 @@ http://gcc.gnu.org/ml/gcc-patches/2004-04/msg00659.html
 This should use fiadd on chips where it is profitable:
 double foo(double P, int *I) { return P+*I; }
 
+We have fiadd patterns now but the followings have the same cost and
+complexity. We need a way to specify the later is more profitable.
+
+def FpADD32m  : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
+                    [(set RFP:$dst, (fadd RFP:$src1,
+                                     (extloadf64f32 addr:$src2)))]>;
+                // ST(0) = ST(0) + [mem32]
+
+def FpIADD32m : FpI<(ops RFP:$dst, RFP:$src1, i32mem:$src2), OneArgFPRW,
+                    [(set RFP:$dst, (fadd RFP:$src1,
+                                     (X86fild addr:$src2, i32)))]>;
+                // ST(0) = ST(0) + [mem32int]
+
 //===---------------------------------------------------------------------===//
 
 The FP stackifier needs to be global.  Also, it should handle simple permutates
@@ -386,11 +399,6 @@ LBB_X_2:
 
 //===---------------------------------------------------------------------===//
 
-The x86 backend currently supports dynamic-no-pic. Need to add asm
-printer support for static and PIC.
-
-//===---------------------------------------------------------------------===//
-
 We should generate bts/btr/etc instructions on targets where they are cheap or
 when codesize is important.  e.g., for:
 
@@ -416,10 +424,6 @@ _foo:
         ret
 
 When: "movl $_dst, _ptr" is sufficient.
-
-//===---------------------------------------------------------------------===//
-
-Use fisttp to do FP to integer conversion whenever it is available.
 
 //===---------------------------------------------------------------------===//
 
@@ -475,3 +479,21 @@ _test1:
 
 which is probably slower, but it's interesting at least :)
 
+//===---------------------------------------------------------------------===//
+
+Currently the x86 codegen isn't very good at mixing SSE and FPStack
+code:
+
+unsigned int foo(double x) { return x; }
+
+foo:
+	subl $20, %esp
+	movsd 24(%esp), %xmm0
+	movsd %xmm0, 8(%esp)
+	fldl 8(%esp)
+	fisttpll (%esp)
+	movl (%esp), %eax
+	addl $20, %esp
+	ret
+
+This will be solved when we go to a dynamic programming based isel.
