@@ -120,18 +120,22 @@ namespace {
       std::vector<SDNode*> NowDead;
       DAG.ReplaceAllUsesOfValueWith(TLO.Old, TLO.New, NowDead);
       
-      // Push the new node and any (now) users onto the worklist.
+      // Push the new node and any (possibly new) users onto the worklist.
       WorkList.push_back(TLO.New.Val);
       AddUsersToWorkList(TLO.New.Val);
       
       // Nodes can end up on the worklist more than once.  Make sure we do
       // not process a node that has been replaced.
-      removeFromWorkList(TLO.Old.Val);
       for (unsigned i = 0, e = NowDead.size(); i != e; ++i)
         removeFromWorkList(NowDead[i]);
       
-      // Finally, since the node is now dead, remove it from the graph.
-      DAG.DeleteNode(TLO.Old.Val);
+      // Finally, if the node is now dead, remove it from the graph.  The node
+      // may not be dead if the replacement process recursively simplified to
+      // something else needing this node.
+      if (TLO.Old.Val->use_empty()) {
+        removeFromWorkList(TLO.Old.Val);
+        DAG.DeleteNode(TLO.Old.Val);
+      }
       return true;
     }
 
