@@ -1661,8 +1661,12 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       const char *FnName = 0;
       if (Node->getOpcode() == ISD::MEMSET) {
         Args.push_back(std::make_pair(Tmp2, IntPtrTy));
-        // Extend the ubyte argument to be an int value for the call.
-        Tmp3 = DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, Tmp3);
+        // Extend the (previously legalized) ubyte argument to be an int value
+        // for the call.
+        if (Tmp3.getValueType() > MVT::i32)
+          Tmp3 = DAG.getNode(ISD::TRUNCATE, MVT::i32, Tmp3);
+        else
+          Tmp3 = DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, Tmp3);
         Args.push_back(std::make_pair(Tmp3, Type::IntTy));
         Args.push_back(std::make_pair(Tmp4, IntPtrTy));
 
