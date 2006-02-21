@@ -403,47 +403,6 @@ def IMPLICIT_DEF_R16  : I<0, Pseudo, (ops R16:$dst),
 def IMPLICIT_DEF_R32  : I<0, Pseudo, (ops R32:$dst),
                          "#IMPLICIT_DEF $dst",
                          [(set R32:$dst, (undef))]>;
-def IMPLICIT_DEF_FR32 : I<0, Pseudo, (ops FR32:$dst),
-                         "#IMPLICIT_DEF $dst",
-                         [(set FR32:$dst, (undef))]>, Requires<[HasSSE2]>;
-def IMPLICIT_DEF_FR64 : I<0, Pseudo, (ops FR64:$dst),
-                         "#IMPLICIT_DEF $dst",
-                         [(set FR64:$dst, (undef))]>, Requires<[HasSSE2]>;
-
-
-// CMOV* - Used to implement the SSE SELECT DAG operation.  Expanded by the
-// scheduler into a branch sequence.
-let usesCustomDAGSchedInserter = 1 in {  // Expanded by the scheduler.
-  def CMOV_FR32 : I<0, Pseudo,
-                    (ops FR32:$dst, FR32:$t, FR32:$f, i8imm:$cond),
-                    "#CMOV_FR32 PSEUDO!",
-                    [(set FR32:$dst, (X86cmov FR32:$t, FR32:$f, imm:$cond))]>;
-  def CMOV_FR64 : I<0, Pseudo,
-                    (ops FR64:$dst, FR64:$t, FR64:$f, i8imm:$cond),
-                    "#CMOV_FR64 PSEUDO!",
-                    [(set FR64:$dst, (X86cmov FR64:$t, FR64:$f, imm:$cond))]>;
-}
-
-let usesCustomDAGSchedInserter = 1 in {  // Expanded by the scheduler.
-  def FP_TO_INT16_IN_MEM : I<0, Pseudo,
-                            (ops i16mem:$dst, RFP:$src),
-                           "#FP_TO_INT16_IN_MEM PSEUDO!",
-                           [(X86fp_to_i16mem RFP:$src, addr:$dst)]>;
-  def FP_TO_INT32_IN_MEM : I<0, Pseudo,
-                            (ops i32mem:$dst, RFP:$src),
-                           "#FP_TO_INT32_IN_MEM PSEUDO!",
-                           [(X86fp_to_i32mem RFP:$src, addr:$dst)]>;
-  def FP_TO_INT64_IN_MEM : I<0, Pseudo,
-                            (ops i64mem:$dst, RFP:$src),
-                           "#FP_TO_INT64_IN_MEM PSEUDO!",
-                           [(X86fp_to_i64mem RFP:$src, addr:$dst)]>;
-}
-
-
-let isTerminator = 1 in
-  let Defs = [FP0, FP1, FP2, FP3, FP4, FP5, FP6] in
-    def FP_REG_KILL  : I<0, Pseudo, (ops), "#FP_REG_KILL", []>;
-
 
 // Nop
 def NOOP : I<0x90, RawFrm, (ops), "nop", []>;
@@ -1690,7 +1649,6 @@ let isTwoAddress = 0 in {
 
 
 // Double shift instructions (generalizations of rotate)
-
 def SHLD32rrCL : I<0xA5, MRMDestReg, (ops R32:$dst, R32:$src1, R32:$src2),
                    "shld{l} {%cl, $src2, $dst|$dst, $src2, %CL}",
                    [(set R32:$dst, (X86shld R32:$src1, R32:$src2, CL))]>,
@@ -2390,24 +2348,6 @@ def MOV32r0  : I<0x31, MRMInitReg,  (ops R32:$dst),
                  [(set R32:$dst, 0)]>;
 
 //===----------------------------------------------------------------------===//
-// Floating Point Stack Support
-//===----------------------------------------------------------------------===//
-
-include "X86InstrFPStack.td"
-
-//===----------------------------------------------------------------------===//
-// MMX and XMM Packed Integer support (requires MMX, SSE, and SSE2)
-//===----------------------------------------------------------------------===//
-
-include "X86InstrMMX.td"
-
-//===----------------------------------------------------------------------===//
-// XMM Floating point support (requires SSE / SSE2)
-//===----------------------------------------------------------------------===//
-
-include "X86InstrSSE.td"
-
-//===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
 //===----------------------------------------------------------------------===//
 
@@ -2460,21 +2400,6 @@ def : Pat<(i16 (anyext R8 :$src)), (MOVZX16rr8  R8 :$src)>;
 def : Pat<(i32 (anyext R8 :$src)), (MOVZX32rr8  R8 :$src)>;
 def : Pat<(i32 (anyext R16:$src)), (MOVZX32rr16 R16:$src)>;
 
-// Required for RET of f32 / f64 values.
-def : Pat<(X86fld addr:$src, f32), (FpLD32m addr:$src)>;
-def : Pat<(X86fld addr:$src, f64), (FpLD64m addr:$src)>;
-
-// Required for CALL which return f32 / f64 values.
-def : Pat<(X86fst RFP:$src, addr:$op, f32), (FpST32m addr:$op, RFP:$src)>;
-def : Pat<(X86fst RFP:$src, addr:$op, f64), (FpST64m addr:$op, RFP:$src)>;
-
-// Floating point constant -0.0 and -1.0
-def : Pat<(f64 fp64immneg0), (FpCHS (FpLD0))>, Requires<[FPStack]>;
-def : Pat<(f64 fp64immneg1), (FpCHS (FpLD1))>, Requires<[FPStack]>;
-
-// Used to conv. i64 to f64 since there isn't a SSE version.
-def : Pat<(X86fildflag addr:$src, i64), (FpILD64m addr:$src)>;
-
 //===----------------------------------------------------------------------===//
 // Some peepholes
 //===----------------------------------------------------------------------===//
@@ -2519,3 +2444,22 @@ def : Pat<(or (shl R16:$src1, CL:$amt),
 def : Pat<(store (or (shl (loadi16 addr:$dst), CL:$amt),
                      (srl R16:$src2, (sub 16, CL:$amt))), addr:$dst),
           (SHLD16mrCL addr:$dst, R16:$src2)>;
+
+
+//===----------------------------------------------------------------------===//
+// Floating Point Stack Support
+//===----------------------------------------------------------------------===//
+
+include "X86InstrFPStack.td"
+
+//===----------------------------------------------------------------------===//
+// MMX and XMM Packed Integer support (requires MMX, SSE, and SSE2)
+//===----------------------------------------------------------------------===//
+
+include "X86InstrMMX.td"
+
+//===----------------------------------------------------------------------===//
+// XMM Floating point support (requires SSE / SSE2)
+//===----------------------------------------------------------------------===//
+
+include "X86InstrSSE.td"
