@@ -100,10 +100,6 @@ def ANDNPDrm : I<0x55, MRMSrcMem, (ops V2F64:$dst, V2F64:$src1, f128mem:$src2),
                Requires<[HasSSE2]>, TB, OpSize;
 }
 
-//===----------------------------------------------------------------------===//
-// XMM Floating point support (requires SSE / SSE2)
-//===----------------------------------------------------------------------===//
-
 def MOVSSrr : I<0x10, MRMSrcReg, (ops FR32:$dst, FR32:$src),
                 "movss {$src, $dst|$dst, $src}", []>,
               Requires<[HasSSE1]>, XS;
