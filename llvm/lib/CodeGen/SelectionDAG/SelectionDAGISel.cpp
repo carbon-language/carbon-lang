@@ -1198,13 +1198,6 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
   SDOperand Chain = getRoot();
   SDOperand Flag;
   
-  // Loop over all of the inputs, copying the operand values into the
-  // appropriate registers and processing the output regs.
-  unsigned RetValReg = 0;
-  std::vector<std::pair<unsigned, Value*> > IndirectStoresToEmit;
-  unsigned OpNum = 1;
-  bool FoundOutputConstraint = false;
-  
   // We fully assign registers here at isel time.  This is not optimal, but
   // should work.  For register classes that correspond to LLVM classes, we
   // could let the LLVM RA do its thing, but we currently don't.  Do a prepass
@@ -1215,7 +1208,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
     std::string &ConstraintCode = Constraints[i].Codes[0];
     
     std::vector<unsigned> Regs =
-      TLI.getRegForInlineAsmConstraint(ConstraintCode);
+      TLI.getRegForInlineAsmConstraint(ConstraintCode, MVT::Other);
     if (Regs.size() != 1) continue;  // Not assigned a fixed reg.
     unsigned TheReg = Regs[0];
     
@@ -1240,14 +1233,23 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
     }
   }      
   
+  // Loop over all of the inputs, copying the operand values into the
+  // appropriate registers and processing the output regs.
+  unsigned RetValReg = 0;
+  std::vector<std::pair<unsigned, Value*> > IndirectStoresToEmit;
+  bool FoundOutputConstraint = false;
+  unsigned OpNum = 1;
+  
   for (unsigned i = 0, e = Constraints.size(); i != e; ++i) {
     assert(Constraints[i].Codes.size() == 1 && "Only handles one code so far!");
     std::string &ConstraintCode = Constraints[i].Codes[0];
+    Value *CallOperand = I.getOperand(OpNum);
+    MVT::ValueType CallOpVT = TLI.getValueType(CallOperand->getType());
     switch (Constraints[i].Type) {
     case InlineAsm::isOutput: {
       // Copy the output from the appropriate register.
       std::vector<unsigned> Regs =
-        TLI.getRegForInlineAsmConstraint(ConstraintCode);
+        TLI.getRegForInlineAsmConstraint(ConstraintCode, CallOpVT);
 
       // Find a regsister that we can use.
       unsigned DestReg;
@@ -1276,9 +1278,8 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
         RetValReg = DestReg;
         OpTy = I.getType();
       } else {
-        IndirectStoresToEmit.push_back(std::make_pair(DestReg,
-                                                      I.getOperand(OpNum)));
-        OpTy = I.getOperand(OpNum)->getType();
+        IndirectStoresToEmit.push_back(std::make_pair(DestReg, CallOperand));
+        OpTy = CallOperand->getType();
         OpTy = cast<PointerType>(OpTy)->getElementType();
         OpNum++;  // Consumes a call operand.
       }
@@ -1292,21 +1293,20 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
       break;
     }
     case InlineAsm::isInput: {
-      Value *Operand = I.getOperand(OpNum);
-      const Type *OpTy = Operand->getType();
+      const Type *OpTy = CallOperand->getType();
       OpNum++;  // Consumes a call operand.
 
       unsigned SrcReg;
       SDOperand ResOp;
       unsigned ResOpType;
-      SDOperand InOperandVal = getValue(Operand);
+      SDOperand InOperandVal = getValue(CallOperand);
       
       if (isdigit(ConstraintCode[0])) {    // Matching constraint?
         // If this is required to match an output register we have already set,
         // just use its register.
         unsigned OperandNo = atoi(ConstraintCode.c_str());
         SrcReg = cast<RegisterSDNode>(AsmNodeOperands[OperandNo*2+2])->getReg();
-        ResOp = DAG.getRegister(SrcReg, TLI.getValueType(OpTy));
+        ResOp = DAG.getRegister(SrcReg, CallOpVT);
         ResOpType = 1;
         
         Chain = DAG.getCopyToReg(Chain, SrcReg, InOperandVal, Flag);
@@ -1321,7 +1321,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
         case TargetLowering::C_RegisterClass: {
           // Copy the input into the appropriate register.
           std::vector<unsigned> Regs =
-            TLI.getRegForInlineAsmConstraint(ConstraintCode);
+            TLI.getRegForInlineAsmConstraint(ConstraintCode, CallOpVT);
           if (Regs.size() == 1)
             SrcReg = Regs[0];
           else
@@ -1332,7 +1332,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
           Chain = DAG.getCopyToReg(Chain, SrcReg, InOperandVal, Flag);
           Flag = Chain.getValue(1);
           
-          ResOp = DAG.getRegister(SrcReg, TLI.getValueType(OpTy));
+          ResOp = DAG.getRegister(SrcReg, CallOpVT);
           ResOpType = 1;
           break;
         }
