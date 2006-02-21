@@ -68,3 +68,14 @@ int %test(int %A) {
 This sort of thing occurs in the alloca lowering code and other places that
 are generating alignment of an already aligned value.
 
+//===---------------------------------------------------------------------===//
+
+Turn this into a signed shift right in instcombine:
+
+int f(unsigned x) {
+  return x >> 31 ? -1 : 0;
+}
+
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=25600
+http://gcc.gnu.org/ml/gcc-patches/2006-02/msg01492.html
+
