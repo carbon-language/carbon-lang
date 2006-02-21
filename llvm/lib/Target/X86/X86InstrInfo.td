@@ -356,8 +356,11 @@ def zextloadi32i16 : PatFrag<(ops node:$ptr), (i32 (zextload node:$ptr, i16))>;
 def extloadi8i1    : PatFrag<(ops node:$ptr), (i8  (extload node:$ptr, i1))>;
 def extloadf64f32  : PatFrag<(ops node:$ptr), (f64 (extload node:$ptr, f32))>;
 
-def X86loadpf32    : PatFrag<(ops node:$ptr), (f32  (X86loadp node:$ptr))>;
-def X86loadpf64    : PatFrag<(ops node:$ptr), (f64  (X86loadp node:$ptr))>;
+def X86loadpf32    : PatFrag<(ops node:$ptr), (f32   (X86loadp node:$ptr))>;
+def X86loadpf64    : PatFrag<(ops node:$ptr), (f64   (X86loadp node:$ptr))>;
+
+def X86loadpv4f32  : PatFrag<(ops node:$ptr), (v4f32 (X86loadp node:$ptr))>;
+def X86loadpv2f64  : PatFrag<(ops node:$ptr), (v2f64 (X86loadp node:$ptr))>;
 
 //===----------------------------------------------------------------------===//
 // Instruction templates...
@@ -705,18 +708,6 @@ def MOV32mr : I<0x89, MRMDestMem, (ops i32mem:$dst, R32:$src),
                 "mov{l} {$src, $dst|$dst, $src}",
                 [(store R32:$src, addr:$dst)]>;
                 
-// Pseudo-instructions that map movr0 to xor.
-// FIXME: remove when we can teach regalloc that xor reg, reg is ok.
-def MOV8r0   : I<0x30, MRMInitReg, (ops R8 :$dst),
-                 "xor{b} $dst, $dst",
-                 [(set R8:$dst, 0)]>;
-def MOV16r0  : I<0x31, MRMInitReg,  (ops R16:$dst), 
-                 "xor{w} $dst, $dst",
-                 [(set R16:$dst, 0)]>, OpSize;
-def MOV32r0  : I<0x31, MRMInitReg,  (ops R32:$dst), 
-                 "xor{l} $dst, $dst",
-                 [(set R32:$dst, 0)]>;
-
 //===----------------------------------------------------------------------===//
 //  Fixed-Register Multiplication and Division Instructions...
 //
@@ -2485,15 +2476,6 @@ def UCOMISDrm: I<0x2E, MRMSrcMem, (ops FR64:$src1, f64mem:$src2),
                  [(X86cmp FR64:$src1, (loadf64 addr:$src2))]>,
                Requires<[HasSSE2]>, TB, OpSize;
 
-// Pseudo-instructions that map fld0 to pxor for sse.
-// FIXME: remove when we can teach regalloc that xor reg, reg is ok.
-def FLD0SS : I<0xEF, MRMInitReg, (ops FR32:$dst),
-               "pxor $dst, $dst", [(set FR32:$dst, fp32imm0)]>,
-             Requires<[HasSSE1]>, TB, OpSize;
-def FLD0SD : I<0xEF, MRMInitReg, (ops FR64:$dst),
-               "pxor $dst, $dst", [(set FR64:$dst, fp64imm0)]>,
-             Requires<[HasSSE2]>, TB, OpSize;
-
 let isTwoAddress = 1 in {
 // SSE Scalar Arithmetic
 let isCommutable = 1 in {
@@ -2583,71 +2565,6 @@ def CMPSDrm : I<0xC2, MRMSrcMem,
                 (ops FR64:$dst, FR64:$src1, f64mem:$src, SSECC:$cc),
                 "cmp${cc}sd {$src, $dst|$dst, $src}", []>,
               Requires<[HasSSE2]>, XD;
-
-// SSE Logical - these all operate on packed values
-let isCommutable = 1 in {
-def ANDPSrr : I<0x54, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
-                "andps {$src2, $dst|$dst, $src2}",
-                [(set FR32:$dst, (X86fand FR32:$src1, FR32:$src2))]>,
-              Requires<[HasSSE1]>, TB;
-def ANDPDrr : I<0x54, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
-                "andpd {$src2, $dst|$dst, $src2}",
-                [(set FR64:$dst, (X86fand FR64:$src1, FR64:$src2))]>,
-              Requires<[HasSSE2]>, TB, OpSize;
-def ORPSrr : I<0x56, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
-                "orps {$src2, $dst|$dst, $src2}", []>,
-             Requires<[HasSSE1]>, TB;
-def ORPDrr : I<0x56, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
-                "orpd {$src2, $dst|$dst, $src2}", []>,
-             Requires<[HasSSE2]>, TB, OpSize;
-def XORPSrr : I<0x57, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
-                "xorps {$src2, $dst|$dst, $src2}",
-                [(set FR32:$dst, (X86fxor FR32:$src1, FR32:$src2))]>,
-              Requires<[HasSSE1]>, TB;
-def XORPDrr : I<0x57, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
-                "xorpd {$src2, $dst|$dst, $src2}",
-                [(set FR64:$dst, (X86fxor FR64:$src1, FR64:$src2))]>,
-              Requires<[HasSSE2]>, TB, OpSize;
-}
-def ANDPSrm : I<0x54, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f128mem:$src2),
-                "andps {$src2, $dst|$dst, $src2}",
-                [(set FR32:$dst, (X86fand FR32:$src1,
-                                  (X86loadpf32 addr:$src2)))]>,
-              Requires<[HasSSE1]>, TB;
-def ANDPDrm : I<0x54, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f128mem:$src2),
-                "andpd {$src2, $dst|$dst, $src2}",
-                [(set FR64:$dst, (X86fand FR64:$src1,
-                                  (X86loadpf64 addr:$src2)))]>,
-              Requires<[HasSSE2]>, TB, OpSize;
-def ORPSrm : I<0x56, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f128mem:$src2),
-                "orps {$src2, $dst|$dst, $src2}", []>,
-             Requires<[HasSSE1]>, TB;
-def ORPDrm : I<0x56, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f128mem:$src2),
-                "orpd {$src2, $dst|$dst, $src2}", []>,
-             Requires<[HasSSE2]>, TB, OpSize;
-def XORPSrm : I<0x57, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f128mem:$src2),
-                "xorps {$src2, $dst|$dst, $src2}",
-                [(set FR32:$dst, (X86fxor FR32:$src1,
-                                  (X86loadpf32 addr:$src2)))]>,
-              Requires<[HasSSE1]>, TB;
-def XORPDrm : I<0x57, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f128mem:$src2),
-                "xorpd {$src2, $dst|$dst, $src2}",
-                [(set FR64:$dst, (X86fxor FR64:$src1,
-                                  (X86loadpf64 addr:$src2)))]>,
-              Requires<[HasSSE2]>, TB, OpSize;
-
-def ANDNPSrr : I<0x55, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
-                "andnps {$src2, $dst|$dst, $src2}", []>,
-               Requires<[HasSSE1]>, TB;
-def ANDNPSrm : I<0x55, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f128mem:$src2),
-                "andnps {$src2, $dst|$dst, $src2}", []>,
-               Requires<[HasSSE1]>, TB;
-def ANDNPDrr : I<0x55, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
-                "andnpd {$src2, $dst|$dst, $src2}", []>,
-               Requires<[HasSSE2]>, TB, OpSize;
-def ANDNPDrm : I<0x55, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f128mem:$src2),
-                "andnpd {$src2, $dst|$dst, $src2}", []>,
-               Requires<[HasSSE2]>, TB, OpSize;
 }
 
 //===----------------------------------------------------------------------===//
@@ -3076,7 +2993,7 @@ def MOVAPSrr : I<0x28, MRMSrcReg, (ops V4F32:$dst, V4F32:$src),
                 "movaps {$src, $dst|$dst, $src}", []>,
                Requires<[HasSSE1]>, TB;
 def MOVAPDrr : I<0x28, MRMSrcReg, (ops V2F64:$dst, V2F64:$src),
-                "movapd {$src, $dst|$dst, $src}", []>,
+                "movapd {$src, $dst|$dst, $src}v2", []>,
                Requires<[HasSSE2]>, TB, OpSize;
 
 def MOVAPSrm : I<0x28, MRMSrcMem, (ops V4F32:$dst, f128mem:$src),
@@ -3091,6 +3008,106 @@ def MOVAPDrm : I<0x28, MRMSrcMem, (ops V2F64:$dst, f128mem:$src),
 def MOVAPDmr : I<0x29, MRMDestMem, (ops f128mem:$dst, V2F64:$src),
                 "movapd {$src, $dst|$dst, $src}",[]>,
                Requires<[HasSSE2]>, TB, OpSize;
+
+// Logical
+let isTwoAddress = 1 in {
+let isCommutable = 1 in {
+def ANDPSrr : I<0x54, MRMSrcReg, (ops V4F32:$dst, V4F32:$src1, V4F32:$src2),
+                "andps {$src2, $dst|$dst, $src2}",
+                [(set V4F32:$dst, (X86fand V4F32:$src1, V4F32:$src2))]>,
+              Requires<[HasSSE1]>, TB;
+def ANDPDrr : I<0x54, MRMSrcReg, (ops V2F64:$dst, V2F64:$src1, V2F64:$src2),
+                "andpd {$src2, $dst|$dst, $src2}",
+                [(set V2F64:$dst, (X86fand V2F64:$src1, V2F64:$src2))]>,
+              Requires<[HasSSE2]>, TB, OpSize;
+def ORPSrr : I<0x56, MRMSrcReg, (ops V4F32:$dst, V4F32:$src1, V4F32:$src2),
+                "orps {$src2, $dst|$dst, $src2}", []>,
+             Requires<[HasSSE1]>, TB;
+def ORPDrr : I<0x56, MRMSrcReg, (ops V2F64:$dst, V2F64:$src1, V2F64:$src2),
+                "orpd {$src2, $dst|$dst, $src2}", []>,
+             Requires<[HasSSE2]>, TB, OpSize;
+def XORPSrr : I<0x57, MRMSrcReg, (ops V4F32:$dst, V4F32:$src1, V4F32:$src2),
+                "xorps {$src2, $dst|$dst, $src2}",
+                [(set V4F32:$dst, (X86fxor V4F32:$src1, V4F32:$src2))]>,
+              Requires<[HasSSE1]>, TB;
+def XORPDrr : I<0x57, MRMSrcReg, (ops V2F64:$dst, V2F64:$src1, V2F64:$src2),
+                "xorpd {$src2, $dst|$dst, $src2}",
+                [(set V2F64:$dst, (X86fxor V2F64:$src1, V2F64:$src2))]>,
+              Requires<[HasSSE2]>, TB, OpSize;
+}
+def ANDPSrm : I<0x54, MRMSrcMem, (ops V4F32:$dst, V4F32:$src1, f128mem:$src2),
+                "andps {$src2, $dst|$dst, $src2}",
+                [(set V4F32:$dst, (X86fand V4F32:$src1,
+                                  (X86loadpv4f32 addr:$src2)))]>,
+              Requires<[HasSSE1]>, TB;
+def ANDPDrm : I<0x54, MRMSrcMem, (ops V2F64:$dst, V2F64:$src1, f128mem:$src2),
+                "andpd {$src2, $dst|$dst, $src2}",
+                [(set V2F64:$dst, (X86fand V2F64:$src1,
+                                  (X86loadpv2f64 addr:$src2)))]>,
+              Requires<[HasSSE2]>, TB, OpSize;
+def ORPSrm : I<0x56, MRMSrcMem, (ops V4F32:$dst, V4F32:$src1, f128mem:$src2),
+                "orps {$src2, $dst|$dst, $src2}", []>,
+             Requires<[HasSSE1]>, TB;
+def ORPDrm : I<0x56, MRMSrcMem, (ops V2F64:$dst, V2F64:$src1, f128mem:$src2),
+                "orpd {$src2, $dst|$dst, $src2}", []>,
+             Requires<[HasSSE2]>, TB, OpSize;
+def XORPSrm : I<0x57, MRMSrcMem, (ops V4F32:$dst, V4F32:$src1, f128mem:$src2),
+                "xorps {$src2, $dst|$dst, $src2}",
+                [(set V4F32:$dst, (X86fxor V4F32:$src1,
+                                  (X86loadpv4f32 addr:$src2)))]>,
+              Requires<[HasSSE1]>, TB;
+def XORPDrm : I<0x57, MRMSrcMem, (ops V2F64:$dst, V2F64:$src1, f128mem:$src2),
+                "xorpd {$src2, $dst|$dst, $src2}",
+                [(set V2F64:$dst, (X86fxor V2F64:$src1,
+                                  (X86loadpv2f64 addr:$src2)))]>,
+              Requires<[HasSSE2]>, TB, OpSize;
+
+def ANDNPSrr : I<0x55, MRMSrcReg, (ops V4F32:$dst, V4F32:$src1, V4F32:$src2),
+                "andnps {$src2, $dst|$dst, $src2}", []>,
+               Requires<[HasSSE1]>, TB;
+def ANDNPSrm : I<0x55, MRMSrcMem, (ops V4F32:$dst, V4F32:$src1, f128mem:$src2),
+                "andnps {$src2, $dst|$dst, $src2}", []>,
+               Requires<[HasSSE1]>, TB;
+def ANDNPDrr : I<0x55, MRMSrcReg, (ops V2F64:$dst, V2F64:$src1, V2F64:$src2),
+                "andnpd {$src2, $dst|$dst, $src2}", []>,
+               Requires<[HasSSE2]>, TB, OpSize;
+def ANDNPDrm : I<0x55, MRMSrcMem, (ops V2F64:$dst, V2F64:$src1, f128mem:$src2),
+                "andnpd {$src2, $dst|$dst, $src2}", []>,
+               Requires<[HasSSE2]>, TB, OpSize;
+}
+
+//===----------------------------------------------------------------------===//
+// Miscellaneous Instructions
+//===----------------------------------------------------------------------===//
+
+def RDTSC : I<0x31, RawFrm, (ops), "rdtsc", [(X86rdtsc)]>,
+            TB, Imp<[],[EAX,EDX]>;
+
+
+//===----------------------------------------------------------------------===//
+// Alias Instructions
+//===----------------------------------------------------------------------===//
+
+// Alias instructions that map movr0 to xor.
+// FIXME: remove when we can teach regalloc that xor reg, reg is ok.
+def MOV8r0   : I<0x30, MRMInitReg, (ops R8 :$dst),
+                 "xor{b} $dst, $dst",
+                 [(set R8:$dst, 0)]>;
+def MOV16r0  : I<0x31, MRMInitReg,  (ops R16:$dst), 
+                 "xor{w} $dst, $dst",
+                 [(set R16:$dst, 0)]>, OpSize;
+def MOV32r0  : I<0x31, MRMInitReg,  (ops R32:$dst), 
+                 "xor{l} $dst, $dst",
+                 [(set R32:$dst, 0)]>;
+
+// Alias instructions that map fld0 to pxor for sse.
+// FIXME: remove when we can teach regalloc that xor reg, reg is ok.
+def FLD0SS : I<0xEF, MRMInitReg, (ops FR32:$dst),
+               "pxor $dst, $dst", [(set FR32:$dst, fp32imm0)]>,
+             Requires<[HasSSE1]>, TB, OpSize;
+def FLD0SD : I<0xEF, MRMInitReg, (ops FR64:$dst),
+               "pxor $dst, $dst", [(set FR64:$dst, fp64imm0)]>,
+             Requires<[HasSSE2]>, TB, OpSize;
 
 // Alias instructions to do FR32 / FR64 reg-to-reg copy using movaps / movapd.
 // Upper bits are disregarded.
@@ -3112,14 +3129,72 @@ def FsMOVAPDrm : I<0x28, MRMSrcMem, (ops FR64:$dst, f128mem:$src),
                   [(set FR64:$dst, (X86loadpf64 addr:$src))]>,
                 Requires<[HasSSE2]>, TB, OpSize;
 
+// Alias bitwise logical operations using SSE logical ops on packed FP values.
+let isTwoAddress = 1 in {
+let isCommutable = 1 in {
+def FsANDPSrr : I<0x54, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
+                  "andps {$src2, $dst|$dst, $src2}",
+                  [(set FR32:$dst, (X86fand FR32:$src1, FR32:$src2))]>,
+                Requires<[HasSSE1]>, TB;
+def FsANDPDrr : I<0x54, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
+                  "andpd {$src2, $dst|$dst, $src2}",
+                  [(set FR64:$dst, (X86fand FR64:$src1, FR64:$src2))]>,
+                Requires<[HasSSE2]>, TB, OpSize;
+def FsORPSrr : I<0x56, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
+                 "orps {$src2, $dst|$dst, $src2}", []>,
+               Requires<[HasSSE1]>, TB;
+def FsORPDrr : I<0x56, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
+                 "orpd {$src2, $dst|$dst, $src2}", []>,
+               Requires<[HasSSE2]>, TB, OpSize;
+def FsXORPSrr : I<0x57, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
+                  "xorps {$src2, $dst|$dst, $src2}",
+                  [(set FR32:$dst, (X86fxor FR32:$src1, FR32:$src2))]>,
+                Requires<[HasSSE1]>, TB;
+def FsXORPDrr : I<0x57, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
+                  "xorpd {$src2, $dst|$dst, $src2}",
+                  [(set FR64:$dst, (X86fxor FR64:$src1, FR64:$src2))]>,
+                Requires<[HasSSE2]>, TB, OpSize;
+}
+def FsANDPSrm : I<0x54, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f128mem:$src2),
+                  "andps {$src2, $dst|$dst, $src2}",
+                  [(set FR32:$dst, (X86fand FR32:$src1,
+                                    (X86loadpf32 addr:$src2)))]>,
+                Requires<[HasSSE1]>, TB;
+def FsANDPDrm : I<0x54, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f128mem:$src2),
+                  "andpd {$src2, $dst|$dst, $src2}",
+                  [(set FR64:$dst, (X86fand FR64:$src1,
+                                    (X86loadpf64 addr:$src2)))]>,
+                Requires<[HasSSE2]>, TB, OpSize;
+def FsORPSrm : I<0x56, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f128mem:$src2),
+                 "orps {$src2, $dst|$dst, $src2}", []>,
+               Requires<[HasSSE1]>, TB;
+def FsORPDrm : I<0x56, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f128mem:$src2),
+                 "orpd {$src2, $dst|$dst, $src2}", []>,
+               Requires<[HasSSE2]>, TB, OpSize;
+def FsXORPSrm : I<0x57, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f128mem:$src2),
+                  "xorps {$src2, $dst|$dst, $src2}",
+                  [(set FR32:$dst, (X86fxor FR32:$src1,
+                                    (X86loadpf32 addr:$src2)))]>,
+                Requires<[HasSSE1]>, TB;
+def FsXORPDrm : I<0x57, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f128mem:$src2),
+                  "xorpd {$src2, $dst|$dst, $src2}",
+                  [(set FR64:$dst, (X86fxor FR64:$src1,
+                                    (X86loadpf64 addr:$src2)))]>,
+                Requires<[HasSSE2]>, TB, OpSize;
 
-//===----------------------------------------------------------------------===//
-// Miscellaneous Instructions
-//===----------------------------------------------------------------------===//
-
-def RDTSC : I<0x31, RawFrm, (ops), "rdtsc", [(X86rdtsc)]>,
-            TB, Imp<[],[EAX,EDX]>;
-
+def FsANDNPSrr : I<0x55, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
+                   "andnps {$src2, $dst|$dst, $src2}", []>,
+                 Requires<[HasSSE1]>, TB;
+def FsANDNPSrm : I<0x55, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f128mem:$src2),
+                   "andnps {$src2, $dst|$dst, $src2}", []>,
+                 Requires<[HasSSE1]>, TB;
+def FsANDNPDrr : I<0x55, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
+                   "andnpd {$src2, $dst|$dst, $src2}", []>,
+                 Requires<[HasSSE2]>, TB, OpSize;
+def FsANDNPDrm : I<0x55, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f128mem:$src2),
+                   "andnpd {$src2, $dst|$dst, $src2}", []>,
+                 Requires<[HasSSE2]>, TB, OpSize;
+}
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
