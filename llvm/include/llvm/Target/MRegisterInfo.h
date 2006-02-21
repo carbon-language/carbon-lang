@@ -44,8 +44,9 @@ public:
   typedef const unsigned* iterator;
   typedef const unsigned* const_iterator;
 
+  typedef const MVT::ValueType* vt_iterator;
 private:
-  const MVT::ValueType* VTs;
+  const vt_iterator VTs;
   const unsigned RegSize, Alignment;    // Size & Alignment of register in bytes
   const iterator RegsBegin, RegsEnd;
 public:
@@ -83,6 +84,21 @@ public:
         return true;
     return false;
   }
+  
+  /// vt_begin - Loop over all of the value types that can be represented by
+  /// values in this register class.
+  vt_iterator vt_begin() const {
+    return VTs;
+  }
+
+  /// vt_begin - Loop over all of the value types that can be represented by
+  /// values in this register class.
+  vt_iterator vt_end() const {
+    vt_iterator I = VTs;
+    while (*I != MVT::Other) ++I;
+    return I;
+  }
+  
   
   /// allocation_order_begin/end - These methods define a range of registers
   /// which specify the registers in this class that are valid to register
