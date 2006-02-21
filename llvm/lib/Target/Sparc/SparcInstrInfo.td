@@ -191,7 +191,7 @@ def IMPLICIT_DEF_DFP : Pseudo<(ops DFPRegs:$dst), "!IMPLICIT_DEF $dst",
                               
 // FpMOVD/FpNEGD/FpABSD - These are lowered to single-precision ops by the 
 // fpmover pass.
-let Predicates = [HasNoV9] in {  // Only emit these in SP mode.
+let Predicates = [HasNoV9] in {  // Only emit these in V8 mode.
   def FpMOVD : Pseudo<(ops DFPRegs:$dst, DFPRegs:$src),
                       "!FpMOVD $src, $dst", []>;
   def FpNEGD : Pseudo<(ops DFPRegs:$dst, DFPRegs:$src),
@@ -205,8 +205,7 @@ let Predicates = [HasNoV9] in {  // Only emit these in SP mode.
 // SELECT_CC_* - Used to implement the SELECT_CC DAG operation.  Expanded by the
 // scheduler into a branch sequence.  This has to handle all permutations of
 // selection between i32/f32/f64 on ICC and FCC.
-let usesCustomDAGSchedInserter = 1,    // Expanded by the scheduler.
-    Predicates = [HasNoV9] in {        // V9 has conditional moves
+let usesCustomDAGSchedInserter = 1 in {   // Expanded by the scheduler.
   def SELECT_CC_Int_ICC
    : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F, i32imm:$Cond),
             "; SELECT_CC_Int_ICC PSEUDO!",
