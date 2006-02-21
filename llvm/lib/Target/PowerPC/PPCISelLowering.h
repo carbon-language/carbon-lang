@@ -99,7 +99,8 @@ namespace llvm {
     
     ConstraintType getConstraintType(char ConstraintLetter) const;
     std::vector<unsigned> 
-      getRegForInlineAsmConstraint(const std::string &Constraint) const;
+      getRegForInlineAsmConstraint(const std::string &Constraint,
+                                   MVT::ValueType VT) const;
     bool isOperandValidForConstraint(SDOperand Op, char ConstraintLetter);
   };
 }

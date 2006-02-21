@@ -745,7 +745,8 @@ bool TargetLowering::isOperandValidForConstraint(SDOperand Op,
 
 
 std::vector<unsigned> TargetLowering::
-getRegForInlineAsmConstraint(const std::string &Constraint) const {
+getRegForInlineAsmConstraint(const std::string &Constraint,
+                             MVT::ValueType VT) const {
   // Not a physreg, must not be a register reference or something.
   if (Constraint[0] != '{') return std::vector<unsigned>();
   assert(*(Constraint.end()-1) == '}' && "Not a brace enclosed constraint?");

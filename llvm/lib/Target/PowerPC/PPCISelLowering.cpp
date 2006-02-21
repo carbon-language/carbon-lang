@@ -999,7 +999,8 @@ PPCTargetLowering::getConstraintType(char ConstraintLetter) const {
 
 
 std::vector<unsigned> PPCTargetLowering::
-getRegForInlineAsmConstraint(const std::string &Constraint) const {
+getRegForInlineAsmConstraint(const std::string &Constraint,
+                             MVT::ValueType VT) const {
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {      // GCC RS6000 Constraint Letters
     default: break;  // Unknown constriant letter
@@ -1051,7 +1052,7 @@ getRegForInlineAsmConstraint(const std::string &Constraint) const {
   }
   
   // Handle explicit register names.
-  return TargetLowering::getRegForInlineAsmConstraint(Constraint);
+  return TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);
 }
 
 // isOperandValidForConstraint
