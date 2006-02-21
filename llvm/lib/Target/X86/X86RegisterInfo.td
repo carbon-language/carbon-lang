@@ -140,13 +140,22 @@ def RST : RegisterClass<"X86", [f64], 32,
 }
 
 // Vector integer registers: V8I8, the 8 x i8 class, V4I16, the 4 x i16 class,
-// and V2I32, the 2 x i32 class.
-def V8I8  : RegisterClass<"X86", [v8i8],  64, [MM0, MM1, MM2, MM3, MM4, MM5,
-  MM6, MM7]>;
-def V4I16 : RegisterClass<"X86", [v4i16], 64, [MM0, MM1, MM2, MM3, MM4, MM5,
-  MM6, MM7]>;
-def V2I32 : RegisterClass<"X86", [v2i32], 64, [MM0, MM1, MM2, MM3, MM4, MM5,
-  MM6, MM7]>;
+// V2I32, the 2 x i32 class, V16I8, the 16 x i8 class, V8I16, the 8 x i16 class,
+// V4I32, the 4 x i32 class, and V2I64, the 2 x i64 class.
+def V8I8  : RegisterClass<"X86", [v8i8],  64,
+                          [MM0, MM1, MM2, MM3, MM4, MM5, MM6, MM7]>;
+def V4I16 : RegisterClass<"X86", [v4i16], 64,
+                          [MM0, MM1, MM2, MM3, MM4, MM5, MM6, MM7]>;
+def V2I32 : RegisterClass<"X86", [v2i32], 64,
+                          [MM0, MM1, MM2, MM3, MM4, MM5, MM6, MM7]>;
+def V16I8 : RegisterClass<"X86", [v16i8], 128,
+                          [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>;
+def V8I16 : RegisterClass<"X86", [v8i16], 128,
+                          [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>;
+def V4I32 : RegisterClass<"X86", [v4i32], 128,
+                          [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>;
+def V2I64 : RegisterClass<"X86", [v2i64], 128,
+                          [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>;
 
 // Vector floating point registers: V4F4, the 4 x f32 class, and V2F8,
 // the 2 x f64 class.
@@ -155,3 +164,8 @@ def V4F32 : RegisterClass<"X86", [v4f32], 128,
 def V2F64 : RegisterClass<"X86", [v2f64], 128,
                          [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>;
 
+// Generic vector registers: VR64 and VR128.
+def VR64  : RegisterClass<"X86", [v8i8, v4i16, v2i32], 64,
+                          [MM0, MM1, MM2, MM3, MM4, MM5, MM6, MM7]>;
+def VR128 : RegisterClass<"X86", [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],128,
+                         [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>;
