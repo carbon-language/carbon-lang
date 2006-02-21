@@ -496,7 +496,8 @@ public:
   /// satisfy the constraint.  This should only be used for physregs and 
   /// C_RegisterClass constraints.
   virtual std::vector<unsigned> 
-  getRegForInlineAsmConstraint(const std::string &Constraint) const;
+  getRegForInlineAsmConstraint(const std::string &Constraint,
+                               MVT::ValueType VT) const;
   
   /// isOperandValidForConstraint - Return true if the specified SDOperand is
   /// valid for the specified target constraint letter.
