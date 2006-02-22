@@ -109,6 +109,7 @@ void AddConfiguredTransformationPasses(PassManager &PM) {
   addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
   addPass(PM, createReassociatePass());          // Reassociate expressions
   addPass(PM, createLICMPass());                 // Hoist loop invariants
+  addPass(PM, createLoopUnswitchPass());         // Unswitch loops.
   addPass(PM, createInstructionCombiningPass()); // Clean up after LICM/reassoc
   addPass(PM, createIndVarSimplifyPass());       // Canonicalize indvars
   addPass(PM, createLoopUnrollPass());           // Unroll small loops
