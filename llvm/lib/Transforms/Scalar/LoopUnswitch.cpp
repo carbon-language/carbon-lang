@@ -325,7 +325,9 @@ static bool IsTrivialUnswitchCondition(Loop *L, Value *Cond, Constant **Val = 0,
       }
   }
 
-  if (!LoopExitBB)
+  // If we didn't find a single unique LoopExit block, or if the loop exit block
+  // contains phi nodes, this isn't trivial.
+  if (!LoopExitBB || isa<PHINode>(LoopExitBB->begin()))
     return false;   // Can't handle this.
   
   if (LoopExit) *LoopExit = LoopExitBB;
