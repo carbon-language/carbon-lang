@@ -774,12 +774,11 @@ unsigned DIEntry::SizeOf(const DwarfWriter &DW, unsigned Form) const {
     
 //===----------------------------------------------------------------------===//
 
-DIE::DIE(unsigned Tag, unsigned ChildrenFlag)
-: Abbrev(new DIEAbbrev(Tag, ChildrenFlag))
+DIE::DIE(unsigned Tag)
+: Abbrev(new DIEAbbrev(Tag, DW_CHILDREN_no))
 , AbbrevID(0)
 , Offset(0)
 , Size(0)
-, Context(NULL)
 , Children()
 , Values()
 {}
@@ -794,8 +793,6 @@ DIE::~DIE() {
   for (unsigned j = 0, M = Values.size(); j < M; ++j) {
     delete Values[j];
   }
-  
-  if (Context) delete Context;
 }
     
 /// AddUInt - Add an unsigned integer attribute data and value.
@@ -875,115 +872,14 @@ void DIE::Complete(DwarfWriter &DW) {
 /// AddChild - Add a child to the DIE.
 ///
 void DIE::AddChild(DIE *Child) {
+  assert(Abbrev && "Adding children without an abbreviation");
+  Abbrev->setChildrenFlag(DW_CHILDREN_yes);
   Children.push_back(Child);
 }
 
 //===----------------------------------------------------------------------===//
 
-/// NewBasicType - Creates a new basic type if necessary, then adds to the
-/// context and owner.
-DIE *DWContext::NewBasicType(const Type *Ty, unsigned Size, unsigned Align) {
-  DIE *TypeDie = Types[Ty];
-  
-  // If first occurance of type.
-  if (!TypeDie) {
-    const char *Name;
-    unsigned Encoding = 0;
-    
-    switch (Ty->getTypeID()) {
-    case Type::UByteTyID:
-      Name = "unsigned char";
-      Encoding = DW_ATE_unsigned_char;
-      break;
-    case Type::SByteTyID:
-      Name = "char";
-      Encoding = DW_ATE_signed_char;
-      break;
-    case Type::UShortTyID:
-      Name = "unsigned short";
-      Encoding = DW_ATE_unsigned;
-      break;
-    case Type::ShortTyID:
-      Name = "short";
-      Encoding = DW_ATE_signed;
-      break;
-    case Type::UIntTyID:
-      Name = "unsigned int";
-      Encoding = DW_ATE_unsigned;
-      break;
-    case Type::IntTyID:
-      Name = "int";
-      Encoding = DW_ATE_signed;
-      break;
-    case Type::ULongTyID:
-      Name = "unsigned long long";
-      Encoding = DW_ATE_unsigned;
-      break;
-    case Type::LongTyID:
-      Name = "long long";
-      Encoding = DW_ATE_signed;
-      break;
-    case Type::FloatTyID:
-      Name = "float";
-      Encoding = DW_ATE_float;
-      break;
-    case Type::DoubleTyID:
-      Name = "float";
-      Encoding = DW_ATE_float;
-      break;
-    default: 
-    // FIXME - handle more complex types.
-      Name = "unknown";
-      Encoding = DW_ATE_address;
-      break;
-    }
-    
-    // construct the type DIE.
-    TypeDie = new DIE(DW_TAG_base_type, DW_CHILDREN_no);
-    TypeDie->AddString(DW_AT_name,      DW_FORM_string, Name);
-    TypeDie->AddUInt  (DW_AT_byte_size, 0,              Size);
-    TypeDie->AddUInt  (DW_AT_encoding,  DW_FORM_data1,  Encoding);
-    TypeDie->Complete(DW);
-    
-    // Add to context owner.
-    Owner->AddChild(TypeDie);
-
-    // Add to map.
-    Types[Ty] = TypeDie;
-  }
-  
-  return TypeDie;
-}
-
-/// NewGlobalVariable - Creates a global variable, if necessary, then adds in
-/// the context and owner.
-DIE *DWContext::NewGlobalVariable(const std::string &Name,
-                                  const std::string &MangledName,
-                                  DIE *Type) {
-  DIE *VariableDie = Variables[MangledName];
-  
-  // If first occurance of variable.
-  if (!VariableDie) {
-    // FIXME - need source file name line number.
-    VariableDie = new DIE(DW_TAG_variable, DW_CHILDREN_no);
-    VariableDie->AddString     (DW_AT_name,      DW_FORM_string, Name);
-    VariableDie->AddUInt       (DW_AT_decl_file, 0,              0);
-    VariableDie->AddUInt       (DW_AT_decl_line, 0,              0);
-    VariableDie->AddDIEntry    (DW_AT_type,      DW_FORM_ref4,   Type);
-    VariableDie->AddUInt       (DW_AT_external,  DW_FORM_flag,   1);
-    // FIXME - needs to be a proper expression.
-    VariableDie->AddObjectLabel(DW_AT_location,  DW_FORM_block1, MangledName);
-    VariableDie->Complete(DW);
- 
-    // Add to context owner.
-    Owner->AddChild(VariableDie);
-    
-    // Add to map.
-    Variables[MangledName] = VariableDie;
-  }
-  
-  return VariableDie;
-}
+/// DWContext
 
 //===----------------------------------------------------------------------===//
 
@@ -1088,14 +984,14 @@ unsigned DwarfWriter::SizeSLEB128(int Value) {
 ///
 void DwarfWriter::EmitInt8(int Value) const {
   O << Asm->Data8bitsDirective;
-  PrintHex(Value);
+  PrintHex(Value & 0xFF);
 }
 
 /// EmitInt16 - Emit a short directive and value.
 ///
 void DwarfWriter::EmitInt16(int Value) const {
   O << Asm->Data16bitsDirective;
-  PrintHex(Value);
+  PrintHex(Value & 0xFFFF);
 }
 
 /// EmitInt32 - Emit a long directive and value.
@@ -1161,8 +1057,8 @@ void DwarfWriter::EmitString(const std::string &String) const {
 void DwarfWriter::PrintLabelName(const char *Tag, unsigned Number) const {
   O << Asm->PrivateGlobalPrefix
     << "debug_"
-    << Tag
-    << Number;
+    << Tag;
+  if (Number) O << Number;
 }
 
 /// EmitLabel - Emit location label for internal use by Dwarf.
@@ -1240,6 +1136,88 @@ DWLabel DwarfWriter::NewString(const std::string &String) {
   return DWLabel("string", StringID);
 }
 
+/// NewBasicType - Creates a new basic type if necessary, then adds to the
+/// owner.
+/// FIXME - Should never be needed.
+DIE *DwarfWriter::NewBasicType(DIE *Owner, Type *Ty) {
+  DIE *&Slot = TypeToDieMap[Ty];
+  if (Slot) return Slot;
+  
+  const char *Name;
+  unsigned Size;
+  unsigned Encoding = 0;
+  
+  switch (Ty->getTypeID()) {
+  case Type::UByteTyID:
+    Name = "unsigned char";
+    Size = 1;
+    Encoding = DW_ATE_unsigned_char;
+    break;
+  case Type::SByteTyID:
+    Name = "char";
+    Size = 1;
+    Encoding = DW_ATE_signed_char;
+    break;
+  case Type::UShortTyID:
+    Name = "unsigned short";
+    Size = 2;
+    Encoding = DW_ATE_unsigned;
+    break;
+  case Type::ShortTyID:
+    Name = "short";
+    Size = 2;
+    Encoding = DW_ATE_signed;
+    break;
+  case Type::UIntTyID:
+    Name = "unsigned int";
+    Size = 4;
+    Encoding = DW_ATE_unsigned;
+    break;
+  case Type::IntTyID:
+    Name = "int";
+    Size = 4;
+    Encoding = DW_ATE_signed;
+    break;
+  case Type::ULongTyID:
+    Name = "unsigned long long";
+    Size = 7;
+    Encoding = DW_ATE_unsigned;
+    break;
+  case Type::LongTyID:
+    Name = "long long";
+    Size = 7;
+    Encoding = DW_ATE_signed;
+    break;
+  case Type::FloatTyID:
+    Name = "float";
+    Size = 4;
+    Encoding = DW_ATE_float;
+    break;
+  case Type::DoubleTyID:
+    Name = "double";
+    Size = 8;
+    Encoding = DW_ATE_float;
+    break;
+  default: 
+    // FIXME - handle more complex types.
+    Name = "unknown";
+    Size = 1;
+    Encoding = DW_ATE_address;
+    break;
+  }
+  
+  // construct the type DIE.
+  Slot = new DIE(DW_TAG_base_type);
+  Slot->AddString(DW_AT_name,      DW_FORM_string, Name);
+  Slot->AddUInt  (DW_AT_byte_size, 0,              Size);
+  Slot->AddUInt  (DW_AT_encoding,  DW_FORM_data1,  Encoding);
+  
+  // Add to context owner.
+  Owner->AddChild(Slot);
+  
+  return Slot;
+}
+
 /// NewGlobalType - Make the type visible globally using the given name.
 ///
 void DwarfWriter::NewGlobalType(const std::string &Name, DIE *Type) {
@@ -1254,34 +1232,111 @@ void DwarfWriter::NewGlobalEntity(const std::string &Name, DIE *Entity) {
   GlobalEntities[Name] = Entity;
 }
 
-/// NewGlobalVariable - Add a new global variable DIE to the context.
-///
-void DwarfWriter::NewGlobalVariable(DWContext *Context,
-                                    const std::string &Name,
-                                    const std::string &MangledName,
-                                    const Type *Ty,
-                                    unsigned Size, unsigned Align) {
-  // Get the DIE type for the global.
-  DIE *Type = Context->NewBasicType(Ty, Size, Align);
-  DIE *Variable = Context->NewGlobalVariable(Name, MangledName, Type);
-  NewGlobalEntity(Name, Variable);
-}
-
 /// NewCompileUnit - Create new compile unit information.
 ///
-DIE *DwarfWriter::NewCompileUnit(const CompileUnitDesc *CompileUnit) {
-  DIE *Unit = new DIE(DW_TAG_compile_unit, DW_CHILDREN_yes);
+DIE *DwarfWriter::NewCompileUnit(CompileUnitDesc *CompileUnit) {
+  // Check for pre-existence.
+  DIE *&Slot = DescToDieMap[CompileUnit];
+  if (Slot) return Slot;
+
+  DIE *Unit = new DIE(DW_TAG_compile_unit);
   // FIXME - use the correct line set.
-  Unit->AddLabel (DW_AT_stmt_list, DW_FORM_data4,  DWLabel("line", 0));
+  Unit->AddLabel (DW_AT_stmt_list, DW_FORM_data4,  DWLabel("section_line", 0));
   Unit->AddLabel (DW_AT_high_pc,   DW_FORM_addr,   DWLabel("text_end", 0));
   Unit->AddLabel (DW_AT_low_pc,    DW_FORM_addr,   DWLabel("text_begin", 0));
   Unit->AddString(DW_AT_producer,  DW_FORM_string, CompileUnit->getProducer());
   Unit->AddUInt  (DW_AT_language,  DW_FORM_data1,  CompileUnit->getLanguage());
   Unit->AddString(DW_AT_name,      DW_FORM_string, CompileUnit->getFileName());
   Unit->AddString(DW_AT_comp_dir,  DW_FORM_string, CompileUnit->getDirectory());
-  Unit->Complete(*this);
+  
+  Slot = Unit;
   
   return Unit;
+}
+
+/// NewGlobalVariable - Add a new global variable DIE.
+///
+DIE *DwarfWriter::NewGlobalVariable(GlobalVariableDesc *GVD) {
+  // Check for pre-existence.
+  DIE *&Slot = DescToDieMap[GVD];
+  if (Slot) return Slot;
+  
+  // Get the compile unit context.
+  CompileUnitDesc *CompileUnit =
+                              static_cast<CompileUnitDesc *>(GVD->getContext());
+  DIE *Unit = NewCompileUnit(CompileUnit);
+  // Get the global variable itself.
+  GlobalVariable *GV = GVD->getGlobalVariable();
+  // Generate the mangled name.
+  std::string MangledName = Asm->Mang->getValueName(GV);
+
+  // Gather the details (simplify add attribute code.)
+  const std::string &Name = GVD->getName();
+  unsigned FileID = DebugInfo->RecordSource(CompileUnit);
+  unsigned Line = GVD->getLine();
+  
+  // FIXME - faking the type for the time being.
+  DIE *Type = NewBasicType(Unit, Type::IntTy); 
+                                    
+  DIE *VariableDie = new DIE(DW_TAG_variable);
+  VariableDie->AddString     (DW_AT_name,      DW_FORM_string, Name);
+  VariableDie->AddUInt       (DW_AT_decl_file, 0,              FileID);
+  VariableDie->AddUInt       (DW_AT_decl_line, 0,              Line);
+  VariableDie->AddDIEntry    (DW_AT_type,      DW_FORM_ref4,   Type);
+  VariableDie->AddUInt       (DW_AT_external,  DW_FORM_flag,   1);
+  // FIXME - needs to be a proper expression.
+  VariableDie->AddObjectLabel(DW_AT_location,  DW_FORM_block1, MangledName);
+  
+  // Add to map.
+  Slot = VariableDie;
+ 
+  // Add to context owner.
+  Unit->AddChild(VariableDie);
+  
+  // Expose as global.
+  NewGlobalEntity(Name, VariableDie);
+  
+  return VariableDie;
+}
+
+/// NewSubprogram - Add a new subprogram DIE.
+///
+DIE *DwarfWriter::NewSubprogram(SubprogramDesc *SPD) {
+  // Check for pre-existence.
+  DIE *&Slot = DescToDieMap[SPD];
+  if (Slot) return Slot;
+  
+  // Get the compile unit context.
+  CompileUnitDesc *CompileUnit =
+                              static_cast<CompileUnitDesc *>(SPD->getContext());
+  DIE *Unit = NewCompileUnit(CompileUnit);
+
+  // Gather the details (simplify add attribute code.)
+  const std::string &Name = SPD->getName();
+  unsigned FileID = DebugInfo->RecordSource(CompileUnit);
+  // FIXME - faking the line for the time being.
+  unsigned Line = 1;
+  
+  // FIXME - faking the type for the time being.
+  DIE *Type = NewBasicType(Unit, Type::IntTy); 
+                                    
+  DIE *SubprogramDie = new DIE(DW_TAG_variable);
+  SubprogramDie->AddString     (DW_AT_name,      DW_FORM_string, Name);
+  SubprogramDie->AddUInt       (DW_AT_decl_file, 0,              FileID);
+  SubprogramDie->AddUInt       (DW_AT_decl_line, 0,              Line);
+  SubprogramDie->AddDIEntry    (DW_AT_type,      DW_FORM_ref4,   Type);
+  SubprogramDie->AddUInt       (DW_AT_external,  DW_FORM_flag,   1);
+  
+  // Add to map.
+  Slot = SubprogramDie;
+ 
+  // Add to context owner.
+  Unit->AddChild(SubprogramDie);
+  
+  // Expose as global.
+  NewGlobalEntity(Name, SubprogramDie);
+  
+  return SubprogramDie;
 }
 
 /// EmitInitial - Emit initial Dwarf declarations.  This is necessary for cc
@@ -1289,14 +1344,30 @@ DIE *DwarfWriter::NewCompileUnit(const CompileUnitDesc *CompileUnit) {
 ///
 void DwarfWriter::EmitInitial() const {
   // Dwarf sections base addresses.
-  Asm->SwitchSection(DwarfAbbrevSection, 0);
-  EmitLabel("abbrev", 0);
+  Asm->SwitchSection(DwarfFrameSection, 0);
+  EmitLabel("section_frame", 0);
   Asm->SwitchSection(DwarfInfoSection, 0);
+  EmitLabel("section_info", 0);
   EmitLabel("info", 0);
+  Asm->SwitchSection(DwarfAbbrevSection, 0);
+  EmitLabel("section_abbrev", 0);
+  EmitLabel("abbrev", 0);
+  Asm->SwitchSection(DwarfARangesSection, 0);
+  EmitLabel("section_aranges", 0);
+  Asm->SwitchSection(DwarfMacInfoSection, 0);
+  EmitLabel("section_macinfo", 0);
   Asm->SwitchSection(DwarfLineSection, 0);
+  EmitLabel("section_line", 0);
   EmitLabel("line", 0);
-  
-  // Standard sections base addresses.
+  Asm->SwitchSection(DwarfLocSection, 0);
+  EmitLabel("section_loc", 0);
+  Asm->SwitchSection(DwarfPubNamesSection, 0);
+  EmitLabel("section_pubnames", 0);
+  Asm->SwitchSection(DwarfStrSection, 0);
+  EmitLabel("section_str", 0);
+  Asm->SwitchSection(DwarfRangesSection, 0);
+  EmitLabel("section_ranges", 0);
+
   Asm->SwitchSection(TextSection, 0);
   EmitLabel("text_begin", 0);
   Asm->SwitchSection(DataSection, 0);
@@ -1358,7 +1429,10 @@ void DwarfWriter::EmitDIE(DIE *Die) const {
 
 /// SizeAndOffsetDie - Compute the size and offset of a DIE.
 ///
-unsigned DwarfWriter::SizeAndOffsetDie(DIE *Die, unsigned Offset) const {
+unsigned DwarfWriter::SizeAndOffsetDie(DIE *Die, unsigned Offset) {
+  // Record the abbreviation.
+  Die->Complete(*this);
+  
   // Get the abbreviation for this DIE.
   unsigned AbbrevID = Die->getAbbrevID();
   const DIEAbbrev &Abbrev = Abbreviations[AbbrevID];
@@ -1550,6 +1624,17 @@ void DwarfWriter::EmitDebugLines() const {
   // Construct rows of the address, source, line, column matrix.
   for (unsigned i = 0, N = LineInfos.size(); i < N; ++i) {
     SourceLineInfo *LineInfo = LineInfos[i];
+    
+    if (DwarfVerbose) {
+      unsigned SourceID = LineInfo->getSourceID();
+      const SourceFileInfo &SourceFile = SourceFiles[SourceID];
+      unsigned DirectoryID = SourceFile.getDirectoryID();
+      O << "\t"
+        << Asm->CommentString << " "
+        << Directories[DirectoryID]
+        << SourceFile.getName() << ":"
+        << LineInfo->getLine() << "\n"; 
+    }
 
     // Define the line address.
     EmitInt8(0); EOL("Extended Op");
@@ -1588,6 +1673,12 @@ void DwarfWriter::EmitDebugLines() const {
       EmitInt8(DW_LNS_copy); EOL("DW_LNS_copy");
     }
   }
+
+  // Define last address.
+  EmitInt8(0); EOL("Extended Op");
+  EmitInt8(4 + 1); EOL("Op size");
+  EmitInt8(DW_LNE_set_address); EOL("DW_LNE_set_address");
+  EmitReference("text_end", 0); EOL("Location label");
 
   // Mark end of matrix.
   EmitInt8(0); EOL("DW_LNE_end_sequence");
@@ -1727,7 +1818,6 @@ void DwarfWriter::ConstructCompileUnitDIEs() {
   
   for (unsigned i = 1, N = CUW.size(); i <= N; ++i) {
     DIE *Unit = NewCompileUnit(CUW[i]);
-    DWContext *Context = new DWContext(*this, NULL, Unit);
     CompileUnits.push_back(Unit);
   }
 }
@@ -1735,39 +1825,26 @@ void DwarfWriter::ConstructCompileUnitDIEs() {
 /// ConstructGlobalDIEs - Create DIEs for each of the externally visible global
 /// variables.
 void DwarfWriter::ConstructGlobalDIEs(Module &M) {
-  const TargetData &TD = Asm->TM.getTargetData();
-  
   std::vector<GlobalVariableDesc *> GlobalVariables =
-                                               DebugInfo->getGlobalVariables(M);
+                       DebugInfo->getAnchoredDescriptors<GlobalVariableDesc>(M);
   
   for (unsigned i = 0, N = GlobalVariables.size(); i < N; ++i) {
     GlobalVariableDesc *GVD = GlobalVariables[i];
-    GlobalVariable *GV = GVD->getGlobalVariable();
-    
-    if (!GV->hasInitializer()) continue;   // External global require no code
-    
-    // FIXME - Use global info type information when available.
-    std::string Name = Asm->Mang->getValueName(GV);
-    Constant *C = GV->getInitializer();
-    const Type *Ty = C->getType();
-    unsigned Size = TD.getTypeSize(Ty);
-    unsigned Align = TD.getTypeAlignmentShift(Ty);
-
-    if (C->isNullValue() && /* FIXME: Verify correct */
-        (GV->hasInternalLinkage() || GV->hasWeakLinkage() ||
-         GV->hasLinkOnceLinkage())) {
-      if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
-    }
-
-    /// FIXME - Get correct compile unit context.
-    assert(CompileUnits.size() && "No compile units");
-    DWContext *Context = CompileUnits[0]->getContext();
-    
-    /// Create new global.
-    NewGlobalVariable(Context, GV->getName(), Name, Ty, Size, Align);
+    NewGlobalVariable(GVD);
   }
 }
 
+/// ConstructSubprogramDIEs - Create DIEs for each of the externally visible
+/// subprograms.
+void DwarfWriter::ConstructSubprogramDIEs(Module &M) {
+  std::vector<SubprogramDesc *> Subprograms =
+                           DebugInfo->getAnchoredDescriptors<SubprogramDesc>(M);
+  
+  for (unsigned i = 0, N = Subprograms.size(); i < N; ++i) {
+    SubprogramDesc *SPD = Subprograms[i];
+    NewSubprogram(SPD);
+  }
+}
 
 /// ShouldEmitDwarf - Determine if Dwarf declarations should be made.
 ///
@@ -1799,6 +1876,8 @@ DwarfWriter::DwarfWriter(std::ostream &OS, AsmPrinter *A)
 , GlobalTypes()
 , GlobalEntities()
 , StringPool()
+, DescToDieMap()
+, TypeToDieMap()
 , AddressSize(sizeof(int32_t))
 , hasLEB128(false)
 , hasDotLoc(false)
@@ -1849,6 +1928,9 @@ void DwarfWriter::EndModule(Module &M) {
   // Create DIEs for each of the externally visible global variables.
   ConstructGlobalDIEs(M);
 
+  // Create DIEs for each of the externally visible subprograms.
+  ConstructSubprogramDIEs(M);
+  
   // Compute DIE offsets and sizes.
   SizeAndOffsets();
   

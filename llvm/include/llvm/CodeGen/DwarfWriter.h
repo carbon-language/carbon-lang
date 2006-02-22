@@ -34,12 +34,14 @@ namespace llvm {
   //
   class AsmPrinter;
   class CompileUnitDesc;
+  class DebugInfoDesc;
   class DIE;
-  class DwarfWriter; 
-  class DWContext;
+  class DwarfWriter;
+  class GlobalVariableDesc;
   class MachineDebugInfo;
   class MachineFunction;
   class Module;
+  class SubprogramDesc;
   class Type;
   
   //===--------------------------------------------------------------------===//
@@ -116,6 +118,7 @@ namespace llvm {
     unsigned getTag()                           const { return Tag; }
     unsigned getChildrenFlag()                  const { return ChildrenFlag; }
     const std::vector<DIEAbbrevData> &getData() const { return Data; }
+    void setChildrenFlag(unsigned CF)                 { ChildrenFlag = CF; }
 
     /// operator== - Used by UniqueVector to locate entry.
     ///
@@ -312,24 +315,21 @@ namespace llvm {
     unsigned AbbrevID;                    // Decribing abbreviation ID.
     unsigned Offset;                      // Offset in debug info section.
     unsigned Size;                        // Size of instance + children.
-    DWContext *Context;                   // Context for types and values.
     std::vector<DIE *> Children;          // Children DIEs.
     std::vector<DIEValue *> Values;       // Attributes values.
     
   public:
-    DIE(unsigned Tag, unsigned ChildrenFlag);
+    DIE(unsigned Tag);
     ~DIE();
     
     // Accessors
     unsigned   getAbbrevID()                   const { return AbbrevID; }
     unsigned   getOffset()                     const { return Offset; }
     unsigned   getSize()                       const { return Size; }
-    DWContext *getContext()                    const { return Context; }
     const std::vector<DIE *> &getChildren()    const { return Children; }
     const std::vector<DIEValue *> &getValues() const { return Values; }
     void setOffset(unsigned O)                 { Offset = O; }
     void setSize(unsigned S)                   { Size = S; }
-    void setContext(DWContext *C)              { Context = C; }
     
     /// SiblingOffset - Return the offset of the debug information entry's
     /// sibling.
@@ -375,40 +375,6 @@ namespace llvm {
     void AddChild(DIE *Child);
   };
   
-  //===--------------------------------------------------------------------===//
-  /// DWContext - Name context for types and values.
-  ///
-  class DWContext {
-  private:
-    DwarfWriter &DW;                    // DwarfWriter for global information.
-    DWContext *Parent;                  // Next context level searched.
-    DIE *Owner;                         // Owning debug information entry.
-    std::map<const Type *, DIE*> Types; // Named types in context.
-    std::map<std::string, DIE*> Variables;// Named variables in context.
-    
-  public:
-    DWContext(DwarfWriter &D, DWContext *P, DIE *O)
-    : DW(D)
-    , Parent(P)
-    , Owner(O)
-    , Types()
-    , Variables()
-    {
-      Owner->setContext(this);
-    }
-    ~DWContext() {}
-    
-    /// NewBasicType - Creates a new basic type, if necessary, then adds to the
-    /// context and owner.
-    DIE *NewBasicType(const Type *Ty, unsigned Size, unsigned Align);
-                                               
-    /// NewVariable - Creates a basic variable, if necessary, then adds to the
-    /// context and owner.
-    DIE *NewGlobalVariable(const std::string &Name,
-                           const std::string &MangledName,
-                           DIE *Type);
-  };
-
   //===--------------------------------------------------------------------===//
   // DwarfWriter - Emits Dwarf debug and exception handling directives.
   //
@@ -459,6 +425,15 @@ namespace llvm {
     /// StringPool - A UniqueVector of strings used by indirect references.
     ///
     UniqueVector<std::string> StringPool;
+    
+    /// DescToDieMap - Tracks the mapping of debug informaton descriptors to
+    /// DIES.
+    std::map<DebugInfoDesc *, DIE *> DescToDieMap;
+    
+    /// TypeToDieMap - Type to DIEType map.
+    ///
+    // FIXME - Should not be needed.
+    std::map<Type *, DIE *> TypeToDieMap;
     
     //===------------------------------------------------------------------===//
     // Properties to be set by the derived class ctor, used to configure the
@@ -637,6 +612,11 @@ public:
     ///
     DWLabel NewString(const std::string &String);
     
+    /// NewBasicType - Creates a new basic type if necessary, then adds to the
+    /// owner.
+    /// FIXME - Should never be needed.
+    DIE *NewBasicType(DIE *Owner, Type *Ty);
+
     /// NewGlobalType - Make the type visible globally using the given name.
     ///
     void NewGlobalType(const std::string &Name, DIE *Type);
@@ -644,20 +624,20 @@ public:
     /// NewGlobalEntity - Make the entity visible globally using the given name.
     ///
     void NewGlobalEntity(const std::string &Name, DIE *Entity);
-    
-    /// NewGlobalVariable - Add a new global variable DIE to the context.
-    ///
-    void NewGlobalVariable(DWContext *Context,
-                           const std::string &Name,
-                           const std::string &MangledName,
-                           const Type *Ty,
-                           unsigned Size, unsigned Align);
 
 private:
+    
+    /// NewGlobalVariable - Make a new global variable DIE.
+    ///
+    DIE *NewGlobalVariable(GlobalVariableDesc *GVD);
+
+    /// NewSubprogram - Add a new subprogram DIE.
+    ///
+    DIE *NewSubprogram(SubprogramDesc *SPD);
 
     /// NewCompileUnit - Create new compile unit information.
     ///
-    DIE *NewCompileUnit(const CompileUnitDesc *CompileUnit);
+    DIE *NewCompileUnit(CompileUnitDesc *CompileUnit);
 
     /// EmitInitial - Emit initial Dwarf declarations.
     ///
@@ -669,7 +649,7 @@ private:
     
     /// SizeAndOffsetDie - Compute the size and offset of a DIE.
     ///
-    unsigned SizeAndOffsetDie(DIE *Die, unsigned Offset) const;
+    unsigned SizeAndOffsetDie(DIE *Die, unsigned Offset);
 
     /// SizeAndOffsets - Compute the size and offset of all the DIEs.
     ///
@@ -723,9 +703,13 @@ private:
     /// header file.
     void ConstructCompileUnitDIEs();
     
-    /// ConstructGlobalDIEs - Create DIEs for each of the externally visible global
-    /// variables.
+    /// ConstructGlobalDIEs - Create DIEs for each of the externally visible
+    /// global variables.
     void ConstructGlobalDIEs(Module &M);
+
+    /// ConstructSubprogramDIEs - Create DIEs for each of the externally visible
+    /// subprograms.
+    void ConstructSubprogramDIEs(Module &M);
 
     /// ShouldEmitDwarf - Returns true if Dwarf declarations should be made.
     /// When called it also checks to see if debug info is newly available.  if

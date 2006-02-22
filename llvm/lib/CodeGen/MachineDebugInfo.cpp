@@ -579,6 +579,7 @@ void GlobalVariableDesc::ApplyToFields(DIVisitor *Visitor) {
   GlobalDesc::ApplyToFields(Visitor);
 
   Visitor->Apply(Global);
+  Visitor->Apply(Line);
 }
 
 /// getDescString - Return a string used to compose global names and labels.
@@ -607,7 +608,8 @@ void GlobalVariableDesc::dump() {
             << "Name(\"" << getName() << "\"), "
             << "IsStatic(" << (isStatic() ? "true" : "false") << "), "
             << "IsDefinition(" << (isDefinition() ? "true" : "false") << "), "
-            << "Global(" << Global << ")\n";
+            << "Global(" << Global << "), "
+            << "Line(" << Line << ")\n";
 }
 #endif
 
@@ -910,16 +912,10 @@ void MachineDebugInfo::AnalyzeModule(Module &M) {
 /// SetupCompileUnits - Set up the unique vector of compile units.
 ///
 void MachineDebugInfo::SetupCompileUnits(Module &M) {
-  // Get vector of all debug compile units.
-  CompileUnitDesc CompileUnit;
-  std::vector<GlobalVariable*> Globals =
-                      getGlobalVariablesUsing(M, CompileUnit.getAnchorString());
+  std::vector<CompileUnitDesc *>CU = getAnchoredDescriptors<CompileUnitDesc>(M);
   
-  // Scan all compile unit globals.
-  for (unsigned i = 0, N = Globals.size(); i < N; ++i) {
-    // Add compile unit to result.
-    CompileUnits.insert(
-                    static_cast<CompileUnitDesc *>(DR.Deserialize(Globals[i])));
+  for (unsigned i = 0, N = CU.size(); i < N; i++) {
+    CompileUnits.insert(CU[i]);
   }
 }
 
@@ -929,26 +925,10 @@ const UniqueVector<CompileUnitDesc *> MachineDebugInfo::getCompileUnits()const{
   return CompileUnits;
 }
 
-/// getGlobalVariables - Return a vector of debug GlobalVariables.
-///
-std::vector<GlobalVariableDesc *>
-MachineDebugInfo::getGlobalVariables(Module &M) {
-  // Get vector of all debug global objects.
-  GlobalVariableDesc Global;
-  std::vector<GlobalVariable*> Globals =
-                           getGlobalVariablesUsing(M, Global.getAnchorString());
-  
-  // Accumulation of GlobalVariables.
-  std::vector<GlobalVariableDesc *> GlobalVariables;
-
-  // Scan all globals.
-  for (unsigned i = 0, N = Globals.size(); i < N; ++i) {
-    GlobalVariable *GV = Globals[i];
-    GlobalVariableDesc *GVD =
-                        static_cast<GlobalVariableDesc *>(DR.Deserialize(GV));
-    GlobalVariables.push_back(GVD);
-  }
-
-  return GlobalVariables;
+/// getGlobalVariablesUsing - Return all of the GlobalVariables that use the
+/// named GlobalVariable.
+std::vector<GlobalVariable*>
+MachineDebugInfo::getGlobalVariablesUsing(Module &M,
+                                          const std::string &RootName) {
+  return ::getGlobalVariablesUsing(M, RootName);
 }
-

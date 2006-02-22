@@ -310,18 +310,21 @@ public:
 class GlobalVariableDesc : public GlobalDesc {
 private:
   GlobalVariable *Global;               // llvm global.
+  unsigned Line;                        // Source line number.
   
 public:
   GlobalVariableDesc();
 
   // Accessors.
   GlobalVariable *getGlobalVariable()        const { return Global; }
+  unsigned getLine()                         const { return Line; }
   void setGlobalVariable(GlobalVariable *GV)       { Global = GV; }
-  
+  void setLine(unsigned L)                         { Line = L; }
+ 
   // Implement isa/cast/dyncast.
   static bool classof(const GlobalVariableDesc *)  { return true; }
   static bool classof(const DebugInfoDesc *D) {
-    return D->getTag() == DI_TAG_global_variable;
+    return D->getTag() == DI_TAG_global_variable; 
   }
   
   /// ApplyToFields - Target the visitor to the fields of the
@@ -350,25 +353,12 @@ public:
 /// subprogram/function.
 class SubprogramDesc : public GlobalDesc {
 private:
-  DebugInfoDesc *Context;               // Context debug descriptor.
-  std::string Name;                     // Subprogram name.
-  // FIXME - Use a descriptor.
-  GlobalVariable *TyDesc;               // Type debug descriptor.
-  bool IsStatic;                        // Is the subprogram a static.
-  bool IsDefinition;                    // Is the subprogram defined in context.
+  // FIXME - Other attributes
   
 public:
   SubprogramDesc();
   
   // Accessors
-  DebugInfoDesc *getContext()                const { return Context; }
-  const std::string &getName()               const { return Name; }
-  bool isStatic()                            const { return IsStatic; }
-  bool isDefinition()                        const { return IsDefinition; }
-  void setContext(DebugInfoDesc *C)                { Context = C; }
-  void setName(const std::string &N)               { Name = N; }
-  void setIsStatic(bool IS)                        { IsStatic = IS; }
-  void setIsDefinition(bool ID)                    { IsDefinition = ID; }
   // FIXME - Other getters/setters.
   
   // Implement isa/cast/dyncast.
@@ -604,9 +594,13 @@ public:
   /// RecordSource - Register a source file with debug info. Returns an source
   /// ID.
   unsigned RecordSource(const std::string &Directory,
-                               const std::string &Source) {
+                        const std::string &Source) {
     unsigned DirectoryID = Directories.insert(Directory);
     return SourceFiles.insert(SourceFileInfo(DirectoryID, Source));
+  }
+  unsigned RecordSource(const CompileUnitDesc *CompileUnit) {
+    return RecordSource(CompileUnit->getDirectory(),
+                        CompileUnit->getFileName());
   }
   
   /// getDirectories - Return the UniqueVector of std::string representing
@@ -634,10 +628,25 @@ public:
   /// getCompileUnits - Return a vector of debug compile units.
   ///
   const UniqueVector<CompileUnitDesc *> getCompileUnits() const;
+  
+  /// getGlobalVariablesUsing - Return all of the GlobalVariables that use the
+  /// named GlobalVariable.
+  std::vector<GlobalVariable*>
+  getGlobalVariablesUsing(Module &M, const std::string &RootName);
 
-  /// getGlobalVariables - Return a vector of debug GlobalVariables.
+  /// getAnchoredDescriptors - Return a vector of anchored debug descriptors.
   ///
-  std::vector<GlobalVariableDesc *> getGlobalVariables(Module &M);
+  template <class T>std::vector<T *> getAnchoredDescriptors(Module &M) {
+    T Desc;
+    std::vector<GlobalVariable *> Globals =
+                             getGlobalVariablesUsing(M, Desc.getAnchorString());
+    std::vector<T *> AnchoredDescs;
+    for (unsigned i = 0, N = Globals.size(); i < N; ++i) {
+      AnchoredDescs.push_back(static_cast<T *>(DR.Deserialize(Globals[i])));
+    }
+
+    return AnchoredDescs;
+  }
 
 }; // End class MachineDebugInfo
 
