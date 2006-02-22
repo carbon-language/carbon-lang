@@ -1181,7 +1181,7 @@ SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
     SDOperand Hi = DAG.getCopyFromReg(Chain, Regs[1], RegVT, Flag);
     Chain = Val.getValue(1);
     Flag  = Val.getValue(2);
-    return DAG.getNode(ISD::MERGE_VALUES, ValueVT, Val, Hi);
+    return DAG.getNode(ISD::BUILD_PAIR, ValueVT, Val, Hi);
   }
 
   // Otherwise, if the return value was promoted, truncate it to the
@@ -1201,18 +1201,32 @@ SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
 /// i.e. it isn't a stack pointer or some other special register, return the
 /// register class for the register.  Otherwise, return null.
 static const TargetRegisterClass *
-isAllocatableRegister(unsigned Reg, MachineFunction &MF, 
-                      const MRegisterInfo *MRI) {
-  for (MRegisterInfo::regclass_iterator RC = MRI->regclass_begin(),
-       E = MRI->regclass_end(); RC != E; ++RC) {
+isAllocatableRegister(unsigned Reg, MachineFunction &MF,
+                      const TargetLowering &TLI, const MRegisterInfo *MRI) {
+  for (MRegisterInfo::regclass_iterator RCI = MRI->regclass_begin(),
+       E = MRI->regclass_end(); RCI != E; ++RCI) {
+    const TargetRegisterClass *RC = *RCI;
+    // If none of the the value types for this register class are valid, we 
+    // can't use it.  For example, 64-bit reg classes on 32-bit targets.
+    bool isLegal = false;
+    for (TargetRegisterClass::vt_iterator I = RC->vt_begin(), E = RC->vt_end();
+         I != E; ++I) {
+      if (TLI.isTypeLegal(*I)) {
+        isLegal = true;
+        break;
+      }
+    }
+    
+    if (!isLegal) continue;
+    
     // NOTE: This isn't ideal.  In particular, this might allocate the
     // frame pointer in functions that need it (due to them not being taken
     // out of allocation, because a variable sized allocation hasn't been seen
     // yet).  This is a slight code pessimization, but should still work.
-    for (TargetRegisterClass::iterator I = (*RC)->allocation_order_begin(MF),
-         E = (*RC)->allocation_order_end(MF); I != E; ++I)
+    for (TargetRegisterClass::iterator I = RC->allocation_order_begin(MF),
+         E = RC->allocation_order_end(MF); I != E; ++I)
       if (*I == Reg)
-        return *RC;
+        return RC;
   }
   return 0;
 }    
@@ -1276,7 +1290,7 @@ GetRegistersForValue(const std::string &ConstrCode,
     
     // Check to see if this register is allocatable (i.e. don't give out the
     // stack pointer).
-    const TargetRegisterClass *RC = isAllocatableRegister(Reg, MF, MRI);
+    const TargetRegisterClass *RC = isAllocatableRegister(Reg, MF, TLI, MRI);
     if (!RC) {
       // Make sure we find consecutive registers.
       NumAllocated = 0;
