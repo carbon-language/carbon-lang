@@ -88,7 +88,7 @@ namespace {
     bool UnswitchIfProfitable(Value *LoopCond, Constant *Val,Loop *L);
     unsigned getLoopUnswitchCost(Loop *L, Value *LIC);
     void UnswitchTrivialCondition(Loop *L, Value *Cond, Constant *Val,
-                                  bool EntersWhenTrue, BasicBlock *ExitBlock);
+                                  BasicBlock *ExitBlock);
     void UnswitchNontrivialCondition(Value *LIC, Constant *OnVal, Loop *L);
     BasicBlock *SplitEdge(BasicBlock *From, BasicBlock *To);
     BasicBlock *SplitBlock(BasicBlock *Old, Instruction *SplitPt);
@@ -282,16 +282,17 @@ static BasicBlock *isTrivialLoopExitBlock(Loop *L, BasicBlock *BB) {
 /// code duplications (equivalently, it produces a simpler loop and a new empty
 /// loop, which gets deleted).
 ///
-/// If this is a trivial condition, return ConstantBool::True if the loop body
-/// runs when the condition is true, False if the loop body executes when the
-/// condition is false.  Otherwise, return null to indicate a complex condition.
-static bool IsTrivialUnswitchCondition(Loop *L, Value *Cond,
-                                       Constant **Val = 0,
-                                       bool *EntersWhenTrue = 0,
+/// If this is a trivial condition, return true, otherwise return false.  When
+/// returning true, this sets Cond and Val to the condition that controls the
+/// trivial condition: when Cond dynamically equals Val, the loop is known to
+/// exit.  Finally, this sets LoopExit to the BB that the loop exits to when
+/// Cond == Val.
+///
+static bool IsTrivialUnswitchCondition(Loop *L, Value *Cond, Constant **Val = 0,
                                        BasicBlock **LoopExit = 0) {
   BasicBlock *Header = L->getHeader();
   TerminatorInst *HeaderTerm = Header->getTerminator();
-
+  
   BasicBlock *LoopExitBB = 0;
   if (BranchInst *BI = dyn_cast<BranchInst>(HeaderTerm)) {
     // If the header block doesn't end with a conditional branch on Cond, we
@@ -304,9 +305,9 @@ static bool IsTrivialUnswitchCondition(Loop *L, Value *Cond,
     // side-effects.  If so, determine the value of Cond that causes it to do
     // this.
     if ((LoopExitBB = isTrivialLoopExitBlock(L, BI->getSuccessor(0)))) {
-      if (Val) *Val = ConstantBool::False;
-    } else if ((LoopExitBB = isTrivialLoopExitBlock(L, BI->getSuccessor(1)))) {
       if (Val) *Val = ConstantBool::True;
+    } else if ((LoopExitBB = isTrivialLoopExitBlock(L, BI->getSuccessor(1)))) {
+      if (Val) *Val = ConstantBool::False;
     }
   } else if (SwitchInst *SI = dyn_cast<SwitchInst>(HeaderTerm)) {
     // If this isn't a switch on Cond, we can't handle it.
@@ -320,7 +321,6 @@ static bool IsTrivialUnswitchCondition(Loop *L, Value *Cond,
       if ((LoopExitBB = isTrivialLoopExitBlock(L, SI->getSuccessor(i)))) {
         // Okay, we found a trivial case, remember the value that is trivial.
         if (Val) *Val = SI->getCaseValue(i);
-        if (EntersWhenTrue) *EntersWhenTrue = false;
         break;
       }
   }
@@ -395,11 +395,9 @@ bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val,Loop *L){
   // If this is a trivial condition to unswitch (which results in no code
   // duplication), do it now.
   Constant *CondVal;
-  bool EntersWhenTrue = true;
   BasicBlock *ExitBlock;
-  if (IsTrivialUnswitchCondition(L, LoopCond, &CondVal,
-                                 &EntersWhenTrue, &ExitBlock)) {
-    UnswitchTrivialCondition(L, LoopCond, CondVal, EntersWhenTrue, ExitBlock);
+  if (IsTrivialUnswitchCondition(L, LoopCond, &CondVal, &ExitBlock)) {
+    UnswitchTrivialCondition(L, LoopCond, CondVal, ExitBlock);
   } else {
     UnswitchNontrivialCondition(LoopCond, Val, L);
   }
@@ -525,13 +523,12 @@ static void EmitPreheaderBranchOnCondition(Value *LIC, Constant *Val,
 /// side-effects), unswitch it.  This doesn't involve any code duplication, just
 /// moving the conditional branch outside of the loop and updating loop info.
 void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond, 
-                                            Constant *Val, bool EntersWhenTrue,
+                                            Constant *Val, 
                                             BasicBlock *ExitBlock) {
   DEBUG(std::cerr << "loop-unswitch: Trivial-Unswitch loop %"
         << L->getHeader()->getName() << " [" << L->getBlocks().size()
         << " blocks] in Function " << L->getHeader()->getParent()->getName()
-        << " on cond: " << *Val << (EntersWhenTrue ? " == " : " != ") << 
-        *Cond << "\n");
+        << " on cond: " << *Val << " == " << *Cond << "\n");
   
   // First step, split the preheader, so that we know that there is a safe place
   // to insert the conditional branch.  We will change 'OrigPH' to have a
@@ -552,12 +549,8 @@ void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond,
     
   // Okay, now we have a position to branch from and a position to branch to, 
   // insert the new conditional branch.
-  {
-    BasicBlock *TrueDest = NewPH, *FalseDest = NewExit;
-    if (!EntersWhenTrue) std::swap(TrueDest, FalseDest);
-    EmitPreheaderBranchOnCondition(Cond, Val, TrueDest, FalseDest, 
-                                   OrigPH->getTerminator());
-  }
+  EmitPreheaderBranchOnCondition(Cond, Val, NewExit, NewPH, 
+                                 OrigPH->getTerminator());
   OrigPH->getTerminator()->eraseFromParent();
 
   // We need to reprocess this loop, it could be unswitched again.
@@ -566,7 +559,7 @@ void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond,
   // Now that we know that the loop is never entered when this condition is a
   // particular value, rewrite the loop with this info.  We know that this will
   // at least eliminate the old branch.
-  RewriteLoopBodyWithConditionConstant(L, Cond, Val, EntersWhenTrue);
+  RewriteLoopBodyWithConditionConstant(L, Cond, Val, false);
   ++NumTrivial;
 }
 
@@ -912,11 +905,6 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
   //      ...
   //    if (li1 > li2)
   //      ...
-
-  // NotVal - If Val is a bool, this contains its inverse.
-  Constant *NotVal = 0;
-  if (ConstantBool *CB = dyn_cast<ConstantBool>(Val))
-    NotVal = ConstantBool::get(!CB->getValue());
   
   // FOLD boolean conditions (X|LIC), (X&LIC).  Fold conditional branches,
   // selects, switches.
@@ -925,8 +913,12 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
 
   // If we know that LIC == Val, or that LIC == NotVal, just replace uses of LIC
   // in the loop with the appropriate one directly.
-  if (IsEqual || NotVal) {
-    Value *Replacement = NotVal ? NotVal : Val;
+  if (IsEqual || isa<ConstantBool>(Val)) {
+    Value *Replacement;
+    if (IsEqual)
+      Replacement = Val;
+    else
+      Replacement = ConstantBool::get(!cast<ConstantBool>(Val)->getValue());
     
     for (unsigned i = 0, e = Users.size(); i != e; ++i)
       if (Instruction *U = cast<Instruction>(Users[i])) {
@@ -978,7 +970,6 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
 /// pass.
 ///
 void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist) {
-  Worklist.back()->getParent()->getParent()->viewCFG();
   while (!Worklist.empty()) {
     Instruction *I = Worklist.back();
     Worklist.pop_back();
@@ -1066,9 +1057,10 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist) {
         Succ->eraseFromParent();
         ++NumSimplify;
       } else if (ConstantBool *CB = dyn_cast<ConstantBool>(BI->getCondition())){
-        break;   // FIXME: Enable.
         // Conditional branch.  Turn it into an unconditional branch, then
         // remove dead blocks.
+        break;  // FIXME: Enable.
+
         DEBUG(std::cerr << "Folded branch: " << *BI);
         BasicBlock *DeadSucc = BI->getSuccessor(CB->getValue());
         BasicBlock *LiveSucc = BI->getSuccessor(!CB->getValue());
