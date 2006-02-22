@@ -481,6 +481,7 @@ public:
   //
   
   enum ConstraintType {
+    C_Register,            // Constraint represents a single register.
     C_RegisterClass,       // Constraint represents one or more registers.
     C_Other,               // Something else.
     C_Unknown              // Unsupported constraint.
@@ -491,13 +492,22 @@ public:
   /// constraint it is for this target.
   virtual ConstraintType getConstraintType(char ConstraintLetter) const;
   
-  /// getRegForInlineAsmConstraint - Given a constraint letter or register
-  /// name (e.g. "r" or "edx"), return a list of registers that can be used to
-  /// satisfy the constraint.  This should only be used for physregs and 
-  /// C_RegisterClass constraints.
+  
+  /// getRegClassForInlineAsmConstraint - Given a constraint letter (e.g. "r"),
+  /// return a list of registers that can be used to satisfy the constraint.
+  /// This should only be used for C_RegisterClass constraints.
   virtual std::vector<unsigned> 
-  getRegForInlineAsmConstraint(const std::string &Constraint,
-                               MVT::ValueType VT) const;
+  getRegClassForInlineAsmConstraint(const std::string &Constraint,
+                                    MVT::ValueType VT) const;
+
+  /// getRegForInlineAsmConstraint - Given a physical register constraint (e.g.
+  /// {edx}), return the register number and the register class for the
+  /// register.  This should only be used for C_Register constraints.  On error,
+  /// this returns a register number of 0.
+  virtual std::pair<unsigned, const TargetRegisterClass*> 
+    getRegForInlineAsmConstraint(const std::string &Constraint,
+                                 MVT::ValueType VT) const;
+  
   
   /// isOperandValidForConstraint - Return true if the specified SDOperand is
   /// valid for the specified target constraint letter.

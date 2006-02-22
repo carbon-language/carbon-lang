@@ -1961,8 +1961,8 @@ void X86TargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
 }
 
 std::vector<unsigned> X86TargetLowering::
-getRegForInlineAsmConstraint(const std::string &Constraint,
-                             MVT::ValueType VT) const {
+getRegClassForInlineAsmConstraint(const std::string &Constraint,
+                                  MVT::ValueType VT) const {
   if (Constraint.size() == 1) {
     // FIXME: not handling fp-stack yet!
     // FIXME: not handling MMX registers yet ('y' constraint).
@@ -1993,6 +1993,5 @@ getRegForInlineAsmConstraint(const std::string &Constraint,
     }
   }
   
-  // Handle explicit register names.
-  return TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);
+  return std::vector<unsigned>();
 }

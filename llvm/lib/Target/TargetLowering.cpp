@@ -745,24 +745,34 @@ bool TargetLowering::isOperandValidForConstraint(SDOperand Op,
 
 
 std::vector<unsigned> TargetLowering::
+getRegClassForInlineAsmConstraint(const std::string &Constraint,
+                                  MVT::ValueType VT) const {
+  return std::vector<unsigned>();
+}
+
+
+std::pair<unsigned, const TargetRegisterClass*> TargetLowering::
 getRegForInlineAsmConstraint(const std::string &Constraint,
                              MVT::ValueType VT) const {
-  // Not a physreg, must not be a register reference or something.
-  if (Constraint[0] != '{') return std::vector<unsigned>();
+  if (Constraint[0] != '{')
+    return std::pair<unsigned, const TargetRegisterClass*>(0, 0);
   assert(*(Constraint.end()-1) == '}' && "Not a brace enclosed constraint?");
 
   // Remove the braces from around the name.
   std::string RegName(Constraint.begin()+1, Constraint.end()-1);
-  
-  // Scan to see if this constraint is a register name.
+
+  // Figure out which register class contains this reg.
   const MRegisterInfo *RI = TM.getRegisterInfo();
-  for (unsigned i = 1, e = RI->getNumRegs(); i != e; ++i) {
-    if (const char *Name = RI->get(i).Name)
-      if (StringsEqualNoCase(RegName, Name))
-        return std::vector<unsigned>(1, i);
+  for (MRegisterInfo::regclass_iterator RCI = RI->regclass_begin(),
+       E = RI->regclass_end(); RCI != E; ++RCI) {
+    const TargetRegisterClass *RC = *RCI;
+    for (TargetRegisterClass::iterator I = RC->begin(), E = RC->end(); 
+         I != E; ++I) {
+      if (StringsEqualNoCase(RegName, RI->get(*I).Name)) {
+        return std::make_pair(*I, RC);
+      }
+    }
   }
   
-  // Unknown physreg.
-  return std::vector<unsigned>();
+  return std::pair<unsigned, const TargetRegisterClass*>(0, 0);
 }
-
