@@ -76,6 +76,11 @@ X86TargetMachine::X86TargetMachine(const Module &M,
     FrameInfo(TargetFrameInfo::StackGrowsDown,
               Subtarget.getStackAlignment(), -4),
     JITInfo(*this) {
+  if (getRelocationModel() == Reloc::Default)
+    if (Subtarget.isTargetDarwin())
+      setRelocationModel(Reloc::DynamicNoPIC);
+    else
+      setRelocationModel(Reloc::PIC);
 }
 
 
@@ -149,8 +154,8 @@ bool X86TargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
 /// not supported for this target.
 ///
 void X86JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
-  // The JIT does not support or need PIC.
-  PICEnabled = false;
+  // The JIT should use static relocation model.
+  TM.setRelocationModel(Reloc::Static);
 
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());

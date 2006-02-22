@@ -86,6 +86,9 @@ bool PPCTargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
 }
 
 bool PPCCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
+  assert((MF.getTarget().getRelocationModel() != Reloc::Default ||
+          MF.getTarget().getRelocationModel() != Reloc::Static) &&
+         "JIT relocation model must be set to static or default!");
   MCE.startFunction(MF);
   MCE.emitConstantPool(MF.getConstantPool());
   for (MachineFunction::iterator BB = MF.begin(), E = MF.end(); BB != E; ++BB)
@@ -118,7 +121,6 @@ bool PPCCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
 }
 
 void PPCCodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
-  assert(!PICEnabled && "CodeEmitter does not support PIC!");
   BBLocations[&MBB] = MCE.getCurrentPCValue();
   for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end(); I != E; ++I){
     MachineInstr &MI = *I;

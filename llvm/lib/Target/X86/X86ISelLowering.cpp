@@ -1836,7 +1836,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     if (getTargetMachine().
         getSubtarget<X86Subtarget>().isTargetDarwin()) {
       // With PIC, the address is actually $g + Offset.
-      if (PICEnabled)
+      if (getTargetMachine().getRelocationModel() == Reloc::PIC)
         Result = DAG.getNode(ISD::ADD, getPointerTy(),
                 DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()), Result);    
     }
@@ -1851,7 +1851,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
       SDOperand Addr = DAG.getTargetGlobalAddress(GV, getPointerTy());
       // With PIC, the address is actually $g + Offset.
-      if (PICEnabled)
+      if (getTargetMachine().getRelocationModel() == Reloc::PIC)
         Addr = DAG.getNode(ISD::ADD, getPointerTy(),
                       DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()), Addr);
 
@@ -1859,8 +1859,9 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       // the value at address GV, not the value of GV itself.  This means that
       // the GlobalAddress must be in the base or index register of the address,
       // not the GV offset field.
-      if (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
-          (GV->isExternal() && !GV->hasNotBeenReadFromBytecode()))
+      if (getTargetMachine().getRelocationModel() != Reloc::Static &&
+          (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
+           (GV->isExternal() && !GV->hasNotBeenReadFromBytecode())))
         Result = DAG.getLoad(MVT::i32, DAG.getEntryNode(),
                              Addr, DAG.getSrcValue(NULL));
     }

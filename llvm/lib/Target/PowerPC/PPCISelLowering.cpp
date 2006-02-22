@@ -396,7 +396,7 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand CPI = DAG.getTargetConstantPool(C, MVT::i32, CP->getAlignment());
     SDOperand Zero = DAG.getConstant(0, MVT::i32);
     
-    if (PPCGenerateStaticCode) {
+    if (getTargetMachine().getRelocationModel() == Reloc::Static) {
       // Generate non-pic code that has direct accesses to the constant pool.
       // The address of the global is just (hi(&g)+lo(&g)).
       SDOperand Hi = DAG.getNode(PPCISD::Hi, MVT::i32, CPI, Zero);
@@ -407,7 +407,7 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     // Only lower ConstantPool on Darwin.
     if (!getTargetMachine().getSubtarget<PPCSubtarget>().isDarwin()) break;
     SDOperand Hi = DAG.getNode(PPCISD::Hi, MVT::i32, CPI, Zero);
-    if (PICEnabled) {
+    if (getTargetMachine().getRelocationModel() == Reloc::PIC) {
       // With PIC, the first instruction is actually "GR+hi(&G)".
       Hi = DAG.getNode(ISD::ADD, MVT::i32,
                        DAG.getNode(PPCISD::GlobalBaseReg, MVT::i32), Hi);
@@ -423,7 +423,7 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand GA = DAG.getTargetGlobalAddress(GV, MVT::i32, GSDN->getOffset());
     SDOperand Zero = DAG.getConstant(0, MVT::i32);
 
-    if (PPCGenerateStaticCode) {
+    if (getTargetMachine().getRelocationModel() == Reloc::Static) {
       // Generate non-pic code that has direct accesses to globals.
       // The address of the global is just (hi(&g)+lo(&g)).
       SDOperand Hi = DAG.getNode(PPCISD::Hi, MVT::i32, GA, Zero);
@@ -435,7 +435,7 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     if (!getTargetMachine().getSubtarget<PPCSubtarget>().isDarwin()) break;
     
     SDOperand Hi = DAG.getNode(PPCISD::Hi, MVT::i32, GA, Zero);
-    if (PICEnabled) {
+    if (getTargetMachine().getRelocationModel() == Reloc::PIC) {
       // With PIC, the first instruction is actually "GR+hi(&G)".
       Hi = DAG.getNode(ISD::ADD, MVT::i32,
                        DAG.getNode(PPCISD::GlobalBaseReg, MVT::i32), Hi);

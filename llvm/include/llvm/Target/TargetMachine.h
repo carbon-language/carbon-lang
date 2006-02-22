@@ -34,6 +34,16 @@ class PassManager;
 class Pass;
 class IntrinsicLowering;
 
+// Relocation model types.
+namespace Reloc {
+  enum Model {
+    Default,
+    Static,
+    PIC,
+    DynamicNoPIC
+  };
+}
+
 //===----------------------------------------------------------------------===//
 ///
 /// TargetMachine - Primary interface to the complete machine description for
@@ -134,6 +144,13 @@ public:
   // These are deprecated interfaces.
   virtual const TargetSchedInfo        *getSchedInfo() const { return 0; }
   virtual const SparcV9RegInfo         *getRegInfo()   const { return 0; }
+
+  /// getRelocationModel - Returns the code generation relocation model. The
+  /// choices are static, PIC, and dynamic-no-pic, and target default.
+  static Reloc::Model getRelocationModel();
+
+  /// setRelocationModel - Sets the code generation relocation model.
+  static void setRelocationModel(Reloc::Model Model);
 
   /// CodeGenFileType - These enums are meant to be passed into
   /// addPassesToEmitFile to indicate what type of file to emit.

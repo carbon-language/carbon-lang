@@ -113,7 +113,7 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     if (!isMemOp && !isCallOp) O << "OFFSET ";
-    if (forDarwin) {
+    if (forDarwin && TM.getRelocationModel() != Reloc::Static) {
       GlobalValue *GV = MO.getGlobal();
       std::string Name = Mang->getValueName(GV);
       if (!isMemOp && !isCallOp) O << '$';
@@ -128,7 +128,7 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
         } else {
           GVStubs.insert(Name);
           O << "L" << Name << "$non_lazy_ptr";
-          if (PICEnabled)
+          if (TM.getRelocationModel() == Reloc::PIC)
             O << "-\"L" << getFunctionNumber() << "$pb\"";
         }
       } else {
@@ -145,13 +145,14 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
   }
   case MachineOperand::MO_ExternalSymbol: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
-    bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
-    if (isCallOp && forDarwin) {
-      std::string Name(GlobalPrefix); Name += MO.getSymbolName();
+    if (isCallOp && forDarwin && TM.getRelocationModel() != Reloc::Static) {
+      std::string Name(GlobalPrefix);
+      Name += MO.getSymbolName();
       FnStubs.insert(Name);
       O << "L" << Name << "$stub";
       return;
     }
+    if (!isCallOp) O << "OFFSET ";
     O << GlobalPrefix << MO.getSymbolName();
     return;
   }
@@ -177,7 +178,7 @@ void X86IntelAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
   } else if (BaseReg.isConstantPoolIndex()) {
     O << "[" << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << "_"
       << BaseReg.getConstantPoolIndex();
-    if (forDarwin && PICEnabled)
+    if (forDarwin && TM.getRelocationModel() == Reloc::PIC)
       O << "-\"L" << getFunctionNumber() << "$pb\"";
 
     if (IndexReg.getReg()) {

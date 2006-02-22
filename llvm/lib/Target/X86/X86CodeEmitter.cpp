@@ -77,6 +77,9 @@ FunctionPass *llvm::createX86CodeEmitterPass(MachineCodeEmitter &MCE) {
 }
 
 bool Emitter::runOnMachineFunction(MachineFunction &MF) {
+  assert((MF.getTarget().getRelocationModel() != Reloc::Default ||
+          MF.getTarget().getRelocationModel() != Reloc::Static) &&
+         "JIT relocation model must be set to static or default!");
   II = ((X86TargetMachine&)MF.getTarget()).getInstrInfo();
 
   MCE.startFunction(MF);
@@ -97,7 +100,6 @@ bool Emitter::runOnMachineFunction(MachineFunction &MF) {
 }
 
 void Emitter::emitBasicBlock(const MachineBasicBlock &MBB) {
-  assert(!PICEnabled && "CodeEmitter does not support PIC!");
   if (uint64_t Addr = MCE.getCurrentPCValue())
     BasicBlockAddrs[&MBB] = Addr;
 

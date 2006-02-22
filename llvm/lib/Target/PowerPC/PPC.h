@@ -31,7 +31,6 @@ FunctionPass *createPPCISelDag(TargetMachine &TM);
 FunctionPass *createDarwinAsmPrinter(std::ostream &OS, TargetMachine &TM);
 FunctionPass *createAIXAsmPrinter(std::ostream &OS, TargetMachine &TM);
 
-extern bool PPCGenerateStaticCode;
 extern PPCTargetEnum PPCTarget;
 } // end namespace llvm;
 

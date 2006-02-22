@@ -119,7 +119,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     if (!isMemOp && !isCallOp) O << '$';
     // Darwin block shameless ripped from PPCAsmPrinter.cpp
-    if (forDarwin) {
+    if (forDarwin && TM.getRelocationModel() != Reloc::Static) {
       GlobalValue *GV = MO.getGlobal();
       std::string Name = Mang->getValueName(GV);
       // Link-once, External, or Weakly-linked global variables need
@@ -133,7 +133,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
         } else {
           GVStubs.insert(Name);
           O << "L" << Name << "$non_lazy_ptr";
-          if (PICEnabled)
+          if (TM.getRelocationModel() == Reloc::PIC)
             O << "-\"L" << getFunctionNumber() << "$pb\"";
         }
       } else {
@@ -150,14 +150,14 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   }
   case MachineOperand::MO_ExternalSymbol: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
-    bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
-    if (isCallOp && forDarwin) {
-      std::string Name(GlobalPrefix); Name += MO.getSymbolName();
+    if (isCallOp && forDarwin && TM.getRelocationModel() != Reloc::Static) {
+      std::string Name(GlobalPrefix);
+      Name += MO.getSymbolName();
       FnStubs.insert(Name);
       O << "L" << Name << "$stub";
       return;
     }
-    if (!isMemOp && !isCallOp) O << '$';
+    if (!isCallOp) O << '$';
     O << GlobalPrefix << MO.getSymbolName();
     return;
   }
@@ -198,7 +198,7 @@ void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
   } else if (BaseReg.isConstantPoolIndex()) {
     O << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << "_"
       << BaseReg.getConstantPoolIndex();
-    if (forDarwin && PICEnabled)
+    if (forDarwin && TM.getRelocationModel() == Reloc::PIC)
       O << "-\"L" << getFunctionNumber() << "$pb\"";
     if (DispSpec.getImmedValue())
       O << "+" << DispSpec.getImmedValue();

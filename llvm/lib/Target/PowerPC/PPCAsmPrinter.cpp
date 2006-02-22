@@ -132,7 +132,7 @@ namespace {
     }
     void printCallOperand(const MachineInstr *MI, unsigned OpNo) {
       const MachineOperand &MO = MI->getOperand(OpNo);
-      if (!PPCGenerateStaticCode) {
+      if (TM.getRelocationModel() != Reloc::Static) {
         if (MO.getType() == MachineOperand::MO_GlobalAddress) {
           GlobalValue *GV = MO.getGlobal();
           if (((GV->isExternal() || GV->hasWeakLinkage() ||
@@ -167,7 +167,7 @@ namespace {
       } else {
         O << "ha16(";
         printOp(MI->getOperand(OpNo));
-        if (PICEnabled)
+        if (TM.getRelocationModel() == Reloc::PIC)
           O << "-\"L" << getFunctionNumber() << "$pb\")";
         else
           O << ')';
@@ -179,7 +179,7 @@ namespace {
       } else {
         O << "lo16(";
         printOp(MI->getOperand(OpNo));
-        if (PICEnabled)
+        if (TM.getRelocationModel() == Reloc::PIC)
           O << "-\"L" << getFunctionNumber() << "$pb\")";
         else
           O << ')';
@@ -362,7 +362,7 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
     return;
   case MachineOperand::MO_ExternalSymbol:
     // Computing the address of an external symbol, not calling it.
-    if (!PPCGenerateStaticCode) {
+    if (TM.getRelocationModel() != Reloc::Static) {
       std::string Name(GlobalPrefix); Name += MO.getSymbolName();
       GVStubs.insert(Name);
       O << "L" << Name << "$non_lazy_ptr";
@@ -377,7 +377,7 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
     int offset = MO.getOffset();
 
     // External or weakly linked global variables need non-lazily-resolved stubs
-    if (!PPCGenerateStaticCode) {
+    if (TM.getRelocationModel() != Reloc::Static) {
       if (((GV->isExternal() || GV->hasWeakLinkage() ||
             GV->hasLinkOnceLinkage()))) {
         GVStubs.insert(Name);
@@ -585,7 +585,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
   }
 
   // Output stubs for dynamically-linked functions
-  if (PICEnabled) {
+  if (TM.getRelocationModel() == Reloc::PIC) {
     for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end();
          i != e; ++i) {
       SwitchSection(".section __TEXT,__picsymbolstub1,symbol_stubs,"

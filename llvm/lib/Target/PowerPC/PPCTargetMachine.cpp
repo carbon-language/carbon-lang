@@ -67,6 +67,11 @@ PPCTargetMachine::PPCTargetMachine(const Module &M, IntrinsicLowering *IL,
     if (Subtarget.isAIX()) PPCTarget = TargetAIX;
     if (Subtarget.isDarwin()) PPCTarget = TargetDarwin;
   }
+  if (getRelocationModel() == Reloc::Default)
+    if (Subtarget.isDarwin())
+      setRelocationModel(Reloc::DynamicNoPIC);
+    else
+      setRelocationModel(Reloc::PIC);
 }
 
 /// addPassesToEmitFile - Add passes to the specified pass manager to implement
@@ -129,8 +134,8 @@ bool PPCTargetMachine::addPassesToEmitFile(PassManager &PM,
 }
 
 void PPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
-  // The JIT does not support or need PIC.
-  PICEnabled = false;
+  // The JIT should use static relocation model.
+  TM.setRelocationModel(Reloc::Static);
 
   // Run loop strength reduction before anything else.
   PM.add(createLoopStrengthReducePass());

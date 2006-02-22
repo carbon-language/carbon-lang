@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetOptions.h"
 #include "llvm/Type.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/Support/CommandLine.h"
@@ -26,7 +27,7 @@ namespace llvm {
   bool NoFramePointerElim;
   bool NoExcessFPPrecision;
   bool UnsafeFPMath;
-  bool PICEnabled;
+  Reloc::Model RelocationModel;
 };
 namespace {
   cl::opt<bool, true> PrintCode("print-machineinstrs",
@@ -48,11 +49,22 @@ namespace {
                cl::desc("Enable optimizations that may decrease FP precision"),
                cl::location(UnsafeFPMath),
                cl::init(false));
-  cl::opt<bool, true>
-  EnablePIC("enable-pic",
-               cl::desc("Enable generation of position independant code"),
-               cl::location(PICEnabled),
-               cl::init(false));
+  cl::opt<llvm::Reloc::Model, true>
+  DefRelocationModel(
+    "relocation-model",
+    cl::desc("Choose relocation model"),
+    cl::location(RelocationModel),
+    cl::init(Reloc::Default),
+    cl::values(
+      clEnumValN(Reloc::Default, "default",
+                 "Target default relocation model"),
+      clEnumValN(Reloc::Static, "static",
+                 "Non-relocatable code"),
+      clEnumValN(Reloc::PIC, "pic",
+                 "Fully relocatable, position independent code"),
+      clEnumValN(Reloc::DynamicNoPIC, "dynamic-no-pic",
+                 "Relocatable external references, non-relocatable code"),
+      clEnumValEnd));
 };
 
 //---------------------------------------------------------------------------
@@ -87,3 +99,13 @@ TargetMachine::~TargetMachine() {
   delete IL;
 }
 
+/// getRelocationModel - Returns the code generation relocation model. The
+/// choices are static, PIC, and dynamic-no-pic, and target default.
+Reloc::Model TargetMachine::getRelocationModel() {
+  return RelocationModel;
+}
+
+/// setRelocationModel - Sets the code generation relocation model.
+void TargetMachine::setRelocationModel(Reloc::Model Model) {
+  RelocationModel = Model;
+}
