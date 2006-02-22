@@ -766,11 +766,24 @@ getRegForInlineAsmConstraint(const std::string &Constraint,
   for (MRegisterInfo::regclass_iterator RCI = RI->regclass_begin(),
        E = RI->regclass_end(); RCI != E; ++RCI) {
     const TargetRegisterClass *RC = *RCI;
+    
+    // If none of the the value types for this register class are valid, we 
+    // can't use it.  For example, 64-bit reg classes on 32-bit targets.
+    bool isLegal = false;
+    for (TargetRegisterClass::vt_iterator I = RC->vt_begin(), E = RC->vt_end();
+         I != E; ++I) {
+      if (isTypeLegal(*I)) {
+        isLegal = true;
+        break;
+      }
+    }
+    
+    if (!isLegal) continue;
+    
     for (TargetRegisterClass::iterator I = RC->begin(), E = RC->end(); 
          I != E; ++I) {
-      if (StringsEqualNoCase(RegName, RI->get(*I).Name)) {
+      if (StringsEqualNoCase(RegName, RI->get(*I).Name))
         return std::make_pair(*I, RC);
-      }
     }
   }
   
