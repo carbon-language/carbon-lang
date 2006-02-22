@@ -51,6 +51,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     if (forDarwin) {
       SwitchSection(".section __TEXT,__textcoal_nt,coalesced,pure_instructions",
                     F);
+      O << "\t.globl\t" << CurrentFnName << "\n";
       O << "\t.weak_definition\t" << CurrentFnName << "\n";
     } else {
       EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
