@@ -78,6 +78,43 @@ namespace {
       clEnumValEnd));
 } // namespace
 
+namespace {
+  /// RegsForValue - This struct represents the physical registers that a
+  /// particular value is assigned and the type information about the value.
+  /// This is needed because values can be promoted into larger registers and
+  /// expanded into multiple smaller registers than the value.
+  struct RegsForValue {
+    /// Regs - This list hold the register (for legal and promoted values)
+    /// or register set (for expanded values) that the value should be assigned
+    /// to.
+    std::vector<unsigned> Regs;
+    
+    /// RegVT - The value type of each register.
+    ///
+    MVT::ValueType RegVT;
+    
+    /// ValueVT - The value type of the LLVM value, which may be promoted from
+    /// RegVT or made from merging the two expanded parts.
+    MVT::ValueType ValueVT;
+    
+    RegsForValue() : RegVT(MVT::Other), ValueVT(MVT::Other) {}
+    
+    RegsForValue(unsigned Reg, MVT::ValueType regvt, MVT::ValueType valuevt)
+      : RegVT(regvt), ValueVT(valuevt) {
+        Regs.push_back(Reg);
+    }
+    RegsForValue(const std::vector<unsigned> &regs, 
+                 MVT::ValueType regvt, MVT::ValueType valuevt)
+      : Regs(regs), RegVT(regvt), ValueVT(valuevt) {
+    }
+    
+    /// getCopyFromRegs - Emit a series of CopyFromReg nodes that copies from
+    /// this value and returns the result as a ValueVT value.  This uses 
+    /// Chain/Flag as the input and updates them for the output Chain/Flag.
+    SDOperand getCopyFromRegs(SelectionDAG &DAG,
+                              SDOperand &Chain, SDOperand &Flag);
+  };
+}
 
 namespace llvm {
   //===--------------------------------------------------------------------===//
@@ -120,7 +157,7 @@ namespace llvm {
       }
 
       // If this value is represented with multiple target registers, make sure
-      // to create enough consequtive registers of the right (smaller) type.
+      // to create enough consecutive registers of the right (smaller) type.
       unsigned NT = VT-1;  // Find the type to use.
       while (TLI.getNumElements((MVT::ValueType)NT) != 1)
         --NT;
@@ -412,11 +449,12 @@ public:
     return N = NewN;
   }
   
-  unsigned GetAvailableRegister(bool OutReg, bool InReg,
-                                const std::vector<unsigned> &RegChoices,
-                                std::set<unsigned> &OutputRegs, 
-                                std::set<unsigned> &InputRegs);
-
+  RegsForValue GetRegistersForValue(const std::string &ConstrCode,
+                                    MVT::ValueType VT,
+                                    bool OutReg, bool InReg,
+                                    std::set<unsigned> &OutputRegs, 
+                                    std::set<unsigned> &InputRegs);
+                                                
   // Terminator instructions.
   void visitRet(ReturnInst &I);
   void visitBr(BranchInst &I);
@@ -1130,48 +1168,144 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
   DAG.setRoot(Result.second);
 }
 
-/// GetAvailableRegister - Pick a register from RegChoices that is available
-/// for input and/or output as specified by isOutReg/isInReg.  If an allocatable
-/// register is found, it is returned and added to the specified set of used
-/// registers.  If not, zero is returned.
-unsigned SelectionDAGLowering::
-GetAvailableRegister(bool isOutReg, bool isInReg,
-                     const std::vector<unsigned> &RegChoices,
-                     std::set<unsigned> &OutputRegs,
-                     std::set<unsigned> &InputRegs) {
-  const MRegisterInfo *MRI = DAG.getTarget().getRegisterInfo();
-  MachineFunction &MF = *CurMBB->getParent();
-  for (unsigned i = 0, e = RegChoices.size(); i != e; ++i) {
-    unsigned Reg = RegChoices[i];
-    // See if this register is available.
-    if (isOutReg && OutputRegs.count(Reg)) continue;  // Already used.
-    if (isInReg  && InputRegs.count(Reg)) continue;  // Already used.
+SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
+                                        SDOperand &Chain, SDOperand &Flag) {
+  SDOperand Val = DAG.getCopyFromReg(Chain, Regs[0], RegVT, Flag);
+  Chain = Val.getValue(1);
+  Flag  = Val.getValue(2);
+  
+  // If the result was expanded, copy from the top part.
+  if (Regs.size() > 1) {
+    assert(Regs.size() == 2 &&
+           "Cannot expand to more than 2 elts yet!");
+    SDOperand Hi = DAG.getCopyFromReg(Chain, Regs[1], RegVT, Flag);
+    Chain = Val.getValue(1);
+    Flag  = Val.getValue(2);
+    return DAG.getNode(ISD::MERGE_VALUES, ValueVT, Val, Hi);
+  }
 
-    // Check to see if this register is allocatable (i.e. don't give out the
-    // stack pointer).
-    bool Found = false;
-    for (MRegisterInfo::regclass_iterator RC = MRI->regclass_begin(),
-         E = MRI->regclass_end(); !Found && RC != E; ++RC) {
-      // NOTE: This isn't ideal.  In particular, this might allocate the
-      // frame pointer in functions that need it (due to them not being taken
-      // out of allocation, because a variable sized allocation hasn't been seen
-      // yet).  This is a slight code pessimization, but should still work.
-      for (TargetRegisterClass::iterator I = (*RC)->allocation_order_begin(MF),
-           E = (*RC)->allocation_order_end(MF); I != E; ++I)
-        if (*I == Reg) {
-          Found = true;
-          break;
-        }
-    }
-    if (!Found) continue;
-    
-    // Okay, this register is good, return it.
-    if (isOutReg) OutputRegs.insert(Reg);  // Mark used.
-    if (isInReg)  InputRegs.insert(Reg);   // Mark used.
-    return Reg;
+  // Otherwise, if the return value was promoted, truncate it to the
+  // appropriate type.
+  if (RegVT == ValueVT)
+    return Val;
+  
+  if (MVT::isInteger(RegVT))
+    return DAG.getNode(ISD::TRUNCATE, ValueVT, Val);
+  else
+    return DAG.getNode(ISD::FP_ROUND, ValueVT, Val);
+}
+
+
+
+/// isAllocatableRegister - If the specified register is safe to allocate, 
+/// i.e. it isn't a stack pointer or some other special register, return the
+/// register class for the register.  Otherwise, return null.
+static const TargetRegisterClass *
+isAllocatableRegister(unsigned Reg, MachineFunction &MF, 
+                      const MRegisterInfo *MRI) {
+  for (MRegisterInfo::regclass_iterator RC = MRI->regclass_begin(),
+       E = MRI->regclass_end(); RC != E; ++RC) {
+    // NOTE: This isn't ideal.  In particular, this might allocate the
+    // frame pointer in functions that need it (due to them not being taken
+    // out of allocation, because a variable sized allocation hasn't been seen
+    // yet).  This is a slight code pessimization, but should still work.
+    for (TargetRegisterClass::iterator I = (*RC)->allocation_order_begin(MF),
+         E = (*RC)->allocation_order_end(MF); I != E; ++I)
+      if (*I == Reg)
+        return *RC;
   }
   return 0;
+}    
+
+RegsForValue SelectionDAGLowering::
+GetRegistersForValue(const std::string &ConstrCode,
+                     MVT::ValueType VT, bool isOutReg, bool isInReg,
+                     std::set<unsigned> &OutputRegs, 
+                     std::set<unsigned> &InputRegs) {
+  std::pair<unsigned, const TargetRegisterClass*> PhysReg = 
+    TLI.getRegForInlineAsmConstraint(ConstrCode, VT);
+  std::vector<unsigned> Regs;
+
+  unsigned NumRegs = VT != MVT::Other ? TLI.getNumElements(VT) : 1;
+  MVT::ValueType RegVT;
+  MVT::ValueType ValueVT = VT;
+  
+  if (PhysReg.first) {
+    if (VT == MVT::Other)
+      ValueVT = *PhysReg.second->vt_begin();
+    RegVT = VT;
+    
+    // This is a explicit reference to a physical register.
+    Regs.push_back(PhysReg.first);
+
+    // If this is an expanded reference, add the rest of the regs to Regs.
+    if (NumRegs != 1) {
+      RegVT = *PhysReg.second->vt_begin();
+      TargetRegisterClass::iterator I = PhysReg.second->begin();
+      TargetRegisterClass::iterator E = PhysReg.second->end();
+      for (; *I != PhysReg.first; ++I)
+        assert(I != E && "Didn't find reg!"); 
+      
+      // Already added the first reg.
+      --NumRegs; ++I;
+      for (; NumRegs; --NumRegs, ++I) {
+        assert(I != E && "Ran out of registers to allocate!");
+        Regs.push_back(*I);
+      }
+    }
+    return RegsForValue(Regs, RegVT, ValueVT);
+  }
+  
+  // This is a reference to a register class.  Allocate NumRegs consecutive,
+  // available, registers from the class.
+  std::vector<unsigned> RegClassRegs =
+    TLI.getRegClassForInlineAsmConstraint(ConstrCode, VT);
+
+  const MRegisterInfo *MRI = DAG.getTarget().getRegisterInfo();
+  MachineFunction &MF = *CurMBB->getParent();
+  unsigned NumAllocated = 0;
+  for (unsigned i = 0, e = RegClassRegs.size(); i != e; ++i) {
+    unsigned Reg = RegClassRegs[i];
+    // See if this register is available.
+    if ((isOutReg && OutputRegs.count(Reg)) ||   // Already used.
+        (isInReg  && InputRegs.count(Reg))) {    // Already used.
+      // Make sure we find consecutive registers.
+      NumAllocated = 0;
+      continue;
+    }
+    
+    // Check to see if this register is allocatable (i.e. don't give out the
+    // stack pointer).
+    const TargetRegisterClass *RC = isAllocatableRegister(Reg, MF, MRI);
+    if (!RC) {
+      // Make sure we find consecutive registers.
+      NumAllocated = 0;
+      continue;
+    }
+    
+    // Okay, this register is good, we can use it.
+    ++NumAllocated;
+
+    // If we allocated enough consecutive   
+    if (NumAllocated == NumRegs) {
+      unsigned RegStart = (i-NumAllocated)+1;
+      unsigned RegEnd   = i+1;
+      // Mark all of the allocated registers used.
+      for (unsigned i = RegStart; i != RegEnd; ++i) {
+        unsigned Reg = RegClassRegs[i];
+        Regs.push_back(Reg);
+        if (isOutReg) OutputRegs.insert(Reg);    // Mark reg used.
+        if (isInReg)  InputRegs.insert(Reg);     // Mark reg used.
+      }
+      
+      return RegsForValue(Regs, *RC->vt_begin(), VT);
+    }
+  }
+  
+  // Otherwise, we couldn't allocate enough registers for this.
+  return RegsForValue();
 }
+
 
 /// visitInlineAsm - Handle a call to an InlineAsm object.
 ///
@@ -1235,39 +1369,40 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
     
     ConstraintVTs.push_back(OpVT);
 
-    std::pair<unsigned, const TargetRegisterClass*> Reg = 
-       TLI.getRegForInlineAsmConstraint(ConstraintCode, OpVT);
-    if (Reg.first == 0) continue;  // Not assigned a fixed reg.
-    unsigned TheReg = Reg.first;
+    if (TLI.getRegForInlineAsmConstraint(ConstraintCode, OpVT).first == 0)
+      continue;  // Not assigned a fixed reg.
     
-    // FIXME: Handle expanded physreg refs!
+    // Build a list of regs that this operand uses.  This always has a single
+    // element for promoted/expanded operands.
+    RegsForValue Regs = GetRegistersForValue(ConstraintCode, OpVT,
+                                             false, false,
+                                             OutputRegs, InputRegs);
     
     switch (Constraints[i].Type) {
     case InlineAsm::isOutput:
       // We can't assign any other output to this register.
-      OutputRegs.insert(TheReg);
+      OutputRegs.insert(Regs.Regs.begin(), Regs.Regs.end());
       // If this is an early-clobber output, it cannot be assigned to the same
       // value as the input reg.
       if (Constraints[i].isEarlyClobber || Constraints[i].hasMatchingInput)
-        InputRegs.insert(TheReg);
+        InputRegs.insert(Regs.Regs.begin(), Regs.Regs.end());
       break;
     case InlineAsm::isInput:
       // We can't assign any other input to this register.
-      InputRegs.insert(TheReg);
+      InputRegs.insert(Regs.Regs.begin(), Regs.Regs.end());
       break;
     case InlineAsm::isClobber:
       // Clobbered regs cannot be used as inputs or outputs.
-      InputRegs.insert(TheReg);
-      OutputRegs.insert(TheReg);
+      InputRegs.insert(Regs.Regs.begin(), Regs.Regs.end());
+      OutputRegs.insert(Regs.Regs.begin(), Regs.Regs.end());
       break;
     }
   }      
   
   // Loop over all of the inputs, copying the operand values into the
   // appropriate registers and processing the output regs.
-  unsigned RetValReg = 0;
-  std::vector<std::pair<unsigned, Value*> > IndirectStoresToEmit;
-  bool FoundOutputConstraint = false;
+  RegsForValue RetValRegs;
+  std::vector<std::pair<RegsForValue, Value*> > IndirectStoresToEmit;
   OpNum = 1;
   
   for (unsigned i = 0, e = Constraints.size(); i != e; ++i) {
@@ -1276,58 +1411,47 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
 
     switch (Constraints[i].Type) {
     case InlineAsm::isOutput: {
-      // Copy the output from the appropriate register.  Find a regsister that
+      // If this is an early-clobber output, or if there is an input
+      // constraint that matches this, we need to reserve the input register
+      // so no other inputs allocate to it.
+      bool UsesInputRegister = false;
+      if (Constraints[i].isEarlyClobber || Constraints[i].hasMatchingInput)
+        UsesInputRegister = true;
+      
+      // Copy the output from the appropriate register.  Find a register that
       // we can use.
-      
-      // Check to see if this is a physreg reference.
-      std::pair<unsigned, const TargetRegisterClass*> PhysReg = 
-         TLI.getRegForInlineAsmConstraint(ConstraintCode, ConstraintVTs[i]);
-      unsigned DestReg;
-      if (PhysReg.first)
-        DestReg = PhysReg.first;
-      else {
-        std::vector<unsigned> Regs =
-          TLI.getRegClassForInlineAsmConstraint(ConstraintCode, 
-                                                ConstraintVTs[i]);
+      RegsForValue Regs =
+        GetRegistersForValue(ConstraintCode, ConstraintVTs[i],
+                             true, UsesInputRegister, 
+                             OutputRegs, InputRegs);
+      assert(!Regs.Regs.empty() && "Couldn't allocate output reg!");
 
-        // If this is an early-clobber output, or if there is an input
-        // constraint that matches this, we need to reserve the input register
-        // so no other inputs allocate to it.
-        bool UsesInputRegister = false;
-        if (Constraints[i].isEarlyClobber || Constraints[i].hasMatchingInput)
-          UsesInputRegister = true;
-        DestReg = GetAvailableRegister(true, UsesInputRegister, 
-                                       Regs, OutputRegs, InputRegs);
-      }
-      
-      assert(DestReg && "Couldn't allocate output reg!");
-
-      const Type *OpTy;
       if (!Constraints[i].isIndirectOutput) {
-        assert(!FoundOutputConstraint &&
+        assert(RetValRegs.Regs.empty() &&
                "Cannot have multiple output constraints yet!");
-        FoundOutputConstraint = true;
         assert(I.getType() != Type::VoidTy && "Bad inline asm!");
-        
-        RetValReg = DestReg;
+        RetValRegs = Regs;
       } else {
         Value *CallOperand = I.getOperand(OpNum);
-        IndirectStoresToEmit.push_back(std::make_pair(DestReg, CallOperand));
+        IndirectStoresToEmit.push_back(std::make_pair(Regs, CallOperand));
         OpNum++;  // Consumes a call operand.
       }
       
       // Add information to the INLINEASM node to know that this register is
       // set.
-      AsmNodeOperands.push_back(DAG.getRegister(DestReg, ConstraintVTs[i]));
-      AsmNodeOperands.push_back(DAG.getConstant(2, MVT::i32)); // ISDEF
       
+      // FIXME:
+      // FIXME: Handle multiple regs here.
+      // FIXME:
+      unsigned DestReg = Regs.Regs[0];
+      AsmNodeOperands.push_back(DAG.getRegister(DestReg, Regs.RegVT));
+      AsmNodeOperands.push_back(DAG.getConstant(2, MVT::i32)); // ISDEF
       break;
     }
     case InlineAsm::isInput: {
       Value *CallOperand = I.getOperand(OpNum);
       OpNum++;  // Consumes a call operand.
 
-      unsigned SrcReg;
       SDOperand ResOp;
       unsigned ResOpType;
       SDOperand InOperandVal = getValue(CallOperand);
@@ -1336,6 +1460,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
         // If this is required to match an output register we have already set,
         // just use its register.
         unsigned OperandNo = atoi(ConstraintCode.c_str());
+        unsigned SrcReg;
         SrcReg = cast<RegisterSDNode>(AsmNodeOperands[OperandNo*2+2])->getReg();
         ResOp = DAG.getRegister(SrcReg, ConstraintVTs[i]);
         ResOpType = 1;
@@ -1343,39 +1468,46 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
         Chain = DAG.getCopyToReg(Chain, SrcReg, InOperandVal, Flag);
         Flag = Chain.getValue(1);
       } else {
-        TargetLowering::ConstraintType CTy = TargetLowering::C_Register;
+        TargetLowering::ConstraintType CTy = TargetLowering::C_RegisterClass;
         if (ConstraintCode.size() == 1)   // not a physreg name.
           CTy = TLI.getConstraintType(ConstraintCode[0]);
         
         switch (CTy) {
         default: assert(0 && "Unknown constraint type! FAIL!");
-        case TargetLowering::C_Register: {
-          std::pair<unsigned, const TargetRegisterClass*> PhysReg = 
-            TLI.getRegForInlineAsmConstraint(ConstraintCode, ConstraintVTs[i]);
-          // FIXME: should be match fail.
-          assert(PhysReg.first && "Unknown physical register name!");
-          SrcReg = PhysReg.first;
-
-          Chain = DAG.getCopyToReg(Chain, SrcReg, InOperandVal, Flag);
-          Flag = Chain.getValue(1);
-          
-          ResOp = DAG.getRegister(SrcReg, ConstraintVTs[i]);
-          ResOpType = 1;
-          break;
-        }
         case TargetLowering::C_RegisterClass: {
-          // Copy the input into the appropriate register.
-          std::vector<unsigned> Regs =
-            TLI.getRegClassForInlineAsmConstraint(ConstraintCode, 
-                                                  ConstraintVTs[i]);
-          SrcReg = GetAvailableRegister(false, true, Regs, 
-                                        OutputRegs, InputRegs);
+          // Copy the input into the appropriate registers.
+          RegsForValue InRegs =
+            GetRegistersForValue(ConstraintCode, ConstraintVTs[i],
+                                 false, true, OutputRegs, InputRegs);
           // FIXME: should be match fail.
-          assert(SrcReg && "Wasn't able to allocate register!");
-          Chain = DAG.getCopyToReg(Chain, SrcReg, InOperandVal, Flag);
-          Flag = Chain.getValue(1);
+          assert(!InRegs.Regs.empty() && "Couldn't allocate input reg!");
+
+          if (InRegs.Regs.size() == 1) {
+            // If there is a single register and the types differ, this must be
+            // a promotion.
+            if (InRegs.RegVT != InRegs.ValueVT) {
+              if (MVT::isInteger(InRegs.RegVT))
+                InOperandVal = DAG.getNode(ISD::ANY_EXTEND, InRegs.RegVT,
+                                           InOperandVal);
+              else
+                InOperandVal = DAG.getNode(ISD::FP_EXTEND, InRegs.RegVT,
+                                           InOperandVal);
+            }
+            Chain = DAG.getCopyToReg(Chain, InRegs.Regs[0], InOperandVal, Flag);
+            Flag = Chain.getValue(1);
+            
+            ResOp = DAG.getRegister(InRegs.Regs[0], InRegs.RegVT);
+          } else {
+            for (unsigned i = 0, e = InRegs.Regs.size(); i != e; ++i) {
+              SDOperand Part = DAG.getNode(ISD::EXTRACT_ELEMENT, InRegs.RegVT,
+                                           InOperandVal, 
+                                           DAG.getConstant(i, MVT::i32));
+              Chain = DAG.getCopyToReg(Chain, InRegs.Regs[i], Part, Flag);
+              Flag = Chain.getValue(1);
+            }
+            ResOp = DAG.getRegister(InRegs.Regs[0], InRegs.RegVT);
+          }
           
-          ResOp = DAG.getRegister(SrcReg, ConstraintVTs[i]);
           ResOpType = 1;
           break;
         }
@@ -1411,26 +1543,18 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
 
   // If this asm returns a register value, copy the result from that register
   // and set it as the value of the call.
-  if (RetValReg) {
-    SDOperand Val = DAG.getCopyFromReg(Chain, RetValReg,
-                                       TLI.getValueType(I.getType()), Flag);
-    Chain = Val.getValue(1);
-    Flag  = Val.getValue(2);
-    setValue(&I, Val);
-  }
+  if (!RetValRegs.Regs.empty())
+    setValue(&I, RetValRegs.getCopyFromRegs(DAG, Chain, Flag));
   
   std::vector<std::pair<SDOperand, Value*> > StoresToEmit;
   
   // Process indirect outputs, first output all of the flagged copies out of
   // physregs.
   for (unsigned i = 0, e = IndirectStoresToEmit.size(); i != e; ++i) {
+    RegsForValue &OutRegs = IndirectStoresToEmit[i].first;
     Value *Ptr = IndirectStoresToEmit[i].second;
-    const Type *Ty = cast<PointerType>(Ptr->getType())->getElementType();
-    SDOperand Val = DAG.getCopyFromReg(Chain, IndirectStoresToEmit[i].first, 
-                                       TLI.getValueType(Ty), Flag);
-    Chain = Val.getValue(1);
-    Flag  = Val.getValue(2);
-    StoresToEmit.push_back(std::make_pair(Val, Ptr));
+    SDOperand OutVal = OutRegs.getCopyFromRegs(DAG, Chain, Flag);
+    StoresToEmit.push_back(std::make_pair(OutVal, Ptr));
   }
   
   // Emit the non-flagged stores from the physregs.
@@ -1689,8 +1813,8 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
           SDOperand Value = getMemsetValue(Op2, VT, DAG);
           SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, getRoot(),
                                         Value,
-                                        getMemBasePlusOffset(Op1, Offset, DAG, TLI),
-                                        DAG.getSrcValue(I.getOperand(1), Offset));
+                                    getMemBasePlusOffset(Op1, Offset, DAG, TLI),
+                                      DAG.getSrcValue(I.getOperand(1), Offset));
           OutChains.push_back(Store);
           Offset += VTSize;
         }
