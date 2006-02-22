@@ -131,7 +131,7 @@ namespace llvm {
         SHF_LINK_ORDER       = 1 << 7, // Preserve order after combining
         SHF_OS_NONCONFORMING = 1 << 8, // nonstandard OS support required
         SHF_GROUP            = 1 << 9, // Section is a member of a group
-        SHF_TLS              = 1 << 10,// Section holds thread-local data
+        SHF_TLS              = 1 << 10 // Section holds thread-local data
       };
 
       ELFSection(const std::string &name)

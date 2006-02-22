@@ -553,7 +553,7 @@ namespace sys {
     UnknownFileType = 0,            ///< Unrecognized file
     BytecodeFileType = 1,           ///< Uncompressed bytecode file
     CompressedBytecodeFileType = 2, ///< Compressed bytecode file
-    ArchiveFileType = 3,            ///< ar style archive file
+    ArchiveFileType = 3             ///< ar style archive file
   };
 
   /// This utility function allows any memory block to be examined in order

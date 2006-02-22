@@ -110,6 +110,6 @@ namespace {
 
     }
   } ForcePassLinking;
-};
+}
 
 #endif

@@ -56,24 +56,24 @@ public:
     Legal,      // The target natively supports this operation.
     Promote,    // This operation should be executed in a larger type.
     Expand,     // Try to expand this to other ops, otherwise use a libcall.
-    Custom,     // Use the LowerOperation hook to implement custom lowering.
+    Custom      // Use the LowerOperation hook to implement custom lowering.
   };
 
   enum OutOfRangeShiftAmount {
     Undefined,  // Oversized shift amounts are undefined (default).
     Mask,       // Shift amounts are auto masked (anded) to value size.
-    Extend,     // Oversized shift pulls in zeros or sign bits.
+    Extend      // Oversized shift pulls in zeros or sign bits.
   };
 
   enum SetCCResultValue {
     UndefinedSetCCResult,          // SetCC returns a garbage/unknown extend.
     ZeroOrOneSetCCResult,          // SetCC returns a zero extended result.
-    ZeroOrNegativeOneSetCCResult,  // SetCC returns a sign extended result.
+    ZeroOrNegativeOneSetCCResult   // SetCC returns a sign extended result.
   };
 
   enum SchedPreference {
     SchedulingForLatency,          // Scheduling for shortest total latency.
-    SchedulingForRegPressure,      // Scheduling for lowest register pressure.
+    SchedulingForRegPressure       // Scheduling for lowest register pressure.
   };
 
   TargetLowering(TargetMachine &TM);

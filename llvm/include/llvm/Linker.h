@@ -53,7 +53,7 @@ class Linker {
     enum ControlFlags {
       Verbose       = 1, ///< Print to std::cerr what steps the linker is taking
       QuietWarnings = 2, ///< Don't print errors and warnings to std::cerr.
-      QuietErrors   = 4, ///< Indicate that this link is for a native executable
+      QuietErrors   = 4  ///< Indicate that this link is for a native executable
     };
 
   /// @}

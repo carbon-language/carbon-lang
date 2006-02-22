@@ -56,7 +56,7 @@ class ArchiveMember {
       CompressedBytecodeFlag = 32, ///< Member is compressed bytecode
       HasPathFlag = 64,            ///< Member has a full or partial path
       HasLongFilenameFlag = 128,   ///< Member uses the long filename syntax
-      StringTableFlag = 256,       ///< Member is an ar(1) format string table
+      StringTableFlag = 256        ///< Member is an ar(1) format string table
     };
 
   /// @}

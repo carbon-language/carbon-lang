@@ -16,6 +16,7 @@
 #define LLVM_ADT_VECTOREXTRAS_H
 
 #include <cstdarg>
+#include <vector>
 
 namespace llvm {
 

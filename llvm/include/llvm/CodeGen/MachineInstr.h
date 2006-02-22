@@ -79,7 +79,7 @@ private:
     LOFLAG32    = 0x08,       // operand is %lo32(value_or_immedVal)
     HIFLAG64    = 0x10,       // operand is %hi64(value_or_immedVal)
     LOFLAG64    = 0x20,       // operand is %lo64(value_or_immedVal)
-    PCRELATIVE  = 0x40,       // Operand is relative to PC, not a global address
+    PCRELATIVE  = 0x40        // Operand is relative to PC, not a global address
   };
 
 public:
@@ -106,7 +106,7 @@ public:
     MO_FrameIndex,              // Abstract Stack Frame Index
     MO_ConstantPoolIndex,       // Address of indexed Constant in Constant Pool
     MO_ExternalSymbol,          // Name of external global symbol
-    MO_GlobalAddress,           // Address of a global value
+    MO_GlobalAddress            // Address of a global value
   };
 
 private:

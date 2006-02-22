@@ -19,6 +19,8 @@
 #ifndef LLVM_PASS_ANALYSIS_SUPPORT_H
 #define LLVM_PASS_ANALYSIS_SUPPORT_H
 
+#include <vector>
+
 namespace llvm {
 
 // No need to include Pass.h, we are being included by it!

@@ -59,7 +59,7 @@ namespace MVT {  // MVT = Machine Value Types
     v4f32          =  21,   //  4 x f32
     v2f64          =  22,   //  2 x f64
 
-    LAST_VALUETYPE,         // This always remains at the end of the list.
+    LAST_VALUETYPE          // This always remains at the end of the list.
   };
 
   static inline bool isInteger(ValueType VT) {
@@ -136,7 +136,7 @@ namespace MVT {  // MVT = Machine Value Types
   /// to the specified ValueType.  For integer types, this returns an unsigned
   /// type.  Note that this will abort for types that cannot be represented.
   const Type *getTypeForValueType(ValueType VT);
-};
+}
 
 } // End llvm namespace
 

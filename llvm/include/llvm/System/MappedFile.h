@@ -38,7 +38,7 @@ namespace sys {
       READ_ACCESS = 0x0001,     ///< Map the file for reading
       WRITE_ACCESS = 0x0002,    ///< Map the file for write access
       EXEC_ACCESS = 0x0004,     ///< Map the file for execution access
-      SHARED_MAPPING = 0x0008,  ///< Map the file shared with other processes
+      SHARED_MAPPING = 0x0008   ///< Map the file shared with other processes
     };
   /// @}
   /// @name Constructors

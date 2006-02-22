@@ -20,6 +20,7 @@
 #include "llvm/ADT/iterator"
 #include <stack>
 #include <set>
+#include <vector>
 
 namespace llvm {
 

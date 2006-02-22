@@ -40,7 +40,7 @@ namespace DS { // FIXME: After the paper, this should get cleaned up
   /// a pointer.
   ///
   bool isPointerType(const Type *Ty);
-};
+}
 
 //===----------------------------------------------------------------------===//
 /// DSNodeHandle - Implement a "handle" to a data structure node that takes care

@@ -27,4 +27,4 @@ namespace llvm {
     /// inserted by the profiler.
     virtual bool isProfiling(Value* v) = 0;
   };
-};
+}

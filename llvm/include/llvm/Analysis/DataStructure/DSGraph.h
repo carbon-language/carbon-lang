@@ -411,7 +411,7 @@ public:
   //
   enum MarkIncompleteFlags {
     MarkFormalArgs = 1, IgnoreFormalArgs = 0,
-    IgnoreGlobals = 2, MarkGlobalsIncomplete = 0,
+    IgnoreGlobals = 2, MarkGlobalsIncomplete = 0
   };
   void markIncompleteNodes(unsigned Flags);
 
@@ -421,7 +421,7 @@ public:
   // graph entirely.  This is only appropriate to use when inlining graphs.
   //
   enum RemoveDeadNodesFlags {
-    RemoveUnreachableGlobals = 1, KeepUnreachableGlobals = 0,
+    RemoveUnreachableGlobals = 1, KeepUnreachableGlobals = 0
   };
   void removeDeadNodes(unsigned Flags);
 
@@ -432,7 +432,7 @@ public:
     DontCloneCallNodes    = 1 << 1, CloneCallNodes    = 0,
     DontCloneAuxCallNodes = 1 << 2, CloneAuxCallNodes = 0,
     StripModRefBits       = 1 << 3, KeepModRefBits    = 0,
-    StripIncompleteBit    = 1 << 4, KeepIncompleteBit = 0,
+    StripIncompleteBit    = 1 << 4, KeepIncompleteBit = 0
   };
 
   void updateFromGlobalGraph();

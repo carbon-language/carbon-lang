@@ -95,7 +95,7 @@ public:
     DEAD        = 1 << 8,   // This node is dead and should not be pointed to
     //#endif
 
-    Composition = AllocaNode | HeapNode | GlobalNode | UnknownNode,
+    Composition = AllocaNode | HeapNode | GlobalNode | UnknownNode
   };
 
   /// NodeType - A union of the above bits.  "Shadow" nodes do not add any flags

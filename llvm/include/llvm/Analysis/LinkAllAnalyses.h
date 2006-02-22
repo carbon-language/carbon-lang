@@ -55,6 +55,6 @@ namespace {
       X.add((llvm::Value*)0, 0);  // for -print-alias-sets
     }
   } ForceAnalysisPassLinking;
-};
+}
 
 #endif

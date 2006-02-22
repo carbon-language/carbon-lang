@@ -75,7 +75,7 @@ namespace sys {
       NANOSECONDS_PER_MICROSECOND = 1000,   ///< One Thousand
       NANOSECONDS_PER_MILLISECOND = 1000000,///< One Million
       NANOSECONDS_PER_POSIX_TICK = 100,     ///< Posix tick is 100 Hz (10ms)
-      NANOSECONDS_PER_WIN32_TICK = 100,     ///< Win32 tick is 100 Hz (10ms)
+      NANOSECONDS_PER_WIN32_TICK = 100      ///< Win32 tick is 100 Hz (10ms)
     };
 
   /// @}

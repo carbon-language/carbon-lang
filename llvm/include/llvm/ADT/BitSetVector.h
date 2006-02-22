@@ -252,7 +252,7 @@ inline std::ostream& operator<< (std::ostream& O, const BitSetVector& bset)
 {
   bset.print(O);
   return O;
-};
+}
 
 
 ///

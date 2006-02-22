@@ -60,7 +60,7 @@ namespace llvm {
         USE   = 1,
         DEF   = 2,
         STORE = 3,
-        NUM   = 4,
+        NUM   = 4
       };
     };
 

@@ -178,7 +178,7 @@ public:
 
       /// CallsThrough - Indirect calls are made through the specified function
       /// pointer.
-      CallsThrough,
+      CallsThrough
     };
   };
 

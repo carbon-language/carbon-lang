@@ -402,7 +402,7 @@ namespace ISD {
     DEBUG_LABEL,
     
     // BUILTIN_OP_END - This must be the last enum value in this list.
-    BUILTIN_OP_END,
+    BUILTIN_OP_END
   };
 
   //===--------------------------------------------------------------------===//
@@ -447,7 +447,7 @@ namespace ISD {
     SETNE,         //  1 X 1 1 0       True if not equal
     SETTRUE2,      //  1 X 1 1 1       Always true (always folded)
 
-    SETCC_INVALID,      // Marker value.
+    SETCC_INVALID       // Marker value.
   };
 
   /// isSignedIntSetCC - Return true if this is a setcc instruction that

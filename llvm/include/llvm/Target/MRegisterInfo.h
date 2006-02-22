@@ -169,7 +169,7 @@ public:
     /// namespace.  This must be the same for all targets, which means that each
     /// target is limited to 1024 registers.
     ///
-    FirstVirtualRegister = 1024,
+    FirstVirtualRegister = 1024
   };
 
   /// isPhysicalRegister - Return true if the specified register number is in

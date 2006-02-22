@@ -47,7 +47,7 @@ public:
     // tables for a function, allowing the indices used within the function to
     // be as small as possible.  This often allows the instructions to be
     // encoded more efficiently.
-    CompactionTable = 0x33,
+    CompactionTable = 0x33
   };
 
   /// In LLVM 1.3 format, the identifier and the size of the block are

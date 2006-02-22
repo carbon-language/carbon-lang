@@ -41,7 +41,7 @@ namespace llvm {
     noScheduling,           // No scheduling, emit breath first sequence.
     simpleScheduling,       // Two pass, min. critical path, max. utilization.
     simpleNoItinScheduling, // Same as above exact using generic latency.
-    listSchedulingBURR,     // Bottom up reg reduction list scheduling.
+    listSchedulingBURR      // Bottom up reg reduction list scheduling.
   };
 
 

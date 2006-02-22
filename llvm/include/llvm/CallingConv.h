@@ -45,7 +45,7 @@ namespace CallingConv {
 
     // Target - This is the start of the target-specific calling conventions,
     // e.g. fastcall and thiscall on X86.
-    FirstTargetCC = 64,
+    FirstTargetCC = 64
   };
 } // End CallingConv namespace
 
