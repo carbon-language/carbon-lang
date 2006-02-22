@@ -65,6 +65,10 @@ struct X86IntelAsmPrinter : public X86SharedAsmPrinter {
     O << "QWORD PTR ";
     printMemReference(MI, OpNo);
   }
+  void printi128mem(const MachineInstr *MI, unsigned OpNo) {
+    O << "XMMWORD PTR ";
+    printMemReference(MI, OpNo);
+  }
   void printf32mem(const MachineInstr *MI, unsigned OpNo) {
     O << "DWORD PTR ";
     printMemReference(MI, OpNo);

@@ -236,6 +236,44 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     addLegalFPImmediate(-0.0); // FLD0/FCHS
     addLegalFPImmediate(-1.0); // FLD1/FCHS
   }
+
+  if (TM.getSubtarget<X86Subtarget>().hasMMX()) {
+    addRegisterClass(MVT::v8i8,  X86::VR64RegisterClass);
+    addRegisterClass(MVT::v4i16, X86::VR64RegisterClass);
+    addRegisterClass(MVT::v2i32, X86::VR64RegisterClass);
+
+    // FIXME: We don't support any ConstantVec's yet.  We should custom expand
+    // the ones we do!
+    setOperationAction(ISD::ConstantVec, MVT::v8i8,  Expand);
+    setOperationAction(ISD::ConstantVec, MVT::v4i16, Expand);
+    setOperationAction(ISD::ConstantVec, MVT::v2i32, Expand);
+  }
+
+  if (TM.getSubtarget<X86Subtarget>().hasSSE1()) {
+    addRegisterClass(MVT::v4f32, X86::VR128RegisterClass);
+
+    // FIXME: We don't support any ConstantVec's yet.  We should custom expand
+    // the ones we do!
+    setOperationAction(ISD::ConstantVec, MVT::v4f32, Expand);
+  }
+
+  if (TM.getSubtarget<X86Subtarget>().hasSSE2()) {
+    addRegisterClass(MVT::v2f64, X86::VR128RegisterClass);
+    addRegisterClass(MVT::v16i8, X86::VR128RegisterClass);
+    addRegisterClass(MVT::v8i16, X86::VR128RegisterClass);
+    addRegisterClass(MVT::v4i32, X86::VR128RegisterClass);
+    addRegisterClass(MVT::v2i64, X86::VR128RegisterClass);
+
+
+    // FIXME: We don't support any ConstantVec's yet.  We should custom expand
+    // the ones we do!
+    setOperationAction(ISD::ConstantVec, MVT::v2f64, Expand);
+    setOperationAction(ISD::ConstantVec, MVT::v16i8, Expand);
+    setOperationAction(ISD::ConstantVec, MVT::v8i16, Expand);
+    setOperationAction(ISD::ConstantVec, MVT::v4i32, Expand);
+    setOperationAction(ISD::ConstantVec, MVT::v2i64, Expand);
+  }
+
   computeRegisterProperties();
 
   // FIXME: These should be based on subtarget info. Plus, the values should

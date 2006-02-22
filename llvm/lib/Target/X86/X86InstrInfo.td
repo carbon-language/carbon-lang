@@ -136,6 +136,7 @@ def i8mem   : X86MemOperand<"printi8mem">;
 def i16mem  : X86MemOperand<"printi16mem">;
 def i32mem  : X86MemOperand<"printi32mem">;
 def i64mem  : X86MemOperand<"printi64mem">;
+def i128mem : X86MemOperand<"printi128mem">;
 def f32mem  : X86MemOperand<"printf32mem">;
 def f64mem  : X86MemOperand<"printf64mem">;
 def f128mem : X86MemOperand<"printf128mem">;
@@ -341,6 +342,9 @@ def loadi32 : PatFrag<(ops node:$ptr), (i32 (load node:$ptr))>;
 def loadf32 : PatFrag<(ops node:$ptr), (f32 (load node:$ptr))>;
 def loadf64 : PatFrag<(ops node:$ptr), (f64 (load node:$ptr))>;
 
+def X86loadv4f32 : PatFrag<(ops node:$ptr), (v4f32 (load node:$ptr))>;
+def X86loadv2f64 : PatFrag<(ops node:$ptr), (v2f64 (load node:$ptr))>;
+
 def sextloadi16i1  : PatFrag<(ops node:$ptr), (i16 (sextload node:$ptr, i1))>;
 def sextloadi32i1  : PatFrag<(ops node:$ptr), (i32 (sextload node:$ptr, i1))>;
 def sextloadi16i8  : PatFrag<(ops node:$ptr), (i16 (sextload node:$ptr, i8))>;
@@ -359,9 +363,6 @@ def extloadf64f32  : PatFrag<(ops node:$ptr), (f64 (extload node:$ptr, f32))>;
 
 def X86loadpf32    : PatFrag<(ops node:$ptr), (f32   (X86loadp node:$ptr))>;
 def X86loadpf64    : PatFrag<(ops node:$ptr), (f64   (X86loadp node:$ptr))>;
-
-def X86loadpv4f32  : PatFrag<(ops node:$ptr), (v4f32 (X86loadp node:$ptr))>;
-def X86loadpv2f64  : PatFrag<(ops node:$ptr), (v2f64 (X86loadp node:$ptr))>;
 
 //===----------------------------------------------------------------------===//
 // Instruction templates...
