@@ -51,6 +51,7 @@ bool InlineAsm::ConstraintInfo::Parse(const std::string &Str,
   isEarlyClobber = false;
   isIndirectOutput = false;
   hasMatchingInput = false;
+  isCommutative = false;
   
   // Parse the prefix.
   if (*I == '~') {
@@ -74,12 +75,21 @@ bool InlineAsm::ConstraintInfo::Parse(const std::string &Str,
     default:
       DoneWithModifiers = true;
       break;
-    case '&':
+    case '&':     // Early clobber.
       if (Type != isOutput ||      // Cannot early clobber anything but output.
           isEarlyClobber)          // Reject &&&&&&
         return true;
       isEarlyClobber = true;
       break;
+    case '%':     // Commutative.
+      if (Type == isClobber ||     // Cannot commute clobbers.
+          isCommutative)           // Reject %%%%%
+        return true;
+      isCommutative = true;
+      break;
+    case '#':     // Comment.
+    case '*':     // Register preferencing.
+      return true;     // Not supported.
     }
     
     if (!DoneWithModifiers) {
