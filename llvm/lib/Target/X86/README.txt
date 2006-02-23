@@ -497,3 +497,12 @@ foo:
 	ret
 
 This will be solved when we go to a dynamic programming based isel.
+
+//===---------------------------------------------------------------------===//
+
+Make use of floating point min / max instructions. Perhaps introduce ISD::FMIN
+and ISD::FMAX node types?
+
+//===---------------------------------------------------------------------===//
+
+Select (add, x, GlobalAddress) to ADD32ri, etc. when it's appropriate.
