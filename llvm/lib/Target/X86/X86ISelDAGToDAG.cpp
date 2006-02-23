@@ -295,7 +295,6 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
     break;
 
   case ISD::ConstantPool:
-  case ISD::TargetConstantPool:
     if (AM.BaseType == X86ISelAddressMode::RegBase && AM.Base.Reg.Val == 0) {
       if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N)) {
         AM.BaseType = X86ISelAddressMode::ConstantPoolBase;
@@ -307,17 +306,27 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
     break;
 
   case ISD::GlobalAddress:
-  case ISD::TargetGlobalAddress:
     if (AM.GV == 0) {
       AM.GV = cast<GlobalAddressSDNode>(N)->getGlobal();
       return false;
     }
     break;
 
-  case X86ISD::TGAWrapper:
-    if (AM.GV == 0) {
-      AM.GV = cast<GlobalAddressSDNode>(N.getOperand(0))->getGlobal();
-      return false;
+  case X86ISD::Wrapper:
+    if (ConstantPoolSDNode *CP =
+        dyn_cast<ConstantPoolSDNode>(N.getOperand(0))) {
+      if (AM.BaseType == X86ISelAddressMode::RegBase && AM.Base.Reg.Val == 0) {
+        AM.BaseType = X86ISelAddressMode::ConstantPoolBase;
+        AM.Base.Reg = CurDAG->getTargetConstantPool(CP->get(), MVT::i32,
+                                                    CP->getAlignment());
+        return false;
+      }
+    } else if (GlobalAddressSDNode *G =
+               dyn_cast<GlobalAddressSDNode>(N.getOperand(0))) {
+      if (AM.GV == 0) {
+        AM.GV = cast<GlobalAddressSDNode>(N.getOperand(0))->getGlobal();
+        return false;
+      }
     }
     break;
 
@@ -484,9 +493,11 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDOperand N, SDOperand &Base,
         Complexity++;
       if (SelectIndex)
         Complexity++;
-      if (AM.GV)
+      if (AM.GV) {
         Complexity++;
-      else if (AM.Disp > 1)
+        if (AM.Disp)
+          Complexity++;
+      } else if (AM.Disp > 1)
         Complexity++;
       // Suppose base == %eax and it has multiple uses, then instead of 
       //   movl %eax, %ecx
@@ -574,13 +585,43 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
   
   switch (Opcode) {
     default: break;
-    case X86ISD::TGAWrapper: {
-      GlobalValue *GV = cast<GlobalAddressSDNode>(N.getOperand(0))->getGlobal();
-      SDOperand TGA = CurDAG->getTargetGlobalAddress(GV, MVT::i32);
-      Result = CodeGenMap[N] =
-        SDOperand(CurDAG->getTargetNode(X86::MOV32ri, MVT::i32, TGA), 0);
+    case X86ISD::GlobalBaseReg: 
+      Result = getGlobalBaseReg();
+      return;
+
+    case X86ISD::Wrapper: {
+      // It's beneficial to manully select the wrapper nodes here rather
+      // then using tablgen'd code to match this. We do not want to mutate the
+      // node to MOV32ri and we do not want to record this in CodeGenMap.
+      // We want to allow the wrapped leaf nodes be duplicated so they can
+      // be used in addressing modes.
+      // e.g.
+      //       0xa59e4a0: i32 = TargetGlobalAddress <xxx> 0
+      //   0xa59e740: i32 = X86ISD::Wrapper 0xa59e4a0
+      // ...
+      // 0xa59e880: i32 = add 0xa59e740, 0xa59e800
+      // ...
+      //       0xa59e880: <multiple use>
+      //   0xa59e970: i32 = add 0xa59e880, 0xa59e910
+      // ...
+      // 0xa59ea60: i32,ch = load 0xa589780, 0xa59e970, 0xa59ea00
+      // ...
+      //          0xa59e880: <multiple use>
+      //        0xa59eb60: ch = CopyToReg 0xa59ea60:1, 0xa59eaf0, 0xa59e880
+      // By allowing the TargetGlobalAddress to be duplicated, it can appear
+      // in the load address as well as an operand of the add.
+      Result = SDOperand(CurDAG->getTargetNode(X86::MOV32ri, MVT::i32,
+                                               N.getOperand(0)), 0);
+#ifndef NDEBUG
+      DEBUG(std::cerr << std::string(Indent-2, ' '));
+      DEBUG(std::cerr << "== ");
+      DEBUG(Result.Val->dump(CurDAG));
+      DEBUG(std::cerr << "\n");
+      Indent -= 2;
+#endif
       return;
     }
+
     case ISD::MULHU:
     case ISD::MULHS: {
       if (Opcode == ISD::MULHU)
@@ -666,10 +707,6 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
       return;
     }
       
-    case X86ISD::GlobalBaseReg: 
-      Result = getGlobalBaseReg();
-      return;
-
     case ISD::SDIV:
     case ISD::UDIV:
     case ISD::SREM:

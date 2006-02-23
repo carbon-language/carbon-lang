@@ -165,6 +165,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   // Darwin ABI issue.
   setOperationAction(ISD::ConstantPool    , MVT::i32  , Custom);
   setOperationAction(ISD::GlobalAddress   , MVT::i32  , Custom);
+  setOperationAction(ISD::ExternalSymbol  , MVT::i32  , Custom);
   // 64-bit addm sub, shl, sra, srl (iff 32-bit x86)
   setOperationAction(ISD::SHL_PARTS       , MVT::i32  , Custom);
   setOperationAction(ISD::SRA_PARTS       , MVT::i32  , Custom);
@@ -1830,9 +1831,9 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   }
   case ISD::ConstantPool: {
     ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);
-    SDOperand Result =
-      DAG.getTargetConstantPool(CP->get(), getPointerTy(), CP->getAlignment());
-    // Only lower ConstantPool on Darwin.
+    SDOperand Result = DAG.getNode(X86ISD::Wrapper, getPointerTy(),
+                         DAG.getTargetConstantPool(CP->get(), getPointerTy(),
+                                                   CP->getAlignment()));
     if (getTargetMachine().getSubtarget<X86Subtarget>().isTargetDarwin()) {
       // With PIC, the address is actually $g + Offset.
       if (getTargetMachine().getRelocationModel() == Reloc::PIC)
@@ -1843,13 +1844,11 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     return Result;
   }
   case ISD::GlobalAddress: {
-    SDOperand Result;
-    // Only lower GlobalAddress on Darwin.
+    GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
+    SDOperand Result = DAG.getNode(X86ISD::Wrapper, getPointerTy(),
+                         DAG.getTargetGlobalAddress(GV, getPointerTy()));
     if (getTargetMachine().
         getSubtarget<X86Subtarget>().isTargetDarwin()) {
-      GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
-      Result = DAG.getNode(X86ISD::TGAWrapper, getPointerTy(),
-                           DAG.getTargetGlobalAddress(GV, getPointerTy()));
       // With PIC, the address is actually $g + Offset.
       if (getTargetMachine().getRelocationModel() == Reloc::PIC)
         Result = DAG.getNode(ISD::ADD, getPointerTy(),
@@ -1864,6 +1863,20 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
            (GV->isExternal() && !GV->hasNotBeenReadFromBytecode())))
         Result = DAG.getLoad(MVT::i32, DAG.getEntryNode(),
                              Result, DAG.getSrcValue(NULL));
+    }
+
+    return Result;
+  }
+  case ISD::ExternalSymbol: {
+    const char *Sym = cast<ExternalSymbolSDNode>(Op)->getSymbol();
+    SDOperand Result = DAG.getNode(X86ISD::Wrapper, getPointerTy(),
+                         DAG.getTargetExternalSymbol(Sym, getPointerTy()));
+    if (getTargetMachine().
+        getSubtarget<X86Subtarget>().isTargetDarwin()) {
+      // With PIC, the address is actually $g + Offset.
+      if (getTargetMachine().getRelocationModel() == Reloc::PIC)
+        Result = DAG.getNode(ISD::ADD, getPointerTy(),
+                    DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()), Result);
     }
 
     return Result;
@@ -1977,7 +1990,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::REP_MOVS:           return "X86ISD::RET_MOVS";
   case X86ISD::LOAD_PACK:          return "X86ISD::LOAD_PACK";
   case X86ISD::GlobalBaseReg:      return "X86ISD::GlobalBaseReg";
-  case X86ISD::TGAWrapper:         return "X86ISD::TGAWrapper";
+  case X86ISD::Wrapper:            return "X86ISD::Wrapper";
   }
 }
 

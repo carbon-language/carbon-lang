@@ -142,9 +142,9 @@ namespace llvm {
       /// at function entry, used for PIC code.
       GlobalBaseReg,
 
-      /// TGAWrapper - A wrapper node for TargetGlobalAddress, only used on
-      /// Darwin.
-      TGAWrapper,
+      /// TCPWrapper - A wrapper node for TargetConstantPool,
+      /// TargetExternalSymbol, and TargetGlobalAddress.
+      Wrapper,
     };
 
     // X86 specific condition code. These correspond to X86_*_COND in

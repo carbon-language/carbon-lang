@@ -117,10 +117,8 @@ def X86rep_movs: SDNode<"X86ISD::REP_MOVS", SDTX86RepStr,
 def X86rdtsc   : SDNode<"X86ISD::RDTSC_DAG",SDTX86RdTsc,
                         [SDNPHasChain, SDNPOutFlag]>;
 
-def X86loadp  : SDNode<"X86ISD::LOAD_PACK", SDTLoad, 
+def X86loadp   : SDNode<"X86ISD::LOAD_PACK", SDTLoad, 
                         [SDNPHasChain]>;
-
-def X86TGAWrapper : SDNode<"X86ISD::TGAWrapper", SDTIntUnaryOp>;
 
 //===----------------------------------------------------------------------===//
 // X86 Operand Definitions.
@@ -167,7 +165,7 @@ def brtarget : Operand<OtherVT>;
 // Define X86 specific addressing mode.
 def addr    : ComplexPattern<i32, 4, "SelectAddr", []>;
 def leaaddr : ComplexPattern<i32, 4, "SelectLEAAddr",
-                             [add, frameindex, constpool]>;
+                             [add, frameindex]>;
 
 //===----------------------------------------------------------------------===//
 // X86 Instruction Format Definitions.
@@ -2353,10 +2351,6 @@ def MOV32r0  : I<0x31, MRMInitReg,  (ops R32:$dst),
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
 //===----------------------------------------------------------------------===//
-
-// GlobalAddress and ExternalSymbol
-def : Pat<(i32 globaladdr:$dst),  (MOV32ri tglobaladdr:$dst)>;
-def : Pat<(i32 externalsym:$dst), (MOV32ri texternalsym:$dst)>;
 
 // Calls
 def : Pat<(X86call tglobaladdr:$dst),
