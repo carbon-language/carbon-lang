@@ -45,6 +45,7 @@ bool X86SharedAsmPrinter::doInitialization(Module &M) {
   const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
   
   forDarwin = false;
+  PrivateGlobalPrefix = ".L";
   
   switch (Subtarget->TargetType) {
   case X86Subtarget::isDarwin:
