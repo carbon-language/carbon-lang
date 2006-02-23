@@ -506,3 +506,31 @@ and ISD::FMAX node types?
 //===---------------------------------------------------------------------===//
 
 Select (add, x, GlobalAddress) to ADD32ri, etc. when it's appropriate.
+
+//===---------------------------------------------------------------------===//
+
+The first BB of this code:
+
+declare bool %foo()
+int %bar() {
+        %V = call bool %foo()
+        br bool %V, label %T, label %F
+T:
+        ret int 1
+F:
+        call bool %foo()
+        ret int 12
+}
+
+compiles to:
+
+_bar:
+        subl $12, %esp
+        call L_foo$stub
+        xorb $1, %al
+        testb %al, %al
+        jne LBB_bar_2   # F
+
+It would be better to emit "cmp %al, 1" than a xor and test.
+
+
