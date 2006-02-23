@@ -134,13 +134,13 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
         } else {
           GVStubs.insert(Name);
           O << "L" << Name << "$non_lazy_ptr";
-          if (TM.getRelocationModel() == Reloc::PIC)
-            O << "-\"L" << getFunctionNumber() << "$pb\"";
         }
       } else {
         O << Mang->getValueName(GV);
-      }
-    } else
+      } 
+      if (!isCallOp && TM.getRelocationModel() == Reloc::PIC)
+        O << "-\"L" << getFunctionNumber() << "$pb\"";
+   } else
       O << Mang->getValueName(MO.getGlobal());
     int Offset = MO.getOffset();
     if (Offset > 0)

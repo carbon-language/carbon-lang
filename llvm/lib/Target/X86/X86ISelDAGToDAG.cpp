@@ -314,6 +314,13 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
     }
     break;
 
+  case X86ISD::TGAWrapper:
+    if (AM.GV == 0) {
+      AM.GV = cast<GlobalAddressSDNode>(N.getOperand(0))->getGlobal();
+      return false;
+    }
+    break;
+
   case ISD::Constant:
     AM.Disp += cast<ConstantSDNode>(N)->getValue();
     return false;
@@ -486,6 +493,16 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDOperand N, SDOperand &Base,
       //   addl $8, %ecx
       // use
       //   leal 8(%eax), %ecx.
+      // FIXME: If the other uses ended up being scheduled ahead of the leal
+      // then it would have been better to use the addl. The proper way to
+      // handle this is with using  X86InstrInfo::convertToThreeAddress hook.
+      // From an email:
+      // BTW, this problem is the one that inspired the
+      // "X86InstrInfo::convertToThreeAddress" hook (which would handle this
+      // the "right" way).  Unfortunately the X86 implementation of this is
+      // disabled, because we don't currently have enough information handy to
+      // know that the flags from the add is dead when the hook is called (from
+      // the register allocator).
       if (AM.Base.Reg.Val->use_size() > 1)
         Complexity++;
       if (Complexity <= 1)
@@ -557,6 +574,13 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
   
   switch (Opcode) {
     default: break;
+    case X86ISD::TGAWrapper: {
+      GlobalValue *GV = cast<GlobalAddressSDNode>(N.getOperand(0))->getGlobal();
+      SDOperand TGA = CurDAG->getTargetGlobalAddress(GV, MVT::i32);
+      Result = CodeGenMap[N] =
+        SDOperand(CurDAG->getTargetNode(X86::MOV32ri, MVT::i32, TGA), 0);
+      return;
+    }
     case ISD::MULHU:
     case ISD::MULHS: {
       if (Opcode == ISD::MULHU)

@@ -120,6 +120,8 @@ def X86rdtsc   : SDNode<"X86ISD::RDTSC_DAG",SDTX86RdTsc,
 def X86loadp  : SDNode<"X86ISD::LOAD_PACK", SDTLoad, 
                         [SDNPHasChain]>;
 
+def X86TGAWrapper : SDNode<"X86ISD::TGAWrapper", SDTIntUnaryOp>;
+
 //===----------------------------------------------------------------------===//
 // X86 Operand Definitions.
 //

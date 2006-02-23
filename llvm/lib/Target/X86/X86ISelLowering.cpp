@@ -1833,8 +1833,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand Result =
       DAG.getTargetConstantPool(CP->get(), getPointerTy(), CP->getAlignment());
     // Only lower ConstantPool on Darwin.
-    if (getTargetMachine().
-        getSubtarget<X86Subtarget>().isTargetDarwin()) {
+    if (getTargetMachine().getSubtarget<X86Subtarget>().isTargetDarwin()) {
       // With PIC, the address is actually $g + Offset.
       if (getTargetMachine().getRelocationModel() == Reloc::PIC)
         Result = DAG.getNode(ISD::ADD, getPointerTy(),
@@ -1849,11 +1848,12 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     if (getTargetMachine().
         getSubtarget<X86Subtarget>().isTargetDarwin()) {
       GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
-      SDOperand Addr = DAG.getTargetGlobalAddress(GV, getPointerTy());
+      Result = DAG.getNode(X86ISD::TGAWrapper, getPointerTy(),
+                           DAG.getTargetGlobalAddress(GV, getPointerTy()));
       // With PIC, the address is actually $g + Offset.
       if (getTargetMachine().getRelocationModel() == Reloc::PIC)
-        Addr = DAG.getNode(ISD::ADD, getPointerTy(),
-                      DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()), Addr);
+        Result = DAG.getNode(ISD::ADD, getPointerTy(),
+                    DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()), Result);
 
       // For Darwin, external and weak symbols are indirect, so we want to load
       // the value at address GV, not the value of GV itself.  This means that
@@ -1863,7 +1863,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
           (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
            (GV->isExternal() && !GV->hasNotBeenReadFromBytecode())))
         Result = DAG.getLoad(MVT::i32, DAG.getEntryNode(),
-                             Addr, DAG.getSrcValue(NULL));
+                             Result, DAG.getSrcValue(NULL));
     }
 
     return Result;
@@ -1977,6 +1977,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::REP_MOVS:           return "X86ISD::RET_MOVS";
   case X86ISD::LOAD_PACK:          return "X86ISD::LOAD_PACK";
   case X86ISD::GlobalBaseReg:      return "X86ISD::GlobalBaseReg";
+  case X86ISD::TGAWrapper:         return "X86ISD::TGAWrapper";
   }
 }
 

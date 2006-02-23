@@ -100,7 +100,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
          (forDarwin && I->hasExternalLinkage() && !I->hasSection()))) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
       if (I->hasExternalLinkage()) {
-          O << "\t.global\t" << name << "\n";
+          O << "\t.globl\t" << name << "\n";
           O << "\t.zerofill __DATA__, __common, " << name << ", "
             << Size << ", " << Align;
       } else {
@@ -119,8 +119,8 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
           if (COMMDirectiveTakesAlignment)
             O << "," << (AlignmentIsInBytes ? (1 << Align) : Align);
         }
-        O << "\t\t" << CommentString << " " << I->getName() << "\n";
       }
+      O << "\t\t" << CommentString << " " << I->getName() << "\n";
     } else {
       switch (I->getLinkage()) {
       case GlobalValue::LinkOnceLinkage:

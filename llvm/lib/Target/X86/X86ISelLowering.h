@@ -141,6 +141,10 @@ namespace llvm {
       /// GlobalBaseReg - On Darwin, this node represents the result of the popl
       /// at function entry, used for PIC code.
       GlobalBaseReg,
+
+      /// TGAWrapper - A wrapper node for TargetGlobalAddress, only used on
+      /// Darwin.
+      TGAWrapper,
     };
 
     // X86 specific condition code. These correspond to X86_*_COND in
