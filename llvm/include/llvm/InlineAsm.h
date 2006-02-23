@@ -90,6 +90,10 @@ public:
     /// there is an input constraint that is required to match it (e.g. "0").
     bool hasMatchingInput;
     
+    /// isCommutative - This is set to true for a constraint that is commutative
+    /// with the next operand.
+    bool isCommutative;
+    
     /// Code - The constraint code, either the register name (in braces) or the
     /// constraint letter/number.
     std::vector<std::string> Codes;
