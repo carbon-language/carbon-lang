@@ -97,10 +97,7 @@ namespace {
     }
     
     bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
-                         unsigned AsmVariant, const char *ExtraCode) {
-       printOperand(MI, OpNo);
-       return false;
-    }
+                         unsigned AsmVariant, const char *ExtraCode);
     
     void printU5ImmOperand(const MachineInstr *MI, unsigned OpNo) {
       unsigned char value = MI->getOperand(OpNo).getImmedValue();
@@ -395,6 +392,33 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
     return;
   }
 }
+
+/// PrintAsmOperand - Print out an operand for an inline asm expression.
+///
+bool PPCAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
+                                    unsigned AsmVariant, 
+                                    const char *ExtraCode) {
+  // Does this asm operand have a single letter operand modifier?
+  if (ExtraCode && ExtraCode[0]) {
+    if (ExtraCode[1] != 0) return true; // Unknown modifier.
+    
+    switch (ExtraCode[0]) {
+    default: return true;  // Unknown modifier.
+    case 'L': // Write second word of DImode reference.  
+      // Verify that this operand has two consecutive registers.
+      if (!MI->getOperand(OpNo).isRegister() ||
+          OpNo+1 == MI->getNumOperands() ||
+          !MI->getOperand(OpNo+1).isRegister())
+        return true;
+      ++OpNo;   // Return the high-part.
+      break;
+    }
+  }
+  
+  printOperand(MI, OpNo);
+  return false;
+}
+
 
 /// printMachineInstruction -- Print out a single PowerPC MI in Darwin syntax to
 /// the current output stream.
