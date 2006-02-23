@@ -1232,7 +1232,40 @@ void DwarfWriter::NewGlobalEntity(const std::string &Name, DIE *Entity) {
   GlobalEntities[Name] = Entity;
 }
 
-/// NewCompileUnit - Create new compile unit information.
+/// NewType - Create a new type DIE.
+///
+DIE *DwarfWriter::NewType(DIE *Unit, TypeDesc *TyDesc) {
+  // Check for pre-existence.
+  DIE *&Slot = DescToDieMap[TyDesc];
+  if (Slot) return Slot;
+
+  // Get core information.
+  const std::string &Name = TyDesc->getName();
+  // FIXME - handle larger sizes.
+  unsigned Size = TyDesc->getSize() >> 3;
+  
+  // Determine how to handle.
+  if (BasicTypeDesc *BasicTyDesc = dyn_cast<BasicTypeDesc>(TyDesc)) {
+    unsigned Encoding = BasicTyDesc->getEncoding();
+  
+    DIE *Ty = new DIE(DW_TAG_base_type);
+    if (!Name.empty())  Ty->AddString(DW_AT_name, DW_FORM_string, Name);
+
+    Ty->AddUInt  (DW_AT_byte_size, 0,              Size);
+    Ty->AddUInt  (DW_AT_encoding,  DW_FORM_data1,  Encoding);
+    
+    Slot = Ty;
+  } else {
+    assert(0 && "Type not supported yet");
+  }
+ 
+  // Add to context owner.
+  Unit->AddChild(Slot);
+  
+  return Slot;
+}
+
+/// NewCompileUnit - Create new compile unit DIE.
 ///
 DIE *DwarfWriter::NewCompileUnit(CompileUnitDesc *CompileUnit) {
   // Check for pre-existence.
@@ -1275,9 +1308,10 @@ DIE *DwarfWriter::NewGlobalVariable(GlobalVariableDesc *GVD) {
   unsigned FileID = DebugInfo->RecordSource(CompileUnit);
   unsigned Line = GVD->getLine();
   
-  // FIXME - faking the type for the time being.
-  DIE *Type = NewBasicType(Unit, Type::IntTy); 
-                                    
+  // Get the global's type.
+  DIE *Type = NewType(Unit, GVD->getTypeDesc()); 
+
+  // Create the globale variable DIE.
   DIE *VariableDie = new DIE(DW_TAG_variable);
   VariableDie->AddString     (DW_AT_name,      DW_FORM_string, Name);
   VariableDie->AddUInt       (DW_AT_decl_file, 0,              FileID);

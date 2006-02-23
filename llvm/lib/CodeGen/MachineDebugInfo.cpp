@@ -197,6 +197,7 @@ public:
   ///
   virtual void Apply(int &Field)             { ++Count; }
   virtual void Apply(unsigned &Field)        { ++Count; }
+  virtual void Apply(uint64_t &Field)        { ++Count; }
   virtual void Apply(bool &Field)            { ++Count; }
   virtual void Apply(std::string &Field)     { ++Count; }
   virtual void Apply(DebugInfoDesc *&Field)  { ++Count; }
@@ -227,6 +228,10 @@ public:
     Field = cast<ConstantSInt>(C)->getValue();
   }
   virtual void Apply(unsigned &Field) {
+    Constant *C = CI->getOperand(I++);
+    Field = cast<ConstantUInt>(C)->getValue();
+  }
+  virtual void Apply(uint64_t &Field) {
     Constant *C = CI->getOperand(I++);
     Field = cast<ConstantUInt>(C)->getValue();
   }
@@ -269,6 +274,9 @@ public:
     Elements.push_back(ConstantSInt::get(Type::IntTy, Field));
   }
   virtual void Apply(unsigned &Field) {
+    Elements.push_back(ConstantUInt::get(Type::UIntTy, Field));
+  }
+  virtual void Apply(uint64_t &Field) {
     Elements.push_back(ConstantUInt::get(Type::UIntTy, Field));
   }
   virtual void Apply(bool &Field) {
@@ -327,6 +335,9 @@ public:
   virtual void Apply(unsigned &Field) {
     Fields.push_back(Type::UIntTy);
   }
+  virtual void Apply(uint64_t &Field) {
+    Fields.push_back(Type::UIntTy);
+  }
   virtual void Apply(bool &Field) {
     Fields.push_back(Type::BoolTy);
   }
@@ -377,6 +388,10 @@ public:
     Constant *C = CI->getOperand(I++);
     IsValid = IsValid && isa<ConstantInt>(C);
   }
+  virtual void Apply(uint64_t &Field) {
+    Constant *C = CI->getOperand(I++);
+    IsValid = IsValid && isa<ConstantInt>(C);
+  }
   virtual void Apply(bool &Field) {
     Constant *C = CI->getOperand(I++);
     IsValid = IsValid && isa<ConstantBool>(C);
@@ -414,6 +429,7 @@ DebugInfoDesc *DebugInfoDesc::DescFactory(unsigned Tag) {
   case DI_TAG_compile_unit:    return new CompileUnitDesc();
   case DI_TAG_global_variable: return new GlobalVariableDesc();
   case DI_TAG_subprogram:      return new SubprogramDesc();
+  case DI_TAG_basictype:       return new BasicTypeDesc();
   default: break;
   }
   return NULL;
@@ -545,6 +561,75 @@ void CompileUnitDesc::dump() {
 
 //===----------------------------------------------------------------------===//
 
+//===----------------------------------------------------------------------===//
+
+TypeDesc::TypeDesc(unsigned T)
+: DebugInfoDesc(T)
+, Context(NULL)
+, Name("")
+, Size(0)
+{}
+
+/// ApplyToFields - Target the visitor to the fields of the  TypeDesc.
+///
+void TypeDesc::ApplyToFields(DIVisitor *Visitor) {
+  DebugInfoDesc::ApplyToFields(Visitor);
+  
+  Visitor->Apply(Context);
+  Visitor->Apply(Name);
+  Visitor->Apply(Size);
+}
+
+/// getDescString - Return a string used to compose global names and labels.
+///
+const char *TypeDesc::getDescString() const {
+  return "llvm.dbg.type";
+}
+
+/// getTypeString - Return a string used to label this descriptor's type.
+///
+const char *TypeDesc::getTypeString() const {
+  return "llvm.dbg.type.type";
+}
+
+#ifndef NDEBUG
+void TypeDesc::dump() {
+  std::cerr << getDescString() << " "
+            << "Tag(" << getTag() << "), "
+            << "Context(" << Context << "), "
+            << "Name(\"" << Name << "\"), "
+            << "Size(" << Size << ")\n";
+}
+#endif
+
+//===----------------------------------------------------------------------===//
+
+BasicTypeDesc::BasicTypeDesc()
+: TypeDesc(DI_TAG_basictype)
+, Encoding(0)
+{}
+
+/// ApplyToFields - Target the visitor to the fields of the  BasicTypeDesc.
+///
+void BasicTypeDesc::ApplyToFields(DIVisitor *Visitor) {
+  TypeDesc::ApplyToFields(Visitor);
+  
+  Visitor->Apply(Encoding);
+}
+
+#ifndef NDEBUG
+void BasicTypeDesc::dump() {
+  std::cerr << getDescString() << " "
+            << "Tag(" << getTag() << "), "
+            << "Context(" << getContext() << "), "
+            << "Name(\"" << getName() << "\"), "
+            << "Size(" << getSize() << "), "
+            << "Encoding(" << Encoding << ")\n";
+}
+#endif
+
+//===----------------------------------------------------------------------===//
+
 GlobalDesc::GlobalDesc(unsigned T)
 : AnchoredDesc(T)
 , Context(0)
@@ -561,7 +646,7 @@ void GlobalDesc::ApplyToFields(DIVisitor *Visitor) {
 
   Visitor->Apply(Context);
   Visitor->Apply(Name);
-  Visitor->Apply(TyDesc);
+  Visitor->Apply((DebugInfoDesc *&)TyDesc);
   Visitor->Apply(IsStatic);
   Visitor->Apply(IsDefinition);
 }
@@ -606,6 +691,7 @@ void GlobalVariableDesc::dump() {
             << "Tag(" << getTag() << "), "
             << "Anchor(" << getAnchor() << "), "
             << "Name(\"" << getName() << "\"), "
+            << "Type(\"" << getTypeDesc() << "\"), "
             << "IsStatic(" << (isStatic() ? "true" : "false") << "), "
             << "IsDefinition(" << (isDefinition() ? "true" : "false") << "), "
             << "Global(" << Global << "), "
@@ -649,12 +735,11 @@ void SubprogramDesc::dump() {
             << "Tag(" << getTag() << "), "
             << "Anchor(" << getAnchor() << "), "
             << "Name(\"" << getName() << "\"), "
+            << "Type(\"" << getTypeDesc() << "\"), "
             << "IsStatic(" << (isStatic() ? "true" : "false") << "), "
             << "IsDefinition(" << (isDefinition() ? "true" : "false") << ")\n";
 }
 #endif
-
-//===----------------------------------------------------------------------===//
 
 DebugInfoDesc *DIDeserializer::Deserialize(Value *V) {
   return Deserialize(getGlobalVariable(V));

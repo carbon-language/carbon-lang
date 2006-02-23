@@ -61,7 +61,8 @@ enum {
   DI_TAG_anchor = 0,
   DI_TAG_compile_unit,
   DI_TAG_global_variable,
-  DI_TAG_subprogram
+  DI_TAG_subprogram,
+  DI_TAG_basictype
 };
 
 //===----------------------------------------------------------------------===//
@@ -80,6 +81,7 @@ public:
   /// appropriate action for the type of field.
   virtual void Apply(int &Field) = 0;
   virtual void Apply(unsigned &Field) = 0;
+  virtual void Apply(uint64_t &Field) = 0;
   virtual void Apply(bool &Field) = 0;
   virtual void Apply(std::string &Field) = 0;
   virtual void Apply(DebugInfoDesc *&Field) = 0;
@@ -274,14 +276,80 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
+/// TypeDesc - This class packages debug information associated with a type.
+///
+class TypeDesc : public DebugInfoDesc {
+private:
+  DebugInfoDesc *Context;               // Context debug descriptor.
+  std::string Name;                     // Type name.
+  uint64_t Size;                        // Type size.
+
+protected:
+  TypeDesc(unsigned T);
+
+public:
+  // Accessors
+  DebugInfoDesc *getContext()                const { return Context; }
+  const std::string &getName()               const { return Name; }
+  uint64_t getSize()                         const { return Size; }
+  void setContext(DebugInfoDesc *C)                { Context = C; }
+  void setName(const std::string &N)               { Name = N; }
+  void setSize(uint64_t S)                         { Size = S; }
+  
+  /// ApplyToFields - Target the visitor to the fields of the  TypeDesc.
+  ///
+  virtual void ApplyToFields(DIVisitor *Visitor);
+
+  /// getDescString - Return a string used to compose global names and labels.
+  ///
+  virtual const char *getDescString() const;
+
+  /// getTypeString - Return a string used to label this descriptor's type.
+  ///
+  virtual const char *getTypeString() const;
+  
+#ifndef NDEBUG
+  virtual void dump();
+#endif
+};
+
+//===----------------------------------------------------------------------===//
+/// BasicTypeDesc - This class packages debug information associated with a
+/// basic type (eg. int, bool, double.)
+class BasicTypeDesc : public TypeDesc {
+private:
+  unsigned Encoding;                    // Type encoding.
+  
+public:
+  BasicTypeDesc();
+  
+  // Accessors
+  unsigned getEncoding()                     const { return Encoding; }
+  void setEncoding(unsigned E)                     { Encoding = E; }
+
+  // Implement isa/cast/dyncast.
+  static bool classof(const BasicTypeDesc *)  { return true; }
+  static bool classof(const DebugInfoDesc *D) {
+    return D->getTag() == DI_TAG_basictype;
+  }
+  
+  /// ApplyToFields - Target the visitor to the fields of the  BasicTypeDesc.
+  ///
+  virtual void ApplyToFields(DIVisitor *Visitor);
+
+#ifndef NDEBUG
+  virtual void dump();
+#endif
+};
+
+//===----------------------------------------------------------------------===//
 /// GlobalDesc - This class is the base descriptor for global functions and
 /// variables.
 class GlobalDesc : public AnchoredDesc {
 private:
   DebugInfoDesc *Context;               // Context debug descriptor.
   std::string Name;                     // Global name.
-  // FIXME - Use a descriptor.
-  GlobalVariable *TyDesc;               // Type debug descriptor.
+  TypeDesc *TyDesc;                     // Type debug descriptor.
   bool IsStatic;                        // Is the global a static.
   bool IsDefinition;                    // Is the global defined in context.
   
@@ -292,10 +360,12 @@ public:
   // Accessors
   DebugInfoDesc *getContext()                const { return Context; }
   const std::string &getName()               const { return Name; }
+  TypeDesc *getTypeDesc()                    const { return TyDesc; }
   bool isStatic()                            const { return IsStatic; }
   bool isDefinition()                        const { return IsDefinition; }
   void setContext(DebugInfoDesc *C)                { Context = C; }
   void setName(const std::string &N)               { Name = N; }
+  void setTypeDesc(TypeDesc *T)                    { TyDesc = T; }
   void setIsStatic(bool IS)                        { IsStatic = IS; }
   void setIsDefinition(bool ID)                    { IsDefinition = ID; }
 

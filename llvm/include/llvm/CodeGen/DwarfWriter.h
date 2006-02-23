@@ -43,6 +43,7 @@ namespace llvm {
   class Module;
   class SubprogramDesc;
   class Type;
+  class TypeDesc;
   
   //===--------------------------------------------------------------------===//
   // DWLabel - Labels are used to track locations in the assembler file.
@@ -626,6 +627,14 @@ public:
     void NewGlobalEntity(const std::string &Name, DIE *Entity);
 
 private:
+
+    /// NewType - Create a new type DIE.
+    ///
+    DIE *NewType(DIE *Unit, TypeDesc *TyDesc);
+    
+    /// NewCompileUnit - Create new compile unit DIE.
+    ///
+    DIE *NewCompileUnit(CompileUnitDesc *CompileUnit);
     
     /// NewGlobalVariable - Make a new global variable DIE.
     ///
@@ -634,10 +643,6 @@ private:
     /// NewSubprogram - Add a new subprogram DIE.
     ///
     DIE *NewSubprogram(SubprogramDesc *SPD);
-
-    /// NewCompileUnit - Create new compile unit information.
-    ///
-    DIE *NewCompileUnit(CompileUnitDesc *CompileUnit);
 
     /// EmitInitial - Emit initial Dwarf declarations.
     ///
