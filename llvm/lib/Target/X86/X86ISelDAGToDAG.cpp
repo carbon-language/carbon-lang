@@ -457,23 +457,19 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDOperand N, SDOperand &Base,
                                     SDOperand &Index, SDOperand &Disp) {
   X86ISelAddressMode AM;
   if (!MatchAddress(N, AM)) {
-    bool SelectBase  = false;
     bool SelectIndex = false;
     bool Check       = false;
     if (AM.BaseType == X86ISelAddressMode::RegBase) {
-      if (AM.Base.Reg.Val) {
-        Check      = true;
-        SelectBase = true;
-      } else {
+      if (AM.Base.Reg.Val)
+        Check = true;
+      else
         AM.Base.Reg = CurDAG->getRegister(0, MVT::i32);
-      }
     }
 
-    if (AM.IndexReg.Val) {
+    if (AM.IndexReg.Val)
       SelectIndex = true;
-    } else {
+    else
       AM.IndexReg = CurDAG->getRegister(0, MVT::i32);
-    }
 
     if (Check) {
       unsigned Complexity = 0;
@@ -484,6 +480,13 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDOperand N, SDOperand &Base,
       if (AM.GV)
         Complexity++;
       else if (AM.Disp > 1)
+        Complexity++;
+      // Suppose base == %eax and it has multiple uses, then instead of 
+      //   movl %eax, %ecx
+      //   addl $8, %ecx
+      // use
+      //   leal 8(%eax), %ecx.
+      if (AM.Base.Reg.Val->use_size() > 1)
         Complexity++;
       if (Complexity <= 1)
         return false;
