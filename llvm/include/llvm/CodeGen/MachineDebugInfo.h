@@ -62,7 +62,8 @@ enum {
   DI_TAG_compile_unit,
   DI_TAG_global_variable,
   DI_TAG_subprogram,
-  DI_TAG_basictype
+  DI_TAG_basictype,
+  DI_TAG_typedef
 };
 
 //===----------------------------------------------------------------------===//
@@ -334,6 +335,42 @@ public:
   }
   
   /// ApplyToFields - Target the visitor to the fields of the  BasicTypeDesc.
+  ///
+  virtual void ApplyToFields(DIVisitor *Visitor);
+
+#ifndef NDEBUG
+  virtual void dump();
+#endif
+};
+
+
+//===----------------------------------------------------------------------===//
+/// TypedefDesc - This class packages debug information associated with a
+/// derived typedef.
+class TypedefDesc : public TypeDesc {
+private:
+  TypeDesc *FromType;                   // Type derived from.
+  CompileUnitDesc *File;                // Declared compile unit.
+  int Line;                             // Declared line#.
+
+public:
+  TypedefDesc();
+  
+  // Accessors
+  TypeDesc *getFromType()                    const { return FromType; }
+  CompileUnitDesc *getFile()                 const { return File; }
+  int getLine()                              const { return Line; }
+  void setFromType(TypeDesc *F)                    { FromType = F; }
+  void setFile(CompileUnitDesc *U)                 { File = U; }
+  void setLine(int L)                              { Line = L; }
+
+  // Implement isa/cast/dyncast.
+  static bool classof(const TypedefDesc *)  { return true; }
+  static bool classof(const DebugInfoDesc *D) {
+    return D->getTag() == DI_TAG_typedef;
+  }
+  
+  /// ApplyToFields - Target the visitor to the fields of the  TypedefDesc.
   ///
   virtual void ApplyToFields(DIVisitor *Visitor);
 
@@ -712,7 +749,7 @@ public:
                              getGlobalVariablesUsing(M, Desc.getAnchorString());
     std::vector<T *> AnchoredDescs;
     for (unsigned i = 0, N = Globals.size(); i < N; ++i) {
-      AnchoredDescs.push_back(static_cast<T *>(DR.Deserialize(Globals[i])));
+      AnchoredDescs.push_back(cast<T>(DR.Deserialize(Globals[i])));
     }
 
     return AnchoredDescs;

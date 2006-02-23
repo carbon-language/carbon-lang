@@ -1244,23 +1244,34 @@ DIE *DwarfWriter::NewType(DIE *Unit, TypeDesc *TyDesc) {
   // FIXME - handle larger sizes.
   unsigned Size = TyDesc->getSize() >> 3;
   
-  // Determine how to handle.
-  if (BasicTypeDesc *BasicTyDesc = dyn_cast<BasicTypeDesc>(TyDesc)) {
-    unsigned Encoding = BasicTyDesc->getEncoding();
+  DIE *Ty = NULL;
   
-    DIE *Ty = new DIE(DW_TAG_base_type);
-    if (!Name.empty())  Ty->AddString(DW_AT_name, DW_FORM_string, Name);
-
-    Ty->AddUInt  (DW_AT_byte_size, 0,              Size);
-    Ty->AddUInt  (DW_AT_encoding,  DW_FORM_data1,  Encoding);
+  // Determine how to handle.
+  if (BasicTypeDesc *BasicTy = dyn_cast<BasicTypeDesc>(TyDesc)) {
+    Slot = Ty = new DIE(DW_TAG_base_type);
+    unsigned Encoding = BasicTy->getEncoding();
+    Ty->AddUInt  (DW_AT_encoding,  DW_FORM_data1, Encoding);
+  } else if (TypedefDesc *TypedefTy = dyn_cast<TypedefDesc>(TyDesc)) {
+    Slot = Ty = new DIE(DW_TAG_typedef);
+    TypeDesc *FromTy = TypedefTy->getFromType();
+    DIE *FromTyDie = NewType(Unit, FromTy);
+    CompileUnitDesc *File = TypedefTy->getFile();
+    unsigned FileID = DebugInfo->RecordSource(File);
+    int Line = TypedefTy->getLine();
     
-    Slot = Ty;
-  } else {
-    assert(0 && "Type not supported yet");
+    Ty->AddDIEntry(DW_AT_type,      DW_FORM_ref4, FromTyDie);
+    Ty->AddUInt   (DW_AT_decl_file, 0,            FileID);
+    Ty->AddUInt   (DW_AT_decl_line, 0,            Line);
   }
+  
+  assert(Ty && "Type not supported yet");
  
+  // Add common information.
+  if (Size) Ty->AddUInt(DW_AT_byte_size, 0, Size);
+  if (!Name.empty()) Ty->AddString(DW_AT_name, DW_FORM_string, Name);
+
   // Add to context owner.
-  Unit->AddChild(Slot);
+  Unit->AddChild(Ty);
   
   return Slot;
 }

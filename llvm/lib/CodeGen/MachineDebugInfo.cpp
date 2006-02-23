@@ -430,6 +430,7 @@ DebugInfoDesc *DebugInfoDesc::DescFactory(unsigned Tag) {
   case DI_TAG_global_variable: return new GlobalVariableDesc();
   case DI_TAG_subprogram:      return new SubprogramDesc();
   case DI_TAG_basictype:       return new BasicTypeDesc();
+  case DI_TAG_typedef:         return new TypedefDesc();
   default: break;
   }
   return NULL;
@@ -561,8 +562,6 @@ void CompileUnitDesc::dump() {
 
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-
 TypeDesc::TypeDesc(unsigned T)
 : DebugInfoDesc(T)
 , Context(NULL)
@@ -625,6 +624,37 @@ void BasicTypeDesc::dump() {
             << "Name(\"" << getName() << "\"), "
             << "Size(" << getSize() << "), "
             << "Encoding(" << Encoding << ")\n";
+}
+#endif
+//===----------------------------------------------------------------------===//
+
+TypedefDesc::TypedefDesc()
+: TypeDesc(DI_TAG_typedef)
+, FromType(NULL)
+, File(NULL)
+, Line(0)
+{}
+
+/// ApplyToFields - Target the visitor to the fields of the  TypedefDesc.
+///
+void TypedefDesc::ApplyToFields(DIVisitor *Visitor) {
+  TypeDesc::ApplyToFields(Visitor);
+  
+  Visitor->Apply((DebugInfoDesc *&)FromType);
+  Visitor->Apply((DebugInfoDesc *&)File);
+  Visitor->Apply(Line);
+}
+
+#ifndef NDEBUG
+void TypedefDesc::dump() {
+  std::cerr << getDescString() << " "
+            << "Tag(" << getTag() << "), "
+            << "Context(" << getContext() << "), "
+            << "Name(\"" << getName() << "\"), "
+            << "Size(" << getSize() << "), "
+            << "FromType(" << FromType << "), "
+            << "File(" << File << "), "
+            << "Line(" << Line << ")\n";
 }
 #endif
 
