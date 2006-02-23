@@ -112,19 +112,19 @@ namespace {
     /// this value and returns the result as a ValueVT value.  This uses 
     /// Chain/Flag as the input and updates them for the output Chain/Flag.
     SDOperand getCopyFromRegs(SelectionDAG &DAG,
-                              SDOperand &Chain, SDOperand &Flag);
+                              SDOperand &Chain, SDOperand &Flag) const;
 
     /// getCopyToRegs - Emit a series of CopyToReg nodes that copies the
     /// specified value into the registers specified by this object.  This uses 
     /// Chain/Flag as the input and updates them for the output Chain/Flag.
     void getCopyToRegs(SDOperand Val, SelectionDAG &DAG,
-                       SDOperand &Chain, SDOperand &Flag);
+                       SDOperand &Chain, SDOperand &Flag) const;
     
     /// AddInlineAsmOperands - Add this value to the specified inlineasm node
     /// operand list.  This adds the code marker and includes the number of 
     /// values added into it.
     void AddInlineAsmOperands(unsigned Code, SelectionDAG &DAG,
-                              std::vector<SDOperand> &Ops);
+                              std::vector<SDOperand> &Ops) const;
   };
 }
 
@@ -1181,7 +1181,7 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
 }
 
 SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
-                                        SDOperand &Chain, SDOperand &Flag) {
+                                        SDOperand &Chain, SDOperand &Flag)const{
   SDOperand Val = DAG.getCopyFromReg(Chain, Regs[0], RegVT, Flag);
   Chain = Val.getValue(1);
   Flag  = Val.getValue(2);
@@ -1193,7 +1193,10 @@ SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
     SDOperand Hi = DAG.getCopyFromReg(Chain, Regs[1], RegVT, Flag);
     Chain = Val.getValue(1);
     Flag  = Val.getValue(2);
-    return DAG.getNode(ISD::BUILD_PAIR, ValueVT, Val, Hi);
+    if (DAG.getTargetLoweringInfo().isLittleEndian())
+      return DAG.getNode(ISD::BUILD_PAIR, ValueVT, Val, Hi);
+    else
+      return DAG.getNode(ISD::BUILD_PAIR, ValueVT, Hi, Val);
   }
 
   // Otherwise, if the return value was promoted, truncate it to the
@@ -1211,7 +1214,7 @@ SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
 /// specified value into the registers specified by this object.  This uses 
 /// Chain/Flag as the input and updates them for the output Chain/Flag.
 void RegsForValue::getCopyToRegs(SDOperand Val, SelectionDAG &DAG,
-                                 SDOperand &Chain, SDOperand &Flag) {
+                                 SDOperand &Chain, SDOperand &Flag) const {
   if (Regs.size() == 1) {
     // If there is a single register and the types differ, this must be
     // a promotion.
@@ -1224,10 +1227,14 @@ void RegsForValue::getCopyToRegs(SDOperand Val, SelectionDAG &DAG,
     Chain = DAG.getCopyToReg(Chain, Regs[0], Val, Flag);
     Flag = Chain.getValue(1);
   } else {
-    for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
+    std::vector<unsigned> R(Regs);
+    if (!DAG.getTargetLoweringInfo().isLittleEndian())
+      std::reverse(R.begin(), R.end());
+    
+    for (unsigned i = 0, e = R.size(); i != e; ++i) {
       SDOperand Part = DAG.getNode(ISD::EXTRACT_ELEMENT, RegVT, Val, 
                                    DAG.getConstant(i, MVT::i32));
-      Chain = DAG.getCopyToReg(Chain, Regs[i], Part, Flag);
+      Chain = DAG.getCopyToReg(Chain, R[i], Part, Flag);
       Flag = Chain.getValue(1);
     }
   }
@@ -1237,7 +1244,7 @@ void RegsForValue::getCopyToRegs(SDOperand Val, SelectionDAG &DAG,
 /// operand list.  This adds the code marker and includes the number of 
 /// values added into it.
 void RegsForValue::AddInlineAsmOperands(unsigned Code, SelectionDAG &DAG,
-                                        std::vector<SDOperand> &Ops) {
+                                        std::vector<SDOperand> &Ops) const {
   Ops.push_back(DAG.getConstant(Code | (Regs.size() << 3), MVT::i32));
   for (unsigned i = 0, e = Regs.size(); i != e; ++i)
     Ops.push_back(DAG.getRegister(Regs[i], RegVT));
