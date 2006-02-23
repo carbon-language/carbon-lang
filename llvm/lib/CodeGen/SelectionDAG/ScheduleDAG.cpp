@@ -309,23 +309,32 @@ void ScheduleDAG::EmitNode(NodeInfo *NI) {
       MI->addExternalSymbolOperand(AsmStr, false);
       
       // Add all of the operand registers to the instruction.
-      for (unsigned i = 2; i != NumOps; i += 2) {
-        unsigned Flags =cast<ConstantSDNode>(Node->getOperand(i+1))->getValue();
-        switch (Flags) {
+      for (unsigned i = 2; i != NumOps;) {
+        unsigned Flags = cast<ConstantSDNode>(Node->getOperand(i))->getValue();
+        unsigned NumOps = Flags >> 3;
+        
+        MI->addZeroExtImm64Operand(NumOps);
+        ++i;  // Skip the ID value.
+        
+        switch (Flags & 7) {
         default: assert(0 && "Bad flags!");
-        case 1: { // Use of register.
-          unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();
-          MI->addMachineRegOperand(Reg, MachineOperand::Use);
+        case 1:  // Use of register.
+          for (; NumOps; --NumOps, ++i) {
+            unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();
+            MI->addMachineRegOperand(Reg, MachineOperand::Use);
+          }
           break;
-        }
-        case 2: { // Def of register.
-          unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();
-          MI->addMachineRegOperand(Reg, MachineOperand::Def);
+        case 2:   // Def of register.
+          for (; NumOps; --NumOps, ++i) {
+            unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();
+            MI->addMachineRegOperand(Reg, MachineOperand::Def);
+          }
           break;
-        }
         case 3: { // Immediate.
+          assert(NumOps == 1 && "Unknown immediate value!");
           uint64_t Val = cast<ConstantSDNode>(Node->getOperand(i))->getValue();
           MI->addZeroExtImm64Operand(Val);
+          ++i;
           break;
         }
         }

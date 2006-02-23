@@ -113,6 +113,18 @@ namespace {
     /// Chain/Flag as the input and updates them for the output Chain/Flag.
     SDOperand getCopyFromRegs(SelectionDAG &DAG,
                               SDOperand &Chain, SDOperand &Flag);
+
+    /// getCopyToRegs - Emit a series of CopyToReg nodes that copies the
+    /// specified value into the registers specified by this object.  This uses 
+    /// Chain/Flag as the input and updates them for the output Chain/Flag.
+    void getCopyToRegs(SDOperand Val, SelectionDAG &DAG,
+                       SDOperand &Chain, SDOperand &Flag);
+    
+    /// AddInlineAsmOperands - Add this value to the specified inlineasm node
+    /// operand list.  This adds the code marker and includes the number of 
+    /// values added into it.
+    void AddInlineAsmOperands(unsigned Code, SelectionDAG &DAG,
+                              std::vector<SDOperand> &Ops);
   };
 }
 
@@ -1195,7 +1207,41 @@ SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
     return DAG.getNode(ISD::FP_ROUND, ValueVT, Val);
 }
 
+/// getCopyToRegs - Emit a series of CopyToReg nodes that copies the
+/// specified value into the registers specified by this object.  This uses 
+/// Chain/Flag as the input and updates them for the output Chain/Flag.
+void RegsForValue::getCopyToRegs(SDOperand Val, SelectionDAG &DAG,
+                                 SDOperand &Chain, SDOperand &Flag) {
+  if (Regs.size() == 1) {
+    // If there is a single register and the types differ, this must be
+    // a promotion.
+    if (RegVT != ValueVT) {
+      if (MVT::isInteger(RegVT))
+        Val = DAG.getNode(ISD::ANY_EXTEND, RegVT, Val);
+      else
+        Val = DAG.getNode(ISD::FP_EXTEND, RegVT, Val);
+    }
+    Chain = DAG.getCopyToReg(Chain, Regs[0], Val, Flag);
+    Flag = Chain.getValue(1);
+  } else {
+    for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
+      SDOperand Part = DAG.getNode(ISD::EXTRACT_ELEMENT, RegVT, Val, 
+                                   DAG.getConstant(i, MVT::i32));
+      Chain = DAG.getCopyToReg(Chain, Regs[i], Part, Flag);
+      Flag = Chain.getValue(1);
+    }
+  }
+}
 
+/// AddInlineAsmOperands - Add this value to the specified inlineasm node
+/// operand list.  This adds the code marker and includes the number of 
+/// values added into it.
+void RegsForValue::AddInlineAsmOperands(unsigned Code, SelectionDAG &DAG,
+                                        std::vector<SDOperand> &Ops) {
+  Ops.push_back(DAG.getConstant(Code | (Regs.size() << 3), MVT::i32));
+  for (unsigned i = 0, e = Regs.size(); i != e; ++i)
+    Ops.push_back(DAG.getRegister(Regs[i], RegVT));
+}
 
 /// isAllocatableRegister - If the specified register is safe to allocate, 
 /// i.e. it isn't a stack pointer or some other special register, return the
@@ -1453,95 +1499,91 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
       
       // Add information to the INLINEASM node to know that this register is
       // set.
-      
-      // FIXME:
-      // FIXME: Handle multiple regs here.
-      // FIXME:
-      unsigned DestReg = Regs.Regs[0];
-      AsmNodeOperands.push_back(DAG.getRegister(DestReg, Regs.RegVT));
-      AsmNodeOperands.push_back(DAG.getConstant(2, MVT::i32)); // ISDEF
+      Regs.AddInlineAsmOperands(2 /*REGDEF*/, DAG, AsmNodeOperands);
       break;
     }
     case InlineAsm::isInput: {
       Value *CallOperand = I.getOperand(OpNum);
       OpNum++;  // Consumes a call operand.
 
-      SDOperand ResOp;
-      unsigned ResOpType;
       SDOperand InOperandVal = getValue(CallOperand);
       
       if (isdigit(ConstraintCode[0])) {    // Matching constraint?
         // If this is required to match an output register we have already set,
         // just use its register.
         unsigned OperandNo = atoi(ConstraintCode.c_str());
-        unsigned SrcReg;
-        SrcReg = cast<RegisterSDNode>(AsmNodeOperands[OperandNo*2+2])->getReg();
-        ResOp = DAG.getRegister(SrcReg, ConstraintVTs[i]);
-        ResOpType = 1;
         
-        Chain = DAG.getCopyToReg(Chain, SrcReg, InOperandVal, Flag);
-        Flag = Chain.getValue(1);
+        // Scan until we find the definition we already emitted of this operand.
+        // When we find it, create a RegsForValue operand.
+        unsigned CurOp = 2;  // The first operand.
+        for (; OperandNo; --OperandNo) {
+          // Advance to the next operand.
+          unsigned NumOps = 
+            cast<ConstantSDNode>(AsmNodeOperands[CurOp])->getValue();
+          assert((NumOps & 7) == 2 /*REGDEF*/ &&
+                 "Skipped past definitions?");
+          CurOp += (NumOps>>3)+1;
+        }
+
+        unsigned NumOps = 
+          cast<ConstantSDNode>(AsmNodeOperands[CurOp])->getValue();
+        assert((NumOps & 7) == 2 /*REGDEF*/ &&
+               "Skipped past definitions?");
+        
+        // Add NumOps>>3 registers to MatchedRegs.
+        RegsForValue MatchedRegs;
+        MatchedRegs.ValueVT = InOperandVal.getValueType();
+        MatchedRegs.RegVT   = AsmNodeOperands[CurOp+1].getValueType();
+        for (unsigned i = 0, e = NumOps>>3; i != e; ++i) {
+          unsigned Reg=cast<RegisterSDNode>(AsmNodeOperands[++CurOp])->getReg();
+          MatchedRegs.Regs.push_back(Reg);
+        }
+        
+        // Use the produced MatchedRegs object to 
+        MatchedRegs.getCopyToRegs(InOperandVal, DAG, Chain, Flag);
+        MatchedRegs.AddInlineAsmOperands(1 /*REGUSE*/, DAG, AsmNodeOperands);
       } else {
         TargetLowering::ConstraintType CTy = TargetLowering::C_RegisterClass;
         if (ConstraintCode.size() == 1)   // not a physreg name.
           CTy = TLI.getConstraintType(ConstraintCode[0]);
         
-        switch (CTy) {
-        default: assert(0 && "Unknown constraint type! FAIL!");
-        case TargetLowering::C_RegisterClass: {
-          // Copy the input into the appropriate registers.
-          RegsForValue InRegs =
-            GetRegistersForValue(ConstraintCode, ConstraintVTs[i],
-                                 false, true, OutputRegs, InputRegs);
-          // FIXME: should be match fail.
-          assert(!InRegs.Regs.empty() && "Couldn't allocate input reg!");
-
-          if (InRegs.Regs.size() == 1) {
-            // If there is a single register and the types differ, this must be
-            // a promotion.
-            if (InRegs.RegVT != InRegs.ValueVT) {
-              if (MVT::isInteger(InRegs.RegVT))
-                InOperandVal = DAG.getNode(ISD::ANY_EXTEND, InRegs.RegVT,
-                                           InOperandVal);
-              else
-                InOperandVal = DAG.getNode(ISD::FP_EXTEND, InRegs.RegVT,
-                                           InOperandVal);
-            }
-            Chain = DAG.getCopyToReg(Chain, InRegs.Regs[0], InOperandVal, Flag);
-            Flag = Chain.getValue(1);
-            
-            ResOp = DAG.getRegister(InRegs.Regs[0], InRegs.RegVT);
-          } else {
-            for (unsigned i = 0, e = InRegs.Regs.size(); i != e; ++i) {
-              SDOperand Part = DAG.getNode(ISD::EXTRACT_ELEMENT, InRegs.RegVT,
-                                           InOperandVal, 
-                                           DAG.getConstant(i, MVT::i32));
-              Chain = DAG.getCopyToReg(Chain, InRegs.Regs[i], Part, Flag);
-              Flag = Chain.getValue(1);
-            }
-            ResOp = DAG.getRegister(InRegs.Regs[0], InRegs.RegVT);
-          }
-          
-          ResOpType = 1;
-          break;
-        }
-        case TargetLowering::C_Other:
+        if (CTy == TargetLowering::C_Other) {
           if (!TLI.isOperandValidForConstraint(InOperandVal, ConstraintCode[0]))
             assert(0 && "MATCH FAIL!");
-          ResOp = InOperandVal;
-          ResOpType = 3;
+          
+          // Add information to the INLINEASM node to know about this input.
+          unsigned ResOpType = 3 /*imm*/ | (1 << 3);
+          AsmNodeOperands.push_back(DAG.getConstant(ResOpType, MVT::i32));
+          AsmNodeOperands.push_back(InOperandVal);
           break;
         }
+        
+        assert(CTy == TargetLowering::C_RegisterClass && "Unknown op type!");
+
+        // Copy the input into the appropriate registers.
+        RegsForValue InRegs =
+          GetRegistersForValue(ConstraintCode, ConstraintVTs[i],
+                               false, true, OutputRegs, InputRegs);
+        // FIXME: should be match fail.
+        assert(!InRegs.Regs.empty() && "Couldn't allocate input reg!");
+
+        InRegs.getCopyToRegs(InOperandVal, DAG, Chain, Flag);
+        
+        InRegs.AddInlineAsmOperands(1/*REGUSE*/, DAG, AsmNodeOperands);
+        break;
       }
-      
-      // Add information to the INLINEASM node to know about this input.
-      AsmNodeOperands.push_back(ResOp);
-      AsmNodeOperands.push_back(DAG.getConstant(ResOpType, MVT::i32));
       break;
     }
-    case InlineAsm::isClobber:
-      // Nothing to do.
+    case InlineAsm::isClobber: {
+      RegsForValue ClobberedRegs =
+        GetRegistersForValue(ConstraintCode, MVT::Other, false, false,
+                             OutputRegs, InputRegs);
+      // Add the clobbered value to the operand list, so that the register
+      // allocator is aware that the physreg got clobbered.
+      if (!ClobberedRegs.Regs.empty())
+        ClobberedRegs.AddInlineAsmOperands(2/*REGDEF*/, DAG, AsmNodeOperands);
       break;
+    }
     }
   }
   

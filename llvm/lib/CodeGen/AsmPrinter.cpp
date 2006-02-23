@@ -569,19 +569,26 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
         exit(1);
       }
       
-      char ExtraCode = 0;  // FIXME:
-      
-      // Okay, we finally have an operand number.  Ask the target to print this
+      // Okay, we finally have a value number.  Ask the target to print this
       // operand!
-      if (CurVariant == -1 || CurVariant == AsmPrinterVariant)
+      if (CurVariant == -1 || CurVariant == AsmPrinterVariant) {
+        unsigned OpNo = 1;
+        
+        // Scan to find the machine operand number for the operand.
+        for (; Val; --Val)
+          OpNo += MI->getOperand(OpNo).getImmedValue()+1;
+        
+        ++OpNo;  // Skip over the ID number.
+        
         if (const_cast<AsmPrinter*>(this)->
-                PrintAsmOperand(MI, Val+1, AsmPrinterVariant,
+                PrintAsmOperand(MI, OpNo, AsmPrinterVariant,
                                 Modifier[0] ? Modifier : 0)) {
           std::cerr << "Invalid operand found in inline asm: '"
                     << AsmStr << "'\n";
           MI->dump();
           exit(1);
         }
+      }
       break;
     }
     case '{':
