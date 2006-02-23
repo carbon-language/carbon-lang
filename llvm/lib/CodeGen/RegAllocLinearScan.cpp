@@ -651,26 +651,17 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
     IntervalPtrs::iterator it;
     if ((it = FindIntervalInVector(active_, i)) != active_.end()) {
       active_.erase(it);
-      if (MRegisterInfo::isPhysicalRegister(i->reg)) {
-        assert(0 && "daksjlfd");
-        prt_->delRegUse(i->reg);
+      assert(!MRegisterInfo::isPhysicalRegister(i->reg));
+      if (!spilled.count(i->reg))
         unhandled_.push(i);
-      } else {
-        if (!spilled.count(i->reg))
-          unhandled_.push(i);
-        prt_->delRegUse(vrm_->getPhys(i->reg));
-        vrm_->clearVirt(i->reg);
-      }
+      prt_->delRegUse(vrm_->getPhys(i->reg));
+      vrm_->clearVirt(i->reg);
     } else if ((it = FindIntervalInVector(inactive_, i)) != inactive_.end()) {
       inactive_.erase(it);
-      if (MRegisterInfo::isPhysicalRegister(i->reg)) {
-        assert(0 && "daksjlfd");
+      assert(!MRegisterInfo::isPhysicalRegister(i->reg));
+      if (!spilled.count(i->reg))
         unhandled_.push(i);
-      } else {
-        if (!spilled.count(i->reg))
-          unhandled_.push(i);
-        vrm_->clearVirt(i->reg);
-      }
+      vrm_->clearVirt(i->reg);
     } else {
       assert(MRegisterInfo::isVirtualRegister(i->reg) &&
              "Can only allocate virtual registers!");
@@ -694,11 +685,8 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
         HI->expiredAt(cur->beginNumber())) {
       DEBUG(std::cerr << "\t\t\tundo changes for: " << *HI << '\n');
       active_.push_back(std::make_pair(HI, HI->begin()));
-      if (MRegisterInfo::isPhysicalRegister(HI->reg)) {
-        assert(0 &&"sdflkajsdf");
-        prt_->addRegUse(HI->reg);
-      } else
-        prt_->addRegUse(vrm_->getPhys(HI->reg));
+      assert(!MRegisterInfo::isPhysicalRegister(HI->reg));
+      prt_->addRegUse(vrm_->getPhys(HI->reg));
     }
   }
 
@@ -709,8 +697,7 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
 
 /// getFreePhysReg - return a free physical register for this virtual register
 /// interval if we have one, otherwise return 0.
-unsigned RA::getFreePhysReg(LiveInterval* cur)
-{
+unsigned RA::getFreePhysReg(LiveInterval *cur) {
   std::vector<unsigned> inactiveCounts(mri_->getNumRegs(), 0);
   unsigned MaxInactiveCount = 0;
   
