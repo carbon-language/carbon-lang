@@ -110,6 +110,85 @@ static unsigned CreateVirtualRegisters(MachineInstr *MI,
   return ResultReg;
 }
 
+/// AddOperand - Add the specified operand to the specified machine instr.  II
+/// specifies the instruction information for the node, and IIOpNum is the
+/// operand number (in the II) that we are adding. IIOpNum and II are used for 
+/// assertions only.
+void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
+                             unsigned IIOpNum,
+                             const TargetInstrDescriptor *II) {
+  if (Op.isTargetOpcode()) {
+    // Note that this case is redundant with the final else block, but we
+    // include it because it is the most common and it makes the logic
+    // simpler here.
+    assert(Op.getValueType() != MVT::Other &&
+           Op.getValueType() != MVT::Flag &&
+           "Chain and flag operands should occur at end of operand list!");
+    
+    // Get/emit the operand.
+    unsigned VReg = getVR(Op);
+    MI->addRegOperand(VReg, MachineOperand::Use);
+    
+    // Verify that it is right.
+    assert(MRegisterInfo::isVirtualRegister(VReg) && "Not a vreg?");
+    if (II) {
+      assert(II->OpInfo[IIOpNum].RegClass &&
+             "Don't have operand info for this instruction!");
+      assert(RegMap->getRegClass(VReg) == II->OpInfo[IIOpNum].RegClass &&
+             "Register class of operand and regclass of use don't agree!");
+    }
+  } else if (ConstantSDNode *C =
+             dyn_cast<ConstantSDNode>(Op)) {
+    MI->addZeroExtImm64Operand(C->getValue());
+  } else if (RegisterSDNode*R =
+             dyn_cast<RegisterSDNode>(Op)) {
+    MI->addRegOperand(R->getReg(), MachineOperand::Use);
+  } else if (GlobalAddressSDNode *TGA =
+             dyn_cast<GlobalAddressSDNode>(Op)) {
+    MI->addGlobalAddressOperand(TGA->getGlobal(), false, TGA->getOffset());
+  } else if (BasicBlockSDNode *BB =
+             dyn_cast<BasicBlockSDNode>(Op)) {
+    MI->addMachineBasicBlockOperand(BB->getBasicBlock());
+  } else if (FrameIndexSDNode *FI =
+             dyn_cast<FrameIndexSDNode>(Op)) {
+    MI->addFrameIndexOperand(FI->getIndex());
+  } else if (ConstantPoolSDNode *CP = 
+             dyn_cast<ConstantPoolSDNode>(Op)) {
+    unsigned Align = CP->getAlignment();
+    // MachineConstantPool wants an explicit alignment.
+    if (Align == 0) {
+      if (CP->get()->getType() == Type::DoubleTy)
+        Align = 3;  // always 8-byte align doubles.
+      else
+        Align = TM.getTargetData()
+          .getTypeAlignmentShift(CP->get()->getType());
+    }
+    
+    unsigned Idx = ConstPool->getConstantPoolIndex(CP->get(), Align);
+    MI->addConstantPoolIndexOperand(Idx);
+  } else if (ExternalSymbolSDNode *ES = 
+             dyn_cast<ExternalSymbolSDNode>(Op)) {
+    MI->addExternalSymbolOperand(ES->getSymbol(), false);
+  } else {
+    assert(Op.getValueType() != MVT::Other &&
+           Op.getValueType() != MVT::Flag &&
+           "Chain and flag operands should occur at end of operand list!");
+    unsigned VReg = getVR(Op);
+    MI->addRegOperand(VReg, MachineOperand::Use);
+    
+    // Verify that it is right.
+    assert(MRegisterInfo::isVirtualRegister(VReg) && "Not a vreg?");
+    if (II) {
+      assert(II->OpInfo[IIOpNum].RegClass &&
+             "Don't have operand info for this instruction!");
+      assert(RegMap->getRegClass(VReg) == II->OpInfo[IIOpNum].RegClass &&
+             "Register class of operand and regclass of use don't agree!");
+    }
+  }
+  
+}
+
+
 /// EmitNode - Generate machine code for an node and needed dependencies.
 ///
 void ScheduleDAG::EmitNode(NodeInfo *NI) {
@@ -159,72 +238,8 @@ void ScheduleDAG::EmitNode(NodeInfo *NI) {
     
     // Emit all of the actual operands of this instruction, adding them to the
     // instruction as appropriate.
-    for (unsigned i = 0; i != NodeOperands; ++i) {
-      if (Node->getOperand(i).isTargetOpcode()) {
-        // Note that this case is redundant with the final else block, but we
-        // include it because it is the most common and it makes the logic
-        // simpler here.
-        assert(Node->getOperand(i).getValueType() != MVT::Other &&
-               Node->getOperand(i).getValueType() != MVT::Flag &&
-               "Chain and flag operands should occur at end of operand list!");
-
-        // Get/emit the operand.
-        unsigned VReg = getVR(Node->getOperand(i));
-        MI->addRegOperand(VReg, MachineOperand::Use);
-        
-        // Verify that it is right.
-        assert(MRegisterInfo::isVirtualRegister(VReg) && "Not a vreg?");
-        assert(II.OpInfo[i+NumResults].RegClass &&
-               "Don't have operand info for this instruction!");
-        assert(RegMap->getRegClass(VReg) == II.OpInfo[i+NumResults].RegClass &&
-               "Register class of operand and regclass of use don't agree!");
-      } else if (ConstantSDNode *C =
-                 dyn_cast<ConstantSDNode>(Node->getOperand(i))) {
-        MI->addZeroExtImm64Operand(C->getValue());
-      } else if (RegisterSDNode*R =
-                 dyn_cast<RegisterSDNode>(Node->getOperand(i))) {
-        MI->addRegOperand(R->getReg(), MachineOperand::Use);
-      } else if (GlobalAddressSDNode *TGA =
-                       dyn_cast<GlobalAddressSDNode>(Node->getOperand(i))) {
-        MI->addGlobalAddressOperand(TGA->getGlobal(), false, TGA->getOffset());
-      } else if (BasicBlockSDNode *BB =
-                       dyn_cast<BasicBlockSDNode>(Node->getOperand(i))) {
-        MI->addMachineBasicBlockOperand(BB->getBasicBlock());
-      } else if (FrameIndexSDNode *FI =
-                       dyn_cast<FrameIndexSDNode>(Node->getOperand(i))) {
-        MI->addFrameIndexOperand(FI->getIndex());
-      } else if (ConstantPoolSDNode *CP = 
-                    dyn_cast<ConstantPoolSDNode>(Node->getOperand(i))) {
-        unsigned Align = CP->getAlignment();
-        // MachineConstantPool wants an explicit alignment.
-        if (Align == 0) {
-          if (CP->get()->getType() == Type::DoubleTy)
-            Align = 3;  // always 8-byte align doubles.
-          else
-            Align = TM.getTargetData()
-              .getTypeAlignmentShift(CP->get()->getType());
-        }
-        
-        unsigned Idx = ConstPool->getConstantPoolIndex(CP->get(), Align);
-        MI->addConstantPoolIndexOperand(Idx);
-      } else if (ExternalSymbolSDNode *ES = 
-                 dyn_cast<ExternalSymbolSDNode>(Node->getOperand(i))) {
-        MI->addExternalSymbolOperand(ES->getSymbol(), false);
-      } else {
-        assert(Node->getOperand(i).getValueType() != MVT::Other &&
-               Node->getOperand(i).getValueType() != MVT::Flag &&
-               "Chain and flag operands should occur at end of operand list!");
-        unsigned VReg = getVR(Node->getOperand(i));
-        MI->addRegOperand(VReg, MachineOperand::Use);
-        
-        // Verify that it is right.
-        assert(MRegisterInfo::isVirtualRegister(VReg) && "Not a vreg?");
-        assert(II.OpInfo[i+NumResults].RegClass &&
-               "Don't have operand info for this instruction!");
-        assert(RegMap->getRegClass(VReg) == II.OpInfo[i+NumResults].RegClass &&
-               "Register class of operand and regclass of use don't agree!");
-      }
-    }
+    for (unsigned i = 0; i != NodeOperands; ++i)
+      AddOperand(MI, Node->getOperand(i), i+NumResults, &II);
     
     // Now that we have emitted all operands, emit this instruction itself.
     if ((II.Flags & M_USES_CUSTOM_DAG_SCHED_INSERTION) == 0) {
