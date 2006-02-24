@@ -326,32 +326,38 @@ void ScheduleDAG::EmitNode(NodeInfo *NI) {
       // Add all of the operand registers to the instruction.
       for (unsigned i = 2; i != NumOps;) {
         unsigned Flags = cast<ConstantSDNode>(Node->getOperand(i))->getValue();
-        unsigned NumOps = Flags >> 3;
+        unsigned NumVals = Flags >> 3;
         
-        MI->addZeroExtImm64Operand(NumOps);
+        MI->addZeroExtImm64Operand(NumVals);
         ++i;  // Skip the ID value.
         
         switch (Flags & 7) {
         default: assert(0 && "Bad flags!");
         case 1:  // Use of register.
-          for (; NumOps; --NumOps, ++i) {
+          for (; NumVals; --NumVals, ++i) {
             unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();
             MI->addMachineRegOperand(Reg, MachineOperand::Use);
           }
           break;
         case 2:   // Def of register.
-          for (; NumOps; --NumOps, ++i) {
+          for (; NumVals; --NumVals, ++i) {
             unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();
             MI->addMachineRegOperand(Reg, MachineOperand::Def);
           }
           break;
         case 3: { // Immediate.
-          assert(NumOps == 1 && "Unknown immediate value!");
+          assert(NumVals == 1 && "Unknown immediate value!");
           uint64_t Val = cast<ConstantSDNode>(Node->getOperand(i))->getValue();
           MI->addZeroExtImm64Operand(Val);
           ++i;
           break;
         }
+        case 4:  // Addressing mode.
+          // The addressing mode has been selected, just add all of the
+          // operands to the machine instruction.
+          for (; NumVals; --NumVals, ++i)
+            AddOperand(MI, Node->getOperand(i), 0, 0);
+          break;
         }
       }
       break;
