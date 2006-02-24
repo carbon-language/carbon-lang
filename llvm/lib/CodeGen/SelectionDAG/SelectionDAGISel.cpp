@@ -2437,3 +2437,45 @@ void SelectionDAGISel::ScheduleAndEmitDAG(SelectionDAG &DAG) {
   BB = SL->Run();
   delete SL;
 }
+
+/// SelectInlineAsmMemoryOperands - Calls to this are automatically generated
+/// by tblgen.  Others should not call it.
+void SelectionDAGISel::
+SelectInlineAsmMemoryOperands(std::vector<SDOperand> &Ops, SelectionDAG &DAG) {
+  std::vector<SDOperand> InOps;
+  std::swap(InOps, Ops);
+
+  Ops.push_back(InOps[0]);  // input chain.
+  Ops.push_back(InOps[1]);  // input asm string.
+
+  const char *AsmStr = cast<ExternalSymbolSDNode>(InOps[1])->getSymbol();
+  unsigned i = 2, e = InOps.size();
+  if (InOps[e-1].getValueType() == MVT::Flag)
+    --e;  // Don't process a flag operand if it is here.
+  
+  while (i != e) {
+    unsigned Flags = cast<ConstantSDNode>(InOps[i])->getValue();
+    if ((Flags & 7) != 4 /*MEM*/) {
+      // Just skip over this operand, copying the operands verbatim.
+      Ops.insert(Ops.end(), InOps.begin()+i, InOps.begin()+i+(Flags >> 3) + 1);
+      i += (Flags >> 3) + 1;
+    } else {
+      assert((Flags >> 3) == 1 && "Memory operand with multiple values?");
+      // Otherwise, this is a memory operand.  Ask the target to select it.
+      std::vector<SDOperand> SelOps;
+      if (SelectInlineAsmMemoryOperand(InOps[i+1], 'm', SelOps, DAG)) {
+        std::cerr << "Could not match memory address.  Inline asm failure!\n";
+        exit(1);
+      }
+      
+      // Add this to the output node.
+      Ops.push_back(DAG.getConstant(4/*MEM*/ | (SelOps.size() << 3), MVT::i32));
+      Ops.insert(Ops.end(), SelOps.begin(), SelOps.end());
+      i += 2;
+    }
+  }
+  
+  // Add the flag input back if present.
+  if (e != InOps.size())
+    Ops.push_back(InOps.back());
+}
