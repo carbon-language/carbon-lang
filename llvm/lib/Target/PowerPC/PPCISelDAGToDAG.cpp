@@ -83,6 +83,35 @@ namespace {
     /// represented as an indexed [r+r] operation.
     bool SelectAddrIdxOnly(SDOperand N, SDOperand &Base, SDOperand &Index);
 
+    /// SelectInlineAsmMemoryOperand - Implement addressing mode selection for
+    /// inline asm expressions.
+    virtual bool SelectInlineAsmMemoryOperand(const SDOperand &Op,
+                                              char ConstraintCode,
+                                              std::vector<SDOperand> &OutOps,
+                                              SelectionDAG &DAG) {
+      SDOperand Op0, Op1;
+      switch (ConstraintCode) {
+      default: return true;
+      case 'm':   // memory
+        if (!SelectAddrIdx(Op, Op0, Op1))
+          SelectAddrImm(Op, Op0, Op1);
+        break;
+      case 'o':   // offsetable
+        if (!SelectAddrImm(Op, Op0, Op1)) {
+          Select(Op0, Op);     // r+0.
+          Op1 = getI32Imm(0);
+        }
+        break;
+      case 'v':   // not offsetable
+        SelectAddrIdxOnly(Op, Op0, Op1);
+        break;
+      }
+      
+      OutOps.push_back(Op0);
+      OutOps.push_back(Op1);
+      return false;
+    }
+    
     SDOperand BuildSDIVSequence(SDNode *N);
     SDOperand BuildUDIVSequence(SDNode *N);
     
