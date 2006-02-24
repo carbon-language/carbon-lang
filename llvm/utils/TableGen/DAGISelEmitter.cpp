@@ -2986,6 +2986,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  // Select the flag operand.\n"
      << "  if (Ops.back().getValueType() == MVT::Flag)\n"
      << "    Select(Ops.back(), Ops.back());\n"
+     << "  SelectInlineAsmMemoryOperands(Ops, *CurDAG);\n"
      << "  std::vector<MVT::ValueType> VTs;\n"
      << "  VTs.push_back(MVT::Other);\n"
      << "  VTs.push_back(MVT::Flag);\n"
