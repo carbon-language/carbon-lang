@@ -64,7 +64,9 @@ enum {
   DI_TAG_global_variable,
   DI_TAG_subprogram,
   DI_TAG_basictype,
-  DI_TAG_typedef
+  DI_TAG_typedef,
+  DI_TAG_pointer,
+  DI_TAG_reference
 };
 
 //===----------------------------------------------------------------------===//
@@ -283,8 +285,10 @@ public:
 class TypeDesc : public DebugInfoDesc {
 private:
   DebugInfoDesc *Context;               // Context debug descriptor.
-  std::string Name;                     // Type name.
-  uint64_t Size;                        // Type size.
+  std::string Name;                     // Type name (may be empty.)
+  CompileUnitDesc *File;                // Declared compile unit (may be NULL.)
+  int Line;                             // Declared line# (may be zero.)
+  uint64_t Size;                        // Type size (may be zero.)
 
 protected:
   TypeDesc(unsigned T);
@@ -293,9 +297,13 @@ public:
   // Accessors
   DebugInfoDesc *getContext()                const { return Context; }
   const std::string &getName()               const { return Name; }
+  CompileUnitDesc *getFile()                 const { return File; }
+  int getLine()                              const { return Line; }
   uint64_t getSize()                         const { return Size; }
   void setContext(DebugInfoDesc *C)                { Context = C; }
   void setName(const std::string &N)               { Name = N; }
+  void setFile(CompileUnitDesc *U)                 { File = U; }
+  void setLine(int L)                              { Line = L; }
   void setSize(uint64_t S)                         { Size = S; }
   
   /// ApplyToFields - Target the visitor to the fields of the  TypeDesc.
@@ -346,32 +354,27 @@ public:
 
 
 //===----------------------------------------------------------------------===//
-/// TypedefDesc - This class packages debug information associated with a
-/// derived typedef.
-class TypedefDesc : public TypeDesc {
+/// DerivedTypeDesc - This class packages debug information associated with a
+/// derived types (eg., typedef, pointer, reference.)
+class DerivedTypeDesc : public TypeDesc {
 private:
   TypeDesc *FromType;                   // Type derived from.
-  CompileUnitDesc *File;                // Declared compile unit.
-  int Line;                             // Declared line#.
 
 public:
-  TypedefDesc();
+  DerivedTypeDesc(unsigned T);
   
   // Accessors
   TypeDesc *getFromType()                    const { return FromType; }
-  CompileUnitDesc *getFile()                 const { return File; }
-  int getLine()                              const { return Line; }
   void setFromType(TypeDesc *F)                    { FromType = F; }
-  void setFile(CompileUnitDesc *U)                 { File = U; }
-  void setLine(int L)                              { Line = L; }
 
   // Implement isa/cast/dyncast.
-  static bool classof(const TypedefDesc *)  { return true; }
+  static bool classof(const DerivedTypeDesc *)  { return true; }
   static bool classof(const DebugInfoDesc *D) {
-    return D->getTag() == DI_TAG_typedef;
+    unsigned T =  D->getTag();
+    return T == DI_TAG_typedef || T == DI_TAG_pointer || T == DI_TAG_reference;
   }
   
-  /// ApplyToFields - Target the visitor to the fields of the  TypedefDesc.
+  /// ApplyToFields - Target the visitor to the fields of the  DerivedTypeDesc.
   ///
   virtual void ApplyToFields(DIVisitor *Visitor);
 

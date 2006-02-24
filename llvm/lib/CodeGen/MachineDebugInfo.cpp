@@ -430,7 +430,9 @@ DebugInfoDesc *DebugInfoDesc::DescFactory(unsigned Tag) {
   case DI_TAG_global_variable: return new GlobalVariableDesc();
   case DI_TAG_subprogram:      return new SubprogramDesc();
   case DI_TAG_basictype:       return new BasicTypeDesc();
-  case DI_TAG_typedef:         return new TypedefDesc();
+  case DI_TAG_typedef:         return new DerivedTypeDesc(DI_TAG_typedef);
+  case DI_TAG_pointer:         return new DerivedTypeDesc(DI_TAG_pointer);         
+  case DI_TAG_reference:       return new DerivedTypeDesc(DI_TAG_reference);
   default: break;
   }
   return NULL;
@@ -566,16 +568,19 @@ TypeDesc::TypeDesc(unsigned T)
 : DebugInfoDesc(T)
 , Context(NULL)
 , Name("")
+, File(NULL)
 , Size(0)
 {}
 
-/// ApplyToFields - Target the visitor to the fields of the  TypeDesc.
+/// ApplyToFields - Target the visitor to the fields of the TypeDesc.
 ///
 void TypeDesc::ApplyToFields(DIVisitor *Visitor) {
   DebugInfoDesc::ApplyToFields(Visitor);
   
   Visitor->Apply(Context);
   Visitor->Apply(Name);
+  Visitor->Apply((DebugInfoDesc *&)File);
+  Visitor->Apply(Line);
   Visitor->Apply(Size);
 }
 
@@ -597,6 +602,8 @@ void TypeDesc::dump() {
             << "Tag(" << getTag() << "), "
             << "Context(" << Context << "), "
             << "Name(\"" << Name << "\"), "
+            << "File(" << File << "), "
+            << "Line(" << Line << "), "
             << "Size(" << Size << ")\n";
 }
 #endif
@@ -608,7 +615,7 @@ BasicTypeDesc::BasicTypeDesc()
 , Encoding(0)
 {}
 
-/// ApplyToFields - Target the visitor to the fields of the  BasicTypeDesc.
+/// ApplyToFields - Target the visitor to the fields of the BasicTypeDesc.
 ///
 void BasicTypeDesc::ApplyToFields(DIVisitor *Visitor) {
   TypeDesc::ApplyToFields(Visitor);
@@ -628,33 +635,32 @@ void BasicTypeDesc::dump() {
 #endif
 //===----------------------------------------------------------------------===//
 
-TypedefDesc::TypedefDesc()
-: TypeDesc(DI_TAG_typedef)
+DerivedTypeDesc::DerivedTypeDesc(unsigned T)
+: TypeDesc(T)
 , FromType(NULL)
-, File(NULL)
-, Line(0)
-{}
+{
+  assert((T == DI_TAG_typedef || T == DI_TAG_pointer || T == DI_TAG_reference)&&
+         "Unknown derived type.");
+}
 
-/// ApplyToFields - Target the visitor to the fields of the  TypedefDesc.
+/// ApplyToFields - Target the visitor to the fields of the DerivedTypeDesc.
 ///
-void TypedefDesc::ApplyToFields(DIVisitor *Visitor) {
+void DerivedTypeDesc::ApplyToFields(DIVisitor *Visitor) {
   TypeDesc::ApplyToFields(Visitor);
   
   Visitor->Apply((DebugInfoDesc *&)FromType);
-  Visitor->Apply((DebugInfoDesc *&)File);
-  Visitor->Apply(Line);
 }
 
 #ifndef NDEBUG
-void TypedefDesc::dump() {
+void DerivedTypeDesc::dump() {
   std::cerr << getDescString() << " "
             << "Tag(" << getTag() << "), "
             << "Context(" << getContext() << "), "
             << "Name(\"" << getName() << "\"), "
             << "Size(" << getSize() << "), "
-            << "FromType(" << FromType << "), "
-            << "File(" << File << "), "
-            << "Line(" << Line << ")\n";
+            << "File(" << getFile() << "), "
+            << "Line(" << getLine() << "), "
+            << "FromType(" << FromType << ")\n";
 }
 #endif
 

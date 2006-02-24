@@ -1235,6 +1235,9 @@ void DwarfWriter::NewGlobalEntity(const std::string &Name, DIE *Entity) {
 /// NewType - Create a new type DIE.
 ///
 DIE *DwarfWriter::NewType(DIE *Unit, TypeDesc *TyDesc) {
+  // FIXME - hack to get around NULL types short term.
+  if (!TyDesc)  return NewBasicType(Unit, Type::IntTy);
+
   // Check for pre-existence.
   DIE *&Slot = DescToDieMap[TyDesc];
   if (Slot) return Slot;
@@ -1246,29 +1249,43 @@ DIE *DwarfWriter::NewType(DIE *Unit, TypeDesc *TyDesc) {
   
   DIE *Ty = NULL;
   
-  // Determine how to handle.
   if (BasicTypeDesc *BasicTy = dyn_cast<BasicTypeDesc>(TyDesc)) {
+    // Fundamental types like int, float, bool
     Slot = Ty = new DIE(DW_TAG_base_type);
     unsigned Encoding = BasicTy->getEncoding();
     Ty->AddUInt  (DW_AT_encoding,  DW_FORM_data1, Encoding);
-  } else if (TypedefDesc *TypedefTy = dyn_cast<TypedefDesc>(TyDesc)) {
-    Slot = Ty = new DIE(DW_TAG_typedef);
-    TypeDesc *FromTy = TypedefTy->getFromType();
-    DIE *FromTyDie = NewType(Unit, FromTy);
-    CompileUnitDesc *File = TypedefTy->getFile();
-    unsigned FileID = DebugInfo->RecordSource(File);
-    int Line = TypedefTy->getLine();
+  } else if (DerivedTypeDesc *DerivedTy = dyn_cast<DerivedTypeDesc>(TyDesc)) {
+    // Determine which derived type.
+    unsigned T = 0;
+    switch (DerivedTy->getTag()) {
+    case DI_TAG_typedef:   T = DW_TAG_typedef;        break;
+    case DI_TAG_pointer:   T = DW_TAG_pointer_type;   break;
+    case DI_TAG_reference: T = DW_TAG_reference_type; break;
+    default: assert( 0 && "Unknown tag on derived type");
+    }
     
-    Ty->AddDIEntry(DW_AT_type,      DW_FORM_ref4, FromTyDie);
-    Ty->AddUInt   (DW_AT_decl_file, 0,            FileID);
-    Ty->AddUInt   (DW_AT_decl_line, 0,            Line);
+    // Create specific DIE.
+    Slot = Ty = new DIE(T);
+    
+    // Map to main type, void will not have a type.
+    if (TypeDesc *FromTy = DerivedTy->getFromType()) {
+       Ty->AddDIEntry(DW_AT_type, DW_FORM_ref4, NewType(Unit, FromTy));
+    }
   }
   
   assert(Ty && "Type not supported yet");
  
-  // Add common information.
+  // Add size if non-zero (derived types don't have a size.)
   if (Size) Ty->AddUInt(DW_AT_byte_size, 0, Size);
+  // Add name if not anonymous or intermediate type.
   if (!Name.empty()) Ty->AddString(DW_AT_name, DW_FORM_string, Name);
+  // Add source line info if present.
+  if (CompileUnitDesc *File = TyDesc->getFile()) {
+    unsigned FileID = DebugInfo->RecordSource(File);
+    int Line = TyDesc->getLine();
+    Ty->AddUInt(DW_AT_decl_file, 0, FileID);
+    Ty->AddUInt(DW_AT_decl_line, 0, Line);
+  }
 
   // Add to context owner.
   Unit->AddChild(Ty);
