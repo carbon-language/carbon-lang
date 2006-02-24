@@ -483,9 +483,9 @@ public:
   enum ConstraintType {
     C_Register,            // Constraint represents a single register.
     C_RegisterClass,       // Constraint represents one or more registers.
+    C_Memory,              // Memory constraint.
     C_Other,               // Something else.
     C_Unknown              // Unsupported constraint.
-    // INTEGER, ADDRESS, MEMORY?
   };
   
   /// getConstraintType - Given a constraint letter, return the type of
