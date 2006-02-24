@@ -5074,30 +5074,25 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
           }
 
           if (OtherAddOp) {
-            // So at this point we know we have:
-            //        select C, (add X, Y), (sub X, ?)
-            // We can do the transform profitably if either 'Y' = '?' or '?' is
-            // a constant.
-            if (SubOp->getOperand(1) == AddOp ||
-                isa<Constant>(SubOp->getOperand(1))) {
-              Value *NegVal;
-              if (Constant *C = dyn_cast<Constant>(SubOp->getOperand(1))) {
-                NegVal = ConstantExpr::getNeg(C);
-              } else {
-                NegVal = InsertNewInstBefore(
-                           BinaryOperator::createNeg(SubOp->getOperand(1)), SI);
-              }
-
-              Value *NewTrueOp = OtherAddOp;
-              Value *NewFalseOp = NegVal;
-              if (AddOp != TI)
-                std::swap(NewTrueOp, NewFalseOp);
-              Instruction *NewSel =
-                new SelectInst(CondVal, NewTrueOp,NewFalseOp,SI.getName()+".p");
-
-              NewSel = InsertNewInstBefore(NewSel, SI);
-              return BinaryOperator::createAdd(SubOp->getOperand(0), NewSel);
+            // So at this point we know we have (Y -> OtherAddOp):
+            //        select C, (add X, Y), (sub X, Z)
+            Value *NegVal;  // Compute -Z
+            if (Constant *C = dyn_cast<Constant>(SubOp->getOperand(1))) {
+              NegVal = ConstantExpr::getNeg(C);
+            } else {
+              NegVal = InsertNewInstBefore(
+                    BinaryOperator::createNeg(SubOp->getOperand(1), "tmp"), SI);
             }
+
+            Value *NewTrueOp = OtherAddOp;
+            Value *NewFalseOp = NegVal;
+            if (AddOp != TI)
+              std::swap(NewTrueOp, NewFalseOp);
+            Instruction *NewSel =
+              new SelectInst(CondVal, NewTrueOp,NewFalseOp,SI.getName()+".p");
+
+            NewSel = InsertNewInstBefore(NewSel, SI);
+            return BinaryOperator::createAdd(SubOp->getOperand(0), NewSel);
           }
         }
       }
