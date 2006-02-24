@@ -1549,36 +1549,55 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
         // Use the produced MatchedRegs object to 
         MatchedRegs.getCopyToRegs(InOperandVal, DAG, Chain, Flag);
         MatchedRegs.AddInlineAsmOperands(1 /*REGUSE*/, DAG, AsmNodeOperands);
-      } else {
-        TargetLowering::ConstraintType CTy = TargetLowering::C_RegisterClass;
-        if (ConstraintCode.size() == 1)   // not a physreg name.
-          CTy = TLI.getConstraintType(ConstraintCode[0]);
-        
-        if (CTy == TargetLowering::C_Other) {
-          if (!TLI.isOperandValidForConstraint(InOperandVal, ConstraintCode[0]))
-            assert(0 && "MATCH FAIL!");
-          
-          // Add information to the INLINEASM node to know about this input.
-          unsigned ResOpType = 3 /*imm*/ | (1 << 3);
-          AsmNodeOperands.push_back(DAG.getConstant(ResOpType, MVT::i32));
-          AsmNodeOperands.push_back(InOperandVal);
-          break;
-        }
-        
-        assert(CTy == TargetLowering::C_RegisterClass && "Unknown op type!");
-
-        // Copy the input into the appropriate registers.
-        RegsForValue InRegs =
-          GetRegistersForValue(ConstraintCode, ConstraintVTs[i],
-                               false, true, OutputRegs, InputRegs);
-        // FIXME: should be match fail.
-        assert(!InRegs.Regs.empty() && "Couldn't allocate input reg!");
-
-        InRegs.getCopyToRegs(InOperandVal, DAG, Chain, Flag);
-        
-        InRegs.AddInlineAsmOperands(1/*REGUSE*/, DAG, AsmNodeOperands);
         break;
       }
+      
+      TargetLowering::ConstraintType CTy = TargetLowering::C_RegisterClass;
+      if (ConstraintCode.size() == 1)   // not a physreg name.
+        CTy = TLI.getConstraintType(ConstraintCode[0]);
+        
+      if (CTy == TargetLowering::C_Other) {
+        if (!TLI.isOperandValidForConstraint(InOperandVal, ConstraintCode[0]))
+          assert(0 && "MATCH FAIL!");
+        
+        // Add information to the INLINEASM node to know about this input.
+        unsigned ResOpType = 3 /*IMM*/ | (1 << 3);
+        AsmNodeOperands.push_back(DAG.getConstant(ResOpType, MVT::i32));
+        AsmNodeOperands.push_back(InOperandVal);
+        break;
+      } else if (CTy == TargetLowering::C_Memory) {
+        // Memory input.
+        
+        // Check that the operand isn't a float.
+        if (!MVT::isInteger(InOperandVal.getValueType()))
+          assert(0 && "MATCH FAIL!");
+        
+        // Extend/truncate to the right pointer type if needed.
+        MVT::ValueType PtrType = TLI.getPointerTy();
+        if (InOperandVal.getValueType() < PtrType)
+          InOperandVal = DAG.getNode(ISD::ZERO_EXTEND, PtrType, InOperandVal);
+        else if (InOperandVal.getValueType() > PtrType)
+          InOperandVal = DAG.getNode(ISD::TRUNCATE, PtrType, InOperandVal);
+
+        // Add information to the INLINEASM node to know about this input.
+        unsigned ResOpType = 4/*MEM*/ | (1 << 3);
+        AsmNodeOperands.push_back(DAG.getConstant(ResOpType, MVT::i32));
+        AsmNodeOperands.push_back(InOperandVal);
+        break;
+      }
+        
+      assert(CTy == TargetLowering::C_RegisterClass && "Unknown op type!");
+
+      // Copy the input into the appropriate registers.
+      RegsForValue InRegs =
+        GetRegistersForValue(ConstraintCode, ConstraintVTs[i],
+                             false, true, OutputRegs, InputRegs);
+      // FIXME: should be match fail.
+      assert(!InRegs.Regs.empty() && "Couldn't allocate input reg!");
+
+      InRegs.getCopyToRegs(InOperandVal, DAG, Chain, Flag);
+      
+      InRegs.AddInlineAsmOperands(1/*REGUSE*/, DAG, AsmNodeOperands);
       break;
     }
     case InlineAsm::isClobber: {
