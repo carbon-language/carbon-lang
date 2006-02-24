@@ -42,6 +42,7 @@
 #include <map>
 #include <set>
 #include <iostream>
+#include <algorithm>
 using namespace llvm;
 
 #ifndef NDEBUG

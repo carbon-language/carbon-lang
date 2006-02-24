@@ -31,6 +31,7 @@
 #define LLVM_CODEGEN_MACHINEDEBUGINFO_H
 
 #include "llvm/Support/Dwarf.h"
+#include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/UniqueVector.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Pass.h"
