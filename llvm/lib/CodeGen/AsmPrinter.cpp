@@ -580,11 +580,19 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
           OpNo += (OpFlags >> 3) + 1;
         }
         
+        unsigned OpFlags = MI->getOperand(OpNo).getImmedValue();
         ++OpNo;  // Skip over the ID number.
-        
-        if (const_cast<AsmPrinter*>(this)->
-                PrintAsmOperand(MI, OpNo, AsmPrinterVariant,
-                                Modifier[0] ? Modifier : 0)) {
+
+        bool Error;
+        AsmPrinter *AP = const_cast<AsmPrinter*>(this);
+        if ((OpFlags & 7) == 4 /*ADDR MODE*/) {
+          Error = AP->PrintAsmMemoryOperand(MI, OpNo, AsmPrinterVariant,
+                                            Modifier[0] ? Modifier : 0);
+        } else {
+          Error = AP->PrintAsmOperand(MI, OpNo, AsmPrinterVariant,
+                                      Modifier[0] ? Modifier : 0);
+        }
+        if (Error) {
           std::cerr << "Invalid operand found in inline asm: '"
                     << AsmStr << "'\n";
           MI->dump();
@@ -630,6 +638,13 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
 /// overried this to format as appropriate.
 bool AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                                  unsigned AsmVariant, const char *ExtraCode) {
+  // Target doesn't support this yet!
+  return true;
+}
+
+bool AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
+                                       unsigned AsmVariant,
+                                       const char *ExtraCode) {
   // Target doesn't support this yet!
   return true;
 }
