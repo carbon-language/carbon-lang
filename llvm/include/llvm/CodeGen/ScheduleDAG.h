@@ -335,6 +335,9 @@ namespace llvm {
     virtual void dump() const;
 
   private:
+    void AddOperand(MachineInstr *MI, SDOperand Op, unsigned IIOpNum,
+                    const TargetInstrDescriptor *II);
+      
     /// PrepareNodeInfo - Set up the basic minimum node info for scheduling.
     /// 
     void PrepareNodeInfo();
