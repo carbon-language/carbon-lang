@@ -49,10 +49,27 @@ public:
   virtual void EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {}
   virtual void InstructionSelectBasicBlock(SelectionDAG &SD) = 0;
 
+  /// SelectInlineAsmMemoryOperand - Select the specified address as a target
+  /// addressing mode, according to the specified constraint code.  If this does
+  /// not match or is not implemented, return true.  The resultant operands
+  /// (which will appear in the machine instruction) should be added to the
+  /// OutOps vector.
+  virtual bool SelectInlineAsmMemoryOperand(const SDOperand &Op,
+                                            char ConstraintCode,
+                                            std::vector<SDOperand> &OutOps,
+                                            SelectionDAG &DAG) {
+    return true;
+  }
+  
 protected:
   /// Pick a safe ordering and emit instructions for each target node in the
   /// graph.
   void ScheduleAndEmitDAG(SelectionDAG &DAG);
+  
+  /// SelectInlineAsmMemoryOperands - Calls to this are automatically generated
+  /// by tblgen.  Others should not call it.
+  void SelectInlineAsmMemoryOperands(std::vector<SDOperand> &Ops,
+                                     SelectionDAG &DAG);
   
 private:
   SDOperand CopyValueToVirtualRegister(SelectionDAGLowering &SDL,
