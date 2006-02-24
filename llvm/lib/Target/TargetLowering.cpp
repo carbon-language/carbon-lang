@@ -718,6 +718,10 @@ TargetLowering::getConstraintType(char ConstraintLetter) const {
   switch (ConstraintLetter) {
   default: return C_Unknown;
   case 'r': return C_RegisterClass;
+  case 'm':    // memory
+  case 'o':    // offsetable
+  case 'V':    // not offsetable
+    return C_Memory;
   case 'i':    // Simple Integer or Relocatable Constant
   case 'n':    // Simple Integer
   case 's':    // Relocatable Constant
@@ -728,7 +732,8 @@ TargetLowering::getConstraintType(char ConstraintLetter) const {
   case 'M':
   case 'N':
   case 'O':
-  case 'P':  return C_Other;
+  case 'P':
+    return C_Other;
   }
 }
 
