@@ -328,7 +328,7 @@ void ScheduleDAG::EmitNode(NodeInfo *NI) {
         unsigned Flags = cast<ConstantSDNode>(Node->getOperand(i))->getValue();
         unsigned NumVals = Flags >> 3;
         
-        MI->addZeroExtImm64Operand(NumVals);
+        MI->addZeroExtImm64Operand(Flags);
         ++i;  // Skip the ID value.
         
         switch (Flags & 7) {

@@ -575,8 +575,10 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
         unsigned OpNo = 1;
         
         // Scan to find the machine operand number for the operand.
-        for (; Val; --Val)
-          OpNo += MI->getOperand(OpNo).getImmedValue()+1;
+        for (; Val; --Val) {
+          unsigned OpFlags = MI->getOperand(OpNo).getImmedValue();
+          OpNo += (OpFlags >> 3) + 1;
+        }
         
         ++OpNo;  // Skip over the ID number.
         
