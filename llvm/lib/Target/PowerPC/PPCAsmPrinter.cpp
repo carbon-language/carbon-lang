@@ -98,6 +98,9 @@ namespace {
     
     bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                          unsigned AsmVariant, const char *ExtraCode);
+    bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
+                               unsigned AsmVariant, const char *ExtraCode);
+    
     
     void printU5ImmOperand(const MachineInstr *MI, unsigned OpNo) {
       unsigned char value = MI->getOperand(OpNo).getImmedValue();
@@ -187,7 +190,7 @@ namespace {
       unsigned RegNo = enumRegToMachineReg(CCReg);
       O << (0x80 >> RegNo);
     }
-    // The new addressing mode printers, currently empty
+    // The new addressing mode printers.
     void printMemRegImm(const MachineInstr *MI, unsigned OpNo) {
       printSymbolLo(MI, OpNo);
       O << '(';
@@ -419,6 +422,14 @@ bool PPCAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
   return false;
 }
 
+bool PPCAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
+                                          unsigned AsmVariant, 
+                                          const char *ExtraCode) {
+  if (ExtraCode && ExtraCode[0])
+    return true; // Unknown modifier.
+  printMemRegReg(MI, OpNo);
+  return false;
+}
 
 /// printMachineInstruction -- Print out a single PowerPC MI in Darwin syntax to
 /// the current output stream.
