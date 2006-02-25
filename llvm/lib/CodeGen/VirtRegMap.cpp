@@ -437,25 +437,39 @@ namespace {
             // to undo a previous reuse.
             MachineBasicBlock *MBB = MI->getParent();
             const TargetRegisterClass *AliasRC =
-            MBB->getParent()->getSSARegMap()->getRegClass(Op.VirtReg);
-            MRI->loadRegFromStackSlot(*MBB, MI, Op.AssignedPhysReg,
-                                      Op.StackSlot, AliasRC);
-            Spills.ClobberPhysReg(Op.AssignedPhysReg);
-            Spills.ClobberPhysReg(Op.PhysRegReused);
+              MBB->getParent()->getSSARegMap()->getRegClass(Op.VirtReg);
+
+            // Copy Op out of the vector and remove it, we're going to insert an
+            // explicit load for it.
+            ReusedOp NewOp = Op;
+            Reuses.erase(Reuses.begin()+ro);
+
+            // Ok, we're going to try to reload the assigned physreg into the
+            // slot that we were supposed to in the first place.  However, that
+            // register could hold a reuse.  Check to see if it conflicts or
+            // would prefer us to use a different register.
+            unsigned NewPhysReg = GetRegForReload(NewOp.AssignedPhysReg,
+                                                  MI, Spills, MaybeDeadStores);
+            
+            MRI->loadRegFromStackSlot(*MBB, MI, NewPhysReg,
+                                      NewOp.StackSlot, AliasRC);
+            Spills.ClobberPhysReg(NewPhysReg);
+            Spills.ClobberPhysReg(NewOp.PhysRegReused);
             
             // Any stores to this stack slot are not dead anymore.
-            MaybeDeadStores.erase(Op.StackSlot);
+            MaybeDeadStores.erase(NewOp.StackSlot);
             
-            MI->SetMachineOperandReg(Op.Operand, Op.AssignedPhysReg);
+            MI->SetMachineOperandReg(NewOp.Operand, NewPhysReg);
             
-            Spills.addAvailable(Op.StackSlot, Op.AssignedPhysReg);
+            Spills.addAvailable(NewOp.StackSlot, NewPhysReg);
             ++NumLoads;
             DEBUG(MachineBasicBlock::iterator MII = MI;
                   std::cerr << '\t' << *prior(MII));
             
             DEBUG(std::cerr << "Reuse undone!\n");
-            Reuses.erase(Reuses.begin()+ro);
             --NumReused;
+            
+            // Finally, PhysReg is now available, go ahead and use it.
             return PhysReg;
           }
         }
