@@ -56,6 +56,8 @@ def SDTX86RepStr  : SDTypeProfile<0, 1, [SDTCisVT<0, OtherVT>]>;
 
 def SDTX86RdTsc   : SDTypeProfile<0, 0, []>;
 
+def SDTX86Wrapper : SDTypeProfile<1, 1, [SDTCisSameAs<0, 1>, SDTCisPtrTy<0>]>;
+
 def X86shld    : SDNode<"X86ISD::SHLD",     SDTIntShiftDOp>;
 def X86shrd    : SDNode<"X86ISD::SHRD",     SDTIntShiftDOp>;
 
@@ -120,6 +122,8 @@ def X86rdtsc   : SDNode<"X86ISD::RDTSC_DAG",SDTX86RdTsc,
 def X86loadp   : SDNode<"X86ISD::LOAD_PACK", SDTLoad, 
                         [SDNPHasChain]>;
 
+def X86Wrapper : SDNode<"X86ISD::Wrapper",  SDTX86Wrapper>;
+
 //===----------------------------------------------------------------------===//
 // X86 Operand Definitions.
 //
@@ -165,7 +169,7 @@ def brtarget : Operand<OtherVT>;
 // Define X86 specific addressing mode.
 def addr    : ComplexPattern<i32, 4, "SelectAddr", []>;
 def leaaddr : ComplexPattern<i32, 4, "SelectLEAAddr",
-                             [add, frameindex]>;
+                             [add, mul, shl, frameindex]>;
 
 //===----------------------------------------------------------------------===//
 // X86 Instruction Format Definitions.
@@ -2351,6 +2355,25 @@ def MOV32r0  : I<0x31, MRMInitReg,  (ops R32:$dst),
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
 //===----------------------------------------------------------------------===//
+
+// ConstantPool GlobalAddress, ExternalSymbol
+def : Pat<(i32 (X86Wrapper tconstpool  :$dst)), (MOV32ri tconstpool  :$dst)>;
+def : Pat<(i32 (X86Wrapper tglobaladdr :$dst)), (MOV32ri tglobaladdr :$dst)>;
+def : Pat<(i32 (X86Wrapper texternalsym:$dst)), (MOV32ri texternalsym:$dst)>;
+
+def : Pat<(add R32:$src1, (X86Wrapper tconstpool:$src2)),
+          (ADD32ri R32:$src1, tconstpool:$src2)>;
+def : Pat<(add R32:$src1, (X86Wrapper tglobaladdr :$src2)),
+          (ADD32ri R32:$src1, tglobaladdr:$src2)>;
+def : Pat<(add R32:$src1, (X86Wrapper texternalsym:$src2)),
+          (ADD32ri R32:$src1, texternalsym:$src2)>;
+
+def : Pat<(store (X86Wrapper tconstpool:$src), addr:$dst),
+          (MOV32mi addr:$dst, tconstpool:$src)>;
+def : Pat<(store (X86Wrapper tglobaladdr:$src), addr:$dst),
+          (MOV32mi addr:$dst, tglobaladdr:$src)>;
+def : Pat<(store (X86Wrapper texternalsym:$src), addr:$dst),
+          (MOV32mi addr:$dst, texternalsym:$src)>;
 
 // Calls
 def : Pat<(X86call tglobaladdr:$dst),
