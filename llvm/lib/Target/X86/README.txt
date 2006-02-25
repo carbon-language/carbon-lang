@@ -157,6 +157,7 @@ aren't.
 
 Use push/pop instructions in prolog/epilog sequences instead of stores off 
 ESP (certain code size win, perf win on some [which?] processors).
+Also, it appears icc use push for parameter passing. Need to investigate.
 
 //===---------------------------------------------------------------------===//
 
@@ -411,22 +412,6 @@ void clearbit(int *target, int bit) {
 
 //===---------------------------------------------------------------------===//
 
-Easy: Global addresses are not always allowed as immediates.  For this:
-
-int dst = 0; int *ptr = 0;
-void foo() { ptr = &dst; }
-
-we get this:
-
-_foo:
-        movl $_dst, %eax
-        movl %eax, _ptr
-        ret
-
-When: "movl $_dst, _ptr" is sufficient.
-
-//===---------------------------------------------------------------------===//
-
 Instead of the following for memset char*, 1, 10:
 
 	movl $16843009, 4(%edx)
@@ -505,10 +490,6 @@ and ISD::FMAX node types?
 
 //===---------------------------------------------------------------------===//
 
-Select (add, x, GlobalAddress) to ADD32ri, etc. when it's appropriate.
-
-//===---------------------------------------------------------------------===//
-
 The first BB of this code:
 
 declare bool %foo()
@@ -533,4 +514,6 @@ _bar:
 
 It would be better to emit "cmp %al, 1" than a xor and test.
 
+//===---------------------------------------------------------------------===//
 
+Enable X86InstrInfo::convertToThreeAddress().
