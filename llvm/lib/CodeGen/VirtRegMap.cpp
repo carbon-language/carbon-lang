@@ -269,6 +269,8 @@ public:
       return I->second >> 1;  // Remove the CanClobber bit.
     return 0;
   }
+  
+  const MRegisterInfo *getRegInfo() const { return MRI; }
 
   /// addAvailable - Mark that the specified stack slot is available in the
   /// specified physreg.  If CanClobber is true, the physreg can be modified at
@@ -375,6 +377,88 @@ namespace {
       : Operand(o), StackSlot(ss), PhysRegReused(prr), AssignedPhysReg(apr),
       VirtReg(vreg) {}
   };
+  
+  /// ReuseInfo - This maintains a collection of ReuseOp's for each operand that
+  /// is reused instead of reloaded.
+  class ReuseInfo {
+    MachineInstr &MI;
+    std::vector<ReusedOp> Reuses;
+  public:
+    ReuseInfo(MachineInstr &mi) : MI(mi) {}
+    
+    bool hasReuses() const {
+      return !Reuses.empty();
+    }
+    
+    /// addReuse - If we choose to reuse a virtual register that is already
+    /// available instead of reloading it, remember that we did so.
+    void addReuse(unsigned OpNo, unsigned StackSlot,
+                  unsigned PhysRegReused, unsigned AssignedPhysReg,
+                  unsigned VirtReg) {
+      // If the reload is to the assigned register anyway, no undo will be
+      // required.
+      if (PhysRegReused == AssignedPhysReg) return;
+      
+      // Otherwise, remember this.
+      Reuses.push_back(ReusedOp(OpNo, StackSlot, PhysRegReused, 
+                                AssignedPhysReg, VirtReg));
+    }
+    
+    /// GetRegForReload - We are about to emit a reload into PhysReg.  If there
+    /// is some other operand that is using the specified register, either pick
+    /// a new register to use, or evict the previous reload and use this reg. 
+    unsigned GetRegForReload(unsigned PhysReg, MachineInstr *MI,
+                             AvailableSpills &Spills,
+                             std::map<int, MachineInstr*> &MaybeDeadStores) {
+      if (Reuses.empty()) return PhysReg;  // This is most often empty.
+
+      for (unsigned ro = 0, e = Reuses.size(); ro != e; ++ro) {
+        ReusedOp &Op = Reuses[ro];
+        // If we find some other reuse that was supposed to use this register
+        // exactly for its reload, we can change this reload to use ITS reload
+        // register.
+        if (Op.PhysRegReused == PhysReg) {
+          // Yup, use the reload register that we didn't use before.
+          return GetRegForReload(Op.AssignedPhysReg, MI, 
+                                 Spills, MaybeDeadStores);
+        } else {
+          // Otherwise, we might also have a problem if a previously reused
+          // value aliases the new register.  If so, codegen the previous reload
+          // and use this one.          
+          unsigned PRRU = Op.PhysRegReused;
+          const MRegisterInfo *MRI = Spills.getRegInfo();
+          if (MRI->areAliases(PRRU, PhysReg)) {
+            // Okay, we found out that an alias of a reused register
+            // was used.  This isn't good because it means we have
+            // to undo a previous reuse.
+            MachineBasicBlock *MBB = MI->getParent();
+            const TargetRegisterClass *AliasRC =
+            MBB->getParent()->getSSARegMap()->getRegClass(Op.VirtReg);
+            MRI->loadRegFromStackSlot(*MBB, MI, Op.AssignedPhysReg,
+                                      Op.StackSlot, AliasRC);
+            Spills.ClobberPhysReg(Op.AssignedPhysReg);
+            Spills.ClobberPhysReg(Op.PhysRegReused);
+            
+            // Any stores to this stack slot are not dead anymore.
+            MaybeDeadStores.erase(Op.StackSlot);
+            
+            MI->SetMachineOperandReg(Op.Operand, Op.AssignedPhysReg);
+            
+            Spills.addAvailable(Op.StackSlot, Op.AssignedPhysReg);
+            ++NumLoads;
+            DEBUG(MachineBasicBlock::iterator MII = MI;
+                  std::cerr << '\t' << *prior(MII));
+            
+            DEBUG(std::cerr << "Reuse undone!\n");
+            Reuses.erase(Reuses.begin()+ro);
+            --NumReused;
+            return PhysReg;
+          }
+        }
+      }
+      return PhysReg;
+    }
+  };
 }
 
 
@@ -388,8 +472,6 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
   // that we can choose to reuse the physregs instead of emitting reloads.
   AvailableSpills Spills(MRI, TII);
   
-  std::vector<ReusedOp> ReusedOperands;
-
   // DefAndUseVReg - When we see a def&use operand that is spilled, keep track
   // of it.  ".first" is the machine operand index (should always be 0 for now),
   // and ".second" is the virtual register that is spilled.
@@ -405,12 +487,18 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
 
   bool *PhysRegsUsed = MBB.getParent()->getUsedPhysregs();
 
+  if (MBB.getBasicBlock()->getName() == "endif.3.i")
+    std::cerr << "HERE\n";
+  
   for (MachineBasicBlock::iterator MII = MBB.begin(), E = MBB.end();
        MII != E; ) {
     MachineInstr &MI = *MII;
     MachineBasicBlock::iterator NextMII = MII; ++NextMII;
 
-    ReusedOperands.clear();
+    /// ReusedOperands - Keep track of operand reuse in case we need to undo
+    /// reuse.
+    ReuseInfo ReusedOperands(MI);
+    
     DefAndUseVReg.clear();
 
     // Process all of the spilled uses and all non spilled reg references.
@@ -480,8 +568,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
         // or R0 and R1 might not be compatible with each other.  In this
         // case, we actually insert a reload for V1 in R1, ensuring that
         // we can get at R0 or its alias.
-        ReusedOperands.push_back(ReusedOp(i, StackSlot, PhysReg,
-                                          VRM.getPhys(VirtReg), VirtReg));
+        ReusedOperands.addReuse(i, StackSlot, PhysReg,
+                                VRM.getPhys(VirtReg), VirtReg);
         ++NumReused;
         continue;
       }
@@ -492,47 +580,14 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
       const TargetRegisterClass* RC =
         MBB.getParent()->getSSARegMap()->getRegClass(VirtReg);
 
-    RecheckRegister:
       // Note that, if we reused a register for a previous operand, the
       // register we want to reload into might not actually be
       // available.  If this occurs, use the register indicated by the
       // reuser.
-      if (!ReusedOperands.empty())   // This is most often empty.
-        for (unsigned ro = 0, e = ReusedOperands.size(); ro != e; ++ro)
-          if (ReusedOperands[ro].PhysRegReused == PhysReg) {
-            // Yup, use the reload register that we didn't use before.
-            PhysReg = ReusedOperands[ro].AssignedPhysReg;
-            goto RecheckRegister;
-          } else {
-            ReusedOp &Op = ReusedOperands[ro];
-            unsigned PRRU = Op.PhysRegReused;
-            if (MRI->areAliases(PRRU, PhysReg)) {
-              // Okay, we found out that an alias of a reused register
-              // was used.  This isn't good because it means we have
-              // to undo a previous reuse.
-              const TargetRegisterClass *AliasRC =
-                MBB.getParent()->getSSARegMap()->getRegClass(Op.VirtReg);
-              MRI->loadRegFromStackSlot(MBB, &MI, Op.AssignedPhysReg,
-                                        Op.StackSlot, AliasRC);
-              Spills.ClobberPhysReg(Op.AssignedPhysReg);
-              Spills.ClobberPhysReg(Op.PhysRegReused);
-              
-              // Any stores to this stack slot are not dead anymore.
-              MaybeDeadStores.erase(Op.StackSlot);
-
-              MI.SetMachineOperandReg(Op.Operand, Op.AssignedPhysReg);
-              
-              Spills.addAvailable(Op.StackSlot, Op.AssignedPhysReg);
-              ++NumLoads;
-              DEBUG(std::cerr << '\t' << *prior(MII));
-
-              DEBUG(std::cerr << "Reuse undone!\n");
-              ReusedOperands.erase(ReusedOperands.begin()+ro);
-              --NumReused;
-              goto ContinueReload;
-            }
-          }
-    ContinueReload:
+      if (ReusedOperands.hasReuses())
+        PhysReg = ReusedOperands.GetRegForReload(PhysReg, &MI, 
+                                                 Spills, MaybeDeadStores);
+      
       PhysRegsUsed[PhysReg] = true;
       MRI->loadRegFromStackSlot(MBB, &MI, PhysReg, StackSlot, RC);
       // This invalidates PhysReg.
