@@ -1,5 +1,7 @@
 ; RUN: llvm-as < %s | llc -march=x86 | grep lea
 
+; XFAIL: *
+
 %G = weak global int 0
 int %test1(int* %P, int %X) {
 	%tmp.1 = getelementptr int* %P, int %X
