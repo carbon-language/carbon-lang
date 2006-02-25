@@ -46,7 +46,6 @@ namespace {
     enum {
       RegBase,
       FrameIndexBase,
-      ConstantPoolBase
     } BaseType;
 
     struct {            // This is really a union, discriminated by BaseType!
@@ -58,9 +57,12 @@ namespace {
     SDOperand IndexReg; 
     unsigned Disp;
     GlobalValue *GV;
+    Constant *CP;
+    unsigned Align;    // CP alignment.
 
     X86ISelAddressMode()
-      : BaseType(RegBase), Scale(1), IndexReg(), Disp(0), GV(0) {
+      : BaseType(RegBase), Scale(1), IndexReg(), Disp(0), GV(0),
+        CP(0), Align(0) {
     }
   };
 }
@@ -132,7 +134,9 @@ namespace {
       Scale = getI8Imm(AM.Scale);
       Index = AM.IndexReg;
       Disp  = AM.GV ? CurDAG->getTargetGlobalAddress(AM.GV, MVT::i32, AM.Disp)
-        : getI32Imm(AM.Disp);
+        : (AM.CP ?
+           CurDAG->getTargetConstantPool(AM.CP, MVT::i32, AM.Align, AM.Disp)
+           : getI32Imm(AM.Disp));
     }
 
     /// getI8Imm - Return a target constant with the specified value, of type
@@ -266,26 +270,44 @@ void X86DAGToDAGISel::EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {
 /// addressing mode
 bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
                                    bool isRoot) {
-  bool StopHere = false;
-  // If N has already been selected, we may or may not want to fold its
-  // operands into the addressing mode. It will result in code duplication!
-  // FIXME: Right now we do. That is, as long as the selected target node
-  // does not produce a chain. This may require a more sophisticated heuristics.
+  bool Available = false;
+  // If N has already been selected, reuse the result unless in some very
+  // specific cases.
   std::map<SDOperand, SDOperand>::iterator CGMI= CodeGenMap.find(N.getValue(0));
   if (CGMI != CodeGenMap.end()) {
-    if (isRoot)
-      // Stop here if it is a root. It's probably not profitable to go deeper.
-      StopHere = true;
-    else {
-      for (unsigned i = 0, e = CGMI->second.Val->getNumValues(); i != e; ++i) {
-        if (CGMI->second.Val->getValueType(i) == MVT::Other)
-          StopHere = true;
-      }
-    }
+    Available = true;
   }
 
   switch (N.getOpcode()) {
   default: break;
+  case ISD::Constant:
+    AM.Disp += cast<ConstantSDNode>(N)->getValue();
+    return false;
+
+  case X86ISD::Wrapper:
+    // If both base and index components have been picked, we can't fit
+    // the result available in the register in the addressing mode. Duplicate
+    // GlobalAddress or ConstantPool as displacement.
+    if (!Available || (AM.Base.Reg.Val && AM.IndexReg.Val)) {
+      if (ConstantPoolSDNode *CP =
+          dyn_cast<ConstantPoolSDNode>(N.getOperand(0))) {
+        if (AM.CP == 0) {
+          AM.CP = CP->get();
+          AM.Align = CP->getAlignment();
+          AM.Disp += CP->getOffset();
+          return false;
+        }
+      } else if (GlobalAddressSDNode *G =
+                 dyn_cast<GlobalAddressSDNode>(N.getOperand(0))) {
+        if (AM.GV == 0) {
+          AM.GV = G->getGlobal();
+          AM.Disp += G->getOffset();
+          return false;
+        }
+      }
+    }
+    break;
+
   case ISD::FrameIndex:
     if (AM.BaseType == X86ISelAddressMode::RegBase && AM.Base.Reg.Val == 0) {
       AM.BaseType = X86ISelAddressMode::FrameIndexBase;
@@ -294,48 +316,8 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
     }
     break;
 
-  case ISD::ConstantPool:
-    if (AM.BaseType == X86ISelAddressMode::RegBase && AM.Base.Reg.Val == 0) {
-      if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N)) {
-        AM.BaseType = X86ISelAddressMode::ConstantPoolBase;
-        AM.Base.Reg = CurDAG->getTargetConstantPool(CP->get(), MVT::i32,
-                                                    CP->getAlignment());
-        return false;
-      }
-    }
-    break;
-
-  case ISD::GlobalAddress:
-    if (AM.GV == 0) {
-      AM.GV = cast<GlobalAddressSDNode>(N)->getGlobal();
-      return false;
-    }
-    break;
-
-  case X86ISD::Wrapper:
-    if (ConstantPoolSDNode *CP =
-        dyn_cast<ConstantPoolSDNode>(N.getOperand(0))) {
-      if (AM.BaseType == X86ISelAddressMode::RegBase && AM.Base.Reg.Val == 0) {
-        AM.BaseType = X86ISelAddressMode::ConstantPoolBase;
-        AM.Base.Reg = CurDAG->getTargetConstantPool(CP->get(), MVT::i32,
-                                                    CP->getAlignment());
-        return false;
-      }
-    } else if (GlobalAddressSDNode *G =
-               dyn_cast<GlobalAddressSDNode>(N.getOperand(0))) {
-      if (AM.GV == 0) {
-        AM.GV = cast<GlobalAddressSDNode>(N.getOperand(0))->getGlobal();
-        return false;
-      }
-    }
-    break;
-
-  case ISD::Constant:
-    AM.Disp += cast<ConstantSDNode>(N)->getValue();
-    return false;
-
   case ISD::SHL:
-    if (!StopHere && AM.IndexReg.Val == 0 && AM.Scale == 1)
+    if (!Available && AM.IndexReg.Val == 0 && AM.Scale == 1)
       if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.Val->getOperand(1))) {
         unsigned Val = CN->getValue();
         if (Val == 1 || Val == 2 || Val == 3) {
@@ -361,8 +343,10 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
 
   case ISD::MUL:
     // X*[3,5,9] -> X+X*[2,4,8]
-    if (!StopHere && AM.IndexReg.Val == 0 && AM.BaseType == X86ISelAddressMode::RegBase &&
-        AM.Base.Reg.Val == 0)
+    if (!Available &&
+        AM.BaseType == X86ISelAddressMode::RegBase &&
+        AM.Base.Reg.Val == 0 &&
+        AM.IndexReg.Val == 0)
       if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.Val->getOperand(1)))
         if (CN->getValue() == 3 || CN->getValue() == 5 || CN->getValue() == 9) {
           AM.Scale = unsigned(CN->getValue())-1;
@@ -389,7 +373,7 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
     break;
 
   case ISD::ADD: {
-    if (!StopHere) {
+    if (!Available) {
       X86ISelAddressMode Backup = AM;
       if (!MatchAddress(N.Val->getOperand(0), AM, false) &&
           !MatchAddress(N.Val->getOperand(1), AM, false))
@@ -406,10 +390,6 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
 
   // Is the base register already occupied?
   if (AM.BaseType != X86ISelAddressMode::RegBase || AM.Base.Reg.Val) {
-    // TargetConstantPool cannot be anything but the base.
-    if (N.getOpcode() == ISD::TargetConstantPool)
-      return true;
-
     // If so, check to see if the scale index register is set.
     if (AM.IndexReg.Val == 0) {
       AM.IndexReg = N;
@@ -445,7 +425,54 @@ bool X86DAGToDAGISel::SelectAddr(SDOperand N, SDOperand &Base, SDOperand &Scale,
     AM.IndexReg = CurDAG->getRegister(0, MVT::i32);
 
   getAddressOperands(AM, Base, Scale, Index, Disp);
+
   return true;
+}
+
+/// SelectLEAAddr - it calls SelectAddr and determines if the maximal addressing
+/// mode it matches can be cost effectively emitted as an LEA instruction.
+/// For X86, it always is unless it's just a (Reg + const).
+bool X86DAGToDAGISel::SelectLEAAddr(SDOperand N, SDOperand &Base,
+                                    SDOperand &Scale,
+                                    SDOperand &Index, SDOperand &Disp) {
+  X86ISelAddressMode AM;
+  if (MatchAddress(N, AM))
+    return false;
+
+  unsigned Complexity = 0;
+  if (AM.BaseType == X86ISelAddressMode::RegBase)
+    if (AM.Base.Reg.Val)
+      Complexity = 1;
+    else
+      AM.Base.Reg = CurDAG->getRegister(0, MVT::i32);
+  else if (AM.BaseType == X86ISelAddressMode::FrameIndexBase)
+    Complexity = 4;
+
+  if (AM.IndexReg.Val)
+    Complexity++;
+  else
+    AM.IndexReg = CurDAG->getRegister(0, MVT::i32);
+
+  if (AM.Scale > 1)
+    Complexity += 2;
+
+  // FIXME: We are artificially lowering the criteria to turn ADD %reg, $GA
+  // to a LEA. This is determined with some expermentation but is by no means
+  // optimal (especially for code size consideration). LEA is nice because of
+  // its three-address nature. Tweak the cost function again when we can run
+  // convertToThreeAddress() at register allocation time.
+  if (AM.GV || AM.CP)
+    Complexity += 2;
+
+  if (AM.Disp && (AM.Base.Reg.Val || AM.IndexReg.Val))
+    Complexity++;
+
+  if (Complexity > 2) {
+    getAddressOperands(AM, Base, Scale, Index, Disp);
+    return true;
+  }
+
+  return false;
 }
 
 bool X86DAGToDAGISel::TryFoldLoad(SDOperand P, SDOperand N,
@@ -462,67 +489,6 @@ bool X86DAGToDAGISel::TryFoldLoad(SDOperand P, SDOperand N,
 static bool isRegister0(SDOperand Op) {
   if (RegisterSDNode *R = dyn_cast<RegisterSDNode>(Op))
     return (R->getReg() == 0);
-  return false;
-}
-
-/// SelectLEAAddr - it calls SelectAddr and determines if the maximal addressing
-/// mode it matches can be cost effectively emitted as an LEA instruction.
-/// For X86, it always is unless it's just a (Reg + const).
-bool X86DAGToDAGISel::SelectLEAAddr(SDOperand N, SDOperand &Base,
-                                    SDOperand &Scale,
-                                    SDOperand &Index, SDOperand &Disp) {
-  X86ISelAddressMode AM;
-  if (!MatchAddress(N, AM)) {
-    bool SelectIndex = false;
-    bool Check       = false;
-    if (AM.BaseType == X86ISelAddressMode::RegBase) {
-      if (AM.Base.Reg.Val)
-        Check = true;
-      else
-        AM.Base.Reg = CurDAG->getRegister(0, MVT::i32);
-    }
-
-    if (AM.IndexReg.Val)
-      SelectIndex = true;
-    else
-      AM.IndexReg = CurDAG->getRegister(0, MVT::i32);
-
-    if (Check) {
-      unsigned Complexity = 0;
-      if (AM.Scale > 1)
-        Complexity++;
-      if (SelectIndex)
-        Complexity++;
-      if (AM.GV) {
-        Complexity++;
-        if (AM.Disp)
-          Complexity++;
-      } else if (AM.Disp > 1)
-        Complexity++;
-      // Suppose base == %eax and it has multiple uses, then instead of 
-      //   movl %eax, %ecx
-      //   addl $8, %ecx
-      // use
-      //   leal 8(%eax), %ecx.
-      // FIXME: If the other uses ended up being scheduled ahead of the leal
-      // then it would have been better to use the addl. The proper way to
-      // handle this is with using  X86InstrInfo::convertToThreeAddress hook.
-      // From an email:
-      // BTW, this problem is the one that inspired the
-      // "X86InstrInfo::convertToThreeAddress" hook (which would handle this
-      // the "right" way).  Unfortunately the X86 implementation of this is
-      // disabled, because we don't currently have enough information handy to
-      // know that the flags from the add is dead when the hook is called (from
-      // the register allocator).
-      if (AM.Base.Reg.Val->use_size() > 1)
-        Complexity++;
-      if (Complexity <= 1)
-        return false;
-    }
-
-    getAddressOperands(AM, Base, Scale, Index, Disp);
-    return true;
-  }
   return false;
 }
 
@@ -589,37 +555,42 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
       Result = getGlobalBaseReg();
       return;
 
-    case X86ISD::Wrapper: {
-      // It's beneficial to manully select the wrapper nodes here rather
-      // then using tablgen'd code to match this. We do not want to mutate the
-      // node to MOV32ri and we do not want to record this in CodeGenMap.
-      // We want to allow the wrapped leaf nodes be duplicated so they can
-      // be used in addressing modes.
-      // e.g.
-      //       0xa59e4a0: i32 = TargetGlobalAddress <xxx> 0
-      //   0xa59e740: i32 = X86ISD::Wrapper 0xa59e4a0
-      // ...
-      // 0xa59e880: i32 = add 0xa59e740, 0xa59e800
-      // ...
-      //       0xa59e880: <multiple use>
-      //   0xa59e970: i32 = add 0xa59e880, 0xa59e910
-      // ...
-      // 0xa59ea60: i32,ch = load 0xa589780, 0xa59e970, 0xa59ea00
-      // ...
-      //          0xa59e880: <multiple use>
-      //        0xa59eb60: ch = CopyToReg 0xa59ea60:1, 0xa59eaf0, 0xa59e880
-      // By allowing the TargetGlobalAddress to be duplicated, it can appear
-      // in the load address as well as an operand of the add.
-      Result = SDOperand(CurDAG->getTargetNode(X86::MOV32ri, MVT::i32,
-                                               N.getOperand(0)), 0);
-#ifndef NDEBUG
-      DEBUG(std::cerr << std::string(Indent-2, ' '));
-      DEBUG(std::cerr << "== ");
-      DEBUG(Result.Val->dump(CurDAG));
-      DEBUG(std::cerr << "\n");
-      Indent -= 2;
-#endif
-      return;
+    case ISD::ADD: {
+      // Turn ADD X, c to MOV32ri X+c. This cannot be done with tblgen'd
+      // code and is matched first so to prevent it from being turned into
+      // LEA32r X+c.
+      SDOperand N0 = N.getOperand(0);
+      SDOperand N1 = N.getOperand(1);
+      if (N.Val->getValueType(0) == MVT::i32 &&
+          N0.getOpcode() == X86ISD::Wrapper &&
+          N1.getOpcode() == ISD::Constant) {
+        unsigned Offset = (unsigned)cast<ConstantSDNode>(N1)->getValue();
+        SDOperand C(0, 0);
+        // TODO: handle ExternalSymbolSDNode.
+        if (GlobalAddressSDNode *G =
+            dyn_cast<GlobalAddressSDNode>(N0.getOperand(0))) {
+          C = CurDAG->getTargetGlobalAddress(G->getGlobal(), MVT::i32,
+                                             G->getOffset() + Offset);
+        } else if (ConstantPoolSDNode *CP =
+                   dyn_cast<ConstantPoolSDNode>(N0.getOperand(0))) {
+          C = CurDAG->getTargetConstantPool(CP->get(), MVT::i32,
+                                            CP->getAlignment(),
+                                            CP->getOffset()+Offset);
+        }
+
+        if (C.Val) {
+          if (N.Val->hasOneUse()) {
+            Result = CurDAG->SelectNodeTo(N.Val, X86::MOV32ri, MVT::i32, C);
+          } else {
+            SDNode *ResNode = CurDAG->getTargetNode(X86::MOV32ri, MVT::i32, C);
+            Result = CodeGenMap[N] = SDOperand(ResNode, 0);
+          }
+          return;
+        }
+      }
+
+      // Other cases are handled by auto-generated code.
+      break;
     }
 
     case ISD::MULHU:
