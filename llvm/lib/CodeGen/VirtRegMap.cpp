@@ -419,8 +419,12 @@ namespace {
         // register.
         if (Op.PhysRegReused == PhysReg) {
           // Yup, use the reload register that we didn't use before.
-          return GetRegForReload(Op.AssignedPhysReg, MI, 
-                                 Spills, MaybeDeadStores);
+          unsigned NewReg = Op.AssignedPhysReg;
+          
+          // Remove the record for the previous reuse.  We know it can never be
+          // invalidated now.
+          Reuses.erase(Reuses.begin()+ro);
+          return GetRegForReload(NewReg, MI, Spills, MaybeDeadStores);
         } else {
           // Otherwise, we might also have a problem if a previously reused
           // value aliases the new register.  If so, codegen the previous reload
@@ -487,9 +491,6 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
 
   bool *PhysRegsUsed = MBB.getParent()->getUsedPhysregs();
 
-  if (MBB.getBasicBlock()->getName() == "endif.3.i")
-    std::cerr << "HERE\n";
-  
   for (MachineBasicBlock::iterator MII = MBB.begin(), E = MBB.end();
        MII != E; ) {
     MachineInstr &MI = *MII;
