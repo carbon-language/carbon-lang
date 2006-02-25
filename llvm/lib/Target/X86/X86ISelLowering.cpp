@@ -1829,6 +1829,13 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     return DAG.getNode(X86ISD::REP_MOVS, MVT::Other, Chain,
                        DAG.getValueType(AVT), InFlag);
   }
+
+  // ConstantPool, GlobalAddress, and ExternalSymbol are lowered as their
+  // target countpart wrapped in the X86ISD::Wrapper node. Suppose N is
+  // one of the above mentioned nodes. It has to be wrapped because otherwise
+  // Select(N) returns N. So the raw TargetGlobalAddress nodes, etc. can only
+  // be used to form addressing mode. These wrapped nodes will be selected
+  // into MOV32ri.
   case ISD::ConstantPool: {
     ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);
     SDOperand Result = DAG.getNode(X86ISD::Wrapper, getPointerTy(),
