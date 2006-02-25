@@ -47,11 +47,12 @@ struct X86SharedAsmPrinter : public AsmPrinter {
 
   inline static bool isMem(const MachineInstr *MI, unsigned Op) {
     if (MI->getOperand(Op).isFrameIndex()) return true;
-    if (MI->getOperand(Op).isConstantPoolIndex()) return true;
     return Op+4 <= MI->getNumOperands() &&
       MI->getOperand(Op  ).isRegister() && isScale(MI->getOperand(Op+1)) &&
-      MI->getOperand(Op+2).isRegister() && (MI->getOperand(Op+3).isImmediate()||
-      MI->getOperand(Op+3).isGlobalAddress());
+      MI->getOperand(Op+2).isRegister() &&
+      (MI->getOperand(Op+3).isImmediate() ||
+       MI->getOperand(Op+3).isGlobalAddress() ||
+       MI->getOperand(Op+3).isConstantPoolIndex());
   }
 };
 
