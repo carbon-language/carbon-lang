@@ -1028,19 +1028,19 @@ public:
 
 class GlobalAddressSDNode : public SDNode {
   GlobalValue *TheGlobal;
-  int offset;
+  int Offset;
 protected:
   friend class SelectionDAG;
   GlobalAddressSDNode(bool isTarget, const GlobalValue *GA, MVT::ValueType VT,
                       int o=0)
-    : SDNode(isTarget ? ISD::TargetGlobalAddress : ISD::GlobalAddress, VT) {
+    : SDNode(isTarget ? ISD::TargetGlobalAddress : ISD::GlobalAddress, VT),
+      Offset(o) {
     TheGlobal = const_cast<GlobalValue*>(GA);
-    offset = o;
   }
 public:
 
   GlobalValue *getGlobal() const { return TheGlobal; }
-  int getOffset() const { return offset; }
+  int getOffset() const { return Offset; }
 
   static bool classof(const GlobalAddressSDNode *) { return true; }
   static bool classof(const SDNode *N) {
@@ -1069,19 +1069,22 @@ public:
 
 class ConstantPoolSDNode : public SDNode {
   Constant *C;
+  int Offset;
   unsigned Alignment;
 protected:
   friend class SelectionDAG;
-  ConstantPoolSDNode(Constant *c, MVT::ValueType VT, bool isTarget)
+  ConstantPoolSDNode(bool isTarget, Constant *c, MVT::ValueType VT,
+                     int o=0)
     : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool, VT),
-    C(c), Alignment(0) {}
-  ConstantPoolSDNode(Constant *c, MVT::ValueType VT, unsigned Align,
-                     bool isTarget)
+      C(c), Offset(o), Alignment(0) {}
+  ConstantPoolSDNode(bool isTarget, Constant *c, MVT::ValueType VT, int o,
+                     unsigned Align)
     : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool, VT),
-    C(c), Alignment(Align) {}
+      C(c), Offset(o), Alignment(Align) {}
 public:
 
   Constant *get() const { return C; }
+  int getOffset() const { return Offset; }
   
   // Return the alignment of this constant pool object, which is either 0 (for
   // default alignment) or log2 of the desired value.

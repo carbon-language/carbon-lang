@@ -125,13 +125,15 @@ public:
     return *this;
   }
 
-  const MachineInstrBuilder &addConstantPoolIndex(unsigned Idx) const {
-    MI->addConstantPoolIndexOperand(Idx);
+  const MachineInstrBuilder &addConstantPoolIndex(unsigned Idx,
+                                                  int Offset = 0) const {
+    MI->addConstantPoolIndexOperand(Idx, Offset);
     return *this;
   }
 
   const MachineInstrBuilder &addGlobalAddress(GlobalValue *GV,
-                                              bool isPCRelative = false, int Offset = 0) const {
+                                              bool isPCRelative = false,
+                                              int Offset = 0) const {
     MI->addGlobalAddressOperand(GV, isPCRelative, Offset);
     return *this;
   }

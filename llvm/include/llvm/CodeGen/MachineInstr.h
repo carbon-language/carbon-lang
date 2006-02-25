@@ -131,7 +131,8 @@ private:
                                 // will be set for a value after reg allocation
 
     int offset;                 // Offset to address of global or external, only
-                                // valid for MO_GlobalAddress and MO_ExternalSym
+                                // valid for MO_GlobalAddress, MO_ExternalSym
+                                // and MO_ConstantPoolIndex
   } extra;
 
   void zeroContents () {
@@ -140,11 +141,14 @@ private:
   }
 
   MachineOperand(int64_t ImmVal = 0,
-        MachineOperandType OpTy = MO_VirtualRegister)
+        MachineOperandType OpTy = MO_VirtualRegister, int Offset = 0)
     : flags(0), opType(OpTy) {
     zeroContents ();
     contents.immedVal = ImmVal;
-    extra.regNum = -1;
+    if (OpTy == MachineOperand::MO_ConstantPoolIndex)
+      extra.offset = Offset;
+    else
+      extra.regNum = -1;
   }
 
   MachineOperand(int Reg, MachineOperandType OpTy, UseType UseTy)
@@ -286,7 +290,7 @@ public:
     return (GlobalValue*)contents.value;
   }
   int getOffset() const {
-    assert((isGlobalAddress() || isExternalSymbol()) &&
+    assert((isGlobalAddress() || isExternalSymbol() || isConstantPoolIndex()) &&
         "Wrong MachineOperand accessor");
     return extra.offset;
   }
@@ -344,7 +348,7 @@ public:
   }
 
   void setOffset(int Offset) {
-    assert((isGlobalAddress() || isExternalSymbol()) &&
+    assert((isGlobalAddress() || isExternalSymbol() || isConstantPoolIndex()) &&
         "Wrong MachineOperand accessor");
     extra.offset = Offset;
   }
@@ -644,7 +648,7 @@ public:
   /// addConstantPoolndexOperand - Add a constant pool object index to the
   /// instruction.
   ///
-  void addConstantPoolIndexOperand(unsigned I) {
+  void addConstantPoolIndexOperand(unsigned I, int Offset=0) {
     assert(!OperandsComplete() &&
            "Trying to add an operand to a machine instr that is already done!");
     operands.push_back(MachineOperand(I, MachineOperand::MO_ConstantPoolIndex));

@@ -175,23 +175,6 @@ void X86IntelAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
       O << " + " << DispSpec.getImmedValue();
     O << "]";
     return;
-  } else if (BaseReg.isConstantPoolIndex()) {
-    O << "[" << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << "_"
-      << BaseReg.getConstantPoolIndex();
-    if (forDarwin && TM.getRelocationModel() == Reloc::PIC)
-      O << "-\"L" << getFunctionNumber() << "$pb\"";
-
-    if (IndexReg.getReg()) {
-      O << " + ";
-      if (ScaleVal != 1)
-        O << ScaleVal << "*";
-      printOp(IndexReg);
-    }
-
-    if (DispSpec.getImmedValue())
-      O << " + " << DispSpec.getImmedValue();
-    O << "]";
-    return;
   }
 
   O << "[";
@@ -213,6 +196,15 @@ void X86IntelAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
     if (NeedPlus)
       O << " + ";
     printOp(DispSpec, "mem");
+  } else if (DispSpec.isConstantPoolIndex()) {
+    O << "[" << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << "_"
+      << DispSpec.getConstantPoolIndex();
+    if (forDarwin && TM.getRelocationModel() == Reloc::PIC)
+      O << "-\"L" << getFunctionNumber() << "$pb\"";
+    if (DispSpec.getOffset())
+      O << " + " << DispSpec.getOffset();
+    O << "]";
+    return;
   } else {
     int DispVal = DispSpec.getImmedValue();
     if (DispVal || (!BaseReg.getReg() && !IndexReg.getReg())) {

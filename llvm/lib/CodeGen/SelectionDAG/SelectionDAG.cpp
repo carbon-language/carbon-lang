@@ -302,12 +302,14 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
   case ISD::ConstantPool:
     Erased = ConstantPoolIndices.
       erase(std::make_pair(cast<ConstantPoolSDNode>(N)->get(),
-                           cast<ConstantPoolSDNode>(N)->getAlignment()));
+                        std::make_pair(cast<ConstantPoolSDNode>(N)->getOffset(),
+                                 cast<ConstantPoolSDNode>(N)->getAlignment())));
     break;
   case ISD::TargetConstantPool:
     Erased = TargetConstantPoolIndices.
       erase(std::make_pair(cast<ConstantPoolSDNode>(N)->get(),
-                           cast<ConstantPoolSDNode>(N)->getAlignment()));
+                        std::make_pair(cast<ConstantPoolSDNode>(N)->getOffset(),
+                                 cast<ConstantPoolSDNode>(N)->getAlignment())));
     break;
   case ISD::BasicBlock:
     Erased = BBNodes.erase(cast<BasicBlockSDNode>(N)->getBasicBlock());
@@ -650,19 +652,21 @@ SDOperand SelectionDAG::getTargetFrameIndex(int FI, MVT::ValueType VT) {
 }
 
 SDOperand SelectionDAG::getConstantPool(Constant *C, MVT::ValueType VT,
-                                        unsigned Alignment) {
-  SDNode *&N = ConstantPoolIndices[std::make_pair(C, Alignment)];
+                                        unsigned Alignment,  int Offset) {
+  SDNode *&N = ConstantPoolIndices[std::make_pair(C,
+                                            std::make_pair(Offset, Alignment))];
   if (N) return SDOperand(N, 0);
-  N = new ConstantPoolSDNode(C, VT, Alignment, false);
+  N = new ConstantPoolSDNode(false, C, VT, Offset, Alignment);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
 
 SDOperand SelectionDAG::getTargetConstantPool(Constant *C, MVT::ValueType VT,
-                                              unsigned Alignment) {
-  SDNode *&N = TargetConstantPoolIndices[std::make_pair(C, Alignment)];
+                                             unsigned Alignment,  int Offset) {
+  SDNode *&N = TargetConstantPoolIndices[std::make_pair(C,
+                                            std::make_pair(Offset, Alignment))];
   if (N) return SDOperand(N, 0);
-  N = new ConstantPoolSDNode(C, VT, Alignment, true);
+  N = new ConstantPoolSDNode(true, C, VT, Offset, Alignment);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }

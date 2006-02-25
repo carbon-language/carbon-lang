@@ -196,25 +196,18 @@ void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
       O << " + " << DispSpec.getImmedValue();
     O << "]";
     return;
-  } else if (BaseReg.isConstantPoolIndex()) {
-    O << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << "_"
-      << BaseReg.getConstantPoolIndex();
-    if (forDarwin && TM.getRelocationModel() == Reloc::PIC)
-      O << "-\"L" << getFunctionNumber() << "$pb\"";
-    if (DispSpec.getImmedValue())
-      O << "+" << DispSpec.getImmedValue();
-    if (IndexReg.getReg()) {
-      O << "(,";
-      printOperand(MI, Op+2);
-      if (ScaleVal != 1)
-        O << "," << ScaleVal;
-      O << ")";
-    }
-    return;
   }
 
   if (DispSpec.isGlobalAddress()) {
     printOperand(MI, Op+3, "mem");
+  } else if (DispSpec.isConstantPoolIndex()) {
+    O << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << "_"
+      << DispSpec.getConstantPoolIndex();
+    if (forDarwin && TM.getRelocationModel() == Reloc::PIC)
+      O << "-\"L" << getFunctionNumber() << "$pb\"";
+    if (DispSpec.getOffset())
+      O << "+" << DispSpec.getOffset();
+    return;
   } else {
     int DispVal = DispSpec.getImmedValue();
     if (DispVal || (!IndexReg.getReg() && !BaseReg.getReg()))

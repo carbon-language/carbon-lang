@@ -154,6 +154,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
     MI->addFrameIndexOperand(FI->getIndex());
   } else if (ConstantPoolSDNode *CP = 
              dyn_cast<ConstantPoolSDNode>(Op)) {
+    int Offset = CP->getOffset();
     unsigned Align = CP->getAlignment();
     // MachineConstantPool wants an explicit alignment.
     if (Align == 0) {
@@ -165,7 +166,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
     }
     
     unsigned Idx = ConstPool->getConstantPoolIndex(CP->get(), Align);
-    MI->addConstantPoolIndexOperand(Idx);
+    MI->addConstantPoolIndexOperand(Idx, Offset);
   } else if (ExternalSymbolSDNode *ES = 
              dyn_cast<ExternalSymbolSDNode>(Op)) {
     MI->addExternalSymbolOperand(ES->getSymbol(), false);
