@@ -154,7 +154,8 @@ static MachineInstr *MakeMIInst(unsigned Opcode, unsigned FrameIndex,
       .addZImm(MI->getOperand(1).getImmedValue());
   else if (MI->getOperand(1).isGlobalAddress())
     return addFrameReference(BuildMI(Opcode, 5), FrameIndex)
-      .addGlobalAddress(MI->getOperand(1).getGlobal());
+      .addGlobalAddress(MI->getOperand(1).getGlobal(),
+                        false, MI->getOperand(1).getOffset());
   assert(0 && "Unknown operand for MakeMI!");
   return 0;
 }
