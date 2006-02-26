@@ -2761,7 +2761,12 @@ void SDNode::dump(const SelectionDAG *G) const {
   } else if (const FrameIndexSDNode *FIDN = dyn_cast<FrameIndexSDNode>(this)) {
     std::cerr << "<" << FIDN->getIndex() << ">";
   } else if (const ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(this)){
+    int offset = CP->getOffset();
     std::cerr << "<" << *CP->get() << ">";
+    if (offset > 0)
+      std::cerr << " + " << offset;
+    else
+      std::cerr << " " << offset;
   } else if (const BasicBlockSDNode *BBDN = dyn_cast<BasicBlockSDNode>(this)) {
     std::cerr << "<";
     const Value *LBB = (const Value*)BBDN->getBasicBlock()->getBasicBlock();
