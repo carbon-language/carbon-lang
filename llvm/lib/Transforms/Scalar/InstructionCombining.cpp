@@ -2846,6 +2846,20 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
                                              ConstantInt::get(I.getType(), 1)),
                                           Op0I->getOperand(0));
           }
+        } else if (Op0I->getOpcode() == Instruction::Or) {
+          // (X|C1)^C2 -> X^(C1|C2) iff X&~C1 == 0
+          if (MaskedValueIsZero(Op0I->getOperand(0), Op0CI->getZExtValue())) {
+            Constant *NewRHS = ConstantExpr::getOr(Op0CI, RHS);
+            // Anything in both C1 and C2 is known to be zero, remove it from
+            // NewRHS.
+            Constant *CommonBits = ConstantExpr::getAnd(Op0CI, RHS);
+            NewRHS = ConstantExpr::getAnd(NewRHS, 
+                                          ConstantExpr::getNot(CommonBits));
+            WorkList.push_back(Op0I);
+            I.setOperand(0, Op0I->getOperand(0));
+            I.setOperand(1, NewRHS);
+            return &I;
+          }
         }
     }
 
