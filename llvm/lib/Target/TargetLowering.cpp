@@ -141,7 +141,7 @@ const char *TargetLowering::getTargetNodeName(unsigned Opcode) const {
 /// constant and return true.
 bool TargetLowering::TargetLoweringOpt::ShrinkDemandedConstant(SDOperand Op, 
                                                             uint64_t Demanded) {
-  // FIXME: ISD::SELECT
+  // FIXME: ISD::SELECT, ISD::SELECT_CC
   switch(Op.getOpcode()) {
   default: break;
   case ISD::AND:
@@ -199,15 +199,13 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
     // We know all of the bits for a constant!
     KnownOne = cast<ConstantSDNode>(Op)->getValue() & DemandedMask;
     KnownZero = ~KnownOne & DemandedMask;
-    return false;
+    return false;   // Don't fall through, will infinitely loop.
   case ISD::AND:
     // If either the LHS or the RHS are Zero, the result is zero.
     if (SimplifyDemandedBits(Op.getOperand(1), DemandedMask, KnownZero,
                              KnownOne, TLO, Depth+1))
       return true;
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
-    // If something is known zero on the RHS, the bits aren't demanded on the
-    // LHS.
     if (SimplifyDemandedBits(Op.getOperand(0), DemandedMask & ~KnownZero,
                              KnownZero2, KnownOne2, TLO, Depth+1))
       return true;
@@ -338,6 +336,24 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
     KnownOne &= KnownOne2;
     KnownZero &= KnownZero2;
     break;
+  case ISD::SELECT_CC:
+    if (SimplifyDemandedBits(Op.getOperand(3), DemandedMask, KnownZero, 
+                             KnownOne, TLO, Depth+1))
+      return true;
+    if (SimplifyDemandedBits(Op.getOperand(2), DemandedMask, KnownZero2,
+                             KnownOne2, TLO, Depth+1))
+      return true;
+    assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
+    assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?"); 
+    
+    // If the operands are constants, see if we can simplify them.
+    if (TLO.ShrinkDemandedConstant(Op, DemandedMask))
+      return true;
+      
+    // Only known if known in both the LHS and RHS.
+    KnownOne &= KnownOne2;
+    KnownZero &= KnownZero2;
+    break;
   case ISD::SHL:
     if (ConstantSDNode *SA = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
       if (SimplifyDemandedBits(Op.getOperand(0), DemandedMask >> SA->getValue(),
@@ -408,19 +424,20 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
     MVT::ValueType  VT = Op.getValueType();
     MVT::ValueType EVT = cast<VTSDNode>(Op.getOperand(1))->getVT();
 
-    // Sign or Zero extension.  Compute the bits in the result that are not
+    // Sign extension.  Compute the demanded bits in the result that are not 
     // present in the input.
-    uint64_t NotIn = ~MVT::getIntVTBitMask(EVT);
-    uint64_t NewBits = MVT::getIntVTBitMask(VT) & NotIn;
+    uint64_t NewBits = ~MVT::getIntVTBitMask(EVT) & DemandedMask;
     
-    // Sign extension.
+    // If none of the extended bits are demanded, eliminate the sextinreg.
+    if (NewBits == 0)
+      return TLO.CombineTo(Op, Op.getOperand(0));
+
     uint64_t InSignBit = MVT::getIntVTSignBit(EVT);
     int64_t InputDemandedBits = DemandedMask & MVT::getIntVTBitMask(EVT);
     
-    // If any of the sign extended bits are demanded, we know that the sign
+    // Since the sign extended bits are demanded, we know that the sign
     // bit is demanded.
-    if (NewBits & DemandedMask)
-      InputDemandedBits |= InSignBit;
+    InputDemandedBits |= InSignBit;
 
     if (SimplifyDemandedBits(Op.getOperand(0), InputDemandedBits,
                              KnownZero, KnownOne, TLO, Depth+1))
@@ -430,17 +447,103 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
     // If the sign bit of the input is known set or clear, then we know the
     // top bits of the result.
     
-    // If the input sign bit is known zero, or if the NewBits are not demanded
-    // convert this into a zero extension.
-    if ((KnownZero & InSignBit) || (NewBits & ~DemandedMask) == NewBits) {
-      return TLO.CombineTo(Op, Op.getOperand(0));
-    } else if (KnownOne & InSignBit) {    // Input sign bit known set
+    // If the input sign bit is known zero, convert this into a zero extension.
+    if (KnownZero & InSignBit)
+      return TLO.CombineTo(Op, 
+                           TLO.DAG.getZeroExtendInReg(Op.getOperand(0), EVT));
+    
+    if (KnownOne & InSignBit) {    // Input sign bit known set
       KnownOne |= NewBits;
       KnownZero &= ~NewBits;
-    } else {                              // Input sign bit unknown
+    } else {                       // Input sign bit unknown
       KnownZero &= ~NewBits;
       KnownOne &= ~NewBits;
     }
+    break;
+  }
+  case ISD::CTTZ:
+  case ISD::CTLZ:
+  case ISD::CTPOP: {
+    MVT::ValueType VT = Op.getValueType();
+    unsigned LowBits = Log2_32(MVT::getSizeInBits(VT))+1;
+    KnownZero = ~((1ULL << LowBits)-1) & MVT::getIntVTBitMask(VT);
+    KnownOne  = 0;
+    break;
+  }
+  case ISD::ZEXTLOAD: {
+    MVT::ValueType VT = cast<VTSDNode>(Op.getOperand(3))->getVT();
+    KnownZero |= ~MVT::getIntVTBitMask(VT) & DemandedMask;
+    break;
+  }
+  case ISD::ZERO_EXTEND: {
+    uint64_t InMask = MVT::getIntVTBitMask(Op.getOperand(0).getValueType());
+    
+    // If none of the top bits are demanded, convert this into an any_extend.
+    uint64_t NewBits = (~InMask) & DemandedMask;
+    if (NewBits == 0)
+      return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::ANY_EXTEND, 
+                                               Op.getValueType(), 
+                                               Op.getOperand(0)));
+    
+    if (SimplifyDemandedBits(Op.getOperand(0), DemandedMask & InMask,
+                             KnownZero, KnownOne, TLO, Depth+1))
+      return true;
+    assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
+    KnownZero |= NewBits;
+    break;
+  }
+  case ISD::SIGN_EXTEND: {
+    MVT::ValueType InVT = Op.getOperand(0).getValueType();
+    uint64_t InMask    = MVT::getIntVTBitMask(InVT);
+    uint64_t InSignBit = MVT::getIntVTSignBit(InVT);
+    uint64_t NewBits   = (~InMask) & DemandedMask;
+    
+    // If none of the top bits are demanded, convert this into an any_extend.
+    if (NewBits == 0)
+      return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::ANY_EXTEND,Op.getValueType(),
+                                           Op.getOperand(0)));
+    
+    // Since some of the sign extended bits are demanded, we know that the sign
+    // bit is demanded.
+    uint64_t InDemandedBits = DemandedMask & InMask;
+    InDemandedBits |= InSignBit;
+    
+    if (SimplifyDemandedBits(Op.getOperand(0), InDemandedBits, KnownZero, 
+                             KnownOne, TLO, Depth+1))
+      return true;
+    
+    // If the sign bit is known zero, convert this to a zero extend.
+    if (KnownZero & InSignBit)
+      return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::ZERO_EXTEND, 
+                                               Op.getValueType(), 
+                                               Op.getOperand(0)));
+    
+    // If the sign bit is known one, the top bits match.
+    if (KnownOne & InSignBit) {
+      KnownOne  |= NewBits;
+      KnownZero &= ~NewBits;
+    } else {   // Otherwise, top bits aren't known.
+      KnownOne  &= ~NewBits;
+      KnownZero &= ~NewBits;
+    }
+    break;
+  }
+  case ISD::ANY_EXTEND: {
+    uint64_t InMask = MVT::getIntVTBitMask(Op.getOperand(0).getValueType());
+    if (SimplifyDemandedBits(Op.getOperand(0), DemandedMask & InMask,
+                             KnownZero, KnownOne, TLO, Depth+1))
+      return true;
+    assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
+    break;
+  }
+  case ISD::AssertZext: {
+    MVT::ValueType VT = cast<VTSDNode>(Op.getOperand(1))->getVT();
+    uint64_t InMask = MVT::getIntVTBitMask(VT);
+    if (SimplifyDemandedBits(Op.getOperand(0), DemandedMask & InMask,
+                             KnownZero, KnownOne, TLO, Depth+1))
+      return true;
+    assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
+    KnownZero |= ~InMask & DemandedMask;
     break;
   }
   case ISD::ADD:
@@ -479,16 +582,13 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
       }
     }
     break;
-  case ISD::CTTZ:
-  case ISD::CTLZ:
-  case ISD::CTPOP: {
-    MVT::ValueType VT = Op.getValueType();
-    unsigned LowBits = Log2_32(MVT::getSizeInBits(VT))+1;
-    KnownZero = ~((1ULL << LowBits)-1) & MVT::getIntVTBitMask(VT);
-    KnownOne  = 0;
-    break;
   }
-  }
+  
+  // If we know the value of all of the demanded bits, return this as a
+  // constant.
+  if ((DemandedMask & (KnownZero|KnownOne)) == DemandedMask)
+    return TLO.CombineTo(Op, TLO.DAG.getConstant(KnownOne, Op.getValueType()));
+  
   return false;
 }
 
@@ -630,6 +730,40 @@ void TargetLowering::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
       }
     }
     return;
+  case ISD::SIGN_EXTEND_INREG: {
+    MVT::ValueType  VT = Op.getValueType();
+    MVT::ValueType EVT = cast<VTSDNode>(Op.getOperand(1))->getVT();
+    
+    // Sign extension.  Compute the demanded bits in the result that are not 
+    // present in the input.
+    uint64_t NewBits = ~MVT::getIntVTBitMask(EVT) & Mask;
+
+    uint64_t InSignBit = MVT::getIntVTSignBit(EVT);
+    int64_t InputDemandedBits = Mask & MVT::getIntVTBitMask(EVT);
+    
+    // If the sign extended bits are demanded, we know that the sign
+    // bit is demanded.
+    if (NewBits)
+      InputDemandedBits |= InSignBit;
+    
+    ComputeMaskedBits(Op.getOperand(0), InputDemandedBits,
+                      KnownZero, KnownOne, Depth+1);
+    assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
+    
+    // If the sign bit of the input is known set or clear, then we know the
+    // top bits of the result.
+    if (KnownZero & InSignBit) {          // Input sign bit known clear
+      KnownZero |= NewBits;
+      KnownOne  &= ~NewBits;
+    } else if (KnownOne & InSignBit) {    // Input sign bit known set
+      KnownOne  |= NewBits;
+      KnownZero &= ~NewBits;
+    } else {                              // Input sign bit unknown
+      KnownZero &= ~NewBits;
+      KnownOne  &= ~NewBits;
+    }
+    return;
+  }
   case ISD::CTTZ:
   case ISD::CTLZ:
   case ISD::CTPOP: {
@@ -640,28 +774,59 @@ void TargetLowering::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
     return;
   }
   case ISD::ZEXTLOAD: {
-    unsigned SrcBits = 
-      MVT::getSizeInBits(cast<VTSDNode>(Op.getOperand(3))->getVT());
-    KnownZero |= ~((1ULL << SrcBits)-1);
+    MVT::ValueType VT = cast<VTSDNode>(Op.getOperand(3))->getVT();
+    KnownZero |= ~MVT::getIntVTBitMask(VT) & Mask;
     return;
   }
   case ISD::ZERO_EXTEND: {
-    unsigned SrcBits = 
-      MVT::getSizeInBits(Op.getOperand(0).getValueType());
-    KnownZero |= ~((1ULL << SrcBits)-1);
+    uint64_t InMask  = MVT::getIntVTBitMask(Op.getOperand(0).getValueType());
+    uint64_t NewBits = (~InMask) & Mask;
+    ComputeMaskedBits(Op.getOperand(0), Mask & InMask, KnownZero, 
+                      KnownOne, Depth+1);
+    KnownZero |= NewBits & Mask;
+    KnownOne  &= ~NewBits;
+    return;
+  }
+  case ISD::SIGN_EXTEND: {
+    MVT::ValueType InVT = Op.getOperand(0).getValueType();
+    unsigned InBits    = MVT::getSizeInBits(InVT);
+    uint64_t InMask    = MVT::getIntVTBitMask(InVT);
+    uint64_t InSignBit = 1ULL << (InBits-1);
+    uint64_t NewBits   = (~InMask) & Mask;
+    uint64_t InDemandedBits = Mask & InMask;
+
+    // If any of the sign extended bits are demanded, we know that the sign
+    // bit is demanded.
+    if (NewBits & Mask)
+      InDemandedBits |= InSignBit;
+    
+    ComputeMaskedBits(Op.getOperand(0), InDemandedBits, KnownZero, 
+                      KnownOne, Depth+1);
+    // If the sign bit is known zero or one, the  top bits match.
+    if (KnownZero & InSignBit) {
+      KnownZero |= NewBits;
+      KnownOne  &= ~NewBits;
+    } else if (KnownOne & InSignBit) {
+      KnownOne  |= NewBits;
+      KnownZero &= ~NewBits;
+    } else {   // Otherwise, top bits aren't known.
+      KnownOne  &= ~NewBits;
+      KnownZero &= ~NewBits;
+    }
     return;
   }
   case ISD::ANY_EXTEND: {
-    unsigned SrcBits = 
-      MVT::getSizeInBits(Op.getOperand(0).getValueType());
-    KnownZero &= ((1ULL << SrcBits)-1);
-    KnownOne  &= ((1ULL << SrcBits)-1);
+    MVT::ValueType VT = Op.getOperand(0).getValueType();
+    ComputeMaskedBits(Op.getOperand(0), Mask & MVT::getIntVTBitMask(VT),
+                      KnownZero, KnownOne, Depth+1);
     return;
   }
   case ISD::AssertZext: {
-    unsigned SrcBits = 
-      MVT::getSizeInBits(cast<VTSDNode>(Op.getOperand(1))->getVT());
-    KnownZero |= ~((1ULL << SrcBits)-1);
+    MVT::ValueType VT = cast<VTSDNode>(Op.getOperand(1))->getVT();
+    uint64_t InMask = MVT::getIntVTBitMask(VT);
+    ComputeMaskedBits(Op.getOperand(0), Mask & InMask, KnownZero, 
+                      KnownOne, Depth+1);
+    KnownZero |= (~InMask) & Mask;
     return;
   }
   case ISD::ADD: {
@@ -683,7 +848,8 @@ void TargetLowering::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
   case ISD::SUB:
     // We know that the top bits of C-X are clear if X contains less bits
     // than C (i.e. no wrap-around can happen).  For example, 20-X is
-    // positive if we can prove that X is >= 0 and < 16.
+    // positive if we can prove that X is >= 0 and < 16.  Remember to update 
+    // SimplifyDemandedBits if/when this is implemented.
     return;
   default:
     // Allow the target to implement this method for its nodes.
