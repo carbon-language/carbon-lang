@@ -1,6 +1,7 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
 
+; RUN: llvm-as < %s | opt -instcombine -disable-output &&
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep -v xor | not grep 'or '
 
 implementation
@@ -148,4 +149,10 @@ int %test22(int %B) {
         %ELIM5 = or int %ELIM41, %ELIM7         ; <int> [#uses=1]
 	ret int %ELIM5
 }
- 
+
+ushort %test23(ushort %A) {
+        %B = shr ushort %A, ubyte 1
+        %C = or ushort %B, 32768       ;; fold or into xor
+        %D = xor ushort %C, 8193
+        ret ushort %D
+}
