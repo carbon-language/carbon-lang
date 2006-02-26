@@ -109,6 +109,21 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
     assert(0 && "Shouldn't use addPCDisp() when building X86 MachineInstrs");
     abort ();
     return;
+  case MachineOperand::MO_ConstantPoolIndex: {
+    bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
+    if (!isMemOp) O << "OFFSET ";
+    O << "[" << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << "_"
+      << MO.getConstantPoolIndex();
+    if (forDarwin && TM.getRelocationModel() == Reloc::PIC)
+      O << "-\"L" << getFunctionNumber() << "$pb\"";
+    int Offset = MO.getOffset();
+    if (Offset > 0)
+      O << " + " << Offset;
+    else if (Offset < 0)
+      O << Offset;
+    O << "]";
+    return;
+  }
   case MachineOperand::MO_GlobalAddress: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
@@ -192,19 +207,10 @@ void X86IntelAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
     NeedPlus = true;
   }
 
-  if (DispSpec.isGlobalAddress()) {
+  if (DispSpec.isGlobalAddress() || DispSpec.isConstantPoolIndex()) {
     if (NeedPlus)
       O << " + ";
     printOp(DispSpec, "mem");
-  } else if (DispSpec.isConstantPoolIndex()) {
-    O << "[" << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << "_"
-      << DispSpec.getConstantPoolIndex();
-    if (forDarwin && TM.getRelocationModel() == Reloc::PIC)
-      O << "-\"L" << getFunctionNumber() << "$pb\"";
-    if (DispSpec.getOffset())
-      O << " + " << DispSpec.getOffset();
-    O << "]";
-    return;
   } else {
     int DispVal = DispSpec.getImmedValue();
     if (DispVal || (!BaseReg.getReg() && !IndexReg.getReg())) {
