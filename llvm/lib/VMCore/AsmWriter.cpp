@@ -419,7 +419,6 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
                              bool PrintName,
                              std::map<const Type *, std::string> &TypeTable,
                              SlotMachine *Machine) {
-  static std::string Indent = "\n";
   if (const ConstantBool *CB = dyn_cast<ConstantBool>(CV)) {
     Out << (CB == ConstantBool::True ? "true" : "false");
   } else if (const ConstantSInt *CI = dyn_cast<ConstantSInt>(CV)) {
@@ -485,12 +484,7 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
     Out << '{';
     unsigned N = CS->getNumOperands();
     if (N) {
-      if (N > 2) {
-        Indent += "    ";
-        Out << Indent;
-      } else {
-        Out << ' ';
-      }
+      Out << ' ';
       printTypeInt(Out, CS->getOperand(0)->getType(), TypeTable);
 
       WriteAsOperandInternal(Out, CS->getOperand(0),
@@ -498,13 +492,11 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
 
       for (unsigned i = 1; i < N; i++) {
         Out << ", ";
-        if (N > 2) Out << Indent;
         printTypeInt(Out, CS->getOperand(i)->getType(), TypeTable);
 
         WriteAsOperandInternal(Out, CS->getOperand(i),
                                PrintName, TypeTable, Machine);
       }
-      if (N > 2) Indent.resize(Indent.size() - 4);
     }
  
     Out << " }";
