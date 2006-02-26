@@ -239,6 +239,9 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
   if (Op3.isGlobalAddress()) {
     GV = Op3.getGlobal();
     DispVal = Op3.getOffset();
+  } else if (Op3.isConstantPoolIndex()) {
+    DispVal += MCE.getConstantPoolEntryAddress(Op3.getConstantPoolIndex());
+    DispVal += Op3.getOffset();
   } else {
     DispVal = Op3.getImmedValue();
   }
@@ -247,16 +250,7 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
   const MachineOperand &Scale    = MI.getOperand(Op+1);
   const MachineOperand &IndexReg = MI.getOperand(Op+2);
 
-  unsigned BaseReg = 0;
-
-  if (Base.isConstantPoolIndex()) {
-    // Emit a direct address reference [disp32] where the displacement of the
-    // constant pool entry is controlled by the MCE.
-    assert(!GV && "Constant Pool reference cannot be relative to global!");
-    DispVal += MCE.getConstantPoolEntryAddress(Base.getConstantPoolIndex());
-  } else {
-    BaseReg = Base.getReg();
-  }
+  unsigned BaseReg = Base.getReg();
 
   // Is a SIB byte needed?
   if (IndexReg.getReg() == 0 && BaseReg != X86::ESP) {
