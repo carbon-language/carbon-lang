@@ -1420,8 +1420,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
         assert(I.getType() != Type::VoidTy && "Bad inline asm!");
         OpVT = TLI.getValueType(I.getType());
       } else {
-        Value *CallOperand = I.getOperand(OpNum);
-        const Type *OpTy = CallOperand->getType();
+        const Type *OpTy = I.getOperand(OpNum)->getType();
         OpVT = TLI.getValueType(cast<PointerType>(OpTy)->getElementType());
         OpNum++;  // Consumes a call operand.
       }
@@ -1479,6 +1478,40 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
 
     switch (Constraints[i].Type) {
     case InlineAsm::isOutput: {
+      TargetLowering::ConstraintType CTy = TargetLowering::C_RegisterClass;
+      if (ConstraintCode.size() == 1)   // not a physreg name.
+        CTy = TLI.getConstraintType(ConstraintCode[0]);
+      
+      if (CTy == TargetLowering::C_Memory) {
+        // Memory output.
+        SDOperand InOperandVal = getValue(I.getOperand(OpNum));
+        
+        // Check that the operand (the address to store to) isn't a float.
+        if (!MVT::isInteger(InOperandVal.getValueType()))
+          assert(0 && "MATCH FAIL!");
+        
+        if (!Constraints[i].isIndirectOutput)
+          assert(0 && "MATCH FAIL!");
+
+        OpNum++;  // Consumes a call operand.
+        
+        // Extend/truncate to the right pointer type if needed.
+        MVT::ValueType PtrType = TLI.getPointerTy();
+        if (InOperandVal.getValueType() < PtrType)
+          InOperandVal = DAG.getNode(ISD::ZERO_EXTEND, PtrType, InOperandVal);
+        else if (InOperandVal.getValueType() > PtrType)
+          InOperandVal = DAG.getNode(ISD::TRUNCATE, PtrType, InOperandVal);
+        
+        // Add information to the INLINEASM node to know about this output.
+        unsigned ResOpType = 4/*MEM*/ | (1 << 3);
+        AsmNodeOperands.push_back(DAG.getConstant(ResOpType, MVT::i32));
+        AsmNodeOperands.push_back(InOperandVal);
+        break;
+      }
+
+      // Otherwise, this is a register output.
+      assert(CTy == TargetLowering::C_RegisterClass && "Unknown op type!");
+
       // If this is an early-clobber output, or if there is an input
       // constraint that matches this, we need to reserve the input register
       // so no other inputs allocate to it.
@@ -1500,8 +1533,8 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
         assert(I.getType() != Type::VoidTy && "Bad inline asm!");
         RetValRegs = Regs;
       } else {
-        Value *CallOperand = I.getOperand(OpNum);
-        IndirectStoresToEmit.push_back(std::make_pair(Regs, CallOperand));
+        IndirectStoresToEmit.push_back(std::make_pair(Regs, 
+                                                      I.getOperand(OpNum)));
         OpNum++;  // Consumes a call operand.
       }
       
@@ -1511,10 +1544,8 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
       break;
     }
     case InlineAsm::isInput: {
-      Value *CallOperand = I.getOperand(OpNum);
+      SDOperand InOperandVal = getValue(I.getOperand(OpNum));
       OpNum++;  // Consumes a call operand.
-
-      SDOperand InOperandVal = getValue(CallOperand);
       
       if (isdigit(ConstraintCode[0])) {    // Matching constraint?
         // If this is required to match an output register we have already set,
