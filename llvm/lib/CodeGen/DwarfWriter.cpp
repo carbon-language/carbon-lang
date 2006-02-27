@@ -26,563 +26,338 @@
 #include <iostream>
 
 using namespace llvm;
+using namespace dwarf;
 
 static cl::opt<bool>
 DwarfVerbose("dwarf-verbose", cl::Hidden,
                                 cl::desc("Add comments to Dwarf directives."));
 
+namespace llvm {
+
 //===----------------------------------------------------------------------===//
+// Forward declarations.
+//
+class CompileUnit;
+class DIE;
 
-/// TagString - Return the string for the specified tag.
-///
-static const char *TagString(unsigned Tag) {
-  switch(Tag) {
-    case DW_TAG_array_type:                return "TAG_array_type";
-    case DW_TAG_class_type:                return "TAG_class_type";
-    case DW_TAG_entry_point:               return "TAG_entry_point";
-    case DW_TAG_enumeration_type:          return "TAG_enumeration_type";
-    case DW_TAG_formal_parameter:          return "TAG_formal_parameter";
-    case DW_TAG_imported_declaration:      return "TAG_imported_declaration";
-    case DW_TAG_label:                     return "TAG_label";
-    case DW_TAG_lexical_block:             return "TAG_lexical_block";
-    case DW_TAG_member:                    return "TAG_member";
-    case DW_TAG_pointer_type:              return "TAG_pointer_type";
-    case DW_TAG_reference_type:            return "TAG_reference_type";
-    case DW_TAG_compile_unit:              return "TAG_compile_unit";
-    case DW_TAG_string_type:               return "TAG_string_type";
-    case DW_TAG_structure_type:            return "TAG_structure_type";
-    case DW_TAG_subroutine_type:           return "TAG_subroutine_type";
-    case DW_TAG_typedef:                   return "TAG_typedef";
-    case DW_TAG_union_type:                return "TAG_union_type";
-    case DW_TAG_unspecified_parameters:    return "TAG_unspecified_parameters";
-    case DW_TAG_variant:                   return "TAG_variant";
-    case DW_TAG_common_block:              return "TAG_common_block";
-    case DW_TAG_common_inclusion:          return "TAG_common_inclusion";
-    case DW_TAG_inheritance:               return "TAG_inheritance";
-    case DW_TAG_inlined_subroutine:        return "TAG_inlined_subroutine";
-    case DW_TAG_module:                    return "TAG_module";
-    case DW_TAG_ptr_to_member_type:        return "TAG_ptr_to_member_type";
-    case DW_TAG_set_type:                  return "TAG_set_type";
-    case DW_TAG_subrange_type:             return "TAG_subrange_type";
-    case DW_TAG_with_stmt:                 return "TAG_with_stmt";
-    case DW_TAG_access_declaration:        return "TAG_access_declaration";
-    case DW_TAG_base_type:                 return "TAG_base_type";
-    case DW_TAG_catch_block:               return "TAG_catch_block";
-    case DW_TAG_const_type:                return "TAG_const_type";
-    case DW_TAG_constant:                  return "TAG_constant";
-    case DW_TAG_enumerator:                return "TAG_enumerator";
-    case DW_TAG_file_type:                 return "TAG_file_type";
-    case DW_TAG_friend:                    return "TAG_friend";
-    case DW_TAG_namelist:                  return "TAG_namelist";
-    case DW_TAG_namelist_item:             return "TAG_namelist_item";
-    case DW_TAG_packed_type:               return "TAG_packed_type";
-    case DW_TAG_subprogram:                return "TAG_subprogram";
-    case DW_TAG_template_type_parameter:   return "TAG_template_type_parameter";
-    case DW_TAG_template_value_parameter: return "TAG_template_value_parameter";
-    case DW_TAG_thrown_type:               return "TAG_thrown_type";
-    case DW_TAG_try_block:                 return "TAG_try_block";
-    case DW_TAG_variant_part:              return "TAG_variant_part";
-    case DW_TAG_variable:                  return "TAG_variable";
-    case DW_TAG_volatile_type:             return "TAG_volatile_type";
-    case DW_TAG_dwarf_procedure:           return "TAG_dwarf_procedure";
-    case DW_TAG_restrict_type:             return "TAG_restrict_type";
-    case DW_TAG_interface_type:            return "TAG_interface_type";
-    case DW_TAG_namespace:                 return "TAG_namespace";
-    case DW_TAG_imported_module:           return "TAG_imported_module";
-    case DW_TAG_unspecified_type:          return "TAG_unspecified_type";
-    case DW_TAG_partial_unit:              return "TAG_partial_unit";
-    case DW_TAG_imported_unit:             return "TAG_imported_unit";
-    case DW_TAG_condition:                 return "TAG_condition";
-    case DW_TAG_shared_type:               return "TAG_shared_type";
-    case DW_TAG_lo_user:                   return "TAG_lo_user";
-    case DW_TAG_hi_user:                   return "TAG_hi_user";
+//===----------------------------------------------------------------------===//
+// DIEAbbrevData - Dwarf abbreviation data, describes the one attribute of a
+// Dwarf abbreviation.
+class DIEAbbrevData {
+private:
+  unsigned Attribute;                 // Dwarf attribute code.
+  unsigned Form;                      // Dwarf form code.
+  
+public:
+  DIEAbbrevData(unsigned A, unsigned F)
+  : Attribute(A)
+  , Form(F)
+  {}
+  
+  // Accessors
+  unsigned getAttribute() const { return Attribute; }
+  unsigned getForm()      const { return Form; }
+  
+  /// operator== - Used by DIEAbbrev to locate entry.
+  ///
+  bool operator==(const DIEAbbrevData &DAD) const {
+    return Attribute == DAD.Attribute && Form == DAD.Form;
   }
-  assert(0 && "Unknown Dwarf Tag");
-  return "";
-}
 
-/// ChildrenString - Return the string for the specified children flag.
-///
-static const char *ChildrenString(unsigned Children) {
-  switch(Children) {
-    case DW_CHILDREN_no:                   return "CHILDREN_no";
-    case DW_CHILDREN_yes:                  return "CHILDREN_yes";
+  /// operator!= - Used by DIEAbbrev to locate entry.
+  ///
+  bool operator!=(const DIEAbbrevData &DAD) const {
+    return Attribute != DAD.Attribute || Form != DAD.Form;
   }
-  assert(0 && "Unknown Dwarf ChildrenFlag");
-  return "";
-}
+  
+  /// operator< - Used by DIEAbbrev to locate entry.
+  ///
+  bool operator<(const DIEAbbrevData &DAD) const {
+    return Attribute < DAD.Attribute ||
+          (Attribute == DAD.Attribute && Form < DAD.Form);
+  }
+};
 
-/// AttributeString - Return the string for the specified attribute.
-///
-static const char *AttributeString(unsigned Attribute) {
-  switch(Attribute) {
-    case DW_AT_sibling:                    return "AT_sibling";
-    case DW_AT_location:                   return "AT_location";
-    case DW_AT_name:                       return "AT_name";
-    case DW_AT_ordering:                   return "AT_ordering";
-    case DW_AT_byte_size:                  return "AT_byte_size";
-    case DW_AT_bit_offset:                 return "AT_bit_offset";
-    case DW_AT_bit_size:                   return "AT_bit_size";
-    case DW_AT_stmt_list:                  return "AT_stmt_list";
-    case DW_AT_low_pc:                     return "AT_low_pc";
-    case DW_AT_high_pc:                    return "AT_high_pc";
-    case DW_AT_language:                   return "AT_language";
-    case DW_AT_discr:                      return "AT_discr";
-    case DW_AT_discr_value:                return "AT_discr_value";
-    case DW_AT_visibility:                 return "AT_visibility";
-    case DW_AT_import:                     return "AT_import";
-    case DW_AT_string_length:              return "AT_string_length";
-    case DW_AT_common_reference:           return "AT_common_reference";
-    case DW_AT_comp_dir:                   return "AT_comp_dir";
-    case DW_AT_const_value:                return "AT_const_value";
-    case DW_AT_containing_type:            return "AT_containing_type";
-    case DW_AT_default_value:              return "AT_default_value";
-    case DW_AT_inline:                     return "AT_inline";
-    case DW_AT_is_optional:                return "AT_is_optional";
-    case DW_AT_lower_bound:                return "AT_lower_bound";
-    case DW_AT_producer:                   return "AT_producer";
-    case DW_AT_prototyped:                 return "AT_prototyped";
-    case DW_AT_return_addr:                return "AT_return_addr";
-    case DW_AT_start_scope:                return "AT_start_scope";
-    case DW_AT_bit_stride:                 return "AT_bit_stride";
-    case DW_AT_upper_bound:                return "AT_upper_bound";
-    case DW_AT_abstract_origin:            return "AT_abstract_origin";
-    case DW_AT_accessibility:              return "AT_accessibility";
-    case DW_AT_address_class:              return "AT_address_class";
-    case DW_AT_artificial:                 return "AT_artificial";
-    case DW_AT_base_types:                 return "AT_base_types";
-    case DW_AT_calling_convention:         return "AT_calling_convention";
-    case DW_AT_count:                      return "AT_count";
-    case DW_AT_data_member_location:       return "AT_data_member_location";
-    case DW_AT_decl_column:                return "AT_decl_column";
-    case DW_AT_decl_file:                  return "AT_decl_file";
-    case DW_AT_decl_line:                  return "AT_decl_line";
-    case DW_AT_declaration:                return "AT_declaration";
-    case DW_AT_discr_list:                 return "AT_discr_list";
-    case DW_AT_encoding:                   return "AT_encoding";
-    case DW_AT_external:                   return "AT_external";
-    case DW_AT_frame_base:                 return "AT_frame_base";
-    case DW_AT_friend:                     return "AT_friend";
-    case DW_AT_identifier_case:            return "AT_identifier_case";
-    case DW_AT_macro_info:                 return "AT_macro_info";
-    case DW_AT_namelist_item:              return "AT_namelist_item";
-    case DW_AT_priority:                   return "AT_priority";
-    case DW_AT_segment:                    return "AT_segment";
-    case DW_AT_specification:              return "AT_specification";
-    case DW_AT_static_link:                return "AT_static_link";
-    case DW_AT_type:                       return "AT_type";
-    case DW_AT_use_location:               return "AT_use_location";
-    case DW_AT_variable_parameter:         return "AT_variable_parameter";
-    case DW_AT_virtuality:                 return "AT_virtuality";
-    case DW_AT_vtable_elem_location:       return "AT_vtable_elem_location";
-    case DW_AT_allocated:                  return "AT_allocated";
-    case DW_AT_associated:                 return "AT_associated";
-    case DW_AT_data_location:              return "AT_data_location";
-    case DW_AT_byte_stride:                return "AT_byte_stride";
-    case DW_AT_entry_pc:                   return "AT_entry_pc";
-    case DW_AT_use_UTF8:                   return "AT_use_UTF8";
-    case DW_AT_extension:                  return "AT_extension";
-    case DW_AT_ranges:                     return "AT_ranges";
-    case DW_AT_trampoline:                 return "AT_trampoline";
-    case DW_AT_call_column:                return "AT_call_column";
-    case DW_AT_call_file:                  return "AT_call_file";
-    case DW_AT_call_line:                  return "AT_call_line";
-    case DW_AT_description:                return "AT_description";
-    case DW_AT_binary_scale:               return "AT_binary_scale";
-    case DW_AT_decimal_scale:              return "AT_decimal_scale";
-    case DW_AT_small:                      return "AT_small";
-    case DW_AT_decimal_sign:               return "AT_decimal_sign";
-    case DW_AT_digit_count:                return "AT_digit_count";
-    case DW_AT_picture_string:             return "AT_picture_string";
-    case DW_AT_mutable:                    return "AT_mutable";
-    case DW_AT_threads_scaled:             return "AT_threads_scaled";
-    case DW_AT_explicit:                   return "AT_explicit";
-    case DW_AT_object_pointer:             return "AT_object_pointer";
-    case DW_AT_endianity:                  return "AT_endianity";
-    case DW_AT_elemental:                  return "AT_elemental";
-    case DW_AT_pure:                       return "AT_pure";
-    case DW_AT_recursive:                  return "AT_recursive";
-    case DW_AT_lo_user:                    return "AT_lo_user";
-    case DW_AT_hi_user:                    return "AT_hi_user";
-  }
-  assert(0 && "Unknown Dwarf Attribute");
-  return "";
-}
+//===----------------------------------------------------------------------===//
+// DIEAbbrev - Dwarf abbreviation, describes the organization of a debug
+// information object.
+class DIEAbbrev {
+private:
+  unsigned Tag;                       // Dwarf tag code.
+  unsigned ChildrenFlag;              // Dwarf children flag.
+  std::vector<DIEAbbrevData> Data;    // Raw data bytes for abbreviation.
 
-/// FormEncodingString - Return the string for the specified form encoding.
-///
-static const char *FormEncodingString(unsigned Encoding) {
-  switch(Encoding) {
-    case DW_FORM_addr:                     return "FORM_addr";
-    case DW_FORM_block2:                   return "FORM_block2";
-    case DW_FORM_block4:                   return "FORM_block4";
-    case DW_FORM_data2:                    return "FORM_data2";
-    case DW_FORM_data4:                    return "FORM_data4";
-    case DW_FORM_data8:                    return "FORM_data8";
-    case DW_FORM_string:                   return "FORM_string";
-    case DW_FORM_block:                    return "FORM_block";
-    case DW_FORM_block1:                   return "FORM_block1";
-    case DW_FORM_data1:                    return "FORM_data1";
-    case DW_FORM_flag:                     return "FORM_flag";
-    case DW_FORM_sdata:                    return "FORM_sdata";
-    case DW_FORM_strp:                     return "FORM_strp";
-    case DW_FORM_udata:                    return "FORM_udata";
-    case DW_FORM_ref_addr:                 return "FORM_ref_addr";
-    case DW_FORM_ref1:                     return "FORM_ref1";
-    case DW_FORM_ref2:                     return "FORM_ref2";
-    case DW_FORM_ref4:                     return "FORM_ref4";
-    case DW_FORM_ref8:                     return "FORM_ref8";
-    case DW_FORM_ref_udata:                return "FORM_ref_udata";
-    case DW_FORM_indirect:                 return "FORM_indirect";
-  }
-  assert(0 && "Unknown Dwarf Form Encoding");
-  return "";
-}
+public:
 
-/// OperationEncodingString - Return the string for the specified operation
-/// encoding.
-static const char *OperationEncodingString(unsigned Encoding) {
-  switch(Encoding) {
-    case DW_OP_addr:                       return "OP_addr";
-    case DW_OP_deref:                      return "OP_deref";
-    case DW_OP_const1u:                    return "OP_const1u";
-    case DW_OP_const1s:                    return "OP_const1s";
-    case DW_OP_const2u:                    return "OP_const2u";
-    case DW_OP_const2s:                    return "OP_const2s";
-    case DW_OP_const4u:                    return "OP_const4u";
-    case DW_OP_const4s:                    return "OP_const4s";
-    case DW_OP_const8u:                    return "OP_const8u";
-    case DW_OP_const8s:                    return "OP_const8s";
-    case DW_OP_constu:                     return "OP_constu";
-    case DW_OP_consts:                     return "OP_consts";
-    case DW_OP_dup:                        return "OP_dup";
-    case DW_OP_drop:                       return "OP_drop";
-    case DW_OP_over:                       return "OP_over";
-    case DW_OP_pick:                       return "OP_pick";
-    case DW_OP_swap:                       return "OP_swap";
-    case DW_OP_rot:                        return "OP_rot";
-    case DW_OP_xderef:                     return "OP_xderef";
-    case DW_OP_abs:                        return "OP_abs";
-    case DW_OP_and:                        return "OP_and";
-    case DW_OP_div:                        return "OP_div";
-    case DW_OP_minus:                      return "OP_minus";
-    case DW_OP_mod:                        return "OP_mod";
-    case DW_OP_mul:                        return "OP_mul";
-    case DW_OP_neg:                        return "OP_neg";
-    case DW_OP_not:                        return "OP_not";
-    case DW_OP_or:                         return "OP_or";
-    case DW_OP_plus:                       return "OP_plus";
-    case DW_OP_plus_uconst:                return "OP_plus_uconst";
-    case DW_OP_shl:                        return "OP_shl";
-    case DW_OP_shr:                        return "OP_shr";
-    case DW_OP_shra:                       return "OP_shra";
-    case DW_OP_xor:                        return "OP_xor";
-    case DW_OP_skip:                       return "OP_skip";
-    case DW_OP_bra:                        return "OP_bra";
-    case DW_OP_eq:                         return "OP_eq";
-    case DW_OP_ge:                         return "OP_ge";
-    case DW_OP_gt:                         return "OP_gt";
-    case DW_OP_le:                         return "OP_le";
-    case DW_OP_lt:                         return "OP_lt";
-    case DW_OP_ne:                         return "OP_ne";
-    case DW_OP_lit0:                       return "OP_lit0";
-    case DW_OP_lit1:                       return "OP_lit1";
-    case DW_OP_lit31:                      return "OP_lit31";
-    case DW_OP_reg0:                       return "OP_reg0";
-    case DW_OP_reg1:                       return "OP_reg1";
-    case DW_OP_reg31:                      return "OP_reg31";
-    case DW_OP_breg0:                      return "OP_breg0";
-    case DW_OP_breg1:                      return "OP_breg1";
-    case DW_OP_breg31:                     return "OP_breg31";
-    case DW_OP_regx:                       return "OP_regx";
-    case DW_OP_fbreg:                      return "OP_fbreg";
-    case DW_OP_bregx:                      return "OP_bregx";
-    case DW_OP_piece:                      return "OP_piece";
-    case DW_OP_deref_size:                 return "OP_deref_size";
-    case DW_OP_xderef_size:                return "OP_xderef_size";
-    case DW_OP_nop:                        return "OP_nop";
-    case DW_OP_push_object_address:        return "OP_push_object_address";
-    case DW_OP_call2:                      return "OP_call2";
-    case DW_OP_call4:                      return "OP_call4";
-    case DW_OP_call_ref:                   return "OP_call_ref";
-    case DW_OP_form_tls_address:           return "OP_form_tls_address";
-    case DW_OP_call_frame_cfa:             return "OP_call_frame_cfa";
-    case DW_OP_lo_user:                    return "OP_lo_user";
-    case DW_OP_hi_user:                    return "OP_hi_user";
-  }
-  assert(0 && "Unknown Dwarf Operation Encoding");
-  return "";
-}
+  DIEAbbrev(unsigned T, unsigned C)
+  : Tag(T)
+  , ChildrenFlag(C)
+  , Data()
+  {}
+  ~DIEAbbrev() {}
+  
+  // Accessors
+  unsigned getTag()                           const { return Tag; }
+  unsigned getChildrenFlag()                  const { return ChildrenFlag; }
+  const std::vector<DIEAbbrevData> &getData() const { return Data; }
+  void setChildrenFlag(unsigned CF)                 { ChildrenFlag = CF; }
 
-/// AttributeEncodingString - Return the string for the specified attribute
-/// encoding.
-static const char *AttributeEncodingString(unsigned Encoding) {
-  switch(Encoding) {
-    case DW_ATE_address:                   return "ATE_address";
-    case DW_ATE_boolean:                   return "ATE_boolean";
-    case DW_ATE_complex_float:             return "ATE_complex_float";
-    case DW_ATE_float:                     return "ATE_float";
-    case DW_ATE_signed:                    return "ATE_signed";
-    case DW_ATE_signed_char:               return "ATE_signed_char";
-    case DW_ATE_unsigned:                  return "ATE_unsigned";
-    case DW_ATE_unsigned_char:             return "ATE_unsigned_char";
-    case DW_ATE_imaginary_float:           return "ATE_imaginary_float";
-    case DW_ATE_packed_decimal:            return "ATE_packed_decimal";
-    case DW_ATE_numeric_string:            return "ATE_numeric_string";
-    case DW_ATE_edited:                    return "ATE_edited";
-    case DW_ATE_signed_fixed:              return "ATE_signed_fixed";
-    case DW_ATE_unsigned_fixed:            return "ATE_unsigned_fixed";
-    case DW_ATE_decimal_float:             return "ATE_decimal_float";
-    case DW_ATE_lo_user:                   return "ATE_lo_user";
-    case DW_ATE_hi_user:                   return "ATE_hi_user";
-  }
-  assert(0 && "Unknown Dwarf Attribute Encoding");
-  return "";
-}
+  /// operator== - Used by UniqueVector to locate entry.
+  ///
+  bool operator==(const DIEAbbrev &DA) const;
 
-/// DecimalSignString - Return the string for the specified decimal sign
-/// attribute.
-static const char *DecimalSignString(unsigned Sign) {
-  switch(Sign) {
-    case DW_DS_unsigned:                   return "DS_unsigned";
-    case DW_DS_leading_overpunch:          return "DS_leading_overpunch";
-    case DW_DS_trailing_overpunch:         return "DS_trailing_overpunch";
-    case DW_DS_leading_separate:           return "DS_leading_separate";
-    case DW_DS_trailing_separate:          return "DS_trailing_separate";
-  }
-  assert(0 && "Unknown Dwarf Decimal Sign Attribute");
-  return "";
-}
+  /// operator< - Used by UniqueVector to locate entry.
+  ///
+  bool operator<(const DIEAbbrev &DA) const;
 
-/// EndianityString - Return the string for the specified endianity.
-///
-static const char *EndianityString(unsigned Endian) {
-  switch(Endian) {
-    case DW_END_default:                   return "END_default";
-    case DW_END_big:                       return "END_big";
-    case DW_END_little:                    return "END_little";
-    case DW_END_lo_user:                   return "END_lo_user";
-    case DW_END_hi_user:                   return "END_hi_user";
+  /// AddAttribute - Adds another set of attribute information to the
+  /// abbreviation.
+  void AddAttribute(unsigned Attribute, unsigned Form) {
+    Data.push_back(DIEAbbrevData(Attribute, Form));
   }
-  assert(0 && "Unknown Dwarf Endianity");
-  return "";
-}
+  
+  /// Emit - Print the abbreviation using the specified Dwarf writer.
+  ///
+  void Emit(const DwarfWriter &DW) const; 
+      
+#ifndef NDEBUG
+  void print(std::ostream &O);
+  void dump();
+#endif
+};
 
-/// AccessibilityString - Return the string for the specified accessibility.
-///
-static const char *AccessibilityString(unsigned Access) {
-  switch(Access) {
-    // Accessibility codes
-    case DW_ACCESS_public:                 return "ACCESS_public";
-    case DW_ACCESS_protected:              return "ACCESS_protected";
-    case DW_ACCESS_private:                return "ACCESS_private";
-  }
-  assert(0 && "Unknown Dwarf Accessibility");
-  return "";
-}
+//===----------------------------------------------------------------------===//
+// DIEValue - A debug information entry value.
+//
+class DIEValue {
+public:
+  enum {
+    isInteger,
+    isString,
+    isLabel,
+    isAsIsLabel,
+    isDelta,
+    isEntry
+  };
+  
+  unsigned Type;                      // Type of the value
+  
+  DIEValue(unsigned T) : Type(T) {}
+  virtual ~DIEValue() {}
+  
+  // Implement isa/cast/dyncast.
+  static bool classof(const DIEValue *) { return true; }
+  
+  /// EmitValue - Emit value via the Dwarf writer.
+  ///
+  virtual void EmitValue(const DwarfWriter &DW, unsigned Form) const = 0;
+  
+  /// SizeOf - Return the size of a value in bytes.
+  ///
+  virtual unsigned SizeOf(const DwarfWriter &DW, unsigned Form) const = 0;
+};
 
-/// VisibilityString - Return the string for the specified visibility.
-///
-static const char *VisibilityString(unsigned Visibility) {
-  switch(Visibility) {
-    case DW_VIS_local:                     return "VIS_local";
-    case DW_VIS_exported:                  return "VIS_exported";
-    case DW_VIS_qualified:                 return "VIS_qualified";
-  }
-  assert(0 && "Unknown Dwarf Visibility");
-  return "";
-}
+//===----------------------------------------------------------------------===//
+// DWInteger - An integer value DIE.
+// 
+class DIEInteger : public DIEValue {
+private:
+  uint64_t Integer;
+  
+public:
+  DIEInteger(uint64_t I) : DIEValue(isInteger), Integer(I) {}
 
-/// VirtualityString - Return the string for the specified virtuality.
-///
-static const char *VirtualityString(unsigned Virtuality) {
-  switch(Virtuality) {
-    case DW_VIRTUALITY_none:               return "VIRTUALITY_none";
-    case DW_VIRTUALITY_virtual:            return "VIRTUALITY_virtual";
-    case DW_VIRTUALITY_pure_virtual:       return "VIRTUALITY_pure_virtual";
-  }
-  assert(0 && "Unknown Dwarf Virtuality");
-  return "";
-}
+  // Implement isa/cast/dyncast.
+  static bool classof(const DIEInteger *) { return true; }
+  static bool classof(const DIEValue *I)  { return I->Type == isInteger; }
+  
+  /// EmitValue - Emit integer of appropriate size.
+  ///
+  virtual void EmitValue(const DwarfWriter &DW, unsigned Form) const;
+  
+  /// SizeOf - Determine size of integer value in bytes.
+  ///
+  virtual unsigned SizeOf(const DwarfWriter &DW, unsigned Form) const;
+};
 
-/// LanguageString - Return the string for the specified language.
-///
-static const char *LanguageString(unsigned Language) {
-  switch(Language) {
-    case DW_LANG_C89:                      return "LANG_C89";
-    case DW_LANG_C:                        return "LANG_C";
-    case DW_LANG_Ada83:                    return "LANG_Ada83";
-    case DW_LANG_C_plus_plus:              return "LANG_C_plus_plus";
-    case DW_LANG_Cobol74:                  return "LANG_Cobol74";
-    case DW_LANG_Cobol85:                  return "LANG_Cobol85";
-    case DW_LANG_Fortran77:                return "LANG_Fortran77";
-    case DW_LANG_Fortran90:                return "LANG_Fortran90";
-    case DW_LANG_Pascal83:                 return "LANG_Pascal83";
-    case DW_LANG_Modula2:                  return "LANG_Modula2";
-    case DW_LANG_Java:                     return "LANG_Java";
-    case DW_LANG_C99:                      return "LANG_C99";
-    case DW_LANG_Ada95:                    return "LANG_Ada95";
-    case DW_LANG_Fortran95:                return "LANG_Fortran95";
-    case DW_LANG_PLI:                      return "LANG_PLI";
-    case DW_LANG_ObjC:                     return "LANG_ObjC";
-    case DW_LANG_ObjC_plus_plus:           return "LANG_ObjC_plus_plus";
-    case DW_LANG_UPC:                      return "LANG_UPC";
-    case DW_LANG_D:                        return "LANG_D";
-    case DW_LANG_lo_user:                  return "LANG_lo_user";
-    case DW_LANG_hi_user:                  return "LANG_hi_user";
-  }
-  assert(0 && "Unknown Dwarf Language");
-  return "";
-}
+//===----------------------------------------------------------------------===//
+// DIEString - A string value DIE.
+// 
+struct DIEString : public DIEValue {
+  const std::string String;
+  
+  DIEString(const std::string &S) : DIEValue(isString), String(S) {}
 
-/// CaseString - Return the string for the specified identifier case.
-///
-static const char *CaseString(unsigned Case) {
-   switch(Case) {
-    case DW_ID_case_sensitive:             return "ID_case_sensitive";
-    case DW_ID_up_case:                    return "ID_up_case";
-    case DW_ID_down_case:                  return "ID_down_case";
-    case DW_ID_case_insensitive:           return "ID_case_insensitive";
-  }
-  assert(0 && "Unknown Dwarf Identifier Case");
-  return "";
-}
+  // Implement isa/cast/dyncast.
+  static bool classof(const DIEString *) { return true; }
+  static bool classof(const DIEValue *S) { return S->Type == isString; }
+  
+  /// EmitValue - Emit string value.
+  ///
+  virtual void EmitValue(const DwarfWriter &DW, unsigned Form) const;
+  
+  /// SizeOf - Determine size of string value in bytes.
+  ///
+  virtual unsigned SizeOf(const DwarfWriter &DW, unsigned Form) const;
+};
 
-/// ConventionString - Return the string for the specified calling convention.
-///
-static const char *ConventionString(unsigned Convention) {
-   switch(Convention) {
-    case DW_CC_normal:                     return "CC_normal";
-    case DW_CC_program:                    return "CC_program";
-    case DW_CC_nocall:                     return "CC_nocall";
-    case DW_CC_lo_user:                    return "CC_lo_user";
-    case DW_CC_hi_user:                    return "CC_hi_user";
-  }
-  assert(0 && "Unknown Dwarf Calling Convention");
-  return "";
-}
+//===----------------------------------------------------------------------===//
+// DIEDwarfLabel - A Dwarf internal label expression DIE.
+//
+struct DIEDwarfLabel : public DIEValue {
+  const DWLabel Label;
+  
+  DIEDwarfLabel(const DWLabel &L) : DIEValue(isLabel), Label(L) {}
 
-/// InlineCodeString - Return the string for the specified inline code.
-///
-static const char *InlineCodeString(unsigned Code) {
-   switch(Code) {
-    case DW_INL_not_inlined:               return "INL_not_inlined";
-    case DW_INL_inlined:                   return "INL_inlined";
-    case DW_INL_declared_not_inlined:      return "INL_declared_not_inlined";
-    case DW_INL_declared_inlined:          return "INL_declared_inlined";
-  }
-  assert(0 && "Unknown Dwarf Inline Code");
-  return "";
-}
+  // Implement isa/cast/dyncast.
+  static bool classof(const DIEDwarfLabel *)  { return true; }
+  static bool classof(const DIEValue *L) { return L->Type == isLabel; }
+  
+  /// EmitValue - Emit label value.
+  ///
+  virtual void EmitValue(const DwarfWriter &DW, unsigned Form) const;
+  
+  /// SizeOf - Determine size of label value in bytes.
+  ///
+  virtual unsigned SizeOf(const DwarfWriter &DW, unsigned Form) const;
+};
 
-/// ArrayOrderString - Return the string for the specified array order.
-///
-static const char *ArrayOrderString(unsigned Order) {
-   switch(Order) {
-    case DW_ORD_row_major:                 return "ORD_row_major";
-    case DW_ORD_col_major:                 return "ORD_col_major";
-  }
-  assert(0 && "Unknown Dwarf Array Order");
-  return "";
-}
 
-/// DiscriminantString - Return the string for the specified discriminant
-/// descriptor.
-static const char *DiscriminantString(unsigned Discriminant) {
-   switch(Discriminant) {
-    case DW_DSC_label:                     return "DSC_label";
-    case DW_DSC_range:                     return "DSC_range";
-  }
-  assert(0 && "Unknown Dwarf Discriminant Descriptor");
-  return "";
-}
+//===----------------------------------------------------------------------===//
+// DIEObjectLabel - A label to an object in code or data.
+//
+struct DIEObjectLabel : public DIEValue {
+  const std::string Label;
+  
+  DIEObjectLabel(const std::string &L) : DIEValue(isAsIsLabel), Label(L) {}
 
-/// LNStandardString - Return the string for the specified line number standard.
-///
-static const char *LNStandardString(unsigned Standard) {
-   switch(Standard) {
-    case DW_LNS_copy:                      return "LNS_copy";
-    case DW_LNS_advance_pc:                return "LNS_advance_pc";
-    case DW_LNS_advance_line:              return "LNS_advance_line";
-    case DW_LNS_set_file:                  return "LNS_set_file";
-    case DW_LNS_set_column:                return "LNS_set_column";
-    case DW_LNS_negate_stmt:               return "LNS_negate_stmt";
-    case DW_LNS_set_basic_block:           return "LNS_set_basic_block";
-    case DW_LNS_const_add_pc:              return "LNS_const_add_pc";
-    case DW_LNS_fixed_advance_pc:          return "LNS_fixed_advance_pc";
-    case DW_LNS_set_prologue_end:          return "LNS_set_prologue_end";
-    case DW_LNS_set_epilogue_begin:        return "LNS_set_epilogue_begin";
-    case DW_LNS_set_isa:                   return "LNS_set_isa";
-  }
-  assert(0 && "Unknown Dwarf Line Number Standard");
-  return "";
-}
+  // Implement isa/cast/dyncast.
+  static bool classof(const DIEObjectLabel *) { return true; }
+  static bool classof(const DIEValue *L)    { return L->Type == isAsIsLabel; }
+  
+  /// EmitValue - Emit label value.
+  ///
+  virtual void EmitValue(const DwarfWriter &DW, unsigned Form) const;
+  
+  /// SizeOf - Determine size of label value in bytes.
+  ///
+  virtual unsigned SizeOf(const DwarfWriter &DW, unsigned Form) const;
+};
 
-/// LNExtendedString - Return the string for the specified line number extended
-/// opcode encodings.
-static const char *LNExtendedString(unsigned Encoding) {
-   switch(Encoding) {
-    // Line Number Extended Opcode Encodings
-    case DW_LNE_end_sequence:              return "LNE_end_sequence";
-    case DW_LNE_set_address:               return "LNE_set_address";
-    case DW_LNE_define_file:               return "LNE_define_file";
-    case DW_LNE_lo_user:                   return "LNE_lo_user";
-    case DW_LNE_hi_user:                   return "LNE_hi_user";
-  }
-  assert(0 && "Unknown Dwarf Line Number Extended Opcode Encoding");
-  return "";
-}
+//===----------------------------------------------------------------------===//
+// DIEDelta - A simple label difference DIE.
+// 
+struct DIEDelta : public DIEValue {
+  const DWLabel LabelHi;
+  const DWLabel LabelLo;
+  
+  DIEDelta(const DWLabel &Hi, const DWLabel &Lo)
+  : DIEValue(isDelta), LabelHi(Hi), LabelLo(Lo) {}
 
-/// MacinfoString - Return the string for the specified macinfo type encodings.
-///
-static const char *MacinfoString(unsigned Encoding) {
-   switch(Encoding) {
-    // Macinfo Type Encodings
-    case DW_MACINFO_define:                return "MACINFO_define";
-    case DW_MACINFO_undef:                 return "MACINFO_undef";
-    case DW_MACINFO_start_file:            return "MACINFO_start_file";
-    case DW_MACINFO_end_file:              return "MACINFO_end_file";
-    case DW_MACINFO_vendor_ext:            return "MACINFO_vendor_ext";
-  }
-  assert(0 && "Unknown Dwarf Macinfo Type Encodings");
-  return "";
-}
+  // Implement isa/cast/dyncast.
+  static bool classof(const DIEDelta *)  { return true; }
+  static bool classof(const DIEValue *D) { return D->Type == isDelta; }
+  
+  /// EmitValue - Emit delta value.
+  ///
+  virtual void EmitValue(const DwarfWriter &DW, unsigned Form) const;
+  
+  /// SizeOf - Determine size of delta value in bytes.
+  ///
+  virtual unsigned SizeOf(const DwarfWriter &DW, unsigned Form) const;
+};
 
-/// CallFrameString - Return the string for the specified call frame instruction
-/// encodings.
-static const char *CallFrameString(unsigned Encoding) {
-   switch(Encoding) {
-    case DW_CFA_advance_loc:               return "CFA_advance_loc";
-    case DW_CFA_offset:                    return "CFA_offset";
-    case DW_CFA_restore:                   return "CFA_restore";
-    case DW_CFA_set_loc:                   return "CFA_set_loc";
-    case DW_CFA_advance_loc1:              return "CFA_advance_loc1";
-    case DW_CFA_advance_loc2:              return "CFA_advance_loc2";
-    case DW_CFA_advance_loc4:              return "CFA_advance_loc4";
-    case DW_CFA_offset_extended:           return "CFA_offset_extended";
-    case DW_CFA_restore_extended:          return "CFA_restore_extended";
-    case DW_CFA_undefined:                 return "CFA_undefined";
-    case DW_CFA_same_value:                return "CFA_same_value";
-    case DW_CFA_register:                  return "CFA_register";
-    case DW_CFA_remember_state:            return "CFA_remember_state";
-    case DW_CFA_restore_state:             return "CFA_restore_state";
-    case DW_CFA_def_cfa:                   return "CFA_def_cfa";
-    case DW_CFA_def_cfa_register:          return "CFA_def_cfa_register";
-    case DW_CFA_def_cfa_offset:            return "CFA_def_cfa_offset";
-    case DW_CFA_def_cfa_expression:        return "CFA_def_cfa_expression";
-    case DW_CFA_expression:                return "CFA_expression";
-    case DW_CFA_offset_extended_sf:        return "CFA_offset_extended_sf";
-    case DW_CFA_def_cfa_sf:                return "CFA_def_cfa_sf";
-    case DW_CFA_def_cfa_offset_sf:         return "CFA_def_cfa_offset_sf";
-    case DW_CFA_val_offset:                return "CFA_val_offset";
-    case DW_CFA_val_offset_sf:             return "CFA_val_offset_sf";
-    case DW_CFA_val_expression:            return "CFA_val_expression";
-    case DW_CFA_lo_user:                   return "CFA_lo_user";
-    case DW_CFA_hi_user:                   return "CFA_hi_user";
-  }
-  assert(0 && "Unknown Dwarf Call Frame Instruction Encodings");
-  return "";
-}
+//===----------------------------------------------------------------------===//
+// DIEntry - A pointer to a debug information entry.
+// 
+struct DIEntry : public DIEValue {
+  DIE *Entry;
+  
+  DIEntry(DIE *E) : DIEValue(isEntry), Entry(E) {}
+
+  // Implement isa/cast/dyncast.
+  static bool classof(const DIEntry *)   { return true; }
+  static bool classof(const DIEValue *E) { return E->Type == isEntry; }
+  
+  /// EmitValue - Emit delta value.
+  ///
+  virtual void EmitValue(const DwarfWriter &DW, unsigned Form) const;
+  
+  /// SizeOf - Determine size of delta value in bytes.
+  ///
+  virtual unsigned SizeOf(const DwarfWriter &DW, unsigned Form) const;
+};
+
+//===----------------------------------------------------------------------===//
+// DIE - A structured debug information entry.  Has an abbreviation which
+// describes it's organization.
+class DIE {
+private:
+  DIEAbbrev *Abbrev;                    // Temporary buffer for abbreviation.
+  unsigned AbbrevID;                    // Decribing abbreviation ID.
+  unsigned Offset;                      // Offset in debug info section.
+  unsigned Size;                        // Size of instance + children.
+  std::vector<DIE *> Children;          // Children DIEs.
+  std::vector<DIEValue *> Values;       // Attributes values.
+  
+public:
+  DIE(unsigned Tag);
+  ~DIE();
+  
+  // Accessors
+  unsigned   getAbbrevID()                   const { return AbbrevID; }
+  unsigned   getOffset()                     const { return Offset; }
+  unsigned   getSize()                       const { return Size; }
+  const std::vector<DIE *> &getChildren()    const { return Children; }
+  const std::vector<DIEValue *> &getValues() const { return Values; }
+  void setOffset(unsigned O)                 { Offset = O; }
+  void setSize(unsigned S)                   { Size = S; }
+  
+  /// SiblingOffset - Return the offset of the debug information entry's
+  /// sibling.
+  unsigned SiblingOffset() const { return Offset + Size; }
+
+  /// AddUInt - Add an unsigned integer attribute data and value.
+  ///
+  void AddUInt(unsigned Attribute, unsigned Form, uint64_t Integer);
+
+  /// AddSInt - Add an signed integer attribute data and value.
+  ///
+  void AddSInt(unsigned Attribute, unsigned Form, int64_t Integer);
+      
+  /// AddString - Add a std::string attribute data and value.
+  ///
+  void AddString(unsigned Attribute, unsigned Form,
+                 const std::string &String);
+      
+  /// AddLabel - Add a Dwarf label attribute data and value.
+  ///
+  void AddLabel(unsigned Attribute, unsigned Form, const DWLabel &Label);
+      
+  /// AddObjectLabel - Add a non-Dwarf label attribute data and value.
+  ///
+  void AddObjectLabel(unsigned Attribute, unsigned Form,
+                      const std::string &Label);
+      
+  /// AddDelta - Add a label delta attribute data and value.
+  ///
+  void AddDelta(unsigned Attribute, unsigned Form,
+                const DWLabel &Hi, const DWLabel &Lo);
+      
+  ///  AddDIEntry - Add a DIE attribute data and value.
+  ///
+  void AddDIEntry(unsigned Attribute, unsigned Form, DIE *Entry);
+
+  /// Complete - Indicate that all attributes have been added and
+  /// ready to get an abbreviation ID.
+  ///
+  void Complete(DwarfWriter &DW);
+  
+  /// AddChild - Add a child to the DIE.
+  void AddChild(DIE *Child);
+};
+
+} // End of namespace llvm
 
 //===----------------------------------------------------------------------===//
 
@@ -1442,14 +1217,16 @@ void DwarfWriter::EmitDIE(DIE *Die) const {
   // Get the abbreviation for this DIE.
   unsigned AbbrevID = Die->getAbbrevID();
   const DIEAbbrev &Abbrev = Abbreviations[AbbrevID];
+  
+  O << "\n";
 
   // Emit the code (index) for the abbreviation.
   EmitULEB128Bytes(AbbrevID);
   EOL(std::string("Abbrev [" +
       utostr(AbbrevID) +
-      "] " +
-      TagString(Abbrev.getTag())) +
-      " ");
+      "] 0x" + utohexstr(Die->getOffset()) +
+      ":0x" + utohexstr(Die->getSize()) + " " +
+      TagString(Abbrev.getTag())));
   
   const std::vector<DIEValue *> &Values = Die->getValues();
   const std::vector<DIEAbbrevData> &AbbrevData = Abbrev.getData();
@@ -1535,14 +1312,16 @@ unsigned DwarfWriter::SizeAndOffsetDie(DIE *Die, unsigned Offset) {
 /// SizeAndOffsets - Compute the size and offset of all the DIEs.
 ///
 void DwarfWriter::SizeAndOffsets() {
-  // Compute size of debug unit header
-  unsigned Offset = sizeof(int32_t) + // Length of Compilation Unit Info
-                    sizeof(int16_t) + // DWARF version number
-                    sizeof(int32_t) + // Offset Into Abbrev. Section
-                    sizeof(int8_t);   // Pointer Size (in bytes)
+  unsigned Offset = 0;
   
   // Process each compile unit.
   for (unsigned i = 0, N = CompileUnits.size(); i < N; ++i) {
+    // Compute size of compile unit header
+    Offset += sizeof(int32_t) + // Length of Compilation Unit Info
+              sizeof(int16_t) + // DWARF version number
+              sizeof(int32_t) + // Offset Into Abbrev. Section
+              sizeof(int8_t);   // Pointer Size (in bytes)
+  
     Offset = SizeAndOffsetDie(CompileUnits[i], Offset);
   }
 }
@@ -1559,26 +1338,28 @@ void DwarfWriter::EmitDebugInfo() const {
   // If there are any compile units.
   if (N) {
     EmitLabel("info_begin", 0);
-    
-    // Emit the compile units header.
 
-    // Emit size of content not including length itself
-    unsigned ContentSize = CompileUnits[N - 1]->SiblingOffset();
-    EmitInt32(ContentSize - sizeof(int32_t));
-    EOL("Length of Compilation Unit Info");
-    
-    EmitInt16(DWARF_VERSION); EOL("DWARF version number");
-
-    EmitReference("abbrev_begin", 0); EOL("Offset Into Abbrev. Section");
-
-    EmitInt8(AddressSize); EOL("Address Size (in bytes)");
-    
     // Process each compile unit.
     for (unsigned i = 0; i < N; ++i) {
+      // Emit the compile units header.
+
+      // Emit size of content not including length itself
+      unsigned ContentSize = CompileUnits[i]->getSize() +
+                             sizeof(int16_t) + // DWARF version number
+                             sizeof(int32_t) + // Offset Into Abbrev. Section
+                             sizeof(int8_t);   // Pointer Size (in bytes)
+                             
+      EmitInt32(ContentSize);  EOL("Length of Compilation Unit Info");
+      EmitInt16(DWARF_VERSION); EOL("DWARF version number");
+      EmitReference("abbrev_begin", 0); EOL("Offset Into Abbrev. Section");
+      EmitInt8(AddressSize); EOL("Address Size (in bytes)");
+    
       EmitDIE(CompileUnits[i]);
     }
-    
+  
     EmitLabel("info_end", 0);
+    
+    O << "\n";
   }
 }
 
@@ -1603,9 +1384,13 @@ void DwarfWriter::EmitAbbreviations() const {
       
       // Emit the abbreviations data.
       Abbrev.Emit(*this);
+  
+      O << "\n";
     }
     
     EmitLabel("abbrev_end", 0);
+  
+    O << "\n";
   }
 }
 
@@ -1748,6 +1533,8 @@ void DwarfWriter::EmitDebugLines() const {
   EmitInt8(1); O << "\n";
   
   EmitLabel("line_end", 0);
+  
+  O << "\n";
 }
   
 /// EmitDebugFrame - Emit visible names into a debug frame section.
@@ -1789,6 +1576,8 @@ void DwarfWriter::EmitDebugPubNames() {
   
     EmitInt32(0); EOL("End Mark");
     EmitLabel("pubnames_end", 0);
+  
+    O << "\n";
   }
 }
 
@@ -1799,6 +1588,8 @@ void DwarfWriter::EmitDebugPubTypes() {
   if (!GlobalTypes.empty()) {
     // Start the dwarf pubtypes section.
     Asm->SwitchSection(DwarfPubTypesSection, 0);
+  
+    O << "\n";
   }
 }
 
@@ -1819,6 +1610,8 @@ void DwarfWriter::EmitDebugStr() {
       const std::string &String = StringPool[StringID];
       EmitString(String); O << "\n";
     }
+  
+    O << "\n";
   }
 }
 
@@ -1827,6 +1620,8 @@ void DwarfWriter::EmitDebugStr() {
 void DwarfWriter::EmitDebugLoc() {
   // Start the dwarf loc section.
   Asm->SwitchSection(DwarfLocSection, 0);
+  
+  O << "\n";
 }
 
 /// EmitDebugARanges - Emit visible names into a debug aranges section.
@@ -1857,6 +1652,8 @@ void DwarfWriter::EmitDebugARanges() {
 
   EmitInt32(0); EOL("EOM (1)");
   EmitInt32(0); EOL("EOM (2)");
+  
+  O << "\n";
 }
 
 /// EmitDebugRanges - Emit visible names into a debug ranges section.
@@ -1864,6 +1661,8 @@ void DwarfWriter::EmitDebugARanges() {
 void DwarfWriter::EmitDebugRanges() {
   // Start the dwarf ranges section.
   Asm->SwitchSection(DwarfRangesSection, 0);
+  
+  O << "\n";
 }
 
 /// EmitDebugMacInfo - Emit visible names into a debug macinfo section.
@@ -1871,6 +1670,8 @@ void DwarfWriter::EmitDebugRanges() {
 void DwarfWriter::EmitDebugMacInfo() {
   // Start the dwarf macinfo section.
   Asm->SwitchSection(DwarfMacInfoSection, 0);
+  
+  O << "\n";
 }
 
 /// ConstructCompileUnitDIEs - Create a compile unit DIE for each source and
@@ -2006,13 +1807,13 @@ void DwarfWriter::EndModule(Module &M) {
   EmitDebugLines();
   
   // Emit info into a debug frame section.
-  EmitDebugFrame();
+  // EmitDebugFrame();
   
   // Emit info into a debug pubnames section.
   EmitDebugPubNames();
   
   // Emit info into a debug pubtypes section.
-  EmitDebugPubTypes();
+  // EmitDebugPubTypes();
   
   // Emit info into a debug str section.
   EmitDebugStr();
