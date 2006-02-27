@@ -223,6 +223,23 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
     // If the RHS is a constant, see if we can simplify it.
     if (TLO.ShrinkDemandedConstant(Op, DemandedMask & ~KnownZero2))
       return true;
+      
+    // If the RHS is a constant, check to see if the LHS would be zero without
+    // using the bits from the RHS.  Above, we used knowledge about the RHS to
+    // simplify the LHS, here we're using information from the LHS to simplify
+    // the RHS.
+    if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
+      uint64_t LHSZero, LHSOne;
+      ComputeMaskedBits(Op.getOperand(0), DemandedMask,
+                        LHSZero, LHSOne, Depth+1);
+      // If the LHS already has zeros where RHSC does, this and is dead.
+      if ((LHSZero & DemandedMask) == (~RHSC->getValue() & DemandedMask))
+        return TLO.CombineTo(Op, Op.getOperand(0));
+      // If any of the set bits in the RHS are known zero on the LHS, shrink
+      // the constant.
+      if (TLO.ShrinkDemandedConstant(Op, ~LHSZero & DemandedMask))
+        return true;
+    }
         
     // Output known-1 bits are only known if set in both the LHS & RHS.
     KnownOne &= KnownOne2;
