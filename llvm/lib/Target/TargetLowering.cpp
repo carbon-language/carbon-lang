@@ -598,6 +598,12 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
       }
     }
     break;
+  case ISD::SUB:
+    // Just use ComputeMaskedBits to compute output bits, there are no
+    // simplifications that can be done here, and sub always demands all input
+    // bits.
+    ComputeMaskedBits(Op, DemandedMask, KnownZero, KnownOne, Depth);
+    break;
   }
   
   // If we know the value of all of the demanded bits, return this as a
@@ -861,12 +867,32 @@ void TargetLowering::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
     KnownOne = 0;
     return;
   }
-  case ISD::SUB:
+  case ISD::SUB: {
+    ConstantSDNode *CLHS = dyn_cast<ConstantSDNode>(Op.getOperand(0));
+    if (!CLHS) return;
+
     // We know that the top bits of C-X are clear if X contains less bits
     // than C (i.e. no wrap-around can happen).  For example, 20-X is
-    // positive if we can prove that X is >= 0 and < 16.  Remember to update 
-    // SimplifyDemandedBits if/when this is implemented.
+    // positive if we can prove that X is >= 0 and < 16.
+    MVT::ValueType VT = CLHS->getValueType(0);
+    if ((CLHS->getValue() & MVT::getIntVTSignBit(VT)) == 0) {  // sign bit clear
+      unsigned NLZ = CountLeadingZeros_64(CLHS->getValue()+1);
+      uint64_t MaskV = (1ULL << (63-NLZ))-1; // NLZ can't be 64 with no sign bit
+      MaskV = ~MaskV & MVT::getIntVTBitMask(VT);
+      ComputeMaskedBits(Op.getOperand(1), MaskV, KnownZero, KnownOne, Depth+1);
+
+      // If all of the MaskV bits are known to be zero, then we know the output
+      // top bits are zero, because we now know that the output is from [0-C].
+      if ((KnownZero & MaskV) == MaskV) {
+        unsigned NLZ2 = CountLeadingZeros_64(CLHS->getValue());
+        KnownZero = ~((1ULL << (64-NLZ2))-1) & Mask;  // Top bits known zero.
+        KnownOne = 0;   // No one bits known.
+      } else {
+        KnownOne = KnownOne = 0;  // Otherwise, nothing known.
+      }
+    }
     return;
+  }
   default:
     // Allow the target to implement this method for its nodes.
     if (Op.getOpcode() >= ISD::BUILTIN_OP_END)
