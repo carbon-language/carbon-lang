@@ -9,3 +9,10 @@ void %test(ubyte* %P) {
 	store ubyte %Z, ubyte* %P
 	ret void
 }
+
+ushort %test2(ushort %crc) { ; No and's should be needed for the ushorts here.
+        %tmp.1 = shr ushort %crc, ubyte 1
+        %tmp.7 = xor ushort %tmp.1, 40961
+        ret ushort %tmp.7
+}
+
