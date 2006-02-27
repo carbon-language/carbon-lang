@@ -4777,63 +4777,59 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
         }
         break;
 
+      case Instruction::SetEQ:
       case Instruction::SetNE:
+        // We if we are just checking for a seteq of a single bit and casting it
+        // to an integer.  If so, shift the bit to the appropriate place then
+        // cast to integer to avoid the comparison.
         if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
-          if (Op1C->getRawValue() == 0) {
-            // If the input only has the low bit set, simplify directly.
-            Constant *Not1 =
-              ConstantExpr::getNot(ConstantInt::get(Op0->getType(), 1));
-            // cast (X != 0) to int  --> X if X&~1 == 0
-            if (MaskedValueIsZero(Op0, 
-                               cast<ConstantIntegral>(Not1)->getZExtValue())) {
-              if (CI.getType() == Op0->getType())
-                return ReplaceInstUsesWith(CI, Op0);
-              else
-                return new CastInst(Op0, CI.getType());
-            }
-
-            // If the input is an and with a single bit, shift then simplify.
-            ConstantInt *AndRHS;
-            if (match(Op0, m_And(m_Value(), m_ConstantInt(AndRHS))))
-              if (AndRHS->getRawValue() &&
-                  (AndRHS->getRawValue() & (AndRHS->getRawValue()-1)) == 0) {
-                unsigned ShiftAmt = Log2_64(AndRHS->getRawValue());
+          uint64_t Op1CV = Op1C->getZExtValue();
+          // cast (X == 0) to int --> X^1        iff X has only the low bit set.
+          // cast (X == 0) to int --> (X>>1)^1   iff X has only the 2nd bit set.
+          // cast (X == 1) to int --> X          iff X has only the low bit set.
+          // cast (X == 2) to int --> X>>1       iff X has only the 2nd bit set.
+          // cast (X != 0) to int --> X          iff X has only the low bit set.
+          // cast (X != 0) to int --> X>>1       iff X has only the 2nd bit set.
+          // cast (X != 1) to int --> X^1        iff X has only the low bit set.
+          // cast (X != 2) to int --> (X>>1)^1   iff X has only the 2nd bit set.
+          if (Op1CV == 0 || isPowerOf2_64(Op1CV)) {
+            // If Op1C some other power of two, convert:
+            uint64_t KnownZero, KnownOne;
+            uint64_t TypeMask = Op1->getType()->getIntegralTypeMask();
+            ComputeMaskedBits(Op0, TypeMask, KnownZero, KnownOne);
+            
+            if (isPowerOf2_64(KnownZero^TypeMask)) { // Exactly one possible 1?
+              bool isSetNE = SrcI->getOpcode() == Instruction::SetNE;
+              if (Op1CV && (Op1CV != (KnownZero^TypeMask))) {
+                // (X&4) == 2 --> false
+                // (X&4) != 2 --> true
+                return ReplaceInstUsesWith(CI, ConstantBool::get(isSetNE));
+              }
+              
+              unsigned ShiftAmt = Log2_64(KnownZero^TypeMask);
+              Value *In = Op0;
+              if (ShiftAmt) {
                 // Perform an unsigned shr by shiftamt.  Convert input to
                 // unsigned if it is signed.
-                Value *In = Op0;
                 if (In->getType()->isSigned())
                   In = InsertNewInstBefore(new CastInst(In,
                         In->getType()->getUnsignedVersion(), In->getName()),CI);
                 // Insert the shift to put the result in the low bit.
                 In = InsertNewInstBefore(new ShiftInst(Instruction::Shr, In,
-                                      ConstantInt::get(Type::UByteTy, ShiftAmt),
-                                                   In->getName()+".lobit"), CI);
-                if (CI.getType() == In->getType())
-                  return ReplaceInstUsesWith(CI, In);
-                else
-                  return new CastInst(In, CI.getType());
+                                     ConstantInt::get(Type::UByteTy, ShiftAmt),
+                                     In->getName()+".lobit"), CI);
               }
-          }
-        }
-        break;
-      case Instruction::SetEQ:
-        // We if we are just checking for a seteq of a single bit and casting it
-        // to an integer.  If so, shift the bit to the appropriate place then
-        // cast to integer to avoid the comparison.
-        if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
-          // Is Op1C a power of two or zero?
-          if ((Op1C->getRawValue() & Op1C->getRawValue()-1) == 0) {
-            // cast (X == 1) to int -> X iff X has only the low bit set.
-            if (Op1C->getRawValue() == 1) {
-              Constant *Not1 =
-                ConstantExpr::getNot(ConstantInt::get(Op0->getType(), 1));
-              if (MaskedValueIsZero(Op0, 
-                              cast<ConstantIntegral>(Not1)->getZExtValue())) {
-                if (CI.getType() == Op0->getType())
-                  return ReplaceInstUsesWith(CI, Op0);
-                else
-                  return new CastInst(Op0, CI.getType());
+              
+              if ((Op1CV != 0) == isSetNE) { // Toggle the low bit.
+                Constant *One = ConstantInt::get(In->getType(), 1);
+                In = BinaryOperator::createXor(In, One, "tmp");
+                InsertNewInstBefore(cast<Instruction>(In), CI);
               }
+              
+              if (CI.getType() == In->getType())
+                return ReplaceInstUsesWith(CI, In);
+              else
+                return new CastInst(In, CI.getType());
             }
           }
         }
