@@ -293,8 +293,6 @@ bool SparcAsmPrinter::doFinalization(Module &M) {
         O << "\t.size " << name << "," << Size << "\n";
         O << name << ":\t\t\t\t! ";
         WriteAsOperand(O, I, true, true, &M);
-        O << " = ";
-        WriteAsOperand(O, C, false, false, &M);
         O << "\n";
         EmitGlobalConstant(C);
       }
