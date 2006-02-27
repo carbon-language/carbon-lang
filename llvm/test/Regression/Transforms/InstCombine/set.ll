@@ -129,3 +129,19 @@ bool %test22(uint %A, int %X) {
 	%R = or bool %C, %Z
 	ret bool %R
 }
+
+int %test23(int %a) {
+        %tmp.1 = and int %a, 1
+        %tmp.2 = seteq int %tmp.1, 0
+        %tmp.3 = cast bool %tmp.2 to int  ;; xor tmp1, 1
+        ret int %tmp.3
+}
+
+int %test24(uint %a) {
+        %tmp1 = and uint %a, 4
+	%tmp.1 = shr uint %tmp1, ubyte 2
+        %tmp.2 = seteq uint %tmp.1, 0
+        %tmp.3 = cast bool %tmp.2 to int  ;; xor tmp1, 1
+        ret int %tmp.3
+}
+
