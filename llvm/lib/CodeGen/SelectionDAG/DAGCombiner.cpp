@@ -16,10 +16,6 @@
 //  some kind of hint from the target that int div is expensive.
 // various folds of mulh[s,u] by constants such as -1, powers of 2, etc.
 //
-// FIXME: Should add a corresponding version of fold AND with
-// ZERO_EXTEND/SIGN_EXTEND by converting them to an ANY_EXTEND node which
-// we don't have yet.
-//
 // FIXME: select C, pow2, pow2 -> something smart
 // FIXME: trunc(select X, Y, Z) -> select X, trunc(Y), trunc(Z)
 // FIXME: Dead stores -> nuke
