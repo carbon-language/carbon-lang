@@ -201,7 +201,23 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
     KnownZero = ~KnownOne & DemandedMask;
     return false;   // Don't fall through, will infinitely loop.
   case ISD::AND:
-    // If either the LHS or the RHS are Zero, the result is zero.
+    // If the RHS is a constant, check to see if the LHS would be zero without
+    // using the bits from the RHS.  Below, we use knowledge about the RHS to
+    // simplify the LHS, here we're using information from the LHS to simplify
+    // the RHS.
+    if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
+      uint64_t LHSZero, LHSOne;
+      ComputeMaskedBits(Op.getOperand(0), DemandedMask,
+                        LHSZero, LHSOne, Depth+1);
+      // If the LHS already has zeros where RHSC does, this and is dead.
+      if ((LHSZero & DemandedMask) == (~RHSC->getValue() & DemandedMask))
+        return TLO.CombineTo(Op, Op.getOperand(0));
+      // If any of the set bits in the RHS are known zero on the LHS, shrink
+      // the constant.
+      if (TLO.ShrinkDemandedConstant(Op, ~LHSZero & DemandedMask))
+        return true;
+    }
+    
     if (SimplifyDemandedBits(Op.getOperand(1), DemandedMask, KnownZero,
                              KnownOne, TLO, Depth+1))
       return true;
@@ -224,23 +240,6 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
     if (TLO.ShrinkDemandedConstant(Op, DemandedMask & ~KnownZero2))
       return true;
       
-    // If the RHS is a constant, check to see if the LHS would be zero without
-    // using the bits from the RHS.  Above, we used knowledge about the RHS to
-    // simplify the LHS, here we're using information from the LHS to simplify
-    // the RHS.
-    if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
-      uint64_t LHSZero, LHSOne;
-      ComputeMaskedBits(Op.getOperand(0), DemandedMask,
-                        LHSZero, LHSOne, Depth+1);
-      // If the LHS already has zeros where RHSC does, this and is dead.
-      if ((LHSZero & DemandedMask) == (~RHSC->getValue() & DemandedMask))
-        return TLO.CombineTo(Op, Op.getOperand(0));
-      // If any of the set bits in the RHS are known zero on the LHS, shrink
-      // the constant.
-      if (TLO.ShrinkDemandedConstant(Op, ~LHSZero & DemandedMask))
-        return true;
-    }
-        
     // Output known-1 bits are only known if set in both the LHS & RHS.
     KnownOne &= KnownOne2;
     // Output known-0 are known to be clear if zero in either the LHS | RHS.
