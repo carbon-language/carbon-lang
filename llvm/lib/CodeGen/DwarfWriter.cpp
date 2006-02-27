@@ -26,7 +26,7 @@
 #include <iostream>
 
 using namespace llvm;
-using namespace dwarf;
+using namespace llvm::dwarf;
 
 static cl::opt<bool>
 DwarfVerbose("dwarf-verbose", cl::Hidden,

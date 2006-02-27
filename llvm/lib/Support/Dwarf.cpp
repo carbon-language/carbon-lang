@@ -15,6 +15,8 @@
 
 #include <cassert>
 
+namespace llvm {
+
 namespace dwarf {
 
 /// TagString - Return the string for the specified tag.
@@ -568,5 +570,6 @@ const char *CallFrameString(unsigned Encoding) {
   return "";
 }
 
-} // End of namespace llvm.
+} // End of namespace dwarf.
 
+} // End of namespace llvm.

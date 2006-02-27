@@ -16,6 +16,8 @@
 #ifndef LLVM_SUPPORT_DWARF_H
 #define LLVM_SUPPORT_DWARF_H
 
+namespace llvm {
+
 namespace dwarf {
 
 //===----------------------------------------------------------------------===//
@@ -512,5 +514,7 @@ const char *MacinfoString(unsigned Encoding);
 const char *CallFrameString(unsigned Encoding);
 
 } // End of namespace dwarf
+
+} // End of namespace llvm
 
 #endif
