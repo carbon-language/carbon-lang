@@ -1208,7 +1208,7 @@ DIE *DwarfWriter::NewSubprogram(SubprogramDesc *SPD) {
   // FIXME - faking the type for the time being.
   DIE *Type = NewBasicType(Unit, Type::IntTy); 
                                     
-  DIE *SubprogramDie = new DIE(DW_TAG_variable);
+  DIE *SubprogramDie = new DIE(DW_TAG_subprogram);
   SubprogramDie->AddString     (DW_AT_name,      DW_FORM_string, Name);
   SubprogramDie->AddUInt       (DW_AT_decl_file, 0,              FileID);
   SubprogramDie->AddUInt       (DW_AT_decl_line, 0,              Line);
