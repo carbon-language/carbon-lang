@@ -155,3 +155,14 @@ int %test22(bool %X) {
         ret int %Q
 }
 
+bool %test23(int %a, int %b) {
+        %tmp.2 = xor int %b, %a
+        %tmp.4 = seteq int %tmp.2, %a
+        ret bool %tmp.4
+}
+
+bool %test24(int %c, int %d) {
+        %tmp.2 = xor int %d, %c
+        %tmp.4 = setne int %tmp.2, %c
+        ret bool %tmp.4
+}

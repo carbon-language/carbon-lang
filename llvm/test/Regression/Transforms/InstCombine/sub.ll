@@ -124,3 +124,16 @@ int %test19(int %X, int %Y) {
 	%Q = add int %Z, %Y
 	ret int %Q
 }
+
+bool %test20(int %g, int %h) {
+        %tmp.2 = sub int %g, %h
+        %tmp.4 = setne int %tmp.2, %g
+        ret bool %tmp.4
+}
+
+bool %test21(int %g, int %h) {
+        %tmp.2 = sub int %g, %h
+        %tmp.4 = setne int %tmp.2, %g
+        ret bool %tmp.4
+}
+
