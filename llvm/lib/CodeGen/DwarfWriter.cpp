@@ -41,6 +41,41 @@ class CompileUnit;
 class DIE;
 
 //===----------------------------------------------------------------------===//
+class CompileUnit {
+private:
+  CompileUnitDesc *Desc;                // Compile unit debug descriptor.
+  unsigned ID;                          // File ID for source.
+  DIE *Die;                             // Compile unit die.
+  std::map<std::string, DIE *> Globals; // A map of globally visible named
+                                        // entities for this unit.
+
+public:
+  CompileUnit(CompileUnitDesc *CUD, unsigned I, DIE *D)
+  : Desc(CUD)
+  , ID(I)
+  , Die(D)
+  , Globals()
+  {}
+  
+  ~CompileUnit();
+  
+  // Accessors.
+  CompileUnitDesc *getDesc() const { return Desc; }
+  unsigned getID()           const { return ID; }
+  DIE* getDie()              const { return Die; }
+  std::map<std::string, DIE *> &getGlobals() { return Globals; }
+  
+  /// hasContent - Return true if this compile unit has something to write out.
+  ///
+  bool hasContent() const;
+  
+  /// AddGlobal - Add a new global entity to the compile unit.
+  ///
+  void AddGlobal(const std::string &Name, DIE *Die);
+  
+};
+
+//===----------------------------------------------------------------------===//
 // DIEAbbrevData - Dwarf abbreviation data, describes the one attribute of a
 // Dwarf abbreviation.
 class DIEAbbrevData {
@@ -54,7 +89,7 @@ public:
   , Form(F)
   {}
   
-  // Accessors
+  // Accessors.
   unsigned getAttribute() const { return Attribute; }
   unsigned getForm()      const { return Form; }
   
@@ -96,7 +131,7 @@ public:
   {}
   ~DIEAbbrev() {}
   
-  // Accessors
+  // Accessors.
   unsigned getTag()                           const { return Tag; }
   unsigned getChildrenFlag()                  const { return ChildrenFlag; }
   const std::vector<DIEAbbrevData> &getData() const { return Data; }
@@ -304,7 +339,7 @@ public:
   DIE(unsigned Tag);
   ~DIE();
   
-  // Accessors
+  // Accessors.
   unsigned   getAbbrevID()                   const { return AbbrevID; }
   unsigned   getOffset()                     const { return Offset; }
   unsigned   getSize()                       const { return Size; }
@@ -358,6 +393,24 @@ public:
 };
 
 } // End of namespace llvm
+
+//===----------------------------------------------------------------------===//
+
+CompileUnit::~CompileUnit() {
+  delete Die;
+}
+
+/// hasContent - Return true if this compile unit has something to write out.
+///
+bool CompileUnit::hasContent() const {
+  return !Die->getChildren().empty();
+}
+
+/// AddGlobal - Add a new global entity to the compile unit.
+///
+void CompileUnit::AddGlobal(const std::string &Name, DIE *Die) {
+  Globals[Name] = Die;
+}
 
 //===----------------------------------------------------------------------===//
 
@@ -914,7 +967,7 @@ DWLabel DwarfWriter::NewString(const std::string &String) {
 /// NewBasicType - Creates a new basic type if necessary, then adds to the
 /// owner.
 /// FIXME - Should never be needed.
-DIE *DwarfWriter::NewBasicType(DIE *Owner, Type *Ty) {
+DIE *DwarfWriter::NewBasicType(CompileUnit *Unit, Type *Ty) {
   DIE *&Slot = TypeToDieMap[Ty];
   if (Slot) return Slot;
   
@@ -988,28 +1041,14 @@ DIE *DwarfWriter::NewBasicType(DIE *Owner, Type *Ty) {
   Slot->AddUInt  (DW_AT_encoding,  DW_FORM_data1,  Encoding);
   
   // Add to context owner.
-  Owner->AddChild(Slot);
+  Unit->getDie()->AddChild(Slot);
   
   return Slot;
 }
 
-/// NewGlobalType - Make the type visible globally using the given name.
-///
-void DwarfWriter::NewGlobalType(const std::string &Name, DIE *Type) {
-  assert(!GlobalTypes[Name] && "Duplicate global type");
-  GlobalTypes[Name] = Type;
-}
-
-/// NewGlobalEntity - Make the entity visible globally using the given name.
-///
-void DwarfWriter::NewGlobalEntity(const std::string &Name, DIE *Entity) {
-  assert(!GlobalEntities[Name] && "Duplicate global variable or function");
-  GlobalEntities[Name] = Entity;
-}
-
 /// NewType - Create a new type DIE.
 ///
-DIE *DwarfWriter::NewType(DIE *Unit, TypeDesc *TyDesc) {
+DIE *DwarfWriter::NewType(CompileUnit *Unit, TypeDesc *TyDesc) {
   // FIXME - hack to get around NULL types short term.
   if (!TyDesc)  return NewBasicType(Unit, Type::IntTy);
 
@@ -1056,37 +1095,50 @@ DIE *DwarfWriter::NewType(DIE *Unit, TypeDesc *TyDesc) {
   if (!Name.empty()) Ty->AddString(DW_AT_name, DW_FORM_string, Name);
   // Add source line info if present.
   if (CompileUnitDesc *File = TyDesc->getFile()) {
-    unsigned FileID = DebugInfo->RecordSource(File);
+    CompileUnit *FileUnit = FindCompileUnit(File);
+    unsigned FileID = FileUnit->getID();
     int Line = TyDesc->getLine();
     Ty->AddUInt(DW_AT_decl_file, 0, FileID);
     Ty->AddUInt(DW_AT_decl_line, 0, Line);
   }
 
   // Add to context owner.
-  Unit->AddChild(Ty);
+  Unit->getDie()->AddChild(Ty);
   
   return Slot;
 }
 
-/// NewCompileUnit - Create new compile unit DIE.
+/// NewCompileUnit - Create new compile unit and it's die.
 ///
-DIE *DwarfWriter::NewCompileUnit(CompileUnitDesc *CompileUnit) {
-  // Check for pre-existence.
-  DIE *&Slot = DescToDieMap[CompileUnit];
-  if (Slot) return Slot;
+CompileUnit *DwarfWriter::NewCompileUnit(CompileUnitDesc *UnitDesc,
+                                         unsigned ID) {
+  // Construct debug information entry.
+  DIE *Die = new DIE(DW_TAG_compile_unit);
+  Die->AddLabel (DW_AT_stmt_list, DW_FORM_data4,  DWLabel("line", 0));
+  Die->AddLabel (DW_AT_high_pc,   DW_FORM_addr,   DWLabel("text_end", 0));
+  Die->AddLabel (DW_AT_low_pc,    DW_FORM_addr,   DWLabel("text_begin", 0));
+  Die->AddString(DW_AT_producer,  DW_FORM_string, UnitDesc->getProducer());
+  Die->AddUInt  (DW_AT_language,  DW_FORM_data1,  UnitDesc->getLanguage());
+  Die->AddString(DW_AT_name,      DW_FORM_string, UnitDesc->getFileName());
+  Die->AddString(DW_AT_comp_dir,  DW_FORM_string, UnitDesc->getDirectory());
+  
+  // Add die to descriptor map.
+  DescToDieMap[UnitDesc] = Die;
+  
+  // Construct compile unit.
+  CompileUnit *Unit = new CompileUnit(UnitDesc, ID, Die);
+  
+  // Add Unit to compile unit map.
+  DescToUnitMap[UnitDesc] = Unit;
+  
+  return Unit;
+}
 
-  DIE *Unit = new DIE(DW_TAG_compile_unit);
-  // FIXME - use the correct line set.
-  Unit->AddLabel (DW_AT_stmt_list, DW_FORM_data4,  DWLabel("section_line", 0));
-  Unit->AddLabel (DW_AT_high_pc,   DW_FORM_addr,   DWLabel("text_end", 0));
-  Unit->AddLabel (DW_AT_low_pc,    DW_FORM_addr,   DWLabel("text_begin", 0));
-  Unit->AddString(DW_AT_producer,  DW_FORM_string, CompileUnit->getProducer());
-  Unit->AddUInt  (DW_AT_language,  DW_FORM_data1,  CompileUnit->getLanguage());
-  Unit->AddString(DW_AT_name,      DW_FORM_string, CompileUnit->getFileName());
-  Unit->AddString(DW_AT_comp_dir,  DW_FORM_string, CompileUnit->getDirectory());
-  
-  Slot = Unit;
-  
+/// FindCompileUnit - Get the compile unit for the given descriptor.
+///
+CompileUnit *DwarfWriter::FindCompileUnit(CompileUnitDesc *UnitDesc) {
+  CompileUnit *Unit = DescToUnitMap[UnitDesc];
+  assert(Unit && "Missing compile unit.");
   return Unit;
 }
 
@@ -1098,9 +1150,8 @@ DIE *DwarfWriter::NewGlobalVariable(GlobalVariableDesc *GVD) {
   if (Slot) return Slot;
   
   // Get the compile unit context.
-  CompileUnitDesc *CompileUnit =
-                              static_cast<CompileUnitDesc *>(GVD->getContext());
-  DIE *Unit = NewCompileUnit(CompileUnit);
+  CompileUnitDesc *UnitDesc = static_cast<CompileUnitDesc *>(GVD->getContext());
+  CompileUnit *Unit = FindCompileUnit(UnitDesc);
   // Get the global variable itself.
   GlobalVariable *GV = GVD->getGlobalVariable();
   // Generate the mangled name.
@@ -1108,7 +1159,7 @@ DIE *DwarfWriter::NewGlobalVariable(GlobalVariableDesc *GVD) {
 
   // Gather the details (simplify add attribute code.)
   const std::string &Name = GVD->getName();
-  unsigned FileID = DebugInfo->RecordSource(CompileUnit);
+  unsigned FileID = Unit->getID();
   unsigned Line = GVD->getLine();
   
   // Get the global's type.
@@ -1128,10 +1179,11 @@ DIE *DwarfWriter::NewGlobalVariable(GlobalVariableDesc *GVD) {
   Slot = VariableDie;
  
   // Add to context owner.
-  Unit->AddChild(VariableDie);
+  Unit->getDie()->AddChild(VariableDie);
   
   // Expose as global.
-  NewGlobalEntity(Name, VariableDie);
+  // FIXME - need to check external flag.
+  Unit->AddGlobal(Name, VariableDie);
   
   return VariableDie;
 }
@@ -1144,13 +1196,12 @@ DIE *DwarfWriter::NewSubprogram(SubprogramDesc *SPD) {
   if (Slot) return Slot;
   
   // Get the compile unit context.
-  CompileUnitDesc *CompileUnit =
-                              static_cast<CompileUnitDesc *>(SPD->getContext());
-  DIE *Unit = NewCompileUnit(CompileUnit);
+  CompileUnitDesc *UnitDesc = static_cast<CompileUnitDesc *>(SPD->getContext());
+  CompileUnit *Unit = FindCompileUnit(UnitDesc);
 
   // Gather the details (simplify add attribute code.)
   const std::string &Name = SPD->getName();
-  unsigned FileID = DebugInfo->RecordSource(CompileUnit);
+  unsigned FileID = Unit->getID();
   // FIXME - faking the line for the time being.
   unsigned Line = 1;
   
@@ -1168,10 +1219,10 @@ DIE *DwarfWriter::NewSubprogram(SubprogramDesc *SPD) {
   Slot = SubprogramDie;
  
   // Add to context owner.
-  Unit->AddChild(SubprogramDie);
+  Unit->getDie()->AddChild(SubprogramDie);
   
   // Expose as global.
-  NewGlobalEntity(Name, SubprogramDie);
+  Unit->AddGlobal(Name, SubprogramDie);
   
   return SubprogramDie;
 }
@@ -1312,17 +1363,19 @@ unsigned DwarfWriter::SizeAndOffsetDie(DIE *Die, unsigned Offset) {
 /// SizeAndOffsets - Compute the size and offset of all the DIEs.
 ///
 void DwarfWriter::SizeAndOffsets() {
-  unsigned Offset = 0;
   
   // Process each compile unit.
   for (unsigned i = 0, N = CompileUnits.size(); i < N; ++i) {
-    // Compute size of compile unit header
-    Offset += sizeof(int32_t) + // Length of Compilation Unit Info
-              sizeof(int16_t) + // DWARF version number
-              sizeof(int32_t) + // Offset Into Abbrev. Section
-              sizeof(int8_t);   // Pointer Size (in bytes)
-  
-    Offset = SizeAndOffsetDie(CompileUnits[i], Offset);
+    CompileUnit *Unit = CompileUnits[i];
+    if (Unit->hasContent()) {
+      // Compute size of compile unit header
+      unsigned Offset = sizeof(int32_t) + // Length of Compilation Unit Info
+                        sizeof(int16_t) + // DWARF version number
+                        sizeof(int32_t) + // Offset Into Abbrev. Section
+                        sizeof(int8_t);   // Pointer Size (in bytes)
+    
+      SizeAndOffsetDie(Unit->getDie(), Offset);
+    }
   }
 }
 
@@ -1332,19 +1385,16 @@ void DwarfWriter::EmitDebugInfo() const {
   // Start debug info section.
   Asm->SwitchSection(DwarfInfoSection, 0);
   
-  // Get the number of compile units.
-  unsigned N = CompileUnits.size();
-  
-  // If there are any compile units.
-  if (N) {
-    EmitLabel("info_begin", 0);
-
-    // Process each compile unit.
-    for (unsigned i = 0; i < N; ++i) {
+  // Process each compile unit.
+  for (unsigned i = 0, N = CompileUnits.size(); i < N; ++i) {
+    CompileUnit *Unit = CompileUnits[i];
+    
+    if (Unit->hasContent()) {
+      DIE *Die = Unit->getDie();
       // Emit the compile units header.
-
+      EmitLabel("info_begin", Unit->getID());
       // Emit size of content not including length itself
-      unsigned ContentSize = CompileUnits[i]->getSize() +
+      unsigned ContentSize = Die->getSize() +
                              sizeof(int16_t) + // DWARF version number
                              sizeof(int32_t) + // Offset Into Abbrev. Section
                              sizeof(int8_t);   // Pointer Size (in bytes)
@@ -1354,10 +1404,9 @@ void DwarfWriter::EmitDebugInfo() const {
       EmitReference("abbrev_begin", 0); EOL("Offset Into Abbrev. Section");
       EmitInt8(AddressSize); EOL("Address Size (in bytes)");
     
-      EmitDIE(CompileUnits[i]);
+      EmitDIE(Die);
+      EmitLabel("info_end", Unit->getID());
     }
-  
-    EmitLabel("info_end", 0);
     
     O << "\n";
   }
@@ -1493,7 +1542,7 @@ void DwarfWriter::EmitDebugLines() const {
     if (Source != LineInfo->getSourceID()) {
       Source = LineInfo->getSourceID();
       EmitInt8(DW_LNS_set_file); EOL("DW_LNS_set_file");
-      EmitULEB128Bytes(0); EOL("New Source");
+      EmitULEB128Bytes(Source); EOL("New Source");
     }
     
     // If change of line.
@@ -1546,50 +1595,45 @@ void DwarfWriter::EmitDebugFrame() {
 /// EmitDebugPubNames - Emit visible names into a debug pubnames section.
 ///
 void DwarfWriter::EmitDebugPubNames() {
-  // Check to see if it is worth the effort.
-  if (!GlobalEntities.empty()) {
-    // Start the dwarf pubnames section.
-    Asm->SwitchSection(DwarfPubNamesSection, 0);
+  // Start the dwarf pubnames section.
+  Asm->SwitchSection(DwarfPubNamesSection, 0);
     
-    EmitDifference("pubnames_end", 0, "pubnames_begin", 0);
-    EOL("Length of Public Names Info");
+  // Process each compile unit.
+  for (unsigned i = 0, N = CompileUnits.size(); i < N; ++i) {
+    CompileUnit *Unit = CompileUnits[i];
     
-    EmitLabel("pubnames_begin", 0);
-    
-    EmitInt16(DWARF_VERSION); EOL("DWARF Version");
-    
-    EmitReference("info_begin", 0); EOL("Offset of Compilation Unit Info");
+    if (Unit->hasContent()) {
+      EmitDifference("pubnames_end", Unit->getID(),
+                     "pubnames_begin", Unit->getID());
+      EOL("Length of Public Names Info");
+      
+      EmitLabel("pubnames_begin", Unit->getID());
+      
+      EmitInt16(DWARF_VERSION); EOL("DWARF Version");
+      
+      EmitReference("info_begin", Unit->getID());
+      EOL("Offset of Compilation Unit Info");
 
-    EmitDifference("info_end", 0, "info_begin", 0);
-    EOL("Compilation Unit Length");
+      EmitDifference("info_end", Unit->getID(), "info_begin", Unit->getID());
+      EOL("Compilation Unit Length");
+      
+      std::map<std::string, DIE *> &Globals = Unit->getGlobals();
+      
+      for (std::map<std::string, DIE *>::iterator GI = Globals.begin(),
+                                                  GE = Globals.end();
+           GI != GE; ++GI) {
+        const std::string &Name = GI->first;
+        DIE * Entity = GI->second;
+        
+        EmitInt32(Entity->getOffset()); EOL("DIE offset");
+        EmitString(Name); EOL("External Name");
+      }
     
-    for (std::map<std::string, DIE *>::iterator GI = GlobalEntities.begin(),
-                                                GE = GlobalEntities.end();
-         GI != GE; ++GI) {
-      const std::string &Name = GI->first;
-      DIE * Entity = GI->second;
-      
-      EmitInt32(Entity->getOffset()); EOL("DIE offset");
-      EmitString(Name); EOL("External Name");
-      
+      EmitInt32(0); EOL("End Mark");
+      EmitLabel("pubnames_end", Unit->getID());
+    
+      O << "\n";
     }
-  
-    EmitInt32(0); EOL("End Mark");
-    EmitLabel("pubnames_end", 0);
-  
-    O << "\n";
-  }
-}
-
-/// EmitDebugPubTypes - Emit visible names into a debug pubtypes section.
-///
-void DwarfWriter::EmitDebugPubTypes() {
-  // Check to see if it is worth the effort.
-  if (!GlobalTypes.empty()) {
-    // Start the dwarf pubtypes section.
-    Asm->SwitchSection(DwarfPubTypesSection, 0);
-  
-    O << "\n";
   }
 }
 
@@ -1631,29 +1675,38 @@ void DwarfWriter::EmitDebugARanges() {
   Asm->SwitchSection(DwarfARangesSection, 0);
   
   // FIXME - Mock up
+#if 0
+  // Process each compile unit.
+  for (unsigned i = 0, N = CompileUnits.size(); i < N; ++i) {
+    CompileUnit *Unit = CompileUnits[i];
+    
+    if (Unit->hasContent()) {
+      // Don't include size of length
+      EmitInt32(0x1c); EOL("Length of Address Ranges Info");
+      
+      EmitInt16(DWARF_VERSION); EOL("Dwarf Version");
+      
+      EmitReference("info_begin", Unit->getID());
+      EOL("Offset of Compilation Unit Info");
 
-  // Don't include size of length
-  EmitInt32(0x1c); EOL("Length of Address Ranges Info");
-  
-  EmitInt16(DWARF_VERSION); EOL("Dwarf Version");
-  
-  EmitReference("info_begin", 0); EOL("Offset of Compilation Unit Info");
+      EmitInt8(AddressSize); EOL("Size of Address");
 
-  EmitInt8(AddressSize); EOL("Size of Address");
+      EmitInt8(0); EOL("Size of Segment Descriptor");
 
-  EmitInt8(0); EOL("Size of Segment Descriptor");
+      EmitInt16(0);  EOL("Pad (1)");
+      EmitInt16(0);  EOL("Pad (2)");
 
-  EmitInt16(0);  EOL("Pad (1)");
-  EmitInt16(0);  EOL("Pad (2)");
+      // Range 1
+      EmitReference("text_begin", 0); EOL("Address");
+      EmitDifference("text_end", 0, "text_begin", 0); EOL("Length");
 
-  // Range 1
-  EmitReference("text_begin", 0); EOL("Address");
-  EmitDifference("text_end", 0, "text_begin", 0); EOL("Length");
-
-  EmitInt32(0); EOL("EOM (1)");
-  EmitInt32(0); EOL("EOM (2)");
-  
-  O << "\n";
+      EmitInt32(0); EOL("EOM (1)");
+      EmitInt32(0); EOL("EOM (2)");
+      
+      O << "\n";
+    }
+  }
+#endif
 }
 
 /// EmitDebugRanges - Emit visible names into a debug ranges section.
@@ -1680,7 +1733,7 @@ void DwarfWriter::ConstructCompileUnitDIEs() {
   const UniqueVector<CompileUnitDesc *> CUW = DebugInfo->getCompileUnits();
   
   for (unsigned i = 1, N = CUW.size(); i <= N; ++i) {
-    DIE *Unit = NewCompileUnit(CUW[i]);
+    CompileUnit *Unit = NewCompileUnit(CUW[i], i);
     CompileUnits.push_back(Unit);
   }
 }
@@ -1736,9 +1789,8 @@ DwarfWriter::DwarfWriter(std::ostream &OS, AsmPrinter *A)
 , didInitial(false)
 , CompileUnits()
 , Abbreviations()
-, GlobalTypes()
-, GlobalEntities()
 , StringPool()
+, DescToUnitMap()
 , DescToDieMap()
 , TypeToDieMap()
 , AddressSize(sizeof(int32_t))
@@ -1811,9 +1863,6 @@ void DwarfWriter::EndModule(Module &M) {
   
   // Emit info into a debug pubnames section.
   EmitDebugPubNames();
-  
-  // Emit info into a debug pubtypes section.
-  // EmitDebugPubTypes();
   
   // Emit info into a debug str section.
   EmitDebugStr();

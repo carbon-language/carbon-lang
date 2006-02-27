@@ -32,6 +32,7 @@ namespace llvm {
 // Forward declarations.
 
 class AsmPrinter;
+class CompileUnit;
 class CompileUnitDesc;
 class DebugInfoDesc;
 class DIE;
@@ -43,7 +44,6 @@ class Module;
 class SubprogramDesc;
 class Type;
 class TypeDesc;
-
   
 //===----------------------------------------------------------------------===//
 // DWLabel - Labels are used to track locations in the assembler file.
@@ -92,23 +92,20 @@ protected:
   
   /// CompileUnits - All the compile units involved in this build.  The index
   /// of each entry in this vector corresponds to the sources in DebugInfo.
-  std::vector<DIE *> CompileUnits;
+  std::vector<CompileUnit *> CompileUnits;
 
   /// Abbreviations - A UniqueVector of TAG structure abbreviations.
   ///
   UniqueVector<DIEAbbrev> Abbreviations;
   
-  /// GlobalTypes - A map of globally visible named types.
-  ///
-  std::map<std::string, DIE *> GlobalTypes;
-  
-  /// GlobalEntities - A map of globally visible named entities.
-  ///
-  std::map<std::string, DIE *> GlobalEntities;
-   
   /// StringPool - A UniqueVector of strings used by indirect references.
-  ///
+  /// UnitMap - Map debug information descriptor to compile unit.
+   ///
   UniqueVector<std::string> StringPool;
+
+  /// UnitMap - Map debug information descriptor to compile unit.
+  ///
+  std::map<DebugInfoDesc *, CompileUnit *> DescToUnitMap;
   
   /// DescToDieMap - Tracks the mapping of debug informaton descriptors to
   /// DIES.
@@ -299,25 +296,21 @@ public:
   /// NewBasicType - Creates a new basic type if necessary, then adds to the
   /// owner.
   /// FIXME - Should never be needed.
-  DIE *NewBasicType(DIE *Owner, Type *Ty);
-
-  /// NewGlobalType - Make the type visible globally using the given name.
-  ///
-  void NewGlobalType(const std::string &Name, DIE *Type);
-  
-  /// NewGlobalEntity - Make the entity visible globally using the given name.
-  ///
-  void NewGlobalEntity(const std::string &Name, DIE *Entity);
+  DIE *NewBasicType(CompileUnit *Unit, Type *Ty);
 
 private:
 
   /// NewType - Create a new type DIE.
   ///
-  DIE *NewType(DIE *Unit, TypeDesc *TyDesc);
+ DIE *DwarfWriter::NewType(CompileUnit *Unit, TypeDesc *TyDesc);
   
-  /// NewCompileUnit - Create new compile unit DIE.
+  /// NewCompileUnit - Create new compile unit and it's die.
   ///
-  DIE *NewCompileUnit(CompileUnitDesc *CompileUnit);
+  CompileUnit *NewCompileUnit(CompileUnitDesc *UnitDesc, unsigned ID);
+  
+  /// FindCompileUnit - Get the compile unit for the given descriptor.
+  ///
+  CompileUnit *FindCompileUnit(CompileUnitDesc *UnitDesc);
   
   /// NewGlobalVariable - Make a new global variable DIE.
   ///
@@ -362,10 +355,6 @@ private:
   /// EmitDebugPubNames - Emit info into a debug pubnames section.
   ///
   void EmitDebugPubNames();
-  
-  /// EmitDebugPubTypes - Emit info into a debug pubtypes section.
-  ///
-  void EmitDebugPubTypes();
   
   /// EmitDebugStr - Emit info into a debug str section.
   ///
