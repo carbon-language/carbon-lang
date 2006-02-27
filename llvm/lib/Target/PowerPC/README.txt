@@ -52,7 +52,7 @@ This occurs in SPASS.
     as:
 
        xoris r0,r3,0x1234
-       cmpwi cr0,r0,0x5678
+       cmplwi cr0,r0,0x5678
        beq cr0,L6
 
     not:
@@ -148,30 +148,35 @@ typedef struct program_t {
 
 void AdjustBitfields(program* prog, unsigned int fmt1)
 {
-	unsigned int shift = 0;
-	unsigned int texCount = 0;
-	unsigned int i;
-	
-	for (i = 0; i < 8; i++)
-	{
-		prog->array[i].bitfields.field0 = texCount;
-		prog->array[i].bitfields.field1 = texCount + 1;
-		prog->array[i].bitfields.field2 = texCount + 2;
-		prog->array[i].bitfields.field3 = texCount + 3;
-
-		texCount += (fmt1 >> shift) & 0x7;
-		shift    += 3;
-	}
+        prog->array[0].bitfields.field0 = fmt1;
+        prog->array[0].bitfields.field1 = fmt1 + 1;
 }
 
-In the loop above, the bitfield adds get generated as 
-(add (shl bitfield, C1), (shl C2, C1)) where C2 is 1, 2 or 3.
+We currently generate:
 
-Since the input to the (or and, and) is an (add) rather than a (shl), the shift
-doesn't get folded into the rlwimi instruction.  We should ideally see through
-things like this, rather than forcing llvm to generate the equivalent
+_AdjustBitfields:
+        lwz r2, 0(r3)
+        addi r5, r4, 1
+        rlwinm r2, r2, 0, 0, 19
+        rlwinm r5, r5, 6, 20, 25
+        rlwimi r2, r4, 0, 26, 31
+        or r2, r2, r5
+        stw r2, 0(r3)
+        blr
 
-(shl (add bitfield, C2), C1) with some kind of mask.
+We should teach someone that or (rlwimi, rlwinm) with disjoint masks can be
+turned into rlwimi (rlwimi)
+
+The better codegen would be:
+
+_AdjustBitfields:
+        lwz r0,0(r3)
+        rlwinm r4,r4,0,0xff
+        rlwimi r0,r4,0,26,31
+        addi r4,r4,1
+        rlwimi r0,r4,6,20,25
+        stw r0,0(r3)
+        blr
 
 ===-------------------------------------------------------------------------===
 
