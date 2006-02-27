@@ -3876,6 +3876,32 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
       if (Instruction *R = visitSetCondInstWithCastAndCast(I))
         return R;
   }
+  
+  if (I.getOpcode() == Instruction::SetNE ||
+      I.getOpcode() == Instruction::SetEQ) {
+    Value *A, *B;
+    if (match(Op0, m_Xor(m_Value(A), m_Value(B))) &&
+        (A == Op1 || B == Op1)) {
+      // (A^B) == A  ->  B == 0
+      Value *OtherVal = A == Op1 ? B : A;
+      return BinaryOperator::create(I.getOpcode(), OtherVal,
+                                    Constant::getNullValue(A->getType()));
+    } else if (match(Op1, m_Xor(m_Value(A), m_Value(B))) &&
+               (A == Op0 || B == Op0)) {
+      // A == (A^B)  ->  B == 0
+      Value *OtherVal = A == Op0 ? B : A;
+      return BinaryOperator::create(I.getOpcode(), OtherVal,
+                                    Constant::getNullValue(A->getType()));
+    } else if (match(Op0, m_Sub(m_Value(A), m_Value(B))) && A == Op1) {
+      // (A-B) == A  ->  B == 0
+      return BinaryOperator::create(I.getOpcode(), B,
+                                    Constant::getNullValue(B->getType()));
+    } else if (match(Op1, m_Sub(m_Value(A), m_Value(B))) && A == Op0) {
+      // A == (A-B)  ->  B == 0
+      return BinaryOperator::create(I.getOpcode(), B,
+                                    Constant::getNullValue(B->getType()));
+    }
+  }
   return Changed ? &I : 0;
 }
 
