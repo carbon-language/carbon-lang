@@ -246,10 +246,8 @@ bool AlphaAsmPrinter::doFinalization(Module &M) {
           O << "\t.local " << name << "\n";
 
         O << "\t.comm " << name << "," << TD.getTypeSize(C->getType())
-          << "," << (1 << Align);
-        O << "\t\t# ";
-        WriteAsOperand(O, I, true, true, &M);
-        O << "\n";
+          << "," << (1 << Align)
+          <<  "\n";
       } else {
         switch (I->getLinkage()) {
         case GlobalValue::LinkOnceLinkage:
@@ -278,11 +276,7 @@ bool AlphaAsmPrinter::doFinalization(Module &M) {
         EmitAlignment(Align);
         O << "\t.type " << name << ",@object\n";
         O << "\t.size " << name << "," << Size << "\n";
-        O << name << ":\t\t\t\t# ";
-        WriteAsOperand(O, I, true, true, &M);
-        O << " = ";
-        WriteAsOperand(O, C, false, false, &M);
-        O << "\n";
+        O << name << ":\n";
         EmitGlobalConstant(C);
       }
     }
