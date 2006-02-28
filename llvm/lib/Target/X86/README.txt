@@ -517,3 +517,19 @@ It would be better to emit "cmp %al, 1" than a xor and test.
 //===---------------------------------------------------------------------===//
 
 Enable X86InstrInfo::convertToThreeAddress().
+
+//===---------------------------------------------------------------------===//
+
+Investigate whether it is better to codegen the following
+
+        %tmp.1 = mul int %x, 9
+to
+
+	movl	4(%esp), %eax
+	leal	(%eax,%eax,8), %eax
+
+as opposed to what llc is currently generating:
+
+	imull $9, 4(%esp), %eax
+
+Currently the load folding imull has a higher complexity than the LEA32 pattern.
