@@ -4818,7 +4818,9 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
               if (Op1CV && (Op1CV != (KnownZero^TypeMask))) {
                 // (X&4) == 2 --> false
                 // (X&4) != 2 --> true
-                return ReplaceInstUsesWith(CI, ConstantBool::get(isSetNE));
+                Constant *Res = ConstantBool::get(isSetNE);
+                Res = ConstantExpr::getCast(Res, CI.getType());
+                return ReplaceInstUsesWith(CI, Res);
               }
               
               unsigned ShiftAmt = Log2_64(KnownZero^TypeMask);
