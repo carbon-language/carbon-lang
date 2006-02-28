@@ -42,3 +42,21 @@ int %test6(int %A) {
 	%B = rem int %A, 0   ;; undef
 	ret int %B
 }
+
+int %test7(int %A) {
+	%B = mul int %A, 26
+	%C = rem int %B, 13
+	ret int %C
+}
+
+int %test8(int %A) {
+	%B = shl int %A, ubyte 4
+	%C = rem int %B, 8 
+	ret int %C
+}
+
+uint %test9(uint %A) {
+	%B = mul uint %A, 124
+	%C = rem uint %B, 62 
+	ret uint %C
+}
