@@ -1,6 +1,6 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
-
+; RUN: llvm-as < %s | opt -instcombine -disable-output &&
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep rem
 
 implementation
@@ -10,7 +10,7 @@ int %test1(int %A) {
 	ret int %B
 }
 
-int %test2(int %A) {          ; 0 % X = 0, we don't need ot preserve traps
+int %test2(int %A) {          ; 0 % X = 0, we don't need to preserve traps
 	%B = rem int 0, %A
 	ret int %B
 }
@@ -38,3 +38,7 @@ uint %test5(uint %X, ubyte %B) {
         ret uint %V
 }
 
+int %test6(int %A) {
+	%B = rem int %A, 0   ;; undef
+	ret int %B
+}
