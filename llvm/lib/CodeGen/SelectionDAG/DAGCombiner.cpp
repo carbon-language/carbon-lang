@@ -1043,9 +1043,13 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
     }
   }
   
-  // fold (and (load x), 255) -> (zextload x)
-  if (N1C && N0.getOpcode() == ISD::LOAD && N0.hasOneUse()) {
-    MVT::ValueType EVT;
+  // fold (and (load x), 255) -> (zextload x, i8)
+  // fold (and (extload x, i16), 255) -> (zextload x, i8)
+  if (N1C &&
+      (N0.getOpcode() == ISD::LOAD || N0.getOpcode() == ISD::EXTLOAD ||
+       N0.getOpcode() == ISD::ZEXTLOAD) &&
+      N0.hasOneUse()) {
+    MVT::ValueType EVT, LoadedVT;
     if (N1C->getValue() == 255)
       EVT = MVT::i8;
     else if (N1C->getValue() == 65535)
@@ -1054,17 +1058,20 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
       EVT = MVT::i32;
     else
       EVT = MVT::Other;
-    if (EVT != MVT::Other) {
-      assert(MVT::getSizeInBits(VT) > MVT::getSizeInBits(EVT) &&
-             "Cannot zext to larger type!");
+    
+    LoadedVT = N0.getOpcode() == ISD::LOAD ? VT :
+                           cast<VTSDNode>(N0.getOperand(3))->getVT();
+    if (EVT != MVT::Other && LoadedVT > EVT) {
       MVT::ValueType PtrType = N0.getOperand(1).getValueType();
       // For big endian targets, we need to add an offset to the pointer to load
       // the correct bytes.  For little endian systems, we merely need to read
       // fewer bytes from the same pointer.
-      uint64_t PtrOff = (MVT::getSizeInBits(VT) - MVT::getSizeInBits(EVT)) / 8;
-      SDOperand NewPtr = TLI.isLittleEndian() ? N0.getOperand(1) : 
-        DAG.getNode(ISD::ADD, PtrType, N0.getOperand(1),
-                    DAG.getConstant(PtrOff, PtrType));
+      unsigned PtrOff =
+        (MVT::getSizeInBits(LoadedVT) - MVT::getSizeInBits(EVT)) / 8;
+      SDOperand NewPtr = N0.getOperand(1);
+      if (!TLI.isLittleEndian())
+        NewPtr = DAG.getNode(ISD::ADD, PtrType, NewPtr,
+                             DAG.getConstant(PtrOff, PtrType));
       WorkList.push_back(NewPtr.Val);
       SDOperand Load =
         DAG.getExtLoad(ISD::ZEXTLOAD, VT, N0.getOperand(0), NewPtr,
