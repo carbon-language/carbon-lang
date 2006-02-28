@@ -23,9 +23,6 @@
 // FIXME: mul (x, const) -> shifts + adds
 // FIXME: undef values
 // FIXME: make truncate see through SIGN_EXTEND and AND
-// FIXME: (sra (sra x, c1), c2) -> (sra x, c1+c2)
-// FIXME: verify that getNode can't return extends with an operand whose type
-//        is >= to that of the extend.
 // FIXME: divide by zero is currently left unfolded.  do we want to turn this
 //        into an undef?
 // FIXME: select ne (select cc, 1, 0), 0, true, false -> select cc, true, false
@@ -1367,6 +1364,17 @@ SDOperand DAGCombiner::visitSRA(SDNode *N) {
       return DAG.getNode(ISD::SIGN_EXTEND_INREG, VT, N0.getOperand(0),
                          DAG.getValueType(EVT));
   }
+  
+  // fold (sra (sra x, c1), c2) -> (sra x, c1+c2)
+  if (N1C && N0.getOpcode() == ISD::SRA) {
+    if (ConstantSDNode *C1 = dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
+      unsigned Sum = N1C->getValue() + C1->getValue();
+      if (Sum >= MVT::getSizeInBits(VT)) Sum = MVT::getSizeInBits(VT)-1;
+      return DAG.getNode(ISD::SRA, VT, N0.getOperand(0),
+                         DAG.getConstant(Sum, N1C->getValueType(0)));
+    }
+  }
+  
   // If the sign bit is known to be zero, switch this to a SRL.
   if (TLI.MaskedValueIsZero(N0, MVT::getIntVTSignBit(VT)))
     return DAG.getNode(ISD::SRL, VT, N0, N1);
