@@ -453,8 +453,11 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDOperand N, SDOperand &Base,
   else
     AM.IndexReg = CurDAG->getRegister(0, MVT::i32);
 
-  if (AM.Scale > 1)
+  if (AM.Scale > 2) 
     Complexity += 2;
+  // Don't match just leal(,%reg,2). It's cheaper to do addl %reg, %reg
+  else if (AM.Scale > 1)
+    Complexity++;
 
   // FIXME: We are artificially lowering the criteria to turn ADD %reg, $GA
   // to a LEA. This is determined with some expermentation but is by no means
