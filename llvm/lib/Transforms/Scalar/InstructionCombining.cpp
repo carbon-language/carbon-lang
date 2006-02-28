@@ -1867,14 +1867,12 @@ Instruction *InstCombiner::visitRem(BinaryOperator &I) {
       if (isPowerOf2_64(C->getValue()))
         return BinaryOperator::createAnd(Op0, SubOne(C));
 
-    if (!RHS->isNullValue()) {
-      if (SelectInst *SI = dyn_cast<SelectInst>(Op0))
-        if (Instruction *R = FoldOpIntoSelect(I, SI, this))
-          return R;
-      if (isa<PHINode>(Op0))
-        if (Instruction *NV = FoldOpIntoPhi(I))
-          return NV;
-    }
+    if (SelectInst *SI = dyn_cast<SelectInst>(Op0))
+      if (Instruction *R = FoldOpIntoSelect(I, SI, this))
+        return R;
+    if (isa<PHINode>(Op0))
+      if (Instruction *NV = FoldOpIntoPhi(I))
+        return NV;
   }
 
   if (Instruction *RHSI = dyn_cast<Instruction>(I.getOperand(1))) {
