@@ -1867,12 +1867,28 @@ Instruction *InstCombiner::visitRem(BinaryOperator &I) {
       if (isPowerOf2_64(C->getValue()))
         return BinaryOperator::createAnd(Op0, SubOne(C));
 
-    if (SelectInst *SI = dyn_cast<SelectInst>(Op0))
-      if (Instruction *R = FoldOpIntoSelect(I, SI, this))
-        return R;
-    if (isa<PHINode>(Op0))
-      if (Instruction *NV = FoldOpIntoPhi(I))
-        return NV;
+    if (Instruction *Op0I = dyn_cast<Instruction>(Op0)) {
+      if (SelectInst *SI = dyn_cast<SelectInst>(Op0I)) {
+        if (Instruction *R = FoldOpIntoSelect(I, SI, this))
+          return R;
+      } else if (isa<PHINode>(Op0I)) {
+        if (Instruction *NV = FoldOpIntoPhi(I))
+          return NV;
+      } else if (Op0I->getOpcode() == Instruction::Mul) {
+        // X*C1%C2 --> 0  iff  C1%C2 == 0
+        if (ConstantInt *MulRHS = dyn_cast<ConstantInt>(Op0I->getOperand(1))) {
+          if (ConstantExpr::getRem(MulRHS, RHS)->isNullValue())
+            return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
+        }
+      } else if (Op0I->getOpcode() == Instruction::Shl) {
+        // (X<<C1)%C2 --> 0  iff  (1<<C1)%C2 == 0
+        if (Constant *ShRHS = dyn_cast<Constant>(Op0I->getOperand(1))) {
+          ShRHS = ConstantExpr::getShl(ConstantInt::get(I.getType(), 1), ShRHS);
+          if (ConstantExpr::getRem(ShRHS, RHS)->isNullValue())
+            return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
+        }
+      }
+    }
   }
 
   if (Instruction *RHSI = dyn_cast<Instruction>(I.getOperand(1))) {
