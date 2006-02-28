@@ -37,6 +37,7 @@ protected:
   bool Has64BitRegs;
   bool HasAltivec;
   bool HasFSQRT;
+  bool HasSTFIWX;
   bool IsAIX;
   bool IsDarwin;
 public:
@@ -60,6 +61,7 @@ public:
   
 
   bool hasFSQRT() const { return HasFSQRT; }
+  bool hasSTFIWX() const { return HasSTFIWX; }
   bool has64BitRegs() const { return Has64BitRegs; }
   bool hasAltivec() const { return HasAltivec; }
   

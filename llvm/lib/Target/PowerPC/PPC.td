@@ -29,6 +29,8 @@ def FeatureGPUL      : SubtargetFeature<"gpul","IsGigaProcessor", "true",
                                         "Enable GPUL instructions">;
 def FeatureFSqrt     : SubtargetFeature<"fsqrt","HasFSQRT", "true",
                                         "Enable the fsqrt instruction">; 
+def FeatureSTFIWX    : SubtargetFeature<"stfiwx","HasSTFIWX", "true",
+                                        "Enable the stfiwx instruction">; 
 
 //===----------------------------------------------------------------------===//
 // Register File Description
@@ -58,10 +60,10 @@ def : Processor<"7450", G4PlusItineraries, [FeatureAltivec]>;
 def : Processor<"g4+", G4PlusItineraries, [FeatureAltivec]>;
 def : Processor<"750", G3Itineraries, []>;
 def : Processor<"970", G5Itineraries,
-                  [FeatureAltivec, FeatureGPUL, FeatureFSqrt,
+                  [FeatureAltivec, FeatureGPUL, FeatureFSqrt, FeatureSTFIWX,
                    Feature64Bit /*, Feature64BitRegs */]>;
 def : Processor<"g5", G5Itineraries,
-                  [FeatureAltivec, FeatureGPUL, FeatureFSqrt,
+                  [FeatureAltivec, FeatureGPUL, FeatureFSqrt, FeatureSTFIWX,
                    Feature64Bit /*, Feature64BitRegs */]>;
 
 
