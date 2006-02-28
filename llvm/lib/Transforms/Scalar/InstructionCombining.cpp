@@ -1814,6 +1814,17 @@ Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
 
 Instruction *InstCombiner::visitRem(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
+  
+  // 0 % X == 0, we don't need to preserve faults!
+  if (Constant *LHS = dyn_cast<Constant>(Op0))
+    if (LHS->isNullValue())
+      return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
+
+  if (isa<UndefValue>(Op0))              // undef % X -> 0
+    return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
+  if (isa<UndefValue>(Op1))
+    return ReplaceInstUsesWith(I, Op1);  // X % undef -> undef
+  
   if (I.getType()->isSigned()) {
     if (Value *RHSNeg = dyn_castNegVal(Op1))
       if (!isa<ConstantSInt>(RHSNeg) ||
@@ -1842,22 +1853,19 @@ Instruction *InstCombiner::visitRem(BinaryOperator &I) {
     }
   }
 
-  if (isa<UndefValue>(Op0))              // undef % X -> 0
-    return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
-  if (isa<UndefValue>(Op1))
-    return ReplaceInstUsesWith(I, Op1);  // X % undef -> undef
-
   if (ConstantInt *RHS = dyn_cast<ConstantInt>(Op1)) {
+    // X % 0 == undef, we don't need to preserve faults!
+    if (RHS->equalsInt(0))
+      return ReplaceInstUsesWith(I, UndefValue::get(I.getType()));
+    
     if (RHS->equalsInt(1))  // X % 1 == 0
       return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
 
     // Check to see if this is an unsigned remainder with an exact power of 2,
     // if so, convert to a bitwise and.
     if (ConstantUInt *C = dyn_cast<ConstantUInt>(RHS))
-      if (uint64_t Val = C->getValue())    // Don't break X % 0 (divide by zero)
-        if (!(Val & (Val-1)))              // Power of 2
-          return BinaryOperator::createAnd(Op0,
-                                         ConstantUInt::get(I.getType(), Val-1));
+      if (isPowerOf2_64(C->getValue()))
+        return BinaryOperator::createAnd(Op0, SubOne(C));
 
     if (!RHS->isNullValue()) {
       if (SelectInst *SI = dyn_cast<SelectInst>(Op0))
@@ -1869,35 +1877,6 @@ Instruction *InstCombiner::visitRem(BinaryOperator &I) {
     }
   }
 
-  // If this is 'urem X, (Cond ? C1, C2)' where C1&C2 are powers of two,
-  // transform this into: '(Cond ? (urem X, C1) : (urem X, C2))'.
-  if (SelectInst *SI = dyn_cast<SelectInst>(Op1))
-    if (ConstantUInt *STO = dyn_cast<ConstantUInt>(SI->getOperand(1)))
-      if (ConstantUInt *SFO = dyn_cast<ConstantUInt>(SI->getOperand(2))) {
-        if (STO->getValue() == 0) { // Couldn't be this argument.
-          I.setOperand(1, SFO);
-          return &I;
-        } else if (SFO->getValue() == 0) {
-          I.setOperand(1, STO);
-          return &I;
-        }
-
-        if (!(STO->getValue() & (STO->getValue()-1)) &&
-            !(SFO->getValue() & (SFO->getValue()-1))) {
-          Value *TrueAnd = InsertNewInstBefore(BinaryOperator::createAnd(Op0,
-                                         SubOne(STO), SI->getName()+".t"), I);
-          Value *FalseAnd = InsertNewInstBefore(BinaryOperator::createAnd(Op0,
-                                         SubOne(SFO), SI->getName()+".f"), I);
-          return new SelectInst(SI->getOperand(0), TrueAnd, FalseAnd);
-        }
-      }
-
-  // 0 % X == 0, we don't need to preserve faults!
-  if (ConstantInt *LHS = dyn_cast<ConstantInt>(Op0))
-    if (LHS->equalsInt(0))
-      return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
-
-  
   if (Instruction *RHSI = dyn_cast<Instruction>(I.getOperand(1))) {
     // Turn A % (C << N), where C is 2^k, into A & ((C << N)-1) [urem only].
     if (I.getType()->isUnsigned() && 
@@ -1911,6 +1890,28 @@ Instruction *InstCombiner::visitRem(BinaryOperator &I) {
         return BinaryOperator::createAnd(Op0, Add);
       }
     }
+    
+    // If this is 'urem X, (Cond ? C1, C2)' where C1&C2 are powers of two,
+    // transform this into: '(Cond ? (urem X, C1) : (urem X, C2))'.
+    if (SelectInst *SI = dyn_cast<SelectInst>(Op1))
+      if (ConstantUInt *STO = dyn_cast<ConstantUInt>(SI->getOperand(1)))
+        if (ConstantUInt *SFO = dyn_cast<ConstantUInt>(SI->getOperand(2))) {
+          if (STO->getValue() == 0) { // Couldn't be this argument.
+            I.setOperand(1, SFO);
+            return &I;
+          } else if (SFO->getValue() == 0) {
+            I.setOperand(1, STO);
+            return &I;
+          }
+          
+          if (isPowerOf2_64(STO->getValue()) && isPowerOf2_64(SFO->getValue())){
+            Value *TrueAnd = InsertNewInstBefore(BinaryOperator::createAnd(Op0,
+                                          SubOne(STO), SI->getName()+".t"), I);
+            Value *FalseAnd = InsertNewInstBefore(BinaryOperator::createAnd(Op0,
+                                          SubOne(SFO), SI->getName()+".f"), I);
+            return new SelectInst(SI->getOperand(0), TrueAnd, FalseAnd);
+          }
+        }
   }
   
   return 0;
