@@ -1075,6 +1075,9 @@ DIE *DwarfWriter::NewType(CompileUnit *Unit, TypeDesc *TyDesc) {
     case DI_TAG_typedef:   T = DW_TAG_typedef;        break;
     case DI_TAG_pointer:   T = DW_TAG_pointer_type;   break;
     case DI_TAG_reference: T = DW_TAG_reference_type; break;
+    case DI_TAG_const:     T = DW_TAG_const_type;     break;
+    case DI_TAG_volatile:  T = DW_TAG_volatile_type;  break;
+    case DI_TAG_restrict:  T = DW_TAG_restrict_type;  break;
     default: assert( 0 && "Unknown tag on derived type");
     }
     

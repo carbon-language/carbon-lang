@@ -66,7 +66,10 @@ enum {
   DI_TAG_basictype,
   DI_TAG_typedef,
   DI_TAG_pointer,
-  DI_TAG_reference
+  DI_TAG_reference,
+  DI_TAG_const,
+  DI_TAG_volatile,
+  DI_TAG_restrict
 };
 
 //===----------------------------------------------------------------------===//
@@ -90,6 +93,7 @@ public:
   virtual void Apply(std::string &Field) = 0;
   virtual void Apply(DebugInfoDesc *&Field) = 0;
   virtual void Apply(GlobalVariable *&Field) = 0;
+  virtual void Apply(std::vector<DebugInfoDesc *> &Field) = 0;
 };
 
 //===----------------------------------------------------------------------===//
@@ -147,7 +151,6 @@ public:
   virtual void dump() = 0;
 #endif
 };
-
 
 //===----------------------------------------------------------------------===//
 /// AnchorDesc - Descriptors of this class act as markers for identifying
@@ -371,7 +374,16 @@ public:
   static bool classof(const DerivedTypeDesc *)  { return true; }
   static bool classof(const DebugInfoDesc *D) {
     unsigned T =  D->getTag();
-    return T == DI_TAG_typedef || T == DI_TAG_pointer || T == DI_TAG_reference;
+    switch (T) {
+    case DI_TAG_typedef:
+    case DI_TAG_pointer:
+    case DI_TAG_reference:
+    case DI_TAG_const:
+    case DI_TAG_volatile:
+    case DI_TAG_restrict:
+      return true;
+    default: return false;
+    }
   }
   
   /// ApplyToFields - Target the visitor to the fields of the  DerivedTypeDesc.

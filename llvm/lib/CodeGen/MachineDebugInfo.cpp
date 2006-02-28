@@ -202,6 +202,9 @@ public:
   virtual void Apply(std::string &Field)     { ++Count; }
   virtual void Apply(DebugInfoDesc *&Field)  { ++Count; }
   virtual void Apply(GlobalVariable *&Field) { ++Count; }
+  virtual void Apply(std::vector<DebugInfoDesc *> &Field) {
+    ++Count;
+  }
 };
 
 //===----------------------------------------------------------------------===//
@@ -250,6 +253,17 @@ public:
   virtual void Apply(GlobalVariable *&Field) {
     Constant *C = CI->getOperand(I++);
     Field = getGlobalVariable(C);
+  }
+  virtual void Apply(std::vector<DebugInfoDesc *> &Field) {
+    Constant *C = CI->getOperand(I++);
+    GlobalVariable *GV = getGlobalVariable(C);
+    ConstantArray *CA = cast<ConstantArray>(GV->getInitializer());
+    Field.resize(0);
+    for (unsigned i = 0, N = CA->getNumOperands(); i < N; ++i) {
+      GlobalVariable *GVE = getGlobalVariable(CA->getOperand(i));
+      DebugInfoDesc *DE = DR.Deserialize(GVE);
+      Field.push_back(DE);
+    }
   }
 };
 
@@ -310,6 +324,22 @@ public:
       Elements.push_back(ConstantPointerNull::get(EmptyTy));
     }
   }
+  virtual void Apply(std::vector<DebugInfoDesc *> &Field) {
+    const PointerType *EmptyTy = SR.getEmptyStructPtrType();
+    unsigned N = Field.size();
+    ArrayType *AT = ArrayType::get(EmptyTy, N);
+    std::vector<Constant *> ArrayElements;
+
+    for (unsigned i = 0, N = Field.size(); i < N; ++i) {
+      GlobalVariable *GVE = SR.Serialize(Field[i]);
+      Constant *CE = ConstantExpr::getCast(GVE, EmptyTy);
+      ArrayElements.push_back(cast<Constant>(CE));
+    }
+    
+    Constant *CA = ConstantArray::get(AT, ArrayElements);
+    Constant *CAE = ConstantExpr::getCast(CA, EmptyTy);
+    Elements.push_back(CAE);
+  }
 };
 
 //===----------------------------------------------------------------------===//
@@ -350,6 +380,10 @@ public:
     Fields.push_back(EmptyTy);
   }
   virtual void Apply(GlobalVariable *&Field) {
+    const PointerType *EmptyTy = SR.getEmptyStructPtrType();
+    Fields.push_back(EmptyTy);
+  }
+  virtual void Apply(std::vector<DebugInfoDesc *> &Field) {
     const PointerType *EmptyTy = SR.getEmptyStructPtrType();
     Fields.push_back(EmptyTy);
   }
@@ -409,6 +443,27 @@ public:
     Constant *C = CI->getOperand(I++);
     IsValid = IsValid && isGlobalVariable(C);
   }
+  virtual void Apply(std::vector<DebugInfoDesc *> &Field) {
+    Constant *C = CI->getOperand(I++);
+    IsValid = IsValid && isGlobalVariable(C);
+    if (!IsValid) return;
+
+    GlobalVariable *GV = getGlobalVariable(C);
+    IsValid = IsValid && GV && GV->hasInitializer();
+    if (!IsValid) return;
+    
+    ConstantArray *CA = dyn_cast<ConstantArray>(GV->getInitializer());
+    IsValid = IsValid && CA;
+    if (!IsValid) return;
+
+    for (unsigned i = 0, N = CA->getNumOperands(); IsValid && i < N; ++i) {
+      IsValid = IsValid && isGlobalVariable(CA->getOperand(i));
+      if (!IsValid) return;
+    
+      GlobalVariable *GVE = getGlobalVariable(CA->getOperand(i));
+      VR.Verify(GVE);
+    }
+  }
 };
 
 
@@ -430,9 +485,12 @@ DebugInfoDesc *DebugInfoDesc::DescFactory(unsigned Tag) {
   case DI_TAG_global_variable: return new GlobalVariableDesc();
   case DI_TAG_subprogram:      return new SubprogramDesc();
   case DI_TAG_basictype:       return new BasicTypeDesc();
-  case DI_TAG_typedef:         return new DerivedTypeDesc(DI_TAG_typedef);
-  case DI_TAG_pointer:         return new DerivedTypeDesc(DI_TAG_pointer);         
-  case DI_TAG_reference:       return new DerivedTypeDesc(DI_TAG_reference);
+  case DI_TAG_typedef:
+  case DI_TAG_pointer:         
+  case DI_TAG_reference:
+  case DI_TAG_const:
+  case DI_TAG_volatile:         
+  case DI_TAG_restrict:        return new DerivedTypeDesc(Tag);
   default: break;
   }
   return NULL;
@@ -639,8 +697,7 @@ DerivedTypeDesc::DerivedTypeDesc(unsigned T)
 : TypeDesc(T)
 , FromType(NULL)
 {
-  assert((T == DI_TAG_typedef || T == DI_TAG_pointer || T == DI_TAG_reference)&&
-         "Unknown derived type.");
+  assert(classof((const DebugInfoDesc *)this) && "Unknown derived type.");
 }
 
 /// ApplyToFields - Target the visitor to the fields of the DerivedTypeDesc.
@@ -776,6 +833,8 @@ void SubprogramDesc::dump() {
             << "IsDefinition(" << (isDefinition() ? "true" : "false") << ")\n";
 }
 #endif
+
+//===----------------------------------------------------------------------===//
 
 DebugInfoDesc *DIDeserializer::Deserialize(Value *V) {
   return Deserialize(getGlobalVariable(V));
