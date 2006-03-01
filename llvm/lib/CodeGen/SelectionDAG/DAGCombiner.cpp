@@ -726,6 +726,33 @@ SDOperand DAGCombiner::visitMUL(SDNode *N) {
                             DAG.getConstant(Log2_64(-N1C->getSignExtended()),
                                             TLI.getShiftAmountTy())));
   }
+  
+  // (mul (shl X, c1), c2) -> (mul X, c2 << c1)
+  if (N1C && N0.getOpcode() == ISD::SHL && 
+      isa<ConstantSDNode>(N0.getOperand(1))) {
+    SDOperand C3 = DAG.getNode(ISD::SHL, VT, N1, N0.getOperand(1));
+    return DAG.getNode(ISD::MUL, VT, N0.getOperand(0), C3);
+  }
+  
+  // Change (mul (shl X, C), Y) -> (shl (mul X, Y), C) when the shift has one
+  // use.
+  {
+    SDOperand Sh(0,0), Y(0,0);
+    // Check for both (mul (shl X, C), Y)  and  (mul Y, (shl X, C)).
+    if (N0.getOpcode() == ISD::SHL && isa<ConstantSDNode>(N0.getOperand(1)) &&
+        N0.Val->hasOneUse()) {
+      Sh = N0; Y = N1;
+    } else if (N1.getOpcode() == ISD::SHL && 
+               isa<ConstantSDNode>(N1.getOperand(1)) && N1.Val->hasOneUse()) {
+      Sh = N1; Y = N0;
+    }
+    if (Sh.Val) {
+      SDOperand Mul = DAG.getNode(ISD::MUL, VT, Sh.getOperand(0), Y);
+      return DAG.getNode(ISD::SHL, VT, Mul, Sh.getOperand(1));
+    }
+  }
+      
+  
   // reassociate mul
   SDOperand RMUL = ReassociateOps(ISD::MUL, N0, N1);
   if (RMUL.Val != 0)
