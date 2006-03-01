@@ -156,10 +156,26 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::SRA, MVT::i64, Custom);
   }
   
+  // First set operation action for all vector types to expand. Then we
+  // will selectively turn on ones that can be effectively codegen'd.
+  for (unsigned VT = (unsigned)MVT::Vector + 1;
+       VT != (unsigned)MVT::LAST_VALUETYPE; VT++) {
+    setOperationAction(ISD::ADD , (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::SUB , (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::MUL , (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::LOAD, (MVT::ValueType)VT, Expand);
+  }
+
   if (TM.getSubtarget<PPCSubtarget>().hasAltivec()) {
     addRegisterClass(MVT::v4f32, PPC::VRRCRegisterClass);
     addRegisterClass(MVT::v4i32, PPC::VRRCRegisterClass);
     
+    setOperationAction(ISD::ADD        , MVT::v4f32, Legal);
+    setOperationAction(ISD::SUB        , MVT::v4f32, Legal);
+    setOperationAction(ISD::MUL        , MVT::v4f32, Legal);
+    setOperationAction(ISD::LOAD       , MVT::v4f32, Legal);
+    setOperationAction(ISD::ADD        , MVT::v4i32, Legal);
+    setOperationAction(ISD::LOAD       , MVT::v4i32, Legal);
     // FIXME: We don't support any ConstantVec's yet.  We should custom expand
     // the ones we do!
     setOperationAction(ISD::ConstantVec, MVT::v4f32, Expand);

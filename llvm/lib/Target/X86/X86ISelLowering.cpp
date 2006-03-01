@@ -238,13 +238,22 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     addLegalFPImmediate(-1.0); // FLD1/FCHS
   }
 
+  // First set operation action for all vector types to expand. Then we
+  // will selectively turn on ones that can be effectively codegen'd.
+  for (unsigned VT = (unsigned)MVT::Vector + 1;
+       VT != (unsigned)MVT::LAST_VALUETYPE; VT++) {
+    setOperationAction(ISD::ADD , (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::SUB , (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::MUL , (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::LOAD, (MVT::ValueType)VT, Expand);
+  }
+
   if (TM.getSubtarget<X86Subtarget>().hasMMX()) {
     addRegisterClass(MVT::v8i8,  X86::VR64RegisterClass);
     addRegisterClass(MVT::v4i16, X86::VR64RegisterClass);
     addRegisterClass(MVT::v2i32, X86::VR64RegisterClass);
 
-    // FIXME: We don't support any ConstantVec's yet.  We should custom expand
-    // the ones we do!
+    // FIXME: add MMX packed arithmetics
     setOperationAction(ISD::ConstantVec, MVT::v8i8,  Expand);
     setOperationAction(ISD::ConstantVec, MVT::v4i16, Expand);
     setOperationAction(ISD::ConstantVec, MVT::v2i32, Expand);
@@ -253,8 +262,10 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   if (TM.getSubtarget<X86Subtarget>().hasSSE1()) {
     addRegisterClass(MVT::v4f32, X86::VR128RegisterClass);
 
-    // FIXME: We don't support any ConstantVec's yet.  We should custom expand
-    // the ones we do!
+    setOperationAction(ISD::ADD        , MVT::v4f32, Legal);
+    setOperationAction(ISD::SUB        , MVT::v4f32, Legal);
+    setOperationAction(ISD::MUL        , MVT::v4f32, Legal);
+    setOperationAction(ISD::LOAD       , MVT::v4f32, Legal);
     setOperationAction(ISD::ConstantVec, MVT::v4f32, Expand);
   }
 
@@ -266,8 +277,10 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     addRegisterClass(MVT::v2i64, X86::VR128RegisterClass);
 
 
-    // FIXME: We don't support any ConstantVec's yet.  We should custom expand
-    // the ones we do!
+    setOperationAction(ISD::ADD        , MVT::v2f64, Legal);
+    setOperationAction(ISD::SUB        , MVT::v2f64, Legal);
+    setOperationAction(ISD::MUL        , MVT::v2f64, Legal);
+    setOperationAction(ISD::LOAD       , MVT::v2f64, Legal);
     setOperationAction(ISD::ConstantVec, MVT::v2f64, Expand);
     setOperationAction(ISD::ConstantVec, MVT::v16i8, Expand);
     setOperationAction(ISD::ConstantVec, MVT::v8i16, Expand);
