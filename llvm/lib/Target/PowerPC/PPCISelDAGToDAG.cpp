@@ -414,6 +414,10 @@ SDNode *PPCDAGToDAGISel::SelectBitfieldInsert(SDNode *N) {
 /// a base register plus a signed 16-bit displacement [r+imm].
 bool PPCDAGToDAGISel::SelectAddrImm(SDOperand N, SDOperand &Disp, 
                                     SDOperand &Base) {
+  // If this can be more profitably realized as r+r, fail.
+  if (SelectAddrIdx(N, Disp, Base))
+    return false;
+
   if (N.getOpcode() == ISD::ADD) {
     unsigned imm = 0;
     if (isIntImmediate(N.getOperand(1), imm) && isInt16(imm)) {
@@ -434,7 +438,23 @@ bool PPCDAGToDAGISel::SelectAddrImm(SDOperand N, SDOperand &Disp,
       Base = N.getOperand(0);
       return true;  // [&g+r]
     }
-    return false;   // [r+r]
+  } else if (N.getOpcode() == ISD::OR) {
+    unsigned imm = 0;
+    if (isIntImmediate(N.getOperand(1), imm) && isInt16(imm)) {
+      // If this is an or of disjoint bitfields, we can codegen this as an add
+      // (for better address arithmetic) if the LHS and RHS of the OR are
+      // provably disjoint.
+      uint64_t LHSKnownZero, LHSKnownOne;
+      PPCLowering.ComputeMaskedBits(N.getOperand(0), ~0U,
+                                    LHSKnownZero, LHSKnownOne);
+      if ((LHSKnownZero|~imm) == ~0U) {
+        // If all of the bits are known zero on the LHS or RHS, the add won't
+        // carry.
+        Base = N.getOperand(0);
+        Disp = getI32Imm(imm & 0xFFFF);
+        return true;
+      }
+    }
   }
   Disp = getI32Imm(0);
   if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(N))
@@ -449,35 +469,56 @@ bool PPCDAGToDAGISel::SelectAddrImm(SDOperand N, SDOperand &Disp,
 /// be represented by [r+imm], which are preferred.
 bool PPCDAGToDAGISel::SelectAddrIdx(SDOperand N, SDOperand &Base, 
                                     SDOperand &Index) {
-  // Check to see if we can represent this as an [r+imm] address instead, 
-  // which will fail if the address is more profitably represented as an
-  // [r+r] address.
-  if (SelectAddrImm(N, Base, Index))
-    return false;
-  
+  unsigned imm = 0;
   if (N.getOpcode() == ISD::ADD) {
+    if (isIntImmediate(N.getOperand(1), imm) && isInt16(imm))
+      return false;    // r+i
+    if (N.getOperand(1).getOpcode() == PPCISD::Lo)
+      return false;    // r+i
+    
     Base = N.getOperand(0);
     Index = N.getOperand(1);
     return true;
+  } else if (N.getOpcode() == ISD::OR) {
+    if (isIntImmediate(N.getOperand(1), imm) && isInt16(imm))
+      return false;    // r+i can fold it if we can.
+    
+    // If this is an or of disjoint bitfields, we can codegen this as an add
+    // (for better address arithmetic) if the LHS and RHS of the OR are provably
+    // disjoint.
+    uint64_t LHSKnownZero, LHSKnownOne;
+    uint64_t RHSKnownZero, RHSKnownOne;
+    PPCLowering.ComputeMaskedBits(N.getOperand(0), ~0U,
+                                  LHSKnownZero, LHSKnownOne);
+    
+    if (LHSKnownZero) {
+      PPCLowering.ComputeMaskedBits(N.getOperand(1), ~0U,
+                                    RHSKnownZero, RHSKnownOne);
+      // If all of the bits are known zero on the LHS or RHS, the add won't
+      // carry.
+      if ((LHSKnownZero | RHSKnownZero) == ~0U) {
+        Base = N.getOperand(0);
+        Index = N.getOperand(1);
+        return true;
+      }
+    }
   }
- 
-  Base = CurDAG->getRegister(PPC::R0, MVT::i32);
-  Index = N;
-  return true;
+  
+  return false;
 }
 
 /// SelectAddrIdxOnly - Given the specified addressed, force it to be
 /// represented as an indexed [r+r] operation.
 bool PPCDAGToDAGISel::SelectAddrIdxOnly(SDOperand N, SDOperand &Base, 
                                         SDOperand &Index) {
-  if (N.getOpcode() == ISD::ADD) {
-    Base = N.getOperand(0);
-    Index = N.getOperand(1);
-    return true;
+  // Check to see if we can easily represent this as an [r+r] address.  This
+  // will fail if it thinks that the address is more profitably represented as
+  // reg+imm, e.g. where imm = 0.
+  if (!SelectAddrIdx(N, Base, Index)) {
+    // Nope, do it the hard way.
+    Base = CurDAG->getRegister(PPC::R0, MVT::i32);
+    Index = N;
   }
-  
-  Base = CurDAG->getRegister(PPC::R0, MVT::i32);
-  Index = N;
   return true;
 }
 
