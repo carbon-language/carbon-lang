@@ -239,6 +239,12 @@ public:
   unsigned getNumElements(MVT::ValueType VT) const {
     return NumElementsForVT[VT];
   }
+  
+  /// hasTargetDAGCombine - If true, the target has custom DAG combine
+  /// transformations that it can perform for the specified node.
+  bool hasTargetDAGCombine(ISD::NodeType NT) const {
+    return TargetDAGCombineArray[NT >> 3] & (1 << (NT&7));
+  }
 
   /// This function returns the maximum number of store operations permitted
   /// to replace a call to llvm.memset. The value is set by the target at the
@@ -334,6 +340,47 @@ public:
                             uint64_t &KnownZero, uint64_t &KnownOne,
                             TargetLoweringOpt &TLO, unsigned Depth = 0) const;
   
+  /// computeMaskedBitsForTargetNode - Determine which of the bits specified in
+  /// Mask are known to be either zero or one and return them in the 
+  /// KnownZero/KnownOne bitsets.
+  virtual void computeMaskedBitsForTargetNode(const SDOperand Op,
+                                              uint64_t Mask,
+                                              uint64_t &KnownZero, 
+                                              uint64_t &KnownOne,
+                                              unsigned Depth = 0) const;
+  
+  struct DAGCombinerInfo {
+    void *DC;  // The DAG Combiner object.
+    bool BeforeLegalize;
+  public:
+    SelectionDAG &DAG;
+    
+    DAGCombinerInfo(SelectionDAG &dag, bool bl, void *dc)
+      : DC(dc), BeforeLegalize(bl), DAG(dag) {}
+    
+    bool isBeforeLegalize() const { return BeforeLegalize; }
+    
+    void AddToWorklist(SDNode *N);
+    SDOperand CombineTo(SDNode *N, const std::vector<SDOperand> &To);
+    SDOperand CombineTo(SDNode *N, SDOperand Res);
+    SDOperand CombineTo(SDNode *N, SDOperand Res0, SDOperand Res1);
+  };
+
+  /// PerformDAGCombine - This method will be invoked for all target nodes and
+  /// for any target-independent nodes that the target has registered with
+  /// invoke it for.
+  ///
+  /// The semantics are as follows:
+  /// Return Value:
+  ///   SDOperand.Val == 0   - No change was made
+  ///   SDOperand.Val == N   - N was replaced, is dead, and is already handled.
+  ///   otherwise            - N should be replaced by the returned Operand.
+  ///
+  /// In addition, methods provided by DAGCombinerInfo may be used to perform
+  /// more complex transformations.
+  ///
+  virtual SDOperand PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
+  
   //===--------------------------------------------------------------------===//
   // TargetLowering Configuration Methods - These methods should be invoked by
   // the derived class constructor to configure this object for the target.
@@ -421,6 +468,13 @@ protected:
     LegalFPImmediates.push_back(Imm);
   }
 
+  /// setTargetDAGCombine - Targets should invoke this method for each target
+  /// independent node that they want to provide a custom DAG combiner for by
+  /// implementing the PerformDAGCombine virtual method.
+  void setTargetDAGCombine(ISD::NodeType NT) {
+    TargetDAGCombineArray[NT >> 3] |= 1 << (NT&7);
+  }
+  
 public:
 
   //===--------------------------------------------------------------------===//
@@ -466,15 +520,6 @@ public:
   /// getTargetNodeName() - This method returns the name of a target specific
   /// DAG node.
   virtual const char *getTargetNodeName(unsigned Opcode) const;
-
-  /// computeMaskedBitsForTargetNode - Determine which of the bits specified in
-  /// Mask are known to be either zero or one and return them in the 
-  /// KnownZero/KnownOne bitsets.
-  virtual void computeMaskedBitsForTargetNode(const SDOperand Op,
-                                              uint64_t Mask,
-                                              uint64_t &KnownZero, 
-                                              uint64_t &KnownOne,
-                                              unsigned Depth = 0) const;
 
   //===--------------------------------------------------------------------===//
   // Inline Asm Support hooks
@@ -606,6 +651,11 @@ private:
   std::vector<std::pair<MVT::ValueType,
                         TargetRegisterClass*> > AvailableRegClasses;
 
+  /// TargetDAGCombineArray - Targets can specify ISD nodes that they would
+  /// like PerformDAGCombine callbacks for by calling setTargetDAGCombine(),
+  /// which sets a bit in this array.
+  unsigned char TargetDAGCombineArray[128/(sizeof(unsigned char)*8)];
+  
 protected:
   /// When lowering %llvm.memset this field specifies the maximum number of
   /// store operations that may be substituted for the call to memset. Targets

@@ -30,6 +30,8 @@ TargetLowering::TargetLowering(TargetMachine &tm)
   ShiftAmountTy = SetCCResultTy = PointerTy = getValueType(TD.getIntPtrType());
   ShiftAmtHandling = Undefined;
   memset(RegClassForVT, 0,MVT::LAST_VALUETYPE*sizeof(TargetRegisterClass*));
+  memset(TargetDAGCombineArray, 0, 
+         sizeof(TargetDAGCombineArray)/sizeof(TargetDAGCombineArray[0]));
   maxStoresPerMemset = maxStoresPerMemcpy = maxStoresPerMemmove = 8;
   allowUnalignedMemoryAccesses = false;
   UseUnderscoreSetJmpLongJmp = false;
@@ -914,6 +916,12 @@ void TargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
          " is a target node!");
   KnownZero = 0;
   KnownOne = 0;
+}
+
+SDOperand TargetLowering::
+PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const {
+  // Default implementation: no optimization.
+  return SDOperand();
 }
 
 //===----------------------------------------------------------------------===//
