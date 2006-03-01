@@ -1018,14 +1018,19 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
         return N1;
   // fold (and (any_ext V), c) -> (zero_ext V) if 'and' only clears top bits.
   if (N1C && N0.getOpcode() == ISD::ANY_EXTEND) {
-    unsigned InBits = MVT::getSizeInBits(N0.getOperand(0).getValueType());
+    unsigned InMask = MVT::getIntVTBitMask(N0.getOperand(0).getValueType());
     if (TLI.MaskedValueIsZero(N0.getOperand(0),
-                              ~N1C->getValue() & ((1ULL << InBits)-1))) {
+                              ~N1C->getValue() & InMask)) {
+      SDOperand Zext = DAG.getNode(ISD::ZERO_EXTEND, N0.getValueType(),
+                                   N0.getOperand(0));
+      
+      // Replace uses of the AND with uses of the Zero extend node.
+      CombineTo(N, Zext);
+      
       // We actually want to replace all uses of the any_extend with the
       // zero_extend, to avoid duplicating things.  This will later cause this
       // AND to be folded.
-      CombineTo(N0.Val, DAG.getNode(ISD::ZERO_EXTEND, N0.getValueType(),
-                                    N0.getOperand(0)));
+      CombineTo(N0.Val, Zext);
       return SDOperand();
     }
   }
