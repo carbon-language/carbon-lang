@@ -447,6 +447,44 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
+/// EnumeratorDesc - This class packages debug information associated with
+/// named integer constants.
+class EnumeratorDesc : public DebugInfoDesc {
+private:
+  std::string Name;                     // Enumerator name.
+  int64_t Value;                        // Enumerator value.
+
+public:
+  EnumeratorDesc();
+  
+  // Accessors
+  const std::string &getName()               const { return Name; }
+  int64_t getValue()                         const { return Value; }
+  void setName(const std::string &N)               { Name = N; }
+  void setValue(int64_t V)                         { Value = V; }
+
+  // Implement isa/cast/dyncast.
+  static bool classof(const EnumeratorDesc *) { return true; }
+  static bool classof(const DebugInfoDesc *D);
+  
+  /// ApplyToFields - Target the visitor to the fields of the EnumeratorDesc.
+  ///
+  virtual void ApplyToFields(DIVisitor *Visitor);
+
+  /// getDescString - Return a string used to compose global names and labels.
+  ///
+  virtual const char *getDescString() const;
+    
+  /// getTypeString - Return a string used to label this descriptor's type.
+  ///
+  virtual const char *getTypeString() const;
+
+#ifndef NDEBUG
+  virtual void dump();
+#endif
+};
+
+//===----------------------------------------------------------------------===//
 /// GlobalDesc - This class is the base descriptor for global functions and
 /// variables.
 class GlobalDesc : public AnchoredDesc {

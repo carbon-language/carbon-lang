@@ -1109,8 +1109,8 @@ DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc) {
         if (Lo != Hi) {
           Subrange->AddDIEntry(DW_AT_type, DW_FORM_ref4, IndexTy);
           // Only add low if non-zero.
-          if (Lo) Subrange->AddUInt(DW_AT_lower_bound, 0, Lo);
-          Subrange->AddUInt(DW_AT_upper_bound, 0, Hi);
+          if (Lo) Subrange->AddSInt(DW_AT_lower_bound, 0, Lo);
+          Subrange->AddSInt(DW_AT_upper_bound, 0, Hi);
         }
         Ty->AddChild(Subrange);
       }
@@ -1124,6 +1124,17 @@ DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc) {
       break;
     }
     case DW_TAG_enumeration_type: {
+      // Add enumerators to enumeration type.
+      for(unsigned i = 0, N = Elements.size(); i < N; ++i) {
+        EnumeratorDesc *ED = cast<EnumeratorDesc>(Elements[i]);
+        const std::string &Name = ED->getName();
+        int64_t Value = ED->getValue();
+        DIE *Enumerator = new DIE(DW_TAG_enumerator);
+        Enumerator->AddString(DW_AT_name, DW_FORM_string, Name);
+        Enumerator->AddSInt(DW_AT_const_value, DW_FORM_sdata, Value);
+        Ty->AddChild(Enumerator);
+      }
+
       break;
     }
     default: break;

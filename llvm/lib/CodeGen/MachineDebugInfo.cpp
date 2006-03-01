@@ -516,6 +516,7 @@ DebugInfoDesc *DebugInfoDesc::DescFactory(unsigned Tag) {
   case DW_TAG_union_type:
   case DW_TAG_enumeration_type: return new CompositeTypeDesc(Tag);
   case DW_TAG_subrange_type:    return new SubrangeDesc();
+  case DW_TAG_enumerator:       return new EnumeratorDesc();
   default: break;
   }
   return NULL;
@@ -904,6 +905,49 @@ void SubrangeDesc::dump() {
             << "Tag(" << getTag() << "), "
             << "Lo(" << Lo << "), "
             << "Hi(" << Hi << ")\n";
+}
+#endif
+
+//===----------------------------------------------------------------------===//
+
+EnumeratorDesc::EnumeratorDesc()
+: DebugInfoDesc(DW_TAG_enumerator)
+, Name("")
+, Value(0)
+{}
+
+// Implement isa/cast/dyncast.
+bool EnumeratorDesc::classof(const DebugInfoDesc *D) {
+  return D->getTag() == DW_TAG_enumerator;
+}
+
+/// ApplyToFields - Target the visitor to the fields of the EnumeratorDesc.
+///
+void EnumeratorDesc::ApplyToFields(DIVisitor *Visitor) {
+  DebugInfoDesc::ApplyToFields(Visitor);
+
+  Visitor->Apply(Name);
+  Visitor->Apply(Value);
+}
+
+/// getDescString - Return a string used to compose global names and labels.
+///
+const char *EnumeratorDesc::getDescString() const {
+  return "llvm.dbg.enumerator";
+}
+  
+/// getTypeString - Return a string used to label this descriptor's type.
+///
+const char *EnumeratorDesc::getTypeString() const {
+  return "llvm.dbg.enumerator.type";
+}
+
+#ifndef NDEBUG
+void EnumeratorDesc::dump() {
+  std::cerr << getDescString() << " "
+            << "Tag(" << getTag() << "), "
+            << "Name(" << Name << "), "
+            << "Value(" << Value << ")\n";
 }
 #endif
 
