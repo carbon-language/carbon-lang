@@ -63,10 +63,10 @@ namespace ISD {
     AssertSext, AssertZext,
 
     // Various leaf nodes.
-    Constant, ConstantFP, STRING,
-    GlobalAddress, FrameIndex, ConstantPool,
-    BasicBlock, ExternalSymbol, VALUETYPE, CONDCODE, Register,
-    
+    STRING, BasicBlock, VALUETYPE, CONDCODE, Register,
+    Constant, ConstantFP,
+    GlobalAddress, FrameIndex, ConstantPool, ExternalSymbol,
+
     // ConstantVec works like Constant or ConstantFP, except that it is not a
     // leaf node.  All operands are either Constant or ConstantFP nodes.
     ConstantVec,
@@ -84,6 +84,11 @@ namespace ISD {
     TargetFrameIndex,
     TargetConstantPool,
     TargetExternalSymbol,
+
+    // Abstract version of ConstantVec with abstract Vector type. The first node
+    // is a constant element count, the second is a value type indicating the
+    // type of the elements.
+    VConstant,
 
     // CopyToReg - This node has three operands: a chain, a register number to
     // set to this value, and a value.  
@@ -139,9 +144,9 @@ namespace ISD {
     // Simple abstract vector operators.  Unlike the integer and floating point
     // binary operators, these nodes also take two additional operands:
     // a constant element count, and a value type node indicating the type of
-    // the elements.  The order is op0, op1, count, type.  All vector opcodes,
-    // including VLOAD, must currently have count and type as their 3rd and 4th
-    // arguments.
+    // the elements.  The order is count, type, op0, op1.  All vector opcodes,
+    // including VLOAD and VConstant must currently have count and type as
+    // their 1st and 2nd arguments.
     VADD, VSUB, VMUL,
 
     // MULHU/MULHS - Multiply high - Multiply two integers of type iN, producing
@@ -243,9 +248,9 @@ namespace ISD {
     // SRCVALUE node that provides alias analysis information.
     LOAD, STORE,
     
-    // Abstract vector version of LOAD.  VLOAD has a token chain as the first
-    // operand, followed by a pointer operand, a constant element count, a value
-    // type node indicating the type of the elements, and a SRCVALUE node.
+    // Abstract vector version of LOAD.  VLOAD has a constant element count as
+    // the first operand, followed by a value type node indicating the type of
+    // the elements, a token chain, a pointer operand, and a SRCVALUE node.
     VLOAD,
 
     // EXTLOAD, SEXTLOAD, ZEXTLOAD - These three operators all load a value from

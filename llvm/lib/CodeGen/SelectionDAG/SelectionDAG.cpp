@@ -1400,10 +1400,10 @@ SDOperand SelectionDAG::getVecLoad(unsigned Count, MVT::ValueType EVT,
   if (N) return SDOperand(N, 0);
   std::vector<SDOperand> Ops;
   Ops.reserve(5);
-  Ops.push_back(Chain);
-  Ops.push_back(Ptr);
   Ops.push_back(getConstant(Count, MVT::i32));
   Ops.push_back(getValueType(EVT));
+  Ops.push_back(Chain);
+  Ops.push_back(Ptr);
   Ops.push_back(SV);
   std::vector<MVT::ValueType> VTs;
   VTs.reserve(2);
@@ -2557,26 +2557,33 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::PCMARKER:      return "PCMarker";
   case ISD::READCYCLECOUNTER: return "ReadCycleCounter";
   case ISD::SRCVALUE:      return "SrcValue";
-  case ISD::VALUETYPE:     return "ValueType";
-  case ISD::STRING:        return "String";
   case ISD::EntryToken:    return "EntryToken";
   case ISD::TokenFactor:   return "TokenFactor";
   case ISD::AssertSext:    return "AssertSext";
   case ISD::AssertZext:    return "AssertZext";
-  case ISD::Constant:      return "Constant";
-  case ISD::TargetConstant: return "TargetConstant";
-  case ISD::ConstantFP:    return "ConstantFP";
-  case ISD::ConstantVec:   return "ConstantVec";
-  case ISD::GlobalAddress: return "GlobalAddress";
-  case ISD::TargetGlobalAddress: return "TargetGlobalAddress";
-  case ISD::FrameIndex:    return "FrameIndex";
-  case ISD::TargetFrameIndex: return "TargetFrameIndex";
+
+  case ISD::STRING:        return "String";
   case ISD::BasicBlock:    return "BasicBlock";
+  case ISD::VALUETYPE:     return "ValueType";
   case ISD::Register:      return "Register";
-  case ISD::ExternalSymbol: return "ExternalSymbol";
-  case ISD::TargetExternalSymbol: return "TargetExternalSymbol";
+
+  case ISD::Constant:      return "Constant";
+  case ISD::ConstantFP:    return "ConstantFP";
+  case ISD::GlobalAddress: return "GlobalAddress";
+  case ISD::FrameIndex:    return "FrameIndex";
   case ISD::ConstantPool:  return "ConstantPool";
+  case ISD::ExternalSymbol: return "ExternalSymbol";
+
+  case ISD::ConstantVec:   return "ConstantVec";
+  case ISD::TargetConstant: return "TargetConstant";
+  case ISD::TargetConstantFP:return "TargetConstantFP";
+  case ISD::TargetConstantVec:return "TargetConstantVec";
+  case ISD::TargetGlobalAddress: return "TargetGlobalAddress";
+  case ISD::TargetFrameIndex: return "TargetFrameIndex";
   case ISD::TargetConstantPool:  return "TargetConstantPool";
+  case ISD::TargetExternalSymbol: return "TargetExternalSymbol";
+  case ISD::VConstant:     return "VConstant";
+
   case ISD::CopyToReg:     return "CopyToReg";
   case ISD::CopyFromReg:   return "CopyFromReg";
   case ISD::UNDEF:         return "undef";
