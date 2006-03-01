@@ -68,6 +68,7 @@ namespace {
                      WorkList.end());
     }
     
+  public:
     void AddToWorkList(SDNode *N) {
       WorkList.push_back(N);
     }
@@ -96,6 +97,20 @@ namespace {
       DAG.DeleteNode(N);
       return SDOperand(N, 0);
     }
+    
+    SDOperand CombineTo(SDNode *N, SDOperand Res) {
+      std::vector<SDOperand> To;
+      To.push_back(Res);
+      return CombineTo(N, To);
+    }
+    
+    SDOperand CombineTo(SDNode *N, SDOperand Res0, SDOperand Res1) {
+      std::vector<SDOperand> To;
+      To.push_back(Res0);
+      To.push_back(Res1);
+      return CombineTo(N, To);
+    }
+  private:    
     
     /// SimplifyDemandedBits - Check the specified integer node value to see if
     /// it can be simplified or if things is uses can be simplified by bit
@@ -137,19 +152,6 @@ namespace {
       return true;
     }
 
-    SDOperand CombineTo(SDNode *N, SDOperand Res) {
-      std::vector<SDOperand> To;
-      To.push_back(Res);
-      return CombineTo(N, To);
-    }
-    
-    SDOperand CombineTo(SDNode *N, SDOperand Res0, SDOperand Res1) {
-      std::vector<SDOperand> To;
-      To.push_back(Res0);
-      To.push_back(Res1);
-      return CombineTo(N, To);
-    }
-    
     /// visit - call the node-specific routine that knows how to fold each
     /// particular type of node.
     SDOperand visit(SDNode *N);
@@ -228,6 +230,36 @@ public:
     void Run(bool RunningAfterLegalize); 
   };
 }
+
+//===----------------------------------------------------------------------===//
+//  TargetLowering::DAGCombinerInfo implementation
+//===----------------------------------------------------------------------===//
+
+void TargetLowering::DAGCombinerInfo::AddToWorklist(SDNode *N) {
+  ((DAGCombiner*)DC)->AddToWorkList(N);
+}
+
+SDOperand TargetLowering::DAGCombinerInfo::
+CombineTo(SDNode *N, const std::vector<SDOperand> &To) {
+  return ((DAGCombiner*)DC)->CombineTo(N, To);
+}
+
+SDOperand TargetLowering::DAGCombinerInfo::
+CombineTo(SDNode *N, SDOperand Res) {
+  return ((DAGCombiner*)DC)->CombineTo(N, Res);
+}
+
+
+SDOperand TargetLowering::DAGCombinerInfo::
+CombineTo(SDNode *N, SDOperand Res0, SDOperand Res1) {
+  return ((DAGCombiner*)DC)->CombineTo(N, Res0, Res1);
+}
+
+
+
+
+//===----------------------------------------------------------------------===//
+
 
 struct ms {
   int64_t m;  // magic number
@@ -495,6 +527,11 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
   // changes of the root.
   HandleSDNode Dummy(DAG.getRoot());
   
+  
+  /// DagCombineInfo - Expose the DAG combiner to the target combiner impls.
+  TargetLowering::DAGCombinerInfo 
+    DagCombineInfo(DAG, !RunningAfterLegalize, this);
+  
   // while the worklist isn't empty, inspect the node on the end of it and
   // try and combine it.
   while (!WorkList.empty()) {
@@ -514,6 +551,14 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
     }
     
     SDOperand RV = visit(N);
+    
+    // If nothing happened, try a target-specific DAG combine.
+    if (RV.Val == 0) {
+      if (N->getOpcode() >= ISD::BUILTIN_OP_END ||
+          TLI.hasTargetDAGCombine((ISD::NodeType)N->getOpcode()))
+        RV = TLI.PerformDAGCombine(N, DagCombineInfo);
+    }
+    
     if (RV.Val) {
       ++NodesCombined;
       // If we get back the same node we passed in, rather than a new node or
