@@ -967,7 +967,7 @@ DWLabel DwarfWriter::NewString(const std::string &String) {
 /// NewBasicType - Creates a new basic type if necessary, then adds to the
 /// owner.
 /// FIXME - Should never be needed.
-DIE *DwarfWriter::NewBasicType(CompileUnit *Unit, Type *Ty) {
+DIE *DwarfWriter::NewBasicType(DIE *Context, Type *Ty) {
   DIE *&Slot = TypeToDieMap[Ty];
   if (Slot) return Slot;
   
@@ -1040,17 +1040,19 @@ DIE *DwarfWriter::NewBasicType(CompileUnit *Unit, Type *Ty) {
   Slot->AddUInt  (DW_AT_byte_size, 0,              Size);
   Slot->AddUInt  (DW_AT_encoding,  DW_FORM_data1,  Encoding);
   
-  // Add to context owner.
-  Unit->getDie()->AddChild(Slot);
+  // Add to context.
+  Context->AddChild(Slot);
   
   return Slot;
 }
 
 /// NewType - Create a new type DIE.
 ///
-DIE *DwarfWriter::NewType(CompileUnit *Unit, TypeDesc *TyDesc) {
+DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc) {
   // FIXME - hack to get around NULL types short term.
-  if (!TyDesc)  return NewBasicType(Unit, Type::IntTy);
+  if (!TyDesc)  return NewBasicType(Context, Type::IntTy);
+  
+  // FIXME - Should handle other contexts that compile units.
 
   // Check for pre-existence.
   DIE *&Slot = DescToDieMap[TyDesc];
@@ -1085,7 +1087,7 @@ DIE *DwarfWriter::NewType(CompileUnit *Unit, TypeDesc *TyDesc) {
     
     // Map to main type, void will not have a type.
     if (TypeDesc *FromTy = DerivedTy->getFromType()) {
-       Ty->AddDIEntry(DW_AT_type, DW_FORM_ref4, NewType(Unit, FromTy));
+       Ty->AddDIEntry(DW_AT_type, DW_FORM_ref4, NewType(Context, FromTy));
     }
   } else if (CompositeTypeDesc *CompTy = dyn_cast<CompositeTypeDesc>(TyDesc)) {
     // Determine which composite type.
@@ -1106,7 +1108,7 @@ DIE *DwarfWriter::NewType(CompileUnit *Unit, TypeDesc *TyDesc) {
     case DI_TAG_array: {
       // Add element type.
       if (TypeDesc *FromTy = CompTy->getFromType()) {
-         Ty->AddDIEntry(DW_AT_type, DW_FORM_ref4, NewType(Unit, FromTy));
+         Ty->AddDIEntry(DW_AT_type, DW_FORM_ref4, NewType(Context, FromTy));
       }
       // Don't emit size attribute.
       Size = 0;
@@ -1116,7 +1118,7 @@ DIE *DwarfWriter::NewType(CompileUnit *Unit, TypeDesc *TyDesc) {
       IndexTy->AddUInt(DW_AT_byte_size, 0, 4);
       IndexTy->AddUInt(DW_AT_encoding, DW_FORM_data1, DW_ATE_signed);
       // Add to context.
-      Unit->getDie()->AddChild(IndexTy);
+      Context->AddChild(IndexTy);
     
       // Add subranges to array type.
       for(unsigned i = 0, N = Elements.size(); i < N; ++i) {
@@ -1166,7 +1168,7 @@ DIE *DwarfWriter::NewType(CompileUnit *Unit, TypeDesc *TyDesc) {
   }
 
   // Add to context owner.
-  Unit->getDie()->AddChild(Ty);
+  Context->AddChild(Ty);
   
   return Slot;
 }
@@ -1226,7 +1228,7 @@ DIE *DwarfWriter::NewGlobalVariable(GlobalVariableDesc *GVD) {
   unsigned Line = GVD->getLine();
   
   // Get the global's type.
-  DIE *Type = NewType(Unit, GVD->getTypeDesc()); 
+  DIE *Type = NewType(Unit->getDie(), GVD->getTypeDesc()); 
 
   // Create the globale variable DIE.
   DIE *VariableDie = new DIE(DW_TAG_variable);
@@ -1269,7 +1271,7 @@ DIE *DwarfWriter::NewSubprogram(SubprogramDesc *SPD) {
   unsigned Line = 1;
   
   // FIXME - faking the type for the time being.
-  DIE *Type = NewBasicType(Unit, Type::IntTy); 
+  DIE *Type = NewBasicType(Unit->getDie(), Type::IntTy); 
                                     
   DIE *SubprogramDie = new DIE(DW_TAG_subprogram);
   SubprogramDie->AddString     (DW_AT_name,      DW_FORM_string, Name);
