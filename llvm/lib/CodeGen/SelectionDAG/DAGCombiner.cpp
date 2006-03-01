@@ -113,7 +113,7 @@ namespace {
   private:    
     
     /// SimplifyDemandedBits - Check the specified integer node value to see if
-    /// it can be simplified or if things is uses can be simplified by bit
+    /// it can be simplified or if things it uses can be simplified by bit
     /// propagation.  If so, return true.
     bool SimplifyDemandedBits(SDOperand Op) {
       TargetLowering::TargetLoweringOpt TLO(DAG);
