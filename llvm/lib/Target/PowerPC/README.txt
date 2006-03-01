@@ -434,3 +434,21 @@ int f(signed char *a, _Bool b, _Bool c) {
   if (c)  *a = t;
 }
 
+===-------------------------------------------------------------------------===
+
+This:
+int test(unsigned *P) { return *P >> 24; }
+
+Should compile to:
+
+_test:
+        lbz r3,0(r3)
+        blr
+
+not:
+
+_test:
+        lwz r2, 0(r3)
+        srwi r3, r2, 24
+        blr
+
