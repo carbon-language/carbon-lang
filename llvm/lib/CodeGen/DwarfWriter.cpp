@@ -1058,8 +1058,7 @@ DIE *DwarfWriter::NewType(CompileUnit *Unit, TypeDesc *TyDesc) {
 
   // Get core information.
   const std::string &Name = TyDesc->getName();
-  // FIXME - handle larger sizes.
-  unsigned Size = TyDesc->getSize() >> 3;
+  uint64_t Size = TyDesc->getSize() >> 3;
   
   DIE *Ty = NULL;
   
