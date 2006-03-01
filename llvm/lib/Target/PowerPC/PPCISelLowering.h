@@ -39,6 +39,11 @@ namespace llvm {
       /// of that FP value.
       FCTIDZ, FCTIWZ,
       
+      /// STFIWX - The STFIWX instruction.  The first operand is an input token
+      /// chain, then an f64 value to store, then an address to store it to,
+      /// then a SRCVALUE for the address.
+      STFIWX,
+      
       // VMADDFP, VNMSUBFP - The VMADDFP and VNMSUBFP instructions, taking
       // three v4f32 operands and producing a v4f32 result.
       VMADDFP, VNMSUBFP,

@@ -187,6 +187,7 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   
   // We have target-specific dag combine patterns for the following nodes:
   setTargetDAGCombine(ISD::SINT_TO_FP);
+  setTargetDAGCombine(ISD::STORE);
   
   computeRegisterProperties();
 }
@@ -198,6 +199,7 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::FCFID:         return "PPCISD::FCFID";
   case PPCISD::FCTIDZ:        return "PPCISD::FCTIDZ";
   case PPCISD::FCTIWZ:        return "PPCISD::FCTIWZ";
+  case PPCISD::STFIWX:        return "PPCISD::STFIWX";
   case PPCISD::VMADDFP:       return "PPCISD::VMADDFP";
   case PPCISD::VNMSUBFP:      return "PPCISD::VNMSUBFP";
   case PPCISD::Hi:            return "PPCISD::Hi";
@@ -1030,6 +1032,25 @@ SDOperand PPCTargetLowering::PerformDAGCombine(SDNode *N,
         }
         return Val;
       }
+    }
+    break;
+  case ISD::STORE:
+    // Turn STORE (FP_TO_SINT F) -> STFIWX(FCTIWZ(F)).
+    if (TM.getSubtarget<PPCSubtarget>().hasSTFIWX() &&
+        N->getOperand(1).getOpcode() == ISD::FP_TO_SINT &&
+        N->getOperand(1).getValueType() == MVT::i32) {
+      SDOperand Val = N->getOperand(1).getOperand(0);
+      if (Val.getValueType() == MVT::f32) {
+        Val = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Val);
+        DCI.AddToWorklist(Val.Val);
+      }
+      Val = DAG.getNode(PPCISD::FCTIWZ, MVT::f64, Val);
+      DCI.AddToWorklist(Val.Val);
+
+      Val = DAG.getNode(PPCISD::STFIWX, MVT::Other, N->getOperand(0), Val,
+                        N->getOperand(2), N->getOperand(3));
+      DCI.AddToWorklist(Val.Val);
+      return Val;
     }
     break;
   }

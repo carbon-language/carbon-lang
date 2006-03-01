@@ -77,6 +77,7 @@ PPCSubtarget::PPCSubtarget(const Module &M, const std::string &FS)
   , Has64BitRegs(false)
   , HasAltivec(false)
   , HasFSQRT(false)
+  , HasSTFIWX(false)
   , IsAIX(false)
   , IsDarwin(false) {
 

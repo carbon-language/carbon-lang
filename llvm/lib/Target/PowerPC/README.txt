@@ -5,12 +5,6 @@ TODO:
 
 ===-------------------------------------------------------------------------===
 
-Use the stfiwx instruction for:
-
-void foo(float a, int *b) { *b = a; }
-
-===-------------------------------------------------------------------------===
-
 Support 'update' load/store instructions.  These are cracked on the G5, but are
 still a codesize win.
 
