@@ -56,20 +56,21 @@ namespace MVT {  // MVT = Machine Value Types
     v4i32          =  19,   //  4 x i32
     v2i64          =  20,   //  2 x i64
 
-    v4f32          =  21,   //  4 x f32
-    v2f64          =  22,   //  2 x f64
+    v2f32          =  21,   //  2 x f32
+    v4f32          =  22,   //  4 x f32
+    v2f64          =  23,   //  2 x f64
 
     LAST_VALUETYPE          // This always remains at the end of the list.
   };
 
   static inline bool isInteger(ValueType VT) {
-    return (VT >= i1 && VT <= i128) || (VT >= v16i8 && VT <= v2i64);
+    return (VT >= i1 && VT <= i128) || (VT >= v8i8 && VT <= v2i64);
   }
   static inline bool isFloatingPoint(ValueType VT) {
     return (VT >= f32 && VT <= f128) || (VT >= v4f32 && VT <= v2f64);
   }
   static inline bool isVector(ValueType VT) {
-    return (VT >= v16i8 && VT <= v2f64);
+    return (VT >= v8i8 && VT <= v2f64);
   }
   
   /// getVectorType - Returns the ValueType that represents a vector NumElements
@@ -80,11 +81,24 @@ namespace MVT {  // MVT = Machine Value Types
     switch (VT) {
     default: 
       break;
+    case MVT::i8:
+      if (NumElements == 8)  return MVT::v8i8;
+      if (NumElements == 16) return MVT::v16i8;
+      break;
+    case MVT::i16:
+      if (NumElements == 4)  return MVT::v4i16;
+      if (NumElements == 8)  return MVT::v8i16;
+      break;
     case MVT::i32:
-      if (NumElements == 4) return MVT::v4i32;
+      if (NumElements == 2)  return MVT::v2i32;
+      if (NumElements == 4)  return MVT::v4i32;
       break;
     case MVT::f32:
-      if (NumElements == 4) return MVT::v4f32;
+      if (NumElements == 2)  return MVT::v2f32;
+      if (NumElements == 4)  return MVT::v4f32;
+      break;
+    case MVT::f64:
+      if (NumElements == 2)  return MVT::v2f64;
       break;
     }
     return MVT::Other;
@@ -93,17 +107,18 @@ namespace MVT {  // MVT = Machine Value Types
   static inline unsigned getSizeInBits(ValueType VT) {
     switch (VT) {
     default: assert(0 && "ValueType has no known size!");
-    case MVT::i1  : return 1;
-    case MVT::i8  : return 8;
-    case MVT::i16 : return 16;
+    case MVT::i1  :  return 1;
+    case MVT::i8  :  return 8;
+    case MVT::i16 :  return 16;
     case MVT::f32 :
-    case MVT::i32 : return 32;
+    case MVT::i32 :  return 32;
     case MVT::f64 :
     case MVT::i64 :
     case MVT::v8i8:
     case MVT::v4i16:
-    case MVT::v2i32:return 64;
-    case MVT::f80 : return 80;
+    case MVT::v2i32: 
+    case MVT::v2f32: return 64;
+    case MVT::f80 :  return 80;
     case MVT::f128:
     case MVT::i128: 
     case MVT::v16i8:
