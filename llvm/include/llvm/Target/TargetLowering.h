@@ -412,7 +412,7 @@ protected:
     assert(VT < 32 && Op < sizeof(OpActions)/sizeof(OpActions[0]) &&
            "Table isn't big enough!");
     OpActions[Op] &= ~(3ULL << VT*2);
-    OpActions[Op] |= Action << VT*2;
+    OpActions[Op] |= (uint64_t)Action << VT*2;
   }
 
   /// addLegalFPImmediate - Indicate that this target can instruction select
