@@ -197,6 +197,7 @@ public:
   ///
   virtual void Apply(int &Field)             { ++Count; }
   virtual void Apply(unsigned &Field)        { ++Count; }
+  virtual void Apply(int64_t &Field)         { ++Count; }
   virtual void Apply(uint64_t &Field)        { ++Count; }
   virtual void Apply(bool &Field)            { ++Count; }
   virtual void Apply(std::string &Field)     { ++Count; }
@@ -233,6 +234,10 @@ public:
   virtual void Apply(unsigned &Field) {
     Constant *C = CI->getOperand(I++);
     Field = cast<ConstantUInt>(C)->getValue();
+  }
+  virtual void Apply(int64_t &Field) {
+    Constant *C = CI->getOperand(I++);
+    Field = cast<ConstantSInt>(C)->getValue();
   }
   virtual void Apply(uint64_t &Field) {
     Constant *C = CI->getOperand(I++);
@@ -290,6 +295,9 @@ public:
   virtual void Apply(unsigned &Field) {
     Elements.push_back(ConstantUInt::get(Type::UIntTy, Field));
   }
+  virtual void Apply(int64_t &Field) {
+    Elements.push_back(ConstantSInt::get(Type::IntTy, Field));
+  }
   virtual void Apply(uint64_t &Field) {
     Elements.push_back(ConstantUInt::get(Type::UIntTy, Field));
   }
@@ -337,7 +345,11 @@ public:
     }
     
     Constant *CA = ConstantArray::get(AT, ArrayElements);
-    Constant *CAE = ConstantExpr::getCast(CA, EmptyTy);
+    GlobalVariable *CAGV = new GlobalVariable(AT, true,
+                                              GlobalValue::InternalLinkage,
+                                              CA, "llvm.dbg.array",
+                                              SR.getModule());
+    Constant *CAE = ConstantExpr::getCast(CAGV, EmptyTy);
     Elements.push_back(CAE);
   }
 };
@@ -364,6 +376,9 @@ public:
   }
   virtual void Apply(unsigned &Field) {
     Fields.push_back(Type::UIntTy);
+  }
+  virtual void Apply(int64_t &Field) {
+    Fields.push_back(Type::IntTy);
   }
   virtual void Apply(uint64_t &Field) {
     Fields.push_back(Type::UIntTy);
@@ -419,6 +434,10 @@ public:
     IsValid = IsValid && isa<ConstantInt>(C);
   }
   virtual void Apply(unsigned &Field) {
+    Constant *C = CI->getOperand(I++);
+    IsValid = IsValid && isa<ConstantInt>(C);
+  }
+  virtual void Apply(int64_t &Field) {
     Constant *C = CI->getOperand(I++);
     IsValid = IsValid && isa<ConstantInt>(C);
   }
@@ -491,6 +510,11 @@ DebugInfoDesc *DebugInfoDesc::DescFactory(unsigned Tag) {
   case DI_TAG_const:
   case DI_TAG_volatile:         
   case DI_TAG_restrict:        return new DerivedTypeDesc(Tag);
+  case DI_TAG_array:
+  case DI_TAG_struct:
+  case DI_TAG_union:
+  case DI_TAG_enum:            return new CompositeTypeDesc(Tag);
+  case DI_TAG_subrange:        return new SubrangeDesc();
   default: break;
   }
   return NULL;
@@ -681,6 +705,18 @@ void BasicTypeDesc::ApplyToFields(DIVisitor *Visitor) {
   Visitor->Apply(Encoding);
 }
 
+/// getDescString - Return a string used to compose global names and labels.
+///
+const char *BasicTypeDesc::getDescString() const {
+  return "llvm.dbg.basictype";
+}
+
+/// getTypeString - Return a string used to label this descriptor's type.
+///
+const char *BasicTypeDesc::getTypeString() const {
+  return "llvm.dbg.basictype.type";
+}
+
 #ifndef NDEBUG
 void BasicTypeDesc::dump() {
   std::cerr << getDescString() << " "
@@ -691,14 +727,13 @@ void BasicTypeDesc::dump() {
             << "Encoding(" << Encoding << ")\n";
 }
 #endif
+
 //===----------------------------------------------------------------------===//
 
 DerivedTypeDesc::DerivedTypeDesc(unsigned T)
 : TypeDesc(T)
 , FromType(NULL)
-{
-  assert(classof((const DebugInfoDesc *)this) && "Unknown derived type.");
-}
+{}
 
 /// ApplyToFields - Target the visitor to the fields of the DerivedTypeDesc.
 ///
@@ -706,6 +741,18 @@ void DerivedTypeDesc::ApplyToFields(DIVisitor *Visitor) {
   TypeDesc::ApplyToFields(Visitor);
   
   Visitor->Apply((DebugInfoDesc *&)FromType);
+}
+
+/// getDescString - Return a string used to compose global names and labels.
+///
+const char *DerivedTypeDesc::getDescString() const {
+  return "llvm.dbg.derivedtype";
+}
+
+/// getTypeString - Return a string used to label this descriptor's type.
+///
+const char *DerivedTypeDesc::getTypeString() const {
+  return "llvm.dbg.derivedtype.type";
 }
 
 #ifndef NDEBUG
@@ -718,6 +765,85 @@ void DerivedTypeDesc::dump() {
             << "File(" << getFile() << "), "
             << "Line(" << getLine() << "), "
             << "FromType(" << FromType << ")\n";
+}
+#endif
+
+//===----------------------------------------------------------------------===//
+
+CompositeTypeDesc::CompositeTypeDesc(unsigned T)
+: DerivedTypeDesc(T)
+, Elements()
+{}
+  
+/// ApplyToFields - Target the visitor to the fields of the CompositeTypeDesc.
+///
+void CompositeTypeDesc::ApplyToFields(DIVisitor *Visitor) {
+  DerivedTypeDesc::ApplyToFields(Visitor);
+  
+  Visitor->Apply(Elements);
+}
+
+/// getDescString - Return a string used to compose global names and labels.
+///
+const char *CompositeTypeDesc::getDescString() const {
+  return "llvm.dbg.compositetype";
+}
+
+/// getTypeString - Return a string used to label this descriptor's type.
+///
+const char *CompositeTypeDesc::getTypeString() const {
+  return "llvm.dbg.compositetype.type";
+}
+
+#ifndef NDEBUG
+void CompositeTypeDesc::dump() {
+  std::cerr << getDescString() << " "
+            << "Tag(" << getTag() << "), "
+            << "Context(" << getContext() << "), "
+            << "Name(\"" << getName() << "\"), "
+            << "Size(" << getSize() << "), "
+            << "File(" << getFile() << "), "
+            << "Line(" << getLine() << "), "
+            << "FromType(" << getFromType() << "), "
+            << "Elements.size(" << Elements.size() << ")\n";
+}
+#endif
+
+//===----------------------------------------------------------------------===//
+
+SubrangeDesc::SubrangeDesc()
+: DebugInfoDesc(DI_TAG_subrange)
+, Lo(0)
+, Hi(0)
+{}
+
+/// ApplyToFields - Target the visitor to the fields of the SubrangeDesc.
+///
+void SubrangeDesc::ApplyToFields(DIVisitor *Visitor) {
+  DebugInfoDesc::ApplyToFields(Visitor);
+
+  Visitor->Apply(Lo);
+  Visitor->Apply(Hi);
+}
+
+/// getDescString - Return a string used to compose global names and labels.
+///
+const char *SubrangeDesc::getDescString() const {
+  return "llvm.dbg.subrange";
+}
+  
+/// getTypeString - Return a string used to label this descriptor's type.
+///
+const char *SubrangeDesc::getTypeString() const {
+  return "llvm.dbg.subrange.type";
+}
+
+#ifndef NDEBUG
+void SubrangeDesc::dump() {
+  std::cerr << getDescString() << " "
+            << "Tag(" << getTag() << "), "
+            << "Lo(" << Lo << "), "
+            << "Hi(" << Hi << ")\n";
 }
 #endif
 

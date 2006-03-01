@@ -1072,12 +1072,12 @@ DIE *DwarfWriter::NewType(CompileUnit *Unit, TypeDesc *TyDesc) {
     // Determine which derived type.
     unsigned T = 0;
     switch (DerivedTy->getTag()) {
-    case DI_TAG_typedef:   T = DW_TAG_typedef;        break;
-    case DI_TAG_pointer:   T = DW_TAG_pointer_type;   break;
-    case DI_TAG_reference: T = DW_TAG_reference_type; break;
-    case DI_TAG_const:     T = DW_TAG_const_type;     break;
-    case DI_TAG_volatile:  T = DW_TAG_volatile_type;  break;
-    case DI_TAG_restrict:  T = DW_TAG_restrict_type;  break;
+    case DI_TAG_typedef:   T = DW_TAG_typedef;         break;
+    case DI_TAG_pointer:   T = DW_TAG_pointer_type;    break;
+    case DI_TAG_reference: T = DW_TAG_reference_type;  break;
+    case DI_TAG_const:     T = DW_TAG_const_type;      break;
+    case DI_TAG_volatile:  T = DW_TAG_volatile_type;   break;
+    case DI_TAG_restrict:  T = DW_TAG_restrict_type;   break;
     default: assert( 0 && "Unknown tag on derived type");
     }
     
@@ -1087,6 +1087,67 @@ DIE *DwarfWriter::NewType(CompileUnit *Unit, TypeDesc *TyDesc) {
     // Map to main type, void will not have a type.
     if (TypeDesc *FromTy = DerivedTy->getFromType()) {
        Ty->AddDIEntry(DW_AT_type, DW_FORM_ref4, NewType(Unit, FromTy));
+    }
+  } else if (CompositeTypeDesc *CompTy = dyn_cast<CompositeTypeDesc>(TyDesc)) {
+    // Determine which composite type.
+    unsigned T = 0;
+    switch (CompTy->getTag()) {
+    case DI_TAG_array:     T = DW_TAG_array_type;       break;
+    case DI_TAG_struct:    T = DW_TAG_structure_type;   break;
+    case DI_TAG_union:     T = DW_TAG_union_type;       break;
+    case DI_TAG_enum:      T = DW_TAG_enumeration_type; break;
+    default: assert( 0 && "Unknown tag on composite type");
+    }
+    
+    // Create specific DIE.
+    Slot = Ty = new DIE(T);
+    std::vector<DebugInfoDesc *> &Elements = CompTy->getElements();
+    
+    switch (CompTy->getTag()) {
+    case DI_TAG_array: {
+      // Add element type.
+      if (TypeDesc *FromTy = CompTy->getFromType()) {
+         Ty->AddDIEntry(DW_AT_type, DW_FORM_ref4, NewType(Unit, FromTy));
+      }
+      // Don't emit size attribute.
+      Size = 0;
+      
+      // Construct an anonymous type for index type.
+      DIE *IndexTy = new DIE(DW_TAG_base_type);
+      IndexTy->AddUInt(DW_AT_byte_size, 0, 4);
+      IndexTy->AddUInt(DW_AT_encoding, DW_FORM_data1, DW_ATE_signed);
+      // Add to context.
+      Unit->getDie()->AddChild(IndexTy);
+    
+      // Add subranges to array type.
+      for(unsigned i = 0, N = Elements.size(); i < N; ++i) {
+        SubrangeDesc *SRD = cast<SubrangeDesc>(Elements[i]);
+        int64_t Lo = SRD->getLo();
+        int64_t Hi = SRD->getHi();
+        DIE *Subrange = new DIE(DW_TAG_subrange_type);
+        
+        // If a range is available.
+        if (Lo != Hi) {
+          Subrange->AddDIEntry(DW_AT_type, DW_FORM_ref4, IndexTy);
+          // Only add low if non-zero.
+          if (Lo) Subrange->AddUInt(DW_AT_lower_bound, 0, Lo);
+          Subrange->AddUInt(DW_AT_upper_bound, 0, Hi);
+        }
+        Ty->AddChild(Subrange);
+      }
+      
+      break;
+    }
+    case DI_TAG_struct: {
+      break;
+    }
+    case DI_TAG_union: {
+      break;
+    }
+    case DI_TAG_enum: {
+      break;
+    }
+    default: break;
     }
   }
   

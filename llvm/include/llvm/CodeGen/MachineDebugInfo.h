@@ -67,6 +67,11 @@ enum {
   DI_TAG_typedef,
   DI_TAG_pointer,
   DI_TAG_reference,
+  DI_TAG_array,
+  DI_TAG_struct,
+  DI_TAG_union,
+  DI_TAG_enum,
+  DI_TAG_subrange,
   DI_TAG_const,
   DI_TAG_volatile,
   DI_TAG_restrict
@@ -88,6 +93,7 @@ public:
   /// appropriate action for the type of field.
   virtual void Apply(int &Field) = 0;
   virtual void Apply(unsigned &Field) = 0;
+  virtual void Apply(int64_t &Field) = 0;
   virtual void Apply(uint64_t &Field) = 0;
   virtual void Apply(bool &Field) = 0;
   virtual void Apply(std::string &Field) = 0;
@@ -130,7 +136,7 @@ public:
   // Subclasses should supply the following static methods.
   
   // Implement isa/cast/dyncast.
-  static bool classof(const DebugInfoDesc *)  { return true; }
+  static bool classof(const DebugInfoDesc *) { return true; }
   
   //===--------------------------------------------------------------------===//
   // Subclasses should supply the following virtual methods.
@@ -341,7 +347,7 @@ public:
   void setEncoding(unsigned E)                     { Encoding = E; }
 
   // Implement isa/cast/dyncast.
-  static bool classof(const BasicTypeDesc *)  { return true; }
+  static bool classof(const BasicTypeDesc *) { return true; }
   static bool classof(const DebugInfoDesc *D) {
     return D->getTag() == DI_TAG_basictype;
   }
@@ -349,6 +355,14 @@ public:
   /// ApplyToFields - Target the visitor to the fields of the  BasicTypeDesc.
   ///
   virtual void ApplyToFields(DIVisitor *Visitor);
+
+  /// getDescString - Return a string used to compose global names and labels.
+  ///
+  virtual const char *getDescString() const;
+
+  /// getTypeString - Return a string used to label this descriptor's type.
+  ///
+  virtual const char *getTypeString() const;
 
 #ifndef NDEBUG
   virtual void dump();
@@ -371,7 +385,7 @@ public:
   void setFromType(TypeDesc *F)                    { FromType = F; }
 
   // Implement isa/cast/dyncast.
-  static bool classof(const DerivedTypeDesc *)  { return true; }
+  static bool classof(const DerivedTypeDesc *) { return true; }
   static bool classof(const DebugInfoDesc *D) {
     unsigned T =  D->getTag();
     switch (T) {
@@ -382,13 +396,107 @@ public:
     case DI_TAG_volatile:
     case DI_TAG_restrict:
       return true;
-    default: return false;
+    default: break;
     }
+    return false;
   }
   
   /// ApplyToFields - Target the visitor to the fields of the  DerivedTypeDesc.
   ///
   virtual void ApplyToFields(DIVisitor *Visitor);
+
+  /// getDescString - Return a string used to compose global names and labels.
+  ///
+  virtual const char *getDescString() const;
+
+  /// getTypeString - Return a string used to label this descriptor's type.
+  ///
+  virtual const char *getTypeString() const;
+
+#ifndef NDEBUG
+  virtual void dump();
+#endif
+};
+
+//===----------------------------------------------------------------------===//
+/// CompositeTypeDesc - This class packages debug information associated with a
+/// array/struct types (eg., arrays, struct, union, enums.)
+class CompositeTypeDesc : public DerivedTypeDesc {
+private:
+  std::vector<DebugInfoDesc *> Elements;// Information used to compose type.
+
+public:
+  CompositeTypeDesc(unsigned T);
+  
+  // Accessors
+  std::vector<DebugInfoDesc *> &getElements() { return Elements; }
+
+  // Implement isa/cast/dyncast.
+  static bool classof(const CompositeTypeDesc *) { return true; }
+  static bool classof(const DebugInfoDesc *D) {
+    unsigned T =  D->getTag();
+    switch (T) {
+    case DI_TAG_array:
+    case DI_TAG_struct:
+    case DI_TAG_union:
+    case DI_TAG_enum:
+      return true;
+    default: break;
+    }
+    return false;
+  }
+  
+  /// ApplyToFields - Target the visitor to the fields of the CompositeTypeDesc.
+  ///
+  virtual void ApplyToFields(DIVisitor *Visitor);
+
+  /// getDescString - Return a string used to compose global names and labels.
+  ///
+  virtual const char *getDescString() const;
+
+  /// getTypeString - Return a string used to label this descriptor's type.
+  ///
+  virtual const char *getTypeString() const;
+
+#ifndef NDEBUG
+  virtual void dump();
+#endif
+};
+
+//===----------------------------------------------------------------------===//
+/// SubrangeDesc - This class packages debug information associated with integer
+/// value ranges.
+class SubrangeDesc : public DebugInfoDesc {
+private:
+  int64_t Lo;                           // Low value of range
+  int64_t Hi;                           // High value of range
+
+public:
+  SubrangeDesc();
+  
+  // Accessors
+  int64_t getLo()                            const { return Lo; }
+  int64_t getHi()                            const { return Hi; }
+  void setLo(int64_t L)                            { Lo = L; }
+  void setHi(int64_t H)                            { Hi = H; }
+
+  // Implement isa/cast/dyncast.
+  static bool classof(const SubrangeDesc *) { return true; }
+  static bool classof(const DebugInfoDesc *D) {
+    return D->getTag() == DI_TAG_subrange;
+  }
+  
+  /// ApplyToFields - Target the visitor to the fields of the SubrangeDesc.
+  ///
+  virtual void ApplyToFields(DIVisitor *Visitor);
+
+  /// getDescString - Return a string used to compose global names and labels.
+  ///
+  virtual const char *getDescString() const;
+    
+  /// getTypeString - Return a string used to label this descriptor's type.
+  ///
+  virtual const char *getTypeString() const;
 
 #ifndef NDEBUG
   virtual void dump();
@@ -445,7 +553,7 @@ public:
   void setLine(unsigned L)                         { Line = L; }
  
   // Implement isa/cast/dyncast.
-  static bool classof(const GlobalVariableDesc *)  { return true; }
+  static bool classof(const GlobalVariableDesc *) { return true; }
   static bool classof(const DebugInfoDesc *D) {
     return D->getTag() == DI_TAG_global_variable; 
   }
@@ -485,7 +593,7 @@ public:
   // FIXME - Other getters/setters.
   
   // Implement isa/cast/dyncast.
-  static bool classof(const SubprogramDesc *)  { return true; }
+  static bool classof(const SubprogramDesc *) { return true; }
   static bool classof(const DebugInfoDesc *D) {
     return D->getTag() == DI_TAG_subprogram;
   }
