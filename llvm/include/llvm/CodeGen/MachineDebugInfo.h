@@ -55,7 +55,7 @@ class StructType;
 // Debug info constants.
 
 enum {
-  LLVMDebugVersion = 1,                 // Current version of debug information.
+  LLVMDebugVersion = 1                  // Current version of debug information.
 };
 
 //===----------------------------------------------------------------------===//
