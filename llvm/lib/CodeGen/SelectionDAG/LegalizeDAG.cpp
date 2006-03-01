@@ -1306,8 +1306,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // in the high half of the vector.
       unsigned IncrementSize;
       if (MVT::Vector == Hi.getValueType()) {
-        unsigned NumElems = cast<ConstantSDNode>(Hi.getOperand(2))->getValue();
-        MVT::ValueType EVT = cast<VTSDNode>(Hi.getOperand(3))->getVT();
+        unsigned NumElems = cast<ConstantSDNode>(Hi.getOperand(0))->getValue();
+        MVT::ValueType EVT = cast<VTSDNode>(Hi.getOperand(1))->getVT();
         IncrementSize = NumElems * MVT::getSizeInBits(EVT)/8;
       } else {
         IncrementSize = MVT::getSizeInBits(Hi.getValueType())/8;
@@ -3529,25 +3529,39 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     Hi = DAG.getConstant(Cst >> MVT::getSizeInBits(NVT), NVT);
     break;
   }
-  case ISD::ConstantVec: {
-    unsigned NumElements = Node->getNumOperands();
-    // If we only have two elements left in the constant vector, just break it
-    // apart into the two scalar constants it contains.  Otherwise, bisect the
-    // ConstantVec, and return each half as a new ConstantVec.
-    // FIXME: this is hard coded as big endian, it may have to change to support
-    // SSE and Alpha MVI
-    if (NumElements == 2) {
-      Hi = Node->getOperand(0);
-      Lo = Node->getOperand(1);
+  case ISD::VConstant: {
+    unsigned NumElements =
+      cast<ConstantSDNode>(Node->getOperand(0))->getValue() / 2;
+    MVT::ValueType EVT = cast<VTSDNode>(Node->getOperand(1))->getVT();
+    MVT::ValueType TVT = (NumElements > 1)
+                         ? getVectorType(EVT, NumElements) : EVT;
+    // If type of bisected vector is legal, turn it into a ConstantVec (which
+    // will be lowered to a ConstantPool or something else). Otherwise, bisect
+    // the VConstant, and return each half as a new VConstant.
+    unsigned Opc = ISD::ConstantVec;
+    std::vector<SDOperand> LoOps, HiOps;
+    if (!(TVT != MVT::Other &&
+          (!MVT::isVector(TVT) || TLI.isTypeLegal(TVT)))) {
+      Opc = ISD::VConstant;
+      TVT = MVT::Vector;
+      SDOperand Num = DAG.getConstant(NumElements, MVT::i32);
+      SDOperand Typ = DAG.getValueType(EVT);
+      HiOps.push_back(Num);
+      HiOps.push_back(Typ);
+      LoOps.push_back(Num);
+      LoOps.push_back(Typ);
+    }
+
+    if (NumElements == 1) {
+      Hi = Node->getOperand(2);
+      Lo = Node->getOperand(3);
     } else {
-      NumElements /= 2; 
-      std::vector<SDOperand> LoOps, HiOps;
       for (unsigned I = 0, E = NumElements; I < E; ++I) {
-        HiOps.push_back(Node->getOperand(I));
-        LoOps.push_back(Node->getOperand(I+NumElements));
+        HiOps.push_back(Node->getOperand(I+2));
+        LoOps.push_back(Node->getOperand(I+2+NumElements));
       }
-      Lo = DAG.getNode(ISD::ConstantVec, MVT::Vector, LoOps);
-      Hi = DAG.getNode(ISD::ConstantVec, MVT::Vector, HiOps);
+      Hi = DAG.getNode(Opc, TVT, HiOps);
+      Lo = DAG.getNode(Opc, TVT, LoOps);
     }
     break;
   }
@@ -3652,22 +3666,25 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     break;
   }
   case ISD::VLOAD: {
-    SDOperand Ch = Node->getOperand(0);   // Legalize the chain.
-    SDOperand Ptr = Node->getOperand(1);  // Legalize the pointer.
-    unsigned NumElements =cast<ConstantSDNode>(Node->getOperand(2))->getValue();
-    MVT::ValueType EVT = cast<VTSDNode>(Node->getOperand(3))->getVT();
+    SDOperand Ch = Node->getOperand(2);   // Legalize the chain.
+    SDOperand Ptr = Node->getOperand(3);  // Legalize the pointer.
+    unsigned NumElements =cast<ConstantSDNode>(Node->getOperand(0))->getValue();
+    MVT::ValueType EVT = cast<VTSDNode>(Node->getOperand(1))->getVT();
+    MVT::ValueType TVT = (NumElements/2 > 1)
+      ? getVectorType(EVT, NumElements/2) : EVT;
     
-    // If we only have two elements, turn into a pair of scalar loads.
-    // FIXME: handle case where a vector of two elements is fine, such as
-    //   2 x double on SSE2.
-    if (NumElements == 2) {
-      Lo = DAG.getLoad(EVT, Ch, Ptr, Node->getOperand(4));
+    // If type of split vector is legal, turn into a pair of scalar or
+    // packed loads.
+    if (TVT != MVT::Other &&
+        (!MVT::isVector(TVT) ||
+         (TLI.isTypeLegal(TVT) && TLI.isOperationLegal(ISD::LOAD, TVT)))) {
+      Lo = DAG.getLoad(TVT, Ch, Ptr, Node->getOperand(4));
       // Increment the pointer to the other half.
-      unsigned IncrementSize = MVT::getSizeInBits(EVT)/8;
+      unsigned IncrementSize = MVT::getSizeInBits(TVT)/8;
       Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
                         getIntPtrConstant(IncrementSize));
       // FIXME: This creates a bogus srcvalue!
-      Hi = DAG.getLoad(EVT, Ch, Ptr, Node->getOperand(4));
+      Hi = DAG.getLoad(TVT, Ch, Ptr, Node->getOperand(4));
     } else {
       NumElements /= 2; // Split the vector in half
       Lo = DAG.getVecLoad(NumElements, EVT, Ch, Ptr, Node->getOperand(4));
@@ -3692,25 +3709,28 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   case ISD::VADD:
   case ISD::VSUB:
   case ISD::VMUL: {
-    unsigned NumElements =cast<ConstantSDNode>(Node->getOperand(2))->getValue();
-    MVT::ValueType EVT = cast<VTSDNode>(Node->getOperand(3))->getVT();
+    unsigned NumElements =cast<ConstantSDNode>(Node->getOperand(0))->getValue();
+    MVT::ValueType EVT = cast<VTSDNode>(Node->getOperand(1))->getVT();
+    MVT::ValueType TVT = (NumElements/2 > 1)
+                         ? getVectorType(EVT, NumElements/2) : EVT;
     SDOperand LL, LH, RL, RH;
     
-    ExpandOp(Node->getOperand(0), LL, LH);
-    ExpandOp(Node->getOperand(1), RL, RH);
+    ExpandOp(Node->getOperand(2), LL, LH);
+    ExpandOp(Node->getOperand(3), RL, RH);
 
-    // If we only have two elements, turn into a pair of scalar loads.
-    // FIXME: handle case where a vector of two elements is fine, such as
-    //   2 x double on SSE2.
-    if (NumElements == 2) {
-      unsigned Opc = getScalarizedOpcode(Node->getOpcode(), EVT);
-      Lo = DAG.getNode(Opc, EVT, LL, RL);
-      Hi = DAG.getNode(Opc, EVT, LH, RH);
+    // If type of split vector is legal, turn into a pair of scalar / packed
+    // ADD, SUB, or MUL.
+    unsigned Opc = getScalarizedOpcode(Node->getOpcode(), EVT);
+    if (TVT != MVT::Other &&
+        (!MVT::isVector(TVT) ||
+         (TLI.isTypeLegal(TVT) && TLI.isOperationLegal(Opc, TVT)))) {
+      Lo = DAG.getNode(Opc, TVT, LL, RL);
+      Hi = DAG.getNode(Opc, TVT, LH, RH);
     } else {
-      Lo = DAG.getNode(Node->getOpcode(), MVT::Vector, LL, RL, LL.getOperand(2),
-                       LL.getOperand(3));
-      Hi = DAG.getNode(Node->getOpcode(), MVT::Vector, LH, RH, LH.getOperand(2),
-                       LH.getOperand(3));
+      SDOperand Num = DAG.getConstant(NumElements/2, MVT::i32);
+      SDOperand Typ = DAG.getValueType(EVT);
+      Lo = DAG.getNode(Node->getOpcode(), MVT::Vector, Num, Typ, LL, RL);
+      Hi = DAG.getNode(Node->getOpcode(), MVT::Vector, Num, Typ, LH, RH);
     }
     break;
   }

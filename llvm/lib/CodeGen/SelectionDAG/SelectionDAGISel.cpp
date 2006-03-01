@@ -415,7 +415,11 @@ public:
         } else {
           // If the packed type isn't legal, then create a ConstantVec node with
           // generic Vector type instead.
-          return N = DAG.getNode(ISD::ConstantVec, MVT::Vector, Ops);
+          SDOperand Num = DAG.getConstant(NumElements, MVT::i32);
+          SDOperand Typ = DAG.getValueType(PVT);
+          Ops.insert(Ops.begin(), Typ);
+          Ops.insert(Ops.begin(), Num);
+          return N = DAG.getNode(ISD::VConstant, MVT::Vector, Ops);
         }
       } else {
         // Canonicalize all constant ints to be unsigned.
@@ -668,12 +672,13 @@ void SelectionDAGLowering::visitBinary(User &I, unsigned IntOp, unsigned FPOp,
     unsigned Opc = MVT::isFloatingPoint(PVT) ? FPOp : IntOp;
     if (NumElements == 1) {
       setValue(&I, DAG.getNode(Opc, PVT, Op1, Op2));
-    } else if (TVT != MVT::Other && TLI.isTypeLegal(TVT)) {
+    } else if (TVT != MVT::Other &&
+               TLI.isTypeLegal(TVT) && TLI.isOperationLegal(Opc, TVT)) {
       setValue(&I, DAG.getNode(Opc, TVT, Op1, Op2));
     } else {
       SDOperand Num = DAG.getConstant(NumElements, MVT::i32);
       SDOperand Typ = DAG.getValueType(PVT);
-      setValue(&I, DAG.getNode(VecOp, MVT::Vector, Op1, Op2, Num, Typ));
+      setValue(&I, DAG.getNode(VecOp, MVT::Vector, Num, Typ, Op1, Op2));
     }
   }
 }
@@ -905,7 +910,8 @@ void SelectionDAGLowering::visitLoad(LoadInst &I) {
     // the Legalize pass does not have to deal with them.
     if (NumElements == 1) {
       L = DAG.getLoad(PVT, Root, Ptr, DAG.getSrcValue(I.getOperand(0)));
-    } else if (TVT != MVT::Other && TLI.isTypeLegal(TVT)) {
+    } else if (TVT != MVT::Other &&
+               TLI.isTypeLegal(TVT) && TLI.isOperationLegal(ISD::LOAD, TVT)) {
       L = DAG.getLoad(TVT, Root, Ptr, DAG.getSrcValue(I.getOperand(0)));
     } else {
       L = DAG.getVecLoad(NumElements, PVT, Root, Ptr, 

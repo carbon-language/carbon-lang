@@ -663,7 +663,7 @@ SDOperand DAGCombiner::visitADD(SDNode *N) {
   if (N1.getOpcode() == ISD::SUB && N0 == N1.getOperand(1))
     return N1.getOperand(0);
   // 
-  if (SimplifyDemandedBits(SDOperand(N, 0)))
+  if (!MVT::isVector(VT) && SimplifyDemandedBits(SDOperand(N, 0)))
     return SDOperand();
   return SDOperand();
 }
