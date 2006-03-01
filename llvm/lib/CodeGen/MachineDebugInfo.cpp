@@ -20,6 +20,7 @@
 #include <iostream>
 
 using namespace llvm;
+using namespace llvm::dwarf;
 
 // Handle the Pass registration stuff necessary to use TargetData's.
 namespace {
@@ -492,29 +493,29 @@ public:
 /// GlobalVariable.  
 unsigned DebugInfoDesc::TagFromGlobal(GlobalVariable *GV) {
   ConstantUInt *C = getUIntOperand(GV, 0);
-  return C ? (unsigned)C->getValue() : (unsigned)DIInvalid;
+  return C ? (unsigned)C->getValue() : (unsigned)DW_TAG_invalid;
 }
 
 /// DescFactory - Create an instance of debug info descriptor based on Tag.
 /// Return NULL if not a recognized Tag.
 DebugInfoDesc *DebugInfoDesc::DescFactory(unsigned Tag) {
   switch (Tag) {
-  case DI_TAG_anchor:          return new AnchorDesc();
-  case DI_TAG_compile_unit:    return new CompileUnitDesc();
-  case DI_TAG_global_variable: return new GlobalVariableDesc();
-  case DI_TAG_subprogram:      return new SubprogramDesc();
-  case DI_TAG_basictype:       return new BasicTypeDesc();
-  case DI_TAG_typedef:
-  case DI_TAG_pointer:         
-  case DI_TAG_reference:
-  case DI_TAG_const:
-  case DI_TAG_volatile:         
-  case DI_TAG_restrict:        return new DerivedTypeDesc(Tag);
-  case DI_TAG_array:
-  case DI_TAG_struct:
-  case DI_TAG_union:
-  case DI_TAG_enum:            return new CompositeTypeDesc(Tag);
-  case DI_TAG_subrange:        return new SubrangeDesc();
+  case DW_TAG_anchor:           return new AnchorDesc();
+  case DW_TAG_compile_unit:     return new CompileUnitDesc();
+  case DW_TAG_variable:         return new GlobalVariableDesc();
+  case DW_TAG_subprogram:       return new SubprogramDesc();
+  case DW_TAG_base_type:        return new BasicTypeDesc();
+  case DW_TAG_typedef:
+  case DW_TAG_pointer_type:         
+  case DW_TAG_reference_type:
+  case DW_TAG_const_type:
+  case DW_TAG_volatile_type:         
+  case DW_TAG_restrict_type:    return new DerivedTypeDesc(Tag);
+  case DW_TAG_array_type:
+  case DW_TAG_structure_type:
+  case DW_TAG_union_type:
+  case DW_TAG_enumeration_type: return new CompositeTypeDesc(Tag);
+  case DW_TAG_subrange_type:    return new SubrangeDesc();
   default: break;
   }
   return NULL;
@@ -534,6 +535,20 @@ void DebugInfoDesc::ApplyToFields(DIVisitor *Visitor) {
 
 //===----------------------------------------------------------------------===//
 
+AnchorDesc::AnchorDesc()
+: DebugInfoDesc(DW_TAG_anchor)
+, Name("")
+{}
+AnchorDesc::AnchorDesc(const std::string &N)
+: DebugInfoDesc(DW_TAG_anchor)
+, Name(N)
+{}
+
+// Implement isa/cast/dyncast.
+bool AnchorDesc::classof(const DebugInfoDesc *D) {
+  return D->getTag() == DW_TAG_anchor;
+}
+  
 /// getLinkage - get linkage appropriate for this type of descriptor.
 ///
 GlobalValue::LinkageTypes AnchorDesc::getLinkage() const {
@@ -586,7 +601,7 @@ void AnchoredDesc::ApplyToFields(DIVisitor *Visitor) {
 //===----------------------------------------------------------------------===//
 
 CompileUnitDesc::CompileUnitDesc()
-: AnchoredDesc(DI_TAG_compile_unit)
+: AnchoredDesc(DW_TAG_compile_unit)
 , DebugVersion(LLVMDebugVersion)
 , Language(0)
 , FileName("")
@@ -594,11 +609,16 @@ CompileUnitDesc::CompileUnitDesc()
 , Producer("")
 {}
 
+// Implement isa/cast/dyncast.
+bool CompileUnitDesc::classof(const DebugInfoDesc *D) {
+  return D->getTag() == DW_TAG_compile_unit;
+}
+
 /// DebugVersionFromGlobal - Returns the version number from a compile unit
 /// GlobalVariable.
 unsigned CompileUnitDesc::DebugVersionFromGlobal(GlobalVariable *GV) {
   ConstantUInt *C = getUIntOperand(GV, 2);
-  return C ? (unsigned)C->getValue() : (unsigned)DIInvalid;
+  return C ? (unsigned)C->getValue() : (unsigned)DW_TAG_invalid;
 }
   
 /// ApplyToFields - Target the visitor to the fields of the CompileUnitDesc.
@@ -693,9 +713,14 @@ void TypeDesc::dump() {
 //===----------------------------------------------------------------------===//
 
 BasicTypeDesc::BasicTypeDesc()
-: TypeDesc(DI_TAG_basictype)
+: TypeDesc(DW_TAG_base_type)
 , Encoding(0)
 {}
+
+// Implement isa/cast/dyncast.
+bool BasicTypeDesc::classof(const DebugInfoDesc *D) {
+  return D->getTag() == DW_TAG_base_type;
+}
 
 /// ApplyToFields - Target the visitor to the fields of the BasicTypeDesc.
 ///
@@ -734,6 +759,22 @@ DerivedTypeDesc::DerivedTypeDesc(unsigned T)
 : TypeDesc(T)
 , FromType(NULL)
 {}
+
+// Implement isa/cast/dyncast.
+bool DerivedTypeDesc::classof(const DebugInfoDesc *D) {
+  unsigned T =  D->getTag();
+  switch (T) {
+  case DW_TAG_typedef:
+  case DW_TAG_pointer_type:
+  case DW_TAG_reference_type:
+  case DW_TAG_const_type:
+  case DW_TAG_volatile_type:
+  case DW_TAG_restrict_type:
+    return true;
+  default: break;
+  }
+  return false;
+}
 
 /// ApplyToFields - Target the visitor to the fields of the DerivedTypeDesc.
 ///
@@ -775,6 +816,20 @@ CompositeTypeDesc::CompositeTypeDesc(unsigned T)
 , Elements()
 {}
   
+// Implement isa/cast/dyncast.
+bool CompositeTypeDesc::classof(const DebugInfoDesc *D) {
+  unsigned T =  D->getTag();
+  switch (T) {
+  case DW_TAG_array_type:
+  case DW_TAG_structure_type:
+  case DW_TAG_union_type:
+  case DW_TAG_enumeration_type:
+    return true;
+  default: break;
+  }
+  return false;
+}
+
 /// ApplyToFields - Target the visitor to the fields of the CompositeTypeDesc.
 ///
 void CompositeTypeDesc::ApplyToFields(DIVisitor *Visitor) {
@@ -812,10 +867,15 @@ void CompositeTypeDesc::dump() {
 //===----------------------------------------------------------------------===//
 
 SubrangeDesc::SubrangeDesc()
-: DebugInfoDesc(DI_TAG_subrange)
+: DebugInfoDesc(DW_TAG_subrange_type)
 , Lo(0)
 , Hi(0)
 {}
+
+// Implement isa/cast/dyncast.
+bool SubrangeDesc::classof(const DebugInfoDesc *D) {
+  return D->getTag() == DW_TAG_subrange_type;
+}
 
 /// ApplyToFields - Target the visitor to the fields of the SubrangeDesc.
 ///
@@ -873,9 +933,14 @@ void GlobalDesc::ApplyToFields(DIVisitor *Visitor) {
 //===----------------------------------------------------------------------===//
 
 GlobalVariableDesc::GlobalVariableDesc()
-: GlobalDesc(DI_TAG_global_variable)
+: GlobalDesc(DW_TAG_variable)
 , Global(NULL)
 {}
+
+// Implement isa/cast/dyncast.
+bool GlobalVariableDesc::classof(const DebugInfoDesc *D) {
+  return D->getTag() == DW_TAG_variable; 
+}
 
 /// ApplyToFields - Target the visitor to the fields of the GlobalVariableDesc.
 ///
@@ -921,8 +986,13 @@ void GlobalVariableDesc::dump() {
 //===----------------------------------------------------------------------===//
 
 SubprogramDesc::SubprogramDesc()
-: GlobalDesc(DI_TAG_subprogram)
+: GlobalDesc(DW_TAG_subprogram)
 {}
+
+// Implement isa/cast/dyncast.
+bool SubprogramDesc::classof(const DebugInfoDesc *D) {
+  return D->getTag() == DW_TAG_subprogram;
+}
 
 /// ApplyToFields - Target the visitor to the fields of the
 /// SubprogramDesc.
@@ -977,7 +1047,7 @@ DebugInfoDesc *DIDeserializer::Deserialize(GlobalVariable *GV) {
   unsigned Tag = DebugInfoDesc::TagFromGlobal(GV);
   
   // Get the debug version if a compile unit.
-  if (Tag == DI_TAG_compile_unit) {
+  if (Tag == DW_TAG_compile_unit) {
     DebugVersion = CompileUnitDesc::DebugVersionFromGlobal(GV);
   }
   
@@ -1123,12 +1193,12 @@ bool DIVerifier::Verify(GlobalVariable *GV) {
   
   // Get the Tag
   unsigned Tag = DebugInfoDesc::TagFromGlobal(GV);
-  if (Tag == DIInvalid) return false;
+  if (Tag == DW_TAG_invalid) return false;
 
   // If a compile unit we need the debug version.
-  if (Tag == DI_TAG_compile_unit) {
+  if (Tag == DW_TAG_compile_unit) {
     DebugVersion = CompileUnitDesc::DebugVersionFromGlobal(GV);
-    if (DebugVersion == DIInvalid) return false;
+    if (DebugVersion == DW_TAG_invalid) return false;
   }
 
   // Construct an empty DebugInfoDesc.

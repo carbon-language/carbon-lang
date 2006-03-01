@@ -24,6 +24,16 @@ namespace dwarf {
 // Dwarf constants as gleaned from the DWARF Debugging Information Format V.3
 // reference manual http://dwarf.freestandards.org .
 //
+
+// Do not mix the following two enumerations sets.  DW_TAG_invalid changes the
+// enumeration base type.
+
+enum llvm_dwarf_constants {
+  // llvm mock tags
+  DW_TAG_invalid = ~0U,                 // Tag for invalid results.
+  DW_TAG_anchor = 0,                    // Tag for descriptor anchors.
+};
+
 enum dwarf_constants {
   DWARF_VERSION = 2,
   

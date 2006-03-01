@@ -56,25 +56,6 @@ class StructType;
 
 enum {
   LLVMDebugVersion = 1,                 // Current version of debug information.
-  DIInvalid = ~0U,                      // Invalid result indicator.
-  
-  // DebugInfoDesc type identifying tags.
-  DI_TAG_anchor = 0,
-  DI_TAG_compile_unit,
-  DI_TAG_global_variable,
-  DI_TAG_subprogram,
-  DI_TAG_basictype,
-  DI_TAG_typedef,
-  DI_TAG_pointer,
-  DI_TAG_reference,
-  DI_TAG_array,
-  DI_TAG_struct,
-  DI_TAG_union,
-  DI_TAG_enum,
-  DI_TAG_subrange,
-  DI_TAG_const,
-  DI_TAG_volatile,
-  DI_TAG_restrict
 };
 
 //===----------------------------------------------------------------------===//
@@ -166,23 +147,15 @@ private:
   std::string Name;                     // Anchor type string.
   
 public:
-  AnchorDesc()
-  : DebugInfoDesc(DI_TAG_anchor)
-  , Name("")
-  {}
-  AnchorDesc(const std::string &N)
-  : DebugInfoDesc(DI_TAG_anchor)
-  , Name(N)
-  {}
+  AnchorDesc();
+  AnchorDesc(const std::string &N);
   
   // Accessors
   const std::string &getName() const { return Name; }
 
   // Implement isa/cast/dyncast.
   static bool classof(const AnchorDesc *) { return true; }
-  static bool classof(const DebugInfoDesc *D) {
-    return D->getTag() == DI_TAG_anchor;
-  }
+  static bool classof(const DebugInfoDesc *D);
 
   /// getLinkage - get linkage appropriate for this type of descriptor.
   ///
@@ -259,9 +232,7 @@ public:
 
   // Implement isa/cast/dyncast.
   static bool classof(const CompileUnitDesc *) { return true; }
-  static bool classof(const DebugInfoDesc *D) {
-    return D->getTag() == DI_TAG_compile_unit;
-  }
+  static bool classof(const DebugInfoDesc *D);
   
   /// DebugVersionFromGlobal - Returns the version number from a compile unit
   /// GlobalVariable.  Return DIIValid if operand is not an unsigned int.
@@ -348,9 +319,7 @@ public:
 
   // Implement isa/cast/dyncast.
   static bool classof(const BasicTypeDesc *) { return true; }
-  static bool classof(const DebugInfoDesc *D) {
-    return D->getTag() == DI_TAG_basictype;
-  }
+  static bool classof(const DebugInfoDesc *D);
   
   /// ApplyToFields - Target the visitor to the fields of the  BasicTypeDesc.
   ///
@@ -386,20 +355,7 @@ public:
 
   // Implement isa/cast/dyncast.
   static bool classof(const DerivedTypeDesc *) { return true; }
-  static bool classof(const DebugInfoDesc *D) {
-    unsigned T =  D->getTag();
-    switch (T) {
-    case DI_TAG_typedef:
-    case DI_TAG_pointer:
-    case DI_TAG_reference:
-    case DI_TAG_const:
-    case DI_TAG_volatile:
-    case DI_TAG_restrict:
-      return true;
-    default: break;
-    }
-    return false;
-  }
+  static bool classof(const DebugInfoDesc *D);
   
   /// ApplyToFields - Target the visitor to the fields of the  DerivedTypeDesc.
   ///
@@ -433,18 +389,7 @@ public:
 
   // Implement isa/cast/dyncast.
   static bool classof(const CompositeTypeDesc *) { return true; }
-  static bool classof(const DebugInfoDesc *D) {
-    unsigned T =  D->getTag();
-    switch (T) {
-    case DI_TAG_array:
-    case DI_TAG_struct:
-    case DI_TAG_union:
-    case DI_TAG_enum:
-      return true;
-    default: break;
-    }
-    return false;
-  }
+  static bool classof(const DebugInfoDesc *D);
   
   /// ApplyToFields - Target the visitor to the fields of the CompositeTypeDesc.
   ///
@@ -482,9 +427,7 @@ public:
 
   // Implement isa/cast/dyncast.
   static bool classof(const SubrangeDesc *) { return true; }
-  static bool classof(const DebugInfoDesc *D) {
-    return D->getTag() == DI_TAG_subrange;
-  }
+  static bool classof(const DebugInfoDesc *D);
   
   /// ApplyToFields - Target the visitor to the fields of the SubrangeDesc.
   ///
@@ -554,9 +497,7 @@ public:
  
   // Implement isa/cast/dyncast.
   static bool classof(const GlobalVariableDesc *) { return true; }
-  static bool classof(const DebugInfoDesc *D) {
-    return D->getTag() == DI_TAG_global_variable; 
-  }
+  static bool classof(const DebugInfoDesc *D);
   
   /// ApplyToFields - Target the visitor to the fields of the
   /// GlobalVariableDesc.
@@ -594,9 +535,7 @@ public:
   
   // Implement isa/cast/dyncast.
   static bool classof(const SubprogramDesc *) { return true; }
-  static bool classof(const DebugInfoDesc *D) {
-    return D->getTag() == DI_TAG_subprogram;
-  }
+  static bool classof(const DebugInfoDesc *D);
   
   /// ApplyToFields - Target the visitor to the fields of the  SubprogramDesc.
   ///
@@ -873,7 +812,12 @@ public:
                              getGlobalVariablesUsing(M, Desc.getAnchorString());
     std::vector<T *> AnchoredDescs;
     for (unsigned i = 0, N = Globals.size(); i < N; ++i) {
-      AnchoredDescs.push_back(cast<T>(DR.Deserialize(Globals[i])));
+      GlobalVariable *GV = Globals[i];
+      // FIXME - Tag check only necessary for bring up (changed tag values.)
+      unsigned Tag = DebugInfoDesc::TagFromGlobal(GV);
+      if (Tag == Desc.getTag()) {
+        AnchoredDescs.push_back(cast<T>(DR.Deserialize(GV)));
+      }
     }
 
     return AnchoredDescs;

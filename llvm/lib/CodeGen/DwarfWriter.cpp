@@ -1070,42 +1070,20 @@ DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc) {
     unsigned Encoding = BasicTy->getEncoding();
     Ty->AddUInt  (DW_AT_encoding,  DW_FORM_data1, Encoding);
   } else if (DerivedTypeDesc *DerivedTy = dyn_cast<DerivedTypeDesc>(TyDesc)) {
-    // Determine which derived type.
-    unsigned T = 0;
-    switch (DerivedTy->getTag()) {
-    case DI_TAG_typedef:   T = DW_TAG_typedef;         break;
-    case DI_TAG_pointer:   T = DW_TAG_pointer_type;    break;
-    case DI_TAG_reference: T = DW_TAG_reference_type;  break;
-    case DI_TAG_const:     T = DW_TAG_const_type;      break;
-    case DI_TAG_volatile:  T = DW_TAG_volatile_type;   break;
-    case DI_TAG_restrict:  T = DW_TAG_restrict_type;   break;
-    default: assert( 0 && "Unknown tag on derived type");
-    }
-    
     // Create specific DIE.
-    Slot = Ty = new DIE(T);
+    Slot = Ty = new DIE(DerivedTy->getTag());
     
     // Map to main type, void will not have a type.
     if (TypeDesc *FromTy = DerivedTy->getFromType()) {
        Ty->AddDIEntry(DW_AT_type, DW_FORM_ref4, NewType(Context, FromTy));
     }
   } else if (CompositeTypeDesc *CompTy = dyn_cast<CompositeTypeDesc>(TyDesc)) {
-    // Determine which composite type.
-    unsigned T = 0;
-    switch (CompTy->getTag()) {
-    case DI_TAG_array:     T = DW_TAG_array_type;       break;
-    case DI_TAG_struct:    T = DW_TAG_structure_type;   break;
-    case DI_TAG_union:     T = DW_TAG_union_type;       break;
-    case DI_TAG_enum:      T = DW_TAG_enumeration_type; break;
-    default: assert( 0 && "Unknown tag on composite type");
-    }
-    
     // Create specific DIE.
-    Slot = Ty = new DIE(T);
+    Slot = Ty = new DIE(CompTy->getTag());
     std::vector<DebugInfoDesc *> &Elements = CompTy->getElements();
     
     switch (CompTy->getTag()) {
-    case DI_TAG_array: {
+    case DW_TAG_array_type: {
       // Add element type.
       if (TypeDesc *FromTy = CompTy->getFromType()) {
          Ty->AddDIEntry(DW_AT_type, DW_FORM_ref4, NewType(Context, FromTy));
@@ -1139,13 +1117,13 @@ DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc) {
       
       break;
     }
-    case DI_TAG_struct: {
+    case DW_TAG_structure_type: {
       break;
     }
-    case DI_TAG_union: {
+    case DW_TAG_union_type: {
       break;
     }
-    case DI_TAG_enum: {
+    case DW_TAG_enumeration_type: {
       break;
     }
     default: break;
