@@ -1311,6 +1311,9 @@ void Constant::print(std::ostream &o) const {
   if (this == 0) { o << "<null> constant value\n"; return; }
 
   o << ' ' << getType()->getDescription() << ' ';
+
+  std::map<const Type *, std::string> TypeTable;
+  WriteConstantInt(o, this, false, TypeTable, 0);
 }
 
 void Type::print(std::ostream &o) const {
