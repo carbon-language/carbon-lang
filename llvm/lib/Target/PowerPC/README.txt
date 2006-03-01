@@ -328,31 +328,6 @@ computable using the spiffy altivec instructions.
 
 Compile this:
 
-double %test(double %X) {
-        %Y = cast double %X to long
-        %Z = cast long %Y to double
-        ret double %Z
-}
-
-to this:
-
-_test:
-        fctidz f0, f1
-        stfd f0, -8(r1)
-        lwz r2, -4(r1)
-        lwz r3, -8(r1)
-        stw r2, -12(r1)
-        stw r3, -16(r1)
-        lfd f0, -16(r1)
-        fcfid f1, f0
-        blr
-
-without the lwz/stw's.
-
-===-------------------------------------------------------------------------===
-
-Compile this:
-
 int foo(int a) {
   int b = (a < 8);
   if (b) {

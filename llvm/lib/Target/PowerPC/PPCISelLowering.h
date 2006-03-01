@@ -81,6 +81,8 @@ namespace llvm {
     ///
     virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
     
+    virtual SDOperand PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
+
     /// LowerArguments - This hook must be implemented to indicate how we should
     /// lower the arguments for the specified function, into the specified DAG.
     virtual std::vector<SDOperand>

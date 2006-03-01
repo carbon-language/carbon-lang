@@ -185,6 +185,9 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   setSetCCResultContents(ZeroOrOneSetCCResult);
   setStackPointerRegisterToSaveRestore(PPC::R1);
   
+  // We have target-specific dag combine patterns for the following nodes:
+  setTargetDAGCombine(ISD::SINT_TO_FP);
+  
   computeRegisterProperties();
 }
 
@@ -995,6 +998,43 @@ PPCTargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
 
   delete MI;   // The pseudo instruction is gone now.
   return BB;
+}
+
+SDOperand PPCTargetLowering::PerformDAGCombine(SDNode *N, 
+                                               DAGCombinerInfo &DCI) const {
+  TargetMachine &TM = getTargetMachine();
+  SelectionDAG &DAG = DCI.DAG;
+  switch (N->getOpcode()) {
+  default: break;
+  case ISD::SINT_TO_FP:
+    if (TM.getSubtarget<PPCSubtarget>().is64Bit()) {
+      // Turn (sint_to_fp (fp_to_sint X)) -> fctidz/fcfid without load/stores.
+      // We allow the src/dst to be either f32/f64, but force the intermediate
+      // type to be i64.
+      if (N->getOperand(0).getOpcode() == ISD::FP_TO_SINT && 
+          N->getOperand(0).getValueType() == MVT::i64) {
+        
+        SDOperand Val = N->getOperand(0).getOperand(0);
+        if (Val.getValueType() == MVT::f32) {
+          Val = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Val);
+          DCI.AddToWorklist(Val.Val);
+        }
+          
+        Val = DAG.getNode(PPCISD::FCTIDZ, MVT::f64, Val);
+        DCI.AddToWorklist(Val.Val);
+        Val = DAG.getNode(PPCISD::FCFID, MVT::f64, Val);
+        DCI.AddToWorklist(Val.Val);
+        if (N->getValueType(0) == MVT::f32) {
+          Val = DAG.getNode(ISD::FP_ROUND, MVT::f32, Val);
+          DCI.AddToWorklist(Val.Val);
+        }
+        return Val;
+      }
+    }
+    break;
+  }
+  
+  return SDOperand();
 }
 
 /// getConstraintType - Given a constraint letter, return the type of
