@@ -31,7 +31,7 @@ namespace dwarf {
 enum llvm_dwarf_constants {
   // llvm mock tags
   DW_TAG_invalid = ~0U,                 // Tag for invalid results.
-  DW_TAG_anchor = 0,                    // Tag for descriptor anchors.
+  DW_TAG_anchor = 0                     // Tag for descriptor anchors.
 };
 
 enum dwarf_constants {
