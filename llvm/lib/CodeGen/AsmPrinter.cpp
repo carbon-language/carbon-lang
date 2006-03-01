@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Assembly/Writer.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/Constants.h"
@@ -114,7 +115,8 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
   EmitAlignment(MCP->getConstantPoolAlignment());
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     O << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << '_' << i
-      << ":\t\t\t\t\t" << CommentString << *CP[i].Val << '\n';
+      << ":\t\t\t\t\t" << CommentString << " ";
+    WriteTypeSymbolic(O, CP[i].Val->getType(), 0) << '\n';
     EmitGlobalConstant(CP[i].Val);
     if (i != e-1) {
       unsigned EntSize = TM.getTargetData().getTypeSize(CP[i].Val->getType());
