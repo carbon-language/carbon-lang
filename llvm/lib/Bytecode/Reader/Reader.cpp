@@ -1865,11 +1865,8 @@ void BytecodeReader::ParseFunctionBody(Function* F) {
         if (CallInst* CI = dyn_cast<CallInst>(II)) {
           std::map<Function*,Function*>::iterator FI = 
             upgradedFunctions.find(CI->getCalledFunction());
-          if (FI != upgradedFunctions.end()) {
-            Instruction* newI = UpgradeIntrinsicCall(CI,FI->second);
-            CI->replaceAllUsesWith(newI);
-            CI->eraseFromParent();
-          }
+          if (FI != upgradedFunctions.end())
+            UpgradeIntrinsicCall(CI, FI->second);
         }
   }
 
@@ -2444,7 +2441,7 @@ void BytecodeReader::ParseBytecode(BufPtr Buf, unsigned Length,
     for (Module::iterator FI = TheModule->begin(), FE = TheModule->end();
          FI != FE; ++FI)
       if (Function* newF = UpgradeIntrinsicFunction(FI)) {
-        upgradedFunctions.insert(std::make_pair(FI,newF));
+        upgradedFunctions.insert(std::make_pair(FI, newF));
         FI->setName("");
       }
 
