@@ -956,9 +956,12 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   case Intrinsic::dbg_func_start:  NumArgs = 1; break;
   case Intrinsic::dbg_declare:     NumArgs = 1; break;
 
-  case Intrinsic::memcpy:          NumArgs = 4; break;
-  case Intrinsic::memmove:         NumArgs = 4; break;
-  case Intrinsic::memset:          NumArgs = 4; break;
+  case Intrinsic::memcpy_i32:      NumArgs = 4; break;
+  case Intrinsic::memcpy_i64:      NumArgs = 4; break;
+  case Intrinsic::memmove_i32:     NumArgs = 4; break;
+  case Intrinsic::memmove_i64:     NumArgs = 4; break;
+  case Intrinsic::memset_i32:      NumArgs = 4; break;
+  case Intrinsic::memset_i64:      NumArgs = 4; break;
 
   case Intrinsic::stacksave:
     NumArgs = 0;

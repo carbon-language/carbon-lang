@@ -23,54 +23,86 @@
 using namespace llvm;
 
 // Utility function for getting the correct suffix given a type
-static inline const char* get_suffix(const Type* Ty) {
+static inline const char *getTypeSuffix(const Type* Ty) {
   switch (Ty->getTypeID()) {
-    case Type::UIntTyID:    return ".i32";
-    case Type::UShortTyID:  return ".i16";
-    case Type::UByteTyID:   return ".i8";
-    case Type::ULongTyID:   return ".i64";
-    case Type::FloatTyID:   return ".f32";
-    case Type::DoubleTyID:  return ".f64";
-    default:                break;                        
+  case Type::ULongTyID:   return ".i64";
+  case Type::UIntTyID:    return ".i32";
+  case Type::UShortTyID:  return ".i16";
+  case Type::UByteTyID:   return ".i8";
+  case Type::FloatTyID:   return ".f32";
+  case Type::DoubleTyID:  return ".f64";
+  default:                break;                        
   }
   return 0;
 }
 
-static inline const Type* getTypeFromFunctionName(Function* F) {
+static Function *getUpgradedUnaryFn(Function *F) {
+  std::string Name = F->getName()+getTypeSuffix(F->getReturnType());
+  Module *M = F->getParent();
+  switch (F->getReturnType()->getTypeID()) {
+  default: return 0;
+  case Type::UByteTyID:
+  case Type::SByteTyID:
+    return M->getOrInsertFunction(Name, 
+                                  Type::UByteTy, Type::UByteTy, NULL);
+  case Type::UShortTyID:
+  case Type::ShortTyID:
+    return M->getOrInsertFunction(Name, 
+                                  Type::UShortTy, Type::UShortTy, NULL);
+  case Type::UIntTyID:
+  case Type::IntTyID:
+    return M->getOrInsertFunction(Name, 
+                                  Type::UIntTy, Type::UIntTy, NULL);
+  case Type::ULongTyID:
+  case Type::LongTyID:
+    return M->getOrInsertFunction(Name, 
+                                  Type::ULongTy, Type::ULongTy, NULL);
+}
+}
+
+static Function *getUpgradedIntrinsic(Function *F) {
   // If there's no function, we can't get the argument type.
-  if (!F)
-    return 0;
+  if (!F) return 0;
 
   // Get the Function's name.
   const std::string& Name = F->getName();
 
   // Quickly eliminate it, if it's not a candidate.
-  if (Name.length() <= 8 || Name[0] != 'l' || Name[1] != 'l' || Name[2] !=
-    'v' || Name[3] != 'm' || Name[4] != '.')
+  if (Name.length() <= 8 || Name[0] != 'l' || Name[1] != 'l' || 
+      Name[2] != 'v' || Name[3] != 'm' || Name[4] != '.')
     return 0;
 
+  Module *M = F->getParent();
   switch (Name[5]) {
-    case 'b':
-      if (Name == "llvm.bswap")
-        return F->getReturnType();
-      break;
-    case 'c':
-      if (Name == "llvm.ctpop" || Name == "llvm.ctlz" || Name == "llvm.cttz")
-        return F->getReturnType();
-      break;
-    case 'i':
-      if (Name == "llvm.isunordered") {
-        Function::const_arg_iterator ArgIt = F->arg_begin();
-        if (ArgIt != F->arg_end()) 
-          return ArgIt->getType();
-      }
-      break;
-    case 's':
-      if (Name == "llvm.sqrt")
-        return F->getReturnType();
-      break;
-    default:
-      break;
+  default: break;
+  case 'b':
+    if (Name == "llvm.bswap") return getUpgradedUnaryFn(F);
+    break;
+  case 'c':
+    if (Name == "llvm.ctpop" || Name == "llvm.ctlz" || Name == "llvm.cttz")
+      return getUpgradedUnaryFn(F);
+    break;
+  case 'i':
+    if (Name == "llvm.isunordered" && F->arg_begin() != F->arg_end()) {
+      if (F->arg_begin()->getType() == Type::FloatTy)
+        return M->getOrInsertFunction(Name+".f32", F->getFunctionType());
+      if (F->arg_begin()->getType() == Type::DoubleTy)
+        return M->getOrInsertFunction(Name+".f64", F->getFunctionType());
+    }
+    break;
+  case 'm':
+    if (Name == "llvm.memcpy" || Name == "llvm.memset" || 
+        Name == "llvm.memmove") {
+      if (F->getFunctionType()->getParamType(2) == Type::UIntTy)
+        return M->getOrInsertFunction(Name+".i32", F->getFunctionType());
+      if (F->getFunctionType()->getParamType(2) == Type::ULongTy)
+        return M->getOrInsertFunction(Name+".i64", F->getFunctionType());
+    }
+    break;
+  case 's':
+    if (Name == "llvm.sqrt")
+      return getUpgradedUnaryFn(F);
+    break;
   }
   return 0;
 }
@@ -92,75 +124,24 @@ static inline const Type* getTypeFromFunction(Function *F) {
   return 0;
 }
 
-bool llvm::IsUpgradeableIntrinsicName(const std::string& Name) {
-  // Quickly eliminate it, if it's not a candidate.
-  if (Name.length() <= 8 || Name[0] != 'l' || Name[1] != 'l' || Name[2] !=
-    'v' || Name[3] != 'm' || Name[4] != '.')
-    return false;
-
-  switch (Name[5]) {
-    case 'b':
-      if (Name == "llvm.bswap")
-        return true;
-      break;
-    case 'c':
-      if (Name == "llvm.ctpop" || Name == "llvm.ctlz" || Name == "llvm.cttz")
-        return true;
-      break;
-    case 'i':
-      if (Name == "llvm.isunordered")
-        return true;
-      break;
-    case 's':
-      if (Name == "llvm.sqrt")
-        return true;
-      break;
-    default:
-      break;
-  }
-  return false;
-}
-
 // UpgradeIntrinsicFunction - Convert overloaded intrinsic function names to
 // their non-overloaded variants by appending the appropriate suffix based on
 // the argument types.
-Function* llvm::UpgradeIntrinsicFunction(Function* F) {
+Function *llvm::UpgradeIntrinsicFunction(Function* F) {
   // See if its one of the name's we're interested in.
-  if (const Type* Ty = getTypeFromFunctionName(F)) {
-    const char* suffix = 
-      get_suffix((Ty->isSigned() ? Ty->getUnsignedVersion() : Ty));
-    assert(suffix && "Intrinsic parameter type not recognized");
-    const std::string& Name = F->getName();
-    std::string new_name = Name + suffix;
-    std::cerr << "WARNING: change " << Name << " to " << new_name << "\n";
-    SymbolTable& SymTab = F->getParent()->getSymbolTable();
-    if (Value* V = SymTab.lookup(F->getType(),new_name))
-      if (Function* OtherF = dyn_cast<Function>(V))
-        return OtherF;
-    
-    // There wasn't an existing function for the intrinsic, so now make sure the
-    // signedness of the arguments is correct.
-    if (Ty->isSigned()) {
-      const Type* newTy = Ty->getUnsignedVersion();
-      std::vector<const Type*> Params;
-      Params.push_back(newTy);
-      FunctionType* FT = FunctionType::get(newTy, Params,false);
-      return new Function(FT, GlobalValue::ExternalLinkage, new_name, 
-                          F->getParent());
-    }
-
-    // The argument was the correct type (unsigned or floating), so just
-    // rename the function to its correct name and return it.
-    F->setName(new_name);
-    return F;
+  if (Function *R = getUpgradedIntrinsic(F)) {
+    std::cerr << "WARNING: change " << F->getName() << " to "
+              << R->getName() << "\n";
+    return R;
   }
   return 0;
 }
 
 
-Instruction* llvm::MakeUpgradedCall(
-    Function* F, const std::vector<Value*>& Params, BasicBlock* BB,
-    bool isTailCall, unsigned CallingConv) {
+Instruction* llvm::MakeUpgradedCall(Function *F, 
+                                    const std::vector<Value*> &Params,
+                                    BasicBlock *BB, bool isTailCall,
+                                    unsigned CallingConv) {
   assert(F && "Need a Function to make a CallInst");
   assert(BB && "Need a BasicBlock to make a CallInst");
 
@@ -181,7 +162,8 @@ Instruction* llvm::MakeUpgradedCall(
       Oprnds.push_back(*PI);
   }
 
-  Instruction* result = new CallInst(F,Oprnds,"autoupgrade_call");
+  Instruction *result = new CallInst(F, Oprnds);
+  if (result->getType() != Type::VoidTy) result->setName("autoupgrade_call");
   if (isTailCall) cast<CallInst>(result)->setTailCall();
   if (CallingConv) cast<CallInst>(result)->setCallingConv(CallingConv);
   if (signedArg) {
@@ -193,35 +175,34 @@ Instruction* llvm::MakeUpgradedCall(
   return result;
 }
 
-Instruction* llvm::UpgradeIntrinsicCall(CallInst *CI, Function* newF) {
+// UpgradeIntrinsicCall - In the BC reader, change a call to some intrinsic to
+// be a called to the specified intrinsic.  We expect the callees to have the
+// same number of arguments, but their types may be different.
+void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
   Function *F = CI->getCalledFunction();
-  if (const Type* Ty = 
-      (newF ? getTypeFromFunction(newF) : getTypeFromFunctionName(F))) {
-    std::vector<Value*> Oprnds;
-    User::op_iterator OI = CI->op_begin(); 
-    ++OI;
-    for (User::op_iterator OE = CI->op_end() ; OI != OE; ++OI) {
-      const Type* opTy = OI->get()->getType();
-      if (opTy->isSigned())
-        Oprnds.push_back(
-          new CastInst(OI->get(),opTy->getUnsignedVersion(), 
-            "autoupgrade_cast",CI));
-      else
-        Oprnds.push_back(*OI);
-    }
-    CallInst* newCI = new CallInst((newF?newF:F),Oprnds,"autoupgrade_call",CI);
-    newCI->setTailCall(CI->isTailCall());
-    newCI->setCallingConv(CI->getCallingConv());
-    if (const Type* oldType = CI->getCalledFunction()->getReturnType())
-      if (oldType->isSigned()) {
-        CastInst* final = 
-          new CastInst(newCI, oldType, "autoupgrade_uncast",newCI);
-        newCI->moveBefore(final);
-        return final;
-      }
-    return newCI;
+
+  const FunctionType *NewFnTy = NewFn->getFunctionType();
+  std::vector<Value*> Oprnds;
+  for (unsigned i = 1, e = CI->getNumOperands(); i != e; ++i) {
+    Value *V = CI->getOperand(i);
+    if (V->getType() != NewFnTy->getParamType(i-1))
+      V = new CastInst(V, NewFnTy->getParamType(i-1), V->getName(), CI);
+    Oprnds.push_back(V);
   }
-  return 0;
+  CallInst *NewCI = new CallInst(NewFn, Oprnds, CI->getName(), CI);
+  NewCI->setTailCall(CI->isTailCall());
+  NewCI->setCallingConv(CI->getCallingConv());
+  
+  if (!CI->use_empty()) {
+    Instruction *RetVal = NewCI;
+    if (F->getReturnType() != NewFn->getReturnType()) {
+      RetVal = new CastInst(NewCI, NewFn->getReturnType(), 
+                            NewCI->getName(), CI);
+      NewCI->moveBefore(RetVal);
+    }
+    CI->replaceAllUsesWith(RetVal);
+  }
+  CI->eraseFromParent();
 }
 
 bool llvm::UpgradeCallsToIntrinsic(Function* F) {
@@ -238,22 +219,24 @@ bool llvm::UpgradeCallsToIntrinsic(Function* F) {
             Oprnds.push_back(
               new CastInst(OI->get(),opTy->getUnsignedVersion(), 
                   "autoupgrade_cast",CI));
-          }
-          else
+          } else {
             Oprnds.push_back(*OI);
+          }
         }
-        CallInst* newCI = new CallInst(newF,Oprnds,"autoupgrade_call",CI);
+        CallInst* newCI = new CallInst(newF, Oprnds,
+                                       CI->hasName() ? "autoupcall" : "", CI);
         newCI->setTailCall(CI->isTailCall());
         newCI->setCallingConv(CI->getCallingConv());
-        if (const Type* Ty = CI->getCalledFunction()->getReturnType())
-          if (Ty->isSigned()) {
-            CastInst* final = 
-              new CastInst(newCI, Ty, "autoupgrade_uncast",newCI);
-            newCI->moveBefore(final);
-            CI->replaceAllUsesWith(final);
-          } else {
-            CI->replaceAllUsesWith(newCI);
-          }
+        if (CI->use_empty()) {
+          // noop
+        } else if (CI->getType() != newCI->getType()) {
+          CastInst *final = new CastInst(newCI, CI->getType(),
+                                         "autoupgrade_uncast", newCI);
+          newCI->moveBefore(final);
+          CI->replaceAllUsesWith(final);
+        } else {
+          CI->replaceAllUsesWith(newCI);
+        }
         CI->eraseFromParent();
       }
     }

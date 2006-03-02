@@ -252,9 +252,12 @@ unsigned Function::getIntrinsicID() const {
     if (Name == "llvm.longjmp")  return Intrinsic::longjmp;
     break;
   case 'm':
-    if (Name == "llvm.memcpy")  return Intrinsic::memcpy;
-    if (Name == "llvm.memmove")  return Intrinsic::memmove;
-    if (Name == "llvm.memset")  return Intrinsic::memset;
+    if (Name == "llvm.memcpy.i32")   return Intrinsic::memcpy_i32;
+    if (Name == "llvm.memcpy.i64")   return Intrinsic::memcpy_i64;
+    if (Name == "llvm.memmove.i32")  return Intrinsic::memmove_i32;
+    if (Name == "llvm.memmove.i64")  return Intrinsic::memmove_i64;
+    if (Name == "llvm.memset.i32")   return Intrinsic::memset_i32;
+    if (Name == "llvm.memset.i64")   return Intrinsic::memset_i64;
     break;
   case 'p':
     if (Name == "llvm.prefetch")  return Intrinsic::prefetch;
