@@ -21,8 +21,9 @@
 #include "llvm/Support/Debug.h"
 #include <climits>
 #include <iostream>
-#include <memory>
 #include <queue>
+#include <set>
+#include <vector>
 using namespace llvm;
 
 namespace {
@@ -32,14 +33,17 @@ namespace {
 struct SUnit {
   SDNode *Node;                       // Representative node.
   std::vector<SDNode*> FlaggedNodes;  // All nodes flagged to Node.
-  std::vector<SUnit*> Preds;         // All real predecessors.
-  std::vector<SUnit*> ChainPreds;    // All chain predecessors.
-  std::vector<SUnit*> Succs;         // All real successors.
-  std::vector<SUnit*> ChainSuccs;    // All chain successors.
+  std::set<SUnit*> Preds;             // All real predecessors.
+  std::set<SUnit*> ChainPreds;        // All chain predecessors.
+  std::set<SUnit*> Succs;             // All real successors.
+  std::set<SUnit*> ChainSuccs;        // All chain successors.
   int NumPredsLeft;                   // # of preds not scheduled.
   int NumSuccsLeft;                   // # of succs not scheduled.
+  int NumChainPredsLeft;              // # of chain preds not scheduled.
+  int NumChainSuccsLeft;              // # of chain succs not scheduled.
   int Priority1;                      // Scheduling priority 1.
   int Priority2;                      // Scheduling priority 2.
+  bool isDefNUseOperand;              // Is a def&use operand.
   unsigned Latency;                   // Node latency.
   unsigned CycleBound;                // Upper/lower cycle to be scheduled at.
   unsigned Slot;                      // Cycle node is scheduled at.
@@ -47,8 +51,9 @@ struct SUnit {
 
   SUnit(SDNode *node)
     : Node(node), NumPredsLeft(0), NumSuccsLeft(0),
-      Priority1(INT_MIN), Priority2(INT_MIN), Latency(0),
-      CycleBound(0), Slot(0), Next(NULL) {}
+      NumChainPredsLeft(0), NumChainSuccsLeft(0),
+      Priority1(INT_MIN), Priority2(INT_MIN), isDefNUseOperand(false),
+      Latency(0), CycleBound(0), Slot(0), Next(NULL) {}
 
   void dump(const SelectionDAG *G, bool All=true) const;
 };
@@ -66,37 +71,43 @@ void SUnit::dump(const SelectionDAG *G, bool All) const {
   }
 
   if (All) {
-    std::cerr << "# preds left  : " << NumPredsLeft << "\n";
-    std::cerr << "# succs left  : " << NumSuccsLeft << "\n";
-    std::cerr << "Latency       : " << Latency << "\n";
-    std::cerr << "Priority      : " << Priority1 << " , " << Priority2 << "\n";
+    std::cerr << "# preds left       : " << NumPredsLeft << "\n";
+    std::cerr << "# succs left       : " << NumSuccsLeft << "\n";
+    std::cerr << "# chain preds left : " << NumChainPredsLeft << "\n";
+    std::cerr << "# chain succs left : " << NumChainSuccsLeft << "\n";
+    std::cerr << "Latency            : " << Latency << "\n";
+    std::cerr << "Priority           : " << Priority1 << " , " << Priority2 << "\n";
 
     if (Preds.size() != 0) {
       std::cerr << "Predecessors  :\n";
-      for (unsigned i = 0, e = Preds.size(); i != e; i++) {
+      for (std::set<SUnit*>::iterator I = Preds.begin(),
+             E = Preds.end(); I != E; ++I) {
         std::cerr << "    ";
-        Preds[i]->dump(G, false);
+        (*I)->dump(G, false);
       }
     }
     if (ChainPreds.size() != 0) {
       std::cerr << "Chained Preds :\n";
-      for (unsigned i = 0, e = ChainPreds.size(); i != e; i++) {
+      for (std::set<SUnit*>::iterator I = ChainPreds.begin(),
+             E = ChainPreds.end(); I != E; ++I) {
         std::cerr << "    ";
-        ChainPreds[i]->dump(G, false);
+        (*I)->dump(G, false);
       }
     }
     if (Succs.size() != 0) {
       std::cerr << "Successors    :\n";
-      for (unsigned i = 0, e = Succs.size(); i != e; i++) {
+      for (std::set<SUnit*>::iterator I = Succs.begin(),
+             E = Succs.end(); I != E; ++I) {
         std::cerr << "    ";
-        Succs[i]->dump(G, false);
+        (*I)->dump(G, false);
       }
     }
     if (ChainSuccs.size() != 0) {
       std::cerr << "Chained succs :\n";
-      for (unsigned i = 0, e = ChainSuccs.size(); i != e; i++) {
+      for (std::set<SUnit*>::iterator I = ChainSuccs.begin(),
+             E = ChainSuccs.end(); I != E; ++I) {
         std::cerr << "    ";
-        ChainSuccs[i]->dump(G, false);
+        (*I)->dump(G, false);
       }
     }
   }
@@ -105,24 +116,30 @@ void SUnit::dump(const SelectionDAG *G, bool All) const {
 /// Sorting functions for the Available queue.
 struct ls_rr_sort : public std::binary_function<SUnit*, SUnit*, bool> {
   bool operator()(const SUnit* left, const SUnit* right) const {
-    if (left->Priority1 > right->Priority1) {
+    bool LFloater = (left ->Preds.size() == 0);
+    bool RFloater = (right->Preds.size() == 0);
+    int LBonus = (int)left ->isDefNUseOperand;
+    int RBonus = (int)right->isDefNUseOperand;
+    int LPriority1 = left ->Priority1 - LBonus;
+    int RPriority1 = right->Priority1 - RBonus;
+    int LPriority2 = left ->Priority2 + LBonus;
+    int RPriority2 = right->Priority2 + RBonus;
+
+    // Favor floaters (i.e. node with no non-passive predecessors):
+    // e.g. MOV32ri.
+    if (!LFloater && RFloater)
       return true;
-    } else if (left->Priority1 == right->Priority1) {
-      unsigned lf = left->FlaggedNodes.size();
-      unsigned rf = right->FlaggedNodes.size();
-      if (lf > rf)
+    else if (LFloater == RFloater)
+      if (LPriority1 > RPriority1)
         return true;
-      else if (lf == rf) {
-        if (left->Priority2 > right->Priority2)
+      else if (LPriority1 == RPriority1)
+        if (LPriority2 < RPriority2)
           return true;
-        else if (left->Priority2 == right->Priority2) {
+        else if (LPriority1 == RPriority1)
           if (left->CycleBound > right->CycleBound) 
             return true;
           else
             return left->Node->getNodeDepth() < right->Node->getNodeDepth();
-        }
-      }
-    }
 
     return false;
   }
@@ -163,7 +180,7 @@ public:
 
 private:
   SUnit *NewSUnit(SDNode *N);
-  void ReleasePred(SUnit *PredSU);
+  void ReleasePred(SUnit *PredSU, bool isChain = false);
   void ScheduleNode(SUnit *SU);
   int  CalcNodePriority(SUnit *SU);
   void CalculatePriorities();
@@ -189,11 +206,21 @@ SUnit *ScheduleDAGList::NewSUnit(SDNode *N) {
 
 /// ReleasePred - Decrement the NumSuccsLeft count of a predecessor. Add it to
 /// the Available queue is the count reaches zero. Also update its cycle bound.
-void ScheduleDAGList::ReleasePred(SUnit *PredSU) {
+void ScheduleDAGList::ReleasePred(SUnit *PredSU, bool isChain) {
   SDNode *PredNode = PredSU->Node;
 
-  PredSU->NumSuccsLeft--;
-  if (PredSU->NumSuccsLeft == 0) {
+  // FIXME: the distance between two nodes is not always == the predecessor's
+  // latency. For example, the reader can very well read the register written
+  // by the predecessor later than the issue cycle. It also depends on the
+  // interrupt model (drain vs. freeze).
+  PredSU->CycleBound = std::max(PredSU->CycleBound, CurrCycle + PredSU->Latency);
+
+  if (!isChain) {
+    PredSU->NumSuccsLeft--;
+    PredSU->Priority1++;
+  } else
+    PredSU->NumChainSuccsLeft--;
+  if (PredSU->NumSuccsLeft == 0 && PredSU->NumChainSuccsLeft == 0) {
     // EntryToken has to go last!
     if (PredNode->getOpcode() != ISD::EntryToken)
       Available.push(PredSU);
@@ -205,12 +232,6 @@ void ScheduleDAGList::ReleasePred(SUnit *PredSU) {
     assert(0);
 #endif
   }
-
-  // FIXME: the distance between two nodes is not always == the predecessor's
-  // latency. For example, the reader can very well read the register written
-  // by the predecessor later than the issue cycle. It also depends on the
-  // interrupt model (drain vs. freeze).
-  PredSU->CycleBound = std::max(PredSU->CycleBound, CurrCycle + PredSU->Latency);
 }
 
 /// ScheduleNode - Add the node to the schedule. Decrement the pending count of
@@ -221,10 +242,15 @@ void ScheduleDAGList::ScheduleNode(SUnit *SU) {
   SU->Slot = CurrCycle;
 
   // Bottom up: release predecessors
-  for (unsigned i = 0, e = SU->Preds.size(); i != e; i++) 
-    ReleasePred(SU->Preds[i]);
-  for (unsigned i = 0, e = SU->ChainPreds.size(); i != e; i++) 
-    ReleasePred(SU->ChainPreds[i]);
+  for (std::set<SUnit*>::iterator I1 = SU->Preds.begin(),
+         E1 = SU->Preds.end(); I1 != E1; ++I1) {
+    ReleasePred(*I1);
+    SU->NumPredsLeft--;
+    SU->Priority1--;
+  }
+  for (std::set<SUnit*>::iterator I2 = SU->ChainPreds.begin(),
+         E2 = SU->ChainPreds.end(); I2 != E2; ++I2)
+    ReleasePred(*I2, true);
 
   CurrCycle++;
 }
@@ -272,7 +298,7 @@ void ScheduleDAGList::ListSchedule() {
 #ifndef NDEBUG
   bool AnyNotSched = false;
   for (SUnit *SU = HeadSUnit; SU != NULL; SU = SU->Next) {
-    if (SU->NumSuccsLeft != 0) {
+    if (SU->NumSuccsLeft != 0 || SU->NumChainSuccsLeft != 0) {
       if (!AnyNotSched)
         std::cerr << "*** List scheduling failed! ***\n";
       SU->dump(&DAG);
@@ -292,22 +318,24 @@ void ScheduleDAGList::ListSchedule() {
   DEBUG(std::cerr << "\n");
 }
 
-/// CalcNodePriority - Priority 1 is just the number of live range genned - number
-/// of live range killed. Priority 2 is the Sethi Ullman number. It returns
-/// priority 2 since it is calculated recursively.
-/// Smaller number is the higher priority in both cases.
+/// CalcNodePriority - Priority1 is just the number of live range genned -
+/// number of live range killed. Priority2 is the Sethi Ullman number. It
+/// returns Priority2 since it is calculated recursively.
+/// Smaller number is the higher priority for Priority2. Reverse is true for
+/// Priority1.
 int ScheduleDAGList::CalcNodePriority(SUnit *SU) {
   if (SU->Priority2 != INT_MIN)
     return SU->Priority2;
 
-  SU->Priority1 = SU->Preds.size() - SU->Succs.size();
+  SU->Priority1 = SU->NumPredsLeft - SU->NumSuccsLeft;
 
   if (SU->Preds.size() == 0) {
     SU->Priority2 = 1;
   } else {
     int Extra = 0;
-    for (unsigned i = 0, e = SU->Preds.size(); i != e; i++) {
-      SUnit *PredSU = SU->Preds[i];
+    for (std::set<SUnit*>::iterator I = SU->Preds.begin(),
+           E = SU->Preds.end(); I != E; ++I) {
+      SUnit *PredSU = *I;
       int PredPriority = CalcNodePriority(PredSU);
       if (PredPriority > SU->Priority2) {
         SU->Priority2 = PredPriority;
@@ -387,14 +415,16 @@ void ScheduleDAGList::BuildSchedUnits() {
           assert(VT != MVT::Flag);
           SUnit *OpSU = SUnitMap[OpN];
           if (VT == MVT::Other) {
-            SU  ->ChainPreds.push_back(OpSU);
-            OpSU->ChainSuccs.push_back(SU);
+            if (SU->ChainPreds.insert(OpSU).second)
+              SU->NumChainPredsLeft++;
+            if (OpSU->ChainSuccs.insert(SU).second)
+              OpSU->NumChainSuccsLeft++;
           } else {
-            SU  ->Preds.push_back(OpSU);
-            OpSU->Succs.push_back(SU);
+            if (SU->Preds.insert(OpSU).second)
+              SU->NumPredsLeft++;
+            if (OpSU->Succs.insert(SU).second)
+              OpSU->NumSuccsLeft++;
           }
-          SU->NumPredsLeft++;
-          OpSU->NumSuccsLeft++;
         }
       }
     } else {
@@ -407,14 +437,18 @@ void ScheduleDAGList::BuildSchedUnits() {
           assert(VT != MVT::Flag);
           SUnit *OpSU = SUnitMap[OpN];
           if (VT == MVT::Other) {
-            SU  ->ChainPreds.push_back(OpSU);
-            OpSU->ChainSuccs.push_back(SU);
+            if (SU->ChainPreds.insert(OpSU).second)
+              SU->NumChainPredsLeft++;
+            if (OpSU->ChainSuccs.insert(SU).second)
+              OpSU->NumChainSuccsLeft++;
           } else {
-            SU  ->Preds.push_back(OpSU);
-            OpSU->Succs.push_back(SU);
+            if (SU->Preds.insert(OpSU).second)
+              SU->NumPredsLeft++;
+            if (OpSU->Succs.insert(SU).second)
+              OpSU->NumSuccsLeft++;
+            if (j == 0 && TII->isTwoAddrInstr(N->getTargetOpcode()))
+              OpSU->isDefNUseOperand = true;
           }
-          SU->NumPredsLeft++;
-          OpSU->NumSuccsLeft++;
         }
       }
     }
