@@ -1812,6 +1812,45 @@ Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
 }
 
 
+/// GetFactor - If we can prove that the specified value is at least a multiple
+/// of some factor, return that factor.
+static Constant *GetFactor(Value *V) {
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(V))
+    return CI;
+  
+  // Unless we can be tricky, we know this is a multiple of 1.
+  Constant *Result = ConstantInt::get(V->getType(), 1);
+  
+  Instruction *I = dyn_cast<Instruction>(V);
+  if (!I) return Result;
+  
+  if (I->getOpcode() == Instruction::Mul) {
+    // Handle multiplies by a constant, etc.
+    return ConstantExpr::getMul(GetFactor(I->getOperand(0)),
+                                GetFactor(I->getOperand(1)));
+  } else if (I->getOpcode() == Instruction::Shl) {
+    // (X<<C) -> X * (1 << C)
+    if (Constant *ShRHS = dyn_cast<Constant>(I->getOperand(1))) {
+      ShRHS = ConstantExpr::getShl(Result, ShRHS);
+      return ConstantExpr::getMul(GetFactor(I->getOperand(0)), ShRHS);
+    }
+  } else if (I->getOpcode() == Instruction::And) {
+    if (ConstantInt *RHS = dyn_cast<ConstantInt>(I->getOperand(1))) {
+      // X & 0xFFF0 is known to be a multiple of 16.
+      unsigned Zeros = CountTrailingZeros_64(RHS->getZExtValue());
+      if (Zeros != V->getType()->getPrimitiveSizeInBits())
+        return ConstantExpr::getShl(Result, 
+                                    ConstantUInt::get(Type::UByteTy, Zeros));
+    }
+  } else if (I->getOpcode() == Instruction::Cast) {
+    Value *Op = I->getOperand(0);
+    // Only handle int->int casts.
+    if (!Op->getType()->isInteger()) return Result;
+    return ConstantExpr::getCast(GetFactor(Op), V->getType());
+  }    
+  return Result;
+}
+
 Instruction *InstCombiner::visitRem(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
   
@@ -1874,20 +1913,11 @@ Instruction *InstCombiner::visitRem(BinaryOperator &I) {
       } else if (isa<PHINode>(Op0I)) {
         if (Instruction *NV = FoldOpIntoPhi(I))
           return NV;
-      } else if (Op0I->getOpcode() == Instruction::Mul) {
-        // X*C1%C2 --> 0  iff  C1%C2 == 0
-        if (ConstantInt *MulRHS = dyn_cast<ConstantInt>(Op0I->getOperand(1))) {
-          if (ConstantExpr::getRem(MulRHS, RHS)->isNullValue())
-            return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
-        }
-      } else if (Op0I->getOpcode() == Instruction::Shl) {
-        // (X<<C1)%C2 --> 0  iff  (1<<C1)%C2 == 0
-        if (Constant *ShRHS = dyn_cast<Constant>(Op0I->getOperand(1))) {
-          ShRHS = ConstantExpr::getShl(ConstantInt::get(I.getType(), 1), ShRHS);
-          if (ConstantExpr::getRem(ShRHS, RHS)->isNullValue())
-            return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
-        }
       }
+      
+      // X*C1%C2 --> 0  iff  C1%C2 == 0
+      if (ConstantExpr::getRem(GetFactor(Op0I), RHS)->isNullValue())
+        return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
     }
   }
 
