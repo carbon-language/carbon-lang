@@ -60,3 +60,20 @@ uint %test9(uint %A) {
 	%C = rem uint %B, 62 
 	ret uint %C
 }
+
+int %test10(ubyte %c) {
+        %tmp.1 = cast ubyte %c to int
+        %tmp.2 = mul int %tmp.1, 3
+        %tmp.3 = cast int %tmp.2 to ulong
+        %tmp.5 = rem ulong %tmp.3, 3
+        %tmp.6 = cast ulong %tmp.5 to int
+        ret int %tmp.6
+}
+
+int %test11(int %i) {
+        %tmp.1 = and int %i, -2
+        %tmp.3 = mul int %tmp.1, 3
+        %tmp.5 = rem int %tmp.3, 6
+        ret int %tmp.5
+}
+
