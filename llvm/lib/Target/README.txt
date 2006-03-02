@@ -79,3 +79,10 @@ int f(unsigned x) {
 http://gcc.gnu.org/bugzilla/show_bug.cgi?id=25600
 http://gcc.gnu.org/ml/gcc-patches/2006-02/msg01492.html
 
+//===---------------------------------------------------------------------===//
+
+We should reassociate:
+int f(int a, int b){ return a * a + 2 * a * b + b * b; }
+into:
+int f(int a, int b) { return a * (a + 2 * b) + b * b; }
+to eliminate a multiply.
