@@ -302,7 +302,7 @@ private:
 
   /// NewType - Create a new type DIE.
   ///
- DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc);
+ DIE *NewType(DIE *Context, TypeDesc *TyDesc);
   
   /// NewCompileUnit - Create new compile unit and it's die.
   ///
