@@ -7,8 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This tablegen backend emits subtarget enumerations.  The format is in a state
-// flux and will be tightened up when integration to scheduling is complete.
+// This tablegen backend emits subtarget enumerations.
 //
 //===----------------------------------------------------------------------===//
 
