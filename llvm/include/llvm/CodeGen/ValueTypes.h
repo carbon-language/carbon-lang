@@ -27,7 +27,7 @@ namespace llvm {
 ///
 namespace MVT {  // MVT = Machine Value Types
   enum ValueType {
-    // If you change this numbering, you must change the values in Target.td as
+    // If you change this numbering, you must change the values in ValueTypes.td
     // well!
     Other          =   0,   // This is a non-standard value
     i1             =   1,   // This is a 1 bit integer value
