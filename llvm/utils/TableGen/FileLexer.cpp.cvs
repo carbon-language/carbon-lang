@@ -609,7 +609,7 @@ static void HandleInclude(const char *Buffer) {
     std::string NextFilename;
     for (unsigned i = 0, e = IncludeDirectories.size(); i != e; ++i) {
       NextFilename = IncludeDirectories[i] + "/" + Filename;
-      if (yyin = fopen(NextFilename.c_str(), "r"))
+      if ((yyin = fopen(NextFilename.c_str(), "r")))
         break;
     }
     
