@@ -36,7 +36,7 @@ int Fileparse();
 namespace llvm {
 
 // Global variable recording the location of the include directory
-std::string IncludeDirectory;
+std::vector<std::string> IncludeDirectories;
 
 /// ParseInt - This has to handle the special case of binary numbers 0b0101
 ///
@@ -74,7 +74,8 @@ std::ostream &err() {
 
 /// ParseFile - this function begins the parsing of the specified tablegen file.
 ///
-void ParseFile(const std::string &Filename, const std::string & IncludeDir) {
+void ParseFile(const std::string &Filename, 
+               const std::vector<std::string> &IncludeDirs) {
   FILE *F = stdin;
   if (Filename != "-") {
     F = fopen(Filename.c_str(), "r");
@@ -90,7 +91,7 @@ void ParseFile(const std::string &Filename, const std::string & IncludeDir) {
 
   // Record the location of the include directory so that the lexer can find
   // it later.
-  IncludeDirectory = IncludeDir;
+  IncludeDirectories = IncludeDirs;
  
   Filein = F;
   Filelineno = 1;
@@ -124,10 +125,13 @@ static void HandleInclude(const char *Buffer) {
     // If we couldn't find the file in the current directory, look for it in
     // the include directories.
     //
-    // NOTE: Right now, there is only one directory.  We need to eventually add
-    // support for more.
-    std::string NextFilename = IncludeDirectory + "/" + Filename;
-    yyin = fopen(NextFilename.c_str(), "r");
+    std::string NextFilename;
+    for (unsigned i = 0, e = IncludeDirectories.size(); i != e; ++i) {
+      NextFilename = IncludeDirectories[i] + "/" + Filename;
+      if (yyin = fopen(NextFilename.c_str(), "r"))
+        break;
+    }
+    
     if (yyin == 0) {
       err() << "Could not find include file '" << Filename << "'!\n";
       exit(1);
