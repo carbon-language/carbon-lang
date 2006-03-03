@@ -86,13 +86,6 @@ namespace Intrinsic {
     cttz_i16,       // Count trailing zeros of short
     cttz_i32,       // Count trailing zeros of int
     cttz_i64,       // Count trailing zeros of long
-    
-    // Input/Output intrinsics.
-    readport,
-    writeport,
-    readio,
-    writeio
-
   };
 
 } // End Intrinsic namespace

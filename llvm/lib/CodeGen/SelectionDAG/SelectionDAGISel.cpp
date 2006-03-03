@@ -968,29 +968,6 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     visitMemIntrinsic(I, ISD::MEMMOVE);
     return 0;
     
-  case Intrinsic::readport:
-  case Intrinsic::readio: {
-    std::vector<MVT::ValueType> VTs;
-    VTs.push_back(TLI.getValueType(I.getType()));
-    VTs.push_back(MVT::Other);
-    std::vector<SDOperand> Ops;
-    Ops.push_back(getRoot());
-    Ops.push_back(getValue(I.getOperand(1)));
-    SDOperand Tmp = DAG.getNode(Intrinsic == Intrinsic::readport ?
-                                ISD::READPORT : ISD::READIO, VTs, Ops);
-    
-    setValue(&I, Tmp);
-    DAG.setRoot(Tmp.getValue(1));
-    return 0;
-  }
-  case Intrinsic::writeport:
-  case Intrinsic::writeio:
-    DAG.setRoot(DAG.getNode(Intrinsic == Intrinsic::writeport ?
-                            ISD::WRITEPORT : ISD::WRITEIO, MVT::Other,
-                            getRoot(), getValue(I.getOperand(1)),
-                            getValue(I.getOperand(2))));
-    return 0;
-    
   case Intrinsic::dbg_stoppoint: {
     if (TLI.getTargetMachine().getIntrinsicLowering().EmitDebugFunctions())
       return "llvm_debugger_stop";

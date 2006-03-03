@@ -138,14 +138,6 @@ def SDTBrcond : SDTypeProfile<0, 2, [ // brcond
 
 def SDTRet : SDTypeProfile<0, 0, []>; // ret
 
-def SDTReadPort : SDTypeProfile<1, 1, [ // readport
-  SDTCisInt<0>, SDTCisInt<1>
-]>;
-
-def SDTWritePort : SDTypeProfile<0, 2, [ // writeport
-  SDTCisInt<0>, SDTCisInt<1>
-]>;
-
 def SDTLoad : SDTypeProfile<1, 1, [ // load
   SDTCisPtrTy<1>  
 ]>;
@@ -283,9 +275,6 @@ def selectcc   : SDNode<"ISD::SELECT_CC"  , SDTSelectCC>;
 def brcond     : SDNode<"ISD::BRCOND"     , SDTBrcond, [SDNPHasChain]>;
 def br         : SDNode<"ISD::BR"         , SDTBr,     [SDNPHasChain]>;
 def ret        : SDNode<"ISD::RET"        , SDTRet,    [SDNPHasChain]>;
-
-def readport   : SDNode<"ISD::READPORT"   , SDTReadPort,  [SDNPHasChain]>;
-def writeport  : SDNode<"ISD::WRITEPORT"  , SDTWritePort, [SDNPHasChain]>;
 
 def load       : SDNode<"ISD::LOAD"       , SDTLoad,  [SDNPHasChain]>;
 def store      : SDNode<"ISD::STORE"      , SDTStore, [SDNPHasChain]>;

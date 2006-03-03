@@ -2691,12 +2691,6 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::CTTZ:    return "cttz";
   case ISD::CTLZ:    return "ctlz";
 
-  // IO Intrinsics
-  case ISD::READPORT: return "readport";
-  case ISD::WRITEPORT: return "writeport";
-  case ISD::READIO: return "readio";
-  case ISD::WRITEIO: return "writeio";
-
   // Debug info
   case ISD::LOCATION: return "location";
   case ISD::DEBUG_LOC: return "debug_loc";

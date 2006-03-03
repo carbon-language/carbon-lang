@@ -1691,68 +1691,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     break;
   }
 
-  case ISD::READPORT:
-    Tmp1 = LegalizeOp(Node->getOperand(0));
-    Tmp2 = LegalizeOp(Node->getOperand(1));
-    Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
-
-    // Since these produce two values, make sure to remember that we legalized
-    // both of them.
-    AddLegalizedOperand(SDOperand(Node, 0), Result.getValue(0));
-    AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
-    return Result;
-  case ISD::WRITEPORT:
-    Tmp1 = LegalizeOp(Node->getOperand(0));
-    Tmp2 = LegalizeOp(Node->getOperand(1));
-    Tmp3 = LegalizeOp(Node->getOperand(2));
-    Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3);
-    break;
-
-  case ISD::READIO:
-    Tmp1 = LegalizeOp(Node->getOperand(0));
-    Tmp2 = LegalizeOp(Node->getOperand(1));
-
-    switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
-    case TargetLowering::Custom:
-    default: assert(0 && "This action not implemented for this operation!");
-    case TargetLowering::Legal:
-      Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
-      break;
-    case TargetLowering::Expand:
-      // Replace this with a load from memory.
-      Result = DAG.getLoad(Node->getValueType(0), Node->getOperand(0),
-                           Node->getOperand(1), DAG.getSrcValue(NULL));
-      Result = LegalizeOp(Result);
-      break;
-    }
-
-    // Since these produce two values, make sure to remember that we legalized
-    // both of them.
-    AddLegalizedOperand(SDOperand(Node, 0), Result.getValue(0));
-    AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
-    return Result.getValue(Op.ResNo);
-
-  case ISD::WRITEIO:
-    Tmp1 = LegalizeOp(Node->getOperand(0));
-    Tmp2 = LegalizeOp(Node->getOperand(1));
-    Tmp3 = LegalizeOp(Node->getOperand(2));
-
-    switch (TLI.getOperationAction(Node->getOpcode(),
-                                   Node->getOperand(1).getValueType())) {
-    case TargetLowering::Custom:
-    default: assert(0 && "This action not implemented for this operation!");
-    case TargetLowering::Legal:
-      Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3);
-      break;
-    case TargetLowering::Expand:
-      // Replace this with a store to memory.
-      Result = DAG.getNode(ISD::STORE, MVT::Other, Node->getOperand(0),
-                           Node->getOperand(1), Node->getOperand(2),
-                           DAG.getSrcValue(NULL));
-      break;
-    }
-    break;
-
   case ISD::SHL_PARTS:
   case ISD::SRA_PARTS:
   case ISD::SRL_PARTS: {

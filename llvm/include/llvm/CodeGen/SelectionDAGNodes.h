@@ -379,12 +379,6 @@ namespace ISD {
     // register (or other high accuracy low latency clock source)
     READCYCLECOUNTER,
 
-    // READPORT, WRITEPORT, READIO, WRITEIO - These correspond to the LLVM
-    // intrinsics of the same name.  The first operand is a token chain, the
-    // other operands match the intrinsic.  These produce a token chain in
-    // addition to a value (if any).
-    READPORT, WRITEPORT, READIO, WRITEIO,
-    
     // HANDLENODE node - Used as a handle for various purposes.
     HANDLENODE,
 

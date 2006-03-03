@@ -702,51 +702,6 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     NumArgs = 1;
     break;
 
-  // Verify that read and write port have integral parameters of the correct
-  // signed-ness.
-  case Intrinsic::writeport:
-    Assert1(FT->getNumParams() == 2,
-            "Illegal # arguments for intrinsic function!", IF);
-    Assert1(FT->getParamType(0)->isIntegral(),
-            "First argument not unsigned int!", IF);
-    Assert1(FT->getParamType(1)->isUnsigned(),
-            "First argument not unsigned int!", IF);
-    NumArgs = 2;
-    break;
-
-  case Intrinsic::writeio:
-    Assert1(FT->getNumParams() == 2,
-            "Illegal # arguments for intrinsic function!", IF);
-    Assert1(FT->getParamType(0)->isFirstClassType(),
-            "First argument not a first class type!", IF);
-    Assert1(isa<PointerType>(FT->getParamType(1)),
-            "Second argument not a pointer!", IF);
-    NumArgs = 2;
-    break;
-
-  case Intrinsic::readport:
-    Assert1(FT->getNumParams() == 1,
-            "Illegal # arguments for intrinsic function!", IF);
-    Assert1(FT->getReturnType()->isFirstClassType(),
-            "Return type is not a first class type!", IF);
-    Assert1(FT->getParamType(0)->isUnsigned(),
-            "First argument not unsigned int!", IF);
-    NumArgs = 1;
-    break;
-
-  case Intrinsic::readio: {
-    const PointerType *ParamType = dyn_cast<PointerType>(FT->getParamType(0));
-    const Type *ReturnType = FT->getReturnType();
-
-    Assert1(FT->getNumParams() == 1,
-            "Illegal # arguments for intrinsic function!", IF);
-    Assert1(ParamType, "First argument not a pointer!", IF);
-    Assert1(ParamType->getElementType() == ReturnType,
-            "Pointer type doesn't match return type!", IF);
-    NumArgs = 1;
-    break;
-  }
-
   case Intrinsic::isunordered_f32:
     Assert1(FT->getNumParams() == 2,
             "Illegal # arguments for intrinsic function!", IF);
