@@ -516,6 +516,7 @@ DebugInfoDesc *DebugInfoDesc::DescFactory(unsigned Tag) {
   case DW_TAG_union_type:
   case DW_TAG_enumeration_type: return new CompositeTypeDesc(Tag);
   case DW_TAG_subrange_type:    return new SubrangeDesc();
+  case DW_TAG_member:           return new DerivedTypeDesc(DW_TAG_member);
   case DW_TAG_enumerator:       return new EnumeratorDesc();
   default: break;
   }
@@ -673,6 +674,7 @@ TypeDesc::TypeDesc(unsigned T)
 , Name("")
 , File(NULL)
 , Size(0)
+, Offset(0)
 {}
 
 /// ApplyToFields - Target the visitor to the fields of the TypeDesc.
@@ -685,6 +687,7 @@ void TypeDesc::ApplyToFields(DIVisitor *Visitor) {
   Visitor->Apply((DebugInfoDesc *&)File);
   Visitor->Apply(Line);
   Visitor->Apply(Size);
+  Visitor->Apply(Offset);
 }
 
 /// getDescString - Return a string used to compose global names and labels.
@@ -707,7 +710,8 @@ void TypeDesc::dump() {
             << "Name(\"" << Name << "\"), "
             << "File(" << File << "), "
             << "Line(" << Line << "), "
-            << "Size(" << Size << ")\n";
+            << "Size(" << Size << "), "
+            << "Offset(" << Offset << ")\n";
 }
 #endif
 
@@ -771,6 +775,7 @@ bool DerivedTypeDesc::classof(const DebugInfoDesc *D) {
   case DW_TAG_const_type:
   case DW_TAG_volatile_type:
   case DW_TAG_restrict_type:
+  case DW_TAG_member:
     return true;
   default: break;
   }

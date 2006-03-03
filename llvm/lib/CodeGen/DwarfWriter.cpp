@@ -41,6 +41,8 @@ class CompileUnit;
 class DIE;
 
 //===----------------------------------------------------------------------===//
+// CompileUnit - This dwarf writer support class manages information associate
+// with a source file.
 class CompileUnit {
 private:
   CompileUnitDesc *Desc;                // Compile unit debug descriptor.
@@ -505,6 +507,13 @@ void DIEInteger::EmitValue(const DwarfWriter &DW, unsigned Form) const {
   case DW_FORM_data8: DW.EmitInt64(Integer);        break;
   case DW_FORM_udata: DW.EmitULEB128Bytes(Integer); break;
   case DW_FORM_sdata: DW.EmitSLEB128Bytes(Integer); break;
+  // FIXME - Punting on field offsets.
+  case DW_FORM_block1: {
+    DW.EmitInt8(1 +  DW.SizeULEB128(Integer)); DW.EOL("Form1 Size");
+    DW.EmitInt8(DW_OP_plus_uconst); DW.EOL("DW_OP_plus_uconst");
+    DW.EmitULEB128Bytes(Integer);
+    break;
+  }
   default: assert(0 && "DIE Value form not supported yet"); break;
   }
 }
@@ -520,6 +529,8 @@ unsigned DIEInteger::SizeOf(const DwarfWriter &DW, unsigned Form) const {
   case DW_FORM_data8: return sizeof(int64_t);
   case DW_FORM_udata: return DW.SizeULEB128(Integer);
   case DW_FORM_sdata: return DW.SizeSLEB128(Integer);
+  // FIXME - Punting on field offsets.
+  case DW_FORM_block1:   return 2 + DW.SizeULEB128(Integer);
   default: assert(0 && "DIE Value form not supported yet"); break;
   }
   return 0;
@@ -1117,10 +1128,36 @@ DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc) {
       
       break;
     }
-    case DW_TAG_structure_type: {
-      break;
-    }
+    case DW_TAG_structure_type:
     case DW_TAG_union_type: {
+      // FIXME - this is just the basics.
+      // Add elements to structure type.
+      for(unsigned i = 0, N = Elements.size(); i < N; ++i) {
+        DerivedTypeDesc *MemberDesc = cast<DerivedTypeDesc>(Elements[i]);
+        const std::string &Name = MemberDesc->getName();
+        unsigned Line = MemberDesc->getLine();
+        TypeDesc *MemTy = MemberDesc->getFromType();
+        uint64_t Size = MemberDesc->getSize();
+        uint64_t Offset = MemberDesc->getOffset();
+   
+        DIE *Member = new DIE(DW_TAG_member);
+        if (!Name.empty()) Member->AddString(DW_AT_name, DW_FORM_string, Name);
+        if (CompileUnitDesc *File = MemberDesc->getFile()) {
+          CompileUnit *FileUnit = FindCompileUnit(File);
+          unsigned FileID = FileUnit->getID();
+          int Line = TyDesc->getLine();
+          Member->AddUInt(DW_AT_decl_file, 0, FileID);
+          Member->AddUInt(DW_AT_decl_line, 0, Line);
+        }
+        if (TypeDesc *FromTy = MemberDesc->getFromType()) {
+           Member->AddDIEntry(DW_AT_type, DW_FORM_ref4,
+                              NewType(Context, FromTy));
+        }
+        // FIXME - Punt on the Address.
+        Member->AddUInt(DW_AT_data_member_location, DW_FORM_block1,
+                                                    Offset >> 3);
+        Ty->AddChild(Member);
+      }
       break;
     }
     case DW_TAG_enumeration_type: {

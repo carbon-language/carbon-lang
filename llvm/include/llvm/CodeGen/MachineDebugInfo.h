@@ -268,23 +268,25 @@ private:
   std::string Name;                     // Type name (may be empty.)
   CompileUnitDesc *File;                // Declared compile unit (may be NULL.)
   int Line;                             // Declared line# (may be zero.)
-  uint64_t Size;                        // Type size (may be zero.)
-
-protected:
-  TypeDesc(unsigned T);
+  uint64_t Size;                        // Type bit size (may be zero.)
+  uint64_t Offset;                      // Type bit offset (may be zero.)
 
 public:
+  TypeDesc(unsigned T);
+
   // Accessors
   DebugInfoDesc *getContext()                const { return Context; }
   const std::string &getName()               const { return Name; }
   CompileUnitDesc *getFile()                 const { return File; }
   int getLine()                              const { return Line; }
   uint64_t getSize()                         const { return Size; }
+  uint64_t getOffset()                       const { return Offset; }
   void setContext(DebugInfoDesc *C)                { Context = C; }
   void setName(const std::string &N)               { Name = N; }
   void setFile(CompileUnitDesc *U)                 { File = U; }
   void setLine(int L)                              { Line = L; }
   void setSize(uint64_t S)                         { Size = S; }
+  void setOffset(uint64_t O)                       { Offset = O; }
   
   /// ApplyToFields - Target the visitor to the fields of the  TypeDesc.
   ///
@@ -413,8 +415,8 @@ public:
 /// value ranges.
 class SubrangeDesc : public DebugInfoDesc {
 private:
-  int64_t Lo;                           // Low value of range
-  int64_t Hi;                           // High value of range
+  int64_t Lo;                           // Low value of range.
+  int64_t Hi;                           // High value of range.
 
 public:
   SubrangeDesc();
