@@ -283,8 +283,11 @@ public:
   Function* get_memcpy() {
     if (!memcpy_func) {
       const Type *SBP = PointerType::get(Type::SByteTy);
-      memcpy_func = M->getOrInsertFunction("llvm.memcpy", Type::VoidTy,SBP, SBP,
-                                           TD->getIntPtrType(), Type::UIntTy, NULL);
+      const char *N = TD->getIntPtrType() == Type::UIntTy ?
+                            "llvm.memcpy.i32" : "llvm.memcpy.i64";
+      memcpy_func = M->getOrInsertFunction(N, Type::VoidTy, SBP, SBP,
+                                           TD->getIntPtrType(), Type::UIntTy,
+                                           NULL);
     }
     return memcpy_func;
   }
@@ -1018,16 +1021,9 @@ struct memcmpOptimization : public LibCallOptimization {
 /// bytes depending on the length of the string and the alignment. Additional
 /// optimizations are possible in code generation (sequence of immediate store)
 /// @brief Simplify the memcpy library function.
-struct LLVMMemCpyOptimization : public LibCallOptimization {
-  /// @brief Default Constructor
-  LLVMMemCpyOptimization() : LibCallOptimization("llvm.memcpy",
-      "Number of 'llvm.memcpy' calls simplified") {}
-
-protected:
-  /// @brief Subclass Constructor
-  LLVMMemCpyOptimization(const char* fname, const char* desc)
-    : LibCallOptimization(fname, desc) {}
-public:
+struct LLVMMemCpyMoveOptzn : public LibCallOptimization {
+  LLVMMemCpyMoveOptzn(const char* fname, const char* desc)
+  : LibCallOptimization(fname, desc) {}
 
   /// @brief Make sure that the "memcpy" function has the right prototype
   virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& TD) {
@@ -1086,27 +1082,26 @@ public:
     ci->eraseFromParent();
     return true;
   }
-} LLVMMemCpyOptimizer;
+};
 
-/// This LibCallOptimization will simplify a call to the memmove library
-/// function. It is identical to MemCopyOptimization except for the name of
-/// the intrinsic.
-/// @brief Simplify the memmove library function.
-struct LLVMMemMoveOptimization : public LLVMMemCpyOptimization {
-  /// @brief Default Constructor
-  LLVMMemMoveOptimization() : LLVMMemCpyOptimization("llvm.memmove",
-      "Number of 'llvm.memmove' calls simplified") {}
-
-} LLVMMemMoveOptimizer;
+/// This LibCallOptimization will simplify a call to the memcpy/memmove library
+/// functions.
+LLVMMemCpyMoveOptzn LLVMMemCpyOptimizer32("llvm.memcpy.i32",
+                                    "Number of 'llvm.memcpy' calls simplified");
+LLVMMemCpyMoveOptzn LLVMMemCpyOptimizer64("llvm.memcpy.i64",
+                                   "Number of 'llvm.memcpy' calls simplified");
+LLVMMemCpyMoveOptzn LLVMMemMoveOptimizer32("llvm.memmove.i32",
+                                   "Number of 'llvm.memmove' calls simplified");
+LLVMMemCpyMoveOptzn LLVMMemMoveOptimizer64("llvm.memmove.i64",
+                                   "Number of 'llvm.memmove' calls simplified");
 
 /// This LibCallOptimization will simplify a call to the memset library
 /// function by expanding it out to a single store of size 0, 1, 2, 4, or 8
 /// bytes depending on the length argument.
 struct LLVMMemSetOptimization : public LibCallOptimization {
   /// @brief Default Constructor
-  LLVMMemSetOptimization() : LibCallOptimization("llvm.memset",
+  LLVMMemSetOptimization(const char *Name) : LibCallOptimization(Name,
       "Number of 'llvm.memset' calls simplified") {}
-public:
 
   /// @brief Make sure that the "memset" function has the right prototype
   virtual bool ValidateCalledFunction(const Function *F, SimplifyLibCalls &TD) {
@@ -1196,7 +1191,11 @@ public:
     ci->eraseFromParent();
     return true;
   }
-} LLVMMemSetOptimizer;
+};
+
+LLVMMemSetOptimization MemSet32Optimizer("llvm.memset.i32");
+LLVMMemSetOptimization MemSet64Optimizer("llvm.memset.i64");
+
 
 /// This LibCallOptimization will simplify calls to the "pow" library
 /// function. It looks for cases where the result of pow is well known and
