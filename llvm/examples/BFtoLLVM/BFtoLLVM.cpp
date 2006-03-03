@@ -29,7 +29,7 @@ void emitDeclarations(std::ofstream &dest) {
        << "\n; Declarations\n"
        << "\ndeclare int %getchar()\n"
        << "declare int %putchar(int)\n"
-       << "declare void %llvm.memset(sbyte*, ubyte, uint, uint)\n"
+       << "declare void %llvm.memset.i32(sbyte*, ubyte, uint, uint)\n"
        << "\n";
 }
 
@@ -38,7 +38,8 @@ void emitMainFunctionProlog(std::ofstream &dest) {
        << "int %main(int %argc, sbyte** %argv) {\n"
        << "\nentry:\n"
        << "%arr = alloca sbyte, uint 30000\n"
-       << "call void (sbyte*, ubyte, uint, uint)* %llvm.memset(sbyte* %arr, ubyte 0, uint 30000, uint 1)\n"
+       << "call void (sbyte*, ubyte, uint, uint)* %llvm.memset.i32"
+       << "(sbyte* %arr, ubyte 0, uint 30000, uint 1)\n"
        << "%ptrbox = alloca sbyte*\n"
        << "store sbyte* %arr, sbyte **%ptrbox\n"
        << "\n";
