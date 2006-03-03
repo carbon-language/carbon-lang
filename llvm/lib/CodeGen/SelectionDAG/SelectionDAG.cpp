@@ -2533,6 +2533,13 @@ bool SDNode::isOnlyUse(SDNode *N) const {
   return Seen;
 }
 
+// isOperand - Return true if this node is an operand of N.
+bool SDNode::isOperand(SDNode *N) const {
+  for (unsigned i = 0, e = N->NumOperands; i != e; ++i)
+    if (this == N->OperandList[i].Val)
+      return true;
+  return false;
+}
 
 const char *SDNode::getOperationName(const SelectionDAG *G) const {
   switch (getOpcode()) {
