@@ -21,7 +21,7 @@ using namespace llvm;
 
 TargetLowering::TargetLowering(TargetMachine &tm)
   : TM(tm), TD(TM.getTargetData()) {
-  assert(ISD::BUILTIN_OP_END <= 128 &&
+  assert(ISD::BUILTIN_OP_END <= 156 &&
          "Fixed size array in TargetLowering is not large enough!");
   // All operations default to being supported.
   memset(OpActions, 0, sizeof(OpActions));

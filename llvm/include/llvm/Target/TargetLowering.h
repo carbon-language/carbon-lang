@@ -642,7 +642,7 @@ private:
   /// Most operations are Legal (aka, supported natively by the target), but
   /// operations that are not should be described.  Note that operations on
   /// non-legal value types are not described here.
-  uint64_t OpActions[128];
+  uint64_t OpActions[156];
   
   ValueTypeActionImpl ValueTypeActions;
 
@@ -654,7 +654,7 @@ private:
   /// TargetDAGCombineArray - Targets can specify ISD nodes that they would
   /// like PerformDAGCombine callbacks for by calling setTargetDAGCombine(),
   /// which sets a bit in this array.
-  unsigned char TargetDAGCombineArray[128/(sizeof(unsigned char)*8)];
+  unsigned char TargetDAGCombineArray[156/(sizeof(unsigned char)*8)];
   
 protected:
   /// When lowering %llvm.memset this field specifies the maximum number of
