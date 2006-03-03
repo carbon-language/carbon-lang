@@ -2534,6 +2534,13 @@ bool SDNode::isOnlyUse(SDNode *N) const {
 }
 
 // isOperand - Return true if this node is an operand of N.
+bool SDOperand::isOperand(SDNode *N) const {
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
+    if (*this == N->getOperand(i))
+      return true;
+  return false;
+}
+
 bool SDNode::isOperand(SDNode *N) const {
   for (unsigned i = 0, e = N->NumOperands; i != e; ++i)
     if (this == N->OperandList[i].Val)

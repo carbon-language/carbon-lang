@@ -531,6 +531,9 @@ public:
     return SDOperand(Val, R);
   }
 
+  // isOperand - Return true if this node is an operand of N.
+  bool isOperand(SDNode *N) const;
+
   /// getValueType - Return the ValueType of the referenced return value.
   ///
   inline MVT::ValueType getValueType() const;
@@ -542,7 +545,6 @@ public:
   inline const SDOperand &getOperand(unsigned i) const;
   inline bool isTargetOpcode() const;
   inline unsigned getTargetOpcode() const;
-  inline const bool isOperand(SDNode *N) const;
 
   /// hasOneUse - Return true if there is exactly one operation using this
   /// result value of the defining operator.
@@ -940,9 +942,6 @@ inline bool SDOperand::isTargetOpcode() const {
 }
 inline unsigned SDOperand::getTargetOpcode() const {
   return Val->getTargetOpcode();
-}
-inline const bool SDOperand::isOperand(SDNode *N) const {
-  return Val->isOperand(N);
 }
 inline bool SDOperand::hasOneUse() const {
   return Val->hasNUsesOfValue(1, ResNo);
