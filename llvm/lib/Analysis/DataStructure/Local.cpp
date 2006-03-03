@@ -545,8 +545,10 @@ void GraphBuilder::visitCallSite(CallSite CS) {
         return;
       case Intrinsic::vaend:
         return;  // noop
-      case Intrinsic::memmove:
-      case Intrinsic::memcpy: {
+      case Intrinsic::memmove_i32:
+      case Intrinsic::memcpy_i32: 
+      case Intrinsic::memmove_i64:
+      case Intrinsic::memcpy_i64: {
         // Merge the first & second arguments, and mark the memory read and
         // modified.
         DSNodeHandle RetNH = getValueDest(**CS.arg_begin());
@@ -555,7 +557,8 @@ void GraphBuilder::visitCallSite(CallSite CS) {
           N->setModifiedMarker()->setReadMarker();
         return;
       }
-      case Intrinsic::memset:
+      case Intrinsic::memset_i32:
+      case Intrinsic::memset_i64:
         // Mark the memory modified.
         if (DSNode *N = getValueDest(**CS.arg_begin()).getNode())
           N->setModifiedMarker();

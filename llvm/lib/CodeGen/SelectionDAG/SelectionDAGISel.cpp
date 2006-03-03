@@ -955,9 +955,18 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::longjmp:
     return "_longjmp"+!TLI.usesUnderscoreSetJmpLongJmp();
     break;
-  case Intrinsic::memcpy:  visitMemIntrinsic(I, ISD::MEMCPY); return 0;
-  case Intrinsic::memset:  visitMemIntrinsic(I, ISD::MEMSET); return 0;
-  case Intrinsic::memmove: visitMemIntrinsic(I, ISD::MEMMOVE); return 0;
+  case Intrinsic::memcpy_i32:
+  case Intrinsic::memcpy_i64:
+    visitMemIntrinsic(I, ISD::MEMCPY);
+    return 0;
+  case Intrinsic::memset_i32:
+  case Intrinsic::memset_i64:
+    visitMemIntrinsic(I, ISD::MEMSET);
+    return 0;
+  case Intrinsic::memmove_i32:
+  case Intrinsic::memmove_i64:
+    visitMemIntrinsic(I, ISD::MEMMOVE);
+    return 0;
     
   case Intrinsic::readport:
   case Intrinsic::readio: {

@@ -24,12 +24,6 @@ namespace llvm {
   class Value;
   class BasicBlock;
 
-  /// This function determines if the \p Name provides is a name for which the
-  /// auto-upgrade to a non-overloaded name applies.
-  /// @returns True if the function name is upgradeable, false otherwise.
-  /// @brief Determine if a name is an upgradeable intrinsic name.
-  bool IsUpgradeableIntrinsicName(const std::string& Name);
-
   /// This function inspects the Function \p F to see if it is an old overloaded
   /// intrinsic. If it is, the Function's name is changed to add a suffix that
   /// indicates the kind of arguments or result that it accepts. In LLVM release
@@ -56,14 +50,10 @@ namespace llvm {
   /// non-overloaded names. This function inspects the CallInst \p CI to see 
   /// if it is a call to an old overloaded intrinsic. If it is, a new CallInst 
   /// is created that uses the correct Function and possibly casts the 
-  /// argument and result to an unsigned type.  The caller can use the 
-  /// returned Instruction to replace the existing one. Note that the
-  /// Instruction* returned could be a CallInst or a CastInst depending on
-  /// whether casting was necessary.
+  /// argument and result to an unsigned type.
   /// @param CI The CallInst to potentially auto-upgrade.
-  /// @returns An instrution to replace \p CI with.
   /// @brief Get replacement instruction for overloaded intrinsic function call.
-  Instruction* UpgradeIntrinsicCall(CallInst* CI, Function* newF = 0);
+  void UpgradeIntrinsicCall(CallInst* CI, Function* newF = 0);
 
   /// Upgrade both the function and all the calls made to it, if that function
   /// needs to be upgraded. This is like a combination of the above two

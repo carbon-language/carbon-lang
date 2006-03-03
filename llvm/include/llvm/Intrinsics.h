@@ -59,13 +59,16 @@ namespace Intrinsic {
     dbg_declare,      // Declare a local object
 
     // Standard C library intrinsics.
-    memcpy,         // Copy non-overlapping memory blocks
-    memmove,        // Copy potentially overlapping memory blocks
-    memset,         // Fill memory with a byte value
-    isunordered_f32,// Return true if either float argument is a NaN
-    isunordered_f64,// Return true if either double argument is a NaN
-    sqrt_f32,       // Square root of float
-    sqrt_f64,       // Square root of double
+    memcpy_i32,      // Copy non-overlapping memory blocks.  i32 size.
+    memcpy_i64,      // Copy non-overlapping memory blocks.  i64 size.
+    memmove_i32,     // Copy potentially overlapping memory blocks.  i32 size.
+    memmove_i64,     // Copy potentially overlapping memory blocks.  i64 size.
+    memset_i32,      // Fill memory with a byte value.  i32 size.
+    memset_i64,      // Fill memory with a byte value.  i64 size.
+    isunordered_f32, // Return true if either float argument is a NaN
+    isunordered_f64, // Return true if either double argument is a NaN
+    sqrt_f32,        // Square root of float
+    sqrt_f64,        // Square root of double
 
     // Bit manipulation instrinsics.
     bswap_i16,      // Byteswap 16 bits

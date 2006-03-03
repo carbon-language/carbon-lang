@@ -99,15 +99,18 @@ void DefaultIntrinsicLowering::AddPrototypes(Module &M) {
         EnsureFunctionExists(M, "abort", I->arg_end(), I->arg_end(),
                              Type::VoidTy);
         break;
-      case Intrinsic::memcpy:
+      case Intrinsic::memcpy_i32:
+      case Intrinsic::memcpy_i64:
         EnsureFunctionExists(M, "memcpy", I->arg_begin(), --I->arg_end(),
                              I->arg_begin()->getType());
         break;
-      case Intrinsic::memmove:
+      case Intrinsic::memmove_i32:
+      case Intrinsic::memmove_i64:
         EnsureFunctionExists(M, "memmove", I->arg_begin(), --I->arg_end(),
                              I->arg_begin()->getType());
         break;
-      case Intrinsic::memset:
+      case Intrinsic::memset_i32:
+      case Intrinsic::memset_i64:
         M.getOrInsertFunction("memset", PointerType::get(Type::SByteTy),
                               PointerType::get(Type::SByteTy),
                               Type::IntTy, (--(--I->arg_end()))->getType(),
@@ -405,7 +408,8 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
       CI->replaceAllUsesWith(Constant::getNullValue(CI->getType()));
     break;    // Simply strip out debugging intrinsics
 
-  case Intrinsic::memcpy: {
+  case Intrinsic::memcpy_i32:
+  case Intrinsic::memcpy_i64: {
     // The memcpy intrinsic take an extra alignment argument that the memcpy
     // libc function does not.
     static Function *MemcpyFCache = 0;
@@ -413,7 +417,8 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
                     (*(CI->op_begin()+1))->getType(), MemcpyFCache);
     break;
   }
-  case Intrinsic::memmove: {
+  case Intrinsic::memmove_i32: 
+  case Intrinsic::memmove_i64: {
     // The memmove intrinsic take an extra alignment argument that the memmove
     // libc function does not.
     static Function *MemmoveFCache = 0;
@@ -421,7 +426,8 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
                     (*(CI->op_begin()+1))->getType(), MemmoveFCache);
     break;
   }
-  case Intrinsic::memset: {
+  case Intrinsic::memset_i32:
+  case Intrinsic::memset_i64: {
     // The memset intrinsic take an extra alignment argument that the memset
     // libc function does not.
     static Function *MemsetFCache = 0;
