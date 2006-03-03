@@ -5286,7 +5286,13 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       if (GlobalVariable *GVSrc = dyn_cast<GlobalVariable>(MMI->getSource()))
         if (GVSrc->isConstant()) {
           Module *M = CI.getParent()->getParent()->getParent();
-          Function *MemCpy = M->getOrInsertFunction("llvm.memcpy",
+          const char *Name;
+          if (CI.getCalledFunction()->getFunctionType()->getParamType(3) == 
+              Type::UIntTy)
+            Name = "llvm.memcpy.i32";
+          else
+            Name = "llvm.memcpy.i64";
+          Function *MemCpy = M->getOrInsertFunction(Name,
                                      CI.getCalledFunction()->getFunctionType());
           CI.setOperand(0, MemCpy);
           Changed = true;
