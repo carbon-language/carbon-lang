@@ -76,9 +76,25 @@ out and it is now as well supported as Linux on X86.</p>
 
 <div class="doc_text">
 <ul>
+<li>New C front-end.</li>
 <li>New SPARC backend.</li>
+<li>Inline assembly support.</li>
 </ul>
 </div>
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="changes">Significant changes in LLVM 1.7cvs</a>
+</div>
+
+<div class="doc_text">
+<ul>
+<li>Removed the llvm.readport/llvm.writeport/llvm.readio/llvm.writeio
+    intrinsics.</li>
+<li>Separated the other intrinsics based on type.</li>
+</ul>
+</div>
+
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
@@ -184,6 +200,10 @@ components, please contact us on the llvmdev list.</p>
 <div class="doc_subsubsection">Bugs</div>
 
 <div class="doc_text">
+
+These bugs are known for the old front-end.  The new GCC-4-based C front-end
+suffers from none of these.
+
 <ul>
 <li>C99 Variable sized arrays do not release stack memory when they go out of 
     scope.  Thus, the following program may run out of stack space:
@@ -208,8 +228,6 @@ href="http://llvm.org/PR162">with the largest union member</a>.</li>
 <div class="doc_text">
 
 <ul>
-
-<li>Inline assembly is not yet supported.</li>
 
 <li>"long double" is transformed by the front-end into "double".  There is no
 support for floating point data types of any size other than 32 and 64
@@ -436,8 +454,7 @@ frontends.</li>
 <div class="doc_text">
 
 <ul>
-<li><a href="http://llvm.org/PR566">Memory Mapped I/O Intrinsics do not fence 
-memory</a></li>
+<li>None yet</li>
 </ul>
 
 </div>
@@ -517,13 +534,13 @@ programs.</li>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="sparcv8">Known problems with the SPARC back-end</a>
+  <a name="sparc">Known problems with the SPARC back-end</a>
 </div>
 
 <div class="doc_text">
 
 <ul>
-<li>This backend lacks a JIT compiler.</li>
+<li>None yet.</li>
 </ul>
 </div>
 
