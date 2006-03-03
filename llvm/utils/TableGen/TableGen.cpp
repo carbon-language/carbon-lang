@@ -25,6 +25,7 @@
 #include "AsmWriterEmitter.h"
 #include "DAGISelEmitter.h"
 #include "SubtargetEmitter.h"
+#include "IntrinsicEmitter.h"
 #include <algorithm>
 #include <cstdio>
 #include <fstream>
@@ -38,6 +39,7 @@ enum ActionType {
   GenInstrEnums, GenInstrs, GenAsmWriter, 
   GenDAGISel,
   GenSubtarget,
+  GenIntrinsic,
   PrintEnums,
   Parse
 };
@@ -65,6 +67,8 @@ namespace {
                                "Generate a DAG instruction selector"),
                     clEnumValN(GenSubtarget, "gen-subtarget",
                                "Generate subtarget enumerations"),
+                    clEnumValN(GenIntrinsic, "gen-intrinsic",
+                               "Generate intrinsic information"),
                     clEnumValN(PrintEnums, "print-enums",
                                "Print enum values for a class"),
                     clEnumValN(Parse, "parse",
@@ -473,6 +477,9 @@ int main(int argc, char **argv) {
       break;
     case GenSubtarget:
       SubtargetEmitter(Records).run(*Out);
+      break;
+    case GenIntrinsic:
+      IntrinsicEmitter(Records).run(*Out);
       break;
     case PrintEnums:
     {
