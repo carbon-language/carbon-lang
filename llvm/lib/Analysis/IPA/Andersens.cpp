@@ -607,7 +607,8 @@ bool Andersens::AddConstraintsForExternalCall(CallSite CS, Function *F) {
       F->getName() == "atol" || F->getName() == "atoll" ||
       F->getName() == "remove" || F->getName() == "unlink" ||
       F->getName() == "rename" || F->getName() == "memcmp" ||
-      F->getName() == "llvm.memset" ||
+      F->getName() == "llvm.memset.i32" ||
+      F->getName() == "llvm.memset.i64" ||
       F->getName() == "strcmp" || F->getName() == "strncmp" ||
       F->getName() == "execl" || F->getName() == "execlp" ||
       F->getName() == "execle" || F->getName() == "execv" ||
@@ -645,7 +646,8 @@ bool Andersens::AddConstraintsForExternalCall(CallSite CS, Function *F) {
 
 
   // These functions do induce points-to edges.
-  if (F->getName() == "llvm.memcpy" || F->getName() == "llvm.memmove" ||
+  if (F->getName() == "llvm.memcpy.i32" || F->getName() == "llvm.memcpy.i64" || 
+      F->getName() == "llvm.memmove.i32" ||F->getName() == "llvm.memmove.i64" ||
       F->getName() == "memmove") {
     // Note: this is a poor approximation, this says Dest = Src, instead of
     // *Dest = *Src.
