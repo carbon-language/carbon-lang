@@ -174,7 +174,8 @@ public:
     isLabel,
     isAsIsLabel,
     isDelta,
-    isEntry
+    isEntry,
+    isBlock
   };
   
   unsigned Type;                      // Type of the value
@@ -208,6 +209,10 @@ public:
   static bool classof(const DIEInteger *) { return true; }
   static bool classof(const DIEValue *I)  { return I->Type == isInteger; }
   
+  /// BestForm - Choose the best form for integer.
+  ///
+  unsigned BestForm(bool IsSigned);
+
   /// EmitValue - Emit integer of appropriate size.
   ///
   virtual void EmitValue(const DwarfWriter &DW, unsigned Form) const;
@@ -316,13 +321,79 @@ struct DIEntry : public DIEValue {
   static bool classof(const DIEntry *)   { return true; }
   static bool classof(const DIEValue *E) { return E->Type == isEntry; }
   
-  /// EmitValue - Emit delta value.
+  /// EmitValue - Emit die entry offset.
   ///
   virtual void EmitValue(const DwarfWriter &DW, unsigned Form) const;
   
-  /// SizeOf - Determine size of delta value in bytes.
+  /// SizeOf - Determine size of die entry in bytes.
   ///
   virtual unsigned SizeOf(const DwarfWriter &DW, unsigned Form) const;
+};
+
+//===----------------------------------------------------------------------===//
+// DIEBlock - A block of values.  Primarily used for location expressions.
+//
+struct DIEBlock : public DIEValue {
+  unsigned Size;                        // Size in bytes excluding size header.
+  std::vector<unsigned> Forms;          // Data forms.
+  std::vector<DIEValue *> Values;       // Block values.
+  
+  DIEBlock()
+  : DIEValue(isBlock)
+  , Size(0)
+  , Forms()
+  , Values()
+  {}
+  ~DIEBlock();
+
+  // Implement isa/cast/dyncast.
+  static bool classof(const DIEBlock *)  { return true; }
+  static bool classof(const DIEValue *E) { return E->Type == isBlock; }
+  
+  /// ComputeSize - calculate the size of the block.
+  ///
+  unsigned ComputeSize(DwarfWriter &DW);
+  
+  /// BestForm - Choose the best form for data.
+  ///
+  unsigned BestForm();
+
+  /// EmitValue - Emit block data.
+  ///
+  virtual void EmitValue(const DwarfWriter &DW, unsigned Form) const;
+  
+  /// SizeOf - Determine size of block data in bytes.
+  ///
+  virtual unsigned SizeOf(const DwarfWriter &DW, unsigned Form) const;
+
+  /// AddUInt - Add an unsigned integer value.
+  ///
+  void AddUInt(unsigned Form, uint64_t Integer);
+
+  /// AddSInt - Add an signed integer value.
+  ///
+  void AddSInt(unsigned Form, int64_t Integer);
+      
+  /// AddString - Add a std::string value.
+  ///
+  void AddString(unsigned Form, const std::string &String);
+      
+  /// AddLabel - Add a Dwarf label value.
+  ///
+  void AddLabel(unsigned Form, const DWLabel &Label);
+      
+  /// AddObjectLabel - Add a non-Dwarf label value.
+  ///
+  void AddObjectLabel(unsigned Form, const std::string &Label);
+      
+  /// AddDelta - Add a label delta value.
+  ///
+  void AddDelta(unsigned Form, const DWLabel &Hi, const DWLabel &Lo);
+      
+  /// AddDIEntry - Add a DIE value.
+  ///
+  void AddDIEntry(unsigned Form, DIE *Entry);
+
 };
 
 //===----------------------------------------------------------------------===//
@@ -381,9 +452,13 @@ public:
   void AddDelta(unsigned Attribute, unsigned Form,
                 const DWLabel &Hi, const DWLabel &Lo);
       
-  ///  AddDIEntry - Add a DIE attribute data and value.
+  /// AddDIEntry - Add a DIE attribute data and value.
   ///
   void AddDIEntry(unsigned Attribute, unsigned Form, DIE *Entry);
+
+  /// AddBlock - Add block data.
+  ///
+  void AddBlock(unsigned Attribute, unsigned Form, DIEBlock *Block);
 
   /// Complete - Indicate that all attributes have been added and
   /// ready to get an abbreviation ID.
@@ -496,6 +571,21 @@ void DIEAbbrev::Emit(const DwarfWriter &DW) const {
 
 //===----------------------------------------------------------------------===//
 
+/// BestForm - Choose the best form for integer.
+///
+unsigned DIEInteger::BestForm(bool IsSigned) {
+  if (IsSigned) {
+    if ((char)Integer == (signed)Integer)   return DW_FORM_data1;
+    if ((short)Integer == (signed)Integer)  return DW_FORM_data2;
+    if ((int)Integer == (signed)Integer)    return DW_FORM_data4;
+  } else {
+    if ((unsigned char)Integer == Integer)  return DW_FORM_data1;
+    if ((unsigned short)Integer == Integer) return DW_FORM_data2;
+    if ((unsigned int)Integer == Integer)   return DW_FORM_data4;
+  }
+  return DW_FORM_data8;
+}
+    
 /// EmitValue - Emit integer of appropriate size.
 ///
 void DIEInteger::EmitValue(const DwarfWriter &DW, unsigned Form) const {
@@ -507,13 +597,6 @@ void DIEInteger::EmitValue(const DwarfWriter &DW, unsigned Form) const {
   case DW_FORM_data8: DW.EmitInt64(Integer);        break;
   case DW_FORM_udata: DW.EmitULEB128Bytes(Integer); break;
   case DW_FORM_sdata: DW.EmitSLEB128Bytes(Integer); break;
-  // FIXME - Punting on field offsets.
-  case DW_FORM_block1: {
-    DW.EmitInt8(1 +  DW.SizeULEB128(Integer)); DW.EOL("Form1 Size");
-    DW.EmitInt8(DW_OP_plus_uconst); DW.EOL("DW_OP_plus_uconst");
-    DW.EmitULEB128Bytes(Integer);
-    break;
-  }
   default: assert(0 && "DIE Value form not supported yet"); break;
   }
 }
@@ -529,8 +612,6 @@ unsigned DIEInteger::SizeOf(const DwarfWriter &DW, unsigned Form) const {
   case DW_FORM_data8: return sizeof(int64_t);
   case DW_FORM_udata: return DW.SizeULEB128(Integer);
   case DW_FORM_sdata: return DW.SizeSLEB128(Integer);
-  // FIXME - Punting on field offsets.
-  case DW_FORM_block1:   return 2 + DW.SizeULEB128(Integer);
   default: assert(0 && "DIE Value form not supported yet"); break;
   }
   return 0;
@@ -569,19 +650,13 @@ unsigned DIEDwarfLabel::SizeOf(const DwarfWriter &DW, unsigned Form) const {
 /// EmitValue - Emit label value.
 ///
 void DIEObjectLabel::EmitValue(const DwarfWriter &DW, unsigned Form) const {
-  DW.EmitInt8(sizeof(int8_t) + DW.getAddressSize());
-  DW.EOL("DW_FORM_block1 length");
-  
-  DW.EmitInt8(DW_OP_addr);
-  DW.EOL("DW_OP_addr");
-  
   DW.EmitReference(Label);
 }
 
 /// SizeOf - Determine size of label value in bytes.
 ///
 unsigned DIEObjectLabel::SizeOf(const DwarfWriter &DW, unsigned Form) const {
-  return sizeof(int8_t) + sizeof(int8_t) + DW.getAddressSize();
+  return DW.getAddressSize();
 }
     
 //===----------------------------------------------------------------------===//
@@ -599,18 +674,127 @@ unsigned DIEDelta::SizeOf(const DwarfWriter &DW, unsigned Form) const {
 }
 
 //===----------------------------------------------------------------------===//
-/// EmitValue - Emit extry offset.
+/// EmitValue - Emit die entry offset.
 ///
 void DIEntry::EmitValue(const DwarfWriter &DW, unsigned Form) const {
   DW.EmitInt32(Entry->getOffset());
 }
 
-/// SizeOf - Determine size of label value in bytes.
+/// SizeOf - Determine size of die value in bytes.
 ///
 unsigned DIEntry::SizeOf(const DwarfWriter &DW, unsigned Form) const {
   return sizeof(int32_t);
 }
     
+//===----------------------------------------------------------------------===//
+
+DIEBlock::~DIEBlock() {
+  for (unsigned i = 0, N = Values.size(); i < N; ++i) {
+    delete Values[i];
+  }
+}
+
+/// ComputeSize - calculate the size of the block.
+///
+unsigned DIEBlock::ComputeSize(DwarfWriter &DW) {
+  Size = 0;
+  for (unsigned i = 0, N = Values.size(); i < N; ++i) {
+    Size += Values[i]->SizeOf(DW, Forms[i]);
+  }
+  return Size;
+}
+
+/// BestForm - Choose the best form for data.
+///
+unsigned DIEBlock::BestForm() {
+  if ((unsigned char)Size == Size)  return DW_FORM_block1;
+  if ((unsigned short)Size == Size) return DW_FORM_block2;
+  if ((unsigned int)Size == Size)   return DW_FORM_block4;
+  return DW_FORM_block;
+}
+
+/// EmitValue - Emit block data.
+///
+void DIEBlock::EmitValue(const DwarfWriter &DW, unsigned Form) const {
+  switch (Form) {
+  case DW_FORM_block1: DW.EmitInt8(Size);         break;
+  case DW_FORM_block2: DW.EmitInt16(Size);        break;
+  case DW_FORM_block4: DW.EmitInt32(Size);        break;
+  case DW_FORM_block:  DW.EmitULEB128Bytes(Size); break;
+  default: assert(0 && "Improper form for block"); break;
+  }
+  for (unsigned i = 0, N = Values.size(); i < N; ++i) {
+    DW.EOL("");
+    Values[i]->EmitValue(DW, Forms[i]);
+  }
+}
+
+/// SizeOf - Determine size of block data in bytes.
+///
+unsigned DIEBlock::SizeOf(const DwarfWriter &DW, unsigned Form) const {
+  switch (Form) {
+  case DW_FORM_block1: return Size + sizeof(int8_t);
+  case DW_FORM_block2: return Size + sizeof(int16_t);
+  case DW_FORM_block4: return Size + sizeof(int32_t);
+  case DW_FORM_block: return Size + DW.SizeULEB128(Size);
+  default: assert(0 && "Improper form for block"); break;
+  }
+  return 0;
+}
+
+/// AddUInt - Add an unsigned integer value.
+///
+void DIEBlock::AddUInt(unsigned Form, uint64_t Integer) {
+  DIEInteger *DI = new DIEInteger(Integer);
+  Values.push_back(DI);
+  if (Form == 0) Form = DI->BestForm(false);
+  Forms.push_back(Form);
+}
+
+/// AddSInt - Add an signed integer value.
+///
+void DIEBlock::AddSInt(unsigned Form, int64_t Integer) {
+  DIEInteger *DI = new DIEInteger(Integer);
+  Values.push_back(DI);
+  if (Form == 0) Form = DI->BestForm(true);
+  Forms.push_back(Form);
+}
+    
+/// AddString - Add a std::string value.
+///
+void DIEBlock::AddString(unsigned Form, const std::string &String) {
+  Values.push_back(new DIEString(String));
+  Forms.push_back(Form);
+}
+    
+/// AddLabel - Add a Dwarf label value.
+///
+void DIEBlock::AddLabel(unsigned Form, const DWLabel &Label) {
+  Values.push_back(new DIEDwarfLabel(Label));
+  Forms.push_back(Form);
+}
+    
+/// AddObjectLabel - Add a non-Dwarf label value.
+///
+void DIEBlock::AddObjectLabel(unsigned Form, const std::string &Label) {
+  Values.push_back(new DIEObjectLabel(Label));
+  Forms.push_back(Form);
+}
+    
+/// AddDelta - Add a label delta value.
+///
+void DIEBlock::AddDelta(unsigned Form, const DWLabel &Hi, const DWLabel &Lo) {
+  Values.push_back(new DIEDelta(Hi, Lo));
+  Forms.push_back(Form);
+}
+    
+/// AddDIEntry - Add a DIE value.
+///
+void DIEBlock::AddDIEntry(unsigned Form, DIE *Entry) {
+  Values.push_back(new DIEntry(Entry));
+  Forms.push_back(Form);
+}
+
 //===----------------------------------------------------------------------===//
 
 DIE::DIE(unsigned Tag)
@@ -637,67 +821,67 @@ DIE::~DIE() {
 /// AddUInt - Add an unsigned integer attribute data and value.
 ///
 void DIE::AddUInt(unsigned Attribute, unsigned Form, uint64_t Integer) {
-  if (Form == 0) {
-      if ((unsigned char)Integer == Integer)       Form = DW_FORM_data1;
-      else if ((unsigned short)Integer == Integer) Form = DW_FORM_data2;
-      else if ((unsigned int)Integer == Integer)   Form = DW_FORM_data4;
-      else                                         Form = DW_FORM_data8;
-  }
+  DIEInteger *DI = new DIEInteger(Integer);
+  Values.push_back(DI);
+  if (!Form) Form = DI->BestForm(false);
   Abbrev->AddAttribute(Attribute, Form);
-  Values.push_back(new DIEInteger(Integer));
 }
     
 /// AddSInt - Add an signed integer attribute data and value.
 ///
 void DIE::AddSInt(unsigned Attribute, unsigned Form, int64_t Integer) {
-  if (Form == 0) {
-      if ((char)Integer == Integer)       Form = DW_FORM_data1;
-      else if ((short)Integer == Integer) Form = DW_FORM_data2;
-      else if ((int)Integer == Integer)   Form = DW_FORM_data4;
-      else                                Form = DW_FORM_data8;
-  }
+  DIEInteger *DI = new DIEInteger(Integer);
+  Values.push_back(DI);
+  if (!Form) Form = DI->BestForm(true);
   Abbrev->AddAttribute(Attribute, Form);
-  Values.push_back(new DIEInteger(Integer));
 }
     
 /// AddString - Add a std::string attribute data and value.
 ///
 void DIE::AddString(unsigned Attribute, unsigned Form,
                     const std::string &String) {
-  Abbrev->AddAttribute(Attribute, Form);
   Values.push_back(new DIEString(String));
+  Abbrev->AddAttribute(Attribute, Form);
 }
     
 /// AddLabel - Add a Dwarf label attribute data and value.
 ///
 void DIE::AddLabel(unsigned Attribute, unsigned Form,
                    const DWLabel &Label) {
-  Abbrev->AddAttribute(Attribute, Form);
   Values.push_back(new DIEDwarfLabel(Label));
+  Abbrev->AddAttribute(Attribute, Form);
 }
     
 /// AddObjectLabel - Add an non-Dwarf label attribute data and value.
 ///
 void DIE::AddObjectLabel(unsigned Attribute, unsigned Form,
                          const std::string &Label) {
-  Abbrev->AddAttribute(Attribute, Form);
   Values.push_back(new DIEObjectLabel(Label));
+  Abbrev->AddAttribute(Attribute, Form);
 }
     
 /// AddDelta - Add a label delta attribute data and value.
 ///
 void DIE::AddDelta(unsigned Attribute, unsigned Form,
                    const DWLabel &Hi, const DWLabel &Lo) {
-  Abbrev->AddAttribute(Attribute, Form);
   Values.push_back(new DIEDelta(Hi, Lo));
+  Abbrev->AddAttribute(Attribute, Form);
 }
     
 /// AddDIEntry - Add a DIE attribute data and value.
 ///
-void DIE::AddDIEntry(unsigned Attribute,
-                     unsigned Form, DIE *Entry) {
-  Abbrev->AddAttribute(Attribute, Form);
+void DIE::AddDIEntry(unsigned Attribute, unsigned Form, DIE *Entry) {
   Values.push_back(new DIEntry(Entry));
+  Abbrev->AddAttribute(Attribute, Form);
+}
+
+/// AddBlock - Add block data.
+///
+void DIE::AddBlock(unsigned Attribute, unsigned Form, DIEBlock *Block) {
+  assert(Block->Size && "Block size has not been computed");
+  Values.push_back(Block);
+  if (!Form) Form = Block->BestForm();
+  Abbrev->AddAttribute(Attribute, Form);
 }
 
 /// Complete - Indicate that all attributes have been added and ready to get an
@@ -731,7 +915,7 @@ void DwarfWriter::PrintHex(int Value) const {
 /// EOL - Print a newline character to asm stream.  If a comment is present
 /// then it will be printed first.  Comments should not contain '\n'.
 void DwarfWriter::EOL(const std::string &Comment) const {
-  if (DwarfVerbose) {
+  if (DwarfVerbose && !Comment.empty()) {
     O << "\t"
       << Asm->CommentString
       << " "
@@ -1134,13 +1318,18 @@ DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc) {
       // Add elements to structure type.
       for(unsigned i = 0, N = Elements.size(); i < N; ++i) {
         DerivedTypeDesc *MemberDesc = cast<DerivedTypeDesc>(Elements[i]);
+        
+        // Extract the basic information.
         const std::string &Name = MemberDesc->getName();
         unsigned Line = MemberDesc->getLine();
         TypeDesc *MemTy = MemberDesc->getFromType();
         uint64_t Size = MemberDesc->getSize();
         uint64_t Offset = MemberDesc->getOffset();
    
+        // Construct member die.
         DIE *Member = new DIE(DW_TAG_member);
+        
+        // Add details.
         if (!Name.empty()) Member->AddString(DW_AT_name, DW_FORM_string, Name);
         if (CompileUnitDesc *File = MemberDesc->getFile()) {
           CompileUnit *FileUnit = FindCompileUnit(File);
@@ -1149,13 +1338,19 @@ DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc) {
           Member->AddUInt(DW_AT_decl_file, 0, FileID);
           Member->AddUInt(DW_AT_decl_line, 0, Line);
         }
+        
         if (TypeDesc *FromTy = MemberDesc->getFromType()) {
            Member->AddDIEntry(DW_AT_type, DW_FORM_ref4,
                               NewType(Context, FromTy));
         }
-        // FIXME - Punt on the Address.
-        Member->AddUInt(DW_AT_data_member_location, DW_FORM_block1,
-                                                    Offset >> 3);
+        
+        // Add computation for offset.
+        DIEBlock *Block = new DIEBlock();
+        Block->AddUInt(DW_FORM_data1, DW_OP_plus_uconst);
+        Block->AddUInt(DW_FORM_udata, Offset >> 3);
+        Block->ComputeSize(*this);
+        Member->AddBlock(DW_AT_data_member_location, 0, Block);
+        
         Ty->AddChild(Member);
       }
       break;
@@ -1263,8 +1458,12 @@ DIE *DwarfWriter::NewGlobalVariable(GlobalVariableDesc *GVD) {
   VariableDie->AddUInt       (DW_AT_decl_line, 0,              Line);
   VariableDie->AddDIEntry    (DW_AT_type,      DW_FORM_ref4,   Type);
   VariableDie->AddUInt       (DW_AT_external,  DW_FORM_flag,   1);
-  // FIXME - needs to be a proper expression.
-  VariableDie->AddObjectLabel(DW_AT_location,  DW_FORM_block1, MangledName);
+
+  DIEBlock *Block = new DIEBlock();
+  Block->AddUInt(DW_FORM_data1, DW_OP_addr);
+  Block->AddObjectLabel(DW_FORM_udata, MangledName);
+  Block->ComputeSize(*this);
+  VariableDie->AddBlock(DW_AT_location,  0, Block);
   
   // Add to map.
   Slot = VariableDie;
