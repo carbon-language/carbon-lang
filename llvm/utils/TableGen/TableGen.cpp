@@ -84,7 +84,7 @@ namespace {
 
   cl::list<std::string>
   IncludeDirs("I", cl::desc("Directory of include files"),
-              cl::value_desc("directory"));
+              cl::value_desc("directory"), cl::Prefix);
 }
 
 namespace llvm {
