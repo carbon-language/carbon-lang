@@ -82,14 +82,14 @@ namespace {
   cl::opt<std::string>
   InputFilename(cl::Positional, cl::desc("<input file>"), cl::init("-"));
 
-  cl::opt<std::string>
-  IncludeDir("I", cl::desc("Directory of include files"),
-                  cl::value_desc("directory"), cl::init(""));
+  cl::list<std::string>
+  IncludeDirs("I", cl::desc("Directory of include files"),
+              cl::value_desc("directory"));
 }
 
 namespace llvm {
   void ParseFile(const std::string &Filename,
-                 const std::string &IncludeDir);
+                 const std::vector<std::string> &IncludeDirs);
 }
 
 RecordKeeper llvm::Records;
@@ -420,7 +420,7 @@ static void ParseMachineCode() {
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv);
-  ParseFile(InputFilename, IncludeDir);
+  ParseFile(InputFilename, IncludeDirs);
 
   std::ostream *Out = &std::cout;
   if (OutputFilename != "-") {
