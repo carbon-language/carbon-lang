@@ -378,7 +378,7 @@ LTInstall     = $(LIBTOOL) $(LibTool.Flags) --mode=install $(INSTALL) \
 ProgInstall   = $(INSTALL) $(Install.StripFlag) -m 0755 
 DataInstall   = $(INSTALL) -m 0644
 Burg          = $(BURG) -I $(PROJ_SRC_DIR)
-TableGen      = $(TBLGEN) -I $(PROJ_SRC_DIR)
+TableGen      = $(TBLGEN) -I $(PROJ_SRC_DIR) -I$(PROJ_SRC_ROOT)/include
 Archive       = $(AR) $(AR.Flags)
 LArchive      = $(LLVMToolDir)/llvm-ar rcsf
 ifdef RANLIB
@@ -1120,7 +1120,8 @@ ifdef TARGET
 
 TDFiles := $(strip $(wildcard $(PROJ_SRC_DIR)/*.td) \
            $(LLVM_SRC_ROOT)/lib/Target/Target.td \
-           $(LLVM_SRC_ROOT)/lib/Target/TargetSelectionDAG.td)
+           $(LLVM_SRC_ROOT)/lib/Target/TargetSelectionDAG.td \
+           $(LLVM_SRC_ROOT)/include/llvm/CodeGen/ValueTypes.td)
 INCFiles := $(filter %.inc,$(BUILT_SOURCES))
 INCTMPFiles := $(INCFiles:%=$(ObjDir)/%.tmp)
 .PRECIOUS: $(INCTMPFiles) $(INCFiles)
