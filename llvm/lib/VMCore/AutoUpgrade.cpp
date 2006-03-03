@@ -19,45 +19,36 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/SymbolTable.h"
 #include <iostream>
-
 using namespace llvm;
 
-// Utility function for getting the correct suffix given a type
-static inline const char *getTypeSuffix(const Type* Ty) {
-  switch (Ty->getTypeID()) {
-  case Type::ULongTyID:   return ".i64";
-  case Type::UIntTyID:    return ".i32";
-  case Type::UShortTyID:  return ".i16";
-  case Type::UByteTyID:   return ".i8";
-  case Type::FloatTyID:   return ".f32";
-  case Type::DoubleTyID:  return ".f64";
-  default:                break;                        
-  }
-  return 0;
-}
-
 static Function *getUpgradedUnaryFn(Function *F) {
-  std::string Name = F->getName()+getTypeSuffix(F->getReturnType());
+  const std::string &Name = F->getName();
   Module *M = F->getParent();
   switch (F->getReturnType()->getTypeID()) {
   default: return 0;
   case Type::UByteTyID:
   case Type::SByteTyID:
-    return M->getOrInsertFunction(Name, 
+    return M->getOrInsertFunction(Name+".i8", 
                                   Type::UByteTy, Type::UByteTy, NULL);
   case Type::UShortTyID:
   case Type::ShortTyID:
-    return M->getOrInsertFunction(Name, 
+    return M->getOrInsertFunction(Name+".i16", 
                                   Type::UShortTy, Type::UShortTy, NULL);
   case Type::UIntTyID:
   case Type::IntTyID:
-    return M->getOrInsertFunction(Name, 
+    return M->getOrInsertFunction(Name+".i32", 
                                   Type::UIntTy, Type::UIntTy, NULL);
   case Type::ULongTyID:
   case Type::LongTyID:
-    return M->getOrInsertFunction(Name, 
+    return M->getOrInsertFunction(Name+".i64",
                                   Type::ULongTy, Type::ULongTy, NULL);
-}
+  case Type::FloatTyID:
+    return M->getOrInsertFunction(Name+".f32",
+                                  Type::FloatTy, Type::FloatTy, NULL);
+  case Type::DoubleTyID:
+    return M->getOrInsertFunction(Name+".f64",
+                                  Type::DoubleTy, Type::DoubleTy, NULL);
+  }
 }
 
 static Function *getUpgradedIntrinsic(Function *F) {
@@ -103,23 +94,6 @@ static Function *getUpgradedIntrinsic(Function *F) {
     if (Name == "llvm.sqrt")
       return getUpgradedUnaryFn(F);
     break;
-  }
-  return 0;
-}
-
-// This assumes the Function is one of the intrinsics we upgraded.
-static inline const Type* getTypeFromFunction(Function *F) {
-  const Type* Ty = F->getReturnType();
-  if (Ty->isFloatingPoint())
-    return Ty;
-  if (Ty->isSigned())
-    return Ty->getUnsignedVersion();
-  if (Ty->isInteger())
-    return Ty;
-  if (Ty == Type::BoolTy) {
-    Function::const_arg_iterator ArgIt = F->arg_begin();
-    if (ArgIt != F->arg_end()) 
-      return ArgIt->getType();
   }
   return 0;
 }
