@@ -152,9 +152,9 @@
         </ol>
       <li><a href="#int_libc">Standard C Library Intrinsics</a>
         <ol>
-          <li><a href="#i_memcpy">'<tt>llvm.memcpy</tt>' Intrinsic</a></li>
-          <li><a href="#i_memmove">'<tt>llvm.memmove</tt>' Intrinsic</a></li>
-          <li><a href="#i_memset">'<tt>llvm.memset</tt>' Intrinsic</a></li>
+          <li><a href="#i_memcpy">'<tt>llvm.memcpy.*</tt>' Intrinsic</a></li>
+          <li><a href="#i_memmove">'<tt>llvm.memmove.*</tt>' Intrinsic</a></li>
+          <li><a href="#i_memset">'<tt>llvm.memset.*</tt>' Intrinsic</a></li>
           <li><a href="#i_isunordered">'<tt>llvm.isunordered.*</tt>' Intrinsic</a></li>
           <li><a href="#i_sqrt">'<tt>llvm.sqrt.*</tt>' Intrinsic</a></li>
 
@@ -3483,27 +3483,29 @@ for more efficient code generation.
 
 <h5>Syntax:</h5>
 <pre>
-  declare void %llvm.memcpy(sbyte* &lt;dest&gt;, sbyte* &lt;src&gt;,
-                            uint &lt;len&gt;, uint &lt;align&gt;)
+  declare void %llvm.memcpy.i32(sbyte* &lt;dest&gt;, sbyte* &lt;src&gt;,
+                                uint &lt;len&gt;, uint &lt;align&gt;)
+  declare void %llvm.memcpy.i64(sbyte* &lt;dest&gt;, sbyte* &lt;src&gt;,
+                                ulong &lt;len&gt;, uint &lt;align&gt;)
 </pre>
 
 <h5>Overview:</h5>
 
 <p>
-The '<tt>llvm.memcpy</tt>' intrinsic copies a block of memory from the source
+The '<tt>llvm.memcpy.*</tt>' intrinsics copy a block of memory from the source
 location to the destination location.
 </p>
 
 <p>
-Note that, unlike the standard libc function, the <tt>llvm.memcpy</tt> intrinsic
-does not return a value, and takes an extra alignment argument.
+Note that, unlike the standard libc function, the <tt>llvm.memcpy.*</tt> 
+intrinsics do not return a value, and takes an extra alignment argument.
 </p>
 
 <h5>Arguments:</h5>
 
 <p>
 The first argument is a pointer to the destination, the second is a pointer to
-the source.  The third argument is an (arbitrarily sized) integer argument
+the source.  The third argument is an integer argument
 specifying the number of bytes to copy, and the fourth argument is the alignment
 of the source and destination locations.
 </p>
@@ -3517,7 +3519,7 @@ and that both the source and destination pointers are aligned to that boundary.
 <h5>Semantics:</h5>
 
 <p>
-The '<tt>llvm.memcpy</tt>' intrinsic copies a block of memory from the source
+The '<tt>llvm.memcpy.*</tt>' intrinsics copy a block of memory from the source
 location to the destination location, which are not allowed to overlap.  It
 copies "len" bytes of memory over.  If the argument is known to be aligned to
 some boundary, this can be specified as the fourth argument, otherwise it should
@@ -3535,28 +3537,30 @@ be set to 0 or 1.
 
 <h5>Syntax:</h5>
 <pre>
-  declare void %llvm.memmove(sbyte* &lt;dest&gt;, sbyte* &lt;src&gt;,
-                             uint &lt;len&gt;, uint &lt;align&gt;)
+  declare void %llvm.memmove.i32(sbyte* &lt;dest&gt;, sbyte* &lt;src&gt;,
+                                 uint &lt;len&gt;, uint &lt;align&gt;)
+  declare void %llvm.memmove.i64(sbyte* &lt;dest&gt;, sbyte* &lt;src&gt;,
+                                 ulong &lt;len&gt;, uint &lt;align&gt;)
 </pre>
 
 <h5>Overview:</h5>
 
 <p>
-The '<tt>llvm.memmove</tt>' intrinsic moves a block of memory from the source
-location to the destination location. It is similar to the '<tt>llvm.memcpy</tt>' 
-intrinsic but allows the two memory locations to overlap.
+The '<tt>llvm.memmove.*</tt>' intrinsics move a block of memory from the source
+location to the destination location. It is similar to the
+'<tt>llvm.memcmp</tt>' intrinsic but allows the two memory locations to overlap.
 </p>
 
 <p>
-Note that, unlike the standard libc function, the <tt>llvm.memmove</tt> intrinsic
-does not return a value, and takes an extra alignment argument.
+Note that, unlike the standard libc function, the <tt>llvm.memmove.*</tt> 
+intrinsics do not return a value, and takes an extra alignment argument.
 </p>
 
 <h5>Arguments:</h5>
 
 <p>
 The first argument is a pointer to the destination, the second is a pointer to
-the source.  The third argument is an (arbitrarily sized) integer argument
+the source.  The third argument is an integer argument
 specifying the number of bytes to copy, and the fourth argument is the alignment
 of the source and destination locations.
 </p>
@@ -3570,7 +3574,7 @@ and that both the source and destination pointers are aligned to that boundary.
 <h5>Semantics:</h5>
 
 <p>
-The '<tt>llvm.memmove</tt>' intrinsic copies a block of memory from the source
+The '<tt>llvm.memmove.*</tt>' intrinsics copy a block of memory from the source
 location to the destination location, which may overlap.  It
 copies "len" bytes of memory over.  If the argument is known to be aligned to
 some boundary, this can be specified as the fourth argument, otherwise it should
@@ -3581,21 +3585,23 @@ be set to 0 or 1.
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="i_memset">'<tt>llvm.memset</tt>' Intrinsic</a>
+  <a name="i_memset">'<tt>llvm.memset.*</tt>' Intrinsics</a>
 </div>
 
 <div class="doc_text">
 
 <h5>Syntax:</h5>
 <pre>
-  declare void %llvm.memset(sbyte* &lt;dest&gt;, ubyte &lt;val&gt;,
-                            uint &lt;len&gt;, uint &lt;align&gt;)
+  declare void %llvm.memset.i32(sbyte* &lt;dest&gt;, ubyte &lt;val&gt;,
+                                uint &lt;len&gt;, uint &lt;align&gt;)
+  declare void %llvm.memset.i64(sbyte* &lt;dest&gt;, ubyte &lt;val&gt;,
+                                ulong &lt;len&gt;, uint &lt;align&gt;)
 </pre>
 
 <h5>Overview:</h5>
 
 <p>
-The '<tt>llvm.memset</tt>' intrinsic fills a block of memory with a particular
+The '<tt>llvm.memset.*</tt>' intrinsics fill a block of memory with a particular
 byte value.
 </p>
 
@@ -3608,7 +3614,7 @@ does not return a value, and takes an extra alignment argument.
 
 <p>
 The first argument is a pointer to the destination to fill, the second is the
-byte value to fill it with, the third argument is an (arbitrarily sized) integer
+byte value to fill it with, the third argument is an integer
 argument specifying the number of bytes to fill, and the fourth argument is the
 known alignment of destination location.
 </p>
@@ -3622,7 +3628,8 @@ and that the destination pointer is aligned to that boundary.
 <h5>Semantics:</h5>
 
 <p>
-The '<tt>llvm.memset</tt>' intrinsic fills "len" bytes of memory starting at the
+The '<tt>llvm.memset.*</tt>' intrinsics fill "len" bytes of memory starting at
+the
 destination location.  If the argument is known to be aligned to some boundary,
 this can be specified as the fourth argument, otherwise it should be set to 0 or
 1.
