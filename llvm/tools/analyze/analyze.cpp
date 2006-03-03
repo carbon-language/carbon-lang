@@ -31,70 +31,6 @@
 
 using namespace llvm;
 
-struct ModulePassPrinter : public ModulePass {
-  const PassInfo *PassToPrint;
-  ModulePassPrinter(const PassInfo *PI) : PassToPrint(PI) {}
-
-  virtual bool runOnModule(Module &M) {
-    std::cout << "Printing analysis '" << PassToPrint->getPassName() << "':\n";
-    getAnalysisID<Pass>(PassToPrint).print(std::cout, &M);
-
-    // Get and print pass...
-    return false;
-  }
-
-  virtual const char *getPassName() const { return "'Pass' Printer"; }
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequiredID(PassToPrint);
-    AU.setPreservesAll();
-  }
-};
-
-struct FunctionPassPrinter : public FunctionPass {
-  const PassInfo *PassToPrint;
-  FunctionPassPrinter(const PassInfo *PI) : PassToPrint(PI) {}
-
-  virtual bool runOnFunction(Function &F) {
-    std::cout << "Printing analysis '" << PassToPrint->getPassName()
-              << "' for function '" << F.getName() << "':\n";
-    getAnalysisID<Pass>(PassToPrint).print(std::cout, F.getParent());
-
-    // Get and print pass...
-    return false;
-  }
-
-  virtual const char *getPassName() const { return "FunctionPass Printer"; }
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequiredID(PassToPrint);
-    AU.setPreservesAll();
-  }
-};
-
-struct BasicBlockPassPrinter : public BasicBlockPass {
-  const PassInfo *PassToPrint;
-  BasicBlockPassPrinter(const PassInfo *PI) : PassToPrint(PI) {}
-
-  virtual bool runOnBasicBlock(BasicBlock &BB) {
-    std::cout << "Printing Analysis info for BasicBlock '" << BB.getName()
-              << "': Pass " << PassToPrint->getPassName() << ":\n";
-    getAnalysisID<Pass>(PassToPrint).print(std::cout, BB.getParent()->getParent());
-
-    // Get and print pass...
-    return false;
-  }
-
-  virtual const char *getPassName() const { return "BasicBlockPass Printer"; }
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequiredID(PassToPrint);
-    AU.setPreservesAll();
-  }
-};
-
-
-
 namespace {
   cl::opt<std::string>
   InputFilename(cl::Positional, cl::desc("<input file>"), cl::init("-"),
@@ -115,6 +51,75 @@ namespace {
 
   Timer BytecodeLoadTimer("Bytecode Loader");
 }
+
+struct ModulePassPrinter : public ModulePass {
+  const PassInfo *PassToPrint;
+  ModulePassPrinter(const PassInfo *PI) : PassToPrint(PI) {}
+
+  virtual bool runOnModule(Module &M) {
+    if (!Quiet) {
+      std::cout << "Printing analysis '" << PassToPrint->getPassName() << "':\n";
+      getAnalysisID<Pass>(PassToPrint).print(std::cout, &M);
+    }
+
+    // Get and print pass...
+    return false;
+  }
+
+  virtual const char *getPassName() const { return "'Pass' Printer"; }
+
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.addRequiredID(PassToPrint);
+    AU.setPreservesAll();
+  }
+};
+
+struct FunctionPassPrinter : public FunctionPass {
+  const PassInfo *PassToPrint;
+  FunctionPassPrinter(const PassInfo *PI) : PassToPrint(PI) {}
+
+  virtual bool runOnFunction(Function &F) {
+    if (!Quiet) {
+      std::cout << "Printing analysis '" << PassToPrint->getPassName()
+		<< "' for function '" << F.getName() << "':\n";
+    }
+    // Get and print pass...
+    getAnalysisID<Pass>(PassToPrint).print(std::cout, F.getParent());
+    return false;
+  }
+
+  virtual const char *getPassName() const { return "FunctionPass Printer"; }
+
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.addRequiredID(PassToPrint);
+    AU.setPreservesAll();
+  }
+};
+
+struct BasicBlockPassPrinter : public BasicBlockPass {
+  const PassInfo *PassToPrint;
+  BasicBlockPassPrinter(const PassInfo *PI) : PassToPrint(PI) {}
+
+  virtual bool runOnBasicBlock(BasicBlock &BB) {
+    if (!Quiet) {
+      std::cout << "Printing Analysis info for BasicBlock '" << BB.getName()
+		<< "': Pass " << PassToPrint->getPassName() << ":\n";
+    }
+
+    // Get and print pass...
+    getAnalysisID<Pass>(PassToPrint).print(std::cout, BB.getParent()->getParent());
+    return false;
+  }
+
+  virtual const char *getPassName() const { return "BasicBlockPass Printer"; }
+
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.addRequiredID(PassToPrint);
+    AU.setPreservesAll();
+  }
+};
+
+
 
 int main(int argc, char **argv) {
   try {
