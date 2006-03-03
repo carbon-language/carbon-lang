@@ -80,7 +80,7 @@ void SUnit::dump(const SelectionDAG *G, bool All) const {
 
     if (Preds.size() != 0) {
       std::cerr << "Predecessors  :\n";
-      for (std::set<SUnit*>::iterator I = Preds.begin(),
+      for (std::set<SUnit*>::const_iterator I = Preds.begin(),
              E = Preds.end(); I != E; ++I) {
         std::cerr << "    ";
         (*I)->dump(G, false);
@@ -88,7 +88,7 @@ void SUnit::dump(const SelectionDAG *G, bool All) const {
     }
     if (ChainPreds.size() != 0) {
       std::cerr << "Chained Preds :\n";
-      for (std::set<SUnit*>::iterator I = ChainPreds.begin(),
+      for (std::set<SUnit*>::const_iterator I = ChainPreds.begin(),
              E = ChainPreds.end(); I != E; ++I) {
         std::cerr << "    ";
         (*I)->dump(G, false);
@@ -96,7 +96,7 @@ void SUnit::dump(const SelectionDAG *G, bool All) const {
     }
     if (Succs.size() != 0) {
       std::cerr << "Successors    :\n";
-      for (std::set<SUnit*>::iterator I = Succs.begin(),
+      for (std::set<SUnit*>::const_iterator I = Succs.begin(),
              E = Succs.end(); I != E; ++I) {
         std::cerr << "    ";
         (*I)->dump(G, false);
@@ -104,7 +104,7 @@ void SUnit::dump(const SelectionDAG *G, bool All) const {
     }
     if (ChainSuccs.size() != 0) {
       std::cerr << "Chained succs :\n";
-      for (std::set<SUnit*>::iterator I = ChainSuccs.begin(),
+      for (std::set<SUnit*>::const_iterator I = ChainSuccs.begin(),
              E = ChainSuccs.end(); I != E; ++I) {
         std::cerr << "    ";
         (*I)->dump(G, false);
