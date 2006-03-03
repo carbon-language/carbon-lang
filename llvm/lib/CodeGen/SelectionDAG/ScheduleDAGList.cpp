@@ -43,6 +43,7 @@ struct SUnit {
   int NumChainSuccsLeft;              // # of chain succs not scheduled.
   int Priority1;                      // Scheduling priority 1.
   int Priority2;                      // Scheduling priority 2.
+  bool isTwoAddress;                  // Is a two-address instruction.
   bool isDefNUseOperand;              // Is a def&use operand.
   unsigned Latency;                   // Node latency.
   unsigned CycleBound;                // Upper/lower cycle to be scheduled at.
@@ -52,7 +53,8 @@ struct SUnit {
   SUnit(SDNode *node)
     : Node(node), NumPredsLeft(0), NumSuccsLeft(0),
       NumChainPredsLeft(0), NumChainSuccsLeft(0),
-      Priority1(INT_MIN), Priority2(INT_MIN), isDefNUseOperand(false),
+      Priority1(INT_MIN), Priority2(INT_MIN),
+      isTwoAddress(false), isDefNUseOperand(false),
       Latency(0), CycleBound(0), Slot(0), Next(NULL) {}
 
   void dump(const SelectionDAG *G, bool All=true) const;
@@ -120,6 +122,20 @@ struct ls_rr_sort : public std::binary_function<SUnit*, SUnit*, bool> {
     bool RFloater = (right->Preds.size() == 0);
     int LBonus = (int)left ->isDefNUseOperand;
     int RBonus = (int)right->isDefNUseOperand;
+
+    // Special tie breaker: if two nodes share a operand, the one that
+    // use it as a def&use operand is preferred.
+    if (left->isTwoAddress && !right->isTwoAddress) {
+      SDNode *DUNode = left->Node->getOperand(0).Val;
+      if (DUNode->isOperand(right->Node))
+        LBonus++;
+    }
+    if (!left->isTwoAddress && right->isTwoAddress) {
+      SDNode *DUNode = right->Node->getOperand(0).Val;
+      if (DUNode->isOperand(left->Node))
+        RBonus++;
+    }
+
     int LPriority1 = left ->Priority1 - LBonus;
     int RPriority1 = right->Priority1 - RBonus;
     int LPriority2 = left ->Priority2 + LBonus;
@@ -138,8 +154,6 @@ struct ls_rr_sort : public std::binary_function<SUnit*, SUnit*, bool> {
         else if (LPriority1 == RPriority1)
           if (left->CycleBound > right->CycleBound) 
             return true;
-          else
-            return left->Node->getNodeDepth() < right->Node->getNodeDepth();
 
     return false;
   }
@@ -238,6 +252,9 @@ void ScheduleDAGList::ReleasePred(SUnit *PredSU, bool isChain) {
 /// its predecessors. If a predecessor pending count is zero, add it to the
 /// Available queue.
 void ScheduleDAGList::ScheduleNode(SUnit *SU) {
+  DEBUG(std::cerr << "*** Scheduling: ");
+  DEBUG(SU->dump(&DAG, false));
+
   Sequence.push_back(SU);
   SU->Slot = CurrCycle;
 
@@ -283,8 +300,6 @@ void ScheduleDAGList::ListSchedule() {
     for (unsigned i = 0, e = NotReady.size(); i != e; ++i)
       Available.push(NotReady[i]);
 
-    DEBUG(std::cerr << "*** Scheduling: ");
-    DEBUG(CurrNode->dump(&DAG, false));
     ScheduleNode(CurrNode);
   }
 
@@ -402,6 +417,9 @@ void ScheduleDAGList::BuildSchedUnits() {
   for (SUnit *SU = HeadSUnit; SU != NULL; SU = SU->Next) {
     SDNode   *N  = SU->Node;
     NodeInfo *NI = getNI(N);
+    
+    if (N->isTargetOpcode() && TII->isTwoAddrInstr(N->getTargetOpcode()))
+      SU->isTwoAddress = true;
 
     if (NI->isInGroup()) {
       // Find all predecessors (of the group).
@@ -446,7 +464,7 @@ void ScheduleDAGList::BuildSchedUnits() {
               SU->NumPredsLeft++;
             if (OpSU->Succs.insert(SU).second)
               OpSU->NumSuccsLeft++;
-            if (j == 0 && TII->isTwoAddrInstr(N->getTargetOpcode()))
+            if (j == 0 && SU->isTwoAddress) 
               OpSU->isDefNUseOperand = true;
           }
         }
