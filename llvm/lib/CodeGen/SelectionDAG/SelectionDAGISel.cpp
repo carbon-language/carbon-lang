@@ -496,15 +496,17 @@ public:
   }
   void visitDiv(User &I) {
     const Type *Ty = I.getType();
-    visitBinary(I, Ty->isSigned() ? ISD::SDIV : ISD::UDIV, ISD::FDIV, 0);
+    visitBinary(I,
+                Ty->isSigned() ? ISD::SDIV : ISD::UDIV, ISD::FDIV,
+                Ty->isSigned() ? ISD::VSDIV : ISD::VUDIV);
   }
   void visitRem(User &I) {
     const Type *Ty = I.getType();
     visitBinary(I, Ty->isSigned() ? ISD::SREM : ISD::UREM, ISD::FREM, 0);
   }
-  void visitAnd(User &I) { visitBinary(I, ISD::AND, 0, 0); }
-  void visitOr (User &I) { visitBinary(I, ISD::OR,  0, 0); }
-  void visitXor(User &I) { visitBinary(I, ISD::XOR, 0, 0); }
+  void visitAnd(User &I) { visitBinary(I, ISD::AND, 0, ISD::VAND); }
+  void visitOr (User &I) { visitBinary(I, ISD::OR,  0, ISD::VOR); }
+  void visitXor(User &I) { visitBinary(I, ISD::XOR, 0, ISD::VXOR); }
   void visitShl(User &I) { visitShift(I, ISD::SHL); }
   void visitShr(User &I) { 
     visitShift(I, I.getType()->isUnsigned() ? ISD::SRL : ISD::SRA);

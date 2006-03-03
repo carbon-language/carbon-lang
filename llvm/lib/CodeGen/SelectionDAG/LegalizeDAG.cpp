@@ -152,9 +152,14 @@ private:
 static unsigned getScalarizedOpcode(unsigned VecOp, MVT::ValueType VT) {
   switch (VecOp) {
   default: assert(0 && "Don't know how to scalarize this opcode!");
-  case ISD::VADD: return MVT::isInteger(VT) ? ISD::ADD : ISD::FADD;
-  case ISD::VSUB: return MVT::isInteger(VT) ? ISD::SUB : ISD::FSUB;
-  case ISD::VMUL: return MVT::isInteger(VT) ? ISD::MUL : ISD::FMUL;
+  case ISD::VADD:  return MVT::isInteger(VT) ? ISD::ADD : ISD::FADD;
+  case ISD::VSUB:  return MVT::isInteger(VT) ? ISD::SUB : ISD::FSUB;
+  case ISD::VMUL:  return MVT::isInteger(VT) ? ISD::MUL : ISD::FMUL;
+  case ISD::VSDIV: return MVT::isInteger(VT) ? ISD::SDIV: ISD::FDIV;
+  case ISD::VUDIV: return MVT::isInteger(VT) ? ISD::UDIV: ISD::FDIV;
+  case ISD::VAND:  return MVT::isInteger(VT) ? ISD::AND : 0;
+  case ISD::VOR:   return MVT::isInteger(VT) ? ISD::OR  : 0;
+  case ISD::VXOR:  return MVT::isInteger(VT) ? ISD::XOR : 0;
   }
 }
 
@@ -3646,7 +3651,12 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   }
   case ISD::VADD:
   case ISD::VSUB:
-  case ISD::VMUL: {
+  case ISD::VMUL:
+  case ISD::VSDIV:
+  case ISD::VUDIV:
+  case ISD::VAND:
+  case ISD::VOR:
+  case ISD::VXOR: {
     unsigned NumElements =cast<ConstantSDNode>(Node->getOperand(0))->getValue();
     MVT::ValueType EVT = cast<VTSDNode>(Node->getOperand(1))->getVT();
     MVT::ValueType TVT = (NumElements/2 > 1)

@@ -147,7 +147,8 @@ namespace ISD {
     // the elements.  The order is count, type, op0, op1.  All vector opcodes,
     // including VLOAD and VConstant must currently have count and type as
     // their 1st and 2nd arguments.
-    VADD, VSUB, VMUL,
+    VADD, VSUB, VMUL, VSDIV, VUDIV,
+    VAND, VOR, VXOR,
 
     // MULHU/MULHS - Multiply high - Multiply two integers of type iN, producing
     // an unsigned/signed value of type i[2*n], then return the top part.
