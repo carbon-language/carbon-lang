@@ -102,19 +102,3 @@ into:
 This would be a win on ppc32, but not x86 or ppc64.
 
 //===---------------------------------------------------------------------===//
-
-Pull add through mul/shift to handle this:
-
-int foo(int P[4][4], int i) {
-  return P[i+2][1];
-}
-
-better than this (no addi needed):
-
-_foo:
-        addi r2, r4, 2
-        slwi r2, r2, 4
-        add r2, r3, r2
-        lwz r3, 4(r2)
-        blr
-
