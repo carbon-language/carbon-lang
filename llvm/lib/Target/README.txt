@@ -86,3 +86,18 @@ int f(int a, int b){ return a * a + 2 * a * b + b * b; }
 into:
 int f(int a, int b) { return a * (a + 2 * b) + b * b; }
 to eliminate a multiply.
+
+//===---------------------------------------------------------------------===//
+
+On targets with expensive 64-bit multiply, we could LSR this:
+
+for (i = ...; ++i) {
+   x = 1ULL << i;
+
+into:
+ long long tmp = 1;
+ for (i = ...; ++i, tmp+=tmp)
+   x = tmp;
+
+This would be a win on ppc32, but not x86 or ppc64.
+
