@@ -20,7 +20,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\..\include;..;..\..\utils\tablegen"
-        PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;WIN32;_DEBUG;_CONSOLE;__STDC_LIMIT_MACROS"
+				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;WIN32;_DEBUG;_CONSOLE;__STDC_LIMIT_MACROS"
 				StringPooling="TRUE"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
@@ -144,7 +144,8 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Flexing $(InputFileName)"
-						CommandLine="..\doflex.cmd debug $(InputName) $(InputPath)"
+						CommandLine="..\doflex.cmd debug $(InputName) $(InputPath)
+"
 						Outputs="$(InputName).cpp"/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -152,7 +153,8 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Flexing $(InputFileName)"
-						CommandLine="..\doflex.cmd release $(InputName) $(InputPath)"
+						CommandLine="..\doflex.cmd release $(InputName) $(InputPath)
+"
 						Outputs="$(InputName).cpp"/>
 				</FileConfiguration>
 			</File>
@@ -163,7 +165,8 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Bisoning $(InputFileName)"
-						CommandLine="..\dobison.cmd File debug $(InputName) $(InputPath)"
+						CommandLine="..\dobison.cmd File debug $(InputName) $(InputPath)
+"
 						Outputs="$(InputName).cpp;$(InputName).h;$(InputName).output"/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -171,12 +174,16 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Bisoning $(InputFileName)"
-						CommandLine="..\dobison.cmd File release $(InputName) $(InputPath)"
+						CommandLine="..\dobison.cmd File release $(InputName) $(InputPath)
+"
 						Outputs="$(InputName).cpp;$(InputName).h;$(InputName).output"/>
 				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\utils\TableGen\InstrInfoEmitter.cpp">
+			</File>
+			<File
+				RelativePath="..\..\utils\TableGen\IntrinsicEmitter.cpp">
 			</File>
 			<File
 				RelativePath="..\..\utils\TableGen\Record.cpp">
@@ -208,6 +215,9 @@
 				RelativePath="..\..\utils\TableGen\CodeGenInstruction.h">
 			</File>
 			<File
+				RelativePath="..\..\utils\TableGen\CodeGenIntrinsics.h">
+			</File>
+			<File
 				RelativePath="..\..\utils\TableGen\CodeGenRegisters.h">
 			</File>
 			<File
@@ -218,6 +228,9 @@
 			</File>
 			<File
 				RelativePath="..\..\utils\TableGen\InstrInfoEmitter.h">
+			</File>
+			<File
+				RelativePath="..\..\utils\TableGen\IntrinsicEmitter.h">
 			</File>
 			<File
 				RelativePath="..\..\utils\TableGen\Record.h">
