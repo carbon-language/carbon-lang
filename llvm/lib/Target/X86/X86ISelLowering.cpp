@@ -1997,8 +1997,8 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::CMOV:               return "X86ISD::CMOV";
   case X86ISD::BRCOND:             return "X86ISD::BRCOND";
   case X86ISD::RET_FLAG:           return "X86ISD::RET_FLAG";
-  case X86ISD::REP_STOS:           return "X86ISD::RET_STOS";
-  case X86ISD::REP_MOVS:           return "X86ISD::RET_MOVS";
+  case X86ISD::REP_STOS:           return "X86ISD::REP_STOS";
+  case X86ISD::REP_MOVS:           return "X86ISD::REP_MOVS";
   case X86ISD::LOAD_PACK:          return "X86ISD::LOAD_PACK";
   case X86ISD::GlobalBaseReg:      return "X86ISD::GlobalBaseReg";
   case X86ISD::Wrapper:            return "X86ISD::Wrapper";
