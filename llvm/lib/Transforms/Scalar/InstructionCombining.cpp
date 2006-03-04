@@ -1622,6 +1622,19 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
       if (Op1F->getValue() == 1.0)
         return ReplaceInstUsesWith(I, Op0);  // Eliminate 'mul double %X, 1.0'
     }
+    
+    if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0))
+      if (Op0I->getOpcode() == Instruction::Add && Op0I->hasOneUse() &&
+          isa<ConstantInt>(Op0I->getOperand(1))) {
+        // Canonicalize (X+C1)*C2 -> X*C2+C1*C2.
+        Instruction *Add = BinaryOperator::createMul(Op0I->getOperand(0),
+                                                     Op1, "tmp");
+        InsertNewInstBefore(Add, I);
+        Value *C1C2 = ConstantExpr::getMul(Op1, 
+                                           cast<Constant>(Op0I->getOperand(1)));
+        return BinaryOperator::createAdd(Add, C1C2);
+        
+      }
 
     // Try to fold constant mul into select arguments.
     if (SelectInst *SI = dyn_cast<SelectInst>(Op0))
