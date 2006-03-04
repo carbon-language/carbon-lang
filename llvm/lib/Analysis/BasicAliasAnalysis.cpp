@@ -527,6 +527,14 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
   // chain.  For example:
   //        A[i][0] != A[j][1] iff (&A[0][1]-&A[0][0] >= std::max(G1S, G2S))
   //
+  // We have to be careful here about array accesses.  In particular, consider:
+  //        A[1][0] vs A[0][i]
+  // In this case, we don't *know* that the array will be accessed in bounds:
+  // the index could even be negative.  Because of this, we have to
+  // conservatively *give up* and return may alias.  We disregard differing
+  // array subscripts that are followed by a variable index without going
+  // through a struct.
+  //
   unsigned SizeMax = std::max(G1S, G2S);
   if (SizeMax == ~0U) return MayAlias; // Avoid frivolous work.
 
@@ -547,15 +555,36 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
             GEP1Ops[FirstConstantOper] = G1OC;
             GEP2Ops[FirstConstantOper] = G2OC;
           }
-
+          
           if (G1OC != G2OC) {
+            // Handle the "be careful" case above: if this is an array
+            // subscript, scan for a subsequent variable array index.
+            if (isa<ArrayType>(BasePtr1Ty))  {
+              const Type *NextTy =cast<ArrayType>(BasePtr1Ty)->getElementType();
+              bool isBadCase = false;
+              
+              for (unsigned Idx = FirstConstantOper+1;
+                   Idx != MinOperands && isa<ArrayType>(NextTy); ++Idx) {
+                const Value *V1 = GEP1Ops[Idx], *V2 = GEP2Ops[Idx];
+                if (!isa<Constant>(V1) || !isa<Constant>(V2)) {
+                  isBadCase = true;
+                  break;
+                }
+                NextTy = cast<ArrayType>(NextTy)->getElementType();
+              }
+              
+              if (isBadCase) G1OC = 0;
+            }
+
             // Make sure they are comparable (ie, not constant expressions), and
             // make sure the GEP with the smaller leading constant is GEP1.
-            Constant *Compare = ConstantExpr::getSetGT(G1OC, G2OC);
-            if (ConstantBool *CV = dyn_cast<ConstantBool>(Compare)) {
-              if (CV->getValue())   // If they are comparable and G2 > G1
-                std::swap(GEP1Ops, GEP2Ops);  // Make GEP1 < GEP2
-              break;
+            if (G1OC) {
+              Constant *Compare = ConstantExpr::getSetGT(G1OC, G2OC);
+              if (ConstantBool *CV = dyn_cast<ConstantBool>(Compare)) {
+                if (CV->getValue())   // If they are comparable and G2 > G1
+                  std::swap(GEP1Ops, GEP2Ops);  // Make GEP1 < GEP2
+                break;
+              }
             }
           }
         }
