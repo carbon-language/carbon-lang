@@ -637,16 +637,23 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
   // than the first constant index of GEP2.
 
   // Advance BasePtr[12]Ty over this first differing constant operand.
-  BasePtr2Ty = cast<CompositeType>(BasePtr1Ty)->getTypeAtIndex(GEP2Ops[FirstConstantOper]);
-  BasePtr1Ty = cast<CompositeType>(BasePtr1Ty)->getTypeAtIndex(GEP1Ops[FirstConstantOper]);
+  BasePtr2Ty = cast<CompositeType>(BasePtr1Ty)->
+      getTypeAtIndex(GEP2Ops[FirstConstantOper]);
+  BasePtr1Ty = cast<CompositeType>(BasePtr1Ty)->
+      getTypeAtIndex(GEP1Ops[FirstConstantOper]);
 
   // We are going to be using TargetData::getIndexedOffset to determine the
   // offset that each of the GEP's is reaching.  To do this, we have to convert
   // all variable references to constant references.  To do this, we convert the
-  // initial equal sequence of variables into constant zeros to start with.
-  for (unsigned i = 0; i != FirstConstantOper; ++i)
-    if (!isa<ConstantInt>(GEP1Ops[i]) || !isa<ConstantInt>(GEP2Ops[i]))
+  // initial sequence of array subscripts into constant zeros to start with.
+  const Type *ZeroIdxTy = GEPPointerTy;
+  for (unsigned i = 0; i != FirstConstantOper; ++i) {
+    if (!isa<StructType>(ZeroIdxTy))
       GEP1Ops[i] = GEP2Ops[i] = Constant::getNullValue(Type::UIntTy);
+
+    if (const CompositeType *CT = dyn_cast<CompositeType>(ZeroIdxTy))
+      ZeroIdxTy = CT->getTypeAtIndex(GEP1Ops[i]);
+  }
 
   // We know that GEP1Ops[FirstConstantOper] & GEP2Ops[FirstConstantOper] are ok
 
