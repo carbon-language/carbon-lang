@@ -533,3 +533,8 @@ as opposed to what llc is currently generating:
 	imull $9, 4(%esp), %eax
 
 Currently the load folding imull has a higher complexity than the LEA32 pattern.
+
+//===---------------------------------------------------------------------===//
+
+Lower memcpy / memset to a series of SSE 128 bit move instructions when it's
+feasible.
