@@ -213,3 +213,10 @@ long %test30(long %x) {
         %tmp.4 = add long %tmp.2, -9223372036854775808
         ret long %tmp.4
 }
+
+int %test31(int %A) {
+	%B = add int %A, 4
+	%C = mul int %B, 5
+	%D = sub int %C, 20
+	ret int %D
+}
