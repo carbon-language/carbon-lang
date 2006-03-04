@@ -107,9 +107,9 @@ static struct PerModuleInfo {
     }
 
     // Look for intrinsic functions and CallInst that need to be upgraded
-    for (Module::iterator FI = CurrentModule->begin(),FE = CurrentModule->end();
-         FI != FE; ++FI)
-      UpgradeCallsToIntrinsic(FI);
+    for (Module::iterator FI = CurrentModule->begin(),
+         FE = CurrentModule->end(); FI != FE; )
+      UpgradeCallsToIntrinsic(FI++);
 
     Values.clear();         // Clear out function local definitions
     Types.clear();
