@@ -192,7 +192,8 @@ public:
   /// isOperationLegal - Return true if the specified operation is legal on this
   /// target.
   bool isOperationLegal(unsigned Op, MVT::ValueType VT) const {
-    return getOperationAction(Op, VT) == Legal;
+    return getOperationAction(Op, VT) == Legal ||
+           getOperationAction(Op, VT) == Custom;
   }
 
   /// getTypeToPromoteTo - If the action for this operation is to promote, this
