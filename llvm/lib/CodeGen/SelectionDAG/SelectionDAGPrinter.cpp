@@ -13,6 +13,7 @@
 
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
+#include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/MRegisterInfo.h"
@@ -22,6 +23,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Config/config.h"
 #include <fstream>
+#include <sstream>
 using namespace llvm;
 
 namespace llvm {
@@ -81,6 +83,13 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
   } else if (const ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Node)){
     if (ConstantFP *CFP = dyn_cast<ConstantFP>(CP->get()))
       Op += "<" + ftostr(CFP->getValue()) + ">";
+    else if (ConstantInt *CI = dyn_cast<ConstantInt>(CP->get()))
+      Op += "<" + utostr(CI->getZExtValue()) + ">";
+    else {
+      std::ostringstream SS;
+      WriteAsOperand(SS, CP->get(), false);
+      Op += "<" + SS.str() + ">";
+    }
   } else if (const BasicBlockSDNode *BBDN = dyn_cast<BasicBlockSDNode>(Node)) {
     Op = "BB: ";
     const Value *LBB = (const Value*)BBDN->getBasicBlock()->getBasicBlock();
