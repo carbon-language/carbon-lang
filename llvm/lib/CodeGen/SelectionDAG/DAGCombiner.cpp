@@ -1454,13 +1454,6 @@ SDOperand DAGCombiner::visitSHL(SDNode *N) {
   if (N1C && N0.getOpcode() == ISD::SRA && N1 == N0.getOperand(1))
     return DAG.getNode(ISD::AND, VT, N0.getOperand(0),
                        DAG.getConstant(~0ULL << N1C->getValue(), VT));
-  // fold (shl (add x, c1), c2) -> (add (shl x, c2), c1<<c2)
-  if (N1C && N0.getOpcode() == ISD::ADD && N0.Val->hasOneUse() && 
-      isa<ConstantSDNode>(N0.getOperand(1))) {
-    return DAG.getNode(ISD::ADD, VT, 
-                       DAG.getNode(ISD::SHL, VT, N0.getOperand(0), N1),
-                       DAG.getNode(ISD::SHL, VT, N0.getOperand(1), N1));
-  }
   return SDOperand();
 }
 
