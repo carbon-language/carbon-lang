@@ -214,7 +214,7 @@ class ScheduleDAGList : public ScheduleDAG {
 private:
   // SDNode to SUnit mapping (many to one).
   std::map<SDNode*, SUnit*> SUnitMap;
-  // The schedule.
+  // The schedule.  Null SUnit*'s represend noop instructions.
   std::vector<SUnit*> Sequence;
   // Current scheduling cycle.
   unsigned CurrCycle;
@@ -523,7 +523,7 @@ void ScheduleDAGList::ListScheduleTopDown() {
       // processors without pipeline interlocks and other cases.
       DEBUG(std::cerr << "*** Emitting noop");
       HazardRec->EmitNoop();
-      // FIXME: Add a noop to the schedule!!
+      Sequence.push_back(0);   // NULL SUnit -> noop
       ++NumNoops;
     }
   }
@@ -688,21 +688,26 @@ void ScheduleDAGList::BuildSchedUnits() {
 /// EmitSchedule - Emit the machine code in scheduled order.
 void ScheduleDAGList::EmitSchedule() {
   for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
-    SDNode *N;
-    SUnit *SU = Sequence[i];
-    for (unsigned j = 0, ee = SU->FlaggedNodes.size(); j != ee; j++) {
-      N = SU->FlaggedNodes[j];
-      EmitNode(getNI(N));
+    if (SUnit *SU = Sequence[i]) {
+      for (unsigned j = 0, ee = SU->FlaggedNodes.size(); j != ee; j++) {
+        SDNode *N = SU->FlaggedNodes[j];
+        EmitNode(getNI(N));
+      }
+      EmitNode(getNI(SU->Node));
+    } else {
+      // Null SUnit* is a noop.
+      EmitNoop();
     }
-    EmitNode(getNI(SU->Node));
   }
 }
 
 /// dump - dump the schedule.
 void ScheduleDAGList::dump() const {
   for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
-    SUnit *SU = Sequence[i];
-    SU->dump(&DAG, false);
+    if (SUnit *SU = Sequence[i])
+      SU->dump(&DAG, false);
+    else
+      std::cerr << "**** NOOP ****\n";
   }
 }
 

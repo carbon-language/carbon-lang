@@ -370,6 +370,10 @@ void ScheduleDAG::EmitNode(NodeInfo *NI) {
   NI->VRBase = VRBase;
 }
 
+void ScheduleDAG::EmitNoop() {
+  TII->insertNoop(*BB, BB->end());
+}
+
 /// EmitAll - Emit all nodes in schedule sorted order.
 ///
 void ScheduleDAG::EmitAll() {
