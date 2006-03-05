@@ -140,6 +140,12 @@ namespace ISD {
     
     // Simple binary floating point operators.
     FADD, FSUB, FMUL, FDIV, FREM,
+
+    // FCOPYSIGN(X, Y) - Return the value of X with the sign of Y.  NOTE: This
+    // DAG node does not require that X and Y have the same type, just that they
+    // are both floating point.  X and the result must have the same type.
+    // FCOPYSIGN(f32, f64) is allowed.
+    FCOPYSIGN,
     
     // Simple abstract vector operators.  Unlike the integer and floating point
     // binary operators, these nodes also take two additional operands:
@@ -243,7 +249,7 @@ namespace ISD {
     // FNEG, FABS, FSQRT, FSIN, FCOS - Perform unary floating point negation,
     // absolute value, square root, sine and cosine operations.
     FNEG, FABS, FSQRT, FSIN, FCOS,
-
+    
     // Other operators.  LOAD and STORE have token chains as their first
     // operand, then the same operands as an LLVM load/store instruction, then a
     // SRCVALUE node that provides alias analysis information.
