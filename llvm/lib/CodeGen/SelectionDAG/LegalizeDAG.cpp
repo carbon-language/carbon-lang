@@ -1775,7 +1775,48 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       break;
     }
     break;
-  
+    
+  case ISD::FCOPYSIGN:  // FCOPYSIGN does not require LHS/RHS to match type!
+    Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
+    switch (getTypeAction(Node->getOperand(1).getValueType())) {
+      case Expand: assert(0 && "Not possible");
+      case Legal:
+        Tmp2 = LegalizeOp(Node->getOperand(1)); // Legalize the RHS.
+        break;
+      case Promote:
+        Tmp2 = PromoteOp(Node->getOperand(1));  // Promote the RHS.
+        break;
+    }
+      
+    Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
+    
+    switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
+    default: assert(0 && "Operation not supported");
+    case TargetLowering::Custom:
+      Tmp1 = TLI.LowerOperation(Result, DAG);
+      if (Tmp1.Val) Result = Tmp1;
+        break;
+    case TargetLowering::Legal: break;
+    case TargetLowering::Expand:
+      // Floating point mod -> fmod libcall.
+      const char *FnName;
+      if (Node->getValueType(0) == MVT::f32) {
+        FnName = "copysignf";
+        if (Tmp2.getValueType() != MVT::f32)  // Force operands to match type.
+          Result = DAG.UpdateNodeOperands(Result, Tmp1, 
+                                    DAG.getNode(ISD::FP_ROUND, MVT::f32, Tmp2));
+      } else {
+        FnName = "copysign";
+        if (Tmp2.getValueType() != MVT::f64)  // Force operands to match type.
+          Result = DAG.UpdateNodeOperands(Result, Tmp1, 
+                                   DAG.getNode(ISD::FP_EXTEND, MVT::f64, Tmp2));
+      }
+      SDOperand Dummy;
+      Result = ExpandLibCall(FnName, Node, Dummy);
+      break;
+    }
+    break;
+    
   case ISD::ADDC:
   case ISD::SUBC:
     Tmp1 = LegalizeOp(Node->getOperand(0));
@@ -2604,13 +2645,14 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     break;
   case ISD::FDIV:
   case ISD::FREM:
+  case ISD::FCOPYSIGN:
     // These operators require that their input be fp extended.
     Tmp1 = PromoteOp(Node->getOperand(0));
     Tmp2 = PromoteOp(Node->getOperand(1));
     Result = DAG.getNode(Node->getOpcode(), NVT, Tmp1, Tmp2);
     
     // Perform FP_ROUND: this is probably overly pessimistic.
-    if (NoExcessFPPrecision)
+    if (NoExcessFPPrecision && Node->getOpcode() != ISD::FCOPYSIGN)
       Result = DAG.getNode(ISD::FP_ROUND_INREG, NVT, Result,
                            DAG.getValueType(VT));
     break;

@@ -1120,7 +1120,18 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
           return;
       } else {    // Not an LLVM intrinsic.
         const std::string &Name = F->getName();
-        if (Name[0] == 'f' && (Name == "fabs" || Name == "fabsf")) {
+        if (Name[0] == 'c' && (Name == "copysign" || Name == "copysignf")) {
+          if (I.getNumOperands() == 3 &&   // Basic sanity checks.
+              I.getOperand(1)->getType()->isFloatingPoint() &&
+              I.getType() == I.getOperand(1)->getType() &&
+              I.getType() == I.getOperand(2)->getType()) {
+            SDOperand LHS = getValue(I.getOperand(1));
+            SDOperand RHS = getValue(I.getOperand(2));
+            setValue(&I, DAG.getNode(ISD::FCOPYSIGN, LHS.getValueType(),
+                                     LHS, RHS));
+            return;
+          }
+        } else if (Name[0] == 'f' && (Name == "fabs" || Name == "fabsf")) {
           if (I.getNumOperands() == 2 &&   // Basic sanity checks.
               I.getOperand(1)->getType()->isFloatingPoint() &&
               I.getType() == I.getOperand(1)->getType()) {

@@ -1152,7 +1152,12 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     assert(N1.getValueType() == N2.getValueType() &&
            N1.getValueType() == VT && "Binary operator types must match!");
     break;
-
+  case ISD::FCOPYSIGN:   // N1 and result must match.  N1/N2 need not match.
+    assert(N1.getValueType() == VT &&
+           MVT::isFloatingPoint(N1.getValueType()) && 
+           MVT::isFloatingPoint(N2.getValueType()) &&
+           "Invalid FCOPYSIGN!");
+    break;
   case ISD::SHL:
   case ISD::SRA:
   case ISD::SRL:
@@ -2635,6 +2640,7 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::FMUL:   return "fmul";
   case ISD::FDIV:   return "fdiv";
   case ISD::FREM:   return "frem";
+  case ISD::FCOPYSIGN: return "fcopysign";
   case ISD::VADD:   return "vadd";
   case ISD::VSUB:   return "vsub";
   case ISD::VMUL:   return "vmul";
