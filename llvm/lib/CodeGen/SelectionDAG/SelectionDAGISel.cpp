@@ -76,6 +76,8 @@ namespace {
                  "except using generic latency"),
       clEnumValN(listSchedulingBURR, "list-burr",
                  "Bottom up register reduction list scheduling"),
+      clEnumValN(listSchedulingG5, "list-g5",
+                 "Scheduling for the PowerPC G5"),
       clEnumValEnd));
 } // namespace
 
@@ -2470,6 +2472,10 @@ void SelectionDAGISel::ScheduleAndEmitDAG(SelectionDAG &DAG) {
     break;
   case listSchedulingBURR:
     SL = createBURRListDAGScheduler(DAG, BB);
+    break;
+  case listSchedulingG5:
+    SL = createTDG5ListDAGScheduler(DAG, BB);
+    break;
   }
   BB = SL->Run();
   delete SL;

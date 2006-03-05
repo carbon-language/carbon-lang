@@ -73,15 +73,16 @@ void SUnit::dump(const SelectionDAG *G, bool All) const {
   }
 
   if (All) {
-    std::cerr << "# preds left       : " << NumPredsLeft << "\n";
-    std::cerr << "# succs left       : " << NumSuccsLeft << "\n";
-    std::cerr << "# chain preds left : " << NumChainPredsLeft << "\n";
-    std::cerr << "# chain succs left : " << NumChainSuccsLeft << "\n";
-    std::cerr << "Latency            : " << Latency << "\n";
-    std::cerr << "Priority           : " << Priority1 << " , " << Priority2 << "\n";
+    std::cerr << "  # preds left       : " << NumPredsLeft << "\n";
+    std::cerr << "  # succs left       : " << NumSuccsLeft << "\n";
+    std::cerr << "  # chain preds left : " << NumChainPredsLeft << "\n";
+    std::cerr << "  # chain succs left : " << NumChainSuccsLeft << "\n";
+    std::cerr << "  Latency            : " << Latency << "\n";
+    std::cerr << "  Priority           : " << Priority1 << " , "
+              << Priority2 << "\n";
 
     if (Preds.size() != 0) {
-      std::cerr << "Predecessors  :\n";
+      std::cerr << "  Predecessors:\n";
       for (std::set<SUnit*>::const_iterator I = Preds.begin(),
              E = Preds.end(); I != E; ++I) {
         std::cerr << "    ";
@@ -89,7 +90,7 @@ void SUnit::dump(const SelectionDAG *G, bool All) const {
       }
     }
     if (ChainPreds.size() != 0) {
-      std::cerr << "Chained Preds :\n";
+      std::cerr << "  Chained Preds:\n";
       for (std::set<SUnit*>::const_iterator I = ChainPreds.begin(),
              E = ChainPreds.end(); I != E; ++I) {
         std::cerr << "    ";
@@ -97,7 +98,7 @@ void SUnit::dump(const SelectionDAG *G, bool All) const {
       }
     }
     if (Succs.size() != 0) {
-      std::cerr << "Successors    :\n";
+      std::cerr << "  Successors:\n";
       for (std::set<SUnit*>::const_iterator I = Succs.begin(),
              E = Succs.end(); I != E; ++I) {
         std::cerr << "    ";
@@ -105,7 +106,7 @@ void SUnit::dump(const SelectionDAG *G, bool All) const {
       }
     }
     if (ChainSuccs.size() != 0) {
-      std::cerr << "Chained succs :\n";
+      std::cerr << "  Chained succs:\n";
       for (std::set<SUnit*>::const_iterator I = ChainSuccs.begin(),
              E = ChainSuccs.end(); I != E; ++I) {
         std::cerr << "    ";
@@ -171,14 +172,18 @@ private:
   // First and last SUnit created.
   SUnit *HeadSUnit, *TailSUnit;
 
+  /// isBottomUp - This is true if the scheduling problem is bottom-up, false if
+  /// it is top-down.
+  bool isBottomUp;
+  
   typedef std::priority_queue<SUnit*, std::vector<SUnit*>, ls_rr_sort>
     AvailableQueueTy;
 
 public:
   ScheduleDAGList(SelectionDAG &dag, MachineBasicBlock *bb,
-                  const TargetMachine &tm)
+                  const TargetMachine &tm, bool isbottomup)
     : ScheduleDAG(listSchedulingBURR, dag, bb, tm),
-      CurrCycle(0), HeadSUnit(NULL), TailSUnit(NULL) {};
+      CurrCycle(0), HeadSUnit(NULL), TailSUnit(NULL), isBottomUp(isbottomup) {}
 
   ~ScheduleDAGList() {
     SUnit *SU = HeadSUnit;
@@ -196,10 +201,13 @@ public:
 private:
   SUnit *NewSUnit(SDNode *N);
   void ReleasePred(AvailableQueueTy &Avail,SUnit *PredSU, bool isChain = false);
-  void ScheduleNode(AvailableQueueTy &Avail, SUnit *SU);
+  void ReleaseSucc(AvailableQueueTy &Avail,SUnit *SuccSU, bool isChain = false);
+  void ScheduleNodeBottomUp(AvailableQueueTy &Avail, SUnit *SU);
+  void ScheduleNodeTopDown(AvailableQueueTy &Avail, SUnit *SU);
   int  CalcNodePriority(SUnit *SU);
   void CalculatePriorities();
-  void ListSchedule();
+  void ListScheduleTopDown();
+  void ListScheduleBottomUp();
   void BuildSchedUnits();
   void EmitSchedule();
 };
@@ -223,8 +231,6 @@ SUnit *ScheduleDAGList::NewSUnit(SDNode *N) {
 /// the Available queue is the count reaches zero. Also update its cycle bound.
 void ScheduleDAGList::ReleasePred(AvailableQueueTy &Available, 
                                   SUnit *PredSU, bool isChain) {
-  SDNode *PredNode = PredSU->Node;
-
   // FIXME: the distance between two nodes is not always == the predecessor's
   // latency. For example, the reader can very well read the register written
   // by the predecessor later than the issue cycle. It also depends on the
@@ -236,24 +242,57 @@ void ScheduleDAGList::ReleasePred(AvailableQueueTy &Available,
     PredSU->Priority1++;
   } else
     PredSU->NumChainSuccsLeft--;
-  if (PredSU->NumSuccsLeft == 0 && PredSU->NumChainSuccsLeft == 0) {
-    // EntryToken has to go last!
-    if (PredNode->getOpcode() != ISD::EntryToken)
-      Available.push(PredSU);
-  } else if (PredSU->NumSuccsLeft < 0) {
+  
 #ifndef NDEBUG
+  if (PredSU->NumSuccsLeft < 0 || PredSU->NumChainSuccsLeft < 0) {
     std::cerr << "*** List scheduling failed! ***\n";
     PredSU->dump(&DAG);
     std::cerr << " has been released too many times!\n";
     assert(0);
+  }
 #endif
+  
+  if ((PredSU->NumSuccsLeft + PredSU->NumChainSuccsLeft) == 0) {
+    // EntryToken has to go last!  Special case it here.
+    if (PredSU->Node->getOpcode() != ISD::EntryToken)
+      Available.push(PredSU);
   }
 }
 
-/// ScheduleNode - Add the node to the schedule. Decrement the pending count of
-/// its predecessors. If a predecessor pending count is zero, add it to the
-/// Available queue.
-void ScheduleDAGList::ScheduleNode(AvailableQueueTy &Available, SUnit *SU) {
+/// ReleaseSucc - Decrement the NumPredsLeft count of a successor. Add it to
+/// the Available queue is the count reaches zero. Also update its cycle bound.
+void ScheduleDAGList::ReleaseSucc(AvailableQueueTy &Available, 
+                                  SUnit *SuccSU, bool isChain) {
+  // FIXME: the distance between two nodes is not always == the predecessor's
+  // latency. For example, the reader can very well read the register written
+  // by the predecessor later than the issue cycle. It also depends on the
+  // interrupt model (drain vs. freeze).
+  SuccSU->CycleBound = std::max(SuccSU->CycleBound, CurrCycle + SuccSU->Latency);
+  
+  if (!isChain) {
+    SuccSU->NumPredsLeft--;
+    SuccSU->Priority1++;          // FIXME: ??
+  } else
+    SuccSU->NumChainPredsLeft--;
+  
+#ifndef NDEBUG
+  if (SuccSU->NumPredsLeft < 0 || SuccSU->NumChainPredsLeft < 0) {
+    std::cerr << "*** List scheduling failed! ***\n";
+    SuccSU->dump(&DAG);
+    std::cerr << " has been released too many times!\n";
+    abort();
+  }
+#endif
+  
+  if ((SuccSU->NumPredsLeft + SuccSU->NumChainPredsLeft) == 0)
+    Available.push(SuccSU);
+}
+
+/// ScheduleNodeBottomUp - Add the node to the schedule. Decrement the pending
+/// count of its predecessors. If a predecessor pending count is zero, add it to
+/// the Available queue.
+void ScheduleDAGList::ScheduleNodeBottomUp(AvailableQueueTy &Available,
+                                           SUnit *SU) {
   DEBUG(std::cerr << "*** Scheduling: ");
   DEBUG(SU->dump(&DAG, false));
 
@@ -274,20 +313,45 @@ void ScheduleDAGList::ScheduleNode(AvailableQueueTy &Available, SUnit *SU) {
   CurrCycle++;
 }
 
+/// ScheduleNodeTopDown - Add the node to the schedule. Decrement the pending
+/// count of its successors. If a successor pending count is zero, add it to
+/// the Available queue.
+void ScheduleDAGList::ScheduleNodeTopDown(AvailableQueueTy &Available,
+                                          SUnit *SU) {
+  DEBUG(std::cerr << "*** Scheduling: ");
+  DEBUG(SU->dump(&DAG, false));
+  
+  Sequence.push_back(SU);
+  SU->Slot = CurrCycle;
+  
+  // Bottom up: release successors.
+  for (std::set<SUnit*>::iterator I1 = SU->Succs.begin(),
+       E1 = SU->Succs.end(); I1 != E1; ++I1) {
+    ReleaseSucc(Available, *I1);
+    SU->NumSuccsLeft--;
+    SU->Priority1--;           // FIXME: what is this??
+  }
+  for (std::set<SUnit*>::iterator I2 = SU->ChainSuccs.begin(),
+       E2 = SU->ChainSuccs.end(); I2 != E2; ++I2)
+    ReleaseSucc(Available, *I2, true);
+  
+  CurrCycle++;
+}
+
 /// isReady - True if node's lower cycle bound is less or equal to the current
 /// scheduling cycle. Always true if all nodes have uniform latency 1.
 static inline bool isReady(SUnit *SU, unsigned CurrCycle) {
   return SU->CycleBound <= CurrCycle;
 }
 
-/// ListSchedule - The main loop of list scheduling.
-void ScheduleDAGList::ListSchedule() {
+/// ListScheduleBottomUp - The main loop of list scheduling for bottom-up
+/// schedulers.
+void ScheduleDAGList::ListScheduleBottomUp() {
   // Available queue.
   AvailableQueueTy Available;
 
   // Add root to Available queue.
-  SUnit *Root = SUnitMap[DAG.getRoot().Val];
-  Available.push(Root);
+  Available.push(SUnitMap[DAG.getRoot().Val]);
 
   // While Available queue is not empty, grab the node with the highest
   // priority. If it is not ready put it back. Schedule the node.
@@ -296,16 +360,19 @@ void ScheduleDAGList::ListSchedule() {
     SUnit *CurrNode = Available.top();
     Available.pop();
 
-    NotReady.clear();
     while (!isReady(CurrNode, CurrCycle)) {
       NotReady.push_back(CurrNode);
       CurrNode = Available.top();
       Available.pop();
     }
-    for (unsigned i = 0, e = NotReady.size(); i != e; ++i)
-      Available.push(NotReady[i]);
+    
+    // Add the nodes that aren't ready back onto the available list.
+    while (!NotReady.empty()) {
+      Available.push(NotReady.back());
+      NotReady.pop_back();
+    }
 
-    ScheduleNode(Available, CurrNode);
+    ScheduleNodeBottomUp(Available, CurrNode);
   }
 
   // Add entry node last
@@ -315,7 +382,12 @@ void ScheduleDAGList::ListSchedule() {
     Sequence.push_back(Entry);
   }
 
+  // Reverse the order if it is bottom up.
+  std::reverse(Sequence.begin(), Sequence.end());
+  
+  
 #ifndef NDEBUG
+  // Verify that all SUnits were scheduled.
   bool AnyNotSched = false;
   for (SUnit *SU = HeadSUnit; SU != NULL; SU = SU->Next) {
     if (SU->NumSuccsLeft != 0 || SU->NumChainSuccsLeft != 0) {
@@ -328,15 +400,64 @@ void ScheduleDAGList::ListSchedule() {
   }
   assert(!AnyNotSched);
 #endif
-
-
-  // Reverse the order if it is bottom up.
-  std::reverse(Sequence.begin(), Sequence.end());
-
-  DEBUG(std::cerr << "*** Final schedule ***\n");
-  DEBUG(dump());
-  DEBUG(std::cerr << "\n");
 }
+
+/// ListScheduleTopDown - The main loop of list scheduling for top-down
+/// schedulers.
+void ScheduleDAGList::ListScheduleTopDown() {
+  // Available queue.
+  AvailableQueueTy Available;
+  
+  // Emit the entry node first.
+  SUnit *Entry = SUnitMap[DAG.getEntryNode().Val];
+  ScheduleNodeTopDown(Available, Entry);
+  
+  // All leaves to Available queue.
+  for (SUnit *SU = HeadSUnit; SU != NULL; SU = SU->Next) {
+    // It is available if it has no predecessors.
+    if ((SU->Preds.size() + SU->ChainPreds.size()) == 0 && SU != Entry)
+      Available.push(SU);
+  }
+  
+  // While Available queue is not empty, grab the node with the highest
+  // priority. If it is not ready put it back.  Schedule the node.
+  std::vector<SUnit*> NotReady;
+  while (!Available.empty()) {
+    SUnit *CurrNode = Available.top();
+    Available.pop();
+    
+    // FIXME: when priorities make sense, reenable this.
+    while (0 && !isReady(CurrNode, CurrCycle)) {
+      NotReady.push_back(CurrNode);
+      CurrNode = Available.top();
+      Available.pop();
+    }
+
+    // Add the nodes that aren't ready back onto the available list.
+    while (!NotReady.empty()) {
+      Available.push(NotReady.back());
+      NotReady.pop_back();
+    }
+    
+    ScheduleNodeTopDown(Available, CurrNode);
+  }
+
+#ifndef NDEBUG
+  // Verify that all SUnits were scheduled.
+  bool AnyNotSched = false;
+  for (SUnit *SU = HeadSUnit; SU != NULL; SU = SU->Next) {
+    if (SU->NumPredsLeft != 0 || SU->NumChainPredsLeft != 0) {
+      if (!AnyNotSched)
+        std::cerr << "*** List scheduling failed! ***\n";
+      SU->dump(&DAG);
+      std::cerr << "has not been scheduled!\n";
+      AnyNotSched = true;
+    }
+  }
+  assert(!AnyNotSched);
+#endif
+}
+
 
 /// CalcNodePriority - Priority1 is just the number of live range genned -
 /// number of live range killed. Priority2 is the Sethi Ullman number. It
@@ -511,14 +632,29 @@ void ScheduleDAGList::Schedule() {
   // Calculate node prirorities.
   CalculatePriorities();
 
-  // Execute the actual scheduling loop.
-  ListSchedule();
-
+  // Execute the actual scheduling loop Top-Down or Bottom-Up as appropriate.
+  if (isBottomUp)
+    ListScheduleBottomUp();
+  else
+    ListScheduleTopDown();
+  
+  DEBUG(std::cerr << "*** Final schedule ***\n");
+  DEBUG(dump());
+  DEBUG(std::cerr << "\n");
+  
   // Emit in scheduled order
   EmitSchedule();
 }
-  
+
 llvm::ScheduleDAG* llvm::createBURRListDAGScheduler(SelectionDAG &DAG,
                                                     MachineBasicBlock *BB) {
-  return new ScheduleDAGList(DAG, BB, DAG.getTarget());
+  return new ScheduleDAGList(DAG, BB, DAG.getTarget(), true);
+}
+
+/// createTDG5ListDAGScheduler - This creates a top-down list scheduler for
+/// the PowerPC G5.  FIXME: pull the priority function out into the PPC
+/// backend!
+ScheduleDAG* llvm::createTDG5ListDAGScheduler(SelectionDAG &DAG,
+                                              MachineBasicBlock *BB) {
+  return new ScheduleDAGList(DAG, BB, DAG.getTarget(), false);
 }
