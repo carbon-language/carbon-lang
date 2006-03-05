@@ -27,9 +27,17 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Support/FileUtilities.h"
+#include "llvm/Support/CommandLine.h"
 #include <fstream>
 #include <set>
 using namespace llvm;
+
+namespace {
+  cl::opt<bool>
+  KeepMain("keep-main",
+           cl::desc("Force function reduction to keep main"),
+           cl::init(false));
+}
 
 namespace llvm {
   class ReducePassList : public ListReducer<const PassInfo*> {
@@ -109,6 +117,11 @@ namespace llvm {
 }
 
 bool ReduceCrashingFunctions::TestFuncs(std::vector<Function*> &Funcs) {
+
+  //if main isn't present, claim there is no problem
+  if (KeepMain && find(Funcs.begin(), Funcs.end(), BD.getProgram()->getMainFunction()) == Funcs.end())
+    return false;
+
   // Clone the program to try hacking it apart...
   Module *M = CloneModule(BD.getProgram());
 
