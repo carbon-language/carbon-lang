@@ -29,11 +29,6 @@
 #include <algorithm>
 using namespace llvm;
 
-#ifdef _MSC_VER
-#include <float.h>
-#define copysign _copysign
-#endif
-
 static bool isCommutativeBinOp(unsigned Opcode) {
   switch (Opcode) {
   case ISD::ADD:
@@ -1255,8 +1250,23 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       case ISD::FREM :
         if (C2) return getConstantFP(fmod(C1, C2), VT);
         break;
-      case ISD::FCOPYSIGN:
-        return getConstantFP(copysign(C1, C2), VT);
+      case ISD::FCOPYSIGN: {
+        union {
+          double   F;
+          uint64_t I;
+        } u1;
+        union {
+          double  F;
+          int64_t I;
+        } u2;
+        u1.F = C1;
+        u2.F = C2;
+        if (u2.I < 0)  // Sign bit of RHS set?
+          u1.I |= 1ULL << 63;      // Set the sign bit of the LHS.
+        else 
+          u1.I &= (1ULL << 63)-1;  // Clear the sign bit of the LHS.
+        return getConstantFP(u1.F, VT);
+      }
       default: break;
       }
     } else {      // Cannonicalize constant to RHS if commutative
