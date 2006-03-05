@@ -273,6 +273,13 @@ public:
     return MI;
   }
   
+  /// insertNoop - Insert a noop into the instruction stream at the specified
+  /// point.
+  virtual void insertNoop(MachineBasicBlock &MBB, 
+                          MachineBasicBlock::iterator MI) const {
+    assert(0 && "Target didn't implement insertNoop!");
+    abort();
+  }
 
   //-------------------------------------------------------------------------
   // Code generation support for creating individual machine instructions
