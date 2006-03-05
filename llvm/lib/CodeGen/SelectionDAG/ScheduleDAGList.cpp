@@ -214,7 +214,7 @@ class ScheduleDAGList : public ScheduleDAG {
 private:
   // SDNode to SUnit mapping (many to one).
   std::map<SDNode*, SUnit*> SUnitMap;
-  // The schedule.  Null SUnit*'s represend noop instructions.
+  // The schedule.  Null SUnit*'s represent noop instructions.
   std::vector<SUnit*> Sequence;
   // Current scheduling cycle.
   unsigned CurrCycle;
@@ -523,7 +523,7 @@ void ScheduleDAGList::ListScheduleTopDown() {
       // processors without pipeline interlocks and other cases.
       DEBUG(std::cerr << "*** Emitting noop");
       HazardRec->EmitNoop();
-      Sequence.push_back(0);   // NULL SUnit -> noop
+      Sequence.push_back(0);   // NULL SUnit* -> noop
       ++NumNoops;
     }
   }
