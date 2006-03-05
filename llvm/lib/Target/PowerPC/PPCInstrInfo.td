@@ -229,7 +229,6 @@ let usesCustomDAGSchedInserter = 1 in {  // Expanded by the scheduler.
                               i32imm:$BROPC), "; SELECT_CC PSEUDO!", []>;
 }
 
-
 let isTerminator = 1, noResults = 1 in {
   let isReturn = 1 in
     def BLR : XLForm_2_ext<19, 16, 20, 0, 0, (ops), "blr", BrB, [(retflag)]>;

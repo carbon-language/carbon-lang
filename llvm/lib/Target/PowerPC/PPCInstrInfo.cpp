@@ -146,3 +146,8 @@ MachineInstr *PPCInstrInfo::commuteInstruction(MachineInstr *MI) const {
   MI->getOperand(5).setImmedValue((MB-1) & 31);
   return MI;
 }
+
+void PPCInstrInfo::insertNoop(MachineBasicBlock &MBB, 
+                              MachineBasicBlock::iterator MI) const {
+  BuildMI(MBB, MI, PPC::NOP, 0);
+}

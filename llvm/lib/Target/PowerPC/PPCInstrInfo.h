@@ -46,6 +46,9 @@ public:
   // rotate amt is zero.  We also have to munge the immediates a bit.
   virtual MachineInstr *commuteInstruction(MachineInstr *MI) const;
   
+  virtual void insertNoop(MachineBasicBlock &MBB, 
+                          MachineBasicBlock::iterator MI) const;
+
   static unsigned invertPPCBranchOpcode(unsigned Opcode) {
     switch (Opcode) {
     default: assert(0 && "Unknown PPC branch opcode!");
