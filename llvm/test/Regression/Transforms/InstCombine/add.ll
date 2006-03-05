@@ -220,3 +220,10 @@ int %test31(int %A) {
 	%D = sub int %C, 20
 	ret int %D
 }
+
+int %test32(int %A) {
+	%B = add int %A, 4
+	%C = shl int %B, ubyte 2
+	%D = sub int %C, 16
+	ret int %D
+}
