@@ -308,14 +308,18 @@ namespace llvm {
     /// EmitNode - Generate machine code for an node and needed dependencies.
     ///
     void EmitNode(NodeInfo *NI);
-
+    
+    /// EmitNoop - Emit a noop instruction.
+    ///
+    void EmitNoop();
+    
     /// EmitAll - Emit all nodes in schedule sorted order.
     ///
     void EmitAll();
 
     /// Schedule - Order nodes according to selected style.
     ///
-    virtual void Schedule() {};
+    virtual void Schedule() {}
 
     /// printNI - Print node info.
     ///
