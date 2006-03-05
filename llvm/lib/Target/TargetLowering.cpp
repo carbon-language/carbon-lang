@@ -580,24 +580,6 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
                                        CountTrailingZeros_64(~KnownZero2));
       KnownZero = (1ULL << KnownZeroOut) - 1;
       KnownOne = 0;
-      
-      SDOperand SH = Op.getOperand(0);
-      // fold (add (shl x, c1), (shl c2, c1)) -> (shl (add x, c2), c1)
-      if (KnownZero && SH.getOpcode() == ISD::SHL && SH.Val->hasOneUse() &&
-          Op.Val->hasOneUse()) {
-        if (ConstantSDNode *SA = dyn_cast<ConstantSDNode>(SH.getOperand(1))) {
-          MVT::ValueType VT = Op.getValueType();
-          unsigned ShiftAmt = SA->getValue();
-          uint64_t AddAmt = AA->getValue();
-          uint64_t AddShr = AddAmt >> ShiftAmt;
-          if (AddAmt == (AddShr << ShiftAmt)) {
-            SDOperand ADD = TLO.DAG.getNode(ISD::ADD, VT, SH.getOperand(0),
-                                            TLO.DAG.getConstant(AddShr, VT));
-            SDOperand SHL = TLO.DAG.getNode(ISD::SHL, VT, ADD,SH.getOperand(1));
-            return TLO.CombineTo(Op, SHL);
-          }
-        }
-      }
     }
     break;
   case ISD::SUB:
