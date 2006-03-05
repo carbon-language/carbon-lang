@@ -29,6 +29,11 @@
 #include <algorithm>
 using namespace llvm;
 
+#ifdef _MSC_VER
+#include <float.h>
+#define copysign _copysign
+#endif
+
 static bool isCommutativeBinOp(unsigned Opcode) {
   switch (Opcode) {
   case ISD::ADD:
