@@ -81,6 +81,10 @@ IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
       setOperationAction(ISD::FCOS , MVT::f32, Expand);
       setOperationAction(ISD::FSQRT, MVT::f32, Expand);
 
+      // FIXME: IA64 supports fcopysign natively!
+      setOperationAction(ISD::FCOPYSIGN, MVT::f64, Expand);
+      setOperationAction(ISD::FCOPYSIGN, MVT::f32, Expand);
+      
       // We don't have line number support yet.
       setOperationAction(ISD::LOCATION, MVT::Other, Expand);
       setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
