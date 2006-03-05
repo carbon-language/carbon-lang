@@ -37,7 +37,7 @@ namespace llvm {
   // Scheduling heuristics
   enum SchedHeuristics {
     defaultScheduling,      // Let the target specify its preference.
-    noScheduling,           // No scheduling, emit breath first sequence.
+    noScheduling,           // No scheduling, emit breadth first sequence.
     simpleScheduling,       // Two pass, min. critical path, max. utilization.
     simpleNoItinScheduling, // Same as above exact using generic latency.
     listSchedulingBURR,     // Bottom up reg reduction list scheduling.
