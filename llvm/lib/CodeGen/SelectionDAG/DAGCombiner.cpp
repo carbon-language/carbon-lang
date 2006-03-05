@@ -195,6 +195,7 @@ namespace {
     SDOperand visitFMUL(SDNode *N);
     SDOperand visitFDIV(SDNode *N);
     SDOperand visitFREM(SDNode *N);
+    SDOperand visitFCOPYSIGN(SDNode *N);
     SDOperand visitSINT_TO_FP(SDNode *N);
     SDOperand visitUINT_TO_FP(SDNode *N);
     SDOperand visitFP_TO_SINT(SDNode *N);
@@ -627,6 +628,7 @@ SDOperand DAGCombiner::visit(SDNode *N) {
   case ISD::FMUL:               return visitFMUL(N);
   case ISD::FDIV:               return visitFDIV(N);
   case ISD::FREM:               return visitFREM(N);
+  case ISD::FCOPYSIGN:          return visitFCOPYSIGN(N);
   case ISD::SINT_TO_FP:         return visitSINT_TO_FP(N);
   case ISD::UINT_TO_FP:         return visitUINT_TO_FP(N);
   case ISD::FP_TO_SINT:         return visitFP_TO_SINT(N);
@@ -1999,6 +2001,54 @@ SDOperand DAGCombiner::visitFREM(SDNode *N) {
   return SDOperand();
 }
 
+SDOperand DAGCombiner::visitFCOPYSIGN(SDNode *N) {
+  SDOperand N0 = N->getOperand(0);
+  SDOperand N1 = N->getOperand(1);
+  ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0);
+  ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1);
+  MVT::ValueType VT = N->getValueType(0);
+
+  if (N0CFP && N1CFP)  // Constant fold
+    return DAG.getNode(ISD::FCOPYSIGN, VT, N0, N1);
+  
+  if (N1CFP) {
+    // copysign(x, c1) -> fabs(x)       iff ispos(c1)
+    // copysign(x, c1) -> fneg(fabs(x)) iff isneg(c1)
+    union {
+      double d;
+      int64_t i;
+    } u;
+    u.d = N1CFP->getValue();
+    if (u.i >= 0)
+      return DAG.getNode(ISD::FABS, VT, N0);
+    else
+      return DAG.getNode(ISD::FNEG, VT, DAG.getNode(ISD::FABS, VT, N0));
+  }
+  
+  // copysign(fabs(x), y) -> copysign(x, y)
+  // copysign(fneg(x), y) -> copysign(x, y)
+  // copysign(copysign(x,z), y) -> copysign(x, y)
+  if (N0.getOpcode() == ISD::FABS || N0.getOpcode() == ISD::FNEG ||
+      N0.getOpcode() == ISD::FCOPYSIGN)
+    return DAG.getNode(ISD::FCOPYSIGN, VT, N0.getOperand(0), N1);
+
+  // copysign(x, abs(y)) -> abs(x)
+  if (N1.getOpcode() == ISD::FABS)
+    return DAG.getNode(ISD::FABS, VT, N0);
+  
+  // copysign(x, copysign(y,z)) -> copysign(x, z)
+  if (N1.getOpcode() == ISD::FCOPYSIGN)
+    return DAG.getNode(ISD::FCOPYSIGN, VT, N0, N1.getOperand(1));
+  
+  // copysign(x, fp_extend(y)) -> copysign(x, y)
+  // copysign(x, fp_round(y)) -> copysign(x, y)
+  if (N1.getOpcode() == ISD::FP_EXTEND || N1.getOpcode() == ISD::FP_ROUND)
+    return DAG.getNode(ISD::FCOPYSIGN, VT, N0, N1.getOperand(0));
+  
+  return SDOperand();
+}
+
+
 
 SDOperand DAGCombiner::visitSINT_TO_FP(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
@@ -2089,11 +2139,11 @@ SDOperand DAGCombiner::visitFNEG(SDNode *N) {
   if (N0CFP)
     return DAG.getNode(ISD::FNEG, VT, N0);
   // fold (fneg (sub x, y)) -> (sub y, x)
-  if (N->getOperand(0).getOpcode() == ISD::SUB)
-    return DAG.getNode(ISD::SUB, VT, N->getOperand(1), N->getOperand(0));
+  if (N0.getOpcode() == ISD::SUB)
+    return DAG.getNode(ISD::SUB, VT, N0.getOperand(1), N0.getOperand(0));
   // fold (fneg (fneg x)) -> x
-  if (N->getOperand(0).getOpcode() == ISD::FNEG)
-    return N->getOperand(0).getOperand(0);
+  if (N0.getOpcode() == ISD::FNEG)
+    return N0.getOperand(0);
   return SDOperand();
 }
 
@@ -2106,11 +2156,13 @@ SDOperand DAGCombiner::visitFABS(SDNode *N) {
   if (N0CFP)
     return DAG.getNode(ISD::FABS, VT, N0);
   // fold (fabs (fabs x)) -> (fabs x)
-  if (N->getOperand(0).getOpcode() == ISD::FABS)
+  if (N0.getOpcode() == ISD::FABS)
     return N->getOperand(0);
   // fold (fabs (fneg x)) -> (fabs x)
-  if (N->getOperand(0).getOpcode() == ISD::FNEG)
-    return DAG.getNode(ISD::FABS, VT, N->getOperand(0).getOperand(0));
+  // fold (fabs (fcopysign x, y)) -> (fabs x)
+  if (N0.getOpcode() == ISD::FNEG || N0.getOpcode() == ISD::FCOPYSIGN)
+    return DAG.getNode(ISD::FABS, VT, N0.getOperand(0));
+  
   return SDOperand();
 }
 

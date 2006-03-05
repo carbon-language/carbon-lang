@@ -1250,6 +1250,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       case ISD::FREM :
         if (C2) return getConstantFP(fmod(C1, C2), VT);
         break;
+      case ISD::FCOPYSIGN:
+        return getConstantFP(copysign(C1, C2), VT);
       default: break;
       }
     } else {      // Cannonicalize constant to RHS if commutative
