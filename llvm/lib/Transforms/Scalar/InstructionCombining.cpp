@@ -6549,42 +6549,77 @@ Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
   return 0;
 }
 
+/// CheapToScalarize - Return true if the value is cheaper to scalarize than it
+/// is to leave as a vector operation.
+static bool CheapToScalarize(Value *V, bool isConstant) {
+  if (isa<ConstantAggregateZero>(V)) 
+    return true;
+  if (ConstantPacked *C = dyn_cast<ConstantPacked>(V)) {
+    if (isConstant) return true;
+    // If all elts are the same, we can extract.
+    Constant *Op0 = C->getOperand(0);
+    for (unsigned i = 1; i < C->getNumOperands(); ++i)
+      if (C->getOperand(i) != Op0)
+        return false;
+    return true;
+  }
+  Instruction *I = dyn_cast<Instruction>(V);
+  if (!I) return false;
+  
+  // Insert element gets simplified to the inserted element or is deleted if
+  // this is constant idx extract element and its a constant idx insertelt.
+  if (I->getOpcode() == Instruction::InsertElement && isConstant &&
+      isa<ConstantInt>(I->getOperand(2)))
+    return true;
+  if (I->getOpcode() == Instruction::Load && I->hasOneUse())
+    return true;
+  if (BinaryOperator *BO = dyn_cast<BinaryOperator>(I))
+    if (BO->hasOneUse() &&
+        (CheapToScalarize(BO->getOperand(0), isConstant) ||
+         CheapToScalarize(BO->getOperand(1), isConstant)))
+      return true;
+  
+  return false;
+}
+
 Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
   if (ConstantAggregateZero *C = 
       dyn_cast<ConstantAggregateZero>(EI.getOperand(0))) {
     // If packed val is constant 0, replace extract with scalar 0
     const Type *Ty = cast<PackedType>(C->getType())->getElementType();
-    EI.replaceAllUsesWith(Constant::getNullValue(Ty));
     return ReplaceInstUsesWith(EI, Constant::getNullValue(Ty));
   }
   if (ConstantPacked *C = dyn_cast<ConstantPacked>(EI.getOperand(0))) {
     // If packed val is constant with uniform operands, replace EI
     // with that operand
-    Constant *op0 = cast<Constant>(C->getOperand(0));
+    Constant *op0 = C->getOperand(0);
     for (unsigned i = 1; i < C->getNumOperands(); ++i)
-      if (C->getOperand(i) != op0) return 0;
-    return ReplaceInstUsesWith(EI, op0);
+      if (C->getOperand(i) != op0) {
+        op0 = 0; 
+        break;
+      }
+    if (op0)
+      return ReplaceInstUsesWith(EI, op0);
   }
+  
   if (Instruction *I = dyn_cast<Instruction>(EI.getOperand(0)))
     if (I->hasOneUse()) {
       // Push extractelement into predecessor operation if legal and
       // profitable to do so
       if (BinaryOperator *BO = dyn_cast<BinaryOperator>(I)) {
-        if (!isa<Constant>(BO->getOperand(0)) &&
-            !isa<Constant>(BO->getOperand(1)))
-          return 0;
-        ExtractElementInst *newEI0 = 
-          new ExtractElementInst(BO->getOperand(0), EI.getOperand(1),
-                                 EI.getName());
-        ExtractElementInst *newEI1 =
-          new ExtractElementInst(BO->getOperand(1), EI.getOperand(1),
-                                 EI.getName());
-        InsertNewInstBefore(newEI0, EI);
-        InsertNewInstBefore(newEI1, EI);
-        return BinaryOperator::create(BO->getOpcode(), newEI0, newEI1);
-      }
-      switch(I->getOpcode()) {
-      case Instruction::Load: {
+        bool isConstantElt = isa<ConstantInt>(EI.getOperand(1));
+        if (CheapToScalarize(BO, isConstantElt)) {
+          ExtractElementInst *newEI0 = 
+            new ExtractElementInst(BO->getOperand(0), EI.getOperand(1),
+                                   EI.getName()+".lhs");
+          ExtractElementInst *newEI1 =
+            new ExtractElementInst(BO->getOperand(1), EI.getOperand(1),
+                                   EI.getName()+".rhs");
+          InsertNewInstBefore(newEI0, EI);
+          InsertNewInstBefore(newEI1, EI);
+          return BinaryOperator::create(BO->getOpcode(), newEI0, newEI1);
+        }
+      } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
         Value *Ptr = InsertCastBefore(I->getOperand(0),
                                       PointerType::get(EI.getType()), EI);
         GetElementPtrInst *GEP = 
@@ -6592,9 +6627,14 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
                                 I->getName() + ".gep");
         InsertNewInstBefore(GEP, EI);
         return new LoadInst(GEP);
-      }
-      default:
-        return 0;
+      } else if (InsertElementInst *IE = dyn_cast<InsertElementInst>(I)) {
+        // Extracting the inserted element?
+        if (IE->getOperand(2) == EI.getOperand(1))
+          return ReplaceInstUsesWith(EI, IE->getOperand(1));
+        // If the inserted and extracted elements are constants, they must not
+        // be the same value, replace with the pre-inserted value.
+        if (isa<Constant>(IE->getOperand(2)) && isa<Constant>(EI.getOperand(1)))
+          return ReplaceInstUsesWith(EI, IE->getOperand(0));
       }
     }
   return 0;
