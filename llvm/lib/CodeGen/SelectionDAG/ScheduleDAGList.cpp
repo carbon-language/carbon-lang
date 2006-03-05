@@ -164,14 +164,15 @@ class ScheduleDAGList : public ScheduleDAG {
 private:
   // SDNode to SUnit mapping (many to one).
   std::map<SDNode*, SUnit*> SUnitMap;
-  // Available queue.
-  std::priority_queue<SUnit*, std::vector<SUnit*>, ls_rr_sort> Available;
   // The schedule.
   std::vector<SUnit*> Sequence;
   // Current scheduling cycle.
   unsigned CurrCycle;
   // First and last SUnit created.
   SUnit *HeadSUnit, *TailSUnit;
+
+  typedef std::priority_queue<SUnit*, std::vector<SUnit*>, ls_rr_sort>
+    AvailableQueueTy;
 
 public:
   ScheduleDAGList(SelectionDAG &dag, MachineBasicBlock *bb,
@@ -194,8 +195,8 @@ public:
 
 private:
   SUnit *NewSUnit(SDNode *N);
-  void ReleasePred(SUnit *PredSU, bool isChain = false);
-  void ScheduleNode(SUnit *SU);
+  void ReleasePred(AvailableQueueTy &Avail,SUnit *PredSU, bool isChain = false);
+  void ScheduleNode(AvailableQueueTy &Avail, SUnit *SU);
   int  CalcNodePriority(SUnit *SU);
   void CalculatePriorities();
   void ListSchedule();
@@ -220,7 +221,8 @@ SUnit *ScheduleDAGList::NewSUnit(SDNode *N) {
 
 /// ReleasePred - Decrement the NumSuccsLeft count of a predecessor. Add it to
 /// the Available queue is the count reaches zero. Also update its cycle bound.
-void ScheduleDAGList::ReleasePred(SUnit *PredSU, bool isChain) {
+void ScheduleDAGList::ReleasePred(AvailableQueueTy &Available, 
+                                  SUnit *PredSU, bool isChain) {
   SDNode *PredNode = PredSU->Node;
 
   // FIXME: the distance between two nodes is not always == the predecessor's
@@ -251,7 +253,7 @@ void ScheduleDAGList::ReleasePred(SUnit *PredSU, bool isChain) {
 /// ScheduleNode - Add the node to the schedule. Decrement the pending count of
 /// its predecessors. If a predecessor pending count is zero, add it to the
 /// Available queue.
-void ScheduleDAGList::ScheduleNode(SUnit *SU) {
+void ScheduleDAGList::ScheduleNode(AvailableQueueTy &Available, SUnit *SU) {
   DEBUG(std::cerr << "*** Scheduling: ");
   DEBUG(SU->dump(&DAG, false));
 
@@ -261,13 +263,13 @@ void ScheduleDAGList::ScheduleNode(SUnit *SU) {
   // Bottom up: release predecessors
   for (std::set<SUnit*>::iterator I1 = SU->Preds.begin(),
          E1 = SU->Preds.end(); I1 != E1; ++I1) {
-    ReleasePred(*I1);
+    ReleasePred(Available, *I1);
     SU->NumPredsLeft--;
     SU->Priority1--;
   }
   for (std::set<SUnit*>::iterator I2 = SU->ChainPreds.begin(),
          E2 = SU->ChainPreds.end(); I2 != E2; ++I2)
-    ReleasePred(*I2, true);
+    ReleasePred(Available, *I2, true);
 
   CurrCycle++;
 }
@@ -280,7 +282,10 @@ static inline bool isReady(SUnit *SU, unsigned CurrCycle) {
 
 /// ListSchedule - The main loop of list scheduling.
 void ScheduleDAGList::ListSchedule() {
-  // Add root to Available queue
+  // Available queue.
+  AvailableQueueTy Available;
+
+  // Add root to Available queue.
   SUnit *Root = SUnitMap[DAG.getRoot().Val];
   Available.push(Root);
 
@@ -300,7 +305,7 @@ void ScheduleDAGList::ListSchedule() {
     for (unsigned i = 0, e = NotReady.size(); i != e; ++i)
       Available.push(NotReady[i]);
 
-    ScheduleNode(CurrNode);
+    ScheduleNode(Available, CurrNode);
   }
 
   // Add entry node last
