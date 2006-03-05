@@ -19,6 +19,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/ADT/Statistic.h"
 #include <climits>
 #include <iostream>
 #include <queue>
@@ -27,6 +28,8 @@
 using namespace llvm;
 
 namespace {
+  Statistic<> NumNoops ("scheduler", "Number of noops inserted");
+  Statistic<> NumStalls("scheduler", "Number of pipeline stalls");
 
 /// SUnit - Scheduling unit. It's an wrapper around either a single SDNode or a
 /// group of nodes flagged together.
@@ -511,13 +514,17 @@ void ScheduleDAGList::ListScheduleTopDown() {
     } else if (!HasNoopHazards) {
       // Otherwise, we have a pipeline stall, but no other problem, just advance
       // the current cycle and try again.
+      DEBUG(std::cerr << "*** Advancing cycle, no work to do");
       HazardRec->AdvanceCycle();
+      ++NumStalls;
     } else {
       // Otherwise, we have no instructions to issue and we have instructions
       // that will fault if we don't do this right.  This is the case for
       // processors without pipeline interlocks and other cases.
+      DEBUG(std::cerr << "*** Emitting noop");
       HazardRec->EmitNoop();
       // FIXME: Add a noop to the schedule!!
+      ++NumNoops;
     }
   }
 
@@ -731,11 +738,44 @@ llvm::ScheduleDAG* llvm::createBURRListDAGScheduler(SelectionDAG &DAG,
 }
 
 /// G5HazardRecognizer - A hazard recognizer for the PowerPC G5 processor.
-/// FIXME: Implement
 /// FIXME: Move to the PowerPC backend.
 class G5HazardRecognizer : public HazardRecognizer {
+  // Totally bogus hazard recognizer, used to test noop insertion. This requires
+  // a noop between copyfromreg's.
+  unsigned EmittedCopyFromReg;
 public:
-  G5HazardRecognizer() {}
+  G5HazardRecognizer() {
+    EmittedCopyFromReg = 0;
+  }
+  
+  virtual HazardType getHazardType(SDNode *Node) {
+    if (Node->getOpcode() == ISD::CopyFromReg && EmittedCopyFromReg)
+      return NoopHazard;
+    return NoHazard;
+  }
+  
+  /// EmitInstruction - This callback is invoked when an instruction is
+  /// emitted, to advance the hazard state.
+  virtual void EmitInstruction(SDNode *Node) {
+    if (Node->getOpcode() == ISD::CopyFromReg) {
+      EmittedCopyFromReg = 5; 
+    } else if (EmittedCopyFromReg) {
+      --EmittedCopyFromReg;
+    }
+  }
+  
+  /// AdvanceCycle - This callback is invoked when no instructions can be
+  /// issued on this cycle without a hazard.  This should increment the
+  /// internal state of the hazard recognizer so that previously "Hazard"
+  /// instructions will now not be hazards.
+  virtual void AdvanceCycle() {
+  }
+  
+  /// EmitNoop - This callback is invoked when a noop was added to the
+  /// instruction stream.
+  virtual void EmitNoop() {
+    --EmittedCopyFromReg;
+  }
 };
 
 
