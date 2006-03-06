@@ -28,6 +28,7 @@ namespace llvm {
   class MachineInstr;
   class TargetLowering;
   class FunctionLoweringInfo;
+  class HazardRecognizer;
 
 /// SelectionDAGISel - This is the common base class used for SelectionDAG-based
 /// pattern-matching instruction selectors.
@@ -60,6 +61,10 @@ public:
                                             SelectionDAG &DAG) {
     return true;
   }
+  
+  /// GetTargetHazardRecognizer - Return the hazard recognizer to use for this
+  /// target when scheduling the DAG.
+  virtual HazardRecognizer &GetTargetHazardRecognizer();
   
 protected:
   /// Pick a safe ordering and emit instructions for each target node in the
