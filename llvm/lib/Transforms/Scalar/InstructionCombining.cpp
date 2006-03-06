@@ -5264,6 +5264,60 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
   return 0;
 }
 
+/// GetKnownAlignment - If the specified pointer has an alignment that we can
+/// determine, return it, otherwise return 0.
+static unsigned GetKnownAlignment(Value *V, TargetData *TD) {
+  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
+    unsigned Align = GV->getAlignment();
+    if (Align == 0 && TD) 
+      Align = TD->getTypeAlignment(GV->getType()->getElementType());
+    return Align;
+  } else if (AllocationInst *AI = dyn_cast<AllocationInst>(V)) {
+    unsigned Align = AI->getAlignment();
+    if (Align == 0 && TD) {
+      if (isa<AllocaInst>(AI))
+        Align = TD->getTypeAlignment(AI->getType()->getElementType());
+      else if (isa<MallocInst>(AI)) {
+        // Malloc returns maximally aligned memory.
+        Align = TD->getTypeAlignment(AI->getType()->getElementType());
+        Align = std::max(Align, (unsigned)TD->getTypeAlignment(Type::DoubleTy));
+        Align = std::max(Align, (unsigned)TD->getTypeAlignment(Type::LongTy));
+      }
+    }
+    return Align;
+  } else if (CastInst *CI = dyn_cast<CastInst>(V)) {
+    if (isa<PointerType>(CI->getOperand(0)->getType()))
+      return GetKnownAlignment(CI->getOperand(0), TD);
+    return 0;
+  } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(V)) {
+    unsigned BaseAlignment = GetKnownAlignment(GEPI->getOperand(0), TD);
+    if (BaseAlignment == 0) return 0;
+    
+    // If all indexes are zero, it is just the alignment of the base pointer.
+    bool AllZeroOperands = true;
+    for (unsigned i = 1, e = GEPI->getNumOperands(); i != e; ++i)
+      if (!isa<Constant>(GEPI->getOperand(i)) ||
+          !cast<Constant>(GEPI->getOperand(i))->isNullValue()) {
+        AllZeroOperands = false;
+        break;
+      }
+    if (AllZeroOperands)
+      return BaseAlignment;
+    
+    // Otherwise, if the base alignment is >= the alignment we expect for the
+    // base pointer type, then we know that the resultant pointer is aligned at
+    // least as much as its type requires.
+    if (!TD) return 0;
+
+    const Type *BasePtrTy = GEPI->getOperand(0)->getType();
+    if (TD->getTypeAlignment(cast<PointerType>(BasePtrTy)->getElementType())
+        <= BaseAlignment)
+      return TD->getTypeAlignment(GEPI->getType()->getElementType());
+    return 0;
+  }
+  return 0;
+}
+
 
 /// visitCallInst - CallInst simplification.  This mostly only handles folding 
 /// of intrinsic instructions.  For normal calls, it allows visitCallSite to do
@@ -5282,8 +5336,6 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     if (Constant *NumBytes = dyn_cast<Constant>(MI->getLength())) {
       if (NumBytes->isNullValue()) return EraseInstFromFunction(CI);
 
-      // FIXME: Increase alignment here.
-
       if (ConstantInt *CI = dyn_cast<ConstantInt>(NumBytes))
         if (CI->getRawValue() == 1) {
           // Replace the instruction with just byte operations.  We would
@@ -5295,7 +5347,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     // If we have a memmove and the source operation is a constant global,
     // then the source and dest pointers can't alias, so we can change this
     // into a call to memcpy.
-    if (MemMoveInst *MMI = dyn_cast<MemMoveInst>(II))
+    if (MemMoveInst *MMI = dyn_cast<MemMoveInst>(II)) {
       if (GlobalVariable *GVSrc = dyn_cast<GlobalVariable>(MMI->getSource()))
         if (GVSrc->isConstant()) {
           Module *M = CI.getParent()->getParent()->getParent();
@@ -5310,7 +5362,26 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
           CI.setOperand(0, MemCpy);
           Changed = true;
         }
+    }
 
+    // If we can determine a pointer alignment that is bigger than currently
+    // set, update the alignment.
+    if (isa<MemCpyInst>(MI) || isa<MemMoveInst>(MI)) {
+      unsigned Alignment1 = GetKnownAlignment(MI->getOperand(1), TD);
+      unsigned Alignment2 = GetKnownAlignment(MI->getOperand(2), TD);
+      unsigned Align = std::min(Alignment1, Alignment2);
+      if (MI->getAlignment()->getRawValue() < Align) {
+        MI->setAlignment(ConstantUInt::get(Type::UIntTy, Align));
+        Changed = true;
+      }
+    } else if (isa<MemSetInst>(MI)) {
+      unsigned Alignment = GetKnownAlignment(MI->getDest(), TD);
+      if (MI->getAlignment()->getRawValue() < Alignment) {
+        MI->setAlignment(ConstantUInt::get(Type::UIntTy, Alignment));
+        Changed = true;
+      }
+    }
+          
     if (Changed) return II;
   } else if (DbgStopPointInst *SPI = dyn_cast<DbgStopPointInst>(II)) {
     // If this stoppoint is at the same source location as the previous
