@@ -120,8 +120,6 @@ void SUnit::dump(const SelectionDAG *G, bool All) const {
 /// Sorting functions for the Available queue.
 struct ls_rr_sort : public std::binary_function<SUnit*, SUnit*, bool> {
   bool operator()(const SUnit* left, const SUnit* right) const {
-    bool LFloater = (left ->Preds.size() == 0);
-    bool RFloater = (right->Preds.size() == 0);
     int LBonus = (int)left ->isDefNUseOperand;
     int RBonus = (int)right->isDefNUseOperand;
 
@@ -144,19 +142,14 @@ struct ls_rr_sort : public std::binary_function<SUnit*, SUnit*, bool> {
     int LPriority2 = left ->SethiUllman + LBonus;
     int RPriority2 = right->SethiUllman + RBonus;
 
-    // Favor floaters (i.e. node with no non-passive predecessors):
-    // e.g. MOV32ri.
-    if (!LFloater && RFloater)
+    if (LPriority1 > RPriority1)
       return true;
-    else if (LFloater == RFloater)
-      if (LPriority1 > RPriority1)
+    else if (LPriority1 == RPriority1)
+      if (LPriority2 < RPriority2)
         return true;
-      else if (LPriority1 == RPriority1)
-        if (LPriority2 < RPriority2)
+      else if (LPriority2 == RPriority2)
+        if (left->CycleBound > right->CycleBound) 
           return true;
-        else if (LPriority2 == RPriority2)
-          if (left->CycleBound > right->CycleBound) 
-            return true;
 
     return false;
   }
