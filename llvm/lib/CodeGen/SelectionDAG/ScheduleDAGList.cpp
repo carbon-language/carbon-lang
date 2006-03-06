@@ -7,9 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This implements a simple two pass scheduler.  The first pass attempts to push
-// backward any lengthy instructions and critical paths.  The second pass packs
-// instructions into semi-optimal time slots.
+// This implements bottom-up and top-down list schedulers, using standard
+// algorithms.  The basic approach uses a priority queue of available nodes to
+// schedule.  One at a time, nodes are taken from the priority queue (thus in
+// priority order), checked for legality to schedule, and emitted if legal.
+//
+// Nodes may not be legal to schedule either due to structural hazards (e.g.
+// pipeline or resource constraints) or because an input to the instruction has
+// not completed execution.
 //
 //===----------------------------------------------------------------------===//
 
