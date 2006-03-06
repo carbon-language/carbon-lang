@@ -44,8 +44,7 @@ struct SUnit {
   int NumSuccsLeft;                   // # of succs not scheduled.
   int NumChainPredsLeft;              // # of chain preds not scheduled.
   int NumChainSuccsLeft;              // # of chain succs not scheduled.
-  int Priority1;                      // Scheduling priority 1.
-  int Priority2;                      // Scheduling priority 2.
+  int SethiUllman;                    // Sethi Ullman number.
   bool isTwoAddress;                  // Is a two-address instruction.
   bool isDefNUseOperand;              // Is a def&use operand.
   unsigned Latency;                   // Node latency.
@@ -56,7 +55,7 @@ struct SUnit {
   SUnit(SDNode *node)
     : Node(node), NumPredsLeft(0), NumSuccsLeft(0),
       NumChainPredsLeft(0), NumChainSuccsLeft(0),
-      Priority1(INT_MIN), Priority2(INT_MIN),
+      SethiUllman(INT_MIN),
       isTwoAddress(false), isDefNUseOperand(false),
       Latency(0), CycleBound(0), Slot(0), Next(NULL) {}
 
@@ -81,8 +80,7 @@ void SUnit::dump(const SelectionDAG *G, bool All) const {
     std::cerr << "  # chain preds left : " << NumChainPredsLeft << "\n";
     std::cerr << "  # chain succs left : " << NumChainSuccsLeft << "\n";
     std::cerr << "  Latency            : " << Latency << "\n";
-    std::cerr << "  Priority           : " << Priority1 << " , "
-              << Priority2 << "\n";
+    std::cerr << "  SethiUllman        : " << SethiUllman << "\n";
 
     if (Preds.size() != 0) {
       std::cerr << "  Predecessors:\n";
@@ -140,10 +138,11 @@ struct ls_rr_sort : public std::binary_function<SUnit*, SUnit*, bool> {
         RBonus++;
     }
 
-    int LPriority1 = left ->Priority1 - LBonus;
-    int RPriority1 = right->Priority1 - RBonus;
-    int LPriority2 = left ->Priority2 + LBonus;
-    int RPriority2 = right->Priority2 + RBonus;
+    // Priority1 is just the number of live range genned.
+    int LPriority1 = left ->NumPredsLeft - LBonus;
+    int RPriority1 = right->NumPredsLeft - RBonus;
+    int LPriority2 = left ->SethiUllman + LBonus;
+    int RPriority2 = right->SethiUllman + RBonus;
 
     // Favor floaters (i.e. node with no non-passive predecessors):
     // e.g. MOV32ri.
@@ -155,7 +154,7 @@ struct ls_rr_sort : public std::binary_function<SUnit*, SUnit*, bool> {
       else if (LPriority1 == RPriority1)
         if (LPriority2 < RPriority2)
           return true;
-        else if (LPriority1 == RPriority1)
+        else if (LPriority2 == RPriority2)
           if (left->CycleBound > right->CycleBound) 
             return true;
 
@@ -249,10 +248,9 @@ void ScheduleDAGList::ReleasePred(AvailableQueueTy &Available,
   // interrupt model (drain vs. freeze).
   PredSU->CycleBound = std::max(PredSU->CycleBound, CurrCycle + PredSU->Latency);
 
-  if (!isChain) {
+  if (!isChain)
     PredSU->NumSuccsLeft--;
-    PredSU->Priority1++;
-  } else
+  else
     PredSU->NumChainSuccsLeft--;
   
 #ifndef NDEBUG
@@ -281,10 +279,9 @@ void ScheduleDAGList::ReleaseSucc(AvailableQueueTy &Available,
   // interrupt model (drain vs. freeze).
   SuccSU->CycleBound = std::max(SuccSU->CycleBound, CurrCycle + SuccSU->Latency);
   
-  if (!isChain) {
+  if (!isChain)
     SuccSU->NumPredsLeft--;
-    SuccSU->Priority1++;          // FIXME: ??
-  } else
+  else
     SuccSU->NumChainPredsLeft--;
   
 #ifndef NDEBUG
@@ -316,7 +313,6 @@ void ScheduleDAGList::ScheduleNodeBottomUp(AvailableQueueTy &Available,
          E1 = SU->Preds.end(); I1 != E1; ++I1) {
     ReleasePred(Available, *I1);
     SU->NumPredsLeft--;
-    SU->Priority1--;
   }
   for (std::set<SUnit*>::iterator I2 = SU->ChainPreds.begin(),
          E2 = SU->ChainPreds.end(); I2 != E2; ++I2)
@@ -341,7 +337,6 @@ void ScheduleDAGList::ScheduleNodeTopDown(AvailableQueueTy &Available,
        E1 = SU->Succs.end(); I1 != E1; ++I1) {
     ReleaseSucc(Available, *I1);
     SU->NumSuccsLeft--;
-    SU->Priority1--;           // FIXME: what is this??
   }
   for (std::set<SUnit*>::iterator I2 = SU->ChainSuccs.begin(),
        E2 = SU->ChainSuccs.end(); I2 != E2; ++I2)
@@ -501,39 +496,34 @@ void ScheduleDAGList::ListScheduleTopDown() {
 }
 
 
-/// CalcNodePriority - Priority1 is just the number of live range genned -
-/// number of live range killed. Priority2 is the Sethi Ullman number. It
-/// returns Priority2 since it is calculated recursively.
-/// Smaller number is the higher priority for Priority2. Reverse is true for
-/// Priority1.
+/// CalcNodePriority - Priority is the Sethi Ullman number. 
+/// Smaller number is the higher priority.
 int ScheduleDAGList::CalcNodePriority(SUnit *SU) {
-  if (SU->Priority2 != INT_MIN)
-    return SU->Priority2;
-
-  SU->Priority1 = SU->NumPredsLeft - SU->NumSuccsLeft;
+  if (SU->SethiUllman != INT_MIN)
+    return SU->SethiUllman;
 
   if (SU->Preds.size() == 0) {
-    SU->Priority2 = 1;
+    SU->SethiUllman = 1;
   } else {
     int Extra = 0;
     for (std::set<SUnit*>::iterator I = SU->Preds.begin(),
            E = SU->Preds.end(); I != E; ++I) {
       SUnit *PredSU = *I;
-      int PredPriority = CalcNodePriority(PredSU);
-      if (PredPriority > SU->Priority2) {
-        SU->Priority2 = PredPriority;
+      int PredSethiUllman = CalcNodePriority(PredSU);
+      if (PredSethiUllman > SU->SethiUllman) {
+        SU->SethiUllman = PredSethiUllman;
         Extra = 0;
-      } else if (PredPriority == SU->Priority2)
+      } else if (PredSethiUllman == SU->SethiUllman)
         Extra++;
     }
 
     if (SU->Node->getOpcode() != ISD::TokenFactor)
-      SU->Priority2 += Extra;
+      SU->SethiUllman += Extra;
     else
-      SU->Priority2 = (Extra == 1) ? 0 : Extra-1;
+      SU->SethiUllman = (Extra == 1) ? 0 : Extra-1;
   }
 
-  return SU->Priority2;
+  return SU->SethiUllman;
 }
 
 /// CalculatePriorities - Calculate priorities of all scheduling units.
