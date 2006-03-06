@@ -76,8 +76,8 @@ namespace {
                  "except using generic latency"),
       clEnumValN(listSchedulingBURR, "list-burr",
                  "Bottom up register reduction list scheduling"),
-      clEnumValN(listSchedulingG5, "list-g5",
-                 "Scheduling for the PowerPC G5"),
+      clEnumValN(listSchedulingTD, "list-td",
+                 "Top-down list scheduler"),
       clEnumValEnd));
 } // namespace
 
@@ -2473,12 +2473,18 @@ void SelectionDAGISel::ScheduleAndEmitDAG(SelectionDAG &DAG) {
   case listSchedulingBURR:
     SL = createBURRListDAGScheduler(DAG, BB);
     break;
-  case listSchedulingG5:
-    SL = createTDG5ListDAGScheduler(DAG, BB);
+  case listSchedulingTD:
+    SL = createTDListDAGScheduler(DAG, BB, GetTargetHazardRecognizer());
     break;
   }
   BB = SL->Run();
   delete SL;
+}
+
+HazardRecognizer &SelectionDAGISel::
+GetTargetHazardRecognizer() {
+  static HazardRecognizer DefaultRecognizer;
+  return DefaultRecognizer;
 }
 
 /// SelectInlineAsmMemoryOperands - Calls to this are automatically generated
