@@ -406,13 +406,13 @@ int main(int argc, char **argv, char **envp) {
     progname = sys::Path(argv[0]).getBasename();
     Linker TheLinker(progname, OutputFilename, Verbose);
 
-    // Set up the library paths for the Linker
-    TheLinker.addPaths(LibPaths);
-    TheLinker.addSystemPaths();
-
     // Parse the command line options
     cl::ParseCommandLineOptions(argc, argv, " llvm linker\n");
     sys::PrintStackTraceOnErrorSignal();
+
+    // Set up the library paths for the Linker
+    TheLinker.addPaths(LibPaths);
+    TheLinker.addSystemPaths();
 
     // Remove any consecutive duplicates of the same library...
     Libraries.erase(std::unique(Libraries.begin(), Libraries.end()),
