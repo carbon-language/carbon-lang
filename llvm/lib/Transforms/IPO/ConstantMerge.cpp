@@ -39,7 +39,9 @@ namespace {
 ModulePass *llvm::createConstantMergePass() { return new ConstantMerge(); }
 
 bool ConstantMerge::runOnModule(Module &M) {
-  std::map<Constant*, GlobalVariable*> CMap;
+  // Map unique constant/section pairs to globals.  We don't want to merge
+  // globals in different sections.
+  std::map<std::pair<Constant*, std::string>, GlobalVariable*> CMap;
 
   // Replacements - This vector contains a list of replacements to perform.
   std::vector<std::pair<GlobalVariable*, GlobalVariable*> > Replacements;
@@ -56,23 +58,24 @@ bool ConstantMerge::runOnModule(Module &M) {
     // because doing so may cause initializers of other globals to be rewritten,
     // invalidating the Constant* pointers in CMap.
     //
-    for (Module::global_iterator GV = M.global_begin(), E = M.global_end(); GV != E; ++GV)
-      // Only process constants with initializers
+    for (Module::global_iterator GV = M.global_begin(), E = M.global_end();
+         GV != E; ++GV)
+      // Only process constants with initializers.
       if (GV->isConstant() && GV->hasInitializer()) {
         Constant *Init = GV->getInitializer();
 
-        // Check to see if the initializer is already known...
-        std::map<Constant*, GlobalVariable*>::iterator I = CMap.find(Init);
+        // Check to see if the initializer is already known.
+        GlobalVariable *&Slot = CMap[std::make_pair(Init, GV->getSection())];
 
-        if (I == CMap.end()) {    // Nope, add it to the map
-          CMap.insert(I, std::make_pair(Init, GV));
+        if (Slot == 0) {    // Nope, add it to the map.
+          Slot = GV;
         } else if (GV->hasInternalLinkage()) {    // Yup, this is a duplicate!
           // Make all uses of the duplicate constant use the canonical version.
-          Replacements.push_back(std::make_pair(GV, I->second));
-        } else if (I->second->hasInternalLinkage()) {
+          Replacements.push_back(std::make_pair(GV, Slot));
+        } else if (GV->hasInternalLinkage()) {
           // Make all uses of the duplicate constant use the canonical version.
-          Replacements.push_back(std::make_pair(I->second, GV));
-          I->second = GV;
+          Replacements.push_back(std::make_pair(Slot, GV));
+          Slot = GV;
         }
       }
 
