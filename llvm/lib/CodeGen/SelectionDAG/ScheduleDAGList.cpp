@@ -435,19 +435,27 @@ void ScheduleDAGList::ListScheduleTopDown() {
 
     bool HasNoopHazards = false;
     do {
-      SUnit *CurrNode = Available.top();
+      SUnit *CurNode = Available.top();
       Available.pop();
-      HazardRecognizer::HazardType HT =
-        HazardRec.getHazardType(CurrNode->Node);
+      
+      // Get the node represented by this SUnit.
+      SDNode *N = CurNode->Node;
+      // If this is a pseudo op, like copyfromreg, look to see if there is a
+      // real target node flagged to it.  If so, use the target node.
+      for (unsigned i = 0, e = CurNode->FlaggedNodes.size(); 
+           N->getOpcode() < ISD::BUILTIN_OP_END && i != e; ++i)
+        N = CurNode->FlaggedNodes[i];
+      
+      HazardRecognizer::HazardType HT = HazardRec.getHazardType(N);
       if (HT == HazardRecognizer::NoHazard) {
-        FoundNode = CurrNode;
+        FoundNode = CurNode;
         break;
       }
       
       // Remember if this is a noop hazard.
       HasNoopHazards |= HT == HazardRecognizer::NoopHazard;
       
-      NotReady.push_back(CurrNode);
+      NotReady.push_back(CurNode);
     } while (!Available.empty());
     
     // Add the nodes that aren't ready back onto the available list.
@@ -463,14 +471,14 @@ void ScheduleDAGList::ListScheduleTopDown() {
     } else if (!HasNoopHazards) {
       // Otherwise, we have a pipeline stall, but no other problem, just advance
       // the current cycle and try again.
-      DEBUG(std::cerr << "*** Advancing cycle, no work to do");
+      DEBUG(std::cerr << "*** Advancing cycle, no work to do\n");
       HazardRec.AdvanceCycle();
       ++NumStalls;
     } else {
       // Otherwise, we have no instructions to issue and we have instructions
       // that will fault if we don't do this right.  This is the case for
       // processors without pipeline interlocks and other cases.
-      DEBUG(std::cerr << "*** Emitting noop");
+      DEBUG(std::cerr << "*** Emitting noop\n");
       HazardRec.EmitNoop();
       Sequence.push_back(0);   // NULL SUnit* -> noop
       ++NumNoops;
