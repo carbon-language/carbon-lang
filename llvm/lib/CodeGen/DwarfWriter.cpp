@@ -1334,20 +1334,32 @@ DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc) {
         if (CompileUnitDesc *File = MemberDesc->getFile()) {
           CompileUnit *FileUnit = FindCompileUnit(File);
           unsigned FileID = FileUnit->getID();
-          int Line = TyDesc->getLine();
+          int Line = MemberDesc->getLine();
           Member->AddUInt(DW_AT_decl_file, 0, FileID);
           Member->AddUInt(DW_AT_decl_line, 0, Line);
         }
         
+        // FIXME - Bitfields not quite right but getting there.
+        uint64_t ByteSize = Size;
+        uint64_t ByteOffset = Offset;
+        
         if (TypeDesc *FromTy = MemberDesc->getFromType()) {
            Member->AddDIEntry(DW_AT_type, DW_FORM_ref4,
                               NewType(Context, FromTy));
+           ByteSize = FromTy->getSize();
+        }
+        
+        if (ByteSize != Size) {
+          ByteOffset -=  Offset % ByteSize;
+          Member->AddUInt(DW_AT_byte_size, 0, ByteSize >> 3);
+          Member->AddUInt(DW_AT_bit_size, 0, Size % ByteSize);
+          Member->AddUInt(DW_AT_bit_offset, 0, Offset - ByteOffset);
         }
         
         // Add computation for offset.
         DIEBlock *Block = new DIEBlock();
         Block->AddUInt(DW_FORM_data1, DW_OP_plus_uconst);
-        Block->AddUInt(DW_FORM_udata, Offset >> 3);
+        Block->AddUInt(DW_FORM_udata, ByteOffset >> 3);
         Block->ComputeSize(*this);
         Member->AddBlock(DW_AT_data_member_location, 0, Block);
         
