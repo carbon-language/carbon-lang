@@ -168,7 +168,9 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   // We don't have line number support yet.
   setOperationAction(ISD::LOCATION, MVT::Other, Expand);
   setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
-  setOperationAction(ISD::DEBUG_LABEL, MVT::Other, Expand);
+  // FIXME - use subtarget debug flags
+  if (!TM.getSubtarget<X86Subtarget>().isTargetDarwin())
+    setOperationAction(ISD::DEBUG_LABEL, MVT::Other, Expand);
 
   // VASTART needs to be custom lowered to use the VarArgsFrameIndex
   setOperationAction(ISD::VASTART           , MVT::Other, Custom);

@@ -27,8 +27,15 @@ using namespace x86;
 /// method to print assembly for each instruction.
 ///
 bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
+  // Let PassManager know we need debug information and relay
+  // the MachineDebugInfo address on to DwarfWriter.
+  DW.SetDebugInfo(&getAnalysis<MachineDebugInfo>());
+
   SetupMachineFunction(MF);
   O << "\n\n";
+
+  // Emit pre-function debug information.
+  DW.BeginFunction(MF);
 
   // Print out constants referenced by the function
   EmitConstantPool(MF.getConstantPool());
@@ -81,6 +88,9 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   if (HasDotTypeDotSizeDirective)
     O << "\t.size " << CurrentFnName << ", .-" << CurrentFnName << "\n";
 
+  // Emit post-function debug information.
+  DW.EndFunction(MF);
+
   // We didn't modify anything.
   return false;
 }
@@ -101,7 +111,9 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
 
   case MachineOperand::MO_SignExtendedImmed:
   case MachineOperand::MO_UnextendedImmed:
-    O << '$' << (int)MO.getImmedValue();
+    if (!Modifier || strcmp(Modifier, "debug") != 0)
+      O << '$';
+    O << (int)MO.getImmedValue();
     return;
   case MachineOperand::MO_MachineBasicBlock: {
     MachineBasicBlock *MBBOp = MO.getMachineBasicBlock();

@@ -18,6 +18,8 @@
 
 #include "X86.h"
 #include "llvm/CodeGen/AsmPrinter.h"
+#include "llvm/CodeGen/DwarfWriter.h"
+#include "llvm/CodeGen/MachineDebugInfo.h"
 #include "llvm/ADT/Statistic.h"
 #include <set>
 
@@ -27,14 +29,46 @@ namespace x86 {
 
 extern Statistic<> EmittedInsts;
 
+/// X86DwarfWriter - Dwarf debug info writer customized for Darwin/Mac OS X
+///
+struct X86DwarfWriter : public DwarfWriter {
+ // Ctor.
+X86DwarfWriter(std::ostream &o, AsmPrinter *ap)
+  : DwarfWriter(o, ap)
+    {
+      needsSet = true;
+      DwarfAbbrevSection = ".section __DWARFA,__debug_abbrev";
+      DwarfInfoSection = ".section __DWARFA,__debug_info";
+      DwarfLineSection = ".section __DWARFA,__debug_line";
+      DwarfFrameSection = ".section __DWARFA,__debug_frame";
+      DwarfPubNamesSection = ".section __DWARFA,__debug_pubnames";
+      DwarfPubTypesSection = ".section __DWARFA,__debug_pubtypes";
+      DwarfStrSection = ".section __DWARFA,__debug_str";
+      DwarfLocSection = ".section __DWARFA,__debug_loc";
+      DwarfARangesSection = ".section __DWARFA,__debug_aranges";
+      DwarfRangesSection = ".section __DWARFA,__debug_ranges";
+      DwarfMacInfoSection = ".section __DWARFA,__debug_macinfo";
+      TextSection = ".text";
+       DataSection = ".data";
+    }
+};
+
 struct X86SharedAsmPrinter : public AsmPrinter {
+  X86DwarfWriter DW;
+
   X86SharedAsmPrinter(std::ostream &O, TargetMachine &TM)
-    : AsmPrinter(O, TM), forDarwin(false) { }
+    : AsmPrinter(O, TM), DW(O, this), forDarwin(false) { }
 
   bool doInitialization(Module &M);
   bool doFinalization(Module &M);
 
-  bool forDarwin;  // FIXME: eliminate.
+  void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesAll();
+    AU.addRequired<MachineDebugInfo>();
+    MachineFunctionPass::getAnalysisUsage(AU);
+  }
+
+    bool forDarwin;  // FIXME: eliminate.
 
   // Necessary for Darwin to print out the apprioriate types of linker stubs
   std::set<std::string> FnStubs, GVStubs, LinkOnceStubs;

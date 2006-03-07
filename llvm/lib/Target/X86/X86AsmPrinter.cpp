@@ -75,6 +75,9 @@ bool X86SharedAsmPrinter::doInitialization(Module &M) {
   default: break;
   }
   
+  // Emit initial debug information.
+  DW.BeginModule(M);
+
   return AsmPrinter::doInitialization(M);
 }
 
@@ -186,6 +189,9 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
       O << "\t.long\t0\n";
     }
   }
+
+  // Emit initial debug information.
+  DW.EndModule(M);
 
   AsmPrinter::doFinalization(M);
   return false; // success
