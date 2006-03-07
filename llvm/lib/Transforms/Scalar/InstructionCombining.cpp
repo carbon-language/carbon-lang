@@ -5285,11 +5285,17 @@ static unsigned GetKnownAlignment(Value *V, TargetData *TD) {
       }
     }
     return Align;
-  } else if (CastInst *CI = dyn_cast<CastInst>(V)) {
+  } else if (isa<CastInst>(V) ||
+             (isa<ConstantExpr>(V) && 
+              cast<ConstantExpr>(V)->getOpcode() == Instruction::Cast)) {
+    User *CI = cast<User>(V);
     if (isa<PointerType>(CI->getOperand(0)->getType()))
       return GetKnownAlignment(CI->getOperand(0), TD);
     return 0;
-  } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(V)) {
+  } else if (isa<GetElementPtrInst>(V) ||
+             (isa<ConstantExpr>(V) && 
+              cast<ConstantExpr>(V)->getOpcode()==Instruction::GetElementPtr)) {
+    User *GEPI = cast<User>(V);
     unsigned BaseAlignment = GetKnownAlignment(GEPI->getOperand(0), TD);
     if (BaseAlignment == 0) return 0;
     
@@ -5311,8 +5317,10 @@ static unsigned GetKnownAlignment(Value *V, TargetData *TD) {
 
     const Type *BasePtrTy = GEPI->getOperand(0)->getType();
     if (TD->getTypeAlignment(cast<PointerType>(BasePtrTy)->getElementType())
-        <= BaseAlignment)
-      return TD->getTypeAlignment(GEPI->getType()->getElementType());
+        <= BaseAlignment) {
+      const Type *GEPTy = GEPI->getType();
+      return TD->getTypeAlignment(cast<PointerType>(GEPTy)->getElementType());
+    }
     return 0;
   }
   return 0;
