@@ -32,6 +32,7 @@ class PPCHazardRecognizer970 : public HazardRecognizer {
   unsigned NumLSU;     // Number of Load/Store instructions
   unsigned NumFPU;     // Number of Floating Point instructions
   bool     HasCR;      // True if Condition Register instruction issued
+  bool     HasSPR;     // True if Special-Purpose Register instruction used
   bool     HasVALU;    // True if Vector Arithmetic instruction issued
   bool     HasVPERM;   // True if Vector Permute instruction issued
   
@@ -63,7 +64,7 @@ private:
   void EndDispatchGroup();
   
   enum PPC970InstrType {
-    FXU, LSU_LD, LSU_ST, FPU, CR, VALU, VPERM, BR, PseudoInst
+    FXU, FXU_FIRST, LSU_LD, LSU_ST, FPU, CR, SPR, VALU, VPERM, BR, PseudoInst
   };
   
   /// GetInstrType - Classify the specified powerpc opcode according to its

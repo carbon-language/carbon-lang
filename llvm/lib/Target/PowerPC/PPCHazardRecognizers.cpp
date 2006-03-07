@@ -54,7 +54,7 @@ void PPCHazardRecognizer970::EndDispatchGroup() {
   DEBUG(std::cerr << "=== Start of dispatch group\n");
   // Pipeline units.
   NumFXU = NumLSU = NumFPU = 0;
-  HasCR = HasVALU = HasVPERM = false;
+  HasCR = HasSPR = HasVALU = HasVPERM = false;
   NumIssued = 0;
   
   // Structural hazard info.
@@ -76,6 +76,15 @@ PPCHazardRecognizer970::GetInstrType(unsigned Opcode) {
   case PPC::BL:
   case PPC::BLA:
     return BR;
+  case PPC::MCRF:
+  case PPC::MFCR:
+  case PPC::MFOCRF:
+    return CR;
+  case PPC::MFLR:
+  case PPC::MFCTR:
+  case PPC::MTLR:
+  case PPC::MTCTR:
+    return SPR;
   case PPC::LFS:
   case PPC::LFD:
   case PPC::LWZ:
@@ -85,6 +94,11 @@ PPCHazardRecognizer970::GetInstrType(unsigned Opcode) {
   case PPC::STFD:
   case PPC::STW:
     return LSU_ST;
+  case PPC::DIVW:
+  case PPC::DIVWU:
+  case PPC::DIVD:
+  case PPC::DIVDU:
+    return FXU_FIRST;
   case PPC::FADDS:
   case PPC::FCTIWZ:
   case PPC::FRSP:
@@ -142,16 +156,24 @@ getHazardType(SDNode *Node) {
 
   switch (InstrType) {
   default: assert(0 && "Unknown instruction type!");
-  case FXU:    if (NumFXU  == 2) return Hazard;
+  case FXU:
+  case FXU_FIRST: if (NumFXU  == 2) return Hazard;
   case LSU_ST:
-  case LSU_LD: if (NumLSU  == 2) return Hazard;
-  case FPU:    if (NumFPU  == 2) return Hazard;
-  case CR:     if (HasCR) return Hazard;
-  case VALU:   if (HasVALU) return Hazard;
-  case VPERM:  if (HasVPERM) return Hazard;
-  case BR:    break;
+  case LSU_LD:    if (NumLSU  == 2) return Hazard;
+  case FPU:       if (NumFPU  == 2) return Hazard;
+  case CR:        if (HasCR) return Hazard;
+  case SPR:       if (HasSPR) return Hazard;
+  case VALU:      if (HasVALU) return Hazard;
+  case VPERM:     if (HasVPERM) return Hazard;
+  case BR:  break;
   }
-
+  
+  // We can only issue a CR or SPR instruction, or an FXU instruction that needs
+  // to lead a dispatch group as the first instruction in the group.
+  if (NumIssued != 0 && 
+      (InstrType == CR || InstrType == SPR || InstrType == FXU_FIRST))
+    return Hazard;
+  
   // We can only issue a branch as the last instruction in a group.
   if (NumIssued == 4 && InstrType != BR)
     return Hazard;
@@ -202,14 +224,16 @@ void PPCHazardRecognizer970::EmitInstruction(SDNode *Node) {
   
   switch (InstrType) {
   default: assert(0 && "Unknown instruction type!");
-  case FXU:    ++NumFXU; break;
+  case FXU:
+  case FXU_FIRST: ++NumFXU; break;
   case LSU_LD:
-  case LSU_ST: ++NumLSU; break;
-  case FPU:    ++NumFPU; break;
-  case CR:     HasCR    = true; break;
-  case VALU:   HasVALU  = true; break;
-  case VPERM:  HasVPERM = true; break;
-  case BR:     NumIssued = 4; return;  // ends a d-group.
+  case LSU_ST:    ++NumLSU; break;
+  case FPU:       ++NumFPU; break;
+  case CR:        HasCR    = true; break;
+  case SPR:       HasSPR   = true; break;
+  case VALU:      HasVALU  = true; break;
+  case VPERM:     HasVPERM = true; break;
+  case BR:        NumIssued = 4; return;  // ends a d-group.
   }
   ++NumIssued;
   
