@@ -22,6 +22,24 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 // PowerPC 970 Hazard Recognizer
 //
+// This models the dispatch group formation of the PPC970 processor.  Dispatch
+// groups are bundles of up to five instructions that can contain up to two ALU
+// (aka FXU) ops, two FPU ops, two Load/Store ops, one CR op, one VALU op, one
+// VPERM op, and one BRANCH op.  If the code contains more instructions in a
+// sequence than the dispatch group can contain (e.g. three loads in a row) the
+// processor terminates the dispatch group early, wasting execution resources.
+//
+// In addition to these restrictions, there are a number of other restrictions:
+// some instructions, e.g. branches, are required to be the last instruction in
+// a group.  Additionally, only branches can issue in the 5th (last) slot.
+//
+// Finally, there are a number of "structural" hazards on the PPC970.  These
+// conditions cause large performance penalties due to misprediction, recovery,
+// and replay logic that has to happen.  These cases include setting a CTR and
+// branching through it in the same dispatch group, and storing to an address,
+// then loading from the same address within a dispatch group.  To avoid these
+// conditions, we insert no-op instructions when appropriate.
+//
 // FIXME: This is missing some significant cases:
 //   0. Handling of instructions that must be the first/last in a group.
 //   1. Modeling of microcoded instructions.
@@ -29,9 +47,6 @@ using namespace llvm;
 //   3. Handling of serialized operations.
 //   4. Handling of the esoteric cases in "Resource-based Instruction Grouping",
 //      e.g. integer divides that only execute in the second slot.
-//
-// Note: on the PPC970, logical CR operations are more expensive in their three
-// address form: ops that read/write the same register are half as expensive as
 //
 
 void PPCHazardRecognizer970::EndDispatchGroup() {
