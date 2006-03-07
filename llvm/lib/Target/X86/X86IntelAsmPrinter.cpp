@@ -26,15 +26,19 @@ using namespace x86;
 /// method to print assembly for each instruction.
 ///
 bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  // Let PassManager know we need debug information and relay
-  // the MachineDebugInfo address on to DwarfWriter.
-  DW.SetDebugInfo(&getAnalysis<MachineDebugInfo>());
+  if (forDarwin) {
+    // Let PassManager know we need debug information and relay
+    // the MachineDebugInfo address on to DwarfWriter.
+    DW.SetDebugInfo(&getAnalysis<MachineDebugInfo>());
+  }
 
   SetupMachineFunction(MF);
   O << "\n\n";
 
-  // Emit pre-function debug information.
-  DW.BeginFunction(MF);
+  if (forDarwin) {
+    // Emit pre-function debug information.
+    DW.BeginFunction(MF);
+  }
 
   // Print out constants referenced by the function
   EmitConstantPool(MF.getConstantPool());
@@ -63,8 +67,10 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     }
   }
 
-  // Emit post-function debug information.
-  DW.EndFunction(MF);
+  if (forDarwin) {
+    // Emit post-function debug information.
+    DW.EndFunction(MF);
+  }
 
   // We didn't modify anything.
   return false;

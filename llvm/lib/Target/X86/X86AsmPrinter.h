@@ -68,7 +68,7 @@ struct X86SharedAsmPrinter : public AsmPrinter {
     MachineFunctionPass::getAnalysisUsage(AU);
   }
 
-    bool forDarwin;  // FIXME: eliminate.
+  bool forDarwin;  // FIXME: eliminate.
 
   // Necessary for Darwin to print out the apprioriate types of linker stubs
   std::set<std::string> FnStubs, GVStubs, LinkOnceStubs;
