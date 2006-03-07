@@ -350,6 +350,7 @@ public:
                                               GlobalValue::InternalLinkage,
                                               CA, "llvm.dbg.array",
                                               SR.getModule());
+    CAGV->setSection("llvm.metadata");
     Constant *CAE = ConstantExpr::getCast(CAGV, EmptyTy);
     Elements.push_back(CAE);
   }
@@ -1193,6 +1194,7 @@ Constant *DISerializer::getString(const std::string &String) {
   GlobalVariable *StrGV = new GlobalVariable(ConstStr->getType(), true,
                                              GlobalVariable::InternalLinkage,
                                              ConstStr, "str", M);
+  StrGV->setSection("llvm.metadata");
   // Convert to generic string pointer.
   Slot = ConstantExpr::getCast(StrGV, getStrPtrType());
   return Slot;
@@ -1214,6 +1216,7 @@ GlobalVariable *DISerializer::Serialize(DebugInfoDesc *DD) {
   // Create the GlobalVariable early to prevent infinite recursion.
   GlobalVariable *GV = new GlobalVariable(Ty, true, DD->getLinkage(),
                                           NULL, DD->getDescString(), M);
+  GV->setSection("llvm.metadata");
 
   // Insert new GlobalVariable in DescGlobals map.
   Slot = GV;

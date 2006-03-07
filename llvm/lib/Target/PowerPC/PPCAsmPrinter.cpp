@@ -564,7 +564,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
     if (!I->hasInitializer()) continue;   // External global require no code
     
     // Check to see if this is a special global used by LLVM, if so, emit it.
-    if (I->hasAppendingLinkage() && EmitSpecialLLVMGlobal(I))
+    if (EmitSpecialLLVMGlobal(I))
       continue;
     
     std::string name = Mang->getValueName(I);

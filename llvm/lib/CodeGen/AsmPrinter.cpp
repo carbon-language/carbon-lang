@@ -131,8 +131,12 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
 /// special global used by LLVM.  If so, emit it and return true, otherwise
 /// do nothing and return false.
 bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
-  assert(GV->hasInitializer() && GV->hasAppendingLinkage() &&
-         "Not a special LLVM global!");
+  // Ignore debug and non-emitted data.
+  if (GV->getSection() == "llvm.metadata") return true;
+  
+  if (!GV->hasAppendingLinkage()) return false;
+
+  assert(GV->hasInitializer() && "Not a special LLVM global!");
   
   if (GV->getName() == "llvm.used")
     return true;  // No need to emit this at all.
