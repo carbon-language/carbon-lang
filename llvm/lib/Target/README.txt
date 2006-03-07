@@ -106,3 +106,14 @@ This would be a win on ppc32, but not x86 or ppc64.
 Shrink: (setlt (loadi32 P), 0) -> (setlt (loadi8 Phi), 0)
 
 //===---------------------------------------------------------------------===//
+
+Reassociate is missing this:
+
+int test(int X, int Y) {
+ return (X+X+Y+Y);  // (X+Y) << 1;
+}
+
+it needs to turn the shifts into multiplies to get it.
+
+//===---------------------------------------------------------------------===//
+
