@@ -95,6 +95,7 @@ PPCHazardRecognizer970::GetInstrType(unsigned Opcode) {
   case PPC::LHZ:
   case PPC::LWZU:
     return LSU_LD;
+  case PPC::STFS:
   case PPC::STFD:
   case PPC::STW:
   case PPC::STB:
@@ -230,6 +231,7 @@ void PPCHazardRecognizer970::EmitInstruction(SDNode *Node) {
     default: assert(0 && "Unknown store instruction!");
     case PPC::STB:  StoreSize = 1; break;
     case PPC::STH:  StoreSize = 2; break;
+    case PPC::STFS:
     case PPC::STWU:
     case PPC::STW:  StoreSize = 4; break;
     case PPC::STFD: StoreSize = 8; break;
