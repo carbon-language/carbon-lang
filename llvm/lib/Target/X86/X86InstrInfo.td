@@ -112,9 +112,9 @@ def X86fp_to_i64mem : SDNode<"X86ISD::FP_TO_INT64_IN_MEM", SDTX86FpToIMem,
                         [SDNPHasChain]>;
 
 def X86rep_stos: SDNode<"X86ISD::REP_STOS", SDTX86RepStr,
-                        [SDNPHasChain, SDNPInFlag]>;
+                        [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
 def X86rep_movs: SDNode<"X86ISD::REP_MOVS", SDTX86RepStr,
-                        [SDNPHasChain, SDNPInFlag]>;
+                        [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
 
 def X86rdtsc   : SDNode<"X86ISD::RDTSC_DAG",SDTX86RdTsc,
                         [SDNPHasChain, SDNPOutFlag]>;
