@@ -53,7 +53,7 @@ getGlobalVariablesUsing(Module &M, const std::string &RootName) {
   
   std::vector<const Type*> FieldTypes;
   FieldTypes.push_back(Type::UIntTy);
-  FieldTypes.push_back(PointerType::get(Type::SByteTy));
+  FieldTypes.push_back(Type::UIntTy);
 
   // Get the GlobalVariable root.
   GlobalVariable *UseRoot = M.getGlobalVariable(RootName,
@@ -539,11 +539,11 @@ void DebugInfoDesc::ApplyToFields(DIVisitor *Visitor) {
 
 AnchorDesc::AnchorDesc()
 : DebugInfoDesc(DW_TAG_anchor)
-, Name("")
+, AnchorTag(0)
 {}
-AnchorDesc::AnchorDesc(const std::string &N)
+AnchorDesc::AnchorDesc(AnchoredDesc *D)
 : DebugInfoDesc(DW_TAG_anchor)
-, Name(N)
+, AnchorTag(D->getTag())
 {}
 
 // Implement isa/cast/dyncast.
@@ -562,13 +562,26 @@ GlobalValue::LinkageTypes AnchorDesc::getLinkage() const {
 void AnchorDesc::ApplyToFields(DIVisitor *Visitor) {
   DebugInfoDesc::ApplyToFields(Visitor);
   
-  Visitor->Apply(Name);
+  Visitor->Apply(AnchorTag);
 }
 
-/// getDescString - Return a string used to compose global names and labels.
-///
+/// getDescString - Return a string used to compose global names and labels. A
+/// A global variable name needs to be defined for each debug descriptor that is
+/// anchored. NOTE: that each global variable name here also needs to be added
+/// to the list of names left external in the internalizer.
+///   ExternalNames.insert("llvm.dbg.compile_units");
+///   ExternalNames.insert("llvm.dbg.global_variables");
+///   ExternalNames.insert("llvm.dbg.subprograms");
 const char *AnchorDesc::getDescString() const {
-  return Name.c_str();
+  switch (AnchorTag) {
+  case DW_TAG_compile_unit: return CompileUnitDesc::AnchorString;
+  case DW_TAG_variable:     return GlobalVariableDesc::AnchorString;
+  case DW_TAG_subprogram:   return SubprogramDesc::AnchorString;
+  default: break;
+  }
+
+  assert(0 && "Tag does not have a case for anchor string");
+  return "";
 }
 
 /// getTypeString - Return a string used to label this descriptors type.
@@ -581,7 +594,7 @@ const char *AnchorDesc::getTypeString() const {
 void AnchorDesc::dump() {
   std::cerr << getDescString() << " "
             << "Tag(" << getTag() << "), "
-            << "Name(" << Name << ")\n";
+            << "AnchorTag(" << AnchorTag << ")\n";
 }
 #endif
 
@@ -649,8 +662,9 @@ const char *CompileUnitDesc::getTypeString() const {
 
 /// getAnchorString - Return a string used to label this descriptor's anchor.
 ///
+const char *CompileUnitDesc::AnchorString = "llvm.dbg.compile_units";
 const char *CompileUnitDesc::getAnchorString() const {
-  return "llvm.dbg.compile_units";
+  return AnchorString;
 }
 
 #ifndef NDEBUG
@@ -1014,8 +1028,9 @@ const char *GlobalVariableDesc::getTypeString() const {
 
 /// getAnchorString - Return a string used to label this descriptor's anchor.
 ///
+const char *GlobalVariableDesc::AnchorString = "llvm.dbg.global_variables";
 const char *GlobalVariableDesc::getAnchorString() const {
-  return "llvm.dbg.global_variables";
+  return AnchorString;
 }
 
 #ifndef NDEBUG
@@ -1063,8 +1078,9 @@ const char *SubprogramDesc::getTypeString() const {
 
 /// getAnchorString - Return a string used to label this descriptor's anchor.
 ///
+const char *SubprogramDesc::AnchorString = "llvm.dbg.subprograms";
 const char *SubprogramDesc::getAnchorString() const {
-  return "llvm.dbg.subprograms";
+  return AnchorString;
 }
 
 #ifndef NDEBUG

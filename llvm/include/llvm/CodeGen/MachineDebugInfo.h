@@ -142,16 +142,18 @@ public:
 //===----------------------------------------------------------------------===//
 /// AnchorDesc - Descriptors of this class act as markers for identifying
 /// descriptors of certain groups.
+class AnchoredDesc;
 class AnchorDesc : public DebugInfoDesc {
-private:  
-  std::string Name;                     // Anchor type string.
+private:
+  unsigned AnchorTag;                   // Tag number of descriptors anchored
+                                        // by this object.
   
 public:
   AnchorDesc();
-  AnchorDesc(const std::string &N);
+  AnchorDesc(AnchoredDesc *D);
   
   // Accessors
-  const std::string &getName() const { return Name; }
+  unsigned getAnchorTag() const { return AnchorTag; }
 
   // Implement isa/cast/dyncast.
   static bool classof(const AnchorDesc *) { return true; }
@@ -198,6 +200,10 @@ public:
   //===--------------------------------------------------------------------===//
   // Subclasses should supply the following virtual methods.
   
+  /// getAnchorString - Return a string used to label descriptor's anchor.
+  ///
+  virtual const char *getAnchorString() const = 0;
+    
   /// ApplyToFields - Target the visitor to the fields of the AnchoredDesc.
   ///
   virtual void ApplyToFields(DIVisitor *Visitor);
@@ -216,6 +222,7 @@ private:
   
 public:
   CompileUnitDesc();
+  
   
   // Accessors
   unsigned getDebugVersion()              const { return DebugVersion; }
@@ -252,6 +259,7 @@ public:
   
   /// getAnchorString - Return a string used to label this descriptor's anchor.
   ///
+  static const char *AnchorString;
   virtual const char *getAnchorString() const;
     
 #ifndef NDEBUG
@@ -553,6 +561,7 @@ public:
   
   /// getAnchorString - Return a string used to label this descriptor's anchor.
   ///
+  static const char *AnchorString;
   virtual const char *getAnchorString() const;
     
 #ifndef NDEBUG
@@ -591,6 +600,7 @@ public:
   
   /// getAnchorString - Return a string used to label this descriptor's anchor.
   ///
+  static const char *AnchorString;
   virtual const char *getAnchorString() const;
     
 #ifndef NDEBUG

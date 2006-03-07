@@ -112,9 +112,10 @@ bool InternalizePass::runOnModule(Module &M) {
   ExternalNames.insert("llvm.used");
   
   // Never internalize anchors used by the debugger, else the debugger won't
-  // find them.
-  ExternalNames.insert("llvm.dbg.translation_units");
-  ExternalNames.insert("llvm.dbg.globals");
+  // find them.  (see MachineDebugInfo.)
+  ExternalNames.insert("llvm.dbg.compile_units");
+  ExternalNames.insert("llvm.dbg.global_variables");
+  ExternalNames.insert("llvm.dbg.subprograms");
       
   // Mark all global variables with initializers as internal as well.
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
