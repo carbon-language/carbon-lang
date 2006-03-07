@@ -2006,9 +2006,14 @@ public:
               PInfo.hasProperty(SDNodeInfo::SDNPHasChain) ||
               PInfo.hasProperty(SDNodeInfo::SDNPInFlag) ||
               PInfo.hasProperty(SDNodeInfo::SDNPOptInFlag))
-            emitCheck("(" + ParentName + ".getNumOperands() == 1 || !" +
-                      "isNonImmUse(" + ParentName + ".Val, " + RootName +
-                      ".Val))");
+            if (PInfo.getNumOperands() > 1) {
+              emitCheck("!isNonImmUse(" + ParentName + ".Val, " + RootName +
+                        ".Val)");
+            } else {
+              emitCheck("(" + ParentName + ".getNumOperands() == 1 || !" +
+                        "isNonImmUse(" + ParentName + ".Val, " + RootName +
+                        ".Val))");
+            }
         }
       }
 
