@@ -128,6 +128,9 @@
 				RelativePath="..\..\lib\Support\Debug.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\Support\Dwarf.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\Support\FileUtilities.cpp">
 			</File>
 			<File
@@ -237,6 +240,9 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Support\DOTGraphTraits.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Support\Dwarf.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Support\ELF.h">
