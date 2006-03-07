@@ -41,6 +41,7 @@ using namespace llvm;
 // conditions, we insert no-op instructions when appropriate.
 //
 // FIXME: This is missing some significant cases:
+//  -1. Handle all of the instruction types in GetInstrType.
 //   0. Handling of instructions that must be the first/last in a group.
 //   1. Modeling of microcoded instructions.
 //   2. Handling of cracked instructions.
@@ -76,12 +77,18 @@ PPCHazardRecognizer970::GetInstrType(unsigned Opcode) {
   case PPC::BLA:
     return BR;
   case PPC::LFS:
+  case PPC::LFD:
   case PPC::LWZ:
+  case PPC::LFSX:
+  case PPC::LWZX:
     return LSU_LD;
   case PPC::STFD:
+  case PPC::STW:
     return LSU_ST;
   case PPC::FADDS:
   case PPC::FCTIWZ:
+  case PPC::FRSP:
+  case PPC::FSUB:
     return FPU;
   }
   
@@ -159,8 +166,11 @@ getHazardType(SDNode *Node) {
     unsigned LoadSize;
     switch (Opcode) {
     default: assert(0 && "Unknown load!");
+    case PPC::LFSX:
     case PPC::LFS:
+    case PPC::LWZX:
     case PPC::LWZ: LoadSize = 4; break;
+    case PPC::LFD: LoadSize = 8; break;
     }
     
     if (isLoadOfStoredAddress(LoadSize, 
@@ -186,6 +196,7 @@ void PPCHazardRecognizer970::EmitInstruction(SDNode *Node) {
     switch (Opcode) {
     default: assert(0 && "Unknown store instruction!");
     case PPC::STFD: StoreSize = 8; break;
+    case PPC::STW:  StoreSize = 4; break;
     }
   }
   
