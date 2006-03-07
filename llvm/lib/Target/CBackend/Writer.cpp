@@ -797,7 +797,7 @@ void CWriter::writeOperand(Value *Operand) {
 // directives to cater to specific compilers as need be.
 //
 static void generateCompilerSpecificCode(std::ostream& Out) {
-  // Alloca is hard to get, and we don't want to include stdlib.h here...
+  // Alloca is hard to get, and we don't want to include stdlib.h here.
   Out << "/* get a declaration for alloca */\n"
       << "#if defined(__CYGWIN__)\n"
       << "extern void *_alloca(unsigned long);\n"
@@ -885,6 +885,8 @@ static void generateCompilerSpecificCode(std::ostream& Out) {
       << "#define LLVM_INFF          __builtin_inff()        /* Float */\n"
       << "#define LLVM_PREFETCH(addr,rw,locality) "
                               "__builtin_prefetch(addr,rw,locality)\n"
+      << "#define __ATTRIBUTE_CTOR__ __attribute__((constructor))\n"
+      << "#define __ATTRIBUTE_DTOR__ __attribute__((destructor))\n"
       << "#else\n"
       << "#define LLVM_NAN(NanStr)   ((double)0.0)           /* Double */\n"
       << "#define LLVM_NANF(NanStr)  0.0F                    /* Float */\n"
@@ -893,6 +895,8 @@ static void generateCompilerSpecificCode(std::ostream& Out) {
       << "#define LLVM_INF           ((double)0.0)           /* Double */\n"
       << "#define LLVM_INFF          0.0F                    /* Float */\n"
       << "#define LLVM_PREFETCH(addr,rw,locality)            /* PREFETCH */\n"
+      << "#define __ATTRIBUTE_CTOR__\n"
+      << "#define __ATTRIBUTE_DTOR__\n"
       << "#endif\n\n";
 
   // Output target-specific code that should be inserted into main.
@@ -908,6 +912,53 @@ static void generateCompilerSpecificCode(std::ostream& Out) {
 
 }
 
+/// FindStaticTors - Given a static ctor/dtor list, unpack its contents into
+/// the StaticTors set.
+static void FindStaticTors(GlobalVariable *GV, std::set<Function*> &StaticTors){
+  ConstantArray *InitList = dyn_cast<ConstantArray>(GV->getInitializer());
+  if (!InitList) return;
+  
+  for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i)
+    if (ConstantStruct *CS = dyn_cast<ConstantStruct>(InitList->getOperand(i))){
+      if (CS->getNumOperands() != 2) return;  // Not array of 2-element structs.
+      
+      if (CS->getOperand(1)->isNullValue())
+        return;  // Found a null terminator, exit printing.
+      Constant *FP = CS->getOperand(1);
+      if (ConstantExpr *CE = dyn_cast<ConstantExpr>(FP))
+        if (CE->getOpcode() == Instruction::Cast)
+          FP = CE->getOperand(0);
+      if (Function *F = dyn_cast<Function>(FP))
+        StaticTors.insert(F);
+    }
+}
+
+enum SpecialGlobalClass {
+  NotSpecial = 0,
+  GlobalCtors, GlobalDtors,
+  NotPrinted
+};
+
+/// getGlobalVariableClass - If this is a global that is specially recognized
+/// by LLVM, return a code that indicates how we should handle it.
+static SpecialGlobalClass getGlobalVariableClass(const GlobalVariable *GV) {
+  // If this is a global ctors/dtors list, handle it now.
+  if (GV->hasAppendingLinkage() && GV->use_empty()) {
+    if (GV->getName() == "llvm.global_ctors")
+      return GlobalCtors;
+    else if (GV->getName() == "llvm.global_dtors")
+      return GlobalDtors;
+  }
+  
+  // Otherwise, it it is other metadata, don't print it.  This catches things
+  // like debug information.
+  if (GV->getSection() == "llvm.metadata")
+    return NotPrinted;
+  
+  return NotSpecial;
+}
+
+
 bool CWriter::doInitialization(Module &M) {
   // Initialize
   TheModule = &M;
@@ -918,6 +969,22 @@ bool CWriter::doInitialization(Module &M) {
   Mang = new Mangler(M);
   Mang->markCharUnacceptable('.');
 
+  // Keep track of which functions are static ctors/dtors so they can have
+  // an attribute added to their prototypes.
+  std::set<Function*> StaticCtors, StaticDtors;
+  for (Module::global_iterator I = M.global_begin(), E = M.global_end();
+       I != E; ++I) {
+    switch (getGlobalVariableClass(I)) {
+    default: break;
+    case GlobalCtors:
+      FindStaticTors(I, StaticCtors);
+      break;
+    case GlobalDtors:
+      FindStaticTors(I, StaticDtors);
+      break;
+    }
+  }
+  
   // get declaration for alloca
   Out << "/* Provide Declarations */\n";
   Out << "#include <stdarg.h>\n";      // Varargs support
@@ -955,20 +1022,22 @@ bool CWriter::doInitialization(Module &M) {
   }
 
   // Function declarations
+  Out << "\n/* Function Declarations */\n";
   Out << "double fmod(double, double);\n";   // Support for FP rem
   Out << "float fmodf(float, float);\n";
   
-  if (!M.empty()) {
-    Out << "\n/* Function Declarations */\n";
-    for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
-      // Don't print declarations for intrinsic functions.
-      if (!I->getIntrinsicID() &&
-          I->getName() != "setjmp" && I->getName() != "longjmp") {
-        printFunctionSignature(I, true);
-        if (I->hasWeakLinkage()) Out << " __ATTRIBUTE_WEAK__";
-        if (I->hasLinkOnceLinkage()) Out << " __ATTRIBUTE_WEAK__";
-        Out << ";\n";
-      }
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
+    // Don't print declarations for intrinsic functions.
+    if (!I->getIntrinsicID() &&
+        I->getName() != "setjmp" && I->getName() != "longjmp") {
+      printFunctionSignature(I, true);
+      if (I->hasWeakLinkage() || I->hasLinkOnceLinkage()) 
+        Out << " __ATTRIBUTE_WEAK__";
+      if (StaticCtors.count(I))
+        Out << " __ATTRIBUTE_CTOR__";
+      if (StaticDtors.count(I))
+        Out << " __ATTRIBUTE_DTOR__";
+      Out << ";\n";
     }
   }
 
@@ -978,6 +1047,10 @@ bool CWriter::doInitialization(Module &M) {
     for (Module::global_iterator I = M.global_begin(), E = M.global_end();
          I != E; ++I)
       if (!I->isExternal()) {
+        // Ignore special globals, such as debug info.
+        if (getGlobalVariableClass(I))
+          continue;
+        
         if (I->hasInternalLinkage())
           Out << "static ";
         else
@@ -998,6 +1071,10 @@ bool CWriter::doInitialization(Module &M) {
     for (Module::global_iterator I = M.global_begin(), E = M.global_end(); 
          I != E; ++I)
       if (!I->isExternal()) {
+        // Ignore special globals, such as debug info.
+        if (getGlobalVariableClass(I))
+          continue;
+        
         if (I->hasInternalLinkage())
           Out << "static ";
         printType(Out, I->getType()->getElementType(), Mang->getValueName(I));
