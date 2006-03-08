@@ -57,10 +57,10 @@ proc llvm-runtest { programs objdir srcdir subdir target_triplet llvmgcc llvmgxx
 		regsub -all {%p} $new_runline [file join $srcdir $subdir] new_runline
 
 		#replace %llvmgcc with actual path to llvmgcc
-		regsub -all {%llvmgcc} $new_runline $llvmgcc new_runline
+		regsub -all {%llvmgcc} $new_runline "$llvmgcc -emit-llvm" new_runline
 
 		#replace %llvmgxx with actual path to llvmg++
-		regsub -all {%llvmgxx} $new_runline $llvmgxx new_runline
+		regsub -all {%llvmgxx} $new_runline "$llvmgxx -emit-llvm" new_runline
 		
 		puts $scriptFileId $new_runline
 	    } elseif {[regexp {XFAIL:[ *](.+)} $line match targets]} {
