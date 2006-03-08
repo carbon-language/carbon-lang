@@ -48,18 +48,17 @@ namespace {
     short NumSuccsLeft;                 // # of succs not scheduled.
     short NumChainPredsLeft;            // # of chain preds not scheduled.
     short NumChainSuccsLeft;            // # of chain succs not scheduled.
-    int SethiUllman;                    // Sethi Ullman number.
     bool isTwoAddress     : 1;          // Is a two-address instruction.
     bool isDefNUseOperand : 1;          // Is a def&use operand.
     unsigned short Latency;             // Node latency.
     unsigned CycleBound;                // Upper/lower cycle to be scheduled at.
+    unsigned NodeNum;                   // Entry # of node in the node vector.
     
-    SUnit(SDNode *node)
+    SUnit(SDNode *node, unsigned nodenum)
       : Node(node), NumPredsLeft(0), NumSuccsLeft(0),
       NumChainPredsLeft(0), NumChainSuccsLeft(0),
-      SethiUllman(INT_MIN),
       isTwoAddress(false), isDefNUseOperand(false),
-      Latency(0), CycleBound(0) {}
+      Latency(0), CycleBound(0), NodeNum(nodenum) {}
     
     void dump(const SelectionDAG *G, bool All=true) const;
   };
@@ -83,7 +82,6 @@ void SUnit::dump(const SelectionDAG *G, bool All) const {
     std::cerr << "  # chain preds left : " << NumChainPredsLeft << "\n";
     std::cerr << "  # chain succs left : " << NumChainSuccsLeft << "\n";
     std::cerr << "  Latency            : " << Latency << "\n";
-    std::cerr << "  SethiUllman        : " << SethiUllman << "\n";
 
     if (Preds.size() != 0) {
       std::cerr << "  Predecessors:\n";
@@ -121,44 +119,137 @@ void SUnit::dump(const SelectionDAG *G, bool All) const {
 }
 
 namespace {
-/// Sorting functions for the Available queue.
-struct ls_rr_sort : public std::binary_function<SUnit*, SUnit*, bool> {
-  bool operator()(const SUnit* left, const SUnit* right) const {
-    int LBonus = (int)left ->isDefNUseOperand;
-    int RBonus = (int)right->isDefNUseOperand;
-
-    // Special tie breaker: if two nodes share a operand, the one that
-    // use it as a def&use operand is preferred.
-    if (left->isTwoAddress && !right->isTwoAddress) {
-      SDNode *DUNode = left->Node->getOperand(0).Val;
-      if (DUNode->isOperand(right->Node))
-        LBonus++;
-    }
-    if (!left->isTwoAddress && right->isTwoAddress) {
-      SDNode *DUNode = right->Node->getOperand(0).Val;
-      if (DUNode->isOperand(left->Node))
-        RBonus++;
-    }
-
-    // Priority1 is just the number of live range genned.
-    int LPriority1 = left ->NumPredsLeft - LBonus;
-    int RPriority1 = right->NumPredsLeft - RBonus;
-    int LPriority2 = left ->SethiUllman + LBonus;
-    int RPriority2 = right->SethiUllman + RBonus;
-
-    if (LPriority1 > RPriority1)
-      return true;
-    else if (LPriority1 == RPriority1)
-      if (LPriority2 < RPriority2)
-        return true;
-      else if (LPriority2 == RPriority2)
-        if (left->CycleBound > right->CycleBound) 
-          return true;
-
-    return false;
-  }
-};
+  class SchedulingPriorityQueue;
+  
+  /// Sorting functions for the Available queue.
+  struct ls_rr_sort : public std::binary_function<SUnit*, SUnit*, bool> {
+    SchedulingPriorityQueue *SPQ;
+    ls_rr_sort(SchedulingPriorityQueue *spq) : SPQ(spq) {}
+    ls_rr_sort(const ls_rr_sort &RHS) : SPQ(RHS.SPQ) {}
+    
+    bool operator()(const SUnit* left, const SUnit* right) const;
+  };
 }  // end anonymous namespace
+
+namespace {
+  class SchedulingPriorityQueue {
+    // SUnits - The SUnits for the current graph.
+    std::vector<SUnit> &SUnits;
+    
+    // SethiUllmanNumbers - The SethiUllman number for each node.
+    std::vector<int> SethiUllmanNumbers;
+    
+    std::priority_queue<SUnit*, std::vector<SUnit*>, ls_rr_sort> Queue;
+  public:
+    SchedulingPriorityQueue(std::vector<SUnit> &sunits)
+      : SUnits(sunits), Queue(ls_rr_sort(this)) {
+      // Calculate node priorities.
+      CalculatePriorities();
+    }
+    
+    unsigned getSethiUllmanNumber(unsigned NodeNum) const {
+      assert(NodeNum < SethiUllmanNumbers.size());
+      return SethiUllmanNumbers[NodeNum];
+    }
+    
+    bool empty() const { return Queue.empty(); }
+    
+    void push(SUnit *U) {
+      Queue.push(U);
+    }
+    SUnit *pop() {
+      SUnit *V = Queue.top();
+      Queue.pop();
+      return V;
+    }
+  private:
+    void CalculatePriorities();
+    int CalcNodePriority(SUnit *SU);
+  };
+}
+
+bool ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
+  unsigned LeftNum  = left->NodeNum;
+  unsigned RightNum = right->NodeNum;
+  
+  int LBonus = (int)left ->isDefNUseOperand;
+  int RBonus = (int)right->isDefNUseOperand;
+  
+  // Special tie breaker: if two nodes share a operand, the one that
+  // use it as a def&use operand is preferred.
+  if (left->isTwoAddress && !right->isTwoAddress) {
+    SDNode *DUNode = left->Node->getOperand(0).Val;
+    if (DUNode->isOperand(right->Node))
+      LBonus++;
+  }
+  if (!left->isTwoAddress && right->isTwoAddress) {
+    SDNode *DUNode = right->Node->getOperand(0).Val;
+    if (DUNode->isOperand(left->Node))
+      RBonus++;
+  }
+  
+  // Priority1 is just the number of live range genned.
+  int LPriority1 = left ->NumPredsLeft - LBonus;
+  int RPriority1 = right->NumPredsLeft - RBonus;
+  int LPriority2 = SPQ->getSethiUllmanNumber(LeftNum) + LBonus;
+  int RPriority2 = SPQ->getSethiUllmanNumber(RightNum) + RBonus;
+  
+  if (LPriority1 > RPriority1)
+    return true;
+  else if (LPriority1 == RPriority1)
+    if (LPriority2 < RPriority2)
+      return true;
+    else if (LPriority2 == RPriority2)
+      if (left->CycleBound > right->CycleBound) 
+        return true;
+  
+  return false;
+}
+
+
+/// CalcNodePriority - Priority is the Sethi Ullman number. 
+/// Smaller number is the higher priority.
+int SchedulingPriorityQueue::CalcNodePriority(SUnit *SU) {
+  int &SethiUllmanNumber = SethiUllmanNumbers[SU->NodeNum];
+  if (SethiUllmanNumber != INT_MIN)
+    return SethiUllmanNumber;
+  
+  if (SU->Preds.size() == 0) {
+    SethiUllmanNumber = 1;
+  } else {
+    int Extra = 0;
+    for (std::set<SUnit*>::iterator I = SU->Preds.begin(),
+         E = SU->Preds.end(); I != E; ++I) {
+      SUnit *PredSU = *I;
+      int PredSethiUllman = CalcNodePriority(PredSU);
+      if (PredSethiUllman > SethiUllmanNumber) {
+        SethiUllmanNumber = PredSethiUllman;
+        Extra = 0;
+      } else if (PredSethiUllman == SethiUllmanNumber)
+        Extra++;
+    }
+    
+    if (SU->Node->getOpcode() != ISD::TokenFactor)
+      SethiUllmanNumber += Extra;
+    else
+      SethiUllmanNumber = (Extra == 1) ? 0 : Extra-1;
+  }
+  
+  return SethiUllmanNumber;
+}
+
+/// CalculatePriorities - Calculate priorities of all scheduling units.
+void SchedulingPriorityQueue::CalculatePriorities() {
+  SethiUllmanNumbers.assign(SUnits.size(), INT_MIN);
+
+  for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
+    // FIXME: assumes uniform latency for now.
+    SUnits[i].Latency = 1;
+    (void)CalcNodePriority(&SUnits[i]);
+  }
+}
+
+
 
 
 namespace {
@@ -182,9 +273,6 @@ private:
   /// HazardRec - The hazard recognizer to use.
   HazardRecognizer *HazardRec;
   
-  typedef std::priority_queue<SUnit*, std::vector<SUnit*>, ls_rr_sort>
-    AvailableQueueTy;
-
 public:
   ScheduleDAGList(SelectionDAG &dag, MachineBasicBlock *bb,
                   const TargetMachine &tm, bool isbottomup,
@@ -203,14 +291,14 @@ public:
 
 private:
   SUnit *NewSUnit(SDNode *N);
-  void ReleasePred(AvailableQueueTy &Avail,SUnit *PredSU, bool isChain = false);
-  void ReleaseSucc(AvailableQueueTy &Avail,SUnit *SuccSU, bool isChain = false);
-  void ScheduleNodeBottomUp(AvailableQueueTy &Avail, SUnit *SU);
-  void ScheduleNodeTopDown(AvailableQueueTy &Avail, SUnit *SU);
-  int  CalcNodePriority(SUnit *SU);
-  void CalculatePriorities();
-  void ListScheduleTopDown();
-  void ListScheduleBottomUp();
+  void ReleasePred(SchedulingPriorityQueue &Avail,
+                   SUnit *PredSU, bool isChain = false);
+  void ReleaseSucc(SchedulingPriorityQueue &Avail,
+                   SUnit *SuccSU, bool isChain = false);
+  void ScheduleNodeBottomUp(SchedulingPriorityQueue &Avail, SUnit *SU);
+  void ScheduleNodeTopDown(SchedulingPriorityQueue &Avail, SUnit *SU);
+  void ListScheduleTopDown(SchedulingPriorityQueue &Available);
+  void ListScheduleBottomUp(SchedulingPriorityQueue &Available);
   void BuildSchedUnits();
   void EmitSchedule();
 };
@@ -221,13 +309,13 @@ HazardRecognizer::~HazardRecognizer() {}
 
 /// NewSUnit - Creates a new SUnit and return a ptr to it.
 SUnit *ScheduleDAGList::NewSUnit(SDNode *N) {
-  SUnits.push_back(N);
+  SUnits.push_back(SUnit(N, SUnits.size()));
   return &SUnits.back();
 }
 
 /// ReleasePred - Decrement the NumSuccsLeft count of a predecessor. Add it to
 /// the Available queue is the count reaches zero. Also update its cycle bound.
-void ScheduleDAGList::ReleasePred(AvailableQueueTy &Available, 
+void ScheduleDAGList::ReleasePred(SchedulingPriorityQueue &Available, 
                                   SUnit *PredSU, bool isChain) {
   // FIXME: the distance between two nodes is not always == the predecessor's
   // latency. For example, the reader can very well read the register written
@@ -258,7 +346,7 @@ void ScheduleDAGList::ReleasePred(AvailableQueueTy &Available,
 
 /// ReleaseSucc - Decrement the NumPredsLeft count of a successor. Add it to
 /// the Available queue is the count reaches zero. Also update its cycle bound.
-void ScheduleDAGList::ReleaseSucc(AvailableQueueTy &Available, 
+void ScheduleDAGList::ReleaseSucc(SchedulingPriorityQueue &Available, 
                                   SUnit *SuccSU, bool isChain) {
   // FIXME: the distance between two nodes is not always == the predecessor's
   // latency. For example, the reader can very well read the register written
@@ -287,7 +375,7 @@ void ScheduleDAGList::ReleaseSucc(AvailableQueueTy &Available,
 /// ScheduleNodeBottomUp - Add the node to the schedule. Decrement the pending
 /// count of its predecessors. If a predecessor pending count is zero, add it to
 /// the Available queue.
-void ScheduleDAGList::ScheduleNodeBottomUp(AvailableQueueTy &Available,
+void ScheduleDAGList::ScheduleNodeBottomUp(SchedulingPriorityQueue &Available,
                                            SUnit *SU) {
   DEBUG(std::cerr << "*** Scheduling: ");
   DEBUG(SU->dump(&DAG, false));
@@ -310,7 +398,7 @@ void ScheduleDAGList::ScheduleNodeBottomUp(AvailableQueueTy &Available,
 /// ScheduleNodeTopDown - Add the node to the schedule. Decrement the pending
 /// count of its successors. If a successor pending count is zero, add it to
 /// the Available queue.
-void ScheduleDAGList::ScheduleNodeTopDown(AvailableQueueTy &Available,
+void ScheduleDAGList::ScheduleNodeTopDown(SchedulingPriorityQueue &Available,
                                           SUnit *SU) {
   DEBUG(std::cerr << "*** Scheduling: ");
   DEBUG(SU->dump(&DAG, false));
@@ -338,10 +426,7 @@ static inline bool isReady(SUnit *SU, unsigned CurrCycle) {
 
 /// ListScheduleBottomUp - The main loop of list scheduling for bottom-up
 /// schedulers.
-void ScheduleDAGList::ListScheduleBottomUp() {
-  // Available queue.
-  AvailableQueueTy Available;
-
+void ScheduleDAGList::ListScheduleBottomUp(SchedulingPriorityQueue &Available) {
   // Add root to Available queue.
   Available.push(SUnitMap[DAG.getRoot().Val]);
 
@@ -349,13 +434,11 @@ void ScheduleDAGList::ListScheduleBottomUp() {
   // priority. If it is not ready put it back. Schedule the node.
   std::vector<SUnit*> NotReady;
   while (!Available.empty()) {
-    SUnit *CurrNode = Available.top();
-    Available.pop();
+    SUnit *CurrNode = Available.pop();
 
     while (!isReady(CurrNode, CurrCycle)) {
       NotReady.push_back(CurrNode);
-      CurrNode = Available.top();
-      Available.pop();
+      CurrNode = Available.pop();
     }
     
     // Add the nodes that aren't ready back onto the available list.
@@ -395,10 +478,7 @@ void ScheduleDAGList::ListScheduleBottomUp() {
 
 /// ListScheduleTopDown - The main loop of list scheduling for top-down
 /// schedulers.
-void ScheduleDAGList::ListScheduleTopDown() {
-  // Available queue.
-  AvailableQueueTy Available;
-
+void ScheduleDAGList::ListScheduleTopDown(SchedulingPriorityQueue &Available) {
   // Emit the entry node first.
   SUnit *Entry = SUnitMap[DAG.getEntryNode().Val];
   ScheduleNodeTopDown(Available, Entry);
@@ -420,8 +500,7 @@ void ScheduleDAGList::ListScheduleTopDown() {
 
     bool HasNoopHazards = false;
     do {
-      SUnit *CurNode = Available.top();
-      Available.pop();
+      SUnit *CurNode = Available.pop();
       
       // Get the node represented by this SUnit.
       SDNode *N = CurNode->Node;
@@ -486,47 +565,6 @@ void ScheduleDAGList::ListScheduleTopDown() {
 #endif
 }
 
-
-/// CalcNodePriority - Priority is the Sethi Ullman number. 
-/// Smaller number is the higher priority.
-int ScheduleDAGList::CalcNodePriority(SUnit *SU) {
-  if (SU->SethiUllman != INT_MIN)
-    return SU->SethiUllman;
-
-  if (SU->Preds.size() == 0) {
-    SU->SethiUllman = 1;
-  } else {
-    int Extra = 0;
-    for (std::set<SUnit*>::iterator I = SU->Preds.begin(),
-           E = SU->Preds.end(); I != E; ++I) {
-      SUnit *PredSU = *I;
-      int PredSethiUllman = CalcNodePriority(PredSU);
-      if (PredSethiUllman > SU->SethiUllman) {
-        SU->SethiUllman = PredSethiUllman;
-        Extra = 0;
-      } else if (PredSethiUllman == SU->SethiUllman)
-        Extra++;
-    }
-
-    if (SU->Node->getOpcode() != ISD::TokenFactor)
-      SU->SethiUllman += Extra;
-    else
-      SU->SethiUllman = (Extra == 1) ? 0 : Extra-1;
-  }
-
-  return SU->SethiUllman;
-}
-
-/// CalculatePriorities - Calculate priorities of all scheduling units.
-void ScheduleDAGList::CalculatePriorities() {
-  for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
-    // FIXME: assumes uniform latency for now.
-    SUnits[i].Latency = 1;
-    (void)CalcNodePriority(&SUnits[i]);
-    DEBUG(SUnits[i].dump(&DAG));
-    DEBUG(std::cerr << "\n");
-  }
-}
 
 void ScheduleDAGList::BuildSchedUnits() {
   // Reserve entries in the vector for each of the SUnits we are creating.  This
@@ -662,15 +700,14 @@ void ScheduleDAGList::Schedule() {
 
   // Build scheduling units.
   BuildSchedUnits();
-
-  // Calculate node priorities.
-  CalculatePriorities();
-
+  
+  SchedulingPriorityQueue PQ(SUnits);
+    
   // Execute the actual scheduling loop Top-Down or Bottom-Up as appropriate.
   if (isBottomUp)
-    ListScheduleBottomUp();
+    ListScheduleBottomUp(PQ);
   else
-    ListScheduleTopDown();
+    ListScheduleTopDown(PQ);
   
   DEBUG(std::cerr << "*** Final schedule ***\n");
   DEBUG(dump());
