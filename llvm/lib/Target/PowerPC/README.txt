@@ -466,3 +466,44 @@ we can convert to the "three address" instruction, to save code space.
 
 This only matters when we start generating cr logical ops.
 
+===-------------------------------------------------------------------------===
+
+We should compile these two functions to the same thing:
+
+#include <stdlib.h>
+void f(int a, int b, int *P) {
+  *P = (a-b)>=0?(a-b):(b-a);
+}
+void g(int a, int b, int *P) {
+  *P = abs(a-b);
+}
+
+Further, they should compile to something better than:
+
+_g:
+        subf r2, r4, r3
+        subfic r3, r2, 0
+        cmpwi cr0, r2, -1
+        bgt cr0, LBB2_2 ; entry
+LBB2_1: ; entry
+        mr r2, r3
+LBB2_2: ; entry
+        stw r2, 0(r5)
+        blr
+
+GCC produces:
+
+_g:
+        subf r4,r4,r3
+        srawi r2,r4,31
+        xor r0,r2,r4
+        subf r0,r2,r0
+        stw r0,0(r5)
+        blr
+
+... which is much nicer.
+
+This theoretically may help improve twolf slightly (used in dimbox.c:142?).
+
+===-------------------------------------------------------------------------===
+
