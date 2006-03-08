@@ -53,14 +53,13 @@ namespace {
     bool isDefNUseOperand : 1;          // Is a def&use operand.
     unsigned short Latency;             // Node latency.
     unsigned CycleBound;                // Upper/lower cycle to be scheduled at.
-    SUnit *Next;
     
     SUnit(SDNode *node)
       : Node(node), NumPredsLeft(0), NumSuccsLeft(0),
       NumChainPredsLeft(0), NumChainSuccsLeft(0),
       SethiUllman(INT_MIN),
       isTwoAddress(false), isDefNUseOperand(false),
-      Latency(0), CycleBound(0), Next(NULL) {}
+      Latency(0), CycleBound(0) {}
     
     void dump(const SelectionDAG *G, bool All=true) const;
   };
@@ -172,8 +171,9 @@ private:
   std::vector<SUnit*> Sequence;
   // Current scheduling cycle.
   unsigned CurrCycle;
-  // First and last SUnit created.
-  SUnit *HeadSUnit, *TailSUnit;
+  
+  // The scheduling units.
+  std::vector<SUnit> SUnits;
 
   /// isBottomUp - This is true if the scheduling problem is bottom-up, false if
   /// it is top-down.
@@ -190,17 +190,10 @@ public:
                   const TargetMachine &tm, bool isbottomup,
                   HazardRecognizer *HR)
     : ScheduleDAG(listSchedulingBURR, dag, bb, tm),
-      CurrCycle(0), HeadSUnit(NULL), TailSUnit(NULL), isBottomUp(isbottomup),
-      HazardRec(HR) {
+      CurrCycle(0), isBottomUp(isbottomup), HazardRec(HR) {
     }
 
   ~ScheduleDAGList() {
-    SUnit *SU = HeadSUnit;
-    while (SU) {
-      SUnit *NextSU = SU->Next;
-      delete SU;
-      SU = NextSU;
-    }
     delete HazardRec;
   }
 
@@ -228,15 +221,8 @@ HazardRecognizer::~HazardRecognizer() {}
 
 /// NewSUnit - Creates a new SUnit and return a ptr to it.
 SUnit *ScheduleDAGList::NewSUnit(SDNode *N) {
-  SUnit *CurrSUnit = new SUnit(N);
-
-  if (HeadSUnit == NULL)
-    HeadSUnit = CurrSUnit;
-  if (TailSUnit != NULL)
-    TailSUnit->Next = CurrSUnit;
-  TailSUnit = CurrSUnit;
-
-  return CurrSUnit;
+  SUnits.push_back(N);
+  return &SUnits.back();
 }
 
 /// ReleasePred - Decrement the NumSuccsLeft count of a predecessor. Add it to
@@ -394,11 +380,11 @@ void ScheduleDAGList::ListScheduleBottomUp() {
 #ifndef NDEBUG
   // Verify that all SUnits were scheduled.
   bool AnyNotSched = false;
-  for (SUnit *SU = HeadSUnit; SU != NULL; SU = SU->Next) {
-    if (SU->NumSuccsLeft != 0 || SU->NumChainSuccsLeft != 0) {
+  for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
+    if (SUnits[i].NumSuccsLeft != 0 || SUnits[i].NumChainSuccsLeft != 0) {
       if (!AnyNotSched)
         std::cerr << "*** List scheduling failed! ***\n";
-      SU->dump(&DAG);
+      SUnits[i].dump(&DAG);
       std::cerr << "has not been scheduled!\n";
       AnyNotSched = true;
     }
@@ -419,10 +405,11 @@ void ScheduleDAGList::ListScheduleTopDown() {
   HazardRec->EmitInstruction(Entry->Node);
                       
   // All leaves to Available queue.
-  for (SUnit *SU = HeadSUnit; SU != NULL; SU = SU->Next) {
+  for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
     // It is available if it has no predecessors.
-    if ((SU->Preds.size() + SU->ChainPreds.size()) == 0 && SU != Entry)
-      Available.push(SU);
+    if ((SUnits[i].Preds.size() + SUnits[i].ChainPreds.size()) == 0 &&
+        &SUnits[i] != Entry)
+      Available.push(&SUnits[i]);
   }
   
   // While Available queue is not empty, grab the node with the highest
@@ -486,11 +473,11 @@ void ScheduleDAGList::ListScheduleTopDown() {
 #ifndef NDEBUG
   // Verify that all SUnits were scheduled.
   bool AnyNotSched = false;
-  for (SUnit *SU = HeadSUnit; SU != NULL; SU = SU->Next) {
-    if (SU->NumPredsLeft != 0 || SU->NumChainPredsLeft != 0) {
+  for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
+    if (SUnits[i].NumPredsLeft != 0 || SUnits[i].NumChainPredsLeft != 0) {
       if (!AnyNotSched)
         std::cerr << "*** List scheduling failed! ***\n";
-      SU->dump(&DAG);
+      SUnits[i].dump(&DAG);
       std::cerr << "has not been scheduled!\n";
       AnyNotSched = true;
     }
@@ -532,16 +519,21 @@ int ScheduleDAGList::CalcNodePriority(SUnit *SU) {
 
 /// CalculatePriorities - Calculate priorities of all scheduling units.
 void ScheduleDAGList::CalculatePriorities() {
-  for (SUnit *SU = HeadSUnit; SU != NULL; SU = SU->Next) {
+  for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
     // FIXME: assumes uniform latency for now.
-    SU->Latency = 1;
-    (void)CalcNodePriority(SU);
-    DEBUG(SU->dump(&DAG));
+    SUnits[i].Latency = 1;
+    (void)CalcNodePriority(&SUnits[i]);
+    DEBUG(SUnits[i].dump(&DAG));
     DEBUG(std::cerr << "\n");
   }
 }
 
 void ScheduleDAGList::BuildSchedUnits() {
+  // Reserve entries in the vector for each of the SUnits we are creating.  This
+  // ensure that reallocation of the vector won't happen, so SUnit*'s won't get
+  // invalidated.
+  SUnits.reserve(NodeCount);
+  
   // Pass 1: create the SUnit's.
   for (unsigned i = 0, NC = NodeCount; i < NC; i++) {
     NodeInfo *NI = &Info[i];
@@ -576,7 +568,8 @@ void ScheduleDAGList::BuildSchedUnits() {
   }
 
   // Pass 2: add the preds, succs, etc.
-  for (SUnit *SU = HeadSUnit; SU != NULL; SU = SU->Next) {
+  for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
+    SUnit *SU = &SUnits[i];
     SDNode   *N  = SU->Node;
     NodeInfo *NI = getNI(N);
     
