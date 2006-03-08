@@ -30,7 +30,7 @@ fi
 ulimit -t 40
 
 SCRIPT=$OUTPUT.script
-grep 'RUN:' $FILENAME | sed "s|^.*RUN:\(.*\)$|\1|g;s|%s|$SUBST|g;s|%llvmgcc|llvm-gcc|g;s|%llvmgxx|llvm-g++|g;s|%prcontext|prcontext.tcl|g" > $SCRIPT
+grep 'RUN:' $FILENAME | sed "s|^.*RUN:\(.*\)$|\1|g;s|%s|$SUBST|g;s|%llvmgcc|llvm-gcc -emit-llvm|g;s|%llvmgxx|llvm-g++ -emit-llvm|g;s|%prcontext|prcontext.tcl|g" > $SCRIPT
 
 
 /bin/sh $SCRIPT > $OUTPUT 2>&1 || (
