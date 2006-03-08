@@ -60,7 +60,8 @@ int main(int argc, char **argv, char * const *envp) {
     try {
       MP = getBytecodeModuleProvider(InputFile);
     } catch (std::string &err) {
-      std::cerr << "Error loading program '" << InputFile << "': " << err << "\n";
+      std::cerr << "Error loading program '" << InputFile << "': "
+                << err << "\n";
       exit(1);
     }
 
@@ -69,10 +70,10 @@ int main(int argc, char **argv, char * const *envp) {
       MP->getModule()->setTargetTriple(TargetTriple);
     
     ExecutionEngine *EE = ExecutionEngine::create(MP, ForceInterpreter);
-    assert(EE && "Couldn't create an ExecutionEngine, not even an interpreter?");
+    assert(EE &&"Couldn't create an ExecutionEngine, not even an interpreter?");
 
-    // If the user specifically requested an argv[0] to pass into the program, do
-    // it now.
+    // If the user specifically requested an argv[0] to pass into the program,
+    // do it now.
     if (!FakeArgv0.empty()) {
       InputFile = FakeArgv0;
     } else {
@@ -96,11 +97,17 @@ int main(int argc, char **argv, char * const *envp) {
       return -1;
     }
 
-    // Run main...
+    // Run static constructors.
+    EE->runStaticConstructorsDestructors(false);
+    
+    // Run main.
     int Result = EE->runFunctionAsMain(Fn, InputArgv, envp);
 
-    // If the program didn't explicitly call exit, call exit now, for the program.
-    // This ensures that any atexit handlers get called correctly.
+    // Run static destructors.
+    EE->runStaticConstructorsDestructors(true);
+    
+    // If the program didn't explicitly call exit, call exit now, for the
+    // program. This ensures that any atexit handlers get called correctly.
     Function *Exit = MP->getModule()->getOrInsertFunction("exit", Type::VoidTy,
                                                           Type::IntTy,
                                                           (Type *)0);
