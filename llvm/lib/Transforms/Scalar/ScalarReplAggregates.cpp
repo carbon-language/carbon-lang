@@ -289,7 +289,7 @@ int SROA::isSafeUseOfAllocation(Instruction *User) {
   GetElementPtrInst *GEPI = cast<GetElementPtrInst>(User);
   gep_type_iterator I = gep_type_begin(GEPI), E = gep_type_end(GEPI);
 
-  // The GEP is safe to transform if it is of the form GEP <ptr>, 0, <cst>
+  // The GEP is not safe to transform if not of the form "GEP <ptr>, 0, <cst>".
   if (I == E ||
       I.getOperand() != Constant::getNullValue(I.getOperand()->getType()))
     return 0;
@@ -308,13 +308,29 @@ int SROA::isSafeUseOfAllocation(Instruction *User) {
       if (cast<ConstantInt>(GEPI->getOperand(2))->getRawValue() >= NumElements)
         return 0;
 
+      // We cannot scalar repl this level of the array unless any array
+      // sub-indices are in-range constants.  In particular, consider:
+      // A[0][i].  We cannot know that the user isn't doing invalid things like
+      // allowing i to index an out-of-range subscript that accesses A[1].
+      //
+      // Scalar replacing *just* the outer index of the array is probably not
+      // going to be a win anyway, so just give up.
+      for (++I; I != E && isa<ArrayType>(*I); ++I) {
+        const ArrayType *SubArrayTy = cast<ArrayType>(*I);
+        uint64_t NumElements = SubArrayTy->getNumElements();
+        if (!isa<ConstantInt>(I.getOperand())) return 0;
+        if (cast<ConstantInt>(I.getOperand())->getRawValue() >= NumElements)
+          return 0;
+      }
+      
     } else {
       // If this is an array index and the index is not constant, we cannot
       // promote... that is unless the array has exactly one or two elements in
       // it, in which case we CAN promote it, but we have to canonicalize this
       // out if this is the only problem.
-      if (NumElements == 1 || NumElements == 2)
-        return AllUsersAreLoads(GEPI) ? 1 : 0;  // Canonicalization required!
+      if ((NumElements == 1 || NumElements == 2) &&
+          AllUsersAreLoads(GEPI))
+        return 1;  // Canonicalization required!
       return 0;
     }
   }
