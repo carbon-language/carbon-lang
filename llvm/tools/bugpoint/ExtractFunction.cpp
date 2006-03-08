@@ -13,11 +13,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "BugDriver.h"
-#include "llvm/Constant.h"
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Pass.h"
-#include "llvm/Type.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
@@ -74,6 +74,9 @@ Module *BugDriver::deleteInstructionFromProgram(const Instruction *I,
   // Remove the instruction from the program.
   TheInst->getParent()->getInstList().erase(TheInst);
 
+  
+  //writeProgramToFile("current.bc", Result);
+    
   // Spiff up the output a little bit.
   PassManager Passes;
   // Make sure that the appropriate target data is always used...
@@ -170,6 +173,80 @@ void llvm::DeleteFunctionBody(Function *F) {
   assert(F->isExternal() && "This didn't make the function external!");
 }
 
+/// GetTorInit - Given a list of entries for static ctors/dtors, return them
+/// as a constant array.
+static Constant *GetTorInit(std::vector<std::pair<Function*, int> > &TorList) {
+  assert(!TorList.empty() && "Don't create empty tor list!");
+  std::vector<Constant*> ArrayElts;
+  for (unsigned i = 0, e = TorList.size(); i != e; ++i) {
+    std::vector<Constant*> Elts;
+    Elts.push_back(ConstantSInt::get(Type::IntTy, TorList[i].second));
+    Elts.push_back(TorList[i].first);
+    ArrayElts.push_back(ConstantStruct::get(Elts));
+  }
+  return ConstantArray::get(ArrayType::get(ArrayElts[0]->getType(), 
+                                           ArrayElts.size()),
+                            ArrayElts);
+}
+
+/// SplitStaticCtorDtor - A module was recently split into two parts, M1/M2, and
+/// M1 has all of the global variables.  If M2 contains any functions that are
+/// static ctors/dtors, we need to add an llvm.global_[cd]tors global to M2, and
+/// prune appropriate entries out of M1s list.
+static void SplitStaticCtorDtor(const char *GlobalName, Module *M1, Module *M2){
+  GlobalVariable *GV = M1->getNamedGlobal(GlobalName);
+  if (!GV || GV->isExternal() || GV->hasInternalLinkage() ||
+      !GV->use_empty()) return;
+  
+  std::vector<std::pair<Function*, int> > M1Tors, M2Tors;
+  ConstantArray *InitList = dyn_cast<ConstantArray>(GV->getInitializer());
+  if (!InitList) return;
+  
+  for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i) {
+    if (ConstantStruct *CS = dyn_cast<ConstantStruct>(InitList->getOperand(i))){
+      if (CS->getNumOperands() != 2) return;  // Not array of 2-element structs.
+      
+      if (CS->getOperand(1)->isNullValue())
+        break;  // Found a null terminator, stop here.
+      
+      ConstantSInt *CI = dyn_cast<ConstantSInt>(CS->getOperand(0));
+      int Priority = CI ? CI->getValue() : 0;
+      
+      Constant *FP = CS->getOperand(1);
+      if (ConstantExpr *CE = dyn_cast<ConstantExpr>(FP))
+        if (CE->getOpcode() == Instruction::Cast)
+          FP = CE->getOperand(0);
+      if (Function *F = dyn_cast<Function>(FP)) {
+        if (!F->isExternal())
+          M1Tors.push_back(std::make_pair(F, Priority));
+        else {
+          // Map to M2's version of the function.
+          F = M2->getFunction(F->getName(), F->getFunctionType());
+          M2Tors.push_back(std::make_pair(F, Priority));
+        }
+      }
+    }
+  }
+  
+  GV->eraseFromParent();
+  if (!M1Tors.empty()) {
+    Constant *M1Init = GetTorInit(M1Tors);
+    new GlobalVariable(M1Init->getType(), false, GlobalValue::AppendingLinkage,
+                       M1Init, GlobalName, M1);
+  }
+
+  GV = M2->getNamedGlobal(GlobalName);
+  assert(GV && "Not a clone of M1?");
+  assert(GV->use_empty() && "llvm.ctors shouldn't have uses!");
+
+  GV->eraseFromParent();
+  if (!M2Tors.empty()) {
+    Constant *M2Init = GetTorInit(M2Tors);
+    new GlobalVariable(M2Init->getType(), false, GlobalValue::AppendingLinkage,
+                       M2Init, GlobalName, M2);
+  }
+}
+
 /// SplitFunctionsOutOfModule - Given a module and a list of functions in the
 /// module, split the functions OUT of the specified module, and place them in
 /// the new module.
@@ -184,13 +261,15 @@ Module *llvm::SplitFunctionsOutOfModule(Module *M,
   // between the two modules will work.
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
     I->setLinkage(GlobalValue::ExternalLinkage);
-  for (Module::global_iterator I = M->global_begin(), E = M->global_end(); I != E; ++I)
+  for (Module::global_iterator I = M->global_begin(), E = M->global_end();
+       I != E; ++I)
     I->setLinkage(GlobalValue::ExternalLinkage);
 
   Module *New = CloneModule(M);
 
   // Make sure global initializers exist only in the safe module (CBE->.so)
-  for (Module::global_iterator I = New->global_begin(), E = New->global_end(); I != E; ++I)
+  for (Module::global_iterator I = New->global_begin(), E = New->global_end();
+       I != E; ++I)
     I->setInitializer(0);  // Delete the initializer to make it external
 
   // Remove the Test functions from the Safe module
@@ -207,6 +286,12 @@ Module *llvm::SplitFunctionsOutOfModule(Module *M,
   for (Module::iterator I = New->begin(), E = New->end(); I != E; ++I)
     if (!TestFunctions.count(std::make_pair(I->getName(), I->getType())))
       DeleteFunctionBody(I);
+  
+  // Make sure that there is a global ctor/dtor array in both halves of the
+  // module if they both have static ctor/dtor functions.
+  SplitStaticCtorDtor("llvm.global_ctors", M, New);
+  SplitStaticCtorDtor("llvm.global_dtors", M, New);
+  
   return New;
 }
 
