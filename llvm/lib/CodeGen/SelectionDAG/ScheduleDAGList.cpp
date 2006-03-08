@@ -178,7 +178,7 @@ private:
   bool isBottomUp;
   
   /// HazardRec - The hazard recognizer to use.
-  HazardRecognizer &HazardRec;
+  HazardRecognizer *HazardRec;
   
   typedef std::priority_queue<SUnit*, std::vector<SUnit*>, ls_rr_sort>
     AvailableQueueTy;
@@ -186,7 +186,7 @@ private:
 public:
   ScheduleDAGList(SelectionDAG &dag, MachineBasicBlock *bb,
                   const TargetMachine &tm, bool isbottomup,
-                  HazardRecognizer &HR)
+                  HazardRecognizer *HR)
     : ScheduleDAG(listSchedulingBURR, dag, bb, tm),
       CurrCycle(0), HeadSUnit(NULL), TailSUnit(NULL), isBottomUp(isbottomup),
       HazardRec(HR) {
@@ -199,6 +199,7 @@ public:
       delete SU;
       SU = NextSU;
     }
+    delete HazardRec;
   }
 
   void Schedule();
@@ -413,12 +414,10 @@ void ScheduleDAGList::ListScheduleTopDown() {
   // Available queue.
   AvailableQueueTy Available;
 
-  HazardRec.StartBasicBlock();
-  
   // Emit the entry node first.
   SUnit *Entry = SUnitMap[DAG.getEntryNode().Val];
   ScheduleNodeTopDown(Available, Entry);
-  HazardRec.EmitInstruction(Entry->Node);
+  HazardRec->EmitInstruction(Entry->Node);
                       
   // All leaves to Available queue.
   for (SUnit *SU = HeadSUnit; SU != NULL; SU = SU->Next) {
@@ -446,7 +445,7 @@ void ScheduleDAGList::ListScheduleTopDown() {
            N->getOpcode() < ISD::BUILTIN_OP_END && i != e; ++i)
         N = CurNode->FlaggedNodes[i];
       
-      HazardRecognizer::HazardType HT = HazardRec.getHazardType(N);
+      HazardRecognizer::HazardType HT = HazardRec->getHazardType(N);
       if (HT == HazardRecognizer::NoHazard) {
         FoundNode = CurNode;
         break;
@@ -467,19 +466,19 @@ void ScheduleDAGList::ListScheduleTopDown() {
     // If we found a node to schedule, do it now.
     if (FoundNode) {
       ScheduleNodeTopDown(Available, FoundNode);
-      HazardRec.EmitInstruction(FoundNode->Node);
+      HazardRec->EmitInstruction(FoundNode->Node);
     } else if (!HasNoopHazards) {
       // Otherwise, we have a pipeline stall, but no other problem, just advance
       // the current cycle and try again.
       DEBUG(std::cerr << "*** Advancing cycle, no work to do\n");
-      HazardRec.AdvanceCycle();
+      HazardRec->AdvanceCycle();
       ++NumStalls;
     } else {
       // Otherwise, we have no instructions to issue and we have instructions
       // that will fault if we don't do this right.  This is the case for
       // processors without pipeline interlocks and other cases.
       DEBUG(std::cerr << "*** Emitting noop\n");
-      HazardRec.EmitNoop();
+      HazardRec->EmitNoop();
       Sequence.push_back(0);   // NULL SUnit* -> noop
       ++NumNoops;
     }
@@ -691,14 +690,14 @@ void ScheduleDAGList::Schedule() {
 
 llvm::ScheduleDAG* llvm::createBURRListDAGScheduler(SelectionDAG &DAG,
                                                     MachineBasicBlock *BB) {
-  HazardRecognizer HR;
-  return new ScheduleDAGList(DAG, BB, DAG.getTarget(), true, HR);
+  return new ScheduleDAGList(DAG, BB, DAG.getTarget(), true, 
+                             new HazardRecognizer());
 }
 
 /// createTDListDAGScheduler - This creates a top-down list scheduler with the
 /// specified hazard recognizer.
 ScheduleDAG* llvm::createTDListDAGScheduler(SelectionDAG &DAG,
                                             MachineBasicBlock *BB,
-                                            HazardRecognizer &HR) {
+                                            HazardRecognizer *HR) {
   return new ScheduleDAGList(DAG, BB, DAG.getTarget(), false, HR);
 }

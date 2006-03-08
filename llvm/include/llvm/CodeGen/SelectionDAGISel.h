@@ -62,9 +62,9 @@ public:
     return true;
   }
   
-  /// GetTargetHazardRecognizer - Return the hazard recognizer to use for this
-  /// target when scheduling the DAG.
-  virtual HazardRecognizer &GetTargetHazardRecognizer();
+  /// CreateTargetHazardRecognizer - Return a newly allocated hazard recognizer
+  /// to use for this target when scheduling the DAG.
+  virtual HazardRecognizer *CreateTargetHazardRecognizer();
   
 protected:
   /// Pick a safe ordering and emit instructions for each target node in the

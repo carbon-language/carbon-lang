@@ -57,10 +57,6 @@ namespace llvm {
       NoopHazard,    // This instruction can't be emitted, and needs noops.
     };
     
-    /// StartBasicBlock - This is called when a new basic block is started.
-    ///
-    virtual void StartBasicBlock() {}
-    
     /// getHazardType - Return the hazard type of emitting this node.  There are
     /// three possible results.  Either:
     ///  * NoHazard: it is legal to issue this instruction on this cycle.
@@ -410,10 +406,11 @@ namespace llvm {
                                           MachineBasicBlock *BB);
   
   /// createTDListDAGScheduler - This creates a top-down list scheduler with
-  /// the specified hazard recognizer.
+  /// the specified hazard recognizer.  This takes ownership of the hazard
+  /// recognizer and deletes it when done.
   ScheduleDAG* createTDListDAGScheduler(SelectionDAG &DAG,
                                         MachineBasicBlock *BB,
-                                        HazardRecognizer &HR);
+                                        HazardRecognizer *HR);
 }
 
 #endif

@@ -2474,17 +2474,15 @@ void SelectionDAGISel::ScheduleAndEmitDAG(SelectionDAG &DAG) {
     SL = createBURRListDAGScheduler(DAG, BB);
     break;
   case listSchedulingTD:
-    SL = createTDListDAGScheduler(DAG, BB, GetTargetHazardRecognizer());
+    SL = createTDListDAGScheduler(DAG, BB, CreateTargetHazardRecognizer());
     break;
   }
   BB = SL->Run();
   delete SL;
 }
 
-HazardRecognizer &SelectionDAGISel::
-GetTargetHazardRecognizer() {
-  static HazardRecognizer DefaultRecognizer;
-  return DefaultRecognizer;
+HazardRecognizer *SelectionDAGISel::CreateTargetHazardRecognizer() {
+  return new HazardRecognizer();
 }
 
 /// SelectInlineAsmMemoryOperands - Calls to this are automatically generated

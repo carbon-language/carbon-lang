@@ -52,7 +52,7 @@ class PPCHazardRecognizer970 : public HazardRecognizer {
   unsigned  StoreSize;
   
 public:
-  virtual void StartBasicBlock();
+  PPCHazardRecognizer970();
   virtual HazardType getHazardType(SDNode *Node);
   virtual void EmitInstruction(SDNode *Node);
   virtual void AdvanceCycle();

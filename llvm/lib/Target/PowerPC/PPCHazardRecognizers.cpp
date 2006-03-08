@@ -50,6 +50,10 @@ using namespace llvm;
 //      e.g. integer divides that only execute in the second slot.
 //
 
+PPCHazardRecognizer970::PPCHazardRecognizer970() {
+  EndDispatchGroup();
+}
+
 void PPCHazardRecognizer970::EndDispatchGroup() {
   DEBUG(std::cerr << "=== Start of dispatch group\n");
   // Pipeline units.
@@ -115,12 +119,6 @@ PPCHazardRecognizer970::GetInstrType(unsigned Opcode) {
   }
   
   return FXU;
-}
-
-
-/// StartBasicBlock - Initiate a new dispatch group.
-void PPCHazardRecognizer970::StartBasicBlock() {
-  EndDispatchGroup();
 }
 
 /// isLoadOfStoredAddress - If we have a load from the previously stored pointer
