@@ -95,6 +95,37 @@ static void *CreateArgv(ExecutionEngine *EE,
   return Result;
 }
 
+
+/// runStaticConstructorsDestructors - This method is used to execute all of
+/// the static constructors or destructors for a module, depending on the
+/// value of isDtors.
+void ExecutionEngine::runStaticConstructorsDestructors(bool isDtors) {
+  const char *Name = isDtors ? "llvm.global_dtors" : "llvm.global_ctors";
+  GlobalVariable *GV = CurMod.getNamedGlobal(Name);
+  if (!GV || GV->isExternal() || !GV->hasInternalLinkage()) return;
+  
+  // Should be an array of '{ int, void ()* }' structs.  The first value is the
+  // init priority, which we ignore.
+  ConstantArray *InitList = dyn_cast<ConstantArray>(GV->getInitializer());
+  if (!InitList) return;
+  for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i)
+    if (ConstantStruct *CS = dyn_cast<ConstantStruct>(InitList->getOperand(i))){
+      if (CS->getNumOperands() != 2) return;  // Not array of 2-element structs.
+      
+      Constant *FP = CS->getOperand(1);
+      if (FP->isNullValue())
+        return;  // Found a null terminator, exit.
+      
+      if (ConstantExpr *CE = dyn_cast<ConstantExpr>(FP))
+        if (CE->getOpcode() == Instruction::Cast)
+          FP = CE->getOperand(0);
+      if (Function *F = dyn_cast<Function>(FP)) {
+        // Execute the ctor/dtor function!
+        runFunction(F, std::vector<GenericValue>());
+      }
+    }
+}
+
 /// runFunctionAsMain - This is a helper function which wraps runFunction to
 /// handle the common task of starting up main with the specified argc, argv,
 /// and envp parameters.
@@ -121,8 +152,6 @@ int ExecutionEngine::runFunctionAsMain(Function *Fn,
   }
   return runFunction(Fn, GVArgs).IntVal;
 }
-
-
 
 /// If possible, create a JIT, unless the caller specifically requests an
 /// Interpreter or there's an error. If even an Interpreter cannot be created,
