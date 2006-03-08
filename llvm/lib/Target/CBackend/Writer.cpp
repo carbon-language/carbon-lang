@@ -1598,6 +1598,7 @@ void CWriter::lowerIntrinsics(Function &F) {
           case Intrinsic::setjmp:
           case Intrinsic::longjmp:
           case Intrinsic::prefetch:
+          case Intrinsic::dbg_stoppoint:
             // We directly implement these intrinsics
             break;
           default:
@@ -1687,6 +1688,22 @@ void CWriter::visitCallInst(CallInst &I) {
         writeOperand(I.getOperand(3));
         Out << ")";
         return;
+      case Intrinsic::dbg_stoppoint: {
+        // If we use writeOperand directly we get a "u" suffix which is rejected
+        // by gcc.
+        ConstantUInt *SI = cast<ConstantUInt>(I.getOperand(2));
+        GlobalVariable *GV = cast<GlobalVariable>(I.getOperand(4));
+        ConstantStruct *CS = cast<ConstantStruct>(GV->getInitializer());
+        std::string FileName = CS->getOperand(4)->getStringValue();
+        std::string Directory = CS->getOperand(5)->getStringValue();
+
+        Out << "\n#line "
+            << SI->getValue()
+            << " \"" << Directory << FileName << "\"\n";
+        // Need to set result.
+        Out << "0";
+        return;
+      }
       }
     }
 
