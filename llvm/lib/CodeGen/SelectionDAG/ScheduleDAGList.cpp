@@ -20,7 +20,6 @@
 
 #define DEBUG_TYPE "sched"
 #include "llvm/CodeGen/ScheduleDAG.h"
-#include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/Debug.h"
@@ -36,36 +35,36 @@ namespace {
   Statistic<> NumNoops ("scheduler", "Number of noops inserted");
   Statistic<> NumStalls("scheduler", "Number of pipeline stalls");
 
-/// SUnit - Scheduling unit. It's an wrapper around either a single SDNode or a
-/// group of nodes flagged together.
-struct SUnit {
-  SDNode *Node;                       // Representative node.
-  std::vector<SDNode*> FlaggedNodes;  // All nodes flagged to Node.
-  std::set<SUnit*> Preds;             // All real predecessors.
-  std::set<SUnit*> ChainPreds;        // All chain predecessors.
-  std::set<SUnit*> Succs;             // All real successors.
-  std::set<SUnit*> ChainSuccs;        // All chain successors.
-  int NumPredsLeft;                   // # of preds not scheduled.
-  int NumSuccsLeft;                   // # of succs not scheduled.
-  int NumChainPredsLeft;              // # of chain preds not scheduled.
-  int NumChainSuccsLeft;              // # of chain succs not scheduled.
-  int SethiUllman;                    // Sethi Ullman number.
-  bool isTwoAddress;                  // Is a two-address instruction.
-  bool isDefNUseOperand;              // Is a def&use operand.
-  unsigned Latency;                   // Node latency.
-  unsigned CycleBound;                // Upper/lower cycle to be scheduled at.
-  unsigned Slot;                      // Cycle node is scheduled at.
-  SUnit *Next;
-
-  SUnit(SDNode *node)
-    : Node(node), NumPredsLeft(0), NumSuccsLeft(0),
+  /// SUnit - Scheduling unit. It's an wrapper around either a single SDNode or a
+  /// group of nodes flagged together.
+  struct SUnit {
+    SDNode *Node;                       // Representative node.
+    std::vector<SDNode*> FlaggedNodes;  // All nodes flagged to Node.
+    std::set<SUnit*> Preds;             // All real predecessors.
+    std::set<SUnit*> ChainPreds;        // All chain predecessors.
+    std::set<SUnit*> Succs;             // All real successors.
+    std::set<SUnit*> ChainSuccs;        // All chain successors.
+    int NumPredsLeft;                   // # of preds not scheduled.
+    int NumSuccsLeft;                   // # of succs not scheduled.
+    int NumChainPredsLeft;              // # of chain preds not scheduled.
+    int NumChainSuccsLeft;              // # of chain succs not scheduled.
+    int SethiUllman;                    // Sethi Ullman number.
+    bool isTwoAddress;                  // Is a two-address instruction.
+    bool isDefNUseOperand;              // Is a def&use operand.
+    unsigned Latency;                   // Node latency.
+    unsigned CycleBound;                // Upper/lower cycle to be scheduled at.
+    SUnit *Next;
+    
+    SUnit(SDNode *node)
+      : Node(node), NumPredsLeft(0), NumSuccsLeft(0),
       NumChainPredsLeft(0), NumChainSuccsLeft(0),
       SethiUllman(INT_MIN),
       isTwoAddress(false), isDefNUseOperand(false),
-      Latency(0), CycleBound(0), Slot(0), Next(NULL) {}
-
-  void dump(const SelectionDAG *G, bool All=true) const;
-};
+      Latency(0), CycleBound(0), Next(NULL) {}
+    
+    void dump(const SelectionDAG *G, bool All=true) const;
+  };
+}
 
 void SUnit::dump(const SelectionDAG *G, bool All) const {
   std::cerr << "SU: ";
@@ -122,6 +121,7 @@ void SUnit::dump(const SelectionDAG *G, bool All) const {
   }
 }
 
+namespace {
 /// Sorting functions for the Available queue.
 struct ls_rr_sort : public std::binary_function<SUnit*, SUnit*, bool> {
   bool operator()(const SUnit* left, const SUnit* right) const {
@@ -159,8 +159,10 @@ struct ls_rr_sort : public std::binary_function<SUnit*, SUnit*, bool> {
     return false;
   }
 };
+}  // end anonymous namespace
 
 
+namespace {
 /// ScheduleDAGList - List scheduler.
 class ScheduleDAGList : public ScheduleDAG {
 private:
@@ -219,7 +221,7 @@ private:
   void BuildSchedUnits();
   void EmitSchedule();
 };
-}  // end namespace
+}  // end anonymous namespace
 
 HazardRecognizer::~HazardRecognizer() {}
 
@@ -305,7 +307,6 @@ void ScheduleDAGList::ScheduleNodeBottomUp(AvailableQueueTy &Available,
   DEBUG(SU->dump(&DAG, false));
 
   Sequence.push_back(SU);
-  SU->Slot = CurrCycle;
 
   // Bottom up: release predecessors
   for (std::set<SUnit*>::iterator I1 = SU->Preds.begin(),
@@ -329,7 +330,6 @@ void ScheduleDAGList::ScheduleNodeTopDown(AvailableQueueTy &Available,
   DEBUG(SU->dump(&DAG, false));
   
   Sequence.push_back(SU);
-  SU->Slot = CurrCycle;
   
   // Bottom up: release successors.
   for (std::set<SUnit*>::iterator I1 = SU->Succs.begin(),
@@ -384,7 +384,6 @@ void ScheduleDAGList::ListScheduleBottomUp() {
   // Add entry node last
   if (DAG.getEntryNode().Val != DAG.getRoot().Val) {
     SUnit *Entry = SUnitMap[DAG.getEntryNode().Val];
-    Entry->Slot = CurrCycle;
     Sequence.push_back(Entry);
   }
 

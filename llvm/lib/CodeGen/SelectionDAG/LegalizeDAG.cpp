@@ -1795,10 +1795,33 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case TargetLowering::Custom:
       Tmp1 = TLI.LowerOperation(Result, DAG);
       if (Tmp1.Val) Result = Tmp1;
-        break;
+      break;
     case TargetLowering::Legal: break;
     case TargetLowering::Expand:
-      // Floating point mod -> fmod libcall.
+      // If this target supports fabs/fneg natively, do this efficiently.
+      if (TLI.isOperationLegal(ISD::FABS, Tmp1.getValueType()) &&
+          TLI.isOperationLegal(ISD::FNEG, Tmp1.getValueType())) {
+        // Get the sign bit of the RHS.
+        MVT::ValueType IVT = 
+          Tmp2.getValueType() == MVT::f32 ? MVT::i32 : MVT::i64;
+        SDOperand SignBit = DAG.getNode(ISD::BIT_CONVERT, IVT, Tmp2);
+        SignBit = DAG.getSetCC(TLI.getSetCCResultTy(),
+                               SignBit, DAG.getConstant(0, IVT), ISD::SETLT);
+        // Get the absolute value of the result.
+        SDOperand AbsVal = DAG.getNode(ISD::FABS, Tmp1.getValueType(), Tmp1);
+        // Select between the nabs and abs value based on the sign bit of
+        // the input.
+        Result = DAG.getNode(ISD::SELECT, AbsVal.getValueType(), SignBit,
+                             DAG.getNode(ISD::FNEG, AbsVal.getValueType(), 
+                                         AbsVal),
+                             AbsVal);
+        Result = LegalizeOp(Result);
+        break;
+      }
+      
+      // Otherwise, do bitwise ops!
+      
+      // copysign -> copysignf/copysign libcall.
       const char *FnName;
       if (Node->getValueType(0) == MVT::f32) {
         FnName = "copysignf";
