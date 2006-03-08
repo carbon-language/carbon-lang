@@ -1244,7 +1244,6 @@ DIE *DwarfWriter::NewBasicType(DIE *Context, Type *Ty) {
 /// NewType - Create a new type DIE.
 ///
 DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc) {
-  // FIXME - hack to get around NULL types short term.
   if (!TyDesc)  return NewBasicType(Context, Type::IntTy);
   
   // FIXME - Should handle other contexts that compile units.

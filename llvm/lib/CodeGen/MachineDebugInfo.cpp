@@ -67,45 +67,6 @@ getGlobalVariablesUsing(Module &M, const std::string &RootName) {
   return Result;
 }
   
-/// getStringValue - Turn an LLVM constant pointer that eventually points to a
-/// global into a string value.  Return an empty string if we can't do it.
-///
-static const std::string getStringValue(Value *V, unsigned Offset = 0) {
-  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
-    if (GV->hasInitializer() && isa<ConstantArray>(GV->getInitializer())) {
-      ConstantArray *Init = cast<ConstantArray>(GV->getInitializer());
-      if (Init->isString()) {
-        std::string Result = Init->getAsString();
-        if (Offset < Result.size()) {
-          // If we are pointing INTO The string, erase the beginning...
-          Result.erase(Result.begin(), Result.begin()+Offset);
-
-          // Take off the null terminator, and any string fragments after it.
-          std::string::size_type NullPos = Result.find_first_of((char)0);
-          if (NullPos != std::string::npos)
-            Result.erase(Result.begin()+NullPos, Result.end());
-          return Result;
-        }
-      }
-    }
-  } else if (Constant *C = dyn_cast<Constant>(V)) {
-    if (GlobalValue *GV = dyn_cast<GlobalValue>(C))
-      return getStringValue(GV, Offset);
-    else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
-      if (CE->getOpcode() == Instruction::GetElementPtr) {
-        // Turn a gep into the specified offset.
-        if (CE->getNumOperands() == 3 &&
-            cast<Constant>(CE->getOperand(1))->isNullValue() &&
-            isa<ConstantInt>(CE->getOperand(2))) {
-          return getStringValue(CE->getOperand(0),
-                   Offset+cast<ConstantInt>(CE->getOperand(2))->getRawValue());
-        }
-      }
-    }
-  }
-  return "";
-}
-
 /// isStringValue - Return true if the given value can be coerced to a string.
 ///
 static bool isStringValue(Value *V) {
@@ -250,7 +211,7 @@ public:
   }
   virtual void Apply(std::string &Field) {
     Constant *C = CI->getOperand(I++);
-    Field = getStringValue(C);
+    Field = C->getStringValue();
   }
   virtual void Apply(DebugInfoDesc *&Field) {
     Constant *C = CI->getOperand(I++);
@@ -571,7 +532,7 @@ void AnchorDesc::ApplyToFields(DIVisitor *Visitor) {
 
 /// getDescString - Return a string used to compose global names and labels. A
 /// A global variable name needs to be defined for each debug descriptor that is
-/// anchored. NOTE: that each global variable name here also needs to be added
+/// anchored. NOTE: that each global variable named here also needs to be added
 /// to the list of names left external in the internalizer.
 ///   ExternalNames.insert("llvm.dbg.compile_units");
 ///   ExternalNames.insert("llvm.dbg.global_variables");

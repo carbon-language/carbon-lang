@@ -873,24 +873,6 @@ void SelectionDAGLowering::visitAlloca(AllocaInst &I) {
   CurMBB->getParent()->getFrameInfo()->CreateVariableSizedObject();
 }
 
-/// getStringValue - Turn an LLVM constant pointer that eventually points to a
-/// global into a string value.  Return an empty string if we can't do it.
-///
-static std::string getStringValue(GlobalVariable *GV, unsigned Offset = 0) {
-  if (GV->hasInitializer() && isa<ConstantArray>(GV->getInitializer())) {
-    ConstantArray *Init = cast<ConstantArray>(GV->getInitializer());
-    if (Init->isString()) {
-      std::string Result = Init->getAsString();
-      if (Offset < Result.size()) {
-        // If we are pointing INTO The string, erase the beginning...
-        Result.erase(Result.begin(), Result.begin()+Offset);
-        return Result;
-      }
-    }
-  }
-  return "";
-}
-
 void SelectionDAGLowering::visitLoad(LoadInst &I) {
   SDOperand Ptr = getValue(I.getOperand(0));
 
@@ -1962,7 +1944,7 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
         if (G) {
           GlobalVariable *GV = dyn_cast<GlobalVariable>(G->getGlobal());
           if (GV) {
-            Str = getStringValue(GV);
+            Str = GV->getStringValue();
             if (!Str.empty()) {
               CopyFromStr = true;
               SrcOff += SrcDelta;

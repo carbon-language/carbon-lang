@@ -90,6 +90,11 @@ public:
   /// constant subsystem, which can be used in environments where this memory
   /// is otherwise reported as a leak.
   static void clearAllValueMaps();
+  
+  /// getStringValue - Turn an LLVM constant pointer that eventually points to a
+  /// global into a string value.  Return an empty string if we can't do it.
+  ///
+   std::string getStringValue(unsigned Offset = 0);
 };
 
 } // End llvm namespace

@@ -1712,3 +1712,43 @@ void Constant::clearAllValueMaps() {
     (*I)->destroyConstantImpl();
   Constants.clear();
 }
+
+/// getStringValue - Turn an LLVM constant pointer that eventually points to a
+/// global into a string value.  Return an empty string if we can't do it.
+///
+std::string Constant::getStringValue(unsigned Offset) {
+  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(this)) {
+    if (GV->hasInitializer() && isa<ConstantArray>(GV->getInitializer())) {
+      ConstantArray *Init = cast<ConstantArray>(GV->getInitializer());
+      if (Init->isString()) {
+        std::string Result = Init->getAsString();
+        if (Offset < Result.size()) {
+          // If we are pointing INTO The string, erase the beginning...
+          Result.erase(Result.begin(), Result.begin()+Offset);
+
+          // Take off the null terminator, and any string fragments after it.
+          std::string::size_type NullPos = Result.find_first_of((char)0);
+          if (NullPos != std::string::npos)
+            Result.erase(Result.begin()+NullPos, Result.end());
+          return Result;
+        }
+      }
+    }
+  } else if (Constant *C = dyn_cast<Constant>(this)) {
+    if (GlobalValue *GV = dyn_cast<GlobalValue>(C))
+      return GV->getStringValue(Offset);
+    else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
+      if (CE->getOpcode() == Instruction::GetElementPtr) {
+        // Turn a gep into the specified offset.
+        if (CE->getNumOperands() == 3 &&
+            cast<Constant>(CE->getOperand(1))->isNullValue() &&
+            isa<ConstantInt>(CE->getOperand(2))) {
+          Offset += cast<ConstantInt>(CE->getOperand(2))->getRawValue();
+          return CE->getOperand(0)->getStringValue(Offset);
+        }
+      }
+    }
+  }
+  return "";
+}
+
