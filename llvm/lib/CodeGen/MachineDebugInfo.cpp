@@ -263,12 +263,15 @@ public:
   virtual void Apply(std::vector<DebugInfoDesc *> &Field) {
     Constant *C = CI->getOperand(I++);
     GlobalVariable *GV = getGlobalVariable(C);
-    ConstantArray *CA = cast<ConstantArray>(GV->getInitializer());
     Field.resize(0);
-    for (unsigned i = 0, N = CA->getNumOperands(); i < N; ++i) {
-      GlobalVariable *GVE = getGlobalVariable(CA->getOperand(i));
-      DebugInfoDesc *DE = DR.Deserialize(GVE);
-      Field.push_back(DE);
+    // Have to be able to deal with the empty array case (zero initializer)
+    if (!GV->hasInitializer()) return;
+    if (ConstantArray *CA = dyn_cast<ConstantArray>(GV->getInitializer())) {
+      for (unsigned i = 0, N = CA->getNumOperands(); i < N; ++i) {
+        GlobalVariable *GVE = getGlobalVariable(CA->getOperand(i));
+        DebugInfoDesc *DE = DR.Deserialize(GVE);
+        Field.push_back(DE);
+      }
     }
   }
 };
