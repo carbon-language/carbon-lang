@@ -35,8 +35,8 @@ namespace {
   Statistic<> NumNoops ("scheduler", "Number of noops inserted");
   Statistic<> NumStalls("scheduler", "Number of pipeline stalls");
 
-  /// SUnit - Scheduling unit. It's an wrapper around either a single SDNode or a
-  /// group of nodes flagged together.
+  /// SUnit - Scheduling unit. It's an wrapper around either a single SDNode or
+  /// a group of nodes flagged together.
   struct SUnit {
     SDNode *Node;                       // Representative node.
     std::vector<SDNode*> FlaggedNodes;  // All nodes flagged to Node.
@@ -44,14 +44,14 @@ namespace {
     std::set<SUnit*> ChainPreds;        // All chain predecessors.
     std::set<SUnit*> Succs;             // All real successors.
     std::set<SUnit*> ChainSuccs;        // All chain successors.
-    int NumPredsLeft;                   // # of preds not scheduled.
-    int NumSuccsLeft;                   // # of succs not scheduled.
-    int NumChainPredsLeft;              // # of chain preds not scheduled.
-    int NumChainSuccsLeft;              // # of chain succs not scheduled.
+    short NumPredsLeft;                 // # of preds not scheduled.
+    short NumSuccsLeft;                 // # of succs not scheduled.
+    short NumChainPredsLeft;            // # of chain preds not scheduled.
+    short NumChainSuccsLeft;            // # of chain succs not scheduled.
     int SethiUllman;                    // Sethi Ullman number.
-    bool isTwoAddress;                  // Is a two-address instruction.
-    bool isDefNUseOperand;              // Is a def&use operand.
-    unsigned Latency;                   // Node latency.
+    bool isTwoAddress     : 1;          // Is a two-address instruction.
+    bool isDefNUseOperand : 1;          // Is a def&use operand.
+    unsigned short Latency;             // Node latency.
     unsigned CycleBound;                // Upper/lower cycle to be scheduled at.
     SUnit *Next;
     
@@ -247,7 +247,7 @@ void ScheduleDAGList::ReleasePred(AvailableQueueTy &Available,
   // latency. For example, the reader can very well read the register written
   // by the predecessor later than the issue cycle. It also depends on the
   // interrupt model (drain vs. freeze).
-  PredSU->CycleBound = std::max(PredSU->CycleBound, CurrCycle + PredSU->Latency);
+  PredSU->CycleBound = std::max(PredSU->CycleBound,CurrCycle + PredSU->Latency);
 
   if (!isChain)
     PredSU->NumSuccsLeft--;
@@ -278,7 +278,7 @@ void ScheduleDAGList::ReleaseSucc(AvailableQueueTy &Available,
   // latency. For example, the reader can very well read the register written
   // by the predecessor later than the issue cycle. It also depends on the
   // interrupt model (drain vs. freeze).
-  SuccSU->CycleBound = std::max(SuccSU->CycleBound, CurrCycle + SuccSU->Latency);
+  SuccSU->CycleBound = std::max(SuccSU->CycleBound,CurrCycle + SuccSU->Latency);
   
   if (!isChain)
     SuccSU->NumPredsLeft--;
