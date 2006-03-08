@@ -222,6 +222,20 @@ GlobalVariable *Module::getGlobalVariable(const std::string &Name,
   return 0;
 }
 
+/// getNamedGlobal - Return the first global variable in the module with the
+/// specified name, of arbitrary type.  This method returns null if a global
+/// with the specified name is not found.
+///
+GlobalVariable *Module::getNamedGlobal(const std::string &Name) {
+  // FIXME: This would be much faster with a symbol table that doesn't
+  // discriminate based on type!
+  for (global_iterator I = global_begin(), E = global_end();
+       I != E; ++I)
+    if (I->getName() == Name) 
+      return I;
+  return 0;
+}
+
 
 
 //===----------------------------------------------------------------------===//
