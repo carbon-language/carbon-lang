@@ -148,6 +148,12 @@ public:
   GlobalVariable *getGlobalVariable(const std::string &Name, const Type *Ty,
                                     bool AllowInternal = false);
 
+  /// getNamedGlobal - Return the first global variable in the module with the
+  /// specified name, of arbitrary type.  This method returns null if a global
+  /// with the specified name is not found.
+  ///
+  GlobalVariable *getNamedGlobal(const std::string &Name);
+  
 
   //===--------------------------------------------------------------------===//
   // Methods for easy access to the types in the module.
