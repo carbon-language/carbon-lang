@@ -277,6 +277,7 @@ private:
   CompileUnitDesc *File;                // Declared compile unit (may be NULL.)
   int Line;                             // Declared line# (may be zero.)
   uint64_t Size;                        // Type bit size (may be zero.)
+  uint64_t Align;                       // Type bit alignment (may be zero.)
   uint64_t Offset;                      // Type bit offset (may be zero.)
 
 public:
@@ -288,12 +289,14 @@ public:
   CompileUnitDesc *getFile()                 const { return File; }
   int getLine()                              const { return Line; }
   uint64_t getSize()                         const { return Size; }
+  uint64_t getAlign()                        const { return Align; }
   uint64_t getOffset()                       const { return Offset; }
   void setContext(DebugInfoDesc *C)                { Context = C; }
   void setName(const std::string &N)               { Name = N; }
   void setFile(CompileUnitDesc *U)                 { File = U; }
   void setLine(int L)                              { Line = L; }
   void setSize(uint64_t S)                         { Size = S; }
+  void setAlign(uint64_t A)                        { Align = A; }
   void setOffset(uint64_t O)                       { Offset = O; }
   
   /// ApplyToFields - Target the visitor to the fields of the  TypeDesc.
