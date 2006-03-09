@@ -92,10 +92,6 @@ function and then be turned into an instruction if warranted.</p>
     constant fold your intrinsic, add support to it in the 
     <tt>canConstantFoldCallTo</tt> and <tt>ConstantFoldCall</tt> functions.</li>
 
-<li><tt>llvm/lib/Transforms/Utils/Local.cpp</tt>: If your intrinsic has no side-
-    effects, add it to the list of intrinsics in the 
-    <tt>isInstructionTriviallyDead</tt> function.</li>
-
 <li><tt>llvm/test/Regression/*</tt>: Add test cases for your test cases to the 
     test suite</li>
 </ol>
