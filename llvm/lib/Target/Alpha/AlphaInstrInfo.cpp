@@ -26,7 +26,11 @@ bool AlphaInstrInfo::isMoveInstr(const MachineInstr& MI,
                                  unsigned& sourceReg,
                                  unsigned& destReg) const {
   MachineOpCode oc = MI.getOpcode();
-  if (oc == Alpha::BIS || oc == Alpha::CPYSS || oc == Alpha::CPYST) {
+  if (oc == Alpha::BIS    || 
+      oc == Alpha::CPYSS  || 
+      oc == Alpha::CPYST  ||
+      oc == Alpha::CPYSSt || 
+      oc == Alpha::CPYSTs) {
     // or r1, r2, r2 
     // cpys(s|t) r1 r2 r2
     assert(MI.getNumOperands() == 3 &&
