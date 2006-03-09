@@ -1,7 +1,7 @@
 This directory contains the C and C++ runtime libraries for the LLVM GCC
 front-ends.  It is composed of four distinct pieces:
 
-1. __main and static ctor/dtor support.  This is used by both C and C++ codes.
+1. __main: now dead, but provided for compatibility.
 
 2. Generic EH support routines.  This is used by C/C++ programs that use
    setjmp/longjmp, and by C++ programs that make use of exceptions.

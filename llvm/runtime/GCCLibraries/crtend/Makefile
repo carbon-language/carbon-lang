@@ -20,7 +20,7 @@ DONT_BUILD_RELINKED = 1
 LIBRARYNAME = crtend
 BYTECODE_DESTINATION = $(CFERuntimeLibDir)
 
-MainSrc      := crtend.c listend.ll
+MainSrc      := crtend.c
 GenericEHSrc := Exception.cpp
 SJLJEHSrc    := SJLJ-Exception.cpp
 
@@ -29,7 +29,7 @@ EXTRA_DIST   := $(MainSrc) $(GenericEHSrc) $(SJLJEHSrc) \
 
 include $(LEVEL)/Makefile.common
 
-MainObj      := $(ObjDir)/crtend.bc $(ObjDir)/listend.bc
+MainObj      := $(ObjDir)/crtend.bc
 GenericEHObj := $(ObjDir)/Exception.bc
 SJLJEHObj    := $(ObjDir)/SJLJ-Exception.bc
 
