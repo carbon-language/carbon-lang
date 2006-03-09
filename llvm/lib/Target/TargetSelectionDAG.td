@@ -83,6 +83,9 @@ def SDTIntShiftOp : SDTypeProfile<1, 2, [   // shl, sra, srl
 def SDTFPBinOp : SDTypeProfile<1, 2, [      // fadd, fmul, etc.
   SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>, SDTCisFP<0>
 ]>;
+def SDTFPSignOp : SDTypeProfile<1, 2, [      // fcopysign.
+  SDTCisSameAs<0, 1>, SDTCisFP<0>, SDTCisFP<2>
+]>;
 def SDTFPTernaryOp : SDTypeProfile<1, 3, [      // fmadd, fnmsub, etc.
   SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>, SDTCisSameAs<0, 3>, SDTCisFP<0>
 ]>;
@@ -262,7 +265,7 @@ def fcos       : SDNode<"ISD::FCOS"       , SDTFPUnaryOp>;
 
 def fround     : SDNode<"ISD::FP_ROUND"   , SDTFPRoundOp>;
 def fextend    : SDNode<"ISD::FP_EXTEND"  , SDTFPExtendOp>;
-def fcopysign  : SDNode<"ISD::FCOPYSIGN"  , SDTFPBinOp>;
+def fcopysign  : SDNode<"ISD::FCOPYSIGN"  , SDTFPSignOp>;
 
 def sint_to_fp : SDNode<"ISD::SINT_TO_FP" , SDTIntToFPOp>;
 def uint_to_fp : SDNode<"ISD::UINT_TO_FP" , SDTIntToFPOp>;
