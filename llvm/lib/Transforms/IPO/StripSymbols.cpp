@@ -100,7 +100,7 @@ bool StripSymbols::runOnModule(Module &M) {
   // Remove all of the calls to the debugger intrinsics, and remove them from
   // the module.
   if (FuncStart) {
-    Value *RV = UndefValue::get(StopPoint->getFunctionType()->getReturnType());
+    Value *RV = UndefValue::get(FuncStart->getFunctionType()->getReturnType());
     while (!FuncStart->use_empty()) {
       CallInst *CI = cast<CallInst>(FuncStart->use_back());
       Value *Arg = CI->getOperand(1);
