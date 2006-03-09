@@ -608,7 +608,21 @@ def CMPTLT : FPForm<0x16, 0x5A6, "cmptlt/su $RA,$RB,$RC", [], s_fadd>;
 def CMPTUN : FPForm<0x16, 0x5A4, "cmptun/su $RA,$RB,$RC", [], s_fadd>;
 //                    [(set F8RC:$RC, (setuo F8RC:$RA, F8RC:$RB))]>;
 }
-//TODO: Add lots more FP patterns
+
+//More CPYS forms:
+let OperandList = (ops F8RC:$RC, F4RC:$RA, F8RC:$RB) in {
+def CPYSTs  : FPForm<0x17, 0x020, "cpys $RA,$RB,$RC",
+                   [(set F8RC:$RC, (fcopysign F8RC:$RB, F4RC:$RA))], s_fadd>;
+def CPYSNTs : FPForm<0x17, 0x021, "cpysn $RA,$RB,$RC",
+                   [(set F8RC:$RC, (fneg (fcopysign F8RC:$RB, F4RC:$RA)))], s_fadd>;
+}
+let OperandList = (ops F4RC:$RC, F8RC:$RA, F4RC:$RB) in {
+def CPYSSt  : FPForm<0x17, 0x020, "cpys $RA,$RB,$RC",
+                   [(set F4RC:$RC, (fcopysign F4RC:$RB, F8RC:$RA))], s_fadd>;
+def CPYSESt : FPForm<0x17, 0x022, "cpyse $RA,$RB,$RC",[], s_fadd>; //Copy sign and exponent
+def CPYSNSt : FPForm<0x17, 0x021, "cpysn $RA,$RB,$RC",
+                   [(set F4RC:$RC, (fneg (fcopysign F4RC:$RB, F8RC:$RA)))], s_fadd>;
+}
 
 //conditional moves, floats
 let OperandList = (ops F4RC:$RDEST, F4RC:$RFALSE, F4RC:$RTRUE, F8RC:$RCOND),
@@ -848,10 +862,15 @@ def : Pat<(fneg F8RC:$RB),
           (CPYSNT F8RC:$RB, F8RC:$RB)>;
 def : Pat<(fneg F4RC:$RB),
           (CPYSNS F4RC:$RB, F4RC:$RB)>;
+
 def : Pat<(fcopysign F4RC:$A, (fneg F4RC:$B)),
           (CPYSNS F4RC:$B, F4RC:$A)>;
 def : Pat<(fcopysign F8RC:$A, (fneg F8RC:$B)),
           (CPYSNT F8RC:$B, F8RC:$A)>;
+def : Pat<(fcopysign F4RC:$A, (fneg F8RC:$B)),
+          (CPYSNSt F8RC:$B, F4RC:$A)>;
+def : Pat<(fcopysign F8RC:$A, (fneg F4RC:$B)),
+          (CPYSNTs F4RC:$B, F8RC:$A)>;
 
 //Yes, signed multiply high is ugly
 def : Pat<(mulhs GPRC:$RA, GPRC:$RB),
