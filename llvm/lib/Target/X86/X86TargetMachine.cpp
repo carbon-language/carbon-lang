@@ -37,6 +37,10 @@ namespace {
   cl::opt<bool> DisableOutput("disable-x86-llc-output", cl::Hidden,
                               cl::desc("Disable the X86 asm printer, for use "
                                        "when profiling the code generator."));
+
+  cl::opt<bool> EnableX86LSR("enable-x86-lsr", cl::Hidden,
+                              cl::desc("Enable the X86 loop strength reduction "
+                                       "pass."));
   // Register the target.
   RegisterTarget<X86TargetMachine> X("x86", "  IA-32 (Pentium and above)");
 }
@@ -91,6 +95,9 @@ bool X86TargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
                                            bool Fast) {
   if (FileType != TargetMachine::AssemblyFile &&
       FileType != TargetMachine::ObjectFile) return true;
+
+  // Run loop strength reduction before anything else.
+  if (EnableX86LSR) PM.add(createLoopStrengthReducePass());
 
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
