@@ -88,10 +88,6 @@ function and then be turned into an instruction if warranted.</p>
 <li><tt>llvm/include/llvm/Intrinsics.td</tt>:
     Add an entry for your intrinsic.</li>
 
-<li><tt>llvm/lib/Analysis/BasicAliasAnalysis.cpp</tt>: If the new intrinsic does
-    not access memory or does not write to memory, add it to the relevant list
-    of functions.</li>
-
 <li><tt>llvm/lib/Analysis/ConstantFolding.cpp</tt>: If it is possible to 
     constant fold your intrinsic, add support to it in the 
     <tt>canConstantFoldCallTo</tt> and <tt>ConstantFoldCall</tt> functions.</li>
