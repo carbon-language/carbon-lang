@@ -9,7 +9,7 @@
 LEVEL = ../..
 LIBRARYNAME = LLVMCore
 
-BUILT_SOURCES = $(LEVEL)/include/llvm/intrinsics.gen
+BUILT_SOURCES = $(LEVEL)/include/llvm/Intrinsics.gen
 
 include $(LEVEL)/Makefile.config
 ifeq ($(ARCH),Alpha)
@@ -18,7 +18,7 @@ endif
 
 include $(LEVEL)/Makefile.common
 
-$(LEVEL)/include/llvm/intrinsics.gen: $(LEVEL)/include/llvm/intrinsics.td
-	@echo Building intrinsics.gen from intrinsics.td
+$(LEVEL)/include/llvm/Intrinsics.gen: $(LEVEL)/include/llvm/Intrinsics.td
+	@echo Building Intrinsics.gen from Intrinsics.td
 	$(Verb) $(TableGen) $< -o $@ -gen-intrinsic
 
