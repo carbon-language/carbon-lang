@@ -1866,6 +1866,7 @@ private:
   std::set<std::pair<bool, std::string> > &GeneratedDecl;
 
   std::string ChainName;
+  bool NewTF;
   bool DoReplace;
   unsigned TmpNo;
   
@@ -1888,7 +1889,8 @@ public:
                      std::set<std::pair<bool, std::string> > &gd,
                      bool dorep)
   : ISE(ise), Predicates(preds), Pattern(pattern), Instruction(instr),
-    GeneratedCode(gc), GeneratedDecl(gd), DoReplace(dorep), TmpNo(0) {}
+    GeneratedCode(gc), GeneratedDecl(gd),
+    NewTF(false), DoReplace(dorep), TmpNo(0) {}
 
   /// EmitMatchCode - Emit a matcher for N, going to the label for PatternNo
   /// if the match fails. At this point, we already know that the opcode for N
@@ -2018,14 +2020,19 @@ public:
       }
 
       if (NodeHasChain) {
-        if (FoundChain)
-          emitCheck("Chain.Val == " + RootName + ".Val");
-        else
-          FoundChain = true;
         ChainName = "Chain" + ChainSuffix;
         emitDecl(ChainName);
-        emitCode(ChainName + " = " + RootName +
-                 ".getOperand(0);");
+        if (FoundChain) {
+         // FIXME: temporary workaround for a common case where chain
+         // is a TokenFactor and the previous "inner" chain is an operand.
+          NewTF = true;
+          emitDecl("OldTF", true);
+          emitCheck("(" + ChainName + " = UpdateFoldedChain(CurDAG, " +
+                    RootName + ".Val, Chain.Val, OldTF)).Val");
+        } else {
+          FoundChain = true;
+          emitCode(ChainName + " = " + RootName + ".getOperand(0);");
+        }
       }
     }
 
@@ -2272,11 +2279,11 @@ public:
         emitCode("bool HasOptInFlag = false;");
 
       // How many results is this pattern expected to produce?
-      unsigned NumExpectedResults = 0;
+      unsigned PatResults = 0;
       for (unsigned i = 0, e = Pattern->getExtTypes().size(); i != e; i++) {
         MVT::ValueType VT = Pattern->getTypeNum(i);
         if (VT != MVT::isVoid && VT != MVT::Flag)
-          NumExpectedResults++;
+          PatResults++;
       }
 
       // Determine operand emission order. Complex pattern first.
@@ -2405,34 +2412,34 @@ public:
           emitCode(Code + ");");
         }
 
-        unsigned ValNo = 0;
-        for (unsigned i = 0; i < NumResults; i++) {
+        if (NewTF)
+          emitCode("if (OldTF) "
+                   "SelectionDAG::InsertISelMapEntry(CodeGenMap, OldTF, 0, " +
+                   ChainName + ".Val, 0);");
+
+        for (unsigned i = 0; i < NumResults; i++)
           emitCode("SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, " +
-                   utostr(ValNo) + ", ResNode, " + utostr(ValNo) + ");");
-          ValNo++;
-        }
+                   utostr(i) + ", ResNode, " + utostr(i) + ");");
 
         if (NodeHasOutFlag)
           emitCode("InFlag = SDOperand(ResNode, " + 
-                   utostr(ValNo + (unsigned)HasChain) + ");");
+                   utostr(NumResults + (unsigned)HasChain) + ");");
 
         if (HasImpResults && EmitCopyFromRegs(N, ChainEmitted)) {
-          emitCode("SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, " +
-                   utostr(ValNo) + ", ResNode, " + utostr(ValNo) + ");");
-          ValNo++;
+          emitCode("SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, "
+                   "0, ResNode, 0);");
+          NumResults = 1;
         }
 
-        // User does not expect the instruction would produce a chain!
-        bool AddedChain = HasChain && !NodeHasChain;
         if (NodeHasChain) {
           emitCode("SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, " + 
-                   utostr(ValNo) + ", ResNode, " + utostr(ValNo) + ");");
+                   utostr(PatResults) + ", ResNode, " +
+                   utostr(NumResults) + ");");
           if (DoReplace)
-            emitCode("if (N.ResNo == 0) AddHandleReplacement(N.Val, "
-                     + utostr(ValNo) + ", " + "ResNode, " + utostr(ValNo) + ");");
-          ValNo++;
+            emitCode("if (N.ResNo == 0) AddHandleReplacement(N.Val, " +
+                     utostr(PatResults) + ", " + "ResNode, " +
+                     utostr(NumResults) + ");");
         }
-
 
         if (FoldedChains.size() > 0) {
           std::string Code;
@@ -2440,26 +2447,29 @@ public:
             emitCode("SelectionDAG::InsertISelMapEntry(CodeGenMap, " +
                      FoldedChains[j].first + ".Val, " + 
                      utostr(FoldedChains[j].second) + ", ResNode, " +
-                     utostr(ValNo) + ");");
+                     utostr(NumResults) + ");");
 
           for (unsigned j = 0, e = FoldedChains.size(); j < e; j++) {
             std::string Code =
               FoldedChains[j].first + ".Val, " +
               utostr(FoldedChains[j].second) + ", ";
             emitCode("AddHandleReplacement(" + Code + "ResNode, " +
-                     utostr(ValNo) + ");");
+                     utostr(NumResults) + ");");
           }
         }
 
         if (NodeHasOutFlag)
           emitCode("SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, " +
-                   utostr(ValNo) + ", InFlag.Val, InFlag.ResNo);");
+                   utostr(PatResults + (unsigned)NodeHasChain) +
+                   ", InFlag.Val, InFlag.ResNo);");
 
+        // User does not expect the instruction would produce a chain!
+        bool AddedChain = HasChain && !NodeHasChain;
         if (AddedChain && NodeHasOutFlag) {
-          if (NumExpectedResults == 0) {
+          if (PatResults == 0) {
             emitCode("Result = SDOperand(ResNode, N.ResNo+1);");
           } else {
-            emitCode("if (N.ResNo < " + utostr(NumExpectedResults) + ")");
+            emitCode("if (N.ResNo < " + utostr(PatResults) + ")");
             emitCode("  Result = SDOperand(ResNode, N.ResNo);");
             emitCode("else");
             emitCode("  Result = SDOperand(ResNode, N.ResNo+1);");
@@ -3245,6 +3255,40 @@ void DAGISelEmitter::run(std::ostream &OS) {
   OS << "      CurDAG->UpdateNodeOperands(U, Ops);\n";
   OS << "    }\n";
   OS << "  }\n";
+  OS << "}\n";
+
+  OS << "\n";
+  OS << "// UpdateFoldedChain - return a SDOperand of the new chain created\n";
+  OS << "// if the folding were to happen. This is called when, for example,\n";
+  OS << "// a load is folded into a store. If the store's chain is the load,\n";
+  OS << "// then the resulting node's input chain would be the load's input\n";
+  OS << "// chain. If the store's chain is a TokenFactor and the load's\n";
+  OS << "// output chain feeds into in, then the new chain is a TokenFactor\n";
+  OS << "// with the other operands along with the input chain of the load.\n";
+  OS << "SDOperand UpdateFoldedChain(SelectionDAG *DAG, SDNode *N, "
+     << "SDNode *Chain, SDNode* &OldTF) {\n";
+  OS << "  OldTF = NULL;\n";
+  OS << "  if (N == Chain) {\n";
+  OS << "    return N->getOperand(0);\n";
+  OS << "  } else if (Chain->getOpcode() == ISD::TokenFactor &&\n";
+  OS << "             N->isOperand(Chain)) {\n";
+  OS << "    SDOperand Ch = SDOperand(Chain, 0);\n";
+  OS << "    std::map<SDOperand, SDOperand>::iterator CGMI = "
+     << "CodeGenMap.find(Ch);\n";
+  OS << "    if (CGMI != CodeGenMap.end())\n";
+  OS << "      return SDOperand(0, 0);\n";
+  OS << "    OldTF = Chain;\n";
+  OS << "    std::vector<SDOperand> Ops;\n";
+  OS << "    for (unsigned i = 0; i < Chain->getNumOperands(); ++i) {\n";
+  OS << "      SDOperand Op = Chain->getOperand(i);\n";
+  OS << "      if (Op.Val == N)\n";
+  OS << "        Ops.push_back(N->getOperand(0));\n";
+  OS << "      else\n";
+  OS << "        Ops.push_back(Op);\n";
+  OS << "    }\n";
+  OS << "    return DAG->getNode(ISD::TokenFactor, MVT::Other, Ops);\n";
+  OS << "  }\n";
+  OS << "  return SDOperand(0, 0);\n";
   OS << "}\n";
 
   OS << "\n";
