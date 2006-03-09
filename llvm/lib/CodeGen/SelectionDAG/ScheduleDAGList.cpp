@@ -848,9 +848,6 @@ public:
     SUnit *pop() {
       SUnit *V = Queue.top();
       Queue.pop();
-      
-      std::cerr << "Got node.  Latency: " << getLatency(V->NodeNum)
-                << "  \n";
       return V;
     }
 private:
