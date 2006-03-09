@@ -29,9 +29,12 @@
 #include <queue>
 #include <set>
 #include <vector>
+#include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
 namespace {
+  // FIXME: UseLatencies is temporary.
+  cl::opt<bool> UseLatencies("use-sched-latencies");
   Statistic<> NumNoops ("scheduler", "Number of noops inserted");
   Statistic<> NumStalls("scheduler", "Number of pipeline stalls");
 
@@ -60,11 +63,12 @@ namespace {
       isTwoAddress(false), isDefNUseOperand(false),
       Latency(0), CycleBound(0), NodeNum(nodenum) {}
     
-    void dump(const SelectionDAG *G, bool All=true) const;
+    void dump(const SelectionDAG *G) const;
+    void dumpAll(const SelectionDAG *G) const;
   };
 }
 
-void SUnit::dump(const SelectionDAG *G, bool All) const {
+void SUnit::dump(const SelectionDAG *G) const {
   std::cerr << "SU: ";
   Node->dump(G);
   std::cerr << "\n";
@@ -75,47 +79,50 @@ void SUnit::dump(const SelectionDAG *G, bool All) const {
       std::cerr << "\n";
     }
   }
+}
 
-  if (All) {
-    std::cerr << "  # preds left       : " << NumPredsLeft << "\n";
-    std::cerr << "  # succs left       : " << NumSuccsLeft << "\n";
-    std::cerr << "  # chain preds left : " << NumChainPredsLeft << "\n";
-    std::cerr << "  # chain succs left : " << NumChainSuccsLeft << "\n";
-    std::cerr << "  Latency            : " << Latency << "\n";
+void SUnit::dumpAll(const SelectionDAG *G) const {
+  dump(G);
 
-    if (Preds.size() != 0) {
-      std::cerr << "  Predecessors:\n";
-      for (std::set<SUnit*>::const_iterator I = Preds.begin(),
-             E = Preds.end(); I != E; ++I) {
-        std::cerr << "    ";
-        (*I)->dump(G, false);
-      }
-    }
-    if (ChainPreds.size() != 0) {
-      std::cerr << "  Chained Preds:\n";
-      for (std::set<SUnit*>::const_iterator I = ChainPreds.begin(),
-             E = ChainPreds.end(); I != E; ++I) {
-        std::cerr << "    ";
-        (*I)->dump(G, false);
-      }
-    }
-    if (Succs.size() != 0) {
-      std::cerr << "  Successors:\n";
-      for (std::set<SUnit*>::const_iterator I = Succs.begin(),
-             E = Succs.end(); I != E; ++I) {
-        std::cerr << "    ";
-        (*I)->dump(G, false);
-      }
-    }
-    if (ChainSuccs.size() != 0) {
-      std::cerr << "  Chained succs:\n";
-      for (std::set<SUnit*>::const_iterator I = ChainSuccs.begin(),
-             E = ChainSuccs.end(); I != E; ++I) {
-        std::cerr << "    ";
-        (*I)->dump(G, false);
-      }
+  std::cerr << "  # preds left       : " << NumPredsLeft << "\n";
+  std::cerr << "  # succs left       : " << NumSuccsLeft << "\n";
+  std::cerr << "  # chain preds left : " << NumChainPredsLeft << "\n";
+  std::cerr << "  # chain succs left : " << NumChainSuccsLeft << "\n";
+  std::cerr << "  Latency            : " << Latency << "\n";
+
+  if (Preds.size() != 0) {
+    std::cerr << "  Predecessors:\n";
+    for (std::set<SUnit*>::const_iterator I = Preds.begin(),
+           E = Preds.end(); I != E; ++I) {
+      std::cerr << "    ";
+      (*I)->dump(G);
     }
   }
+  if (ChainPreds.size() != 0) {
+    std::cerr << "  Chained Preds:\n";
+    for (std::set<SUnit*>::const_iterator I = ChainPreds.begin(),
+           E = ChainPreds.end(); I != E; ++I) {
+      std::cerr << "    ";
+      (*I)->dump(G);
+    }
+  }
+  if (Succs.size() != 0) {
+    std::cerr << "  Successors:\n";
+    for (std::set<SUnit*>::const_iterator I = Succs.begin(),
+           E = Succs.end(); I != E; ++I) {
+      std::cerr << "    ";
+      (*I)->dump(G);
+    }
+  }
+  if (ChainSuccs.size() != 0) {
+    std::cerr << "  Chained succs:\n";
+    for (std::set<SUnit*>::const_iterator I = ChainSuccs.begin(),
+           E = ChainSuccs.end(); I != E; ++I) {
+      std::cerr << "    ";
+      (*I)->dump(G);
+    }
+  }
+  std::cerr << "\n";
 }
 
 //===----------------------------------------------------------------------===//
@@ -186,7 +193,7 @@ public:
 
   void Schedule();
 
-  void dump() const;
+  void dumpSchedule() const;
 
 private:
   SUnit *NewSUnit(SDNode *N);
@@ -272,7 +279,7 @@ void ScheduleDAGList::ReleaseSucc(SUnit *SuccSU, bool isChain) {
 /// the Available queue.
 void ScheduleDAGList::ScheduleNodeBottomUp(SUnit *SU) {
   DEBUG(std::cerr << "*** Scheduling: ");
-  DEBUG(SU->dump(&DAG, false));
+  DEBUG(SU->dump(&DAG));
 
   Sequence.push_back(SU);
 
@@ -294,7 +301,7 @@ void ScheduleDAGList::ScheduleNodeBottomUp(SUnit *SU) {
 /// the Available queue.
 void ScheduleDAGList::ScheduleNodeTopDown(SUnit *SU) {
   DEBUG(std::cerr << "*** Scheduling: ");
-  DEBUG(SU->dump(&DAG, false));
+  DEBUG(SU->dump(&DAG));
   
   Sequence.push_back(SU);
   
@@ -465,6 +472,8 @@ void ScheduleDAGList::BuildSchedUnits() {
   // invalidated.
   SUnits.reserve(NodeCount);
   
+  const InstrItineraryData &InstrItins = TM.getInstrItineraryData();
+
   // Pass 1: create the SUnit's.
   for (unsigned i = 0, NC = NodeCount; i < NC; i++) {
     NodeInfo *NI = &Info[i];
@@ -496,9 +505,32 @@ void ScheduleDAGList::BuildSchedUnits() {
       SU = NewSUnit(N);
     }
     SUnitMap[N] = SU;
-    
-    // FIXME: assumes uniform latency for now.
-    SU->Latency = 1;
+
+    // Compute the latency for the node.  We use the sum of the latencies for
+    // all nodes flagged together into this SUnit.
+    if (InstrItins.isEmpty() || !UseLatencies) {
+      // No latency information.
+      SU->Latency = 1;
+    } else {
+      SU->Latency = 0;
+      if (N->isTargetOpcode()) {
+        unsigned SchedClass = TII->getSchedClass(N->getTargetOpcode());
+        InstrStage *S = InstrItins.begin(SchedClass);
+        InstrStage *E = InstrItins.end(SchedClass);
+        for (; S != E; ++S)
+          SU->Latency += S->Cycles;
+      }
+      for (unsigned i = 0, e = SU->FlaggedNodes.size(); i != e; ++i) {
+        SDNode *FNode = SU->FlaggedNodes[i];
+        if (FNode->isTargetOpcode()) {
+          unsigned SchedClass = TII->getSchedClass(FNode->getTargetOpcode());
+          InstrStage *S = InstrItins.begin(SchedClass);
+          InstrStage *E = InstrItins.end(SchedClass);
+          for (; S != E; ++S)
+            SU->Latency += S->Cycles;
+        }
+      }
+    }
   }
 
   // Pass 2: add the preds, succs, etc.
@@ -559,6 +591,8 @@ void ScheduleDAGList::BuildSchedUnits() {
         }
       }
     }
+    
+    DEBUG(SU->dumpAll(&DAG));
   }
 }
 
@@ -579,10 +613,10 @@ void ScheduleDAGList::EmitSchedule() {
 }
 
 /// dump - dump the schedule.
-void ScheduleDAGList::dump() const {
+void ScheduleDAGList::dumpSchedule() const {
   for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
     if (SUnit *SU = Sequence[i])
-      SU->dump(&DAG, false);
+      SU->dump(&DAG);
     else
       std::cerr << "**** NOOP ****\n";
   }
@@ -608,7 +642,7 @@ void ScheduleDAGList::Schedule() {
   PriorityQueue->releaseState();
 
   DEBUG(std::cerr << "*** Final schedule ***\n");
-  DEBUG(dump());
+  DEBUG(dumpSchedule());
   DEBUG(std::cerr << "\n");
   
   // Emit in scheduled order
