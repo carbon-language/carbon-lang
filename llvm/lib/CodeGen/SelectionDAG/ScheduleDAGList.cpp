@@ -118,137 +118,25 @@ void SUnit::dump(const SelectionDAG *G, bool All) const {
   }
 }
 
-namespace {
-  class SchedulingPriorityQueue;
+//===----------------------------------------------------------------------===//
+// SchedulingPriorityQueue - This interface is used to plug different
+// priorities computation algorithms into the list scheduler.  It implements the
+// interface of a standard priority queue, where nodes are inserted in arbitrary
+// order and returned in priority order.  The computation of the priority and
+// the representation of the queue are totally up to the implementation to
+// decide.
+// 
+class SchedulingPriorityQueue {
+public:
+  virtual ~SchedulingPriorityQueue() {}
   
-  /// Sorting functions for the Available queue.
-  struct ls_rr_sort : public std::binary_function<SUnit*, SUnit*, bool> {
-    SchedulingPriorityQueue *SPQ;
-    ls_rr_sort(SchedulingPriorityQueue *spq) : SPQ(spq) {}
-    ls_rr_sort(const ls_rr_sort &RHS) : SPQ(RHS.SPQ) {}
-    
-    bool operator()(const SUnit* left, const SUnit* right) const;
-  };
-}  // end anonymous namespace
-
-namespace {
-  class SchedulingPriorityQueue {
-    // SUnits - The SUnits for the current graph.
-    std::vector<SUnit> &SUnits;
-    
-    // SethiUllmanNumbers - The SethiUllman number for each node.
-    std::vector<int> SethiUllmanNumbers;
-    
-    std::priority_queue<SUnit*, std::vector<SUnit*>, ls_rr_sort> Queue;
-  public:
-    SchedulingPriorityQueue(std::vector<SUnit> &sunits)
-      : SUnits(sunits), Queue(ls_rr_sort(this)) {
-      // Calculate node priorities.
-      CalculatePriorities();
-    }
-    
-    unsigned getSethiUllmanNumber(unsigned NodeNum) const {
-      assert(NodeNum < SethiUllmanNumbers.size());
-      return SethiUllmanNumbers[NodeNum];
-    }
-    
-    bool empty() const { return Queue.empty(); }
-    
-    void push(SUnit *U) {
-      Queue.push(U);
-    }
-    SUnit *pop() {
-      SUnit *V = Queue.top();
-      Queue.pop();
-      return V;
-    }
-  private:
-    void CalculatePriorities();
-    int CalcNodePriority(SUnit *SU);
-  };
-}
-
-bool ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
-  unsigned LeftNum  = left->NodeNum;
-  unsigned RightNum = right->NodeNum;
+  virtual void initNodes(const std::vector<SUnit> &SUnits) = 0;
+  virtual void releaseState() = 0;
   
-  int LBonus = (int)left ->isDefNUseOperand;
-  int RBonus = (int)right->isDefNUseOperand;
-  
-  // Special tie breaker: if two nodes share a operand, the one that
-  // use it as a def&use operand is preferred.
-  if (left->isTwoAddress && !right->isTwoAddress) {
-    SDNode *DUNode = left->Node->getOperand(0).Val;
-    if (DUNode->isOperand(right->Node))
-      LBonus++;
-  }
-  if (!left->isTwoAddress && right->isTwoAddress) {
-    SDNode *DUNode = right->Node->getOperand(0).Val;
-    if (DUNode->isOperand(left->Node))
-      RBonus++;
-  }
-  
-  // Priority1 is just the number of live range genned.
-  int LPriority1 = left ->NumPredsLeft - LBonus;
-  int RPriority1 = right->NumPredsLeft - RBonus;
-  int LPriority2 = SPQ->getSethiUllmanNumber(LeftNum) + LBonus;
-  int RPriority2 = SPQ->getSethiUllmanNumber(RightNum) + RBonus;
-  
-  if (LPriority1 > RPriority1)
-    return true;
-  else if (LPriority1 == RPriority1)
-    if (LPriority2 < RPriority2)
-      return true;
-    else if (LPriority2 == RPriority2)
-      if (left->CycleBound > right->CycleBound) 
-        return true;
-  
-  return false;
-}
-
-
-/// CalcNodePriority - Priority is the Sethi Ullman number. 
-/// Smaller number is the higher priority.
-int SchedulingPriorityQueue::CalcNodePriority(SUnit *SU) {
-  int &SethiUllmanNumber = SethiUllmanNumbers[SU->NodeNum];
-  if (SethiUllmanNumber != INT_MIN)
-    return SethiUllmanNumber;
-  
-  if (SU->Preds.size() == 0) {
-    SethiUllmanNumber = 1;
-  } else {
-    int Extra = 0;
-    for (std::set<SUnit*>::iterator I = SU->Preds.begin(),
-         E = SU->Preds.end(); I != E; ++I) {
-      SUnit *PredSU = *I;
-      int PredSethiUllman = CalcNodePriority(PredSU);
-      if (PredSethiUllman > SethiUllmanNumber) {
-        SethiUllmanNumber = PredSethiUllman;
-        Extra = 0;
-      } else if (PredSethiUllman == SethiUllmanNumber)
-        Extra++;
-    }
-    
-    if (SU->Node->getOpcode() != ISD::TokenFactor)
-      SethiUllmanNumber += Extra;
-    else
-      SethiUllmanNumber = (Extra == 1) ? 0 : Extra-1;
-  }
-  
-  return SethiUllmanNumber;
-}
-
-/// CalculatePriorities - Calculate priorities of all scheduling units.
-void SchedulingPriorityQueue::CalculatePriorities() {
-  SethiUllmanNumbers.assign(SUnits.size(), INT_MIN);
-
-  for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
-    // FIXME: assumes uniform latency for now.
-    SUnits[i].Latency = 1;
-    (void)CalcNodePriority(&SUnits[i]);
-  }
-}
-
+  virtual bool empty() const = 0;
+  virtual void push(SUnit *U) = 0;
+  virtual SUnit *pop() = 0;
+};
 
 
 
@@ -270,19 +158,25 @@ private:
   /// it is top-down.
   bool isBottomUp;
   
+  /// PriorityQueue - The priority queue to use.
+  SchedulingPriorityQueue *PriorityQueue;
+  
   /// HazardRec - The hazard recognizer to use.
   HazardRecognizer *HazardRec;
   
 public:
   ScheduleDAGList(SelectionDAG &dag, MachineBasicBlock *bb,
                   const TargetMachine &tm, bool isbottomup,
+                  SchedulingPriorityQueue *priorityqueue,
                   HazardRecognizer *HR)
     : ScheduleDAG(listSchedulingBURR, dag, bb, tm),
-      CurrCycle(0), isBottomUp(isbottomup), HazardRec(HR) {
+      CurrCycle(0), isBottomUp(isbottomup), 
+      PriorityQueue(priorityqueue), HazardRec(HR) {
     }
 
   ~ScheduleDAGList() {
     delete HazardRec;
+    delete PriorityQueue;
   }
 
   void Schedule();
@@ -603,6 +497,9 @@ void ScheduleDAGList::BuildSchedUnits() {
       SU = NewSUnit(N);
     }
     SUnitMap[N] = SU;
+    
+    // FIXME: assumes uniform latency for now.
+    SU->Latency = 1;
   }
 
   // Pass 2: add the preds, succs, etc.
@@ -701,14 +598,16 @@ void ScheduleDAGList::Schedule() {
   // Build scheduling units.
   BuildSchedUnits();
   
-  SchedulingPriorityQueue PQ(SUnits);
-    
+  PriorityQueue->initNodes(SUnits);
+  
   // Execute the actual scheduling loop Top-Down or Bottom-Up as appropriate.
   if (isBottomUp)
-    ListScheduleBottomUp(PQ);
+    ListScheduleBottomUp(*PriorityQueue);
   else
-    ListScheduleTopDown(PQ);
-  
+    ListScheduleTopDown(*PriorityQueue);
+
+  PriorityQueue->releaseState();
+
   DEBUG(std::cerr << "*** Final schedule ***\n");
   DEBUG(dump());
   DEBUG(std::cerr << "\n");
@@ -717,9 +616,157 @@ void ScheduleDAGList::Schedule() {
   EmitSchedule();
 }
 
+//===----------------------------------------------------------------------===//
+//                RegReductionPriorityQueue Implementation
+//===----------------------------------------------------------------------===//
+//
+// This is a SchedulingPriorityQueue that schedules using Sethi Ullman numbers
+// to reduce register pressure.
+// 
+namespace {
+  class RegReductionPriorityQueue;
+  
+  /// Sorting functions for the Available queue.
+  struct ls_rr_sort : public std::binary_function<SUnit*, SUnit*, bool> {
+    RegReductionPriorityQueue *SPQ;
+    ls_rr_sort(RegReductionPriorityQueue *spq) : SPQ(spq) {}
+    ls_rr_sort(const ls_rr_sort &RHS) : SPQ(RHS.SPQ) {}
+    
+    bool operator()(const SUnit* left, const SUnit* right) const;
+  };
+}  // end anonymous namespace
+
+namespace {
+  class RegReductionPriorityQueue : public SchedulingPriorityQueue {
+    // SUnits - The SUnits for the current graph.
+    const std::vector<SUnit> *SUnits;
+    
+    // SethiUllmanNumbers - The SethiUllman number for each node.
+    std::vector<int> SethiUllmanNumbers;
+    
+    std::priority_queue<SUnit*, std::vector<SUnit*>, ls_rr_sort> Queue;
+  public:
+    RegReductionPriorityQueue() : Queue(ls_rr_sort(this)) {
+    }
+    
+    void initNodes(const std::vector<SUnit> &sunits) {
+      SUnits = &sunits;
+      // Calculate node priorities.
+      CalculatePriorities();
+    }
+    void releaseState() {
+      SUnits = 0;
+      SethiUllmanNumbers.clear();
+    }
+    
+    unsigned getSethiUllmanNumber(unsigned NodeNum) const {
+      assert(NodeNum < SethiUllmanNumbers.size());
+      return SethiUllmanNumbers[NodeNum];
+    }
+    
+    bool empty() const { return Queue.empty(); }
+    
+    void push(SUnit *U) {
+      Queue.push(U);
+    }
+    SUnit *pop() {
+      SUnit *V = Queue.top();
+      Queue.pop();
+      return V;
+    }
+  private:
+    void CalculatePriorities();
+    int CalcNodePriority(const SUnit *SU);
+  };
+}
+
+bool ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
+  unsigned LeftNum  = left->NodeNum;
+  unsigned RightNum = right->NodeNum;
+  
+  int LBonus = (int)left ->isDefNUseOperand;
+  int RBonus = (int)right->isDefNUseOperand;
+  
+  // Special tie breaker: if two nodes share a operand, the one that
+  // use it as a def&use operand is preferred.
+  if (left->isTwoAddress && !right->isTwoAddress) {
+    SDNode *DUNode = left->Node->getOperand(0).Val;
+    if (DUNode->isOperand(right->Node))
+      LBonus++;
+  }
+  if (!left->isTwoAddress && right->isTwoAddress) {
+    SDNode *DUNode = right->Node->getOperand(0).Val;
+    if (DUNode->isOperand(left->Node))
+      RBonus++;
+  }
+  
+  // Priority1 is just the number of live range genned.
+  int LPriority1 = left ->NumPredsLeft - LBonus;
+  int RPriority1 = right->NumPredsLeft - RBonus;
+  int LPriority2 = SPQ->getSethiUllmanNumber(LeftNum) + LBonus;
+  int RPriority2 = SPQ->getSethiUllmanNumber(RightNum) + RBonus;
+  
+  if (LPriority1 > RPriority1)
+    return true;
+  else if (LPriority1 == RPriority1)
+    if (LPriority2 < RPriority2)
+      return true;
+    else if (LPriority2 == RPriority2)
+      if (left->CycleBound > right->CycleBound) 
+        return true;
+  
+  return false;
+}
+
+
+/// CalcNodePriority - Priority is the Sethi Ullman number. 
+/// Smaller number is the higher priority.
+int RegReductionPriorityQueue::CalcNodePriority(const SUnit *SU) {
+  int &SethiUllmanNumber = SethiUllmanNumbers[SU->NodeNum];
+  if (SethiUllmanNumber != INT_MIN)
+    return SethiUllmanNumber;
+  
+  if (SU->Preds.size() == 0) {
+    SethiUllmanNumber = 1;
+  } else {
+    int Extra = 0;
+    for (std::set<SUnit*>::iterator I = SU->Preds.begin(),
+         E = SU->Preds.end(); I != E; ++I) {
+      SUnit *PredSU = *I;
+      int PredSethiUllman = CalcNodePriority(PredSU);
+      if (PredSethiUllman > SethiUllmanNumber) {
+        SethiUllmanNumber = PredSethiUllman;
+        Extra = 0;
+      } else if (PredSethiUllman == SethiUllmanNumber)
+        Extra++;
+    }
+    
+    if (SU->Node->getOpcode() != ISD::TokenFactor)
+      SethiUllmanNumber += Extra;
+    else
+      SethiUllmanNumber = (Extra == 1) ? 0 : Extra-1;
+  }
+  
+  return SethiUllmanNumber;
+}
+
+/// CalculatePriorities - Calculate priorities of all scheduling units.
+void RegReductionPriorityQueue::CalculatePriorities() {
+  SethiUllmanNumbers.assign(SUnits->size(), INT_MIN);
+  
+  for (unsigned i = 0, e = SUnits->size(); i != e; ++i)
+    CalcNodePriority(&(*SUnits)[i]);
+}
+
+
+//===----------------------------------------------------------------------===//
+//                         Public Constructor Functions
+//===----------------------------------------------------------------------===//
+
 llvm::ScheduleDAG* llvm::createBURRListDAGScheduler(SelectionDAG &DAG,
                                                     MachineBasicBlock *BB) {
   return new ScheduleDAGList(DAG, BB, DAG.getTarget(), true, 
+                             new RegReductionPriorityQueue(),
                              new HazardRecognizer());
 }
 
@@ -728,5 +775,7 @@ llvm::ScheduleDAG* llvm::createBURRListDAGScheduler(SelectionDAG &DAG,
 ScheduleDAG* llvm::createTDListDAGScheduler(SelectionDAG &DAG,
                                             MachineBasicBlock *BB,
                                             HazardRecognizer *HR) {
-  return new ScheduleDAGList(DAG, BB, DAG.getTarget(), false, HR);
+  return new ScheduleDAGList(DAG, BB, DAG.getTarget(), false,
+                             new RegReductionPriorityQueue(),
+                             HR);
 }
