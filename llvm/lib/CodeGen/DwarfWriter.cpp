@@ -1323,6 +1323,7 @@ DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc) {
         unsigned Line = MemberDesc->getLine();
         TypeDesc *MemTy = MemberDesc->getFromType();
         uint64_t Size = MemberDesc->getSize();
+        uint64_t Align = MemberDesc->getAlign();
         uint64_t Offset = MemberDesc->getOffset();
    
         // Construct member die.
@@ -1338,27 +1339,42 @@ DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc) {
           Member->AddUInt(DW_AT_decl_line, 0, Line);
         }
         
-        // FIXME - Bitfields not quite right but getting there.
-        uint64_t ByteSize = Size;
-        uint64_t ByteOffset = Offset;
+        // Most of the time the field info is the same as the members.
+        uint64_t FieldSize = Size;
+        uint64_t FieldAlign = Align;
+        uint64_t FieldOffset = Offset;
         
         if (TypeDesc *FromTy = MemberDesc->getFromType()) {
            Member->AddDIEntry(DW_AT_type, DW_FORM_ref4,
                               NewType(Context, FromTy));
-           ByteSize = FromTy->getSize();
+           FieldSize = FromTy->getSize();
+           FieldAlign = FromTy->getSize();
         }
         
-        if (ByteSize != Size) {
-          ByteOffset -=  Offset % ByteSize;
-          Member->AddUInt(DW_AT_byte_size, 0, ByteSize >> 3);
-          Member->AddUInt(DW_AT_bit_size, 0, Size % ByteSize);
-          Member->AddUInt(DW_AT_bit_offset, 0, Offset - ByteOffset);
+        // Unless we have a bit field.
+        if (FieldSize != Size) {
+          // Construct the alignment mask.
+          uint64_t AlignMask = ~(FieldAlign - 1);
+          // Determine the high bit + 1 of the declared size.
+          uint64_t HiMark = (Offset + FieldSize) & AlignMask;
+          // Work backwards to determine the base offset of the field.
+          FieldOffset = HiMark - FieldSize;
+          // Now normalize offset to the field.
+          Offset -= FieldOffset;
+          
+          // Maybe we need to work from the other.
+          const TargetData &TD = Asm->TM.getTargetData();
+          if (TD.isLittleEndian()) Offset = FieldSize - (Offset + Size);
+          
+          Member->AddUInt(DW_AT_byte_size, 0, FieldSize >> 3);
+          Member->AddUInt(DW_AT_bit_size, 0, Size);
+          Member->AddUInt(DW_AT_bit_offset, 0, Offset);
         }
         
         // Add computation for offset.
         DIEBlock *Block = new DIEBlock();
         Block->AddUInt(DW_FORM_data1, DW_OP_plus_uconst);
-        Block->AddUInt(DW_FORM_udata, ByteOffset >> 3);
+        Block->AddUInt(DW_FORM_udata, FieldOffset >> 3);
         Block->ComputeSize(*this);
         Member->AddBlock(DW_AT_data_member_location, 0, Block);
         
