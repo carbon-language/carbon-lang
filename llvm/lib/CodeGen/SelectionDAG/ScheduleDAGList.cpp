@@ -33,8 +33,6 @@
 using namespace llvm;
 
 namespace {
-  // FIXME: UseLatencies is temporary.
-  cl::opt<bool> UseLatencies("use-sched-latencies");
   Statistic<> NumNoops ("scheduler", "Number of noops inserted");
   Statistic<> NumStalls("scheduler", "Number of pipeline stalls");
 
@@ -508,7 +506,7 @@ void ScheduleDAGList::BuildSchedUnits() {
 
     // Compute the latency for the node.  We use the sum of the latencies for
     // all nodes flagged together into this SUnit.
-    if (InstrItins.isEmpty() || !UseLatencies) {
+    if (InstrItins.isEmpty()) {
       // No latency information.
       SU->Latency = 1;
     } else {
