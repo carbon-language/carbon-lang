@@ -85,15 +85,8 @@ function and then be turned into an instruction if warranted.</p>
     what the restrictions are.  Talk to other people about it so that you are
     sure it's a good idea.</li>
 
-<li><tt>llvm/include/llvm/Intrinsics.h</tt>:
-    add an enum in the <tt>llvm::Intrinsic</tt> namespace</li>
-
-<li><tt>llvm/lib/VMCore/Verifier.cpp</tt>:
-    Add code to check the invariants of the intrinsic are respected.</li>
-
-<li><tt>llvm/lib/VMCore/Function.cpp (<tt>Function::getIntrinsicID()</tt>)</tt>:
-    Identify the new intrinsic function, returning the enum for the intrinsic
-    that you added.</li>
+<li><tt>llvm/include/llvm/Intrinsics.td</tt>:
+    Add an entry for your intrinsic.</li>
 
 <li><tt>llvm/lib/Analysis/BasicAliasAnalysis.cpp</tt>: If the new intrinsic does
     not access memory or does not write to memory, add it to the relevant list
