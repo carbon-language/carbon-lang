@@ -44,9 +44,6 @@ namespace llvm {
       /// DIVCALL - used for special library calls for div and rem
       DivCall,
 
-      ///LD, ST
-      LDQ_, LDT_, LDS_, LDL_, LDWU_, LDBU_, 
-      STQ_, STT_, STS_, STL_, STW_, STB_, 
     };
   }
 

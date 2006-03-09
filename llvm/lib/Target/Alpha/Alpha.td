@@ -32,6 +32,12 @@ def FeatureFIX : SubtargetFeature<"FIX", "HasF2I", "true",
 include "AlphaRegisterInfo.td"
 
 //===----------------------------------------------------------------------===//
+// Schedule Description
+//===----------------------------------------------------------------------===//
+
+include "AlphaSchedule.td"
+
+//===----------------------------------------------------------------------===//
 // Instruction Descriptions
 //===----------------------------------------------------------------------===//
 
@@ -47,11 +53,11 @@ def AlphaInstrInfo : InstrInfo {
 // Alpha Processor Definitions
 //===----------------------------------------------------------------------===//
 
-def : Processor<"generic", NoItineraries, []>;
-def : Processor<"pca56"  , NoItineraries, []>;
-def : Processor<"ev56"   , NoItineraries, []>;
-def : Processor<"ev6"    , NoItineraries, [FeatureFIX]>;
-def : Processor<"ev67"   , NoItineraries, [FeatureFIX, FeatureCIX]>;
+def : Processor<"generic", Alpha21264Itineraries, []>;
+def : Processor<"pca56"  , Alpha21264Itineraries, []>;
+def : Processor<"ev56"   , Alpha21264Itineraries, []>;
+def : Processor<"ev6"    , Alpha21264Itineraries, [FeatureFIX]>;
+def : Processor<"ev67"   , Alpha21264Itineraries, [FeatureFIX, FeatureCIX]>;
 
 //===----------------------------------------------------------------------===//
 // The Alpha Target

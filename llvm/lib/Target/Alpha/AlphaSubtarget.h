@@ -14,6 +14,7 @@
 #ifndef ALPHASUBTARGET_H
 #define ALPHASUBTARGET_H
 
+#include "llvm/Target/TargetInstrItineraries.h"
 #include "llvm/Target/TargetSubtarget.h"
 
 #include <string>
@@ -27,6 +28,8 @@ protected:
   /// Used by the ISel to turn in optimizations for POWER4-derived architectures
   bool HasF2I;
   bool HasCT;
+
+  InstrItineraryData InstrItins;
 
 public:
   /// This constructor initializes the data members to match that
