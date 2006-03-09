@@ -42,6 +42,18 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
       else
         Name += EnumName[i];
   }
+  
+  // Parse the list of argument types.
+  ListInit *TypeList = R->getValueAsListInit("Types");
+  for (unsigned i = 0, e = TypeList->getSize(); i != e; ++i) {
+    DefInit *DI = dynamic_cast<DefInit*>(TypeList->getElement(i));
+    assert(DI && "Invalid list type!");
+    Record *TyEl = DI->getDef();
+    assert(TyEl->isSubClassOf("LLVMType") && "Expected a type!");
+    ArgTypes.push_back(TyEl->getValueAsString("TypeVal"));
+  }
+  if (ArgTypes.size() == 0)
+    throw "Intrinsic '"+DefName+"' needs at least a type for the ret value!";
 }
 
 //===----------------------------------------------------------------------===//
@@ -58,6 +70,9 @@ void IntrinsicEmitter::run(std::ostream &OS) {
   
   // Emit the function name recognizer.
   EmitFnNameRecognizer(Ints, OS);
+
+  // Emit the intrinsic verifier.
+  EmitVerifier(Ints, OS);
 }
 
 void IntrinsicEmitter::EmitEnumInfo(const std::vector<CodeGenIntrinsic> &Ints,
@@ -84,8 +99,7 @@ EmitFnNameRecognizer(const std::vector<CodeGenIntrinsic> &Ints,
   OS << "// Function name -> enum value recognizer code.\n";
   OS << "#ifdef GET_FUNCTION_RECOGNIZER\n";
   OS << "  switch (Name[5]) {\n";
-  OS << "  // The 'llvm.' namespace is reserved!\n";
-  OS << "  default: assert(0 && \"Unknown LLVM intrinsic function!\");\n";
+  OS << "  default: break;\n";
   // Emit the intrinsics in sorted order.
   char LastChar = 0;
   for (std::map<std::string, std::string>::iterator I = IntMapping.begin(),
@@ -102,6 +116,33 @@ EmitFnNameRecognizer(const std::vector<CodeGenIntrinsic> &Ints,
        << I->second << ";\n";
   }
   OS << "  }\n";
-  OS << "#endif\n";
+  OS << "  // The 'llvm.' namespace is reserved!\n";
+  OS << "  assert(0 && \"Unknown LLVM intrinsic function!\");\n";
+  OS << "#endif\n\n";
+}
+
+void IntrinsicEmitter::EmitVerifier(const std::vector<CodeGenIntrinsic> &Ints, 
+                                    std::ostream &OS) {
+  OS << "// Verifier::visitIntrinsicFunctionCall code.\n";
+  OS << "#ifdef GET_INTRINSIC_VERIFIER\n";
+  OS << "  switch (ID) {\n";
+  OS << "  default: assert(0 && \"Invalid intrinsic!\");\n";
+  for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
+    OS << "  case Intrinsic::" << Ints[i].EnumName << ":\t\t// "
+       << Ints[i].Name << "\n";
+    OS << "    Assert1(FTy->getNumParams() == " << Ints[i].ArgTypes.size()-1
+       << ",\n"
+       << "            \"Illegal # arguments for intrinsic function!\", IF);\n";
+    OS << "    Assert1(FTy->getReturnType()->getTypeID() == "
+       << Ints[i].ArgTypes[0] << ",\n"
+       << "            \"Illegal result type!\", IF);\n";
+    for (unsigned j = 1; j != Ints[i].ArgTypes.size(); ++j)
+      OS << "    Assert1(FTy->getParamType(" << j-1 << ")->getTypeID() == "
+         << Ints[i].ArgTypes[j] << ",\n"
+         << "            \"Illegal result type!\", IF);\n";
+    OS << "    break;\n";
+  }
+  OS << "  }\n";
+  OS << "#endif\n\n";
 }
 
