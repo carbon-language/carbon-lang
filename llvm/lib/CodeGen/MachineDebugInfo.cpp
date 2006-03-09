@@ -653,7 +653,7 @@ TypeDesc::TypeDesc(unsigned T)
 , Name("")
 , File(NULL)
 , Size(0)
-//, Align(0)
+, Align(0)
 , Offset(0)
 {}
 
@@ -667,7 +667,7 @@ void TypeDesc::ApplyToFields(DIVisitor *Visitor) {
   Visitor->Apply((DebugInfoDesc *&)File);
   Visitor->Apply(Line);
   Visitor->Apply(Size);
-  //Visitor->Apply(Align);
+  Visitor->Apply(Align);
   Visitor->Apply(Offset);
 }
 
@@ -692,7 +692,7 @@ void TypeDesc::dump() {
             << "File(" << File << "), "
             << "Line(" << Line << "), "
             << "Size(" << Size << "), "
-  //<< "Align(" << Align << "), "
+            << "Align(" << Align << "), "
             << "Offset(" << Offset << ")\n";
 }
 #endif
