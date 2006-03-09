@@ -741,12 +741,7 @@ namespace {
 
 // Note that this list cannot contain libm functions (such as acos and sqrt)
 // that set errno on a domain or other error.
-static const char *DoesntAccessMemoryTable[] = {
-  // LLVM intrinsics:
-  "llvm.frameaddress", "llvm.returnaddress", "llvm.readport",
-  "llvm.isunordered", "llvm.sqrt", "llvm.bswap.i16", "llvm.bswap.i32",
-  "llvm.bswap.i64", "llvm.ctpop", "llvm.ctlz", "llvm.cttz",
-
+static const char *DoesntAccessMemoryFns[] = {
   "abs", "labs", "llabs", "imaxabs", "fabs", "fabsf", "fabsl",
   "trunc", "truncf", "truncl", "ldexp",
 
@@ -783,10 +778,8 @@ static const char *DoesntAccessMemoryTable[] = {
   "__signbit", "__signbitf", "__signbitl",
 };
 
-static const unsigned DAMTableSize =
-    sizeof(DoesntAccessMemoryTable)/sizeof(DoesntAccessMemoryTable[0]);
 
-static const char *OnlyReadsMemoryTable[] = {
+static const char *OnlyReadsMemoryFns[] = {
   "atoi", "atol", "atof", "atoll", "atoq", "a64l",
   "bcmp", "memcmp", "memchr", "memrchr", "wmemcmp", "wmemchr",
 
@@ -810,34 +803,45 @@ static const char *OnlyReadsMemoryTable[] = {
   "feof_unlocked", "ferror_unlocked", "fileno_unlocked"
 };
 
-static const unsigned ORMTableSize =
-    sizeof(OnlyReadsMemoryTable)/sizeof(OnlyReadsMemoryTable[0]);
-
 AliasAnalysis::ModRefBehavior
 BasicAliasAnalysis::getModRefBehavior(Function *F, CallSite CS,
                                       std::vector<PointerAccessInfo> *Info) {
   if (!F->isExternal()) return UnknownModRefBehavior;
 
+  static std::vector<const char*> NoMemoryTable, OnlyReadsMemoryTable;
+
   static bool Initialized = false;
   if (!Initialized) {
+    NoMemoryTable.insert(NoMemoryTable.end(),
+                         DoesntAccessMemoryFns, 
+                         DoesntAccessMemoryFns+
+                sizeof(DoesntAccessMemoryFns)/sizeof(DoesntAccessMemoryFns[0]));
+
+    OnlyReadsMemoryTable.insert(OnlyReadsMemoryTable.end(),
+                                OnlyReadsMemoryFns, 
+                                OnlyReadsMemoryFns+
+                      sizeof(OnlyReadsMemoryFns)/sizeof(OnlyReadsMemoryFns[0]));
+#define GET_MODREF_BEHAVIOR
+#include "llvm/Intrinsics.gen"
+#undef GET_MODREF_BEHAVIOR
+    
     // Sort the table the first time through.
-    std::sort(DoesntAccessMemoryTable, DoesntAccessMemoryTable+DAMTableSize,
-              StringCompare());
-    std::sort(OnlyReadsMemoryTable, OnlyReadsMemoryTable+ORMTableSize,
+    std::sort(NoMemoryTable.begin(), NoMemoryTable.end(), StringCompare());
+    std::sort(OnlyReadsMemoryTable.begin(), OnlyReadsMemoryTable.end(),
               StringCompare());
     Initialized = true;
   }
 
-  const char **Ptr = std::lower_bound(DoesntAccessMemoryTable,
-                                      DoesntAccessMemoryTable+DAMTableSize,
-                                      F->getName().c_str(), StringCompare());
-  if (Ptr != DoesntAccessMemoryTable+DAMTableSize && *Ptr == F->getName())
+  std::vector<const char*>::iterator Ptr =
+    std::lower_bound(NoMemoryTable.begin(), NoMemoryTable.end(),
+                     F->getName().c_str(), StringCompare());
+  if (Ptr != NoMemoryTable.end() && *Ptr == F->getName())
     return DoesNotAccessMemory;
 
-  Ptr = std::lower_bound(OnlyReadsMemoryTable,
-                         OnlyReadsMemoryTable+ORMTableSize,
+  Ptr = std::lower_bound(OnlyReadsMemoryTable.begin(),
+                         OnlyReadsMemoryTable.end(),
                          F->getName().c_str(), StringCompare());
-  if (Ptr != OnlyReadsMemoryTable+ORMTableSize && *Ptr == F->getName())
+  if (Ptr != OnlyReadsMemoryTable.end() && *Ptr == F->getName())
     return OnlyReadsMemory;
 
   return UnknownModRefBehavior;
