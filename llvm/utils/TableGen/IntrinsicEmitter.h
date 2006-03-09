@@ -28,6 +28,10 @@ namespace llvm {
     
     void EmitEnumInfo(const std::vector<CodeGenIntrinsic> &Ints, 
                       std::ostream &OS);
+
+    void EmitFnNameRecognizer(const std::vector<CodeGenIntrinsic> &Ints, 
+                              std::ostream &OS);
+
   };
 
 } // End llvm namespace

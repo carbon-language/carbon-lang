@@ -55,10 +55,14 @@ void IntrinsicEmitter::run(std::ostream &OS) {
 
   // Emit the enum information.
   EmitEnumInfo(Ints, OS);
+  
+  // Emit the function name recognizer.
+  EmitFnNameRecognizer(Ints, OS);
 }
 
 void IntrinsicEmitter::EmitEnumInfo(const std::vector<CodeGenIntrinsic> &Ints,
                                     std::ostream &OS) {
+  OS << "// Enum values for Intrinsics.h\n";
   OS << "#ifdef GET_INTRINSIC_ENUM_VALUES\n";
   for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
     OS << "    " << Ints[i].EnumName;
@@ -68,3 +72,36 @@ void IntrinsicEmitter::EmitEnumInfo(const std::vector<CodeGenIntrinsic> &Ints,
   }
   OS << "#endif\n\n";
 }
+
+void IntrinsicEmitter::
+EmitFnNameRecognizer(const std::vector<CodeGenIntrinsic> &Ints, 
+                     std::ostream &OS) {
+  // Build a function name -> intrinsic name mapping.
+  std::map<std::string, std::string> IntMapping;
+  for (unsigned i = 0, e = Ints.size(); i != e; ++i)
+    IntMapping[Ints[i].Name] = Ints[i].EnumName;
+    
+  OS << "// Function name -> enum value recognizer code.\n";
+  OS << "#ifdef GET_FUNCTION_RECOGNIZER\n";
+  OS << "  switch (Name[5]) {\n";
+  OS << "  // The 'llvm.' namespace is reserved!\n";
+  OS << "  default: assert(0 && \"Unknown LLVM intrinsic function!\");\n";
+  // Emit the intrinsics in sorted order.
+  char LastChar = 0;
+  for (std::map<std::string, std::string>::iterator I = IntMapping.begin(),
+       E = IntMapping.end(); I != E; ++I) {
+    assert(I->first.size() > 5 && std::string(I->first.begin(),
+                                              I->first.begin()+5) == "llvm." &&
+           "Invalid intrinsic name!");
+    if (I->first[5] != LastChar) {
+      LastChar = I->first[5];
+      OS << "  case '" << LastChar << "':\n";
+    }
+    
+    OS << "    if (Name == \"" << I->first << "\") return Intrinsic::"
+       << I->second << ";\n";
+  }
+  OS << "  }\n";
+  OS << "#endif\n";
+}
+
