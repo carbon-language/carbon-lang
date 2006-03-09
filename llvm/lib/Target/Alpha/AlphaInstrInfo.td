@@ -571,11 +571,10 @@ def MULS  : FPForm<0x16, 0x582, "muls/su $RA,$RB,$RC",
                    [(set F4RC:$RC, (fmul F4RC:$RA, F4RC:$RB))], s_fmul>;
 
 def CPYSS  : FPForm<0x17, 0x020, "cpys $RA,$RB,$RC",
-                   [(set F4RC:$RC, (fcopysign F4RC:$RA, F4RC:$RB))], s_fadd>;
+                   [(set F4RC:$RC, (fcopysign F4RC:$RB, F4RC:$RA))], s_fadd>;
 def CPYSES : FPForm<0x17, 0x022, "cpyse $RA,$RB,$RC",[], s_fadd>; //Copy sign and exponent
-//FIXME: This might be legalized in the oposite manner
 def CPYSNS : FPForm<0x17, 0x021, "cpysn $RA,$RB,$RC",
-                   [(set F4RC:$RC, (fneg (fcopysign F4RC:$RA, F4RC:$RB)))], s_fadd>;
+                   [(set F4RC:$RC, (fneg (fcopysign F4RC:$RB, F4RC:$RA)))], s_fadd>;
 }
 
 //Doubles
@@ -595,11 +594,10 @@ def MULT  : FPForm<0x16, 0x5A2, "mult/su $RA,$RB,$RC",
                    [(set F8RC:$RC, (fmul F8RC:$RA, F8RC:$RB))], s_fmul>;
 
 def CPYST  : FPForm<0x17, 0x020, "cpys $RA,$RB,$RC",
-                   [(set F8RC:$RC, (fcopysign F8RC:$RA, F8RC:$RB))], s_fadd>;
+                   [(set F8RC:$RC, (fcopysign F8RC:$RB, F8RC:$RA))], s_fadd>;
 def CPYSET : FPForm<0x17, 0x022, "cpyse $RA,$RB,$RC",[], s_fadd>; //Copy sign and exponent
-//FIXME: This might be legalized in the oposite manner
 def CPYSNT : FPForm<0x17, 0x021, "cpysn $RA,$RB,$RC",
-                   [(set F8RC:$RC, (fneg (fcopysign F8RC:$RA, F8RC:$RB)))], s_fadd>;
+                   [(set F8RC:$RC, (fneg (fcopysign F8RC:$RB, F8RC:$RA)))], s_fadd>;
 
 def CMPTEQ : FPForm<0x16, 0x5A5, "cmpteq/su $RA,$RB,$RC", [], s_fadd>;
 //                    [(set F8RC:$RC, (seteq F8RC:$RA, F8RC:$RB))]>;
@@ -850,10 +848,10 @@ def : Pat<(fneg F8RC:$RB),
           (CPYSNT F8RC:$RB, F8RC:$RB)>;
 def : Pat<(fneg F4RC:$RB),
           (CPYSNS F4RC:$RB, F4RC:$RB)>;
-def : Pat<(fcopysign (fneg F4RC:$A), F4RC:$B),
-          (CPYSNS F4RC:$A, F4RC:$B)>;
-def : Pat<(fcopysign (fneg F8RC:$A), F8RC:$B),
-          (CPYSNT F8RC:$A, F8RC:$B)>;
+def : Pat<(fcopysign F4RC:$A, (fneg F4RC:$B)),
+          (CPYSNS F4RC:$B, F4RC:$A)>;
+def : Pat<(fcopysign F8RC:$A, (fneg F8RC:$B)),
+          (CPYSNT F8RC:$B, F8RC:$A)>;
 
 //Yes, signed multiply high is ugly
 def : Pat<(mulhs GPRC:$RA, GPRC:$RB),
