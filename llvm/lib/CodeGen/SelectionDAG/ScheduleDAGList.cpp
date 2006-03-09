@@ -791,6 +791,109 @@ void RegReductionPriorityQueue::CalculatePriorities() {
     CalcNodePriority(&(*SUnits)[i]);
 }
 
+//===----------------------------------------------------------------------===//
+//                    LatencyPriorityQueue Implementation
+//===----------------------------------------------------------------------===//
+//
+// This is a SchedulingPriorityQueue that schedules using latency information to
+// reduce the length of the critical path through the basic block.
+// 
+namespace {
+  class LatencyPriorityQueue;
+  
+  /// Sorting functions for the Available queue.
+  struct latency_sort : public std::binary_function<SUnit*, SUnit*, bool> {
+    LatencyPriorityQueue *PQ;
+    latency_sort(LatencyPriorityQueue *pq) : PQ(pq) {}
+    latency_sort(const latency_sort &RHS) : PQ(RHS.PQ) {}
+    
+    bool operator()(const SUnit* left, const SUnit* right) const;
+  };
+}  // end anonymous namespace
+
+namespace {
+  class LatencyPriorityQueue : public SchedulingPriorityQueue {
+    // SUnits - The SUnits for the current graph.
+    const std::vector<SUnit> *SUnits;
+    
+    // Latencies - The latency (max of latency from this node to the bb exit)
+    // for each node.
+    std::vector<int> Latencies;
+    
+    std::priority_queue<SUnit*, std::vector<SUnit*>, latency_sort> Queue;
+public:
+    LatencyPriorityQueue() : Queue(latency_sort(this)) {
+    }
+    
+    void initNodes(const std::vector<SUnit> &sunits) {
+      SUnits = &sunits;
+      // Calculate node priorities.
+      CalculatePriorities();
+    }
+    void releaseState() {
+      SUnits = 0;
+      Latencies.clear();
+    }
+    
+    unsigned getLatency(unsigned NodeNum) const {
+      assert(NodeNum < Latencies.size());
+      return Latencies[NodeNum];
+    }
+    
+    bool empty() const { return Queue.empty(); }
+    
+    void push(SUnit *U) {
+      Queue.push(U);
+    }
+    SUnit *pop() {
+      SUnit *V = Queue.top();
+      Queue.pop();
+      
+      std::cerr << "Got node.  Latency: " << getLatency(V->NodeNum)
+                << "  \n";
+      return V;
+    }
+private:
+    void CalculatePriorities();
+    int CalcLatency(const SUnit &SU);
+  };
+}
+
+bool latency_sort::operator()(const SUnit *LHS, const SUnit *RHS) const {
+  unsigned LHSNum = LHS->NodeNum;
+  unsigned RHSNum = RHS->NodeNum;
+  
+  return PQ->getLatency(LHSNum) < PQ->getLatency(RHSNum);
+}
+
+
+/// CalcNodePriority - Calculate the maximal path from the node to the exit.
+///
+int LatencyPriorityQueue::CalcLatency(const SUnit &SU) {
+  int &Latency = Latencies[SU.NodeNum];
+  if (Latency != -1)
+    return Latency;
+  
+  int MaxSuccLatency = 0;
+  for (std::set<SUnit*>::iterator I = SU.Succs.begin(),
+       E = SU.Succs.end(); I != E; ++I)
+    MaxSuccLatency = std::max(MaxSuccLatency, CalcLatency(**I));
+
+  for (std::set<SUnit*>::iterator I = SU.ChainSuccs.begin(),
+       E = SU.ChainSuccs.end(); I != E; ++I)
+    MaxSuccLatency = std::max(MaxSuccLatency, CalcLatency(**I));
+
+  return Latency = MaxSuccLatency + SU.Latency;
+}
+
+/// CalculatePriorities - Calculate priorities of all scheduling units.
+void LatencyPriorityQueue::CalculatePriorities() {
+  Latencies.assign(SUnits->size(), -1);
+  
+  for (unsigned i = 0, e = SUnits->size(); i != e; ++i)
+    CalcLatency((*SUnits)[i]);
+}
+
 
 //===----------------------------------------------------------------------===//
 //                         Public Constructor Functions
@@ -809,6 +912,6 @@ ScheduleDAG* llvm::createTDListDAGScheduler(SelectionDAG &DAG,
                                             MachineBasicBlock *BB,
                                             HazardRecognizer *HR) {
   return new ScheduleDAGList(DAG, BB, DAG.getTarget(), false,
-                             new RegReductionPriorityQueue(),
+                             new LatencyPriorityQueue(),
                              HR);
 }
