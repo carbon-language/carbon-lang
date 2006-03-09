@@ -262,6 +262,7 @@ def fcos       : SDNode<"ISD::FCOS"       , SDTFPUnaryOp>;
 
 def fround     : SDNode<"ISD::FP_ROUND"   , SDTFPRoundOp>;
 def fextend    : SDNode<"ISD::FP_EXTEND"  , SDTFPExtendOp>;
+def fcopysign  : SDNode<"ISD::FCOPYSIGN"  , SDTFPBinOp>;
 
 def sint_to_fp : SDNode<"ISD::SINT_TO_FP" , SDTIntToFPOp>;
 def uint_to_fp : SDNode<"ISD::UINT_TO_FP" , SDTIntToFPOp>;
