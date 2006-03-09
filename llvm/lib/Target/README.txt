@@ -117,3 +117,13 @@ it needs to turn the shifts into multiplies to get it.
 
 //===---------------------------------------------------------------------===//
 
+These two functions should generate the same code on big-endian systems:
+
+int g(int *j,int *l)  {  return memcmp(j,l,4);  }
+int h(int *j, int *l) {  return *j - *l; }
+
+this could be done in SelectionDAGISel.cpp, along with other special cases,
+for 1,2,4,8 bytes.
+
+//===---------------------------------------------------------------------===//
+
