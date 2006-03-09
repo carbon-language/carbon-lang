@@ -84,10 +84,18 @@ static Function *getUpgradedIntrinsic(Function *F) {
   case 'm':
     if (Name == "llvm.memcpy" || Name == "llvm.memset" || 
         Name == "llvm.memmove") {
-      if (F->getFunctionType()->getParamType(2) == Type::UIntTy)
-        return M->getOrInsertFunction(Name+".i32", F->getFunctionType());
-      if (F->getFunctionType()->getParamType(2) == Type::ULongTy)
-        return M->getOrInsertFunction(Name+".i64", F->getFunctionType());
+      if (F->getFunctionType()->getParamType(2) == Type::UIntTy ||
+          F->getFunctionType()->getParamType(2) == Type::IntTy)
+        return M->getOrInsertFunction(Name+".i32", Type::VoidTy,
+                                      PointerType::get(Type::SByteTy),
+                                      F->getFunctionType()->getParamType(1),
+                                      Type::UIntTy, Type::UIntTy, NULL);
+      if (F->getFunctionType()->getParamType(2) == Type::ULongTy ||
+          F->getFunctionType()->getParamType(2) == Type::LongTy)
+        return M->getOrInsertFunction(Name+".i64", Type::VoidTy,
+                                      PointerType::get(Type::SByteTy),
+                                      F->getFunctionType()->getParamType(1),
+                                      Type::ULongTy, Type::UIntTy, NULL);
     }
     break;
   case 's':
