@@ -1003,10 +1003,6 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     if (I.getType() != Type::VoidTy)
       setValue(&I, DAG.getNode(ISD::UNDEF, TLI.getValueType(I.getType())));
     return 0;
-  case Intrinsic::dbg_declare:
-    if (I.getType() != Type::VoidTy)
-      setValue(&I, DAG.getNode(ISD::UNDEF, TLI.getValueType(I.getType())));
-    return 0;
     
   case Intrinsic::isunordered_f32:
   case Intrinsic::isunordered_f64:

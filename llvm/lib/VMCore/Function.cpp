@@ -232,7 +232,6 @@ unsigned Function::getIntrinsicID() const {
     if (Name == "llvm.dbg.region.start")return Intrinsic::dbg_region_start;
     if (Name == "llvm.dbg.region.end")  return Intrinsic::dbg_region_end;
     if (Name == "llvm.dbg.func.start")  return Intrinsic::dbg_func_start;
-    if (Name == "llvm.dbg.declare")     return Intrinsic::dbg_declare;
     break;
   case 'f':
     if (Name == "llvm.frameaddress")  return Intrinsic::frameaddress;

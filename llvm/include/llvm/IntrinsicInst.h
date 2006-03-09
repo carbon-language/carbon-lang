@@ -76,7 +76,6 @@ namespace llvm {
       case Intrinsic::dbg_region_start:
       case Intrinsic::dbg_region_end:
       case Intrinsic::dbg_func_start:
-      case Intrinsic::dbg_declare:
         return true;
       default: return false;
       }
