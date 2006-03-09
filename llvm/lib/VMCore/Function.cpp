@@ -207,82 +207,9 @@ unsigned Function::getIntrinsicID() const {
 
   assert(Name.size() != 5 && "'llvm.' is an invalid intrinsic name!");
 
-  switch (Name[5]) {
-  case 'b':
-    if (Name == "llvm.bswap.i16") return Intrinsic::bswap_i16;
-    if (Name == "llvm.bswap.i32") return Intrinsic::bswap_i32;
-    if (Name == "llvm.bswap.i64") return Intrinsic::bswap_i64;
-    break;
-  case 'c':
-    if (Name == "llvm.ctpop.i8") return Intrinsic::ctpop_i8;
-    if (Name == "llvm.ctpop.i16") return Intrinsic::ctpop_i16;
-    if (Name == "llvm.ctpop.i32") return Intrinsic::ctpop_i32;
-    if (Name == "llvm.ctpop.i64") return Intrinsic::ctpop_i64;
-    if (Name == "llvm.cttz.i8") return Intrinsic::cttz_i8;
-    if (Name == "llvm.cttz.i16") return Intrinsic::cttz_i16;
-    if (Name == "llvm.cttz.i32") return Intrinsic::cttz_i32;
-    if (Name == "llvm.cttz.i64") return Intrinsic::cttz_i64;
-    if (Name == "llvm.ctlz.i8") return Intrinsic::ctlz_i8;
-    if (Name == "llvm.ctlz.i16") return Intrinsic::ctlz_i16;
-    if (Name == "llvm.ctlz.i32") return Intrinsic::ctlz_i32;
-    if (Name == "llvm.ctlz.i64") return Intrinsic::ctlz_i64;
-    break;
-  case 'd':
-    if (Name == "llvm.dbg.stoppoint")   return Intrinsic::dbg_stoppoint;
-    if (Name == "llvm.dbg.region.start")return Intrinsic::dbg_region_start;
-    if (Name == "llvm.dbg.region.end")  return Intrinsic::dbg_region_end;
-    if (Name == "llvm.dbg.func.start")  return Intrinsic::dbg_func_start;
-    break;
-  case 'f':
-    if (Name == "llvm.frameaddress")  return Intrinsic::frameaddress;
-    break;
-  case 'g':
-    if (Name == "llvm.gcwrite") return Intrinsic::gcwrite;
-    if (Name == "llvm.gcread")  return Intrinsic::gcread;
-    if (Name == "llvm.gcroot")  return Intrinsic::gcroot;
-    break;
-  case 'i':
-    if (Name == "llvm.isunordered.f32") 
-      return Intrinsic::isunordered_f32;
-    if (Name == "llvm.isunordered.f64") 
-      return Intrinsic::isunordered_f64;
-    break;
-  case 'l':
-    if (Name == "llvm.longjmp")  return Intrinsic::longjmp;
-    break;
-  case 'm':
-    if (Name == "llvm.memcpy.i32")   return Intrinsic::memcpy_i32;
-    if (Name == "llvm.memcpy.i64")   return Intrinsic::memcpy_i64;
-    if (Name == "llvm.memmove.i32")  return Intrinsic::memmove_i32;
-    if (Name == "llvm.memmove.i64")  return Intrinsic::memmove_i64;
-    if (Name == "llvm.memset.i32")   return Intrinsic::memset_i32;
-    if (Name == "llvm.memset.i64")   return Intrinsic::memset_i64;
-    break;
-  case 'p':
-    if (Name == "llvm.prefetch")  return Intrinsic::prefetch;
-    if (Name == "llvm.pcmarker")  return Intrinsic::pcmarker;
-    break;
-  case 'r':
-    if (Name == "llvm.returnaddress")    return Intrinsic::returnaddress;
-    if (Name == "llvm.readcyclecounter") return Intrinsic::readcyclecounter;
-    break;
-  case 's':
-    if (Name == "llvm.setjmp")       return Intrinsic::setjmp;
-    if (Name == "llvm.sigsetjmp")    return Intrinsic::sigsetjmp;
-    if (Name == "llvm.siglongjmp")   return Intrinsic::siglongjmp;
-    if (Name == "llvm.stackrestore") return Intrinsic::stackrestore;
-    if (Name == "llvm.stacksave")    return Intrinsic::stacksave;
-    if (Name == "llvm.sqrt.f32")     return Intrinsic::sqrt_f32;
-    if (Name == "llvm.sqrt.f64")     return Intrinsic::sqrt_f64;
-    break;
-  case 'v':
-    if (Name == "llvm.va_copy")  return Intrinsic::vacopy;
-    if (Name == "llvm.va_end")   return Intrinsic::vaend;
-    if (Name == "llvm.va_start") return Intrinsic::vastart;
-    break;
-  }
-  // The "llvm." namespace is reserved!
-  assert(!"Unknown LLVM intrinsic function!");
+#define GET_FUNCTION_RECOGNIZER
+#include "llvm/Intrinsics.gen"
+#undef GET_FUNCTION_RECOGNIZER
   return 0;
 }
 
