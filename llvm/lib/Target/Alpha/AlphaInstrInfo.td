@@ -19,13 +19,6 @@ include "AlphaInstrFormats.td"
 def SDTFPUnaryOpUnC  : SDTypeProfile<1, 1, [
   SDTCisFP<1>, SDTCisFP<0>
 ]>;
-def SDTLoadA : SDTypeProfile<1, 6, [ // load
-  SDTCisInt<1>, SDTCisPtrTy<2>, SDTCisInt<3>, SDTCisInt<4>, SDTCisInt<5>, SDTCisInt<6>
-]>;
-def SDTStoreA : SDTypeProfile<0, 7, [ // load
-  SDTCisInt<1>, SDTCisPtrTy<2>, SDTCisInt<3>, SDTCisInt<4>, SDTCisInt<5>, SDTCisInt<6>
-]>;
-
 def Alpha_itoft   : SDNode<"AlphaISD::ITOFT_",    SDTIntToFPOp, []>;
 def Alpha_ftoit   : SDNode<"AlphaISD::FTOIT_",    SDTFPToIntOp, []>;
 def Alpha_cvtqt   : SDNode<"AlphaISD::CVTQT_",    SDTFPUnaryOpUnC, []>;
@@ -34,18 +27,6 @@ def Alpha_cvttq   : SDNode<"AlphaISD::CVTTQ_"  ,  SDTFPUnaryOp, []>;
 def Alpha_gprello : SDNode<"AlphaISD::GPRelLo",   SDTIntBinOp, []>;
 def Alpha_gprelhi : SDNode<"AlphaISD::GPRelHi",   SDTIntBinOp, []>;
 def Alpha_rellit  : SDNode<"AlphaISD::RelLit",    SDTIntBinOp, []>;
-def Alpha_ldq     : SDNode<"AlphaISD::LDQ_",      SDTLoadA, [SDNPHasChain]>;
-def Alpha_ldt     : SDNode<"AlphaISD::LDT_",      SDTLoadA, [SDNPHasChain]>;
-def Alpha_lds     : SDNode<"AlphaISD::LDS_",      SDTLoadA, [SDNPHasChain]>;
-def Alpha_ldl     : SDNode<"AlphaISD::LDL_",      SDTLoadA, [SDNPHasChain]>;
-def Alpha_ldwu    : SDNode<"AlphaISD::LDWU_",     SDTLoadA, [SDNPHasChain]>;
-def Alpha_ldbu    : SDNode<"AlphaISD::LDBU_",     SDTLoadA, [SDNPHasChain]>;
-def Alpha_stq     : SDNode<"AlphaISD::STQ_",      SDTStoreA, [SDNPHasChain]>;
-def Alpha_stl     : SDNode<"AlphaISD::STL_",      SDTStoreA, [SDNPHasChain]>;
-def Alpha_stw     : SDNode<"AlphaISD::STW_",      SDTStoreA, [SDNPHasChain]>;
-def Alpha_stb     : SDNode<"AlphaISD::STB_",      SDTStoreA, [SDNPHasChain]>;
-def Alpha_sts     : SDNode<"AlphaISD::STS_",      SDTStoreA, [SDNPHasChain]>;
-def Alpha_stt     : SDNode<"AlphaISD::STT_",      SDTStoreA, [SDNPHasChain]>;
 
 // These are target-independent nodes, but have target-specific formats.
 def SDT_AlphaCallSeq : SDTypeProfile<0, 1, [ SDTCisVT<0, i64> ]>;
@@ -569,38 +550,6 @@ def : Pat<(Alpha_rellit texternalsym:$ext, GPRC:$RB),
           (LDQl texternalsym:$ext, GPRC:$RB)>;
 
 
-//Various tracked versions
-let OperandList = (ops GPRC:$RA, s64imm:$DISP, GPRC:$RB, 
-		   s64imm:$i, s64imm:$j, s64imm:$k, s64imm:$m) in {
-def LDQlbl   : MForm<0x29, 0, 1, "LSMARKER$$$i$$$j$$$k$$$m:\n\t ldq $RA,$DISP($RB)",
-                 [(set GPRC:$RA, (Alpha_ldq  imm:$DISP, GPRC:$RB, imm:$i, imm:$j, imm:$k, imm:$m))]>;
-def LDLlbl   : MForm<0x28, 0, 1, "LSMARKER$$$i$$$j$$$k$$$m:\n\t ldl $RA,$DISP($RB)",
-                 [(set GPRC:$RA, (Alpha_ldl  imm:$DISP, GPRC:$RB, imm:$i, imm:$j, imm:$k, imm:$m))]>;
-def LDBUlbl  : MForm<0x0A, 0, 1, "LSMARKER$$$i$$$j$$$k$$$m:\n\t ldbu $RA,$DISP($RB)",
-                 [(set GPRC:$RA, (Alpha_ldwu  imm:$DISP, GPRC:$RB, imm:$i, imm:$j, imm:$k, imm:$m))]>;
-def LDWUlbl  : MForm<0x0C, 0, 1, "LSMARKER$$$i$$$j$$$k$$$m:\n\t ldwu $RA,$DISP($RB)",
-                 [(set GPRC:$RA, (Alpha_ldbu  imm:$DISP, GPRC:$RB, imm:$i, imm:$j, imm:$k, imm:$m))]>;
-
-def STBlbl   : MForm<0x0E, 1, 0, "LSMARKER$$$i$$$j$$$k$$$m:\n\t stb $RA,$DISP($RB)",
-		 [(Alpha_stb GPRC:$RA, imm:$DISP, GPRC:$RB, imm:$i, imm:$j, imm:$k, imm:$m)]>;
-def STWlbl   : MForm<0x0D, 1, 0, "LSMARKER$$$i$$$j$$$k$$$m:\n\t stw $RA,$DISP($RB)",
-		 [(Alpha_stw GPRC:$RA, imm:$DISP, GPRC:$RB, imm:$i, imm:$j, imm:$k, imm:$m)]>;
-def STLlbl   : MForm<0x2C, 1, 0, "LSMARKER$$$i$$$j$$$k$$$m:\n\t stl $RA,$DISP($RB)",
-		 [(Alpha_stl GPRC:$RA, imm:$DISP, GPRC:$RB, imm:$i, imm:$j, imm:$k, imm:$m)]>;
-def STQlbl   : MForm<0x2D, 1, 0, "LSMARKER$$$i$$$j$$$k$$$m:\n\t stq $RA,$DISP($RB)",
-		 [(Alpha_stq GPRC:$RA, imm:$DISP, GPRC:$RB, imm:$i, imm:$j, imm:$k, imm:$m)]>;
-}
-
-let OperandList = (ops F8RC:$RA, s64imm:$DISP, GPRC:$RB, 
-		   s64imm:$i, s64imm:$j, s64imm:$k, s64imm:$m) in 
-def LDTlbl   : MForm<0x29, 0, 1, "LSMARKER$$$i$$$j$$$k$$$m:\n\t ldt $RA,$DISP($RB)",
-                 [(set F8RC:$RA, (Alpha_ldt  imm:$DISP, GPRC:$RB, imm:$i, imm:$j, imm:$k, imm:$m))]>;
-
-let OperandList = (ops F4RC:$RA, s64imm:$DISP, GPRC:$RB, 
-		   s64imm:$i, s64imm:$j, s64imm:$k, s64imm:$m) in 
-def LDSlbl   : MForm<0x29, 0, 1, "LSMARKER$$$i$$$j$$$k$$$m:\n\t lds $RA,$DISP($RB)",
-                 [(set F4RC:$RA, (Alpha_lds  imm:$DISP, GPRC:$RB, imm:$i, imm:$j, imm:$k, imm:$m))]>;
-
 def RPCC : MfcForm<0x18, 0xC000, "rpcc $RA">; //Read process cycle counter
 
 //Basic Floating point ops
@@ -621,9 +570,12 @@ def DIVS  : FPForm<0x16, 0x583, "divs/su $RA,$RB,$RC",
 def MULS  : FPForm<0x16, 0x582, "muls/su $RA,$RB,$RC",
                    [(set F4RC:$RC, (fmul F4RC:$RA, F4RC:$RB))]>;
 
-def CPYSS  : FPForm<0x17, 0x020, "cpys $RA,$RB,$RC",[]>;  //Copy sign
+def CPYSS  : FPForm<0x17, 0x020, "cpys $RA,$RB,$RC",
+                   [(set F4RC:$RC, (fcopysign F4RC:$RA, F4RC:$RB))]>;
 def CPYSES : FPForm<0x17, 0x022, "cpyse $RA,$RB,$RC",[]>; //Copy sign and exponent
-def CPYSNS : FPForm<0x17, 0x021, "cpysn $RA,$RB,$RC",[]>; //Copy sign negate
+//FIXME: This might be legalized in the oposite manner
+def CPYSNS : FPForm<0x17, 0x021, "cpysn $RA,$RB,$RC",
+                   [(set F4RC:$RC, (fneg (fcopysign F4RC:$RA, F4RC:$RB)))]>;
 }
 
 //Doubles
@@ -642,9 +594,12 @@ def DIVT  : FPForm<0x16, 0x5A3, "divt/su $RA,$RB,$RC",
 def MULT  : FPForm<0x16, 0x5A2, "mult/su $RA,$RB,$RC",
                    [(set F8RC:$RC, (fmul F8RC:$RA, F8RC:$RB))]>;
 
-def CPYST  : FPForm<0x17, 0x020, "cpys $RA,$RB,$RC",[]>;  //Copy sign
+def CPYST  : FPForm<0x17, 0x020, "cpys $RA,$RB,$RC",
+                   [(set F8RC:$RC, (fcopysign F8RC:$RA, F8RC:$RB))]>;
 def CPYSET : FPForm<0x17, 0x022, "cpyse $RA,$RB,$RC",[]>; //Copy sign and exponent
-def CPYSNT : FPForm<0x17, 0x021, "cpysn $RA,$RB,$RC",[]>; //Copy sign negate
+//FIXME: This might be legalized in the oposite manner
+def CPYSNT : FPForm<0x17, 0x021, "cpysn $RA,$RB,$RC",
+                   [(set F8RC:$RC, (fneg (fcopysign F8RC:$RA, F8RC:$RB)))]>;
 
 def CMPTEQ : FPForm<0x16, 0x5A5, "cmpteq/su $RA,$RB,$RC", []>;
 //                    [(set F8RC:$RC, (seteq F8RC:$RA, F8RC:$RB))]>;
@@ -895,6 +850,11 @@ def : Pat<(fneg F8RC:$RB),
           (CPYSNT F8RC:$RB, F8RC:$RB)>;
 def : Pat<(fneg F4RC:$RB),
           (CPYSNS F4RC:$RB, F4RC:$RB)>;
+def : Pat<(fcopysign (fneg F4RC:$A), F4RC:$B),
+          (CPYSNS F4RC:$A, F4RC:$B)>;
+def : Pat<(fcopysign (fneg F8RC:$A), F8RC:$B),
+          (CPYSNT F8RC:$A, F8RC:$B)>;
+
 //Yes, signed multiply high is ugly
 def : Pat<(mulhs GPRC:$RA, GPRC:$RB),
           (SUBQ (UMULH GPRC:$RA, GPRC:$RB), (ADDQ (CMOVGE GPRC:$RB, R31, GPRC:$RA), 

@@ -26,12 +26,6 @@
 
 using namespace llvm;
 
-namespace llvm {
-  cl::opt<bool> EnableAlphaLSMark("enable-alpha-lsmark",
-    cl::desc("Emit symbols to correlate Mem ops to LLVM Values"),
-    cl::Hidden);
-}
-
 /// AddLiveIn - This helper function adds the specified physical register to the
 /// MachineFunction as a live in value.  It also creates a corresponding virtual
 /// register for it.
@@ -70,20 +64,6 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   setOperationAction(ISD::SEXTLOAD, MVT::i16, Expand);
   
   setOperationAction(ISD::TRUNCSTORE, MVT::i1, Promote);
-
-  if (EnableAlphaLSMark) {
-    setOperationAction(ISD::LOAD, MVT::i64, Custom);
-    setOperationAction(ISD::LOAD, MVT::f64, Custom);
-    setOperationAction(ISD::LOAD, MVT::f32, Custom);
-
-    setOperationAction(ISD::ZEXTLOAD, MVT::i8,  Custom);
-    setOperationAction(ISD::ZEXTLOAD, MVT::i16, Custom);
-    setOperationAction(ISD::SEXTLOAD, MVT::i32, Custom);
-
-    setOperationAction(ISD::EXTLOAD, MVT::i8,  Custom);
-    setOperationAction(ISD::EXTLOAD, MVT::i16, Custom);
-    setOperationAction(ISD::EXTLOAD, MVT::i32, Custom);
-  }
 
   setOperationAction(ISD::FREM, MVT::f32, Expand);
   setOperationAction(ISD::FREM, MVT::f64, Expand);
@@ -175,18 +155,6 @@ const char *AlphaTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case AlphaISD::GlobalBaseReg: return "Alpha::GlobalBaseReg";
   case AlphaISD::CALL:   return "Alpha::CALL";
   case AlphaISD::DivCall: return "Alpha::DivCall";
-  case AlphaISD::LDQ_: return "Alpha::LDQ_";
-  case AlphaISD::LDT_: return "Alpha::LDT_";
-  case AlphaISD::LDS_: return "Alpha::LDS_";
-  case AlphaISD::LDL_: return "Alpha::LDL_";
-  case AlphaISD::LDWU_: return "Alpha::LDWU_";
-  case AlphaISD::LDBU_:  return "Alpha::LDBU_";
-  case AlphaISD::STQ_: return "Alpha::STQ_";
-  case AlphaISD::STT_: return "Alpha::STT_";
-  case AlphaISD::STS_: return "Alpha::STS_";
-  case AlphaISD::STL_: return "Alpha::STL_";
-  case AlphaISD::STW_: return "Alpha::STW_";
-  case AlphaISD::STB_:  return "Alpha::STB_";
   }
 }
 
@@ -395,48 +363,6 @@ void AlphaTargetLowering::restoreRA(MachineBasicBlock* BB)
   BuildMI(BB, Alpha::BIS, 2, Alpha::R26).addReg(RA).addReg(RA);
 }
 
-
-
-static void getValueInfo(const Value* v, int& type, int& fun, int& offset)
-{
-  fun = type = offset = 0;
-  if (v == NULL) {
-    type = 0;
-  } else if (const GlobalValue* GV = dyn_cast<GlobalValue>(v)) {
-    type = 1;
-    const Module* M = GV->getParent();
-    for(Module::const_global_iterator ii = M->global_begin(); &*ii != GV; ++ii)
-      ++offset;
-  } else if (const Argument* Arg = dyn_cast<Argument>(v)) {
-    type = 2;
-    const Function* F = Arg->getParent();
-    const Module* M = F->getParent();
-    for(Module::const_iterator ii = M->begin(); &*ii != F; ++ii)
-      ++fun;
-    for(Function::const_arg_iterator ii = F->arg_begin(); &*ii != Arg; ++ii)
-      ++offset;
-  } else if (const Instruction* I = dyn_cast<Instruction>(v)) {
-    assert(dyn_cast<PointerType>(I->getType()));
-    type = 3;
-    const BasicBlock* bb = I->getParent();
-    const Function* F = bb->getParent();
-    const Module* M = F->getParent();
-    for(Module::const_iterator ii = M->begin(); &*ii != F; ++ii)
-      ++fun;
-    for(Function::const_iterator ii = F->begin(); &*ii != bb; ++ii)
-      offset += ii->size();
-    for(BasicBlock::const_iterator ii = bb->begin(); &*ii != I; ++ii)
-      ++offset;
-  } else if (const Constant* C = dyn_cast<Constant>(v)) {
-    //Don't know how to look these up yet
-    type = 0;
-  } else {
-    assert(0 && "Error in value marking");
-  }
-  //type = 4: register spilling
-  //type = 5: global address loading or constant loading
-}
-
 static int getUID()
 {
   static int id = 0;
@@ -535,97 +461,6 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     }
     break;
 
-  case ISD::LOAD:
-  case ISD::SEXTLOAD:
-  case ISD::ZEXTLOAD:
-  case ISD::EXTLOAD:
-    {
-      SDOperand Chain   = Op.getOperand(0);
-      SDOperand Address = Op.getOperand(1);
-
-      unsigned Opc;
-      unsigned opcode = Op.getOpcode();
-
-      if (opcode == ISD::LOAD)
-        switch (Op.Val->getValueType(0)) {
-        default: Op.Val->dump(); assert(0 && "Bad load!");
-        case MVT::i64: Opc = AlphaISD::LDQ_; break;
-        case MVT::f64: Opc = AlphaISD::LDT_; break;
-        case MVT::f32: Opc = AlphaISD::LDS_; break;
-        }
-      else
-        switch (cast<VTSDNode>(Op.getOperand(3))->getVT()) {
-        default: Op.Val->dump(); assert(0 && "Bad sign extend!");
-        case MVT::i32: Opc = AlphaISD::LDL_;
-          assert(opcode != ISD::ZEXTLOAD && "Not sext"); break;
-        case MVT::i16: Opc = AlphaISD::LDWU_;
-          assert(opcode != ISD::SEXTLOAD && "Not zext"); break;
-        case MVT::i1: //FIXME: Treat i1 as i8 since there are problems otherwise
-        case MVT::i8: Opc = AlphaISD::LDBU_;
-          assert(opcode != ISD::SEXTLOAD && "Not zext"); break;
-        }
-
-      int i, j, k;
-      getValueInfo(dyn_cast<SrcValueSDNode>(Op.getOperand(2))->getValue(), i, j, k);
-
-      SDOperand Zero = DAG.getConstant(0, MVT::i64);
-      std::vector<MVT::ValueType> VTS;
-      VTS.push_back(Op.Val->getValueType(0));
-      VTS.push_back(MVT::Other);
-      std::vector<SDOperand> ARGS;
-      ARGS.push_back(Chain);
-      ARGS.push_back(Zero);
-      ARGS.push_back(Address);
-      ARGS.push_back(DAG.getConstant(i, MVT::i64));
-      ARGS.push_back(DAG.getConstant(j, MVT::i64));
-      ARGS.push_back(DAG.getConstant(k, MVT::i64));
-      ARGS.push_back(DAG.getConstant(getUID(), MVT::i64));
-      return DAG.getNode(Opc, VTS, ARGS);
-    }
-
-  case ISD::TRUNCSTORE:
-  case ISD::STORE:
-    {
-      SDOperand Chain   = Op.getOperand(0);
-      SDOperand Value = Op.getOperand(1);
-      SDOperand Address = Op.getOperand(2);
-
-      unsigned Opc;
-      unsigned opcode = Op.getOpcode();
-
-      if (opcode == ISD::STORE) {
-        switch(Value.getValueType()) {
-        default: assert(0 && "unknown Type in store");
-        case MVT::i64: Opc = AlphaISD::STQ_; break;
-        case MVT::f64: Opc = AlphaISD::STT_; break;
-        case MVT::f32: Opc = AlphaISD::STS_; break;
-        }
-      } else { //ISD::TRUNCSTORE
-        switch(cast<VTSDNode>(Op.getOperand(4))->getVT()) {
-        default: assert(0 && "unknown Type in store");
-        case MVT::i8: Opc = AlphaISD::STB_; break;
-        case MVT::i16: Opc = AlphaISD::STW_; break;
-        case MVT::i32: Opc = AlphaISD::STL_; break;
-        }
-      }
-
-      int i, j, k;
-      getValueInfo(cast<SrcValueSDNode>(Op.getOperand(3))->getValue(), i, j, k);
-
-      SDOperand Zero = DAG.getConstant(0, MVT::i64);
-      std::vector<MVT::ValueType> VTS;
-      VTS.push_back(MVT::Other);
-      std::vector<SDOperand> ARGS;
-      ARGS.push_back(Chain);
-      ARGS.push_back(Value);
-      ARGS.push_back(Zero);
-      ARGS.push_back(Address);
-      ARGS.push_back(DAG.getConstant(i, MVT::i64));
-      ARGS.push_back(DAG.getConstant(j, MVT::i64));
-      ARGS.push_back(DAG.getConstant(k, MVT::i64));
-      ARGS.push_back(DAG.getConstant(getUID(), MVT::i64));
-      return DAG.getNode(Opc, VTS, ARGS);
-    }
   case ISD::VAARG: {
     SDOperand Chain = Op.getOperand(0);
     SDOperand VAListP = Op.getOperand(1);
