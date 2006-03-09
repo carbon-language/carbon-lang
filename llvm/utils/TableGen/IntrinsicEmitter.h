@@ -33,6 +33,8 @@ namespace llvm {
                               std::ostream &OS);
     void EmitVerifier(const std::vector<CodeGenIntrinsic> &Ints, 
                       std::ostream &OS);
+    void EmitModRefInfo(const std::vector<CodeGenIntrinsic> &Ints, 
+                        std::ostream &OS);
   };
 
 } // End llvm namespace

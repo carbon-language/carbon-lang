@@ -26,6 +26,7 @@ std::vector<CodeGenIntrinsic> llvm::LoadIntrinsics(const RecordKeeper &RC) {
 
 CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
   std::string DefName = R->getName();
+  ModRef = WriteMem;
   
   if (DefName.size() <= 4 || 
       std::string(DefName.begin(), DefName.begin()+4) != "int_")
@@ -54,6 +55,29 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
   }
   if (ArgTypes.size() == 0)
     throw "Intrinsic '"+DefName+"' needs at least a type for the ret value!";
+  
+  // Parse the intrinsic properties.
+  ListInit *PropList = R->getValueAsListInit("Properties");
+  for (unsigned i = 0, e = PropList->getSize(); i != e; ++i) {
+    DefInit *DI = dynamic_cast<DefInit*>(PropList->getElement(i));
+    assert(DI && "Invalid list type!");
+    Record *Property = DI->getDef();
+    assert(Property->isSubClassOf("IntrinsicProperty") &&
+           "Expected a property!");
+
+    if (Property->getName() == "InstrNoMem")
+      ModRef = NoMem;
+    else if (Property->getName() == "InstrReadArgMem")
+      ModRef = ReadArgMem;
+    else if (Property->getName() == "IntrReadMem")
+      ModRef = ReadMem;
+    else if (Property->getName() == "InstrWriteArgMem")
+      ModRef = WriteArgMem;
+    else if (Property->getName() == "IntrWriteMem")
+      ModRef = WriteMem;
+    else
+      assert(0 && "Unknown property!");
+  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -73,6 +97,9 @@ void IntrinsicEmitter::run(std::ostream &OS) {
 
   // Emit the intrinsic verifier.
   EmitVerifier(Ints, OS);
+  
+  // Emit mod/ref info for each function.
+  EmitModRefInfo(Ints, OS);
 }
 
 void IntrinsicEmitter::EmitEnumInfo(const std::vector<CodeGenIntrinsic> &Ints,
@@ -146,3 +173,21 @@ void IntrinsicEmitter::EmitVerifier(const std::vector<CodeGenIntrinsic> &Ints,
   OS << "#endif\n\n";
 }
 
+void IntrinsicEmitter::EmitModRefInfo(const std::vector<CodeGenIntrinsic> &Ints,
+                                      std::ostream &OS) {
+  OS << "// BasicAliasAnalysis code.\n";
+  OS << "#ifdef GET_MODREF_BEHAVIOR\n";
+  for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
+    switch (Ints[i].ModRef) {
+    default: break;
+    case CodeGenIntrinsic::NoMem:
+      OS << "  NoMemoryTable.push_back(\"" << Ints[i].Name << "\");\n";
+      break;
+    case CodeGenIntrinsic::ReadArgMem:
+    case CodeGenIntrinsic::ReadMem:
+      OS << "  OnlyReadsMemoryTable.push_back(\"" << Ints[i].Name << "\");\n";
+      break;
+    }
+  }
+  OS << "#endif\n\n";
+}
