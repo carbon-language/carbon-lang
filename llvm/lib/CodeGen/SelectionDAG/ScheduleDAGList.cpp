@@ -119,13 +119,14 @@ void SUnit::dump(const SelectionDAG *G, bool All) const {
 }
 
 //===----------------------------------------------------------------------===//
-// SchedulingPriorityQueue - This interface is used to plug different
-// priorities computation algorithms into the list scheduler.  It implements the
-// interface of a standard priority queue, where nodes are inserted in arbitrary
-// order and returned in priority order.  The computation of the priority and
-// the representation of the queue are totally up to the implementation to
-// decide.
-// 
+/// SchedulingPriorityQueue - This interface is used to plug different
+/// priorities computation algorithms into the list scheduler. It implements the
+/// interface of a standard priority queue, where nodes are inserted in 
+/// arbitrary order and returned in priority order.  The computation of the
+/// priority and the representation of the queue are totally up to the
+/// implementation to decide.
+/// 
+namespace {
 class SchedulingPriorityQueue {
 public:
   virtual ~SchedulingPriorityQueue() {}
@@ -137,11 +138,15 @@ public:
   virtual void push(SUnit *U) = 0;
   virtual SUnit *pop() = 0;
 };
+}
 
 
 
 namespace {
-/// ScheduleDAGList - List scheduler.
+//===----------------------------------------------------------------------===//
+/// ScheduleDAGList - The actual list scheduler implementation.  This supports
+/// both top-down and bottom-up scheduling.
+///
 class ScheduleDAGList : public ScheduleDAG {
 private:
   // SDNode to SUnit mapping (many to one).
