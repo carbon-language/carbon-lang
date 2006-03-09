@@ -1,5 +1,6 @@
 ; Test that the StrCatOptimizer works correctly
-; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | not grep 'call.*llvm.memmove'
+; RUN: llvm-as < %s | opt -constprop -simplify-libcalls -disable-output &&
+; RUN: llvm-as < %s | opt -constprop -simplify-libcalls | llvm-dis | not grep 'call.*llvm.memmove'
 
 declare sbyte* %llvm.memmove(sbyte*,sbyte*,int,int)
 %h = constant [2 x sbyte] c"h\00"
