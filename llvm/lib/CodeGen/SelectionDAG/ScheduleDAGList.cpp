@@ -190,14 +190,12 @@ public:
 
 private:
   SUnit *NewSUnit(SDNode *N);
-  void ReleasePred(SchedulingPriorityQueue &Avail,
-                   SUnit *PredSU, bool isChain = false);
-  void ReleaseSucc(SchedulingPriorityQueue &Avail,
-                   SUnit *SuccSU, bool isChain = false);
-  void ScheduleNodeBottomUp(SchedulingPriorityQueue &Avail, SUnit *SU);
-  void ScheduleNodeTopDown(SchedulingPriorityQueue &Avail, SUnit *SU);
-  void ListScheduleTopDown(SchedulingPriorityQueue &Available);
-  void ListScheduleBottomUp(SchedulingPriorityQueue &Available);
+  void ReleasePred(SUnit *PredSU, bool isChain = false);
+  void ReleaseSucc(SUnit *SuccSU, bool isChain = false);
+  void ScheduleNodeBottomUp(SUnit *SU);
+  void ScheduleNodeTopDown(SUnit *SU);
+  void ListScheduleTopDown();
+  void ListScheduleBottomUp();
   void BuildSchedUnits();
   void EmitSchedule();
 };
@@ -214,8 +212,7 @@ SUnit *ScheduleDAGList::NewSUnit(SDNode *N) {
 
 /// ReleasePred - Decrement the NumSuccsLeft count of a predecessor. Add it to
 /// the Available queue is the count reaches zero. Also update its cycle bound.
-void ScheduleDAGList::ReleasePred(SchedulingPriorityQueue &Available, 
-                                  SUnit *PredSU, bool isChain) {
+void ScheduleDAGList::ReleasePred(SUnit *PredSU, bool isChain) {
   // FIXME: the distance between two nodes is not always == the predecessor's
   // latency. For example, the reader can very well read the register written
   // by the predecessor later than the issue cycle. It also depends on the
@@ -239,14 +236,13 @@ void ScheduleDAGList::ReleasePred(SchedulingPriorityQueue &Available,
   if ((PredSU->NumSuccsLeft + PredSU->NumChainSuccsLeft) == 0) {
     // EntryToken has to go last!  Special case it here.
     if (PredSU->Node->getOpcode() != ISD::EntryToken)
-      Available.push(PredSU);
+      PriorityQueue->push(PredSU);
   }
 }
 
 /// ReleaseSucc - Decrement the NumPredsLeft count of a successor. Add it to
 /// the Available queue is the count reaches zero. Also update its cycle bound.
-void ScheduleDAGList::ReleaseSucc(SchedulingPriorityQueue &Available, 
-                                  SUnit *SuccSU, bool isChain) {
+void ScheduleDAGList::ReleaseSucc(SUnit *SuccSU, bool isChain) {
   // FIXME: the distance between two nodes is not always == the predecessor's
   // latency. For example, the reader can very well read the register written
   // by the predecessor later than the issue cycle. It also depends on the
@@ -268,14 +264,13 @@ void ScheduleDAGList::ReleaseSucc(SchedulingPriorityQueue &Available,
 #endif
   
   if ((SuccSU->NumPredsLeft + SuccSU->NumChainPredsLeft) == 0)
-    Available.push(SuccSU);
+    PriorityQueue->push(SuccSU);
 }
 
 /// ScheduleNodeBottomUp - Add the node to the schedule. Decrement the pending
 /// count of its predecessors. If a predecessor pending count is zero, add it to
 /// the Available queue.
-void ScheduleDAGList::ScheduleNodeBottomUp(SchedulingPriorityQueue &Available,
-                                           SUnit *SU) {
+void ScheduleDAGList::ScheduleNodeBottomUp(SUnit *SU) {
   DEBUG(std::cerr << "*** Scheduling: ");
   DEBUG(SU->dump(&DAG, false));
 
@@ -284,12 +279,12 @@ void ScheduleDAGList::ScheduleNodeBottomUp(SchedulingPriorityQueue &Available,
   // Bottom up: release predecessors
   for (std::set<SUnit*>::iterator I1 = SU->Preds.begin(),
          E1 = SU->Preds.end(); I1 != E1; ++I1) {
-    ReleasePred(Available, *I1);
+    ReleasePred(*I1);
     SU->NumPredsLeft--;
   }
   for (std::set<SUnit*>::iterator I2 = SU->ChainPreds.begin(),
          E2 = SU->ChainPreds.end(); I2 != E2; ++I2)
-    ReleasePred(Available, *I2, true);
+    ReleasePred(*I2, true);
 
   CurrCycle++;
 }
@@ -297,8 +292,7 @@ void ScheduleDAGList::ScheduleNodeBottomUp(SchedulingPriorityQueue &Available,
 /// ScheduleNodeTopDown - Add the node to the schedule. Decrement the pending
 /// count of its successors. If a successor pending count is zero, add it to
 /// the Available queue.
-void ScheduleDAGList::ScheduleNodeTopDown(SchedulingPriorityQueue &Available,
-                                          SUnit *SU) {
+void ScheduleDAGList::ScheduleNodeTopDown(SUnit *SU) {
   DEBUG(std::cerr << "*** Scheduling: ");
   DEBUG(SU->dump(&DAG, false));
   
@@ -307,12 +301,12 @@ void ScheduleDAGList::ScheduleNodeTopDown(SchedulingPriorityQueue &Available,
   // Bottom up: release successors.
   for (std::set<SUnit*>::iterator I1 = SU->Succs.begin(),
        E1 = SU->Succs.end(); I1 != E1; ++I1) {
-    ReleaseSucc(Available, *I1);
+    ReleaseSucc(*I1);
     SU->NumSuccsLeft--;
   }
   for (std::set<SUnit*>::iterator I2 = SU->ChainSuccs.begin(),
        E2 = SU->ChainSuccs.end(); I2 != E2; ++I2)
-    ReleaseSucc(Available, *I2, true);
+    ReleaseSucc(*I2, true);
   
   CurrCycle++;
 }
@@ -325,28 +319,28 @@ static inline bool isReady(SUnit *SU, unsigned CurrCycle) {
 
 /// ListScheduleBottomUp - The main loop of list scheduling for bottom-up
 /// schedulers.
-void ScheduleDAGList::ListScheduleBottomUp(SchedulingPriorityQueue &Available) {
+void ScheduleDAGList::ListScheduleBottomUp() {
   // Add root to Available queue.
-  Available.push(SUnitMap[DAG.getRoot().Val]);
+  PriorityQueue->push(SUnitMap[DAG.getRoot().Val]);
 
   // While Available queue is not empty, grab the node with the highest
   // priority. If it is not ready put it back. Schedule the node.
   std::vector<SUnit*> NotReady;
-  while (!Available.empty()) {
-    SUnit *CurrNode = Available.pop();
+  while (!PriorityQueue->empty()) {
+    SUnit *CurrNode = PriorityQueue->pop();
 
     while (!isReady(CurrNode, CurrCycle)) {
       NotReady.push_back(CurrNode);
-      CurrNode = Available.pop();
+      CurrNode = PriorityQueue->pop();
     }
     
     // Add the nodes that aren't ready back onto the available list.
     while (!NotReady.empty()) {
-      Available.push(NotReady.back());
+      PriorityQueue->push(NotReady.back());
       NotReady.pop_back();
     }
 
-    ScheduleNodeBottomUp(Available, CurrNode);
+    ScheduleNodeBottomUp(CurrNode);
   }
 
   // Add entry node last
@@ -377,10 +371,10 @@ void ScheduleDAGList::ListScheduleBottomUp(SchedulingPriorityQueue &Available) {
 
 /// ListScheduleTopDown - The main loop of list scheduling for top-down
 /// schedulers.
-void ScheduleDAGList::ListScheduleTopDown(SchedulingPriorityQueue &Available) {
+void ScheduleDAGList::ListScheduleTopDown() {
   // Emit the entry node first.
   SUnit *Entry = SUnitMap[DAG.getEntryNode().Val];
-  ScheduleNodeTopDown(Available, Entry);
+  ScheduleNodeTopDown(Entry);
   HazardRec->EmitInstruction(Entry->Node);
                       
   // All leaves to Available queue.
@@ -388,18 +382,18 @@ void ScheduleDAGList::ListScheduleTopDown(SchedulingPriorityQueue &Available) {
     // It is available if it has no predecessors.
     if ((SUnits[i].Preds.size() + SUnits[i].ChainPreds.size()) == 0 &&
         &SUnits[i] != Entry)
-      Available.push(&SUnits[i]);
+      PriorityQueue->push(&SUnits[i]);
   }
   
   // While Available queue is not empty, grab the node with the highest
   // priority. If it is not ready put it back.  Schedule the node.
   std::vector<SUnit*> NotReady;
-  while (!Available.empty()) {
+  while (!PriorityQueue->empty()) {
     SUnit *FoundNode = 0;
 
     bool HasNoopHazards = false;
     do {
-      SUnit *CurNode = Available.pop();
+      SUnit *CurNode = PriorityQueue->pop();
       
       // Get the node represented by this SUnit.
       SDNode *N = CurNode->Node;
@@ -419,17 +413,17 @@ void ScheduleDAGList::ListScheduleTopDown(SchedulingPriorityQueue &Available) {
       HasNoopHazards |= HT == HazardRecognizer::NoopHazard;
       
       NotReady.push_back(CurNode);
-    } while (!Available.empty());
+    } while (!PriorityQueue->empty());
     
     // Add the nodes that aren't ready back onto the available list.
     while (!NotReady.empty()) {
-      Available.push(NotReady.back());
+      PriorityQueue->push(NotReady.back());
       NotReady.pop_back();
     }
 
     // If we found a node to schedule, do it now.
     if (FoundNode) {
-      ScheduleNodeTopDown(Available, FoundNode);
+      ScheduleNodeTopDown(FoundNode);
       HazardRec->EmitInstruction(FoundNode->Node);
     } else if (!HasNoopHazards) {
       // Otherwise, we have a pipeline stall, but no other problem, just advance
@@ -607,9 +601,9 @@ void ScheduleDAGList::Schedule() {
   
   // Execute the actual scheduling loop Top-Down or Bottom-Up as appropriate.
   if (isBottomUp)
-    ListScheduleBottomUp(*PriorityQueue);
+    ListScheduleBottomUp();
   else
-    ListScheduleTopDown(*PriorityQueue);
+    ListScheduleTopDown();
 
   PriorityQueue->releaseState();
 
