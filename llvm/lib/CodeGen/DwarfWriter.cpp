@@ -1323,7 +1323,7 @@ DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc) {
         unsigned Line = MemberDesc->getLine();
         TypeDesc *MemTy = MemberDesc->getFromType();
         uint64_t Size = MemberDesc->getSize();
-        uint64_t Align = MemberDesc->getAlign();
+        uint64_t Align = 0; //MemberDesc->getAlign();
         uint64_t Offset = MemberDesc->getOffset();
    
         // Construct member die.
