@@ -35,6 +35,8 @@ namespace llvm {
                       std::ostream &OS);
     void EmitModRefInfo(const std::vector<CodeGenIntrinsic> &Ints, 
                         std::ostream &OS);
+    void EmitSideEffectInfo(const std::vector<CodeGenIntrinsic> &Ints, 
+                            std::ostream &OS);
   };
 
 } // End llvm namespace

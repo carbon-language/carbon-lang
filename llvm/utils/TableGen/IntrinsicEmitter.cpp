@@ -100,6 +100,9 @@ void IntrinsicEmitter::run(std::ostream &OS) {
   
   // Emit mod/ref info for each function.
   EmitModRefInfo(Ints, OS);
+  
+  // Emit side effect info for each function.
+  EmitSideEffectInfo(Ints, OS);
 }
 
 void IntrinsicEmitter::EmitEnumInfo(const std::vector<CodeGenIntrinsic> &Ints,
@@ -190,4 +193,26 @@ void IntrinsicEmitter::EmitModRefInfo(const std::vector<CodeGenIntrinsic> &Ints,
     }
   }
   OS << "#endif\n\n";
+}
+
+void IntrinsicEmitter::
+EmitSideEffectInfo(const std::vector<CodeGenIntrinsic> &Ints, std::ostream &OS){
+  OS << "// isInstructionTriviallyDead code.\n";
+  OS << "#ifdef GET_SIDE_EFFECT_INFO\n";
+  OS << "  switch (F->getIntrinsicID()) {\n";
+  OS << "  default: break;\n";
+  for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
+    switch (Ints[i].ModRef) {
+      default: break;
+      case CodeGenIntrinsic::NoMem:
+      case CodeGenIntrinsic::ReadArgMem:
+      case CodeGenIntrinsic::ReadMem:
+        OS << "  case Intrinsic::" << Ints[i].EnumName << ":\n";
+        break;
+    }
+  }
+  OS << "    return true; // These intrinsics have no side effects.\n";
+  OS << "  }\n";
+  OS << "#endif\n\n";
+  
 }
