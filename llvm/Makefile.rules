@@ -1096,11 +1096,11 @@ endif
 ifdef DEBUG_RUNTIME
 $(ObjectsBC): $(ObjDir)/%.bc: $(ObjDir)/%.ll $(GCCAS)
 	$(Echo) "Compiling $*.ll to $*.bc for $(BuildMode) build (bytecode)"
-	@$(GCCAS) $< -o $@
+	$(Verb) $(GCCAS) $< -o $@
 else
 $(ObjectsBC): $(ObjDir)/%.bc: $(ObjDir)/%.ll $(GCCAS)
 	$(Echo) "Compiling $*.ll to $*.bc for $(BuildMode) build (bytecode)"
-	@$(GCCAS) -strip-debug $< -o $@
+	$(Verb) $(GCCAS) -strip-debug $< -o $@
 endif
 
 
