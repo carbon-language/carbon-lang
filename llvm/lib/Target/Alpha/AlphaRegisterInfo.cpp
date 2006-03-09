@@ -31,10 +31,6 @@
 #include <iostream>
 using namespace llvm;
 
-namespace llvm {
-  extern cl::opt<bool> EnableAlphaLSMark;
-}
-
 //These describe LDAx
 static const int IMM_LOW  = -32768;
 static const int IMM_HIGH = 32767;
@@ -72,9 +68,6 @@ AlphaRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                        const TargetRegisterClass *RC) const {
   //std::cerr << "Trying to store " << getPrettyName(SrcReg) << " to " << FrameIdx << "\n";
   //BuildMI(MBB, MI, Alpha::WTF, 0).addReg(SrcReg);
-  if (EnableAlphaLSMark)
-    BuildMI(MBB, MI, Alpha::MEMLABEL, 4).addImm(4).addImm(0).addImm(1)
-      .addImm(getUID());
   if (RC == Alpha::F4RCRegisterClass)
     BuildMI(MBB, MI, Alpha::STS, 3).addReg(SrcReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else if (RC == Alpha::F8RCRegisterClass)
@@ -91,9 +84,6 @@ AlphaRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                         unsigned DestReg, int FrameIdx,
                                         const TargetRegisterClass *RC) const {
   //std::cerr << "Trying to load " << getPrettyName(DestReg) << " to " << FrameIdx << "\n";
-  if (EnableAlphaLSMark)
-    BuildMI(MBB, MI, Alpha::MEMLABEL, 4).addImm(4).addImm(0).addImm(2)
-      .addImm(getUID());
   if (RC == Alpha::F4RCRegisterClass)
     BuildMI(MBB, MI, Alpha::LDS, 2, DestReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else if (RC == Alpha::F8RCRegisterClass)
@@ -317,9 +307,6 @@ void AlphaRegisterInfo::emitPrologue(MachineFunction &MF) const {
   //now if we need to, save the old FP and set the new
   if (FP)
   {
-    if (EnableAlphaLSMark)
-      BuildMI(MBB, MBBI, Alpha::MEMLABEL, 4).addImm(4).addImm(0).addImm(1)
-        .addImm(getUID());
     BuildMI(MBB, MBBI, Alpha::STQ, 3).addReg(Alpha::R15).addImm(0).addReg(Alpha::R30);
     //this must be the last instr in the prolog
     BuildMI(MBB, MBBI, Alpha::BIS, 2, Alpha::R15).addReg(Alpha::R30).addReg(Alpha::R30);
@@ -346,9 +333,6 @@ void AlphaRegisterInfo::emitEpilogue(MachineFunction &MF,
     BuildMI(MBB, MBBI, Alpha::BIS, 2, Alpha::R30).addReg(Alpha::R15)
       .addReg(Alpha::R15);
     //restore the FP
-    if (EnableAlphaLSMark)
-      BuildMI(MBB, MBBI, Alpha::MEMLABEL, 4).addImm(4).addImm(0).addImm(2)
-        .addImm(getUID());
     BuildMI(MBB, MBBI, Alpha::LDQ, 2, Alpha::R15).addImm(0).addReg(Alpha::R15);
   }
 
