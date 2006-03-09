@@ -2,8 +2,6 @@
 ;
 ; Test the add and load are folded into the store instruction.
 
-target triple = "i686-pc-linux-gnu"
-
 %X = weak global short 0
 
 void %foo() {
