@@ -288,6 +288,10 @@ bool IA64AsmPrinter::doFinalization(Module &M) {
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I)
     if (I->hasInitializer()) {   // External global require no code
+      // Check to see if this is a special global used by LLVM, if so, emit it.
+      if (EmitSpecialLLVMGlobal(I))
+        continue;
+      
       O << "\n\n";
       std::string name = Mang->getValueName(I);
       Constant *C = I->getInitializer();
