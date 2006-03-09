@@ -292,7 +292,7 @@ void ScheduleDAGSimple::IncludeNode(NodeInfo *NI) {
 ///
 void ScheduleDAGSimple::GatherSchedulingInfo() {
   // Get instruction itineraries for the target
-  const InstrItineraryData InstrItins = TM.getInstrItineraryData();
+  const InstrItineraryData &InstrItins = TM.getInstrItineraryData();
   
   // For each node
   for (unsigned i = 0, N = NodeCount; i < N; i++) {
