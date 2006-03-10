@@ -347,44 +347,15 @@ namespace llvm {
     ///
     void EmitNoop();
     
-    /// EmitAll - Emit all nodes in schedule sorted order.
-    ///
-    void EmitAll();
 
     /// Schedule - Order nodes according to selected style.
     ///
     virtual void Schedule() {}
 
-    /// printNI - Print node info.
-    ///
-    void printNI(std::ostream &O, NodeInfo *NI) const;
-
-    /// printChanges - Hilight changes in order caused by scheduling.
-    ///
-    void printChanges(unsigned Index) const;
-
-    /// print - Print ordering to specified output stream.
-    ///
-    void print(std::ostream &O) const;
-
-    void dump(const char *tag) const;
-
-    virtual void dump() const;
-
   private:
     void AddOperand(MachineInstr *MI, SDOperand Op, unsigned IIOpNum,
                     const TargetInstrDescriptor *II,
                     std::map<SDNode*, unsigned> &VRBaseMap);
-
-    void AddToGroup(NodeInfo *D, NodeInfo *U);
-protected:
-    /// PrepareNodeInfo - Set up the basic minimum node info for scheduling.
-    /// 
-    void PrepareNodeInfo();
-    
-    /// IdentifyGroups - Put flagged nodes into groups.
-    ///
-    void IdentifyGroups();
   };
 
   /// createSimpleDAGScheduler - This creates a simple two pass instruction

@@ -20,6 +20,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/Debug.h"
 #include <algorithm>
+#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -215,6 +216,35 @@ private:
   bool isWeakDependency(NodeInfo *A, NodeInfo *B);
   void ScheduleBackward();
   void ScheduleForward();
+  
+  void AddToGroup(NodeInfo *D, NodeInfo *U);
+  /// PrepareNodeInfo - Set up the basic minimum node info for scheduling.
+  /// 
+  void PrepareNodeInfo();
+  
+  /// IdentifyGroups - Put flagged nodes into groups.
+  ///
+  void IdentifyGroups();
+  
+  /// print - Print ordering to specified output stream.
+  ///
+  void print(std::ostream &O) const;
+  
+  void dump(const char *tag) const;
+  
+  virtual void dump() const;
+  
+  /// EmitAll - Emit all nodes in schedule sorted order.
+  ///
+  void EmitAll();
+
+  /// printNI - Print node info.
+  ///
+  void printNI(std::ostream &O, NodeInfo *NI) const;
+  
+  /// printChanges - Hilight changes in order caused by scheduling.
+  ///
+  void printChanges(unsigned Index) const;
 };
 
 //===----------------------------------------------------------------------===//
@@ -239,6 +269,242 @@ static InstrStage FloatStage = { 3, RSFloat };
 
 //===----------------------------------------------------------------------===//
 
+/// PrepareNodeInfo - Set up the basic minimum node info for scheduling.
+/// 
+void ScheduleDAGSimple::PrepareNodeInfo() {
+  // Allocate node information
+  Info = new NodeInfo[NodeCount];
+  
+  unsigned i = 0;
+  for (SelectionDAG::allnodes_iterator I = DAG.allnodes_begin(),
+       E = DAG.allnodes_end(); I != E; ++I, ++i) {
+    // Fast reference to node schedule info
+    NodeInfo* NI = &Info[i];
+    // Set up map
+    Map[I] = NI;
+    // Set node
+    NI->Node = I;
+    // Set pending visit count
+    NI->setPending(I->use_size());
+  }
+}
+
+/// IdentifyGroups - Put flagged nodes into groups.
+///
+void ScheduleDAGSimple::IdentifyGroups() {
+  for (unsigned i = 0, N = NodeCount; i < N; i++) {
+    NodeInfo* NI = &Info[i];
+    SDNode *Node = NI->Node;
+    
+    // For each operand (in reverse to only look at flags)
+    for (unsigned N = Node->getNumOperands(); 0 < N--;) {
+      // Get operand
+      SDOperand Op = Node->getOperand(N);
+      // No more flags to walk
+      if (Op.getValueType() != MVT::Flag) break;
+      // Add to node group
+      AddToGroup(getNI(Op.Val), NI);
+      // Let everyone else know
+      HasGroups = true;
+    }
+  }
+}
+
+/// CountInternalUses - Returns the number of edges between the two nodes.
+///
+static unsigned CountInternalUses(NodeInfo *D, NodeInfo *U) {
+  unsigned N = 0;
+  for (unsigned M = U->Node->getNumOperands(); 0 < M--;) {
+    SDOperand Op = U->Node->getOperand(M);
+    if (Op.Val == D->Node) N++;
+  }
+  
+  return N;
+}
+
+//===----------------------------------------------------------------------===//
+/// Add - Adds a definer and user pair to a node group.
+///
+void ScheduleDAGSimple::AddToGroup(NodeInfo *D, NodeInfo *U) {
+  // Get current groups
+  NodeGroup *DGroup = D->Group;
+  NodeGroup *UGroup = U->Group;
+  // If both are members of groups
+  if (DGroup && UGroup) {
+    // There may have been another edge connecting 
+    if (DGroup == UGroup) return;
+    // Add the pending users count
+    DGroup->addPending(UGroup->getPending());
+    // For each member of the users group
+    NodeGroupIterator UNGI(U);
+    while (NodeInfo *UNI = UNGI.next() ) {
+      // Change the group
+      UNI->Group = DGroup;
+      // For each member of the definers group
+      NodeGroupIterator DNGI(D);
+      while (NodeInfo *DNI = DNGI.next() ) {
+        // Remove internal edges
+        DGroup->addPending(-CountInternalUses(DNI, UNI));
+      }
+    }
+    // Merge the two lists
+    DGroup->group_insert(DGroup->group_end(),
+                         UGroup->group_begin(), UGroup->group_end());
+  } else if (DGroup) {
+    // Make user member of definers group
+    U->Group = DGroup;
+    // Add users uses to definers group pending
+    DGroup->addPending(U->Node->use_size());
+    // For each member of the definers group
+    NodeGroupIterator DNGI(D);
+    while (NodeInfo *DNI = DNGI.next() ) {
+      // Remove internal edges
+      DGroup->addPending(-CountInternalUses(DNI, U));
+    }
+    DGroup->group_push_back(U);
+  } else if (UGroup) {
+    // Make definer member of users group
+    D->Group = UGroup;
+    // Add definers uses to users group pending
+    UGroup->addPending(D->Node->use_size());
+    // For each member of the users group
+    NodeGroupIterator UNGI(U);
+    while (NodeInfo *UNI = UNGI.next() ) {
+      // Remove internal edges
+      UGroup->addPending(-CountInternalUses(D, UNI));
+    }
+    UGroup->group_insert(UGroup->group_begin(), D);
+  } else {
+    D->Group = U->Group = DGroup = new NodeGroup();
+    DGroup->addPending(D->Node->use_size() + U->Node->use_size() -
+                       CountInternalUses(D, U));
+    DGroup->group_push_back(D);
+    DGroup->group_push_back(U);
+    
+    if (HeadNG == NULL)
+      HeadNG = DGroup;
+    if (TailNG != NULL)
+      TailNG->Next = DGroup;
+    TailNG = DGroup;
+  }
+}
+
+
+/// print - Print ordering to specified output stream.
+///
+void ScheduleDAGSimple::print(std::ostream &O) const {
+#ifndef NDEBUG
+  O << "Ordering\n";
+  for (unsigned i = 0, N = Ordering.size(); i < N; i++) {
+    NodeInfo *NI = Ordering[i];
+    printNI(O, NI);
+    O << "\n";
+    if (NI->isGroupDominator()) {
+      NodeGroup *Group = NI->Group;
+      for (NIIterator NII = Group->group_begin(), E = Group->group_end();
+           NII != E; NII++) {
+        O << "    ";
+        printNI(O, *NII);
+        O << "\n";
+      }
+    }
+  }
+#endif
+}
+
+void ScheduleDAGSimple::dump(const char *tag) const {
+  std::cerr << tag; dump();
+}
+
+void ScheduleDAGSimple::dump() const {
+  print(std::cerr);
+}
+
+
+/// EmitAll - Emit all nodes in schedule sorted order.
+///
+void ScheduleDAGSimple::EmitAll() {
+  std::map<SDNode*, unsigned> VRBaseMap;
+  
+  // For each node in the ordering
+  for (unsigned i = 0, N = Ordering.size(); i < N; i++) {
+    // Get the scheduling info
+    NodeInfo *NI = Ordering[i];
+    if (NI->isInGroup()) {
+      NodeGroupIterator NGI(Ordering[i]);
+      while (NodeInfo *NI = NGI.next()) EmitNode(NI->Node, VRBaseMap);
+    } else {
+      EmitNode(NI->Node, VRBaseMap);
+    }
+  }
+}
+
+/// isFlagDefiner - Returns true if the node defines a flag result.
+static bool isFlagDefiner(SDNode *A) {
+  unsigned N = A->getNumValues();
+  return N && A->getValueType(N - 1) == MVT::Flag;
+}
+
+/// isFlagUser - Returns true if the node uses a flag result.
+///
+static bool isFlagUser(SDNode *A) {
+  unsigned N = A->getNumOperands();
+  return N && A->getOperand(N - 1).getValueType() == MVT::Flag;
+}
+
+/// printNI - Print node info.
+///
+void ScheduleDAGSimple::printNI(std::ostream &O, NodeInfo *NI) const {
+#ifndef NDEBUG
+  SDNode *Node = NI->Node;
+  O << " "
+    << std::hex << Node << std::dec
+    << ", Lat=" << NI->Latency
+    << ", Slot=" << NI->Slot
+    << ", ARITY=(" << Node->getNumOperands() << ","
+    << Node->getNumValues() << ")"
+    << " " << Node->getOperationName(&DAG);
+  if (isFlagDefiner(Node)) O << "<#";
+  if (isFlagUser(Node)) O << ">#";
+#endif
+}
+
+/// printChanges - Hilight changes in order caused by scheduling.
+///
+void ScheduleDAGSimple::printChanges(unsigned Index) const {
+#ifndef NDEBUG
+  // Get the ordered node count
+  unsigned N = Ordering.size();
+  // Determine if any changes
+  unsigned i = 0;
+  for (; i < N; i++) {
+    NodeInfo *NI = Ordering[i];
+    if (NI->Preorder != i) break;
+  }
+  
+  if (i < N) {
+    std::cerr << Index << ". New Ordering\n";
+    
+    for (i = 0; i < N; i++) {
+      NodeInfo *NI = Ordering[i];
+      std::cerr << "  " << NI->Preorder << ". ";
+      printNI(std::cerr, NI);
+      std::cerr << "\n";
+      if (NI->isGroupDominator()) {
+        NodeGroup *Group = NI->Group;
+        for (NIIterator NII = Group->group_begin(), E = Group->group_end();
+             NII != E; NII++) {
+          std::cerr << "          ";
+          printNI(std::cerr, *NII);
+          std::cerr << "\n";
+        }
+      }
+    }
+  } else {
+    std::cerr << Index << ". No Changes\n";
+  }
+#endif
+}
 
 //===----------------------------------------------------------------------===//
 /// isDefiner - Return true if node A is a definer for B.
