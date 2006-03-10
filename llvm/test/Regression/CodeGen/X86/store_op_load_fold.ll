@@ -2,7 +2,7 @@
 ;
 ; Test the add and load are folded into the store instruction.
 
-%X = weak global short 0
+%X = internal global short 0
 
 void %foo() {
 	%tmp.0 = load short* %X
