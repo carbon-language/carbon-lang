@@ -139,8 +139,10 @@ let Properties = [InstrWriteArgMem] in {
 }
 
 let Properties = [InstrNoMem] in {
-  def int_isunordered_f32 : Intrinsic<[llvm_float_ty,  llvm_float_ty]>;
-  def int_isunordered_f64 : Intrinsic<[llvm_double_ty, llvm_double_ty]>;
+  def int_isunordered_f32 : Intrinsic<[llvm_bool_ty, 
+                                       llvm_float_ty,  llvm_float_ty]>;
+  def int_isunordered_f64 : Intrinsic<[llvm_bool_ty, 
+                                       llvm_double_ty, llvm_double_ty]>;
   def int_sqrt_f32 : Intrinsic<[llvm_float_ty , llvm_float_ty]>;
   def int_sqrt_f64 : Intrinsic<[llvm_double_ty, llvm_double_ty]>;
 }
