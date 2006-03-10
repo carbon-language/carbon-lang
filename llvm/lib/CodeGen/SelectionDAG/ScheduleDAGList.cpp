@@ -482,127 +482,127 @@ void ScheduleDAGList::BuildSchedUnits() {
   // Reserve entries in the vector for each of the SUnits we are creating.  This
   // ensure that reallocation of the vector won't happen, so SUnit*'s won't get
   // invalidated.
-  SUnits.reserve(NodeCount);
+  SUnits.reserve(std::distance(DAG.allnodes_begin(), DAG.allnodes_end()));
   
   const InstrItineraryData &InstrItins = TM.getInstrItineraryData();
 
-  // Pass 1: create the SUnit's.
-  for (unsigned i = 0, NC = NodeCount; i < NC; i++) {
-    NodeInfo *NI = &Info[i];
-    SDNode *N = NI->Node;
-    if (isPassiveNode(N))
+  for (SelectionDAG::allnodes_iterator NI = DAG.allnodes_begin(),
+       E = DAG.allnodes_end(); NI != E; ++NI) {
+    if (isPassiveNode(NI))  // Leaf node, e.g. a TargetImmediate.
       continue;
+    
+    // If this node has already been processed, stop now.
+    if (SUnitMap[NI]) continue;
+    
+    SUnit *NodeSUnit = NewSUnit(NI);
 
-    SUnit *SU;
-    if (NI->isInGroup()) {
-      if (NI != NI->Group->getBottom())  // Bottom up, so only look at bottom
-        continue;                        // node of the NodeGroup
-
-      SU = NewSUnit(N);
-      // Find the flagged nodes.
-      SDOperand  FlagOp = N->getOperand(N->getNumOperands() - 1);
-      SDNode    *Flag   = FlagOp.Val;
-      unsigned   ResNo  = FlagOp.ResNo;
-      while (Flag->getValueType(ResNo) == MVT::Flag) {
-        NodeInfo *FNI = getNI(Flag);
-        assert(FNI->Group == NI->Group);
-        SU->FlaggedNodes.insert(SU->FlaggedNodes.begin(), Flag);
-        SUnitMap[Flag] = SU;
-
-        FlagOp = Flag->getOperand(Flag->getNumOperands() - 1);
-        Flag   = FlagOp.Val;
-        ResNo  = FlagOp.ResNo;
-      }
-    } else {
-      SU = NewSUnit(N);
+    // See if anything is flagged to this node, if so, add them to flagged
+    // nodes.  Nodes can have at most one flag input and one flag output.  Flags
+    // are required the be the last operand and result of a node.
+    
+    // Scan up, adding flagged preds to FlaggedNodes.
+    SDNode *N = NI;
+    while (N->getNumOperands() &&
+           N->getOperand(N->getNumOperands()-1).getValueType() == MVT::Flag) {
+      N = N->getOperand(N->getNumOperands()-1).Val;
+      NodeSUnit->FlaggedNodes.push_back(N);
+      SUnitMap[N] = NodeSUnit;
     }
-    SUnitMap[N] = SU;
-
+    
+    // Scan down, adding this node and any flagged succs to FlaggedNodes if they
+    // have a user of the flag operand.
+    N = NI;
+    while (N->getValueType(N->getNumValues()-1) == MVT::Flag) {
+      SDOperand FlagVal(N, N->getNumValues()-1);
+      
+      // There are either zero or one users of the Flag result.
+      bool HasFlagUse = false;
+      for (SDNode::use_iterator UI = N->use_begin(), E = N->use_end(); 
+           UI != E; ++UI)
+        if (FlagVal.isOperand(*UI)) {
+          HasFlagUse = true;
+          NodeSUnit->FlaggedNodes.push_back(N);
+          SUnitMap[N] = NodeSUnit;
+          N = *UI;
+          break;
+        }
+      if (!HasFlagUse) break;
+    }
+  
+    // Now all flagged nodes are in FlaggedNodes and N is the bottom-most node.
+    // Update the SUnit
+    NodeSUnit->Node = N;
+    SUnitMap[N] = NodeSUnit;
+    
     // Compute the latency for the node.  We use the sum of the latencies for
     // all nodes flagged together into this SUnit.
     if (InstrItins.isEmpty()) {
       // No latency information.
-      SU->Latency = 1;
+      NodeSUnit->Latency = 1;
     } else {
-      SU->Latency = 0;
+      NodeSUnit->Latency = 0;
       if (N->isTargetOpcode()) {
         unsigned SchedClass = TII->getSchedClass(N->getTargetOpcode());
         InstrStage *S = InstrItins.begin(SchedClass);
         InstrStage *E = InstrItins.end(SchedClass);
         for (; S != E; ++S)
-          SU->Latency += S->Cycles;
+          NodeSUnit->Latency += S->Cycles;
       }
-      for (unsigned i = 0, e = SU->FlaggedNodes.size(); i != e; ++i) {
-        SDNode *FNode = SU->FlaggedNodes[i];
+      for (unsigned i = 0, e = NodeSUnit->FlaggedNodes.size(); i != e; ++i) {
+        SDNode *FNode = NodeSUnit->FlaggedNodes[i];
         if (FNode->isTargetOpcode()) {
           unsigned SchedClass = TII->getSchedClass(FNode->getTargetOpcode());
           InstrStage *S = InstrItins.begin(SchedClass);
           InstrStage *E = InstrItins.end(SchedClass);
           for (; S != E; ++S)
-            SU->Latency += S->Cycles;
+            NodeSUnit->Latency += S->Cycles;
         }
       }
     }
   }
 
   // Pass 2: add the preds, succs, etc.
-  for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
-    SUnit *SU = &SUnits[i];
-    SDNode   *N  = SU->Node;
-    NodeInfo *NI = getNI(N);
+  for (unsigned su = 0, e = SUnits.size(); su != e; ++su) {
+    SUnit *SU = &SUnits[su];
+    SDNode *MainNode = SU->Node;
     
-    if (N->isTargetOpcode() && TII->isTwoAddrInstr(N->getTargetOpcode()))
+    if (MainNode->isTargetOpcode() &&
+        TII->isTwoAddrInstr(MainNode->getTargetOpcode()))
       SU->isTwoAddress = true;
 
-    if (NI->isInGroup()) {
-      // Find all predecessors (of the group).
-      NodeGroupOpIterator NGOI(NI);
-      while (!NGOI.isEnd()) {
-        SDOperand Op  = NGOI.next();
-        SDNode   *OpN = Op.Val;
-        MVT::ValueType VT = OpN->getValueType(Op.ResNo);
-        NodeInfo *OpNI = getNI(OpN);
-        if (OpNI->Group != NI->Group && !isPassiveNode(OpN)) {
-          assert(VT != MVT::Flag);
-          SUnit *OpSU = SUnitMap[OpN];
-          if (VT == MVT::Other) {
-            if (SU->ChainPreds.insert(OpSU).second)
-              SU->NumChainPredsLeft++;
-            if (OpSU->ChainSuccs.insert(SU).second)
-              OpSU->NumChainSuccsLeft++;
-          } else {
-            if (SU->Preds.insert(OpSU).second)
-              SU->NumPredsLeft++;
-            if (OpSU->Succs.insert(SU).second)
-              OpSU->NumSuccsLeft++;
-          }
-        }
-      }
-    } else {
-      // Find node predecessors.
-      for (unsigned j = 0, e = N->getNumOperands(); j != e; j++) {
-        SDOperand Op  = N->getOperand(j);
-        SDNode   *OpN = Op.Val;
-        MVT::ValueType VT = OpN->getValueType(Op.ResNo);
-        if (!isPassiveNode(OpN)) {
-          assert(VT != MVT::Flag);
-          SUnit *OpSU = SUnitMap[OpN];
-          if (VT == MVT::Other) {
-            if (SU->ChainPreds.insert(OpSU).second)
-              SU->NumChainPredsLeft++;
-            if (OpSU->ChainSuccs.insert(SU).second)
-              OpSU->NumChainSuccsLeft++;
-          } else {
-            if (SU->Preds.insert(OpSU).second)
-              SU->NumPredsLeft++;
-            if (OpSU->Succs.insert(SU).second)
-              OpSU->NumSuccsLeft++;
-            if (j == 0 && SU->isTwoAddress) 
-              OpSU->isDefNUseOperand = true;
-          }
+    // Find all predecessors and successors of the group.
+    // Temporarily add N to make code simpler.
+    SU->FlaggedNodes.push_back(MainNode);
+    
+    for (unsigned n = 0, e = SU->FlaggedNodes.size(); n != e; ++n) {
+      SDNode *N = SU->FlaggedNodes[n];
+      
+      for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+        SDNode *OpN = N->getOperand(i).Val;
+        if (isPassiveNode(OpN)) continue;   // Not scheduled.
+        SUnit *OpSU = SUnitMap[OpN];
+        assert(OpSU && "Node has no SUnit!");
+        if (OpSU == SU) continue;           // In the same group.
+        
+        MVT::ValueType OpVT = N->getOperand(i).getValueType();
+        assert(OpVT != MVT::Flag && "Flagged nodes should be in same sunit!");
+        
+        if (OpVT == MVT::Other) {
+          if (SU->ChainPreds.insert(OpSU).second)
+            SU->NumChainPredsLeft++;
+          if (OpSU->ChainSuccs.insert(SU).second)
+            OpSU->NumChainSuccsLeft++;
+        } else {
+          if (SU->Preds.insert(OpSU).second)
+            SU->NumPredsLeft++;
+          if (OpSU->Succs.insert(SU).second)
+            OpSU->NumSuccsLeft++;
         }
       }
     }
+    
+    // Remove MainNode from FlaggedNodes again.
+    SU->FlaggedNodes.pop_back();
     
     DEBUG(SU->dumpAll(&DAG));
   }
