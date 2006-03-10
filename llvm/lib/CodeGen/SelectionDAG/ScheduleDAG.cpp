@@ -110,13 +110,23 @@ static unsigned CreateVirtualRegisters(MachineInstr *MI,
   return ResultReg;
 }
 
+/// getVR - Return the virtual register corresponding to the specified result
+/// of the specified node.
+static unsigned getVR(SDOperand Op, std::map<SDNode*, unsigned> &VRBaseMap) {
+  std::map<SDNode*, unsigned>::iterator I = VRBaseMap.find(Op.Val);
+  assert(I != VRBaseMap.end() && "Node emitted out of order - late");
+  return I->second + Op.ResNo;
+}
+
+
 /// AddOperand - Add the specified operand to the specified machine instr.  II
 /// specifies the instruction information for the node, and IIOpNum is the
 /// operand number (in the II) that we are adding. IIOpNum and II are used for 
 /// assertions only.
 void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
                              unsigned IIOpNum,
-                             const TargetInstrDescriptor *II) {
+                             const TargetInstrDescriptor *II,
+                             std::map<SDNode*, unsigned> &VRBaseMap) {
   if (Op.isTargetOpcode()) {
     // Note that this case is redundant with the final else block, but we
     // include it because it is the most common and it makes the logic
@@ -126,7 +136,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
            "Chain and flag operands should occur at end of operand list!");
     
     // Get/emit the operand.
-    unsigned VReg = getVR(Op);
+    unsigned VReg = getVR(Op, VRBaseMap);
     MI->addRegOperand(VReg, MachineOperand::Use);
     
     // Verify that it is right.
@@ -174,7 +184,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
     assert(Op.getValueType() != MVT::Other &&
            Op.getValueType() != MVT::Flag &&
            "Chain and flag operands should occur at end of operand list!");
-    unsigned VReg = getVR(Op);
+    unsigned VReg = getVR(Op, VRBaseMap);
     MI->addRegOperand(VReg, MachineOperand::Use);
     
     // Verify that it is right.
@@ -192,7 +202,8 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
 
 /// EmitNode - Generate machine code for an node and needed dependencies.
 ///
-void ScheduleDAG::EmitNode(NodeInfo *NI) {
+void ScheduleDAG::EmitNode(NodeInfo *NI, 
+                           std::map<SDNode*, unsigned> &VRBaseMap) {
   unsigned VRBase = 0;                 // First virtual register for node
   SDNode *Node = NI->Node;
   
@@ -240,7 +251,7 @@ void ScheduleDAG::EmitNode(NodeInfo *NI) {
     // Emit all of the actual operands of this instruction, adding them to the
     // instruction as appropriate.
     for (unsigned i = 0; i != NodeOperands; ++i)
-      AddOperand(MI, Node->getOperand(i), i+NumResults, &II);
+      AddOperand(MI, Node->getOperand(i), i+NumResults, &II, VRBaseMap);
     
     // Now that we have emitted all operands, emit this instruction itself.
     if ((II.Flags & M_USES_CUSTOM_DAG_SCHED_INSERTION) == 0) {
@@ -259,7 +270,7 @@ void ScheduleDAG::EmitNode(NodeInfo *NI) {
     case ISD::TokenFactor:
       break;
     case ISD::CopyToReg: {
-      unsigned InReg = getVR(Node->getOperand(2));
+      unsigned InReg = getVR(Node->getOperand(2), VRBaseMap);
       unsigned DestReg = cast<RegisterSDNode>(Node->getOperand(1))->getReg();
       if (InReg != DestReg)   // Coallesced away the copy?
         MRI->copyRegToReg(*BB, BB->end(), DestReg, InReg,
@@ -357,7 +368,7 @@ void ScheduleDAG::EmitNode(NodeInfo *NI) {
           // The addressing mode has been selected, just add all of the
           // operands to the machine instruction.
           for (; NumVals; --NumVals, ++i)
-            AddOperand(MI, Node->getOperand(i), 0, 0);
+            AddOperand(MI, Node->getOperand(i), 0, 0, VRBaseMap);
           break;
         }
       }
@@ -366,8 +377,8 @@ void ScheduleDAG::EmitNode(NodeInfo *NI) {
     }
   }
 
-  assert(NI->VRBase == 0 && "Node emitted out of order - early");
-  NI->VRBase = VRBase;
+  assert(!VRBaseMap.count(Node) && "Node emitted out of order - early");
+  VRBaseMap[Node] = VRBase;
 }
 
 void ScheduleDAG::EmitNoop() {
@@ -377,15 +388,17 @@ void ScheduleDAG::EmitNoop() {
 /// EmitAll - Emit all nodes in schedule sorted order.
 ///
 void ScheduleDAG::EmitAll() {
+  std::map<SDNode*, unsigned> VRBaseMap;
+  
   // For each node in the ordering
   for (unsigned i = 0, N = Ordering.size(); i < N; i++) {
     // Get the scheduling info
     NodeInfo *NI = Ordering[i];
     if (NI->isInGroup()) {
       NodeGroupIterator NGI(Ordering[i]);
-      while (NodeInfo *NI = NGI.next()) EmitNode(NI);
+      while (NodeInfo *NI = NGI.next()) EmitNode(NI, VRBaseMap);
     } else {
-      EmitNode(NI);
+      EmitNode(NI, VRBaseMap);
     }
   }
 }

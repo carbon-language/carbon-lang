@@ -610,13 +610,14 @@ void ScheduleDAGList::BuildSchedUnits() {
 
 /// EmitSchedule - Emit the machine code in scheduled order.
 void ScheduleDAGList::EmitSchedule() {
+  std::map<SDNode*, unsigned> VRBaseMap;
   for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
     if (SUnit *SU = Sequence[i]) {
       for (unsigned j = 0, ee = SU->FlaggedNodes.size(); j != ee; j++) {
         SDNode *N = SU->FlaggedNodes[j];
-        EmitNode(getNI(N));
+        EmitNode(getNI(N), VRBaseMap);
       }
-      EmitNode(getNI(SU->Node));
+      EmitNode(getNI(SU->Node), VRBaseMap);
     } else {
       // Null SUnit* is a noop.
       EmitNoop();
