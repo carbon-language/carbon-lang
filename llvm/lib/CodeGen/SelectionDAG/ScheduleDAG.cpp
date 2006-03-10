@@ -346,9 +346,6 @@ MachineBasicBlock *ScheduleDAG::Run() {
   RegMap = BB->getParent()->getSSARegMap();
   ConstPool = BB->getParent()->getConstantPool();
 
-  // Number the nodes
-  NodeCount = std::distance(DAG.allnodes_begin(), DAG.allnodes_end());
-
   Schedule();
   return BB;
 }

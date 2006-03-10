@@ -188,24 +188,48 @@ public:
 ///
 class ScheduleDAGSimple : public ScheduleDAG {
 private:
+  SchedHeuristics Heuristic;            // Scheduling heuristic
+
   ResourceTally<unsigned> Tally;        // Resource usage tally
   unsigned NSlots;                      // Total latency
   static const unsigned NotFound = ~0U; // Search marker
+
+  unsigned NodeCount;                   // Number of nodes in DAG
+  std::map<SDNode *, NodeInfo *> Map;   // Map nodes to info
+  bool HasGroups;                       // True if there are any groups
+  NodeInfo *Info;                       // Info for nodes being scheduled
+  NIVector Ordering;                    // Emit ordering of nodes
+  NodeGroup *HeadNG, *TailNG;           // Keep track of allocated NodeGroups
   
 public:
 
   // Ctor.
   ScheduleDAGSimple(SchedHeuristics hstc, SelectionDAG &dag,
                     MachineBasicBlock *bb, const TargetMachine &tm)
-    : ScheduleDAG(hstc, dag, bb, tm), Tally(), NSlots(0) {
+    : ScheduleDAG(dag, bb, tm), Heuristic(hstc), Tally(), NSlots(0),
+    NodeCount(0), HasGroups(false), Info(NULL), HeadNG(NULL), TailNG(NULL) {
     assert(&TII && "Target doesn't provide instr info?");
     assert(&MRI && "Target doesn't provide register info?");
   }
 
-  virtual ~ScheduleDAGSimple() {};
+  virtual ~ScheduleDAGSimple() {
+    if (Info)
+      delete[] Info;
+    
+    NodeGroup *NG = HeadNG;
+    while (NG) {
+      NodeGroup *NextSU = NG->Next;
+      delete NG;
+      NG = NextSU;
+    }
+  }
 
   void Schedule();
 
+  /// getNI - Returns the node info for the specified node.
+  ///
+  NodeInfo *getNI(SDNode *Node) { return Map[Node]; }
+  
 private:
   static bool isDefiner(NodeInfo *A, NodeInfo *B);
   void IncludeNode(NodeInfo *NI);
@@ -826,6 +850,9 @@ void ScheduleDAGSimple::ScheduleForward() {
 /// Schedule - Order nodes according to selected style.
 ///
 void ScheduleDAGSimple::Schedule() {
+  // Number the nodes
+  NodeCount = std::distance(DAG.allnodes_begin(), DAG.allnodes_end());
+
   // Set up minimum info for scheduling
   PrepareNodeInfo();
   // Construct node groups for flagged nodes

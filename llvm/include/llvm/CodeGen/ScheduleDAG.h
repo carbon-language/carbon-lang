@@ -284,7 +284,6 @@ namespace llvm {
 
   class ScheduleDAG {
   public:
-    SchedHeuristics Heuristic;            // Scheduling heuristic
     SelectionDAG &DAG;                    // DAG of the current basic block
     MachineBasicBlock *BB;                // Current basic block
     const TargetMachine &TM;              // Target processor
@@ -292,38 +291,18 @@ namespace llvm {
     const MRegisterInfo *MRI;             // Target processor register info
     SSARegMap *RegMap;                    // Virtual/real register map
     MachineConstantPool *ConstPool;       // Target constant pool
-    std::map<SDNode *, NodeInfo *> Map;   // Map nodes to info
-    unsigned NodeCount;                   // Number of nodes in DAG
-    bool HasGroups;                       // True if there are any groups
-    NodeInfo *Info;                       // Info for nodes being scheduled
-    NIVector Ordering;                    // Emit ordering of nodes
-    NodeGroup *HeadNG, *TailNG;           // Keep track of allocated NodeGroups
 
-    ScheduleDAG(SchedHeuristics hstc, SelectionDAG &dag, MachineBasicBlock *bb,
+    ScheduleDAG(SelectionDAG &dag, MachineBasicBlock *bb,
                 const TargetMachine &tm)
-      : Heuristic(hstc), DAG(dag), BB(bb), TM(tm), NodeCount(0),
-        HasGroups(false), Info(NULL), HeadNG(NULL), TailNG(NULL) {}
+      : DAG(dag), BB(bb), TM(tm) {}
 
     virtual ~ScheduleDAG() {
-      if (Info)
-        delete[] Info;
-
-      NodeGroup *NG = HeadNG;
-      while (NG) {
-        NodeGroup *NextSU = NG->Next;
-        delete NG;
-        NG = NextSU;
-      }
     };
 
     /// Run - perform scheduling.
     ///
     MachineBasicBlock *Run();
 
-    /// getNI - Returns the node info for the specified node.
-    ///
-    NodeInfo *getNI(SDNode *Node) { return Map[Node]; }
-  
     /// isPassiveNode - Return true if the node is a non-scheduled leaf.
     ///
     static bool isPassiveNode(SDNode *Node) {

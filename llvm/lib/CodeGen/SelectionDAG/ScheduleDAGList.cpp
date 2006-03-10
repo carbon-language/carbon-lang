@@ -189,7 +189,7 @@ public:
                   const TargetMachine &tm, bool isbottomup,
                   SchedulingPriorityQueue *priorityqueue,
                   HazardRecognizer *HR)
-    : ScheduleDAG(listSchedulingBURR, dag, bb, tm),
+    : ScheduleDAG(dag, bb, tm),
       CurrCycle(0), isBottomUp(isbottomup), 
       PriorityQueue(priorityqueue), HazardRec(HR) {
     }
