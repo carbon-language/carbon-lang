@@ -151,7 +151,6 @@ namespace llvm {
     bool          IsStore : 1;            // Is memory store
     unsigned      Slot;                   // Node's time slot
     NodeGroup     *Group;                 // Grouping information
-    unsigned      VRBase;                 // Virtual register base
 #ifndef NDEBUG
     unsigned      Preorder;               // Index before scheduling
 #endif
@@ -166,7 +165,6 @@ namespace llvm {
       , IsCall(false)
       , Slot(0)
       , Group(NULL)
-      , VRBase(0)
 #ifndef NDEBUG
       , Preorder(0)
 #endif
@@ -326,14 +324,6 @@ namespace llvm {
     ///
     NodeInfo *getNI(SDNode *Node) { return Map[Node]; }
   
-    /// getVR - Returns the virtual register number of the node.
-    ///
-    unsigned getVR(SDOperand Op) {
-      NodeInfo *NI = getNI(Op.Val);
-      assert(NI->VRBase != 0 && "Node emitted out of order - late");
-      return NI->VRBase + Op.ResNo;
-    }
-
     /// isPassiveNode - Return true if the node is a non-scheduled leaf.
     ///
     static bool isPassiveNode(SDNode *Node) {
@@ -348,8 +338,10 @@ namespace llvm {
     }
 
     /// EmitNode - Generate machine code for an node and needed dependencies.
+    /// VRBaseMap contains, for each already emitted node, the first virtual
+    /// register number for the results of the node.
     ///
-    void EmitNode(NodeInfo *NI);
+    void EmitNode(NodeInfo *NI, std::map<SDNode*, unsigned> &VRBaseMap);
     
     /// EmitNoop - Emit a noop instruction.
     ///
@@ -381,7 +373,8 @@ namespace llvm {
 
   private:
     void AddOperand(MachineInstr *MI, SDOperand Op, unsigned IIOpNum,
-                    const TargetInstrDescriptor *II);
+                    const TargetInstrDescriptor *II,
+                    std::map<SDNode*, unsigned> &VRBaseMap);
 
     void AddToGroup(NodeInfo *D, NodeInfo *U);
 protected:
