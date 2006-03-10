@@ -202,10 +202,9 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
 
 /// EmitNode - Generate machine code for an node and needed dependencies.
 ///
-void ScheduleDAG::EmitNode(NodeInfo *NI, 
+void ScheduleDAG::EmitNode(SDNode *Node, 
                            std::map<SDNode*, unsigned> &VRBaseMap) {
   unsigned VRBase = 0;                 // First virtual register for node
-  SDNode *Node = NI->Node;
   
   // If machine instruction
   if (Node->isTargetOpcode()) {
@@ -396,9 +395,9 @@ void ScheduleDAG::EmitAll() {
     NodeInfo *NI = Ordering[i];
     if (NI->isInGroup()) {
       NodeGroupIterator NGI(Ordering[i]);
-      while (NodeInfo *NI = NGI.next()) EmitNode(NI, VRBaseMap);
+      while (NodeInfo *NI = NGI.next()) EmitNode(NI->Node, VRBaseMap);
     } else {
-      EmitNode(NI, VRBaseMap);
+      EmitNode(NI->Node, VRBaseMap);
     }
   }
 }

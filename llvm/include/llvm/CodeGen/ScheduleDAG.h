@@ -341,7 +341,7 @@ namespace llvm {
     /// VRBaseMap contains, for each already emitted node, the first virtual
     /// register number for the results of the node.
     ///
-    void EmitNode(NodeInfo *NI, std::map<SDNode*, unsigned> &VRBaseMap);
+    void EmitNode(SDNode *Node, std::map<SDNode*, unsigned> &VRBaseMap);
     
     /// EmitNoop - Emit a noop instruction.
     ///

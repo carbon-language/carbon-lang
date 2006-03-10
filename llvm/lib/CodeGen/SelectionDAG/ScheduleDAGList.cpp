@@ -613,11 +613,9 @@ void ScheduleDAGList::EmitSchedule() {
   std::map<SDNode*, unsigned> VRBaseMap;
   for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
     if (SUnit *SU = Sequence[i]) {
-      for (unsigned j = 0, ee = SU->FlaggedNodes.size(); j != ee; j++) {
-        SDNode *N = SU->FlaggedNodes[j];
-        EmitNode(getNI(N), VRBaseMap);
-      }
-      EmitNode(getNI(SU->Node), VRBaseMap);
+      for (unsigned j = 0, ee = SU->FlaggedNodes.size(); j != ee; j++)
+        EmitNode(SU->FlaggedNodes[j], VRBaseMap);
+      EmitNode(SU->Node, VRBaseMap);
     } else {
       // Null SUnit* is a noop.
       EmitNoop();
@@ -641,9 +639,6 @@ void ScheduleDAGList::dumpSchedule() const {
 void ScheduleDAGList::Schedule() {
   DEBUG(std::cerr << "********** List Scheduling **********\n");
 
-  // Set up minimum info for scheduling
-  PrepareNodeInfo();
-  
   // Build scheduling units.
   BuildSchedUnits();
   
