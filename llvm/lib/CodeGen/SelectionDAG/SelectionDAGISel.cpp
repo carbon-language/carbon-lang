@@ -1941,7 +1941,7 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
         if (G) {
           GlobalVariable *GV = dyn_cast<GlobalVariable>(G->getGlobal());
           if (GV) {
-            Str = GV->getStringValue();
+            Str = GV->getStringValue(false);
             if (!Str.empty()) {
               CopyFromStr = true;
               SrcOff += SrcDelta;

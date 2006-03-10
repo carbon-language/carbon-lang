@@ -93,8 +93,10 @@ public:
   
   /// getStringValue - Turn an LLVM constant pointer that eventually points to a
   /// global into a string value.  Return an empty string if we can't do it.
+  /// Parameter Chop determines if the result is chopped at the first null
+  /// terminator.
   ///
-   std::string getStringValue(unsigned Offset = 0);
+  std::string getStringValue(bool Chop = true, unsigned Offset = 0);
 };
 
 } // End llvm namespace

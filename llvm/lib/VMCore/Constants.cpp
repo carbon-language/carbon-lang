@@ -1715,8 +1715,10 @@ void Constant::clearAllValueMaps() {
 
 /// getStringValue - Turn an LLVM constant pointer that eventually points to a
 /// global into a string value.  Return an empty string if we can't do it.
+/// Parameter Chop determines if the result is chopped at the first null
+/// terminator.
 ///
-std::string Constant::getStringValue(unsigned Offset) {
+std::string Constant::getStringValue(bool Chop, unsigned Offset) {
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(this)) {
     if (GV->hasInitializer() && isa<ConstantArray>(GV->getInitializer())) {
       ConstantArray *Init = cast<ConstantArray>(GV->getInitializer());
@@ -1727,9 +1729,11 @@ std::string Constant::getStringValue(unsigned Offset) {
           Result.erase(Result.begin(), Result.begin()+Offset);
 
           // Take off the null terminator, and any string fragments after it.
-          std::string::size_type NullPos = Result.find_first_of((char)0);
-          if (NullPos != std::string::npos)
-            Result.erase(Result.begin()+NullPos, Result.end());
+          if (Chop) {
+            std::string::size_type NullPos = Result.find_first_of((char)0);
+            if (NullPos != std::string::npos)
+              Result.erase(Result.begin()+NullPos, Result.end());
+          }
           return Result;
         }
       }
