@@ -761,7 +761,7 @@ int RegReductionPriorityQueue::CalcNodePriority(const SUnit *SU) {
     SethiUllmanNumber = 1;
   } else {
     int Extra = 0;
-    for (std::set<SUnit*>::iterator I = SU->Preds.begin(),
+    for (std::set<SUnit*>::const_iterator I = SU->Preds.begin(),
          E = SU->Preds.end(); I != E; ++I) {
       SUnit *PredSU = *I;
       int PredSethiUllman = CalcNodePriority(PredSU);
@@ -870,11 +870,11 @@ int LatencyPriorityQueue::CalcLatency(const SUnit &SU) {
     return Latency;
   
   int MaxSuccLatency = 0;
-  for (std::set<SUnit*>::iterator I = SU.Succs.begin(),
+  for (std::set<SUnit*>::const_iterator I = SU.Succs.begin(),
        E = SU.Succs.end(); I != E; ++I)
     MaxSuccLatency = std::max(MaxSuccLatency, CalcLatency(**I));
 
-  for (std::set<SUnit*>::iterator I = SU.ChainSuccs.begin(),
+  for (std::set<SUnit*>::const_iterator I = SU.ChainSuccs.begin(),
        E = SU.ChainSuccs.end(); I != E; ++I)
     MaxSuccLatency = std::max(MaxSuccLatency, CalcLatency(**I));
 

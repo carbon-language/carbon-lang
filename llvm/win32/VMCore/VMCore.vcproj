@@ -4,6 +4,7 @@
 	Version="7.10"
 	Name="VMCore"
 	ProjectGUID="{45CD78D7-C5D9-47FE-AD12-F3251EEDAFFB}"
+	RootNamespace="VMCore"
 	Keyword="Win32Proj">
 	<Platforms>
 		<Platform
@@ -143,6 +144,27 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\VMCore\Instructions.cpp">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Intrinsics.td">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Performing TableGen Step"
+						CommandLine="..\$(IntDir)\TableGen.exe -gen-intrinsic -I ..\..\include $(InputPath) -o $(InputDir)intrinsics.gen"
+						AdditionalDependencies="$(ProjectDir)..\$(IntDir)\TableGen.exe"
+						Outputs="$(InputDir)intrinsics.gen"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Performing TableGen Step"
+						CommandLine="..\$(IntDir)\TableGen.exe -gen-intrinsic -I ..\..\include $(InputPath) -o $(InputDir)intrinsics.gen"
+						AdditionalDependencies="$(ProjectDir)..\$(IntDir)\TableGen.exe"
+						Outputs="$(InputDir)intrinsics.gen"/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\lib\VMCore\LeakDetector.cpp">
@@ -301,6 +323,13 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Assembly\Writer.h">
+			</File>
+		</Filter>
+		<Filter
+			Name="Generated Tablegen Files"
+			Filter="">
+			<File
+				RelativePath="..\..\include\llvm\intrinsics.gen">
 			</File>
 		</Filter>
 	</Files>
