@@ -34,16 +34,6 @@ namespace llvm {
   typedef std::vector<NodeInfoPtr>           NIVector;
   typedef std::vector<NodeInfoPtr>::iterator NIIterator;
 
-  // Scheduling heuristics
-  enum SchedHeuristics {
-    defaultScheduling,      // Let the target specify its preference.
-    noScheduling,           // No scheduling, emit breadth first sequence.
-    simpleScheduling,       // Two pass, min. critical path, max. utilization.
-    simpleNoItinScheduling, // Same as above exact using generic latency.
-    listSchedulingBURR,     // Bottom up reg reduction list scheduling.
-    listSchedulingTD        // Top-down list scheduler.
-  };
-  
   /// HazardRecognizer - This determines whether or not an instruction can be
   /// issued this cycle, and whether or not a noop needs to be inserted to handle
   /// the hazard.
@@ -296,8 +286,7 @@ namespace llvm {
                 const TargetMachine &tm)
       : DAG(dag), BB(bb), TM(tm) {}
 
-    virtual ~ScheduleDAG() {
-    };
+    virtual ~ScheduleDAG() {}
 
     /// Run - perform scheduling.
     ///
@@ -337,10 +326,11 @@ namespace llvm {
                     std::map<SDNode*, unsigned> &VRBaseMap);
   };
 
+  ScheduleDAG *createBFS_DAGScheduler(SelectionDAG &DAG, MachineBasicBlock *BB);
+  
   /// createSimpleDAGScheduler - This creates a simple two pass instruction
   /// scheduler.
-  ScheduleDAG* createSimpleDAGScheduler(SchedHeuristics Heuristic,
-                                        SelectionDAG &DAG,
+  ScheduleDAG* createSimpleDAGScheduler(bool NoItins, SelectionDAG &DAG,
                                         MachineBasicBlock *BB);
 
   /// createBURRListDAGScheduler - This creates a bottom up register usage
