@@ -13,18 +13,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "sched"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Target/TargetInstrItineraries.h"
 #include "llvm/Target/TargetLowering.h"
-#include "llvm/Support/Debug.h"
-#include "llvm/Constant.h"
-#include <iostream>
 using namespace llvm;
 
 
