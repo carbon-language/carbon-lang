@@ -965,9 +965,6 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     return 0;
     
   case Intrinsic::dbg_stoppoint: {
-    if (TLI.getTargetMachine().getIntrinsicLowering().EmitDebugFunctions())
-      return "llvm_debugger_stop";
-    
     MachineDebugInfo *DebugInfo = DAG.getMachineDebugInfo();
     if (DebugInfo &&  DebugInfo->Verify(I.getOperand(4))) {
       std::vector<SDOperand> Ops;
@@ -996,20 +993,14 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     return 0;
   }
   case Intrinsic::dbg_region_start:
-    if (TLI.getTargetMachine().getIntrinsicLowering().EmitDebugFunctions())
-      return "llvm_dbg_region_start";
     if (I.getType() != Type::VoidTy)
       setValue(&I, DAG.getNode(ISD::UNDEF, TLI.getValueType(I.getType())));
     return 0;
   case Intrinsic::dbg_region_end:
-    if (TLI.getTargetMachine().getIntrinsicLowering().EmitDebugFunctions())
-      return "llvm_dbg_region_end";
     if (I.getType() != Type::VoidTy)
       setValue(&I, DAG.getNode(ISD::UNDEF, TLI.getValueType(I.getType())));
     return 0;
   case Intrinsic::dbg_func_start:
-    if (TLI.getTargetMachine().getIntrinsicLowering().EmitDebugFunctions())
-      return "llvm_dbg_subprogram";
     if (I.getType() != Type::VoidTy)
       setValue(&I, DAG.getNode(ISD::UNDEF, TLI.getValueType(I.getType())));
     return 0;
