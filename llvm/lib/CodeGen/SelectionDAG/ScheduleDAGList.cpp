@@ -141,7 +141,14 @@ public:
   
   virtual bool empty() const = 0;
   virtual void push(SUnit *U) = 0;
+  
+  virtual void push_all(const std::vector<SUnit *> &Nodes) = 0;
   virtual SUnit *pop() = 0;
+  
+  /// ScheduledNode - As each node is scheduled, this method is invoked.  This
+  /// allows the priority function to adjust the priority of node that have
+  /// already been emitted.
+  virtual void ScheduledNode(SUnit *Node) {}
 };
 }
 
@@ -340,11 +347,10 @@ void ScheduleDAGList::ListScheduleBottomUp() {
     }
     
     // Add the nodes that aren't ready back onto the available list.
-    while (!NotReady.empty()) {
-      PriorityQueue->push(NotReady.back());
-      NotReady.pop_back();
-    }
+    PriorityQueue->push_all(NotReady);
+    NotReady.clear();
 
+    PriorityQueue->ScheduledNode(CurrNode);
     ScheduleNodeBottomUp(CurrNode);
   }
 
@@ -421,13 +427,12 @@ void ScheduleDAGList::ListScheduleTopDown() {
     } while (!PriorityQueue->empty());
     
     // Add the nodes that aren't ready back onto the available list.
-    while (!NotReady.empty()) {
-      PriorityQueue->push(NotReady.back());
-      NotReady.pop_back();
-    }
+    PriorityQueue->push_all(NotReady);
+    NotReady.clear();
 
     // If we found a node to schedule, do it now.
     if (FoundNode) {
+      PriorityQueue->ScheduledNode(FoundNode);
       ScheduleNodeTopDown(FoundNode);
       HazardRec->EmitInstruction(FoundNode->Node);
     } else if (!HasNoopHazards) {
@@ -700,6 +705,11 @@ namespace {
     void push(SUnit *U) {
       Queue.push(U);
     }
+    void push_all(const std::vector<SUnit *> &Nodes) {
+      for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
+        Queue.push(Nodes[i]);
+    }
+    
     SUnit *pop() {
       SUnit *V = Queue.top();
       Queue.pop();
@@ -843,6 +853,11 @@ public:
     void push(SUnit *U) {
       Queue.push(U);
     }
+    void push_all(const std::vector<SUnit *> &Nodes) {
+      for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
+        Queue.push(Nodes[i]);
+    }
+    
     SUnit *pop() {
       SUnit *V = Queue.top();
       Queue.pop();
