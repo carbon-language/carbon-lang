@@ -498,10 +498,6 @@ MachineBasicBlock *ScheduleDAG::Run() {
 
   // Number the nodes
   NodeCount = std::distance(DAG.allnodes_begin(), DAG.allnodes_end());
-  // Set up minimum info for scheduling
-  PrepareNodeInfo();
-  // Construct node groups for flagged nodes
-  IdentifyGroups();
 
   Schedule();
   return BB;

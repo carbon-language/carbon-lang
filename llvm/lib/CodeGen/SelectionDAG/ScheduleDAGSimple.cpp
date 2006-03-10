@@ -560,6 +560,11 @@ void ScheduleDAGSimple::ScheduleForward() {
 /// Schedule - Order nodes according to selected style.
 ///
 void ScheduleDAGSimple::Schedule() {
+  // Set up minimum info for scheduling
+  PrepareNodeInfo();
+  // Construct node groups for flagged nodes
+  IdentifyGroups();
+  
   // Test to see if scheduling should occur
   bool ShouldSchedule = NodeCount > 3 && Heuristic != noScheduling;
   // Don't waste time if is only entry and return

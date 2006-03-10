@@ -640,6 +640,11 @@ void ScheduleDAGList::dumpSchedule() const {
 void ScheduleDAGList::Schedule() {
   DEBUG(std::cerr << "********** List Scheduling **********\n");
 
+  // Set up minimum info for scheduling
+  PrepareNodeInfo();
+  // Construct node groups for flagged nodes
+  IdentifyGroups();
+  
   // Build scheduling units.
   BuildSchedUnits();
   
