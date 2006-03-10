@@ -382,16 +382,16 @@ namespace llvm {
   private:
     void AddOperand(MachineInstr *MI, SDOperand Op, unsigned IIOpNum,
                     const TargetInstrDescriptor *II);
-      
+
+    void AddToGroup(NodeInfo *D, NodeInfo *U);
+protected:
     /// PrepareNodeInfo - Set up the basic minimum node info for scheduling.
     /// 
     void PrepareNodeInfo();
-
+    
     /// IdentifyGroups - Put flagged nodes into groups.
     ///
     void IdentifyGroups();
-
-    void AddToGroup(NodeInfo *D, NodeInfo *U);
   };
 
   /// createSimpleDAGScheduler - This creates a simple two pass instruction
