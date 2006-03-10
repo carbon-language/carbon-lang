@@ -1,14 +1,4 @@
-;; RUN: echo create > %t.commands
-;; RUN: echo s >> %t.commands
-;; RUN: echo s >> %t.commands
-;; RUN: echo finish >> %t.commands
-;; RUN: echo bt >> %t.commands
-;; RUN: echo q >> %t.commands
-;; RUN: echo y >> %t.commands
-;; RUN: llvm-as -f %s -o %t.bc
-;; RUN: llvm-db %t.bc < %t.commands | grep 'in main at funccall.c:11:2'
-
-; XFAIL: alpha|ia64
+;; RUN: llvm-as < %s | llc
 
 ;; Debugger type declarations
 %lldb.compile_unit = type { uint, ushort, ushort, sbyte*, sbyte*, sbyte*, {}* }
@@ -21,7 +11,6 @@ declare {}* %llvm.dbg.stoppoint({}*, uint, uint, %lldb.compile_unit*)
 declare {}* %llvm.dbg.func.start(%lldb.global*)
 declare {}* %llvm.dbg.region.start({}*)
 declare {}* %llvm.dbg.region.end({}*)
-declare {}* %llvm.dbg.declare({}*, ...)
 
 ;; Global object anchors
 %llvm.dbg.translation_units = linkonce global {} {}
@@ -100,10 +89,9 @@ entry:
 	%.1 = call {}* %llvm.dbg.func.start(%lldb.global* %d.foo)
 	%.2 = call {}* %llvm.dbg.stoppoint({}* %.1, uint 5, uint 2, %lldb.compile_unit* %d.compile_unit)
 
-        %.3 = call {}*({}*, ...)* %llvm.dbg.declare({}* %.2, %lldb.local* %d.t, int* %t)
 	%tmp.0 = load int* %q
 	store int %tmp.0, int* %t
-	%.4 = call {}* %llvm.dbg.stoppoint({}* %.3, uint 6, uint 2, %lldb.compile_unit* %d.compile_unit)
+	%.4 = call {}* %llvm.dbg.stoppoint({}* %.2, uint 6, uint 2, %lldb.compile_unit* %d.compile_unit)
 	%tmp.01 = load int* %t
 	%tmp.1 = add int %tmp.01, 1
 	store int %tmp.1, int* %q
