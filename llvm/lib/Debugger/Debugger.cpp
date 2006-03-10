@@ -113,6 +113,12 @@ void Debugger::createProgram() {
   Process = InferiorProcess::create(Program, Args, Environment);
 }
 
+InferiorProcess *
+InferiorProcess::create(Module *M, const std::vector<std::string> &Arguments,
+                        const char * const *envp) {
+  throw"No supported binding to inferior processes (debugger not implemented).";
+}
+
 /// killProgram - If the program is currently executing, kill off the
 /// process and free up any state related to the currently running program.  If
 /// there is no program currently running, this just silently succeeds.
