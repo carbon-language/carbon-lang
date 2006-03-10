@@ -152,18 +152,20 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Performing TableGen Step"
-						CommandLine="..\$(IntDir)\TableGen.exe -gen-intrinsic -I ..\..\include $(InputPath) -o $(InputDir)intrinsics.gen"
+						CommandLine="..\$(IntDir)\TableGen.exe -gen-intrinsic -I ..\..\include $(InputPath) -o $(SolutionDir)llvm\intrinsics.gen
+"
 						AdditionalDependencies="$(ProjectDir)..\$(IntDir)\TableGen.exe"
-						Outputs="$(InputDir)intrinsics.gen"/>
+						Outputs="$(SolutionDir)llvm\intrinsics.gen"/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Performing TableGen Step"
-						CommandLine="..\$(IntDir)\TableGen.exe -gen-intrinsic -I ..\..\include $(InputPath) -o $(InputDir)intrinsics.gen"
+						CommandLine="..\$(IntDir)\TableGen.exe -gen-intrinsic -I ..\..\include $(InputPath) -o $(SolutionDir)llvm\intrinsics.gen
+"
 						AdditionalDependencies="$(ProjectDir)..\$(IntDir)\TableGen.exe"
-						Outputs="$(InputDir)intrinsics.gen"/>
+						Outputs="$(SolutionDir)llvm\intrinsics.gen"/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -329,7 +331,7 @@
 			Name="Generated Tablegen Files"
 			Filter="">
 			<File
-				RelativePath="..\..\include\llvm\intrinsics.gen">
+				RelativePath="..\llvm\intrinsics.gen">
 			</File>
 		</Filter>
 	</Files>
