@@ -188,8 +188,8 @@ public:
 ///
 class ScheduleDAGSimple : public ScheduleDAG {
 private:
-  SchedHeuristics Heuristic;            // Scheduling heuristic
-
+  bool NoSched;                         // Just do a BFS schedule, nothing fancy
+  bool NoItins;                         // Don't use itineraries?
   ResourceTally<unsigned> Tally;        // Resource usage tally
   unsigned NSlots;                      // Total latency
   static const unsigned NotFound = ~0U; // Search marker
@@ -204,9 +204,9 @@ private:
 public:
 
   // Ctor.
-  ScheduleDAGSimple(SchedHeuristics hstc, SelectionDAG &dag,
+  ScheduleDAGSimple(bool noSched, bool noItins, SelectionDAG &dag,
                     MachineBasicBlock *bb, const TargetMachine &tm)
-    : ScheduleDAG(dag, bb, tm), Heuristic(hstc), Tally(), NSlots(0),
+    : ScheduleDAG(dag, bb, tm), NoSched(noSched), NoItins(noItins), NSlots(0),
     NodeCount(0), HasGroups(false), Info(NULL), HeadNG(NULL), TailNG(NULL) {
     assert(&TII && "Target doesn't provide instr info?");
     assert(&MRI && "Target doesn't provide register info?");
@@ -591,7 +591,7 @@ void ScheduleDAGSimple::GatherSchedulingInfo() {
     SDNode *Node = NI->Node;
     
     // If there are itineraries and it is a machine instruction
-    if (InstrItins.isEmpty() || Heuristic == simpleNoItinScheduling) {
+    if (InstrItins.isEmpty() || NoItins) {
       // If machine opcode
       if (Node->isTargetOpcode()) {
         // Get return type to guess which processing unit 
@@ -859,7 +859,7 @@ void ScheduleDAGSimple::Schedule() {
   IdentifyGroups();
   
   // Test to see if scheduling should occur
-  bool ShouldSchedule = NodeCount > 3 && Heuristic != noScheduling;
+  bool ShouldSchedule = NodeCount > 3 && !NoSched;
   // Don't waste time if is only entry and return
   if (ShouldSchedule) {
     // Get latency and resource requirements
@@ -899,8 +899,13 @@ void ScheduleDAGSimple::Schedule() {
 
 /// createSimpleDAGScheduler - This creates a simple two pass instruction
 /// scheduler.
-llvm::ScheduleDAG* llvm::createSimpleDAGScheduler(SchedHeuristics Heuristic,
+llvm::ScheduleDAG* llvm::createSimpleDAGScheduler(bool NoItins,
                                                   SelectionDAG &DAG,
                                                   MachineBasicBlock *BB) {
-  return new ScheduleDAGSimple(Heuristic, DAG, BB,  DAG.getTarget());
+  return new ScheduleDAGSimple(false, NoItins, DAG, BB, DAG.getTarget());
+}
+
+llvm::ScheduleDAG* llvm::createBFS_DAGScheduler(SelectionDAG &DAG,
+                                                MachineBasicBlock *BB) {
+  return new ScheduleDAGSimple(true, false, DAG, BB,  DAG.getTarget());
 }

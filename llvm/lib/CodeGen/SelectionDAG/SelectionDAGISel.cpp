@@ -57,6 +57,16 @@ static const bool ViewISelDAGs = 0;
 static const bool ViewSchedDAGs = 0;
 #endif
 
+// Scheduling heuristics
+enum SchedHeuristics {
+  defaultScheduling,      // Let the target specify its preference.
+  noScheduling,           // No scheduling, emit breadth first sequence.
+  simpleScheduling,       // Two pass, min. critical path, max. utilization.
+  simpleNoItinScheduling, // Same as above exact using generic latency.
+  listSchedulingBURR,     // Bottom up reg reduction list scheduling.
+  listSchedulingTD        // Top-down list scheduler.
+};
+
 namespace {
   cl::opt<SchedHeuristics>
   ISHeuristic(
@@ -2444,9 +2454,13 @@ void SelectionDAGISel::ScheduleAndEmitDAG(SelectionDAG &DAG) {
       SL = createBURRListDAGScheduler(DAG, BB);
     break;
   case noScheduling:
+    SL = createBFS_DAGScheduler(DAG, BB);
+    break;
   case simpleScheduling:
+    SL = createSimpleDAGScheduler(false, DAG, BB);
+    break;
   case simpleNoItinScheduling:
-    SL = createSimpleDAGScheduler(ISHeuristic, DAG, BB);
+    SL = createSimpleDAGScheduler(true, DAG, BB);
     break;
   case listSchedulingBURR:
     SL = createBURRListDAGScheduler(DAG, BB);
