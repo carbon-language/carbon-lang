@@ -642,8 +642,6 @@ void ScheduleDAGList::Schedule() {
 
   // Set up minimum info for scheduling
   PrepareNodeInfo();
-  // Construct node groups for flagged nodes
-  IdentifyGroups();
   
   // Build scheduling units.
   BuildSchedUnits();
