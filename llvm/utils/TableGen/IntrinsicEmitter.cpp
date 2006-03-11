@@ -169,7 +169,7 @@ void IntrinsicEmitter::EmitVerifier(const std::vector<CodeGenIntrinsic> &Ints,
     for (unsigned j = 1; j != Ints[i].ArgTypes.size(); ++j)
       OS << "    Assert1(FTy->getParamType(" << j-1 << ")->getTypeID() == "
          << Ints[i].ArgTypes[j] << ",\n"
-         << "            \"Illegal result type!\", IF);\n";
+         << "            \"Illegal argument type!\", IF);\n";
     OS << "    break;\n";
   }
   OS << "  }\n";
