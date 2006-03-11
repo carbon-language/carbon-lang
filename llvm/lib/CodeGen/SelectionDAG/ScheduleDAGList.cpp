@@ -217,6 +217,199 @@ SUnit *ScheduleDAGList::NewSUnit(SDNode *N) {
   return &SUnits.back();
 }
 
+/// BuildSchedUnits - Build SUnits from the selection dag that we are input.
+/// This SUnit graph is similar to the SelectionDAG, but represents flagged
+/// together nodes with a single SUnit.
+void ScheduleDAGList::BuildSchedUnits() {
+  // Reserve entries in the vector for each of the SUnits we are creating.  This
+  // ensure that reallocation of the vector won't happen, so SUnit*'s won't get
+  // invalidated.
+  SUnits.reserve(std::distance(DAG.allnodes_begin(), DAG.allnodes_end()));
+  
+  const InstrItineraryData &InstrItins = TM.getInstrItineraryData();
+  
+  for (SelectionDAG::allnodes_iterator NI = DAG.allnodes_begin(),
+       E = DAG.allnodes_end(); NI != E; ++NI) {
+    if (isPassiveNode(NI))  // Leaf node, e.g. a TargetImmediate.
+      continue;
+    
+    // If this node has already been processed, stop now.
+    if (SUnitMap[NI]) continue;
+    
+    SUnit *NodeSUnit = NewSUnit(NI);
+    
+    // See if anything is flagged to this node, if so, add them to flagged
+    // nodes.  Nodes can have at most one flag input and one flag output.  Flags
+    // are required the be the last operand and result of a node.
+    
+    // Scan up, adding flagged preds to FlaggedNodes.
+    SDNode *N = NI;
+    while (N->getNumOperands() &&
+           N->getOperand(N->getNumOperands()-1).getValueType() == MVT::Flag) {
+      N = N->getOperand(N->getNumOperands()-1).Val;
+      NodeSUnit->FlaggedNodes.push_back(N);
+      SUnitMap[N] = NodeSUnit;
+    }
+    
+    // Scan down, adding this node and any flagged succs to FlaggedNodes if they
+    // have a user of the flag operand.
+    N = NI;
+    while (N->getValueType(N->getNumValues()-1) == MVT::Flag) {
+      SDOperand FlagVal(N, N->getNumValues()-1);
+      
+      // There are either zero or one users of the Flag result.
+      bool HasFlagUse = false;
+      for (SDNode::use_iterator UI = N->use_begin(), E = N->use_end(); 
+           UI != E; ++UI)
+        if (FlagVal.isOperand(*UI)) {
+          HasFlagUse = true;
+          NodeSUnit->FlaggedNodes.push_back(N);
+          SUnitMap[N] = NodeSUnit;
+          N = *UI;
+          break;
+        }
+          if (!HasFlagUse) break;
+    }
+    
+    // Now all flagged nodes are in FlaggedNodes and N is the bottom-most node.
+    // Update the SUnit
+    NodeSUnit->Node = N;
+    SUnitMap[N] = NodeSUnit;
+    
+    // Compute the latency for the node.  We use the sum of the latencies for
+    // all nodes flagged together into this SUnit.
+    if (InstrItins.isEmpty()) {
+      // No latency information.
+      NodeSUnit->Latency = 1;
+    } else {
+      NodeSUnit->Latency = 0;
+      if (N->isTargetOpcode()) {
+        unsigned SchedClass = TII->getSchedClass(N->getTargetOpcode());
+        InstrStage *S = InstrItins.begin(SchedClass);
+        InstrStage *E = InstrItins.end(SchedClass);
+        for (; S != E; ++S)
+          NodeSUnit->Latency += S->Cycles;
+      }
+      for (unsigned i = 0, e = NodeSUnit->FlaggedNodes.size(); i != e; ++i) {
+        SDNode *FNode = NodeSUnit->FlaggedNodes[i];
+        if (FNode->isTargetOpcode()) {
+          unsigned SchedClass = TII->getSchedClass(FNode->getTargetOpcode());
+          InstrStage *S = InstrItins.begin(SchedClass);
+          InstrStage *E = InstrItins.end(SchedClass);
+          for (; S != E; ++S)
+            NodeSUnit->Latency += S->Cycles;
+        }
+      }
+    }
+  }
+  
+  // Pass 2: add the preds, succs, etc.
+  for (unsigned su = 0, e = SUnits.size(); su != e; ++su) {
+    SUnit *SU = &SUnits[su];
+    SDNode *MainNode = SU->Node;
+    
+    if (MainNode->isTargetOpcode() &&
+        TII->isTwoAddrInstr(MainNode->getTargetOpcode()))
+      SU->isTwoAddress = true;
+    
+    // Find all predecessors and successors of the group.
+    // Temporarily add N to make code simpler.
+    SU->FlaggedNodes.push_back(MainNode);
+    
+    for (unsigned n = 0, e = SU->FlaggedNodes.size(); n != e; ++n) {
+      SDNode *N = SU->FlaggedNodes[n];
+      
+      for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+        SDNode *OpN = N->getOperand(i).Val;
+        if (isPassiveNode(OpN)) continue;   // Not scheduled.
+        SUnit *OpSU = SUnitMap[OpN];
+        assert(OpSU && "Node has no SUnit!");
+        if (OpSU == SU) continue;           // In the same group.
+        
+        MVT::ValueType OpVT = N->getOperand(i).getValueType();
+        assert(OpVT != MVT::Flag && "Flagged nodes should be in same sunit!");
+        bool isChain = OpVT == MVT::Other;
+        
+        if (SU->Preds.insert(std::make_pair(OpSU, isChain)).second) {
+          if (!isChain) {
+            SU->NumPredsLeft++;
+          } else {
+            SU->NumChainPredsLeft++;
+          }
+        }
+        if (OpSU->Succs.insert(std::make_pair(SU, isChain)).second) {
+          if (!isChain) {
+            OpSU->NumSuccsLeft++;
+          } else {
+            OpSU->NumChainSuccsLeft++;
+          }
+        }
+      }
+    }
+    
+    // Remove MainNode from FlaggedNodes again.
+    SU->FlaggedNodes.pop_back();
+  }
+  DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
+        SUnits[su].dumpAll(&DAG));
+}
+
+/// EmitSchedule - Emit the machine code in scheduled order.
+void ScheduleDAGList::EmitSchedule() {
+  std::map<SDNode*, unsigned> VRBaseMap;
+  for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
+    if (SUnit *SU = Sequence[i]) {
+      for (unsigned j = 0, ee = SU->FlaggedNodes.size(); j != ee; j++)
+        EmitNode(SU->FlaggedNodes[j], VRBaseMap);
+      EmitNode(SU->Node, VRBaseMap);
+    } else {
+      // Null SUnit* is a noop.
+      EmitNoop();
+    }
+  }
+}
+
+/// dump - dump the schedule.
+void ScheduleDAGList::dumpSchedule() const {
+  for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
+    if (SUnit *SU = Sequence[i])
+      SU->dump(&DAG);
+    else
+      std::cerr << "**** NOOP ****\n";
+  }
+}
+
+/// Schedule - Schedule the DAG using list scheduling.
+/// FIXME: Right now it only supports the burr (bottom up register reducing)
+/// heuristic.
+void ScheduleDAGList::Schedule() {
+  DEBUG(std::cerr << "********** List Scheduling **********\n");
+  
+  // Build scheduling units.
+  BuildSchedUnits();
+  
+  PriorityQueue->initNodes(SUnits);
+  
+  // Execute the actual scheduling loop Top-Down or Bottom-Up as appropriate.
+  if (isBottomUp)
+    ListScheduleBottomUp();
+  else
+    ListScheduleTopDown();
+  
+  PriorityQueue->releaseState();
+  
+  DEBUG(std::cerr << "*** Final schedule ***\n");
+  DEBUG(dumpSchedule());
+  DEBUG(std::cerr << "\n");
+  
+  // Emit in scheduled order
+  EmitSchedule();
+}
+
+//===----------------------------------------------------------------------===//
+//  Bottom-Up Scheduling
+//===----------------------------------------------------------------------===//
+
 /// ReleasePred - Decrement the NumSuccsLeft count of a predecessor. Add it to
 /// the Available queue is the count reaches zero. Also update its cycle bound.
 void ScheduleDAGList::ReleasePred(SUnit *PredSU, bool isChain) {
@@ -248,36 +441,6 @@ void ScheduleDAGList::ReleasePred(SUnit *PredSU, bool isChain) {
     }
   }
 }
-
-/// ReleaseSucc - Decrement the NumPredsLeft count of a successor. Add it to
-/// the Available queue is the count reaches zero. Also update its cycle bound.
-void ScheduleDAGList::ReleaseSucc(SUnit *SuccSU, bool isChain) {
-  // FIXME: the distance between two nodes is not always == the predecessor's
-  // latency. For example, the reader can very well read the register written
-  // by the predecessor later than the issue cycle. It also depends on the
-  // interrupt model (drain vs. freeze).
-  SuccSU->CycleBound = std::max(SuccSU->CycleBound,CurrCycle + SuccSU->Latency);
-  
-  if (!isChain)
-    SuccSU->NumPredsLeft--;
-  else
-    SuccSU->NumChainPredsLeft--;
-  
-#ifndef NDEBUG
-  if (SuccSU->NumPredsLeft < 0 || SuccSU->NumChainPredsLeft < 0) {
-    std::cerr << "*** List scheduling failed! ***\n";
-    SuccSU->dump(&DAG);
-    std::cerr << " has been released too many times!\n";
-    abort();
-  }
-#endif
-  
-  if ((SuccSU->NumPredsLeft + SuccSU->NumChainPredsLeft) == 0) {
-    SuccSU->isAvailable = true;
-    PriorityQueue->push(SuccSU);
-  }
-}
-
 /// ScheduleNodeBottomUp - Add the node to the schedule. Decrement the pending
 /// count of its predecessors. If a predecessor pending count is zero, add it to
 /// the Available queue.
@@ -293,25 +456,6 @@ void ScheduleDAGList::ScheduleNodeBottomUp(SUnit *SU) {
     ReleasePred(I->first, I->second);
     if (!I->second)
       SU->NumPredsLeft--;
-  }
-  CurrCycle++;
-}
-
-/// ScheduleNodeTopDown - Add the node to the schedule. Decrement the pending
-/// count of its successors. If a successor pending count is zero, add it to
-/// the Available queue.
-void ScheduleDAGList::ScheduleNodeTopDown(SUnit *SU) {
-  DEBUG(std::cerr << "*** Scheduling: ");
-  DEBUG(SU->dump(&DAG));
-  
-  Sequence.push_back(SU);
-  
-  // Bottom up: release successors.
-  for (std::set<std::pair<SUnit*, bool> >::iterator I = SU->Succs.begin(),
-       E = SU->Succs.end(); I != E; ++I) {
-    ReleaseSucc(I->first, I->second);
-    if (!I->second)
-      SU->NumSuccsLeft--;
   }
   CurrCycle++;
 }
@@ -372,6 +516,58 @@ void ScheduleDAGList::ListScheduleBottomUp() {
   }
   assert(!AnyNotSched);
 #endif
+}
+
+//===----------------------------------------------------------------------===//
+//  Top-Down Scheduling
+//===----------------------------------------------------------------------===//
+
+/// ReleaseSucc - Decrement the NumPredsLeft count of a successor. Add it to
+/// the Available queue is the count reaches zero. Also update its cycle bound.
+void ScheduleDAGList::ReleaseSucc(SUnit *SuccSU, bool isChain) {
+  // FIXME: the distance between two nodes is not always == the predecessor's
+  // latency. For example, the reader can very well read the register written
+  // by the predecessor later than the issue cycle. It also depends on the
+  // interrupt model (drain vs. freeze).
+  SuccSU->CycleBound = std::max(SuccSU->CycleBound,CurrCycle + SuccSU->Latency);
+  
+  if (!isChain)
+    SuccSU->NumPredsLeft--;
+  else
+    SuccSU->NumChainPredsLeft--;
+  
+#ifndef NDEBUG
+  if (SuccSU->NumPredsLeft < 0 || SuccSU->NumChainPredsLeft < 0) {
+    std::cerr << "*** List scheduling failed! ***\n";
+    SuccSU->dump(&DAG);
+    std::cerr << " has been released too many times!\n";
+    abort();
+  }
+#endif
+  
+  if ((SuccSU->NumPredsLeft + SuccSU->NumChainPredsLeft) == 0) {
+    SuccSU->isAvailable = true;
+    PriorityQueue->push(SuccSU);
+  }
+}
+
+/// ScheduleNodeTopDown - Add the node to the schedule. Decrement the pending
+/// count of its successors. If a successor pending count is zero, add it to
+/// the Available queue.
+void ScheduleDAGList::ScheduleNodeTopDown(SUnit *SU) {
+  DEBUG(std::cerr << "*** Scheduling: ");
+  DEBUG(SU->dump(&DAG));
+  
+  Sequence.push_back(SU);
+  
+  // Bottom up: release successors.
+  for (std::set<std::pair<SUnit*, bool> >::iterator I = SU->Succs.begin(),
+       E = SU->Succs.end(); I != E; ++I) {
+    ReleaseSucc(I->first, I->second);
+    if (!I->second)
+      SU->NumSuccsLeft--;
+  }
+  CurrCycle++;
 }
 
 /// ListScheduleTopDown - The main loop of list scheduling for top-down
@@ -460,193 +656,6 @@ void ScheduleDAGList::ListScheduleTopDown() {
   }
   assert(!AnyNotSched);
 #endif
-}
-
-
-void ScheduleDAGList::BuildSchedUnits() {
-  // Reserve entries in the vector for each of the SUnits we are creating.  This
-  // ensure that reallocation of the vector won't happen, so SUnit*'s won't get
-  // invalidated.
-  SUnits.reserve(std::distance(DAG.allnodes_begin(), DAG.allnodes_end()));
-  
-  const InstrItineraryData &InstrItins = TM.getInstrItineraryData();
-
-  for (SelectionDAG::allnodes_iterator NI = DAG.allnodes_begin(),
-       E = DAG.allnodes_end(); NI != E; ++NI) {
-    if (isPassiveNode(NI))  // Leaf node, e.g. a TargetImmediate.
-      continue;
-    
-    // If this node has already been processed, stop now.
-    if (SUnitMap[NI]) continue;
-    
-    SUnit *NodeSUnit = NewSUnit(NI);
-
-    // See if anything is flagged to this node, if so, add them to flagged
-    // nodes.  Nodes can have at most one flag input and one flag output.  Flags
-    // are required the be the last operand and result of a node.
-    
-    // Scan up, adding flagged preds to FlaggedNodes.
-    SDNode *N = NI;
-    while (N->getNumOperands() &&
-           N->getOperand(N->getNumOperands()-1).getValueType() == MVT::Flag) {
-      N = N->getOperand(N->getNumOperands()-1).Val;
-      NodeSUnit->FlaggedNodes.push_back(N);
-      SUnitMap[N] = NodeSUnit;
-    }
-    
-    // Scan down, adding this node and any flagged succs to FlaggedNodes if they
-    // have a user of the flag operand.
-    N = NI;
-    while (N->getValueType(N->getNumValues()-1) == MVT::Flag) {
-      SDOperand FlagVal(N, N->getNumValues()-1);
-      
-      // There are either zero or one users of the Flag result.
-      bool HasFlagUse = false;
-      for (SDNode::use_iterator UI = N->use_begin(), E = N->use_end(); 
-           UI != E; ++UI)
-        if (FlagVal.isOperand(*UI)) {
-          HasFlagUse = true;
-          NodeSUnit->FlaggedNodes.push_back(N);
-          SUnitMap[N] = NodeSUnit;
-          N = *UI;
-          break;
-        }
-      if (!HasFlagUse) break;
-    }
-  
-    // Now all flagged nodes are in FlaggedNodes and N is the bottom-most node.
-    // Update the SUnit
-    NodeSUnit->Node = N;
-    SUnitMap[N] = NodeSUnit;
-    
-    // Compute the latency for the node.  We use the sum of the latencies for
-    // all nodes flagged together into this SUnit.
-    if (InstrItins.isEmpty()) {
-      // No latency information.
-      NodeSUnit->Latency = 1;
-    } else {
-      NodeSUnit->Latency = 0;
-      if (N->isTargetOpcode()) {
-        unsigned SchedClass = TII->getSchedClass(N->getTargetOpcode());
-        InstrStage *S = InstrItins.begin(SchedClass);
-        InstrStage *E = InstrItins.end(SchedClass);
-        for (; S != E; ++S)
-          NodeSUnit->Latency += S->Cycles;
-      }
-      for (unsigned i = 0, e = NodeSUnit->FlaggedNodes.size(); i != e; ++i) {
-        SDNode *FNode = NodeSUnit->FlaggedNodes[i];
-        if (FNode->isTargetOpcode()) {
-          unsigned SchedClass = TII->getSchedClass(FNode->getTargetOpcode());
-          InstrStage *S = InstrItins.begin(SchedClass);
-          InstrStage *E = InstrItins.end(SchedClass);
-          for (; S != E; ++S)
-            NodeSUnit->Latency += S->Cycles;
-        }
-      }
-    }
-  }
-
-  // Pass 2: add the preds, succs, etc.
-  for (unsigned su = 0, e = SUnits.size(); su != e; ++su) {
-    SUnit *SU = &SUnits[su];
-    SDNode *MainNode = SU->Node;
-    
-    if (MainNode->isTargetOpcode() &&
-        TII->isTwoAddrInstr(MainNode->getTargetOpcode()))
-      SU->isTwoAddress = true;
-
-    // Find all predecessors and successors of the group.
-    // Temporarily add N to make code simpler.
-    SU->FlaggedNodes.push_back(MainNode);
-    
-    for (unsigned n = 0, e = SU->FlaggedNodes.size(); n != e; ++n) {
-      SDNode *N = SU->FlaggedNodes[n];
-      
-      for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
-        SDNode *OpN = N->getOperand(i).Val;
-        if (isPassiveNode(OpN)) continue;   // Not scheduled.
-        SUnit *OpSU = SUnitMap[OpN];
-        assert(OpSU && "Node has no SUnit!");
-        if (OpSU == SU) continue;           // In the same group.
-        
-        MVT::ValueType OpVT = N->getOperand(i).getValueType();
-        assert(OpVT != MVT::Flag && "Flagged nodes should be in same sunit!");
-        bool isChain = OpVT == MVT::Other;
-          
-        if (SU->Preds.insert(std::make_pair(OpSU, isChain)).second) {
-          if (!isChain) {
-            SU->NumPredsLeft++;
-          } else {
-            SU->NumChainPredsLeft++;
-          }
-        }
-        if (OpSU->Succs.insert(std::make_pair(SU, isChain)).second) {
-          if (!isChain) {
-            OpSU->NumSuccsLeft++;
-          } else {
-            OpSU->NumChainSuccsLeft++;
-          }
-        }
-      }
-    }
-    
-    // Remove MainNode from FlaggedNodes again.
-    SU->FlaggedNodes.pop_back();
-  }
-  DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
-          SUnits[su].dumpAll(&DAG));
-}
-
-/// EmitSchedule - Emit the machine code in scheduled order.
-void ScheduleDAGList::EmitSchedule() {
-  std::map<SDNode*, unsigned> VRBaseMap;
-  for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
-    if (SUnit *SU = Sequence[i]) {
-      for (unsigned j = 0, ee = SU->FlaggedNodes.size(); j != ee; j++)
-        EmitNode(SU->FlaggedNodes[j], VRBaseMap);
-      EmitNode(SU->Node, VRBaseMap);
-    } else {
-      // Null SUnit* is a noop.
-      EmitNoop();
-    }
-  }
-}
-
-/// dump - dump the schedule.
-void ScheduleDAGList::dumpSchedule() const {
-  for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
-    if (SUnit *SU = Sequence[i])
-      SU->dump(&DAG);
-    else
-      std::cerr << "**** NOOP ****\n";
-  }
-}
-
-/// Schedule - Schedule the DAG using list scheduling.
-/// FIXME: Right now it only supports the burr (bottom up register reducing)
-/// heuristic.
-void ScheduleDAGList::Schedule() {
-  DEBUG(std::cerr << "********** List Scheduling **********\n");
-
-  // Build scheduling units.
-  BuildSchedUnits();
-  
-  PriorityQueue->initNodes(SUnits);
-  
-  // Execute the actual scheduling loop Top-Down or Bottom-Up as appropriate.
-  if (isBottomUp)
-    ListScheduleBottomUp();
-  else
-    ListScheduleTopDown();
-
-  PriorityQueue->releaseState();
-
-  DEBUG(std::cerr << "*** Final schedule ***\n");
-  DEBUG(dumpSchedule());
-  DEBUG(std::cerr << "\n");
-  
-  // Emit in scheduled order
-  EmitSchedule();
 }
 
 //===----------------------------------------------------------------------===//
