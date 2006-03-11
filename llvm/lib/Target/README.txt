@@ -117,6 +117,10 @@ it needs to turn the shifts into multiplies to get it.
 
 //===---------------------------------------------------------------------===//
 
+Reassociate should turn: X*X*X*X -> t=(X*X) (t*t) to eliminate a multiply.
+
+//===---------------------------------------------------------------------===//
+
 These two functions should generate the same code on big-endian systems:
 
 int g(int *j,int *l)  {  return memcmp(j,l,4);  }
