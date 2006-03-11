@@ -121,6 +121,17 @@ Reassociate should turn: X*X*X*X -> t=(X*X) (t*t) to eliminate a multiply.
 
 //===---------------------------------------------------------------------===//
 
+Interesting? testcase for add/shift/mul reassoc:
+
+int bar(int x, int y) {
+  return x*x*x+y+x*x*x*x*x*y*y*y*y;
+}
+int foo(int z, int n) {
+  return bar(z, n) + bar(2*z, 2*n);
+}
+
+//===---------------------------------------------------------------------===//
+
 These two functions should generate the same code on big-endian systems:
 
 int g(int *j,int *l)  {  return memcmp(j,l,4);  }
