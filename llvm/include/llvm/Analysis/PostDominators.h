@@ -18,6 +18,42 @@
 
 namespace llvm {
 
+//===-------------------------------------
+/// ImmediatePostDominators Class - Concrete subclass of ImmediateDominatorsBase
+/// that is used to compute a normal immediate dominator set.
+///
+struct ImmediatePostDominators : public ImmediateDominatorsBase {
+  ImmediatePostDominators() : ImmediateDominatorsBase(false) {}
+  
+  virtual bool runOnFunction(Function &F);
+  
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesAll();
+  }
+  
+private:
+    struct InfoRec {
+      unsigned Semi;
+      unsigned Size;
+      BasicBlock *Label, *Parent, *Child, *Ancestor;
+      
+      std::vector<BasicBlock*> Bucket;
+      
+      InfoRec() : Semi(0), Size(0), Label(0), Parent(0), Child(0), Ancestor(0){}
+    };
+  
+  // Vertex - Map the DFS number to the BasicBlock*
+  std::vector<BasicBlock*> Vertex;
+  
+  // Info - Collection of information used during the computation of idoms.
+  std::map<BasicBlock*, InfoRec> Info;
+  
+  unsigned DFSPass(BasicBlock *V, InfoRec &VInfo, unsigned N);
+  void Compress(BasicBlock *V, InfoRec &VInfo);
+  BasicBlock *Eval(BasicBlock *v);
+  void Link(BasicBlock *V, BasicBlock *W, InfoRec &WInfo);
+};
+
 /// PostDominatorSet Class - Concrete subclass of DominatorSetBase that is used
 /// to compute the post-dominator set.  Because there can be multiple exit nodes
 /// in an LLVM function, we calculate post dominators with a special null block
@@ -27,39 +63,19 @@ namespace llvm {
 ///
 struct PostDominatorSet : public DominatorSetBase {
   PostDominatorSet() : DominatorSetBase(true) {}
-
+  
   virtual bool runOnFunction(Function &F);
-
-  /// getAnalysisUsage - This pass does not modify the function at all.
+  
+  /// getAnalysisUsage - This simply provides a dominator set
   ///
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.addRequired<ImmediatePostDominators>();
     AU.setPreservesAll();
   }
+  
+  // stub - dummy function, just ignore it
+  static void stub();
 };
-
-
-/// ImmediatePostDominators Class - Concrete subclass of ImmediateDominatorsBase
-/// that is used to compute the immediate post-dominators.
-///
-struct ImmediatePostDominators : public ImmediateDominatorsBase {
-  ImmediatePostDominators() : ImmediateDominatorsBase(true) {}
-
-  virtual bool runOnFunction(Function &F) {
-    IDoms.clear();     // Reset from the last time we were run...
-    PostDominatorSet &DS = getAnalysis<PostDominatorSet>();
-    Roots = DS.getRoots();
-    calcIDoms(DS);
-    return false;
-  }
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.setPreservesAll();
-    AU.addRequired<PostDominatorSet>();
-  }
-private:
-  void calcIDoms(const DominatorSetBase &DS);
-};
-
 
 /// PostDominatorTree Class - Concrete subclass of DominatorTree that is used to
 /// compute the a post-dominator tree.
@@ -69,18 +85,19 @@ struct PostDominatorTree : public DominatorTreeBase {
 
   virtual bool runOnFunction(Function &F) {
     reset();     // Reset from the last time we were run...
-    PostDominatorSet &DS = getAnalysis<PostDominatorSet>();
-    Roots = DS.getRoots();
-    calculate(DS);
+    ImmediatePostDominators &IPD = getAnalysis<ImmediatePostDominators>();
+    Roots = IPD.getRoots();
+    calculate(IPD);
     return false;
   }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
-    AU.addRequired<PostDominatorSet>();
+    AU.addRequired<ImmediatePostDominators>();
   }
 private:
-  void calculate(const PostDominatorSet &DS);
+  void calculate(const ImmediatePostDominators &IPD);
+  Node *getNodeForBlock(BasicBlock *BB);
 };
 
 

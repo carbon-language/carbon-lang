@@ -16,7 +16,130 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SetOperations.h"
+#include <iostream>
 using namespace llvm;
+
+//===----------------------------------------------------------------------===//
+//  ImmediatePostDominators Implementation
+//===----------------------------------------------------------------------===//
+
+static RegisterAnalysis<ImmediatePostDominators>
+D("postidom", "Immediate Post-Dominators Construction", true);
+
+unsigned ImmediatePostDominators::DFSPass(BasicBlock *V, InfoRec &VInfo,
+                                          unsigned N) {
+  VInfo.Semi = ++N;
+  VInfo.Label = V;
+  
+  Vertex.push_back(V);        // Vertex[n] = V;
+                              //Info[V].Ancestor = 0;     // Ancestor[n] = 0
+                              //Child[V] = 0;             // Child[v] = 0
+  VInfo.Size = 1;             // Size[v] = 1
+  
+  // For PostDominators, we want to walk predecessors rather than successors
+  // as we do in forward Dominators.
+  for (pred_iterator PI = pred_begin(V), PE = pred_end(V); PI != PE; ++PI) {
+    InfoRec &SuccVInfo = Info[*PI];
+    if (SuccVInfo.Semi == 0) {
+      SuccVInfo.Parent = V;
+      N = DFSPass(*PI, SuccVInfo, N);
+    }
+  }
+  return N;
+}
+
+void ImmediatePostDominators::Compress(BasicBlock *V, InfoRec &VInfo) {
+  BasicBlock *VAncestor = VInfo.Ancestor;
+  InfoRec &VAInfo = Info[VAncestor];
+  if (VAInfo.Ancestor == 0)
+    return;
+  
+  Compress(VAncestor, VAInfo);
+  
+  BasicBlock *VAncestorLabel = VAInfo.Label;
+  BasicBlock *VLabel = VInfo.Label;
+  if (Info[VAncestorLabel].Semi < Info[VLabel].Semi)
+    VInfo.Label = VAncestorLabel;
+  
+  VInfo.Ancestor = VAInfo.Ancestor;
+}
+
+BasicBlock *ImmediatePostDominators::Eval(BasicBlock *V) {
+  InfoRec &VInfo = Info[V];
+
+  // Higher-complexity but faster implementation
+  if (VInfo.Ancestor == 0)
+    return V;
+  Compress(V, VInfo);
+  return VInfo.Label;
+}
+
+void ImmediatePostDominators::Link(BasicBlock *V, BasicBlock *W, 
+                                   InfoRec &WInfo) {
+  // Higher-complexity but faster implementation
+  WInfo.Ancestor = V;
+}
+
+bool ImmediatePostDominators::runOnFunction(Function &F) {
+  IDoms.clear();     // Reset from the last time we were run...
+  Roots.clear();
+
+  // Step #0: Scan the function looking for the root nodes of the post-dominance
+  // relationships.  These blocks, which have no successors, end with return and
+  // unwind instructions.
+  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
+    if (succ_begin(I) == succ_end(I))
+      Roots.push_back(I);
+  
+  Vertex.push_back(0);
+  
+  // Step #1: Number blocks in depth-first order and initialize variables used
+  // in later stages of the algorithm.
+  unsigned N = 0;
+  for (unsigned i = 0, e = Roots.size(); i != e; ++i)
+    N = DFSPass(Roots[i], Info[Roots[i]], N);
+  
+  for (unsigned i = N; i >= 2; --i) {
+    BasicBlock *W = Vertex[i];
+    InfoRec &WInfo = Info[W];
+    
+    // Step #2: Calculate the semidominators of all vertices
+    for (succ_iterator SI = succ_begin(W), SE = succ_end(W); SI != SE; ++SI)
+      if (Info.count(*SI)) {  // Only if this predecessor is reachable!
+        unsigned SemiU = Info[Eval(*SI)].Semi;
+        if (SemiU < WInfo.Semi)
+          WInfo.Semi = SemiU;
+      }
+        
+    Info[Vertex[WInfo.Semi]].Bucket.push_back(W);
+    
+    BasicBlock *WParent = WInfo.Parent;
+    Link(WParent, W, WInfo);
+    
+    // Step #3: Implicitly define the immediate dominator of vertices
+    std::vector<BasicBlock*> &WParentBucket = Info[WParent].Bucket;
+    while (!WParentBucket.empty()) {
+      BasicBlock *V = WParentBucket.back();
+      WParentBucket.pop_back();
+      BasicBlock *U = Eval(V);
+      IDoms[V] = Info[U].Semi < Info[V].Semi ? U : WParent;
+    }
+  }
+  
+  // Step #4: Explicitly define the immediate dominator of each vertex
+  for (unsigned i = 2; i <= N; ++i) {
+    BasicBlock *W = Vertex[i];
+    BasicBlock *&WIDom = IDoms[W];
+    if (WIDom != Vertex[Info[W].Semi])
+      WIDom = IDoms[WIDom];
+  }
+  
+  // Free temporary memory used to construct idom's
+  Info.clear();
+  std::vector<BasicBlock*>().swap(Vertex);
+  
+  return false;
+}
 
 //===----------------------------------------------------------------------===//
 //  PostDominatorSet Implementation
@@ -30,119 +153,59 @@ B("postdomset", "Post-Dominator Set Construction", true);
 // sets for the function.
 //
 bool PostDominatorSet::runOnFunction(Function &F) {
-  Doms.clear();   // Reset from the last time we were run...
-
   // Scan the function looking for the root nodes of the post-dominance
   // relationships.  These blocks end with return and unwind instructions.
   // While we are iterating over the function, we also initialize all of the
   // domsets to empty.
   Roots.clear();
-  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
-    Doms[I];  // Initialize to empty
-
+  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
     if (succ_begin(I) == succ_end(I))
       Roots.push_back(I);
-  }
 
   // If there are no exit nodes for the function, postdomsets are all empty.
   // This can happen if the function just contains an infinite loop, for
   // example.
+  ImmediatePostDominators &IPD = getAnalysis<ImmediatePostDominators>();
+  Doms.clear();   // Reset from the last time we were run...
   if (Roots.empty()) return false;
 
   // If we have more than one root, we insert an artificial "null" exit, which
   // has "virtual edges" to each of the real exit nodes.
-  if (Roots.size() > 1)
-    Doms[0].insert(0);
+  //if (Roots.size() > 1)
+  //  Doms[0].insert(0);
 
-  bool Changed;
-  do {
-    Changed = false;
+  // Root nodes only dominate themselves.
+  for (unsigned i = 0, e = Roots.size(); i != e; ++i)
+    Doms[Roots[i]].insert(Roots[i]);
+  
+  // Loop over all of the blocks in the function, calculating dominator sets for
+  // each function.
+  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
+    if (BasicBlock *IPDom = IPD[I]) {   // Get idom if block is reachable
+      DomSetType &DS = Doms[I];
+      assert(DS.empty() && "PostDomset already filled in for this block?");
+      DS.insert(I);  // Blocks always dominate themselves
 
-    std::set<BasicBlock*> Visited;
-    DomSetType WorkingSet;
-
-    for (unsigned i = 0, e = Roots.size(); i != e; ++i)
-      for (idf_ext_iterator<BasicBlock*> It = idf_ext_begin(Roots[i], Visited),
-             E = idf_ext_end(Roots[i], Visited); It != E; ++It) {
-        BasicBlock *BB = *It;
-        succ_iterator SI = succ_begin(BB), SE = succ_end(BB);
-        if (SI != SE) {                // Is there SOME successor?
-          // Loop until we get to a successor that has had it's dom set filled
-          // in at least once.  We are guaranteed to have this because we are
-          // traversing the graph in DFO and have handled start nodes specially.
-          //
-          while (Doms[*SI].size() == 0) ++SI;
-          WorkingSet = Doms[*SI];
-
-          for (++SI; SI != SE; ++SI) { // Intersect all of the successor sets
-            DomSetType &SuccSet = Doms[*SI];
-            if (SuccSet.size())
-              set_intersect(WorkingSet, SuccSet);
-          }
+      // Insert all dominators into the set...
+      while (IPDom) {
+        // If we have already computed the dominator sets for our immediate post
+        // dominator, just use it instead of walking all the way up to the root.
+        DomSetType &IPDS = Doms[IPDom];
+        if (!IPDS.empty()) {
+          DS.insert(IPDS.begin(), IPDS.end());
+          break;
         } else {
-          // If this node has no successors, it must be one of the root nodes.
-          // We will already take care of the notion that the node
-          // post-dominates itself.  The only thing we have to add is that if
-          // there are multiple root nodes, we want to insert a special "null"
-          // exit node which dominates the roots as well.
-          if (Roots.size() > 1)
-            WorkingSet.insert(0);
+          DS.insert(IPDom);
+          IPDom = IPD[IPDom];
         }
-
-        WorkingSet.insert(BB);           // A block always dominates itself
-        DomSetType &BBSet = Doms[BB];
-        if (BBSet != WorkingSet) {
-          BBSet.swap(WorkingSet);        // Constant time operation!
-          Changed = true;                // The sets changed.
-        }
-        WorkingSet.clear();              // Clear out the set for next iteration
       }
-  } while (Changed);
-  return false;
-}
-
-//===----------------------------------------------------------------------===//
-//  ImmediatePostDominators Implementation
-//===----------------------------------------------------------------------===//
-
-static RegisterAnalysis<ImmediatePostDominators>
-D("postidom", "Immediate Post-Dominators Construction", true);
-
-
-// calcIDoms - Calculate the immediate dominator mapping, given a set of
-// dominators for every basic block.
-void ImmediatePostDominators::calcIDoms(const DominatorSetBase &DS) {
-  // Loop over all of the nodes that have dominators... figuring out the IDOM
-  // for each node...
-  //
-  for (DominatorSet::const_iterator DI = DS.begin(), DEnd = DS.end();
-       DI != DEnd; ++DI) {
-    BasicBlock *BB = DI->first;
-    const DominatorSet::DomSetType &Dominators = DI->second;
-    unsigned DomSetSize = Dominators.size();
-    if (DomSetSize == 1) continue;  // Root node... IDom = null
-
-    // Loop over all dominators of this node.  This corresponds to looping over
-    // nodes in the dominator chain, looking for a node whose dominator set is
-    // equal to the current nodes, except that the current node does not exist
-    // in it.  This means that it is one level higher in the dom chain than the
-    // current node, and it is our idom!
-    //
-    DominatorSet::DomSetType::const_iterator I = Dominators.begin();
-    DominatorSet::DomSetType::const_iterator End = Dominators.end();
-    for (; I != End; ++I) {   // Iterate over dominators...
-      // All of our dominators should form a chain, where the number of elements
-      // in the dominator set indicates what level the node is at in the chain.
-      // We want the node immediately above us, so it will have an identical
-      // dominator set, except that BB will not dominate it... therefore it's
-      // dominator set size will be one less than BB's...
-      //
-      if (DS.getDominators(*I).size() == DomSetSize - 1) {
-        IDoms[BB] = *I;
-        break;
-      }
+    } else {
+      // Ensure that every basic block has at least an empty set of nodes.  This
+      // is important for the case when there is unreachable blocks.
+      Doms[I];
     }
-  }
+
+  return false;
 }
 
 //===----------------------------------------------------------------------===//
@@ -152,59 +215,45 @@ void ImmediatePostDominators::calcIDoms(const DominatorSetBase &DS) {
 static RegisterAnalysis<PostDominatorTree>
 F("postdomtree", "Post-Dominator Tree Construction", true);
 
-void PostDominatorTree::calculate(const PostDominatorSet &DS) {
+DominatorTreeBase::Node *PostDominatorTree::getNodeForBlock(BasicBlock *BB) {
+  Node *&BBNode = Nodes[BB];
+  if (BBNode) return BBNode;
+  
+  // Haven't calculated this node yet?  Get or calculate the node for the
+  // immediate postdominator.
+  BasicBlock *IPDom = getAnalysis<ImmediatePostDominators>()[BB];
+  Node *IPDomNode = getNodeForBlock(IPDom);
+  
+  // Add a new tree node for this BasicBlock, and link it as a child of
+  // IDomNode
+  return BBNode = IPDomNode->addChild(new Node(BB, IPDomNode));
+}
+
+void PostDominatorTree::calculate(const ImmediatePostDominators &IPD) {
   if (Roots.empty()) return;
+
+  // Add a node for the root.  This node might be the actual root, if there is
+  // one exit block, or it may be the virtual exit (denoted by (BasicBlock *)0)
+  // which postdominates all real exits if there are multiple exit blocks.
   BasicBlock *Root = Roots.size() == 1 ? Roots[0] : 0;
-
-  Nodes[Root] = RootNode = new Node(Root, 0);   // Add a node for the root...
-
-  // Iterate over all nodes in depth first order...
-  for (unsigned i = 0, e = Roots.size(); i != e; ++i)
-    for (idf_iterator<BasicBlock*> I = idf_begin(Roots[i]),
-           E = idf_end(Roots[i]); I != E; ++I) {
-      BasicBlock *BB = *I;
-      const DominatorSet::DomSetType &Dominators = DS.getDominators(BB);
-      unsigned DomSetSize = Dominators.size();
-      if (DomSetSize == 1) continue;  // Root node... IDom = null
-
-      // If we have already computed the immediate dominator for this node,
-      // don't revisit.  This can happen due to nodes reachable from multiple
-      // roots, but which the idf_iterator doesn't know about.
-      if (Nodes.find(BB) != Nodes.end()) continue;
-
-      // Loop over all dominators of this node.  This corresponds to looping
-      // over nodes in the dominator chain, looking for a node whose dominator
-      // set is equal to the current nodes, except that the current node does
-      // not exist in it.  This means that it is one level higher in the dom
-      // chain than the current node, and it is our idom!  We know that we have
-      // already added a DominatorTree node for our idom, because the idom must
-      // be a predecessor in the depth first order that we are iterating through
-      // the function.
-      //
-      for (DominatorSet::DomSetType::const_iterator I = Dominators.begin(),
-           E = Dominators.end(); I != E; ++I) {  // Iterate over dominators.
-        // All of our dominators should form a chain, where the number
-        // of elements in the dominator set indicates what level the
-        // node is at in the chain.  We want the node immediately
-        // above us, so it will have an identical dominator set,
-        // except that BB will not dominate it... therefore it's
-        // dominator set size will be one less than BB's...
-        //
-        if (DS.getDominators(*I).size() == DomSetSize - 1) {
-          // We know that the immediate dominator should already have a node,
-          // because we are traversing the CFG in depth first order!
-          //
-          Node *IDomNode = Nodes[*I];
-          assert(IDomNode && "No node for IDOM?");
-
-          // Add a new tree node for this BasicBlock, and link it as a child of
-          // IDomNode
-          Nodes[BB] = IDomNode->addChild(new Node(BB, IDomNode));
-          break;
-        }
+  Nodes[Root] = RootNode = new Node(Root, 0);
+  
+  Function *F = Roots[0]->getParent();
+  // Loop over all of the reachable blocks in the function...
+  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
+    if (BasicBlock *ImmPostDom = IPD.get(I)) {  // Reachable block.
+      Node *&BBNode = Nodes[I];
+      if (!BBNode) {  // Haven't calculated this node yet?
+                      // Get or calculate the node for the immediate dominator
+        Node *IPDomNode = getNodeForBlock(ImmPostDom);
+        
+        // Add a new tree node for this BasicBlock, and link it as a child of
+        // IDomNode
+        BBNode = IPDomNode->addChild(new Node(I, IPDomNode));
       }
     }
 }
+
 //===----------------------------------------------------------------------===//
 // PostETForest Implementation
 //===----------------------------------------------------------------------===//
