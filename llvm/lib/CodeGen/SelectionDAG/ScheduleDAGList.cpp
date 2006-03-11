@@ -41,10 +41,12 @@ namespace {
   struct SUnit {
     SDNode *Node;                       // Representative node.
     std::vector<SDNode*> FlaggedNodes;  // All nodes flagged to Node.
-    std::set<SUnit*> Preds;             // All real predecessors.
-    std::set<SUnit*> ChainPreds;        // All chain predecessors.
-    std::set<SUnit*> Succs;             // All real successors.
-    std::set<SUnit*> ChainSuccs;        // All chain successors.
+    
+    // Preds/Succs - The SUnits before/after us in the graph.  The boolean value
+    // is true if the edge is a token chain edge, false if it is a value edge. 
+    std::set<std::pair<SUnit*,bool> > Preds;  // All sunit predecessors.
+    std::set<std::pair<SUnit*,bool> > Succs;  // All sunit successors.
+
     short NumPredsLeft;                 // # of preds not scheduled.
     short NumSuccsLeft;                 // # of succs not scheduled.
     short NumChainPredsLeft;            // # of chain preds not scheduled.
@@ -93,34 +95,24 @@ void SUnit::dumpAll(const SelectionDAG *G) const {
 
   if (Preds.size() != 0) {
     std::cerr << "  Predecessors:\n";
-    for (std::set<SUnit*>::const_iterator I = Preds.begin(),
+    for (std::set<std::pair<SUnit*,bool> >::const_iterator I = Preds.begin(),
            E = Preds.end(); I != E; ++I) {
-      std::cerr << "    ";
-      (*I)->dump(G);
-    }
-  }
-  if (ChainPreds.size() != 0) {
-    std::cerr << "  Chained Preds:\n";
-    for (std::set<SUnit*>::const_iterator I = ChainPreds.begin(),
-           E = ChainPreds.end(); I != E; ++I) {
-      std::cerr << "    ";
-      (*I)->dump(G);
+      if (I->second)
+        std::cerr << "   ch  ";
+      else
+        std::cerr << "   val ";
+      I->first->dump(G);
     }
   }
   if (Succs.size() != 0) {
     std::cerr << "  Successors:\n";
-    for (std::set<SUnit*>::const_iterator I = Succs.begin(),
+    for (std::set<std::pair<SUnit*, bool> >::const_iterator I = Succs.begin(),
            E = Succs.end(); I != E; ++I) {
-      std::cerr << "    ";
-      (*I)->dump(G);
-    }
-  }
-  if (ChainSuccs.size() != 0) {
-    std::cerr << "  Chained succs:\n";
-    for (std::set<SUnit*>::const_iterator I = ChainSuccs.begin(),
-           E = ChainSuccs.end(); I != E; ++I) {
-      std::cerr << "    ";
-      (*I)->dump(G);
+      if (I->second)
+        std::cerr << "   ch  ";
+      else
+        std::cerr << "   val ";
+      I->first->dump(G);
     }
   }
   std::cerr << "\n";
@@ -205,8 +197,8 @@ public:
 
 private:
   SUnit *NewSUnit(SDNode *N);
-  void ReleasePred(SUnit *PredSU, bool isChain = false);
-  void ReleaseSucc(SUnit *SuccSU, bool isChain = false);
+  void ReleasePred(SUnit *PredSU, bool isChain);
+  void ReleaseSucc(SUnit *SuccSU, bool isChain);
   void ScheduleNodeBottomUp(SUnit *SU);
   void ScheduleNodeTopDown(SUnit *SU);
   void ListScheduleTopDown();
@@ -296,15 +288,12 @@ void ScheduleDAGList::ScheduleNodeBottomUp(SUnit *SU) {
   Sequence.push_back(SU);
 
   // Bottom up: release predecessors
-  for (std::set<SUnit*>::iterator I1 = SU->Preds.begin(),
-         E1 = SU->Preds.end(); I1 != E1; ++I1) {
-    ReleasePred(*I1);
-    SU->NumPredsLeft--;
+  for (std::set<std::pair<SUnit*, bool> >::iterator I = SU->Preds.begin(),
+         E = SU->Preds.end(); I != E; ++I) {
+    ReleasePred(I->first, I->second);
+    if (!I->second)
+      SU->NumPredsLeft--;
   }
-  for (std::set<SUnit*>::iterator I2 = SU->ChainPreds.begin(),
-         E2 = SU->ChainPreds.end(); I2 != E2; ++I2)
-    ReleasePred(*I2, true);
-
   CurrCycle++;
 }
 
@@ -318,15 +307,12 @@ void ScheduleDAGList::ScheduleNodeTopDown(SUnit *SU) {
   Sequence.push_back(SU);
   
   // Bottom up: release successors.
-  for (std::set<SUnit*>::iterator I1 = SU->Succs.begin(),
-       E1 = SU->Succs.end(); I1 != E1; ++I1) {
-    ReleaseSucc(*I1);
-    SU->NumSuccsLeft--;
+  for (std::set<std::pair<SUnit*, bool> >::iterator I = SU->Succs.begin(),
+       E = SU->Succs.end(); I != E; ++I) {
+    ReleaseSucc(I->first, I->second);
+    if (!I->second)
+      SU->NumSuccsLeft--;
   }
-  for (std::set<SUnit*>::iterator I2 = SU->ChainSuccs.begin(),
-       E2 = SU->ChainSuccs.end(); I2 != E2; ++I2)
-    ReleaseSucc(*I2, true);
-  
   CurrCycle++;
 }
 
@@ -399,8 +385,7 @@ void ScheduleDAGList::ListScheduleTopDown() {
   // All leaves to Available queue.
   for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
     // It is available if it has no predecessors.
-    if ((SUnits[i].Preds.size() + SUnits[i].ChainPreds.size()) == 0 &&
-        &SUnits[i] != Entry)
+    if (SUnits[i].Preds.size() == 0 && &SUnits[i] != Entry)
       PriorityQueue->push(&SUnits[i]);
   }
   
@@ -586,26 +571,30 @@ void ScheduleDAGList::BuildSchedUnits() {
         
         MVT::ValueType OpVT = N->getOperand(i).getValueType();
         assert(OpVT != MVT::Flag && "Flagged nodes should be in same sunit!");
-        
-        if (OpVT == MVT::Other) {
-          if (SU->ChainPreds.insert(OpSU).second)
-            SU->NumChainPredsLeft++;
-          if (OpSU->ChainSuccs.insert(SU).second)
-            OpSU->NumChainSuccsLeft++;
-        } else {
-          if (SU->Preds.insert(OpSU).second)
+        bool isChain = OpVT == MVT::Other;
+          
+        if (SU->Preds.insert(std::make_pair(OpSU, isChain)).second) {
+          if (!isChain) {
             SU->NumPredsLeft++;
-          if (OpSU->Succs.insert(SU).second)
+          } else {
+            SU->NumChainPredsLeft++;
+          }
+        }
+        if (OpSU->Succs.insert(std::make_pair(SU, isChain)).second) {
+          if (!isChain) {
             OpSU->NumSuccsLeft++;
+          } else {
+            OpSU->NumChainSuccsLeft++;
+          }
         }
       }
     }
     
     // Remove MainNode from FlaggedNodes again.
     SU->FlaggedNodes.pop_back();
-    
-    DEBUG(SU->dumpAll(&DAG));
   }
+  DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
+          SUnits[su].dumpAll(&DAG));
 }
 
 /// EmitSchedule - Emit the machine code in scheduled order.
@@ -779,9 +768,10 @@ int RegReductionPriorityQueue::CalcNodePriority(const SUnit *SU) {
     SethiUllmanNumber = 1;
   } else {
     int Extra = 0;
-    for (std::set<SUnit*>::const_iterator I = SU->Preds.begin(),
-         E = SU->Preds.end(); I != E; ++I) {
-      SUnit *PredSU = *I;
+    for (std::set<std::pair<SUnit*, bool> >::const_iterator
+         I = SU->Preds.begin(), E = SU->Preds.end(); I != E; ++I) {
+      if (I->second) continue;  // ignore chain preds.
+      SUnit *PredSU = I->first;
       int PredSethiUllman = CalcNodePriority(PredSU);
       if (PredSethiUllman > SethiUllmanNumber) {
         SethiUllmanNumber = PredSethiUllman;
@@ -950,13 +940,9 @@ int LatencyPriorityQueue::CalcLatency(const SUnit &SU) {
     return Latency;
   
   int MaxSuccLatency = 0;
-  for (std::set<SUnit*>::const_iterator I = SU.Succs.begin(),
+  for (std::set<std::pair<SUnit*, bool> >::const_iterator I = SU.Succs.begin(),
        E = SU.Succs.end(); I != E; ++I)
-    MaxSuccLatency = std::max(MaxSuccLatency, CalcLatency(**I));
-
-  for (std::set<SUnit*>::const_iterator I = SU.ChainSuccs.begin(),
-       E = SU.ChainSuccs.end(); I != E; ++I)
-    MaxSuccLatency = std::max(MaxSuccLatency, CalcLatency(**I));
+    MaxSuccLatency = std::max(MaxSuccLatency, CalcLatency(*I->first));
 
   return Latency = MaxSuccLatency + SU.Latency;
 }
@@ -974,24 +960,14 @@ void LatencyPriorityQueue::CalculatePriorities() {
 /// of SU, return it, otherwise return null.
 static SUnit *getSingleUnscheduledPred(SUnit *SU) {
   SUnit *OnlyAvailablePred = 0;
-  for (std::set<SUnit*>::const_iterator I = SU->Preds.begin(),
+  for (std::set<std::pair<SUnit*, bool> >::const_iterator I = SU->Preds.begin(),
        E = SU->Preds.end(); I != E; ++I)
-    if (!(*I)->isScheduled) {
+    if (!I->first->isScheduled) {
       // We found an available, but not scheduled, predecessor.  If it's the
       // only one we have found, keep track of it... otherwise give up.
-      if (OnlyAvailablePred && OnlyAvailablePred != *I)
+      if (OnlyAvailablePred && OnlyAvailablePred != I->first)
         return 0;
-      OnlyAvailablePred = *I;
-    }
-      
-  for (std::set<SUnit*>::const_iterator I = SU->ChainSuccs.begin(),
-       E = SU->ChainSuccs.end(); I != E; ++I)
-    if (!(*I)->isScheduled) {
-      // We found an available, but not scheduled, predecessor.  If it's the
-      // only one we have found, keep track of it... otherwise give up.
-      if (OnlyAvailablePred && OnlyAvailablePred != *I)
-        return 0;
-      OnlyAvailablePred = *I;
+      OnlyAvailablePred = I->first;
     }
       
   return OnlyAvailablePred;
@@ -1001,15 +977,11 @@ void LatencyPriorityQueue::push_impl(SUnit *SU) {
   // Look at all of the successors of this node.  Count the number of nodes that
   // this node is the sole unscheduled node for.
   unsigned NumNodesBlocking = 0;
-  for (std::set<SUnit*>::const_iterator I = SU->Succs.begin(),
+  for (std::set<std::pair<SUnit*, bool> >::const_iterator I = SU->Succs.begin(),
        E = SU->Succs.end(); I != E; ++I)
-    if (getSingleUnscheduledPred(*I) == SU)
+    if (getSingleUnscheduledPred(I->first) == SU)
       ++NumNodesBlocking;
-  
-  for (std::set<SUnit*>::const_iterator I = SU->ChainSuccs.begin(),
-       E = SU->ChainSuccs.end(); I != E; ++I)
-    if (getSingleUnscheduledPred(*I) == SU)
-      ++NumNodesBlocking;
+  NumNodesSolelyBlocking[SU->NodeNum] = NumNodesBlocking;
   
   Queue.push(SU);
 }
@@ -1020,13 +992,9 @@ void LatencyPriorityQueue::push_impl(SUnit *SU) {
 // single predecessor has a higher priority, since scheduling it will make
 // the node available.
 void LatencyPriorityQueue::ScheduledNode(SUnit *SU) {
-  for (std::set<SUnit*>::const_iterator I = SU->Succs.begin(),
+  for (std::set<std::pair<SUnit*, bool> >::const_iterator I = SU->Succs.begin(),
        E = SU->Succs.end(); I != E; ++I)
-    AdjustPriorityOfUnscheduledPreds(*I);
-    
-  for (std::set<SUnit*>::const_iterator I = SU->ChainSuccs.begin(),
-       E = SU->ChainSuccs.end(); I != E; ++I)
-    AdjustPriorityOfUnscheduledPreds(*I);
+    AdjustPriorityOfUnscheduledPreds(I->first);
 }
 
 /// AdjustPriorityOfUnscheduledPreds - One of the predecessors of SU was just
