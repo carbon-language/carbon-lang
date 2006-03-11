@@ -79,6 +79,7 @@ PPCHazardRecognizer970::GetInstrType(unsigned Opcode) {
   case PPC::BCTRL:
   case PPC::BL:
   case PPC::BLA:
+  case PPC::BLR:
     return BR;
   case PPC::MCRF:
   case PPC::MFCR:
