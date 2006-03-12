@@ -387,8 +387,6 @@ void ScheduleDAGList::dumpSchedule() const {
 }
 
 /// Schedule - Schedule the DAG using list scheduling.
-/// FIXME: Right now it only supports the burr (bottom up register reducing)
-/// heuristic.
 void ScheduleDAGList::Schedule() {
   DEBUG(std::cerr << "********** List Scheduling **********\n");
   
@@ -552,8 +550,16 @@ void ScheduleDAGList::ReleaseSucc(SUnit *SuccSU, bool isChain) {
     unsigned AvailableCycle = 0;
     for (std::set<std::pair<SUnit*, bool> >::iterator I = SuccSU->Preds.begin(),
          E = SuccSU->Preds.end(); I != E; ++I) {
-      AvailableCycle = std::max(AvailableCycle, 
-                                I->first->Cycle + I->first->Latency);
+      // If this is a token edge, we don't need to wait for the full latency of
+      // the preceeding instruction (e.g. a long-latency load) unless there is
+      // also some other data dependence.
+      unsigned PredDoneCycle = I->first->Cycle;
+      if (!I->second)
+        PredDoneCycle += I->first->Latency;
+      else
+        PredDoneCycle += 1;  
+
+      AvailableCycle = std::max(AvailableCycle, PredDoneCycle);
     }
     
     PendingQueue.push_back(std::make_pair(AvailableCycle, SuccSU));
