@@ -19,6 +19,43 @@
 #include "PPCRegisterInfo.h"
 
 namespace llvm {
+
+/// PPCII - This namespace holds all of the PowerPC target-specific
+/// per-instruction flags.  These must match the corresponding definitions in
+/// PPC.td and PPCInstrFormats.td.
+namespace PPCII {
+enum {
+  // PPC970 Instruction Flags.  These flags describe the characteristics of the
+  // PowerPC 970 (aka G5) dispatch groups and how they are formed out of
+  // raw machine instructions.
+
+  /// PPC970_First - This instruction starts a new dispatch group, so it will
+  /// always be the first one in the group.
+  PPC970_First = 0x1,
+  
+  /// PPC970_Single - This instruction starts a new dispatch group and
+  /// terminates it, so it will be the sole instruction in the group.
+  PPC970_Single = 0x2,
+
+  /// PPC970_Mask/Shift - This is a bitmask that selects the pipeline type that
+  /// an instruction is issued to.
+  PPC970_Shift = 2,
+  PPC970_Mask = 0x07 << PPC970_Shift,
+};
+enum PPC970_Unit {
+  /// These are the various PPC970 execution unit pipelines.  Each instruction
+  /// is one of these.
+  PPC970_Pseudo = 0 << PPC970_Shift,   // Pseudo instruction
+  PPC970_FXU    = 1 << PPC970_Shift,   // Fixed Point (aka Integer/ALU) Unit
+  PPC970_LSU    = 2 << PPC970_Shift,   // Load Store Unit
+  PPC970_FPU    = 3 << PPC970_Shift,   // Floating Point Unit
+  PPC970_CRU    = 4 << PPC970_Shift,   // Control Register Unit
+  PPC970_VALU   = 5 << PPC970_Shift,   // Vector ALU
+  PPC970_VPERM  = 6 << PPC970_Shift,   // Vector Permute Unit
+  PPC970_BRU    = 7 << PPC970_Shift,   // Branch Unit
+};
+}
+  
   
 class PPCInstrInfo : public TargetInstrInfo {
   const PPCRegisterInfo RI;

@@ -67,9 +67,27 @@ def : Processor<"g5", G5Itineraries,
                    Feature64Bit /*, Feature64BitRegs */]>;
 
 
+def PPCInstrInfo : InstrInfo {
+  // Define how we want to layout our TargetSpecific information field... This
+  // should be kept up-to-date with the fields in the PPCInstrInfo.h file.
+  let TSFlagsFields = ["PPC970_First",
+                       "PPC970_Single",
+                       "PPC970_Unit"];
+  let TSFlagsShifts = [0,
+                       1,
+                       2];
+
+  let isLittleEndianEncoding = 1;
+}
+
+
 def PPC : Target {
   // Pointers on PPC are 32-bits in size.
   let PointerType = i32;
+
+  // Information about the instructions.
+  let InstructionSet = PPCInstrInfo;
+
 
   // According to the Mach-O Runtime ABI, these regs are nonvolatile across
   // calls
@@ -77,7 +95,4 @@ def PPC : Target {
     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29, R30, R31, F14, F15,
     F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, F26, F27, F28, F29,
     F30, F31, CR2, CR3, CR4, LR];
-
-  // Pull in Instruction Info:
-  let InstructionSet = PowerPCInstrInfo;
 }

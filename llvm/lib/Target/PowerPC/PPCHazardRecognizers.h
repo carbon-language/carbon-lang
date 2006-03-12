@@ -15,6 +15,7 @@
 #define PPCHAZRECS_H
 
 #include "llvm/CodeGen/ScheduleDAG.h"
+#include "PPCInstrInfo.h"
 
 namespace llvm {
   
@@ -25,16 +26,9 @@ namespace llvm {
 /// setting the CTR register then branching through it within a dispatch group),
 /// or storing then loading from the same address within a dispatch group.
 class PPCHazardRecognizer970 : public HazardRecognizer {
-  unsigned NumIssued;  // Number of insts issued, including advanced cycles.
+  const TargetInstrInfo &TII;
   
-  // Number of various types of instructions in the current dispatch group.
-  unsigned NumFXU;     // Number of Fixed Point (integer) instructions
-  unsigned NumLSU;     // Number of Load/Store instructions
-  unsigned NumFPU;     // Number of Floating Point instructions
-  bool     HasCR;      // True if Condition Register instruction issued
-  bool     HasSPR;     // True if Special-Purpose Register instruction used
-  bool     HasVALU;    // True if Vector Arithmetic instruction issued
-  bool     HasVPERM;   // True if Vector Permute instruction issued
+  unsigned NumIssued;  // Number of insts issued, including advanced cycles.
   
   // Various things that can cause a structural hazard.
   
@@ -42,17 +36,17 @@ class PPCHazardRecognizer970 : public HazardRecognizer {
   bool HasCTRSet;
   
   // StoredPtr - Keep track of the address of any store.  If we see a load from
-  // the same address (or one that aliases it), disallow the store.  We only
-  // need one pointer here, because there can only be two LSU operations and we
-  // only get an LSU reject if the first is a store and the second is a load.
+  // the same address (or one that aliases it), disallow the store.  We can have
+  // up to four stores in one dispatch group, hence we track up to 4.
   //
   // This is null if we haven't seen a store yet.  We keep track of both
   // operands of the store here, since we support [r+r] and [r+i] addressing.
-  SDOperand StorePtr1, StorePtr2;
-  unsigned  StoreSize;
+  SDOperand StorePtr1[4], StorePtr2[4];
+  unsigned  StoreSize[4];
+  unsigned NumStores;
   
 public:
-  PPCHazardRecognizer970();
+  PPCHazardRecognizer970(const TargetInstrInfo &TII);
   virtual HazardType getHazardType(SDNode *Node);
   virtual void EmitInstruction(SDNode *Node);
   virtual void AdvanceCycle();
@@ -63,13 +57,11 @@ private:
   ///
   void EndDispatchGroup();
   
-  enum PPC970InstrType {
-    FXU, FXU_FIRST, LSU_LD, LSU_ST, FPU, CR, SPR, VALU, VPERM, BR, PseudoInst
-  };
-  
   /// GetInstrType - Classify the specified powerpc opcode according to its
   /// pipeline.
-  PPC970InstrType GetInstrType(unsigned Opcode);
+  PPCII::PPC970_Unit GetInstrType(unsigned Opcode,
+                                  bool &isFirst, bool &isSingle,
+                                  bool &isLoad, bool &isStore);
   
   bool isLoadOfStoredAddress(unsigned LoadSize,
                              SDOperand Ptr1, SDOperand Ptr2) const;

@@ -27,7 +27,27 @@ class I<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin>
   let OperandList = OL;
   let AsmString = asmstr;
   let Itinerary = itin;
+  
+  /// These fields correspond to the fields in PPCInstrInfo.h.  Any changes to
+  /// these must be reflected there!  See comments there for what these are.
+  bits<1> PPC970_First = 0;
+  bits<1> PPC970_Single = 0;
+  bits<3> PPC970_Unit = 0;
 }
+
+class PPC970_DGroup_First  { bits<1> PPC970_First = 1;  }
+class PPC970_DGroup_Single { bits<1> PPC970_Single = 1; }
+class PPC970_MicroCode;
+
+class PPC970_Unit_Pseudo   { bits<3> PPC970_Unit = 0;   }
+class PPC970_Unit_FXU      { bits<3> PPC970_Unit = 1;   }
+class PPC970_Unit_LSU      { bits<3> PPC970_Unit = 2;   }
+class PPC970_Unit_FPU      { bits<3> PPC970_Unit = 3;   }
+class PPC970_Unit_CRU      { bits<3> PPC970_Unit = 4;   }
+class PPC970_Unit_VALU     { bits<3> PPC970_Unit = 5;   }
+class PPC970_Unit_VPERM    { bits<3> PPC970_Unit = 6;   }
+class PPC970_Unit_BRU      { bits<3> PPC970_Unit = 7;   }
+
 
 // 1.7.1 I-Form
 class IForm<bits<6> opcode, bit aa, bit lk, dag OL, string asmstr,
