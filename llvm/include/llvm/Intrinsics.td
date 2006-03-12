@@ -112,7 +112,7 @@ def int_gcwrite : Intrinsic<[llvm_void_ty, llvm_ptr_ty, llvm_ptrptr_ty],
 //  
 def int_returnaddress : Intrinsic<[llvm_ptr_ty, llvm_uint_ty], [InstrNoMem]>;
 def int_frameaddress  : Intrinsic<[llvm_ptr_ty, llvm_uint_ty], [InstrNoMem]>;
-def int_stacksave     : Intrinsic<[llvm_ptr_ty]>;
+def int_stacksave     : Intrinsic<[llvm_ptr_ty], [IntrReadMem]>;
 def int_stackrestore  : Intrinsic<[llvm_void_ty, llvm_ptr_ty]>;
 def int_prefetch      : Intrinsic<[llvm_void_ty, llvm_ptr_ty, 
                                    llvm_uint_ty, llvm_uint_ty]>;
