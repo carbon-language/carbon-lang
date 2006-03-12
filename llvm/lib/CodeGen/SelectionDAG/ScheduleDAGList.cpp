@@ -357,6 +357,8 @@ void ScheduleDAGList::BuildSchedUnits() {
     // Remove MainNode from FlaggedNodes again.
     SU->FlaggedNodes.pop_back();
   }
+  
+  return;
   DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
         SUnits[su].dumpAll(&DAG));
 }
@@ -550,14 +552,14 @@ void ScheduleDAGList::ReleaseSucc(SUnit *SuccSU, bool isChain) {
     unsigned AvailableCycle = 0;
     for (std::set<std::pair<SUnit*, bool> >::iterator I = SuccSU->Preds.begin(),
          E = SuccSU->Preds.end(); I != E; ++I) {
-      // If this is a token edge, we don't need to wait for the full latency of
-      // the preceeding instruction (e.g. a long-latency load) unless there is
-      // also some other data dependence.
+      // If this is a token edge, we don't need to wait for the latency of the
+      // preceeding instruction (e.g. a long-latency load) unless there is also
+      // some other data dependence.
       unsigned PredDoneCycle = I->first->Cycle;
       if (!I->second)
         PredDoneCycle += I->first->Latency;
-      else
-        PredDoneCycle += 1;  
+      else if (I->first->Latency)
+        PredDoneCycle += 1;
 
       AvailableCycle = std::max(AvailableCycle, PredDoneCycle);
     }
@@ -608,7 +610,7 @@ void ScheduleDAGList::ListScheduleTopDown() {
   while (!AvailableQueue->empty() || !PendingQueue.empty()) {
     // Check to see if any of the pending instructions are ready to issue.  If
     // so, add them to the available queue.
-    for (unsigned i = 0, e = PendingQueue.size(); i != e; ++i)
+    for (unsigned i = 0, e = PendingQueue.size(); i != e; ++i) {
       if (PendingQueue[i].first == CurCycle) {
         AvailableQueue->push(PendingQueue[i].second);
         PendingQueue[i].second->isAvailable = true;
@@ -618,54 +620,67 @@ void ScheduleDAGList::ListScheduleTopDown() {
       } else {
         assert(PendingQueue[i].first > CurCycle && "Negative latency?");
       }
+    }
     
-    SUnit *FoundNode = 0;
+    // If there are no instructions available, don't try to issue anything, and
+    // don't advance the hazard recognizer.
+    if (AvailableQueue->empty()) {
+      ++CurCycle;
+      continue;
+    }
 
+    SUnit *FoundSUnit = 0;
+    SDNode *FoundNode = 0;
+    
     bool HasNoopHazards = false;
     while (!AvailableQueue->empty()) {
-      SUnit *CurNode = AvailableQueue->pop();
+      SUnit *CurSUnit = AvailableQueue->pop();
       
       // Get the node represented by this SUnit.
-      SDNode *N = CurNode->Node;
+      FoundNode = CurSUnit->Node;
+      
       // If this is a pseudo op, like copyfromreg, look to see if there is a
       // real target node flagged to it.  If so, use the target node.
-      for (unsigned i = 0, e = CurNode->FlaggedNodes.size(); 
-           N->getOpcode() < ISD::BUILTIN_OP_END && i != e; ++i)
-        N = CurNode->FlaggedNodes[i];
+      for (unsigned i = 0, e = CurSUnit->FlaggedNodes.size(); 
+           FoundNode->getOpcode() < ISD::BUILTIN_OP_END && i != e; ++i)
+        FoundNode = CurSUnit->FlaggedNodes[i];
       
-      HazardRecognizer::HazardType HT = HazardRec->getHazardType(N);
+      HazardRecognizer::HazardType HT = HazardRec->getHazardType(FoundNode);
       if (HT == HazardRecognizer::NoHazard) {
-        FoundNode = CurNode;
+        FoundSUnit = CurSUnit;
         break;
       }
       
       // Remember if this is a noop hazard.
       HasNoopHazards |= HT == HazardRecognizer::NoopHazard;
       
-      NotReady.push_back(CurNode);
+      NotReady.push_back(CurSUnit);
     }
     
     // Add the nodes that aren't ready back onto the available list.
-    AvailableQueue->push_all(NotReady);
-    NotReady.clear();
+    if (!NotReady.empty()) {
+      AvailableQueue->push_all(NotReady);
+      NotReady.clear();
+    }
 
     // If we found a node to schedule, do it now.
-    if (FoundNode) {
-      ScheduleNodeTopDown(FoundNode, CurCycle);
-      HazardRec->EmitInstruction(FoundNode->Node);
-      FoundNode->isScheduled = true;
-      AvailableQueue->ScheduledNode(FoundNode);
+    if (FoundSUnit) {
+      ScheduleNodeTopDown(FoundSUnit, CurCycle);
+      HazardRec->EmitInstruction(FoundNode);
+      FoundSUnit->isScheduled = true;
+      AvailableQueue->ScheduledNode(FoundSUnit);
 
       // If this is a pseudo-op node, we don't want to increment the current
       // cycle.
-      if (FoundNode->Latency == 0)
-        continue;   // Don't increment for pseudo-ops!
+      if (FoundSUnit->Latency)  // Don't increment CurCycle for pseudo-ops!
+        ++CurCycle;        
     } else if (!HasNoopHazards) {
       // Otherwise, we have a pipeline stall, but no other problem, just advance
       // the current cycle and try again.
       DEBUG(std::cerr << "*** Advancing cycle, no work to do\n");
       HazardRec->AdvanceCycle();
       ++NumStalls;
+      ++CurCycle;
     } else {
       // Otherwise, we have no instructions to issue and we have instructions
       // that will fault if we don't do this right.  This is the case for
@@ -674,8 +689,8 @@ void ScheduleDAGList::ListScheduleTopDown() {
       HazardRec->EmitNoop();
       Sequence.push_back(0);   // NULL SUnit* -> noop
       ++NumNoops;
+      ++CurCycle;
     }
-    ++CurCycle;
   }
 
 #ifndef NDEBUG
