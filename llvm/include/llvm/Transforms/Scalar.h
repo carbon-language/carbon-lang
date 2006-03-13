@@ -15,6 +15,8 @@
 #ifndef LLVM_TRANSFORMS_SCALAR_H
 #define LLVM_TRANSFORMS_SCALAR_H
 
+#include <cstdlib>
+
 namespace llvm {
 
 class ModulePass;
@@ -22,6 +24,7 @@ class FunctionPass;
 class GetElementPtrInst;
 class PassInfo;
 class TerminatorInst;
+class TargetLowering;
 
 //===----------------------------------------------------------------------===//
 //
@@ -132,9 +135,12 @@ FunctionPass *createLICMPass();
 // a loop's canonical induction variable as one of their indices.  The
 // MaxTargetAMSize is the largest element size that the target architecture
 // can handle in its addressing modes.  Power of two multipliers less than or
-// equal to this value are not reduced.
+// equal to this value are not reduced. It also takes an optional second
+// parameter used to consult the target machine whether certain transformations
+// are profitable.
 //
-FunctionPass *createLoopStrengthReducePass(unsigned MaxTargetAMSize = 1);
+FunctionPass *createLoopStrengthReducePass(unsigned MaxTargetAMSize = 1,
+                                           const TargetLowering *TLI = NULL);
 
 //===----------------------------------------------------------------------===//
 //
