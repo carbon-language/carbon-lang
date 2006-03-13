@@ -714,9 +714,27 @@ SDOperand DAGCombiner::visitADD(SDNode *N) {
   // fold (A+(B-A)) -> B
   if (N1.getOpcode() == ISD::SUB && N0 == N1.getOperand(1))
     return N1.getOperand(0);
-  // 
+
   if (!MVT::isVector(VT) && SimplifyDemandedBits(SDOperand(N, 0)))
     return SDOperand();
+  
+  // fold (a+b) -> (a|b) iff a and b share no bits.
+  if (MVT::isInteger(VT) && !MVT::isVector(VT)) {
+    uint64_t LHSZero, LHSOne;
+    uint64_t RHSZero, RHSOne;
+    uint64_t Mask = MVT::getIntVTBitMask(VT);
+    TLI.ComputeMaskedBits(N0, Mask, LHSZero, LHSOne);
+    if (LHSZero) {
+      TLI.ComputeMaskedBits(N1, Mask, RHSZero, RHSOne);
+      
+      // If all possibly-set bits on the LHS are clear on the RHS, return an OR.
+      // If all possibly-set bits on the RHS are clear on the LHS, return an OR.
+      if ((RHSZero & (~LHSZero & Mask)) == (~LHSZero & Mask) ||
+          (LHSZero & (~RHSZero & Mask)) == (~RHSZero & Mask))
+        return DAG.getNode(ISD::OR, VT, N0, N1);
+    }
+  }
+  
   return SDOperand();
 }
 
