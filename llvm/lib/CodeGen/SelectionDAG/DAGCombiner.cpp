@@ -2102,6 +2102,18 @@ SDOperand DAGCombiner::visitFP_ROUND(SDNode *N) {
   // fold (fp_round c1fp) -> c1fp
   if (N0CFP)
     return DAG.getNode(ISD::FP_ROUND, VT, N0);
+  
+  // fold (fp_round (fp_extend x)) -> x
+  if (N0.getOpcode() == ISD::FP_EXTEND && VT == N0.getOperand(0).getValueType())
+    return N0.getOperand(0);
+  
+  // fold (fp_round (copysign X, Y)) -> (copysign (fp_round X), Y)
+  if (N0.getOpcode() == ISD::FCOPYSIGN && N0.Val->hasOneUse()) {
+    SDOperand Tmp = DAG.getNode(ISD::FP_ROUND, VT, N0.getOperand(0));
+    AddToWorkList(Tmp.Val);
+    return DAG.getNode(ISD::FCOPYSIGN, VT, Tmp, N0.getOperand(1));
+  }
+  
   return SDOperand();
 }
 
