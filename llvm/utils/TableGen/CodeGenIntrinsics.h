@@ -30,6 +30,10 @@ namespace llvm {
     /// of the arguments.  These are things like Type::UIntTyID.
     std::vector<std::string> ArgTypes;
     
+    /// ArgTypeDefs - The records for each argument type.
+    ///
+    std::vector<Record*> ArgTypeDefs;
+    
     // Memory mod/ref behavior of this intrinsic.
     enum {
       NoMem, ReadArgMem, ReadMem, WriteArgMem, WriteMem

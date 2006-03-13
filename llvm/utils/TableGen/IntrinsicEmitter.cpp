@@ -13,6 +13,7 @@
 
 #include "IntrinsicEmitter.h"
 #include "Record.h"
+#include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -52,6 +53,7 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
     Record *TyEl = DI->getDef();
     assert(TyEl->isSubClassOf("LLVMType") && "Expected a type!");
     ArgTypes.push_back(TyEl->getValueAsString("TypeVal"));
+    ArgTypeDefs.push_back(TyEl);
   }
   if (ArgTypes.size() == 0)
     throw "Intrinsic '"+DefName+"' needs at least a type for the ret value!";
@@ -151,6 +153,25 @@ EmitFnNameRecognizer(const std::vector<CodeGenIntrinsic> &Ints,
   OS << "#endif\n\n";
 }
 
+static void EmitTypeVerify(std::ostream &OS, const std::string &Val,
+                           Record *ArgType) {
+  OS << "    Assert1(" << Val << "->getTypeID() == "
+     << ArgType->getValueAsString("TypeVal") << ",\n"
+     << "            \"Illegal intrinsic type!\", IF);\n";
+
+  // If this is a packed type, check that the subtype and size are correct.
+  if (ArgType->isSubClassOf("LLVMPackedType")) {
+    Record *SubType = ArgType->getValueAsDef("ElTy");
+    OS << "    Assert1(cast<PackedType>(" << Val
+       << ")->getElementType()->getTypeID() == "
+       << SubType->getValueAsString("TypeVal") << ",\n"
+       << "            \"Illegal intrinsic type!\", IF);\n";
+    OS << "    Assert1(cast<PackedType>(" << Val << ")->getNumElements() == "
+       << ArgType->getValueAsInt("NumElts") << ",\n"
+       << "            \"Illegal intrinsic type!\", IF);\n";
+  }
+}
+
 void IntrinsicEmitter::EmitVerifier(const std::vector<CodeGenIntrinsic> &Ints, 
                                     std::ostream &OS) {
   OS << "// Verifier::visitIntrinsicFunctionCall code.\n";
@@ -163,13 +184,10 @@ void IntrinsicEmitter::EmitVerifier(const std::vector<CodeGenIntrinsic> &Ints,
     OS << "    Assert1(FTy->getNumParams() == " << Ints[i].ArgTypes.size()-1
        << ",\n"
        << "            \"Illegal # arguments for intrinsic function!\", IF);\n";
-    OS << "    Assert1(FTy->getReturnType()->getTypeID() == "
-       << Ints[i].ArgTypes[0] << ",\n"
-       << "            \"Illegal result type!\", IF);\n";
+    EmitTypeVerify(OS, "FTy->getReturnType()", Ints[i].ArgTypeDefs[0]);
     for (unsigned j = 1; j != Ints[i].ArgTypes.size(); ++j)
-      OS << "    Assert1(FTy->getParamType(" << j-1 << ")->getTypeID() == "
-         << Ints[i].ArgTypes[j] << ",\n"
-         << "            \"Illegal argument type!\", IF);\n";
+      EmitTypeVerify(OS, "FTy->getParamType(" + utostr(j-1) + ")",
+                     Ints[i].ArgTypeDefs[j]);
     OS << "    break;\n";
   }
   OS << "  }\n";
