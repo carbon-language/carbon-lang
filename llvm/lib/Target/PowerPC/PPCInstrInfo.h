@@ -37,9 +37,13 @@ enum {
   /// terminates it, so it will be the sole instruction in the group.
   PPC970_Single = 0x2,
 
+  /// PPC970_Cracked - This instruction is cracked into two pieces, requiring
+  /// two dispatch pipes to be available to issue.
+  PPC970_Cracked = 0x4,
+  
   /// PPC970_Mask/Shift - This is a bitmask that selects the pipeline type that
   /// an instruction is issued to.
-  PPC970_Shift = 2,
+  PPC970_Shift = 3,
   PPC970_Mask = 0x07 << PPC970_Shift,
 };
 enum PPC970_Unit {

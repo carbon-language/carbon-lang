@@ -6,9 +6,6 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
-//
-//
-//===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
 //
@@ -32,11 +29,13 @@ class I<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin>
   /// these must be reflected there!  See comments there for what these are.
   bits<1> PPC970_First = 0;
   bits<1> PPC970_Single = 0;
+  bits<1> PPC970_Cracked = 0;
   bits<3> PPC970_Unit = 0;
 }
 
-class PPC970_DGroup_First  { bits<1> PPC970_First = 1;  }
-class PPC970_DGroup_Single { bits<1> PPC970_Single = 1; }
+class PPC970_DGroup_First   { bits<1> PPC970_First = 1;  }
+class PPC970_DGroup_Single  { bits<1> PPC970_Single = 1; }
+class PPC970_DGroup_Cracked { bits<1> PPC970_Cracked = 1; }
 class PPC970_MicroCode;
 
 class PPC970_Unit_Pseudo   { bits<3> PPC970_Unit = 0;   }

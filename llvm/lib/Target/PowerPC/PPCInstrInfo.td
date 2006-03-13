@@ -293,7 +293,8 @@ def LBZ : DForm_1<34, (ops GPRC:$rD, memri:$src),
                   [(set GPRC:$rD, (zextload iaddr:$src, i8))]>;
 def LHA : DForm_1<42, (ops GPRC:$rD, memri:$src),
                   "lha $rD, $src", LdStLHA,
-                  [(set GPRC:$rD, (sextload iaddr:$src, i16))]>;
+                  [(set GPRC:$rD, (sextload iaddr:$src, i16))]>,
+                  PPC970_DGroup_Cracked;
 def LHZ : DForm_1<40, (ops GPRC:$rD, memri:$src),
                   "lhz $rD, $src", LdStGeneral,
                   [(set GPRC:$rD, (zextload iaddr:$src, i16))]>;
@@ -313,7 +314,8 @@ def ADDI   : DForm_2<14, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
                      [(set GPRC:$rD, (add GPRC:$rA, immSExt16:$imm))]>;
 def ADDIC  : DForm_2<12, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
                      "addic $rD, $rA, $imm", IntGeneral,
-                     [(set GPRC:$rD, (addc GPRC:$rA, immSExt16:$imm))]>;
+                     [(set GPRC:$rD, (addc GPRC:$rA, immSExt16:$imm))]>,
+                     PPC970_DGroup_Cracked;
 def ADDICo : DForm_2<13, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
                      "addic. $rD, $rA, $imm", IntGeneral,
                      []>;
@@ -412,7 +414,7 @@ def STFD : DForm_9<54, (ops F8RC:$rS, memri:$dst),
 let isLoad = 1, PPC970_Unit = 2 in {
 def LWA  : DSForm_1<58, 2, (ops GPRC:$rT, s16immX4:$DS, GPRC:$rA),
                     "lwa $rT, $DS($rA)", LdStLWA,
-                    []>, isPPC64;
+                    []>, isPPC64, PPC970_DGroup_Cracked;
 def LD   : DSForm_2<58, 0, (ops GPRC:$rT, s16immX4:$DS, GPRC:$rA),
                     "ld $rT, $DS($rA)", LdStLD,
                     []>, isPPC64;
@@ -435,13 +437,15 @@ def LBZX : XForm_1<31,  87, (ops GPRC:$rD, memrr:$src),
                    [(set GPRC:$rD, (zextload xaddr:$src, i8))]>;
 def LHAX : XForm_1<31, 343, (ops GPRC:$rD, memrr:$src),
                    "lhax $rD, $src", LdStLHA,
-                   [(set GPRC:$rD, (sextload xaddr:$src, i16))]>;
+                   [(set GPRC:$rD, (sextload xaddr:$src, i16))]>,
+                   PPC970_DGroup_Cracked;
 def LHZX : XForm_1<31, 279, (ops GPRC:$rD, memrr:$src),
                    "lhzx $rD, $src", LdStGeneral,
                    [(set GPRC:$rD, (zextload xaddr:$src, i16))]>;
 def LWAX : XForm_1<31, 341, (ops G8RC:$rD, memrr:$src),
                    "lwax $rD, $src", LdStLHA,
-                   [(set G8RC:$rD, (sextload xaddr:$src, i32))]>, isPPC64;
+                   [(set G8RC:$rD, (sextload xaddr:$src, i32))]>, isPPC64,
+                   PPC970_DGroup_Cracked;
 def LWZX : XForm_1<31,  23, (ops GPRC:$rD, memrr:$src),
                    "lwzx $rD, $src", LdStGeneral,
                    [(set GPRC:$rD, (load xaddr:$src))]>;
@@ -529,19 +533,22 @@ def SRAW : XForm_6<31, 792, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
 let isStore = 1, noResults = 1, PPC970_Unit = 2 in {
 def STBX  : XForm_8<31, 215, (ops GPRC:$rS, memrr:$dst),
                    "stbx $rS, $dst", LdStGeneral,
-                   [(truncstore GPRC:$rS, xaddr:$dst, i8)]>;
+                   [(truncstore GPRC:$rS, xaddr:$dst, i8)]>, 
+                   PPC970_DGroup_Cracked;
 def STHX  : XForm_8<31, 407, (ops GPRC:$rS, memrr:$dst),
                    "sthx $rS, $dst", LdStGeneral,
-                   [(truncstore GPRC:$rS, xaddr:$dst, i16)]>;
+                   [(truncstore GPRC:$rS, xaddr:$dst, i16)]>, 
+                   PPC970_DGroup_Cracked;
 def STWX  : XForm_8<31, 151, (ops GPRC:$rS, memrr:$dst),
                    "stwx $rS, $dst", LdStGeneral,
-                   [(store GPRC:$rS, xaddr:$dst)]>;
+                   [(store GPRC:$rS, xaddr:$dst)]>,
+                   PPC970_DGroup_Cracked;
 def STWUX : XForm_8<31, 183, (ops GPRC:$rS, GPRC:$rA, GPRC:$rB),
                    "stwux $rS, $rA, $rB", LdStGeneral,
                    []>;
 def STDX  : XForm_8<31, 149, (ops GPRC:$rS, GPRC:$rA, GPRC:$rB),
                    "stdx $rS, $rA, $rB", LdStSTD,
-                   []>, isPPC64;
+                   []>, isPPC64, PPC970_DGroup_Cracked;
 def STDUX : XForm_8<31, 181, (ops GPRC:$rS, GPRC:$rA, GPRC:$rB),
                    "stdux $rS, $rA, $rB", LdStSTD,
                    []>, isPPC64;
@@ -721,26 +728,27 @@ def ADD8  : XOForm_1<31, 266, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
                      [(set G8RC:$rT, (add G8RC:$rA, G8RC:$rB))]>;
 def ADDC  : XOForm_1<31, 10, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "addc $rT, $rA, $rB", IntGeneral,
-                     [(set GPRC:$rT, (addc GPRC:$rA, GPRC:$rB))]>;
+                     [(set GPRC:$rT, (addc GPRC:$rA, GPRC:$rB))]>,
+                     PPC970_DGroup_Cracked;
 def ADDE  : XOForm_1<31, 138, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "adde $rT, $rA, $rB", IntGeneral,
                      [(set GPRC:$rT, (adde GPRC:$rA, GPRC:$rB))]>;
 def DIVD  : XOForm_1<31, 489, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
                      "divd $rT, $rA, $rB", IntDivD,
                      [(set G8RC:$rT, (sdiv G8RC:$rA, G8RC:$rB))]>, isPPC64,
-                     PPC970_DGroup_First;
+                     PPC970_DGroup_First, PPC970_DGroup_Cracked;
 def DIVDU : XOForm_1<31, 457, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
                      "divdu $rT, $rA, $rB", IntDivD,
                      [(set G8RC:$rT, (udiv G8RC:$rA, G8RC:$rB))]>, isPPC64,
-                     PPC970_DGroup_First;
+                     PPC970_DGroup_First, PPC970_DGroup_Cracked;
 def DIVW  : XOForm_1<31, 491, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "divw $rT, $rA, $rB", IntDivW,
                      [(set GPRC:$rT, (sdiv GPRC:$rA, GPRC:$rB))]>,
-                     PPC970_DGroup_First;
+                     PPC970_DGroup_First, PPC970_DGroup_Cracked;
 def DIVWU : XOForm_1<31, 459, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "divwu $rT, $rA, $rB", IntDivW,
                      [(set GPRC:$rT, (udiv GPRC:$rA, GPRC:$rB))]>,
-                     PPC970_DGroup_First;
+                     PPC970_DGroup_First, PPC970_DGroup_Cracked;
 def MULHD : XOForm_1<31, 73, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
                      "mulhd $rT, $rA, $rB", IntMulHW,
                      [(set G8RC:$rT, (mulhs G8RC:$rA, G8RC:$rB))]>;
@@ -764,7 +772,8 @@ def SUBF  : XOForm_1<31, 40, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      [(set GPRC:$rT, (sub GPRC:$rB, GPRC:$rA))]>;
 def SUBFC : XOForm_1<31, 8, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "subfc $rT, $rA, $rB", IntGeneral,
-                     [(set GPRC:$rT, (subc GPRC:$rB, GPRC:$rA))]>;
+                     [(set GPRC:$rT, (subc GPRC:$rB, GPRC:$rA))]>,
+                     PPC970_DGroup_Cracked;
 def SUBFE : XOForm_1<31, 136, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "subfe $rT, $rA, $rB", IntGeneral,
                      [(set GPRC:$rT, (sube GPRC:$rB, GPRC:$rA))]>;
@@ -891,7 +900,7 @@ let isTwoAddress = 1, isCommutable = 1 in {
 def RLWIMI : MForm_2<20,
                      (ops GPRC:$rA, GPRC:$rSi, GPRC:$rS, u5imm:$SH, u5imm:$MB, 
                       u5imm:$ME), "rlwimi $rA, $rS, $SH, $MB, $ME", IntRotate,
-                      []>;
+                      []>, PPC970_DGroup_Cracked;
 def RLDIMI : MDForm_1<30, 3,
                       (ops G8RC:$rA, G8RC:$rSi, G8RC:$rS, u6imm:$SH, u6imm:$MB),
                       "rldimi $rA, $rS, $SH, $MB", IntRotateD,
@@ -904,7 +913,7 @@ def RLWINM : MForm_2<21,
 def RLWINMo : MForm_2<21,
                      (ops GPRC:$rA, GPRC:$rS, u5imm:$SH, u5imm:$MB, u5imm:$ME),
                      "rlwinm. $rA, $rS, $SH, $MB, $ME", IntGeneral,
-                     []>, isDOT;
+                     []>, isDOT, PPC970_DGroup_Cracked;
 def RLWNM  : MForm_2<23,
                      (ops GPRC:$rA, GPRC:$rS, GPRC:$rB, u5imm:$MB, u5imm:$ME),
                      "rlwnm $rA, $rS, $rB, $MB, $ME", IntGeneral,
