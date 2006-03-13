@@ -84,7 +84,7 @@ bool PPCTargetMachine::addPassesToEmitFile(PassManager &PM,
   if (FileType != TargetMachine::AssemblyFile) return true;
   
   // Run loop strength reduction before anything else.
-  if (!Fast) PM.add(createLoopStrengthReducePass());
+  if (!Fast) PM.add(createLoopStrengthReducePass(1, &TLInfo));
 
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
@@ -138,7 +138,7 @@ void PPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   TM.setRelocationModel(Reloc::DynamicNoPIC);
 
   // Run loop strength reduction before anything else.
-  PM.add(createLoopStrengthReducePass());
+  PM.add(createLoopStrengthReducePass(1, TM.getTargetLowering()));
 
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
