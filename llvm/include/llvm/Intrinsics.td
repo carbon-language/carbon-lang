@@ -54,6 +54,11 @@ class LLVMType<string typeval> {
   string TypeVal = typeval;
 }
 
+class LLVMPackedType<int numelts, LLVMType elty> : LLVMType<"Type::PackedTyID">{
+  int NumElts = numelts;
+  LLVMType ElTy = elty;
+} 
+
 def llvm_void_ty       : LLVMType<"Type::VoidTyID">;
 def llvm_bool_ty       : LLVMType<"Type::BoolTyID">;
 def llvm_sbyte_ty      : LLVMType<"Type::SByteTyID">;
@@ -70,6 +75,10 @@ def llvm_ptr_ty        : LLVMType<"Type::PointerTyID">;     // sbyte*
 def llvm_ptrptr_ty     : LLVMType<"Type::PointerTyID">;     // sbyte**
 def llvm_anchor_ty     : LLVMType<"Type::PointerTyID">;     // {}*
 def llvm_descriptor_ty : LLVMType<"Type::PointerTyID">;     // global*
+
+def llvm_v4i32_ty      : LLVMPackedType<4, llvm_int_ty>;    // 4 x int
+def llvm_v4f32_ty      : LLVMPackedType<4, llvm_float_ty>;  // 4 x float
+def llvm_v2f64_ty      : LLVMPackedType<4, llvm_float_ty>;  // 2 x double
 
 //===----------------------------------------------------------------------===//
 // Intrinsic Definitions.
@@ -88,8 +97,16 @@ class Intrinsic<list<LLVMType> types,
                 list<IntrinsicProperty> properties = [],
                 string name = ""> {
   string LLVMName = name;
+  string GCCBuiltinName = "";
   list<LLVMType> Types = types;
   list<IntrinsicProperty> Properties = properties;
+}
+
+/// GCCBuiltin - If this intrinsic exactly corresponds to a GCC builtin, this
+/// specifies the name of the builtin.  This provides automatic CBE and CFE
+/// support.
+class GCCBuiltin<string name> {
+  string GCCBuiltinName = name;
 }
 
 
@@ -188,4 +205,17 @@ def int_dbg_region_start : Intrinsic<[llvm_void_ty]>;
 def int_dbg_region_end   : Intrinsic<[llvm_void_ty]>;
 def int_dbg_func_start   : Intrinsic<[llvm_void_ty, llvm_descriptor_ty]>;
 //    dbg_declare,      // Declare a local object
+
+
+
+//===----------------------------------------------------------------------===//
+// Target-specific intrinsics
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+// PowerPC Intrinsics
+
+def int_ppc_altivec_lvx : Intrinsic<[llvm_v4i32_ty, llvm_int_ty, llvm_ptr_ty],
+                                    [IntrReadMem]>,
+                          GCCBuiltin<"__builtin_altivec_lvx">;
 
