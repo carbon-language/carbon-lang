@@ -60,7 +60,7 @@ private:
   /// GetInstrType - Classify the specified powerpc opcode according to its
   /// pipeline.
   PPCII::PPC970_Unit GetInstrType(unsigned Opcode,
-                                  bool &isFirst, bool &isSingle,
+                                  bool &isFirst, bool &isSingle,bool &isCracked,
                                   bool &isLoad, bool &isStore);
   
   bool isLoadOfStoredAddress(unsigned LoadSize,

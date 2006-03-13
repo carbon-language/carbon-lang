@@ -42,10 +42,8 @@ using namespace llvm;
 //
 // FIXME: This is missing some significant cases:
 //   1. Modeling of microcoded instructions.
-//   2. Handling of cracked instructions.
-//   3. Handling of serialized operations.
-//   4. Handling of the esoteric cases in "Resource-based Instruction Grouping",
-//      e.g. integer divides that only execute in the second slot.
+//   2. Handling of serialized operations.
+//   3. Handling of the esoteric cases in "Resource-based Instruction Grouping".
 //
 
 PPCHazardRecognizer970::PPCHazardRecognizer970(const TargetInstrInfo &tii)
@@ -66,9 +64,10 @@ void PPCHazardRecognizer970::EndDispatchGroup() {
 PPCII::PPC970_Unit 
 PPCHazardRecognizer970::GetInstrType(unsigned Opcode,
                                      bool &isFirst, bool &isSingle,
-                                     bool &isLoad, bool &isStore){
+                                     bool &isCracked,
+                                     bool &isLoad, bool &isStore) {
   if (Opcode < ISD::BUILTIN_OP_END) {
-    isFirst = isSingle = isLoad = isStore = false;
+    isFirst = isSingle = isCracked = isLoad = isStore = false;
     return PPCII::PPC970_Pseudo;
   }
   Opcode -= ISD::BUILTIN_OP_END;
@@ -80,8 +79,9 @@ PPCHazardRecognizer970::GetInstrType(unsigned Opcode,
   
   unsigned TSFlags = TID.TSFlags;
   
-  isFirst  = TSFlags & PPCII::PPC970_First;
-  isSingle = TSFlags & PPCII::PPC970_Single;
+  isFirst   = TSFlags & PPCII::PPC970_First;
+  isSingle  = TSFlags & PPCII::PPC970_Single;
+  isCracked = TSFlags & PPCII::PPC970_Cracked;
   return (PPCII::PPC970_Unit)(TSFlags & PPCII::PPC970_Mask);
 }
 
@@ -122,17 +122,24 @@ isLoadOfStoredAddress(unsigned LoadSize, SDOperand Ptr1, SDOperand Ptr2) const {
 /// pipeline flush.
 HazardRecognizer::HazardType PPCHazardRecognizer970::
 getHazardType(SDNode *Node) {
-  bool isFirst, isSingle, isLoad, isStore;
+  bool isFirst, isSingle, isCracked, isLoad, isStore;
   PPCII::PPC970_Unit InstrType = 
-    GetInstrType(Node->getOpcode(), isFirst, isSingle, isLoad, isStore);
+    GetInstrType(Node->getOpcode(), isFirst, isSingle, isCracked,
+                 isLoad, isStore);
   if (InstrType == PPCII::PPC970_Pseudo) return NoHazard;  
   unsigned Opcode = Node->getOpcode()-ISD::BUILTIN_OP_END;
 
   // We can only issue a PPC970_First/PPC970_Single instruction (such as
   // crand/mtspr/etc) if this is the first cycle of the dispatch group.
-  if (NumIssued != 0 && (isFirst || isSingle) )
+  if (NumIssued != 0 && (isFirst || isSingle))
     return Hazard;
   
+  // If this instruction is cracked into two ops by the decoder, we know that
+  // it is not a branch and that it cannot issue if 3 other instructions are
+  // already in the dispatch group.
+  if (isCracked && NumIssued > 2)
+    return Hazard;
+      
   switch (InstrType) {
   default: assert(0 && "Unknown instruction type!");
   case PPCII::PPC970_FXU:
@@ -150,7 +157,7 @@ getHazardType(SDNode *Node) {
   case PPCII::PPC970_BRU:
     break;
   }
-
+  
   // Do not allow MTCTR and BCTRL to be in the same dispatch group.
   if (HasCTRSet && Opcode == PPC::BCTRL)
     return NoopHazard;
@@ -203,9 +210,10 @@ getHazardType(SDNode *Node) {
 }
 
 void PPCHazardRecognizer970::EmitInstruction(SDNode *Node) {
-  bool isFirst, isSingle, isLoad, isStore;
+  bool isFirst, isSingle, isCracked, isLoad, isStore;
   PPCII::PPC970_Unit InstrType = 
-    GetInstrType(Node->getOpcode(), isFirst, isSingle, isLoad, isStore);
+    GetInstrType(Node->getOpcode(), isFirst, isSingle, isCracked,
+                 isLoad, isStore);
   if (InstrType == PPCII::PPC970_Pseudo) return;  
   unsigned Opcode = Node->getOpcode()-ISD::BUILTIN_OP_END;
 
@@ -259,6 +267,11 @@ void PPCHazardRecognizer970::EmitInstruction(SDNode *Node) {
   if (InstrType == PPCII::PPC970_BRU || isSingle)
     NumIssued = 4;  // Terminate a d-group.
   ++NumIssued;
+  
+  // If this instruction is cracked into two ops by the decoder, remember that
+  // we issued two pieces.
+  if (isCracked)
+    ++NumIssued;
   
   if (NumIssued == 5)
     EndDispatchGroup();
