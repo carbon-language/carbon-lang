@@ -106,7 +106,7 @@ isLoadOfStoredAddress(unsigned LoadSize, SDOperand Ptr1, SDOperand Ptr2) const {
           int StoreOffs = StoreOffset->getValue();
           int LoadOffs  = LoadOffset->getValue();
           if (StoreOffs < LoadOffs) {
-            if (int(StoreOffs+StoreSize) > LoadOffs) return true;
+            if (int(StoreOffs+StoreSize[i]) > LoadOffs) return true;
           } else {
             if (int(LoadOffs+LoadSize) > StoreOffs) return true;
           }
@@ -164,7 +164,7 @@ getHazardType(SDNode *Node) {
   
   // If this is a load following a store, make sure it's not to the same or
   // overlapping address.
-  if (isLoad && StoreSize) {
+  if (isLoad && NumStores) {
     unsigned LoadSize;
     switch (Opcode) {
     default: assert(0 && "Unknown load!");
