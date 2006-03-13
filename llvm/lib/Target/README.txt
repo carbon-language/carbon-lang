@@ -56,20 +56,6 @@ Number 1 is the preferred solution.
 
 //===---------------------------------------------------------------------===//
 
-DAG combine this into mul A, 8:
-
-int %test(int %A) {
-  %B = mul int %A, 8  ;; shift
-  %C = add int %B, 7  ;; dead, no demanded bits.
-  %D = and int %C, -8 ;; dead once add is gone.
-  ret int %D
-}
-
-This sort of thing occurs in the alloca lowering code and other places that
-are generating alignment of an already aligned value.
-
-//===---------------------------------------------------------------------===//
-
 Turn this into a signed shift right in instcombine:
 
 int f(unsigned x) {
@@ -78,14 +64,6 @@ int f(unsigned x) {
 
 http://gcc.gnu.org/bugzilla/show_bug.cgi?id=25600
 http://gcc.gnu.org/ml/gcc-patches/2006-02/msg01492.html
-
-//===---------------------------------------------------------------------===//
-
-We should reassociate:
-int f(int a, int b){ return a * a + 2 * a * b + b * b; }
-into:
-int f(int a, int b) { return a * (a + 2 * b) + b * b; }
-to eliminate a multiply.
 
 //===---------------------------------------------------------------------===//
 
