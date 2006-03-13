@@ -665,6 +665,7 @@ SDOperand DAGCombiner::visitTokenFactor(SDNode *N) {
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
     SDOperand Op = N->getOperand(i);
     if (Op.getOpcode() == ISD::TokenFactor && Op.hasOneUse()) {
+      AddToWorkList(Op.Val);  // Remove dead node.
       Changed = true;
       for (unsigned j = 0, e = Op.getNumOperands(); j != e; ++j)
         Ops.push_back(Op.getOperand(j));
