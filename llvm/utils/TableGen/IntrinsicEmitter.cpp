@@ -33,6 +33,7 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
       std::string(DefName.begin(), DefName.begin()+4) != "int_")
     throw "Intrinsic '" + DefName + "' does not start with 'int_'!";
   EnumName = std::string(DefName.begin()+4, DefName.end());
+  GCCBuiltinName = R->getValueAsString("GCCBuiltinName");
   
   Name = R->getValueAsString("LLVMName");
   if (Name == "") {
@@ -105,6 +106,9 @@ void IntrinsicEmitter::run(std::ostream &OS) {
   
   // Emit side effect info for each function.
   EmitSideEffectInfo(Ints, OS);
+
+  // Emit a list of intrinsics with corresponding GCC builtins.
+  EmitGCCBuiltinList(Ints, OS);
 }
 
 void IntrinsicEmitter::EmitEnumInfo(const std::vector<CodeGenIntrinsic> &Ints,
@@ -221,16 +225,31 @@ EmitSideEffectInfo(const std::vector<CodeGenIntrinsic> &Ints, std::ostream &OS){
   OS << "  default: break;\n";
   for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
     switch (Ints[i].ModRef) {
-      default: break;
-      case CodeGenIntrinsic::NoMem:
-      case CodeGenIntrinsic::ReadArgMem:
-      case CodeGenIntrinsic::ReadMem:
-        OS << "  case Intrinsic::" << Ints[i].EnumName << ":\n";
-        break;
+    default: break;
+    case CodeGenIntrinsic::NoMem:
+    case CodeGenIntrinsic::ReadArgMem:
+    case CodeGenIntrinsic::ReadMem:
+      OS << "  case Intrinsic::" << Ints[i].EnumName << ":\n";
+      break;
     }
   }
   OS << "    return true; // These intrinsics have no side effects.\n";
   OS << "  }\n";
   OS << "#endif\n\n";
-  
+}
+
+void IntrinsicEmitter::
+EmitGCCBuiltinList(const std::vector<CodeGenIntrinsic> &Ints, std::ostream &OS){
+  OS << "// Get the GCC builtin that corresponds to an LLVM intrinsic.\n";
+  OS << "#ifdef GET_GCC_BUILTIN_NAME\n";
+  OS << "  switch (F->getIntrinsicID()) {\n";
+  OS << "  default: BuiltinName = \"\"; break;\n";
+  for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
+    if (!Ints[i].GCCBuiltinName.empty()) {
+      OS << "  case Intrinsic::" << Ints[i].EnumName << ": BuiltinName = \""
+         << Ints[i].GCCBuiltinName << "\"; break;\n";
+    }
+  }
+  OS << "  }\n";
+  OS << "#endif\n\n";
 }
