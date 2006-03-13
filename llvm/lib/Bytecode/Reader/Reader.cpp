@@ -1861,8 +1861,8 @@ void BytecodeReader::ParseFunctionBody(Function* F) {
   if (!upgradedFunctions.empty()) {
     for (Function::iterator BI = F->begin(), BE = F->end(); BI != BE; ++BI) 
       for (BasicBlock::iterator II = BI->begin(), IE = BI->end(); 
-           II != IE; ++II)
-        if (CallInst* CI = dyn_cast<CallInst>(II)) {
+           II != IE;)
+        if (CallInst* CI = dyn_cast<CallInst>(II++)) {
           std::map<Function*,Function*>::iterator FI = 
             upgradedFunctions.find(CI->getCalledFunction());
           if (FI != upgradedFunctions.end())

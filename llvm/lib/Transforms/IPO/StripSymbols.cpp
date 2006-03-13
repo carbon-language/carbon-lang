@@ -116,7 +116,7 @@ bool StripSymbols::runOnModule(Module &M) {
     Value *RV = UndefValue::get(StopPoint->getFunctionType()->getReturnType());
     while (!StopPoint->use_empty()) {
       CallInst *CI = cast<CallInst>(StopPoint->use_back());
-      Value *Arg = CI->getOperand(4);
+      Value *Arg = CI->getOperand(3);
       CI->replaceAllUsesWith(RV);
       CI->eraseFromParent();
       if (Arg->use_empty())

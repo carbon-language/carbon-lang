@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Assembly/AutoUpgrade.h"
+#include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Module.h"
@@ -73,6 +74,31 @@ static Function *getUpgradedIntrinsic(Function *F) {
     if (Name == "llvm.ctpop" || Name == "llvm.ctlz" || Name == "llvm.cttz")
       return getUpgradedUnaryFn(F);
     break;
+  case 'd':
+    if (Name == "llvm.dbg.stoppoint") {
+      if (F->getReturnType() != Type::VoidTy) {
+        return M->getOrInsertFunction(Name, Type::VoidTy,
+                                      Type::UIntTy,
+                                      Type::UIntTy,
+                                      F->getFunctionType()->getParamType(3),
+                                      NULL);
+      }
+    } else if (Name == "llvm.dbg.func.start") {
+      if (F->getReturnType()  != Type::VoidTy) {
+        return M->getOrInsertFunction(Name, Type::VoidTy,
+                                      F->getFunctionType()->getParamType(0),
+                                      NULL);
+      }
+    } else if (Name == "llvm.dbg.region.start") {
+      if (F->getReturnType() != Type::VoidTy) {
+        return M->getOrInsertFunction(Name, Type::VoidTy, NULL);
+      }
+    } else if (Name == "llvm.dbg.region.end") {
+      if (F->getReturnType() != Type::VoidTy) {
+        return M->getOrInsertFunction(Name, Type::VoidTy, NULL);
+      }
+    }
+    break;
   case 'i':
     if (Name == "llvm.isunordered" && F->arg_begin() != F->arg_end()) {
       if (F->arg_begin()->getType() == Type::FloatTy)
@@ -104,6 +130,29 @@ static Function *getUpgradedIntrinsic(Function *F) {
     break;
   }
   return 0;
+}
+
+// Occasionally upgraded function call site arguments need to be permutated to
+// some new order.  The result of getArgumentPermutation is an array of size 
+// F->getFunctionType()getNumParams() indicating the new operand order.  A value
+// of zero in the array indicates replacing with UndefValue for the arg type.
+// NULL is returned if there is no permutation.  It's assumed that the function
+// name is in the form "llvm.?????"
+static unsigned *getArgumentPermutation(Function* F) {
+  // Get the Function's name.
+  const std::string& Name = F->getName();
+  switch (Name[5]) {
+  case 'd':
+    if (Name == "llvm.dbg.stoppoint") {
+      static unsigned Permutation[] = { 2, 3, 4 };
+      assert(F->getFunctionType()->getNumParams() ==
+             (sizeof(Permutation) / sizeof(unsigned)) &&
+             "Permutation is wrong length");
+      return Permutation;
+    }
+    break;
+  }
+  return NULL;
 }
 
 // UpgradeIntrinsicFunction - Convert overloaded intrinsic function names to
@@ -157,72 +206,75 @@ Instruction* llvm::MakeUpgradedCall(Function *F,
   return result;
 }
 
-// UpgradeIntrinsicCall - In the BC reader, change a call to some intrinsic to
-// be a called to the specified intrinsic.  We expect the callees to have the
-// same number of arguments, but their types may be different.
+// UpgradeIntrinsicCall - In the BC reader, change a call to an intrinsic to be
+// a call to an upgraded intrinsic.  We may have to permute the order or promote
+// some arguments with a cast.
 void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
   Function *F = CI->getCalledFunction();
 
   const FunctionType *NewFnTy = NewFn->getFunctionType();
   std::vector<Value*> Oprnds;
-  for (unsigned i = 1, e = CI->getNumOperands(); i != e; ++i) {
-    Value *V = CI->getOperand(i);
-    if (V->getType() != NewFnTy->getParamType(i-1))
-      V = new CastInst(V, NewFnTy->getParamType(i-1), V->getName(), CI);
-    Oprnds.push_back(V);
+  
+  unsigned *Permutation = getArgumentPermutation(NewFn);
+  unsigned N = NewFnTy->getNumParams();
+
+  if (Permutation) {
+    for (unsigned i = 0; i != N; ++i) {
+      unsigned p = Permutation[i];
+      
+      if (p) {
+        Value *V = CI->getOperand(p);
+        if (V->getType() != NewFnTy->getParamType(i))
+          V = new CastInst(V, NewFnTy->getParamType(i), V->getName(), CI);
+        Oprnds.push_back(V);
+      } else
+        Oprnds.push_back(UndefValue::get(NewFnTy->getParamType(i)));
+    }
+  } else {
+    assert(N == (CI->getNumOperands() - 1) &&
+           "Upgraded function needs permutation");
+    for (unsigned i = 0; i != N; ++i) {
+      Value *V = CI->getOperand(i + 1);
+      if (V->getType() != NewFnTy->getParamType(i))
+        V = new CastInst(V, NewFnTy->getParamType(i), V->getName(), CI);
+      Oprnds.push_back(V);
+    }
   }
-  CallInst *NewCI = new CallInst(NewFn, Oprnds, CI->getName(), CI);
+  
+  bool NewIsVoid = NewFn->getReturnType() == Type::VoidTy;
+  
+  CallInst *NewCI = new CallInst(NewFn, Oprnds,
+                                 NewIsVoid ? "" : CI->getName(),
+                                 CI);
   NewCI->setTailCall(CI->isTailCall());
   NewCI->setCallingConv(CI->getCallingConv());
   
   if (!CI->use_empty()) {
-    Instruction *RetVal = NewCI;
-    if (F->getReturnType() != NewFn->getReturnType()) {
-      RetVal = new CastInst(NewCI, NewFn->getReturnType(), 
-                            NewCI->getName(), CI);
-      NewCI->moveBefore(RetVal);
+    if (NewIsVoid) {
+      CI->replaceAllUsesWith(UndefValue::get(CI->getType()));
+    } else {
+      Instruction *RetVal = NewCI;
+      
+      if (F->getReturnType() != NewFn->getReturnType()) {
+        RetVal = new CastInst(NewCI, NewFn->getReturnType(), 
+                              NewCI->getName(), CI);
+        NewCI->moveBefore(RetVal);
+      }
+      
+      CI->replaceAllUsesWith(RetVal);
     }
-    CI->replaceAllUsesWith(RetVal);
   }
   CI->eraseFromParent();
 }
 
 bool llvm::UpgradeCallsToIntrinsic(Function* F) {
-  if (Function* newF = UpgradeIntrinsicFunction(F)) {
+  if (Function* NewFn = UpgradeIntrinsicFunction(F)) {
     for (Value::use_iterator UI = F->use_begin(), UE = F->use_end();
          UI != UE; ) {
-      if (CallInst* CI = dyn_cast<CallInst>(*UI++)) {
-        std::vector<Value*> Oprnds;
-        User::op_iterator OI = CI->op_begin();
-        ++OI;
-        for (User::op_iterator OE = CI->op_end(); OI != OE; ++OI) {
-          const Type* opTy = OI->get()->getType();
-          if (opTy->isSigned()) {
-            Oprnds.push_back(
-              new CastInst(OI->get(),opTy->getUnsignedVersion(), 
-                  "autoupgrade_cast",CI));
-          } else {
-            Oprnds.push_back(*OI);
-          }
-        }
-        CallInst* newCI = new CallInst(newF, Oprnds,
-                                       CI->hasName() ? "autoupcall" : "", CI);
-        newCI->setTailCall(CI->isTailCall());
-        newCI->setCallingConv(CI->getCallingConv());
-        if (CI->use_empty()) {
-          // noop
-        } else if (CI->getType() != newCI->getType()) {
-          CastInst *final = new CastInst(newCI, CI->getType(),
-                                         "autoupgrade_uncast", newCI);
-          newCI->moveBefore(final);
-          CI->replaceAllUsesWith(final);
-        } else {
-          CI->replaceAllUsesWith(newCI);
-        }
-        CI->eraseFromParent();
-      }
+      if (CallInst* CI = dyn_cast<CallInst>(*UI++)) 
+        UpgradeIntrinsicCall(CI, NewFn);
     }
-    if (newF != F)
+    if (NewFn != F)
       F->eraseFromParent();
     return true;
   }

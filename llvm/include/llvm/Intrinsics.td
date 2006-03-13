@@ -181,11 +181,11 @@ let Properties = [InstrNoMem] in {
 //===------------------------ Debugger Intrinsics -------------------------===//
 //
 
-def int_dbg_stoppoint    : Intrinsic<[llvm_anchor_ty, llvm_anchor_ty,
+def int_dbg_stoppoint    : Intrinsic<[llvm_void_ty,
                                       llvm_uint_ty, llvm_uint_ty, 
                                       llvm_descriptor_ty]>;
-def int_dbg_region_start : Intrinsic<[llvm_anchor_ty, llvm_anchor_ty]>;
-def int_dbg_region_end   : Intrinsic<[llvm_anchor_ty, llvm_anchor_ty]>;
-def int_dbg_func_start   : Intrinsic<[llvm_anchor_ty, llvm_descriptor_ty]>;
+def int_dbg_region_start : Intrinsic<[llvm_void_ty]>;
+def int_dbg_region_end   : Intrinsic<[llvm_void_ty]>;
+def int_dbg_func_start   : Intrinsic<[llvm_void_ty, llvm_descriptor_ty]>;
 //    dbg_declare,      // Declare a local object
 

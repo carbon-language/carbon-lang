@@ -1691,8 +1691,8 @@ void CWriter::visitCallInst(CallInst &I) {
       case Intrinsic::dbg_stoppoint: {
         // If we use writeOperand directly we get a "u" suffix which is rejected
         // by gcc.
-        ConstantUInt *SI = cast<ConstantUInt>(I.getOperand(2));
-        GlobalVariable *GV = cast<GlobalVariable>(I.getOperand(4));
+        ConstantUInt *SI = cast<ConstantUInt>(I.getOperand(1));
+        GlobalVariable *GV = cast<GlobalVariable>(I.getOperand(3));
         ConstantStruct *CS = cast<ConstantStruct>(GV->getInitializer());
         std::string FileName = CS->getOperand(4)->getStringValue();
         std::string Directory = CS->getOperand(5)->getStringValue();

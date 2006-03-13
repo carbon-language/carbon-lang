@@ -966,19 +966,19 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     
   case Intrinsic::dbg_stoppoint: {
     MachineDebugInfo *DebugInfo = DAG.getMachineDebugInfo();
-    if (DebugInfo &&  DebugInfo->Verify(I.getOperand(4))) {
+    if (DebugInfo &&  DebugInfo->Verify(I.getOperand(3))) {
       std::vector<SDOperand> Ops;
 
       // Input Chain
       Ops.push_back(getRoot());
       
       // line number
-      Ops.push_back(getValue(I.getOperand(2)));
+      Ops.push_back(getValue(I.getOperand(1)));
      
       // column
-      Ops.push_back(getValue(I.getOperand(3)));
+      Ops.push_back(getValue(I.getOperand(2)));
 
-      DebugInfoDesc *DD = DebugInfo->getDescFor(I.getOperand(4));
+      DebugInfoDesc *DD = DebugInfo->getDescFor(I.getOperand(3));
       assert(DD && "Not a debug information descriptor");
       CompileUnitDesc *CompileUnit = dyn_cast<CompileUnitDesc>(DD);
       assert(CompileUnit && "Not a compile unit");

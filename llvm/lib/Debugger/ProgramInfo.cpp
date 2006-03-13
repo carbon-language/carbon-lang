@@ -63,11 +63,11 @@ static const GlobalVariable *getNextStopPoint(const Value *V, unsigned &LineNo,
         if (F->getIntrinsicID() == Intrinsic::dbg_stoppoint) {
           unsigned CurLineNo = ~0, CurColNo = ~0;
           const GlobalVariable *CurDesc = 0;
-          if (const ConstantInt *C = dyn_cast<ConstantInt>(CI->getOperand(2)))
+          if (const ConstantInt *C = dyn_cast<ConstantInt>(CI->getOperand(1)))
             CurLineNo = C->getRawValue();
-          if (const ConstantInt *C = dyn_cast<ConstantInt>(CI->getOperand(3)))
+          if (const ConstantInt *C = dyn_cast<ConstantInt>(CI->getOperand(2)))
             CurColNo = C->getRawValue();
-          const Value *Op = CI->getOperand(4);
+          const Value *Op = CI->getOperand(3);
 
           if ((CurDesc = dyn_cast<GlobalVariable>(Op)) &&
               (LineNo < LastLineNo ||
