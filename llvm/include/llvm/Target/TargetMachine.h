@@ -24,6 +24,7 @@ class TargetSubtarget;
 class TargetInstrInfo;
 class TargetInstrDescriptor;
 class TargetJITInfo;
+class TargetLowering;
 class TargetSchedInfo;
 class SparcV9RegInfo;
 class TargetFrameInfo;
@@ -108,9 +109,11 @@ public:
   // -- Instruction opcode and operand information
   // -- Pipelines and scheduling information
   // -- Stack frame information
+  // -- Selection DAG lowering information
   //
   virtual const TargetInstrInfo        *getInstrInfo() const { return 0; }
   virtual const TargetFrameInfo        *getFrameInfo() const { return 0; }
+  virtual       TargetLowering    *getTargetLowering() const { return 0; }
   const TargetData &getTargetData() const { return DataLayout; }
 
   /// getSubtarget - This method returns a pointer to the specified type of
