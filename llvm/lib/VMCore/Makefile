@@ -19,6 +19,6 @@ endif
 include $(LEVEL)/Makefile.common
 
 $(LEVEL)/include/llvm/Intrinsics.gen: $(LEVEL)/include/llvm/Intrinsics.td $(TBLGEN)
-	@echo Building Intrinsics.gen from Intrinsics.td
+	$(Echo) Building Intrinsics.gen from Intrinsics.td
 	$(Verb) $(TableGen) $< -o $@ -gen-intrinsic
 
