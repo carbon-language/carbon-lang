@@ -54,6 +54,9 @@ There are two ways to fix this:
 
 Number 1 is the preferred solution.
 
+This has been "fixed" by a TableGen hack. But that is a short term workaround
+which will be removed once the proper fix is made.
+
 //===---------------------------------------------------------------------===//
 
 Turn this into a signed shift right in instcombine:
