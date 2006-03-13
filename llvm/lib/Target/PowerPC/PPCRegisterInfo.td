@@ -152,9 +152,9 @@ def GPRC : RegisterClass<"PPC", [i32], 32,
     GPRCClass::iterator
     GPRCClass::allocation_order_end(MachineFunction &MF) const {
       if (hasFP(MF))
-        return end()-4;
+        return end()-4;  // don't allocate R31, R0, R1, LR
       else
-        return end()-3;
+        return end()-3;  // don't allocate R0, R1, LR
     }
   }];
 }

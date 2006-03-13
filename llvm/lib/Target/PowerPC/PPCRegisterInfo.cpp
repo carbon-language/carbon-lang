@@ -266,12 +266,63 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
   }
 }
 
+// HandleVRSaveUpdate - MI is the UPDATE_VRSAVE instruction introduced by the
+// instruction selector.  Based on the vector registers that have been used,
+// transform this into the appropriate ORI instruction.
+static void HandleVRSaveUpdate(MachineInstr *MI, const bool *UsedRegs) {
+  unsigned UsedRegMask = 0;
+#define HANDLEREG(N) if (UsedRegs[PPC::V##N]) UsedRegMask |= 1 << (31-N)
+  HANDLEREG( 0); HANDLEREG( 1); HANDLEREG( 2); HANDLEREG( 3);
+  HANDLEREG( 4); HANDLEREG( 5); HANDLEREG( 6); HANDLEREG( 7);
+  HANDLEREG( 8); HANDLEREG( 9); HANDLEREG(10); HANDLEREG(11);
+  HANDLEREG(12); HANDLEREG(13); HANDLEREG(14); HANDLEREG(15);
+  HANDLEREG(16); HANDLEREG(17); HANDLEREG(18); HANDLEREG(19);
+  HANDLEREG(20); HANDLEREG(21); HANDLEREG(22); HANDLEREG(23);
+  HANDLEREG(24); HANDLEREG(25); HANDLEREG(26); HANDLEREG(27);
+  HANDLEREG(28); HANDLEREG(29); HANDLEREG(30); HANDLEREG(31);
+#undef HANDLEREG
+  unsigned SrcReg = MI->getOperand(1).getReg();
+  unsigned DstReg = MI->getOperand(0).getReg();
+  // If no registers are used, turn this into a copy.
+  if (UsedRegMask == 0) {
+    if (SrcReg != DstReg)
+      BuildMI(*MI->getParent(), MI, PPC::OR4, 2, DstReg)
+        .addReg(SrcReg).addReg(SrcReg);
+  } else if ((UsedRegMask & 0xFFFF) == UsedRegMask) {
+    BuildMI(*MI->getParent(), MI, PPC::ORI, 2, DstReg)
+        .addReg(SrcReg).addImm(UsedRegMask);
+  } else if ((UsedRegMask & 0xFFFF0000) == UsedRegMask) {
+    BuildMI(*MI->getParent(), MI, PPC::ORIS, 2, DstReg)
+        .addReg(SrcReg).addImm(UsedRegMask >> 16);
+  } else {
+    BuildMI(*MI->getParent(), MI, PPC::ORIS, 2, DstReg)
+       .addReg(SrcReg).addImm(UsedRegMask >> 16);
+    BuildMI(*MI->getParent(), MI, PPC::ORI, 2, DstReg)
+      .addReg(DstReg).addImm(UsedRegMask & 0xFFFF);
+  }
+  
+  // Remove the old UPDATE_VRSAVE instruction.
+  MI->getParent()->erase(MI);
+}
+
 
 void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
 
+  // Scan the first few instructions of the prolog, looking for an UPDATE_VRSAVE
+  // instruction.  If we find it, process it.
+  for (unsigned i = 0; MBBI != MBB.end() && i < 5; ++i, ++MBBI) {
+    if (MBBI->getOpcode() == PPC::UPDATE_VRSAVE) {
+      HandleVRSaveUpdate(MBBI, MF.getUsedPhysregs());
+      break;
+    }
+  }
+  
+  // Move MBBI back to the beginning of the function.
+  MBBI = MBB.begin();
+  
   // Get the number of bytes to allocate from the FrameInfo
   unsigned NumBytes = MFI->getStackSize();
   

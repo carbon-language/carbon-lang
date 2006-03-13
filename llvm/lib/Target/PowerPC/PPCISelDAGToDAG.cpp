@@ -196,8 +196,65 @@ void PPCDAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   CodeGenMap.clear();
   DAG.RemoveDeadNodes();
   
-  // Emit machine code to BB. 
+  // Emit machine code to BB.
   ScheduleAndEmitDAG(DAG);
+  
+  // Check to see if this function uses vector registers, which means we have to
+  // save and restore the VRSAVE register and update it with the regs we use.  
+  //
+  // In this case, there will be virtual registers of vector type type created
+  // by the scheduler.  Detect them now.
+  SSARegMap *RegMap = DAG.getMachineFunction().getSSARegMap();
+  bool HasVectorVReg = false;
+  for (unsigned i = MRegisterInfo::FirstVirtualRegister, 
+       e = RegMap->getLastVirtReg(); i != e; ++i)
+    if (RegMap->getRegClass(i) == &PPC::VRRCRegClass) {
+      HasVectorVReg = true;
+      break;
+    }
+  
+  // If we have a vector register, we want to emit code into the entry and exit
+  // blocks to save and restore the VRSAVE register.  We do this here (instead
+  // of marking all vector instructions as clobbering VRSAVE) for two reasons:
+  //
+  // 1. This (trivially) reduces the load on the register allocator, by not
+  //    having to represent the live range of the VRSAVE register.
+  // 2. This (more significantly) allows us to create a temporary virtual
+  //    register to hold the saved VRSAVE value, allowing this temporary to be
+  //    register allocated, instead of forcing it to be spilled to the stack.
+  if (HasVectorVReg) {
+    // Create two vregs - one to hold the VRSAVE register that is live-in to the
+    // function and one for the value after having bits or'd into it.
+    unsigned InVRSAVE = RegMap->createVirtualRegister(&PPC::GPRCRegClass);
+    unsigned UpdatedVRSAVE = RegMap->createVirtualRegister(&PPC::GPRCRegClass);
+    
+    MachineFunction &MF = DAG.getMachineFunction();
+    MachineBasicBlock &EntryBB = *MF.begin();
+    // Emit the following code into the entry block:
+    // InVRSAVE = MFVRSAVE
+    // UpdatedVRSAVE = UPDATE_VRSAVE InVRSAVE
+    // MTVRSAVE UpdatedVRSAVE
+    MachineBasicBlock::iterator IP = EntryBB.begin();  // Insert Point
+    BuildMI(EntryBB, IP, PPC::MFVRSAVE, 0, InVRSAVE);
+    BuildMI(EntryBB, IP, PPC::UPDATE_VRSAVE, 1, UpdatedVRSAVE).addReg(InVRSAVE);
+    BuildMI(EntryBB, IP, PPC::MTVRSAVE, 1).addReg(UpdatedVRSAVE);
+    
+    // Find all return blocks, outputting a restore in each epilog.
+    const TargetInstrInfo &TII = *DAG.getTarget().getInstrInfo();
+    for (MachineFunction::iterator BB = MF.begin(), E = MF.end(); BB != E; ++BB)
+      if (!BB->empty() && TII.isReturn(BB->back().getOpcode())) {
+        IP = BB->end(); --IP;
+        
+        // Skip over all terminator instructions, which are part of the return
+        // sequence.
+        MachineBasicBlock::iterator I2 = IP;
+        while (I2 != BB->begin() && TII.isTerminatorInstr((--I2)->getOpcode()))
+          IP = I2;
+        
+        // Emit: MTVRSAVE InVRSave
+        BuildMI(*BB, IP, PPC::MTVRSAVE, 1).addReg(InVRSAVE);
+      }        
+  }
 }
 
 /// getGlobalBaseReg - Output the instructions required to put the

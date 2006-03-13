@@ -210,6 +210,9 @@ def ADJCALLSTACKDOWN : Pseudo<(ops u16imm:$amt),
 def ADJCALLSTACKUP   : Pseudo<(ops u16imm:$amt),
                               "; ADJCALLSTACKUP",
                               [(callseq_end imm:$amt)]>;
+
+def UPDATE_VRSAVE    : Pseudo<(ops GPRC:$rD, GPRC:$rS),
+                              "UPDATE_VRSAVE $rD, $rS", []>;
 }
 def IMPLICIT_DEF_GPR : Pseudo<(ops GPRC:$rD), "; $rD = IMPLICIT_DEF_GPRC",
                               [(set GPRC:$rD, (undef))]>;
@@ -694,8 +697,24 @@ def MCRF   : XLForm_3<19, 0, (ops CRRC:$BF, CRRC:$BFA),
 //
 def MFCTR : XFXForm_1_ext<31, 339, 9, (ops GPRC:$rT), "mfctr $rT", SprMFSPR>,
             PPC970_DGroup_First, PPC970_Unit_FXU;
+def MTCTR : XFXForm_7_ext<31, 467, 9, (ops GPRC:$rS), "mtctr $rS", SprMTSPR>,
+            PPC970_DGroup_First, PPC970_Unit_FXU;
+
+def MTLR  : XFXForm_7_ext<31, 467, 8, (ops GPRC:$rS), "mtlr $rS", SprMTSPR>,
+            PPC970_DGroup_First, PPC970_Unit_FXU;
 def MFLR  : XFXForm_1_ext<31, 339, 8, (ops GPRC:$rT), "mflr $rT",  SprMFSPR>,
             PPC970_DGroup_First, PPC970_Unit_FXU;
+
+// Move to/from VRSAVE: despite being a SPR, the VRSAVE register is renamed like
+// a GPR on the PPC970.  As such, copies in and out have the same performance
+// characteristics as an OR instruction.
+def MTVRSAVE : XFXForm_7_ext<31, 467, 256, (ops GPRC:$rS),
+                             "mtspr 256, $rS", IntGeneral>,
+               PPC970_Unit_FXU;
+def MFVRSAVE : XFXForm_1_ext<31, 339, 256, (ops GPRC:$rT),
+                             "mfspr $rT, 256", IntGeneral>,
+               PPC970_Unit_FXU;
+
 def MFCR  : XFXForm_3<31, 19, (ops GPRC:$rT), "mfcr $rT", SprMFCR>,
             PPC970_MicroCode, PPC970_Unit_CRU;
 def MTCRF : XFXForm_5<31, 144, (ops crbitm:$FXM, GPRC:$rS),
@@ -704,13 +723,6 @@ def MTCRF : XFXForm_5<31, 144, (ops crbitm:$FXM, GPRC:$rS),
 def MFOCRF: XFXForm_5a<31, 19, (ops GPRC:$rT, crbitm:$FXM),
                        "mfcr $rT, $FXM", SprMFCR>,
             PPC970_DGroup_First, PPC970_Unit_CRU;
-def MTCTR : XFXForm_7_ext<31, 467, 9, (ops GPRC:$rS), "mtctr $rS", SprMTSPR>,
-            PPC970_DGroup_First, PPC970_Unit_FXU;
-def MTLR  : XFXForm_7_ext<31, 467, 8, (ops GPRC:$rS), "mtlr $rS", SprMTSPR>,
-            PPC970_DGroup_First, PPC970_Unit_FXU;
-def MTSPR : XFXForm_7<31, 467, (ops GPRC:$rS, u16imm:$UIMM), "mtspr $UIMM, $rS",
-                      SprMTSPR>,
-            PPC970_DGroup_Single, PPC970_Unit_FXU;
 
 // XS-Form instructions.  Just 'sradi'
 //
