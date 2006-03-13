@@ -565,23 +565,6 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
     break;
   }
   case ISD::ADD:
-    if (ConstantSDNode *AA = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
-      if (SimplifyDemandedBits(Op.getOperand(0), DemandedMask, KnownZero, 
-                               KnownOne, TLO, Depth+1))
-        return true;
-      // Compute the KnownOne/KnownZero masks for the constant, so we can set
-      // KnownZero appropriately if we're adding a constant that has all low
-      // bits cleared.
-      ComputeMaskedBits(Op.getOperand(1), 
-                        MVT::getIntVTBitMask(Op.getValueType()), 
-                        KnownZero2, KnownOne2, Depth+1);
-      
-      uint64_t KnownZeroOut = std::min(CountTrailingZeros_64(~KnownZero), 
-                                       CountTrailingZeros_64(~KnownZero2));
-      KnownZero = (1ULL << KnownZeroOut) - 1;
-      KnownOne = 0;
-    }
-    break;
   case ISD::SUB:
     // Just use ComputeMaskedBits to compute output bits, there are no
     // simplifications that can be done here, and sub always demands all input
@@ -843,7 +826,8 @@ void TargetLowering::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
     assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?"); 
     
     // Output known-0 bits are known if clear or set in both the low clear bits
-    // common to both LHS & RHS;
+    // common to both LHS & RHS.  For example, 8+(X<<3) is known to have the
+    // low 3 bits clear.
     uint64_t KnownZeroOut = std::min(CountTrailingZeros_64(~KnownZero), 
                                      CountTrailingZeros_64(~KnownZero2));
     
