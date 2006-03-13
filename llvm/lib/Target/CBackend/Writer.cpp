@@ -1602,6 +1602,15 @@ void CWriter::lowerIntrinsics(Function &F) {
             // We directly implement these intrinsics
             break;
           default:
+            // If this is an intrinsic that directly corresponds to a GCC
+            // builtin, we handle it.
+            const char *BuiltinName = "";
+#define GET_GCC_BUILTIN_NAME
+#include "llvm/Intrinsics.gen"
+#undef GET_GCC_BUILTIN_NAME
+            // If we handle it, don't lower it.
+            if (BuiltinName[0]) break;
+            
             // All other intrinsic calls we must lower.
             Instruction *Before = 0;
             if (CI != &BB->front())
@@ -1613,17 +1622,32 @@ void CWriter::lowerIntrinsics(Function &F) {
             } else {
               I = BB->begin();
             }
+            break;
           }
 }
 
 
 
 void CWriter::visitCallInst(CallInst &I) {
+  bool WroteCallee = false;
+
   // Handle intrinsic function calls first...
   if (Function *F = I.getCalledFunction())
     if (Intrinsic::ID ID = (Intrinsic::ID)F->getIntrinsicID()) {
       switch (ID) {
-      default: assert(0 && "Unknown LLVM intrinsic!");
+      default: {
+        // If this is an intrinsic that directly corresponds to a GCC
+        // builtin, we emit it here.
+        const char *BuiltinName = "";
+#define GET_GCC_BUILTIN_NAME
+#include "llvm/Intrinsics.gen"
+#undef GET_GCC_BUILTIN_NAME
+        assert(BuiltinName[0] && "Unknown LLVM intrinsic!");
+
+        Out << BuiltinName;
+        WroteCallee = true;
+        break;
+      }
       case Intrinsic::vastart:
         Out << "0; ";
 
@@ -1720,7 +1744,6 @@ void CWriter::visitCallInst(CallInst &I) {
   // in the common case, we handle casts where the number of arguments passed
   // match exactly.
   //
-  bool WroteCallee = false;
   if (I.isTailCall()) Out << " /*tail*/ ";
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Callee))
     if (CE->getOpcode() == Instruction::Cast)
