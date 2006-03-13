@@ -19,6 +19,8 @@
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
+#include "llvm/ADT/VectorExtras.h"
+#include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -26,7 +28,6 @@
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/ADT/VectorExtras.h"
 using namespace llvm;
 
 // FIXME: temporary.
@@ -1317,6 +1318,16 @@ X86TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
 //                           X86 Custom Lowering Hooks
 //===----------------------------------------------------------------------===//
 
+/// DarwinGVRequiresExtraLoad - true if accessing the GV requires an extra
+/// load. For Darwin, external and weak symbols are indirect, loading the value
+/// at address GV rather then the value of GV itself. This means that the
+/// GlobalAddress must be in the base or index register of the address, not the
+/// GV offset field.
+static bool DarwinGVRequiresExtraLoad(GlobalValue *GV) {
+  return (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
+          (GV->isExternal() && !GV->hasNotBeenReadFromBytecode()));
+}
+
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
 SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
@@ -1986,12 +1997,11 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
                     DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()), Result);
 
       // For Darwin, external and weak symbols are indirect, so we want to load
-      // the value at address GV, not the value of GV itself.  This means that
+      // the value at address GV, not the value of GV itself. This means that
       // the GlobalAddress must be in the base or index register of the address,
       // not the GV offset field.
       if (getTargetMachine().getRelocationModel() != Reloc::Static &&
-          (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
-           (GV->isExternal() && !GV->hasNotBeenReadFromBytecode())))
+          DarwinGVRequiresExtraLoad(GV))
         Result = DAG.getLoad(MVT::i32, DAG.getEntryNode(),
                              Result, DAG.getSrcValue(NULL));
     }
@@ -2178,4 +2188,25 @@ getRegClassForInlineAsmConstraint(const std::string &Constraint,
   }
   
   return std::vector<unsigned>();
+}
+
+/// isLegalAddressImmediate - Return true if the integer value or
+/// GlobalValue can be used as the offset of the target addressing mode.
+bool X86TargetLowering::isLegalAddressImmediate(int64_t V) const {
+  // X86 allows a sign-extended 32-bit immediate field.
+  return (V > -(1LL << 32) && V < (1LL << 32)-1);
+}
+
+bool X86TargetLowering::isLegalAddressImmediate(GlobalValue *GV) const {
+  if (getTargetMachine().
+      getSubtarget<X86Subtarget>().isTargetDarwin()) {
+    Reloc::Model RModel = getTargetMachine().getRelocationModel();
+    if (RModel == Reloc::Static)
+      return true;
+    else if (RModel == Reloc::DynamicNoPIC)
+      return DarwinGVRequiresExtraLoad(GV);
+    else
+      return false;
+  } else
+    return true;
 }

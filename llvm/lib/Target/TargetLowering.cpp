@@ -976,3 +976,16 @@ getRegForInlineAsmConstraint(const std::string &Constraint,
   
   return std::pair<unsigned, const TargetRegisterClass*>(0, 0);
 }
+
+//===----------------------------------------------------------------------===//
+//  Loop Strength Reduction hooks
+//===----------------------------------------------------------------------===//
+
+/// isLegalAddressImmediate - Return true if the integer value or
+/// GlobalValue can be used as the offset of the target addressing mode.
+bool TargetLowering::isLegalAddressImmediate(int64_t V) const {
+  return false;
+}
+bool TargetLowering::isLegalAddressImmediate(GlobalValue *GV) const {
+  return false;
+}

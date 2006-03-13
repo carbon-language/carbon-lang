@@ -349,7 +349,7 @@ public:
                                               uint64_t &KnownZero, 
                                               uint64_t &KnownOne,
                                               unsigned Depth = 0) const;
-  
+
   struct DAGCombinerInfo {
     void *DC;  // The DAG Combiner object.
     bool BeforeLegalize;
@@ -558,6 +558,15 @@ public:
   /// isOperandValidForConstraint - Return true if the specified SDOperand is
   /// valid for the specified target constraint letter.
   virtual bool isOperandValidForConstraint(SDOperand Op, char ConstraintLetter);
+  
+  //===--------------------------------------------------------------------===//
+  // Loop Strength Reduction hooks
+  //
+  
+  /// isLegalAddressImmediate - Return true if the integer value or GlobalValue
+  /// can be used as the offset of the target addressing mode.
+  virtual bool isLegalAddressImmediate(int64_t V) const;
+  virtual bool isLegalAddressImmediate(GlobalValue *GV) const;
   
   //===--------------------------------------------------------------------===//
   // Scheduler hooks
