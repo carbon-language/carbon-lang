@@ -17,18 +17,21 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/PassManager.h"
+#include "X86.h"
 #include "X86InstrInfo.h"
 #include "X86JITInfo.h"
 #include "X86Subtarget.h"
+#include "X86ISelLowering.h"
 
 namespace llvm {
 class IntrinsicLowering;
 
 class X86TargetMachine : public TargetMachine {
-  X86InstrInfo    InstrInfo;
-  X86Subtarget    Subtarget;
-  TargetFrameInfo FrameInfo;
-  X86JITInfo      JITInfo;
+  X86InstrInfo      InstrInfo;
+  X86Subtarget      Subtarget;
+  TargetFrameInfo   FrameInfo;
+  X86JITInfo        JITInfo;
+  X86TargetLowering TLInfo;
 public:
   X86TargetMachine(const Module &M, IntrinsicLowering *IL,
                    const std::string &FS);
@@ -37,6 +40,7 @@ public:
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }
   virtual       TargetJITInfo    *getJITInfo()         { return &JITInfo; }
   virtual const TargetSubtarget  *getSubtargetImpl() const{ return &Subtarget; }
+  virtual       X86TargetLowering *getTargetLowering() { return &TLInfo; }
   virtual const MRegisterInfo    *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }

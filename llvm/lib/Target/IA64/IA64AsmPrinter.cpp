@@ -374,7 +374,8 @@ bool IA64AsmPrinter::doFinalization(Module &M) {
 /// assembly code for a MachineFunction to the given output stream, using
 /// the given target machine description.
 ///
-FunctionPass *llvm::createIA64CodePrinterPass(std::ostream &o,TargetMachine &tm){
+FunctionPass *llvm::createIA64CodePrinterPass(std::ostream &o,
+                                              IA64TargetMachine &tm) {
   return new IA64AsmPrinter(o, tm);
 }
 

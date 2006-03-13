@@ -14,6 +14,7 @@
 #include "PPCISelLowering.h"
 #include "PPCTargetMachine.h"
 #include "llvm/ADT/VectorExtras.h"
+#include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -1173,4 +1174,11 @@ isOperandValidForConstraint(SDOperand Op, char Letter) {
   
   // Handle standard constraint letters.
   return TargetLowering::isOperandValidForConstraint(Op, Letter);
+}
+
+/// isLegalAddressImmediate - Return true if the integer value can be used
+/// as the offset of the target addressing mode.
+bool PPCTargetLowering::isLegalAddressImmediate(int64_t V) const {
+  // PPC allows a sign-extended 16-bit immediate field.
+  return (V > -(1 << 16) && V < (1 << 16)-1);
 }

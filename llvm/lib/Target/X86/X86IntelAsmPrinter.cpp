@@ -20,7 +20,6 @@
 #include "llvm/Support/Mangler.h"
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
-using namespace x86;
 
 /// runOnMachineFunction - This uses the printMachineInstruction()
 /// method to print assembly for each instruction.

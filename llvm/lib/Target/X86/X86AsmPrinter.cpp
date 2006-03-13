@@ -14,10 +14,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "X86AsmPrinter.h"
 #include "X86ATTAsmPrinter.h"
 #include "X86IntelAsmPrinter.h"
 #include "X86Subtarget.h"
-#include "X86.h"
 #include "llvm/Constants.h"
 #include "llvm/Module.h"
 #include "llvm/Type.h"
@@ -25,10 +25,9 @@
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
-using namespace x86;
 
-Statistic<> llvm::x86::EmittedInsts("asm-printer",
-                                    "Number of machine instrs printed");
+Statistic<> llvm::EmittedInsts("asm-printer",
+                               "Number of machine instrs printed");
 
 enum AsmWriterFlavorTy { att, intel };
 cl::opt<AsmWriterFlavorTy>
@@ -210,7 +209,8 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
 /// for a MachineFunction to the given output stream, using the given target
 /// machine description.
 ///
-FunctionPass *llvm::createX86CodePrinterPass(std::ostream &o,TargetMachine &tm){
+FunctionPass *llvm::createX86CodePrinterPass(std::ostream &o,
+                                             X86TargetMachine &tm){
   switch (AsmWriterFlavor) {
   default:
     assert(0 && "Unknown asm flavor!");

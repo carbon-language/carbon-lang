@@ -16,14 +16,12 @@
 
 #include "X86AsmPrinter.h"
 #include "llvm/CodeGen/ValueTypes.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MRegisterInfo.h"
 
 namespace llvm {
-namespace x86 {
 
 struct X86IntelAsmPrinter : public X86SharedAsmPrinter {
- X86IntelAsmPrinter(std::ostream &O, TargetMachine &TM)
+ X86IntelAsmPrinter(std::ostream &O, X86TargetMachine &TM)
     : X86SharedAsmPrinter(O, TM) { }
 
   virtual const char *getPassName() const {
@@ -91,7 +89,6 @@ struct X86IntelAsmPrinter : public X86SharedAsmPrinter {
   bool doInitialization(Module &M);
 };
 
-} // end namespace x86
 } // end namespace llvm
 
 #endif

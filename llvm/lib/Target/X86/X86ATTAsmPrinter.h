@@ -18,10 +18,9 @@
 #include "llvm/CodeGen/ValueTypes.h"
 
 namespace llvm {
-namespace x86 {
 
 struct X86ATTAsmPrinter : public X86SharedAsmPrinter {
- X86ATTAsmPrinter(std::ostream &O, TargetMachine &TM)
+ X86ATTAsmPrinter(std::ostream &O, X86TargetMachine &TM)
     : X86SharedAsmPrinter(O, TM) { }
 
   virtual const char *getPassName() const {
@@ -69,7 +68,6 @@ struct X86ATTAsmPrinter : public X86SharedAsmPrinter {
   bool runOnMachineFunction(MachineFunction &F);
 };
 
-} // end namespace x86
 } // end namespace llvm
 
 #endif

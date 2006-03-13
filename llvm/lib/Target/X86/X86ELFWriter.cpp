@@ -13,15 +13,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86.h"
+#include "X86TargetMachine.h"
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/ELFWriter.h"
-#include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
 namespace {
   class X86ELFWriter : public ELFWriter {
   public:
-    X86ELFWriter(std::ostream &O, TargetMachine &TM) : ELFWriter(O, TM) {
+    X86ELFWriter(std::ostream &O, X86TargetMachine &TM) : ELFWriter(O, TM) {
       e_machine = 3;   // EM_386
     }
   };
@@ -31,7 +31,7 @@ namespace {
 /// as an ELF object file.
 ///
 void llvm::addX86ELFObjectWriterPass(PassManager &FPM,
-                                     std::ostream &O, TargetMachine &TM) {
+                                     std::ostream &O, X86TargetMachine &TM) {
   X86ELFWriter *EW = new X86ELFWriter(O, TM);
   FPM.add(EW);
   FPM.add(createX86CodeEmitterPass(EW->getMachineCodeEmitter()));

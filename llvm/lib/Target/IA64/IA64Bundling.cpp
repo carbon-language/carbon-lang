@@ -37,9 +37,9 @@ namespace {
     /// Target machine description which we query for reg. names, data
     /// layout, etc.
     ///
-    TargetMachine &TM;
+    IA64TargetMachine &TM;
 
-    IA64BundlingPass(TargetMachine &tm) : TM(tm) { }
+    IA64BundlingPass(IA64TargetMachine &tm) : TM(tm) { }
 
     virtual const char *getPassName() const {
       return "IA64 (Itanium) Bundling Pass";
@@ -64,7 +64,7 @@ namespace {
 /// createIA64BundlingPass - Returns a pass that adds STOP (;;) instructions
 /// and arranges the result into bundles.
 ///
-FunctionPass *llvm::createIA64BundlingPass(TargetMachine &tm) {
+FunctionPass *llvm::createIA64BundlingPass(IA64TargetMachine &tm) {
   return new IA64BundlingPass(tm);
 }
 

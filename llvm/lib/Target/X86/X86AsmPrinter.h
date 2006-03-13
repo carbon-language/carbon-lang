@@ -17,6 +17,7 @@
 #define X86ASMPRINTER_H
 
 #include "X86.h"
+#include "X86TargetMachine.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/MachineDebugInfo.h"
@@ -25,7 +26,6 @@
 
 
 namespace llvm {
-namespace x86 {
 
 extern Statistic<> EmittedInsts;
 
@@ -56,7 +56,7 @@ X86DwarfWriter(std::ostream &o, AsmPrinter *ap)
 struct X86SharedAsmPrinter : public AsmPrinter {
   X86DwarfWriter DW;
 
-  X86SharedAsmPrinter(std::ostream &O, TargetMachine &TM)
+  X86SharedAsmPrinter(std::ostream &O, X86TargetMachine &TM)
     : AsmPrinter(O, TM), DW(O, this), forDarwin(false) { }
 
   bool doInitialization(Module &M);
@@ -90,7 +90,6 @@ struct X86SharedAsmPrinter : public AsmPrinter {
   }
 };
 
-} // end namespace x86
 } // end namespace llvm
 
 #endif

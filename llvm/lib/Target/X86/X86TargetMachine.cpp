@@ -79,7 +79,7 @@ X86TargetMachine::X86TargetMachine(const Module &M,
     Subtarget(M, FS),
     FrameInfo(TargetFrameInfo::StackGrowsDown,
               Subtarget.getStackAlignment(), -4),
-    JITInfo(*this) {
+    JITInfo(*this), TLInfo(*this) {
   if (getRelocationModel() == Reloc::Default)
     if (Subtarget.isTargetDarwin())
       setRelocationModel(Reloc::DynamicNoPIC);
@@ -97,7 +97,7 @@ bool X86TargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
       FileType != TargetMachine::ObjectFile) return true;
 
   // Run loop strength reduction before anything else.
-  if (EnableX86LSR) PM.add(createLoopStrengthReducePass());
+  if (EnableX86LSR) PM.add(createLoopStrengthReducePass(1, &TLInfo));
 
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
@@ -163,6 +163,10 @@ bool X86TargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
 void X86JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   // The JIT should use static relocation model.
   TM.setRelocationModel(Reloc::Static);
+
+  // Run loop strength reduction before anything else.
+  if (EnableX86LSR)
+    PM.add(createLoopStrengthReducePass(1, TM.getTargetLowering()));
 
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());

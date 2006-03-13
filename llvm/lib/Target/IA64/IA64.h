@@ -18,26 +18,26 @@
 
 namespace llvm {
 
-class TargetMachine;
+class IA64TargetMachine;
 class FunctionPass;
 class IntrinsicLowering;
 
 /// createIA64DAGToDAGInstructionSelector - This pass converts an LLVM
 /// function into IA64 machine code in a sane, DAG->DAG transform.
 ///
-FunctionPass *createIA64DAGToDAGInstructionSelector(TargetMachine &TM);
+FunctionPass *createIA64DAGToDAGInstructionSelector(IA64TargetMachine &TM);
 
 /// createIA64BundlingPass - This pass adds stop bits and bundles
 /// instructions.
 ///
-FunctionPass *createIA64BundlingPass(TargetMachine &TM);
+FunctionPass *createIA64BundlingPass(IA64TargetMachine &TM);
 
 /// createIA64CodePrinterPass - Returns a pass that prints the IA64
 /// assembly code for a MachineFunction to the given output stream,
 /// using the given target machine description.  This should work
 /// regardless of whether the function is in SSA form.
 ///
-FunctionPass *createIA64CodePrinterPass(std::ostream &o,TargetMachine &tm);
+FunctionPass *createIA64CodePrinterPass(std::ostream &o, IA64TargetMachine &tm);
 
 } // End llvm namespace
 

@@ -79,7 +79,8 @@ unsigned IA64TargetMachine::getModuleMatchQuality(const Module &M) {
 IA64TargetMachine::IA64TargetMachine(const Module &M, IntrinsicLowering *IL,
                                      const std::string &FS)
   : TargetMachine("IA64", IL, true),
-    FrameInfo(TargetFrameInfo::StackGrowsDown, 16, 0) { // FIXME? check this stuff
+    FrameInfo(TargetFrameInfo::StackGrowsDown, 16, 0),
+    TLInfo(*this) { // FIXME? check this stuff
 }
 
 // addPassesToEmitFile - We currently use all of the same passes as the JIT

@@ -17,13 +17,13 @@
 #include "llvm/Target/TargetJITInfo.h"
 
 namespace llvm {
-  class TargetMachine;
+  class PPCTargetMachine;
 
   class PPCJITInfo : public TargetJITInfo {
   protected:
-    TargetMachine &TM;
+    PPCTargetMachine &TM;
   public:
-    PPCJITInfo(TargetMachine &tm) : TM(tm) {useGOT = 0;}
+    PPCJITInfo(PPCTargetMachine &tm) : TM(tm) {useGOT = 0;}
 
     /// addPassesToJITCompile - Add passes to the specified pass manager to
     /// implement a fast dynamic compiler for this target.  Return true if this

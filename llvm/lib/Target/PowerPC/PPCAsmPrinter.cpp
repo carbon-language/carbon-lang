@@ -307,7 +307,8 @@ namespace {
 /// code for a MachineFunction to the given output stream, in a format that the
 /// Darwin assembler can deal with.
 ///
-FunctionPass *llvm::createDarwinAsmPrinter(std::ostream &o, TargetMachine &tm) {
+FunctionPass *llvm::createDarwinAsmPrinter(std::ostream &o,
+                                           PPCTargetMachine &tm) {
   return new DarwinAsmPrinter(o, tm);
 }
 
@@ -315,7 +316,7 @@ FunctionPass *llvm::createDarwinAsmPrinter(std::ostream &o, TargetMachine &tm) {
 /// for a MachineFunction to the given output stream, in a format that the
 /// AIX 5L assembler can deal with.
 ///
-FunctionPass *llvm::createAIXAsmPrinter(std::ostream &o, TargetMachine &tm) {
+FunctionPass *llvm::createAIXAsmPrinter(std::ostream &o, PPCTargetMachine &tm) {
   return new AIXAsmPrinter(o, tm);
 }
 

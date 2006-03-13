@@ -19,7 +19,7 @@
 
 namespace llvm {
 
-class TargetMachine;
+class X86TargetMachine;
 class PassManager;
 class FunctionPass;
 class IntrinsicLowering;
@@ -28,7 +28,7 @@ class MachineCodeEmitter;
 /// createX86ISelDag - This pass converts a legalized DAG into a 
 /// X86-specific DAG, ready for instruction scheduling.
 ///
-FunctionPass *createX86ISelDag(TargetMachine &TM);
+FunctionPass *createX86ISelDag(X86TargetMachine &TM);
 
 /// createX86FloatingPointStackifierPass - This function returns a pass which
 /// converts floating point register references and pseudo instructions into
@@ -40,7 +40,7 @@ FunctionPass *createX86FloatingPointStackifierPass();
 /// assembly code for a MachineFunction to the given output stream,
 /// using the given target machine description.
 ///
-FunctionPass *createX86CodePrinterPass(std::ostream &o, TargetMachine &tm);
+FunctionPass *createX86CodePrinterPass(std::ostream &o, X86TargetMachine &tm);
 
 /// createX86CodeEmitterPass - Return a pass that emits the collected X86 code
 /// to the specified MCE object.
@@ -50,7 +50,7 @@ FunctionPass *createX86CodeEmitterPass(MachineCodeEmitter &MCE);
 /// code as an ELF object file.
 ///
 void addX86ELFObjectWriterPass(PassManager &FPM,
-                               std::ostream &o, TargetMachine &tm);
+                               std::ostream &o, X86TargetMachine &tm);
 
 /// createX86EmitCodeToMemory - Returns a pass that converts a register
 /// allocated function into raw machine code in a dynamically

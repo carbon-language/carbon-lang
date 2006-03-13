@@ -230,6 +230,12 @@ namespace llvm {
     std::vector<unsigned> 
       getRegClassForInlineAsmConstraint(const std::string &Constraint,
                                         MVT::ValueType VT) const;
+
+    /// isLegalAddressImmediate - Return true if the integer value or
+    /// GlobalValue can be used as the offset of the target addressing mode.
+    virtual bool isLegalAddressImmediate(int64_t V) const;
+    virtual bool isLegalAddressImmediate(GlobalValue *GV) const;
+
   private:
     // C Calling Convention implementation.
     std::vector<SDOperand> LowerCCCArguments(Function &F, SelectionDAG &DAG);

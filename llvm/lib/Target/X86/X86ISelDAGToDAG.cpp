@@ -15,9 +15,10 @@
 #define DEBUG_TYPE "isel"
 #include "X86.h"
 #include "X86InstrBuilder.h"
+#include "X86ISelLowering.h"
 #include "X86RegisterInfo.h"
 #include "X86Subtarget.h"
-#include "X86ISelLowering.h"
+#include "X86TargetMachine.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Instructions.h"
 #include "llvm/Support/CFG.h"
@@ -90,8 +91,9 @@ namespace {
 
     unsigned GlobalBaseReg;
   public:
-    X86DAGToDAGISel(TargetMachine &TM)
-      : SelectionDAGISel(X86Lowering), X86Lowering(TM) {
+    X86DAGToDAGISel(X86TargetMachine &TM)
+      : SelectionDAGISel(X86Lowering),
+        X86Lowering(*TM.getTargetLowering()) {
       Subtarget = &TM.getSubtarget<X86Subtarget>();
     }
 
@@ -842,6 +844,6 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
 /// createX86ISelDag - This pass converts a legalized DAG into a 
 /// X86-specific DAG, ready for instruction scheduling.
 ///
-FunctionPass *llvm::createX86ISelDag(TargetMachine &TM) {
+FunctionPass *llvm::createX86ISelDag(X86TargetMachine &TM) {
   return new X86DAGToDAGISel(TM);
 }

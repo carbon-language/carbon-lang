@@ -18,20 +18,23 @@
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/PassManager.h"
 #include "IA64InstrInfo.h"
+#include "IA64ISelLowering.h"
 
 namespace llvm {
 class IntrinsicLowering;
 
 class IA64TargetMachine : public TargetMachine {
-  IA64InstrInfo    InstrInfo;
-  TargetFrameInfo FrameInfo;
+  IA64InstrInfo      InstrInfo;
+  TargetFrameInfo    FrameInfo;
   //IA64JITInfo      JITInfo;
+  IA64TargetLowering TLInfo;
 public:
   IA64TargetMachine(const Module &M, IntrinsicLowering *IL,
                     const std::string &FS);
 
-  virtual const IA64InstrInfo     *getInstrInfo() const { return &InstrInfo; }
-  virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }
+  virtual const IA64InstrInfo      *getInstrInfo() const { return &InstrInfo; }
+  virtual const TargetFrameInfo    *getFrameInfo() const { return &FrameInfo; }
+  virtual       IA64TargetLowering *getTargetLowering()  { return &TLInfo; }
   virtual const MRegisterInfo    *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }

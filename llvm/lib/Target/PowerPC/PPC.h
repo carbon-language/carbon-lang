@@ -20,16 +20,16 @@
 namespace llvm {
 
 class FunctionPass;
-class TargetMachine;
+class PPCTargetMachine;
 
 enum PPCTargetEnum {
   TargetDefault, TargetAIX, TargetDarwin
 };
 
 FunctionPass *createPPCBranchSelectionPass();
-FunctionPass *createPPCISelDag(TargetMachine &TM);
-FunctionPass *createDarwinAsmPrinter(std::ostream &OS, TargetMachine &TM);
-FunctionPass *createAIXAsmPrinter(std::ostream &OS, TargetMachine &TM);
+FunctionPass *createPPCISelDag(PPCTargetMachine &TM);
+FunctionPass *createDarwinAsmPrinter(std::ostream &OS, PPCTargetMachine &TM);
+FunctionPass *createAIXAsmPrinter(std::ostream &OS, PPCTargetMachine &TM);
 
 extern PPCTargetEnum PPCTarget;
 } // end namespace llvm;

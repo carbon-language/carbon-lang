@@ -18,6 +18,7 @@
 #include "PPCSubtarget.h"
 #include "PPCJITInfo.h"
 #include "PPCInstrInfo.h"
+#include "PPCISelLowering.h"
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
@@ -31,6 +32,7 @@ class PPCTargetMachine : public TargetMachine {
   PPCSubtarget           Subtarget;
   PPCFrameInfo           FrameInfo;
   PPCJITInfo             JITInfo;
+  PPCTargetLowering      TLInfo;
   InstrItineraryData     InstrItins;
 public:
   PPCTargetMachine(const Module &M, IntrinsicLowering *IL,
@@ -40,6 +42,7 @@ public:
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }
   virtual       TargetJITInfo    *getJITInfo()         { return &JITInfo; }
   virtual const TargetSubtarget  *getSubtargetImpl() const{ return &Subtarget; }
+  virtual       PPCTargetLowering *getTargetLowering() { return &TLInfo; }
   virtual const MRegisterInfo    *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }

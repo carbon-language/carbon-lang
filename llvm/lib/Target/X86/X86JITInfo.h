@@ -17,13 +17,13 @@
 #include "llvm/Target/TargetJITInfo.h"
 
 namespace llvm {
-  class TargetMachine;
+  class X86TargetMachine;
   class IntrinsicLowering;
 
   class X86JITInfo : public TargetJITInfo {
-    TargetMachine &TM;
+    X86TargetMachine &TM;
   public:
-    X86JITInfo(TargetMachine &tm) : TM(tm) {useGOT = 0;}
+    X86JITInfo(X86TargetMachine &tm) : TM(tm) {useGOT = 0;}
 
     /// addPassesToJITCompile - Add passes to the specified pass manager to
     /// implement a fast dynamic compiler for this target.  Return true if this

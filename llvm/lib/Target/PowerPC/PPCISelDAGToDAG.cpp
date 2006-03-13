@@ -42,8 +42,9 @@ namespace {
     PPCTargetLowering PPCLowering;
     unsigned GlobalBaseReg;
   public:
-    PPCDAGToDAGISel(TargetMachine &TM)
-      : SelectionDAGISel(PPCLowering), PPCLowering(TM) {}
+    PPCDAGToDAGISel(PPCTargetMachine &TM)
+      : SelectionDAGISel(PPCLowering),
+        PPCLowering(*TM.getTargetLowering()){}
     
     virtual bool runOnFunction(Function &Fn) {
       // Make sure we re-emit a set of the global base reg if necessary
@@ -1140,7 +1141,7 @@ void PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
 /// createPPCISelDag - This pass converts a legalized DAG into a 
 /// PowerPC-specific DAG, ready for instruction scheduling.
 ///
-FunctionPass *llvm::createPPCISelDag(TargetMachine &TM) {
+FunctionPass *llvm::createPPCISelDag(PPCTargetMachine &TM) {
   return new PPCDAGToDAGISel(TM);
 }
 

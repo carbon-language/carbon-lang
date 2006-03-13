@@ -42,8 +42,8 @@ namespace {
     IA64TargetLowering IA64Lowering;
     unsigned GlobalBaseReg;
   public:
-    IA64DAGToDAGISel(TargetMachine &TM)
-      : SelectionDAGISel(IA64Lowering), IA64Lowering(TM) {}
+    IA64DAGToDAGISel(IA64TargetMachine &TM)
+      : SelectionDAGISel(IA64Lowering), IA64Lowering(*TM.getTargetLowering()) {}
     
     virtual bool runOnFunction(Function &Fn) {
       // Make sure we re-emit a set of the global base reg if necessary
@@ -621,7 +621,8 @@ void IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
 /// createIA64DAGToDAGInstructionSelector - This pass converts a legalized DAG
 /// into an IA64-specific DAG, ready for instruction scheduling.
 ///
-FunctionPass *llvm::createIA64DAGToDAGInstructionSelector(TargetMachine &TM) {
+FunctionPass
+*llvm::createIA64DAGToDAGInstructionSelector(IA64TargetMachine &TM) {
   return new IA64DAGToDAGISel(TM);
 }
 
