@@ -2917,7 +2917,7 @@ the runtime to find the pointer at GC safe points.
 <h5>Syntax:</h5>
 
 <pre>
-  declare sbyte* %llvm.gcread(sbyte** %Ptr)
+  declare sbyte* %llvm.gcread(sbyte* %ObjPtr, sbyte** %Ptr)
 </pre>
 
 <h5>Overview:</h5>
@@ -2928,8 +2928,10 @@ barriers.</p>
 
 <h5>Arguments:</h5>
 
-<p>The argument is the address to read from, which should be an address
-allocated from the garbage collector.</p>
+<p>The second argument is the address to read from, which should be an address
+allocated from the garbage collector.  The first object is a pointer to the 
+start of the referenced object, if needed by the language runtime (otherwise
+null).</p>
 
 <h5>Semantics:</h5>
 
@@ -2950,7 +2952,7 @@ garbage collector runtime, as needed.</p>
 <h5>Syntax:</h5>
 
 <pre>
-  declare void %llvm.gcwrite(sbyte* %P1, sbyte** %P2)
+  declare void %llvm.gcwrite(sbyte* %P1, sbyte* %Obj, sbyte** %P2)
 </pre>
 
 <h5>Overview:</h5>
@@ -2961,8 +2963,10 @@ barriers (such as generational or reference counting collectors).</p>
 
 <h5>Arguments:</h5>
 
-<p>The first argument is the reference to store, and the second is the heap
-location to store to.</p>
+<p>The first argument is the reference to store, the second is the start of the
+object to store it to, and the third is the address of the field of Obj to 
+store to.  If the runtime does not require a pointer to the object, Obj may be
+null.</p>
 
 <h5>Semantics:</h5>
 
