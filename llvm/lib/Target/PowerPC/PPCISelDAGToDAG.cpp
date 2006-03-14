@@ -208,7 +208,7 @@ void PPCDAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   SSARegMap *RegMap = DAG.getMachineFunction().getSSARegMap();
   bool HasVectorVReg = false;
   for (unsigned i = MRegisterInfo::FirstVirtualRegister, 
-       e = RegMap->getLastVirtReg(); i != e; ++i)
+       e = RegMap->getLastVirtReg()+1; i != e; ++i)
     if (RegMap->getRegClass(i) == &PPC::VRRCRegClass) {
       HasVectorVReg = true;
       break;
