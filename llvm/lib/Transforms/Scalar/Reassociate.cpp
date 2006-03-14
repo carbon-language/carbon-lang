@@ -78,6 +78,7 @@ namespace {
   private:
     void BuildRankMap(Function &F);
     unsigned getRank(Value *V);
+    void ReassociateExpression(BinaryOperator *I);
     void RewriteExprTree(BinaryOperator *I, unsigned Idx,
                          std::vector<ValueEntry> &Ops);
     Value *OptimizeExpression(BinaryOperator *I, std::vector<ValueEntry> &Ops);
@@ -752,57 +753,62 @@ void Reassociate::ReassociateBB(BasicBlock *BB) {
         cast<Instruction>(I->use_back())->getOpcode() == Instruction::Sub)
       continue;
 
-    // First, walk the expression tree, linearizing the tree, collecting
-    std::vector<ValueEntry> Ops;
-    LinearizeExprTree(I, Ops);
+    ReassociateExpression(I);
+  }
+}
 
-    DEBUG(std::cerr << "RAIn:\t"; PrintOps(I, Ops);
-          std::cerr << "\n");
-
-    // Now that we have linearized the tree to a list and have gathered all of
-    // the operands and their ranks, sort the operands by their rank.  Use a
-    // stable_sort so that values with equal ranks will have their relative
-    // positions maintained (and so the compiler is deterministic).  Note that
-    // this sorts so that the highest ranking values end up at the beginning of
-    // the vector.
-    std::stable_sort(Ops.begin(), Ops.end());
-
-    // OptimizeExpression - Now that we have the expression tree in a convenient
-    // sorted form, optimize it globally if possible.
-    if (Value *V = OptimizeExpression(I, Ops)) {
-      // This expression tree simplified to something that isn't a tree,
-      // eliminate it.
-      DEBUG(std::cerr << "Reassoc to scalar: " << *V << "\n");
-      I->replaceAllUsesWith(V);
-      RemoveDeadBinaryOp(I);
-      continue;
-    }
-
-    // We want to sink immediates as deeply as possible except in the case where
-    // this is a multiply tree used only by an add, and the immediate is a -1.
-    // In this case we reassociate to put the negation on the outside so that we
-    // can fold the negation into the add: (-X)*Y + Z -> Z-X*Y
-    if (I->getOpcode() == Instruction::Mul && I->hasOneUse() &&
-        cast<Instruction>(I->use_back())->getOpcode() == Instruction::Add &&
-        isa<ConstantInt>(Ops.back().Op) &&
-        cast<ConstantInt>(Ops.back().Op)->isAllOnesValue()) {
-      Ops.insert(Ops.begin(), Ops.back());
-      Ops.pop_back();
-    }
-
-    DEBUG(std::cerr << "RAOut:\t"; PrintOps(I, Ops);
-          std::cerr << "\n");
-
-    if (Ops.size() == 1) {
-      // This expression tree simplified to something that isn't a tree,
-      // eliminate it.
-      I->replaceAllUsesWith(Ops[0].Op);
-      RemoveDeadBinaryOp(I);
-    } else {
-      // Now that we ordered and optimized the expressions, splat them back into
-      // the expression tree, removing any unneeded nodes.
-      RewriteExprTree(I, 0, Ops);
-    }
+void Reassociate::ReassociateExpression(BinaryOperator *I) {
+  
+  // First, walk the expression tree, linearizing the tree, collecting
+  std::vector<ValueEntry> Ops;
+  LinearizeExprTree(I, Ops);
+  
+  DEBUG(std::cerr << "RAIn:\t"; PrintOps(I, Ops);
+        std::cerr << "\n");
+  
+  // Now that we have linearized the tree to a list and have gathered all of
+  // the operands and their ranks, sort the operands by their rank.  Use a
+  // stable_sort so that values with equal ranks will have their relative
+  // positions maintained (and so the compiler is deterministic).  Note that
+  // this sorts so that the highest ranking values end up at the beginning of
+  // the vector.
+  std::stable_sort(Ops.begin(), Ops.end());
+  
+  // OptimizeExpression - Now that we have the expression tree in a convenient
+  // sorted form, optimize it globally if possible.
+  if (Value *V = OptimizeExpression(I, Ops)) {
+    // This expression tree simplified to something that isn't a tree,
+    // eliminate it.
+    DEBUG(std::cerr << "Reassoc to scalar: " << *V << "\n");
+    I->replaceAllUsesWith(V);
+    RemoveDeadBinaryOp(I);
+    return;
+  }
+  
+  // We want to sink immediates as deeply as possible except in the case where
+  // this is a multiply tree used only by an add, and the immediate is a -1.
+  // In this case we reassociate to put the negation on the outside so that we
+  // can fold the negation into the add: (-X)*Y + Z -> Z-X*Y
+  if (I->getOpcode() == Instruction::Mul && I->hasOneUse() &&
+      cast<Instruction>(I->use_back())->getOpcode() == Instruction::Add &&
+      isa<ConstantInt>(Ops.back().Op) &&
+      cast<ConstantInt>(Ops.back().Op)->isAllOnesValue()) {
+    Ops.insert(Ops.begin(), Ops.back());
+    Ops.pop_back();
+  }
+  
+  DEBUG(std::cerr << "RAOut:\t"; PrintOps(I, Ops);
+        std::cerr << "\n");
+  
+  if (Ops.size() == 1) {
+    // This expression tree simplified to something that isn't a tree,
+    // eliminate it.
+    I->replaceAllUsesWith(Ops[0].Op);
+    RemoveDeadBinaryOp(I);
+  } else {
+    // Now that we ordered and optimized the expressions, splat them back into
+    // the expression tree, removing any unneeded nodes.
+    RewriteExprTree(I, 0, Ops);
   }
 }
 
