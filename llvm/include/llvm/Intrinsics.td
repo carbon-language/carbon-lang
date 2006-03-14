@@ -73,12 +73,11 @@ def llvm_float_ty      : LLVMType<"Type::FloatTyID">;
 def llvm_double_ty     : LLVMType<"Type::DoubleTyID">;
 def llvm_ptr_ty        : LLVMType<"Type::PointerTyID">;     // sbyte*
 def llvm_ptrptr_ty     : LLVMType<"Type::PointerTyID">;     // sbyte**
-def llvm_anchor_ty     : LLVMType<"Type::PointerTyID">;     // {}*
 def llvm_descriptor_ty : LLVMType<"Type::PointerTyID">;     // global*
 
 def llvm_v4i32_ty      : LLVMPackedType<4, llvm_int_ty>;    // 4 x int
 def llvm_v4f32_ty      : LLVMPackedType<4, llvm_float_ty>;  // 4 x float
-def llvm_v2f64_ty      : LLVMPackedType<4, llvm_float_ty>;  // 2 x double
+def llvm_v2f64_ty      : LLVMPackedType<4, llvm_double_ty>; // 2 x double
 
 //===----------------------------------------------------------------------===//
 // Intrinsic Definitions.
@@ -121,9 +120,10 @@ def int_vaend   : Intrinsic<[llvm_void_ty, llvm_ptrptr_ty], [], "llvm.va_end">;
 //===------------------- Garbage Collection Intrinsics --------------------===//
 //  
 def int_gcroot  : Intrinsic<[llvm_void_ty, llvm_ptrptr_ty, llvm_ptr_ty]>;
-def int_gcread  : Intrinsic<[llvm_ptr_ty, llvm_ptrptr_ty], [InstrReadArgMem]>;
-def int_gcwrite : Intrinsic<[llvm_void_ty, llvm_ptr_ty, llvm_ptrptr_ty],
-                            [InstrWriteArgMem]>;
+def int_gcread  : Intrinsic<[llvm_ptr_ty, llvm_ptr_ty, llvm_ptrptr_ty],
+                            [InstrReadArgMem]>;
+def int_gcwrite : Intrinsic<[llvm_void_ty, llvm_ptr_ty, llvm_ptr_ty,
+                             llvm_ptrptr_ty], [InstrWriteArgMem]>;
 
 //===--------------------- Code Generator Intrinsics ----------------------===//
 //  
