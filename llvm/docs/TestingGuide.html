@@ -416,7 +416,7 @@ directory to run them.</p>
 <ol>
   <li>cd into the llvm/projects directory</li>
   <li>check out the <tt>llvm-test</tt> module with:<br/>
-  <tt>cvs -d :pserver:anon@llvm.cs.uiuc.edu:/var/cvs/llvm co -PR llvm-test</tt><br> 
+  <tt>cvs -d :pserver:anon@llvm.org:/var/cvs/llvm co -PR llvm-test</tt><br> 
   This will get the test suite into <tt>llvm/projects/llvm-test</tt></li>
   <li>configure the test suite. You can do this one of two ways:
   <ol>
@@ -468,7 +468,7 @@ will help you separate benign warnings from actual test failures.</p>
 <div class="doc_text">
 
 <p>
-The <a href="http://llvm.cs.uiuc.edu/testresults/">LLVM Nightly Testers</a>
+The <a href="http://llvm.org/testresults/">LLVM Nightly Testers</a>
 automatically check out an LLVM tree, build it, run the "nightly" 
 program test (described above), run  all of the feature and regression tests, 
 and then delete the checked out tree.  This tester is designed to ensure that 
@@ -492,7 +492,7 @@ The optimized x86 Linux nightly test is run from just such a script:</p>
 <pre>
 #!/bin/bash
 BASE=/proj/work/llvm/nightlytest
-export CVSROOT=:pserver:anon@llvm.cs.uiuc.edu:/var/cvs/llvm
+export CVSROOT=:pserver:anon@llvm.org:/var/cvs/llvm
 export BUILDDIR=$BASE/build 
 export WEBDIR=$BASE/testresults 
 export LLVMGCCDIR=/proj/work/llvm/cfrontend/install
@@ -521,7 +521,7 @@ we'll link your page to the global tester page.  Thanks!</p>
   src="http://www.w3.org/Icons/valid-html401" alt="Valid HTML 4.01!" /></a>
 
   John T. Criswell, Reid Spencer, and Tanya Lattner<br>
-  <a href="http://llvm.cs.uiuc.edu">The LLVM Compiler Infrastructure</a><br/>
+  <a href="http://llvm.org">The LLVM Compiler Infrastructure</a><br/>
   Last modified: $Date$
 </address>
 </body>

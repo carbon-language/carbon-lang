@@ -115,7 +115,7 @@ build the analysis results that are used by these transformations, and they are,
 above all, a structuring technique for compiler code.</p>
 
 <p>All LLVM passes are subclasses of the <tt><a
-href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1Pass.html">Pass</a></tt>
+href="http://llvm.org/doxygen/classllvm_1_1Pass.html">Pass</a></tt>
 class, which implement functionality by overriding virtual methods inherited
 from <tt>Pass</tt>.  Depending on how your pass works, you should inherit from
 the <tt><a href="#ModulePass">ModulePass</a></tt>, <tt><a
@@ -206,14 +206,14 @@ the pass itself.</p>
 Start out with:</p>
 
 <pre>
-<b>#include</b> "<a href="http://llvm.cs.uiuc.edu/doxygen/Pass_8h-source.html">llvm/Pass.h</a>"
-<b>#include</b> "<a href="http://llvm.cs.uiuc.edu/doxygen/Function_8h-source.html">llvm/Function.h</a>"
+<b>#include</b> "<a href="http://llvm.org/doxygen/Pass_8h-source.html">llvm/Pass.h</a>"
+<b>#include</b> "<a href="http://llvm.org/doxygen/Function_8h-source.html">llvm/Function.h</a>"
 </pre>
 
 <p>Which are needed because we are writing a <tt><a
-href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1Pass.html">Pass</a></tt>, and
+href="http://llvm.org/doxygen/classllvm_1_1Pass.html">Pass</a></tt>, and
 we are operating on <tt><a
-href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1Function.html">Function</a></tt>'s.</p>
+href="http://llvm.org/doxygen/classllvm_1_1Function.html">Function</a></tt>'s.</p>
 
 <p>Next we have:</p>
 <pre>
@@ -242,7 +242,7 @@ information.</p>
 </pre><p>
 
 <p>This declares a "<tt>Hello</tt>" class that is a subclass of <tt><a
-href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1FunctionPass.html">FunctionPass</a></tt>.
+href="http://llvm.org/doxygen/classllvm_1_1FunctionPass.html">FunctionPass</a></tt>.
 The different builtin pass subclasses are described in detail <a
 href="#passtype">later</a>, but for now, know that <a
 href="#FunctionPass"><tt>FunctionPass</tt></a>'s operate a function at a
@@ -276,8 +276,8 @@ depending on what it is to be used for.  For "optimizations" we use the
 <p>As a whole, the <tt>.cpp</tt> file looks like:</p>
 
 <pre>
-<b>#include</b> "<a href="http://llvm.cs.uiuc.edu/doxygen/Pass_8h-source.html">llvm/Pass.h</a>"
-<b>#include</b> "<a href="http://llvm.cs.uiuc.edu/doxygen/Function_8h-source.html">llvm/Function.h</a>"
+<b>#include</b> "<a href="http://llvm.org/doxygen/Pass_8h-source.html">llvm/Pass.h</a>"
+<b>#include</b> "<a href="http://llvm.org/doxygen/Function_8h-source.html">llvm/Function.h</a>"
 
 <b>using namespace llvm;</b>
 
@@ -424,7 +424,7 @@ slow.</p>
 <div class="doc_text">
 
 <p>The most plain and boring type of pass is the "<tt><a
-href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1ImmutablePass.html">ImmutablePass</a></tt>"
+href="http://llvm.org/doxygen/classllvm_1_1ImmutablePass.html">ImmutablePass</a></tt>"
 class.  This pass type is used for passes that do not have to be run, do not
 change state, and never need to be updated.  This is not a normal type of
 transformation or analysis, but can provide information about the current
@@ -447,7 +447,7 @@ invalidated, and are never "run".</p>
 <div class="doc_text">
 
 <p>The "<tt><a
-href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1ModulePass.html">ModulePass</a></tt>"
+href="http://llvm.org/doxygen/classllvm_1_1ModulePass.html">ModulePass</a></tt>"
 class is the most general of all superclasses that you can use.  Deriving from
 <tt>ModulePass</tt> indicates that your pass uses the entire program as a unit,
 refering to function bodies in no predictable order, or adding and removing
@@ -485,7 +485,7 @@ false otherwise.</p>
 <div class="doc_text">
 
 <p>The "<tt><a
-href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1CallGraphSCCPass.html">CallGraphSCCPass</a></tt>"
+href="http://llvm.org/doxygen/classllvm_1_1CallGraphSCCPass.html">CallGraphSCCPass</a></tt>"
 is used by passes that need to traverse the program bottom-up on the call graph
 (callees before callers).  Deriving from CallGraphSCCPass provides some
 mechanics for building and traversing the CallGraph, but also allows the system
@@ -593,7 +593,7 @@ program being compiled.</p>
 <div class="doc_text">
 
 <p>In contrast to <tt>ModulePass</tt> subclasses, <tt><a
-href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1Pass.html">FunctionPass</a></tt>
+href="http://llvm.org/doxygen/classllvm_1_1Pass.html">FunctionPass</a></tt>
 subclasses do have a predictable, local behavior that can be expected by the
 system.  All <tt>FunctionPass</tt> execute on each function in the program
 independent of all of the other functions in the program.
@@ -638,7 +638,7 @@ scheduled to overlap with any other pass executions (thus it should be very
 fast).</p>
 
 <p>A good example of how this method should be used is the <a
-href="http://llvm.cs.uiuc.edu/doxygen/LowerAllocations_8cpp-source.html">LowerAllocations</a>
+href="http://llvm.org/doxygen/LowerAllocations_8cpp-source.html">LowerAllocations</a>
 pass.  This pass converts <tt>malloc</tt> and <tt>free</tt> instructions into
 platform dependent <tt>malloc()</tt> and <tt>free()</tt> function calls.  It
 uses the <tt>doInitialization</tt> method to get a reference to the malloc and
@@ -853,7 +853,7 @@ registering a pass that logically should be available for use in the
 <tt>Register*</tt> templates that should be used if you want your pass listed by
 multiple or no utilities.  This template takes an extra third argument that
 specifies which tools it should be listed in.  See the <a
-href="http://llvm.cs.uiuc.edu/doxygen/PassSupport_8h-source.html">PassSupport.h</a>
+href="http://llvm.org/doxygen/PassSupport_8h-source.html">PassSupport.h</a>
 file for more information.</li>
 
 </ul>
@@ -934,7 +934,7 @@ having any prerequisite passes, and invalidating <b>all</b> other passes.</p>
 <p>By implementing the <tt>getAnalysisUsage</tt> method, the required and
 invalidated sets may be specified for your transformation.  The implementation
 should fill in the <tt><a
-href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1AnalysisUsage.html">AnalysisUsage</a></tt>
+href="http://llvm.org/doxygen/classllvm_1_1AnalysisUsage.html">AnalysisUsage</a></tt>
 object with information about which passes are required and not invalidated.  To
 do this, a pass may call any of the following methods on the AnalysisUsage
 object:</p>
@@ -1011,9 +1011,9 @@ the fact that it hacks on the CFG.
 <pre>
   <i>// This is an example implementation from an analysis, which does not modify
   // the program at all, yet has a prerequisite.</i>
-  <b>void</b> <a href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1PostDominanceFrontier.html">PostDominanceFrontier</a>::getAnalysisUsage(AnalysisUsage &amp;AU) <b>const</b> {
+  <b>void</b> <a href="http://llvm.org/doxygen/classllvm_1_1PostDominanceFrontier.html">PostDominanceFrontier</a>::getAnalysisUsage(AnalysisUsage &amp;AU) <b>const</b> {
     AU.setPreservesAll();
-    AU.addRequired&lt;<a href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1PostDominatorTree.html">PostDominatorTree</a>&gt;();
+    AU.addRequired&lt;<a href="http://llvm.org/doxygen/classllvm_1_1PostDominatorTree.html">PostDominatorTree</a>&gt;();
   }
 </pre>
 
@@ -1021,9 +1021,9 @@ the fact that it hacks on the CFG.
 
 <pre>
   <i>// This example modifies the program, but does not modify the CFG</i>
-  <b>void</b> <a href="http://llvm.cs.uiuc.edu/doxygen/structLICM.html">LICM</a>::getAnalysisUsage(AnalysisUsage &amp;AU) <b>const</b> {
+  <b>void</b> <a href="http://llvm.org/doxygen/structLICM.html">LICM</a>::getAnalysisUsage(AnalysisUsage &amp;AU) <b>const</b> {
     AU.setPreservesCFG();
-    AU.addRequired&lt;<a href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1LoopInfo.html">LoopInfo</a>&gt;();
+    AU.addRequired&lt;<a href="http://llvm.org/doxygen/classllvm_1_1LoopInfo.html">LoopInfo</a>&gt;();
   }
 </pre>
 
@@ -1128,16 +1128,16 @@ implementation pool.  Also, a default implementation of the interface
 href="#registerag"><tt>RegisterAnalysisGroup</tt></a>.</p>
 
 <p>As a concrete example of an Analysis Group in action, consider the <a
-href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1AliasAnalysis.html">AliasAnalysis</a>
+href="http://llvm.org/doxygen/classllvm_1_1AliasAnalysis.html">AliasAnalysis</a>
 analysis group.  The default implementation of the alias analysis interface (the
 <tt><a
-href="http://llvm.cs.uiuc.edu/doxygen/structBasicAliasAnalysis.html">basicaa</a></tt>
+href="http://llvm.org/doxygen/structBasicAliasAnalysis.html">basicaa</a></tt>
 pass) just does a few simple checks that don't require significant analysis to
 compute (such as: two different globals can never alias each other, etc).
 Passes that use the <tt><a
-href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1AliasAnalysis.html">AliasAnalysis</a></tt>
+href="http://llvm.org/doxygen/classllvm_1_1AliasAnalysis.html">AliasAnalysis</a></tt>
 interface (for example the <tt><a
-href="http://llvm.cs.uiuc.edu/doxygen/structGCSE.html">gcse</a></tt> pass), do
+href="http://llvm.org/doxygen/structGCSE.html">gcse</a></tt> pass), do
 not care which implementation of alias analysis is actually provided, they just
 use the designated interface.</p>
 
@@ -1164,7 +1164,7 @@ Unlike registration of passes, there is no command line argument to be specified
 for the Analysis Group Interface itself, because it is "abstract":</p>
 
 <pre>
-  <b>static</b> RegisterAnalysisGroup&lt;<a href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1AliasAnalysis.html">AliasAnalysis</a>&gt; A("<i>Alias Analysis</i>");
+  <b>static</b> RegisterAnalysisGroup&lt;<a href="http://llvm.org/doxygen/classllvm_1_1AliasAnalysis.html">AliasAnalysis</a>&gt; A("<i>Alias Analysis</i>");
 </pre>
 
 <p>Once the analysis is registered, passes can declare that they are valid
@@ -1177,13 +1177,13 @@ implementations of the interface by using the following code:</p>
   B("<i>somefancyaa</i>", "<i>A more complex alias analysis implementation</i>");
 
   //<i> Declare that we implement the AliasAnalysis interface</i>
-  RegisterAnalysisGroup&lt;<a href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1AliasAnalysis.html">AliasAnalysis</a>, FancyAA&gt; C;
+  RegisterAnalysisGroup&lt;<a href="http://llvm.org/doxygen/classllvm_1_1AliasAnalysis.html">AliasAnalysis</a>, FancyAA&gt; C;
 }
 </pre>
 
 <p>This just shows a class <tt>FancyAA</tt> that is registered normally, then
 uses the <tt>RegisterAnalysisGroup</tt> template to "join" the <tt><a
-href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1AliasAnalysis.html">AliasAnalysis</a></tt>
+href="http://llvm.org/doxygen/classllvm_1_1AliasAnalysis.html">AliasAnalysis</a></tt>
 analysis group.  Every implementation of an analysis group should join using
 this template.  A single pass may join multiple different analysis groups with
 no problem.</p>
@@ -1191,11 +1191,11 @@ no problem.</p>
 <pre>
 <b>namespace</b> {
   //<i> Analysis Group implementations <b>must</b> be registered normally...</i>
-  RegisterOpt&lt;<a href="http://llvm.cs.uiuc.edu/doxygen/structBasicAliasAnalysis.html">BasicAliasAnalysis</a>&gt;
+  RegisterOpt&lt;<a href="http://llvm.org/doxygen/structBasicAliasAnalysis.html">BasicAliasAnalysis</a>&gt;
   D("<i>basicaa</i>", "<i>Basic Alias Analysis (default AA impl)</i>");
 
   //<i> Declare that we implement the AliasAnalysis interface</i>
-  RegisterAnalysisGroup&lt;<a href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1AliasAnalysis.html">AliasAnalysis</a>, <a href="http://llvm.cs.uiuc.edu/doxygen/structBasicAliasAnalysis.html">BasicAliasAnalysis</a>, <b>true</b>&gt; E;
+  RegisterAnalysisGroup&lt;<a href="http://llvm.org/doxygen/classllvm_1_1AliasAnalysis.html">AliasAnalysis</a>, <a href="http://llvm.org/doxygen/structBasicAliasAnalysis.html">BasicAliasAnalysis</a>, <b>true</b>&gt; E;
 }
 </pre>
 
@@ -1203,7 +1203,7 @@ no problem.</p>
 argument to the <tt>RegisterAnalysisGroup</tt> template).  There must be exactly
 one default implementation available at all times for an Analysis Group to be
 used.  Here we declare that the <tt><a
-href="http://llvm.cs.uiuc.edu/doxygen/structBasicAliasAnalysis.html">BasicAliasAnalysis</a></tt>
+href="http://llvm.org/doxygen/structBasicAliasAnalysis.html">BasicAliasAnalysis</a></tt>
 pass is the default implementation for the interface.</p>
 
 </div>
@@ -1216,7 +1216,7 @@ pass is the default implementation for the interface.</p>
 
 <div class="doc_text">
 <p>The <a
-href="http://llvm.cs.uiuc.edu/doxygen/Statistic_8h-source.html"><tt>Statistic</tt></a>
+href="http://llvm.org/doxygen/Statistic_8h-source.html"><tt>Statistic</tt></a>
 class is designed to be an easy way to expose various success
 metrics from passes.  These statistics are printed at the end of a
 run, when the -stats command line option is enabled on the command
@@ -1234,9 +1234,9 @@ line. See the <a href="http://llvm.org/docs/ProgrammersManual.html#Statistic">St
 <div class="doc_text">
 
 <p>The <a
-href="http://llvm.cs.uiuc.edu/doxygen/PassManager_8h-source.html"><tt>PassManager</tt></a>
+href="http://llvm.org/doxygen/PassManager_8h-source.html"><tt>PassManager</tt></a>
 <a
-href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1PassManager.html">class</a>
+href="http://llvm.org/doxygen/classllvm_1_1PassManager.html">class</a>
 takes a list of passes, ensures their <a href="#interaction">prerequisites</a>
 are set up correctly, and then schedules passes to run efficiently.  All of the
 LLVM tools that run passes use the <tt>PassManager</tt> for execution of these
@@ -1267,7 +1267,7 @@ etc... until the entire program has been run through the passes.
 the LLVM program representation for a single function at a time, instead of
 traversing the entire program.  It reduces the memory consumption of compiler,
 because, for example, only one <a
-href="http://llvm.cs.uiuc.edu/doxygen/classllvm_1_1DominatorSet.html"><tt>DominatorSet</tt></a>
+href="http://llvm.org/doxygen/classllvm_1_1DominatorSet.html"><tt>DominatorSet</tt></a>
 needs to be calculated at a time.  This also makes it possible some <a
 href="#SMP">interesting enhancements</a> in the future.</p></li>
 
@@ -1592,7 +1592,7 @@ href="#ModulePass"><tt>ModulePass</tt></a>, only the other way around.</p>
   src="http://www.w3.org/Icons/valid-html401" alt="Valid HTML 4.01!" /></a>
 
   <a href="mailto:sabre@nondot.org">Chris Lattner</a><br>
-  <a href="http://llvm.cs.uiuc.edu">The LLVM Compiler Infrastructure</a><br>
+  <a href="http://llvm.org">The LLVM Compiler Infrastructure</a><br>
   Last modified: $Date$
 </address>
 
