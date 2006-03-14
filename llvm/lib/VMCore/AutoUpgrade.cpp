@@ -97,6 +97,9 @@ static Function *getUpgradedIntrinsic(Function *F) {
       if (F->getReturnType() != Type::VoidTy) {
         return M->getOrInsertFunction(Name, Type::VoidTy, NULL);
       }
+    } else if (Name == "llvm.dbg.declare") {
+      F->setName("");
+      return NULL;
     }
     break;
   case 'i':
@@ -230,7 +233,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       } else
         Oprnds.push_back(UndefValue::get(NewFnTy->getParamType(i)));
     }
-  } else {
+  } else if (N) {
     assert(N == (CI->getNumOperands() - 1) &&
            "Upgraded function needs permutation");
     for (unsigned i = 0; i != N; ++i) {
