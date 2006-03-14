@@ -1,5 +1,5 @@
 ;; LLVM coding style guidelines in emacs
-;; Maintainer: LLVM Team, http://llvm.cs.uiuc.edu
+;; Maintainer: LLVM Team, http://llvm.org/
 ;; Modified:   2005-04-24
 
 ;; Max 80 cols per line, indent by two spaces, no tabs.
