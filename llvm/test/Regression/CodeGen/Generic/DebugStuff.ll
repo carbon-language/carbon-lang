@@ -12,7 +12,6 @@ declare {}* %llvm.dbg.stoppoint({}*, uint, uint, %lldb.compile_unit*)
 declare {}* %llvm.dbg.func.start(%lldb.global*)
 declare {}* %llvm.dbg.region.start({}*)
 declare {}* %llvm.dbg.region.end({}*)
-declare {}* %llvm.dbg.declare({}*, ...)
 
 ;; Global object anchors
 %llvm.dbg.translation_units = linkonce global {} {}
@@ -90,16 +89,14 @@ entry:
 	%t = alloca int
 	%.1 = call {}* %llvm.dbg.func.start(%lldb.global* %d.foo)
 	%.2 = call {}* %llvm.dbg.stoppoint({}* %.1, uint 5, uint 2, %lldb.compile_unit* %d.compile_unit)
-
-        %.3 = call {}*({}*, ...)* %llvm.dbg.declare({}* %.2, %lldb.local* %d.t, int* %t)
 	%tmp.0 = load int* %q
 	store int %tmp.0, int* %t
-	%.4 = call {}* %llvm.dbg.stoppoint({}* %.3, uint 6, uint 2, %lldb.compile_unit* %d.compile_unit)
+	%.3 = call {}* %llvm.dbg.stoppoint({}* %.2, uint 6, uint 2, %lldb.compile_unit* %d.compile_unit)
 	%tmp.01 = load int* %t
 	%tmp.1 = add int %tmp.01, 1
 	store int %tmp.1, int* %q
-	%.5 = call {}* %llvm.dbg.stoppoint({}* %.4, uint 7, uint 1, %lldb.compile_unit* %d.compile_unit)
-	call {}* %llvm.dbg.region.end({}* %.5)
+	%.4 = call {}* %llvm.dbg.stoppoint({}* %.3, uint 7, uint 1, %lldb.compile_unit* %d.compile_unit)
+	call {}* %llvm.dbg.region.end({}* %.4)
 	ret void
 }
 
