@@ -1407,14 +1407,13 @@ typedef const int *IntPtr;
 %<a href="#format_derived_type">llvm.dbg.derivedtype2</a> = internal constant %<a href="#format_derived_type">llvm.dbg.derivedtype.type</a> {
     uint 15, 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    sbyte* getelementptr ([1 x sbyte]* %str2, int 0, int 0), 
+    sbyte* null, 
     {  }* null, 
     int 0, 
     uint 32, 
     uint 32, 
     uint 0, 
     {  }* cast (%<a href="#format_derived_type">llvm.dbg.derivedtype.type</a>* %<a href="#format_derived_type">llvm.dbg.derivedtype3</a> to {  }*) }, section "llvm.metadata"
-%str2 = internal constant [1 x sbyte] zeroinitializer, section "llvm.metadata"
 
 ;;
 ;; Define the const type.
@@ -1422,7 +1421,7 @@ typedef const int *IntPtr;
 %<a href="#format_derived_type">llvm.dbg.derivedtype3</a> = internal constant %<a href="#format_derived_type">llvm.dbg.derivedtype.type</a> {
     uint 38, 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    sbyte* getelementptr ([1 x sbyte]* %str2, int 0, int 0), 
+    sbyte* null, 
     {  }* null, 
     int 0, 
     uint 0, 
@@ -1436,14 +1435,14 @@ typedef const int *IntPtr;
 %<a href="#format_basic_type">llvm.dbg.basictype1</a> = internal constant %<a href="#format_basic_type">llvm.dbg.basictype.type</a> {
     uint 36, 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
-    sbyte* getelementptr ([4 x sbyte]* %str4, int 0, int 0), 
+    sbyte* getelementptr ([4 x sbyte]* %str2, int 0, int 0), 
     {  }* null, 
     int 0, 
     uint 32, 
     uint 32, 
     uint 0, 
     uint 5 }, section "llvm.metadata"
-%str4 = internal constant [4 x sbyte] c"int\00", section "llvm.metadata"
+%str2 = internal constant [4 x sbyte] c"int\00", section "llvm.metadata"
 </pre>
 
 </div>
