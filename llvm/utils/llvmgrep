@@ -18,7 +18,8 @@
 # details.
 ##===----------------------------------------------------------------------===##
 
-TOPDIR=`pwd | sed -e 's#\(.*/llvm\).*#\1#'`
+TOPDIR=`pwd | sed -e 's#\(.*/llvm[0-9]*\).*#\1#'`
+echo $TOPDIR
 if test -d "$TOPDIR" ; then
   cd $TOPDIR
   case `uname -s` in
