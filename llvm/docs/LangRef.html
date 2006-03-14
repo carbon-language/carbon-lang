@@ -106,7 +106,8 @@
           <li><a href="#i_phi">'<tt>phi</tt>'   Instruction</a></li>
           <li><a href="#i_cast">'<tt>cast .. to</tt>' Instruction</a></li>
           <li><a href="#i_select">'<tt>select</tt>' Instruction</a></li>
-          <li><a href="#i_vset">'<tt>vset</tt>' Instruction</a></li>
+          <li><a href="#i_vsetint">'<tt>vsetint</tt>' Instruction</a></li>
+          <li><a href="#i_vsetfp">'<tt>vsetfp</tt>' Instruction</a></li>
           <li><a href="#i_vselect">'<tt>vselect</tt>' Instruction</a></li>
           <li><a href="#i_extractelement">'<tt>extractelement</tt>' Instruction</a></li>
           <li><a href="#i_insertelement">'<tt>insertelement</tt>' Instruction</a></li>
@@ -2331,56 +2332,50 @@ value argument; otherwise, it returns the second value argument.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_vset">'<tt>vset</tt>'
+<div class="doc_subsubsection"> <a name="i_vsetint">'<tt>vsetint</tt>'
 Instruction</a> </div>
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>&lt;result&gt; = vset &lt;op&gt;, &lt;n x &lt;ty&gt;&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields &lt;n x bool&gt;</i>
+<pre>&lt;result&gt; = vsetint &lt;op&gt;, &lt;n x &lt;ty&gt;&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields &lt;n x bool&gt;</i>
 </pre>
 
 <h5>Overview:</h5>
 
-<p>The '<tt>vset</tt>' instruction returns a vector of boolean
-values representing, at each position, the result of the comparison
-between the values at that position in the two operands.</p>
+<p>The '<tt>vsetint</tt>' instruction takes two integer vectors and
+returns a vector of boolean values representing, at each position, the
+result of the comparison between the values at that position in the
+two operands.</p>
 
 <h5>Arguments:</h5>
 
-<p>The arguments to a '<tt>vset</tt>' instruction are a comparison
+<p>The arguments to a '<tt>vsetint</tt>' instruction are a comparison
 operation and two value arguments.  The value arguments must be of <a
-href="#t_packed">packed</a> type, and they must have identical types.
-For value arguments of integral element type, the operation argument
-must be one of <tt>eq</tt>, <tt>ne</tt>, <tt>lt</tt>, <tt>gt</tt>,
-<tt>le</tt>, <tt>ge</tt>, <tt>ult</tt>, <tt>ugt</tt>, <tt>ule</tt>,
-<tt>uge</tt>, <tt>true</tt>, and <tt>false</tt>.  For value arguments
-of floating point element type, the operation argument must be one of
-<tt>eq</tt>, <tt>ne</tt>, <tt>lt</tt>, <tt>gt</tt>, <tt>le</tt>,
-<tt>ge</tt>, <tt>oeq</tt>, <tt>one</tt>, <tt>olt</tt>, <tt>ogt</tt>,
-<tt>ole</tt>, <tt>oge</tt>, <tt>ueq</tt>, <tt>une</tt>, <tt>ult</tt>,
-<tt>ugt</tt>, <tt>ule</tt>, <tt>uge</tt>, <tt>o</tt>, <tt>u</tt>,
-<tt>true</tt>, and <tt>false</tt>.  The result is a packed
-<tt>bool</tt> value with the same length as each operand.</p>
+href="#t_integral">integral</a> <a href="#t_packed">packed</a> type,
+and they must have identical types.  The operation argument must be
+one of <tt>eq</tt>, <tt>ne</tt>, <tt>slt</tt>, <tt>sgt</tt>,
+<tt>sle</tt>, <tt>sge</tt>, <tt>ult</tt>, <tt>ugt</tt>, <tt>ule</tt>,
+<tt>uge</tt>, <tt>true</tt>, and <tt>false</tt>.  The result is a
+packed <tt>bool</tt> value with the same length as each operand.</p>
 
 <h5>Semantics:</h5>
 
-<p>The following table shows the semantics of '<tt>vset</tt>' for
-integral value arguments.  For each position of the result, the
-comparison is done on the corresponding positions of the two value
-arguments.  Note that the signedness of the comparison depends on the
-comparison opcode and <i>not</i> on the signedness of the value
-operands.  E.g., <tt>vset lt <4 x unsigned> %x, %y</tt> does an
-elementwise <i>signed</i> comparison of <tt>%x</tt> and
-<tt>%y</tt>.</p>
+<p>The following table shows the semantics of '<tt>vsetint</tt>'.  For
+each position of the result, the comparison is done on the
+corresponding positions of the two value arguments.  Note that the
+signedness of the comparison depends on the comparison opcode and
+<i>not</i> on the signedness of the value operands.  E.g., <tt>vsetint
+slt <4 x unsigned> %x, %y</tt> does an elementwise <i>signed</i>
+comparison of <tt>%x</tt> and <tt>%y</tt>.</p>
 
 <table  border="1" cellspacing="0" cellpadding="4">
   <tbody>
     <tr><th>Operation</th><th>Result is true iff</th><th>Comparison is</th></tr>
     <tr><td><tt>eq</tt></td><td>var1 == var2</td><td>--</td></tr>
     <tr><td><tt>ne</tt></td><td>var1 != var2</td><td>--</td></tr>
-    <tr><td><tt>lt</tt></td><td>var1 &lt; var2</td><td>signed</td></tr>
-    <tr><td><tt>gt</tt></td><td>var1 &gt; var2</td><td>signed</td></tr>
-    <tr><td><tt>le</tt></td><td>var1 &lt;= var2</td><td>signed</td></tr>
-    <tr><td><tt>ge</tt></td><td>var1 &gt;= var2</td><td>signed</td></tr>
+    <tr><td><tt>slt</tt></td><td>var1 &lt; var2</td><td>signed</td></tr>
+    <tr><td><tt>sgt</tt></td><td>var1 &gt; var2</td><td>signed</td></tr>
+    <tr><td><tt>sle</tt></td><td>var1 &lt;= var2</td><td>signed</td></tr>
+    <tr><td><tt>sge</tt></td><td>var1 &gt;= var2</td><td>signed</td></tr>
     <tr><td><tt>ult</tt></td><td>var1 &lt; var2</td><td>unsigned</td></tr>
     <tr><td><tt>ugt</tt></td><td>var1 &gt; var2</td><td>unsigned</td></tr>
     <tr><td><tt>ule</tt></td><td>var1 &lt;= var2</td><td>unsigned</td></tr>
@@ -2390,7 +2385,47 @@ elementwise <i>signed</i> comparison of <tt>%x</tt> and
   </tbody>
 </table>
 
-<p>The following table shows the semantics of '<tt>vset</tt>' for
+<h5>Example:</h5>
+<pre>  &lt;result&gt; = vsetint eq &lt;2 x int&gt; &lt;int 0, int 1&gt;, &lt;int 1, int 0&gt;      <i>; yields {&lt;2 x bool&gt;}:result = false, false</i>
+  &lt;result&gt; = vsetint ne &lt;2 x int&gt; &lt;int 0, int 1&gt;, &lt;int 1, int 0&gt;      <i>; yields {&lt;2 x bool&gt;}:result = true, true</i>
+  &lt;result&gt; = vsetint slt &lt;2 x int&gt; &lt;int 0, int 1&gt;, &lt;int 1, int 0&gt;      <i>; yields {&lt;2 x bool&gt;}:result = true, false</i>
+  &lt;result&gt; = vsetint sgt &lt;2 x int&gt; &lt;int 0, int 1&gt;, &lt;int 1, int 0&gt;      <i>; yields {&lt;2 x bool&gt;}:result = false, true</i>
+  &lt;result&gt; = vsetint sle &lt;2 x int&gt; &lt;int 0, int 1&gt;, &lt;int 1, int 0&gt;      <i>; yields {&lt;2 x bool&gt;}:result = true, false</i>
+  &lt;result&gt; = vsetint sge &lt;2 x int&gt; &lt;int 0, int 1&gt;, &lt;int 1, int 0&gt;      <i>; yields {&lt;2 x bool&gt;}:result = false, true</i>
+</pre>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"> <a name="i_vsetfp">'<tt>vsetfp</tt>'
+Instruction</a> </div>
+<div class="doc_text">
+<h5>Syntax:</h5>
+<pre>&lt;result&gt; = vsetfp &lt;op&gt;, &lt;n x &lt;ty&gt;&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields &lt;n x bool&gt;</i>
+</pre>
+
+<h5>Overview:</h5>
+
+<p>The '<tt>vsetfp</tt>' instruction takes two floating point vector
+arguments and returns a vector of boolean values representing, at each
+position, the result of the comparison between the values at that
+position in the two operands.</p>
+
+<h5>Arguments:</h5>
+
+<p>The arguments to a '<tt>vsetfp</tt>' instruction are a comparison
+operation and two value arguments.  The value arguments must be of <a
+href="t_floating">floating point</a> <a href="#t_packed">packed</a>
+type, and they must have identical types.  The operation argument must
+be one of <tt>eq</tt>, <tt>ne</tt>, <tt>lt</tt>, <tt>gt</tt>,
+<tt>le</tt>, <tt>ge</tt>, <tt>oeq</tt>, <tt>one</tt>, <tt>olt</tt>,
+<tt>ogt</tt>, <tt>ole</tt>, <tt>oge</tt>, <tt>ueq</tt>, <tt>une</tt>,
+<tt>ult</tt>, <tt>ugt</tt>, <tt>ule</tt>, <tt>uge</tt>, <tt>o</tt>,
+<tt>u</tt>, <tt>true</tt>, and <tt>false</tt>.  The result is a packed
+<tt>bool</tt> value with the same length as each operand.</p>
+
+<h5>Semantics:</h5>
+
+<p>The following table shows the semantics of '<tt>vsetfp</tt>' for
 floating point types.  If either operand is a floating point Not a
 Number (NaN) value, the operation is unordered, and the value in the
 first column below is produced at that position.  Otherwise, the
@@ -2426,12 +2461,12 @@ produced.</p>
 </table>
 
 <h5>Example:</h5>
-<pre>  &lt;result&gt; = vset eq &lt;2 x int&gt; &lt;int 0, int 1&gt;, &lt;int 1, int 0&gt;      <i>; yields {&lt;2 x bool&gt;}:result = false, false</i>
-  &lt;result&gt; = vset ne &lt;2 x int&gt; &lt;int 0, int 1&gt;, &lt;int 1, int 0&gt;      <i>; yields {&lt;2 x bool&gt;}:result = true, true</i>
-  &lt;result&gt; = vset lt &lt;2 x int&gt; &lt;int 0, int 1&gt;, &lt;int 1, int 0&gt;      <i>; yields {&lt;2 x bool&gt;}:result = true, false</i>
-  &lt;result&gt; = vset gt &lt;2 x int&gt; &lt;int 0, int 1&gt;, &lt;int 1, int 0&gt;      <i>; yields {&lt;2 x bool&gt;}:result = false, true</i>
-  &lt;result&gt; = vset le &lt;2 x int&gt; &lt;int 0, int 1&gt;, &lt;int 1, int 0&gt;      <i>; yields {&lt;2 x bool&gt;}:result = true, false</i>
-  &lt;result&gt; = vset ge &lt;2 x int&gt; &lt;int 0, int 1&gt;, &lt;int 1, int 0&gt;      <i>; yields {&lt;2 x bool&gt;}:result = false, true</i>
+<pre>  &lt;result&gt; = vsetfp eq &lt;2 x float&gt; &lt;float 0, float 1&gt;, &lt;float 1, float 0&gt;      <i>; yields {&lt;2 x bool&gt;}:result = false, false</i>
+  &lt;result&gt; = vsetfp ne &lt;2 x float&gt; &lt;float 0, float 1&gt;, &lt;float 1, float 0&gt;      <i>; yields {&lt;2 x bool&gt;}:result = true, true</i>
+  &lt;result&gt; = vsetfp lt &lt;2 x float&gt; &lt;float 0, float 1&gt;, &lt;float 1, float 0&gt;      <i>; yields {&lt;2 x bool&gt;}:result = true, false</i>
+  &lt;result&gt; = vsetfp gt &lt;2 x float&gt; &lt;float 0, float 1&gt;, &lt;float 1, float 0&gt;      <i>; yields {&lt;2 x bool&gt;}:result = false, true</i>
+  &lt;result&gt; = vsetfp le &lt;2 x float&gt; &lt;float 0, float 1&gt;, &lt;float 1, float 0&gt;      <i>; yields {&lt;2 x bool&gt;}:result = true, false</i>
+  &lt;result&gt; = vsetfp ge &lt;2 x float&gt; &lt;float 0, float 1&gt;, &lt;float 1, float 0&gt;      <i>; yields {&lt;2 x bool&gt;}:result = false, true</i>
 </pre>
 </div>
 
