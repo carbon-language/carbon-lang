@@ -113,3 +113,11 @@ for 1,2,4,8 bytes.
 
 //===---------------------------------------------------------------------===//
 
+This code:
+int rot(unsigned char b) { int a = ((b>>1) ^ (b<<7)) & 0xff; return a; }
+
+Can be improved in two ways:
+
+1. The instcombiner should eliminate the type conversions.
+2. The X86 backend should turn this into a rotate by one bit.
+
