@@ -46,7 +46,7 @@ static void runAtExitHandlers() {
 // strategy of making these functions work differently when inlined vs. when
 // not inlined, and hiding their real definitions in a separate archive file
 // that the dynamic linker can't see. For more info, search for
-// 'libc_nonshared.a' on Google, or read http://llvm.cs.uiuc.edu/PR274.
+// 'libc_nonshared.a' on Google, or read http://llvm.org/PR274.
 #if defined(__linux__)
 #if defined(HAVE_SYS_STAT_H)
 #include <sys/stat.h>

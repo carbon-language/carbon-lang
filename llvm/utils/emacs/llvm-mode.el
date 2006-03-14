@@ -1,4 +1,4 @@
-;; Maintainer:  The LLVM team, http://llvm.cs.uiuc.edu/
+;; Maintainer:  The LLVM team, http://llvm.org/
 ;; Description: Major mode for the LLVM assembler language.
 ;; Updated:     2003-06-02
 

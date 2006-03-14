@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:   TableGen
-" Maintainer: The LLVM team, http://llvm.cs.uiuc.edu/
+" Maintainer: The LLVM team, http://llvm.org/
 " Updated:    2003-08-11
 
 if version < 600

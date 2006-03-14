@@ -15,7 +15,7 @@ porting is this library.
 Complete documentation for the library can be found in the file:
   llvm/docs/SystemLibrary.html 
 or at this URL:
-  http://llvm.cs.uiuc.edu/docs/SystemLibrary.html
+  http://llvm.org/docs/SystemLibrary.html
 
 While we recommend that you read the more detailed documentation, for the 
 impatient, here's a high level summary of the library's requirements.

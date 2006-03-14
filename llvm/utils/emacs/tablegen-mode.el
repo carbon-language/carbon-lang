@@ -1,4 +1,4 @@
-;; Maintainer:  The LLVM team, http://llvm.cs.uiuc.edu/
+;; Maintainer:  The LLVM team, http://llvm.org/
 ;; Description: Major mode for TableGen description files (part of LLVM project)
 ;; Updated:     2003-08-11
 
