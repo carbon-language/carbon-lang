@@ -270,7 +270,11 @@ public:
     Elements.push_back(ConstantBool::get(Field));
   }
   virtual void Apply(std::string &Field) {
-    Elements.push_back(SR.getString(Field));
+    if (Field.empty()) {
+      Elements.push_back(NULL);
+    } else {
+      Elements.push_back(SR.getString(Field));
+    }
   }
   virtual void Apply(DebugInfoDesc *&Field) {
     GlobalVariable *GV = NULL;
@@ -417,7 +421,7 @@ public:
   }
   virtual void Apply(std::string &Field) {
     Constant *C = CI->getOperand(I++);
-    IsValid = IsValid && isStringValue(C);
+    IsValid = IsValid && (!C || isStringValue(C));
   }
   virtual void Apply(DebugInfoDesc *&Field) {
     // FIXME - Prepare the correct descriptor.
@@ -1086,11 +1090,13 @@ DebugInfoDesc *DIDeserializer::Deserialize(GlobalVariable *GV) {
   
   // Create an empty instance of the correct sort.
   Slot = DebugInfoDesc::DescFactory(Tag);
-  assert(Slot && "Unknown Tag");
   
-  // Deserialize the fields.
-  DIDeserializeVisitor DRAM(*this, GV);
-  DRAM.ApplyToFields(Slot);
+  // If not a user defined descriptor.
+  if (Slot) {
+    // Deserialize the fields.
+    DIDeserializeVisitor DRAM(*this, GV);
+    DRAM.ApplyToFields(Slot);
+  }
   
   return Slot;
 }
@@ -1238,7 +1244,9 @@ bool DIVerifier::Verify(GlobalVariable *GV) {
 
   // Construct an empty DebugInfoDesc.
   DebugInfoDesc *DD = DebugInfoDesc::DescFactory(Tag);
-  if (!DD) return false;
+  
+  // Allow for user defined descriptors.
+  if (!DD) return true;
   
   // Get the initializer constant.
   ConstantStruct *CI = cast<ConstantStruct>(GV->getInitializer());
@@ -1255,8 +1263,8 @@ bool DIVerifier::Verify(GlobalVariable *GV) {
     Slot = CTAM.getCount();
   }
   
-  // Field count must equal operand count.
-  if (Slot != N) {
+  // Field count must be at most equal operand count.
+  if (Slot >  N) {
     delete DD;
     return false;
   }
