@@ -682,6 +682,7 @@ void ETNode::setFather(ETNode *NewFather) {
     rightmost->MinOccurrence = NewFatherOcc->MinOccurrence;
   }
 
+  delete ParentOcc;
   ParentOcc = NewFatherOcc;
 
   // Update *our* tree
