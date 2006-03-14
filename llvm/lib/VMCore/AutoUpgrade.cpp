@@ -259,7 +259,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       Instruction *RetVal = NewCI;
       
       if (F->getReturnType() != NewFn->getReturnType()) {
-        RetVal = new CastInst(NewCI, NewFn->getReturnType(), 
+        RetVal = new CastInst(NewCI, F->getReturnType(), 
                               NewCI->getName(), CI);
         NewCI->moveBefore(RetVal);
       }
