@@ -306,10 +306,10 @@ Rate encoding scheme. The percentage is relative to # of VBR Expanded Bytes.
 
 =head1 SEE ALSO
 
-L<llvm-dis|llvm-dis>, L<http://llvm.cs.uiuc.edu/docs/BytecodeFormat.html>
+L<llvm-dis|llvm-dis>, L<http://llvm.org/docs/BytecodeFormat.html>
 
 =head1 AUTHORS
 
-Maintained by the LLVM Team (L<http://llvm.cs.uiuc.edu>).
+Maintained by the LLVM Team (L<http://llvm.org>).
 
 =cut

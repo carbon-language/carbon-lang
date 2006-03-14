@@ -13,7 +13,7 @@ B<stkrc> [I<options>] [I<filename>]
 The B<stkrc> command is the compiler for the Stacker language. Stacker is a
 simple stack based, Forth-like language that was written as a demonstration
 language for LLVM. For details on the language, please see
-L<http://llvm.cs.uiuc.edu/docs/Stacker.html> . The B<stkrc> compiler is fairly 
+L<http://llvm.org/docs/Stacker.html> . The B<stkrc> compiler is fairly 
 minimal. It compiles to bytecode only and doesn't perform any optimizations.
 The output of stkrc (a bytecode file) can be piped through other LLVM tools
 for optimization and linking.
@@ -87,10 +87,10 @@ occurs, it will exit with a non-zero value, usually 1.
 
 =head1 SEE ALSO
 
-L<llvm-as>, L<http://llvm.cs.uiuc.edu/docs/Stacker.html>
+L<llvm-as>, L<http://llvm.org/docs/Stacker.html>
 
 =head1 AUTHORS
 
-Maintained by the LLVM Team (L<http://llvm.cs.uiuc.edu>).
+Maintained by the LLVM Team (L<http://llvm.org>).
 
 =cut

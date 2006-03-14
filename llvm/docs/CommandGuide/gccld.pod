@@ -170,6 +170,6 @@ L<llvm-link|llvm-link>, L<gccas|gccas>
 
 =head1 AUTHORS
 
-Maintained by the LLVM Team (L<http://llvm.cs.uiuc.edu>).
+Maintained by the LLVM Team (L<http://llvm.org>).
 
 =cut

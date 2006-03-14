@@ -92,6 +92,6 @@ L<llc|llc>
 
 =head1 AUTHOR
 
-Maintained by the LLVM Team (L<http://llvm.cs.uiuc.edu>).
+Maintained by the LLVM Team (L<http://llvm.org>).
 
 =cut

@@ -92,6 +92,6 @@ L<analyze|analyze>
 
 =head1 AUTHORS
 
-Maintained by the LLVM Team (L<http://llvm.cs.uiuc.edu>).
+Maintained by the LLVM Team (L<http://llvm.org>).
 
 =cut
