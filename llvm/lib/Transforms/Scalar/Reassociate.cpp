@@ -410,19 +410,23 @@ static Instruction *BreakUpSubtract(Instruction *Sub) {
 /// by one, change this into a multiply by a constant to assist with further
 /// reassociation.
 static Instruction *ConvertShiftToMul(Instruction *Shl) {
-  if (!isReassociableOp(Shl->getOperand(0), Instruction::Mul) &&
-      !(Shl->hasOneUse() && isReassociableOp(Shl->use_back(),Instruction::Mul)))
-    return 0;
-
-  Constant *MulCst = ConstantInt::get(Shl->getType(), 1);
-  MulCst = ConstantExpr::getShl(MulCst, cast<Constant>(Shl->getOperand(1)));
-
-  std::string Name = Shl->getName();  Shl->setName("");
-  Instruction *Mul = BinaryOperator::createMul(Shl->getOperand(0), MulCst,
-                                               Name, Shl);
-  Shl->replaceAllUsesWith(Mul);
-  Shl->eraseFromParent();
-  return Mul;
+  // If an operand of this shift is a reassociable multiply, or if the shift
+  // is used by a reassociable multiply or add, turn into a multiply.
+  if (isReassociableOp(Shl->getOperand(0), Instruction::Mul) ||
+      (Shl->hasOneUse() && 
+       (isReassociableOp(Shl->use_back(), Instruction::Mul) ||
+        isReassociableOp(Shl->use_back(), Instruction::Add)))) {
+    Constant *MulCst = ConstantInt::get(Shl->getType(), 1);
+    MulCst = ConstantExpr::getShl(MulCst, cast<Constant>(Shl->getOperand(1)));
+    
+    std::string Name = Shl->getName();  Shl->setName("");
+    Instruction *Mul = BinaryOperator::createMul(Shl->getOperand(0), MulCst,
+                                                 Name, Shl);
+    Shl->replaceAllUsesWith(Mul);
+    Shl->eraseFromParent();
+    return Mul;
+  }
+  return 0;
 }
 
 // Scan backwards and forwards among values with the same rank as element i to
