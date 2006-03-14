@@ -88,16 +88,6 @@ Shrink: (setlt (loadi32 P), 0) -> (setlt (loadi8 Phi), 0)
 
 //===---------------------------------------------------------------------===//
 
-Reassociate is missing this:
-
-int test(int X, int Y) {
- return (X+X+Y+Y);  // (X+Y) << 1;
-}
-
-it needs to turn the shifts into multiplies to get it.
-
-//===---------------------------------------------------------------------===//
-
 Reassociate should turn: X*X*X*X -> t=(X*X) (t*t) to eliminate a multiply.
 
 //===---------------------------------------------------------------------===//
