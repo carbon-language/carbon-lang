@@ -988,15 +988,6 @@ void GraphBuilder::visitCallSite(CallSite CS) {
             N->mergeTypeInfo(Type::DoubleTy, H.getOffset());
           }
           return;
-        } else if (F->getName() == "qsort") {
-          CallSite::arg_iterator AI = CS.arg_begin();
-          if (DSNode *N = getValueDest(**AI).getNode())
-            N->setModifiedMarker();
-          //How do you mark a function pointer as being called?  Assume it is a read
-          AI += 3;
-          if (DSNode *N = getValueDest(**AI).getNode())
-            N->setReadMarker();
-          return;
         } else if (F->getName() == "strcat" || F->getName() == "strncat") {
           //This might be making unsafe assumptions about usage
           //Merge return and first arg
