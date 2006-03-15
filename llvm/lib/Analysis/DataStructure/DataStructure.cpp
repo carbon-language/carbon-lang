@@ -492,12 +492,50 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
       return true;
     }
 
-    if (Offset) {  // We could handle this case, but we don't for now...
-      std::cerr << "UNIMP: Trying to merge a growth type into "
-                << "offset != 0: Collapsing!\n";
-      if (FoldIfIncompatible) foldNodeCompletely();
+    // If this node would have to have an unreasonable number of fields, just
+    // collapse it.  This can occur for fortran common blocks, which have stupid
+    // things like { [100000000 x double], [1000000 x double] }.
+    unsigned NumFields = (NewTySize+Offset+DS::PointerSize-1) >> DS::PointerShift;
+    if (NumFields > 256) {
+      foldNodeCompletely();
       return true;
     }
+
+    if (Offset) {
+      //handle some common cases:
+      // Ty:    struct { t1, t2, t3, t4, ..., tn}
+      // NewTy: struct { offset, stuff...}
+      // try merge with NewTy: struct {t1, t2, stuff...} if offset lands exactly on a field in Ty
+      if (isa<StructType>(NewTy) && isa<StructType>(Ty)) {
+        DEBUG(std::cerr << "Ty: " << *Ty << "\nNewTy: " << *NewTy << "@" << Offset << "\n");
+        unsigned O = 0;
+        const StructType *STy = cast<StructType>(Ty);
+        const StructLayout &SL = *TD.getStructLayout(STy);
+        unsigned i = SL.getElementContainingOffset(Offset);
+        //Either we hit it exactly or give up
+        if (SL.MemberOffsets[i] != Offset) {
+          if (FoldIfIncompatible) foldNodeCompletely();
+          return true;
+        }
+        std::vector<const Type*> nt;
+        for (unsigned x = 0; x < i; ++x)
+          nt.push_back(STy->getElementType(x));
+        STy = cast<StructType>(NewTy);
+        nt.insert(nt.end(), STy->element_begin(), STy->element_end());
+        //and merge
+        STy = StructType::get(nt);
+        DEBUG(std::cerr << "Trying with: " << *STy << "\n");
+        return mergeTypeInfo(STy, 0);
+      }
+
+      std::cerr << "UNIMP: Trying to merge a growth type into "
+                << "offset != 0: Collapsing!\n";
+      abort();
+      if (FoldIfIncompatible) foldNodeCompletely();
+      return true;
+
+    }
+
 
     // Okay, the situation is nice and simple, we are trying to merge a type in
     // at offset 0 that is bigger than our current type.  Implement this by
@@ -505,15 +543,6 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
     // hit the other code path here.  If the other code path decides it's not
     // ok, it will collapse the node as appropriate.
     //
-
-    // If this node would have to have an unreasonable number of fields, just
-    // collapse it.  This can occur for fortran common blocks, which have stupid
-    // things like { [100000000 x double], [1000000 x double] }.
-    unsigned NumFields = (NewTySize+DS::PointerSize-1) >> DS::PointerShift;
-    if (NumFields > 256) {
-      foldNodeCompletely();
-      return true;
-    }
 
     const Type *OldTy = Ty;
     Ty = NewTy;
