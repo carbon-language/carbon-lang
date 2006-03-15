@@ -39,6 +39,8 @@ namespace llvm {
                             std::ostream &OS);
     void EmitGCCBuiltinList(const std::vector<CodeGenIntrinsic> &Ints, 
                             std::ostream &OS);
+    void EmitIntrinsicToGCCBuiltinMap(const std::vector<CodeGenIntrinsic> &Ints, 
+                                      std::ostream &OS);
   };
 
 } // End llvm namespace

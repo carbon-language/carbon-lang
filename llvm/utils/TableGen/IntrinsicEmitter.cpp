@@ -34,7 +34,7 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
     throw "Intrinsic '" + DefName + "' does not start with 'int_'!";
   EnumName = std::string(DefName.begin()+4, DefName.end());
   GCCBuiltinName = R->getValueAsString("GCCBuiltinName");
-  
+  TargetPrefix   = R->getValueAsString("TargetPrefix");
   Name = R->getValueAsString("LLVMName");
   if (Name == "") {
     // If an explicit name isn't specified, derive one from the DefName.
@@ -44,6 +44,21 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
         Name += '.';
       else
         Name += EnumName[i];
+  } else {
+    // Verify it starts with "llvm.".
+    if (Name.size() <= 5 || 
+        std::string(Name.begin(), Name.begin()+5) != "llvm.")
+      throw "Intrinsic '" + DefName + "'s name does not start with 'llvm.'!";
+  }
+  
+  // If TargetPrefix is specified, make sure that Name starts with
+  // "llvm.<targetprefix>.".
+  if (!TargetPrefix.empty()) {
+    if (Name.size() < 6+TargetPrefix.size() ||
+        std::string(Name.begin()+5, Name.begin()+6+TargetPrefix.size()) 
+          != (TargetPrefix+"."))
+      throw "Intrinsic '" + DefName + "' does not start with 'llvm." + 
+            TargetPrefix + ".'!";
   }
   
   // Parse the list of argument types.
@@ -109,6 +124,9 @@ void IntrinsicEmitter::run(std::ostream &OS) {
 
   // Emit a list of intrinsics with corresponding GCC builtins.
   EmitGCCBuiltinList(Ints, OS);
+
+  // Emit code to translate GCC builtins into LLVM intrinsics.
+  EmitIntrinsicToGCCBuiltinMap(Ints, OS);
 }
 
 void IntrinsicEmitter::EmitEnumInfo(const std::vector<CodeGenIntrinsic> &Ints,
@@ -251,5 +269,42 @@ EmitGCCBuiltinList(const std::vector<CodeGenIntrinsic> &Ints, std::ostream &OS){
     }
   }
   OS << "  }\n";
+  OS << "#endif\n\n";
+}
+
+void IntrinsicEmitter::
+EmitIntrinsicToGCCBuiltinMap(const std::vector<CodeGenIntrinsic> &Ints, 
+                             std::ostream &OS) {
+  typedef std::map<std::pair<std::string, std::string>, std::string> BIMTy;
+  BIMTy BuiltinMap;
+  for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
+    if (!Ints[i].GCCBuiltinName.empty()) {
+      std::pair<std::string, std::string> Key(Ints[i].GCCBuiltinName,
+                                              Ints[i].TargetPrefix);
+      if (!BuiltinMap.insert(std::make_pair(Key, Ints[i].EnumName)).second)
+        throw "Intrinsic '" + Ints[i].TheDef->getName() +
+              "': duplicate GCC builtin name!";
+    }
+  }
+  
+  OS << "// Get the LLVM intrinsic that corresponds to a GCC builtin.\n";
+  OS << "// This is used by the C front-end.  The GCC builtin name is passed\n";
+  OS << "// in as BuiltinName, and a target prefix (e.g. 'ppc') is passed\n";
+  OS << "// in as TargetPrefix.  The result is assigned to 'IntrinsicID'.\n";
+  OS << "#ifdef GET_LLVM_INTRINSIC_FOR_GCC_BUILTIN\n";
+  OS << "  if (0);\n";
+  // Note: this could emit significantly better code if we cared.
+  for (BIMTy::iterator I = BuiltinMap.begin(), E = BuiltinMap.end();I != E;++I){
+    OS << "  else if (";
+    if (!I->first.second.empty()) {
+      // Emit this as a strcmp, so it can be constant folded by the FE.
+      OS << "!strcmp(TargetPrefix, \"" << I->first.second << "\") &&\n"
+         << "           ";
+    }
+    OS << "!strcmp(BuiltinName, \"" << I->first.first << "\"))\n";
+    OS << "    IntrinsicID = Intrinsic::" << I->second << "\";\n";
+  }
+  OS << "  else\n";
+  OS << "    IntrinsicID = Intrinsic::not_intrinsic;\n";
   OS << "#endif\n\n";
 }
