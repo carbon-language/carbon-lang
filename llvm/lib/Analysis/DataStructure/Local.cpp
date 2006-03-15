@@ -549,7 +549,7 @@ void GraphBuilder::visitCallSite(CallSite CS) {
       case Intrinsic::memcpy_i64: {
         //write first location
         if (DSNode *N = getValueDest(**CS.arg_begin()).getNode())
-          N->setHeapNodeMarker()->setModifiedMarker();
+          N->setModifiedMarker();
         //and read second pointer
         if (DSNode *N = getValueDest(**(CS.arg_begin() + 1)).getNode())
           N->setReadMarker();
