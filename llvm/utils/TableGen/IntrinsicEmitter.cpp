@@ -34,7 +34,8 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
       std::string(DefName.begin(), DefName.begin()+4) != "int_")
     throw "Intrinsic '" + DefName + "' does not start with 'int_'!";
   EnumName = std::string(DefName.begin()+4, DefName.end());
-  GCCBuiltinName = R->getValueAsString("GCCBuiltinName");
+  if (R->getValue("GCCBuiltinName"))  // Ignore a missing GCCBuiltinName field.
+    GCCBuiltinName = R->getValueAsString("GCCBuiltinName");
   TargetPrefix   = R->getValueAsString("TargetPrefix");
   Name = R->getValueAsString("LLVMName");
   if (Name == "") {
