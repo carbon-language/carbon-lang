@@ -362,6 +362,9 @@ public:
 
   void setCurrentBasicBlock(MachineBasicBlock *MBB) { CurMBB = MBB; }
 
+  SDOperand getLoadFrom(const Type *Ty, SDOperand Ptr,
+                        SDOperand SrcValue, SDOperand Root,
+                        bool isVolatile);
 
   SDOperand getIntPtrConstant(uint64_t Val) {
     return DAG.getConstant(Val, TLI.getPointerTy());
@@ -726,42 +729,78 @@ void SelectionDAGLowering::visitSelect(User &I) {
 
 void SelectionDAGLowering::visitCast(User &I) {
   SDOperand N = getValue(I.getOperand(0));
-  MVT::ValueType SrcTy = TLI.getValueType(I.getOperand(0)->getType());
-  MVT::ValueType DestTy = TLI.getValueType(I.getType());
+  MVT::ValueType SrcVT = TLI.getValueType(I.getOperand(0)->getType());
+  MVT::ValueType DestVT = TLI.getValueType(I.getType());
 
-  if (N.getValueType() == DestTy) {
+  if (N.getValueType() == DestVT) {
     setValue(&I, N);  // noop cast.
-  } else if (DestTy == MVT::i1) {
+  } else if (DestVT == MVT::i1) {
     // Cast to bool is a comparison against zero, not truncation to zero.
-    SDOperand Zero = isInteger(SrcTy) ? DAG.getConstant(0, N.getValueType()) :
+    SDOperand Zero = isInteger(SrcVT) ? DAG.getConstant(0, N.getValueType()) :
                                        DAG.getConstantFP(0.0, N.getValueType());
     setValue(&I, DAG.getSetCC(MVT::i1, N, Zero, ISD::SETNE));
-  } else if (isInteger(SrcTy)) {
-    if (isInteger(DestTy)) {        // Int -> Int cast
-      if (DestTy < SrcTy)   // Truncating cast?
-        setValue(&I, DAG.getNode(ISD::TRUNCATE, DestTy, N));
+  } else if (isInteger(SrcVT)) {
+    if (isInteger(DestVT)) {        // Int -> Int cast
+      if (DestVT < SrcVT)   // Truncating cast?
+        setValue(&I, DAG.getNode(ISD::TRUNCATE, DestVT, N));
       else if (I.getOperand(0)->getType()->isSigned())
-        setValue(&I, DAG.getNode(ISD::SIGN_EXTEND, DestTy, N));
+        setValue(&I, DAG.getNode(ISD::SIGN_EXTEND, DestVT, N));
       else
-        setValue(&I, DAG.getNode(ISD::ZERO_EXTEND, DestTy, N));
+        setValue(&I, DAG.getNode(ISD::ZERO_EXTEND, DestVT, N));
     } else {                        // Int -> FP cast
       if (I.getOperand(0)->getType()->isSigned())
-        setValue(&I, DAG.getNode(ISD::SINT_TO_FP, DestTy, N));
+        setValue(&I, DAG.getNode(ISD::SINT_TO_FP, DestVT, N));
       else
-        setValue(&I, DAG.getNode(ISD::UINT_TO_FP, DestTy, N));
+        setValue(&I, DAG.getNode(ISD::UINT_TO_FP, DestVT, N));
     }
-  } else {
-    assert(isFloatingPoint(SrcTy) && "Unknown value type!");
-    if (isFloatingPoint(DestTy)) {  // FP -> FP cast
-      if (DestTy < SrcTy)   // Rounding cast?
-        setValue(&I, DAG.getNode(ISD::FP_ROUND, DestTy, N));
+  } else if (isFloatingPoint(SrcVT)) {
+    if (isFloatingPoint(DestVT)) {  // FP -> FP cast
+      if (DestVT < SrcVT)   // Rounding cast?
+        setValue(&I, DAG.getNode(ISD::FP_ROUND, DestVT, N));
       else
-        setValue(&I, DAG.getNode(ISD::FP_EXTEND, DestTy, N));
+        setValue(&I, DAG.getNode(ISD::FP_EXTEND, DestVT, N));
     } else {                        // FP -> Int cast.
       if (I.getType()->isSigned())
-        setValue(&I, DAG.getNode(ISD::FP_TO_SINT, DestTy, N));
+        setValue(&I, DAG.getNode(ISD::FP_TO_SINT, DestVT, N));
       else
-        setValue(&I, DAG.getNode(ISD::FP_TO_UINT, DestTy, N));
+        setValue(&I, DAG.getNode(ISD::FP_TO_UINT, DestVT, N));
+    }
+  } else {
+    const PackedType *SrcTy = cast<PackedType>(I.getOperand(0)->getType());
+    const PackedType *DstTy = cast<PackedType>(I.getType());
+    
+    unsigned SrcNumElements = SrcTy->getNumElements();
+    MVT::ValueType SrcPVT = TLI.getValueType(SrcTy->getElementType());
+    MVT::ValueType SrcTVT = MVT::getVectorType(SrcPVT, SrcNumElements);
+
+    unsigned DstNumElements = DstTy->getNumElements();
+    MVT::ValueType DstPVT = TLI.getValueType(DstTy->getElementType());
+    MVT::ValueType DstTVT = MVT::getVectorType(DstPVT, DstNumElements);
+    
+    // If the input and output type are legal, convert this to a bit convert of
+    // the SrcTVT/DstTVT types.
+    if (SrcTVT != MVT::Other && DstTVT != MVT::Other &&
+        TLI.isTypeLegal(SrcTVT) && TLI.isTypeLegal(DstTVT)) {
+      assert(N.getValueType() == SrcTVT);
+      setValue(&I, DAG.getNode(ISD::BIT_CONVERT, DstTVT, N));
+    } else {
+      // Otherwise, convert this directly into a store/load.
+      // FIXME: add a VBIT_CONVERT node that we could use to automatically turn
+      // 8xFloat -> 8xInt casts into two 4xFloat -> 4xInt casts.
+      // Create the stack frame object.
+      uint64_t ByteSize = TD.getTypeSize(SrcTy);
+      assert(ByteSize == TD.getTypeSize(DstTy) && "Not a bit_convert!");
+      MachineFrameInfo *FrameInfo = DAG.getMachineFunction().getFrameInfo();
+      int FrameIdx = FrameInfo->CreateStackObject(ByteSize, ByteSize);
+      SDOperand FIPtr = DAG.getFrameIndex(FrameIdx, TLI.getPointerTy());
+      
+      // Emit a store to the stack slot.
+      SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
+                                    N, FIPtr, DAG.getSrcValue(NULL));
+      // Result is a load from the stack slot.
+      SDOperand Val =
+        getLoadFrom(DstTy, FIPtr, DAG.getSrcValue(NULL), Store, false);
+      setValue(&I, Val);
     }
   }
 }
@@ -893,8 +932,14 @@ void SelectionDAGLowering::visitLoad(LoadInst &I) {
     // Do not serialize non-volatile loads against each other.
     Root = DAG.getRoot();
   }
-  
-  const Type *Ty = I.getType();
+
+  setValue(&I, getLoadFrom(I.getType(), Ptr, DAG.getSrcValue(I.getOperand(0)),
+                           Root, I.isVolatile()));
+}
+
+SDOperand SelectionDAGLowering::getLoadFrom(const Type *Ty, SDOperand Ptr,
+                                            SDOperand SrcValue, SDOperand Root,
+                                            bool isVolatile) {
   SDOperand L;
   
   if (const PackedType *PTy = dyn_cast<PackedType>(Ty)) {
@@ -905,24 +950,23 @@ void SelectionDAGLowering::visitLoad(LoadInst &I) {
     // Immediately scalarize packed types containing only one element, so that
     // the Legalize pass does not have to deal with them.
     if (NumElements == 1) {
-      L = DAG.getLoad(PVT, Root, Ptr, DAG.getSrcValue(I.getOperand(0)));
-    } else if (TVT != MVT::Other &&
-               TLI.isTypeLegal(TVT) && TLI.isOperationLegal(ISD::LOAD, TVT)) {
-      L = DAG.getLoad(TVT, Root, Ptr, DAG.getSrcValue(I.getOperand(0)));
+      L = DAG.getLoad(PVT, Root, Ptr, SrcValue);
+    } else if (TVT != MVT::Other && TLI.isTypeLegal(TVT) &&
+               TLI.isOperationLegal(ISD::LOAD, TVT)) {
+      L = DAG.getLoad(TVT, Root, Ptr, SrcValue);
     } else {
-      L = DAG.getVecLoad(NumElements, PVT, Root, Ptr, 
-                         DAG.getSrcValue(I.getOperand(0)));
+      L = DAG.getVecLoad(NumElements, PVT, Root, Ptr, SrcValue);
     }
   } else {
-    L = DAG.getLoad(TLI.getValueType(Ty), Root, Ptr, 
-                    DAG.getSrcValue(I.getOperand(0)));
+    L = DAG.getLoad(TLI.getValueType(Ty), Root, Ptr, SrcValue);
   }
-  setValue(&I, L);
 
-  if (I.isVolatile())
+  if (isVolatile)
     DAG.setRoot(L.getValue(1));
   else
     PendingLoads.push_back(L.getValue(1));
+  
+  return L;
 }
 
 
