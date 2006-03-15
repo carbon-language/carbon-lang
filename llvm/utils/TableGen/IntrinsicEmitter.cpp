@@ -318,7 +318,7 @@ EmitIntrinsicToGCCBuiltinMap(const std::vector<CodeGenIntrinsic> &Ints,
          << "           ";
     }
     OS << "!strcmp(BuiltinName, \"" << I->first.first << "\"))\n";
-    OS << "    IntrinsicID = Intrinsic::" << I->second << "\";\n";
+    OS << "    IntrinsicID = Intrinsic::" << I->second << ";\n";
   }
   OS << "  else\n";
   OS << "    IntrinsicID = Intrinsic::not_intrinsic;\n";
