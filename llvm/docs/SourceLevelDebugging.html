@@ -26,6 +26,7 @@
       <li><a href="#format_compile_units">Compile unit descriptors</a></li>
       <li><a href="#format_global_variables">Global variable descriptors</a></li>
       <li><a href="#format_subprograms">Subprogram descriptors</a></li>
+      <li><a href="#format_blocks">Block descriptors</a></li>
       <li><a href="#format_basic_type">Basic type descriptors</a></li>
       <li><a href="#format_derived_type">Derived type descriptors</a></li>
       <li><a href="#format_composite_type">Composite type descriptors</a></li>
@@ -126,7 +127,7 @@ href="http://www.eagercon.com/dwarf/dwarf3std.htm">Dwarf 3 standard</a>).</p>
 
 <p>When a program is being debugged, a debugger interacts with the user and
 turns the stored debug information into source-language specific information. 
-As such, the debugger must be aware of the source-language, and is thus tied to
+As such, a debugger must be aware of the source-language, and is thus tied to
 a specific language of family of languages.</p>
 
 </div>
@@ -175,7 +176,7 @@ removed.</li>
 
 <p>Basically, the debug information allows you to compile a program with
 "<tt>-O0 -g</tt>" and get full debug information, allowing you to arbitrarily
-modify the program as it executes from the debugger.  Compiling a program with
+modify the program as it executes from a debugger.  Compiling a program with
 "<tt>-O3 -g</tt>" gives you full debug information that is always available and
 accurate for reading (e.g., you get accurate stack traces despite tail call
 elimination and inlining), but you might lose the ability to modify the program
@@ -225,7 +226,7 @@ assumptions about the source-level language being debugged, though it keeps
 these to a minimum.  The only common features that the LLVM debugger assumes
 exist are <a href="#format_compile_units">source files</a>, and <a
 href="#format_global_variables">program objects</a>.  These abstract objects are
-used by the debugger to form stack traces, show information about local
+used by a debugger to form stack traces, show information about local
 variables, etc.</p>
 
 <p>This section of the documentation first describes the representation aspects
@@ -297,7 +298,7 @@ LLVM debugger to efficiently index all of the global objects without having the
 scan the program.  To do this, all of the global objects use "anchor"
 descriptors with designated names.  All of the global objects of a particular
 type (e.g., compile units) contain a pointer to the anchor.  This pointer allows
-the debugger to use def-use chains to find all global objects of that type.</p>
+a debugger to use def-use chains to find all global objects of that type.</p>
 
 <p>The following names are recognized as anchors by LLVM:</p>
 
@@ -327,7 +328,7 @@ deleted.</p>
   %<a href="#format_compile_units">llvm.dbg.compile_unit.type</a> = type {
     uint,   ;; Tag = 17 (DW_TAG_compile_unit)
     {  }*,  ;; Compile unit anchor = cast = (%<a href="#format_anchors">llvm.dbg.anchor.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_units</a> to {  }*)
-    uint,   ;; LLVM debug version number = 1
+    uint,   ;; LLVM debug version number = 2
     uint,   ;; Dwarf language identifier (ex. DW_LANG_C89) 
     sbyte*, ;; Source file name
     sbyte*, ;; Source file directory (includes trailing slash)
@@ -336,7 +337,7 @@ deleted.</p>
 </pre>
 
 <p>These descriptors contain the version number for the debug info (currently
-1), a source language ID for the file (we use the Dwarf 3.0 ID numbers, such as
+2), a source language ID for the file (we use the Dwarf 3.0 ID numbers, such as
 <tt>DW_LANG_C89</tt>, <tt>DW_LANG_C_plus_plus</tt>, <tt>DW_LANG_Cobol74</tt>,
 etc), three strings describing the filename, working directory of the compiler,
 and an identifier string for the compiler that produced it.</p>
@@ -359,13 +360,14 @@ line correspondence.</p>
   %<a href="#format_global_variables">llvm.dbg.global_variable.type</a> = type {
     uint,   ;; Tag = 52 (DW_TAG_variable)
     {  }*,  ;; Global variable anchor = cast (%<a href="#format_anchors">llvm.dbg.anchor.type</a>* %<a href="#format_global_variables">llvm.dbg.global_variables</a> to {  }*),  
-    {  }*,  ;; Reference to compile unit
+    {  }*,  ;; Reference to context descriptor
     sbyte*, ;; Name
+    {  }*,  ;; Reference to compile unit where defined
+    int,    ;; Line number where defined
     {  }*,  ;; Reference to type descriptor
     bool,   ;; True if the global is local to compile unit (static)
     bool,   ;; True if the global is defined in the compile unit (not extern)
-    {  }*,  ;; Reference to the global variable
-    uint    ;; Line number in compile unit where variable is defined
+    {  }*   ;; Reference to the global variable
   }
 </pre>
 
@@ -385,19 +387,42 @@ provide details such as name, type and where the variable is defined.</p>
   %<a href="#format_subprograms">llvm.dbg.subprogram.type</a> = type {
     uint,   ;; Tag = 46 (DW_TAG_subprogram)
     {  }*,  ;; Subprogram anchor = cast (%<a href="#format_anchors">llvm.dbg.anchor.type</a>* %<a href="#format_subprograms">llvm.dbg.subprograms</a> to {  }*),  
-    {  }*,  ;; Reference to compile unit
+    {  }*,  ;; Reference to context descriptor
     sbyte*, ;; Name
+    {  }*,  ;; Reference to compile unit where defined
+    int,    ;; Line number where defined
     {  }*,  ;; Reference to type descriptor
     bool,   ;; True if the global is local to compile unit (static)
-    bool    ;; True if the global is defined in the compile unit (not extern)
-    TODO - MORE TO COME
+    bool,    ;; True if the global is defined in the compile unit (not extern)
+    {  }*   ;; Reference to array of member descriptors
   }
-
 </pre>
 
 <p>These descriptors provide debug information about functions, methods and
 subprograms.  The provide details such as name, return and argument types and
 where the subprogram is defined.</p>
+
+<p>The array of member descriptors is used to define arguments local variables
+and nested blocks.</p>
+
+</div>
+<!-- ======================================================================= -->
+<div class="doc_subsubsection">
+  <a name="format_blocks">Block descriptors</a>
+</div>
+
+<div class="doc_text">
+
+<pre>
+  %<a href="#format_blocks">llvm.dbg.block</a> = type {
+    uint,   ;; Tag = 13 (DW_TAG_lexical_block)
+    {  }*   ;; Reference to array of member descriptors
+  }
+</pre>
+
+<p>These descriptors provide debug information about nested blocks within a
+subprogram.  The array of member descriptors is used to define local variables
+and deeper nested blocks.</p>
 
 </div>
 
@@ -473,6 +498,7 @@ value of the tag varies depending on the meaning.  The following are possible
 tag values;</p>
 
 <pre>
+  DW_TAG_formal_parameter = 5
   DW_TAG_member = 13
   DW_TAG_pointer_type = 15
   DW_TAG_reference_type = 16
@@ -483,8 +509,10 @@ tag values;</p>
 </pre>
 
 <p> <tt>DW_TAG_member</tt> is used to define a member of a <a
-href="#format_composite_type">composite type</a>.  The type of the member is the
-<a href="#format_derived_type">derived type</a>.</p>
+href="#format_composite_type">composite type</a> or <a
+href="#format_subprograms">subprogram</a>.  The type of the member is the <a
+href="#format_derived_type">derived type</a>. <tt>DW_TAG_formal_parameter</tt>
+is used to define a member which is a formal argument of a subprogram.</p>
 
 <p><tt>DW_TAG_typedef</tt> is used to
 provide a name for the derived type.</p>
@@ -720,8 +748,8 @@ that allows the LLVM to maintain simple semantics for <a
 href="#debugopt">debugging optimized code</a>.  The basic idea is that the
 front-end inserts calls to the <a
 href="#format_common_stoppoint">%<tt>llvm.dbg.stoppoint</tt></a> intrinsic
-function at every point in the program where the debugger should be able to
-inspect the program (these correspond to places the debugger stops when you
+function at every point in the program where a debugger should be able to
+inspect the program (these correspond to places a debugger stops when you
 "<tt>step</tt>" through it).  The front-end can choose to place these as
 fine-grained as it would like (for example, before every subexpression
 evaluated), but it is recommended to only put them after every source statement
@@ -841,7 +869,7 @@ to support inlining with debugging information: there is no explicit correlation
 drawn between LLVM functions and their source-level counterparts (note however,
 that if the inliner inlines all instances of a non-strong-linkage function into
 its caller that it will not be possible for the user to manually invoke the
-inlined function from the debugger).</p>
+inlined function from a debugger).</p>
 
 <p>Once the function has been defined, the <a
 href="#format_common_stoppoint"><tt>stopping point</tt></a> corresponding to
@@ -990,7 +1018,7 @@ int MyGlobal = 100;
 ;; compile unit.
 ;;
 %<a href="#format_anchors">llvm.dbg.anchor.type</a> = type { uint, uint }
-%<a href="#format_global_variables">llvm.dbg.global_variable.type</a> = type { uint, {  }*, {  }*, sbyte*, {  }*, bool, bool, {  }*, uint }
+%<a href="#format_global_variables">llvm.dbg.global_variable.type</a> = type { uint, {  }*, {  }*, sbyte*, {  }*, uint, {  }*, bool, bool, {  }*, uint }
 %<a href="#format_basic_type">llvm.dbg.basictype.type</a> = type { uint, {  }*, sbyte*, {  }*, int, uint, uint, uint, uint }
 %<a href="#format_compile_units">llvm.dbg.compile_unit.type</a> = ...
 ...
@@ -1015,11 +1043,12 @@ int MyGlobal = 100;
     {  }* cast (%<a href="#format_anchors">llvm.dbg.anchor.type</a>* %<a href="#format_global_variables">llvm.dbg.global_variables</a> to {  }*), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
     sbyte* getelementptr ([9 x sbyte]* %str1, int 0, int 0), 
+    {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
+    uint 1,
     {  }* cast (%<a href="#format_basic_type">llvm.dbg.basictype.type</a>* %<a href="#format_basic_type">llvm.dbg.basictype</a> to {  }*), 
     bool false, 
     bool true, 
-    {  }* cast (int* %MyGlobal to {  }*), 
-    uint 1 }, section "llvm.metadata"
+    {  }* cast (int* %MyGlobal to {  }*) }, section "llvm.metadata"
     
 ;;
 ;; Define the basic type of 32 bit signed integer.  Note that since int is an
@@ -1068,7 +1097,7 @@ int main(int argc, char *argv[]) {
 ;; descriptor, one for the global's basic type and one for the subprogram's
 ;; compile unit.
 ;;
-%<a href="#format_subprograms">llvm.dbg.subprogram.type</a> = type { uint, {  }*, {  }*, sbyte*, {  }*, bool, bool }
+%<a href="#format_subprograms">llvm.dbg.subprogram.type</a> = type { uint, {  }*, {  }*, sbyte*, {  }*, bool, bool, {  }* }
 %<a href="#format_anchors">llvm.dbg.anchor.type</a> = type { uint, uint }
 %<a href="#format_compile_units">llvm.dbg.compile_unit.type</a> = ...
 	
@@ -1087,9 +1116,12 @@ int main(int argc, char *argv[]) {
     {  }* cast (%<a href="#format_anchors">llvm.dbg.anchor.type</a>* %<a href="#format_subprograms">llvm.dbg.subprograms</a> to {  }*), 
     {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*), 
     sbyte* getelementptr ([5 x sbyte]* %str1, int 0, int 0), 
+    {  }* cast (%<a href="#format_compile_units">llvm.dbg.compile_unit.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_unit</a> to {  }*),
+    uint 1,
     {  }* null, 
     bool false, 
-    bool true }, section "llvm.metadata"
+    bool true,
+    null }, section "llvm.metadata"
 
 ;;
 ;; Define the name of the subprogram.
