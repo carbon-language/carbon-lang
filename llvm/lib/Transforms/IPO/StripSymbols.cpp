@@ -84,6 +84,11 @@ bool StripSymbols::runOnModule(Module &M) {
         I->setName("");     // Internal symbols can't participate in linkage
       I->getSymbolTable().strip();
     }
+    
+    // Remove all names from types.
+    SymbolTable &SymTab = M.getSymbolTable();
+    while (SymTab.type_begin() != SymTab.type_end())
+      SymTab.remove(SymTab.type_begin());
   }
 
   // Strip debug info in the module if it exists.  To do this, we remove
