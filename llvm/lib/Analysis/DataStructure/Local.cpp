@@ -545,10 +545,18 @@ void GraphBuilder::visitCallSite(CallSite CS) {
         return;
       case Intrinsic::vaend:
         return;  // noop
-      case Intrinsic::memmove_i32:
       case Intrinsic::memcpy_i32: 
-      case Intrinsic::memmove_i64:
       case Intrinsic::memcpy_i64: {
+        //write first location
+        if (DSNode *N = getValueDest(**CS.arg_begin()).getNode())
+          N->setHeapNodeMarker()->setModifiedMarker();
+        //and read second pointer
+        if (DSNode *N = getValueDest(**(CS.arg_begin() + 1)).getNode())
+          N->setReadMarker();
+        return;
+      }
+      case Intrinsic::memmove_i32:
+      case Intrinsic::memmove_i64: {
         // Merge the first & second arguments, and mark the memory read and
         // modified.
         DSNodeHandle RetNH = getValueDest(**CS.arg_begin());
@@ -676,7 +684,6 @@ void GraphBuilder::visitCallSite(CallSite CS) {
               Link.mergeWith(getValueDest(**CS.arg_begin()));
             }
           }
-
           return;
         } else if (F->getName() == "fopen" || F->getName() == "fdopen" ||
                    F->getName() == "freopen") {
@@ -980,6 +987,26 @@ void GraphBuilder::visitCallSite(CallSite CS) {
             N->setModifiedMarker();
             N->mergeTypeInfo(Type::DoubleTy, H.getOffset());
           }
+          return;
+        } else if (F->getName() == "qsort") {
+          CallSite::arg_iterator AI = CS.arg_begin();
+          if (DSNode *N = getValueDest(**AI).getNode())
+            N->setModifiedMarker();
+          //How do you mark a function pointer as being called?  Assume it is a read
+          AI += 3;
+          if (DSNode *N = getValueDest(**AI).getNode())
+            N->setReadMarker();
+          return;
+        } else if (F->getName() == "strcat" || F->getName() == "strncat") {
+          //This might be making unsafe assumptions about usage
+          //Merge return and first arg
+          DSNodeHandle RetNH = getValueDest(*CS.getInstruction());
+          RetNH.mergeWith(getValueDest(**CS.arg_begin()));
+          if (DSNode *N = RetNH.getNode())
+            N->setHeapNodeMarker()->setModifiedMarker()->setReadMarker();
+          //and read second pointer
+          if (DSNode *N = getValueDest(**(CS.arg_begin() + 1)).getNode())
+            N->setReadMarker();
           return;
         } else {
           // Unknown function, warn if it returns a pointer type or takes a
