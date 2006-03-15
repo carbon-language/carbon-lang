@@ -39,6 +39,10 @@ namespace {
   Statistic<> NumDNE            ("dsa", "Number of nodes removed by reachability");
   Statistic<> NumTrivialDNE     ("dsa", "Number of nodes trivially removed");
   Statistic<> NumTrivialGlobalDNE("dsa", "Number of globals trivially removed");
+  static cl::opt<unsigned>
+  DSAFieldLimit("dsa-field-limit", cl::Hidden,
+                cl::desc("Number of fields to track before collapsing a node"),
+                cl::init(256));
 };
 
 #if 0
@@ -468,7 +472,7 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
     // collapse it.  This can occur for fortran common blocks, which have stupid
     // things like { [100000000 x double], [1000000 x double] }.
     unsigned NumFields = (NewTySize+DS::PointerSize-1) >> DS::PointerShift;
-    if (NumFields > 256) {
+    if (NumFields > DSAFieldLimit) {
       foldNodeCompletely();
       return true;
     }
@@ -496,7 +500,7 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
     // collapse it.  This can occur for fortran common blocks, which have stupid
     // things like { [100000000 x double], [1000000 x double] }.
     unsigned NumFields = (NewTySize+Offset+DS::PointerSize-1) >> DS::PointerShift;
-    if (NumFields > 256) {
+    if (NumFields > DSAFieldLimit) {
       foldNodeCompletely();
       return true;
     }
