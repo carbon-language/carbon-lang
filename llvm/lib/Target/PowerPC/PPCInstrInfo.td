@@ -710,10 +710,10 @@ def MFLR  : XFXForm_1_ext<31, 339, 8, (ops GPRC:$rT), "mflr $rT",  SprMFSPR>,
 // characteristics as an OR instruction.
 def MTVRSAVE : XFXForm_7_ext<31, 467, 256, (ops GPRC:$rS),
                              "mtspr 256, $rS", IntGeneral>,
-               PPC970_Unit_FXU;
+               PPC970_DGroup_Single, PPC970_Unit_FXU;
 def MFVRSAVE : XFXForm_1_ext<31, 339, 256, (ops GPRC:$rT),
                              "mfspr $rT, 256", IntGeneral>,
-               PPC970_Unit_FXU;
+               PPC970_DGroup_First, PPC970_Unit_FXU;
 
 def MFCR  : XFXForm_3<31, 19, (ops GPRC:$rT), "mfcr $rT", SprMFCR>,
             PPC970_MicroCode, PPC970_Unit_CRU;
