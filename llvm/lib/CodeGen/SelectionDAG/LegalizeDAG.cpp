@@ -1260,6 +1260,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
     // Turn 'store float 1.0, Ptr' -> 'store int 0x12345678, Ptr'
     // FIXME: We shouldn't do this for TargetConstantFP's.
+    // FIXME: move this to the DAG Combiner!
     if (ConstantFPSDNode *CFP =dyn_cast<ConstantFPSDNode>(Node->getOperand(1))){
       if (CFP->getValueType(0) == MVT::f32) {
         Tmp3 = DAG.getConstant(FloatToBits(CFP->getValue()), MVT::i32);
