@@ -97,6 +97,7 @@ class Intrinsic<list<LLVMType> types,
                 string name = ""> {
   string LLVMName = name;
   string GCCBuiltinName = "";
+  string TargetPrefix = "";   // Set to a prefix for target-specific intrinsics.
   list<LLVMType> Types = types;
   list<IntrinsicProperty> Properties = properties;
 }
@@ -204,8 +205,6 @@ def int_dbg_stoppoint    : Intrinsic<[llvm_void_ty,
 def int_dbg_region_start : Intrinsic<[llvm_void_ty]>;
 def int_dbg_region_end   : Intrinsic<[llvm_void_ty]>;
 def int_dbg_func_start   : Intrinsic<[llvm_void_ty, llvm_descriptor_ty]>;
-//    dbg_declare,      // Declare a local object
-
 
 
 //===----------------------------------------------------------------------===//
@@ -214,8 +213,9 @@ def int_dbg_func_start   : Intrinsic<[llvm_void_ty, llvm_descriptor_ty]>;
 
 //===----------------------------------------------------------------------===//
 // PowerPC Intrinsics
-
-def int_ppc_altivec_lvx : Intrinsic<[llvm_v4i32_ty, llvm_int_ty, llvm_ptr_ty],
-                                    [IntrReadMem]>,
-                          GCCBuiltin<"__builtin_altivec_lvx">;
-
+//
+let TargetPrefix = "ppc" in {  // All intrinsics start with "llvm.ppc.".
+  def int_ppc_altivec_lvx : Intrinsic<[llvm_v4i32_ty, llvm_int_ty, llvm_ptr_ty],
+                                      [IntrReadMem]>,
+                            GCCBuiltin<"__builtin_altivec_lvx">;
+}
