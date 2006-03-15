@@ -1518,19 +1518,19 @@ DIE *DwarfWriter::NewSubprogram(SubprogramDesc *SPD) {
 
   // Gather the details (simplify add attribute code.)
   const std::string &Name = SPD->getName();
-  unsigned FileID = Unit->getID();
-  // FIXME - faking the line for the time being.
-  unsigned Line = 1;
-  
-  // FIXME - faking the type for the time being.
-  DIE *Type = NewBasicType(Unit->getDie(), Type::IntTy); 
+  CompileUnitDesc *FileDesc = static_cast<CompileUnitDesc *>(SPD->getFile());
+  CompileUnit *File = FindCompileUnit(FileDesc);
+  unsigned FileID = File->getID();
+  DIE *Type = NewBasicType(Unit->getDie(), Type::IntTy);
+  unsigned Line = SPD->getLine();
+  unsigned IsExternal = SPD->isStatic() ? 0 : 1;
                                     
   DIE *SubprogramDie = new DIE(DW_TAG_subprogram);
   SubprogramDie->AddString     (DW_AT_name,      DW_FORM_string, Name);
   SubprogramDie->AddUInt       (DW_AT_decl_file, 0,              FileID);
   SubprogramDie->AddUInt       (DW_AT_decl_line, 0,              Line);
   SubprogramDie->AddDIEntry    (DW_AT_type,      DW_FORM_ref4,   Type);
-  SubprogramDie->AddUInt       (DW_AT_external,  DW_FORM_flag,   1);
+  SubprogramDie->AddUInt       (DW_AT_external,  DW_FORM_flag,   IsExternal);
   
   // Add to map.
   Slot = SubprogramDie;

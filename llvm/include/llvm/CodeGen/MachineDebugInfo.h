@@ -55,7 +55,7 @@ class StructType;
 // Debug info constants.
 
 enum {
-  LLVMDebugVersion = 1                  // Current version of debug information.
+  LLVMDebugVersion = 2                  // Current version of debug information.
 };
 
 //===----------------------------------------------------------------------===//
@@ -274,8 +274,8 @@ class TypeDesc : public DebugInfoDesc {
 private:
   DebugInfoDesc *Context;               // Context debug descriptor.
   std::string Name;                     // Type name (may be empty.)
-  CompileUnitDesc *File;                // Declared compile unit (may be NULL.)
-  int Line;                             // Declared line# (may be zero.)
+  CompileUnitDesc *File;                // Defined compile unit (may be NULL.)
+  unsigned Line;                        // Defined line# (may be zero.)
   uint64_t Size;                        // Type bit size (may be zero.)
   uint64_t Align;                       // Type bit alignment (may be zero.)
   uint64_t Offset;                      // Type bit offset (may be zero.)
@@ -287,14 +287,14 @@ public:
   DebugInfoDesc *getContext()                const { return Context; }
   const std::string &getName()               const { return Name; }
   CompileUnitDesc *getFile()                 const { return File; }
-  int getLine()                              const { return Line; }
+  unsigned getLine()                         const { return Line; }
   uint64_t getSize()                         const { return Size; }
   uint64_t getAlign()                        const { return Align; }
   uint64_t getOffset()                       const { return Offset; }
   void setContext(DebugInfoDesc *C)                { Context = C; }
   void setName(const std::string &N)               { Name = N; }
   void setFile(CompileUnitDesc *U)                 { File = U; }
-  void setLine(int L)                              { Line = L; }
+  void setLine(unsigned L)                         { Line = L; }
   void setSize(uint64_t S)                         { Size = S; }
   void setAlign(uint64_t A)                        { Align = A; }
   void setOffset(uint64_t O)                       { Offset = O; }
@@ -504,6 +504,8 @@ class GlobalDesc : public AnchoredDesc {
 private:
   DebugInfoDesc *Context;               // Context debug descriptor.
   std::string Name;                     // Global name.
+  CompileUnitDesc *File;                // Defined compile unit (may be NULL.)
+  unsigned Line;                        // Defined line# (may be zero.)
   TypeDesc *TyDesc;                     // Type debug descriptor.
   bool IsStatic;                        // Is the global a static.
   bool IsDefinition;                    // Is the global defined in context.
@@ -515,11 +517,15 @@ public:
   // Accessors
   DebugInfoDesc *getContext()                const { return Context; }
   const std::string &getName()               const { return Name; }
+  CompileUnitDesc *getFile()                 const { return File; }
+  unsigned getLine()                         const { return Line; }
   TypeDesc *getTypeDesc()                    const { return TyDesc; }
   bool isStatic()                            const { return IsStatic; }
   bool isDefinition()                        const { return IsDefinition; }
   void setContext(DebugInfoDesc *C)                { Context = C; }
   void setName(const std::string &N)               { Name = N; }
+  void setFile(CompileUnitDesc *U)                 { File = U; }
+  void setLine(unsigned L)                         { Line = L; }
   void setTypeDesc(TypeDesc *T)                    { TyDesc = T; }
   void setIsStatic(bool IS)                        { IsStatic = IS; }
   void setIsDefinition(bool ID)                    { IsDefinition = ID; }
@@ -535,16 +541,13 @@ public:
 class GlobalVariableDesc : public GlobalDesc {
 private:
   GlobalVariable *Global;               // llvm global.
-  unsigned Line;                        // Source line number.
   
 public:
   GlobalVariableDesc();
 
   // Accessors.
   GlobalVariable *getGlobalVariable()        const { return Global; }
-  unsigned getLine()                         const { return Line; }
   void setGlobalVariable(GlobalVariable *GV)       { Global = GV; }
-  void setLine(unsigned L)                         { Line = L; }
  
   // Implement isa/cast/dyncast.
   static bool classof(const GlobalVariableDesc *) { return true; }
@@ -577,19 +580,20 @@ public:
 /// subprogram/function.
 class SubprogramDesc : public GlobalDesc {
 private:
-  // FIXME - Other attributes
+  std::vector<DebugInfoDesc *> Elements;// Information about args, variables
+                                        // and blocks.
   
 public:
   SubprogramDesc();
   
   // Accessors
-  // FIXME - Other getters/setters.
+  std::vector<DebugInfoDesc *> &getElements() { return Elements; }
   
   // Implement isa/cast/dyncast.
   static bool classof(const SubprogramDesc *) { return true; }
   static bool classof(const DebugInfoDesc *D);
   
-  /// ApplyToFields - Target the visitor to the fields of the  SubprogramDesc.
+  /// ApplyToFields - Target the visitor to the fields of the SubprogramDesc.
   ///
   virtual void ApplyToFields(DIVisitor *Visitor);
 
@@ -605,6 +609,40 @@ public:
   ///
   static const char *AnchorString;
   virtual const char *getAnchorString() const;
+    
+#ifndef NDEBUG
+  virtual void dump();
+#endif
+};
+
+//===----------------------------------------------------------------------===//
+/// BlockDesc - This descriptor groups variables and blocks nested in a block.
+///
+class BlockDesc : public DebugInfoDesc {
+private:
+  std::vector<DebugInfoDesc *> Elements;// Information about nested variables
+                                        // and blocks.
+public:
+  BlockDesc();
+  
+  // Accessors
+  std::vector<DebugInfoDesc *> &getElements() { return Elements; }
+  
+  // Implement isa/cast/dyncast.
+  static bool classof(const BlockDesc *) { return true; }
+  static bool classof(const DebugInfoDesc *D);
+  
+  /// ApplyToFields - Target the visitor to the fields of the BlockDesc.
+  ///
+  virtual void ApplyToFields(DIVisitor *Visitor);
+
+  /// getDescString - Return a string used to compose global names and labels.
+  ///
+  virtual const char *getDescString() const;
+
+  /// getTypeString - Return a string used to label this descriptor's type.
+  ///
+  virtual const char *getTypeString() const;
     
 #ifndef NDEBUG
   virtual void dump();

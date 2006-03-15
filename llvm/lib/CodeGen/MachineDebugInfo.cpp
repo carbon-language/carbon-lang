@@ -270,16 +270,12 @@ public:
     Elements.push_back(ConstantBool::get(Field));
   }
   virtual void Apply(std::string &Field) {
-    if (Field.empty()) {
-      Elements.push_back(NULL);
-    } else {
       Elements.push_back(SR.getString(Field));
-    }
   }
   virtual void Apply(DebugInfoDesc *&Field) {
     GlobalVariable *GV = NULL;
     
-    // If non-NULL the convert to global.
+    // If non-NULL then convert to global.
     if (Field) GV = SR.Serialize(Field);
     
     // FIXME - At some point should use specific type.
@@ -473,19 +469,21 @@ DebugInfoDesc *DebugInfoDesc::DescFactory(unsigned Tag) {
   case DW_TAG_compile_unit:     return new CompileUnitDesc();
   case DW_TAG_variable:         return new GlobalVariableDesc();
   case DW_TAG_subprogram:       return new SubprogramDesc();
+  case DW_TAG_lexical_block:    return new BlockDesc();
   case DW_TAG_base_type:        return new BasicTypeDesc();
   case DW_TAG_typedef:
-  case DW_TAG_pointer_type:         
+  case DW_TAG_pointer_type:        
   case DW_TAG_reference_type:
   case DW_TAG_const_type:
-  case DW_TAG_volatile_type:         
-  case DW_TAG_restrict_type:    return new DerivedTypeDesc(Tag);
+  case DW_TAG_volatile_type:        
+  case DW_TAG_restrict_type:
+  case DW_TAG_formal_parameter:
+  case DW_TAG_member:           return new DerivedTypeDesc(Tag);
   case DW_TAG_array_type:
   case DW_TAG_structure_type:
   case DW_TAG_union_type:
   case DW_TAG_enumeration_type: return new CompositeTypeDesc(Tag);
   case DW_TAG_subrange_type:    return new SubrangeDesc();
-  case DW_TAG_member:           return new DerivedTypeDesc(DW_TAG_member);
   case DW_TAG_enumerator:       return new EnumeratorDesc();
   default: break;
   }
@@ -761,6 +759,7 @@ bool DerivedTypeDesc::classof(const DebugInfoDesc *D) {
   case DW_TAG_const_type:
   case DW_TAG_volatile_type:
   case DW_TAG_restrict_type:
+  case DW_TAG_formal_parameter:
   case DW_TAG_member:
     return true;
   default: break;
@@ -948,6 +947,8 @@ GlobalDesc::GlobalDesc(unsigned T)
 : AnchoredDesc(T)
 , Context(0)
 , Name("")
+, File(NULL)
+, Line(0)
 , TyDesc(NULL)
 , IsStatic(false)
 , IsDefinition(false)
@@ -960,6 +961,8 @@ void GlobalDesc::ApplyToFields(DIVisitor *Visitor) {
 
   Visitor->Apply(Context);
   Visitor->Apply(Name);
+  Visitor->Apply((DebugInfoDesc *&)File);
+  Visitor->Apply(Line);
   Visitor->Apply((DebugInfoDesc *&)TyDesc);
   Visitor->Apply(IsStatic);
   Visitor->Apply(IsDefinition);
@@ -983,7 +986,6 @@ void GlobalVariableDesc::ApplyToFields(DIVisitor *Visitor) {
   GlobalDesc::ApplyToFields(Visitor);
 
   Visitor->Apply(Global);
-  Visitor->Apply(Line);
 }
 
 /// getDescString - Return a string used to compose global names and labels.
@@ -1011,11 +1013,12 @@ void GlobalVariableDesc::dump() {
             << "Tag(" << getTag() << "), "
             << "Anchor(" << getAnchor() << "), "
             << "Name(\"" << getName() << "\"), "
+            << "File(" << getFile() << "),"
+            << "Line(" << getLine() << "),"
             << "Type(\"" << getTypeDesc() << "\"), "
             << "IsStatic(" << (isStatic() ? "true" : "false") << "), "
             << "IsDefinition(" << (isDefinition() ? "true" : "false") << "), "
-            << "Global(" << Global << "), "
-            << "Line(" << Line << ")\n";
+            << "Global(" << Global << ")\n";
 }
 #endif
 
@@ -1034,6 +1037,8 @@ bool SubprogramDesc::classof(const DebugInfoDesc *D) {
 /// SubprogramDesc.
 void SubprogramDesc::ApplyToFields(DIVisitor *Visitor) {
   GlobalDesc::ApplyToFields(Visitor);
+
+  Visitor->Apply(Elements);
 }
 
 /// getDescString - Return a string used to compose global names and labels.
@@ -1061,9 +1066,49 @@ void SubprogramDesc::dump() {
             << "Tag(" << getTag() << "), "
             << "Anchor(" << getAnchor() << "), "
             << "Name(\"" << getName() << "\"), "
+            << "File(" << getFile() << "),"
+            << "Line(" << getLine() << "),"
             << "Type(\"" << getTypeDesc() << "\"), "
             << "IsStatic(" << (isStatic() ? "true" : "false") << "), "
             << "IsDefinition(" << (isDefinition() ? "true" : "false") << ")\n";
+}
+#endif
+
+//===----------------------------------------------------------------------===//
+
+BlockDesc::BlockDesc()
+: DebugInfoDesc(DW_TAG_lexical_block)
+{}
+
+// Implement isa/cast/dyncast.
+bool BlockDesc::classof(const DebugInfoDesc *D) {
+  return D->getTag() == DW_TAG_lexical_block;
+}
+
+/// ApplyToFields - Target the visitor to the fields of the BlockDesc.
+///
+void BlockDesc::ApplyToFields(DIVisitor *Visitor) {
+  DebugInfoDesc::ApplyToFields(Visitor);
+
+  Visitor->Apply(Elements);
+}
+
+/// getDescString - Return a string used to compose global names and labels.
+///
+const char *BlockDesc::getDescString() const {
+  return "llvm.dbg.block";
+}
+
+/// getTypeString - Return a string used to label this descriptors type.
+///
+const char *BlockDesc::getTypeString() const {
+  return "llvm.dbg.block.type";
+}
+
+#ifndef NDEBUG
+void BlockDesc::dump() {
+  std::cerr << getDescString() << " "
+            << "Tag(" << getTag() << ")\n";
 }
 #endif
 
@@ -1159,17 +1204,22 @@ const StructType *DISerializer::getTagType(DebugInfoDesc *DD) {
 Constant *DISerializer::getString(const std::string &String) {
   // Check string cache for previous edition.
   Constant *&Slot = StringCache[String];
-  // return Constant if previously defined.
+  // Return Constant if previously defined.
   if (Slot) return Slot;
-  // Construct string as an llvm constant.
-  Constant *ConstStr = ConstantArray::get(String);
-  // Otherwise create and return a new string global.
-  GlobalVariable *StrGV = new GlobalVariable(ConstStr->getType(), true,
-                                             GlobalVariable::InternalLinkage,
-                                             ConstStr, "str", M);
-  StrGV->setSection("llvm.metadata");
-  // Convert to generic string pointer.
-  Slot = ConstantExpr::getCast(StrGV, getStrPtrType());
+  // If empty string then use a sbyte* null instead.
+  if (String.empty()) {
+    Slot = ConstantPointerNull::get(getStrPtrType());
+  } else {
+    // Construct string as an llvm constant.
+    Constant *ConstStr = ConstantArray::get(String);
+    // Otherwise create and return a new string global.
+    GlobalVariable *StrGV = new GlobalVariable(ConstStr->getType(), true,
+                                               GlobalVariable::InternalLinkage,
+                                               ConstStr, "str", M);
+    StrGV->setSection("llvm.metadata");
+    // Convert to generic string pointer.
+    Slot = ConstantExpr::getCast(StrGV, getStrPtrType());
+  }
   return Slot;
   
 }
