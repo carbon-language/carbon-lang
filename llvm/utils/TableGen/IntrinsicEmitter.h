@@ -31,6 +31,8 @@ namespace llvm {
 
     void EmitFnNameRecognizer(const std::vector<CodeGenIntrinsic> &Ints, 
                               std::ostream &OS);
+    void EmitIntrinsicToNameTable(const std::vector<CodeGenIntrinsic> &Ints, 
+                                  std::ostream &OS);
     void EmitVerifier(const std::vector<CodeGenIntrinsic> &Ints, 
                       std::ostream &OS);
     void EmitModRefInfo(const std::vector<CodeGenIntrinsic> &Ints, 

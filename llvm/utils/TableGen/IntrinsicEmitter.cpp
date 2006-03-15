@@ -109,10 +109,13 @@ void IntrinsicEmitter::run(std::ostream &OS) {
 
   // Emit the enum information.
   EmitEnumInfo(Ints, OS);
+
+  // Emit the intrinsic ID -> name table.
+  EmitIntrinsicToNameTable(Ints, OS);
   
   // Emit the function name recognizer.
   EmitFnNameRecognizer(Ints, OS);
-
+  
   // Emit the intrinsic verifier.
   EmitVerifier(Ints, OS);
   
@@ -158,9 +161,6 @@ EmitFnNameRecognizer(const std::vector<CodeGenIntrinsic> &Ints,
   char LastChar = 0;
   for (std::map<std::string, std::string>::iterator I = IntMapping.begin(),
        E = IntMapping.end(); I != E; ++I) {
-    assert(I->first.size() > 5 && std::string(I->first.begin(),
-                                              I->first.begin()+5) == "llvm." &&
-           "Invalid intrinsic name!");
     if (I->first[5] != LastChar) {
       LastChar = I->first[5];
       OS << "  case '" << LastChar << "':\n";
@@ -172,6 +172,22 @@ EmitFnNameRecognizer(const std::vector<CodeGenIntrinsic> &Ints,
   OS << "  }\n";
   OS << "  // The 'llvm.' namespace is reserved!\n";
   OS << "  assert(0 && \"Unknown LLVM intrinsic function!\");\n";
+  OS << "#endif\n\n";
+}
+
+void IntrinsicEmitter::
+EmitIntrinsicToNameTable(const std::vector<CodeGenIntrinsic> &Ints, 
+                         std::ostream &OS) {
+  std::vector<std::string> Names;
+  for (unsigned i = 0, e = Ints.size(); i != e; ++i)
+    Names.push_back(Ints[i].Name);
+  std::sort(Names.begin(), Names.end());
+  
+  OS << "// Intrinsic ID to name table\n";
+  OS << "#ifdef GET_INTRINSIC_NAME_TABLE\n";
+  OS << "  // Note that entry #0 is the invalid intrinsic!\n";
+  for (unsigned i = 0, e = Names.size(); i != e; ++i)
+    OS << "  \"" << Names[i] << "\",\n";
   OS << "#endif\n\n";
 }
 
