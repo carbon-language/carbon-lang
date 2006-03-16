@@ -50,6 +50,9 @@ PPCRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                      unsigned SrcReg, int FrameIdx,
                                      const TargetRegisterClass *RC) const {
   if (SrcReg == PPC::LR) {
+    // FIXME: this spills LR immediately to memory in one step.  To do this, we
+    // use R11, which we know cannot be used in the prolog/epilog.  This is a
+    // hack.
     BuildMI(MBB, MI, PPC::MFLR, 1, PPC::R11);
     addFrameReference(BuildMI(MBB, MI, PPC::STW, 3).addReg(PPC::R11), FrameIdx);
   } else if (RC == PPC::CRRCRegisterClass) {
@@ -63,6 +66,15 @@ PPCRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     addFrameReference(BuildMI(MBB, MI, PPC::STFD, 3).addReg(SrcReg),FrameIdx);
   } else if (RC == PPC::F4RCRegisterClass) {
     addFrameReference(BuildMI(MBB, MI, PPC::STFS, 3).addReg(SrcReg),FrameIdx);
+  } else if (RC == PPC::VRRCRegisterClass) {
+    // We don't have indexed addressing for vector loads.  Emit:
+    // R11 = ADDI FI#
+    // Dest = LVX R0, R11
+    // 
+    // FIXME: We use R0 here, because it isn't available for RA.
+    addFrameReference(BuildMI(MBB, MI, PPC::ADDI, 1, PPC::R0), FrameIdx, 0, 0);
+    BuildMI(MBB, MI, PPC::STVX, 3)
+      .addReg(SrcReg).addReg(PPC::R0).addReg(PPC::R0);
   } else {
     assert(0 && "Unknown regclass!");
     abort();
@@ -88,6 +100,14 @@ PPCRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     addFrameReference(BuildMI(MBB, MI, PPC::LFD, 2, DestReg), FrameIdx);
   } else if (RC == PPC::F4RCRegisterClass) {
     addFrameReference(BuildMI(MBB, MI, PPC::LFS, 2, DestReg), FrameIdx);
+  } else if (RC == PPC::VRRCRegisterClass) {
+    // We don't have indexed addressing for vector loads.  Emit:
+    // R11 = ADDI FI#
+    // Dest = LVX R0, R11
+    // 
+    // FIXME: We use R0 here, because it isn't available for RA.
+    addFrameReference(BuildMI(MBB, MI, PPC::ADDI, 1, PPC::R0), FrameIdx, 0, 0);
+    BuildMI(MBB, MI, PPC::LVX, 2, DestReg).addReg(PPC::R0).addReg(PPC::R0);
   } else {
     assert(0 && "Unknown regclass!");
     abort();

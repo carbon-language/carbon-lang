@@ -80,7 +80,7 @@ bool PPCInstrInfo::isMoveInstr(const MachineInstr& MI,
 }
 
 unsigned PPCInstrInfo::isLoadFromStackSlot(MachineInstr *MI, 
-                                              int &FrameIndex) const {
+                                           int &FrameIndex) const {
   switch (MI->getOpcode()) {
   default: break;
   case PPC::LD:
