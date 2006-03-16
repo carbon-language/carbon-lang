@@ -507,3 +507,14 @@ This theoretically may help improve twolf slightly (used in dimbox.c:142?).
 
 ===-------------------------------------------------------------------------===
 
+int foo(int N, int ***W, int **TK, int X) {
+  int t, i;
+  
+  for (t = 0; t < N; ++t)
+    for (i = 0; i < 4; ++i)
+      W[t / X][i][t % X] = TK[i][t];
+      
+  return 5;
+}
+
+We generate relatively atrocious code for this loop compared to gcc.
