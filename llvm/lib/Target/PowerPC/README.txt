@@ -507,6 +507,10 @@ This theoretically may help improve twolf slightly (used in dimbox.c:142?).
 
 ===-------------------------------------------------------------------------===
 
+Implement PPCInstrInfo::isLoadFromStackSlot/isStoreToStackSlot for vector
+registers, to generate better spill code.
+
+===-------------------------------------------------------------------------===
 int foo(int N, int ***W, int **TK, int X) {
   int t, i;
   
@@ -518,3 +522,6 @@ int foo(int N, int ***W, int **TK, int X) {
 }
 
 We generate relatively atrocious code for this loop compared to gcc.
+
+
+
