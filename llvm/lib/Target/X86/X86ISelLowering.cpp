@@ -2214,7 +2214,7 @@ bool X86TargetLowering::isLegalAddressImmediate(GlobalValue *GV) const {
     if (RModel == Reloc::Static)
       return true;
     else if (RModel == Reloc::DynamicNoPIC)
-      return DarwinGVRequiresExtraLoad(GV);
+      return !DarwinGVRequiresExtraLoad(GV);
     else
       return false;
   } else
