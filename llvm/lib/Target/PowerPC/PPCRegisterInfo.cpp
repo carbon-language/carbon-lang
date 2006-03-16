@@ -118,8 +118,6 @@ void PPCRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
                                    MachineBasicBlock::iterator MI,
                                    unsigned DestReg, unsigned SrcReg,
                                    const TargetRegisterClass *RC) const {
-  MachineInstr *I;
-
   if (RC == PPC::GPRCRegisterClass) {
     BuildMI(MBB, MI, PPC::OR4, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
   } else if (RC == PPC::G8RCRegisterClass) {
