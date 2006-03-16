@@ -171,28 +171,8 @@ namespace llvm {
       return RegMap->createVirtualRegister(TLI.getRegClassFor(VT));
     }
 
-    unsigned CreateRegForValue(const Value *V) {
-      MVT::ValueType VT = TLI.getValueType(V->getType());
-      // The common case is that we will only create one register for this
-      // value.  If we have that case, create and return the virtual register.
-      unsigned NV = TLI.getNumElements(VT);
-      if (NV == 1) {
-        // If we are promoting this value, pick the next largest supported type.
-        return MakeReg(TLI.getTypeToTransformTo(VT));
-      }
-
-      // If this value is represented with multiple target registers, make sure
-      // to create enough consecutive registers of the right (smaller) type.
-      unsigned NT = VT-1;  // Find the type to use.
-      while (TLI.getNumElements((MVT::ValueType)NT) != 1)
-        --NT;
-
-      unsigned R = MakeReg((MVT::ValueType)NT);
-      for (unsigned i = 1; i != NV; ++i)
-        MakeReg((MVT::ValueType)NT);
-      return R;
-    }
-
+    unsigned CreateRegForValue(const Value *V);
+    
     unsigned InitializeRegForValue(const Value *V) {
       unsigned &R = ValueMap[V];
       assert(R == 0 && "Already initialized this value register!");
@@ -290,7 +270,57 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
   }
 }
 
-
+/// CreateRegForValue - Allocate the appropriate number of virtual registers of
+/// the correctly promoted or expanded types.  Assign these registers
+/// consecutive vreg numbers and return the first assigned number.
+unsigned FunctionLoweringInfo::CreateRegForValue(const Value *V) {
+  MVT::ValueType VT = TLI.getValueType(V->getType());
+  
+  // The number of multiples of registers that we need, to, e.g., split up
+  // a <2 x int64> -> 4 x i32 registers.
+  unsigned NumVectorRegs = 1;
+  
+  // If this is a packed type, figure out what type it will decompose into
+  // and how many of the elements it will use.
+  if (VT == MVT::Vector) {
+    const PackedType *PTy = cast<PackedType>(V->getType());
+    unsigned NumElts = PTy->getNumElements();
+    MVT::ValueType EltTy = TLI.getValueType(PTy->getElementType());
+    
+    // Divide the input until we get to a supported size.  This will always
+    // end with a scalar if the target doesn't support vectors.
+    while (NumElts > 1 && !TLI.isTypeLegal(getVectorType(EltTy, NumElts))) {
+      NumElts >>= 1;
+      NumVectorRegs <<= 1;
+    }
+    VT = getVectorType(EltTy, NumElts);
+  }
+  
+  // The common case is that we will only create one register for this
+  // value.  If we have that case, create and return the virtual register.
+  unsigned NV = TLI.getNumElements(VT);
+  if (NV == 1) {
+    // If we are promoting this value, pick the next largest supported type.
+    MVT::ValueType PromotedType = TLI.getTypeToTransformTo(VT);
+    unsigned Reg = MakeReg(PromotedType);
+    // If this is a vector of supported or promoted types (e.g. 4 x i16),
+    // create all of the registers.
+    for (unsigned i = 1; i != NumVectorRegs; ++i)
+      MakeReg(PromotedType);
+    return Reg;
+  }
+  
+  // If this value is represented with multiple target registers, make sure
+  // to create enough consecutive registers of the right (smaller) type.
+  unsigned NT = VT-1;  // Find the type to use.
+  while (TLI.getNumElements((MVT::ValueType)NT) != 1)
+    --NT;
+  
+  unsigned R = MakeReg((MVT::ValueType)NT);
+  for (unsigned i = 1; i != NV*NumVectorRegs; ++i)
+    MakeReg((MVT::ValueType)NT);
+  return R;
+}
 
 //===----------------------------------------------------------------------===//
 /// SelectionDAGLowering - This is the common target-independent lowering
