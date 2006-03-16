@@ -584,3 +584,48 @@ Optimize copysign(x, *y) to use an integer load from y.
 
 //===---------------------------------------------------------------------===//
 
+%X = weak global int 0
+
+void %foo(int %N) {
+	%N = cast int %N to uint
+	%tmp.24 = setgt int %N, 0
+	br bool %tmp.24, label %no_exit, label %return
+
+no_exit:
+	%indvar = phi uint [ 0, %entry ], [ %indvar.next, %no_exit ]
+	%i.0.0 = cast uint %indvar to int
+	volatile store int %i.0.0, int* %X
+	%indvar.next = add uint %indvar, 1
+	%exitcond = seteq uint %indvar.next, %N
+	br bool %exitcond, label %return, label %no_exit
+
+return:
+	ret void
+}
+
+compiles into:
+
+	.text
+	.align	4
+	.globl	_foo
+_foo:
+	movl 4(%esp), %eax
+	cmpl $1, %eax
+	jl LBB_foo_4	# return
+LBB_foo_1:	# no_exit.preheader
+	xorl %ecx, %ecx
+LBB_foo_2:	# no_exit
+	movl L_X$non_lazy_ptr, %edx
+	movl %ecx, (%edx)
+	incl %ecx
+	cmpl %eax, %ecx
+	jne LBB_foo_2	# no_exit
+LBB_foo_3:	# return.loopexit
+LBB_foo_4:	# return
+	ret
+
+We should hoist "movl L_X$non_lazy_ptr, %edx" out of the loop after
+remateralization is implemented. This can be accomplished with 1) a target
+dependent LICM pass or 2) makeing SelectDAG represent the whole function. 
+
+//===---------------------------------------------------------------------===//
