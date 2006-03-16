@@ -97,7 +97,7 @@ bool X86TargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
       FileType != TargetMachine::ObjectFile) return true;
 
   // Run loop strength reduction before anything else.
-  if (EnableX86LSR) PM.add(createLoopStrengthReducePass(1, &TLInfo));
+  if (EnableX86LSR) PM.add(createLoopStrengthReducePass(&TLInfo));
 
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
@@ -166,7 +166,7 @@ void X86JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
 
   // Run loop strength reduction before anything else.
   if (EnableX86LSR)
-    PM.add(createLoopStrengthReducePass(1, TM.getTargetLowering()));
+    PM.add(createLoopStrengthReducePass(TM.getTargetLowering()));
 
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());

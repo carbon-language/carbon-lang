@@ -49,6 +49,16 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setSchedulingPreference(SchedulingForRegPressure);
   setShiftAmountFlavor(Mask);   // shl X, 32 == shl X, 0
   setStackPointerRegisterToSaveRestore(X86::ESP);
+
+  // Add legal addressing mode scale values.
+  addLegalAddressScale(8);
+  addLegalAddressScale(4);
+  addLegalAddressScale(2);
+  // Enter the ones which require both scale + index last. These are more
+  // expensive.
+  addLegalAddressScale(9);
+  addLegalAddressScale(5);
+  addLegalAddressScale(3);
   
   // Set up the register classes.
   addRegisterClass(MVT::i8, X86::R8RegisterClass);

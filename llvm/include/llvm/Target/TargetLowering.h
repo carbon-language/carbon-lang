@@ -560,15 +560,6 @@ public:
   virtual bool isOperandValidForConstraint(SDOperand Op, char ConstraintLetter);
   
   //===--------------------------------------------------------------------===//
-  // Loop Strength Reduction hooks
-  //
-  
-  /// isLegalAddressImmediate - Return true if the integer value or GlobalValue
-  /// can be used as the offset of the target addressing mode.
-  virtual bool isLegalAddressImmediate(int64_t V) const;
-  virtual bool isLegalAddressImmediate(GlobalValue *GV) const;
-  
-  //===--------------------------------------------------------------------===//
   // Scheduler hooks
   //
   
@@ -580,6 +571,34 @@ public:
   virtual MachineBasicBlock *InsertAtEndOfBasicBlock(MachineInstr *MI,
                                                      MachineBasicBlock *MBB);
 
+  //===--------------------------------------------------------------------===//
+  // Loop Strength Reduction hooks
+  //
+  
+  /// isLegalAddressImmediate - Return true if the integer value or GlobalValue
+  /// can be used as the offset of the target addressing mode.
+  virtual bool isLegalAddressImmediate(int64_t V) const;
+  virtual bool isLegalAddressImmediate(GlobalValue *GV) const;
+
+  typedef std::vector<unsigned>::const_iterator legal_am_scale_iterator;
+  legal_am_scale_iterator legal_am_scale_begin() const {
+    return LegalAddressScales.begin();
+  }
+  legal_am_scale_iterator legal_am_scale_end() const {
+    return LegalAddressScales.end();
+  }
+
+protected:
+  /// addLegalAddressScale - Add a integer (> 1) value which can be used as
+  /// scale in the target addressing mode. Note: the ordering matters so the
+  /// least efficient ones should be entered first.
+  void addLegalAddressScale(unsigned Scale) {
+    LegalAddressScales.push_back(Scale);
+  }
+
+private:
+  std::vector<unsigned> LegalAddressScales;
+  
 private:
   TargetMachine &TM;
   const TargetData &TD;
