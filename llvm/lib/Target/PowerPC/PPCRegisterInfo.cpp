@@ -315,7 +315,7 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
 
   // Scan the first few instructions of the prolog, looking for an UPDATE_VRSAVE
   // instruction.  If we find it, process it.
-  for (unsigned i = 0; MBBI != MBB.end() && i < 5; ++i, ++MBBI) {
+  for (unsigned i = 0; MBBI != MBB.end(); ++i, ++MBBI) {
     if (MBBI->getOpcode() == PPC::UPDATE_VRSAVE) {
       HandleVRSaveUpdate(MBBI, MF.getUsedPhysregs());
       break;
