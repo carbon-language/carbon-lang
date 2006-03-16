@@ -18,6 +18,34 @@ unconditional branch, so we don't end up with things like:
 
 This occurs in SPASS.
 
+The power of diet coke came up with a solution to this today:
+
+We know the only two cases that can happen here are either:
+a) we have a conditional branch followed by a fallthrough to the next BB
+b) we have a conditional branch followed by an unconditional branch
+
+We also invented the BRTWOWAY node to model (b).
+
+Currently, these are modeled by the PPC_BRCOND node which is a 12-byte pseudo
+that codegens to 
+  bccinv false
+true:
+  b truebb
+false:
+  b falsebb 
+
+However, realizing that for (a), we can bccinv directly to the fallthrough 
+block, and for (b) we will already have another unconditional branch after
+the conditional branch (see SPASS case above), then we know that we don't need
+BRTWOWAY at all, and can just codegen PPC_BRCOND as 
+
+bccinv +8
+b truebb
+
+This will also allow us to selectively not run the ppc branch selector, by just
+selecting PPC_BRCOND pseudo directly to the correct conditional branch
+instruction for small functions.
+
 ===-------------------------------------------------------------------------===
 
 * Codegen this:
