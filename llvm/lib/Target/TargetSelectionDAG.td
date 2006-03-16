@@ -74,6 +74,8 @@ def SDTFPLeaf : SDTypeProfile<1, 0, [SDTCisFP<0>]>;       // for 'fpimm'.
 def SDTPtrLeaf: SDTypeProfile<1, 0, [SDTCisPtrTy<0>]>;      // for '&g'.
 def SDTOther  : SDTypeProfile<1, 0, [SDTCisVT<0, OtherVT>]>; // for 'vt'.
 def SDTUNDEF  : SDTypeProfile<1, 0, []>; // for 'undef'.
+def SDTUnaryOp  : SDTypeProfile<1, 1, []>; // bitconvert
+
 def SDTIntBinOp : SDTypeProfile<1, 2, [   // add, and, or, xor, udiv, etc.
   SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>, SDTCisInt<0>
 ]>;
@@ -251,6 +253,7 @@ def sext       : SDNode<"ISD::SIGN_EXTEND", SDTIntExtendOp>;
 def zext       : SDNode<"ISD::ZERO_EXTEND", SDTIntExtendOp>;
 def anyext     : SDNode<"ISD::ANY_EXTEND" , SDTIntExtendOp>;
 def trunc      : SDNode<"ISD::TRUNCATE"   , SDTIntTruncOp>;
+def bitconvert : SDNode<"ISD::BIT_CONVERT", SDTUnaryOp>;
                         
 def fadd       : SDNode<"ISD::FADD"       , SDTFPBinOp, [SDNPCommutative]>;
 def fsub       : SDNode<"ISD::FSUB"       , SDTFPBinOp>;
