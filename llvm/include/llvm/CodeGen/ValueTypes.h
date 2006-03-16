@@ -48,6 +48,7 @@ namespace MVT {  // MVT = Machine Value Types
     Vector         =  13,   // This is an abstract vector type, which will
                             // be expanded into a target vector type, or scalars
                             // if no matching vector type is available.
+
     v8i8           =  14,   //  8 x i8
     v4i16          =  15,   //  4 x i16
     v2i32          =  16,   //  2 x i32
@@ -59,8 +60,10 @@ namespace MVT {  // MVT = Machine Value Types
     v2f32          =  21,   //  2 x f32
     v4f32          =  22,   //  4 x f32
     v2f64          =  23,   //  2 x f64
+    FIRST_VECTOR_VALUETYPE = v8i8,
+    LAST_VECTOR_VALUETYPE  = v2f64,
 
-    LAST_VALUETYPE          // This always remains at the end of the list.
+    LAST_VALUETYPE =  24    // This always remains at the end of the list.
   };
 
   static inline bool isInteger(ValueType VT) {
@@ -70,7 +73,8 @@ namespace MVT {  // MVT = Machine Value Types
     return (VT >= f32 && VT <= f128) || (VT >= v4f32 && VT <= v2f64);
   }
   static inline bool isVector(ValueType VT) {
-    return (VT >= v8i8 && VT <= v2f64);
+    return (VT >= FIRST_VECTOR_VALUETYPE &&
+            VT <= LAST_VECTOR_VALUETYPE);
   }
   
   /// getVectorType - Returns the ValueType that represents a vector NumElements
