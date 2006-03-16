@@ -93,5 +93,6 @@ def PPC : Target {
   let CalleeSavedRegisters = [R1, R13, R14, R15, R16, R17, R18, R19,
     R20, R21, R22, R23, R24, R25, R26, R27, R28, R29, R30, R31, F14, F15,
     F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, F26, F27, F28, F29,
-    F30, F31, CR2, CR3, CR4, LR];
+    F30, F31, CR2, CR3, CR4, V20, V21, V22, V23, V24, V25, V26, V27, V28,
+    V29, V30, V31, LR];
 }
