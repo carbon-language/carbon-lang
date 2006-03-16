@@ -1,4 +1,4 @@
-// %llvmgcc %s -S -o -
+// RUN: %llvmgcc %s -S -o -
 namespace std {
   class exception { };
 
