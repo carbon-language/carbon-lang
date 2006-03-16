@@ -110,6 +110,8 @@ void PPCRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
     BuildMI(MBB, MI, PPC::FMRD, 1, DestReg).addReg(SrcReg);
   } else if (RC == PPC::CRRCRegisterClass) {
     BuildMI(MBB, MI, PPC::MCRF, 1, DestReg).addReg(SrcReg);
+  } else if (RC == PPC::VRRCRegisterClass) {
+    BuildMI(MBB, MI, PPC::VOR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
   } else {
     std::cerr << "Attempt to copy register that is not GPR or FPR";
     abort();

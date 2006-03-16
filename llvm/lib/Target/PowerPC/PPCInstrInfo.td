@@ -1009,6 +1009,9 @@ def VRSQRTEFP : VXForm_2<330, (ops VRRC:$vD, VRRC:$vB),
 def VSUBFP : VXForm_1<74, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       "vsubfp $vD, $vA, $vB", VecFP,
                       [(set VRRC:$vD, (fsub VRRC:$vA, VRRC:$vB))]>;
+def VOR : VXForm_1<1156, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vor $vD, $vA, $vB", VecFP,
+                      []>;
 def VXOR : VXForm_1<1220, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       "vxor $vD, $vA, $vB", VecFP,
                       []>;
@@ -1150,6 +1153,7 @@ def : Pat<(v4i32 (load xoaddr:$src)),
           (v4i32 (LVX xoaddr:$src))>;
 def : Pat<(store (v4i32 VRRC:$rS), xoaddr:$dst),
           (STVX (v4i32 VRRC:$rS), xoaddr:$dst)>;
+
 
 // Same as above, but using a temporary. FIXME: implement temporaries :)
 /*
