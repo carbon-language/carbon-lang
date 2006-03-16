@@ -400,110 +400,7 @@ public:
     return DAG.getConstant(Val, TLI.getPointerTy());
   }
 
-  SDOperand getValue(const Value *V) {
-    SDOperand &N = NodeMap[V];
-    if (N.Val) return N;
-
-    const Type *VTy = V->getType();
-    MVT::ValueType VT = TLI.getValueType(VTy);
-    if (Constant *C = const_cast<Constant*>(dyn_cast<Constant>(V)))
-      if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
-        visit(CE->getOpcode(), *CE);
-        assert(N.Val && "visit didn't populate the ValueMap!");
-        return N;
-      } else if (GlobalValue *GV = dyn_cast<GlobalValue>(C)) {
-        return N = DAG.getGlobalAddress(GV, VT);
-      } else if (isa<ConstantPointerNull>(C)) {
-        return N = DAG.getConstant(0, TLI.getPointerTy());
-      } else if (isa<UndefValue>(C)) {
-        return N = DAG.getNode(ISD::UNDEF, VT);
-      } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
-        return N = DAG.getConstantFP(CFP->getValue(), VT);
-      } else if (const PackedType *PTy = dyn_cast<PackedType>(VTy)) {
-        unsigned NumElements = PTy->getNumElements();
-        MVT::ValueType PVT = TLI.getValueType(PTy->getElementType());
-        MVT::ValueType TVT = MVT::getVectorType(PVT, NumElements);
-        
-        // Now that we know the number and type of the elements, push a
-        // Constant or ConstantFP node onto the ops list for each element of
-        // the packed constant.
-        std::vector<SDOperand> Ops;
-        if (ConstantPacked *CP = dyn_cast<ConstantPacked>(C)) {
-          if (MVT::isFloatingPoint(PVT)) {
-            for (unsigned i = 0; i != NumElements; ++i) {
-              const ConstantFP *El = cast<ConstantFP>(CP->getOperand(i));
-              Ops.push_back(DAG.getConstantFP(El->getValue(), PVT));
-            }
-          } else {
-            for (unsigned i = 0; i != NumElements; ++i) {
-              const ConstantIntegral *El = 
-                cast<ConstantIntegral>(CP->getOperand(i));
-              Ops.push_back(DAG.getConstant(El->getRawValue(), PVT));
-            }
-          }
-        } else {
-          assert(isa<ConstantAggregateZero>(C) && "Unknown packed constant!");
-          SDOperand Op;
-          if (MVT::isFloatingPoint(PVT))
-            Op = DAG.getConstantFP(0, PVT);
-          else
-            Op = DAG.getConstant(0, PVT);
-          Ops.assign(NumElements, Op);
-        }
-        
-        // Handle the case where we have a 1-element vector, in which
-        // case we want to immediately turn it into a scalar constant.
-        if (Ops.size() == 1) {
-          return N = Ops[0];
-        } else if (TVT != MVT::Other && TLI.isTypeLegal(TVT)) {
-          return N = DAG.getNode(ISD::ConstantVec, TVT, Ops);
-        } else {
-          // If the packed type isn't legal, then create a ConstantVec node with
-          // generic Vector type instead.
-          SDOperand Num = DAG.getConstant(NumElements, MVT::i32);
-          SDOperand Typ = DAG.getValueType(PVT);
-          Ops.insert(Ops.begin(), Typ);
-          Ops.insert(Ops.begin(), Num);
-          return N = DAG.getNode(ISD::VConstant, MVT::Vector, Ops);
-        }
-      } else {
-        // Canonicalize all constant ints to be unsigned.
-        return N = DAG.getConstant(cast<ConstantIntegral>(C)->getRawValue(),VT);
-      }
-
-    if (const AllocaInst *AI = dyn_cast<AllocaInst>(V)) {
-      std::map<const AllocaInst*, int>::iterator SI =
-        FuncInfo.StaticAllocaMap.find(AI);
-      if (SI != FuncInfo.StaticAllocaMap.end())
-        return DAG.getFrameIndex(SI->second, TLI.getPointerTy());
-    }
-
-    std::map<const Value*, unsigned>::const_iterator VMI =
-      FuncInfo.ValueMap.find(V);
-    assert(VMI != FuncInfo.ValueMap.end() && "Value not in map!");
-
-    unsigned InReg = VMI->second;
-   
-    // If this type is not legal, make it so now.
-    MVT::ValueType DestVT = TLI.getTypeToTransformTo(VT);
-    
-    N = DAG.getCopyFromReg(DAG.getEntryNode(), InReg, DestVT);
-    if (DestVT < VT) {
-      // Source must be expanded.  This input value is actually coming from the
-      // register pair VMI->second and VMI->second+1.
-      N = DAG.getNode(ISD::BUILD_PAIR, VT, N,
-                      DAG.getCopyFromReg(DAG.getEntryNode(), InReg+1, DestVT));
-    } else {
-      if (DestVT > VT) { // Promotion case
-        if (MVT::isFloatingPoint(VT))
-          N = DAG.getNode(ISD::FP_ROUND, VT, N);
-        else
-          N = DAG.getNode(ISD::TRUNCATE, VT, N);
-      }
-    }
-    
-    return N;
-  }
+  SDOperand getValue(const Value *V);
 
   const SDOperand &setValue(const Value *V, SDOperand NewN) {
     SDOperand &N = NodeMap[V];
@@ -598,6 +495,124 @@ public:
   }
 };
 } // end namespace llvm
+
+SDOperand SelectionDAGLowering::getValue(const Value *V) {
+  SDOperand &N = NodeMap[V];
+  if (N.Val) return N;
+  
+  const Type *VTy = V->getType();
+  MVT::ValueType VT = TLI.getValueType(VTy);
+  if (Constant *C = const_cast<Constant*>(dyn_cast<Constant>(V))) {
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
+      visit(CE->getOpcode(), *CE);
+      assert(N.Val && "visit didn't populate the ValueMap!");
+      return N;
+    } else if (GlobalValue *GV = dyn_cast<GlobalValue>(C)) {
+      return N = DAG.getGlobalAddress(GV, VT);
+    } else if (isa<ConstantPointerNull>(C)) {
+      return N = DAG.getConstant(0, TLI.getPointerTy());
+    } else if (isa<UndefValue>(C)) {
+      return N = DAG.getNode(ISD::UNDEF, VT);
+    } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
+      return N = DAG.getConstantFP(CFP->getValue(), VT);
+    } else if (const PackedType *PTy = dyn_cast<PackedType>(VTy)) {
+      unsigned NumElements = PTy->getNumElements();
+      MVT::ValueType PVT = TLI.getValueType(PTy->getElementType());
+      MVT::ValueType TVT = MVT::getVectorType(PVT, NumElements);
+      
+      // Now that we know the number and type of the elements, push a
+      // Constant or ConstantFP node onto the ops list for each element of
+      // the packed constant.
+      std::vector<SDOperand> Ops;
+      if (ConstantPacked *CP = dyn_cast<ConstantPacked>(C)) {
+        if (MVT::isFloatingPoint(PVT)) {
+          for (unsigned i = 0; i != NumElements; ++i) {
+            const ConstantFP *El = cast<ConstantFP>(CP->getOperand(i));
+            Ops.push_back(DAG.getConstantFP(El->getValue(), PVT));
+          }
+        } else {
+          for (unsigned i = 0; i != NumElements; ++i) {
+            const ConstantIntegral *El = 
+            cast<ConstantIntegral>(CP->getOperand(i));
+            Ops.push_back(DAG.getConstant(El->getRawValue(), PVT));
+          }
+        }
+      } else {
+        assert(isa<ConstantAggregateZero>(C) && "Unknown packed constant!");
+        SDOperand Op;
+        if (MVT::isFloatingPoint(PVT))
+          Op = DAG.getConstantFP(0, PVT);
+        else
+          Op = DAG.getConstant(0, PVT);
+        Ops.assign(NumElements, Op);
+      }
+      
+      // Handle the case where we have a 1-element vector, in which
+      // case we want to immediately turn it into a scalar constant.
+      if (Ops.size() == 1) {
+        return N = Ops[0];
+      } else if (TVT != MVT::Other && TLI.isTypeLegal(TVT)) {
+        return N = DAG.getNode(ISD::ConstantVec, TVT, Ops);
+      } else {
+        // If the packed type isn't legal, then create a ConstantVec node with
+        // generic Vector type instead.
+        SDOperand Num = DAG.getConstant(NumElements, MVT::i32);
+        SDOperand Typ = DAG.getValueType(PVT);
+        Ops.insert(Ops.begin(), Typ);
+        Ops.insert(Ops.begin(), Num);
+        return N = DAG.getNode(ISD::VConstant, MVT::Vector, Ops);
+      }
+    } else {
+      // Canonicalize all constant ints to be unsigned.
+      return N = DAG.getConstant(cast<ConstantIntegral>(C)->getRawValue(),VT);
+    }
+  }
+      
+  if (const AllocaInst *AI = dyn_cast<AllocaInst>(V)) {
+    std::map<const AllocaInst*, int>::iterator SI =
+    FuncInfo.StaticAllocaMap.find(AI);
+    if (SI != FuncInfo.StaticAllocaMap.end())
+      return DAG.getFrameIndex(SI->second, TLI.getPointerTy());
+  }
+      
+  std::map<const Value*, unsigned>::const_iterator VMI =
+      FuncInfo.ValueMap.find(V);
+  assert(VMI != FuncInfo.ValueMap.end() && "Value not in map!");
+  
+  unsigned InReg = VMI->second;
+  
+  // If this type is not legal, make it so now.
+  if (VT == MVT::Vector) {
+    // FIXME: We only handle legal vectors right now.  We need a VBUILD_VECTOR
+    const PackedType *PTy = cast<PackedType>(VTy);
+    unsigned NumElements = PTy->getNumElements();
+    MVT::ValueType PVT = TLI.getValueType(PTy->getElementType());
+    MVT::ValueType TVT = MVT::getVectorType(PVT, NumElements);
+    assert(TLI.isTypeLegal(TVT) &&
+           "FIXME: Cannot handle illegal vector types here yet!");
+    VT = TVT;
+  }  
+  
+  MVT::ValueType DestVT = TLI.getTypeToTransformTo(VT);
+  
+  N = DAG.getCopyFromReg(DAG.getEntryNode(), InReg, DestVT);
+  if (DestVT < VT) {
+    // Source must be expanded.  This input value is actually coming from the
+    // register pair VMI->second and VMI->second+1.
+    N = DAG.getNode(ISD::BUILD_PAIR, VT, N,
+                    DAG.getCopyFromReg(DAG.getEntryNode(), InReg+1, DestVT));
+  } else {
+    if (DestVT > VT) { // Promotion case
+      if (MVT::isFloatingPoint(VT))
+        N = DAG.getNode(ISD::FP_ROUND, VT, N);
+      else
+        N = DAG.getNode(ISD::TRUNCATE, VT, N);
+    }
+  }
+  
+  return N;
+}
+
 
 void SelectionDAGLowering::visitRet(ReturnInst &I) {
   if (I.getNumOperands() == 0) {
