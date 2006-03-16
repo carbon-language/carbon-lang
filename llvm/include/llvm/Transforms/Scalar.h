@@ -132,15 +132,11 @@ FunctionPass *createLICMPass();
 //===----------------------------------------------------------------------===//
 //
 // LoopStrengthReduce - This pass is strength reduces GEP instructions that use
-// a loop's canonical induction variable as one of their indices.  The
-// MaxTargetAMSize is the largest element size that the target architecture
-// can handle in its addressing modes.  Power of two multipliers less than or
-// equal to this value are not reduced. It also takes an optional second
-// parameter used to consult the target machine whether certain transformations
-// are profitable.
+// a loop's canonical induction variable as one of their indices.  It takes an
+// optional parameter used to consult the target machine whether certain
+// transformations are profitable.
 //
-FunctionPass *createLoopStrengthReducePass(unsigned MaxTargetAMSize = 1,
-                                           const TargetLowering *TLI = NULL);
+FunctionPass *createLoopStrengthReducePass(const TargetLowering *TLI = NULL);
 
 //===----------------------------------------------------------------------===//
 //

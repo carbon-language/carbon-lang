@@ -76,6 +76,27 @@ namespace {
     }
   };
 
+  /// IVInfo - This structure keeps track of one IV expression inserted during
+  /// StrengthReduceStridedIVUsers. It contains the base value, as well as the
+  /// PHI node and increment value created for rewrite.
+  struct IVExpr {
+    SCEVHandle  Base;
+    PHINode    *PHI;
+    Value      *IncV;
+
+    IVExpr(const SCEVHandle &base, PHINode *phi, Value *incv)
+      : Base(base), PHI(phi), IncV(incv) {}
+  };
+
+  /// IVsOfOneStride - This structure keeps track of all IV expression inserted
+  /// during StrengthReduceStridedIVUsers for a particular stride of the IV.
+  struct IVsOfOneStride {
+    std::vector<IVExpr> IVs;
+
+    void addIV(const SCEVHandle &Base, PHINode *PHI, Value *IncV) {
+      IVs.push_back(IVExpr(Base, PHI, IncV));
+    }
+  };
 
   class LoopStrengthReduce : public FunctionPass {
     LoopInfo *LI;
@@ -85,13 +106,13 @@ namespace {
     const Type *UIntPtrTy;
     bool Changed;
 
-    /// MaxTargetAMSize - This is the maximum power-of-two scale value that the
-    /// target can handle for free with its addressing modes.
-    unsigned MaxTargetAMSize;
-
     /// IVUsesByStride - Keep track of all uses of induction variables that we
     /// are interested in.  The key of the map is the stride of the access.
     std::map<SCEVHandle, IVUsersOfOneStride> IVUsesByStride;
+
+    /// IVsByStride - Keep track of all IVs that have been inserted for a
+    /// particular stride.
+    std::map<SCEVHandle, IVsOfOneStride> IVsByStride;
 
     /// StrideOrder - An ordering of the keys in IVUsesByStride that is stable:
     /// We use this to iterate over the IVUsesByStride collection without being
@@ -112,8 +133,8 @@ namespace {
     const TargetLowering *TLI;
 
   public:
-    LoopStrengthReduce(unsigned MTAMS = 1, const TargetLowering *tli = NULL)
-      : MaxTargetAMSize(MTAMS), TLI(tli) {
+    LoopStrengthReduce(const TargetLowering *tli = NULL)
+      : TLI(tli) {
     }
 
     virtual bool runOnFunction(Function &) {
@@ -168,9 +189,8 @@ private:
                                     "Loop Strength Reduction");
 }
 
-FunctionPass *llvm::createLoopStrengthReducePass(unsigned MaxTargetAMSize,
-                                                 const TargetLowering *TLI) {
-  return new LoopStrengthReduce(MaxTargetAMSize, TLI);
+FunctionPass *llvm::createLoopStrengthReducePass(const TargetLowering *TLI) {
+  return new LoopStrengthReduce(TLI);
 }
 
 /// getCastedVersionOf - Return the specified value casted to uintptr_t.
@@ -829,6 +849,14 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses) {
   return Result;
 }
 
+/// isZero - returns true if the scalar evolution expression is zero.
+///
+static bool isZero(SCEVHandle &V) {
+  if (SCEVConstant *SC = dyn_cast<SCEVConstant>(V))
+    return SC->getValue()->getRawValue() == 0;
+  return false;
+}
+
 
 /// StrengthReduceStridedIVUsers - Strength reduce all of the users of a single
 /// stride of IV.  All of the users may have different starting values, and this
@@ -863,7 +891,8 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
   // for the strides (e.g. if we have "A+C+B" and "A+B+D" as our bases, find
   // "A+B"), emit it to the preheader, then remove the expression from the
   // UsersToProcess base values.
-  SCEVHandle CommonExprs = RemoveCommonExpressionsFromUseBases(UsersToProcess);
+  SCEVHandle CommonExprs =
+    RemoveCommonExpressionsFromUseBases(UsersToProcess);
   
   // Next, figure out what we can represent in the immediate fields of
   // instructions.  If we can represent anything there, move it to the imm
@@ -891,12 +920,12 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
                           isAddress, L);
     }
   }
- 
+
   // Now that we know what we need to do, insert the PHI node itself.
   //
   DEBUG(std::cerr << "INSERTING IV of STRIDE " << *Stride << " and BASE "
         << *CommonExprs << " :\n");
-    
+
   SCEVExpander Rewriter(*SE, *LI);
   SCEVExpander PreheaderRewriter(*SE, *LI);
   
@@ -905,33 +934,68 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
   Instruction *PhiInsertBefore = L->getHeader()->begin();
   
   BasicBlock *LatchBlock = L->getLoopLatch();
-  
-  // Create a new Phi for this base, and stick it in the loop header.
+
+  unsigned RewriteFactor = 1;
+  PHINode *NewPHI = NULL;
+  Value   *IncV   = NULL;
+  // FIXME: Only handle base == 0 for now.
+  if (TLI && isZero(CommonExprs)) {
+    if (SCEVConstant *SC = dyn_cast<SCEVConstant>(Stride)) {
+      unsigned SInt = SC->getValue()->getRawValue();
+      for (TargetLowering::legal_am_scale_iterator
+             I = TLI->legal_am_scale_begin(), E = TLI->legal_am_scale_end();
+           I != E; ++I) {
+        unsigned Scale = *I;
+        if ((SInt % Scale) != 0)
+          continue;
+        std::map<SCEVHandle, IVsOfOneStride>::iterator SI =
+        IVsByStride.find(SCEVUnknown::getIntegerSCEV(SInt/Scale, Type::UIntTy));
+        if (SI == IVsByStride.end())
+          continue;
+        for (std::vector<IVExpr>::iterator II = SI->second.IVs.begin(),
+               IE = SI->second.IVs.end(); II != IE; ++II)
+          if (isZero(II->Base)) {
+            RewriteFactor = Scale;
+            NewPHI = II->PHI;
+            IncV   = II->IncV;
+            break;
+          }
+        if (RewriteFactor != 1)
+          break;
+      }
+    }
+  }
+
   const Type *ReplacedTy = CommonExprs->getType();
-  PHINode *NewPHI = new PHINode(ReplacedTy, "iv.", PhiInsertBefore);
-  ++NumInserted;
+  if (RewriteFactor == 1) {
+    // Create a new Phi for this base, and stick it in the loop header.
+    NewPHI = new PHINode(ReplacedTy, "iv.", PhiInsertBefore);
+    ++NumInserted;
   
-  // Insert the stride into the preheader.
-  Value *StrideV = PreheaderRewriter.expandCodeFor(Stride, PreInsertPt,
-                                                   ReplacedTy);
-  if (!isa<ConstantInt>(StrideV)) ++NumVariable;
+    // Insert the stride into the preheader.
+    Value *StrideV = PreheaderRewriter.expandCodeFor(Stride, PreInsertPt,
+                                                     ReplacedTy);
+    if (!isa<ConstantInt>(StrideV)) ++NumVariable;
 
 
-  // Emit the initial base value into the loop preheader, and add it to the
-  // Phi node.
-  Value *PHIBaseV = PreheaderRewriter.expandCodeFor(CommonExprs, PreInsertPt,
-                                                    ReplacedTy);
-  NewPHI->addIncoming(PHIBaseV, Preheader);
+    // Emit the initial base value into the loop preheader, and add it to the
+    // Phi node.
+    Value *PHIBaseV = PreheaderRewriter.expandCodeFor(CommonExprs, PreInsertPt,
+                                                      ReplacedTy);
+    NewPHI->addIncoming(PHIBaseV, Preheader);
   
-  // Emit the increment of the base value before the terminator of the loop
-  // latch block, and add it to the Phi node.
-  SCEVHandle IncExp = SCEVAddExpr::get(SCEVUnknown::get(NewPHI),
-                                       SCEVUnknown::get(StrideV));
+    // Emit the increment of the base value before the terminator of the loop
+    // latch block, and add it to the Phi node.
+    SCEVHandle IncExp = SCEVAddExpr::get(SCEVUnknown::get(NewPHI),
+                                         SCEVUnknown::get(StrideV));
   
-  Value *IncV = Rewriter.expandCodeFor(IncExp, LatchBlock->getTerminator(),
-                                       ReplacedTy);
-  IncV->setName(NewPHI->getName()+".inc");
-  NewPHI->addIncoming(IncV, LatchBlock);
+    IncV = Rewriter.expandCodeFor(IncExp, LatchBlock->getTerminator(),
+                                  ReplacedTy);
+    IncV->setName(NewPHI->getName()+".inc");
+    NewPHI->addIncoming(IncV, LatchBlock);
+
+    IVsByStride[Stride].addIV(CommonExprs, NewPHI, IncV);
+  }
 
   // Sort by the base value, so that all IVs with identical bases are next to
   // each other.
@@ -977,13 +1041,20 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
       // Clear the SCEVExpander's expression map so that we are guaranteed
       // to have the code emitted where we expect it.
       Rewriter.clear();
-     
+
+      // If we are reusing the iv, then it must be multiplied by a constant
+      // factor take advantage of addressing mode scale component.
+      if (RewriteFactor != 1)
+        RewriteExpr =
+          SCEVMulExpr::get(SCEVUnknown::getIntegerSCEV(RewriteFactor,
+                                          RewriteExpr->getType()), RewriteExpr);
+
       // Now that we know what we need to do, insert code before User for the
       // immediate and any loop-variant expressions.
       if (!isa<ConstantInt>(BaseV) || !cast<ConstantInt>(BaseV)->isNullValue())
         // Add BaseV to the PHI value if needed.
         RewriteExpr = SCEVAddExpr::get(RewriteExpr, SCEVUnknown::get(BaseV));
-      
+
       User.RewriteInstructionToUseNewBase(RewriteExpr, Rewriter, L, this);
 
       // Mark old value we replaced as possibly dead, so that it is elminated
@@ -1119,7 +1190,15 @@ void LoopStrengthReduce::runOnLoop(Loop *L) {
 
   // If we only have one stride, we can more aggressively eliminate some things.
   bool HasOneStride = IVUsesByStride.size() == 1;
-  
+
+#ifndef NDEBUG
+  DEBUG(std::cerr << "\nLSR on ");
+  DEBUG(L->dump());
+#endif
+
+  // IVsByStride keeps IVs for one particular loop.
+  IVsByStride.clear();
+
   // Note: this processes each stride/type pair individually.  All users passed
   // into StrengthReduceStridedIVUsers have the same type AND stride.  Also,
   // node that we iterate over IVUsesByStride indirectly by using StrideOrder.
