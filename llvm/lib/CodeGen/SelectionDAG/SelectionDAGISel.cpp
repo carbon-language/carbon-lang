@@ -293,7 +293,10 @@ unsigned FunctionLoweringInfo::CreateRegForValue(const Value *V) {
       NumElts >>= 1;
       NumVectorRegs <<= 1;
     }
-    VT = getVectorType(EltTy, NumElts);
+    if (NumElts == 1)
+      VT = EltTy;
+    else
+      VT = getVectorType(EltTy, NumElts);
   }
   
   // The common case is that we will only create one register for this
