@@ -128,6 +128,9 @@ bool ReduceCrashingFunctions::TestFuncs(std::vector<Function*> &Funcs) {
   // Convert list to set for fast lookup...
   std::set<Function*> Functions;
   for (unsigned i = 0, e = Funcs.size(); i != e; ++i) {
+    // FIXME: bugpoint should add names to all stripped symbols.
+    assert(!Funcs[i]->getName().empty() &&
+           "Bugpoint doesn't work on stripped modules yet PR718!");
     Function *CMF = M->getFunction(Funcs[i]->getName(),
                                    Funcs[i]->getFunctionType());
     assert(CMF && "Function not in module?!");
