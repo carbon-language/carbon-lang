@@ -2649,10 +2649,12 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::VADD:   return "vadd";
   case ISD::VSUB:   return "vsub";
   case ISD::VMUL:   return "vmul";
-    
+
   case ISD::SETCC:       return "setcc";
   case ISD::SELECT:      return "select";
   case ISD::SELECT_CC:   return "select_cc";
+  case ISD::INSERT_VECTOR_ELT: return "insert_vector_elt";
+  case ISD::VINSERT_VECTOR_ELT: return "vinsert_vector_elt";
   case ISD::ADDC:        return "addc";
   case ISD::ADDE:        return "adde";
   case ISD::SUBC:        return "subc";
