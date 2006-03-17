@@ -334,7 +334,7 @@ def MULLI  : DForm_2< 7, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
                      [(set GPRC:$rD, (mul GPRC:$rA, immSExt16:$imm))]>;
 def SUBFIC : DForm_2< 8, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
                      "subfic $rD, $rA, $imm", IntGeneral,
-                     [(set GPRC:$rD, (sub immSExt16:$imm, GPRC:$rA))]>;
+                     [(set GPRC:$rD, (subc immSExt16:$imm, GPRC:$rA))]>;
 def LI  : DForm_2_r0<14, (ops GPRC:$rD, symbolLo:$imm),
                      "li $rD, $imm", IntGeneral,
                      [(set GPRC:$rD, immSExt16:$imm)]>;
@@ -1058,7 +1058,7 @@ def : Pat<(or GPRC:$in, imm:$imm),
 def : Pat<(xor GPRC:$in, imm:$imm),
           (XORIS (XORI GPRC:$in, (LO16 imm:$imm)), (HI16 imm:$imm))>;
 // SUBFIC
-def : Pat<(subc immSExt16:$imm, GPRC:$in),
+def : Pat<(sub  immSExt16:$imm, GPRC:$in),
           (SUBFIC GPRC:$in, imm:$imm)>;
 
 // Return void support.
