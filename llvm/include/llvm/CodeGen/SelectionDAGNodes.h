@@ -146,7 +146,12 @@ namespace ISD {
     // are both floating point.  X and the result must have the same type.
     // FCOPYSIGN(f32, f64) is allowed.
     FCOPYSIGN,
+
+    /// INSERT_VECTOR_ELT(VECTOR, VAL, IDX) - Returns VECTOR (a legal packed
+    /// type) with the element at IDX replaced with VAL.
+    INSERT_VECTOR_ELT,
     
+    // BINOP(LHS, RHS,  COUNT,TYPE)
     // Simple abstract vector operators.  Unlike the integer and floating point
     // binary operators, these nodes also take two additional operands:
     // a constant element count, and a value type node indicating the type of
@@ -156,6 +161,12 @@ namespace ISD {
     VADD, VSUB, VMUL, VSDIV, VUDIV,
     VAND, VOR, VXOR,
 
+    /// VINSERT_VECTOR_ELT(VECTOR, VAL, IDX,  COUNT,TYPE) - Given a vector
+    /// VECTOR, an element ELEMENT, and a (potentially variable) index IDX,
+    /// return an vector with the specified element of VECTOR replaced with VAL.
+    /// COUNT and TYPE specify the type of vector, as is standard for V* nodes.
+    VINSERT_VECTOR_ELT,
+    
     // MULHU/MULHS - Multiply high - Multiply two integers of type iN, producing
     // an unsigned/signed value of type i[2*n], then return the top part.
     MULHU, MULHS,
@@ -168,7 +179,7 @@ namespace ISD {
     // Counting operators
     CTTZ, CTLZ, CTPOP,
 
-    // Select
+    // Select(COND, TRUEVAL, FALSEVAL)
     SELECT, 
     
     // Select with condition operator - This selects between a true value and 
