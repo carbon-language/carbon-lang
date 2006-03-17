@@ -13,6 +13,32 @@
 //
 //===----------------------------------------------------------------------===//
 
+//===----------------------------------------------------------------------===//
+// FPStack pattern fragments
+//===----------------------------------------------------------------------===//
+
+def fp32imm0 : PatLeaf<(f32 fpimm), [{
+  return N->isExactlyValue(+0.0);
+}]>;
+
+def fp64imm0 : PatLeaf<(f64 fpimm), [{
+  return N->isExactlyValue(+0.0);
+}]>;
+
+def fp64immneg0 : PatLeaf<(f64 fpimm), [{
+  return N->isExactlyValue(-0.0);
+}]>;
+
+def fp64imm1 : PatLeaf<(f64 fpimm), [{
+  return N->isExactlyValue(+1.0);
+}]>;
+
+def fp64immneg1 : PatLeaf<(f64 fpimm), [{
+  return N->isExactlyValue(-1.0);
+}]>;
+
+def extloadf64f32  : PatFrag<(ops node:$ptr), (f64 (extload node:$ptr, f32))>;
+
 // Some 'special' instructions
 let usesCustomDAGSchedInserter = 1 in {  // Expanded by the scheduler.
   def FP_TO_INT16_IN_MEM : I<0, Pseudo,

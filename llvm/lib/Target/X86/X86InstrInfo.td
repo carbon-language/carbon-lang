@@ -319,35 +319,13 @@ def i16immZExt8  : PatLeaf<(i16 imm), [{
   return (unsigned)N->getValue() == (unsigned char)N->getValue();
 }]>;
 
-def fp32imm0 : PatLeaf<(f32 fpimm), [{
-  return N->isExactlyValue(+0.0);
-}]>;
-
-def fp64imm0 : PatLeaf<(f64 fpimm), [{
-  return N->isExactlyValue(+0.0);
-}]>;
-
-def fp64immneg0 : PatLeaf<(f64 fpimm), [{
-  return N->isExactlyValue(-0.0);
-}]>;
-
-def fp64imm1 : PatLeaf<(f64 fpimm), [{
-  return N->isExactlyValue(+1.0);
-}]>;
-
-def fp64immneg1 : PatLeaf<(f64 fpimm), [{
-  return N->isExactlyValue(-1.0);
-}]>;
-
 // Helper fragments for loads.
 def loadi8  : PatFrag<(ops node:$ptr), (i8  (load node:$ptr))>;
 def loadi16 : PatFrag<(ops node:$ptr), (i16 (load node:$ptr))>;
 def loadi32 : PatFrag<(ops node:$ptr), (i32 (load node:$ptr))>;
+
 def loadf32 : PatFrag<(ops node:$ptr), (f32 (load node:$ptr))>;
 def loadf64 : PatFrag<(ops node:$ptr), (f64 (load node:$ptr))>;
-
-def X86loadv4f32 : PatFrag<(ops node:$ptr), (v4f32 (load node:$ptr))>;
-def X86loadv2f64 : PatFrag<(ops node:$ptr), (v2f64 (load node:$ptr))>;
 
 def sextloadi16i1  : PatFrag<(ops node:$ptr), (i16 (sextload node:$ptr, i1))>;
 def sextloadi32i1  : PatFrag<(ops node:$ptr), (i32 (sextload node:$ptr, i1))>;
@@ -363,10 +341,6 @@ def zextloadi32i8  : PatFrag<(ops node:$ptr), (i32 (zextload node:$ptr, i8))>;
 def zextloadi32i16 : PatFrag<(ops node:$ptr), (i32 (zextload node:$ptr, i16))>;
 
 def extloadi8i1    : PatFrag<(ops node:$ptr), (i8  (extload node:$ptr, i1))>;
-def extloadf64f32  : PatFrag<(ops node:$ptr), (f64 (extload node:$ptr, f32))>;
-
-def X86loadpf32    : PatFrag<(ops node:$ptr), (f32   (X86loadp node:$ptr))>;
-def X86loadpf64    : PatFrag<(ops node:$ptr), (f64   (X86loadp node:$ptr))>;
 
 //===----------------------------------------------------------------------===//
 // Instruction templates...
