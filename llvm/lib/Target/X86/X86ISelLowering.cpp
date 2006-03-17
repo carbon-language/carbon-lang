@@ -639,12 +639,24 @@ static unsigned AddLiveIn(MachineFunction &MF, unsigned PReg,
   return VReg;
 }
 
-enum {
-  // FASTCC_NUM_INT_ARGS_INREGS - This is the max number of integer arguments
-  // to pass in registers.  0 is none, 1 is is "use EAX", 2 is "use EAX and
-  // EDX".  Anything more is illegal.
-  FASTCC_NUM_INT_ARGS_INREGS = 2
-};
+// FASTCC_NUM_INT_ARGS_INREGS - This is the max number of integer arguments
+// to pass in registers.  0 is none, 1 is is "use EAX", 2 is "use EAX and
+// EDX".  Anything more is illegal.
+//
+// FIXME: The linscan register allocator currently has problem with
+// coallescing.  At the time of this writing, whenever it decides to coallesce
+// a physreg with a virtreg, this increases the size of the physreg's live
+// range, and the live range cannot ever be reduced.  This causes problems if
+// too many physregs are coalleced with virtregs, which can cause the register
+// allocator to wedge itself.
+//
+// This code triggers this problem more often if we pass args in registers,
+// so disable it until this is fixed.
+//
+// NOTE: this isn't marked const, so that GCC doesn't emit annoying warnings
+// about code being dead.
+//
+static unsigned FASTCC_NUM_INT_ARGS_INREGS = 0;
 
 
 std::vector<SDOperand>
