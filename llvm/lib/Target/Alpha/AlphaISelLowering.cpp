@@ -48,8 +48,6 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   addRegisterClass(MVT::f64, Alpha::F8RCRegisterClass);
   addRegisterClass(MVT::f32, Alpha::F4RCRegisterClass);
   
-  setOperationAction(ISD::BRCONDTWOWAY, MVT::Other, Expand);
-  setOperationAction(ISD::BRTWOWAY_CC,  MVT::Other, Expand);
   setOperationAction(ISD::BR_CC,        MVT::Other, Expand);
   setOperationAction(ISD::SELECT_CC,    MVT::Other, Expand);
   

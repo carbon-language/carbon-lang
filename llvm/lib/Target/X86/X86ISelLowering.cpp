@@ -125,8 +125,6 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::BIT_CONVERT      , MVT::i32  , Expand);
 
   setOperationAction(ISD::BRCOND           , MVT::Other, Custom);
-  setOperationAction(ISD::BRCONDTWOWAY     , MVT::Other, Expand);
-  setOperationAction(ISD::BRTWOWAY_CC      , MVT::Other, Expand);
   setOperationAction(ISD::BR_CC            , MVT::Other, Expand);
   setOperationAction(ISD::SELECT_CC        , MVT::Other, Expand);
   setOperationAction(ISD::MEMMOVE          , MVT::Other, Expand);

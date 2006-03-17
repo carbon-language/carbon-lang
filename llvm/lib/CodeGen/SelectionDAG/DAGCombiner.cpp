@@ -206,9 +206,7 @@ namespace {
     SDOperand visitFNEG(SDNode *N);
     SDOperand visitFABS(SDNode *N);
     SDOperand visitBRCOND(SDNode *N);
-    SDOperand visitBRCONDTWOWAY(SDNode *N);
     SDOperand visitBR_CC(SDNode *N);
-    SDOperand visitBRTWOWAY_CC(SDNode *N);
     SDOperand visitLOAD(SDNode *N);
     SDOperand visitSTORE(SDNode *N);
 
@@ -639,9 +637,7 @@ SDOperand DAGCombiner::visit(SDNode *N) {
   case ISD::FNEG:               return visitFNEG(N);
   case ISD::FABS:               return visitFABS(N);
   case ISD::BRCOND:             return visitBRCOND(N);
-  case ISD::BRCONDTWOWAY:       return visitBRCONDTWOWAY(N);
   case ISD::BR_CC:              return visitBR_CC(N);
-  case ISD::BRTWOWAY_CC:        return visitBRTWOWAY_CC(N);
   case ISD::LOAD:               return visitLOAD(N);
   case ISD::STORE:              return visitSTORE(N);
   }
@@ -2219,35 +2215,6 @@ SDOperand DAGCombiner::visitBRCOND(SDNode *N) {
   return SDOperand();
 }
 
-SDOperand DAGCombiner::visitBRCONDTWOWAY(SDNode *N) {
-  SDOperand Chain = N->getOperand(0);
-  SDOperand N1 = N->getOperand(1);
-  SDOperand N2 = N->getOperand(2);
-  SDOperand N3 = N->getOperand(3);
-  ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
-  
-  // unconditional branch to true mbb
-  if (N1C && N1C->getValue() == 1)
-    return DAG.getNode(ISD::BR, MVT::Other, Chain, N2);
-  // unconditional branch to false mbb
-  if (N1C && N1C->isNullValue())
-    return DAG.getNode(ISD::BR, MVT::Other, Chain, N3);
-  // fold a brcondtwoway with a setcc condition into a BRTWOWAY_CC node if 
-  // BRTWOWAY_CC is legal on the target.
-  if (N1.getOpcode() == ISD::SETCC && 
-      TLI.isOperationLegal(ISD::BRTWOWAY_CC, MVT::Other)) {
-    std::vector<SDOperand> Ops;
-    Ops.push_back(Chain);
-    Ops.push_back(N1.getOperand(2));
-    Ops.push_back(N1.getOperand(0));
-    Ops.push_back(N1.getOperand(1));
-    Ops.push_back(N2);
-    Ops.push_back(N3);
-    return DAG.getNode(ISD::BRTWOWAY_CC, MVT::Other, Ops);
-  }
-  return SDOperand();
-}
-
 // Operand List for BR_CC: Chain, CondCC, CondLHS, CondRHS, DestBB.
 //
 SDOperand DAGCombiner::visitBR_CC(SDNode *N) {
@@ -2270,41 +2237,6 @@ SDOperand DAGCombiner::visitBR_CC(SDNode *N) {
     return DAG.getNode(ISD::BR_CC, MVT::Other, N->getOperand(0), 
                        Simp.getOperand(2), Simp.getOperand(0),
                        Simp.getOperand(1), N->getOperand(4));
-  return SDOperand();
-}
-
-SDOperand DAGCombiner::visitBRTWOWAY_CC(SDNode *N) {
-  SDOperand Chain = N->getOperand(0);
-  SDOperand CCN = N->getOperand(1);
-  SDOperand LHS = N->getOperand(2);
-  SDOperand RHS = N->getOperand(3);
-  SDOperand N4 = N->getOperand(4);
-  SDOperand N5 = N->getOperand(5);
-  
-  SDOperand SCC = SimplifySetCC(TLI.getSetCCResultTy(), LHS, RHS,
-                                cast<CondCodeSDNode>(CCN)->get(), false);
-  ConstantSDNode *SCCC = dyn_cast_or_null<ConstantSDNode>(SCC.Val);
-  
-  // fold select_cc lhs, rhs, x, x, cc -> x
-  if (N4 == N5)
-    return DAG.getNode(ISD::BR, MVT::Other, Chain, N4);
-  // fold select_cc true, x, y -> x
-  if (SCCC && SCCC->getValue())
-    return DAG.getNode(ISD::BR, MVT::Other, Chain, N4);
-  // fold select_cc false, x, y -> y
-  if (SCCC && SCCC->isNullValue())
-    return DAG.getNode(ISD::BR, MVT::Other, Chain, N5);
-  // fold to a simpler setcc
-  if (SCC.Val && SCC.getOpcode() == ISD::SETCC) {
-    std::vector<SDOperand> Ops;
-    Ops.push_back(Chain);
-    Ops.push_back(SCC.getOperand(2));
-    Ops.push_back(SCC.getOperand(0));
-    Ops.push_back(SCC.getOperand(1));
-    Ops.push_back(N4);
-    Ops.push_back(N5);
-    return DAG.getNode(ISD::BRTWOWAY_CC, MVT::Other, Ops);
-  }
   return SDOperand();
 }
 

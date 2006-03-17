@@ -17,7 +17,11 @@ We currently compile this into a memcpy from a static array into 'm', then
 a bunch of loads from m.  It would be better to avoid the memcpy and just do
 loads from the static array.
 
-===-------------------------------------------------------------------------===
+//===---------------------------------------------------------------------===//
+
+Make the PPC branch selector target independant
+
+//===---------------------------------------------------------------------===//
 
 Get the C front-end to expand hypot(x,y) -> llvm.sqrt(x*x+y*y) when errno and
 precision don't matter (ffastmath).  Misc/mandel will like this. :)

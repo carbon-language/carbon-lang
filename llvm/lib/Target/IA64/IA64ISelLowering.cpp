@@ -36,8 +36,6 @@ IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
       addRegisterClass(MVT::i1, IA64::PRRegisterClass);
 
       setOperationAction(ISD::BR_CC            , MVT::Other, Expand);
-      setOperationAction(ISD::BRCONDTWOWAY     , MVT::Other, Expand);
-      setOperationAction(ISD::BRTWOWAY_CC      , MVT::Other, Expand);
       setOperationAction(ISD::FP_ROUND_INREG   , MVT::f32  , Expand);
 
       // ia64 uses SELECT not SELECT_CC

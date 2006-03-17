@@ -94,9 +94,8 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   // PowerPC wants to optimize integer setcc a bit
   setOperationAction(ISD::SETCC, MVT::i32, Custom);
   
-  // PowerPC does not have BRCOND* which requires SetCC
-  setOperationAction(ISD::BRCOND,       MVT::Other, Expand);
-  setOperationAction(ISD::BRCONDTWOWAY, MVT::Other, Expand);
+  // PowerPC does not have BRCOND which requires SetCC
+  setOperationAction(ISD::BRCOND, MVT::Other, Expand);
   
   // PowerPC turns FP_TO_SINT into FCTIWZ and some load/stores.
   setOperationAction(ISD::FP_TO_SINT, MVT::i32, Custom);

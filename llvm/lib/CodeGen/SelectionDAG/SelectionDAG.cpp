@@ -1486,18 +1486,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(Ops[1].Val);
   switch (Opcode) {
   default: break;
-  case ISD::BRCONDTWOWAY:
-    if (N1C)
-      if (N1C->getValue()) // Unconditional branch to true dest.
-        return getNode(ISD::BR, MVT::Other, Ops[0], Ops[2]);
-      else                 // Unconditional branch to false dest.
-        return getNode(ISD::BR, MVT::Other, Ops[0], Ops[3]);
-    break;
-  case ISD::BRTWOWAY_CC:
-    assert(Ops.size() == 6 && "BRTWOWAY_CC takes 6 operands!");
-    assert(Ops[2].getValueType() == Ops[3].getValueType() &&
-           "LHS and RHS of comparison must have same type!");
-    break;
   case ISD::TRUNCSTORE: {
     assert(Ops.size() == 5 && "TRUNCSTORE takes 5 operands!");
     MVT::ValueType EVT = cast<VTSDNode>(Ops[4])->getVT();
@@ -2692,9 +2680,7 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
     // Control flow instructions
   case ISD::BR:      return "br";
   case ISD::BRCOND:  return "brcond";
-  case ISD::BRCONDTWOWAY:  return "brcondtwoway";
-  case ISD::BR_CC:  return "br_cc";
-  case ISD::BRTWOWAY_CC:  return "brtwoway_cc";
+  case ISD::BR_CC:   return "br_cc";
   case ISD::RET:     return "ret";
   case ISD::CALLSEQ_START:  return "callseq_start";
   case ISD::CALLSEQ_END:    return "callseq_end";

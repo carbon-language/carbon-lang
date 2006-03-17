@@ -48,10 +48,10 @@ FunctionPass *llvm::createPPCBranchSelectionPass() {
 static unsigned getNumBytesForInstruction(MachineInstr *MI) {
   switch (MI->getOpcode()) {
   case PPC::COND_BRANCH:
-    // while this will be 4 most of the time, if we emit 12 it is just a
+    // while this will be 4 most of the time, if we emit 8 it is just a
     // minor pessimization that saves us from having to worry about
     // keeping the offsets up to date later when we emit long branch glue.
-    return 12;
+    return 8;
   case PPC::IMPLICIT_DEF_GPR: // no asm emitted
   case PPC::IMPLICIT_DEF_F4: // no asm emitted
   case PPC::IMPLICIT_DEF_F8: // no asm emitted
@@ -102,7 +102,6 @@ bool PPCBSel::runOnMachineFunction(MachineFunction &Fn) {
   // long branch:
   // bInverseCC $PC+8
   // b .L_TARGET_MBB
-  // b .L_FALLTHROUGH_MBB
   for (MachineFunction::iterator MFI = Fn.begin(), E = Fn.end(); MFI != E;
        ++MFI) {
     MachineBasicBlock *MBB = MFI;
@@ -123,8 +122,6 @@ bool PPCBSel::runOnMachineFunction(MachineFunction &Fn) {
         // 3. fallthrough MBB
         MachineBasicBlock *trueMBB =
           MBBI->getOperand(2).getMachineBasicBlock();
-        MachineBasicBlock *falseMBB =
-          MBBI->getOperand(3).getMachineBasicBlock();
         
         int Displacement = OffsetMap[trueMBB] - ByteCount;
         unsigned Opcode = MBBI->getOperand(1).getImmedValue();
@@ -136,7 +133,6 @@ bool PPCBSel::runOnMachineFunction(MachineFunction &Fn) {
         } else {
           BuildMI(*MBB, MBBJ, Inverted, 2).addReg(CRReg).addSImm(8);
           BuildMI(*MBB, MBBJ, PPC::B, 1).addMBB(trueMBB);
-          BuildMI(*MBB, MBBJ, PPC::B, 1).addMBB(falseMBB);
         }
         
         // Erase the psuedo COND_BRANCH instruction, and then back up the

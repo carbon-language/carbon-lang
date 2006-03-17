@@ -166,8 +166,6 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
   
   // Sparc doesn't have BRCOND either, it has BR_CC.
   setOperationAction(ISD::BRCOND, MVT::Other, Expand);
-  setOperationAction(ISD::BRCONDTWOWAY, MVT::Other, Expand);
-  setOperationAction(ISD::BRTWOWAY_CC, MVT::Other, Expand);
   setOperationAction(ISD::BR_CC, MVT::i32, Custom);
   setOperationAction(ISD::BR_CC, MVT::f32, Custom);
   setOperationAction(ISD::BR_CC, MVT::f64, Custom);

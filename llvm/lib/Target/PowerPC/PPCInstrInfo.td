@@ -245,8 +245,7 @@ let Defs = [LR] in
 
 let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, 
     noResults = 1, PPC970_Unit = 7 in {
-  def COND_BRANCH : Pseudo<(ops CRRC:$crS, u16imm:$opc,
-                                target:$true, target:$false),
+  def COND_BRANCH : Pseudo<(ops CRRC:$crS, u16imm:$opc, target:$true),
                            "; COND_BRANCH", []>;
   def B   : IForm<18, 0, 0, (ops target:$dst),
                   "b $dst", BrB,

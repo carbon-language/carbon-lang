@@ -691,10 +691,10 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
         SDOperand True = DAG.getConstant(1, Cond.getValueType());
         Cond = DAG.getNode(ISD::XOR, Cond.getValueType(), Cond, True);
       }
-      Ops.push_back(Cond);
-      Ops.push_back(DAG.getBasicBlock(Succ0MBB));
-      Ops.push_back(DAG.getBasicBlock(Succ1MBB));
-      DAG.setRoot(DAG.getNode(ISD::BRCONDTWOWAY, MVT::Other, Ops));
+      SDOperand True = DAG.getNode(ISD::BRCOND, MVT::Other, getRoot(), Cond,
+                                   DAG.getBasicBlock(Succ0MBB));
+      DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, True, 
+                              DAG.getBasicBlock(Succ1MBB)));
     }
   }
 }
