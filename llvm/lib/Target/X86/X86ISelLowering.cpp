@@ -639,6 +639,13 @@ static unsigned AddLiveIn(MachineFunction &MF, unsigned PReg,
   return VReg;
 }
 
+enum {
+  // FASTCC_NUM_INT_ARGS_INREGS - This is the max number of integer arguments
+  // to pass in registers.  0 is none, 1 is is "use EAX", 2 is "use EAX and
+  // EDX".  Anything more is illegal.
+  FASTCC_NUM_INT_ARGS_INREGS = 2
+};
+
 
 std::vector<SDOperand>
 X86TargetLowering::LowerFastCCArguments(Function &F, SelectionDAG &DAG) {
@@ -660,7 +667,7 @@ X86TargetLowering::LowerFastCCArguments(Function &F, SelectionDAG &DAG) {
   // 0 (neither EAX or EDX used), 1 (EAX is used) or 2 (EAX and EDX are both
   // used).
   unsigned NumIntRegs = 0;
-
+  
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I) {
     MVT::ValueType ObjectVT = getValueType(I->getType());
     unsigned ArgIncrement = 4;
@@ -671,7 +678,7 @@ X86TargetLowering::LowerFastCCArguments(Function &F, SelectionDAG &DAG) {
     default: assert(0 && "Unhandled argument type!");
     case MVT::i1:
     case MVT::i8:
-      if (NumIntRegs < 2) {
+      if (NumIntRegs < FASTCC_NUM_INT_ARGS_INREGS) {
         if (!I->use_empty()) {
           unsigned VReg = AddLiveIn(MF, NumIntRegs ? X86::DL : X86::AL,
                                     X86::R8RegisterClass);
@@ -688,7 +695,7 @@ X86TargetLowering::LowerFastCCArguments(Function &F, SelectionDAG &DAG) {
       ObjSize = 1;
       break;
     case MVT::i16:
-      if (NumIntRegs < 2) {
+      if (NumIntRegs < FASTCC_NUM_INT_ARGS_INREGS) {
         if (!I->use_empty()) {
           unsigned VReg = AddLiveIn(MF, NumIntRegs ? X86::DX : X86::AX,
                                     X86::R16RegisterClass);
@@ -701,9 +708,9 @@ X86TargetLowering::LowerFastCCArguments(Function &F, SelectionDAG &DAG) {
       ObjSize = 2;
       break;
     case MVT::i32:
-      if (NumIntRegs < 2) {
+      if (NumIntRegs < FASTCC_NUM_INT_ARGS_INREGS) {
         if (!I->use_empty()) {
-          unsigned VReg = AddLiveIn(MF,NumIntRegs ? X86::EDX : X86::EAX,
+          unsigned VReg = AddLiveIn(MF, NumIntRegs ? X86::EDX : X86::EAX,
                                     X86::R32RegisterClass);
           ArgValue = DAG.getCopyFromReg(DAG.getRoot(), VReg, MVT::i32);
           DAG.setRoot(ArgValue.getValue(1));
@@ -714,7 +721,7 @@ X86TargetLowering::LowerFastCCArguments(Function &F, SelectionDAG &DAG) {
       ObjSize = 4;
       break;
     case MVT::i64:
-      if (NumIntRegs == 0) {
+      if (NumIntRegs+2 <= FASTCC_NUM_INT_ARGS_INREGS) {
         if (!I->use_empty()) {
           unsigned BotReg = AddLiveIn(MF, X86::EAX, X86::R32RegisterClass);
           unsigned TopReg = AddLiveIn(MF, X86::EDX, X86::R32RegisterClass);
@@ -725,9 +732,9 @@ X86TargetLowering::LowerFastCCArguments(Function &F, SelectionDAG &DAG) {
 
           ArgValue = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Low, Hi);
         }
-        NumIntRegs = 2;
+        NumIntRegs += 2;
         break;
-      } else if (NumIntRegs == 1) {
+      } else if (NumIntRegs+1 <= FASTCC_NUM_INT_ARGS_INREGS) {
         if (!I->use_empty()) {
           unsigned BotReg = AddLiveIn(MF, X86::EDX, X86::R32RegisterClass);
           SDOperand Low = DAG.getCopyFromReg(DAG.getRoot(), BotReg, MVT::i32);
@@ -742,7 +749,7 @@ X86TargetLowering::LowerFastCCArguments(Function &F, SelectionDAG &DAG) {
           ArgValue = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Low, Hi);
         }
         ArgOffset += 4;
-        NumIntRegs = 2;
+        NumIntRegs = FASTCC_NUM_INT_ARGS_INREGS;
         break;
       }
       ObjSize = ArgIncrement = 8;
@@ -826,7 +833,7 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
     case MVT::i8:
     case MVT::i16:
     case MVT::i32:
-      if (NumIntRegs < 2) {
+      if (NumIntRegs < FASTCC_NUM_INT_ARGS_INREGS) {
         ++NumIntRegs;
         break;
       }
@@ -835,11 +842,11 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
       NumBytes += 4;
       break;
     case MVT::i64:
-      if (NumIntRegs == 0) {
-        NumIntRegs = 2;
+      if (NumIntRegs+2 <= FASTCC_NUM_INT_ARGS_INREGS) {
+        NumIntRegs += 2;
         break;
-      } else if (NumIntRegs == 1) {
-        NumIntRegs = 2;
+      } else if (NumIntRegs+1 <= FASTCC_NUM_INT_ARGS_INREGS) {
+        NumIntRegs = FASTCC_NUM_INT_ARGS_INREGS;
         NumBytes += 4;
         break;
       }
@@ -872,7 +879,7 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
     case MVT::i8:
     case MVT::i16:
     case MVT::i32:
-      if (NumIntRegs < 2) {
+      if (NumIntRegs < FASTCC_NUM_INT_ARGS_INREGS) {
         RegValuesToPass.push_back(Args[i].first);
         ++NumIntRegs;
         break;
@@ -888,14 +895,17 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
       break;
     }
     case MVT::i64:
-      if (NumIntRegs < 2) {    // Can pass part of it in regs?
+       // Can pass (at least) part of it in regs?
+      if (NumIntRegs < FASTCC_NUM_INT_ARGS_INREGS) {
         SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32,
                                    Args[i].first, DAG.getConstant(1, MVT::i32));
         SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32,
                                    Args[i].first, DAG.getConstant(0, MVT::i32));
         RegValuesToPass.push_back(Lo);
         ++NumIntRegs;
-        if (NumIntRegs < 2) {   // Pass both parts in regs?
+        
+        // Pass both parts in regs?
+        if (NumIntRegs < FASTCC_NUM_INT_ARGS_INREGS) {
           RegValuesToPass.push_back(Hi);
           ++NumIntRegs;
         } else {
