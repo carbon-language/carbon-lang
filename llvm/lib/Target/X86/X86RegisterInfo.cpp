@@ -160,6 +160,11 @@ static MachineInstr *MakeMIInst(unsigned Opcode, unsigned FrameIndex,
   return 0;
 }
 
+static MachineInstr *MakeM0Inst(unsigned Opcode, unsigned FrameIndex,
+                                MachineInstr *MI) {
+  return addFrameReference(BuildMI(Opcode, 5), FrameIndex).addZImm(0);
+}
+
 static MachineInstr *MakeRMInst(unsigned Opcode, unsigned FrameIndex,
                                 MachineInstr *MI) {
   const MachineOperand& op = MI->getOperand(0);
@@ -328,6 +333,10 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr* MI,
     case X86::CMP8ri:    return MakeMIInst(X86::CMP8mi , FrameIndex, MI);
     case X86::CMP16ri:   return MakeMIInst(X86::CMP16mi, FrameIndex, MI);
     case X86::CMP32ri:   return MakeMIInst(X86::CMP32mi, FrameIndex, MI);
+    // Alias instructions
+    case X86::MOV8r0:    return MakeM0Inst(X86::MOV8mi, FrameIndex, MI);
+    case X86::MOV16r0:   return MakeM0Inst(X86::MOV16mi, FrameIndex, MI);
+    case X86::MOV32r0:   return MakeM0Inst(X86::MOV32mi, FrameIndex, MI);
     // Alias scalar SSE instructions
     case X86::FsMOVAPSrr: return MakeMRInst(X86::MOVSSmr, FrameIndex, MI);
     case X86::FsMOVAPDrr: return MakeMRInst(X86::MOVSDmr, FrameIndex, MI);
