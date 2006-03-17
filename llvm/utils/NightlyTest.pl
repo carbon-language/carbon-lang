@@ -151,7 +151,7 @@ sub AddRecord {
 
 sub AddPreTag {  # Add pre tags around nonempty list, or convert to "none"
   $_ = shift;
-  if (length) { return "<ul><pre>$_</pre></ul>"; } else { "<b>none</b><br>"; }
+  if (length) { return "<ul><tt>$_</tt></ul>"; } else { "<b>none</b><br>"; }
 }
 
 sub ChangeDir { # directory, logical name
