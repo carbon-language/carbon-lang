@@ -50,6 +50,10 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setShiftAmountFlavor(Mask);   // shl X, 32 == shl X, 0
   setStackPointerRegisterToSaveRestore(X86::ESP);
 
+  if (!TM.getSubtarget<X86Subtarget>().isTargetDarwin())
+    // Darwin should use _setjmp/_longjmp instead of setjmp/longjmp.
+    setUseUnderscoreSetJmpLongJmp(true);
+    
   // Add legal addressing mode scale values.
   addLegalAddressScale(8);
   addLegalAddressScale(4);
