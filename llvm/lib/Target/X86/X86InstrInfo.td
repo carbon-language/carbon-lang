@@ -1784,7 +1784,6 @@ def ADD32ri  : Ii32<0x81, MRM0r, (ops R32:$dst, R32:$src1, i32imm:$src2),
                     [(set R32:$dst, (add R32:$src1, imm:$src2))]>;
 }
 
-// FIXME: move ADD16ri8 above ADD16ri to optimize for space.
 def ADD16ri8 : Ii8<0x83, MRM0r, (ops R16:$dst, R16:$src1, i16i8imm:$src2),
                    "add{w} {$src2, $dst|$dst, $src2}",
                    [(set R16:$dst, (add R16:$src1, i16immSExt8:$src2))]>,
@@ -1926,39 +1925,19 @@ let isTwoAddress = 0 in {
   def SBB8mi  : Ii32<0x80, MRM3m, (ops i8mem:$dst, i8imm:$src2), 
                       "sbb{b} {$src2, $dst|$dst, $src2}",
                    [(store (sube (loadi8 addr:$dst), imm:$src2), addr:$dst)]>;
-  def SBB16mi  : Ii32<0x81, MRM3m, (ops i16mem:$dst, i16imm:$src2), 
-                      "sbb{w} {$src2, $dst|$dst, $src2}",
-                  [(store (sube (loadi16 addr:$dst), imm:$src2), addr:$dst)]>,
-                     OpSize;
   def SBB32mi  : Ii32<0x81, MRM3m, (ops i32mem:$dst, i32imm:$src2), 
                       "sbb{l} {$src2, $dst|$dst, $src2}",
                   [(store (sube (loadi32 addr:$dst), imm:$src2), addr:$dst)]>;
-  def SBB16mi8 : Ii8<0x83, MRM3m, (ops i16mem:$dst, i16i8imm :$src2), 
-                     "sbb{w} {$src2, $dst|$dst, $src2}",
-             [(store (sube (load addr:$dst), i16immSExt8:$src2), addr:$dst)]>,
-                     OpSize;
   def SBB32mi8 : Ii8<0x83, MRM3m, (ops i32mem:$dst, i32i8imm :$src2), 
                      "sbb{l} {$src2, $dst|$dst, $src2}",
              [(store (sube (load addr:$dst), i32immSExt8:$src2), addr:$dst)]>;
 }
-def SBB8ri   : Ii8<0x80, MRM3r, (ops R8:$dst, R8:$src1, i8imm:$src2),
-                    "sbb{b} {$src2, $dst|$dst, $src2}",
-                    [(set R8:$dst, (sube R8:$src1, imm:$src2))]>;
-def SBB16ri  : Ii16<0x81, MRM3r, (ops R16:$dst, R16:$src1, i16imm:$src2),
-                    "sbb{w} {$src2, $dst|$dst, $src2}",
-                    [(set R16:$dst, (sube R16:$src1, imm:$src2))]>, OpSize;
-
 def SBB32rm  : I<0x1B, MRMSrcMem, (ops R32:$dst, R32:$src1, i32mem:$src2),
                     "sbb{l} {$src2, $dst|$dst, $src2}",
                     [(set R32:$dst, (sube R32:$src1, (load addr:$src2)))]>;
 def SBB32ri  : Ii32<0x81, MRM3r, (ops R32:$dst, R32:$src1, i32imm:$src2),
                     "sbb{l} {$src2, $dst|$dst, $src2}",
                     [(set R32:$dst, (sube R32:$src1, imm:$src2))]>;
-
-def SBB16ri8 : Ii8<0x83, MRM3r, (ops R16:$dst, R16:$src1, i16i8imm:$src2),
-                   "sbb{w} {$src2, $dst|$dst, $src2}",
-                   [(set R16:$dst, (sube R16:$src1, i16immSExt8:$src2))]>,
-                   OpSize;
 def SBB32ri8 : Ii8<0x83, MRM3r, (ops R32:$dst, R32:$src1, i32i8imm:$src2),
                    "sbb{l} {$src2, $dst|$dst, $src2}",
                    [(set R32:$dst, (sube R32:$src1, i32immSExt8:$src2))]>;
