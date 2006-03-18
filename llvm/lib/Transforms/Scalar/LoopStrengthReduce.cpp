@@ -1199,6 +1199,30 @@ void LoopStrengthReduce::OptimizeIndvars(Loop *L) {
   CondUse->isUseOfPostIncrementedValue = true;
 }
 
+namespace {
+  // Constant strides come first which in turns are sorted by their absolute
+  // values. If absolute values are the same, then positive strides comes first.
+  // e.g.
+  // 4, -1, X, 1, 2 ==> 1, -1, 2, 4, X
+  struct StrideCompare {
+    bool operator()(const SCEVHandle &LHS, const SCEVHandle &RHS) {
+      SCEVConstant *LHSC = dyn_cast<SCEVConstant>(LHS);
+      SCEVConstant *RHSC = dyn_cast<SCEVConstant>(RHS);
+      if (LHSC && RHSC) {
+        int64_t  LV = LHSC->getValue()->getSExtValue();
+        int64_t  RV = RHSC->getValue()->getSExtValue();
+        uint64_t ALV = (LV < 0) ? -LV : LV;
+        uint64_t ARV = (RV < 0) ? -RV : RV;
+        if (ALV == ARV)
+          return LV > RV;
+        else
+          return ALV < ARV;
+      } else
+        return (LHSC && !RHSC);
+    }
+  };
+}
+
 void LoopStrengthReduce::runOnLoop(Loop *L) {
   // First step, transform all loops nesting inside of this loop.
   for (LoopInfo::iterator I = L->begin(), E = L->end(); I != E; ++I)
@@ -1240,6 +1264,9 @@ void LoopStrengthReduce::runOnLoop(Loop *L) {
 
   // IVsByStride keeps IVs for one particular loop.
   IVsByStride.clear();
+
+  // Sort the StrideOrder so we process larger strides first.
+  std::stable_sort(StrideOrder.begin(), StrideOrder.end(), StrideCompare());
 
   // Note: this processes each stride/type pair individually.  All users passed
   // into StrengthReduceStridedIVUsers have the same type AND stride.  Also,
