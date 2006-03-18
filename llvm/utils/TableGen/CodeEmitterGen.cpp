@@ -112,6 +112,10 @@ void CodeEmitterGen::run(std::ostream &o) {
         NewBI->setBit(middle, BI->getBit(middle));
       }
       BI = NewBI;
+      
+      // Update the bits in reversed order so that emitInstrOpBits will get the
+      // correct endianness.
+      R->getValue("Inst")->setValue(NewBI);
     }
 
     unsigned Value = 0;
