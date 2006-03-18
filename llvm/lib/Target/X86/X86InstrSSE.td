@@ -14,14 +14,25 @@
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
+// SSE specific DAG Nodes.
+//===----------------------------------------------------------------------===//
+
+def X86loadp   : SDNode<"X86ISD::LOAD_PACK", SDTLoad, 
+                        [SDNPHasChain]>;
+def X86fand    : SDNode<"X86ISD::FAND",     SDTFPBinOp,
+                        [SDNPCommutative, SDNPAssociative]>;
+def X86fxor    : SDNode<"X86ISD::FXOR",     SDTFPBinOp,
+                        [SDNPCommutative, SDNPAssociative]>;
+
+//===----------------------------------------------------------------------===//
 // SSE pattern fragments
 //===----------------------------------------------------------------------===//
 
 def X86loadpf32  : PatFrag<(ops node:$ptr), (f32   (X86loadp node:$ptr))>;
 def X86loadpf64  : PatFrag<(ops node:$ptr), (f64   (X86loadp node:$ptr))>;
 
-def X86loadv4f32 : PatFrag<(ops node:$ptr), (v4f32 (load node:$ptr))>;
-def X86loadv2f64 : PatFrag<(ops node:$ptr), (v2f64 (load node:$ptr))>;
+def loadv4f32    : PatFrag<(ops node:$ptr), (v4f32 (load node:$ptr))>;
+def loadv2f64    : PatFrag<(ops node:$ptr), (v2f64 (load node:$ptr))>;
 
 //===----------------------------------------------------------------------===//
 // SSE scalar FP Instructions
@@ -331,329 +342,344 @@ def FsANDNPDrm : PDI<0x55, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f128mem:$src2)
 //===----------------------------------------------------------------------===//
 
 // Move Instructions
-def MOVAPSrr : PSI<0x28, MRMSrcReg, (ops V4F32:$dst, V4F32:$src),
+def MOVAPSrr : PSI<0x28, MRMSrcReg, (ops VR128:$dst, VR128:$src),
                    "movaps {$src, $dst|$dst, $src}", []>;
-def MOVAPSrm : PSI<0x28, MRMSrcMem, (ops V4F32:$dst, f128mem:$src),
+def MOVAPSrm : PSI<0x28, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
                    "movaps {$src, $dst|$dst, $src}",
-                   [(set V4F32:$dst, (X86loadv4f32 addr:$src))]>;
-def MOVAPDrr : PDI<0x28, MRMSrcReg, (ops V2F64:$dst, V2F64:$src),
+                   [(set VR128:$dst, (loadv4f32 addr:$src))]>;
+def MOVAPDrr : PDI<0x28, MRMSrcReg, (ops VR128:$dst, VR128:$src),
                    "movapd {$src, $dst|$dst, $src}", []>;
-def MOVAPDrm : PDI<0x28, MRMSrcMem, (ops V2F64:$dst, f128mem:$src),
+def MOVAPDrm : PDI<0x28, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
                    "movapd {$src, $dst|$dst, $src}",
-                   [(set V2F64:$dst, (X86loadv2f64 addr:$src))]>;
+                   [(set VR128:$dst, (loadv2f64 addr:$src))]>;
 
-def MOVAPSmr : PSI<0x29, MRMDestMem, (ops f128mem:$dst, V4F32:$src),
+def MOVAPSmr : PSI<0x29, MRMDestMem, (ops f128mem:$dst, VR128:$src),
                    "movaps {$src, $dst|$dst, $src}",
-                   [(store V4F32:$src, addr:$dst)]>;
-def MOVAPDmr : PDI<0x29, MRMDestMem, (ops f128mem:$dst, V2F64:$src),
+                   [(store (v4f32 VR128:$src), addr:$dst)]>;
+def MOVAPDmr : PDI<0x29, MRMDestMem, (ops f128mem:$dst, VR128:$src),
                    "movapd {$src, $dst|$dst, $src}",
-                   [(store V2F64:$src, addr:$dst)]>;
+                   [(store (v2f64 VR128:$src), addr:$dst)]>;
 
-def MOVUPSrr : PSI<0x10, MRMSrcReg, (ops V4F32:$dst, V4F32:$src),
+def MOVUPSrr : PSI<0x10, MRMSrcReg, (ops VR128:$dst, VR128:$src),
                    "movups {$src, $dst|$dst, $src}", []>;
-def MOVUPSrm : PSI<0x10, MRMSrcMem, (ops V4F32:$dst, f128mem:$src),
+def MOVUPSrm : PSI<0x10, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
                    "movups {$src, $dst|$dst, $src}", []>;
-def MOVUPSmr : PSI<0x11, MRMDestMem, (ops f128mem:$dst, V4F32:$src),
+def MOVUPSmr : PSI<0x11, MRMDestMem, (ops f128mem:$dst, VR128:$src),
                    "movups {$src, $dst|$dst, $src}", []>;
-def MOVUPDrr : PDI<0x10, MRMSrcReg, (ops V2F64:$dst, V2F64:$src),
+def MOVUPDrr : PDI<0x10, MRMSrcReg, (ops VR128:$dst, VR128:$src),
                    "movupd {$src, $dst|$dst, $src}", []>;
-def MOVUPDrm : PDI<0x10, MRMSrcMem, (ops V2F64:$dst, f128mem:$src),
+def MOVUPDrm : PDI<0x10, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
                    "movupd {$src, $dst|$dst, $src}", []>;
-def MOVUPDmr : PDI<0x11, MRMDestMem, (ops f128mem:$dst, V2F64:$src),
+def MOVUPDmr : PDI<0x11, MRMDestMem, (ops f128mem:$dst, VR128:$src),
                    "movupd {$src, $dst|$dst, $src}", []>;
 
-def MOVLPSrm : PSI<0x12, MRMSrcMem, (ops V4F32:$dst, f64mem:$src),
+def MOVLPSrm : PSI<0x12, MRMSrcMem, (ops VR128:$dst, f64mem:$src),
                    "movlps {$src, $dst|$dst, $src}", []>;
-def MOVLPSmr : PSI<0x13, MRMDestMem, (ops f64mem:$dst, V4F32:$src),
+def MOVLPSmr : PSI<0x13, MRMDestMem, (ops f64mem:$dst, VR128:$src),
                    "movlps {$src, $dst|$dst, $src}", []>;
-def MOVLPDrm : PDI<0x12, MRMSrcMem, (ops V2F64:$dst, f64mem:$src),
+def MOVLPDrm : PDI<0x12, MRMSrcMem, (ops VR128:$dst, f64mem:$src),
                    "movlpd {$src, $dst|$dst, $src}", []>;
-def MOVLPDmr : PDI<0x13, MRMDestMem, (ops f64mem:$dst, V2F64:$src),
+def MOVLPDmr : PDI<0x13, MRMDestMem, (ops f64mem:$dst, VR128:$src),
                    "movlpd {$src, $dst|$dst, $src}", []>;
 
-def MOVHPSrm : PSI<0x16, MRMSrcMem, (ops V4F32:$dst, f64mem:$src),
+def MOVHPSrm : PSI<0x16, MRMSrcMem, (ops VR128:$dst, f64mem:$src),
                    "movhps {$src, $dst|$dst, $src}", []>;
-def MOVHPSmr : PSI<0x17, MRMDestMem, (ops f64mem:$dst, V4F32:$src),
+def MOVHPSmr : PSI<0x17, MRMDestMem, (ops f64mem:$dst, VR128:$src),
                    "movhps {$src, $dst|$dst, $src}", []>;
-def MOVHPDrm : PDI<0x16, MRMSrcMem, (ops V2F64:$dst, f64mem:$src),
+def MOVHPDrm : PDI<0x16, MRMSrcMem, (ops VR128:$dst, f64mem:$src),
                    "movhpd {$src, $dst|$dst, $src}", []>;
-def MOVHPDmr : PDI<0x17, MRMDestMem, (ops f64mem:$dst, V2F64:$src),
+def MOVHPDmr : PDI<0x17, MRMDestMem, (ops f64mem:$dst, VR128:$src),
                    "movhpd {$src, $dst|$dst, $src}", []>;
 
-def MOVLHPSrr : PSI<0x16, MRMSrcReg, (ops V4F32:$dst, V4F32:$src),
+def MOVLHPSrr : PSI<0x16, MRMSrcReg, (ops VR128:$dst, VR128:$src),
                     "movlhps {$src, $dst|$dst, $src}", []>;
-def MOVHLPSrr : PSI<0x12, MRMSrcReg, (ops V4F32:$dst, V4F32:$src),
+def MOVHLPSrr : PSI<0x12, MRMSrcReg, (ops VR128:$dst, VR128:$src),
                     "movlhps {$src, $dst|$dst, $src}", []>;
 
-def MOVMSKPSrr : PSI<0x50, MRMSrcReg, (ops R32:$dst, V4F32:$src),
+def MOVMSKPSrr : PSI<0x50, MRMSrcReg, (ops R32:$dst, VR128:$src),
                      "movmskps {$src, $dst|$dst, $src}", []>;
-def MOVMSKPDrr : PSI<0x50, MRMSrcReg, (ops R32:$dst, V2F64:$src),
+def MOVMSKPDrr : PSI<0x50, MRMSrcReg, (ops R32:$dst, VR128:$src),
                      "movmskpd {$src, $dst|$dst, $src}", []>;
 
 // Conversion instructions
-def CVTPI2PSrr : PSI<0x2A, MRMSrcReg, (ops V4F32:$dst, V2I32:$src),
+def CVTPI2PSrr : PSI<0x2A, MRMSrcReg, (ops VR128:$dst, VR64:$src),
                      "cvtpi2ps {$src, $dst|$dst, $src}", []>;
-def CVTPI2PSrm : PSI<0x2A, MRMSrcMem, (ops V4F32:$dst, i64mem:$src),
+def CVTPI2PSrm : PSI<0x2A, MRMSrcMem, (ops VR128:$dst, i64mem:$src),
                      "cvtpi2ps {$src, $dst|$dst, $src}", []>;
-def CVTPI2PDrr : PDI<0x2A, MRMSrcReg, (ops V2F64:$dst, V2I32:$src),
+def CVTPI2PDrr : PDI<0x2A, MRMSrcReg, (ops VR128:$dst, VR64:$src),
                      "cvtpi2pd {$src, $dst|$dst, $src}", []>;
-def CVTPI2PDrm : PDI<0x2A, MRMSrcMem, (ops V2F64:$dst, i64mem:$src),
+def CVTPI2PDrm : PDI<0x2A, MRMSrcMem, (ops VR128:$dst, i64mem:$src),
                      "cvtpi2pd {$src, $dst|$dst, $src}", []>;
 
 // SSE2 instructions without OpSize prefix
-def CVTDQ2PSrr : I<0x5B, MRMSrcReg, (ops V4F32:$dst, V4I32:$src),
+def CVTDQ2PSrr : I<0x5B, MRMSrcReg, (ops VR128:$dst, VR128:$src),
                    "cvtdq2ps {$src, $dst|$dst, $src}", []>, TB,
                  Requires<[HasSSE2]>;
-def CVTDQ2PSrm : I<0x5B, MRMSrcMem, (ops V4F32:$dst, i128mem:$src),
+def CVTDQ2PSrm : I<0x5B, MRMSrcMem, (ops VR128:$dst, i128mem:$src),
                    "cvtdq2ps {$src, $dst|$dst, $src}", []>, TB,
                  Requires<[HasSSE2]>;
 
 // SSE2 instructions with XS prefix
-def CVTDQ2PDrr : I<0xE6, MRMSrcReg, (ops V2F64:$dst, V2I32:$src),
+def CVTDQ2PDrr : I<0xE6, MRMSrcReg, (ops VR128:$dst, VR64:$src),
                    "cvtdq2pd {$src, $dst|$dst, $src}", []>,
                  XS, Requires<[HasSSE2]>;
-def CVTDQ2PDrm : I<0xE6, MRMSrcMem, (ops V4F32:$dst, i64mem:$src),
+def CVTDQ2PDrm : I<0xE6, MRMSrcMem, (ops VR128:$dst, i64mem:$src),
                    "cvtdq2pd {$src, $dst|$dst, $src}", []>,
                  XS, Requires<[HasSSE2]>;
 
-def CVTPS2PIrr : PSI<0x2D, MRMSrcReg, (ops V2I32:$dst, V4F32:$src),
+def CVTPS2PIrr : PSI<0x2D, MRMSrcReg, (ops VR64:$dst, VR128:$src),
                     "cvtps2pi {$src, $dst|$dst, $src}", []>;
-def CVTPS2PIrm : PSI<0x2D, MRMSrcMem, (ops V2I32:$dst, f64mem:$src),
+def CVTPS2PIrm : PSI<0x2D, MRMSrcMem, (ops VR64:$dst, f64mem:$src),
                     "cvtps2pi {$src, $dst|$dst, $src}", []>;
-def CVTPD2PIrr : PDI<0x2D, MRMSrcReg, (ops V2I32:$dst, V2F64:$src),
+def CVTPD2PIrr : PDI<0x2D, MRMSrcReg, (ops VR64:$dst, VR128:$src),
                     "cvtpd2pi {$src, $dst|$dst, $src}", []>;
-def CVTPD2PIrm : PDI<0x2D, MRMSrcMem, (ops V2I32:$dst, f128mem:$src),
+def CVTPD2PIrm : PDI<0x2D, MRMSrcMem, (ops VR64:$dst, f128mem:$src),
                     "cvtpd2pi {$src, $dst|$dst, $src}", []>;
 
-def CVTPS2DQrr : PDI<0x5B, MRMSrcReg, (ops V4I32:$dst, V4F32:$src),
+def CVTPS2DQrr : PDI<0x5B, MRMSrcReg, (ops VR128:$dst, VR128:$src),
                      "cvtps2dq {$src, $dst|$dst, $src}", []>;
-def CVTPS2DQrm : PDI<0x5B, MRMSrcMem, (ops V4I32:$dst, f128mem:$src),
+def CVTPS2DQrm : PDI<0x5B, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
                      "cvtps2dq {$src, $dst|$dst, $src}", []>;
 // SSE2 packed instructions with XD prefix
-def CVTPD2DQrr : SDI<0xE6, MRMSrcReg, (ops V4I32:$dst, V2F64:$src),
+def CVTPD2DQrr : SDI<0xE6, MRMSrcReg, (ops VR128:$dst, VR128:$src),
                      "cvtpd2dq {$src, $dst|$dst, $src}", []>;
-def CVTPD2DQrm : SDI<0xE6, MRMSrcMem, (ops V4I32:$dst, f128mem:$src),
+def CVTPD2DQrm : SDI<0xE6, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
                      "cvtpd2dq {$src, $dst|$dst, $src}", []>;
 
 // SSE2 instructions without OpSize prefix
-def CVTPS2PDrr : I<0x5A, MRMSrcReg, (ops V4I32:$dst, V2F64:$src),
+def CVTPS2PDrr : I<0x5A, MRMSrcReg, (ops VR128:$dst, VR128:$src),
                    "cvtps2pd {$src, $dst|$dst, $src}", []>, TB,
                  Requires<[HasSSE2]>;
-def CVTPS2PDrm : I<0x5A, MRMSrcReg, (ops V4I32:$dst, f64mem:$src),
+def CVTPS2PDrm : I<0x5A, MRMSrcReg, (ops VR128:$dst, f64mem:$src),
                    "cvtps2pd {$src, $dst|$dst, $src}", []>, TB,
                  Requires<[HasSSE2]>;
 
-def CVTPD2PSrr : PDI<0x5A, MRMSrcReg, (ops V4F32:$dst, V2F64:$src),
+def CVTPD2PSrr : PDI<0x5A, MRMSrcReg, (ops VR128:$dst, VR128:$src),
                      "cvtpd2ps {$src, $dst|$dst, $src}", []>;
-def CVTPD2PSrm : PDI<0x5A, MRMSrcReg, (ops V4F32:$dst, f128mem:$src),
+def CVTPD2PSrm : PDI<0x5A, MRMSrcReg, (ops VR128:$dst, f128mem:$src),
                      "cvtpd2ps {$src, $dst|$dst, $src}", []>;
 
 // Arithmetic
 let isTwoAddress = 1 in {
 let isCommutable = 1 in {
-def ADDPSrr : PSI<0x58, MRMSrcReg, (ops V4F32:$dst, V4F32:$src1, V4F32:$src2),
+def ADDPSrr : PSI<0x58, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                   "addps {$src2, $dst|$dst, $src2}",
-                  [(set V4F32:$dst, (fadd V4F32:$src1, V4F32:$src2))]>;
-def ADDPDrr : PDI<0x58, MRMSrcReg, (ops V2F64:$dst, V2F64:$src1, V2F64:$src2),
+                  [(set VR128:$dst, (v4f32 (fadd VR128:$src1, VR128:$src2)))]>;
+def ADDPDrr : PDI<0x58, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                   "addpd {$src2, $dst|$dst, $src2}",
-                  [(set V2F64:$dst, (fadd V2F64:$src1, V2F64:$src2))]>;
-def MULPSrr : PSI<0x59, MRMSrcReg, (ops V4F32:$dst, V4F32:$src1, V4F32:$src2),
+                  [(set VR128:$dst, (v2f64 (fadd VR128:$src1, VR128:$src2)))]>;
+def MULPSrr : PSI<0x59, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                   "mulps {$src2, $dst|$dst, $src2}",
-                  [(set V4F32:$dst, (fmul V4F32:$src1, V4F32:$src2))]>;
-def MULPDrr : PDI<0x59, MRMSrcReg, (ops V2F64:$dst, V2F64:$src1, V2F64:$src2),
+                  [(set VR128:$dst, (v4f32 (fmul VR128:$src1, VR128:$src2)))]>;
+def MULPDrr : PDI<0x59, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                   "mulpd {$src2, $dst|$dst, $src2}",
-                  [(set V2F64:$dst, (fmul V2F64:$src1, V2F64:$src2))]>;
+                  [(set VR128:$dst, (v2f64 (fmul VR128:$src1, VR128:$src2)))]>;
 }
 
-def ADDPSrm : PSI<0x58, MRMSrcMem, (ops V4F32:$dst, V4F32:$src1, f128mem:$src2),
+def ADDPSrm : PSI<0x58, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                   "addps {$src2, $dst|$dst, $src2}",
-                  [(set V4F32:$dst, (fadd V4F32:$src1,
-                                    (X86loadv4f32 addr:$src2)))]>;
-def ADDPDrm : PDI<0x58, MRMSrcMem, (ops V2F64:$dst, V2F64:$src1, f128mem:$src2),
+                  [(set VR128:$dst, (v4f32 (fadd VR128:$src1,
+                                            (load addr:$src2))))]>;
+def ADDPDrm : PDI<0x58, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                   "addpd {$src2, $dst|$dst, $src2}",
-                  [(set V2F64:$dst, (fadd V2F64:$src1,
-                                    (X86loadv2f64 addr:$src2)))]>;
-def MULPSrm : PSI<0x59, MRMSrcMem, (ops V4F32:$dst, V4F32:$src1, f128mem:$src2),
+                  [(set VR128:$dst, (v2f64 (fadd VR128:$src1,
+                                            (load addr:$src2))))]>;
+def MULPSrm : PSI<0x59, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                   "mulps {$src2, $dst|$dst, $src2}",
-                  [(set V4F32:$dst, (fmul V4F32:$src1,
-                                    (X86loadv4f32 addr:$src2)))]>;
-def MULPDrm : PDI<0x59, MRMSrcMem, (ops V2F64:$dst, V2F64:$src1, f128mem:$src2),
+                  [(set VR128:$dst, (v4f32 (fmul VR128:$src1,
+                                            (load addr:$src2))))]>;
+def MULPDrm : PDI<0x59, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                   "mulpd {$src2, $dst|$dst, $src2}",
-                  [(set V2F64:$dst, (fmul V2F64:$src1,
-                                    (X86loadv2f64 addr:$src2)))]>;
+                  [(set VR128:$dst, (v2f64 (fmul VR128:$src1,
+                                            (load addr:$src2))))]>;
 
-def DIVPSrr : PSI<0x5E, MRMSrcReg, (ops V4F32:$dst, V4F32:$src1, V4F32:$src2),
-                "divps {$src2, $dst|$dst, $src2}",
-                [(set V4F32:$dst, (fdiv V4F32:$src1, V4F32:$src2))]>;
-def DIVPSrm : PSI<0x5E, MRMSrcMem, (ops V4F32:$dst, V4F32:$src1, f128mem:$src2),
-                "divps {$src2, $dst|$dst, $src2}",
-                [(set V4F32:$dst, (fdiv V4F32:$src1,
-                                  (X86loadv4f32 addr:$src2)))]>;
-def DIVPDrr : PDI<0x5E, MRMSrcReg, (ops V2F64:$dst, V2F64:$src1, V2F64:$src2),
+def DIVPSrr : PSI<0x5E, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                  "divps {$src2, $dst|$dst, $src2}",
+                  [(set VR128:$dst, (v4f32 (fdiv VR128:$src1, VR128:$src2)))]>;
+def DIVPSrm : PSI<0x5E, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
+                  "divps {$src2, $dst|$dst, $src2}",
+                  [(set VR128:$dst, (v4f32 (fdiv VR128:$src1,
+                                            (load addr:$src2))))]>;
+def DIVPDrr : PDI<0x5E, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                 "divpd {$src2, $dst|$dst, $src2}",
-                [(set V2F64:$dst, (fdiv V2F64:$src1, V2F64:$src2))]>;
-def DIVPDrm : PDI<0x5E, MRMSrcMem, (ops V2F64:$dst, V2F64:$src1, f128mem:$src2),
+                  [(set VR128:$dst, (v2f64 (fdiv VR128:$src1, VR128:$src2)))]>;
+def DIVPDrm : PDI<0x5E, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                 "divpd {$src2, $dst|$dst, $src2}",
-                [(set V2F64:$dst, (fdiv V2F64:$src1,
-                                  (X86loadv2f64 addr:$src2)))]>;
+                  [(set VR128:$dst, (v2f64 (fdiv VR128:$src1,
+                                            (load addr:$src2))))]>;
 
-def SUBPSrr : PSI<0x5C, MRMSrcReg, (ops V4F32:$dst, V4F32:$src1, V4F32:$src2),
-                "subps {$src2, $dst|$dst, $src2}",
-                [(set V4F32:$dst, (fsub V4F32:$src1, V4F32:$src2))]>;
-def SUBPSrm : PSI<0x5C, MRMSrcMem, (ops V4F32:$dst, V4F32:$src1, f128mem:$src2),
-                "subps {$src2, $dst|$dst, $src2}",
-                [(set V4F32:$dst, (fsub V4F32:$src1,
-                                  (X86loadv4f32 addr:$src2)))]>;
-def SUBPDrr : PDI<0x5C, MRMSrcReg, (ops V2F64:$dst, V2F64:$src1, V2F64:$src2),
-                "subpd {$src2, $dst|$dst, $src2}",
-                [(set V2F64:$dst, (fsub V2F64:$src1, V2F64:$src2))]>;
-def SUBPDrm : PDI<0x5C, MRMSrcMem, (ops V2F64:$dst, V2F64:$src1, f128mem:$src2),
-                "subpd {$src2, $dst|$dst, $src2}",
-                [(set V2F64:$dst, (fsub V2F64:$src1,
-                                  (X86loadv2f64 addr:$src2)))]>;
+def SUBPSrr : PSI<0x5C, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                  "subps {$src2, $dst|$dst, $src2}",
+                  [(set VR128:$dst, (v4f32 (fsub VR128:$src1, VR128:$src2)))]>;
+def SUBPSrm : PSI<0x5C, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
+                  "subps {$src2, $dst|$dst, $src2}",
+                  [(set VR128:$dst, (v4f32 (fsub VR128:$src1,
+                                            (load addr:$src2))))]>;
+def SUBPDrr : PDI<0x5C, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                  "subpd {$src2, $dst|$dst, $src2}",
+                  [(set VR128:$dst, (fsub VR128:$src1, VR128:$src2))]>;
+def SUBPDrm : PDI<0x5C, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
+                  "subpd {$src2, $dst|$dst, $src2}",
+                  [(set VR128:$dst, (fsub VR128:$src1,
+                                     (load addr:$src2)))]>;
 }
 
-def SQRTPSrr : PSI<0x51, MRMSrcReg, (ops V4F32:$dst, V4F32:$src),
-                 "sqrtps {$src, $dst|$dst, $src}",
-                 [(set V4F32:$dst, (fsqrt V4F32:$src))]>;
-def SQRTPSrm : PSI<0x51, MRMSrcMem, (ops V4F32:$dst, f128mem:$src),
-                 "sqrtps {$src, $dst|$dst, $src}",
-                 [(set V4F32:$dst, (fsqrt (X86loadv4f32 addr:$src)))]>;
-def SQRTPDrr : PDI<0x51, MRMSrcReg, (ops V2F64:$dst, V2F64:$src),
-                 "sqrtpd {$src, $dst|$dst, $src}",
-                 [(set V2F64:$dst, (fsqrt V2F64:$src))]>;
-def SQRTPDrm : PDI<0x51, MRMSrcMem, (ops V2F64:$dst, f128mem:$src),
-                 "sqrtpd {$src, $dst|$dst, $src}",
-                 [(set V2F64:$dst, (fsqrt (X86loadv2f64 addr:$src)))]>;
+def SQRTPSrr : PSI<0x51, MRMSrcReg, (ops VR128:$dst, VR128:$src),
+                   "sqrtps {$src, $dst|$dst, $src}",
+                   [(set VR128:$dst, (v4f32 (fsqrt VR128:$src)))]>;
+def SQRTPSrm : PSI<0x51, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
+                   "sqrtps {$src, $dst|$dst, $src}",
+                   [(set VR128:$dst, (v4f32 (fsqrt (load addr:$src))))]>;
+def SQRTPDrr : PDI<0x51, MRMSrcReg, (ops VR128:$dst, VR128:$src),
+                   "sqrtpd {$src, $dst|$dst, $src}",
+                   [(set VR128:$dst, (v2f64 (fsqrt VR128:$src)))]>;
+def SQRTPDrm : PDI<0x51, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
+                   "sqrtpd {$src, $dst|$dst, $src}",
+                   [(set VR128:$dst, (v2f64 (fsqrt (load addr:$src))))]>;
 
-def RSQRTPSrr : PSI<0x52, MRMSrcReg, (ops V4F32:$dst, V4F32:$src),
-                 "rsqrtps {$src, $dst|$dst, $src}", []>;
-def RSQRTPSrm : PSI<0x52, MRMSrcMem, (ops V4F32:$dst, f128mem:$src),
-                 "rsqrtps {$src, $dst|$dst, $src}", []>;
-def RCPPSrr : PSI<0x53, MRMSrcReg, (ops V4F32:$dst, V4F32:$src),
+def RSQRTPSrr : PSI<0x52, MRMSrcReg, (ops VR128:$dst, VR128:$src),
+                    "rsqrtps {$src, $dst|$dst, $src}", []>;
+def RSQRTPSrm : PSI<0x52, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
+                    "rsqrtps {$src, $dst|$dst, $src}", []>;
+def RCPPSrr : PSI<0x53, MRMSrcReg, (ops VR128:$dst, VR128:$src),
                   "rcpps {$src, $dst|$dst, $src}", []>;
-def RCPPSrm : PSI<0x53, MRMSrcMem, (ops V4F32:$dst, f128mem:$src),
+def RCPPSrm : PSI<0x53, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
                   "rcpps {$src, $dst|$dst, $src}", []>;
 
-def MAXPSrr : PSI<0x5F, MRMSrcReg, (ops V4F32:$dst, V4F32:$src),
+def MAXPSrr : PSI<0x5F, MRMSrcReg, (ops VR128:$dst, VR128:$src),
                   "maxps {$src, $dst|$dst, $src}", []>;
-def MAXPSrm : PSI<0x5F, MRMSrcMem, (ops V4F32:$dst, f128mem:$src),
+def MAXPSrm : PSI<0x5F, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
                   "maxps {$src, $dst|$dst, $src}", []>;
-def MAXPDrr : PDI<0x5F, MRMSrcReg, (ops V2F64:$dst, V2F64:$src),
+def MAXPDrr : PDI<0x5F, MRMSrcReg, (ops VR128:$dst, VR128:$src),
                   "maxpd {$src, $dst|$dst, $src}", []>;
-def MAXPDrm : PDI<0x5F, MRMSrcMem, (ops V2F64:$dst, f128mem:$src),
+def MAXPDrm : PDI<0x5F, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
                   "maxpd {$src, $dst|$dst, $src}", []>;
-def MINPSrr : PSI<0x5D, MRMSrcReg, (ops V4F32:$dst, V4F32:$src),
+def MINPSrr : PSI<0x5D, MRMSrcReg, (ops VR128:$dst, VR128:$src),
                   "minps {$src, $dst|$dst, $src}", []>;
-def MINPSrm : PSI<0x5D, MRMSrcMem, (ops V4F32:$dst, f128mem:$src),
+def MINPSrm : PSI<0x5D, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
                   "minps {$src, $dst|$dst, $src}", []>;
-def MINPDrr : PDI<0x5D, MRMSrcReg, (ops V2F64:$dst, V2F64:$src),
+def MINPDrr : PDI<0x5D, MRMSrcReg, (ops VR128:$dst, VR128:$src),
                   "minpd {$src, $dst|$dst, $src}", []>;
-def MINPDrm : PDI<0x5D, MRMSrcMem, (ops V2F64:$dst, f128mem:$src),
+def MINPDrm : PDI<0x5D, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
                   "minpd {$src, $dst|$dst, $src}", []>;
 
 // Logical
 let isTwoAddress = 1 in {
 let isCommutable = 1 in {
-def ANDPSrr : PSI<0x54, MRMSrcReg, (ops V4F32:$dst, V4F32:$src1, V4F32:$src2),
-                "andps {$src2, $dst|$dst, $src2}",
-                [(set V4F32:$dst, (X86fand V4F32:$src1, V4F32:$src2))]>;
-def ANDPDrr : PDI<0x54, MRMSrcReg, (ops V2F64:$dst, V2F64:$src1, V2F64:$src2),
+def ANDPSrr : PSI<0x54, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                  "andps {$src2, $dst|$dst, $src2}",
+                  [(set VR128:$dst, (v4i32 (and VR128:$src1, VR128:$src2)))]>;
+def ANDPDrr : PDI<0x54, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                 "andpd {$src2, $dst|$dst, $src2}",
-                [(set V2F64:$dst, (X86fand V2F64:$src1, V2F64:$src2))]>;
-def ORPSrr  : PSI<0x56, MRMSrcReg, (ops V4F32:$dst, V4F32:$src1, V4F32:$src2),
-                "orps {$src2, $dst|$dst, $src2}", []>;
-def ORPDrr  : PDI<0x56, MRMSrcReg, (ops V2F64:$dst, V2F64:$src1, V2F64:$src2),
-                "orpd {$src2, $dst|$dst, $src2}", []>;
-def XORPSrr : PSI<0x57, MRMSrcReg, (ops V4F32:$dst, V4F32:$src1, V4F32:$src2),
-                "xorps {$src2, $dst|$dst, $src2}",
-                [(set V4F32:$dst, (X86fxor V4F32:$src1, V4F32:$src2))]>;
-def XORPDrr : PDI<0x57, MRMSrcReg, (ops V2F64:$dst, V2F64:$src1, V2F64:$src2),
-                "xorpd {$src2, $dst|$dst, $src2}",
-                [(set V2F64:$dst, (X86fxor V2F64:$src1, V2F64:$src2))]>;
+                  [(set VR128:$dst, (v2i64 (and VR128:$src1, VR128:$src2)))]>;
+def ORPSrr  : PSI<0x56, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                  "orps {$src2, $dst|$dst, $src2}",
+                  [(set VR128:$dst, (v4i32 (or VR128:$src1, VR128:$src2)))]>;
+def ORPDrr  : PDI<0x56, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                  "orpd {$src2, $dst|$dst, $src2}",
+                  [(set VR128:$dst, (v2i64 (or VR128:$src1, VR128:$src2)))]>;
+def XORPSrr : PSI<0x57, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                  "xorps {$src2, $dst|$dst, $src2}",
+                  [(set VR128:$dst, (v4i32 (xor VR128:$src1, VR128:$src2)))]>;
+def XORPDrr : PDI<0x57, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                  "xorpd {$src2, $dst|$dst, $src2}",
+                  [(set VR128:$dst, (v2i64 (xor VR128:$src1, VR128:$src2)))]>;
 }
-def ANDPSrm : PSI<0x54, MRMSrcMem, (ops V4F32:$dst, V4F32:$src1, f128mem:$src2),
-                "andps {$src2, $dst|$dst, $src2}",
-                [(set V4F32:$dst, (X86fand V4F32:$src1,
-                                  (X86loadv4f32 addr:$src2)))]>;
-def ANDPDrm : PDI<0x54, MRMSrcMem, (ops V2F64:$dst, V2F64:$src1, f128mem:$src2),
-                "andpd {$src2, $dst|$dst, $src2}",
-                [(set V2F64:$dst, (X86fand V2F64:$src1,
-                                  (X86loadv2f64 addr:$src2)))]>;
-def ORPSrm  : PSI<0x56, MRMSrcMem, (ops V4F32:$dst, V4F32:$src1, f128mem:$src2),
-                "orps {$src2, $dst|$dst, $src2}", []>;
-def ORPDrm  : PDI<0x56, MRMSrcMem, (ops V2F64:$dst, V2F64:$src1, f128mem:$src2),
-                "orpd {$src2, $dst|$dst, $src2}", []>;
-def XORPSrm : PSI<0x57, MRMSrcMem, (ops V4F32:$dst, V4F32:$src1, f128mem:$src2),
-                "xorps {$src2, $dst|$dst, $src2}",
-                [(set V4F32:$dst, (X86fxor V4F32:$src1,
-                                  (X86loadv4f32 addr:$src2)))]>;
-def XORPDrm : PDI<0x57, MRMSrcMem, (ops V2F64:$dst, V2F64:$src1, f128mem:$src2),
-                "xorpd {$src2, $dst|$dst, $src2}",
-                [(set V2F64:$dst, (X86fxor V2F64:$src1,
-                                  (X86loadv2f64 addr:$src2)))]>;
-def ANDNPSrr : PSI<0x55, MRMSrcReg, (ops V4F32:$dst, V4F32:$src1, V4F32:$src2),
-                "andnps {$src2, $dst|$dst, $src2}", []>;
-def ANDNPSrm : PSI<0x55, MRMSrcMem, (ops V4F32:$dst, V4F32:$src1, f128mem:$src2),
-                "andnps {$src2, $dst|$dst, $src2}", []>;
-def ANDNPDrr : PDI<0x55, MRMSrcReg, (ops V2F64:$dst, V2F64:$src1, V2F64:$src2),
-                "andnpd {$src2, $dst|$dst, $src2}", []>;
-def ANDNPDrm : PDI<0x55, MRMSrcMem, (ops V2F64:$dst, V2F64:$src1, f128mem:$src2),
-                "andnpd {$src2, $dst|$dst, $src2}", []>;
+def ANDPSrm : PSI<0x54, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
+                  "andps {$src2, $dst|$dst, $src2}",
+                  [(set VR128:$dst, (v4i32 (and VR128:$src1,
+                                            (load addr:$src2))))]>;
+def ANDPDrm : PDI<0x54, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
+                  "andpd {$src2, $dst|$dst, $src2}",
+                  [(set VR128:$dst, (v2i64 (and VR128:$src1,
+                                            (load addr:$src2))))]>;
+def ORPSrm  : PSI<0x56, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
+                  "orps {$src2, $dst|$dst, $src2}",
+                  [(set VR128:$dst, (v4i32 (or VR128:$src1,
+                                            (load addr:$src2))))]>;
+def ORPDrm  : PDI<0x56, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
+                "orpd {$src2, $dst|$dst, $src2}",
+                  [(set VR128:$dst, (v2i64 (or VR128:$src1,
+                                            (load addr:$src2))))]>;
+def XORPSrm : PSI<0x57, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
+                  "xorps {$src2, $dst|$dst, $src2}",
+                  [(set VR128:$dst, (v4i32 (xor VR128:$src1,
+                                            (load addr:$src2))))]>;
+def XORPDrm : PDI<0x57, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
+                  "xorpd {$src2, $dst|$dst, $src2}",
+                  [(set VR128:$dst, (v2i64 (xor VR128:$src1,
+                                            (load addr:$src2))))]>;
+def ANDNPSrr : PSI<0x55, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                  "andnps {$src2, $dst|$dst, $src2}",
+                  [(set VR128:$dst, (v4i32 (and (not VR128:$src1),
+                                            VR128:$src2)))]>;
+def ANDNPSrm : PSI<0x55, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
+                  "andnps {$src2, $dst|$dst, $src2}",
+                  [(set VR128:$dst, (v4i32 (and (not VR128:$src1),
+                                            (load addr:$src2))))]>;
+def ANDNPDrr : PDI<0x55, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                  "andnpd {$src2, $dst|$dst, $src2}",
+                  [(set VR128:$dst, (v2i64 (and (not VR128:$src1),
+                                            VR128:$src2)))]>;
+
+def ANDNPDrm : PDI<0x55, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
+                  "andnpd {$src2, $dst|$dst, $src2}",
+                  [(set VR128:$dst, (v2i64 (and VR128:$src1,
+                                            (load addr:$src2))))]>;
 }
 
 let isTwoAddress = 1 in {
 def CMPPSrr : PSI<0xC2, MRMSrcReg, 
-                (ops V4F32:$dst, V4F32:$src1, V4F32:$src, SSECC:$cc),
+                (ops VR128:$dst, VR128:$src1, VR128:$src, SSECC:$cc),
                 "cmp${cc}ps {$src, $dst|$dst, $src}", []>;
 def CMPPSrm : PSI<0xC2, MRMSrcMem, 
-                (ops V4F32:$dst, V4F32:$src1, f128mem:$src, SSECC:$cc),
+                (ops VR128:$dst, VR128:$src1, f128mem:$src, SSECC:$cc),
                 "cmp${cc}ps {$src, $dst|$dst, $src}", []>;
 def CMPPDrr : PDI<0xC2, MRMSrcReg, 
-                (ops V2F64:$dst, V2F64:$src1, V2F64:$src, SSECC:$cc),
+                (ops VR128:$dst, VR128:$src1, VR128:$src, SSECC:$cc),
                 "cmp${cc}pd {$src, $dst|$dst, $src}", []>;
 def CMPPDrm : PDI<0xC2, MRMSrcMem, 
-                (ops V2F64:$dst, V2F64:$src1, f128mem:$src, SSECC:$cc),
+                (ops VR128:$dst, VR128:$src1, f128mem:$src, SSECC:$cc),
                 "cmp${cc}pd {$src, $dst|$dst, $src}", []>;
 }
 
 // Shuffle and unpack instructions
 def SHUFPSrr : PSI<0xC6, MRMSrcReg, 
-                   (ops V4F32:$dst, V4F32:$src1, V4F32:$src2, i8imm:$src3),
+                   (ops VR128:$dst, VR128:$src1, VR128:$src2, i8imm:$src3),
                    "shufps {$src3, $src2, $dst|$dst, $src2, $src3}", []>;
 def SHUFPSrm : PSI<0xC6, MRMSrcMem, 
-                   (ops V4F32:$dst, V4F32:$src1, f128mem:$src2, i8imm:$src3),
+                   (ops VR128:$dst, VR128:$src1, f128mem:$src2, i8imm:$src3),
                    "shufps {$src3, $src2, $dst|$dst, $src2, $src3}", []>;
 def SHUFPDrr : PDI<0xC6, MRMSrcReg, 
-                   (ops V2F64:$dst, V2F64:$src1, V2F64:$src2, i8imm:$src3),
+                   (ops VR128:$dst, VR128:$src1, VR128:$src2, i8imm:$src3),
                    "shufpd {$src3, $src2, $dst|$dst, $src2, $src3}", []>;
 def SHUFPDrm : PDI<0xC6, MRMSrcMem, 
-                   (ops V2F64:$dst, V2F64:$src1, f128mem:$src2, i8imm:$src3),
+                   (ops VR128:$dst, VR128:$src1, f128mem:$src2, i8imm:$src3),
                    "shufpd {$src3, $src2, $dst|$dst, $src2, $src3}", []>;
 
 def UNPCKHPSrr : PSI<0x15, MRMSrcReg, 
-                    (ops V4F32:$dst, V4F32:$src1, V4F32:$src2),
+                    (ops VR128:$dst, VR128:$src1, VR128:$src2),
                     "unpckhps {$src2, $dst|$dst, $src2}", []>;
 def UNPCKHPSrm : PSI<0x15, MRMSrcMem, 
-                    (ops V4F32:$dst, V4F32:$src1, f128mem:$src2),
+                    (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                     "unpckhps {$src2, $dst|$dst, $src2}", []>;
 def UNPCKHPDrr : PDI<0x15, MRMSrcReg, 
-                    (ops V2F64:$dst, V2F64:$src1, V2F64:$src2),
+                    (ops VR128:$dst, VR128:$src1, VR128:$src2),
                     "unpckhpd {$src2, $dst|$dst, $src2}", []>;
 def UNPCKHPDrm : PDI<0x15, MRMSrcMem, 
-                    (ops V2F64:$dst, V2F64:$src1, f128mem:$src2),
+                    (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                     "unpckhpd {$src2, $dst|$dst, $src2}", []>;
 def UNPCKLPSrr : PSI<0x14, MRMSrcReg, 
-                    (ops V4F32:$dst, V4F32:$src1, V4F32:$src2),
+                    (ops VR128:$dst, VR128:$src1, VR128:$src2),
                     "unpcklps {$src2, $dst|$dst, $src2}", []>;
 def UNPCKLPSrm : PSI<0x14, MRMSrcMem, 
-                    (ops V4F32:$dst, V4F32:$src1, f128mem:$src2),
+                    (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                     "unpcklps {$src2, $dst|$dst, $src2}", []>;
 def UNPCKLPDrr : PDI<0x14, MRMSrcReg, 
-                    (ops V2F64:$dst, V2F64:$src1, V2F64:$src2),
+                    (ops VR128:$dst, VR128:$src1, VR128:$src2),
                     "unpcklpd {$src2, $dst|$dst, $src2}", []>;
 def UNPCKLPDrm : PDI<0x14, MRMSrcMem, 
-                    (ops V2F64:$dst, V2F64:$src1, f128mem:$src2),
+                    (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                     "unpcklpd {$src2, $dst|$dst, $src2}", []>;
 
 //===----------------------------------------------------------------------===//

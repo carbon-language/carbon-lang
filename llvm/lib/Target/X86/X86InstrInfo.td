@@ -41,17 +41,6 @@ def SDT_X86CallSeqEnd   : SDTypeProfile<0, 2, [ SDTCisVT<0, i32>,
 
 def SDT_X86Call   : SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
 
-def SDTX86FpGet   : SDTypeProfile<1, 0, [SDTCisVT<0, f64>]>;
-def SDTX86FpSet   : SDTypeProfile<0, 1, [SDTCisFP<0>]>;
-
-def SDTX86Fld     : SDTypeProfile<1, 2, [SDTCisVT<0, f64>,
-                                         SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>]>;
-def SDTX86Fst     : SDTypeProfile<0, 3, [SDTCisFP<0>,
-                                         SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>]>;
-def SDTX86Fild    : SDTypeProfile<1, 2, [SDTCisVT<0, f64>, SDTCisPtrTy<1>,
-                                         SDTCisVT<2, OtherVT>]>;
-def SDTX86FpToIMem: SDTypeProfile<0, 2, [SDTCisFP<0>, SDTCisPtrTy<1>]>;
-
 def SDTX86RepStr  : SDTypeProfile<0, 1, [SDTCisVT<0, OtherVT>]>;
 
 def SDTX86RdTsc   : SDTypeProfile<0, 0, []>;
@@ -60,11 +49,6 @@ def SDTX86Wrapper : SDTypeProfile<1, 1, [SDTCisSameAs<0, 1>, SDTCisPtrTy<0>]>;
 
 def X86shld    : SDNode<"X86ISD::SHLD",     SDTIntShiftDOp>;
 def X86shrd    : SDNode<"X86ISD::SHRD",     SDTIntShiftDOp>;
-
-def X86fand    : SDNode<"X86ISD::FAND",     SDTFPBinOp,
-                        [SDNPCommutative, SDNPAssociative]>;
-def X86fxor    : SDNode<"X86ISD::FXOR",     SDTFPBinOp,
-                        [SDNPCommutative, SDNPAssociative]>;
 
 def X86cmp     : SDNode<"X86ISD::CMP" ,     SDTX86CmpTest,
                         [SDNPOutFlag]>;
@@ -91,26 +75,6 @@ def X86callseq_end :
 def X86call    : SDNode<"X86ISD::CALL",     SDT_X86Call,
                         [SDNPHasChain, SDNPOutFlag, SDNPOptInFlag]>;
 
-def X86fpget   : SDNode<"X86ISD::FP_GET_RESULT", SDTX86FpGet,
-                        [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
-def X86fpset   : SDNode<"X86ISD::FP_SET_RESULT", SDTX86FpSet,
-                        [SDNPHasChain, SDNPOutFlag]>;
-
-def X86fld     : SDNode<"X86ISD::FLD",      SDTX86Fld,
-                        [SDNPHasChain]>;
-def X86fst     : SDNode<"X86ISD::FST",      SDTX86Fst,
-                        [SDNPHasChain, SDNPInFlag]>;
-def X86fild    : SDNode<"X86ISD::FILD",     SDTX86Fild,
-                        [SDNPHasChain]>;
-def X86fildflag: SDNode<"X86ISD::FILD_FLAG",SDTX86Fild,
-                        [SDNPHasChain, SDNPOutFlag]>;
-def X86fp_to_i16mem : SDNode<"X86ISD::FP_TO_INT16_IN_MEM", SDTX86FpToIMem,
-                        [SDNPHasChain]>;
-def X86fp_to_i32mem : SDNode<"X86ISD::FP_TO_INT32_IN_MEM", SDTX86FpToIMem,
-                        [SDNPHasChain]>;
-def X86fp_to_i64mem : SDNode<"X86ISD::FP_TO_INT64_IN_MEM", SDTX86FpToIMem,
-                        [SDNPHasChain]>;
-
 def X86rep_stos: SDNode<"X86ISD::REP_STOS", SDTX86RepStr,
                         [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
 def X86rep_movs: SDNode<"X86ISD::REP_MOVS", SDTX86RepStr,
@@ -118,9 +82,6 @@ def X86rep_movs: SDNode<"X86ISD::REP_MOVS", SDTX86RepStr,
 
 def X86rdtsc   : SDNode<"X86ISD::RDTSC_DAG",SDTX86RdTsc,
                         [SDNPHasChain, SDNPOutFlag]>;
-
-def X86loadp   : SDNode<"X86ISD::LOAD_PACK", SDTLoad, 
-                        [SDNPHasChain]>;
 
 def X86Wrapper : SDNode<"X86ISD::Wrapper",  SDTX86Wrapper>;
 
