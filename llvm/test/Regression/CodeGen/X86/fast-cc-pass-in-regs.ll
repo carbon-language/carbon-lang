@@ -1,6 +1,8 @@
 ; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel -enable-x86-fastcc  | grep 'mov %EDX, 1'
-
 ; check that fastcc is passing stuff in regs.
+
+; Argument reg passing is disabled due to regalloc issues.  FIXME!
+; XFAIL: *
 
 declare fastcc long %callee(long)
 
