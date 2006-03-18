@@ -423,8 +423,6 @@ public:
   void visitUnreachable(UnreachableInst &I) { /* noop */ }
 
   // These all get lowered before this pass.
-  void visitExtractElement(ExtractElementInst &I) { assert(0 && "TODO"); }
-  void visitInsertElement(InsertElementInst &I) { assert(0 && "TODO"); }
   void visitSwitch(SwitchInst &I) { assert(0 && "TODO"); }
   void visitInvoke(InvokeInst &I) { assert(0 && "TODO"); }
   void visitUnwind(UnwindInst &I) { assert(0 && "TODO"); }
@@ -464,6 +462,9 @@ public:
   void visitSetGE(User &I) { visitSetCC(I, ISD::SETGE, ISD::SETUGE); }
   void visitSetLT(User &I) { visitSetCC(I, ISD::SETLT, ISD::SETULT); }
   void visitSetGT(User &I) { visitSetCC(I, ISD::SETGT, ISD::SETUGT); }
+
+  void visitExtractElement(ExtractElementInst &I) { assert(0 && "TODO"); }
+  void visitInsertElement(InsertElementInst &I);
 
   void visitGetElementPtr(User &I);
   void visitCast(User &I);
@@ -550,21 +551,12 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
         Ops.assign(NumElements, Op);
       }
       
-      // Handle the case where we have a 1-element vector, in which
-      // case we want to immediately turn it into a scalar constant.
-      if (Ops.size() == 1) {
-        return N = Ops[0];
-      } else if (TVT != MVT::Other && TLI.isTypeLegal(TVT)) {
-        return N = DAG.getNode(ISD::ConstantVec, TVT, Ops);
-      } else {
-        // If the packed type isn't legal, then create a ConstantVec node with
-        // generic Vector type instead.
-        SDOperand Num = DAG.getConstant(NumElements, MVT::i32);
-        SDOperand Typ = DAG.getValueType(PVT);
-        Ops.insert(Ops.begin(), Typ);
-        Ops.insert(Ops.begin(), Num);
-        return N = DAG.getNode(ISD::VConstant, MVT::Vector, Ops);
-      }
+      // Create a ConstantVec node with generic Vector type.
+      SDOperand Num = DAG.getConstant(NumElements, MVT::i32);
+      SDOperand Typ = DAG.getValueType(PVT);
+      Ops.push_back(Num);
+      Ops.push_back(Typ);
+      return N = DAG.getNode(ISD::VConstant, MVT::Vector, Ops);
     } else {
       // Canonicalize all constant ints to be unsigned.
       return N = DAG.getConstant(cast<ConstantIntegral>(C)->getRawValue(),VT);
@@ -724,27 +716,9 @@ void SelectionDAGLowering::visitBinary(User &I, unsigned IntOp, unsigned FPOp,
     setValue(&I, DAG.getNode(FPOp, Op1.getValueType(), Op1, Op2));
   } else {
     const PackedType *PTy = cast<PackedType>(Ty);
-    unsigned NumElements = PTy->getNumElements();
-    MVT::ValueType PVT = TLI.getValueType(PTy->getElementType());
-    MVT::ValueType TVT = MVT::getVectorType(PVT, NumElements);
-    
-    // Immediately scalarize packed types containing only one element, so that
-    // the Legalize pass does not have to deal with them.  Similarly, if the
-    // abstract vector is going to turn into one that the target natively
-    // supports, generate that type now so that Legalize doesn't have to deal
-    // with that either.  These steps ensure that Legalize only has to handle
-    // vector types in its Expand case.
-    unsigned Opc = MVT::isFloatingPoint(PVT) ? FPOp : IntOp;
-    if (NumElements == 1) {
-      setValue(&I, DAG.getNode(Opc, PVT, Op1, Op2));
-    } else if (TVT != MVT::Other &&
-               TLI.isTypeLegal(TVT) && TLI.isOperationLegal(Opc, TVT)) {
-      setValue(&I, DAG.getNode(Opc, TVT, Op1, Op2));
-    } else {
-      SDOperand Num = DAG.getConstant(NumElements, MVT::i32);
-      SDOperand Typ = DAG.getValueType(PVT);
-      setValue(&I, DAG.getNode(VecOp, MVT::Vector, Num, Typ, Op1, Op2));
-    }
+    SDOperand Num = DAG.getConstant(PTy->getNumElements(), MVT::i32);
+    SDOperand Typ = DAG.getValueType(TLI.getValueType(PTy->getElementType()));
+    setValue(&I, DAG.getNode(VecOp, MVT::Vector, Op1, Op2, Num, Typ));
   }
 }
 
@@ -814,6 +788,8 @@ void SelectionDAGLowering::visitCast(User &I) {
         setValue(&I, DAG.getNode(ISD::FP_TO_UINT, DestVT, N));
     }
   } else {
+    assert(0 && "Cannot bitconvert vectors yet!");
+#if 0
     const PackedType *SrcTy = cast<PackedType>(I.getOperand(0)->getType());
     const PackedType *DstTy = cast<PackedType>(I.getType());
     
@@ -850,8 +826,40 @@ void SelectionDAGLowering::visitCast(User &I) {
         getLoadFrom(DstTy, FIPtr, DAG.getSrcValue(NULL), Store, false);
       setValue(&I, Val);
     }
+#endif
   }
 }
+
+void SelectionDAGLowering::visitInsertElement(InsertElementInst &I) {
+  const PackedType *Ty = cast<PackedType>(I.getType());
+  unsigned NumElements = Ty->getNumElements();
+  MVT::ValueType PVT = TLI.getValueType(Ty->getElementType());
+  MVT::ValueType TVT = MVT::getVectorType(PVT, NumElements);
+
+  SDOperand InVec = getValue(I.getOperand(0));
+  SDOperand InVal = getValue(I.getOperand(1));
+  SDOperand InIdx = DAG.getNode(ISD::ZERO_EXTEND, TLI.getPointerTy(),
+                                getValue(I.getOperand(2)));
+
+  // Immediately scalarize packed types containing only one element, so that
+  // the Legalize pass does not have to deal with them.  Similarly, if the
+  // abstract vector is going to turn into one that the target natively
+  // supports, generate that type now so that Legalize doesn't have to deal
+  // with that either.  These steps ensure that Legalize only has to handle
+  // vector types in its Expand case.
+  if (NumElements == 1) {
+    setValue(&I, InVal);   // Must be insertelt(Vec, InVal, 0) -> InVal
+  } else if (TVT != MVT::Other && TLI.isTypeLegal(TVT) && 
+             TLI.isOperationLegal(ISD::INSERT_VECTOR_ELT, TVT)) {
+    setValue(&I, DAG.getNode(ISD::INSERT_VECTOR_ELT, TVT, InVec, InVal, InIdx));
+  } else {
+    SDOperand Num = DAG.getConstant(NumElements, MVT::i32);
+    SDOperand Typ = DAG.getValueType(PVT);
+    setValue(&I, DAG.getNode(ISD::VINSERT_VECTOR_ELT, MVT::Vector,
+                             InVec, InVal, InIdx, Num, Typ));
+  }
+}
+
 
 void SelectionDAGLowering::visitGetElementPtr(User &I) {
   SDOperand N = getValue(I.getOperand(0));
@@ -989,22 +997,9 @@ SDOperand SelectionDAGLowering::getLoadFrom(const Type *Ty, SDOperand Ptr,
                                             SDOperand SrcValue, SDOperand Root,
                                             bool isVolatile) {
   SDOperand L;
-  
   if (const PackedType *PTy = dyn_cast<PackedType>(Ty)) {
-    unsigned NumElements = PTy->getNumElements();
     MVT::ValueType PVT = TLI.getValueType(PTy->getElementType());
-    MVT::ValueType TVT = MVT::getVectorType(PVT, NumElements);
-    
-    // Immediately scalarize packed types containing only one element, so that
-    // the Legalize pass does not have to deal with them.
-    if (NumElements == 1) {
-      L = DAG.getLoad(PVT, Root, Ptr, SrcValue);
-    } else if (TVT != MVT::Other && TLI.isTypeLegal(TVT) &&
-               TLI.isOperationLegal(ISD::LOAD, TVT)) {
-      L = DAG.getLoad(TVT, Root, Ptr, SrcValue);
-    } else {
-      L = DAG.getVecLoad(NumElements, PVT, Root, Ptr, SrcValue);
-    }
+    L = DAG.getVecLoad(PTy->getNumElements(), PVT, Root, Ptr, SrcValue);
   } else {
     L = DAG.getLoad(TLI.getValueType(Ty), Root, Ptr, SrcValue);
   }

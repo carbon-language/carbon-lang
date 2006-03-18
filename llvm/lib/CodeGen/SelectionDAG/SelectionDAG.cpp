@@ -1422,11 +1422,11 @@ SDOperand SelectionDAG::getVecLoad(unsigned Count, MVT::ValueType EVT,
   if (N) return SDOperand(N, 0);
   std::vector<SDOperand> Ops;
   Ops.reserve(5);
-  Ops.push_back(getConstant(Count, MVT::i32));
-  Ops.push_back(getValueType(EVT));
   Ops.push_back(Chain);
   Ops.push_back(Ptr);
   Ops.push_back(SV);
+  Ops.push_back(getConstant(Count, MVT::i32));
+  Ops.push_back(getValueType(EVT));
   std::vector<MVT::ValueType> VTs;
   VTs.reserve(2);
   VTs.push_back(MVT::Vector); VTs.push_back(MVT::Other);  // Add token chain.
