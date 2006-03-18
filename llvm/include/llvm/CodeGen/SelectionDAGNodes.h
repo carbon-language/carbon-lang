@@ -85,9 +85,10 @@ namespace ISD {
     TargetConstantPool,
     TargetExternalSymbol,
 
-    // Abstract version of ConstantVec with abstract Vector type. The first node
-    // is a constant element count, the second is a value type indicating the
-    // type of the elements.
+    // Abstract version of ConstantVec with abstract Vector type. The first N-2
+    // operands are the constants to initialize the vector, the N-2nd operand
+    // is a constant element count, and that last operand is the value type
+    // indicating the type of the elements.
     VConstant,
 
     // CopyToReg - This node has three operands: a chain, a register number to
@@ -157,7 +158,7 @@ namespace ISD {
     // a constant element count, and a value type node indicating the type of
     // the elements.  The order is count, type, op0, op1.  All vector opcodes,
     // including VLOAD and VConstant must currently have count and type as
-    // their 1st and 2nd arguments.
+    // their last two operands.
     VADD, VSUB, VMUL, VSDIV, VUDIV,
     VAND, VOR, VXOR,
 
