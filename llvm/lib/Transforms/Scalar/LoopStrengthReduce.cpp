@@ -77,15 +77,20 @@ namespace {
   };
 
   /// IVInfo - This structure keeps track of one IV expression inserted during
-  /// StrengthReduceStridedIVUsers. It contains the base value, as well as the
-  /// PHI node and increment value created for rewrite.
+  /// StrengthReduceStridedIVUsers. It contains the stride, the common base, as
+  /// well as the PHI node and increment value created for rewrite.
   struct IVExpr {
+    SCEVHandle  Stride;
     SCEVHandle  Base;
     PHINode    *PHI;
     Value      *IncV;
 
-    IVExpr(const SCEVHandle &base, PHINode *phi, Value *incv)
-      : Base(base), PHI(phi), IncV(incv) {}
+    IVExpr()
+      : Stride(SCEVUnknown::getIntegerSCEV(0, Type::UIntTy)),
+        Base  (SCEVUnknown::getIntegerSCEV(0, Type::UIntTy)) {}
+    IVExpr(const SCEVHandle &stride, const SCEVHandle &base, PHINode *phi,
+           Value *incv)
+      : Stride(stride), Base(base), PHI(phi), IncV(incv) {}
   };
 
   /// IVsOfOneStride - This structure keeps track of all IV expression inserted
@@ -93,8 +98,9 @@ namespace {
   struct IVsOfOneStride {
     std::vector<IVExpr> IVs;
 
-    void addIV(const SCEVHandle &Base, PHINode *PHI, Value *IncV) {
-      IVs.push_back(IVExpr(Base, PHI, IncV));
+    void addIV(const SCEVHandle &Stride, const SCEVHandle &Base, PHINode *PHI,
+               Value *IncV) {
+      IVs.push_back(IVExpr(Stride, Base, PHI, IncV));
     }
   };
 
@@ -863,22 +869,20 @@ static bool isZero(SCEVHandle &V) {
 /// CheckForIVReuse - Returns the multiple if the stride is the multiple
 /// of a previous stride and it is a legal value for the target addressing
 /// mode scale component. This allows the users of this stride to be rewritten
-/// as prev iv * factor. It returns 1 if no reuse is possible.
+/// as prev iv * factor. It returns 0 if no reuse is possible.
 unsigned LoopStrengthReduce::CheckForIVReuse(const SCEVHandle &Stride,
                                              IVExpr &IV) {
-  if (!TLI)
-    return 1;
+  if (!TLI) return 0;
 
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(Stride)) {
-    unsigned SInt = SC->getValue()->getRawValue();
-    if (SInt == 1)
-      return 1;
+    int64_t SInt = SC->getValue()->getSExtValue();
+    if (SInt == 1) return 0;
 
     for (TargetLowering::legal_am_scale_iterator
            I = TLI->legal_am_scale_begin(), E = TLI->legal_am_scale_end();
          I != E; ++I) {
       unsigned Scale = *I;
-      if (SInt >= Scale && (SInt % Scale) != 0)
+      if (abs(SInt) < Scale || (SInt % Scale) != 0)
         continue;
       std::map<SCEVHandle, IVsOfOneStride>::iterator SI =
         IVsByStride.find(SCEVUnknown::getIntegerSCEV(SInt/Scale, Type::UIntTy));
@@ -894,7 +898,7 @@ unsigned LoopStrengthReduce::CheckForIVReuse(const SCEVHandle &Stride,
     }
   }
 
-  return 1;
+  return 0;
 }
 
 
@@ -929,9 +933,11 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
   // field of the target addressing mode.
   PHINode *NewPHI = NULL;
   Value   *IncV   = NULL;
-  IVExpr   ReuseIV(Stride, NULL, NULL);
+  IVExpr   ReuseIV;
   unsigned RewriteFactor = CheckForIVReuse(Stride, ReuseIV);
-  if (RewriteFactor > 1) {
+  if (RewriteFactor != 0) {
+    DEBUG(std::cerr << "BASED ON IV of STRIDE " << *ReuseIV.Stride
+          << " and BASE " << *ReuseIV.Base << " :\n");
     NewPHI = ReuseIV.PHI;
     IncV   = ReuseIV.IncV;
   }
@@ -994,7 +1000,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
     = PreheaderRewriter.expandCodeFor(CommonExprs, PreInsertPt,
                                       ReplacedTy);
 
-  if (RewriteFactor == 1) {
+  if (RewriteFactor == 0) {
     // Create a new Phi for this base, and stick it in the loop header.
     NewPHI = new PHINode(ReplacedTy, "iv.", PhiInsertBefore);
     ++NumInserted;
@@ -1018,7 +1024,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
     NewPHI->addIncoming(IncV, LatchBlock);
 
     // Remember this in case a later stride is multiple of this.
-    IVsByStride[Stride].addIV(CommonExprs, NewPHI, IncV);
+    IVsByStride[Stride].addIV(Stride, CommonExprs, NewPHI, IncV);
   } else {
     Constant *C = dyn_cast<Constant>(CommonBaseV);
     if (!C ||
@@ -1076,7 +1082,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
 
       // If we are reusing the iv, then it must be multiplied by a constant
       // factor take advantage of addressing mode scale component.
-      if (RewriteFactor != 1) {
+      if (RewriteFactor != 0) {
         RewriteExpr =
           SCEVMulExpr::get(SCEVUnknown::getIntegerSCEV(RewriteFactor,
                                                        RewriteExpr->getType()),
