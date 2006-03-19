@@ -629,3 +629,7 @@ remateralization is implemented. This can be accomplished with 1) a target
 dependent LICM pass or 2) makeing SelectDAG represent the whole function. 
 
 //===---------------------------------------------------------------------===//
+
+The following tests perform worse with LSR:
+
+lambda, siod, optimizer-eval, ackermann, hash2, nestedloop, strcat, and Treesor.
