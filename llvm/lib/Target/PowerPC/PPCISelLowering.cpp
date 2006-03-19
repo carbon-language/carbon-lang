@@ -183,6 +183,9 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
     // the ones we do!
     setOperationAction(ISD::BUILD_VECTOR, MVT::v4f32, Expand);
     setOperationAction(ISD::BUILD_VECTOR, MVT::v4i32, Expand);
+    
+    setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v4f32, Expand);
+    setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v4i32, Expand);
   }
   
   setSetCCResultContents(ZeroOrOneSetCCResult);
