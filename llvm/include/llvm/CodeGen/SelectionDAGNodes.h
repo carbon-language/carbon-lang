@@ -67,15 +67,10 @@ namespace ISD {
     Constant, ConstantFP,
     GlobalAddress, FrameIndex, ConstantPool, ExternalSymbol,
 
-    // ConstantVec works like Constant or ConstantFP, except that it is not a
-    // leaf node.  All operands are either Constant or ConstantFP nodes.
-    ConstantVec,
-    
     // TargetConstant* - Like Constant*, but the DAG does not do any folding or
     // simplification of the constant.
     TargetConstant,
     TargetConstantFP,
-    TargetConstantVec, 
     
     // TargetGlobalAddress - Like GlobalAddress, but the DAG does no folding or
     // anything else with this node, and this is valid in the target-specific
@@ -84,12 +79,6 @@ namespace ISD {
     TargetFrameIndex,
     TargetConstantPool,
     TargetExternalSymbol,
-
-    // Abstract version of ConstantVec with abstract Vector type. The first N-2
-    // operands are the constants to initialize the vector, the N-2nd operand
-    // is a constant element count, and that last operand is the value type
-    // indicating the type of the elements.
-    VConstant,
 
     // CopyToReg - This node has three operands: a chain, a register number to
     // set to this value, and a value.  
@@ -148,26 +137,36 @@ namespace ISD {
     // FCOPYSIGN(f32, f64) is allowed.
     FCOPYSIGN,
 
-    /// INSERT_VECTOR_ELT(VECTOR, VAL, IDX) - Returns VECTOR (a legal packed
-    /// type) with the element at IDX replaced with VAL.
-    INSERT_VECTOR_ELT,
-    
-    // BINOP(LHS, RHS,  COUNT,TYPE)
-    // Simple abstract vector operators.  Unlike the integer and floating point
-    // binary operators, these nodes also take two additional operands:
-    // a constant element count, and a value type node indicating the type of
-    // the elements.  The order is count, type, op0, op1.  All vector opcodes,
-    // including VLOAD and VConstant must currently have count and type as
-    // their last two operands.
-    VADD, VSUB, VMUL, VSDIV, VUDIV,
-    VAND, VOR, VXOR,
+    /// VBUILD_VECTOR(ELT1, ELT2, ELT3, ELT4,...,  COUNT,TYPE) - Return a vector
+    /// with the specified, possibly variable, elements.  The number of elements
+    /// is required to be a power of two.
+    VBUILD_VECTOR,
 
+    /// BUILD_VECTOR(ELT1, ELT2, ELT3, ELT4,...) - Return a vector
+    /// with the specified, possibly variable, elements.  The number of elements
+    /// is required to be a power of two.
+    BUILD_VECTOR,
+    
     /// VINSERT_VECTOR_ELT(VECTOR, VAL, IDX,  COUNT,TYPE) - Given a vector
     /// VECTOR, an element ELEMENT, and a (potentially variable) index IDX,
     /// return an vector with the specified element of VECTOR replaced with VAL.
     /// COUNT and TYPE specify the type of vector, as is standard for V* nodes.
     VINSERT_VECTOR_ELT,
     
+    /// INSERT_VECTOR_ELT(VECTOR, VAL, IDX) - Returns VECTOR (a legal packed
+    /// type) with the element at IDX replaced with VAL.
+    INSERT_VECTOR_ELT,
+    
+    /// BINOP(LHS, RHS,  COUNT,TYPE)
+    /// Simple abstract vector operators.  Unlike the integer and floating point
+    /// binary operators, these nodes also take two additional operands:
+    /// a constant element count, and a value type node indicating the type of
+    /// the elements.  The order is count, type, op0, op1.  All vector opcodes,
+    /// including VLOAD and VConstant must currently have count and type as
+    /// their last two operands.
+    VADD, VSUB, VMUL, VSDIV, VUDIV,
+    VAND, VOR, VXOR,
+
     // MULHU/MULHS - Multiply high - Multiply two integers of type iN, producing
     // an unsigned/signed value of type i[2*n], then return the top part.
     MULHU, MULHS,
