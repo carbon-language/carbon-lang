@@ -125,3 +125,6 @@ Can be improved in two ways:
 1. The instcombiner should eliminate the type conversions.
 2. The X86 backend should turn this into a rotate by one bit.
 
+//===---------------------------------------------------------------------===//
+
+Add LSR exit value substitution. It'll probably be a win for Ackermann, etc.
