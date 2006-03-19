@@ -64,3 +64,15 @@ void %test_undef(%f4 *%P, %f4 *%S) {
   store %f4 %R, %f4 *%S
   ret void
 }
+
+void %test_constant_insert(%f4 *%S) {
+  %R = insertelement %f4 zeroinitializer, float 10.0, uint 0
+  store %f4 %R, %f4 *%S
+  ret void
+}
+
+void %test_variable_buildvector(float %F, %f4 *%S) {
+  %R = insertelement %f4 zeroinitializer, float %F, uint 0
+  store %f4 %R, %f4 *%S
+  ret void
+}
