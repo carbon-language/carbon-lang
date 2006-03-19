@@ -779,8 +779,38 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // Otherwise, this isn't a constant entry.  Allocate a sufficiently
       // aligned object on the stack, store each element into it, then load
       // the result as a vector.
-      assert(0 && "Cannot lower variable BUILD_VECTOR yet!");
-      abort();
+      MVT::ValueType VT = Node->getValueType(0);
+      // Create the stack frame object.
+      MachineFrameInfo *FrameInfo = DAG.getMachineFunction().getFrameInfo();
+      unsigned ByteSize = MVT::getSizeInBits(VT)/8;
+      int FrameIdx = FrameInfo->CreateStackObject(ByteSize, ByteSize);
+      SDOperand FIPtr = DAG.getFrameIndex(FrameIdx, TLI.getPointerTy());
+      
+      // Emit a store of each element to the stack slot.
+      std::vector<SDOperand> Stores;
+      bool isLittleEndian = TLI.isLittleEndian();
+      unsigned TypeByteSize = 
+        MVT::getSizeInBits(Node->getOperand(0).getValueType())/8;
+      unsigned VectorSize = MVT::getSizeInBits(VT)/8;
+      // Store (in the right endianness) the elements to memory.
+      for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
+        unsigned Offset;
+        if (isLittleEndian) 
+          Offset = TypeByteSize*i;
+        else
+          Offset = TypeByteSize*(e-i-1);
+
+        SDOperand Idx = DAG.getConstant(Offset, FIPtr.getValueType());
+        Idx = DAG.getNode(ISD::ADD, FIPtr.getValueType(), FIPtr, Idx);
+
+        Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
+                                     Node->getOperand(i), Idx, 
+                                     DAG.getSrcValue(NULL)));
+      }
+      SDOperand StoreChain = DAG.getNode(ISD::TokenFactor, MVT::Other, Stores);
+      
+      // Result is a load from the stack slot.
+      Result = DAG.getLoad(VT, StoreChain, FIPtr, DAG.getSrcValue(0));
       break;
     }
     }
