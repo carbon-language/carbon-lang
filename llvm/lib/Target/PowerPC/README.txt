@@ -506,6 +506,7 @@ Implement PPCInstrInfo::isLoadFromStackSlot/isStoreToStackSlot for vector
 registers, to generate better spill code.
 
 ===-------------------------------------------------------------------------===
+
 int foo(int N, int ***W, int **TK, int X) {
   int t, i;
   
@@ -518,5 +519,20 @@ int foo(int N, int ***W, int **TK, int X) {
 
 We generate relatively atrocious code for this loop compared to gcc.
 
+===-------------------------------------------------------------------------===
 
+Altivec support.  The first should be a single lvx from the constant pool, the
+second should be a xor/stvx:
+
+void foo(void) {
+  int x[8] __attribute__((aligned(128))) = { 1, 1, 1, 1, 1, 1, 1, 1 };
+  bar (x);
+}
+
+#include <string.h>
+void foo(void) {
+  int x[8] __attribute__((aligned(128)));
+  memset (x, 0, sizeof (x));
+  bar (x);
+}
 
