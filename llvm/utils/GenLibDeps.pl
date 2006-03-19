@@ -9,6 +9,16 @@
 # Syntax:   GenLibDeps.pl <directory_with_libraries_in_it>
 #
 
+# Parse arguments... 
+while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
+  shift;
+  last if /^--$/;  # Stop processing arguments on --
+
+  # List command line options here...
+  if (/^-flat$/)     { $FLAT = 1; next; }
+  print "Unknown option: $_ : ignoring!\n";
+}
+
 # Give first option a name.
 my $Directory = $ARGV[0];
 
@@ -58,7 +68,11 @@ sub gen_one_entry {
   my $lib = $_[0];
   my $lib_ns = $lib;
   $lib_ns =~ s/(.*)\.[oa]/$1/;
-  print "  <dt><b>$lib</b</dt><dd><ul>\n";
+  if ($FLAT) {
+    print "$lib:";
+  } else {
+    print "  <dt><b>$lib</b</dt><dd><ul>\n";
+  }
   open UNDEFS, 
     "nm -u $Directory/$lib | grep ' U ' | sed -e 's/         U //' | sort | uniq |";
   open DEPENDS,
@@ -80,7 +94,11 @@ sub gen_one_entry {
   open DF, "<GenLibDeps.out";
   while (<DF>) {
     chomp;
-    print "    <li>$_</li>\n";
+    if ($FLAT) {
+      print " $_";
+    } else {
+      print "    <li>$_</li>\n";
+    }
     $suffix = substr($_,length($_)-1,1);
     $_ =~ s/(.*)\.[oa]/$1/;
     if ($suffix eq "a") {
@@ -90,7 +108,11 @@ sub gen_one_entry {
     }
   }
   close DF;
-  print "  </ul></dd>\n";
+  if ($FLAT) {
+    print "\n";
+  } else {
+    print "  </ul></dd>\n";
+  }
 }
 
 # Make sure we flush on write. This is slower but correct based on the way we
@@ -98,7 +120,9 @@ sub gen_one_entry {
 $| = 1;
 
 # Print the definition list tag
-print "<dl>\n";
+if (!$FLAT) {
+  print "<dl>\n";
+}
 
 open DOT, "| $DotPath -Tgif > libdeps.gif";
 
@@ -125,4 +149,6 @@ print DOT "}\n";
 close DOT;
 
 # Print end tag of definition list element
-print "</dl>\n";
+if (!$FLAT) {
+  print "</dl>\n";
+}
