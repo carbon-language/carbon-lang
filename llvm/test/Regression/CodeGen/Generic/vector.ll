@@ -8,6 +8,8 @@
 
 implementation
 
+;;; TEST HANDLING OF VARIOUS VECTOR SIZES
+
 void %test_f1(%f1 *%P, %f1* %Q, %f1 *%S) {
   %p = load %f1 *%P
   %q = load %f1* %Q
@@ -37,5 +39,28 @@ void %test_f8(%f8 *%P, %f8* %Q, %f8 *%S) {
   %q = load %f8* %Q
   %R = add %f8 %p, %q
   store %f8 %R, %f8 *%S
+  ret void
+}
+
+;;; TEST VECTOR CONSTRUCTS
+
+void %test_cst(%f4 *%P, %f4 *%S) {
+  %p = load %f4* %P
+  %R = add %f4 %p, <float 0.1, float 1.0, float 2.0, float 4.5>
+  store %f4 %R, %f4 *%S
+  ret void
+}
+
+void %test_zero(%f4 *%P, %f4 *%S) {
+  %p = load %f4* %P
+  %R = add %f4 %p, zeroinitializer
+  store %f4 %R, %f4 *%S
+  ret void
+}
+
+void %test_undef(%f4 *%P, %f4 *%S) {
+  %p = load %f4* %P
+  %R = add %f4 %p, undef
+  store %f4 %R, %f4 *%S
   ret void
 }
