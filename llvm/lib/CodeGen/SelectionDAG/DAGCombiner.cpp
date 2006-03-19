@@ -209,6 +209,8 @@ namespace {
     SDOperand visitBR_CC(SDNode *N);
     SDOperand visitLOAD(SDNode *N);
     SDOperand visitSTORE(SDNode *N);
+    SDOperand visitINSERT_VECTOR_ELT(SDNode *N);
+    SDOperand visitVINSERT_VECTOR_ELT(SDNode *N);
 
     SDOperand ReassociateOps(unsigned Opc, SDOperand LHS, SDOperand RHS);
     
@@ -640,6 +642,8 @@ SDOperand DAGCombiner::visit(SDNode *N) {
   case ISD::BR_CC:              return visitBR_CC(N);
   case ISD::LOAD:               return visitLOAD(N);
   case ISD::STORE:              return visitSTORE(N);
+  case ISD::INSERT_VECTOR_ELT:  return visitINSERT_VECTOR_ELT(N);
+  case ISD::VINSERT_VECTOR_ELT: return visitVINSERT_VECTOR_ELT(N);
   }
   return SDOperand();
 }
@@ -2286,6 +2290,44 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
   if (0 && Value.getOpcode() == ISD::BIT_CONVERT)
     return DAG.getNode(ISD::STORE, MVT::Other, Chain, Value.getOperand(0),
                        Ptr, SrcValue);
+  
+  return SDOperand();
+}
+
+SDOperand DAGCombiner::visitINSERT_VECTOR_ELT(SDNode *N) {
+  SDOperand InVec = N->getOperand(0);
+  SDOperand InVal = N->getOperand(1);
+  SDOperand EltNo = N->getOperand(2);
+  
+  // If the invec is a BUILD_VECTOR and if EltNo is a constant, build a new
+  // vector with the inserted element.
+  if (InVec.getOpcode() == ISD::BUILD_VECTOR && isa<ConstantSDNode>(EltNo)) {
+    unsigned Elt = cast<ConstantSDNode>(EltNo)->getValue();
+    std::vector<SDOperand> Ops(InVec.Val->op_begin(), InVec.Val->op_end());
+    if (Elt < Ops.size())
+      Ops[Elt] = InVal;
+    return DAG.getNode(ISD::BUILD_VECTOR, InVec.getValueType(), Ops);
+  }
+  
+  return SDOperand();
+}
+
+SDOperand DAGCombiner::visitVINSERT_VECTOR_ELT(SDNode *N) {
+  SDOperand InVec = N->getOperand(0);
+  SDOperand InVal = N->getOperand(1);
+  SDOperand EltNo = N->getOperand(2);
+  SDOperand NumElts = N->getOperand(3);
+  SDOperand EltType = N->getOperand(4);
+  
+  // If the invec is a VBUILD_VECTOR and if EltNo is a constant, build a new
+  // vector with the inserted element.
+  if (InVec.getOpcode() == ISD::VBUILD_VECTOR && isa<ConstantSDNode>(EltNo)) {
+    unsigned Elt = cast<ConstantSDNode>(EltNo)->getValue();
+    std::vector<SDOperand> Ops(InVec.Val->op_begin(), InVec.Val->op_end());
+    if (Elt < Ops.size()-2)
+      Ops[Elt] = InVal;
+    return DAG.getNode(ISD::VBUILD_VECTOR, InVec.getValueType(), Ops);
+  }
   
   return SDOperand();
 }
