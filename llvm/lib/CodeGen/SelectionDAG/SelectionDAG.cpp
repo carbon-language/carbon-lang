@@ -1360,6 +1360,13 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       else
         return N1;         // Never-taken branch
     break;
+  case ISD::VECTOR_SHUFFLE:
+    assert(VT == N1.getValueType() && VT == N2.getValueType() &&
+           MVT::isVector(VT) && MVT::isVector(N3.getValueType()) &&
+           N3.getOpcode() == ISD::BUILD_VECTOR &&
+           MVT::getVectorNumElements(VT) == N3.getNumOperands() &&
+           "Illegal VECTOR_SHUFFLE node!");
+    break;
   }
 
   std::vector<SDOperand> Ops;
@@ -2615,7 +2622,6 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::TargetFrameIndex: return "TargetFrameIndex";
   case ISD::TargetConstantPool:  return "TargetConstantPool";
   case ISD::TargetExternalSymbol: return "TargetExternalSymbol";
-  case ISD::VBUILD_VECTOR: return "VBUILD_VECTOR";
 
   case ISD::CopyToReg:     return "CopyToReg";
   case ISD::CopyFromReg:   return "CopyFromReg";
@@ -2665,6 +2671,8 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::INSERT_VECTOR_ELT: return "insert_vector_elt";
   case ISD::VINSERT_VECTOR_ELT: return "vinsert_vector_elt";
   case ISD::SCALAR_TO_VECTOR:   return "scalar_to_vector";
+  case ISD::VBUILD_VECTOR: return "vbuild_vector";
+  case ISD::VECTOR_SHUFFLE: return "vector_shuffle";
   case ISD::ADDC:        return "addc";
   case ISD::ADDE:        return "adde";
   case ISD::SUBC:        return "subc";
