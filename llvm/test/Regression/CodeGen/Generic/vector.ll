@@ -79,6 +79,12 @@ void %test_variable_buildvector(float %F, %f4 *%S) {
   ret void
 }
 
+void %test_scalar_to_vector(float %F, %f4 *%S) {
+  %R = insertelement %f4 undef, float %F, uint 0   ;; R = scalar_to_vector F
+  store %f4 %R, %f4 *%S
+  ret void
+}
+
 ;;; TEST IMPORTANT IDIOMS
 
 void %splat(%f4* %P, %f4* %Q, float %X) {
