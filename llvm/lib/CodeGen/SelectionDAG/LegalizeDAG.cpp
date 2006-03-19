@@ -407,7 +407,7 @@ void SelectionDAGLegalize::HandleOp(SDOperand Op) {
         // Otherwise, this is a multiple element vector that isn't supported.
         // Split it in half and legalize both parts.
         SDOperand X, Y;
-        ExpandOp(Op, X, Y);
+        SplitVectorOp(Op, X, Y);
       }
     }
     break;
@@ -4006,6 +4006,7 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
   }
   
   switch (Node->getOpcode()) {
+  default: assert(0 && "Unknown vector operation!");
   case ISD::VConstant: {
     std::vector<SDOperand> LoOps(Node->op_begin(), Node->op_begin()+NewNumElts);
     LoOps.push_back(NewNumEltsNode);
@@ -4098,10 +4099,10 @@ SDOperand SelectionDAGLegalize::PackVectorOp(SDOperand Op,
                          PackVectorOp(Node->getOperand(1), NewVT));
     break;
   case ISD::VLOAD: {
-    SDOperand Ch = LegalizeOp(Node->getOperand(2));   // Legalize the chain.
-    SDOperand Ptr = LegalizeOp(Node->getOperand(3));  // Legalize the pointer.
+    SDOperand Ch = LegalizeOp(Node->getOperand(0));   // Legalize the chain.
+    SDOperand Ptr = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
     
-    Result = DAG.getLoad(NewVT, Ch, Ptr, Node->getOperand(4));
+    Result = DAG.getLoad(NewVT, Ch, Ptr, Node->getOperand(2));
     
     // Remember that we legalized the chain.
     AddLegalizedOperand(Op.getValue(1), LegalizeOp(Result.getValue(1)));
