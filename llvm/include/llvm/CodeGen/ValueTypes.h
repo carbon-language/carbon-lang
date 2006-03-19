@@ -161,6 +161,24 @@ namespace MVT {  // MVT = Machine Value Types
     }
   }
   
+  /// MVT::getVectorNumElements - Given a packed vector type, return the number
+  /// of elements it contains.
+  static inline unsigned getVectorNumElements(ValueType VT) {
+    switch (VT) {
+      default: assert(0 && "Invalid vector type!");
+      case v16i8: return 16;
+      case v8i8 :
+      case v8i16: return 8;
+      case v4i16:
+      case v4i32: 
+      case v4f32: return 4;
+      case v2i32:
+      case v2i64:
+      case v2f32:
+      case v2f64: return 2;
+    }
+  }
+  
   /// MVT::getIntVTBitMask - Return an integer with 1's every place there are
   /// bits in the specified integer value type.
   static inline uint64_t getIntVTBitMask(ValueType VT) {
