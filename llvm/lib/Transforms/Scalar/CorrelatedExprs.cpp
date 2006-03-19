@@ -267,6 +267,7 @@ namespace {
                              const std::vector<BasicBlock*> &RegionExitBlocks);
 
     void PropagateBranchInfo(BranchInst *BI);
+    void PropagateSwitchInfo(SwitchInst *SI);
     void PropagateEquality(Value *Op0, Value *Op1, RegionInfo &RI);
     void PropagateRelation(Instruction::BinaryOps Opcode, Value *Op0,
                            Value *Op1, RegionInfo &RI);
@@ -360,9 +361,12 @@ bool CEE::TransformRegion(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks){
   // Now that all of our successors have information if they deserve it,
   // propagate any information our terminator instruction finds to our
   // successors.
-  if (BranchInst *BI = dyn_cast<BranchInst>(TI))
+  if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
     if (BI->isConditional())
       PropagateBranchInfo(BI);
+  } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
+    PropagateSwitchInfo(SI);
+  }
 
   // If this is a branch to a block outside our region that simply performs
   // another conditional branch, one whose outcome is known inside of this
@@ -791,6 +795,22 @@ void CEE::PropagateBranchInfo(BranchInst *BI) {
   //
   PropagateEquality(BI->getCondition(), ConstantBool::False,
                     getRegionInfo(BI->getSuccessor(1)));
+}
+
+
+// PropagateSwitchInfo - We need to propagate the value tested by the
+// switch statement through each case block.
+//
+void CEE::PropagateSwitchInfo(SwitchInst *SI) {
+  // Propagate information down each of our non-default case labels.  We
+  // don't yet propagate information down the default label, because a
+  // potentially large number of inequality constraints provide less
+  // benefit per unit work than a single equality constraint.
+  //
+  Value *cond = SI->getCondition();
+  for (unsigned i = 1; i < SI->getNumSuccessors(); ++i)
+    PropagateEquality(cond, SI->getSuccessorValue(i),
+                      getRegionInfo(SI->getSuccessor(i)));
 }
 
 
