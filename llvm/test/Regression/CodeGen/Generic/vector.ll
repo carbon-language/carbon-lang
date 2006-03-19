@@ -1,5 +1,7 @@
-; RUN: llvm-as < %s | llc
 ; Test that vectors are scalarized/lowered correctly.
+; RUN: llvm-as < %s | llc && 
+; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 &&
+; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g3
 
 %f1 = type <1 x float>
 %f2 = type <2 x float>
@@ -76,3 +78,17 @@ void %test_variable_buildvector(float %F, %f4 *%S) {
   store %f4 %R, %f4 *%S
   ret void
 }
+
+;;; TEST IMPORTANT IDIOMS
+
+void %splat(%f4* %P, %f4* %Q, float %X) {
+        %tmp = insertelement %f4 undef, float %X, uint 0
+        %tmp2 = insertelement %f4 %tmp, float %X, uint 1
+        %tmp4 = insertelement %f4 %tmp2, float %X, uint 2
+        %tmp6 = insertelement %f4 %tmp4, float %X, uint 3
+	%q = load %f4* %Q
+	%R = add %f4 %q, %tmp6
+        store %f4 %R, %f4* %P
+        ret void
+}
+
