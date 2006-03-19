@@ -157,6 +157,15 @@ namespace ISD {
     /// type) with the element at IDX replaced with VAL.
     INSERT_VECTOR_ELT,
     
+    /// VECTOR_SHUFFLE(VEC1, VEC2, SHUFFLEVEC) - Returns a vector, of the same
+    /// type as VEC1/VEC2.  SHUFFLEVEC is a BUILD_VECTOR of constant int values
+    /// (regardless of whether its datatype is legal or not) that indicate
+    /// which value each result element will get.  The elements of VEC1/VEC2 are
+    /// enumerated in order.  This is quite similar to the Altivec 'vperm'
+    /// instruction, except that the indices must be constants and are in terms
+    /// of the element size of VEC1/VEC2, not in terms of bytes.
+    VECTOR_SHUFFLE,
+    
     /// BINOP(LHS, RHS,  COUNT,TYPE)
     /// Simple abstract vector operators.  Unlike the integer and floating point
     /// binary operators, these nodes also take two additional operands:
