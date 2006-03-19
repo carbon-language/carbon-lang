@@ -66,48 +66,26 @@ namespace MVT {  // MVT = Machine Value Types
     LAST_VALUETYPE =  24    // This always remains at the end of the list.
   };
 
+  /// MVT::isInteger - Return true if this is a simple integer, or a packed
+  /// vector integer type.
   static inline bool isInteger(ValueType VT) {
     return (VT >= i1 && VT <= i128) || (VT >= v8i8 && VT <= v2i64);
   }
+
+  /// MVT::isFloatingPoint - Return true if this is a simple FP, or a packed
+  /// vector FP type.
   static inline bool isFloatingPoint(ValueType VT) {
     return (VT >= f32 && VT <= f128) || (VT >= v4f32 && VT <= v2f64);
   }
+  
+  /// MVT::isVector - Return true if this is a packed vector type (i.e. not 
+  /// MVT::Vector).
   static inline bool isVector(ValueType VT) {
-    return (VT >= FIRST_VECTOR_VALUETYPE &&
-            VT <= LAST_VECTOR_VALUETYPE);
+    return VT >= FIRST_VECTOR_VALUETYPE && VT <= LAST_VECTOR_VALUETYPE;
   }
   
-  /// getVectorType - Returns the ValueType that represents a vector NumElements
-  /// in length, where each element is of type VT.  If there is no ValueType
-  /// that represents this vector, a ValueType of Other is returned.
+  /// MVT::getSizeInBits - Return the size of the specified value type in bits.
   ///
-  static inline ValueType getVectorType(ValueType VT, unsigned NumElements) {
-    switch (VT) {
-    default: 
-      break;
-    case MVT::i8:
-      if (NumElements == 8)  return MVT::v8i8;
-      if (NumElements == 16) return MVT::v16i8;
-      break;
-    case MVT::i16:
-      if (NumElements == 4)  return MVT::v4i16;
-      if (NumElements == 8)  return MVT::v8i16;
-      break;
-    case MVT::i32:
-      if (NumElements == 2)  return MVT::v2i32;
-      if (NumElements == 4)  return MVT::v4i32;
-      break;
-    case MVT::f32:
-      if (NumElements == 2)  return MVT::v2f32;
-      if (NumElements == 4)  return MVT::v4f32;
-      break;
-    case MVT::f64:
-      if (NumElements == 2)  return MVT::v2f64;
-      break;
-    }
-    return MVT::Other;
-  }
-  
   static inline unsigned getSizeInBits(ValueType VT) {
     switch (VT) {
     default: assert(0 && "ValueType has no known size!");
@@ -134,14 +112,63 @@ namespace MVT {  // MVT = Machine Value Types
     }
   }
   
-  /// getIntVTBitMask - Return an integer with 1's every place there are bits
-  /// in the specified integer value type.
+  /// MVT::getVectorType - Returns the ValueType that represents a vector
+  /// NumElements in length, where each element is of type VT.  If there is no
+  /// ValueType that represents this vector, a ValueType of Other is returned.
+  ///
+  static inline ValueType getVectorType(ValueType VT, unsigned NumElements) {
+    switch (VT) {
+    default: 
+      break;
+    case MVT::i8:
+      if (NumElements == 8)  return MVT::v8i8;
+      if (NumElements == 16) return MVT::v16i8;
+        break;
+    case MVT::i16:
+      if (NumElements == 4)  return MVT::v4i16;
+      if (NumElements == 8)  return MVT::v8i16;
+        break;
+    case MVT::i32:
+      if (NumElements == 2)  return MVT::v2i32;
+      if (NumElements == 4)  return MVT::v4i32;
+        break;
+    case MVT::f32:
+      if (NumElements == 2)  return MVT::v2f32;
+      if (NumElements == 4)  return MVT::v4f32;
+        break;
+    case MVT::f64:
+      if (NumElements == 2)  return MVT::v2f64;
+      break;
+    }
+    return MVT::Other;
+  }
+  
+  /// MVT::getVectorBaseType - Given a packed vector type, return the type of
+  /// each element.
+  static inline ValueType getVectorBaseType(ValueType VT) {
+    switch (VT) {
+    default: assert(0 && "Invalid vector type!");
+    case v8i8 :
+    case v16i8: return i8;
+    case v4i16:
+    case v8i16: return i16; 
+    case v2i32:
+    case v4i32: return i32;
+    case v2i64: return i64;
+    case v2f32:
+    case v4f32: return f32;
+    case v2f64: return f64;
+    }
+  }
+  
+  /// MVT::getIntVTBitMask - Return an integer with 1's every place there are
+  /// bits in the specified integer value type.
   static inline uint64_t getIntVTBitMask(ValueType VT) {
     assert(isInteger(VT) && !isVector(VT) && "Only applies to int scalars!");
     return ~0ULL >> (64-getSizeInBits(VT));
   }
-  /// getIntVTSignBit - Return an integer with a 1 in the position of the sign
-  /// bit for the specified integer value type.
+  /// MVT::getIntVTSignBit - Return an integer with a 1 in the position of the
+  /// sign bit for the specified integer value type.
   static inline uint64_t getIntVTSignBit(ValueType VT) {
     assert(isInteger(VT) && !isVector(VT) && "Only applies to int scalars!");
     return 1ULL << (getSizeInBits(VT)-1);

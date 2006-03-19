@@ -166,7 +166,12 @@ namespace ISD {
     /// their last two operands.
     VADD, VSUB, VMUL, VSDIV, VUDIV,
     VAND, VOR, VXOR,
-
+    
+    /// SCALAR_TO_VECTOR(VAL) - This represents the operation of loading a
+    /// scalar value into the low element of the resultant vector type.  The top
+    /// elements of the vector are undefined.
+    SCALAR_TO_VECTOR,
+    
     // MULHU/MULHS - Multiply high - Multiply two integers of type iN, producing
     // an unsigned/signed value of type i[2*n], then return the top part.
     MULHU, MULHS,
@@ -281,10 +286,9 @@ namespace ISD {
     //          integer result type.
     // ZEXTLOAD loads the integer operand and zero extends it to a larger
     //          integer result type.
-    // EXTLOAD  is used for two things: floating point extending loads, and
-    //          integer extending loads where it doesn't matter what the high
-    //          bits are set to.  The code generator is allowed to codegen this
-    //          into whichever operation is more efficient.
+    // EXTLOAD  is used for three things: floating point extending loads, 
+    //          integer extending loads [the top bits are undefined], and vector
+    //          extending loads [load into low elt].
     EXTLOAD, SEXTLOAD, ZEXTLOAD,
 
     // TRUNCSTORE - This operators truncates (for integer) or rounds (for FP) a
