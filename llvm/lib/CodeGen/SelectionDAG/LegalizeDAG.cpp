@@ -730,12 +730,16 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       std::vector<Constant*> CV;
       if (MVT::isFloatingPoint(VT)) {
         for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
-          double V = cast<ConstantFPSDNode>(Node->getOperand(i))->getValue();
+          double V = 0;
+          if (Node->getOperand(i).getOpcode() != ISD::UNDEF)
+            V = cast<ConstantFPSDNode>(Node->getOperand(i))->getValue();
           CV.push_back(ConstantFP::get(OpNTy, V));
         }
       } else {
         for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
-          uint64_t V = cast<ConstantSDNode>(Node->getOperand(i))->getValue();
+          uint64_t V = 0;
+          if (Node->getOperand(i).getOpcode() != ISD::UNDEF)
+            V = cast<ConstantSDNode>(Node->getOperand(i))->getValue();
           CV.push_back(ConstantUInt::get(OpNTy, V));
         }
       }

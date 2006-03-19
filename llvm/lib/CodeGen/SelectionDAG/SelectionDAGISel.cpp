@@ -516,13 +516,26 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
     } else if (isa<ConstantPointerNull>(C)) {
       return N = DAG.getConstant(0, TLI.getPointerTy());
     } else if (isa<UndefValue>(C)) {
-      return N = DAG.getNode(ISD::UNDEF, VT);
+      if (!isa<PackedType>(VTy))
+        return N = DAG.getNode(ISD::UNDEF, VT);
+
+      // Create a VConstant of undef nodes.
+      const PackedType *PTy = cast<PackedType>(VTy);
+      unsigned NumElements = PTy->getNumElements();
+      MVT::ValueType PVT = TLI.getValueType(PTy->getElementType());
+
+      std::vector<SDOperand> Ops;
+      Ops.assign(NumElements, DAG.getNode(ISD::UNDEF, PVT));
+      
+      // Create a VConstant node with generic Vector type.
+      Ops.push_back(DAG.getConstant(NumElements, MVT::i32));
+      Ops.push_back(DAG.getValueType(PVT));
+      return N = DAG.getNode(ISD::VConstant, MVT::Vector, Ops);
     } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
       return N = DAG.getConstantFP(CFP->getValue(), VT);
     } else if (const PackedType *PTy = dyn_cast<PackedType>(VTy)) {
       unsigned NumElements = PTy->getNumElements();
       MVT::ValueType PVT = TLI.getValueType(PTy->getElementType());
-      MVT::ValueType TVT = MVT::getVectorType(PVT, NumElements);
       
       // Now that we know the number and type of the elements, push a
       // Constant or ConstantFP node onto the ops list for each element of
@@ -551,11 +564,9 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
         Ops.assign(NumElements, Op);
       }
       
-      // Create a ConstantVec node with generic Vector type.
-      SDOperand Num = DAG.getConstant(NumElements, MVT::i32);
-      SDOperand Typ = DAG.getValueType(PVT);
-      Ops.push_back(Num);
-      Ops.push_back(Typ);
+      // Create a VConstant node with generic Vector type.
+      Ops.push_back(DAG.getConstant(NumElements, MVT::i32));
+      Ops.push_back(DAG.getValueType(PVT));
       return N = DAG.getNode(ISD::VConstant, MVT::Vector, Ops);
     } else {
       // Canonicalize all constant ints to be unsigned.
