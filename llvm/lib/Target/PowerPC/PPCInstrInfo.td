@@ -220,6 +220,8 @@ def IMPLICIT_DEF_F8  : Pseudo<(ops F8RC:$rD), "; $rD = IMPLICIT_DEF_F8",
                               [(set F8RC:$rD, (undef))]>;
 def IMPLICIT_DEF_F4  : Pseudo<(ops F4RC:$rD), "; $rD = IMPLICIT_DEF_F4",
                               [(set F4RC:$rD, (undef))]>;
+def IMPLICIT_DEF_VRRC : Pseudo<(ops VRRC:$rD), "; $rD = IMPLICIT_DEF_VRRC",
+                               [(set VRRC:$rD, (v4f32 (undef)))]>;
 
 // SELECT_CC_* - Used to implement the SELECT_CC DAG operation.  Expanded by the
 // scheduler into a branch sequence.
@@ -1147,6 +1149,8 @@ def : Pat<(v4i32 (load xoaddr:$src)),
           (v4i32 (LVX xoaddr:$src))>;
 def : Pat<(store (v4i32 VRRC:$rS), xoaddr:$dst),
           (STVX (v4i32 VRRC:$rS), xoaddr:$dst)>;
+
+def : Pat<(v4i32 (undef)), (v4i32 (IMPLICIT_DEF_VRRC))>;
 
 
 // Same as above, but using a temporary. FIXME: implement temporaries :)
