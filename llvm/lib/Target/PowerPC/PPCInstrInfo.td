@@ -216,9 +216,9 @@ def UPDATE_VRSAVE    : Pseudo<(ops GPRC:$rD, GPRC:$rS),
 }
 def IMPLICIT_DEF_GPR : Pseudo<(ops GPRC:$rD), "; $rD = IMPLICIT_DEF_GPRC",
                               [(set GPRC:$rD, (undef))]>;
-def IMPLICIT_DEF_F8  : Pseudo<(ops F8RC:$rD), "; %rD = IMPLICIT_DEF_F8",
+def IMPLICIT_DEF_F8  : Pseudo<(ops F8RC:$rD), "; $rD = IMPLICIT_DEF_F8",
                               [(set F8RC:$rD, (undef))]>;
-def IMPLICIT_DEF_F4  : Pseudo<(ops F4RC:$rD), "; %rD = IMPLICIT_DEF_F4",
+def IMPLICIT_DEF_F4  : Pseudo<(ops F4RC:$rD), "; $rD = IMPLICIT_DEF_F4",
                               [(set F4RC:$rD, (undef))]>;
 
 // SELECT_CC_* - Used to implement the SELECT_CC DAG operation.  Expanded by the
