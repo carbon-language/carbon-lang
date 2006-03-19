@@ -184,8 +184,8 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::BUILD_VECTOR, MVT::v4f32, Expand);
     setOperationAction(ISD::BUILD_VECTOR, MVT::v4i32, Expand);
     
-    setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v4f32, Expand);
-    setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v4i32, Expand);
+    setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v4f32, Custom);
+    setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v4i32, Custom);
   }
   
   setSetCCResultContents(ZeroOrOneSetCCResult);
@@ -208,6 +208,7 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::STFIWX:        return "PPCISD::STFIWX";
   case PPCISD::VMADDFP:       return "PPCISD::VMADDFP";
   case PPCISD::VNMSUBFP:      return "PPCISD::VNMSUBFP";
+  case PPCISD::LVE_X:         return "PPCISD::LVE_X";
   case PPCISD::Hi:            return "PPCISD::Hi";
   case PPCISD::Lo:            return "PPCISD::Lo";
   case PPCISD::GlobalBaseReg: return "PPCISD::GlobalBaseReg";
@@ -549,6 +550,21 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       break;
     }
     return DAG.getNode(PPCISD::RET_FLAG, MVT::Other, Copy, Copy.getValue(1));
+  }
+  case ISD::SCALAR_TO_VECTOR: {
+    // Create a stack slot that is 16-byte aligned.
+    MachineFrameInfo *FrameInfo = DAG.getMachineFunction().getFrameInfo();
+    int FrameIdx = FrameInfo->CreateStackObject(16, 16);
+    SDOperand FIdx = DAG.getFrameIndex(FrameIdx, MVT::i32);
+    
+    // Store the input value into Value#0 of the stack slot.
+    unsigned InSize = MVT::getSizeInBits(Op.getOperand(0).getValueType())/8;
+    FIdx = DAG.getNode(ISD::ADD, MVT::i32, FIdx,
+                       DAG.getConstant(16-InSize, MVT::i32));
+    SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
+                                  Op.getOperand(0), FIdx,DAG.getSrcValue(NULL));
+    return DAG.getNode(PPCISD::LVE_X, Op.getValueType(), Store, FIdx, 
+                       DAG.getSrcValue(NULL));
   }
   }
   return SDOperand();
