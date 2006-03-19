@@ -1092,6 +1092,11 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     if (OpOpcode == ISD::BIT_CONVERT)  // bitconv(bitconv(x)) -> bitconv(x)
       return getNode(ISD::BIT_CONVERT, VT, Operand.getOperand(0));
     break;
+  case ISD::SCALAR_TO_VECTOR:
+    assert(MVT::isVector(VT) && !MVT::isVector(Operand.getValueType()) &&
+           MVT::getVectorBaseType(VT) == Operand.getValueType() &&
+           "Illegal SCALAR_TO_VECTOR node!");
+    break;
   case ISD::FNEG:
     if (OpOpcode == ISD::FSUB)   // -(X-Y) -> (Y-X)
       return getNode(ISD::FSUB, VT, Operand.Val->getOperand(1),
@@ -1555,10 +1560,15 @@ SDOperand SelectionDAG::getNode(unsigned Opcode,
     // normal load.
     if (ResultTys[0] == EVT)
       return getLoad(ResultTys[0], Ops[0], Ops[1], Ops[2]);
-    assert(EVT < ResultTys[0] &&
-           "Should only be an extending load, not truncating!");
+    if (MVT::isVector(ResultTys[0])) {
+      assert(EVT == MVT::getVectorBaseType(ResultTys[0]) &&
+             "Invalid vector extload!");
+    } else {
+      assert(EVT < ResultTys[0] &&
+             "Should only be an extending load, not truncating!");
+    }
     assert((Opcode == ISD::EXTLOAD || MVT::isInteger(ResultTys[0])) &&
-           "Cannot sign/zero extend a FP load!");
+           "Cannot sign/zero extend a FP/Vector load!");
     assert(MVT::isInteger(ResultTys[0]) == MVT::isInteger(EVT) &&
            "Cannot convert from FP to Int or Int -> FP!");
     break;
@@ -2654,6 +2664,7 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::SELECT_CC:   return "select_cc";
   case ISD::INSERT_VECTOR_ELT: return "insert_vector_elt";
   case ISD::VINSERT_VECTOR_ELT: return "vinsert_vector_elt";
+  case ISD::SCALAR_TO_VECTOR:   return "scalar_to_vector";
   case ISD::ADDC:        return "addc";
   case ISD::ADDE:        return "adde";
   case ISD::SUBC:        return "subc";

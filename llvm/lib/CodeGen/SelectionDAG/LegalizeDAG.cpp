@@ -160,12 +160,15 @@ private:
 
   void LegalizeSetCCOperands(SDOperand &LHS, SDOperand &RHS, SDOperand &CC);
     
+  SDOperand CreateStackTemporary(MVT::ValueType VT);
+
   SDOperand ExpandLibCall(const char *Name, SDNode *Node,
                           SDOperand &Hi);
   SDOperand ExpandIntToFP(bool isSigned, MVT::ValueType DestTy,
                           SDOperand Source);
 
   SDOperand ExpandBIT_CONVERT(MVT::ValueType DestVT, SDOperand SrcOp);
+  SDOperand ExpandBUILD_VECTOR(SDNode *Node);
   SDOperand ExpandLegalINT_TO_FP(bool isSigned,
                                  SDOperand LegalOp,
                                  MVT::ValueType DestVT);
@@ -737,90 +740,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         break;
       }
       // FALLTHROUGH
-    case TargetLowering::Expand: {
-      // We assume that built vectors are not legal, and will be immediately
-      // spilled to memory.  If the values are all constants, turn this into a
-      // load from the constant pool.
-      bool isConstant = true;
-      for (SDNode::op_iterator I = Node->op_begin(), E = Node->op_end();
-           I != E; ++I) {
-        if (!isa<ConstantFPSDNode>(I) && !isa<ConstantSDNode>(I) &&
-            I->getOpcode() != ISD::UNDEF) {
-          isConstant = false;
-          break;
-        }
-      }
-      
-      // Create a ConstantPacked, and put it in the constant pool.
-      if (isConstant) {
-        MVT::ValueType VT = Node->getValueType(0);
-        const Type *OpNTy = 
-          MVT::getTypeForValueType(Node->getOperand(0).getValueType());
-        std::vector<Constant*> CV;
-        for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
-          if (ConstantFPSDNode *V = 
-                dyn_cast<ConstantFPSDNode>(Node->getOperand(i))) {
-            CV.push_back(ConstantFP::get(OpNTy, V->getValue()));
-          } else if (ConstantSDNode *V = 
-                         dyn_cast<ConstantSDNode>(Node->getOperand(i))) {
-            CV.push_back(ConstantUInt::get(OpNTy, V->getValue()));
-          } else {
-            assert(Node->getOperand(i).getOpcode() == ISD::UNDEF);
-            CV.push_back(UndefValue::get(OpNTy));
-          }
-        }
-        Constant *CP = ConstantPacked::get(CV);
-        SDOperand CPIdx = DAG.getConstantPool(CP, TLI.getPointerTy());
-        Result = DAG.getLoad(VT, DAG.getEntryNode(), CPIdx,
-                             DAG.getSrcValue(NULL));
-        break;
-      }
-      
-      // Otherwise, this isn't a constant entry.  Allocate a sufficiently
-      // aligned object on the stack, store each element into it, then load
-      // the result as a vector.
-      MVT::ValueType VT = Node->getValueType(0);
-      // Create the stack frame object.
-      MachineFrameInfo *FrameInfo = DAG.getMachineFunction().getFrameInfo();
-      unsigned ByteSize = MVT::getSizeInBits(VT)/8;
-      int FrameIdx = FrameInfo->CreateStackObject(ByteSize, ByteSize);
-      SDOperand FIPtr = DAG.getFrameIndex(FrameIdx, TLI.getPointerTy());
-      
-      // Emit a store of each element to the stack slot.
-      std::vector<SDOperand> Stores;
-      bool isLittleEndian = TLI.isLittleEndian();
-      unsigned TypeByteSize = 
-        MVT::getSizeInBits(Node->getOperand(0).getValueType())/8;
-      unsigned VectorSize = MVT::getSizeInBits(VT)/8;
-      // Store (in the right endianness) the elements to memory.
-      for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
-        // Ignore undef elements.
-        if (Node->getOperand(i).getOpcode() == ISD::UNDEF) continue;
-        
-        unsigned Offset;
-        if (isLittleEndian) 
-          Offset = TypeByteSize*i;
-        else
-          Offset = TypeByteSize*(e-i-1);
-
-        SDOperand Idx = DAG.getConstant(Offset, FIPtr.getValueType());
-        Idx = DAG.getNode(ISD::ADD, FIPtr.getValueType(), FIPtr, Idx);
-
-        Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
-                                     Node->getOperand(i), Idx, 
-                                     DAG.getSrcValue(NULL)));
-      }
-      
-      SDOperand StoreChain;
-      if (!Stores.empty())    // Not all undef elements?
-        StoreChain = DAG.getNode(ISD::TokenFactor, MVT::Other, Stores);
-      else
-        StoreChain = DAG.getEntryNode();
-      
-      // Result is a load from the stack slot.
-      Result = DAG.getLoad(VT, StoreChain, FIPtr, DAG.getSrcValue(0));
+    case TargetLowering::Expand:
+      Result = ExpandBUILD_VECTOR(Result.Val);
       break;
-    }
     }
     break;
   case ISD::INSERT_VECTOR_ELT:
@@ -849,6 +771,29 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // permute it into place, if the idx is a constant and if the idx is
       // supported by the target.
       assert(0 && "INSERT_VECTOR_ELT expand not supported yet!");
+      break;
+    }
+    }
+    break;
+  case ISD::SCALAR_TO_VECTOR:
+    Tmp1 = LegalizeOp(Node->getOperand(0));  // InVal
+    Result = DAG.UpdateNodeOperands(Result, Tmp1);
+    switch (TLI.getOperationAction(ISD::SCALAR_TO_VECTOR,
+                                   Node->getValueType(0))) {
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Legal:
+      break;
+    case TargetLowering::Expand: {
+      // If the target doesn't support this, store the value to a temporary
+      // stack slot, then EXTLOAD the vector back out.
+      SDOperand StackPtr = 
+        CreateStackTemporary(Node->getOperand(0).getValueType());
+      SDOperand Ch = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
+                                 Node->getOperand(0), StackPtr,
+                                 DAG.getSrcValue(NULL));
+      Result = DAG.getExtLoad(ISD::EXTLOAD, Node->getValueType(0), Ch, StackPtr,
+                              DAG.getSrcValue(NULL),
+                              Node->getOperand(0).getValueType());
       break;
     }
     }
@@ -3005,16 +2950,124 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDOperand &LHS,
 SDOperand SelectionDAGLegalize::ExpandBIT_CONVERT(MVT::ValueType DestVT, 
                                                   SDOperand SrcOp) {
   // Create the stack frame object.
-  MachineFrameInfo *FrameInfo = DAG.getMachineFunction().getFrameInfo();
-  unsigned ByteSize = MVT::getSizeInBits(DestVT)/8;
-  int FrameIdx = FrameInfo->CreateStackObject(ByteSize, ByteSize);
-  SDOperand FIPtr = DAG.getFrameIndex(FrameIdx, TLI.getPointerTy());
+  SDOperand FIPtr = CreateStackTemporary(DestVT);
   
   // Emit a store to the stack slot.
   SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
                                 SrcOp, FIPtr, DAG.getSrcValue(NULL));
   // Result is a load from the stack slot.
   return DAG.getLoad(DestVT, Store, FIPtr, DAG.getSrcValue(0));
+}
+
+/// ExpandBUILD_VECTOR - Expand a BUILD_VECTOR node on targets that don't
+/// support the operation, but do support the resultant packed vector type.
+SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
+  
+  // If the only non-undef value is the low element, turn this into a 
+  // SCALAR_TO_VECTOR node.
+  bool isOnlyLowElement = true;
+  for (SDNode::op_iterator I = Node->op_begin()+1, E = Node->op_end();
+       I != E; ++I) {
+    if (I->getOpcode() != ISD::UNDEF) {
+      isOnlyLowElement = false;
+      break;
+    }
+  }
+  
+  if (isOnlyLowElement) {
+    // If the low element is an undef too, then this whole things is an undef.
+    if (Node->getOperand(0).getOpcode() == ISD::UNDEF)
+      return DAG.getNode(ISD::UNDEF, Node->getValueType(0));
+    // Otherwise, turn this into a scalar_to_vector node.
+    return DAG.getNode(ISD::SCALAR_TO_VECTOR, Node->getValueType(0),
+                       Node->getOperand(0));
+  }
+  
+  // If the elements are all constants, turn this into a load from the constant
+  // pool.
+  bool isConstant = true;
+  for (SDNode::op_iterator I = Node->op_begin(), E = Node->op_end();
+       I != E; ++I) {
+    if (!isa<ConstantFPSDNode>(I) && !isa<ConstantSDNode>(I) &&
+        I->getOpcode() != ISD::UNDEF) {
+      isConstant = false;
+      break;
+    }
+  }
+  
+  // Create a ConstantPacked, and put it in the constant pool.
+  if (isConstant) {
+    MVT::ValueType VT = Node->getValueType(0);
+    const Type *OpNTy = 
+      MVT::getTypeForValueType(Node->getOperand(0).getValueType());
+    std::vector<Constant*> CV;
+    for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
+      if (ConstantFPSDNode *V = 
+          dyn_cast<ConstantFPSDNode>(Node->getOperand(i))) {
+        CV.push_back(ConstantFP::get(OpNTy, V->getValue()));
+      } else if (ConstantSDNode *V = 
+                 dyn_cast<ConstantSDNode>(Node->getOperand(i))) {
+        CV.push_back(ConstantUInt::get(OpNTy, V->getValue()));
+      } else {
+        assert(Node->getOperand(i).getOpcode() == ISD::UNDEF);
+        CV.push_back(UndefValue::get(OpNTy));
+      }
+    }
+    Constant *CP = ConstantPacked::get(CV);
+    SDOperand CPIdx = DAG.getConstantPool(CP, TLI.getPointerTy());
+    return DAG.getLoad(VT, DAG.getEntryNode(), CPIdx,
+                       DAG.getSrcValue(NULL));
+  }
+  
+  // Otherwise, we can't handle this case efficiently.  Allocate a sufficiently
+  // aligned object on the stack, store each element into it, then load
+  // the result as a vector.
+  MVT::ValueType VT = Node->getValueType(0);
+  // Create the stack frame object.
+  SDOperand FIPtr = CreateStackTemporary(VT);
+  
+  // Emit a store of each element to the stack slot.
+  std::vector<SDOperand> Stores;
+  bool isLittleEndian = TLI.isLittleEndian();
+  unsigned TypeByteSize = 
+    MVT::getSizeInBits(Node->getOperand(0).getValueType())/8;
+  unsigned VectorSize = MVT::getSizeInBits(VT)/8;
+  // Store (in the right endianness) the elements to memory.
+  for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
+    // Ignore undef elements.
+    if (Node->getOperand(i).getOpcode() == ISD::UNDEF) continue;
+    
+    unsigned Offset;
+    if (isLittleEndian) 
+      Offset = TypeByteSize*i;
+    else
+      Offset = TypeByteSize*(e-i-1);
+    
+    SDOperand Idx = DAG.getConstant(Offset, FIPtr.getValueType());
+    Idx = DAG.getNode(ISD::ADD, FIPtr.getValueType(), FIPtr, Idx);
+    
+    Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
+                                 Node->getOperand(i), Idx, 
+                                 DAG.getSrcValue(NULL)));
+  }
+  
+  SDOperand StoreChain;
+  if (!Stores.empty())    // Not all undef elements?
+    StoreChain = DAG.getNode(ISD::TokenFactor, MVT::Other, Stores);
+  else
+    StoreChain = DAG.getEntryNode();
+  
+  // Result is a load from the stack slot.
+  return DAG.getLoad(VT, StoreChain, FIPtr, DAG.getSrcValue(0));
+}
+
+/// CreateStackTemporary - Create a stack temporary, suitable for holding the
+/// specified value type.
+SDOperand SelectionDAGLegalize::CreateStackTemporary(MVT::ValueType VT) {
+  MachineFrameInfo *FrameInfo = DAG.getMachineFunction().getFrameInfo();
+  unsigned ByteSize = MVT::getSizeInBits(VT)/8;
+  int FrameIdx = FrameInfo->CreateStackObject(ByteSize, ByteSize);
+  return DAG.getFrameIndex(FrameIdx, TLI.getPointerTy());
 }
 
 void SelectionDAGLegalize::ExpandShiftParts(unsigned NodeOp,
