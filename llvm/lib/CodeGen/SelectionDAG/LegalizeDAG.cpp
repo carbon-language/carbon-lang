@@ -783,9 +783,18 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Legal:
       break;
+    case TargetLowering::Custom:
+      Tmp3 = TLI.LowerOperation(Result, DAG);
+      if (Tmp3.Val) {
+        Result = Tmp3;
+        break;
+      }
+      // FALLTHROUGH
     case TargetLowering::Expand: {
       // If the target doesn't support this, store the value to a temporary
       // stack slot, then EXTLOAD the vector back out.
+      // TODO: If a target doesn't support this, create a stack slot for the
+      // whole vector, then store into it, then load the whole vector.
       SDOperand StackPtr = 
         CreateStackTemporary(Node->getOperand(0).getValueType());
       SDOperand Ch = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
