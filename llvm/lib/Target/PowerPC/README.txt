@@ -536,3 +536,13 @@ void foo(void) {
   bar (x);
 }
 
+===-------------------------------------------------------------------------===
+
+Altivec: Codegen'ing MUL with vector FMADD should add -0.0, not 0.0:
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=8763
+
+We need to codegen -0.0 vector efficiently (no constant pool load).
+
+When -ffast-math is on, we can use 0.0.
+
+===-------------------------------------------------------------------------===
