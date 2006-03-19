@@ -794,6 +794,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       unsigned VectorSize = MVT::getSizeInBits(VT)/8;
       // Store (in the right endianness) the elements to memory.
       for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
+        // Ignore undef elements.
+        if (Node->getOperand(i).getOpcode() == ISD::UNDEF) continue;
+        
         unsigned Offset;
         if (isLittleEndian) 
           Offset = TypeByteSize*i;
@@ -807,7 +810,12 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                                      Node->getOperand(i), Idx, 
                                      DAG.getSrcValue(NULL)));
       }
-      SDOperand StoreChain = DAG.getNode(ISD::TokenFactor, MVT::Other, Stores);
+      
+      SDOperand StoreChain;
+      if (!Stores.empty())    // Not all undef elements?
+        StoreChain = DAG.getNode(ISD::TokenFactor, MVT::Other, Stores);
+      else
+        StoreChain = DAG.getEntryNode();
       
       // Result is a load from the stack slot.
       Result = DAG.getLoad(VT, StoreChain, FIPtr, DAG.getSrcValue(0));
