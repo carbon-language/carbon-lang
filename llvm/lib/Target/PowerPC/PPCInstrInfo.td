@@ -301,9 +301,6 @@ def LHA : DForm_1<42, (ops GPRC:$rD, memri:$src),
 def LHZ : DForm_1<40, (ops GPRC:$rD, memri:$src),
                   "lhz $rD, $src", LdStGeneral,
                   [(set GPRC:$rD, (zextload iaddr:$src, i16))]>;
-def LMW : DForm_1<46, (ops GPRC:$rD, s16imm:$disp, GPRC:$rA),
-                  "lmw $rD, $disp($rA)", LdStLMW,
-                  []>;
 def LWZ : DForm_1<32, (ops GPRC:$rD, memri:$src),
                   "lwz $rD, $src", LdStGeneral,
                   [(set GPRC:$rD, (load iaddr:$src))]>;
@@ -343,9 +340,6 @@ def LIS : DForm_2_r0<15, (ops GPRC:$rD, symbolHi:$imm),
                      [(set GPRC:$rD, imm16Shifted:$imm)]>;
 }
 let isStore = 1, noResults = 1, PPC970_Unit = 2 in {
-def STMW : DForm_3<47, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
-                   "stmw $rS, $disp($rA)", LdStLMW,
-                   []>;
 def STB  : DForm_3<38, (ops GPRC:$rS, memri:$src),
                    "stb $rS, $src", LdStGeneral,
                    [(truncstore GPRC:$rS, iaddr:$src, i8)]>;
