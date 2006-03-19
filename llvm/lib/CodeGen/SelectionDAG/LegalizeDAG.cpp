@@ -729,62 +729,92 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
   case ISD::BUILD_VECTOR:
     switch (TLI.getOperationAction(ISD::BUILD_VECTOR, Node->getValueType(0))) {
-      default: assert(0 && "This action is not supported yet!");
-      case TargetLowering::Custom:
-        Tmp3 = TLI.LowerOperation(Result, DAG);
-        if (Tmp3.Val) {
-          Result = Tmp3;
-          break;
-        }
-          // FALLTHROUGH
-        case TargetLowering::Expand: {
-          // We assume that built vectors are not legal, and will be immediately
-          // spilled to memory.  If the values are all constants, turn this into a
-          // load from the constant pool.
-          bool isConstant = true;
-          for (SDNode::op_iterator I = Node->op_begin(), E = Node->op_end();
-               I != E; ++I) {
-            if (!isa<ConstantFPSDNode>(I) && !isa<ConstantSDNode>(I) &&
-                I->getOpcode() != ISD::UNDEF) {
-              isConstant = false;
-              break;
-            }
-          }
-          
-          // Create a ConstantPacked, and put it in the constant pool.
-          if (isConstant) {
-            MVT::ValueType VT = Node->getValueType(0);
-            const Type *OpNTy = 
-              MVT::getTypeForValueType(Node->getOperand(0).getValueType());
-            std::vector<Constant*> CV;
-            for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
-              if (ConstantFPSDNode *V = 
-                    dyn_cast<ConstantFPSDNode>(Node->getOperand(i))) {
-                CV.push_back(ConstantFP::get(OpNTy, V->getValue()));
-              } else if (ConstantSDNode *V = 
-                             dyn_cast<ConstantSDNode>(Node->getOperand(i))) {
-                CV.push_back(ConstantUInt::get(OpNTy, V->getValue()));
-              } else {
-                assert(Node->getOperand(i).getOpcode() == ISD::UNDEF);
-                CV.push_back(UndefValue::get(OpNTy));
-              }
-            }
-            Constant *CP = ConstantPacked::get(CV);
-            SDOperand CPIdx = DAG.getConstantPool(CP, TLI.getPointerTy());
-            Result = DAG.getLoad(VT, DAG.getEntryNode(), CPIdx,
-                                 DAG.getSrcValue(NULL));
-            break;
-          }
-          
-          // Otherwise, this isn't a constant entry.  Allocate a sufficiently
-          // aligned object on the stack, store each element into it, then load
-          // the result as a vector.
-          assert(0 && "Cannot lower variable BUILD_VECTOR yet!");
-          abort();
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Custom:
+      Tmp3 = TLI.LowerOperation(Result, DAG);
+      if (Tmp3.Val) {
+        Result = Tmp3;
+        break;
+      }
+      // FALLTHROUGH
+    case TargetLowering::Expand: {
+      // We assume that built vectors are not legal, and will be immediately
+      // spilled to memory.  If the values are all constants, turn this into a
+      // load from the constant pool.
+      bool isConstant = true;
+      for (SDNode::op_iterator I = Node->op_begin(), E = Node->op_end();
+           I != E; ++I) {
+        if (!isa<ConstantFPSDNode>(I) && !isa<ConstantSDNode>(I) &&
+            I->getOpcode() != ISD::UNDEF) {
+          isConstant = false;
           break;
         }
       }
+      
+      // Create a ConstantPacked, and put it in the constant pool.
+      if (isConstant) {
+        MVT::ValueType VT = Node->getValueType(0);
+        const Type *OpNTy = 
+          MVT::getTypeForValueType(Node->getOperand(0).getValueType());
+        std::vector<Constant*> CV;
+        for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
+          if (ConstantFPSDNode *V = 
+                dyn_cast<ConstantFPSDNode>(Node->getOperand(i))) {
+            CV.push_back(ConstantFP::get(OpNTy, V->getValue()));
+          } else if (ConstantSDNode *V = 
+                         dyn_cast<ConstantSDNode>(Node->getOperand(i))) {
+            CV.push_back(ConstantUInt::get(OpNTy, V->getValue()));
+          } else {
+            assert(Node->getOperand(i).getOpcode() == ISD::UNDEF);
+            CV.push_back(UndefValue::get(OpNTy));
+          }
+        }
+        Constant *CP = ConstantPacked::get(CV);
+        SDOperand CPIdx = DAG.getConstantPool(CP, TLI.getPointerTy());
+        Result = DAG.getLoad(VT, DAG.getEntryNode(), CPIdx,
+                             DAG.getSrcValue(NULL));
+        break;
+      }
+      
+      // Otherwise, this isn't a constant entry.  Allocate a sufficiently
+      // aligned object on the stack, store each element into it, then load
+      // the result as a vector.
+      assert(0 && "Cannot lower variable BUILD_VECTOR yet!");
+      abort();
       break;
+    }
+    }
+    break;
+  case ISD::INSERT_VECTOR_ELT:
+    Tmp1 = LegalizeOp(Node->getOperand(0));  // InVec
+    Tmp2 = LegalizeOp(Node->getOperand(1));  // InVal
+    Tmp3 = LegalizeOp(Node->getOperand(2));  // InEltNo
+    Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3);
+    
+    switch (TLI.getOperationAction(ISD::INSERT_VECTOR_ELT,
+                                   Node->getValueType(0))) {
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Legal:
+      break;
+    case TargetLowering::Custom:
+      Tmp3 = TLI.LowerOperation(Result, DAG);
+      if (Tmp3.Val) {
+        Result = Tmp3;
+        break;
+      }
+      // FALLTHROUGH
+    case TargetLowering::Expand: {
+      // If the target doesn't support this, we have to spill the input vector
+      // to a temporary stack slot, update the element, then reload it.  This is
+      // badness.  We could also load the value into a vector register (either
+      // with a "move to register" or "extload into register" instruction, then
+      // permute it into place, if the idx is a constant and if the idx is
+      // supported by the target.
+      assert(0 && "INSERT_VECTOR_ELT expand not supported yet!");
+      break;
+    }
+    }
+    break;
   case ISD::CALLSEQ_START: {
     SDNode *CallEnd = FindCallEndFromCallStart(Node);
     
@@ -4104,7 +4134,9 @@ SDOperand SelectionDAGLegalize::PackVectorOp(SDOperand Op,
   
   SDOperand Result;
   switch (Node->getOpcode()) {
-  default: assert(0 && "Unknown vector operation!");
+  default: 
+    Node->dump(); std::cerr << "\n";
+    assert(0 && "Unknown vector operation in PackVectorOp!");
   case ISD::VADD:
   case ISD::VSUB:
   case ISD::VMUL:
@@ -4136,6 +4168,16 @@ SDOperand SelectionDAGLegalize::PackVectorOp(SDOperand Op,
       // Returning a BUILD_VECTOR?
       std::vector<SDOperand> Ops(Node->op_begin(), Node->op_end()-2);
       Result = DAG.getNode(ISD::BUILD_VECTOR, NewVT, Ops);
+    }
+    break;
+  case ISD::VINSERT_VECTOR_ELT:
+    if (!MVT::isVector(NewVT)) {
+      // Returning a scalar?  Must be the inserted element.
+      Result = Node->getOperand(1);
+    } else {
+      Result = DAG.getNode(ISD::INSERT_VECTOR_ELT, NewVT,
+                           PackVectorOp(Node->getOperand(0), NewVT),
+                           Node->getOperand(1), Node->getOperand(2));
     }
     break;
   }
