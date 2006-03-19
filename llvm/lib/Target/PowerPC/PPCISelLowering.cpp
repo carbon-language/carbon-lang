@@ -179,10 +179,10 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::LOAD       , MVT::v4f32, Legal);
     setOperationAction(ISD::ADD        , MVT::v4i32, Legal);
     setOperationAction(ISD::LOAD       , MVT::v4i32, Legal);
-    // FIXME: We don't support any ConstantVec's yet.  We should custom expand
+    // FIXME: We don't support any BUILD_VECTOR's yet.  We should custom expand
     // the ones we do!
-    setOperationAction(ISD::ConstantVec, MVT::v4f32, Expand);
-    setOperationAction(ISD::ConstantVec, MVT::v4i32, Expand);
+    setOperationAction(ISD::BUILD_VECTOR, MVT::v4f32, Expand);
+    setOperationAction(ISD::BUILD_VECTOR, MVT::v4i32, Expand);
   }
   
   setSetCCResultContents(ZeroOrOneSetCCResult);

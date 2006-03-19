@@ -263,9 +263,9 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     addRegisterClass(MVT::v2i32, X86::VR64RegisterClass);
 
     // FIXME: add MMX packed arithmetics
-    setOperationAction(ISD::ConstantVec, MVT::v8i8,  Expand);
-    setOperationAction(ISD::ConstantVec, MVT::v4i16, Expand);
-    setOperationAction(ISD::ConstantVec, MVT::v2i32, Expand);
+    setOperationAction(ISD::BUILD_VECTOR, MVT::v8i8,  Expand);
+    setOperationAction(ISD::BUILD_VECTOR, MVT::v4i16, Expand);
+    setOperationAction(ISD::BUILD_VECTOR, MVT::v2i32, Expand);
   }
 
   if (TM.getSubtarget<X86Subtarget>().hasSSE1()) {
@@ -275,7 +275,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::SUB        , MVT::v4f32, Legal);
     setOperationAction(ISD::MUL        , MVT::v4f32, Legal);
     setOperationAction(ISD::LOAD       , MVT::v4f32, Legal);
-    setOperationAction(ISD::ConstantVec, MVT::v4f32, Expand);
+    setOperationAction(ISD::BUILD_VECTOR, MVT::v4f32, Expand);
   }
 
   if (TM.getSubtarget<X86Subtarget>().hasSSE2()) {
@@ -290,11 +290,11 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::SUB        , MVT::v2f64, Legal);
     setOperationAction(ISD::MUL        , MVT::v2f64, Legal);
     setOperationAction(ISD::LOAD       , MVT::v2f64, Legal);
-    setOperationAction(ISD::ConstantVec, MVT::v2f64, Expand);
-    setOperationAction(ISD::ConstantVec, MVT::v16i8, Expand);
-    setOperationAction(ISD::ConstantVec, MVT::v8i16, Expand);
-    setOperationAction(ISD::ConstantVec, MVT::v4i32, Expand);
-    setOperationAction(ISD::ConstantVec, MVT::v2i64, Expand);
+    setOperationAction(ISD::BUILD_VECTOR, MVT::v2f64, Expand);
+    setOperationAction(ISD::BUILD_VECTOR, MVT::v16i8, Expand);
+    setOperationAction(ISD::BUILD_VECTOR, MVT::v8i16, Expand);
+    setOperationAction(ISD::BUILD_VECTOR, MVT::v4i32, Expand);
+    setOperationAction(ISD::BUILD_VECTOR, MVT::v2i64, Expand);
   }
 
   computeRegisterProperties();
