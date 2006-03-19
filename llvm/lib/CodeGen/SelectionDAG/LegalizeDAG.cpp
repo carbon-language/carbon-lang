@@ -452,7 +452,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::TargetFrameIndex:
   case ISD::TargetConstant:
   case ISD::TargetConstantFP:
-  case ISD::TargetConstantVec:
   case ISD::TargetConstantPool:
   case ISD::TargetGlobalAddress:
   case ISD::TargetExternalSymbol:
@@ -709,47 +708,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
   }
-  case ISD::ConstantVec:
-    switch (TLI.getOperationAction(ISD::ConstantVec, Node->getValueType(0))) {
-    default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Custom:
-      Tmp3 = TLI.LowerOperation(Result, DAG);
-      if (Tmp3.Val) {
-        Result = Tmp3;
-        break;
-      }
-      // FALLTHROUGH
-    case TargetLowering::Expand:
-      // We assume that vector constants are not legal, and will be immediately
-      // spilled to the constant pool.
-      //
-      // Create a ConstantPacked, and put it in the constant pool.
-      MVT::ValueType VT = Node->getValueType(0);
-      const Type *OpNTy = 
-        MVT::getTypeForValueType(Node->getOperand(0).getValueType());
-      std::vector<Constant*> CV;
-      if (MVT::isFloatingPoint(VT)) {
-        for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
-          double V = 0;
-          if (Node->getOperand(i).getOpcode() != ISD::UNDEF)
-            V = cast<ConstantFPSDNode>(Node->getOperand(i))->getValue();
-          CV.push_back(ConstantFP::get(OpNTy, V));
-        }
-      } else {
-        for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
-          uint64_t V = 0;
-          if (Node->getOperand(i).getOpcode() != ISD::UNDEF)
-            V = cast<ConstantSDNode>(Node->getOperand(i))->getValue();
-          CV.push_back(ConstantUInt::get(OpNTy, V));
-        }
-      }
-      Constant *CP = ConstantPacked::get(CV);
-      SDOperand CPIdx = DAG.getConstantPool(CP, TLI.getPointerTy());
-      Result = DAG.getLoad(VT, DAG.getEntryNode(), CPIdx,
-                           DAG.getSrcValue(NULL));
-      break;
-    }
-    break;
   case ISD::TokenFactor:
     if (Node->getNumOperands() == 2) {
       Tmp1 = LegalizeOp(Node->getOperand(0));
@@ -769,6 +727,64 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
 
+  case ISD::BUILD_VECTOR:
+    switch (TLI.getOperationAction(ISD::BUILD_VECTOR, Node->getValueType(0))) {
+      default: assert(0 && "This action is not supported yet!");
+      case TargetLowering::Custom:
+        Tmp3 = TLI.LowerOperation(Result, DAG);
+        if (Tmp3.Val) {
+          Result = Tmp3;
+          break;
+        }
+          // FALLTHROUGH
+        case TargetLowering::Expand: {
+          // We assume that built vectors are not legal, and will be immediately
+          // spilled to memory.  If the values are all constants, turn this into a
+          // load from the constant pool.
+          bool isConstant = true;
+          for (SDNode::op_iterator I = Node->op_begin(), E = Node->op_end();
+               I != E; ++I) {
+            if (!isa<ConstantFPSDNode>(I) && !isa<ConstantSDNode>(I) &&
+                I->getOpcode() != ISD::UNDEF) {
+              isConstant = false;
+              break;
+            }
+          }
+          
+          // Create a ConstantPacked, and put it in the constant pool.
+          if (isConstant) {
+            MVT::ValueType VT = Node->getValueType(0);
+            const Type *OpNTy = 
+              MVT::getTypeForValueType(Node->getOperand(0).getValueType());
+            std::vector<Constant*> CV;
+            for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
+              if (ConstantFPSDNode *V = 
+                    dyn_cast<ConstantFPSDNode>(Node->getOperand(i))) {
+                CV.push_back(ConstantFP::get(OpNTy, V->getValue()));
+              } else if (ConstantSDNode *V = 
+                             dyn_cast<ConstantSDNode>(Node->getOperand(i))) {
+                CV.push_back(ConstantUInt::get(OpNTy, V->getValue()));
+              } else {
+                assert(Node->getOperand(i).getOpcode() == ISD::UNDEF);
+                CV.push_back(UndefValue::get(OpNTy));
+              }
+            }
+            Constant *CP = ConstantPacked::get(CV);
+            SDOperand CPIdx = DAG.getConstantPool(CP, TLI.getPointerTy());
+            Result = DAG.getLoad(VT, DAG.getEntryNode(), CPIdx,
+                                 DAG.getSrcValue(NULL));
+            break;
+          }
+          
+          // Otherwise, this isn't a constant entry.  Allocate a sufficiently
+          // aligned object on the stack, store each element into it, then load
+          // the result as a vector.
+          assert(0 && "Cannot lower variable BUILD_VECTOR yet!");
+          abort();
+          break;
+        }
+      }
+      break;
   case ISD::CALLSEQ_START: {
     SDNode *CallEnd = FindCallEndFromCallStart(Node);
     
@@ -4011,16 +4027,16 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
   
   switch (Node->getOpcode()) {
   default: assert(0 && "Unknown vector operation!");
-  case ISD::VConstant: {
+  case ISD::VBUILD_VECTOR: {
     std::vector<SDOperand> LoOps(Node->op_begin(), Node->op_begin()+NewNumElts);
     LoOps.push_back(NewNumEltsNode);
     LoOps.push_back(TypeNode);
-    Lo = DAG.getNode(ISD::VConstant, MVT::Vector, LoOps);
+    Lo = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, LoOps);
 
     std::vector<SDOperand> HiOps(Node->op_begin()+NewNumElts, Node->op_end()-2);
     HiOps.push_back(NewNumEltsNode);
     HiOps.push_back(TypeNode);
-    Hi = DAG.getNode(ISD::VConstant, MVT::Vector, HiOps);
+    Hi = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, HiOps);
     break;
   }
   case ISD::VADD:
@@ -4112,15 +4128,14 @@ SDOperand SelectionDAGLegalize::PackVectorOp(SDOperand Op,
     AddLegalizedOperand(Op.getValue(1), LegalizeOp(Result.getValue(1)));
     break;
   }
-  case ISD::VConstant:
+  case ISD::VBUILD_VECTOR:
     if (!MVT::isVector(NewVT)) {
+      // Returning a scalar?
       Result = Node->getOperand(0);
     } else {
-      // If type of bisected vector is legal, turn it into a ConstantVec (which
-      // will be lowered to a ConstantPool or something else). Otherwise, bisect
-      // the VConstant, and return each half as a new VConstant.
+      // Returning a BUILD_VECTOR?
       std::vector<SDOperand> Ops(Node->op_begin(), Node->op_end()-2);
-      Result = DAG.getNode(ISD::ConstantVec, NewVT, Ops);
+      Result = DAG.getNode(ISD::BUILD_VECTOR, NewVT, Ops);
     }
     break;
   }

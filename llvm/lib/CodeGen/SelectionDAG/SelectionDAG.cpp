@@ -2598,15 +2598,14 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::ConstantPool:  return "ConstantPool";
   case ISD::ExternalSymbol: return "ExternalSymbol";
 
-  case ISD::ConstantVec:   return "ConstantVec";
+  case ISD::BUILD_VECTOR:   return "BUILD_VECTOR";
   case ISD::TargetConstant: return "TargetConstant";
   case ISD::TargetConstantFP:return "TargetConstantFP";
-  case ISD::TargetConstantVec:return "TargetConstantVec";
   case ISD::TargetGlobalAddress: return "TargetGlobalAddress";
   case ISD::TargetFrameIndex: return "TargetFrameIndex";
   case ISD::TargetConstantPool:  return "TargetConstantPool";
   case ISD::TargetExternalSymbol: return "TargetExternalSymbol";
-  case ISD::VConstant:     return "VConstant";
+  case ISD::VBUILD_VECTOR: return "VBUILD_VECTOR";
 
   case ISD::CopyToReg:     return "CopyToReg";
   case ISD::CopyFromReg:   return "CopyFromReg";

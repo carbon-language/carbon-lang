@@ -519,7 +519,7 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
       if (!isa<PackedType>(VTy))
         return N = DAG.getNode(ISD::UNDEF, VT);
 
-      // Create a VConstant of undef nodes.
+      // Create a VBUILD_VECTOR of undef nodes.
       const PackedType *PTy = cast<PackedType>(VTy);
       unsigned NumElements = PTy->getNumElements();
       MVT::ValueType PVT = TLI.getValueType(PTy->getElementType());
@@ -530,7 +530,7 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
       // Create a VConstant node with generic Vector type.
       Ops.push_back(DAG.getConstant(NumElements, MVT::i32));
       Ops.push_back(DAG.getValueType(PVT));
-      return N = DAG.getNode(ISD::VConstant, MVT::Vector, Ops);
+      return N = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, Ops);
     } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
       return N = DAG.getConstantFP(CFP->getValue(), VT);
     } else if (const PackedType *PTy = dyn_cast<PackedType>(VTy)) {
@@ -564,10 +564,10 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
         Ops.assign(NumElements, Op);
       }
       
-      // Create a VConstant node with generic Vector type.
+      // Create a VBUILD_VECTOR node with generic Vector type.
       Ops.push_back(DAG.getConstant(NumElements, MVT::i32));
       Ops.push_back(DAG.getValueType(PVT));
-      return N = DAG.getNode(ISD::VConstant, MVT::Vector, Ops);
+      return N = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, Ops);
     } else {
       // Canonicalize all constant ints to be unsigned.
       return N = DAG.getConstant(cast<ConstantIntegral>(C)->getRawValue(),VT);
