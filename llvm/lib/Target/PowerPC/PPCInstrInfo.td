@@ -955,6 +955,10 @@ def VNMSUBFP: VAForm_1<47, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, VRRC:$vC),
                                                   VRRC:$vB)))]>,
                        Requires<[FPContractions]>;
 
+def VPERM   : VAForm_1<43, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, VRRC:$vC),
+                       "vperm $vD, $vA, $vC, $vB", VecFP, []>;
+
+
 // VX-Form instructions.  AltiVec arithmetic ops.
 def VADDFP : VXForm_1<10, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       "vaddfp $vD, $vA, $vB", VecFP,
