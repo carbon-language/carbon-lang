@@ -66,7 +66,23 @@ public:
 ///
 class ImmediateDominatorsBase : public DominatorBase {
 protected:
+  struct InfoRec {
+    unsigned Semi;
+    unsigned Size;
+    BasicBlock *Label, *Parent, *Child, *Ancestor;
+    
+    std::vector<BasicBlock*> Bucket;
+    
+    InfoRec() : Semi(0), Size(0), Label(0), Parent(0), Child(0), Ancestor(0){}
+  };
+  
   std::map<BasicBlock*, BasicBlock*> IDoms;
+
+  // Vertex - Map the DFS number to the BasicBlock*
+  std::vector<BasicBlock*> Vertex;
+  
+  // Info - Collection of information used during the computation of idoms.
+  std::map<BasicBlock*, InfoRec> Info;
 public:
   ImmediateDominatorsBase(bool isPostDom) : DominatorBase(isPostDom) {}
 
@@ -139,22 +155,6 @@ struct ImmediateDominators : public ImmediateDominatorsBase {
   }
 
 private:
-  struct InfoRec {
-    unsigned Semi;
-    unsigned Size;
-    BasicBlock *Label, *Parent, *Child, *Ancestor;
-
-    std::vector<BasicBlock*> Bucket;
-
-    InfoRec() : Semi(0), Size(0), Label(0), Parent(0), Child(0), Ancestor(0){}
-  };
-
-  // Vertex - Map the DFS number to the BasicBlock*
-  std::vector<BasicBlock*> Vertex;
-
-  // Info - Collection of information used during the computation of idoms.
-  std::map<BasicBlock*, InfoRec> Info;
-
   unsigned DFSPass(BasicBlock *V, InfoRec &VInfo, unsigned N);
   void Compress(BasicBlock *V, InfoRec &VInfo);
   BasicBlock *Eval(BasicBlock *v);
