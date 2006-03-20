@@ -63,14 +63,14 @@ static bool LHSIsSubsetOfRHS(const std::vector<unsigned char> &LHS,
 
 /// isExtIntegerVT - Return true if the specified extended value type vector
 /// contains isInt or an integer value type.
-static bool isExtIntegerInVTs(std::vector<unsigned char> EVTs) {
+static bool isExtIntegerInVTs(const std::vector<unsigned char> &EVTs) {
   assert(!EVTs.empty() && "Cannot check for integer in empty ExtVT list!");
   return EVTs[0] == MVT::isInt || !(FilterEVTs(EVTs, MVT::isInteger).empty());
 }
 
 /// isExtFloatingPointVT - Return true if the specified extended value type 
 /// vector contains isFP or a FP value type.
-static bool isExtFloatingPointInVTs(std::vector<unsigned char> EVTs) {
+static bool isExtFloatingPointInVTs(const std::vector<unsigned char> &EVTs) {
   assert(!EVTs.empty() && "Cannot check for integer in empty ExtVT list!");
   return EVTs[0] == MVT::isFP ||
          !(FilterEVTs(EVTs, MVT::isFloatingPoint).empty());
@@ -103,6 +103,10 @@ SDTypeConstraint::SDTypeConstraint(Record *R) {
     ConstraintType = SDTCisOpSmallerThanOp;
     x.SDTCisOpSmallerThanOp_Info.BigOperandNum = 
       R->getValueAsInt("BigOperandNum");
+  } else if (R->isSubClassOf("SDTCisIntVectorOfSameSize")) {
+    ConstraintType = SDTCisIntVectorOfSameSize;
+    x.SDTCisIntVectorOfSameSize_Info.OtherOperandNum =
+      R->getValueAsInt("OtherOpNum");
   } else {
     std::cerr << "Unrecognized SDTypeConstraint '" << R->getName() << "'!\n";
     exit(1);
@@ -258,6 +262,19 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
       break;
     }    
     return MadeChange;
+  }
+  case SDTCisIntVectorOfSameSize: {
+    TreePatternNode *OtherOperand =
+      getOperandNum(x.SDTCisIntVectorOfSameSize_Info.OtherOperandNum,
+                    N, NumResults);
+    if (OtherOperand->hasTypeSet()) {
+      if (!MVT::isVector(OtherOperand->getTypeNum(0)))
+        TP.error(N->getOperator()->getName() + " VT operand must be a vector!");
+      MVT::ValueType IVT = OtherOperand->getTypeNum(0);
+      IVT = MVT::getIntVectorWithNumElements(MVT::getVectorNumElements(IVT));
+      return NodeToApply->UpdateNodeType(IVT, TP);
+    }
+    return false;
   }
   }  
   return false;
