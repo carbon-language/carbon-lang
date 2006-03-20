@@ -807,6 +807,21 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     }
     break;
+  case ISD::VECTOR_SHUFFLE:
+    assert(TLI.isShuffleLegal(Result.getValueType(), Node->getOperand(2)) &&
+           "vector shuffle should not be created if not legal!");
+    Tmp1 = LegalizeOp(Node->getOperand(0));   // Legalize the input vectors,
+    Tmp2 = LegalizeOp(Node->getOperand(1));   // but not the shuffle mask.
+    Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Node->getOperand(2));
+
+    // Allow targets to custom lower the SHUFFLEs they support.
+    if (TLI.getOperationAction(ISD::VECTOR_SHUFFLE, Result.getValueType())
+        == TargetLowering::Custom) {
+      Tmp1 = TLI.LowerOperation(Result, DAG);
+      if (Tmp1.Val) Result = Tmp1;
+    }
+    break;
+    
   case ISD::CALLSEQ_START: {
     SDNode *CallEnd = FindCallEndFromCallStart(Node);
     
@@ -2973,14 +2988,15 @@ SDOperand SelectionDAGLegalize::ExpandBIT_CONVERT(MVT::ValueType DestVT,
 SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
   
   // If the only non-undef value is the low element, turn this into a 
-  // SCALAR_TO_VECTOR node.
+  // SCALAR_TO_VECTOR node.  If this is { X, X, X, X }, determine X.
   bool isOnlyLowElement = true;
+  SDOperand SplatValue = Node->getOperand(0);
   for (SDNode::op_iterator I = Node->op_begin()+1, E = Node->op_end();
        I != E; ++I) {
-    if (I->getOpcode() != ISD::UNDEF) {
+    if (I->getOpcode() != ISD::UNDEF)
       isOnlyLowElement = false;
-      break;
-    }
+    if (SplatValue != *I)
+      SplatValue = SDOperand(0,0);
   }
   
   if (isOnlyLowElement) {
@@ -2990,6 +3006,27 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
     // Otherwise, turn this into a scalar_to_vector node.
     return DAG.getNode(ISD::SCALAR_TO_VECTOR, Node->getValueType(0),
                        Node->getOperand(0));
+  }
+  
+  if (SplatValue.Val) {   // Splat of one value?
+    // Build the shuffle constant vector: <0, 0, 0, 0>
+    MVT::ValueType MaskVT = 
+      MVT::getIntVectorWithNumElements(Node->getNumOperands());
+    SDOperand Zero = DAG.getConstant(0, MVT::getVectorBaseType(MaskVT));
+    std::vector<SDOperand> ZeroVec(Node->getNumOperands(), Zero);
+    SDOperand SplatMask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, ZeroVec);
+
+    // If the target supports VECTOR_SHUFFLE and this shuffle mask, use it.
+    if (TLI.isShuffleLegal(Node->getValueType(0), SplatMask)) {
+      // Get the splatted value into the low element of a vector register.
+      SDOperand LowValVec = 
+        DAG.getNode(ISD::SCALAR_TO_VECTOR, Node->getValueType(0), SplatValue);
+    
+      // Return shuffle(LowValVec, undef, <0,0,0,0>)
+      return DAG.getNode(ISD::VECTOR_SHUFFLE, Node->getValueType(0), LowValVec,
+                         DAG.getNode(ISD::UNDEF, Node->getValueType(0)),
+                         SplatMask);
+    }
   }
   
   // If the elements are all constants, turn this into a load from the constant
