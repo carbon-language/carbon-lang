@@ -179,6 +179,19 @@ namespace MVT {  // MVT = Machine Value Types
     }
   }
   
+  /// MVT::getIntVectorWithNumElements - Return any integer vector type that has
+  /// the specified number of elements.
+  static inline ValueType getIntVectorWithNumElements(unsigned NumElts) {
+    switch (NumElts) {
+    default: assert(0 && "Invalid vector type!");
+    case  2: return v2i32;
+    case  4: return v4i16;
+    case  8: return v8i8;
+    case 16: return v16i8;
+    }
+  }
+  
+  
   /// MVT::getIntVTBitMask - Return an integer with 1's every place there are
   /// bits in the specified integer value type.
   static inline uint64_t getIntVTBitMask(ValueType VT) {
