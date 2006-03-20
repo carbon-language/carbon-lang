@@ -694,14 +694,26 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
   } else {
     assert(getOperator()->isSubClassOf("SDNodeXForm") && "Unknown node type!");
     
-    // Node transforms always take one operand, and take and return the same
-    // type.
+    // Node transforms always take one operand.
     if (getNumChildren() != 1)
       TP.error("Node transform '" + getOperator()->getName() +
                "' requires one operand!");
-    bool MadeChange = UpdateNodeType(getChild(0)->getExtTypes(), TP);
-    MadeChange |= getChild(0)->UpdateNodeType(getExtTypes(), TP);
-    return MadeChange;
+    unsigned char ExtType0 = getExtTypeNum(0);
+    unsigned char ChildExtType0 = getChild(0)->getExtTypeNum(0);
+    if (ExtType0 == MVT::isInt ||
+        ExtType0 == MVT::isFP ||
+        ExtType0 == MVT::isUnknown ||
+        ChildExtType0 == MVT::isInt ||
+        ChildExtType0 == MVT::isFP ||
+        ChildExtType0 == MVT::isUnknown) {
+      // If either the output or input of the xform does not have exact
+      // type info. We assume they must be the same. Otherwise, it is perfectly
+      // legal to transform from one type to a completely different type.
+      bool MadeChange = UpdateNodeType(getChild(0)->getExtTypes(), TP);
+      MadeChange |= getChild(0)->UpdateNodeType(getExtTypes(), TP);
+      return MadeChange;
+    }
+    return false;
   }
 }
 
