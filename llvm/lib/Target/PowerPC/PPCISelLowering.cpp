@@ -598,9 +598,9 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand FIdx = DAG.getFrameIndex(FrameIdx, MVT::i32);
     
     // Store the input value into Value#0 of the stack slot.
-    unsigned InSize = MVT::getSizeInBits(Op.getOperand(0).getValueType())/8;
     SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
                                   Op.getOperand(0), FIdx,DAG.getSrcValue(NULL));
+    // LVE_X it out.
     return DAG.getNode(PPCISD::LVE_X, Op.getValueType(), Store, FIdx, 
                        DAG.getSrcValue(NULL));
   }
