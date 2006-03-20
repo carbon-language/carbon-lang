@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -enable-x86-lsr | grep 'A(' | wc -l | grep 1
+; RUN: llvm-as < %s | llc -march=x86 | grep 'A(' | wc -l | grep 1
 ;
 ; Make sure the common loop invariant _A(reg) is hoisted up to preheader.
 
