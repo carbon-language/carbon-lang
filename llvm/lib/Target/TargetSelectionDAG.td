@@ -307,7 +307,7 @@ def extld      : SDNode<"ISD::EXTLOAD"    , SDTExtLoad,    [SDNPHasChain]>;
 def truncst    : SDNode<"ISD::TRUNCSTORE" , SDTTruncStore, [SDNPHasChain]>;
 
 def vector_shuffle : SDNode<"ISD::VECTOR_SHUFFLE", SDTVecShuffle, []>;
-
+def build_vector : SDNode<"ISD::BUILD_VECTOR", SDTypeProfile<1, 0, []>, []>;
 
 //===----------------------------------------------------------------------===//
 // Selection DAG Condition Codes
