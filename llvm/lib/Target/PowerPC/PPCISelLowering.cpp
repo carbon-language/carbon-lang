@@ -167,6 +167,11 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::SUB , (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::MUL , (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::LOAD, (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::VECTOR_SHUFFLE, (MVT::ValueType)VT, Expand);
+    
+    // FIXME: We don't support any BUILD_VECTOR's yet.  We should custom expand
+    // the ones we do, like splat(0.0) and splat(-0.0).
+    setOperationAction(ISD::BUILD_VECTOR, (MVT::ValueType)VT, Expand);
   }
 
   if (TM.getSubtarget<PPCSubtarget>().hasAltivec()) {
@@ -179,11 +184,11 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::LOAD       , MVT::v4f32, Legal);
     setOperationAction(ISD::ADD        , MVT::v4i32, Legal);
     setOperationAction(ISD::LOAD       , MVT::v4i32, Legal);
-    // FIXME: We don't support any BUILD_VECTOR's yet.  We should custom expand
-    // the ones we do!
-    setOperationAction(ISD::BUILD_VECTOR, MVT::v4f32, Expand);
-    setOperationAction(ISD::BUILD_VECTOR, MVT::v4i32, Expand);
-    
+    setOperationAction(ISD::LOAD       , MVT::v16i8, Legal);
+
+    setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v4i32, Custom);
+    setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v4f32, Custom);
+
     setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v4f32, Custom);
     setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v4i32, Custom);
   }
@@ -209,6 +214,7 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::VMADDFP:       return "PPCISD::VMADDFP";
   case PPCISD::VNMSUBFP:      return "PPCISD::VNMSUBFP";
   case PPCISD::LVE_X:         return "PPCISD::LVE_X";
+  case PPCISD::VPERM:         return "PPCISD::VPERM";
   case PPCISD::Hi:            return "PPCISD::Hi";
   case PPCISD::Lo:            return "PPCISD::Lo";
   case PPCISD::GlobalBaseReg: return "PPCISD::GlobalBaseReg";
@@ -565,6 +571,36 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
                                   Op.getOperand(0), FIdx,DAG.getSrcValue(NULL));
     return DAG.getNode(PPCISD::LVE_X, Op.getValueType(), Store, FIdx, 
                        DAG.getSrcValue(NULL));
+  }
+  case ISD::VECTOR_SHUFFLE: {
+    // FIXME: Cases that are handled by instructions that take permute
+    // immediates (such as vsplt*) shouldn't be lowered here!  Also handle cases
+    // that are cheaper to do as multiple such instructions than as a constant
+    // pool load/vperm pair.
+    
+    // Lower this to a VPERM(V1, V2, V3) expression, where V3 is a constant
+    // vector that will get spilled to the constant pool.
+    SDOperand V1 = Op.getOperand(0);
+    SDOperand V2 = Op.getOperand(1);
+    if (V2.getOpcode() == ISD::UNDEF) V2 = V1;
+    SDOperand PermMask = Op.getOperand(2);
+    
+    // The SHUFFLE_VECTOR mask is almost exactly what we want for vperm, except
+    // that it is in input element units, not in bytes.  Convert now.
+    MVT::ValueType EltVT = MVT::getVectorBaseType(V1.getValueType());
+    unsigned BytesPerElement = MVT::getSizeInBits(EltVT)/8;
+    
+    std::vector<SDOperand> ResultMask;
+    for (unsigned i = 0, e = PermMask.getNumOperands(); i != e; ++i) {
+      unsigned SrcElt =cast<ConstantSDNode>(PermMask.getOperand(i))->getValue();
+      
+      for (unsigned j = 0; j != BytesPerElement; ++j)
+        ResultMask.push_back(DAG.getConstant(SrcElt*BytesPerElement+j,
+                                             MVT::i8));
+    }
+    
+    SDOperand VPermMask =DAG.getNode(ISD::BUILD_VECTOR, MVT::v16i8, ResultMask);
+    return DAG.getNode(PPCISD::VPERM, V1.getValueType(), V1, V2, VPermMask);
   }
   }
   return SDOperand();

@@ -56,6 +56,10 @@ namespace llvm {
       /// the third is the SRCVALUE node.
       LVE_X,
       
+      /// VPERM - The PPC VPERM Instruction.
+      ///
+      VPERM,
+      
       /// Hi/Lo - These represent the high and low 16-bit parts of a global
       /// address respectively.  These nodes have two operands, the first of
       /// which must be a TargetGlobalAddress, and the second of which must be a
