@@ -245,6 +245,12 @@ static bool isFloatingPointZero(SDOperand Op) {
 /// VSPLTB/VSPLTH/VSPLTW.
 bool PPC::isSplatShuffleMask(SDNode *N) {
   assert(N->getOpcode() == ISD::BUILD_VECTOR);
+  
+  // We can only splat 8-bit, 16-bit, and 32-bit quantities.
+  if (N->getNumOperands() != 4 && N->getNumOperands() != 8 &&
+      N->getNumOperands() != 16)
+    return false;
+  
   // This is a splat operation if each element of the permute is the same, and
   // if the value doesn't reference the second vector.
   SDOperand Elt = N->getOperand(0);
@@ -263,9 +269,8 @@ bool PPC::isSplatShuffleMask(SDNode *N) {
 /// specified isSplatShuffleMask VECTOR_SHUFFLE mask.
 unsigned PPC::getVSPLTImmediate(SDNode *N) {
   assert(isSplatShuffleMask(N));
-  return cast<ConstantSDNode>(N)->getValue();
+  return cast<ConstantSDNode>(N->getOperand(0))->getValue();
 }
-
 
 
 /// LowerOperation - Provide custom lowering hooks for some operations.
@@ -602,17 +607,22 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
                        DAG.getSrcValue(NULL));
   }
   case ISD::VECTOR_SHUFFLE: {
-    // FIXME: Cases that are handled by instructions that take permute
-    // immediates (such as vsplt*) shouldn't be lowered here!  Also handle cases
-    // that are cheaper to do as multiple such instructions than as a constant
-    // pool load/vperm pair.
+    SDOperand V1 = Op.getOperand(0);
+    SDOperand V2 = Op.getOperand(1);
+    SDOperand PermMask = Op.getOperand(2);
+    
+    // Cases that are handled by instructions that take permute immediates
+    // (such as vsplt*) should be left as VECTOR_SHUFFLE nodes so they can be
+    // selected by the instruction selector.
+    if (PPC::isSplatShuffleMask(PermMask.Val) && V2.getOpcode() == ISD::UNDEF)
+      break;
+    
+    // TODO: Handle more cases, and also handle cases that are cheaper to do as
+    // multiple such instructions than as a constant pool load/vperm pair.
     
     // Lower this to a VPERM(V1, V2, V3) expression, where V3 is a constant
     // vector that will get spilled to the constant pool.
-    SDOperand V1 = Op.getOperand(0);
-    SDOperand V2 = Op.getOperand(1);
     if (V2.getOpcode() == ISD::UNDEF) V2 = V1;
-    SDOperand PermMask = Op.getOperand(2);
     
     // The SHUFFLE_VECTOR mask is almost exactly what we want for vperm, except
     // that it is in input element units, not in bytes.  Convert now.

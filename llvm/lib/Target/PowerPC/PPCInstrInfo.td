@@ -1032,10 +1032,12 @@ def VSPLTH : VXForm_1<588, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
                       "vsplth $vD, $vB, $UIMM", VecPerm,
                       []>;
                       
-//def VSPLTW : VXForm_1<652, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
-//                      "vspltw $vD, $vB, $UIMM", VecPerm,
-//                      [(set VRRC:$vD, (vector_shuffle (v4f32 VRRC:$vB), (undef),
-//                                      VSPLT_shuffle_mask:$UIMM))]>;
+def VSPLTW : VXForm_1<652, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
+                      "vspltw $vD, $vB, $UIMM", VecPerm,
+                      [/*
+                       (set VRRC:$vD, (vector_shuffle (v4f32 VRRC:$vB), (undef),
+                                      VSPLT_shuffle_mask:$UIMM))*/]>;
+                      // FIXME: ALSO ADD SUPPORT FOR v4i32!
                       
 // VX-Form Pseudo Instructions
 
