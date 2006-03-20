@@ -972,7 +972,7 @@ def VADDFP : VXForm_1<10, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       [(set VRRC:$vD, (fadd VRRC:$vA, VRRC:$vB))]>;
 def VADDUWM : VXForm_1<128, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       "vadduwm $vD, $vA, $vB", VecGeneral,
-                      [(set VRRC:$vD, (add VRRC:$vA, VRRC:$vB))]>;
+                      [(set VRRC:$vD, (add (v4i32 VRRC:$vA), VRRC:$vB))]>;
 def VCFSX  : VXForm_1<842, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
                       "vcfsx $vD, $vB, $UIMM", VecFP,
                       []>;
@@ -1177,6 +1177,9 @@ def : Pat<(v4i32 (load xoaddr:$src)),
 def : Pat<(v16i8 (load xoaddr:$src)),
           (v16i8 (LVX xoaddr:$src))>;
 
+
+def : Pat<(vector_shuffle (v4i32 VRRC:$vB), (undef), VSPLT_shuffle_mask:$UIMM),
+          (v4i32 (VSPLTW VSPLT_shuffle_mask:$UIMM, VRRC:$vB))>;
 
 def : Pat<(PPCvperm (v4i32 VRRC:$vA), VRRC:$vB, VRRC:$vC),
           (v4i32 (VPERM VRRC:$vA, VRRC:$vB, VRRC:$vC))>;
