@@ -952,7 +952,7 @@ def VNMSUBFP: VAForm_1<47, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, VRRC:$vC),
                        Requires<[FPContractions]>;
 
 def VPERM   : VAForm_1<43, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, VRRC:$vC),
-                       "vperm $vD, $vA, $vC, $vB", VecFP,
+                       "vperm $vD, $vA, $vC, $vB", VecPerm,
                        [(set VRRC:$vD,
                              (PPCvperm (v4f32 VRRC:$vA), VRRC:$vB, VRRC:$vC))]>;
 
@@ -1014,6 +1014,16 @@ def VOR : VXForm_1<1156, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       []>;
 def VXOR : VXForm_1<1220, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       "vxor $vD, $vA, $vB", VecFP,
+                      []>;
+
+def VSPLTB : VFForm_1<524, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
+                      "vspltb $vD, $vB, $UIMM", VecPerm,
+                      []>;
+def VSPLTH : VFForm_1<588, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
+                      "vsplth $vD, $vB, $UIMM", VecPerm,
+                      []>;
+def VSPLTW : VFForm_1<652, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
+                      "vspltw $vD, $vB, $UIMM", VecPerm,
                       []>;
                       
 // VX-Form Pseudo Instructions
