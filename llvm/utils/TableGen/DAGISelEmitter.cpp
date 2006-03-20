@@ -1105,7 +1105,7 @@ static bool HandleUse(TreePattern *I, TreePatternNode *Pat,
 void DAGISelEmitter::
 FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
                             std::map<std::string, TreePatternNode*> &InstInputs,
-                            std::map<std::string, Record*> &InstResults,
+                            std::map<std::string, TreePatternNode*> &InstResults,
                             std::vector<Record*> &InstImpInputs,
                             std::vector<Record*> &InstImpResults) {
   if (Pat->isLeaf()) {
@@ -1159,7 +1159,7 @@ FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
         I->error("set destination must have a name!");
       if (InstResults.count(Dest->getName()))
         I->error("cannot set '" + Dest->getName() +"' multiple times");
-      InstResults[Dest->getName()] = Val->getDef();
+      InstResults[Dest->getName()] = Dest;
     } else if (Val->getDef()->isSubClassOf("Register")) {
       InstImpResults.push_back(Val->getDef());
     } else {
@@ -1235,7 +1235,7 @@ void DAGISelEmitter::ParseInstructions() {
     
     // InstResults - Keep track of all the virtual registers that are 'set'
     // in the instruction, including what reg class they are.
-    std::map<std::string, Record*> InstResults;
+    std::map<std::string, TreePatternNode*> InstResults;
 
     std::vector<Record*> InstImpInputs;
     std::vector<Record*> InstImpResults;
@@ -1265,6 +1265,7 @@ void DAGISelEmitter::ParseInstructions() {
 
     // Check that all of the results occur first in the list.
     std::vector<Record*> Results;
+    TreePatternNode *Res0Node = NULL;
     for (unsigned i = 0; i != NumResults; ++i) {
       if (i == CGI.OperandList.size())
         I->error("'" + InstResults.begin()->first +
@@ -1272,7 +1273,10 @@ void DAGISelEmitter::ParseInstructions() {
       const std::string &OpName = CGI.OperandList[i].Name;
       
       // Check that it exists in InstResults.
-      Record *R = InstResults[OpName];
+      TreePatternNode *RNode = InstResults[OpName];
+      if (i == 0)
+        Res0Node = RNode;
+      Record *R = dynamic_cast<DefInit*>(RNode->getLeafValue())->getDef();
       if (R == 0)
         I->error("Operand $" + OpName + " should be a set destination: all "
                  "outputs must occur before inputs in operand list!");
@@ -1337,6 +1341,9 @@ void DAGISelEmitter::ParseInstructions() {
 
     TreePatternNode *ResultPattern =
       new TreePatternNode(I->getRecord(), ResultNodeOperands);
+    // Copy fully inferred output node type to instruction result pattern.
+    if (NumResults > 0)
+      ResultPattern->setTypes(Res0Node->getExtTypes());
 
     // Create and insert the instruction.
     DAGInstruction TheInst(I, Results, Operands, InstImpResults, InstImpInputs);
@@ -1407,7 +1414,7 @@ void DAGISelEmitter::ParsePatterns() {
     // Validate that the input pattern is correct.
     {
       std::map<std::string, TreePatternNode*> InstInputs;
-      std::map<std::string, Record*> InstResults;
+      std::map<std::string, TreePatternNode*> InstResults;
       std::vector<Record*> InstImpInputs;
       std::vector<Record*> InstImpResults;
       FindPatternInputsAndOutputs(Pattern, Pattern->getOnlyTree(),

@@ -469,7 +469,8 @@ private:
   void FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
                                    std::map<std::string,
                                             TreePatternNode*> &InstInputs,
-                                   std::map<std::string, Record*> &InstResults,
+                                   std::map<std::string,
+                                            TreePatternNode*> &InstResults,
                                    std::vector<Record*> &InstImpInputs,
                                    std::vector<Record*> &InstImpResults);
   void GenerateCodeForPattern(PatternToMatch &Pattern,
