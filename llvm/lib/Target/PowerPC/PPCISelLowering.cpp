@@ -245,14 +245,25 @@ static bool isFloatingPointZero(SDOperand Op) {
 /// VSPLTB/VSPLTH/VSPLTW.
 bool PPC::isSplatShuffleMask(SDNode *N) {
   assert(N->getOpcode() == ISD::BUILD_VECTOR);
-  return false;
+  // This is a splat operation if each element of the permute is the same, and
+  // if the value doesn't reference the second vector.
+  SDOperand Elt = N->getOperand(0);
+  assert(isa<ConstantSDNode>(Elt) && "Invalid VECTOR_SHUFFLE mask!");
+  for (unsigned i = 1, e = N->getNumOperands(); i != e; ++i) {
+    assert(isa<ConstantSDNode>(N->getOperand(i)) &&
+           "Invalid VECTOR_SHUFFLE mask!");
+    if (N->getOperand(i) != Elt) return false;
+  }
+
+  // Make sure it is a splat of the first vector operand.
+  return cast<ConstantSDNode>(Elt)->getValue() < N->getNumOperands();
 }
 
 /// getVSPLTImmediate - Return the appropriate VSPLT* immediate to splat the
 /// specified isSplatShuffleMask VECTOR_SHUFFLE mask.
 unsigned PPC::getVSPLTImmediate(SDNode *N) {
   assert(isSplatShuffleMask(N));
-  return 0;
+  return cast<ConstantSDNode>(N)->getValue();
 }
 
 
