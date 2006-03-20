@@ -13,6 +13,15 @@
 //
 //===----------------------------------------------------------------------===//
 
+// Some 'special' instructions
+def IMPLICIT_DEF_VR64 : I<0, Pseudo, (ops VR64:$dst),
+                          "#IMPLICIT_DEF $dst",
+                          [(set VR64:$dst, (v8i8 (undef)))]>,
+                        Requires<[HasMMX]>;
+
+def : Pat<(v4i16 (undef)), (IMPLICIT_DEF_VR64)>,  Requires<[HasMMX]>;
+def : Pat<(v2i32 (undef)), (IMPLICIT_DEF_VR64)>,  Requires<[HasMMX]>;
+
 // Move Instructions
 def MOVD64rr : I<0x6E, MRMSrcReg, (ops VR64:$dst, R32:$src),
                  "movd {$src, $dst|$dst, $src}", []>, TB,
@@ -33,3 +42,4 @@ def MOVQ64rm : I<0x6F, MRMSrcMem, (ops VR64:$dst, i64mem:$src),
 def MOVQ64mr : I<0x7F, MRMDestMem, (ops i64mem:$dst, VR64:$src),
                  "movq {$src, $dst|$dst, $src}", []>, TB,
                Requires<[HasMMX]>;
+

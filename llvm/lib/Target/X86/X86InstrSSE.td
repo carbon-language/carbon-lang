@@ -348,6 +348,10 @@ def IMPLICIT_DEF_VR128 : I<0, Pseudo, (ops VR128:$dst),
                          Requires<[HasSSE1]>;
 
 def : Pat<(v2f64 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
+def : Pat<(v16i8 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
+def : Pat<(v8i16 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
+def : Pat<(v4i32 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
+def : Pat<(v2i64 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
 
 // Move Instructions
 def MOVAPSrr : PSI<0x28, MRMSrcReg, (ops VR128:$dst, VR128:$src),
@@ -693,19 +697,6 @@ def UNPCKLPDrm : PDI<0x14, MRMSrcMem,
 //===----------------------------------------------------------------------===//
 // SSE integer instructions
 //===----------------------------------------------------------------------===//
-
-// Some 'special' instructions
-def IMPLICIT_DEF_VR64 : I<0, Pseudo, (ops VR64:$dst),
-                          "#IMPLICIT_DEF $dst",
-                          [(set VR64:$dst, (v8i8 (undef)))]>,
-                        Requires<[HasMMX]>;
-
-def : Pat<(v4i16 (undef)), (IMPLICIT_DEF_VR64)>,  Requires<[HasMMX]>;
-def : Pat<(v2i32 (undef)), (IMPLICIT_DEF_VR64)>,  Requires<[HasMMX]>;
-def : Pat<(v16i8 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
-def : Pat<(v8i16 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
-def : Pat<(v4i32 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
-def : Pat<(v2i64 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
 
 // Move Instructions
 def MOVD128rr : PDI<0x6E, MRMSrcReg, (ops VR128:$dst, R32:$src),
