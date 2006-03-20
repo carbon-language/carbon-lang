@@ -2175,7 +2175,7 @@ public:
   /// EmitResultCode - Emit the action for a pattern.  Now that it has matched
   /// we actually have to build a DAG!
   std::pair<unsigned, unsigned>
-  EmitResultCode(TreePatternNode *N, bool isRoot = false) {
+  EmitResultCode(TreePatternNode *N, bool LikeLeaf = false, bool isRoot = false) {
     // This is something selected from the pattern we matched.
     if (!N->getName().empty()) {
       assert(!isRoot && "Root of pattern cannot be a leaf!");
@@ -2257,7 +2257,12 @@ public:
         TmpNo = ResNo + NumRes;
       } else {
         emitDecl("Tmp" + utostr(ResNo));
-        emitCode("Select(Tmp" + utostr(ResNo) + ", " + Val + ");");
+        // This node, probably wrapped in a SDNodeXForms, behaves like a leaf
+        // node even if it isn't one. Don't select it.
+        if (LikeLeaf)
+          emitCode("Tmp" + utostr(ResNo) + " = " + Val + ";");
+        else
+          emitCode("Select(Tmp" + utostr(ResNo) + ", " + Val + ");");
       }
       // Add Tmp<ResNo> to VariableMap, so that we don't multiply select this
       // value if used multiple times by this pattern result.
@@ -2552,7 +2557,9 @@ public:
       return std::make_pair(1, ResNo);
     } else if (Op->isSubClassOf("SDNodeXForm")) {
       assert(N->getNumChildren() == 1 && "node xform should have one child!");
-      unsigned OpVal = EmitResultCode(N->getChild(0)).second;
+      // PatLeaf node - the operand may or may not be a leaf node. But it should
+      // behave like one.
+      unsigned OpVal = EmitResultCode(N->getChild(0), true).second;
       unsigned ResNo = TmpNo++;
       emitDecl("Tmp" + utostr(ResNo));
       emitCode("Tmp" + utostr(ResNo) + " = Transform_" + Op->getName()
@@ -2748,7 +2755,7 @@ void DAGISelEmitter::GenerateCodeForPattern(PatternToMatch &Pattern,
     // otherwise we are done.
   } while (Emitter.InsertOneTypeCheck(Pat, Pattern.getSrcPattern(), "N"));
 
-  Emitter.EmitResultCode(Pattern.getDstPattern(), true /*the root*/);
+  Emitter.EmitResultCode(Pattern.getDstPattern(), false, true /*the root*/);
   delete Pat;
 }
 
