@@ -51,6 +51,15 @@ class SDTCisOpSmallerThanOp<int SmallOp, int BigOp> : SDTypeConstraint<SmallOp>{
   int BigOperandNum = BigOp;
 }
 
+/// SDTCisIntVectorOfSameSize - This indicates that ThisOp and OtherOp are
+/// packed vector types, and that ThisOp is the result of 
+/// MVT::getIntVectorWithNumElements with the number of elements that ThisOp
+/// has.
+class SDTCisIntVectorOfSameSize<int ThisOp, int OtherOp>
+  : SDTypeConstraint<ThisOp> {
+  int OtherOpNum = OtherOp;
+}
+
 //===----------------------------------------------------------------------===//
 // Selection DAG Type Profile definitions.
 //
@@ -159,6 +168,10 @@ def SDTIntExtLoad : SDTypeProfile<1, 3, [  // sextload, zextload
 ]>;
 def SDTTruncStore : SDTypeProfile<0, 4, [  // truncstore
   SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>, SDTCisVT<3, OtherVT>
+]>;
+
+def SDTVecShuffle : SDTypeProfile<1, 3, [
+  SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>, SDTCisIntVectorOfSameSize<3, 0>
 ]>;
 
 //===----------------------------------------------------------------------===//
@@ -292,6 +305,9 @@ def sextld     : SDNode<"ISD::SEXTLOAD"   , SDTIntExtLoad, [SDNPHasChain]>;
 def zextld     : SDNode<"ISD::ZEXTLOAD"   , SDTIntExtLoad, [SDNPHasChain]>;
 def extld      : SDNode<"ISD::EXTLOAD"    , SDTExtLoad,    [SDNPHasChain]>;
 def truncst    : SDNode<"ISD::TRUNCSTORE" , SDTTruncStore, [SDNPHasChain]>;
+
+def vector_shuffle : SDNode<"ISD::VECTOR_SHUFFLE", SDTVecShuffle, []>;
+
 
 //===----------------------------------------------------------------------===//
 // Selection DAG Condition Codes
