@@ -535,7 +535,24 @@ bool PPCDAGToDAGISel::SelectAddrImm(SDOperand N, SDOperand &Disp,
         return true;
       }
     }
+  } else if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N)) {
+    // Loading from a constant address.
+    int Addr = (int)CN->getValue();
+    
+    // If this address fits entirely in a 16-bit sext immediate field, codegen
+    // this as "d, 0"
+    if (Addr == (short)Addr) {
+      Disp = getI32Imm(Addr);
+      Base = CurDAG->getRegister(PPC::R0, MVT::i32);
+      return true;
+    }
+    
+    // Otherwise, break this down into an LIS + disp.
+    Disp = getI32Imm((short)Addr);
+    Base = CurDAG->getConstant(Addr - (signed short)Addr, MVT::i32);
+    return true;
   }
+  
   Disp = getI32Imm(0);
   if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(N))
     Base = CurDAG->getTargetFrameIndex(FI->getIndex(), MVT::i32);
