@@ -961,7 +961,7 @@ def VNMSUBFP: VAForm_1<47, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, VRRC:$vC),
                        Requires<[FPContractions]>;
 
 def VPERM   : VAForm_1<43, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, VRRC:$vC),
-                       "vperm $vD, $vA, $vC, $vB", VecPerm,
+                       "vperm $vD, $vA, $vB, $vC", VecPerm,
                        [(set VRRC:$vD,
                              (PPCvperm (v4f32 VRRC:$vA), VRRC:$vB, VRRC:$vC))]>;
 
