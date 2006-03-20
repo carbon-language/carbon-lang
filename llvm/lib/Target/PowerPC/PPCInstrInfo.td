@@ -123,6 +123,14 @@ def imm16Shifted : PatLeaf<(imm), [{
   return ((unsigned)N->getValue() & 0xFFFF0000U) == (unsigned)N->getValue();
 }], HI16>;
 
+// VSPLT_get_imm xform function: convert vector_shuffle mask to VSPLT* imm.
+def VSPLT_get_imm : SDNodeXForm<build_vector, [{
+  return getI32Imm(PPC::getVSPLTImmediate(N));
+}]>;
+
+def VSPLT_shuffle_mask : PatLeaf<(build_vector), [{
+  return PPC::isSplatShuffleMask(N);
+}], VSPLT_get_imm>;
 
 //===----------------------------------------------------------------------===//
 // PowerPC Flag Definitions.
@@ -937,6 +945,7 @@ def RLDICR : MDForm_1<30, 1,
                       []>, isPPC64;
 }
 
+
 let PPC970_Unit = 5 in {  // VALU Operations.
 // VA-Form instructions.  3-input AltiVec ops.
 def VMADDFP : VAForm_1<46, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, VRRC:$vC),
@@ -1022,9 +1031,11 @@ def VSPLTB : VXForm_1<524, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
 def VSPLTH : VXForm_1<588, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
                       "vsplth $vD, $vB, $UIMM", VecPerm,
                       []>;
-def VSPLTW : VXForm_1<652, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
-                      "vspltw $vD, $vB, $UIMM", VecPerm,
-                      []>;
+                      
+//def VSPLTW : VXForm_1<652, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
+//                      "vspltw $vD, $vB, $UIMM", VecPerm,
+//                      [(set VRRC:$vD, (vector_shuffle (v4f32 VRRC:$vB), (undef),
+//                                      VSPLT_shuffle_mask:$UIMM))]>;
                       
 // VX-Form Pseudo Instructions
 
@@ -1032,6 +1043,7 @@ def V_SET0 : VXForm_setzero<1220, (ops VRRC:$vD),
                       "vxor $vD, $vD, $vD", VecFP,
                       []>;
 }
+
 
 //===----------------------------------------------------------------------===//
 // DWARF Pseudo Instructions

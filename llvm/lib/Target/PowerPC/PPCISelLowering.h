@@ -82,7 +82,19 @@ namespace llvm {
       /// Return with a flag operand, matched by 'blr'
       RET_FLAG,
     };
-  }  
+  }
+
+  /// Define some predicates that are used for node matching.
+  namespace PPC {
+    /// isSplatShuffleMask - Return true if the specified VECTOR_SHUFFLE operand
+    /// specifies a splat of a single element that is suitable for input to
+    /// VSPLTB/VSPLTH/VSPLTW.
+    bool isSplatShuffleMask(SDNode *N) { return false; } // FIXME:
+    
+    /// getVSPLTImmediate - Return the appropriate VSPLT* immediate to splat the
+    /// specified isSplatShuffleMask VECTOR_SHUFFLE mask.
+    unsigned getVSPLTImmediate(SDNode *N) { return 0; }  // FIXME:
+  }
   
   class PPCTargetLowering : public TargetLowering {
     int VarArgsFrameIndex;            // FrameIndex for start of varargs area.
