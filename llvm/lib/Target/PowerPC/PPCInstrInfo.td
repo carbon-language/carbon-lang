@@ -1016,13 +1016,13 @@ def VXOR : VXForm_1<1220, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       "vxor $vD, $vA, $vB", VecFP,
                       []>;
 
-def VSPLTB : VFForm_1<524, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
+def VSPLTB : VXForm_1<524, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
                       "vspltb $vD, $vB, $UIMM", VecPerm,
                       []>;
-def VSPLTH : VFForm_1<588, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
+def VSPLTH : VXForm_1<588, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
                       "vsplth $vD, $vB, $UIMM", VecPerm,
                       []>;
-def VSPLTW : VFForm_1<652, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
+def VSPLTW : VXForm_1<652, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
                       "vspltw $vD, $vB, $UIMM", VecPerm,
                       []>;
                       
