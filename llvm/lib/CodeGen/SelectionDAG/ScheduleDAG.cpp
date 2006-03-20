@@ -20,6 +20,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetLowering.h"
+#include "llvm/Support/MathExtras.h"
 using namespace llvm;
 
 
@@ -124,9 +125,15 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
     if (Align == 0) {
       if (CP->get()->getType() == Type::DoubleTy)
         Align = 3;  // always 8-byte align doubles.
-      else
+      else {
         Align = TM.getTargetData()
           .getTypeAlignmentShift(CP->get()->getType());
+        if (Align == 0) {
+          // Alignment of packed types.  FIXME!
+          Align = TM.getTargetData().getTypeSize(CP->get()->getType());
+          Align = Log2_64(Align);
+        }
+      }
     }
     
     unsigned Idx = ConstPool->getConstantPoolIndex(CP->get(), Align);
