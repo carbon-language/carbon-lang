@@ -239,6 +239,24 @@ static bool isFloatingPointZero(SDOperand Op) {
   return false;
 }
 
+
+/// isSplatShuffleMask - Return true if the specified VECTOR_SHUFFLE operand
+/// specifies a splat of a single element that is suitable for input to
+/// VSPLTB/VSPLTH/VSPLTW.
+bool PPC::isSplatShuffleMask(SDNode *N) {
+  assert(N->getOpcode() == ISD::BUILD_VECTOR);
+  return false;
+}
+
+/// getVSPLTImmediate - Return the appropriate VSPLT* immediate to splat the
+/// specified isSplatShuffleMask VECTOR_SHUFFLE mask.
+unsigned PPC::getVSPLTImmediate(SDNode *N) {
+  assert(isSplatShuffleMask(N));
+  return 0;
+}
+
+
+
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
 SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {

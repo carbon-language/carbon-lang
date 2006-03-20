@@ -89,11 +89,11 @@ namespace llvm {
     /// isSplatShuffleMask - Return true if the specified VECTOR_SHUFFLE operand
     /// specifies a splat of a single element that is suitable for input to
     /// VSPLTB/VSPLTH/VSPLTW.
-    bool isSplatShuffleMask(SDNode *N) { return false; } // FIXME:
+    bool isSplatShuffleMask(SDNode *N);
     
     /// getVSPLTImmediate - Return the appropriate VSPLT* immediate to splat the
     /// specified isSplatShuffleMask VECTOR_SHUFFLE mask.
-    unsigned getVSPLTImmediate(SDNode *N) { return 0; }  // FIXME:
+    unsigned getVSPLTImmediate(SDNode *N);
   }
   
   class PPCTargetLowering : public TargetLowering {
