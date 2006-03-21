@@ -156,6 +156,16 @@ namespace ISD {
     /// INSERT_VECTOR_ELT(VECTOR, VAL, IDX) - Returns VECTOR (a legal packed
     /// type) with the element at IDX replaced with VAL.
     INSERT_VECTOR_ELT,
+
+    /// VEXTRACT_VECTOR_ELT(VECTOR, IDX) - Returns a single element from VECTOR
+    /// (an MVT::Vector value) identified by the (potentially variable) element
+    /// number IDX.
+    VEXTRACT_VECTOR_ELT,
+    
+    /// EXTRACT_VECTOR_ELT(VECTOR, IDX) - Returns a single element from VECTOR
+    /// (a legal packed type vector) identified by the (potentially variable)
+    /// element number IDX.
+    EXTRACT_VECTOR_ELT,
     
     /// VECTOR_SHUFFLE(VEC1, VEC2, SHUFFLEVEC) - Returns a vector, of the same
     /// type as VEC1/VEC2.  SHUFFLEVEC is a BUILD_VECTOR of constant int values
