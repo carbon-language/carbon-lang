@@ -2285,6 +2285,32 @@ CopyValueToVirtualRegister(SelectionDAGLowering &SDL, Value *V, unsigned Reg) {
   SelectionDAG &DAG = SDL.DAG;
   if (SrcVT == DestVT) {
     return DAG.getCopyToReg(SDL.getRoot(), Reg, Op);
+  } else if (SrcVT == MVT::Vector) {
+    // FIXME: THIS DOES NOT SUPPORT PROMOTED/EXPANDED ELEMENTS!
+
+    // Figure out the right, legal destination reg to copy into.
+    const PackedType *PTy = cast<PackedType>(V->getType());
+    unsigned NumElts = PTy->getNumElements();
+    MVT::ValueType EltTy = TLI.getValueType(PTy->getElementType());
+    
+    unsigned NumVectorRegs = 1;
+
+    // Divide the input until we get to a supported size.  This will always
+    // end with a scalar if the target doesn't support vectors.
+    while (NumElts > 1 && !TLI.isTypeLegal(getVectorType(EltTy, NumElts))) {
+      NumElts >>= 1;
+      NumVectorRegs <<= 1;
+    }
+    
+    MVT::ValueType VT;
+    if (NumElts == 1)
+      VT = EltTy;
+    else
+      VT = getVectorType(EltTy, NumElts);
+    
+    // FIXME: THIS ASSUMES THAT THE INPUT VECTOR WILL BE LEGAL!
+    Op = DAG.getNode(ISD::BIT_CONVERT, VT, Op);
+    return DAG.getCopyToReg(SDL.getRoot(), Reg, Op);
   } else if (SrcVT < DestVT) {
     // The src value is promoted to the register.
     if (MVT::isFloatingPoint(SrcVT))
