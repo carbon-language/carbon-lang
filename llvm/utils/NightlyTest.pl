@@ -151,7 +151,21 @@ sub AddRecord {
 
 sub AddPreTag {  # Add pre tags around nonempty list, or convert to "none"
   $_ = shift;
-  if (length) { return "<ul><tt>$_</tt></ul>"; } else { "<b>none</b><br>"; }
+  if (length) { return "<pre>$_</pre>"; } else { "<b>none</b><br>"; }
+}
+
+sub ArrayToList { # Add <li> tags around nonempty list or convert to "none"
+  my $result = "";
+  if (scalar @_) {
+    $result = "<ul>";
+    foreach $item (@_) {
+      $result .= "<li><tt>$item</tt></li>";
+    }
+    $result .= "</ul>";
+  } else {
+    $result = "<p><b>none</b></p>";
+  }
+  return $result;
 }
 
 sub ChangeDir { # directory, logical name
@@ -528,7 +542,7 @@ foreach $Warning (@Warn) {
   }
 }
 my $WarningsFile =  join "\n", @Warnings;
-my $WarningsList = AddPreTag $WarningsFile;
+my $WarningsList = ArrayToList @Warnings;
 $WarningsFile =~ s/:[0-9]+:/::/g;
 
 # Emit the warnings file, so we can diff...
@@ -539,8 +553,10 @@ my ($WarningsAdded, $WarningsRemoved) = DiffFiles "-Warnings.txt";
 print "ADDED   WARNINGS:\n$WarningsAdded\n\n" if (length $WarningsAdded);
 print "REMOVED WARNINGS:\n$WarningsRemoved\n\n" if (length $WarningsRemoved);
 
-$WarningsAdded = AddPreTag $WarningsAdded;
-$WarningsRemoved = AddPreTag $WarningsRemoved;
+my @TmpWarningsAdded = split "\n", $WarningsAdded;
+my @TmpWarningsRemoved = split "\n", $WarningsRemoved;
+$WarningsAdded = ArrayToList @TmpWarningsAdded;
+$WarningsRemoved = ArrayToList @TmpWarningsRemoved;
 
 #
 # Get some statistics about CVS commits over the current day...
