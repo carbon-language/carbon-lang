@@ -132,6 +132,7 @@ void PPCCodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
     case PPC::IMPLICIT_DEF_GPR:
     case PPC::IMPLICIT_DEF_F8:
     case PPC::IMPLICIT_DEF_F4:
+    case PPC::IMPLICIT_DEF_VRRC:
       break; // pseudo opcode, no side effects
     case PPC::MovePCtoLR:
       assert(0 && "CodeEmitter does not support MovePCtoLR instruction");
