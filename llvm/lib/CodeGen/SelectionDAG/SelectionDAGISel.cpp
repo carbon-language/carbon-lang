@@ -463,7 +463,7 @@ public:
   void visitSetLT(User &I) { visitSetCC(I, ISD::SETLT, ISD::SETULT); }
   void visitSetGT(User &I) { visitSetCC(I, ISD::SETGT, ISD::SETUGT); }
 
-  void visitExtractElement(ExtractElementInst &I) { assert(0 && "TODO"); }
+  void visitExtractElement(ExtractElementInst &I);
   void visitInsertElement(InsertElementInst &I);
 
   void visitGetElementPtr(User &I);
@@ -853,6 +853,14 @@ void SelectionDAGLowering::visitInsertElement(InsertElementInst &I) {
                            InVec, InVal, InIdx, Num, Typ));
 }
 
+void SelectionDAGLowering::visitExtractElement(ExtractElementInst &I) {
+  SDOperand InVec = getValue(I.getOperand(0));
+  SDOperand InIdx = DAG.getNode(ISD::ZERO_EXTEND, TLI.getPointerTy(),
+                                getValue(I.getOperand(1)));
+  SDOperand Typ = *(InVec.Val->op_end()-1);
+  setValue(&I, DAG.getNode(ISD::VEXTRACT_VECTOR_ELT,
+                           TLI.getValueType(I.getType()), InVec, InIdx));
+}
 
 void SelectionDAGLowering::visitGetElementPtr(User &I) {
   SDOperand N = getValue(I.getOperand(0));

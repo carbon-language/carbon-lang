@@ -821,6 +821,56 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       if (Tmp1.Val) Result = Tmp1;
     }
     break;
+  
+  case ISD::EXTRACT_VECTOR_ELT:
+    Tmp1 = LegalizeOp(Node->getOperand(0));
+    Tmp2 = LegalizeOp(Node->getOperand(1));
+    Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
+    // FIXME: LOWER.
+    break;
+
+  case ISD::VEXTRACT_VECTOR_ELT:
+    // We know that operand #0 is the Vec vector.  If the index is a constant
+    // or if the invec is a supported hardware type, we can use it.  Otherwise,
+    // lower to a store then an indexed load.
+    Tmp1 = Node->getOperand(0);
+    Tmp2 = LegalizeOp(Node->getOperand(1));
+    
+    SDNode *InVal = Tmp1.Val;
+    unsigned NumElems = cast<ConstantSDNode>(*(InVal->op_end()-2))->getValue();
+    MVT::ValueType EVT = cast<VTSDNode>(*(InVal->op_end()-1))->getVT();
+    
+    // Figure out if there is a Packed type corresponding to this Vector
+    // type.  If so, convert to the packed type.
+    MVT::ValueType TVT = MVT::getVectorType(EVT, NumElems);
+    if (TVT != MVT::Other && TLI.isTypeLegal(TVT)) {
+      // Turn this into a packed extract_vector_elt operation.
+      Tmp1 = PackVectorOp(Tmp1, TVT);
+      Result = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, Node->getValueType(0),
+                           Tmp1, Tmp2);
+      break;
+    } else if (NumElems == 1) {
+      // This must be an access of the only element.
+      Result = PackVectorOp(Tmp1, EVT);
+      break;
+    } else if (ConstantSDNode *CIdx = dyn_cast<ConstantSDNode>(Tmp2)) {
+      SDOperand Lo, Hi;
+      SplitVectorOp(Tmp1, Lo, Hi);
+      if (CIdx->getValue() < NumElems/2) {
+        Tmp1 = Lo;
+      } else {
+        Tmp1 = Hi;
+        Tmp2 = DAG.getConstant(CIdx->getValue() - NumElems/2,
+                               Tmp2.getValueType());
+      }
+
+      // It's now an extract from the appropriate high or low part.
+      Result = LegalizeOp(DAG.UpdateNodeOperands(Result, Tmp1, Tmp2));
+    } else {
+      // FIXME: IMPLEMENT STORE/LOAD lowering.
+      assert(0 && "unimp!");
+    }
+    break;
     
   case ISD::CALLSEQ_START: {
     SDNode *CallEnd = FindCallEndFromCallStart(Node);
@@ -4264,7 +4314,7 @@ SDOperand SelectionDAGLegalize::PackVectorOp(SDOperand Op,
                                              MVT::ValueType NewVT) {
   // FIXME: THIS IS A TEMPORARY HACK
   if (Op.getValueType() == NewVT) return Op;
-  
+    
   assert(Op.getValueType() == MVT::Vector && "Bad PackVectorOp invocation!");
   SDNode *Node = Op.Val;
   
