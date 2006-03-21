@@ -1123,7 +1123,7 @@ def : Pat<(add GPRC:$in, (PPChi tconstpool:$g, 0)),
           (ADDIS GPRC:$in, tconstpool:$g)>;
 
 def : Pat<(fmul VRRC:$vA, VRRC:$vB),
-          (VMADDFP VRRC:$vA, (V_SET0), VRRC:$vB)>; 
+          (VMADDFP VRRC:$vA, VRRC:$vB, (V_SET0))>; 
 
 // Fused negative multiply subtract, alternate pattern
 def : Pat<(fsub F8RC:$B, (fmul F8RC:$A, F8RC:$C)),
