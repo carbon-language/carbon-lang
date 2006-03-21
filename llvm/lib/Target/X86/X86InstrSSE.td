@@ -353,6 +353,42 @@ def : Pat<(v8i16 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
 def : Pat<(v4i32 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
 def : Pat<(v2i64 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
 
+def SCALAR_TO_VECTOR_V4F32 : I<0, Pseudo, (ops VR128:$dst, FR32:$src),
+                               "#SCALAR_TO_VECTOR $src",
+                               [(set VR128:$dst,
+                                 (v4f32 (scalar_to_vector FR32:$src)))]>,
+                             Requires<[HasSSE1]>;
+
+def SCALAR_TO_VECTOR_V2F64 : I<0, Pseudo, (ops VR128:$dst, FR64:$src),
+                               "#SCALAR_TO_VECTOR $src",
+                               [(set VR128:$dst,
+                                 (v2f64 (scalar_to_vector FR64:$src)))]>,
+                             Requires<[HasSSE2]>;
+
+def SCALAR_TO_VECTOR_V16I8 : I<0, Pseudo, (ops VR128:$dst, R8:$src),
+                               "#SCALAR_TO_VECTOR $src",
+                               [(set VR128:$dst,
+                                 (v16i8 (scalar_to_vector R8:$src)))]>,
+                             Requires<[HasSSE2]>;
+
+def SCALAR_TO_VECTOR_V8I16 : I<0, Pseudo, (ops VR128:$dst, R16:$src),
+                               "#SCALAR_TO_VECTOR $src",
+                               [(set VR128:$dst,
+                                 (v8i16 (scalar_to_vector R16:$src)))]>,
+                             Requires<[HasSSE2]>;
+
+def SCALAR_TO_VECTOR_V4I32 : I<0, Pseudo, (ops VR128:$dst, R32:$src),
+                               "#SCALAR_TO_VECTOR $src",
+                               [(set VR128:$dst,
+                                 (v4i32 (scalar_to_vector R32:$src)))]>,
+                             Requires<[HasSSE2]>;
+
+def SCALAR_TO_VECTOR_V2I64 : I<0, Pseudo, (ops VR128:$dst, VR64:$src),
+                               "#SCALAR_TO_VECTOR $src",
+                               [(set VR128:$dst,
+                                 (v2i64 (scalar_to_vector VR64:$src)))]>,
+                             Requires<[HasSSE2]>;
+
 // Move Instructions
 def MOVAPSrr : PSI<0x28, MRMSrcReg, (ops VR128:$dst, VR128:$src),
                    "movaps {$src, $dst|$dst, $src}", []>;
