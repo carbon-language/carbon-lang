@@ -519,6 +519,9 @@ int foo(int N, int ***W, int **TK, int X) {
 
 We generate relatively atrocious code for this loop compared to gcc.
 
+We could also strength reduce the rem and the div:
+http://www.lcs.mit.edu/pubs/pdf/MIT-LCS-TM-600.pdf
+
 ===-------------------------------------------------------------------------===
 
 Altivec support.  The first should be a single lvx from the constant pool, the
