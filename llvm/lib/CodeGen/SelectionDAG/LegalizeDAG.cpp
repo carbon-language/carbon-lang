@@ -826,7 +826,37 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp1 = LegalizeOp(Node->getOperand(0));
     Tmp2 = LegalizeOp(Node->getOperand(1));
     Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
-    // FIXME: LOWER.
+    
+    switch (TLI.getOperationAction(ISD::EXTRACT_VECTOR_ELT,
+                                   Tmp1.getValueType())) {
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Legal:
+      break;
+    case TargetLowering::Custom:
+      Tmp3 = TLI.LowerOperation(Result, DAG);
+      if (Tmp3.Val) {
+        Result = Tmp3;
+        break;
+      }
+      // FALLTHROUGH
+    case TargetLowering::Expand: {
+      // If the target doesn't support this, store the value to a temporary
+      // stack slot, then LOAD the scalar element back out.
+      SDOperand StackPtr = CreateStackTemporary(Tmp1.getValueType());
+      SDOperand Ch = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
+                                 Tmp1, StackPtr, DAG.getSrcValue(NULL));
+      
+      // Add the offset to the index.
+      unsigned EltSize = MVT::getSizeInBits(Result.getValueType())/8;
+      Tmp2 = DAG.getNode(ISD::MUL, Tmp2.getValueType(), Tmp2,
+                         DAG.getConstant(EltSize, Tmp2.getValueType()));
+      StackPtr = DAG.getNode(ISD::ADD, Tmp2.getValueType(), Tmp2, StackPtr);
+      
+      Result = DAG.getLoad(Result.getValueType(), Ch, StackPtr,
+                              DAG.getSrcValue(NULL));
+      break;
+    }
+    }
     break;
 
   case ISD::VEXTRACT_VECTOR_ELT:
