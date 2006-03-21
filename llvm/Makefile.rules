@@ -198,12 +198,11 @@ install-bytecode:: install-bytecode-local
 # Variables derived from configuration we are building
 #--------------------------------------------------------------------
 
-
 ifdef ENABLE_PROFILING
   BuildMode := Profile
-  CXX.Flags := -O3 -DNDEBUG -felide-constructors -finline-functions -pg
-  C.Flags   := -O3 -DNDEBUG -pg
-  LD.Flags  := -O3 -DNDEBUG -pg 
+  CXX.Flags := -O3 -felide-constructors -finline-functions -pg
+  C.Flags   := -O3 -pg
+  LD.Flags  := -O3 -pg 
 else
   ifdef ENABLE_OPTIMIZED
     BuildMode := Release
@@ -211,17 +210,28 @@ else
     ifneq ($(OS),FreeBSD)
       OmitFramePointer := -fomit-frame-pointer
     endif
-    CXX.Flags  := -O3 -DNDEBUG -finline-functions -felide-constructors \
-                  $(OmitFramePointer)
-    C.Flags    := -O3 -DNDEBUG $(OmitFramePointer)
-    LD.Flags   := -O3 -DNDEBUG 
+    CXX.Flags := -O3 -finline-functions -felide-constructors $(OmitFramePointer)
+    C.Flags   := -O3 $(OmitFramePointer)
+    LD.Flags  := -O3
   else
     BuildMode := Debug
-    CXX.Flags := -g -D_DEBUG
-    C.Flags   := -g -D_DEBUG
-    LD.Flags  := -g -D_DEBUG 
+    CXX.Flags := -g
+    C.Flags   := -g
+    LD.Flags  := -g 
     KEEP_SYMBOLS := 1
+    # Assertions default to ON for debug builds.
+    ENABLE_ASSERTIONS := 1
   endif
+endif
+
+# If this is a debug build or if ENABLE_ASSERTIONS=1 is specified on the make
+# command line, enable assertions.
+ifdef ENABLE_ASSERTIONS
+  CXX.Flags += -D_DEBUG
+  C.Flags   += -D_DEBUG
+else
+  CXX.Flags += -DNDEBUG
+  C.Flags   += -DNDEBUG
 endif
 
 CXX.Flags += $(CXXFLAGS)
