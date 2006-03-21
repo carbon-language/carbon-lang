@@ -1446,6 +1446,25 @@ void DAGISelEmitter::ParsePatterns() {
       Result->error("Cannot handle instructions producing instructions "
                     "with temporaries yet!");
 
+    // Promote the xform function to be an explicit node if set.
+    std::vector<TreePatternNode*> ResultNodeOperands;
+    TreePatternNode *DstPattern = Result->getOnlyTree();
+    for (unsigned ii = 0, ee = DstPattern->getNumChildren(); ii != ee; ++ii) {
+      TreePatternNode *OpNode = DstPattern->getChild(ii);
+      if (Record *Xform = OpNode->getTransformFn()) {
+        OpNode->setTransformFn(0);
+        std::vector<TreePatternNode*> Children;
+        Children.push_back(OpNode);
+        OpNode = new TreePatternNode(Xform, Children);
+      }
+      ResultNodeOperands.push_back(OpNode);
+    }
+    DstPattern = new TreePatternNode(Result->getOnlyTree()->getOperator(),
+                                     ResultNodeOperands);
+    DstPattern->setTypes(Result->getOnlyTree()->getExtTypes());
+    TreePattern Temp(Result->getRecord(), DstPattern, false, *this);
+    Temp.InferAllTypes();
+
     std::string Reason;
     if (!Pattern->getOnlyTree()->canPatternMatch(Reason, *this))
       Pattern->error("Pattern can never match: " + Reason);
@@ -1453,7 +1472,7 @@ void DAGISelEmitter::ParsePatterns() {
     PatternsToMatch.
       push_back(PatternToMatch(Patterns[i]->getValueAsListInit("Predicates"),
                                Pattern->getOnlyTree(),
-                               Result->getOnlyTree()));
+                               Temp.getOnlyTree()));
   }
 }
 
