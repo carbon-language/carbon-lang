@@ -194,7 +194,11 @@ namespace {
     void printMemRegImm(const MachineInstr *MI, unsigned OpNo) {
       printSymbolLo(MI, OpNo);
       O << '(';
-      printOperand(MI, OpNo+1);
+      if (MI->getOperand(OpNo+1).isRegister() && 
+          MI->getOperand(OpNo+1).getReg() == PPC::R0)
+        O << "0";
+      else
+        printOperand(MI, OpNo+1);
       O << ')';
     }
     void printMemRegReg(const MachineInstr *MI, unsigned OpNo) {
