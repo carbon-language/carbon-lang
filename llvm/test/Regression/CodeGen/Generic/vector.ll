@@ -6,6 +6,7 @@
 %f1 = type <1 x float>
 %f2 = type <2 x float>
 %f4 = type <4 x float>
+%i4 = type <4 x int>
 %f8 = type <8 x float>
 
 implementation
@@ -44,6 +45,13 @@ void %test_f8(%f8 *%P, %f8* %Q, %f8 *%S) {
   ret void
 }
 
+void %test_fmul(%f8 *%P, %f8* %Q, %f8 *%S) {
+  %p = load %f8* %P
+  %q = load %f8* %Q
+  %R = mul %f8 %p, %q
+  store %f8 %R, %f8 *%S
+  ret void
+}
 ;;; TEST VECTOR CONSTRUCTS
 
 void %test_cst(%f4 *%P, %f4 *%S) {
@@ -95,6 +103,17 @@ void %splat(%f4* %P, %f4* %Q, float %X) {
 	%q = load %f4* %Q
 	%R = add %f4 %q, %tmp6
         store %f4 %R, %f4* %P
+        ret void
+}
+
+void %splat_i4(%i4* %P, %i4* %Q, int %X) {
+        %tmp = insertelement %i4 undef, int %X, uint 0
+        %tmp2 = insertelement %i4 %tmp, int %X, uint 1
+        %tmp4 = insertelement %i4 %tmp2, int %X, uint 2
+        %tmp6 = insertelement %i4 %tmp4, int %X, uint 3
+	%q = load %i4* %Q
+	%R = add %i4 %q, %tmp6
+        store %i4 %R, %i4* %P
         ret void
 }
 
