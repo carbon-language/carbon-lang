@@ -17,12 +17,14 @@
 // SSE specific DAG Nodes.
 //===----------------------------------------------------------------------===//
 
-def X86loadp   : SDNode<"X86ISD::LOAD_PACK", SDTLoad, 
-                        [SDNPHasChain]>;
-def X86fand    : SDNode<"X86ISD::FAND",     SDTFPBinOp,
-                        [SDNPCommutative, SDNPAssociative]>;
-def X86fxor    : SDNode<"X86ISD::FXOR",     SDTFPBinOp,
-                        [SDNPCommutative, SDNPAssociative]>;
+def X86loadp : SDNode<"X86ISD::LOAD_PACK", SDTLoad, 
+                      [SDNPHasChain]>;
+def X86fand  : SDNode<"X86ISD::FAND",     SDTFPBinOp,
+                      [SDNPCommutative, SDNPAssociative]>;
+def X86fxor  : SDNode<"X86ISD::FXOR",     SDTFPBinOp,
+                      [SDNPCommutative, SDNPAssociative]>;
+def X86s2vec : SDNode<"X86ISD::SCALAR_TO_VECTOR",
+                      SDTypeProfile<1, 1, []>, []>;
 
 //===----------------------------------------------------------------------===//
 // SSE pattern fragments
@@ -346,12 +348,6 @@ def IMPLICIT_DEF_VR128 : I<0, Pseudo, (ops VR128:$dst),
                            "#IMPLICIT_DEF $dst",
                            [(set VR128:$dst, (v4f32 (undef)))]>,
                          Requires<[HasSSE1]>;
-
-def : Pat<(v2f64 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
-def : Pat<(v16i8 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
-def : Pat<(v8i16 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
-def : Pat<(v4i32 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
-def : Pat<(v2i64 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
 
 // Move Instructions
 def MOVAPSrr : PSI<0x28, MRMSrcReg, (ops VR128:$dst, VR128:$src),
@@ -700,7 +696,9 @@ def UNPCKLPDrm : PDI<0x14, MRMSrcMem,
 
 // Move Instructions
 def MOVD128rr : PDI<0x6E, MRMSrcReg, (ops VR128:$dst, R32:$src),
-                  "movd {$src, $dst|$dst, $src}", []>;
+                  "movd {$src, $dst|$dst, $src}",
+                    [(set VR128:$dst,
+                      (v4i32 (scalar_to_vector R32:$src)))]>;
 def MOVD128rm : PDI<0x6E, MRMSrcMem, (ops VR128:$dst, i32mem:$src),
                   "movd {$src, $dst|$dst, $src}", []>;
 def MOVD128mr : PDI<0x7E, MRMDestMem, (ops i32mem:$dst, VR128:$src),
@@ -708,11 +706,12 @@ def MOVD128mr : PDI<0x7E, MRMDestMem, (ops i32mem:$dst, VR128:$src),
 
 // SSE2 instructions with XS prefix
 def MOVQ128rr : I<0x7E, MRMSrcReg, (ops VR128:$dst, VR64:$src),
-                  "movq {$src, $dst|$dst, $src}", []>, XS,
+                  "movq {$src, $dst|$dst, $src}",
+                  [(set VR128:$dst,
+                      (v2i64 (scalar_to_vector VR64:$src)))]>, XS,
                 Requires<[HasSSE2]>;
 def MOVQ128rm : I<0x7E, MRMSrcMem, (ops VR128:$dst, i64mem:$src),
-                  "movq {$src, $dst|$dst, $src}", []>, XS,
-                Requires<[HasSSE2]>;
+                  "movq {$src, $dst|$dst, $src}", []>, XS;
 
 def MOVQ128mr : PDI<0xD6, MRMSrcMem, (ops i64mem:$dst, VR128:$src),
                   "movq {$src, $dst|$dst, $src}", []>;
@@ -731,3 +730,28 @@ def FR64ToV2F64 : PDI<0x28, MRMSrcReg, (ops VR128:$dst, FR64:$src),
                       "movapd {$src, $dst|$dst, $src}",
                       [(set VR128:$dst,
                         (v2f64 (scalar_to_vector FR64:$src)))]>;
+
+//===----------------------------------------------------------------------===//
+// Non-Instruction Patterns
+//===----------------------------------------------------------------------===//
+
+// 128-bit vector undef's.
+def : Pat<(v2f64 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
+def : Pat<(v16i8 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
+def : Pat<(v8i16 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
+def : Pat<(v4i32 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
+def : Pat<(v2i64 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
+
+// Store 128-bit integer vector values.
+def : Pat<(store (v16i8 VR128:$src), addr:$dst), (MOVAPSmr addr:$dst, VR128:$src)>;
+def : Pat<(store (v8i16 VR128:$src), addr:$dst), (MOVAPSmr addr:$dst, VR128:$src)>;
+def : Pat<(store (v4i32 VR128:$src), addr:$dst), (MOVAPSmr addr:$dst, VR128:$src)>;
+def : Pat<(store (v2i64 VR128:$src), addr:$dst), (MOVAPSmr addr:$dst, VR128:$src)>;
+
+// Scalar to v8i16 / v16i8. The source may be a R32, but only the lower 8 or
+// 16-bits matter.
+def : Pat<(v8i16 (X86s2vec R32:$src)), (MOVD128rr R32:$src)>,
+  Requires<[HasSSE2]>;
+def : Pat<(v16i8 (X86s2vec R32:$src)), (MOVD128rr R32:$src)>,
+  Requires<[HasSSE2]>;
+

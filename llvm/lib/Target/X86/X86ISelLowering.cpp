@@ -265,19 +265,19 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     addRegisterClass(MVT::v2i32, X86::VR64RegisterClass);
 
     // FIXME: add MMX packed arithmetics
-    setOperationAction(ISD::BUILD_VECTOR, MVT::v8i8,  Expand);
-    setOperationAction(ISD::BUILD_VECTOR, MVT::v4i16, Expand);
-    setOperationAction(ISD::BUILD_VECTOR, MVT::v2i32, Expand);
+    setOperationAction(ISD::BUILD_VECTOR,     MVT::v8i8,  Expand);
+    setOperationAction(ISD::BUILD_VECTOR,     MVT::v4i16, Expand);
+    setOperationAction(ISD::BUILD_VECTOR,     MVT::v2i32, Expand);
   }
 
   if (TM.getSubtarget<X86Subtarget>().hasSSE1()) {
     addRegisterClass(MVT::v4f32, X86::VR128RegisterClass);
 
-    setOperationAction(ISD::ADD        , MVT::v4f32, Legal);
-    setOperationAction(ISD::SUB        , MVT::v4f32, Legal);
-    setOperationAction(ISD::MUL        , MVT::v4f32, Legal);
-    setOperationAction(ISD::LOAD       , MVT::v4f32, Legal);
-    setOperationAction(ISD::BUILD_VECTOR, MVT::v4f32, Expand);
+    setOperationAction(ISD::ADD,              MVT::v4f32, Legal);
+    setOperationAction(ISD::SUB,              MVT::v4f32, Legal);
+    setOperationAction(ISD::MUL,              MVT::v4f32, Legal);
+    setOperationAction(ISD::LOAD,             MVT::v4f32, Legal);
+    setOperationAction(ISD::BUILD_VECTOR,     MVT::v4f32, Expand);
   }
 
   if (TM.getSubtarget<X86Subtarget>().hasSSE2()) {
@@ -288,15 +288,17 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     addRegisterClass(MVT::v2i64, X86::VR128RegisterClass);
 
 
-    setOperationAction(ISD::ADD        , MVT::v2f64, Legal);
-    setOperationAction(ISD::SUB        , MVT::v2f64, Legal);
-    setOperationAction(ISD::MUL        , MVT::v2f64, Legal);
-    setOperationAction(ISD::LOAD       , MVT::v2f64, Legal);
-    setOperationAction(ISD::BUILD_VECTOR, MVT::v2f64, Expand);
-    setOperationAction(ISD::BUILD_VECTOR, MVT::v16i8, Expand);
-    setOperationAction(ISD::BUILD_VECTOR, MVT::v8i16, Expand);
-    setOperationAction(ISD::BUILD_VECTOR, MVT::v4i32, Expand);
-    setOperationAction(ISD::BUILD_VECTOR, MVT::v2i64, Expand);
+    setOperationAction(ISD::ADD,              MVT::v2f64, Legal);
+    setOperationAction(ISD::SUB,              MVT::v2f64, Legal);
+    setOperationAction(ISD::MUL,              MVT::v2f64, Legal);
+    setOperationAction(ISD::LOAD,             MVT::v2f64, Legal);
+    setOperationAction(ISD::BUILD_VECTOR,     MVT::v2f64, Expand);
+    setOperationAction(ISD::BUILD_VECTOR,     MVT::v16i8, Expand);
+    setOperationAction(ISD::BUILD_VECTOR,     MVT::v8i16, Expand);
+    setOperationAction(ISD::BUILD_VECTOR,     MVT::v4i32, Expand);
+    setOperationAction(ISD::BUILD_VECTOR,     MVT::v2i64, Expand);
+    setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v16i8, Custom);
+    setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v8i16, Custom);
   }
 
   computeRegisterProperties();
@@ -2135,6 +2137,10 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
                        Copy, DAG.getConstant(getBytesToPopOnReturn(), MVT::i16),
                        Copy.getValue(1));
   }
+  case ISD::SCALAR_TO_VECTOR: {
+    SDOperand AnyExt = DAG.getNode(ISD::ANY_EXTEND, MVT::i32, Op.getOperand(0));
+    return DAG.getNode(X86ISD::SCALAR_TO_VECTOR, Op.getValueType(), AnyExt);
+  }
   }
 }
 
@@ -2168,6 +2174,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::LOAD_PACK:          return "X86ISD::LOAD_PACK";
   case X86ISD::GlobalBaseReg:      return "X86ISD::GlobalBaseReg";
   case X86ISD::Wrapper:            return "X86ISD::Wrapper";
+  case X86ISD::SCALAR_TO_VECTOR:   return "X86ISD::SCALAR_TO_VECTOR";
   }
 }
 

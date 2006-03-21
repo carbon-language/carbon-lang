@@ -145,6 +145,10 @@ namespace llvm {
       /// TCPWrapper - A wrapper node for TargetConstantPool,
       /// TargetExternalSymbol, and TargetGlobalAddress.
       Wrapper,
+
+      /// SCALAR_TO_VECTOR - X86 version of SCALAR_TO_VECTOR. The destination base
+      /// type does not have to match the operand type.
+      SCALAR_TO_VECTOR,
     };
 
     // X86 specific condition code. These correspond to X86_*_COND in
