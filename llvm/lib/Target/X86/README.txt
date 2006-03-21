@@ -644,3 +644,5 @@ void minf(float a, float b, float *X) {
 
 //===---------------------------------------------------------------------===//
 
+Teach the coallescer to coales vregs of different register classes. e.g. FR32 /
+FR64 to VR128.
