@@ -168,6 +168,7 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::MUL , (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::LOAD, (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::VECTOR_SHUFFLE, (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::EXTRACT_VECTOR_ELT, (MVT::ValueType)VT, Expand);
     
     // FIXME: We don't support any BUILD_VECTOR's yet.  We should custom expand
     // the ones we do, like splat(0.0) and splat(-0.0).

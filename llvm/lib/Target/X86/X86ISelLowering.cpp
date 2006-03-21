@@ -256,6 +256,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::MUL , (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::LOAD, (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::VECTOR_SHUFFLE, (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::EXTRACT_VECTOR_ELT, (MVT::ValueType)VT, Expand);
   }
 
   if (TM.getSubtarget<X86Subtarget>().hasMMX()) {
