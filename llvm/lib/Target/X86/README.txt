@@ -485,6 +485,12 @@ This will be solved when we go to a dynamic programming based isel.
 
 //===---------------------------------------------------------------------===//
 
+Should generate min/max for stuff like:
+
+void minf(float a, float b, float *X) {
+  *X = a <= b ? a : b;
+}
+
 Make use of floating point min / max instructions. Perhaps introduce ISD::FMIN
 and ISD::FMAX node types?
 
@@ -633,14 +639,6 @@ dependent LICM pass or 2) makeing SelectDAG represent the whole function.
 The following tests perform worse with LSR:
 
 lambda, siod, optimizer-eval, ackermann, hash2, nestedloop, strcat, and Treesor.
-
-//===---------------------------------------------------------------------===//
-
-Should generate min/max for stuff like:
-
-void minf(float a, float b, float *X) {
-  *X = a <= b ? a : b;
-}
 
 //===---------------------------------------------------------------------===//
 
