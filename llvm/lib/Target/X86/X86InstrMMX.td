@@ -22,24 +22,6 @@ def IMPLICIT_DEF_VR64 : I<0, Pseudo, (ops VR64:$dst),
 def : Pat<(v4i16 (undef)), (IMPLICIT_DEF_VR64)>,  Requires<[HasMMX]>;
 def : Pat<(v2i32 (undef)), (IMPLICIT_DEF_VR64)>,  Requires<[HasMMX]>;
 
-def SCALAR_TO_VECTOR_V8I8 : I<0, Pseudo, (ops VR64:$dst, R8:$src),
-                              "#SCALAR_TO_VECTOR $src",
-                              [(set VR64:$dst,
-                                (v8i8 (scalar_to_vector R8:$src)))]>,
-                            Requires<[HasMMX]>;
-
-def SCALAR_TO_VECTOR_V4I16 : I<0, Pseudo, (ops VR64:$dst, R16:$src),
-                               "#SCALAR_TO_VECTOR $src",
-                               [(set VR64:$dst,
-                                 (v4i16 (scalar_to_vector R16:$src)))]>,
-                             Requires<[HasMMX]>;
-
-def SCALAR_TO_VECTOR_V2I32 : I<0, Pseudo, (ops VR64:$dst, R32:$src),
-                               "#SCALAR_TO_VECTOR $src",
-                               [(set VR64:$dst,
-                                 (v2i32 (scalar_to_vector R32:$src)))]>,
-                             Requires<[HasMMX]>;
-
 // Move Instructions
 def MOVD64rr : I<0x6E, MRMSrcReg, (ops VR64:$dst, R32:$src),
                  "movd {$src, $dst|$dst, $src}", []>, TB,
@@ -60,4 +42,3 @@ def MOVQ64rm : I<0x6F, MRMSrcMem, (ops VR64:$dst, i64mem:$src),
 def MOVQ64mr : I<0x7F, MRMDestMem, (ops i64mem:$dst, VR64:$src),
                  "movq {$src, $dst|$dst, $src}", []>, TB,
                Requires<[HasMMX]>;
-
