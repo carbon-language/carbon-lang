@@ -1223,8 +1223,8 @@ namespace {
           return LV > RV;
         else
           return ALV < ARV;
-      } else
-        return (LHSC && !RHSC);
+      }
+      return (LHSC && !RHSC);
     }
   };
 }
