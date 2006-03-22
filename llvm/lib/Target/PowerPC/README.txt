@@ -552,34 +552,20 @@ When -ffast-math is on, we can use 0.0.
 
 float foo(float X) { return (int)(X); }
 
-Currently produces
+Currently produces:
 
 _foo:
-        lis r2, ha16(LCPI1_0)
-        lis r3, 17200
         fctiwz f0, f1
         stfd f0, -8(r1)
-        lwz r4, -4(r1)
-        xoris r4, r4, 32768
-        stw r4, -12(r1)
-        stw r3, -16(r1)
-        lfs f0, lo16(LCPI1_0)(r2)
-        lfd f1, -16(r1)
-        fsub f0, f1, f0
+        lwz r2, -4(r1)
+        extsw r2, r2
+        std r2, -16(r1)
+        lfd f0, -16(r1)
+        fcfid f0, f0
         frsp f1, f0
         blr
 
-When we have ppc64 working properly, it could produce the nicer code:
+We could use a target dag combine to turn the lwz/extsw into an lwa when the 
+lwz has a single use.  Since LWA is cracked anyway, this would be a codesize
+win only.
 
-_foo:
-        fctiwz f0, f1
-        stfd f0, -8(r1)
-        lwz r4, -4(r1)
-        extsh r4, r4
-        std r4, -16(r1)
-        lfd f1, -16(r1)
-        fcfid f0, f0
-        frsp f0, f0
-        blr
-
-Note: this would speed up SingleSource/Misc/pi by about 30%
