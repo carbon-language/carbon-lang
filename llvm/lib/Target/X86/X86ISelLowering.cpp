@@ -1368,6 +1368,26 @@ static bool DarwinGVRequiresExtraLoad(GlobalValue *GV) {
           (GV->isExternal() && !GV->hasNotBeenReadFromBytecode()));
 }
 
+/// isPSHUFDMask - Return true if the specified VECTOR_SHUFFLE operand
+/// specifies a shuffle of elements that is suitable for input to PSHUFD.
+bool X86::isPSHUFDMask(SDNode *N) {
+  assert(N->getOpcode() == ISD::BUILD_VECTOR);
+
+  if (N->getNumOperands() != 4)
+    return false;
+
+  // Check if the value doesn't reference the second vector.
+  SDOperand Elt = N->getOperand(0);
+  assert(isa<ConstantSDNode>(Elt) && "Invalid VECTOR_SHUFFLE mask!");
+  for (unsigned i = 1, e = N->getNumOperands(); i != e; ++i) {
+    assert(isa<ConstantSDNode>(N->getOperand(i)) &&
+           "Invalid VECTOR_SHUFFLE mask!");
+    if (cast<ConstantSDNode>(N->getOperand(i))->getValue() >= 4) return false;
+  }
+
+  return true;
+}
+
 /// isSplatMask - Return true if the specified VECTOR_SHUFFLE operand specifies
 /// a splat of a single element.
 bool X86::isSplatMask(SDNode *N) {
@@ -2211,17 +2231,26 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand PermMask = Op.getOperand(2);
     MVT::ValueType VT = Op.getValueType();
 
-    if (V2.getOpcode() == ISD::UNDEF) {
-      // Handle splat cases.
-      if (X86::isSplatMask(PermMask.Val)) {
-        if (VT == MVT::v2f64 || VT == MVT::v2i64)
-          // Use unpcklpd
-          return DAG.getNode(X86ISD::UNPCKLP, VT, V1, V1);
+    // Handle splat cases.
+    if (X86::isSplatMask(PermMask.Val)) {
+      if (V2.getOpcode() == ISD::UNDEF)
         // Leave the VECTOR_SHUFFLE alone. It matches SHUFP*.
         return SDOperand();
-      } else if (VT == MVT::v4f32)
+      else
+        // Make it match SHUFP* or UNPCKLPD. Second vector is undef since it's
+        // not needed.
+        return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1,
+                           DAG.getNode(ISD::UNDEF, V1.getValueType()),
+                           PermMask);
+    } else if (X86::isPSHUFDMask(PermMask.Val)) {
+      if (V2.getOpcode() == ISD::UNDEF)
         // Leave the VECTOR_SHUFFLE alone. It matches PSHUFD.
         return SDOperand();
+      else
+        // Make it match PSHUFD. Second vector is undef since it's not needed.
+        return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1,
+                           DAG.getNode(ISD::UNDEF, V1.getValueType()),
+                           PermMask);
     }
 
     // TODO.
@@ -2262,7 +2291,6 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::GlobalBaseReg:      return "X86ISD::GlobalBaseReg";
   case X86ISD::Wrapper:            return "X86ISD::Wrapper";
   case X86ISD::SCALAR_TO_VECTOR:   return "X86ISD::SCALAR_TO_VECTOR";
-  case X86ISD::UNPCKLP:            return "X86ISD::UNPCKLP";
   }
 }
 
@@ -2340,4 +2368,12 @@ bool X86TargetLowering::isLegalAddressImmediate(GlobalValue *GV) const {
       return false;
   } else
     return true;
+}
+
+/// isShuffleMaskLegal - Targets can use this to indicate that they only
+/// support *some* VECTOR_SHUFFLE operations, those with specific masks.
+/// By default, if a target supports the VECTOR_SHUFFLE node, all mask values
+/// are assumed to be legal.
+bool X86TargetLowering::isShuffleMaskLegal(SDOperand Mask) const {
+  return (X86::isSplatMask(Mask.Val) || X86::isPSHUFDMask(Mask.Val));
 }

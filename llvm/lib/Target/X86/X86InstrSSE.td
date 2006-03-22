@@ -55,7 +55,15 @@ def SHUFP_splat_mask : PatLeaf<(build_vector), [{
   return X86::isSplatMask(N);
 }], SHUFFLE_get_shuf_imm>;
 
-def PSHUFD_shuffle_mask : PatLeaf<(build_vector), [{}], SHUFFLE_get_pshufd_imm>;
+def UNPCKLP_splat_mask : PatLeaf<(build_vector), [{
+  return X86::isSplatMask(N);
+}]>;
+
+// Only use PSHUF if it is not a splat.
+def PSHUFD_shuffle_mask : PatLeaf<(build_vector), [{
+  return !X86::isSplatMask(N) && X86::isPSHUFDMask(N);
+}], SHUFFLE_get_pshufd_imm>;
+
 
 //===----------------------------------------------------------------------===//
 // SSE scalar FP Instructions
@@ -691,9 +699,7 @@ def PSHUFWrm : PSIi8<0x70, MRMSrcMem,
                      "pshufw {$src2, $src1, $dst|$dst, $src1, $src2}", []>;
 def PSHUFDrr : PDIi8<0x70, MRMDestReg,
                      (ops VR128:$dst, VR128:$src1, i8imm:$src2),
-                     "pshufd {$src2, $src1, $dst|$dst, $src1, $src2}",
-                 [(set VR128:$dst, (vector_shuffle (v4f32 VR128:$src1), (undef),
-                                    PSHUFD_shuffle_mask:$src2))]>;
+                     "pshufd {$src2, $src1, $dst|$dst, $src1, $src2}", []>;
 def PSHUFDrm : PDIi8<0x70, MRMSrcMem,
                      (ops VR128:$dst, i128mem:$src1, i8imm:$src2),
                      "pshufd {$src2, $src1, $dst|$dst, $src1, $src2}", []>;
@@ -809,12 +815,13 @@ def : Pat<(vector_shuffle (v4i32 VR128:$src), (undef), SHUFP_splat_mask:$sm),
           (v4i32 (SHUFPSrr VR128:$src, VR128:$src, SHUFP_splat_mask:$sm))>;
 
 // Splat v2f64 / v2i64
-def : Pat<(X86unpcklp (v2f64 VR128:$src1), VR128:$src2),
-          (v2f64 (UNPCKLPDrr VR128:$src1, VR128:$src2))>;
-def : Pat<(X86unpcklp (v2i64 VR128:$src1), VR128:$src2),
-          (v2i64 (UNPCKLPDrr VR128:$src1, VR128:$src2))>;
+def : Pat<(vector_shuffle (v2f64 VR128:$src), (undef), UNPCKLP_splat_mask:$sm),
+          (v2f64 (UNPCKLPDrr VR128:$src, VR128:$src))>;
+def : Pat<(vector_shuffle (v2i64 VR128:$src), (undef), UNPCKLP_splat_mask:$sm),
+          (v2i64 (UNPCKLPDrr VR128:$src, VR128:$src))>;
 
-// Shuffle v4i32, undef
-def : Pat<(vector_shuffle (v4i32 VR128:$src1), (undef),
-           PSHUFD_shuffle_mask:$src2),
-          (v4i32 (PSHUFDrr VR128:$src1, PSHUFD_shuffle_mask:$src2))>;
+// Shuffle v4f32 / v4i32, undef. These should only match if splat cases do not.
+def : Pat<(vector_shuffle (v4f32 VR128:$src), (undef), PSHUFD_shuffle_mask:$sm),
+          (v4f32 (PSHUFDrr VR128:$src, PSHUFD_shuffle_mask:$sm))>;
+def : Pat<(vector_shuffle (v4i32 VR128:$src), (undef), PSHUFD_shuffle_mask:$sm),
+          (v4i32 (PSHUFDrr VR128:$src, PSHUFD_shuffle_mask:$sm))>;

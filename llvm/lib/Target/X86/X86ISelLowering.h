@@ -179,6 +179,10 @@ namespace llvm {
 
  /// Define some predicates that are used for node matching.
  namespace X86 {
+   /// isPSHUFDMask - Return true if the specified VECTOR_SHUFFLE operand
+   /// specifies a shuffle of elements that is suitable for input to PSHUFD.
+   bool isPSHUFDMask(SDNode *N);
+
    /// isSplatMask - Return true if the specified VECTOR_SHUFFLE operand
    /// specifies a splat of a single element.
    bool isSplatMask(SDNode *N);
@@ -259,6 +263,11 @@ namespace llvm {
     virtual bool isLegalAddressImmediate(int64_t V) const;
     virtual bool isLegalAddressImmediate(GlobalValue *GV) const;
 
+    /// isShuffleMaskLegal - Targets can use this to indicate that they only
+    /// support *some* VECTOR_SHUFFLE operations, those with specific masks.
+    /// By default, if a target supports the VECTOR_SHUFFLE node, all mask values
+    /// are assumed to be legal.
+    virtual bool isShuffleMaskLegal(SDOperand Mask) const;
   private:
     // C Calling Convention implementation.
     std::vector<SDOperand> LowerCCCArguments(Function &F, SelectionDAG &DAG);
