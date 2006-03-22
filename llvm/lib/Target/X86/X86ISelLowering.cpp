@@ -2216,14 +2216,15 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
           // Use unpcklpd
           return DAG.getNode(X86ISD::UNPCKLP, VT, V1, V1);
         // Leave the VECTOR_SHUFFLE alone. It matches SHUFP*.
-        break;
+        return SDOperand();
       } else if (VT == MVT::v4f32 && X86::isPSHUFDMask(PermMask.Val))
         // Leave the VECTOR_SHUFFLE alone. It matches PSHUFD.
-        break;
+        return SDOperand();
     }
 
     // TODO.
-    assert(0);
+    assert(0 && "TODO");
+    abort();
   }
   }
 }
