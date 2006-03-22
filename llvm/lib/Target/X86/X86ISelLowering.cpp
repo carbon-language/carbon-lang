@@ -50,7 +50,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setShiftAmountFlavor(Mask);   // shl X, 32 == shl X, 0
   setStackPointerRegisterToSaveRestore(X86::ESP);
 
-  if (!TM.getSubtarget<X86Subtarget>().isTargetDarwin())
+  if (!Subtarget->isTargetDarwin())
     // Darwin should use _setjmp/_longjmp instead of setjmp/longjmp.
     setUseUnderscoreSetJmpLongJmp(true);
     
@@ -182,7 +182,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::LOCATION, MVT::Other, Expand);
   setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
   // FIXME - use subtarget debug flags
-  if (!TM.getSubtarget<X86Subtarget>().isTargetDarwin())
+  if (!Subtarget->isTargetDarwin())
     setOperationAction(ISD::DEBUG_LABEL, MVT::Other, Expand);
 
   // VASTART needs to be custom lowered to use the VarArgsFrameIndex
@@ -259,7 +259,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, (MVT::ValueType)VT, Expand);
   }
 
-  if (TM.getSubtarget<X86Subtarget>().hasMMX()) {
+  if (Subtarget->hasMMX()) {
     addRegisterClass(MVT::v8i8,  X86::VR64RegisterClass);
     addRegisterClass(MVT::v4i16, X86::VR64RegisterClass);
     addRegisterClass(MVT::v2i32, X86::VR64RegisterClass);
@@ -270,7 +270,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::BUILD_VECTOR,     MVT::v2i32, Expand);
   }
 
-  if (TM.getSubtarget<X86Subtarget>().hasSSE1()) {
+  if (Subtarget->hasSSE1()) {
     addRegisterClass(MVT::v4f32, X86::VR128RegisterClass);
 
     setOperationAction(ISD::ADD,              MVT::v4f32, Legal);
@@ -281,7 +281,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::VECTOR_SHUFFLE,   MVT::v4f32, Custom);
   }
 
-  if (TM.getSubtarget<X86Subtarget>().hasSSE2()) {
+  if (Subtarget->hasSSE2()) {
     addRegisterClass(MVT::v2f64, X86::VR128RegisterClass);
     addRegisterClass(MVT::v16i8, X86::VR128RegisterClass);
     addRegisterClass(MVT::v8i16, X86::VR128RegisterClass);
@@ -2098,7 +2098,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand Result = DAG.getNode(X86ISD::Wrapper, getPointerTy(),
                          DAG.getTargetConstantPool(CP->get(), getPointerTy(),
                                                    CP->getAlignment()));
-    if (getTargetMachine().getSubtarget<X86Subtarget>().isTargetDarwin()) {
+    if (Subtarget->isTargetDarwin()) {
       // With PIC, the address is actually $g + Offset.
       if (getTargetMachine().getRelocationModel() == Reloc::PIC)
         Result = DAG.getNode(ISD::ADD, getPointerTy(),
@@ -2111,8 +2111,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
     SDOperand Result = DAG.getNode(X86ISD::Wrapper, getPointerTy(),
                          DAG.getTargetGlobalAddress(GV, getPointerTy()));
-    if (getTargetMachine().
-        getSubtarget<X86Subtarget>().isTargetDarwin()) {
+    if (Subtarget->isTargetDarwin()) {
       // With PIC, the address is actually $g + Offset.
       if (getTargetMachine().getRelocationModel() == Reloc::PIC)
         Result = DAG.getNode(ISD::ADD, getPointerTy(),
@@ -2134,8 +2133,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     const char *Sym = cast<ExternalSymbolSDNode>(Op)->getSymbol();
     SDOperand Result = DAG.getNode(X86ISD::Wrapper, getPointerTy(),
                          DAG.getTargetExternalSymbol(Sym, getPointerTy()));
-    if (getTargetMachine().
-        getSubtarget<X86Subtarget>().isTargetDarwin()) {
+    if (Subtarget->isTargetDarwin()) {
       // With PIC, the address is actually $g + Offset.
       if (getTargetMachine().getRelocationModel() == Reloc::PIC)
         Result = DAG.getNode(ISD::ADD, getPointerTy(),
@@ -2357,8 +2355,7 @@ bool X86TargetLowering::isLegalAddressImmediate(int64_t V) const {
 }
 
 bool X86TargetLowering::isLegalAddressImmediate(GlobalValue *GV) const {
-  if (getTargetMachine().
-      getSubtarget<X86Subtarget>().isTargetDarwin()) {
+  if (Subtarget->isTargetDarwin()) {
     Reloc::Model RModel = getTargetMachine().getRelocationModel();
     if (RModel == Reloc::Static)
       return true;
