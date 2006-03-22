@@ -948,22 +948,21 @@ def RLDICR : MDForm_1<30, 1,
 
 let PPC970_Unit = 5 in {  // VALU Operations.
 // VA-Form instructions.  3-input AltiVec ops.
-def VMADDFP : VAForm_1<46, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, VRRC:$vC),
+def VMADDFP : VAForm_1<46, (ops VRRC:$vD, VRRC:$vA, VRRC:$vC, VRRC:$vB),
                        "vmaddfp $vD, $vA, $vC, $vB", VecFP,
                        [(set VRRC:$vD, (fadd (fmul VRRC:$vA, VRRC:$vC),
                                              VRRC:$vB))]>,
                        Requires<[FPContractions]>;
-def VNMSUBFP: VAForm_1<47, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, VRRC:$vC),
+def VNMSUBFP: VAForm_1<47, (ops VRRC:$vD, VRRC:$vA, VRRC:$vC, VRRC:$vB),
                        "vnmsubfp $vD, $vA, $vC, $vB", VecFP,
-                       [(set VRRC:$vD, (fneg (fsub (fmul VRRC:$vA, 
-                                                         VRRC:$vC),
-                                                  VRRC:$vB)))]>,
+                       [(set VRRC:$vD, (fneg (fsub (fmul VRRC:$vA, VRRC:$vC),
+                                                   VRRC:$vB)))]>,
                        Requires<[FPContractions]>;
 
-def VPERM   : VAForm_1<43, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, VRRC:$vC),
-                       "vperm $vD, $vA, $vB, $vC", VecPerm,
+def VPERM   : VAForm_1<43, (ops VRRC:$vD, VRRC:$vA, VRRC:$vC, VRRC:$vB),
+                       "vperm $vD, $vA, $vC, $vB", VecPerm,
                        [(set VRRC:$vD,
-                             (PPCvperm (v4f32 VRRC:$vA), VRRC:$vB, VRRC:$vC))]>;
+                             (PPCvperm (v4f32 VRRC:$vA), VRRC:$vC, VRRC:$vB))]>;
 
 
 // VX-Form instructions.  AltiVec arithmetic ops.

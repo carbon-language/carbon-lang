@@ -595,8 +595,8 @@ class VAForm_1<bits<6> xo, dag OL, string asmstr,
     : I<4, OL, asmstr, itin> {
   bits<5> VD;
   bits<5> VA;
-  bits<5> VB;
   bits<5> VC;
+  bits<5> VB;
 
   let Pattern = pattern;
   
