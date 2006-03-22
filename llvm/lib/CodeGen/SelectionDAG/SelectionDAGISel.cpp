@@ -788,7 +788,7 @@ void SelectionDAGLowering::visitCast(User &I) {
         setValue(&I, DAG.getNode(ISD::SIGN_EXTEND, DestVT, N));
       else
         setValue(&I, DAG.getNode(ISD::ZERO_EXTEND, DestVT, N));
-    } else if (isFloatingPoint(SrcVT)) {           // Int -> FP cast
+    } else if (isFloatingPoint(DestVT)) {           // Int -> FP cast
       if (I.getOperand(0)->getType()->isSigned())
         setValue(&I, DAG.getNode(ISD::SINT_TO_FP, DestVT, N));
       else
