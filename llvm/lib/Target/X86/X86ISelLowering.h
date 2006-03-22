@@ -149,6 +149,9 @@ namespace llvm {
       /// SCALAR_TO_VECTOR - X86 version of SCALAR_TO_VECTOR. The destination base
       /// type does not have to match the operand type.
       SCALAR_TO_VECTOR,
+
+      /// UNPCKLP - X86 unpack and interleave low instructions.
+      UNPCKLP,
     };
 
     // X86 specific condition code. These correspond to X86_*_COND in
@@ -173,6 +176,21 @@ namespace llvm {
       COND_INVALID
     };
   }
+
+ /// Define some predicates that are used for node matching.
+ namespace X86 {
+   /// isPSHUFDMask - Return true if the specified VECTOR_SHUFFLE operand
+   /// specifies a shuffle of elements that is suitable for input to PSHUFD.
+   bool isPSHUFDMask(SDNode *N);
+
+   /// isSplatMask - Return true if the specified VECTOR_SHUFFLE operand
+   /// specifies a splat of a single element.
+   bool isSplatMask(SDNode *N);
+
+   /// getShuffleImmediate - Return the appropriate immediate to shuffle
+   /// the specified isShuffleMask VECTOR_SHUFFLE mask.
+   unsigned getShuffleImmediate(SDNode *N);
+ }
 
   //===----------------------------------------------------------------------===//
   //  X86TargetLowering - X86 Implementation of the TargetLowering interface

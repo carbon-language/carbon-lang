@@ -278,6 +278,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::MUL,              MVT::v4f32, Legal);
     setOperationAction(ISD::LOAD,             MVT::v4f32, Legal);
     setOperationAction(ISD::BUILD_VECTOR,     MVT::v4f32, Expand);
+    setOperationAction(ISD::VECTOR_SHUFFLE,   MVT::v4f32, Custom);
   }
 
   if (TM.getSubtarget<X86Subtarget>().hasSSE2()) {
@@ -299,6 +300,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::BUILD_VECTOR,     MVT::v2i64, Expand);
     setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v16i8, Custom);
     setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v8i16, Custom);
+    setOperationAction(ISD::VECTOR_SHUFFLE,   MVT::v2f64, Custom);
   }
 
   computeRegisterProperties();
@@ -1366,6 +1368,66 @@ static bool DarwinGVRequiresExtraLoad(GlobalValue *GV) {
           (GV->isExternal() && !GV->hasNotBeenReadFromBytecode()));
 }
 
+/// isPSHUFDMask - Return true if the specified VECTOR_SHUFFLE operand
+/// specifies a shuffle of elements that is suitable for input to PSHUFD.
+bool X86::isPSHUFDMask(SDNode *N) {
+  assert(N->getOpcode() == ISD::BUILD_VECTOR);
+
+  if (N->getNumOperands() != 4)
+    return false;
+
+  // This is a splat operation if each element of the permute is the same, and
+  // if the value doesn't reference the second vector.
+  SDOperand Elt = N->getOperand(0);
+  assert(isa<ConstantSDNode>(Elt) && "Invalid VECTOR_SHUFFLE mask!");
+  for (unsigned i = 1, e = N->getNumOperands(); i != e; ++i) {
+    assert(isa<ConstantSDNode>(N->getOperand(i)) &&
+           "Invalid VECTOR_SHUFFLE mask!");
+    if (cast<ConstantSDNode>(N->getOperand(i))->getValue() >= 4) return false;
+  }
+
+  return true;
+}
+
+/// isSplatMask - Return true if the specified VECTOR_SHUFFLE operand specifies
+/// a splat of a single element.
+bool X86::isSplatMask(SDNode *N) {
+  assert(N->getOpcode() == ISD::BUILD_VECTOR);
+
+  // We can only splat 64-bit, and 32-bit quantities.
+  if (N->getNumOperands() != 4 && N->getNumOperands() != 2)
+    return false;
+
+  // This is a splat operation if each element of the permute is the same, and
+  // if the value doesn't reference the second vector.
+  SDOperand Elt = N->getOperand(0);
+  assert(isa<ConstantSDNode>(Elt) && "Invalid VECTOR_SHUFFLE mask!");
+  for (unsigned i = 1, e = N->getNumOperands(); i != e; ++i) {
+    assert(isa<ConstantSDNode>(N->getOperand(i)) &&
+           "Invalid VECTOR_SHUFFLE mask!");
+    if (N->getOperand(i) != Elt) return false;
+  }
+
+  // Make sure it is a splat of the first vector operand.
+  return cast<ConstantSDNode>(Elt)->getValue() < N->getNumOperands();
+}
+
+/// getShuffleImmediate - Return the appropriate immediate to shuffle
+/// the specified isShuffleMask VECTOR_SHUFFLE mask.
+unsigned X86::getShuffleImmediate(SDNode *N) {
+  unsigned NumOperands = N->getNumOperands();
+  unsigned Shift = (NumOperands == 4) ? 2 : 1;
+  unsigned Mask = 0;
+  unsigned i = NumOperands - 1;
+  do {
+    Mask |= cast<ConstantSDNode>(N->getOperand(i))->getValue();
+    Mask <<= Shift;
+    --i;
+  } while (i != 0);
+
+  return Mask;
+}
+
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
 SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
@@ -2141,6 +2203,28 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand AnyExt = DAG.getNode(ISD::ANY_EXTEND, MVT::i32, Op.getOperand(0));
     return DAG.getNode(X86ISD::SCALAR_TO_VECTOR, Op.getValueType(), AnyExt);
   }
+  case ISD::VECTOR_SHUFFLE: {
+    SDOperand V1 = Op.getOperand(0);
+    SDOperand V2 = Op.getOperand(1);
+    SDOperand PermMask = Op.getOperand(2);
+    MVT::ValueType VT = Op.getValueType();
+
+    if (V2.getOpcode() == ISD::UNDEF) {
+      // Handle splat cases.
+      if (X86::isSplatMask(PermMask.Val)) {
+        if (VT == MVT::v2f64 || VT == MVT::v2i64)
+          // Use unpcklpd
+          return DAG.getNode(X86ISD::UNPCKLP, VT, V1, V1);
+        // Leave the VECTOR_SHUFFLE alone. It matches SHUFP*.
+        break;
+      } else if (VT == MVT::v4f32 && X86::isPSHUFDMask(PermMask.Val))
+        // Leave the VECTOR_SHUFFLE alone. It matches PSHUFD.
+        break;
+    }
+
+    // TODO.
+    assert(0);
+  }
   }
 }
 
@@ -2175,6 +2259,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::GlobalBaseReg:      return "X86ISD::GlobalBaseReg";
   case X86ISD::Wrapper:            return "X86ISD::Wrapper";
   case X86ISD::SCALAR_TO_VECTOR:   return "X86ISD::SCALAR_TO_VECTOR";
+  case X86ISD::UNPCKLP:            return "X86ISD::UNPCKLP";
   }
 }
 

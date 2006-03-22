@@ -17,14 +17,19 @@
 // SSE specific DAG Nodes.
 //===----------------------------------------------------------------------===//
 
-def X86loadp : SDNode<"X86ISD::LOAD_PACK", SDTLoad, 
-                      [SDNPHasChain]>;
-def X86fand  : SDNode<"X86ISD::FAND",     SDTFPBinOp,
-                      [SDNPCommutative, SDNPAssociative]>;
-def X86fxor  : SDNode<"X86ISD::FXOR",     SDTFPBinOp,
-                      [SDNPCommutative, SDNPAssociative]>;
-def X86s2vec : SDNode<"X86ISD::SCALAR_TO_VECTOR",
-                      SDTypeProfile<1, 1, []>, []>;
+def SDTX86Unpcklp : SDTypeProfile<1, 2,
+                                  [SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>]>;
+
+def X86loadp   : SDNode<"X86ISD::LOAD_PACK", SDTLoad, 
+                        [SDNPHasChain]>;
+def X86fand    : SDNode<"X86ISD::FAND",     SDTFPBinOp,
+                        [SDNPCommutative, SDNPAssociative]>;
+def X86fxor    : SDNode<"X86ISD::FXOR",     SDTFPBinOp,
+                        [SDNPCommutative, SDNPAssociative]>;
+def X86s2vec   : SDNode<"X86ISD::SCALAR_TO_VECTOR",
+                        SDTypeProfile<1, 1, []>, []>;
+def X86unpcklp : SDNode<"X86ISD::UNPCKLP",
+                        SDTX86Unpcklp, []>;
 
 //===----------------------------------------------------------------------===//
 // SSE pattern fragments
@@ -35,6 +40,20 @@ def X86loadpf64  : PatFrag<(ops node:$ptr), (f64   (X86loadp node:$ptr))>;
 
 def loadv4f32    : PatFrag<(ops node:$ptr), (v4f32 (load node:$ptr))>;
 def loadv2f64    : PatFrag<(ops node:$ptr), (v2f64 (load node:$ptr))>;
+
+// SHUFFLE_get_imm xform function: convert vector_shuffle mask to PSHUF*,
+// SHUF* etc. imm.
+def SHUFFLE_get_imm : SDNodeXForm<build_vector, [{
+  return getI8Imm(X86::getShuffleImmediate(N));
+}]>;
+
+def SHUFFLE_splat_mask : PatLeaf<(build_vector), [{
+  return X86::isSplatMask(N);
+}], SHUFFLE_get_imm>;
+
+def PSHUFD_shuffle_mask : PatLeaf<(build_vector), [{
+  return X86::isPSHUFDMask(N);
+}], SHUFFLE_get_imm>;
 
 //===----------------------------------------------------------------------===//
 // SSE scalar FP Instructions
@@ -652,6 +671,21 @@ def CMPPDrm : PDI<0xC2, MRMSrcMem,
 }
 
 // Shuffle and unpack instructions
+def PSHUFWrr : PSI<0x70, AddRegFrm,
+                   (ops VR64:$dst, VR64:$src1, i8imm:$src2),
+                   "pshufw {$src2, $src1, $dst|$dst, $src1, $src2}", []>;
+def PSHUFWrm : PSI<0x70, MRMSrcMem,
+                   (ops VR64:$dst, i64mem:$src1, i8imm:$src2),
+                   "pshufw {$src2, $src1, $dst|$dst, $src1, $src2}", []>;
+def PSHUFDrr : PDI<0x70, AddRegFrm,
+                   (ops VR128:$dst, VR128:$src1, i8imm:$src2),
+                   "pshufd {$src2, $src1, $dst|$dst, $src1, $src2}",
+                 [(set VR128:$dst, (vector_shuffle (v4f32 VR128:$src1), (undef),
+                                    PSHUFD_shuffle_mask:$src2))]>;
+def PSHUFDrm : PDI<0x70, MRMSrcMem,
+                   (ops VR128:$dst, i128mem:$src1, i8imm:$src2),
+                   "pshufd {$src2, $src1, $dst|$dst, $src1, $src2}", []>;
+
 def SHUFPSrr : PSI<0xC6, MRMSrcReg, 
                    (ops VR128:$dst, VR128:$src1, VR128:$src2, i8imm:$src3),
                    "shufps {$src3, $src2, $dst|$dst, $src2, $src3}", []>;
@@ -755,3 +789,15 @@ def : Pat<(v8i16 (X86s2vec R32:$src)), (MOVD128rr R32:$src)>,
 def : Pat<(v16i8 (X86s2vec R32:$src)), (MOVD128rr R32:$src)>,
   Requires<[HasSSE2]>;
 
+
+// Splat v4f32 / v4i32
+def : Pat<(vector_shuffle (v4f32 VR128:$src), (undef), SHUFFLE_splat_mask:$sm),
+          (v4f32 (SHUFPSrr VR128:$src, VR128:$src, SHUFFLE_splat_mask:$sm))>;
+def : Pat<(vector_shuffle (v4i32 VR128:$src), (undef), SHUFFLE_splat_mask:$sm),
+          (v4i32 (SHUFPSrr VR128:$src, VR128:$src, SHUFFLE_splat_mask:$sm))>;
+
+// Splat v2f64 / v2i64
+def : Pat<(X86unpcklp (v2f64 VR128:$src1), VR128:$src2),
+          (v2f64 (UNPCKLPDrr VR128:$src1, VR128:$src2))>;
+def : Pat<(X86unpcklp (v2i64 VR128:$src1), VR128:$src2),
+          (v2i64 (UNPCKLPDrr VR128:$src1, VR128:$src2))>;
