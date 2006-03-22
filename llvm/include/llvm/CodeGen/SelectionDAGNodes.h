@@ -176,6 +176,18 @@ namespace ISD {
     /// of the element size of VEC1/VEC2, not in terms of bytes.
     VECTOR_SHUFFLE,
     
+    /// X = VBIT_CONVERT(Y)  and X = VBIT_CONVERT(Y, COUNT,TYPE) - This node
+    /// represents a conversion from or to an ISD::Vector type.
+    ///
+    /// This is lowered to a BIT_CONVERT of the appropriate input/output types.
+    /// The input and output are required to have the same size and at least one
+    /// is required to be a vector.
+    ///
+    /// If the source is a vector, this takes three operands (like any other
+    /// vector consumer) which indicate the size and type of the vector input.
+    /// Otherwise it takes one input.
+    VBIT_CONVERT,
+    
     /// BINOP(LHS, RHS,  COUNT,TYPE)
     /// Simple abstract vector operators.  Unlike the integer and floating point
     /// binary operators, these nodes also take two additional operands:
