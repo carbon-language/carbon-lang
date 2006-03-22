@@ -859,7 +859,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
 
-  case ISD::VEXTRACT_VECTOR_ELT:
+  case ISD::VEXTRACT_VECTOR_ELT: {
     // We know that operand #0 is the Vec vector.  If the index is a constant
     // or if the invec is a supported hardware type, we can use it.  Otherwise,
     // lower to a store then an indexed load.
@@ -897,10 +897,11 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // It's now an extract from the appropriate high or low part.
       Result = LegalizeOp(DAG.UpdateNodeOperands(Result, Tmp1, Tmp2));
     } else {
-      // FIXME: IMPLEMENT STORE/LOAD lowering.
+      // FIXME: IMPLEMENT STORE/LOAD lowering.  Need alignment of stack slot!!
       assert(0 && "unimp!");
     }
     break;
+  }
     
   case ISD::CALLSEQ_START: {
     SDNode *CallEnd = FindCallEndFromCallStart(Node);
