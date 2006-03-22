@@ -3155,7 +3155,6 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
   
   // Emit a store of each element to the stack slot.
   std::vector<SDOperand> Stores;
-  bool isLittleEndian = TLI.isLittleEndian();
   unsigned TypeByteSize = 
     MVT::getSizeInBits(Node->getOperand(0).getValueType())/8;
   unsigned VectorSize = MVT::getSizeInBits(VT)/8;
@@ -3164,11 +3163,7 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
     // Ignore undef elements.
     if (Node->getOperand(i).getOpcode() == ISD::UNDEF) continue;
     
-    unsigned Offset;
-    if (isLittleEndian) 
-      Offset = TypeByteSize*i;
-    else
-      Offset = TypeByteSize*(e-i-1);
+    unsigned Offset = TypeByteSize*i;
     
     SDOperand Idx = DAG.getConstant(Offset, FIPtr.getValueType());
     Idx = DAG.getNode(ISD::ADD, FIPtr.getValueType(), FIPtr, Idx);
