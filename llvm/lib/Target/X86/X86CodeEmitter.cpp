@@ -398,6 +398,8 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
     case X86::IMPLICIT_DEF_R32:
     case X86::IMPLICIT_DEF_FR32:
     case X86::IMPLICIT_DEF_FR64:
+    case X86::IMPLICIT_DEF_VR64:
+    case X86::IMPLICIT_DEF_VR128:
     case X86::FP_REG_KILL:
       break;
     }
