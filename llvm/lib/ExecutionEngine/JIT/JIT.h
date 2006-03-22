@@ -60,6 +60,10 @@ class JIT : public ExecutionEngine {
 public:
   ~JIT();
 
+  static void Register() {
+    JITCtor = create;
+  }
+  
   /// getJITInfo - Return the target JIT information structure.
   ///
   TargetJITInfo &getJITInfo() const { return TJI; }

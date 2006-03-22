@@ -13,8 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "jit"
-#include "Interpreter/Interpreter.h"
-#include "JIT/JIT.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
@@ -26,12 +24,16 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/System/DynamicLibrary.h"
 #include "llvm/Target/TargetData.h"
+#include <iostream>
 using namespace llvm;
 
 namespace {
   Statistic<> NumInitBytes("lli", "Number of bytes of global vars initialized");
   Statistic<> NumGlobals  ("lli", "Number of global vars initialized");
 }
+
+ExecutionEngine::EECtorFn ExecutionEngine::JITCtor = 0;
+ExecutionEngine::EECtorFn ExecutionEngine::InterpCtor = 0;
 
 ExecutionEngine::ExecutionEngine(ModuleProvider *P) :
   CurMod(*P->getModule()), MP(P) {
@@ -163,24 +165,12 @@ ExecutionEngine *ExecutionEngine::create(ModuleProvider *MP,
   ExecutionEngine *EE = 0;
 
   // Unless the interpreter was explicitly selected, try making a JIT.
-  if (!ForceInterpreter)
-    EE = JIT::create(MP, IL);
+  if (!ForceInterpreter && JITCtor)
+    EE = JITCtor(MP, IL);
 
   // If we can't make a JIT, make an interpreter instead.
-  if (EE == 0) {
-    try {
-      Module *M = MP->materializeModule();
-      try {
-        EE = Interpreter::create(M, IL);
-      } catch (...) {
-        std::cerr << "Error creating the interpreter!\n";
-      }
-    } catch (std::string& errmsg) {
-      std::cerr << "Error reading the bytecode file: " << errmsg << "\n";
-    } catch (...) {
-      std::cerr << "Error reading the bytecode file!\n";
-    }
-  }
+  if (EE == 0 && InterpCtor)
+    EE = InterpCtor(MP, IL);
 
   if (EE == 0)
     delete IL;

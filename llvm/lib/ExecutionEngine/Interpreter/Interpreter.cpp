@@ -17,11 +17,24 @@
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
+#include "llvm/ModuleProvider.h"
 using namespace llvm;
+
+static struct RegisterInterp {
+  RegisterInterp() { Interpreter::Register(); }
+} InterpRegistrator;
 
 /// create - Create a new interpreter object.  This can never fail.
 ///
-ExecutionEngine *Interpreter::create(Module *M, IntrinsicLowering *IL) {
+ExecutionEngine *Interpreter::create(ModuleProvider *MP,
+                                     IntrinsicLowering *IL) {
+  Module *M;
+  try {
+    M = MP->materializeModule();
+  } catch (...) {
+    return 0;  // error materializing the module.
+  }
+  
   bool isLittleEndian = false;
   switch (M->getEndianness()) {
   case Module::LittleEndian: isLittleEndian = true; break;

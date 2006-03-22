@@ -102,11 +102,15 @@ public:
   ///
   void runAtExitHandlers();
 
+  static void Register() {
+    InterpCtor = create;
+  }
+  
   /// create - Create an interpreter ExecutionEngine. This can never fail.  The
   /// specified IntrinsicLowering implementation will be deleted when the
   /// Interpreter execution engine is destroyed.
   ///
-  static ExecutionEngine *create(Module *M, IntrinsicLowering *IL);
+  static ExecutionEngine *create(ModuleProvider *M, IntrinsicLowering *IL);
 
   /// run - Start execution with the specified function and arguments.
   ///

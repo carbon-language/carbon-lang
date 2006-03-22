@@ -26,8 +26,11 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetJITInfo.h"
 #include <iostream>
-
 using namespace llvm;
+
+static struct RegisterJIT {
+  RegisterJIT() { JIT::Register(); }
+} JITRegistrator;
 
 JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji)
   : ExecutionEngine(MP), TM(tm), TJI(tji), state(MP) {
