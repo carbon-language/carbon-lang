@@ -762,10 +762,18 @@ void SelectionDAGLowering::visitSelect(User &I) {
 
 void SelectionDAGLowering::visitCast(User &I) {
   SDOperand N = getValue(I.getOperand(0));
-  MVT::ValueType SrcVT = TLI.getValueType(I.getOperand(0)->getType());
+  MVT::ValueType SrcVT = N.getValueType();
   MVT::ValueType DestVT = TLI.getValueType(I.getType());
 
-  if (N.getValueType() == DestVT) {
+  if (DestVT == MVT::Vector) {
+    // This is a cast to a vector from something else.  This is always a bit
+    // convert.  Get information about the input vector.
+    const PackedType *DestTy = cast<PackedType>(I.getType());
+    MVT::ValueType EltVT = TLI.getValueType(DestTy->getElementType());
+    setValue(&I, DAG.getNode(ISD::VBIT_CONVERT, DestVT, N, 
+                             DAG.getConstant(DestTy->getNumElements(),MVT::i32),
+                             DAG.getValueType(EltVT)));
+  } else if (SrcVT == DestVT) {
     setValue(&I, N);  // noop cast.
   } else if (DestVT == MVT::i1) {
     // Cast to bool is a comparison against zero, not truncation to zero.
@@ -780,11 +788,13 @@ void SelectionDAGLowering::visitCast(User &I) {
         setValue(&I, DAG.getNode(ISD::SIGN_EXTEND, DestVT, N));
       else
         setValue(&I, DAG.getNode(ISD::ZERO_EXTEND, DestVT, N));
-    } else {                        // Int -> FP cast
+    } else if (isFloatingPoint(SrcVT)) {           // Int -> FP cast
       if (I.getOperand(0)->getType()->isSigned())
         setValue(&I, DAG.getNode(ISD::SINT_TO_FP, DestVT, N));
       else
         setValue(&I, DAG.getNode(ISD::UINT_TO_FP, DestVT, N));
+    } else {
+      assert(0 && "Unknown cast!");
     }
   } else if (isFloatingPoint(SrcVT)) {
     if (isFloatingPoint(DestVT)) {  // FP -> FP cast
@@ -792,52 +802,20 @@ void SelectionDAGLowering::visitCast(User &I) {
         setValue(&I, DAG.getNode(ISD::FP_ROUND, DestVT, N));
       else
         setValue(&I, DAG.getNode(ISD::FP_EXTEND, DestVT, N));
-    } else {                        // FP -> Int cast.
+    } else if (isInteger(DestVT)) {        // FP -> Int cast.
       if (I.getType()->isSigned())
         setValue(&I, DAG.getNode(ISD::FP_TO_SINT, DestVT, N));
       else
         setValue(&I, DAG.getNode(ISD::FP_TO_UINT, DestVT, N));
+    } else {
+      assert(0 && "Unknown cast!");
     }
   } else {
-    assert(0 && "Cannot bitconvert vectors yet!");
-#if 0
-    const PackedType *SrcTy = cast<PackedType>(I.getOperand(0)->getType());
-    const PackedType *DstTy = cast<PackedType>(I.getType());
-    
-    unsigned SrcNumElements = SrcTy->getNumElements();
-    MVT::ValueType SrcPVT = TLI.getValueType(SrcTy->getElementType());
-    MVT::ValueType SrcTVT = MVT::getVectorType(SrcPVT, SrcNumElements);
-
-    unsigned DstNumElements = DstTy->getNumElements();
-    MVT::ValueType DstPVT = TLI.getValueType(DstTy->getElementType());
-    MVT::ValueType DstTVT = MVT::getVectorType(DstPVT, DstNumElements);
-    
-    // If the input and output type are legal, convert this to a bit convert of
-    // the SrcTVT/DstTVT types.
-    if (SrcTVT != MVT::Other && DstTVT != MVT::Other &&
-        TLI.isTypeLegal(SrcTVT) && TLI.isTypeLegal(DstTVT)) {
-      assert(N.getValueType() == SrcTVT);
-      setValue(&I, DAG.getNode(ISD::BIT_CONVERT, DstTVT, N));
-    } else {
-      // Otherwise, convert this directly into a store/load.
-      // FIXME: add a VBIT_CONVERT node that we could use to automatically turn
-      // 8xFloat -> 8xInt casts into two 4xFloat -> 4xInt casts.
-      // Create the stack frame object.
-      uint64_t ByteSize = TD.getTypeSize(SrcTy);
-      assert(ByteSize == TD.getTypeSize(DstTy) && "Not a bit_convert!");
-      MachineFrameInfo *FrameInfo = DAG.getMachineFunction().getFrameInfo();
-      int FrameIdx = FrameInfo->CreateStackObject(ByteSize, ByteSize);
-      SDOperand FIPtr = DAG.getFrameIndex(FrameIdx, TLI.getPointerTy());
-      
-      // Emit a store to the stack slot.
-      SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
-                                    N, FIPtr, DAG.getSrcValue(NULL));
-      // Result is a load from the stack slot.
-      SDOperand Val =
-        getLoadFrom(DstTy, FIPtr, DAG.getSrcValue(NULL), Store, false);
-      setValue(&I, Val);
-    }
-#endif
+    assert(SrcVT == MVT::Vector && "Unknown cast!");
+    assert(DestVT != MVT::Vector && "Casts to vector already handled!");
+    // This is a cast from a vector to something else.  This is always a bit
+    // convert.  Get information about the input vector.
+    setValue(&I, DAG.getNode(ISD::VBIT_CONVERT, DestVT, N));
   }
 }
 

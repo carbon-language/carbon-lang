@@ -4396,6 +4396,35 @@ SDOperand SelectionDAGLegalize::PackVectorOp(SDOperand Op,
                            Node->getOperand(1), Node->getOperand(2));
     }
     break;
+  case ISD::VBIT_CONVERT:
+    if (Op.getOperand(0).getValueType() != MVT::Vector)
+      Result = DAG.getNode(ISD::BIT_CONVERT, NewVT, Op.getOperand(0));
+    else {
+      // If the input is a vector type, we have to either scalarize it, pack it
+      // or convert it based on whether the input vector type is legal.
+      SDNode *InVal = Node->getOperand(0).Val;
+      unsigned NumElems =
+        cast<ConstantSDNode>(*(InVal->op_end()-2))->getValue();
+      MVT::ValueType EVT = cast<VTSDNode>(*(InVal->op_end()-1))->getVT();
+        
+      // Figure out if there is a Packed type corresponding to this Vector
+      // type.  If so, convert to the packed type.
+      MVT::ValueType TVT = MVT::getVectorType(EVT, NumElems);
+      if (TVT != MVT::Other && TLI.isTypeLegal(TVT)) {
+        // Turn this into a bit convert of the packed input.
+        Result = DAG.getNode(ISD::BIT_CONVERT, NewVT, 
+                             PackVectorOp(Node->getOperand(0), TVT));
+        break;
+      } else if (NumElems == 1) {
+        // Turn this into a bit convert of the scalar input.
+        Result = DAG.getNode(ISD::BIT_CONVERT, NewVT, 
+                             PackVectorOp(Node->getOperand(0), EVT));
+        break;
+      } else {
+        // FIXME: UNIMP!
+        assert(0 && "Cast from unsupported vector type not implemented yet!");
+      }
+    }
   }
 
   if (TLI.isTypeLegal(NewVT))
