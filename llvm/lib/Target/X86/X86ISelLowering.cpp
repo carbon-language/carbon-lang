@@ -2371,7 +2371,10 @@ bool X86TargetLowering::isLegalAddressImmediate(GlobalValue *GV) const {
 /// support *some* VECTOR_SHUFFLE operations, those with specific masks.
 /// By default, if a target supports the VECTOR_SHUFFLE node, all mask values
 /// are assumed to be legal.
-bool X86TargetLowering::isShuffleMaskLegal(SDOperand Mask) const {
+bool
+X86TargetLowering::isShuffleMaskLegal(SDOperand Mask, MVT::ValueType VT) const {
+  // Only do shuffles on 128-bit vector types for now.
+  if (MVT::getSizeInBits(VT) == 64) return false;
   return (X86::isSplatMask(Mask.Val) ||
           (Subtarget->hasSSE2() && X86::isPSHUFDMask(Mask.Val)));
 }

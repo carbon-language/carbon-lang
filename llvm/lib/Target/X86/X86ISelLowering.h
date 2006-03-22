@@ -267,7 +267,7 @@ namespace llvm {
     /// support *some* VECTOR_SHUFFLE operations, those with specific masks.
     /// By default, if a target supports the VECTOR_SHUFFLE node, all mask values
     /// are assumed to be legal.
-    virtual bool isShuffleMaskLegal(SDOperand Mask) const;
+    virtual bool isShuffleMaskLegal(SDOperand Mask, MVT::ValueType VT) const;
   private:
     // C Calling Convention implementation.
     std::vector<SDOperand> LowerCCCArguments(Function &F, SelectionDAG &DAG);

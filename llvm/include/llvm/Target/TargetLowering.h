@@ -202,7 +202,7 @@ public:
   /// support and the code generator is tasked with not creating illegal masks.
   bool isShuffleLegal(MVT::ValueType VT, SDOperand Mask) const {
     return isOperationLegal(ISD::VECTOR_SHUFFLE, VT) && 
-           isShuffleMaskLegal(Mask);
+           isShuffleMaskLegal(Mask, VT);
   }
 
   /// getTypeToPromoteTo - If the action for this operation is to promote, this
@@ -489,7 +489,7 @@ protected:
   /// support *some* VECTOR_SHUFFLE operations, those with specific masks.
   /// By default, if a target supports the VECTOR_SHUFFLE node, all mask values
   /// are assumed to be legal.
-  virtual bool isShuffleMaskLegal(SDOperand Mask) const {
+  virtual bool isShuffleMaskLegal(SDOperand Mask, MVT::ValueType VT) const {
     return true;
   }
   
