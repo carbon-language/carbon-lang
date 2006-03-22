@@ -1368,27 +1368,6 @@ static bool DarwinGVRequiresExtraLoad(GlobalValue *GV) {
           (GV->isExternal() && !GV->hasNotBeenReadFromBytecode()));
 }
 
-/// isPSHUFDMask - Return true if the specified VECTOR_SHUFFLE operand
-/// specifies a shuffle of elements that is suitable for input to PSHUFD.
-bool X86::isPSHUFDMask(SDNode *N) {
-  assert(N->getOpcode() == ISD::BUILD_VECTOR);
-
-  if (N->getNumOperands() != 4)
-    return false;
-
-  // This is a splat operation if each element of the permute is the same, and
-  // if the value doesn't reference the second vector.
-  SDOperand Elt = N->getOperand(0);
-  assert(isa<ConstantSDNode>(Elt) && "Invalid VECTOR_SHUFFLE mask!");
-  for (unsigned i = 1, e = N->getNumOperands(); i != e; ++i) {
-    assert(isa<ConstantSDNode>(N->getOperand(i)) &&
-           "Invalid VECTOR_SHUFFLE mask!");
-    if (cast<ConstantSDNode>(N->getOperand(i))->getValue() >= 4) return false;
-  }
-
-  return true;
-}
-
 /// isSplatMask - Return true if the specified VECTOR_SHUFFLE operand specifies
 /// a splat of a single element.
 bool X86::isSplatMask(SDNode *N) {
@@ -1412,9 +1391,10 @@ bool X86::isSplatMask(SDNode *N) {
   return cast<ConstantSDNode>(Elt)->getValue() < N->getNumOperands();
 }
 
-/// getShuffleImmediate - Return the appropriate immediate to shuffle
-/// the specified isShuffleMask VECTOR_SHUFFLE mask.
-unsigned X86::getShuffleImmediate(SDNode *N) {
+/// getShuffleSHUFImmediate - Return the appropriate immediate to shuffle
+/// the specified isShuffleMask VECTOR_SHUFFLE mask with PSHUF* and SHUFP*
+/// instructions.
+unsigned X86::getShuffleSHUFImmediate(SDNode *N) {
   unsigned NumOperands = N->getNumOperands();
   unsigned Shift = (NumOperands == 4) ? 2 : 1;
   unsigned Mask = 0;
@@ -1422,6 +1402,28 @@ unsigned X86::getShuffleImmediate(SDNode *N) {
   do {
     Mask |= cast<ConstantSDNode>(N->getOperand(i))->getValue();
     Mask <<= Shift;
+    --i;
+  } while (i != 0);
+
+  return Mask;
+}
+
+/// getShufflePSHUFDImmediate - Return the appropriate immediate to shuffle
+/// the specified isShuffleMask VECTOR_SHUFFLE mask with PSHUFD instruction.
+unsigned X86::getShufflePSHUFDImmediate(SDNode *N) {
+  unsigned NumOperands = N->getNumOperands();
+  unsigned Mask = 0;
+
+  assert(NumOperands == 4 && "Expect v4f32 / v4i32 vector operand");
+
+  unsigned i = NumOperands - 1;
+  do {
+    uint64_t Val = cast<ConstantSDNode>(N->getOperand(i))->getValue();
+    // Second vector operand must be undef. We can have it point to anything
+    // we want.
+    if (Val >= NumOperands) Val = 0;
+    Mask |= Val;
+    Mask <<= 2;
     --i;
   } while (i != 0);
 
@@ -2217,7 +2219,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
           return DAG.getNode(X86ISD::UNPCKLP, VT, V1, V1);
         // Leave the VECTOR_SHUFFLE alone. It matches SHUFP*.
         return SDOperand();
-      } else if (VT == MVT::v4f32 && X86::isPSHUFDMask(PermMask.Val))
+      } else if (VT == MVT::v4f32)
         // Leave the VECTOR_SHUFFLE alone. It matches PSHUFD.
         return SDOperand();
     }

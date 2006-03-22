@@ -179,17 +179,18 @@ namespace llvm {
 
  /// Define some predicates that are used for node matching.
  namespace X86 {
-   /// isPSHUFDMask - Return true if the specified VECTOR_SHUFFLE operand
-   /// specifies a shuffle of elements that is suitable for input to PSHUFD.
-   bool isPSHUFDMask(SDNode *N);
-
    /// isSplatMask - Return true if the specified VECTOR_SHUFFLE operand
    /// specifies a splat of a single element.
    bool isSplatMask(SDNode *N);
 
-   /// getShuffleImmediate - Return the appropriate immediate to shuffle
-   /// the specified isShuffleMask VECTOR_SHUFFLE mask.
-   unsigned getShuffleImmediate(SDNode *N);
+   /// getShuffleSHUFImmediate - Return the appropriate immediate to shuffle
+   /// the specified isShuffleMask VECTOR_SHUFFLE mask with PSHUF* and SHUFP*
+   /// instructions.
+   unsigned getShuffleSHUFImmediate(SDNode *N);
+
+   /// getShufflePSHUFDImmediate - Return the appropriate immediate to shuffle
+   /// the specified isShuffleMask VECTOR_SHUFFLE mask with PSHUFD instruction.
+   unsigned getShufflePSHUFDImmediate(SDNode *N);
  }
 
   //===----------------------------------------------------------------------===//

@@ -41,19 +41,21 @@ def X86loadpf64  : PatFrag<(ops node:$ptr), (f64   (X86loadp node:$ptr))>;
 def loadv4f32    : PatFrag<(ops node:$ptr), (v4f32 (load node:$ptr))>;
 def loadv2f64    : PatFrag<(ops node:$ptr), (v2f64 (load node:$ptr))>;
 
-// SHUFFLE_get_imm xform function: convert vector_shuffle mask to PSHUF*,
-// SHUF* etc. imm.
-def SHUFFLE_get_imm : SDNodeXForm<build_vector, [{
-  return getI8Imm(X86::getShuffleImmediate(N));
+// SHUFFLE_get_shuf_imm xform function: convert vector_shuffle mask to PSHUF*,
+// SHUFP* etc. imm.
+def SHUFFLE_get_shuf_imm : SDNodeXForm<build_vector, [{
+  return getI8Imm(X86::getShuffleSHUFImmediate(N));
 }]>;
 
-def SHUFFLE_splat_mask : PatLeaf<(build_vector), [{
-  return X86::isSplatMask(N);
-}], SHUFFLE_get_imm>;
+def SHUFFLE_get_pshufd_imm : SDNodeXForm<build_vector, [{
+  return getI8Imm(X86::getShufflePSHUFDImmediate(N));
+}]>;
 
-def PSHUFD_shuffle_mask : PatLeaf<(build_vector), [{
-  return X86::isPSHUFDMask(N);
-}], SHUFFLE_get_imm>;
+def SHUFP_splat_mask : PatLeaf<(build_vector), [{
+  return X86::isSplatMask(N);
+}], SHUFFLE_get_shuf_imm>;
+
+def PSHUFD_shuffle_mask : PatLeaf<(build_vector), [{}], SHUFFLE_get_pshufd_imm>;
 
 //===----------------------------------------------------------------------===//
 // SSE scalar FP Instructions
@@ -801,13 +803,18 @@ def : Pat<(v16i8 (X86s2vec R32:$src)), (MOVD128rr R32:$src)>,
 
 
 // Splat v4f32 / v4i32
-def : Pat<(vector_shuffle (v4f32 VR128:$src), (undef), SHUFFLE_splat_mask:$sm),
-          (v4f32 (SHUFPSrr VR128:$src, VR128:$src, SHUFFLE_splat_mask:$sm))>;
-def : Pat<(vector_shuffle (v4i32 VR128:$src), (undef), SHUFFLE_splat_mask:$sm),
-          (v4i32 (SHUFPSrr VR128:$src, VR128:$src, SHUFFLE_splat_mask:$sm))>;
+def : Pat<(vector_shuffle (v4f32 VR128:$src), (undef), SHUFP_splat_mask:$sm),
+          (v4f32 (SHUFPSrr VR128:$src, VR128:$src, SHUFP_splat_mask:$sm))>;
+def : Pat<(vector_shuffle (v4i32 VR128:$src), (undef), SHUFP_splat_mask:$sm),
+          (v4i32 (SHUFPSrr VR128:$src, VR128:$src, SHUFP_splat_mask:$sm))>;
 
 // Splat v2f64 / v2i64
 def : Pat<(X86unpcklp (v2f64 VR128:$src1), VR128:$src2),
           (v2f64 (UNPCKLPDrr VR128:$src1, VR128:$src2))>;
 def : Pat<(X86unpcklp (v2i64 VR128:$src1), VR128:$src2),
           (v2i64 (UNPCKLPDrr VR128:$src1, VR128:$src2))>;
+
+// Shuffle v4i32, undef
+def : Pat<(vector_shuffle (v4i32 VR128:$src1), (undef),
+           PSHUFD_shuffle_mask:$src2),
+          (v4i32 (PSHUFDrr VR128:$src1, PSHUFD_shuffle_mask:$src2))>;
