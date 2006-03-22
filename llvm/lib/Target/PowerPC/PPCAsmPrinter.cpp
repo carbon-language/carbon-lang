@@ -201,6 +201,20 @@ namespace {
         printOperand(MI, OpNo+1);
       O << ')';
     }
+    void printMemRegImmShifted(const MachineInstr *MI, unsigned OpNo) {
+      if (MI->getOperand(OpNo).isImmediate())
+        printS16X4ImmOperand(MI, OpNo);
+      else 
+        printSymbolLo(MI, OpNo);
+      O << '(';
+      if (MI->getOperand(OpNo+1).isRegister() && 
+          MI->getOperand(OpNo+1).getReg() == PPC::R0)
+        O << "0";
+      else
+        printOperand(MI, OpNo+1);
+      O << ')';
+    }
+    
     void printMemRegReg(const MachineInstr *MI, unsigned OpNo) {
       // When used as the base register, r0 reads constant zero rather than
       // the value contained in the register.  For this reason, the darwin
