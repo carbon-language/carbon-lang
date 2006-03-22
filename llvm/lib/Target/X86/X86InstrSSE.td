@@ -64,6 +64,8 @@ def PSHUFD_shuffle_mask : PatLeaf<(build_vector), [{
 // SDI - SSE2 instructions with XD prefix.
 // PSI - SSE1 instructions with TB prefix.
 // PDI - SSE2 instructions with TB and OpSize prefixes.
+// PSIi8 - SSE1 instructions with ImmT == Imm8 and TB prefix.
+// PDIi8 - SSE2 instructions with ImmT == Imm8 and TB and OpSize prefixes.
 class SSI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
       : I<o, F, ops, asm, pattern>, XS, Requires<[HasSSE1]>;
 class SDI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
@@ -72,6 +74,14 @@ class PSI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
       : I<o, F, ops, asm, pattern>, TB, Requires<[HasSSE1]>;
 class PDI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
       : I<o, F, ops, asm, pattern>, TB, OpSize, Requires<[HasSSE2]>;
+class PSIi8<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
+      : X86Inst<o, F, Imm8, ops, asm>, TB, Requires<[HasSSE1]> {
+  let Pattern = pattern;
+}
+class PDIi8<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
+      : X86Inst<o, F, Imm8, ops, asm>, TB, OpSize, Requires<[HasSSE2]> {
+  let Pattern = pattern;
+}
 
 // Some 'special' instructions
 def IMPLICIT_DEF_FR32 : I<0, Pseudo, (ops FR32:$dst),
@@ -671,33 +681,33 @@ def CMPPDrm : PDI<0xC2, MRMSrcMem,
 }
 
 // Shuffle and unpack instructions
-def PSHUFWrr : PSI<0x70, AddRegFrm,
-                   (ops VR64:$dst, VR64:$src1, i8imm:$src2),
-                   "pshufw {$src2, $src1, $dst|$dst, $src1, $src2}", []>;
-def PSHUFWrm : PSI<0x70, MRMSrcMem,
-                   (ops VR64:$dst, i64mem:$src1, i8imm:$src2),
-                   "pshufw {$src2, $src1, $dst|$dst, $src1, $src2}", []>;
-def PSHUFDrr : PDI<0x70, AddRegFrm,
-                   (ops VR128:$dst, VR128:$src1, i8imm:$src2),
-                   "pshufd {$src2, $src1, $dst|$dst, $src1, $src2}",
+def PSHUFWrr : PSIi8<0x70, MRMDestReg,
+                     (ops VR64:$dst, VR64:$src1, i8imm:$src2),
+                     "pshufw {$src2, $src1, $dst|$dst, $src1, $src2}", []>;
+def PSHUFWrm : PSIi8<0x70, MRMSrcMem,
+                     (ops VR64:$dst, i64mem:$src1, i8imm:$src2),
+                     "pshufw {$src2, $src1, $dst|$dst, $src1, $src2}", []>;
+def PSHUFDrr : PDIi8<0x70, MRMDestReg,
+                     (ops VR128:$dst, VR128:$src1, i8imm:$src2),
+                     "pshufd {$src2, $src1, $dst|$dst, $src1, $src2}",
                  [(set VR128:$dst, (vector_shuffle (v4f32 VR128:$src1), (undef),
                                     PSHUFD_shuffle_mask:$src2))]>;
-def PSHUFDrm : PDI<0x70, MRMSrcMem,
-                   (ops VR128:$dst, i128mem:$src1, i8imm:$src2),
-                   "pshufd {$src2, $src1, $dst|$dst, $src1, $src2}", []>;
+def PSHUFDrm : PDIi8<0x70, MRMSrcMem,
+                     (ops VR128:$dst, i128mem:$src1, i8imm:$src2),
+                     "pshufd {$src2, $src1, $dst|$dst, $src1, $src2}", []>;
 
-def SHUFPSrr : PSI<0xC6, MRMSrcReg, 
-                   (ops VR128:$dst, VR128:$src1, VR128:$src2, i8imm:$src3),
-                   "shufps {$src3, $src2, $dst|$dst, $src2, $src3}", []>;
-def SHUFPSrm : PSI<0xC6, MRMSrcMem, 
-                   (ops VR128:$dst, VR128:$src1, f128mem:$src2, i8imm:$src3),
-                   "shufps {$src3, $src2, $dst|$dst, $src2, $src3}", []>;
-def SHUFPDrr : PDI<0xC6, MRMSrcReg, 
-                   (ops VR128:$dst, VR128:$src1, VR128:$src2, i8imm:$src3),
-                   "shufpd {$src3, $src2, $dst|$dst, $src2, $src3}", []>;
-def SHUFPDrm : PDI<0xC6, MRMSrcMem, 
-                   (ops VR128:$dst, VR128:$src1, f128mem:$src2, i8imm:$src3),
-                   "shufpd {$src3, $src2, $dst|$dst, $src2, $src3}", []>;
+def SHUFPSrr : PSIi8<0xC6, MRMSrcReg, 
+                     (ops VR128:$dst, VR128:$src1, VR128:$src2, i8imm:$src3),
+                     "shufps {$src3, $src2, $dst|$dst, $src2, $src3}", []>;
+def SHUFPSrm : PSIi8<0xC6, MRMSrcMem, 
+                     (ops VR128:$dst, VR128:$src1, f128mem:$src2, i8imm:$src3),
+                     "shufps {$src3, $src2, $dst|$dst, $src2, $src3}", []>;
+def SHUFPDrr : PDIi8<0xC6, MRMSrcReg, 
+                     (ops VR128:$dst, VR128:$src1, VR128:$src2, i8imm:$src3),
+                     "shufpd {$src3, $src2, $dst|$dst, $src2, $src3}", []>;
+def SHUFPDrm : PDIi8<0xC6, MRMSrcMem, 
+                     (ops VR128:$dst, VR128:$src1, f128mem:$src2, i8imm:$src3),
+                     "shufpd {$src3, $src2, $dst|$dst, $src2, $src3}", []>;
 
 def UNPCKHPSrr : PSI<0x15, MRMSrcReg, 
                     (ops VR128:$dst, VR128:$src1, VR128:$src2),
