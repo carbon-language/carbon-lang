@@ -659,6 +659,9 @@ AC_CONFIG_FILES([Makefile.config])
 dnl Configure doxygen's configuration file
 AC_CONFIG_FILES([docs/doxygen.cfg])
 
+dnl Do the first stage of configuration for llvm-config.in.
+AC_CONFIG_FILES([utils/llvm-config/llvm-config.in])
+
 dnl Do special configuration of Makefiles
 AC_CONFIG_COMMANDS([setup],,[llvm_src="${srcdir}"])
 AC_CONFIG_MAKEFILE(Makefile)

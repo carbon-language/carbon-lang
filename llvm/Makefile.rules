@@ -234,17 +234,17 @@ else
   C.Flags   += -DNDEBUG
 endif
 
-CXX.Flags += $(CXXFLAGS)
-C.Flags   += $(CFLAGS)
-CPP.Flags += $(CPPFLAGS)
-LD.Flags  += $(LDFLAGS)
-AR.Flags  := cru
+CXX.Flags     += $(CXXFLAGS)
+C.Flags       += $(CFLAGS)
+CPP.BaseFlags += $(CPPFLAGS)
+LD.Flags      += $(LDFLAGS)
+AR.Flags      := cru
 LibTool.Flags := --tag=CXX
 
 #Make Floating point ieee complient on alpha
 ifeq ($(ARCH),Alpha)
-  CXX.Flags += -mieee
-  CPP.Flags += -mieee
+  CXX.Flags     += -mieee
+  CPP.BaseFlags += -mieee
 endif
 
 #--------------------------------------------------------------------
@@ -360,13 +360,15 @@ ifeq ($(OS),HP-UX)
   CompileCommonOpts := -D_REENTRANT -D_HPUX_SOURCE
 endif
 
-LD.Flags  += -L$(LibDir) -L$(LLVMLibDir) 
-CPP.Flags += -I$(PROJ_OBJ_DIR) -I$(PROJ_SRC_DIR) \
-	     -I$(PROJ_OBJ_ROOT)/include \
-	     -I$(PROJ_SRC_ROOT)/include \
-	     -I$(LLVM_OBJ_ROOT)/include \
-	     -I$(LLVM_SRC_ROOT)/include \
-	     -D_GNU_SOURCE -D__STDC_LIMIT_MACROS
+LD.Flags      += -L$(LibDir) -L$(LLVMLibDir) 
+CPP.BaseFlags += -D_GNU_SOURCE -D__STDC_LIMIT_MACROS
+# All -I flags should go here, so that they don't confuse llvm-config.
+CPP.Flags     += -I$(PROJ_OBJ_DIR) -I$(PROJ_SRC_DIR) \
+	         -I$(PROJ_OBJ_ROOT)/include \
+	         -I$(PROJ_SRC_ROOT)/include \
+	         -I$(LLVM_OBJ_ROOT)/include \
+	         -I$(LLVM_SRC_ROOT)/include \
+		 $(CPP.BaseFlags)
 
 Compile.C     = $(CC) $(CPP.Flags) $(CompileCommonOpts) -c $(C.Flags)
 LTCompile.C   = $(LIBTOOL) $(LibTool.Flags) --mode=compile $(Compile.C)
@@ -386,6 +388,7 @@ Relink        = $(LIBTOOL) $(LibTool.Flags) --mode=link $(CXX) $(CPP.Flags) \
 LTInstall     = $(LIBTOOL) $(LibTool.Flags) --mode=install $(INSTALL) \
 		$(Install.Flags)
 ProgInstall   = $(INSTALL) $(Install.StripFlag) -m 0755 
+ScriptInstall = $(INSTALL) -m 0755 
 DataInstall   = $(INSTALL) -m 0644
 Burg          = $(BURG) -I $(PROJ_SRC_DIR)
 TableGen      = $(TBLGEN) -I $(PROJ_SRC_DIR) -I$(PROJ_SRC_ROOT)/include
@@ -635,6 +638,9 @@ endif
 ifeq ($(ARCH),Alpha)
 USEDLIBS :=  $(subst LLVMCore, LLVMCore.a, $(USEDLIBS))
 LLVMLIBS := $(subst LLVMCore, LLVMCore.a, $(LLVMLIBS))
+CORE_IS_ARCHIVE := 1
+else
+CORE_IS_ARCHIVE := 0
 endif
 
 ProjLibsOptions := $(patsubst %.a.o, -l%, $(addsuffix .o, $(USEDLIBS)))
