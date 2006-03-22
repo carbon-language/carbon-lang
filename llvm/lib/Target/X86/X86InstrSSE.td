@@ -704,6 +704,7 @@ def PSHUFDrm : PDIi8<0x70, MRMSrcMem,
                      (ops VR128:$dst, i128mem:$src1, i8imm:$src2),
                      "pshufd {$src2, $src1, $dst|$dst, $src1, $src2}", []>;
 
+let isTwoAddress = 1 in {
 def SHUFPSrr : PSIi8<0xC6, MRMSrcReg, 
                      (ops VR128:$dst, VR128:$src1, VR128:$src2, i8imm:$src3),
                      "shufps {$src3, $src2, $dst|$dst, $src2, $src3}", []>;
@@ -716,6 +717,7 @@ def SHUFPDrr : PDIi8<0xC6, MRMSrcReg,
 def SHUFPDrm : PDIi8<0xC6, MRMSrcMem, 
                      (ops VR128:$dst, VR128:$src1, f128mem:$src2, i8imm:$src3),
                      "shufpd {$src3, $src2, $dst|$dst, $src2, $src3}", []>;
+}
 
 def UNPCKHPSrr : PSI<0x15, MRMSrcReg, 
                     (ops VR128:$dst, VR128:$src1, VR128:$src2),
