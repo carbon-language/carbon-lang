@@ -245,8 +245,9 @@ void PPCHazardRecognizer970::EmitInstruction(SDNode *Node) {
     case PPC::STFIWX:
       ThisStoreSize = 4;
       break;
+    case PPC::STD_32:
+    case PPC::STDX_32:
     case PPC::STD:
-    case PPC::STDU:
     case PPC::STFD:
     case PPC::STFDX:
     case PPC::STDX:

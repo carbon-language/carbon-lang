@@ -140,6 +140,7 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
     // They also have instructions for converting between i64 and fp.
     setOperationAction(ISD::FP_TO_SINT, MVT::i64, Custom);
     setOperationAction(ISD::SINT_TO_FP, MVT::i64, Custom);
+    setOperationAction(ISD::SINT_TO_FP, MVT::i32, Custom);
     // To take advantage of the above i64 FP_TO_SINT, promote i32 FP_TO_UINT
     setOperationAction(ISD::FP_TO_UINT, MVT::i32, Promote);
   } else {
@@ -222,6 +223,8 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::SRL:           return "PPCISD::SRL";
   case PPCISD::SRA:           return "PPCISD::SRA";
   case PPCISD::SHL:           return "PPCISD::SHL";
+  case PPCISD::EXTSW_32:      return "PPCISD::EXTSW_32";
+  case PPCISD::STD_32:        return "PPCISD::STD_32";
   case PPCISD::CALL:          return "PPCISD::CALL";
   case PPCISD::RET_FLAG:      return "PPCISD::RET_FLAG";
   }
@@ -302,15 +305,41 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       Bits = DAG.getNode(ISD::TRUNCATE, MVT::i32, Bits);
     return Bits;
   }
-  case ISD::SINT_TO_FP: {
-    assert(MVT::i64 == Op.getOperand(0).getValueType() && 
-           "Unhandled SINT_TO_FP type in custom expander!");
-    SDOperand Bits = DAG.getNode(ISD::BIT_CONVERT, MVT::f64, Op.getOperand(0));
-    SDOperand FP = DAG.getNode(PPCISD::FCFID, MVT::f64, Bits);
-    if (MVT::f32 == Op.getValueType())
-      FP = DAG.getNode(ISD::FP_ROUND, MVT::f32, FP);
-    return FP;
-  }
+  case ISD::SINT_TO_FP:
+    if (Op.getOperand(0).getValueType() == MVT::i64) {
+      SDOperand Bits = DAG.getNode(ISD::BIT_CONVERT, MVT::f64, Op.getOperand(0));
+      SDOperand FP = DAG.getNode(PPCISD::FCFID, MVT::f64, Bits);
+      if (Op.getValueType() == MVT::f32)
+        FP = DAG.getNode(ISD::FP_ROUND, MVT::f32, FP);
+      return FP;
+    } else {
+      assert(Op.getOperand(0).getValueType() == MVT::i32 &&
+             "Unhandled SINT_TO_FP type in custom expander!");
+      // Since we only generate this in 64-bit mode, we can take advantage of
+      // 64-bit registers.  In particular, sign extend the input value into the
+      // 64-bit register with extsw, store the WHOLE 64-bit value into the stack
+      // then lfd it and fcfid it.
+      MachineFrameInfo *FrameInfo = DAG.getMachineFunction().getFrameInfo();
+      int FrameIdx = FrameInfo->CreateStackObject(8, 8);
+      SDOperand FIdx = DAG.getFrameIndex(FrameIdx, MVT::i32);
+      
+      SDOperand Ext64 = DAG.getNode(PPCISD::EXTSW_32, MVT::i32,
+                                    Op.getOperand(0));
+
+      // STD the extended value into the stack slot.
+      SDOperand Store = DAG.getNode(PPCISD::STD_32, MVT::Other,
+                                    DAG.getEntryNode(), Ext64, FIdx,
+                                    DAG.getSrcValue(NULL));
+      // Load the value as a double.
+      SDOperand Ld = DAG.getLoad(MVT::f64, Store, FIdx, DAG.getSrcValue(NULL));
+      
+      // FCFID it and return it.
+      SDOperand FP = DAG.getNode(PPCISD::FCFID, MVT::f64, Ld);
+      if (Op.getValueType() == MVT::f32)
+        FP = DAG.getNode(ISD::FP_ROUND, MVT::f32, FP);
+      return FP;
+    }
+
   case ISD::SELECT_CC: {
     // Turn FP only select_cc's into fsel instructions.
     if (!MVT::isFloatingPoint(Op.getOperand(0).getValueType()) ||
@@ -1106,27 +1135,30 @@ SDOperand PPCTargetLowering::PerformDAGCombine(SDNode *N,
   default: break;
   case ISD::SINT_TO_FP:
     if (TM.getSubtarget<PPCSubtarget>().is64Bit()) {
-      // Turn (sint_to_fp (fp_to_sint X)) -> fctidz/fcfid without load/stores.
-      // We allow the src/dst to be either f32/f64, but force the intermediate
-      // type to be i64.
-      if (N->getOperand(0).getOpcode() == ISD::FP_TO_SINT && 
-          N->getOperand(0).getValueType() == MVT::i64) {
-        
-        SDOperand Val = N->getOperand(0).getOperand(0);
-        if (Val.getValueType() == MVT::f32) {
-          Val = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Val);
+      if (N->getOperand(0).getOpcode() == ISD::FP_TO_SINT) {
+        // Turn (sint_to_fp (fp_to_sint X)) -> fctidz/fcfid without load/stores.
+        // We allow the src/dst to be either f32/f64, but the intermediate
+        // type must be i64.
+        if (N->getOperand(0).getValueType() == MVT::i64) {
+          SDOperand Val = N->getOperand(0).getOperand(0);
+          if (Val.getValueType() == MVT::f32) {
+            Val = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Val);
+            DCI.AddToWorklist(Val.Val);
+          }
+            
+          Val = DAG.getNode(PPCISD::FCTIDZ, MVT::f64, Val);
           DCI.AddToWorklist(Val.Val);
-        }
-          
-        Val = DAG.getNode(PPCISD::FCTIDZ, MVT::f64, Val);
-        DCI.AddToWorklist(Val.Val);
-        Val = DAG.getNode(PPCISD::FCFID, MVT::f64, Val);
-        DCI.AddToWorklist(Val.Val);
-        if (N->getValueType(0) == MVT::f32) {
-          Val = DAG.getNode(ISD::FP_ROUND, MVT::f32, Val);
+          Val = DAG.getNode(PPCISD::FCFID, MVT::f64, Val);
           DCI.AddToWorklist(Val.Val);
+          if (N->getValueType(0) == MVT::f32) {
+            Val = DAG.getNode(ISD::FP_ROUND, MVT::f32, Val);
+            DCI.AddToWorklist(Val.Val);
+          }
+          return Val;
+        } else if (N->getOperand(0).getValueType() == MVT::i32) {
+          // If the intermediate type is i32, we can avoid the load/store here
+          // too.
         }
-        return Val;
       }
     }
     break;

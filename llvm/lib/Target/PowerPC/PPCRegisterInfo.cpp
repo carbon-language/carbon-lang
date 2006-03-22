@@ -276,7 +276,7 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
     case PPC::LWA:
     case PPC::LD:
     case PPC::STD:
-    case PPC::STDU:
+    case PPC::STD_32:
       assert((Offset & 3) == 0 && "Invalid frame offset!");
       Offset >>= 2;    // The actual encoded value has the low two bits zero.
       break;

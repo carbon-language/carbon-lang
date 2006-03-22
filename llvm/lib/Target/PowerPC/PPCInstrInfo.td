@@ -58,6 +58,9 @@ def PPCsrl        : SDNode<"PPCISD::SRL"       , SDT_PPCShiftOp>;
 def PPCsra        : SDNode<"PPCISD::SRA"       , SDT_PPCShiftOp>;
 def PPCshl        : SDNode<"PPCISD::SHL"       , SDT_PPCShiftOp>;
 
+def PPCextsw_32   : SDNode<"PPCISD::EXTSW_32"  , SDTIntUnaryOp>;
+def PPCstd_32     : SDNode<"PPCISD::STD_32"    , SDTStore, [SDNPHasChain]>;
+
 // These are target-independent nodes, but have target-specific formats.
 def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_PPCCallSeq,[SDNPHasChain]>;
 def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_PPCCallSeq,[SDNPHasChain]>;
@@ -194,11 +197,17 @@ def memrr : Operand<i32> {
   let NumMIOperands = 2;
   let MIOperandInfo = (ops GPRC, GPRC);
 }
+def memrix : Operand<i32> {   // memri where the imm is shifted 2 bits.
+  let PrintMethod = "printMemRegImmShifted";
+  let NumMIOperands = 2;
+  let MIOperandInfo = (ops i32imm, GPRC);
+}
 
 // Define PowerPC specific addressing mode.
 def iaddr  : ComplexPattern<i32, 2, "SelectAddrImm",    []>;
 def xaddr  : ComplexPattern<i32, 2, "SelectAddrIdx",    []>;
 def xoaddr : ComplexPattern<i32, 2, "SelectAddrIdxOnly",[]>;
+def ixaddr : ComplexPattern<i32, 2, "SelectAddrImmShift", []>; // "std"
 
 //===----------------------------------------------------------------------===//
 // PowerPC Instruction Predicate Definitions.
@@ -428,9 +437,15 @@ let isStore = 1, noResults = 1, PPC970_Unit = 2 in {
 def STD  : DSForm_2<62, 0, (ops GPRC:$rT, s16immX4:$DS, GPRC:$rA),
                     "std $rT, $DS($rA)", LdStSTD,
                     []>, isPPC64;
-def STDU : DSForm_2<62, 1, (ops GPRC:$rT, s16immX4:$DS, GPRC:$rA),
-                    "stdu $rT, $DS($rA)", LdStSTD,
-                    []>, isPPC64;
+
+// STD_32/STDX_32 - Just like STD/STDX, but uses a '32-bit' input register.
+def STD_32  : DSForm_2<62, 0, (ops GPRC:$rT, memrix:$dst),
+                       "std $rT, $dst", LdStSTD,
+                       [(PPCstd_32  GPRC:$rT, ixaddr:$dst)]>, isPPC64;
+def STDX_32  : XForm_8<31, 149, (ops GPRC:$rT, memrr:$dst),
+                       "stdx $rT, $dst", LdStSTD,
+                       [(PPCstd_32  GPRC:$rT, xaddr:$dst)]>, isPPC64,
+                       PPC970_DGroup_Cracked;
 }
 
 // X-Form instructions.  Most instructions that perform an operation on a
@@ -586,6 +601,11 @@ def EXTSH  : XForm_11<31, 922, (ops GPRC:$rA, GPRC:$rS),
 def EXTSW  : XForm_11<31, 986, (ops G8RC:$rA, G8RC:$rS),
                       "extsw $rA, $rS", IntGeneral,
                       [(set G8RC:$rA, (sext_inreg G8RC:$rS, i32))]>, isPPC64;
+/// EXTSW_32 - Just like EXTSW, but works on '32-bit' registers.
+def EXTSW_32 : XForm_11<31, 986, (ops GPRC:$rA, GPRC:$rS),
+                      "extsw $rA, $rS", IntGeneral,
+                      [(set GPRC:$rA, (PPCextsw_32 GPRC:$rS))]>, isPPC64;
+
 def CMP    : XForm_16<31, 0, (ops CRRC:$crD, i1imm:$long, GPRC:$rA, GPRC:$rB),
                       "cmp $crD, $long, $rA, $rB", IntCompare>;
 def CMPL   : XForm_16<31, 32, (ops CRRC:$crD, i1imm:$long, GPRC:$rA, GPRC:$rB),
