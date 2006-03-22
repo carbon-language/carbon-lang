@@ -48,11 +48,13 @@ private:
   std::map<void *, const GlobalValue*> GlobalAddressReverseMap;
 
 public:
-  std::map<const GlobalValue*, void *>& getGlobalAddressMap(const MutexGuard& locked) {
+  std::map<const GlobalValue*, void *> &
+  getGlobalAddressMap(const MutexGuard &locked) {
     return GlobalAddressMap;
   }
 
-  std::map<void *, const GlobalValue*>& getGlobalAddressReverseMap(const MutexGuard& locked) {
+  std::map<void*, const GlobalValue*> & 
+  getGlobalAddressReverseMap(const MutexGuard& locked) {
     return GlobalAddressReverseMap;
   }
 };
@@ -71,9 +73,16 @@ protected:
     TD = &td;
   }
 
+  // To avoid having libexecutionengine depend on the JIT and interpreter
+  // libraries, the JIT and Interpreter set these functions to ctor pointers
+  // at startup time if they are linked in.
+  typedef ExecutionEngine *(*EECtorFn)(ModuleProvider*, IntrinsicLowering*);
+  static EECtorFn JITCtor, InterpCtor;
+    
 public:
-  /// lock - This lock is protects the ExecutionEngine, JIT, JITResolver and JITEmitter classes.
-  /// It must be held while changing the internal state of any of those classes.
+  /// lock - This lock is protects the ExecutionEngine, JIT, JITResolver and
+  /// JITEmitter classes.  It must be held while changing the internal state of
+  /// any of those classes.
   sys::Mutex lock; // Used to make this class and subclasses thread-safe
 
   ExecutionEngine(ModuleProvider *P);
@@ -156,7 +165,8 @@ public:
   void *getPointerToGlobalIfAvailable(const GlobalValue *GV) {
     MutexGuard locked(lock);
 
-    std::map<const GlobalValue*, void*>::iterator I = state.getGlobalAddressMap(locked).find(GV);
+    std::map<const GlobalValue*, void*>::iterator I =
+      state.getGlobalAddressMap(locked).find(GV);
     return I != state.getGlobalAddressMap(locked).end() ? I->second : 0;
   }
 
