@@ -128,3 +128,13 @@ Can be improved in two ways:
 //===---------------------------------------------------------------------===//
 
 Add LSR exit value substitution. It'll probably be a win for Ackermann, etc.
+
+//===---------------------------------------------------------------------===//
+
+It would be nice to revert this patch:
+http://lists.cs.uiuc.edu/pipermail/llvm-commits/Week-of-Mon-20060213/031986.html
+
+And teach the dag combiner enough to simplify the code expanded before 
+legalize.  It seems plausible that this knowledge would let it simplify other
+stuff too.
+
