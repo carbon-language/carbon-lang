@@ -55,7 +55,7 @@ def SHUFP_splat_mask : PatLeaf<(build_vector), [{
   return X86::isSplatMask(N);
 }], SHUFFLE_get_shuf_imm>;
 
-def UNPCKLP_splat_mask : PatLeaf<(build_vector), [{
+def MOVLHPS_splat_mask : PatLeaf<(build_vector), [{
   return X86::isSplatMask(N);
 }]>;
 
@@ -810,18 +810,22 @@ def : Pat<(v16i8 (X86s2vec R32:$src)), (MOVD128rr R32:$src)>,
 
 // Splat v4f32 / v4i32
 def : Pat<(vector_shuffle (v4f32 VR128:$src), (undef), SHUFP_splat_mask:$sm),
-          (v4f32 (SHUFPSrr VR128:$src, VR128:$src, SHUFP_splat_mask:$sm))>;
+          (v4f32 (SHUFPSrr VR128:$src, VR128:$src, SHUFP_splat_mask:$sm))>,
+  Requires<[HasSSE1]>;
 def : Pat<(vector_shuffle (v4i32 VR128:$src), (undef), SHUFP_splat_mask:$sm),
-          (v4i32 (SHUFPSrr VR128:$src, VR128:$src, SHUFP_splat_mask:$sm))>;
+          (v4i32 (SHUFPSrr VR128:$src, VR128:$src, SHUFP_splat_mask:$sm))>,
+  Requires<[HasSSE1]>;
 
 // Splat v2f64 / v2i64
-def : Pat<(vector_shuffle (v2f64 VR128:$src), (undef), UNPCKLP_splat_mask:$sm),
-          (v2f64 (UNPCKLPDrr VR128:$src, VR128:$src))>;
-def : Pat<(vector_shuffle (v2i64 VR128:$src), (undef), UNPCKLP_splat_mask:$sm),
-          (v2i64 (UNPCKLPDrr VR128:$src, VR128:$src))>;
+def : Pat<(vector_shuffle (v2f64 VR128:$src), (undef), MOVLHPS_splat_mask:$sm),
+          (v2f64 (MOVLHPSrr VR128:$src))>, Requires<[HasSSE1]>;
+def : Pat<(vector_shuffle (v2i64 VR128:$src), (undef), MOVLHPS_splat_mask:$sm),
+          (v2i64 (MOVLHPSrr VR128:$src))>, Requires<[HasSSE1]>;
 
 // Shuffle v4f32 / v4i32, undef. These should only match if splat cases do not.
 def : Pat<(vector_shuffle (v4f32 VR128:$src), (undef), PSHUFD_shuffle_mask:$sm),
-          (v4f32 (PSHUFDrr VR128:$src, PSHUFD_shuffle_mask:$sm))>;
+          (v4f32 (PSHUFDrr VR128:$src, PSHUFD_shuffle_mask:$sm))>,
+  Requires<[HasSSE2]>;
 def : Pat<(vector_shuffle (v4i32 VR128:$src), (undef), PSHUFD_shuffle_mask:$sm),
-          (v4i32 (PSHUFDrr VR128:$src, PSHUFD_shuffle_mask:$sm))>;
+          (v4i32 (PSHUFDrr VR128:$src, PSHUFD_shuffle_mask:$sm))>,
+  Requires<[HasSSE2]>;

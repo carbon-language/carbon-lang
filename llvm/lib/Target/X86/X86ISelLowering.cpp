@@ -2242,7 +2242,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
         return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1,
                            DAG.getNode(ISD::UNDEF, V1.getValueType()),
                            PermMask);
-    } else if (X86::isPSHUFDMask(PermMask.Val)) {
+    } else if (Subtarget->hasSSE2() && X86::isPSHUFDMask(PermMask.Val)) {
       if (V2.getOpcode() == ISD::UNDEF)
         // Leave the VECTOR_SHUFFLE alone. It matches PSHUFD.
         return SDOperand();
@@ -2375,5 +2375,6 @@ bool X86TargetLowering::isLegalAddressImmediate(GlobalValue *GV) const {
 /// By default, if a target supports the VECTOR_SHUFFLE node, all mask values
 /// are assumed to be legal.
 bool X86TargetLowering::isShuffleMaskLegal(SDOperand Mask) const {
-  return (X86::isSplatMask(Mask.Val) || X86::isPSHUFDMask(Mask.Val));
+  return (X86::isSplatMask(Mask.Val) ||
+          (Subtarget->hasSSE2() && X86::isPSHUFDMask(Mask.Val)));
 }
