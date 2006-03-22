@@ -181,10 +181,11 @@ namespace ISD {
     ///
     /// This is lowered to a BIT_CONVERT of the appropriate input/output types.
     /// The input and output are required to have the same size and at least one
-    /// is required to be a vector.
+    /// is required to be a vector (if neither is a vector, just use
+    /// BIT_CONVERT).
     ///
-    /// If the source is a vector, this takes three operands (like any other
-    /// vector consumer) which indicate the size and type of the vector input.
+    /// If the result is a vector, this takes three operands (like any other
+    /// vector producer) which indicate the size and type of the vector result.
     /// Otherwise it takes one input.
     VBIT_CONVERT,
     
