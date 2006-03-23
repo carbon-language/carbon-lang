@@ -61,7 +61,7 @@ ExecutionEngine *JIT::create(ModuleProvider *MP) {
   }
 
   // Allocate a target...
-  TargetMachine *Target = MArch->CtorFn(*MP->getModule(), 0, FeaturesStr);
+  TargetMachine *Target = MArch->CtorFn(*MP->getModule(), FeaturesStr);
   assert(Target && "Could not allocate target machine!");
 
   // If the target supports JIT code generation, return a new JIT now.

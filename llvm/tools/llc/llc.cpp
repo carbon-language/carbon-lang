@@ -119,8 +119,6 @@ int main(int argc, char **argv) {
     
     // Allocate target machine.  First, check whether the user has
     // explicitly specified an architecture to compile for.
-    TargetMachine* (*TargetMachineAllocator)(const Module&,
-                                             IntrinsicLowering *) = 0;
     if (MArch == 0) {
       std::string Err;
       MArch = TargetMachineRegistry::getClosestStaticTargetForModule(mod, Err);
@@ -142,7 +140,7 @@ int main(int argc, char **argv) {
       FeaturesStr = Features.getString();
     }
 
-    std::auto_ptr<TargetMachine> target(MArch->CtorFn(mod, 0, FeaturesStr));
+    std::auto_ptr<TargetMachine> target(MArch->CtorFn(mod, FeaturesStr));
     assert(target.get() && "Could not allocate target machine!");
     TargetMachine &Target = *target.get();
     const TargetData &TD = Target.getTargetData();
