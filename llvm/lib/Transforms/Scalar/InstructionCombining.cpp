@@ -5391,16 +5391,6 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     }
           
     if (Changed) return II;
-  } else if (DbgStopPointInst *SPI = dyn_cast<DbgStopPointInst>(II)) {
-    // If this stoppoint is at the same source location as the previous
-    // stoppoint in the chain, it is not needed.
-    if (DbgStopPointInst *PrevSPI =
-        dyn_cast<DbgStopPointInst>(SPI->getChain()))
-      if (SPI->getLineNo() == PrevSPI->getLineNo() &&
-          SPI->getColNo() == PrevSPI->getColNo()) {
-        SPI->replaceAllUsesWith(PrevSPI);
-        return EraseInstFromFunction(CI);
-      }
   } else {
     switch (II->getIntrinsicID()) {
     default: break;
