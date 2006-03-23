@@ -69,11 +69,9 @@ public:
   TargetJITInfo &getJITInfo() const { return TJI; }
 
   /// create - Create an return a new JIT compiler if there is one available
-  /// for the current target.  Otherwise, return null.  If the JIT is created
-  /// successfully, it takes responsibility for deleting the specified
-  /// IntrinsicLowering implementation.
+  /// for the current target.  Otherwise, return null.
   ///
-  static ExecutionEngine *create(ModuleProvider *MP, IntrinsicLowering *IL = 0);
+  static ExecutionEngine *create(ModuleProvider *MP);
 
   /// run - Start execution with the specified function and arguments.
   ///

@@ -25,6 +25,7 @@
 
 namespace llvm {
 
+class IntrinsicLowering;
 struct FunctionInfo;
 template<typename T> class generic_gep_type_iterator;
 class ConstantExpr;
@@ -93,8 +94,7 @@ class Interpreter : public ExecutionEngine, public InstVisitor<Interpreter> {
   std::vector<Function*> AtExitHandlers;
 
 public:
-  Interpreter(Module *M, bool isLittleEndian, bool isLongPointer,
-              IntrinsicLowering *IL);
+  Interpreter(Module *M, bool isLittleEndian, bool isLongPointer);
   ~Interpreter();
 
   /// runAtExitHandlers - Run any functions registered by the program's calls to
@@ -106,11 +106,9 @@ public:
     InterpCtor = create;
   }
   
-  /// create - Create an interpreter ExecutionEngine. This can never fail.  The
-  /// specified IntrinsicLowering implementation will be deleted when the
-  /// Interpreter execution engine is destroyed.
+  /// create - Create an interpreter ExecutionEngine. This can never fail.
   ///
-  static ExecutionEngine *create(ModuleProvider *M, IntrinsicLowering *IL);
+  static ExecutionEngine *create(ModuleProvider *M);
 
   /// run - Start execution with the specified function and arguments.
   ///

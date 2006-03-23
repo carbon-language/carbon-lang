@@ -26,8 +26,7 @@ static struct RegisterInterp {
 
 /// create - Create a new interpreter object.  This can never fail.
 ///
-ExecutionEngine *Interpreter::create(ModuleProvider *MP,
-                                     IntrinsicLowering *IL) {
+ExecutionEngine *Interpreter::create(ModuleProvider *MP) {
   Module *M;
   try {
     M = MP->materializeModule();
@@ -55,17 +54,16 @@ ExecutionEngine *Interpreter::create(ModuleProvider *MP,
     break;
   }
 
-  return new Interpreter(M, isLittleEndian, isLongPointer, IL);
+  return new Interpreter(M, isLittleEndian, isLongPointer);
 }
 
 //===----------------------------------------------------------------------===//
 // Interpreter ctor - Initialize stuff
 //
-Interpreter::Interpreter(Module *M, bool isLittleEndian, bool isLongPointer,
-                         IntrinsicLowering *il)
+Interpreter::Interpreter(Module *M, bool isLittleEndian, bool isLongPointer)
   : ExecutionEngine(M),
     TD("lli", isLittleEndian, isLongPointer ? 8 : 4, isLongPointer ? 8 : 4,
-       isLongPointer ? 8 : 4), IL(il) {
+       isLongPointer ? 8 : 4) {
 
   memset(&ExitValue, 0, sizeof(ExitValue));
   setTargetData(TD);
@@ -74,7 +72,7 @@ Interpreter::Interpreter(Module *M, bool isLittleEndian, bool isLongPointer,
   initializeExternalFunctions();
   emitGlobals();
 
-  if (IL == 0) IL = new DefaultIntrinsicLowering();
+  IL = new DefaultIntrinsicLowering();
 }
 
 Interpreter::~Interpreter() {

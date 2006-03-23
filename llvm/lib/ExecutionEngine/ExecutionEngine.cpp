@@ -160,24 +160,22 @@ int ExecutionEngine::runFunctionAsMain(Function *Fn,
 /// NULL is returned.
 ///
 ExecutionEngine *ExecutionEngine::create(ModuleProvider *MP,
-                                         bool ForceInterpreter,
-                                         IntrinsicLowering *IL) {
+                                         bool ForceInterpreter) {
   ExecutionEngine *EE = 0;
 
   // Unless the interpreter was explicitly selected, try making a JIT.
   if (!ForceInterpreter && JITCtor)
-    EE = JITCtor(MP, IL);
+    EE = JITCtor(MP);
 
   // If we can't make a JIT, make an interpreter instead.
   if (EE == 0 && InterpCtor)
-    EE = InterpCtor(MP, IL);
+    EE = InterpCtor(MP);
 
-  if (EE == 0)
-    delete IL;
-  else
+  if (EE) {
     // Make sure we can resolve symbols in the program as well. The zero arg
     // to the function tells DynamicLibrary to load the program, not a library.
     sys::DynamicLibrary::LoadLibraryPermanently(0);
+  }
 
   return EE;
 }

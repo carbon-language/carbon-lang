@@ -39,7 +39,7 @@ MAttrs("mattr",
 /// create - Create an return a new JIT compiler if there is one available
 /// for the current target.  Otherwise, return null.
 ///
-ExecutionEngine *JIT::create(ModuleProvider *MP, IntrinsicLowering *IL) {
+ExecutionEngine *JIT::create(ModuleProvider *MP) {
   if (MArch == 0) {
     std::string Error;
     MArch = TargetMachineRegistry::getClosestTargetForJIT(Error);
@@ -61,7 +61,7 @@ ExecutionEngine *JIT::create(ModuleProvider *MP, IntrinsicLowering *IL) {
   }
 
   // Allocate a target...
-  TargetMachine *Target = MArch->CtorFn(*MP->getModule(), IL, FeaturesStr);
+  TargetMachine *Target = MArch->CtorFn(*MP->getModule(), 0, FeaturesStr);
   assert(Target && "Could not allocate target machine!");
 
   // If the target supports JIT code generation, return a new JIT now.

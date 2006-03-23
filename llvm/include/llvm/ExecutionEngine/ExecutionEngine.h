@@ -32,8 +32,6 @@ class Module;
 class ModuleProvider;
 class TargetData;
 class Type;
-class IntrinsicLowering;
-
 
 class ExecutionEngineState {
 private:
@@ -76,7 +74,7 @@ protected:
   // To avoid having libexecutionengine depend on the JIT and interpreter
   // libraries, the JIT and Interpreter set these functions to ctor pointers
   // at startup time if they are linked in.
-  typedef ExecutionEngine *(*EECtorFn)(ModuleProvider*, IntrinsicLowering*);
+  typedef ExecutionEngine *(*EECtorFn)(ModuleProvider*);
   static EECtorFn JITCtor, InterpCtor;
     
 public:
@@ -93,10 +91,9 @@ public:
   const TargetData &getTargetData() const { return *TD; }
 
   /// create - This is the factory method for creating an execution engine which
-  /// is appropriate for the current machine.  If specified, the
-  /// IntrinsicLowering implementation should be allocated on the heap.
-  static ExecutionEngine *create(ModuleProvider *MP, bool ForceInterpreter,
-                                 IntrinsicLowering *IL = 0);
+  /// is appropriate for the current machine.
+  static ExecutionEngine *create(ModuleProvider *MP,
+                                 bool ForceInterpreter = false);
 
   /// runFunction - Execute the specified function with the specified arguments,
   /// and return the result.
