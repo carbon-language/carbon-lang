@@ -52,6 +52,10 @@ private:
   DIE *Die;                             // Compile unit debug information entry.
   std::map<std::string, DIE *> Globals; // A map of globally visible named
                                         // entities for this unit.
+  std::map<DebugInfoDesc *, DIE *> DescToDieMap;
+                                        // Tracks the mapping of unit level
+                                        // debug informaton descriptors to debug
+                                        // information entries.
 
 public:
   CompileUnit(CompileUnitDesc *CUD, unsigned I, DIE *D)
@@ -59,6 +63,7 @@ public:
   , ID(I)
   , Die(D)
   , Globals()
+  , DescToDieMap()
   {}
   
   ~CompileUnit();
@@ -77,6 +82,11 @@ public:
   ///
   void AddGlobal(const std::string &Name, DIE *Die);
   
+  /// getDieMapSlotFor - Returns the debug information entry map slot for the
+  /// specified debug descriptor.
+  DIE *&getDieMapSlotFor(DebugInfoDesc *DD) {
+    return DescToDieMap[DD];
+  }
 };
 
 //===----------------------------------------------------------------------===//
@@ -1204,98 +1214,28 @@ void DwarfWriter::AddSourceLine(DIE *Die, CompileUnitDesc *File, unsigned Line) 
   }
 }
 
-
-/// NewBasicType - Creates a new basic type if necessary, then adds to the
-/// owner.
-/// FIXME - Should never be needed.
-DIE *DwarfWriter::NewBasicType(DIE *Context, Type *Ty) {
-  DIE *&Slot = TypeToDieMap[Ty];
-  if (Slot) return Slot;
-  
-  const char *Name;
-  unsigned Size;
-  unsigned Encoding = 0;
-  
-  switch (Ty->getTypeID()) {
-  case Type::UByteTyID:
-    Name = "unsigned char";
-    Size = 1;
-    Encoding = DW_ATE_unsigned_char;
-    break;
-  case Type::SByteTyID:
-    Name = "char";
-    Size = 1;
-    Encoding = DW_ATE_signed_char;
-    break;
-  case Type::UShortTyID:
-    Name = "unsigned short";
-    Size = 2;
-    Encoding = DW_ATE_unsigned;
-    break;
-  case Type::ShortTyID:
-    Name = "short";
-    Size = 2;
-    Encoding = DW_ATE_signed;
-    break;
-  case Type::UIntTyID:
-    Name = "unsigned int";
-    Size = 4;
-    Encoding = DW_ATE_unsigned;
-    break;
-  case Type::IntTyID:
-    Name = "int";
-    Size = 4;
-    Encoding = DW_ATE_signed;
-    break;
-  case Type::ULongTyID:
-    Name = "unsigned long long";
-    Size = 7;
-    Encoding = DW_ATE_unsigned;
-    break;
-  case Type::LongTyID:
-    Name = "long long";
-    Size = 7;
-    Encoding = DW_ATE_signed;
-    break;
-  case Type::FloatTyID:
-    Name = "float";
-    Size = 4;
-    Encoding = DW_ATE_float;
-    break;
-  case Type::DoubleTyID:
-    Name = "double";
-    Size = 8;
-    Encoding = DW_ATE_float;
-    break;
-  default: 
-    // FIXME - handle more complex types.
-    Name = "unknown";
-    Size = 1;
-    Encoding = DW_ATE_address;
-    break;
-  }
-  
-  // construct the type DIE.
-  Slot = new DIE(DW_TAG_base_type);
-  Slot->AddString(DW_AT_name,      DW_FORM_string, Name);
-  Slot->AddUInt  (DW_AT_byte_size, 0,              Size);
-  Slot->AddUInt  (DW_AT_encoding,  DW_FORM_data1,  Encoding);
-  
-  // Add to context.
-  Context->AddChild(Slot);
-  
-  return Slot;
+/// getDieMapSlotFor - Returns the debug information entry map slot for the
+/// specified debug descriptor.
+DIE *&DwarfWriter::getDieMapSlotFor(DebugInfoDesc *DD) {
+  return DescToDieMap[DD];
 }
-
+                                 
 /// NewType - Create a new type DIE.
 ///
-DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc) {
-  if (!TyDesc)  return NewBasicType(Context, Type::IntTy);
+DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc, CompileUnit *Unit) {
+  if (!TyDesc) {
+    // FIXME - Hack for missing types
+    DIE *Die = new DIE(DW_TAG_base_type);
+    Die->AddUInt(DW_AT_byte_size, 0, 4);
+    Die->AddUInt(DW_AT_encoding, DW_FORM_data1, DW_ATE_signed);
+    Unit->getDie()->AddChild(Die);
+    return Die;
+  }
   
   // FIXME - Should handle other contexts that compile units.
 
   // Check for pre-existence.
-  DIE *&Slot = DescToDieMap[TyDesc];
+  DIE *&Slot = Unit->getDieMapSlotFor(TyDesc);
   if (Slot) return Slot;
 
   // Get core information.
@@ -1315,7 +1255,8 @@ DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc) {
     
     // Map to main type, void will not have a type.
     if (TypeDesc *FromTy = DerivedTy->getFromType()) {
-       Ty->AddDIEntry(DW_AT_type, DW_FORM_ref4, NewType(Context, FromTy));
+      Ty->AddDIEntry(DW_AT_type, DW_FORM_ref4,
+                     NewType(Context, FromTy, Unit));
     }
   } else if (CompositeTypeDesc *CompTy = dyn_cast<CompositeTypeDesc>(TyDesc)) {
     // Create specific DIE.
@@ -1326,7 +1267,8 @@ DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc) {
     case DW_TAG_array_type: {
       // Add element type.
       if (TypeDesc *FromTy = CompTy->getFromType()) {
-         Ty->AddDIEntry(DW_AT_type, DW_FORM_ref4, NewType(Context, FromTy));
+        Ty->AddDIEntry(DW_AT_type, DW_FORM_ref4,
+                       NewType(Context, FromTy, Unit));
       }
       // Don't emit size attribute.
       Size = 0;
@@ -1385,10 +1327,10 @@ DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc) {
         uint64_t FieldOffset = Offset;
         
         if (TypeDesc *FromTy = MemberDesc->getFromType()) {
-           Member->AddDIEntry(DW_AT_type, DW_FORM_ref4,
-                              NewType(Context, FromTy));
-           FieldSize = FromTy->getSize();
-           FieldAlign = FromTy->getSize();
+          Member->AddDIEntry(DW_AT_type, DW_FORM_ref4,
+                             NewType(Context, FromTy, Unit));
+          FieldSize = FromTy->getSize();
+          FieldAlign = FromTy->getSize();
         }
         
         // Unless we have a bit field.
@@ -1470,7 +1412,8 @@ CompileUnit *DwarfWriter::NewCompileUnit(CompileUnitDesc *UnitDesc,
   Die->AddString(DW_AT_comp_dir,  DW_FORM_string, UnitDesc->getDirectory());
   
   // Add debug information entry to descriptor map.
-  DescToDieMap[UnitDesc] = Die;
+  DIE *&Slot = getDieMapSlotFor(UnitDesc);
+  Slot = Die;
   
   // Construct compile unit.
   CompileUnit *Unit = new CompileUnit(UnitDesc, ID, Die);
@@ -1492,13 +1435,14 @@ CompileUnit *DwarfWriter::FindCompileUnit(CompileUnitDesc *UnitDesc) {
 /// NewGlobalVariable - Add a new global variable DIE.
 ///
 DIE *DwarfWriter::NewGlobalVariable(GlobalVariableDesc *GVD) {
-  // Check for pre-existence.
-  DIE *&Slot = DescToDieMap[GVD];
-  if (Slot) return Slot;
-  
   // Get the compile unit context.
   CompileUnitDesc *UnitDesc = static_cast<CompileUnitDesc *>(GVD->getContext());
   CompileUnit *Unit = FindCompileUnit(UnitDesc);
+
+  // Check for pre-existence.
+  DIE *&Slot = Unit->getDieMapSlotFor(GVD);
+  if (Slot) return Slot;
+  
   // Get the global variable itself.
   GlobalVariable *GV = GVD->getGlobalVariable();
   // Generate the mangled name.
@@ -1508,7 +1452,7 @@ DIE *DwarfWriter::NewGlobalVariable(GlobalVariableDesc *GVD) {
   const std::string &Name = GVD->getName();
   
   // Get the global's type.
-  DIE *Type = NewType(Unit->getDie(), GVD->getType()); 
+  DIE *Type = NewType(Unit->getDie(), GVD->getType(), Unit); 
 
   // Create the globale variable DIE.
   DIE *VariableDie = new DIE(DW_TAG_variable);
@@ -1542,17 +1486,17 @@ DIE *DwarfWriter::NewGlobalVariable(GlobalVariableDesc *GVD) {
 /// NewSubprogram - Add a new subprogram DIE.
 ///
 DIE *DwarfWriter::NewSubprogram(SubprogramDesc *SPD) {
-  // Check for pre-existence.
-  DIE *&Slot = DescToDieMap[SPD];
-  if (Slot) return Slot;
-  
   // Get the compile unit context.
   CompileUnitDesc *UnitDesc = static_cast<CompileUnitDesc *>(SPD->getContext());
   CompileUnit *Unit = FindCompileUnit(UnitDesc);
 
+  // Check for pre-existence.
+  DIE *&Slot = Unit->getDieMapSlotFor(SPD);
+  if (Slot) return Slot;
+  
   // Gather the details (simplify add attribute code.)
   const std::string &Name = SPD->getName();
-  DIE *Type = NewBasicType(Unit->getDie(), Type::IntTy);
+  DIE *Type = NewType(Unit->getDie(), SPD->getType(), Unit); 
   unsigned IsExternal = SPD->isStatic() ? 0 : 1;
                                     
   DIE *SubprogramDie = new DIE(DW_TAG_subprogram);
@@ -1599,7 +1543,7 @@ DIE *DwarfWriter::NewScopeVariable(DebugVariable *DV, CompileUnit *Unit) {
   AddSourceLine(VariableDie, VD->getFile(), VD->getLine());
   
   // Add variable type.
-  DIE *Type = NewType(Unit->getDie(), VD->getType()); 
+  DIE *Type = NewType(Unit->getDie(), VD->getType(), Unit); 
   VariableDie->AddDIEntry(DW_AT_type, DW_FORM_ref4, Type);
   
   // Get variable address.
@@ -1673,7 +1617,13 @@ void DwarfWriter::ConstructRootScope(DebugScope *RootScope) {
   
   // Get the subprogram debug information entry. 
   SubprogramDesc *SPD = cast<SubprogramDesc>(RootScope->getDesc());
-  DIE *SPDie = DescToDieMap[SPD];
+  
+  // Get the compile unit context.
+  CompileUnitDesc *UnitDesc = static_cast<CompileUnitDesc *>(SPD->getContext());
+  CompileUnit *Unit = FindCompileUnit(UnitDesc);  
+  
+  // Get the subprogram die.
+  DIE *SPDie = Unit->getDieMapSlotFor(SPD);
   assert(SPDie && "Missing subprogram descriptor");
   
   // Add the function bounds.
@@ -1682,9 +1632,6 @@ void DwarfWriter::ConstructRootScope(DebugScope *RootScope) {
   SPDie->AddLabel(DW_AT_high_pc, DW_FORM_addr,
                   DWLabel("func_end", SubprogramCount));
                   
-  CompileUnitDesc *UnitDesc = static_cast<CompileUnitDesc *>(SPD->getContext());
-  CompileUnit *Unit = FindCompileUnit(UnitDesc);
-
   ConstructScope(RootScope, SPDie, Unit);
 }
 

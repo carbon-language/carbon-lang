@@ -121,8 +121,8 @@ protected:
   ///
   std::map<DebugInfoDesc *, CompileUnit *> DescToUnitMap;
   
-  /// DescToDieMap - Tracks the mapping of debug informaton descriptors to
-  /// DIES.
+  /// DescToDieMap - Tracks the mapping of top level debug informaton
+  /// descriptors to debug information entries.
   std::map<DebugInfoDesc *, DIE *> DescToDieMap;
   
   /// TypeToDieMap - Type to DIEType map.
@@ -302,7 +302,7 @@ public:
   }
   void EmitDifference(const char *TagHi, unsigned NumberHi,
                       const char *TagLo, unsigned NumberLo) const;
-                                 
+                      
   /// NewAbbreviation - Add the abbreviation to the Abbreviation vector.
   ///  
   unsigned NewAbbreviation(DIEAbbrev *Abbrev);
@@ -311,11 +311,10 @@ public:
   ///
   DWLabel NewString(const std::string &String);
   
-  /// NewBasicType - Creates a new basic type if necessary, then adds to the
-  /// owner.
-  /// FIXME - Should never be needed.
-  DIE *NewBasicType(DIE *Context, Type *Ty);
-
+  /// getDieMapSlotFor - Returns the debug information entry map slot for the
+  /// specified debug descriptor.
+  DIE *&getDieMapSlotFor(DebugInfoDesc *DD);
+                                 
 private:
 
   /// AddSourceLine - Add location information to specified debug information
@@ -324,7 +323,7 @@ private:
 
   /// NewType - Create a new type DIE.
   ///
- DIE *NewType(DIE *Context, TypeDesc *TyDesc);
+  DIE *NewType(DIE *Context, TypeDesc *TyDesc, CompileUnit *Unit);
   
   /// NewCompileUnit - Create new compile unit and it's die.
   ///
