@@ -89,8 +89,8 @@
   Make 3.79, a widely portable makefile processor. LLVM unabashedly makes heavy 
   use of the features of GNU Make so the dependency on GNU Make is firm. If 
   you're not familiar with <tt>make</tt>, it is recommended that you read the 
-  <a href="http://www.gnu.org/software/make/manual/make.html">GNU Makefile Manual
-  </a>.</p>
+  <a href="http://www.gnu.org/software/make/manual/make.html">GNU Makefile 
+  Manual</a>.</p>
   <p>While this document is rightly part of the 
   <a href="ProgrammersManual.html">LLVM Programmer's Manual</a>, it is treated
   separately here because of the volume of content and because it is often an
@@ -634,8 +634,8 @@
     the profiled tools (<tt>gmon.out</tt>).</dd>
     <dt><a name="ENABLE_ASSERTIONS"><tt>ENABLE_ASSERTIONS</tt></a></dt>
     <dd>If set to any value, causes the build to enable assertions, even if 
-    building a release or profile build.  This is slower than a release build but
-    far faster than a debug build.</dd>
+    building a release or profile build.  This is slower than a release build 
+    but far faster than a debug build.</dd>
     <dt><a name="EXPERIMENTAL_DIRS"><tt>EXPERIMENTAL_DIRS</tt></a></dt>
     <dd>Specify a set of directories that should be built, but if they fail, it
     should not cause the build to fail. Note that this should only be used 
@@ -647,7 +647,7 @@
     <dd>Specifies a set of symbols to be exported by the linker.</dd>
     <dt><a name="EXTRA_DIST"><tt>EXTRA_DIST</tt></a></dt>
     <dd>Specifies additional files that should be distributed with LLVM. All
-    source files, all built sources, all Makefiles, and most documentation files 
+    source files, all built sources, all Makefiles, and most documentation files
     will be automatically distributed. Use this variable to distribute any 
     files that are not automatically distributed.</dd>
     <dt><a name="KEEP_SYMBOLS"><tt>KEEP_SYMBOLS</tt></a></dt>
@@ -768,7 +768,8 @@
     <dd>Specifies the path to the <tt>echo</tt> tool for printing output.</dd>
     <dt><a name="ETAGS"><tt>ETAGS</tt></a><small>(configured)</small></dt>
     <dd>Specifies the path to the <tt>etags</tt> tool.</dd>
-    <dt><a name="ETAGSFLAGS"><tt>ETAGSFLAGS</tt></a><small>(configured)</small></dt>
+    <dt><a name="ETAGSFLAGS"><tt>ETAGSFLAGS</tt></a><small>(configured)</small>
+    </dt>
     <dd>Provides flags to be passed to the <tt>etags</tt> tool.</dd>
     <dt><a name="EXEEXT"><tt>EXEEXT</tt></a><small>(configured)</small></dt>
     <dd>Provides the extension to be used on executables built by the makefiles.
@@ -793,12 +794,15 @@
     <dd>Specifies the path to the LLVM version of the GCC 'C' Compiler</dd>
     <dt><a name="LLVMGXX"><tt>LLVMGXX</tt></a><small>(defaulted)</small></dt>
     <dd>Specifies the path to the LLVM version of the GCC C++ Compiler</dd>
-    <dt><a name="LLVM_OBJ_ROOT"><tt>LLVM_OBJ_ROOT</tt></a><small>(configured)</small></dt>
+    <dt><a name="LLVM_OBJ_ROOT"><tt>LLVM_OBJ_ROOT</tt></a><small>(configured)
+    </small></dt>
     <dd>Specifies the top directory into which the output of the build is
     placed.</dd>
-    <dt><a name="LLVM_SRC_ROOT"><tt>LLVM_SRC_ROOT</tt></a><small>(configured)</small></dt>
+    <dt><a name="LLVM_SRC_ROOT"><tt>LLVM_SRC_ROOT</tt></a><small>(configured)
+    </small></dt>
     <dd>Specifies the top directory in which the sources are found.</dd>
-    <dt><a name="LLVM_TARBALL_NAME"><tt>LLVM_TARBALL_NAME</tt></a><small>(configured)</small></dt>
+    <dt><a name="LLVM_TARBALL_NAME"><tt>LLVM_TARBALL_NAME</tt></a>
+    <small>(configured)</small></dt>
     <dd>Specifies the name of the distribution tarball to create. This is
     configured from the name of the project and its version number.</dd>
     <dt><a name="MKDIR"><tt>MKDIR</tt></a><small>(defaulted)</small></dt>
@@ -839,8 +843,8 @@
     <dd>The name of the type of build being performed: Debug, Release, or 
     Profile</dd>
     <dt><a name="bytecode_libdir"><tt>bytecode_libdir</tt></a></dt>
-    <dd>The directory into which bytecode libraries will ultimately be installed. 
-    This value is derived from the <tt>--prefix</tt> option given to
+    <dd>The directory into which bytecode libraries will ultimately be 
+    installed.  This value is derived from the <tt>--prefix</tt> option given to
     <tt>configure</tt>.</dd>
     <dt><a name="ConfigureScriptFLAGS"><tt>ConfigureScriptFLAGS</tt></a></dt>
     <dd>Additional flags given to the <tt>configure</tt> script when
@@ -997,6 +1001,5 @@
   <a href="http://llvm.org">The LLVM Compiler Infrastructure</a><br>
   Last modified: $Date$
 </address>
-
 </body>
 </html>
