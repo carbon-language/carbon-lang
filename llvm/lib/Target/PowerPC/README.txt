@@ -569,3 +569,13 @@ We could use a target dag combine to turn the lwz/extsw into an lwa when the
 lwz has a single use.  Since LWA is cracked anyway, this would be a codesize
 win only.
 
+===-------------------------------------------------------------------------===
+
+  Consider this:
+  v4f32 Vector;
+  v4f32 Vector2 = { Vector.X, Vector.X, Vector.X, Vector.X };
+
+Since we know that "Vector" is 16-byte aligned and we know the element offset 
+of ".X", we should change the load into a lve*x instruction, instead of doing
+a load/store/lve*x sequence.
+
