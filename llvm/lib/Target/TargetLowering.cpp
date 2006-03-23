@@ -128,7 +128,7 @@ void TargetLowering::computeRegisterProperties() {
   // Loop over all of the legal vector value types, specifying an identity type
   // transformation.
   for (unsigned i = MVT::FIRST_VECTOR_VALUETYPE;
-       i != MVT::LAST_VECTOR_VALUETYPE; ++i) {
+       i <= MVT::LAST_VECTOR_VALUETYPE; ++i) {
     if (isTypeLegal((MVT::ValueType)i))
       TransformToType[i] = (MVT::ValueType)i;
   }
