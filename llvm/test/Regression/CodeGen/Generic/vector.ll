@@ -93,6 +93,29 @@ void %test_scalar_to_vector(float %F, %f4 *%S) {
   ret void
 }
 
+float %test_extract_elt(%f8 *%P) {
+  %p = load %f8* %P
+  %R = extractelement %f8 %p, uint 3
+  ret float %R
+}
+
+void %test_cast_1(<4 x float>* %b, <4 x int>* %a) {
+  %tmp = load <4 x float>* %b
+  %tmp2 = add <4 x float> %tmp, <float 1.0, float 2.0, float 3.0, float 4.0>
+  %tmp3 = cast <4 x float> %tmp2 to <4 x int>
+  %tmp4 = add <4 x int> %tmp3, <int 1, int 2, int 3, int 4>
+  store <4 x int> %tmp4, <4 x int>* %a
+  ret void
+}
+
+void %test_cast_2(<8 x float>* %a, <8 x int>* %b) {
+  %T = load <8 x float>* %a
+  %T2 = cast <8 x float> %T to <8 x int>
+  store <8 x int> %T2, <8 x int>* %b
+  ret void
+}
+
+
 ;;; TEST IMPORTANT IDIOMS
 
 void %splat(%f4* %P, %f4* %Q, float %X) {
