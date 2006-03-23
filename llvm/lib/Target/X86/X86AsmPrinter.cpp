@@ -76,7 +76,7 @@ bool X86SharedAsmPrinter::doInitialization(Module &M) {
   
   if (forDarwin) {
     // Emit initial debug information.
-    DW.BeginModule(M);
+    DW.BeginModule(&M);
   }
 
   return AsmPrinter::doInitialization(M);
@@ -191,13 +191,13 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     }
 
     // Emit initial debug information.
-    DW.EndModule(M);
+    DW.EndModule();
 
     // Funny Darwin hack: This flag tells the linker that no global symbols
     // contain code that falls through to other global symbols (e.g. the obvious
     // implementation of multiple entry points).  If this doesn't occur, the
-    // linker can safely perform dead code stripping.  Since LLVM never generates
-    // code that does this, it is always safe to set.
+    // linker can safely perform dead code stripping.  Since LLVM never
+    // generates code that does this, it is always safe to set.
     O << "\t.subsections_via_symbols\n";
   }
 

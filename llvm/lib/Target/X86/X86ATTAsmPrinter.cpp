@@ -37,7 +37,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   if (forDarwin) {
     // Emit pre-function debug information.
-    DW.BeginFunction(MF);
+    DW.BeginFunction(&MF);
   }
 
   // Print out constants referenced by the function
@@ -93,7 +93,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   if (forDarwin) {
     // Emit post-function debug information.
-    DW.EndFunction(MF);
+    DW.EndFunction();
   }
 
   // We didn't modify anything.
