@@ -2203,6 +2203,22 @@ def CMP32mi : Ii32<0x81, MRM7m,
                    (ops i32mem:$src1, i32imm:$src2),
                    "cmp{l} {$src2, $src1|$src1, $src2}",
                    [(X86cmp (loadi32 addr:$src1), imm:$src2)]>;
+def CMP16ri8 : Ii16<0x83, MRM7r,
+                   (ops R16:$src1, i16i8imm:$src2),
+                   "cmp{w} {$src2, $src1|$src1, $src2}",
+                   [(X86cmp R16:$src1, i16immSExt8:$src2)]>, OpSize;
+def CMP16mi8 : Ii16<0x83, MRM7m,
+                   (ops i16mem:$src1, i16i8imm:$src2),
+                   "cmp{w} {$src2, $src1|$src1, $src2}",
+                   [(X86cmp (loadi16 addr:$src1), i16immSExt8:$src2)]>, OpSize;
+def CMP32mi8 : Ii32<0x83, MRM7m,
+                   (ops i32mem:$src1, i32i8imm:$src2),
+                   "cmp{l} {$src2, $src1|$src1, $src2}",
+                   [(X86cmp (loadi32 addr:$src1), i32immSExt8:$src2)]>;
+def CMP32ri8 : Ii32<0x83, MRM7r,
+                   (ops R32:$src1, i32i8imm:$src2),
+                   "cmp{l} {$src2, $src1|$src1, $src2}",
+                   [(X86cmp R32:$src1, i32immSExt8:$src2)]>;
 
 // Sign/Zero extenders
 def MOVSX16rr8 : I<0xBE, MRMSrcReg, (ops R16:$dst, R8 :$src),
