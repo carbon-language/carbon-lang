@@ -153,35 +153,31 @@ static Function *getUpgradedIntrinsic(Function *F) {
 // of zero in the array indicates replacing with UndefValue for the arg type.
 // NULL is returned if there is no permutation.  It's assumed that the function
 // name is in the form "llvm.?????"
-static unsigned *getArgumentPermutation(Function* F) {
-  const std::string& Name = F->getName();
-  const FunctionType *FTy = F->getFunctionType();
-  unsigned N = FTy->getNumParams();
+static unsigned *getArgumentPermutation(Function* Fn, Function* NewFn) {
+  const std::string& Name = Fn->getName();
+  unsigned N = Fn->getFunctionType()->getNumParams();
+  unsigned M = NewFn->getFunctionType()->getNumParams();
   
   switch (Name[5]) {
   case 'd':
     if (Name == "llvm.dbg.stoppoint") {
       static unsigned Permutation[] = { 2, 3, 4 };
-      assert(F->getFunctionType()->getNumParams() ==
-             (sizeof(Permutation) / sizeof(unsigned)) &&
+      assert(M == (sizeof(Permutation) / sizeof(unsigned)) &&
              "Permutation is wrong length");
       if (N == 4) return Permutation;
     } else if (Name == "llvm.dbg.region.start") {
       static unsigned Permutation[] = { 0 };
-      assert(F->getFunctionType()->getNumParams() ==
-             (sizeof(Permutation) / sizeof(unsigned)) &&
+      assert(M == (sizeof(Permutation) / sizeof(unsigned)) &&
              "Permutation is wrong length");
       if (N == 0) return Permutation;
     } else if (Name == "llvm.dbg.region.end") {
       static unsigned Permutation[] = { 0 };
-      assert(F->getFunctionType()->getNumParams() ==
-             (sizeof(Permutation) / sizeof(unsigned)) &&
+      assert(M == (sizeof(Permutation) / sizeof(unsigned)) &&
              "Permutation is wrong length");
       if (N == 0) return Permutation;
     } else if (Name == "llvm.dbg.declare") {
       static unsigned Permutation[] = { 0, 0 };
-      assert(F->getFunctionType()->getNumParams() ==
-             (sizeof(Permutation) / sizeof(unsigned)) &&
+      assert(M == (sizeof(Permutation) / sizeof(unsigned)) &&
              "Permutation is wrong length");
       if (N == 0) return Permutation;
     }
@@ -259,7 +255,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
   const FunctionType *NewFnTy = NewFn->getFunctionType();
   std::vector<Value*> Oprnds;
   
-  unsigned *Permutation = getArgumentPermutation(F);
+  unsigned *Permutation = getArgumentPermutation(F, NewFn);
   unsigned N = NewFnTy->getNumParams();
 
   if (Permutation) {
