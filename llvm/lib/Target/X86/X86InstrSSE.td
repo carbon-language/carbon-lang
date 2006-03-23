@@ -770,6 +770,32 @@ def MOVQ128rm : I<0x7E, MRMSrcMem, (ops VR128:$dst, i64mem:$src),
 def MOVQ128mr : PDI<0xD6, MRMSrcMem, (ops i64mem:$dst, VR128:$src),
                   "movq {$src, $dst|$dst, $src}", []>;
 
+// 128-bit Integer Arithmetic
+let isTwoAddress = 1 in {
+let isCommutable = 1 in {
+def PADDBrr : PDI<0xFC, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                  "paddb {$src2, $dst|$dst, $src2}",
+              [(set VR128:$dst, (v16i8 (add VR128:$src1, VR128:$src2)))]>;
+def PADDWrr : PDI<0xFD, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                  "paddw {$src2, $dst|$dst, $src2}",
+              [(set VR128:$dst, (v8i16 (add VR128:$src1, VR128:$src2)))]>;
+def PADDDrr : PDI<0xFE, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                  "paddd {$src2, $dst|$dst, $src2}",
+              [(set VR128:$dst, (v4i32 (add VR128:$src1, VR128:$src2)))]>;
+}
+def PADDBrm : PDI<0xFC, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
+                  "paddb {$src2, $dst|$dst, $src2}",
+              [(set VR128:$dst, (v16i8 (add VR128:$src1,
+                                        (load addr:$src2))))]>;
+def PADDWrm : PDI<0xFD, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
+                  "paddw {$src2, $dst|$dst, $src2}",
+              [(set VR128:$dst, (v8i16 (add VR128:$src1,
+                                        (load addr:$src2))))]>;
+def PADDDrm : PDI<0xFE, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
+                  "paddd {$src2, $dst|$dst, $src2}",
+              [(set VR128:$dst, (v4i32 (add VR128:$src1,
+                                        (load addr:$src2))))]>;
+}
 
 //===----------------------------------------------------------------------===//
 // Alias Instructions
@@ -796,11 +822,25 @@ def : Pat<(v8i16 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
 def : Pat<(v4i32 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
 def : Pat<(v2i64 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
 
+// Load 128-bit integer vector values.
+def : Pat<(v16i8 (load addr:$src)), (MOVAPSrm addr:$src)>,
+  Requires<[HasSSE1]>;
+def : Pat<(v8i16 (load addr:$src)), (MOVAPSrm addr:$src)>,
+  Requires<[HasSSE1]>;
+def : Pat<(v4i32 (load addr:$src)), (MOVAPSrm addr:$src)>,
+  Requires<[HasSSE1]>;
+def : Pat<(v2i64 (load addr:$src)), (MOVAPDrm addr:$src)>,
+  Requires<[HasSSE2]>;
+
 // Store 128-bit integer vector values.
-def : Pat<(store (v16i8 VR128:$src), addr:$dst), (MOVAPSmr addr:$dst, VR128:$src)>;
-def : Pat<(store (v8i16 VR128:$src), addr:$dst), (MOVAPSmr addr:$dst, VR128:$src)>;
-def : Pat<(store (v4i32 VR128:$src), addr:$dst), (MOVAPSmr addr:$dst, VR128:$src)>;
-def : Pat<(store (v2i64 VR128:$src), addr:$dst), (MOVAPSmr addr:$dst, VR128:$src)>;
+def : Pat<(store (v16i8 VR128:$src), addr:$dst), (MOVAPSmr addr:$dst, VR128:$src)>,
+  Requires<[HasSSE1]>;
+def : Pat<(store (v8i16 VR128:$src), addr:$dst), (MOVAPSmr addr:$dst, VR128:$src)>,
+  Requires<[HasSSE1]>;
+def : Pat<(store (v4i32 VR128:$src), addr:$dst), (MOVAPSmr addr:$dst, VR128:$src)>,
+  Requires<[HasSSE1]>;
+def : Pat<(store (v2i64 VR128:$src), addr:$dst), (MOVAPDmr addr:$dst, VR128:$src)>,
+  Requires<[HasSSE2]>;
 
 // Scalar to v8i16 / v16i8. The source may be a R32, but only the lower 8 or
 // 16-bits matter.

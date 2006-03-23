@@ -290,14 +290,20 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
 
 
     setOperationAction(ISD::ADD,              MVT::v2f64, Legal);
+    setOperationAction(ISD::ADD,              MVT::v16i8, Legal);
+    setOperationAction(ISD::ADD,              MVT::v8i16, Legal);
+    setOperationAction(ISD::ADD,              MVT::v4i32, Legal);
     setOperationAction(ISD::SUB,              MVT::v2f64, Legal);
     setOperationAction(ISD::MUL,              MVT::v2f64, Legal);
     setOperationAction(ISD::LOAD,             MVT::v2f64, Legal);
+    setOperationAction(ISD::LOAD,             MVT::v16i8, Legal);
+    setOperationAction(ISD::LOAD,             MVT::v8i16, Legal);
+    setOperationAction(ISD::LOAD,             MVT::v4i32, Legal);
+    setOperationAction(ISD::LOAD,             MVT::v2i64, Legal);
     setOperationAction(ISD::BUILD_VECTOR,     MVT::v2f64, Expand);
     setOperationAction(ISD::BUILD_VECTOR,     MVT::v16i8, Expand);
     setOperationAction(ISD::BUILD_VECTOR,     MVT::v8i16, Expand);
     setOperationAction(ISD::BUILD_VECTOR,     MVT::v4i32, Expand);
-    setOperationAction(ISD::BUILD_VECTOR,     MVT::v2i64, Expand);
     setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v16i8, Custom);
     setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v8i16, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE,   MVT::v2f64, Custom);
