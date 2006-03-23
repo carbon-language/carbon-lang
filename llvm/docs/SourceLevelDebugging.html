@@ -716,15 +716,16 @@ provide debug information at various points in generated code.</p>
 
 <div class="doc_text">
 <pre>
-  void %<a href="#format_common_stoppoint">llvm.dbg.stoppoint</a>( uint, uint, %<a href="#format_compile_units">llvm.dbg.compile_unit</a>* )
+  void %<a href="#format_common_stoppoint">llvm.dbg.stoppoint</a>( uint, uint, { }* )
 </pre>
 
 <p>This intrinsic is used to provide correspondence between the source file and
 the generated code.  The first argument is the line number (base 1), second
 argument si the column number (0 if unknown) and the third argument the source
-compile unit.  Code following a call to this intrinsic will have been defined in
-close proximity of the line, column and file.  This information holds until the
-next call to <tt>%<a
+<tt>%<a href="#format_compile_units">llvm.dbg.compile_unit</a>*</tt> cast to a
+<tt>{ }*</tt>.  Code following a call to this intrinsic will have been defined
+in close proximity of the line, column and file.  This information holds until
+the next call to <tt>%<a
 href="#format_common_stoppoint">lvm.dbg.stoppoint</a></tt>.</p>
 
 </div>
