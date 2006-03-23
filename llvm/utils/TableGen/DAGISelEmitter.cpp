@@ -1459,8 +1459,10 @@ void DAGISelEmitter::ParsePatterns() {
       }
       ResultNodeOperands.push_back(OpNode);
     }
-    DstPattern = new TreePatternNode(Result->getOnlyTree()->getOperator(),
-                                     ResultNodeOperands);
+    DstPattern = Result->getOnlyTree();
+    if (!DstPattern->isLeaf())
+      DstPattern = new TreePatternNode(DstPattern->getOperator(),
+                                       ResultNodeOperands);
     DstPattern->setTypes(Result->getOnlyTree()->getExtTypes());
     TreePattern Temp(Result->getRecord(), DstPattern, false, *this);
     Temp.InferAllTypes();
@@ -2191,7 +2193,6 @@ public:
   EmitResultCode(TreePatternNode *N, bool LikeLeaf = false, bool isRoot = false) {
     // This is something selected from the pattern we matched.
     if (!N->getName().empty()) {
-      assert(!isRoot && "Root of pattern cannot be a leaf!");
       std::string &Val = VariableMap[N->getName()];
       assert(!Val.empty() &&
              "Variable referenced but not defined and not caught earlier!");
@@ -2276,13 +2277,17 @@ public:
           emitCode("Tmp" + utostr(ResNo) + " = " + Val + ";");
         else
           emitCode("Select(Tmp" + utostr(ResNo) + ", " + Val + ");");
+
+        if (isRoot && N->isLeaf()) {
+          emitCode("Result = Tmp" + utostr(ResNo) + ";");
+          emitCode("return;");
+        }
       }
       // Add Tmp<ResNo> to VariableMap, so that we don't multiply select this
       // value if used multiple times by this pattern result.
       Val = "Tmp"+utostr(ResNo);
       return std::make_pair(NumRes, ResNo);
     }
-  
     if (N->isLeaf()) {
       // If this is an explicit register reference, handle it.
       if (DefInit *DI = dynamic_cast<DefInit*>(N->getLeafValue())) {
