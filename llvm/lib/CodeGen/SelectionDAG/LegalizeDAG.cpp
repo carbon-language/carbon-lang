@@ -4266,7 +4266,7 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
   }
   
   switch (Node->getOpcode()) {
-  default: assert(0 && "Unknown vector operation!");
+  default: Node->dump(); assert(0 && "Unknown vector operation!");
   case ISD::VBUILD_VECTOR: {
     std::vector<SDOperand> LoOps(Node->op_begin(), Node->op_begin()+NewNumElts);
     LoOps.push_back(NewNumEltsNode);
@@ -4319,6 +4319,46 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
     if (!TLI.isLittleEndian())
       std::swap(Lo, Hi);
     break;
+  }
+  case ISD::VBIT_CONVERT: {
+    // We know the result is a vector.  The input may be either a vector or a
+    // scalar value.
+    if (Op.getOperand(0).getValueType() != MVT::Vector) {
+      // Lower to a store/load.  FIXME: this could be improved probably.
+      SDOperand Ptr = CreateStackTemporary(Op.getOperand(0).getValueType());
+
+      SDOperand St = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
+                                 Op.getOperand(0), Ptr, DAG.getSrcValue(0));
+      MVT::ValueType EVT = cast<VTSDNode>(TypeNode)->getVT();
+      St = DAG.getVecLoad(NumElements, EVT, St, Ptr, DAG.getSrcValue(0));
+      SplitVectorOp(St, Lo, Hi);
+    } else {
+      // If the input is a vector type, we have to either scalarize it, pack it
+      // or convert it based on whether the input vector type is legal.
+      SDNode *InVal = Node->getOperand(0).Val;
+      unsigned NumElems =
+        cast<ConstantSDNode>(*(InVal->op_end()-2))->getValue();
+      MVT::ValueType EVT = cast<VTSDNode>(*(InVal->op_end()-1))->getVT();
+
+      // If the input is from a single element vector, scalarize the vector,
+      // then treat like a scalar.
+      if (NumElems == 1) {
+        SDOperand Scalar = PackVectorOp(Op.getOperand(0), EVT);
+        Scalar = DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, Scalar,
+                             Op.getOperand(1), Op.getOperand(2));
+        SplitVectorOp(Scalar, Lo, Hi);
+      } else {
+        // Split the input vector.
+        SplitVectorOp(Op.getOperand(0), Lo, Hi);
+
+        // Convert each of the pieces now.
+        Lo = DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, Lo,
+                         NewNumEltsNode, TypeNode);
+        Hi = DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, Hi,
+                         NewNumEltsNode, TypeNode);
+      }
+      break;
+    }
   }
   }
       
