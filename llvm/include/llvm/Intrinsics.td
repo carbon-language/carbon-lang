@@ -201,10 +201,11 @@ let Properties = [InstrNoMem] in {
 def int_dbg_stoppoint    : Intrinsic<[llvm_void_ty,
                                       llvm_uint_ty, llvm_uint_ty, 
                                       llvm_descriptor_ty]>;
-def int_dbg_region_start : Intrinsic<[llvm_void_ty]>;
-def int_dbg_region_end   : Intrinsic<[llvm_void_ty]>;
+def int_dbg_region_start : Intrinsic<[llvm_void_ty, llvm_descriptor_ty]>;
+def int_dbg_region_end   : Intrinsic<[llvm_void_ty, llvm_descriptor_ty]>;
 def int_dbg_func_start   : Intrinsic<[llvm_void_ty, llvm_descriptor_ty]>;
-
+def int_dbg_declare      : Intrinsic<[llvm_void_ty, llvm_ptr_ty,
+                                                    llvm_descriptor_ty]>;
 
 //===----------------------------------------------------------------------===//
 // Target-specific intrinsics
