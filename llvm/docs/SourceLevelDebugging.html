@@ -16,6 +16,7 @@
   <li><a href="#introduction">Introduction</a>
   <ol>
     <li><a href="#phil">Philosophy behind LLVM debugging information</a></li>
+    <li><a href="#consumers">Debug information consumers</a></li>
     <li><a href="#debugopt">Debugging optimized code</a></li>
   </ol></li>
   <li><a href="#format">Debugging information format</a>
@@ -32,6 +33,7 @@
       <li><a href="#format_composite_type">Composite type descriptors</a></li>
       <li><a href="#format_subrange">Subrange descriptors</a></li>
       <li><a href="#format_enumeration">Enumerator descriptors</a></li>
+      <li><a href="#format_variables">Local variables</a></li>
     </ul></li>
     <li><a href="#format_common_intrinsics">Debugger intrinsic functions</a>
       <ul>
@@ -129,6 +131,29 @@ href="http://www.eagercon.com/dwarf/dwarf3std.htm">Dwarf 3 standard</a>).</p>
 turns the stored debug information into source-language specific information. 
 As such, a debugger must be aware of the source-language, and is thus tied to
 a specific language of family of languages.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="consumers">Debug information consumers</a>
+</div>
+
+<div class="doc_text">
+<p>The role of debug information is to provide meta information normally
+stripped away during the compilation process.  This meta information provides an
+llvm user a relationship between generated code and the original program source
+code.</p>
+
+<p>Currently, debug information is consumed by the DwarfWriter to produce dwarf
+information used by the gdb debugger.  Other targets could use the same
+information to produce stabs or other debug forms.</p>
+
+<p>It would also be reasonable to use debug information to feed profiling tools
+for analysis of generated code, or, tools for reconstructing the original source
+from generated code.</p>
+
+<p>TODO - expound a bit more.</p>
 
 </div>
 
@@ -248,12 +273,13 @@ debug descriptors.</p>
 
 <p>Consumers of LLVM debug information expect the descriptors for program
 objects to start in a canonical format, but the descriptors can include
-additional information appended at the end that is source-language specific. 
-All LLVM debugging information is versioned, allowing backwards compatibility in
-the case that the core structures need to change in some way.  Also, all
-debugging information objects start with a tag to indicate what type of object
-it is.  The source-language is allowed to define its own objects, by using
-unreserved tag numbers.</p>
+additional information appended at the end that is source-language specific. All
+LLVM debugging information is versioned, allowing backwards compatibility in the
+case that the core structures need to change in some way.  Also, all debugging
+information objects start with a tag to indicate what type of object it is.  The
+source-language is allowed to define its own objects, by using unreserved tag
+numbers.  We recommend using with tags in the range 0x1000 thru 0x2000 (there is
+a defined enum DW_TAG_user_base = 0x1000.)</p>
 
 <p>The fields of debug descriptors used internally by LLVM (MachineDebugInfo)
 are restricted to only the simple data types <tt>int</tt>, <tt>uint</tt>,
@@ -328,7 +354,7 @@ deleted.</p>
   %<a href="#format_compile_units">llvm.dbg.compile_unit.type</a> = type {
     uint,   ;; Tag = 17 (DW_TAG_compile_unit)
     {  }*,  ;; Compile unit anchor = cast = (%<a href="#format_anchors">llvm.dbg.anchor.type</a>* %<a href="#format_compile_units">llvm.dbg.compile_units</a> to {  }*)
-    uint,   ;; LLVM debug version number = 2
+    uint,   ;; LLVM debug version number = 3
     uint,   ;; Dwarf language identifier (ex. DW_LANG_C89) 
     sbyte*, ;; Source file name
     sbyte*, ;; Source file directory (includes trailing slash)
@@ -337,7 +363,7 @@ deleted.</p>
 </pre>
 
 <p>These descriptors contain the version number for the debug info (currently
-2), a source language ID for the file (we use the Dwarf 3.0 ID numbers, such as
+3), a source language ID for the file (we use the Dwarf 3.0 ID numbers, such as
 <tt>DW_LANG_C89</tt>, <tt>DW_LANG_C_plus_plus</tt>, <tt>DW_LANG_Cobol74</tt>,
 etc), three strings describing the filename, working directory of the compiler,
 and an identifier string for the compiler that produced it.</p>
@@ -363,7 +389,7 @@ line correspondence.</p>
     {  }*,  ;; Reference to context descriptor
     sbyte*, ;; Name
     {  }*,  ;; Reference to compile unit where defined
-    int,    ;; Line number where defined
+    uint,   ;; Line number where defined
     {  }*,  ;; Reference to type descriptor
     bool,   ;; True if the global is local to compile unit (static)
     bool,   ;; True if the global is defined in the compile unit (not extern)
@@ -390,20 +416,16 @@ provide details such as name, type and where the variable is defined.</p>
     {  }*,  ;; Reference to context descriptor
     sbyte*, ;; Name
     {  }*,  ;; Reference to compile unit where defined
-    int,    ;; Line number where defined
+    uint,   ;; Line number where defined
     {  }*,  ;; Reference to type descriptor
     bool,   ;; True if the global is local to compile unit (static)
-    bool,    ;; True if the global is defined in the compile unit (not extern)
-    {  }*   ;; Reference to array of member descriptors
+    bool    ;; True if the global is defined in the compile unit (not extern)
   }
 </pre>
 
 <p>These descriptors provide debug information about functions, methods and
-subprograms.  The provide details such as name, return and argument types and
-where the subprogram is defined.</p>
-
-<p>The array of member descriptors is used to define arguments local variables
-and nested blocks.</p>
+subprograms.  They provide details such as name, return types and the source
+location where the subprogram is defined.</p>
 
 </div>
 <!-- ======================================================================= -->
@@ -416,7 +438,7 @@ and nested blocks.</p>
 <pre>
   %<a href="#format_blocks">llvm.dbg.block</a> = type {
     uint,   ;; Tag = 13 (DW_TAG_lexical_block)
-    {  }*   ;; Reference to array of member descriptors
+    {  }*   ;; Reference to context descriptor
   }
 </pre>
 
@@ -439,7 +461,7 @@ and deeper nested blocks.</p>
     {  }*,  ;; Reference to context (typically a compile unit)
     sbyte*, ;; Name (may be "" for anonymous types)
     {  }*,  ;; Reference to compile unit where defined (may be NULL)
-    int,    ;; Line number where defined (may be 0)
+    uint,   ;; Line number where defined (may be 0)
     uint,   ;; Size in bits
     uint,   ;; Alignment in bits
     uint,   ;; Offset in bits
@@ -485,7 +507,7 @@ one of the following;</p>
     {  }*,  ;; Reference to context
     sbyte*, ;; Name (may be "" for anonymous types)
     {  }*,  ;; Reference to compile unit where defined (may be NULL)
-    int,    ;; Line number where defined (may be 0)
+    uint,   ;; Line number where defined (may be 0)
     uint,   ;; Size in bits
     uint,   ;; Alignment in bits
     uint,   ;; Offset in bits
@@ -549,7 +571,7 @@ NULL derived type.</p>
     {  }*,  ;; Reference to context
     sbyte*, ;; Name (may be "" for anonymous types)
     {  }*,  ;; Reference to compile unit where defined (may be NULL)
-    int,    ;; Line number where defined (may be 0)
+    uint,   ;; Line number where defined (may be 0)
     uint,   ;; Size in bits
     uint,   ;; Alignment in bits
     uint,   ;; Offset in bits
@@ -638,6 +660,44 @@ value.</p>
 </div>
 
 <!-- ======================================================================= -->
+<div class="doc_subsubsection">
+  <a name="format_variables">Local variables</a>
+</div>
+
+<div class="doc_text">
+<pre>
+  %<a href="#format_variables">llvm.dbg.variable.type</a> = type {
+    uint,    ;; Tag (see below)
+    {  }*,   ;; Context
+    sbyte*,  ;; Name
+    {  }*,   ;; Reference to compile unit where defined
+    uint,    ;; Line number where defined
+    {  }*    ;; Type descriptor
+  }
+</pre>
+
+<p>These descriptors are used to define variables local to a sub program.  The
+value of the tag depends on the usage of the variable;</p>
+
+<pre>
+  DW_TAG_auto_variable = 256
+  DW_TAG_arg_variable = 257
+  DW_TAG_return_variable = 258
+</pre>
+
+<p>An auto variable is any variable declared in the body of the function.  An
+argument variable is any variable that appears as a formal argument to the
+function.  A return variable is used to track the result of a function and has
+no source correspondent.</p>
+
+<p>The context is eitehr the subprogram or block where the variable is defined.
+Name the source variable name.  Compile unit and line indicate where the
+variable was defined. Type descriptor defines the declared type of the
+variable.</p>
+
+</div>
+
+<!-- ======================================================================= -->
 <div class="doc_subsection">
   <a name="format_common_intrinsics">Debugger intrinsic functions</a>
 </div>
@@ -664,7 +724,8 @@ the generated code.  The first argument is the line number (base 1), second
 argument si the column number (0 if unknown) and the third argument the source
 compile unit.  Code following a call to this intrinsic will have been defined in
 close proximity of the line, column and file.  This information holds until the
-next call to <a href="#format_common_stoppoint">lvm.dbg.stoppoint</a>.</p>
+next call to <tt>%<a
+href="#format_common_stoppoint">lvm.dbg.stoppoint</a></tt>.</p>
 
 </div>
 
@@ -675,14 +736,17 @@ next call to <a href="#format_common_stoppoint">lvm.dbg.stoppoint</a>.</p>
 
 <div class="doc_text">
 <pre>
-  void %<a href="#format_common_func_start">llvm.dbg.func.start</a>( %<a href="#format_subprograms">llvm.dbg.subprogram.type</a>* )
+  void %<a href="#format_common_func_start">llvm.dbg.func.start</a>( { }* )
 </pre>
 
 <p>This intrinsic is used to link the debug information in <tt>%<a
 href="#format_subprograms">llvm.dbg.subprogram</a></tt> to the function. It also
 defines the beginning of the function's declarative region (scope.)  The
 intrinsic should be called early in the function after the all the alloca
-instructions.</p>
+instructions.  It should be paired off with a closing <tt>%<a
+href="#format_common_region_end">llvm.dbg.region.end</a></tt>.  The function's
+single argument is the <tt>%<a
+href="#format_subprograms">llvm.dbg.subprogram.type</a></tt>.</p>
 
 </div>
 
@@ -693,12 +757,15 @@ instructions.</p>
 
 <div class="doc_text">
 <pre>
-  void %<a href="#format_common_region_start">llvm.dbg.region.start</a>()
+  void %<a href="#format_common_region_start">llvm.dbg.region.start</a>( { }* )
 </pre>
 
 <p>This intrinsic is used to define the beginning of a declarative scope (ex.
 block) for local language elements.  It should be paired off with a closing
-<tt>%<a href="#format_common_region_end">llvm.dbg.region.end</a></tt>.</p>
+<tt>%<a href="#format_common_region_end">llvm.dbg.region.end</a></tt>.  The
+function's single argument is the <tt>%<a
+href="#format_blocks">llvm.dbg.block</a></tt> which is starting.</p>
+
 
 </div>
 
@@ -709,13 +776,17 @@ block) for local language elements.  It should be paired off with a closing
 
 <div class="doc_text">
 <pre>
-  void %<a href="#format_common_region_end">llvm.dbg.region.end</a>()
+  void %<a href="#format_common_region_end">llvm.dbg.region.end</a>( { }* )
 </pre>
 
 <p>This intrinsic is used to define the end of a declarative scope (ex. block)
 for local language elements.  It should be paired off with an opening <tt>%<a
 href="#format_common_region_start">llvm.dbg.region.start</a></tt> or <tt>%<a
-href="#format_common_func_start">llvm.dbg.func.start</a></tt>.</p>
+href="#format_common_func_start">llvm.dbg.func.start</a></tt>.  The function's
+single argument is either the <tt>%<a
+href="#format_blocks">llvm.dbg.block</a></tt> or the <tt>%<a
+href="#format_subprograms">llvm.dbg.subprogram.type</a></tt> which is
+ending.</p>
 
 </div>
 
@@ -726,11 +797,13 @@ href="#format_common_func_start">llvm.dbg.func.start</a></tt>.</p>
 
 <div class="doc_text">
 <pre>
-  void %<a href="#format_common_declare">llvm.dbg.declare</a>( {} *, ... )
+  void %<a href="#format_common_declare">llvm.dbg.declare</a>( { } *, { }* )
 </pre>
 
 <p>This intrinsic provides information about a local element (ex. variable.) 
-TODO - details.</p>
+The first argument as a AllocA for the variable cast to a <tt>{ }*</tt>. The second
+argument is the <tt>%<a href="#format_variables">llvm.dbg.variable</a></tt>
+containing the description of the variable, also cast to a <tt>{ }*</tt>.</p>
 
 </div>
 
@@ -1097,7 +1170,7 @@ int main(int argc, char *argv[]) {
 ;; descriptor, one for the global's basic type and one for the subprogram's
 ;; compile unit.
 ;;
-%<a href="#format_subprograms">llvm.dbg.subprogram.type</a> = type { uint, {  }*, {  }*, sbyte*, {  }*, bool, bool, {  }* }
+%<a href="#format_subprograms">llvm.dbg.subprogram.type</a> = type { uint, {  }*, {  }*, sbyte*, {  }*, bool, bool }
 %<a href="#format_anchors">llvm.dbg.anchor.type</a> = type { uint, uint }
 %<a href="#format_compile_units">llvm.dbg.compile_unit.type</a> = ...
 	
@@ -1120,8 +1193,7 @@ int main(int argc, char *argv[]) {
     uint 1,
     {  }* null, 
     bool false, 
-    bool true,
-    null }, section "llvm.metadata"
+    bool true }, section "llvm.metadata"
 
 ;;
 ;; Define the name of the subprogram.
