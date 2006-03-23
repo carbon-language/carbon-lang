@@ -33,7 +33,6 @@ class MRegisterInfo;
 class FunctionPassManager;
 class PassManager;
 class Pass;
-class IntrinsicLowering;
 
 // Relocation model types.
 namespace Reloc {
@@ -54,28 +53,24 @@ namespace Reloc {
 class TargetMachine {
   const std::string Name;
   const TargetData DataLayout;       // Calculates type size & alignment
-  IntrinsicLowering *IL;             // Specifies how to lower intrinsic calls
 
   TargetMachine(const TargetMachine&);   // DO NOT IMPLEMENT
   void operator=(const TargetMachine&);  // DO NOT IMPLEMENT
 protected: // Can only create subclasses...
-  TargetMachine(const std::string &name, IntrinsicLowering *IL,
-                bool LittleEndian = false,
+  TargetMachine(const std::string &name, bool LittleEndian = false,
                 unsigned char PtrSize = 8, unsigned char PtrAl = 8,
                 unsigned char DoubleAl = 8, unsigned char FloatAl = 4,
                 unsigned char LongAl = 8, unsigned char IntAl = 4,
                 unsigned char ShortAl = 2, unsigned char ByteAl = 1,
                 unsigned char BoolAl = 1);
 
-  TargetMachine(const std::string &name, IntrinsicLowering *IL,
-                const TargetData &TD);
+  TargetMachine(const std::string &name, const TargetData &TD);
 
   /// This constructor is used for targets that support arbitrary TargetData
   /// layouts, like the C backend.  It initializes the TargetData to match that
   /// of the specified module.
   ///
-  TargetMachine(const std::string &name, IntrinsicLowering *IL,
-                const Module &M);
+  TargetMachine(const std::string &name, const Module &M);
 
   /// getSubtargetImpl - virtual method implemented by subclasses that returns
   /// a reference to that target's TargetSubtarget-derived member variable.
@@ -98,12 +93,6 @@ public:
 
 
   const std::string &getName() const { return Name; }
-
-  /// getIntrinsicLowering - This method returns a reference to an
-  /// IntrinsicLowering instance which should be used by the code generator to
-  /// lower unknown intrinsic functions to the equivalent LLVM expansion.
-  ///
-  IntrinsicLowering &getIntrinsicLowering() const { return *IL; }
 
   // Interfaces to the major aspects of target machine information:
   // -- Instruction opcode and operand information

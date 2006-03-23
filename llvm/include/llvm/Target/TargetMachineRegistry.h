@@ -80,7 +80,7 @@ namespace llvm {
     }
   private:
     static TargetMachine *Allocator(const Module &M, const std::string &FS) {
-      return new TargetMachineImpl(M, 0, FS);
+      return new TargetMachineImpl(M, FS);
     }
   };
 
