@@ -76,30 +76,42 @@ static Function *getUpgradedIntrinsic(Function *F) {
     break;
   case 'd':
     if (Name == "llvm.dbg.stoppoint") {
-      if (F->getReturnType() != Type::VoidTy) {
+      PointerType *ESP =
+                  PointerType::get(StructType::get(std::vector<const Type*>()));
+      if (F->getReturnType() != Type::VoidTy ||
+          F->getFunctionType()->getParamType(2) != ESP) {
         return M->getOrInsertFunction(Name, Type::VoidTy,
-                                      Type::UIntTy,
-                                      Type::UIntTy,
-                                      F->getFunctionType()->getParamType(3),
-                                      NULL);
+                                      Type::UIntTy, Type::UIntTy, ESP, NULL);
       }
     } else if (Name == "llvm.dbg.func.start") {
-      if (F->getReturnType()  != Type::VoidTy) {
-        return M->getOrInsertFunction(Name, Type::VoidTy,
-                                      F->getFunctionType()->getParamType(0),
-                                      NULL);
+      PointerType *ESP =
+                  PointerType::get(StructType::get(std::vector<const Type*>()));
+      if (F->getReturnType()  != Type::VoidTy ||
+          F->getFunctionType()->getParamType(0) != ESP) {
+        return M->getOrInsertFunction(Name, Type::VoidTy, ESP, NULL);
       }
     } else if (Name == "llvm.dbg.region.start") {
-      if (F->getReturnType() != Type::VoidTy) {
-        return M->getOrInsertFunction(Name, Type::VoidTy, NULL);
+      PointerType *ESP =
+                  PointerType::get(StructType::get(std::vector<const Type*>()));
+      if (F->getReturnType() != Type::VoidTy ||
+          F->getFunctionType()->getParamType(0) != ESP) {
+        return M->getOrInsertFunction(Name, Type::VoidTy,  ESP, NULL);
       }
     } else if (Name == "llvm.dbg.region.end") {
-      if (F->getReturnType() != Type::VoidTy) {
-        return M->getOrInsertFunction(Name, Type::VoidTy, NULL);
+      PointerType *ESP =
+                  PointerType::get(StructType::get(std::vector<const Type*>()));
+      if (F->getReturnType() != Type::VoidTy ||
+          F->getFunctionType()->getParamType(0) != ESP) {
+         return M->getOrInsertFunction(Name, Type::VoidTy,  ESP, NULL);
       }
     } else if (Name == "llvm.dbg.declare") {
-      F->setName("");
-      return NULL;
+      PointerType *ESP =
+                  PointerType::get(StructType::get(std::vector<const Type*>()));
+      if (F->getReturnType() != Type::VoidTy ||
+          F->getFunctionType()->getParamType(0) != ESP ||
+          F->getFunctionType()->getParamType(1) != ESP) {
+        return M->getOrInsertFunction(Name, Type::VoidTy, ESP, ESP, NULL);
+      }
     }
     break;
   case 'i':
@@ -142,8 +154,10 @@ static Function *getUpgradedIntrinsic(Function *F) {
 // NULL is returned if there is no permutation.  It's assumed that the function
 // name is in the form "llvm.?????"
 static unsigned *getArgumentPermutation(Function* F) {
-  // Get the Function's name.
   const std::string& Name = F->getName();
+  const FunctionType *FTy = F->getFunctionType();
+  unsigned N = FTy->getNumParams();
+  
   switch (Name[5]) {
   case 'd':
     if (Name == "llvm.dbg.stoppoint") {
@@ -151,7 +165,25 @@ static unsigned *getArgumentPermutation(Function* F) {
       assert(F->getFunctionType()->getNumParams() ==
              (sizeof(Permutation) / sizeof(unsigned)) &&
              "Permutation is wrong length");
-      return Permutation;
+      if (N == 4) return Permutation;
+    } else if (Name == "llvm.dbg.region.start") {
+      static unsigned Permutation[] = { 0 };
+      assert(F->getFunctionType()->getNumParams() ==
+             (sizeof(Permutation) / sizeof(unsigned)) &&
+             "Permutation is wrong length");
+      if (N == 0) return Permutation;
+    } else if (Name == "llvm.dbg.region.end") {
+      static unsigned Permutation[] = { 0 };
+      assert(F->getFunctionType()->getNumParams() ==
+             (sizeof(Permutation) / sizeof(unsigned)) &&
+             "Permutation is wrong length");
+      if (N == 0) return Permutation;
+    } else if (Name == "llvm.dbg.declare") {
+      static unsigned Permutation[] = { 0, 0 };
+      assert(F->getFunctionType()->getNumParams() ==
+             (sizeof(Permutation) / sizeof(unsigned)) &&
+             "Permutation is wrong length");
+      if (N == 0) return Permutation;
     }
     break;
   }
@@ -171,6 +203,15 @@ Function *llvm::UpgradeIntrinsicFunction(Function* F) {
   return 0;
 }
 
+// CastArg - Perform the appropriate cast of an upgraded argument.
+//
+static Value *CastArg(Value *Arg, const Type *Ty) {
+  if (Constant *C = dyn_cast<Constant>(Arg)) {
+    return ConstantExpr::getCast(C, Ty);
+  } else {
+    return new CastInst(Arg, Ty, "autoupgrade_cast");
+  }
+}
 
 Instruction* llvm::MakeUpgradedCall(Function *F, 
                                     const std::vector<Value*> &Params,
@@ -187,9 +228,9 @@ Instruction* llvm::MakeUpgradedCall(Function *F,
     const Type* opTy = (*PI)->getType();
     if (opTy->isSigned()) {
       signedArg = true;
-      CastInst* cast = 
-        new CastInst(*PI,opTy->getUnsignedVersion(), "autoupgrade_cast");
-      BB->getInstList().push_back(cast);
+      Value *cast = CastArg(*PI, opTy->getUnsignedVersion());
+      if (Instruction *I = dyn_cast<Instruction>(cast))
+        BB->getInstList().push_back(I);
       Oprnds.push_back(cast);
     }
     else
@@ -218,7 +259,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
   const FunctionType *NewFnTy = NewFn->getFunctionType();
   std::vector<Value*> Oprnds;
   
-  unsigned *Permutation = getArgumentPermutation(NewFn);
+  unsigned *Permutation = getArgumentPermutation(F);
   unsigned N = NewFnTy->getNumParams();
 
   if (Permutation) {
@@ -228,7 +269,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       if (p) {
         Value *V = CI->getOperand(p);
         if (V->getType() != NewFnTy->getParamType(i))
-          V = new CastInst(V, NewFnTy->getParamType(i), V->getName(), CI);
+          V = CastArg(V, NewFnTy->getParamType(i));
         Oprnds.push_back(V);
       } else
         Oprnds.push_back(UndefValue::get(NewFnTy->getParamType(i)));
@@ -239,7 +280,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
     for (unsigned i = 0; i != N; ++i) {
       Value *V = CI->getOperand(i + 1);
       if (V->getType() != NewFnTy->getParamType(i))
-        V = new CastInst(V, NewFnTy->getParamType(i), V->getName(), CI);
+        V = CastArg(V, NewFnTy->getParamType(i));
       Oprnds.push_back(V);
     }
   }
