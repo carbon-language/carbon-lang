@@ -1,4 +1,4 @@
 Output
 *.log
 *.sum
-*.dot
+*.bc

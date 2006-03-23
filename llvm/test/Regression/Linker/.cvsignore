@@ -1,0 +1,5 @@
+Output
+*.log
+*.sum
+2006-01-19-ConstantPacked.ll.bc
+2006-01-19-ConstantPacked.ll.linked
