@@ -1210,6 +1210,9 @@ def : Pat<(v4i32 (PPClve_x xoaddr:$src)),
 
 def : Pat<(v4i32 (undef)), (v4i32 (IMPLICIT_DEF_VRRC))>;
 
+// bit_convert
+def : Pat<(v4i32 (bitconvert (v4f32 VRRC:$src))), (v4i32 VRRC:$src)>;
+def : Pat<(v4f32 (bitconvert (v4i32 VRRC:$src))), (v4f32 VRRC:$src)>;
 
 // Same as above, but using a temporary. FIXME: implement temporaries :)
 /*
