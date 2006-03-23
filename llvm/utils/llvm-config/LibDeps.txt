@@ -15,12 +15,12 @@ LLVMAsmParser.o: LLVMCore.o
 LLVMBCReader.o: libLLVMSupport.a libLLVMSystem.a LLVMCore.o
 LLVMBCWriter.o: libLLVMSupport.a LLVMCore.o
 LLVMbzip2.o:
-LLVMCBackend.o: libLLVMAnalysis.a libLLVMipa.a libLLVMScalarOpts.a libLLVMSupport.a libLLVMTarget.a LLVMCore.o
+LLVMCBackend.o: libLLVMAnalysis.a libLLVMipa.a libLLVMScalarOpts.a libLLVMSupport.a libLLVMTarget.a LLVMCodeGen.o LLVMCore.o
 LLVMCodeGen.o: libLLVMAnalysis.a libLLVMSupport.a libLLVMTarget.a LLVMCore.o
 LLVMCore.o: libLLVMSupport.a
 LLVMDataStructure.o: libLLVMAnalysis.a libLLVMSupport.a libLLVMTarget.a LLVMCore.o
 LLVMDebugger.o: libLLVMSupport.a libLLVMSystem.a LLVMBCReader.o LLVMCore.o
-LLVMExecutionEngine.o: libLLVMSupport.a libLLVMSystem.a libLLVMTarget.a LLVMCore.o LLVMInterpreter.o LLVMJIT.o
+LLVMExecutionEngine.o: libLLVMSupport.a libLLVMSystem.a libLLVMTarget.a LLVMCore.o
 LLVMIA64.o: libLLVMScalarOpts.a libLLVMSupport.a libLLVMTarget.a LLVMCodeGen.o LLVMCore.o LLVMSelectionDAG.o
 LLVMInterpreter.o: libLLVMSupport.a libLLVMSystem.a libLLVMTarget.a LLVMCore.o LLVMExecutionEngine.o
 LLVMJIT.o: libLLVMSupport.a libLLVMSystem.a libLLVMTarget.a LLVMCore.o LLVMExecutionEngine.o
