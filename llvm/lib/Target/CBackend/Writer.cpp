@@ -21,6 +21,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Analysis/ConstantsScanner.h"
 #include "llvm/Analysis/FindUsedTypes.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -1715,17 +1716,12 @@ void CWriter::visitCallInst(CallInst &I) {
       case Intrinsic::dbg_stoppoint: {
         // If we use writeOperand directly we get a "u" suffix which is rejected
         // by gcc.
-        ConstantUInt *SI = cast<ConstantUInt>(I.getOperand(1));
-        GlobalVariable *GV = cast<GlobalVariable>(I.getOperand(3));
-        ConstantStruct *CS = cast<ConstantStruct>(GV->getInitializer());
-        std::string FileName = CS->getOperand(4)->getStringValue();
-        std::string Directory = CS->getOperand(5)->getStringValue();
+        DbgStopPointInst &SPI = cast<DbgStopPointInst>(I);
 
         Out << "\n#line "
-            << SI->getValue()
-            << " \"" << Directory << FileName << "\"\n";
-        // Need to set result.
-        Out << "0";
+            << SPI.getLine()
+            << " \"" << SPI.getDirectory()
+            << SPI.getFileName() << "\"\n";
         return;
       }
       }
