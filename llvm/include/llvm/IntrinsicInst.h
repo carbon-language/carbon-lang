@@ -66,16 +66,15 @@ namespace llvm {
   ///
   struct DbgInfoIntrinsic : public IntrinsicInst {
 
-    Value *getChain() const { return const_cast<Value*>(getOperand(1)); }
-
     // Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const DbgInfoIntrinsic *) { return true; }
     static inline bool classof(const IntrinsicInst *I) {
       switch (I->getIntrinsicID()) {
       case Intrinsic::dbg_stoppoint:
+      case Intrinsic::dbg_func_start:
       case Intrinsic::dbg_region_start:
       case Intrinsic::dbg_region_end:
-      case Intrinsic::dbg_func_start:
+      case Intrinsic::dbg_declare:
         return true;
       default: return false;
       }
@@ -83,26 +82,94 @@ namespace llvm {
     static inline bool classof(const Value *V) {
       return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));
     }
+    
+    static Value *StripCast(Value *C);
   };
 
-
-  /// DbgStopPointInst - This represent llvm.dbg.stoppoint instructions.
+  /// DbgStopPointInst - This represents the llvm.dbg.stoppoint instruction.
   ///
   struct DbgStopPointInst : public DbgInfoIntrinsic {
+    Value *getLineValue() const { return const_cast<Value*>(getOperand(1)); }
+    Value *getColumnValue() const { return const_cast<Value*>(getOperand(2)); }
+    Value *getContext() const {
+      return StripCast(getOperand(3));
+    }
 
-    unsigned getLineNo() const {
+    unsigned getLine() const {
+      return unsigned(cast<ConstantInt>(getOperand(1))->getRawValue());
+    }
+    unsigned getColumn() const {
       return unsigned(cast<ConstantInt>(getOperand(2))->getRawValue());
     }
-    unsigned getColNo() const {
-      return unsigned(cast<ConstantInt>(getOperand(3))->getRawValue());
-    }
-    Value *getContext() const { return const_cast<Value*>(getOperand(4)); }
-
+    
+    std::string getFileName() const;
+    std::string getDirectory() const;
 
     // Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const DbgStopPointInst *) { return true; }
     static inline bool classof(const IntrinsicInst *I) {
       return I->getIntrinsicID() == Intrinsic::dbg_stoppoint;
+    }
+    static inline bool classof(const Value *V) {
+      return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));
+    }
+  };
+  
+  /// DbgFuncStartInst - This represents the llvm.dbg.func.start instruction.
+  ///
+  struct DbgFuncStartInst : public DbgInfoIntrinsic {
+    Value *getSubprogram() const { return StripCast(getOperand(1)); }
+
+    // Methods for support type inquiry through isa, cast, and dyn_cast:
+    static inline bool classof(const DbgFuncStartInst *) { return true; }
+    static inline bool classof(const IntrinsicInst *I) {
+      return I->getIntrinsicID() == Intrinsic::dbg_func_start;
+    }
+    static inline bool classof(const Value *V) {
+      return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));
+    }
+  };
+
+  /// DbgRegionStartInst - This represents the llvm.dbg.region.start
+  /// instruction.
+  struct DbgRegionStartInst : public DbgInfoIntrinsic {
+    Value *getContext() const { return StripCast(getOperand(1)); }
+
+    // Methods for support type inquiry through isa, cast, and dyn_cast:
+    static inline bool classof(const DbgRegionStartInst *) { return true; }
+    static inline bool classof(const IntrinsicInst *I) {
+      return I->getIntrinsicID() == Intrinsic::dbg_region_start;
+    }
+    static inline bool classof(const Value *V) {
+      return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));
+    }
+  };
+
+  /// DbgRegionEndInst - This represents the llvm.dbg.region.end instruction.
+  ///
+  struct DbgRegionEndInst : public DbgInfoIntrinsic {
+    Value *getContext() const { return StripCast(getOperand(1)); }
+
+    // Methods for support type inquiry through isa, cast, and dyn_cast:
+    static inline bool classof(const DbgRegionEndInst *) { return true; }
+    static inline bool classof(const IntrinsicInst *I) {
+      return I->getIntrinsicID() == Intrinsic::dbg_region_end;
+    }
+    static inline bool classof(const Value *V) {
+      return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));
+    }
+  };
+
+  /// DbgDeclareInst - This represents the llvm.dbg.declare instruction.
+  ///
+  struct DbgDeclareInst : public DbgInfoIntrinsic {
+    Value *getAllocA() const { return StripCast(getOperand(1)); }
+    Value *getVariable() const { return StripCast(getOperand(2)); }
+
+    // Methods for support type inquiry through isa, cast, and dyn_cast:
+    static inline bool classof(const DbgDeclareInst *) { return true; }
+    static inline bool classof(const IntrinsicInst *I) {
+      return I->getIntrinsicID() == Intrinsic::dbg_declare;
     }
     static inline bool classof(const Value *V) {
       return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));
