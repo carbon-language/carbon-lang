@@ -14,7 +14,6 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Type.h"
-#include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
@@ -70,8 +69,7 @@ namespace {
 //---------------------------------------------------------------------------
 // TargetMachine Class
 //
-TargetMachine::TargetMachine(const std::string &name, IntrinsicLowering *il,
-                             bool LittleEndian,
+TargetMachine::TargetMachine(const std::string &name, bool LittleEndian,
                              unsigned char PtrSize, unsigned char PtrAl,
                              unsigned char DoubleAl, unsigned char FloatAl,
                              unsigned char LongAl, unsigned char IntAl,
@@ -80,23 +78,17 @@ TargetMachine::TargetMachine(const std::string &name, IntrinsicLowering *il,
   : Name(name), DataLayout(name, LittleEndian,
                            PtrSize, PtrAl, DoubleAl, FloatAl, LongAl,
                            IntAl, ShortAl, ByteAl, BoolAl) {
-  IL = il ? il : new DefaultIntrinsicLowering();
 }
 
-TargetMachine::TargetMachine(const std::string &name, IntrinsicLowering *il,
-                             const TargetData &TD)
+TargetMachine::TargetMachine(const std::string &name, const TargetData &TD)
   : Name(name), DataLayout(TD) {
-  IL = il ? il : new DefaultIntrinsicLowering();
 }
 
-TargetMachine::TargetMachine(const std::string &name, IntrinsicLowering *il,
-                             const Module &M)
+TargetMachine::TargetMachine(const std::string &name, const Module &M)
   : Name(name), DataLayout(name, &M) {
-  IL = il ? il : new DefaultIntrinsicLowering();
 }
 
 TargetMachine::~TargetMachine() {
-  delete IL;
 }
 
 /// getRelocationModel - Returns the code generation relocation model. The

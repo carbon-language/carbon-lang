@@ -15,7 +15,6 @@
 #include "X86.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
-#include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetOptions.h"
@@ -69,10 +68,8 @@ unsigned X86TargetMachine::getModuleMatchQuality(const Module &M) {
 
 /// X86TargetMachine ctor - Create an ILP32 architecture model
 ///
-X86TargetMachine::X86TargetMachine(const Module &M,
-                                  IntrinsicLowering *IL,
-                                  const std::string &FS)
-  : TargetMachine("X86", IL, true, 4, 4, 4, 4, 4),
+X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS)
+  : TargetMachine("X86", true, 4, 4, 4, 4, 4),
     Subtarget(M, FS),
     FrameInfo(TargetFrameInfo::StackGrowsDown,
               Subtarget.getStackAlignment(), -4),

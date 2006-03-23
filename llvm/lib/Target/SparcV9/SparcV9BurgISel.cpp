@@ -4356,6 +4356,7 @@ void GetInstructionsByRule(InstructionNode* subtreeRoot, int ruleForNode,
 //==------------------------------------------------------------------------==//
 
 bool V9ISel::runOnFunction(Function &F) {
+  DefaultIntrinsicLowering IL;
   // First pass - Walk the function, lowering any calls to intrinsic functions
   // which the instruction selector cannot handle.
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
@@ -4376,7 +4377,7 @@ bool V9ISel::runOnFunction(Function &F) {
           default:
             // All other intrinsic calls we must lower.
             Instruction *Before = CI->getPrev();
-            Target.getIntrinsicLowering().LowerIntrinsicCall(CI);
+            IL.LowerIntrinsicCall(CI);
             if (Before) {        // Move iterator to instruction after call
               I = Before;  ++I;
             } else {

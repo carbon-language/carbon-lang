@@ -17,7 +17,6 @@
 #include "llvm/PassManager.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/CodeGen/InstrScheduling.h"
-#include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetOptions.h"
@@ -147,10 +146,9 @@ FunctionPass *llvm::createSparcV9MachineCodeDestructionPass() {
 }
 
 
-SparcV9TargetMachine::SparcV9TargetMachine(const Module &M,
-                                           IntrinsicLowering *il,
+SparcV9TargetMachine::SparcV9TargetMachine(const Module &M, 
                                            const std::string &FS)
-  : TargetMachine("UltraSparcV9-Native", il, false),
+  : TargetMachine("UltraSparcV9-Native", false),
     schedInfo(*this),
     regInfo(*this),
     frameInfo(*this),

@@ -22,7 +22,6 @@
 
 namespace llvm {
 
-class IntrinsicLowering;
 class Module;
 
 class SparcTargetMachine : public TargetMachine {
@@ -30,8 +29,7 @@ class SparcTargetMachine : public TargetMachine {
   SparcInstrInfo InstrInfo;
   TargetFrameInfo FrameInfo;
 public:
-  SparcTargetMachine(const Module &M, IntrinsicLowering *IL,
-                     const std::string &FS);
+  SparcTargetMachine(const Module &M, const std::string &FS);
 
   virtual const SparcInstrInfo *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }

@@ -30,9 +30,8 @@ namespace {
 
 /// SparcTargetMachine ctor - Create an ILP32 architecture model
 ///
-SparcTargetMachine::SparcTargetMachine(const Module &M, IntrinsicLowering *IL,
-                                       const std::string &FS)
-  : TargetMachine("Sparc", IL, false, 4, 4),
+SparcTargetMachine::SparcTargetMachine(const Module &M, const std::string &FS)
+  : TargetMachine("Sparc", false, 4, 4),
     Subtarget(M, FS), InstrInfo(Subtarget),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 8, 0) {
 }

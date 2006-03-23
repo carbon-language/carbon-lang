@@ -67,7 +67,7 @@ namespace {
   /// module to a C translation unit.
   class CWriter : public FunctionPass, public InstVisitor<CWriter> {
     std::ostream &Out;
-    IntrinsicLowering &IL;
+    DefaultIntrinsicLowering IL;
     Mangler *Mang;
     LoopInfo *LI;
     const Module *TheModule;
@@ -75,7 +75,7 @@ namespace {
 
     std::map<const ConstantFP *, unsigned> FPConstantMap;
   public:
-    CWriter(std::ostream &o, IntrinsicLowering &il) : Out(o), IL(il) {}
+    CWriter(std::ostream &o) : Out(o) {}
 
     virtual const char *getPassName() const { return "C backend"; }
 
@@ -1931,6 +1931,6 @@ bool CTargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &o,
   PM.add(createLowerInvokePass());
   PM.add(createCFGSimplificationPass());   // clean up after lower invoke.
   PM.add(new CBackendNameAllUsedStructsAndMergeFunctions());
-  PM.add(new CWriter(o, getIntrinsicLowering()));
+  PM.add(new CWriter(o));
   return false;
 }

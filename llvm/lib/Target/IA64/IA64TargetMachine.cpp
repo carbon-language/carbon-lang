@@ -15,7 +15,6 @@
 #include "IA64.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
-#include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetOptions.h"
@@ -76,9 +75,8 @@ unsigned IA64TargetMachine::getModuleMatchQuality(const Module &M) {
 
 /// IA64TargetMachine ctor - Create an LP64 architecture model
 ///
-IA64TargetMachine::IA64TargetMachine(const Module &M, IntrinsicLowering *IL,
-                                     const std::string &FS)
-  : TargetMachine("IA64", IL, true),
+IA64TargetMachine::IA64TargetMachine(const Module &M, const std::string &FS)
+  : TargetMachine("IA64", true),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 16, 0),
     TLInfo(*this) { // FIXME? check this stuff
 }

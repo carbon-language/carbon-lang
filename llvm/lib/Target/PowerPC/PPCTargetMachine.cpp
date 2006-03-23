@@ -18,7 +18,6 @@
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Analysis/Verifier.h"
-#include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetOptions.h"
@@ -58,9 +57,8 @@ unsigned PPCTargetMachine::getModuleMatchQuality(const Module &M) {
   return getJITMatchQuality()/2;
 }
 
-PPCTargetMachine::PPCTargetMachine(const Module &M, IntrinsicLowering *IL,
-                                   const std::string &FS)
-: TargetMachine("PowerPC", IL, false, 4, 4, 4, 4, 4, 4, 2, 1, 1),
+PPCTargetMachine::PPCTargetMachine(const Module &M, const std::string &FS)
+: TargetMachine("PowerPC", false, 4, 4, 4, 4, 4, 4, 2, 1, 1),
   Subtarget(M, FS), FrameInfo(*this, false), JITInfo(*this),
   TLInfo(*this), InstrItins(Subtarget.getInstrItineraryData()) {
   if (TargetDefault == PPCTarget) {

@@ -23,9 +23,7 @@
 
 namespace llvm {
 class PassManager;
-class IntrinsicLowering;
 class GlobalValue;
-class IntrinsicLowering;
 
 class PPCTargetMachine : public TargetMachine {
   PPCInstrInfo           InstrInfo;
@@ -35,8 +33,7 @@ class PPCTargetMachine : public TargetMachine {
   PPCTargetLowering      TLInfo;
   InstrItineraryData     InstrItins;
 public:
-  PPCTargetMachine(const Module &M, IntrinsicLowering *IL,
-                   const std::string &FS);
+  PPCTargetMachine(const Module &M, const std::string &FS);
 
   virtual const PPCInstrInfo     *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }

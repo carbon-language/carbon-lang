@@ -24,7 +24,6 @@
 #include "X86ISelLowering.h"
 
 namespace llvm {
-class IntrinsicLowering;
 
 class X86TargetMachine : public TargetMachine {
   X86InstrInfo      InstrInfo;
@@ -33,8 +32,7 @@ class X86TargetMachine : public TargetMachine {
   X86JITInfo        JITInfo;
   X86TargetLowering TLInfo;
 public:
-  X86TargetMachine(const Module &M, IntrinsicLowering *IL,
-                   const std::string &FS);
+  X86TargetMachine(const Module &M, const std::string &FS);
 
   virtual const X86InstrInfo     *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }

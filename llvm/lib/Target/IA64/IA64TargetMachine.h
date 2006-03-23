@@ -21,7 +21,6 @@
 #include "IA64ISelLowering.h"
 
 namespace llvm {
-class IntrinsicLowering;
 
 class IA64TargetMachine : public TargetMachine {
   IA64InstrInfo      InstrInfo;
@@ -29,8 +28,7 @@ class IA64TargetMachine : public TargetMachine {
   //IA64JITInfo      JITInfo;
   IA64TargetLowering TLInfo;
 public:
-  IA64TargetMachine(const Module &M, IntrinsicLowering *IL,
-                    const std::string &FS);
+  IA64TargetMachine(const Module &M, const std::string &FS);
 
   virtual const IA64InstrInfo      *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo    *getFrameInfo() const { return &FrameInfo; }

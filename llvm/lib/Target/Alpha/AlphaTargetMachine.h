@@ -24,7 +24,6 @@
 namespace llvm {
 
 class GlobalValue;
-class IntrinsicLowering;
 
 class AlphaTargetMachine : public TargetMachine {
   AlphaInstrInfo InstrInfo;
@@ -33,8 +32,7 @@ class AlphaTargetMachine : public TargetMachine {
   AlphaSubtarget Subtarget;
 
 public:
-  AlphaTargetMachine(const Module &M, IntrinsicLowering *IL,
-                     const std::string &FS);
+  AlphaTargetMachine(const Module &M, const std::string &FS);
 
   virtual const AlphaInstrInfo *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }
