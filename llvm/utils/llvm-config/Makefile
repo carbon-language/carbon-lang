@@ -24,7 +24,9 @@ SUB_LDFLAGS =
 # should only be re-built manually.  No other rule in this file should
 # depend on LibDeps.txt.
 LibDeps.txt: $(LEVEL)/utils/GenLibDeps.pl $(LibDir)
-	$(LEVEL)/utils/GenLibDeps.pl -flat $(LibDir) | sort > LibDeps.txt
+	$(Echo) "Regenerating LibDeps.txt"
+	$(Verb) $(LLVM_SRC_ROOT)/utils/GenLibDeps.pl -flat $(LibDir) | \
+	  sort > LibDeps.txt
 
 # Find all the cyclic dependencies between various LLVM libraries, so we
 # don't have to process them at runtime.
