@@ -40,6 +40,10 @@ def X86loadpf64  : PatFrag<(ops node:$ptr), (f64   (X86loadp node:$ptr))>;
 
 def loadv4f32    : PatFrag<(ops node:$ptr), (v4f32 (load node:$ptr))>;
 def loadv2f64    : PatFrag<(ops node:$ptr), (v2f64 (load node:$ptr))>;
+def loadv16i8    : PatFrag<(ops node:$ptr), (v16i8 (load node:$ptr))>;
+def loadv8i16    : PatFrag<(ops node:$ptr), (v8i16 (load node:$ptr))>;
+def loadv4i32    : PatFrag<(ops node:$ptr), (v4i32 (load node:$ptr))>;
+def loadv2i64    : PatFrag<(ops node:$ptr), (v2i64 (load node:$ptr))>;
 
 // SHUFFLE_get_shuf_imm xform function: convert vector_shuffle mask to PSHUF*,
 // SHUFP* etc. imm.
@@ -750,13 +754,22 @@ def UNPCKLPDrm : PDI<0x14, MRMSrcMem,
 
 // Move Instructions
 def MOVD128rr : PDI<0x6E, MRMSrcReg, (ops VR128:$dst, R32:$src),
-                  "movd {$src, $dst|$dst, $src}",
+                    "movd {$src, $dst|$dst, $src}",
                     [(set VR128:$dst,
                       (v4i32 (scalar_to_vector R32:$src)))]>;
 def MOVD128rm : PDI<0x6E, MRMSrcMem, (ops VR128:$dst, i32mem:$src),
                   "movd {$src, $dst|$dst, $src}", []>;
 def MOVD128mr : PDI<0x7E, MRMDestMem, (ops i32mem:$dst, VR128:$src),
                   "movd {$src, $dst|$dst, $src}", []>;
+
+def MOVDQArr : PDI<0x6F, MRMSrcReg, (ops VR128:$dst, VR128:$src),
+                   "movdqa {$src, $dst|$dst, $src}", []>;
+def MOVDQArm : PDI<0x6F, MRMSrcMem, (ops VR128:$dst, i128mem:$src),
+                   "movdqa {$src, $dst|$dst, $src}",
+                   [(set VR128:$dst, (loadv4i32 addr:$src))]>;
+def MOVDQAmr : PDI<0x7F, MRMDestMem, (ops i128mem:$dst, VR128:$src),
+                   "movdqa {$src, $dst|$dst, $src}",
+                   [(store (v4i32 VR128:$src), addr:$dst)]>;
 
 // SSE2 instructions with XS prefix
 def MOVQ128rr : I<0x7E, MRMSrcReg, (ops VR128:$dst, VR64:$src),
@@ -823,24 +836,24 @@ def : Pat<(v4i32 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
 def : Pat<(v2i64 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
 
 // Load 128-bit integer vector values.
-def : Pat<(v16i8 (load addr:$src)), (MOVAPSrm addr:$src)>,
-  Requires<[HasSSE1]>;
-def : Pat<(v8i16 (load addr:$src)), (MOVAPSrm addr:$src)>,
-  Requires<[HasSSE1]>;
-def : Pat<(v4i32 (load addr:$src)), (MOVAPSrm addr:$src)>,
-  Requires<[HasSSE1]>;
-def : Pat<(v2i64 (load addr:$src)), (MOVAPDrm addr:$src)>,
+def : Pat<(v16i8 (load addr:$src)), (MOVDQArm addr:$src)>,
+  Requires<[HasSSE2]>;
+def : Pat<(v8i16 (load addr:$src)), (MOVDQArm addr:$src)>,
+  Requires<[HasSSE2]>;
+def : Pat<(v4i32 (load addr:$src)), (MOVDQArm addr:$src)>,
+  Requires<[HasSSE2]>;
+def : Pat<(v2i64 (load addr:$src)), (MOVDQArm addr:$src)>,
   Requires<[HasSSE2]>;
 
 // Store 128-bit integer vector values.
-def : Pat<(store (v16i8 VR128:$src), addr:$dst), (MOVAPSmr addr:$dst, VR128:$src)>,
-  Requires<[HasSSE1]>;
-def : Pat<(store (v8i16 VR128:$src), addr:$dst), (MOVAPSmr addr:$dst, VR128:$src)>,
-  Requires<[HasSSE1]>;
-def : Pat<(store (v4i32 VR128:$src), addr:$dst), (MOVAPSmr addr:$dst, VR128:$src)>,
-  Requires<[HasSSE1]>;
-def : Pat<(store (v2i64 VR128:$src), addr:$dst), (MOVAPDmr addr:$dst, VR128:$src)>,
-  Requires<[HasSSE2]>;
+def : Pat<(store (v16i8 VR128:$src), addr:$dst),
+          (MOVDQAmr addr:$dst, VR128:$src)>, Requires<[HasSSE1]>;
+def : Pat<(store (v8i16 VR128:$src), addr:$dst),
+          (MOVDQAmr addr:$dst, VR128:$src)>, Requires<[HasSSE1]>;
+def : Pat<(store (v4i32 VR128:$src), addr:$dst),
+          (MOVDQAmr addr:$dst, VR128:$src)>, Requires<[HasSSE1]>;
+def : Pat<(store (v2i64 VR128:$src), addr:$dst),
+          (MOVDQAmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
 
 // Scalar to v8i16 / v16i8. The source may be a R32, but only the lower 8 or
 // 16-bits matter.
