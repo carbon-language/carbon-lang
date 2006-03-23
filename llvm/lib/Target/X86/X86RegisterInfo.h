@@ -62,6 +62,9 @@ struct X86RegisterInfo : public X86GenRegisterInfo {
 
   void emitPrologue(MachineFunction &MF) const;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
+
+  void getLocation(MachineFunction &MF, unsigned Index,
+                   MachineLocation &ML) const;
 };
 
 } // End llvm namespace

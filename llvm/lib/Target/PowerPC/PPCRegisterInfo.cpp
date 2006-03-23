@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
@@ -444,6 +445,17 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
         .addReg(PPC::R0).addReg(PPC::R1);
     }
   }
+}
+
+void PPCRegisterInfo::getLocation(MachineFunction &MF, unsigned Index,
+                                  MachineLocation &ML) const {
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  bool FP = hasFP(MF);
+  
+  // FIXME - Needs to handle register variables.
+  // FIXME - Faking that llvm number is same as gcc numbering.
+  ML.set((FP ? PPC::R31 : PPC::R1) - PPC::R0,
+         MFI->getObjectOffset(Index) + MFI->getStackSize());
 }
 
 #include "PPCGenRegisterInfo.inc"

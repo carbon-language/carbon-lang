@@ -26,6 +26,7 @@ namespace llvm {
 class Type;
 class MachineFunction;
 class MachineInstr;
+class MachineLocation;
 class TargetRegisterClass;
 
 /// TargetRegisterDesc - This record contains all of the information known about
@@ -341,6 +342,11 @@ public:
   virtual void emitPrologue(MachineFunction &MF) const = 0;
   virtual void emitEpilogue(MachineFunction &MF,
                             MachineBasicBlock &MBB) const = 0;
+                            
+  /// getLocation - This method should return the actual location of a frame
+  /// variable given the frame index.
+  virtual void getLocation(MachineFunction &MF, unsigned Index,
+                          MachineLocation &ML) const = 0;
 };
 
 // This is useful when building DenseMaps keyed on virtual registers

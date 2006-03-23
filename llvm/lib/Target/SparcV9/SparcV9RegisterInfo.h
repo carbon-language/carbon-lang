@@ -44,6 +44,8 @@ struct SparcV9RegisterInfo : public MRegisterInfo {
   void eliminateFrameIndex (MachineBasicBlock::iterator MI) const;
   void emitPrologue (MachineFunction &MF) const;
   void emitEpilogue (MachineFunction &MF, MachineBasicBlock &MBB) const;
+  void getLocation(MachineFunction &MF, unsigned Index,
+                   MachineLocation &ML) const;
 };
 
 } // End llvm namespace

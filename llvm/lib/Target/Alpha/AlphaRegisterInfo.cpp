@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
@@ -351,6 +352,18 @@ void AlphaRegisterInfo::emitEpilogue(MachineFunction &MF,
          abort();
        }
      }
+}
+
+void AlphaRegisterInfo::getLocation(MachineFunction &MF, unsigned Index,
+                                    MachineLocation &ML) const {
+  assert(0 && "Needs to be defined for target");
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  bool FP = hasFP(MF);
+  
+  // FIXME - Needs to handle register variables.
+  // FIXME - Faking that llvm number is same as gcc numbering.
+  ML.set((FP ? Alpha::R15 : Alpha::R30) - Alpha::R0,
+         MFI->getObjectOffset(Index) + MFI->getStackSize());
 }
 
 #include "AlphaGenRegisterInfo.inc"

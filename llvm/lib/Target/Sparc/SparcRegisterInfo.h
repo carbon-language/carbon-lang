@@ -56,6 +56,9 @@ struct SparcRegisterInfo : public SparcGenRegisterInfo {
 
   void emitPrologue(MachineFunction &MF) const;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
+  
+  void getLocation(MachineFunction &MF, unsigned Index,
+                   MachineLocation &ML) const;
 };
 
 } // end namespace llvm

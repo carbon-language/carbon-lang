@@ -17,6 +17,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/Type.h"
 #include "llvm/ADT/STLExtras.h"
 #include <iostream>
@@ -197,6 +198,17 @@ void SparcRegisterInfo::emitEpilogue(MachineFunction &MF,
   assert(MBBI->getOpcode() == SP::RETL &&
          "Can only put epilog before 'retl' instruction!");
   BuildMI(MBB, MBBI, SP::RESTORErr, 2, SP::G0).addReg(SP::G0).addReg(SP::G0);
+}
+
+void SparcRegisterInfo::getLocation(MachineFunction &MF, unsigned Index,
+                                  MachineLocation &ML) const {
+  assert(0 && "Needs to be defined for target");
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  
+  // FIXME - Needs to handle register variables.
+  // FIXME - Faking that llvm number is same as gcc numbering.
+  ML.set(SP::G1 - SP::G0,
+         MFI->getObjectOffset(Index) + MFI->getStackSize());
 }
 
 #include "SparcGenRegisterInfo.inc"

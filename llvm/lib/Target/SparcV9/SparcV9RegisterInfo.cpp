@@ -316,3 +316,9 @@ void SparcV9RegisterInfo::emitEpilogue(MachineFunction &MF,
                                        MachineBasicBlock &MBB) const {
   abort ();
 }
+
+
+void SparcV9RegisterInfo::getLocation(MachineFunction &MF, unsigned Index,
+                                      MachineLocation &ML) const {
+  abort ();
+}

@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
@@ -683,6 +684,17 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
       }
     }
   }
+}
+
+void X86RegisterInfo::getLocation(MachineFunction &MF, unsigned Index,
+                                  MachineLocation &ML) const {
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  bool FP = hasFP(MF);
+  
+  // FIXME - Needs to handle register variables.
+  // FIXME - Hardcoding gcc numbering.
+  ML.set(FP ? 6 : 7,
+         MFI->getObjectOffset(Index) + MFI->getStackSize());
 }
 
 #include "X86GenRegisterInfo.inc"

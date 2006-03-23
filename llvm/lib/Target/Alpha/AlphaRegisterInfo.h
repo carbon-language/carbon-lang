@@ -53,6 +53,9 @@ struct AlphaRegisterInfo : public AlphaGenRegisterInfo {
   void emitPrologue(MachineFunction &MF) const;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
 
+  void getLocation(MachineFunction &MF, unsigned Index, MachineLocation &ML) const;
+
+
   static std::string getPrettyName(unsigned reg);
 };
 
