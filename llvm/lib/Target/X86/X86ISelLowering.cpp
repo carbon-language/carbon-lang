@@ -1385,7 +1385,7 @@ bool X86::isPSHUFDMask(SDNode *N) {
   // Check if the value doesn't reference the second vector.
   SDOperand Elt = N->getOperand(0);
   assert(isa<ConstantSDNode>(Elt) && "Invalid VECTOR_SHUFFLE mask!");
-  for (unsigned i = 1, e = N->getNumOperands(); i != e; ++i) {
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
     assert(isa<ConstantSDNode>(N->getOperand(i)) &&
            "Invalid VECTOR_SHUFFLE mask!");
     if (cast<ConstantSDNode>(N->getOperand(i))->getValue() >= 4) return false;
