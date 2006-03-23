@@ -871,3 +871,7 @@ def : Pat<(vector_shuffle (v4f32 VR128:$src), (undef), PSHUFD_shuffle_mask:$sm),
 def : Pat<(vector_shuffle (v4i32 VR128:$src), (undef), PSHUFD_shuffle_mask:$sm),
           (v4i32 (PSHUFDrr VR128:$src, PSHUFD_shuffle_mask:$sm))>,
   Requires<[HasSSE2]>;
+
+// bit_convert
+def : Pat<(v4i32 (bitconvert (v4f32 VR128:$src))), (v4i32 VR128:$src)>;
+def : Pat<(v4f32 (bitconvert (v4i32 VR128:$src))), (v4f32 VR128:$src)>;
