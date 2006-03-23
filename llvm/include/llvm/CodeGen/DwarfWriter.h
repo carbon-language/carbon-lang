@@ -35,6 +35,8 @@ class AsmPrinter;
 class CompileUnit;
 class CompileUnitDesc;
 class DebugInfoDesc;
+class DebugVariable;
+class DebugScope;
 class DIE;
 class DIEAbbrev;
 class GlobalVariableDesc;
@@ -78,6 +80,14 @@ protected:
   ///
   AsmPrinter *Asm;
   
+  /// M - Current module.
+  ///
+  Module *M;
+  
+  /// MF - Current machine function.
+  ///
+  MachineFunction *MF;
+  
   /// DebugInfo - Collected debug information.
   ///
   MachineDebugInfo *DebugInfo;
@@ -85,6 +95,10 @@ protected:
   /// didInitial - Flag to indicate if initial emission has been done.
   ///
   bool didInitial;
+  
+  /// SubprogramCount - The running count of functions being compiled.
+  ///
+  unsigned SubprogramCount;
   
   //===--------------------------------------------------------------------===//
   // Attributes used to construct specific Dwarf sections.
@@ -209,6 +223,10 @@ public:
   /// EOL - Print a newline character to asm stream.  If a comment is present
   /// then it will be printed first.  Comments should not contain '\n'.
   void EOL(const std::string &Comment) const;
+  
+  /// EmitAlign - Print a align directive.
+  ///
+  void EmitAlign(unsigned Alignment) const;
                                         
   /// EmitULEB128Bytes - Emit an assembler byte data directive to compose an
   /// unsigned leb128 value.
@@ -300,6 +318,10 @@ public:
 
 private:
 
+  /// AddSourceLine - Add location information to specified debug information
+  /// entry. 
+  void AddSourceLine(DIE *Die, CompileUnitDesc *File, unsigned Line);
+
   /// NewType - Create a new type DIE.
   ///
  DIE *NewType(DIE *Context, TypeDesc *TyDesc);
@@ -320,6 +342,19 @@ private:
   ///
   DIE *NewSubprogram(SubprogramDesc *SPD);
 
+  /// NewScopeVariable - Create a new scope variable.
+  ///
+  DIE *NewScopeVariable(DebugVariable *DV, CompileUnit *Unit);
+
+  /// ConstructScope - Construct the components of a scope.
+  ///
+  void ConstructScope(DebugScope *ParentScope, DIE *ParentDie,
+                      CompileUnit *Unit);
+
+  /// ConstructRootScope - Construct the scope for the subprogram.
+  ///
+  void ConstructRootScope(DebugScope *RootScope);
+
   /// EmitInitial - Emit initial Dwarf declarations.
   ///
   void EmitInitial() const;
@@ -330,7 +365,7 @@ private:
   
   /// SizeAndOffsetDie - Compute the size and offset of a DIE.
   ///
-  unsigned SizeAndOffsetDie(DIE *Die, unsigned Offset);
+  unsigned SizeAndOffsetDie(DIE *Die, unsigned Offset, bool Last);
 
   /// SizeAndOffsets - Compute the size and offset of all the DIEs.
   ///
@@ -382,11 +417,11 @@ private:
   
   /// ConstructGlobalDIEs - Create DIEs for each of the externally visible
   /// global variables.
-  void ConstructGlobalDIEs(Module &M);
+  void ConstructGlobalDIEs();
 
   /// ConstructSubprogramDIEs - Create DIEs for each of the externally visible
   /// subprograms.
-  void ConstructSubprogramDIEs(Module &M);
+  void ConstructSubprogramDIEs();
 
   /// ShouldEmitDwarf - Returns true if Dwarf declarations should be made.
   /// When called it also checks to see if debug info is newly available.  if
@@ -408,19 +443,19 @@ public:
   
   /// BeginModule - Emit all Dwarf sections that should come prior to the
   /// content.
-  void BeginModule(Module &M);
+  void BeginModule(Module *M);
   
   /// EndModule - Emit all Dwarf sections that should come after the content.
   ///
-  void EndModule(Module &M);
+  void EndModule();
   
   /// BeginFunction - Gather pre-function debug information.
   ///
-  void BeginFunction(MachineFunction &MF);
+  void BeginFunction(MachineFunction *MF);
   
   /// EndFunction - Gather and emit post-function debug information.
   ///
-  void EndFunction(MachineFunction &MF);
+  void EndFunction();
 };
 
 } // end llvm namespace

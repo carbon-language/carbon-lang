@@ -477,7 +477,6 @@ DebugInfoDesc *DebugInfoDesc::DescFactory(unsigned Tag) {
   case DW_TAG_const_type:
   case DW_TAG_volatile_type:        
   case DW_TAG_restrict_type:
-  case DW_TAG_formal_parameter:
   case DW_TAG_member:           return new DerivedTypeDesc(Tag);
   case DW_TAG_array_type:
   case DW_TAG_structure_type:
@@ -485,6 +484,9 @@ DebugInfoDesc *DebugInfoDesc::DescFactory(unsigned Tag) {
   case DW_TAG_enumeration_type: return new CompositeTypeDesc(Tag);
   case DW_TAG_subrange_type:    return new SubrangeDesc();
   case DW_TAG_enumerator:       return new EnumeratorDesc();
+  case DW_TAG_return_variable:
+  case DW_TAG_arg_variable:
+  case DW_TAG_auto_variable:    return new VariableDesc(Tag);
   default: break;
   }
   return NULL;
@@ -654,6 +656,7 @@ TypeDesc::TypeDesc(unsigned T)
 , Context(NULL)
 , Name("")
 , File(NULL)
+, Line(0)
 , Size(0)
 , Align(0)
 , Offset(0)
@@ -759,7 +762,6 @@ bool DerivedTypeDesc::classof(const DebugInfoDesc *D) {
   case DW_TAG_const_type:
   case DW_TAG_volatile_type:
   case DW_TAG_restrict_type:
-  case DW_TAG_formal_parameter:
   case DW_TAG_member:
     return true;
   default: break;
@@ -943,6 +945,66 @@ void EnumeratorDesc::dump() {
 
 //===----------------------------------------------------------------------===//
 
+VariableDesc::VariableDesc(unsigned T)
+: DebugInfoDesc(T)
+, Context(NULL)
+, Name("")
+, File(NULL)
+, Line(0)
+, TyDesc(0)
+{}
+
+// Implement isa/cast/dyncast.
+bool VariableDesc::classof(const DebugInfoDesc *D) {
+  unsigned T =  D->getTag();
+  switch (T) {
+  case DW_TAG_auto_variable:
+  case DW_TAG_arg_variable:
+  case DW_TAG_return_variable:
+    return true;
+  default: break;
+  }
+  return false;
+}
+
+/// ApplyToFields - Target the visitor to the fields of the VariableDesc.
+///
+void VariableDesc::ApplyToFields(DIVisitor *Visitor) {
+  DebugInfoDesc::ApplyToFields(Visitor);
+  
+  Visitor->Apply(Context);
+  Visitor->Apply(Name);
+  Visitor->Apply((DebugInfoDesc *&)File);
+  Visitor->Apply(Line);
+  Visitor->Apply((DebugInfoDesc *&)TyDesc);
+}
+
+/// getDescString - Return a string used to compose global names and labels.
+///
+const char *VariableDesc::getDescString() const {
+  return "llvm.dbg.variable";
+}
+
+/// getTypeString - Return a string used to label this descriptor's type.
+///
+const char *VariableDesc::getTypeString() const {
+  return "llvm.dbg.variable.type";
+}
+
+#ifndef NDEBUG
+void VariableDesc::dump() {
+  std::cerr << getDescString() << " "
+            << "Tag(" << getTag() << "), "
+            << "Context(" << Context << "), "
+            << "Name(\"" << Name << "\"), "
+            << "File(" << File << "), "
+            << "Line(" << Line << "), "
+            << "TyDesc(" << TyDesc << ")\n";
+}
+#endif
+
+//===----------------------------------------------------------------------===//
+
 GlobalDesc::GlobalDesc(unsigned T)
 : AnchoredDesc(T)
 , Context(0)
@@ -1015,7 +1077,7 @@ void GlobalVariableDesc::dump() {
             << "Name(\"" << getName() << "\"), "
             << "File(" << getFile() << "),"
             << "Line(" << getLine() << "),"
-            << "Type(\"" << getTypeDesc() << "\"), "
+            << "Type(\"" << getType() << "\"), "
             << "IsStatic(" << (isStatic() ? "true" : "false") << "), "
             << "IsDefinition(" << (isDefinition() ? "true" : "false") << "), "
             << "Global(" << Global << ")\n";
@@ -1037,8 +1099,6 @@ bool SubprogramDesc::classof(const DebugInfoDesc *D) {
 /// SubprogramDesc.
 void SubprogramDesc::ApplyToFields(DIVisitor *Visitor) {
   GlobalDesc::ApplyToFields(Visitor);
-
-  Visitor->Apply(Elements);
 }
 
 /// getDescString - Return a string used to compose global names and labels.
@@ -1068,7 +1128,7 @@ void SubprogramDesc::dump() {
             << "Name(\"" << getName() << "\"), "
             << "File(" << getFile() << "),"
             << "Line(" << getLine() << "),"
-            << "Type(\"" << getTypeDesc() << "\"), "
+            << "Type(\"" << getType() << "\"), "
             << "IsStatic(" << (isStatic() ? "true" : "false") << "), "
             << "IsDefinition(" << (isDefinition() ? "true" : "false") << ")\n";
 }
@@ -1078,6 +1138,7 @@ void SubprogramDesc::dump() {
 
 BlockDesc::BlockDesc()
 : DebugInfoDesc(DW_TAG_lexical_block)
+, Context(NULL)
 {}
 
 // Implement isa/cast/dyncast.
@@ -1090,7 +1151,7 @@ bool BlockDesc::classof(const DebugInfoDesc *D) {
 void BlockDesc::ApplyToFields(DIVisitor *Visitor) {
   DebugInfoDesc::ApplyToFields(Visitor);
 
-  Visitor->Apply(Elements);
+  Visitor->Apply(Context);
 }
 
 /// getDescString - Return a string used to compose global names and labels.
@@ -1108,7 +1169,8 @@ const char *BlockDesc::getTypeString() const {
 #ifndef NDEBUG
 void BlockDesc::dump() {
   std::cerr << getDescString() << " "
-            << "Tag(" << getTag() << ")\n";
+            << "Tag(" << getTag() << "),"
+            << "Context(" << Context << ")\n";
 }
 #endif
 
@@ -1284,14 +1346,17 @@ bool DIVerifier::Verify(GlobalVariable *GV) {
   
   // Get the Tag
   unsigned Tag = DebugInfoDesc::TagFromGlobal(GV);
-  if (Tag == DW_TAG_invalid) return false;
+  
+  // Check for user defined descriptors.
+  if (Tag == DW_TAG_invalid) return true;
 
   // If a compile unit we need the debug version.
   if (Tag == DW_TAG_compile_unit) {
     DebugVersion = CompileUnitDesc::DebugVersionFromGlobal(GV);
-    if (DebugVersion == DW_TAG_invalid) return false;
+    // FIXME - In the short term, changes are too drastic to continue.
+    if (DebugVersion != LLVMDebugVersion) return false;
   }
-
+  
   // Construct an empty DebugInfoDesc.
   DebugInfoDesc *DD = DebugInfoDesc::DescFactory(Tag);
   
@@ -1332,13 +1397,23 @@ bool DIVerifier::Verify(GlobalVariable *GV) {
 
 //===----------------------------------------------------------------------===//
 
+DebugScope::~DebugScope() {
+  for (unsigned i = 0, N = Scopes.size(); i < N; ++i) delete Scopes[i];
+  for (unsigned j = 0, M = Variables.size(); j < M; ++j) delete Variables[j];
+}
+
+//===----------------------------------------------------------------------===//
 
 MachineDebugInfo::MachineDebugInfo()
 : DR()
+, VR()
 , CompileUnits()
 , Directories()
 , SourceFiles()
 , Lines()
+, LabelID(0)
+, ScopeMap()
+, RootScope(NULL)
 {
   
 }
@@ -1368,7 +1443,6 @@ DebugInfoDesc *MachineDebugInfo::getDescFor(Value *V) {
 /// Verify - Verify that a Value is debug information descriptor.
 ///
 bool MachineDebugInfo::Verify(Value *V) {
-  DIVerifier VR;
   return VR.Verify(V);
 }
 
@@ -1401,3 +1475,94 @@ MachineDebugInfo::getGlobalVariablesUsing(Module &M,
                                           const std::string &RootName) {
   return ::getGlobalVariablesUsing(M, RootName);
 }
+
+/// RecordLabel - Records location information and associates it with a
+/// debug label.  Returns a unique label ID used to generate a label and 
+/// provide correspondence to the source line list.
+unsigned MachineDebugInfo::RecordLabel(unsigned Line, unsigned Column,
+                                       unsigned Source) {
+  unsigned ID = NextLabelID();
+  Lines.push_back(new SourceLineInfo(Line, Column, Source, ID));
+  return ID;
+}
+
+/// RecordSource - Register a source file with debug info. Returns an source
+/// ID.
+unsigned MachineDebugInfo::RecordSource(const std::string &Directory,
+                                        const std::string &Source) {
+  unsigned DirectoryID = Directories.insert(Directory);
+  return SourceFiles.insert(SourceFileInfo(DirectoryID, Source));
+}
+unsigned MachineDebugInfo::RecordSource(const CompileUnitDesc *CompileUnit) {
+  return RecordSource(CompileUnit->getDirectory(),
+                      CompileUnit->getFileName());
+}
+
+/// RecordRegionStart - Indicate the start of a region.
+///
+unsigned MachineDebugInfo::RecordRegionStart(Value *V) {
+  // FIXME - need to be able to handle split scopes because of bb cloning.
+  DebugInfoDesc *ScopeDesc = DR.Deserialize(V);
+  DebugScope *Scope = getOrCreateScope(ScopeDesc);
+  unsigned ID = NextLabelID();
+  if (!Scope->getStartLabelID()) Scope->setStartLabelID(ID);
+  return ID;
+}
+
+/// RecordRegionEnd - Indicate the end of a region.
+///
+unsigned MachineDebugInfo::RecordRegionEnd(Value *V) {
+  // FIXME - need to be able to handle split scopes because of bb cloning.
+  DebugInfoDesc *ScopeDesc = DR.Deserialize(V);
+  DebugScope *Scope = getOrCreateScope(ScopeDesc);
+  unsigned ID = NextLabelID();
+  Scope->setEndLabelID(ID);
+  return ID;
+}
+
+/// RecordVariable - Indicate the declaration of  a local variable.
+///
+void MachineDebugInfo::RecordVariable(Value *V, unsigned FrameIndex) {
+  VariableDesc *VD = cast<VariableDesc>(DR.Deserialize(V));
+  DebugScope *Scope = getOrCreateScope(VD->getContext());
+  DebugVariable *DV = new DebugVariable(VD, FrameIndex);
+  Scope->AddVariable(DV);
+}
+
+/// getOrCreateScope - Returns the scope associated with the given descriptor.
+///
+DebugScope *MachineDebugInfo::getOrCreateScope(DebugInfoDesc *ScopeDesc) {
+  DebugScope *&Slot = ScopeMap[ScopeDesc];
+  if (!Slot) {
+    // FIXME - breaks down when the context is an inlined function.
+    DebugInfoDesc *ParentDesc = NULL;
+    if (BlockDesc *Block = dyn_cast<BlockDesc>(ScopeDesc)) {
+      ParentDesc = Block->getContext();
+    }
+    DebugScope *Parent = ParentDesc ? getOrCreateScope(ParentDesc) : NULL;
+    Slot = new DebugScope(Parent, ScopeDesc);
+    if (Parent) {
+      Parent->AddScope(Slot);
+    } else if (RootScope) {
+      // FIXME - Add inlined function scopes to the root so we can delete
+      // them later.  Long term, handle inlined functions properly.
+      RootScope->AddScope(Slot);
+    } else {
+      // First function is top level function.
+      RootScope = Slot;
+    }
+  }
+  return Slot;
+}
+
+/// ClearScopes - Delete the scope and variable info after a function is
+/// completed.
+void MachineDebugInfo::ClearScopes() {
+  if (RootScope) {
+    delete RootScope;
+    ScopeMap.clear();
+    RootScope = NULL;
+  }
+}
+
+

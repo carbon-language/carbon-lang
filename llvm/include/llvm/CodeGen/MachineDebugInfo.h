@@ -55,7 +55,7 @@ class StructType;
 // Debug info constants.
 
 enum {
-  LLVMDebugVersion = 2                  // Current version of debug information.
+  LLVMDebugVersion = 3                  // Current version of debug information.
 };
 
 //===----------------------------------------------------------------------===//
@@ -299,7 +299,7 @@ public:
   void setAlign(uint64_t A)                        { Align = A; }
   void setOffset(uint64_t O)                       { Offset = O; }
   
-  /// ApplyToFields - Target the visitor to the fields of the  TypeDesc.
+  /// ApplyToFields - Target the visitor to the fields of the TypeDesc.
   ///
   virtual void ApplyToFields(DIVisitor *Visitor);
 
@@ -334,7 +334,7 @@ public:
   static bool classof(const BasicTypeDesc *) { return true; }
   static bool classof(const DebugInfoDesc *D);
   
-  /// ApplyToFields - Target the visitor to the fields of the  BasicTypeDesc.
+  /// ApplyToFields - Target the visitor to the fields of the BasicTypeDesc.
   ///
   virtual void ApplyToFields(DIVisitor *Visitor);
 
@@ -370,7 +370,7 @@ public:
   static bool classof(const DerivedTypeDesc *) { return true; }
   static bool classof(const DebugInfoDesc *D);
   
-  /// ApplyToFields - Target the visitor to the fields of the  DerivedTypeDesc.
+  /// ApplyToFields - Target the visitor to the fields of the DerivedTypeDesc.
   ///
   virtual void ApplyToFields(DIVisitor *Visitor);
 
@@ -498,6 +498,54 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
+/// VariableDesc - This class packages debug information associated with a
+/// subprogram variable.
+///
+class VariableDesc : public DebugInfoDesc {
+private:
+  DebugInfoDesc *Context;               // Context debug descriptor.
+  std::string Name;                     // Type name (may be empty.)
+  CompileUnitDesc *File;                // Defined compile unit (may be NULL.)
+  unsigned Line;                        // Defined line# (may be zero.)
+  TypeDesc *TyDesc;                     // Type of variable.
+
+public:
+  VariableDesc(unsigned T);
+
+  // Accessors
+  DebugInfoDesc *getContext()                const { return Context; }
+  const std::string &getName()               const { return Name; }
+  CompileUnitDesc *getFile()                 const { return File; }
+  unsigned getLine()                         const { return Line; }
+  TypeDesc *getType()                        const { return TyDesc; }
+  void setContext(DebugInfoDesc *C)                { Context = C; }
+  void setName(const std::string &N)               { Name = N; }
+  void setFile(CompileUnitDesc *U)                 { File = U; }
+  void setLine(unsigned L)                         { Line = L; }
+  void setType(TypeDesc *T)                        { TyDesc = T; }
+  
+  // Implement isa/cast/dyncast.
+  static bool classof(const VariableDesc *) { return true; }
+  static bool classof(const DebugInfoDesc *D);
+  
+  /// ApplyToFields - Target the visitor to the fields of the VariableDesc.
+  ///
+  virtual void ApplyToFields(DIVisitor *Visitor);
+
+  /// getDescString - Return a string used to compose global names and labels.
+  ///
+  virtual const char *getDescString() const;
+
+  /// getTypeString - Return a string used to label this descriptor's type.
+  ///
+  virtual const char *getTypeString() const;
+  
+#ifndef NDEBUG
+  virtual void dump();
+#endif
+};
+
+//===----------------------------------------------------------------------===//
 /// GlobalDesc - This class is the base descriptor for global functions and
 /// variables.
 class GlobalDesc : public AnchoredDesc {
@@ -519,7 +567,7 @@ public:
   const std::string &getName()               const { return Name; }
   CompileUnitDesc *getFile()                 const { return File; }
   unsigned getLine()                         const { return Line; }
-  TypeDesc *getTypeDesc()                    const { return TyDesc; }
+  TypeDesc *getType()                        const { return TyDesc; }
   bool isStatic()                            const { return IsStatic; }
   bool isDefinition()                        const { return IsDefinition; }
   void setContext(DebugInfoDesc *C)                { Context = C; }
@@ -580,14 +628,11 @@ public:
 /// subprogram/function.
 class SubprogramDesc : public GlobalDesc {
 private:
-  std::vector<DebugInfoDesc *> Elements;// Information about args, variables
-                                        // and blocks.
   
 public:
   SubprogramDesc();
   
   // Accessors
-  std::vector<DebugInfoDesc *> &getElements() { return Elements; }
   
   // Implement isa/cast/dyncast.
   static bool classof(const SubprogramDesc *) { return true; }
@@ -620,13 +665,14 @@ public:
 ///
 class BlockDesc : public DebugInfoDesc {
 private:
-  std::vector<DebugInfoDesc *> Elements;// Information about nested variables
-                                        // and blocks.
+  DebugInfoDesc *Context;               // Context debug descriptor.
+
 public:
   BlockDesc();
   
   // Accessors
-  std::vector<DebugInfoDesc *> &getElements() { return Elements; }
+  DebugInfoDesc *getContext()                const { return Context; }
+  void setContext(DebugInfoDesc *C)                { Context = C; }
   
   // Implement isa/cast/dyncast.
   static bool classof(const BlockDesc *) { return true; }
@@ -753,15 +799,17 @@ private:
   unsigned Line;                        // Source line number.
   unsigned Column;                      // Source column.
   unsigned SourceID;                    // Source ID number.
+  unsigned LabelID;                     // Label in code ID number.
 
 public:
-  SourceLineInfo(unsigned L, unsigned C, unsigned S)
-  : Line(L), Column(C), SourceID(S) {}
+  SourceLineInfo(unsigned L, unsigned C, unsigned S, unsigned I)
+  : Line(L), Column(C), SourceID(S), LabelID(I) {}
   
   // Accessors
   unsigned getLine()     const { return Line; }
   unsigned getColumn()   const { return Column; }
   unsigned getSourceID() const { return SourceID; }
+  unsigned getLabelID()  const { return LabelID; }
 };
 
 //===----------------------------------------------------------------------===//
@@ -794,14 +842,77 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
+/// DebugVariable - This class is used to track local variable information.
+///
+class DebugVariable {
+private:
+  VariableDesc *Desc;                   // Variable Descriptor.
+  unsigned FrameIndex;                  // Variable frame index.
+
+public:
+  DebugVariable(VariableDesc *D, unsigned I)
+  : Desc(D)
+  , FrameIndex(I)
+  {}
+  
+  // Accessors.
+  VariableDesc *getDesc()  const { return Desc; }
+  unsigned getFrameIndex() const { return FrameIndex; }
+};
+
+//===----------------------------------------------------------------------===//
+/// DebugScope - This class is used to track scope information.
+///
+class DebugScope {
+private:
+  DebugScope *Parent;                   // Parent to this scope.
+  DebugInfoDesc *Desc;                  // Debug info descriptor for scope.
+                                        // Either subprogram or block.
+  unsigned StartLabelID;                // Label ID of the beginning of scope.
+  unsigned EndLabelID;                  // Label ID of the end of scope.
+  std::vector<DebugScope *> Scopes;     // Scopes defined in scope.
+  std::vector<DebugVariable *> Variables;// Variables declared in scope.
+  
+public:
+  DebugScope(DebugScope *P, DebugInfoDesc *D)
+  : Parent(P)
+  , Desc(D)
+  , StartLabelID(0)
+  , EndLabelID(0)
+  , Scopes()
+  , Variables()
+  {}
+  ~DebugScope();
+  
+  // Accessors.
+  DebugScope *getParent()        const { return Parent; }
+  DebugInfoDesc *getDesc()       const { return Desc; }
+  unsigned getStartLabelID()     const { return StartLabelID; }
+  unsigned getEndLabelID()       const { return EndLabelID; }
+  std::vector<DebugScope *> &getScopes() { return Scopes; }
+  std::vector<DebugVariable *> &getVariables() { return Variables; }
+  void setStartLabelID(unsigned S) { StartLabelID = S; }
+  void setEndLabelID(unsigned E)   { EndLabelID = E; }
+  
+  /// AddScope - Add a scope to the scope.
+  ///
+  void AddScope(DebugScope *S) { Scopes.push_back(S); }
+  
+  /// AddVariable - Add a variable to the scope.
+  ///
+  void AddVariable(DebugVariable *V) { Variables.push_back(V); }
+};
+
+//===----------------------------------------------------------------------===//
 /// MachineDebugInfo - This class contains debug information specific to a
 /// module.  Queries can be made by different debugging schemes and reformated
 /// for specific use.
 ///
 class MachineDebugInfo : public ImmutablePass {
 private:
-  // Use the same serializer/deserializer/verifier for the module.
+  // Use the same deserializer/verifier for the module.
   DIDeserializer DR;
+  DIVerifier VR;
 
   // CompileUnits - Uniquing vector for compile units.
   UniqueVector<CompileUnitDesc *> CompileUnits;
@@ -814,6 +925,16 @@ private:
 
   // Lines - List of of source line correspondence.
   std::vector<SourceLineInfo *> Lines;
+  
+  // LabelID - Current number assigned to unique label numbers.
+  unsigned LabelID;
+  
+  // ScopeMap - Tracks the scopes in the current function.
+  std::map<DebugInfoDesc *, DebugScope *> ScopeMap;
+  
+  // RootScope - Top level scope for the current function.
+  //
+  DebugScope *RootScope;
 
 public:
   MachineDebugInfo();
@@ -844,25 +965,20 @@ public:
   ///
   bool hasInfo() const { return !CompileUnits.empty(); }
   
+  /// NextLabelID - Return the next unique label id.
+  ///
+  unsigned NextLabelID() { return ++LabelID; }
+  
   /// RecordLabel - Records location information and associates it with a
   /// debug label.  Returns a unique label ID used to generate a label and 
   /// provide correspondence to the source line list.
-  unsigned RecordLabel(unsigned Line, unsigned Column, unsigned Source) {
-    Lines.push_back(new SourceLineInfo(Line, Column, Source));
-    return Lines.size();
-  }
+  unsigned RecordLabel(unsigned Line, unsigned Column, unsigned Source);
   
   /// RecordSource - Register a source file with debug info. Returns an source
   /// ID.
   unsigned RecordSource(const std::string &Directory,
-                        const std::string &Source) {
-    unsigned DirectoryID = Directories.insert(Directory);
-    return SourceFiles.insert(SourceFileInfo(DirectoryID, Source));
-  }
-  unsigned RecordSource(const CompileUnitDesc *CompileUnit) {
-    return RecordSource(CompileUnit->getDirectory(),
-                        CompileUnit->getFileName());
-  }
+                        const std::string &Source);
+  unsigned RecordSource(const CompileUnitDesc *CompileUnit);
   
   /// getDirectories - Return the UniqueVector of std::string representing
   /// directories.
@@ -904,8 +1020,14 @@ public:
     std::vector<T *> AnchoredDescs;
     for (unsigned i = 0, N = Globals.size(); i < N; ++i) {
       GlobalVariable *GV = Globals[i];
-      // FIXME - Tag check only necessary for bring up (changed tag values.)
       unsigned Tag = DebugInfoDesc::TagFromGlobal(GV);
+      
+      if (isa<CompileUnitDesc>(&Desc)) {
+        unsigned DebugVersion = CompileUnitDesc::DebugVersionFromGlobal(GV);
+        // FIXME - In the short term, changes are too drastic to continue.
+        if (DebugVersion != LLVMDebugVersion) break;
+      }
+      
       if (Tag == Desc.getTag()) {
         AnchoredDescs.push_back(cast<T>(DR.Deserialize(GV)));
       }
@@ -913,6 +1035,30 @@ public:
 
     return AnchoredDescs;
   }
+  
+  /// RecordRegionStart - Indicate the start of a region.
+  ///
+  unsigned RecordRegionStart(Value *V);
+
+  /// RecordRegionEnd - Indicate the end of a region.
+  ///
+  unsigned RecordRegionEnd(Value *V);
+
+  /// RecordVariable - Indicate the declaration of  a local variable.
+  ///
+  void RecordVariable(Value *V, unsigned FrameIndex);
+  
+  /// getRootScope - Return current functions root scope.
+  ///
+  DebugScope *getRootScope() { return RootScope; }
+  
+  /// getOrCreateScope - Returns the scope associated with the given descriptor.
+  ///
+  DebugScope *getOrCreateScope(DebugInfoDesc *ScopeDesc);
+
+  /// ClearScopes - Delete the scope and variable info after a function is
+  /// completed.
+  void ClearScopes();
 
 }; // End class MachineDebugInfo
 
