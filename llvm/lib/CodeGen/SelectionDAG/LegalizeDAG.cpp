@@ -3435,14 +3435,11 @@ SDOperand SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
     // word offset constant for Hi/Lo address computation
     SDOperand WordOff = DAG.getConstant(sizeof(int), TLI.getPointerTy());
     // set up Hi and Lo (into buffer) address based on endian
-    SDOperand Hi, Lo;
-    if (TLI.isLittleEndian()) {
-      Hi = DAG.getNode(ISD::ADD, TLI.getPointerTy(), StackSlot, WordOff);
-      Lo = StackSlot;
-    } else {
-      Hi = StackSlot;
-      Lo = DAG.getNode(ISD::ADD, TLI.getPointerTy(), StackSlot, WordOff);
-    }
+    SDOperand Hi = StackSlot;
+    SDOperand Lo = DAG.getNode(ISD::ADD, TLI.getPointerTy(), StackSlot,WordOff);
+    if (TLI.isLittleEndian())
+      std::swap(Hi, Lo);
+    
     // if signed map to unsigned space
     SDOperand Op0Mapped;
     if (isSigned) {
