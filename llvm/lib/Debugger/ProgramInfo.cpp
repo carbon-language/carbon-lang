@@ -16,6 +16,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Debugger/SourceFile.h"
@@ -57,17 +58,15 @@ static const GlobalVariable *getNextStopPoint(const Value *V, unsigned &LineNo,
       // Infinite loops == bad, ignore PHI nodes.
       ShouldRecurse = false;
     } else if (const CallInst *CI = dyn_cast<CallInst>(*UI)) {
+      
       // If we found a stop point, check to see if it is earlier than what we
       // already have.  If so, remember it.
       if (const Function *F = CI->getCalledFunction())
-        if (F->getIntrinsicID() == Intrinsic::dbg_stoppoint) {
-          unsigned CurLineNo = ~0, CurColNo = ~0;
+        if (const DbgStopPointInst *SPI = dyn_cast<DbgStopPointInst>(CI)) {
+          unsigned CurLineNo = SPI->getLine();
+          unsigned CurColNo = SPI->getColumn();
           const GlobalVariable *CurDesc = 0;
-          if (const ConstantInt *C = dyn_cast<ConstantInt>(CI->getOperand(1)))
-            CurLineNo = C->getRawValue();
-          if (const ConstantInt *C = dyn_cast<ConstantInt>(CI->getOperand(2)))
-            CurColNo = C->getRawValue();
-          const Value *Op = CI->getOperand(3);
+          const Value *Op = SPI->getContext();
 
           if ((CurDesc = dyn_cast<GlobalVariable>(Op)) &&
               (LineNo < LastLineNo ||
@@ -78,7 +77,6 @@ static const GlobalVariable *getNextStopPoint(const Value *V, unsigned &LineNo,
           }
           ShouldRecurse = false;
         }
-
     }
 
     // If this is not a phi node or a stopping point, recursively scan the users

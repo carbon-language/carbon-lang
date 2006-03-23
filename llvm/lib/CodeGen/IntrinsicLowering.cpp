@@ -403,6 +403,7 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::dbg_region_start:
   case Intrinsic::dbg_region_end:
   case Intrinsic::dbg_func_start:
+  case Intrinsic::dbg_declare:
     break;    // Simply strip out debugging intrinsics
 
   case Intrinsic::memcpy_i32:

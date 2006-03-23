@@ -22,6 +22,7 @@
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/CodeGen/MachineDebugInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -1032,44 +1033,88 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     
   case Intrinsic::dbg_stoppoint: {
     MachineDebugInfo *DebugInfo = DAG.getMachineDebugInfo();
-    if (DebugInfo &&  DebugInfo->Verify(I.getOperand(3))) {
+    DbgStopPointInst &SPI = cast<DbgStopPointInst>(I);
+    if (DebugInfo &&  DebugInfo->Verify(SPI.getContext())) {
       std::vector<SDOperand> Ops;
 
-      // Input Chain
       Ops.push_back(getRoot());
-      
-      // line number
-      Ops.push_back(getValue(I.getOperand(1)));
-     
-      // column
-      Ops.push_back(getValue(I.getOperand(2)));
+      Ops.push_back(getValue(SPI.getLineValue()));
+      Ops.push_back(getValue(SPI.getColumnValue()));
 
-      DebugInfoDesc *DD = DebugInfo->getDescFor(I.getOperand(3));
+      DebugInfoDesc *DD = DebugInfo->getDescFor(SPI.getContext());
       assert(DD && "Not a debug information descriptor");
-      CompileUnitDesc *CompileUnit = dyn_cast<CompileUnitDesc>(DD);
-      assert(CompileUnit && "Not a compile unit");
+      CompileUnitDesc *CompileUnit = cast<CompileUnitDesc>(DD);
+      
       Ops.push_back(DAG.getString(CompileUnit->getFileName()));
       Ops.push_back(DAG.getString(CompileUnit->getDirectory()));
       
-      if (Ops.size() == 5)  // Found filename/workingdir.
-        DAG.setRoot(DAG.getNode(ISD::LOCATION, MVT::Other, Ops));
+      DAG.setRoot(DAG.getNode(ISD::LOCATION, MVT::Other, Ops));
     }
-    
-    setValue(&I, DAG.getNode(ISD::UNDEF, TLI.getValueType(I.getType())));
+
     return 0;
   }
-  case Intrinsic::dbg_region_start:
-    if (I.getType() != Type::VoidTy)
-      setValue(&I, DAG.getNode(ISD::UNDEF, TLI.getValueType(I.getType())));
+  case Intrinsic::dbg_region_start: {
+    MachineDebugInfo *DebugInfo = DAG.getMachineDebugInfo();
+    DbgRegionStartInst &RSI = cast<DbgRegionStartInst>(I);
+    if (DebugInfo && DebugInfo->Verify(RSI.getContext())) {
+      std::vector<SDOperand> Ops;
+
+      unsigned LabelID = DebugInfo->RecordRegionStart(RSI.getContext());
+      
+      Ops.push_back(getRoot());
+      Ops.push_back(DAG.getConstant(LabelID, MVT::i32));
+
+      DAG.setRoot(DAG.getNode(ISD::DEBUG_LABEL, MVT::Other, Ops));
+    }
+
     return 0;
-  case Intrinsic::dbg_region_end:
-    if (I.getType() != Type::VoidTy)
-      setValue(&I, DAG.getNode(ISD::UNDEF, TLI.getValueType(I.getType())));
+  }
+  case Intrinsic::dbg_region_end: {
+    MachineDebugInfo *DebugInfo = DAG.getMachineDebugInfo();
+    DbgRegionEndInst &REI = cast<DbgRegionEndInst>(I);
+    if (DebugInfo && DebugInfo->Verify(REI.getContext())) {
+      std::vector<SDOperand> Ops;
+
+      unsigned LabelID = DebugInfo->RecordRegionEnd(REI.getContext());
+      
+      Ops.push_back(getRoot());
+      Ops.push_back(DAG.getConstant(LabelID, MVT::i32));
+
+      DAG.setRoot(DAG.getNode(ISD::DEBUG_LABEL, MVT::Other, Ops));
+    }
+
     return 0;
-  case Intrinsic::dbg_func_start:
-    if (I.getType() != Type::VoidTy)
-      setValue(&I, DAG.getNode(ISD::UNDEF, TLI.getValueType(I.getType())));
+  }
+  case Intrinsic::dbg_func_start: {
+    MachineDebugInfo *DebugInfo = DAG.getMachineDebugInfo();
+    DbgFuncStartInst &FSI = cast<DbgFuncStartInst>(I);
+    if (DebugInfo && DebugInfo->Verify(FSI.getSubprogram())) {
+      std::vector<SDOperand> Ops;
+
+      unsigned LabelID = DebugInfo->RecordRegionStart(FSI.getSubprogram());
+      
+      Ops.push_back(getRoot());
+      Ops.push_back(DAG.getConstant(LabelID, MVT::i32));
+
+      DAG.setRoot(DAG.getNode(ISD::DEBUG_LABEL, MVT::Other, Ops));
+    }
+
     return 0;
+  }
+  case Intrinsic::dbg_declare: {
+    MachineDebugInfo *DebugInfo = DAG.getMachineDebugInfo();
+    DbgDeclareInst &DI = cast<DbgDeclareInst>(I);
+    if (DebugInfo && DebugInfo->Verify(DI.getVariable())) {
+      std::vector<SDOperand> Ops;
+
+      SDOperand AllocaOp  = getValue(I.getOperand(1));
+      if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(AllocaOp)) {
+        DebugInfo->RecordVariable(DI.getVariable(), FI->getIndex());
+      }
+    }
+
+    return 0;
+  }
     
   case Intrinsic::isunordered_f32:
   case Intrinsic::isunordered_f64:
