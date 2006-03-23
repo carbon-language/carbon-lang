@@ -96,8 +96,10 @@ bool StripSymbols::runOnModule(Module &M) {
   // any globals they point to if now dead.
   Function *FuncStart = M.getNamedFunction("llvm.dbg.func.start");
   Function *StopPoint = M.getNamedFunction("llvm.dbg.stoppoint");
+  Function *RegionStart = M.getNamedFunction("llvm.dbg.region.start");
   Function *RegionEnd = M.getNamedFunction("llvm.dbg.region.end");
-  if (!FuncStart && !StopPoint && !RegionEnd)
+  Function *Declare = M.getNamedFunction("llvm.dbg.declare");
+  if (!FuncStart && !StopPoint && !RegionStart && !RegionEnd && !Declare)
     return true;
 
   std::vector<GlobalVariable*> DeadGlobals;
@@ -105,11 +107,10 @@ bool StripSymbols::runOnModule(Module &M) {
   // Remove all of the calls to the debugger intrinsics, and remove them from
   // the module.
   if (FuncStart) {
-    Value *RV = UndefValue::get(FuncStart->getFunctionType()->getReturnType());
     while (!FuncStart->use_empty()) {
       CallInst *CI = cast<CallInst>(FuncStart->use_back());
       Value *Arg = CI->getOperand(1);
-      CI->replaceAllUsesWith(RV);
+      assert(CI->use_empty() && "llvm.dbg intrinsic should have void result");
       CI->eraseFromParent();
       if (Arg->use_empty())
         if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Arg))
@@ -118,11 +119,10 @@ bool StripSymbols::runOnModule(Module &M) {
     FuncStart->eraseFromParent();
   }
   if (StopPoint) {
-    Value *RV = UndefValue::get(StopPoint->getFunctionType()->getReturnType());
     while (!StopPoint->use_empty()) {
       CallInst *CI = cast<CallInst>(StopPoint->use_back());
       Value *Arg = CI->getOperand(3);
-      CI->replaceAllUsesWith(RV);
+      assert(CI->use_empty() && "llvm.dbg intrinsic should have void result");
       CI->eraseFromParent();
       if (Arg->use_empty())
         if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Arg))
@@ -130,14 +130,41 @@ bool StripSymbols::runOnModule(Module &M) {
     }
     StopPoint->eraseFromParent();
   }
+  if (RegionStart) {
+    while (!RegionStart->use_empty()) {
+      CallInst *CI = cast<CallInst>(RegionStart->use_back());
+      Value *Arg = CI->getOperand(1);
+      assert(CI->use_empty() && "llvm.dbg intrinsic should have void result");
+      CI->eraseFromParent();
+      if (Arg->use_empty())
+        if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Arg))
+          DeadGlobals.push_back(GV);
+    }
+    RegionStart->eraseFromParent();
+  }
   if (RegionEnd) {
-    Value *RV = UndefValue::get(RegionEnd->getFunctionType()->getReturnType());
     while (!RegionEnd->use_empty()) {
       CallInst *CI = cast<CallInst>(RegionEnd->use_back());
-      CI->replaceAllUsesWith(RV);
+      Value *Arg = CI->getOperand(1);
+      assert(CI->use_empty() && "llvm.dbg intrinsic should have void result");
       CI->eraseFromParent();
+      if (Arg->use_empty())
+        if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Arg))
+          DeadGlobals.push_back(GV);
     }
     RegionEnd->eraseFromParent();
+  }
+  if (Declare) {
+    while (!Declare->use_empty()) {
+      CallInst *CI = cast<CallInst>(Declare->use_back());
+      Value *Arg = CI->getOperand(2);
+      assert(CI->use_empty() && "llvm.dbg intrinsic should have void result");
+      CI->eraseFromParent();
+      if (Arg->use_empty())
+        if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Arg))
+          DeadGlobals.push_back(GV);
+    }
+    Declare->eraseFromParent();
   }
 
   // Finally, delete any internal globals that were only used by the debugger
