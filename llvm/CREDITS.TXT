@@ -77,6 +77,10 @@ N: Brad Jones
 E: kungfoomaster@nondot.org
 D: Support for packed types
 
+N: Eric Kidd
+W: http://randomhacks.net/
+D: llvm-config script
+
 N: Sumant Kowshik
 E: kowshik@uiuc.edu
 D: Author of the original C backend

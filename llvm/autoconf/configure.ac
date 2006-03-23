@@ -218,13 +218,13 @@ then
   AC_SUBST(JIT,[[]])
 else
   case "$llvm_cv_target_arch" in
-    x86)     AC_SUBST(JIT,[[TARGET_HAS_JIT=1]]) ;;
-    Sparc)   AC_SUBST(JIT,[[TARGET_HAS_JIT=1]]) ;;
-    PowerPC) AC_SUBST(JIT,[[TARGET_HAS_JIT=1]]) ;;
-    x86_64)  AC_SUBST(JIT,[[]]) ;;
-    Alpha)   AC_SUBST(JIT,[[TARGET_HAS_JIT=1]]) ;;
-    IA64)    AC_SUBST(JIT,[[]]) ;;
-    *)       AC_SUBST(JIT,[[]]) ;;
+    x86)     AC_SUBST(TARGET_HAS_JIT,1) ;;
+    Sparc)   AC_SUBST(TARGET_HAS_JIT,1) ;;
+    PowerPC) AC_SUBST(TARGET_HAS_JIT,1) ;;
+    x86_64)  AC_SUBST(TARGET_HAS_JIT,0) ;;
+    Alpha)   AC_SUBST(TARGET_HAS_JIT,1) ;;
+    IA64)    AC_SUBST(TARGET_HAS_JIT,0) ;;
+    *)       AC_SUBST(TARGET_HAS_JIT,0) ;;
   esac
 fi
 
@@ -336,6 +336,15 @@ if test "$GV" != "echo gv" ; then
   AC_DEFINE([HAVE_GV],[1],[Define if the gv program is available])
   AC_DEFINE_UNQUOTED([LLVM_PATH_GV],"$GV",
    [Define to path to gv program if found or 'echo gv' otherwise])
+fi
+
+dnl Look for a sufficiently recent version of Perl.
+LLVM_PROG_PERL([5.006])
+AC_SUBST(PERL)
+if test x"$PERL" = xnone; then
+   AC_SUBST(HAVE_PERL,0)
+else
+   AC_SUBST(HAVE_PERL,1)
 fi
 
 dnl Find the install program

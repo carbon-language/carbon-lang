@@ -1,4 +1,4 @@
-#!/usr/bin/perl 
+#!@PERL@
 #
 # Program:  llvm-config
 #
@@ -10,6 +10,7 @@
 # This file was written by Eric Kidd, and is placed into the public domain.
 #
 
+use 5.006;
 use strict;
 use warnings;
 
@@ -20,6 +21,7 @@ my $BINDIR              = q{@LLVM_BINDIR@};
 my $INCLUDEDIR          = q{@LLVM_INCLUDEDIR@};
 my $LIBDIR              = q{@LLVM_LIBDIR@};
 my $ARCH                = lc(q{@ARCH@});
+my $TARGET_HAS_JIT      = q{@TARGET_HAS_JIT@};
 my @TARGETS_BUILT       = map { lc($_) } qw{@TARGETS_TO_BUILD@};
 #---- end autoconf values ----
 
@@ -106,7 +108,7 @@ Get various configuration information needed to compile programs which use
 LLVM.  Typically called from 'configure' scripts.  Examples:
   llvm-config --cxxflags
   llvm-config --ldflags
-  llvm-config --libs jitplus
+  llvm-config --libs engine bcreader scalaropts
 
 Options:
   --version              LLVM version.
@@ -122,8 +124,8 @@ Options:
   --targets-built        List of all targets currently built.
 Typical components:
   all                    All LLVM libraries (default).
-  native                 A native-code backend for this platform, if any.
-  jitplus                All libraries needed to use the LLVM JIT examples.
+  backend                Either a native backend or the C backend.
+  engine                 Either a native JIT or a bytecode interpreter.
 __EOD__
     exit(1);
 }
@@ -163,7 +165,8 @@ sub fix_library_names (@) {
 
 sub load_dependencies;
 sub build_name_map;
-sub find_native_platform;
+sub have_native_backend;
+sub find_best_engine;
 sub expand_names (@);
 sub find_all_required_sets (@);
 sub find_all_required_sets_helper ($$@);
@@ -231,19 +234,29 @@ sub build_name_map {
     }
 
     # Add virtual entries.
-    $NAME_MAP{'native'}  = find_native_platform;
-    $NAME_MAP{'jitplus'} = ['native', 'jit', 'bcreader', 'scalaropts'];
-    $NAME_MAP{'all'}     = [name_map_entries]; # Must be last.
+    $NAME_MAP{'native'}  = have_native_backend() ? [$ARCH] : [];
+    $NAME_MAP{'backend'} = have_native_backend() ? ['native'] : ['cbackend'];
+    $NAME_MAP{'engine'}  = find_best_engine;
+    $NAME_MAP{'all'}     = [name_map_entries];   # Must be last.
 }
 
-# Figure our what native platform we should use, if any.
-sub find_native_platform {
+# Return true if we have a native backend to use.
+sub have_native_backend {
     my %BUILT;
     foreach my $target (@TARGETS_BUILT) { $BUILT{$target} = 1; }
-    if (defined $NAME_MAP{$ARCH} && defined $BUILT{$ARCH}) {
-        return [$ARCH];
+    return defined $NAME_MAP{$ARCH} && defined $BUILT{$ARCH};
+}
+
+# Find a working subclass of ExecutionEngine for this platform.
+sub find_best_engine {
+    if (have_native_backend && $TARGET_HAS_JIT) {
+        # XXX - Right now, if we omit the interpreter, we get a linker
+        # error complaining about
+        # __ZN4llvm11Interpreter6createEPNS_6ModuleEPNS_17IntrinsicLoweringE.
+        # This needs investigation.
+        return ['jit', 'native', 'interpreter'];
     } else {
-        return [];
+        return ['interpreter'];
     }
 }
 

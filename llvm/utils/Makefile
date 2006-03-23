@@ -17,3 +17,7 @@ EXTRA_DIST = check-each-file codegen-diff countloc.sh cvsupdate emacs \
 
 include $(LEVEL)/Makefile.common
 
+# Only include llvm-config if we have Perl to build it with.
+ifeq ($(HAVE_PERL),1)
+  DIRS += llvm-config
+endif

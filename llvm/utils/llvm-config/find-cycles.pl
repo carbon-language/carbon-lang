@@ -18,6 +18,7 @@
 # This file was written by Eric Kidd, and is placed into the public domain.
 #
 
+use 5.006;
 use strict;
 use warnings;
 

@@ -9,6 +9,7 @@
 
 LEVEL = ../..
 
+EXTRA_DIST = LibDeps.txt llvm-config.in.in find-cycles.pl
 
 include $(LEVEL)/Makefile.common
 
@@ -32,7 +33,7 @@ LibDeps.txt: $(LEVEL)/utils/GenLibDeps.pl $(LibDir)
 # don't have to process them at runtime.
 FinalLibDeps.txt: find-cycles.pl # LibDeps.txt deliberately omitted.
 	$(Echo) "Finding cyclic dependencies between LLVM libraries."
-	$(Verb) $< < $(PROJ_SRC_DIR)/LibDeps.txt > $@
+	$(Verb) $(PERL) $< < $(PROJ_SRC_DIR)/LibDeps.txt > $@
 
 # Rerun our configure substitutions as needed.
 llvm-config.in: llvm-config.in.in $(ConfigStatusScript)

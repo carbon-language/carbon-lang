@@ -137,6 +137,7 @@ TAR        := @TAR@
 YACC       := @YACC@
 
 # Paths to miscellaneous programs we hope are present but might not be
+PERL       := @PERL@ 
 BZIP2      := @BZIP2@
 DOT        := @DOT@
 DOXYGEN    := @DOXYGEN@
@@ -149,6 +150,8 @@ POD2MAN    := @POD2MAN@
 RUNTEST    := @RUNTEST@
 TCLSH      := @TCLSH@
 ZIP        := @ZIP@
+
+HAVE_PERL  := @HAVE_PERL@
 
 LIBS       := @LIBS@
 
@@ -195,7 +198,7 @@ ENABLE_DOXYGEN = @ENABLE_DOXYGEN@
 #VERBOSE = 1
 
 # Enable JIT for this platform
-@JIT@
+TARGET_HAS_JIT = @TARGET_HAS_JIT@
 
 # Shared library extension for this platform.
 SHLIBEXT = @SHLIBEXT@
