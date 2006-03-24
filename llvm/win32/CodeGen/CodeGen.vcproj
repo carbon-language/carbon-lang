@@ -259,6 +259,9 @@
 				RelativePath="..\..\include\llvm\CodeGen\MachineInstrBuilder.h">
 			</File>
 			<File
+				RelativePath="..\..\include\llvm\CodeGen\MachineLocation.h">
+			</File>
+			<File
 				RelativePath="..\..\include\llvm\CodeGen\MachineRelocation.h">
 			</File>
 			<File

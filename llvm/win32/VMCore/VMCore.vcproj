@@ -146,6 +146,9 @@
 				RelativePath="..\..\lib\VMCore\Instructions.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\VMCore\IntrinsicInst.cpp">
+			</File>
+			<File
 				RelativePath="..\..\include\llvm\Intrinsics.td">
 				<FileConfiguration
 					Name="Debug|Win32">
