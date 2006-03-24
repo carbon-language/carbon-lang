@@ -552,6 +552,14 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
   }
+    
+  case ISD::INTRINSIC: {
+    std::vector<SDOperand> Ops;
+    for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i)
+      Ops.push_back(LegalizeOp(Node->getOperand(i)));
+    Result = DAG.UpdateNodeOperands(Result, Ops);
+    break;
+  }    
 
   case ISD::LOCATION:
     assert(Node->getNumOperands() == 5 && "Invalid LOCATION node!");
@@ -2312,6 +2320,36 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       }
     }
     break;
+  case ISD::VBIT_CONVERT: {
+    assert(Op.getOperand(0).getValueType() == MVT::Vector &&
+           "Can only have VBIT_CONVERT where input or output is MVT::Vector!");
+    
+    // The input has to be a vector type, we have to either scalarize it, pack
+    // it, or convert it based on whether the input vector type is legal.
+    SDNode *InVal = Node->getOperand(0).Val;
+    unsigned NumElems =
+      cast<ConstantSDNode>(*(InVal->op_end()-2))->getValue();
+    MVT::ValueType EVT = cast<VTSDNode>(*(InVal->op_end()-1))->getVT();
+    
+    // Figure out if there is a Packed type corresponding to this Vector
+    // type.  If so, convert to the packed type.
+    MVT::ValueType TVT = MVT::getVectorType(EVT, NumElems);
+    if (TVT != MVT::Other && TLI.isTypeLegal(TVT)) {
+      // Turn this into a bit convert of the packed input.
+      Result = DAG.getNode(ISD::BIT_CONVERT, Node->getValueType(0), 
+                           PackVectorOp(Node->getOperand(0), TVT));
+      break;
+    } else if (NumElems == 1) {
+      // Turn this into a bit convert of the scalar input.
+      Result = DAG.getNode(ISD::BIT_CONVERT, Node->getValueType(0), 
+                           PackVectorOp(Node->getOperand(0), EVT));
+      break;
+    } else {
+      // FIXME: UNIMP!  Store then reload
+      assert(0 && "Cast from unsupported vector type not implemented yet!");
+    }
+  }
+      
     // Conversion operators.  The source and destination have different types.
   case ISD::SINT_TO_FP:
   case ISD::UINT_TO_FP: {
