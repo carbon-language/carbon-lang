@@ -51,10 +51,6 @@ def SHUFFLE_get_shuf_imm : SDNodeXForm<build_vector, [{
   return getI8Imm(X86::getShuffleSHUFImmediate(N));
 }]>;
 
-def SHUFFLE_get_pshufd_imm : SDNodeXForm<build_vector, [{
-  return getI8Imm(X86::getShufflePSHUFDImmediate(N));
-}]>;
-
 def SHUFP_splat_mask : PatLeaf<(build_vector), [{
   return X86::isSplatMask(N);
 }], SHUFFLE_get_shuf_imm>;
@@ -66,8 +62,11 @@ def MOVLHPS_splat_mask : PatLeaf<(build_vector), [{
 // Only use PSHUF if it is not a splat.
 def PSHUFD_shuffle_mask : PatLeaf<(build_vector), [{
   return !X86::isSplatMask(N) && X86::isPSHUFDMask(N);
-}], SHUFFLE_get_pshufd_imm>;
+}], SHUFFLE_get_shuf_imm>;
 
+def SHUFP_shuffle_mask : PatLeaf<(build_vector), [{
+  return X86::isSHUFPMask(N);
+}], SHUFFLE_get_shuf_imm>;
 
 //===----------------------------------------------------------------------===//
 // SSE scalar FP Instructions
@@ -442,10 +441,12 @@ def MOVHPDrm : PDI<0x16, MRMSrcMem, (ops VR128:$dst, f64mem:$src),
 def MOVHPDmr : PDI<0x17, MRMDestMem, (ops f64mem:$dst, VR128:$src),
                    "movhpd {$src, $dst|$dst, $src}", []>;
 
-def MOVLHPSrr : PSI<0x16, MRMSrcReg, (ops VR128:$dst, VR128:$src),
-                    "movlhps {$src, $dst|$dst, $src}", []>;
-def MOVHLPSrr : PSI<0x12, MRMSrcReg, (ops VR128:$dst, VR128:$src),
-                    "movlhps {$src, $dst|$dst, $src}", []>;
+let isTwoAddress = 1 in {
+def MOVLHPSrr : PSI<0x16, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                    "movlhps {$src2, $dst|$dst, $src2}", []>;
+def MOVHLPSrr : PSI<0x12, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                    "movlhps {$src2, $dst|$dst, $src2}", []>;
+}
 
 def MOVMSKPSrr : PSI<0x50, MRMSrcReg, (ops R32:$dst, VR128:$src),
                      "movmskps {$src, $dst|$dst, $src}", []>;
@@ -711,13 +712,19 @@ def PSHUFDrm : PDIi8<0x70, MRMSrcMem,
 let isTwoAddress = 1 in {
 def SHUFPSrr : PSIi8<0xC6, MRMSrcReg, 
                      (ops VR128:$dst, VR128:$src1, VR128:$src2, i8imm:$src3),
-                     "shufps {$src3, $src2, $dst|$dst, $src2, $src3}", []>;
+                     "shufps {$src3, $src2, $dst|$dst, $src2, $src3}",
+                    [(set VR128:$dst, (vector_shuffle
+                                       (v4f32 VR128:$src1), (v4f32 VR128:$src2),
+                                       SHUFP_shuffle_mask:$src3))]>;
 def SHUFPSrm : PSIi8<0xC6, MRMSrcMem, 
                      (ops VR128:$dst, VR128:$src1, f128mem:$src2, i8imm:$src3),
                      "shufps {$src3, $src2, $dst|$dst, $src2, $src3}", []>;
 def SHUFPDrr : PDIi8<0xC6, MRMSrcReg, 
                      (ops VR128:$dst, VR128:$src1, VR128:$src2, i8imm:$src3),
-                     "shufpd {$src3, $src2, $dst|$dst, $src2, $src3}", []>;
+                     "shufpd {$src3, $src2, $dst|$dst, $src2, $src3}",
+                    [(set VR128:$dst, (vector_shuffle
+                                       (v2f64 VR128:$src1), (v2f64 VR128:$src2),
+                                       SHUFP_shuffle_mask:$src3))]>;
 def SHUFPDrm : PDIi8<0xC6, MRMSrcMem, 
                      (ops VR128:$dst, VR128:$src1, f128mem:$src2, i8imm:$src3),
                      "shufpd {$src3, $src2, $dst|$dst, $src2, $src3}", []>;
@@ -873,9 +880,9 @@ def : Pat<(vector_shuffle (v4i32 VR128:$src), (undef), SHUFP_splat_mask:$sm),
 
 // Splat v2f64 / v2i64
 def : Pat<(vector_shuffle (v2f64 VR128:$src), (undef), MOVLHPS_splat_mask:$sm),
-          (v2f64 (MOVLHPSrr VR128:$src))>, Requires<[HasSSE1]>;
+          (v2f64 (MOVLHPSrr VR128:$src, VR128:$src))>, Requires<[HasSSE1]>;
 def : Pat<(vector_shuffle (v2i64 VR128:$src), (undef), MOVLHPS_splat_mask:$sm),
-          (v2i64 (MOVLHPSrr VR128:$src))>, Requires<[HasSSE1]>;
+          (v2i64 (MOVLHPSrr VR128:$src, VR128:$src))>, Requires<[HasSSE1]>;
 
 // Shuffle v4f32 / v4i32, undef. These should only match if splat cases do not.
 def : Pat<(vector_shuffle (v4f32 VR128:$src), (undef), PSHUFD_shuffle_mask:$sm),
