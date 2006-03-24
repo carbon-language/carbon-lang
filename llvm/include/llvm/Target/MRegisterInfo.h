@@ -344,7 +344,7 @@ public:
                             MachineBasicBlock &MBB) const = 0;
                             
   /// getLocation - This method should return the actual location of a frame
-  /// variable given the frame index.
+  /// variable given the frame index.  The location is returned in ML.
   virtual void getLocation(MachineFunction &MF, unsigned Index,
                           MachineLocation &ML) const = 0;
 };
