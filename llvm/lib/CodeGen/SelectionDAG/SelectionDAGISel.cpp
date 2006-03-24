@@ -481,6 +481,7 @@ public:
   void visitCall(CallInst &I);
   void visitInlineAsm(CallInst &I);
   const char *visitIntrinsicCall(CallInst &I, unsigned Intrinsic);
+  void visitTargetIntrinsic(CallInst &I, unsigned Intrinsic);
 
   void visitVAStart(CallInst &I);
   void visitVAArg(VAArgInst &I);
@@ -1001,12 +1002,91 @@ void SelectionDAGLowering::visitStore(StoreInst &I) {
                           DAG.getSrcValue(I.getOperand(1))));
 }
 
+/// IntrinsicCannotAccessMemory - Return true if the specified intrinsic cannot
+/// access memory and has no other side effects at all.
+static bool IntrinsicCannotAccessMemory(unsigned IntrinsicID) {
+#define GET_NO_MEMORY_INTRINSICS
+#include "llvm/Intrinsics.gen"
+#undef GET_NO_MEMORY_INTRINSICS
+  return false;
+}
+
+/// visitTargetIntrinsic - Lower a call of a target intrinsic to an INTRINSIC
+/// node.
+void SelectionDAGLowering::visitTargetIntrinsic(CallInst &I, 
+                                                unsigned Intrinsic) {
+  bool HasChain = IntrinsicCannotAccessMemory(Intrinsic);
+  
+  // Build the operand list.
+  std::vector<SDOperand> Ops;
+  if (HasChain)   // If this intrinsic has side-effects, chainify it.
+    Ops.push_back(getRoot());
+  
+  // Add the intrinsic ID as an integer operand.
+  Ops.push_back(DAG.getConstant(Intrinsic, TLI.getPointerTy()));
+
+  // Add all operands of the call to the operand list.
+  for (unsigned i = 1, e = I.getNumOperands(); i != e; ++i) {
+    SDOperand Op = getValue(I.getOperand(i));
+    
+    // If this is a vector type, force it to the right packed type.
+    if (Op.getValueType() == MVT::Vector) {
+      const PackedType *OpTy = cast<PackedType>(I.getOperand(i)->getType());
+      MVT::ValueType EltVT = TLI.getValueType(OpTy->getElementType());
+      
+      MVT::ValueType VVT = MVT::getVectorType(EltVT, OpTy->getNumElements());
+      assert(VVT != MVT::Other && "Intrinsic uses a non-legal type?");
+      Op = DAG.getNode(ISD::VBIT_CONVERT, VVT, Op);
+    }
+    
+    assert(TLI.isTypeLegal(Op.getValueType()) &&
+           "Intrinsic uses a non-legal type?");
+    Ops.push_back(Op);
+  }
+
+  std::vector<MVT::ValueType> VTs;
+  if (I.getType() != Type::VoidTy) {
+    MVT::ValueType VT = TLI.getValueType(I.getType());
+    if (VT == MVT::Vector) {
+      const PackedType *DestTy = cast<PackedType>(I.getType());
+      MVT::ValueType EltVT = TLI.getValueType(DestTy->getElementType());
+      
+      VT = MVT::getVectorType(EltVT, DestTy->getNumElements());
+      assert(VT != MVT::Other && "Intrinsic uses a non-legal type?");
+    }
+    
+    assert(TLI.isTypeLegal(VT) && "Intrinsic uses a non-legal type?");
+    VTs.push_back(VT);
+  }
+  if (HasChain)
+    VTs.push_back(MVT::Other);
+
+  // Create the node.
+  SDOperand Result = DAG.getNode(ISD::INTRINSIC, VTs, Ops);
+  
+  if (HasChain)
+    DAG.setRoot(Result.getValue(Result.Val->getNumValues()-1));
+  if (I.getType() != Type::VoidTy) {
+    if (const PackedType *PTy = dyn_cast<PackedType>(I.getType())) {
+      MVT::ValueType EVT = TLI.getValueType(PTy->getElementType());
+      Result = DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, Result,
+                           DAG.getConstant(PTy->getNumElements(), MVT::i32),
+                           DAG.getValueType(EVT));
+    } 
+    setValue(&I, Result);
+  }
+}
+
 /// visitIntrinsicCall - Lower the call to the specified intrinsic function.  If
 /// we want to emit this as a call to a named external function, return the name
 /// otherwise lower it and return null.
 const char *
 SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   switch (Intrinsic) {
+  default:
+    // By default, turn this into a target intrinsic node.
+    visitTargetIntrinsic(I, Intrinsic);
+    return 0;
   case Intrinsic::vastart:  visitVAStart(I); return 0;
   case Intrinsic::vaend:    visitVAEnd(I); return 0;
   case Intrinsic::vacopy:   visitVACopy(I); return 0;
@@ -1193,10 +1273,6 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   }
   case Intrinsic::prefetch:
     // FIXME: Currently discarding prefetches.
-    return 0;
-  default:
-    std::cerr << I;
-    assert(0 && "This intrinsic is not implemented yet!");
     return 0;
   }
 }
