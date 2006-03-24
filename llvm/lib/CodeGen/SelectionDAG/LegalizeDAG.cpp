@@ -3209,7 +3209,8 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
     SDOperand ShuffleMask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, MaskVec);
 
     // If the target supports VECTOR_SHUFFLE and this shuffle mask, use it.
-    if (TLI.isShuffleLegal(Node->getValueType(0), ShuffleMask)) {
+    if (TLI.isShuffleLegal(Node->getValueType(0), ShuffleMask) &&
+        TLI.isOperationLegal(ISD::SCALAR_TO_VECTOR, Node->getValueType(0))) {
       std::vector<SDOperand> Ops;
       for(std::map<SDOperand,std::vector<unsigned> >::iterator I=Values.begin(),
             E = Values.end(); I != E; ++I) {
