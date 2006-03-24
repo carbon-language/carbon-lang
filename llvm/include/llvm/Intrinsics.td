@@ -77,7 +77,7 @@ def llvm_descriptor_ty : LLVMType<"Type::PointerTyID">;     // global*
 
 def llvm_v4i32_ty      : LLVMPackedType<4, llvm_int_ty>;    // 4 x int
 def llvm_v4f32_ty      : LLVMPackedType<4, llvm_float_ty>;  // 4 x float
-def llvm_v2f64_ty      : LLVMPackedType<4, llvm_double_ty>; // 2 x double
+def llvm_v2f64_ty      : LLVMPackedType<2, llvm_double_ty>; // 2 x double
 
 //===----------------------------------------------------------------------===//
 // Intrinsic Definitions.
@@ -229,4 +229,22 @@ let TargetPrefix = "ppc" in {  // All intrinsics start with "llvm.ppc.".
               Intrinsic<[llvm_v4i32_ty, llvm_v4i32_ty, llvm_v4i32_ty],
                         [InstrNoMem]>;
   
+}
+
+
+//===----------------------------------------------------------------------===//
+// X86 Intrinsics
+//
+
+// SSE1
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_movmskps : GCCBuiltin<"__builtin_ia32_movmskps">,
+              Intrinsic<[llvm_int_ty, llvm_v4f32_ty], [InstrNoMem]>;
+}
+
+// SSE2
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse2_movmskpd : GCCBuiltin<"__builtin_ia32_movmskpd">,
+              Intrinsic<[llvm_int_ty, llvm_v2f64_ty], [InstrNoMem]>;
 }
