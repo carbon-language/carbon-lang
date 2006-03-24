@@ -2329,7 +2329,10 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
         return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1,
                            DAG.getNode(ISD::UNDEF, V1.getValueType()),
                            PermMask);
-    } else if (NumElems == 2 || X86::isSHUFPMask(PermMask.Val)) {
+    } else if (NumElems == 2) {
+      // All v2f64 cases are handled.
+      return SDOperand();
+    } else if (X86::isSHUFPMask(PermMask.Val)) {
       SDOperand Elt = PermMask.getOperand(0);
       if (cast<ConstantSDNode>(Elt)->getValue() >= NumElems) {
         // Swap the operands and change mask.
