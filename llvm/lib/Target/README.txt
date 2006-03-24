@@ -138,3 +138,15 @@ And teach the dag combiner enough to simplify the code expanded before
 legalize.  It seems plausible that this knowledge would let it simplify other
 stuff too.
 
+//===---------------------------------------------------------------------===//
+
+The loop unroller should be enhanced to be able to unroll loops that aren't 
+single basic blocks.  It should be able to handle stuff like this:
+
+  for (i = 0; i < c1; ++i)
+     if (c2 & (1 << i))
+       foo
+
+where c1/c2 are constants.
+
+
