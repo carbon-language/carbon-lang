@@ -232,7 +232,7 @@ void ScheduleDAG::EmitNode(SDNode *Node,
     case ISD::CopyToReg: {
       unsigned InReg = getVR(Node->getOperand(2), VRBaseMap);
       unsigned DestReg = cast<RegisterSDNode>(Node->getOperand(1))->getReg();
-      if (InReg != DestReg)   // Coallesced away the copy?
+      if (InReg != DestReg)   // Coalesced away the copy?
         MRI->copyRegToReg(*BB, BB->end(), DestReg, InReg,
                           RegMap->getRegClass(InReg));
       break;
