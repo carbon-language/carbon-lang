@@ -21,7 +21,7 @@
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include <iostream>
-#include <set>
+#include <map>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -3070,13 +3070,21 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
   
   // If the only non-undef value is the low element, turn this into a 
   // SCALAR_TO_VECTOR node.  If this is { X, X, X, X }, determine X.
+  unsigned NumElems = Node->getNumOperands();
   bool isOnlyLowElement = true;
   SDOperand SplatValue = Node->getOperand(0);
-  for (SDNode::op_iterator I = Node->op_begin()+1, E = Node->op_end();
-       I != E; ++I) {
-    if (I->getOpcode() != ISD::UNDEF)
+  std::map<SDOperand, std::vector<unsigned> > Values;
+  Values[SplatValue].push_back(0);
+  for (unsigned i = 1; i < NumElems; ++i) {
+    SDOperand V = Node->getOperand(i);
+    std::map<SDOperand, std::vector<unsigned> >::iterator I = Values.find(V);
+    if (I != Values.end())
+      I->second.push_back(i);
+    else
+      Values[V].push_back(i);
+    if (V.getOpcode() != ISD::UNDEF)
       isOnlyLowElement = false;
-    if (SplatValue != *I)
+    if (SplatValue != V)
       SplatValue = SDOperand(0,0);
   }
   
@@ -3092,9 +3100,9 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
   if (SplatValue.Val) {   // Splat of one value?
     // Build the shuffle constant vector: <0, 0, 0, 0>
     MVT::ValueType MaskVT = 
-      MVT::getIntVectorWithNumElements(Node->getNumOperands());
+      MVT::getIntVectorWithNumElements(NumElems);
     SDOperand Zero = DAG.getConstant(0, MVT::getVectorBaseType(MaskVT));
-    std::vector<SDOperand> ZeroVec(Node->getNumOperands(), Zero);
+    std::vector<SDOperand> ZeroVec(NumElems, Zero);
     SDOperand SplatMask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, ZeroVec);
 
     // If the target supports VECTOR_SHUFFLE and this shuffle mask, use it.
@@ -3128,7 +3136,7 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
     const Type *OpNTy = 
       MVT::getTypeForValueType(Node->getOperand(0).getValueType());
     std::vector<Constant*> CV;
-    for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
+    for (unsigned i = 0, e = NumElems; i != e; ++i) {
       if (ConstantFPSDNode *V = 
           dyn_cast<ConstantFPSDNode>(Node->getOperand(i))) {
         CV.push_back(ConstantFP::get(OpNTy, V->getValue()));
@@ -3144,6 +3152,39 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
     SDOperand CPIdx = DAG.getConstantPool(CP, TLI.getPointerTy());
     return DAG.getLoad(VT, DAG.getEntryNode(), CPIdx,
                        DAG.getSrcValue(NULL));
+  }
+
+  // If there are only two unique elements, we may be able to turn this into a
+  // vector shuffle.
+  if (Values.size() == 2) {
+    // Build the shuffle constant vector: e.g. <0, 4, 0, 4>
+    MVT::ValueType MaskVT = 
+      MVT::getIntVectorWithNumElements(NumElems);
+    std::vector<SDOperand> MaskVec(NumElems);
+    unsigned i = 0;
+    for (std::map<SDOperand,std::vector<unsigned> >::iterator I=Values.begin(),
+           E = Values.end(); I != E; ++I) {
+      for (std::vector<unsigned>::iterator II = I->second.begin(),
+             EE = I->second.end(); II != EE; ++II)
+        MaskVec[*II] = DAG.getConstant(i, MVT::getVectorBaseType(MaskVT));
+      i += NumElems;
+    }
+    SDOperand ShuffleMask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, MaskVec);
+
+    // If the target supports VECTOR_SHUFFLE and this shuffle mask, use it.
+    if (TLI.isShuffleLegal(Node->getValueType(0), ShuffleMask)) {
+      std::vector<SDOperand> Ops;
+      for(std::map<SDOperand,std::vector<unsigned> >::iterator I=Values.begin(),
+            E = Values.end(); I != E; ++I) {
+        SDOperand Op = DAG.getNode(ISD::SCALAR_TO_VECTOR, Node->getValueType(0),
+                                   I->first);
+        Ops.push_back(Op);
+      }
+      Ops.push_back(ShuffleMask);
+
+      // Return shuffle(LoValVec, HiValVec, <0,1,0,1>)
+      return DAG.getNode(ISD::VECTOR_SHUFFLE, Node->getValueType(0), Ops);
+    }
   }
   
   // Otherwise, we can't handle this case efficiently.  Allocate a sufficiently
