@@ -644,3 +644,14 @@ lambda, siod, optimizer-eval, ackermann, hash2, nestedloop, strcat, and Treesor.
 
 Teach the coallescer to coales vregs of different register classes. e.g. FR32 /
 FR64 to VR128.
+
+//===---------------------------------------------------------------------===//
+
+mov $reg, 48(%esp)
+...
+leal 48(%esp), %eax
+mov %eax, (%esp)
+call _foo
+
+Obviously it would have been better for the first mov (or any op) to store
+directly %esp[0] if there are no other uses.
