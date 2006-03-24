@@ -124,7 +124,10 @@ void IntrinsicEmitter::run(std::ostream &OS) {
   // Emit mod/ref info for each function.
   EmitModRefInfo(Ints, OS);
   
-  // Emit side effect info for each function.
+  // Emit table of non-memory accessing intrinsics.
+  EmitNoMemoryInfo(Ints, OS);
+  
+  // Emit side effect info for each intrinsic.
   EmitSideEffectInfo(Ints, OS);
 
   // Emit a list of intrinsics with corresponding GCC builtins.
@@ -250,6 +253,25 @@ void IntrinsicEmitter::EmitModRefInfo(const std::vector<CodeGenIntrinsic> &Ints,
       break;
     }
   }
+  OS << "#endif\n\n";
+}
+
+void IntrinsicEmitter::
+EmitNoMemoryInfo(const std::vector<CodeGenIntrinsic> &Ints, std::ostream &OS) {
+  OS << "// SelectionDAGIsel code.\n";
+  OS << "#ifdef GET_NO_MEMORY_INTRINSICS\n";
+  OS << "  switch (IntrinsicID) {\n";
+  OS << "  default: break;\n";
+  for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
+    switch (Ints[i].ModRef) {
+    default: break;
+    case CodeGenIntrinsic::NoMem:
+      OS << "  case Intrinsic::" << Ints[i].EnumName << ":\n";
+      break;
+    }
+  }
+  OS << "    return true; // These intrinsics have no side effects.\n";
+  OS << "  }\n";
   OS << "#endif\n\n";
 }
 
