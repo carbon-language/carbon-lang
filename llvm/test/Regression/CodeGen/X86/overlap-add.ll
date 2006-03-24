@@ -1,5 +1,5 @@
 ;; X's live range extends beyond the shift, so the register allocator
-;; cannot coallesce it with Y.  Because of this, a copy needs to be
+;; cannot coalesce it with Y.  Because of this, a copy needs to be
 ;; emitted before the shift to save the register value before it is
 ;; clobbered.  However, this copy is not needed if the register
 ;; allocator turns the shift into an LEA.  This also occurs for ADD.
