@@ -599,7 +599,7 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
     assert(TLI.isTypeLegal(TVT) &&
            "FIXME: Cannot handle illegal vector types here yet!");
     VT = TVT;
-  }  
+  }
   
   MVT::ValueType DestVT = TLI.getTypeToTransformTo(VT);
   
@@ -1015,7 +1015,7 @@ static bool IntrinsicCannotAccessMemory(unsigned IntrinsicID) {
 /// node.
 void SelectionDAGLowering::visitTargetIntrinsic(CallInst &I, 
                                                 unsigned Intrinsic) {
-  bool HasChain = IntrinsicCannotAccessMemory(Intrinsic);
+  bool HasChain = !IntrinsicCannotAccessMemory(Intrinsic);
   
   // Build the operand list.
   std::vector<SDOperand> Ops;
