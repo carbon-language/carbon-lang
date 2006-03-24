@@ -690,7 +690,7 @@ argument variable is any variable that appears as a formal argument to the
 function.  A return variable is used to track the result of a function and has
 no source correspondent.</p>
 
-<p>The context is eitehr the subprogram or block where the variable is defined.
+<p>The context is either the subprogram or block where the variable is defined.
 Name the source variable name.  Compile unit and line indicate where the
 variable was defined. Type descriptor defines the declared type of the
 variable.</p>
@@ -801,10 +801,11 @@ ending.</p>
   void %<a href="#format_common_declare">llvm.dbg.declare</a>( { } *, { }* )
 </pre>
 
-<p>This intrinsic provides information about a local element (ex. variable.) 
-The first argument as a AllocA for the variable cast to a <tt>{ }*</tt>. The second
-argument is the <tt>%<a href="#format_variables">llvm.dbg.variable</a></tt>
-containing the description of the variable, also cast to a <tt>{ }*</tt>.</p>
+<p>This intrinsic provides information about a local element (ex. variable.) The
+first argument is the alloca for the variable, cast to a <tt>{ }*</tt>. The
+second argument is the <tt>%<a
+href="#format_variables">llvm.dbg.variable</a></tt> containing the description
+of the variable, also cast to a <tt>{ }*</tt>.</p>
 
 </div>
 
