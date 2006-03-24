@@ -79,6 +79,14 @@ namespace ISD {
     TargetFrameIndex,
     TargetConstantPool,
     TargetExternalSymbol,
+    
+    /// RESULT{,OUTCHAIN} = INTRINSIC({INCHAIN,} INTRINSICID, arg1, arg2, ...)
+    /// This node represents a target intrinsic function.  If the intrinsic
+    /// has side effects, the first operand is a chain pointer and the result
+    /// includes an output chain.  After this input is the ID number of the 
+    /// intrinsic, from the llvm::intrinsic namespace.  The operands to the 
+    /// intrinsic follow.
+    INTRINSIC,
 
     // CopyToReg - This node has three operands: a chain, a register number to
     // set to this value, and a value.  
