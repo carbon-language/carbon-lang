@@ -956,13 +956,10 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     case ISD::SINT_TO_FP:  return getConstantFP(C->getSignExtended(), VT);
     case ISD::UINT_TO_FP:  return getConstantFP(C->getValue(), VT);
     case ISD::BIT_CONVERT:
-      if (VT == MVT::f32) {
-        assert(C->getValueType(0) == MVT::i32 && "Invalid bit_convert!");
+      if (VT == MVT::f32 && C->getValueType(0) == MVT::i32)
         return getConstantFP(BitsToFloat(Val), VT);
-      } else if (VT == MVT::f64) {
-        assert(C->getValueType(0) == MVT::i64 && "Invalid bit_convert!");
+      else if (VT == MVT::f64 && C->getValueType(0) == MVT::i64)
         return getConstantFP(BitsToDouble(Val), VT);
-      }
       break;
     case ISD::BSWAP:
       switch(VT) {
@@ -1035,13 +1032,10 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     case ISD::FP_TO_UINT:
       return getConstant((uint64_t)C->getValue(), VT);
     case ISD::BIT_CONVERT:
-      if (VT == MVT::i32) {
-        assert(C->getValueType(0) == MVT::f32 && "Invalid bit_convert!");
+      if (VT == MVT::i32 && C->getValueType(0) == MVT::f32)
         return getConstant(FloatToBits(C->getValue()), VT);
-      } else if (VT == MVT::i64) {
-        assert(C->getValueType(0) == MVT::f64 && "Invalid bit_convert!");
+      else if (VT == MVT::i64 && C->getValueType(0) == MVT::f64)
         return getConstant(DoubleToBits(C->getValue()), VT);
-      }
       break;
     }
 
