@@ -1552,10 +1552,8 @@ DIE *DwarfWriter::NewScopeVariable(DebugVariable *DV, CompileUnit *Unit) {
   // Add computation for variable.
   DIEBlock *Block = new DIEBlock();
   if (Location.isRegister()) {
-    // FIXME - This is a real hack.
     Block->AddUInt(DW_FORM_data1, DW_OP_reg0 + Location.getRegister());
   } else {
-    // FIXME - This is a real hack.
     Block->AddUInt(DW_FORM_data1, DW_OP_breg0 + Location.getRegister());
     Block->AddUInt(DW_FORM_sdata, Location.getOffset());
   }
