@@ -1,4 +1,4 @@
-//===- ExecutionEngine.h - Abstract Execution Engine Interface --*- C++ -*-===//
+//===-- JIT.h - Abstract Execution Engine Interface -------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
