@@ -59,6 +59,18 @@ def MOVLHPS_splat_mask : PatLeaf<(build_vector), [{
   return X86::isSplatMask(N);
 }]>;
 
+def MOVLHPSorUNPCKLPD_shuffle_mask : PatLeaf<(build_vector), [{
+  return X86::isMOVLHPSorUNPCKLPDMask(N);
+}], SHUFFLE_get_shuf_imm>;
+
+def MOVHLPS_shuffle_mask : PatLeaf<(build_vector), [{
+  return X86::isMOVHLPSMask(N);
+}], SHUFFLE_get_shuf_imm>;
+
+def UNPCKHPD_shuffle_mask : PatLeaf<(build_vector), [{
+  return X86::isUNPCKHPDMask(N);
+}], SHUFFLE_get_shuf_imm>;
+
 // Only use PSHUF if it is not a splat.
 def PSHUFD_shuffle_mask : PatLeaf<(build_vector), [{
   return !X86::isSplatMask(N) && X86::isPSHUFDMask(N);
@@ -444,6 +456,7 @@ def MOVHPDmr : PDI<0x17, MRMDestMem, (ops f64mem:$dst, VR128:$src),
 let isTwoAddress = 1 in {
 def MOVLHPSrr : PSI<0x16, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                     "movlhps {$src2, $dst|$dst, $src2}", []>;
+
 def MOVHLPSrr : PSI<0x12, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                     "movlhps {$src2, $dst|$dst, $src2}", []>;
 }
@@ -569,11 +582,11 @@ def SUBPSrm : PSI<0x5C, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                                             (load addr:$src2))))]>;
 def SUBPDrr : PDI<0x5C, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                   "subpd {$src2, $dst|$dst, $src2}",
-                  [(set VR128:$dst, (fsub VR128:$src1, VR128:$src2))]>;
+                  [(set VR128:$dst, (v2f64 (fsub VR128:$src1, VR128:$src2)))]>;
 def SUBPDrm : PDI<0x5C, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                   "subpd {$src2, $dst|$dst, $src2}",
-                  [(set VR128:$dst, (fsub VR128:$src1,
-                                     (load addr:$src2)))]>;
+                  [(set VR128:$dst, (v2f64 (fsub VR128:$src1,
+                                            (load addr:$src2))))]>;
 }
 
 def SQRTPSrr : PSI<0x51, MRMSrcReg, (ops VR128:$dst, VR128:$src),
@@ -728,7 +741,6 @@ def SHUFPDrr : PDIi8<0xC6, MRMSrcReg,
 def SHUFPDrm : PDIi8<0xC6, MRMSrcMem, 
                      (ops VR128:$dst, VR128:$src1, f128mem:$src2, i8imm:$src3),
                      "shufpd {$src3, $src2, $dst|$dst, $src2, $src3}", []>;
-}
 
 def UNPCKHPSrr : PSI<0x15, MRMSrcReg, 
                     (ops VR128:$dst, VR128:$src1, VR128:$src2),
@@ -754,6 +766,7 @@ def UNPCKLPDrr : PDI<0x14, MRMSrcReg,
 def UNPCKLPDrm : PDI<0x14, MRMSrcMem, 
                     (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                     "unpcklpd {$src2, $dst|$dst, $src2}", []>;
+}
 
 //===----------------------------------------------------------------------===//
 // SSE integer instructions
@@ -869,6 +882,9 @@ def : Pat<(v8i16 (X86s2vec R32:$src)), (MOVD128rr R32:$src)>,
 def : Pat<(v16i8 (X86s2vec R32:$src)), (MOVD128rr R32:$src)>,
   Requires<[HasSSE2]>;
 
+// bit_convert
+def : Pat<(v4i32 (bitconvert (v4f32 VR128:$src))), (v4i32 VR128:$src)>;
+def : Pat<(v4f32 (bitconvert (v4i32 VR128:$src))), (v4f32 VR128:$src)>;
 
 // Splat v4f32 / v4i32
 def : Pat<(vector_shuffle (v4f32 VR128:$src), (undef), SHUFP_splat_mask:$sm),
@@ -892,6 +908,29 @@ def : Pat<(vector_shuffle (v4i32 VR128:$src), (undef), PSHUFD_shuffle_mask:$sm),
           (v4i32 (PSHUFDrr VR128:$src, PSHUFD_shuffle_mask:$sm))>,
   Requires<[HasSSE2]>;
 
-// bit_convert
-def : Pat<(v4i32 (bitconvert (v4f32 VR128:$src))), (v4i32 VR128:$src)>;
-def : Pat<(v4f32 (bitconvert (v4i32 VR128:$src))), (v4f32 VR128:$src)>;
+// Shuffle v2f64 / v2i64
+def : Pat<(vector_shuffle (v2f64 VR128:$src1), (v2f64 VR128:$src2),
+           MOVLHPSorUNPCKLPD_shuffle_mask:$sm),
+          (v2f64 (MOVLHPSrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE1]>;
+def : Pat<(vector_shuffle (v2f64 VR128:$src1), (v2f64 VR128:$src2),
+           MOVHLPS_shuffle_mask:$sm),
+          (v2f64 (MOVHLPSrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE1]>;
+def : Pat<(vector_shuffle (v2f64 VR128:$src1), (v2f64 VR128:$src2),
+           UNPCKHPD_shuffle_mask:$sm),
+          (v2f64 (UNPCKHPDrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
+def : Pat<(vector_shuffle (v2f64 VR128:$src1), (loadv2f64 addr:$src2),
+           MOVLHPSorUNPCKLPD_shuffle_mask:$sm),
+          (v2f64 (UNPCKLPDrm VR128:$src1, addr:$src2))>, Requires<[HasSSE2]>;
+
+def : Pat<(vector_shuffle (v2i64 VR128:$src1), (v2i64 VR128:$src2),
+           MOVLHPSorUNPCKLPD_shuffle_mask:$sm),
+          (v2i64 (MOVLHPSrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE1]>;
+def : Pat<(vector_shuffle (v2i64 VR128:$src1), (v2i64 VR128:$src2),
+           MOVHLPS_shuffle_mask:$sm),
+          (v2i64 (MOVHLPSrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE1]>;
+def : Pat<(vector_shuffle (v2i64 VR128:$src1), (v2i64 VR128:$src2),
+           UNPCKHPD_shuffle_mask:$sm),
+          (v2i64 (UNPCKHPDrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
+def : Pat<(vector_shuffle (v2i64 VR128:$src1), (loadv2i64 addr:$src2),
+           MOVLHPSorUNPCKLPD_shuffle_mask:$sm),
+          (v2i64 (UNPCKLPDrm VR128:$src1, addr:$src2))>, Requires<[HasSSE2]>;

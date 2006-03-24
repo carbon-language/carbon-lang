@@ -1398,8 +1398,19 @@ bool X86::isSHUFPMask(SDNode *N) {
   assert(N->getOpcode() == ISD::BUILD_VECTOR);
 
   unsigned NumOperands = N->getNumOperands();
-  if (NumOperands != 2 && NumOperands != 4)
-    return false;
+  if (NumOperands == 2) {
+    // The only case that ought be handled by SHUFPD is
+    // Dest { 2, 1 } <=  shuffle( Dest { 1, 0 },  Src { 3, 2 }
+    // Expect bit 0 == 1, bit1 == 2
+    SDOperand Bit0 = N->getOperand(0);
+    SDOperand Bit1 = N->getOperand(1);
+    assert(isa<ConstantSDNode>(Bit0) && isa<ConstantSDNode>(Bit1) &&
+           "Invalid VECTOR_SHUFFLE mask!");
+    return (cast<ConstantSDNode>(Bit0)->getValue() == 1 &&
+            cast<ConstantSDNode>(Bit1)->getValue() == 2);
+  }
+
+  if (NumOperands != 4) return false;
 
   // Each half must refer to only one of the vector.
   SDOperand Elt = N->getOperand(0);
@@ -1422,6 +1433,58 @@ bool X86::isSHUFPMask(SDNode *N) {
   }
 
   return true;
+}
+
+/// isMOVLHPSorUNPCKLPDMask - Return true if the specified VECTOR_SHUFFLE
+/// operand specifies a shuffle of elements that is suitable for input to
+/// MOVLHPS or UNPCKLPD.
+bool X86::isMOVLHPSorUNPCKLPDMask(SDNode *N) {
+  assert(N->getOpcode() == ISD::BUILD_VECTOR);
+
+  if (N->getNumOperands() != 2)
+    return false;
+
+  // Expect bit 0 == 0, bit1 == 2
+  SDOperand Bit0 = N->getOperand(0);
+  SDOperand Bit1 = N->getOperand(1);
+  assert(isa<ConstantSDNode>(Bit0) && isa<ConstantSDNode>(Bit1) &&
+         "Invalid VECTOR_SHUFFLE mask!");
+  return (cast<ConstantSDNode>(Bit0)->getValue() == 0 && 
+          cast<ConstantSDNode>(Bit1)->getValue() == 2);
+}
+
+/// isMOVHLPSMask - Return true if the specified VECTOR_SHUFFLE operand
+/// specifies a shuffle of elements that is suitable for input to MOVHLPS.
+bool X86::isMOVHLPSMask(SDNode *N) {
+  assert(N->getOpcode() == ISD::BUILD_VECTOR);
+
+  if (N->getNumOperands() != 2)
+    return false;
+
+  // Expect bit 0 == 0, bit1 == 3
+  SDOperand Bit0 = N->getOperand(0);
+  SDOperand Bit1 = N->getOperand(1);
+  assert(isa<ConstantSDNode>(Bit0) && isa<ConstantSDNode>(Bit1) &&
+         "Invalid VECTOR_SHUFFLE mask!");
+  return (cast<ConstantSDNode>(Bit0)->getValue() == 0 &&
+          cast<ConstantSDNode>(Bit1)->getValue() == 3);
+}
+
+/// isUNPCKHPDMask - Return true if the specified VECTOR_SHUFFLE operand
+/// specifies a shuffle of elements that is suitable for input to UNPCKHPD.
+bool X86::isUNPCKHPDMask(SDNode *N) {
+  assert(N->getOpcode() == ISD::BUILD_VECTOR);
+
+  if (N->getNumOperands() != 2)
+    return false;
+
+  // Expect bit 0 == 1, bit1 == 3
+  SDOperand Bit0 = N->getOperand(0);
+  SDOperand Bit1 = N->getOperand(1);
+  assert(isa<ConstantSDNode>(Bit0) && isa<ConstantSDNode>(Bit1) &&
+         "Invalid VECTOR_SHUFFLE mask!");
+  return (cast<ConstantSDNode>(Bit0)->getValue() == 1 && 
+          cast<ConstantSDNode>(Bit1)->getValue() == 3);
 }
 
 /// isSplatMask - Return true if the specified VECTOR_SHUFFLE operand specifies
@@ -2244,6 +2307,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand V2 = Op.getOperand(1);
     SDOperand PermMask = Op.getOperand(2);
     MVT::ValueType VT = Op.getValueType();
+    unsigned NumElems = PermMask.getNumOperands();
 
     // Handle splat cases.
     if (X86::isSplatMask(PermMask.Val)) {
@@ -2265,8 +2329,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
         return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1,
                            DAG.getNode(ISD::UNDEF, V1.getValueType()),
                            PermMask);
-    } else if (X86::isSHUFPMask(PermMask.Val)) {
-      unsigned NumElems = PermMask.getNumOperands();
+    } else if (NumElems == 2 || X86::isSHUFPMask(PermMask.Val)) {
       SDOperand Elt = PermMask.getOperand(0);
       if (cast<ConstantSDNode>(Elt)->getValue() >= NumElems) {
         // Swap the operands and change mask.
@@ -2406,7 +2469,8 @@ bool
 X86TargetLowering::isShuffleMaskLegal(SDOperand Mask, MVT::ValueType VT) const {
   // Only do shuffles on 128-bit vector types for now.
   if (MVT::getSizeInBits(VT) == 64) return false;
-  return (X86::isSplatMask(Mask.Val) ||
+  return (Mask.Val->getNumOperands() == 2 ||
+          X86::isSplatMask(Mask.Val) ||
           X86::isPSHUFDMask(Mask.Val) ||
           X86::isSHUFPMask(Mask.Val));
 }
