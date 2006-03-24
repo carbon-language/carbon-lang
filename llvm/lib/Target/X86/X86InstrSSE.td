@@ -45,6 +45,14 @@ def loadv8i16    : PatFrag<(ops node:$ptr), (v8i16 (load node:$ptr))>;
 def loadv4i32    : PatFrag<(ops node:$ptr), (v4i32 (load node:$ptr))>;
 def loadv2i64    : PatFrag<(ops node:$ptr), (v2i64 (load node:$ptr))>;
 
+def fp32imm0 : PatLeaf<(f32 fpimm), [{
+  return N->isExactlyValue(+0.0);
+}]>;
+
+def vecimm0 : PatLeaf<(build_vector), [{
+  return X86::isZeroVector(N);
+}]>;
+
 // SHUFFLE_get_shuf_imm xform function: convert vector_shuffle mask to PSHUF*,
 // SHUFP* etc. imm.
 def SHUFFLE_get_shuf_imm : SDNodeXForm<build_vector, [{
@@ -833,6 +841,25 @@ def PADDDrm : PDI<0xFE, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
 //===----------------------------------------------------------------------===//
 // Alias Instructions
 //===----------------------------------------------------------------------===//
+
+// Alias instructions that map zero vector to xorp* for sse.
+// FIXME: remove when we can teach regalloc that xor reg, reg is ok.
+def VZEROv16i8 : I<0xEF, MRMInitReg, (ops VR128:$dst),
+                   "pxor $dst, $dst", [(set VR128:$dst, (v16i8 vecimm0))]>,
+                 Requires<[HasSSE2]>, TB, OpSize;
+def VZEROv8i16 : I<0xEF, MRMInitReg, (ops VR128:$dst),
+                   "pxor $dst, $dst", [(set VR128:$dst, (v8i16 vecimm0))]>,
+                 Requires<[HasSSE2]>, TB, OpSize;
+def VZEROv4i32 : I<0xEF, MRMInitReg, (ops VR128:$dst),
+                   "pxor $dst, $dst", [(set VR128:$dst, (v4i32 vecimm0))]>,
+                 Requires<[HasSSE2]>, TB, OpSize;
+def VZEROv2i64 : I<0xEF, MRMInitReg, (ops VR128:$dst),
+                   "pxor $dst, $dst", [(set VR128:$dst, (v2i64 vecimm0))]>,
+                 Requires<[HasSSE2]>, TB, OpSize;
+def VZEROv4f32 : PSI<0x57, MRMInitReg, (ops VR128:$dst),
+                     "xorps $dst, $dst", [(set VR128:$dst, (v4f32 vecimm0))]>;
+def VZEROv2f64 : PDI<0x57, MRMInitReg, (ops VR128:$dst),
+                     "xorpd $dst, $dst", [(set VR128:$dst, (v2f64 vecimm0))]>;
 
 def FR32ToV4F32 : PSI<0x28, MRMSrcReg, (ops VR128:$dst, FR32:$src),
                       "movaps {$src, $dst|$dst, $src}",

@@ -277,7 +277,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::SUB,              MVT::v4f32, Legal);
     setOperationAction(ISD::MUL,              MVT::v4f32, Legal);
     setOperationAction(ISD::LOAD,             MVT::v4f32, Legal);
-    setOperationAction(ISD::BUILD_VECTOR,     MVT::v4f32, Expand);
+    setOperationAction(ISD::BUILD_VECTOR,     MVT::v4f32, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE,   MVT::v4f32, Custom);
   }
 
@@ -300,10 +300,11 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::LOAD,             MVT::v8i16, Legal);
     setOperationAction(ISD::LOAD,             MVT::v4i32, Legal);
     setOperationAction(ISD::LOAD,             MVT::v2i64, Legal);
-    setOperationAction(ISD::BUILD_VECTOR,     MVT::v2f64, Expand);
-    setOperationAction(ISD::BUILD_VECTOR,     MVT::v16i8, Expand);
-    setOperationAction(ISD::BUILD_VECTOR,     MVT::v8i16, Expand);
-    setOperationAction(ISD::BUILD_VECTOR,     MVT::v4i32, Expand);
+    setOperationAction(ISD::BUILD_VECTOR,     MVT::v2f64, Custom);
+    setOperationAction(ISD::BUILD_VECTOR,     MVT::v16i8, Custom);
+    setOperationAction(ISD::BUILD_VECTOR,     MVT::v8i16, Custom);
+    setOperationAction(ISD::BUILD_VECTOR,     MVT::v4i32, Custom);
+    setOperationAction(ISD::BUILD_VECTOR,     MVT::v2i64, Custom);
     setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v16i8, Custom);
     setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v8i16, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE,   MVT::v2f64, Custom);
@@ -1529,6 +1530,23 @@ unsigned X86::getShuffleSHUFImmediate(SDNode *N) {
   return Mask;
 }
 
+/// isZeroVector - Return true if all elements of BUILD_VECTOR are 0 or +0.0.
+bool X86::isZeroVector(SDNode *N) {
+  for (SDNode::op_iterator I = N->op_begin(), E = N->op_end();
+       I != E; ++I) {
+    if (ConstantFPSDNode *FPC = dyn_cast<ConstantFPSDNode>(*I)) {
+      if (!FPC->isExactlyValue(+0.0))
+        return false;
+    } else if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(*I)) {
+      if (!C->isNullValue())
+        return false;
+    } else
+      return false;
+  }
+
+  return true;
+}
+
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
 SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
@@ -2348,9 +2366,27 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       return SDOperand();
     }
 
-    // TODO.
-    assert(0 && "TODO");
+    assert(0 && "Unexpected VECTOR_SHUFFLE to lower");
     abort();
+  }
+  case ISD::BUILD_VECTOR: {
+    bool isZero = true;
+    unsigned NumElems = Op.getNumOperands();
+    for (unsigned i = 0; i < NumElems; ++i) {
+      SDOperand V = Op.getOperand(i);
+      if (ConstantFPSDNode *FPC = dyn_cast<ConstantFPSDNode>(V)) {
+        if (!FPC->isExactlyValue(+0.0))
+          isZero = false;
+      } else if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(V)) {
+        if (!C->isNullValue())
+          isZero = false;
+      } else
+        isZero = false;
+    }
+
+    if (isZero)
+      return Op;
+    return SDOperand();
   }
   }
 }

@@ -208,6 +208,9 @@ namespace llvm {
    /// the specified isShuffleMask VECTOR_SHUFFLE mask with PSHUF* and SHUFP*
    /// instructions.
    unsigned getShuffleSHUFImmediate(SDNode *N);
+
+   /// isZeroVector - Return true if all elements of BUILD_VECTOR are 0 or +0.0.
+   bool isZeroVector(SDNode *N);
  }
 
   //===----------------------------------------------------------------------===//

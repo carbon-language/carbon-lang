@@ -50,10 +50,6 @@ def X86fp_to_i64mem : SDNode<"X86ISD::FP_TO_INT64_IN_MEM", SDTX86FpToIMem,
 // FPStack pattern fragments
 //===----------------------------------------------------------------------===//
 
-def fp32imm0 : PatLeaf<(f32 fpimm), [{
-  return N->isExactlyValue(+0.0);
-}]>;
-
 def fp64imm0 : PatLeaf<(f64 fpimm), [{
   return N->isExactlyValue(+0.0);
 }]>;
