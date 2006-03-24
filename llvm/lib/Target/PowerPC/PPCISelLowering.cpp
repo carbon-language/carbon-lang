@@ -140,7 +140,12 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
     // They also have instructions for converting between i64 and fp.
     setOperationAction(ISD::FP_TO_SINT, MVT::i64, Custom);
     setOperationAction(ISD::SINT_TO_FP, MVT::i64, Custom);
-    setOperationAction(ISD::SINT_TO_FP, MVT::i32, Custom);
+    
+    // FIXME: disable this lowered code.  This generates 64-bit register values,
+    // and we don't model the fact that the top part is clobbered by calls.  We
+    // need to flag these together so that the value isn't live across a call.
+    //setOperationAction(ISD::SINT_TO_FP, MVT::i32, Custom);
+    
     // To take advantage of the above i64 FP_TO_SINT, promote i32 FP_TO_UINT
     setOperationAction(ISD::FP_TO_UINT, MVT::i32, Promote);
   } else {
@@ -359,6 +364,7 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
         FP = DAG.getNode(ISD::FP_ROUND, MVT::f32, FP);
       return FP;
     }
+    break;
 
   case ISD::SELECT_CC: {
     // Turn FP only select_cc's into fsel instructions.
