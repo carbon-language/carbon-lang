@@ -616,11 +616,21 @@ bool PPCDAGToDAGISel::SelectAddrIdxOnly(SDOperand N, SDOperand &Base,
   // Check to see if we can easily represent this as an [r+r] address.  This
   // will fail if it thinks that the address is more profitably represented as
   // reg+imm, e.g. where imm = 0.
-  if (!SelectAddrIdx(N, Base, Index)) {
-    // Nope, do it the hard way.
-    Base = CurDAG->getRegister(PPC::R0, MVT::i32);
-    Index = N;
+  if (SelectAddrIdx(N, Base, Index))
+    return true;
+  
+  // If the operand is an addition, always emit this as [r+r], since this is
+  // better (for code size, and execution, as the memop does the add for free)
+  // than emitting an explicit add.
+  if (N.getOpcode() == ISD::ADD) {
+    Base = N.getOperand(0);
+    Index = N.getOperand(1);
+    return true;
   }
+  
+  // Otherwise, do it the hard way, using R0 as the base register.
+  Base = CurDAG->getRegister(PPC::R0, MVT::i32);
+  Index = N;
   return true;
 }
 
