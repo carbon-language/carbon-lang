@@ -16,6 +16,7 @@
 
 #include "TableGenBackend.h"
 #include "CodeGenTarget.h"
+#include "CodeGenIntrinsics.h"
 #include <set>
 
 namespace llvm {
@@ -412,6 +413,7 @@ class DAGISelEmitter : public TableGenBackend {
 private:
   RecordKeeper &Records;
   CodeGenTarget Target;
+  std::vector<CodeGenIntrinsic> Intrinsics;
   
   std::map<Record*, SDNodeInfo> SDNodes;
   std::map<Record*, std::pair<Record*, std::string> > SDNodeXForms;
@@ -446,6 +448,13 @@ public:
   const ComplexPattern &getComplexPattern(Record *R) const {
     assert(ComplexPatterns.count(R) && "Unknown addressing mode!");
     return ComplexPatterns.find(R)->second;
+  }
+  
+  const CodeGenIntrinsic &getIntrinsic(Record *R) const {
+    for (unsigned i = 0, e = Intrinsics.size(); i != e; ++i)
+      if (Intrinsics[i].TheDef == R) return Intrinsics[i];
+    assert(0 && "Unknown intrinsic!");
+    abort();
   }
   
   TreePattern *getPatternFragment(Record *R) const {

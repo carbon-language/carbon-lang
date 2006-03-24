@@ -691,6 +691,25 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
       MadeChange |= getChild(i)->ApplyTypeConstraints(TP, NotRegisters);
     }
     return MadeChange;
+  } else if (getOperator()->isSubClassOf("Intrinsic")) {
+    const CodeGenIntrinsic &Int = 
+      TP.getDAGISelEmitter().getIntrinsic(getOperator());
+    // FIXME: get type information! 
+    bool MadeChange = false;
+
+    // Apply the result type to the node.
+    MadeChange = UpdateNodeType(Int.ArgVTs[0], TP);
+    
+    if (getNumChildren() != Int.ArgVTs.size()-1)
+      TP.error("Intrinsic '" + getOperator()->getName() + " expects " +
+               utostr(Int.ArgVTs.size()-1) + " operands, not " +
+               utostr(getNumChildren()) + " operands!");
+    for (unsigned i = 0, e = getNumChildren(); i != e; ++i) {
+      MVT::ValueType OpVT = Int.ArgVTs[i+1];
+      MadeChange |= getChild(i)->UpdateNodeType(OpVT, TP);
+      MadeChange |= getChild(i)->ApplyTypeConstraints(TP, NotRegisters);
+    }
+    return MadeChange;
   } else {
     assert(getOperator()->isSubClassOf("SDNodeXForm") && "Unknown node type!");
     
@@ -723,6 +742,13 @@ bool TreePatternNode::canPatternMatch(std::string &Reason, DAGISelEmitter &ISE){
     if (!getChild(i)->canPatternMatch(Reason, ISE))
       return false;
 
+  // If this is an intrinsic, handle cases that would make it not match.  For
+  // example, if an operand is required to be an immediate.
+  if (getOperator()->isSubClassOf("Intrinsic")) {
+    // TODO:
+    return true;
+  }
+  
   // If this node is a commutative operator, check that the LHS isn't an
   // immediate.
   const SDNodeInfo &NodeInfo = ISE.getSDNodeInfo(getOperator());
@@ -811,6 +837,7 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
   if (!Operator->isSubClassOf("PatFrag") && !Operator->isSubClassOf("SDNode") &&
       !Operator->isSubClassOf("Instruction") && 
       !Operator->isSubClassOf("SDNodeXForm") &&
+      !Operator->isSubClassOf("Intrinsic") &&
       Operator->getName() != "set")
     error("Unrecognized node '" + Operator->getName() + "'!");
   
@@ -1592,10 +1619,13 @@ static void GenerateVariantsOf(TreePatternNode *N,
   }
 
   // Look up interesting info about the node.
-  const SDNodeInfo &NodeInfo = ISE.getSDNodeInfo(N->getOperator());
+  const SDNodeInfo *NodeInfo = 0;
+  
+  if (!N->getOperator()->isSubClassOf("Intrinsic"))
+    NodeInfo = &ISE.getSDNodeInfo(N->getOperator());
 
   // If this node is associative, reassociate.
-  if (NodeInfo.hasProperty(SDNodeInfo::SDNPAssociative)) {
+  if (NodeInfo && NodeInfo->hasProperty(SDNodeInfo::SDNPAssociative)) {
     // Reassociate by pulling together all of the linked operators 
     std::vector<TreePatternNode*> MaximalChildren;
     GatherChildrenOfAssociativeOpcode(N, MaximalChildren);
@@ -1656,7 +1686,7 @@ static void GenerateVariantsOf(TreePatternNode *N,
   CombineChildVariants(N, ChildVariants, OutVariants, ISE);
 
   // If this node is commutative, consider the commuted order.
-  if (NodeInfo.hasProperty(SDNodeInfo::SDNPCommutative)) {
+  if (NodeInfo && NodeInfo->hasProperty(SDNodeInfo::SDNPCommutative)) {
     assert(N->getNumChildren()==2 &&"Commutative but doesn't have 2 children!");
     // Consider the commuted order.
     CombineChildVariants(N, ChildVariants[1], ChildVariants[0],
@@ -2955,6 +2985,9 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
   for (std::map<Record*, std::vector<PatternToMatch*>,
        CompareByRecordName>::iterator PBOI = PatternsByOpcode.begin(),
        E = PatternsByOpcode.end(); PBOI != E; ++PBOI) {
+    if (PBOI->first->isSubClassOf("Intrinsic"))
+      continue;   // Skip intrinsics here.
+    
     const std::string &OpName = PBOI->first->getName();
     OS << "void Select_" << OpName << "(SDOperand &Result, SDOperand N) {\n";
     
@@ -3201,6 +3234,9 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
   for (std::map<Record*, std::vector<PatternToMatch*>,
                 CompareByRecordName>::iterator PBOI = PatternsByOpcode.begin(),
        E = PatternsByOpcode.end(); PBOI != E; ++PBOI) {
+    if (PBOI->first->isSubClassOf("Intrinsic"))
+      continue;
+    
     const SDNodeInfo &OpcodeInfo = getSDNodeInfo(PBOI->first);
     OS << "  case " << OpcodeInfo.getEnumName() << ": "
        << std::string(std::max(0, int(24-OpcodeInfo.getEnumName().size())), ' ')
@@ -3363,6 +3399,7 @@ void DAGISelEmitter::run(std::ostream &OS) {
   OS << "  return ResNode;\n";
   OS << "}\n";
   
+  Intrinsics = LoadIntrinsics(Records);
   ParseNodeInfo();
   ParseNodeTransforms(OS);
   ParseComplexPatterns();
