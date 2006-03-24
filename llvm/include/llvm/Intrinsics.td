@@ -52,34 +52,36 @@ def IntrWriteMem : IntrinsicProperty;
 // Types used by intrinsics.
 //===----------------------------------------------------------------------===//
 
-class LLVMType<string typeval> {
+class LLVMType<ValueType vt, string typeval> {
+  ValueType VT = vt;
   string TypeVal = typeval;
 }
 
-class LLVMPackedType<int numelts, LLVMType elty> : LLVMType<"Type::PackedTyID">{
+class LLVMPackedType<ValueType VT, int numelts, LLVMType elty>
+  : LLVMType<VT, "Type::PackedTyID">{
   int NumElts = numelts;
   LLVMType ElTy = elty;
 } 
 
-def llvm_void_ty       : LLVMType<"Type::VoidTyID">;
-def llvm_bool_ty       : LLVMType<"Type::BoolTyID">;
-def llvm_sbyte_ty      : LLVMType<"Type::SByteTyID">;
-def llvm_short_ty      : LLVMType<"Type::ShortTyID">;
-def llvm_int_ty        : LLVMType<"Type::IntTyID">;
-def llvm_long_ty       : LLVMType<"Type::LongTyID">;
-def llvm_ubyte_ty      : LLVMType<"Type::UByteTyID">;
-def llvm_ushort_ty     : LLVMType<"Type::UShortTyID">;
-def llvm_uint_ty       : LLVMType<"Type::UIntTyID">;
-def llvm_ulong_ty      : LLVMType<"Type::ULongTyID">;
-def llvm_float_ty      : LLVMType<"Type::FloatTyID">;
-def llvm_double_ty     : LLVMType<"Type::DoubleTyID">;
-def llvm_ptr_ty        : LLVMType<"Type::PointerTyID">;     // sbyte*
-def llvm_ptrptr_ty     : LLVMType<"Type::PointerTyID">;     // sbyte**
-def llvm_descriptor_ty : LLVMType<"Type::PointerTyID">;     // global*
+def llvm_void_ty       : LLVMType<isVoid, "Type::VoidTyID">;
+def llvm_bool_ty       : LLVMType<i1 , "Type::BoolTyID">;
+def llvm_sbyte_ty      : LLVMType<i8 , "Type::SByteTyID">;
+def llvm_short_ty      : LLVMType<i16, "Type::ShortTyID">;
+def llvm_int_ty        : LLVMType<i32, "Type::IntTyID">;
+def llvm_long_ty       : LLVMType<i64, "Type::LongTyID">;
+def llvm_ubyte_ty      : LLVMType<i8,  "Type::UByteTyID">;
+def llvm_ushort_ty     : LLVMType<i16, "Type::UShortTyID">;
+def llvm_uint_ty       : LLVMType<i32, "Type::UIntTyID">;
+def llvm_ulong_ty      : LLVMType<i64, "Type::ULongTyID">;
+def llvm_float_ty      : LLVMType<f32, "Type::FloatTyID">;
+def llvm_double_ty     : LLVMType<f64, "Type::DoubleTyID">;
+def llvm_ptr_ty        : LLVMType<OtherVT, "Type::PointerTyID">;     // sbyte*
+def llvm_ptrptr_ty     : LLVMType<OtherVT, "Type::PointerTyID">;     // sbyte**
+def llvm_descriptor_ty : LLVMType<OtherVT, "Type::PointerTyID">;     // global*
 
-def llvm_v4i32_ty      : LLVMPackedType<4, llvm_int_ty>;    // 4 x int
-def llvm_v4f32_ty      : LLVMPackedType<4, llvm_float_ty>;  // 4 x float
-def llvm_v2f64_ty      : LLVMPackedType<2, llvm_double_ty>; // 2 x double
+def llvm_v4i32_ty      : LLVMPackedType<v4i32, 4, llvm_int_ty>;    // 4 x int
+def llvm_v4f32_ty      : LLVMPackedType<v4f32, 4, llvm_float_ty>;  // 4 x float
+def llvm_v2f64_ty      : LLVMPackedType<v2f64, 2, llvm_double_ty>; // 2 x double
 
 //===----------------------------------------------------------------------===//
 // Intrinsic Definitions.
