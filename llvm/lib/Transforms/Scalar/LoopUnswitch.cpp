@@ -375,7 +375,8 @@ unsigned LoopUnswitch::getLoopUnswitchCost(Loop *L, Value *LIC) {
 /// unswitch the loop, reprocess the pieces, then return true.
 bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val,Loop *L){
   // Check to see if it would be profitable to unswitch this loop.
-  if (getLoopUnswitchCost(L, LoopCond) > Threshold) {
+  unsigned Cost = getLoopUnswitchCost(L, LoopCond);
+  if (Cost > Threshold) {
     // FIXME: this should estimate growth by the amount of code shared by the
     // resultant unswitched loops.
     //
@@ -390,7 +391,8 @@ bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val,Loop *L){
   // these values.
   if (LoopValuesUsedOutsideLoop(L)) {
     DEBUG(std::cerr << "NOT unswitching loop %" << L->getHeader()->getName()
-                    << ", a loop value is used outside loop!\n");
+                    << ", a loop value is used outside loop!  Cost: "
+                    << Cost << "\n");
     return false;
   }
       
