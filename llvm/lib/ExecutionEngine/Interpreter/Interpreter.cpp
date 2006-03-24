@@ -24,6 +24,11 @@ static struct RegisterInterp {
   RegisterInterp() { Interpreter::Register(); }
 } InterpRegistrator;
 
+namespace llvm {
+  void LinkInInterpreter() {
+  }
+}
+
 /// create - Create a new interpreter object.  This can never fail.
 ///
 ExecutionEngine *Interpreter::create(ModuleProvider *MP) {

@@ -32,6 +32,11 @@ static struct RegisterJIT {
   RegisterJIT() { JIT::Register(); }
 } JITRegistrator;
 
+namespace llvm {
+  void LinkInJIT() {
+  }
+}
+
 JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji)
   : ExecutionEngine(MP), TM(tm), TJI(tji), state(MP) {
   setTargetData(TM.getTargetData());
