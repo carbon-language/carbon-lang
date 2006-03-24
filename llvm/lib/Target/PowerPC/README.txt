@@ -579,3 +579,18 @@ Since we know that "Vector" is 16-byte aligned and we know the element offset
 of ".X", we should change the load into a lve*x instruction, instead of doing
 a load/store/lve*x sequence.
 
+===-------------------------------------------------------------------------===
+
+We generate ugly code for this:
+
+void func(unsigned int *ret, float dx, float dy, float dz, float dw) {
+  unsigned code = 0;
+  if(dx < -dw) code |= 1;
+  if(dx > dw)  code |= 2;
+  if(dy < -dw) code |= 4;
+  if(dy > dw)  code |= 8;
+  if(dz < -dw) code |= 16;
+  if(dz > dw)  code |= 32;
+  *ret = code;
+}
+
