@@ -250,11 +250,7 @@ sub have_native_backend {
 # Find a working subclass of ExecutionEngine for this platform.
 sub find_best_engine {
     if (have_native_backend && $TARGET_HAS_JIT) {
-        # XXX - Right now, if we omit the interpreter, we get a linker
-        # error complaining about
-        # __ZN4llvm11Interpreter6createEPNS_6ModuleEPNS_17IntrinsicLoweringE.
-        # This needs investigation.
-        return ['jit', 'native', 'interpreter'];
+        return ['jit', 'native'];
     } else {
         return ['interpreter'];
     }
