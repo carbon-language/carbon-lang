@@ -2,8 +2,26 @@
 //
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by the LLVM research group and is distributed under
+// This file was developed by James M. Laskey and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file implements methods that make it really easy to deal with intrinsic
+// functions with the isa/dyncast family of functions.  In particular, this
+// allows you to do things like:
+//
+//     if (DbgStopPointInst *SPI = dyn_cast<DbgStopPointInst>(Inst))
+//        ... SPI->getFileName() ... SPI->getDirectory() ...
+//
+// All intrinsic function calls are instances of the call instruction, so these
+// are all subclasses of the CallInst class.  Note that none of these classes
+// has state or virtual methods, which is an important part of this gross/neat
+// hack working.
+// 
+// In some cases, arguments to intrinsics need to be generic and are defined as
+// type pointer to empty struct { }*.  To access the real item of interest the
+// cast instruction needs to be stripped away. 
 //
 //===----------------------------------------------------------------------===//
 
