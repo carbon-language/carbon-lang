@@ -15,6 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CodeGenTarget.h"
+#include "CodeGenIntrinsics.h"
 #include "Record.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
@@ -348,3 +349,87 @@ ComplexPattern::ComplexPattern(Record *R) {
   RootNodes   = R->getValueAsListOfDefs("RootNodes");
 }
 
+//===----------------------------------------------------------------------===//
+// CodeGenIntrinsic Implementation
+//===----------------------------------------------------------------------===//
+
+std::vector<CodeGenIntrinsic> llvm::LoadIntrinsics(const RecordKeeper &RC) {
+  std::vector<Record*> I = RC.getAllDerivedDefinitions("Intrinsic");
+  return std::vector<CodeGenIntrinsic>(I.begin(), I.end());
+}
+
+CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
+  std::string DefName = R->getName();
+  ModRef = WriteMem;
+  
+  if (DefName.size() <= 4 || 
+      std::string(DefName.begin(), DefName.begin()+4) != "int_")
+    throw "Intrinsic '" + DefName + "' does not start with 'int_'!";
+  EnumName = std::string(DefName.begin()+4, DefName.end());
+  if (R->getValue("GCCBuiltinName"))  // Ignore a missing GCCBuiltinName field.
+    GCCBuiltinName = R->getValueAsString("GCCBuiltinName");
+  TargetPrefix   = R->getValueAsString("TargetPrefix");
+  Name = R->getValueAsString("LLVMName");
+  if (Name == "") {
+    // If an explicit name isn't specified, derive one from the DefName.
+    Name = "llvm.";
+    for (unsigned i = 0, e = EnumName.size(); i != e; ++i)
+      if (EnumName[i] == '_')
+        Name += '.';
+      else
+        Name += EnumName[i];
+  } else {
+    // Verify it starts with "llvm.".
+    if (Name.size() <= 5 || 
+        std::string(Name.begin(), Name.begin()+5) != "llvm.")
+      throw "Intrinsic '" + DefName + "'s name does not start with 'llvm.'!";
+  }
+  
+  // If TargetPrefix is specified, make sure that Name starts with
+  // "llvm.<targetprefix>.".
+  if (!TargetPrefix.empty()) {
+    if (Name.size() < 6+TargetPrefix.size() ||
+        std::string(Name.begin()+5, Name.begin()+6+TargetPrefix.size()) 
+        != (TargetPrefix+"."))
+      throw "Intrinsic '" + DefName + "' does not start with 'llvm." + 
+        TargetPrefix + ".'!";
+  }
+  
+  // Parse the list of argument types.
+  ListInit *TypeList = R->getValueAsListInit("Types");
+  for (unsigned i = 0, e = TypeList->getSize(); i != e; ++i) {
+    DefInit *DI = dynamic_cast<DefInit*>(TypeList->getElement(i));
+    assert(DI && "Invalid list type!");
+    Record *TyEl = DI->getDef();
+    assert(TyEl->isSubClassOf("LLVMType") && "Expected a type!");
+    ArgTypes.push_back(TyEl->getValueAsString("TypeVal"));
+    
+    ArgVTs.push_back(getValueType(TyEl->getValueAsDef("VT")));
+    ArgTypeDefs.push_back(TyEl);
+  }
+  if (ArgTypes.size() == 0)
+    throw "Intrinsic '"+DefName+"' needs at least a type for the ret value!";
+  
+  // Parse the intrinsic properties.
+  ListInit *PropList = R->getValueAsListInit("Properties");
+  for (unsigned i = 0, e = PropList->getSize(); i != e; ++i) {
+    DefInit *DI = dynamic_cast<DefInit*>(PropList->getElement(i));
+    assert(DI && "Invalid list type!");
+    Record *Property = DI->getDef();
+    assert(Property->isSubClassOf("IntrinsicProperty") &&
+           "Expected a property!");
+    
+    if (Property->getName() == "InstrNoMem")
+      ModRef = NoMem;
+    else if (Property->getName() == "InstrReadArgMem")
+      ModRef = ReadArgMem;
+    else if (Property->getName() == "IntrReadMem")
+      ModRef = ReadMem;
+    else if (Property->getName() == "InstrWriteArgMem")
+      ModRef = WriteArgMem;
+    else if (Property->getName() == "IntrWriteMem")
+      ModRef = WriteMem;
+    else
+      assert(0 && "Unknown property!");
+  }
+}

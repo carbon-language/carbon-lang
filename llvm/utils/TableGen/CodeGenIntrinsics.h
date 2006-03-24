@@ -16,6 +16,7 @@
 
 #include <string>
 #include <vector>
+#include "llvm/CodeGen/ValueTypes.h"
 
 namespace llvm {
   class Record;
@@ -31,6 +32,9 @@ namespace llvm {
     /// ArgTypes - The type primitive enum value for the return value and all
     /// of the arguments.  These are things like Type::UIntTyID.
     std::vector<std::string> ArgTypes;
+    
+    /// ArgVTs - The MVT::ValueType for each argument type.
+    std::vector<MVT::ValueType> ArgVTs;
     
     /// ArgTypeDefs - The records for each argument type.
     ///
