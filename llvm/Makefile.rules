@@ -564,6 +564,14 @@ endif
 # shorthand for a bunch of libraries that get the correct
 # JIT support for a library or a tool that runs JIT.
 #---------------------------------------------------------
+ifeq ($(firstword $(LLVMLIBS)),config)
+LLVM_CONFIG := $(LLVM_SRC_ROOT)/utils/llvm-config/llvm-config 
+LLVMLIBS := $(shell $(LLVM_CONFIG) $(wordlist 2,9999,$(LLVMLIBS)))
+LLVMLIBS := $(patsubst $(PROJ_libdir)/%,%,$(LLVMLIBS))
+LLVMLIBS := $(patsubst %.o,%,$(LLVMLIBS))
+LLVMLIBS := $(patsubst -l%,%.a,$(LLVMLIBS))
+endif
+
 ifeq ($(LLVMLIBS),JIT)
 
 # Make sure we can get our own symbols in the tool
