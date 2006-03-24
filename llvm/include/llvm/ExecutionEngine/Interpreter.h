@@ -16,6 +16,7 @@
 #define EXECUTION_ENGINE_INTERPRETER_H
 
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
+#include <cstdlib>
 
 namespace llvm {
   extern void LinkInInterpreter();

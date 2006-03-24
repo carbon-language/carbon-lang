@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file forces the interpreter to link in on certain operating systems.
+// This file forces the JIT to link in on certain operating systems.
 // (Windows).
 //
 //===----------------------------------------------------------------------===//
@@ -16,6 +16,7 @@
 #define EXECUTION_ENGINE_JIT_H
 
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
+#include <cstdlib>
 
 namespace llvm {
   extern void LinkInJIT();
