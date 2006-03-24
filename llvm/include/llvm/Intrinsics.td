@@ -239,17 +239,16 @@ let TargetPrefix = "ppc" in {  // All intrinsics start with "llvm.ppc.".
 //===----------------------------------------------------------------------===//
 // X86 Intrinsics
 //
-
-let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
-  def int_x86_ldmxcsr : GCCBuiltin<"__builtin_ia32_ldmxcsr">,
-              Intrinsic<[llvm_void_ty, llvm_ptr_ty], [IntrWriteMem]>;
-}
-
 // SSE1
 
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse_movmskps : GCCBuiltin<"__builtin_ia32_movmskps">,
               Intrinsic<[llvm_int_ty, llvm_v4f32_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_ldmxcsr : GCCBuiltin<"__builtin_ia32_ldmxcsr">,
+              Intrinsic<[llvm_void_ty, llvm_ptr_ty], [IntrWriteMem]>;
 }
 
 // SSE2
