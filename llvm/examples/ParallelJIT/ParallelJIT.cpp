@@ -23,7 +23,8 @@
 #include "llvm/Type.h"
 #include "llvm/Instructions.h"
 #include "llvm/ModuleProvider.h"
-#include "llvm/ExecutionEngine/ExecutionEngine.h"
+#include "llvm/ExecutionEngine/JIT.h"
+#include "llvm/ExecutionEngine/Interpreter.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include <iostream>
 using namespace llvm;
