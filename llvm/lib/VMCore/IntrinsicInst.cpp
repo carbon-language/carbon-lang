@@ -45,7 +45,7 @@ static Value *CastOperand(Value *C) {
 
 Value *DbgInfoIntrinsic::StripCast(Value *C) {
   if (Value *CO = CastOperand(C)) {
-      return StripCast(CO);
+    return StripCast(CO);
   } else if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C)) {
     if (GV->hasInitializer())
       if (Value *CO = CastOperand(GV->getInitializer()))
