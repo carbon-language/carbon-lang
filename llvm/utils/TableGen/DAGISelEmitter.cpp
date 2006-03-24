@@ -1138,7 +1138,7 @@ static bool HandleUse(TreePattern *I, TreePatternNode *Pat,
 void DAGISelEmitter::
 FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
                             std::map<std::string, TreePatternNode*> &InstInputs,
-                            std::map<std::string, TreePatternNode*> &InstResults,
+                            std::map<std::string, TreePatternNode*>&InstResults,
                             std::vector<Record*> &InstImpInputs,
                             std::vector<Record*> &InstImpResults) {
   if (Pat->isLeaf()) {
@@ -2220,7 +2220,8 @@ public:
   /// EmitResultCode - Emit the action for a pattern.  Now that it has matched
   /// we actually have to build a DAG!
   std::pair<unsigned, unsigned>
-  EmitResultCode(TreePatternNode *N, bool LikeLeaf = false, bool isRoot = false) {
+  EmitResultCode(TreePatternNode *N, bool LikeLeaf = false,
+                 bool isRoot = false) {
     // This is something selected from the pattern we matched.
     if (!N->getName().empty()) {
       std::string &Val = VariableMap[N->getName()];
@@ -3056,8 +3057,8 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
     }
 
     // Print all declarations.
-    for (std::set<std::pair<bool, std::string> >::iterator I = GeneratedDecl.begin(),
-           E = GeneratedDecl.end(); I != E; ++I)
+    for (std::set<std::pair<bool, std::string> >::iterator
+         I = GeneratedDecl.begin(), E = GeneratedDecl.end(); I != E; ++I)
       if (I->first)
         OS << "  SDNode *" << I->second << ";\n";
       else
@@ -3226,7 +3227,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "    }\n"
      << "    return;\n"
      << "  }\n"
-     << "  case ISD::INLINEASM:           Select_INLINEASM(Result, N); return;\n";
+     << "  case ISD::INLINEASM:  Select_INLINEASM(Result, N); return;\n";
 
     
   // Loop over all of the case statements, emiting a call to each method we
