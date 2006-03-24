@@ -60,7 +60,8 @@ void RegisterInfoEmitter::runHeader(std::ostream &OS) {
      << "  " << ClassName
      << "(int CallFrameSetupOpcode = -1, int CallFrameDestroyOpcode = -1);\n"
      << "  const unsigned* getCalleeSaveRegs() const;\n"
-     << "const TargetRegisterClass* const *getCalleeSaveRegClasses() const;\n"
+     << "  const TargetRegisterClass* const *getCalleeSaveRegClasses() const;\n"
+     << "  int getDwarfRegNum(unsigned RegNum) const;\n"
      << "};\n\n";
 
   const std::vector<CodeGenRegisterClass> &RegisterClasses =
@@ -277,6 +278,22 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
     OS << "&" << getQualifiedName(RC->TheDef) << "RegClass, ";
   }
   OS << " 0\n  };\n  return CalleeSaveRegClasses;\n}\n\n";
+ 
+  // Emit information about the dwarf register numbers.
+  OS << "int " << ClassName << "::getDwarfRegNum(unsigned RegNum) const {\n";
+  OS << "  static const int DwarfRegNums[] = { -1, // NoRegister";
+  for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
+    if (!(i % 16)) OS << "\n    ";
+    const CodeGenRegister &Reg = Registers[i];
+    int DwarfRegNum = Reg.TheDef->getValueAsInt("DwarfNumber");
+    OS << DwarfRegNum;
+    if ((i + 1) != e)  OS << ", ";
+  }
+  OS << "\n  };\n";
+  OS << "  assert(RegNum < (sizeof(DwarfRegNums)/sizeof(int)) &&\n";
+  OS << "         \"RegNum exceeds number of registers\");\n";
+  OS << "  return DwarfRegNums[RegNum];\n";
+  OS << "}\n\n";
 
   OS << "} // End llvm namespace \n";
 }
