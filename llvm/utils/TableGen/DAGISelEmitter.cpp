@@ -594,6 +594,7 @@ static std::vector<unsigned char> getIntrinsicType(Record *R, bool NotRegisters,
 /// change, false otherwise.  If a type contradiction is found, throw an
 /// exception.
 bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
+  DAGISelEmitter &ISE = TP.getDAGISelEmitter();
   if (isLeaf()) {
     if (DefInit *DI = dynamic_cast<DefInit*>(getLeafValue())) {
       // If it's a regclass or something else known, include the type.
@@ -636,8 +637,34 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
     MadeChange |= getChild(1)->UpdateNodeType(getChild(0)->getExtTypes(), TP);
     MadeChange |= UpdateNodeType(MVT::isVoid, TP);
     return MadeChange;
+  } else if (getOperator() == ISE.get_intrinsic_void_sdnode() ||
+             getOperator() == ISE.get_intrinsic_w_chain_sdnode() ||
+             getOperator() == ISE.get_intrinsic_wo_chain_sdnode()) {
+    unsigned IID = 
+    dynamic_cast<IntInit*>(getChild(0)->getLeafValue())->getValue();
+    const CodeGenIntrinsic &Int = ISE.getIntrinsicInfo(IID);
+    bool MadeChange = false;
+    
+    // Apply the result type to the node.
+    MadeChange = UpdateNodeType(Int.ArgVTs[0], TP);
+    
+    if (getNumChildren() != Int.ArgVTs.size())
+      TP.error("Intrinsic '" + getOperator()->getName() + " expects " +
+               utostr(Int.ArgVTs.size()-1) + " operands, not " +
+               utostr(getNumChildren()-1) + " operands!");
+
+    // Apply type info to the intrinsic ID.
+    MVT::ValueType PtrTy = ISE.getTargetInfo().getPointerType();
+    MadeChange |= getChild(0)->UpdateNodeType(PtrTy, TP);
+    
+    for (unsigned i = 1, e = getNumChildren(); i != e; ++i) {
+      MVT::ValueType OpVT = Int.ArgVTs[i];
+      MadeChange |= getChild(i)->UpdateNodeType(OpVT, TP);
+      MadeChange |= getChild(i)->ApplyTypeConstraints(TP, NotRegisters);
+    }
+    return MadeChange;
   } else if (getOperator()->isSubClassOf("SDNode")) {
-    const SDNodeInfo &NI = TP.getDAGISelEmitter().getSDNodeInfo(getOperator());
+    const SDNodeInfo &NI = ISE.getSDNodeInfo(getOperator());
     
     bool MadeChange = NI.ApplyTypeConstraints(this, TP);
     for (unsigned i = 0, e = getNumChildren(); i != e; ++i)
@@ -648,8 +675,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
       MadeChange |= UpdateNodeType(MVT::isVoid, TP);
     return MadeChange;  
   } else if (getOperator()->isSubClassOf("Instruction")) {
-    const DAGInstruction &Inst =
-      TP.getDAGISelEmitter().getInstruction(getOperator());
+    const DAGInstruction &Inst = ISE.getInstruction(getOperator());
     bool MadeChange = false;
     unsigned NumResults = Inst.getNumResults();
     
@@ -664,7 +690,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
              "Operands should be register classes!");
 
       const CodeGenRegisterClass &RC = 
-        TP.getDAGISelEmitter().getTargetInfo().getRegisterClass(ResultNode);
+        ISE.getTargetInfo().getRegisterClass(ResultNode);
       MadeChange = UpdateNodeType(ConvertVTs(RC.getValueTypes()), TP);
     }
 
@@ -677,7 +703,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
       MVT::ValueType VT;
       if (OperandNode->isSubClassOf("RegisterClass")) {
         const CodeGenRegisterClass &RC = 
-          TP.getDAGISelEmitter().getTargetInfo().getRegisterClass(OperandNode);
+          ISE.getTargetInfo().getRegisterClass(OperandNode);
         //VT = RC.getValueTypeNum(0);
         MadeChange |=getChild(i)->UpdateNodeType(ConvertVTs(RC.getValueTypes()),
                                                  TP);
@@ -688,25 +714,6 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
         assert(0 && "Unknown operand type!");
         abort();
       }
-      MadeChange |= getChild(i)->ApplyTypeConstraints(TP, NotRegisters);
-    }
-    return MadeChange;
-  } else if (getOperator()->isSubClassOf("Intrinsic")) {
-    const CodeGenIntrinsic &Int = 
-      TP.getDAGISelEmitter().getIntrinsic(getOperator());
-    // FIXME: get type information! 
-    bool MadeChange = false;
-
-    // Apply the result type to the node.
-    MadeChange = UpdateNodeType(Int.ArgVTs[0], TP);
-    
-    if (getNumChildren() != Int.ArgVTs.size()-1)
-      TP.error("Intrinsic '" + getOperator()->getName() + " expects " +
-               utostr(Int.ArgVTs.size()-1) + " operands, not " +
-               utostr(getNumChildren()) + " operands!");
-    for (unsigned i = 0, e = getNumChildren(); i != e; ++i) {
-      MVT::ValueType OpVT = Int.ArgVTs[i+1];
-      MadeChange |= getChild(i)->UpdateNodeType(OpVT, TP);
       MadeChange |= getChild(i)->ApplyTypeConstraints(TP, NotRegisters);
     }
     return MadeChange;
@@ -843,7 +850,7 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
   
   //  Check to see if this is something that is illegal in an input pattern.
   if (isInputPattern && (Operator->isSubClassOf("Instruction") ||
-      Operator->isSubClassOf("SDNodeXForm")))
+                         Operator->isSubClassOf("SDNodeXForm")))
     error("Cannot use '" + Operator->getName() + "' in an input pattern!");
   
   std::vector<TreePatternNode*> Children;
@@ -885,6 +892,29 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
       std::cerr << "\": ";
       error("Unknown leaf value for tree pattern!");
     }
+  }
+  
+  // If the operator is an intrinsic, then this is just syntactic sugar for for
+  // (intrinsic_* <number>, ..children..).  Pick the right intrinsic node, and 
+  // convert the intrinsic name to a number.
+  if (Operator->isSubClassOf("Intrinsic")) {
+    const CodeGenIntrinsic &Int = getDAGISelEmitter().getIntrinsic(Operator);
+    unsigned IID = getDAGISelEmitter().getIntrinsicID(Operator)+1;
+
+    // If this intrinsic returns void, it must have side-effects and thus a
+    // chain.
+    if (Int.ArgVTs[0] == MVT::isVoid) {
+      Operator = getDAGISelEmitter().get_intrinsic_void_sdnode();
+    } else if (Int.ModRef != CodeGenIntrinsic::NoMem) {
+      // Has side-effects, requires chain.
+      Operator = getDAGISelEmitter().get_intrinsic_w_chain_sdnode();
+    } else {
+      // Otherwise, no chain.
+      Operator = getDAGISelEmitter().get_intrinsic_wo_chain_sdnode();
+    }
+    
+    TreePatternNode *IIDNode = new TreePatternNode(new IntInit(IID));
+    Children.insert(Children.begin(), IIDNode);
   }
   
   return new TreePatternNode(Operator, Children);
@@ -944,6 +974,11 @@ void DAGISelEmitter::ParseNodeInfo() {
     SDNodes.insert(std::make_pair(Nodes.back(), Nodes.back()));
     Nodes.pop_back();
   }
+
+  // Get the buildin intrinsic nodes.
+  intrinsic_void_sdnode     = getSDNodeNamed("intrinsic_void");
+  intrinsic_w_chain_sdnode  = getSDNodeNamed("intrinsic_w_chain");
+  intrinsic_wo_chain_sdnode = getSDNodeNamed("intrinsic_wo_chain");
 }
 
 /// ParseNodeTransforms - Parse all SDNodeXForm instances into the SDNodeXForms
@@ -1619,13 +1654,10 @@ static void GenerateVariantsOf(TreePatternNode *N,
   }
 
   // Look up interesting info about the node.
-  const SDNodeInfo *NodeInfo = 0;
-  
-  if (!N->getOperator()->isSubClassOf("Intrinsic"))
-    NodeInfo = &ISE.getSDNodeInfo(N->getOperator());
+  const SDNodeInfo &NodeInfo = ISE.getSDNodeInfo(N->getOperator());
 
   // If this node is associative, reassociate.
-  if (NodeInfo && NodeInfo->hasProperty(SDNodeInfo::SDNPAssociative)) {
+  if (NodeInfo.hasProperty(SDNodeInfo::SDNPAssociative)) {
     // Reassociate by pulling together all of the linked operators 
     std::vector<TreePatternNode*> MaximalChildren;
     GatherChildrenOfAssociativeOpcode(N, MaximalChildren);
@@ -1686,7 +1718,7 @@ static void GenerateVariantsOf(TreePatternNode *N,
   CombineChildVariants(N, ChildVariants, OutVariants, ISE);
 
   // If this node is commutative, consider the commuted order.
-  if (NodeInfo && NodeInfo->hasProperty(SDNodeInfo::SDNPCommutative)) {
+  if (NodeInfo.hasProperty(SDNodeInfo::SDNPCommutative)) {
     assert(N->getNumChildren()==2 &&"Commutative but doesn't have 2 children!");
     // Consider the commuted order.
     CombineChildVariants(N, ChildVariants[1], ChildVariants[0],
@@ -1886,7 +1918,10 @@ static void RemoveAllTypes(TreePatternNode *N) {
 
 Record *DAGISelEmitter::getSDNodeNamed(const std::string &Name) const {
   Record *N = Records.getDef(Name);
-  assert(N && N->isSubClassOf("SDNode") && "Bad argument");
+  if (!N || !N->isSubClassOf("SDNode")) {
+    std::cerr << "Error getting SDNode '" << Name << "'!\n";
+    exit(1);
+  }
   return N;
 }
 
@@ -2986,9 +3021,6 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
   for (std::map<Record*, std::vector<PatternToMatch*>,
        CompareByRecordName>::iterator PBOI = PatternsByOpcode.begin(),
        E = PatternsByOpcode.end(); PBOI != E; ++PBOI) {
-    if (PBOI->first->isSubClassOf("Intrinsic"))
-      continue;   // Skip intrinsics here.
-    
     const std::string &OpName = PBOI->first->getName();
     OS << "void Select_" << OpName << "(SDOperand &Result, SDOperand N) {\n";
     
@@ -3235,9 +3267,6 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
   for (std::map<Record*, std::vector<PatternToMatch*>,
                 CompareByRecordName>::iterator PBOI = PatternsByOpcode.begin(),
        E = PatternsByOpcode.end(); PBOI != E; ++PBOI) {
-    if (PBOI->first->isSubClassOf("Intrinsic"))
-      continue;
-    
     const SDNodeInfo &OpcodeInfo = getSDNodeInfo(PBOI->first);
     OS << "  case " << OpcodeInfo.getEnumName() << ": "
        << std::string(std::max(0, int(24-OpcodeInfo.getEnumName().size())), ' ')

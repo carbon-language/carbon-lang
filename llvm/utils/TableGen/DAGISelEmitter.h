@@ -421,6 +421,10 @@ private:
   std::map<Record*, TreePattern*> PatternFragments;
   std::map<Record*, DAGInstruction> Instructions;
   
+  // Specific SDNode definitions:
+  Record *intrinsic_void_sdnode;
+  Record *intrinsic_w_chain_sdnode, *intrinsic_wo_chain_sdnode;
+  
   /// PatternsToMatch - All of the things we are matching on the DAG.  The first
   /// value is the pattern to match, the second pattern is the result to
   /// emit.
@@ -457,6 +461,18 @@ public:
     abort();
   }
   
+  const CodeGenIntrinsic &getIntrinsicInfo(unsigned IID) const {
+    assert(IID-1 < Intrinsics.size() && "Bad intrinsic ID!");
+    return Intrinsics[IID-1];
+  }
+  
+  unsigned getIntrinsicID(Record *R) const {
+    for (unsigned i = 0, e = Intrinsics.size(); i != e; ++i)
+      if (Intrinsics[i].TheDef == R) return i;
+    assert(0 && "Unknown intrinsic!");
+    abort();
+  }
+  
   TreePattern *getPatternFragment(Record *R) const {
     assert(PatternFragments.count(R) && "Invalid pattern fragment request!");
     return PatternFragments.find(R)->second;
@@ -466,6 +482,17 @@ public:
     assert(Instructions.count(R) && "Unknown instruction!");
     return Instructions.find(R)->second;
   }
+  
+  Record *get_intrinsic_void_sdnode() const {
+    return intrinsic_void_sdnode;
+  }
+  Record *get_intrinsic_w_chain_sdnode() const {
+    return intrinsic_w_chain_sdnode;
+  }
+  Record *get_intrinsic_wo_chain_sdnode() const {
+    return intrinsic_wo_chain_sdnode;
+  }
+
   
 private:
   void ParseNodeInfo();
