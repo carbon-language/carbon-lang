@@ -1187,8 +1187,8 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     if (DebugInfo && DebugInfo->Verify(DI.getVariable())) {
       std::vector<SDOperand> Ops;
 
-      SDOperand AllocaOp  = getValue(I.getOperand(1));
-      if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(AllocaOp)) {
+      SDOperand AddressOp  = getValue(DI.getAddress());
+      if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(AddressOp)) {
         DebugInfo->RecordVariable(DI.getVariable(), FI->getIndex());
       }
     }
