@@ -359,6 +359,7 @@ std::vector<CodeGenIntrinsic> llvm::LoadIntrinsics(const RecordKeeper &RC) {
 }
 
 CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
+  TheDef = R;
   std::string DefName = R->getName();
   ModRef = WriteMem;
   
