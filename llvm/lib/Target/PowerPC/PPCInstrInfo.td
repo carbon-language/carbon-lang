@@ -659,7 +659,7 @@ def FSQRTS : XForm_26<59, 22, (ops F4RC:$frD, F4RC:$frB),
 /// FMR is split into 3 versions, one for 4/8 byte FP, and one for extending.
 ///
 /// Note that these are defined as pseudo-ops on the PPC970 because they are
-/// often coallesced away and we don't want the dispatch group builder to think
+/// often coalesced away and we don't want the dispatch group builder to think
 /// that they will fill slots (which could cause the load of a LSU reject to
 /// sneak into a d-group with a store).
 def FMRS   : XForm_26<63, 72, (ops F4RC:$frD, F4RC:$frB),

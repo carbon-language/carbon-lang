@@ -660,10 +660,10 @@ static unsigned AddLiveIn(MachineFunction &MF, unsigned PReg,
 // EDX".  Anything more is illegal.
 //
 // FIXME: The linscan register allocator currently has problem with
-// coallescing.  At the time of this writing, whenever it decides to coallesce
+// coalescing.  At the time of this writing, whenever it decides to coalesce
 // a physreg with a virtreg, this increases the size of the physreg's live
 // range, and the live range cannot ever be reduced.  This causes problems if
-// too many physregs are coalleced with virtregs, which can cause the register
+// too many physregs are coaleced with virtregs, which can cause the register
 // allocator to wedge itself.
 //
 // This code triggers this problem more often if we pass args in registers,

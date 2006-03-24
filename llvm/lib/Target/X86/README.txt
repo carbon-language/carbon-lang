@@ -547,7 +547,7 @@ feasible.
 
 //===---------------------------------------------------------------------===//
 
-Teach the coallescer to commute 2-addr instructions, allowing us to eliminate
+Teach the coalescer to commute 2-addr instructions, allowing us to eliminate
 the reg-reg copy in this example:
 
 float foo(int *x, float *y, unsigned c) {
@@ -642,7 +642,7 @@ lambda, siod, optimizer-eval, ackermann, hash2, nestedloop, strcat, and Treesor.
 
 //===---------------------------------------------------------------------===//
 
-Teach the coallescer to coales vregs of different register classes. e.g. FR32 /
+Teach the coalescer to coalesce vregs of different register classes. e.g. FR32 /
 FR64 to VR128.
 
 //===---------------------------------------------------------------------===//
