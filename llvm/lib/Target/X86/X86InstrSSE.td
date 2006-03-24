@@ -17,19 +17,16 @@
 // SSE specific DAG Nodes.
 //===----------------------------------------------------------------------===//
 
-def SDTX86Unpcklp : SDTypeProfile<1, 2,
-                                  [SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>]>;
-
 def X86loadp   : SDNode<"X86ISD::LOAD_PACK", SDTLoad, 
                         [SDNPHasChain]>;
 def X86fand    : SDNode<"X86ISD::FAND",     SDTFPBinOp,
                         [SDNPCommutative, SDNPAssociative]>;
 def X86fxor    : SDNode<"X86ISD::FXOR",     SDTFPBinOp,
                         [SDNPCommutative, SDNPAssociative]>;
-def X86s2vec   : SDNode<"X86ISD::SCALAR_TO_VECTOR",
+def X86s2vec   : SDNode<"X86ISD::S2VEC",
                         SDTypeProfile<1, 1, []>, []>;
-def X86unpcklp : SDNode<"X86ISD::UNPCKLP",
-                        SDTX86Unpcklp, []>;
+def X86zexts2vec : SDNode<"X86ISD::ZEXT_S2VEC",
+                          SDTypeProfile<1, 1, []>, []>;
 
 //===----------------------------------------------------------------------===//
 // SSE pattern fragments
@@ -155,6 +152,25 @@ def MOVSSmr : SSI<0x11, MRMDestMem, (ops f32mem:$dst, FR32:$src),
 def MOVSDmr : SDI<0x11, MRMDestMem, (ops f64mem:$dst, FR64:$src),
                 "movsd {$src, $dst|$dst, $src}",
                 [(store FR64:$src, addr:$dst)]>;
+
+// FR32 / FR64 to 128-bit vector conversion.
+def MOVSS128rr : SSI<0x10, MRMSrcReg, (ops VR128:$dst, FR32:$src),
+                      "movss {$src, $dst|$dst, $src}",
+                      [(set VR128:$dst,
+                        (v4f32 (scalar_to_vector FR32:$src)))]>;
+def MOVSS128rm : SSI<0x10, MRMSrcMem, (ops VR128:$dst, f32mem:$src),
+                     "movss {$src, $dst|$dst, $src}",
+                     [(set VR128:$dst,
+                       (v4f32 (scalar_to_vector (loadf32 addr:$src))))]>;
+def MOVSD128rr : SDI<0x10, MRMSrcReg, (ops VR128:$dst, FR64:$src),
+                      "movsd {$src, $dst|$dst, $src}",
+                      [(set VR128:$dst,
+                        (v2f64 (scalar_to_vector FR64:$src)))]>;
+def MOVSD128rm : SDI<0x10, MRMSrcMem, (ops VR128:$dst, f64mem:$src),
+                     "movsd {$src, $dst|$dst, $src}",
+                     [(set VR128:$dst, 
+                       (v4f32 (scalar_to_vector (loadf64 addr:$src))))]>;
+
 
 // Conversion instructions
 def CVTTSS2SIrr: SSI<0x2C, MRMSrcReg, (ops R32:$dst, FR32:$src),
@@ -788,7 +804,10 @@ def MOVD128rr : PDI<0x6E, MRMSrcReg, (ops VR128:$dst, R32:$src),
                     [(set VR128:$dst,
                       (v4i32 (scalar_to_vector R32:$src)))]>;
 def MOVD128rm : PDI<0x6E, MRMSrcMem, (ops VR128:$dst, i32mem:$src),
-                  "movd {$src, $dst|$dst, $src}", []>;
+                  "movd {$src, $dst|$dst, $src}",
+                    [(set VR128:$dst,
+                      (v4i32 (scalar_to_vector (loadi32 addr:$src))))]>;
+
 def MOVD128mr : PDI<0x7E, MRMDestMem, (ops i32mem:$dst, VR128:$src),
                   "movd {$src, $dst|$dst, $src}", []>;
 
@@ -808,8 +827,8 @@ def MOVQ128rr : I<0x7E, MRMSrcReg, (ops VR128:$dst, VR64:$src),
                       (v2i64 (scalar_to_vector VR64:$src)))]>, XS,
                 Requires<[HasSSE2]>;
 def MOVQ128rm : I<0x7E, MRMSrcMem, (ops VR128:$dst, i64mem:$src),
-                  "movq {$src, $dst|$dst, $src}", []>, XS;
-
+                  "movq {$src, $dst|$dst, $src}", []>, XS,
+                Requires<[HasSSE2]>;
 def MOVQ128mr : PDI<0xD6, MRMSrcMem, (ops i64mem:$dst, VR128:$src),
                   "movq {$src, $dst|$dst, $src}", []>;
 
@@ -870,15 +889,32 @@ def VZEROv4f32 : PSI<0x57, MRMInitReg, (ops VR128:$dst),
 def VZEROv2f64 : PDI<0x57, MRMInitReg, (ops VR128:$dst),
                      "xorpd $dst, $dst", [(set VR128:$dst, (v2f64 vecimm0))]>;
 
-def FR32ToV4F32 : PSI<0x28, MRMSrcReg, (ops VR128:$dst, FR32:$src),
-                      "movaps {$src, $dst|$dst, $src}",
-                      [(set VR128:$dst,
-                        (v4f32 (scalar_to_vector FR32:$src)))]>;
+// Scalar to 128-bit vector with zero extension.
+// Three operand (but two address) aliases.
+let isTwoAddress = 1 in {
+def MOVZSS128rr : SSI<0x10, MRMSrcReg, (ops VR128:$dst, VR128:$src1, FR32:$src2),
+                      "movss {$src2, $dst|$dst, $src2}", []>;
+def MOVZSD128rr : SDI<0x10, MRMSrcReg, (ops VR128:$dst, VR128:$src1, FR64:$src2),
+                      "movsd {$src2, $dst|$dst, $src2}", []>;
+def MOVZD128rr  : PDI<0x6E, MRMSrcReg, (ops VR128:$dst, VR128:$src1, R32:$src2),
+                      "movd {$src2, $dst|$dst, $src2}", []>;
+def MOVZQ128rr  : I<0x7E, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR64:$src2),
+                    "movq {$src2, $dst|$dst, $src2}", []>;
+}
 
-def FR64ToV2F64 : PDI<0x28, MRMSrcReg, (ops VR128:$dst, FR64:$src),
-                      "movapd {$src, $dst|$dst, $src}",
+// Loading from memory automatically zeroing upper bits.
+def MOVZSS128rm : SSI<0x10, MRMSrcMem, (ops VR128:$dst, f32mem:$src),
+                      "movss {$src, $dst|$dst, $src}",
                       [(set VR128:$dst,
-                        (v2f64 (scalar_to_vector FR64:$src)))]>;
+                        (v4f32 (X86zexts2vec (loadf32 addr:$src))))]>;
+def MOVZSD128rm : SDI<0x10, MRMSrcMem, (ops VR128:$dst, f64mem:$src),
+                      "movsd {$src, $dst|$dst, $src}",
+                      [(set VR128:$dst,
+                        (v2f64 (X86zexts2vec (loadf64 addr:$src))))]>;
+def MOVZD128rm : PDI<0x6E, MRMSrcMem, (ops VR128:$dst, i32mem:$src),
+                     "movd {$src, $dst|$dst, $src}",
+                     [(set VR128:$dst,
+                       (v4i32 (X86zexts2vec (loadi32 addr:$src))))]>;
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
@@ -921,6 +957,20 @@ def : Pat<(v16i8 (X86s2vec R32:$src)), (MOVD128rr R32:$src)>,
 // bit_convert
 def : Pat<(v4i32 (bitconvert (v4f32 VR128:$src))), (v4i32 VR128:$src)>;
 def : Pat<(v4f32 (bitconvert (v4i32 VR128:$src))), (v4f32 VR128:$src)>;
+
+// Zeroing a VR128 then do a MOVS* to the lower bits.
+def : Pat<(v2f64 (X86zexts2vec FR64:$src)),
+          (MOVZSD128rr (VZEROv2f64), FR64:$src)>;
+def : Pat<(v4f32 (X86zexts2vec FR32:$src)),
+          (MOVZSS128rr (VZEROv4f32), FR32:$src)>;
+def : Pat<(v2i64 (X86zexts2vec VR64:$src)),
+          (MOVZQ128rr (VZEROv2i64), VR64:$src)>, Requires<[HasSSE2]>;
+def : Pat<(v4i32 (X86zexts2vec R32:$src)),
+          (MOVZD128rr (VZEROv4i32), R32:$src)>;
+def : Pat<(v8i16 (X86zexts2vec R16:$src)),
+          (MOVZD128rr (VZEROv8i16), (MOVZX32rr16 R16:$src))>;
+def : Pat<(v16i8 (X86zexts2vec R8:$src)),
+          (MOVZD128rr (VZEROv16i8), (MOVZX32rr8 R8:$src))>;
 
 // Splat v4f32 / v4i32
 def : Pat<(vector_shuffle (v4f32 VR128:$src), (undef), SHUFP_splat_mask:$sm),

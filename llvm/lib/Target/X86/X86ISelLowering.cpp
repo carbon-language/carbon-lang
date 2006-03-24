@@ -1398,8 +1398,8 @@ bool X86::isPSHUFDMask(SDNode *N) {
 bool X86::isSHUFPMask(SDNode *N) {
   assert(N->getOpcode() == ISD::BUILD_VECTOR);
 
-  unsigned NumOperands = N->getNumOperands();
-  if (NumOperands == 2) {
+  unsigned NumElems = N->getNumOperands();
+  if (NumElems == 2) {
     // The only case that ought be handled by SHUFPD is
     // Dest { 2, 1 } <=  shuffle( Dest { 1, 0 },  Src { 3, 2 }
     // Expect bit 0 == 1, bit1 == 2
@@ -1411,21 +1411,21 @@ bool X86::isSHUFPMask(SDNode *N) {
             cast<ConstantSDNode>(Bit1)->getValue() == 2);
   }
 
-  if (NumOperands != 4) return false;
+  if (NumElems != 4) return false;
 
   // Each half must refer to only one of the vector.
   SDOperand Elt = N->getOperand(0);
   assert(isa<ConstantSDNode>(Elt) && "Invalid VECTOR_SHUFFLE mask!");
-  for (unsigned i = 1; i != NumOperands / 2; ++i) {
+  for (unsigned i = 1; i != NumElems / 2; ++i) {
     assert(isa<ConstantSDNode>(N->getOperand(i)) &&
            "Invalid VECTOR_SHUFFLE mask!");
     if (cast<ConstantSDNode>(N->getOperand(i))->getValue() != 
         cast<ConstantSDNode>(Elt)->getValue())
       return false;
   }
-  Elt = N->getOperand(NumOperands / 2);
+  Elt = N->getOperand(NumElems / 2);
   assert(isa<ConstantSDNode>(Elt) && "Invalid VECTOR_SHUFFLE mask!");
-  for (unsigned i = NumOperands / 2; i != NumOperands; ++i) {
+  for (unsigned i = NumElems / 2; i != NumElems; ++i) {
     assert(isa<ConstantSDNode>(N->getOperand(i)) &&
            "Invalid VECTOR_SHUFFLE mask!");
     if (cast<ConstantSDNode>(N->getOperand(i))->getValue() != 
@@ -1530,20 +1530,23 @@ unsigned X86::getShuffleSHUFImmediate(SDNode *N) {
   return Mask;
 }
 
-/// isZeroVector - Return true if all elements of BUILD_VECTOR are 0 or +0.0.
+/// isZeroVector - Return true if this build_vector is an all-zero vector.
+///
 bool X86::isZeroVector(SDNode *N) {
-  for (SDNode::op_iterator I = N->op_begin(), E = N->op_end();
-       I != E; ++I) {
-    if (ConstantFPSDNode *FPC = dyn_cast<ConstantFPSDNode>(*I)) {
-      if (!FPC->isExactlyValue(+0.0))
+  if (MVT::isInteger(N->getOperand(0).getValueType())) {
+    for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
+      if (!isa<ConstantSDNode>(N->getOperand(i)) ||
+          cast<ConstantSDNode>(N->getOperand(i))->getValue() != 0)
         return false;
-    } else if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(*I)) {
-      if (!C->isNullValue())
+  } else {
+    assert(MVT::isFloatingPoint(N->getOperand(0).getValueType()) &&
+           "Vector of non-int, non-float values?");
+    // See if this is all zeros.
+    for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
+      if (!isa<ConstantFPSDNode>(N->getOperand(i)) ||
+          !cast<ConstantFPSDNode>(N->getOperand(i))->isExactlyValue(0.0))
         return false;
-    } else
-      return false;
   }
-
   return true;
 }
 
@@ -2318,7 +2321,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   }
   case ISD::SCALAR_TO_VECTOR: {
     SDOperand AnyExt = DAG.getNode(ISD::ANY_EXTEND, MVT::i32, Op.getOperand(0));
-    return DAG.getNode(X86ISD::SCALAR_TO_VECTOR, Op.getValueType(), AnyExt);
+    return DAG.getNode(X86ISD::S2VEC, Op.getValueType(), AnyExt);
   }
   case ISD::VECTOR_SHUFFLE: {
     SDOperand V1 = Op.getOperand(0);
@@ -2338,6 +2341,9 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
         return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1,
                            DAG.getNode(ISD::UNDEF, V1.getValueType()),
                            PermMask);
+    } else if (NumElems == 2) {
+      // All v2f64 cases are handled.
+      return SDOperand();
     } else if (X86::isPSHUFDMask(PermMask.Val)) {
       if (V2.getOpcode() == ISD::UNDEF)
         // Leave the VECTOR_SHUFFLE alone. It matches PSHUFD.
@@ -2347,9 +2353,6 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
         return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1,
                            DAG.getNode(ISD::UNDEF, V1.getValueType()),
                            PermMask);
-    } else if (NumElems == 2) {
-      // All v2f64 cases are handled.
-      return SDOperand();
     } else if (X86::isSHUFPMask(PermMask.Val)) {
       SDOperand Elt = PermMask.getOperand(0);
       if (cast<ConstantSDNode>(Elt)->getValue() >= NumElems) {
@@ -2370,22 +2373,32 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     abort();
   }
   case ISD::BUILD_VECTOR: {
-    bool isZero = true;
+    SDOperand Elt0 = Op.getOperand(0);
+    bool Elt0IsZero = (isa<ConstantSDNode>(Elt0) &&
+                       cast<ConstantSDNode>(Elt0)->getValue() == 0) ||
+      (isa<ConstantFPSDNode>(Elt0) &&
+       cast<ConstantFPSDNode>(Elt0)->isExactlyValue(0.0));
+    bool RestAreZero = true;
     unsigned NumElems = Op.getNumOperands();
-    for (unsigned i = 0; i < NumElems; ++i) {
+    for (unsigned i = 1; i < NumElems; ++i) {
       SDOperand V = Op.getOperand(i);
       if (ConstantFPSDNode *FPC = dyn_cast<ConstantFPSDNode>(V)) {
         if (!FPC->isExactlyValue(+0.0))
-          isZero = false;
+          RestAreZero = false;
       } else if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(V)) {
         if (!C->isNullValue())
-          isZero = false;
+          RestAreZero = false;
       } else
-        isZero = false;
+        RestAreZero = false;
     }
 
-    if (isZero)
-      return Op;
+    if (RestAreZero) {
+      if (Elt0IsZero) return Op;
+
+      // Zero extend a scalar to a vector.
+      return DAG.getNode(X86ISD::ZEXT_S2VEC, Op.getValueType(), Elt0);
+    }
+
     return SDOperand();
   }
   }
@@ -2421,7 +2434,8 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::LOAD_PACK:          return "X86ISD::LOAD_PACK";
   case X86ISD::GlobalBaseReg:      return "X86ISD::GlobalBaseReg";
   case X86ISD::Wrapper:            return "X86ISD::Wrapper";
-  case X86ISD::SCALAR_TO_VECTOR:   return "X86ISD::SCALAR_TO_VECTOR";
+  case X86ISD::S2VEC:              return "X86ISD::S2VEC";
+  case X86ISD::ZEXT_S2VEC:         return "X86ISD::ZEXT_S2VEC";
   }
 }
 

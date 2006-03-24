@@ -146,12 +146,13 @@ namespace llvm {
       /// TargetExternalSymbol, and TargetGlobalAddress.
       Wrapper,
 
-      /// SCALAR_TO_VECTOR - X86 version of SCALAR_TO_VECTOR. The destination base
-      /// type does not have to match the operand type.
-      SCALAR_TO_VECTOR,
+      /// S2VEC - X86 version of SCALAR_TO_VECTOR. The destination base does not
+      /// have to match the operand type.
+      S2VEC,
 
-      /// UNPCKLP - X86 unpack and interleave low instructions.
-      UNPCKLP,
+      /// ZEXT_S2VEC - SCALAR_TO_VECTOR with zero extension. The destination base
+      /// does not have to match the operand type.
+      ZEXT_S2VEC,
     };
 
     // X86 specific condition code. These correspond to X86_*_COND in
@@ -209,7 +210,8 @@ namespace llvm {
    /// instructions.
    unsigned getShuffleSHUFImmediate(SDNode *N);
 
-   /// isZeroVector - Return true if all elements of BUILD_VECTOR are 0 or +0.0.
+   /// isZeroVector - Return true if this build_vector is an all-zero vector.
+   ///
    bool isZeroVector(SDNode *N);
  }
 
