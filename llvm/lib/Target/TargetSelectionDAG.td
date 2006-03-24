@@ -12,6 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+// Include all information about LLVM intrinsics.
+include "llvm/Intrinsics.td"
+
 //===----------------------------------------------------------------------===//
 // Selection DAG Type Constraint definitions.
 //
