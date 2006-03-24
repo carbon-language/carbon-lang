@@ -2615,6 +2615,7 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::FrameIndex:    return "FrameIndex";
   case ISD::ConstantPool:  return "ConstantPool";
   case ISD::ExternalSymbol: return "ExternalSymbol";
+  case ISD::INTRINSIC:     return "INTRINSIC";
 
   case ISD::BUILD_VECTOR:   return "BUILD_VECTOR";
   case ISD::TargetConstant: return "TargetConstant";
