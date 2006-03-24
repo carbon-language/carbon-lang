@@ -1140,7 +1140,7 @@ void LoopStrengthReduce::OptimizeIndvars(Loop *L) {
 
   // Finally, get the terminating condition for the loop if possible.  If we
   // can, we want to change it to use a post-incremented version of its
-  // induction variable, to allow coallescing the live ranges for the IV into
+  // induction variable, to allow coalescing the live ranges for the IV into
   // one register value.
   PHINode *SomePHI = cast<PHINode>(L->getHeader()->begin());
   BasicBlock  *Preheader = L->getLoopPreheader();
@@ -1199,7 +1199,7 @@ void LoopStrengthReduce::OptimizeIndvars(Loop *L) {
   }
 
   // If we get to here, we know that we can transform the setcc instruction to
-  // use the post-incremented version of the IV, allowing us to coallesce the
+  // use the post-incremented version of the IV, allowing us to coalesce the
   // live ranges for the IV correctly.
   CondUse->Offset = SCEV::getMinusSCEV(CondUse->Offset, *CondStride);
   CondUse->isUseOfPostIncrementedValue = true;
