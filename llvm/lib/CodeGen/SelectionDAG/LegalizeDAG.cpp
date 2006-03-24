@@ -3113,6 +3113,11 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
   SDOperand SplatValue = Node->getOperand(0);
   std::map<SDOperand, std::vector<unsigned> > Values;
   Values[SplatValue].push_back(0);
+  bool isConstant = true;
+  if (!isa<ConstantFPSDNode>(SplatValue) && !isa<ConstantSDNode>(SplatValue) &&
+      SplatValue.getOpcode() != ISD::UNDEF)
+    isConstant = false;
+  
   for (unsigned i = 1; i < NumElems; ++i) {
     SDOperand V = Node->getOperand(i);
     std::map<SDOperand, std::vector<unsigned> >::iterator I = Values.find(V);
@@ -3124,6 +3129,12 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
       isOnlyLowElement = false;
     if (SplatValue != V)
       SplatValue = SDOperand(0,0);
+
+    // If this isn't a constant element or an undef, we can't use a constant
+    // pool load.
+    if (!isa<ConstantFPSDNode>(V) && !isa<ConstantSDNode>(V) &&
+        V.getOpcode() != ISD::UNDEF)
+      isConstant = false;
   }
   
   if (isOnlyLowElement) {
@@ -3133,6 +3144,30 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
     // Otherwise, turn this into a scalar_to_vector node.
     return DAG.getNode(ISD::SCALAR_TO_VECTOR, Node->getValueType(0),
                        Node->getOperand(0));
+  }
+  
+  // If all elements are constants, create a load from the constant pool.
+  if (isConstant) {
+    MVT::ValueType VT = Node->getValueType(0);
+    const Type *OpNTy = 
+      MVT::getTypeForValueType(Node->getOperand(0).getValueType());
+    std::vector<Constant*> CV;
+    for (unsigned i = 0, e = NumElems; i != e; ++i) {
+      if (ConstantFPSDNode *V = 
+          dyn_cast<ConstantFPSDNode>(Node->getOperand(i))) {
+        CV.push_back(ConstantFP::get(OpNTy, V->getValue()));
+      } else if (ConstantSDNode *V = 
+                 dyn_cast<ConstantSDNode>(Node->getOperand(i))) {
+        CV.push_back(ConstantUInt::get(OpNTy, V->getValue()));
+      } else {
+        assert(Node->getOperand(i).getOpcode() == ISD::UNDEF);
+        CV.push_back(UndefValue::get(OpNTy));
+      }
+    }
+    Constant *CP = ConstantPacked::get(CV);
+    SDOperand CPIdx = DAG.getConstantPool(CP, TLI.getPointerTy());
+    return DAG.getLoad(VT, DAG.getEntryNode(), CPIdx,
+                       DAG.getSrcValue(NULL));
   }
   
   if (SplatValue.Val) {   // Splat of one value?
@@ -3156,42 +3191,6 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
     }
   }
   
-  // If the elements are all constants, turn this into a load from the constant
-  // pool.
-  bool isConstant = true;
-  for (SDNode::op_iterator I = Node->op_begin(), E = Node->op_end();
-       I != E; ++I) {
-    if (!isa<ConstantFPSDNode>(I) && !isa<ConstantSDNode>(I) &&
-        I->getOpcode() != ISD::UNDEF) {
-      isConstant = false;
-      break;
-    }
-  }
-  
-  // Create a ConstantPacked, and put it in the constant pool.
-  if (isConstant) {
-    MVT::ValueType VT = Node->getValueType(0);
-    const Type *OpNTy = 
-      MVT::getTypeForValueType(Node->getOperand(0).getValueType());
-    std::vector<Constant*> CV;
-    for (unsigned i = 0, e = NumElems; i != e; ++i) {
-      if (ConstantFPSDNode *V = 
-          dyn_cast<ConstantFPSDNode>(Node->getOperand(i))) {
-        CV.push_back(ConstantFP::get(OpNTy, V->getValue()));
-      } else if (ConstantSDNode *V = 
-                 dyn_cast<ConstantSDNode>(Node->getOperand(i))) {
-        CV.push_back(ConstantUInt::get(OpNTy, V->getValue()));
-      } else {
-        assert(Node->getOperand(i).getOpcode() == ISD::UNDEF);
-        CV.push_back(UndefValue::get(OpNTy));
-      }
-    }
-    Constant *CP = ConstantPacked::get(CV);
-    SDOperand CPIdx = DAG.getConstantPool(CP, TLI.getPointerTy());
-    return DAG.getLoad(VT, DAG.getEntryNode(), CPIdx,
-                       DAG.getSrcValue(NULL));
-  }
-
   // If there are only two unique elements, we may be able to turn this into a
   // vector shuffle.
   if (Values.size() == 2) {
