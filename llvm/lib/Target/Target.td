@@ -12,7 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-include "llvm/CodeGen/ValueTypes.td"
+// Include all information about LLVM intrinsics.
+include "llvm/Intrinsics.td"
 
 //===----------------------------------------------------------------------===//
 // Register file description - These classes are used to fill in the target
