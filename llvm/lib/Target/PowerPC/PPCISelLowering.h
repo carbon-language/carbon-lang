@@ -101,6 +101,10 @@ namespace llvm {
     /// getVSPLTImmediate - Return the appropriate VSPLT* immediate to splat the
     /// specified isSplatShuffleMask VECTOR_SHUFFLE mask.
     unsigned getVSPLTImmediate(SDNode *N);
+    
+    /// isZeroVector - Return true if this build_vector is an all-zero vector.
+    ///
+    bool isZeroVector(SDNode *N);
   }
   
   class PPCTargetLowering : public TargetLowering {

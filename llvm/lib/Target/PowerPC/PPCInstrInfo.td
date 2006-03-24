@@ -135,6 +135,11 @@ def VSPLT_shuffle_mask : PatLeaf<(build_vector), [{
   return PPC::isSplatShuffleMask(N);
 }], VSPLT_get_imm>;
 
+def vecimm0 : PatLeaf<(build_vector), [{
+  return PPC::isZeroVector(N);
+}]>;
+
+
 //===----------------------------------------------------------------------===//
 // PowerPC Flag Definitions.
 
@@ -1061,7 +1066,7 @@ def VSPLTW : VXForm_1<652, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
 
 def V_SET0 : VXForm_setzero<1220, (ops VRRC:$vD),
                       "vxor $vD, $vD, $vD", VecFP,
-                      []>;
+                      [(set VRRC:$vD, (v4f32 vecimm0))]>;
 }
 
 
@@ -1209,6 +1214,7 @@ def : Pat<(v4i32 (PPClve_x xoaddr:$src)),
           (v4i32 (LVEWX xoaddr:$src))>;
 
 def : Pat<(v4i32 (undef)), (v4i32 (IMPLICIT_DEF_VRRC))>;
+def : Pat<(v4i32 vecimm0), (v4i32 (V_SET0))>;
 
 // bit_convert
 def : Pat<(v4i32 (bitconvert (v4f32 VRRC:$src))), (v4i32 VRRC:$src)>;

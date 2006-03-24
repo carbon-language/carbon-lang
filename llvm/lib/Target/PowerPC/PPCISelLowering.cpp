@@ -170,9 +170,6 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::LOAD, (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::VECTOR_SHUFFLE, (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, (MVT::ValueType)VT, Expand);
-    
-    // FIXME: We don't support any BUILD_VECTOR's yet.  We should custom expand
-    // the ones we do, like splat(0.0) and splat(-0.0).
     setOperationAction(ISD::BUILD_VECTOR, (MVT::ValueType)VT, Expand);
   }
 
@@ -193,6 +190,9 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
 
     setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v4f32, Custom);
     setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v4i32, Custom);
+    
+    setOperationAction(ISD::BUILD_VECTOR, MVT::v4i32, Custom);
+    setOperationAction(ISD::BUILD_VECTOR, MVT::v4f32, Custom);
   }
   
   setSetCCResultContents(ZeroOrOneSetCCResult);
@@ -274,6 +274,26 @@ bool PPC::isSplatShuffleMask(SDNode *N) {
 unsigned PPC::getVSPLTImmediate(SDNode *N) {
   assert(isSplatShuffleMask(N));
   return cast<ConstantSDNode>(N->getOperand(0))->getValue();
+}
+
+/// isZeroVector - Return true if this build_vector is an all-zero vector.
+///
+bool PPC::isZeroVector(SDNode *N) {
+  if (MVT::isInteger(N->getOperand(0).getValueType())) {
+    for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
+      if (!isa<ConstantSDNode>(N->getOperand(i)) ||
+          cast<ConstantSDNode>(N->getOperand(i))->getValue() != 0)
+        return false;
+  } else {
+    assert(MVT::isFloatingPoint(N->getOperand(0).getValueType()) &&
+           "Vector of non-int, non-float values?");
+    // See if this is all zeros.
+    for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
+      if (!isa<ConstantFPSDNode>(N->getOperand(i)) ||
+          !cast<ConstantFPSDNode>(N->getOperand(i))->isExactlyValue(0.0))
+        return false;
+  }
+  return true;
 }
 
 
@@ -634,6 +654,16 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     return DAG.getNode(PPCISD::LVE_X, Op.getValueType(), Store, FIdx, 
                        DAG.getSrcValue(NULL));
   }
+  case ISD::BUILD_VECTOR:
+    // If this is a case we can't handle, return null and let the default
+    // expansion code take care of it.  If we CAN select this case, return Op.
+    
+    // See if this is all zeros.
+    // FIXME: We should handle splat(-0.0), and other cases here.
+    if (PPC::isZeroVector(Op.Val))
+      return Op;
+    return SDOperand();
+    
   case ISD::VECTOR_SHUFFLE: {
     SDOperand V1 = Op.getOperand(0);
     SDOperand V2 = Op.getOperand(1);
