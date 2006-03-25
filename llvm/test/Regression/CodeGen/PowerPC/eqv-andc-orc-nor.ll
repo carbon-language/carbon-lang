@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | llc -march=ppc32 | grep eqv | wc -l  | grep 3 &&
-; RUN: llvm-as < %s | llc -march=ppc32 | grep andc | wc -l | grep 2 &&
+; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | grep andc | wc -l | grep 3 &&
 ; RUN: llvm-as < %s | llc -march=ppc32 | grep orc | wc -l  | grep 2 &&
-; RUN: llvm-as < %s | llc -march=ppc32 | grep nor | wc -l  | grep 2 &&
+; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | grep nor | wc -l  | grep 3 &&
 ; RUN: llvm-as < %s | llc -march=ppc32 | grep nand | wc -l  | grep 1
 
 int %EQV1(int %X, int %Y) {
@@ -62,3 +62,28 @@ int %NAND1(int %X, int %Y) {
 	%W = xor int %Z, -1
 	ret int %W
 }
+
+void %VNOR(<4 x float>* %P, <4 x float>* %Q) {
+        %tmp = load <4 x float>* %P
+        %tmp = cast <4 x float> %tmp to <4 x int>
+        %tmp2 = load <4 x float>* %Q
+        %tmp2 = cast <4 x float> %tmp2 to <4 x int>
+        %tmp3 = or <4 x int> %tmp, %tmp2
+        %tmp4 = xor <4 x int> %tmp3, < int -1, int -1, int -1, int -1 >
+        %tmp4 = cast <4 x int> %tmp4 to <4 x float>
+        store <4 x float> %tmp4, <4 x float>* %P
+        ret void
+}
+
+void %VANDC(<4 x float>* %P, <4 x float>* %Q) {
+        %tmp = load <4 x float>* %P
+        %tmp = cast <4 x float> %tmp to <4 x int>
+        %tmp2 = load <4 x float>* %Q
+        %tmp2 = cast <4 x float> %tmp2 to <4 x int>
+        %tmp3 = and <4 x int> %tmp, %tmp2
+        %tmp4 = xor <4 x int> %tmp3, < int -1, int -1, int -1, int -1 >
+        %tmp4 = cast <4 x int> %tmp4 to <4 x float>
+        store <4 x float> %tmp4, <4 x float>* %P
+        ret void
+}
+
