@@ -242,7 +242,7 @@ let TargetPrefix = "ppc" in {  // All intrinsics start with "llvm.ppc.".
 //
 // SSE1
 
-// Arithmetics
+// Arithmetic ops
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse_addss : GCCBuiltin<"__builtin_ia32_addss">,
               Intrinsic<[llvm_float_ty, llvm_float_ty,
@@ -351,7 +351,7 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
                          llvm_v4f32_ty], [InstrNoMem]>;
 }
 
-// Logical
+// Logical ops
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse_andps : GCCBuiltin<"__builtin_ia32_andps">,
               Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty,
@@ -376,7 +376,7 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
                          llvm_v4f32_ty], [InstrNoMem]>;
 }
 
-// Comparison
+// Comparison ops
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse_cmpeqss : GCCBuiltin<"__builtin_ia32_cmpeqss">,
               Intrinsic<[llvm_float_ty, llvm_float_ty,
@@ -594,7 +594,7 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 }
 
 
-// Conversion
+// Conversion ops
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse_cvtss2si : GCCBuiltin<"__builtin_ia32_cvtss2si">,
               Intrinsic<[llvm_int_ty, llvm_float_ty], [InstrNoMem]>;
@@ -623,6 +623,23 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse_cvtpi2ps : GCCBuiltin<"__builtin_ia32_cvtpi2ps">,
               Intrinsic<[llvm_v4f32_ty, llvm_v2i32_ty], [InstrNoMem]>;
+}
+
+// SIMD load ops
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_loadhps : GCCBuiltin<"__builtin_ia32_loadhps">,
+              Intrinsic<[llvm_v4f32_ty, llvm_ptr_ty], [IntrReadMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_loadlps : GCCBuiltin<"__builtin_ia32_loadlps">,
+              Intrinsic<[llvm_v4f32_ty, llvm_ptr_ty], [IntrReadMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_loadups : GCCBuiltin<"__builtin_ia32_loadups">,
+              Intrinsic<[llvm_v4f32_ty, llvm_ptr_ty], [IntrReadMem]>;
 }
 
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
