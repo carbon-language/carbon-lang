@@ -1208,6 +1208,11 @@ def : Pat<(PPCvmaddfp VRRC:$A, VRRC:$B, VRRC:$C),
 def : Pat<(PPCvnmsubfp VRRC:$A, VRRC:$B, VRRC:$C),
           (VNMSUBFP VRRC:$A, VRRC:$B, VRRC:$C)>;
 
+def : Pat<(int_ppc_altivec_vmaddfp VRRC:$A, VRRC:$B, VRRC:$C),
+          (VMADDFP VRRC:$A, VRRC:$B, VRRC:$C)>;
+def : Pat<(int_ppc_altivec_vnmsubfp VRRC:$A, VRRC:$B, VRRC:$C),
+          (VNMSUBFP VRRC:$A, VRRC:$B, VRRC:$C)>;
+
 // Standard shifts.  These are represented separately from the real shifts above
 // so that we can distinguish between shifts that allow 5-bit and 6-bit shift
 // amounts.
