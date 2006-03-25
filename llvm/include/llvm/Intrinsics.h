@@ -30,7 +30,12 @@ namespace Intrinsic {
 #define GET_INTRINSIC_ENUM_VALUES
 #include "llvm/Intrinsics.gen"    
 #undef GET_INTRINSIC_ENUM_VALUES
+    , num_intrinsics
   };
+  
+  /// Intrinsic::getName(ID) - Return the LLVM name for an intrinsic, such as
+  /// "llvm.ppc.altivec.lvx".
+  const char *getName(ID id);
 } // End Intrinsic namespace
 
 } // End llvm namespace
