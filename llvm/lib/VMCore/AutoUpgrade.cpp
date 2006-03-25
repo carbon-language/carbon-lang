@@ -201,49 +201,13 @@ Function *llvm::UpgradeIntrinsicFunction(Function* F) {
 
 // CastArg - Perform the appropriate cast of an upgraded argument.
 //
-static Value *CastArg(Value *Arg, const Type *Ty) {
+static Value *CastArg(Value *Arg, const Type *Ty, Instruction *InsertBefore) {
   if (Constant *C = dyn_cast<Constant>(Arg)) {
     return ConstantExpr::getCast(C, Ty);
   } else {
-    return new CastInst(Arg, Ty, "autoupgrade_cast");
+    Value *Cast = new CastInst(Arg, Ty, "autoupgrade_cast", InsertBefore);
+    return Cast;
   }
-}
-
-Instruction* llvm::MakeUpgradedCall(Function *F, 
-                                    const std::vector<Value*> &Params,
-                                    BasicBlock *BB, bool isTailCall,
-                                    unsigned CallingConv) {
-  assert(F && "Need a Function to make a CallInst");
-  assert(BB && "Need a BasicBlock to make a CallInst");
-
-  // Convert the params
-  bool signedArg = false;
-  std::vector<Value*> Oprnds;
-  for (std::vector<Value*>::const_iterator PI = Params.begin(), 
-       PE = Params.end(); PI != PE; ++PI) {
-    const Type* opTy = (*PI)->getType();
-    if (opTy->isSigned()) {
-      signedArg = true;
-      Value *cast = CastArg(*PI, opTy->getUnsignedVersion());
-      if (Instruction *I = dyn_cast<Instruction>(cast))
-        BB->getInstList().push_back(I);
-      Oprnds.push_back(cast);
-    }
-    else
-      Oprnds.push_back(*PI);
-  }
-
-  Instruction *result = new CallInst(F, Oprnds);
-  if (result->getType() != Type::VoidTy) result->setName("autoupgrade_call");
-  if (isTailCall) cast<CallInst>(result)->setTailCall();
-  if (CallingConv) cast<CallInst>(result)->setCallingConv(CallingConv);
-  if (signedArg) {
-    const Type* newTy = F->getReturnType()->getUnsignedVersion();
-    CastInst* final = new CastInst(result, newTy, "autoupgrade_uncast");
-    BB->getInstList().push_back(result);
-    result = final;
-  }
-  return result;
 }
 
 // UpgradeIntrinsicCall - In the BC reader, change a call to an intrinsic to be
@@ -265,7 +229,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       if (p) {
         Value *V = CI->getOperand(p);
         if (V->getType() != NewFnTy->getParamType(i))
-          V = CastArg(V, NewFnTy->getParamType(i));
+          V = CastArg(V, NewFnTy->getParamType(i), CI);
         Oprnds.push_back(V);
       } else
         Oprnds.push_back(UndefValue::get(NewFnTy->getParamType(i)));
@@ -276,7 +240,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
     for (unsigned i = 0; i != N; ++i) {
       Value *V = CI->getOperand(i + 1);
       if (V->getType() != NewFnTy->getParamType(i))
-        V = CastArg(V, NewFnTy->getParamType(i));
+        V = CastArg(V, NewFnTy->getParamType(i), CI);
       Oprnds.push_back(V);
     }
   }
