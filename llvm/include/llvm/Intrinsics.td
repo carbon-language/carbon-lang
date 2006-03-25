@@ -79,6 +79,9 @@ def llvm_ptr_ty        : LLVMType<OtherVT, "Type::PointerTyID">;     // sbyte*
 def llvm_ptrptr_ty     : LLVMType<OtherVT, "Type::PointerTyID">;     // sbyte**
 def llvm_descriptor_ty : LLVMType<OtherVT, "Type::PointerTyID">;     // global*
 
+def llvm_v16i8_ty      : LLVMPackedType<v16i8,16, llvm_sbyte_ty>;  // 16 x sbyte
+def llvm_v8i16_ty      : LLVMPackedType<v8i16, 8, llvm_short_ty>;  // 8 x short
+
 def llvm_v2i32_ty      : LLVMPackedType<v2i32, 2, llvm_int_ty>;    // 2 x int
 def llvm_v4i32_ty      : LLVMPackedType<v4i32, 4, llvm_int_ty>;    // 4 x int
 def llvm_v4f32_ty      : LLVMPackedType<v4f32, 4, llvm_float_ty>;  // 4 x float
@@ -233,9 +236,41 @@ let TargetPrefix = "ppc" in {  // All intrinsics start with "llvm.ppc.".
   def int_ppc_altivec_vnmsubfp : GCCBuiltin<"__builtin_altivec_vnmsubfp">,
               Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty,
                          llvm_v4f32_ty, llvm_v4f32_ty], [InstrNoMem]>;
-  def int_ppc_altivec_vadduwm : GCCBuiltin<"__builtin_altivec_vadduwm">,
+
+  def int_ppc_altivec_vaddcuw : GCCBuiltin<"__builtin_altivec_vaddcuw">,
               Intrinsic<[llvm_v4i32_ty, llvm_v4i32_ty, llvm_v4i32_ty],
                         [InstrNoMem]>;
+
+  // Saturating adds:
+  def int_ppc_altivec_vaddubs : GCCBuiltin<"__builtin_altivec_vaddubs">,
+              Intrinsic<[llvm_v16i8_ty, llvm_v16i8_ty, llvm_v16i8_ty],
+                        [InstrNoMem]>;
+  def int_ppc_altivec_vaddsbs : GCCBuiltin<"__builtin_altivec_vaddsbs">,
+              Intrinsic<[llvm_v16i8_ty, llvm_v16i8_ty, llvm_v16i8_ty],
+                        [InstrNoMem]>;
+  def int_ppc_altivec_vadduhs : GCCBuiltin<"__builtin_altivec_vadduhs">,
+              Intrinsic<[llvm_v8i16_ty, llvm_v8i16_ty, llvm_v8i16_ty],
+                        [InstrNoMem]>;
+  def int_ppc_altivec_vaddshs : GCCBuiltin<"__builtin_altivec_vaddshs">,
+              Intrinsic<[llvm_v8i16_ty, llvm_v8i16_ty, llvm_v8i16_ty],
+                        [InstrNoMem]>;
+  def int_ppc_altivec_vadduws : GCCBuiltin<"__builtin_altivec_vadduws">,
+              Intrinsic<[llvm_v4i32_ty, llvm_v4i32_ty, llvm_v4i32_ty],
+                        [InstrNoMem]>;
+  def int_ppc_altivec_vaddsws : GCCBuiltin<"__builtin_altivec_vaddsws">,
+              Intrinsic<[llvm_v4i32_ty, llvm_v4i32_ty, llvm_v4i32_ty],
+                        [InstrNoMem]>;
+                        
+  // FP to integer conversion.
+  def int_ppc_altivec_vcfsx : GCCBuiltin<"__builtin_altivec_vcfsx">,
+              Intrinsic<[llvm_v4f32_ty, llvm_v4i32_ty, llvm_int_ty],
+                        [InstrNoMem]>;
+  def int_ppc_altivec_vcfux : GCCBuiltin<"__builtin_altivec_vcfux">,
+              Intrinsic<[llvm_v4f32_ty, llvm_v4i32_ty, llvm_int_ty],
+                        [InstrNoMem]>;
+
+  def int_ppc_altivec_vrsqrtefp : GCCBuiltin<"__builtin_altivec_vrsqrtefp">,
+              Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty], [InstrNoMem]>;
   
 }
 
