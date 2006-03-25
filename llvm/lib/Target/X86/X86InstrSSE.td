@@ -862,6 +862,29 @@ def PADDDrm : PDI<0xFE, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                   "paddd {$src2, $dst|$dst, $src2}",
               [(set VR128:$dst, (v4i32 (add VR128:$src1,
                                         (load addr:$src2))))]>;
+
+def PSUBBrr : PDI<0xF8, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                  "psubb {$src2, $dst|$dst, $src2}",
+              [(set VR128:$dst, (v16i8 (sub VR128:$src1, VR128:$src2)))]>;
+def PSUBWrr : PDI<0xF9, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                  "psubw {$src2, $dst|$dst, $src2}",
+              [(set VR128:$dst, (v8i16 (sub VR128:$src1, VR128:$src2)))]>;
+def PSUBDrr : PDI<0xFA, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                  "psubd {$src2, $dst|$dst, $src2}",
+              [(set VR128:$dst, (v4i32 (sub VR128:$src1, VR128:$src2)))]>;
+
+def PSUBBrm : PDI<0xF8, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
+                  "psubb {$src2, $dst|$dst, $src2}",
+              [(set VR128:$dst, (v16i8 (sub VR128:$src1,
+                                        (load addr:$src2))))]>;
+def PSUBWrm : PDI<0xF9, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
+                  "psubw {$src2, $dst|$dst, $src2}",
+              [(set VR128:$dst, (v8i16 (sub VR128:$src1,
+                                        (load addr:$src2))))]>;
+def PSUBDrm : PDI<0xFA, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
+                  "psubd {$src2, $dst|$dst, $src2}",
+              [(set VR128:$dst, (v4i32 (sub VR128:$src1,
+                                        (load addr:$src2))))]>;
 }
 
 //===----------------------------------------------------------------------===//
