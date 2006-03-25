@@ -891,6 +891,36 @@ def PSUBDrm : PDI<0xFA, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
 // Miscellaneous Instructions
 //===----------------------------------------------------------------------===//
 
+// Prefetching loads
+def PREFETCHT0   : I<0x18, MRM1m, (ops i8mem:$src),
+                     "prefetcht0 $src", []>, TB,
+                   Requires<[HasSSE1]>;
+def PREFETCHT1   : I<0x18, MRM2m, (ops i8mem:$src),
+                     "prefetcht0 $src", []>, TB,
+                   Requires<[HasSSE1]>;
+def PREFETCHT2   : I<0x18, MRM3m, (ops i8mem:$src),
+                     "prefetcht0 $src", []>, TB,
+                   Requires<[HasSSE1]>;
+def PREFETCHTNTA : I<0x18, MRM0m, (ops i8mem:$src),
+                     "prefetcht0 $src", []>, TB,
+                   Requires<[HasSSE1]>;
+
+// Non-temporal stores
+def MOVNTQ   : I<0xE7, MRMDestMem, (ops i64mem:$dst, VR64:$src),
+                 "movntq {$src, $dst|$dst, $src}", []>, TB,
+               Requires<[HasSSE1]>;
+def MOVNTPS  : I<0x2B, MRMDestMem, (ops i128mem:$dst, VR128:$src),
+                "movntps {$src, $dst|$dst, $src}", []>, TB,
+               Requires<[HasSSE1]>;
+def MASKMOVQ : I<0xF7, MRMDestMem, (ops i64mem:$dst, VR64:$src),
+                 "maskmovq {$src, $dst|$dst, $src}", []>, TB,
+               Requires<[HasSSE1]>;
+
+// Store fence
+def SFENCE : I<0xAE, MRM7m, (ops),
+               "sfence", []>, TB, Requires<[HasSSE1]>;
+
+// Load MXCSR register
 def LDMXCSR : I<0xAE, MRM2m, (ops i32mem:$src),
                 "ldmxcsr {$src|$src}", []>, TB, Requires<[HasSSE1]>;
 
