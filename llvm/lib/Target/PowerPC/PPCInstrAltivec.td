@@ -158,7 +158,13 @@ def VADDUWS : VXForm_1<640, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                        "vadduws $vD, $vA, $vB", VecFP,
                        [(set VRRC:$vD,
                              (int_ppc_altivec_vadduws VRRC:$vA, VRRC:$vB))]>;
-                      
+def VAND : VXForm_1<1028, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                    "vand $vD, $vA, $vB", VecFP,
+                    [(set VRRC:$vD, (and (v4i32 VRRC:$vA), VRRC:$vB))]>;
+def VANDC : VXForm_1<1092, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                     "vandc $vD, $vA, $vB", VecFP,
+                     []>;
+
 def VCFSX  : VXForm_1<842, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
                       "vcfsx $vD, $vB, $UIMM", VecFP,
                       [(set VRRC:$vD,
@@ -206,12 +212,15 @@ def VRSQRTEFP : VXForm_2<330, (ops VRRC:$vD, VRRC:$vB),
 def VSUBFP : VXForm_1<74, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       "vsubfp $vD, $vA, $vB", VecFP,
                       [(set VRRC:$vD, (fsub VRRC:$vA, VRRC:$vB))]>;
+def VNOR : VXForm_1<1284, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                    "vnor $vD, $vA, $vB", VecFP,
+                    []>;
 def VOR : VXForm_1<1156, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       "vor $vD, $vA, $vB", VecFP,
-                      []>;
+                      [(set VRRC:$vD, (or (v4i32 VRRC:$vA), VRRC:$vB))]>;
 def VXOR : VXForm_1<1220, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       "vxor $vD, $vA, $vB", VecFP,
-                      []>;
+                      [(set VRRC:$vD, (xor (v4i32 VRRC:$vA), VRRC:$vB))]>;
 
 def VSPLTB : VXForm_1<524, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
                       "vspltb $vD, $vB, $UIMM", VecPerm,
@@ -297,6 +306,13 @@ def : Pat<(v4i32 vecspltisb:$invec), (v4i32 (VSPLTISB vecspltisb:$invec))>;
 def : Pat<(v4i32 vecspltish:$invec), (v4i32 (VSPLTISH vecspltish:$invec))>;
 def : Pat<(v4i32 vecspltisw:$invec), (v4i32 (VSPLTISW vecspltisw:$invec))>;
 
+// Logical Operations
+def : Pat<(v16i8 (and VRRC:$A, VRRC:$B)), (v16i8 (VAND VRRC:$A, VRRC:$B))>;
+def : Pat<(v8i16 (and VRRC:$A, VRRC:$B)), (v8i16 (VAND VRRC:$A, VRRC:$B))>;
+def : Pat<(v16i8 (or  VRRC:$A, VRRC:$B)), (v16i8 (VOR  VRRC:$A, VRRC:$B))>;
+def : Pat<(v8i16 (or  VRRC:$A, VRRC:$B)), (v8i16 (VOR  VRRC:$A, VRRC:$B))>;
+def : Pat<(v16i8 (xor VRRC:$A, VRRC:$B)), (v16i8 (VXOR VRRC:$A, VRRC:$B))>;
+def : Pat<(v8i16 (xor VRRC:$A, VRRC:$B)), (v8i16 (VXOR VRRC:$A, VRRC:$B))>;
 
 
 def : Pat<(fmul VRRC:$vA, VRRC:$vB),
