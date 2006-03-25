@@ -36,14 +36,6 @@ namespace llvm {
   /// @brief Remove overloaded intrinsic function names.
   Function* UpgradeIntrinsicFunction(Function* F);
 
-  Instruction* MakeUpgradedCall(
-    Function* F,  ///< The function to call
-    const std::vector<Value*>& Params, ///< Operands of the call
-    BasicBlock* BB, ///< Basic block the caller will insert result to 
-    bool isTailCall = false, ///< True if this is a tail call.
-    unsigned CallingConv = 0 ///< Calling convention to use
-  );
-
   /// In LLVM 1.7, the overloading of intrinsic functions was replaced with
   /// separate functions for each of the various argument sizes. This function
   /// implements the auto-upgrade feature from old overloaded names to the new
