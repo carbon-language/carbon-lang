@@ -626,7 +626,6 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 }
 
 // SIMD load ops
-
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse_loadhps : GCCBuiltin<"__builtin_ia32_loadhps">,
               Intrinsic<[llvm_v4f32_ty, llvm_ptr_ty], [IntrReadMem]>;
@@ -643,7 +642,6 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 }
 
 // SIMD store ops
-
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse_storehps : GCCBuiltin<"__builtin_ia32_storehps">,
               Intrinsic<[llvm_ptr_ty, llvm_v4f32_ty], [IntrWriteMem]>;
@@ -657,6 +655,27 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse_storeups : GCCBuiltin<"__builtin_ia32_storeups">,
               Intrinsic<[llvm_ptr_ty, llvm_v4f32_ty], [IntrWriteMem]>;
+}
+
+// Cacheability support ops
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_prefetch : GCCBuiltin<"__builtin_ia32_prefetch">,
+              Intrinsic<[llvm_ptr_ty, llvm_int_ty], [IntrWriteMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_movntq : GCCBuiltin<"__builtin_ia32_movntq">,
+              Intrinsic<[llvm_ptr_ty, llvm_v2i32_ty], [IntrWriteMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_movntps : GCCBuiltin<"__builtin_ia32_movntps">,
+              Intrinsic<[llvm_ptr_ty, llvm_v4f32_ty], [IntrWriteMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_sfence : GCCBuiltin<"__builtin_ia32_sfence">,
+              Intrinsic<[llvm_void_ty], [IntrWriteMem]>;
 }
 
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
