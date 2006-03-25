@@ -1120,7 +1120,8 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
   }
   // fold (and (sign_extend_inreg x, i16 to i32), 1) -> (and x, 1)
   // fold (and (sra)) -> (and (srl)) when possible.
-  if (SimplifyDemandedBits(SDOperand(N, 0)))
+  if (!MVT::isVector(VT) &&
+      SimplifyDemandedBits(SDOperand(N, 0)))
     return SDOperand();
   // fold (zext_inreg (extload x)) -> (zextload x)
   if (N0.getOpcode() == ISD::EXTLOAD) {
