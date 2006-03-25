@@ -513,10 +513,10 @@ def LDX  : XForm_1<31,  21, (ops G8RC:$rD, memrr:$src),
                    [(set G8RC:$rD, (load xaddr:$src))]>, isPPC64;
 def LVEBX: XForm_1<31,   7, (ops VRRC:$vD, memrr:$src),
                    "lvebx $vD, $src", LdStGeneral,
-                   []>;
+                   [(set VRRC:$vD, (v16i8 (PPClve_x xoaddr:$src)))]>;
 def LVEHX: XForm_1<31,  39, (ops VRRC:$vD,  memrr:$src),
                    "lvehx $vD, $src", LdStGeneral,
-                   []>;
+                   [(set VRRC:$vD, (v8i16 (PPClve_x xoaddr:$src)))]>;
 def LVEWX: XForm_1<31,  71, (ops VRRC:$vD,  memrr:$src),
                    "lvewx $vD, $src", LdStGeneral,
                    [(set VRRC:$vD, (v4f32 (PPClve_x xoaddr:$src)))]>;
@@ -1244,10 +1244,9 @@ def : Pat<(f64 (extload iaddr:$src, f32)),
 def : Pat<(f64 (extload xaddr:$src, f32)),
           (FMRSD (LFSX xaddr:$src))>;
 
-def : Pat<(v4i32 (load xoaddr:$src)),
-          (v4i32 (LVX xoaddr:$src))>;
-def : Pat<(v16i8 (load xoaddr:$src)),
-          (v16i8 (LVX xoaddr:$src))>;
+def : Pat<(v4i32 (load xoaddr:$src)), (v4i32 (LVX xoaddr:$src))>;
+def : Pat<(v8i16 (load xoaddr:$src)), (v8i16 (LVX xoaddr:$src))>;
+def : Pat<(v16i8 (load xoaddr:$src)), (v16i8 (LVX xoaddr:$src))>;
 
 
 def : Pat<(vector_shuffle (v4i32 VRRC:$vB), (undef), VSPLT_shuffle_mask:$UIMM),
@@ -1256,8 +1255,13 @@ def : Pat<(vector_shuffle (v4i32 VRRC:$vB), (undef), VSPLT_shuffle_mask:$UIMM),
 def : Pat<(PPCvperm (v4i32 VRRC:$vA), VRRC:$vB, VRRC:$vC),
           (v4i32 (VPERM VRRC:$vA, VRRC:$vB, VRRC:$vC))>;
 
+def : Pat<(store (v16i8 VRRC:$rS), xoaddr:$dst),
+          (STVX (v16i8 VRRC:$rS), xoaddr:$dst)>;
+def : Pat<(store (v8i16 VRRC:$rS), xoaddr:$dst),
+          (STVX (v8i16 VRRC:$rS), xoaddr:$dst)>;
 def : Pat<(store (v4i32 VRRC:$rS), xoaddr:$dst),
           (STVX (v4i32 VRRC:$rS), xoaddr:$dst)>;
+
 def : Pat<(v4i32 (PPClve_x xoaddr:$src)),
           (v4i32 (LVEWX xoaddr:$src))>;
 

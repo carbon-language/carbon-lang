@@ -172,7 +172,6 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::ADD , (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::SUB , (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::MUL , (MVT::ValueType)VT, Expand);
-    setOperationAction(ISD::LOAD, (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::VECTOR_SHUFFLE, (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::BUILD_VECTOR, (MVT::ValueType)VT, Expand);
@@ -181,14 +180,13 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   if (TM.getSubtarget<PPCSubtarget>().hasAltivec()) {
     addRegisterClass(MVT::v4f32, PPC::VRRCRegisterClass);
     addRegisterClass(MVT::v4i32, PPC::VRRCRegisterClass);
+    addRegisterClass(MVT::v8i16, PPC::VRRCRegisterClass);
+    addRegisterClass(MVT::v16i8, PPC::VRRCRegisterClass);
     
     setOperationAction(ISD::ADD        , MVT::v4f32, Legal);
     setOperationAction(ISD::SUB        , MVT::v4f32, Legal);
     setOperationAction(ISD::MUL        , MVT::v4f32, Legal);
-    setOperationAction(ISD::LOAD       , MVT::v4f32, Legal);
     setOperationAction(ISD::ADD        , MVT::v4i32, Legal);
-    setOperationAction(ISD::LOAD       , MVT::v4i32, Legal);
-    setOperationAction(ISD::LOAD       , MVT::v16i8, Legal);
 
     setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v4i32, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v4f32, Custom);
