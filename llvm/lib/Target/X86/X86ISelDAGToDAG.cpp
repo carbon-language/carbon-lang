@@ -21,6 +21,7 @@
 #include "X86TargetMachine.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Instructions.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"

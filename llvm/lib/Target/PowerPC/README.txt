@@ -594,3 +594,10 @@ void func(unsigned int *ret, float dx, float dy, float dz, float dw) {
   *ret = code;
 }
 
+===-------------------------------------------------------------------------===
+
+There are a wide range of vector constants we can generate with combinations of
+altivec instructions.  For example, GCC does: t=vsplti*, r = t+t.
+
+===-------------------------------------------------------------------------===
+
