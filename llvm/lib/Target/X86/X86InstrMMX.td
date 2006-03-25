@@ -42,3 +42,11 @@ def MOVQ64rm : I<0x6F, MRMSrcMem, (ops VR64:$dst, i64mem:$src),
 def MOVQ64mr : I<0x7F, MRMDestMem, (ops i64mem:$dst, VR64:$src),
                  "movq {$src, $dst|$dst, $src}", []>, TB,
                Requires<[HasMMX]>;
+
+// Conversion instructions
+def CVTTPS2PIrr: I<0x2C, MRMSrcReg, (ops VR64:$dst, VR128:$src),
+                   "cvttps2pi {$src, $dst|$dst, $src}", []>, TB,
+                 Requires<[HasSSE2]>;
+def CVTTPS2PIrm: I<0x2C, MRMSrcReg, (ops VR64:$dst, f64mem:$src),
+                   "cvttps2pi {$src, $dst|$dst, $src}", []>, TB,
+                 Requires<[HasMMX]>;
