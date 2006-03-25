@@ -2362,6 +2362,9 @@ def : Pat<(extloadi8i1 addr:$src), (MOV8rm addr:$src)>;
 def : Pat<(i16 (anyext R8 :$src)), (MOVZX16rr8  R8 :$src)>;
 def : Pat<(i32 (anyext R8 :$src)), (MOVZX32rr8  R8 :$src)>;
 def : Pat<(i32 (anyext R16:$src)), (MOVZX32rr16 R16:$src)>;
+def : Pat<(i16 (anyext (loadi8  addr:$src))), (MOVZX16rm8  addr:$src)>;
+def : Pat<(i32 (anyext (loadi8  addr:$src))), (MOVZX32rm8  addr:$src)>;
+def : Pat<(i32 (anyext (loadi16 addr:$src))), (MOVZX32rm16 addr:$src)>;
 
 //===----------------------------------------------------------------------===//
 // Some peepholes
