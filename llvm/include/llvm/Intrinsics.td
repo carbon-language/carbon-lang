@@ -79,6 +79,7 @@ def llvm_ptr_ty        : LLVMType<OtherVT, "Type::PointerTyID">;     // sbyte*
 def llvm_ptrptr_ty     : LLVMType<OtherVT, "Type::PointerTyID">;     // sbyte**
 def llvm_descriptor_ty : LLVMType<OtherVT, "Type::PointerTyID">;     // global*
 
+def llvm_v2i32_ty      : LLVMPackedType<v2i32, 2, llvm_int_ty>;    // 2 x int
 def llvm_v4i32_ty      : LLVMPackedType<v4i32, 4, llvm_int_ty>;    // 4 x int
 def llvm_v4f32_ty      : LLVMPackedType<v4f32, 4, llvm_float_ty>;  // 4 x float
 def llvm_v2f64_ty      : LLVMPackedType<v2f64, 2, llvm_double_ty>; // 2 x double
@@ -375,7 +376,7 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
                          llvm_v4f32_ty], [InstrNoMem]>;
 }
 
-// Comparisons
+// Comparison
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse_cmpeqss : GCCBuiltin<"__builtin_ia32_cmpeqss">,
               Intrinsic<[llvm_float_ty, llvm_float_ty,
@@ -590,6 +591,38 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse_ucomineqss : GCCBuiltin<"__builtin_ia32_ucomineq">,
               Intrinsic<[llvm_int_ty, llvm_float_ty,
                          llvm_float_ty], [InstrNoMem]>;
+}
+
+
+// Conversion
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_cvtss2si : GCCBuiltin<"__builtin_ia32_cvtss2si">,
+              Intrinsic<[llvm_int_ty, llvm_float_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_cvtps2pi : GCCBuiltin<"__builtin_ia32_cvtps2pi">,
+              Intrinsic<[llvm_v2i32_ty, llvm_v4i32_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_cvttss2si : GCCBuiltin<"__builtin_ia32_cvttss2si">,
+              Intrinsic<[llvm_int_ty, llvm_float_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_cvttps2pi : GCCBuiltin<"__builtin_ia32_cvttps2pi">,
+              Intrinsic<[llvm_v2i32_ty, llvm_v4i32_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_cvtsi2ss : GCCBuiltin<"__builtin_ia32_cvtsi2ss">,
+              Intrinsic<[llvm_float_ty, llvm_int_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_cvtpi2ps : GCCBuiltin<"__builtin_ia32_cvtpi2ps">,
+              Intrinsic<[llvm_v4f32_ty, llvm_v2i32_ty], [InstrNoMem]>;
 }
 
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
