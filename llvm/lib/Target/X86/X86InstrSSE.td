@@ -28,6 +28,11 @@ def X86s2vec   : SDNode<"X86ISD::S2VEC",
 def X86zexts2vec : SDNode<"X86ISD::ZEXT_S2VEC",
                           SDTypeProfile<1, 1, []>, []>;
 
+def SDTUnpckl : SDTypeProfile<1, 2,
+                              [SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>]>;
+def X86unpckl  : SDNode<"X86ISD::UNPCKL", SDTUnpckl,
+                        []>;
+
 //===----------------------------------------------------------------------===//
 // SSE pattern fragments
 //===----------------------------------------------------------------------===//
@@ -787,10 +792,14 @@ def UNPCKHPDrm : PDI<0x15, MRMSrcMem,
                     "unpckhpd {$src2, $dst|$dst, $src2}", []>;
 def UNPCKLPSrr : PSI<0x14, MRMSrcReg, 
                     (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                    "unpcklps {$src2, $dst|$dst, $src2}", []>;
+                    "unpcklps {$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst, (v4f32 (X86unpckl VR128:$src1,
+                                              VR128:$src2)))]>;
 def UNPCKLPSrm : PSI<0x14, MRMSrcMem, 
                     (ops VR128:$dst, VR128:$src1, f128mem:$src2),
-                    "unpcklps {$src2, $dst|$dst, $src2}", []>;
+                    "unpcklps {$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst, (v4f32 (X86unpckl VR128:$src1,
+                                              (load addr:$src2))))]>;
 def UNPCKLPDrr : PDI<0x14, MRMSrcReg, 
                     (ops VR128:$dst, VR128:$src1, VR128:$src2),
                     "unpcklpd {$src2, $dst|$dst, $src2}", []>;
@@ -885,6 +894,69 @@ def PSUBDrm : PDI<0xFA, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                   "psubd {$src2, $dst|$dst, $src2}",
               [(set VR128:$dst, (v4i32 (sub VR128:$src1,
                                         (load addr:$src2))))]>;
+
+// Unpack and interleave
+def PUNPCKLBWrr : PDI<0x60, MRMSrcReg, 
+                      (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                      "punpcklbw {$src2, $dst|$dst, $src2}",
+                      [(set VR128:$dst, (v16i8 (X86unpckl VR128:$src1,
+                                                VR128:$src2)))]>;
+def PUNPCKLBWrm : PDI<0x60, MRMSrcMem, 
+                      (ops VR128:$dst, VR128:$src1, i128mem:$src2),
+                      "punpcklbw {$src2, $dst|$dst, $src2}",
+                      [(set VR128:$dst, (v16i8 (X86unpckl VR128:$src1,
+                                                (load addr:$src2))))]>;
+def PUNPCKLWDrr : PDI<0x61, MRMSrcReg, 
+                      (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                      "punpcklwd {$src2, $dst|$dst, $src2}",
+                      [(set VR128:$dst, (v8i16 (X86unpckl VR128:$src1,
+                                                VR128:$src2)))]>;
+def PUNPCKLWDrm : PDI<0x61, MRMSrcMem, 
+                      (ops VR128:$dst, VR128:$src1, i128mem:$src2),
+                      "punpcklwd {$src2, $dst|$dst, $src2}",
+                      [(set VR128:$dst, (v8i16 (X86unpckl VR128:$src1,
+                                                (load addr:$src2))))]>;
+def PUNPCKLDQrr : PDI<0x62, MRMSrcReg, 
+                      (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                      "punpckldq {$src2, $dst|$dst, $src2}",
+                      [(set VR128:$dst, (v4i32 (X86unpckl VR128:$src1,
+                                                VR128:$src2)))]>;
+def PUNPCKLDQrm : PDI<0x62, MRMSrcMem, 
+                      (ops VR128:$dst, VR128:$src1, i128mem:$src2),
+                      "punpckldq {$src2, $dst|$dst, $src2}",
+                      [(set VR128:$dst, (v4i32 (X86unpckl VR128:$src1,
+                                                (load addr:$src2))))]>;
+def PUNPCKLQDQrr : PDI<0x6C, MRMSrcReg, 
+                       (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                       "punpcklqdq {$src2, $dst|$dst, $src2}", []>;
+def PUNPCKLQDQrm : PDI<0x6C, MRMSrcMem, 
+                       (ops VR128:$dst, VR128:$src1, i128mem:$src2),
+                       "punpcklqdq {$src2, $dst|$dst, $src2}", []>;
+
+def PUNPCKHBWrr : PDI<0x68, MRMSrcReg, 
+                      (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                      "punpckhbw {$src2, $dst|$dst, $src2}", []>;
+def PUNPCKHBWrm : PDI<0x68, MRMSrcMem, 
+                      (ops VR128:$dst, VR128:$src1, i128mem:$src2),
+                      "punpckhbw {$src2, $dst|$dst, $src2}", []>;
+def PUNPCKHWDrr : PDI<0x69, MRMSrcReg, 
+                      (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                      "punpckhwd {$src2, $dst|$dst, $src2}", []>;
+def PUNPCKHWDrm : PDI<0x69, MRMSrcMem, 
+                      (ops VR128:$dst, VR128:$src1, i128mem:$src2),
+                      "punpckhwd {$src2, $dst|$dst, $src2}", []>;
+def PUNPCKHDQrr : PDI<0x6A, MRMSrcReg, 
+                      (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                      "punpckhdq {$src2, $dst|$dst, $src2}", []>;
+def PUNPCKHDQrm : PDI<0x6A, MRMSrcMem, 
+                      (ops VR128:$dst, VR128:$src1, i128mem:$src2),
+                      "punpckhdq {$src2, $dst|$dst, $src2}", []>;
+def PUNPCKHQDQrr : PDI<0x6D, MRMSrcReg, 
+                       (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                       "punpckhdq {$src2, $dst|$dst, $src2}", []>;
+def PUNPCKHQDQrm : PDI<0x6D, MRMSrcMem, 
+                      (ops VR128:$dst, VR128:$src1, i128mem:$src2),
+                      "punpckhqdq {$src2, $dst|$dst, $src2}", []>;
 }
 
 //===----------------------------------------------------------------------===//

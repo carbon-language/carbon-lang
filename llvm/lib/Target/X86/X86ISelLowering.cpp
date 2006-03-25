@@ -2376,7 +2376,9 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     abort();
   }
   case ISD::BUILD_VECTOR: {
+    std::set<SDOperand> Values;
     SDOperand Elt0 = Op.getOperand(0);
+    Values.insert(Elt0);
     bool Elt0IsZero = (isa<ConstantSDNode>(Elt0) &&
                        cast<ConstantSDNode>(Elt0)->getValue() == 0) ||
       (isa<ConstantFPSDNode>(Elt0) &&
@@ -2384,15 +2386,16 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     bool RestAreZero = true;
     unsigned NumElems = Op.getNumOperands();
     for (unsigned i = 1; i < NumElems; ++i) {
-      SDOperand V = Op.getOperand(i);
-      if (ConstantFPSDNode *FPC = dyn_cast<ConstantFPSDNode>(V)) {
+      SDOperand Elt = Op.getOperand(i);
+      if (ConstantFPSDNode *FPC = dyn_cast<ConstantFPSDNode>(Elt)) {
         if (!FPC->isExactlyValue(+0.0))
           RestAreZero = false;
-      } else if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(V)) {
+      } else if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Elt)) {
         if (!C->isNullValue())
           RestAreZero = false;
       } else
         RestAreZero = false;
+      Values.insert(Elt);
     }
 
     if (RestAreZero) {
@@ -2400,6 +2403,25 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
 
       // Zero extend a scalar to a vector.
       return DAG.getNode(X86ISD::ZEXT_S2VEC, Op.getValueType(), Elt0);
+    }
+
+    if (Values.size() > 2) {
+      // Expand into a number of unpckl*.
+      // e.g. for v4f32
+      //   Step 1: unpcklps 0, 2 ==> X: <?, ?, 2, 0>
+      //         : unpcklps 1, 3 ==> Y: <?, ?, 3, 1>
+      //   Step 2: unpcklps X, Y ==>    <3, 2, 1, 0>
+      MVT::ValueType VT = Op.getValueType();
+      std::vector<SDOperand> V(NumElems);
+      for (unsigned i = 0; i < NumElems; ++i)
+        V[i] = DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, Op.getOperand(i));
+      NumElems >>= 1;
+      while (NumElems != 0) {
+        for (unsigned i = 0; i < NumElems; ++i)
+          V[i] = DAG.getNode(X86ISD::UNPCKL, VT, V[i], V[i + NumElems]);
+        NumElems >>= 1;
+      }
+      return V[0];
     }
 
     return SDOperand();
@@ -2439,6 +2461,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::Wrapper:            return "X86ISD::Wrapper";
   case X86ISD::S2VEC:              return "X86ISD::S2VEC";
   case X86ISD::ZEXT_S2VEC:         return "X86ISD::ZEXT_S2VEC";
+  case X86ISD::UNPCKL:             return "X86ISD::UNPCKL";
   }
 }
 
