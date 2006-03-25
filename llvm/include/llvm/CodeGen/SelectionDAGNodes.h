@@ -453,6 +453,13 @@ namespace ISD {
     BUILTIN_OP_END
   };
 
+  /// Node predicates
+
+  /// isBuildVectorAllOnesInteger - Return true if the specified node is a
+  /// BUILD_VECTOR where all of the elements are ~0 or undef.
+  bool isBuildVectorAllOnesInteger(const SDNode *N);
+  
+  
   //===--------------------------------------------------------------------===//
   /// ISD::CondCode enum - These are ordered carefully to make the bitfields
   /// below work out, when considering SETFALSE (something that never exists
