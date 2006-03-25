@@ -375,6 +375,222 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
                          llvm_v4f32_ty], [InstrNoMem]>;
 }
 
+// Comparisons
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_cmpeqss : GCCBuiltin<"__builtin_ia32_cmpeqss">,
+              Intrinsic<[llvm_float_ty, llvm_float_ty,
+                         llvm_float_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_cmpeqps : GCCBuiltin<"__builtin_ia32_cmpeqps">,
+              Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty,
+                         llvm_v4f32_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_cmpltss : GCCBuiltin<"__builtin_ia32_cmpltss">,
+              Intrinsic<[llvm_float_ty, llvm_float_ty,
+                         llvm_float_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_cmpltps : GCCBuiltin<"__builtin_ia32_cmpltps">,
+              Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty,
+                         llvm_v4f32_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_cmpless : GCCBuiltin<"__builtin_ia32_cmpless">,
+              Intrinsic<[llvm_float_ty, llvm_float_ty,
+                         llvm_float_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_cmpleps : GCCBuiltin<"__builtin_ia32_cmpleps">,
+              Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty,
+                         llvm_v4f32_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_cmpgtss : GCCBuiltin<"__builtin_ia32_cmpgtss">,
+              Intrinsic<[llvm_float_ty, llvm_float_ty,
+                         llvm_float_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_cmpgtps : GCCBuiltin<"__builtin_ia32_cmpgtps">,
+              Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty,
+                         llvm_v4f32_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_cmpgess : GCCBuiltin<"__builtin_ia32_cmpgess">,
+              Intrinsic<[llvm_float_ty, llvm_float_ty,
+                         llvm_float_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_cmpgeps : GCCBuiltin<"__builtin_ia32_cmpgeps">,
+              Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty,
+                         llvm_v4f32_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_cmpneqss : GCCBuiltin<"__builtin_ia32_cmpneqss">,
+              Intrinsic<[llvm_float_ty, llvm_float_ty,
+                         llvm_float_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_cmpneqps : GCCBuiltin<"__builtin_ia32_cmpneqps">,
+              Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty,
+                         llvm_v4f32_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_cmpnltss : GCCBuiltin<"__builtin_ia32_cmpnltss">,
+              Intrinsic<[llvm_float_ty, llvm_float_ty,
+                         llvm_float_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_cmpnltps : GCCBuiltin<"__builtin_ia32_cmpnltps">,
+              Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty,
+                         llvm_v4f32_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_cmpnless : GCCBuiltin<"__builtin_ia32_cmpnless">,
+              Intrinsic<[llvm_float_ty, llvm_float_ty,
+                         llvm_float_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_cmpnleps : GCCBuiltin<"__builtin_ia32_cmpnleps">,
+              Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty,
+                         llvm_v4f32_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_cmpngtss : GCCBuiltin<"__builtin_ia32_cmpngtss">,
+              Intrinsic<[llvm_float_ty, llvm_float_ty,
+                         llvm_float_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_cmpngtps : GCCBuiltin<"__builtin_ia32_cmpngtps">,
+              Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty,
+                         llvm_v4f32_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_cmpngess : GCCBuiltin<"__builtin_ia32_cmpngess">,
+              Intrinsic<[llvm_float_ty, llvm_float_ty,
+                         llvm_float_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_cmpngeps : GCCBuiltin<"__builtin_ia32_cmpngeps">,
+              Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty,
+                         llvm_v4f32_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_cmpordss : GCCBuiltin<"__builtin_ia32_cmpordss">,
+              Intrinsic<[llvm_float_ty, llvm_float_ty,
+                         llvm_float_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_cmpordps : GCCBuiltin<"__builtin_ia32_cmpordps">,
+              Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty,
+                         llvm_v4f32_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_cmpunordss : GCCBuiltin<"__builtin_ia32_cmpunordss">,
+              Intrinsic<[llvm_float_ty, llvm_float_ty,
+                         llvm_float_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_cmpunordps : GCCBuiltin<"__builtin_ia32_cmpunordps">,
+              Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty,
+                         llvm_v4f32_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_comieqss : GCCBuiltin<"__builtin_ia32_comieq">,
+              Intrinsic<[llvm_int_ty, llvm_float_ty,
+                         llvm_float_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_comiltss : GCCBuiltin<"__builtin_ia32_comilt">,
+              Intrinsic<[llvm_int_ty, llvm_float_ty,
+                         llvm_float_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_comiless : GCCBuiltin<"__Builtin_ia32_comile">,
+              Intrinsic<[llvm_int_ty, llvm_float_ty,
+                         llvm_float_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_comigtss : GCCBuiltin<"__builtin_ia32_comigt">,
+              Intrinsic<[llvm_int_ty, llvm_float_ty,
+                         llvm_float_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_comigess : GCCBuiltin<"__builtin_ia32_comige">,
+              Intrinsic<[llvm_int_ty, llvm_float_ty,
+                         llvm_float_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_comineqss : GCCBuiltin<"__builtin_ia32_comineq">,
+              Intrinsic<[llvm_int_ty, llvm_float_ty,
+                         llvm_float_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_ucomieqss : GCCBuiltin<"__builtin_ia32_ucomieq">,
+              Intrinsic<[llvm_int_ty, llvm_float_ty,
+                         llvm_float_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_ucomiltss : GCCBuiltin<"__builtin_ia32_ucomilt">,
+              Intrinsic<[llvm_int_ty, llvm_float_ty,
+                         llvm_float_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_ucomiless : GCCBuiltin<"__Builtin_ia32_ucomile">,
+              Intrinsic<[llvm_int_ty, llvm_float_ty,
+                         llvm_float_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_ucomigtss : GCCBuiltin<"__builtin_ia32_ucomigt">,
+              Intrinsic<[llvm_int_ty, llvm_float_ty,
+                         llvm_float_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_ucomigess : GCCBuiltin<"__builtin_ia32_ucomige">,
+              Intrinsic<[llvm_int_ty, llvm_float_ty,
+                         llvm_float_ty], [InstrNoMem]>;
+}
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse_ucomineqss : GCCBuiltin<"__builtin_ia32_ucomineq">,
+              Intrinsic<[llvm_int_ty, llvm_float_ty,
+                         llvm_float_ty], [InstrNoMem]>;
+}
 
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse_movmskps : GCCBuiltin<"__builtin_ia32_movmskps">,
