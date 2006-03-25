@@ -301,6 +301,63 @@ bool PPC::isZeroVector(SDNode *N) {
   return true;
 }
 
+/// isVecSplatImm - Return true if this is a build_vector of constants which
+/// can be formed by using a vspltis[bhw] instruction.  The ByteSize field
+/// indicates the number of bytes of each element [124] -> [bhw].
+bool PPC::isVecSplatImm(SDNode *N, unsigned ByteSize, char *Val) {
+  SDOperand OpVal(0, 0);
+  // Check to see if this buildvec has a single non-undef value in its elements.
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+    if (N->getOperand(i).getOpcode() == ISD::UNDEF) continue;
+    if (OpVal.Val == 0)
+      OpVal = N->getOperand(i);
+    else if (OpVal != N->getOperand(i))
+      return false;
+  }
+  
+  if (OpVal.Val == 0) return false;  // All UNDEF: use implicit def.
+  
+  unsigned ValSizeInBytes;
+  uint64_t Value;
+  if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(OpVal)) {
+    Value = CN->getValue();
+    ValSizeInBytes = MVT::getSizeInBits(CN->getValueType(0))/8;
+  } else if (ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(OpVal)) {
+    assert(CN->getValueType(0) == MVT::f32 && "Only one legal FP vector type!");
+    Value = FloatToBits(CN->getValue());
+    ValSizeInBytes = 4;
+  }
+
+  // If the splat value is larger than the element value, then we can never do
+  // this splat.  The only case that we could fit the replicated bits into our
+  // immediate field for would be zero, and we prefer to use vxor for it.
+  if (ValSizeInBytes < ByteSize) return false;
+  
+  // If the element value is larger than the splat value, cut it in half and
+  // check to see if the two halves are equal.  Continue doing this until we
+  // get to ByteSize.  This allows us to handle 0x01010101 as 0x01.
+  while (ValSizeInBytes > ByteSize) {
+    ValSizeInBytes >>= 1;
+    
+    // If the top half equals the bottom half, we're still ok.
+    if (((Value >> (ValSizeInBytes*8)) & ((8 << ValSizeInBytes)-1)) !=
+         (Value                        & ((8 << ValSizeInBytes)-1)))
+      return false;
+  }
+
+  // Properly sign extend the value.
+  int ShAmt = (4-ByteSize)*8;
+  int MaskVal = ((int)Value << ShAmt) >> ShAmt;
+  
+  // If this is zero, don't match, zero matches isZeroVector.
+  if (MaskVal == 0) return false;
+
+  if (Val) *Val = MaskVal;
+
+  // Finally, if this value fits in a 5 bit sext field, return true.
+  return ((MaskVal << (32-5)) >> (32-5)) == MaskVal; 
+}
+
 
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
@@ -668,6 +725,12 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     // FIXME: We should handle splat(-0.0), and other cases here.
     if (PPC::isZeroVector(Op.Val))
       return Op;
+    
+    if (PPC::isVecSplatImm(Op.Val, 1) ||    // vspltisb
+        PPC::isVecSplatImm(Op.Val, 2) ||    // vspltish
+        PPC::isVecSplatImm(Op.Val, 4))      // vspltisw
+      return Op;
+      
     return SDOperand();
     
   case ISD::VECTOR_SHUFFLE: {

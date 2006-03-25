@@ -102,6 +102,11 @@ namespace {
                                unsigned AsmVariant, const char *ExtraCode);
     
     
+    void printS5ImmOperand(const MachineInstr *MI, unsigned OpNo) {
+      char value = MI->getOperand(OpNo).getImmedValue();
+      value = (value << (32-5)) >> (32-5);
+      O << (int)value;
+    }
     void printU5ImmOperand(const MachineInstr *MI, unsigned OpNo) {
       unsigned char value = MI->getOperand(OpNo).getImmedValue();
       assert(value <= 31 && "Invalid u5imm argument!");

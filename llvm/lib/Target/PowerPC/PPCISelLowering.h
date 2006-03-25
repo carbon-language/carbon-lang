@@ -105,6 +105,11 @@ namespace llvm {
     /// isZeroVector - Return true if this build_vector is an all-zero vector.
     ///
     bool isZeroVector(SDNode *N);
+    
+    /// isVecSplatImm - Return true if this is a build_vector of constants which
+    /// can be formed by using a vspltis[bhw] instruction.  The ByteSize field
+    /// indicates the number of bytes of each element [124] -> [bhw].
+    bool isVecSplatImm(SDNode *N, unsigned ByteSize, char *Val = 0);
   }
   
   class PPCTargetLowering : public TargetLowering {

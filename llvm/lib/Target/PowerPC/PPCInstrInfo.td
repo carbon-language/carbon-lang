@@ -140,6 +140,37 @@ def vecimm0 : PatLeaf<(build_vector), [{
 }]>;
 
 
+// VSPLTISB_get_imm xform function: convert build_vector to VSPLTISB imm.
+def VSPLTISB_get_imm : SDNodeXForm<build_vector, [{
+  char Val;
+  PPC::isVecSplatImm(N, 1, &Val);
+  return getI32Imm(Val);
+}]>;
+def vecspltisb : PatLeaf<(build_vector), [{
+  return PPC::isVecSplatImm(N, 1);
+}], VSPLTISB_get_imm>;
+
+// VSPLTISH_get_imm xform function: convert build_vector to VSPLTISH imm.
+def VSPLTISH_get_imm : SDNodeXForm<build_vector, [{
+  char Val;
+  PPC::isVecSplatImm(N, 2, &Val);
+  return getI32Imm(Val);
+}]>;
+def vecspltish : PatLeaf<(build_vector), [{
+  return PPC::isVecSplatImm(N, 2);
+}], VSPLTISH_get_imm>;
+
+// VSPLTISW_get_imm xform function: convert build_vector to VSPLTISW imm.
+def VSPLTISW_get_imm : SDNodeXForm<build_vector, [{
+  char Val;
+  PPC::isVecSplatImm(N, 4, &Val);
+  return getI32Imm(Val);
+}]>;
+def vecspltisw : PatLeaf<(build_vector), [{
+  return PPC::isVecSplatImm(N, 4);
+}], VSPLTISW_get_imm>;
+
+
 //===----------------------------------------------------------------------===//
 // PowerPC Flag Definitions.
 
@@ -155,6 +186,9 @@ class isDOT   {
 //===----------------------------------------------------------------------===//
 // PowerPC Operand Definitions.
 
+def s5imm   : Operand<i32> {
+  let PrintMethod = "printS5ImmOperand";
+}
 def u5imm   : Operand<i32> {
   let PrintMethod = "printU5ImmOperand";
 }
@@ -1055,12 +1089,21 @@ def VSPLTB : VXForm_1<524, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
 def VSPLTH : VXForm_1<588, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
                       "vsplth $vD, $vB, $UIMM", VecPerm,
                       []>;
-                      
 def VSPLTW : VXForm_1<652, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
                       "vspltw $vD, $vB, $UIMM", VecPerm,
                       [(set VRRC:$vD, (vector_shuffle (v4f32 VRRC:$vB), (undef),
                                       VSPLT_shuffle_mask:$UIMM))]>;
-                      // FIXME: ALSO ADD SUPPORT FOR v4i32!
+
+def VSPLTISB : VXForm_1<780, (ops VRRC:$vD, s5imm:$SIMM),
+                      "vspltisb $vD, $SIMM", VecPerm,
+                      [(set VRRC:$vD, (v4f32 vecspltisb:$SIMM))]>;
+def VSPLTISH : VXForm_1<844, (ops VRRC:$vD, s5imm:$SIMM),
+                      "vspltish $vD, $SIMM", VecPerm,
+                      [(set VRRC:$vD, (v4f32 vecspltish:$SIMM))]>;
+def VSPLTISW : VXForm_1<908, (ops VRRC:$vD, s5imm:$SIMM),
+                      "vspltisw $vD, $SIMM", VecPerm,
+                      [(set VRRC:$vD, (v4f32 vecspltisw:$SIMM))]>;
+
                       
 // VX-Form Pseudo Instructions
 
@@ -1215,6 +1258,11 @@ def : Pat<(v4i32 (PPClve_x xoaddr:$src)),
 
 def : Pat<(v4i32 (undef)), (v4i32 (IMPLICIT_DEF_VRRC))>;
 def : Pat<(v4i32 vecimm0), (v4i32 (V_SET0))>;
+
+def : Pat<(v4i32 vecspltisb:$invec), (v4i32 (VSPLTISB vecspltisb:$invec))>;
+def : Pat<(v4i32 vecspltish:$invec), (v4i32 (VSPLTISH vecspltish:$invec))>;
+def : Pat<(v4i32 vecspltisw:$invec), (v4i32 (VSPLTISW vecspltisw:$invec))>;
+
 
 // bit_convert
 def : Pat<(v4i32 (bitconvert (v4f32 VRRC:$src))), (v4i32 VRRC:$src)>;
