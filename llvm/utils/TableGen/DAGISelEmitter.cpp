@@ -1342,6 +1342,9 @@ void DAGISelEmitter::ParseInstructions() {
       
       // Check that it exists in InstResults.
       TreePatternNode *RNode = InstResults[OpName];
+      if (RNode == 0)
+        I->error("Operand $" + OpName + " does not exist in operand list!");
+        
       if (i == 0)
         Res0Node = RNode;
       Record *R = dynamic_cast<DefInit*>(RNode->getLeafValue())->getDef();
