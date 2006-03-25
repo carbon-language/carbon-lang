@@ -124,18 +124,49 @@ def VPERM   : VAForm_1<43, (ops VRRC:$vD, VRRC:$vA, VRRC:$vC, VRRC:$vB),
 
 
 // VX-Form instructions.  AltiVec arithmetic ops.
+def VADDCUW : VXForm_1<384, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                       "vaddcuw $vD, $vA, $vB", VecFP,
+                       [(set VRRC:$vD,
+                             (int_ppc_altivec_vaddcuw VRRC:$vA, VRRC:$vB))]>;
 def VADDFP : VXForm_1<10, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       "vaddfp $vD, $vA, $vB", VecFP,
                       [(set VRRC:$vD, (fadd VRRC:$vA, VRRC:$vB))]>;
+def VADDSBS : VXForm_1<768, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                       "vaddsbs $vD, $vA, $vB", VecFP,
+                       [(set VRRC:$vD,
+                             (int_ppc_altivec_vaddsbs VRRC:$vA, VRRC:$vB))]>;
+def VADDSHS : VXForm_1<832, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                       "vaddshs $vD, $vA, $vB", VecFP,
+                       [(set VRRC:$vD,
+                             (int_ppc_altivec_vaddshs VRRC:$vA, VRRC:$vB))]>;
+def VADDSWS : VXForm_1<896, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                       "vaddsws $vD, $vA, $vB", VecFP,
+                       [(set VRRC:$vD,
+                             (int_ppc_altivec_vaddsws VRRC:$vA, VRRC:$vB))]>;
+def VADDUBS : VXForm_1<512, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                       "vaddubs $vD, $vA, $vB", VecFP,
+                       [(set VRRC:$vD,
+                             (int_ppc_altivec_vaddubs VRRC:$vA, VRRC:$vB))]>;
+def VADDUHS : VXForm_1<576, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                       "vadduhs $vD, $vA, $vB", VecFP,
+                       [(set VRRC:$vD,
+                             (int_ppc_altivec_vadduhs VRRC:$vA, VRRC:$vB))]>;
 def VADDUWM : VXForm_1<128, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       "vadduwm $vD, $vA, $vB", VecGeneral,
                       [(set VRRC:$vD, (add (v4i32 VRRC:$vA), VRRC:$vB))]>;
+def VADDUWS : VXForm_1<640, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                       "vadduws $vD, $vA, $vB", VecFP,
+                       [(set VRRC:$vD,
+                             (int_ppc_altivec_vadduws VRRC:$vA, VRRC:$vB))]>;
+                      
 def VCFSX  : VXForm_1<842, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
                       "vcfsx $vD, $vB, $UIMM", VecFP,
-                      []>;
+                      [(set VRRC:$vD,
+                             (int_ppc_altivec_vcfsx VRRC:$vB, imm:$UIMM))]>;
 def VCFUX  : VXForm_1<778, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
                       "vcfux $vD, $vB, $UIMM", VecFP,
-                      []>;
+                      [(set VRRC:$vD,
+                             (int_ppc_altivec_vcfux VRRC:$vB, imm:$UIMM))]>;
 def VCTSXS : VXForm_1<970, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
                       "vctsxs $vD, $vB, $UIMM", VecFP,
                       []>;
@@ -171,7 +202,7 @@ def VRFIZ  : VXForm_2<586, (ops VRRC:$vD, VRRC:$vB),
                       []>;
 def VRSQRTEFP : VXForm_2<330, (ops VRRC:$vD, VRRC:$vB),
                          "vrsqrtefp $vD, $vB", VecFP,
-                         []>;
+                         [(set VRRC:$vD,(int_ppc_altivec_vrsqrtefp VRRC:$vB))]>;
 def VSUBFP : VXForm_1<74, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       "vsubfp $vD, $vA, $vB", VecFP,
                       [(set VRRC:$vD, (fsub VRRC:$vA, VRRC:$vB))]>;
