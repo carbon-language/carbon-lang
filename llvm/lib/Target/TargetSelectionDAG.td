@@ -311,6 +311,18 @@ def build_vector : SDNode<"ISD::BUILD_VECTOR", SDTypeProfile<1, 0, []>, []>;
 def scalar_to_vector : SDNode<"ISD::SCALAR_TO_VECTOR", SDTypeProfile<1, 1, []>,
                               []>;
 
+// Nodes for intrinsics, you should use the intrinsic itself and let tblgen use
+// these internally.  Don't reference these directly.
+def intrinsic_void : SDNode<"ISD::INTRINSIC", 
+                            SDTypeProfile<0, -1, [SDTCisPtrTy<0>]>,
+                            [SDNPHasChain]>;
+def intrinsic_w_chain : SDNode<"ISD::INTRINSIC", 
+                               SDTypeProfile<1, -1, [SDTCisPtrTy<1>]>,
+                               [SDNPHasChain]>;
+def intrinsic_wo_chain : SDNode<"ISD::INTRINSIC", 
+                                SDTypeProfile<1, -1, [SDTCisPtrTy<1>]>, []>;
+
+
 //===----------------------------------------------------------------------===//
 // Selection DAG Condition Codes
 
