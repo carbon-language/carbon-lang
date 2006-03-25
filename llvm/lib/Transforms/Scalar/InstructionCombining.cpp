@@ -2380,7 +2380,8 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   // See if we can simplify any instructions used by the instruction whose sole 
   // purpose is to compute bits we don't care about.
   uint64_t KnownZero, KnownOne;
-  if (SimplifyDemandedBits(&I, I.getType()->getIntegralTypeMask(),
+  if (!isa<PackedType>(I.getType()) &&
+      SimplifyDemandedBits(&I, I.getType()->getIntegralTypeMask(),
                            KnownZero, KnownOne))
     return &I;
   
@@ -2624,7 +2625,8 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   // See if we can simplify any instructions used by the instruction whose sole 
   // purpose is to compute bits we don't care about.
   uint64_t KnownZero, KnownOne;
-  if (SimplifyDemandedBits(&I, I.getType()->getIntegralTypeMask(),
+  if (!isa<PackedType>(I.getType()) &&
+      SimplifyDemandedBits(&I, I.getType()->getIntegralTypeMask(),
                            KnownZero, KnownOne))
     return &I;
   
@@ -2861,7 +2863,8 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
   // See if we can simplify any instructions used by the instruction whose sole 
   // purpose is to compute bits we don't care about.
   uint64_t KnownZero, KnownOne;
-  if (SimplifyDemandedBits(&I, I.getType()->getIntegralTypeMask(),
+  if (!isa<PackedType>(I.getType()) &&
+      SimplifyDemandedBits(&I, I.getType()->getIntegralTypeMask(),
                            KnownZero, KnownOne))
     return &I;
 
