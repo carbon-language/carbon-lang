@@ -173,6 +173,11 @@ def MOVSD128rm : SDI<0x10, MRMSrcMem, (ops VR128:$dst, f64mem:$src),
 
 
 // Conversion instructions
+def CVTSS2SIrr: SSI<0x2D, MRMSrcReg, (ops R32:$dst, FR32:$src),
+                   "cvtss2si {$src, $dst|$dst, $src}", []>;
+def CVTSS2SIrm: SSI<0x2D, MRMSrcMem, (ops R32:$dst, f32mem:$src),
+                   "cvtss2si {$src, $dst|$dst, $src}", []>;
+
 def CVTTSS2SIrr: SSI<0x2C, MRMSrcReg, (ops R32:$dst, FR32:$src),
                    "cvttss2si {$src, $dst|$dst, $src}",
                    [(set R32:$dst, (fp_to_sint FR32:$src))]>;
