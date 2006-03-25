@@ -923,8 +923,15 @@ BinaryOperator *BinaryOperator::createNeg(Value *Op, const std::string &Name,
 
 BinaryOperator *BinaryOperator::createNot(Value *Op, const std::string &Name,
                                           Instruction *InsertBefore) {
-  return new BinaryOperator(Instruction::Xor, Op,
-                            ConstantIntegral::getAllOnesValue(Op->getType()),
+  Constant *C;
+  if (const PackedType *PTy = dyn_cast<PackedType>(Op->getType())) {
+    C = ConstantIntegral::getAllOnesValue(PTy->getElementType());
+    C = ConstantPacked::get(std::vector<Constant*>(PTy->getNumElements(), C));
+  } else {
+    C = ConstantIntegral::getAllOnesValue(Op->getType());
+  }
+  
+  return new BinaryOperator(Instruction::Xor, Op, C,
                             Op->getType(), Name, InsertBefore);
 }
 
