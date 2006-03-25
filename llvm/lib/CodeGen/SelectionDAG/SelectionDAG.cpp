@@ -86,12 +86,13 @@ bool ISD::isBuildVectorAllOnesInteger(const SDNode *N) {
   
   // Do not accept build_vectors that aren't all constants or which have non-~0
   // elements.
-  if (!isa<ConstantSDNode>(N) || !cast<ConstantSDNode>(N)->isAllOnesValue())
+  SDOperand NotZero = N->getOperand(i);
+  if (!isa<ConstantSDNode>(NotZero) ||
+      !cast<ConstantSDNode>(NotZero)->isAllOnesValue())
     return false;
   
   // Okay, we have at least one ~0 value, check to see if the rest match or are
   // undefs.
-  SDOperand NotZero = N->getOperand(i);
   for (++i; i != e; ++i)
     if (N->getOperand(i) != NotZero &&
         N->getOperand(i).getOpcode() != ISD::UNDEF)
