@@ -213,6 +213,17 @@ unsigned Function::getIntrinsicID() const {
   return 0;
 }
 
+const char *Intrinsic::getName(ID id) {
+  assert(id < num_intrinsics && "Invalid intrinsic ID!");
+  const char * const Table[] = {
+    "not_intrinsic",
+#define GET_INTRINSIC_NAME_TABLE
+#include "llvm/Intrinsics.gen"
+#undef GET_INTRINSIC_NAME_TABLE
+  };
+  return Table[id];
+}
+
 Value *IntrinsicInst::StripPointerCasts(Value *Ptr) {
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ptr)) {
     if (CE->getOpcode() == Instruction::Cast) {
