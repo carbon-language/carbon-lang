@@ -66,8 +66,39 @@ bool ConstantFPSDNode::isExactlyValue(double V) const {
 }
 
 //===----------------------------------------------------------------------===//
-//                              ISD Class
+//                              ISD Namespace
 //===----------------------------------------------------------------------===//
+
+/// isBuildVectorAllOnesInteger - Return true if the specified node is a
+/// BUILD_VECTOR where all of the elements are ~0 or undef.
+bool ISD::isBuildVectorAllOnesInteger(const SDNode *N) {
+  if (N->getOpcode() != ISD::BUILD_VECTOR ||
+      !MVT::isInteger(N->getOperand(0).getValueType())) return false;
+  
+  unsigned i = 0, e = N->getNumOperands();
+  
+  // Skip over all of the undef values.
+  while (i != e && N->getOperand(i).getOpcode() == ISD::UNDEF)
+    ++i;
+  
+  // Do not accept an all-undef vector.
+  if (i == e) return false;
+  
+  // Do not accept build_vectors that aren't all constants or which have non-~0
+  // elements.
+  if (!isa<ConstantSDNode>(N) || !cast<ConstantSDNode>(N)->isAllOnesValue())
+    return false;
+  
+  // Okay, we have at least one ~0 value, check to see if the rest match or are
+  // undefs.
+  SDOperand NotZero = N->getOperand(i);
+  for (++i; i != e; ++i)
+    if (N->getOperand(i) != NotZero &&
+        N->getOperand(i).getOpcode() != ISD::UNDEF)
+      return false;
+  return true;
+}
+
 
 /// getSetCCSwappedOperands - Return the operation corresponding to (Y op X)
 /// when given the operation for (X op Y).
