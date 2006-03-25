@@ -80,9 +80,9 @@ void %VANDC(<4 x float>* %P, <4 x float>* %Q) {
         %tmp = cast <4 x float> %tmp to <4 x int>
         %tmp2 = load <4 x float>* %Q
         %tmp2 = cast <4 x float> %tmp2 to <4 x int>
-        %tmp3 = and <4 x int> %tmp, %tmp2
-        %tmp4 = xor <4 x int> %tmp3, < int -1, int -1, int -1, int -1 >
-        %tmp4 = cast <4 x int> %tmp4 to <4 x float>
+        %tmp4 = xor <4 x int> %tmp2, < int -1, int -1, int -1, int -1 >
+        %tmp3 = and <4 x int> %tmp, %tmp4
+        %tmp4 = cast <4 x int> %tmp3 to <4 x float>
         store <4 x float> %tmp4, <4 x float>* %P
         ret void
 }
