@@ -539,6 +539,7 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
  
   DEBUG(std::cerr << "\tassigning stack slot at interval "<< *cur << ":\n");
 
+  // Find a register to spill.
   float minWeight = float(HUGE_VAL);
   unsigned minReg = 0;
   for (TargetRegisterClass::iterator i = RC->allocation_order_begin(*mf_),
@@ -549,6 +550,9 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
       minReg = reg;
     }
   }
+  
+  // If we didn't find a register that is spillable, try aliases?
+  
 // FIXME:  assert(minReg && "Didn't find any reg!");
   DEBUG(std::cerr << "\t\tregister with min weight: "
         << mri_->getName(minReg) << " (" << minWeight << ")\n");
