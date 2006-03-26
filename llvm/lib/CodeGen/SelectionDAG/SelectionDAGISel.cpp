@@ -1114,7 +1114,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::dbg_stoppoint: {
     MachineDebugInfo *DebugInfo = DAG.getMachineDebugInfo();
     DbgStopPointInst &SPI = cast<DbgStopPointInst>(I);
-    if (DebugInfo &&  DebugInfo->Verify(SPI.getContext())) {
+    if (DebugInfo && SPI.getContext() && DebugInfo->Verify(SPI.getContext())) {
       std::vector<SDOperand> Ops;
 
       Ops.push_back(getRoot());
@@ -1136,7 +1136,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::dbg_region_start: {
     MachineDebugInfo *DebugInfo = DAG.getMachineDebugInfo();
     DbgRegionStartInst &RSI = cast<DbgRegionStartInst>(I);
-    if (DebugInfo && DebugInfo->Verify(RSI.getContext())) {
+    if (DebugInfo && RSI.getContext() && DebugInfo->Verify(RSI.getContext())) {
       std::vector<SDOperand> Ops;
 
       unsigned LabelID = DebugInfo->RecordRegionStart(RSI.getContext());
@@ -1152,7 +1152,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::dbg_region_end: {
     MachineDebugInfo *DebugInfo = DAG.getMachineDebugInfo();
     DbgRegionEndInst &REI = cast<DbgRegionEndInst>(I);
-    if (DebugInfo && DebugInfo->Verify(REI.getContext())) {
+    if (DebugInfo && REI.getContext() && DebugInfo->Verify(REI.getContext())) {
       std::vector<SDOperand> Ops;
 
       unsigned LabelID = DebugInfo->RecordRegionEnd(REI.getContext());
@@ -1168,7 +1168,8 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::dbg_func_start: {
     MachineDebugInfo *DebugInfo = DAG.getMachineDebugInfo();
     DbgFuncStartInst &FSI = cast<DbgFuncStartInst>(I);
-    if (DebugInfo && DebugInfo->Verify(FSI.getSubprogram())) {
+    if (DebugInfo && FSI.getSubprogram() &&
+        DebugInfo->Verify(FSI.getSubprogram())) {
       std::vector<SDOperand> Ops;
 
       unsigned LabelID = DebugInfo->RecordRegionStart(FSI.getSubprogram());
