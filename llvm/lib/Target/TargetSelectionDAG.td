@@ -386,6 +386,9 @@ def immAllOnes : PatLeaf<(imm), [{ return N->isAllOnesValue(); }]>;
 def immAllOnesV: PatLeaf<(build_vector), [{
   return ISD::isBuildVectorAllOnesInteger(N);
 }]>;
+def immAllZerosV: PatLeaf<(build_vector), [{
+  return ISD::isBuildVectorAllZeros(N);
+}]>;
 
 // Other helper fragments.
 def not  : PatFrag<(ops node:$in), (xor node:$in, immAllOnes)>;
