@@ -59,7 +59,10 @@ def vecspltisw : PatLeaf<(build_vector), [{
   return PPC::isVecSplatImm(N, 4);
 }], VSPLTISW_get_imm>;
 
-
+class isVDOT {   // vector dot instruction.
+  list<Register> Defs = [CR6];
+  bit RC = 1;
+}
 
 //===----------------------------------------------------------------------===//
 // Instruction Definitions.
@@ -297,9 +300,108 @@ def VSPLTISW : VXForm_1<908, (ops VRRC:$vD, s5imm:$SIMM),
                       "vspltisw $vD, $SIMM", VecPerm,
                       [(set VRRC:$vD, (v4f32 vecspltisw:$SIMM))]>;
 
-                      
-// VX-Form Pseudo Instructions
 
+// Altivec Comparisons.
+
+// f32 element comparisons.
+def VCMPBFP   : VXRForm_1<966, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                          "vcmpbfp $vD, $vA, $vB", VecFPCompare,
+                          [(set VRRC:$vD, 
+                                (int_ppc_altivec_vcmpbfp VRRC:$vA, VRRC:$vB))]>;
+def VCMPBFPo  : VXRForm_1<966, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                          "vcmpbfp. $vD, $vA, $vB", VecFPCompare,
+                          []>, isVDOT;
+def VCMPEQFP  : VXRForm_1<198, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                         "vcmpeqfp $vD, $vA, $vB", VecFPCompare,
+                         [(set VRRC:$vD, 
+                               (int_ppc_altivec_vcmpeqfp VRRC:$vA, VRRC:$vB))]>;
+def VCMPEQFPo : VXRForm_1<198, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                         "vcmpeqfp. $vD, $vA, $vB", VecFPCompare,
+                         []>, isVDOT;
+def VCMPGEFP  : VXRForm_1<454, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                         "vcmpgefp $vD, $vA, $vB", VecFPCompare,
+                         [(set VRRC:$vD, 
+                               (int_ppc_altivec_vcmpgefp VRRC:$vA, VRRC:$vB))]>;
+def VCMPGEFPo : VXRForm_1<454, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                         "vcmpgefp. $vD, $vA, $vB", VecFPCompare,
+                         []>, isVDOT;
+def VCMPGTFP  : VXRForm_1<710, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                         "vcmpgtfp $vD, $vA, $vB", VecFPCompare,
+                         [(set VRRC:$vD, 
+                               (int_ppc_altivec_vcmpgtfp VRRC:$vA, VRRC:$vB))]>;
+def VCMPGTFPo : VXRForm_1<710, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                         "vcmpgtfp. $vD, $vA, $vB", VecFPCompare,
+                         []>, isVDOT;
+
+// i8 element comparisons.
+def VCMPEQUB  : VXRForm_1<6, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                         "vcmpequb $vD, $vA, $vB", VecFPCompare,
+                         [(set VRRC:$vD, 
+                               (int_ppc_altivec_vcmpequb VRRC:$vA, VRRC:$vB))]>;
+def VCMPEQUBo : VXRForm_1<6, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                         "vcmpequb. $vD, $vA, $vB", VecFPCompare,
+                         []>, isVDOT;
+def VCMPGTSB  : VXRForm_1<774, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                         "vcmpgtsb $vD, $vA, $vB", VecFPCompare,
+                         [(set VRRC:$vD, 
+                               (int_ppc_altivec_vcmpgtsb VRRC:$vA, VRRC:$vB))]>;
+def VCMPGTSBo : VXRForm_1<774, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                         "vcmpgtsb. $vD, $vA, $vB", VecFPCompare,
+                         []>, isVDOT;
+def VCMPGTUB  : VXRForm_1<518, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                         "vcmpgtub $vD, $vA, $vB", VecFPCompare,
+                         [(set VRRC:$vD, 
+                               (int_ppc_altivec_vcmpgtub VRRC:$vA, VRRC:$vB))]>;
+def VCMPGTUBo : VXRForm_1<518, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                         "vcmpgtub. $vD, $vA, $vB", VecFPCompare,
+                         []>, isVDOT;
+
+// i16 element comparisons.
+def VCMPEQUH  : VXRForm_1<70, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                         "vcmpequh $vD, $vA, $vB", VecFPCompare,
+                         [(set VRRC:$vD, 
+                               (int_ppc_altivec_vcmpequh VRRC:$vA, VRRC:$vB))]>;
+def VCMPEQUHo : VXRForm_1<70, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                         "vcmpequh. $vD, $vA, $vB", VecFPCompare,
+                         []>, isVDOT;
+def VCMPGTSH  : VXRForm_1<838, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                         "vcmpgtsh $vD, $vA, $vB", VecFPCompare,
+                         [(set VRRC:$vD, 
+                               (int_ppc_altivec_vcmpgtsh VRRC:$vA, VRRC:$vB))]>;
+def VCMPGTSHo : VXRForm_1<838, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                         "vcmpgtsh. $vD, $vA, $vB", VecFPCompare,
+                         []>, isVDOT;
+def VCMPGTUH  : VXRForm_1<582, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                         "vcmpgtuh $vD, $vA, $vB", VecFPCompare,
+                         [(set VRRC:$vD, 
+                               (int_ppc_altivec_vcmpgtuh VRRC:$vA, VRRC:$vB))]>;
+def VCMPGTUHo : VXRForm_1<582, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                         "vcmpgtuh. $vD, $vA, $vB", VecFPCompare,
+                         []>, isVDOT;
+
+// i32 element comparisons.
+def VCMPEQUW  : VXRForm_1<134, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                         "vcmpequw $vD, $vA, $vB", VecFPCompare,
+                         [(set VRRC:$vD, 
+                               (int_ppc_altivec_vcmpequw VRRC:$vA, VRRC:$vB))]>;
+def VCMPEQUWo : VXRForm_1<134, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                         "vcmpequw. $vD, $vA, $vB", VecFPCompare,
+                         []>, isVDOT;
+def VCMPGTSW  : VXRForm_1<902, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                         "vcmpgtsw $vD, $vA, $vB", VecFPCompare,
+                         [(set VRRC:$vD, 
+                               (int_ppc_altivec_vcmpgtsw VRRC:$vA, VRRC:$vB))]>;
+def VCMPGTSWo : VXRForm_1<902, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                         "vcmpgtsw. $vD, $vA, $vB", VecFPCompare,
+                         []>, isVDOT;
+def VCMPGTUW  : VXRForm_1<646, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                         "vcmpgtuw $vD, $vA, $vB", VecFPCompare,
+                         [(set VRRC:$vD, 
+                               (int_ppc_altivec_vcmpgtuw VRRC:$vA, VRRC:$vB))]>;
+def VCMPGTUWo : VXRForm_1<646, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                         "vcmpgtuw. $vD, $vA, $vB", VecFPCompare,
+                         []>, isVDOT;
+                      
 def V_SET0 : VXForm_setzero<1220, (ops VRRC:$vD),
                       "vxor $vD, $vD, $vD", VecFP,
                       [(set VRRC:$vD, (v4f32 vecimm0))]>;

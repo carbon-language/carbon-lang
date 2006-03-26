@@ -664,19 +664,20 @@ class VXForm_2<bits<11> xo, dag OL, string asmstr,
 }
 
 // E-4 VXR-Form
-class VXRForm_1<bits<10> xo, bit rc, dag OL, string asmstr,
+class VXRForm_1<bits<10> xo, dag OL, string asmstr,
                InstrItinClass itin, list<dag> pattern>
     : I<4, OL, asmstr, itin> {
   bits<5> VD;
   bits<5> VA;
   bits<5> VB;
+  bit RC = 0;
   
   let Pattern = pattern;
   
   let Inst{6-10}  = VD;
   let Inst{11-15} = VA;
   let Inst{16-20} = VB;
-  let Inst{21}    = rc;
+  let Inst{21}    = RC;
   let Inst{22-31} = xo;
 }
 
