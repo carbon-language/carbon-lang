@@ -558,6 +558,13 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i)
       Ops.push_back(LegalizeOp(Node->getOperand(i)));
     Result = DAG.UpdateNodeOperands(Result, Ops);
+    
+    // Allow the target to custom lower its intrinsics if it wants to.
+    if (TLI.getOperationAction(ISD::INTRINSIC, MVT::Other) == 
+        TargetLowering::Custom) {
+      Tmp3 = TLI.LowerOperation(Result, DAG);
+      if (Tmp3.Val) Result = Tmp3;
+    }      
     break;
   }    
 
