@@ -213,10 +213,6 @@ namespace llvm {
    /// the specified isShuffleMask VECTOR_SHUFFLE mask with PSHUF* and SHUFP*
    /// instructions.
    unsigned getShuffleSHUFImmediate(SDNode *N);
-
-   /// isZeroVector - Return true if this build_vector is an all-zero vector.
-   ///
-   bool isZeroVector(SDNode *N);
  }
 
   //===----------------------------------------------------------------------===//

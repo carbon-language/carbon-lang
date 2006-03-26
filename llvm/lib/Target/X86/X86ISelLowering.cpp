@@ -1533,26 +1533,6 @@ unsigned X86::getShuffleSHUFImmediate(SDNode *N) {
   return Mask;
 }
 
-/// isZeroVector - Return true if this build_vector is an all-zero vector.
-///
-bool X86::isZeroVector(SDNode *N) {
-  if (MVT::isInteger(N->getOperand(0).getValueType())) {
-    for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
-      if (!isa<ConstantSDNode>(N->getOperand(i)) ||
-          cast<ConstantSDNode>(N->getOperand(i))->getValue() != 0)
-        return false;
-  } else {
-    assert(MVT::isFloatingPoint(N->getOperand(0).getValueType()) &&
-           "Vector of non-int, non-float values?");
-    // See if this is all zeros.
-    for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
-      if (!isa<ConstantFPSDNode>(N->getOperand(i)) ||
-          !cast<ConstantFPSDNode>(N->getOperand(i))->isExactlyValue(0.0))
-        return false;
-  }
-  return true;
-}
-
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
 SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {

@@ -51,10 +51,6 @@ def fp32imm0 : PatLeaf<(f32 fpimm), [{
   return N->isExactlyValue(+0.0);
 }]>;
 
-def vecimm0 : PatLeaf<(build_vector), [{
-  return X86::isZeroVector(N);
-}]>;
-
 // SHUFFLE_get_shuf_imm xform function: convert vector_shuffle mask to PSHUF*,
 // SHUFP* etc. imm.
 def SHUFFLE_get_shuf_imm : SDNodeXForm<build_vector, [{
@@ -1000,24 +996,17 @@ def LDMXCSR : I<0xAE, MRM2m, (ops i32mem:$src),
 // Alias Instructions
 //===----------------------------------------------------------------------===//
 
-// Alias instructions that map zero vector to xorp* for sse.
+// Alias instructions that map zero vector to pxor / xorp* for sse.
 // FIXME: remove when we can teach regalloc that xor reg, reg is ok.
-def VZEROv16i8 : I<0xEF, MRMInitReg, (ops VR128:$dst),
-                   "pxor $dst, $dst", [(set VR128:$dst, (v16i8 vecimm0))]>,
-                 Requires<[HasSSE2]>, TB, OpSize;
-def VZEROv8i16 : I<0xEF, MRMInitReg, (ops VR128:$dst),
-                   "pxor $dst, $dst", [(set VR128:$dst, (v8i16 vecimm0))]>,
-                 Requires<[HasSSE2]>, TB, OpSize;
-def VZEROv4i32 : I<0xEF, MRMInitReg, (ops VR128:$dst),
-                   "pxor $dst, $dst", [(set VR128:$dst, (v4i32 vecimm0))]>,
-                 Requires<[HasSSE2]>, TB, OpSize;
-def VZEROv2i64 : I<0xEF, MRMInitReg, (ops VR128:$dst),
-                   "pxor $dst, $dst", [(set VR128:$dst, (v2i64 vecimm0))]>,
-                 Requires<[HasSSE2]>, TB, OpSize;
-def VZEROv4f32 : PSI<0x57, MRMInitReg, (ops VR128:$dst),
-                     "xorps $dst, $dst", [(set VR128:$dst, (v4f32 vecimm0))]>;
-def VZEROv2f64 : PDI<0x57, MRMInitReg, (ops VR128:$dst),
-                     "xorpd $dst, $dst", [(set VR128:$dst, (v2f64 vecimm0))]>;
+def V_SET0_PI : PDI<0xEF, MRMInitReg, (ops VR128:$dst),
+                    "pxor $dst, $dst",
+                    [(set VR128:$dst, (v2i64 immAllZerosV))]>;
+def V_SET0_PS : PSI<0x57, MRMInitReg, (ops VR128:$dst),
+                    "xorps $dst, $dst",
+                    [(set VR128:$dst, (v4f32 immAllZerosV))]>;
+def V_SET0_PD : PDI<0x57, MRMInitReg, (ops VR128:$dst),
+                    "xorpd $dst, $dst",
+                    [(set VR128:$dst, (v2f64 immAllZerosV))]>;
 
 // Scalar to 128-bit vector with zero extension.
 // Three operand (but two address) aliases.
@@ -1057,80 +1046,87 @@ def : Pat<(v8i16 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
 def : Pat<(v4i32 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
 def : Pat<(v2i64 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
 
+// 128-bit vector all zero's.
+def : Pat<(v16i8 immAllZerosV), (v16i8 (V_SET0_PI))>, Requires<[HasSSE2]>;
+def : Pat<(v8i16 immAllZerosV), (v8i16 (V_SET0_PI))>, Requires<[HasSSE2]>;
+def : Pat<(v4i32 immAllZerosV), (v4i32 (V_SET0_PI))>, Requires<[HasSSE2]>;
+
 // Load 128-bit integer vector values.
 def : Pat<(v16i8 (load addr:$src)), (MOVDQArm addr:$src)>,
-  Requires<[HasSSE2]>;
+      Requires<[HasSSE2]>;
 def : Pat<(v8i16 (load addr:$src)), (MOVDQArm addr:$src)>,
-  Requires<[HasSSE2]>;
+      Requires<[HasSSE2]>;
 def : Pat<(v4i32 (load addr:$src)), (MOVDQArm addr:$src)>,
-  Requires<[HasSSE2]>;
+      Requires<[HasSSE2]>;
 def : Pat<(v2i64 (load addr:$src)), (MOVDQArm addr:$src)>,
-  Requires<[HasSSE2]>;
+      Requires<[HasSSE2]>;
 
 // Store 128-bit integer vector values.
 def : Pat<(store (v16i8 VR128:$src), addr:$dst),
-          (MOVDQAmr addr:$dst, VR128:$src)>, Requires<[HasSSE1]>;
+          (MOVDQAmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
 def : Pat<(store (v8i16 VR128:$src), addr:$dst),
-          (MOVDQAmr addr:$dst, VR128:$src)>, Requires<[HasSSE1]>;
+          (MOVDQAmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
 def : Pat<(store (v4i32 VR128:$src), addr:$dst),
-          (MOVDQAmr addr:$dst, VR128:$src)>, Requires<[HasSSE1]>;
+          (MOVDQAmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
 def : Pat<(store (v2i64 VR128:$src), addr:$dst),
           (MOVDQAmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
 
 // Scalar to v8i16 / v16i8. The source may be a R32, but only the lower 8 or
 // 16-bits matter.
 def : Pat<(v8i16 (X86s2vec R32:$src)), (MOVD128rr R32:$src)>,
-  Requires<[HasSSE2]>;
+      Requires<[HasSSE2]>;
 def : Pat<(v16i8 (X86s2vec R32:$src)), (MOVD128rr R32:$src)>,
-  Requires<[HasSSE2]>;
+      Requires<[HasSSE2]>;
 
 // bit_convert
-def : Pat<(v4i32 (bitconvert (v4f32 VR128:$src))), (v4i32 VR128:$src)>;
-def : Pat<(v4f32 (bitconvert (v4i32 VR128:$src))), (v4f32 VR128:$src)>;
+def : Pat<(v4i32 (bitconvert (v4f32 VR128:$src))), (v4i32 VR128:$src)>,
+      Requires<[HasSSE2]>;
+def : Pat<(v4f32 (bitconvert (v4i32 VR128:$src))), (v4f32 VR128:$src)>,
+      Requires<[HasSSE2]>;
 
 // Zeroing a VR128 then do a MOVS* to the lower bits.
 def : Pat<(v2f64 (X86zexts2vec FR64:$src)),
-          (MOVZSD128rr (VZEROv2f64), FR64:$src)>;
+          (MOVZSD128rr (V_SET0_PD), FR64:$src)>, Requires<[HasSSE2]>;
 def : Pat<(v4f32 (X86zexts2vec FR32:$src)),
-          (MOVZSS128rr (VZEROv4f32), FR32:$src)>;
+          (MOVZSS128rr (V_SET0_PS), FR32:$src)>, Requires<[HasSSE2]>;
 def : Pat<(v2i64 (X86zexts2vec VR64:$src)),
-          (MOVZQ128rr (VZEROv2i64), VR64:$src)>, Requires<[HasSSE2]>;
+          (MOVZQ128rr (V_SET0_PI), VR64:$src)>, Requires<[HasSSE2]>;
 def : Pat<(v4i32 (X86zexts2vec R32:$src)),
-          (MOVZD128rr (VZEROv4i32), R32:$src)>;
+          (MOVZD128rr (V_SET0_PI), R32:$src)>, Requires<[HasSSE2]>;
 def : Pat<(v8i16 (X86zexts2vec R16:$src)),
-          (MOVZD128rr (VZEROv8i16), (MOVZX32rr16 R16:$src))>;
+         (MOVZD128rr (V_SET0_PI), (MOVZX32rr16 R16:$src))>, Requires<[HasSSE2]>;
 def : Pat<(v16i8 (X86zexts2vec R8:$src)),
-          (MOVZD128rr (VZEROv16i8), (MOVZX32rr8 R8:$src))>;
+          (MOVZD128rr (V_SET0_PI), (MOVZX32rr8 R8:$src))>, Requires<[HasSSE2]>;
 
 // Splat v4f32 / v4i32
 def : Pat<(vector_shuffle (v4f32 VR128:$src), (undef), SHUFP_splat_mask:$sm),
           (v4f32 (SHUFPSrr VR128:$src, VR128:$src, SHUFP_splat_mask:$sm))>,
-  Requires<[HasSSE1]>;
+      Requires<[HasSSE1]>;
 def : Pat<(vector_shuffle (v4i32 VR128:$src), (undef), SHUFP_splat_mask:$sm),
           (v4i32 (SHUFPSrr VR128:$src, VR128:$src, SHUFP_splat_mask:$sm))>,
-  Requires<[HasSSE1]>;
+      Requires<[HasSSE2]>;
 
 // Splat v2f64 / v2i64
 def : Pat<(vector_shuffle (v2f64 VR128:$src), (undef), MOVLHPS_splat_mask:$sm),
-          (v2f64 (MOVLHPSrr VR128:$src, VR128:$src))>, Requires<[HasSSE1]>;
+          (v2f64 (MOVLHPSrr VR128:$src, VR128:$src))>, Requires<[HasSSE2]>;
 def : Pat<(vector_shuffle (v2i64 VR128:$src), (undef), MOVLHPS_splat_mask:$sm),
-          (v2i64 (MOVLHPSrr VR128:$src, VR128:$src))>, Requires<[HasSSE1]>;
+          (v2i64 (MOVLHPSrr VR128:$src, VR128:$src))>, Requires<[HasSSE2]>;
 
 // Shuffle v4f32 / v4i32, undef. These should only match if splat cases do not.
 def : Pat<(vector_shuffle (v4f32 VR128:$src), (undef), PSHUFD_shuffle_mask:$sm),
           (v4f32 (PSHUFDrr VR128:$src, PSHUFD_shuffle_mask:$sm))>,
-  Requires<[HasSSE2]>;
+      Requires<[HasSSE2]>;
 def : Pat<(vector_shuffle (v4i32 VR128:$src), (undef), PSHUFD_shuffle_mask:$sm),
           (v4i32 (PSHUFDrr VR128:$src, PSHUFD_shuffle_mask:$sm))>,
-  Requires<[HasSSE2]>;
+      Requires<[HasSSE2]>;
 
 // Shuffle v2f64 / v2i64
 def : Pat<(vector_shuffle (v2f64 VR128:$src1), (v2f64 VR128:$src2),
            MOVLHPSorUNPCKLPD_shuffle_mask:$sm),
-          (v2f64 (MOVLHPSrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE1]>;
+          (v2f64 (MOVLHPSrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
 def : Pat<(vector_shuffle (v2f64 VR128:$src1), (v2f64 VR128:$src2),
            MOVHLPS_shuffle_mask:$sm),
-          (v2f64 (MOVHLPSrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE1]>;
+          (v2f64 (MOVHLPSrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
 def : Pat<(vector_shuffle (v2f64 VR128:$src1), (v2f64 VR128:$src2),
            UNPCKHPD_shuffle_mask:$sm),
           (v2f64 (UNPCKHPDrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
@@ -1140,10 +1136,10 @@ def : Pat<(vector_shuffle (v2f64 VR128:$src1), (loadv2f64 addr:$src2),
 
 def : Pat<(vector_shuffle (v2i64 VR128:$src1), (v2i64 VR128:$src2),
            MOVLHPSorUNPCKLPD_shuffle_mask:$sm),
-          (v2i64 (MOVLHPSrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE1]>;
+          (v2i64 (MOVLHPSrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
 def : Pat<(vector_shuffle (v2i64 VR128:$src1), (v2i64 VR128:$src2),
            MOVHLPS_shuffle_mask:$sm),
-          (v2i64 (MOVHLPSrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE1]>;
+          (v2i64 (MOVHLPSrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
 def : Pat<(vector_shuffle (v2i64 VR128:$src1), (v2i64 VR128:$src2),
            UNPCKHPD_shuffle_mask:$sm),
           (v2i64 (UNPCKHPDrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
