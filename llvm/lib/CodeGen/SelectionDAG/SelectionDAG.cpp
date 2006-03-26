@@ -101,6 +101,30 @@ bool ISD::isBuildVectorAllOnesInteger(const SDNode *N) {
 }
 
 
+/// isBuildVectorAllZeros - Return true if the specified node is a
+/// BUILD_VECTOR where all of the elements are 0 or undef.
+bool ISD::isBuildVectorAllZeros(const SDNode *N) {
+  if (N->getOpcode() != ISD::BUILD_VECTOR) return false;
+
+  bool AllUndef = true;
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+    SDOperand Elt = N->getOperand(i);
+    if (Elt.getOpcode() != ISD::UNDEF) {
+      AllUndef = false;
+      if (isa<ConstantSDNode>(Elt)) {
+        if (!cast<ConstantSDNode>(Elt)->isNullValue())
+          return false;
+      } else if (isa<ConstantFPSDNode>(Elt)) {
+        if (!cast<ConstantFPSDNode>(Elt)->isExactlyValue(0.0))
+          return false;
+      } else
+        return false;
+    }
+  }
+
+  return !AllUndef;
+}
+
 /// getSetCCSwappedOperands - Return the operation corresponding to (Y op X)
 /// when given the operation for (X op Y).
 ISD::CondCode ISD::getSetCCSwappedOperands(ISD::CondCode Operation) {
