@@ -24,10 +24,6 @@ def VSPLT_shuffle_mask : PatLeaf<(build_vector), [{
   return PPC::isSplatShuffleMask(N);
 }], VSPLT_get_imm>;
 
-def vecimm0 : PatLeaf<(build_vector), [{
-  return PPC::isZeroVector(N);
-}]>;
-
 
 // VSPLTISB_get_imm xform function: convert build_vector to VSPLTISB imm.
 def VSPLTISB_get_imm : SDNodeXForm<build_vector, [{
@@ -404,7 +400,7 @@ def VCMPGTUWo : VXRForm_1<646, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       
 def V_SET0 : VXForm_setzero<1220, (ops VRRC:$vD),
                       "vxor $vD, $vD, $vD", VecFP,
-                      [(set VRRC:$vD, (v4f32 vecimm0))]>;
+                      [(set VRRC:$vD, (v4f32 immAllZerosV))]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -415,9 +411,9 @@ def V_SET0 : VXForm_setzero<1220, (ops VRRC:$vD),
 def : Pat<(v16i8 (undef)), (v16i8 (IMPLICIT_DEF_VRRC))>;
 def : Pat<(v8i16 (undef)), (v8i16 (IMPLICIT_DEF_VRRC))>;
 def : Pat<(v4i32 (undef)), (v4i32 (IMPLICIT_DEF_VRRC))>;
-def : Pat<(v16i8 vecimm0), (v16i8 (V_SET0))>;
-def : Pat<(v8i16 vecimm0), (v8i16 (V_SET0))>;
-def : Pat<(v4i32 vecimm0), (v4i32 (V_SET0))>;
+def : Pat<(v16i8 immAllZerosV), (v16i8 (V_SET0))>;
+def : Pat<(v8i16 immAllZerosV), (v8i16 (V_SET0))>;
+def : Pat<(v4i32 immAllZerosV), (v4i32 (V_SET0))>;
 
 // Loads.
 def : Pat<(v16i8 (load xoaddr:$src)), (v16i8 (LVX xoaddr:$src))>;

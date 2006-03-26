@@ -279,26 +279,6 @@ unsigned PPC::getVSPLTImmediate(SDNode *N) {
   return cast<ConstantSDNode>(N->getOperand(0))->getValue();
 }
 
-/// isZeroVector - Return true if this build_vector is an all-zero vector.
-///
-bool PPC::isZeroVector(SDNode *N) {
-  if (MVT::isInteger(N->getOperand(0).getValueType())) {
-    for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
-      if (!isa<ConstantSDNode>(N->getOperand(i)) ||
-          cast<ConstantSDNode>(N->getOperand(i))->getValue() != 0)
-        return false;
-  } else {
-    assert(MVT::isFloatingPoint(N->getOperand(0).getValueType()) &&
-           "Vector of non-int, non-float values?");
-    // See if this is all zeros.
-    for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
-      if (!isa<ConstantFPSDNode>(N->getOperand(i)) ||
-          !cast<ConstantFPSDNode>(N->getOperand(i))->isExactlyValue(0.0))
-        return false;
-  }
-  return true;
-}
-
 /// isVecSplatImm - Return true if this is a build_vector of constants which
 /// can be formed by using a vspltis[bhw] instruction.  The ByteSize field
 /// indicates the number of bytes of each element [124] -> [bhw].
@@ -347,7 +327,7 @@ bool PPC::isVecSplatImm(SDNode *N, unsigned ByteSize, char *Val) {
   int ShAmt = (4-ByteSize)*8;
   int MaskVal = ((int)Value << ShAmt) >> ShAmt;
   
-  // If this is zero, don't match, zero matches isZeroVector.
+  // If this is zero, don't match, zero matches ISD::isBuildVectorAllZeros.
   if (MaskVal == 0) return false;
 
   if (Val) *Val = MaskVal;
@@ -721,7 +701,7 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     
     // See if this is all zeros.
     // FIXME: We should handle splat(-0.0), and other cases here.
-    if (PPC::isZeroVector(Op.Val))
+    if (ISD::isBuildVectorAllZeros(Op.Val))
       return Op;
     
     if (PPC::isVecSplatImm(Op.Val, 1) ||    // vspltisb
