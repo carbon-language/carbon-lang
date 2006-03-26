@@ -240,6 +240,10 @@ let TargetPrefix = "ppc" in {  // All intrinsics start with "llvm.ppc.".
   def int_ppc_altivec_vaddcuw : GCCBuiltin<"__builtin_altivec_vaddcuw">,
               Intrinsic<[llvm_v4i32_ty, llvm_v4i32_ty, llvm_v4i32_ty],
                         [InstrNoMem]>;
+  def int_ppc_altivec_vsldoi : GCCBuiltin<"__builtin_altivec_vsldoi_4si">,
+              Intrinsic<[llvm_v4i32_ty, llvm_v4i32_ty, 
+                         llvm_v4i32_ty, llvm_int_ty],
+                        [InstrNoMem]>;
 
   // Saturating adds:
   def int_ppc_altivec_vaddubs : GCCBuiltin<"__builtin_altivec_vaddubs">,
