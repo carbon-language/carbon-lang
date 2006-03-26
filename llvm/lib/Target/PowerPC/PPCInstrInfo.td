@@ -30,6 +30,10 @@ def SDT_PPCvperm   : SDTypeProfile<1, 3, [
   SDTCisVT<3, v16i8>, SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>
 ]>;
 
+def SDT_PPCvcmp_o : SDTypeProfile<1, 3, [
+  SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>, SDTCisVT<3, i32>
+]>;
+
 //===----------------------------------------------------------------------===//
 // PowerPC specific DAG Nodes.
 //
@@ -67,6 +71,8 @@ def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_PPCCallSeq,[SDNPHasChain]>;
 
 def retflag       : SDNode<"PPCISD::RET_FLAG", SDT_PPCRetFlag,
 	                   [SDNPHasChain, SDNPOptInFlag]>;
+
+def PPCvcmp_o     : SDNode<"PPCISD::VCMPo", SDT_PPCvcmp_o, [SDNPOutFlag]>;
 
 //===----------------------------------------------------------------------===//
 // PowerPC specific transformation functions and pattern fragments.
@@ -701,10 +707,10 @@ def MFVRSAVE : XFXForm_1_ext<31, 339, 256, (ops GPRC:$rT),
                              "mfspr $rT, 256", IntGeneral>,
                PPC970_DGroup_First, PPC970_Unit_FXU;
 
-def MFCR  : XFXForm_3<31, 19, (ops GPRC:$rT), "mfcr $rT", SprMFCR>,
-            PPC970_MicroCode, PPC970_Unit_CRU;
 def MTCRF : XFXForm_5<31, 144, (ops crbitm:$FXM, GPRC:$rS),
                       "mtcrf $FXM, $rS", BrMCRX>,
+            PPC970_MicroCode, PPC970_Unit_CRU;
+def MFCR  : XFXForm_3<31, 19, (ops GPRC:$rT), "mfcr $rT", SprMFCR>,
             PPC970_MicroCode, PPC970_Unit_CRU;
 def MFOCRF: XFXForm_5a<31, 19, (ops GPRC:$rT, crbitm:$FXM),
                        "mfcr $rT, $FXM", SprMFCR>,

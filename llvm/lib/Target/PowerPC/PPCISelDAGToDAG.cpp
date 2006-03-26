@@ -1060,6 +1060,20 @@ void PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
                                       getI32Imm(0)), 0);
     return;
   }
+
+  case PPCISD::MFCR: {
+    SDOperand InFlag;
+    Select(InFlag, N->getOperand(1));
+    // Use MFOCRF if supported.
+    if (TLI.getTargetMachine().getSubtarget<PPCSubtarget>().isGigaProcessor())
+      Result = SDOperand(CurDAG->getTargetNode(PPC::MFOCRF, MVT::i32,
+                                               N->getOperand(0), InFlag), 0);
+    else
+      Result = SDOperand(CurDAG->getTargetNode(PPC::MFCR, MVT::i32, InFlag), 0);
+    CodeGenMap[Op] = Result;
+    return;
+  }
+    
   case ISD::SDIV: {
     // FIXME: since this depends on the setting of the carry flag from the srawi
     //        we should really be making notes about that for the scheduler.

@@ -88,6 +88,17 @@ namespace llvm {
       
       /// Return with a flag operand, matched by 'blr'
       RET_FLAG,
+      
+      /// R32 = MFCR(CRREG, INFLAG) - Represents the MFCR/MFOCRF instructions.
+      /// This copies the bits corresponding to the specified CRREG into the
+      /// resultant GPR.  Bits corresponding to other CR regs are undefined.
+      MFCR,
+      
+      /// RESVEC, OUTFLAG = VCMPo(LHS, RHS, OPC) - Represents one of the
+      /// altivec VCMP*o instructions.  For lack of better number, we use the 
+      /// opcode number encoding for the OPC field to identify the compare.  For
+      /// example, 838 is VCMPGTSH.
+      VCMPo
     };
   }
 

@@ -22,6 +22,7 @@
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
@@ -136,6 +137,9 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::STACKRESTORE      , MVT::Other, Expand);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32  , Expand);
   
+  // We want to custom lower some of our intrinsics.
+  setOperationAction(ISD::INTRINSIC         , MVT::Other, Custom);
+  
   if (TM.getSubtarget<PPCSubtarget>().is64Bit()) {
     // They also have instructions for converting between i64 and fp.
     setOperationAction(ISD::FP_TO_SINT, MVT::i64, Custom);
@@ -230,6 +234,8 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::STD_32:        return "PPCISD::STD_32";
   case PPCISD::CALL:          return "PPCISD::CALL";
   case PPCISD::RET_FLAG:      return "PPCISD::RET_FLAG";
+  case PPCISD::MFCR:          return "PPCISD::MFCR";
+  case PPCISD::VCMPo:         return "PPCISD::VCMPo";
   }
 }
 
@@ -745,6 +751,80 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     
     SDOperand VPermMask =DAG.getNode(ISD::BUILD_VECTOR, MVT::v16i8, ResultMask);
     return DAG.getNode(PPCISD::VPERM, V1.getValueType(), V1, V2, VPermMask);
+  }
+  case ISD::INTRINSIC: {
+    bool HasChain = Op.getOperand(0).getValueType() == MVT::Other;
+    unsigned IntNo=cast<ConstantSDNode>(Op.getOperand(HasChain))->getValue();
+    
+    // If this is a lowered altivec predicate compare, CompareOpc is set to the
+    // opcode number of the comparison.
+    int CompareOpc = -1;
+    switch (IntNo) {
+    default: return SDOperand();    // Don't custom lower most intrinsics.
+    case Intrinsic::ppc_altivec_vcmpbfp_p:  CompareOpc = 966; break;
+    case Intrinsic::ppc_altivec_vcmpeqfp_p: CompareOpc = 198; break;
+    case Intrinsic::ppc_altivec_vcmpequb_p: CompareOpc =   6; break;
+    case Intrinsic::ppc_altivec_vcmpequh_p: CompareOpc =  70; break;
+    case Intrinsic::ppc_altivec_vcmpequw_p: CompareOpc = 134; break;
+    case Intrinsic::ppc_altivec_vcmpgefp_p: CompareOpc = 454; break;
+    case Intrinsic::ppc_altivec_vcmpgtfp_p: CompareOpc = 710; break;
+    case Intrinsic::ppc_altivec_vcmpgtsb_p: CompareOpc = 774; break;
+    case Intrinsic::ppc_altivec_vcmpgtsh_p: CompareOpc = 838; break;
+    case Intrinsic::ppc_altivec_vcmpgtsw_p: CompareOpc = 902; break;
+    case Intrinsic::ppc_altivec_vcmpgtub_p: CompareOpc = 518; break;
+    case Intrinsic::ppc_altivec_vcmpgtuh_p: CompareOpc = 582; break;
+    case Intrinsic::ppc_altivec_vcmpgtuw_p: CompareOpc = 646; break;
+    }
+    
+    assert(CompareOpc>0 && "We only lower altivec predicate compares so far!");
+
+    // Create the PPCISD altivec 'dot' comparison node.
+    std::vector<SDOperand> Ops;
+    std::vector<MVT::ValueType> VTs;
+    Ops.push_back(Op.getOperand(2));  // LHS
+    Ops.push_back(Op.getOperand(3));  // RHS
+    Ops.push_back(DAG.getConstant(CompareOpc, MVT::i32));
+    VTs.push_back(Op.getOperand(2).getValueType());
+    VTs.push_back(MVT::Flag);
+    SDOperand CompNode = DAG.getNode(PPCISD::VCMPo, VTs, Ops);
+
+    // Now that we have the comparison, emit a copy from the CR to a GPR.
+    // This is flagged to the above dot comparison.
+    SDOperand Flags = DAG.getNode(PPCISD::MFCR, MVT::i32,
+                                  DAG.getRegister(PPC::CR6, MVT::i32),
+                                  CompNode.getValue(1)); 
+
+    // Unpack the result based on how the target uses it.
+    unsigned BitNo;   // Bit # of CR6.
+    bool InvertBit;   // Invert result?
+    switch (cast<ConstantSDNode>(Op.getOperand(1))->getValue()) {
+    default:  // Can't happen, don't crash on invalid number though.
+    case 0:   // Return the value of the EQ bit of CR6.
+      BitNo = 0; InvertBit = false;
+      break;
+    case 1:   // Return the inverted value of the EQ bit of CR6.
+      BitNo = 0; InvertBit = true;
+      break;
+    case 2:   // Return the value of the LT bit of CR6.
+      BitNo = 2; InvertBit = false;
+      break;
+    case 3:   // Return the inverted value of the LT bit of CR6.
+      BitNo = 2; InvertBit = true;
+      break;
+    }
+    
+    // Shift the bit into the low position.
+    Flags = DAG.getNode(ISD::SRL, MVT::i32, Flags,
+                        DAG.getConstant(8-(3-BitNo), MVT::i32));
+    // Isolate the bit.
+    Flags = DAG.getNode(ISD::AND, MVT::i32, Flags,
+                        DAG.getConstant(1, MVT::i32));
+    
+    // If we are supposed to, toggle the bit.
+    if (InvertBit)
+      Flags = DAG.getNode(ISD::XOR, MVT::i32, Flags,
+                          DAG.getConstant(1, MVT::i32));
+    return Flags;
   }
   }
   return SDOperand();
