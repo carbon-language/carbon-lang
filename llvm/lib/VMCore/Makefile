@@ -20,9 +20,12 @@ include $(LEVEL)/Makefile.common
 
 GENFILE:=$(PROJ_SRC_ROOT)/include/llvm/Intrinsics.gen
 
-$(GENFILE): $(PROJ_SRC_ROOT)/include/llvm/Intrinsics.td $(TBLGEN)
+INTRINSICTD  := $(PROJ_SRC_ROOT)/include/llvm/Intrinsics.td
+INTRINSICTDS := $(wildcard $(PROJ_SRC_ROOT)/include/llvm/Intrinsics*.td)
+
+$(GENFILE): $(INTRINSICTDS) $(TBLGEN)
 	$(Echo) Building Intrinsics.gen from Intrinsics.td
-	$(Verb) $(TableGen) $< -o $@ -gen-intrinsic
+	$(Verb) $(TableGen) $(INTRINSICTD) -o $@ -gen-intrinsic
 
 install-local:: $(GENFILE)
 	$(DataInstall) $(GENFILE) $(PROJ_includedir)/llvm/Intrinsics.gen
