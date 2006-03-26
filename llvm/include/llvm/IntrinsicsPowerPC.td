@@ -83,6 +83,50 @@ let TargetPrefix = "ppc" in {  // All intrinsics start with "llvm.ppc.".
               Intrinsic<[llvm_v4i32_ty, llvm_v16i8_ty, llvm_v16i8_ty],
                         [InstrNoMem]>;
 
+  // Predicate Comparisons.  The first operand specifies interpretation of CR6.
+  def int_ppc_altivec_vcmpbfp_p : GCCBuiltin<"__builtin_altivec_vcmpbfp_p">,
+              Intrinsic<[llvm_int_ty, llvm_int_ty, llvm_v4f32_ty,llvm_v4f32_ty],
+                        [InstrNoMem]>;
+  def int_ppc_altivec_vcmpeqfp_p : GCCBuiltin<"__builtin_altivec_vcmpeqfp_p">,
+              Intrinsic<[llvm_int_ty, llvm_int_ty, llvm_v4f32_ty,llvm_v4f32_ty],
+                        [InstrNoMem]>;
+  def int_ppc_altivec_vcmpgefp_p : GCCBuiltin<"__builtin_altivec_vcmpgefp_p">,
+              Intrinsic<[llvm_int_ty, llvm_int_ty, llvm_v4f32_ty,llvm_v4f32_ty],
+                        [InstrNoMem]>;
+  def int_ppc_altivec_vcmpgtfp_p : GCCBuiltin<"__builtin_altivec_vcmpgtfp_p">,
+              Intrinsic<[llvm_int_ty, llvm_int_ty, llvm_v4f32_ty,llvm_v4f32_ty],
+                        [InstrNoMem]>;
+                        
+  def int_ppc_altivec_vcmpequw_p : GCCBuiltin<"__builtin_altivec_vcmpequw_p">,
+              Intrinsic<[llvm_int_ty, llvm_int_ty, llvm_v4i32_ty,llvm_v4i32_ty],
+                        [InstrNoMem]>;
+  def int_ppc_altivec_vcmpgtsw_p : GCCBuiltin<"__builtin_altivec_vcmpgtsw_p">,
+              Intrinsic<[llvm_int_ty, llvm_int_ty, llvm_v4i32_ty,llvm_v4i32_ty],
+                        [InstrNoMem]>;
+  def int_ppc_altivec_vcmpgtuw_p : GCCBuiltin<"__builtin_altivec_vcmpgtuw_p">,
+              Intrinsic<[llvm_int_ty, llvm_int_ty, llvm_v4i32_ty,llvm_v4i32_ty],
+                        [InstrNoMem]>;
+                        
+  def int_ppc_altivec_vcmpequh_p : GCCBuiltin<"__builtin_altivec_vcmpequh_p">,
+              Intrinsic<[llvm_int_ty, llvm_int_ty, llvm_v8i16_ty,llvm_v8i16_ty],
+                        [InstrNoMem]>;
+  def int_ppc_altivec_vcmpgtsh_p : GCCBuiltin<"__builtin_altivec_vcmpgtsh_p">,
+              Intrinsic<[llvm_int_ty, llvm_int_ty, llvm_v8i16_ty,llvm_v8i16_ty],
+                        [InstrNoMem]>;
+  def int_ppc_altivec_vcmpgtuh_p : GCCBuiltin<"__builtin_altivec_vcmpgtuh_p">,
+              Intrinsic<[llvm_int_ty, llvm_int_ty, llvm_v8i16_ty,llvm_v8i16_ty],
+                        [InstrNoMem]>;
+
+  def int_ppc_altivec_vcmpequb_p : GCCBuiltin<"__builtin_altivec_vcmpequb_p">,
+              Intrinsic<[llvm_int_ty, llvm_int_ty, llvm_v16i8_ty,llvm_v16i8_ty],
+                        [InstrNoMem]>;
+  def int_ppc_altivec_vcmpgtsb_p : GCCBuiltin<"__builtin_altivec_vcmpgtsb_p">,
+              Intrinsic<[llvm_int_ty, llvm_int_ty, llvm_v16i8_ty,llvm_v16i8_ty],
+                        [InstrNoMem]>;
+  def int_ppc_altivec_vcmpgtub_p : GCCBuiltin<"__builtin_altivec_vcmpgtub_p">,
+              Intrinsic<[llvm_int_ty, llvm_int_ty, llvm_v16i8_ty,llvm_v16i8_ty],
+                        [InstrNoMem]>;
+
   // Saturating adds and subs.
   def int_ppc_altivec_vaddubs : GCCBuiltin<"__builtin_altivec_vaddubs">,
               Intrinsic<[llvm_v16i8_ty, llvm_v16i8_ty, llvm_v16i8_ty],
