@@ -1320,30 +1320,24 @@ GlobalVariable *DISerializer::Serialize(DebugInfoDesc *DD) {
 
 //===----------------------------------------------------------------------===//
 
-/// markVisited - Return true if the GlobalVariable hase been "seen" before.
-/// Mark visited otherwise.
-bool DIVerifier::markVisited(GlobalVariable *GV) {
-  // Check if the GlobalVariable is already in the Visited set.
-  std::set<GlobalVariable *>::iterator VI = Visited.lower_bound(GV);
-  
-  // See if GlobalVariable exists.
-  bool Exists = VI != Visited.end() && *VI == GV;
-
-  // Insert in set.
-  if (!Exists) Visited.insert(VI, GV);
-  
-  return Exists;
-}
-
 /// Verify - Return true if the GlobalVariable appears to be a valid
 /// serialization of a DebugInfoDesc.
 bool DIVerifier::Verify(Value *V) {
   return Verify(getGlobalVariable(V));
 }
 bool DIVerifier::Verify(GlobalVariable *GV) {
-  // Check if seen before.
-  if (markVisited(GV)) return true;
+  // NULLs are valid.
+  if (!GV) return true;
   
+  // Check prior validity.
+  unsigned &ValiditySlot = Validity[GV];
+  
+  // If visited before then use old state.
+  if (ValiditySlot) return ValiditySlot == Valid;
+  
+  // Assume validity for the time being (recursion.)
+  ValiditySlot = Valid;
+
   // Get the Tag
   unsigned Tag = DebugInfoDesc::TagFromGlobal(GV);
   
@@ -1354,7 +1348,10 @@ bool DIVerifier::Verify(GlobalVariable *GV) {
   if (Tag == DW_TAG_compile_unit) {
     DebugVersion = CompileUnitDesc::DebugVersionFromGlobal(GV);
     // FIXME - In the short term, changes are too drastic to continue.
-    if (DebugVersion != LLVMDebugVersion) return false;
+    if (DebugVersion != LLVMDebugVersion) {
+      ValiditySlot = Invalid;
+      return false;
+    }
   }
   
   // Construct an empty DebugInfoDesc.
@@ -1370,17 +1367,18 @@ bool DIVerifier::Verify(GlobalVariable *GV) {
   unsigned N = CI->getNumOperands();
   
   // Get the field count.
-  unsigned &Slot = Counts[Tag];
-  if (!Slot) {
+  unsigned &CountSlot = Counts[Tag];
+  if (!CountSlot) {
     // Check the operand count to the field count
     DICountVisitor CTAM;
     CTAM.ApplyToFields(DD);
-    Slot = CTAM.getCount();
+    CountSlot = CTAM.getCount();
   }
   
   // Field count must be at most equal operand count.
-  if (Slot >  N) {
+  if (CountSlot >  N) {
     delete DD;
+    ValiditySlot = Invalid;
     return false;
   }
   
@@ -1391,8 +1389,13 @@ bool DIVerifier::Verify(GlobalVariable *GV) {
   // Release empty DebugInfoDesc.
   delete DD;
   
-  // Return result of field tests.
-  return VRAM.isValid();
+  // If fields are not valid.
+  if (!VRAM.isValid()) {
+    ValiditySlot = Invalid;
+    return false;
+  }
+  
+  return true;
 }
 
 //===----------------------------------------------------------------------===//

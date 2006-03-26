@@ -773,16 +773,21 @@ public:
 /// GlobalVariables are valid as DebugInfoDesc objects.
 class DIVerifier {
 private:
+  enum {
+    Unknown = 0,
+    Invalid,
+    Valid
+  };
   unsigned DebugVersion;                // Version of debug information in use.
-  std::set<GlobalVariable *> Visited;   // Tracks visits during recursion.
+  std::map<GlobalVariable *, unsigned> Validity;// Tracks prior results.
   std::map<unsigned, unsigned> Counts;  // Count of fields per Tag type.
-
-  /// markVisited - Return true if the GlobalVariable hase been "seen" before.
-  /// Mark markVisited otherwise.
-  bool markVisited(GlobalVariable *GV);
   
 public:
-  DIVerifier() : DebugVersion(LLVMDebugVersion) {}
+  DIVerifier()
+  : DebugVersion(LLVMDebugVersion)
+  , Validity()
+  , Counts()
+  {}
   ~DIVerifier() {}
   
   /// Verify - Return true if the GlobalVariable appears to be a valid
