@@ -542,6 +542,13 @@ Currently the load folding imull has a higher complexity than the LEA32 pattern.
 
 //===---------------------------------------------------------------------===//
 
+We are currently lowering large (1MB+) memmove/memcpy to rep/stosl and rep/movsl
+We should leave these as libcalls for everything over a much lower threshold,
+since libc is hand tuned for medium and large mem ops (avoiding RFO for large
+stores, TLB preheating, etc)
+
+//===---------------------------------------------------------------------===//
+
 Lower memcpy / memset to a series of SSE 128 bit move instructions when it's
 feasible.
 
