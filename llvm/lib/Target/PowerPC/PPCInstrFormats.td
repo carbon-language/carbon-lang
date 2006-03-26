@@ -607,6 +607,24 @@ class VAForm_1<bits<6> xo, dag OL, string asmstr,
   let Inst{26-31} = xo;
 }
 
+class VAForm_2<bits<6> xo, dag OL, string asmstr,
+               InstrItinClass itin, list<dag> pattern>
+    : I<4, OL, asmstr, itin> {
+  bits<5> VD;
+  bits<5> VA;
+  bits<5> VB;
+  bits<4> SH;
+
+  let Pattern = pattern;
+  
+  let Inst{6-10}  = VD;
+  let Inst{11-15} = VA;
+  let Inst{16-20} = VB;
+  let Inst{21}    = 0;
+  let Inst{22-25} = SH;
+  let Inst{26-31} = xo;
+}
+
 // E-2 VX-Form
 class VXForm_1<bits<11> xo, dag OL, string asmstr,
                InstrItinClass itin, list<dag> pattern>
