@@ -125,6 +125,10 @@ def VSLDOI  : VAForm_2<44, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, u5imm:$SH),
                        [(set VRRC:$vD,
                              (int_ppc_altivec_vsldoi VRRC:$vA, VRRC:$vB,
                                                      imm:$SH))]>;
+def VSEL   : VAForm_1<42, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, VRRC:$vC),
+                       "vsel $vD, $vA, $vB, $vC", VecFP,
+                       [(set VRRC:$vD,
+                         (int_ppc_altivec_vsel VRRC:$vA, VRRC:$vB, VRRC:$vC))]>;
 
 // VX-Form instructions.  AltiVec arithmetic ops.
 def VADDCUW : VXForm_1<384, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
