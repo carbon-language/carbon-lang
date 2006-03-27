@@ -43,3 +43,7 @@ def v2i64  : ValueType<128, 20>;   //  2 x i64 vector value
 def v2f32  : ValueType<64,  21>;   //  2 x f32 vector value
 def v4f32  : ValueType<128, 22>;   //  4 x f32 vector value
 def v2f64  : ValueType<128, 23>;   //  2 x f64 vector value
+
+
+// Pseudo valuetype mapped to the current pointer size.
+def iPTR   : ValueType<0  , 255>;

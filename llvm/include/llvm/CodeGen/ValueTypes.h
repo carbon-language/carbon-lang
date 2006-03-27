@@ -63,7 +63,11 @@ namespace MVT {  // MVT = Machine Value Types
     FIRST_VECTOR_VALUETYPE = v8i8,
     LAST_VECTOR_VALUETYPE  = v2f64,
 
-    LAST_VALUETYPE =  24    // This always remains at the end of the list.
+    LAST_VALUETYPE =  24,   // This always remains at the end of the list.
+
+    // iPTR - An int value the size of the pointer of the current
+    // target.  This should only be used internal to tblgen!
+    iPTR           = 255
   };
 
   /// MVT::isInteger - Return true if this is a simple integer, or a packed
