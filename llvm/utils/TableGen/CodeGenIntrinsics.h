@@ -21,6 +21,7 @@
 namespace llvm {
   class Record;
   class RecordKeeper;
+  class CodeGenTarget;
 
   struct CodeGenIntrinsic {
     Record *TheDef;            // The actual record defining this instruction.
@@ -45,7 +46,7 @@ namespace llvm {
       NoMem, ReadArgMem, ReadMem, WriteArgMem, WriteMem
     } ModRef;
 
-    CodeGenIntrinsic(Record *R);
+    CodeGenIntrinsic(Record *R, CodeGenTarget &CGT);
   };
 
   /// LoadIntrinsics - Read all of the intrinsics defined in the specified

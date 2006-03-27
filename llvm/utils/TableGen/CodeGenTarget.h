@@ -27,10 +27,11 @@ namespace llvm {
 class Record;
 class RecordKeeper;
 struct CodeGenRegister;
+class CodeGenTarget;
 
 /// getValueType - Return the MVT::ValueType that the specified TableGen record
 /// corresponds to.
-MVT::ValueType getValueType(Record *Rec);
+MVT::ValueType getValueType(Record *Rec, const CodeGenTarget *CGT = 0);
 
 std::ostream &operator<<(std::ostream &OS, MVT::ValueType T);
 std::string getName(MVT::ValueType T);

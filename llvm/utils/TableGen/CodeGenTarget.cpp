@@ -29,8 +29,13 @@ AsmWriterNum("asmwriternum", cl::init(0),
 
 /// getValueType - Return the MCV::ValueType that the specified TableGen record
 /// corresponds to.
-MVT::ValueType llvm::getValueType(Record *Rec) {
-  return (MVT::ValueType)Rec->getValueAsInt("Value");
+MVT::ValueType llvm::getValueType(Record *Rec, const CodeGenTarget *CGT) {
+  MVT::ValueType VT = (MVT::ValueType)Rec->getValueAsInt("Value");
+  if (VT == MVT::iPTR) {
+    assert(CGT && "Use a pointer type in a place that isn't supported yet!");
+    VT = CGT->getPointerType();
+  }
+  return VT;
 }
 
 std::string llvm::getName(MVT::ValueType T) {
@@ -355,10 +360,15 @@ ComplexPattern::ComplexPattern(Record *R) {
 
 std::vector<CodeGenIntrinsic> llvm::LoadIntrinsics(const RecordKeeper &RC) {
   std::vector<Record*> I = RC.getAllDerivedDefinitions("Intrinsic");
-  return std::vector<CodeGenIntrinsic>(I.begin(), I.end());
+  
+  std::vector<CodeGenIntrinsic> Result;
+  CodeGenTarget CGT;
+  for (unsigned i = 0, e = I.size(); i != e; ++i)
+    Result.push_back(CodeGenIntrinsic(I[i], CGT));
+  return Result;
 }
 
-CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
+CodeGenIntrinsic::CodeGenIntrinsic(Record *R, CodeGenTarget &CGT) {
   TheDef = R;
   std::string DefName = R->getName();
   ModRef = WriteMem;
@@ -405,7 +415,7 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
     assert(TyEl->isSubClassOf("LLVMType") && "Expected a type!");
     ArgTypes.push_back(TyEl->getValueAsString("TypeVal"));
     
-    ArgVTs.push_back(getValueType(TyEl->getValueAsDef("VT")));
+    ArgVTs.push_back(getValueType(TyEl->getValueAsDef("VT"), &CGT));
     ArgTypeDefs.push_back(TyEl);
   }
   if (ArgTypes.size() == 0)
