@@ -1382,7 +1382,6 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     return 0;
   }
   case Intrinsic::dbg_declare: {
-    return 0;
     MachineDebugInfo *DebugInfo = DAG.getMachineDebugInfo();
     DbgDeclareInst &DI = cast<DbgDeclareInst>(I);
     if (DebugInfo && DebugInfo->Verify(DI.getVariable())) {
