@@ -454,7 +454,7 @@ void PPCRegisterInfo::getLocation(MachineFunction &MF, unsigned Index,
   
   // FIXME - Needs to handle register variables.
   // FIXME - Faking that llvm number is same as gcc numbering.
-  ML.set((FP ? PPC::R31 : PPC::R1) - PPC::R0,
+  ML.set(getDwarfRegNum(FP ? PPC::R31 : PPC::R1),
          MFI->getObjectOffset(Index) + MFI->getStackSize());
 }
 

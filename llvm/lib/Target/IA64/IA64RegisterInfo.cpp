@@ -337,7 +337,7 @@ void IA64RegisterInfo::getLocation(MachineFunction &MF, unsigned Index,
   
   // FIXME - Needs to handle register variables.
   // FIXME - Faking that llvm number is same as gcc numbering.
-  ML.set((FP ? IA64::r5 : IA64::r12) - IA64::r0,
+  ML.set(getDwarfRegNum(FP ? IA64::r5 : IA64::r12),
          MFI->getObjectOffset(Index) + MFI->getStackSize());
 }
 

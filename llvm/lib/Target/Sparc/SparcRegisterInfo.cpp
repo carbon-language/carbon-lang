@@ -207,7 +207,7 @@ void SparcRegisterInfo::getLocation(MachineFunction &MF, unsigned Index,
   
   // FIXME - Needs to handle register variables.
   // FIXME - Faking that llvm number is same as gcc numbering.
-  ML.set(SP::G1 - SP::G0,
+  ML.set(getDwarfRegNum(SP::G1),
          MFI->getObjectOffset(Index) + MFI->getStackSize());
 }
 

@@ -693,7 +693,7 @@ void X86RegisterInfo::getLocation(MachineFunction &MF, unsigned Index,
   
   // FIXME - Needs to handle register variables.
   // FIXME - Hardcoding gcc numbering.
-  ML.set(FP ? 6 : 7,
+  ML.set(getDwarfRegNum(FP ? X86::EBP : X86::ESP),
          MFI->getObjectOffset(Index) + MFI->getStackSize());
 }
 

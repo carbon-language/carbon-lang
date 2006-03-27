@@ -362,7 +362,7 @@ void AlphaRegisterInfo::getLocation(MachineFunction &MF, unsigned Index,
   
   // FIXME - Needs to handle register variables.
   // FIXME - Faking that llvm number is same as gcc numbering.
-  ML.set((FP ? Alpha::R15 : Alpha::R30) - Alpha::R0,
+  ML.set(getDwarfRegNum(FP ? Alpha::R15 : Alpha::R30),
          MFI->getObjectOffset(Index) + MFI->getStackSize());
 }
 
