@@ -384,7 +384,7 @@ def vtFP       : PatLeaf<(vt),  [{ return MVT::isFloatingPoint(N->getVT()); }]>;
 
 def immAllOnes : PatLeaf<(imm), [{ return N->isAllOnesValue(); }]>;
 def immAllOnesV: PatLeaf<(build_vector), [{
-  return ISD::isBuildVectorAllOnesInteger(N);
+  return ISD::isBuildVectorAllOnes(N);
 }]>;
 def immAllZerosV: PatLeaf<(build_vector), [{
   return ISD::isBuildVectorAllZeros(N);
