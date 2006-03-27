@@ -1337,6 +1337,13 @@ bool DIVerifier::Verify(GlobalVariable *GV) {
   
   // Assume validity for the time being (recursion.)
   ValiditySlot = Valid;
+  
+  // Make sure the global is internal or link once (anchor.)
+  if (GV->getLinkage() != GlobalValue::InternalLinkage &&
+      GV->getLinkage() != GlobalValue::LinkOnceLinkage) {
+    ValiditySlot = Invalid;
+    return false;
+  }
 
   // Get the Tag
   unsigned Tag = DebugInfoDesc::TagFromGlobal(GV);
