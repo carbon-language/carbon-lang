@@ -455,9 +455,9 @@ namespace ISD {
 
   /// Node predicates
 
-  /// isBuildVectorAllOnesInteger - Return true if the specified node is a
+  /// isBuildVectorAllOnes - Return true if the specified node is a
   /// BUILD_VECTOR where all of the elements are ~0 or undef.
-  bool isBuildVectorAllOnesInteger(const SDNode *N);
+  bool isBuildVectorAllOnes(const SDNode *N);
 
   /// isBuildVectorAllZeros - Return true if the specified node is a
   /// BUILD_VECTOR where all of the elements are 0 or undef.
