@@ -91,7 +91,8 @@ bool ISD::isBuildVectorAllOnes(const SDNode *N) {
     if (!cast<ConstantSDNode>(NotZero)->isAllOnesValue())
       return false;
   } else if (isa<ConstantFPSDNode>(NotZero)) {
-    if (!cast<ConstantFPSDNode>(NotZero)->isExactlyValue(-1))
+    if (DoubleToBits(cast<ConstantFPSDNode>(NotZero)->getValue()) ==
+        (0ULL - 1))
       return false;
   } else
     return false;
