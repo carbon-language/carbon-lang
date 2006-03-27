@@ -649,7 +649,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
     MadeChange = UpdateNodeType(Int.ArgVTs[0], TP);
     
     if (getNumChildren() != Int.ArgVTs.size())
-      TP.error("Intrinsic '" + getOperator()->getName() + " expects " +
+      TP.error("Intrinsic '" + Int.Name + "' expects " +
                utostr(Int.ArgVTs.size()-1) + " operands, not " +
                utostr(getNumChildren()-1) + " operands!");
 
