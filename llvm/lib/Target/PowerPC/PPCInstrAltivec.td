@@ -290,15 +290,15 @@ def VSPLTW : VXForm_1<652, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
                       [(set VRRC:$vD, (vector_shuffle (v4f32 VRRC:$vB), (undef),
                                       VSPLT_shuffle_mask:$UIMM))]>;
 
-def VSPLTISB : VXForm_1<780, (ops VRRC:$vD, s5imm:$SIMM),
-                      "vspltisb $vD, $SIMM", VecPerm,
-                      [(set VRRC:$vD, (v4f32 vecspltisb:$SIMM))]>;
-def VSPLTISH : VXForm_1<844, (ops VRRC:$vD, s5imm:$SIMM),
-                      "vspltish $vD, $SIMM", VecPerm,
-                      [(set VRRC:$vD, (v4f32 vecspltish:$SIMM))]>;
-def VSPLTISW : VXForm_1<908, (ops VRRC:$vD, s5imm:$SIMM),
-                      "vspltisw $vD, $SIMM", VecPerm,
-                      [(set VRRC:$vD, (v4f32 vecspltisw:$SIMM))]>;
+def VSPLTISB : VXForm_3<780, (ops VRRC:$vD, s5imm:$SIMM),
+                       "vspltisb $vD, $SIMM", VecPerm,
+                       [(set VRRC:$vD, (v4f32 vecspltisb:$SIMM))]>;
+def VSPLTISH : VXForm_3<844, (ops VRRC:$vD, s5imm:$SIMM),
+                       "vspltish $vD, $SIMM", VecPerm,
+                       [(set VRRC:$vD, (v4f32 vecspltish:$SIMM))]>;
+def VSPLTISW : VXForm_3<908, (ops VRRC:$vD, s5imm:$SIMM),
+                       "vspltisw $vD, $SIMM", VecPerm,
+                       [(set VRRC:$vD, (v4f32 vecspltisw:$SIMM))]>;
 
 
 // Altivec Comparisons.
