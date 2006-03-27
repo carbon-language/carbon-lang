@@ -564,8 +564,19 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         TargetLowering::Custom) {
       Tmp3 = TLI.LowerOperation(Result, DAG);
       if (Tmp3.Val) Result = Tmp3;
-    }      
-    break;
+    }
+
+    if (Result.Val->getNumValues() == 1) break;
+
+    // Must have return value and chain result.
+    assert(Result.Val->getNumValues() == 2 &&
+           "Cannot return more than two values!");
+
+    // Since loads produce two values, make sure to remember that we 
+    // legalized both of them.
+    AddLegalizedOperand(SDOperand(Node, 0), Result.getValue(0));
+    AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
+    return Result.getValue(Op.ResNo);
   }    
 
   case ISD::LOCATION:
