@@ -33,13 +33,13 @@ let TargetPrefix = "ppc" in {  // All intrinsics start with "llvm.ppc.".
   def int_ppc_altivec_stvxl : GCCBuiltin<"__builtin_altivec_stvxl">,
               Intrinsic<[llvm_void_ty, llvm_v4i32_ty, llvm_int_ty, llvm_ptr_ty],
                         [IntrWriteMem]>;
-  def int_ppc_altivec_stevbx : GCCBuiltin<"__builtin_altivec_stevbx">,
+  def int_ppc_altivec_stvebx : GCCBuiltin<"__builtin_altivec_stvebx">,
               Intrinsic<[llvm_void_ty, llvm_v16i8_ty, llvm_int_ty, llvm_ptr_ty],
                         [IntrWriteMem]>;
-  def int_ppc_altivec_stevhx : GCCBuiltin<"__builtin_altivec_stevhx">,
+  def int_ppc_altivec_stvehx : GCCBuiltin<"__builtin_altivec_stvehx">,
               Intrinsic<[llvm_void_ty, llvm_v8i16_ty, llvm_int_ty, llvm_ptr_ty],
                         [IntrWriteMem]>;
-  def int_ppc_altivec_stevwx : GCCBuiltin<"__builtin_altivec_stevwx">,
+  def int_ppc_altivec_stvewx : GCCBuiltin<"__builtin_altivec_stvewx">,
               Intrinsic<[llvm_void_ty, llvm_v4i32_ty, llvm_int_ty, llvm_ptr_ty],
                         [IntrWriteMem]>;
 
