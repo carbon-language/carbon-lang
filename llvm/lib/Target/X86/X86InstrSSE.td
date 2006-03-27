@@ -1008,6 +1008,10 @@ def V_SET0_PD : PDI<0x57, MRMInitReg, (ops VR128:$dst),
                     "xorpd $dst, $dst",
                     [(set VR128:$dst, (v2f64 immAllZerosV))]>;
 
+def V_SETALLONES : PDI<0x76, MRMInitReg, (ops VR128:$dst),
+                       "pcmpeqd $dst, $dst",
+                       [(set VR128:$dst, (v2f64 immAllOnesV))]>;
+
 // Scalar to 128-bit vector with zero extension.
 // Three operand (but two address) aliases.
 let isTwoAddress = 1 in {
@@ -1050,6 +1054,13 @@ def : Pat<(v2i64 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
 def : Pat<(v16i8 immAllZerosV), (v16i8 (V_SET0_PI))>, Requires<[HasSSE2]>;
 def : Pat<(v8i16 immAllZerosV), (v8i16 (V_SET0_PI))>, Requires<[HasSSE2]>;
 def : Pat<(v4i32 immAllZerosV), (v4i32 (V_SET0_PI))>, Requires<[HasSSE2]>;
+
+// 128-bit vector all one's.
+def : Pat<(v16i8 immAllOnesV), (v16i8 (V_SETALLONES))>, Requires<[HasSSE2]>;
+def : Pat<(v8i16 immAllOnesV), (v8i16 (V_SETALLONES))>, Requires<[HasSSE2]>;
+def : Pat<(v4i32 immAllOnesV), (v4i32 (V_SETALLONES))>, Requires<[HasSSE2]>;
+def : Pat<(v2i64 immAllOnesV), (v2i64 (V_SETALLONES))>, Requires<[HasSSE2]>;
+def : Pat<(v4f32 immAllOnesV), (v4f32 (V_SETALLONES))>, Requires<[HasSSE1]>;
 
 // Load 128-bit integer vector values.
 def : Pat<(v16i8 (load addr:$src)), (MOVDQArm addr:$src)>,

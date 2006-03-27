@@ -2364,6 +2364,10 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     abort();
   }
   case ISD::BUILD_VECTOR: {
+    // All one's are handled with pcmpeqd.
+    if (ISD::isBuildVectorAllOnes(Op.Val))
+      return Op;
+
     std::set<SDOperand> Values;
     SDOperand Elt0 = Op.getOperand(0);
     Values.insert(Elt0);
