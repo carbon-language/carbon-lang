@@ -116,16 +116,16 @@ def VNMSUBFP: VAForm_1<47, (ops VRRC:$vD, VRRC:$vA, VRRC:$vC, VRRC:$vB),
                                                    VRRC:$vB)))]>,
                        Requires<[FPContractions]>;
 
-def VPERM   : VAForm_1<43, (ops VRRC:$vD, VRRC:$vA, VRRC:$vC, VRRC:$vB),
-                       "vperm $vD, $vA, $vB, $vC", VecPerm,
-                       [(set VRRC:$vD,
+def VPERM   : VAForm_1a<43, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, VRRC:$vC),
+                        "vperm $vD, $vA, $vB, $vC", VecPerm,
+                        [(set VRRC:$vD,
                              (PPCvperm (v4f32 VRRC:$vA), VRRC:$vB, VRRC:$vC))]>;
 def VSLDOI  : VAForm_2<44, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, u5imm:$SH),
                        "vsldoi $vD, $vA, $vB, $SH", VecFP,
                        [(set VRRC:$vD,
                              (int_ppc_altivec_vsldoi VRRC:$vA, VRRC:$vB,
                                                      imm:$SH))]>;
-def VSEL   : VAForm_1<42, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, VRRC:$vC),
+def VSEL   : VAForm_1a<42, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, VRRC:$vC),
                        "vsel $vD, $vA, $vB, $vC", VecFP,
                        [(set VRRC:$vD,
                          (int_ppc_altivec_vsel VRRC:$vA, VRRC:$vB, VRRC:$vC))]>;

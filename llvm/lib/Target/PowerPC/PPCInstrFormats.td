@@ -590,6 +590,8 @@ class MDForm_1<bits<6> opcode, bits<3> xo, dag OL, string asmstr,
 }
 
 // E-1 VA-Form
+
+// VAForm_1 - DACB ordering.
 class VAForm_1<bits<6> xo, dag OL, string asmstr,
                InstrItinClass itin, list<dag> pattern>
     : I<4, OL, asmstr, itin> {
@@ -597,6 +599,24 @@ class VAForm_1<bits<6> xo, dag OL, string asmstr,
   bits<5> VA;
   bits<5> VC;
   bits<5> VB;
+
+  let Pattern = pattern;
+  
+  let Inst{6-10}  = VD;
+  let Inst{11-15} = VA;
+  let Inst{16-20} = VB;
+  let Inst{21-25} = VC;
+  let Inst{26-31} = xo;
+}
+
+// VAForm_1a - DABC ordering.
+class VAForm_1a<bits<6> xo, dag OL, string asmstr,
+                InstrItinClass itin, list<dag> pattern>
+    : I<4, OL, asmstr, itin> {
+  bits<5> VD;
+  bits<5> VA;
+  bits<5> VB;
+  bits<5> VC;
 
   let Pattern = pattern;
   
