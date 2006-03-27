@@ -163,7 +163,7 @@ namespace llvm {
   /// DbgDeclareInst - This represents the llvm.dbg.declare instruction.
   ///
   struct DbgDeclareInst : public DbgInfoIntrinsic {
-    Value *getAddress()  const { return StripCast(getOperand(1)); }
+    Value *getAddress()  const { return getOperand(1); }
     Value *getVariable() const { return StripCast(getOperand(2)); }
 
     // Methods for support type inquiry through isa, cast, and dyn_cast:
