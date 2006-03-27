@@ -701,6 +701,9 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
 void DSNode::addEdgeTo(unsigned Offset, const DSNodeHandle &NH) {
   if (NH.isNull()) return;       // Nothing to do
 
+  if (isNodeCompletelyFolded())
+    Offset = 0;
+
   DSNodeHandle &ExistingEdge = getLink(Offset);
   if (!ExistingEdge.isNull()) {
     // Merge the two nodes...
