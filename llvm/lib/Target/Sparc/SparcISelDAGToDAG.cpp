@@ -916,7 +916,15 @@ SparcTargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
   MachineFunction *F = BB->getParent();
   F->getBasicBlockList().insert(It, copy0MBB);
   F->getBasicBlockList().insert(It, sinkMBB);
-  // Update machine-CFG edges
+  // Update machine-CFG edges by first adding all successors of the current
+  // block to the new block which will contain the Phi node for the select.
+  for(MachineBasicBlock::succ_iterator i = BB->succ_begin(), 
+      e = BB->succ_end(); i != e; ++i)
+    sinkMBB->addSuccessor(*i);
+  // Next, remove all successors of the current block, and add the true
+  // and fallthrough blocks as its successors.
+  while(!BB->succ_empty())
+    BB->removeSuccessor(BB->succ_begin());
   BB->addSuccessor(copy0MBB);
   BB->addSuccessor(sinkMBB);
   

@@ -183,22 +183,25 @@ namespace llvm {
 }
 
 /// isUsedOutsideOfDefiningBlock - Return true if this instruction is used by
-/// PHI nodes or outside of the basic block that defines it.
+/// PHI nodes or outside of the basic block that defines it, or used by a 
+/// switch instruction, which may expand to multiple basic blocks.
 static bool isUsedOutsideOfDefiningBlock(Instruction *I) {
   if (isa<PHINode>(I)) return true;
   BasicBlock *BB = I->getParent();
   for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E; ++UI)
-    if (cast<Instruction>(*UI)->getParent() != BB || isa<PHINode>(*UI))
+    if (cast<Instruction>(*UI)->getParent() != BB || isa<PHINode>(*UI) ||
+        isa<SwitchInst>(*UI))
       return true;
   return false;
 }
 
 /// isOnlyUsedInEntryBlock - If the specified argument is only used in the
-/// entry block, return true.
+/// entry block, return true.  This includes arguments used by switches, since
+/// the switch may expand into multiple basic blocks.
 static bool isOnlyUsedInEntryBlock(Argument *A) {
   BasicBlock *Entry = A->getParent()->begin();
   for (Value::use_iterator UI = A->use_begin(), E = A->use_end(); UI != E; ++UI)
-    if (cast<Instruction>(*UI)->getParent() != Entry)
+    if (cast<Instruction>(*UI)->getParent() != Entry || isa<SwitchInst>(*UI))
       return false;  // Use not in entry block.
   return true;
 }
@@ -343,6 +346,40 @@ class SelectionDAGLowering {
   /// analysis.
   std::vector<SDOperand> PendingLoads;
 
+  /// Case - A pair of values to record the Value for a switch case, and the
+  /// case's target basic block.  
+  typedef std::pair<Constant*, MachineBasicBlock*> Case;
+  typedef std::vector<Case>::iterator              CaseItr;
+  typedef std::pair<CaseItr, CaseItr>              CaseRange;
+
+  /// CaseRec - A struct with ctor used in lowering switches to a binary tree
+  /// of conditional branches.
+  struct CaseRec {
+    CaseRec(MachineBasicBlock *bb, Constant *lt, Constant *ge, CaseRange r) :
+    CaseBB(bb), LT(lt), GE(ge), Range(r) {}
+
+    /// CaseBB - The MBB in which to emit the compare and branch
+    MachineBasicBlock *CaseBB;
+    /// LT, GE - If nonzero, we know the current case value must be less-than or
+    /// greater-than-or-equal-to these Constants.
+    Constant *LT;
+    Constant *GE;
+    /// Range - A pair of iterators representing the range of case values to be
+    /// processed at this point in the binary search tree.
+    CaseRange Range;
+  };
+  
+  /// The comparison function for sorting Case values.
+  struct CaseCmp {
+    bool operator () (const Case& C1, const Case& C2) {
+      if (const ConstantUInt* U1 = dyn_cast<const ConstantUInt>(C1.first))
+        return U1->getValue() < cast<const ConstantUInt>(C2.first)->getValue();
+      
+      const ConstantSInt* S1 = dyn_cast<const ConstantSInt>(C1.first);
+      return S1->getValue() < cast<const ConstantSInt>(C2.first)->getValue();
+    }
+  };
+  
 public:
   // TLI - This is information that describes the available target features we
   // need for lowering.  This indicates when operations are unavailable,
@@ -351,6 +388,10 @@ public:
   SelectionDAG &DAG;
   const TargetData &TD;
 
+  /// SwitchCases - Vector of CaseBlock structures used to communicate
+  /// SwitchInst code generation information.
+  std::vector<SelectionDAGISel::CaseBlock> SwitchCases;
+  
   /// FuncInfo - Information about the function as a whole.
   ///
   FunctionLoweringInfo &FuncInfo;
@@ -417,18 +458,20 @@ public:
                                     bool OutReg, bool InReg,
                                     std::set<unsigned> &OutputRegs, 
                                     std::set<unsigned> &InputRegs);
-                                                
+
   // Terminator instructions.
   void visitRet(ReturnInst &I);
   void visitBr(BranchInst &I);
+  void visitSwitch(SwitchInst &I);
   void visitUnreachable(UnreachableInst &I) { /* noop */ }
 
+  // Helper for visitSwitch
+  void visitSwitchCase(SelectionDAGISel::CaseBlock &CB);
+  
   // These all get lowered before this pass.
-  void visitSwitch(SwitchInst &I) { assert(0 && "TODO"); }
   void visitInvoke(InvokeInst &I) { assert(0 && "TODO"); }
   void visitUnwind(UnwindInst &I) { assert(0 && "TODO"); }
 
-  //
   void visitBinary(User &I, unsigned IntOp, unsigned FPOp, unsigned VecOp);
   void visitShift(User &I, unsigned Opcode);
   void visitAdd(User &I) { 
@@ -470,7 +513,6 @@ public:
   void visitGetElementPtr(User &I);
   void visitCast(User &I);
   void visitSelect(User &I);
-  //
 
   void visitMalloc(MallocInst &I);
   void visitFree(FreeInst &I);
@@ -656,6 +698,7 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
 void SelectionDAGLowering::visitBr(BranchInst &I) {
   // Update machine-CFG edges.
   MachineBasicBlock *Succ0MBB = FuncInfo.MBBMap[I.getSuccessor(0)];
+  CurMBB->addSuccessor(Succ0MBB);
 
   // Figure out which block is immediately after the current one.
   MachineBasicBlock *NextBlock = 0;
@@ -670,6 +713,7 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
                               DAG.getBasicBlock(Succ0MBB)));
   } else {
     MachineBasicBlock *Succ1MBB = FuncInfo.MBBMap[I.getSuccessor(1)];
+    CurMBB->addSuccessor(Succ1MBB);
 
     SDOperand Cond = getValue(I.getCondition());
     if (Succ1MBB == NextBlock) {
@@ -700,6 +744,161 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
                                    DAG.getBasicBlock(Succ0MBB));
       DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, True, 
                               DAG.getBasicBlock(Succ1MBB)));
+    }
+  }
+}
+
+/// visitSwitchCase - Emits the necessary code to represent a single node in
+/// the binary search tree resulting from lowering a switch instruction.
+void SelectionDAGLowering::visitSwitchCase(SelectionDAGISel::CaseBlock &CB) {
+  SDOperand SwitchOp = getValue(CB.SwitchV);
+  SDOperand CaseOp = getValue(CB.CaseC);
+  SDOperand Cond = DAG.getSetCC(MVT::i1, SwitchOp, CaseOp, CB.CC);
+  
+  // Set NextBlock to be the MBB immediately after the current one, if any.
+  // This is used to avoid emitting unnecessary branches to the next block.
+  MachineBasicBlock *NextBlock = 0;
+  MachineFunction::iterator BBI = CurMBB;
+  if (++BBI != CurMBB->getParent()->end())
+    NextBlock = BBI;
+  
+  // If the lhs block is the next block, invert the condition so that we can
+  // fall through to the lhs instead of the rhs block.
+  if (CB.LHSBB == NextBlock) {
+    std::swap(CB.LHSBB, CB.RHSBB);
+    SDOperand True = DAG.getConstant(1, Cond.getValueType());
+    Cond = DAG.getNode(ISD::XOR, Cond.getValueType(), Cond, True);
+  }
+  SDOperand BrCond = DAG.getNode(ISD::BRCOND, MVT::Other, getRoot(), Cond,
+                                 DAG.getBasicBlock(CB.LHSBB));
+  if (CB.RHSBB == NextBlock)
+    DAG.setRoot(BrCond);
+  else
+    DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, BrCond, 
+                            DAG.getBasicBlock(CB.RHSBB)));
+  // Update successor info
+  CurMBB->addSuccessor(CB.LHSBB);
+  CurMBB->addSuccessor(CB.RHSBB);
+}
+
+void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
+  // Figure out which block is immediately after the current one.
+  MachineBasicBlock *NextBlock = 0;
+  MachineFunction::iterator BBI = CurMBB;
+  if (++BBI != CurMBB->getParent()->end())
+    NextBlock = BBI;
+  
+  // If there is only the default destination, branch to it if it is not the
+  // next basic block.  Otherwise, just fall through.
+  if (I.getNumOperands() == 2) {
+    // Update machine-CFG edges.
+    MachineBasicBlock *DefaultMBB = FuncInfo.MBBMap[I.getDefaultDest()];
+    // If this is not a fall-through branch, emit the branch.
+    if (DefaultMBB != NextBlock)
+      DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, getRoot(),
+                              DAG.getBasicBlock(DefaultMBB)));
+    return;
+  }
+  
+  // If there are any non-default case statements, create a vector of Cases
+  // representing each one, and sort the vector so that we can efficiently
+  // create a binary search tree from them.
+  std::vector<Case> Cases;
+  for (unsigned i = 1; i < I.getNumSuccessors(); ++i) {
+    MachineBasicBlock *SMBB = FuncInfo.MBBMap[I.getSuccessor(i)];
+    Cases.push_back(Case(I.getSuccessorValue(i), SMBB));
+  }
+  std::sort(Cases.begin(), Cases.end(), CaseCmp());
+  
+  // Get the Value to be switched on and default basic blocks, which will be
+  // inserted into CaseBlock records, representing basic blocks in the binary
+  // search tree.
+  Value *SV = I.getOperand(0);
+  MachineBasicBlock *Default = FuncInfo.MBBMap[I.getDefaultDest()];
+  
+  // Get the current MachineFunction and LLVM basic block, for use in creating
+  // and inserting new MBBs during the creation of the binary search tree.
+  MachineFunction *CurMF = CurMBB->getParent();
+  const BasicBlock *LLVMBB = CurMBB->getBasicBlock();
+  
+  // Push the initial CaseRec onto the worklist
+  std::vector<CaseRec> CaseVec;
+  CaseVec.push_back(CaseRec(CurMBB,0,0,CaseRange(Cases.begin(),Cases.end())));
+  
+  while (!CaseVec.empty()) {
+    // Grab a record representing a case range to process off the worklist
+    CaseRec CR = CaseVec.back();
+    CaseVec.pop_back();
+    
+    // Size is the number of Cases represented by this range.  If Size is 1,
+    // then we are processing a leaf of the binary search tree.  Otherwise,
+    // we need to pick a pivot, and push left and right ranges onto the 
+    // worklist.
+    unsigned Size = CR.Range.second - CR.Range.first;
+    
+    if (Size == 1) {
+      // Create a CaseBlock record representing a conditional branch to
+      // the Case's target mbb if the value being switched on SV is equal
+      // to C.  Otherwise, branch to default.
+      Constant *C = CR.Range.first->first;
+      MachineBasicBlock *Target = CR.Range.first->second;
+      SelectionDAGISel::CaseBlock CB(ISD::SETEQ, SV, C, Target, Default, 
+                                     CR.CaseBB);
+      // If the MBB representing the leaf node is the current MBB, then just
+      // call visitSwitchCase to emit the code into the current block.
+      // Otherwise, push the CaseBlock onto the vector to be later processed
+      // by SDISel, and insert the node's MBB before the next MBB.
+      if (CR.CaseBB == CurMBB)
+        visitSwitchCase(CB);
+      else {
+        SwitchCases.push_back(CB);
+        CurMF->getBasicBlockList().insert(BBI, CR.CaseBB);
+      }
+    } else {
+      // split case range at pivot
+      CaseItr Pivot = CR.Range.first + (Size / 2);
+      CaseRange LHSR(CR.Range.first, Pivot);
+      CaseRange RHSR(Pivot, CR.Range.second);
+      Constant *C = Pivot->first;
+      MachineBasicBlock *RHSBB = 0, *LHSBB = 0;
+      // We know that we branch to the LHS if the Value being switched on is
+      // less than the Pivot value, C.  We use this to optimize our binary 
+      // tree a bit, by recognizing that if SV is greater than or equal to the
+      // LHS's Case Value, and that Case Value is exactly one less than the 
+      // Pivot's Value, then we can branch directly to the LHS's Target,
+      // rather than creating a leaf node for it.
+      if ((LHSR.second - LHSR.first) == 1 &&
+          LHSR.first->first == CR.GE &&
+          cast<ConstantIntegral>(C)->getRawValue() ==
+          (cast<ConstantIntegral>(CR.GE)->getRawValue() + 1ULL)) {
+        LHSBB = LHSR.first->second;
+      } else {
+        LHSBB = new MachineBasicBlock(LLVMBB);
+        CaseVec.push_back(CaseRec(LHSBB,C,CR.GE,LHSR));
+      }
+      // Similar to the optimization above, if the Value being switched on is
+      // known to be less than the Constant CR.LT, and the current Case Value
+      // is CR.LT - 1, then we can branch directly to the target block for
+      // the current Case Value, rather than emitting a RHS leaf node for it.
+      if ((RHSR.second - RHSR.first) == 1 && CR.LT &&
+          cast<ConstantIntegral>(RHSR.first->first)->getRawValue() ==
+          (cast<ConstantIntegral>(CR.LT)->getRawValue() - 1ULL)) {
+        RHSBB = RHSR.first->second;
+      } else {
+        RHSBB = new MachineBasicBlock(LLVMBB);
+        CaseVec.push_back(CaseRec(RHSBB,CR.LT,C,RHSR));
+      }
+      // Create a CaseBlock record representing a conditional branch to
+      // the LHS node if the value being switched on SV is less than C. 
+      // Otherwise, branch to LHS.
+      ISD::CondCode CC = C->getType()->isSigned() ? ISD::SETLT : ISD::SETULT;
+      SelectionDAGISel::CaseBlock CB(CC, SV, C, LHSBB, RHSBB, CR.CaseBB);
+      if (CR.CaseBB == CurMBB)
+        visitSwitchCase(CB);
+      else {
+        SwitchCases.push_back(CB);
+        CurMF->getBasicBlockList().insert(BBI, CR.CaseBB);
+      }
     }
   }
 }
@@ -2481,7 +2680,7 @@ LowerArguments(BasicBlock *BB, SelectionDAGLowering &SDL,
 
 void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
        std::vector<std::pair<MachineInstr*, unsigned> > &PHINodesToUpdate,
-                                    FunctionLoweringInfo &FuncInfo) {
+                                         FunctionLoweringInfo &FuncInfo) {
   SelectionDAGLowering SDL(DAG, TLI, FuncInfo);
 
   std::vector<SDOperand> UnorderedChains;
@@ -2497,7 +2696,7 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
   for (BasicBlock::iterator I = LLVMBB->begin(), E = --LLVMBB->end();
        I != E; ++I)
     SDL.visit(*I);
-
+  
   // Ensure that all instructions which are used outside of their defining
   // blocks are available as virtual registers.
   for (BasicBlock::iterator I = LLVMBB->begin(), E = LLVMBB->end(); I != E;++I)
@@ -2585,33 +2784,29 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
   // Lower the terminator after the copies are emitted.
   SDL.visit(*LLVMBB->getTerminator());
 
+  // Copy over any CaseBlock records that may now exist due to SwitchInst
+  // lowering.
+  SwitchCases.clear();
+  SwitchCases = SDL.SwitchCases;
+  
   // Make sure the root of the DAG is up-to-date.
   DAG.setRoot(SDL.getRoot());
 }
 
-void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
-                                        FunctionLoweringInfo &FuncInfo) {
-  SelectionDAG DAG(TLI, MF, getAnalysisToUpdate<MachineDebugInfo>());
-  CurDAG = &DAG;
-  std::vector<std::pair<MachineInstr*, unsigned> > PHINodesToUpdate;
-
-  // First step, lower LLVM code to some DAG.  This DAG may use operations and
-  // types that are not supported by the target.
-  BuildSelectionDAG(DAG, LLVMBB, PHINodesToUpdate, FuncInfo);
-
+void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
   // Run the DAG combiner in pre-legalize mode.
   DAG.Combine(false);
   
   DEBUG(std::cerr << "Lowered selection DAG:\n");
   DEBUG(DAG.dump());
-
+  
   // Second step, hack on the DAG until it only uses operations and types that
   // the target supports.
   DAG.Legalize();
-
+  
   DEBUG(std::cerr << "Legalized selection DAG:\n");
   DEBUG(DAG.dump());
-
+  
   // Run the DAG combiner in post-legalize mode.
   DAG.Combine(true);
   
@@ -2620,26 +2815,66 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
   // Third, instruction select all of the operations to machine code, adding the
   // code to the MachineBasicBlock.
   InstructionSelectBasicBlock(DAG);
-
+  
   DEBUG(std::cerr << "Selected machine code:\n");
   DEBUG(BB->dump());
+}  
 
+void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
+                                        FunctionLoweringInfo &FuncInfo) {
+  std::vector<std::pair<MachineInstr*, unsigned> > PHINodesToUpdate;
+  {
+    SelectionDAG DAG(TLI, MF, getAnalysisToUpdate<MachineDebugInfo>());
+    CurDAG = &DAG;
+  
+    // First step, lower LLVM code to some DAG.  This DAG may use operations and
+    // types that are not supported by the target.
+    BuildSelectionDAG(DAG, LLVMBB, PHINodesToUpdate, FuncInfo);
+
+    // Second step, emit the lowered DAG as machine code.
+    CodeGenAndEmitDAG(DAG);
+  }
+  
   // Next, now that we know what the last MBB the LLVM BB expanded is, update
   // PHI nodes in successors.
-  for (unsigned i = 0, e = PHINodesToUpdate.size(); i != e; ++i) {
-    MachineInstr *PHI = PHINodesToUpdate[i].first;
-    assert(PHI->getOpcode() == TargetInstrInfo::PHI &&
-           "This is not a machine PHI node that we are updating!");
-    PHI->addRegOperand(PHINodesToUpdate[i].second);
-    PHI->addMachineBasicBlockOperand(BB);
+  if (SwitchCases.empty()) {
+    for (unsigned i = 0, e = PHINodesToUpdate.size(); i != e; ++i) {
+      MachineInstr *PHI = PHINodesToUpdate[i].first;
+      assert(PHI->getOpcode() == TargetInstrInfo::PHI &&
+             "This is not a machine PHI node that we are updating!");
+      PHI->addRegOperand(PHINodesToUpdate[i].second);
+      PHI->addMachineBasicBlockOperand(BB);
+    }
+    return;
   }
-
-  // Finally, add the CFG edges from the last selected MBB to the successor
-  // MBBs.
-  TerminatorInst *TI = LLVMBB->getTerminator();
-  for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i) {
-    MachineBasicBlock *Succ0MBB = FuncInfo.MBBMap[TI->getSuccessor(i)];
-    BB->addSuccessor(Succ0MBB);
+  
+  // If we generated any switch lowering information, build and codegen any
+  // additional DAGs necessary.
+  for(unsigned i = 0, e = SwitchCases.size(); i != e; ++i) {
+    SelectionDAG SDAG(TLI, MF, getAnalysisToUpdate<MachineDebugInfo>());
+    CurDAG = &SDAG;
+    SelectionDAGLowering SDL(SDAG, TLI, FuncInfo);
+    // Set the current basic block to the mbb we wish to insert the code into
+    BB = SwitchCases[i].ThisBB;
+    SDL.setCurrentBasicBlock(BB);
+    // Emit the code
+    SDL.visitSwitchCase(SwitchCases[i]);
+    SDAG.setRoot(SDL.getRoot());
+    CodeGenAndEmitDAG(SDAG);
+    // Iterate over the phi nodes, if there is a phi node in a successor of this
+    // block (for instance, the default block), then add a pair of operands to
+    // the phi node for this block, as if we were coming from the original
+    // BB before switch expansion.
+    for (unsigned pi = 0, pe = PHINodesToUpdate.size(); pi != pe; ++pi) {
+      MachineInstr *PHI = PHINodesToUpdate[pi].first;
+      MachineBasicBlock *PHIBB = PHI->getParent();
+      assert(PHI->getOpcode() == TargetInstrInfo::PHI &&
+             "This is not a machine PHI node that we are updating!");
+      if (PHIBB == SwitchCases[i].LHSBB || PHIBB == SwitchCases[i].RHSBB) {
+        PHI->addRegOperand(PHINodesToUpdate[pi].second);
+        PHI->addMachineBasicBlockOperand(BB);
+      }
+    }
   }
 }
 

@@ -16,7 +16,8 @@
 #define LLVM_CODEGEN_SELECTIONDAG_ISEL_H
 
 #include "llvm/Pass.h"
-#include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/Constant.h"
+#include "llvm/CodeGen/SelectionDAGNodes.h"
 
 namespace llvm {
   class SelectionDAG;
@@ -66,6 +67,27 @@ public:
   /// to use for this target when scheduling the DAG.
   virtual HazardRecognizer *CreateTargetHazardRecognizer();
   
+  /// CaseBlock - This structure is used to communicate between SDLowering and
+  /// SDISel for the code generation of additional basic blocks needed by multi-
+  /// case switch statements.
+  struct CaseBlock {
+    CaseBlock(ISD::CondCode cc, Value *s, Constant *c, MachineBasicBlock *lhs,
+              MachineBasicBlock *rhs, MachineBasicBlock *me) : 
+    CC(cc), SwitchV(s), CaseC(c), LHSBB(lhs), RHSBB(rhs), ThisBB(me) {}
+    // CC - the condition code to use for the case block's setcc node
+    ISD::CondCode CC;
+    // SwitchV - the value to be switched on, 'foo' in switch(foo)
+    Value *SwitchV;
+    // CaseC - the constant the setcc node will compare against SwitchV
+    Constant *CaseC;
+    // LHSBB - the block to branch to if the setcc is true
+    MachineBasicBlock *LHSBB;
+    // RHSBB - the block to branch to if the setcc is false
+    MachineBasicBlock *RHSBB;
+    // ThisBB - the blcok into which to emit the code for the setcc and branches
+    MachineBasicBlock *ThisBB;
+  };
+  
 protected:
   /// Pick a safe ordering and emit instructions for each target node in the
   /// graph.
@@ -85,8 +107,13 @@ private:
   void BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
            std::vector<std::pair<MachineInstr*, unsigned> > &PHINodesToUpdate,
                          FunctionLoweringInfo &FuncInfo);
+  void CodeGenAndEmitDAG(SelectionDAG &DAG);
   void LowerArguments(BasicBlock *BB, SelectionDAGLowering &SDL,
                       std::vector<SDOperand> &UnorderedChains);
+
+  /// SwitchCases - Vector of CaseBlock structures used to communicate
+  /// SwitchInst code generation information.
+  std::vector<CaseBlock> SwitchCases;
 };
 
 }
