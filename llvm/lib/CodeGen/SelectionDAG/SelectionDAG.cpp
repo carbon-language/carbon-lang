@@ -2689,10 +2689,11 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::FrameIndex:    return "FrameIndex";
   case ISD::ConstantPool:  return "ConstantPool";
   case ISD::ExternalSymbol: return "ExternalSymbol";
-  case ISD::INTRINSIC:
+  case ISD::INTRINSIC: {
     bool hasChain = getOperand(0).getValueType() == MVT::Other;
     unsigned IID = cast<ConstantSDNode>(getOperand(hasChain))->getValue();
     return Intrinsic::getName((Intrinsic::ID)IID);
+  }
 
   case ISD::BUILD_VECTOR:   return "BUILD_VECTOR";
   case ISD::TargetConstant: return "TargetConstant";
