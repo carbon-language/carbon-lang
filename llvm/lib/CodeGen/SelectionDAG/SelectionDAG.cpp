@@ -91,9 +91,16 @@ bool ISD::isBuildVectorAllOnes(const SDNode *N) {
     if (!cast<ConstantSDNode>(NotZero)->isAllOnesValue())
       return false;
   } else if (isa<ConstantFPSDNode>(NotZero)) {
-    if (DoubleToBits(cast<ConstantFPSDNode>(NotZero)->getValue()) ==
-        (0ULL - 1))
-      return false;
+    MVT::ValueType VT = NotZero.getValueType();
+    if (VT== MVT::f64) {
+      if (DoubleToBits(cast<ConstantFPSDNode>(NotZero)->getValue()) !=
+          (uint64_t)-1)
+        return false;
+    } else {
+      if (FloatToBits(cast<ConstantFPSDNode>(NotZero)->getValue()) !=
+          (uint32_t)-1)
+        return false;
+    }
   } else
     return false;
   
