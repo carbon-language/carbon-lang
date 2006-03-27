@@ -132,7 +132,7 @@ public:
   }
 
   // Retrieve a reference to the current SCC
-   UserTy *operator*() const {
+  UserTy *operator*() const {
     assert(U && "Cannot increment end iterator!");
     return U->getUser();
   }
@@ -141,6 +141,30 @@ public:
 
   Use &getUse() const { return *U; }
 };
+
+
+template<> struct simplify_type<value_use_iterator<User> > {
+  typedef User* SimpleType;
+  
+  static SimpleType getSimplifiedValue(const value_use_iterator<User> &Val) {
+    return *Val;
+  }
+};
+
+template<> struct simplify_type<const value_use_iterator<User> >
+ : public simplify_type<value_use_iterator<User> > {};
+
+template<> struct simplify_type<value_use_iterator<const User> > {
+  typedef const User* SimpleType;
+  
+  static SimpleType getSimplifiedValue(const 
+                                       value_use_iterator<const User> &Val) {
+    return *Val;
+  }
+};
+
+template<> struct simplify_type<const value_use_iterator<const User> >
+  : public simplify_type<value_use_iterator<const User> > {};
 
 } // End llvm namespace
 
