@@ -92,6 +92,25 @@ Value *llvm::MapValue(const Value *V, std::map<const Value*, Value*> &VM) {
         return VMSlot = ConstantExpr::get(CE->getOpcode(), MV1, MV2);
       }
 
+    } else if (ConstantPacked *CP = dyn_cast<ConstantPacked>(C)) {
+      for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i) {
+        Value *MV = MapValue(CP->getOperand(i), VM);
+        if (MV != CP->getOperand(i)) {
+          // This packed value must contain a reference to a global, make a new
+          // packed constant and return it.
+          //
+          std::vector<Constant*> Values;
+          Values.reserve(CP->getNumOperands());
+          for (unsigned j = 0; j != i; ++j)
+            Values.push_back(CP->getOperand(j));
+          Values.push_back(cast<Constant>(MV));
+          for (++i; i != e; ++i)
+            Values.push_back(cast<Constant>(MapValue(CP->getOperand(i), VM)));
+          return VMSlot = ConstantPacked::get(Values);
+        }
+      }
+      return VMSlot = C;
+      
     } else {
       assert(0 && "Unknown type of constant!");
     }
