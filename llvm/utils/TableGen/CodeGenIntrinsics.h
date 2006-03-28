@@ -46,7 +46,7 @@ namespace llvm {
       NoMem, ReadArgMem, ReadMem, WriteArgMem, WriteMem
     } ModRef;
 
-    CodeGenIntrinsic(Record *R, CodeGenTarget &CGT);
+    CodeGenIntrinsic(Record *R, CodeGenTarget *CGT);
   };
 
   /// LoadIntrinsics - Read all of the intrinsics defined in the specified

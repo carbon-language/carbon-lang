@@ -362,13 +362,12 @@ std::vector<CodeGenIntrinsic> llvm::LoadIntrinsics(const RecordKeeper &RC) {
   std::vector<Record*> I = RC.getAllDerivedDefinitions("Intrinsic");
   
   std::vector<CodeGenIntrinsic> Result;
-  CodeGenTarget CGT;
   for (unsigned i = 0, e = I.size(); i != e; ++i)
-    Result.push_back(CodeGenIntrinsic(I[i], CGT));
+    Result.push_back(CodeGenIntrinsic(I[i], 0));
   return Result;
 }
 
-CodeGenIntrinsic::CodeGenIntrinsic(Record *R, CodeGenTarget &CGT) {
+CodeGenIntrinsic::CodeGenIntrinsic(Record *R, CodeGenTarget *CGT) {
   TheDef = R;
   std::string DefName = R->getName();
   ModRef = WriteMem;
@@ -415,7 +414,7 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R, CodeGenTarget &CGT) {
     assert(TyEl->isSubClassOf("LLVMType") && "Expected a type!");
     ArgTypes.push_back(TyEl->getValueAsString("TypeVal"));
     
-    ArgVTs.push_back(getValueType(TyEl->getValueAsDef("VT"), &CGT));
+    ArgVTs.push_back(getValueType(TyEl->getValueAsDef("VT"), 0));
     ArgTypeDefs.push_back(TyEl);
   }
   if (ArgTypes.size() == 0)
