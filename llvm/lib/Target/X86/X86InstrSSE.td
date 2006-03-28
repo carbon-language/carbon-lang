@@ -174,53 +174,6 @@ def MOVSD128rm : SDI<0x10, MRMSrcMem, (ops VR128:$dst, f64mem:$src),
                      [(set VR128:$dst, 
                        (v2f64 (scalar_to_vector (loadf64 addr:$src))))]>;
 
-
-// Conversion instructions
-def CVTSS2SIrr: SSI<0x2D, MRMSrcReg, (ops R32:$dst, FR32:$src),
-                   "cvtss2si {$src, $dst|$dst, $src}", []>;
-def CVTSS2SIrm: SSI<0x2D, MRMSrcMem, (ops R32:$dst, f32mem:$src),
-                   "cvtss2si {$src, $dst|$dst, $src}", []>;
-
-def CVTTSS2SIrr: SSI<0x2C, MRMSrcReg, (ops R32:$dst, FR32:$src),
-                   "cvttss2si {$src, $dst|$dst, $src}",
-                   [(set R32:$dst, (fp_to_sint FR32:$src))]>;
-def CVTTSS2SIrm: SSI<0x2C, MRMSrcMem, (ops R32:$dst, f32mem:$src),
-                   "cvttss2si {$src, $dst|$dst, $src}",
-                   [(set R32:$dst, (fp_to_sint (loadf32 addr:$src)))]>;
-def CVTTSD2SIrr: SDI<0x2C, MRMSrcReg, (ops R32:$dst, FR64:$src),
-                   "cvttsd2si {$src, $dst|$dst, $src}",
-                   [(set R32:$dst, (fp_to_sint FR64:$src))]>;
-def CVTTSD2SIrm: SDI<0x2C, MRMSrcMem, (ops R32:$dst, f64mem:$src),
-                   "cvttsd2si {$src, $dst|$dst, $src}",
-                   [(set R32:$dst, (fp_to_sint (loadf64 addr:$src)))]>;
-def CVTSD2SSrr: SDI<0x5A, MRMSrcReg, (ops FR32:$dst, FR64:$src),
-                  "cvtsd2ss {$src, $dst|$dst, $src}",
-                  [(set FR32:$dst, (fround FR64:$src))]>;
-def CVTSD2SSrm: SDI<0x5A, MRMSrcMem, (ops FR32:$dst, f64mem:$src), 
-                  "cvtsd2ss {$src, $dst|$dst, $src}",
-                  [(set FR32:$dst, (fround (loadf64 addr:$src)))]>;
-def CVTSI2SSrr: SSI<0x2A, MRMSrcReg, (ops FR32:$dst, R32:$src),
-                  "cvtsi2ss {$src, $dst|$dst, $src}",
-                  [(set FR32:$dst, (sint_to_fp R32:$src))]>;
-def CVTSI2SSrm: SSI<0x2A, MRMSrcMem, (ops FR32:$dst, i32mem:$src),
-                  "cvtsi2ss {$src, $dst|$dst, $src}",
-                  [(set FR32:$dst, (sint_to_fp (loadi32 addr:$src)))]>;
-def CVTSI2SDrr: SDI<0x2A, MRMSrcReg, (ops FR64:$dst, R32:$src),
-                  "cvtsi2sd {$src, $dst|$dst, $src}",
-                  [(set FR64:$dst, (sint_to_fp R32:$src))]>;
-def CVTSI2SDrm: SDI<0x2A, MRMSrcMem, (ops FR64:$dst, i32mem:$src),
-                  "cvtsi2sd {$src, $dst|$dst, $src}",
-                  [(set FR64:$dst, (sint_to_fp (loadi32 addr:$src)))]>;
-// SSE2 instructions with XS prefix
-def CVTSS2SDrr: I<0x5A, MRMSrcReg, (ops FR64:$dst, FR32:$src),
-                  "cvtss2sd {$src, $dst|$dst, $src}",
-                  [(set FR64:$dst, (fextend FR32:$src))]>, XS,
-                Requires<[HasSSE2]>;
-def CVTSS2SDrm: I<0x5A, MRMSrcMem, (ops FR64:$dst, f32mem:$src),
-                  "cvtss2sd {$src, $dst|$dst, $src}",
-                  [(set FR64:$dst, (fextend (loadf32 addr:$src)))]>, XS,
-                Requires<[HasSSE2]>;
-
 // Arithmetic instructions
 let isTwoAddress = 1 in {
 let isCommutable = 1 in {
@@ -316,6 +269,207 @@ def MINSDrr : SDI<0x5D, MRMSrcReg, (ops FR64:$dst, FR64:$src),
                   "minsd {$src, $dst|$dst, $src}", []>;
 def MINSDrm : SDI<0x5D, MRMSrcMem, (ops FR64:$dst, f64mem:$src),
                   "minsd {$src, $dst|$dst, $src}", []>;
+
+
+// Aliases to match intrinsics which expect XMM operand(s).
+let isTwoAddress = 1 in {
+let isCommutable = 1 in {
+def Int_ADDSSrr : SSI<0x58, MRMSrcReg, (ops VR128:$dst, VR128:$src1,
+                                        VR128:$src2),
+                "addss {$src2, $dst|$dst, $src2}",
+                [(set VR128:$dst, (int_x86_sse_add_ss VR128:$src1,
+                                   VR128:$src2))]>;
+def Int_ADDSDrr : SDI<0x58, MRMSrcReg, (ops VR128:$dst, VR128:$src1,
+                                        VR128:$src2),
+                "addsd {$src2, $dst|$dst, $src2}",
+                [(set VR128:$dst, (int_x86_sse2_add_sd VR128:$src1,
+                                   VR128:$src2))]>;
+def Int_MULSSrr : SSI<0x59, MRMSrcReg, (ops VR128:$dst, VR128:$src1,
+                                        VR128:$src2),
+                "mulss {$src2, $dst|$dst, $src2}",
+                [(set VR128:$dst, (int_x86_sse_mul_ss VR128:$src1,
+                                   VR128:$src2))]>;
+def Int_MULSDrr : SDI<0x59, MRMSrcReg, (ops VR128:$dst, VR128:$src1,
+                                        VR128:$src2),
+                "mulsd {$src2, $dst|$dst, $src2}",
+                [(set VR128:$dst, (int_x86_sse2_mul_sd VR128:$src1,
+                                   VR128:$src2))]>;
+}
+
+def Int_ADDSSrm : SSI<0x58, MRMSrcMem, (ops VR128:$dst, VR128:$src1,
+                                        f32mem:$src2),
+                "addss {$src2, $dst|$dst, $src2}",
+                [(set VR128:$dst, (int_x86_sse_add_ss VR128:$src1,
+                                   (load addr:$src2)))]>;
+def Int_ADDSDrm : SDI<0x58, MRMSrcMem, (ops VR128:$dst, VR128:$src1,
+                                        f64mem:$src2),
+                "addsd {$src2, $dst|$dst, $src2}",
+                [(set VR128:$dst, (int_x86_sse2_add_sd VR128:$src1,
+                                   (load addr:$src2)))]>;
+def Int_MULSSrm : SSI<0x59, MRMSrcMem, (ops VR128:$dst, VR128:$src1,
+                                        f32mem:$src2),
+                "mulss {$src2, $dst|$dst, $src2}",
+                [(set VR128:$dst, (int_x86_sse_mul_ss VR128:$src1,
+                                   (load addr:$src2)))]>;
+def Int_MULSDrm : SDI<0x59, MRMSrcMem, (ops VR128:$dst, VR128:$src1,
+                                        f64mem:$src2),
+                "mulsd {$src2, $dst|$dst, $src2}",
+                [(set VR128:$dst, (int_x86_sse2_mul_sd VR128:$src1,
+                                   (load addr:$src2)))]>;
+
+def Int_DIVSSrr : SSI<0x5E, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                "divss {$src2, $dst|$dst, $src2}",
+                [(set VR128:$dst, (int_x86_sse_div_ss VR128:$src1,
+                                   VR128:$src2))]>;
+def Int_DIVSSrm : SSI<0x5E, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f32mem:$src2),
+                "divss {$src2, $dst|$dst, $src2}",
+                [(set VR128:$dst, (int_x86_sse_div_ss VR128:$src1,
+                                   (load addr:$src2)))]>;
+def Int_DIVSDrr : SDI<0x5E, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                "divsd {$src2, $dst|$dst, $src2}",
+                [(set VR128:$dst, (int_x86_sse2_div_sd VR128:$src1,
+                                   VR128:$src2))]>;
+def Int_DIVSDrm : SDI<0x5E, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
+                "divsd {$src2, $dst|$dst, $src2}",
+                [(set VR128:$dst, (int_x86_sse2_div_sd VR128:$src1,
+                                   (load addr:$src2)))]>;
+
+def Int_SUBSSrr : SSI<0x5C, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                "subss {$src2, $dst|$dst, $src2}",
+                [(set VR128:$dst, (int_x86_sse_sub_ss VR128:$src1,
+                                   VR128:$src2))]>;
+def Int_SUBSSrm : SSI<0x5C, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f32mem:$src2),
+                "subss {$src2, $dst|$dst, $src2}",
+                [(set VR128:$dst, (int_x86_sse_sub_ss VR128:$src1,
+                                   (load addr:$src2)))]>;
+def Int_SUBSDrr : SDI<0x5C, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                "subsd {$src2, $dst|$dst, $src2}",
+                [(set VR128:$dst, (int_x86_sse2_sub_sd VR128:$src1,
+                                   VR128:$src2))]>;
+def Int_SUBSDrm : SDI<0x5C, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
+                "subsd {$src2, $dst|$dst, $src2}",
+                [(set VR128:$dst, (int_x86_sse2_sub_sd VR128:$src1,
+                                   (load addr:$src2)))]>;
+}
+
+def Int_SQRTSSrr : SSI<0x51, MRMSrcReg, (ops VR128:$dst, VR128:$src),
+                 "sqrtss {$src, $dst|$dst, $src}",
+                       [(set VR128:$dst, (int_x86_sse_sqrt_ss VR128:$src))]>;
+def Int_SQRTSSrm : SSI<0x51, MRMSrcMem, (ops VR128:$dst, f32mem:$src),
+                 "sqrtss {$src, $dst|$dst, $src}",
+                       [(set VR128:$dst, (int_x86_sse_sqrt_ss
+                                          (load addr:$src)))]>;
+def Int_SQRTSDrr : SDI<0x51, MRMSrcReg, (ops VR128:$dst, VR128:$src),
+                      "sqrtsd {$src, $dst|$dst, $src}",
+                      [(set VR128:$dst, (int_x86_sse2_sqrt_sd VR128:$src))]>;
+def Int_SQRTSDrm : SDI<0x51, MRMSrcMem, (ops VR128:$dst, f64mem:$src),
+                      "sqrtsd {$src, $dst|$dst, $src}",
+                      [(set VR128:$dst, (int_x86_sse2_sqrt_sd
+                                         (load addr:$src)))]>;
+
+def Int_RSQRTSSrr : SSI<0x52, MRMSrcReg, (ops VR128:$dst, VR128:$src),
+                       "rsqrtss {$src, $dst|$dst, $src}",
+                       [(set VR128:$dst, (int_x86_sse_rsqrt_ss VR128:$src))]>;
+def Int_RSQRTSSrm : SSI<0x52, MRMSrcMem, (ops VR128:$dst, f32mem:$src),
+                       "rsqrtss {$src, $dst|$dst, $src}",
+                       [(set VR128:$dst, (int_x86_sse_rsqrt_ss
+                                          (load addr:$src)))]>;
+def Int_RCPSSrr : SSI<0x53, MRMSrcReg, (ops VR128:$dst, VR128:$src),
+                     "rcpss {$src, $dst|$dst, $src}",
+                     [(set VR128:$dst, (int_x86_sse_rcp_ss VR128:$src))]>;
+def Int_RCPSSrm : SSI<0x53, MRMSrcMem, (ops VR128:$dst, f32mem:$src),
+                     "rcpss {$src, $dst|$dst, $src}",
+                     [(set VR128:$dst, (int_x86_sse_rcp_ss
+                                        (load addr:$src)))]>;
+
+let isTwoAddress = 1 in {
+def Int_MAXSSrr : SSI<0x5F, MRMSrcReg, (ops VR128:$dst, VR128:$src1,
+                                        VR128:$src2),
+                      "maxss {$src2, $dst|$dst, $src2}",
+                      [(set VR128:$dst, (int_x86_sse_max_ss VR128:$src1,
+                                         VR128:$src2))]>;
+def Int_MAXSSrm : SSI<0x5F, MRMSrcMem, (ops VR128:$dst, VR128:$src1,
+                                        f32mem:$src2),
+                      "maxss {$src2, $dst|$dst, $src2}",
+                      [(set VR128:$dst, (int_x86_sse_max_ss VR128:$src1,
+                                         (load addr:$src2)))]>;
+def Int_MAXSDrr : SDI<0x5F, MRMSrcReg, (ops VR128:$dst, VR128:$src1,
+                                        VR128:$src2),
+                      "maxsd {$src2, $dst|$dst, $src2}",
+                      [(set VR128:$dst, (int_x86_sse2_max_sd VR128:$src1,
+                                         VR128:$src2))]>;
+def Int_MAXSDrm : SDI<0x5F, MRMSrcMem, (ops VR128:$dst, VR128:$src1,
+                                        f64mem:$src2),
+                      "maxsd {$src2, $dst|$dst, $src2}",
+                      [(set VR128:$dst, (int_x86_sse2_max_sd VR128:$src1,
+                                         (load addr:$src2)))]>;
+def Int_MINSSrr : SSI<0x5D, MRMSrcReg, (ops VR128:$dst, VR128:$src1,
+                                        VR128:$src2),
+                      "minss {$src2, $dst|$dst, $src2}",
+                      [(set VR128:$dst, (int_x86_sse_min_ss VR128:$src1,
+                                         VR128:$src2))]>;
+def Int_MINSSrm : SSI<0x5D, MRMSrcMem, (ops VR128:$dst, VR128:$src1,
+                                        f32mem:$src2),
+                      "minss {$src2, $dst|$dst, $src2}",
+                      [(set VR128:$dst, (int_x86_sse_min_ss VR128:$src1,
+                                         (load addr:$src2)))]>;
+def Int_MINSDrr : SDI<0x5D, MRMSrcReg, (ops VR128:$dst, VR128:$src1,
+                                        VR128:$src2),
+                      "minsd {$src2, $dst|$dst, $src2}",
+                      [(set VR128:$dst, (int_x86_sse2_min_sd VR128:$src1,
+                                         VR128:$src2))]>;
+def Int_MINSDrm : SDI<0x5D, MRMSrcMem, (ops VR128:$dst, VR128:$src1,
+                                        f64mem:$src2),
+                      "minsd {$src2, $dst|$dst, $src2}",
+                      [(set VR128:$dst, (int_x86_sse2_min_sd VR128:$src1,
+                                         (load addr:$src2)))]>;
+}
+
+// Conversion instructions
+def CVTSS2SIrr: SSI<0x2D, MRMSrcReg, (ops R32:$dst, FR32:$src),
+                   "cvtss2si {$src, $dst|$dst, $src}", []>;
+def CVTSS2SIrm: SSI<0x2D, MRMSrcMem, (ops R32:$dst, f32mem:$src),
+                   "cvtss2si {$src, $dst|$dst, $src}", []>;
+
+def CVTTSS2SIrr: SSI<0x2C, MRMSrcReg, (ops R32:$dst, FR32:$src),
+                   "cvttss2si {$src, $dst|$dst, $src}",
+                   [(set R32:$dst, (fp_to_sint FR32:$src))]>;
+def CVTTSS2SIrm: SSI<0x2C, MRMSrcMem, (ops R32:$dst, f32mem:$src),
+                   "cvttss2si {$src, $dst|$dst, $src}",
+                   [(set R32:$dst, (fp_to_sint (loadf32 addr:$src)))]>;
+def CVTTSD2SIrr: SDI<0x2C, MRMSrcReg, (ops R32:$dst, FR64:$src),
+                   "cvttsd2si {$src, $dst|$dst, $src}",
+                   [(set R32:$dst, (fp_to_sint FR64:$src))]>;
+def CVTTSD2SIrm: SDI<0x2C, MRMSrcMem, (ops R32:$dst, f64mem:$src),
+                   "cvttsd2si {$src, $dst|$dst, $src}",
+                   [(set R32:$dst, (fp_to_sint (loadf64 addr:$src)))]>;
+def CVTSD2SSrr: SDI<0x5A, MRMSrcReg, (ops FR32:$dst, FR64:$src),
+                  "cvtsd2ss {$src, $dst|$dst, $src}",
+                  [(set FR32:$dst, (fround FR64:$src))]>;
+def CVTSD2SSrm: SDI<0x5A, MRMSrcMem, (ops FR32:$dst, f64mem:$src), 
+                  "cvtsd2ss {$src, $dst|$dst, $src}",
+                  [(set FR32:$dst, (fround (loadf64 addr:$src)))]>;
+def CVTSI2SSrr: SSI<0x2A, MRMSrcReg, (ops FR32:$dst, R32:$src),
+                  "cvtsi2ss {$src, $dst|$dst, $src}",
+                  [(set FR32:$dst, (sint_to_fp R32:$src))]>;
+def CVTSI2SSrm: SSI<0x2A, MRMSrcMem, (ops FR32:$dst, i32mem:$src),
+                  "cvtsi2ss {$src, $dst|$dst, $src}",
+                  [(set FR32:$dst, (sint_to_fp (loadi32 addr:$src)))]>;
+def CVTSI2SDrr: SDI<0x2A, MRMSrcReg, (ops FR64:$dst, R32:$src),
+                  "cvtsi2sd {$src, $dst|$dst, $src}",
+                  [(set FR64:$dst, (sint_to_fp R32:$src))]>;
+def CVTSI2SDrm: SDI<0x2A, MRMSrcMem, (ops FR64:$dst, i32mem:$src),
+                  "cvtsi2sd {$src, $dst|$dst, $src}",
+                  [(set FR64:$dst, (sint_to_fp (loadi32 addr:$src)))]>;
+// SSE2 instructions with XS prefix
+def CVTSS2SDrr: I<0x5A, MRMSrcReg, (ops FR64:$dst, FR32:$src),
+                  "cvtss2sd {$src, $dst|$dst, $src}",
+                  [(set FR64:$dst, (fextend FR32:$src))]>, XS,
+                Requires<[HasSSE2]>;
+def CVTSS2SDrm: I<0x5A, MRMSrcMem, (ops FR64:$dst, f32mem:$src),
+                  "cvtss2sd {$src, $dst|$dst, $src}",
+                  [(set FR64:$dst, (fextend (loadf32 addr:$src)))]>, XS,
+                Requires<[HasSSE2]>;
 
 // Comparison instructions
 let isTwoAddress = 1 in {
