@@ -1396,8 +1396,16 @@ SDOperand DAGCombiner::visitXOR(SDNode *N) {
                          DAG.getConstant(N1C->getValue()^N01C->getValue(), VT));
   }
   // fold (xor x, x) -> 0
-  if (N0 == N1)
-    return DAG.getConstant(0, VT);
+  if (N0 == N1) {
+    if (!MVT::isVector(VT)) {
+      return DAG.getConstant(0, VT);
+    } else if (!AfterLegalize || TLI.isOperationLegal(ISD::BUILD_VECTOR, VT)) {
+      // Produce a vector of zeros.
+      SDOperand El = DAG.getConstant(0, MVT::getVectorBaseType(VT));
+      std::vector<SDOperand> Ops(MVT::getVectorNumElements(VT), El);
+      return DAG.getNode(ISD::BUILD_VECTOR, VT, Ops);
+    }
+  }
   // fold (xor (zext x), (zext y)) -> (zext (xor x, y))
   if (N0.getOpcode() == ISD::ZERO_EXTEND && 
       N1.getOpcode() == ISD::ZERO_EXTEND &&
