@@ -136,6 +136,9 @@ namespace MVT {  // MVT = Machine Value Types
       if (NumElements == 2)  return MVT::v2i32;
       if (NumElements == 4)  return MVT::v4i32;
         break;
+    case MVT::i64:
+      if (NumElements == 2)  return MVT::v2i64;
+      break;
     case MVT::f32:
       if (NumElements == 2)  return MVT::v2f32;
       if (NumElements == 4)  return MVT::v4f32;
