@@ -500,7 +500,7 @@ def MOVLHPSrr : PSI<0x16, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                               MOVLHPS_shuffle_mask)))]>;
 
 def MOVHLPSrr : PSI<0x12, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                    "movlhps {$src2, $dst|$dst, $src2}",
+                    "movhlps {$src2, $dst|$dst, $src2}",
                     [(set VR128:$dst,
                       (v4f32 (vector_shuffle VR128:$src1, VR128:$src2,
                               MOVHLPS_shuffle_mask)))]>;
