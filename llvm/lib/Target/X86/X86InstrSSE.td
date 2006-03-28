@@ -63,6 +63,10 @@ def MOVLHPS_splat_mask : PatLeaf<(build_vector), [{
   return X86::isSplatMask(N);
 }]>;
 
+def MOVLHPS_shuffle_mask : PatLeaf<(build_vector), [{
+  return X86::isMOVLHPSMask(N);
+}]>;
+
 def MOVHLPS_shuffle_mask : PatLeaf<(build_vector), [{
   return X86::isMOVHLPSMask(N);
 }]>;
@@ -492,13 +496,13 @@ let isTwoAddress = 1 in {
 def MOVLHPSrr : PSI<0x16, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                     "movlhps {$src2, $dst|$dst, $src2}",
                     [(set VR128:$dst,
-                      (v2f64 (vector_shuffle VR128:$src1, VR128:$src2,
-                              UNPCKL_shuffle_mask)))]>;
+                      (v4f32 (vector_shuffle VR128:$src1, VR128:$src2,
+                              MOVLHPS_shuffle_mask)))]>;
 
 def MOVHLPSrr : PSI<0x12, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                     "movlhps {$src2, $dst|$dst, $src2}",
                     [(set VR128:$dst,
-                      (v2f64 (vector_shuffle VR128:$src1, VR128:$src2,
+                      (v4f32 (vector_shuffle VR128:$src1, VR128:$src2,
                               MOVHLPS_shuffle_mask)))]>;
 }
 
@@ -1204,17 +1208,3 @@ def : Pat<(vector_shuffle (v4f32 VR128:$src), (undef), PSHUFD_shuffle_mask:$sm),
 def : Pat<(vector_shuffle (v4i32 VR128:$src), (undef), PSHUFD_shuffle_mask:$sm),
           (v4i32 (PSHUFDrr VR128:$src, PSHUFD_shuffle_mask:$sm))>,
       Requires<[HasSSE2]>;
-
-// Shuffle v2i64
-def : Pat<(vector_shuffle (v2i64 VR128:$src1), (v2i64 VR128:$src2),
-           UNPCKL_shuffle_mask:$sm),
-          (v2i64 (MOVLHPSrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
-def : Pat<(vector_shuffle (v2i64 VR128:$src1), (v2i64 VR128:$src2),
-           MOVHLPS_shuffle_mask:$sm),
-          (v2i64 (MOVHLPSrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
-def : Pat<(vector_shuffle (v2i64 VR128:$src1), (load addr:$src2),
-           UNPCKL_shuffle_mask:$sm),
-          (v2i64 (UNPCKLPDrm VR128:$src1, addr:$src2))>, Requires<[HasSSE2]>;
-def : Pat<(vector_shuffle (v2i64 VR128:$src1), (load addr:$src2),
-           UNPCKH_shuffle_mask:$sm),
-          (v2i64 (UNPCKHPDrm VR128:$src1, addr:$src2))>, Requires<[HasSSE2]>;
