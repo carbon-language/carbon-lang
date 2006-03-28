@@ -15,6 +15,8 @@ let TargetPrefix = "ppc" in {  // All intrinsics start with "llvm.ppc.".
   // Loads.
   def int_ppc_altivec_lvx : GCCBuiltin<"__builtin_altivec_lvx">,
               Intrinsic<[llvm_v4i32_ty, llvm_ptr_ty], [IntrReadMem]>;
+  def int_ppc_altivec_lvxl : GCCBuiltin<"__builtin_altivec_lvxl">,
+              Intrinsic<[llvm_v4i32_ty, llvm_ptr_ty], [IntrReadMem]>;
   def int_ppc_altivec_lvebx : GCCBuiltin<"__builtin_altivec_lvebx">,
               Intrinsic<[llvm_v16i8_ty, llvm_ptr_ty], [IntrReadMem]>;
   def int_ppc_altivec_lvehx : GCCBuiltin<"__builtin_altivec_lvehx">,
