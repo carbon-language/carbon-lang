@@ -662,7 +662,3 @@ call _foo
 
 Obviously it would have been better for the first mov (or any op) to store
 directly %esp[0] if there are no other uses.
-
-//===---------------------------------------------------------------------===//
-
-Add more vector shuffle special cases using unpckhps and unpcklps.
