@@ -211,6 +211,7 @@ namespace {
     SDOperand visitSTORE(SDNode *N);
     SDOperand visitINSERT_VECTOR_ELT(SDNode *N);
     SDOperand visitVINSERT_VECTOR_ELT(SDNode *N);
+    SDOperand visitVBUILD_VECTOR(SDNode *N);
 
     SDOperand ReassociateOps(unsigned Opc, SDOperand LHS, SDOperand RHS);
     
@@ -644,6 +645,7 @@ SDOperand DAGCombiner::visit(SDNode *N) {
   case ISD::STORE:              return visitSTORE(N);
   case ISD::INSERT_VECTOR_ELT:  return visitINSERT_VECTOR_ELT(N);
   case ISD::VINSERT_VECTOR_ELT: return visitVINSERT_VECTOR_ELT(N);
+  case ISD::VBUILD_VECTOR:      return visitVBUILD_VECTOR(N);
   }
   return SDOperand();
 }
@@ -2336,6 +2338,90 @@ SDOperand DAGCombiner::visitVINSERT_VECTOR_ELT(SDNode *N) {
     if (Elt < Ops.size()-2)
       Ops[Elt] = InVal;
     return DAG.getNode(ISD::VBUILD_VECTOR, InVec.getValueType(), Ops);
+  }
+  
+  return SDOperand();
+}
+
+SDOperand DAGCombiner::visitVBUILD_VECTOR(SDNode *N) {
+  unsigned NumInScalars = N->getNumOperands()-2;
+  SDOperand NumElts = N->getOperand(NumInScalars);
+  SDOperand EltType = N->getOperand(NumInScalars+1);
+
+  // Check to see if this is a VBUILD_VECTOR of a bunch of VEXTRACT_VECTOR_ELT
+  // operations.  If so, and if the EXTRACT_ELT vector inputs come from at most
+  // two distinct vectors, turn this into a shuffle node.
+  SDOperand VecIn1, VecIn2;
+  for (unsigned i = 0; i != NumInScalars; ++i) {
+    // Ignore undef inputs.
+    if (N->getOperand(i).getOpcode() == ISD::UNDEF) continue;
+    
+    // If this input is something other than a VEXTRACT_VECTOR_ELT with a
+    // constant index, bail out.
+    if (N->getOperand(i).getOpcode() != ISD::VEXTRACT_VECTOR_ELT ||
+        !isa<ConstantSDNode>(N->getOperand(i).getOperand(1))) {
+      VecIn1 = VecIn2 = SDOperand(0, 0);
+      break;
+    }
+    
+    // If the input vector type disagrees with the result of the vbuild_vector,
+    // we can't make a shuffle.
+    SDOperand ExtractedFromVec = N->getOperand(i).getOperand(0);
+    if (*(ExtractedFromVec.Val->op_end()-2) != NumElts ||
+        *(ExtractedFromVec.Val->op_end()-1) != EltType) {
+      VecIn1 = VecIn2 = SDOperand(0, 0);
+      break;
+    }
+    
+    // Otherwise, remember this.  We allow up to two distinct input vectors.
+    if (ExtractedFromVec == VecIn1 || ExtractedFromVec == VecIn2)
+      continue;
+    
+    if (VecIn1.Val == 0) {
+      VecIn1 = ExtractedFromVec;
+    } else if (VecIn2.Val == 0) {
+      VecIn2 = ExtractedFromVec;
+    } else {
+      // Too many inputs.
+      VecIn1 = VecIn2 = SDOperand(0, 0);
+      break;
+    }
+  }
+  
+  // If everything is good, we can make a shuffle operation.
+  if (VecIn1.Val) {
+    std::vector<SDOperand> BuildVecIndices;
+    for (unsigned i = 0; i != NumInScalars; ++i) {
+      if (N->getOperand(i).getOpcode() == ISD::UNDEF) {
+        BuildVecIndices.push_back(DAG.getNode(ISD::UNDEF, MVT::i32));
+        continue;
+      }
+      
+      SDOperand Extract = N->getOperand(i);
+      
+      // If extracting from the first vector, just use the index directly.
+      if (Extract.getOperand(0) == VecIn1) {
+        BuildVecIndices.push_back(Extract.getOperand(1));
+        continue;
+      }
+
+      // Otherwise, use InIdx + VecSize
+      unsigned Idx = cast<ConstantSDNode>(Extract.getOperand(1))->getValue();
+      BuildVecIndices.push_back(DAG.getConstant(Idx+NumInScalars, MVT::i32));
+    }
+    
+    // Add count and size info.
+    BuildVecIndices.push_back(NumElts);
+    BuildVecIndices.push_back(DAG.getValueType(MVT::i32));
+    
+    // Return the new VVECTOR_SHUFFLE node.
+    std::vector<SDOperand> Ops;
+    Ops.push_back(VecIn1);
+    Ops.push_back(VecIn2.Val ? VecIn2 : VecIn1); // Use V1 twice if no V2.
+    Ops.push_back(DAG.getNode(ISD::VBUILD_VECTOR,MVT::Vector, BuildVecIndices));
+    Ops.push_back(NumElts);
+    Ops.push_back(EltType);
+    return DAG.getNode(ISD::VVECTOR_SHUFFLE, MVT::Vector, Ops);
   }
   
   return SDOperand();
