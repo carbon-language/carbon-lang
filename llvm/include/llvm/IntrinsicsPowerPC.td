@@ -12,32 +12,34 @@
 //===----------------------------------------------------------------------===//
 
 let TargetPrefix = "ppc" in {  // All intrinsics start with "llvm.ppc.".
-  // Loads.
-  def int_ppc_altivec_lvx : GCCBuiltin<"__builtin_altivec_lvx">,
+  // Loads.  These don't map directly to GCC builtins because they represent the
+  // source address with a single pointer.
+  def int_ppc_altivec_lvx :
               Intrinsic<[llvm_v4i32_ty, llvm_ptr_ty], [IntrReadMem]>;
-  def int_ppc_altivec_lvxl : GCCBuiltin<"__builtin_altivec_lvxl">,
+  def int_ppc_altivec_lvxl :
               Intrinsic<[llvm_v4i32_ty, llvm_ptr_ty], [IntrReadMem]>;
-  def int_ppc_altivec_lvebx : GCCBuiltin<"__builtin_altivec_lvebx">,
+  def int_ppc_altivec_lvebx :
               Intrinsic<[llvm_v16i8_ty, llvm_ptr_ty], [IntrReadMem]>;
-  def int_ppc_altivec_lvehx : GCCBuiltin<"__builtin_altivec_lvehx">,
+  def int_ppc_altivec_lvehx :
               Intrinsic<[llvm_v8i16_ty, llvm_ptr_ty], [IntrReadMem]>;
-  def int_ppc_altivec_lvewx : GCCBuiltin<"__builtin_altivec_lvewx">,
+  def int_ppc_altivec_lvewx :
               Intrinsic<[llvm_v4i32_ty, llvm_ptr_ty], [IntrReadMem]>;
 
-  // Stores.
-  def int_ppc_altivec_stvx : GCCBuiltin<"__builtin_altivec_stvx">,
+  // Stores.  These don't map directly to GCC builtins because they represent the
+  // source address with a single pointer.
+  def int_ppc_altivec_stvx :
               Intrinsic<[llvm_void_ty, llvm_v4i32_ty, llvm_ptr_ty],
                         [IntrWriteMem]>;
-  def int_ppc_altivec_stvxl : GCCBuiltin<"__builtin_altivec_stvxl">,
+  def int_ppc_altivec_stvxl :
               Intrinsic<[llvm_void_ty, llvm_v4i32_ty, llvm_ptr_ty],
                         [IntrWriteMem]>;
-  def int_ppc_altivec_stvebx : GCCBuiltin<"__builtin_altivec_stvebx">,
+  def int_ppc_altivec_stvebx :
               Intrinsic<[llvm_void_ty, llvm_v16i8_ty, llvm_ptr_ty],
                         [IntrWriteMem]>;
-  def int_ppc_altivec_stvehx : GCCBuiltin<"__builtin_altivec_stvehx">,
+  def int_ppc_altivec_stvehx :
               Intrinsic<[llvm_void_ty, llvm_v8i16_ty, llvm_ptr_ty],
                         [IntrWriteMem]>;
-  def int_ppc_altivec_stvewx : GCCBuiltin<"__builtin_altivec_stvewx">,
+  def int_ppc_altivec_stvewx :
               Intrinsic<[llvm_void_ty, llvm_v4i32_ty, llvm_ptr_ty],
                         [IntrWriteMem]>;
 
