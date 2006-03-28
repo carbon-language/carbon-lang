@@ -75,9 +75,9 @@ def llvm_uint_ty       : LLVMType<i32, "Type::UIntTyID">;
 def llvm_ulong_ty      : LLVMType<i64, "Type::ULongTyID">;
 def llvm_float_ty      : LLVMType<f32, "Type::FloatTyID">;
 def llvm_double_ty     : LLVMType<f64, "Type::DoubleTyID">;
-def llvm_ptr_ty        : LLVMType<iPTR, "Type::PointerTyID">;     // sbyte*
-def llvm_ptrptr_ty     : LLVMType<iPTR, "Type::PointerTyID">;     // sbyte**
-def llvm_descriptor_ty : LLVMType<iPTR, "Type::PointerTyID">;     // global*
+def llvm_ptr_ty        : LLVMType<OtherVT, "Type::PointerTyID">;     // sbyte*
+def llvm_ptrptr_ty     : LLVMType<OtherVT, "Type::PointerTyID">;     // sbyte**
+def llvm_descriptor_ty : LLVMType<OtherVT, "Type::PointerTyID">;     // global*
 
 def llvm_v16i8_ty      : LLVMPackedType<v16i8,16, llvm_sbyte_ty>;  // 16 x sbyte
 def llvm_v8i16_ty      : LLVMPackedType<v8i16, 8, llvm_short_ty>;  // 8 x short
