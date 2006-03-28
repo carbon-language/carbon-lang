@@ -634,6 +634,8 @@ SDOperand SelectionDAG::getZeroExtendInReg(SDOperand Op, MVT::ValueType VT) {
 
 SDOperand SelectionDAG::getConstant(uint64_t Val, MVT::ValueType VT) {
   assert(MVT::isInteger(VT) && "Cannot create FP integer constant!");
+  assert(!MVT::isVector(VT) && "Cannot create Vector ConstantSDNodes!");
+  
   // Mask out any bits that are not valid for this constant.
   if (VT != MVT::i64)
     Val &= ((uint64_t)1 << MVT::getSizeInBits(VT)) - 1;
