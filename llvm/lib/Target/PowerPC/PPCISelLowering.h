@@ -48,14 +48,6 @@ namespace llvm {
       // three v4f32 operands and producing a v4f32 result.
       VMADDFP, VNMSUBFP,
       
-      /// LVE_X - The PPC LVE*X instructions.  The size of the element loaded is
-      /// the size of the element type of the vector result.  The element loaded
-      /// depends on the alignment of the input pointer.
-      ///
-      /// The first operand is a token chain, the second is the address to load
-      /// the third is the SRCVALUE node.
-      LVE_X,
-      
       /// VPERM - The PPC VPERM Instruction.
       ///
       VPERM,

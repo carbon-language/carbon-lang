@@ -69,13 +69,13 @@ def IMPLICIT_DEF_VRRC : Pseudo<(ops VRRC:$rD), "; $rD = IMPLICIT_DEF_VRRC",
 let isLoad = 1, PPC970_Unit = 2 in {  // Loads.
 def LVEBX: XForm_1<31,   7, (ops VRRC:$vD, memrr:$src),
                    "lvebx $vD, $src", LdStGeneral,
-                   [(set VRRC:$vD, (v16i8 (PPClve_x xoaddr:$src)))]>;
+                   []>;
 def LVEHX: XForm_1<31,  39, (ops VRRC:$vD, memrr:$src),
                    "lvehx $vD, $src", LdStGeneral,
-                   [(set VRRC:$vD, (v8i16 (PPClve_x xoaddr:$src)))]>;
+                   []>;
 def LVEWX: XForm_1<31,  71, (ops VRRC:$vD, memrr:$src),
                    "lvewx $vD, $src", LdStGeneral,
-                   [(set VRRC:$vD, (v4f32 (PPClve_x xoaddr:$src)))]>;
+                   []>;
 def LVX  : XForm_1<31, 103, (ops VRRC:$vD, memrr:$src),
                    "lvx $vD, $src", LdStGeneral,
                    [(set VRRC:$vD, (v4f32 (load xoaddr:$src)))]>;
@@ -510,8 +510,4 @@ def : Pat<(vector_shuffle (v4i32 VRRC:$vB), (undef), VSPLT_shuffle_mask:$UIMM),
 
 def : Pat<(PPCvperm (v4i32 VRRC:$vA), VRRC:$vB, VRRC:$vC),
           (v4i32 (VPERM VRRC:$vA, VRRC:$vB, VRRC:$vC))>;
-
-def : Pat<(v4i32 (PPClve_x xoaddr:$src)),
-          (v4i32 (LVEWX xoaddr:$src))>;
-
 

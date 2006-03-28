@@ -222,7 +222,6 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::STFIWX:        return "PPCISD::STFIWX";
   case PPCISD::VMADDFP:       return "PPCISD::VMADDFP";
   case PPCISD::VNMSUBFP:      return "PPCISD::VNMSUBFP";
-  case PPCISD::LVE_X:         return "PPCISD::LVE_X";
   case PPCISD::VPERM:         return "PPCISD::VPERM";
   case PPCISD::Hi:            return "PPCISD::Hi";
   case PPCISD::Lo:            return "PPCISD::Lo";
@@ -697,9 +696,8 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     // Store the input value into Value#0 of the stack slot.
     SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
                                   Op.getOperand(0), FIdx,DAG.getSrcValue(NULL));
-    // LVE_X it out.
-    return DAG.getNode(PPCISD::LVE_X, Op.getValueType(), Store, FIdx, 
-                       DAG.getSrcValue(NULL));
+    // Load it out.
+    return DAG.getLoad(Op.getValueType(), Store, FIdx, DAG.getSrcValue(NULL));
   }
   case ISD::BUILD_VECTOR:
     // If this is a case we can't handle, return null and let the default

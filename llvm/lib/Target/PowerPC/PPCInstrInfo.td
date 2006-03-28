@@ -53,7 +53,6 @@ def PPClo       : SDNode<"PPCISD::Lo", SDTIntBinOp, []>;
 def PPCvmaddfp  : SDNode<"PPCISD::VMADDFP", SDTFPTernaryOp, []>;
 def PPCvnmsubfp : SDNode<"PPCISD::VNMSUBFP", SDTFPTernaryOp, []>;
 
-def PPClve_x    : SDNode<"PPCISD::LVE_X", SDTLoad, [SDNPHasChain]>;
 def PPCvperm    : SDNode<"PPCISD::VPERM", SDT_PPCvperm, []>;
 
 // These nodes represent the 32-bit PPC shifts that operate on 6-bit shift
