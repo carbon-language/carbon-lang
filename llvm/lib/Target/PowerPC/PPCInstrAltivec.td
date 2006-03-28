@@ -69,16 +69,19 @@ def IMPLICIT_DEF_VRRC : Pseudo<(ops VRRC:$rD), "; $rD = IMPLICIT_DEF_VRRC",
 let isLoad = 1, PPC970_Unit = 2 in {  // Loads.
 def LVEBX: XForm_1<31,   7, (ops VRRC:$vD, memrr:$src),
                    "lvebx $vD, $src", LdStGeneral,
-                   []>;
+                   [(set VRRC:$vD, (int_ppc_altivec_lvebx xoaddr:$src))]>;
 def LVEHX: XForm_1<31,  39, (ops VRRC:$vD, memrr:$src),
                    "lvehx $vD, $src", LdStGeneral,
-                   []>;
+                   [(set VRRC:$vD, (int_ppc_altivec_lvehx xoaddr:$src))]>;
 def LVEWX: XForm_1<31,  71, (ops VRRC:$vD, memrr:$src),
                    "lvewx $vD, $src", LdStGeneral,
-                   []>;
+                   [(set VRRC:$vD, (int_ppc_altivec_lvewx xoaddr:$src))]>;
 def LVX  : XForm_1<31, 103, (ops VRRC:$vD, memrr:$src),
                    "lvx $vD, $src", LdStGeneral,
-                   [(set VRRC:$vD, (v4f32 (load xoaddr:$src)))]>;
+                   [(set VRRC:$vD, (int_ppc_altivec_lvx xoaddr:$src))]>;
+def LVXL : XForm_1<31, 359, (ops VRRC:$vD, memrr:$src),
+                   "lvxl $vD, $src", LdStGeneral,
+                   [(set VRRC:$vD, (int_ppc_altivec_lvxl xoaddr:$src))]>;
 }
 
 def LVSL : XForm_1<31,   6, (ops VRRC:$vD,  GPRC:$base, GPRC:$rA),
@@ -100,7 +103,10 @@ def STVEWX: XForm_8<31, 199, (ops VRRC:$rS, memrr:$dst),
                    [(int_ppc_altivec_stvewx VRRC:$rS, xoaddr:$dst)]>;
 def STVX  : XForm_8<31, 231, (ops VRRC:$rS, memrr:$dst),
                    "stvx $rS, $dst", LdStGeneral,
-                   [(store (v4f32 VRRC:$rS), xoaddr:$dst)]>;
+                   [(int_ppc_altivec_stvx VRRC:$rS, xoaddr:$dst)]>;
+def STVXL : XForm_8<31, 487, (ops VRRC:$rS, memrr:$dst),
+                   "stvxl $rS, $dst", LdStGeneral,
+                   [(int_ppc_altivec_stvxl VRRC:$rS, xoaddr:$dst)]>;
 }
 
 let PPC970_Unit = 5 in {  // VALU Operations.
@@ -197,10 +203,10 @@ def VCTUXS : VXForm_1<906, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
                       []>;
 def VEXPTEFP : VXForm_2<394, (ops VRRC:$vD, VRRC:$vB),
                         "vexptefp $vD, $vB", VecFP,
-                        []>;
+                        [(set VRRC:$vD, (int_ppc_altivec_vexptefp VRRC:$vB))]>;
 def VLOGEFP  : VXForm_2<458, (ops VRRC:$vD, VRRC:$vB),
                         "vlogefp $vD, $vB", VecFP,
-                        []>;
+                        [(set VRRC:$vD, (int_ppc_altivec_vlogefp VRRC:$vB))]>;
 def VMAXFP : VXForm_1<1034, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       "vmaxfp $vD, $vA, $vB", VecFP,
                       []>;
@@ -209,19 +215,19 @@ def VMINFP : VXForm_1<1098, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       []>;
 def VREFP  : VXForm_2<266, (ops VRRC:$vD, VRRC:$vB),
                       "vrefp $vD, $vB", VecFP,
-                      []>;
+                      [(set VRRC:$vD, (int_ppc_altivec_vrefp VRRC:$vB))]>;
 def VRFIM  : VXForm_2<714, (ops VRRC:$vD, VRRC:$vB),
                       "vrfim $vD, $vB", VecFP,
-                      []>;
+                      [(set VRRC:$vD, (int_ppc_altivec_vrfim VRRC:$vB))]>;
 def VRFIN  : VXForm_2<522, (ops VRRC:$vD, VRRC:$vB),
                       "vrfin $vD, $vB", VecFP,
-                      []>;
+                      [(set VRRC:$vD, (int_ppc_altivec_vrfin VRRC:$vB))]>;
 def VRFIP  : VXForm_2<650, (ops VRRC:$vD, VRRC:$vB),
                       "vrfip $vD, $vB", VecFP,
-                      []>;
+                      [(set VRRC:$vD, (int_ppc_altivec_vrfip VRRC:$vB))]>;
 def VRFIZ  : VXForm_2<586, (ops VRRC:$vD, VRRC:$vB),
                       "vrfiz $vD, $vB", VecFP,
-                      []>;
+                      [(set VRRC:$vD, (int_ppc_altivec_vrfiz VRRC:$vB))]>;
 def VRSQRTEFP : VXForm_2<330, (ops VRRC:$vD, VRRC:$vB),
                          "vrsqrtefp $vD, $vB", VecFP,
                          [(set VRRC:$vD,(int_ppc_altivec_vrsqrtefp VRRC:$vB))]>;
@@ -268,7 +274,28 @@ def VSUBUWS : VXForm_1<1664, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                        "vsubuws $vD, $vA, $vB", VecFP,
                        [(set VRRC:$vD,
                              (int_ppc_altivec_vsubuws VRRC:$vA, VRRC:$vB))]>;
-                      
+
+def VSUMSWS : VXForm_1<1928, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                       "vsumsws $vD, $vA, $vB", VecFP,
+                       [(set VRRC:$vD,
+                             (int_ppc_altivec_vsumsws VRRC:$vA, VRRC:$vB))]>;
+def VSUM2SWS: VXForm_1<1672, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                       "vsum2sws $vD, $vA, $vB", VecFP,
+                       [(set VRRC:$vD,
+                             (int_ppc_altivec_vsum2sws VRRC:$vA, VRRC:$vB))]>;
+def VSUM4SBS: VXForm_1<1672, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                       "vsum4sbs $vD, $vA, $vB", VecFP,
+                       [(set VRRC:$vD,
+                             (int_ppc_altivec_vsum4sbs VRRC:$vA, VRRC:$vB))]>;
+def VSUM4SHS: VXForm_1<1608, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                       "vsum4shs $vD, $vA, $vB", VecFP,
+                       [(set VRRC:$vD,
+                             (int_ppc_altivec_vsum4shs VRRC:$vA, VRRC:$vB))]>;
+def VSUM4UBS: VXForm_1<1544, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                       "vsum4ubs $vD, $vA, $vB", VecFP,
+                       [(set VRRC:$vD,
+                             (int_ppc_altivec_vsum4ubs VRRC:$vA, VRRC:$vB))]>;
+
 def VNOR : VXForm_1<1284, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                     "vnor $vD, $vA, $vB", VecFP,
                     [(set VRRC:$vD, (vnot (or (v4i32 VRRC:$vA), VRRC:$vB)))]>;
@@ -278,6 +305,36 @@ def VOR : VXForm_1<1156, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
 def VXOR : VXForm_1<1220, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       "vxor $vD, $vA, $vB", VecFP,
                       [(set VRRC:$vD, (xor (v4i32 VRRC:$vA), VRRC:$vB))]>;
+
+def VRLB   : VXForm_1<4, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vrlb $vD, $vA, $vB", VecFP,
+                      [(set VRRC:$vD,
+                             (int_ppc_altivec_vrlb VRRC:$vA, VRRC:$vB))]>;
+def VRLH   : VXForm_1<68, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vrlh $vD, $vA, $vB", VecFP,
+                      [(set VRRC:$vD,
+                             (int_ppc_altivec_vrlh VRRC:$vA, VRRC:$vB))]>;
+def VRLW   : VXForm_1<132, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vrlw $vD, $vA, $vB", VecFP,
+                      [(set VRRC:$vD,
+                             (int_ppc_altivec_vrlw VRRC:$vA, VRRC:$vB))]>;
+
+def VSLO   : VXForm_1<1036, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vslo $vD, $vA, $vB", VecFP,
+                      [(set VRRC:$vD,
+                             (int_ppc_altivec_vslo VRRC:$vA, VRRC:$vB))]>;
+def VSLB   : VXForm_1<260, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vslb $vD, $vA, $vB", VecFP,
+                      [(set VRRC:$vD,
+                             (int_ppc_altivec_vslb VRRC:$vA, VRRC:$vB))]>;
+def VSLH   : VXForm_1<324, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vslh $vD, $vA, $vB", VecFP,
+                      [(set VRRC:$vD,
+                             (int_ppc_altivec_vslh VRRC:$vA, VRRC:$vB))]>;
+def VSLW   : VXForm_1<388, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vslw $vD, $vA, $vB", VecFP,
+                      [(set VRRC:$vD,
+                             (int_ppc_altivec_vslw VRRC:$vA, VRRC:$vB))]>;
 
 def VSPLTB : VXForm_1<524, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
                       "vspltb $vD, $vB, $UIMM", VecPerm,
@@ -289,6 +346,40 @@ def VSPLTW : VXForm_1<652, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
                       "vspltw $vD, $vB, $UIMM", VecPerm,
                       [(set VRRC:$vD, (vector_shuffle (v4f32 VRRC:$vB), (undef),
                                       VSPLT_shuffle_mask:$UIMM))]>;
+
+def VSR    : VXForm_1<708, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vsr $vD, $vA, $vB", VecFP,
+                      [(set VRRC:$vD,
+                             (int_ppc_altivec_vsr VRRC:$vA, VRRC:$vB))]>;
+def VSRO   : VXForm_1<1100, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vsro $vD, $vA, $vB", VecFP,
+                      [(set VRRC:$vD,
+                             (int_ppc_altivec_vsro VRRC:$vA, VRRC:$vB))]>;
+def VSRAB  : VXForm_1<772, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vsrab $vD, $vA, $vB", VecFP,
+                      [(set VRRC:$vD,
+                             (int_ppc_altivec_vsrab VRRC:$vA, VRRC:$vB))]>;
+def VSRAH  : VXForm_1<836, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vsrah $vD, $vA, $vB", VecFP,
+                      [(set VRRC:$vD,
+                             (int_ppc_altivec_vsrah VRRC:$vA, VRRC:$vB))]>;
+def VSRAW  : VXForm_1<900, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vsraw $vD, $vA, $vB", VecFP,
+                      [(set VRRC:$vD,
+                             (int_ppc_altivec_vsraw VRRC:$vA, VRRC:$vB))]>;
+def VSRB   : VXForm_1<516, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vsrb $vD, $vA, $vB", VecFP,
+                      [(set VRRC:$vD,
+                             (int_ppc_altivec_vsrb VRRC:$vA, VRRC:$vB))]>;
+def VSRH   : VXForm_1<580, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vsrh $vD, $vA, $vB", VecFP,
+                      [(set VRRC:$vD,
+                             (int_ppc_altivec_vsrh VRRC:$vA, VRRC:$vB))]>;
+def VSRW   : VXForm_1<644, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vsrw $vD, $vA, $vB", VecFP,
+                      [(set VRRC:$vD,
+                             (int_ppc_altivec_vsrw VRRC:$vA, VRRC:$vB))]>;
+
 
 def VSPLTISB : VXForm_3<780, (ops VRRC:$vD, s5imm:$SIMM),
                        "vspltisb $vD, $SIMM", VecPerm,
@@ -436,6 +527,7 @@ def : Pat<(v4i32 immAllZerosV), (v4i32 (V_SET0))>;
 def : Pat<(v16i8 (load xoaddr:$src)), (v16i8 (LVX xoaddr:$src))>;
 def : Pat<(v8i16 (load xoaddr:$src)), (v8i16 (LVX xoaddr:$src))>;
 def : Pat<(v4i32 (load xoaddr:$src)), (v4i32 (LVX xoaddr:$src))>;
+def : Pat<(v4f32 (load xoaddr:$src)), (v4f32 (LVX xoaddr:$src))>;
 
 // Stores.
 def : Pat<(store (v16i8 VRRC:$rS), xoaddr:$dst),
@@ -444,6 +536,8 @@ def : Pat<(store (v8i16 VRRC:$rS), xoaddr:$dst),
           (STVX (v8i16 VRRC:$rS), xoaddr:$dst)>;
 def : Pat<(store (v4i32 VRRC:$rS), xoaddr:$dst),
           (STVX (v4i32 VRRC:$rS), xoaddr:$dst)>;
+def : Pat<(store (v4f32 VRRC:$rS), xoaddr:$dst),
+          (STVX (v4f32 VRRC:$rS), xoaddr:$dst)>;
 
 // Bit conversions.
 def : Pat<(v16i8 (bitconvert (v8i16 VRRC:$src))), (v16i8 VRRC:$src)>;

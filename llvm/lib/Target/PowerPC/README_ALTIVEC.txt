@@ -50,14 +50,9 @@ altivec instructions.  Examples
 Missing intrinsics:
 
 ds*
-lve*
-lvs*
-lvx*
+lvsl/lvsr
 mf*
-st*
 vavg*
-vexptefp
-vlogefp
 vmax*
 vmhaddshs/vmhraddshs
 vmin*
@@ -67,11 +62,7 @@ vmsum*
 vmul*
 vperm
 vpk*
-vr*
 vsel (some aliases only accessible using builtins)
-vsl* (except vsldoi)
-vsr*
-vsum*
 vup*
 
 //===----------------------------------------------------------------------===//
