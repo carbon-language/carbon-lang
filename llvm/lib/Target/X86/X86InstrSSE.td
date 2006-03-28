@@ -63,20 +63,16 @@ def MOVLHPS_splat_mask : PatLeaf<(build_vector), [{
   return X86::isSplatMask(N);
 }]>;
 
-def MOVLHPSorUNPCKLPD_shuffle_mask : PatLeaf<(build_vector), [{
-  return X86::isMOVLHPSorUNPCKLPDMask(N);
-}], SHUFFLE_get_shuf_imm>;
-
 def MOVHLPS_shuffle_mask : PatLeaf<(build_vector), [{
   return X86::isMOVHLPSMask(N);
-}], SHUFFLE_get_shuf_imm>;
-
-def UNPCKHPD_shuffle_mask : PatLeaf<(build_vector), [{
-  return X86::isUNPCKHPDMask(N);
-}], SHUFFLE_get_shuf_imm>;
+}]>;
 
 def UNPCKL_shuffle_mask : PatLeaf<(build_vector), [{
   return X86::isUNPCKLMask(N);
+}]>;
+
+def UNPCKH_shuffle_mask : PatLeaf<(build_vector), [{
+  return X86::isUNPCKHMask(N);
 }]>;
 
 // Only use PSHUF if it is not a splat.
@@ -172,7 +168,7 @@ def MOVSD128rr : SDI<0x10, MRMSrcReg, (ops VR128:$dst, FR64:$src),
 def MOVSD128rm : SDI<0x10, MRMSrcMem, (ops VR128:$dst, f64mem:$src),
                      "movsd {$src, $dst|$dst, $src}",
                      [(set VR128:$dst, 
-                       (v4f32 (scalar_to_vector (loadf64 addr:$src))))]>;
+                       (v2f64 (scalar_to_vector (loadf64 addr:$src))))]>;
 
 
 // Conversion instructions
@@ -476,21 +472,34 @@ def MOVLPDrm : PDI<0x12, MRMSrcMem, (ops VR128:$dst, f64mem:$src),
 def MOVLPDmr : PDI<0x13, MRMDestMem, (ops f64mem:$dst, VR128:$src),
                    "movlpd {$src, $dst|$dst, $src}", []>;
 
-def MOVHPSrm : PSI<0x16, MRMSrcMem, (ops VR128:$dst, f64mem:$src),
-                   "movhps {$src, $dst|$dst, $src}", []>;
+let isTwoAddress = 1 in {
+def MOVHPSrm : PSI<0x16, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
+                   "movhps {$src2, $dst|$dst, $src2}", []>;
+def MOVHPDrm : PDI<0x16, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
+                   "movhpd {$src2, $dst|$dst, $src2}",
+                   [(set VR128:$dst, 
+                     (v2f64 (vector_shuffle VR128:$src1,
+                             (scalar_to_vector (loadf64 addr:$src2)),
+                             UNPCKL_shuffle_mask)))]>;
+}
+
 def MOVHPSmr : PSI<0x17, MRMDestMem, (ops f64mem:$dst, VR128:$src),
                    "movhps {$src, $dst|$dst, $src}", []>;
-def MOVHPDrm : PDI<0x16, MRMSrcMem, (ops VR128:$dst, f64mem:$src),
-                   "movhpd {$src, $dst|$dst, $src}", []>;
 def MOVHPDmr : PDI<0x17, MRMDestMem, (ops f64mem:$dst, VR128:$src),
                    "movhpd {$src, $dst|$dst, $src}", []>;
 
 let isTwoAddress = 1 in {
 def MOVLHPSrr : PSI<0x16, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                    "movlhps {$src2, $dst|$dst, $src2}", []>;
+                    "movlhps {$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst,
+                      (v2f64 (vector_shuffle VR128:$src1, VR128:$src2,
+                              UNPCKL_shuffle_mask)))]>;
 
 def MOVHLPSrr : PSI<0x12, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                    "movlhps {$src2, $dst|$dst, $src2}", []>;
+                    "movlhps {$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst,
+                      (v2f64 (vector_shuffle VR128:$src1, VR128:$src2,
+                              MOVHLPS_shuffle_mask)))]>;
 }
 
 def MOVMSKPSrr : PSI<0x50, MRMSrcReg, (ops R32:$dst, VR128:$src),
@@ -784,16 +793,29 @@ def SHUFPDrm : PDIi8<0xC6, MRMSrcMem,
 
 def UNPCKHPSrr : PSI<0x15, MRMSrcReg, 
                     (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                    "unpckhps {$src2, $dst|$dst, $src2}", []>;
+                    "unpckhps {$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst,
+                      (v4f32 (vector_shuffle VR128:$src1, VR128:$src2,
+                              UNPCKH_shuffle_mask)))]>;
 def UNPCKHPSrm : PSI<0x15, MRMSrcMem, 
                     (ops VR128:$dst, VR128:$src1, f128mem:$src2),
-                    "unpckhps {$src2, $dst|$dst, $src2}", []>;
+                    "unpckhps {$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst,
+                      (v4f32 (vector_shuffle VR128:$src1, (load addr:$src2),
+                              UNPCKH_shuffle_mask)))]>;
 def UNPCKHPDrr : PDI<0x15, MRMSrcReg, 
                     (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                    "unpckhpd {$src2, $dst|$dst, $src2}", []>;
+                    "unpckhpd {$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst,
+                      (v2f64 (vector_shuffle VR128:$src1, VR128:$src2,
+                              UNPCKH_shuffle_mask)))]>;
 def UNPCKHPDrm : PDI<0x15, MRMSrcMem, 
                     (ops VR128:$dst, VR128:$src1, f128mem:$src2),
-                    "unpckhpd {$src2, $dst|$dst, $src2}", []>;
+                    "unpckhpd {$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst,
+                      (v2f64 (vector_shuffle VR128:$src1, (load addr:$src2),
+                              UNPCKH_shuffle_mask)))]>;
+
 def UNPCKLPSrr : PSI<0x14, MRMSrcReg, 
                     (ops VR128:$dst, VR128:$src1, VR128:$src2),
                     "unpcklps {$src2, $dst|$dst, $src2}",
@@ -808,10 +830,16 @@ def UNPCKLPSrm : PSI<0x14, MRMSrcMem,
                               UNPCKL_shuffle_mask)))]>;
 def UNPCKLPDrr : PDI<0x14, MRMSrcReg, 
                     (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                    "unpcklpd {$src2, $dst|$dst, $src2}", []>;
+                    "unpcklpd {$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst,
+                      (v2f64 (vector_shuffle VR128:$src1, VR128:$src2,
+                              UNPCKL_shuffle_mask)))]>;
 def UNPCKLPDrm : PDI<0x14, MRMSrcMem, 
                     (ops VR128:$dst, VR128:$src1, f128mem:$src2),
-                    "unpcklpd {$src2, $dst|$dst, $src2}", []>;
+                    "unpcklpd {$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst,
+                      (v2f64 (vector_shuffle VR128:$src1, (load addr:$src2),
+                              UNPCKL_shuffle_mask)))]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -940,35 +968,65 @@ def PUNPCKLDQrm : PDI<0x62, MRMSrcMem,
                                 UNPCKL_shuffle_mask)))]>;
 def PUNPCKLQDQrr : PDI<0x6C, MRMSrcReg, 
                        (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                       "punpcklqdq {$src2, $dst|$dst, $src2}", []>;
+                       "punpcklqdq {$src2, $dst|$dst, $src2}",
+                      [(set VR128:$dst,
+                        (v2i64 (vector_shuffle VR128:$src1, VR128:$src2,
+                                UNPCKL_shuffle_mask)))]>;
 def PUNPCKLQDQrm : PDI<0x6C, MRMSrcMem, 
                        (ops VR128:$dst, VR128:$src1, i128mem:$src2),
-                       "punpcklqdq {$src2, $dst|$dst, $src2}", []>;
+                       "punpcklqdq {$src2, $dst|$dst, $src2}",
+                      [(set VR128:$dst,
+                        (v2i64 (vector_shuffle VR128:$src1, (load addr:$src2),
+                                UNPCKL_shuffle_mask)))]>;
 
 def PUNPCKHBWrr : PDI<0x68, MRMSrcReg, 
                       (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                      "punpckhbw {$src2, $dst|$dst, $src2}", []>;
+                      "punpckhbw {$src2, $dst|$dst, $src2}",
+                      [(set VR128:$dst,
+                        (v16i8 (vector_shuffle VR128:$src1, VR128:$src2,
+                                UNPCKH_shuffle_mask)))]>;
 def PUNPCKHBWrm : PDI<0x68, MRMSrcMem, 
                       (ops VR128:$dst, VR128:$src1, i128mem:$src2),
-                      "punpckhbw {$src2, $dst|$dst, $src2}", []>;
+                      "punpckhbw {$src2, $dst|$dst, $src2}",
+                      [(set VR128:$dst,
+                        (v16i8 (vector_shuffle VR128:$src1, (load addr:$src2),
+                                UNPCKH_shuffle_mask)))]>;
 def PUNPCKHWDrr : PDI<0x69, MRMSrcReg, 
                       (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                      "punpckhwd {$src2, $dst|$dst, $src2}", []>;
+                      "punpckhwd {$src2, $dst|$dst, $src2}",
+                      [(set VR128:$dst,
+                        (v8i16 (vector_shuffle VR128:$src1, VR128:$src2,
+                                UNPCKH_shuffle_mask)))]>;
 def PUNPCKHWDrm : PDI<0x69, MRMSrcMem, 
                       (ops VR128:$dst, VR128:$src1, i128mem:$src2),
-                      "punpckhwd {$src2, $dst|$dst, $src2}", []>;
+                      "punpckhwd {$src2, $dst|$dst, $src2}",
+                      [(set VR128:$dst,
+                        (v8i16 (vector_shuffle VR128:$src1, (load addr:$src2),
+                                UNPCKH_shuffle_mask)))]>;
 def PUNPCKHDQrr : PDI<0x6A, MRMSrcReg, 
                       (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                      "punpckhdq {$src2, $dst|$dst, $src2}", []>;
+                      "punpckhdq {$src2, $dst|$dst, $src2}",
+                      [(set VR128:$dst,
+                        (v4i32 (vector_shuffle VR128:$src1, VR128:$src2,
+                                UNPCKH_shuffle_mask)))]>;
 def PUNPCKHDQrm : PDI<0x6A, MRMSrcMem, 
                       (ops VR128:$dst, VR128:$src1, i128mem:$src2),
-                      "punpckhdq {$src2, $dst|$dst, $src2}", []>;
+                      "punpckhdq {$src2, $dst|$dst, $src2}",
+                      [(set VR128:$dst,
+                        (v4i32 (vector_shuffle VR128:$src1, (load addr:$src2),
+                                UNPCKH_shuffle_mask)))]>;
 def PUNPCKHQDQrr : PDI<0x6D, MRMSrcReg, 
                        (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                       "punpckhdq {$src2, $dst|$dst, $src2}", []>;
+                       "punpckhdq {$src2, $dst|$dst, $src2}",
+                      [(set VR128:$dst,
+                        (v2i64 (vector_shuffle VR128:$src1, VR128:$src2,
+                                UNPCKH_shuffle_mask)))]>;
 def PUNPCKHQDQrm : PDI<0x6D, MRMSrcMem, 
                       (ops VR128:$dst, VR128:$src1, i128mem:$src2),
-                      "punpckhqdq {$src2, $dst|$dst, $src2}", []>;
+                      "punpckhqdq {$src2, $dst|$dst, $src2}",
+                      [(set VR128:$dst,
+                        (v2i64 (vector_shuffle VR128:$src1, (load addr:$src2),
+                                UNPCKH_shuffle_mask)))]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1147,29 +1205,16 @@ def : Pat<(vector_shuffle (v4i32 VR128:$src), (undef), PSHUFD_shuffle_mask:$sm),
           (v4i32 (PSHUFDrr VR128:$src, PSHUFD_shuffle_mask:$sm))>,
       Requires<[HasSSE2]>;
 
-// Shuffle v2f64 / v2i64
-def : Pat<(vector_shuffle (v2f64 VR128:$src1), (v2f64 VR128:$src2),
-           MOVLHPSorUNPCKLPD_shuffle_mask:$sm),
-          (v2f64 (MOVLHPSrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
-def : Pat<(vector_shuffle (v2f64 VR128:$src1), (v2f64 VR128:$src2),
-           MOVHLPS_shuffle_mask:$sm),
-          (v2f64 (MOVHLPSrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
-def : Pat<(vector_shuffle (v2f64 VR128:$src1), (v2f64 VR128:$src2),
-           UNPCKHPD_shuffle_mask:$sm),
-          (v2f64 (UNPCKHPDrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
-def : Pat<(vector_shuffle (v2f64 VR128:$src1), (loadv2f64 addr:$src2),
-           MOVLHPSorUNPCKLPD_shuffle_mask:$sm),
-          (v2f64 (UNPCKLPDrm VR128:$src1, addr:$src2))>, Requires<[HasSSE2]>;
-
+// Shuffle v2i64
 def : Pat<(vector_shuffle (v2i64 VR128:$src1), (v2i64 VR128:$src2),
-           MOVLHPSorUNPCKLPD_shuffle_mask:$sm),
+           UNPCKL_shuffle_mask:$sm),
           (v2i64 (MOVLHPSrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
 def : Pat<(vector_shuffle (v2i64 VR128:$src1), (v2i64 VR128:$src2),
            MOVHLPS_shuffle_mask:$sm),
           (v2i64 (MOVHLPSrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
-def : Pat<(vector_shuffle (v2i64 VR128:$src1), (v2i64 VR128:$src2),
-           UNPCKHPD_shuffle_mask:$sm),
-          (v2i64 (UNPCKHPDrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
-def : Pat<(vector_shuffle (v2i64 VR128:$src1), (loadv2i64 addr:$src2),
-           MOVLHPSorUNPCKLPD_shuffle_mask:$sm),
+def : Pat<(vector_shuffle (v2i64 VR128:$src1), (load addr:$src2),
+           UNPCKL_shuffle_mask:$sm),
           (v2i64 (UNPCKLPDrm VR128:$src1, addr:$src2))>, Requires<[HasSSE2]>;
+def : Pat<(vector_shuffle (v2i64 VR128:$src1), (load addr:$src2),
+           UNPCKH_shuffle_mask:$sm),
+          (v2i64 (UNPCKHPDrm VR128:$src1, addr:$src2))>, Requires<[HasSSE2]>;

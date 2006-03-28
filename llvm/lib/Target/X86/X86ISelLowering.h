@@ -188,22 +188,17 @@ namespace llvm {
    /// specifies a shuffle of elements that is suitable for input to SHUFP*.
    bool isSHUFPMask(SDNode *N);
 
-   /// isMOVLHPSorUNPCKLPDMask - Return true if the specified VECTOR_SHUFFLE
-   /// operand specifies a shuffle of elements that is suitable for input to
-   /// MOVLHPS or UNPCKLPD.
-   bool isMOVLHPSorUNPCKLPDMask(SDNode *N);
-
    /// isMOVHLPSMask - Return true if the specified VECTOR_SHUFFLE operand
    /// specifies a shuffle of elements that is suitable for input to MOVHLPS.
    bool isMOVHLPSMask(SDNode *N);
 
-   /// isUNPCKHPDMask - Return true if the specified VECTOR_SHUFFLE operand
-   /// specifies a shuffle of elements that is suitable for input to UNPCKHPD.
-   bool isUNPCKHPDMask(SDNode *N);
-
    /// isUNPCKLMask - Return true if the specified VECTOR_SHUFFLE operand
    /// specifies a shuffle of elements that is suitable for input to UNPCKL.
    bool isUNPCKLMask(SDNode *N);
+
+   /// isUNPCKHMask - Return true if the specified VECTOR_SHUFFLE operand
+   /// specifies a shuffle of elements that is suitable for input to UNPCKH.
+   bool isUNPCKHMask(SDNode *N);
 
    /// isSplatMask - Return true if the specified VECTOR_SHUFFLE operand
    /// specifies a splat of a single element.

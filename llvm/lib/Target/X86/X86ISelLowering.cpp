@@ -1451,24 +1451,6 @@ bool X86::isSHUFPMask(SDNode *N) {
   return true;
 }
 
-/// isMOVLHPSorUNPCKLPDMask - Return true if the specified VECTOR_SHUFFLE
-/// operand specifies a shuffle of elements that is suitable for input to
-/// MOVLHPS or UNPCKLPD.
-bool X86::isMOVLHPSorUNPCKLPDMask(SDNode *N) {
-  assert(N->getOpcode() == ISD::BUILD_VECTOR);
-
-  if (N->getNumOperands() != 2)
-    return false;
-
-  // Expect bit 0 == 0, bit1 == 2
-  SDOperand Bit0 = N->getOperand(0);
-  SDOperand Bit1 = N->getOperand(1);
-  assert(isa<ConstantSDNode>(Bit0) && isa<ConstantSDNode>(Bit1) &&
-         "Invalid VECTOR_SHUFFLE mask!");
-  return (cast<ConstantSDNode>(Bit0)->getValue() == 0 && 
-          cast<ConstantSDNode>(Bit1)->getValue() == 2);
-}
-
 /// isMOVHLPSMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to MOVHLPS.
 bool X86::isMOVHLPSMask(SDNode *N) {
@@ -1477,29 +1459,12 @@ bool X86::isMOVHLPSMask(SDNode *N) {
   if (N->getNumOperands() != 2)
     return false;
 
-  // Expect bit 0 == 0, bit1 == 3
+  // Expect bit 0 == 1, bit1 == 1
   SDOperand Bit0 = N->getOperand(0);
   SDOperand Bit1 = N->getOperand(1);
   assert(isa<ConstantSDNode>(Bit0) && isa<ConstantSDNode>(Bit1) &&
          "Invalid VECTOR_SHUFFLE mask!");
   return (cast<ConstantSDNode>(Bit0)->getValue() == 0 &&
-          cast<ConstantSDNode>(Bit1)->getValue() == 3);
-}
-
-/// isUNPCKHPDMask - Return true if the specified VECTOR_SHUFFLE operand
-/// specifies a shuffle of elements that is suitable for input to UNPCKHPD.
-bool X86::isUNPCKHPDMask(SDNode *N) {
-  assert(N->getOpcode() == ISD::BUILD_VECTOR);
-
-  if (N->getNumOperands() != 2)
-    return false;
-
-  // Expect bit 0 == 1, bit1 == 3
-  SDOperand Bit0 = N->getOperand(0);
-  SDOperand Bit1 = N->getOperand(1);
-  assert(isa<ConstantSDNode>(Bit0) && isa<ConstantSDNode>(Bit1) &&
-         "Invalid VECTOR_SHUFFLE mask!");
-  return (cast<ConstantSDNode>(Bit0)->getValue() == 1 && 
           cast<ConstantSDNode>(Bit1)->getValue() == 3);
 }
 
@@ -1520,6 +1485,29 @@ bool X86::isUNPCKLMask(SDNode *N) {
     if (cast<ConstantSDNode>(BitI)->getValue()  != j)
       return false;
     if (cast<ConstantSDNode>(BitI1)->getValue() != j + NumElems)
+      return false;
+  }
+
+  return true;
+}
+
+/// isUNPCKHMask - Return true if the specified VECTOR_SHUFFLE operand
+/// specifies a shuffle of elements that is suitable for input to UNPCKH.
+bool X86::isUNPCKHMask(SDNode *N) {
+  assert(N->getOpcode() == ISD::BUILD_VECTOR);
+
+  unsigned NumElems = N->getNumOperands();
+  if (NumElems != 2 && NumElems != 4 && NumElems != 8 && NumElems != 16)
+    return false;
+
+  for (unsigned i = 0, j = 0; i != NumElems; i += 2, ++j) {
+    SDOperand BitI  = N->getOperand(i);
+    SDOperand BitI1 = N->getOperand(i+1);
+    assert(isa<ConstantSDNode>(BitI) && isa<ConstantSDNode>(BitI1) &&
+           "Invalid VECTOR_SHUFFLE mask!");
+    if (cast<ConstantSDNode>(BitI)->getValue()  != j + NumElems/2)
+      return false;
+    if (cast<ConstantSDNode>(BitI1)->getValue() != j + NumElems/2 + NumElems)
       return false;
   }
 
