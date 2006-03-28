@@ -662,3 +662,29 @@ call _foo
 
 Obviously it would have been better for the first mov (or any op) to store
 directly %esp[0] if there are no other uses.
+
+//===---------------------------------------------------------------------===//
+
+Is it really a good idea to use movlhps to move 1 double-precision FP value from
+low quadword of source to high quadword of destination?
+
+e.g.
+
+void test2 (v2sd *b, double X, double Y) {
+  v2sd a = (v2sd) {X, X*Y};
+  *b = a;
+}
+
+	movsd 8(%esp), %xmm0
+	movapd %xmm0, %xmm1
+	mulsd 16(%esp), %xmm1
+	movlhps %xmm1, %xmm0
+	movl 4(%esp), %eax
+	movapd %xmm0, (%eax)
+	ret
+
+icc uses unpcklpd instead.
+
+//===---------------------------------------------------------------------===//
+
+Use movhps and movlhps to update upper 64-bits of a v4sf value.
