@@ -2609,5 +2609,5 @@ X86TargetLowering::isShuffleMaskLegal(SDOperand Mask, MVT::ValueType VT) const {
           X86::isPSHUFDMask(Mask.Val) ||
           X86::isSHUFPMask(Mask.Val) ||
           X86::isUNPCKLMask(Mask.Val) ||
-          X86::isUNPCKHMask(Mask.Val);
+          X86::isUNPCKHMask(Mask.Val));
 }
