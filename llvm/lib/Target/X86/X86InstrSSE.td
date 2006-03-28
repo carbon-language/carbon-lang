@@ -467,16 +467,11 @@ def MOVUPDrm : PDI<0x10, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
 def MOVUPDmr : PDI<0x11, MRMDestMem, (ops f128mem:$dst, VR128:$src),
                    "movupd {$src, $dst|$dst, $src}", []>;
 
-def MOVLPSrm : PSI<0x12, MRMSrcMem, (ops VR128:$dst, f64mem:$src),
-                   "movlps {$src, $dst|$dst, $src}", []>;
-def MOVLPSmr : PSI<0x13, MRMDestMem, (ops f64mem:$dst, VR128:$src),
-                   "movlps {$src, $dst|$dst, $src}", []>;
-def MOVLPDrm : PDI<0x12, MRMSrcMem, (ops VR128:$dst, f64mem:$src),
-                   "movlpd {$src, $dst|$dst, $src}", []>;
-def MOVLPDmr : PDI<0x13, MRMDestMem, (ops f64mem:$dst, VR128:$src),
-                   "movlpd {$src, $dst|$dst, $src}", []>;
-
 let isTwoAddress = 1 in {
+def MOVLPSrm : PSI<0x12, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
+                   "movlps {$src2, $dst|$dst, $src2}", []>;
+def MOVLPDrm : PDI<0x12, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
+                   "movlpd {$src2, $dst|$dst, $src2}", []>;
 def MOVHPSrm : PSI<0x16, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
                    "movhps {$src2, $dst|$dst, $src2}", []>;
 def MOVHPDrm : PDI<0x16, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
@@ -486,6 +481,11 @@ def MOVHPDrm : PDI<0x16, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
                              (scalar_to_vector (loadf64 addr:$src2)),
                              UNPCKL_shuffle_mask)))]>;
 }
+
+def MOVLPSmr : PSI<0x13, MRMDestMem, (ops f64mem:$dst, VR128:$src),
+                   "movlps {$src, $dst|$dst, $src}", []>;
+def MOVLPDmr : PDI<0x13, MRMDestMem, (ops f64mem:$dst, VR128:$src),
+                   "movlpd {$src, $dst|$dst, $src}", []>;
 
 def MOVHPSmr : PSI<0x17, MRMDestMem, (ops f64mem:$dst, VR128:$src),
                    "movhps {$src, $dst|$dst, $src}", []>;
