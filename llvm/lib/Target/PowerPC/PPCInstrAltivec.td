@@ -89,15 +89,15 @@ def LVSR : XForm_1<31,  38, (ops VRRC:$vD,  GPRC:$base, GPRC:$rA),
                    []>, PPC970_Unit_LSU;
 
 let isStore = 1, noResults = 1, PPC970_Unit = 2 in {   // Stores.
-def STVEBX: XForm_8<31, 135, (ops VRRC:$rS, GPRC:$rA, GPRC:$rB),
-                   "stvebx $rS, $rA, $rB", LdStGeneral,
-                   []>;
-def STVEHX: XForm_8<31, 167, (ops VRRC:$rS, GPRC:$rA, GPRC:$rB),
-                   "stvehx $rS, $rA, $rB", LdStGeneral,
-                   []>;
-def STVEWX: XForm_8<31, 199, (ops VRRC:$rS, GPRC:$rA, GPRC:$rB),
-                   "stvewx $rS, $rA, $rB", LdStGeneral,
-                   []>;
+def STVEBX: XForm_8<31, 135, (ops VRRC:$rS, memrr:$dst),
+                   "stvebx $rS, $dst", LdStGeneral,
+                   [(int_ppc_altivec_stvebx VRRC:$rS, xoaddr:$dst)]>;
+def STVEHX: XForm_8<31, 167, (ops VRRC:$rS, memrr:$dst),
+                   "stvehx $rS, $dst", LdStGeneral,
+                   [(int_ppc_altivec_stvehx VRRC:$rS, xoaddr:$dst)]>;
+def STVEWX: XForm_8<31, 199, (ops VRRC:$rS, memrr:$dst),
+                   "stvewx $rS, $dst", LdStGeneral,
+                   [(int_ppc_altivec_stvewx VRRC:$rS, xoaddr:$dst)]>;
 def STVX  : XForm_8<31, 231, (ops VRRC:$rS, memrr:$dst),
                    "stvx $rS, $dst", LdStGeneral,
                    [(store (v4f32 VRRC:$rS), xoaddr:$dst)]>;

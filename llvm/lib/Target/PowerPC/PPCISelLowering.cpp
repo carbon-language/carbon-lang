@@ -138,7 +138,7 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32  , Expand);
   
   // We want to custom lower some of our intrinsics.
-  setOperationAction(ISD::INTRINSIC         , MVT::Other, Custom);
+  setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
   
   if (TM.getSubtarget<PPCSubtarget>().is64Bit()) {
     // They also have instructions for converting between i64 and fp.
@@ -752,7 +752,7 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand VPermMask =DAG.getNode(ISD::BUILD_VECTOR, MVT::v16i8, ResultMask);
     return DAG.getNode(PPCISD::VPERM, V1.getValueType(), V1, V2, VPermMask);
   }
-  case ISD::INTRINSIC: {
+  case ISD::INTRINSIC_WO_CHAIN: {
     bool HasChain = Op.getOperand(0).getValueType() == MVT::Other;
     unsigned IntNo=cast<ConstantSDNode>(Op.getOperand(HasChain))->getValue();
     

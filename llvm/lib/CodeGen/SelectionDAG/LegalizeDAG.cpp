@@ -553,14 +553,16 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     break;
   }
     
-  case ISD::INTRINSIC: {
+  case ISD::INTRINSIC_W_CHAIN:
+  case ISD::INTRINSIC_WO_CHAIN:
+  case ISD::INTRINSIC_VOID: {
     std::vector<SDOperand> Ops;
     for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i)
       Ops.push_back(LegalizeOp(Node->getOperand(i)));
     Result = DAG.UpdateNodeOperands(Result, Ops);
     
     // Allow the target to custom lower its intrinsics if it wants to.
-    if (TLI.getOperationAction(ISD::INTRINSIC, MVT::Other) == 
+    if (TLI.getOperationAction(Node->getOpcode(), MVT::Other) == 
         TargetLowering::Custom) {
       Tmp3 = TLI.LowerOperation(Result, DAG);
       if (Tmp3.Val) Result = Tmp3;

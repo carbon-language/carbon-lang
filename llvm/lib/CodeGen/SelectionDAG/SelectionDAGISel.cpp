@@ -1261,8 +1261,14 @@ void SelectionDAGLowering::visitTargetIntrinsic(CallInst &I,
     VTs.push_back(MVT::Other);
 
   // Create the node.
-  SDOperand Result = DAG.getNode(ISD::INTRINSIC, VTs, Ops);
-  
+  SDOperand Result;
+  if (!HasChain)
+    Result = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, VTs, Ops);
+  else if (I.getType() != Type::VoidTy)
+    Result = DAG.getNode(ISD::INTRINSIC_W_CHAIN, VTs, Ops);
+  else
+    Result = DAG.getNode(ISD::INTRINSIC_VOID, VTs, Ops);
+
   if (HasChain)
     DAG.setRoot(Result.getValue(Result.Val->getNumValues()-1));
   if (I.getType() != Type::VoidTy) {

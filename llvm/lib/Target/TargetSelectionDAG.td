@@ -313,13 +313,13 @@ def scalar_to_vector : SDNode<"ISD::SCALAR_TO_VECTOR", SDTypeProfile<1, 1, []>,
 
 // Nodes for intrinsics, you should use the intrinsic itself and let tblgen use
 // these internally.  Don't reference these directly.
-def intrinsic_void : SDNode<"ISD::INTRINSIC", 
+def intrinsic_void : SDNode<"ISD::INTRINSIC_VOID", 
                             SDTypeProfile<0, -1, [SDTCisPtrTy<0>]>,
                             [SDNPHasChain]>;
-def intrinsic_w_chain : SDNode<"ISD::INTRINSIC", 
+def intrinsic_w_chain : SDNode<"ISD::INTRINSIC_W_CHAIN", 
                                SDTypeProfile<1, -1, [SDTCisPtrTy<1>]>,
                                [SDNPHasChain]>;
-def intrinsic_wo_chain : SDNode<"ISD::INTRINSIC", 
+def intrinsic_wo_chain : SDNode<"ISD::INTRINSIC_WO_CHAIN", 
                                 SDTypeProfile<1, -1, [SDTCisPtrTy<1>]>, []>;
 
 
