@@ -200,15 +200,8 @@ void SparcRegisterInfo::emitEpilogue(MachineFunction &MF,
   BuildMI(MBB, MBBI, SP::RESTORErr, 2, SP::G0).addReg(SP::G0).addReg(SP::G0);
 }
 
-void SparcRegisterInfo::getLocation(MachineFunction &MF, unsigned Index,
-                                  MachineLocation &ML) const {
-  assert(0 && "Needs to be defined for target");
-  MachineFrameInfo *MFI = MF.getFrameInfo();
-  
-  // FIXME - Needs to handle register variables.
-  // FIXME - Faking that llvm number is same as gcc numbering.
-  ML.set(getDwarfRegNum(SP::G1),
-         MFI->getObjectOffset(Index) + MFI->getStackSize());
+unsigned SparcRegisterInfo::getFrameRegister(MachineFunction &MF) const {
+  return getDwarfRegNum(SP::G1);
 }
 
 #include "SparcGenRegisterInfo.inc"

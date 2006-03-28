@@ -447,15 +447,8 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
   }
 }
 
-void PPCRegisterInfo::getLocation(MachineFunction &MF, unsigned Index,
-                                  MachineLocation &ML) const {
-  MachineFrameInfo *MFI = MF.getFrameInfo();
-  bool FP = hasFP(MF);
-  
-  // FIXME - Needs to handle register variables.
-  // FIXME - Faking that llvm number is same as gcc numbering.
-  ML.set(getDwarfRegNum(FP ? PPC::R31 : PPC::R1),
-         MFI->getObjectOffset(Index) + MFI->getStackSize());
+unsigned PPCRegisterInfo::getFrameRegister(MachineFunction &MF) const {
+  return getDwarfRegNum(hasFP(MF) ? PPC::R31 : PPC::R1);
 }
 
 #include "PPCGenRegisterInfo.inc"

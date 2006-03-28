@@ -343,10 +343,20 @@ public:
   virtual void emitEpilogue(MachineFunction &MF,
                             MachineBasicBlock &MBB) const = 0;
                             
+  //===--------------------------------------------------------------------===//
+  /// Debug information queries.
+
+  /// getFrameRegister - This method should return the register used as a base
+  /// for values allocated in the current stack frame.  This value should be
+  /// returned as a dwarf register number (getDwarfRegNum.)
+  virtual unsigned getFrameRegister(MachineFunction &MF) const = 0;
+                            
   /// getLocation - This method should return the actual location of a frame
   /// variable given the frame index.  The location is returned in ML.
+  /// Subclasses should override this method for special handling of frame
+  /// variables and call MRegisterInfo::getLocation for the default action.
   virtual void getLocation(MachineFunction &MF, unsigned Index,
-                          MachineLocation &ML) const = 0;
+                           MachineLocation &ML) const;
 };
 
 // This is useful when building DenseMaps keyed on virtual registers

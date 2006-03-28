@@ -329,18 +329,9 @@ void IA64RegisterInfo::emitEpilogue(MachineFunction &MF,
 
 }
 
-void IA64RegisterInfo::getLocation(MachineFunction &MF, unsigned Index,
-                                   MachineLocation &ML) const {
-  assert(0 && "Needs to be defined for target");
-  MachineFrameInfo *MFI = MF.getFrameInfo();
-  bool FP = hasFP(MF);
-  
-  // FIXME - Needs to handle register variables.
-  // FIXME - Faking that llvm number is same as gcc numbering.
-  ML.set(getDwarfRegNum(FP ? IA64::r5 : IA64::r12),
-         MFI->getObjectOffset(Index) + MFI->getStackSize());
+unsigned IA64RegisterInfo::getFrameRegister(MachineFunction &MF) const {
+  return getDwarfRegNum(hasFP(MF) ? IA64::r5 : IA64::r12);
 }
-
 
 #include "IA64GenRegisterInfo.inc"
 

@@ -12,6 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Target/MRegisterInfo.h"
+
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineLocation.h"
+
 using namespace llvm;
 
 MRegisterInfo::MRegisterInfo(const TargetRegisterDesc *D, unsigned NR,
@@ -37,4 +42,15 @@ std::vector<bool> MRegisterInfo::getAllocatableSet(MachineFunction &MF) const {
       Allocatable[*I] = true;
   }
   return Allocatable;
+}
+
+/// getLocation - This method should return the actual location of a frame
+/// variable given the frame index.  The location is returned in ML.
+/// Subclasses should override this method for special handling of frame
+/// variables and then call MRegisterInfo::getLocation for the default action.
+void MRegisterInfo::getLocation(MachineFunction &MF, unsigned Index,
+                        MachineLocation &ML) const {
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  ML.set(getFrameRegister(MF),
+         MFI->getObjectOffset(Index) + MFI->getStackSize());
 }

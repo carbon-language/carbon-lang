@@ -686,15 +686,8 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
   }
 }
 
-void X86RegisterInfo::getLocation(MachineFunction &MF, unsigned Index,
-                                  MachineLocation &ML) const {
-  MachineFrameInfo *MFI = MF.getFrameInfo();
-  bool FP = hasFP(MF);
-  
-  // FIXME - Needs to handle register variables.
-  // FIXME - Hardcoding gcc numbering.
-  ML.set(getDwarfRegNum(FP ? X86::EBP : X86::ESP),
-         MFI->getObjectOffset(Index) + MFI->getStackSize());
+unsigned X86RegisterInfo::getFrameRegister(MachineFunction &MF) const {
+  return getDwarfRegNum(hasFP(MF) ? X86::EBP : X86::ESP);
 }
 
 #include "X86GenRegisterInfo.inc"

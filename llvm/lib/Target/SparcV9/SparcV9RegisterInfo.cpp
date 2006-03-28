@@ -318,7 +318,7 @@ void SparcV9RegisterInfo::emitEpilogue(MachineFunction &MF,
 }
 
 
-void SparcV9RegisterInfo::getLocation(MachineFunction &MF, unsigned Index,
-                                      MachineLocation &ML) const {
+unsigned SparcV9RegisterInfo::getFrameRegister(MachineFunction &MF) const {
   abort ();
+  return 0;
 }

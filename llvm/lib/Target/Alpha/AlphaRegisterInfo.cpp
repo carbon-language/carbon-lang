@@ -354,16 +354,8 @@ void AlphaRegisterInfo::emitEpilogue(MachineFunction &MF,
      }
 }
 
-void AlphaRegisterInfo::getLocation(MachineFunction &MF, unsigned Index,
-                                    MachineLocation &ML) const {
-  assert(0 && "Needs to be defined for target");
-  MachineFrameInfo *MFI = MF.getFrameInfo();
-  bool FP = hasFP(MF);
-  
-  // FIXME - Needs to handle register variables.
-  // FIXME - Faking that llvm number is same as gcc numbering.
-  ML.set(getDwarfRegNum(FP ? Alpha::R15 : Alpha::R30),
-         MFI->getObjectOffset(Index) + MFI->getStackSize());
+unsigned AlphaRegisterInfo::getFrameRegister(MachineFunction &MF) const {
+  return getDwarfRegNum(hasFP(MF) ? Alpha::R15 : Alpha::R30);
 }
 
 #include "AlphaGenRegisterInfo.inc"
