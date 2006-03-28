@@ -41,6 +41,7 @@ class DIE;
 class DIEAbbrev;
 class GlobalVariableDesc;
 class MachineDebugInfo;
+class MachineLocation;
 class MachineFunction;
 class Module;
 class SubprogramDesc;
@@ -320,6 +321,10 @@ private:
   /// AddSourceLine - Add location information to specified debug information
   /// entry. 
   void AddSourceLine(DIE *Die, CompileUnitDesc *File, unsigned Line);
+
+  /// AddAddress - Add an address attribute to a die based on the location
+  /// provided.
+  void AddAddress(DIE *Die, unsigned Attribute, MachineLocation &Location);
 
   /// NewType - Create a new type DIE.
   ///

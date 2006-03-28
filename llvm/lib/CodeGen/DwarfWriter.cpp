@@ -1213,6 +1213,21 @@ void DwarfWriter::AddSourceLine(DIE *Die, CompileUnitDesc *File, unsigned Line) 
   }
 }
 
+/// AddAddress - Add an address attribute to a die based on the location
+/// provided.
+void DwarfWriter::AddAddress(DIE *Die, unsigned Attribute,
+                             MachineLocation &Location) {
+  DIEBlock *Block = new DIEBlock();
+  if (Location.isRegister()) {
+    Block->AddUInt(DW_FORM_data1, DW_OP_reg0 + Location.getRegister());
+  } else {
+    Block->AddUInt(DW_FORM_data1, DW_OP_breg0 + Location.getRegister());
+    Block->AddUInt(DW_FORM_sdata, Location.getOffset());
+  }
+  Block->ComputeSize(*this);
+  Die->AddBlock(Attribute, 0, Block);
+}
+
 /// getDieMapSlotFor - Returns the debug information entry map slot for the
 /// specified debug descriptor.
 DIE *&DwarfWriter::getDieMapSlotFor(DebugInfoDesc *DD) {
@@ -1518,7 +1533,6 @@ DIE *DwarfWriter::NewSubprogram(SubprogramDesc *SPD) {
   return SubprogramDie;
 }
 
-
 /// NewScopeVariable - Create a new scope variable.
 ///
 DIE *DwarfWriter::NewScopeVariable(DebugVariable *DV, CompileUnit *Unit) {
@@ -1545,20 +1559,10 @@ DIE *DwarfWriter::NewScopeVariable(DebugVariable *DV, CompileUnit *Unit) {
   DIE *Type = NewType(Unit->getDie(), VD->getType(), Unit); 
   VariableDie->AddDIEntry(DW_AT_type, DW_FORM_ref4, Type);
   
-  // Get variable address.
+  // Add variable address.
   MachineLocation Location;
   Asm->TM.getRegisterInfo()->getLocation(*MF, DV->getFrameIndex(), Location);
-  
-  // Add computation for variable.
-  DIEBlock *Block = new DIEBlock();
-  if (Location.isRegister()) {
-    Block->AddUInt(DW_FORM_data1, DW_OP_reg0 + Location.getRegister());
-  } else {
-    Block->AddUInt(DW_FORM_data1, DW_OP_breg0 + Location.getRegister());
-    Block->AddUInt(DW_FORM_sdata, Location.getOffset());
-  }
-  Block->ComputeSize(*this);
-  VariableDie->AddBlock(DW_AT_location, 0, Block);
+  AddAddress(VariableDie, DW_AT_location, Location);
   
   return VariableDie;
 }
@@ -1628,6 +1632,8 @@ void DwarfWriter::ConstructRootScope(DebugScope *RootScope) {
                   DWLabel("func_begin", SubprogramCount));
   SPDie->AddLabel(DW_AT_high_pc, DW_FORM_addr,
                   DWLabel("func_end", SubprogramCount));
+  MachineLocation Location(Asm->TM.getRegisterInfo()->getFrameRegister(*MF));
+  AddAddress(SPDie, DW_AT_frame_base, Location);
                   
   ConstructScope(RootScope, SPDie, Unit);
 }
