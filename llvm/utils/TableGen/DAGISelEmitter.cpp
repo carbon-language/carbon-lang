@@ -3115,19 +3115,21 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
     
     // If the last pattern has predicates (which could fail) emit code to catch
     // the case where nothing handles a pattern.
-    if (mightNotMatch)
-      OS << "  std::cerr << \"Cannot yet select: \";\n"
-         << "  if (N.getOpcode() != ISD::INTRINSIC) {\n"
-         << "    N.Val->dump(CurDAG);\n"
-         << "  } else {\n"
-         << "    unsigned iid = cast<ConstantSDNode>(N.getOperand("
-                 "N.getOperand(0).getValueType() == MVT::Other))->getValue();\n"
-         << "    std::cerr << \"intrinsic %\"<< "
-                       "Intrinsic::getName((Intrinsic::ID)iid);\n"
-         << "  }\n"
-         << "  std::cerr << '\\n';\n"
+    if (mightNotMatch) {
+      OS << "  std::cerr << \"Cannot yet select: \";\n";
+      if (OpcodeInfo.getEnumName() != "ISD::INTRINSIC_W_CHAIN" &&
+          OpcodeInfo.getEnumName() != "ISD::INTRINSIC_WO_CHAIN" &&
+          OpcodeInfo.getEnumName() != "ISD::INTRINSIC_VOID") {
+        OS << "  N.Val->dump(CurDAG);\n";
+      } else {
+        OS << "  unsigned iid = cast<ConstantSDNode>(N.getOperand("
+               "N.getOperand(0).getValueType() == MVT::Other))->getValue();\n"
+           << "  std::cerr << \"intrinsic %\"<< "
+                         "Intrinsic::getName((Intrinsic::ID)iid);\n";
+      }
+      OS << "  std::cerr << '\\n';\n"
          << "  abort();\n";
-
+    }
     OS << "}\n\n";
   }
   
@@ -3285,7 +3287,9 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
 
   OS << "  } // end of big switch.\n\n"
      << "  std::cerr << \"Cannot yet select: \";\n"
-     << "  if (N.getOpcode() != ISD::INTRINSIC) {\n"
+     << "  if (N.getOpcode() != ISD::INTRINSIC_W_CHAIN &&\n"
+     << "      N.getOpcode() != ISD::INTRINSIC_WO_CHAIN &&\n"
+     << "      N.getOpcode() != ISD::INTRINSIC_VOID) {\n"
      << "    N.Val->dump(CurDAG);\n"
      << "  } else {\n"
      << "    unsigned iid = cast<ConstantSDNode>(N.getOperand("
