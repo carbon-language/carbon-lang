@@ -212,6 +212,7 @@ namespace {
     SDOperand visitINSERT_VECTOR_ELT(SDNode *N);
     SDOperand visitVINSERT_VECTOR_ELT(SDNode *N);
     SDOperand visitVBUILD_VECTOR(SDNode *N);
+    SDOperand visitVECTOR_SHUFFLE(SDNode *N);
 
     SDOperand ReassociateOps(unsigned Opc, SDOperand LHS, SDOperand RHS);
     
@@ -646,6 +647,7 @@ SDOperand DAGCombiner::visit(SDNode *N) {
   case ISD::INSERT_VECTOR_ELT:  return visitINSERT_VECTOR_ELT(N);
   case ISD::VINSERT_VECTOR_ELT: return visitVINSERT_VECTOR_ELT(N);
   case ISD::VBUILD_VECTOR:      return visitVBUILD_VECTOR(N);
+  case ISD::VECTOR_SHUFFLE:     return visitVECTOR_SHUFFLE(N);
   }
   return SDOperand();
 }
@@ -2424,6 +2426,34 @@ SDOperand DAGCombiner::visitVBUILD_VECTOR(SDNode *N) {
     return DAG.getNode(ISD::VVECTOR_SHUFFLE, MVT::Vector, Ops);
   }
   
+  return SDOperand();
+}
+
+SDOperand DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
+  // If the LHS and the RHS are the same node, turn the RHS into an undef.
+  if (N->getOperand(0) == N->getOperand(1)) {
+    // Check the SHUFFLE mask, mapping any inputs from the 2nd operand into the
+    // first operand.
+    std::vector<SDOperand> MappedOps;
+    SDOperand ShufMask = N->getOperand(2);
+    unsigned NumElts = ShufMask.getNumOperands();
+    for (unsigned i = 0, e = ShufMask.getNumOperands(); i != e; ++i) {
+      if (cast<ConstantSDNode>(ShufMask.getOperand(i))->getValue() >= NumElts) {
+        unsigned NewIdx = 
+           cast<ConstantSDNode>(ShufMask.getOperand(i))->getValue() - NumElts;
+        MappedOps.push_back(DAG.getConstant(NewIdx, MVT::i32));
+      } else {
+        MappedOps.push_back(ShufMask.getOperand(i));
+      }
+    }
+    ShufMask = DAG.getNode(ISD::BUILD_VECTOR, ShufMask.getValueType(),
+                           MappedOps);
+    return DAG.getNode(ISD::VECTOR_SHUFFLE, N->getValueType(0),
+                       N->getOperand(0), 
+                       DAG.getNode(ISD::UNDEF, N->getValueType(0)),
+                       ShufMask);
+  }
+ 
   return SDOperand();
 }
 
