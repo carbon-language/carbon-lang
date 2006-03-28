@@ -54,13 +54,11 @@ lvsl/lvsr
 mf*
 vavg*
 vmax*
-vmhaddshs/vmhraddshs
 vmin*
 vmladduhm
 vmr*
 vmsum*
 vmul*
-vperm
 vpk*
 vsel (some aliases only accessible using builtins)
 vup*

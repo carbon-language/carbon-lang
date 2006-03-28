@@ -121,7 +121,14 @@ def VNMSUBFP: VAForm_1<47, (ops VRRC:$vD, VRRC:$vA, VRRC:$vC, VRRC:$vB),
                        [(set VRRC:$vD, (fneg (fsub (fmul VRRC:$vA, VRRC:$vC),
                                                    VRRC:$vB)))]>,
                        Requires<[FPContractions]>;
-
+def VMHADDSHS  : VAForm_1a<32, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, VRRC:$vC),
+                  "vmhaddshs $vD, $vA, $vB, $vC", VecFP,
+                  [(set VRRC:$vD,
+                   (int_ppc_altivec_vmhaddshs VRRC:$vA, VRRC:$vB, VRRC:$vC))]>;
+def VMHRADDSHS : VAForm_1a<33, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, VRRC:$vC),
+                  "vmhraddshs $vD, $vA, $vB, $vC", VecFP,
+                  [(set VRRC:$vD,
+                   (int_ppc_altivec_vmhraddshs VRRC:$vA, VRRC:$vB, VRRC:$vC))]>;
 def VPERM   : VAForm_1a<43, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, VRRC:$vC),
                         "vperm $vD, $vA, $vB, $vC", VecPerm,
                         [(set VRRC:$vD,
@@ -213,6 +220,22 @@ def VMAXFP : VXForm_1<1034, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
 def VMINFP : VXForm_1<1098, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       "vminfp $vD, $vA, $vB", VecFP,
                       []>;
+def VMRGHH : VXForm_1<76, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vmrghh $vD, $vA, $vB", VecFP,
+                      [(set VRRC:$vD,
+                       (int_ppc_altivec_vmrghh VRRC:$vA, VRRC:$vB))]>;
+def VMRGHW : VXForm_1<140, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vmrghh $vD, $vA, $vB", VecFP,
+                      [(set VRRC:$vD,
+                       (int_ppc_altivec_vmrghw VRRC:$vA, VRRC:$vB))]>;
+def VMRGLH : VXForm_1<332, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vmrglh $vD, $vA, $vB", VecFP,
+                      [(set VRRC:$vD,
+                       (int_ppc_altivec_vmrglh VRRC:$vA, VRRC:$vB))]>;
+def VMRGLW : VXForm_1<396, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vmrglh $vD, $vA, $vB", VecFP,
+                      [(set VRRC:$vD,
+                       (int_ppc_altivec_vmrglw VRRC:$vA, VRRC:$vB))]>;
 def VREFP  : VXForm_2<266, (ops VRRC:$vD, VRRC:$vB),
                       "vrefp $vD, $vB", VecFP,
                       [(set VRRC:$vD, (int_ppc_altivec_vrefp VRRC:$vB))]>;
@@ -598,7 +621,8 @@ def : Pat<(int_ppc_altivec_vmaddfp VRRC:$A, VRRC:$B, VRRC:$C),
           (VMADDFP VRRC:$A, VRRC:$B, VRRC:$C)>;
 def : Pat<(int_ppc_altivec_vnmsubfp VRRC:$A, VRRC:$B, VRRC:$C),
           (VNMSUBFP VRRC:$A, VRRC:$B, VRRC:$C)>;
-
+def : Pat<(int_ppc_altivec_vperm VRRC:$A, VRRC:$B, VRRC:$C),
+          (VPERM VRRC:$A, VRRC:$B, VRRC:$C)>;
 def : Pat<(vector_shuffle (v4i32 VRRC:$vB), (undef), VSPLT_shuffle_mask:$UIMM),
           (v4i32 (VSPLTW VSPLT_shuffle_mask:$UIMM, VRRC:$vB))>;
 

@@ -300,8 +300,8 @@ bool PPC::isVecSplatImm(SDNode *N, unsigned ByteSize, char *Val) {
   
   if (OpVal.Val == 0) return false;  // All UNDEF: use implicit def.
   
-  unsigned ValSizeInBytes;
-  uint64_t Value;
+  unsigned ValSizeInBytes = 0;
+  uint64_t Value = 0;
   if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(OpVal)) {
     Value = CN->getValue();
     ValSizeInBytes = MVT::getSizeInBits(CN->getValueType(0))/8;
