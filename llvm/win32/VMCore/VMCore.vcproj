@@ -157,7 +157,7 @@
 						Description="Performing TableGen Step"
 						CommandLine="..\$(IntDir)\TableGen.exe -gen-intrinsic -I ..\..\include $(InputPath) -o $(SolutionDir)llvm\intrinsics.gen
 "
-						AdditionalDependencies="$(ProjectDir)..\$(IntDir)\TableGen.exe"
+						AdditionalDependencies="$(ProjectDir)..\$(IntDir)\TableGen.exe $(InputDir)IntrinsicsX86.td $(InputDir)IntrinsicsPowerPC.td"
 						Outputs="$(SolutionDir)llvm\intrinsics.gen"/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -167,9 +167,15 @@
 						Description="Performing TableGen Step"
 						CommandLine="..\$(IntDir)\TableGen.exe -gen-intrinsic -I ..\..\include $(InputPath) -o $(SolutionDir)llvm\intrinsics.gen
 "
-						AdditionalDependencies="$(ProjectDir)..\$(IntDir)\TableGen.exe"
+						AdditionalDependencies="$(ProjectDir)..\$(IntDir)\TableGen.exe $(InputDir)IntrinsicsX86.td $(InputDir)IntrinsicsPowerPC.td"
 						Outputs="$(SolutionDir)llvm\intrinsics.gen"/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\IntrinsicsPowerPC.td">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\IntrinsicsX86.td">
 			</File>
 			<File
 				RelativePath="..\..\lib\VMCore\LeakDetector.cpp">
