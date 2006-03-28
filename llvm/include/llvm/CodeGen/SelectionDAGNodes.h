@@ -80,14 +80,28 @@ namespace ISD {
     TargetConstantPool,
     TargetExternalSymbol,
     
-    /// RESULT{,OUTCHAIN} = INTRINSIC({INCHAIN,} INTRINSICID, arg1, arg2, ...)
-    /// This node represents a target intrinsic function.  If the intrinsic
-    /// has side effects, the first operand is a chain pointer and the result
-    /// includes an output chain.  After this input is the ID number of the 
-    /// intrinsic, from the llvm::intrinsic namespace.  The operands to the 
-    /// intrinsic follow.
-    INTRINSIC,
+    /// RESULT = INTRINSIC_WO_CHAIN(INTRINSICID, arg1, arg2, ...)
+    /// This node represents a target intrinsic function with no side effects.
+    /// The first operand is the ID number of the intrinsic from the
+    /// llvm::Intrinsic namespace.  The operands to the intrinsic follow.  The
+    /// node has returns the result of the intrinsic.
+    INTRINSIC_WO_CHAIN,
+    
+    /// RESULT,OUTCHAIN = INTRINSIC_W_CHAIN(INCHAIN, INTRINSICID, arg1, ...)
+    /// This node represents a target intrinsic function with side effects that
+    /// returns a result.  The first operand is a chain pointer.  The second is
+    /// the ID number of the intrinsic from the llvm::Intrinsic namespace.  The
+    /// operands to the intrinsic follow.  The node has two results, the result
+    /// of the intrinsic and an output chain.
+    INTRINSIC_W_CHAIN,
 
+    /// OUTCHAIN = INTRINSIC_VOID(INCHAIN, INTRINSICID, arg1, arg2, ...)
+    /// This node represents a target intrinsic function with side effects that
+    /// does not return a result.  The first operand is a chain pointer.  The
+    /// second is the ID number of the intrinsic from the llvm::Intrinsic
+    /// namespace.  The operands to the intrinsic follow.
+    INTRINSIC_VOID,
+    
     // CopyToReg - This node has three operands: a chain, a register number to
     // set to this value, and a value.  
     CopyToReg,
