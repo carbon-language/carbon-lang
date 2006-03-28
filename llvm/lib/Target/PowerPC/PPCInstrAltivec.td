@@ -225,7 +225,7 @@ def VMRGHH : VXForm_1<76, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       [(set VRRC:$vD,
                        (int_ppc_altivec_vmrghh VRRC:$vA, VRRC:$vB))]>;
 def VMRGHW : VXForm_1<140, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                      "vmrghh $vD, $vA, $vB", VecFP,
+                      "vmrghw $vD, $vA, $vB", VecFP,
                       [(set VRRC:$vD,
                        (int_ppc_altivec_vmrghw VRRC:$vA, VRRC:$vB))]>;
 def VMRGLH : VXForm_1<332, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
@@ -233,7 +233,7 @@ def VMRGLH : VXForm_1<332, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       [(set VRRC:$vD,
                        (int_ppc_altivec_vmrglh VRRC:$vA, VRRC:$vB))]>;
 def VMRGLW : VXForm_1<396, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                      "vmrglh $vD, $vA, $vB", VecFP,
+                      "vmrglw $vD, $vA, $vB", VecFP,
                       [(set VRRC:$vD,
                        (int_ppc_altivec_vmrglw VRRC:$vA, VRRC:$vB))]>;
 def VREFP  : VXForm_2<266, (ops VRRC:$vD, VRRC:$vB),
