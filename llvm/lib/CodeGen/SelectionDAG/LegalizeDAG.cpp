@@ -4532,6 +4532,27 @@ SDOperand SelectionDAGLegalize::PackVectorOp(SDOperand Op,
                            Node->getOperand(1), Node->getOperand(2));
     }
     break;
+  case ISD::VVECTOR_SHUFFLE:
+    if (!MVT::isVector(NewVT)) {
+      // Returning a scalar?  Figure out if it is the LHS or RHS and return it.
+      SDOperand EltNum = Node->getOperand(2).getOperand(0);
+      if (cast<ConstantSDNode>(EltNum)->getValue())
+        Result = PackVectorOp(Node->getOperand(1), NewVT);
+      else
+        Result = PackVectorOp(Node->getOperand(0), NewVT);
+    } else {
+      // Otherwise, return a VECTOR_SHUFFLE node.  First convert the index
+      // vector from a VBUILD_VECTOR to a BUILD_VECTOR.
+      std::vector<SDOperand> BuildVecIdx(Node->getOperand(2).Val->op_begin(),
+                                         Node->getOperand(2).Val->op_end()-2);
+      MVT::ValueType BVT = MVT::getIntVectorWithNumElements(BuildVecIdx.size());
+      SDOperand BV = DAG.getNode(ISD::BUILD_VECTOR, BVT, BuildVecIdx);
+      
+      Result = DAG.getNode(ISD::VECTOR_SHUFFLE, NewVT,
+                           PackVectorOp(Node->getOperand(0), NewVT),
+                           PackVectorOp(Node->getOperand(1), NewVT), BV);
+    }
+    break;
   case ISD::VBIT_CONVERT:
     if (Op.getOperand(0).getValueType() != MVT::Vector)
       Result = DAG.getNode(ISD::BIT_CONVERT, NewVT, Op.getOperand(0));
