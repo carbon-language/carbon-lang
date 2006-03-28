@@ -303,14 +303,18 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::LOAD,             MVT::v8i16, Legal);
     setOperationAction(ISD::LOAD,             MVT::v4i32, Legal);
     setOperationAction(ISD::LOAD,             MVT::v2i64, Legal);
+    setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v16i8, Custom);
+    setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v8i16, Custom);
     setOperationAction(ISD::BUILD_VECTOR,     MVT::v2f64, Custom);
     setOperationAction(ISD::BUILD_VECTOR,     MVT::v16i8, Custom);
     setOperationAction(ISD::BUILD_VECTOR,     MVT::v8i16, Custom);
     setOperationAction(ISD::BUILD_VECTOR,     MVT::v4i32, Custom);
     setOperationAction(ISD::BUILD_VECTOR,     MVT::v2i64, Custom);
-    setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v16i8, Custom);
-    setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v8i16, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE,   MVT::v2f64, Custom);
+    setOperationAction(ISD::VECTOR_SHUFFLE,   MVT::v16i8, Custom);
+    setOperationAction(ISD::VECTOR_SHUFFLE,   MVT::v8i16, Custom);
+    setOperationAction(ISD::VECTOR_SHUFFLE,   MVT::v4i32, Custom);
+    setOperationAction(ISD::VECTOR_SHUFFLE,   MVT::v2i64, Custom);
   }
 
   computeRegisterProperties();
@@ -1499,6 +1503,29 @@ bool X86::isUNPCKHPDMask(SDNode *N) {
           cast<ConstantSDNode>(Bit1)->getValue() == 3);
 }
 
+/// isUNPCKLMask - Return true if the specified VECTOR_SHUFFLE operand
+/// specifies a shuffle of elements that is suitable for input to UNPCKL.
+bool X86::isUNPCKLMask(SDNode *N) {
+  assert(N->getOpcode() == ISD::BUILD_VECTOR);
+
+  unsigned NumElems = N->getNumOperands();
+  if (NumElems != 2 && NumElems != 4 && NumElems != 8 && NumElems != 16)
+    return false;
+
+  for (unsigned i = 0, j = 0; i != NumElems; i += 2, ++j) {
+    SDOperand BitI  = N->getOperand(i);
+    SDOperand BitI1 = N->getOperand(i+1);
+    assert(isa<ConstantSDNode>(BitI) && isa<ConstantSDNode>(BitI1) &&
+           "Invalid VECTOR_SHUFFLE mask!");
+    if (cast<ConstantSDNode>(BitI)->getValue()  != j)
+      return false;
+    if (cast<ConstantSDNode>(BitI1)->getValue() != j + NumElems)
+      return false;
+  }
+
+  return true;
+}
+
 /// isSplatMask - Return true if the specified VECTOR_SHUFFLE operand specifies
 /// a splat of a single element.
 bool X86::isSplatMask(SDNode *N) {
@@ -2321,6 +2348,9 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     MVT::ValueType VT = Op.getValueType();
     unsigned NumElems = PermMask.getNumOperands();
 
+    // All v2f64 cases are handled.
+    if (NumElems == 2) return SDOperand();
+
     // Handle splat cases.
     if (X86::isSplatMask(PermMask.Val)) {
       if (V2.getOpcode() == ISD::UNDEF)
@@ -2332,8 +2362,8 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
         return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1,
                            DAG.getNode(ISD::UNDEF, V1.getValueType()),
                            PermMask);
-    } else if (NumElems == 2) {
-      // All v2f64 cases are handled.
+    } else if (X86::isUNPCKLMask(PermMask.Val)) {
+      // Leave the VECTOR_SHUFFLE alone. It matches {P}UNPCKL*.
       return SDOperand();
     } else if (X86::isPSHUFDMask(PermMask.Val)) {
       if (V2.getOpcode() == ISD::UNDEF)
@@ -2404,13 +2434,22 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       //         : unpcklps 1, 3 ==> Y: <?, ?, 3, 1>
       //   Step 2: unpcklps X, Y ==>    <3, 2, 1, 0>
       MVT::ValueType VT = Op.getValueType();
+      MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(NumElems);
+      MVT::ValueType BaseVT = MVT::getVectorBaseType(MaskVT);
+      std::vector<SDOperand> MaskVec;
+      for (unsigned i = 0, e = NumElems/2; i != e; ++i) {
+        MaskVec.push_back(DAG.getConstant(i,            BaseVT));
+        MaskVec.push_back(DAG.getConstant(i + NumElems, BaseVT));
+      }
+      SDOperand PermMask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, MaskVec);
       std::vector<SDOperand> V(NumElems);
       for (unsigned i = 0; i < NumElems; ++i)
         V[i] = DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, Op.getOperand(i));
       NumElems >>= 1;
       while (NumElems != 0) {
         for (unsigned i = 0; i < NumElems; ++i)
-          V[i] = DAG.getNode(X86ISD::UNPCKL, VT, V[i], V[i + NumElems]);
+          V[i] = DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V[i], V[i + NumElems],
+                             PermMask);
         NumElems >>= 1;
       }
       return V[0];
@@ -2453,7 +2492,6 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::Wrapper:            return "X86ISD::Wrapper";
   case X86ISD::S2VEC:              return "X86ISD::S2VEC";
   case X86ISD::ZEXT_S2VEC:         return "X86ISD::ZEXT_S2VEC";
-  case X86ISD::UNPCKL:             return "X86ISD::UNPCKL";
   }
 }
 
@@ -2543,5 +2581,6 @@ X86TargetLowering::isShuffleMaskLegal(SDOperand Mask, MVT::ValueType VT) const {
   return (Mask.Val->getNumOperands() == 2 ||
           X86::isSplatMask(Mask.Val) ||
           X86::isPSHUFDMask(Mask.Val) ||
-          X86::isSHUFPMask(Mask.Val));
+          X86::isSHUFPMask(Mask.Val) ||
+          X86::isUNPCKLMask(Mask.Val));
 }

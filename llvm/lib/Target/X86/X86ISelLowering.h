@@ -153,10 +153,6 @@ namespace llvm {
       /// ZEXT_S2VEC - SCALAR_TO_VECTOR with zero extension. The destination base
       /// does not have to match the operand type.
       ZEXT_S2VEC,
-
-      /// UNPCKL - Unpack and interleave low. This corresponds to X86::UNPCKLPS,
-      /// X86::PUNPCKL*.
-      UNPCKL,
     };
 
     // X86 specific condition code. These correspond to X86_*_COND in
@@ -204,6 +200,10 @@ namespace llvm {
    /// isUNPCKHPDMask - Return true if the specified VECTOR_SHUFFLE operand
    /// specifies a shuffle of elements that is suitable for input to UNPCKHPD.
    bool isUNPCKHPDMask(SDNode *N);
+
+   /// isUNPCKLMask - Return true if the specified VECTOR_SHUFFLE operand
+   /// specifies a shuffle of elements that is suitable for input to UNPCKL.
+   bool isUNPCKLMask(SDNode *N);
 
    /// isSplatMask - Return true if the specified VECTOR_SHUFFLE operand
    /// specifies a splat of a single element.

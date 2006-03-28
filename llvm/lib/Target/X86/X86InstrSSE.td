@@ -30,8 +30,6 @@ def X86zexts2vec : SDNode<"X86ISD::ZEXT_S2VEC",
 
 def SDTUnpckl : SDTypeProfile<1, 2,
                               [SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>]>;
-def X86unpckl  : SDNode<"X86ISD::UNPCKL", SDTUnpckl,
-                        []>;
 
 //===----------------------------------------------------------------------===//
 // SSE pattern fragments
@@ -76,6 +74,10 @@ def MOVHLPS_shuffle_mask : PatLeaf<(build_vector), [{
 def UNPCKHPD_shuffle_mask : PatLeaf<(build_vector), [{
   return X86::isUNPCKHPDMask(N);
 }], SHUFFLE_get_shuf_imm>;
+
+def UNPCKL_shuffle_mask : PatLeaf<(build_vector), [{
+  return X86::isUNPCKLMask(N);
+}]>;
 
 // Only use PSHUF if it is not a splat.
 def PSHUFD_shuffle_mask : PatLeaf<(build_vector), [{
@@ -756,14 +758,17 @@ def PSHUFDrm : PDIi8<0x70, MRMSrcMem,
 
 let isTwoAddress = 1 in {
 def SHUFPSrr : PSIi8<0xC6, MRMSrcReg, 
-                     (ops VR128:$dst, VR128:$src1, VR128:$src2, i8imm:$src3),
+                     (ops VR128:$dst, VR128:$src1, VR128:$src2, i32i8imm:$src3),
                      "shufps {$src3, $src2, $dst|$dst, $src2, $src3}",
                     [(set VR128:$dst, (vector_shuffle
                                        (v4f32 VR128:$src1), (v4f32 VR128:$src2),
                                        SHUFP_shuffle_mask:$src3))]>;
 def SHUFPSrm : PSIi8<0xC6, MRMSrcMem, 
-                     (ops VR128:$dst, VR128:$src1, f128mem:$src2, i8imm:$src3),
-                     "shufps {$src3, $src2, $dst|$dst, $src2, $src3}", []>;
+                   (ops VR128:$dst, VR128:$src1, f128mem:$src2, i32i8imm:$src3),
+                     "shufps {$src3, $src2, $dst|$dst, $src2, $src3}",
+                    [(set VR128:$dst, (vector_shuffle
+                                       (v4f32 VR128:$src1), (load addr:$src2),
+                                       SHUFP_shuffle_mask:$src3))]>;
 def SHUFPDrr : PDIi8<0xC6, MRMSrcReg, 
                      (ops VR128:$dst, VR128:$src1, VR128:$src2, i8imm:$src3),
                      "shufpd {$src3, $src2, $dst|$dst, $src2, $src3}",
@@ -772,7 +777,10 @@ def SHUFPDrr : PDIi8<0xC6, MRMSrcReg,
                                        SHUFP_shuffle_mask:$src3))]>;
 def SHUFPDrm : PDIi8<0xC6, MRMSrcMem, 
                      (ops VR128:$dst, VR128:$src1, f128mem:$src2, i8imm:$src3),
-                     "shufpd {$src3, $src2, $dst|$dst, $src2, $src3}", []>;
+                     "shufpd {$src3, $src2, $dst|$dst, $src2, $src3}",
+                    [(set VR128:$dst, (vector_shuffle
+                                       (v2f64 VR128:$src1), (load addr:$src2),
+                                       SHUFP_shuffle_mask:$src3))]>;
 
 def UNPCKHPSrr : PSI<0x15, MRMSrcReg, 
                     (ops VR128:$dst, VR128:$src1, VR128:$src2),
@@ -789,13 +797,15 @@ def UNPCKHPDrm : PDI<0x15, MRMSrcMem,
 def UNPCKLPSrr : PSI<0x14, MRMSrcReg, 
                     (ops VR128:$dst, VR128:$src1, VR128:$src2),
                     "unpcklps {$src2, $dst|$dst, $src2}",
-                    [(set VR128:$dst, (v4f32 (X86unpckl VR128:$src1,
-                                              VR128:$src2)))]>;
+                    [(set VR128:$dst,
+                      (v4f32 (vector_shuffle VR128:$src1, VR128:$src2,
+                              UNPCKL_shuffle_mask)))]>;
 def UNPCKLPSrm : PSI<0x14, MRMSrcMem, 
                     (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                     "unpcklps {$src2, $dst|$dst, $src2}",
-                    [(set VR128:$dst, (v4f32 (X86unpckl VR128:$src1,
-                                              (load addr:$src2))))]>;
+                    [(set VR128:$dst,
+                      (v4f32 (vector_shuffle VR128:$src1, (load addr:$src2),
+                              UNPCKL_shuffle_mask)))]>;
 def UNPCKLPDrr : PDI<0x14, MRMSrcReg, 
                     (ops VR128:$dst, VR128:$src1, VR128:$src2),
                     "unpcklpd {$src2, $dst|$dst, $src2}", []>;
@@ -895,33 +905,39 @@ def PSUBDrm : PDI<0xFA, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
 def PUNPCKLBWrr : PDI<0x60, MRMSrcReg, 
                       (ops VR128:$dst, VR128:$src1, VR128:$src2),
                       "punpcklbw {$src2, $dst|$dst, $src2}",
-                      [(set VR128:$dst, (v16i8 (X86unpckl VR128:$src1,
-                                                VR128:$src2)))]>;
+                      [(set VR128:$dst,
+                        (v16i8 (vector_shuffle VR128:$src1, VR128:$src2,
+                                UNPCKL_shuffle_mask)))]>;
 def PUNPCKLBWrm : PDI<0x60, MRMSrcMem, 
                       (ops VR128:$dst, VR128:$src1, i128mem:$src2),
                       "punpcklbw {$src2, $dst|$dst, $src2}",
-                      [(set VR128:$dst, (v16i8 (X86unpckl VR128:$src1,
-                                                (load addr:$src2))))]>;
+                      [(set VR128:$dst,
+                        (v16i8 (vector_shuffle VR128:$src1, (load addr:$src2),
+                                UNPCKL_shuffle_mask)))]>;
 def PUNPCKLWDrr : PDI<0x61, MRMSrcReg, 
                       (ops VR128:$dst, VR128:$src1, VR128:$src2),
                       "punpcklwd {$src2, $dst|$dst, $src2}",
-                      [(set VR128:$dst, (v8i16 (X86unpckl VR128:$src1,
-                                                VR128:$src2)))]>;
+                      [(set VR128:$dst,
+                        (v8i16 (vector_shuffle VR128:$src1, VR128:$src2,
+                                UNPCKL_shuffle_mask)))]>;
 def PUNPCKLWDrm : PDI<0x61, MRMSrcMem, 
                       (ops VR128:$dst, VR128:$src1, i128mem:$src2),
                       "punpcklwd {$src2, $dst|$dst, $src2}",
-                      [(set VR128:$dst, (v8i16 (X86unpckl VR128:$src1,
-                                                (load addr:$src2))))]>;
+                      [(set VR128:$dst,
+                        (v8i16 (vector_shuffle VR128:$src1, (load addr:$src2),
+                                UNPCKL_shuffle_mask)))]>;
 def PUNPCKLDQrr : PDI<0x62, MRMSrcReg, 
                       (ops VR128:$dst, VR128:$src1, VR128:$src2),
                       "punpckldq {$src2, $dst|$dst, $src2}",
-                      [(set VR128:$dst, (v4i32 (X86unpckl VR128:$src1,
-                                                VR128:$src2)))]>;
+                      [(set VR128:$dst,
+                        (v4i32 (vector_shuffle VR128:$src1, VR128:$src2,
+                                UNPCKL_shuffle_mask)))]>;
 def PUNPCKLDQrm : PDI<0x62, MRMSrcMem, 
                       (ops VR128:$dst, VR128:$src1, i128mem:$src2),
                       "punpckldq {$src2, $dst|$dst, $src2}",
-                      [(set VR128:$dst, (v4i32 (X86unpckl VR128:$src1,
-                                                (load addr:$src2))))]>;
+                      [(set VR128:$dst,
+                        (v4i32 (vector_shuffle VR128:$src1, (load addr:$src2),
+                                UNPCKL_shuffle_mask)))]>;
 def PUNPCKLQDQrr : PDI<0x6C, MRMSrcReg, 
                        (ops VR128:$dst, VR128:$src1, VR128:$src2),
                        "punpcklqdq {$src2, $dst|$dst, $src2}", []>;
