@@ -362,8 +362,17 @@ std::vector<CodeGenIntrinsic> llvm::LoadIntrinsics(const RecordKeeper &RC) {
   std::vector<Record*> I = RC.getAllDerivedDefinitions("Intrinsic");
   
   std::vector<CodeGenIntrinsic> Result;
+
+  // If we are in the context of a target .td file, get the target info so that
+  // we can decode the current intptr_t.
+  CodeGenTarget *CGT = 0;
+  if (Records.getClass("Target") &&
+      Records.getAllDerivedDefinitions("Target").size() == 1)
+    CGT = new CodeGenTarget();
+  
   for (unsigned i = 0, e = I.size(); i != e; ++i)
-    Result.push_back(CodeGenIntrinsic(I[i], 0));
+    Result.push_back(CodeGenIntrinsic(I[i], CGT));
+  delete CGT;
   return Result;
 }
 
@@ -414,7 +423,8 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R, CodeGenTarget *CGT) {
     assert(TyEl->isSubClassOf("LLVMType") && "Expected a type!");
     ArgTypes.push_back(TyEl->getValueAsString("TypeVal"));
     
-    ArgVTs.push_back(getValueType(TyEl->getValueAsDef("VT"), 0));
+    if (CGT)
+      ArgVTs.push_back(getValueType(TyEl->getValueAsDef("VT"), CGT));
     ArgTypeDefs.push_back(TyEl);
   }
   if (ArgTypes.size() == 0)
