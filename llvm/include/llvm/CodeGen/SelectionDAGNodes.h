@@ -189,6 +189,15 @@ namespace ISD {
     /// element number IDX.
     EXTRACT_VECTOR_ELT,
     
+    /// VVECTOR_SHUFFLE(VEC1, VEC2, SHUFFLEVEC, COUNT,TYPE) - Returns a vector,
+    /// of the same type as VEC1/VEC2.  SHUFFLEVEC is a VBUILD_VECTOR of
+    /// constant int values that indicate which value each result element will
+    /// get.  The elements of VEC1/VEC2 are enumerated in order.  This is quite
+    /// similar to the Altivec 'vperm' instruction, except that the indices must
+    /// be constants and are in terms of the element size of VEC1/VEC2, not in
+    /// terms of bytes.
+    VVECTOR_SHUFFLE,
+
     /// VECTOR_SHUFFLE(VEC1, VEC2, SHUFFLEVEC) - Returns a vector, of the same
     /// type as VEC1/VEC2.  SHUFFLEVEC is a BUILD_VECTOR of constant int values
     /// (regardless of whether its datatype is legal or not) that indicate
