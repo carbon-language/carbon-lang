@@ -134,4 +134,14 @@ This would fix two problems:
 2. Identical operations in different types are not getting CSE'd (e.g. 
    { 0U, 0U, 0U, 0U } and {0.0, 0.0, 0.0, 0.0}.
 
+//===----------------------------------------------------------------------===//
+
+Two identical comparisons in predicate and nonpredicate form like this:
+
+a = vec_cmpb(x, y);
+b = vec_any_out(x, y);
+
+Should turn into one "." compare instruction, not a dot and "nondot" form.
+
+//===----------------------------------------------------------------------===//
 
