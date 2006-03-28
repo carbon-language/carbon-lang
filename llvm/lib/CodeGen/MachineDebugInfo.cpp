@@ -1323,7 +1323,7 @@ GlobalVariable *DISerializer::Serialize(DebugInfoDesc *DD) {
 /// Verify - Return true if the GlobalVariable appears to be a valid
 /// serialization of a DebugInfoDesc.
 bool DIVerifier::Verify(Value *V) {
-  return Verify(getGlobalVariable(V));
+  return !V || Verify(getGlobalVariable(V));
 }
 bool DIVerifier::Verify(GlobalVariable *GV) {
   // NULLs are valid.
