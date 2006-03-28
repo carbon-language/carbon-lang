@@ -1390,7 +1390,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::dbg_declare: {
     MachineDebugInfo *DebugInfo = DAG.getMachineDebugInfo();
     DbgDeclareInst &DI = cast<DbgDeclareInst>(I);
-    if (DebugInfo && DebugInfo->Verify(DI.getVariable())) {
+    if (DebugInfo && DI.getVariable() && DebugInfo->Verify(DI.getVariable())) {
       std::vector<SDOperand> Ops;
 
       SDOperand AddressOp  = getValue(DI.getAddress());
