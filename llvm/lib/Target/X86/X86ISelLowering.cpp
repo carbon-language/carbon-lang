@@ -1571,14 +1571,14 @@ unsigned X86::getShuffleSHUFImmediate(SDNode *N) {
   unsigned NumOperands = N->getNumOperands();
   unsigned Shift = (NumOperands == 4) ? 2 : 1;
   unsigned Mask = 0;
-  unsigned i = NumOperands - 1;
-  do {
-    unsigned Val = cast<ConstantSDNode>(N->getOperand(i))->getValue();
+  for (unsigned i = 0; i < NumOperands; ++i) {
+    unsigned Val
+      = cast<ConstantSDNode>(N->getOperand(NumOperands-i-1))->getValue();
     if (Val >= NumOperands) Val -= NumOperands;
     Mask |= Val;
-    Mask <<= Shift;
-    --i;
-  } while (i != 0);
+    if (i != NumOperands - 1)
+      Mask <<= Shift;
+  }
 
   return Mask;
 }
