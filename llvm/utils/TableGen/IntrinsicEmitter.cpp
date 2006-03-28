@@ -100,16 +100,11 @@ EmitFnNameRecognizer(const std::vector<CodeGenIntrinsic> &Ints,
 void IntrinsicEmitter::
 EmitIntrinsicToNameTable(const std::vector<CodeGenIntrinsic> &Ints, 
                          std::ostream &OS) {
-  std::vector<std::string> Names;
-  for (unsigned i = 0, e = Ints.size(); i != e; ++i)
-    Names.push_back(Ints[i].Name);
-  std::sort(Names.begin(), Names.end());
-  
   OS << "// Intrinsic ID to name table\n";
   OS << "#ifdef GET_INTRINSIC_NAME_TABLE\n";
   OS << "  // Note that entry #0 is the invalid intrinsic!\n";
-  for (unsigned i = 0, e = Names.size(); i != e; ++i)
-    OS << "  \"" << Names[i] << "\",\n";
+  for (unsigned i = 0, e = Ints.size(); i != e; ++i)
+    OS << "  \"" << Ints[i].Name << "\",\n";
   OS << "#endif\n\n";
 }
 
