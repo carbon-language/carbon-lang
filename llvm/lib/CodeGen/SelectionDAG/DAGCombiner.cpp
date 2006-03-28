@@ -2419,7 +2419,17 @@ SDOperand DAGCombiner::visitVBUILD_VECTOR(SDNode *N) {
     // Return the new VVECTOR_SHUFFLE node.
     std::vector<SDOperand> Ops;
     Ops.push_back(VecIn1);
-    Ops.push_back(VecIn2.Val ? VecIn2 : VecIn1); // Use V1 twice if no V2.
+    if (VecIn2.Val) {
+      Ops.push_back(VecIn2);
+    } else {
+       // Use an undef vbuild_vector as input for the second operand.
+      std::vector<SDOperand> UnOps(NumInScalars,
+                                   DAG.getNode(ISD::UNDEF, 
+                                           cast<VTSDNode>(EltType)->getVT()));
+      UnOps.push_back(NumElts);
+      UnOps.push_back(EltType);
+      Ops.push_back(DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, UnOps));
+    }
     Ops.push_back(DAG.getNode(ISD::VBUILD_VECTOR,MVT::Vector, BuildVecIndices));
     Ops.push_back(NumElts);
     Ops.push_back(EltType);
