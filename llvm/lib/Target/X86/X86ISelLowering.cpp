@@ -1583,15 +1583,21 @@ unsigned X86::getShuffleSHUFImmediate(SDNode *N) {
   return Mask;
 }
 
-/// CommuteVectorShuffleIfNeeded - Swap vector_shuffle operands (as well as
-/// values in ther permute mask if needed. Return an empty SDOperand is it is
-/// already well formed.
-static SDOperand CommuteVectorShuffleIfNeeded(SDOperand V1, SDOperand V2,
-                                              SDOperand Mask, MVT::ValueType VT,
-                                              SelectionDAG &DAG) {
+/// NormalizeVectorShuffle - Swap vector_shuffle operands (as well as
+/// values in ther permute mask if needed. Use V1 as second vector if it is
+/// undef. Return an empty SDOperand is it is already well formed.
+static SDOperand NormalizeVectorShuffle(SDOperand V1, SDOperand V2,
+                                        SDOperand Mask, MVT::ValueType VT,
+                                        SelectionDAG &DAG) {
   unsigned NumElems = Mask.getNumOperands();
   SDOperand Half1 = Mask.getOperand(0);
   SDOperand Half2 = Mask.getOperand(NumElems/2);
+  bool V2Undef = false;
+  if (V2.getOpcode() == ISD::UNDEF) {
+    V2Undef = true;
+    V2 = V1;
+  }
+
   if (cast<ConstantSDNode>(Half1)->getValue() >= NumElems &&
       cast<ConstantSDNode>(Half2)->getValue() <  NumElems) {
     // Swap the operands and change mask.
@@ -1604,6 +1610,10 @@ static SDOperand CommuteVectorShuffleIfNeeded(SDOperand V1, SDOperand V2,
       DAG.getNode(ISD::BUILD_VECTOR, Mask.getValueType(), MaskVec);
     return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V2, V1, Mask);
   }
+
+  if (V2Undef)
+    return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V1, Mask);
+
   return SDOperand();
 }
 
@@ -2387,8 +2397,26 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     MVT::ValueType VT = Op.getValueType();
     unsigned NumElems = PermMask.getNumOperands();
 
-    if (NumElems == 2)
-      return CommuteVectorShuffleIfNeeded(V1, V2, PermMask, VT, DAG);
+    if (X86::isUNPCKLMask(PermMask.Val) ||
+        X86::isUNPCKHMask(PermMask.Val))
+      // Leave the VECTOR_SHUFFLE alone. It matches {P}UNPCKL*.
+      return SDOperand();
+
+    // PSHUFD's 2nd vector must be undef.
+    if (MVT::isInteger(VT) && X86::isPSHUFDMask(PermMask.Val))
+      if (V2.getOpcode() == ISD::UNDEF)
+        return SDOperand();
+      else
+        return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1,
+                           DAG.getNode(ISD::UNDEF, V1.getValueType()),
+                           PermMask);
+
+    if (NumElems == 2 ||
+        X86::isSplatMask(PermMask.Val) ||
+        X86::isSHUFPMask(PermMask.Val)) {
+      return NormalizeVectorShuffle(V1, V2, PermMask, VT, DAG);
+    }
+#if 0
     else if (X86::isSplatMask(PermMask.Val)) {
       // Handle splat cases.
       if (V2.getOpcode() == ISD::UNDEF)
@@ -2400,10 +2428,6 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
         return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1,
                            DAG.getNode(ISD::UNDEF, V1.getValueType()),
                            PermMask);
-    } else if (X86::isUNPCKLMask(PermMask.Val) ||
-               X86::isUNPCKHMask(PermMask.Val)) {
-      // Leave the VECTOR_SHUFFLE alone. It matches {P}UNPCKL*.
-      return SDOperand();
     } else if (X86::isPSHUFDMask(PermMask.Val)) {
       if (V2.getOpcode() == ISD::UNDEF)
         // Leave the VECTOR_SHUFFLE alone. It matches PSHUFD.
@@ -2414,7 +2438,8 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
                            DAG.getNode(ISD::UNDEF, V1.getValueType()),
                            PermMask);
     } else if (X86::isSHUFPMask(PermMask.Val))
-      return CommuteVectorShuffleIfNeeded(V1, V2, PermMask, VT, DAG);
+      return NormalizeVectorShuffle(V1, V2, PermMask, VT, DAG);
+#endif
 
     assert(0 && "Unexpected VECTOR_SHUFFLE to lower");
     abort();
