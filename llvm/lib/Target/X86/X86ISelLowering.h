@@ -184,6 +184,14 @@ namespace llvm {
    /// specifies a shuffle of elements that is suitable for input to PSHUFD.
    bool isPSHUFDMask(SDNode *N);
 
+   /// isPSHUFHWMask - Return true if the specified VECTOR_SHUFFLE operand
+   /// specifies a shuffle of elements that is suitable for input to PSHUFD.
+   bool isPSHUFHWMask(SDNode *N);
+
+   /// isPSHUFLWMask - Return true if the specified VECTOR_SHUFFLE operand
+   /// specifies a shuffle of elements that is suitable for input to PSHUFD.
+   bool isPSHUFLWMask(SDNode *N);
+
    /// isSHUFPMask - Return true if the specified VECTOR_SHUFFLE operand
    /// specifies a shuffle of elements that is suitable for input to SHUFP*.
    bool isSHUFPMask(SDNode *N);
@@ -212,6 +220,16 @@ namespace llvm {
    /// the specified isShuffleMask VECTOR_SHUFFLE mask with PSHUF* and SHUFP*
    /// instructions.
    unsigned getShuffleSHUFImmediate(SDNode *N);
+
+   /// getShufflePSHUFHWImmediate - Return the appropriate immediate to shuffle
+   /// the specified isShuffleMask VECTOR_SHUFFLE mask with PSHUFHW
+   /// instructions.
+   unsigned getShufflePSHUFHWImmediate(SDNode *N);
+
+   /// getShufflePSHUFKWImmediate - Return the appropriate immediate to shuffle
+   /// the specified isShuffleMask VECTOR_SHUFFLE mask with PSHUFLW
+   /// instructions.
+   unsigned getShufflePSHUFLWImmediate(SDNode *N);
  }
 
   //===----------------------------------------------------------------------===//

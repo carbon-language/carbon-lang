@@ -1399,10 +1399,67 @@ bool X86::isPSHUFDMask(SDNode *N) {
     return false;
 
   // Check if the value doesn't reference the second vector.
-  for (unsigned i = 1, e = N->getNumOperands(); i != e; ++i) {
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
     assert(isa<ConstantSDNode>(N->getOperand(i)) &&
            "Invalid VECTOR_SHUFFLE mask!");
-    if (cast<ConstantSDNode>(N->getOperand(i))->getValue() >= 4) return false;
+    if (cast<ConstantSDNode>(N->getOperand(i))->getValue() >= 4)
+      return false;
+  }
+
+  return true;
+}
+
+/// isPSHUFHWMask - Return true if the specified VECTOR_SHUFFLE operand
+/// specifies a shuffle of elements that is suitable for input to PSHUFD.
+bool X86::isPSHUFHWMask(SDNode *N) {
+  assert(N->getOpcode() == ISD::BUILD_VECTOR);
+
+  if (N->getNumOperands() != 8)
+    return false;
+
+  // Lower quadword copied in order.
+  for (unsigned i = 0; i != 4; ++i) {
+    assert(isa<ConstantSDNode>(N->getOperand(i)) &&
+           "Invalid VECTOR_SHUFFLE mask!");
+    if (cast<ConstantSDNode>(N->getOperand(i))->getValue() != i)
+      return false;
+  }
+
+  // Upper quadword shuffled.
+  for (unsigned i = 4; i != 8; ++i) {
+    assert(isa<ConstantSDNode>(N->getOperand(i)) &&
+           "Invalid VECTOR_SHUFFLE mask!");
+    unsigned Val = cast<ConstantSDNode>(N->getOperand(i))->getValue();
+    if (Val < 4 || Val > 7)
+      return false;
+  }
+
+  return true;
+}
+
+/// isPSHUFLWMask - Return true if the specified VECTOR_SHUFFLE operand
+/// specifies a shuffle of elements that is suitable for input to PSHUFD.
+bool X86::isPSHUFLWMask(SDNode *N) {
+  assert(N->getOpcode() == ISD::BUILD_VECTOR);
+
+  if (N->getNumOperands() != 8)
+    return false;
+
+  // Upper quadword copied in order.
+  for (unsigned i = 4; i != 8; ++i) {
+    assert(isa<ConstantSDNode>(N->getOperand(i)) &&
+           "Invalid VECTOR_SHUFFLE mask!");
+    if (cast<ConstantSDNode>(N->getOperand(i))->getValue() != i)
+      return false;
+  }
+
+  // Lower quadword shuffled.
+  for (unsigned i = 0; i != 4; ++i) {
+    assert(isa<ConstantSDNode>(N->getOperand(i)) &&
+           "Invalid VECTOR_SHUFFLE mask!");
+    unsigned Val = cast<ConstantSDNode>(N->getOperand(i))->getValue();
+    if (Val > 4)
+      return false;
   }
 
   return true;
@@ -1431,7 +1488,7 @@ bool X86::isSHUFPMask(SDNode *N) {
   // Each half must refer to only one of the vector.
   SDOperand Elt = N->getOperand(0);
   assert(isa<ConstantSDNode>(Elt) && "Invalid VECTOR_SHUFFLE mask!");
-  for (unsigned i = 1; i != NumElems / 2; ++i) {
+  for (unsigned i = 1; i < NumElems / 2; ++i) {
     assert(isa<ConstantSDNode>(N->getOperand(i)) &&
            "Invalid VECTOR_SHUFFLE mask!");
     if (cast<ConstantSDNode>(N->getOperand(i))->getValue() != 
@@ -1440,7 +1497,7 @@ bool X86::isSHUFPMask(SDNode *N) {
   }
   Elt = N->getOperand(NumElems / 2);
   assert(isa<ConstantSDNode>(Elt) && "Invalid VECTOR_SHUFFLE mask!");
-  for (unsigned i = NumElems / 2; i != NumElems; ++i) {
+  for (unsigned i = NumElems / 2 + 1; i < NumElems; ++i) {
     assert(isa<ConstantSDNode>(N->getOperand(i)) &&
            "Invalid VECTOR_SHUFFLE mask!");
     if (cast<ConstantSDNode>(N->getOperand(i))->getValue() != 
@@ -1578,6 +1635,40 @@ unsigned X86::getShuffleSHUFImmediate(SDNode *N) {
     Mask |= Val;
     if (i != NumOperands - 1)
       Mask <<= Shift;
+  }
+
+  return Mask;
+}
+
+/// getShufflePSHUFHWImmediate - Return the appropriate immediate to shuffle
+/// the specified isShuffleMask VECTOR_SHUFFLE mask with PSHUFHW
+/// instructions.
+unsigned X86::getShufflePSHUFHWImmediate(SDNode *N) {
+  unsigned Mask = 0;
+  // 8 nodes, but we only care about the last 4.
+  for (unsigned i = 7; i >= 4; --i) {
+    unsigned Val
+      = cast<ConstantSDNode>(N->getOperand(i))->getValue();
+    Mask |= (Val - 4);
+    if (i != 4)
+      Mask <<= 2;
+  }
+
+  return Mask;
+}
+
+/// getShufflePSHUFLWImmediate - Return the appropriate immediate to shuffle
+/// the specified isShuffleMask VECTOR_SHUFFLE mask with PSHUFLW
+/// instructions.
+unsigned X86::getShufflePSHUFLWImmediate(SDNode *N) {
+  unsigned Mask = 0;
+  // 8 nodes, but we only care about the first 4.
+  for (int i = 3; i >= 0; --i) {
+    unsigned Val
+      = cast<ConstantSDNode>(N->getOperand(i))->getValue();
+    Mask |= Val;
+    if (i != 0)
+      Mask <<= 2;
   }
 
   return Mask;
@@ -2399,7 +2490,10 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
 
     // Splat && PSHUFD's 2nd vector must be undef.
     if (X86::isSplatMask(PermMask.Val) ||
-        ((MVT::isInteger(VT) && X86::isPSHUFDMask(PermMask.Val)))) {
+        ((MVT::isInteger(VT) &&
+          (X86::isPSHUFDMask(PermMask.Val) ||
+           X86::isPSHUFHWMask(PermMask.Val) ||
+           X86::isPSHUFLWMask(PermMask.Val))))) {
       if (V2.getOpcode() != ISD::UNDEF)
         return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1,
                            DAG.getNode(ISD::UNDEF, V1.getValueType()),PermMask);
@@ -2607,6 +2701,8 @@ X86TargetLowering::isShuffleMaskLegal(SDOperand Mask, MVT::ValueType VT) const {
   return (Mask.Val->getNumOperands() == 2 ||
           X86::isSplatMask(Mask.Val) ||
           X86::isPSHUFDMask(Mask.Val) ||
+          X86::isPSHUFHWMask(Mask.Val) ||
+          X86::isPSHUFLWMask(Mask.Val) ||
           X86::isSHUFPMask(Mask.Val) ||
           X86::isUNPCKLMask(Mask.Val) ||
           X86::isUNPCKHMask(Mask.Val));
