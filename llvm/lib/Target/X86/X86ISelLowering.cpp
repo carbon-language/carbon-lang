@@ -2397,21 +2397,21 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     MVT::ValueType VT = Op.getValueType();
     unsigned NumElems = PermMask.getNumOperands();
 
-    if (X86::isUNPCKLMask(PermMask.Val) ||
-        X86::isUNPCKHMask(PermMask.Val))
-      // Leave the VECTOR_SHUFFLE alone. It matches {P}UNPCKL*.
-      return SDOperand();
-
-    // PSHUFD's 2nd vector must be undef.
-    if (MVT::isInteger(VT) && X86::isPSHUFDMask(PermMask.Val)) {
+    // Splat && PSHUFD's 2nd vector must be undef.
+    if (X86::isSplatMask(PermMask.Val) ||
+        ((MVT::isInteger(VT) && X86::isPSHUFDMask(PermMask.Val)))) {
       if (V2.getOpcode() != ISD::UNDEF)
         return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1,
                            DAG.getNode(ISD::UNDEF, V1.getValueType()),PermMask);
       return SDOperand();
     }
 
+    if (X86::isUNPCKLMask(PermMask.Val) ||
+        X86::isUNPCKHMask(PermMask.Val))
+      // Leave the VECTOR_SHUFFLE alone. It matches {P}UNPCKL*.
+      return SDOperand();
+
     if (NumElems == 2 ||
-        X86::isSplatMask(PermMask.Val) ||
         X86::isSHUFPMask(PermMask.Val)) {
       return NormalizeVectorShuffle(V1, V2, PermMask, VT, DAG);
     }

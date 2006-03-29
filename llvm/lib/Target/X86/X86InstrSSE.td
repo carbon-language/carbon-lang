@@ -58,9 +58,9 @@ def SHUFFLE_get_shuf_imm : SDNodeXForm<build_vector, [{
   return getI8Imm(X86::getShuffleSHUFImmediate(N));
 }]>;
 
-def v2f64_v2i64_splat_mask : PatLeaf<(build_vector), [{
+def SSE_splat_mask : PatLeaf<(build_vector), [{
   return X86::isSplatMask(N);
-}]>;
+}], SHUFFLE_get_shuf_imm>;
 
 def MOVLHPS_shuffle_mask : PatLeaf<(build_vector), [{
   return X86::isMOVLHPSMask(N);
@@ -1375,12 +1375,15 @@ def : Pat<(v16i8 (X86zexts2vec R8:$src)),
           (MOVZD128rr (V_SET0_PI), (MOVZX32rr8 R8:$src))>, Requires<[HasSSE2]>;
 
 // Splat v2f64 / v2i64
-def : Pat<(vector_shuffle (v2f64 VR128:$src), (v2f64 VR128:$src),
-           v2f64_v2i64_splat_mask:$sm),
-          (v2f64 (UNPCKLPDrr VR128:$src, VR128:$src))>, Requires<[HasSSE2]>;
-def : Pat<(vector_shuffle (v2i64 VR128:$src), (v2i64 VR128:$src),
-           v2f64_v2i64_splat_mask:$sm),
+def : Pat<(vector_shuffle (v2f64 VR128:$src), (undef), SSE_splat_mask:$sm),
+          (v2f64 (UNPCKLPDrr VR128:$src, VR128:$src))>,   Requires<[HasSSE2]>;
+def : Pat<(vector_shuffle (v2i64 VR128:$src), (undef), SSE_splat_mask:$sm),
           (v2i64 (PUNPCKLQDQrr VR128:$src, VR128:$src))>, Requires<[HasSSE2]>;
+
+// Splat v4f32
+def : Pat<(vector_shuffle (v4f32 VR128:$src), (undef), SSE_splat_mask:$sm),
+          (v4f32 (SHUFPSrr VR128:$src, VR128:$src, SSE_splat_mask:$sm))>,
+      Requires<[HasSSE1]>;
 
 // Shuffle v4i32 if others do not match
 def : Pat<(vector_shuffle (v4i32 VR128:$src1), (v4i32 VR128:$src2),
