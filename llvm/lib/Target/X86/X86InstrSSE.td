@@ -1182,39 +1182,39 @@ let isTwoAddress = 1 in {
 def PACKSSWBrr : PDI<0x63, MRMSrcReg, (ops VR128:$dst, VR128:$src1,
                                        VR128:$src2),
                  "packsswb {$src2, $dst|$dst, $src2}",
-                 [(set VR128:$dst, (v16i8 (int_x86_sse2_packsswb_128
-                                           (v8i16 VR128:$src1),
-                                           (v8i16 VR128:$src2))))]>;
+                 [(set VR128:$dst, (v8i16 (int_x86_sse2_packsswb_128
+                                           VR128:$src1,
+                                           VR128:$src2)))]>;
 def PACKSSWBrm : PDI<0x63, MRMSrcMem, (ops VR128:$dst, VR128:$src1,
                                        i128mem:$src2),
                  "packsswb {$src2, $dst|$dst, $src2}",
-                 [(set VR128:$dst, (v16i8 (int_x86_sse2_packsswb_128
-                                           (v8i16 VR128:$src1),
-                                           (loadv8i16 addr:$src2))))]>;
+                 [(set VR128:$dst, (v8i16 (int_x86_sse2_packsswb_128
+                                           VR128:$src1,
+                                         (bc_v8i16 (loadv2f64 addr:$src2)))))]>;
 def PACKSSDWrr : PDI<0x6B, MRMSrcReg, (ops VR128:$dst, VR128:$src1,
                                        VR128:$src2),
-                 "packsswb {$src2, $dst|$dst, $src2}",
-                 [(set VR128:$dst, (v8i16 (int_x86_sse2_packssdw_128
-                                           (v4i32 VR128:$src1),
-                                           (v4i32 VR128:$src2))))]>;
+                 "packssdw {$src2, $dst|$dst, $src2}",
+                 [(set VR128:$dst, (v4i32 (int_x86_sse2_packssdw_128
+                                           VR128:$src1,
+                                           VR128:$src2)))]>;
 def PACKSSDWrm : PDI<0x6B, MRMSrcReg, (ops VR128:$dst, VR128:$src1,
                                        i128mem:$src2),
-                 "packsswb {$src2, $dst|$dst, $src2}",
-                 [(set VR128:$dst, (v8i16 (int_x86_sse2_packssdw_128
-                                           (v4i32 VR128:$src1),
-                                           (loadv4i32 addr:$src2))))]>;
+                 "packssdw {$src2, $dst|$dst, $src2}",
+                 [(set VR128:$dst, (v4i32 (int_x86_sse2_packssdw_128
+                                           VR128:$src1,
+                                         (bc_v4i32 (loadv2i64 addr:$src2)))))]>;
 def PACKUSWBrr : PDI<0x67, MRMSrcReg, (ops VR128:$dst, VR128:$src1,
                                        VR128:$src2),
                      "packuswb {$src2, $dst|$dst, $src2}",
-                 [(set VR128:$dst, (v16i8 (int_x86_sse2_packuswb_128
-                                           (v8i16 VR128:$src1),
-                                           (v8i16 VR128:$src2))))]>;
+                 [(set VR128:$dst, (v8i16 (int_x86_sse2_packuswb_128
+                                           VR128:$src1,
+                                           VR128:$src2)))]>;
 def PACKUSWBrm : PDI<0x67, MRMSrcReg, (ops VR128:$dst, VR128:$src1,
                                        i128mem:$src2),
                      "packuswb {$src2, $dst|$dst, $src2}",
-                 [(set VR128:$dst, (v16i8 (int_x86_sse2_packuswb_128
-                                           (v8i16 VR128:$src1),
-                                           (loadv8i16 addr:$src2))))]>;
+                 [(set VR128:$dst, (v8i16 (int_x86_sse2_packuswb_128
+                                           VR128:$src1,
+                                         (bc_v8i16 (loadv2i64 addr:$src2)))))]>;
 }
 
 // Shuffle and unpack instructions
