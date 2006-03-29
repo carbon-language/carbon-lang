@@ -2403,43 +2403,18 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       return SDOperand();
 
     // PSHUFD's 2nd vector must be undef.
-    if (MVT::isInteger(VT) && X86::isPSHUFDMask(PermMask.Val))
-      if (V2.getOpcode() == ISD::UNDEF)
-        return SDOperand();
-      else
+    if (MVT::isInteger(VT) && X86::isPSHUFDMask(PermMask.Val)) {
+      if (V2.getOpcode() != ISD::UNDEF)
         return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1,
-                           DAG.getNode(ISD::UNDEF, V1.getValueType()),
-                           PermMask);
+                           DAG.getNode(ISD::UNDEF, V1.getValueType()),PermMask);
+      return SDOperand();
+    }
 
     if (NumElems == 2 ||
         X86::isSplatMask(PermMask.Val) ||
         X86::isSHUFPMask(PermMask.Val)) {
       return NormalizeVectorShuffle(V1, V2, PermMask, VT, DAG);
     }
-#if 0
-    else if (X86::isSplatMask(PermMask.Val)) {
-      // Handle splat cases.
-      if (V2.getOpcode() == ISD::UNDEF)
-        // Leave the VECTOR_SHUFFLE alone. It matches SHUFP*.
-        return SDOperand();
-      else
-        // Make it match SHUFP* or UNPCKLPD. Second vector is undef since it's
-        // not needed.
-        return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1,
-                           DAG.getNode(ISD::UNDEF, V1.getValueType()),
-                           PermMask);
-    } else if (X86::isPSHUFDMask(PermMask.Val)) {
-      if (V2.getOpcode() == ISD::UNDEF)
-        // Leave the VECTOR_SHUFFLE alone. It matches PSHUFD.
-        return SDOperand();
-      else
-        // Make it match PSHUFD. Second vector is undef since it's not needed.
-        return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1,
-                           DAG.getNode(ISD::UNDEF, V1.getValueType()),
-                           PermMask);
-    } else if (X86::isSHUFPMask(PermMask.Val))
-      return NormalizeVectorShuffle(V1, V2, PermMask, VT, DAG);
-#endif
 
     assert(0 && "Unexpected VECTOR_SHUFFLE to lower");
     abort();
