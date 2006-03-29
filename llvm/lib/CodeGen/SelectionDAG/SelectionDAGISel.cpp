@@ -507,8 +507,8 @@ public:
   void visitSetLT(User &I) { visitSetCC(I, ISD::SETLT, ISD::SETULT); }
   void visitSetGT(User &I) { visitSetCC(I, ISD::SETGT, ISD::SETUGT); }
 
-  void visitExtractElement(ExtractElementInst &I);
-  void visitInsertElement(InsertElementInst &I);
+  void visitExtractElement(User &I);
+  void visitInsertElement(User &I);
 
   void visitGetElementPtr(User &I);
   void visitCast(User &I);
@@ -586,18 +586,8 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
       // the packed constant.
       std::vector<SDOperand> Ops;
       if (ConstantPacked *CP = dyn_cast<ConstantPacked>(C)) {
-        if (MVT::isFloatingPoint(PVT)) {
-          for (unsigned i = 0; i != NumElements; ++i) {
-            const ConstantFP *El = cast<ConstantFP>(CP->getOperand(i));
-            Ops.push_back(DAG.getConstantFP(El->getValue(), PVT));
-          }
-        } else {
-          for (unsigned i = 0; i != NumElements; ++i) {
-            const ConstantIntegral *El = 
-            cast<ConstantIntegral>(CP->getOperand(i));
-            Ops.push_back(DAG.getConstant(El->getRawValue(), PVT));
-          }
-        }
+        for (unsigned i = 0; i != NumElements; ++i)
+          Ops.push_back(getValue(CP->getOperand(i)));
       } else {
         assert(isa<ConstantAggregateZero>(C) && "Unknown packed constant!");
         SDOperand Op;
@@ -1020,7 +1010,7 @@ void SelectionDAGLowering::visitCast(User &I) {
   }
 }
 
-void SelectionDAGLowering::visitInsertElement(InsertElementInst &I) {
+void SelectionDAGLowering::visitInsertElement(User &I) {
   SDOperand InVec = getValue(I.getOperand(0));
   SDOperand InVal = getValue(I.getOperand(1));
   SDOperand InIdx = DAG.getNode(ISD::ZERO_EXTEND, TLI.getPointerTy(),
@@ -1032,7 +1022,7 @@ void SelectionDAGLowering::visitInsertElement(InsertElementInst &I) {
                            InVec, InVal, InIdx, Num, Typ));
 }
 
-void SelectionDAGLowering::visitExtractElement(ExtractElementInst &I) {
+void SelectionDAGLowering::visitExtractElement(User &I) {
   SDOperand InVec = getValue(I.getOperand(0));
   SDOperand InIdx = DAG.getNode(ISD::ZERO_EXTEND, TLI.getPointerTy(),
                                 getValue(I.getOperand(1)));
