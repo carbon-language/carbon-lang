@@ -667,3 +667,9 @@ directly %esp[0] if there are no other uses.
 
 Use movhps to update upper 64-bits of a v4sf value. Also movlps on lower half
 of a v4sf value.
+
+//===---------------------------------------------------------------------===//
+
+Better codegen for vector_shuffles like this { x, 0, 0, 0 } or { x, 0, x, 0}.
+Perhaps use pxor / xorp* to clear a XMM register first?
+
