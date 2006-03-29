@@ -145,3 +145,7 @@ Should turn into one "." compare instruction, not a dot and "nondot" form.
 
 //===----------------------------------------------------------------------===//
 
+Instcombine llvm.ppc.altivec.vperm with an immediate into a shuffle operation.
+
+//===----------------------------------------------------------------------===//
+
