@@ -63,6 +63,11 @@ class isVDOT {   // vector dot instruction.
 //===----------------------------------------------------------------------===//
 // Helpers for defining instructions that directly correspond to intrinsics.
 
+// VA1a_Int - A VAForm_1a intrinsic definition.
+class VA1a_Int<bits<6> xo, string asmstr, Intrinsic IntID>
+  : VAForm_1a<xo, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, VRRC:$vC), asmstr, VecFP,
+                       [(set VRRC:$vD, (IntID VRRC:$vA, VRRC:$vB, VRRC:$vC))]>;
+
 // VX1_Int - A VXForm_1 intrinsic definition.
 class VX1_Int<bits<11> xo, string asmstr, Intrinsic IntID>
   : VXForm_1<xo, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB), asmstr, VecFP,
@@ -236,17 +241,26 @@ def VMINFP : VXForm_1<1098, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       "vminfp $vD, $vA, $vB", VecFP,
                       []>;
 
-
 def VMRGHH : VX1_Int<76 , "vmrghh $vD, $vA, $vB", int_ppc_altivec_vmrghh>;
 def VMRGHW : VX1_Int<140, "vmrghw $vD, $vA, $vB", int_ppc_altivec_vmrghw>;
 def VMRGLH : VX1_Int<332, "vmrglh $vD, $vA, $vB", int_ppc_altivec_vmrglh>;
 def VMRGLW : VX1_Int<396, "vmrglw $vD, $vA, $vB", int_ppc_altivec_vmrglw>;
+
+def VMSUMMBM : VA1a_Int<37, "vmsummbm $vD, $vA, $vB, $vC", int_ppc_altivec_vmsummbm>;
+def VMSUMSHM : VA1a_Int<40, "vmsumshm $vD, $vA, $vB, $vC", int_ppc_altivec_vmsumshm>;
+def VMSUMSHS : VA1a_Int<41, "vmsumshs $vD, $vA, $vB, $vC", int_ppc_altivec_vmsumshs>;
+def VMSUMUBM : VA1a_Int<36, "vmsumubm $vD, $vA, $vB, $vC", int_ppc_altivec_vmsumubm>;
+def VMSUMUHM : VA1a_Int<38, "vmsumuhm $vD, $vA, $vB, $vC", int_ppc_altivec_vmsumuhm>;
+def VMSUMUHS : VA1a_Int<39, "vmsumuhs $vD, $vA, $vB, $vC", int_ppc_altivec_vmsumuhs>;
 
 def VMULESB : VX1_Int<776, "vmulesb $vD, $vA, $vB", int_ppc_altivec_vmulesb>;
 def VMULESH : VX1_Int<840, "vmulesh $vD, $vA, $vB", int_ppc_altivec_vmulesh>;
 def VMULEUB : VX1_Int<520, "vmuleub $vD, $vA, $vB", int_ppc_altivec_vmuleub>;
 def VMULEUH : VX1_Int<584, "vmuleuh $vD, $vA, $vB", int_ppc_altivec_vmuleuh>;
 def VMULOSB : VX1_Int<264, "vmulosb $vD, $vA, $vB", int_ppc_altivec_vmulosb>;
+def VMULOSH : VX1_Int<328, "vmulosh $vD, $vA, $vB", int_ppc_altivec_vmulosh>;
+def VMULOUB : VX1_Int<  8, "vmuloub $vD, $vA, $vB", int_ppc_altivec_vmuloub>;
+def VMULOUH : VX1_Int< 72, "vmulouh $vD, $vA, $vB", int_ppc_altivec_vmulouh>;
                        
 def VREFP     : VX2_Int<266, "vrefp $vD, $vB",     int_ppc_altivec_vrefp>;
 def VRFIM     : VX2_Int<714, "vrfim $vD, $vB",     int_ppc_altivec_vrfim>;
