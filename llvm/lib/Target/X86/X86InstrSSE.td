@@ -45,6 +45,8 @@ def loadv8i16    : PatFrag<(ops node:$ptr), (v8i16 (load node:$ptr))>;
 def loadv4i32    : PatFrag<(ops node:$ptr), (v4i32 (load node:$ptr))>;
 def loadv2i64    : PatFrag<(ops node:$ptr), (v2i64 (load node:$ptr))>;
 
+def bc_v4f32 : PatFrag<(ops node:$in), (v4f32 (bitconvert node:$in))>;
+def bc_v2f64 : PatFrag<(ops node:$in), (v2f64 (bitconvert node:$in))>;
 def bc_v16i8 : PatFrag<(ops node:$in), (v16i8 (bitconvert node:$in))>;
 def bc_v8i16 : PatFrag<(ops node:$in), (v8i16 (bitconvert node:$in))>;
 def bc_v4i32 : PatFrag<(ops node:$in), (v4i32 (bitconvert node:$in))>;
@@ -1600,3 +1602,107 @@ def : Pat<(vector_shuffle (v4i32 VR128:$src1), (load addr:$src2),
            SHUFP_shuffle_mask:$sm),
           (v4i32 (SHUFPSrm VR128:$src1, addr:$src2,
                   SHUFP_v4i32_shuffle_mask:$sm))>, Requires<[HasSSE2]>;
+
+// Logical ops
+def : Pat<(and (bc_v4i32 (v4f32 VR128:$src1)), (loadv4i32 addr:$src2)),
+          (ANDPSrm VR128:$src1, addr:$src2)>;
+def : Pat<(and (bc_v2i64 (v2f64 VR128:$src1)), (loadv2i64 addr:$src2)),
+          (ANDPDrm VR128:$src1, addr:$src2)>;
+def : Pat<(or  (bc_v4i32 (v4f32 VR128:$src1)), (loadv4i32 addr:$src2)),
+          (ORPSrm VR128:$src1, addr:$src2)>;
+def : Pat<(or  (bc_v2i64 (v2f64 VR128:$src1)), (loadv2i64 addr:$src2)),
+          (ORPDrm VR128:$src1, addr:$src2)>;
+def : Pat<(xor (bc_v4i32 (v4f32 VR128:$src1)), (loadv4i32 addr:$src2)),
+          (XORPSrm VR128:$src1, addr:$src2)>;
+def : Pat<(xor (bc_v2i64 (v2f64 VR128:$src1)), (loadv2i64 addr:$src2)),
+          (XORPDrm VR128:$src1, addr:$src2)>;
+def : Pat<(and (vnot (bc_v4i32 (v4f32 VR128:$src1))), (loadv4i32 addr:$src2)),
+          (ANDNPSrm VR128:$src1, addr:$src2)>;
+def : Pat<(and (vnot (bc_v2i64 (v2f64 VR128:$src1))), (loadv2i64 addr:$src2)),
+          (ANDNPDrm VR128:$src1, addr:$src2)>;
+
+def : Pat<(bc_v4f32 (v4i32 (and VR128:$src1, VR128:$src2))),
+          (ANDPSrr VR128:$src1, VR128:$src2)>;
+def : Pat<(bc_v4f32 (v4i32 (or VR128:$src1, VR128:$src2))),
+          (ORPSrr VR128:$src1, VR128:$src2)>;
+def : Pat<(bc_v4f32 (v4i32 (xor VR128:$src1, VR128:$src2))),
+          (XORPSrr VR128:$src1, VR128:$src2)>;
+def : Pat<(bc_v4f32 (v4i32 (and (vnot VR128:$src1), VR128:$src2))),
+          (ANDNPSrr VR128:$src1, VR128:$src2)>;
+
+def : Pat<(bc_v4f32 (v4i32 (and VR128:$src1, (load addr:$src2)))),
+          (ANDPSrm (v4i32 VR128:$src1), addr:$src2)>;
+def : Pat<(bc_v4f32 (v4i32 (or VR128:$src1, (load addr:$src2)))),
+          (ORPSrm VR128:$src1, addr:$src2)>;
+def : Pat<(bc_v4f32 (v4i32 (xor VR128:$src1, (load addr:$src2)))),
+          (XORPSrm VR128:$src1, addr:$src2)>;
+def : Pat<(bc_v4f32 (v4i32 (and (vnot VR128:$src1), (load addr:$src2)))),
+          (ANDNPSrm VR128:$src1, addr:$src2)>;
+
+def : Pat<(bc_v2f64 (v2i64 (and VR128:$src1, VR128:$src2))),
+          (ANDPDrr VR128:$src1, VR128:$src2)>;
+def : Pat<(bc_v2f64 (v2i64 (or VR128:$src1, VR128:$src2))),
+          (ORPDrr VR128:$src1, VR128:$src2)>;
+def : Pat<(bc_v2f64 (v2i64 (xor VR128:$src1, VR128:$src2))),
+          (XORPDrr VR128:$src1, VR128:$src2)>;
+def : Pat<(bc_v2f64 (v2i64 (and (vnot VR128:$src1), VR128:$src2))),
+          (ANDNPDrr VR128:$src1, VR128:$src2)>;
+
+def : Pat<(bc_v2f64 (v2i64 (and VR128:$src1, (load addr:$src2)))),
+          (ANDPSrm (v2i64 VR128:$src1), addr:$src2)>;
+def : Pat<(bc_v2f64 (v2i64 (or VR128:$src1, (load addr:$src2)))),
+          (ORPSrm VR128:$src1, addr:$src2)>;
+def : Pat<(bc_v2f64 (v2i64 (xor VR128:$src1, (load addr:$src2)))),
+          (XORPSrm VR128:$src1, addr:$src2)>;
+def : Pat<(bc_v2f64 (v2i64 (and (vnot VR128:$src1), (load addr:$src2)))),
+          (ANDNPSrm VR128:$src1, addr:$src2)>;
+
+def : Pat<(v4i32 (and VR128:$src1, VR128:$src2)),
+          (PANDrr VR128:$src1, VR128:$src2)>;
+def : Pat<(v8i16 (and VR128:$src1, VR128:$src2)),
+          (PANDrr VR128:$src1, VR128:$src2)>;
+def : Pat<(v16i8 (and VR128:$src1, VR128:$src2)),
+          (PANDrr VR128:$src1, VR128:$src2)>;
+def : Pat<(v4i32 (or VR128:$src1, VR128:$src2)),
+          (PORrr VR128:$src1, VR128:$src2)>;
+def : Pat<(v8i16 (or VR128:$src1, VR128:$src2)),
+          (PORrr VR128:$src1, VR128:$src2)>;
+def : Pat<(v16i8 (or VR128:$src1, VR128:$src2)),
+          (PORrr VR128:$src1, VR128:$src2)>;
+def : Pat<(v4i32 (xor VR128:$src1, VR128:$src2)),
+          (PXORrr VR128:$src1, VR128:$src2)>;
+def : Pat<(v8i16 (xor VR128:$src1, VR128:$src2)),
+          (PXORrr VR128:$src1, VR128:$src2)>;
+def : Pat<(v16i8 (xor VR128:$src1, VR128:$src2)),
+          (PXORrr VR128:$src1, VR128:$src2)>;
+def : Pat<(v4i32 (and (vnot VR128:$src1), VR128:$src2)),
+          (PANDNrr VR128:$src1, VR128:$src2)>;
+def : Pat<(v8i16 (and (vnot VR128:$src1), VR128:$src2)),
+          (PANDNrr VR128:$src1, VR128:$src2)>;
+def : Pat<(v16i8 (and (vnot VR128:$src1), VR128:$src2)),
+          (PANDNrr VR128:$src1, VR128:$src2)>;
+
+def : Pat<(v4i32 (and VR128:$src1, (load addr:$src2))),
+          (PANDrm VR128:$src1, addr:$src2)>;
+def : Pat<(v8i16 (and VR128:$src1, (load addr:$src2))),
+          (PANDrm VR128:$src1, addr:$src2)>;
+def : Pat<(v16i8 (and VR128:$src1, (load addr:$src2))),
+          (PANDrm VR128:$src1, addr:$src2)>;
+def : Pat<(v4i32 (or VR128:$src1, (load addr:$src2))),
+          (PORrm VR128:$src1, addr:$src2)>;
+def : Pat<(v8i16 (or VR128:$src1, (load addr:$src2))),
+          (PORrm VR128:$src1, addr:$src2)>;
+def : Pat<(v16i8 (or VR128:$src1, (load addr:$src2))),
+          (PORrm VR128:$src1, addr:$src2)>;
+def : Pat<(v4i32 (xor VR128:$src1, (load addr:$src2))),
+          (PXORrm VR128:$src1, addr:$src2)>;
+def : Pat<(v8i16 (xor VR128:$src1, (load addr:$src2))),
+          (PXORrm VR128:$src1, addr:$src2)>;
+def : Pat<(v16i8 (xor VR128:$src1, (load addr:$src2))),
+          (PXORrm VR128:$src1, addr:$src2)>;
+def : Pat<(v4i32 (and (vnot VR128:$src1), (load addr:$src2))),
+          (PANDNrm VR128:$src1, addr:$src2)>;
+def : Pat<(v8i16 (and (vnot VR128:$src1), (load addr:$src2))),
+          (PANDNrm VR128:$src1, addr:$src2)>;
+def : Pat<(v16i8 (and (vnot VR128:$src1), (load addr:$src2))),
+          (PANDNrm VR128:$src1, addr:$src2)>;
