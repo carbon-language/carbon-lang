@@ -686,13 +686,6 @@ def MOVHLPSrr : PSI<0x12, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                               MOVHLPS_shuffle_mask)))]>;
 }
 
-def MOVMSKPSrr : PSI<0x50, MRMSrcReg, (ops R32:$dst, VR128:$src),
-                     "movmskps {$src, $dst|$dst, $src}",
-                     [(set R32:$dst, (int_x86_sse_movmsk_ps VR128:$src))]>;
-def MOVMSKPDrr : PSI<0x50, MRMSrcReg, (ops R32:$dst, VR128:$src),
-                     "movmskpd {$src, $dst|$dst, $src}",
-                     [(set R32:$dst, (int_x86_sse2_movmskpd VR128:$src))]>;
-
 // Conversion instructions
 def CVTPI2PSrr : PSI<0x2A, MRMSrcReg, (ops VR128:$dst, VR64:$src),
                      "cvtpi2ps {$src, $dst|$dst, $src}", []>;
@@ -1373,6 +1366,18 @@ def PUNPCKHQDQrm : PDI<0x6D, MRMSrcMem,
 //===----------------------------------------------------------------------===//
 // Miscellaneous Instructions
 //===----------------------------------------------------------------------===//
+
+// Mask creation
+def MOVMSKPSrr : PSI<0x50, MRMSrcReg, (ops R32:$dst, VR128:$src),
+                     "movmskps {$src, $dst|$dst, $src}",
+                     [(set R32:$dst, (int_x86_sse_movmsk_ps VR128:$src))]>;
+def MOVMSKPDrr : PSI<0x50, MRMSrcReg, (ops R32:$dst, VR128:$src),
+                     "movmskpd {$src, $dst|$dst, $src}",
+                     [(set R32:$dst, (int_x86_sse2_movmskpd VR128:$src))]>;
+
+def PMOVMSKBrr : PDI<0xD7, MRMSrcReg, (ops R32:$dst, VR128:$src),
+                     "pmovmskb {$src, $dst|$dst, $src}",
+                     [(set R32:$dst, (int_x86_sse2_pmovmskb_128 VR128:$src))]>;
 
 // Prefetching loads
 def PREFETCHT0   : I<0x18, MRM1m, (ops i8mem:$src),
