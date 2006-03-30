@@ -61,6 +61,19 @@ class isVDOT {   // vector dot instruction.
 }
 
 //===----------------------------------------------------------------------===//
+// Helpers for defining instructions that directly correspond to intrinsics.
+
+// VX1_Int - A VXForm_1 intrinsic definition.
+class VX1_Int<bits<11> xo, string asmstr, Intrinsic IntID>
+  : VXForm_1<xo, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB), asmstr, VecFP,
+             [(set VRRC:$vD, (IntID VRRC:$vA, VRRC:$vB))]>;
+
+// VX2_Int - A VXForm_2 intrinsic definition.
+class VX2_Int<bits<11> xo, string asmstr, Intrinsic IntID>
+  : VXForm_2<xo, (ops VRRC:$vD, VRRC:$vB), asmstr, VecFP,
+             [(set VRRC:$vD, (IntID VRRC:$vB))]>;
+
+//===----------------------------------------------------------------------===//
 // Instruction Definitions.
 
 def IMPLICIT_DEF_VRRC : Pseudo<(ops VRRC:$rD), "; $rD = IMPLICIT_DEF_VRRC",
@@ -222,71 +235,31 @@ def VMAXFP : VXForm_1<1034, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
 def VMINFP : VXForm_1<1098, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       "vminfp $vD, $vA, $vB", VecFP,
                       []>;
-def VMRGHH : VXForm_1<76, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                      "vmrghh $vD, $vA, $vB", VecFP,
-                      [(set VRRC:$vD,
-                       (int_ppc_altivec_vmrghh VRRC:$vA, VRRC:$vB))]>;
-def VMRGHW : VXForm_1<140, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                      "vmrghw $vD, $vA, $vB", VecFP,
-                      [(set VRRC:$vD,
-                       (int_ppc_altivec_vmrghw VRRC:$vA, VRRC:$vB))]>;
-def VMRGLH : VXForm_1<332, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                      "vmrglh $vD, $vA, $vB", VecFP,
-                      [(set VRRC:$vD,
-                       (int_ppc_altivec_vmrglh VRRC:$vA, VRRC:$vB))]>;
-def VMRGLW : VXForm_1<396, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                      "vmrglw $vD, $vA, $vB", VecFP,
-                      [(set VRRC:$vD,
-                       (int_ppc_altivec_vmrglw VRRC:$vA, VRRC:$vB))]>;
 
-def VMULESB : VXForm_1<776, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                       "vmulesb $vD, $vA, $vB", VecFP,
-                       [(set VRRC:$vD,
-                            (int_ppc_altivec_vmulesb VRRC:$vA, VRRC:$vB))]>;
-def VMULESH : VXForm_1<840, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                       "vmulesh $vD, $vA, $vB", VecFP,
-                       [(set VRRC:$vD,
-                            (int_ppc_altivec_vmulesh VRRC:$vA, VRRC:$vB))]>;
-def VMULEUB : VXForm_1<520, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                       "vmuleub $vD, $vA, $vB", VecFP,
-                       [(set VRRC:$vD,
-                            (int_ppc_altivec_vmuleub VRRC:$vA, VRRC:$vB))]>;
-def VMULEUH : VXForm_1<584, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                       "vmuleuh $vD, $vA, $vB", VecFP,
-                       [(set VRRC:$vD,
-                            (int_ppc_altivec_vmuleuh VRRC:$vA, VRRC:$vB))]>;
-def VMULOSB : VXForm_1<264, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                       "vmulosb $vD, $vA, $vB", VecFP,
-                       [(set VRRC:$vD,
-                            (int_ppc_altivec_vmulosb VRRC:$vA, VRRC:$vB))]>;
+
+def VMRGHH : VX1_Int<76 , "vmrghh $vD, $vA, $vB", int_ppc_altivec_vmrghh>;
+def VMRGHW : VX1_Int<140, "vmrghw $vD, $vA, $vB", int_ppc_altivec_vmrghw>;
+def VMRGLH : VX1_Int<332, "vmrglh $vD, $vA, $vB", int_ppc_altivec_vmrglh>;
+def VMRGLW : VX1_Int<396, "vmrglw $vD, $vA, $vB", int_ppc_altivec_vmrglw>;
+
+def VMULESB : VX1_Int<776, "vmulesb $vD, $vA, $vB", int_ppc_altivec_vmulesb>;
+def VMULESH : VX1_Int<840, "vmulesh $vD, $vA, $vB", int_ppc_altivec_vmulesh>;
+def VMULEUB : VX1_Int<520, "vmuleub $vD, $vA, $vB", int_ppc_altivec_vmuleub>;
+def VMULEUH : VX1_Int<584, "vmuleuh $vD, $vA, $vB", int_ppc_altivec_vmuleuh>;
+def VMULOSB : VX1_Int<264, "vmulosb $vD, $vA, $vB", int_ppc_altivec_vmulosb>;
                        
-                       
-def VREFP  : VXForm_2<266, (ops VRRC:$vD, VRRC:$vB),
-                      "vrefp $vD, $vB", VecFP,
-                      [(set VRRC:$vD, (int_ppc_altivec_vrefp VRRC:$vB))]>;
-def VRFIM  : VXForm_2<714, (ops VRRC:$vD, VRRC:$vB),
-                      "vrfim $vD, $vB", VecFP,
-                      [(set VRRC:$vD, (int_ppc_altivec_vrfim VRRC:$vB))]>;
-def VRFIN  : VXForm_2<522, (ops VRRC:$vD, VRRC:$vB),
-                      "vrfin $vD, $vB", VecFP,
-                      [(set VRRC:$vD, (int_ppc_altivec_vrfin VRRC:$vB))]>;
-def VRFIP  : VXForm_2<650, (ops VRRC:$vD, VRRC:$vB),
-                      "vrfip $vD, $vB", VecFP,
-                      [(set VRRC:$vD, (int_ppc_altivec_vrfip VRRC:$vB))]>;
-def VRFIZ  : VXForm_2<586, (ops VRRC:$vD, VRRC:$vB),
-                      "vrfiz $vD, $vB", VecFP,
-                      [(set VRRC:$vD, (int_ppc_altivec_vrfiz VRRC:$vB))]>;
-def VRSQRTEFP : VXForm_2<330, (ops VRRC:$vD, VRRC:$vB),
-                         "vrsqrtefp $vD, $vB", VecFP,
-                         [(set VRRC:$vD,(int_ppc_altivec_vrsqrtefp VRRC:$vB))]>;
-def VSUBCUW : VXForm_1<74, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                       "vsubcuw $vD, $vA, $vB", VecFP,
-                       [(set VRRC:$vD,
-                             (int_ppc_altivec_vsubcuw VRRC:$vA, VRRC:$vB))]>;
-def VSUBFP : VXForm_1<74, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                      "vsubfp $vD, $vA, $vB", VecFP,
+def VREFP     : VX2_Int<266, "vrefp $vD, $vB",     int_ppc_altivec_vrefp>;
+def VRFIM     : VX2_Int<714, "vrfim $vD, $vB",     int_ppc_altivec_vrfim>;
+def VRFIN     : VX2_Int<522, "vrfin $vD, $vB",     int_ppc_altivec_vrfin>;
+def VRFIP     : VX2_Int<650, "vrfip $vD, $vB",     int_ppc_altivec_vrfip>;
+def VRFIZ     : VX2_Int<586, "vrfiz $vD, $vB",     int_ppc_altivec_vrfiz>;
+def VRSQRTEFP : VX2_Int<330, "vrsqrtefp $vD, $vB", int_ppc_altivec_vrsqrtefp>;
+
+def VSUBCUW : VX1_Int<74, "vsubcuw $vD, $vA, $vB", int_ppc_altivec_vsubcuw>;
+
+def VSUBFP  : VXForm_1<74, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vsubfp $vD, $vA, $vB", VecGeneral,
                       [(set VRRC:$vD, (fsub VRRC:$vA, VRRC:$vB))]>;
-                  
 def VSUBUBM : VXForm_1<1024, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       "vsububm $vD, $vA, $vB", VecGeneral,
                       [(set VRRC:$vD, (sub (v16i8 VRRC:$vA), VRRC:$vB))]>;
@@ -297,52 +270,17 @@ def VSUBUWM : VXForm_1<1152, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       "vsubuwm $vD, $vA, $vB", VecGeneral,
                       [(set VRRC:$vD, (sub (v4i32 VRRC:$vA), VRRC:$vB))]>;
                       
-def VSUBSBS : VXForm_1<1792, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                       "vsubsbs $vD, $vA, $vB", VecFP,
-                       [(set VRRC:$vD,
-                             (int_ppc_altivec_vsubsbs VRRC:$vA, VRRC:$vB))]>;
-def VSUBSHS : VXForm_1<1856, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                       "vsubshs $vD, $vA, $vB", VecFP,
-                       [(set VRRC:$vD,
-                             (int_ppc_altivec_vsubshs VRRC:$vA, VRRC:$vB))]>;
-def VSUBSWS : VXForm_1<1920, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                       "vsubsws $vD, $vA, $vB", VecFP,
-                       [(set VRRC:$vD,
-                             (int_ppc_altivec_vsubsws VRRC:$vA, VRRC:$vB))]>;
-                             
-def VSUBUBS : VXForm_1<1536, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                       "vsububs $vD, $vA, $vB", VecFP,
-                       [(set VRRC:$vD,
-                             (int_ppc_altivec_vsububs VRRC:$vA, VRRC:$vB))]>;
-def VSUBUHS : VXForm_1<1600, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                       "vsubuhs $vD, $vA, $vB", VecFP,
-                       [(set VRRC:$vD,
-                             (int_ppc_altivec_vsubuhs VRRC:$vA, VRRC:$vB))]>;
-def VSUBUWS : VXForm_1<1664, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                       "vsubuws $vD, $vA, $vB", VecFP,
-                       [(set VRRC:$vD,
-                             (int_ppc_altivec_vsubuws VRRC:$vA, VRRC:$vB))]>;
-
-def VSUMSWS : VXForm_1<1928, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                       "vsumsws $vD, $vA, $vB", VecFP,
-                       [(set VRRC:$vD,
-                             (int_ppc_altivec_vsumsws VRRC:$vA, VRRC:$vB))]>;
-def VSUM2SWS: VXForm_1<1672, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                       "vsum2sws $vD, $vA, $vB", VecFP,
-                       [(set VRRC:$vD,
-                             (int_ppc_altivec_vsum2sws VRRC:$vA, VRRC:$vB))]>;
-def VSUM4SBS: VXForm_1<1672, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                       "vsum4sbs $vD, $vA, $vB", VecFP,
-                       [(set VRRC:$vD,
-                             (int_ppc_altivec_vsum4sbs VRRC:$vA, VRRC:$vB))]>;
-def VSUM4SHS: VXForm_1<1608, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                       "vsum4shs $vD, $vA, $vB", VecFP,
-                       [(set VRRC:$vD,
-                             (int_ppc_altivec_vsum4shs VRRC:$vA, VRRC:$vB))]>;
-def VSUM4UBS: VXForm_1<1544, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                       "vsum4ubs $vD, $vA, $vB", VecFP,
-                       [(set VRRC:$vD,
-                             (int_ppc_altivec_vsum4ubs VRRC:$vA, VRRC:$vB))]>;
+def VSUBSBS : VX1_Int<1792, "vsubsbs $vD, $vA, $vB", int_ppc_altivec_vsubsbs>;
+def VSUBSHS : VX1_Int<1856, "vsubshs $vD, $vA, $vB", int_ppc_altivec_vsubshs>;
+def VSUBSWS : VX1_Int<1920, "vsubsws $vD, $vA, $vB", int_ppc_altivec_vsubsws>;
+def VSUBUBS : VX1_Int<1536, "vsububs $vD, $vA, $vB", int_ppc_altivec_vsububs>;
+def VSUBUHS : VX1_Int<1600, "vsubuhs $vD, $vA, $vB", int_ppc_altivec_vsubuhs>;
+def VSUBUWS : VX1_Int<1664, "vsubuws $vD, $vA, $vB", int_ppc_altivec_vsubuws>;
+def VSUMSWS : VX1_Int<1928, "vsumsws $vD, $vA, $vB", int_ppc_altivec_vsumsws>;
+def VSUM2SWS: VX1_Int<1672, "vsum2sws $vD, $vA, $vB", int_ppc_altivec_vsum2sws>;
+def VSUM4SBS: VX1_Int<1672, "vsum4sbs $vD, $vA, $vB", int_ppc_altivec_vsum4sbs>;
+def VSUM4SHS: VX1_Int<1608, "vsum4shs $vD, $vA, $vB", int_ppc_altivec_vsum4shs>;
+def VSUM4UBS: VX1_Int<1544, "vsum4ubs $vD, $vA, $vB", int_ppc_altivec_vsum4ubs>;
 
 def VNOR : VXForm_1<1284, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                     "vnor $vD, $vA, $vB", VecFP,
