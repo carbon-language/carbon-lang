@@ -192,23 +192,23 @@ let TargetPrefix = "ppc" in {  // All intrinsics start with "llvm.ppc.".
 
   // Vector Multiply Sum Instructions.
   def int_ppc_altivec_vmsummbm : GCCBuiltin<"__builtin_altivec_vmsummbm">,
-            Intrinsic<[llvm_v16i8_ty, llvm_v16i8_ty, llvm_v4i32_ty],
-                      [InstrNoMem]>;
+            Intrinsic<[llvm_v4i32_ty, llvm_v16i8_ty, llvm_v16i8_ty,
+                       llvm_v4i32_ty], [InstrNoMem]>;
   def int_ppc_altivec_vmsumshm : GCCBuiltin<"__builtin_altivec_vmsumshm">,
-            Intrinsic<[llvm_v8i16_ty, llvm_v8i16_ty, llvm_v4i32_ty],
-                      [InstrNoMem]>;
+            Intrinsic<[llvm_v4i32_ty, llvm_v8i16_ty, llvm_v8i16_ty,
+                       llvm_v4i32_ty], [InstrNoMem]>;
   def int_ppc_altivec_vmsumshs : GCCBuiltin<"__builtin_altivec_vmsumshs">,
-            Intrinsic<[llvm_v8i16_ty, llvm_v8i16_ty, llvm_v4i32_ty],
-                      [InstrNoMem]>;
+            Intrinsic<[llvm_v4i32_ty, llvm_v8i16_ty, llvm_v8i16_ty, 
+                       llvm_v4i32_ty], [InstrNoMem]>;
   def int_ppc_altivec_vmsumubm : GCCBuiltin<"__builtin_altivec_vmsumubm">,
-            Intrinsic<[llvm_v16i8_ty, llvm_v16i8_ty, llvm_v4i32_ty],
-                      [InstrNoMem]>;
+            Intrinsic<[llvm_v4i32_ty, llvm_v16i8_ty, llvm_v16i8_ty, 
+                       llvm_v4i32_ty], [InstrNoMem]>;
   def int_ppc_altivec_vmsumuhm : GCCBuiltin<"__builtin_altivec_vmsumuhm">,
-            Intrinsic<[llvm_v8i16_ty, llvm_v8i16_ty, llvm_v4i32_ty],
-                      [InstrNoMem]>;
+            Intrinsic<[llvm_v4i32_ty, llvm_v8i16_ty, llvm_v8i16_ty,
+                       llvm_v4i32_ty], [InstrNoMem]>;
   def int_ppc_altivec_vmsumuhs : GCCBuiltin<"__builtin_altivec_vmsumuhs">,
-            Intrinsic<[llvm_v8i16_ty, llvm_v8i16_ty, llvm_v4i32_ty],
-                      [InstrNoMem]>;
+            Intrinsic<[llvm_v4i32_ty, llvm_v8i16_ty, llvm_v8i16_ty,
+                       llvm_v4i32_ty], [InstrNoMem]>;
 
   // Vector Multiply Instructions.
   def int_ppc_altivec_vmulesb : GCCBuiltin<"__builtin_altivec_vmulesb">,
