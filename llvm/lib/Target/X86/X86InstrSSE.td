@@ -501,7 +501,8 @@ def CVTSS2SDrm: I<0x5A, MRMSrcMem, (ops FR64:$dst, f32mem:$src),
 let isTwoAddress = 1 in {
 def CMPSSrr : SSI<0xC2, MRMSrcReg, 
                 (ops FR32:$dst, FR32:$src1, FR32:$src, SSECC:$cc),
-                "cmp${cc}ss {$src, $dst|$dst, $src}", []>;
+                "cmp${cc}ss {$src, $dst|$dst, $src}",
+                 []>;
 def CMPSSrm : SSI<0xC2, MRMSrcMem, 
                 (ops FR32:$dst, FR32:$src1, f32mem:$src, SSECC:$cc),
                 "cmp${cc}ss {$src, $dst|$dst, $src}", []>;
@@ -525,6 +526,27 @@ def UCOMISDrr: PDI<0x2E, MRMSrcReg, (ops FR64:$src1, FR64:$src2),
 def UCOMISDrm: PDI<0x2E, MRMSrcMem, (ops FR64:$src1, f64mem:$src2),
                  "ucomisd {$src2, $src1|$src1, $src2}",
                  [(X86cmp FR64:$src1, (loadf64 addr:$src2))]>;
+
+// Aliases to match intrinsics which expect XMM operand(s).
+let isTwoAddress = 1 in {
+def Int_CMPSSrr : SSI<0xC2, MRMSrcReg, 
+                      (ops VR128:$dst, VR128:$src1, VR128:$src, SSECC:$cc),
+                      "cmp${cc}ss {$src, $dst|$dst, $src}",
+                      [(set VR128:$dst, (int_x86_sse_cmp_ss VR128:$src1,
+                                         VR128:$src, imm:$cc))]>;
+def Int_CMPSSrm : SSI<0xC2, MRMSrcMem, 
+                      (ops VR128:$dst, VR128:$src1, f32mem:$src, SSECC:$cc),
+                      "cmp${cc}ss {$src, $dst|$dst, $src}",
+                      [(set VR128:$dst, (int_x86_sse_cmp_ss VR128:$src1,
+                                         (load addr:$src), imm:$cc))]>;
+def Int_CMPSDrr : SDI<0xC2, MRMSrcReg, 
+                      (ops VR128:$dst, VR128:$src1, VR128:$src, SSECC:$cc),
+                      "cmp${cc}sd {$src, $dst|$dst, $src}", []>;
+def Int_CMPSDrm : SDI<0xC2, MRMSrcMem, 
+                      (ops VR128:$dst, VR128:$src1, f64mem:$src, SSECC:$cc),
+                      "cmp${cc}sd {$src, $dst|$dst, $src}", []>;
+}
+
 
 // Aliases of packed instructions for scalar use. These all have names that
 // start with 'Fs'.
@@ -936,17 +958,21 @@ def ANDNPDrm : PDI<0x55, MRMSrcMem, (ops VR128:$dst, VR128:$src1,f128mem:$src2),
 
 let isTwoAddress = 1 in {
 def CMPPSrr : PSI<0xC2, MRMSrcReg, 
-                (ops VR128:$dst, VR128:$src1, VR128:$src, SSECC:$cc),
-                "cmp${cc}ps {$src, $dst|$dst, $src}", []>;
+                  (ops VR128:$dst, VR128:$src1, VR128:$src, SSECC:$cc),
+                  "cmp${cc}ps {$src, $dst|$dst, $src}",
+                  [(set VR128:$dst, (int_x86_sse_cmp_ps VR128:$src1,
+                                     VR128:$src, imm:$cc))]>;
 def CMPPSrm : PSI<0xC2, MRMSrcMem, 
-                (ops VR128:$dst, VR128:$src1, f128mem:$src, SSECC:$cc),
-                "cmp${cc}ps {$src, $dst|$dst, $src}", []>;
+                  (ops VR128:$dst, VR128:$src1, f128mem:$src, SSECC:$cc),
+                  "cmp${cc}ps {$src, $dst|$dst, $src}",
+                  [(set VR128:$dst, (int_x86_sse_cmp_ps VR128:$src1,
+                                     (load addr:$src), imm:$cc))]>;
 def CMPPDrr : PDI<0xC2, MRMSrcReg, 
-                (ops VR128:$dst, VR128:$src1, VR128:$src, SSECC:$cc),
-                "cmp${cc}pd {$src, $dst|$dst, $src}", []>;
+                  (ops VR128:$dst, VR128:$src1, VR128:$src, SSECC:$cc),
+                  "cmp${cc}pd {$src, $dst|$dst, $src}", []>;
 def CMPPDrm : PDI<0xC2, MRMSrcMem, 
-                (ops VR128:$dst, VR128:$src1, f128mem:$src, SSECC:$cc),
-                "cmp${cc}pd {$src, $dst|$dst, $src}", []>;
+                  (ops VR128:$dst, VR128:$src1, f128mem:$src, SSECC:$cc),
+                  "cmp${cc}pd {$src, $dst|$dst, $src}", []>;
 }
 
 // Shuffle and unpack instructions
