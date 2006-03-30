@@ -804,7 +804,9 @@ void TreePattern::error(const std::string &Msg) const {
 }
 
 TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
-  Record *Operator = Dag->getNodeType();
+  DefInit *OpDef = dynamic_cast<DefInit*>(Dag->getOperator());
+  if (!OpDef) error("Pattern has unexpected operator type!");
+  Record *Operator = OpDef->getDef();
   
   if (Operator->isSubClassOf("ValueType")) {
     // If the operator is a ValueType, then this must be "type cast" of a leaf
@@ -817,7 +819,7 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
     if (DefInit *DI = dynamic_cast<DefInit*>(Arg)) {
       Record *R = DI->getDef();
       if (R->isSubClassOf("SDNode") || R->isSubClassOf("PatFrag")) {
-        Dag->setArg(0, new DagInit(R,
+        Dag->setArg(0, new DagInit(DI,
                                 std::vector<std::pair<Init*, std::string> >()));
         return ParseTreePattern(Dag);
       }
@@ -866,7 +868,7 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
       // Direct reference to a leaf DagNode or PatFrag?  Turn it into a
       // TreePatternNode if its own.
       if (R->isSubClassOf("SDNode") || R->isSubClassOf("PatFrag")) {
-        Dag->setArg(i, new DagInit(R,
+        Dag->setArg(i, new DagInit(DefI,
                               std::vector<std::pair<Init*, std::string> >()));
         --i;  // Revisit this node...
       } else {
@@ -1043,7 +1045,8 @@ void DAGISelEmitter::ParsePatternFragments(std::ostream &OS) {
     
     // Parse the operands list.
     DagInit *OpsList = Fragments[i]->getValueAsDag("Operands");
-    if (OpsList->getNodeType()->getName() != "ops")
+    DefInit *OpsOp = dynamic_cast<DefInit*>(OpsList->getOperator());
+    if (!OpsOp || OpsOp->getDef()->getName() != "ops")
       P->error("Operands list should start with '(ops ... '!");
     
     // Copy over the arguments.       

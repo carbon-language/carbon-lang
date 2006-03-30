@@ -559,15 +559,17 @@ Init *DagInit::resolveReferences(Record &R, const RecordVal *RV) {
   for (unsigned i = 0, e = Args.size(); i != e; ++i)
     NewArgs.push_back(Args[i]->resolveReferences(R, RV));
   
-  if (Args != NewArgs)
-    return new DagInit(NodeTypeDef, NewArgs, ArgNames);
+  Init *Op = Val->resolveReferences(R, RV);
+  
+  if (Args != NewArgs || Op != Val)
+    return new DagInit(Op, NewArgs, ArgNames);
     
   return this;
 }
 
 
 void DagInit::print(std::ostream &OS) const {
-  OS << "(" << NodeTypeDef->getName();
+  OS << "(" << *Val;
   if (Args.size()) {
     OS << " " << *Args[0];
     if (!ArgNames[0].empty()) OS << ":$" << ArgNames[0];

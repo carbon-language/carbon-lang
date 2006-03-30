@@ -210,7 +210,7 @@ using namespace llvm;
 %type <SubClassRef>  SubClassRef
 %type <SubClassList> ClassList ClassListNE
 %type <IntVal>       OptPrefix
-%type <Initializer>  Value OptValue
+%type <Initializer>  Value OptValue IDValue
 %type <DagValueList> DagArgList DagArgListNE
 %type <FieldList>    ValueList ValueListNE
 %type <BitList>      BitList OptBitList RBitList
@@ -253,7 +253,26 @@ OptPrefix : /*empty*/ { $$ = 0; } | FIELD { $$ = 1; };
 
 OptValue : /*empty*/ { $$ = 0; } | '=' Value { $$ = $2; };
 
-Value : INTVAL {
+IDValue : ID {
+  if (const RecordVal *RV = (CurRec ? CurRec->getValue(*$1) : 0)) {
+    $$ = new VarInit(*$1, RV->getType());
+  } else if (CurRec && CurRec->isTemplateArg(CurRec->getName()+":"+*$1)) {
+    const RecordVal *RV = CurRec->getValue(CurRec->getName()+":"+*$1);
+    assert(RV && "Template arg doesn't exist??");
+    $$ = new VarInit(CurRec->getName()+":"+*$1, RV->getType());
+  } else if (Record *D = Records.getDef(*$1)) {
+    $$ = new DefInit(D);
+  } else {
+    err() << "Variable not defined: '" << *$1 << "'!\n";
+    exit(1);
+  }
+  
+  delete $1;
+};
+
+Value : IDValue {
+    $$ = $1;
+  } | INTVAL {
     $$ = new IntInit($1);
   } | STRVAL {
     $$ = new StringInit(*$1);
@@ -304,21 +323,6 @@ Value : INTVAL {
     
     // Restore the old CurRec
     CurRec = OldRec;
-  } | ID {
-    if (const RecordVal *RV = (CurRec ? CurRec->getValue(*$1) : 0)) {
-      $$ = new VarInit(*$1, RV->getType());
-    } else if (CurRec && CurRec->isTemplateArg(CurRec->getName()+":"+*$1)) {
-      const RecordVal *RV = CurRec->getValue(CurRec->getName()+":"+*$1);
-      assert(RV && "Template arg doesn't exist??");
-      $$ = new VarInit(CurRec->getName()+":"+*$1, RV->getType());
-    } else if (Record *D = Records.getDef(*$1)) {
-      $$ = new DefInit(D);
-    } else {
-      err() << "Variable not defined: '" << *$1 << "'!\n";
-      exit(1);
-    }
-    
-    delete $1;
   } | Value '{' BitList '}' {
     $$ = $1->convertInitializerBitRange(*$3);
     if ($$ == 0) {
@@ -336,14 +340,9 @@ Value : INTVAL {
     }
     $$ = new FieldInit($1, *$3);
     delete $3;
-  } | '(' ID DagArgList ')' {
-    Record *D = Records.getDef(*$2);
-    if (D == 0) {
-      err() << "Invalid def '" << *$2 << "'!\n";
-      exit(1);
-    }
-    $$ = new DagInit(D, *$3);
-    delete $2; delete $3;
+  } | '(' IDValue DagArgList ')' {
+    $$ = new DagInit($2, *$3);
+    delete $3;
   } | Value '[' BitList ']' {
     std::reverse($3->begin(), $3->end());
     $$ = $1->convertInitListSlice(*$3);

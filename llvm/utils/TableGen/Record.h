@@ -808,17 +808,17 @@ public:
   }
 };
 
-/// DagInit - (def a, b) - Represent a DAG tree value.  DAG inits are required
-/// to have Records for their first value, after that, any legal Init is
-/// possible.
+/// DagInit - (v a, b) - Represent a DAG tree value.  DAG inits are required
+/// to have at least one value then a (possibly empty) list of arguments.  Each
+/// argument can have a name associated with it.
 ///
 class DagInit : public Init {
-  Record *NodeTypeDef;
+  Init *Val;
   std::vector<Init*> Args;
   std::vector<std::string> ArgNames;
 public:
-  DagInit(Record *D, const std::vector<std::pair<Init*, std::string> > &args)
-    : NodeTypeDef(D) {
+  DagInit(Init *V, const std::vector<std::pair<Init*, std::string> > &args)
+    : Val(V) {
     Args.reserve(args.size());
     ArgNames.reserve(args.size());
     for (unsigned i = 0, e = args.size(); i != e; ++i) {
@@ -826,16 +826,16 @@ public:
       ArgNames.push_back(args[i].second);
     }
   }
-  DagInit(Record *D, const std::vector<Init*> &args, 
+  DagInit(Init *V, const std::vector<Init*> &args, 
           const std::vector<std::string> &argNames)
-  : NodeTypeDef(D), Args(args), ArgNames(argNames) {
+  : Val(V), Args(args), ArgNames(argNames) {
   }
   
   virtual Init *convertInitializerTo(RecTy *Ty) {
     return Ty->convertValue(this);
   }
 
-  Record *getNodeType() const { return NodeTypeDef; }
+  Init *getOperator() const { return Val; }
 
   unsigned getNumArgs() const { return Args.size(); }
   Init *getArg(unsigned Num) const {
