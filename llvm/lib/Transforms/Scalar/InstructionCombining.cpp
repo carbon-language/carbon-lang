@@ -6704,9 +6704,13 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
         if (IE->getOperand(2) == EI.getOperand(1))
           return ReplaceInstUsesWith(EI, IE->getOperand(1));
         // If the inserted and extracted elements are constants, they must not
-        // be the same value, replace with the pre-inserted value.
-        if (isa<Constant>(IE->getOperand(2)) && isa<Constant>(EI.getOperand(1)))
-          return ReplaceInstUsesWith(EI, IE->getOperand(0));
+        // be the same value, extract from the pre-inserted value instead.
+        if (isa<Constant>(IE->getOperand(2)) &&
+            isa<Constant>(EI.getOperand(1))) {
+          AddUsesToWorkList(EI);
+          EI.setOperand(0, IE->getOperand(0));
+          return &EI;
+        }
       }
     }
   return 0;
