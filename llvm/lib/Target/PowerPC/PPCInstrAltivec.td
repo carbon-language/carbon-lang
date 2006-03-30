@@ -84,12 +84,14 @@ def LVXL : XForm_1<31, 359, (ops VRRC:$vD, memrr:$src),
                    [(set VRRC:$vD, (int_ppc_altivec_lvxl xoaddr:$src))]>;
 }
 
-def LVSL : XForm_1<31,   6, (ops VRRC:$vD,  GPRC:$base, GPRC:$rA),
-                   "lvsl $vD, $base, $rA", LdStGeneral,
-                   []>, PPC970_Unit_LSU;
-def LVSR : XForm_1<31,  38, (ops VRRC:$vD,  GPRC:$base, GPRC:$rA),
-                   "lvsl $vD, $base, $rA", LdStGeneral,
-                   []>, PPC970_Unit_LSU;
+def LVSL : XForm_1<31,   6, (ops VRRC:$vD, memrr:$src),
+                   "lvsl $vD, $src", LdStGeneral,
+                   [(set VRRC:$vD, (int_ppc_altivec_lvsl xoaddr:$src))]>,
+                   PPC970_Unit_LSU;
+def LVSR : XForm_1<31,  38, (ops VRRC:$vD, memrr:$src),
+                   "lvsl $vD, $src", LdStGeneral,
+                   [(set VRRC:$vD, (int_ppc_altivec_lvsr xoaddr:$src))]>,
+                   PPC970_Unit_LSU;
 
 let isStore = 1, noResults = 1, PPC970_Unit = 2 in {   // Stores.
 def STVEBX: XForm_8<31, 135, (ops VRRC:$rS, memrr:$dst),
@@ -236,6 +238,29 @@ def VMRGLW : VXForm_1<396, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       "vmrglw $vD, $vA, $vB", VecFP,
                       [(set VRRC:$vD,
                        (int_ppc_altivec_vmrglw VRRC:$vA, VRRC:$vB))]>;
+
+def VMULESB : VXForm_1<776, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                       "vmulesb $vD, $vA, $vB", VecFP,
+                       [(set VRRC:$vD,
+                            (int_ppc_altivec_vmulesb VRRC:$vA, VRRC:$vB))]>;
+def VMULESH : VXForm_1<840, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                       "vmulesh $vD, $vA, $vB", VecFP,
+                       [(set VRRC:$vD,
+                            (int_ppc_altivec_vmulesh VRRC:$vA, VRRC:$vB))]>;
+def VMULEUB : VXForm_1<520, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                       "vmuleub $vD, $vA, $vB", VecFP,
+                       [(set VRRC:$vD,
+                            (int_ppc_altivec_vmuleub VRRC:$vA, VRRC:$vB))]>;
+def VMULEUH : VXForm_1<584, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                       "vmuleuh $vD, $vA, $vB", VecFP,
+                       [(set VRRC:$vD,
+                            (int_ppc_altivec_vmuleuh VRRC:$vA, VRRC:$vB))]>;
+def VMULOSB : VXForm_1<264, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                       "vmulosb $vD, $vA, $vB", VecFP,
+                       [(set VRRC:$vD,
+                            (int_ppc_altivec_vmulosb VRRC:$vA, VRRC:$vB))]>;
+                       
+                       
 def VREFP  : VXForm_2<266, (ops VRRC:$vD, VRRC:$vB),
                       "vrefp $vD, $vB", VecFP,
                       [(set VRRC:$vD, (int_ppc_altivec_vrefp VRRC:$vB))]>;
@@ -413,6 +438,62 @@ def VSPLTISH : VXForm_3<844, (ops VRRC:$vD, s5imm:$SIMM),
 def VSPLTISW : VXForm_3<908, (ops VRRC:$vD, s5imm:$SIMM),
                        "vspltisw $vD, $SIMM", VecPerm,
                        [(set VRRC:$vD, (v4f32 vecspltisw:$SIMM))]>;
+
+// Vector Pack.
+def VPKPX   : VXForm_1<782, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                       "vpkpx $vD, $vA, $vB", VecFP,
+                       [(set VRRC:$vD,
+                            (int_ppc_altivec_vpkpx VRRC:$vA, VRRC:$vB))]>;
+def VPKSHSS : VXForm_1<398, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                       "vpkshss $vD, $vA, $vB", VecFP,
+                       [(set VRRC:$vD,
+                            (int_ppc_altivec_vpkshss VRRC:$vA, VRRC:$vB))]>;
+def VPKSHUS : VXForm_1<270, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                       "vpkshus $vD, $vA, $vB", VecFP,
+                       [(set VRRC:$vD,
+                            (int_ppc_altivec_vpkshus VRRC:$vA, VRRC:$vB))]>;
+def VPKSWSS : VXForm_1<462, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                       "vpkswss $vD, $vA, $vB", VecFP,
+                       [(set VRRC:$vD,
+                            (int_ppc_altivec_vpkswss VRRC:$vA, VRRC:$vB))]>;
+def VPKSWUS : VXForm_1<334, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                       "vpkswus $vD, $vA, $vB", VecFP,
+                       [(set VRRC:$vD,
+                            (int_ppc_altivec_vpkswus VRRC:$vA, VRRC:$vB))]>;
+def VPKUHUM : VXForm_1<14, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                       "vpkuhum $vD, $vA, $vB", VecFP,
+                       [/*TODO*/]>;
+def VPKUHUS : VXForm_1<142, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                       "vpkuhus $vD, $vA, $vB", VecFP,
+                       [(set VRRC:$vD,
+                            (int_ppc_altivec_vpkuhus VRRC:$vA, VRRC:$vB))]>;
+def VPKUWUM : VXForm_1<78, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                       "vpkuwum $vD, $vA, $vB", VecFP,
+                       [/*TODO*/]>;
+def VPKUWUS : VXForm_1<206, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                       "vpkuwus $vD, $vA, $vB", VecFP,
+                       [(set VRRC:$vD,
+                            (int_ppc_altivec_vpkuwus VRRC:$vA, VRRC:$vB))]>;
+
+// Vector Unpack.
+def VUPKHPX : VXForm_2<846, (ops VRRC:$vD, VRRC:$vB),
+                       "vupkhpx $vD, $vB", VecFP,
+                       [(set VRRC:$vD, (int_ppc_altivec_vupkhpx VRRC:$vB))]>;
+def VUPKHSB : VXForm_2<526, (ops VRRC:$vD, VRRC:$vB),
+                       "vupkhsb $vD, $vB", VecFP,
+                       [(set VRRC:$vD, (int_ppc_altivec_vupkhsb VRRC:$vB))]>;
+def VUPKHSH : VXForm_2<590, (ops VRRC:$vD, VRRC:$vB),
+                       "vupkhsh $vD, $vB", VecFP,
+                       [(set VRRC:$vD, (int_ppc_altivec_vupkhsh VRRC:$vB))]>;
+def VUPKLPX : VXForm_2<974, (ops VRRC:$vD, VRRC:$vB),
+                       "vupklpx $vD, $vB", VecFP,
+                       [(set VRRC:$vD, (int_ppc_altivec_vupklpx VRRC:$vB))]>;
+def VUPKLSB : VXForm_2<654, (ops VRRC:$vD, VRRC:$vB),
+                       "vupklsb $vD, $vB", VecFP,
+                       [(set VRRC:$vD, (int_ppc_altivec_vupklsb VRRC:$vB))]>;
+def VUPKLSH : VXForm_2<718, (ops VRRC:$vD, VRRC:$vB),
+                       "vupklsh $vD, $vB", VecFP,
+                       [(set VRRC:$vD, (int_ppc_altivec_vupklsh VRRC:$vB))]>;
 
 
 // Altivec Comparisons.
