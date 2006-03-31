@@ -6654,7 +6654,41 @@ static bool CheapToScalarize(Value *V, bool isConstant) {
   return false;
 }
 
+/// FindScalarElement - Given a vector and an element number, see if the scalar
+/// value is already around as a register, for example if it were inserted then
+/// extracted from the vector.
+static Value *FindScalarElement(Value *V, unsigned EltNo) {
+  assert(isa<PackedType>(V->getType()) && "Not looking at a vector?");
+  const PackedType *PTy = cast<PackedType>(V->getType());
+  if (EltNo >= PTy->getNumElements())  // Out of range access.
+    return UndefValue::get(PTy->getElementType());
+  
+  if (isa<UndefValue>(V))
+    return UndefValue::get(PTy->getElementType());
+  else if (isa<ConstantAggregateZero>(V))
+    return Constant::getNullValue(PTy->getElementType());
+  else if (ConstantPacked *CP = dyn_cast<ConstantPacked>(V))
+    return CP->getOperand(EltNo);
+  else if (InsertElementInst *III = dyn_cast<InsertElementInst>(V)) {
+    // If this is an insert to a variable element, we don't know what it is.
+    if (!isa<ConstantUInt>(III->getOperand(2))) return 0;
+    unsigned IIElt = cast<ConstantUInt>(III->getOperand(2))->getValue();
+    
+    // If this is an insert to the element we are looking for, return the
+    // inserted value.
+    if (EltNo == IIElt) return III->getOperand(1);
+    
+    // Otherwise, the insertelement doesn't modify the value, recurse on its
+    // vector input.
+    return FindScalarElement(III->getOperand(0), EltNo);
+  }
+  
+  // Otherwise, we don't know.
+  return 0;
+}
+
 Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
+
   // If packed val is undef, replace extract with scalar undef.
   if (isa<UndefValue>(EI.getOperand(0)))
     return ReplaceInstUsesWith(EI, UndefValue::get(EI.getType()));
@@ -6675,6 +6709,12 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
     if (op0)
       return ReplaceInstUsesWith(EI, op0);
   }
+  
+  // If extracting a specified index from the vector, see if we can recursively
+  // find a previously computed scalar that was inserted into the vector.
+  if (ConstantUInt *IdxC = dyn_cast<ConstantUInt>(EI.getOperand(1)))
+    if (Value *Elt = FindScalarElement(EI.getOperand(0), IdxC->getValue()))
+      return ReplaceInstUsesWith(EI, Elt);
   
   if (Instruction *I = dyn_cast<Instruction>(EI.getOperand(0)))
     if (I->hasOneUse()) {
