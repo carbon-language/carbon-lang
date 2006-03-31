@@ -55,6 +55,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/InstVisitor.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
 #include <iostream>
@@ -196,6 +197,7 @@ namespace {  // Anonymous namespace for class
     void visitUserOp2(Instruction &I) { visitUserOp1(I); }
     void visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI);
 
+    void VerifyIntrinsicPrototype(Function *F, ...);
 
     void WriteValue(const Value *V) {
       if (!V) return;
@@ -436,8 +438,7 @@ void Verifier::visitSelectInst(SelectInst &SI) {
 /// a pass, if any exist, it's an error.
 ///
 void Verifier::visitUserOp1(Instruction &I) {
-  Assert1(0, "User-defined operators should not live outside of a pass!",
-          &I);
+  Assert1(0, "User-defined operators should not live outside of a pass!", &I);
 }
 
 /// visitPHINode - Ensure that a PHI node is well formed.
@@ -682,6 +683,63 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
 #define GET_INTRINSIC_VERIFIER
 #include "llvm/Intrinsics.gen"
 #undef GET_INTRINSIC_VERIFIER
+}
+
+/// VerifyIntrinsicPrototype - TableGen emits calls to this function into
+/// Intrinsics.gen.  This implements a little state machine that verifies the
+/// prototype of intrinsics.
+void Verifier::VerifyIntrinsicPrototype(Function *F, ...) {
+  va_list VA;
+  va_start(VA, F);
+  
+  const FunctionType *FTy = F->getFunctionType();
+  
+  // Note that "arg#0" is the return type.
+  for (unsigned ArgNo = 0; 1; ++ArgNo) {
+    int TypeID = va_arg(VA, int);
+
+    if (TypeID == -1) {
+      if (ArgNo != FTy->getNumParams()+1)
+        CheckFailed("Intrinsic prototype has too many arguments!", F);
+      break;
+    }
+
+    if (ArgNo == FTy->getNumParams()+1) {
+      CheckFailed("Intrinsic prototype has too few arguments!", F);
+      break;
+    }
+    
+    const Type *Ty;
+    if (ArgNo == 0) 
+      Ty = FTy->getReturnType();
+    else
+      Ty = FTy->getParamType(ArgNo-1);
+    
+    if (Ty->getTypeID() != TypeID) {
+      if (ArgNo == 0)
+        CheckFailed("Intrinsic prototype has incorrect result type!", F);
+      else
+        CheckFailed("Intrinsic parameter #" + utostr(ArgNo-1) + " is wrong!",F);
+      break;
+    }
+
+    // If this is a packed argument, verify the number and type of elements.
+    if (TypeID == Type::PackedTyID) {
+      const PackedType *PTy = cast<PackedType>(Ty);
+      if (va_arg(VA, int) != PTy->getElementType()->getTypeID()) {
+        CheckFailed("Intrinsic prototype has incorrect vector element type!",F);
+        break;
+      }
+
+      if ((unsigned)va_arg(VA, int) != PTy->getNumElements()) {
+        CheckFailed("Intrinsic prototype has incorrect number of "
+                    "vector elements!",F);
+        break;
+      }
+    }
+  }
+
+  va_end(VA);
 }
 
 
