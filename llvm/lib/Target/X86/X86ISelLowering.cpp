@@ -2685,7 +2685,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
         N1 = DAG.getNode(ISD::ANY_EXTEND, MVT::i32, N1);
       if (N2.getValueType() != MVT::i32)
         N2 = DAG.getConstant(cast<ConstantSDNode>(N2)->getValue(), MVT::i32);
-      return DAG.getNode(ISD::INSERT_VECTOR_ELT, VT, Op.getOperand(0), N1, N2);
+      return DAG.getNode(X86ISD::PINSRW, VT, Op.getOperand(0), N1, N2);
     }
 
     return SDOperand();
@@ -2726,6 +2726,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::S2VEC:              return "X86ISD::S2VEC";
   case X86ISD::ZEXT_S2VEC:         return "X86ISD::ZEXT_S2VEC";
   case X86ISD::PEXTRW:             return "X86ISD::PEXTRW";
+  case X86ISD::PINSRW:             return "X86ISD::PINSRW";
   }
 }
 

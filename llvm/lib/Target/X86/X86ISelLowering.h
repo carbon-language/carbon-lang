@@ -155,8 +155,12 @@ namespace llvm {
       ZEXT_S2VEC,
 
       /// PEXTRW - Extract a 16-bit value from a vector and zero extend it to
-      /// i32, corresponds to X86::PINSRW.
+      /// i32, corresponds to X86::PEXTRW.
       PEXTRW,
+
+      /// PINSRW - Insert the lower 16-bits of a 32-bit value to a vector,
+      /// corresponds to X86::PINSRW.
+      PINSRW,
     };
 
     // X86 specific condition code. These correspond to X86_*_COND in

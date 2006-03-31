@@ -27,9 +27,10 @@ def X86s2vec   : SDNode<"X86ISD::S2VEC",
                         SDTypeProfile<1, 1, []>, []>;
 def X86zexts2vec : SDNode<"X86ISD::ZEXT_S2VEC",
                           SDTypeProfile<1, 1, []>, []>;
-
 def X86pextrw  : SDNode<"X86ISD::PEXTRW",
                         SDTypeProfile<1, 2, []>, []>;
+def X86pinsrw  : SDNode<"X86ISD::PINSRW",
+                        SDTypeProfile<1, 3, []>, []>;
 
 //===----------------------------------------------------------------------===//
 // SSE pattern fragments
@@ -1468,13 +1469,13 @@ let isTwoAddress = 1 in {
 def PINSRWrr : PDIi8<0xC4, MRMSrcReg,
                      (ops VR128:$dst, VR128:$src1, R32:$src2, i32i8imm:$src3),
                      "pinsrw {$src3, $src2, $dst|$dst, $src2, $src3}",
-                     [(set VR128:$dst, (v8i16 (vector_insert (v8i16 VR128:$src1),
-                               R32:$src2, (i32 imm:$src3))))]>;
+                     [(set VR128:$dst, (v8i16 (X86pinsrw (v8i16 VR128:$src1),
+                                               R32:$src2, (i32 imm:$src3))))]>;
 def PINSRWrm : PDIi8<0xC4, MRMSrcMem,
                      (ops VR128:$dst, VR128:$src1, i16mem:$src2, i32i8imm:$src3),
                      "pinsrw {$src3, $src2, $dst|$dst, $src2, $src3}",
                      [(set VR128:$dst,
-                       (v8i16 (vector_insert (v8i16 VR128:$src1),
+                       (v8i16 (X86pinsrw (v8i16 VR128:$src1),
                                (i32 (anyext (loadi16 addr:$src2))),
                                (i32 imm:$src3))))]>;
 }
