@@ -1612,7 +1612,7 @@ bool X86::isUNPCKLMask(SDNode *N) {
 
     if (BitI1.getOpcode() != ISD::UNDEF) {
       assert(isa<ConstantSDNode>(BitI1) && "Invalid VECTOR_SHUFFLE mask!");
-      if (cast<ConstantSDNode>(BitI)->getValue() != j + NumElems)
+      if (cast<ConstantSDNode>(BitI1)->getValue() != j + NumElems)
         return false;
     }
   }
@@ -1641,7 +1641,7 @@ bool X86::isUNPCKHMask(SDNode *N) {
 
     if (BitI1.getOpcode() != ISD::UNDEF) {
       assert(isa<ConstantSDNode>(BitI1) && "Invalid VECTOR_SHUFFLE mask!");
-      if (cast<ConstantSDNode>(BitI)->getValue() != j + NumElems/2 + NumElems)
+      if (cast<ConstantSDNode>(BitI1)->getValue() != j + NumElems/2 + NumElems)
         return false;
     }
   }
