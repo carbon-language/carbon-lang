@@ -1477,6 +1477,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           Tmp3 = PackVectorOp(Node->getOperand(1), EVT);
           Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp3, Tmp2, 
                                           Node->getOperand(3));
+          // The scalarized value type may not be legal, e.g. it might require
+          // promotion or expansion.  Relegalize the scalar store.
+          Result = LegalizeOp(Result);
           break;
         } else {
           SplitVectorOp(Node->getOperand(1), Lo, Hi);
