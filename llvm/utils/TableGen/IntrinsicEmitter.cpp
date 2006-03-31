@@ -108,22 +108,14 @@ EmitIntrinsicToNameTable(const std::vector<CodeGenIntrinsic> &Ints,
   OS << "#endif\n\n";
 }
 
-static void EmitTypeVerify(std::ostream &OS, const std::string &Val,
-                           Record *ArgType) {
-  OS << "    Assert1(" << Val << "->getTypeID() == "
-     << ArgType->getValueAsString("TypeVal") << ",\n"
-     << "            \"Illegal intrinsic type!\", IF);\n";
+static void EmitTypeVerify(std::ostream &OS, Record *ArgType) {
+  OS << "(int)" << ArgType->getValueAsString("TypeVal") << ", ";
 
   // If this is a packed type, check that the subtype and size are correct.
   if (ArgType->isSubClassOf("LLVMPackedType")) {
     Record *SubType = ArgType->getValueAsDef("ElTy");
-    OS << "    Assert1(cast<PackedType>(" << Val
-       << ")->getElementType()->getTypeID() == "
-       << SubType->getValueAsString("TypeVal") << ",\n"
-       << "            \"Illegal intrinsic type!\", IF);\n";
-    OS << "    Assert1(cast<PackedType>(" << Val << ")->getNumElements() == "
-       << ArgType->getValueAsInt("NumElts") << ",\n"
-       << "            \"Illegal intrinsic type!\", IF);\n";
+    OS << "(int)" << SubType->getValueAsString("TypeVal") << ", "
+       << ArgType->getValueAsInt("NumElts") << ", ";
   }
 }
 
@@ -170,12 +162,12 @@ void IntrinsicEmitter::EmitVerifier(const std::vector<CodeGenIntrinsic> &Ints,
       OS << "  case Intrinsic::" << Ints[I->second[i]].EnumName << ":\t\t// "
          << Ints[I->second[i]].Name << "\n";
     }
+    
     const std::vector<Record*> &ArgTypes = I->first;
-    OS << "    Assert1(FTy->getNumParams() == " << ArgTypes.size()-1 << ",\n"
-       << "            \"Illegal # arguments for intrinsic function!\", IF);\n";
-    EmitTypeVerify(OS, "FTy->getReturnType()", ArgTypes[0]);
-    for (unsigned j = 1; j != ArgTypes.size(); ++j)
-      EmitTypeVerify(OS, "FTy->getParamType(" + utostr(j-1) + ")", ArgTypes[j]);
+    OS << "    VerifyIntrinsicPrototype(IF, ";
+    for (unsigned j = 0; j != ArgTypes.size(); ++j)
+      EmitTypeVerify(OS, ArgTypes[j]);
+    OS << "-1);\n";
     OS << "    break;\n";
   }
   OS << "  }\n";
