@@ -141,27 +141,18 @@ def VNMSUBFP: VAForm_1<47, (ops VRRC:$vD, VRRC:$vA, VRRC:$vC, VRRC:$vB),
                        [(set VRRC:$vD, (fneg (fsub (fmul VRRC:$vA, VRRC:$vC),
                                                    VRRC:$vB)))]>,
                        Requires<[FPContractions]>;
-def VMHADDSHS  : VAForm_1a<32, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, VRRC:$vC),
-                  "vmhaddshs $vD, $vA, $vB, $vC", VecFP,
-                  [(set VRRC:$vD,
-                   (int_ppc_altivec_vmhaddshs VRRC:$vA, VRRC:$vB, VRRC:$vC))]>;
-def VMHRADDSHS : VAForm_1a<33, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, VRRC:$vC),
-                  "vmhraddshs $vD, $vA, $vB, $vC", VecFP,
-                  [(set VRRC:$vD,
-                   (int_ppc_altivec_vmhraddshs VRRC:$vA, VRRC:$vB, VRRC:$vC))]>;
-def VPERM   : VAForm_1a<43, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, VRRC:$vC),
-                        "vperm $vD, $vA, $vB, $vC", VecPerm,
-                        [(set VRRC:$vD,
-                             (PPCvperm (v4f32 VRRC:$vA), VRRC:$vB, VRRC:$vC))]>;
+def VMHADDSHS  : VA1a_Int<32, "vmhaddshs $vD, $vA, $vB, $vC",
+                          int_ppc_altivec_vmhaddshs>;
+def VMHRADDSHS : VA1a_Int<33, "vmhraddshs $vD, $vA, $vB, $vC", 
+                          int_ppc_altivec_vmhraddshs>;
+def VPERM   : VA1a_Int<43, "vperm $vD, $vA, $vB, $vC", int_ppc_altivec_vperm>;
+def VPERM   : VA1a_Int<42, "vsel $vD, $vA, $vB, $vC",  int_ppc_altivec_vsel>;
+
 def VSLDOI  : VAForm_2<44, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, u5imm:$SH),
                        "vsldoi $vD, $vA, $vB, $SH", VecFP,
                        [(set VRRC:$vD,
                              (int_ppc_altivec_vsldoi VRRC:$vA, VRRC:$vB,
                                                      imm:$SH))]>;
-def VSEL   : VAForm_1a<42, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, VRRC:$vC),
-                       "vsel $vD, $vA, $vB, $vC", VecFP,
-                       [(set VRRC:$vD,
-                         (int_ppc_altivec_vsel VRRC:$vA, VRRC:$vB, VRRC:$vC))]>;
 
 // VX-Form instructions.  AltiVec arithmetic ops.
 def VADDCUW : VXForm_1<384, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
@@ -537,11 +528,14 @@ def : Pat<(int_ppc_altivec_vmaddfp VRRC:$A, VRRC:$B, VRRC:$C),
           (VMADDFP VRRC:$A, VRRC:$B, VRRC:$C)>;
 def : Pat<(int_ppc_altivec_vnmsubfp VRRC:$A, VRRC:$B, VRRC:$C),
           (VNMSUBFP VRRC:$A, VRRC:$B, VRRC:$C)>;
-def : Pat<(int_ppc_altivec_vperm VRRC:$A, VRRC:$B, VRRC:$C),
-          (VPERM VRRC:$A, VRRC:$B, VRRC:$C)>;
 def : Pat<(vector_shuffle (v4i32 VRRC:$vB), (undef), VSPLT_shuffle_mask:$UIMM),
           (v4i32 (VSPLTW VSPLT_shuffle_mask:$UIMM, VRRC:$vB))>;
 
 def : Pat<(PPCvperm (v4i32 VRRC:$vA), VRRC:$vB, VRRC:$vC),
           (v4i32 (VPERM VRRC:$vA, VRRC:$vB, VRRC:$vC))>;
-
+def : Pat<(PPCvperm (v4f32 VRRC:$vA), VRRC:$vB, VRRC:$vC),
+          (v4f32 (VPERM VRRC:$vA, VRRC:$vB, VRRC:$vC))>;
+def : Pat<(PPCvperm (v8i16 VRRC:$vA), VRRC:$vB, VRRC:$vC),
+          (v8i16 (VPERM VRRC:$vA, VRRC:$vB, VRRC:$vC))>;
+def : Pat<(PPCvperm (v16i8 VRRC:$vA), VRRC:$vB, VRRC:$vC),
+          (v16i8 (VPERM VRRC:$vA, VRRC:$vB, VRRC:$vC))>;
