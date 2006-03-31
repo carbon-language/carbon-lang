@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
+// Implement the tablegen record classes.
 //
 //===----------------------------------------------------------------------===//
 
@@ -124,6 +125,19 @@ Init *IntRecTy::convertValue(TypedInit *TI) {
     return TI;  // Accept variable if already of the right type!
   return 0;
 }
+
+Init *StringRecTy::convertValue(BinOpInit *BO) {
+  if (BO->getOpcode() == BinOpInit::STRCONCAT) {
+    Init *L = BO->getLHS()->convertInitializerTo(this);
+    Init *R = BO->getRHS()->convertInitializerTo(this);
+    if (L == 0 || R == 0) return 0;
+    if (L != BO->getLHS() || R != BO->getRHS())
+      return new BinOpInit(BinOpInit::STRCONCAT, L, R);
+    return BO;
+  }
+  return 0;
+}
+
 
 Init *StringRecTy::convertValue(TypedInit *TI) {
   if (dynamic_cast<StringRecTy*>(TI->getType()))
@@ -299,21 +313,6 @@ Init *BitsInit::resolveReferences(Record &R, const RecordVal *RV) {
   return this;
 }
 
-Init *IntInit::getBinaryOp(BinaryOp Op, Init *RHS) {
-  IntInit *RHSi = dynamic_cast<IntInit*>(RHS);
-  if (RHSi == 0) return 0;
-
-  int NewValue;
-  switch (Op) {
-  default: assert(0 && "Unknown binop");
-  case SHL: NewValue = Value << RHSi->getValue(); break;
-  case SRA: NewValue = Value >> RHSi->getValue(); break;
-  case SRL: NewValue = (unsigned)Value >> (unsigned)RHSi->getValue(); break;
-  }
-  return new IntInit(NewValue);
-}
-
-
 Init *IntInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) {
   BitsInit *BI = new BitsInit(Bits.size());
 
@@ -366,6 +365,61 @@ void ListInit::print(std::ostream &OS) const {
     OS << *Values[i];
   }
   OS << "]";
+}
+
+Init *BinOpInit::Fold() {
+  switch (getOpcode()) {
+  default: assert(0 && "Unknown binop");
+  case STRCONCAT: {
+    StringInit *LHSs = dynamic_cast<StringInit*>(LHS);
+    StringInit *RHSs = dynamic_cast<StringInit*>(RHS);
+    if (LHSs && RHSs)
+      return new StringInit(LHSs->getValue() + RHSs->getValue());
+    break;
+  }
+  case SHL:
+  case SRA:
+  case SRL: {
+    IntInit *LHSi = dynamic_cast<IntInit*>(LHS);
+    IntInit *RHSi = dynamic_cast<IntInit*>(RHS);
+    if (LHSi && RHSi) {
+      int LHSv = LHSi->getValue(), RHSv = RHSi->getValue();
+      int Result;
+      switch (getOpcode()) {
+      default: assert(0 && "Bad opcode!");
+      case SHL: Result = LHSv << RHSv; break;
+      case SRA: Result = LHSv >> RHSv; break;
+      case SRL: Result = (unsigned)LHSv >> (unsigned)RHSv; break;
+      }
+      return new IntInit(Result);
+    }
+    break;
+  }
+  }
+  return this;
+}
+
+Init *BinOpInit::resolveReferences(Record &R, const RecordVal *RV) {
+  Init *lhs = LHS->resolveReferences(R, RV);
+  Init *rhs = RHS->resolveReferences(R, RV);
+  
+  if (LHS != lhs || RHS != rhs)
+    return (new BinOpInit(getOpcode(), lhs, rhs))->Fold();
+  return Fold();
+}
+
+void BinOpInit::print(std::ostream &OS) const {
+  switch (Opc) {
+  case SHL: OS << "!shl"; break;
+  case SRA: OS << "!sra"; break;
+  case SRL: OS << "!srl"; break;
+  case STRCONCAT: OS << "!strconcat"; break;
+  }
+  OS << "(";
+  LHS->print(OS);
+  OS << ", ";
+  RHS->print(OS);
+  OS << ")";
 }
 
 Init *TypedInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) {

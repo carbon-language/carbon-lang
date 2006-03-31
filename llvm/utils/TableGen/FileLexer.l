@@ -202,6 +202,7 @@ in             { return IN; }
 !sra           { return SRATOK; }
 !srl           { return SRLTOK; }
 !shl           { return SHLTOK; }
+!strconcat     { return STRCONCATTOK; }
 
 
 {Identifier}   { Filelval.StrVal = new std::string(yytext, yytext+yyleng);

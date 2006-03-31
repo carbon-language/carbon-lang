@@ -42,6 +42,7 @@ class IntInit;
 class StringInit;
 class CodeInit;
 class ListInit;
+class BinOpInit;
 class DefInit;
 class DagInit;
 class TypedInit;
@@ -75,6 +76,7 @@ public:   // These methods should only be called from subclasses of Init
   virtual Init *convertValue(   IntInit *II) { return 0; }
   virtual Init *convertValue(StringInit *SI) { return 0; }
   virtual Init *convertValue(  ListInit *LI) { return 0; }
+  virtual Init *convertValue( BinOpInit *UI) { return 0; }
   virtual Init *convertValue(  CodeInit *CI) { return 0; }
   virtual Init *convertValue(VarBitInit *VB) { return 0; }
   virtual Init *convertValue(   DefInit *DI) { return 0; }
@@ -231,6 +233,7 @@ public:
   virtual Init *convertValue(   IntInit *II) { return 0; }
   virtual Init *convertValue(StringInit *SI) { return (Init*)SI; }
   virtual Init *convertValue(  ListInit *LI) { return 0; }
+  virtual Init *convertValue( BinOpInit *BO);
   virtual Init *convertValue(  CodeInit *CI) { return 0; }
   virtual Init *convertValue(VarBitInit *VB) { return 0; }
   virtual Init *convertValue(   DefInit *DI) { return 0; }
@@ -465,11 +468,6 @@ struct Init {
     return 0;
   }
 
-  enum BinaryOp { SHL, SRA, SRL };
-  virtual Init *getBinaryOp(BinaryOp Op, Init *RHS) {
-    return 0;
-  }
-
   /// resolveReferences - This method is used by classes that refer to other
   /// variables which may not be defined at the time they expression is formed.
   /// If a value is set for the variable later, this method will be called on
@@ -570,8 +568,6 @@ public:
   }
   virtual Init *convertInitializerBitRange(const std::vector<unsigned> &Bits);
 
-  virtual Init *getBinaryOp(BinaryOp Op, Init *RHS);
-
   virtual void print(std::ostream &OS) const { OS << Value; }
 };
 
@@ -638,6 +634,36 @@ public:
 
   virtual void print(std::ostream &OS) const;
 };
+
+/// BinOpInit - !op (X, Y) - Combine two inits.
+///
+class BinOpInit : public Init {
+public:
+  enum BinaryOp { SHL, SRA, SRL, STRCONCAT };
+private:
+  BinaryOp Opc;
+  Init *LHS, *RHS;
+public:
+  BinOpInit(BinaryOp opc, Init *lhs, Init *rhs) : Opc(opc), LHS(lhs), RHS(rhs) {
+  }
+  
+  BinaryOp getOpcode() const { return Opc; }
+  Init *getLHS() const { return LHS; }
+  Init *getRHS() const { return RHS; }
+
+  // Fold - If possible, fold this to a simpler init.  Return this if not
+  // possible to fold.
+  Init *Fold();
+
+  virtual Init *convertInitializerTo(RecTy *Ty) {
+    return Ty->convertValue(this);
+  }
+  
+  virtual Init *resolveReferences(Record &R, const RecordVal *RV);
+  
+  virtual void print(std::ostream &OS) const;
+};
+
 
 
 /// TypedInit - This is the common super-class of types that have a specific,
