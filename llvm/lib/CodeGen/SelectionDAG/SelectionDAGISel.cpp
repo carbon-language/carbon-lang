@@ -2805,8 +2805,16 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
 
         // Remember that this register needs to added to the machine PHI node as
         // the input for this MBB.
-        unsigned NumElements =
-          TLI.getNumElements(TLI.getValueType(PN->getType()));
+        MVT::ValueType VT = TLI.getValueType(PN->getType());
+        unsigned NumElements;
+        if (VT != MVT::Vector)
+          NumElements = TLI.getNumElements(VT);
+        else {
+          MVT::ValueType VT1,VT2;
+          NumElements = 
+            TLI.getPackedTypeBreakdown(cast<PackedType>(PN->getType()),
+                                       VT1, VT2);
+        }
         for (unsigned i = 0, e = NumElements; i != e; ++i)
           PHINodesToUpdate.push_back(std::make_pair(MBBI++, Reg+i));
       }
