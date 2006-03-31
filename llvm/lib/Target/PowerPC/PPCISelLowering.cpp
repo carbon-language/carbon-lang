@@ -171,12 +171,16 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   
   // First set operation action for all vector types to expand. Then we
   // will selectively turn on ones that can be effectively codegen'd.
-  for (unsigned VT = (unsigned)MVT::Vector + 1;
-       VT != (unsigned)MVT::LAST_VALUETYPE; VT++) {
-    setOperationAction(ISD::ADD , (MVT::ValueType)VT, Expand);
-    setOperationAction(ISD::SUB , (MVT::ValueType)VT, Expand);
+  for (unsigned VT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
+       VT != (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++VT) {
+    // Add and sub are legal for all supported VT's.
+    setOperationAction(ISD::ADD , (MVT::ValueType)VT, Legal);
+    setOperationAction(ISD::SUB , (MVT::ValueType)VT, Legal);
+    setOperationAction(ISD::VECTOR_SHUFFLE, (MVT::ValueType)VT, Legal);
+    
     setOperationAction(ISD::MUL , (MVT::ValueType)VT, Expand);
-    setOperationAction(ISD::VECTOR_SHUFFLE, (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::DIV , (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::REM , (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::INSERT_VECTOR_ELT, (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::BUILD_VECTOR, (MVT::ValueType)VT, Expand);
@@ -188,10 +192,7 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
     addRegisterClass(MVT::v8i16, PPC::VRRCRegisterClass);
     addRegisterClass(MVT::v16i8, PPC::VRRCRegisterClass);
     
-    setOperationAction(ISD::ADD        , MVT::v4f32, Legal);
-    setOperationAction(ISD::SUB        , MVT::v4f32, Legal);
     setOperationAction(ISD::MUL        , MVT::v4f32, Legal);
-    setOperationAction(ISD::ADD        , MVT::v4i32, Legal);
 
     setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v4i32, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v4f32, Custom);
