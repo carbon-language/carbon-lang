@@ -2261,6 +2261,11 @@ SDOperand DAGCombiner::visitLOAD(SDNode *N) {
   SDOperand Chain    = N->getOperand(0);
   SDOperand Ptr      = N->getOperand(1);
   SDOperand SrcValue = N->getOperand(2);
+
+  // If there are no uses of the loaded value, change uses of the chain value
+  // into uses of the chain input (i.e. delete the dead load).
+  if (N->hasNUsesOfValue(0, 0))
+    return CombineTo(N, DAG.getNode(ISD::UNDEF, N->getValueType(0)), Chain);
   
   // If this load is directly stored, replace the load value with the stored
   // value.
