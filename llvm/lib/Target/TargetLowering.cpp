@@ -148,11 +148,13 @@ const char *TargetLowering::getTargetNodeName(unsigned Opcode) const {
 ///
 /// This method returns the number and type of the resultant breakdown.
 ///
-MVT::ValueType TargetLowering::getPackedTypeBreakdown(const PackedType *PTy, 
-                                                      unsigned &NumVals) const {
+unsigned TargetLowering::getPackedTypeBreakdown(const PackedType *PTy, 
+                                                MVT::ValueType &PTyElementVT,
+                                      MVT::ValueType &PTyLegalElementVT) const {
   // Figure out the right, legal destination reg to copy into.
   unsigned NumElts = PTy->getNumElements();
   MVT::ValueType EltTy = getValueType(PTy->getElementType());
+  PTyElementVT = EltTy;
   
   unsigned NumVectorRegs = 1;
   
@@ -170,13 +172,14 @@ MVT::ValueType TargetLowering::getPackedTypeBreakdown(const PackedType *PTy,
     VT = getVectorType(EltTy, NumElts);
 
   MVT::ValueType DestVT = getTypeToTransformTo(VT);
+  PTyLegalElementVT = DestVT;
   if (DestVT < VT) {
     // Value is expanded, e.g. i64 -> i16.
-    NumVals = NumVectorRegs*(MVT::getSizeInBits(VT)/MVT::getSizeInBits(DestVT));
+    return NumVectorRegs*(MVT::getSizeInBits(VT)/MVT::getSizeInBits(DestVT));
   } else {
     // Otherwise, promotion or legal types use the same number of registers as
     // the vector decimated to the appropriate level.
-    NumVals = NumVectorRegs;
+    return NumVectorRegs;
   }
   
   return DestVT;

@@ -178,10 +178,13 @@ public:
   /// with Altivec or SSE1, or 8 promoted MVT::f64 values with the X86 FP stack.
   /// Similarly, <2 x long> turns into 4 MVT::i32 values with both PPC and X86.
   ///
-  /// This method returns the number and type of the resultant breakdown.
+  /// This method returns the number of registers needed, and the VT for each
+  /// register.  It also returns the VT of the PackedType elements before they
+  /// are promoted/expanded.
   ///
-  MVT::ValueType getPackedTypeBreakdown(const PackedType *PTy, 
-                                        unsigned &NE) const;
+  unsigned getPackedTypeBreakdown(const PackedType *PTy, 
+                                  MVT::ValueType &PTyElementVT,
+                                  MVT::ValueType &PTyLegalElementVT) const;
   
   typedef std::vector<double>::const_iterator legal_fpimm_iterator;
   legal_fpimm_iterator legal_fpimm_begin() const {
