@@ -1368,6 +1368,35 @@ SDOperand PPCTargetLowering::PerformDAGCombine(SDNode *N,
       return Val;
     }
     break;
+  case PPCISD::VCMP: {
+    // If a VCMPo node already exists with exactly the same operands as this
+    // node, use its result instead of this node (VCMPo computes both a CR6 and
+    // a normal output).
+    //
+    if (!N->getOperand(0).hasOneUse() &&
+        !N->getOperand(1).hasOneUse() &&
+        !N->getOperand(2).hasOneUse()) {
+      
+      // Scan all of the users of the LHS, looking for VCMPo's that match.
+      SDNode *VCMPoNode = 0;
+      
+      SDNode *LHSN = N->getOperand(0).Val;
+      for (SDNode::use_iterator UI = LHSN->use_begin(), E = LHSN->use_end();
+           UI != E; ++UI)
+        if ((*UI)->getOpcode() == PPCISD::VCMPo &&
+            (*UI)->getOperand(1) == N->getOperand(1) &&
+            (*UI)->getOperand(2) == N->getOperand(2) &&
+            (*UI)->getOperand(0) == N->getOperand(0)) {
+          VCMPoNode = *UI;
+          break;
+        }
+      
+      // If there are non-zero uses of the flag value, use the VCMPo node!
+      if (!VCMPoNode->hasNUsesOfValue(0, 1))
+        return SDOperand(VCMPoNode, 0);
+    }
+    break;
+  }
   }
   
   return SDOperand();

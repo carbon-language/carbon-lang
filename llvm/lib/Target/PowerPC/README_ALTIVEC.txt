@@ -131,15 +131,6 @@ This would fix two problems:
 
 //===----------------------------------------------------------------------===//
 
-Two identical comparisons in predicate and nonpredicate form like this:
-
-a = vec_cmpb(x, y);
-b = vec_any_out(x, y);
-
-Should turn into one "." compare instruction, not a dot and "nondot" form.
-
-//===----------------------------------------------------------------------===//
-
 Instcombine llvm.ppc.altivec.vperm with an immediate into a shuffle operation.
 
 //===----------------------------------------------------------------------===//
