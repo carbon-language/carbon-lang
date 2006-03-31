@@ -1450,10 +1450,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       } else {
         ExpandOp(Node->getOperand(1), Lo, Hi);
         IncrementSize = MVT::getSizeInBits(Hi.getValueType())/8;
-      }
 
-      if (!TLI.isLittleEndian())
-        std::swap(Lo, Hi);
+        if (!TLI.isLittleEndian())
+          std::swap(Lo, Hi);
+      }
 
       Lo = DAG.getNode(ISD::STORE, MVT::Other, Tmp1, Lo, Tmp2,
                        Node->getOperand(3));
