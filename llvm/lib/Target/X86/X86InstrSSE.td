@@ -145,6 +145,8 @@ def SHUFP_int_shuffle_mask : PatLeaf<(build_vector), [{
 // PDI - SSE2 instructions with TB and OpSize prefixes.
 // PSIi8 - SSE1 instructions with ImmT == Imm8 and TB prefix.
 // PDIi8 - SSE2 instructions with ImmT == Imm8 and TB and OpSize prefixes.
+// S3SI - SSE3 instructions with XD prefix.
+// S3DI - SSE3 instructions with TB and OpSize prefixes.
 class SSI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
       : I<o, F, ops, asm, pattern>, XS, Requires<[HasSSE1]>;
 class SDI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
@@ -161,6 +163,27 @@ class PDIi8<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
       : X86Inst<o, F, Imm8, ops, asm>, TB, OpSize, Requires<[HasSSE2]> {
   let Pattern = pattern;
 }
+class S3SI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
+      : I<o, F, ops, asm, pattern>, XD, Requires<[HasSSE3]>;
+class S3DI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
+      : I<o, F, ops, asm, pattern>, TB, OpSize, Requires<[HasSSE3]>;
+
+//===----------------------------------------------------------------------===//
+// Helpers for defining instructions that directly correspond to intrinsics.
+class S3S_Intrr<bits<8> o, string asm, Intrinsic IntId>
+  : S3SI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2), asm,
+         [(set VR128:$dst, (v4f32 (IntId VR128:$src1, VR128:$src2)))]>;
+class S3S_Intrm<bits<8> o, string asm, Intrinsic IntId>
+  : S3SI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2), asm,
+         [(set VR128:$dst, (v4f32 (IntId VR128:$src1,
+                                   (loadv4f32 addr:$src2))))]>;
+class S3D_Intrr<bits<8> o, string asm, Intrinsic IntId>
+  : S3DI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2), asm,
+         [(set VR128:$dst, (v2f64 (IntId VR128:$src1, VR128:$src2)))]>;
+class S3D_Intrm<bits<8> o, string asm, Intrinsic IntId>
+  : S3DI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2), asm,
+         [(set VR128:$dst, (v2f64 (IntId VR128:$src1,
+                                   (loadv2f64 addr:$src2))))]>;
 
 // Some 'special' instructions
 def IMPLICIT_DEF_FR32 : I<0, Pseudo, (ops FR32:$dst),
@@ -1071,6 +1094,26 @@ def UNPCKLPDrm : PDI<0x14, MRMSrcMem,
                     [(set VR128:$dst, (v2f64 (vector_shuffle
                                               VR128:$src1, (load addr:$src2),
                                               UNPCKL_shuffle_mask)))]>;
+}
+
+// Horizontal ops
+let isTwoAddress = 1 in {
+def HADDPSrr : S3S_Intrr<0x7C, "haddps {$src2, $dst|$dst, $src2}",
+                          int_x86_sse3_hadd_ps>;
+def HADDPSrm : S3S_Intrm<0x7C, "haddps {$src2, $dst|$dst, $src2}",
+                          int_x86_sse3_hadd_ps>;
+def HADDPDrr : S3D_Intrr<0x7C, "haddpd {$src2, $dst|$dst, $src2}",
+                          int_x86_sse3_hadd_pd>;
+def HADDPDrm : S3D_Intrm<0x7C, "haddpd {$src2, $dst|$dst, $src2}",
+                          int_x86_sse3_hadd_pd>;
+def HSUBPSrr : S3S_Intrr<0x7C, "hsubps {$src2, $dst|$dst, $src2}",
+                          int_x86_sse3_hsub_ps>;
+def HSUBPSrm : S3S_Intrm<0x7C, "hsubps {$src2, $dst|$dst, $src2}",
+                          int_x86_sse3_hsub_ps>;
+def HSUBPDrr : S3D_Intrr<0x7C, "hsubpd {$src2, $dst|$dst, $src2}",
+                          int_x86_sse3_hsub_pd>;
+def HSUBPDrm : S3D_Intrm<0x7C, "hsubpd {$src2, $dst|$dst, $src2}",
+                          int_x86_sse3_hsub_pd>;
 }
 
 //===----------------------------------------------------------------------===//
