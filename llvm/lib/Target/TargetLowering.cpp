@@ -154,7 +154,6 @@ unsigned TargetLowering::getPackedTypeBreakdown(const PackedType *PTy,
   // Figure out the right, legal destination reg to copy into.
   unsigned NumElts = PTy->getNumElements();
   MVT::ValueType EltTy = getValueType(PTy->getElementType());
-  PTyElementVT = EltTy;
   
   unsigned NumVectorRegs = 1;
   
@@ -166,10 +165,12 @@ unsigned TargetLowering::getPackedTypeBreakdown(const PackedType *PTy,
   }
   
   MVT::ValueType VT;
-  if (NumElts == 1)
+  if (NumElts == 1) {
     VT = EltTy;
-  else
-    VT = getVectorType(EltTy, NumElts);
+  } else {
+    VT = getVectorType(EltTy, NumElts); 
+  }
+  PTyElementVT = VT;
 
   MVT::ValueType DestVT = getTypeToTransformTo(VT);
   PTyLegalElementVT = DestVT;
