@@ -146,7 +146,7 @@ def VMHADDSHS  : VA1a_Int<32, "vmhaddshs $vD, $vA, $vB, $vC",
 def VMHRADDSHS : VA1a_Int<33, "vmhraddshs $vD, $vA, $vB, $vC", 
                           int_ppc_altivec_vmhraddshs>;
 def VPERM   : VA1a_Int<43, "vperm $vD, $vA, $vB, $vC", int_ppc_altivec_vperm>;
-def VPERM   : VA1a_Int<42, "vsel $vD, $vA, $vB, $vC",  int_ppc_altivec_vsel>;
+def VSEL    : VA1a_Int<42, "vsel $vD, $vA, $vB, $vC",  int_ppc_altivec_vsel>;
 
 def VSLDOI  : VAForm_2<44, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, u5imm:$SH),
                        "vsldoi $vD, $vA, $vB, $SH", VecFP,
