@@ -178,6 +178,7 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::MUL , (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::VECTOR_SHUFFLE, (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::INSERT_VECTOR_ELT, (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::BUILD_VECTOR, (MVT::ValueType)VT, Expand);
   }
 
