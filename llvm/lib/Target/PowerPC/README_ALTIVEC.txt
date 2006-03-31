@@ -135,3 +135,5 @@ Instcombine llvm.ppc.altivec.vperm with an immediate into a shuffle operation.
 
 //===----------------------------------------------------------------------===//
 
+Handle VECTOR_SHUFFLE nodes with the appropriate shuffle mask with vsldoi,
+vpkuhum and vpkuwum.
