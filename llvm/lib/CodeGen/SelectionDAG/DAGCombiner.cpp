@@ -214,6 +214,7 @@ namespace {
     SDOperand visitVINSERT_VECTOR_ELT(SDNode *N);
     SDOperand visitVBUILD_VECTOR(SDNode *N);
     SDOperand visitVECTOR_SHUFFLE(SDNode *N);
+    SDOperand visitVVECTOR_SHUFFLE(SDNode *N);
 
     SDOperand ReassociateOps(unsigned Opc, SDOperand LHS, SDOperand RHS);
     
@@ -652,6 +653,7 @@ SDOperand DAGCombiner::visit(SDNode *N) {
   case ISD::VINSERT_VECTOR_ELT: return visitVINSERT_VECTOR_ELT(N);
   case ISD::VBUILD_VECTOR:      return visitVBUILD_VECTOR(N);
   case ISD::VECTOR_SHUFFLE:     return visitVECTOR_SHUFFLE(N);
+  case ISD::VVECTOR_SHUFFLE:    return visitVVECTOR_SHUFFLE(N);
   }
   return SDOperand();
 }
@@ -2464,13 +2466,36 @@ SDOperand DAGCombiner::visitVBUILD_VECTOR(SDNode *N) {
 }
 
 SDOperand DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
+  SDOperand ShufMask = N->getOperand(2);
+  unsigned NumElts = ShufMask.getNumOperands();
+
+  // If the shuffle mask is an identity operation on the LHS, return the LHS.
+  bool isIdentity = true;
+  for (unsigned i = 0; i != NumElts; ++i) {
+    if (ShufMask.getOperand(i).getOpcode() != ISD::UNDEF &&
+        cast<ConstantSDNode>(ShufMask.getOperand(i))->getValue() != i) {
+      isIdentity = false;
+      break;
+    }
+  }
+  if (isIdentity) return N->getOperand(0);
+
+  // If the shuffle mask is an identity operation on the RHS, return the RHS.
+  isIdentity = true;
+  for (unsigned i = 0; i != NumElts; ++i) {
+    if (ShufMask.getOperand(i).getOpcode() != ISD::UNDEF &&
+        cast<ConstantSDNode>(ShufMask.getOperand(i))->getValue() != i+NumElts) {
+      isIdentity = false;
+      break;
+    }
+  }
+  if (isIdentity) return N->getOperand(1);
+  
   // If the LHS and the RHS are the same node, turn the RHS into an undef.
   if (N->getOperand(0) == N->getOperand(1)) {
     // Check the SHUFFLE mask, mapping any inputs from the 2nd operand into the
     // first operand.
     std::vector<SDOperand> MappedOps;
-    SDOperand ShufMask = N->getOperand(2);
-    unsigned NumElts = ShufMask.getNumOperands();
     for (unsigned i = 0, e = ShufMask.getNumOperands(); i != e; ++i) {
       if (cast<ConstantSDNode>(ShufMask.getOperand(i))->getValue() >= NumElts) {
         unsigned NewIdx = 
@@ -2488,6 +2513,35 @@ SDOperand DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
                        ShufMask);
   }
  
+  return SDOperand();
+}
+
+SDOperand DAGCombiner::visitVVECTOR_SHUFFLE(SDNode *N) {
+  SDOperand ShufMask = N->getOperand(2);
+  unsigned NumElts = ShufMask.getNumOperands()-2;
+  
+  // If the shuffle mask is an identity operation on the LHS, return the LHS.
+  bool isIdentity = true;
+  for (unsigned i = 0; i != NumElts; ++i) {
+    if (ShufMask.getOperand(i).getOpcode() != ISD::UNDEF &&
+        cast<ConstantSDNode>(ShufMask.getOperand(i))->getValue() != i) {
+      isIdentity = false;
+      break;
+    }
+  }
+  if (isIdentity) return N->getOperand(0);
+  
+  // If the shuffle mask is an identity operation on the RHS, return the RHS.
+  isIdentity = true;
+  for (unsigned i = 0; i != NumElts; ++i) {
+    if (ShufMask.getOperand(i).getOpcode() != ISD::UNDEF &&
+        cast<ConstantSDNode>(ShufMask.getOperand(i))->getValue() != i+NumElts) {
+      isIdentity = false;
+      break;
+    }
+  }
+  if (isIdentity) return N->getOperand(1);
+
   return SDOperand();
 }
 
