@@ -830,6 +830,15 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
       New = new TreePatternNode(II);
       if (!Dag->getArgName(0).empty())
         error("Constant int argument should not have a name!");
+    } else if (BitsInit *BI = dynamic_cast<BitsInit*>(Arg)) {
+      // Turn this into an IntInit.
+      Init *II = BI->convertInitializerTo(new IntRecTy());
+      if (II == 0 || !dynamic_cast<IntInit*>(II))
+        error("Bits value must be constants!");
+      
+      New = new TreePatternNode(dynamic_cast<IntInit*>(II));
+      if (!Dag->getArgName(0).empty())
+        error("Constant int argument should not have a name!");
     } else {
       Arg->dump();
       error("Unknown leaf value for tree pattern!");
@@ -885,6 +894,16 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
       }
     } else if (IntInit *II = dynamic_cast<IntInit*>(Arg)) {
       TreePatternNode *Node = new TreePatternNode(II);
+      if (!Dag->getArgName(i).empty())
+        error("Constant int argument should not have a name!");
+      Children.push_back(Node);
+    } else if (BitsInit *BI = dynamic_cast<BitsInit*>(Arg)) {
+      // Turn this into an IntInit.
+      Init *II = BI->convertInitializerTo(new IntRecTy());
+      if (II == 0 || !dynamic_cast<IntInit*>(II))
+        error("Bits value must be constants!");
+      
+      TreePatternNode *Node = new TreePatternNode(dynamic_cast<IntInit*>(II));
       if (!Dag->getArgName(i).empty())
         error("Constant int argument should not have a name!");
       Children.push_back(Node);
