@@ -1392,7 +1392,7 @@ SDOperand PPCTargetLowering::PerformDAGCombine(SDNode *N,
         }
       
       // If there are non-zero uses of the flag value, use the VCMPo node!
-      if (!VCMPoNode->hasNUsesOfValue(0, 1))
+      if (VCMPoNode && !VCMPoNode->hasNUsesOfValue(0, 1))
         return SDOperand(VCMPoNode, 0);
     }
     break;
