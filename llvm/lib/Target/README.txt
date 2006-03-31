@@ -149,4 +149,8 @@ single basic blocks.  It should be able to handle stuff like this:
 
 where c1/c2 are constants.
 
+//===---------------------------------------------------------------------===//
 
+For packed types, TargetData.cpp::getTypeInfo() returns alignment that is equal
+to the type size. It works but can be overly conservative as the alignment of
+specific packed types are target dependent.
