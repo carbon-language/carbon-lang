@@ -168,34 +168,38 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::SRL, MVT::i64, Custom);
     setOperationAction(ISD::SRA, MVT::i64, Custom);
   }
-  
-  // First set operation action for all vector types to expand. Then we
-  // will selectively turn on ones that can be effectively codegen'd.
-  for (unsigned VT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
-       VT != (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++VT) {
-    // Add and sub are legal for all supported VT's.
-    setOperationAction(ISD::ADD , (MVT::ValueType)VT, Legal);
-    setOperationAction(ISD::SUB , (MVT::ValueType)VT, Legal);
-    setOperationAction(ISD::VECTOR_SHUFFLE, (MVT::ValueType)VT, Legal);
-    
-    setOperationAction(ISD::MUL , (MVT::ValueType)VT, Expand);
-    setOperationAction(ISD::DIV , (MVT::ValueType)VT, Expand);
-    setOperationAction(ISD::REM , (MVT::ValueType)VT, Expand);
-    setOperationAction(ISD::EXTRACT_VECTOR_ELT, (MVT::ValueType)VT, Expand);
-    setOperationAction(ISD::INSERT_VECTOR_ELT, (MVT::ValueType)VT, Expand);
-    setOperationAction(ISD::BUILD_VECTOR, (MVT::ValueType)VT, Expand);
-  }
 
   if (TM.getSubtarget<PPCSubtarget>().hasAltivec()) {
+    // First set operation action for all vector types to expand. Then we
+    // will selectively turn on ones that can be effectively codegen'd.
+    for (unsigned VT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
+         VT != (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++VT) {
+      // add/sub/and/or/xor are legal for all supported vector VT's.
+      setOperationAction(ISD::ADD , (MVT::ValueType)VT, Legal);
+      setOperationAction(ISD::SUB , (MVT::ValueType)VT, Legal);
+      setOperationAction(ISD::AND , (MVT::ValueType)VT, Legal);
+      setOperationAction(ISD::OR  , (MVT::ValueType)VT, Legal);
+      setOperationAction(ISD::XOR , (MVT::ValueType)VT, Legal);
+      
+      // We can custom expand all VECTOR_SHUFFLEs to VPERM.
+      setOperationAction(ISD::VECTOR_SHUFFLE, (MVT::ValueType)VT, Custom);
+      
+      setOperationAction(ISD::MUL , (MVT::ValueType)VT, Expand);
+      setOperationAction(ISD::SDIV, (MVT::ValueType)VT, Expand);
+      setOperationAction(ISD::SREM, (MVT::ValueType)VT, Expand);
+      setOperationAction(ISD::UDIV, (MVT::ValueType)VT, Expand);
+      setOperationAction(ISD::UREM, (MVT::ValueType)VT, Expand);
+      setOperationAction(ISD::EXTRACT_VECTOR_ELT, (MVT::ValueType)VT, Expand);
+      setOperationAction(ISD::INSERT_VECTOR_ELT, (MVT::ValueType)VT, Expand);
+      setOperationAction(ISD::BUILD_VECTOR, (MVT::ValueType)VT, Expand);
+    }
+
     addRegisterClass(MVT::v4f32, PPC::VRRCRegisterClass);
     addRegisterClass(MVT::v4i32, PPC::VRRCRegisterClass);
     addRegisterClass(MVT::v8i16, PPC::VRRCRegisterClass);
     addRegisterClass(MVT::v16i8, PPC::VRRCRegisterClass);
     
-    setOperationAction(ISD::MUL        , MVT::v4f32, Legal);
-
-    setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v4i32, Custom);
-    setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v4f32, Custom);
+    setOperationAction(ISD::MUL, MVT::v4f32, Legal);
 
     setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v4f32, Custom);
     setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v4i32, Custom);
