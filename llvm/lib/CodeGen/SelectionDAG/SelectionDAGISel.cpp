@@ -264,8 +264,16 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
     for (BasicBlock::iterator I = BB->begin();
          (PN = dyn_cast<PHINode>(I)); ++I)
       if (!PN->use_empty()) {
-        unsigned NumElements =
-          TLI.getNumElements(TLI.getValueType(PN->getType()));
+        MVT::ValueType VT = TLI.getValueType(PN->getType());
+        unsigned NumElements;
+        if (VT != MVT::Vector)
+          NumElements = TLI.getNumElements(VT);
+        else {
+          MVT::ValueType VT1,VT2;
+          NumElements = 
+            TLI.getPackedTypeBreakdown(cast<PackedType>(PN->getType()),
+                                       VT1, VT2);
+        }
         unsigned PHIReg = ValueMap[PN];
         assert(PHIReg &&"PHI node does not have an assigned virtual register!");
         for (unsigned i = 0; i != NumElements; ++i)
@@ -622,32 +630,61 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
   unsigned InReg = VMI->second;
   
   // If this type is not legal, make it so now.
-  if (VT == MVT::Vector) {
-    // FIXME: We only handle legal vectors right now.  We need a VBUILD_VECTOR
-    const PackedType *PTy = cast<PackedType>(VTy);
-    unsigned NumElements = PTy->getNumElements();
-    MVT::ValueType PVT = TLI.getValueType(PTy->getElementType());
-    MVT::ValueType TVT = MVT::getVectorType(PVT, NumElements);
-    assert(TLI.isTypeLegal(TVT) &&
-           "FIXME: Cannot handle illegal vector types here yet!");
-    VT = TVT;
-  }
+  if (VT != MVT::Vector) {
+    MVT::ValueType DestVT = TLI.getTypeToTransformTo(VT);
   
-  MVT::ValueType DestVT = TLI.getTypeToTransformTo(VT);
-  
-  N = DAG.getCopyFromReg(DAG.getEntryNode(), InReg, DestVT);
-  if (DestVT < VT) {
-    // Source must be expanded.  This input value is actually coming from the
-    // register pair VMI->second and VMI->second+1.
-    N = DAG.getNode(ISD::BUILD_PAIR, VT, N,
-                    DAG.getCopyFromReg(DAG.getEntryNode(), InReg+1, DestVT));
-  } else {
-    if (DestVT > VT) { // Promotion case
+    N = DAG.getCopyFromReg(DAG.getEntryNode(), InReg, DestVT);
+    if (DestVT < VT) {
+      // Source must be expanded.  This input value is actually coming from the
+      // register pair VMI->second and VMI->second+1.
+      N = DAG.getNode(ISD::BUILD_PAIR, VT, N,
+                      DAG.getCopyFromReg(DAG.getEntryNode(), InReg+1, DestVT));
+    } else if (DestVT > VT) { // Promotion case
       if (MVT::isFloatingPoint(VT))
         N = DAG.getNode(ISD::FP_ROUND, VT, N);
       else
         N = DAG.getNode(ISD::TRUNCATE, VT, N);
     }
+  } else {
+    // Otherwise, if this is a vector, make it available as a generic vector
+    // here.
+    MVT::ValueType PTyElementVT, PTyLegalElementVT;
+    unsigned NE = TLI.getPackedTypeBreakdown(cast<PackedType>(VTy),PTyElementVT,
+                                             PTyLegalElementVT);
+
+    // Build a VBUILD_VECTOR with the input registers.
+    std::vector<SDOperand> Ops;
+    if (PTyElementVT == PTyLegalElementVT) {
+      // If the value types are legal, just VBUILD the CopyFromReg nodes.
+      for (unsigned i = 0; i != NE; ++i)
+        Ops.push_back(DAG.getCopyFromReg(DAG.getEntryNode(), InReg++, 
+                                         PTyElementVT));
+    } else if (PTyElementVT < PTyLegalElementVT) {
+      // If the register was promoted, use TRUNCATE of FP_ROUND as appropriate.
+      for (unsigned i = 0; i != NE; ++i) {
+        SDOperand Op = DAG.getCopyFromReg(DAG.getEntryNode(), InReg++, 
+                                          PTyElementVT);
+        if (MVT::isFloatingPoint(PTyElementVT))
+          Op = DAG.getNode(ISD::FP_ROUND, PTyElementVT, Op);
+        else
+          Op = DAG.getNode(ISD::TRUNCATE, PTyElementVT, Op);
+        Ops.push_back(Op);
+      }
+    } else {
+      // If the register was expanded, use BUILD_PAIR.
+      assert((NE & 1) == 0 && "Must expand into a multiple of 2 elements!");
+      for (unsigned i = 0; i != NE/2; ++i) {
+        SDOperand Op0 = DAG.getCopyFromReg(DAG.getEntryNode(), InReg++, 
+                                           PTyElementVT);
+        SDOperand Op1 = DAG.getCopyFromReg(DAG.getEntryNode(), InReg++, 
+                                           PTyElementVT);
+        Ops.push_back(DAG.getNode(ISD::BUILD_PAIR, VT, Op0, Op1));
+      }
+    }
+    
+    Ops.push_back(DAG.getConstant(NE, MVT::i32));
+    Ops.push_back(DAG.getValueType(PTyLegalElementVT));
+    N = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, Ops);
   }
   
   return N;
@@ -2589,31 +2626,47 @@ CopyValueToVirtualRegister(SelectionDAGLowering &SDL, Value *V, unsigned Reg) {
   if (SrcVT == DestVT) {
     return DAG.getCopyToReg(SDL.getRoot(), Reg, Op);
   } else if (SrcVT == MVT::Vector) {
-    // FIXME: THIS DOES NOT SUPPORT PROMOTED/EXPANDED ELEMENTS!
-
-    // Figure out the right, legal destination reg to copy into.
-    const PackedType *PTy = cast<PackedType>(V->getType());
-    unsigned NumElts = PTy->getNumElements();
-    MVT::ValueType EltTy = TLI.getValueType(PTy->getElementType());
+    // Handle copies from generic vectors to registers.
+    MVT::ValueType PTyElementVT, PTyLegalElementVT;
+    unsigned NE = TLI.getPackedTypeBreakdown(cast<PackedType>(V->getType()),
+                                             PTyElementVT, PTyLegalElementVT);
     
-    unsigned NumVectorRegs = 1;
+    // Insert a VBIT_CONVERT of the input vector to a "N x PTyElementVT" 
+    // MVT::Vector type.
+    Op = DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, Op,
+                     DAG.getConstant(NE, MVT::i32), 
+                     DAG.getValueType(PTyElementVT));
 
-    // Divide the input until we get to a supported size.  This will always
-    // end with a scalar if the target doesn't support vectors.
-    while (NumElts > 1 && !TLI.isTypeLegal(getVectorType(EltTy, NumElts))) {
-      NumElts >>= 1;
-      NumVectorRegs <<= 1;
+    // Loop over all of the elements of the resultant vector,
+    // VEXTRACT_VECTOR_ELT'ing them, converting them to PTyLegalElementVT, then
+    // copying them into output registers.
+    std::vector<SDOperand> OutChains;
+    SDOperand Root = SDL.getRoot();
+    for (unsigned i = 0; i != NE; ++i) {
+      SDOperand Elt = DAG.getNode(ISD::VEXTRACT_VECTOR_ELT, PTyElementVT,
+                                  Op, DAG.getConstant(i, MVT::i32));
+      if (PTyElementVT == PTyLegalElementVT) {
+        // Elements are legal.
+        OutChains.push_back(DAG.getCopyToReg(Root, Reg++, Elt));
+      } else if (PTyLegalElementVT > PTyElementVT) {
+        // Elements are promoted.
+        if (MVT::isFloatingPoint(PTyLegalElementVT))
+          Elt = DAG.getNode(ISD::FP_EXTEND, PTyLegalElementVT, Elt);
+        else
+          Elt = DAG.getNode(ISD::ANY_EXTEND, PTyLegalElementVT, Elt);
+        OutChains.push_back(DAG.getCopyToReg(Root, Reg++, Elt));
+      } else {
+        // Elements are expanded.
+        // The src value is expanded into multiple registers.
+        SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, PTyLegalElementVT,
+                                   Elt, DAG.getConstant(0, MVT::i32));
+        SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, PTyLegalElementVT,
+                                   Elt, DAG.getConstant(1, MVT::i32));
+        OutChains.push_back(DAG.getCopyToReg(Root, Reg++, Lo));
+        OutChains.push_back(DAG.getCopyToReg(Root, Reg++, Hi));
+      }
     }
-    
-    MVT::ValueType VT;
-    if (NumElts == 1)
-      VT = EltTy;
-    else
-      VT = getVectorType(EltTy, NumElts);
-    
-    // FIXME: THIS ASSUMES THAT THE INPUT VECTOR WILL BE LEGAL!
-    Op = DAG.getNode(ISD::BIT_CONVERT, VT, Op);
-    return DAG.getCopyToReg(SDL.getRoot(), Reg, Op);
+    return DAG.getNode(ISD::TokenFactor, MVT::Other, OutChains);
   } else if (SrcVT < DestVT) {
     // The src value is promoted to the register.
     if (MVT::isFloatingPoint(SrcVT))

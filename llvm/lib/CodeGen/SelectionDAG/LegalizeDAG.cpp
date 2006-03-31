@@ -4497,9 +4497,6 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
 /// type for the result.
 SDOperand SelectionDAGLegalize::PackVectorOp(SDOperand Op, 
                                              MVT::ValueType NewVT) {
-  // FIXME: THIS IS A TEMPORARY HACK
-  if (Op.getValueType() == NewVT) return Op;
-    
   assert(Op.getValueType() == MVT::Vector && "Bad PackVectorOp invocation!");
   SDNode *Node = Op.Val;
   
@@ -4536,7 +4533,7 @@ SDOperand SelectionDAGLegalize::PackVectorOp(SDOperand Op,
     break;
   }
   case ISD::VBUILD_VECTOR:
-    if (!MVT::isVector(NewVT)) {
+    if (Node->getOperand(0).getValueType() == NewVT) {
       // Returning a scalar?
       Result = Node->getOperand(0);
     } else {
