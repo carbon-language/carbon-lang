@@ -14,6 +14,7 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MRegisterInfo.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/MathExtras.h"
@@ -139,6 +140,46 @@ void TargetLowering::computeRegisterProperties() {
 
 const char *TargetLowering::getTargetNodeName(unsigned Opcode) const {
   return NULL;
+}
+
+/// getPackedTypeBreakdown - Packed types are broken down into some number of
+/// legal scalar types.  For example, <8 x float> maps to 2 MVT::v2f32 values
+/// with Altivec or SSE1, or 8 promoted MVT::f64 values with the X86 FP stack.
+///
+/// This method returns the number and type of the resultant breakdown.
+///
+MVT::ValueType TargetLowering::getPackedTypeBreakdown(const PackedType *PTy, 
+                                                      unsigned &NumVals) const {
+  // Figure out the right, legal destination reg to copy into.
+  unsigned NumElts = PTy->getNumElements();
+  MVT::ValueType EltTy = getValueType(PTy->getElementType());
+  
+  unsigned NumVectorRegs = 1;
+  
+  // Divide the input until we get to a supported size.  This will always
+  // end with a scalar if the target doesn't support vectors.
+  while (NumElts > 1 && !isTypeLegal(getVectorType(EltTy, NumElts))) {
+    NumElts >>= 1;
+    NumVectorRegs <<= 1;
+  }
+  
+  MVT::ValueType VT;
+  if (NumElts == 1)
+    VT = EltTy;
+  else
+    VT = getVectorType(EltTy, NumElts);
+
+  MVT::ValueType DestVT = getTypeToTransformTo(VT);
+  if (DestVT < VT) {
+    // Value is expanded, e.g. i64 -> i16.
+    NumVals = NumVectorRegs*(MVT::getSizeInBits(VT)/MVT::getSizeInBits(DestVT));
+  } else {
+    // Otherwise, promotion or legal types use the same number of registers as
+    // the vector decimated to the appropriate level.
+    NumVals = NumVectorRegs;
+  }
+  
+  return DestVT;
 }
 
 //===----------------------------------------------------------------------===//
