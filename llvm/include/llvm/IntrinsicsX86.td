@@ -199,3 +199,22 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse2_pmovmskb_128 : GCCBuiltin<"__builtin_ia32_pmovmskb128">,
               Intrinsic<[llvm_int_ty, llvm_v16i8_ty], [InstrNoMem]>;
 }
+
+//===----------------------------------------------------------------------===//
+// SSE3
+
+// Horizontal ops.
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse3_hadd_ps : GCCBuiltin<"__builtin_ia32_haddps">,
+              Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty,
+                         llvm_v4f32_ty], [InstrNoMem]>;
+  def int_x86_sse3_hadd_pd : GCCBuiltin<"__builtin_ia32_haddpd">,
+              Intrinsic<[llvm_v2f64_ty, llvm_v2f64_ty,
+                         llvm_v2f64_ty], [InstrNoMem]>;
+  def int_x86_sse3_hsub_ps : GCCBuiltin<"__builtin_ia32_hsubps">,
+              Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty,
+                         llvm_v4f32_ty], [InstrNoMem]>;
+  def int_x86_sse3_hsub_pd : GCCBuiltin<"__builtin_ia32_hsubpd">,
+              Intrinsic<[llvm_v2f64_ty, llvm_v2f64_ty,
+                         llvm_v2f64_ty], [InstrNoMem]>;
+}
