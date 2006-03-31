@@ -184,6 +184,8 @@ private:
   void ExpandShiftParts(unsigned NodeOp, SDOperand Op, SDOperand Amt,
                         SDOperand &Lo, SDOperand &Hi);
 
+  SDOperand LowerVEXTRACT_VECTOR_ELT(SDOperand Op);
+  
   SDOperand getIntPtrConstant(uint64_t Val) {
     return DAG.getConstant(Val, TLI.getPointerTy());
   }
@@ -910,49 +912,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
 
-  case ISD::VEXTRACT_VECTOR_ELT: {
-    // We know that operand #0 is the Vec vector.  If the index is a constant
-    // or if the invec is a supported hardware type, we can use it.  Otherwise,
-    // lower to a store then an indexed load.
-    Tmp1 = Node->getOperand(0);
-    Tmp2 = LegalizeOp(Node->getOperand(1));
-    
-    SDNode *InVal = Tmp1.Val;
-    unsigned NumElems = cast<ConstantSDNode>(*(InVal->op_end()-2))->getValue();
-    MVT::ValueType EVT = cast<VTSDNode>(*(InVal->op_end()-1))->getVT();
-    
-    // Figure out if there is a Packed type corresponding to this Vector
-    // type.  If so, convert to the packed type.
-    MVT::ValueType TVT = MVT::getVectorType(EVT, NumElems);
-    if (TVT != MVT::Other && TLI.isTypeLegal(TVT)) {
-      // Turn this into a packed extract_vector_elt operation.
-      Tmp1 = PackVectorOp(Tmp1, TVT);
-      Result = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, Node->getValueType(0),
-                           Tmp1, Tmp2);
-      break;
-    } else if (NumElems == 1) {
-      // This must be an access of the only element.
-      Result = PackVectorOp(Tmp1, EVT);
-      break;
-    } else if (ConstantSDNode *CIdx = dyn_cast<ConstantSDNode>(Tmp2)) {
-      SDOperand Lo, Hi;
-      SplitVectorOp(Tmp1, Lo, Hi);
-      if (CIdx->getValue() < NumElems/2) {
-        Tmp1 = Lo;
-      } else {
-        Tmp1 = Hi;
-        Tmp2 = DAG.getConstant(CIdx->getValue() - NumElems/2,
-                               Tmp2.getValueType());
-      }
-
-      // It's now an extract from the appropriate high or low part.
-      Result = LegalizeOp(DAG.UpdateNodeOperands(Result, Tmp1, Tmp2));
-    } else {
-      // FIXME: IMPLEMENT STORE/LOAD lowering.  Need alignment of stack slot!!
-      assert(0 && "unimp!");
-    }
+  case ISD::VEXTRACT_VECTOR_ELT: 
+    Result = LegalizeOp(LowerVEXTRACT_VECTOR_ELT(Op));
     break;
-  }
     
   case ISD::CALLSEQ_START: {
     SDNode *CallEnd = FindCallEndFromCallStart(Node);
@@ -2999,6 +2961,9 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
       break;
     }
     break;
+  case ISD::VEXTRACT_VECTOR_ELT:
+    Result = PromoteOp(LowerVEXTRACT_VECTOR_ELT(Op));
+    break;
   }
 
   assert(Result.Val && "Didn't set a result!");
@@ -3010,6 +2975,53 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   AddPromotedOperand(Op, Result);
   return Result;
 }
+
+/// LowerVEXTRACT_VECTOR_ELT - Lower a VEXTRACT_VECTOR_ELT operation into a
+/// EXTRACT_VECTOR_ELT operation, to memory operations, or to scalar code based
+/// on the vector type.  The return type of this matches the element type of the
+/// vector, which may not be legal for the target.
+SDOperand SelectionDAGLegalize::LowerVEXTRACT_VECTOR_ELT(SDOperand Op) {
+  // We know that operand #0 is the Vec vector.  If the index is a constant
+  // or if the invec is a supported hardware type, we can use it.  Otherwise,
+  // lower to a store then an indexed load.
+  SDOperand Vec = Op.getOperand(0);
+  SDOperand Idx = LegalizeOp(Op.getOperand(1));
+  
+  SDNode *InVal = Vec.Val;
+  unsigned NumElems = cast<ConstantSDNode>(*(InVal->op_end()-2))->getValue();
+  MVT::ValueType EVT = cast<VTSDNode>(*(InVal->op_end()-1))->getVT();
+  
+  // Figure out if there is a Packed type corresponding to this Vector
+  // type.  If so, convert to the packed type.
+  MVT::ValueType TVT = MVT::getVectorType(EVT, NumElems);
+  if (TVT != MVT::Other && TLI.isTypeLegal(TVT)) {
+    // Turn this into a packed extract_vector_elt operation.
+    Vec = PackVectorOp(Vec, TVT);
+    return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, Op.getValueType(), Vec, Idx);
+  } else if (NumElems == 1) {
+    // This must be an access of the only element.  Return it.
+    return PackVectorOp(Vec, EVT);
+  } else if (ConstantSDNode *CIdx = dyn_cast<ConstantSDNode>(Idx)) {
+    SDOperand Lo, Hi;
+    SplitVectorOp(Vec, Lo, Hi);
+    if (CIdx->getValue() < NumElems/2) {
+      Vec = Lo;
+    } else {
+      Vec = Hi;
+      Idx = DAG.getConstant(CIdx->getValue() - NumElems/2, Idx.getValueType());
+    }
+    
+    // It's now an extract from the appropriate high or low part.  Recurse.
+    Op = DAG.UpdateNodeOperands(Op, Vec, Idx);
+    return LowerVEXTRACT_VECTOR_ELT(Op);
+  } else {
+    // Variable index case for extract element.
+    // FIXME: IMPLEMENT STORE/LOAD lowering.  Need alignment of stack slot!!
+    assert(0 && "unimp!");
+    return SDOperand();
+  }
+}
+
 
 /// LegalizeSetCCOperands - Attempts to create a legal LHS and RHS for a SETCC
 /// with condition CC on the current target.  This usually involves legalizing
