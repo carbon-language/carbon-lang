@@ -1,13 +1,16 @@
 ; Test that vectors are scalarized/lowered correctly.
 ; RUN: llvm-as < %s | llc && 
 ; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 &&
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g3
+; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g3 &&
+; RUN: llvm-as < %s | llc -march=x86 -mcpu=i386 &&
+; RUN: llvm-as < %s | llc -march=x86 -mcpu=yonah
 
 %f1 = type <1 x float>
 %f2 = type <2 x float>
 %f4 = type <4 x float>
 %i4 = type <4 x int>
 %f8 = type <8 x float>
+%d8 = type <8 x double>
 
 implementation
 
@@ -97,6 +100,12 @@ float %test_extract_elt(%f8 *%P) {
   %p = load %f8* %P
   %R = extractelement %f8 %p, uint 3
   ret float %R
+}
+
+double %test_extract_elt2(%d8 *%P) {
+  %p = load %d8* %P
+  %R = extractelement %d8 %p, uint 3
+  ret double %R
 }
 
 void %test_cast_1(<4 x float>* %b, <4 x int>* %a) {
