@@ -4453,8 +4453,6 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
     
     // Remember that we legalized the chain.
     AddLegalizedOperand(Op.getValue(1), LegalizeOp(TF));
-    if (!TLI.isLittleEndian())
-      std::swap(Lo, Hi);
     break;
   }
   case ISD::VBIT_CONVERT: {
