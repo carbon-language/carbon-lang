@@ -310,6 +310,10 @@ def vector_shuffle : SDNode<"ISD::VECTOR_SHUFFLE", SDTVecShuffle, []>;
 def build_vector : SDNode<"ISD::BUILD_VECTOR", SDTypeProfile<1, 0, []>, []>;
 def scalar_to_vector : SDNode<"ISD::SCALAR_TO_VECTOR", SDTypeProfile<1, 1, []>,
                               []>;
+def vector_extract : SDNode<"ISD::EXTRACT_VECTOR_ELT",
+    SDTypeProfile<1, 2, []>, []>;
+def vector_insert : SDNode<"ISD::INSERT_VECTOR_ELT",
+    SDTypeProfile<1, 3, []>, []>;
 
 // Nodes for intrinsics, you should use the intrinsic itself and let tblgen use
 // these internally.  Don't reference these directly.
