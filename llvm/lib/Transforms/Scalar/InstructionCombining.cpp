@@ -6655,12 +6655,14 @@ static bool CheapToScalarize(Value *V, bool isConstant) {
 }
 
 Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
-  if (ConstantAggregateZero *C = 
-      dyn_cast<ConstantAggregateZero>(EI.getOperand(0))) {
-    // If packed val is constant 0, replace extract with scalar 0
-    const Type *Ty = cast<PackedType>(C->getType())->getElementType();
-    return ReplaceInstUsesWith(EI, Constant::getNullValue(Ty));
-  }
+  // If packed val is undef, replace extract with scalar undef.
+  if (isa<UndefValue>(EI.getOperand(0)))
+    return ReplaceInstUsesWith(EI, UndefValue::get(EI.getType()));
+
+  // If packed val is constant 0, replace extract with scalar 0.
+  if (isa<ConstantAggregateZero>(EI.getOperand(0)))
+    return ReplaceInstUsesWith(EI, Constant::getNullValue(EI.getType()));
+  
   if (ConstantPacked *C = dyn_cast<ConstantPacked>(EI.getOperand(0))) {
     // If packed val is constant with uniform operands, replace EI
     // with that operand
