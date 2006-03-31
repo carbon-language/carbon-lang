@@ -70,13 +70,15 @@ class VA1a_Int<bits<6> xo, string opc, Intrinsic IntID>
                        [(set VRRC:$vD, (IntID VRRC:$vA, VRRC:$vB, VRRC:$vC))]>;
 
 // VX1_Int - A VXForm_1 intrinsic definition.
-class VX1_Int<bits<11> xo, string asmstr, Intrinsic IntID>
-  : VXForm_1<xo, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB), asmstr, VecFP,
+class VX1_Int<bits<11> xo, string opc, Intrinsic IntID>
+  : VXForm_1<xo, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+             !strconcat(opc, " $vD, $vA, $vB"), VecFP,
              [(set VRRC:$vD, (IntID VRRC:$vA, VRRC:$vB))]>;
 
 // VX2_Int - A VXForm_2 intrinsic definition.
-class VX2_Int<bits<11> xo, string asmstr, Intrinsic IntID>
-  : VXForm_2<xo, (ops VRRC:$vD, VRRC:$vB), asmstr, VecFP,
+class VX2_Int<bits<11> xo, string opc, Intrinsic IntID>
+  : VXForm_2<xo, (ops VRRC:$vD, VRRC:$vB),
+             !strconcat(opc, " $vD, $vB"), VecFP,
              [(set VRRC:$vD, (IntID VRRC:$vB))]>;
 
 //===----------------------------------------------------------------------===//
@@ -231,10 +233,10 @@ def VMINFP : VXForm_1<1098, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       "vminfp $vD, $vA, $vB", VecFP,
                       []>;
 
-def VMRGHH : VX1_Int<76 , "vmrghh $vD, $vA, $vB", int_ppc_altivec_vmrghh>;
-def VMRGHW : VX1_Int<140, "vmrghw $vD, $vA, $vB", int_ppc_altivec_vmrghw>;
-def VMRGLH : VX1_Int<332, "vmrglh $vD, $vA, $vB", int_ppc_altivec_vmrglh>;
-def VMRGLW : VX1_Int<396, "vmrglw $vD, $vA, $vB", int_ppc_altivec_vmrglw>;
+def VMRGHH : VX1_Int<76 , "vmrghh", int_ppc_altivec_vmrghh>;
+def VMRGHW : VX1_Int<140, "vmrghw", int_ppc_altivec_vmrghw>;
+def VMRGLH : VX1_Int<332, "vmrglh", int_ppc_altivec_vmrglh>;
+def VMRGLW : VX1_Int<396, "vmrglw", int_ppc_altivec_vmrglw>;
 
 def VMSUMMBM : VA1a_Int<37, "vmsummbm", int_ppc_altivec_vmsummbm>;
 def VMSUMSHM : VA1a_Int<40, "vmsumshm", int_ppc_altivec_vmsumshm>;
@@ -243,23 +245,23 @@ def VMSUMUBM : VA1a_Int<36, "vmsumubm", int_ppc_altivec_vmsumubm>;
 def VMSUMUHM : VA1a_Int<38, "vmsumuhm", int_ppc_altivec_vmsumuhm>;
 def VMSUMUHS : VA1a_Int<39, "vmsumuhs", int_ppc_altivec_vmsumuhs>;
 
-def VMULESB : VX1_Int<776, "vmulesb $vD, $vA, $vB", int_ppc_altivec_vmulesb>;
-def VMULESH : VX1_Int<840, "vmulesh $vD, $vA, $vB", int_ppc_altivec_vmulesh>;
-def VMULEUB : VX1_Int<520, "vmuleub $vD, $vA, $vB", int_ppc_altivec_vmuleub>;
-def VMULEUH : VX1_Int<584, "vmuleuh $vD, $vA, $vB", int_ppc_altivec_vmuleuh>;
-def VMULOSB : VX1_Int<264, "vmulosb $vD, $vA, $vB", int_ppc_altivec_vmulosb>;
-def VMULOSH : VX1_Int<328, "vmulosh $vD, $vA, $vB", int_ppc_altivec_vmulosh>;
-def VMULOUB : VX1_Int<  8, "vmuloub $vD, $vA, $vB", int_ppc_altivec_vmuloub>;
-def VMULOUH : VX1_Int< 72, "vmulouh $vD, $vA, $vB", int_ppc_altivec_vmulouh>;
+def VMULESB : VX1_Int<776, "vmulesb", int_ppc_altivec_vmulesb>;
+def VMULESH : VX1_Int<840, "vmulesh", int_ppc_altivec_vmulesh>;
+def VMULEUB : VX1_Int<520, "vmuleub", int_ppc_altivec_vmuleub>;
+def VMULEUH : VX1_Int<584, "vmuleuh", int_ppc_altivec_vmuleuh>;
+def VMULOSB : VX1_Int<264, "vmulosb", int_ppc_altivec_vmulosb>;
+def VMULOSH : VX1_Int<328, "vmulosh", int_ppc_altivec_vmulosh>;
+def VMULOUB : VX1_Int<  8, "vmuloub", int_ppc_altivec_vmuloub>;
+def VMULOUH : VX1_Int< 72, "vmulouh", int_ppc_altivec_vmulouh>;
                        
-def VREFP     : VX2_Int<266, "vrefp $vD, $vB",     int_ppc_altivec_vrefp>;
-def VRFIM     : VX2_Int<714, "vrfim $vD, $vB",     int_ppc_altivec_vrfim>;
-def VRFIN     : VX2_Int<522, "vrfin $vD, $vB",     int_ppc_altivec_vrfin>;
-def VRFIP     : VX2_Int<650, "vrfip $vD, $vB",     int_ppc_altivec_vrfip>;
-def VRFIZ     : VX2_Int<586, "vrfiz $vD, $vB",     int_ppc_altivec_vrfiz>;
-def VRSQRTEFP : VX2_Int<330, "vrsqrtefp $vD, $vB", int_ppc_altivec_vrsqrtefp>;
+def VREFP     : VX2_Int<266, "vrefp",     int_ppc_altivec_vrefp>;
+def VRFIM     : VX2_Int<714, "vrfim",     int_ppc_altivec_vrfim>;
+def VRFIN     : VX2_Int<522, "vrfin",     int_ppc_altivec_vrfin>;
+def VRFIP     : VX2_Int<650, "vrfip",     int_ppc_altivec_vrfip>;
+def VRFIZ     : VX2_Int<586, "vrfiz",     int_ppc_altivec_vrfiz>;
+def VRSQRTEFP : VX2_Int<330, "vrsqrtefp", int_ppc_altivec_vrsqrtefp>;
 
-def VSUBCUW : VX1_Int<74, "vsubcuw $vD, $vA, $vB", int_ppc_altivec_vsubcuw>;
+def VSUBCUW : VX1_Int<74, "vsubcuw", int_ppc_altivec_vsubcuw>;
 
 def VSUBFP  : VXForm_1<74, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       "vsubfp $vD, $vA, $vB", VecGeneral,
@@ -274,17 +276,17 @@ def VSUBUWM : VXForm_1<1152, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       "vsubuwm $vD, $vA, $vB", VecGeneral,
                       [(set VRRC:$vD, (sub (v4i32 VRRC:$vA), VRRC:$vB))]>;
                       
-def VSUBSBS : VX1_Int<1792, "vsubsbs $vD, $vA, $vB", int_ppc_altivec_vsubsbs>;
-def VSUBSHS : VX1_Int<1856, "vsubshs $vD, $vA, $vB", int_ppc_altivec_vsubshs>;
-def VSUBSWS : VX1_Int<1920, "vsubsws $vD, $vA, $vB", int_ppc_altivec_vsubsws>;
-def VSUBUBS : VX1_Int<1536, "vsububs $vD, $vA, $vB", int_ppc_altivec_vsububs>;
-def VSUBUHS : VX1_Int<1600, "vsubuhs $vD, $vA, $vB", int_ppc_altivec_vsubuhs>;
-def VSUBUWS : VX1_Int<1664, "vsubuws $vD, $vA, $vB", int_ppc_altivec_vsubuws>;
-def VSUMSWS : VX1_Int<1928, "vsumsws $vD, $vA, $vB", int_ppc_altivec_vsumsws>;
-def VSUM2SWS: VX1_Int<1672, "vsum2sws $vD, $vA, $vB", int_ppc_altivec_vsum2sws>;
-def VSUM4SBS: VX1_Int<1672, "vsum4sbs $vD, $vA, $vB", int_ppc_altivec_vsum4sbs>;
-def VSUM4SHS: VX1_Int<1608, "vsum4shs $vD, $vA, $vB", int_ppc_altivec_vsum4shs>;
-def VSUM4UBS: VX1_Int<1544, "vsum4ubs $vD, $vA, $vB", int_ppc_altivec_vsum4ubs>;
+def VSUBSBS : VX1_Int<1792, "vsubsbs" , int_ppc_altivec_vsubsbs>;
+def VSUBSHS : VX1_Int<1856, "vsubshs" , int_ppc_altivec_vsubshs>;
+def VSUBSWS : VX1_Int<1920, "vsubsws" , int_ppc_altivec_vsubsws>;
+def VSUBUBS : VX1_Int<1536, "vsububs" , int_ppc_altivec_vsububs>;
+def VSUBUHS : VX1_Int<1600, "vsubuhs" , int_ppc_altivec_vsubuhs>;
+def VSUBUWS : VX1_Int<1664, "vsubuws" , int_ppc_altivec_vsubuws>;
+def VSUMSWS : VX1_Int<1928, "vsumsws" , int_ppc_altivec_vsumsws>;
+def VSUM2SWS: VX1_Int<1672, "vsum2sws", int_ppc_altivec_vsum2sws>;
+def VSUM4SBS: VX1_Int<1672, "vsum4sbs", int_ppc_altivec_vsum4sbs>;
+def VSUM4SHS: VX1_Int<1608, "vsum4shs", int_ppc_altivec_vsum4shs>;
+def VSUM4UBS: VX1_Int<1544, "vsum4ubs", int_ppc_altivec_vsum4ubs>;
 
 def VNOR : VXForm_1<1284, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                     "vnor $vD, $vA, $vB", VecFP,
@@ -296,13 +298,13 @@ def VXOR : VXForm_1<1220, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       "vxor $vD, $vA, $vB", VecFP,
                       [(set VRRC:$vD, (xor (v4i32 VRRC:$vA), VRRC:$vB))]>;
 
-def VRLB   : VX1_Int<   4, "vrlb $vD, $vA, $vB", int_ppc_altivec_vrlb>;
-def VRLH   : VX1_Int<  68, "vrlh $vD, $vA, $vB", int_ppc_altivec_vrlh>;
-def VRLW   : VX1_Int< 132, "vrlw $vD, $vA, $vB", int_ppc_altivec_vrlw>;
-def VSLO   : VX1_Int<1036, "vslo $vD, $vA, $vB", int_ppc_altivec_vslo>;
-def VSLB   : VX1_Int< 260, "vslb $vD, $vA, $vB", int_ppc_altivec_vslb>;
-def VSLH   : VX1_Int< 324, "vslh $vD, $vA, $vB", int_ppc_altivec_vslh>;
-def VSLW   : VX1_Int< 388, "vslw $vD, $vA, $vB", int_ppc_altivec_vslw>;
+def VRLB   : VX1_Int<   4, "vrlb", int_ppc_altivec_vrlb>;
+def VRLH   : VX1_Int<  68, "vrlh", int_ppc_altivec_vrlh>;
+def VRLW   : VX1_Int< 132, "vrlw", int_ppc_altivec_vrlw>;
+def VSLO   : VX1_Int<1036, "vslo", int_ppc_altivec_vslo>;
+def VSLB   : VX1_Int< 260, "vslb", int_ppc_altivec_vslb>;
+def VSLH   : VX1_Int< 324, "vslh", int_ppc_altivec_vslh>;
+def VSLW   : VX1_Int< 388, "vslw", int_ppc_altivec_vslw>;
 
 def VSPLTB : VXForm_1<524, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
                       "vspltb $vD, $vB, $UIMM", VecPerm,
@@ -315,14 +317,14 @@ def VSPLTW : VXForm_1<652, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
                       [(set VRRC:$vD, (vector_shuffle (v4f32 VRRC:$vB), (undef),
                                       VSPLT_shuffle_mask:$UIMM))]>;
 
-def VSR    : VX1_Int< 708, "vsr $vD, $vA, $vB"  , int_ppc_altivec_vsr>;
-def VSRO   : VX1_Int<1100, "vsro $vD, $vA, $vB" , int_ppc_altivec_vsro>;
-def VSRAB  : VX1_Int< 772, "vsrab $vD, $vA, $vB", int_ppc_altivec_vsrab>;
-def VSRAH  : VX1_Int< 836, "vsrah $vD, $vA, $vB", int_ppc_altivec_vsrah>;
-def VSRAW  : VX1_Int< 900, "vsraw $vD, $vA, $vB", int_ppc_altivec_vsraw>;
-def VSRB   : VX1_Int< 516, "vsrb $vD, $vA, $vB" , int_ppc_altivec_vsrb>;
-def VSRH   : VX1_Int< 580, "vsrh $vD, $vA, $vB" , int_ppc_altivec_vsrh>;
-def VSRW   : VX1_Int< 644, "vsrw $vD, $vA, $vB" , int_ppc_altivec_vsrw>;
+def VSR    : VX1_Int< 708, "vsr"  , int_ppc_altivec_vsr>;
+def VSRO   : VX1_Int<1100, "vsro" , int_ppc_altivec_vsro>;
+def VSRAB  : VX1_Int< 772, "vsrab", int_ppc_altivec_vsrab>;
+def VSRAH  : VX1_Int< 836, "vsrah", int_ppc_altivec_vsrah>;
+def VSRAW  : VX1_Int< 900, "vsraw", int_ppc_altivec_vsraw>;
+def VSRB   : VX1_Int< 516, "vsrb" , int_ppc_altivec_vsrb>;
+def VSRH   : VX1_Int< 580, "vsrh" , int_ppc_altivec_vsrh>;
+def VSRW   : VX1_Int< 644, "vsrw" , int_ppc_altivec_vsrw>;
 
 
 def VSPLTISB : VXForm_3<780, (ops VRRC:$vD, s5imm:$SIMM),
@@ -336,40 +338,19 @@ def VSPLTISW : VXForm_3<908, (ops VRRC:$vD, s5imm:$SIMM),
                        [(set VRRC:$vD, (v4f32 vecspltisw:$SIMM))]>;
 
 // Vector Pack.
-def VPKPX   : VXForm_1<782, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                       "vpkpx $vD, $vA, $vB", VecFP,
-                       [(set VRRC:$vD,
-                            (int_ppc_altivec_vpkpx VRRC:$vA, VRRC:$vB))]>;
-def VPKSHSS : VXForm_1<398, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                       "vpkshss $vD, $vA, $vB", VecFP,
-                       [(set VRRC:$vD,
-                            (int_ppc_altivec_vpkshss VRRC:$vA, VRRC:$vB))]>;
-def VPKSHUS : VXForm_1<270, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                       "vpkshus $vD, $vA, $vB", VecFP,
-                       [(set VRRC:$vD,
-                            (int_ppc_altivec_vpkshus VRRC:$vA, VRRC:$vB))]>;
-def VPKSWSS : VXForm_1<462, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                       "vpkswss $vD, $vA, $vB", VecFP,
-                       [(set VRRC:$vD,
-                            (int_ppc_altivec_vpkswss VRRC:$vA, VRRC:$vB))]>;
-def VPKSWUS : VXForm_1<334, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                       "vpkswus $vD, $vA, $vB", VecFP,
-                       [(set VRRC:$vD,
-                            (int_ppc_altivec_vpkswus VRRC:$vA, VRRC:$vB))]>;
+def VPKPX   : VX1_Int<782, "vpkpx", int_ppc_altivec_vpkpx>;
+def VPKSHSS : VX1_Int<398, "vpkshss", int_ppc_altivec_vpkshss>;
+def VPKSHUS : VX1_Int<270, "vpkshus", int_ppc_altivec_vpkshus>;
+def VPKSWSS : VX1_Int<462, "vpkswss", int_ppc_altivec_vpkswss>;
+def VPKSWUS : VX1_Int<334, "vpkswus", int_ppc_altivec_vpkswus>;
 def VPKUHUM : VXForm_1<14, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                        "vpkuhum $vD, $vA, $vB", VecFP,
                        [/*TODO*/]>;
-def VPKUHUS : VXForm_1<142, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                       "vpkuhus $vD, $vA, $vB", VecFP,
-                       [(set VRRC:$vD,
-                            (int_ppc_altivec_vpkuhus VRRC:$vA, VRRC:$vB))]>;
+def VPKUHUS : VX1_Int<142, "vpkuhus", int_ppc_altivec_vpkuhus>;
 def VPKUWUM : VXForm_1<78, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                        "vpkuwum $vD, $vA, $vB", VecFP,
                        [/*TODO*/]>;
-def VPKUWUS : VXForm_1<206, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                       "vpkuwus $vD, $vA, $vB", VecFP,
-                       [(set VRRC:$vD,
-                            (int_ppc_altivec_vpkuwus VRRC:$vA, VRRC:$vB))]>;
+def VPKUWUS : VX1_Int<206, "vpkuwus", int_ppc_altivec_vpkuwus>;
 
 // Vector Unpack.
 def VUPKHPX : VXForm_2<846, (ops VRRC:$vD, VRRC:$vB),
