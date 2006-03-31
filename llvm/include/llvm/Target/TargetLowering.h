@@ -173,6 +173,16 @@ public:
     return TransformToType[VT];
   }
 
+  /// getPackedTypeBreakdown - Packed types are broken down into some number of
+  /// legal scalar types.  For example, <8 x float> maps to 2 MVT::v2f32 values
+  /// with Altivec or SSE1, or 8 promoted MVT::f64 values with the X86 FP stack.
+  /// Similarly, <2 x long> turns into 4 MVT::i32 values with both PPC and X86.
+  ///
+  /// This method returns the number and type of the resultant breakdown.
+  ///
+  MVT::ValueType getPackedTypeBreakdown(const PackedType *PTy, 
+                                        unsigned &NE) const;
+  
   typedef std::vector<double>::const_iterator legal_fpimm_iterator;
   legal_fpimm_iterator legal_fpimm_begin() const {
     return LegalFPImmediates.begin();
