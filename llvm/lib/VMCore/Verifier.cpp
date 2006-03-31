@@ -60,6 +60,7 @@
 #include <algorithm>
 #include <iostream>
 #include <sstream>
+#include <cstdarg>
 using namespace llvm;
 
 namespace {  // Anonymous namespace for class
