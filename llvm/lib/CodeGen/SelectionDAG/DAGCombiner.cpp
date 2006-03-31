@@ -208,6 +208,7 @@ namespace {
     SDOperand visitBRCOND(SDNode *N);
     SDOperand visitBR_CC(SDNode *N);
     SDOperand visitLOAD(SDNode *N);
+    SDOperand visitXEXTLOAD(SDNode *N);
     SDOperand visitSTORE(SDNode *N);
     SDOperand visitINSERT_VECTOR_ELT(SDNode *N);
     SDOperand visitVINSERT_VECTOR_ELT(SDNode *N);
@@ -643,6 +644,9 @@ SDOperand DAGCombiner::visit(SDNode *N) {
   case ISD::BRCOND:             return visitBRCOND(N);
   case ISD::BR_CC:              return visitBR_CC(N);
   case ISD::LOAD:               return visitLOAD(N);
+  case ISD::EXTLOAD:
+  case ISD::SEXTLOAD:
+  case ISD::ZEXTLOAD:           return visitXEXTLOAD(N);
   case ISD::STORE:              return visitSTORE(N);
   case ISD::INSERT_VECTOR_ELT:  return visitINSERT_VECTOR_ELT(N);
   case ISD::VINSERT_VECTOR_ELT: return visitVINSERT_VECTOR_ELT(N);
@@ -2274,6 +2278,21 @@ SDOperand DAGCombiner::visitLOAD(SDNode *N) {
   if (Chain.getOpcode() == ISD::STORE && Chain.getOperand(2) == Ptr &&
       Chain.getOperand(1).getValueType() == N->getValueType(0))
     return CombineTo(N, Chain.getOperand(1), Chain);
+  
+  return SDOperand();
+}
+
+/// visitXEXTLOAD - Handle EXTLOAD/ZEXTLOAD/SEXTLOAD.
+SDOperand DAGCombiner::visitXEXTLOAD(SDNode *N) {
+  SDOperand Chain    = N->getOperand(0);
+  SDOperand Ptr      = N->getOperand(1);
+  SDOperand SrcValue = N->getOperand(2);
+  SDOperand EVT      = N->getOperand(3);
+  
+  // If there are no uses of the loaded value, change uses of the chain value
+  // into uses of the chain input (i.e. delete the dead load).
+  if (N->hasNUsesOfValue(0, 0))
+    return CombineTo(N, DAG.getNode(ISD::UNDEF, N->getValueType(0)), Chain);
   
   return SDOperand();
 }
