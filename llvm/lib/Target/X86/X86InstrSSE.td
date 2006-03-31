@@ -28,8 +28,8 @@ def X86s2vec   : SDNode<"X86ISD::S2VEC",
 def X86zexts2vec : SDNode<"X86ISD::ZEXT_S2VEC",
                           SDTypeProfile<1, 1, []>, []>;
 
-def SDTUnpckl : SDTypeProfile<1, 2,
-                              [SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>]>;
+def X86pextrw  : SDNode<"X86ISD::PEXTRW",
+                        SDTypeProfile<1, 2, []>, []>;
 
 //===----------------------------------------------------------------------===//
 // SSE pattern fragments
@@ -1407,6 +1407,33 @@ def PUNPCKHQDQrm : PDI<0x6D, MRMSrcMem,
                       [(set VR128:$dst,
                         (v2i64 (vector_shuffle VR128:$src1, (load addr:$src2),
                                 UNPCKH_shuffle_mask)))]>;
+}
+
+// Extract / Insert
+def PEXTRWrr : PDIi8<0xC5, MRMSrcReg,
+                     (ops R32:$dst, VR128:$src1, i32i8imm:$src2),
+                     "pextrw {$src2, $src1, $dst|$dst, $src1, $src2}",
+                     [(set R32:$dst, (X86pextrw (v8i16 VR128:$src1),
+                                      (i32 imm:$src2)))]>;
+def PEXTRWrm : PDIi8<0xC5, MRMSrcMem,
+                     (ops R32:$dst, i128mem:$src1, i32i8imm:$src2),
+                     "pextrw {$src2, $src1, $dst|$dst, $src1, $src2}",
+                     [(set R32:$dst, (X86pextrw (loadv8i16 addr:$src1),
+                                      (i32 imm:$src2)))]>;
+
+let isTwoAddress = 1 in {
+def PINSRWrr : PDIi8<0xC4, MRMSrcReg,
+                     (ops VR128:$dst, VR128:$src1, R32:$src2, i32i8imm:$src3),
+                     "pinsrw {$src3, $src2, $dst|$dst, $src2, $src3}",
+                     [(set VR128:$dst, (v8i16 (vector_insert (v8i16 VR128:$src1),
+                               R32:$src2, (i32 imm:$src3))))]>;
+def PINSRWrm : PDIi8<0xC4, MRMSrcMem,
+                     (ops VR128:$dst, VR128:$src1, i16mem:$src2, i32i8imm:$src3),
+                     "pinsrw {$src3, $src2, $dst|$dst, $src2, $src3}",
+                     [(set VR128:$dst,
+                       (v8i16 (vector_insert (v8i16 VR128:$src1),
+                               (i32 (anyext (loadi16 addr:$src2))),
+                               (i32 imm:$src3))))]>;
 }
 
 //===----------------------------------------------------------------------===//

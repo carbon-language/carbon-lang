@@ -255,9 +255,9 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::SUB , (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::MUL , (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::LOAD, (MVT::ValueType)VT, Expand);
-    setOperationAction(ISD::VECTOR_SHUFFLE, (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::VECTOR_SHUFFLE,     (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, (MVT::ValueType)VT, Expand);
-    setOperationAction(ISD::INSERT_VECTOR_ELT, (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::INSERT_VECTOR_ELT,  (MVT::ValueType)VT, Expand);
   }
 
   if (Subtarget->hasMMX()) {
@@ -316,6 +316,8 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::VECTOR_SHUFFLE,   MVT::v8i16, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE,   MVT::v4i32, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE,   MVT::v2i64, Custom);
+    setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v8i16, Custom);
+    setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v8i16, Custom);
   }
 
   computeRegisterProperties();
@@ -2657,6 +2659,37 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
 
     return SDOperand();
   }
+  case ISD::EXTRACT_VECTOR_ELT: {
+    // Transform it so it match pextrw which produces a 32-bit result.
+    MVT::ValueType VT = Op.getValueType();
+    if (MVT::getSizeInBits(VT) == 16) {
+      MVT::ValueType EVT = (MVT::ValueType)(VT+1);
+      SDOperand Extract = DAG.getNode(X86ISD::PEXTRW, EVT,
+                                      Op.getOperand(0), Op.getOperand(1));
+      SDOperand Assert  = DAG.getNode(ISD::AssertZext, EVT, Extract,
+                                      DAG.getValueType(VT));
+      return DAG.getNode(ISD::TRUNCATE, VT, Assert);
+    }
+
+    return SDOperand();
+  }
+  case ISD::INSERT_VECTOR_ELT: {
+    // Transform it so it match pinsrw which expects a 16-bit value in a R32
+    // as its second argument.
+    MVT::ValueType VT = Op.getValueType();
+    MVT::ValueType BaseVT = MVT::getVectorBaseType(VT);
+    if (MVT::getSizeInBits(BaseVT) == 16) {
+      SDOperand N1 = Op.getOperand(1);
+      SDOperand N2 = Op.getOperand(2);
+      if (N1.getValueType() != MVT::i32)
+        N1 = DAG.getNode(ISD::ANY_EXTEND, MVT::i32, N1);
+      if (N2.getValueType() != MVT::i32)
+        N2 = DAG.getConstant(cast<ConstantSDNode>(N2)->getValue(), MVT::i32);
+      return DAG.getNode(ISD::INSERT_VECTOR_ELT, VT, Op.getOperand(0), N1, N2);
+    }
+
+    return SDOperand();
+  }
   }
 }
 
@@ -2692,6 +2725,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::Wrapper:            return "X86ISD::Wrapper";
   case X86ISD::S2VEC:              return "X86ISD::S2VEC";
   case X86ISD::ZEXT_S2VEC:         return "X86ISD::ZEXT_S2VEC";
+  case X86ISD::PEXTRW:             return "X86ISD::PEXTRW";
   }
 }
 

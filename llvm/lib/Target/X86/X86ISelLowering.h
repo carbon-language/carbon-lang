@@ -153,6 +153,10 @@ namespace llvm {
       /// ZEXT_S2VEC - SCALAR_TO_VECTOR with zero extension. The destination base
       /// does not have to match the operand type.
       ZEXT_S2VEC,
+
+      /// PEXTRW - Extract a 16-bit value from a vector and zero extend it to
+      /// i32, corresponds to X86::PINSRW.
+      PEXTRW,
     };
 
     // X86 specific condition code. These correspond to X86_*_COND in
