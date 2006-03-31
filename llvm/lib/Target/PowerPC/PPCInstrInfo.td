@@ -30,7 +30,7 @@ def SDT_PPCvperm   : SDTypeProfile<1, 3, [
   SDTCisVT<3, v16i8>, SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>
 ]>;
 
-def SDT_PPCvcmp_o : SDTypeProfile<1, 3, [
+def SDT_PPCvcmp : SDTypeProfile<1, 3, [
   SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>, SDTCisVT<3, i32>
 ]>;
 
@@ -71,7 +71,8 @@ def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_PPCCallSeq,[SDNPHasChain]>;
 def retflag       : SDNode<"PPCISD::RET_FLAG", SDT_PPCRetFlag,
 	                   [SDNPHasChain, SDNPOptInFlag]>;
 
-def PPCvcmp_o     : SDNode<"PPCISD::VCMPo", SDT_PPCvcmp_o, [SDNPOutFlag]>;
+def PPCvcmp       : SDNode<"PPCISD::VCMP" , SDT_PPCvcmp, []>;
+def PPCvcmp_o     : SDNode<"PPCISD::VCMPo", SDT_PPCvcmp, [SDNPOutFlag]>;
 
 //===----------------------------------------------------------------------===//
 // PowerPC specific transformation functions and pattern fragments.

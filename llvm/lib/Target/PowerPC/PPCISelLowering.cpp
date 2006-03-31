@@ -235,6 +235,7 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::CALL:          return "PPCISD::CALL";
   case PPCISD::RET_FLAG:      return "PPCISD::RET_FLAG";
   case PPCISD::MFCR:          return "PPCISD::MFCR";
+  case PPCISD::VCMP:          return "PPCISD::VCMP";
   case PPCISD::VCMPo:         return "PPCISD::VCMPo";
   }
 }
@@ -752,31 +753,53 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     return DAG.getNode(PPCISD::VPERM, V1.getValueType(), V1, V2, VPermMask);
   }
   case ISD::INTRINSIC_WO_CHAIN: {
-    bool HasChain = Op.getOperand(0).getValueType() == MVT::Other;
-    unsigned IntNo=cast<ConstantSDNode>(Op.getOperand(HasChain))->getValue();
+    unsigned IntNo=cast<ConstantSDNode>(Op.getOperand(0))->getValue();
     
     // If this is a lowered altivec predicate compare, CompareOpc is set to the
     // opcode number of the comparison.
     int CompareOpc = -1;
+    bool isDot = false;
     switch (IntNo) {
     default: return SDOperand();    // Don't custom lower most intrinsics.
-    case Intrinsic::ppc_altivec_vcmpbfp_p:  CompareOpc = 966; break;
-    case Intrinsic::ppc_altivec_vcmpeqfp_p: CompareOpc = 198; break;
-    case Intrinsic::ppc_altivec_vcmpequb_p: CompareOpc =   6; break;
-    case Intrinsic::ppc_altivec_vcmpequh_p: CompareOpc =  70; break;
-    case Intrinsic::ppc_altivec_vcmpequw_p: CompareOpc = 134; break;
-    case Intrinsic::ppc_altivec_vcmpgefp_p: CompareOpc = 454; break;
-    case Intrinsic::ppc_altivec_vcmpgtfp_p: CompareOpc = 710; break;
-    case Intrinsic::ppc_altivec_vcmpgtsb_p: CompareOpc = 774; break;
-    case Intrinsic::ppc_altivec_vcmpgtsh_p: CompareOpc = 838; break;
-    case Intrinsic::ppc_altivec_vcmpgtsw_p: CompareOpc = 902; break;
-    case Intrinsic::ppc_altivec_vcmpgtub_p: CompareOpc = 518; break;
-    case Intrinsic::ppc_altivec_vcmpgtuh_p: CompareOpc = 582; break;
-    case Intrinsic::ppc_altivec_vcmpgtuw_p: CompareOpc = 646; break;
+    // Comparison predicates.
+    case Intrinsic::ppc_altivec_vcmpbfp_p:  CompareOpc = 966; isDot = 1; break;
+    case Intrinsic::ppc_altivec_vcmpeqfp_p: CompareOpc = 198; isDot = 1; break;
+    case Intrinsic::ppc_altivec_vcmpequb_p: CompareOpc =   6; isDot = 1; break;
+    case Intrinsic::ppc_altivec_vcmpequh_p: CompareOpc =  70; isDot = 1; break;
+    case Intrinsic::ppc_altivec_vcmpequw_p: CompareOpc = 134; isDot = 1; break;
+    case Intrinsic::ppc_altivec_vcmpgefp_p: CompareOpc = 454; isDot = 1; break;
+    case Intrinsic::ppc_altivec_vcmpgtfp_p: CompareOpc = 710; isDot = 1; break;
+    case Intrinsic::ppc_altivec_vcmpgtsb_p: CompareOpc = 774; isDot = 1; break;
+    case Intrinsic::ppc_altivec_vcmpgtsh_p: CompareOpc = 838; isDot = 1; break;
+    case Intrinsic::ppc_altivec_vcmpgtsw_p: CompareOpc = 902; isDot = 1; break;
+    case Intrinsic::ppc_altivec_vcmpgtub_p: CompareOpc = 518; isDot = 1; break;
+    case Intrinsic::ppc_altivec_vcmpgtuh_p: CompareOpc = 582; isDot = 1; break;
+    case Intrinsic::ppc_altivec_vcmpgtuw_p: CompareOpc = 646; isDot = 1; break;
+
+    // Normal Comparisons.
+    case Intrinsic::ppc_altivec_vcmpbfp:    CompareOpc = 966; isDot = 0; break;
+    case Intrinsic::ppc_altivec_vcmpeqfp:   CompareOpc = 198; isDot = 0; break;
+    case Intrinsic::ppc_altivec_vcmpequb:   CompareOpc =   6; isDot = 0; break;
+    case Intrinsic::ppc_altivec_vcmpequh:   CompareOpc =  70; isDot = 0; break;
+    case Intrinsic::ppc_altivec_vcmpequw:   CompareOpc = 134; isDot = 0; break;
+    case Intrinsic::ppc_altivec_vcmpgefp:   CompareOpc = 454; isDot = 0; break;
+    case Intrinsic::ppc_altivec_vcmpgtfp:   CompareOpc = 710; isDot = 0; break;
+    case Intrinsic::ppc_altivec_vcmpgtsb:   CompareOpc = 774; isDot = 0; break;
+    case Intrinsic::ppc_altivec_vcmpgtsh:   CompareOpc = 838; isDot = 0; break;
+    case Intrinsic::ppc_altivec_vcmpgtsw:   CompareOpc = 902; isDot = 0; break;
+    case Intrinsic::ppc_altivec_vcmpgtub:   CompareOpc = 518; isDot = 0; break;
+    case Intrinsic::ppc_altivec_vcmpgtuh:   CompareOpc = 582; isDot = 0; break;
+    case Intrinsic::ppc_altivec_vcmpgtuw:   CompareOpc = 646; isDot = 0; break;
     }
     
     assert(CompareOpc>0 && "We only lower altivec predicate compares so far!");
 
+    // If this is a non-dot comparison, make the VCMP node.
+    if (!isDot)
+      return DAG.getNode(PPCISD::VCMP, Op.getOperand(2).getValueType(),
+                         Op.getOperand(1), Op.getOperand(2),
+                         DAG.getConstant(CompareOpc, MVT::i32));
+    
     // Create the PPCISD altivec 'dot' comparison node.
     std::vector<SDOperand> Ops;
     std::vector<MVT::ValueType> VTs;
