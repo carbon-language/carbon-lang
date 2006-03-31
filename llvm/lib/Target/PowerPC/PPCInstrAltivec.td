@@ -64,8 +64,9 @@ class isVDOT {   // vector dot instruction.
 // Helpers for defining instructions that directly correspond to intrinsics.
 
 // VA1a_Int - A VAForm_1a intrinsic definition.
-class VA1a_Int<bits<6> xo, string asmstr, Intrinsic IntID>
-  : VAForm_1a<xo, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, VRRC:$vC), asmstr, VecFP,
+class VA1a_Int<bits<6> xo, string opc, Intrinsic IntID>
+  : VAForm_1a<xo, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, VRRC:$vC),
+              !strconcat(opc, " $vD, $vA, $vB, $vC"), VecFP,
                        [(set VRRC:$vD, (IntID VRRC:$vA, VRRC:$vB, VRRC:$vC))]>;
 
 // VX1_Int - A VXForm_1 intrinsic definition.
@@ -141,12 +142,10 @@ def VNMSUBFP: VAForm_1<47, (ops VRRC:$vD, VRRC:$vA, VRRC:$vC, VRRC:$vB),
                        [(set VRRC:$vD, (fneg (fsub (fmul VRRC:$vA, VRRC:$vC),
                                                    VRRC:$vB)))]>,
                        Requires<[FPContractions]>;
-def VMHADDSHS  : VA1a_Int<32, "vmhaddshs $vD, $vA, $vB, $vC",
-                          int_ppc_altivec_vmhaddshs>;
-def VMHRADDSHS : VA1a_Int<33, "vmhraddshs $vD, $vA, $vB, $vC", 
-                          int_ppc_altivec_vmhraddshs>;
-def VPERM   : VA1a_Int<43, "vperm $vD, $vA, $vB, $vC", int_ppc_altivec_vperm>;
-def VSEL    : VA1a_Int<42, "vsel $vD, $vA, $vB, $vC",  int_ppc_altivec_vsel>;
+def VMHADDSHS  : VA1a_Int<32, "vmhaddshs",  int_ppc_altivec_vmhaddshs>;
+def VMHRADDSHS : VA1a_Int<33, "vmhraddshs", int_ppc_altivec_vmhraddshs>;
+def VPERM      : VA1a_Int<43, "vperm",      int_ppc_altivec_vperm>;
+def VSEL       : VA1a_Int<42, "vsel",       int_ppc_altivec_vsel>;
 
 def VSLDOI  : VAForm_2<44, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, u5imm:$SH),
                        "vsldoi $vD, $vA, $vB, $SH", VecFP,
@@ -237,12 +236,12 @@ def VMRGHW : VX1_Int<140, "vmrghw $vD, $vA, $vB", int_ppc_altivec_vmrghw>;
 def VMRGLH : VX1_Int<332, "vmrglh $vD, $vA, $vB", int_ppc_altivec_vmrglh>;
 def VMRGLW : VX1_Int<396, "vmrglw $vD, $vA, $vB", int_ppc_altivec_vmrglw>;
 
-def VMSUMMBM : VA1a_Int<37, "vmsummbm $vD, $vA, $vB, $vC", int_ppc_altivec_vmsummbm>;
-def VMSUMSHM : VA1a_Int<40, "vmsumshm $vD, $vA, $vB, $vC", int_ppc_altivec_vmsumshm>;
-def VMSUMSHS : VA1a_Int<41, "vmsumshs $vD, $vA, $vB, $vC", int_ppc_altivec_vmsumshs>;
-def VMSUMUBM : VA1a_Int<36, "vmsumubm $vD, $vA, $vB, $vC", int_ppc_altivec_vmsumubm>;
-def VMSUMUHM : VA1a_Int<38, "vmsumuhm $vD, $vA, $vB, $vC", int_ppc_altivec_vmsumuhm>;
-def VMSUMUHS : VA1a_Int<39, "vmsumuhs $vD, $vA, $vB, $vC", int_ppc_altivec_vmsumuhs>;
+def VMSUMMBM : VA1a_Int<37, "vmsummbm", int_ppc_altivec_vmsummbm>;
+def VMSUMSHM : VA1a_Int<40, "vmsumshm", int_ppc_altivec_vmsumshm>;
+def VMSUMSHS : VA1a_Int<41, "vmsumshs", int_ppc_altivec_vmsumshs>;
+def VMSUMUBM : VA1a_Int<36, "vmsumubm", int_ppc_altivec_vmsumubm>;
+def VMSUMUHM : VA1a_Int<38, "vmsumuhm", int_ppc_altivec_vmsumuhm>;
+def VMSUMUHS : VA1a_Int<39, "vmsumuhs", int_ppc_altivec_vmsumuhs>;
 
 def VMULESB : VX1_Int<776, "vmulesb $vD, $vA, $vB", int_ppc_altivec_vmulesb>;
 def VMULESH : VX1_Int<840, "vmulesh $vD, $vA, $vB", int_ppc_altivec_vmulesh>;
