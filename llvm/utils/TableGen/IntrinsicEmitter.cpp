@@ -127,22 +127,55 @@ static void EmitTypeVerify(std::ostream &OS, const std::string &Val,
   }
 }
 
+/// RecordListComparator - Provide a determinstic comparator for lists of
+/// records.
+namespace {
+  struct RecordListComparator {
+    bool operator()(const std::vector<Record*> &LHS,
+                    const std::vector<Record*> &RHS) const {
+      unsigned i = 0;
+      do {
+        if (i == RHS.size()) return false;  // RHS is shorter than LHS.
+        if (LHS[i] != RHS[i])
+          return LHS[i]->getName() < RHS[i]->getName();
+      } while (++i != LHS.size());
+      
+      return i != RHS.size();
+    }
+  };
+}
+
 void IntrinsicEmitter::EmitVerifier(const std::vector<CodeGenIntrinsic> &Ints, 
                                     std::ostream &OS) {
   OS << "// Verifier::visitIntrinsicFunctionCall code.\n";
   OS << "#ifdef GET_INTRINSIC_VERIFIER\n";
   OS << "  switch (ID) {\n";
   OS << "  default: assert(0 && \"Invalid intrinsic!\");\n";
-  for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
-    OS << "  case Intrinsic::" << Ints[i].EnumName << ":\t\t// "
-       << Ints[i].Name << "\n";
-    OS << "    Assert1(FTy->getNumParams() == " << Ints[i].ArgTypes.size()-1
-       << ",\n"
+  
+  // This checking can emit a lot of very common code.  To reduce the amount of
+  // code that we emit, batch up cases that have identical types.  This avoids
+  // problems where GCC can run out of memory compiling Verifier.cpp.
+  typedef std::map<std::vector<Record*>, std::vector<unsigned>, 
+    RecordListComparator> MapTy;
+  MapTy UniqueArgInfos;
+  
+  // Compute the unique argument type info.
+  for (unsigned i = 0, e = Ints.size(); i != e; ++i)
+    UniqueArgInfos[Ints[i].ArgTypeDefs].push_back(i);
+
+  // Loop through the array, emitting one comparison for each batch.
+  for (MapTy::iterator I = UniqueArgInfos.begin(),
+       E = UniqueArgInfos.end(); I != E; ++I) {
+    for (unsigned i = 0, e = I->second.size(); i != e; ++i) {
+      OS << "  case Intrinsic::" << Ints[I->second[i]].EnumName << ":\t\t// "
+         << Ints[I->second[i]].Name << "\n";
+    }
+    const std::vector<Record*> &ArgTypes = I->first;
+    OS << "    Assert1(FTy->getNumParams() == " << ArgTypes.size()-1 << ",\n"
        << "            \"Illegal # arguments for intrinsic function!\", IF);\n";
-    EmitTypeVerify(OS, "FTy->getReturnType()", Ints[i].ArgTypeDefs[0]);
-    for (unsigned j = 1; j != Ints[i].ArgTypes.size(); ++j)
-      EmitTypeVerify(OS, "FTy->getParamType(" + utostr(j-1) + ")",
-                     Ints[i].ArgTypeDefs[j]);
+    EmitTypeVerify(OS, "FTy->getReturnType()", ArgTypes[0]);
+    for (unsigned j = 1; j != ArgTypes.size(); ++j)
+      EmitTypeVerify(OS, "FTy->getParamType(" + utostr(j-1) + ")", ArgTypes[j]);
     OS << "    break;\n";
   }
   OS << "  }\n";
