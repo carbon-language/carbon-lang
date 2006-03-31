@@ -25,11 +25,12 @@ typedef union {
 #define	SHLTOK	269
 #define	SRATOK	270
 #define	SRLTOK	271
-#define	INTVAL	272
-#define	ID	273
-#define	VARNAME	274
-#define	STRVAL	275
-#define	CODEFRAGMENT	276
+#define	STRCONCATTOK	272
+#define	INTVAL	273
+#define	ID	274
+#define	VARNAME	275
+#define	STRVAL	276
+#define	CODEFRAGMENT	277
 
 
 extern YYSTYPE Filelval;
