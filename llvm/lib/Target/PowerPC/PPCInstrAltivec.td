@@ -445,6 +445,10 @@ def : Pat<(v4i32 vecspltish:$invec), (v4i32 (VSPLTISH vecspltish:$invec))>;
 def : Pat<(v4i32 vecspltisw:$invec), (v4i32 (VSPLTISW vecspltisw:$invec))>;
 
 // Logical Operations
+def : Pat<(v16i8 (vnot VRRC:$vA)), (v16i8 (VNOR VRRC:$vA, VRRC:$vA))>;
+def : Pat<(v8i16 (vnot VRRC:$vA)), (v8i16 (VNOR VRRC:$vA, VRRC:$vA))>;
+def : Pat<(v4i32 (vnot VRRC:$vA)), (v4i32 (VNOR VRRC:$vA, VRRC:$vA))>;
+
 def : Pat<(v16i8 (and VRRC:$A, VRRC:$B)), (v16i8 (VAND VRRC:$A, VRRC:$B))>;
 def : Pat<(v8i16 (and VRRC:$A, VRRC:$B)), (v8i16 (VAND VRRC:$A, VRRC:$B))>;
 def : Pat<(v16i8 (or  VRRC:$A, VRRC:$B)), (v16i8 (VOR  VRRC:$A, VRRC:$B))>;
