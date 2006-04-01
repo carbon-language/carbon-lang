@@ -3008,7 +3008,8 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
     } else if (Op0I->getOpcode() == Instruction::And && Op0I->hasOneUse()) {
       if (Op0I->getOperand(0) == Op1)                      // (A&B)^A -> (B&A)^A
         Op0I->swapOperands();
-      if (Op0I->getOperand(1) == Op1) {                    // (B&A)^A == ~B & A
+      if (Op0I->getOperand(1) == Op1 &&                    // (B&A)^A == ~B & A
+          !isa<ConstantInt>(Op1)) {  // Canonical form is (B&C)^C
         Instruction *N = BinaryOperator::createNot(Op0I->getOperand(0), "tmp");
         InsertNewInstBefore(N, I);
         return BinaryOperator::createAnd(N, Op1);
