@@ -136,7 +136,7 @@ namespace llvm {
 
     Value *visitMulExpr(SCEVMulExpr *S);
 
-    Value *visitUDivExpr(SCEVUDivExpr *S) {
+    Value *visitSDivExpr(SCEVSDivExpr *S) {
       const Type *Ty = S->getType();
       Value *LHS = expandInTy(S->getLHS(), Ty);
       Value *RHS = expandInTy(S->getRHS(), Ty);

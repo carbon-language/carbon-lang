@@ -23,7 +23,7 @@ namespace llvm {
   enum SCEVTypes {
     // These should be ordered in terms of increasing complexity to make the
     // folders simpler.
-    scConstant, scTruncate, scZeroExtend, scAddExpr, scMulExpr, scUDivExpr,
+    scConstant, scTruncate, scZeroExtend, scAddExpr, scMulExpr, scSDivExpr,
     scAddRecExpr, scUnknown, scCouldNotCompute
   };
 
@@ -293,16 +293,16 @@ namespace llvm {
 
 
   //===--------------------------------------------------------------------===//
-  /// SCEVUDivExpr - This class represents a binary unsigned division operation.
+  /// SCEVSDivExpr - This class represents a binary unsigned division operation.
   ///
-  class SCEVUDivExpr : public SCEV {
+  class SCEVSDivExpr : public SCEV {
     SCEVHandle LHS, RHS;
-    SCEVUDivExpr(const SCEVHandle &lhs, const SCEVHandle &rhs)
-      : SCEV(scUDivExpr), LHS(lhs), RHS(rhs) {}
+    SCEVSDivExpr(const SCEVHandle &lhs, const SCEVHandle &rhs)
+      : SCEV(scSDivExpr), LHS(lhs), RHS(rhs) {}
 
-    virtual ~SCEVUDivExpr();
+    virtual ~SCEVSDivExpr();
   public:
-    /// get method - This just gets and returns a new SCEVUDiv object.
+    /// get method - This just gets and returns a new SCEVSDiv object.
     ///
     static SCEVHandle get(const SCEVHandle &LHS, const SCEVHandle &RHS);
 
@@ -334,9 +334,9 @@ namespace llvm {
     void print(std::ostream &OS) const;
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
-    static inline bool classof(const SCEVUDivExpr *S) { return true; }
+    static inline bool classof(const SCEVSDivExpr *S) { return true; }
     static inline bool classof(const SCEV *S) {
-      return S->getSCEVType() == scUDivExpr;
+      return S->getSCEVType() == scSDivExpr;
     }
   };
 
@@ -496,8 +496,8 @@ namespace llvm {
         return ((SC*)this)->visitAddExpr((SCEVAddExpr*)S);
       case scMulExpr:
         return ((SC*)this)->visitMulExpr((SCEVMulExpr*)S);
-      case scUDivExpr:
-        return ((SC*)this)->visitUDivExpr((SCEVUDivExpr*)S);
+      case scSDivExpr:
+        return ((SC*)this)->visitSDivExpr((SCEVSDivExpr*)S);
       case scAddRecExpr:
         return ((SC*)this)->visitAddRecExpr((SCEVAddRecExpr*)S);
       case scUnknown:

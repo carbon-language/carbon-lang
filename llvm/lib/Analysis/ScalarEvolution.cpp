@@ -294,22 +294,22 @@ replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
 }
 
 
-// SCEVUDivs - Only allow the creation of one SCEVUDivExpr for any particular
+// SCEVSDivs - Only allow the creation of one SCEVSDivExpr for any particular
 // input.  Don't use a SCEVHandle here, or else the object will never be
 // deleted!
-static std::map<std::pair<SCEV*, SCEV*>, SCEVUDivExpr*> SCEVUDivs;
+static std::map<std::pair<SCEV*, SCEV*>, SCEVSDivExpr*> SCEVSDivs;
 
-SCEVUDivExpr::~SCEVUDivExpr() {
-  SCEVUDivs.erase(std::make_pair(LHS, RHS));
+SCEVSDivExpr::~SCEVSDivExpr() {
+  SCEVSDivs.erase(std::make_pair(LHS, RHS));
 }
 
-void SCEVUDivExpr::print(std::ostream &OS) const {
-  OS << "(" << *LHS << " /u " << *RHS << ")";
+void SCEVSDivExpr::print(std::ostream &OS) const {
+  OS << "(" << *LHS << " /s " << *RHS << ")";
 }
 
-const Type *SCEVUDivExpr::getType() const {
+const Type *SCEVSDivExpr::getType() const {
   const Type *Ty = LHS->getType();
-  if (Ty->isSigned()) Ty = Ty->getUnsignedVersion();
+  if (Ty->isUnsigned()) Ty = Ty->getSignedVersion();
   return Ty;
 }
 
@@ -540,7 +540,7 @@ SCEVHandle SCEVAddRecExpr::evaluateAtIteration(SCEVHandle It) const {
   for (unsigned i = 1, e = getNumOperands(); i != e; ++i) {
     SCEVHandle BC = PartialFact(It, i);
     Divisor *= i;
-    SCEVHandle Val = SCEVUDivExpr::get(SCEVMulExpr::get(BC, getOperand(i)),
+    SCEVHandle Val = SCEVSDivExpr::get(SCEVMulExpr::get(BC, getOperand(i)),
                                        SCEVUnknown::getIntegerSCEV(Divisor,Ty));
     Result = SCEVAddExpr::get(Result, Val);
   }
@@ -982,20 +982,20 @@ SCEVHandle SCEVMulExpr::get(std::vector<SCEVHandle> &Ops) {
   return Result;
 }
 
-SCEVHandle SCEVUDivExpr::get(const SCEVHandle &LHS, const SCEVHandle &RHS) {
+SCEVHandle SCEVSDivExpr::get(const SCEVHandle &LHS, const SCEVHandle &RHS) {
   if (SCEVConstant *RHSC = dyn_cast<SCEVConstant>(RHS)) {
     if (RHSC->getValue()->equalsInt(1))
-      return LHS;                            // X /u 1 --> x
+      return LHS;                            // X /s 1 --> x
     if (RHSC->getValue()->isAllOnesValue())
-      return SCEV::getNegativeSCEV(LHS);           // X /u -1  -->  -x
+      return SCEV::getNegativeSCEV(LHS);           // X /s -1  -->  -x
 
     if (SCEVConstant *LHSC = dyn_cast<SCEVConstant>(LHS)) {
       Constant *LHSCV = LHSC->getValue();
       Constant *RHSCV = RHSC->getValue();
-      if (LHSCV->getType()->isSigned())
+      if (LHSCV->getType()->isUnsigned())
         LHSCV = ConstantExpr::getCast(LHSCV,
-                                      LHSCV->getType()->getUnsignedVersion());
-      if (RHSCV->getType()->isSigned())
+                                      LHSCV->getType()->getSignedVersion());
+      if (RHSCV->getType()->isUnsigned())
         RHSCV = ConstantExpr::getCast(RHSCV, LHSCV->getType());
       return SCEVUnknown::get(ConstantExpr::getDiv(LHSCV, RHSCV));
     }
@@ -1003,8 +1003,8 @@ SCEVHandle SCEVUDivExpr::get(const SCEVHandle &LHS, const SCEVHandle &RHS) {
 
   // FIXME: implement folding of (X*4)/4 when we know X*4 doesn't overflow.
 
-  SCEVUDivExpr *&Result = SCEVUDivs[std::make_pair(LHS, RHS)];
-  if (Result == 0) Result = new SCEVUDivExpr(LHS, RHS);
+  SCEVSDivExpr *&Result = SCEVSDivs[std::make_pair(LHS, RHS)];
+  if (Result == 0) Result = new SCEVSDivExpr(LHS, RHS);
   return Result;
 }
 
@@ -1356,8 +1356,8 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
       return SCEVMulExpr::get(getSCEV(I->getOperand(0)),
                               getSCEV(I->getOperand(1)));
     case Instruction::Div:
-      if (V->getType()->isInteger() && V->getType()->isUnsigned())
-        return SCEVUDivExpr::get(getSCEV(I->getOperand(0)),
+      if (V->getType()->isInteger() && V->getType()->isSigned())
+        return SCEVSDivExpr::get(getSCEV(I->getOperand(0)),
                                  getSCEV(I->getOperand(1)));
       break;
 
@@ -1376,10 +1376,10 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
 
     case Instruction::Shr:
       if (ConstantUInt *SA = dyn_cast<ConstantUInt>(I->getOperand(1)))
-        if (V->getType()->isUnsigned()) {
+        if (V->getType()->isSigned()) {
           Constant *X = ConstantInt::get(V->getType(), 1);
           X = ConstantExpr::getShl(X, SA);
-          return SCEVUDivExpr::get(getSCEV(I->getOperand(0)), getSCEV(X));
+          return SCEVSDivExpr::get(getSCEV(I->getOperand(0)), getSCEV(X));
         }
       break;
 
@@ -1982,14 +1982,14 @@ SCEVHandle ScalarEvolutionsImpl::getSCEVAtScope(SCEV *V, const Loop *L) {
     return Comm;
   }
 
-  if (SCEVUDivExpr *UDiv = dyn_cast<SCEVUDivExpr>(V)) {
-    SCEVHandle LHS = getSCEVAtScope(UDiv->getLHS(), L);
+  if (SCEVSDivExpr *Div = dyn_cast<SCEVSDivExpr>(V)) {
+    SCEVHandle LHS = getSCEVAtScope(Div->getLHS(), L);
     if (LHS == UnknownValue) return LHS;
-    SCEVHandle RHS = getSCEVAtScope(UDiv->getRHS(), L);
+    SCEVHandle RHS = getSCEVAtScope(Div->getRHS(), L);
     if (RHS == UnknownValue) return RHS;
-    if (LHS == UDiv->getLHS() && RHS == UDiv->getRHS())
-      return UDiv;   // must be loop invariant
-    return SCEVUDivExpr::get(LHS, RHS);
+    if (LHS == Div->getLHS() && RHS == Div->getRHS())
+      return Div;   // must be loop invariant
+    return SCEVSDivExpr::get(LHS, RHS);
   }
 
   // If this is a loop recurrence for a loop that does not contain L, then we
