@@ -154,3 +154,15 @@ where c1/c2 are constants.
 For packed types, TargetData.cpp::getTypeInfo() returns alignment that is equal
 to the type size. It works but can be overly conservative as the alignment of
 specific packed types are target dependent.
+
+//===---------------------------------------------------------------------===//
+
+We should add 'unaligned load/store' nodes, and produce them from code like
+this:
+
+v4sf example(float *P) {
+  return (v4sf){P[0], P[1], P[2], P[3] };
+}
+
+//===---------------------------------------------------------------------===//
+
