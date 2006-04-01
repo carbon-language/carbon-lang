@@ -2508,6 +2508,30 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
     if (match(Op1, m_Or(m_Value(A), m_Value(B))))
       if (A == Op0 || B == Op0)    // A & (A | ?)  --> A
         return ReplaceInstUsesWith(I, Op0);
+    
+    if (Op0->hasOneUse() &&
+        match(Op0, m_Xor(m_Value(A), m_Value(B)))) {
+      if (A == Op1) {                                // (A^B)&A -> A&(A^B)
+        I.swapOperands();     // Simplify below
+        std::swap(Op0, Op1);
+      } else if (B == Op1) {                         // (A^B)&B -> B&(B^A)
+        cast<BinaryOperator>(Op0)->swapOperands();
+        I.swapOperands();     // Simplify below
+        std::swap(Op0, Op1);
+      }
+    }
+    if (Op1->hasOneUse() &&
+        match(Op1, m_Xor(m_Value(A), m_Value(B)))) {
+      if (B == Op0) {                                // B&(A^B) -> B&(B^A)
+        cast<BinaryOperator>(Op1)->swapOperands();
+        std::swap(A, B);
+      }
+      if (A == Op0) {                                // A&(A^B) -> A & ~B
+        Instruction *NotB = BinaryOperator::createNot(B, "tmp");
+        InsertNewInstBefore(NotB, I);
+        return BinaryOperator::createAnd(A, NotB);
+      }
+    }
   }
   
 
@@ -2943,14 +2967,14 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
       return ReplaceInstUsesWith(I,
                                 ConstantIntegral::getAllOnesValue(I.getType()));
 
-  if (Instruction *Op1I = dyn_cast<Instruction>(Op1))
+  if (BinaryOperator *Op1I = dyn_cast<BinaryOperator>(Op1))
     if (Op1I->getOpcode() == Instruction::Or) {
       if (Op1I->getOperand(0) == Op0) {              // B^(B|A) == (A|B)^B
-        cast<BinaryOperator>(Op1I)->swapOperands();
+        Op1I->swapOperands();
         I.swapOperands();
         std::swap(Op0, Op1);
       } else if (Op1I->getOperand(1) == Op0) {       // B^(A|B) == (A|B)^B
-        I.swapOperands();
+        I.swapOperands();     // Simplified below.
         std::swap(Op0, Op1);
       }
     } else if (Op1I->getOpcode() == Instruction::Xor) {
@@ -2958,15 +2982,22 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
         return ReplaceInstUsesWith(I, Op1I->getOperand(1));
       else if (Op0 == Op1I->getOperand(1))                   // A^(B^A) == B
         return ReplaceInstUsesWith(I, Op1I->getOperand(0));
+    } else if (Op1I->getOpcode() == Instruction::And && Op1I->hasOneUse()) {
+      if (Op1I->getOperand(0) == Op0)                      // A^(A&B) -> A^(B&A)
+        Op1I->swapOperands();
+      if (Op0 == Op1I->getOperand(1)) {                    // A^(B&A) -> (B&A)^A
+        I.swapOperands();     // Simplified below.
+        std::swap(Op0, Op1);
+      }
     }
 
-  if (Instruction *Op0I = dyn_cast<Instruction>(Op0))
+  if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0))
     if (Op0I->getOpcode() == Instruction::Or && Op0I->hasOneUse()) {
       if (Op0I->getOperand(0) == Op1)                // (B|A)^B == (A|B)^B
-        cast<BinaryOperator>(Op0I)->swapOperands();
+        Op0I->swapOperands();
       if (Op0I->getOperand(1) == Op1) {              // (A|B)^B == A & ~B
-        Value *NotB = InsertNewInstBefore(BinaryOperator::createNot(Op1,
-                                                     Op1->getName()+".not"), I);
+        Instruction *NotB = BinaryOperator::createNot(Op1, "tmp");
+        InsertNewInstBefore(NotB, I);
         return BinaryOperator::createAnd(Op0I->getOperand(0), NotB);
       }
     } else if (Op0I->getOpcode() == Instruction::Xor) {
@@ -2974,6 +3005,14 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
         return ReplaceInstUsesWith(I, Op0I->getOperand(1));
       else if (Op1 == Op0I->getOperand(1))                   // (B^A)^A == B
         return ReplaceInstUsesWith(I, Op0I->getOperand(0));
+    } else if (Op0I->getOpcode() == Instruction::And && Op0I->hasOneUse()) {
+      if (Op0I->getOperand(0) == Op1)                      // (A&B)^A -> (B&A)^A
+        Op0I->swapOperands();
+      if (Op0I->getOperand(1) == Op1) {                    // (B&A)^A == ~B & A
+        Instruction *N = BinaryOperator::createNot(Op0I->getOperand(0), "tmp");
+        InsertNewInstBefore(N, I);
+        return BinaryOperator::createAnd(N, Op1);
+      }
     }
 
   // (setcc1 A, B) ^ (setcc2 A, B) --> (setcc3 A, B)
