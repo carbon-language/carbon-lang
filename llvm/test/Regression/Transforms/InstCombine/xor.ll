@@ -166,3 +166,18 @@ bool %test24(int %c, int %d) {
         %tmp.4 = setne int %tmp.2, %c
         ret bool %tmp.4
 }
+
+int %test25(int %g, int %h) {
+	%h2 = xor int %h, -1
+        %tmp2 = and int %h2, %g
+        %tmp4 = xor int %tmp2, %g  ; (h2&g)^g -> ~h2 & g -> h & g
+        ret int %tmp4
+}
+
+int %test26(int %a, int %b) {
+	%b2 = xor int %b, -1
+        %tmp2 = xor int %a, %b2
+        %tmp4 = and int %tmp2, %a  ; (a^b2)&a -> ~b2 & a -> b & a
+        ret int %tmp4
+}
+
