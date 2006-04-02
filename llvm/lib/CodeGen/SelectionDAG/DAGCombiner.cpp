@@ -1601,6 +1601,39 @@ SDOperand DAGCombiner::visitSRL(SDNode *N) {
     return DAG.getNode(ISD::SRL, VT, N0.getOperand(0), 
                        DAG.getConstant(c1 + c2, N1.getValueType()));
   }
+  
+  // fold (srl (ctlz x), "5") -> x  iff x has one bit set (the low bit).
+  if (N1C && N0.getOpcode() == ISD::CTLZ && 
+      N1C->getValue() == Log2_32(MVT::getSizeInBits(VT))) {
+    uint64_t KnownZero, KnownOne, Mask = MVT::getIntVTBitMask(VT);
+    TLI.ComputeMaskedBits(N0.getOperand(0), Mask, KnownZero, KnownOne);
+    
+    // If any of the input bits are KnownOne, then the input couldn't be all
+    // zeros, thus the result of the srl will always be zero.
+    if (KnownOne) return DAG.getConstant(0, VT);
+    
+    // If all of the bits input the to ctlz node are known to be zero, then
+    // the result of the ctlz is "32" and the result of the shift is one.
+    uint64_t UnknownBits = ~KnownZero & Mask;
+    if (UnknownBits == 0) return DAG.getConstant(1, VT);
+    
+    // Otherwise, check to see if there is exactly one bit input to the ctlz.
+    if ((UnknownBits & (UnknownBits-1)) == 0) {
+      // Okay, we know that only that the single bit specified by UnknownBits
+      // could be set on input to the CTLZ node.  If this bit is set, the SRL
+      // will return 0, if it is clear, it returns 1.  Change the CTLZ/SRL pair
+      // to an SRL,XOR pair, which is likely to simplify more.
+      unsigned ShAmt = CountTrailingZeros_64(UnknownBits);
+      SDOperand Op = N0.getOperand(0);
+      if (ShAmt) {
+        Op = DAG.getNode(ISD::SRL, VT, Op,
+                         DAG.getConstant(ShAmt, TLI.getShiftAmountTy()));
+        AddToWorkList(Op.Val);
+      }
+      return DAG.getNode(ISD::XOR, VT, Op, DAG.getConstant(1, VT));
+    }
+  }
+  
   return SDOperand();
 }
 
