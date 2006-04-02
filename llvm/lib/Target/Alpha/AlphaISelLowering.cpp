@@ -585,10 +585,22 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
 		       DAG.getNode(AlphaISD::GlobalBaseReg, MVT::i64));
   }
 
-  case ISD::SDIV:
-  case ISD::UDIV:
   case ISD::UREM:
   case ISD::SREM:
+    //Expand only on constant case
+    if (Op.getOperand(1).getOpcode() == ISD::Constant) {
+      MVT::ValueType VT = Op.Val->getValueType(0);
+      unsigned Opc = Op.Val->getOpcode() == ISD::UREM ? ISD::UDIV : ISD::SDIV;
+      SDOperand Tmp1 = Op.Val->getOpcode() == ISD::UREM ?
+	BuildUDIVSequence(Op, &DAG) :
+	BuildSDIVSequence(Op, &DAG);
+      Tmp1 = DAG.getNode(ISD::MUL, VT, Tmp1, Op.getOperand(1));
+      Tmp1 = DAG.getNode(ISD::SUB, VT, Op.getOperand(0), Tmp1);
+      return Tmp1;
+    }
+    //fall through
+  case ISD::SDIV:
+  case ISD::UDIV:
     if (MVT::isInteger(Op.getValueType())) {
       const char* opstr = 0;
       switch(Op.getOpcode()) {
