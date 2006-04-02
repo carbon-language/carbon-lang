@@ -935,7 +935,10 @@ void TargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
                                                     uint64_t &KnownZero, 
                                                     uint64_t &KnownOne,
                                                     unsigned Depth) const {
-  assert(Op.getOpcode() >= ISD::BUILTIN_OP_END &&
+  assert((Op.getOpcode() >= ISD::BUILTIN_OP_END ||
+          Op.getOpcode() == ISD::INTRINSIC_WO_CHAIN ||
+          Op.getOpcode() == ISD::INTRINSIC_W_CHAIN ||
+          Op.getOpcode() == ISD::INTRINSIC_VOID) &&
          "Should use MaskedValueIsZero if you don't know whether Op"
          " is a target node!");
   KnownZero = 0;
