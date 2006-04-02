@@ -4539,6 +4539,10 @@ static bool isEliminableCastOfCast(const Type *SrcTy, const Type *MidTy,
       SrcTy->getPrimitiveSize() < MidTy->getPrimitiveSize())
     return true;
   
+  // Packed type conversions don't modify bits.
+  if (isa<PackedType>(SrcTy) && isa<PackedType>(MidTy) &&isa<PackedType>(DstTy))
+    return true;
+  
   return false;
 }
 
