@@ -75,6 +75,11 @@ const Type *Type::getPrimitiveType(TypeID IDNumber) {
 //
 bool Type::isLosslesslyConvertibleTo(const Type *Ty) const {
   if (this == Ty) return true;
+  
+  // Packed type conversions are always bitwise.
+  if (isa<PackedType>(this) && isa<PackedType>(Ty))
+    return true;
+  
   if ((!isPrimitiveType()    && !isa<PointerType>(this)) ||
       (!isa<PointerType>(Ty) && !Ty->isPrimitiveType())) return false;
 
