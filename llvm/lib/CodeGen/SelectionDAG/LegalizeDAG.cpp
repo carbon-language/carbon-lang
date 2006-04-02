@@ -1916,12 +1916,29 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
       
     switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
-    default: assert(0 && "Operation not supported");
+    default: assert(0 && "BinOp legalize operation not supported");
     case TargetLowering::Legal: break;
     case TargetLowering::Custom:
       Tmp1 = TLI.LowerOperation(Result, DAG);
       if (Tmp1.Val) Result = Tmp1;
       break;
+    case TargetLowering::Expand: {
+      assert(MVT::isVector(Node->getValueType(0)) &&
+             "Cannot expand this binary operator!");
+      // Expand the operation into a bunch of nasty scalar code.
+      std::vector<SDOperand> Ops;
+      MVT::ValueType EltVT = MVT::getVectorBaseType(Node->getValueType(0));
+      MVT::ValueType PtrVT = TLI.getPointerTy();
+      for (unsigned i = 0, e = MVT::getVectorNumElements(Node->getValueType(0));
+           i != e; ++i) {
+        SDOperand Idx = DAG.getConstant(i, PtrVT);
+        SDOperand LHS = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, EltVT, Tmp1, Idx);
+        SDOperand RHS = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, EltVT, Tmp2, Idx);
+        Ops.push_back(DAG.getNode(Node->getOpcode(), EltVT, LHS, RHS));
+      }
+      Result = DAG.getNode(ISD::BUILD_VECTOR, Node->getValueType(0), Ops);
+      break;
+    }
     }
     break;
     
