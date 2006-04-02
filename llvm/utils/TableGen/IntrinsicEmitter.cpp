@@ -214,9 +214,9 @@ EmitNoMemoryInfo(const std::vector<CodeGenIntrinsic> &Ints, std::ostream &OS) {
 
 void IntrinsicEmitter::
 EmitSideEffectInfo(const std::vector<CodeGenIntrinsic> &Ints, std::ostream &OS){
-  OS << "// isInstructionTriviallyDead code.\n";
+  OS << "// Return true if doesn't access or only reads memory.\n";
   OS << "#ifdef GET_SIDE_EFFECT_INFO\n";
-  OS << "  switch (F->getIntrinsicID()) {\n";
+  OS << "  switch (IntrinsicID) {\n";
   OS << "  default: break;\n";
   for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
     switch (Ints[i].ModRef) {
