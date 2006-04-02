@@ -194,6 +194,7 @@ private:
                         SDOperand &Lo, SDOperand &Hi);
 
   SDOperand LowerVEXTRACT_VECTOR_ELT(SDOperand Op);
+  SDOperand ExpandEXTRACT_VECTOR_ELT(SDOperand Op);
   
   SDOperand getIntPtrConstant(uint64_t Val) {
     return DAG.getConstant(Val, TLI.getPointerTy());
@@ -901,23 +902,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         break;
       }
       // FALLTHROUGH
-    case TargetLowering::Expand: {
-      // If the target doesn't support this, store the value to a temporary
-      // stack slot, then LOAD the scalar element back out.
-      SDOperand StackPtr = CreateStackTemporary(Tmp1.getValueType());
-      SDOperand Ch = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
-                                 Tmp1, StackPtr, DAG.getSrcValue(NULL));
-      
-      // Add the offset to the index.
-      unsigned EltSize = MVT::getSizeInBits(Result.getValueType())/8;
-      Tmp2 = DAG.getNode(ISD::MUL, Tmp2.getValueType(), Tmp2,
-                         DAG.getConstant(EltSize, Tmp2.getValueType()));
-      StackPtr = DAG.getNode(ISD::ADD, Tmp2.getValueType(), Tmp2, StackPtr);
-      
-      Result = DAG.getLoad(Result.getValueType(), Ch, StackPtr,
-                              DAG.getSrcValue(NULL));
+    case TargetLowering::Expand:
+      Result = ExpandEXTRACT_VECTOR_ELT(Result);
       break;
-    }
     }
     break;
 
@@ -2990,6 +2977,9 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   case ISD::VEXTRACT_VECTOR_ELT:
     Result = PromoteOp(LowerVEXTRACT_VECTOR_ELT(Op));
     break;
+  case ISD::EXTRACT_VECTOR_ELT:
+    Result = PromoteOp(ExpandEXTRACT_VECTOR_ELT(Op));
+    break;
   }
 
   assert(Result.Val && "Didn't set a result!");
@@ -3046,6 +3036,27 @@ SDOperand SelectionDAGLegalize::LowerVEXTRACT_VECTOR_ELT(SDOperand Op) {
     assert(0 && "unimp!");
     return SDOperand();
   }
+}
+
+/// ExpandEXTRACT_VECTOR_ELT - Expand an EXTRACT_VECTOR_ELT operation into
+/// memory traffic.
+SDOperand SelectionDAGLegalize::ExpandEXTRACT_VECTOR_ELT(SDOperand Op) {
+  SDOperand Vector = Op.getOperand(0);
+  SDOperand Idx    = Op.getOperand(1);
+  
+  // If the target doesn't support this, store the value to a temporary
+  // stack slot, then LOAD the scalar element back out.
+  SDOperand StackPtr = CreateStackTemporary(Vector.getValueType());
+  SDOperand Ch = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
+                             Vector, StackPtr, DAG.getSrcValue(NULL));
+  
+  // Add the offset to the index.
+  unsigned EltSize = MVT::getSizeInBits(Op.getValueType())/8;
+  Idx = DAG.getNode(ISD::MUL, Idx.getValueType(), Idx,
+                    DAG.getConstant(EltSize, Idx.getValueType()));
+  StackPtr = DAG.getNode(ISD::ADD, Idx.getValueType(), Idx, StackPtr);
+  
+  return DAG.getLoad(Op.getValueType(), Ch, StackPtr, DAG.getSrcValue(NULL));
 }
 
 
