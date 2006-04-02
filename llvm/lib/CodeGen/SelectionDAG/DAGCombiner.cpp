@@ -190,6 +190,7 @@ namespace {
     SDOperand visitSIGN_EXTEND_INREG(SDNode *N);
     SDOperand visitTRUNCATE(SDNode *N);
     SDOperand visitBIT_CONVERT(SDNode *N);
+    SDOperand visitVBIT_CONVERT(SDNode *N);
     SDOperand visitFADD(SDNode *N);
     SDOperand visitFSUB(SDNode *N);
     SDOperand visitFMUL(SDNode *N);
@@ -224,7 +225,7 @@ namespace {
                                SDOperand N3, ISD::CondCode CC);
     SDOperand SimplifySetCC(MVT::ValueType VT, SDOperand N0, SDOperand N1,
                             ISD::CondCode Cond, bool foldBooleans = true);
-    
+    SDOperand ConstantFoldVBIT_CONVERTofVBUILD_VECTOR(SDNode *, MVT::ValueType);
     SDOperand BuildSDIV(SDNode *N);
     SDOperand BuildUDIV(SDNode *N);    
 public:
@@ -627,6 +628,7 @@ SDOperand DAGCombiner::visit(SDNode *N) {
   case ISD::SIGN_EXTEND_INREG:  return visitSIGN_EXTEND_INREG(N);
   case ISD::TRUNCATE:           return visitTRUNCATE(N);
   case ISD::BIT_CONVERT:        return visitBIT_CONVERT(N);
+  case ISD::VBIT_CONVERT:       return visitVBIT_CONVERT(N);
   case ISD::FADD:               return visitFADD(N);
   case ISD::FSUB:               return visitFSUB(N);
   case ISD::FMUL:               return visitFMUL(N);
@@ -1940,7 +1942,7 @@ SDOperand DAGCombiner::visitBIT_CONVERT(SDNode *N) {
   
   if (N0.getOpcode() == ISD::BIT_CONVERT)  // conv(conv(x,t1),t2) -> conv(x,t2)
     return DAG.getNode(ISD::BIT_CONVERT, VT, N0.getOperand(0));
-  
+
   // fold (conv (load x)) -> (load (conv*)x)
   // FIXME: These xforms need to know that the resultant load doesn't need a 
   // higher alignment than the original!
@@ -1955,6 +1957,141 @@ SDOperand DAGCombiner::visitBIT_CONVERT(SDNode *N) {
   
   return SDOperand();
 }
+
+SDOperand DAGCombiner::visitVBIT_CONVERT(SDNode *N) {
+  SDOperand N0 = N->getOperand(0);
+  MVT::ValueType VT = N->getValueType(0);
+
+  // If the input is a VBUILD_VECTOR with all constant elements, fold this now.
+  // First check to see if this is all constant.
+  if (N0.getOpcode() == ISD::VBUILD_VECTOR && N0.Val->hasOneUse() &&
+      VT == MVT::Vector) {
+    bool isSimple = true;
+    for (unsigned i = 0, e = N0.getNumOperands()-2; i != e; ++i)
+      if (N0.getOperand(i).getOpcode() != ISD::UNDEF &&
+          N0.getOperand(i).getOpcode() != ISD::Constant &&
+          N0.getOperand(i).getOpcode() != ISD::ConstantFP) {
+        isSimple = false; 
+        break;
+      }
+        
+    if (isSimple) {
+      MVT::ValueType DestEltVT = cast<VTSDNode>(N->getOperand(2))->getVT();
+      return ConstantFoldVBIT_CONVERTofVBUILD_VECTOR(N0.Val, DestEltVT);
+    }
+  }
+  
+  return SDOperand();
+}
+
+/// ConstantFoldVBIT_CONVERTofVBUILD_VECTOR - We know that BV is a vbuild_vector
+/// node with Constant, ConstantFP or Undef operands.  DstEltVT indicates the 
+/// destination element value type.
+SDOperand DAGCombiner::
+ConstantFoldVBIT_CONVERTofVBUILD_VECTOR(SDNode *BV, MVT::ValueType DstEltVT) {
+  MVT::ValueType SrcEltVT = BV->getOperand(0).getValueType();
+  
+  // If this is already the right type, we're done.
+  if (SrcEltVT == DstEltVT) return SDOperand(BV, 0);
+  
+  unsigned SrcBitSize = MVT::getSizeInBits(SrcEltVT);
+  unsigned DstBitSize = MVT::getSizeInBits(DstEltVT);
+  
+  // If this is a conversion of N elements of one type to N elements of another
+  // type, convert each element.  This handles FP<->INT cases.
+  if (SrcBitSize == DstBitSize) {
+    std::vector<SDOperand> Ops;
+    for (unsigned i = 0, e = BV->getNumOperands()-2; i != e; ++i)
+      Ops.push_back(DAG.getNode(ISD::BIT_CONVERT, DstEltVT, BV->getOperand(i)));
+    Ops.push_back(*(BV->op_end()-2)); // Add num elements.
+    Ops.push_back(DAG.getValueType(DstEltVT));
+    return DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, Ops);
+  }
+  
+  // Otherwise, we're growing or shrinking the elements.  To avoid having to
+  // handle annoying details of growing/shrinking FP values, we convert them to
+  // int first.
+  if (MVT::isFloatingPoint(SrcEltVT)) {
+    // Convert the input float vector to a int vector where the elements are the
+    // same sizes.
+    assert((SrcEltVT == MVT::f32 || SrcEltVT == MVT::f64) && "Unknown FP VT!");
+    MVT::ValueType IntVT = SrcEltVT == MVT::f32 ? MVT::i32 : MVT::i64;
+    BV = ConstantFoldVBIT_CONVERTofVBUILD_VECTOR(BV, IntVT).Val;
+    SrcEltVT = IntVT;
+  }
+  
+  // Now we know the input is an integer vector.  If the output is a FP type,
+  // convert to integer first, then to FP of the right size.
+  if (MVT::isFloatingPoint(DstEltVT)) {
+    assert((DstEltVT == MVT::f32 || DstEltVT == MVT::f64) && "Unknown FP VT!");
+    MVT::ValueType TmpVT = DstEltVT == MVT::f32 ? MVT::i32 : MVT::i64;
+    SDNode *Tmp = ConstantFoldVBIT_CONVERTofVBUILD_VECTOR(BV, TmpVT).Val;
+    
+    // Next, convert to FP elements of the same size.
+    return ConstantFoldVBIT_CONVERTofVBUILD_VECTOR(Tmp, DstEltVT);
+  }
+  
+  // Okay, we know the src/dst types are both integers of differing types.
+  // Handling growing first.
+  assert(MVT::isInteger(SrcEltVT) && MVT::isInteger(DstEltVT));
+  if (SrcBitSize < DstBitSize) {
+    unsigned NumInputsPerOutput = DstBitSize/SrcBitSize;
+    
+    std::vector<SDOperand> Ops;
+    for (unsigned i = 0, e = BV->getNumOperands()-2; i != e;
+         i += NumInputsPerOutput) {
+      bool isLE = TLI.isLittleEndian();
+      uint64_t NewBits = 0;
+      bool EltIsUndef = true;
+      for (unsigned j = 0; j != NumInputsPerOutput; ++j) {
+        // Shift the previously computed bits over.
+        NewBits <<= SrcBitSize;
+        SDOperand Op = BV->getOperand(i+ (isLE ? (NumInputsPerOutput-j-1) : j));
+        if (Op.getOpcode() == ISD::UNDEF) continue;
+        EltIsUndef = false;
+        
+        NewBits |= cast<ConstantSDNode>(Op)->getValue();
+      }
+      
+      if (EltIsUndef)
+        Ops.push_back(DAG.getNode(ISD::UNDEF, DstEltVT));
+      else
+        Ops.push_back(DAG.getConstant(NewBits, DstEltVT));
+    }
+
+    Ops.push_back(DAG.getConstant(Ops.size(), MVT::i32)); // Add num elements.
+    Ops.push_back(DAG.getValueType(DstEltVT));            // Add element size.
+    return DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, Ops);
+  }
+  
+  // Finally, this must be the case where we are shrinking elements: each input
+  // turns into multiple outputs.
+  unsigned NumOutputsPerInput = SrcBitSize/DstBitSize;
+  std::vector<SDOperand> Ops;
+  for (unsigned i = 0, e = BV->getNumOperands()-2; i != e; ++i) {
+    if (BV->getOperand(i).getOpcode() == ISD::UNDEF) {
+      for (unsigned j = 0; j != NumOutputsPerInput; ++j)
+        Ops.push_back(DAG.getNode(ISD::UNDEF, DstEltVT));
+      continue;
+    }
+    uint64_t OpVal = cast<ConstantSDNode>(BV->getOperand(i))->getValue();
+
+    for (unsigned j = 0; j != NumOutputsPerInput; ++j) {
+      unsigned ThisVal = OpVal & ((1ULL << DstBitSize)-1);
+      OpVal >>= DstBitSize;
+      Ops.push_back(DAG.getConstant(ThisVal, DstEltVT));
+    }
+
+    // For big endian targets, swap the order of the pieces of each element.
+    if (!TLI.isLittleEndian())
+      std::reverse(Ops.end()-NumOutputsPerInput, Ops.end());
+  }
+  Ops.push_back(DAG.getConstant(Ops.size(), MVT::i32)); // Add num elements.
+  Ops.push_back(DAG.getValueType(DstEltVT));            // Add element size.
+  return DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, Ops);
+}
+
+
 
 SDOperand DAGCombiner::visitFADD(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
