@@ -176,6 +176,7 @@ namespace {
     SDOperand visitAND(SDNode *N);
     SDOperand visitOR(SDNode *N);
     SDOperand visitXOR(SDNode *N);
+    SDOperand visitVBinOp(SDNode *N, ISD::NodeType IntOp, ISD::NodeType FPOp);
     SDOperand visitSHL(SDNode *N);
     SDOperand visitSRA(SDNode *N);
     SDOperand visitSRL(SDNode *N);
@@ -656,6 +657,14 @@ SDOperand DAGCombiner::visit(SDNode *N) {
   case ISD::VBUILD_VECTOR:      return visitVBUILD_VECTOR(N);
   case ISD::VECTOR_SHUFFLE:     return visitVECTOR_SHUFFLE(N);
   case ISD::VVECTOR_SHUFFLE:    return visitVVECTOR_SHUFFLE(N);
+  case ISD::VADD:               return visitVBinOp(N, ISD::ADD , ISD::FADD);
+  case ISD::VSUB:               return visitVBinOp(N, ISD::SUB , ISD::FSUB);
+  case ISD::VMUL:               return visitVBinOp(N, ISD::MUL , ISD::FMUL);
+  case ISD::VSDIV:              return visitVBinOp(N, ISD::SDIV, ISD::FDIV);
+  case ISD::VUDIV:              return visitVBinOp(N, ISD::UDIV, ISD::UDIV);
+  case ISD::VAND:               return visitVBinOp(N, ISD::AND , ISD::AND);
+  case ISD::VOR:                return visitVBinOp(N, ISD::OR  , ISD::OR);
+  case ISD::VXOR:               return visitVBinOp(N, ISD::XOR , ISD::XOR);
   }
   return SDOperand();
 }
@@ -2679,6 +2688,46 @@ SDOperand DAGCombiner::visitVVECTOR_SHUFFLE(SDNode *N) {
   }
   if (isIdentity) return N->getOperand(1);
 
+  return SDOperand();
+}
+
+/// visitVBinOp - Visit a binary vector operation, like VADD.  IntOp indicates
+/// the scalar operation of the vop if it is operating on an integer vector
+/// (e.g. ADD) and FPOp indicates the FP version (e.g. FADD).
+SDOperand DAGCombiner::visitVBinOp(SDNode *N, ISD::NodeType IntOp, 
+                                   ISD::NodeType FPOp) {
+  MVT::ValueType EltType = cast<VTSDNode>(*(N->op_end()-1))->getVT();
+  ISD::NodeType ScalarOp = MVT::isInteger(EltType) ? IntOp : FPOp;
+  SDOperand LHS = N->getOperand(0);
+  SDOperand RHS = N->getOperand(1);
+  
+  // If the LHS and RHS are VBUILD_VECTOR nodes, see if we can constant fold
+  // this operation.
+  if (LHS.getOpcode() == ISD::VBUILD_VECTOR && 
+      RHS.getOpcode() == ISD::VBUILD_VECTOR) {
+    std::vector<SDOperand> Ops;
+    for (unsigned i = 0, e = LHS.getNumOperands()-2; i != e; ++i) {
+      SDOperand LHSOp = LHS.getOperand(i);
+      SDOperand RHSOp = RHS.getOperand(i);
+      // If these two elements can't be folded, bail out.
+      if ((LHSOp.getOpcode() != ISD::UNDEF &&
+           LHSOp.getOpcode() != ISD::Constant &&
+           LHSOp.getOpcode() != ISD::ConstantFP) ||
+          (RHSOp.getOpcode() != ISD::UNDEF &&
+           RHSOp.getOpcode() != ISD::Constant &&
+           RHSOp.getOpcode() != ISD::ConstantFP))
+        break;
+      Ops.push_back(DAG.getNode(ScalarOp, EltType, LHSOp, RHSOp));
+      assert((Ops.back().getOpcode() == ISD::UNDEF ||
+              Ops.back().getOpcode() == ISD::Constant ||
+              Ops.back().getOpcode() == ISD::ConstantFP) &&
+             "Scalar binop didn't fold!");
+    }
+    Ops.push_back(*(LHS.Val->op_end()-2));
+    Ops.push_back(*(LHS.Val->op_end()-1));
+    return DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, Ops);
+  }
+  
   return SDOperand();
 }
 
