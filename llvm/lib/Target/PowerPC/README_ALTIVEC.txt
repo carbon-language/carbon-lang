@@ -137,3 +137,14 @@ Instcombine llvm.ppc.altivec.vperm with an immediate into a shuffle operation.
 
 Handle VECTOR_SHUFFLE nodes with the appropriate shuffle mask with vsldoi,
 vpkuhum and vpkuwum.
+
+//===----------------------------------------------------------------------===//
+
+Implement multiply for vector integer types, to avoid the horrible scalarized
+code produced by legalize.
+
+void test(vector int *X, vector int *Y) {
+  *X = *X * *Y;
+}
+
+//===----------------------------------------------------------------------===//
