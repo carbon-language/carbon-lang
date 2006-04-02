@@ -112,11 +112,6 @@ be constants.  The verifier should enforce this constraint.
 
 //===----------------------------------------------------------------------===//
 
-We should instcombine the lvx/stvx intrinsics into loads/stores if we know that
-the loaded address is 16-byte aligned.
-
-//===----------------------------------------------------------------------===//
-
 Instead of writting a pattern for type-agnostic operations (e.g. gen-zero, load,
 store, and, ...) in every supported type, make legalize do the work.  We should
 have a canonical type that we want operations changed to (e.g. v4i32 for
