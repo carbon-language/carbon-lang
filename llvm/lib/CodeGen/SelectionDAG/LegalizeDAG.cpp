@@ -14,15 +14,24 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
-#include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
+#include "llvm/Support/MathExtras.h"
+#include "llvm/Support/CommandLine.h"
 #include <iostream>
 #include <map>
 using namespace llvm;
+
+#ifndef NDEBUG
+static cl::opt<bool>
+ViewLegalizeDAGs("view-legalize-dags", cl::Hidden,
+                 cl::desc("Pop up a window to show dags before legalize"));
+#else
+static const bool ViewLegalizeDAGs = 0;
+#endif
 
 //===----------------------------------------------------------------------===//
 /// SelectionDAGLegalize - This takes an arbitrary SelectionDAG as input and
@@ -4628,6 +4637,8 @@ SDOperand SelectionDAGLegalize::PackVectorOp(SDOperand Op,
 // SelectionDAG::Legalize - This is the entry point for the file.
 //
 void SelectionDAG::Legalize() {
+  if (ViewLegalizeDAGs) viewGraph();
+
   /// run - This is the main entry point to this class.
   ///
   SelectionDAGLegalize(*this).LegalizeDAG();

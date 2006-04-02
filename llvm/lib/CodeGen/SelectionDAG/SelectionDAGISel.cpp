@@ -54,8 +54,7 @@ static cl::opt<bool>
 ViewSchedDAGs("view-sched-dags", cl::Hidden,
           cl::desc("Pop up a window to show sched dags as they are processed"));
 #else
-static const bool ViewISelDAGs = 0;
-static const bool ViewSchedDAGs = 0;
+static const bool ViewISelDAGs = 0, ViewSchedDAGs = 0;
 #endif
 
 // Scheduling heuristics
