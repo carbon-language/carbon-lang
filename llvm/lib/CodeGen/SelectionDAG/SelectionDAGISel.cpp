@@ -1236,16 +1236,32 @@ static bool IntrinsicCannotAccessMemory(unsigned IntrinsicID) {
   return false;
 }
 
+// IntrinsicOnlyReadsMemory - Return true if the specified intrinsic doesn't
+// have any side-effects or if it only reads memory.
+static bool IntrinsicOnlyReadsMemory(unsigned IntrinsicID) {
+#define GET_SIDE_EFFECT_INFO
+#include "llvm/Intrinsics.gen"
+#undef GET_SIDE_EFFECT_INFO
+  return false;
+}
+
 /// visitTargetIntrinsic - Lower a call of a target intrinsic to an INTRINSIC
 /// node.
 void SelectionDAGLowering::visitTargetIntrinsic(CallInst &I, 
                                                 unsigned Intrinsic) {
   bool HasChain = !IntrinsicCannotAccessMemory(Intrinsic);
+  bool OnlyLoad = HasChain && IntrinsicOnlyReadsMemory(Intrinsic);
   
   // Build the operand list.
   std::vector<SDOperand> Ops;
-  if (HasChain)   // If this intrinsic has side-effects, chainify it.
-    Ops.push_back(getRoot());
+  if (HasChain) {  // If this intrinsic has side-effects, chainify it.
+    if (OnlyLoad) {
+      // We don't need to serialize loads against other loads.
+      Ops.push_back(DAG.getRoot());
+    } else { 
+      Ops.push_back(getRoot());
+    }
+  }
   
   // Add the intrinsic ID as an integer operand.
   Ops.push_back(DAG.getConstant(Intrinsic, TLI.getPointerTy()));
@@ -1295,8 +1311,13 @@ void SelectionDAGLowering::visitTargetIntrinsic(CallInst &I,
   else
     Result = DAG.getNode(ISD::INTRINSIC_VOID, VTs, Ops);
 
-  if (HasChain)
-    DAG.setRoot(Result.getValue(Result.Val->getNumValues()-1));
+  if (HasChain) {
+    SDOperand Chain = Result.getValue(Result.Val->getNumValues()-1);
+    if (OnlyLoad)
+      PendingLoads.push_back(Chain);
+    else
+      DAG.setRoot(Chain);
+  }
   if (I.getType() != Type::VoidTy) {
     if (const PackedType *PTy = dyn_cast<PackedType>(I.getType())) {
       MVT::ValueType EVT = TLI.getValueType(PTy->getElementType());
