@@ -5437,6 +5437,28 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   } else {
     switch (II->getIntrinsicID()) {
     default: break;
+    case Intrinsic::ppc_altivec_lvx:
+    case Intrinsic::ppc_altivec_lvxl:
+      // Turn lvx -> load if the pointer is known aligned.
+      if (GetKnownAlignment(II->getOperand(1), TD) >= 16) {
+        Instruction *Ptr = new CastInst(II->getOperand(1), 
+                                        PointerType::get(II->getType()), "tmp");
+        InsertNewInstBefore(Ptr, CI);
+        return new LoadInst(Ptr);
+      }
+      break;
+    case Intrinsic::ppc_altivec_stvx:
+    case Intrinsic::ppc_altivec_stvxl:
+      // Turn stvx -> store if the pointer is known aligned.
+      if (GetKnownAlignment(II->getOperand(2), TD) >= 16) {
+        const Type *OpTy = II->getOperand(1)->getType();
+        Instruction *Ptr = new CastInst(II->getOperand(2), 
+                                        PointerType::get(OpTy), "tmp");
+        InsertNewInstBefore(Ptr, CI);
+        return new StoreInst(II->getOperand(1), Ptr);
+      }
+      break;
+      
     case Intrinsic::stackrestore: {
       // If the save is right next to the restore, remove the restore.  This can
       // happen when variable allocas are DCE'd.
