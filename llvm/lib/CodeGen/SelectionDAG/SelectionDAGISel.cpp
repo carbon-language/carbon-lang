@@ -1663,21 +1663,30 @@ void RegsForValue::AddInlineAsmOperands(unsigned Code, SelectionDAG &DAG,
 static const TargetRegisterClass *
 isAllocatableRegister(unsigned Reg, MachineFunction &MF,
                       const TargetLowering &TLI, const MRegisterInfo *MRI) {
+  MVT::ValueType FoundVT = MVT::Other;
+  const TargetRegisterClass *FoundRC = 0;
   for (MRegisterInfo::regclass_iterator RCI = MRI->regclass_begin(),
        E = MRI->regclass_end(); RCI != E; ++RCI) {
+    MVT::ValueType ThisVT = MVT::Other;
+
     const TargetRegisterClass *RC = *RCI;
     // If none of the the value types for this register class are valid, we 
     // can't use it.  For example, 64-bit reg classes on 32-bit targets.
-    bool isLegal = false;
     for (TargetRegisterClass::vt_iterator I = RC->vt_begin(), E = RC->vt_end();
          I != E; ++I) {
       if (TLI.isTypeLegal(*I)) {
-        isLegal = true;
-        break;
+        // If we have already found this register in a different register class,
+        // choose the one with the largest VT specified.  For example, on
+        // PowerPC, we favor f64 register classes over f32.
+        if (FoundVT == MVT::Other || 
+            MVT::getSizeInBits(FoundVT) < MVT::getSizeInBits(*I)) {
+          ThisVT = *I;
+          break;
+        }
       }
     }
     
-    if (!isLegal) continue;
+    if (ThisVT == MVT::Other) continue;
     
     // NOTE: This isn't ideal.  In particular, this might allocate the
     // frame pointer in functions that need it (due to them not being taken
@@ -1685,10 +1694,15 @@ isAllocatableRegister(unsigned Reg, MachineFunction &MF,
     // yet).  This is a slight code pessimization, but should still work.
     for (TargetRegisterClass::iterator I = RC->allocation_order_begin(MF),
          E = RC->allocation_order_end(MF); I != E; ++I)
-      if (*I == Reg)
-        return RC;
+      if (*I == Reg) {
+        // We found a matching register class.  Keep looking at others in case
+        // we find one with larger registers that this physreg is also in.
+        FoundRC = RC;
+        FoundVT = ThisVT;
+        break;
+      }
   }
-  return 0;
+  return FoundRC;
 }    
 
 RegsForValue SelectionDAGLowering::
