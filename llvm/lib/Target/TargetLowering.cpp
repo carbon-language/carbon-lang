@@ -619,9 +619,10 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
   }
   case ISD::ADD:
   case ISD::SUB:
-    // Just use ComputeMaskedBits to compute output bits, there are no
-    // simplifications that can be done here, and sub always demands all input
-    // bits.
+  case ISD::INTRINSIC_WO_CHAIN:
+  case ISD::INTRINSIC_W_CHAIN:
+  case ISD::INTRINSIC_VOID:
+    // Just use ComputeMaskedBits to compute output bits.
     ComputeMaskedBits(Op, DemandedMask, KnownZero, KnownOne, Depth);
     break;
   }
@@ -916,8 +917,12 @@ void TargetLowering::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
   }
   default:
     // Allow the target to implement this method for its nodes.
-    if (Op.getOpcode() >= ISD::BUILTIN_OP_END)
+    if (Op.getOpcode() >= ISD::BUILTIN_OP_END) {
+  case ISD::INTRINSIC_WO_CHAIN:
+  case ISD::INTRINSIC_W_CHAIN:
+  case ISD::INTRINSIC_VOID:
       computeMaskedBitsForTargetNode(Op, Mask, KnownZero, KnownOne);
+    }
     return;
   }
 }
