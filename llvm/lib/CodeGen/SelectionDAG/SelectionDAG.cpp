@@ -2749,10 +2749,6 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::VADD:   return "vadd";
   case ISD::VSUB:   return "vsub";
   case ISD::VMUL:   return "vmul";
-    
-  case ISD::VADD:   return "vadd";
-  case ISD::VSUB:   return "vsub";
-  case ISD::VMUL:   return "vmul";
   case ISD::VSDIV:  return "vsdiv";
   case ISD::VUDIV:  return "vudiv";
   case ISD::VAND:   return "vand";
