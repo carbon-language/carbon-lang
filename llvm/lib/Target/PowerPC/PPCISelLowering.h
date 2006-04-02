@@ -133,6 +133,11 @@ namespace llvm {
     
     virtual SDOperand PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
 
+    virtual void computeMaskedBitsForTargetNode(const SDOperand Op,
+                                                uint64_t Mask,
+                                                uint64_t &KnownZero, 
+                                                uint64_t &KnownOne,
+                                                unsigned Depth = 0) const;
     /// LowerArguments - This hook must be implemented to indicate how we should
     /// lower the arguments for the specified function, into the specified DAG.
     virtual std::vector<SDOperand>

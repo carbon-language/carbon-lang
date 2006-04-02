@@ -760,7 +760,7 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     return DAG.getNode(PPCISD::VPERM, V1.getValueType(), V1, V2, VPermMask);
   }
   case ISD::INTRINSIC_WO_CHAIN: {
-    unsigned IntNo=cast<ConstantSDNode>(Op.getOperand(0))->getValue();
+    unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(0))->getValue();
     
     // If this is a lowered altivec predicate compare, CompareOpc is set to the
     // opcode number of the comparison.
@@ -1408,6 +1408,39 @@ SDOperand PPCTargetLowering::PerformDAGCombine(SDNode *N,
   
   return SDOperand();
 }
+
+void PPCTargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
+                                                       uint64_t Mask,
+                                                       uint64_t &KnownZero, 
+                                                       uint64_t &KnownOne,
+                                                       unsigned Depth) const {
+  KnownZero = 0;
+  KnownOne = 0;
+  switch (Op.getOpcode()) {
+  default: break;
+  case ISD::INTRINSIC_WO_CHAIN: {
+    switch (cast<ConstantSDNode>(Op.getOperand(0))->getValue()) {
+    default: break;
+    case Intrinsic::ppc_altivec_vcmpbfp_p:
+    case Intrinsic::ppc_altivec_vcmpeqfp_p:
+    case Intrinsic::ppc_altivec_vcmpequb_p:
+    case Intrinsic::ppc_altivec_vcmpequh_p:
+    case Intrinsic::ppc_altivec_vcmpequw_p:
+    case Intrinsic::ppc_altivec_vcmpgefp_p:
+    case Intrinsic::ppc_altivec_vcmpgtfp_p:
+    case Intrinsic::ppc_altivec_vcmpgtsb_p:
+    case Intrinsic::ppc_altivec_vcmpgtsh_p:
+    case Intrinsic::ppc_altivec_vcmpgtsw_p:
+    case Intrinsic::ppc_altivec_vcmpgtub_p:
+    case Intrinsic::ppc_altivec_vcmpgtuh_p:
+    case Intrinsic::ppc_altivec_vcmpgtuw_p:
+      KnownZero = ~1U;  // All bits but the low one are known to be zero.
+      break;
+    }        
+  }
+  }
+}
+
 
 /// getConstraintType - Given a constraint letter, return the type of
 /// constraint it is for this target.
