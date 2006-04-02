@@ -24,6 +24,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
+#include "llvm/Support/MathExtras.h"
 #include <limits>
 #include <cmath>
 using namespace llvm;
@@ -621,6 +622,81 @@ static unsigned getSize(const Type *Ty) {
   return S ? S : 8;  // Treat pointers at 8 bytes
 }
 
+/// CastConstantPacked - Convert the specified ConstantPacked node to the
+/// specified packed type.  At this point, we know that the elements of the
+/// input packed constant are all simple integer or FP values.
+static Constant *CastConstantPacked(ConstantPacked *CP,
+                                    const PackedType *DstTy) {
+  unsigned SrcNumElts = CP->getType()->getNumElements();
+  unsigned DstNumElts = DstTy->getNumElements();
+  const Type *SrcEltTy = CP->getType()->getElementType();
+  const Type *DstEltTy = DstTy->getElementType();
+  
+  // If both vectors have the same number of elements (thus, the elements
+  // are the same size), perform the conversion now.
+  if (SrcNumElts == DstNumElts) {
+    std::vector<Constant*> Result;
+    
+    // If the src and dest elements are both integers, just cast each one
+    // which will do the appropriate bit-convert.
+    if (SrcEltTy->isIntegral() && DstEltTy->isIntegral()) {
+      for (unsigned i = 0; i != SrcNumElts; ++i)
+        Result.push_back(ConstantExpr::getCast(CP->getOperand(i),
+                                               DstEltTy));
+      return ConstantPacked::get(Result);
+    }
+    
+    if (SrcEltTy->isIntegral()) {
+      // Otherwise, this is an int-to-fp cast.
+      assert(DstEltTy->isFloatingPoint());
+      if (DstEltTy->getTypeID() == Type::DoubleTyID) {
+        for (unsigned i = 0; i != SrcNumElts; ++i) {
+          double V =
+            BitsToDouble(cast<ConstantInt>(CP->getOperand(i))->getRawValue());
+          Result.push_back(ConstantFP::get(Type::DoubleTy, V));
+        }
+        return ConstantPacked::get(Result);
+      }
+      assert(DstEltTy == Type::FloatTy && "Unknown fp type!");
+      for (unsigned i = 0; i != SrcNumElts; ++i) {
+        float V =
+        BitsToFloat(cast<ConstantInt>(CP->getOperand(i))->getRawValue());
+        Result.push_back(ConstantFP::get(Type::FloatTy, V));
+      }
+      return ConstantPacked::get(Result);
+    }
+    
+    // Otherwise, this is an fp-to-int cast.
+    assert(SrcEltTy->isFloatingPoint() && DstEltTy->isIntegral());
+    
+    if (SrcEltTy->getTypeID() == Type::DoubleTyID) {
+      for (unsigned i = 0; i != SrcNumElts; ++i) {
+        uint64_t V =
+          DoubleToBits(cast<ConstantFP>(CP->getOperand(i))->getValue());
+        Constant *C = ConstantUInt::get(Type::ULongTy, V);
+        Result.push_back(ConstantExpr::getCast(C, DstEltTy));
+      }
+      return ConstantPacked::get(Result);
+    }
+
+    assert(SrcEltTy->getTypeID() == Type::FloatTyID);
+    for (unsigned i = 0; i != SrcNumElts; ++i) {
+      unsigned V = FloatToBits(cast<ConstantFP>(CP->getOperand(i))->getValue());
+      Constant *C = ConstantUInt::get(Type::UIntTy, V);
+      Result.push_back(ConstantExpr::getCast(C, DstEltTy));
+    }
+    return ConstantPacked::get(Result);
+  }
+  
+  // Otherwise, this is a cast that changes element count and size.  Handle
+  // casts which shrink the elements here.
+  
+  // FIXME: We need to know endianness to do this!
+  
+  return 0;
+}
+
+
 Constant *llvm::ConstantFoldCastInstruction(const Constant *V,
                                             const Type *DestTy) {
   if (V->getType() == DestTy) return (Constant*)V;
@@ -688,6 +764,38 @@ Constant *llvm::ConstantFoldCastInstruction(const Constant *V,
       if (ElTy == DPTy->getElementType())
         return ConstantExpr::getGetElementPtr(const_cast<Constant*>(V),IdxList);
     }
+      
+  // Handle casts from one packed constant to another.  We know that the src and
+  // dest type have the same size.
+  if (const PackedType *DestPTy = dyn_cast<PackedType>(DestTy)) {
+    if (const PackedType *SrcTy = dyn_cast<PackedType>(V->getType())) {
+      assert(DestPTy->getElementType()->getPrimitiveSizeInBits() * 
+                 DestPTy->getNumElements()  ==
+             SrcTy->getElementType()->getPrimitiveSizeInBits() * 
+             SrcTy->getNumElements() && "Not cast between same sized vectors!");
+      if (isa<ConstantAggregateZero>(V))
+        return Constant::getNullValue(DestTy);
+      if (isa<UndefValue>(V))
+        return UndefValue::get(DestTy);
+      if (const ConstantPacked *CP = dyn_cast<ConstantPacked>(V)) {
+        // This is a cast from a ConstantPacked of one type to a ConstantPacked
+        // of another type.  Check to see if all elements of the input are
+        // simple.
+        bool AllSimpleConstants = true;
+        for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i) {
+          if (!isa<ConstantInt>(CP->getOperand(i)) &&
+              !isa<ConstantFP>(CP->getOperand(i))) {
+            AllSimpleConstants = false;
+            break;
+          }
+        }
+            
+        // If all of the elements are simple constants, we can fold this.
+        if (AllSimpleConstants)
+          return CastConstantPacked(const_cast<ConstantPacked*>(CP), DestPTy);
+      }
+    }
+  }
 
   ConstRules &Rules = ConstRules::get(V, V);
 
