@@ -196,8 +196,16 @@ MachineInstr *PPCRegisterInfo::foldMemoryOperand(MachineInstr *MI,
 // pointer register.  This is true if the function has variable sized allocas or
 // if frame pointer elimination is disabled.
 //
-static bool hasFP(MachineFunction &MF) {
-  return NoFramePointerElim || MF.getFrameInfo()->hasVarSizedObjects();
+static bool hasFP(const MachineFunction &MF) {
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  unsigned TargetAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
+
+  // If frame pointers are forced, if there are variable sized stack objects,
+  // or if there is an object on the stack that requires more alignment than is
+  // normally provided, use a frame pointer.
+  // 
+  return NoFramePointerElim || MFI->hasVarSizedObjects() ||
+         MFI->getMaxAlignment() > TargetAlign;
 }
 
 void PPCRegisterInfo::
@@ -331,9 +339,12 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
+  
+  // Do we have a frame pointer for this function?
+  bool HasFP = hasFP(MF);
 
-  // Scan the first few instructions of the prolog, looking for an UPDATE_VRSAVE
-  // instruction.  If we find it, process it.
+  // Scan the prolog, looking for an UPDATE_VRSAVE instruction.  If we find it,
+  // process it.
   for (unsigned i = 0; MBBI != MBB.end(); ++i, ++MBBI) {
     if (MBBI->getOpcode() == PPC::UPDATE_VRSAVE) {
       HandleVRSaveUpdate(MBBI, MF.getUsedPhysregs());
@@ -364,7 +375,7 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // If we are a leaf function, and use up to 224 bytes of stack space,
   // and don't have a frame pointer, then we do not need to adjust the stack
   // pointer (we fit in the Red Zone).
-  if ((NumBytes == 0) || (NumBytes <= 224 && !hasFP(MF) && !MFI->hasCalls() &&
+  if ((NumBytes == 0) || (NumBytes <= 224 && !HasFP && !MFI->hasCalls() &&
                           MaxAlign <= TargetAlign)) {
     MFI->setStackSize(0);
     return;
@@ -374,7 +385,7 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // of the stack and round the size to a multiple of the alignment.
   unsigned Align = std::max(TargetAlign, MaxAlign);
   unsigned GPRSize = 4;
-  unsigned Size = hasFP(MF) ? GPRSize + GPRSize : GPRSize;
+  unsigned Size = HasFP ? GPRSize + GPRSize : GPRSize;
   NumBytes = (NumBytes+Size+Align-1)/Align*Align;
 
   // Update frame info to pretend that this is part of the stack...
@@ -407,7 +418,7 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   }
   
   // If there is a frame pointer, copy R1 (SP) into R31 (FP)
-  if (hasFP(MF)) {
+  if (HasFP) {
     BuildMI(MBB, MBBI, PPC::STW, 3)
       .addReg(PPC::R31).addSImm(GPRSize).addReg(PPC::R1);
     BuildMI(MBB, MBBI, PPC::OR4, 2, PPC::R31).addReg(PPC::R1).addReg(PPC::R1);
