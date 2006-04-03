@@ -280,6 +280,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::LOAD,             MVT::v4f32, Legal);
     setOperationAction(ISD::BUILD_VECTOR,     MVT::v4f32, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE,   MVT::v4f32, Custom);
+    setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4f32, Custom);
   }
 
   if (Subtarget->hasSSE2()) {
@@ -316,7 +317,9 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::VECTOR_SHUFFLE,   MVT::v8i16, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE,   MVT::v4i32, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE,   MVT::v2i64, Custom);
+    setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v2f64, Custom);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v8i16, Custom);
+    setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4i32, Custom);
     setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v8i16, Custom);
   }
 
@@ -1484,11 +1487,20 @@ bool X86::isSHUFPMask(SDNode *N) {
     // Dest { 2, 1 } <=  shuffle( Dest { 1, 0 },  Src { 3, 2 }
     // Expect bit 0 == 1, bit1 == 2
     SDOperand Bit0 = N->getOperand(0);
+    if (Bit0.getOpcode() != ISD::UNDEF) {
+      assert(isa<ConstantSDNode>(Bit0) && "Invalid VECTOR_SHUFFLE mask!");
+      if (cast<ConstantSDNode>(Bit0)->getValue() != 1)
+        return false;
+    }
+
     SDOperand Bit1 = N->getOperand(1);
-    assert(isa<ConstantSDNode>(Bit0) && isa<ConstantSDNode>(Bit1) &&
-           "Invalid VECTOR_SHUFFLE mask!");
-    return (cast<ConstantSDNode>(Bit0)->getValue() == 1 &&
-            cast<ConstantSDNode>(Bit1)->getValue() == 2);
+    if (Bit1.getOpcode() != ISD::UNDEF) {
+      assert(isa<ConstantSDNode>(Bit1) && "Invalid VECTOR_SHUFFLE mask!");
+      if (cast<ConstantSDNode>(Bit1)->getValue() != 2)
+        return false;
+    }
+
+    return true;
   }
 
   if (NumElems != 4) return false;
@@ -2660,15 +2672,55 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     return SDOperand();
   }
   case ISD::EXTRACT_VECTOR_ELT: {
-    // Transform it so it match pextrw which produces a 32-bit result.
+    if (!isa<ConstantSDNode>(Op.getOperand(1)))
+        return SDOperand();
+
     MVT::ValueType VT = Op.getValueType();
     if (MVT::getSizeInBits(VT) == 16) {
+      // Transform it so it match pextrw which produces a 32-bit result.
       MVT::ValueType EVT = (MVT::ValueType)(VT+1);
       SDOperand Extract = DAG.getNode(X86ISD::PEXTRW, EVT,
                                       Op.getOperand(0), Op.getOperand(1));
       SDOperand Assert  = DAG.getNode(ISD::AssertZext, EVT, Extract,
                                       DAG.getValueType(VT));
       return DAG.getNode(ISD::TRUNCATE, VT, Assert);
+    } else if (MVT::getSizeInBits(VT) == 32) {
+      SDOperand Vec = Op.getOperand(0);
+      unsigned Idx = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
+      if (Idx == 0)
+        return Op;
+
+      // TODO: if Idex == 2, we can use unpckhps
+      // SHUFPS the element to the lowest double word, then movss.
+      MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(4);
+      SDOperand IdxNode = DAG.getConstant((Idx < 2) ? Idx : Idx+4,
+                                          MVT::getVectorBaseType(MaskVT));
+      std::vector<SDOperand> IdxVec;
+      IdxVec.push_back(DAG.getConstant(Idx, MVT::getVectorBaseType(MaskVT)));
+      IdxVec.push_back(DAG.getNode(ISD::UNDEF, MVT::getVectorBaseType(MaskVT)));
+      IdxVec.push_back(DAG.getNode(ISD::UNDEF, MVT::getVectorBaseType(MaskVT)));
+      IdxVec.push_back(DAG.getNode(ISD::UNDEF, MVT::getVectorBaseType(MaskVT)));
+      SDOperand Mask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, IdxVec);
+      Vec = DAG.getNode(ISD::VECTOR_SHUFFLE, Vec.getValueType(),
+                        Vec, Vec, Mask);
+      return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, VT, Vec,
+                         DAG.getConstant(0, MVT::i32));
+    } else if (MVT::getSizeInBits(VT) == 64) {
+      SDOperand Vec = Op.getOperand(0);
+      unsigned Idx = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
+      if (Idx == 0)
+        return Op;
+
+      // UNPCKHPD the element to the lowest double word, then movsd.
+      MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(4);
+      std::vector<SDOperand> IdxVec;
+      IdxVec.push_back(DAG.getConstant(1, MVT::getVectorBaseType(MaskVT)));
+      IdxVec.push_back(DAG.getNode(ISD::UNDEF, MVT::getVectorBaseType(MaskVT)));
+      SDOperand Mask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, IdxVec);
+      Vec = DAG.getNode(ISD::VECTOR_SHUFFLE, Vec.getValueType(),
+                        Vec, DAG.getNode(ISD::UNDEF, Vec.getValueType()), Mask);
+      return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, VT, Vec,
+                         DAG.getConstant(0, MVT::i32));
     }
 
     return SDOperand();

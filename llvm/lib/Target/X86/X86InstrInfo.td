@@ -284,6 +284,7 @@ def i16immZExt8  : PatLeaf<(i16 imm), [{
 def loadi8  : PatFrag<(ops node:$ptr), (i8  (load node:$ptr))>;
 def loadi16 : PatFrag<(ops node:$ptr), (i16 (load node:$ptr))>;
 def loadi32 : PatFrag<(ops node:$ptr), (i32 (load node:$ptr))>;
+def loadi64 : PatFrag<(ops node:$ptr), (i64 (load node:$ptr))>;
 
 def loadf32 : PatFrag<(ops node:$ptr), (f32 (load node:$ptr))>;
 def loadf64 : PatFrag<(ops node:$ptr), (f64 (load node:$ptr))>;
