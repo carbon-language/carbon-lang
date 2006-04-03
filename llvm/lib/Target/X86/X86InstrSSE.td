@@ -171,6 +171,45 @@ class S3DI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
 
 //===----------------------------------------------------------------------===//
 // Helpers for defining instructions that directly correspond to intrinsics.
+class SS_Intrr<bits<8> o, string asm, Intrinsic IntId, ValueType Ty>
+  : SSI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2), asm,
+        [(set VR128:$dst, (Ty (IntId VR128:$src1, VR128:$src2)))]>;
+class SS_Intrm<bits<8> o, string asm, Intrinsic IntId, ValueType Ty>
+  : SSI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f32mem:$src2), asm,
+        [(set VR128:$dst, (Ty (IntId VR128:$src1, (load addr:$src2))))]>;
+class SD_Intrr<bits<8> o, string asm, Intrinsic IntId, ValueType Ty>
+  : SDI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2), asm,
+        [(set VR128:$dst, (Ty (IntId VR128:$src1, VR128:$src2)))]>;
+class SD_Intrm<bits<8> o, string asm, Intrinsic IntId, ValueType Ty>
+  : SDI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2), asm,
+        [(set VR128:$dst, (Ty (IntId VR128:$src1, (load addr:$src2))))]>;
+
+class PS_Intr<bits<8> o, string asm, Intrinsic IntId>
+  : PSI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src), asm,
+        [(set VR128:$dst, (IntId VR128:$src))]>;
+class PS_Intm<bits<8> o, string asm, Intrinsic IntId>
+  : PSI<o, MRMSrcMem, (ops VR128:$dst, f32mem:$src), asm,
+        [(set VR128:$dst, (IntId (loadv4f32 addr:$src)))]>;
+class PD_Intr<bits<8> o, string asm, Intrinsic IntId>
+  : PDI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src), asm,
+        [(set VR128:$dst, (IntId VR128:$src))]>;
+class PD_Intm<bits<8> o, string asm, Intrinsic IntId>
+  : PDI<o, MRMSrcMem, (ops VR128:$dst, f64mem:$src), asm,
+        [(set VR128:$dst, (IntId (loadv2f64 addr:$src)))]>;
+
+class PS_Intrr<bits<8> o, string asm, Intrinsic IntId>
+  : PSI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2), asm,
+        [(set VR128:$dst, (IntId VR128:$src1, VR128:$src2))]>;
+class PS_Intrm<bits<8> o, string asm, Intrinsic IntId>
+  : PSI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f32mem:$src2), asm,
+        [(set VR128:$dst, (IntId VR128:$src1, (loadv4f32 addr:$src2)))]>;
+class PD_Intrr<bits<8> o, string asm, Intrinsic IntId>
+  : PDI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2), asm,
+        [(set VR128:$dst, (IntId VR128:$src1, VR128:$src2))]>;
+class PD_Intrm<bits<8> o, string asm, Intrinsic IntId>
+  : PDI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2), asm,
+        [(set VR128:$dst, (IntId VR128:$src1, (loadv2f64 addr:$src2)))]>;
+
 class S3S_Intrr<bits<8> o, string asm, Intrinsic IntId>
   : S3SI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2), asm,
          [(set VR128:$dst, (v4f32 (IntId VR128:$src1, VR128:$src2)))]>;
@@ -435,46 +474,22 @@ def Int_RCPSSrm : SSI<0x53, MRMSrcMem, (ops VR128:$dst, f32mem:$src),
                                         (load addr:$src)))]>;
 
 let isTwoAddress = 1 in {
-def Int_MAXSSrr : SSI<0x5F, MRMSrcReg, (ops VR128:$dst, VR128:$src1,
-                                        VR128:$src2),
-                      "maxss {$src2, $dst|$dst, $src2}",
-                      [(set VR128:$dst, (int_x86_sse_max_ss VR128:$src1,
-                                         VR128:$src2))]>;
-def Int_MAXSSrm : SSI<0x5F, MRMSrcMem, (ops VR128:$dst, VR128:$src1,
-                                        f32mem:$src2),
-                      "maxss {$src2, $dst|$dst, $src2}",
-                      [(set VR128:$dst, (int_x86_sse_max_ss VR128:$src1,
-                                         (load addr:$src2)))]>;
-def Int_MAXSDrr : SDI<0x5F, MRMSrcReg, (ops VR128:$dst, VR128:$src1,
-                                        VR128:$src2),
-                      "maxsd {$src2, $dst|$dst, $src2}",
-                      [(set VR128:$dst, (int_x86_sse2_max_sd VR128:$src1,
-                                         VR128:$src2))]>;
-def Int_MAXSDrm : SDI<0x5F, MRMSrcMem, (ops VR128:$dst, VR128:$src1,
-                                        f64mem:$src2),
-                      "maxsd {$src2, $dst|$dst, $src2}",
-                      [(set VR128:$dst, (int_x86_sse2_max_sd VR128:$src1,
-                                         (load addr:$src2)))]>;
-def Int_MINSSrr : SSI<0x5D, MRMSrcReg, (ops VR128:$dst, VR128:$src1,
-                                        VR128:$src2),
-                      "minss {$src2, $dst|$dst, $src2}",
-                      [(set VR128:$dst, (int_x86_sse_min_ss VR128:$src1,
-                                         VR128:$src2))]>;
-def Int_MINSSrm : SSI<0x5D, MRMSrcMem, (ops VR128:$dst, VR128:$src1,
-                                        f32mem:$src2),
-                      "minss {$src2, $dst|$dst, $src2}",
-                      [(set VR128:$dst, (int_x86_sse_min_ss VR128:$src1,
-                                         (load addr:$src2)))]>;
-def Int_MINSDrr : SDI<0x5D, MRMSrcReg, (ops VR128:$dst, VR128:$src1,
-                                        VR128:$src2),
-                      "minsd {$src2, $dst|$dst, $src2}",
-                      [(set VR128:$dst, (int_x86_sse2_min_sd VR128:$src1,
-                                         VR128:$src2))]>;
-def Int_MINSDrm : SDI<0x5D, MRMSrcMem, (ops VR128:$dst, VR128:$src1,
-                                        f64mem:$src2),
-                      "minsd {$src2, $dst|$dst, $src2}",
-                      [(set VR128:$dst, (int_x86_sse2_min_sd VR128:$src1,
-                                         (load addr:$src2)))]>;
+def Int_MAXSSrr : SS_Intrr<0x5F, "maxss {$src2, $dst|$dst, $src2}",
+                           int_x86_sse_max_ss, v4f32>;
+def Int_MAXSSrm : SS_Intrm<0x5F, "maxss {$src2, $dst|$dst, $src2}",
+                           int_x86_sse_max_ss, v4f32>;
+def Int_MAXSDrr : SD_Intrr<0x5F, "maxsd {$src2, $dst|$dst, $src2}",
+                           int_x86_sse2_max_sd, v2f64>;
+def Int_MAXSDrm : SD_Intrm<0x5F, "maxsd {$src2, $dst|$dst, $src2}",
+                           int_x86_sse2_max_sd, v2f64>;
+def Int_MINSSrr : SS_Intrr<0x5D, "minss {$src2, $dst|$dst, $src2}",
+                           int_x86_sse_min_ss, v4f32>;
+def Int_MINSSrm : SS_Intrm<0x5D, "minss {$src2, $dst|$dst, $src2}",
+                           int_x86_sse_min_ss, v4f32>;
+def Int_MINSDrr : SD_Intrr<0x5D, "minsd {$src2, $dst|$dst, $src2}",
+                           int_x86_sse2_min_sd, v2f64>;
+def Int_MINSDrm : SD_Intrm<0x5D, "minsd {$src2, $dst|$dst, $src2}",
+                           int_x86_sse2_min_sd, v2f64>;
 }
 
 // Conversion instructions
@@ -863,44 +878,42 @@ def SUBPDrm : PDI<0x5C, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                                             (load addr:$src2))))]>;
 }
 
-def SQRTPSrr : PSI<0x51, MRMSrcReg, (ops VR128:$dst, VR128:$src),
-                   "sqrtps {$src, $dst|$dst, $src}",
-                   [(set VR128:$dst, (v4f32 (fsqrt VR128:$src)))]>;
-def SQRTPSrm : PSI<0x51, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
-                   "sqrtps {$src, $dst|$dst, $src}",
-                   [(set VR128:$dst, (v4f32 (fsqrt (load addr:$src))))]>;
-def SQRTPDrr : PDI<0x51, MRMSrcReg, (ops VR128:$dst, VR128:$src),
-                   "sqrtpd {$src, $dst|$dst, $src}",
-                   [(set VR128:$dst, (v2f64 (fsqrt VR128:$src)))]>;
-def SQRTPDrm : PDI<0x51, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
-                   "sqrtpd {$src, $dst|$dst, $src}",
-                   [(set VR128:$dst, (v2f64 (fsqrt (load addr:$src))))]>;
+def SQRTPSrr : PS_Intr<0x51, "sqrtps {$src, $dst|$dst, $src}",
+                        int_x86_sse_sqrt_ps>;
+def SQRTPSrm : PS_Intm<0x51, "sqrtps {$src, $dst|$dst, $src}",
+                        int_x86_sse_sqrt_ps>;
+def SQRTPDrr : PD_Intr<0x51, "sqrtpd {$src, $dst|$dst, $src}",
+                        int_x86_sse2_sqrt_pd>;
+def SQRTPDrm : PD_Intm<0x51, "sqrtpd {$src, $dst|$dst, $src}",
+                        int_x86_sse2_sqrt_pd>;
 
-def RSQRTPSrr : PSI<0x52, MRMSrcReg, (ops VR128:$dst, VR128:$src),
-                    "rsqrtps {$src, $dst|$dst, $src}", []>;
-def RSQRTPSrm : PSI<0x52, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
-                    "rsqrtps {$src, $dst|$dst, $src}", []>;
-def RCPPSrr : PSI<0x53, MRMSrcReg, (ops VR128:$dst, VR128:$src),
-                  "rcpps {$src, $dst|$dst, $src}", []>;
-def RCPPSrm : PSI<0x53, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
-                  "rcpps {$src, $dst|$dst, $src}", []>;
+def RSQRTPSrr : PS_Intr<0x52, "rsqrtps {$src, $dst|$dst, $src}",
+                         int_x86_sse_rsqrt_ps>;
+def RSQRTPSrm : PS_Intm<0x52, "rsqrtps {$src, $dst|$dst, $src}",
+                         int_x86_sse_rsqrt_ps>;
+def RCPPSrr : PS_Intr<0x53, "rcpps {$src, $dst|$dst, $src}",
+                       int_x86_sse_rcp_ps>;
+def RCPPSrm : PS_Intm<0x53, "rcpps {$src, $dst|$dst, $src}",
+                       int_x86_sse_rcp_ps>;
 
-def MAXPSrr : PSI<0x5F, MRMSrcReg, (ops VR128:$dst, VR128:$src),
-                  "maxps {$src, $dst|$dst, $src}", []>;
-def MAXPSrm : PSI<0x5F, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
-                  "maxps {$src, $dst|$dst, $src}", []>;
-def MAXPDrr : PDI<0x5F, MRMSrcReg, (ops VR128:$dst, VR128:$src),
-                  "maxpd {$src, $dst|$dst, $src}", []>;
-def MAXPDrm : PDI<0x5F, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
-                  "maxpd {$src, $dst|$dst, $src}", []>;
-def MINPSrr : PSI<0x5D, MRMSrcReg, (ops VR128:$dst, VR128:$src),
-                  "minps {$src, $dst|$dst, $src}", []>;
-def MINPSrm : PSI<0x5D, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
-                  "minps {$src, $dst|$dst, $src}", []>;
-def MINPDrr : PDI<0x5D, MRMSrcReg, (ops VR128:$dst, VR128:$src),
-                  "minpd {$src, $dst|$dst, $src}", []>;
-def MINPDrm : PDI<0x5D, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
-                  "minpd {$src, $dst|$dst, $src}", []>;
+let isTwoAddress = 1 in {
+def MAXPSrr : PS_Intrr<0x5F, "maxps {$src2, $dst|$dst, $src2}",
+                       int_x86_sse_max_ps>;
+def MAXPSrm : PS_Intrm<0x5F, "maxps {$src2, $dst|$dst, $src2}",
+                       int_x86_sse_max_ps>;
+def MAXPDrr : PD_Intrr<0x5F, "maxpd {$src2, $dst|$dst, $src2}",
+                       int_x86_sse2_max_pd>;
+def MAXPDrm : PD_Intrm<0x5F, "maxpd {$src2, $dst|$dst, $src2}",
+                       int_x86_sse2_max_pd>;
+def MINPSrr : PS_Intrr<0x5D, "minps {$src2, $dst|$dst, $src2}",
+                       int_x86_sse_min_ps>;
+def MINPSrm : PS_Intrm<0x5D, "minps {$src2, $dst|$dst, $src2}",
+                       int_x86_sse_min_ps>;
+def MINPDrr : PD_Intrr<0x5D, "minpd {$src2, $dst|$dst, $src2}",
+                       int_x86_sse2_min_pd>;
+def MINPDrm : PD_Intrm<0x5D, "minpd {$src2, $dst|$dst, $src2}",
+                       int_x86_sse2_min_pd>;
+}
 
 // Logical
 let isTwoAddress = 1 in {
