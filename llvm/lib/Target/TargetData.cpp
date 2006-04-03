@@ -217,7 +217,7 @@ static inline void getTypeInfo(const Type *Ty, const TargetData *TD,
     Size = AlignedSize*PTy->getNumElements();
     // FIXME: The alignments of specific packed types are target dependent.
     // For now, just set it to be equal to Size.
-    Alignment = (Size+7)/8;
+    Alignment = Size;
     return;
   }
   case Type::StructTyID: {
