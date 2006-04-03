@@ -2756,9 +2756,12 @@ SDOperand DAGCombiner::visitVBinOp(SDNode *N, ISD::NodeType IntOp,
               Ops.back().getOpcode() == ISD::ConstantFP) &&
              "Scalar binop didn't fold!");
     }
-    Ops.push_back(*(LHS.Val->op_end()-2));
-    Ops.push_back(*(LHS.Val->op_end()-1));
-    return DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, Ops);
+    
+    if (Ops.size() == LHS.getNumOperands()-2) {
+      Ops.push_back(*(LHS.Val->op_end()-2));
+      Ops.push_back(*(LHS.Val->op_end()-1));
+      return DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, Ops);
+    }
   }
   
   return SDOperand();
