@@ -60,6 +60,10 @@ def iZAPX : SDNodeXForm<imm, [{ // get imm to ZAPi
 def nearP2X : SDNodeXForm<imm, [{
   return getI64Imm(Log2_64(getNearPower2((uint64_t)N->getValue())));
 }]>;
+def nearP2RemX : SDNodeXForm<imm, [{
+  uint64_t x = abs(N->getValue() - getNearPower2((uint64_t)N->getValue()));
+  return getI64Imm(Log2_64(x));
+}]>;
 
 def immUExt8  : PatLeaf<(imm), [{ //imm fits in 8 bit zero extended field
   return (uint64_t)N->getValue() == (uint8_t)N->getValue();
@@ -84,26 +88,39 @@ def immFPZ  : PatLeaf<(fpimm), [{ //the only fpconstant nodes are +/- 0.0
   return true;
 }]>;
 def immRem1 : PatLeaf<(imm), [{
-  return (int64_t)getNearPower2((uint64_t)N->getValue()) - (int64_t)N->getValue() == -1;
+  return N->getValue() - getNearPower2((uint64_t)N->getValue()) == 1;
 }]>;
 def immRem3 : PatLeaf<(imm), [{
-  return (int64_t)getNearPower2((uint64_t)N->getValue()) - (int64_t)N->getValue() == -3;
+  return N->getValue() - getNearPower2((uint64_t)N->getValue()) == 3;
+}]>;
+def immRem4 : PatLeaf<(imm), [{
+  return N->getValue() - getNearPower2((uint64_t)N->getValue()) == 4;
 }]>;
 def immRem5 : PatLeaf<(imm), [{
-  return (int64_t)getNearPower2((uint64_t)N->getValue()) - (int64_t)N->getValue() == -5;
+  return N->getValue() - getNearPower2((uint64_t)N->getValue()) == 5;
 }]>;
 def immRem1n : PatLeaf<(imm), [{
-  return (int64_t)getNearPower2((uint64_t)N->getValue()) - N->getValue() == 1;
+  return getNearPower2((uint64_t)N->getValue()) - N->getValue() == 1;
 }]>;
 def immRem3n : PatLeaf<(imm), [{
-  return (int64_t)getNearPower2((uint64_t)N->getValue()) - N->getValue() == 3;
+  return getNearPower2((uint64_t)N->getValue()) - N->getValue() == 3;
+}]>;
+def immRem4n : PatLeaf<(imm), [{
+  return getNearPower2((uint64_t)N->getValue()) - N->getValue() == 4;
 }]>;
 def immRem5n : PatLeaf<(imm), [{
-  return (int64_t)getNearPower2((uint64_t)N->getValue()) - N->getValue() == 5;
+  return getNearPower2((uint64_t)N->getValue()) - N->getValue() == 5;
+}]>;
+def immRemP2n : PatLeaf<(imm), [{
+  return isPowerOf2_64(getNearPower2((uint64_t)N->getValue()) - N->getValue());
+}]>;
+def immRemP2 : PatLeaf<(imm), [{
+  return isPowerOf2_64(N->getValue() - getNearPower2((uint64_t)N->getValue()));
 }]>;
 def immUExt8ME : PatLeaf<(imm), [{ //use this imm for mulqi
-  int64_t d = (int64_t)getNearPower2((uint64_t)N->getValue()) - N->getValue();
-  switch (abs(d)) {
+  int64_t d =  abs((int64_t)N->getValue() - (int64_t)getNearPower2((uint64_t)N->getValue()));
+  if (isPowerOf2_64(d)) return false;
+  switch (d) {
     case 1: case 3: case 5: return false; 
     default: return (uint64_t)N->getValue() == (uint8_t)N->getValue();
   };
@@ -915,6 +932,10 @@ def : Pat<(mul GPRC:$RA, immRem3:$imm),
           (ADDQ (SL GPRC:$RA, (nearP2X immRem3:$imm)), (S4SUBQ GPRC:$RA, GPRC:$RA))>;
 def : Pat<(mul GPRC:$RA, immRem5:$imm),
           (ADDQ (SL GPRC:$RA, (nearP2X immRem5:$imm)), (S4ADDQ GPRC:$RA, GPRC:$RA))>;
+def : Pat<(mul GPRC:$RA, immRem4:$imm),
+          (S4ADDQ GPRC:$RA, (SL GPRC:$RA, (nearP2X immRem4:$imm)))>;
+def : Pat<(mul GPRC:$RA, immRemP2:$imm),
+          (ADDQ (SL GPRC:$RA, (nearP2X immRemP2:$imm)), (SLi GPRC:$RA, (nearP2RemX immRemP2:$imm)))>;
 
 def : Pat<(mul GPRC:$RA, immRem1n:$imm), 
           (SUBQ (SL GPRC:$RA, (nearP2X immRem1n:$imm)), GPRC:$RA)>;
@@ -922,4 +943,5 @@ def : Pat<(mul GPRC:$RA, immRem3n:$imm),
           (SUBQ (SL GPRC:$RA, (nearP2X immRem3n:$imm)), (S4SUBQ GPRC:$RA, GPRC:$RA))>;
 def : Pat<(mul GPRC:$RA, immRem5n:$imm),
           (SUBQ (SL GPRC:$RA, (nearP2X immRem5n:$imm)), (S4ADDQ GPRC:$RA, GPRC:$RA))>;
-
+def : Pat<(mul GPRC:$RA, immRemP2n:$imm),
+          (SUBQ (SL GPRC:$RA, (nearP2X immRemP2n:$imm)), (SLi GPRC:$RA, (nearP2RemX immRemP2n:$imm)))>;
