@@ -2017,8 +2017,8 @@ SDOperand DAGCombiner::visitVBIT_CONVERT(SDNode *N) {
         break;
       }
         
-    if (isSimple) {
-      MVT::ValueType DestEltVT = cast<VTSDNode>(N->getOperand(2))->getVT();
+    MVT::ValueType DestEltVT = cast<VTSDNode>(N->getOperand(2))->getVT();
+    if (isSimple && !MVT::isVector(DestEltVT)) {
       return ConstantFoldVBIT_CONVERTofVBUILD_VECTOR(N0.Val, DestEltVT);
     }
   }
