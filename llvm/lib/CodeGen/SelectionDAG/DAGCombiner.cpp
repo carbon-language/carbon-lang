@@ -819,31 +819,6 @@ SDOperand DAGCombiner::visitMUL(SDNode *N) {
                                             TLI.getShiftAmountTy())));
   }
 
-  //These two might be better as:
-  // mul x, ((1 << c) + cn) -> (x << c) + (x * cn)
-  // where TargetInfo tells us cn is a cheap constant to multiply by
-
-  // fold (mul x, (1 << c) + 1) -> (x << c) + x
-  //FIXME: there should be a target hint to allow other constants based on 
-  //       expense of mul
-  if (N1C && isPowerOf2_64(N1C->getSignExtended() - 1)) {
-    return DAG.getNode(ISD::ADD, VT, 
-		       DAG.getNode(ISD::SHL, VT, N0,
-			   DAG.getConstant(Log2_64(N1C->getSignExtended() - 1),
-						   TLI.getShiftAmountTy())),
-		       N0);
-  }
-  // fold (mul x, (1 << c) - 1) -> (x << c) - x
-  //FIXME: there should be a target hint to allow other constants based on 
-  //       the expense of mul
-  if (N1C && isPowerOf2_64(N1C->getSignExtended() + 1)) {
-    return DAG.getNode(ISD::SUB, VT, 
-		       DAG.getNode(ISD::SHL, VT, N0,
-			   DAG.getConstant(Log2_64(N1C->getSignExtended() + 1),
-					   TLI.getShiftAmountTy())),
-		       N0);
-  }
-
   // (mul (shl X, c1), c2) -> (mul X, c2 << c1)
   if (N1C && N0.getOpcode() == ISD::SHL && 
       isa<ConstantSDNode>(N0.getOperand(1))) {
