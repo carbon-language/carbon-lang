@@ -71,6 +71,18 @@ namespace {
       return build;
     }
 
+    static uint64_t getNearPower2(uint64_t x) {
+      if (!x) return 0;
+      unsigned at = CountLeadingZeros_64(x);
+      uint64_t complow = 1 << (63 - at);
+      uint64_t comphigh = 1 << (64 - at);
+      //std::cerr << x << ":" << complow << ":" << comphigh << "\n";
+      if (abs(complow - x) < abs(comphigh - x))
+        return complow;
+      else
+        return comphigh;
+    }
+
     static bool isFPZ(SDOperand N) {
       ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(N);
       return (CN && (CN->isExactlyValue(+0.0) || CN->isExactlyValue(-0.0)));

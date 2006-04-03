@@ -57,6 +57,9 @@ def LH16 : SDNodeXForm<imm, [{ //ldah part of constant (or more if too big)
 def iZAPX : SDNodeXForm<imm, [{ // get imm to ZAPi
   return getI64Imm(get_zapImm((uint64_t)N->getValue()));
 }]>;
+def nearP2X : SDNodeXForm<imm, [{
+  return getI64Imm(Log2_64(getNearPower2((uint64_t)N->getValue())));
+}]>;
 
 def immUExt8  : PatLeaf<(imm), [{ //imm fits in 8 bit zero extended field
   return (uint64_t)N->getValue() == (uint8_t)N->getValue();
@@ -79,6 +82,31 @@ def immZAP  : PatLeaf<(imm), [{ //imm is good for zapi
 }], iZAPX>;
 def immFPZ  : PatLeaf<(fpimm), [{ //the only fpconstant nodes are +/- 0.0
   return true;
+}]>;
+def immRem1 : PatLeaf<(imm), [{
+  return (int64_t)getNearPower2((uint64_t)N->getValue()) - (int64_t)N->getValue() == -1;
+}]>;
+def immRem3 : PatLeaf<(imm), [{
+  return (int64_t)getNearPower2((uint64_t)N->getValue()) - (int64_t)N->getValue() == -3;
+}]>;
+def immRem5 : PatLeaf<(imm), [{
+  return (int64_t)getNearPower2((uint64_t)N->getValue()) - (int64_t)N->getValue() == -5;
+}]>;
+def immRem1n : PatLeaf<(imm), [{
+  return (int64_t)getNearPower2((uint64_t)N->getValue()) - N->getValue() == 1;
+}]>;
+def immRem3n : PatLeaf<(imm), [{
+  return (int64_t)getNearPower2((uint64_t)N->getValue()) - N->getValue() == 3;
+}]>;
+def immRem5n : PatLeaf<(imm), [{
+  return (int64_t)getNearPower2((uint64_t)N->getValue()) - N->getValue() == 5;
+}]>;
+def immUExt8ME : PatLeaf<(imm), [{ //use this imm for mulqi
+  int64_t d = (int64_t)getNearPower2((uint64_t)N->getValue()) - N->getValue();
+  switch (abs(d)) {
+    case 1: case 3: case 5: return false; 
+    default: return (uint64_t)N->getValue() == (uint8_t)N->getValue();
+  };
 }]>;
 
 def intop : PatFrag<(ops node:$op), (sext_inreg node:$op, i32)>;
@@ -252,7 +280,7 @@ def MULLi    : OFormL<0x13, 0x00, "mull $RA,$L,$RC",
 def MULQ     : OForm< 0x13, 0x20, "mulq $RA,$RB,$RC",
                       [(set GPRC:$RC, (mul GPRC:$RA, GPRC:$RB))], s_imul>;
 def MULQi    : OFormL<0x13, 0x20, "mulq $RA,$L,$RC",
-                      [(set GPRC:$RC, (mul GPRC:$RA, immUExt8:$L))], s_imul>;
+                      [(set GPRC:$RC, (mul GPRC:$RA, immUExt8ME:$L))], s_imul>;
 def ORNOT    : OForm< 0x11, 0x28, "ornot $RA,$RB,$RC",
                       [(set GPRC:$RC, (or GPRC:$RA, (not GPRC:$RB)))], s_ilog>;
 def ORNOTi   : OFormL<0x11, 0x28, "ornot $RA,$L,$RC", 
@@ -876,3 +904,22 @@ def : Pat<(fcopysign F8RC:$A, (fneg F4RC:$B)),
 def : Pat<(mulhs GPRC:$RA, GPRC:$RB),
           (SUBQ (UMULH GPRC:$RA, GPRC:$RB), (ADDQ (CMOVGE GPRC:$RB, R31, GPRC:$RA), 
                                                  (CMOVGE GPRC:$RA, R31, GPRC:$RB)))>;
+
+//Stupid crazy arithmetic stuff:
+def : Pat<(mul GPRC:$RA, 5), (S4ADDQ GPRC:$RA, GPRC:$RA)>;
+def : Pat<(mul GPRC:$RA, 3), (S4SUBQ GPRC:$RA, GPRC:$RA)>;
+
+def : Pat<(mul GPRC:$RA, immRem1:$imm), 
+          (ADDQ (SL GPRC:$RA, (nearP2X immRem1:$imm)), GPRC:$RA)>;
+def : Pat<(mul GPRC:$RA, immRem3:$imm),
+          (ADDQ (SL GPRC:$RA, (nearP2X immRem3:$imm)), (S4SUBQ GPRC:$RA, GPRC:$RA))>;
+def : Pat<(mul GPRC:$RA, immRem5:$imm),
+          (ADDQ (SL GPRC:$RA, (nearP2X immRem5:$imm)), (S4ADDQ GPRC:$RA, GPRC:$RA))>;
+
+def : Pat<(mul GPRC:$RA, immRem1n:$imm), 
+          (SUBQ (SL GPRC:$RA, (nearP2X immRem1n:$imm)), GPRC:$RA)>;
+def : Pat<(mul GPRC:$RA, immRem3n:$imm),
+          (SUBQ (SL GPRC:$RA, (nearP2X immRem3n:$imm)), (S4SUBQ GPRC:$RA, GPRC:$RA))>;
+def : Pat<(mul GPRC:$RA, immRem5n:$imm),
+          (SUBQ (SL GPRC:$RA, (nearP2X immRem5n:$imm)), (S4ADDQ GPRC:$RA, GPRC:$RA))>;
+

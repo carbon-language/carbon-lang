@@ -229,7 +229,7 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   setOperationAction(ISD::UREM     , MVT::i64, Custom);
   setOperationAction(ISD::SDIV     , MVT::i64, Custom);
   setOperationAction(ISD::UDIV     , MVT::i64, Custom);
-  
+
   setOperationAction(ISD::MEMMOVE  , MVT::Other, Expand);
   setOperationAction(ISD::MEMSET   , MVT::Other, Expand);
   setOperationAction(ISD::MEMCPY   , MVT::Other, Expand);
