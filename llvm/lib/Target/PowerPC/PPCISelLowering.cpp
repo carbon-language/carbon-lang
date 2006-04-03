@@ -182,7 +182,7 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
       setOperationAction(ISD::XOR , (MVT::ValueType)VT, Legal);
       
       // We can custom expand all VECTOR_SHUFFLEs to VPERM.
-      setOperationAction(ISD::VECTOR_SHUFFLE, (MVT::ValueType)VT, Promote);
+      setOperationAction(ISD::VECTOR_SHUFFLE, (MVT::ValueType)VT, Custom);
       
       setOperationAction(ISD::MUL , (MVT::ValueType)VT, Expand);
       setOperationAction(ISD::SDIV, (MVT::ValueType)VT, Expand);
@@ -196,8 +196,6 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
       setOperationAction(ISD::SCALAR_TO_VECTOR, (MVT::ValueType)VT, Expand);
     }
 
-    setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v16i8, Custom);
-    
     addRegisterClass(MVT::v4f32, PPC::VRRCRegisterClass);
     addRegisterClass(MVT::v4i32, PPC::VRRCRegisterClass);
     addRegisterClass(MVT::v8i16, PPC::VRRCRegisterClass);
