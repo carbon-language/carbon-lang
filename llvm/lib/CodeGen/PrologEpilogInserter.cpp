@@ -321,7 +321,8 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
 
   // Remember the required stack alignment in case targets need it to perform
   // dynamic stack alignment.
-  FFI->setMaxAlignment(MaxAlign);
+  assert(FFI->getMaxAlignment() == MaxAlign &&
+         "Stack alignment calculation broken!");
 }
 
 
