@@ -210,15 +210,13 @@ public:
   /// a postive identifier to represent it.
   ///
   int CreateStackObject(unsigned Size, unsigned Alignment) {
+    // Keep track of the maximum alignment.
+    if (MaxAlignment < Alignment) MaxAlignment = Alignment;
+    
     assert(Size != 0 && "Cannot allocate zero size stack objects!");
     Objects.push_back(StackObject(Size, Alignment, -1));
     return Objects.size()-NumFixedObjects-1;
   }
-
-  /// CreateStackObject - Create a stack object for a value of the specified
-  /// LLVM type.
-  ///
-  int CreateStackObject(const Type *Ty, const TargetData &TD);
 
   /// CreateVariableSizedObject - Notify the MachineFrameInfo object that a
   /// variable sized object has been created.  This must be created whenever a
