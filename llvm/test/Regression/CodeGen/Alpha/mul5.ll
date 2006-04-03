@@ -3,9 +3,20 @@
 
 implementation   ; Functions:
 
-ulong %foo(ulong %x) {
+ulong %foo1(ulong %x) {
 entry:
-	%tmp.1 = mul ulong %x, 5		; <ulong> [#uses=1]
+	%tmp.1 = mul ulong %x, 9		; <ulong> [#uses=1]
+	ret ulong %tmp.1
+}
+ulong %foo3(ulong %x) {
+entry:
+        %tmp.1 = mul ulong %x, 259
+	ret ulong %tmp.1
+}
+
+ulong %foo1n(ulong %x) {
+entry:
+        %tmp.1 = mul ulong %x, 511
 	ret ulong %tmp.1
 }
 
