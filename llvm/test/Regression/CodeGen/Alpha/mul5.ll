@@ -14,10 +14,28 @@ entry:
 	ret ulong %tmp.1
 }
 
+ulong %foo4l(ulong %x) {
+entry:
+        %tmp.1 = mul ulong %x, 260
+	ret ulong %tmp.1
+}
+
+ulong %foo4ln(ulong %x) {
+entry:
+        %tmp.1 = mul ulong %x, 252
+	ret ulong %tmp.1
+}
+
 ulong %foo1n(ulong %x) {
 entry:
         %tmp.1 = mul ulong %x, 511
 	ret ulong %tmp.1
+}
+
+ulong %foo8l(ulong %x) {
+entry:
+        %tmp.1 = mul ulong %x, 768
+        ret ulong %tmp.1
 }
 
 long %bar(long %x) {
