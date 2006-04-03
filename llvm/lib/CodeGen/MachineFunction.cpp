@@ -297,14 +297,6 @@ void MachineFunction::clearSSARegMap() {
 //  MachineFrameInfo implementation
 //===----------------------------------------------------------------------===//
 
-/// CreateStackObject - Create a stack object for a value of the specified type.
-///
-int MachineFrameInfo::CreateStackObject(const Type *Ty, const TargetData &TD) {
-  return CreateStackObject((unsigned)TD.getTypeSize(Ty),
-                           TD.getTypeAlignment(Ty));
-}
-
-
 void MachineFrameInfo::print(const MachineFunction &MF, std::ostream &OS) const{
   int ValOffset = MF.getTarget().getFrameInfo()->getOffsetOfLocalArea();
 
