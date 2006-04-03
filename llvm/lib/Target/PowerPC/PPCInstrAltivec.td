@@ -203,12 +203,20 @@ def VCTUXS : VXForm_1<906, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
 def VEXPTEFP : VX2_Int<394, "vexptefp", int_ppc_altivec_vexptefp>;
 def VLOGEFP  : VX2_Int<458, "vlogefp",  int_ppc_altivec_vlogefp>;
 
-def VMAXFP : VXForm_1<1034, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                      "vmaxfp $vD, $vA, $vB", VecFP,
-                      []>;
-def VMINFP : VXForm_1<1098, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                      "vminfp $vD, $vA, $vB", VecFP,
-                      []>;
+def VMAXFP : VX1_Int<1034, "vmaxfp", int_ppc_altivec_vmaxfp>;
+def VMAXSB : VX1_Int< 258, "vmaxsb", int_ppc_altivec_vmaxsb>;
+def VMAXSH : VX1_Int< 322, "vmaxsh", int_ppc_altivec_vmaxsh>;
+def VMAXSW : VX1_Int< 386, "vmaxsw", int_ppc_altivec_vmaxsw>;
+def VMAXUB : VX1_Int<   2, "vmaxub", int_ppc_altivec_vmaxub>;
+def VMAXUH : VX1_Int<  66, "vmaxuh", int_ppc_altivec_vmaxuh>;
+def VMAXUW : VX1_Int< 130, "vmaxuw", int_ppc_altivec_vmaxuw>;
+def VMINFP : VX1_Int<1098, "vminfp", int_ppc_altivec_vminfp>;
+def VMINSB : VX1_Int< 770, "vminsb", int_ppc_altivec_vminsb>;
+def VMINSH : VX1_Int< 834, "vminsh", int_ppc_altivec_vminsh>;
+def VMINSW : VX1_Int< 896, "vminsw", int_ppc_altivec_vminsw>;
+def VMINUB : VX1_Int< 514, "vminub", int_ppc_altivec_vminub>;
+def VMINUH : VX1_Int< 578, "vminuh", int_ppc_altivec_vminuh>;
+def VMINUW : VX1_Int< 642, "vminuw", int_ppc_altivec_vminuw>;
 
 def VMRGHH : VX1_Int<76 , "vmrghh", int_ppc_altivec_vmrghh>;
 def VMRGHW : VX1_Int<140, "vmrghw", int_ppc_altivec_vmrghw>;
