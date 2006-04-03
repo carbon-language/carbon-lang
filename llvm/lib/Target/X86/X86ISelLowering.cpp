@@ -2712,6 +2712,8 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
         return Op;
 
       // UNPCKHPD the element to the lowest double word, then movsd.
+      // Note if the lower 64 bits of the result of the UNPCKHPD is then stored
+      // to a f64mem, the whole operation is folded into a single MOVHPDmr.
       MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(4);
       std::vector<SDOperand> IdxVec;
       IdxVec.push_back(DAG.getConstant(1, MVT::getVectorBaseType(MaskVT)));
