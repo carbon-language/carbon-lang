@@ -52,8 +52,6 @@ Missing intrinsics:
 ds*
 mf*
 vavg*
-vmax*
-vmin*
 vmladduhm
 vmr*
 vsel (some aliases only accessible using builtins)
@@ -61,6 +59,19 @@ vsel (some aliases only accessible using builtins)
 //===----------------------------------------------------------------------===//
 
 FABS/FNEG can be codegen'd with the appropriate and/xor of -0.0.
+
+//===----------------------------------------------------------------------===//
+
+Codegen the constant here with something better than a constant pool load.
+
+void %test_f(<4 x float>* %P, <4 x float>* %Q, float %X) {
+        %tmp = load <4 x float>* %Q
+        %tmp = cast <4 x float> %tmp to <4 x int>
+        %tmp1 = and <4 x int> %tmp, < int 2147483647, int 2147483647, int 2147483647, int 2147483647 > 
+        %tmp2 = cast <4 x int> %tmp1 to <4 x float>
+        store <4 x float> %tmp2, <4 x float>* %P
+        ret void
+}
 
 //===----------------------------------------------------------------------===//
 
