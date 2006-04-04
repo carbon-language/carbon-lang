@@ -165,6 +165,17 @@ private:
   /// we know that this type is legal for the target.
   SDOperand PackVectorOp(SDOperand O, MVT::ValueType PackedVT);
   
+  /// isShuffleLegal - Return true if a vector shuffle is legal with the
+  /// specified mask and type.  Targets can specify exactly which masks they
+  /// support and the code generator is tasked with not creating illegal masks.
+  ///
+  /// Note that this will also return true for shuffles that are promoted to a
+  /// different type.
+  ///
+  /// If this is a legal shuffle, this method returns the (possibly promoted)
+  /// build_vector Mask.  If it's not a legal shuffle, it returns null.
+  SDNode *isShuffleLegal(MVT::ValueType VT, SDOperand Mask) const;
+  
   bool LegalizeAllNodesNotLeadingTo(SDNode *N, SDNode *Dest);
 
   void LegalizeSetCCOperands(SDOperand &LHS, SDOperand &RHS, SDOperand &CC);
@@ -178,6 +189,7 @@ private:
 
   SDOperand ExpandBIT_CONVERT(MVT::ValueType DestVT, SDOperand SrcOp);
   SDOperand ExpandBUILD_VECTOR(SDNode *Node);
+  SDOperand ExpandSCALAR_TO_VECTOR(SDNode *Node);
   SDOperand ExpandLegalINT_TO_FP(bool isSigned,
                                  SDOperand LegalOp,
                                  MVT::ValueType DestVT);
@@ -200,6 +212,51 @@ private:
     return DAG.getConstant(Val, TLI.getPointerTy());
   }
 };
+}
+
+/// isVectorShuffleLegal - Return true if a vector shuffle is legal with the
+/// specified mask and type.  Targets can specify exactly which masks they
+/// support and the code generator is tasked with not creating illegal masks.
+///
+/// Note that this will also return true for shuffles that are promoted to a
+/// different type.
+SDNode *SelectionDAGLegalize::isShuffleLegal(MVT::ValueType VT, 
+                                             SDOperand Mask) const {
+  switch (TLI.getOperationAction(ISD::VECTOR_SHUFFLE, VT)) {
+  default: return 0;
+  case TargetLowering::Legal:
+  case TargetLowering::Custom:
+    break;
+  case TargetLowering::Promote: {
+    // If this is promoted to a different type, convert the shuffle mask and
+    // ask if it is legal in the promoted type!
+    MVT::ValueType NVT = TLI.getTypeToPromoteTo(ISD::VECTOR_SHUFFLE, VT);
+
+    // If we changed # elements, change the shuffle mask.
+    unsigned NumEltsGrowth =
+      MVT::getVectorNumElements(NVT) / MVT::getVectorNumElements(VT);
+    assert(NumEltsGrowth && "Cannot promote to vector type with fewer elts!");
+    if (NumEltsGrowth > 1) {
+      // Renumber the elements.
+      std::vector<SDOperand> Ops;
+      for (unsigned i = 0, e = Mask.getNumOperands(); i != e; ++i) {
+        SDOperand InOp = Mask.getOperand(i);
+        for (unsigned j = 0; j != NumEltsGrowth; ++j) {
+          if (InOp.getOpcode() == ISD::UNDEF)
+            Ops.push_back(DAG.getNode(ISD::UNDEF, MVT::i32));
+          else {
+            unsigned InEltNo = cast<ConstantSDNode>(InOp)->getValue();
+            Ops.push_back(DAG.getConstant(InEltNo*NumEltsGrowth+j, MVT::i32));
+          }
+        }
+      }
+      Mask = DAG.getNode(ISD::BUILD_VECTOR, NVT, Ops);
+    }
+    VT = NVT;
+    break;
+  }
+  }
+  return TLI.isShuffleMaskLegal(Mask, VT) ? Mask.Val : 0;
 }
 
 /// getScalarizedOpcode - Return the scalar opcode that corresponds to the
@@ -839,6 +896,11 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
   case ISD::SCALAR_TO_VECTOR:
+    if (!TLI.isTypeLegal(Node->getOperand(0).getValueType())) {
+      Result = LegalizeOp(ExpandSCALAR_TO_VECTOR(Node));
+      break;
+    }
+    
     Tmp1 = LegalizeOp(Node->getOperand(0));  // InVal
     Result = DAG.UpdateNodeOperands(Result, Tmp1);
     switch (TLI.getOperationAction(ISD::SCALAR_TO_VECTOR,
@@ -853,35 +915,43 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         break;
       }
       // FALLTHROUGH
-    case TargetLowering::Expand: {
-      // If the target doesn't support this, store the value to a temporary
-      // stack slot, then EXTLOAD the vector back out.
-      // TODO: If a target doesn't support this, create a stack slot for the
-      // whole vector, then store into it, then load the whole vector.
-      SDOperand StackPtr = 
-        CreateStackTemporary(Node->getOperand(0).getValueType());
-      SDOperand Ch = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
-                                 Node->getOperand(0), StackPtr,
-                                 DAG.getSrcValue(NULL));
-      Result = DAG.getExtLoad(ISD::EXTLOAD, Node->getValueType(0), Ch, StackPtr,
-                              DAG.getSrcValue(NULL),
-                              Node->getOperand(0).getValueType());
+    case TargetLowering::Expand:
+      Result = LegalizeOp(ExpandSCALAR_TO_VECTOR(Node));
       break;
-    }
     }
     break;
   case ISD::VECTOR_SHUFFLE:
-    assert(TLI.isShuffleLegal(Result.getValueType(), Node->getOperand(2)) &&
-           "vector shuffle should not be created if not legal!");
     Tmp1 = LegalizeOp(Node->getOperand(0));   // Legalize the input vectors,
     Tmp2 = LegalizeOp(Node->getOperand(1));   // but not the shuffle mask.
     Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Node->getOperand(2));
 
     // Allow targets to custom lower the SHUFFLEs they support.
-    if (TLI.getOperationAction(ISD::VECTOR_SHUFFLE, Result.getValueType())
-        == TargetLowering::Custom) {
+    switch (TLI.getOperationAction(ISD::VECTOR_SHUFFLE,Result.getValueType())) {
+    default: assert(0 && "Unknown operation action!");
+    case TargetLowering::Legal:
+      assert(isShuffleLegal(Result.getValueType(), Node->getOperand(2)) &&
+             "vector shuffle should not be created if not legal!");
+      break;
+    case TargetLowering::Custom:
       Tmp1 = TLI.LowerOperation(Result, DAG);
       if (Tmp1.Val) Result = Tmp1;
+      break;
+    case TargetLowering::Promote: {
+      // Change base type to a different vector type.
+      MVT::ValueType OVT = Node->getValueType(0);
+      MVT::ValueType NVT = TLI.getTypeToPromoteTo(Node->getOpcode(), OVT);
+
+      // Cast the two input vectors.
+      Tmp1 = DAG.getNode(ISD::BIT_CONVERT, NVT, Tmp1);
+      Tmp2 = DAG.getNode(ISD::BIT_CONVERT, NVT, Tmp2);
+      
+      // Convert the shuffle mask to the right # elements.
+      Tmp3 = SDOperand(isShuffleLegal(OVT, Node->getOperand(2)), 0);
+      assert(Tmp3.Val && "Shuffle not legal?");
+      Result = DAG.getNode(ISD::VECTOR_SHUFFLE, NVT, Tmp1, Tmp2, Tmp3);
+      Result = DAG.getNode(ISD::BIT_CONVERT, OVT, Result);
+      break;
+    }
     }
     break;
   
@@ -3197,6 +3267,17 @@ SDOperand SelectionDAGLegalize::ExpandBIT_CONVERT(MVT::ValueType DestVT,
   return DAG.getLoad(DestVT, Store, FIPtr, DAG.getSrcValue(0));
 }
 
+SDOperand SelectionDAGLegalize::ExpandSCALAR_TO_VECTOR(SDNode *Node) {
+  // Create a vector sized/aligned stack slot, store the value to element #0,
+  // then load the whole vector back out.
+  SDOperand StackPtr = CreateStackTemporary(Node->getValueType(0));
+  SDOperand Ch = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
+                             Node->getOperand(0), StackPtr,
+                             DAG.getSrcValue(NULL));
+  return DAG.getLoad(Node->getValueType(0), Ch, StackPtr,DAG.getSrcValue(NULL));
+}
+
+
 /// ExpandBUILD_VECTOR - Expand a BUILD_VECTOR node on targets that don't
 /// support the operation, but do support the resultant packed vector type.
 SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
@@ -3274,7 +3355,7 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
     SDOperand SplatMask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, ZeroVec);
 
     // If the target supports VECTOR_SHUFFLE and this shuffle mask, use it.
-    if (TLI.isShuffleLegal(Node->getValueType(0), SplatMask)) {
+    if (isShuffleLegal(Node->getValueType(0), SplatMask)) {
       // Get the splatted value into the low element of a vector register.
       SDOperand LowValVec = 
         DAG.getNode(ISD::SCALAR_TO_VECTOR, Node->getValueType(0), SplatValue);
@@ -3304,8 +3385,8 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
     SDOperand ShuffleMask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, MaskVec);
 
     // If the target supports VECTOR_SHUFFLE and this shuffle mask, use it.
-    if (TLI.isShuffleLegal(Node->getValueType(0), ShuffleMask) &&
-        TLI.isOperationLegal(ISD::SCALAR_TO_VECTOR, Node->getValueType(0))) {
+    if (TLI.isOperationLegal(ISD::SCALAR_TO_VECTOR, Node->getValueType(0)) &&
+        isShuffleLegal(Node->getValueType(0), ShuffleMask)) {
       std::vector<SDOperand> Ops;
       for(std::map<SDOperand,std::vector<unsigned> >::iterator I=Values.begin(),
             E = Values.end(); I != E; ++I) {
