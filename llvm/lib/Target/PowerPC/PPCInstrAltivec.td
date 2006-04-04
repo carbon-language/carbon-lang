@@ -293,10 +293,12 @@ def VSLW   : VX1_Int< 388, "vslw", int_ppc_altivec_vslw>;
 
 def VSPLTB : VXForm_1<524, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
                       "vspltb $vD, $vB, $UIMM", VecPerm,
-                      []>;
+                      [(set VRRC:$vD, (vector_shuffle (v16i8 VRRC:$vB), (undef),
+                                      VSPLT_shuffle_mask:$UIMM))]>;
 def VSPLTH : VXForm_1<588, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
                       "vsplth $vD, $vB, $UIMM", VecPerm,
-                      []>;
+                      [(set VRRC:$vD, (vector_shuffle (v8i16 VRRC:$vB), (undef),
+                                      VSPLT_shuffle_mask:$UIMM))]>;
 def VSPLTW : VXForm_1<652, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
                       "vspltw $vD, $vB, $UIMM", VecPerm,
                       [(set VRRC:$vD, (vector_shuffle (v4f32 VRRC:$vB), (undef),
