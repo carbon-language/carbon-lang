@@ -191,6 +191,14 @@ public:
   legal_fpimm_iterator legal_fpimm_end() const {
     return LegalFPImmediates.end();
   }
+  
+  /// isShuffleMaskLegal - Targets can use this to indicate that they only
+  /// support *some* VECTOR_SHUFFLE operations, those with specific masks.
+  /// By default, if a target supports the VECTOR_SHUFFLE node, all mask values
+  /// are assumed to be legal.
+  virtual bool isShuffleMaskLegal(SDOperand Mask, MVT::ValueType VT) const {
+    return true;
+  }
 
   /// getOperationAction - Return how this operation should be treated: either
   /// it is legal, needs to be promoted to a larger size, needs to be
@@ -207,15 +215,6 @@ public:
            getOperationAction(Op, VT) == Custom;
   }
   
-  
-  /// isVectorShuffleLegal - Return true if a vector shuffle is legal with the
-  /// specified mask and type.  Targets can specify exactly which masks they
-  /// support and the code generator is tasked with not creating illegal masks.
-  bool isShuffleLegal(MVT::ValueType VT, SDOperand Mask) const {
-    return isOperationLegal(ISD::VECTOR_SHUFFLE, VT) && 
-           isShuffleMaskLegal(Mask, VT);
-  }
-
   /// getTypeToPromoteTo - If the action for this operation is to promote, this
   /// method returns the ValueType to promote to.
   MVT::ValueType getTypeToPromoteTo(unsigned Op, MVT::ValueType VT) const {
@@ -513,14 +512,6 @@ protected:
   /// implementing the PerformDAGCombine virtual method.
   void setTargetDAGCombine(ISD::NodeType NT) {
     TargetDAGCombineArray[NT >> 3] |= 1 << (NT&7);
-  }
-  
-  /// isShuffleMaskLegal - Targets can use this to indicate that they only
-  /// support *some* VECTOR_SHUFFLE operations, those with specific masks.
-  /// By default, if a target supports the VECTOR_SHUFFLE node, all mask values
-  /// are assumed to be legal.
-  virtual bool isShuffleMaskLegal(SDOperand Mask, MVT::ValueType VT) const {
-    return true;
   }
   
 public:
