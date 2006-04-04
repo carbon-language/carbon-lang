@@ -57,6 +57,11 @@ def fp32imm0 : PatLeaf<(f32 fpimm), [{
   return N->isExactlyValue(+0.0);
 }]>;
 
+def PSxLDQ_imm  : SDNodeXForm<imm, [{
+  // Transformation function: imm >> 3
+  return getI32Imm(N->getValue() >> 3);
+}]>;
+
 // SHUFFLE_get_shuf_imm xform function: convert vector_shuffle mask to PSHUF*,
 // SHUFP* etc. imm.
 def SHUFFLE_get_shuf_imm : SDNodeXForm<build_vector, [{
@@ -1159,6 +1164,13 @@ def PSUBQrm : PDI<0xFB, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                                         (load addr:$src2))))]>;
 }
 
+let isTwoAddress = 1 in {
+def PSLLDQri : PDIi8<0x73, MRM7r, (ops VR128:$dst, VR128:$src1, i32i8imm:$src2),
+                     "pslldq {$src2, $dst|$dst, $src2}", []>;
+def PSRLDQri : PDIi8<0x73, MRM7r, (ops VR128:$dst, VR128:$src1, i32i8imm:$src2),
+                     "psrldq {$src2, $dst|$dst, $src2}", []>;
+}
+
 // Logical
 let isTwoAddress = 1 in {
 let isCommutable = 1 in {
@@ -1720,6 +1732,12 @@ def : Pat<(vector_shuffle (loadv4f32 addr:$src1), (undef),
            PSHUFLW_fp_shuffle_mask:$sm),
           (v4f32 (PSHUFLWmi addr:$src1, PSHUFLW_fp_shuffle_mask:$sm))>,
       Requires<[HasSSE2]>;
+
+// 128-bit logical shifts
+def : Pat<(int_x86_sse2_psll_dq VR128:$src1, imm:$src2),
+          (v2i64 (PSLLDQri VR128:$src1, (PSxLDQ_imm imm:$src2)))>;
+def : Pat<(int_x86_sse2_psrl_dq VR128:$src1, imm:$src2),
+          (v2i64 (PSRLDQri VR128:$src1, (PSxLDQ_imm imm:$src2)))>;
 
 // Logical ops
 def : Pat<(and (bc_v4i32 (v4f32 VR128:$src1)), (loadv4i32 addr:$src2)),
