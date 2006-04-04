@@ -209,6 +209,13 @@ def VCTUXS : VXForm_1<906, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
 def VEXPTEFP : VX2_Int<394, "vexptefp", int_ppc_altivec_vexptefp>;
 def VLOGEFP  : VX2_Int<458, "vlogefp",  int_ppc_altivec_vlogefp>;
 
+def VAVGSB : VX1_Int<1282, "vavgsb", int_ppc_altivec_vavgsb>;
+def VAVGSH : VX1_Int<1346, "vavgsh", int_ppc_altivec_vavgsh>;
+def VAVGSW : VX1_Int<1410, "vavgsw", int_ppc_altivec_vavgsw>;
+def VAVGUB : VX1_Int<1026, "vavgub", int_ppc_altivec_vavgub>;
+def VAVGUH : VX1_Int<1090, "vavguh", int_ppc_altivec_vavguh>;
+def VAVGUW : VX1_Int<1154, "vavguw", int_ppc_altivec_vavguw>;
+
 def VMAXFP : VX1_Int<1034, "vmaxfp", int_ppc_altivec_vmaxfp>;
 def VMAXSB : VX1_Int< 258, "vmaxsb", int_ppc_altivec_vmaxsb>;
 def VMAXSH : VX1_Int< 322, "vmaxsh", int_ppc_altivec_vmaxsh>;
