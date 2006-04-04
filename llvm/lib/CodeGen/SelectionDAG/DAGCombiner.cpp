@@ -1193,7 +1193,8 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
     
     LoadedVT = N0.getOpcode() == ISD::LOAD ? VT :
                            cast<VTSDNode>(N0.getOperand(3))->getVT();
-    if (EVT != MVT::Other && LoadedVT > EVT) {
+    if (EVT != MVT::Other && LoadedVT > EVT &&
+        (!AfterLegalize || TLI.isOperationLegal(ISD::ZEXTLOAD, EVT))) {
       MVT::ValueType PtrType = N0.getOperand(1).getValueType();
       // For big endian targets, we need to add an offset to the pointer to load
       // the correct bytes.  For little endian systems, we merely need to read
