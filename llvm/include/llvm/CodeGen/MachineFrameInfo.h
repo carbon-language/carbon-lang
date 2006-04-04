@@ -225,6 +225,7 @@ public:
   ///
   int CreateVariableSizedObject() {
     HasVarSizedObjects = true;
+    if (MaxAlignment < 1) MaxAlignment = 1;
     Objects.push_back(StackObject(0, 1, -1));
     return Objects.size()-NumFixedObjects-1;
   }
