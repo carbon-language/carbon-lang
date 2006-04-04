@@ -171,18 +171,31 @@ class S3DI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
 
 //===----------------------------------------------------------------------===//
 // Helpers for defining instructions that directly correspond to intrinsics.
-class SS_Intrr<bits<8> o, string asm, Intrinsic IntId, ValueType Ty>
+class SS_Intr<bits<8> o, string asm, Intrinsic IntId>
+  : SSI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src), asm,
+        [(set VR128:$dst, (v4f32 (IntId VR128:$src)))]>;
+class SS_Intm<bits<8> o, string asm, Intrinsic IntId>
+  : SSI<o, MRMSrcMem, (ops VR128:$dst, f32mem:$src), asm,
+        [(set VR128:$dst, (v4f32 (IntId (load addr:$src))))]>;
+class SD_Intr<bits<8> o, string asm, Intrinsic IntId>
+  : SDI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src), asm,
+        [(set VR128:$dst, (v2f64 (IntId VR128:$src)))]>;
+class SD_Intm<bits<8> o, string asm, Intrinsic IntId>
+  : SDI<o, MRMSrcMem, (ops VR128:$dst, f64mem:$src), asm,
+        [(set VR128:$dst, (v2f64 (IntId (load addr:$src))))]>;
+
+class SS_Intrr<bits<8> o, string asm, Intrinsic IntId>
   : SSI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2), asm,
-        [(set VR128:$dst, (Ty (IntId VR128:$src1, VR128:$src2)))]>;
-class SS_Intrm<bits<8> o, string asm, Intrinsic IntId, ValueType Ty>
+        [(set VR128:$dst, (v4f32 (IntId VR128:$src1, VR128:$src2)))]>;
+class SS_Intrm<bits<8> o, string asm, Intrinsic IntId>
   : SSI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f32mem:$src2), asm,
-        [(set VR128:$dst, (Ty (IntId VR128:$src1, (load addr:$src2))))]>;
-class SD_Intrr<bits<8> o, string asm, Intrinsic IntId, ValueType Ty>
+        [(set VR128:$dst, (v4f32 (IntId VR128:$src1, (load addr:$src2))))]>;
+class SD_Intrr<bits<8> o, string asm, Intrinsic IntId>
   : SDI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2), asm,
-        [(set VR128:$dst, (Ty (IntId VR128:$src1, VR128:$src2)))]>;
-class SD_Intrm<bits<8> o, string asm, Intrinsic IntId, ValueType Ty>
+        [(set VR128:$dst, (v2f64 (IntId VR128:$src1, VR128:$src2)))]>;
+class SD_Intrm<bits<8> o, string asm, Intrinsic IntId>
   : SDI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2), asm,
-        [(set VR128:$dst, (Ty (IntId VR128:$src1, (load addr:$src2))))]>;
+        [(set VR128:$dst, (v2f64 (IntId VR128:$src1, (load addr:$src2))))]>;
 
 class PS_Intr<bits<8> o, string asm, Intrinsic IntId>
   : PSI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src), asm,
@@ -365,131 +378,79 @@ def MINSDrm : SDI<0x5D, MRMSrcMem, (ops FR64:$dst, f64mem:$src),
 // Aliases to match intrinsics which expect XMM operand(s).
 let isTwoAddress = 1 in {
 let isCommutable = 1 in {
-def Int_ADDSSrr : SSI<0x58, MRMSrcReg, (ops VR128:$dst, VR128:$src1,
-                                        VR128:$src2),
-                "addss {$src2, $dst|$dst, $src2}",
-                [(set VR128:$dst, (int_x86_sse_add_ss VR128:$src1,
-                                   VR128:$src2))]>;
-def Int_ADDSDrr : SDI<0x58, MRMSrcReg, (ops VR128:$dst, VR128:$src1,
-                                        VR128:$src2),
-                "addsd {$src2, $dst|$dst, $src2}",
-                [(set VR128:$dst, (int_x86_sse2_add_sd VR128:$src1,
-                                   VR128:$src2))]>;
-def Int_MULSSrr : SSI<0x59, MRMSrcReg, (ops VR128:$dst, VR128:$src1,
-                                        VR128:$src2),
-                "mulss {$src2, $dst|$dst, $src2}",
-                [(set VR128:$dst, (int_x86_sse_mul_ss VR128:$src1,
-                                   VR128:$src2))]>;
-def Int_MULSDrr : SDI<0x59, MRMSrcReg, (ops VR128:$dst, VR128:$src1,
-                                        VR128:$src2),
-                "mulsd {$src2, $dst|$dst, $src2}",
-                [(set VR128:$dst, (int_x86_sse2_mul_sd VR128:$src1,
-                                   VR128:$src2))]>;
+def Int_ADDSSrr : SS_Intrr<0x58, "addss {$src2, $dst|$dst, $src2}",
+                           int_x86_sse_add_ss>;
+def Int_ADDSDrr : SD_Intrr<0x58, "addsd {$src2, $dst|$dst, $src2}",
+                           int_x86_sse2_add_sd>;
+def Int_MULSSrr : SS_Intrr<0x59, "mulss {$src2, $dst|$dst, $src2}",
+                           int_x86_sse_mul_ss>;
+def Int_MULSDrr : SD_Intrr<0x59, "mulsd {$src2, $dst|$dst, $src2}",
+                           int_x86_sse2_mul_sd>;
 }
 
-def Int_ADDSSrm : SSI<0x58, MRMSrcMem, (ops VR128:$dst, VR128:$src1,
-                                        f32mem:$src2),
-                "addss {$src2, $dst|$dst, $src2}",
-                [(set VR128:$dst, (int_x86_sse_add_ss VR128:$src1,
-                                   (load addr:$src2)))]>;
-def Int_ADDSDrm : SDI<0x58, MRMSrcMem, (ops VR128:$dst, VR128:$src1,
-                                        f64mem:$src2),
-                "addsd {$src2, $dst|$dst, $src2}",
-                [(set VR128:$dst, (int_x86_sse2_add_sd VR128:$src1,
-                                   (load addr:$src2)))]>;
-def Int_MULSSrm : SSI<0x59, MRMSrcMem, (ops VR128:$dst, VR128:$src1,
-                                        f32mem:$src2),
-                "mulss {$src2, $dst|$dst, $src2}",
-                [(set VR128:$dst, (int_x86_sse_mul_ss VR128:$src1,
-                                   (load addr:$src2)))]>;
-def Int_MULSDrm : SDI<0x59, MRMSrcMem, (ops VR128:$dst, VR128:$src1,
-                                        f64mem:$src2),
-                "mulsd {$src2, $dst|$dst, $src2}",
-                [(set VR128:$dst, (int_x86_sse2_mul_sd VR128:$src1,
-                                   (load addr:$src2)))]>;
+def Int_ADDSSrm : SS_Intrm<0x58, "addss {$src2, $dst|$dst, $src2}",
+                           int_x86_sse_add_ss>;
+def Int_ADDSDrm : SD_Intrm<0x58, "addsd {$src2, $dst|$dst, $src2}",
+                           int_x86_sse2_add_sd>;
+def Int_MULSSrm : SS_Intrm<0x59, "mulss {$src2, $dst|$dst, $src2}",
+                           int_x86_sse_mul_ss>;
+def Int_MULSDrm : SD_Intrm<0x59, "mulsd {$src2, $dst|$dst, $src2}",
+                           int_x86_sse2_mul_sd>;
 
-def Int_DIVSSrr : SSI<0x5E, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                "divss {$src2, $dst|$dst, $src2}",
-                [(set VR128:$dst, (int_x86_sse_div_ss VR128:$src1,
-                                   VR128:$src2))]>;
-def Int_DIVSSrm : SSI<0x5E, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f32mem:$src2),
-                "divss {$src2, $dst|$dst, $src2}",
-                [(set VR128:$dst, (int_x86_sse_div_ss VR128:$src1,
-                                   (load addr:$src2)))]>;
-def Int_DIVSDrr : SDI<0x5E, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                "divsd {$src2, $dst|$dst, $src2}",
-                [(set VR128:$dst, (int_x86_sse2_div_sd VR128:$src1,
-                                   VR128:$src2))]>;
-def Int_DIVSDrm : SDI<0x5E, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
-                "divsd {$src2, $dst|$dst, $src2}",
-                [(set VR128:$dst, (int_x86_sse2_div_sd VR128:$src1,
-                                   (load addr:$src2)))]>;
+def Int_DIVSSrr : SS_Intrr<0x5E, "divss {$src2, $dst|$dst, $src2}",
+                           int_x86_sse_div_ss>;
+def Int_DIVSSrm : SS_Intrm<0x5E, "divss {$src2, $dst|$dst, $src2}",
+                           int_x86_sse_div_ss>;
+def Int_DIVSDrr : SD_Intrr<0x5E, "divsd {$src2, $dst|$dst, $src2}",
+                           int_x86_sse2_div_sd>;
+def Int_DIVSDrm : SD_Intrm<0x5E, "divsd {$src2, $dst|$dst, $src2}",
+                           int_x86_sse2_div_sd>;
 
-def Int_SUBSSrr : SSI<0x5C, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                "subss {$src2, $dst|$dst, $src2}",
-                [(set VR128:$dst, (int_x86_sse_sub_ss VR128:$src1,
-                                   VR128:$src2))]>;
-def Int_SUBSSrm : SSI<0x5C, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f32mem:$src2),
-                "subss {$src2, $dst|$dst, $src2}",
-                [(set VR128:$dst, (int_x86_sse_sub_ss VR128:$src1,
-                                   (load addr:$src2)))]>;
-def Int_SUBSDrr : SDI<0x5C, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                "subsd {$src2, $dst|$dst, $src2}",
-                [(set VR128:$dst, (int_x86_sse2_sub_sd VR128:$src1,
-                                   VR128:$src2))]>;
-def Int_SUBSDrm : SDI<0x5C, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
-                "subsd {$src2, $dst|$dst, $src2}",
-                [(set VR128:$dst, (int_x86_sse2_sub_sd VR128:$src1,
-                                   (load addr:$src2)))]>;
+def Int_SUBSSrr : SS_Intrr<0x5C, "subss {$src2, $dst|$dst, $src2}",
+                           int_x86_sse_sub_ss>;
+def Int_SUBSSrm : SS_Intrm<0x5C, "subss {$src2, $dst|$dst, $src2}",
+                           int_x86_sse_sub_ss>;
+def Int_SUBSDrr : SD_Intrr<0x5C, "subsd {$src2, $dst|$dst, $src2}",
+                           int_x86_sse2_sub_sd>;
+def Int_SUBSDrm : SD_Intrm<0x5C, "subsd {$src2, $dst|$dst, $src2}",
+                           int_x86_sse2_sub_sd>;
 }
 
-def Int_SQRTSSrr : SSI<0x51, MRMSrcReg, (ops VR128:$dst, VR128:$src),
-                 "sqrtss {$src, $dst|$dst, $src}",
-                       [(set VR128:$dst, (int_x86_sse_sqrt_ss VR128:$src))]>;
-def Int_SQRTSSrm : SSI<0x51, MRMSrcMem, (ops VR128:$dst, f32mem:$src),
-                 "sqrtss {$src, $dst|$dst, $src}",
-                       [(set VR128:$dst, (int_x86_sse_sqrt_ss
-                                          (load addr:$src)))]>;
-def Int_SQRTSDrr : SDI<0x51, MRMSrcReg, (ops VR128:$dst, VR128:$src),
-                      "sqrtsd {$src, $dst|$dst, $src}",
-                      [(set VR128:$dst, (int_x86_sse2_sqrt_sd VR128:$src))]>;
-def Int_SQRTSDrm : SDI<0x51, MRMSrcMem, (ops VR128:$dst, f64mem:$src),
-                      "sqrtsd {$src, $dst|$dst, $src}",
-                      [(set VR128:$dst, (int_x86_sse2_sqrt_sd
-                                         (load addr:$src)))]>;
+def Int_SQRTSSrr : SS_Intr<0x51, "sqrtss {$src, $dst|$dst, $src}",
+                            int_x86_sse_sqrt_ss>;
+def Int_SQRTSSrm : SS_Intm<0x51, "sqrtss {$src, $dst|$dst, $src}",
+                            int_x86_sse_sqrt_ss>;
+def Int_SQRTSDrr : SD_Intr<0x51, "sqrtsd {$src, $dst|$dst, $src}",
+                           int_x86_sse2_sqrt_sd>;
+def Int_SQRTSDrm : SD_Intm<0x51, "sqrtsd {$src, $dst|$dst, $src}",
+                           int_x86_sse2_sqrt_sd>;
 
-def Int_RSQRTSSrr : SSI<0x52, MRMSrcReg, (ops VR128:$dst, VR128:$src),
-                       "rsqrtss {$src, $dst|$dst, $src}",
-                       [(set VR128:$dst, (int_x86_sse_rsqrt_ss VR128:$src))]>;
-def Int_RSQRTSSrm : SSI<0x52, MRMSrcMem, (ops VR128:$dst, f32mem:$src),
-                       "rsqrtss {$src, $dst|$dst, $src}",
-                       [(set VR128:$dst, (int_x86_sse_rsqrt_ss
-                                          (load addr:$src)))]>;
-def Int_RCPSSrr : SSI<0x53, MRMSrcReg, (ops VR128:$dst, VR128:$src),
-                     "rcpss {$src, $dst|$dst, $src}",
-                     [(set VR128:$dst, (int_x86_sse_rcp_ss VR128:$src))]>;
-def Int_RCPSSrm : SSI<0x53, MRMSrcMem, (ops VR128:$dst, f32mem:$src),
-                     "rcpss {$src, $dst|$dst, $src}",
-                     [(set VR128:$dst, (int_x86_sse_rcp_ss
-                                        (load addr:$src)))]>;
+def Int_RSQRTSSrr : SS_Intr<0x52, "rsqrtss {$src, $dst|$dst, $src}",
+                             int_x86_sse_rsqrt_ss>;
+def Int_RSQRTSSrm : SS_Intm<0x52, "rsqrtss {$src, $dst|$dst, $src}",
+                             int_x86_sse_rsqrt_ss>;
+def Int_RCPSSrr   : SS_Intr<0x53, "rcpss {$src, $dst|$dst, $src}",
+                            int_x86_sse_rcp_ss>;
+def Int_RCPSSrm   : SS_Intm<0x53, "rcpss {$src, $dst|$dst, $src}",
+                            int_x86_sse_rcp_ss>;
 
 let isTwoAddress = 1 in {
 def Int_MAXSSrr : SS_Intrr<0x5F, "maxss {$src2, $dst|$dst, $src2}",
-                           int_x86_sse_max_ss, v4f32>;
+                           int_x86_sse_max_ss>;
 def Int_MAXSSrm : SS_Intrm<0x5F, "maxss {$src2, $dst|$dst, $src2}",
-                           int_x86_sse_max_ss, v4f32>;
+                           int_x86_sse_max_ss>;
 def Int_MAXSDrr : SD_Intrr<0x5F, "maxsd {$src2, $dst|$dst, $src2}",
-                           int_x86_sse2_max_sd, v2f64>;
+                           int_x86_sse2_max_sd>;
 def Int_MAXSDrm : SD_Intrm<0x5F, "maxsd {$src2, $dst|$dst, $src2}",
-                           int_x86_sse2_max_sd, v2f64>;
+                           int_x86_sse2_max_sd>;
 def Int_MINSSrr : SS_Intrr<0x5D, "minss {$src2, $dst|$dst, $src2}",
-                           int_x86_sse_min_ss, v4f32>;
+                           int_x86_sse_min_ss>;
 def Int_MINSSrm : SS_Intrm<0x5D, "minss {$src2, $dst|$dst, $src2}",
-                           int_x86_sse_min_ss, v4f32>;
+                           int_x86_sse_min_ss>;
 def Int_MINSDrr : SD_Intrr<0x5D, "minsd {$src2, $dst|$dst, $src2}",
-                           int_x86_sse2_min_sd, v2f64>;
+                           int_x86_sse2_min_sd>;
 def Int_MINSDrm : SD_Intrm<0x5D, "minsd {$src2, $dst|$dst, $src2}",
-                           int_x86_sse2_min_sd, v2f64>;
+                           int_x86_sse2_min_sd>;
 }
 
 // Conversion instructions
