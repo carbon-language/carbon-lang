@@ -24,9 +24,7 @@
 
 #include "llvm/Type.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
-#include "llvm/CodeGen/ValueTypes.h"
-#include "llvm/Support/DataTypes.h"
-#include <vector>
+#include <map>
 
 namespace llvm {
   class Value;
@@ -172,7 +170,7 @@ public:
   MVT::ValueType getTypeToTransformTo(MVT::ValueType VT) const {
     return TransformToType[VT];
   }
-
+  
   /// getPackedTypeBreakdown - Packed types are broken down into some number of
   /// legal scalar types.  For example, <8 x float> maps to 2 MVT::v2f32 values
   /// with Altivec or SSE1, or 8 promoted MVT::f64 values with the X86 FP stack.
@@ -223,6 +221,16 @@ public:
   MVT::ValueType getTypeToPromoteTo(unsigned Op, MVT::ValueType VT) const {
     assert(getOperationAction(Op, VT) == Promote &&
            "This operation isn't promoted!");
+
+    // See if this has an explicit type specified.
+    std::map<std::pair<unsigned, MVT::ValueType>, 
+             MVT::ValueType>::const_iterator PTTI =
+      PromoteToType.find(std::make_pair(Op, VT));
+    if (PTTI != PromoteToType.end()) return PTTI->second;
+    
+    assert((MVT::isInteger(VT) || MVT::isFloatingPoint(VT)) &&
+           "Cannot autopromote this type, add it with AddPromotedToType.");
+    
     MVT::ValueType NVT = VT;
     do {
       NVT = (MVT::ValueType)(NVT+1);
@@ -484,6 +492,15 @@ protected:
     OpActions[Op] &= ~(3ULL << VT*2);
     OpActions[Op] |= (uint64_t)Action << VT*2;
   }
+  
+  /// AddPromotedToType - If Opc/OrigVT is specified as being promoted, the
+  /// promotion code defaults to trying a larger integer/fp until it can find
+  /// one that works.  If that default is insufficient, this method can be used
+  /// by the target to override the default.
+  void AddPromotedToType(unsigned Opc, MVT::ValueType OrigVT, 
+                         MVT::ValueType DestVT) {
+    PromoteToType[std::make_pair(Opc, OrigVT)] = DestVT;
+  }
 
   /// addLegalFPImmediate - Indicate that this target can instruction select
   /// the specified FP immediate natively.
@@ -629,7 +646,6 @@ protected:
 private:
   std::vector<unsigned> LegalAddressScales;
   
-private:
   TargetMachine &TM;
   const TargetData &TD;
 
@@ -714,6 +730,14 @@ private:
   /// like PerformDAGCombine callbacks for by calling setTargetDAGCombine(),
   /// which sets a bit in this array.
   unsigned char TargetDAGCombineArray[156/(sizeof(unsigned char)*8)];
+  
+  /// PromoteToType - For operations that must be promoted to a specific type,
+  /// this holds the destination type.  This map should be sparse, so don't hold
+  /// it as an array.
+  ///
+  /// Targets add entries to this map with AddPromotedToType(..), clients access
+  /// this with getTypeToPromoteTo(..).
+  std::map<std::pair<unsigned, MVT::ValueType>, MVT::ValueType> PromoteToType;
   
 protected:
   /// When lowering %llvm.memset this field specifies the maximum number of
