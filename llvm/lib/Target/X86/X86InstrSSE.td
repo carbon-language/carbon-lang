@@ -1239,14 +1239,14 @@ def PACKUSWBrm : PDI<0x67, MRMSrcReg, (ops VR128:$dst, VR128:$src1,
 }
 
 // Shuffle and unpack instructions
-def PSHUFWrr : PSIi8<0x70, MRMDestReg,
+def PSHUFWrr : PSIi8<0x70, MRMSrcReg,
                      (ops VR64:$dst, VR64:$src1, i8imm:$src2),
                      "pshufw {$src2, $src1, $dst|$dst, $src1, $src2}", []>;
 def PSHUFWrm : PSIi8<0x70, MRMSrcMem,
                      (ops VR64:$dst, i64mem:$src1, i8imm:$src2),
                      "pshufw {$src2, $src1, $dst|$dst, $src1, $src2}", []>;
 
-def PSHUFDrr : PDIi8<0x70, MRMDestReg,
+def PSHUFDrr : PDIi8<0x70, MRMSrcReg,
                      (ops VR128:$dst, VR128:$src1, i8imm:$src2),
                      "pshufd {$src2, $src1, $dst|$dst, $src1, $src2}",
                      [(set VR128:$dst, (v4i32 (vector_shuffle
@@ -1260,14 +1260,14 @@ def PSHUFDrm : PDIi8<0x70, MRMSrcMem,
                                                PSHUFD_shuffle_mask:$src2)))]>;
 
 // SSE2 with ImmT == Imm8 and XS prefix.
-def PSHUFHWrr : Ii8<0x70, MRMDestReg,
+def PSHUFHWrr : Ii8<0x70, MRMSrcReg,
                     (ops VR128:$dst, VR128:$src1, i8imm:$src2),
                     "pshufhw {$src2, $src1, $dst|$dst, $src1, $src2}",
                     [(set VR128:$dst, (v8i16 (vector_shuffle
                                               VR128:$src1, (undef),
                                               PSHUFHW_shuffle_mask:$src2)))]>,
                 XS, Requires<[HasSSE2]>;
-def PSHUFHWrm : Ii8<0x70, MRMDestMem,
+def PSHUFHWrm : Ii8<0x70, MRMSrcMem,
                     (ops VR128:$dst, i128mem:$src1, i8imm:$src2),
                     "pshufhw {$src2, $src1, $dst|$dst, $src1, $src2}",
                     [(set VR128:$dst, (v8i16 (vector_shuffle
@@ -1276,14 +1276,14 @@ def PSHUFHWrm : Ii8<0x70, MRMDestMem,
                 XS, Requires<[HasSSE2]>;
 
 // SSE2 with ImmT == Imm8 and XD prefix.
-def PSHUFLWrr : Ii8<0x70, MRMDestReg,
+def PSHUFLWrr : Ii8<0x70, MRMSrcReg,
                     (ops VR128:$dst, VR128:$src1, i32i8imm:$src2),
                     "pshuflw {$src2, $src1, $dst|$dst, $src1, $src2}",
                     [(set VR128:$dst, (v8i16 (vector_shuffle
                                               VR128:$src1, (undef),
                                               PSHUFLW_shuffle_mask:$src2)))]>,
                 XD, Requires<[HasSSE2]>;
-def PSHUFLWrm : Ii8<0x70, MRMDestMem,
+def PSHUFLWrm : Ii8<0x70, MRMSrcMem,
                     (ops VR128:$dst, i128mem:$src1, i32i8imm:$src2),
                     "pshuflw {$src2, $src1, $dst|$dst, $src1, $src2}",
                     [(set VR128:$dst, (v8i16 (vector_shuffle
