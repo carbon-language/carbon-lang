@@ -1374,15 +1374,6 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
       }
       break;
 
-    case Instruction::Shr:
-      if (ConstantUInt *SA = dyn_cast<ConstantUInt>(I->getOperand(1)))
-        if (V->getType()->isSigned()) {
-          Constant *X = ConstantInt::get(V->getType(), 1);
-          X = ConstantExpr::getShl(X, SA);
-          return SCEVSDivExpr::get(getSCEV(I->getOperand(0)), getSCEV(X));
-        }
-      break;
-
     case Instruction::Cast:
       return createNodeForCast(cast<CastInst>(I));
 
