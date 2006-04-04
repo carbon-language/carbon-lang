@@ -51,9 +51,7 @@ Missing intrinsics:
 
 ds*
 mf*
-vavg*
 vmladduhm
-vmr*
 vsel (some aliases only accessible using builtins)
 
 //===----------------------------------------------------------------------===//
@@ -152,5 +150,9 @@ code produced by legalize.
 void test(vector int *X, vector int *Y) {
   *X = *X * *Y;
 }
+
+//===----------------------------------------------------------------------===//
+
+Lower "merges" in the front-end to shuffles, reconstruct in the backend.
 
 //===----------------------------------------------------------------------===//
