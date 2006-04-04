@@ -122,23 +122,23 @@ let TargetPrefix = "ppc" in {  // All intrinsics start with "llvm.ppc.".
                         [InstrNoMem]>;
                         
   def int_ppc_altivec_vcmpequh : GCCBuiltin<"__builtin_altivec_vcmpequh">,
-              Intrinsic<[llvm_v4i32_ty, llvm_v8i16_ty, llvm_v8i16_ty],
+              Intrinsic<[llvm_v8i16_ty, llvm_v8i16_ty, llvm_v8i16_ty],
                         [InstrNoMem]>;
   def int_ppc_altivec_vcmpgtsh : GCCBuiltin<"__builtin_altivec_vcmpgtsh">,
-              Intrinsic<[llvm_v4i32_ty, llvm_v8i16_ty, llvm_v8i16_ty],
+              Intrinsic<[llvm_v8i16_ty, llvm_v8i16_ty, llvm_v8i16_ty],
                         [InstrNoMem]>;
   def int_ppc_altivec_vcmpgtuh : GCCBuiltin<"__builtin_altivec_vcmpgtuh">,
-              Intrinsic<[llvm_v4i32_ty, llvm_v8i16_ty, llvm_v8i16_ty],
+              Intrinsic<[llvm_v8i16_ty, llvm_v8i16_ty, llvm_v8i16_ty],
                         [InstrNoMem]>;
 
   def int_ppc_altivec_vcmpequb : GCCBuiltin<"__builtin_altivec_vcmpequb">,
-              Intrinsic<[llvm_v4i32_ty, llvm_v16i8_ty, llvm_v16i8_ty],
+              Intrinsic<[llvm_v16i8_ty, llvm_v16i8_ty, llvm_v16i8_ty],
                         [InstrNoMem]>;
   def int_ppc_altivec_vcmpgtsb : GCCBuiltin<"__builtin_altivec_vcmpgtsb">,
-              Intrinsic<[llvm_v4i32_ty, llvm_v16i8_ty, llvm_v16i8_ty],
+              Intrinsic<[llvm_v16i8_ty, llvm_v16i8_ty, llvm_v16i8_ty],
                         [InstrNoMem]>;
   def int_ppc_altivec_vcmpgtub : GCCBuiltin<"__builtin_altivec_vcmpgtub">,
-              Intrinsic<[llvm_v4i32_ty, llvm_v16i8_ty, llvm_v16i8_ty],
+              Intrinsic<[llvm_v16i8_ty, llvm_v16i8_ty, llvm_v16i8_ty],
                         [InstrNoMem]>;
 
   // Predicate Comparisons.  The first operand specifies interpretation of CR6.
