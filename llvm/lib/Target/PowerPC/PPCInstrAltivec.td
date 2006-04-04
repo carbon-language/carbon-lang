@@ -233,8 +233,10 @@ def VMINUB : VX1_Int< 514, "vminub", int_ppc_altivec_vminub>;
 def VMINUH : VX1_Int< 578, "vminuh", int_ppc_altivec_vminuh>;
 def VMINUW : VX1_Int< 642, "vminuw", int_ppc_altivec_vminuw>;
 
+def VMRGHB : VX1_Int<12 , "vmrghb", int_ppc_altivec_vmrghb>;
 def VMRGHH : VX1_Int<76 , "vmrghh", int_ppc_altivec_vmrghh>;
 def VMRGHW : VX1_Int<140, "vmrghw", int_ppc_altivec_vmrghw>;
+def VMRGLB : VX1_Int<268, "vmrglb", int_ppc_altivec_vmrglb>;
 def VMRGLH : VX1_Int<332, "vmrglh", int_ppc_altivec_vmrglh>;
 def VMRGLW : VX1_Int<396, "vmrglw", int_ppc_altivec_vmrglw>;
 
