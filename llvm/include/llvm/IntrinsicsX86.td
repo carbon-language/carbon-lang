@@ -183,6 +183,16 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
                          llvm_v2f64_ty], [InstrNoMem]>;
 }
 
+// Integer shift ops.
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse2_psll_dq : GCCBuiltin<"__builtin_ia32_pslldqi128">,
+              Intrinsic<[llvm_v2i64_ty, llvm_v2i64_ty,
+                         llvm_int_ty], [InstrNoMem]>;
+  def int_x86_sse2_psrl_dq : GCCBuiltin<"__builtin_ia32_psrldqi128">,
+              Intrinsic<[llvm_v2i64_ty, llvm_v2i64_ty,
+                         llvm_int_ty], [InstrNoMem]>;
+}
+
 // Misc.
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse2_packsswb_128 : GCCBuiltin<"__builtin_ia32_packsswb128">,

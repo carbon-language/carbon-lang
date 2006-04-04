@@ -82,6 +82,7 @@ def llvm_descriptor_ty : LLVMType<iPTR, "Type::PointerTyID">;     // global*
 def llvm_v16i8_ty      : LLVMPackedType<v16i8,16, llvm_sbyte_ty>;  // 16 x sbyte
 def llvm_v8i16_ty      : LLVMPackedType<v8i16, 8, llvm_short_ty>;  // 8 x short
 
+def llvm_v2i64_ty      : LLVMPackedType<v2i64, 2, llvm_long_ty>;   // 2 x long
 def llvm_v2i32_ty      : LLVMPackedType<v2i32, 2, llvm_int_ty>;    // 2 x int
 def llvm_v4i32_ty      : LLVMPackedType<v4i32, 4, llvm_int_ty>;    // 4 x int
 def llvm_v4f32_ty      : LLVMPackedType<v4f32, 4, llvm_float_ty>;  // 4 x float
