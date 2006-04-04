@@ -202,10 +202,12 @@ def VCFUX  : VXForm_1<778, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
                              (int_ppc_altivec_vcfux VRRC:$vB, imm:$UIMM))]>;
 def VCTSXS : VXForm_1<970, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
                       "vctsxs $vD, $vB, $UIMM", VecFP,
-                      []>;
+                      [(set VRRC:$vD,
+                             (int_ppc_altivec_vctsxs VRRC:$vB, imm:$UIMM))]>;
 def VCTUXS : VXForm_1<906, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
                       "vctuxs $vD, $vB, $UIMM", VecFP,
-                      []>;
+                      [(set VRRC:$vD,
+                             (int_ppc_altivec_vctuxs VRRC:$vB, imm:$UIMM))]>;
 def VEXPTEFP : VX2_Int<394, "vexptefp", int_ppc_altivec_vexptefp>;
 def VLOGEFP  : VX2_Int<458, "vlogefp",  int_ppc_altivec_vlogefp>;
 

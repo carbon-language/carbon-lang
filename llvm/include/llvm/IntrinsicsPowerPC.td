@@ -350,12 +350,18 @@ let TargetPrefix = "ppc" in {  // All PPC intrinsics start with "llvm.ppc.".
             Intrinsic<[llvm_v4i32_ty, llvm_v8i16_ty], [InstrNoMem]>;
 
 
-  // FP to integer conversion.
+  // FP <-> integer conversion.
   def int_ppc_altivec_vcfsx : GCCBuiltin<"__builtin_altivec_vcfsx">,
               Intrinsic<[llvm_v4f32_ty, llvm_v4i32_ty, llvm_int_ty],
                         [InstrNoMem]>;
   def int_ppc_altivec_vcfux : GCCBuiltin<"__builtin_altivec_vcfux">,
               Intrinsic<[llvm_v4f32_ty, llvm_v4i32_ty, llvm_int_ty],
+                        [InstrNoMem]>;
+  def int_ppc_altivec_vctsxs : GCCBuiltin<"__builtin_altivec_vctsxs">,
+              Intrinsic<[llvm_v4i32_ty, llvm_v4f32_ty, llvm_int_ty],
+                        [InstrNoMem]>;
+  def int_ppc_altivec_vctuxs : GCCBuiltin<"__builtin_altivec_vctuxs">,
+              Intrinsic<[llvm_v4i32_ty, llvm_v4f32_ty, llvm_int_ty],
                         [InstrNoMem]>;
 
   def int_ppc_altivec_vrfim : GCCBuiltin<"__builtin_altivec_vrfim">,
