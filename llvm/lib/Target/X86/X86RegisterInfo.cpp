@@ -429,8 +429,8 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr* MI,
     case X86::CVTSD2SSrr:return MakeRMInst(X86::CVTSD2SSrm, FrameIndex, MI);
     case X86::CVTSI2SSrr:return MakeRMInst(X86::CVTSI2SSrm, FrameIndex, MI);
     case X86::CVTSI2SDrr:return MakeRMInst(X86::CVTSI2SDrm, FrameIndex, MI);
-    case X86::SQRTSSrr:  return MakeRMInst(X86::SQRTSSrm, FrameIndex, MI);
-    case X86::SQRTSDrr:  return MakeRMInst(X86::SQRTSDrm, FrameIndex, MI);
+    case X86::SQRTSSr:  return MakeRMInst(X86::SQRTSSm, FrameIndex, MI);
+    case X86::SQRTSDr:  return MakeRMInst(X86::SQRTSDm, FrameIndex, MI);
     case X86::UCOMISSrr: return MakeRMInst(X86::UCOMISSrm, FrameIndex, MI);
     case X86::UCOMISDrr: return MakeRMInst(X86::UCOMISDrm, FrameIndex, MI);
     case X86::ADDSSrr:   return MakeRMInst(X86::ADDSSrm, FrameIndex, MI);
