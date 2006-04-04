@@ -34,7 +34,7 @@
 #ifndef LLVM_TYPE_H
 #define LLVM_TYPE_H
 
-#include "AbstractTypeUser.h"
+#include "llvm/AbstractTypeUser.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/GraphTraits.h"
