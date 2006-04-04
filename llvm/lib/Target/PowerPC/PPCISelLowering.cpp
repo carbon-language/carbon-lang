@@ -181,8 +181,9 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
       setOperationAction(ISD::OR  , (MVT::ValueType)VT, Legal);
       setOperationAction(ISD::XOR , (MVT::ValueType)VT, Legal);
       
-      // We can custom expand all VECTOR_SHUFFLEs to VPERM.
-      setOperationAction(ISD::VECTOR_SHUFFLE, (MVT::ValueType)VT, Custom);
+      // We promote all shuffles to v16i8.
+      setOperationAction(ISD::VECTOR_SHUFFLE, (MVT::ValueType)VT, Promote);
+      AddPromotedToType(ISD::VECTOR_SHUFFLE, (MVT::ValueType)VT, MVT::v16i8);
       
       setOperationAction(ISD::MUL , (MVT::ValueType)VT, Expand);
       setOperationAction(ISD::SDIV, (MVT::ValueType)VT, Expand);
@@ -195,6 +196,10 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
 
       setOperationAction(ISD::SCALAR_TO_VECTOR, (MVT::ValueType)VT, Expand);
     }
+
+    // We can custom expand all VECTOR_SHUFFLEs to VPERM, others we can handle
+    // with merges, splats, etc.
+    setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v16i8, Custom);
 
     addRegisterClass(MVT::v4f32, PPC::VRRCRegisterClass);
     addRegisterClass(MVT::v4i32, PPC::VRRCRegisterClass);
@@ -266,33 +271,47 @@ static bool isFloatingPointZero(SDOperand Op) {
 /// isSplatShuffleMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a splat of a single element that is suitable for input to
 /// VSPLTB/VSPLTH/VSPLTW.
-bool PPC::isSplatShuffleMask(SDNode *N) {
-  assert(N->getOpcode() == ISD::BUILD_VECTOR);
-  
-  // We can only splat 8-bit, 16-bit, and 32-bit quantities.
-  if (N->getNumOperands() != 4 && N->getNumOperands() != 8 &&
-      N->getNumOperands() != 16)
-    return false;
+bool PPC::isSplatShuffleMask(SDNode *N, unsigned EltSize) {
+  assert(N->getOpcode() == ISD::BUILD_VECTOR &&
+         N->getNumOperands() == 16 &&
+         (EltSize == 1 || EltSize == 2 || EltSize == 4));
   
   // This is a splat operation if each element of the permute is the same, and
   // if the value doesn't reference the second vector.
+  unsigned ElementBase = 0;
   SDOperand Elt = N->getOperand(0);
+  if (ConstantSDNode *EltV = dyn_cast<ConstantSDNode>(Elt))
+    ElementBase = EltV->getValue();
+  else
+    return false;   // FIXME: Handle UNDEF elements too!
+
+  if (cast<ConstantSDNode>(Elt)->getValue() >= 16)
+    return false;
+  
+  // Check that they are consequtive.
+  for (unsigned i = 1; i != EltSize; ++i) {
+    if (!isa<ConstantSDNode>(N->getOperand(i)) ||
+        cast<ConstantSDNode>(N->getOperand(i))->getValue() != i+ElementBase)
+      return false;
+  }
+  
   assert(isa<ConstantSDNode>(Elt) && "Invalid VECTOR_SHUFFLE mask!");
-  for (unsigned i = 1, e = N->getNumOperands(); i != e; ++i) {
+  for (unsigned i = EltSize, e = 16; i != e; i += EltSize) {
     assert(isa<ConstantSDNode>(N->getOperand(i)) &&
            "Invalid VECTOR_SHUFFLE mask!");
-    if (N->getOperand(i) != Elt) return false;
+    for (unsigned j = 0; j != EltSize; ++j)
+      if (N->getOperand(i+j) != N->getOperand(j))
+        return false;
   }
 
-  // Make sure it is a splat of the first vector operand.
-  return cast<ConstantSDNode>(Elt)->getValue() < N->getNumOperands();
+  return true;
 }
 
 /// getVSPLTImmediate - Return the appropriate VSPLT* immediate to splat the
 /// specified isSplatShuffleMask VECTOR_SHUFFLE mask.
-unsigned PPC::getVSPLTImmediate(SDNode *N) {
-  assert(isSplatShuffleMask(N));
-  return cast<ConstantSDNode>(N->getOperand(0))->getValue();
+unsigned PPC::getVSPLTImmediate(SDNode *N, unsigned EltSize) {
+  assert(isSplatShuffleMask(N, EltSize));
+  return cast<ConstantSDNode>(N->getOperand(0))->getValue() / EltSize;
 }
 
 /// isVecSplatImm - Return true if this is a build_vector of constants which
@@ -734,7 +753,10 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     // Cases that are handled by instructions that take permute immediates
     // (such as vsplt*) should be left as VECTOR_SHUFFLE nodes so they can be
     // selected by the instruction selector.
-    if (PPC::isSplatShuffleMask(PermMask.Val) && V2.getOpcode() == ISD::UNDEF)
+    if (V2.getOpcode() == ISD::UNDEF && 
+        (PPC::isSplatShuffleMask(PermMask.Val, 1) ||
+         PPC::isSplatShuffleMask(PermMask.Val, 2) ||
+         PPC::isSplatShuffleMask(PermMask.Val, 4)))
       break;
     
     // TODO: Handle more cases, and also handle cases that are cheaper to do as

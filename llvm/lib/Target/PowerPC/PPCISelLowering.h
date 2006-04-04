@@ -105,11 +105,11 @@ namespace llvm {
     /// isSplatShuffleMask - Return true if the specified VECTOR_SHUFFLE operand
     /// specifies a splat of a single element that is suitable for input to
     /// VSPLTB/VSPLTH/VSPLTW.
-    bool isSplatShuffleMask(SDNode *N);
+    bool isSplatShuffleMask(SDNode *N, unsigned EltSize);
     
     /// getVSPLTImmediate - Return the appropriate VSPLT* immediate to splat the
     /// specified isSplatShuffleMask VECTOR_SHUFFLE mask.
-    unsigned getVSPLTImmediate(SDNode *N);
+    unsigned getVSPLTImmediate(SDNode *N, unsigned EltSize);
     
     /// isVecSplatImm - Return true if this is a build_vector of constants which
     /// can be formed by using a vspltis[bhw] instruction.  The ByteSize field

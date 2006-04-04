@@ -15,14 +15,25 @@
 // Altivec transformation functions and pattern fragments.
 //
 
-// VSPLT_get_imm xform function: convert vector_shuffle mask to VSPLT* imm.
-def VSPLT_get_imm : SDNodeXForm<build_vector, [{
-  return getI32Imm(PPC::getVSPLTImmediate(N));
+// VSPLT*_get_imm xform function: convert vector_shuffle mask to VSPLT* imm.
+def VSPLTB_get_imm : SDNodeXForm<build_vector, [{
+  return getI32Imm(PPC::getVSPLTImmediate(N, 1));
 }]>;
-
-def VSPLT_shuffle_mask : PatLeaf<(build_vector), [{
-  return PPC::isSplatShuffleMask(N);
-}], VSPLT_get_imm>;
+def VSPLTB_shuffle_mask : PatLeaf<(build_vector), [{
+  return PPC::isSplatShuffleMask(N, 1);
+}], VSPLTB_get_imm>;
+def VSPLTH_get_imm : SDNodeXForm<build_vector, [{
+  return getI32Imm(PPC::getVSPLTImmediate(N, 2));
+}]>;
+def VSPLTH_shuffle_mask : PatLeaf<(build_vector), [{
+  return PPC::isSplatShuffleMask(N, 2);
+}], VSPLTH_get_imm>;
+def VSPLTW_get_imm : SDNodeXForm<build_vector, [{
+  return getI32Imm(PPC::getVSPLTImmediate(N, 4));
+}]>;
+def VSPLTW_shuffle_mask : PatLeaf<(build_vector), [{
+  return PPC::isSplatShuffleMask(N, 4);
+}], VSPLTW_get_imm>;
 
 
 // VSPLTISB_get_imm xform function: convert build_vector to VSPLTISB imm.
@@ -54,11 +65,6 @@ def VSPLTISW_get_imm : SDNodeXForm<build_vector, [{
 def vecspltisw : PatLeaf<(build_vector), [{
   return PPC::isVecSplatImm(N, 4);
 }], VSPLTISW_get_imm>;
-
-class isVDOT {   // vector dot instruction.
-  list<Register> Defs = [CR6];
-  bit RC = 1;
-}
 
 //===----------------------------------------------------------------------===//
 // Helpers for defining instructions that directly correspond to intrinsics.
@@ -294,15 +300,15 @@ def VSLW   : VX1_Int< 388, "vslw", int_ppc_altivec_vslw>;
 def VSPLTB : VXForm_1<524, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
                       "vspltb $vD, $vB, $UIMM", VecPerm,
                       [(set VRRC:$vD, (vector_shuffle (v16i8 VRRC:$vB), (undef),
-                                      VSPLT_shuffle_mask:$UIMM))]>;
+                                      VSPLTB_shuffle_mask:$UIMM))]>;
 def VSPLTH : VXForm_1<588, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
                       "vsplth $vD, $vB, $UIMM", VecPerm,
-                      [(set VRRC:$vD, (vector_shuffle (v8i16 VRRC:$vB), (undef),
-                                      VSPLT_shuffle_mask:$UIMM))]>;
+                      [(set VRRC:$vD, (vector_shuffle (v16i8 VRRC:$vB), (undef),
+                                      VSPLTH_shuffle_mask:$UIMM))]>;
 def VSPLTW : VXForm_1<652, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
                       "vspltw $vD, $vB, $UIMM", VecPerm,
-                      [(set VRRC:$vD, (vector_shuffle (v4f32 VRRC:$vB), (undef),
-                                      VSPLT_shuffle_mask:$UIMM))]>;
+                      [(set VRRC:$vD, (vector_shuffle (v16i8 VRRC:$vB), (undef),
+                                      VSPLTW_shuffle_mask:$UIMM))]>;
 
 def VSR    : VX1_Int< 708, "vsr"  , int_ppc_altivec_vsr>;
 def VSRO   : VX1_Int<1100, "vsro" , int_ppc_altivec_vsro>;
@@ -355,7 +361,10 @@ class VCMP<bits<10> xo, string asmstr, ValueType Ty>
               [(set VRRC:$vD, (Ty (PPCvcmp VRRC:$vA, VRRC:$vB, xo)))]>;
 class VCMPo<bits<10> xo, string asmstr, ValueType Ty>
   : VXRForm_1<xo, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB), asmstr, VecFPCompare,
-              [(set VRRC:$vD, (Ty (PPCvcmp_o VRRC:$vA, VRRC:$vB, xo)))]>,isVDOT;
+              [(set VRRC:$vD, (Ty (PPCvcmp_o VRRC:$vA, VRRC:$vB, xo)))]> {
+  let Defs = [CR6];
+  let RC = 1;
+}
 
 // f32 element comparisons.0
 def VCMPBFP   : VCMP <966, "vcmpbfp $vD, $vA, $vB"  , v4f32>;
@@ -487,14 +496,6 @@ def : Pat<(int_ppc_altivec_vmaddfp VRRC:$A, VRRC:$B, VRRC:$C),
           (VMADDFP VRRC:$A, VRRC:$B, VRRC:$C)>;
 def : Pat<(int_ppc_altivec_vnmsubfp VRRC:$A, VRRC:$B, VRRC:$C),
           (VNMSUBFP VRRC:$A, VRRC:$B, VRRC:$C)>;
-def : Pat<(vector_shuffle (v4i32 VRRC:$vB), (undef), VSPLT_shuffle_mask:$UIMM),
-          (v4i32 (VSPLTW VSPLT_shuffle_mask:$UIMM, VRRC:$vB))>;
 
-def : Pat<(PPCvperm (v4i32 VRRC:$vA), VRRC:$vB, VRRC:$vC),
-          (v4i32 (VPERM VRRC:$vA, VRRC:$vB, VRRC:$vC))>;
-def : Pat<(PPCvperm (v4f32 VRRC:$vA), VRRC:$vB, VRRC:$vC),
-          (v4f32 (VPERM VRRC:$vA, VRRC:$vB, VRRC:$vC))>;
-def : Pat<(PPCvperm (v8i16 VRRC:$vA), VRRC:$vB, VRRC:$vC),
-          (v8i16 (VPERM VRRC:$vA, VRRC:$vB, VRRC:$vC))>;
 def : Pat<(PPCvperm (v16i8 VRRC:$vA), VRRC:$vB, VRRC:$vC),
           (v16i8 (VPERM VRRC:$vA, VRRC:$vB, VRRC:$vC))>;
