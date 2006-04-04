@@ -1167,6 +1167,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     if (VT == Operand.getValueType()) return Operand;  // noop conversion.
     if (OpOpcode == ISD::BIT_CONVERT)  // bitconv(bitconv(x)) -> bitconv(x)
       return getNode(ISD::BIT_CONVERT, VT, Operand.getOperand(0));
+    if (OpOpcode == ISD::UNDEF)
+      return getNode(ISD::UNDEF, VT);
     break;
   case ISD::SCALAR_TO_VECTOR:
     assert(MVT::isVector(VT) && !MVT::isVector(Operand.getValueType()) &&
