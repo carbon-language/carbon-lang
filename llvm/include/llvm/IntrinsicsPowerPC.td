@@ -186,6 +186,14 @@ let TargetPrefix = "ppc" in {  // All intrinsics start with "llvm.ppc.".
                         [InstrNoMem]>;
 }
 
+// Vector average.
+def int_ppc_altivec_vavgsb : PowerPC_Vec_BBB_Intrinsic<"vavgsb">;
+def int_ppc_altivec_vavgsh : PowerPC_Vec_HHH_Intrinsic<"vavgsh">;
+def int_ppc_altivec_vavgsw : PowerPC_Vec_WWW_Intrinsic<"vavgsw">;
+def int_ppc_altivec_vavgub : PowerPC_Vec_BBB_Intrinsic<"vavgub">;
+def int_ppc_altivec_vavguh : PowerPC_Vec_HHH_Intrinsic<"vavguh">;
+def int_ppc_altivec_vavguw : PowerPC_Vec_WWW_Intrinsic<"vavguw">;
+
 // Vector maximum.
 def int_ppc_altivec_vmaxfp : PowerPC_Vec_FFF_Intrinsic<"vmaxfp">;
 def int_ppc_altivec_vmaxsb : PowerPC_Vec_BBB_Intrinsic<"vmaxsb">;
