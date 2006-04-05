@@ -353,8 +353,8 @@ bool PPC::isVecSplatImm(SDNode *N, unsigned ByteSize, char *Val) {
     ValSizeInBytes >>= 1;
     
     // If the top half equals the bottom half, we're still ok.
-    if (((Value >> (ValSizeInBytes*8)) & (1 << (8*ValSizeInBytes)-1)) !=
-         (Value                        & (1 << (8*ValSizeInBytes)-1)))
+    if (((Value >> (ValSizeInBytes*8)) & ((1 << (8*ValSizeInBytes))-1)) !=
+         (Value                        & ((1 << (8*ValSizeInBytes))-1)))
       return false;
   }
 
