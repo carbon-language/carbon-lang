@@ -66,6 +66,13 @@ class PowerPC_Vec_WWW_Intrinsic<string GCCIntSuffix>
 // PowerPC Altivec Intrinsic Definitions.
 
 let TargetPrefix = "ppc" in {  // All intrinsics start with "llvm.ppc.".
+  // VSCR access.
+  def int_ppc_altivec_mfvscr : GCCBuiltin<"__builtin_altivec_mfvscr">,
+              Intrinsic<[llvm_v8i16_ty], [IntrReadMem]>;
+  def int_ppc_altivec_mtvscr : GCCBuiltin<"__builtin_altivec_mtvscr">,
+              Intrinsic<[llvm_void_ty, llvm_v4i32_ty], [IntrWriteMem]>;
+
+
   // Loads.  These don't map directly to GCC builtins because they represent the
   // source address with a single pointer.
   def int_ppc_altivec_lvx :
