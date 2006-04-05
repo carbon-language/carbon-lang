@@ -312,6 +312,8 @@ def VXOR : VXForm_1<1220, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
 def VRLB   : VX1_Int<   4, "vrlb", int_ppc_altivec_vrlb>;
 def VRLH   : VX1_Int<  68, "vrlh", int_ppc_altivec_vrlh>;
 def VRLW   : VX1_Int< 132, "vrlw", int_ppc_altivec_vrlw>;
+
+def VSL    : VX1_Int< 452, "vsl" , int_ppc_altivec_vsl >;
 def VSLO   : VX1_Int<1036, "vslo", int_ppc_altivec_vslo>;
 def VSLB   : VX1_Int< 260, "vslb", int_ppc_altivec_vslb>;
 def VSLH   : VX1_Int< 324, "vslh", int_ppc_altivec_vslh>;
