@@ -673,3 +673,34 @@ of a v4sf value.
 Better codegen for vector_shuffles like this { x, 0, 0, 0 } or { x, 0, x, 0}.
 Perhaps use pxor / xorp* to clear a XMM register first?
 
+//===---------------------------------------------------------------------===//
+
+Adding to the list of cmp / test poor codegen issues:
+
+int test(__m128 *A, __m128 *B) {
+  if (_mm_comige_ss(*A, *B))
+    return 3;
+  else
+    return 4;
+}
+
+_test:
+	movl 8(%esp), %eax
+	movaps (%eax), %xmm0
+	movl 4(%esp), %eax
+	movaps (%eax), %xmm1
+	comiss %xmm0, %xmm1
+	setae %al
+	movzbl %al, %ecx
+	movl $3, %eax
+	movl $4, %edx
+	cmpl $0, %ecx
+	cmove %edx, %eax
+	ret
+
+Note the setae, movzbl, cmpl, cmove can be replaced with a single cmovae. There
+are a number of issues. 1) We are introducing a setcc between the result of the
+intrisic call and select. 2) The intrinsic is expected to produce a i32 value
+so a any extend (which becomes a zero extend) is added.
+
+We probably need some kind of target DAG combine hook to fix this.
