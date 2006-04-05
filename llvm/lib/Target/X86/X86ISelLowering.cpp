@@ -1417,7 +1417,7 @@ bool X86::isPSHUFDMask(SDNode *N) {
 }
 
 /// isPSHUFHWMask - Return true if the specified VECTOR_SHUFFLE operand
-/// specifies a shuffle of elements that is suitable for input to PSHUFD.
+/// specifies a shuffle of elements that is suitable for input to PSHUFHW.
 bool X86::isPSHUFHWMask(SDNode *N) {
   assert(N->getOpcode() == ISD::BUILD_VECTOR);
 
@@ -1447,7 +1447,7 @@ bool X86::isPSHUFHWMask(SDNode *N) {
 }
 
 /// isPSHUFLWMask - Return true if the specified VECTOR_SHUFFLE operand
-/// specifies a shuffle of elements that is suitable for input to PSHUFD.
+/// specifies a shuffle of elements that is suitable for input to PSHUFLW.
 bool X86::isPSHUFLWMask(SDNode *N) {
   assert(N->getOpcode() == ISD::BUILD_VECTOR);
 
@@ -1779,6 +1779,38 @@ static SDOperand NormalizeVectorShuffle(SDOperand V1, SDOperand V2,
     return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V1, Mask);
 
   return SDOperand();
+}
+
+/// isPSHUFHW_PSHUFLWMask - true if the specified VECTOR_SHUFFLE operand
+/// specifies a 8 element shuffle that can be broken into a pair of
+/// PSHUFHW and PSHUFLW.
+static bool isPSHUFHW_PSHUFLWMask(SDNode *N) {
+  assert(N->getOpcode() == ISD::BUILD_VECTOR);
+
+  if (N->getNumOperands() != 8)
+    return false;
+
+  // Lower quadword shuffled.
+  for (unsigned i = 0; i != 4; ++i) {
+    SDOperand Arg = N->getOperand(i);
+    if (Arg.getOpcode() == ISD::UNDEF) continue;
+    assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
+    unsigned Val = cast<ConstantSDNode>(Arg)->getValue();
+    if (Val > 4)
+      return false;
+  }
+
+  // Upper quadword shuffled.
+  for (unsigned i = 4; i != 8; ++i) {
+    SDOperand Arg = N->getOperand(i);
+    if (Arg.getOpcode() == ISD::UNDEF) continue;
+    assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
+    unsigned Val = cast<ConstantSDNode>(Arg)->getValue();
+    if (Val < 4 || Val > 7)
+      return false;
+  }
+
+  return true;
 }
 
 /// LowerOperation - Provide custom lowering hooks for some operations.
@@ -2590,6 +2622,26 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
 
       if (X86::isSHUFPMask(PermMask.Val))
         return NormalizeVectorShuffle(V1, V2, PermMask, VT, DAG);
+
+      // Handle v8i16 shuffle high / low shuffle node pair.
+      if (VT == MVT::v8i16 && isPSHUFHW_PSHUFLWMask(PermMask.Val)) {
+        MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(NumElems);
+        MVT::ValueType BaseVT = MVT::getVectorBaseType(MaskVT);
+        std::vector<SDOperand> MaskVec;
+        for (unsigned i = 0; i != 4; ++i)
+          MaskVec.push_back(PermMask.getOperand(i));
+        for (unsigned i = 4; i != 8; ++i)
+          MaskVec.push_back(DAG.getConstant(i, BaseVT));
+        SDOperand Mask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, MaskVec);
+        V1 = DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2, Mask);
+        MaskVec.clear();
+        for (unsigned i = 0; i != 4; ++i)
+          MaskVec.push_back(DAG.getConstant(i, BaseVT));
+        for (unsigned i = 4; i != 8; ++i)
+          MaskVec.push_back(PermMask.getOperand(i));
+        Mask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, MaskVec);
+        return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2, Mask);
+      }
     } else {
       // Floating point cases in the other order.
       if (X86::isSHUFPMask(PermMask.Val))
@@ -2872,6 +2924,7 @@ X86TargetLowering::isShuffleMaskLegal(SDOperand Mask, MVT::ValueType VT) const {
           X86::isPSHUFDMask(Mask.Val) ||
           X86::isPSHUFHWMask(Mask.Val) ||
           X86::isPSHUFLWMask(Mask.Val) ||
+          isPSHUFHW_PSHUFLWMask(Mask.Val) ||
           X86::isSHUFPMask(Mask.Val) ||
           X86::isUNPCKLMask(Mask.Val) ||
           X86::isUNPCKHMask(Mask.Val));
