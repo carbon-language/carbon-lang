@@ -325,6 +325,26 @@ class XForm_28<bits<6> opcode, bits<10> xo, dag OL, string asmstr,
   : XForm_base_r3xo<opcode, xo, OL, asmstr, itin, pattern> {
 }
 
+// DSS_Form - Form X instruction, used for altivec dss* instructions.
+class DSS_Form<bits<10> xo, dag OL, string asmstr, 
+                      InstrItinClass itin, list<dag> pattern>
+  : I<31, OL, asmstr, itin> {
+  bits<1> T;
+  bits<2> STRM;
+  bits<5> A;
+  bits<5> B;
+
+  let Pattern = pattern;
+
+  let Inst{6}     = T;
+  let Inst{7-8}   = 0;
+  let Inst{9-10}  = STRM;
+  let Inst{11-15} = A;
+  let Inst{16-20} = B;
+  let Inst{21-30} = xo;
+  let Inst{31}    = 0;
+}
+
 // 1.7.7 XL-Form
 class XLForm_1<bits<6> opcode, bits<10> xo, dag OL, string asmstr,
                InstrItinClass itin>
@@ -588,6 +608,8 @@ class MDForm_1<bits<6> opcode, bits<3> xo, dag OL, string asmstr,
   let Inst{30}    = SH{0};
   let Inst{31}    = RC;
 }
+
+
 
 // E-1 VA-Form
 

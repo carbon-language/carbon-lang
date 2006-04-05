@@ -47,13 +47,6 @@ altivec instructions.  Examples
 
 //===----------------------------------------------------------------------===//
 
-Missing intrinsics:
-
-ds*
-vsel (some aliases only accessible using builtins)
-
-//===----------------------------------------------------------------------===//
-
 FABS/FNEG can be codegen'd with the appropriate and/xor of -0.0.
 
 //===----------------------------------------------------------------------===//
