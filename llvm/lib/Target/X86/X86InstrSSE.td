@@ -100,6 +100,10 @@ def UNPCKH_shuffle_mask : PatLeaf<(build_vector), [{
   return X86::isUNPCKHMask(N);
 }]>;
 
+def UNPCKL_v_undef_shuffle_mask : PatLeaf<(build_vector), [{
+  return X86::isUNPCKL_v_undef_Mask(N);
+}]>;
+
 def PSHUFD_shuffle_mask : PatLeaf<(build_vector), [{
   return X86::isPSHUFDMask(N);
 }], SHUFFLE_get_shuf_imm>;
@@ -1732,6 +1736,20 @@ def : Pat<(vector_shuffle (loadv4f32 addr:$src1), (undef),
            PSHUFLW_fp_shuffle_mask:$sm),
           (v4f32 (PSHUFLWmi addr:$src1, PSHUFLW_fp_shuffle_mask:$sm))>,
       Requires<[HasSSE2]>;
+
+// vector_shuffle v1, <undef>, <0, 0, 1, 1, ...>
+def : Pat<(v4f32 (vector_shuffle VR128:$src, (undef),
+                  UNPCKL_v_undef_shuffle_mask)),
+          (UNPCKLPSrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
+def : Pat<(v16i8 (vector_shuffle VR128:$src, (undef),
+                  UNPCKL_v_undef_shuffle_mask)),
+          (PUNPCKLBWrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
+def : Pat<(v8i16 (vector_shuffle VR128:$src, (undef),
+                  UNPCKL_v_undef_shuffle_mask)),
+          (PUNPCKLWDrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
+def : Pat<(v4i32 (vector_shuffle VR128:$src, (undef),
+                  UNPCKL_v_undef_shuffle_mask)),
+          (PUNPCKLDQrr VR128:$src, VR128:$src)>, Requires<[HasSSE1]>;
 
 // 128-bit logical shifts
 def : Pat<(int_x86_sse2_psll_dq VR128:$src1, imm:$src2),

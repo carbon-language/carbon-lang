@@ -1664,6 +1664,37 @@ bool X86::isUNPCKHMask(SDNode *N) {
   return true;
 }
 
+/// isUNPCKL_v_undef_Mask - Special case of isUNPCKLMask for canonical form
+/// of vector_shuffle v, v, <0, 4, 1, 5>, i.e. vector_shuffle v, undef,
+/// <0, 0, 1, 1>
+bool X86::isUNPCKL_v_undef_Mask(SDNode *N) {
+  assert(N->getOpcode() == ISD::BUILD_VECTOR);
+
+  unsigned NumElems = N->getNumOperands();
+  if (NumElems != 4 && NumElems != 8 && NumElems != 16)
+    return false;
+
+  for (unsigned i = 0, j = 0; i != NumElems; i += 2, ++j) {
+    SDOperand BitI  = N->getOperand(i);
+    SDOperand BitI1 = N->getOperand(i+1);
+
+    if (BitI.getOpcode() != ISD::UNDEF) {
+      assert(isa<ConstantSDNode>(BitI) && "Invalid VECTOR_SHUFFLE mask!");
+      if (cast<ConstantSDNode>(BitI)->getValue() != j)
+        return false;
+    }
+
+    if (BitI1.getOpcode() != ISD::UNDEF) {
+      assert(isa<ConstantSDNode>(BitI1) && "Invalid VECTOR_SHUFFLE mask!");
+      if (cast<ConstantSDNode>(BitI1)->getValue() != j)
+        return false;
+    }
+  }
+
+  return true;
+}
+
+
 /// isSplatMask - Return true if the specified VECTOR_SHUFFLE operand specifies
 /// a splat of a single element.
 bool X86::isSplatMask(SDNode *N) {
@@ -2604,6 +2635,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     }
 
     if (X86::isUNPCKLMask(PermMask.Val) ||
+        X86::isUNPCKL_v_undef_Mask(PermMask.Val) ||
         X86::isUNPCKHMask(PermMask.Val))
       // Leave the VECTOR_SHUFFLE alone. It matches {P}UNPCKL*.
       return Op;
@@ -2929,5 +2961,6 @@ X86TargetLowering::isShuffleMaskLegal(SDOperand Mask, MVT::ValueType VT) const {
           isPSHUFHW_PSHUFLWMask(Mask.Val) ||
           X86::isSHUFPMask(Mask.Val) ||
           X86::isUNPCKLMask(Mask.Val) ||
+          X86::isUNPCKL_v_undef_Mask(Mask.Val) ||
           X86::isUNPCKHMask(Mask.Val));
 }

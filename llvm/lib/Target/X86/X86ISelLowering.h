@@ -220,6 +220,11 @@ namespace llvm {
    /// specifies a shuffle of elements that is suitable for input to UNPCKH.
    bool isUNPCKHMask(SDNode *N);
 
+   /// isUNPCKL_v_undef_Mask - Special case of isUNPCKLMask for canonical form
+   /// of vector_shuffle v, v, <0, 4, 1, 5>, i.e. vector_shuffle v, undef,
+   /// <0, 0, 1, 1>
+   bool isUNPCKL_v_undef_Mask(SDNode *N);
+
    /// isSplatMask - Return true if the specified VECTOR_SHUFFLE operand
    /// specifies a splat of a single element.
    bool isSplatMask(SDNode *N);
