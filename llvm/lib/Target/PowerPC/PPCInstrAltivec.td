@@ -157,8 +157,10 @@ def VNMSUBFP: VAForm_1<47, (ops VRRC:$vD, VRRC:$vA, VRRC:$vC, VRRC:$vB),
                        [(set VRRC:$vD, (fneg (fsub (fmul VRRC:$vA, VRRC:$vC),
                                                    VRRC:$vB)))]>,
                        Requires<[FPContractions]>;
+
 def VMHADDSHS  : VA1a_Int<32, "vmhaddshs",  int_ppc_altivec_vmhaddshs>;
 def VMHRADDSHS : VA1a_Int<33, "vmhraddshs", int_ppc_altivec_vmhraddshs>;
+def VMLADDUHM  : VA1a_Int<34, "vmladduhm",  int_ppc_altivec_vmladduhm>;
 def VPERM      : VA1a_Int<43, "vperm",      int_ppc_altivec_vperm>;
 def VSEL       : VA1a_Int<42, "vsel",       int_ppc_altivec_vsel>;
 

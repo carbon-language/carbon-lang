@@ -50,8 +50,6 @@ altivec instructions.  Examples
 Missing intrinsics:
 
 ds*
-mf*
-vmladduhm
 vsel (some aliases only accessible using builtins)
 
 //===----------------------------------------------------------------------===//
