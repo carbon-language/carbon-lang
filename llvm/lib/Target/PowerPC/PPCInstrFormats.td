@@ -697,6 +697,33 @@ class VXForm_3<bits<11> xo, dag OL, string asmstr,
   let Inst{21-31} = xo;
 }
 
+/// VXForm_4 - VX instructions with "VD,0,0" register fields, like mfvscr.
+class VXForm_4<bits<11> xo, dag OL, string asmstr,
+               InstrItinClass itin, list<dag> pattern>
+    : I<4, OL, asmstr, itin> {
+  bits<5> VD;
+  
+  let Pattern = pattern;
+  
+  let Inst{6-10}  = VD;
+  let Inst{11-15} = 0;
+  let Inst{16-20} = 0;
+  let Inst{21-31} = xo;
+}
+
+/// VXForm_5 - VX instructions with "0,0,VB" register fields, like mtvscr.
+class VXForm_5<bits<11> xo, dag OL, string asmstr,
+               InstrItinClass itin, list<dag> pattern>
+    : I<4, OL, asmstr, itin> {
+  bits<5> VB;
+  
+  let Pattern = pattern;
+  
+  let Inst{6-10}  = 0;
+  let Inst{11-15} = 0;
+  let Inst{16-20} = VB;
+  let Inst{21-31} = xo;
+}
 
 // E-4 VXR-Form
 class VXRForm_1<bits<10> xo, dag OL, string asmstr,

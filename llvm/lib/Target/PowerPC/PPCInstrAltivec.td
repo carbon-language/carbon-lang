@@ -93,6 +93,13 @@ class VX2_Int<bits<11> xo, string opc, Intrinsic IntID>
 def IMPLICIT_DEF_VRRC : Pseudo<(ops VRRC:$rD), "; $rD = IMPLICIT_DEF_VRRC",
                                [(set VRRC:$rD, (v4f32 (undef)))]>;
 
+def MFVSCR : VXForm_4<1540, (ops VRRC:$vD),
+                      "mfvcr $vD", LdStGeneral,
+                      [(set VRRC:$vD, (int_ppc_altivec_mfvscr))]>; 
+def MTVSCR : VXForm_5<1604, (ops VRRC:$vB),
+                      "mtvcr $vB", LdStGeneral,
+                      [(int_ppc_altivec_mtvscr VRRC:$vB)]>; 
+
 let isLoad = 1, PPC970_Unit = 2 in {  // Loads.
 def LVEBX: XForm_1<31,   7, (ops VRRC:$vD, memrr:$src),
                    "lvebx $vD, $src", LdStGeneral,
