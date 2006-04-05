@@ -933,9 +933,37 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
              "vector shuffle should not be created if not legal!");
       break;
     case TargetLowering::Custom:
-      Tmp1 = TLI.LowerOperation(Result, DAG);
-      if (Tmp1.Val) Result = Tmp1;
+      Tmp3 = TLI.LowerOperation(Result, DAG);
+      if (Tmp3.Val) {
+        Result = Tmp3;
+        break;
+      }
+      // FALLTHROUGH
+    case TargetLowering::Expand: {
+      MVT::ValueType VT = Node->getValueType(0);
+      MVT::ValueType EltVT = MVT::getVectorBaseType(VT);
+      MVT::ValueType PtrVT = TLI.getPointerTy();
+      SDOperand Mask = Node->getOperand(2);
+      unsigned NumElems = Mask.getNumOperands();
+      std::vector<SDOperand> Ops;
+      for (unsigned i = 0; i != NumElems; ++i) {
+        SDOperand Arg = Mask.getOperand(i);
+        if (Arg.getOpcode() == ISD::UNDEF) {
+          Ops.push_back(DAG.getNode(ISD::UNDEF, EltVT));
+        } else {
+          assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
+          unsigned Idx = cast<ConstantSDNode>(Arg)->getValue();
+          if (Idx < NumElems)
+            Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, EltVT, Tmp1,
+                                      DAG.getConstant(Idx, PtrVT)));
+          else
+            Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, EltVT, Tmp2,
+                                      DAG.getConstant(Idx - NumElems, PtrVT)));
+        }
+      }
+      Result = DAG.getNode(ISD::BUILD_VECTOR, VT, Ops);
       break;
+    }
     case TargetLowering::Promote: {
       // Change base type to a different vector type.
       MVT::ValueType OVT = Node->getValueType(0);
