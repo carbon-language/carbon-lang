@@ -106,7 +106,7 @@ namespace llvm {
       RDTSC_DAG,
 
       /// X86 compare and logical compare instructions.
-      CMP, TEST,
+      CMP, TEST, COMI, UCOMI,
 
       /// X86 SetCC. Operand 1 is condition code, and operand 2 is the flag
       /// operand produced by a CMP instruction.

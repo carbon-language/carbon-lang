@@ -19,10 +19,14 @@
 
 def X86loadp   : SDNode<"X86ISD::LOAD_PACK", SDTLoad, 
                         [SDNPHasChain]>;
-def X86fand    : SDNode<"X86ISD::FAND",     SDTFPBinOp,
+def X86fand    : SDNode<"X86ISD::FAND",      SDTFPBinOp,
                         [SDNPCommutative, SDNPAssociative]>;
-def X86fxor    : SDNode<"X86ISD::FXOR",     SDTFPBinOp,
+def X86fxor    : SDNode<"X86ISD::FXOR",      SDTFPBinOp,
                         [SDNPCommutative, SDNPAssociative]>;
+def X86comi    : SDNode<"X86ISD::COMI",      SDTX86CmpTest,
+                        [SDNPOutFlag]>;
+def X86ucomi   : SDNode<"X86ISD::UCOMI",     SDTX86CmpTest,
+                        [SDNPOutFlag]>;
 def X86s2vec   : SDNode<"X86ISD::S2VEC",
                         SDTypeProfile<1, 1, []>, []>;
 def X86zexts2vec : SDNode<"X86ISD::ZEXT_S2VEC",
@@ -559,6 +563,31 @@ def Int_CMPSDrm : SDI<0xC2, MRMSrcMem,
                       "cmp${cc}sd {$src, $dst|$dst, $src}", []>;
 }
 
+def Int_UCOMISSrr: PSI<0x2E, MRMSrcReg, (ops VR128:$src1, VR128:$src2),
+                       "ucomiss {$src2, $src1|$src1, $src2}",
+                       [(X86ucomi (v4f32 VR128:$src1), VR128:$src2)]>;
+def Int_UCOMISSrm: PSI<0x2E, MRMSrcMem, (ops VR128:$src1, f128mem:$src2),
+                       "ucomiss {$src2, $src1|$src1, $src2}",
+                      [(X86ucomi (v4f32 VR128:$src1), (loadv4f32 addr:$src2))]>;
+def Int_UCOMISDrr: PDI<0x2E, MRMSrcReg, (ops VR128:$src1, VR128:$src2),
+                       "ucomisd {$src2, $src1|$src1, $src2}",
+                       [(X86ucomi (v2f64 VR128:$src1), (v2f64 VR128:$src2))]>;
+def Int_UCOMISDrm: PDI<0x2E, MRMSrcMem, (ops VR128:$src1, f128mem:$src2),
+                       "ucomisd {$src2, $src1|$src1, $src2}",
+                      [(X86ucomi (v2f64 VR128:$src1), (loadv2f64 addr:$src2))]>;
+
+def Int_COMISSrr: PSI<0x2F, MRMSrcReg, (ops VR128:$src1, VR128:$src2),
+                      "comiss {$src2, $src1|$src1, $src2}",
+                      [(X86comi (v4f32 VR128:$src1), VR128:$src2)]>;
+def Int_COMISSrm: PSI<0x2F, MRMSrcMem, (ops VR128:$src1, f128mem:$src2),
+                      "comiss {$src2, $src1|$src1, $src2}",
+                      [(X86comi (v4f32 VR128:$src1), (loadv4f32 addr:$src2))]>;
+def Int_COMISDrr: PDI<0x2F, MRMSrcReg, (ops VR128:$src1, VR128:$src2),
+                      "comisd {$src2, $src1|$src1, $src2}",
+                      [(X86comi (v2f64 VR128:$src1), (v2f64 VR128:$src2))]>;
+def Int_COMISDrm: PDI<0x2F, MRMSrcMem, (ops VR128:$src1, f128mem:$src2),
+                      "comisd {$src2, $src1|$src1, $src2}",
+                      [(X86comi (v2f64 VR128:$src1), (loadv2f64 addr:$src2))]>;
 
 // Aliases of packed instructions for scalar use. These all have names that
 // start with 'Fs'.

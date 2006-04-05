@@ -19,6 +19,7 @@
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/ADT/VectorExtras.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -322,6 +323,9 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4i32, Custom);
     setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v8i16, Custom);
   }
+
+  // We want to custom lower some of our intrinsics.
+  setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
 
   computeRegisterProperties();
 
@@ -1185,9 +1189,8 @@ static unsigned getCondBrOpcodeForX86CC(unsigned X86CC) {
 /// specific condition code. It returns a false if it cannot do a direct
 /// translation. X86CC is the translated CondCode. Flip is set to true if the
 /// the order of comparison operands should be flipped.
-static bool translateX86CC(SDOperand CC, bool isFP, unsigned &X86CC,
-                           bool &Flip) {
-  ISD::CondCode SetCCOpcode = cast<CondCodeSDNode>(CC)->get();
+static bool translateX86CC(ISD::CondCode SetCCOpcode, bool isFP,
+                           unsigned &X86CC, bool &Flip) {
   Flip = false;
   X86CC = X86ISD::COND_INVALID;
   if (!isFP) {
@@ -1235,6 +1238,11 @@ static bool translateX86CC(SDOperand CC, bool isFP, unsigned &X86CC,
   }
 
   return X86CC != X86ISD::COND_INVALID;
+}
+
+static bool translateX86CC(SDOperand CC, bool isFP, unsigned &X86CC,
+                           bool &Flip) {
+  return translateX86CC(cast<CondCodeSDNode>(CC)->get(), isFP, X86CC, Flip);
 }
 
 /// hasFPCMov - is there a floating point cmov for the specific X86 condition
@@ -2146,7 +2154,9 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       // If the X86ISD::SETCC has more than one use, then it's probably better
       // to use a test instead of duplicating the X86ISD::CMP (for register
       // pressure reason).
-      if (Op0.getOperand(1).getOpcode() == X86ISD::CMP) {
+      unsigned CmpOpc = Op0.getOperand(1).getOpcode();
+      if (CmpOpc == X86ISD::CMP || CmpOpc == X86ISD::COMI ||
+          CmpOpc == X86ISD::UCOMI) {
         if (!Op0.hasOneUse()) {
           std::vector<MVT::ValueType> Tys;
           for (unsigned i = 0; i < Op0.Val->getNumValues(); ++i)
@@ -2160,7 +2170,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
         CC   = Op0.getOperand(0);
         Cond = Op0.getOperand(1);
         // Make a copy as flag result cannot be used by more than one.
-        Cond = DAG.getNode(X86ISD::CMP, MVT::Flag,
+        Cond = DAG.getNode(CmpOpc, MVT::Flag,
                            Cond.getOperand(0), Cond.getOperand(1));
         addTest =
           isFPStack && !hasFPCMov(cast<ConstantSDNode>(CC)->getSignExtended());
@@ -2201,7 +2211,9 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       // If the X86ISD::SETCC has more than one use, then it's probably better
       // to use a test instead of duplicating the X86ISD::CMP (for register
       // pressure reason).
-      if (Cond.getOperand(1).getOpcode() == X86ISD::CMP) {
+      unsigned CmpOpc = Cond.getOperand(1).getOpcode();
+      if (CmpOpc == X86ISD::CMP || CmpOpc == X86ISD::COMI ||
+          CmpOpc == X86ISD::UCOMI) {
         if (!Cond.hasOneUse()) {
           std::vector<MVT::ValueType> Tys;
           for (unsigned i = 0; i < Cond.Val->getNumValues(); ++i)
@@ -2215,7 +2227,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
         CC   = Cond.getOperand(0);
         Cond = Cond.getOperand(1);
         // Make a copy as flag result cannot be used by more than one.
-        Cond = DAG.getNode(X86ISD::CMP, MVT::Flag,
+        Cond = DAG.getNode(CmpOpc, MVT::Flag,
                            Cond.getOperand(0), Cond.getOperand(1));
       } else
         addTest = true;
@@ -2829,6 +2841,111 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
 
     return SDOperand();
   }
+  case ISD::INTRINSIC_WO_CHAIN: {
+    unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(0))->getValue();
+    switch (IntNo) {
+    default: return SDOperand();    // Don't custom lower most intrinsics.
+    // Comparison intrinsics.
+    case Intrinsic::x86_sse_comieq_ss:
+    case Intrinsic::x86_sse_comilt_ss:
+    case Intrinsic::x86_sse_comile_ss:
+    case Intrinsic::x86_sse_comigt_ss:
+    case Intrinsic::x86_sse_comige_ss:
+    case Intrinsic::x86_sse_comineq_ss:
+    case Intrinsic::x86_sse_ucomieq_ss:
+    case Intrinsic::x86_sse_ucomilt_ss:
+    case Intrinsic::x86_sse_ucomile_ss:
+    case Intrinsic::x86_sse_ucomigt_ss:
+    case Intrinsic::x86_sse_ucomige_ss:
+    case Intrinsic::x86_sse_ucomineq_ss:
+    case Intrinsic::x86_sse2_comieq_sd:
+    case Intrinsic::x86_sse2_comilt_sd:
+    case Intrinsic::x86_sse2_comile_sd:
+    case Intrinsic::x86_sse2_comigt_sd:
+    case Intrinsic::x86_sse2_comige_sd:
+    case Intrinsic::x86_sse2_comineq_sd:
+    case Intrinsic::x86_sse2_ucomieq_sd:
+    case Intrinsic::x86_sse2_ucomilt_sd:
+    case Intrinsic::x86_sse2_ucomile_sd:
+    case Intrinsic::x86_sse2_ucomigt_sd:
+    case Intrinsic::x86_sse2_ucomige_sd:
+    case Intrinsic::x86_sse2_ucomineq_sd: {
+      unsigned Opc;
+      ISD::CondCode CC;
+      switch (IntNo) {
+        default: break;
+        case Intrinsic::x86_sse_comieq_ss: 
+        case Intrinsic::x86_sse2_comieq_sd: 
+          Opc = X86ISD::COMI;
+          CC = ISD::SETEQ;
+          break;
+        case Intrinsic::x86_sse_comilt_ss:
+        case Intrinsic::x86_sse2_comilt_sd:
+          Opc = X86ISD::COMI;
+          CC = ISD::SETLT;
+          break;
+        case Intrinsic::x86_sse_comile_ss:
+        case Intrinsic::x86_sse2_comile_sd:
+          Opc = X86ISD::COMI;
+          CC = ISD::SETLE;
+          break;
+        case Intrinsic::x86_sse_comigt_ss:
+        case Intrinsic::x86_sse2_comigt_sd:
+          Opc = X86ISD::COMI;
+          CC = ISD::SETGT;
+          break;
+        case Intrinsic::x86_sse_comige_ss:
+        case Intrinsic::x86_sse2_comige_sd:
+          Opc = X86ISD::COMI;
+          CC = ISD::SETGE;
+          break;
+        case Intrinsic::x86_sse_comineq_ss:
+        case Intrinsic::x86_sse2_comineq_sd:
+          Opc = X86ISD::COMI;
+          CC = ISD::SETNE;
+          break;
+        case Intrinsic::x86_sse_ucomieq_ss:
+        case Intrinsic::x86_sse2_ucomieq_sd:
+          Opc = X86ISD::UCOMI;
+          CC = ISD::SETEQ;
+          break;
+        case Intrinsic::x86_sse_ucomilt_ss:
+        case Intrinsic::x86_sse2_ucomilt_sd:
+          Opc = X86ISD::UCOMI;
+          CC = ISD::SETLT;
+          break;
+        case Intrinsic::x86_sse_ucomile_ss:
+        case Intrinsic::x86_sse2_ucomile_sd:
+          Opc = X86ISD::UCOMI;
+          CC = ISD::SETLE;
+          break;
+        case Intrinsic::x86_sse_ucomigt_ss:
+        case Intrinsic::x86_sse2_ucomigt_sd:
+          Opc = X86ISD::UCOMI;
+          CC = ISD::SETGT;
+          break;
+        case Intrinsic::x86_sse_ucomige_ss:
+        case Intrinsic::x86_sse2_ucomige_sd:
+          Opc = X86ISD::UCOMI;
+          CC = ISD::SETGE;
+          break;
+        case Intrinsic::x86_sse_ucomineq_ss:
+        case Intrinsic::x86_sse2_ucomineq_sd:
+          Opc = X86ISD::UCOMI;
+          CC = ISD::SETNE;
+          break;
+      }
+      bool Flip;
+      unsigned X86CC;
+      translateX86CC(CC, true, X86CC, Flip);
+      SDOperand Cond = DAG.getNode(Opc, MVT::Flag, Op.getOperand(Flip?2:1),
+                                   Op.getOperand(Flip?1:2));
+      SDOperand SetCC = DAG.getNode(X86ISD::SETCC, MVT::i8, 
+                                    DAG.getConstant(X86CC, MVT::i8), Cond);
+      return DAG.getNode(ISD::ANY_EXTEND, MVT::i32, SetCC);
+    }
+    }
+  }
   }
 }
 
@@ -2853,6 +2970,8 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::RDTSC_DAG:          return "X86ISD::RDTSC_DAG";
   case X86ISD::CMP:                return "X86ISD::CMP";
   case X86ISD::TEST:               return "X86ISD::TEST";
+  case X86ISD::COMI:               return "X86ISD::COMI";
+  case X86ISD::UCOMI:              return "X86ISD::UCOMI";
   case X86ISD::SETCC:              return "X86ISD::SETCC";
   case X86ISD::CMOV:               return "X86ISD::CMOV";
   case X86ISD::BRCOND:             return "X86ISD::BRCOND";
