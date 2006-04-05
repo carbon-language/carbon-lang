@@ -126,7 +126,7 @@
 ..\$(IntDir)\TableGen.exe -gen-dag-isel -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenDAGISel.inc
 ..\$(IntDir)\TableGen.exe -gen-subtarget -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenSubtarget.inc
 "
-						AdditionalDependencies="$(InputDir)X86InstrInfo.td;$(InputDir)X86RegisterInfo.td;$(InputDir)..\Target.td;$(ProjectDir)..\$(IntDir)\TableGen.exe"
+						AdditionalDependencies="$(InputDir)X86InstrInfo.td;$(InputDir)X86RegisterInfo.td;$(InputDir)X86InstrFPStack.td;$(InputDir)X86InstrMMX.td;$(InputDir)X86InstrSSE.td;$(InputDir)..\Target.td;$(InputDir)..\TargetSchedule.td;$(InputDir)..\TargetScheduleDAG.td;$(ProjectDir)..\$(IntDir)\TableGen.exe"
 						Outputs="X86GenRegisterNames.inc;X86GenRegisterInfo.h.inc;X86GenRegisterInfo.inc;X86GenInstrNames.inc;X86GenInstrInfo.inc;X86GenAsmWriter.inc;X86GenAsmWriter1.inc;X86GenDAGISel.inc;X86GenSubtarget.inc"/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -144,7 +144,7 @@
 ..\$(IntDir)\TableGen.exe -gen-dag-isel -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenDAGISel.inc
 ..\$(IntDir)\TableGen.exe -gen-subtarget -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenSubtarget.inc
 "
-						AdditionalDependencies="$(InputDir)X86InstrInfo.td;$(InputDir)X86RegisterInfo.td;$(InputDir)..\Target.td;$(ProjectDir)..\$(IntDir)\TableGen.exe"
+						AdditionalDependencies="$(InputDir)X86InstrInfo.td;$(InputDir)X86RegisterInfo.td;$(InputDir)X86InstrFPStack.td;$(InputDir)X86InstrMMX.td;$(InputDir)X86InstrSSE.td;$(InputDir)..\Target.td;$(InputDir)..\TargetSchedule.td;$(InputDir)..\TargetScheduleDAG.td;$(ProjectDir)..\$(IntDir)\TableGen.exe"
 						Outputs="X86GenRegisterNames.inc;X86GenRegisterInfo.h.inc;X86GenRegisterInfo.inc;X86GenInstrNames.inc;X86GenInstrInfo.inc;X86GenAsmWriter.inc;X86GenAsmWriter1.inc;X86GenDAGISel.inc;X86GenSubtarget.inc"/>
 				</FileConfiguration>
 			</File>
