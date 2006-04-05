@@ -648,7 +648,8 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
     // Otherwise, if this is a vector, make it available as a generic vector
     // here.
     MVT::ValueType PTyElementVT, PTyLegalElementVT;
-    unsigned NE = TLI.getPackedTypeBreakdown(cast<PackedType>(VTy),PTyElementVT,
+    const PackedType *PTy = cast<PackedType>(VTy);
+    unsigned NE = TLI.getPackedTypeBreakdown(PTy, PTyElementVT,
                                              PTyLegalElementVT);
 
     // Build a VBUILD_VECTOR with the input registers.
@@ -684,6 +685,13 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
     Ops.push_back(DAG.getConstant(NE, MVT::i32));
     Ops.push_back(DAG.getValueType(PTyLegalElementVT));
     N = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, Ops);
+    
+    // Finally, use a VBIT_CONVERT to make this available as the appropriate
+    // vector type.
+    N = DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, N, 
+                    DAG.getConstant(PTy->getNumElements(),
+                                    MVT::i32),
+                    DAG.getValueType(TLI.getValueType(PTy->getElementType())));
   }
   
   return N;
