@@ -546,17 +546,15 @@ void GraphBuilder::visitCallSite(CallSite CS) {
       case Intrinsic::vaend:
         return;  // noop
       case Intrinsic::memcpy_i32: 
-      case Intrinsic::memcpy_i64: {
-        //write first location
-        if (DSNode *N = getValueDest(**CS.arg_begin()).getNode())
-          N->setModifiedMarker();
-        //and read second pointer
-        if (DSNode *N = getValueDest(**(CS.arg_begin() + 1)).getNode())
-          N->setReadMarker();
-        return;
-      }
+      case Intrinsic::memcpy_i64:
       case Intrinsic::memmove_i32:
       case Intrinsic::memmove_i64: {
+        //This is over aggressive.  What these functions do is not make the 
+        // targets pointers alias, but rather merge the out edges of the graphs
+        // for the pointers according to the type merging of the graphs.
+        //Simply merging the two graphs is a crude approximation to this.
+        //I might be wrong though.
+
         // Merge the first & second arguments, and mark the memory read and
         // modified.
         DSNodeHandle RetNH = getValueDest(**CS.arg_begin());
