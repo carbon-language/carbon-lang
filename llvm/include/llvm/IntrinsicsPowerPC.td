@@ -66,6 +66,24 @@ class PowerPC_Vec_WWW_Intrinsic<string GCCIntSuffix>
 // PowerPC Altivec Intrinsic Definitions.
 
 let TargetPrefix = "ppc" in {  // All intrinsics start with "llvm.ppc.".
+  // Data Stream Control.
+  def int_ppc_altivec_dss : GCCBuiltin<"__builtin_altivec_dss">,
+              Intrinsic<[llvm_void_ty, llvm_int_ty], [IntrWriteMem]>;
+  def int_ppc_altivec_dssall : GCCBuiltin<"__builtin_altivec_dssall">,
+              Intrinsic<[llvm_void_ty], [IntrWriteMem]>;
+  def int_ppc_altivec_dst : GCCBuiltin<"__builtin_altivec_dst">,
+              Intrinsic<[llvm_void_ty, llvm_ptr_ty, llvm_int_ty, llvm_int_ty],
+                        [IntrWriteMem]>;
+  def int_ppc_altivec_dstt : GCCBuiltin<"__builtin_altivec_dstt">,
+              Intrinsic<[llvm_void_ty, llvm_ptr_ty, llvm_int_ty, llvm_int_ty],
+                        [IntrWriteMem]>;
+  def int_ppc_altivec_dstst : GCCBuiltin<"__builtin_altivec_dstst">,
+              Intrinsic<[llvm_void_ty, llvm_ptr_ty, llvm_int_ty, llvm_int_ty],
+                        [IntrWriteMem]>;
+  def int_ppc_altivec_dststt : GCCBuiltin<"__builtin_altivec_dststt">,
+              Intrinsic<[llvm_void_ty, llvm_ptr_ty, llvm_int_ty, llvm_int_ty],
+                        [IntrWriteMem]>;
+
   // VSCR access.
   def int_ppc_altivec_mfvscr : GCCBuiltin<"__builtin_altivec_mfvscr">,
               Intrinsic<[llvm_v8i16_ty], [IntrReadMem]>;
