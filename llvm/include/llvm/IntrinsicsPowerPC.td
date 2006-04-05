@@ -336,7 +336,7 @@ let TargetPrefix = "ppc" in {  // All PPC intrinsics start with "llvm.ppc.".
             Intrinsic<[llvm_v16i8_ty, llvm_v4i32_ty, llvm_v4i32_ty],
                       [InstrNoMem]>;
   def int_ppc_altivec_vpkswus : GCCBuiltin<"__builtin_altivec_vpkswus">,
-            Intrinsic<[llvm_v16i8_ty, llvm_v4i32_ty, llvm_v4i32_ty],
+            Intrinsic<[llvm_v8i16_ty, llvm_v4i32_ty, llvm_v4i32_ty],
                       [InstrNoMem]>;
   // vpkuhum is lowered to a shuffle.
   def int_ppc_altivec_vpkuhus : GCCBuiltin<"__builtin_altivec_vpkuhus">,
@@ -344,7 +344,7 @@ let TargetPrefix = "ppc" in {  // All PPC intrinsics start with "llvm.ppc.".
                       [InstrNoMem]>;
   // vpkuwum is lowered to a shuffle.
   def int_ppc_altivec_vpkuwus : GCCBuiltin<"__builtin_altivec_vpkuwus">,
-            Intrinsic<[llvm_v8i16_ty, llvm_v4i32_ty, llvm_v4i32_ty],
+            Intrinsic<[llvm_v16i8_ty, llvm_v4i32_ty, llvm_v4i32_ty],
                       [InstrNoMem]>;
 
   // Unpacks.
@@ -410,7 +410,10 @@ let TargetPrefix = "ppc" in {  // All PPC intrinsics start with "llvm.ppc.".
               Intrinsic<[llvm_v4i32_ty, llvm_v4i32_ty, 
                          llvm_v4i32_ty, llvm_int_ty], [InstrNoMem]>;
 }
+
+def int_ppc_altivec_vsl   : PowerPC_Vec_WWW_Intrinsic<"vsl">;
 def int_ppc_altivec_vslo  : PowerPC_Vec_WWW_Intrinsic<"vslo">;
+
 def int_ppc_altivec_vslb  : PowerPC_Vec_BBB_Intrinsic<"vslb">;
 def int_ppc_altivec_vslh  : PowerPC_Vec_HHH_Intrinsic<"vslh">;
 def int_ppc_altivec_vslw  : PowerPC_Vec_WWW_Intrinsic<"vslw">;
