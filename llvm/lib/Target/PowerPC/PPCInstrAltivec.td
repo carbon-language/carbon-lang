@@ -123,7 +123,7 @@ def LVSL : XForm_1<31,   6, (ops VRRC:$vD, memrr:$src),
                    [(set VRRC:$vD, (int_ppc_altivec_lvsl xoaddr:$src))]>,
                    PPC970_Unit_LSU;
 def LVSR : XForm_1<31,  38, (ops VRRC:$vD, memrr:$src),
-                   "lvsl $vD, $src", LdStGeneral,
+                   "lvsr $vD, $src", LdStGeneral,
                    [(set VRRC:$vD, (int_ppc_altivec_lvsr xoaddr:$src))]>,
                    PPC970_Unit_LSU;
 
