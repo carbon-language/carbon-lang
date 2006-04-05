@@ -2842,14 +2842,17 @@ void X86TargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
                                                        uint64_t &KnownZero, 
                                                        uint64_t &KnownOne,
                                                        unsigned Depth) const {
-
   unsigned Opc = Op.getOpcode();
-  KnownZero = KnownOne = 0;   // Don't know anything.
+  assert((Opc >= ISD::BUILTIN_OP_END ||
+          Opc == ISD::INTRINSIC_WO_CHAIN ||
+          Opc == ISD::INTRINSIC_W_CHAIN ||
+          Opc == ISD::INTRINSIC_VOID) &&
+         "Should use MaskedValueIsZero if you don't know whether Op"
+         " is a target node!");
 
+  KnownZero = KnownOne = 0;   // Don't know anything.
   switch (Opc) {
-  default:
-    assert(Opc >= ISD::BUILTIN_OP_END && "Expected a target specific node");
-    break;
+  default: break;
   case X86ISD::SETCC: 
     KnownZero |= (MVT::getIntVTBitMask(Op.getValueType()) ^ 1ULL);
     break;
