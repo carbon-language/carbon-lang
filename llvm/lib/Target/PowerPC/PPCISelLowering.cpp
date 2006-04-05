@@ -757,7 +757,7 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
         (PPC::isSplatShuffleMask(PermMask.Val, 1) ||
          PPC::isSplatShuffleMask(PermMask.Val, 2) ||
          PPC::isSplatShuffleMask(PermMask.Val, 4)))
-      break;
+      return Op;
     
     // TODO: Handle more cases, and also handle cases that are cheaper to do as
     // multiple such instructions than as a constant pool load/vperm pair.
