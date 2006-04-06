@@ -704,3 +704,59 @@ intrisic call and select. 2) The intrinsic is expected to produce a i32 value
 so a any extend (which becomes a zero extend) is added.
 
 We probably need some kind of target DAG combine hook to fix this.
+
+//===---------------------------------------------------------------------===//
+
+How to decide when to use the "floating point version" of logical ops? Here are
+some code fragments:
+
+	movaps LCPI5_5, %xmm2
+	divps %xmm1, %xmm2
+	mulps %xmm2, %xmm3
+	mulps 8656(%ecx), %xmm3
+	addps 8672(%ecx), %xmm3
+	andps LCPI5_6, %xmm2
+	andps LCPI5_1, %xmm3
+	por %xmm2, %xmm3
+	movdqa %xmm3, (%edi)
+
+	movaps LCPI5_5, %xmm1
+	divps %xmm0, %xmm1
+	mulps %xmm1, %xmm3
+	mulps 8656(%ecx), %xmm3
+	addps 8672(%ecx), %xmm3
+	andps LCPI5_6, %xmm1
+	andps LCPI5_1, %xmm3
+	orps %xmm1, %xmm3
+	movaps %xmm3, 112(%esp)
+	movaps %xmm3, (%ebx)
+
+Due to some minor source change, the later case ended up using orps and movaps
+instead of por and movdqa. Does it matter?
+
+//===---------------------------------------------------------------------===//
+
+Use movddup to splat a v2f64 directly from a memory source. e.g.
+
+#include <emmintrin.h>
+
+void test(__m128d *r, double A) {
+  *r = _mm_set1_pd(A);
+}
+
+llc:
+
+_test:
+	movsd 8(%esp), %xmm0
+	unpcklpd %xmm0, %xmm0
+	movl 4(%esp), %eax
+	movapd %xmm0, (%eax)
+	ret
+
+icc:
+
+_test:
+	movl 4(%esp), %eax
+	movddup 8(%esp), %xmm0
+	movapd %xmm0, (%eax)
+	ret
