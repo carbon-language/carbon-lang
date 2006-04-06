@@ -69,12 +69,6 @@ clobbered regs.
 
 //===----------------------------------------------------------------------===//
 
-VSPLTW and friends are expanded by the FE into insert/extract element ops.  Make
-sure that the dag combiner puts them back together in the appropriate 
-vector_shuffle node and that this gets pattern matched appropriately.
-
-//===----------------------------------------------------------------------===//
-
 Implement passing/returning vectors by value.
 
 //===----------------------------------------------------------------------===//
@@ -123,10 +117,6 @@ This would fix two problems:
 1. Writing patterns multiple times.
 2. Identical operations in different types are not getting CSE'd (e.g. 
    { 0U, 0U, 0U, 0U } and {0.0, 0.0, 0.0, 0.0}.
-
-//===----------------------------------------------------------------------===//
-
-Instcombine llvm.ppc.altivec.vperm with an immediate into a shuffle operation.
 
 //===----------------------------------------------------------------------===//
 
