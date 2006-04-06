@@ -1599,7 +1599,7 @@ def MOVPS2SSrr : SSI<0x10, MRMSrcReg, (ops FR32:$dst, VR128:$src),
                      "movss {$src, $dst|$dst, $src}",
                      [(set FR32:$dst, (vector_extract (v4f32 VR128:$src),
                                        (i32 0)))]>;
-def MOVPS2SSmr : SSI<0x10, MRMDestMem, (ops f32mem:$dst, VR128:$src),
+def MOVPS2SSmr : SSI<0x11, MRMDestMem, (ops f32mem:$dst, VR128:$src),
                      "movss {$src, $dst|$dst, $src}",
                      [(store (f32 (vector_extract (v4f32 VR128:$src),
                                    (i32 0))), addr:$dst)]>;
@@ -1607,7 +1607,7 @@ def MOVPD2SDrr : SDI<0x10, MRMSrcReg, (ops FR64:$dst, VR128:$src),
                      "movsd {$src, $dst|$dst, $src}",
                      [(set FR64:$dst, (vector_extract (v2f64 VR128:$src),
                                        (i32 0)))]>;
-def MOVPDI2DIrr  : PDI<0x7E, MRMSrcReg, (ops R32:$dst, VR128:$src),
+def MOVPDI2DIrr  : PDI<0x6E, MRMSrcReg, (ops R32:$dst, VR128:$src),
                        "movd {$src, $dst|$dst, $src}",
                        [(set R32:$dst, (vector_extract (v4i32 VR128:$src),
                                         (i32 0)))]>;
