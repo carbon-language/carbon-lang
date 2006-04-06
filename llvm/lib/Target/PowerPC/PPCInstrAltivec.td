@@ -25,22 +25,41 @@ def VPKUWUM_shuffle_mask : PatLeaf<(build_vector), [{
 }]>;
 
 def VMRGLB_shuffle_mask : PatLeaf<(build_vector), [{
-  return PPC::isVMRGLShuffleMask(N, 1);
+  return PPC::isVMRGLShuffleMask(N, 1, false);
 }]>;
 def VMRGLH_shuffle_mask : PatLeaf<(build_vector), [{
-  return PPC::isVMRGLShuffleMask(N, 2);
+  return PPC::isVMRGLShuffleMask(N, 2, false);
 }]>;
 def VMRGLW_shuffle_mask : PatLeaf<(build_vector), [{
-  return PPC::isVMRGLShuffleMask(N, 4);
+  return PPC::isVMRGLShuffleMask(N, 4, false);
 }]>;
 def VMRGHB_shuffle_mask : PatLeaf<(build_vector), [{
-  return PPC::isVMRGHShuffleMask(N, 1);
+  return PPC::isVMRGHShuffleMask(N, 1, false);
 }]>;
 def VMRGHH_shuffle_mask : PatLeaf<(build_vector), [{
-  return PPC::isVMRGHShuffleMask(N, 2);
+  return PPC::isVMRGHShuffleMask(N, 2, false);
 }]>;
 def VMRGHW_shuffle_mask : PatLeaf<(build_vector), [{
-  return PPC::isVMRGHShuffleMask(N, 4);
+  return PPC::isVMRGHShuffleMask(N, 4, false);
+}]>;
+
+def VMRGLB_unary_shuffle_mask : PatLeaf<(build_vector), [{
+  return PPC::isVMRGLShuffleMask(N, 1, true);
+}]>;
+def VMRGLH_unary_shuffle_mask : PatLeaf<(build_vector), [{
+  return PPC::isVMRGLShuffleMask(N, 2, true);
+}]>;
+def VMRGLW_unary_shuffle_mask : PatLeaf<(build_vector), [{
+  return PPC::isVMRGLShuffleMask(N, 4, true);
+}]>;
+def VMRGHB_unary_shuffle_mask : PatLeaf<(build_vector), [{
+  return PPC::isVMRGHShuffleMask(N, 1, true);
+}]>;
+def VMRGHH_unary_shuffle_mask : PatLeaf<(build_vector), [{
+  return PPC::isVMRGHShuffleMask(N, 2, true);
+}]>;
+def VMRGHW_unary_shuffle_mask : PatLeaf<(build_vector), [{
+  return PPC::isVMRGHShuffleMask(N, 4, true);
 }]>;
 
 
@@ -565,6 +584,21 @@ def : Pat<(v4f32 (bitconvert (v4i32 VRRC:$src))), (v4f32 VRRC:$src)>;
 // Match vsldoi(x,x)
 def:Pat<(vector_shuffle (v16i8 VRRC:$vA),undef, VSLDOI_rotate_shuffle_mask:$in),
         (VSLDOI VRRC:$vA, VRRC:$vA, VSLDOI_rotate_shuffle_mask:$in)>;
+
+// Match vmrg*(x,x)
+def:Pat<(vector_shuffle (v16i8 VRRC:$vA), undef, VMRGLB_unary_shuffle_mask:$in),
+        (VMRGLB VRRC:$vA, VRRC:$vA)>;
+def:Pat<(vector_shuffle (v16i8 VRRC:$vA), undef, VMRGLH_unary_shuffle_mask:$in),
+        (VMRGLH VRRC:$vA, VRRC:$vA)>;
+def:Pat<(vector_shuffle (v16i8 VRRC:$vA), undef, VMRGLW_unary_shuffle_mask:$in),
+        (VMRGLW VRRC:$vA, VRRC:$vA)>;
+def:Pat<(vector_shuffle (v16i8 VRRC:$vA), undef, VMRGHB_unary_shuffle_mask:$in),
+        (VMRGHB VRRC:$vA, VRRC:$vA)>;
+def:Pat<(vector_shuffle (v16i8 VRRC:$vA), undef, VMRGHH_unary_shuffle_mask:$in),
+        (VMRGHH VRRC:$vA, VRRC:$vA)>;
+def:Pat<(vector_shuffle (v16i8 VRRC:$vA), undef, VMRGHW_unary_shuffle_mask:$in),
+        (VMRGHW VRRC:$vA, VRRC:$vA)>;
+
 
 // Immediate vector formation with vsplti*.
 def : Pat<(v16i8 vecspltisb:$invec), (v16i8 (VSPLTISB vecspltisb:$invec))>;

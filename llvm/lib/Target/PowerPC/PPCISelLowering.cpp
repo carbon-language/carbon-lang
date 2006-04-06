@@ -293,9 +293,10 @@ bool PPC::isVPKUWUMShuffleMask(SDNode *N) {
   return true;
 }
 
-/// isVMRGLShuffleMask - Return true if this is a shuffle mask suitable for
-/// a VRGL* instruction with the specified unit size (1,2 or 4 bytes).
-bool PPC::isVMRGLShuffleMask(SDNode *N, unsigned UnitSize) {
+/// isVMerge - Common function, used to match vmrg* shuffles.
+///
+static bool isVMerge(SDNode *N, unsigned UnitSize, 
+                     unsigned LHSStart, unsigned RHSStart) {
   assert(N->getOpcode() == ISD::BUILD_VECTOR &&
          N->getNumOperands() == 16 && "PPC only supports shuffles by bytes!");
   assert((UnitSize == 1 || UnitSize == 2 || UnitSize == 4) &&
@@ -304,31 +305,28 @@ bool PPC::isVMRGLShuffleMask(SDNode *N, unsigned UnitSize) {
   for (unsigned i = 0; i != 8/UnitSize; ++i)     // Step over units
     for (unsigned j = 0; j != UnitSize; ++j) {   // Step over bytes within unit
       if (!isConstantOrUndef(N->getOperand(i*UnitSize*2+j),
-                             8+j+i*UnitSize) ||
+                             LHSStart+j+i*UnitSize) ||
           !isConstantOrUndef(N->getOperand(i*UnitSize*2+UnitSize+j),
-                             24+j+i*UnitSize))
+                             RHSStart+j+i*UnitSize))
         return false;
     }
-  return true;
+      return true;
+}
+
+/// isVMRGLShuffleMask - Return true if this is a shuffle mask suitable for
+/// a VRGL* instruction with the specified unit size (1,2 or 4 bytes).
+bool PPC::isVMRGLShuffleMask(SDNode *N, unsigned UnitSize, bool isUnary) {
+  if (!isUnary)
+    return isVMerge(N, UnitSize, 8, 24);
+  return isVMerge(N, UnitSize, 8, 8);
 }
 
 /// isVMRGHShuffleMask - Return true if this is a shuffle mask suitable for
 /// a VRGH* instruction with the specified unit size (1,2 or 4 bytes).
-bool PPC::isVMRGHShuffleMask(SDNode *N, unsigned UnitSize) {
-  assert(N->getOpcode() == ISD::BUILD_VECTOR &&
-         N->getNumOperands() == 16 && "PPC only supports shuffles by bytes!");
-  assert((UnitSize == 1 || UnitSize == 2 || UnitSize == 4) &&
-         "Unsupported merge size!");
-
-  for (unsigned i = 0; i != 8/UnitSize; ++i)     // Step over units
-    for (unsigned j = 0; j != UnitSize; ++j) {   // Step over bytes within unit
-      if (!isConstantOrUndef(N->getOperand(i*UnitSize*2+j),
-                             0+j+i*UnitSize) ||
-          !isConstantOrUndef(N->getOperand(i*UnitSize*2+UnitSize+j),
-                             16+j+i*UnitSize))
-        return false;
-    }
-  return true;
+bool PPC::isVMRGHShuffleMask(SDNode *N, unsigned UnitSize, bool isUnary) {
+  if (!isUnary)
+    return isVMerge(N, UnitSize, 0, 16);
+  return isVMerge(N, UnitSize, 0, 0);
 }
 
 
@@ -870,22 +868,30 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     // Cases that are handled by instructions that take permute immediates
     // (such as vsplt*) should be left as VECTOR_SHUFFLE nodes so they can be
     // selected by the instruction selector.
-    if (V2.getOpcode() == ISD::UNDEF && 
-        (PPC::isSplatShuffleMask(PermMask.Val, 1) ||
-         PPC::isSplatShuffleMask(PermMask.Val, 2) ||
-         PPC::isSplatShuffleMask(PermMask.Val, 4) ||
-         PPC::isVSLDOIRotateShuffleMask(PermMask.Val) != -1))
-      return Op;
+    if (V2.getOpcode() == ISD::UNDEF) {
+      if (PPC::isSplatShuffleMask(PermMask.Val, 1) ||
+          PPC::isSplatShuffleMask(PermMask.Val, 2) ||
+          PPC::isSplatShuffleMask(PermMask.Val, 4) ||
+          PPC::isVSLDOIRotateShuffleMask(PermMask.Val) != -1 ||
+          PPC::isVMRGLShuffleMask(PermMask.Val, 1, true) ||
+          PPC::isVMRGLShuffleMask(PermMask.Val, 2, true) ||
+          PPC::isVMRGLShuffleMask(PermMask.Val, 4, true) ||
+          PPC::isVMRGHShuffleMask(PermMask.Val, 1, true) ||
+          PPC::isVMRGHShuffleMask(PermMask.Val, 2, true) ||
+          PPC::isVMRGHShuffleMask(PermMask.Val, 4, true)) {
+        return Op;
+      }
+    }
     
     if (PPC::isVPKUWUMShuffleMask(PermMask.Val) ||
         PPC::isVPKUHUMShuffleMask(PermMask.Val) ||
         PPC::isVSLDOIShuffleMask(PermMask.Val) != -1 ||
-        PPC::isVMRGLShuffleMask(PermMask.Val, 1) ||
-        PPC::isVMRGLShuffleMask(PermMask.Val, 2) ||
-        PPC::isVMRGLShuffleMask(PermMask.Val, 4) ||
-        PPC::isVMRGHShuffleMask(PermMask.Val, 1) ||
-        PPC::isVMRGHShuffleMask(PermMask.Val, 2) ||
-        PPC::isVMRGHShuffleMask(PermMask.Val, 4))
+        PPC::isVMRGLShuffleMask(PermMask.Val, 1, false) ||
+        PPC::isVMRGLShuffleMask(PermMask.Val, 2, false) ||
+        PPC::isVMRGLShuffleMask(PermMask.Val, 4, false) ||
+        PPC::isVMRGHShuffleMask(PermMask.Val, 1, false) ||
+        PPC::isVMRGHShuffleMask(PermMask.Val, 2, false) ||
+        PPC::isVMRGHShuffleMask(PermMask.Val, 4, false))
       return Op;
     
     // TODO: Handle more cases, and also handle cases that are cheaper to do as
