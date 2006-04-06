@@ -165,6 +165,9 @@ namespace {
     Value *InsertCastBefore(Value *V, const Type *Ty, Instruction &Pos) {
       if (V->getType() == Ty) return V;
 
+      if (Constant *CV = dyn_cast<Constant>(V))
+        return ConstantExpr::getCast(CV, Ty);
+      
       Instruction *C = new CastInst(V, Ty, V->getName(), &Pos);
       WorkList.push_back(C);
       return C;
@@ -5445,9 +5448,8 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     case Intrinsic::ppc_altivec_lvxl:
       // Turn lvx -> load if the pointer is known aligned.
       if (GetKnownAlignment(II->getOperand(1), TD) >= 16) {
-        Instruction *Ptr = new CastInst(II->getOperand(1), 
-                                        PointerType::get(II->getType()), "tmp");
-        InsertNewInstBefore(Ptr, CI);
+        Value *Ptr = InsertCastBefore(II->getOperand(1),
+                                      PointerType::get(II->getType()), CI);
         return new LoadInst(Ptr);
       }
       break;
@@ -5455,14 +5457,62 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     case Intrinsic::ppc_altivec_stvxl:
       // Turn stvx -> store if the pointer is known aligned.
       if (GetKnownAlignment(II->getOperand(2), TD) >= 16) {
-        const Type *OpTy = II->getOperand(1)->getType();
-        Instruction *Ptr = new CastInst(II->getOperand(2), 
-                                        PointerType::get(OpTy), "tmp");
-        InsertNewInstBefore(Ptr, CI);
+        const Type *OpPtrTy = PointerType::get(II->getOperand(1)->getType());
+        Value *Ptr = InsertCastBefore(II->getOperand(2), OpPtrTy, CI);
         return new StoreInst(II->getOperand(1), Ptr);
       }
       break;
-      
+    case Intrinsic::ppc_altivec_vperm:
+      // Turn vperm(V1,V2,mask) -> shuffle(V1,V2,mask) if mask is a constant.
+      if (ConstantPacked *Mask = dyn_cast<ConstantPacked>(II->getOperand(3))) {
+        assert(Mask->getNumOperands() == 16 && "Bad type for intrinsic!");
+        
+        // Check that all of the elements are integer constants or undefs.
+        bool AllEltsOk = true;
+        for (unsigned i = 0; i != 16; ++i) {
+          if (!isa<ConstantInt>(Mask->getOperand(i)) && 
+              !isa<UndefValue>(Mask->getOperand(i))) {
+            AllEltsOk = false;
+            break;
+          }
+        }
+        
+        if (AllEltsOk) {
+          // Cast the input vectors to byte vectors.
+          Value *Op0 = InsertCastBefore(II->getOperand(1), Mask->getType(), CI);
+          Value *Op1 = InsertCastBefore(II->getOperand(2), Mask->getType(), CI);
+          Value *Result = UndefValue::get(Op0->getType());
+          
+          // Only extract each element once.
+          Value *ExtractedElts[32];
+          memset(ExtractedElts, 0, sizeof(ExtractedElts));
+          
+          for (unsigned i = 0; i != 16; ++i) {
+            if (isa<UndefValue>(Mask->getOperand(i)))
+              continue;
+            unsigned Idx =cast<ConstantInt>(Mask->getOperand(i))->getRawValue();
+            Idx &= 31;  // Match the hardware behavior.
+            
+            if (ExtractedElts[Idx] == 0) {
+              Instruction *Elt = 
+                new ExtractElementInst(Idx < 16 ? Op0 : Op1,
+                                       ConstantUInt::get(Type::UIntTy, Idx&15),
+                                       "tmp");
+              InsertNewInstBefore(Elt, CI);
+              ExtractedElts[Idx] = Elt;
+            }
+          
+            // Insert this value into the result vector.
+            Result = new InsertElementInst(Result, ExtractedElts[Idx],
+                                           ConstantUInt::get(Type::UIntTy, i),
+                                           "tmp");
+            InsertNewInstBefore(cast<Instruction>(Result), CI);
+          }
+          return new CastInst(Result, CI.getType());
+        }
+      }
+      break;
+
     case Intrinsic::stackrestore: {
       // If the save is right next to the restore, remove the restore.  This can
       // happen when variable allocas are DCE'd.
