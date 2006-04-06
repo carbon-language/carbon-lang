@@ -96,6 +96,14 @@ def MOVHLPS_shuffle_mask : PatLeaf<(build_vector), [{
   return X86::isMOVHLPSMask(N);
 }]>;
 
+def MOVHP_shuffle_mask : PatLeaf<(build_vector), [{
+  return X86::isMOVHPMask(N);
+}]>;
+
+def MOVLP_shuffle_mask : PatLeaf<(build_vector), [{
+  return X86::isMOVLPMask(N);
+}]>;
+
 def UNPCKL_shuffle_mask : PatLeaf<(build_vector), [{
   return X86::isUNPCKLMask(N);
 }]>;
@@ -712,17 +720,29 @@ def MOVUPDmr : PDI<0x11, MRMDestMem, (ops f128mem:$dst, VR128:$src),
 
 let isTwoAddress = 1 in {
 def MOVLPSrm : PSI<0x12, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
-                   "movlps {$src2, $dst|$dst, $src2}", []>;
+                   "movlps {$src2, $dst|$dst, $src2}",
+                   [(set VR128:$dst, 
+                     (v4f32 (vector_shuffle VR128:$src1,
+                     (bc_v4f32 (v2f64 (scalar_to_vector (loadf64 addr:$src2)))),
+                             MOVLP_shuffle_mask)))]>;
 def MOVLPDrm : PDI<0x12, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
-                   "movlpd {$src2, $dst|$dst, $src2}", []>;
+                   "movlpd {$src2, $dst|$dst, $src2}",
+                   [(set VR128:$dst, 
+                     (v2f64 (vector_shuffle VR128:$src1,
+                             (scalar_to_vector (loadf64 addr:$src2)),
+                             MOVLP_shuffle_mask)))]>;
 def MOVHPSrm : PSI<0x16, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
-                   "movhps {$src2, $dst|$dst, $src2}", []>;
+                   "movhps {$src2, $dst|$dst, $src2}",
+                   [(set VR128:$dst, 
+                     (v4f32 (vector_shuffle VR128:$src1,
+                     (bc_v4f32 (v2f64 (scalar_to_vector (loadf64 addr:$src2)))),
+                             MOVHP_shuffle_mask)))]>;
 def MOVHPDrm : PDI<0x16, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
                    "movhpd {$src2, $dst|$dst, $src2}",
                    [(set VR128:$dst, 
                      (v2f64 (vector_shuffle VR128:$src1,
                              (scalar_to_vector (loadf64 addr:$src2)),
-                             UNPCKL_shuffle_mask)))]>;
+                             MOVHP_shuffle_mask)))]>;
 }
 
 def MOVLPSmr : PSI<0x13, MRMDestMem, (ops f64mem:$dst, VR128:$src),
@@ -1705,6 +1725,8 @@ def : Pat<(v16i8 (bitconvert (v8i16 VR128:$src))), (v4i32 VR128:$src)>,
 def : Pat<(v4i32 (bitconvert (v4f32 VR128:$src))), (v4i32 VR128:$src)>,
       Requires<[HasSSE2]>;
 def : Pat<(v4f32 (bitconvert (v4i32 VR128:$src))), (v4f32 VR128:$src)>,
+      Requires<[HasSSE2]>;
+def : Pat<(v4f32 (bitconvert (v2f64 VR128:$src))), (v4f32 VR128:$src)>,
       Requires<[HasSSE2]>;
 
 // Zeroing a VR128 then do a MOVS* to the lower bits.
