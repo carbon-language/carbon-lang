@@ -10,6 +10,13 @@
 LEVEL = ..
 include $(LEVEL)/Makefile.config
 
+ifneq ($(LLVMGCC_MAJVERS),3)
+PARALLEL_DIRS :=
+install all::
+	$(Echo) "Warning: The runtime libraries only need to be built with"
+	$(Echo) "Warning: llvm-gcc version 3. They are automatically included"
+	$(Echo) "Warning: with llvm-gcc version 4 and beyond"
+else 
 ifneq ($(wildcard $(LLVMGCC)),)
 PARALLEL_DIRS  := GCCLibraries  libdummy libprofile libtrace GC
 else
@@ -25,6 +32,7 @@ endif
 # build on Sparc
 ifeq ($(ARCH), Sparc)
 PARALLEL_DIRS := $(filter-out libprofile, $(PARALLEL_DIRS))
+endif
 endif
 
 include $(LEVEL)/Makefile.common

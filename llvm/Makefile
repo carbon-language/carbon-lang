@@ -9,18 +9,23 @@
 LEVEL = .
 DIRS = lib/System lib/Support utils lib
 
+include $(LEVEL)/Makefile.common
+
 ifeq ($(MAKECMDGOALS),tools-only)
-DIRS += tools
+  DIRS += tools
 else
   ifneq ($(MAKECMDGOALS),libs-only)
-    DIRS += tools runtime docs
-    OPTIONAL_DIRS = examples projects
+    DIRS += tools
+    ifeq ($(LLVMGCC_MAJVERS),3)
+      DIRS += runtime
+    else
+      $(warning Skipping runtime libraries, llvm-gcc 4 detected.)
+    endif
+    DIRS += docs
   endif
+  OPTIONAL_DIRS = examples projects
 endif
-
 EXTRA_DIST := test llvm.spec include
-
-include $(LEVEL)/Makefile.common
 
 # Specify options to pass to configure script when we're
 # running the dist-check target
