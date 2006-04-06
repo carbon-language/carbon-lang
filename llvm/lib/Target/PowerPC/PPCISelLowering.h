@@ -102,6 +102,14 @@ namespace llvm {
 
   /// Define some predicates that are used for node matching.
   namespace PPC {
+    /// isVPKUHUMShuffleMask - Return true if this is the shuffle mask for a
+    /// VPKUHUM instruction.
+    bool isVPKUHUMShuffleMask(SDNode *N);
+    
+    /// isVPKUWUMShuffleMask - Return true if this is the shuffle mask for a
+    /// VPKUWUM instruction.
+    bool isVPKUWUMShuffleMask(SDNode *N);
+    
     /// isSplatShuffleMask - Return true if the specified VECTOR_SHUFFLE operand
     /// specifies a splat of a single element that is suitable for input to
     /// VSPLTB/VSPLTH/VSPLTW.

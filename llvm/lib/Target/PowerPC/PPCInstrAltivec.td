@@ -15,6 +15,15 @@
 // Altivec transformation functions and pattern fragments.
 //
 
+/// VPKUHUM_shuffle_mask/VPKUWUM_shuffle_mask - Return true if this is a valid
+/// shuffle mask for the VPKUHUM or VPKUWUM instructions.
+def VPKUHUM_shuffle_mask : PatLeaf<(build_vector), [{
+  return PPC::isVPKUHUMShuffleMask(N);
+}]>;
+def VPKUWUM_shuffle_mask : PatLeaf<(build_vector), [{
+  return PPC::isVPKUWUMShuffleMask(N);
+}]>;
+
 // VSPLT*_get_imm xform function: convert vector_shuffle mask to VSPLT* imm.
 def VSPLTB_get_imm : SDNodeXForm<build_vector, [{
   return getI32Imm(PPC::getVSPLTImmediate(N, 1));
@@ -369,11 +378,13 @@ def VPKSWSS : VX1_Int<462, "vpkswss", int_ppc_altivec_vpkswss>;
 def VPKSWUS : VX1_Int<334, "vpkswus", int_ppc_altivec_vpkswus>;
 def VPKUHUM : VXForm_1<14, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                        "vpkuhum $vD, $vA, $vB", VecFP,
-                       [/*TODO*/]>;
+                       [(set VRRC:$vD, (vector_shuffle (v16i8 VRRC:$vA),
+                                             VRRC:$vB, VPKUHUM_shuffle_mask))]>;
 def VPKUHUS : VX1_Int<142, "vpkuhus", int_ppc_altivec_vpkuhus>;
 def VPKUWUM : VXForm_1<78, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                        "vpkuwum $vD, $vA, $vB", VecFP,
-                       [/*TODO*/]>;
+                       [(set VRRC:$vD, (vector_shuffle (v16i8 VRRC:$vA),
+                                             VRRC:$vB, VPKUWUM_shuffle_mask))]>;
 def VPKUWUS : VX1_Int<206, "vpkuwus", int_ppc_altivec_vpkuwus>;
 
 // Vector Unpack.

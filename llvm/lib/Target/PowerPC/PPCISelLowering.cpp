@@ -267,6 +267,56 @@ static bool isFloatingPointZero(SDOperand Op) {
   return false;
 }
 
+/// isConstantOrUndef - Op is either an undef node or a ConstantSDNode.  Return
+/// true if Op is undef or if it matches the specified value.
+static bool isConstantOrUndef(SDOperand Op, unsigned Val) {
+  return Op.getOpcode() == ISD::UNDEF || 
+         cast<ConstantSDNode>(Op)->getValue() == Val;
+}
+
+/// isVPKUHUMShuffleMask - Return true if this is the shuffle mask for a
+/// VPKUHUM instruction.
+bool PPC::isVPKUHUMShuffleMask(SDNode *N) {
+  return isConstantOrUndef(N->getOperand( 0),  1) &&
+         isConstantOrUndef(N->getOperand( 1),  3) &&
+         isConstantOrUndef(N->getOperand( 2),  5) &&
+         isConstantOrUndef(N->getOperand( 3),  7) &&
+         isConstantOrUndef(N->getOperand( 4),  9) &&
+         isConstantOrUndef(N->getOperand( 5), 11) &&
+         isConstantOrUndef(N->getOperand( 6), 13) &&
+         isConstantOrUndef(N->getOperand( 7), 15) &&
+         isConstantOrUndef(N->getOperand( 8), 17) &&
+         isConstantOrUndef(N->getOperand( 9), 19) &&
+         isConstantOrUndef(N->getOperand(10), 21) &&
+         isConstantOrUndef(N->getOperand(11), 23) &&
+         isConstantOrUndef(N->getOperand(12), 25) &&
+         isConstantOrUndef(N->getOperand(13), 27) &&
+         isConstantOrUndef(N->getOperand(14), 29) &&
+         isConstantOrUndef(N->getOperand(15), 31);
+}
+
+/// isVPKUWUMShuffleMask - Return true if this is the shuffle mask for a
+/// VPKUWUM instruction.
+bool PPC::isVPKUWUMShuffleMask(SDNode *N) {
+  return isConstantOrUndef(N->getOperand( 0),  2) &&
+         isConstantOrUndef(N->getOperand( 1),  3) &&
+         isConstantOrUndef(N->getOperand( 2),  6) &&
+         isConstantOrUndef(N->getOperand( 3),  7) &&
+         isConstantOrUndef(N->getOperand( 4), 10) &&
+         isConstantOrUndef(N->getOperand( 5), 11) &&
+         isConstantOrUndef(N->getOperand( 6), 14) &&
+         isConstantOrUndef(N->getOperand( 7), 15) &&
+         isConstantOrUndef(N->getOperand( 8), 18) &&
+         isConstantOrUndef(N->getOperand( 9), 19) &&
+         isConstantOrUndef(N->getOperand(10), 22) &&
+         isConstantOrUndef(N->getOperand(11), 23) &&
+         isConstantOrUndef(N->getOperand(12), 26) &&
+         isConstantOrUndef(N->getOperand(13), 27) &&
+         isConstantOrUndef(N->getOperand(14), 30) &&
+         isConstantOrUndef(N->getOperand(15), 31);
+}
+
+
 
 /// isSplatShuffleMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a splat of a single element that is suitable for input to
@@ -757,6 +807,10 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
         (PPC::isSplatShuffleMask(PermMask.Val, 1) ||
          PPC::isSplatShuffleMask(PermMask.Val, 2) ||
          PPC::isSplatShuffleMask(PermMask.Val, 4)))
+      return Op;
+    
+    if (PPC::isVPKUWUMShuffleMask(PermMask.Val) ||
+        PPC::isVPKUHUMShuffleMask(PermMask.Val))
       return Op;
     
     // TODO: Handle more cases, and also handle cases that are cheaper to do as
