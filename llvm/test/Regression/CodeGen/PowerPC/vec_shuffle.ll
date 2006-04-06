@@ -1,4 +1,5 @@
 ; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | grep vsldoi | wc -l | grep 2
+; RUN: llvm-as < %s | opt -instcombine | llc -march=ppc32 -mcpu=g5 | not grep vperm
 
 void %VSLDOI_xy(<8 x short>* %A, <8 x short>* %B) {
 entry:
@@ -84,3 +85,18 @@ void %VSLDOI_xx(<8 x short>* %A, <8 x short>* %B) {
 	store <8 x short> %tmp33, <8 x short>* %A
 	ret void
 }
+
+void %VPERM_promote(<8 x short>* %A, <8 x short>* %B) {
+entry:
+        %tmp = load <8 x short>* %A             ; <<8 x short>> [#uses=1]
+        %tmp = cast <8 x short> %tmp to <4 x int>               ; <<4 x int>> [#uses=1]
+        %tmp2 = load <8 x short>* %B            ; <<8 x short>> [#uses=1]
+        %tmp2 = cast <8 x short> %tmp2 to <4 x int>             ; <<4 x int>> [#uses=1]
+        %tmp3 = call <4 x int> %llvm.ppc.altivec.vperm( <4 x int> %tmp, <4 x int> %tmp2, <16 x sbyte> < sbyte 14, sbyte 14, sbyte 14, sbyte 14, sbyte 14, sbyte 14, sbyte 14, sbyte 14, sbyte 14, sbyte 14, sbyte 14, sbyte 14, sbyte 14, sbyte 14, sbyte 14, sbyte 14 > )                ; <<4 x int>> [#uses=1]
+        %tmp3 = cast <4 x int> %tmp3 to <8 x short>             ; <<8 x short>> [#uses=1]
+        store <8 x short> %tmp3, <8 x short>* %A
+        ret void
+}
+
+declare <4 x int> %llvm.ppc.altivec.vperm(<4 x int>, <4 x int>, <16 x sbyte>)
+
