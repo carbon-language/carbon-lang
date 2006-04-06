@@ -277,46 +277,73 @@ static bool isConstantOrUndef(SDOperand Op, unsigned Val) {
 /// isVPKUHUMShuffleMask - Return true if this is the shuffle mask for a
 /// VPKUHUM instruction.
 bool PPC::isVPKUHUMShuffleMask(SDNode *N) {
-  return isConstantOrUndef(N->getOperand( 0),  1) &&
-         isConstantOrUndef(N->getOperand( 1),  3) &&
-         isConstantOrUndef(N->getOperand( 2),  5) &&
-         isConstantOrUndef(N->getOperand( 3),  7) &&
-         isConstantOrUndef(N->getOperand( 4),  9) &&
-         isConstantOrUndef(N->getOperand( 5), 11) &&
-         isConstantOrUndef(N->getOperand( 6), 13) &&
-         isConstantOrUndef(N->getOperand( 7), 15) &&
-         isConstantOrUndef(N->getOperand( 8), 17) &&
-         isConstantOrUndef(N->getOperand( 9), 19) &&
-         isConstantOrUndef(N->getOperand(10), 21) &&
-         isConstantOrUndef(N->getOperand(11), 23) &&
-         isConstantOrUndef(N->getOperand(12), 25) &&
-         isConstantOrUndef(N->getOperand(13), 27) &&
-         isConstantOrUndef(N->getOperand(14), 29) &&
-         isConstantOrUndef(N->getOperand(15), 31);
+  for (unsigned i = 0; i != 16; ++i)
+    if (!isConstantOrUndef(N->getOperand(i),  i*2+1))
+      return false;
+  return true;
 }
 
 /// isVPKUWUMShuffleMask - Return true if this is the shuffle mask for a
 /// VPKUWUM instruction.
 bool PPC::isVPKUWUMShuffleMask(SDNode *N) {
-  return isConstantOrUndef(N->getOperand( 0),  2) &&
-         isConstantOrUndef(N->getOperand( 1),  3) &&
-         isConstantOrUndef(N->getOperand( 2),  6) &&
-         isConstantOrUndef(N->getOperand( 3),  7) &&
-         isConstantOrUndef(N->getOperand( 4), 10) &&
-         isConstantOrUndef(N->getOperand( 5), 11) &&
-         isConstantOrUndef(N->getOperand( 6), 14) &&
-         isConstantOrUndef(N->getOperand( 7), 15) &&
-         isConstantOrUndef(N->getOperand( 8), 18) &&
-         isConstantOrUndef(N->getOperand( 9), 19) &&
-         isConstantOrUndef(N->getOperand(10), 22) &&
-         isConstantOrUndef(N->getOperand(11), 23) &&
-         isConstantOrUndef(N->getOperand(12), 26) &&
-         isConstantOrUndef(N->getOperand(13), 27) &&
-         isConstantOrUndef(N->getOperand(14), 30) &&
-         isConstantOrUndef(N->getOperand(15), 31);
+  for (unsigned i = 0; i != 16; i += 2)
+    if (!isConstantOrUndef(N->getOperand(i  ),  i*2+2) ||
+        !isConstantOrUndef(N->getOperand(i+1),  i*2+3))
+      return false;
+  return true;
 }
 
+/// isVSLDOIShuffleMask - If this is a vsldoi shuffle mask, return the shift
+/// amount, otherwise return -1.
+int PPC::isVSLDOIShuffleMask(SDNode *N) {
+  assert(N->getNumOperands() == 16 && "PPC only supports shuffles by bytes!");
+  // Find the first non-undef value in the shuffle mask.
+  unsigned i;
+  for (i = 0; i != 16 && N->getOperand(i).getOpcode() == ISD::UNDEF; ++i)
+    /*search*/;
+  
+  if (i == 16) return -1;  // all undef.
+  
+  // Otherwise, check to see if the rest of the elements are consequtively
+  // numbered from this value.
+  unsigned ShiftAmt = cast<ConstantSDNode>(N->getOperand(i))->getValue();
+  if (ShiftAmt < i) return -1;
+  ShiftAmt -= i;
 
+  // Check the rest of the elements to see if they are consequtive.
+  for (++i; i != 16; ++i)
+    if (!isConstantOrUndef(N->getOperand(i), ShiftAmt+i))
+      return -1;
+  
+  return ShiftAmt;
+}
+
+/// isVSLDOIRotateShuffleMask - If this is a vsldoi rotate shuffle mask,
+/// return the shift amount, otherwise return -1.  Note that vlsdoi(x,x) will
+/// result in the shuffle being changed to shuffle(x,undef, ...) with
+/// transformed byte numbers.
+int PPC::isVSLDOIRotateShuffleMask(SDNode *N) {
+  assert(N->getNumOperands() == 16 && "PPC only supports shuffles by bytes!");
+  // Find the first non-undef value in the shuffle mask.
+  unsigned i;
+  for (i = 0; i != 16 && N->getOperand(i).getOpcode() == ISD::UNDEF; ++i)
+    /*search*/;
+  
+  if (i == 16) return -1;  // all undef.
+  
+  // Otherwise, check to see if the rest of the elements are consequtively
+  // numbered from this value.
+  unsigned ShiftAmt = cast<ConstantSDNode>(N->getOperand(i))->getValue();
+  if (ShiftAmt < i) return -1;
+  ShiftAmt -= i;
+  
+  // Check the rest of the elements to see if they are consequtive.
+  for (++i; i != 16; ++i)
+    if (!isConstantOrUndef(N->getOperand(i), (ShiftAmt+i) & 15))
+      return -1;
+  
+  return ShiftAmt;
+}
 
 /// isSplatShuffleMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a splat of a single element that is suitable for input to
@@ -810,7 +837,9 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       return Op;
     
     if (PPC::isVPKUWUMShuffleMask(PermMask.Val) ||
-        PPC::isVPKUHUMShuffleMask(PermMask.Val))
+        PPC::isVPKUHUMShuffleMask(PermMask.Val) ||
+        PPC::isVSLDOIShuffleMask(PermMask.Val) != -1 ||
+        PPC::isVSLDOIRotateShuffleMask(PermMask.Val) != -1)
       return Op;
     
     // TODO: Handle more cases, and also handle cases that are cheaper to do as

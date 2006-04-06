@@ -110,6 +110,14 @@ namespace llvm {
     /// VPKUWUM instruction.
     bool isVPKUWUMShuffleMask(SDNode *N);
     
+    /// isVSLDOIShuffleMask - If this is a vsldoi shuffle mask, return the shift
+    /// amount, otherwise return -1.
+    int isVSLDOIShuffleMask(SDNode *N);
+
+    /// isVSLDOIRotateShuffleMask - If this is a vsldoi rotate shuffle mask,
+    /// return the shift amount, otherwise return -1.  This matches vsldoi(x,x).
+    int isVSLDOIRotateShuffleMask(SDNode *N);
+    
     /// isSplatShuffleMask - Return true if the specified VECTOR_SHUFFLE operand
     /// specifies a splat of a single element that is suitable for input to
     /// VSPLTB/VSPLTH/VSPLTW.

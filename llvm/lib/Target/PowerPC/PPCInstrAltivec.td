@@ -24,6 +24,23 @@ def VPKUWUM_shuffle_mask : PatLeaf<(build_vector), [{
   return PPC::isVPKUWUMShuffleMask(N);
 }]>;
 
+def VSLDOI_get_imm : SDNodeXForm<build_vector, [{
+  return getI32Imm(PPC::isVSLDOIShuffleMask(N));
+}]>;
+def VSLDOI_shuffle_mask :  PatLeaf<(build_vector), [{
+  return PPC::isVSLDOIShuffleMask(N) != -1;
+}], VSLDOI_get_imm>;
+
+/// VSLDOI_rotate* - These are used to match vsldoi(X,X), which is turned into
+/// vector_shuffle(X,undef,mask) by the dag combiner.
+def VSLDOI_rotate_get_imm : SDNodeXForm<build_vector, [{
+  return getI32Imm(PPC::isVSLDOIRotateShuffleMask(N));
+}]>;
+def VSLDOI_rotate_shuffle_mask :  PatLeaf<(build_vector), [{
+  return PPC::isVSLDOIRotateShuffleMask(N) != -1;
+}], VSLDOI_rotate_get_imm>;
+
+
 // VSPLT*_get_imm xform function: convert vector_shuffle mask to VSPLT* imm.
 def VSPLTB_get_imm : SDNodeXForm<build_vector, [{
   return getI32Imm(PPC::getVSPLTImmediate(N, 1));
@@ -182,11 +199,12 @@ def VMLADDUHM  : VA1a_Int<34, "vmladduhm",  int_ppc_altivec_vmladduhm>;
 def VPERM      : VA1a_Int<43, "vperm",      int_ppc_altivec_vperm>;
 def VSEL       : VA1a_Int<42, "vsel",       int_ppc_altivec_vsel>;
 
+// Shuffles.
 def VSLDOI  : VAForm_2<44, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, u5imm:$SH),
                        "vsldoi $vD, $vA, $vB, $SH", VecFP,
-                       [(set VRRC:$vD,
-                             (int_ppc_altivec_vsldoi VRRC:$vA, VRRC:$vB,
-                                                     imm:$SH))]>;
+                       [(set VRRC:$vD, 
+                             (vector_shuffle (v16i8 VRRC:$vA), VRRC:$vB,
+                                             VSLDOI_shuffle_mask:$SH))]>;
 
 // VX-Form instructions.  AltiVec arithmetic ops.
 def VADDFP : VXForm_1<10, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
@@ -503,6 +521,12 @@ def : Pat<(v4i32 (bitconvert (v4f32 VRRC:$src))), (v4i32 VRRC:$src)>;
 def : Pat<(v4f32 (bitconvert (v16i8 VRRC:$src))), (v4f32 VRRC:$src)>;
 def : Pat<(v4f32 (bitconvert (v8i16 VRRC:$src))), (v4f32 VRRC:$src)>;
 def : Pat<(v4f32 (bitconvert (v4i32 VRRC:$src))), (v4f32 VRRC:$src)>;
+
+// Shuffles.
+
+// Match vsldoi(x,x)
+def:Pat<(vector_shuffle (v16i8 VRRC:$vA),undef, VSLDOI_rotate_shuffle_mask:$in),
+        (VSLDOI VRRC:$vA, VRRC:$vA, VSLDOI_rotate_shuffle_mask:$in)>;
 
 // Immediate vector formation with vsplti*.
 def : Pat<(v16i8 vecspltisb:$invec), (v16i8 (VSPLTISB vecspltisb:$invec))>;
