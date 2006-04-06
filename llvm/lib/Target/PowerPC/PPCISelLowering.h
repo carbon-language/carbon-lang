@@ -104,11 +104,11 @@ namespace llvm {
   namespace PPC {
     /// isVPKUHUMShuffleMask - Return true if this is the shuffle mask for a
     /// VPKUHUM instruction.
-    bool isVPKUHUMShuffleMask(SDNode *N);
+    bool isVPKUHUMShuffleMask(SDNode *N, bool isUnary);
     
     /// isVPKUWUMShuffleMask - Return true if this is the shuffle mask for a
     /// VPKUWUM instruction.
-    bool isVPKUWUMShuffleMask(SDNode *N);
+    bool isVPKUWUMShuffleMask(SDNode *N, bool isUnary);
 
     /// isVMRGLShuffleMask - Return true if this is a shuffle mask suitable for
     /// a VRGL* instruction with the specified unit size (1,2 or 4 bytes).
@@ -120,11 +120,7 @@ namespace llvm {
     
     /// isVSLDOIShuffleMask - If this is a vsldoi shuffle mask, return the shift
     /// amount, otherwise return -1.
-    int isVSLDOIShuffleMask(SDNode *N);
-
-    /// isVSLDOIRotateShuffleMask - If this is a vsldoi rotate shuffle mask,
-    /// return the shift amount, otherwise return -1.  This matches vsldoi(x,x).
-    int isVSLDOIRotateShuffleMask(SDNode *N);
+    int isVSLDOIShuffleMask(SDNode *N, bool isUnary);
     
     /// isSplatShuffleMask - Return true if the specified VECTOR_SHUFFLE operand
     /// specifies a splat of a single element that is suitable for input to

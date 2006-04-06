@@ -18,11 +18,19 @@
 /// VPKUHUM_shuffle_mask/VPKUWUM_shuffle_mask - Return true if this is a valid
 /// shuffle mask for the VPKUHUM or VPKUWUM instructions.
 def VPKUHUM_shuffle_mask : PatLeaf<(build_vector), [{
-  return PPC::isVPKUHUMShuffleMask(N);
+  return PPC::isVPKUHUMShuffleMask(N, false);
 }]>;
 def VPKUWUM_shuffle_mask : PatLeaf<(build_vector), [{
-  return PPC::isVPKUWUMShuffleMask(N);
+  return PPC::isVPKUWUMShuffleMask(N, false);
 }]>;
+
+def VPKUHUM_unary_shuffle_mask : PatLeaf<(build_vector), [{
+  return PPC::isVPKUHUMShuffleMask(N, true);
+}]>;
+def VPKUWUM_unary_shuffle_mask : PatLeaf<(build_vector), [{
+  return PPC::isVPKUWUMShuffleMask(N, true);
+}]>;
+
 
 def VMRGLB_shuffle_mask : PatLeaf<(build_vector), [{
   return PPC::isVMRGLShuffleMask(N, 1, false);
@@ -64,20 +72,20 @@ def VMRGHW_unary_shuffle_mask : PatLeaf<(build_vector), [{
 
 
 def VSLDOI_get_imm : SDNodeXForm<build_vector, [{
-  return getI32Imm(PPC::isVSLDOIShuffleMask(N));
+  return getI32Imm(PPC::isVSLDOIShuffleMask(N, false));
 }]>;
 def VSLDOI_shuffle_mask :  PatLeaf<(build_vector), [{
-  return PPC::isVSLDOIShuffleMask(N) != -1;
+  return PPC::isVSLDOIShuffleMask(N, false) != -1;
 }], VSLDOI_get_imm>;
 
-/// VSLDOI_rotate* - These are used to match vsldoi(X,X), which is turned into
+/// VSLDOI_unary* - These are used to match vsldoi(X,X), which is turned into
 /// vector_shuffle(X,undef,mask) by the dag combiner.
-def VSLDOI_rotate_get_imm : SDNodeXForm<build_vector, [{
-  return getI32Imm(PPC::isVSLDOIRotateShuffleMask(N));
+def VSLDOI_unary_get_imm : SDNodeXForm<build_vector, [{
+  return getI32Imm(PPC::isVSLDOIShuffleMask(N, true));
 }]>;
-def VSLDOI_rotate_shuffle_mask :  PatLeaf<(build_vector), [{
-  return PPC::isVSLDOIRotateShuffleMask(N) != -1;
-}], VSLDOI_rotate_get_imm>;
+def VSLDOI_unary_shuffle_mask :  PatLeaf<(build_vector), [{
+  return PPC::isVSLDOIShuffleMask(N, true) != -1;
+}], VSLDOI_unary_get_imm>;
 
 
 // VSPLT*_get_imm xform function: convert vector_shuffle mask to VSPLT* imm.
@@ -581,9 +589,13 @@ def : Pat<(v4f32 (bitconvert (v4i32 VRRC:$src))), (v4f32 VRRC:$src)>;
 
 // Shuffles.
 
-// Match vsldoi(x,x)
-def:Pat<(vector_shuffle (v16i8 VRRC:$vA),undef, VSLDOI_rotate_shuffle_mask:$in),
-        (VSLDOI VRRC:$vA, VRRC:$vA, VSLDOI_rotate_shuffle_mask:$in)>;
+// Match vsldoi(x,x), vpkuwum(x,x), vpkuhum(x,x)
+def:Pat<(vector_shuffle (v16i8 VRRC:$vA), undef, VSLDOI_unary_shuffle_mask:$in),
+        (VSLDOI VRRC:$vA, VRRC:$vA, VSLDOI_unary_shuffle_mask:$in)>;
+def:Pat<(vector_shuffle (v16i8 VRRC:$vA), undef,VPKUWUM_unary_shuffle_mask:$in),
+        (VPKUWUM VRRC:$vA, VRRC:$vA)>;
+def:Pat<(vector_shuffle (v16i8 VRRC:$vA), undef,VPKUHUM_unary_shuffle_mask:$in),
+        (VPKUHUM VRRC:$vA, VRRC:$vA)>;
 
 // Match vmrg*(x,x)
 def:Pat<(vector_shuffle (v16i8 VRRC:$vA), undef, VMRGLB_unary_shuffle_mask:$in),
@@ -598,7 +610,6 @@ def:Pat<(vector_shuffle (v16i8 VRRC:$vA), undef, VMRGHH_unary_shuffle_mask:$in),
         (VMRGHH VRRC:$vA, VRRC:$vA)>;
 def:Pat<(vector_shuffle (v16i8 VRRC:$vA), undef, VMRGHW_unary_shuffle_mask:$in),
         (VMRGHW VRRC:$vA, VRRC:$vA)>;
-
 
 // Immediate vector formation with vsplti*.
 def : Pat<(v16i8 vecspltisb:$invec), (v16i8 (VSPLTISB vecspltisb:$invec))>;

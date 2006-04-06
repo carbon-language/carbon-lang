@@ -276,20 +276,36 @@ static bool isConstantOrUndef(SDOperand Op, unsigned Val) {
 
 /// isVPKUHUMShuffleMask - Return true if this is the shuffle mask for a
 /// VPKUHUM instruction.
-bool PPC::isVPKUHUMShuffleMask(SDNode *N) {
-  for (unsigned i = 0; i != 16; ++i)
-    if (!isConstantOrUndef(N->getOperand(i),  i*2+1))
-      return false;
+bool PPC::isVPKUHUMShuffleMask(SDNode *N, bool isUnary) {
+  if (!isUnary) {
+    for (unsigned i = 0; i != 16; ++i)
+      if (!isConstantOrUndef(N->getOperand(i),  i*2+1))
+        return false;
+  } else {
+    for (unsigned i = 0; i != 8; ++i)
+      if (!isConstantOrUndef(N->getOperand(i),  i*2+1) ||
+          !isConstantOrUndef(N->getOperand(i+8),  i*2+1))
+        return false;
+  }
   return true;
 }
 
 /// isVPKUWUMShuffleMask - Return true if this is the shuffle mask for a
 /// VPKUWUM instruction.
-bool PPC::isVPKUWUMShuffleMask(SDNode *N) {
-  for (unsigned i = 0; i != 16; i += 2)
-    if (!isConstantOrUndef(N->getOperand(i  ),  i*2+2) ||
-        !isConstantOrUndef(N->getOperand(i+1),  i*2+3))
-      return false;
+bool PPC::isVPKUWUMShuffleMask(SDNode *N, bool isUnary) {
+  if (!isUnary) {
+    for (unsigned i = 0; i != 16; i += 2)
+      if (!isConstantOrUndef(N->getOperand(i  ),  i*2+2) ||
+          !isConstantOrUndef(N->getOperand(i+1),  i*2+3))
+        return false;
+  } else {
+    for (unsigned i = 0; i != 8; i += 2)
+      if (!isConstantOrUndef(N->getOperand(i  ),  i*2+2) ||
+          !isConstantOrUndef(N->getOperand(i+1),  i*2+3) ||
+          !isConstantOrUndef(N->getOperand(i+8),  i*2+2) ||
+          !isConstantOrUndef(N->getOperand(i+9),  i*2+3))
+        return false;
+  }
   return true;
 }
 
@@ -332,7 +348,7 @@ bool PPC::isVMRGHShuffleMask(SDNode *N, unsigned UnitSize, bool isUnary) {
 
 /// isVSLDOIShuffleMask - If this is a vsldoi shuffle mask, return the shift
 /// amount, otherwise return -1.
-int PPC::isVSLDOIShuffleMask(SDNode *N) {
+int PPC::isVSLDOIShuffleMask(SDNode *N, bool isUnary) {
   assert(N->getOpcode() == ISD::BUILD_VECTOR &&
          N->getNumOperands() == 16 && "PPC only supports shuffles by bytes!");
   // Find the first non-undef value in the shuffle mask.
@@ -348,37 +364,17 @@ int PPC::isVSLDOIShuffleMask(SDNode *N) {
   if (ShiftAmt < i) return -1;
   ShiftAmt -= i;
 
-  // Check the rest of the elements to see if they are consequtive.
-  for (++i; i != 16; ++i)
-    if (!isConstantOrUndef(N->getOperand(i), ShiftAmt+i))
-      return -1;
-  
-  return ShiftAmt;
-}
-
-/// isVSLDOIRotateShuffleMask - If this is a vsldoi rotate shuffle mask,
-/// return the shift amount, otherwise return -1.  Note that vlsdoi(x,x) will
-/// result in the shuffle being changed to shuffle(x,undef, ...) with
-/// transformed byte numbers.
-int PPC::isVSLDOIRotateShuffleMask(SDNode *N) {
-  assert(N->getNumOperands() == 16 && "PPC only supports shuffles by bytes!");
-  // Find the first non-undef value in the shuffle mask.
-  unsigned i;
-  for (i = 0; i != 16 && N->getOperand(i).getOpcode() == ISD::UNDEF; ++i)
-    /*search*/;
-  
-  if (i == 16) return -1;  // all undef.
-  
-  // Otherwise, check to see if the rest of the elements are consequtively
-  // numbered from this value.
-  unsigned ShiftAmt = cast<ConstantSDNode>(N->getOperand(i))->getValue();
-  if (ShiftAmt < i) return -1;
-  ShiftAmt -= i;
-  
-  // Check the rest of the elements to see if they are consequtive.
-  for (++i; i != 16; ++i)
-    if (!isConstantOrUndef(N->getOperand(i), (ShiftAmt+i) & 15))
-      return -1;
+  if (!isUnary) {
+    // Check the rest of the elements to see if they are consequtive.
+    for (++i; i != 16; ++i)
+      if (!isConstantOrUndef(N->getOperand(i), ShiftAmt+i))
+        return -1;
+  } else {
+    // Check the rest of the elements to see if they are consequtive.
+    for (++i; i != 16; ++i)
+      if (!isConstantOrUndef(N->getOperand(i), (ShiftAmt+i) & 15))
+        return -1;
+  }
   
   return ShiftAmt;
 }
@@ -872,7 +868,9 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       if (PPC::isSplatShuffleMask(PermMask.Val, 1) ||
           PPC::isSplatShuffleMask(PermMask.Val, 2) ||
           PPC::isSplatShuffleMask(PermMask.Val, 4) ||
-          PPC::isVSLDOIRotateShuffleMask(PermMask.Val) != -1 ||
+          PPC::isVPKUWUMShuffleMask(PermMask.Val, true) ||
+          PPC::isVPKUHUMShuffleMask(PermMask.Val, true) ||
+          PPC::isVSLDOIShuffleMask(PermMask.Val, true) != -1 ||
           PPC::isVMRGLShuffleMask(PermMask.Val, 1, true) ||
           PPC::isVMRGLShuffleMask(PermMask.Val, 2, true) ||
           PPC::isVMRGLShuffleMask(PermMask.Val, 4, true) ||
@@ -883,9 +881,12 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       }
     }
     
-    if (PPC::isVPKUWUMShuffleMask(PermMask.Val) ||
-        PPC::isVPKUHUMShuffleMask(PermMask.Val) ||
-        PPC::isVSLDOIShuffleMask(PermMask.Val) != -1 ||
+    // Altivec has a variety of "shuffle immediates" that take two vector inputs
+    // and produce a fixed permutation.  If any of these match, do not lower to
+    // VPERM.
+    if (PPC::isVPKUWUMShuffleMask(PermMask.Val, false) ||
+        PPC::isVPKUHUMShuffleMask(PermMask.Val, false) ||
+        PPC::isVSLDOIShuffleMask(PermMask.Val, false) != -1 ||
         PPC::isVMRGLShuffleMask(PermMask.Val, 1, false) ||
         PPC::isVMRGLShuffleMask(PermMask.Val, 2, false) ||
         PPC::isVMRGLShuffleMask(PermMask.Val, 4, false) ||
