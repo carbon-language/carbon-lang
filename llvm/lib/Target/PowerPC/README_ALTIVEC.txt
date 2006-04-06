@@ -129,6 +129,3 @@ void test(vector int *X, vector int *Y) {
 
 //===----------------------------------------------------------------------===//
 
-Lower "merges" in the front-end to shuffles, reconstruct in the backend.
-
-//===----------------------------------------------------------------------===//

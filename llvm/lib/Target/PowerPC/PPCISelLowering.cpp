@@ -293,10 +293,50 @@ bool PPC::isVPKUWUMShuffleMask(SDNode *N) {
   return true;
 }
 
+/// isVMRGLShuffleMask - Return true if this is a shuffle mask suitable for
+/// a VRGL* instruction with the specified unit size (1,2 or 4 bytes).
+bool PPC::isVMRGLShuffleMask(SDNode *N, unsigned UnitSize) {
+  assert(N->getOpcode() == ISD::BUILD_VECTOR &&
+         N->getNumOperands() == 16 && "PPC only supports shuffles by bytes!");
+  assert((UnitSize == 1 || UnitSize == 2 || UnitSize == 4) &&
+         "Unsupported merge size!");
+  
+  for (unsigned i = 0; i != 8/UnitSize; ++i)     // Step over units
+    for (unsigned j = 0; j != UnitSize; ++j) {   // Step over bytes within unit
+      if (!isConstantOrUndef(N->getOperand(i*UnitSize*2+j),
+                             8+j+i*UnitSize) ||
+          !isConstantOrUndef(N->getOperand(i*UnitSize*2+UnitSize+j),
+                             24+j+i*UnitSize))
+        return false;
+    }
+  return true;
+}
+
+/// isVMRGHShuffleMask - Return true if this is a shuffle mask suitable for
+/// a VRGH* instruction with the specified unit size (1,2 or 4 bytes).
+bool PPC::isVMRGHShuffleMask(SDNode *N, unsigned UnitSize) {
+  assert(N->getOpcode() == ISD::BUILD_VECTOR &&
+         N->getNumOperands() == 16 && "PPC only supports shuffles by bytes!");
+  assert((UnitSize == 1 || UnitSize == 2 || UnitSize == 4) &&
+         "Unsupported merge size!");
+
+  for (unsigned i = 0; i != 8/UnitSize; ++i)     // Step over units
+    for (unsigned j = 0; j != UnitSize; ++j) {   // Step over bytes within unit
+      if (!isConstantOrUndef(N->getOperand(i*UnitSize*2+j),
+                             0+j+i*UnitSize) ||
+          !isConstantOrUndef(N->getOperand(i*UnitSize*2+UnitSize+j),
+                             16+j+i*UnitSize))
+        return false;
+    }
+  return true;
+}
+
+
 /// isVSLDOIShuffleMask - If this is a vsldoi shuffle mask, return the shift
 /// amount, otherwise return -1.
 int PPC::isVSLDOIShuffleMask(SDNode *N) {
-  assert(N->getNumOperands() == 16 && "PPC only supports shuffles by bytes!");
+  assert(N->getOpcode() == ISD::BUILD_VECTOR &&
+         N->getNumOperands() == 16 && "PPC only supports shuffles by bytes!");
   // Find the first non-undef value in the shuffle mask.
   unsigned i;
   for (i = 0; i != 16 && N->getOperand(i).getOpcode() == ISD::UNDEF; ++i)
@@ -833,13 +873,19 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     if (V2.getOpcode() == ISD::UNDEF && 
         (PPC::isSplatShuffleMask(PermMask.Val, 1) ||
          PPC::isSplatShuffleMask(PermMask.Val, 2) ||
-         PPC::isSplatShuffleMask(PermMask.Val, 4)))
+         PPC::isSplatShuffleMask(PermMask.Val, 4) ||
+         PPC::isVSLDOIRotateShuffleMask(PermMask.Val) != -1))
       return Op;
     
     if (PPC::isVPKUWUMShuffleMask(PermMask.Val) ||
         PPC::isVPKUHUMShuffleMask(PermMask.Val) ||
         PPC::isVSLDOIShuffleMask(PermMask.Val) != -1 ||
-        PPC::isVSLDOIRotateShuffleMask(PermMask.Val) != -1)
+        PPC::isVMRGLShuffleMask(PermMask.Val, 1) ||
+        PPC::isVMRGLShuffleMask(PermMask.Val, 2) ||
+        PPC::isVMRGLShuffleMask(PermMask.Val, 4) ||
+        PPC::isVMRGHShuffleMask(PermMask.Val, 1) ||
+        PPC::isVMRGHShuffleMask(PermMask.Val, 2) ||
+        PPC::isVMRGHShuffleMask(PermMask.Val, 4))
       return Op;
     
     // TODO: Handle more cases, and also handle cases that are cheaper to do as

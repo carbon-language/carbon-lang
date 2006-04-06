@@ -24,6 +24,26 @@ def VPKUWUM_shuffle_mask : PatLeaf<(build_vector), [{
   return PPC::isVPKUWUMShuffleMask(N);
 }]>;
 
+def VMRGLB_shuffle_mask : PatLeaf<(build_vector), [{
+  return PPC::isVMRGLShuffleMask(N, 1);
+}]>;
+def VMRGLH_shuffle_mask : PatLeaf<(build_vector), [{
+  return PPC::isVMRGLShuffleMask(N, 2);
+}]>;
+def VMRGLW_shuffle_mask : PatLeaf<(build_vector), [{
+  return PPC::isVMRGLShuffleMask(N, 4);
+}]>;
+def VMRGHB_shuffle_mask : PatLeaf<(build_vector), [{
+  return PPC::isVMRGHShuffleMask(N, 1);
+}]>;
+def VMRGHH_shuffle_mask : PatLeaf<(build_vector), [{
+  return PPC::isVMRGHShuffleMask(N, 2);
+}]>;
+def VMRGHW_shuffle_mask : PatLeaf<(build_vector), [{
+  return PPC::isVMRGHShuffleMask(N, 4);
+}]>;
+
+
 def VSLDOI_get_imm : SDNodeXForm<build_vector, [{
   return getI32Imm(PPC::isVSLDOIShuffleMask(N));
 }]>;
@@ -278,12 +298,30 @@ def VMINUB : VX1_Int< 514, "vminub", int_ppc_altivec_vminub>;
 def VMINUH : VX1_Int< 578, "vminuh", int_ppc_altivec_vminuh>;
 def VMINUW : VX1_Int< 642, "vminuw", int_ppc_altivec_vminuw>;
 
-def VMRGHB : VX1_Int<12 , "vmrghb", int_ppc_altivec_vmrghb>;
-def VMRGHH : VX1_Int<76 , "vmrghh", int_ppc_altivec_vmrghh>;
-def VMRGHW : VX1_Int<140, "vmrghw", int_ppc_altivec_vmrghw>;
-def VMRGLB : VX1_Int<268, "vmrglb", int_ppc_altivec_vmrglb>;
-def VMRGLH : VX1_Int<332, "vmrglh", int_ppc_altivec_vmrglh>;
-def VMRGLW : VX1_Int<396, "vmrglw", int_ppc_altivec_vmrglw>;
+def VMRGHB : VXForm_1< 12, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vmrghb $vD, $vA, $vB", VecFP,
+                      [(set VRRC:$vD, (vector_shuffle (v16i8 VRRC:$vA),
+                                             VRRC:$vB, VMRGHB_shuffle_mask))]>;
+def VMRGHH : VXForm_1< 76, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vmrghh $vD, $vA, $vB", VecFP,
+                      [(set VRRC:$vD, (vector_shuffle (v16i8 VRRC:$vA),
+                                             VRRC:$vB, VMRGHH_shuffle_mask))]>;
+def VMRGHW : VXForm_1<140, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vmrghw $vD, $vA, $vB", VecFP,
+                      [(set VRRC:$vD, (vector_shuffle (v16i8 VRRC:$vA),
+                                             VRRC:$vB, VMRGHW_shuffle_mask))]>;
+def VMRGLB : VXForm_1<268, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vmrglb $vD, $vA, $vB", VecFP,
+                      [(set VRRC:$vD, (vector_shuffle (v16i8 VRRC:$vA),
+                                             VRRC:$vB, VMRGLB_shuffle_mask))]>;
+def VMRGLH : VXForm_1<332, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vmrglh $vD, $vA, $vB", VecFP,
+                      [(set VRRC:$vD, (vector_shuffle (v16i8 VRRC:$vA),
+                                             VRRC:$vB, VMRGLH_shuffle_mask))]>;
+def VMRGLW : VXForm_1<396, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vmrglw $vD, $vA, $vB", VecFP,
+                      [(set VRRC:$vD, (vector_shuffle (v16i8 VRRC:$vA),
+                                             VRRC:$vB, VMRGLW_shuffle_mask))]>;
 
 def VMSUMMBM : VA1a_Int<37, "vmsummbm", int_ppc_altivec_vmsummbm>;
 def VMSUMSHM : VA1a_Int<40, "vmsumshm", int_ppc_altivec_vmsumshm>;
