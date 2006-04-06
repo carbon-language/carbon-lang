@@ -962,10 +962,12 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     assert(CompareOpc>0 && "We only lower altivec predicate compares so far!");
 
     // If this is a non-dot comparison, make the VCMP node.
-    if (!isDot)
-      return DAG.getNode(PPCISD::VCMP, Op.getOperand(2).getValueType(),
-                         Op.getOperand(1), Op.getOperand(2),
-                         DAG.getConstant(CompareOpc, MVT::i32));
+    if (!isDot) {
+      SDOperand Tmp = DAG.getNode(PPCISD::VCMP, Op.getOperand(2).getValueType(),
+                                  Op.getOperand(1), Op.getOperand(2),
+                                  DAG.getConstant(CompareOpc, MVT::i32));
+      return DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Tmp);
+    }
     
     // Create the PPCISD altivec 'dot' comparison node.
     std::vector<SDOperand> Ops;
