@@ -1,7 +1,9 @@
 ; RUN: llvm-as < %s | opt -instcombine | llc -march=ppc32 -mcpu=g5 | not grep vperm &&
 ; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | grep vsldoi | wc -l | grep 2 &&
 ; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | grep vmrgh | wc -l | grep 6 &&
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | grep vmrgl | wc -l | grep 6
+; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | grep vmrgl | wc -l | grep 6 &&
+; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | grep vpkuhum | wc -l | grep 1 &&
+; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | grep vpkuwum | wc -l | grep 1
 
 void %VSLDOI_xy(<8 x short>* %A, <8 x short>* %B) {
 entry:
@@ -414,5 +416,73 @@ entry:
 	%tmp8 = insertelement <4 x int> %tmp7, int %tmp4, uint 2		; <<4 x int>> [#uses=1]
 	%tmp9 = insertelement <4 x int> %tmp8, int %tmp5, uint 3		; <<4 x int>> [#uses=1]
 	store <4 x int> %tmp9, <4 x int>* %A
+	ret void
+}
+
+void %VPCKUHUM_unary(<8 x short>* %A, <8 x short>* %B) {
+entry:
+	%tmp = load <8 x short>* %A		; <<8 x short>> [#uses=2]
+	%tmp = cast <8 x short> %tmp to <16 x sbyte>		; <<16 x sbyte>> [#uses=8]
+	%tmp3 = cast <8 x short> %tmp to <16 x sbyte>		; <<16 x sbyte>> [#uses=8]
+	%tmp = extractelement <16 x sbyte> %tmp, uint 1		; <sbyte> [#uses=1]
+	%tmp4 = extractelement <16 x sbyte> %tmp, uint 3		; <sbyte> [#uses=1]
+	%tmp5 = extractelement <16 x sbyte> %tmp, uint 5		; <sbyte> [#uses=1]
+	%tmp6 = extractelement <16 x sbyte> %tmp, uint 7		; <sbyte> [#uses=1]
+	%tmp7 = extractelement <16 x sbyte> %tmp, uint 9		; <sbyte> [#uses=1]
+	%tmp8 = extractelement <16 x sbyte> %tmp, uint 11		; <sbyte> [#uses=1]
+	%tmp9 = extractelement <16 x sbyte> %tmp, uint 13		; <sbyte> [#uses=1]
+	%tmp10 = extractelement <16 x sbyte> %tmp, uint 15		; <sbyte> [#uses=1]
+	%tmp11 = extractelement <16 x sbyte> %tmp3, uint 1		; <sbyte> [#uses=1]
+	%tmp12 = extractelement <16 x sbyte> %tmp3, uint 3		; <sbyte> [#uses=1]
+	%tmp13 = extractelement <16 x sbyte> %tmp3, uint 5		; <sbyte> [#uses=1]
+	%tmp14 = extractelement <16 x sbyte> %tmp3, uint 7		; <sbyte> [#uses=1]
+	%tmp15 = extractelement <16 x sbyte> %tmp3, uint 9		; <sbyte> [#uses=1]
+	%tmp16 = extractelement <16 x sbyte> %tmp3, uint 11		; <sbyte> [#uses=1]
+	%tmp17 = extractelement <16 x sbyte> %tmp3, uint 13		; <sbyte> [#uses=1]
+	%tmp18 = extractelement <16 x sbyte> %tmp3, uint 15		; <sbyte> [#uses=1]
+	%tmp19 = insertelement <16 x sbyte> undef, sbyte %tmp, uint 0		; <<16 x sbyte>> [#uses=1]
+	%tmp20 = insertelement <16 x sbyte> %tmp19, sbyte %tmp4, uint 1		; <<16 x sbyte>> [#uses=1]
+	%tmp21 = insertelement <16 x sbyte> %tmp20, sbyte %tmp5, uint 2		; <<16 x sbyte>> [#uses=1]
+	%tmp22 = insertelement <16 x sbyte> %tmp21, sbyte %tmp6, uint 3		; <<16 x sbyte>> [#uses=1]
+	%tmp23 = insertelement <16 x sbyte> %tmp22, sbyte %tmp7, uint 4		; <<16 x sbyte>> [#uses=1]
+	%tmp24 = insertelement <16 x sbyte> %tmp23, sbyte %tmp8, uint 5		; <<16 x sbyte>> [#uses=1]
+	%tmp25 = insertelement <16 x sbyte> %tmp24, sbyte %tmp9, uint 6		; <<16 x sbyte>> [#uses=1]
+	%tmp26 = insertelement <16 x sbyte> %tmp25, sbyte %tmp10, uint 7		; <<16 x sbyte>> [#uses=1]
+	%tmp27 = insertelement <16 x sbyte> %tmp26, sbyte %tmp11, uint 8		; <<16 x sbyte>> [#uses=1]
+	%tmp28 = insertelement <16 x sbyte> %tmp27, sbyte %tmp12, uint 9		; <<16 x sbyte>> [#uses=1]
+	%tmp29 = insertelement <16 x sbyte> %tmp28, sbyte %tmp13, uint 10		; <<16 x sbyte>> [#uses=1]
+	%tmp30 = insertelement <16 x sbyte> %tmp29, sbyte %tmp14, uint 11		; <<16 x sbyte>> [#uses=1]
+	%tmp31 = insertelement <16 x sbyte> %tmp30, sbyte %tmp15, uint 12		; <<16 x sbyte>> [#uses=1]
+	%tmp32 = insertelement <16 x sbyte> %tmp31, sbyte %tmp16, uint 13		; <<16 x sbyte>> [#uses=1]
+	%tmp33 = insertelement <16 x sbyte> %tmp32, sbyte %tmp17, uint 14		; <<16 x sbyte>> [#uses=1]
+	%tmp34 = insertelement <16 x sbyte> %tmp33, sbyte %tmp18, uint 15		; <<16 x sbyte>> [#uses=1]
+	%tmp34 = cast <16 x sbyte> %tmp34 to <8 x short>		; <<8 x short>> [#uses=1]
+	store <8 x short> %tmp34, <8 x short>* %A
+	ret void
+}
+
+void %VPCKUWUM_unary(<4 x int>* %A, <4 x int>* %B) {
+entry:
+	%tmp = load <4 x int>* %A		; <<4 x int>> [#uses=2]
+	%tmp = cast <4 x int> %tmp to <8 x short>		; <<8 x short>> [#uses=4]
+	%tmp3 = cast <4 x int> %tmp to <8 x short>		; <<8 x short>> [#uses=4]
+	%tmp = extractelement <8 x short> %tmp, uint 1		; <short> [#uses=1]
+	%tmp4 = extractelement <8 x short> %tmp, uint 3		; <short> [#uses=1]
+	%tmp5 = extractelement <8 x short> %tmp, uint 5		; <short> [#uses=1]
+	%tmp6 = extractelement <8 x short> %tmp, uint 7		; <short> [#uses=1]
+	%tmp7 = extractelement <8 x short> %tmp3, uint 1		; <short> [#uses=1]
+	%tmp8 = extractelement <8 x short> %tmp3, uint 3		; <short> [#uses=1]
+	%tmp9 = extractelement <8 x short> %tmp3, uint 5		; <short> [#uses=1]
+	%tmp10 = extractelement <8 x short> %tmp3, uint 7		; <short> [#uses=1]
+	%tmp11 = insertelement <8 x short> undef, short %tmp, uint 0		; <<8 x short>> [#uses=1]
+	%tmp12 = insertelement <8 x short> %tmp11, short %tmp4, uint 1		; <<8 x short>> [#uses=1]
+	%tmp13 = insertelement <8 x short> %tmp12, short %tmp5, uint 2		; <<8 x short>> [#uses=1]
+	%tmp14 = insertelement <8 x short> %tmp13, short %tmp6, uint 3		; <<8 x short>> [#uses=1]
+	%tmp15 = insertelement <8 x short> %tmp14, short %tmp7, uint 4		; <<8 x short>> [#uses=1]
+	%tmp16 = insertelement <8 x short> %tmp15, short %tmp8, uint 5		; <<8 x short>> [#uses=1]
+	%tmp17 = insertelement <8 x short> %tmp16, short %tmp9, uint 6		; <<8 x short>> [#uses=1]
+	%tmp18 = insertelement <8 x short> %tmp17, short %tmp10, uint 7		; <<8 x short>> [#uses=1]
+	%tmp18 = cast <8 x short> %tmp18 to <4 x int>		; <<4 x int>> [#uses=1]
+	store <4 x int> %tmp18, <4 x int>* %A
 	ret void
 }
