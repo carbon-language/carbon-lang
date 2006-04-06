@@ -422,11 +422,6 @@ let TargetPrefix = "ppc" in {  // All PPC intrinsics start with "llvm.ppc.".
   def int_ppc_altivec_vmrglw : GCCBuiltin<"__builtin_altivec_vmrglw">,
               Intrinsic<[llvm_v4i32_ty, llvm_v4i32_ty, llvm_v4i32_ty],
                         [InstrNoMem]>;
-
-  // Left Shifts.
-  def int_ppc_altivec_vsldoi : GCCBuiltin<"__builtin_altivec_vsldoi_4si">,
-              Intrinsic<[llvm_v4i32_ty, llvm_v4i32_ty, 
-                         llvm_v4i32_ty, llvm_int_ty], [InstrNoMem]>;
 }
 
 def int_ppc_altivec_vsl   : PowerPC_Vec_WWW_Intrinsic<"vsl">;
