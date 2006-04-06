@@ -542,11 +542,11 @@ TreePatternNode *TreePatternNode::InlinePatternFragments(TreePattern &TP) {
   return FragTree;
 }
 
-/// getIntrinsicType - Check to see if the specified record has an intrinsic
+/// getImplicitType - Check to see if the specified record has an implicit
 /// type which should be applied to it.  This infer the type of register
 /// references from the register file information, for example.
 ///
-static std::vector<unsigned char> getIntrinsicType(Record *R, bool NotRegisters,
+static std::vector<unsigned char> getImplicitType(Record *R, bool NotRegisters,
                                       TreePattern &TP) {
   // Some common return values
   std::vector<unsigned char> Unknown(1, MVT::isUnknown);
@@ -598,8 +598,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
   if (isLeaf()) {
     if (DefInit *DI = dynamic_cast<DefInit*>(getLeafValue())) {
       // If it's a regclass or something else known, include the type.
-      return UpdateNodeType(getIntrinsicType(DI->getDef(), NotRegisters, TP),
-                            TP);
+      return UpdateNodeType(getImplicitType(DI->getDef(), NotRegisters, TP),TP);
     } else if (IntInit *II = dynamic_cast<IntInit*>(getLeafValue())) {
       // Int inits are always integers. :)
       bool MadeChange = UpdateNodeType(MVT::isInt, TP);
