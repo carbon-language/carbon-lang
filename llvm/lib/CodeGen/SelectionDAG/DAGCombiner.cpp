@@ -2673,16 +2673,19 @@ SDOperand DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
   
   // If the LHS and the RHS are the same node, turn the RHS into an undef.
   if (N->getOperand(0) == N->getOperand(1)) {
+    if (N->getOperand(0).getOpcode() == ISD::UNDEF)
+      return DAG.getNode(ISD::UNDEF, N->getValueType(0));
     // Check the SHUFFLE mask, mapping any inputs from the 2nd operand into the
     // first operand.
     std::vector<SDOperand> MappedOps;
     for (unsigned i = 0, e = ShufMask.getNumOperands(); i != e; ++i) {
-      if (cast<ConstantSDNode>(ShufMask.getOperand(i))->getValue() >= NumElts) {
+      if (ShufMask.getOperand(i).getOpcode() == ISD::UNDEF ||
+          cast<ConstantSDNode>(ShufMask.getOperand(i))->getValue() < NumElts) {
+        MappedOps.push_back(ShufMask.getOperand(i));
+      } else {
         unsigned NewIdx = 
            cast<ConstantSDNode>(ShufMask.getOperand(i))->getValue() - NumElts;
         MappedOps.push_back(DAG.getConstant(NewIdx, MVT::i32));
-      } else {
-        MappedOps.push_back(ShufMask.getOperand(i));
       }
     }
     ShufMask = DAG.getNode(ISD::BUILD_VECTOR, ShufMask.getValueType(),
