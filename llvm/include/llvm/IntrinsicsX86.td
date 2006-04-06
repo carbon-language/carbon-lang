@@ -126,10 +126,6 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 
 // SIMD load ops
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
-  def int_x86_sse_loadh_ps : GCCBuiltin<"__builtin_ia32_loadhps">,
-              Intrinsic<[llvm_v4f32_ty, llvm_ptr_ty], [IntrReadMem]>;
-  def int_x86_sse_loadl_ps : GCCBuiltin<"__builtin_ia32_loadlps">,
-              Intrinsic<[llvm_v4f32_ty, llvm_ptr_ty], [IntrReadMem]>;
   def int_x86_sse_loadu_ps : GCCBuiltin<"__builtin_ia32_loadups">,
               Intrinsic<[llvm_v4f32_ty, llvm_ptr_ty], [IntrReadMem]>;
 }
