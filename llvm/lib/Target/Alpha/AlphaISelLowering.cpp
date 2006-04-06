@@ -571,7 +571,7 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     GlobalValue *GV = GSDN->getGlobal();
     SDOperand GA = DAG.getTargetGlobalAddress(GV, MVT::i64, GSDN->getOffset());
 
-    if (!GV->hasWeakLinkage() && !GV->isExternal()) {
+    if (!GV->hasWeakLinkage() && !GV->isExternal() && !GV->hasLinkOnceLinkage()) {
       SDOperand Hi = DAG.getNode(AlphaISD::GPRelHi,  MVT::i64, GA,
 				 DAG.getNode(AlphaISD::GlobalBaseReg, MVT::i64));
       SDOperand Lo = DAG.getNode(AlphaISD::GPRelLo, MVT::i64, GA, Hi);
@@ -602,6 +602,8 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::SDIV:
   case ISD::UDIV:
     if (MVT::isInteger(Op.getValueType())) {
+      if (Op.getOperand(1).getOpcode() == ISD::Constant)
+	return Op.getOpcode() == ISD::SDIV ? BuildSDIVSequence(Op, &DAG) : BuildUDIVSequence(Op, &DAG);
       const char* opstr = 0;
       switch(Op.getOpcode()) {
       case ISD::UREM: opstr = "__remqu"; break;
