@@ -9,7 +9,7 @@ Altivec support.  The first should be a single lvx from the constant pool, the
 second should be a xor/stvx:
 
 void foo(void) {
-  int x[8] __attribute__((aligned(128))) = { 1, 1, 1, 1, 1, 1, 1, 1 };
+  int x[8] __attribute__((aligned(128))) = { 1, 1, 1, 17, 1, 1, 1, 1 };
   bar (x);
 }
 
@@ -129,3 +129,8 @@ void test(vector int *X, vector int *Y) {
 
 //===----------------------------------------------------------------------===//
 
+There are a wide variety of vector_shuffle operations that we can do with a pair
+of instructions (e.g. a vsldoi + vpkuhum).  We should pattern match these, but
+there are a huge number of these.
+
+//===----------------------------------------------------------------------===//
