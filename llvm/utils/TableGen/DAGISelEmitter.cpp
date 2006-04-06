@@ -672,6 +672,26 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
     // must have void types.
     if (NI.getNumResults() == 0)
       MadeChange |= UpdateNodeType(MVT::isVoid, TP);
+    
+    // If this is a vector_shuffle operation, apply types to the build_vector
+    // operation.  The types of the integers don't matter, but this ensures they
+    // won't get checked.
+    if (getOperator()->getName() == "vector_shuffle" &&
+        getChild(2)->getOperator()->getName() == "build_vector") {
+      TreePatternNode *BV = getChild(2);
+      const std::vector<MVT::ValueType> &LegalVTs
+        = ISE.getTargetInfo().getLegalValueTypes();
+      MVT::ValueType LegalIntVT = MVT::Other;
+      for (unsigned i = 0, e = LegalVTs.size(); i != e; ++i)
+        if (MVT::isInteger(LegalVTs[i]) && !MVT::isVector(LegalVTs[i])) {
+          LegalIntVT = LegalVTs[i];
+          break;
+        }
+      assert(LegalIntVT != MVT::Other && "No legal integer VT?");
+            
+      for (unsigned i = 0, e = BV->getNumChildren(); i != e; ++i)
+        MadeChange |= BV->getChild(i)->UpdateNodeType(LegalIntVT, TP);
+    }
     return MadeChange;  
   } else if (getOperator()->isSubClassOf("Instruction")) {
     const DAGInstruction &Inst = ISE.getInstruction(getOperator());
