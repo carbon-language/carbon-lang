@@ -360,6 +360,13 @@ ifeq ($(OS),HP-UX)
   CompileCommonOpts := -D_REENTRANT -D_HPUX_SOURCE
 endif
 
+# If we are building a universal binary on Mac OS/X, pass extra options.  This is
+# useful to people that want to link the LLVM libraries into their universal apps.
+ifdef UNIVERSAL
+  CompileCommonOpts += -arch i386 -arch ppc -isysroot /Developer/SDKs/MACOSX10.4u.sdk/
+  DISABLE_AUTO_DEPENDENCIES=1
+endif
+
 LD.Flags      += -L$(LibDir) -L$(LLVMLibDir) 
 CPP.BaseFlags += -D_GNU_SOURCE -D__STDC_LIMIT_MACROS
 # All -I flags should go here, so that they don't confuse llvm-config.
