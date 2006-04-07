@@ -74,3 +74,13 @@ $(FilesToConfigPATH) : $(LLVM_OBJ_ROOT)/% : $(LLVM_SRC_ROOT)/%.in
 	$(Echo) Regenerating $*
 	$(Verb) cd $(LLVM_OBJ_ROOT) && $(ConfigStatusScript) $*
 .PRECIOUS: $(FilesToConfigPATH)
+
+#NOTE: THis needs to remain as the last target definition in this file so
+#that it gets executed last.
+all:: 
+	$(Echo) '*****' Completed $(BuildMode)$(AssertMode) Build
+ifeq ($(BuildMode),Debug)
+	$(Echo) '*****' Note: Debug build can be 10 times slower than an
+	$(Echo) '*****' optimized build. Use 'make ENABLE_OPTIMIZED=1' to
+	$(Echo) '*****' make an optimized build.
+endif
