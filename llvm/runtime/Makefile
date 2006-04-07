@@ -13,7 +13,7 @@ include $(LEVEL)/Makefile.config
 ifneq ($(LLVMGCC_MAJVERS),3)
 PARALLEL_DIRS :=
 install all::
-	$(Echo) "Warning: The runtime libraries only need to be built with"
+	$(Echo) "Warning: These runtime libraries only need to be built with"
 	$(Echo) "Warning: llvm-gcc version 3. They are automatically included"
 	$(Echo) "Warning: with llvm-gcc version 4 and beyond"
 else 
@@ -40,3 +40,4 @@ include $(LEVEL)/Makefile.common
 # Install target for libraries: Copy into $LLVMGCCDIR/bytecode-libs
 #
 install::
+
