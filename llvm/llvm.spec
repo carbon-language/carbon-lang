@@ -29,7 +29,9 @@ functionality.
 --bindir=%{_bindir} \
 --datadir=%{_datadir} \
 --includedir=%{_includedir} \
---libdir=%{_libdir}
+--libdir=%{_libdir} \
+--enable-optimized \
+--enable-assertions \
 make
 
 %install
@@ -53,6 +55,8 @@ rm -rf %{buildroot}
 %{_includedir}/llvm
 
 %changelog
+* Fri Apr 07 2006 Reid Spencer
+- Make the build be optimized+assertions
 * Fri May 13 2005 Reid Spencer
 - Minor adjustments for the 1.5 release
 * Mon Feb 09 2003 Brian R. Gaeke
