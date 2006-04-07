@@ -305,6 +305,18 @@ static Value *RemapOperand(const Value *In,
                                                         ValueMap)));
 
         Result = ConstantExpr::getGetElementPtr(cast<Constant>(Ptr), Indices);
+      } else if (CE->getOpcode() == Instruction::ExtractElement) {
+        Value *Ptr = RemapOperand(CE->getOperand(0), ValueMap);
+        Value *Idx = RemapOperand(CE->getOperand(1), ValueMap);
+        Result = ConstantExpr::getExtractElement(cast<Constant>(Ptr),
+                                                 cast<Constant>(Idx));
+      } else if (CE->getOpcode() == Instruction::InsertElement) {
+        Value *Ptr = RemapOperand(CE->getOperand(0), ValueMap);
+        Value *Elt = RemapOperand(CE->getOperand(1), ValueMap);
+        Value *Idx = RemapOperand(CE->getOperand(2), ValueMap);
+        Result = ConstantExpr::getInsertElement(cast<Constant>(Ptr),
+                                                cast<Constant>(Elt),
+                                                cast<Constant>(Idx));
       } else if (CE->getNumOperands() == 1) {
         // Cast instruction
         assert(CE->getOpcode() == Instruction::Cast);
