@@ -5,3 +5,5 @@ config.status
 cvs.out
 autom4te.cache
 configure.out
+LLVM-*
+_distcheckdir
