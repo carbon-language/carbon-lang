@@ -746,14 +746,23 @@ def MOVHPDrm : PDI<0x16, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
 }
 
 def MOVLPSmr : PSI<0x13, MRMDestMem, (ops f64mem:$dst, VR128:$src),
-                   "movlps {$src, $dst|$dst, $src}", []>;
+                   "movlps {$src, $dst|$dst, $src}",
+                   [(store (f64 (vector_extract (bc_v2f64 (v4f32 VR128:$src)),
+                                 (i32 0))), addr:$dst)]>;
 def MOVLPDmr : PDI<0x13, MRMDestMem, (ops f64mem:$dst, VR128:$src),
                    "movlpd {$src, $dst|$dst, $src}",
                    [(store (f64 (vector_extract (v2f64 VR128:$src),
                                  (i32 0))), addr:$dst)]>;
 
+// v2f64 extract element 1 is always custom lowered to unpack high to low
+// and extract element 0 so the non-store version isn't too horrible.
 def MOVHPSmr : PSI<0x17, MRMDestMem, (ops f64mem:$dst, VR128:$src),
-                   "movhps {$src, $dst|$dst, $src}", []>;
+                   "movhps {$src, $dst|$dst, $src}",
+                   [(store (f64 (vector_extract
+                                 (v2f64 (vector_shuffle
+                                         (bc_v2f64 (v4f32 VR128:$src)), (undef),
+                                         UNPCKH_shuffle_mask)), (i32 0))),
+                     addr:$dst)]>;
 def MOVHPDmr : PDI<0x17, MRMDestMem, (ops f64mem:$dst, VR128:$src),
                    "movhpd {$src, $dst|$dst, $src}",
                    [(store (f64 (vector_extract
@@ -1703,11 +1712,19 @@ def : Pat<(v2i64 (bitconvert (v8i16 VR128:$src))), (v2i64 VR128:$src)>,
       Requires<[HasSSE2]>;
 def : Pat<(v2i64 (bitconvert (v16i8 VR128:$src))), (v2i64 VR128:$src)>,
       Requires<[HasSSE2]>;
+def : Pat<(v2i64 (bitconvert (v2f64 VR128:$src))), (v2i64 VR128:$src)>,
+      Requires<[HasSSE2]>;
+def : Pat<(v2i64 (bitconvert (v4f32 VR128:$src))), (v2i64 VR128:$src)>,
+      Requires<[HasSSE2]>;
 def : Pat<(v4i32 (bitconvert (v2i64 VR128:$src))), (v4i32 VR128:$src)>,
       Requires<[HasSSE2]>;
 def : Pat<(v4i32 (bitconvert (v8i16 VR128:$src))), (v4i32 VR128:$src)>,
       Requires<[HasSSE2]>;
 def : Pat<(v4i32 (bitconvert (v16i8 VR128:$src))), (v4i32 VR128:$src)>,
+      Requires<[HasSSE2]>;
+def : Pat<(v4i32 (bitconvert (v2f64 VR128:$src))), (v4i32 VR128:$src)>,
+      Requires<[HasSSE2]>;
+def : Pat<(v4i32 (bitconvert (v4f32 VR128:$src))), (v4i32 VR128:$src)>,
       Requires<[HasSSE2]>;
 def : Pat<(v8i16 (bitconvert (v2i64 VR128:$src))), (v4i32 VR128:$src)>,
       Requires<[HasSSE2]>;
@@ -1715,18 +1732,39 @@ def : Pat<(v8i16 (bitconvert (v4i32 VR128:$src))), (v4i32 VR128:$src)>,
       Requires<[HasSSE2]>;
 def : Pat<(v8i16 (bitconvert (v16i8 VR128:$src))), (v4i32 VR128:$src)>,
       Requires<[HasSSE2]>;
+def : Pat<(v8i16 (bitconvert (v2f64 VR128:$src))), (v8i16 VR128:$src)>,
+      Requires<[HasSSE2]>;
+def : Pat<(v8i16 (bitconvert (v4f32 VR128:$src))), (v8i16 VR128:$src)>,
+      Requires<[HasSSE2]>;
 def : Pat<(v16i8 (bitconvert (v2i64 VR128:$src))), (v4i32 VR128:$src)>,
       Requires<[HasSSE2]>;
 def : Pat<(v16i8 (bitconvert (v4i32 VR128:$src))), (v4i32 VR128:$src)>,
       Requires<[HasSSE2]>;
 def : Pat<(v16i8 (bitconvert (v8i16 VR128:$src))), (v4i32 VR128:$src)>,
       Requires<[HasSSE2]>;
-
-def : Pat<(v4i32 (bitconvert (v4f32 VR128:$src))), (v4i32 VR128:$src)>,
+def : Pat<(v16i8 (bitconvert (v2f64 VR128:$src))), (v16i8 VR128:$src)>,
+      Requires<[HasSSE2]>;
+def : Pat<(v16i8 (bitconvert (v4f32 VR128:$src))), (v16i8 VR128:$src)>,
+      Requires<[HasSSE2]>;
+def : Pat<(v4f32 (bitconvert (v2i64 VR128:$src))), (v4f32 VR128:$src)>,
       Requires<[HasSSE2]>;
 def : Pat<(v4f32 (bitconvert (v4i32 VR128:$src))), (v4f32 VR128:$src)>,
       Requires<[HasSSE2]>;
+def : Pat<(v4f32 (bitconvert (v8i16 VR128:$src))), (v4f32 VR128:$src)>,
+      Requires<[HasSSE2]>;
+def : Pat<(v4f32 (bitconvert (v16i8 VR128:$src))), (v4f32 VR128:$src)>,
+      Requires<[HasSSE2]>;
 def : Pat<(v4f32 (bitconvert (v2f64 VR128:$src))), (v4f32 VR128:$src)>,
+      Requires<[HasSSE2]>;
+def : Pat<(v2f64 (bitconvert (v2i64 VR128:$src))), (v2f64 VR128:$src)>,
+      Requires<[HasSSE2]>;
+def : Pat<(v2f64 (bitconvert (v4i32 VR128:$src))), (v2f64 VR128:$src)>,
+      Requires<[HasSSE2]>;
+def : Pat<(v2f64 (bitconvert (v8i16 VR128:$src))), (v2f64 VR128:$src)>,
+      Requires<[HasSSE2]>;
+def : Pat<(v2f64 (bitconvert (v16i8 VR128:$src))), (v2f64 VR128:$src)>,
+      Requires<[HasSSE2]>;
+def : Pat<(v2f64 (bitconvert (v4f32 VR128:$src))), (v2f64 VR128:$src)>,
       Requires<[HasSSE2]>;
 
 // Zeroing a VR128 then do a MOVS* to the lower bits.
