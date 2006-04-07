@@ -10,7 +10,7 @@
 LEVEL = ..
 include $(LEVEL)/Makefile.config
 
-ifneq ($(LLVMGCC_MAJVERS),3)
+ifeq ($(LLVMGCC_MAJVERS),4)
 PARALLEL_DIRS :=
 install all::
 	$(Echo) "Warning: These runtime libraries only need to be built with"

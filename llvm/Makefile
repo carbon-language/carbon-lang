@@ -16,7 +16,7 @@ ifeq ($(MAKECMDGOALS),tools-only)
 else
   ifneq ($(MAKECMDGOALS),libs-only)
     DIRS += tools
-    ifeq ($(LLVMGCC_MAJVERS),3)
+    ifneq ($(LLVMGCC_MAJVERS),4)
       DIRS += runtime
     else
       $(warning Skipping runtime libraries, llvm-gcc 4 detected.)
