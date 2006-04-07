@@ -760,3 +760,8 @@ _test:
 	movddup 8(%esp), %xmm0
 	movapd %xmm0, (%eax)
 	ret
+
+//===---------------------------------------------------------------------===//
+
+A Mac OS X IA-32 specific ABI bug wrt returning value > 8 bytes:
+http://llvm.org/bugs/show_bug.cgi?id=729
