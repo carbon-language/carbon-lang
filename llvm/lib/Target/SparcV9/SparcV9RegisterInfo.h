@@ -46,6 +46,8 @@ struct SparcV9RegisterInfo : public MRegisterInfo {
   void emitEpilogue (MachineFunction &MF, MachineBasicBlock &MBB) const;
   
   // Debug information queries.
+  int getDwarfRegNum(unsigned RegNum) const;
+  unsigned getRARegister() const;
   unsigned getFrameRegister(MachineFunction &MF) const;
 };
 

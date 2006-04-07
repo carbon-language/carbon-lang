@@ -64,6 +64,7 @@ struct X86RegisterInfo : public X86GenRegisterInfo {
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
 
   // Debug information queries.
+  unsigned getRARegister() const;
   unsigned getFrameRegister(MachineFunction &MF) const;
 };
 

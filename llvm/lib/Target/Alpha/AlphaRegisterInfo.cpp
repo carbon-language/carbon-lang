@@ -354,8 +354,13 @@ void AlphaRegisterInfo::emitEpilogue(MachineFunction &MF,
      }
 }
 
+unsigned AlphaRegisterInfo::getRARegister() const {
+  assert(0 && "What is the return address register");
+  return 0;
+}
+
 unsigned AlphaRegisterInfo::getFrameRegister(MachineFunction &MF) const {
-  return getDwarfRegNum(hasFP(MF) ? Alpha::R15 : Alpha::R30);
+  return hasFP(MF) ? Alpha::R15 : Alpha::R30;
 }
 
 #include "AlphaGenRegisterInfo.inc"

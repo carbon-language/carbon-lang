@@ -58,6 +58,7 @@ struct SparcRegisterInfo : public SparcGenRegisterInfo {
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
   
   // Debug information queries.
+  unsigned getRARegister() const;
   unsigned getFrameRegister(MachineFunction &MF) const;
 };
 

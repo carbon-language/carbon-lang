@@ -686,8 +686,12 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
   }
 }
 
+unsigned X86RegisterInfo::getRARegister() const {
+  return X86::ST0;  // use a non-register register
+}
+
 unsigned X86RegisterInfo::getFrameRegister(MachineFunction &MF) const {
-  return getDwarfRegNum(hasFP(MF) ? X86::EBP : X86::ESP);
+  return hasFP(MF) ? X86::EBP : X86::ESP;
 }
 
 #include "X86GenRegisterInfo.inc"

@@ -44,6 +44,7 @@ namespace llvm {
 class TargetData;
 class TargetRegisterClass;
 class Type;
+class MachineDebugInfo;
 class MachineFunction;
 
 class MachineFrameInfo {
@@ -106,12 +107,21 @@ class MachineFrameInfo {
   /// insertion.
   ///
   unsigned MaxCallFrameSize;
+  
+  /// DebugInfo - This field is set (via setMachineDebugInfo) by a debug info
+  /// consumer (ex. DwarfWriter) to indicate that frame layout information
+  /// should be acquired.  Typically, it's the responsibility of the target's
+  /// MRegisterInfo prologue/epilogue emitting code to inform MachineDebugInfo
+  /// of frame layouts.
+  MachineDebugInfo *DebugInfo;
+  
 public:
   MachineFrameInfo() {
     NumFixedObjects = StackSize = MaxAlignment = 0;
     HasVarSizedObjects = false;
     HasCalls = false;
     MaxCallFrameSize = 0;
+    DebugInfo = 0;
   }
 
   /// hasStackObjects - Return true if there are any stack objects in this
@@ -229,6 +239,14 @@ public:
     Objects.push_back(StackObject(0, 1, -1));
     return Objects.size()-NumFixedObjects-1;
   }
+
+  /// getMachineDebugInfo - Used by a prologue/epilogue emitter (MRegisterInfo)
+  /// to provide frame layout information. 
+  MachineDebugInfo *getMachineDebugInfo() const { return DebugInfo; }
+
+  /// setMachineDebugInfo - Used by a debug consumer (DwarfWriter) to indicate
+  /// that frame layout information should be gathered.
+  void setMachineDebugInfo(MachineDebugInfo *DI) { DebugInfo = DI; }
 
   /// print - Used by the MachineFunction printer to print information about
   /// stack objects.  Implemented in MachineFunction.cpp

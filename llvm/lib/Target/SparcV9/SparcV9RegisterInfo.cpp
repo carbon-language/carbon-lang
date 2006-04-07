@@ -317,6 +317,15 @@ void SparcV9RegisterInfo::emitEpilogue(MachineFunction &MF,
   abort ();
 }
 
+int SparcV9RegisterInfo::getDwarfRegNum(unsigned RegNum) const {
+  abort ();
+  return 0;
+}
+
+unsigned SparcV9RegisterInfo::getRARegister() const {
+  abort ();
+  return 0;
+}
 
 unsigned SparcV9RegisterInfo::getFrameRegister(MachineFunction &MF) const {
   abort ();

@@ -53,7 +53,8 @@ struct AlphaRegisterInfo : public AlphaGenRegisterInfo {
   void emitPrologue(MachineFunction &MF) const;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
 
-   // Debug information queries.
+  // Debug information queries.
+  unsigned getRARegister() const;
   unsigned getFrameRegister(MachineFunction &MF) const;
 
   static std::string getPrettyName(unsigned reg);

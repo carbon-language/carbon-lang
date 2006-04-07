@@ -18,6 +18,7 @@
 #include "llvm/Type.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineDebugInfo.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/CommandLine.h"
@@ -1073,8 +1074,6 @@ void DwarfWriter::EmitInt64(uint64_t Value) const {
   if (Asm->Data64bitsDirective) {
     O << Asm->Data64bitsDirective << "0x" << std::hex << Value << std::dec;
   } else {
-    const TargetData &TD = Asm->TM.getTargetData();
-    
     if (TD.isBigEndian()) {
       EmitInt32(unsigned(Value >> 32)); O << "\n";
       EmitInt32(unsigned(Value));
@@ -1216,12 +1215,14 @@ void DwarfWriter::AddSourceLine(DIE *Die, CompileUnitDesc *File, unsigned Line) 
 /// AddAddress - Add an address attribute to a die based on the location
 /// provided.
 void DwarfWriter::AddAddress(DIE *Die, unsigned Attribute,
-                             MachineLocation &Location) {
+                             const MachineLocation &Location) {
   DIEBlock *Block = new DIEBlock();
   if (Location.isRegister()) {
-    Block->AddUInt(DW_FORM_data1, DW_OP_reg0 + Location.getRegister());
+    Block->AddUInt(DW_FORM_data1,
+                   DW_OP_reg0 + RI->getDwarfRegNum(Location.getRegister()));
   } else {
-    Block->AddUInt(DW_FORM_data1, DW_OP_breg0 + Location.getRegister());
+    Block->AddUInt(DW_FORM_data1,
+                   DW_OP_breg0 + RI->getDwarfRegNum(Location.getRegister()));
     Block->AddUInt(DW_FORM_sdata, Location.getOffset());
   }
   Block->ComputeSize(*this);
@@ -1358,8 +1359,7 @@ DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc, CompileUnit *Unit) {
           // Now normalize offset to the field.
           Offset -= FieldOffset;
           
-          // Maybe we need to work from the other.
-          const TargetData &TD = Asm->TM.getTargetData();
+          // Maybe we need to work from the other end.
           if (TD.isLittleEndian()) Offset = FieldSize - (Offset + Size);
           
           Member->AddUInt(DW_AT_byte_size, 0, FieldSize >> 3);
@@ -1515,8 +1515,11 @@ DIE *DwarfWriter::NewSubprogram(SubprogramDesc *SPD) {
                                     
   DIE *SubprogramDie = new DIE(DW_TAG_subprogram);
   SubprogramDie->AddString     (DW_AT_name,      DW_FORM_string, Name);
-  SubprogramDie->AddDIEntry    (DW_AT_type,      DW_FORM_ref4,   Type);
-  SubprogramDie->AddUInt       (DW_AT_external,  DW_FORM_flag,   IsExternal);
+  if (Type) {
+    SubprogramDie->AddDIEntry    (DW_AT_type,      DW_FORM_ref4,   Type);
+  }
+  SubprogramDie->AddUInt       (DW_AT_external,    DW_FORM_flag,   IsExternal);
+  SubprogramDie->AddUInt       (DW_AT_prototyped,  DW_FORM_flag,   1);
   
   // Add source line info if available.
   AddSourceLine(SubprogramDie, UnitDesc, SPD->getLine());
@@ -1561,7 +1564,7 @@ DIE *DwarfWriter::NewScopeVariable(DebugVariable *DV, CompileUnit *Unit) {
   
   // Add variable address.
   MachineLocation Location;
-  Asm->TM.getRegisterInfo()->getLocation(*MF, DV->getFrameIndex(), Location);
+  RI->getLocation(*MF, DV->getFrameIndex(), Location);
   AddAddress(VariableDie, DW_AT_location, Location);
   
   return VariableDie;
@@ -1621,18 +1624,20 @@ void DwarfWriter::ConstructRootScope(DebugScope *RootScope) {
   
   // Get the compile unit context.
   CompileUnitDesc *UnitDesc = static_cast<CompileUnitDesc *>(SPD->getContext());
-  CompileUnit *Unit = FindCompileUnit(UnitDesc);  
+  CompileUnit *Unit = FindCompileUnit(UnitDesc);
+  
+  // Generate the mangled name.
+  std::string MangledName = Asm->Mang->getValueName(MF->getFunction());
   
   // Get the subprogram die.
   DIE *SPDie = Unit->getDieMapSlotFor(SPD);
   assert(SPDie && "Missing subprogram descriptor");
   
   // Add the function bounds.
-  SPDie->AddLabel(DW_AT_low_pc, DW_FORM_addr,
-                  DWLabel("func_begin", SubprogramCount));
+  SPDie->AddObjectLabel(DW_AT_low_pc, DW_FORM_addr, MangledName);
   SPDie->AddLabel(DW_AT_high_pc, DW_FORM_addr,
                   DWLabel("func_end", SubprogramCount));
-  MachineLocation Location(Asm->TM.getRegisterInfo()->getFrameRegister(*MF));
+  MachineLocation Location(RI->getFrameRegister(*MF));
   AddAddress(SPDie, DW_AT_frame_base, Location);
                   
   ConstructScope(RootScope, SPDie, Unit);
@@ -1788,6 +1793,50 @@ void DwarfWriter::SizeAndOffsets() {
                         sizeof(int32_t) + // Offset Into Abbrev. Section
                         sizeof(int8_t);   // Pointer Size (in bytes)
       SizeAndOffsetDie(Unit->getDie(), Offset, (i + 1) == N);
+    }
+  }
+}
+
+/// EmitFrameMoves - Emit frame instructions to describe the layout of the
+/// frame.
+void DwarfWriter::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
+                                 std::vector<MachineMove *> &Moves) {
+  for (unsigned i = 0, N = Moves.size(); i < N; ++i) {
+    MachineMove *Move = Moves[i];
+    unsigned LabelID = Move->getLabelID();
+    const MachineLocation &Dst = Move->getDestination();
+    const MachineLocation &Src = Move->getSource();
+    
+    // Advance row if new location.
+    if (BaseLabel && LabelID && BaseLabelID != LabelID) {
+      EmitULEB128Bytes(DW_CFA_advance_loc4);
+      EOL("DW_CFA_advance_loc4");
+      EmitDifference("loc", LabelID, BaseLabel, BaseLabelID);
+      EOL("");
+      
+      BaseLabelID = LabelID;
+      BaseLabel = "loc";
+    }
+    
+    // If advancing cfa.
+    if (Dst.isRegister() && Dst.getRegister() == MachineLocation::VirtualFP) {
+      if (!Src.isRegister()) {
+        if (Src.getRegister() == MachineLocation::VirtualFP) {
+          EmitULEB128Bytes(DW_CFA_def_cfa_offset);
+          EOL("DW_CFA_def_cfa_offset");
+        } else {
+          EmitULEB128Bytes(DW_CFA_def_cfa);
+          EOL("DW_CFA_def_cfa");
+          
+          EmitULEB128Bytes(RI->getDwarfRegNum(Src.getRegister()));
+          EOL("Register");
+        }
+          
+        EmitULEB128Bytes(Src.getOffset() / RI->getStackDirection());
+        EOL("Offset");
+      } else {
+      }
+    } else {
     }
   }
 }
@@ -1999,10 +2048,10 @@ void DwarfWriter::EmitDebugLines() const {
   O << "\n";
 }
   
-/// EmitDebugFrame - Emit visible names into a debug frame section.
+/// EmitInitialDebugFrame - Emit common frame info into a debug frame section.
 ///
-void DwarfWriter::EmitDebugFrame() {
-  // Start the dwarf pubnames section.
+void DwarfWriter::EmitInitialDebugFrame() {
+  // Start the dwarf frame section.
   Asm->SwitchSection(DwarfFrameSection, 0);
 
   EmitDifference("frame_common_end", 0,
@@ -2014,17 +2063,46 @@ void DwarfWriter::EmitDebugFrame() {
   EmitInt8(DW_CIE_VERSION); EOL("CIE Version");
   EmitString("");  EOL("CIE Augmentation");
   EmitULEB128Bytes(1); EOL("CIE Code Alignment Factor");
-  // FIXME - needs to change based on stack direction.
-  EmitSLEB128Bytes(-sizeof(int32_t)); EOL("CIE Data Alignment Factor");
-  // FIXME - hard coded for PPC (LR).
-  EmitInt8(0x41); EOL("CIE RA Column Hardcoded (PPC LR)");
-  // FIXME - hard coded for PPC 0(SP).
-  EmitULEB128Bytes(DW_CFA_def_cfa); EOL("DW_CFA_def_cfa");
-  EmitULEB128Bytes(1); EOL("PPC Register SP");
-  EmitULEB128Bytes(0); EOL("PPC offset 0 as in 0(SP)");
+  EmitSLEB128Bytes(RI->getStackDirection()); EOL("CIE Data Alignment Factor");   
+  EmitInt8(RI->getDwarfRegNum(RI->getRARegister())); EOL("CIE RA Column");
+  
+  std::vector<MachineMove *> Moves;
+  RI->getInitialFrameState(Moves);
+  EmitFrameMoves(NULL, 0, Moves);
+  for (unsigned i = 0, N = Moves.size(); i < N; ++i) delete Moves[i];
+
   EmitAlign(2);
   EmitLabel("frame_common_end", 0);
   
+  O << "\n";
+}
+
+/// EmitFunctionDebugFrame - Emit per function frame info into a debug frame
+/// section.
+void DwarfWriter::EmitFunctionDebugFrame() {
+  // Start the dwarf frame section.
+  Asm->SwitchSection(DwarfFrameSection, 0);
+  
+  EmitDifference("frame_end", SubprogramCount,
+                 "frame_begin", SubprogramCount);
+  EOL("Length of Frame Information Entry");
+  
+  EmitLabel("frame_begin", SubprogramCount);
+  
+  EmitReference("section_frame", 0); EOL("FDE CIE offset");
+
+  EmitReference("func_begin", SubprogramCount); EOL("FDE initial location");
+  EmitDifference("func_end", SubprogramCount,
+                 "func_begin", SubprogramCount);
+  EOL("FDE address range");
+  
+  std::vector<MachineMove *> &Moves = DebugInfo->getFrameMoves();
+  
+  EmitFrameMoves("func_begin", SubprogramCount, Moves);
+  
+  EmitAlign(2);
+  EmitLabel("frame_end", SubprogramCount);
+
   O << "\n";
 }
 
@@ -2208,6 +2286,9 @@ bool DwarfWriter::ShouldEmitDwarf() {
   if (!didInitial) {
     EmitInitial();
   
+    // Emit common frame information.
+    EmitInitialDebugFrame();
+  
     // Create all the compile unit DIEs.
     ConstructCompileUnitDIEs();
     
@@ -2231,6 +2312,8 @@ bool DwarfWriter::ShouldEmitDwarf() {
 DwarfWriter::DwarfWriter(std::ostream &OS, AsmPrinter *A)
 : O(OS)
 , Asm(A)
+, TD(Asm->TM.getTargetData())
+, RI(Asm->TM.getRegisterInfo())
 , M(NULL)
 , MF(NULL)
 , DebugInfo(NULL)
@@ -2267,6 +2350,12 @@ DwarfWriter::~DwarfWriter() {
   }
 }
 
+/// SetDebugInfo - Set DebugInfo when it's known that pass manager has
+/// created it.  Set by the target AsmPrinter.
+void DwarfWriter::SetDebugInfo(MachineDebugInfo *DI) {
+  DebugInfo = DI;
+}
+
 /// BeginModule - Emit all Dwarf sections that should come prior to the content.
 ///
 void DwarfWriter::BeginModule(Module *M) {
@@ -2300,9 +2389,6 @@ void DwarfWriter::EndModule() {
   // Emit source line correspondence into a debug line section.
   EmitDebugLines();
   
-  // Emit info into a debug frame section.
-  EmitDebugFrame();
-  
   // Emit info into a debug pubnames section.
   EmitDebugPubNames();
   
@@ -2327,6 +2413,9 @@ void DwarfWriter::EndModule() {
 void DwarfWriter::BeginFunction(MachineFunction *MF) {
   this->MF = MF;
   
+  // Begin accumulating function debug information.
+  DebugInfo->BeginFunction(MF);
+  
   if (!ShouldEmitDwarf()) return;
   EOL("Dwarf Begin Function");
   
@@ -2334,7 +2423,6 @@ void DwarfWriter::BeginFunction(MachineFunction *MF) {
   Asm->SwitchSection(TextSection, 0);
   EmitLabel("func_begin", ++SubprogramCount);
 }
-
 
 /// EndFunction - Gather and emit post-function debug information.
 ///
@@ -2348,5 +2436,10 @@ void DwarfWriter::EndFunction() {
   
   // Construct scopes for subprogram.
   ConstructRootScope(DebugInfo->getRootScope());
-  DebugInfo->ClearScopes();
+  
+  // Emit function frame information.
+  EmitFunctionDebugFrame();
+  
+  // Clear function debug information.
+  DebugInfo->EndFunction();
 }

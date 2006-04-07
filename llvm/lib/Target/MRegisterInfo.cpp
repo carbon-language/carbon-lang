@@ -44,6 +44,13 @@ std::vector<bool> MRegisterInfo::getAllocatableSet(MachineFunction &MF) const {
   return Allocatable;
 }
 
+/// getStackDirection - This method should return the factor by which stacks
+/// grow.  The tyical value is -4 which is the grows negatively in 4 byte
+/// increments.
+int MRegisterInfo::getStackDirection() const {
+  return -sizeof(int32_t);
+}
+
 /// getLocation - This method should return the actual location of a frame
 /// variable given the frame index.  The location is returned in ML.
 /// Subclasses should override this method for special handling of frame
@@ -54,3 +61,11 @@ void MRegisterInfo::getLocation(MachineFunction &MF, unsigned Index,
   ML.set(getFrameRegister(MF),
          MFI->getObjectOffset(Index) + MFI->getStackSize());
 }
+
+/// getInitialFrameState - Returns a list of machine moves that are assumed
+/// on entry to a function.
+void
+MRegisterInfo::getInitialFrameState(std::vector<MachineMove *> &Moves) const {
+  // Default is to do nothing.
+}
+

@@ -8,7 +8,13 @@
 //===----------------------------------------------------------------------===//
 // The MachineLocation class is used to represent a simple location in a machine
 // frame.  Locations will be one of two forms; a register or an address formed
-// from a base address plus an offset.
+// from a base address plus an offset.  Register indirection can be specified by
+// using an offset of zero.
+//
+// The MachineMove class is used to represent abstract move operations in the 
+// prolog/epilog of a compiled function.  A collection of these objects can be
+// used by a debug consumer to track the location of values when unwinding stack
+// frames.
 //===----------------------------------------------------------------------===//
 
 
@@ -24,6 +30,11 @@ private:
   int Offset;                           // Displacement if not register.
 
 public:
+  enum {
+    // The target register number for an abstract frame pointer. The value is
+    // an arbitrary value greater than MRegisterInfo::FirstVirtualRegister.
+    VirtualFP = ~0U
+  };
   MachineLocation()
   : IsRegister(false)
   , Register(0)
@@ -37,7 +48,7 @@ public:
   MachineLocation(unsigned R, int O)
   : IsRegister(false)
   , Register(R)
-  , Offset(0)
+  , Offset(O)
   {}
   
   // Accessors
@@ -57,6 +68,31 @@ public:
     Register = R;
     Offset = O;
   }
+
+#ifndef NDEBUG
+  void dump();
+#endif
+};
+
+class MachineMove {
+private:
+  unsigned LabelID;                     // Label ID number for post-instruction
+                                        // address when result of move takes
+                                        // effect.
+  const MachineLocation Destination;    // Move to location.
+  const MachineLocation Source;         // Move from location.
+  
+public:
+  MachineMove(unsigned ID, MachineLocation &D, MachineLocation &S)
+  : LabelID(ID)
+  , Destination(D)
+  , Source(S)
+  {}
+  
+  // Accessors
+  unsigned getLabelID()                   const { return LabelID; }
+  const MachineLocation &getDestination() const { return Destination; }
+  const MachineLocation &getSource()      const { return Source; }
 };
 
 } // End llvm namespace

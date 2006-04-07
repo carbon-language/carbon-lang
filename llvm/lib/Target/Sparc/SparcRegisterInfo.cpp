@@ -200,8 +200,14 @@ void SparcRegisterInfo::emitEpilogue(MachineFunction &MF,
   BuildMI(MBB, MBBI, SP::RESTORErr, 2, SP::G0).addReg(SP::G0).addReg(SP::G0);
 }
 
+unsigned SparcRegisterInfo::getRARegister() const {
+  assert(0 && "What is the return address register");
+  return 0;
+}
+
 unsigned SparcRegisterInfo::getFrameRegister(MachineFunction &MF) const {
-  return getDwarfRegNum(SP::G1);
+  assert(0 && "What is the frame register");
+  return SP::G1;
 }
 
 #include "SparcGenRegisterInfo.inc"

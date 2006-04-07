@@ -57,7 +57,9 @@ public:
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
 
   // Debug information queries.
+  unsigned getRARegister() const;
   unsigned getFrameRegister(MachineFunction &MF) const;
+  void getInitialFrameState(std::vector<MachineMove *> &Moves) const;
 };
 
 } // end namespace llvm

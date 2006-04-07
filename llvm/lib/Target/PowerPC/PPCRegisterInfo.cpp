@@ -19,9 +19,11 @@
 #include "llvm/Type.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineDebugInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineLocation.h"
+#include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
@@ -339,6 +341,7 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
+  MachineDebugInfo *DebugInfo = MFI->getMachineDebugInfo();
   
   // Do we have a frame pointer for this function?
   bool HasFP = hasFP(MF);
@@ -390,18 +393,30 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
 
   // Update frame info to pretend that this is part of the stack...
   MFI->setStackSize(NumBytes);
+  int NegNumbytes = -NumBytes;
 
   // Adjust stack pointer: r1 -= numbytes.
   if (NumBytes <= 32768) {
     BuildMI(MBB, MBBI, PPC::STWU, 3)
        .addReg(PPC::R1).addSImm(-NumBytes).addReg(PPC::R1);
   } else {
-    int NegNumbytes = -NumBytes;
     BuildMI(MBB, MBBI, PPC::LIS, 1, PPC::R0).addSImm(NegNumbytes >> 16);
     BuildMI(MBB, MBBI, PPC::ORI, 2, PPC::R0)
         .addReg(PPC::R0).addImm(NegNumbytes & 0xFFFF);
     BuildMI(MBB, MBBI, PPC::STWUX, 3)
         .addReg(PPC::R1).addReg(PPC::R1).addReg(PPC::R0);
+  }
+  
+  if (DebugInfo) {
+    std::vector<MachineMove *> &Moves = DebugInfo->getFrameMoves();
+    unsigned LabelID = DebugInfo->NextLabelID();
+    
+    // Show update of SP.
+    MachineLocation Dst(MachineLocation::VirtualFP);
+    MachineLocation Src(MachineLocation::VirtualFP, NegNumbytes);
+    Moves.push_back(new MachineMove(LabelID, Dst, Src));
+
+    BuildMI(MBB, MBBI, PPC::DWARF_LABEL, 1).addSImm(LabelID);
   }
   
   // If there is a preferred stack alignment, align R1 now
@@ -458,8 +473,20 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
   }
 }
 
+unsigned PPCRegisterInfo::getRARegister() const {
+  return PPC::LR;
+}
+
 unsigned PPCRegisterInfo::getFrameRegister(MachineFunction &MF) const {
-  return getDwarfRegNum(hasFP(MF) ? PPC::R31 : PPC::R1);
+  return hasFP(MF) ? PPC::R31 : PPC::R1;
+}
+
+void PPCRegisterInfo::getInitialFrameState(std::vector<MachineMove *> &Moves)
+                                                                         const {
+  // Initial state is the frame pointer is R1.
+  MachineLocation Dst(MachineLocation::VirtualFP);
+  MachineLocation Src(PPC::R1, 0);
+  Moves.push_back(new MachineMove(0, Dst, Src));
 }
 
 #include "PPCGenRegisterInfo.inc"

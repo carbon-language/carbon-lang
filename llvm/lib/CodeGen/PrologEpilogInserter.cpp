@@ -36,6 +36,12 @@ namespace {
     /// frame indexes with appropriate references.
     ///
     bool runOnMachineFunction(MachineFunction &Fn) {
+      // Get MachineDebugInfo so that we can track the construction of the
+      // frame.
+      if (MachineDebugInfo *DI = getAnalysisToUpdate<MachineDebugInfo>()) {
+        Fn.getFrameInfo()->setMachineDebugInfo(DI);
+      }
+      
       // Scan the function for modified caller saved registers and insert spill
       // code for any caller saved registers that are modified.  Also calculate
       // the MaxCallFrameSize and HasCalls variables for the function's frame

@@ -47,6 +47,8 @@ namespace llvm {
 class Constant;
 class DebugInfoDesc;
 class GlobalVariable;
+class MachineFunction;
+class MachineMove;
 class Module;
 class PointerType;
 class StructType;
@@ -574,7 +576,7 @@ public:
   void setName(const std::string &N)               { Name = N; }
   void setFile(CompileUnitDesc *U)                 { File = U; }
   void setLine(unsigned L)                         { Line = L; }
-  void setTypeDesc(TypeDesc *T)                    { TyDesc = T; }
+  void setType(TypeDesc *T)                        { TyDesc = T; }
   void setIsStatic(bool IS)                        { IsStatic = IS; }
   void setIsDefinition(bool ID)                    { IsDefinition = ID; }
 
@@ -940,6 +942,10 @@ private:
   // RootScope - Top level scope for the current function.
   //
   DebugScope *RootScope;
+  
+  // FrameMoves - List of moves done by a function's prolog.  Used to construct
+  // frame maps by debug consumers.
+  std::vector<MachineMove *> FrameMoves;
 
 public:
   MachineDebugInfo();
@@ -953,6 +959,14 @@ public:
   ///
   bool doFinalization();
   
+  /// BeginFunction - Begin gathering function debug information.
+  ///
+  void BeginFunction(MachineFunction *MF);
+  
+  /// EndFunction - Discard function debug information.
+  ///
+  void EndFunction();
+
   /// getDescFor - Convert a Value to a debug information descriptor.
   ///
   // FIXME - use new Value type when available.
@@ -1060,10 +1074,10 @@ public:
   /// getOrCreateScope - Returns the scope associated with the given descriptor.
   ///
   DebugScope *getOrCreateScope(DebugInfoDesc *ScopeDesc);
-
-  /// ClearScopes - Delete the scope and variable info after a function is
-  /// completed.
-  void ClearScopes();
+  
+  /// getFrameMoves - Returns a reference to a list of moves done in the current
+  /// function's prologue.  Used to construct frame maps for debug comsumers.
+  std::vector<MachineMove *> &getFrameMoves() { return FrameMoves; }
 
 }; // End class MachineDebugInfo
 

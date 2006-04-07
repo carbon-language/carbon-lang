@@ -10,6 +10,7 @@
 #include "llvm/CodeGen/MachineDebugInfo.h"
 
 #include "llvm/Constants.h"
+#include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Intrinsics.h"
@@ -1424,9 +1425,8 @@ MachineDebugInfo::MachineDebugInfo()
 , LabelID(0)
 , ScopeMap()
 , RootScope(NULL)
-{
-  
-}
+, FrameMoves()
+{}
 MachineDebugInfo::~MachineDebugInfo() {
 
 }
@@ -1441,6 +1441,27 @@ bool MachineDebugInfo::doInitialization() {
 ///
 bool MachineDebugInfo::doFinalization() {
   return false;
+}
+
+/// BeginFunction - Begin gathering function debug information.
+///
+void MachineDebugInfo::BeginFunction(MachineFunction *MF) {
+  // Coming soon.
+}
+
+/// MachineDebugInfo::EndFunction - Discard function debug information.
+///
+void MachineDebugInfo::EndFunction() {
+  // Clean up scope information.
+  if (RootScope) {
+    delete RootScope;
+    ScopeMap.clear();
+    RootScope = NULL;
+  }
+  
+  // Clean up frame info.
+  for (unsigned i = 0, N = FrameMoves.size(); i < N; ++i) delete FrameMoves[i];
+  FrameMoves.clear();
 }
 
 /// getDescFor - Convert a Value to a debug information descriptor.
@@ -1563,16 +1584,6 @@ DebugScope *MachineDebugInfo::getOrCreateScope(DebugInfoDesc *ScopeDesc) {
     }
   }
   return Slot;
-}
-
-/// ClearScopes - Delete the scope and variable info after a function is
-/// completed.
-void MachineDebugInfo::ClearScopes() {
-  if (RootScope) {
-    delete RootScope;
-    ScopeMap.clear();
-    RootScope = NULL;
-  }
 }
 
 

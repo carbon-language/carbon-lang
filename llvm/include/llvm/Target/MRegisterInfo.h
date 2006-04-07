@@ -27,6 +27,7 @@ class Type;
 class MachineFunction;
 class MachineInstr;
 class MachineLocation;
+class MachineMove;
 class TargetRegisterClass;
 
 /// TargetRegisterDesc - This record contains all of the information known about
@@ -345,18 +346,35 @@ public:
                             
   //===--------------------------------------------------------------------===//
   /// Debug information queries.
+  
+  /// getDwarfRegNum - Map a target register to an equivalent dwarf register
+  /// number.  Returns -1 if there is no equivalent value.
+  virtual int getDwarfRegNum(unsigned RegNum) const = 0;
 
   /// getFrameRegister - This method should return the register used as a base
-  /// for values allocated in the current stack frame.  This value should be
-  /// returned as a dwarf register number (getDwarfRegNum.)
+  /// for values allocated in the current stack frame.
   virtual unsigned getFrameRegister(MachineFunction &MF) const = 0;
+  
+  /// getRARegister - This method should return the register where the return
+  /// address can be found.
+  virtual unsigned getRARegister() const = 0;
                             
+  /// getStackDirection - This method should return the factor by which stacks
+  /// grow.  The tyical value is -4 which is the grows negatively in 4 byte
+  /// increments.
+  virtual int getStackDirection() const;
+  
   /// getLocation - This method should return the actual location of a frame
   /// variable given the frame index.  The location is returned in ML.
   /// Subclasses should override this method for special handling of frame
   /// variables and call MRegisterInfo::getLocation for the default action.
   virtual void getLocation(MachineFunction &MF, unsigned Index,
                            MachineLocation &ML) const;
+                           
+  /// getInitialFrameState - Returns a list of machine moves that are assumed
+  /// on entry to all functions.  Note that LabelID is ignored (assumed to be
+  /// the beginning of the function.)
+  virtual void getInitialFrameState(std::vector<MachineMove *> &Moves) const;
 };
 
 // This is useful when building DenseMaps keyed on virtual registers

@@ -329,8 +329,13 @@ void IA64RegisterInfo::emitEpilogue(MachineFunction &MF,
 
 }
 
+unsigned IA64RegisterInfo::getRARegister() const {
+  assert(0 && "What is the return address register");
+  return 0;
+}
+
 unsigned IA64RegisterInfo::getFrameRegister(MachineFunction &MF) const {
-  return getDwarfRegNum(hasFP(MF) ? IA64::r5 : IA64::r12);
+  return hasFP(MF) ? IA64::r5 : IA64::r12;
 }
 
 #include "IA64GenRegisterInfo.inc"

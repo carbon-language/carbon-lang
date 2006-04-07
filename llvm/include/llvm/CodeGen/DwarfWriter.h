@@ -41,10 +41,13 @@ class DIE;
 class DIEAbbrev;
 class GlobalVariableDesc;
 class MachineDebugInfo;
-class MachineLocation;
 class MachineFunction;
+class MachineLocation;
+class MachineMove;
 class Module;
+class MRegisterInfo;
 class SubprogramDesc;
+class TargetData;
 class Type;
 class TypeDesc;
   
@@ -80,6 +83,12 @@ protected:
   /// Asm - Target of Dwarf emission.
   ///
   AsmPrinter *Asm;
+  
+  /// TD - Target data.
+  const TargetData &TD;
+  
+  /// RI - Register Information.
+  const MRegisterInfo *RI;
   
   /// M - Current module.
   ///
@@ -324,7 +333,8 @@ private:
 
   /// AddAddress - Add an address attribute to a die based on the location
   /// provided.
-  void AddAddress(DIE *Die, unsigned Attribute, MachineLocation &Location);
+  void AddAddress(DIE *Die, unsigned Attribute,
+                  const MachineLocation &Location);
 
   /// NewType - Create a new type DIE.
   ///
@@ -375,6 +385,11 @@ private:
   ///
   void SizeAndOffsets();
   
+  /// EmitFrameMoves - Emit frame instructions to describe the layout of the
+  /// frame.
+  void EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
+                      std::vector<MachineMove *> &Moves);
+
   /// EmitDebugInfo - Emit the debug info section.
   ///
   void EmitDebugInfo() const;
@@ -387,10 +402,14 @@ private:
   ///
   void EmitDebugLines() const;
 
-  /// EmitDebugFrame - Emit info into a debug frame section.
+  /// EmitInitialDebugFrame - Emit common frame info into a debug frame section.
   ///
-  void EmitDebugFrame();
-  
+  void EmitInitialDebugFrame();
+    
+  /// EmitFunctionDebugFrame - Emit per function frame info into a debug frame
+  /// section.
+  void EmitFunctionDebugFrame();
+
   /// EmitDebugPubNames - Emit info into a debug pubnames section.
   ///
   void EmitDebugPubNames();
@@ -439,7 +458,7 @@ public:
   
   /// SetDebugInfo - Set DebugInfo when it's known that pass manager has
   /// created it.  Set by the target AsmPrinter.
-  void SetDebugInfo(MachineDebugInfo *DI) { DebugInfo = DI; }
+  void SetDebugInfo(MachineDebugInfo *DI);
 
   //===--------------------------------------------------------------------===//
   // Main entry points.
