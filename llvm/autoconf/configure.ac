@@ -184,6 +184,23 @@ AC_SUBST(ARCH,$llvm_cv_target_arch)
 dnl Check for the endianness of the target
 AC_C_BIGENDIAN(AC_SUBST([ENDIAN],[big]),AC_SUBST([ENDIAN],[little]))
 
+dnl Check to see if there's a "CVS" directory indicating that this build is
+dnl being done from a CVS checkout. This sets up several defaults for the
+dnl command line switches. When we build with a CVS directory, we get a 
+dnl debug with assertions turned on. Without, we assume a source release and we
+dnl get an optimized build without assertions. See --enable-optimized and
+dnl --enable-assertions below
+if test -d "CVS" ; then
+  cvsbuild="yes"
+  optimize="no"
+  asserts="yes"
+  AC_SUBST(CVSBUILD,[[CVSBUILD=1]])
+else
+  cvsbuild="no"
+  optimize="yes"
+  asserts="no"
+fi
+
 dnl===-----------------------------------------------------------------------===
 dnl===
 dnl=== SECTION 3: Command line arguments for the configure script.
@@ -191,12 +208,21 @@ dnl===
 dnl===-----------------------------------------------------------------------===
 
 dnl --enable-optimized : check whether they want to do an optimized build:
-AC_ARG_ENABLE(optimized,
-              AS_HELP_STRING([--enable-optimized,Compile with optimizations enabled (default is NO)]),,enableval=no)
+AC_ARG_ENABLE(optimized, AS_HELP_STRING(
+ [--enable-optimized,Compile with optimizations enabled (default is NO)]),,enableval=$optimize)
 if test ${enableval} = "no" ; then
   AC_SUBST(ENABLE_OPTIMIZED,[[]])
 else
   AC_SUBST(ENABLE_OPTIMIZED,[[ENABLE_OPTIMIZED=1]])
+fi
+
+dnl --enable-assertions : check whether they want to turn on assertions or not:
+AC_ARG_ENABLE(assertions,AS_HELP_STRING(
+  [--enable-assertions,Compile with assertion checks enabled (default is NO)]),, enableval=$asserts)
+if test ${enableval} = "no" ; then
+  AC_SUBST(ENABLE_ASSERTIONS,[[]])
+else
+  AC_SUBST(ENABLE_ASSERTIONS,[[ENABLE_ASSERTIONS=1]])
 fi
 
 dnl --enable-debug-runtime : should runtime libraries have debug symbols?
