@@ -2,7 +2,7 @@
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep pshuflw | wc -l | grep 1
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movhps | wc -l | grep 1
 
-void %test_pshuf(<2 x long>* %res, <2 x long>* %A) {
+void %test1(<2 x long>* %res, <2 x long>* %A) {
 	%tmp = load <2 x long>* %A
 	%tmp = cast <2 x long> %tmp to <8 x short>
 	%tmp0 = extractelement <8 x short> %tmp, uint 0
@@ -26,7 +26,7 @@ void %test_pshuf(<2 x long>* %res, <2 x long>* %A) {
 	ret void
 }
 
-void %testh_movhps(<4 x float>* %r, <2 x int>* %A) {
+void %test2(<4 x float>* %r, <2 x int>* %A) {
 	%tmp = load <4 x float>* %r
 	%tmp = cast <2 x int>* %A to double*
 	%tmp = load double* %tmp
