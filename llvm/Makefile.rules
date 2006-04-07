@@ -367,6 +367,11 @@ ifdef UNIVERSAL
   DISABLE_AUTO_DEPENDENCIES=1
 endif
 
+# Temporary workaround for a Mac OSX specific issue.
+ifdef NO_CXA_ATEXIT
+  CompileCommonOpts += -fno-use-cxa-atexit
+endif
+
 LD.Flags      += -L$(LibDir) -L$(LLVMLibDir) 
 CPP.BaseFlags += -D_GNU_SOURCE -D__STDC_LIMIT_MACROS
 # All -I flags should go here, so that they don't confuse llvm-config.
