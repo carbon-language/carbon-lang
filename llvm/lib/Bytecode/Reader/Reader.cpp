@@ -544,10 +544,6 @@ Constant* BytecodeReader::getConstantValue(unsigned TypeSlot, unsigned Slot) {
 /// or FunctionValues data members of this class.
 unsigned BytecodeReader::insertValue(Value *Val, unsigned type,
                                       ValueTable &ValueTab) {
-  assert((!isa<Constant>(Val) || !cast<Constant>(Val)->isNullValue()) ||
-          !hasImplicitNull(type) &&
-         "Cannot read null values from bytecode!");
-
   if (ValueTab.size() <= type)
     ValueTab.resize(type+1);
 
@@ -1506,14 +1502,15 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
 
   // Ok, not an ConstantExpr.  We now know how to read the given type...
   const Type *Ty = getType(TypeID);
+  Constant *Result = 0;
   switch (Ty->getTypeID()) {
   case Type::BoolTyID: {
     unsigned Val = read_vbr_uint();
     if (Val != 0 && Val != 1)
       error("Invalid boolean value read.");
-    Constant* Result = ConstantBool::get(Val == 1);
+    Result = ConstantBool::get(Val == 1);
     if (Handler) Handler->handleConstantValue(Result);
-    return Result;
+    break;
   }
 
   case Type::UByteTyID:   // Unsigned integer types...
@@ -1522,43 +1519,42 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
     unsigned Val = read_vbr_uint();
     if (!ConstantUInt::isValueValidForType(Ty, Val))
       error("Invalid unsigned byte/short/int read.");
-    Constant* Result =  ConstantUInt::get(Ty, Val);
+    Result = ConstantUInt::get(Ty, Val);
     if (Handler) Handler->handleConstantValue(Result);
-    return Result;
+    break;
   }
 
-  case Type::ULongTyID: {
-    Constant* Result = ConstantUInt::get(Ty, read_vbr_uint64());
+  case Type::ULongTyID:
+    Result = ConstantUInt::get(Ty, read_vbr_uint64());
     if (Handler) Handler->handleConstantValue(Result);
-    return Result;
-  }
-
+    break;
+    
   case Type::SByteTyID:   // Signed integer types...
   case Type::ShortTyID:
-  case Type::IntTyID: {
-  case Type::LongTyID:
+  case Type::IntTyID:
+  case Type::LongTyID: {
     int64_t Val = read_vbr_int64();
     if (!ConstantSInt::isValueValidForType(Ty, Val))
       error("Invalid signed byte/short/int/long read.");
-    Constant* Result = ConstantSInt::get(Ty, Val);
+    Result = ConstantSInt::get(Ty, Val);
     if (Handler) Handler->handleConstantValue(Result);
-    return Result;
+    break;
   }
 
   case Type::FloatTyID: {
     float Val;
     read_float(Val);
-    Constant* Result = ConstantFP::get(Ty, Val);
+    Result = ConstantFP::get(Ty, Val);
     if (Handler) Handler->handleConstantValue(Result);
-    return Result;
+    break;
   }
 
   case Type::DoubleTyID: {
     double Val;
     read_double(Val);
-    Constant* Result = ConstantFP::get(Ty, Val);
+    Result = ConstantFP::get(Ty, Val);
     if (Handler) Handler->handleConstantValue(Result);
-    return Result;
+    break;
   }
 
   case Type::ArrayTyID: {
@@ -1570,9 +1566,9 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
     while (NumElements--)     // Read all of the elements of the constant.
       Elements.push_back(getConstantValue(TypeSlot,
                                           read_vbr_uint()));
-    Constant* Result = ConstantArray::get(AT, Elements);
+    Result = ConstantArray::get(AT, Elements);
     if (Handler) Handler->handleConstantArray(AT, Elements, TypeSlot, Result);
-    return Result;
+    break;
   }
 
   case Type::StructTyID: {
@@ -1584,9 +1580,9 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
       Elements.push_back(getConstantValue(ST->getElementType(i),
                                           read_vbr_uint()));
 
-    Constant* Result = ConstantStruct::get(ST, Elements);
+    Result = ConstantStruct::get(ST, Elements);
     if (Handler) Handler->handleConstantStruct(ST, Elements, Result);
-    return Result;
+    break;
   }
 
   case Type::PackedTyID: {
@@ -1598,9 +1594,9 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
     while (NumElements--)     // Read all of the elements of the constant.
       Elements.push_back(getConstantValue(TypeSlot,
                                           read_vbr_uint()));
-    Constant* Result = ConstantPacked::get(PT, Elements);
+    Result = ConstantPacked::get(PT, Elements);
     if (Handler) Handler->handleConstantPacked(PT, Elements, TypeSlot, Result);
-    return Result;
+    break;
   }
 
   case Type::PointerTyID: {  // ConstantPointerRef value (backwards compat).
@@ -1624,7 +1620,15 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
                       Ty->getDescription());
     break;
   }
-  return 0;
+  
+  // Check that we didn't read a null constant if they are implicit for this
+  // type plane.  Do not do this check for constantexprs, as they may be folded
+  // to a null value in a way that isn't predicted when a .bc file is initially
+  // produced.
+  assert((!isa<Constant>(Result) || !cast<Constant>(Result)->isNullValue()) ||
+         !hasImplicitNull(TypeID) &&
+         "Cannot read null values from bytecode!");
+  return Result;
 }
 
 /// Resolve references for constants. This function resolves the forward
