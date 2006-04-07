@@ -178,10 +178,16 @@ OBJ_ROOT := .
 # These are options that can either be enabled here, or can be enabled on the
 # make command line (ie, make ENABLE_PROFILING=1):
 
-# When ENABLE_OPTIMIZED is enabled, Release builds of all of the LLVM code are
-# turned on, and Debug builds are turned off.
+# When ENABLE_OPTIMIZED is enabled, LLVM code is optimized and output is put
+# into the "Release" directories. Otherwise, LLVM code is not optimized and 
+# output is put in the "Debug" directories.
 #ENABLE_OPTIMIZED = 1
 @ENABLE_OPTIMIZED@
+
+# When ENABLE_ASSERTIONS is enabled, builds of all of the LLVM code will include
+# assertion checks, otherwise they are not included.
+#ENABLE_ASSERTIONS = 1
+@ENABLE_ASSERTIONS@
 
 # When DEBUG_RUNTIME is enabled, the runtime libraries will retain debug
 # symbols.
