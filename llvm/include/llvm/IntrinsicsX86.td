@@ -132,10 +132,6 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 
 // SIMD store ops
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
-  def int_x86_sse_storeh_ps : GCCBuiltin<"__builtin_ia32_storehps">,
-              Intrinsic<[llvm_ptr_ty, llvm_v4f32_ty], [IntrWriteMem]>;
-  def int_x86_sse_storel_ps : GCCBuiltin<"__builtin_ia32_storelps">,
-              Intrinsic<[llvm_ptr_ty, llvm_v4f32_ty], [IntrWriteMem]>;
   def int_x86_sse_storeu_ps : GCCBuiltin<"__builtin_ia32_storeups">,
               Intrinsic<[llvm_ptr_ty, llvm_v4f32_ty], [IntrWriteMem]>;
 }
