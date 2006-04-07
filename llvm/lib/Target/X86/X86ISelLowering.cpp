@@ -1405,13 +1405,21 @@ static bool DarwinGVRequiresExtraLoad(GlobalValue *GV) {
 }
 
 /// isUndefOrInRange - Op is either an undef node or a ConstantSDNode.  Return
-/// true if Op is undef or if its value falls within the specified range (L, H).
+/// true if Op is undef or if its value falls within the specified range (L, H].
 static bool isUndefOrInRange(SDOperand Op, unsigned Low, unsigned Hi) {
   if (Op.getOpcode() == ISD::UNDEF)
     return true;
 
   unsigned Val = cast<ConstantSDNode>(Op)->getValue();
-  return (Val >= Low && Val <= Hi);
+  return (Val >= Low && Val < Hi);
+}
+
+/// isUndefOrEqual - Op is either an undef node or a ConstantSDNode.  Return
+/// true if Op is undef or if its value equal to the specified value.
+static bool isUndefOrEqual(SDOperand Op, unsigned Val) {
+  if (Op.getOpcode() == ISD::UNDEF)
+    return true;
+  return cast<ConstantSDNode>(Op)->getValue() == Val;
 }
 
 /// isPSHUFDMask - Return true if the specified VECTOR_SHUFFLE operand
@@ -1473,23 +1481,14 @@ bool X86::isPSHUFLWMask(SDNode *N) {
     return false;
 
   // Upper quadword copied in order.
-  for (unsigned i = 4; i != 8; ++i) {
-    SDOperand Arg = N->getOperand(i);
-    if (Arg.getOpcode() == ISD::UNDEF) continue;
-    assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
-    if (cast<ConstantSDNode>(Arg)->getValue() != i)
+  for (unsigned i = 4; i != 8; ++i)
+    if (!isUndefOrEqual(N->getOperand(i), i))
       return false;
-  }
 
   // Lower quadword shuffled.
-  for (unsigned i = 0; i != 4; ++i) {
-    SDOperand Arg = N->getOperand(i);
-    if (Arg.getOpcode() == ISD::UNDEF) continue;
-    assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
-    unsigned Val = cast<ConstantSDNode>(Arg)->getValue();
-    if (Val > 4)
+  for (unsigned i = 0; i != 4; ++i)
+    if (!isUndefOrInRange(N->getOperand(i), 0, 4))
       return false;
-  }
 
   return true;
 }
@@ -1507,9 +1506,9 @@ bool X86::isSHUFPMask(SDNode *N) {
     // Expect bit 0 == 1, bit1 == 2
     SDOperand Bit0 = N->getOperand(0);
     SDOperand Bit1 = N->getOperand(1);
-    if (isUndefOrInRange(Bit0, 0, 0) && isUndefOrInRange(Bit1, 3, 3))
+    if (isUndefOrEqual(Bit0, 0) && isUndefOrEqual(Bit1, 3))
       return true;
-    if (isUndefOrInRange(Bit0, 1, 1) && isUndefOrInRange(Bit1, 2, 2))
+    if (isUndefOrEqual(Bit0, 1) && isUndefOrEqual(Bit1, 2))
       return true;
     return false;
   }
@@ -1544,36 +1543,10 @@ bool X86::isMOVHLPSMask(SDNode *N) {
     return false;
 
   // Expect bit0 == 6, bit1 == 7, bit2 == 2, bit3 == 3
-  SDOperand Bit0 = N->getOperand(0);
-  SDOperand Bit1 = N->getOperand(1);
-  SDOperand Bit2 = N->getOperand(2);
-  SDOperand Bit3 = N->getOperand(3);
-
-  if (Bit0.getOpcode() != ISD::UNDEF) {
-    assert(isa<ConstantSDNode>(Bit0) && "Invalid VECTOR_SHUFFLE mask!");
-    if (cast<ConstantSDNode>(Bit0)->getValue() != 6)
-      return false;
-  }
-
-  if (Bit1.getOpcode() != ISD::UNDEF) {
-    assert(isa<ConstantSDNode>(Bit1) && "Invalid VECTOR_SHUFFLE mask!");
-    if (cast<ConstantSDNode>(Bit1)->getValue() != 7)
-      return false;
-  }
-
-  if (Bit2.getOpcode() != ISD::UNDEF) {
-    assert(isa<ConstantSDNode>(Bit2) && "Invalid VECTOR_SHUFFLE mask!");
-    if (cast<ConstantSDNode>(Bit2)->getValue() != 2)
-      return false;
-  }
-
-  if (Bit3.getOpcode() != ISD::UNDEF) {
-    assert(isa<ConstantSDNode>(Bit3) && "Invalid VECTOR_SHUFFLE mask!");
-    if (cast<ConstantSDNode>(Bit3)->getValue() != 3)
-      return false;
-  }
-
-  return true;
+  return isUndefOrEqual(N->getOperand(0), 6) &&
+         isUndefOrEqual(N->getOperand(1), 7) &&
+         isUndefOrEqual(N->getOperand(2), 2) &&
+         isUndefOrEqual(N->getOperand(3), 3);
 }
 
 /// isMOVLHPSMask - Return true if the specified VECTOR_SHUFFLE operand
@@ -1585,36 +1558,10 @@ bool X86::isMOVLHPSMask(SDNode *N) {
     return false;
 
   // Expect bit0 == 0, bit1 == 1, bit2 == 4, bit3 == 5
-  SDOperand Bit0 = N->getOperand(0);
-  SDOperand Bit1 = N->getOperand(1);
-  SDOperand Bit2 = N->getOperand(2);
-  SDOperand Bit3 = N->getOperand(3);
-
-  if (Bit0.getOpcode() != ISD::UNDEF) {
-    assert(isa<ConstantSDNode>(Bit0) && "Invalid VECTOR_SHUFFLE mask!");
-    if (cast<ConstantSDNode>(Bit0)->getValue() != 0)
-      return false;
-  }
-
-  if (Bit1.getOpcode() != ISD::UNDEF) {
-    assert(isa<ConstantSDNode>(Bit1) && "Invalid VECTOR_SHUFFLE mask!");
-    if (cast<ConstantSDNode>(Bit1)->getValue() != 1)
-      return false;
-  }
-
-  if (Bit2.getOpcode() != ISD::UNDEF) {
-    assert(isa<ConstantSDNode>(Bit2) && "Invalid VECTOR_SHUFFLE mask!");
-    if (cast<ConstantSDNode>(Bit2)->getValue() != 4)
-      return false;
-  }
-
-  if (Bit3.getOpcode() != ISD::UNDEF) {
-    assert(isa<ConstantSDNode>(Bit3) && "Invalid VECTOR_SHUFFLE mask!");
-    if (cast<ConstantSDNode>(Bit3)->getValue() != 5)
-      return false;
-  }
-
-  return true;
+  return isUndefOrEqual(N->getOperand(0), 0) &&
+         isUndefOrEqual(N->getOperand(1), 1) &&
+         isUndefOrEqual(N->getOperand(2), 4) &&
+         isUndefOrEqual(N->getOperand(3), 5);
 }
 
 /// isMOVLPMask - Return true if the specified VECTOR_SHUFFLE operand
@@ -1626,21 +1573,13 @@ bool X86::isMOVLPMask(SDNode *N) {
   if (NumElems != 2 && NumElems != 4)
     return false;
 
-  for (unsigned i = 0; i < NumElems/2; ++i) {
-    SDOperand Arg = N->getOperand(i);
-    if (Arg.getOpcode() == ISD::UNDEF) continue;
-    assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
-    unsigned Val = cast<ConstantSDNode>(Arg)->getValue();
-    if (Val != i + NumElems) return false;
-  }
+  for (unsigned i = 0; i < NumElems/2; ++i)
+    if (!isUndefOrEqual(N->getOperand(i), i + NumElems))
+      return false;
 
-  for (unsigned i = NumElems/2; i < NumElems; ++i) {
-    SDOperand Arg = N->getOperand(i);
-    if (Arg.getOpcode() == ISD::UNDEF) continue;
-    assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
-    unsigned Val = cast<ConstantSDNode>(Arg)->getValue();
-    if (Val != i) return false;
-  }
+  for (unsigned i = NumElems/2; i < NumElems; ++i)
+    if (!isUndefOrEqual(N->getOperand(i), i))
+      return false;
 
   return true;
 }
@@ -1654,20 +1593,14 @@ bool X86::isMOVHPMask(SDNode *N) {
   if (NumElems != 2 && NumElems != 4)
     return false;
 
-  for (unsigned i = 0; i < NumElems/2; ++i) {
-    SDOperand Arg = N->getOperand(i);
-    if (Arg.getOpcode() == ISD::UNDEF) continue;
-    assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
-    unsigned Val = cast<ConstantSDNode>(Arg)->getValue();
-    if (Val != i) return false;
-  }
+  for (unsigned i = 0; i < NumElems/2; ++i)
+    if (!isUndefOrEqual(N->getOperand(i), i))
+      return false;
 
   for (unsigned i = 0; i < NumElems/2; ++i) {
     SDOperand Arg = N->getOperand(i + NumElems/2);
-    if (Arg.getOpcode() == ISD::UNDEF) continue;
-    assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
-    unsigned Val = cast<ConstantSDNode>(Arg)->getValue();
-    if (Val != i + NumElems) return false;
+    if (!isUndefOrEqual(Arg, i + NumElems))
+      return false;
   }
 
   return true;
@@ -1685,18 +1618,10 @@ bool X86::isUNPCKLMask(SDNode *N) {
   for (unsigned i = 0, j = 0; i != NumElems; i += 2, ++j) {
     SDOperand BitI  = N->getOperand(i);
     SDOperand BitI1 = N->getOperand(i+1);
-
-    if (BitI.getOpcode() != ISD::UNDEF) {
-      assert(isa<ConstantSDNode>(BitI) && "Invalid VECTOR_SHUFFLE mask!");
-      if (cast<ConstantSDNode>(BitI)->getValue() != j)
-        return false;
-    }
-
-    if (BitI1.getOpcode() != ISD::UNDEF) {
-      assert(isa<ConstantSDNode>(BitI1) && "Invalid VECTOR_SHUFFLE mask!");
-      if (cast<ConstantSDNode>(BitI1)->getValue() != j + NumElems)
-        return false;
-    }
+    if (!isUndefOrEqual(BitI, j))
+      return false;
+    if (!isUndefOrEqual(BitI1, j + NumElems))
+      return false;
   }
 
   return true;
@@ -1714,18 +1639,10 @@ bool X86::isUNPCKHMask(SDNode *N) {
   for (unsigned i = 0, j = 0; i != NumElems; i += 2, ++j) {
     SDOperand BitI  = N->getOperand(i);
     SDOperand BitI1 = N->getOperand(i+1);
-
-    if (BitI.getOpcode() != ISD::UNDEF) {
-      assert(isa<ConstantSDNode>(BitI) && "Invalid VECTOR_SHUFFLE mask!");
-      if (cast<ConstantSDNode>(BitI)->getValue() != j + NumElems/2)
-        return false;
-    }
-
-    if (BitI1.getOpcode() != ISD::UNDEF) {
-      assert(isa<ConstantSDNode>(BitI1) && "Invalid VECTOR_SHUFFLE mask!");
-      if (cast<ConstantSDNode>(BitI1)->getValue() != j + NumElems/2 + NumElems)
-        return false;
-    }
+    if (!isUndefOrEqual(BitI, j + NumElems/2))
+      return false;
+    if (!isUndefOrEqual(BitI1, j + NumElems/2 + NumElems))
+      return false;
   }
 
   return true;
@@ -1745,17 +1662,10 @@ bool X86::isUNPCKL_v_undef_Mask(SDNode *N) {
     SDOperand BitI  = N->getOperand(i);
     SDOperand BitI1 = N->getOperand(i+1);
 
-    if (BitI.getOpcode() != ISD::UNDEF) {
-      assert(isa<ConstantSDNode>(BitI) && "Invalid VECTOR_SHUFFLE mask!");
-      if (cast<ConstantSDNode>(BitI)->getValue() != j)
-        return false;
-    }
-
-    if (BitI1.getOpcode() != ISD::UNDEF) {
-      assert(isa<ConstantSDNode>(BitI1) && "Invalid VECTOR_SHUFFLE mask!");
-      if (cast<ConstantSDNode>(BitI1)->getValue() != j)
-        return false;
-    }
+    if (!isUndefOrEqual(BitI, j))
+      return false;
+    if (!isUndefOrEqual(BitI1, j))
+      return false;
   }
 
   return true;
@@ -1923,11 +1833,11 @@ static bool ShouldXformedToMOVLP(SDOperand V1, SDOperand V2, SDOperand Mask) {
   if (isScalarLoadToVector(V1)) {
     unsigned NumElems = Mask.getNumOperands();
     for (unsigned i = 0, e = NumElems/2; i != e; ++i)
-      if (!isUndefOrInRange(Mask.getOperand(i), i, i))
+      if (!isUndefOrEqual(Mask.getOperand(i), i))
         return false;
     for (unsigned i = NumElems/2; i != NumElems; ++i)
       if (!isUndefOrInRange(Mask.getOperand(i),
-                            NumElems+NumElems/2, NumElems*2-1))
+                            NumElems+NumElems/2, NumElems*2))
         return false;
     return true;
   }
@@ -1944,10 +1854,10 @@ static bool isLowerFromV2UpperFromV1(SDOperand Op) {
 
   unsigned NumElems = Op.getNumOperands();
   for (unsigned i = 0, e = NumElems/2; i != e; ++i)
-    if (!isUndefOrInRange(Op.getOperand(i), NumElems, NumElems*2-1))
+    if (!isUndefOrInRange(Op.getOperand(i), NumElems, NumElems*2))
       return false;
   for (unsigned i = NumElems/2; i != NumElems; ++i)
-    if (!isUndefOrInRange(Op.getOperand(i), 0, NumElems-1))
+    if (!isUndefOrInRange(Op.getOperand(i), 0, NumElems))
       return false;
   return true;
 }
