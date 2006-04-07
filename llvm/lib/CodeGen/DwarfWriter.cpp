@@ -1626,15 +1626,13 @@ void DwarfWriter::ConstructRootScope(DebugScope *RootScope) {
   CompileUnitDesc *UnitDesc = static_cast<CompileUnitDesc *>(SPD->getContext());
   CompileUnit *Unit = FindCompileUnit(UnitDesc);
   
-  // Generate the mangled name.
-  std::string MangledName = Asm->Mang->getValueName(MF->getFunction());
-  
   // Get the subprogram die.
   DIE *SPDie = Unit->getDieMapSlotFor(SPD);
   assert(SPDie && "Missing subprogram descriptor");
   
   // Add the function bounds.
-  SPDie->AddObjectLabel(DW_AT_low_pc, DW_FORM_addr, MangledName);
+  SPDie->AddLabel(DW_AT_low_pc, DW_FORM_addr,
+                  DWLabel("func_begin", SubprogramCount));
   SPDie->AddLabel(DW_AT_high_pc, DW_FORM_addr,
                   DWLabel("func_end", SubprogramCount));
   MachineLocation Location(RI->getFrameRegister(*MF));
@@ -2408,8 +2406,8 @@ void DwarfWriter::EndModule() {
   EmitDebugMacInfo();
 }
 
-/// BeginFunction - Gather pre-function debug information.
-///
+/// BeginFunction - Gather pre-function debug information.  Assumes being 
+/// emitted immediately after the function entry point.
 void DwarfWriter::BeginFunction(MachineFunction *MF) {
   this->MF = MF;
   
@@ -2419,8 +2417,7 @@ void DwarfWriter::BeginFunction(MachineFunction *MF) {
   if (!ShouldEmitDwarf()) return;
   EOL("Dwarf Begin Function");
   
-  // Define begin label for subprogram.
-  Asm->SwitchSection(TextSection, 0);
+  // Assumes in correct section after the entry point.
   EmitLabel("func_begin", ++SubprogramCount);
 }
 

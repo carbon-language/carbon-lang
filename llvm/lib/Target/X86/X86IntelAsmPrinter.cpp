@@ -34,11 +34,6 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SetupMachineFunction(MF);
   O << "\n\n";
 
-  if (forDarwin) {
-    // Emit pre-function debug information.
-    DW.BeginFunction(&MF);
-  }
-
   // Print out constants referenced by the function
   EmitConstantPool(MF.getConstantPool());
 
@@ -49,6 +44,11 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   if (HasDotTypeDotSizeDirective)
     O << "\t.type\t" << CurrentFnName << ", @function\n";
   O << CurrentFnName << ":\n";
+  
+  if (forDarwin) {
+    // Emit pre-function debug information.
+    DW.BeginFunction(&MF);
+  }
 
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();

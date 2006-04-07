@@ -511,9 +511,6 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SetupMachineFunction(MF);
   O << "\n\n";
   
-  // Emit pre-function debug information.
-  DW.BeginFunction(&MF);
-
   // Print out constants referenced by the function
   EmitConstantPool(MF.getConstantPool());
 
@@ -538,6 +535,9 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   }
   EmitAlignment(4, F);
   O << CurrentFnName << ":\n";
+
+  // Emit pre-function debug information.
+  DW.BeginFunction(&MF);
 
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();

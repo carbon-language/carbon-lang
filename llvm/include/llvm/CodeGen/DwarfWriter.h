@@ -472,8 +472,8 @@ public:
   ///
   void EndModule();
   
-  /// BeginFunction - Gather pre-function debug information.
-  ///
+  /// BeginFunction - Gather pre-function debug information.  Assumes being 
+  /// emitted immediately after the function entry point.
   void BeginFunction(MachineFunction *MF);
   
   /// EndFunction - Gather and emit post-function debug information.

@@ -35,11 +35,6 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SetupMachineFunction(MF);
   O << "\n\n";
 
-  if (forDarwin) {
-    // Emit pre-function debug information.
-    DW.BeginFunction(&MF);
-  }
-
   // Print out constants referenced by the function
   EmitConstantPool(MF.getConstantPool());
 
@@ -72,6 +67,11 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     break;
   }
   O << CurrentFnName << ":\n";
+
+  if (forDarwin) {
+    // Emit pre-function debug information.
+    DW.BeginFunction(&MF);
+  }
 
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
