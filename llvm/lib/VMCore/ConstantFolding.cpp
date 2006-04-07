@@ -836,6 +836,9 @@ Constant *llvm::ConstantFoldExtractElementInstruction(const Constant *Val,
                                                       const Constant *Idx) {
   if (isa<UndefValue>(Val))  // ee(undef, x) -> undef
     return UndefValue::get(cast<PackedType>(Val->getType())->getElementType());
+  if (Val->isNullValue())  // ee(zero, x) -> zero
+    return Constant::getNullValue(
+                          cast<PackedType>(Val->getType())->getElementType());
   
   if (const ConstantPacked *CVal = dyn_cast<ConstantPacked>(Val)) {
     if (const ConstantUInt *CIdx = dyn_cast<ConstantUInt>(Idx)) {
