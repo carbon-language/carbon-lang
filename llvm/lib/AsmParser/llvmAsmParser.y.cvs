@@ -1547,7 +1547,16 @@ ConstExpr: CAST '(' ConstVal TO Types ')' {
     if ($5->getType() != Type::UIntTy)
       ThrowException("Second operand of extractelement must be uint!");
     $$ = ConstantExpr::getExtractElement($3, $5);
+  }
+  | INSERTELEMENT '(' ConstVal ',' ConstVal ',' ConstVal ')' {
+    $$ = ConstantExpr::getInsertElement($3, $5, $7);
+  }
+  | SHUFFLEVECTOR '(' ConstVal ',' ConstVal ',' ConstVal ')' {
+    if (!ShuffleVectorInst::isValidOperands($3, $5, $7))
+      ThrowException("Invalid shufflevector operands!");
+    $$ = ConstantExpr::getShuffleVector($3, $5, $7);
   };
+
 
 // ConstVector - A list of comma separated constants.
 ConstVector : ConstVector ',' ConstVal {
@@ -2261,8 +2270,8 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     $$ = new InsertElementInst($2, $4, $6);
   }
   | SHUFFLEVECTOR ResolvedVal ',' ResolvedVal ',' ResolvedVal {
-  if (!ShuffleVectorInst::isValidOperands($2, $4, $6))
-    ThrowException("Invalid shufflevector operands!");
+    if (!ShuffleVectorInst::isValidOperands($2, $4, $6))
+      ThrowException("Invalid shufflevector operands!");
     $$ = new ShuffleVectorInst($2, $4, $6);
   }
   | PHI_TOK PHIList {
