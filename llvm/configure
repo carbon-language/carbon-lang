@@ -2968,7 +2968,7 @@ presetting ac_cv_c_bigendian=no (or yes) will help" >&2;}
 esac
 
 
-if test -d "CVS" ; then
+if test -d "CVS" -o -d "${srcdir}/CVS"; then
   cvsbuild="yes"
   optimize="no"
   asserts="yes"

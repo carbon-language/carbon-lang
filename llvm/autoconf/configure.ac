@@ -190,7 +190,7 @@ dnl command line switches. When we build with a CVS directory, we get a
 dnl debug with assertions turned on. Without, we assume a source release and we
 dnl get an optimized build without assertions. See --enable-optimized and
 dnl --enable-assertions below
-if test -d "CVS" ; then
+if test -d "CVS" -o -d "${srcdir}/CVS"; then
   cvsbuild="yes"
   optimize="no"
   asserts="yes"
