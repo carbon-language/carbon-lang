@@ -585,7 +585,7 @@ a power of 2.</p>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="moduleasm">Module-Level Inline Assembly</a></li>
+  <a name="moduleasm">Module-Level Inline Assembly</a>
 </div>
 
 <div class="doc_text">
@@ -2662,8 +2662,10 @@ operand may be undef if performing a shuffle from only one vector.
 <h5>Example:</h5>
 
 <pre>
-  %result = shufflevector &lt;4 x int&gt; %v1, &lt;4 x int&gt; %v2, &lt;4 x uint&gt; &lt;uint 0, uint 4, uint 1, uint 5&gt;    <i>; yields &lt;4 x int&gt;</i>
-  %result = shufflevector &lt;4 x int&gt; %v1, &lt;4 x int&gt; undef, &lt;4 x uint&gt; &lt;uint 0, uint 1, uint 2, uint 3&gt;  <i>; yields &lt;4 x int&gt;</i> - Identity shuffle.
+  %result = shufflevector &lt;4 x int&gt; %v1, &lt;4 x int&gt; %v2, 
+                          &lt;4 x uint&gt; &lt;uint 0, uint 4, uint 1, uint 5&gt;    <i>; yields &lt;4 x int&gt;</i>
+  %result = shufflevector &lt;4 x int&gt; %v1, &lt;4 x int&gt; undef, 
+                          &lt;4 x uint&gt; &lt;uint 0, uint 1, uint 2, uint 3&gt;  <i>; yields &lt;4 x int&gt;</i> - Identity shuffle.
 </pre>
 </div>
 
