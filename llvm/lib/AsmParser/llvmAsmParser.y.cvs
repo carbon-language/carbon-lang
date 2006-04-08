@@ -1541,14 +1541,13 @@ ConstExpr: CAST '(' ConstVal TO Types ')' {
     $$ = ConstantExpr::get($1, $3, $5);
   }
   | EXTRACTELEMENT '(' ConstVal ',' ConstVal ')' {
-        if (!isa<PackedType>($3->getType()))
-      ThrowException("First operand of extractelement must be "
-                     "packed type!");
-    if ($5->getType() != Type::UIntTy)
-      ThrowException("Second operand of extractelement must be uint!");
+    if (!ExtractElementInst::isValidOperands($3, $5))
+      ThrowException("Invalid extractelement operands!");
     $$ = ConstantExpr::getExtractElement($3, $5);
   }
   | INSERTELEMENT '(' ConstVal ',' ConstVal ',' ConstVal ')' {
+    if (!InsertElementInst::isValidOperands($3, $5, $7))
+      ThrowException("Invalid insertelement operands!");
     $$ = ConstantExpr::getInsertElement($3, $5, $7);
   }
   | SHUFFLEVECTOR '(' ConstVal ',' ConstVal ',' ConstVal ')' {
@@ -2250,23 +2249,13 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     delete $4;
   }
   | EXTRACTELEMENT ResolvedVal ',' ResolvedVal {
-    if (!isa<PackedType>($2->getType()))
-      ThrowException("First operand of extractelement must be "
-                     "packed type!");
-    if ($4->getType() != Type::UIntTy)
-      ThrowException("Second operand of extractelement must be uint!");
+    if (!ExtractElementInst::isValidOperands($2, $4))
+      ThrowException("Invalid extractelement operands!");
     $$ = new ExtractElementInst($2, $4);
   }
   | INSERTELEMENT ResolvedVal ',' ResolvedVal ',' ResolvedVal {
-    if (!isa<PackedType>($2->getType()))
-      ThrowException("First operand of insertelement must be "
-                     "packed type!");
-    if ($4->getType() != 
-        cast<PackedType>($2->getType())->getElementType())
-      ThrowException("Second operand of insertelement must be "
-                     "packed element type!");
-    if ($6->getType() != Type::UIntTy)
-      ThrowException("Third operand of insertelement must be uint!");
+    if (!InsertElementInst::isValidOperands($2, $4, $6))
+      ThrowException("Invalid insertelement operands!");
     $$ = new InsertElementInst($2, $4, $6);
   }
   | SHUFFLEVECTOR ResolvedVal ',' ResolvedVal ',' ResolvedVal {
