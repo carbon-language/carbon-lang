@@ -2688,6 +2688,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   }
   }
   
+  assert(Result.getValueType() == Op.getValueType() &&
+         "Bad legalization!");
+  
   // Make sure that the generated code is itself legal.
   if (Result != Op)
     Result = LegalizeOp(Result);
