@@ -431,6 +431,63 @@ unsigned PPC::getVSPLTImmediate(SDNode *N, unsigned EltSize) {
 /// bytes of each element [124] -> [bhw].
 SDOperand PPC::get_VSPLI_elt(SDNode *N, unsigned ByteSize, SelectionDAG &DAG) {
   SDOperand OpVal(0, 0);
+
+  // If ByteSize of the splat is bigger than the element size of the
+  // build_vector, then we have a case where we are checking for a splat where
+  // multiple elements of the buildvector are folded together into a single
+  // logical element of the splat (e.g. "vsplish 1" to splat {0,1}*8).
+  unsigned EltSize = 16/N->getNumOperands();
+  if (EltSize < ByteSize) {
+    unsigned Multiple = ByteSize/EltSize;   // Number of BV entries per spltval.
+    SDOperand UniquedVals[4];
+    assert(Multiple > 1 && Multiple <= 4 && "How can this happen?");
+    
+    // See if all of the elements in the buildvector agree across.
+    for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+      if (N->getOperand(i).getOpcode() == ISD::UNDEF) continue;
+      // If the element isn't a constant, bail fully out.
+      if (!isa<ConstantSDNode>(N->getOperand(i))) return SDOperand();
+
+          
+      if (UniquedVals[i&(Multiple-1)].Val == 0)
+        UniquedVals[i&(Multiple-1)] = N->getOperand(i);
+      else if (UniquedVals[i&(Multiple-1)] != N->getOperand(i))
+        return SDOperand();  // no match.
+    }
+    
+    // Okay, if we reached this point, UniquedVals[0..Multiple-1] contains
+    // either constant or undef values that are identical for each chunk.  See
+    // if these chunks can form into a larger vspltis*.
+    
+    // Check to see if all of the leading entries are either 0 or -1.  If
+    // neither, then this won't fit into the immediate field.
+    bool LeadingZero = true;
+    bool LeadingOnes = true;
+    for (unsigned i = 0; i != Multiple-1; ++i) {
+      if (UniquedVals[i].Val == 0) continue;  // Must have been undefs.
+      
+      LeadingZero &= cast<ConstantSDNode>(UniquedVals[i])->isNullValue();
+      LeadingOnes &= cast<ConstantSDNode>(UniquedVals[i])->isAllOnesValue();
+    }
+    // Finally, check the least significant entry.
+    if (LeadingZero) {
+      if (UniquedVals[Multiple-1].Val == 0)
+        return DAG.getTargetConstant(0, MVT::i32);  // 0,0,0,undef
+      int Val = cast<ConstantSDNode>(UniquedVals[Multiple-1])->getValue();
+      if (Val < 16)
+        return DAG.getTargetConstant(Val, MVT::i32);  // 0,0,0,4 -> vspltisw(4)
+    }
+    if (LeadingOnes) {
+      if (UniquedVals[Multiple-1].Val == 0)
+        return DAG.getTargetConstant(~0U, MVT::i32);  // -1,-1,-1,undef
+      int Val =cast<ConstantSDNode>(UniquedVals[Multiple-1])->getSignExtended();
+      if (Val >= -16)                            // -1,-1,-1,-2 -> vspltisw(-2)
+        return DAG.getTargetConstant(Val, MVT::i32);
+    }
+    
+    return SDOperand();
+  }
+  
   // Check to see if this buildvec has a single non-undef value in its elements.
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
     if (N->getOperand(i).getOpcode() == ISD::UNDEF) continue;
