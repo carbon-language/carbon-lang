@@ -226,7 +226,7 @@ void AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
   case ISD::RET: {
     SDOperand Chain;
     Select(Chain, N->getOperand(0));     // Token chain.
-    SDOperand InFlag;
+    SDOperand InFlag(0,0);
 
     if (N->getNumOperands() == 2) {
       SDOperand Val;
@@ -420,7 +420,7 @@ SDOperand AlphaDAGToDAGISel::SelectCALL(SDOperand Op) {
   SDNode *N = Op.Val;
   SDOperand Chain;
   SDOperand Addr = N->getOperand(1);
-  SDOperand InFlag;  // Null incoming flag value.
+  SDOperand InFlag(0,0);  // Null incoming flag value.
   Select(Chain, N->getOperand(0));
 
    std::vector<SDOperand> CallOperands;
