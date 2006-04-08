@@ -908,6 +908,14 @@ Constant *llvm::ConstantFoldInsertElementInstruction(const Constant *Val,
   return 0;
 }
 
+Constant *llvm::ConstantFoldShuffleVectorInstruction(const Constant *V1,
+                                                     const Constant *V2,
+                                                     const Constant *Mask) {
+  // TODO:
+  return 0;
+}
+
+
 /// isZeroSizedType - This type is zero sized if its an array or structure of
 /// zero sized types.  The only leaf zero sized type is an empty structure.
 static bool isMaybeZeroSizedType(const Type *Ty) {

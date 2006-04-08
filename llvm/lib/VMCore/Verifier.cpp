@@ -184,6 +184,7 @@ namespace {  // Anonymous namespace for class
     void visitShiftInst(ShiftInst &SI);
     void visitExtractElementInst(ExtractElementInst &EI);
     void visitInsertElementInst(InsertElementInst &EI);
+    void visitShuffleVectorInst(ShuffleVectorInst &EI);
     void visitVAArgInst(VAArgInst &VAA) { visitInstruction(VAA); }
     void visitCallInst(CallInst &CI);
     void visitGetElementPtrInst(GetElementPtrInst &GEP);
@@ -560,6 +561,29 @@ void Verifier::visitInsertElementInst(InsertElementInst &IE) {
   Assert1(IE.getOperand(2)->getType() == Type::UIntTy,
           "Third operand to insertelement must be uint type!", &IE);
   visitInstruction(IE);
+}
+
+void Verifier::visitShuffleVectorInst(ShuffleVectorInst &SV) {
+  Assert1(ShuffleVectorInst::isValidOperands(SV.getOperand(0), SV.getOperand(1),
+                                             SV.getOperand(2)),
+          "Invalid shufflevector operands!", &SV);
+  Assert1(SV.getType() == SV.getOperand(0)->getType(),
+          "Result of shufflevector must match first operand type!", &SV);
+  
+  // Check to see if Mask is valid.
+  if (const ConstantPacked *MV = dyn_cast<ConstantPacked>(SV.getOperand(2))) {
+    for (unsigned i = 0, e = MV->getNumOperands(); i != e; ++i) {
+      Assert1(isa<ConstantUInt>(MV->getOperand(i)) ||
+              isa<UndefValue>(MV->getOperand(i)),
+              "Invalid shufflevector shuffle mask!", &SV);
+    }
+  } else {
+    Assert1(isa<UndefValue>(SV.getOperand(2)) || 
+            isa<ConstantAggregateZero>(SV.getOperand(2)),
+            "Invalid shufflevector shuffle mask!", &SV);
+  }
+  
+  visitInstruction(SV);
 }
 
 void Verifier::visitGetElementPtrInst(GetElementPtrInst &GEP) {

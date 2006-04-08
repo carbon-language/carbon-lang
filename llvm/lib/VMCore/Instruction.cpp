@@ -122,6 +122,7 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
   case VAArg:   return "va_arg";
   case ExtractElement: return "extractelement";
   case InsertElement: return "insertelement";
+  case ShuffleVector: return "shufflevector";
 
   default: return "<Invalid operator> ";
   }

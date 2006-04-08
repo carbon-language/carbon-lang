@@ -376,6 +376,21 @@ public:
   }
 };
 
+/// ShuffleVectorConstantExpr - This class is private to
+/// Constants.cpp, and is used behind the scenes to implement
+/// shufflevector constant exprs.
+class ShuffleVectorConstantExpr : public ConstantExpr {
+  Use Ops[3];
+public:
+  ShuffleVectorConstantExpr(Constant *C1, Constant *C2, Constant *C3)
+  : ConstantExpr(C1->getType(), Instruction::ShuffleVector, 
+                 Ops, 3) {
+    Ops[0].init(C1, this);
+    Ops[1].init(C2, this);
+    Ops[2].init(C3, this);
+  }
+};
+
 /// GetElementPtrConstantExpr - This class is private to Constants.cpp, and is
 /// used behind the scenes to implement getelementpr constant exprs.
 struct GetElementPtrConstantExpr : public ConstantExpr {
@@ -1175,7 +1190,10 @@ namespace llvm {
       if (V.first == Instruction::InsertElement)
         return new InsertElementConstantExpr(V.second[0], V.second[1],
                                              V.second[2]);
-
+      if (V.first == Instruction::ShuffleVector)
+        return new ShuffleVectorConstantExpr(V.second[0], V.second[1],
+                                             V.second[2]);
+      
       assert(V.first == Instruction::GetElementPtr && "Invalid ConstantExpr!");
 
       std::vector<Constant*> IdxList(V.second.begin()+1, V.second.end());
@@ -1463,6 +1481,26 @@ Constant *ConstantExpr::getInsertElement(Constant *Val, Constant *Elt,
   return getInsertElementTy(cast<PackedType>(Val->getType())->getElementType(),
                             Val, Elt, Idx);
 }
+
+Constant *ConstantExpr::getShuffleVectorTy(const Type *ReqTy, Constant *V1,
+                                           Constant *V2, Constant *Mask) {
+  if (Constant *FC = ConstantFoldShuffleVectorInstruction(V1, V2, Mask))
+    return FC;          // Fold a few common cases...
+  // Look up the constant in the table first to ensure uniqueness
+  std::vector<Constant*> ArgVec(1, V1);
+  ArgVec.push_back(V2);
+  ArgVec.push_back(Mask);
+  const ExprMapKeyType &Key = std::make_pair(Instruction::ShuffleVector,ArgVec);
+  return ExprConstants.getOrCreate(ReqTy, Key);
+}
+
+Constant *ConstantExpr::getShuffleVector(Constant *V1, Constant *V2, 
+                                         Constant *Mask) {
+  assert(ShuffleVectorInst::isValidOperands(V1, V2, Mask) &&
+         "Invalid shuffle vector constant expr operands!");
+  return getShuffleVectorTy(V1->getType(), V1, V2, Mask);
+}
+
 
 // destroyConstant - Remove the constant from the constant table...
 //

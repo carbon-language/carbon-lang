@@ -36,6 +36,9 @@ namespace llvm {
   Constant *ConstantFoldInsertElementInstruction(const Constant *Val,
                                                  const Constant *Elt,
                                                  const Constant *Idx);
+  Constant *ConstantFoldShuffleVectorInstruction(const Constant *V1,
+                                                 const Constant *V2,
+                                                 const Constant *Mask);
   Constant *ConstantFoldBinaryInstruction(unsigned Opcode, const Constant *V1,
                                           const Constant *V2);
   Constant *ConstantFoldGetElementPtr(const Constant *C,

@@ -800,7 +800,8 @@ const Type* GetElementPtrInst::getIndexedType(const Type *Ptr, Value *Idx) {
 //===----------------------------------------------------------------------===//
 
 ExtractElementInst::ExtractElementInst(Value *Val, Value *Index,
-                                       const std::string &Name, Instruction *InsertBef)
+                                       const std::string &Name,
+                                       Instruction *InsertBef)
   : Instruction(cast<PackedType>(Val->getType())->getElementType(),
                 ExtractElement, Ops, 2, Name, InsertBef) {
   Ops[0].init(Val, this);
@@ -808,7 +809,8 @@ ExtractElementInst::ExtractElementInst(Value *Val, Value *Index,
 }
 
 ExtractElementInst::ExtractElementInst(Value *Val, Value *Index,
-                                       const std::string &Name, BasicBlock *InsertAE)
+                                       const std::string &Name,
+                                       BasicBlock *InsertAE)
   : Instruction(cast<PackedType>(Val->getType())->getElementType(),
                 ExtractElement, Ops, 2, Name, InsertAE) {
   Ops[0].init(Val, this);
@@ -820,7 +822,8 @@ ExtractElementInst::ExtractElementInst(Value *Val, Value *Index,
 //===----------------------------------------------------------------------===//
 
 InsertElementInst::InsertElementInst(Value *Val, Value *Elt, Value *Index,
-                                     const std::string &Name, Instruction *InsertBef)
+                                     const std::string &Name,
+                                     Instruction *InsertBef)
   : Instruction(Val->getType(), InsertElement, Ops, 3, Name, InsertBef) {
   Ops[0].init(Val, this);
   Ops[1].init(Elt, this);
@@ -828,12 +831,53 @@ InsertElementInst::InsertElementInst(Value *Val, Value *Elt, Value *Index,
 }
 
 InsertElementInst::InsertElementInst(Value *Val, Value *Elt, Value *Index,
-                                     const std::string &Name, BasicBlock *InsertAE)
+                                     const std::string &Name,
+                                     BasicBlock *InsertAE)
   : Instruction(Val->getType(), InsertElement, Ops, 3, Name, InsertAE) {
   Ops[0].init(Val, this);
   Ops[1].init(Elt, this);
   Ops[2].init(Index, this);
 }
+
+//===----------------------------------------------------------------------===//
+//                      ShuffleVectorInst Implementation
+//===----------------------------------------------------------------------===//
+
+ShuffleVectorInst::ShuffleVectorInst(Value *V1, Value *V2, Value *Mask,
+                                     const std::string &Name,
+                                     Instruction *InsertBefore)
+  : Instruction(V1->getType(), ShuffleVector, Ops, 3, Name, InsertBefore) {
+  assert(isValidOperands(V1, V2, Mask) &&
+         "Invalid shuffle vector instruction operands!");
+  Ops[0].init(V1, this);
+  Ops[1].init(V2, this);
+  Ops[2].init(Mask, this);
+}
+
+ShuffleVectorInst::ShuffleVectorInst(Value *V1, Value *V2, Value *Mask,
+                                     const std::string &Name, 
+                                     BasicBlock *InsertAtEnd)
+  : Instruction(V1->getType(), ShuffleVector, Ops, 3, Name, InsertAtEnd) {
+  assert(isValidOperands(V1, V2, Mask) &&
+         "Invalid shuffle vector instruction operands!");
+
+  Ops[0].init(V1, this);
+  Ops[1].init(V2, this);
+  Ops[2].init(Mask, this);
+}
+
+bool ShuffleVectorInst::isValidOperands(const Value *V1, const Value *V2, 
+                                        const Value *Mask) {
+  if (!isa<PackedType>(V1->getType())) return false;
+  if (V1->getType() != V2->getType()) return false;
+  if (!isa<PackedType>(Mask->getType()) ||
+         cast<PackedType>(Mask->getType())->getElementType() != Type::UIntTy ||
+         cast<PackedType>(Mask->getType())->getNumElements() !=
+         cast<PackedType>(V1->getType())->getNumElements())
+    return false;
+  return true;
+}
+
 
 //===----------------------------------------------------------------------===//
 //                             BinaryOperator Class
@@ -1202,8 +1246,15 @@ CallInst   *CallInst::clone()   const { return new CallInst(*this); }
 ShiftInst  *ShiftInst::clone()  const { return new ShiftInst(*this); }
 SelectInst *SelectInst::clone() const { return new SelectInst(*this); }
 VAArgInst  *VAArgInst::clone()  const { return new VAArgInst(*this); }
-ExtractElementInst *ExtractElementInst::clone() const {return new ExtractElementInst(*this); }
-InsertElementInst *InsertElementInst::clone() const {return new InsertElementInst(*this); }
+ExtractElementInst *ExtractElementInst::clone() const {
+  return new ExtractElementInst(*this);
+}
+InsertElementInst *InsertElementInst::clone() const {
+  return new InsertElementInst(*this);
+}
+ShuffleVectorInst *ShuffleVectorInst::clone() const {
+  return new ShuffleVectorInst(*this);
+}
 PHINode    *PHINode::clone()    const { return new PHINode(*this); }
 ReturnInst *ReturnInst::clone() const { return new ReturnInst(*this); }
 BranchInst *BranchInst::clone() const { return new BranchInst(*this); }
