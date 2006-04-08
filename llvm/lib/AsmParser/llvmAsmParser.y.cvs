@@ -107,8 +107,8 @@ static struct PerModuleInfo {
     }
 
     // Look for intrinsic functions and CallInst that need to be upgraded
-    for (Module::iterator FI = CurrentModule->begin(),FE = CurrentModule->end();
-         FI != FE; )
+    for (Module::iterator FI = CurrentModule->begin(),
+         FE = CurrentModule->end(); FI != FE; )
       UpgradeCallsToIntrinsic(FI++);
 
     Values.clear();         // Clear out function local definitions
@@ -998,7 +998,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 // Other Operators
 %type  <OtherOpVal> ShiftOps
 %token <OtherOpVal> PHI_TOK CAST SELECT SHL SHR VAARG
-%token <OtherOpVal> EXTRACTELEMENT INSERTELEMENT
+%token <OtherOpVal> EXTRACTELEMENT INSERTELEMENT SHUFFLEVECTOR
 %token VAARG_old VANEXT_old //OBSOLETE
 
 
@@ -2259,6 +2259,11 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     if ($6->getType() != Type::UIntTy)
       ThrowException("Third operand of insertelement must be uint!");
     $$ = new InsertElementInst($2, $4, $6);
+  }
+  | SHUFFLEVECTOR ResolvedVal ',' ResolvedVal ',' ResolvedVal {
+  if (!ShuffleVectorInst::isValidOperands($2, $4, $6))
+    ThrowException("Invalid shufflevector operands!");
+    $$ = new ShuffleVectorInst($2, $4, $6);
   }
   | PHI_TOK PHIList {
     const Type *Ty = $2->front().first->getType();
