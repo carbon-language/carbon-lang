@@ -22,8 +22,8 @@ else
       $(warning Skipping runtime libraries, llvm-gcc 4 detected.)
     endif
     DIRS += docs
+    OPTIONAL_DIRS = examples projects
   endif
-  OPTIONAL_DIRS = examples projects
 endif
 EXTRA_DIST := test llvm.spec include
 
