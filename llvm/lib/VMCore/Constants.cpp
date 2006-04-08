@@ -1702,6 +1702,22 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
     if (C1 == From) C1 = To;
     if (C2 == From) C2 = To;
     Replacement = ConstantExpr::getExtractElement(C1, C2);
+  } else if (getOpcode() == Instruction::InsertElement) {
+    Constant *C1 = getOperand(0);
+    Constant *C2 = getOperand(1);
+    Constant *C3 = getOperand(1);
+    if (C1 == From) C1 = To;
+    if (C2 == From) C2 = To;
+    if (C3 == From) C3 = To;
+    Replacement = ConstantExpr::getInsertElement(C1, C2, C3);
+  } else if (getOpcode() == Instruction::ShuffleVector) {
+    Constant *C1 = getOperand(0);
+    Constant *C2 = getOperand(1);
+    Constant *C3 = getOperand(2);
+    if (C1 == From) C1 = To;
+    if (C2 == From) C2 = To;
+    if (C3 == From) C3 = To;
+    Replacement = ConstantExpr::getShuffleVector(C1, C2, C3);
   } else if (getNumOperands() == 2) {
     Constant *C1 = getOperand(0);
     Constant *C2 = getOperand(1);
