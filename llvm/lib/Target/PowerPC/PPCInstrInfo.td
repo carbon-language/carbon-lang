@@ -247,6 +247,8 @@ let usesCustomDAGSchedInserter = 1,    // Expanded by the scheduler.
                               i32imm:$BROPC), "; SELECT_CC PSEUDO!", []>;
   def SELECT_CC_F8  : Pseudo<(ops F8RC:$dst, CRRC:$cond, F8RC:$T, F8RC:$F,
                               i32imm:$BROPC), "; SELECT_CC PSEUDO!", []>;
+  def SELECT_CC_VRRC: Pseudo<(ops VRRC:$dst, CRRC:$cond, VRRC:$T, VRRC:$F,
+                              i32imm:$BROPC), "; SELECT_CC PSEUDO!", []>;
 }
 
 let isTerminator = 1, noResults = 1, PPC970_Unit = 7 in {

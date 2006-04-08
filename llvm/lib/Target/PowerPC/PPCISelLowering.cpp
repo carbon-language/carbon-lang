@@ -1484,7 +1484,8 @@ PPCTargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
                                            MachineBasicBlock *BB) {
   assert((MI->getOpcode() == PPC::SELECT_CC_Int ||
           MI->getOpcode() == PPC::SELECT_CC_F4 ||
-          MI->getOpcode() == PPC::SELECT_CC_F8) &&
+          MI->getOpcode() == PPC::SELECT_CC_F8 ||
+          MI->getOpcode() == PPC::SELECT_CC_VRRC) &&
          "Unexpected instr type to insert");
   
   // To "insert" a SELECT_CC instruction, we actually have to insert the diamond

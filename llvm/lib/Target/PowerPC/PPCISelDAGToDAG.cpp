@@ -1219,8 +1219,11 @@ void PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
       SelectCCOp = PPC::SELECT_CC_Int;
     else if (N->getValueType(0) == MVT::f32)
       SelectCCOp = PPC::SELECT_CC_F4;
-    else
+    else if (N->getValueType(0) == MVT::f64)
       SelectCCOp = PPC::SELECT_CC_F8;
+    else
+      SelectCCOp = PPC::SELECT_CC_VRRC;
+
     SDOperand N2, N3;
     Select(N2, N->getOperand(2));
     Select(N3, N->getOperand(3));
