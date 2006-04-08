@@ -253,6 +253,21 @@ void %tw_h(<4 x int>* %A, <4 x int>* %B) {
 entry:
 	%tmp = load <4 x int>* %A		; <<4 x int>> [#uses=2]
 	%tmp2 = load <4 x int>* %B		; <<4 x int>> [#uses=2]
+	%tmp = extractelement <4 x int> %tmp2, uint 0		; <int> [#uses=1]
+	%tmp3 = extractelement <4 x int> %tmp, uint 0		; <int> [#uses=1]
+	%tmp4 = extractelement <4 x int> %tmp2, uint 1		; <int> [#uses=1]
+	%tmp5 = extractelement <4 x int> %tmp, uint 1		; <int> [#uses=1]
+	%tmp6 = insertelement <4 x int> undef, int %tmp, uint 0		; <<4 x int>> [#uses=1]
+	%tmp7 = insertelement <4 x int> %tmp6, int %tmp3, uint 1		; <<4 x int>> [#uses=1]
+	%tmp8 = insertelement <4 x int> %tmp7, int %tmp4, uint 2		; <<4 x int>> [#uses=1]
+	%tmp9 = insertelement <4 x int> %tmp8, int %tmp5, uint 3		; <<4 x int>> [#uses=1]
+	store <4 x int> %tmp9, <4 x int>* %A
+	ret void
+}
+
+void %tw_h_flop(<4 x int>* %A, <4 x int>* %B) {
+	%tmp = load <4 x int>* %A		; <<4 x int>> [#uses=2]
+	%tmp2 = load <4 x int>* %B		; <<4 x int>> [#uses=2]
 	%tmp = extractelement <4 x int> %tmp, uint 0		; <int> [#uses=1]
 	%tmp3 = extractelement <4 x int> %tmp2, uint 0		; <int> [#uses=1]
 	%tmp4 = extractelement <4 x int> %tmp, uint 1		; <int> [#uses=1]
@@ -264,6 +279,7 @@ entry:
 	store <4 x int> %tmp9, <4 x int>* %A
 	ret void
 }
+
 
 void %VMRG_UNARY_tb_l(<16 x sbyte>* %A, <16 x sbyte>* %B) {
 entry:
