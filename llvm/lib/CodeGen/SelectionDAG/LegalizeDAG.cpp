@@ -867,30 +867,27 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // with a "move to register" or "extload into register" instruction, then
       // permute it into place, if the idx is a constant and if the idx is
       // supported by the target.
-      SDOperand StackPtr = CreateStackTemporary(Tmp1.getValueType());
+      MVT::ValueType VT    = Tmp1.getValueType();
+      MVT::ValueType EltVT = Tmp2.getValueType();
+      MVT::ValueType IdxVT = Tmp3.getValueType();
+      MVT::ValueType PtrVT = TLI.getPointerTy();
+      SDOperand StackPtr = CreateStackTemporary(VT);
       // Store the vector.
       SDOperand Ch = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
                                  Tmp1, StackPtr, DAG.getSrcValue(NULL));
 
       // Truncate or zero extend offset to target pointer type.
-      MVT::ValueType IntPtr = TLI.getPointerTy();
-      if (Tmp3.getValueType() > IntPtr)
-        Tmp3 = DAG.getNode(ISD::TRUNCATE, IntPtr, Tmp3);
-      else
-        Tmp3 = DAG.getNode(ISD::ZERO_EXTEND, IntPtr, Tmp3);
-
+      unsigned CastOpc = (IdxVT > PtrVT) ? ISD::TRUNCATE : ISD::ZERO_EXTEND;
+      Tmp3 = DAG.getNode(CastOpc, PtrVT, Tmp3);
       // Add the offset to the index.
-      unsigned EltSize = MVT::getSizeInBits(Result.getValueType())/8;
-      Tmp3 = DAG.getNode(ISD::MUL, Tmp3.getValueType(), Tmp3,
-                         DAG.getConstant(EltSize, Tmp3.getValueType()));
-      SDOperand StackPtr2 =
-        DAG.getNode(ISD::ADD, Tmp3.getValueType(), Tmp3, StackPtr);
+      unsigned EltSize = MVT::getSizeInBits(EltVT)/8;
+      Tmp3 = DAG.getNode(ISD::MUL, IdxVT, Tmp3,DAG.getConstant(EltSize, IdxVT));
+      SDOperand StackPtr2 = DAG.getNode(ISD::ADD, IdxVT, Tmp3, StackPtr);
       // Store the scalar value.
       Ch = DAG.getNode(ISD::STORE, MVT::Other, Ch,
                        Tmp2, StackPtr2, DAG.getSrcValue(NULL));
       // Load the updated vector.
-      Result = DAG.getLoad(Result.getValueType(), Ch, StackPtr,
-                           DAG.getSrcValue(NULL));
+      Result = DAG.getLoad(VT, Ch, StackPtr, DAG.getSrcValue(NULL));
       break;
     }
     }
