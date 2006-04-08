@@ -1447,6 +1447,12 @@ SDOperand DAGCombiner::visitXOR(SDNode *N) {
     AddToWorkList(XORNode.Val);
     return DAG.getNode(N0.getOpcode(), VT, XORNode, N0.getOperand(1));
   }
+
+  // Simplify the expression using non-local knowledge.
+  if (!MVT::isVector(VT) &&
+      SimplifyDemandedBits(SDOperand(N, 0)))
+    return SDOperand();
+  
   return SDOperand();
 }
 
@@ -2044,8 +2050,10 @@ ConstantFoldVBIT_CONVERTofVBUILD_VECTOR(SDNode *BV, MVT::ValueType DstEltVT) {
   // type, convert each element.  This handles FP<->INT cases.
   if (SrcBitSize == DstBitSize) {
     std::vector<SDOperand> Ops;
-    for (unsigned i = 0, e = BV->getNumOperands()-2; i != e; ++i)
+    for (unsigned i = 0, e = BV->getNumOperands()-2; i != e; ++i) {
       Ops.push_back(DAG.getNode(ISD::BIT_CONVERT, DstEltVT, BV->getOperand(i)));
+      AddToWorkList(Ops.back().Val);
+    }
     Ops.push_back(*(BV->op_end()-2)); // Add num elements.
     Ops.push_back(DAG.getValueType(DstEltVT));
     return DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, Ops);
@@ -2635,6 +2643,7 @@ SDOperand DAGCombiner::visitVBUILD_VECTOR(SDNode *N) {
       UnOps.push_back(NumElts);
       UnOps.push_back(EltType);
       Ops.push_back(DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, UnOps));
+      AddToWorkList(Ops.back().Val);
     }
     Ops.push_back(DAG.getNode(ISD::VBUILD_VECTOR,MVT::Vector, BuildVecIndices));
     Ops.push_back(NumElts);
@@ -2690,6 +2699,7 @@ SDOperand DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
     }
     ShufMask = DAG.getNode(ISD::BUILD_VECTOR, ShufMask.getValueType(),
                            MappedOps);
+    AddToWorkList(ShufMask.Val);
     return DAG.getNode(ISD::VECTOR_SHUFFLE, N->getValueType(0),
                        N->getOperand(0), 
                        DAG.getNode(ISD::UNDEF, N->getValueType(0)),
@@ -2755,6 +2765,7 @@ SDOperand DAGCombiner::visitVBinOp(SDNode *N, ISD::NodeType IntOp,
            RHSOp.getOpcode() != ISD::ConstantFP))
         break;
       Ops.push_back(DAG.getNode(ScalarOp, EltType, LHSOp, RHSOp));
+      AddToWorkList(Ops.back().Val);
       assert((Ops.back().getOpcode() == ISD::UNDEF ||
               Ops.back().getOpcode() == ISD::Constant ||
               Ops.back().getOpcode() == ISD::ConstantFP) &&

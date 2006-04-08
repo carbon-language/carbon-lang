@@ -516,7 +516,7 @@ public:
 
   void visitExtractElement(User &I);
   void visitInsertElement(User &I);
-  void visitShuffleVector(User &I) { assert(0 && "ShuffleVector not impl!"); }
+  void visitShuffleVector(User &I);
 
   void visitGetElementPtr(User &I);
   void visitCast(User &I);
@@ -1075,6 +1075,18 @@ void SelectionDAGLowering::visitExtractElement(User &I) {
   setValue(&I, DAG.getNode(ISD::VEXTRACT_VECTOR_ELT,
                            TLI.getValueType(I.getType()), InVec, InIdx));
 }
+
+void SelectionDAGLowering::visitShuffleVector(User &I) {
+  SDOperand V1   = getValue(I.getOperand(0));
+  SDOperand V2   = getValue(I.getOperand(1));
+  SDOperand Mask = getValue(I.getOperand(2));
+
+  SDOperand Num = *(V1.Val->op_end()-2);
+  SDOperand Typ = *(V2.Val->op_end()-1);
+  setValue(&I, DAG.getNode(ISD::VVECTOR_SHUFFLE, MVT::Vector,
+                           V1, V2, Mask, Num, Typ));
+}
+
 
 void SelectionDAGLowering::visitGetElementPtr(User &I) {
   SDOperand N = getValue(I.getOperand(0));
