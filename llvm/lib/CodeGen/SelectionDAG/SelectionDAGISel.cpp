@@ -516,6 +516,7 @@ public:
 
   void visitExtractElement(User &I);
   void visitInsertElement(User &I);
+  void visitShuffleVector(User &I) { assert(0 && "ShuffleVector not impl!"); }
 
   void visitGetElementPtr(User &I);
   void visitCast(User &I);
