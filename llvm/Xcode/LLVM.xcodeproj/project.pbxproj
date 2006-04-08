@@ -78,6 +78,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		CF1ACC9709C9DE4400D3C5EB /* IntrinsicInst.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = IntrinsicInst.cpp; path = ../lib/VMCore/IntrinsicInst.cpp; sourceTree = "<group>"; };
 		CF26835B09178F5500C5F253 /* TargetInstrItineraries.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TargetInstrItineraries.h; sourceTree = "<group>"; };
 		CF490CD50903C9260072DB1C /* PPC.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PPC.h; sourceTree = "<group>"; };
 		CF490CD60903C9260072DB1C /* PPCAsmPrinter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPCAsmPrinter.cpp; sourceTree = "<group>"; };
@@ -112,6 +113,35 @@
 		CF490D890906A78C0072DB1C /* PPC.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = PPC.td; sourceTree = "<group>"; };
 		CF490E2F0907BBF80072DB1C /* SubtargetEmitter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SubtargetEmitter.h; sourceTree = "<group>"; };
 		CF490E300907BBF80072DB1C /* SubtargetEmitter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SubtargetEmitter.cpp; sourceTree = "<group>"; };
+		CF65223409CA39B800C4B521 /* Intrinsics.gen */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Intrinsics.gen; sourceTree = "<group>"; };
+		CF6527D909D1A53400C4B521 /* MachineLocation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachineLocation.h; sourceTree = "<group>"; };
+		CF6527FA09D1BA3800C4B521 /* DelaySlotFiller.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DelaySlotFiller.cpp; path = ../lib/Target/Sparc/DelaySlotFiller.cpp; sourceTree = SOURCE_ROOT; };
+		CF6527FB09D1BA3800C4B521 /* FPMover.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FPMover.cpp; path = ../lib/Target/Sparc/FPMover.cpp; sourceTree = SOURCE_ROOT; };
+		CF6527FC09D1BA3800C4B521 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; name = Makefile; path = ../lib/Target/Sparc/Makefile; sourceTree = SOURCE_ROOT; };
+		CF6527FD09D1BA3800C4B521 /* README.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = README.txt; path = ../lib/Target/Sparc/README.txt; sourceTree = SOURCE_ROOT; };
+		CF6527FE09D1BA3800C4B521 /* Sparc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Sparc.h; path = ../lib/Target/Sparc/Sparc.h; sourceTree = SOURCE_ROOT; };
+		CF6527FF09D1BA3800C4B521 /* Sparc.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = Sparc.td; path = ../lib/Target/Sparc/Sparc.td; sourceTree = SOURCE_ROOT; };
+		CF65280009D1BA3800C4B521 /* SparcAsmPrinter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SparcAsmPrinter.cpp; path = ../lib/Target/Sparc/SparcAsmPrinter.cpp; sourceTree = SOURCE_ROOT; };
+		CF65280109D1BA3800C4B521 /* SparcGenAsmWriter.inc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.pascal; name = SparcGenAsmWriter.inc; path = ../lib/Target/Sparc/SparcGenAsmWriter.inc; sourceTree = SOURCE_ROOT; };
+		CF65280209D1BA3800C4B521 /* SparcGenDAGISel.inc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.pascal; name = SparcGenDAGISel.inc; path = ../lib/Target/Sparc/SparcGenDAGISel.inc; sourceTree = SOURCE_ROOT; };
+		CF65280309D1BA3800C4B521 /* SparcGenInstrInfo.inc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.pascal; name = SparcGenInstrInfo.inc; path = ../lib/Target/Sparc/SparcGenInstrInfo.inc; sourceTree = SOURCE_ROOT; };
+		CF65280409D1BA3800C4B521 /* SparcGenInstrNames.inc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.pascal; name = SparcGenInstrNames.inc; path = ../lib/Target/Sparc/SparcGenInstrNames.inc; sourceTree = SOURCE_ROOT; };
+		CF65280509D1BA3800C4B521 /* SparcGenRegisterInfo.h.inc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.pascal; name = SparcGenRegisterInfo.h.inc; path = ../lib/Target/Sparc/SparcGenRegisterInfo.h.inc; sourceTree = SOURCE_ROOT; };
+		CF65280609D1BA3800C4B521 /* SparcGenRegisterInfo.inc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.pascal; name = SparcGenRegisterInfo.inc; path = ../lib/Target/Sparc/SparcGenRegisterInfo.inc; sourceTree = SOURCE_ROOT; };
+		CF65280709D1BA3800C4B521 /* SparcGenRegisterNames.inc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.pascal; name = SparcGenRegisterNames.inc; path = ../lib/Target/Sparc/SparcGenRegisterNames.inc; sourceTree = SOURCE_ROOT; };
+		CF65280809D1BA3800C4B521 /* SparcGenSubtarget.inc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.pascal; name = SparcGenSubtarget.inc; path = ../lib/Target/Sparc/SparcGenSubtarget.inc; sourceTree = SOURCE_ROOT; };
+		CF65280909D1BA3800C4B521 /* SparcInstrFormats.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = SparcInstrFormats.td; path = ../lib/Target/Sparc/SparcInstrFormats.td; sourceTree = SOURCE_ROOT; };
+		CF65280A09D1BA3800C4B521 /* SparcInstrInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SparcInstrInfo.cpp; path = ../lib/Target/Sparc/SparcInstrInfo.cpp; sourceTree = SOURCE_ROOT; };
+		CF65280B09D1BA3800C4B521 /* SparcInstrInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SparcInstrInfo.h; path = ../lib/Target/Sparc/SparcInstrInfo.h; sourceTree = SOURCE_ROOT; };
+		CF65280C09D1BA3800C4B521 /* SparcInstrInfo.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = SparcInstrInfo.td; path = ../lib/Target/Sparc/SparcInstrInfo.td; sourceTree = SOURCE_ROOT; };
+		CF65280D09D1BA3800C4B521 /* SparcISelDAGToDAG.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SparcISelDAGToDAG.cpp; path = ../lib/Target/Sparc/SparcISelDAGToDAG.cpp; sourceTree = SOURCE_ROOT; };
+		CF65280E09D1BA3800C4B521 /* SparcRegisterInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SparcRegisterInfo.cpp; path = ../lib/Target/Sparc/SparcRegisterInfo.cpp; sourceTree = SOURCE_ROOT; };
+		CF65280F09D1BA3800C4B521 /* SparcRegisterInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SparcRegisterInfo.h; path = ../lib/Target/Sparc/SparcRegisterInfo.h; sourceTree = SOURCE_ROOT; };
+		CF65281009D1BA3800C4B521 /* SparcRegisterInfo.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = SparcRegisterInfo.td; path = ../lib/Target/Sparc/SparcRegisterInfo.td; sourceTree = SOURCE_ROOT; };
+		CF65281109D1BA3800C4B521 /* SparcSubtarget.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SparcSubtarget.cpp; path = ../lib/Target/Sparc/SparcSubtarget.cpp; sourceTree = SOURCE_ROOT; };
+		CF65281209D1BA3800C4B521 /* SparcSubtarget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SparcSubtarget.h; path = ../lib/Target/Sparc/SparcSubtarget.h; sourceTree = SOURCE_ROOT; };
+		CF65281309D1BA3800C4B521 /* SparcTargetMachine.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SparcTargetMachine.cpp; path = ../lib/Target/Sparc/SparcTargetMachine.cpp; sourceTree = SOURCE_ROOT; };
+		CF65281409D1BA3800C4B521 /* SparcTargetMachine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SparcTargetMachine.h; path = ../lib/Target/Sparc/SparcTargetMachine.h; sourceTree = SOURCE_ROOT; };
 		CF6529A6095B21A8007F884E /* MachineDebugInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MachineDebugInfo.cpp; sourceTree = "<group>"; };
 		CF6B5AFD095C82C300D1EA42 /* DAGCombiner.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DAGCombiner.cpp; sourceTree = "<group>"; };
 		CF6F487109505E1500BC9E82 /* MachineDebugInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachineDebugInfo.h; sourceTree = "<group>"; };
@@ -127,8 +157,6 @@
 		CF73C0AE098A51AD00627152 /* Alarm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Alarm.h; sourceTree = "<group>"; };
 		CF73C0AF098A51DD00627152 /* RSProfiling.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RSProfiling.h; sourceTree = "<group>"; };
 		CF73C0B0098A523C00627152 /* ConstantFolding.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ConstantFolding.cpp; sourceTree = "<group>"; };
-		CF73C0B4098A538B00627152 /* SparcV8Subtarget.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SparcV8Subtarget.cpp; sourceTree = "<group>"; };
-		CF73C0B5098A538B00627152 /* SparcV8Subtarget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SparcV8Subtarget.h; sourceTree = "<group>"; };
 		CF73C0B6098A53EF00627152 /* IA64Bundling.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = IA64Bundling.cpp; sourceTree = "<group>"; };
 		CF73C0B7098A546000627152 /* RSProfiling.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RSProfiling.cpp; sourceTree = "<group>"; };
 		CF73C0B8098A546000627152 /* RSProfiling.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RSProfiling.h; sourceTree = "<group>"; };
@@ -137,9 +165,11 @@
 		CF73C0BD098A551F00627152 /* InlineAsm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = InlineAsm.cpp; path = ../lib/VMCore/InlineAsm.cpp; sourceTree = SOURCE_ROOT; };
 		CF73C0BE098A551F00627152 /* TypeSymbolTable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TypeSymbolTable.cpp; path = ../lib/VMCore/TypeSymbolTable.cpp; sourceTree = SOURCE_ROOT; };
 		CF73C0BF098A551F00627152 /* ValueSymbolTable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueSymbolTable.cpp; path = ../lib/VMCore/ValueSymbolTable.cpp; sourceTree = SOURCE_ROOT; };
+		CF79495D09B326D4005ADFCA /* Dwarf.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Dwarf.cpp; sourceTree = "<group>"; };
 		CF7FFA1F0985081C008B0087 /* ScheduleDAGList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ScheduleDAGList.cpp; sourceTree = "<group>"; };
 		CF7FFA200985081C008B0087 /* ScheduleDAGSimple.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ScheduleDAGSimple.cpp; sourceTree = "<group>"; };
 		CF7FFA2109850864008B0087 /* ScheduleDAG.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ScheduleDAG.h; sourceTree = "<group>"; };
+		CF8D62FA09C2226F006017BA /* Intrinsics.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Intrinsics.td; sourceTree = "<group>"; };
 		CF8E00490989162500DA2399 /* Dwarf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Dwarf.h; sourceTree = "<group>"; };
 		CF9BCD0808C74DE0001E7011 /* SubtargetFeature.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SubtargetFeature.h; sourceTree = "<group>"; };
 		CF9BCD1508C75070001E7011 /* SubtargetFeature.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SubtargetFeature.cpp; sourceTree = "<group>"; };
@@ -152,10 +182,12 @@
 		CFC244BB0959F24C009F8C47 /* X86ISelDAGToDAG.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = X86ISelDAGToDAG.cpp; sourceTree = "<group>"; };
 		CFC244BC0959F24C009F8C47 /* X86ISelLowering.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = X86ISelLowering.cpp; sourceTree = "<group>"; };
 		CFC244BD0959F24C009F8C47 /* X86ISelLowering.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = X86ISelLowering.h; sourceTree = "<group>"; };
-		CFC244BE0959F284009F8C47 /* SparcV8ISelDAGToDAG.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SparcV8ISelDAGToDAG.cpp; sourceTree = "<group>"; };
 		CFC244BF0959F2E3009F8C47 /* IA64ISelDAGToDAG.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = IA64ISelDAGToDAG.cpp; sourceTree = "<group>"; };
 		CFC244C00959F2E3009F8C47 /* IA64ISelLowering.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = IA64ISelLowering.cpp; sourceTree = "<group>"; };
 		CFC244C10959F2E3009F8C47 /* IA64ISelLowering.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IA64ISelLowering.h; sourceTree = "<group>"; };
+		CFF0DE6309BF6C360031957F /* X86InstrFPStack.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = X86InstrFPStack.td; sourceTree = "<group>"; };
+		CFF0DE6409BF6C360031957F /* X86InstrMMX.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = X86InstrMMX.td; sourceTree = "<group>"; };
+		CFF0DE6509BF6C360031957F /* X86InstrSSE.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = X86InstrSSE.td; sourceTree = "<group>"; };
 		CFF8B434097C605F0047F72A /* UniqueVector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UniqueVector.h; sourceTree = "<group>"; };
 		DE4DA0390911476D0012D44B /* LoopSimplify.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = LoopSimplify.cpp; path = ../lib/Transforms/Utils/LoopSimplify.cpp; sourceTree = SOURCE_ROOT; };
 		DE4DA03C091147920012D44B /* LiveInterval.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = LiveInterval.h; path = ../include/llvm/CodeGen/LiveInterval.h; sourceTree = SOURCE_ROOT; };
@@ -418,34 +450,6 @@
 		DE66EF1008ABEE5E00323D32 /* MRegisterInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = MRegisterInfo.cpp; sourceTree = "<group>"; };
 		DE66EF3D08ABEE5F00323D32 /* LICENSE.TXT */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = LICENSE.TXT; sourceTree = "<group>"; };
 		DE66EF6F08ABEE5F00323D32 /* README.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = README.txt; sourceTree = "<group>"; };
-		DE66EF8208ABEE5F00323D32 /* README.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = README.txt; sourceTree = "<group>"; };
-		DE66EF8308ABEE5F00323D32 /* Skeleton.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Skeleton.h; sourceTree = "<group>"; };
-		DE66EF8408ABEE5F00323D32 /* Skeleton.td */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = Skeleton.td; sourceTree = "<group>"; };
-		DE66EF8A08ABEE5F00323D32 /* SkeletonInstrInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = SkeletonInstrInfo.cpp; sourceTree = "<group>"; };
-		DE66EF8B08ABEE5F00323D32 /* SkeletonInstrInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SkeletonInstrInfo.h; sourceTree = "<group>"; };
-		DE66EF8C08ABEE5F00323D32 /* SkeletonInstrInfo.td */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = SkeletonInstrInfo.td; sourceTree = "<group>"; };
-		DE66EF8D08ABEE5F00323D32 /* SkeletonJITInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = SkeletonJITInfo.cpp; sourceTree = "<group>"; };
-		DE66EF8E08ABEE5F00323D32 /* SkeletonJITInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SkeletonJITInfo.h; sourceTree = "<group>"; };
-		DE66EF8F08ABEE5F00323D32 /* SkeletonRegisterInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = SkeletonRegisterInfo.cpp; sourceTree = "<group>"; };
-		DE66EF9008ABEE5F00323D32 /* SkeletonRegisterInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SkeletonRegisterInfo.h; sourceTree = "<group>"; };
-		DE66EF9108ABEE5F00323D32 /* SkeletonRegisterInfo.td */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = SkeletonRegisterInfo.td; sourceTree = "<group>"; };
-		DE66EF9208ABEE5F00323D32 /* SkeletonTargetMachine.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = SkeletonTargetMachine.cpp; sourceTree = "<group>"; };
-		DE66EF9308ABEE5F00323D32 /* SkeletonTargetMachine.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SkeletonTargetMachine.h; sourceTree = "<group>"; };
-		DE66EFAF08ABEE5F00323D32 /* DelaySlotFiller.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = DelaySlotFiller.cpp; sourceTree = "<group>"; };
-		DE66EFB008ABEE5F00323D32 /* FPMover.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = FPMover.cpp; sourceTree = "<group>"; };
-		DE66EFB208ABEE5F00323D32 /* README.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = README.txt; sourceTree = "<group>"; };
-		DE66EFB308ABEE5F00323D32 /* SparcV8.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SparcV8.h; sourceTree = "<group>"; };
-		DE66EFB408ABEE5F00323D32 /* SparcV8.td */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = SparcV8.td; sourceTree = "<group>"; };
-		DE66EFB508ABEE5F00323D32 /* SparcV8AsmPrinter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = SparcV8AsmPrinter.cpp; sourceTree = "<group>"; };
-		DE66EFBD08ABEE5F00323D32 /* SparcV8InstrFormats.td */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = SparcV8InstrFormats.td; sourceTree = "<group>"; };
-		DE66EFBE08ABEE5F00323D32 /* SparcV8InstrInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = SparcV8InstrInfo.cpp; sourceTree = "<group>"; };
-		DE66EFBF08ABEE5F00323D32 /* SparcV8InstrInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SparcV8InstrInfo.h; sourceTree = "<group>"; };
-		DE66EFC008ABEE5F00323D32 /* SparcV8InstrInfo.td */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = SparcV8InstrInfo.td; sourceTree = "<group>"; };
-		DE66EFC408ABEE5F00323D32 /* SparcV8RegisterInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = SparcV8RegisterInfo.cpp; sourceTree = "<group>"; };
-		DE66EFC508ABEE5F00323D32 /* SparcV8RegisterInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SparcV8RegisterInfo.h; sourceTree = "<group>"; };
-		DE66EFC608ABEE5F00323D32 /* SparcV8RegisterInfo.td */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = SparcV8RegisterInfo.td; sourceTree = "<group>"; };
-		DE66EFC708ABEE5F00323D32 /* SparcV8TargetMachine.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = SparcV8TargetMachine.cpp; sourceTree = "<group>"; };
-		DE66EFC808ABEE5F00323D32 /* SparcV8TargetMachine.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SparcV8TargetMachine.h; sourceTree = "<group>"; };
 		DE66EFFA08ABEE6000323D32 /* DecomposeMultiDimRefs.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = DecomposeMultiDimRefs.cpp; sourceTree = "<group>"; };
 		DE66EFFB08ABEE6000323D32 /* EmitBytecodeToAssembly.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = EmitBytecodeToAssembly.cpp; sourceTree = "<group>"; };
 		DE66F00708ABEE6000323D32 /* InstrScheduling.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = InstrScheduling.cpp; sourceTree = "<group>"; };
@@ -554,10 +558,8 @@
 		DE66F0CF08ABEE6100323D32 /* X86InstrInfo.td */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = X86InstrInfo.td; sourceTree = "<group>"; };
 		DE66F0D008ABEE6100323D32 /* X86IntelAsmPrinter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = X86IntelAsmPrinter.cpp; sourceTree = "<group>"; };
 		DE66F0D108ABEE6100323D32 /* X86IntelAsmPrinter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = X86IntelAsmPrinter.h; sourceTree = "<group>"; };
-		DE66F0D208ABEE6100323D32 /* X86ISelPattern.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = X86ISelPattern.cpp; sourceTree = "<group>"; };
 		DE66F0D508ABEE6100323D32 /* X86JITInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = X86JITInfo.cpp; sourceTree = "<group>"; };
 		DE66F0D608ABEE6100323D32 /* X86JITInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = X86JITInfo.h; sourceTree = "<group>"; };
-		DE66F0D708ABEE6100323D32 /* X86PeepholeOpt.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = X86PeepholeOpt.cpp; sourceTree = "<group>"; };
 		DE66F0D808ABEE6100323D32 /* X86RegisterInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = X86RegisterInfo.cpp; sourceTree = "<group>"; };
 		DE66F0D908ABEE6100323D32 /* X86RegisterInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = X86RegisterInfo.h; sourceTree = "<group>"; };
 		DE66F0DA08ABEE6100323D32 /* X86RegisterInfo.td */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = X86RegisterInfo.td; sourceTree = "<group>"; };
@@ -868,17 +870,17 @@
 		DE66F37E08ABF14500323D32 /* llvmc.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = llvmc.cpp; sourceTree = "<group>"; };
 		DE66F38708ABF14500323D32 /* opt.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = opt.cpp; path = opt/opt.cpp; sourceTree = "<group>"; };
 		DE66F38C08ABF35300323D32 /* CREDITS.TXT */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; name = CREDITS.TXT; path = ../CREDITS.TXT; sourceTree = SOURCE_ROOT; };
-		DE66F38F08ABF35C00323D32 /* AliasAnalysis.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = AliasAnalysis.html; sourceTree = "<group>"; };
-		DE66F39008ABF35C00323D32 /* Bugpoint.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = Bugpoint.html; sourceTree = "<group>"; };
-		DE66F39108ABF35C00323D32 /* BytecodeFormat.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = BytecodeFormat.html; sourceTree = "<group>"; };
-		DE66F39208ABF35C00323D32 /* CFEBuildInstrs.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = CFEBuildInstrs.html; sourceTree = "<group>"; };
-		DE66F39308ABF35C00323D32 /* CodeGenerator.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = CodeGenerator.html; sourceTree = "<group>"; };
-		DE66F39408ABF35C00323D32 /* CodingStandards.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = CodingStandards.html; sourceTree = "<group>"; };
+		DE66F38F08ABF35C00323D32 /* AliasAnalysis.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = AliasAnalysis.html; sourceTree = "<group>"; };
+		DE66F39008ABF35C00323D32 /* Bugpoint.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = Bugpoint.html; sourceTree = "<group>"; };
+		DE66F39108ABF35C00323D32 /* BytecodeFormat.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = BytecodeFormat.html; sourceTree = "<group>"; };
+		DE66F39208ABF35C00323D32 /* CFEBuildInstrs.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = CFEBuildInstrs.html; sourceTree = "<group>"; };
+		DE66F39308ABF35C00323D32 /* CodeGenerator.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = CodeGenerator.html; sourceTree = "<group>"; };
+		DE66F39408ABF35C00323D32 /* CodingStandards.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = CodingStandards.html; sourceTree = "<group>"; };
 		DE66F39708ABF35C00323D32 /* analyze.pod */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = analyze.pod; sourceTree = "<group>"; };
 		DE66F39808ABF35C00323D32 /* bugpoint.pod */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = bugpoint.pod; sourceTree = "<group>"; };
 		DE66F39908ABF35C00323D32 /* gccas.pod */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = gccas.pod; sourceTree = "<group>"; };
 		DE66F39A08ABF35C00323D32 /* gccld.pod */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = gccld.pod; sourceTree = "<group>"; };
-		DE66F39E08ABF35C00323D32 /* index.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = index.html; sourceTree = "<group>"; };
+		DE66F39E08ABF35C00323D32 /* index.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = index.html; sourceTree = "<group>"; };
 		DE66F39F08ABF35C00323D32 /* llc.pod */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = llc.pod; sourceTree = "<group>"; };
 		DE66F3A008ABF35C00323D32 /* lli.pod */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = lli.pod; sourceTree = "<group>"; };
 		DE66F3A108ABF35C00323D32 /* llvm-ar.pod */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = "llvm-ar.pod"; sourceTree = "<group>"; };
@@ -899,42 +901,42 @@
 		DE66F3B408ABF35D00323D32 /* manpage.css */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = manpage.css; sourceTree = "<group>"; };
 		DE66F3B508ABF35D00323D32 /* opt.pod */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = opt.pod; sourceTree = "<group>"; };
 		DE66F3B808ABF35D00323D32 /* stkrc.pod */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = stkrc.pod; sourceTree = "<group>"; };
-		DE66F3B908ABF35D00323D32 /* CommandLine.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = CommandLine.html; sourceTree = "<group>"; };
-		DE66F3BA08ABF35D00323D32 /* CompilerDriver.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = CompilerDriver.html; sourceTree = "<group>"; };
-		DE66F3BB08ABF35D00323D32 /* CompilerWriterInfo.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = CompilerWriterInfo.html; sourceTree = "<group>"; };
+		DE66F3B908ABF35D00323D32 /* CommandLine.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = CommandLine.html; sourceTree = "<group>"; };
+		DE66F3BA08ABF35D00323D32 /* CompilerDriver.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = CompilerDriver.html; sourceTree = "<group>"; };
+		DE66F3BB08ABF35D00323D32 /* CompilerWriterInfo.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = CompilerWriterInfo.html; sourceTree = "<group>"; };
 		DE66F3BD08ABF35D00323D32 /* doxygen.cfg.in */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = doxygen.cfg.in; sourceTree = "<group>"; };
 		DE66F3BE08ABF35D00323D32 /* doxygen.css */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = doxygen.css; sourceTree = "<group>"; };
 		DE66F3BF08ABF35D00323D32 /* doxygen.footer */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = doxygen.footer; sourceTree = "<group>"; };
 		DE66F3C008ABF35D00323D32 /* doxygen.header */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = doxygen.header; sourceTree = "<group>"; };
 		DE66F3C108ABF35D00323D32 /* doxygen.intro */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = doxygen.intro; sourceTree = "<group>"; };
-		DE66F3C208ABF35D00323D32 /* ExtendingLLVM.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = ExtendingLLVM.html; sourceTree = "<group>"; };
-		DE66F3C308ABF35D00323D32 /* FAQ.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = FAQ.html; sourceTree = "<group>"; };
-		DE66F3C408ABF35D00323D32 /* GarbageCollection.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = GarbageCollection.html; sourceTree = "<group>"; };
-		DE66F3C508ABF35D00323D32 /* GettingStarted.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = GettingStarted.html; sourceTree = "<group>"; };
-		DE66F3C608ABF35D00323D32 /* GettingStartedVS.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = GettingStartedVS.html; sourceTree = "<group>"; };
-		DE66F3E408ABF35D00323D32 /* HowToSubmitABug.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = HowToSubmitABug.html; sourceTree = "<group>"; };
+		DE66F3C208ABF35D00323D32 /* ExtendingLLVM.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = ExtendingLLVM.html; sourceTree = "<group>"; };
+		DE66F3C308ABF35D00323D32 /* FAQ.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = FAQ.html; sourceTree = "<group>"; };
+		DE66F3C408ABF35D00323D32 /* GarbageCollection.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = GarbageCollection.html; sourceTree = "<group>"; };
+		DE66F3C508ABF35D00323D32 /* GettingStarted.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = GettingStarted.html; sourceTree = "<group>"; };
+		DE66F3C608ABF35D00323D32 /* GettingStartedVS.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = GettingStartedVS.html; sourceTree = "<group>"; };
+		DE66F3E408ABF35D00323D32 /* HowToSubmitABug.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = HowToSubmitABug.html; sourceTree = "<group>"; };
 		DE66F3E608ABF35D00323D32 /* Debugging.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = Debugging.gif; sourceTree = "<group>"; };
 		DE66F3E708ABF35D00323D32 /* libdeps.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = libdeps.gif; sourceTree = "<group>"; };
 		DE66F3E808ABF35D00323D32 /* lines.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = lines.gif; sourceTree = "<group>"; };
 		DE66F3E908ABF35D00323D32 /* objdeps.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = objdeps.gif; sourceTree = "<group>"; };
 		DE66F3EA08ABF35D00323D32 /* venusflytrap.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = venusflytrap.jpg; sourceTree = "<group>"; };
-		DE66F3EB08ABF35D00323D32 /* index.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = index.html; sourceTree = "<group>"; };
-		DE66F3EC08ABF35D00323D32 /* LangRef.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = LangRef.html; sourceTree = "<group>"; };
-		DE66F3ED08ABF35D00323D32 /* Lexicon.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = Lexicon.html; sourceTree = "<group>"; };
+		DE66F3EB08ABF35D00323D32 /* index.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = index.html; sourceTree = "<group>"; };
+		DE66F3EC08ABF35D00323D32 /* LangRef.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = LangRef.html; sourceTree = "<group>"; };
+		DE66F3ED08ABF35D00323D32 /* Lexicon.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = Lexicon.html; sourceTree = "<group>"; };
 		DE66F3EE08ABF35D00323D32 /* llvm.css */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = llvm.css; sourceTree = "<group>"; };
-		DE66F3EF08ABF35D00323D32 /* LLVMVsTheWorld.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = LLVMVsTheWorld.html; sourceTree = "<group>"; };
-		DE66F3F108ABF35D00323D32 /* MakefileGuide.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = MakefileGuide.html; sourceTree = "<group>"; };
-		DE66F3F208ABF35D00323D32 /* ProgrammersManual.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = ProgrammersManual.html; sourceTree = "<group>"; };
-		DE66F3F308ABF35D00323D32 /* Projects.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = Projects.html; sourceTree = "<group>"; };
-		DE66F3F408ABF35D00323D32 /* ReleaseNotes.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = ReleaseNotes.html; sourceTree = "<group>"; };
-		DE66F3F508ABF35D00323D32 /* SourceLevelDebugging.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = SourceLevelDebugging.html; sourceTree = "<group>"; };
-		DE66F3F608ABF35D00323D32 /* Stacker.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = Stacker.html; sourceTree = "<group>"; };
-		DE66F3F708ABF35D00323D32 /* SystemLibrary.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = SystemLibrary.html; sourceTree = "<group>"; };
-		DE66F3F808ABF35D00323D32 /* TableGenFundamentals.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = TableGenFundamentals.html; sourceTree = "<group>"; };
-		DE66F3F908ABF35D00323D32 /* TestingGuide.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = TestingGuide.html; sourceTree = "<group>"; };
-		DE66F3FA08ABF35D00323D32 /* UsingLibraries.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = UsingLibraries.html; sourceTree = "<group>"; };
-		DE66F3FB08ABF35D00323D32 /* WritingAnLLVMBackend.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = WritingAnLLVMBackend.html; sourceTree = "<group>"; };
-		DE66F3FC08ABF35D00323D32 /* WritingAnLLVMPass.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = WritingAnLLVMPass.html; sourceTree = "<group>"; };
+		DE66F3EF08ABF35D00323D32 /* LLVMVsTheWorld.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = LLVMVsTheWorld.html; sourceTree = "<group>"; };
+		DE66F3F108ABF35D00323D32 /* MakefileGuide.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = MakefileGuide.html; sourceTree = "<group>"; };
+		DE66F3F208ABF35D00323D32 /* ProgrammersManual.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = ProgrammersManual.html; sourceTree = "<group>"; };
+		DE66F3F308ABF35D00323D32 /* Projects.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = Projects.html; sourceTree = "<group>"; };
+		DE66F3F408ABF35D00323D32 /* ReleaseNotes.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = ReleaseNotes.html; sourceTree = "<group>"; };
+		DE66F3F508ABF35D00323D32 /* SourceLevelDebugging.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = SourceLevelDebugging.html; sourceTree = "<group>"; };
+		DE66F3F608ABF35D00323D32 /* Stacker.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = Stacker.html; sourceTree = "<group>"; };
+		DE66F3F708ABF35D00323D32 /* SystemLibrary.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = SystemLibrary.html; sourceTree = "<group>"; };
+		DE66F3F808ABF35D00323D32 /* TableGenFundamentals.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = TableGenFundamentals.html; sourceTree = "<group>"; };
+		DE66F3F908ABF35D00323D32 /* TestingGuide.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = TestingGuide.html; sourceTree = "<group>"; };
+		DE66F3FA08ABF35D00323D32 /* UsingLibraries.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = UsingLibraries.html; sourceTree = "<group>"; };
+		DE66F3FB08ABF35D00323D32 /* WritingAnLLVMBackend.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = WritingAnLLVMBackend.html; sourceTree = "<group>"; };
+		DE66F3FC08ABF35D00323D32 /* WritingAnLLVMPass.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = WritingAnLLVMPass.html; sourceTree = "<group>"; };
 		DE66F3FF08ABF37000323D32 /* BFtoLLVM.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = BFtoLLVM.cpp; path = BFtoLLVM/BFtoLLVM.cpp; sourceTree = "<group>"; };
 		DE66F40E08ABF37000323D32 /* fibonacci.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = fibonacci.cpp; path = Fibonacci/fibonacci.cpp; sourceTree = "<group>"; };
 		DE66F41508ABF37000323D32 /* HowToUseJIT.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = HowToUseJIT.cpp; path = HowToUseJIT/HowToUseJIT.cpp; sourceTree = "<group>"; };
@@ -944,7 +946,7 @@
 		DE81704008CFB44D0093BDEF /* fpcmp.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = fpcmp.cpp; path = fpcmp/fpcmp.cpp; sourceTree = "<group>"; };
 		DE81704F08CFB44D0093BDEF /* NightlyTest.gnuplot */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = NightlyTest.gnuplot; sourceTree = "<group>"; };
 		DE81705008CFB44D0093BDEF /* NightlyTest.pl */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.script.perl; path = NightlyTest.pl; sourceTree = "<group>"; };
-		DE81705108CFB44D0093BDEF /* NightlyTestTemplate.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = NightlyTestTemplate.html; sourceTree = "<group>"; };
+		DE81705108CFB44D0093BDEF /* NightlyTestTemplate.html */ = {isa = PBXFileReference; explicitFileType = text.html.documentation; fileEncoding = 30; path = NightlyTestTemplate.html; sourceTree = "<group>"; };
 		DE81705908CFB44D0093BDEF /* AsmWriterEmitter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = AsmWriterEmitter.cpp; sourceTree = "<group>"; };
 		DE81705A08CFB44D0093BDEF /* AsmWriterEmitter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = AsmWriterEmitter.h; sourceTree = "<group>"; };
 		DE81705B08CFB44D0093BDEF /* CodeEmitterGen.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CodeEmitterGen.cpp; sourceTree = "<group>"; };
@@ -1012,6 +1014,7 @@
 				CF73C0BD098A551F00627152 /* InlineAsm.cpp */,
 				DE66EC6408ABE86A00323D32 /* Instruction.cpp */,
 				DE66EC6508ABE86A00323D32 /* Instructions.cpp */,
+				CF1ACC9709C9DE4400D3C5EB /* IntrinsicInst.cpp */,
 				DE66EC6608ABE86A00323D32 /* LeakDetector.cpp */,
 				DE66EC6708ABE86A00323D32 /* Mangler.cpp */,
 				DE66EC6808ABE86A00323D32 /* Module.cpp */,
@@ -1153,8 +1156,8 @@
 			children = (
 				DE66ED8308ABEC2B00323D32 /* SelectionDAG */,
 				DE66ED3F08ABEC2A00323D32 /* AsmPrinter.cpp */,
-				CFC244570959DEF2009F8C47 /* DwarfWriter.cpp */,
 				DE66ED4008ABEC2A00323D32 /* BranchFolding.cpp */,
+				CFC244570959DEF2009F8C47 /* DwarfWriter.cpp */,
 				DEFAB19C0959E97F00E0AB42 /* DwarfWriter.cpp */,
 				DE66ED6F08ABEC2B00323D32 /* ELFWriter.cpp */,
 				DE66ED7008ABEC2B00323D32 /* IntrinsicLowering.cpp */,
@@ -1272,6 +1275,7 @@
 				DE66EE1D08ABEDE600323D32 /* CommandLine.cpp */,
 				DE66EE1E08ABEDE600323D32 /* Compressor.cpp */,
 				DE66EE3D08ABEDE600323D32 /* Debug.cpp */,
+				CF79495D09B326D4005ADFCA /* Dwarf.cpp */,
 				DE66EE3E08ABEDE600323D32 /* FileUtilities.cpp */,
 				DE66EE3F08ABEDE600323D32 /* IsInf.cpp */,
 				DE66EE4008ABEDE600323D32 /* IsNAN.cpp */,
@@ -1381,8 +1385,7 @@
 				DE66EEC908ABEE5E00323D32 /* CBackend */,
 				DE66EEE508ABEE5E00323D32 /* IA64 */,
 				DE66EF1108ABEE5E00323D32 /* PowerPC */,
-				DE66EF7008ABEE5F00323D32 /* Skeleton */,
-				DE66EF9408ABEE5F00323D32 /* SparcV8 */,
+				DE66EF7008ABEE5F00323D32 /* Sparc */,
 				DE66EFC908ABEE5F00323D32 /* SparcV9 */,
 				DE66F09308ABEE6000323D32 /* X86 */,
 				DE66EF1008ABEE5E00323D32 /* MRegisterInfo.cpp */,
@@ -1533,49 +1536,39 @@
 			path = PowerPC;
 			sourceTree = "<group>";
 		};
-		DE66EF7008ABEE5F00323D32 /* Skeleton */ = {
+		DE66EF7008ABEE5F00323D32 /* Sparc */ = {
 			isa = PBXGroup;
 			children = (
-				DE66EF8208ABEE5F00323D32 /* README.txt */,
-				DE66EF8308ABEE5F00323D32 /* Skeleton.h */,
-				DE66EF8408ABEE5F00323D32 /* Skeleton.td */,
-				DE66EF8A08ABEE5F00323D32 /* SkeletonInstrInfo.cpp */,
-				DE66EF8B08ABEE5F00323D32 /* SkeletonInstrInfo.h */,
-				DE66EF8C08ABEE5F00323D32 /* SkeletonInstrInfo.td */,
-				DE66EF8D08ABEE5F00323D32 /* SkeletonJITInfo.cpp */,
-				DE66EF8E08ABEE5F00323D32 /* SkeletonJITInfo.h */,
-				DE66EF8F08ABEE5F00323D32 /* SkeletonRegisterInfo.cpp */,
-				DE66EF9008ABEE5F00323D32 /* SkeletonRegisterInfo.h */,
-				DE66EF9108ABEE5F00323D32 /* SkeletonRegisterInfo.td */,
-				DE66EF9208ABEE5F00323D32 /* SkeletonTargetMachine.cpp */,
-				DE66EF9308ABEE5F00323D32 /* SkeletonTargetMachine.h */,
+				CF6527FA09D1BA3800C4B521 /* DelaySlotFiller.cpp */,
+				CF6527FB09D1BA3800C4B521 /* FPMover.cpp */,
+				CF6527FC09D1BA3800C4B521 /* Makefile */,
+				CF6527FD09D1BA3800C4B521 /* README.txt */,
+				CF6527FE09D1BA3800C4B521 /* Sparc.h */,
+				CF6527FF09D1BA3800C4B521 /* Sparc.td */,
+				CF65280009D1BA3800C4B521 /* SparcAsmPrinter.cpp */,
+				CF65280109D1BA3800C4B521 /* SparcGenAsmWriter.inc */,
+				CF65280209D1BA3800C4B521 /* SparcGenDAGISel.inc */,
+				CF65280309D1BA3800C4B521 /* SparcGenInstrInfo.inc */,
+				CF65280409D1BA3800C4B521 /* SparcGenInstrNames.inc */,
+				CF65280509D1BA3800C4B521 /* SparcGenRegisterInfo.h.inc */,
+				CF65280609D1BA3800C4B521 /* SparcGenRegisterInfo.inc */,
+				CF65280709D1BA3800C4B521 /* SparcGenRegisterNames.inc */,
+				CF65280809D1BA3800C4B521 /* SparcGenSubtarget.inc */,
+				CF65280909D1BA3800C4B521 /* SparcInstrFormats.td */,
+				CF65280A09D1BA3800C4B521 /* SparcInstrInfo.cpp */,
+				CF65280B09D1BA3800C4B521 /* SparcInstrInfo.h */,
+				CF65280C09D1BA3800C4B521 /* SparcInstrInfo.td */,
+				CF65280D09D1BA3800C4B521 /* SparcISelDAGToDAG.cpp */,
+				CF65280E09D1BA3800C4B521 /* SparcRegisterInfo.cpp */,
+				CF65280F09D1BA3800C4B521 /* SparcRegisterInfo.h */,
+				CF65281009D1BA3800C4B521 /* SparcRegisterInfo.td */,
+				CF65281109D1BA3800C4B521 /* SparcSubtarget.cpp */,
+				CF65281209D1BA3800C4B521 /* SparcSubtarget.h */,
+				CF65281309D1BA3800C4B521 /* SparcTargetMachine.cpp */,
+				CF65281409D1BA3800C4B521 /* SparcTargetMachine.h */,
 			);
+			name = Sparc;
 			path = Skeleton;
-			sourceTree = "<group>";
-		};
-		DE66EF9408ABEE5F00323D32 /* SparcV8 */ = {
-			isa = PBXGroup;
-			children = (
-				DE66EFAF08ABEE5F00323D32 /* DelaySlotFiller.cpp */,
-				DE66EFB008ABEE5F00323D32 /* FPMover.cpp */,
-				DE66EFB208ABEE5F00323D32 /* README.txt */,
-				DE66EFB308ABEE5F00323D32 /* SparcV8.h */,
-				DE66EFB408ABEE5F00323D32 /* SparcV8.td */,
-				DE66EFB508ABEE5F00323D32 /* SparcV8AsmPrinter.cpp */,
-				DE66EFBD08ABEE5F00323D32 /* SparcV8InstrFormats.td */,
-				DE66EFBE08ABEE5F00323D32 /* SparcV8InstrInfo.cpp */,
-				DE66EFBF08ABEE5F00323D32 /* SparcV8InstrInfo.h */,
-				DE66EFC008ABEE5F00323D32 /* SparcV8InstrInfo.td */,
-				DE66EFC408ABEE5F00323D32 /* SparcV8RegisterInfo.cpp */,
-				DE66EFC508ABEE5F00323D32 /* SparcV8RegisterInfo.h */,
-				DE66EFC608ABEE5F00323D32 /* SparcV8RegisterInfo.td */,
-				CFC244BE0959F284009F8C47 /* SparcV8ISelDAGToDAG.cpp */,
-				CF73C0B4098A538B00627152 /* SparcV8Subtarget.cpp */,
-				CF73C0B5098A538B00627152 /* SparcV8Subtarget.h */,
-				DE66EFC708ABEE5F00323D32 /* SparcV8TargetMachine.cpp */,
-				DE66EFC808ABEE5F00323D32 /* SparcV8TargetMachine.h */,
-			);
-			path = SparcV8;
 			sourceTree = "<group>";
 		};
 		DE66EFC908ABEE5F00323D32 /* SparcV9 */ = {
@@ -1704,6 +1697,9 @@
 		DE66F09308ABEE6000323D32 /* X86 */ = {
 			isa = PBXGroup;
 			children = (
+				CFF0DE6309BF6C360031957F /* X86InstrFPStack.td */,
+				CFF0DE6409BF6C360031957F /* X86InstrMMX.td */,
+				CFF0DE6509BF6C360031957F /* X86InstrSSE.td */,
 				DE66F0BC08ABEE6000323D32 /* X86.h */,
 				DE66F0BD08ABEE6000323D32 /* X86.td */,
 				DE66F0BE08ABEE6000323D32 /* X86AsmPrinter.cpp */,
@@ -1719,10 +1715,8 @@
 				DE66F0CF08ABEE6100323D32 /* X86InstrInfo.td */,
 				DE66F0D008ABEE6100323D32 /* X86IntelAsmPrinter.cpp */,
 				DE66F0D108ABEE6100323D32 /* X86IntelAsmPrinter.h */,
-				DE66F0D208ABEE6100323D32 /* X86ISelPattern.cpp */,
 				DE66F0D508ABEE6100323D32 /* X86JITInfo.cpp */,
 				DE66F0D608ABEE6100323D32 /* X86JITInfo.h */,
-				DE66F0D708ABEE6100323D32 /* X86PeepholeOpt.cpp */,
 				DE66F0D808ABEE6100323D32 /* X86RegisterInfo.cpp */,
 				DE66F0D908ABEE6100323D32 /* X86RegisterInfo.h */,
 				DE66F0DA08ABEE6100323D32 /* X86RegisterInfo.td */,
@@ -1886,6 +1880,8 @@
 				DE66F26408ABF03100323D32 /* Instructions.h */,
 				DE66F26508ABF03100323D32 /* IntrinsicInst.h */,
 				DE66F26608ABF03100323D32 /* Intrinsics.h */,
+				CF65223409CA39B800C4B521 /* Intrinsics.gen */,
+				CF8D62FA09C2226F006017BA /* Intrinsics.td */,
 				DE66F26708ABF03100323D32 /* Linker.h */,
 				DE66F26808ABF03100323D32 /* Module.h */,
 				DE66F26908ABF03200323D32 /* ModuleProvider.h */,
@@ -2026,6 +2022,7 @@
 				DE66F24008ABF03100323D32 /* MachineFunctionPass.h */,
 				DE66F24108ABF03100323D32 /* MachineInstr.h */,
 				DE66F24208ABF03100323D32 /* MachineInstrBuilder.h */,
+				CF6527D909D1A53400C4B521 /* MachineLocation.h */,
 				DE66F24308ABF03100323D32 /* MachineRelocation.h */,
 				DE66F24408ABF03100323D32 /* Passes.h */,
 				DE66F24508ABF03100323D32 /* SchedGraphCommon.h */,
@@ -2452,7 +2449,7 @@
 				);
 			};
 			buildToolPath = /usr/bin/make;
-			buildWorkingDirectory = /Volumes/Big2/llvm/llvm/lib;
+			buildWorkingDirectory = "$(SRCROOT)/../lib";
 			dependencies = (
 			);
 			name = "LLVM lib";
@@ -2479,7 +2476,7 @@
 				);
 			};
 			buildToolPath = /usr/bin/make;
-			buildWorkingDirectory = /Volumes/Big2/llvm/llvm/tools/llc;
+			buildWorkingDirectory = "$(SRCROOT)/../tools/llc";
 			dependencies = (
 			);
 			name = "LLVM llc";
