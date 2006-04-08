@@ -2428,7 +2428,6 @@ void DwarfWriter::EndFunction() {
   EOL("Dwarf End Function");
   
   // Define end label for subprogram.
-  Asm->SwitchSection(TextSection, 0);
   EmitLabel("func_end", SubprogramCount);
   
   // Construct scopes for subprogram.
