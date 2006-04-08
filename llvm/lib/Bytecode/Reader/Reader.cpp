@@ -719,19 +719,27 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
   case Instruction::ExtractElement: {
     if (Oprnds.size() != 2)
       throw std::string("Invalid extractelement instruction!");
-    Result = new ExtractElementInst(getValue(iType, Oprnds[0]), 
-                                    getValue(Type::UIntTyID, Oprnds[1]));
+    Value *V1 = getValue(iType, Oprnds[0]);
+    Value *V2 = getValue(Type::UIntTyID, Oprnds[1]);
+    
+    if (!ExtractElementInst::isValidOperands(V1, V2))
+      throw std::string("Invalid extractelement instruction!");
+
+    Result = new ExtractElementInst(V1, V2);
     break;
   }
   case Instruction::InsertElement: {
     const PackedType *PackedTy = dyn_cast<PackedType>(InstTy);
     if (!PackedTy || Oprnds.size() != 3)
       throw std::string("Invalid insertelement instruction!");
-    Result = 
-      new InsertElementInst(getValue(iType, Oprnds[0]), 
-                            getValue(getTypeSlot(PackedTy->getElementType()), 
-                                     Oprnds[1]),
-                            getValue(Type::UIntTyID, Oprnds[2]));
+    
+    Value *V1 = getValue(iType, Oprnds[0]);
+    Value *V2 = getValue(getTypeSlot(PackedTy->getElementType()), Oprnds[1]);
+    Value *V3 = getValue(Type::UIntTyID, Oprnds[2]);
+      
+    if (!InsertElementInst::isValidOperands(V1, V2, V3))
+      throw std::string("Invalid insertelement instruction!");
+    Result = new InsertElementInst(V1, V2, V3);
     break;
   }
   case Instruction::ShuffleVector: {
@@ -1495,22 +1503,25 @@ Value *BytecodeReader::ParseConstantPoolValue(unsigned TypeID) {
       if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, Result);
       return Result;
     } else if (Opcode == Instruction::ExtractElement) {
-      if (ArgVec.size() != 2)
-        error("ExtractElement instruction must have two arguments.");
+      if (ArgVec.size() != 2 ||
+          !ExtractElementInst::isValidOperands(ArgVec[0], ArgVec[1]))
+        error("Invalid extractelement constand expr arguments");
       Constant* Result = ConstantExpr::getExtractElement(ArgVec[0], ArgVec[1]);
       if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, Result);
       return Result;
     } else if (Opcode == Instruction::InsertElement) {
-      if (ArgVec.size() != 3)
-        error("InsertElement instruction must have three arguments.");
-      Constant* Result = 
+      if (ArgVec.size() != 3 ||
+          !InsertElementInst::isValidOperands(ArgVec[0], ArgVec[1], ArgVec[2]))
+        error("Invalid insertelement constand expr arguments");
+        
+      Constant *Result = 
         ConstantExpr::getInsertElement(ArgVec[0], ArgVec[1], ArgVec[2]);
       if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, Result);
       return Result;
     } else if (Opcode == Instruction::ShuffleVector) {
       if (ArgVec.size() != 3 ||
           !ShuffleVectorInst::isValidOperands(ArgVec[0], ArgVec[1], ArgVec[2]))
-        error("shufflevector constant expr must have three arguments.");
+        error("Invalid shufflevector constant expr arguments.");
       Constant *Result = 
         ConstantExpr::getShuffleVector(ArgVec[0], ArgVec[1], ArgVec[2]);
       if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, Result);
