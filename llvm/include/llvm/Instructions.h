@@ -738,6 +738,10 @@ public:
   ExtractElementInst(Value *Vec, Value *Idx, const std::string &Name,
                      BasicBlock *InsertAtEnd);
 
+  /// isValidOperands - Return true if an extractelement instruction can be
+  /// formed with the specified operands.
+  static bool isValidOperands(const Value *Vec, const Value *Idx);
+  
   virtual ExtractElementInst *clone() const;
 
   virtual bool mayWriteToMemory() const { return false; }
@@ -785,6 +789,11 @@ public:
   InsertElementInst(Value *Vec, Value *NewElt, Value *Idx,
                     const std::string &Name, BasicBlock *InsertAtEnd);
 
+  /// isValidOperands - Return true if an insertelement instruction can be
+  /// formed with the specified operands.
+  static bool isValidOperands(const Value *Vec, const Value *NewElt,
+                              const Value *Idx);
+  
   virtual InsertElementInst *clone() const;
 
   virtual bool mayWriteToMemory() const { return false; }
@@ -832,7 +841,7 @@ public:
   ShuffleVectorInst(Value *V1, Value *V2, Value *Mask,
                     const std::string &Name, BasicBlock *InsertAtEnd);
   
-  /// isValidOperands - Return true if a value shufflevector instruction can be
+  /// isValidOperands - Return true if a shufflevector instruction can be
   /// formed with the specified operands.
   static bool isValidOperands(const Value *V1, const Value *V2,
                               const Value *Mask);
