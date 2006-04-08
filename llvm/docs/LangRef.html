@@ -111,6 +111,7 @@
           <li><a href="#i_vselect">'<tt>vselect</tt>' Instruction</a></li>
           <li><a href="#i_extractelement">'<tt>extractelement</tt>' Instruction</a></li>
           <li><a href="#i_insertelement">'<tt>insertelement</tt>' Instruction</a></li>
+          <li><a href="#i_shufflevector">'<tt>shufflevector</tt>' Instruction</a></li>
           <li><a href="#i_call">'<tt>call</tt>'  Instruction</a></li>
           <li><a href="#i_va_arg">'<tt>va_arg</tt>'  Instruction</a></li>
         </ol>
@@ -1133,6 +1134,12 @@ following is the syntax for constant expressions:</p>
   <dt><b><tt>insertelement ( VAL, ELT, IDX )</tt></b></dt>
 
   <dd>Perform the <a href="#i_insertelement">insertelement
+  operation</a> on constants.
+
+
+  <dt><b><tt>shufflevector ( VEC1, VEC2, IDXMASK )</tt></b></dt>
+
+  <dd>Perform the <a href="#i_shufflevector">shufflevector
   operation</a> on constants.
 
   <dt><b><tt>OPCODE ( LHS, RHS )</tt></b></dt>
@@ -2605,6 +2612,58 @@ exceeds the length of <tt>val</tt>, the results are undefined.
 
 <pre>
   %result = insertelement &lt;4 x int&gt; %vec, int 1, uint 0    <i>; yields &lt;4 x int&gt;</i>
+</pre>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+   <a name="i_shufflevector">'<tt>shufflevector</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+
+<pre>
+  &lt;result&gt; = shufflevector &lt;n x &lt;ty&gt;&gt; &lt;v1&gt;, &lt;n x &lt;ty&gt;&gt; &lt;v2&gt;, &lt;n x uint&gt; &lt;mask&gt;    <i>; yields &lt;n x &lt;ty&gt;&gt;</i>
+</pre>
+
+<h5>Overview:</h5>
+
+<p>
+The '<tt>shufflevector</tt>' instruction constructs a permutation of elements
+from two input vectors, returning a vector of the same type.
+</p>
+
+<h5>Arguments:</h5>
+
+<p>
+The first two operands of a '<tt>shufflevector</tt>' instruction are vectors
+with types that match each other and types that match the result of the
+instruction.  The third argument is a shuffle mask, which has the same number
+of elements as the other vector type, but whose element type is always 'uint'.
+</p>
+
+<p>
+The shuffle mask operand is required to be a constant vector with either
+constant integer or undef values.
+</p>
+
+<h5>Semantics:</h5>
+
+<p>
+The elements of the two input vectors are numbered from left to right across
+both of the vectors.  The shuffle mask operand specifies, for each element of
+the result vector, which element of the two input registers the result element
+gets.  The element selector may be undef (meaning "don't care") and the second
+operand may be undef if performing a shuffle from only one vector.
+</p>
+
+<h5>Example:</h5>
+
+<pre>
+  %result = shufflevector &lt;4 x int&gt; %v1, &lt;4 x int&gt; %v2, <4 x uint> <uint 0, uint 4, uint 1, uint 5>    <i>; yields &lt;4 x int&gt;</i>
+  %result = shufflevector &lt;4 x int&gt; %v1, &lt;4 x int&gt; undef, <4 x uint> <uint 0, uint 1, uint 2, uint 3>  <i>; yields &lt;4 x int&gt;</i> - Identity shuffle.
 </pre>
 </div>
 
