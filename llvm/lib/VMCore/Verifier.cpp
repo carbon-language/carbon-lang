@@ -540,26 +540,17 @@ void Verifier::visitShiftInst(ShiftInst &SI) {
 }
 
 void Verifier::visitExtractElementInst(ExtractElementInst &EI) {
-  Assert1(isa<PackedType>(EI.getOperand(0)->getType()),
-          "First operand to extractelement must be packed type!", &EI);
-  Assert1(EI.getOperand(1)->getType() == Type::UIntTy,
-          "Second operand to extractelement must be uint type!", &EI);
-  Assert1(EI.getType() == 
-          cast<PackedType>(EI.getOperand(0)->getType())->getElementType(),
-          "Extractelement return type must match "
-          "first operand element type!", &EI);
+  Assert1(ExtractElementInst::isValidOperands(EI.getOperand(0),
+                                              EI.getOperand(1)),
+          "Invalid extractelement operands!", &EI);
   visitInstruction(EI);
 }
 
 void Verifier::visitInsertElementInst(InsertElementInst &IE) {
-  Assert1(isa<PackedType>(IE.getOperand(0)->getType()),
-          "First operand to insertelement must be packed type!", &IE);
-  Assert1(IE.getOperand(1)->getType() == 
-          cast<PackedType>(IE.getOperand(0)->getType())->getElementType(),
-          "Second operand to insertelement must match "
-          "first operand element type!", &IE);
-  Assert1(IE.getOperand(2)->getType() == Type::UIntTy,
-          "Third operand to insertelement must be uint type!", &IE);
+  Assert1(InsertElementInst::isValidOperands(IE.getOperand(0),
+                                             IE.getOperand(1),
+                                             IE.getOperand(2)),
+          "Invalid insertelement operands!", &IE);
   visitInstruction(IE);
 }
 
