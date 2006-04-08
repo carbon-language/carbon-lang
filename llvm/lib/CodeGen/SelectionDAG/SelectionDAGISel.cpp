@@ -992,8 +992,14 @@ void SelectionDAGLowering::visitSelect(User &I) {
   SDOperand Cond     = getValue(I.getOperand(0));
   SDOperand TrueVal  = getValue(I.getOperand(1));
   SDOperand FalseVal = getValue(I.getOperand(2));
-  setValue(&I, DAG.getNode(ISD::SELECT, TrueVal.getValueType(), Cond,
-                           TrueVal, FalseVal));
+  if (!isa<PackedType>(I.getType())) {
+    setValue(&I, DAG.getNode(ISD::SELECT, TrueVal.getValueType(), Cond,
+                             TrueVal, FalseVal));
+  } else {
+    setValue(&I, DAG.getNode(ISD::VSELECT, MVT::Vector, Cond, TrueVal, FalseVal,
+                             *(TrueVal.Val->op_end()-2),
+                             *(TrueVal.Val->op_end()-1)));
+  }
 }
 
 void SelectionDAGLowering::visitCast(User &I) {
