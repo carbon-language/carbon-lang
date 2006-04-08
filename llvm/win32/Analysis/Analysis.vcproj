@@ -130,6 +130,9 @@
 				RelativePath="..\..\lib\Analysis\ConstantFolding.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\Analysis\ConstantRange.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\Analysis\InstCount.cpp">
 			</File>
 			<File

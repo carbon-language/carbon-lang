@@ -122,9 +122,6 @@
 				RelativePath="..\..\lib\VMCore\ConstantFolding.cpp">
 			</File>
 			<File
-				RelativePath="..\..\lib\VMCore\ConstantRange.cpp">
-			</File>
-			<File
 				RelativePath="..\..\lib\VMCore\Constants.cpp">
 			</File>
 			<File
