@@ -277,6 +277,7 @@ getelementptr   { RET_TOK(MemOpVal, GetElementPtr, GETELEMENTPTR); }
 
 extractelement  { RET_TOK(OtherOpVal, ExtractElement, EXTRACTELEMENT); }
 insertelement   { RET_TOK(OtherOpVal, InsertElement, INSERTELEMENT); }
+shufflevector   { RET_TOK(OtherOpVal, ShuffleVector, SHUFFLEVECTOR); }
 
 
 {VarID}         {
