@@ -111,32 +111,26 @@ def VSPLTW_shuffle_mask : PatLeaf<(build_vector), [{
 
 // VSPLTISB_get_imm xform function: convert build_vector to VSPLTISB imm.
 def VSPLTISB_get_imm : SDNodeXForm<build_vector, [{
-  char Val;
-  PPC::isVecSplatImm(N, 1, &Val);
-  return getI32Imm(Val);
+  return PPC::get_VSPLI_elt(N, 1, *CurDAG);
 }]>;
 def vecspltisb : PatLeaf<(build_vector), [{
-  return PPC::isVecSplatImm(N, 1);
+  return PPC::get_VSPLI_elt(N, 1, *CurDAG).Val != 0;
 }], VSPLTISB_get_imm>;
 
 // VSPLTISH_get_imm xform function: convert build_vector to VSPLTISH imm.
 def VSPLTISH_get_imm : SDNodeXForm<build_vector, [{
-  char Val;
-  PPC::isVecSplatImm(N, 2, &Val);
-  return getI32Imm(Val);
+  return PPC::get_VSPLI_elt(N, 2, *CurDAG);
 }]>;
 def vecspltish : PatLeaf<(build_vector), [{
-  return PPC::isVecSplatImm(N, 2);
+  return PPC::get_VSPLI_elt(N, 2, *CurDAG).Val != 0;
 }], VSPLTISH_get_imm>;
 
 // VSPLTISW_get_imm xform function: convert build_vector to VSPLTISW imm.
 def VSPLTISW_get_imm : SDNodeXForm<build_vector, [{
-  char Val;
-  PPC::isVecSplatImm(N, 4, &Val);
-  return getI32Imm(Val);
+  return PPC::get_VSPLI_elt(N, 4, *CurDAG);
 }]>;
 def vecspltisw : PatLeaf<(build_vector), [{
-  return PPC::isVecSplatImm(N, 4);
+  return PPC::get_VSPLI_elt(N, 4, *CurDAG).Val != 0;
 }], VSPLTISW_get_imm>;
 
 //===----------------------------------------------------------------------===//

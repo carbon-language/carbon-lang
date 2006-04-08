@@ -425,10 +425,11 @@ unsigned PPC::getVSPLTImmediate(SDNode *N, unsigned EltSize) {
   return cast<ConstantSDNode>(N->getOperand(0))->getValue() / EltSize;
 }
 
-/// isVecSplatImm - Return true if this is a build_vector of constants which
-/// can be formed by using a vspltis[bhw] instruction.  The ByteSize field
-/// indicates the number of bytes of each element [124] -> [bhw].
-bool PPC::isVecSplatImm(SDNode *N, unsigned ByteSize, char *Val) {
+/// get_VSPLI_elt - If this is a build_vector of constants which can be formed
+/// by using a vspltis[bhw] instruction of the specified element size, return
+/// the constant being splatted.  The ByteSize field indicates the number of
+/// bytes of each element [124] -> [bhw].
+SDOperand PPC::get_VSPLI_elt(SDNode *N, unsigned ByteSize, SelectionDAG &DAG) {
   SDOperand OpVal(0, 0);
   // Check to see if this buildvec has a single non-undef value in its elements.
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
@@ -436,10 +437,10 @@ bool PPC::isVecSplatImm(SDNode *N, unsigned ByteSize, char *Val) {
     if (OpVal.Val == 0)
       OpVal = N->getOperand(i);
     else if (OpVal != N->getOperand(i))
-      return false;
+      return SDOperand();
   }
   
-  if (OpVal.Val == 0) return false;  // All UNDEF: use implicit def.
+  if (OpVal.Val == 0) return SDOperand();  // All UNDEF: use implicit def.
   
   unsigned ValSizeInBytes = 0;
   uint64_t Value = 0;
@@ -455,7 +456,7 @@ bool PPC::isVecSplatImm(SDNode *N, unsigned ByteSize, char *Val) {
   // If the splat value is larger than the element value, then we can never do
   // this splat.  The only case that we could fit the replicated bits into our
   // immediate field for would be zero, and we prefer to use vxor for it.
-  if (ValSizeInBytes < ByteSize) return false;
+  if (ValSizeInBytes < ByteSize) return SDOperand();
   
   // If the element value is larger than the splat value, cut it in half and
   // check to see if the two halves are equal.  Continue doing this until we
@@ -466,7 +467,7 @@ bool PPC::isVecSplatImm(SDNode *N, unsigned ByteSize, char *Val) {
     // If the top half equals the bottom half, we're still ok.
     if (((Value >> (ValSizeInBytes*8)) & ((1 << (8*ValSizeInBytes))-1)) !=
          (Value                        & ((1 << (8*ValSizeInBytes))-1)))
-      return false;
+      return SDOperand();
   }
 
   // Properly sign extend the value.
@@ -474,12 +475,12 @@ bool PPC::isVecSplatImm(SDNode *N, unsigned ByteSize, char *Val) {
   int MaskVal = ((int)Value << ShAmt) >> ShAmt;
   
   // If this is zero, don't match, zero matches ISD::isBuildVectorAllZeros.
-  if (MaskVal == 0) return false;
+  if (MaskVal == 0) return SDOperand();
 
-  if (Val) *Val = MaskVal;
-
-  // Finally, if this value fits in a 5 bit sext field, return true.
-  return ((MaskVal << (32-5)) >> (32-5)) == MaskVal; 
+  // Finally, if this value fits in a 5 bit sext field, return it
+  if (((MaskVal << (32-5)) >> (32-5)) == MaskVal)
+    return DAG.getTargetConstant(MaskVal, MVT::i32);
+  return SDOperand();
 }
 
 
@@ -849,9 +850,9 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     if (ISD::isBuildVectorAllZeros(Op.Val))
       return Op;
     
-    if (PPC::isVecSplatImm(Op.Val, 1) ||    // vspltisb
-        PPC::isVecSplatImm(Op.Val, 2) ||    // vspltish
-        PPC::isVecSplatImm(Op.Val, 4))      // vspltisw
+    if (PPC::get_VSPLI_elt(Op.Val, 1, DAG).Val ||    // vspltisb
+        PPC::get_VSPLI_elt(Op.Val, 2, DAG).Val ||    // vspltish
+        PPC::get_VSPLI_elt(Op.Val, 4, DAG).Val)      // vspltisw
       return Op;
       
     return SDOperand();
