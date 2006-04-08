@@ -96,9 +96,6 @@ bool IA64TargetMachine::addPassesToEmitFile(PassManager &PM,
   PM.add(createLowerInvokePass(704, 16)); // on ia64 linux, jmpbufs are 704
                                           // bytes and must be 16byte aligned
 
-  // FIXME: Implement the switch instruction in the instruction selector!
-  PM.add(createLowerSwitchPass());
-
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
 

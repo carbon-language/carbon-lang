@@ -81,9 +81,6 @@ bool AlphaTargetMachine::addPassesToEmitFile(PassManager &PM,
   // FIXME: Implement the invoke/unwind instructions!
   PM.add(createLowerInvokePass());
 
-  // FIXME: Implement the switch instruction in the instruction selector!
-  PM.add(createLowerSwitchPass());
-
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
 
@@ -118,9 +115,6 @@ void AlphaJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
 
   // FIXME: Implement the invoke/unwind instructions!
   PM.add(createLowerInvokePass());
-
-  // FIXME: Implement the switch instruction in the instruction selector!
-  PM.add(createLowerSwitchPass());
 
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());

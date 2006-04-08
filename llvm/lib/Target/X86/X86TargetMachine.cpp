@@ -36,8 +36,6 @@ namespace {
   cl::opt<bool> DisableOutput("disable-x86-llc-output", cl::Hidden,
                               cl::desc("Disable the X86 asm printer, for use "
                                        "when profiling the code generator."));
-  cl::opt<bool> DisableLowerSwitch("disable-lower-switch", cl::Hidden,
-                                   cl::desc("Disable the LowerSwitch pass"));
   // Register the target.
   RegisterTarget<X86TargetMachine> X("x86", "  IA-32 (Pentium and above)");
 }
@@ -100,10 +98,6 @@ bool X86TargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
   // FIXME: Implement the invoke/unwind instructions!
   PM.add(createLowerInvokePass());
 
-  // FIXME: Implement the switch instruction in the instruction selector!
-  if (!DisableLowerSwitch)
-    PM.add(createLowerSwitchPass());
-  
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
 
@@ -168,10 +162,6 @@ void X86JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
 
   // FIXME: Implement the invoke/unwind instructions!
   PM.add(createLowerInvokePass());
-
-  // FIXME: Implement the switch instruction in the instruction selector!
-  if (!DisableLowerSwitch)
-    PM.add(createLowerSwitchPass());
 
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());

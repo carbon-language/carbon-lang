@@ -93,9 +93,6 @@ bool PPCTargetMachine::addPassesToEmitFile(PassManager &PM,
   // Clean up after other passes, e.g. merging critical edges.
   if (!Fast) PM.add(createCFGSimplificationPass());
 
-  // FIXME: Implement the switch instruction in the instruction selector!
-  PM.add(createLowerSwitchPass());
-
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
 
@@ -146,9 +143,6 @@ void PPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
 
   // Clean up after other passes, e.g. merging critical edges.
   PM.add(createCFGSimplificationPass());
-
-  // FIXME: Implement the switch instruction in the instruction selector!
-  PM.add(createLowerSwitchPass());
 
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());

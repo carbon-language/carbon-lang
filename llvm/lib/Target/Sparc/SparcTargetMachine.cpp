@@ -72,9 +72,6 @@ bool SparcTargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
   // FIXME: implement the invoke/unwind instructions!
   PM.add(createLowerInvokePass());
 
-  // FIXME: implement the switch instruction in the instruction selector.
-  PM.add(createLowerSwitchPass());
-  
   // Print LLVM code input to instruction selector:
   if (PrintMachineCode)
     PM.add(new PrintFunctionPass());
