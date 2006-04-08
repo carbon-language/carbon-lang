@@ -2735,6 +2735,42 @@ SDOperand DAGCombiner::visitVVECTOR_SHUFFLE(SDNode *N) {
   }
   if (isIdentity) return N->getOperand(1);
 
+  // If the LHS and the RHS are the same node, turn the RHS into an undef.
+  if (N->getOperand(0) == N->getOperand(1)) {
+    // Check the SHUFFLE mask, mapping any inputs from the 2nd operand into the
+    // first operand.
+    std::vector<SDOperand> MappedOps;
+    for (unsigned i = 0; i != NumElts; ++i) {
+      if (ShufMask.getOperand(i).getOpcode() == ISD::UNDEF ||
+          cast<ConstantSDNode>(ShufMask.getOperand(i))->getValue() < NumElts) {
+        MappedOps.push_back(ShufMask.getOperand(i));
+      } else {
+        unsigned NewIdx = 
+          cast<ConstantSDNode>(ShufMask.getOperand(i))->getValue() - NumElts;
+        MappedOps.push_back(DAG.getConstant(NewIdx, MVT::i32));
+      }
+    }
+    // Add the type/#elts values.
+    MappedOps.push_back(ShufMask.getOperand(NumElts));
+    MappedOps.push_back(ShufMask.getOperand(NumElts+1));
+
+    ShufMask = DAG.getNode(ISD::VBUILD_VECTOR, ShufMask.getValueType(),
+                           MappedOps);
+    AddToWorkList(ShufMask.Val);
+    
+    // Build the undef vector.
+    SDOperand UDVal = DAG.getNode(ISD::UNDEF, MappedOps[0].getValueType());
+    for (unsigned i = 0; i != NumElts; ++i)
+      MappedOps[i] = UDVal;
+    MappedOps[NumElts  ] = *(N->getOperand(0).Val->op_end()-2);
+    MappedOps[NumElts+1] = *(N->getOperand(0).Val->op_end()-1);
+    UDVal = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, MappedOps);
+    
+    return DAG.getNode(ISD::VVECTOR_SHUFFLE, MVT::Vector, 
+                       N->getOperand(0), UDVal, ShufMask,
+                       MappedOps[NumElts], MappedOps[NumElts+1]);
+  }
+  
   return SDOperand();
 }
 

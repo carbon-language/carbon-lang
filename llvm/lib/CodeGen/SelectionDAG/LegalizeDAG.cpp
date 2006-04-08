@@ -4697,8 +4697,20 @@ SDOperand SelectionDAGLegalize::PackVectorOp(SDOperand Op,
       Result = Node->getOperand(0);
     } else {
       // Returning a BUILD_VECTOR?
-      std::vector<SDOperand> Ops(Node->op_begin(), Node->op_end()-2);
-      Result = DAG.getNode(ISD::BUILD_VECTOR, NewVT, Ops);
+      
+      // If all elements of the build_vector are undefs, return an undef.
+      bool AllUndef = true;
+      for (unsigned i = 0, e = Node->getNumOperands()-2; i != e; ++i)
+        if (Node->getOperand(i).getOpcode() != ISD::UNDEF) {
+          AllUndef = false;
+          break;
+        }
+      if (AllUndef) {
+        Result = DAG.getNode(ISD::UNDEF, NewVT);
+      } else {
+        std::vector<SDOperand> Ops(Node->op_begin(), Node->op_end()-2);
+        Result = DAG.getNode(ISD::BUILD_VECTOR, NewVT, Ops);
+      }
     }
     break;
   case ISD::VINSERT_VECTOR_ELT:
