@@ -330,6 +330,7 @@ private:
   void visitShiftInst(ShiftInst &I) { visitBinaryOperator(I); }
   void visitExtractElementInst(ExtractElementInst &I);
   void visitInsertElementInst(InsertElementInst &I);
+  void visitShuffleVectorInst(ShuffleVectorInst &I);
 
   // Instructions that cannot be folded away...
   void visitStoreInst     (Instruction &I);
@@ -780,6 +781,30 @@ void SCCPSolver::visitInsertElementInst(InsertElementInst &I) {
     markConstant(&I, ConstantExpr::getInsertElement(UndefValue::get(I.getType()),
                                                     EltState.getConstant(),
                                                     IdxState.getConstant()));
+}
+
+void SCCPSolver::visitShuffleVectorInst(ShuffleVectorInst &I) {
+  LatticeVal &V1State   = getValueState(I.getOperand(0));
+  LatticeVal &V2State   = getValueState(I.getOperand(1));
+  LatticeVal &MaskState = getValueState(I.getOperand(2));
+
+  if (MaskState.isUndefined() ||
+      (V1State.isUndefined() && V2State.isUndefined()))
+    return;  // Undefined output if mask or both inputs undefined.
+  
+  if (V1State.isOverdefined() || V2State.isOverdefined() ||
+      MaskState.isOverdefined()) {
+    markOverdefined(&I);
+  } else {
+    // A mix of constant/undef inputs.
+    Constant *V1 = V1State.isConstant() ? 
+        V1State.getConstant() : UndefValue::get(I.getType());
+    Constant *V2 = V2State.isConstant() ? 
+        V2State.getConstant() : UndefValue::get(I.getType());
+    Constant *Mask = MaskState.isConstant() ? 
+      MaskState.getConstant() : UndefValue::get(I.getOperand(2)->getType());
+    markConstant(&I, ConstantExpr::getShuffleVector(V1, V2, Mask));
+  }
 }
 
 // Handle getelementptr instructions... if all operands are constants then we
