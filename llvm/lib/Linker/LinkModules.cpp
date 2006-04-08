@@ -317,6 +317,12 @@ static Value *RemapOperand(const Value *In,
         Result = ConstantExpr::getInsertElement(cast<Constant>(Ptr),
                                                 cast<Constant>(Elt),
                                                 cast<Constant>(Idx));
+      } else if (CE->getOpcode() == Instruction::ShuffleVector) {
+        Value *V1 = RemapOperand(CE->getOperand(0), ValueMap);
+        Value *V2 = RemapOperand(CE->getOperand(1), ValueMap);
+        Result = ConstantExpr::getShuffleVector(cast<Constant>(V1),
+                                                cast<Constant>(V2),
+                                             cast<Constant>(CE->getOperand(2)));
       } else if (CE->getNumOperands() == 1) {
         // Cast instruction
         assert(CE->getOpcode() == Instruction::Cast);
