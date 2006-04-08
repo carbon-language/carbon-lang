@@ -733,10 +733,10 @@ class ExtractElementInst : public Instruction {
   }
 
 public:
-  ExtractElementInst(Value *Val, Value *Index,
-                     const std::string &Name = "", Instruction *InsertBefore = 0);
-  ExtractElementInst(Value *Val, Value *Index,
-                     const std::string &Name, BasicBlock *InsertAtEnd);
+  ExtractElementInst(Value *Vec, Value *Idx, const std::string &Name = "",
+                     Instruction *InsertBefore = 0);
+  ExtractElementInst(Value *Vec, Value *Idx, const std::string &Name,
+                     BasicBlock *InsertAtEnd);
 
   virtual ExtractElementInst *clone() const;
 
@@ -780,9 +780,9 @@ class InsertElementInst : public Instruction {
   }
 
 public:
-  InsertElementInst(Value *Val, Value *Elt, Value *Index,
-                    const std::string &Name = "", Instruction *InsertBefore = 0);
-  InsertElementInst(Value *Val, Value *Elt,  Value *Index,
+  InsertElementInst(Value *Vec, Value *NewElt, Value *Idx,
+                    const std::string &Name = "",Instruction *InsertBefore = 0);
+  InsertElementInst(Value *Vec, Value *NewElt, Value *Idx,
                     const std::string &Name, BasicBlock *InsertAtEnd);
 
   virtual InsertElementInst *clone() const;
@@ -809,6 +809,59 @@ public:
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
 };
+
+//===----------------------------------------------------------------------===//
+//                           ShuffleVectorInst Class
+//===----------------------------------------------------------------------===//
+
+/// ShuffleVectorInst - This instruction constructs a fixed permutation of two
+/// input vectors.
+///
+class ShuffleVectorInst : public Instruction {
+  Use Ops[3];
+  ShuffleVectorInst(const ShuffleVectorInst &IE) : 
+    Instruction(IE.getType(), ShuffleVector, Ops, 3) {
+      Ops[0].init(IE.Ops[0], this);
+      Ops[1].init(IE.Ops[1], this);
+      Ops[2].init(IE.Ops[2], this);
+    }
+  
+public:
+  ShuffleVectorInst(Value *V1, Value *V2, Value *Mask,
+                    const std::string &Name = "", Instruction *InsertBefor = 0);
+  ShuffleVectorInst(Value *V1, Value *V2, Value *Mask,
+                    const std::string &Name, BasicBlock *InsertAtEnd);
+  
+  /// isValidOperands - Return true if a value shufflevector instruction can be
+  /// formed with the specified operands.
+  static bool isValidOperands(const Value *V1, const Value *V2,
+                              const Value *Mask);
+  
+  virtual ShuffleVectorInst *clone() const;
+  
+  virtual bool mayWriteToMemory() const { return false; }
+  
+  /// Transparently provide more efficient getOperand methods.
+  Value *getOperand(unsigned i) const {
+    assert(i < 3 && "getOperand() out of range!");
+    return Ops[i];
+  }
+  void setOperand(unsigned i, Value *Val) {
+    assert(i < 3 && "setOperand() out of range!");
+    Ops[i] = Val;
+  }
+  unsigned getNumOperands() const { return 3; }
+  
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const ShuffleVectorInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Instruction::ShuffleVector;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
 
 //===----------------------------------------------------------------------===//
 //                               PHINode Class

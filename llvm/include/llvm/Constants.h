@@ -524,6 +524,8 @@ protected:
                                        Constant *Idx);
   static Constant *getInsertElementTy(const Type *Ty, Constant *Val,
                                       Constant *Elt, Constant *Idx);
+  static Constant *getShuffleVectorTy(const Type *Ty, Constant *V1,
+                                      Constant *V2, Constant *Mask);
 
 public:
   // Static methods to construct a ConstantExpr of different kinds.  Note that
@@ -591,15 +593,10 @@ public:
   static Constant *getGetElementPtr(Constant *C,
                                     const std::vector<Value*> &IdxList);
 
-  /// Extractelement form.
-  ///
-  static Constant *getExtractElement(Constant *Val, Constant *Idx);
-
-  /// Insertelement form.
-  ///
-  static Constant *getInsertElement(Constant *Val, Constant *Elt, 
-                                    Constant *Idx);
-
+  static Constant *getExtractElement(Constant *Vec, Constant *Idx);
+  static Constant *getInsertElement(Constant *Vec, Constant *Elt,Constant *Idx);
+  static Constant *getShuffleVector(Constant *V1, Constant *V2, Constant *Mask);
+  
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.
   virtual bool isNullValue() const { return false; }
