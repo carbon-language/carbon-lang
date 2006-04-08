@@ -1538,9 +1538,13 @@ def MASKMOVQ : I<0xF7, MRMDestMem, (ops i64mem:$dst, VR64:$src),
 def SFENCE : I<0xAE, MRM7m, (ops),
                "sfence", []>, TB, Requires<[HasSSE1]>;
 
-// Load MXCSR register
+// MXCSR register
 def LDMXCSR : I<0xAE, MRM2m, (ops i32mem:$src),
-                "ldmxcsr {$src|$src}", []>, TB, Requires<[HasSSE1]>;
+                "ldmxcsr $src",
+                [(int_x86_sse_ldmxcsr addr:$src)]>, TB, Requires<[HasSSE1]>;
+def STMXCSR : I<0xAE, MRM3m, (ops i32mem:$dst),
+                "stmxcsr $dst",
+                [(int_x86_sse_stmxcsr addr:$dst)]>, TB, Requires<[HasSSE1]>;
 
 //===----------------------------------------------------------------------===//
 // Alias Instructions
