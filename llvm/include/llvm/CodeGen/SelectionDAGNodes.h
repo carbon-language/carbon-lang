@@ -230,6 +230,11 @@ namespace ISD {
     VADD, VSUB, VMUL, VSDIV, VUDIV,
     VAND, VOR, VXOR,
     
+    /// VSELECT(COND,LHS,RHS,  COUNT,TYPE) - Select for MVT::Vector values.
+    /// COND is a boolean value.  This node return LHS if COND is true, RHS if
+    /// COND is false.
+    VSELECT,
+    
     /// SCALAR_TO_VECTOR(VAL) - This represents the operation of loading a
     /// scalar value into the low element of the resultant vector type.  The top
     /// elements of the vector are undefined.
