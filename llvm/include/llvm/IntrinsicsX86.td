@@ -150,9 +150,9 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 
 // Control register.
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
-  def int_x86_sse_stmxcsr : GCCBuiltin<"__builtin_ia32_stmxcsr">,
+  def int_x86_sse_stmxcsr :
               Intrinsic<[llvm_void_ty, llvm_ptr_ty], [IntrWriteMem]>;
-  def int_x86_sse_ldmxcsr : GCCBuiltin<"__builtin_ia32_ldmxcsr">,
+  def int_x86_sse_ldmxcsr :
               Intrinsic<[llvm_void_ty, llvm_ptr_ty], [IntrWriteMem]>;
 }
 
