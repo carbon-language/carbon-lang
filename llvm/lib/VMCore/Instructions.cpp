@@ -804,6 +804,8 @@ ExtractElementInst::ExtractElementInst(Value *Val, Value *Index,
                                        Instruction *InsertBef)
   : Instruction(cast<PackedType>(Val->getType())->getElementType(),
                 ExtractElement, Ops, 2, Name, InsertBef) {
+  assert(isValidOperands(Val, Index) &&
+         "Invalid extractelement instruction operands!");
   Ops[0].init(Val, this);
   Ops[1].init(Index, this);
 }
@@ -813,31 +815,60 @@ ExtractElementInst::ExtractElementInst(Value *Val, Value *Index,
                                        BasicBlock *InsertAE)
   : Instruction(cast<PackedType>(Val->getType())->getElementType(),
                 ExtractElement, Ops, 2, Name, InsertAE) {
+  assert(isValidOperands(Val, Index) &&
+         "Invalid extractelement instruction operands!");
+
   Ops[0].init(Val, this);
   Ops[1].init(Index, this);
 }
+
+bool ExtractElementInst::isValidOperands(const Value *Val, const Value *Index) {
+  if (!isa<PackedType>(Val->getType()) || Index->getType() != Type::UIntTy)
+    return false;
+  return true;
+}
+
 
 //===----------------------------------------------------------------------===//
 //                           InsertElementInst Implementation
 //===----------------------------------------------------------------------===//
 
-InsertElementInst::InsertElementInst(Value *Val, Value *Elt, Value *Index,
+InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, Value *Index,
                                      const std::string &Name,
                                      Instruction *InsertBef)
-  : Instruction(Val->getType(), InsertElement, Ops, 3, Name, InsertBef) {
-  Ops[0].init(Val, this);
+  : Instruction(Vec->getType(), InsertElement, Ops, 3, Name, InsertBef) {
+  assert(isValidOperands(Vec, Elt, Index) &&
+         "Invalid insertelement instruction operands!");
+  Ops[0].init(Vec, this);
   Ops[1].init(Elt, this);
   Ops[2].init(Index, this);
 }
 
-InsertElementInst::InsertElementInst(Value *Val, Value *Elt, Value *Index,
+InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, Value *Index,
                                      const std::string &Name,
                                      BasicBlock *InsertAE)
-  : Instruction(Val->getType(), InsertElement, Ops, 3, Name, InsertAE) {
-  Ops[0].init(Val, this);
+  : Instruction(Vec->getType(), InsertElement, Ops, 3, Name, InsertAE) {
+  assert(isValidOperands(Vec, Elt, Index) &&
+         "Invalid insertelement instruction operands!");
+
+  Ops[0].init(Vec, this);
   Ops[1].init(Elt, this);
   Ops[2].init(Index, this);
 }
+
+bool InsertElementInst::isValidOperands(const Value *Vec, const Value *Elt, 
+                                        const Value *Index) {
+  if (!isa<PackedType>(Vec->getType()))
+    return false;   // First operand of insertelement must be packed type.
+  
+  if (Elt->getType() != cast<PackedType>(Vec->getType())->getElementType())
+    return false;// Second operand of insertelement must be packed element type.
+    
+  if (Index->getType() != Type::UIntTy)
+    return false;  // Third operand of insertelement must be uint.
+  return true;
+}
+
 
 //===----------------------------------------------------------------------===//
 //                      ShuffleVectorInst Implementation
