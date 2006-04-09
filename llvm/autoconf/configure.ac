@@ -193,12 +193,10 @@ dnl --enable-assertions below
 if test -d "CVS" -o -d "${srcdir}/CVS"; then
   cvsbuild="yes"
   optimize="no"
-  asserts="yes"
   AC_SUBST(CVSBUILD,[[CVSBUILD=1]])
 else
   cvsbuild="no"
   optimize="yes"
-  asserts="no"
 fi
 
 dnl===-----------------------------------------------------------------------===
@@ -218,11 +216,11 @@ fi
 
 dnl --enable-assertions : check whether they want to turn on assertions or not:
 AC_ARG_ENABLE(assertions,AS_HELP_STRING(
-  [--enable-assertions,Compile with assertion checks enabled (default is NO)]),, enableval=$asserts)
-if test ${enableval} = "no" ; then
-  AC_SUBST(ENABLE_ASSERTIONS,[[]])
+  [--enable-assertions,Compile with assertion checks enabled (default is YES)]),, enableval="yes")
+if test ${enableval} = "yes" ; then
+  AC_SUBST(DISABLE_ASSERTIONS,[[]])
 else
-  AC_SUBST(ENABLE_ASSERTIONS,[[ENABLE_ASSERTIONS=1]])
+  AC_SUBST(DISABLE_ASSERTIONS,[[DISABLE_ASSERTIONS=1]])
 fi
 
 dnl --enable-debug-runtime : should runtime libraries have debug symbols?

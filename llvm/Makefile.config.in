@@ -186,8 +186,8 @@ OBJ_ROOT := .
 
 # When ENABLE_ASSERTIONS is enabled, builds of all of the LLVM code will include
 # assertion checks, otherwise they are not included.
-#ENABLE_ASSERTIONS = 1
-@ENABLE_ASSERTIONS@
+#DISABLE_ASSERTIONS = 1
+@DISABLE_ASSERTIONS@
 
 # When DEBUG_RUNTIME is enabled, the runtime libraries will retain debug
 # symbols.
