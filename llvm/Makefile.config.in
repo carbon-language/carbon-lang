@@ -184,8 +184,8 @@ OBJ_ROOT := .
 #ENABLE_OPTIMIZED = 1
 @ENABLE_OPTIMIZED@
 
-# When ENABLE_ASSERTIONS is enabled, builds of all of the LLVM code will include
-# assertion checks, otherwise they are not included.
+# When DISABLE_ASSERTIONS is enabled, builds of all of the LLVM code will 
+# exclude assertion checks, otherwise they are included.
 #DISABLE_ASSERTIONS = 1
 @DISABLE_ASSERTIONS@
 
