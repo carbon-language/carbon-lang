@@ -632,10 +632,11 @@
     to the compilers and linkers to ensure that profile data can be collected
     from the tools built. Use the <tt>gprof</tt> tool to analyze the output from
     the profiled tools (<tt>gmon.out</tt>).</dd>
-    <dt><a name="ENABLE_ASSERTIONS"><tt>ENABLE_ASSERTIONS</tt></a></dt>
-    <dd>If set to any value, causes the build to enable assertions, even if 
-    building a release or profile build.  This is slower than a release build 
-    but far faster than a debug build.</dd>
+    <dt><a name="DISABLE_ASSERTIONS"><tt>DISABLE_ASSERTIONS</tt></a></dt>
+    <dd>If set to any value, causes the build to disable assertions, even if 
+    building a release or profile build.  This will exclude all assertion check
+    code from the build. LLVM will execute faster, but with little help when
+    things go wrong.</dd>
     <dt><a name="EXPERIMENTAL_DIRS"><tt>EXPERIMENTAL_DIRS</tt></a></dt>
     <dd>Specify a set of directories that should be built, but if they fail, it
     should not cause the build to fail. Note that this should only be used 
