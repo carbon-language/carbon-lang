@@ -15,3 +15,10 @@ implementation
   ret %T %v2
 }
 
+float %test3(%T %A, %T %B, float %f) {
+        %C = insertelement %T %A, float %f, uint 0
+        %D = shufflevector %T %C, %T %B, <4 x uint> <uint 5, uint 0, uint 2, uint 7>
+        %E = extractelement %T %D, uint 1
+        ret float %E
+}
+
