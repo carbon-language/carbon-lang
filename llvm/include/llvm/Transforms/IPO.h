@@ -169,6 +169,11 @@ ModulePass *createBlockExtractorPass(std::vector<BasicBlock*> &BTNE);
 // specific well-known (library) functions.
 ModulePass *createSimplifyLibCallsPass();
 
+
+// createIndMemRemPass - This pass removes potential indirect calls of
+// malloc and free
+ModulePass *createIndMemRemPass();
+
 } // End llvm namespace
 
 #endif

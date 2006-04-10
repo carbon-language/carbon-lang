@@ -107,7 +107,7 @@ namespace {
       (void) llvm::createCondPropagationPass();
       (void) llvm::createNullProfilerRSPass();
       (void) llvm::createRSProfilingPass();
-
+      (void) llvm::createIndMemRemPass();
     }
   } ForcePassLinking;
 }
