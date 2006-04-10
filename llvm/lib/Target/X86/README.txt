@@ -770,8 +770,8 @@ http://llvm.org/bugs/show_bug.cgi?id=729
 
 #include <emmintrin.h>
 
-void test(__m128 *res, __m128 *A) {
-  *res = _mm_shuffle_ps(*A, *A, 0xF0);
+void test(__m128 *res, __m128 *A, __m128 *B) {
+  *res = _mm_shuffle_ps(*A, *B, 0xF0);
 }
 
 We should emit
