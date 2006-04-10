@@ -4773,6 +4773,7 @@ SDOperand SelectionDAGLegalize::PackVectorOp(SDOperand Op,
         assert(0 && "Cast from unsupported vector type not implemented yet!");
       }
     }
+    break;
   case ISD::VSELECT:
     Result = DAG.getNode(ISD::SELECT, NewVT, Op.getOperand(0),
                          PackVectorOp(Op.getOperand(1), NewVT),
