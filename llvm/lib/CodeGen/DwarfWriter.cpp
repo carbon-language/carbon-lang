@@ -25,6 +25,7 @@
 #include "llvm/Support/Mangler.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetFrameInfo.h"
 
 #include <iostream>
 
@@ -1829,8 +1830,13 @@ void DwarfWriter::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
           EmitULEB128Bytes(RI->getDwarfRegNum(Src.getRegister()));
           EOL("Register");
         }
-          
-        EmitULEB128Bytes(Src.getOffset() / RI->getStackDirection());
+        
+        int stackGrowth =
+            Asm->TM.getFrameInfo()->getStackGrowthDirection() ==
+              TargetFrameInfo::StackGrowsUp ?
+            AddressSize : -AddressSize;
+        
+        EmitULEB128Bytes(Src.getOffset() / stackGrowth);
         EOL("Offset");
       } else {
       }
@@ -2049,6 +2055,11 @@ void DwarfWriter::EmitDebugLines() const {
 /// EmitInitialDebugFrame - Emit common frame info into a debug frame section.
 ///
 void DwarfWriter::EmitInitialDebugFrame() {
+  int stackGrowth =
+      Asm->TM.getFrameInfo()->getStackGrowthDirection() ==
+        TargetFrameInfo::StackGrowsUp ?
+      AddressSize : -AddressSize;
+
   // Start the dwarf frame section.
   Asm->SwitchSection(DwarfFrameSection, 0);
 
@@ -2061,7 +2072,7 @@ void DwarfWriter::EmitInitialDebugFrame() {
   EmitInt8(DW_CIE_VERSION); EOL("CIE Version");
   EmitString("");  EOL("CIE Augmentation");
   EmitULEB128Bytes(1); EOL("CIE Code Alignment Factor");
-  EmitSLEB128Bytes(RI->getStackDirection()); EOL("CIE Data Alignment Factor");   
+  EmitSLEB128Bytes(stackGrowth); EOL("CIE Data Alignment Factor");   
   EmitInt8(RI->getDwarfRegNum(RI->getRARegister())); EOL("CIE RA Column");
   
   std::vector<MachineMove *> Moves;

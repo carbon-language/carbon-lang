@@ -359,11 +359,6 @@ public:
   /// address can be found.
   virtual unsigned getRARegister() const = 0;
                             
-  /// getStackDirection - This method should return the factor by which stacks
-  /// grow.  The tyical value is -4 which is the grows negatively in 4 byte
-  /// increments.
-  virtual int getStackDirection() const;
-  
   /// getLocation - This method should return the actual location of a frame
   /// variable given the frame index.  The location is returned in ML.
   /// Subclasses should override this method for special handling of frame
