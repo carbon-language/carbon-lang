@@ -675,6 +675,29 @@ Perhaps use pxor / xorp* to clear a XMM register first?
 
 //===---------------------------------------------------------------------===//
 
+Better codegen for:
+
+void f(float a, float b, vector float * out) { *out = (vector float){ a, 0.0, 0.0, b}; }
+void f(float a, float b, vector float * out) { *out = (vector float){ a, b, 0.0, 0}; }
+
+For the later we generate:
+
+_f:
+        pxor %xmm0, %xmm0
+        movss 8(%esp), %xmm1
+        movaps %xmm0, %xmm2
+        unpcklps %xmm1, %xmm2
+        movss 4(%esp), %xmm1
+        unpcklps %xmm0, %xmm1
+        unpcklps %xmm2, %xmm1
+        movl 12(%esp), %eax
+        movaps %xmm1, (%eax)
+        ret
+
+This seems like it should use shufps, one for each of a & b.
+
+//===---------------------------------------------------------------------===//
+
 Adding to the list of cmp / test poor codegen issues:
 
 int test(__m128 *A, __m128 *B) {
