@@ -722,16 +722,20 @@ def MOVAPDmr : PDI<0x29, MRMDestMem, (ops f128mem:$dst, VR128:$src),
 
 def MOVUPSrr : PSI<0x10, MRMSrcReg, (ops VR128:$dst, VR128:$src),
                    "movups {$src, $dst|$dst, $src}", []>;
-def MOVUPSrm : PSI<0x10, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
-                   "movups {$src, $dst|$dst, $src}", []>;
-def MOVUPSmr : PSI<0x11, MRMDestMem, (ops f128mem:$dst, VR128:$src),
-                   "movups {$src, $dst|$dst, $src}", []>;
+def MOVUPSrm : PDI<0x10, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
+                   "movups {$src, $dst|$dst, $src}",
+                   [(set VR128:$dst, (int_x86_sse_loadu_ps addr:$src))]>;
+def MOVUPSmr : PDI<0x11, MRMDestMem, (ops f128mem:$dst, VR128:$src),
+                   "movups {$src, $dst|$dst, $src}",
+                   [(int_x86_sse_storeu_ps addr:$dst, VR128:$src)]>;
 def MOVUPDrr : PDI<0x10, MRMSrcReg, (ops VR128:$dst, VR128:$src),
                    "movupd {$src, $dst|$dst, $src}", []>;
 def MOVUPDrm : PDI<0x10, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
-                   "movupd {$src, $dst|$dst, $src}", []>;
+                   "movupd {$src, $dst|$dst, $src}",
+                   [(set VR128:$dst, (int_x86_sse2_loadu_pd addr:$src))]>;
 def MOVUPDmr : PDI<0x11, MRMDestMem, (ops f128mem:$dst, VR128:$src),
-                   "movupd {$src, $dst|$dst, $src}", []>;
+                   "movupd {$src, $dst|$dst, $src}",
+                   [(int_x86_sse2_storeu_pd addr:$dst, VR128:$src)]>;
 
 let isTwoAddress = 1 in {
 def MOVLPSrm : PSI<0x12, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
