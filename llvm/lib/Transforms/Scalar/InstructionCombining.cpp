@@ -6779,7 +6779,8 @@ static bool CheapToScalarize(Value *V, bool isConstant) {
 static Value *FindScalarElement(Value *V, unsigned EltNo) {
   assert(isa<PackedType>(V->getType()) && "Not looking at a vector?");
   const PackedType *PTy = cast<PackedType>(V->getType());
-  if (EltNo >= PTy->getNumElements())  // Out of range access.
+  unsigned Width = PTy->getNumElements();
+  if (EltNo >= Width)  // Out of range access.
     return UndefValue::get(PTy->getElementType());
   
   if (isa<UndefValue>(V))
@@ -6800,6 +6801,19 @@ static Value *FindScalarElement(Value *V, unsigned EltNo) {
     // Otherwise, the insertelement doesn't modify the value, recurse on its
     // vector input.
     return FindScalarElement(III->getOperand(0), EltNo);
+  } else if (ShuffleVectorInst *SVI = dyn_cast<ShuffleVectorInst>(V)) {
+    if (isa<ConstantAggregateZero>(SVI->getOperand(2))) {
+      return FindScalarElement(SVI->getOperand(0), 0);
+    } else if (ConstantPacked *CP = 
+                   dyn_cast<ConstantPacked>(SVI->getOperand(2))) {
+      if (isa<UndefValue>(CP->getOperand(EltNo)))
+        return UndefValue::get(PTy->getElementType());
+      unsigned InEl = cast<ConstantUInt>(CP->getOperand(EltNo))->getValue();
+      if (InEl < Width)
+        return FindScalarElement(SVI->getOperand(0), InEl);
+      else
+        return FindScalarElement(SVI->getOperand(1), InEl - Width);
+    }
   }
   
   // Otherwise, we don't know.
@@ -6831,9 +6845,10 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
   
   // If extracting a specified index from the vector, see if we can recursively
   // find a previously computed scalar that was inserted into the vector.
-  if (ConstantUInt *IdxC = dyn_cast<ConstantUInt>(EI.getOperand(1)))
+  if (ConstantUInt *IdxC = dyn_cast<ConstantUInt>(EI.getOperand(1))) {
     if (Value *Elt = FindScalarElement(EI.getOperand(0), IdxC->getValue()))
       return ReplaceInstUsesWith(EI, Elt);
+  }
   
   if (Instruction *I = dyn_cast<Instruction>(EI.getOperand(0)))
     if (I->hasOneUse()) {
