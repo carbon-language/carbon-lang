@@ -138,6 +138,7 @@ namespace {
     Instruction *visitBranchInst(BranchInst &BI);
     Instruction *visitSwitchInst(SwitchInst &SI);
     Instruction *visitExtractElementInst(ExtractElementInst &EI);
+    Instruction *visitShuffleVectorInst(ShuffleVectorInst &SVI);
 
     // visitInstruction - Specify what to return for unhandled instructions...
     Instruction *visitInstruction(Instruction &I) { return 0; }
@@ -6875,6 +6876,67 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
     }
   return 0;
 }
+
+Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
+  Value *LHS = SVI.getOperand(0);
+  Value *RHS = SVI.getOperand(1);
+  Constant *Mask = cast<Constant>(SVI.getOperand(2));
+
+  bool MadeChange = false;
+  
+  if (isa<UndefValue>(Mask))
+    return ReplaceInstUsesWith(SVI, UndefValue::get(SVI.getType()));
+  
+  // Canonicalize shuffle(x,x) -> shuffle(x,undef)
+  if (LHS == RHS) {
+    if (isa<UndefValue>(LHS)) {
+      // shuffle(undef,undef,mask) -> undef.
+      return ReplaceInstUsesWith(SVI, LHS);
+    }
+    
+    if (!isa<ConstantAggregateZero>(Mask)) {
+      // Remap any references to RHS to use LHS.
+      ConstantPacked *CP = cast<ConstantPacked>(Mask);
+      std::vector<Constant*> Elts;
+      for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i) {
+        Elts.push_back(CP->getOperand(i));
+        if (isa<UndefValue>(CP->getOperand(i)))
+          continue;
+        unsigned MV = cast<ConstantInt>(CP->getOperand(i))->getRawValue();
+        if (MV >= e)
+          Elts.back() = ConstantUInt::get(Type::UIntTy, MV & (e-1));
+      }
+      Mask = ConstantPacked::get(Elts);
+    }
+    SVI.setOperand(1, UndefValue::get(RHS->getType()));
+    SVI.setOperand(2, Mask);
+    MadeChange = true;
+  }
+  
+  if (ConstantPacked *CP = dyn_cast<ConstantPacked>(Mask)) {
+    bool isLHSID = true, isRHSID = true;
+    
+    // Analyze the shuffle.
+    for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i) {
+      if (isa<UndefValue>(CP->getOperand(i)))
+        continue;
+      unsigned MV = cast<ConstantInt>(CP->getOperand(i))->getRawValue();
+      
+      // Is this an identity shuffle of the LHS value?
+      isLHSID &= (MV == i);
+      
+      // Is this an identity shuffle of the RHS value?
+      isRHSID &= (MV-e == i);
+    }
+
+    // Eliminate identity shuffles.
+    if (isLHSID) return ReplaceInstUsesWith(SVI, LHS);
+    if (isRHSID) return ReplaceInstUsesWith(SVI, RHS);
+  }
+  
+  return MadeChange ? &SVI : 0;
+}
+
 
 
 void InstCombiner::removeFromWorkList(Instruction *I) {
