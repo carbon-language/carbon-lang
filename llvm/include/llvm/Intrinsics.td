@@ -24,24 +24,24 @@ class IntrinsicProperty;
 // if correct) to the least aggressive.  If no property is set, the worst case 
 // is assumed (IntrWriteMem).
 
-// InstrNoMem - The intrinsic does not access memory or have any other side
+// IntrNoMem - The intrinsic does not access memory or have any other side
 // effects.  It may be CSE'd deleted if dead, etc.
-def InstrNoMem : IntrinsicProperty;
+def IntrNoMem : IntrinsicProperty;
 
-// InstrReadArgMem - This intrinsic reads only from memory that one of its
+// IntrReadArgMem - This intrinsic reads only from memory that one of its
 // arguments points to, but may read an unspecified amount.
-def InstrReadArgMem : IntrinsicProperty;
+def IntrReadArgMem : IntrinsicProperty;
 
 // IntrReadMem - This intrinsic reads from unspecified memory, so it cannot be
 // moved across stores.  However, it can be reordered otherwise and can be
 // deleted if dead.
 def IntrReadMem : IntrinsicProperty;
 
-// InstrWriteArgMem - This intrinsic reads and writes only from memory that one
+// IntrWriteArgMem - This intrinsic reads and writes only from memory that one
 // of its arguments points to, but may access an unspecified amount.  It has no
 // other side effects.  This may only be used if the intrinsic doesn't "capture"
 // the argument pointer (e.g. storing it someplace).
-def InstrWriteArgMem : IntrinsicProperty;
+def IntrWriteArgMem : IntrinsicProperty;
 
 // IntrWriteMem - This intrinsic may read or modify unspecified memory or has 
 // other side effects.  It cannot be modified by the optimizer.  This is the
@@ -130,14 +130,14 @@ def int_vaend   : Intrinsic<[llvm_void_ty, llvm_ptrptr_ty], [], "llvm.va_end">;
 //  
 def int_gcroot  : Intrinsic<[llvm_void_ty, llvm_ptrptr_ty, llvm_ptr_ty]>;
 def int_gcread  : Intrinsic<[llvm_ptr_ty, llvm_ptr_ty, llvm_ptrptr_ty],
-                            [InstrReadArgMem]>;
+                            [IntrReadArgMem]>;
 def int_gcwrite : Intrinsic<[llvm_void_ty, llvm_ptr_ty, llvm_ptr_ty,
-                             llvm_ptrptr_ty], [InstrWriteArgMem]>;
+                             llvm_ptrptr_ty], [IntrWriteArgMem]>;
 
 //===--------------------- Code Generator Intrinsics ----------------------===//
 //  
-def int_returnaddress : Intrinsic<[llvm_ptr_ty, llvm_uint_ty], [InstrNoMem]>;
-def int_frameaddress  : Intrinsic<[llvm_ptr_ty, llvm_uint_ty], [InstrNoMem]>;
+def int_returnaddress : Intrinsic<[llvm_ptr_ty, llvm_uint_ty], [IntrNoMem]>;
+def int_frameaddress  : Intrinsic<[llvm_ptr_ty, llvm_uint_ty], [IntrNoMem]>;
 def int_stacksave     : Intrinsic<[llvm_ptr_ty], [IntrReadMem]>;
 def int_stackrestore  : Intrinsic<[llvm_void_ty, llvm_ptr_ty]>;
 def int_prefetch      : Intrinsic<[llvm_void_ty, llvm_ptr_ty, 
@@ -149,7 +149,7 @@ def int_readcyclecounter : Intrinsic<[llvm_ulong_ty]>;
 //===------------------- Standard C Library Intrinsics --------------------===//
 //
 
-let Properties = [InstrWriteArgMem] in {
+let Properties = [IntrWriteArgMem] in {
   def int_memcpy_i32  : Intrinsic<[llvm_void_ty, llvm_ptr_ty, llvm_ptr_ty,
                                    llvm_uint_ty, llvm_uint_ty]>;
   def int_memcpy_i64  : Intrinsic<[llvm_void_ty, llvm_ptr_ty, llvm_ptr_ty,
@@ -164,7 +164,7 @@ let Properties = [InstrWriteArgMem] in {
                                    llvm_ulong_ty, llvm_uint_ty]>;
 }
 
-let Properties = [InstrNoMem] in {
+let Properties = [IntrNoMem] in {
   def int_isunordered_f32 : Intrinsic<[llvm_bool_ty, 
                                        llvm_float_ty,  llvm_float_ty]>;
   def int_isunordered_f64 : Intrinsic<[llvm_bool_ty, 
@@ -183,7 +183,7 @@ def int_siglongjmp : Intrinsic<[llvm_void_ty, llvm_ptr_ty, llvm_int_ty]>;
 //
 
 // None of these intrinsics accesses memory at all.
-let Properties = [InstrNoMem] in {
+let Properties = [IntrNoMem] in {
   def int_bswap_i16 : Intrinsic<[llvm_ushort_ty, llvm_ushort_ty]>;
   def int_bswap_i32 : Intrinsic<[llvm_uint_ty,   llvm_uint_ty]>;
   def int_bswap_i64 : Intrinsic<[llvm_ulong_ty,  llvm_ulong_ty]>;

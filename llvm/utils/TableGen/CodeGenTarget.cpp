@@ -439,13 +439,13 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R, CodeGenTarget *CGT) {
     assert(Property->isSubClassOf("IntrinsicProperty") &&
            "Expected a property!");
     
-    if (Property->getName() == "InstrNoMem")
+    if (Property->getName() == "IntrNoMem")
       ModRef = NoMem;
-    else if (Property->getName() == "InstrReadArgMem")
+    else if (Property->getName() == "IntrReadArgMem")
       ModRef = ReadArgMem;
     else if (Property->getName() == "IntrReadMem")
       ModRef = ReadMem;
-    else if (Property->getName() == "InstrWriteArgMem")
+    else if (Property->getName() == "IntrWriteArgMem")
       ModRef = WriteArgMem;
     else if (Property->getName() == "IntrWriteMem")
       ModRef = WriteMem;
