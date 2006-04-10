@@ -765,3 +765,22 @@ _test:
 
 A Mac OS X IA-32 specific ABI bug wrt returning value > 8 bytes:
 http://llvm.org/bugs/show_bug.cgi?id=729
+
+//===---------------------------------------------------------------------===//
+
+#include <emmintrin.h>
+
+void test(__m128 *res, __m128 *A) {
+  *res = _mm_shuffle_ps(*A, *A, 0xF0);
+}
+
+We should emit
+  shufps $240, (%eax), %xmm0
+instead of 
+  pshufd $240, (%eax), %xmm0
+
+//===---------------------------------------------------------------------===//
+
+X86RegisterInfo::copyRegToReg() returns X86::MOVAPSrr for VR128. Is it possible
+to choose between movaps, movapd, and movdqa based on types of source and
+destination?
