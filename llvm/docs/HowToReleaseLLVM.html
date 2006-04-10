@@ -11,18 +11,7 @@
 <p class="doc_warning">NOTE: THIS DOCUMENT IS A WORK IN PROGRESS!</p>
 <ol>
   <li><a href="#introduction">Introduction</a></li>
-  <li><a href="#process">Release Process</a>
-  <ol>
-    <li><a href="overview">Overview</a></li>
-    <li><a href="merge">Merge Branches</a></li>
-    <li><a href="build">Build LLVM</a></li>
-    <li><a href="check">Run 'make check'</a></li>
-    <li><a href="test">Run LLVM Test Suite</a></li>
-    <li><a href="deps">make LibDeps.txt</a></li>
-    <li><a href="tag">cvs tag</a></li>
-    <li><a href="dist">make dist</a></li>
-    <li><a href="release">Release</a></li>
-  </ol></li>
+  <li><a href="#process">Release Process</a></li>
 </ol>
 <div class="doc_author">
   <p>Written by <a href="mailto:rspencer@x10sys.com">Reid Spencer</a></p>
@@ -48,14 +37,14 @@ deficient.</p>
 <div class="doc_subsection"><a name="overview">Process Overview</a></div>
 <div class="doc_text">
   <ol>
-    <li><a href="merge">Merge Branches</a></li>
-    <li><a href="build">Build LLVM</a></li>
-    <li><a href="check">Run 'make check'</a></li>
-    <li><a href="test">Run LLVM Test Suite</a></li>
-    <li><a href="deps">make LibDeps.txt</a></li>
-    <li><a href="tag">cvs tag</a></li>
-    <li><a href="dist">make dist</a></li>
-    <li><a href="release">release</a></li>
+    <li><a href="#merge">Merge Branches</a></li>
+    <li><a href="#build">Build LLVM</a></li>
+    <li><a href="#check">Run 'make check'</a></li>
+    <li><a href="#test">Run LLVM Test Suite</a></li>
+    <li><a href="#deps">make LibDeps.txt</a></li>
+    <li><a href="#tag">cvs tag</a></li>
+    <li><a href="#dist">make dist</a></li>
+    <li><a href="#release">release</a></li>
   </ol>
 </div>
 
@@ -74,8 +63,8 @@ deficient.</p>
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="check">Run 'make check'</a></div>
 <div class="doc_text">
-  <p>Run "make check" and ensure there are no unexpected failures. If there
-  are, resolve the failures and go back to step 2.</p>
+  <p>Run <tt>make check</tt> and ensure there are no unexpected failures. If
+  there are, resolve the failures and go back to step 2.</p>
 </div>
 
 <!-- ======================================================================= -->
@@ -88,9 +77,9 @@ deficient.</p>
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="deps">Make LibDeps.txt</a></div>
 <div class="doc_text">
-  <p>Rebuild the LibDeps.txt target in utils/llvm-config. This makes sure that
-  the llvm-config utility remains relevant for the release, reflecting any
-  changes in the library dependencies.</p>
+  <p>Rebuild the <tt>LibDeps.txt</tt> target in <tt>utils/llvm-config</tt>. This
+  makes sure that the <tt>llvm-config</tt> utility remains relevant for the
+  release, reflecting any changes in the library dependencies.</p>
 </div>
 
 <!-- ======================================================================= -->
