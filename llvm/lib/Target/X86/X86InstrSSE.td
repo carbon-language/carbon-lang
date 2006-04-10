@@ -1365,7 +1365,7 @@ def PSHUFHWmi : Ii8<0x70, MRMSrcMem,
                     (ops VR128:$dst, i128mem:$src1, i8imm:$src2),
                     "pshufhw {$src2, $src1, $dst|$dst, $src1, $src2}",
                     [(set VR128:$dst, (v8i16 (vector_shuffle
-                                     (bc_v8i16 (loadv2i64 addr:$src1)), (undef),
+                                              (load addr:$src1), (undef),
                                               PSHUFHW_shuffle_mask:$src2)))]>,
                 XS, Requires<[HasSSE2]>;
 
@@ -1381,7 +1381,7 @@ def PSHUFLWmi : Ii8<0x70, MRMSrcMem,
                     (ops VR128:$dst, i128mem:$src1, i32i8imm:$src2),
                     "pshuflw {$src2, $src1, $dst|$dst, $src1, $src2}",
                     [(set VR128:$dst, (v8i16 (vector_shuffle
-                                     (bc_v8i16 (loadv2i64 addr:$src1)), (undef),
+                                              (load addr:$src1), (undef),
                                               PSHUFLW_shuffle_mask:$src2)))]>,
                 XD, Requires<[HasSSE2]>;
 
@@ -1823,11 +1823,28 @@ def : Pat<(vector_shuffle (v4i32 VR128:$src1), (load addr:$src2),
           (v4i32 (SHUFPSrm VR128:$src1, addr:$src2,
                   SHUFP_int_shuffle_mask:$sm))>, Requires<[HasSSE2]>;
 
-// Shuffle v4f32 with PSHUF* if others do not match.
+// Special pshuf* cases: folding (bit_convert (loadv2i64 addr)).
+def : Pat<(v4i32 (vector_shuffle (bc_v4i32 (loadv2i64 addr:$src1)), (undef),
+                  PSHUFD_shuffle_mask:$src2)),
+          (PSHUFDmi addr:$src1, PSHUFD_shuffle_mask:$src2)>,
+      Requires<[HasSSE2]>;
+def : Pat<(v8i16 (vector_shuffle (bc_v8i16 (loadv2i64 addr:$src1)), (undef),
+                  PSHUFHW_shuffle_mask:$src2)),
+          (PSHUFHWmi addr:$src1, PSHUFHW_shuffle_mask:$src2)>,
+      Requires<[HasSSE2]>;
+def : Pat<(v8i16 (vector_shuffle (bc_v8i16 (loadv2i64 addr:$src1)), (undef),
+                  PSHUFLW_shuffle_mask:$src2)),
+          (PSHUFLWmi addr:$src1, PSHUFHW_shuffle_mask:$src2)>,
+      Requires<[HasSSE2]>;
+
+
+// Special SHUFPSrr case: looks like a PSHUFD, like make both operands src1.
+// FIXME: when we want non two-address code, then we should use PSHUFD!
 def : Pat<(vector_shuffle (v4f32 VR128:$src1), (undef),
            PSHUFD_fp_shuffle_mask:$sm),
-          (v4f32 (PSHUFDri VR128:$src1, PSHUFD_fp_shuffle_mask:$sm))>,
-      Requires<[HasSSE2]>;
+       (v4f32 (SHUFPSrr VR128:$src1, VR128:$src1, PSHUFD_fp_shuffle_mask:$sm))>,
+      Requires<[HasSSE1]>;
+// Shuffle v4f32 with PSHUF* if others do not match.
 def : Pat<(vector_shuffle (loadv4f32 addr:$src1), (undef),
            PSHUFD_fp_shuffle_mask:$sm),
           (v4f32 (PSHUFDmi addr:$src1, PSHUFD_fp_shuffle_mask:$sm))>,
