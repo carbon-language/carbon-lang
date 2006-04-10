@@ -278,6 +278,21 @@ let usesCustomDAGSchedInserter = 1 in {  // Expanded by the scheduler.
                     (ops FR64:$dst, FR64:$t, FR64:$f, i8imm:$cond),
                     "#CMOV_FR64 PSEUDO!",
                     [(set FR64:$dst, (X86cmov FR64:$t, FR64:$f, imm:$cond))]>;
+  def CMOV_V4F32 : I<0, Pseudo,
+                    (ops VR128:$dst, VR128:$t, VR128:$f, i8imm:$cond),
+                    "#CMOV_V4F32 PSEUDO!",
+                    [(set VR128:$dst,
+                      (v4f32 (X86cmov VR128:$t, VR128:$f, imm:$cond)))]>;
+  def CMOV_V2F64 : I<0, Pseudo,
+                    (ops VR128:$dst, VR128:$t, VR128:$f, i8imm:$cond),
+                    "#CMOV_V2F64 PSEUDO!",
+                    [(set VR128:$dst,
+                      (v2f64 (X86cmov VR128:$t, VR128:$f, imm:$cond)))]>;
+  def CMOV_V2I64 : I<0, Pseudo,
+                    (ops VR128:$dst, VR128:$t, VR128:$f, i8imm:$cond),
+                    "#CMOV_V2I64 PSEUDO!",
+                    [(set VR128:$dst,
+                      (v2i64 (X86cmov VR128:$t, VR128:$f, imm:$cond)))]>;
 }
 
 // Move Instructions

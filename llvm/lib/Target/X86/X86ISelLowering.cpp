@@ -275,13 +275,14 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   if (Subtarget->hasSSE1()) {
     addRegisterClass(MVT::v4f32, X86::VR128RegisterClass);
 
-    setOperationAction(ISD::ADD,              MVT::v4f32, Legal);
-    setOperationAction(ISD::SUB,              MVT::v4f32, Legal);
-    setOperationAction(ISD::MUL,              MVT::v4f32, Legal);
-    setOperationAction(ISD::LOAD,             MVT::v4f32, Legal);
-    setOperationAction(ISD::BUILD_VECTOR,     MVT::v4f32, Custom);
-    setOperationAction(ISD::VECTOR_SHUFFLE,   MVT::v4f32, Custom);
+    setOperationAction(ISD::ADD,                MVT::v4f32, Legal);
+    setOperationAction(ISD::SUB,                MVT::v4f32, Legal);
+    setOperationAction(ISD::MUL,                MVT::v4f32, Legal);
+    setOperationAction(ISD::LOAD,               MVT::v4f32, Legal);
+    setOperationAction(ISD::BUILD_VECTOR,       MVT::v4f32, Custom);
+    setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v4f32, Custom);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4f32, Custom);
+    setOperationAction(ISD::SELECT,             MVT::v4f32, Custom);
   }
 
   if (Subtarget->hasSSE2()) {
@@ -291,37 +292,46 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     addRegisterClass(MVT::v4i32, X86::VR128RegisterClass);
     addRegisterClass(MVT::v2i64, X86::VR128RegisterClass);
 
-
-    setOperationAction(ISD::ADD,              MVT::v2f64, Legal);
-    setOperationAction(ISD::ADD,              MVT::v16i8, Legal);
-    setOperationAction(ISD::ADD,              MVT::v8i16, Legal);
-    setOperationAction(ISD::ADD,              MVT::v4i32, Legal);
-    setOperationAction(ISD::SUB,              MVT::v2f64, Legal);
-    setOperationAction(ISD::SUB,              MVT::v16i8, Legal);
-    setOperationAction(ISD::SUB,              MVT::v8i16, Legal);
-    setOperationAction(ISD::SUB,              MVT::v4i32, Legal);
-    setOperationAction(ISD::MUL,              MVT::v2f64, Legal);
-    setOperationAction(ISD::LOAD,             MVT::v2f64, Legal);
-    setOperationAction(ISD::LOAD,             MVT::v16i8, Legal);
-    setOperationAction(ISD::LOAD,             MVT::v8i16, Legal);
-    setOperationAction(ISD::LOAD,             MVT::v4i32, Legal);
-    setOperationAction(ISD::LOAD,             MVT::v2i64, Legal);
-    setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v16i8, Custom);
-    setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v8i16, Custom);
-    setOperationAction(ISD::BUILD_VECTOR,     MVT::v2f64, Custom);
-    setOperationAction(ISD::BUILD_VECTOR,     MVT::v16i8, Custom);
-    setOperationAction(ISD::BUILD_VECTOR,     MVT::v8i16, Custom);
-    setOperationAction(ISD::BUILD_VECTOR,     MVT::v4i32, Custom);
-    setOperationAction(ISD::BUILD_VECTOR,     MVT::v2i64, Custom);
-    setOperationAction(ISD::VECTOR_SHUFFLE,   MVT::v2f64, Custom);
-    setOperationAction(ISD::VECTOR_SHUFFLE,   MVT::v16i8, Custom);
-    setOperationAction(ISD::VECTOR_SHUFFLE,   MVT::v8i16, Custom);
-    setOperationAction(ISD::VECTOR_SHUFFLE,   MVT::v4i32, Custom);
-    setOperationAction(ISD::VECTOR_SHUFFLE,   MVT::v2i64, Custom);
+    setOperationAction(ISD::ADD,                MVT::v2f64, Legal);
+    setOperationAction(ISD::ADD,                MVT::v16i8, Legal);
+    setOperationAction(ISD::ADD,                MVT::v8i16, Legal);
+    setOperationAction(ISD::ADD,                MVT::v4i32, Legal);
+    setOperationAction(ISD::SUB,                MVT::v2f64, Legal);
+    setOperationAction(ISD::SUB,                MVT::v16i8, Legal);
+    setOperationAction(ISD::SUB,                MVT::v8i16, Legal);
+    setOperationAction(ISD::SUB,                MVT::v4i32, Legal);
+    setOperationAction(ISD::MUL,                MVT::v2f64, Legal);
+    setOperationAction(ISD::LOAD,               MVT::v2f64, Legal);
+    setOperationAction(ISD::LOAD,               MVT::v16i8, Legal);
+    setOperationAction(ISD::LOAD,               MVT::v8i16, Legal);
+    setOperationAction(ISD::LOAD,               MVT::v4i32, Legal);
+    setOperationAction(ISD::LOAD,               MVT::v2i64, Legal);
+    setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v16i8, Custom);
+    setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v8i16, Custom);
+    setOperationAction(ISD::BUILD_VECTOR,       MVT::v2f64, Custom);
+    setOperationAction(ISD::BUILD_VECTOR,       MVT::v16i8, Custom);
+    setOperationAction(ISD::BUILD_VECTOR,       MVT::v8i16, Custom);
+    setOperationAction(ISD::BUILD_VECTOR,       MVT::v4i32, Custom);
+    setOperationAction(ISD::BUILD_VECTOR,       MVT::v2i64, Custom);
+    setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v2f64, Custom);
+    setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v16i8, Custom);
+    setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v8i16, Custom);
+    setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v4i32, Custom);
+    setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v2i64, Custom);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v2f64, Custom);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v8i16, Custom);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4i32, Custom);
     setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v8i16, Custom);
+
+    // Promote v16i8, v8i16, v4i32 selects to v2i64. Custom lower v2i64, v2f64,
+    // and v4f32 selects.
+    for (unsigned VT = (unsigned)MVT::v16i8;
+         VT != (unsigned)MVT::v2i64; VT++) {
+      setOperationAction(ISD::SELECT, (MVT::ValueType)VT, Promote);
+      AddPromotedToType (ISD::SELECT, (MVT::ValueType)VT, MVT::v2i64);
+    }
+    setOperationAction(ISD::SELECT,             MVT::v2i64, Custom);
+    setOperationAction(ISD::SELECT,             MVT::v2f64, Custom);
   }
 
   // We want to custom lower some of our intrinsics.
@@ -1270,7 +1280,10 @@ X86TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
   switch (MI->getOpcode()) {
   default: assert(false && "Unexpected instr type to insert");
   case X86::CMOV_FR32:
-  case X86::CMOV_FR64: {
+  case X86::CMOV_FR64:
+  case X86::CMOV_V4F32:
+  case X86::CMOV_V2F64:
+  case X86::CMOV_V2I64: {
     // To "insert" a SELECT_CC instruction, we actually have to insert the
     // diamond control-flow pattern.  The incoming instruction knows the
     // destination vreg to set, the condition code register to branch on, the
@@ -2146,9 +2159,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   }
   case ISD::SELECT: {
     MVT::ValueType VT = Op.getValueType();
-    bool isFP      = MVT::isFloatingPoint(VT);
-    bool isFPStack = isFP && !X86ScalarSSE;
-    bool isFPSSE   = isFP && X86ScalarSSE;
+    bool isFPStack = MVT::isFloatingPoint(VT) && !X86ScalarSSE;
     bool addTest   = false;
     SDOperand Op0 = Op.getOperand(0);
     SDOperand Cond, CC;
