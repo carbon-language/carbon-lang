@@ -222,8 +222,8 @@ else
   endif
 endif
 
-# If ENABLE_ASSERTIONS=1 is specified (make command line or configured),
-# then enable assertions by defining the appropriate preprocessor symbols.
+# If DISABLE_ASSERTIONS=1 is specified (make command line or configured),
+# then disable assertions by defining the appropriate preprocessor symbols.
 ifdef DISABLE_ASSERTIONS
   BuildMode := $(BuildMode)-Asserts
   CXX.Flags += -DNDEBUG
@@ -1527,7 +1527,7 @@ $(DistDir)/.makedistdir: $(DistSources)
 	  $(EchoCmd) Removing old $(DistDir) ; \
 	  $(RM) -rf $(DistDir); \
 	  $(EchoCmd) Making 'all' to verify build ; \
-	  $(MAKE) ENABLE_OPTIMIZED=1 ENABLE_ASSERTIONS=1 all ; \
+	  $(MAKE) ENABLE_OPTIMIZED=1 all ; \
 	fi
 	$(Echo) Building Distribution Directory $(DistDir)
 	$(Verb) $(MKDIR) $(DistDir) 
@@ -1588,7 +1588,7 @@ $(DistDir)/.makedistdir: $(DistSources)
 	  if test "$$subdir" \!= "." ; then \
 	    new_distdir="$(DistDir)/$$subdir" ; \
 	    test -d "$$new_distdir" || $(MKDIR) "$$new_distdir" || exit 1; \
-	    ( cd $$subdir && $(MAKE) ENABLE_OPTIMIZED=1 ENABLE_ASSERTIONS=1 \
+	    ( cd $$subdir && $(MAKE) ENABLE_OPTIMIZED=1 \
 	      DistDir="$$new_distdir" distdir ) || exit 1; \
 	  fi; \
 	done
