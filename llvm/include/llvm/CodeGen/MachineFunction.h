@@ -192,8 +192,10 @@ public:
   typedef std::vector<unsigned>::const_iterator liveout_iterator;
   livein_iterator livein_begin() const { return LiveIns.begin(); }
   livein_iterator livein_end()   const { return LiveIns.end(); }
+  bool            livein_empty() const { return LiveIns.empty(); }
   liveout_iterator liveout_begin() const { return LiveOuts.begin(); }
   liveout_iterator liveout_end()   const { return LiveOuts.end(); }
+  bool             liveout_empty() const { return LiveOuts.empty(); }
 
   /// getBlockNumbered - MachineBasicBlocks are automatically numbered when they
   /// are inserted into the machine function.  The block number for a machine
