@@ -113,6 +113,14 @@ namespace ISD {
 
     // UNDEF - An undefined node
     UNDEF,
+    
+    /// FORMAL_ARGUMENTS(CC#, ISVARARG) - This node represents the formal
+    /// arguments for a function.  CC# is a Constant value indicating the
+    /// calling convention of the function, and ISVARARG is a flag that
+    /// indicates whether the function is varargs or not.  This node has one
+    /// result value for each incoming argument, and is typically custom
+    /// legalized.
+    FORMAL_ARGUMENTS,
 
     // EXTRACT_ELEMENT - This is used to get the first or second (determined by
     // a Constant, which is required to be operand #1), element of the aggregate
