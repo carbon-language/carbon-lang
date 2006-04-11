@@ -407,7 +407,7 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
         .addReg(PPC::R1).addReg(PPC::R1).addReg(PPC::R0);
   }
   
-  if (DebugInfo) {
+  if (DebugInfo && DebugInfo->hasInfo()) {
     std::vector<MachineMove *> &Moves = DebugInfo->getFrameMoves();
     unsigned LabelID = DebugInfo->NextLabelID();
     
