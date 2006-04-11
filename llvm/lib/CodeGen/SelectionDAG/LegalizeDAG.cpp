@@ -1397,10 +1397,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp1 = DAG.getNode(ISD::TokenFactor, MVT::Other, Tmp1, LastCALLSEQ_END);
     Tmp1 = LegalizeOp(Tmp1);
     LastCALLSEQ_END = DAG.getEntryNode();
-    Tmp2 = Node->getOperand(1);
       
     switch (Node->getNumOperands()) {
     case 2:  // ret val
+      Tmp2 = Node->getOperand(1);
       switch (getTypeAction(Tmp2.getValueType())) {
       case Legal:
         Result = DAG.UpdateNodeOperands(Result, Tmp1, LegalizeOp(Tmp2));
