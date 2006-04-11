@@ -233,6 +233,10 @@ namespace llvm {
    /// <0, 0, 1, 1>
    bool isUNPCKL_v_undef_Mask(SDNode *N);
 
+   /// isMOVSMask - Return true if the specified VECTOR_SHUFFLE operand
+   /// specifies a shuffle of elements that is suitable for input to MOVS{S|D}.
+   bool isMOVSMask(SDNode *N);
+
    /// isSplatMask - Return true if the specified VECTOR_SHUFFLE operand
    /// specifies a splat of a single element.
    bool isSplatMask(SDNode *N);

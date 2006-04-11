@@ -104,6 +104,10 @@ def MOVLP_shuffle_mask : PatLeaf<(build_vector), [{
   return X86::isMOVLPMask(N);
 }]>;
 
+def MOVS_shuffle_mask : PatLeaf<(build_vector), [{
+  return X86::isMOVSMask(N);
+}]>;
+
 def UNPCKL_shuffle_mask : PatLeaf<(build_vector), [{
   return X86::isUNPCKLMask(N);
 }]>;
@@ -1641,6 +1645,17 @@ def MOVLSD2PDrr : SDI<0x10, MRMSrcReg, (ops VR128:$dst, VR128:$src1, FR64:$src2)
                       "movsd {$src2, $dst|$dst, $src2}", []>;
 def MOVLDI2PDIrr : PDI<0x6E, MRMSrcReg, (ops VR128:$dst, VR128:$src1, R32:$src2),
                       "movd {$src2, $dst|$dst, $src2}", []>;
+
+def MOVLPSrr : SSI<0x10, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                      "movss {$src2, $dst|$dst, $src2}",
+                   [(set VR128:$dst,
+                     (v4f32 (vector_shuffle VR128:$src1, VR128:$src2,
+                             MOVS_shuffle_mask)))]>;
+def MOVLPDrr : SDI<0x10, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                      "movsd {$src2, $dst|$dst, $src2}",
+                   [(set VR128:$dst,
+                     (v2f64 (vector_shuffle VR128:$src1, VR128:$src2,
+                             MOVS_shuffle_mask)))]>;
 }
 
 // Move to lower bits of a VR128 and zeroing upper bits.

@@ -1684,6 +1684,26 @@ bool X86::isUNPCKL_v_undef_Mask(SDNode *N) {
   return true;
 }
 
+/// isMOVSMask - Return true if the specified VECTOR_SHUFFLE operand
+/// specifies a shuffle of elements that is suitable for input to MOVS{S|D}.
+bool X86::isMOVSMask(SDNode *N) {
+  assert(N->getOpcode() == ISD::BUILD_VECTOR);
+
+  unsigned NumElems = N->getNumOperands();
+  if (NumElems != 2 && NumElems != 4)
+    return false;
+
+  if (!isUndefOrEqual(N->getOperand(0), NumElems))
+    return false;
+
+  for (unsigned i = 1; i < NumElems; ++i) {
+    SDOperand Arg = N->getOperand(i);
+    if (!isUndefOrEqual(Arg, i))
+      return false;
+  }
+
+  return true;
+}
 
 /// isSplatMask - Return true if the specified VECTOR_SHUFFLE operand specifies
 /// a splat of a single element.
@@ -2680,6 +2700,10 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     if (NumElems == 2)
       return Op;
 
+    if (X86::isMOVSMask(PermMask.Val))
+      // Leave the VECTOR_SHUFFLE alone. It matches MOVS{S|D}.
+      return Op;
+
     if (X86::isUNPCKLMask(PermMask.Val) ||
         X86::isUNPCKL_v_undef_Mask(PermMask.Val) ||
         X86::isUNPCKHMask(PermMask.Val))
@@ -3106,10 +3130,11 @@ X86TargetLowering::isShuffleMaskLegal(SDOperand Mask, MVT::ValueType VT) const {
   // Only do shuffles on 128-bit vector types for now.
   if (MVT::getSizeInBits(VT) == 64) return false;
   return (Mask.Val->getNumOperands() == 2 ||
-          X86::isSplatMask(Mask.Val) ||
+          X86::isSplatMask(Mask.Val)  ||
+          X86::isMOVSMask(Mask.Val)   ||
           X86::isPSHUFDMask(Mask.Val) ||
           isPSHUFHW_PSHUFLWMask(Mask.Val) ||
-          X86::isSHUFPMask(Mask.Val) ||
+          X86::isSHUFPMask(Mask.Val)  ||
           X86::isUNPCKLMask(Mask.Val) ||
           X86::isUNPCKL_v_undef_Mask(Mask.Val) ||
           X86::isUNPCKHMask(Mask.Val));
