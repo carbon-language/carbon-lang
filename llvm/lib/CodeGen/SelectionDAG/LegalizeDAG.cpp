@@ -1427,10 +1427,16 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
             // Turn this into a return of the scalar type.
             Tmp2 = PackVectorOp(Tmp2, EVT);
             Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
+            
+            // FIXME: Returns of gcc generic vectors smaller than a legal type
+            // should be returned in integer registers!
+            
             // The scalarized value type may not be legal, e.g. it might require
             // promotion or expansion.  Relegalize the return.
             Result = LegalizeOp(Result);
           } else {
+            // FIXME: Returns of gcc generic vectors larger than a legal vector
+            // type should be returned by reference!
             SDOperand Lo, Hi;
             SplitVectorOp(Tmp2, Lo, Hi);
             Result = DAG.getNode(ISD::RET, MVT::Other, Tmp1, Lo, Hi);
@@ -1458,6 +1464,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           break;
         case Expand: {
           SDOperand Lo, Hi;
+          assert(Node->getOperand(i).getValueType() != MVT::Vector &&
+                 "FIXME: TODO: implement returning non-legal vector types!");
           ExpandOp(Node->getOperand(i), Lo, Hi);
           NewValues.push_back(Lo);
           NewValues.push_back(Hi);
