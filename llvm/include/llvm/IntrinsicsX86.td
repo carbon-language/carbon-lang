@@ -269,6 +269,8 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse2_loadu_pd : GCCBuiltin<"__builtin_ia32_loadupd">,
               Intrinsic<[llvm_v2f64_ty, llvm_ptr_ty], [IntrReadMem]>;
+  def int_x86_sse2_loadu_dq : GCCBuiltin<"__builtin_ia32_loaddqu">,
+              Intrinsic<[llvm_v16i8_ty, llvm_ptr_ty], [IntrReadMem]>;
 }
 
 // SIMD store ops
@@ -276,6 +278,12 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse2_storeu_pd : GCCBuiltin<"__builtin_ia32_storeupd">,
               Intrinsic<[llvm_void_ty, llvm_ptr_ty,
                          llvm_v2f64_ty], [IntrWriteMem]>;
+  def int_x86_sse2_storeu_dq : GCCBuiltin<"__builtin_ia32_storedqu">,
+              Intrinsic<[llvm_void_ty, llvm_ptr_ty,
+                         llvm_v16i8_ty], [IntrWriteMem]>;
+  def int_x86_sse2_storel_dq : GCCBuiltin<"__builtin_ia32_storelv4si">,
+              Intrinsic<[llvm_void_ty, llvm_ptr_ty,
+                         llvm_v4i32_ty], [IntrWriteMem]>;
 }
 
 // Cacheability support ops
@@ -302,6 +310,9 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse2_packuswb_128 : GCCBuiltin<"__builtin_ia32_packuswb128">,
               Intrinsic<[llvm_v8i16_ty, llvm_v8i16_ty,
                          llvm_v8i16_ty], [IntrNoMem]>;
+  // FIXME: Temporary workaround since 2-wide shuffle is broken.
+  def int_x86_sse2_movl_dq : GCCBuiltin<"__builtin_ia32_movqv4si">,
+              Intrinsic<[llvm_v4i32_ty, llvm_v4i32_ty], [IntrNoMem]>;
   def int_x86_sse2_movmskpd : GCCBuiltin<"__builtin_ia32_movmskpd">,
               Intrinsic<[llvm_int_ty, llvm_v2f64_ty], [IntrNoMem]>;
   def int_x86_sse2_pmovmskb_128 : GCCBuiltin<"__builtin_ia32_pmovmskb128">,

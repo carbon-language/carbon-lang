@@ -724,6 +724,14 @@ def MOVUPDrm : PDI<0x10, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
 def MOVUPDmr : PDI<0x11, MRMDestMem, (ops f128mem:$dst, VR128:$src),
                    "movupd {$src, $dst|$dst, $src}",
                    [(int_x86_sse2_storeu_pd addr:$dst, VR128:$src)]>;
+def MOVDQUrm :   I<0x6F, MRMSrcMem, (ops VR128:$dst, i128mem:$src),
+                   "movdqu {$src, $dst|$dst, $src}",
+                   [(set VR128:$dst, (int_x86_sse2_loadu_dq addr:$src))]>,
+                 XS, Requires<[HasSSE2]>;
+def MOVDQUmr :   I<0x7F, MRMDestMem, (ops i128mem:$dst, VR128:$src),
+                   "movdqu {$src, $dst|$dst, $src}",
+                   [(int_x86_sse2_storeu_dq addr:$dst, VR128:$src)]>,
+                 XS, Requires<[HasSSE2]>;
 
 let isTwoAddress = 1 in {
 def MOVLPSrm : PSI<0x12, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
@@ -1657,6 +1665,16 @@ def MOVLPDrr : SDI<0x10, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                              MOVS_shuffle_mask)))]>;
 }
 
+// Store / copy lower 64-bits of a XMM register.
+def MOVLQ128mr : PDI<0xD6, MRMDestMem, (ops i64mem:$dst, VR128:$src),
+                     "movq {$src, $dst|$dst, $src}",
+                     [(int_x86_sse2_storel_dq addr:$dst, VR128:$src)]>;
+
+// FIXME: Temporary workaround since 2-wide shuffle is broken.
+def MOVLQ128rr : PDI<0xD6, MRMSrcReg, (ops VR128:$dst, VR128:$src),
+                     "movq {$src, $dst|$dst, $src}",
+                     [(set VR128:$dst, (int_x86_sse2_movl_dq VR128:$src))]>;
+
 // Move to lower bits of a VR128 and zeroing upper bits.
 // Loading from memory automatically zeroing upper bits.
 def MOVZSS2PSrm : SSI<0x10, MRMSrcMem, (ops VR128:$dst, f32mem:$src),
@@ -1672,9 +1690,10 @@ def MOVZDI2PDIrm : PDI<0x6E, MRMSrcMem, (ops VR128:$dst, i32mem:$src),
                        [(set VR128:$dst,
                          (v4i32 (X86zexts2vec (loadi32 addr:$src))))]>;
 def MOVZQI2PQIrm : PDI<0x7E, MRMSrcMem, (ops VR128:$dst, i64mem:$src),
-                       "movd {$src, $dst|$dst, $src}",
+                       "movq {$src, $dst|$dst, $src}",
                        [(set VR128:$dst,
-                         (v2i64 (X86zexts2vec (loadi64 addr:$src))))]>;
+                         (bc_v2i64 (v2f64 (X86zexts2vec
+                                           (loadf64 addr:$src)))))]>;
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
