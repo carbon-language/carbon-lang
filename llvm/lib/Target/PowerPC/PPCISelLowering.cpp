@@ -880,12 +880,21 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       unsigned ArgReg = MVT::isInteger(ArgVT) ? PPC::R3 : PPC::F1;
       Copy = DAG.getCopyToReg(Op.getOperand(0), ArgReg, Op.getOperand(1),
                               SDOperand());
+      
+      // If we haven't noted the R3/F1 are live out, do so now.
+      if (DAG.getMachineFunction().liveout_empty())
+        DAG.getMachineFunction().addLiveOut(ArgReg);
       break;
     }
     case 3:
       Copy = DAG.getCopyToReg(Op.getOperand(0), PPC::R3, Op.getOperand(2), 
                               SDOperand());
       Copy = DAG.getCopyToReg(Copy, PPC::R4, Op.getOperand(1),Copy.getValue(1));
+      // If we haven't noted the R3+R4 are live out, do so now.
+      if (DAG.getMachineFunction().liveout_empty()) {
+        DAG.getMachineFunction().addLiveOut(PPC::R3);
+        DAG.getMachineFunction().addLiveOut(PPC::R4);
+      }
       break;
     }
     return DAG.getNode(PPCISD::RET_FLAG, MVT::Other, Copy, Copy.getValue(1));
@@ -1247,26 +1256,6 @@ PPCTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       MemOps.push_back(DAG.getRoot());
       DAG.setRoot(DAG.getNode(ISD::TokenFactor, MVT::Other, MemOps));
     }
-  }
-  
-  // Finally, inform the code generator which regs we return values in.
-  switch (getValueType(F.getReturnType())) {
-    default: assert(0 && "Unknown type!");
-    case MVT::isVoid: break;
-    case MVT::i1:
-    case MVT::i8:
-    case MVT::i16:
-    case MVT::i32:
-      MF.addLiveOut(PPC::R3);
-      break;
-    case MVT::i64:
-      MF.addLiveOut(PPC::R3);
-      MF.addLiveOut(PPC::R4);
-      break;
-    case MVT::f32:
-    case MVT::f64:
-      MF.addLiveOut(PPC::F1);
-      break;
   }
   
   return ArgValues;
