@@ -18,7 +18,8 @@ D: MingW Win32 API portability layer
 
 N: Nate Begeman
 E: natebegeman@mac.com
-D: Primary PowerPC backend developer
+D: PowerPC backend developer
+D: Target-independent code generator and analysis improvements
 
 N: Daniel Berlin
 E: dberlin@dberlin.org
