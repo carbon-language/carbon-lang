@@ -89,6 +89,7 @@ D: Author of the original C backend
 N: Jim Laskey
 E: jlaskey@apple.com
 D: Improvements to the PPC backend, instruction scheduling
+D: Debug implementation, Dwarf implementation
 
 N: Chris Lattner
 E: sabre@nondot.org
