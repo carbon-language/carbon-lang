@@ -38,6 +38,7 @@ deficient.</p>
 <div class="doc_text">
   <ol>
     <li><a href="#merge">Merge Branches</a></li>
+    <li><a href="#settle">Settle LLVM HEAD</a></li>
     <li><a href="#build">Build LLVM</a></li>
     <li><a href="#check">Run 'make check'</a></li>
     <li><a href="#test">Run LLVM Test Suite</a></li>
@@ -51,27 +52,45 @@ deficient.</p>
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="merge">Merge Branches</a></div>
 <div class="doc_text">
-<p>Merge any work done on branches intended for release into mainline.</p>
+<p>Merge any work done on branches intended for release into mainline. Work that
+is not to be incorporated into the release should not be merged from the branch.
+</p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="build">Settle CVS HEAD</a></div>
+<div class="doc_text">
+  <p>Use the nightly test reports, and 'make check' (deja-gnu based tests) to 
+  increase the quality of LLVM and ensure that merged branches have not
+  destabilized LLVM.</p>
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="build">Build LLVM</a></div>
 <div class="doc_text">
-  <p>Build LLVM</p>
+  <p>Build both debug and release versions of LLVM on all platforms. Ensure
+  build is warning and error free on each platform.</p>
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="check">Run 'make check'</a></div>
 <div class="doc_text">
   <p>Run <tt>make check</tt> and ensure there are no unexpected failures. If
-  there are, resolve the failures and go back to step 2.</p>
+  there are, resolve the failures and go back to <a href="#settle">step 2</a>.
+  Ensure that 'make check' passes on all platforms for all targets. If certain
+  failures cannot be resolved before release time, determine if marking them
+  XFAIL is appropriate. If not, fix the bug and go back. The test suite must
+  complete with "0 unexpected failures" for release.
+  </p>
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="test">LLVM Test Suite</a></div>
 <div class="doc_text">
   <p>Run the llvm-test suite and ensure there are no unacceptable failures.
-  If there are, resolve the failures and go back to step 2.</p>
+  If there are, resolve the failures and go back to step 2. The test suite
+  should be run in Nightly Test mode. All tests must pass. If they do not,
+  investigate and go back to settling CVS HEAD.</p>
 </div>
 
 <!-- ======================================================================= -->
@@ -83,21 +102,48 @@ deficient.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="tag">CVS Tag</a></div>
+<div class="doc_subsection"><a name="tag">CVS Tag And Branch</a></div>
 <div class="doc_text">
-  <p>Tag the release.</p>
+  <p>Tag and branch the CVS HEAD using the following procedure:</p>
+  <ol>
+    <li>Request all developers to refrain from committing. Offenders get commit
+    rights taken away (temporarily).</li>
+    <li>Tag the cvs HEAD with "ROOT_RELEASE_XX" where XX is the major and minor
+    release numbers (you can't have . in a cvs tag name). So, for Release 1.2,
+    XX=12 and for Release 1.10, XX=110.</li>
+    <li>Immediately create a cvs branch based on the ROOT_RELEASE tag. This is
+    where the release distribution will be created.</li>
+    <li>Advise developers they can work on CVS HEAD again.</li>
+    <li>Ensure all subsequent building and fixing is done on this branch.</li>
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="dist">Run 'make dist'</a></div>
 <div class="doc_text">
-  <p>Build the distribution, ensuring it is installable and working</p>
+  <p>Build the distribution, ensuring it is installable and working. This is a
+  two step process. First, use "make dist" to simply build the distribution. Any
+  failures need to be corrected (on the branch). Once "make dist" can be
+  successful, do "make dist-check". This target will do the same thing as the
+  'dist' target but also test that distribution to make sure it works. This
+  ensures that needed files are not missing and that the src tarball can be
+  successfully unbacked, built, installed, and cleaned. This two-level testing
+  needs to be done on each target platform.</p>
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="release">Release</a></div>
 <div class="doc_text">
-  <p>Release the distribution tarball to the public.</p>
+  <p>Release the distribution tarball to the public. This consists of generating
+  several tarballs. The first set, the source distributions, are automatically
+  generated by the "make dist" and "make dist-check". There are gzip, bzip2, and
+  zip versions of these bundles.</p>
+  <p>The second set of tarballs is the binary release. When "make dist-check"
+  succeeds, it will have created an _install directory into which it installed
+  the binary release. You need to rename that directory as "llvm" and then
+  create tarballs from the contents of that "llvm" directory.</p>
+  <p>Finally, use rpm to make an rpm package based on the llvm.spec file. Don't
+  forget to update the version number, documentation, etc. in the llvm.spec
+  file.</p>
 </div>
 
 <!-- *********************************************************************** -->
