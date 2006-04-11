@@ -138,7 +138,9 @@ D: The `paths' pass
 N: Reid Spencer
 E: rspencer@x10sys.com
 W: http://llvm.x10sys.com/rspencer
-D: Stacker, llvmc, bytecode, other. See web page for current notes.
+D: Stacker, llvmc, llvm-ld, llvm-ar, lib/Archive, lib/Linker, lib/System, 
+D: bytecode enhancements, symtab hacking, unoverloading of intrinsics, makefile 
+D: and configuration system, documentation.
 
 N: Adam Treat
 E: manyoso@yahoo.com
