@@ -179,6 +179,9 @@
 					RelativePath="..\..\lib\Transforms\Ipo\GlobalOpt.cpp">
 				</File>
 				<File
+					RelativePath="..\..\lib\Transforms\Ipo\IndMemRemoval.cpp">
+				</File>
+				<File
 					RelativePath="..\..\lib\Transforms\Ipo\Inliner.cpp">
 				</File>
 				<File
