@@ -202,12 +202,10 @@ static bool hasFP(const MachineFunction &MF) {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   unsigned TargetAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
 
-  // If frame pointers are forced, if there are variable sized stack objects,
-  // or if there is an object on the stack that requires more alignment than is
-  // normally provided, use a frame pointer.
+  // If frame pointers are forced, or if there are variable sized stack objects,
+  // use a frame pointer.
   // 
-  return NoFramePointerElim || MFI->hasVarSizedObjects() ||
-         MFI->getMaxAlignment() > TargetAlign;
+  return NoFramePointerElim || MFI->hasVarSizedObjects();
 }
 
 void PPCRegisterInfo::
@@ -396,15 +394,26 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   int NegNumbytes = -NumBytes;
 
   // Adjust stack pointer: r1 -= numbytes.
-  if (NumBytes <= 32768) {
-    BuildMI(MBB, MBBI, PPC::STWU, 3)
-       .addReg(PPC::R1).addSImm(-NumBytes).addReg(PPC::R1);
+  // If there is a preferred stack alignment, align R1 now
+  if (MaxAlign > TargetAlign) {
+    assert(isPowerOf2_32(MaxAlign) && MaxAlign < 32767 && "Invalid alignment!");
+    assert(NumBytes <= 32768 && "Unhandled stack size and alignment combo!");
+    BuildMI(MBB, MBBI, PPC::RLWINM, 4, PPC::R0)
+      .addReg(PPC::R1).addImm(0).addImm(32-Log2_32(MaxAlign)).addImm(31);
+    BuildMI(MBB, MBBI, PPC::SUBFIC,2,PPC::R0).addReg(PPC::R0).addSImm(MaxAlign);
+    BuildMI(MBB, MBBI, PPC::ADDI, 2, PPC::R0).addReg(PPC::R0)
+      .addSImm(NegNumbytes);
+    BuildMI(MBB, MBBI, PPC::STWUX, 3)
+      .addReg(PPC::R1).addReg(PPC::R1).addReg(PPC::R0);
+  } else if (NumBytes <= 32768) {
+    BuildMI(MBB, MBBI, PPC::STWU, 3).addReg(PPC::R1).addSImm(NegNumbytes)
+      .addReg(PPC::R1);
   } else {
     BuildMI(MBB, MBBI, PPC::LIS, 1, PPC::R0).addSImm(NegNumbytes >> 16);
-    BuildMI(MBB, MBBI, PPC::ORI, 2, PPC::R0)
-        .addReg(PPC::R0).addImm(NegNumbytes & 0xFFFF);
-    BuildMI(MBB, MBBI, PPC::STWUX, 3)
-        .addReg(PPC::R1).addReg(PPC::R1).addReg(PPC::R0);
+    BuildMI(MBB, MBBI, PPC::ORI, 2, PPC::R0).addReg(PPC::R0)
+      .addImm(NegNumbytes & 0xFFFF);
+    BuildMI(MBB, MBBI, PPC::STWUX, 3).addReg(PPC::R1).addReg(PPC::R1)
+      .addReg(PPC::R0);
   }
   
   if (DebugInfo && DebugInfo->hasInfo()) {
@@ -417,19 +426,6 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     Moves.push_back(new MachineMove(LabelID, Dst, Src));
 
     BuildMI(MBB, MBBI, PPC::DWARF_LABEL, 1).addSImm(LabelID);
-  }
-  
-  // If there is a preferred stack alignment, align R1 now
-  // FIXME: If this ever matters, this could be made more efficient by folding
-  // this into the code above, so that we don't issue two store+update
-  // instructions.
-  if (MaxAlign > TargetAlign) {
-    assert(isPowerOf2_32(MaxAlign) && MaxAlign < 32767 && "Invalid alignment!");
-    BuildMI(MBB, MBBI, PPC::RLWINM, 4, PPC::R0)
-      .addReg(PPC::R1).addImm(0).addImm(32-Log2_32(MaxAlign)).addImm(31);
-    BuildMI(MBB, MBBI, PPC::SUBFIC, 2,PPC::R0).addReg(PPC::R0).addImm(MaxAlign);
-    BuildMI(MBB, MBBI, PPC::STWUX, 3)
-      .addReg(PPC::R1).addReg(PPC::R1).addReg(PPC::R0);
   }
   
   // If there is a frame pointer, copy R1 (SP) into R31 (FP)
@@ -446,8 +442,12 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
   assert(MBBI->getOpcode() == PPC::BLR &&
          "Can only insert epilog into returning blocks");
 
+  // Get alignment info so we know how to restore r1
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  unsigned TargetAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
+
   // Get the number of bytes allocated from the FrameInfo.
-  unsigned NumBytes = MF.getFrameInfo()->getStackSize();
+  unsigned NumBytes = MFI->getStackSize();
   unsigned GPRSize = 4; 
 
   if (NumBytes != 0) {
@@ -460,15 +460,11 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
     
     // The loaded (or persistent) stack pointer value is offseted by the 'stwu'
     // on entry to the function.  Add this offset back now.
-    if (NumBytes < 32768) {
+    if (NumBytes < 32768 && TargetAlign >= MFI->getMaxAlignment()) {
       BuildMI(MBB, MBBI, PPC::ADDI, 2, PPC::R1)
           .addReg(PPC::R1).addSImm(NumBytes);
     } else {
-      BuildMI(MBB, MBBI, PPC::LIS, 1, PPC::R0).addSImm(NumBytes >> 16);
-      BuildMI(MBB, MBBI, PPC::ORI, 2, PPC::R0)
-          .addReg(PPC::R0).addImm(NumBytes & 0xFFFF);
-      BuildMI(MBB, MBBI, PPC::ADD4, 2, PPC::R1)
-        .addReg(PPC::R0).addReg(PPC::R1);
+      BuildMI(MBB, MBBI, PPC::LWZ, 2, PPC::R1).addSImm(0).addReg(PPC::R1);
     }
   }
 }
