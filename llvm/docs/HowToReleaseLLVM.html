@@ -24,9 +24,21 @@
 <div class="doc_text">
 <p>This document collects information about successfully releasing LLVM to the
 public. It is the release manager's guide to ensuring that a high quality build
-of LLVM is released. Mostly, its just a bunch of reminders of things to do at
+of LLVM is released. Mostly, it's just a bunch of reminders of things to do at
 release time so we don't inadvertently ship something that is utility 
 deficient.</p>
+
+<p>
+There are three main tasks for building a release of LLVM:
+<ol>
+  <li>Create the LLVM source distribution.</li>
+  <li>Create the LLVM GCC source distribtuion.</li>
+  <li>Create a set of LLVM GCC binary distribtuions for each supported
+      platform.  These binary distributions must include compiled versions
+      of the libraries found in <tt>llvm/runtime</tt> from the LLVM
+      source distribution created in Step 1.</li>
+</ol>
+</p>
 </div>
 
 <!-- *********************************************************************** -->
@@ -37,46 +49,143 @@ deficient.</p>
 <div class="doc_subsection"><a name="overview">Process Overview</a></div>
 <div class="doc_text">
   <ol>
+    <li><a href="#updocs">Update Documentation</a></li>
     <li><a href="#merge">Merge Branches</a></li>
+    <li><a href="#deps">Make LibDeps.txt</a></li>
     <li><a href="#settle">Settle LLVM HEAD</a></li>
+    <li><a href="#tag">Tag LLVM and Create the Release Branch</a></li>
     <li><a href="#build">Build LLVM</a></li>
     <li><a href="#check">Run 'make check'</a></li>
     <li><a href="#test">Run LLVM Test Suite</a></li>
-    <li><a href="#deps">make LibDeps.txt</a></li>
-    <li><a href="#tag">cvs tag</a></li>
-    <li><a href="#dist">make dist</a></li>
-    <li><a href="#release">release</a></li>
+    <li><a href="#dist">Build the LLVM Source Distributions</a></li>
+    <li><a href="#llvmgccbin">Build the LLVM GCC Binary Distribution</a></li>
   </ol>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="updocs">Update Documentation</a></div>
+<div class="doc_text">
+  <p>
+  Review the documentation and ensure that it is up to date.  The Release Notes
+  must be updated to reflect bug fixes, new known issues, and changes in the
+  list of supported platforms.  The Getting Started Guide should be updated to
+  reflect the new release version number tag avaiable from CVS and changes in
+  basic system requirements.
+  </p>
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="merge">Merge Branches</a></div>
 <div class="doc_text">
-<p>Merge any work done on branches intended for release into mainline. Work that
-is not to be incorporated into the release should not be merged from the branch.
+<p>
+Merge any work done on branches intended for release into mainline. Finish and
+commit all new features or bug fixes that are scheduled to go into the release.
+Work that is not to be incorporated into the release should not be merged from
+branchs or commited from developer's working directories.
+</p>
+
+<p>
+From this point until the release branch is created, developers should
+<em>not</em>
+commit changes to the llvm and llvm-gcc CVS repositories unless it is a bug
+fix <em>for the release</em>.
 </p>
 </div>
 
 <!-- ======================================================================= -->
+<div class="doc_subsection"><a name="deps">Make LibDeps.txt</a></div>
+<div class="doc_text">
+  <p>Rebuild the <tt>LibDeps.txt</tt> target in <tt>utils/llvm-config</tt>. This
+  makes sure that the <tt>llvm-config</tt> utility remains relevant for the
+  release, reflecting any changes in the library dependencies.</p>
+</div>
+
+
+<!-- ======================================================================= -->
 <div class="doc_subsection"><a name="settle">Settle CVS HEAD</a></div>
 <div class="doc_text">
-  <p>Use the nightly test reports, and 'make check' (deja-gnu based tests) to 
-  increase the quality of LLVM and ensure that merged branches have not
-  destabilized LLVM.</p>
+  <p>
+  Use the nightly test reports and 'make check' (deja-gnu based tests) to 
+  ensure that recent changes and merged branches have not destabilized LLVM.
+  Platforms which are used less often should be given special attention as they
+  are the most likely to break from commits from the previous step.
+  </p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="tag">CVS Tag And Branch</a></div>
+<div class="doc_text">
+  <p>Tag and branch the CVS HEAD using the following procedure:</p>
+  <ol>
+    <li>
+    Request all developers to refrain from committing. Offenders get commit
+    rights taken away (temporarily).
+    </li>
+
+    <li>
+    The Release Manager updates his/her llvm, llvm-test, and llvm-gcc source
+    trees with the
+    latest sources from mainline CVS.  The Release Manage may want to consider
+    using a new working directory for this to keep current uncommitted work
+    separate from release work.
+    </li>
+
+    <li>
+    The Release Manager tags his/her llvm, llvm-test, and llvm-gcc working
+    directories with
+    "ROOT_RELEASE_XX" where XX is the major and minor
+    release numbers (you can't have . in a cvs tag name). So, for Release 1.2,
+    XX=12 and for Release 1.10, XX=110.
+    </li>
+
+    <li>
+    Immediately create cvs branches based on the ROOT_RELEASE_XX tag. The tag
+    should be "release_XX" (where XX matches that used for the ROOT_RELEASE_XX
+    tag).  This is where the release distribution will be created.
+    </li>
+
+    <li>
+    Advise developers they can work on CVS HEAD again.
+    </li>
+
+    <li>
+    The Release Manager and any developers working on the release should switch
+    to the release branch (as all changes to the release will now be done in
+    the branch).  The easiest way to do this is to grab another working copy
+    using the following commands:
+
+    <p>
+    <tt>cvs -d &lt;CVS Repository&gt; co -r release_XX llvm</tt><br>
+    <tt>cvs -d &lt;CVS Repository&gt; co -r release_XX llvm-test</tt><br>
+    <tt>cvs -d &lt;CVS Repository&gt; co -r release_XX llvm-gcc</tt><br>
+    </p>
+    </li>
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="build">Build LLVM</a></div>
 <div class="doc_text">
-  <p>Build both debug and release versions of LLVM on all platforms. Ensure
-  build is warning and error free on each platform.</p>
+  <p>
+  Build both debug and release (optimized) versions of LLVM on all
+  platforms. Ensure the build is warning and error free on each platform.
+  </p>
+
+  <p>
+  Build a new version of the LLVM GCC front-end after building the LLVM tools.
+  Once that is complete, go back to the LLVM source tree and build and install
+  the <tt>llvm/runtime</tt> libraries.
+  </p>
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="check">Run 'make check'</a></div>
 <div class="doc_text">
   <p>Run <tt>make check</tt> and ensure there are no unexpected failures. If
-  there are, resolve the failures and go back to <a href="#settle">step 2</a>.
+  there are, resolve the failures, commit them back into the release branch,
+  and restart testing by <a href="#build">re-building LLVM</a>.
+  </p>
+
+  <p>
   Ensure that 'make check' passes on all platforms for all targets. If certain
   failures cannot be resolved before release time, determine if marking them
   XFAIL is appropriate. If not, fix the bug and go back. The test suite must
@@ -88,48 +197,82 @@ is not to be incorporated into the release should not be merged from the branch.
 <div class="doc_subsection"><a name="test">LLVM Test Suite</a></div>
 <div class="doc_text">
   <p>Run the llvm-test suite and ensure there are no unacceptable failures.
-  If there are, resolve the failures and go back to step 2. The test suite
-  should be run in Nightly Test mode. All tests must pass. If they do not,
-  investigate and go back to settling CVS HEAD.</p>
+  If there are, resolve the failures and go back to
+  <a href="#build">re-building LLVM</a>. The test suite
+  should be run in Nightly Test mode. All tests must pass.
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="deps">Make LibDeps.txt</a></div>
+<div class="doc_subsection"><a name="dist">Build the LLVM Source Distributions</a></div>
 <div class="doc_text">
-  <p>Rebuild the <tt>LibDeps.txt</tt> target in <tt>utils/llvm-config</tt>. This
-  makes sure that the <tt>llvm-config</tt> utility remains relevant for the
-  release, reflecting any changes in the library dependencies.</p>
-</div>
+  <p>
+  Create source distributions for LLVM, LLVM GCC, and the LLVM Test Suite by
+  exporting the source
+  from CVS and archiving it.  This can be done with the following commands:
+  </p>
 
-<!-- ======================================================================= -->
-<div class="doc_subsection"><a name="tag">CVS Tag And Branch</a></div>
-<div class="doc_text">
-  <p>Tag and branch the CVS HEAD using the following procedure:</p>
-  <ol>
-    <li>Request all developers to refrain from committing. Offenders get commit
-    rights taken away (temporarily).</li>
-    <li>Tag the cvs HEAD with "ROOT_RELEASE_XX" where XX is the major and minor
-    release numbers (you can't have . in a cvs tag name). So, for Release 1.2,
-    XX=12 and for Release 1.10, XX=110.</li>
-    <li>Immediately create a cvs branch based on the ROOT_RELEASE tag. This is
-    where the release distribution will be created.</li>
-    <li>Advise developers they can work on CVS HEAD again.</li>
-    <li>Ensure all subsequent building and fixing is done on this branch.</li>
-</div>
+  <p>
+  <tt>cvs -d &lt;CVS Repository&gt; export -r release_XX llvm</tt><br>
+  <tt>cvs -d &lt;CVS Repository&gt; export -r release_XX llvm-test</tt><br>
+  <tt>cvs -d &lt;CVS Repository&gt; export -r release_XX llvm-gcc</tt><br>
+  <tt>mkdir cfrontend; mv llvm-gcc cfrontend/src</tt><br>
+  <tt>tar -cvf - llvm          | gzip &gt; llvm-X.X.tar.gz</tt><br>
+  <tt>tar -cvf - llvm-test     | gzip &gt; llvm-test-X.X.tar.gz</tt><br>
+  <tt>tar -cvf - cfrontend/src | gzip &gt; cfrontend-X.X.source.tar.gz</tt><br>
+  </p>
 
-<!-- ======================================================================= -->
-<div class="doc_subsection"><a name="dist">Run 'make dist'</a></div>
-<div class="doc_text">
-  <p>Build the distribution, ensuring it is installable and working. This is a
+  <!-- This is a
   two step process. First, use "make dist" to simply build the distribution. Any
   failures need to be corrected (on the branch). Once "make dist" can be
   successful, do "make dist-check". This target will do the same thing as the
   'dist' target but also test that distribution to make sure it works. This
   ensures that needed files are not missing and that the src tarball can be
   successfully unbacked, built, installed, and cleaned. This two-level testing
-  needs to be done on each target platform.</p>
+  needs to be done on each target platform.
+  -->
 </div>
 
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="llvmgccbin">Build the LLVM GCC Binary Distribution</a></div>
+<div class="doc_text">
+  <p>
+  Creating the LLVM GCC binary distribution requires performing the following
+  steps for each supported platform:
+  </p>
+
+  <ol>
+    <li>
+    Build the LLVM GCC front-end.  The LLVM GCC front-end must be installed in
+    a directory named <tt>cfrontend/&lt;platform&gt;/llvm-gcc</tt>.  For
+    example, the Sparc/Solaris directory is named
+    <tt>cfrontend/sparc/llvm-gcc</tt>.
+    </li>
+
+    <li>
+    Build the libraries in <tt>llvm/runtime</tt> and install them into the 
+    created LLVM GCC installation directory.
+    </li>
+
+    <li>
+    For systems with non-distributable header files (e.g. Solaris), manually
+    remove header files that the GCC build process has "fixed."  This process
+    is admittedly painful, but not as bad as it looks; these header files are
+    almost always easily identifiable with simple grep expressions and are
+    installed in only a few directories in the GCC installation directory.
+    </li>
+
+    <li>
+    Add the copyright files and header file fix script.
+    </li>
+
+    <li>
+    Archive and compress the installation directory.  These can be found in
+    previous releases of the LLVM-GCC front-end.
+    </li>
+  </ol>
+</div>
+
+<!--
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="release">Release</a></div>
 <div class="doc_text">
@@ -145,6 +288,7 @@ is not to be incorporated into the release should not be merged from the branch.
   forget to update the version number, documentation, etc. in the llvm.spec
   file.</p>
 </div>
+-->
 
 <!-- *********************************************************************** -->
 <hr>
