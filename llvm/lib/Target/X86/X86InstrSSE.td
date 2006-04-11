@@ -1516,18 +1516,18 @@ def MASKMOVDQU : PDI<0xF7, RawFrm, (ops VR128:$src, VR128:$mask),
                  Imp<[EDI],[]>;
 
 // Prefetching loads
-def PREFETCHT0   : I<0x18, MRM1m, (ops i8mem:$src),
-                     "prefetcht0 $src", []>, TB,
-                   Requires<[HasSSE1]>;
-def PREFETCHT1   : I<0x18, MRM2m, (ops i8mem:$src),
-                     "prefetcht0 $src", []>, TB,
-                   Requires<[HasSSE1]>;
-def PREFETCHT2   : I<0x18, MRM3m, (ops i8mem:$src),
-                     "prefetcht0 $src", []>, TB,
-                   Requires<[HasSSE1]>;
-def PREFETCHTNTA : I<0x18, MRM0m, (ops i8mem:$src),
-                     "prefetcht0 $src", []>, TB,
-                   Requires<[HasSSE1]>;
+def PREFETCHT0   : PSI<0x18, MRM1m, (ops i8mem:$src),
+                       "prefetcht0 $src",
+                       [(int_x86_sse_prefetch addr:$src, 1)]>;
+def PREFETCHT1   : PSI<0x18, MRM2m, (ops i8mem:$src),
+                       "prefetcht1 $src",
+                       [(int_x86_sse_prefetch addr:$src, 2)]>;
+def PREFETCHT2   : PSI<0x18, MRM3m, (ops i8mem:$src),
+                       "prefetcht2 $src",
+                       [(int_x86_sse_prefetch addr:$src, 3)]>;
+def PREFETCHTNTA : PSI<0x18, MRM0m, (ops i8mem:$src),
+                       "prefetchtnta $src",
+                       [(int_x86_sse_prefetch addr:$src, 0)]>;
 
 // Non-temporal stores
 def MOVNTPSmr : PSI<0x2B, MRMDestMem, (ops i128mem:$dst, VR128:$src),
@@ -1546,7 +1546,7 @@ def MOVNTImr  :   I<0xC3, MRMDestMem, (ops i32mem:$dst, R32:$src),
 
 // Store fence
 def SFENCE : I<0xAE, MRM7m, (ops),
-               "sfence", []>, TB, Requires<[HasSSE1]>;
+               "sfence", [(int_x86_sse_sfence)]>, TB, Requires<[HasSSE1]>;
 
 // MXCSR register
 def LDMXCSR : I<0xAE, MRM2m, (ops i32mem:$src),

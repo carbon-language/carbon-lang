@@ -140,7 +140,8 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 // Cacheability support ops
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse_prefetch : GCCBuiltin<"__builtin_ia32_prefetch">,
-              Intrinsic<[llvm_ptr_ty, llvm_int_ty], [IntrWriteMem]>;
+              Intrinsic<[llvm_void_ty, llvm_ptr_ty,
+                         llvm_int_ty], [IntrWriteMem]>;
   def int_x86_sse_movnt_ps : GCCBuiltin<"__builtin_ia32_movntps">,
               Intrinsic<[llvm_void_ty, llvm_ptr_ty,
                          llvm_v4f32_ty], [IntrWriteMem]>;
