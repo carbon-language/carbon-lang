@@ -96,11 +96,6 @@ instructions.
  
 //===----------------------------------------------------------------------===//
 
-We need an LLVM 'shuffle' instruction, that corresponds to the VECTOR_SHUFFLE
-node.
-
-//===----------------------------------------------------------------------===//
-
 We need a way to teach tblgen that some operands of an intrinsic are required to
 be constants.  The verifier should enforce this constraint.
 
@@ -132,5 +127,11 @@ void test(vector int *X, vector int *Y) {
 There are a wide variety of vector_shuffle operations that we can do with a pair
 of instructions (e.g. a vsldoi + vpkuhum).  We should pattern match these, but
 there are a huge number of these.
+
+Specific examples:
+
+C = vector_shuffle A, B, <0, 1, 2, 4>
+->  t = vsldoi A, A, 12
+->  C = vsldoi A, B, 4
 
 //===----------------------------------------------------------------------===//
