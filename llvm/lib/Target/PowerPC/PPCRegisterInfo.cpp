@@ -397,12 +397,11 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // If there is a preferred stack alignment, align R1 now
   if (MaxAlign > TargetAlign) {
     assert(isPowerOf2_32(MaxAlign) && MaxAlign < 32767 && "Invalid alignment!");
-    assert(NumBytes <= 32768 && "Unhandled stack size and alignment combo!");
+    assert(isInt16(MaxAlign-NumBytes) && "Unhandled stack size and alignment!");
     BuildMI(MBB, MBBI, PPC::RLWINM, 4, PPC::R0)
       .addReg(PPC::R1).addImm(0).addImm(32-Log2_32(MaxAlign)).addImm(31);
-    BuildMI(MBB, MBBI, PPC::SUBFIC,2,PPC::R0).addReg(PPC::R0).addSImm(MaxAlign);
-    BuildMI(MBB, MBBI, PPC::ADDI, 2, PPC::R0).addReg(PPC::R0)
-      .addSImm(NegNumbytes);
+    BuildMI(MBB, MBBI, PPC::SUBFIC,2,PPC::R0).addReg(PPC::R0)
+      .addSImm(MaxAlign-NumBytes);
     BuildMI(MBB, MBBI, PPC::STWUX, 3)
       .addReg(PPC::R1).addReg(PPC::R1).addReg(PPC::R0);
   } else if (NumBytes <= 32768) {
