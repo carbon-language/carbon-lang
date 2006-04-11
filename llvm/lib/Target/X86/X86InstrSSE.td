@@ -1321,13 +1321,6 @@ def PACKUSWBrm : PDI<0x67, MRMSrcReg, (ops VR128:$dst, VR128:$src1,
 }
 
 // Shuffle and unpack instructions
-def PSHUFWri : PSIi8<0x70, MRMSrcReg,
-                     (ops VR64:$dst, VR64:$src1, i8imm:$src2),
-                     "pshufw {$src2, $src1, $dst|$dst, $src1, $src2}", []>;
-def PSHUFWmi : PSIi8<0x70, MRMSrcMem,
-                     (ops VR64:$dst, i64mem:$src1, i8imm:$src2),
-                     "pshufw {$src2, $src1, $dst|$dst, $src1, $src2}", []>;
-
 def PSHUFDri : PDIi8<0x70, MRMSrcReg,
                      (ops VR128:$dst, VR128:$src1, i8imm:$src2),
                      "pshufd {$src2, $src1, $dst|$dst, $src1, $src2}",
@@ -1516,6 +1509,12 @@ def PMOVMSKBrr : PDI<0xD7, MRMSrcReg, (ops R32:$dst, VR128:$src),
                      "pmovmskb {$src, $dst|$dst, $src}",
                      [(set R32:$dst, (int_x86_sse2_pmovmskb_128 VR128:$src))]>;
 
+// Conditional store
+def MASKMOVDQU : PDI<0xF7, RawFrm, (ops VR128:$src, VR128:$mask),
+                     "maskmovdqu {$mask, $src|$src, $mask}",
+                     [(int_x86_sse2_maskmov_dqu VR128:$src, VR128:$mask, EDI)]>,
+                 Imp<[EDI],[]>;
+
 // Prefetching loads
 def PREFETCHT0   : I<0x18, MRM1m, (ops i8mem:$src),
                      "prefetcht0 $src", []>, TB,
@@ -1531,15 +1530,19 @@ def PREFETCHTNTA : I<0x18, MRM0m, (ops i8mem:$src),
                    Requires<[HasSSE1]>;
 
 // Non-temporal stores
-def MOVNTQ   : I<0xE7, MRMDestMem, (ops i64mem:$dst, VR64:$src),
-                 "movntq {$src, $dst|$dst, $src}", []>, TB,
-               Requires<[HasSSE1]>;
-def MOVNTPS  : I<0x2B, MRMDestMem, (ops i128mem:$dst, VR128:$src),
-                "movntps {$src, $dst|$dst, $src}", []>, TB,
-               Requires<[HasSSE1]>;
-def MASKMOVQ : I<0xF7, MRMDestMem, (ops i64mem:$dst, VR64:$src),
-                 "maskmovq {$src, $dst|$dst, $src}", []>, TB,
-               Requires<[HasSSE1]>;
+def MOVNTPSmr : PSI<0x2B, MRMDestMem, (ops i128mem:$dst, VR128:$src),
+                    "movntps {$src, $dst|$dst, $src}",
+                    [(int_x86_sse_movnt_ps addr:$dst, VR128:$src)]>;
+def MOVNTPDmr : PDI<0x2B, MRMDestMem, (ops i128mem:$dst, VR128:$src),
+                    "movntpd {$src, $dst|$dst, $src}",
+                    [(int_x86_sse2_movnt_pd addr:$dst, VR128:$src)]>;
+def MOVNTDQmr : PDI<0xE7, MRMDestMem, (ops f128mem:$dst, VR128:$src),
+                    "movntdq {$src, $dst|$dst, $src}",
+                    [(int_x86_sse2_movnt_dq addr:$dst, VR128:$src)]>;
+def MOVNTImr  :   I<0xC3, MRMDestMem, (ops i32mem:$dst, R32:$src),
+                    "movnti {$src, $dst|$dst, $src}",
+                    [(int_x86_sse2_movnt_i addr:$dst, R32:$src)]>, 
+                  TB, Requires<[HasSSE2]>;
 
 // Store fence
 def SFENCE : I<0xAE, MRM7m, (ops),

@@ -141,10 +141,9 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse_prefetch : GCCBuiltin<"__builtin_ia32_prefetch">,
               Intrinsic<[llvm_ptr_ty, llvm_int_ty], [IntrWriteMem]>;
-  def int_x86_sse_movntq : GCCBuiltin<"__builtin_ia32_movntq">,
-              Intrinsic<[llvm_ptr_ty, llvm_v2i32_ty], [IntrWriteMem]>;
-  def int_x86_sse_movntps : GCCBuiltin<"__builtin_ia32_movntps">,
-              Intrinsic<[llvm_ptr_ty, llvm_v4f32_ty], [IntrWriteMem]>;
+  def int_x86_sse_movnt_ps : GCCBuiltin<"__builtin_ia32_movntps">,
+              Intrinsic<[llvm_void_ty, llvm_ptr_ty,
+                         llvm_v4f32_ty], [IntrWriteMem]>;
   def int_x86_sse_sfence : GCCBuiltin<"__builtin_ia32_sfence">,
               Intrinsic<[llvm_void_ty], [IntrWriteMem]>;
 }
@@ -281,6 +280,19 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
                          llvm_v2f64_ty], [IntrWriteMem]>;
 }
 
+// Cacheability support ops
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse2_movnt_dq : GCCBuiltin<"__builtin_ia32_movntdq">,
+              Intrinsic<[llvm_void_ty, llvm_ptr_ty,
+                         llvm_v2i64_ty], [IntrWriteMem]>;
+  def int_x86_sse2_movnt_pd : GCCBuiltin<"__builtin_ia32_movntpd">,
+              Intrinsic<[llvm_void_ty, llvm_ptr_ty,
+                         llvm_v2f64_ty], [IntrWriteMem]>;
+  def int_x86_sse2_movnt_i : GCCBuiltin<"__builtin_ia32_movnti">,
+              Intrinsic<[llvm_void_ty, llvm_ptr_ty,
+                         llvm_int_ty], [IntrWriteMem]>;
+}
+
 // Misc.
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse2_packsswb_128 : GCCBuiltin<"__builtin_ia32_packsswb128">,
@@ -296,6 +308,9 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
               Intrinsic<[llvm_int_ty, llvm_v2f64_ty], [IntrNoMem]>;
   def int_x86_sse2_pmovmskb_128 : GCCBuiltin<"__builtin_ia32_pmovmskb128">,
               Intrinsic<[llvm_int_ty, llvm_v16i8_ty], [IntrNoMem]>;
+  def int_x86_sse2_maskmov_dqu : GCCBuiltin<"__builtin_ia32_maskmovdqu">,
+              Intrinsic<[llvm_void_ty, llvm_v16i8_ty,
+                         llvm_v16i8_ty, llvm_ptr_ty], [IntrWriteMem]>;
 }
 
 //===----------------------------------------------------------------------===//
