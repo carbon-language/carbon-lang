@@ -1397,20 +1397,47 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp1 = DAG.getNode(ISD::TokenFactor, MVT::Other, Tmp1, LastCALLSEQ_END);
     Tmp1 = LegalizeOp(Tmp1);
     LastCALLSEQ_END = DAG.getEntryNode();
-    
+    Tmp2 = Node->getOperand(1);
+      
     switch (Node->getNumOperands()) {
     case 2:  // ret val
-      switch (getTypeAction(Node->getOperand(1).getValueType())) {
+      switch (getTypeAction(Tmp2.getValueType())) {
       case Legal:
-        Tmp2 = LegalizeOp(Node->getOperand(1));
-        Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
+        Result = DAG.UpdateNodeOperands(Result, Tmp1, LegalizeOp(Tmp2));
         break;
-      case Expand: {
-        SDOperand Lo, Hi;
-        ExpandOp(Node->getOperand(1), Lo, Hi);
-        Result = DAG.getNode(ISD::RET, MVT::Other, Tmp1, Lo, Hi);
+      case Expand:
+        if (Tmp2.getValueType() != MVT::Vector) {
+          SDOperand Lo, Hi;
+          ExpandOp(Tmp2, Lo, Hi);
+          Result = DAG.getNode(ISD::RET, MVT::Other, Tmp1, Lo, Hi);
+        } else {
+          SDNode *InVal = Tmp2.Val;
+          unsigned NumElems =
+            cast<ConstantSDNode>(*(InVal->op_end()-2))->getValue();
+          MVT::ValueType EVT = cast<VTSDNode>(*(InVal->op_end()-1))->getVT();
+          
+          // Figure out if there is a Packed type corresponding to this Vector
+          // type.  If so, convert to the packed type.
+          MVT::ValueType TVT = MVT::getVectorType(EVT, NumElems);
+          if (TVT != MVT::Other && TLI.isTypeLegal(TVT)) {
+            // Turn this into a return of the packed type.
+            Tmp2 = PackVectorOp(Tmp2, TVT);
+            Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
+          } else if (NumElems == 1) {
+            // Turn this into a return of the scalar type.
+            Tmp2 = PackVectorOp(Tmp2, EVT);
+            Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
+            // The scalarized value type may not be legal, e.g. it might require
+            // promotion or expansion.  Relegalize the return.
+            Result = LegalizeOp(Result);
+          } else {
+            SDOperand Lo, Hi;
+            SplitVectorOp(Tmp2, Lo, Hi);
+            Result = DAG.getNode(ISD::RET, MVT::Other, Tmp1, Lo, Hi);
+            Result = LegalizeOp(Result);
+          }
+        }
         break;
-      }
       case Promote:
         Tmp2 = PromoteOp(Node->getOperand(1));
         Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
