@@ -1502,8 +1502,6 @@ dist-check:: $(DistTarGZip)
 	  $(MAKE) check && \
 	  $(MAKE) install && \
 	  $(MAKE) uninstall && \
-	  $(MAKE) dist && \
-	  $(MAKE) clean && \
 	  $(MAKE) dist-clean && \
 	  $(EchoCmd) ===== $(DistTarGZip) Ready For Distribution =====
 
