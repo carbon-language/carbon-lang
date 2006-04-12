@@ -1,4 +1,5 @@
-proc llvm-runtest { programs objdir srcdir subdir target_triplet llvmgcc llvmgxx prcontext} {
+proc llvm-runtest { programs objdir srcdir subdir target_triplet llvmgcc llvmgxx prcontext llvmgcc_version} {
+
 
     set timeout 60
 
@@ -65,7 +66,6 @@ proc llvm-runtest { programs objdir srcdir subdir target_triplet llvmgcc llvmgxx
 		puts $scriptFileId $new_runline
 	    } elseif {[regexp {XFAIL:[ *](.+)} $line match targets]} {
 		set targets
-		
 
 		#split up target if more then 1 specified
 		foreach target [split $targets ,] {
@@ -73,6 +73,10 @@ proc llvm-runtest { programs objdir srcdir subdir target_triplet llvmgcc llvmgxx
 			set outcome XFAIL
 		    } elseif { [regexp $target $target_triplet match] } {
 			set outcome XFAIL
+		    } elseif { [regexp {llvmgcc(([0-9]+)|([0-9]+[.][0-9]+))} $target match submatch submatch2]  } {
+		if { [regexp ^($submatch)$|^(($submatch)(\.)) $llvmgcc_version match] } {
+			  set outcome XFAIL
+		    	}
 		    }
 		    
 		}
