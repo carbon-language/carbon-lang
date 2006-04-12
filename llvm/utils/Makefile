@@ -13,7 +13,8 @@ DIRS = Burg TableGen fpcmp
 EXTRA_DIST = check-each-file codegen-diff countloc.sh cvsupdate emacs \
 	     getsrcs.sh llvmdo llvmgrep llvm-native-gcc llvm-native-gxx \
              makellvm NightlyTest.gnuplot NightlyTest.pl \
-	     NightlyTestTemplate.html profile.pl RegressionFinder.pl vim
+	     NightlyTestTemplate.html profile.pl RegressionFinder.pl vim \
+	     llvm-config
 
 include $(LEVEL)/Makefile.common
 
