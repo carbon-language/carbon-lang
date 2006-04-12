@@ -794,3 +794,7 @@ http://llvm.org/bugs/show_bug.cgi?id=729
 X86RegisterInfo::copyRegToReg() returns X86::MOVAPSrr for VR128. Is it possible
 to choose between movaps, movapd, and movdqa based on types of source and
 destination?
+
+How about andps, andpd, and pand? Do we really care about the type of the packed
+elements? If not, why not always use the "ps" variants which are likely to be
+shorter.

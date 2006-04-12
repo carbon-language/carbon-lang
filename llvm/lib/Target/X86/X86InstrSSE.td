@@ -1019,9 +1019,7 @@ let isTwoAddress = 1 in {
 let isCommutable = 1 in {
 def ANDPSrr : PSI<0x54, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                   "andps {$src2, $dst|$dst, $src2}",
-                  [(set VR128:$dst,
-                    (and (bc_v4i32 (v4f32 VR128:$src1)),
-                     (bc_v4i32 (v4f32 VR128:$src2))))]>;
+                  [(set VR128:$dst, (v2i64 (and VR128:$src1, VR128:$src2)))]>;
 def ANDPDrr : PDI<0x54, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                 "andpd {$src2, $dst|$dst, $src2}",
                   [(set VR128:$dst,
@@ -1029,9 +1027,7 @@ def ANDPDrr : PDI<0x54, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                      (bc_v2i64 (v2f64 VR128:$src2))))]>;
 def ORPSrr  : PSI<0x56, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                   "orps {$src2, $dst|$dst, $src2}",
-                  [(set VR128:$dst,
-                    (or (bc_v4i32 (v4f32 VR128:$src1)),
-                     (bc_v4i32 (v4f32 VR128:$src2))))]>;
+                  [(set VR128:$dst, (v2i64 (or VR128:$src1, VR128:$src2)))]>;
 def ORPDrr  : PDI<0x56, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                   "orpd {$src2, $dst|$dst, $src2}",
                   [(set VR128:$dst,
@@ -1039,9 +1035,7 @@ def ORPDrr  : PDI<0x56, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                      (bc_v2i64 (v2f64 VR128:$src2))))]>;
 def XORPSrr : PSI<0x57, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                   "xorps {$src2, $dst|$dst, $src2}",
-                  [(set VR128:$dst,
-                    (xor (bc_v4i32 (v4f32 VR128:$src1)),
-                     (bc_v4i32 (v4f32 VR128:$src2))))]>;
+                  [(set VR128:$dst, (v2i64 (xor VR128:$src1, VR128:$src2)))]>;
 def XORPDrr : PDI<0x57, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                   "xorpd {$src2, $dst|$dst, $src2}",
                   [(set VR128:$dst,
@@ -1050,9 +1044,8 @@ def XORPDrr : PDI<0x57, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
 }
 def ANDPSrm : PSI<0x54, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                   "andps {$src2, $dst|$dst, $src2}",
-                [(set VR128:$dst,
-                  (and (bc_v4i32 (v4f32 VR128:$src1)),
-                   (bc_v4i32 (loadv4f32 addr:$src2))))]>;
+                  [(set VR128:$dst, (and VR128:$src1,
+                                          (bc_v2i64 (loadv4f32 addr:$src2))))]>;
 def ANDPDrm : PDI<0x54, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                   "andpd {$src2, $dst|$dst, $src2}",
                 [(set VR128:$dst,
@@ -1060,9 +1053,8 @@ def ANDPDrm : PDI<0x54, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                    (bc_v2i64 (loadv2f64 addr:$src2))))]>;
 def ORPSrm  : PSI<0x56, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                   "orps {$src2, $dst|$dst, $src2}",
-                 [(set VR128:$dst,
-                   (or (bc_v4i32 (v4f32 VR128:$src1)),
-                    (bc_v4i32 (loadv4f32 addr:$src2))))]>;
+                  [(set VR128:$dst, (or VR128:$src1,
+                                          (bc_v2i64 (loadv4f32 addr:$src2))))]>;
 def ORPDrm  : PDI<0x56, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                 "orpd {$src2, $dst|$dst, $src2}",
                  [(set VR128:$dst,
@@ -1070,9 +1062,8 @@ def ORPDrm  : PDI<0x56, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                     (bc_v2i64 (loadv2f64 addr:$src2))))]>;
 def XORPSrm : PSI<0x57, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                   "xorps {$src2, $dst|$dst, $src2}",
-                [(set VR128:$dst,
-                  (xor (bc_v4i32 (v4f32 VR128:$src1)),
-                   (bc_v4i32 (loadv4f32 addr:$src2))))]>;
+                  [(set VR128:$dst, (xor VR128:$src1,
+                                          (bc_v2i64 (loadv4f32 addr:$src2))))]>;
 def XORPDrm : PDI<0x57, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                   "xorpd {$src2, $dst|$dst, $src2}",
                 [(set VR128:$dst,
@@ -1080,14 +1071,14 @@ def XORPDrm : PDI<0x57, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                    (bc_v2i64 (loadv2f64 addr:$src2))))]>;
 def ANDNPSrr : PSI<0x55, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                   "andnps {$src2, $dst|$dst, $src2}",
-                [(set VR128:$dst,
-                  (and (vnot (bc_v4i32 (v4f32 VR128:$src1))),
-                   (bc_v4i32 (v4f32 VR128:$src2))))]>;
+                  [(set VR128:$dst, (v2i64 (and (xor VR128:$src1,
+                                                (bc_v2i64 (v4i32 immAllOnesV))),
+                                            VR128:$src2)))]>;
 def ANDNPSrm : PSI<0x55, MRMSrcMem, (ops VR128:$dst, VR128:$src1,f128mem:$src2),
                   "andnps {$src2, $dst|$dst, $src2}",
-                  [(set VR128:$dst,
-                    (and (vnot (bc_v4i32 (v4f32 VR128:$src1))),
-                     (bc_v4i32 (loadv4f32 addr:$src2))))]>;
+                  [(set VR128:$dst, (v2i64 (and (xor VR128:$src1,
+                                                (bc_v2i64 (v4i32 immAllOnesV))),
+                                         (bc_v2i64 (loadv4f32 addr:$src2)))))]>;
 def ANDNPDrr : PDI<0x55, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                   "andnpd {$src2, $dst|$dst, $src2}",
                 [(set VR128:$dst,
@@ -1922,110 +1913,29 @@ def : Pat<(v4i32 (vector_shuffle VR128:$src, (undef),
 
 // 128-bit logical shifts
 def : Pat<(int_x86_sse2_psll_dq VR128:$src1, imm:$src2),
-          (v2i64 (PSLLDQri VR128:$src1, (PSxLDQ_imm imm:$src2)))>;
+          (v2i64 (PSLLDQri VR128:$src1, (PSxLDQ_imm imm:$src2)))>,
+      Requires<[HasSSE2]>;
 def : Pat<(int_x86_sse2_psrl_dq VR128:$src1, imm:$src2),
-          (v2i64 (PSRLDQri VR128:$src1, (PSxLDQ_imm imm:$src2)))>;
+          (v2i64 (PSRLDQri VR128:$src1, (PSxLDQ_imm imm:$src2)))>,
+      Requires<[HasSSE2]>;
 
-// Logical ops
-def : Pat<(and (bc_v4i32 (v4f32 VR128:$src1)), (loadv4i32 addr:$src2)),
-          (ANDPSrm VR128:$src1, addr:$src2)>;
-def : Pat<(and (bc_v2i64 (v2f64 VR128:$src1)), (loadv2i64 addr:$src2)),
-          (ANDPDrm VR128:$src1, addr:$src2)>;
-def : Pat<(or  (bc_v4i32 (v4f32 VR128:$src1)), (loadv4i32 addr:$src2)),
-          (ORPSrm VR128:$src1, addr:$src2)>;
-def : Pat<(or  (bc_v2i64 (v2f64 VR128:$src1)), (loadv2i64 addr:$src2)),
-          (ORPDrm VR128:$src1, addr:$src2)>;
-def : Pat<(xor (bc_v4i32 (v4f32 VR128:$src1)), (loadv4i32 addr:$src2)),
-          (XORPSrm VR128:$src1, addr:$src2)>;
-def : Pat<(xor (bc_v2i64 (v2f64 VR128:$src1)), (loadv2i64 addr:$src2)),
-          (XORPDrm VR128:$src1, addr:$src2)>;
-def : Pat<(and (vnot (bc_v4i32 (v4f32 VR128:$src1))), (loadv4i32 addr:$src2)),
-          (ANDNPSrm VR128:$src1, addr:$src2)>;
-def : Pat<(and (vnot (bc_v2i64 (v2f64 VR128:$src1))), (loadv2i64 addr:$src2)),
-          (ANDNPDrm VR128:$src1, addr:$src2)>;
+// Some special case pandn patterns.
+def : Pat<(v2i64 (and (xor VR128:$src1, (bc_v2i64 (v4i32 immAllOnesV))),
+                  VR128:$src2)),
+          (PANDNrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
+def : Pat<(v2i64 (and (xor VR128:$src1, (bc_v2i64 (v8i16 immAllOnesV))),
+                  VR128:$src2)),
+          (PANDNrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
+def : Pat<(v2i64 (and (xor VR128:$src1, (bc_v2i64 (v16i8 immAllOnesV))),
+                  VR128:$src2)),
+          (PANDNrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
 
-def : Pat<(bc_v4f32 (v4i32 (and VR128:$src1, VR128:$src2))),
-          (ANDPSrr VR128:$src1, VR128:$src2)>;
-def : Pat<(bc_v4f32 (v4i32 (or VR128:$src1, VR128:$src2))),
-          (ORPSrr VR128:$src1, VR128:$src2)>;
-def : Pat<(bc_v4f32 (v4i32 (xor VR128:$src1, VR128:$src2))),
-          (XORPSrr VR128:$src1, VR128:$src2)>;
-def : Pat<(bc_v4f32 (v4i32 (and (vnot VR128:$src1), VR128:$src2))),
-          (ANDNPSrr VR128:$src1, VR128:$src2)>;
-
-def : Pat<(bc_v4f32 (v4i32 (and VR128:$src1, (load addr:$src2)))),
-          (ANDPSrm (v4i32 VR128:$src1), addr:$src2)>;
-def : Pat<(bc_v4f32 (v4i32 (or VR128:$src1, (load addr:$src2)))),
-          (ORPSrm VR128:$src1, addr:$src2)>;
-def : Pat<(bc_v4f32 (v4i32 (xor VR128:$src1, (load addr:$src2)))),
-          (XORPSrm VR128:$src1, addr:$src2)>;
-def : Pat<(bc_v4f32 (v4i32 (and (vnot VR128:$src1), (load addr:$src2)))),
-          (ANDNPSrm VR128:$src1, addr:$src2)>;
-
-def : Pat<(bc_v2f64 (v2i64 (and VR128:$src1, VR128:$src2))),
-          (ANDPDrr VR128:$src1, VR128:$src2)>;
-def : Pat<(bc_v2f64 (v2i64 (or VR128:$src1, VR128:$src2))),
-          (ORPDrr VR128:$src1, VR128:$src2)>;
-def : Pat<(bc_v2f64 (v2i64 (xor VR128:$src1, VR128:$src2))),
-          (XORPDrr VR128:$src1, VR128:$src2)>;
-def : Pat<(bc_v2f64 (v2i64 (and (vnot VR128:$src1), VR128:$src2))),
-          (ANDNPDrr VR128:$src1, VR128:$src2)>;
-
-def : Pat<(bc_v2f64 (v2i64 (and VR128:$src1, (load addr:$src2)))),
-          (ANDPSrm (v2i64 VR128:$src1), addr:$src2)>;
-def : Pat<(bc_v2f64 (v2i64 (or VR128:$src1, (load addr:$src2)))),
-          (ORPSrm VR128:$src1, addr:$src2)>;
-def : Pat<(bc_v2f64 (v2i64 (xor VR128:$src1, (load addr:$src2)))),
-          (XORPSrm VR128:$src1, addr:$src2)>;
-def : Pat<(bc_v2f64 (v2i64 (and (vnot VR128:$src1), (load addr:$src2)))),
-          (ANDNPSrm VR128:$src1, addr:$src2)>;
-
-def : Pat<(v4i32 (and VR128:$src1, VR128:$src2)),
-          (PANDrr VR128:$src1, VR128:$src2)>;
-def : Pat<(v8i16 (and VR128:$src1, VR128:$src2)),
-          (PANDrr VR128:$src1, VR128:$src2)>;
-def : Pat<(v16i8 (and VR128:$src1, VR128:$src2)),
-          (PANDrr VR128:$src1, VR128:$src2)>;
-def : Pat<(v4i32 (or VR128:$src1, VR128:$src2)),
-          (PORrr VR128:$src1, VR128:$src2)>;
-def : Pat<(v8i16 (or VR128:$src1, VR128:$src2)),
-          (PORrr VR128:$src1, VR128:$src2)>;
-def : Pat<(v16i8 (or VR128:$src1, VR128:$src2)),
-          (PORrr VR128:$src1, VR128:$src2)>;
-def : Pat<(v4i32 (xor VR128:$src1, VR128:$src2)),
-          (PXORrr VR128:$src1, VR128:$src2)>;
-def : Pat<(v8i16 (xor VR128:$src1, VR128:$src2)),
-          (PXORrr VR128:$src1, VR128:$src2)>;
-def : Pat<(v16i8 (xor VR128:$src1, VR128:$src2)),
-          (PXORrr VR128:$src1, VR128:$src2)>;
-def : Pat<(v4i32 (and (vnot VR128:$src1), VR128:$src2)),
-          (PANDNrr VR128:$src1, VR128:$src2)>;
-def : Pat<(v8i16 (and (vnot VR128:$src1), VR128:$src2)),
-          (PANDNrr VR128:$src1, VR128:$src2)>;
-def : Pat<(v16i8 (and (vnot VR128:$src1), VR128:$src2)),
-          (PANDNrr VR128:$src1, VR128:$src2)>;
-
-def : Pat<(v4i32 (and VR128:$src1, (load addr:$src2))),
-          (PANDrm VR128:$src1, addr:$src2)>;
-def : Pat<(v8i16 (and VR128:$src1, (load addr:$src2))),
-          (PANDrm VR128:$src1, addr:$src2)>;
-def : Pat<(v16i8 (and VR128:$src1, (load addr:$src2))),
-          (PANDrm VR128:$src1, addr:$src2)>;
-def : Pat<(v4i32 (or VR128:$src1, (load addr:$src2))),
-          (PORrm VR128:$src1, addr:$src2)>;
-def : Pat<(v8i16 (or VR128:$src1, (load addr:$src2))),
-          (PORrm VR128:$src1, addr:$src2)>;
-def : Pat<(v16i8 (or VR128:$src1, (load addr:$src2))),
-          (PORrm VR128:$src1, addr:$src2)>;
-def : Pat<(v4i32 (xor VR128:$src1, (load addr:$src2))),
-          (PXORrm VR128:$src1, addr:$src2)>;
-def : Pat<(v8i16 (xor VR128:$src1, (load addr:$src2))),
-          (PXORrm VR128:$src1, addr:$src2)>;
-def : Pat<(v16i8 (xor VR128:$src1, (load addr:$src2))),
-          (PXORrm VR128:$src1, addr:$src2)>;
-def : Pat<(v4i32 (and (vnot VR128:$src1), (load addr:$src2))),
-          (PANDNrm VR128:$src1, addr:$src2)>;
-def : Pat<(v8i16 (and (vnot VR128:$src1), (load addr:$src2))),
-          (PANDNrm VR128:$src1, addr:$src2)>;
-def : Pat<(v16i8 (and (vnot VR128:$src1), (load addr:$src2))),
-          (PANDNrm VR128:$src1, addr:$src2)>;
+def : Pat<(v2i64 (and (xor VR128:$src1, (bc_v2i64 (v4i32 immAllOnesV))),
+                  (load addr:$src2))),
+          (PANDNrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
+def : Pat<(v2i64 (and (xor VR128:$src1, (bc_v2i64 (v8i16 immAllOnesV))),
+                  (load addr:$src2))),
+          (PANDNrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
+def : Pat<(v2i64 (and (xor VR128:$src1, (bc_v2i64 (v16i8 immAllOnesV))),
+                  (load addr:$src2))),
+          (PANDNrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
