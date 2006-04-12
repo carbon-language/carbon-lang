@@ -1,5 +1,5 @@
 ; Tests to make sure elimination of casts is working correctly
-
+; RUN: llvm-as < %s | opt -instcombine -disable-output &&
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep '%c' | not grep cast
 
 %inbuf = external global [32832 x ubyte]
@@ -166,3 +166,14 @@ int %test26(float %F) {
 	%D = cast double %c to int
 	ret int %D
 }
+
+[4 x float]* %test27([9 x [4 x float]]* %A) {
+        %c = cast [9 x [4 x float]]* %A to [4 x float]*
+	ret [4 x float]* %c
+}
+
+float* %test28([4 x float]* %A) {
+        %c = cast [4 x float]* %A to float*
+	ret float* %c
+}
+
