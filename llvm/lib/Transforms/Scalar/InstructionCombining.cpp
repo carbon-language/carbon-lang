@@ -4813,7 +4813,30 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
   if (isa<PHINode>(Src))
     if (Instruction *NV = FoldOpIntoPhi(CI))
       return NV;
+  
+  // If the source and destination are pointers, and this cast is equivalent to
+  // a getelementptr X, 0, 0, 0...  turn it into the appropriate getelementptr.
+  // This can enhance SROA and other transforms that want type-safe pointers.
+  if (const PointerType *DstPTy = dyn_cast<PointerType>(CI.getType()))
+    if (const PointerType *SrcPTy = dyn_cast<PointerType>(Src->getType())) {
+      const Type *DstTy = DstPTy->getElementType();
+      const Type *SrcTy = SrcPTy->getElementType();
+      
+      Constant *ZeroUInt = Constant::getNullValue(Type::UIntTy);
+      unsigned NumZeros = 0;
+      while (SrcTy != DstTy && 
+             isa<CompositeType>(SrcTy) && !isa<PointerType>(SrcTy)) {
+        SrcTy = cast<CompositeType>(SrcTy)->getTypeAtIndex(ZeroUInt);
+        ++NumZeros;
+      }
 
+      // If we found a path from the src to dest, create the getelementptr now.
+      if (SrcTy == DstTy) {
+        std::vector<Value*> Idxs(NumZeros+1, ZeroUInt);
+        return new GetElementPtrInst(Src, Idxs);
+      }
+    }
+      
   // If the source value is an instruction with only this use, we can attempt to
   // propagate the cast into the instruction.  Also, only handle integral types
   // for now.
