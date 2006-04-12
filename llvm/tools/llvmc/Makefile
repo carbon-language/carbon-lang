@@ -10,7 +10,7 @@ LEVEL = ../..
 TOOLNAME = llvmc
 USEDLIBS = LLVMBCReader LLVMCore LLVMSupport.a LLVMbzip2 LLVMSystem.a
 CONFIG_FILES = c cpp ll
-EXTRA_DIST = c cpp ll
+EXTRA_DIST = c cpp ll ConfigLexer.cpp.cvs ConfigLexer.l.cvs
 
 # The CompilerDriver needs to know the locations of several configured
 # directories and paths. We define these as preprocessor symbols so they can 
