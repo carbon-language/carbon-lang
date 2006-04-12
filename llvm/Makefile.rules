@@ -690,7 +690,8 @@ $(warning Modules require llvm-gcc but no llvm-gcc is available ****)
 else
 
 Module     := $(LibDir)/$(MODULE_NAME).bc
-LinkModule := $(GCCLD)
+LinkModule := $(GCCLD) -L$(CFERuntimeLibDir)
+
 
 ifdef EXPORTED_SYMBOL_FILE
 LinkModule += -internalize-public-api-file=$(EXPORTED_SYMBOL_FILE)
@@ -800,7 +801,7 @@ else
 all-local:: $(LibName.BCA)
 
 ifdef EXPORTED_SYMBOL_FILE
-BCLinkLib = $(GCCLD) -internalize-public-api-file=$(EXPORTED_SYMBOL_FILE)
+BCLinkLib = $(GCCLD) -L$(CFERuntimeLibDir) -internalize-public-api-file=$(EXPORTED_SYMBOL_FILE)
 
 $(LibName.BCA): $(ObjectsBC) $(LibDir)/.dir $(GCCLD) \
                 $(LLVMToolDir)/llvm-ar
