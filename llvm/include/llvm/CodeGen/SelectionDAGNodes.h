@@ -609,7 +609,7 @@ public:
   SDNode *Val;        // The node defining the value we are using.
   unsigned ResNo;     // Which return value of the node we are using.
 
-  SDOperand() : Val(0) {}
+  SDOperand() : Val(0), ResNo(0) {}
   SDOperand(SDNode *val, unsigned resno) : Val(val), ResNo(resno) {}
 
   bool operator==(const SDOperand &O) const {
