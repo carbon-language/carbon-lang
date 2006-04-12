@@ -14,7 +14,7 @@ EXTRA_DIST := cgiplotNLT.pl check-each-file codegen-diff countloc.sh cvsupdate \
               DSAclean.py DSAextract.py emacs findsym.pl GenLibDeps.pl \
 	      getsrcs.sh importNLT.pl llvmdo llvmgrep llvm-native-gcc \
 	      llvm-native-gxx makellvm NightlyTest.gnuplot NightlyTest.pl \
-	      NightlyTestTemplate.html NLT.schema parseNTL.pl plotNLT.pl \
+	      NightlyTestTemplate.html NLT.schema parseNLT.pl plotNLT.pl \
 	      profile.pl RegressionFinder.pl userloc.pl webNLT.pl \
 	      vim llvm-config
 
