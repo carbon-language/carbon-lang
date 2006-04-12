@@ -25,7 +25,7 @@ else
     DIRS += docs
   endif
 endif
-EXTRA_DIST := test llvm.spec include
+EXTRA_DIST := test llvm.spec include win32 Xcode
 
 include $(LLVM_SRC_ROOT)/Makefile.rules
 
