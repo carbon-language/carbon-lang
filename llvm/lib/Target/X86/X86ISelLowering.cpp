@@ -302,10 +302,6 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::SUB,                MVT::v4i32, Legal);
     setOperationAction(ISD::MUL,                MVT::v2f64, Legal);
     setOperationAction(ISD::LOAD,               MVT::v2f64, Legal);
-    setOperationAction(ISD::LOAD,               MVT::v16i8, Legal);
-    setOperationAction(ISD::LOAD,               MVT::v8i16, Legal);
-    setOperationAction(ISD::LOAD,               MVT::v4i32, Legal);
-    setOperationAction(ISD::LOAD,               MVT::v2i64, Legal);
     setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v16i8, Custom);
     setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v8i16, Custom);
     setOperationAction(ISD::BUILD_VECTOR,       MVT::v2f64, Custom);
@@ -329,7 +325,10 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
          VT != (unsigned)MVT::v2i64; VT++) {
       setOperationAction(ISD::SELECT, (MVT::ValueType)VT, Promote);
       AddPromotedToType (ISD::SELECT, (MVT::ValueType)VT, MVT::v2i64);
+      setOperationAction(ISD::LOAD,   (MVT::ValueType)VT, Promote);
+      AddPromotedToType (ISD::LOAD,   (MVT::ValueType)VT, MVT::v2i64);
     }
+    setOperationAction(ISD::LOAD,               MVT::v2i64, Legal);
     setOperationAction(ISD::SELECT,             MVT::v2i64, Custom);
     setOperationAction(ISD::SELECT,             MVT::v2f64, Custom);
   }

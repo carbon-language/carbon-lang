@@ -531,7 +531,7 @@ def Int_CVTTSD2SIrr: SDI<0x2C, MRMSrcReg, (ops R32:$dst, VR128:$src),
 def Int_CVTTSD2SIrm: SDI<0x2C, MRMSrcMem, (ops R32:$dst, f128mem:$src),
                          "cvttsd2si {$src, $dst|$dst, $src}",
                          [(set R32:$dst, (int_x86_sse2_cvttsd2si
-                                          (load addr:$src)))]>;
+                                          (loadv2f64 addr:$src)))]>;
 
 def CVTSD2SIrr: SDI<0x2D, MRMSrcReg, (ops R32:$dst, VR128:$src),
                     "cvtsd2si {$src, $dst|$dst, $src}",
@@ -539,7 +539,7 @@ def CVTSD2SIrr: SDI<0x2D, MRMSrcReg, (ops R32:$dst, VR128:$src),
 def CVTSD2SIrm: SDI<0x2D, MRMSrcMem, (ops R32:$dst, f128mem:$src),
                     "cvtsd2si {$src, $dst|$dst, $src}",
                     [(set R32:$dst, (int_x86_sse2_cvtsd2si
-                                     (load addr:$src)))]>;
+                                     (loadv2f64 addr:$src)))]>;
 
 // Comparison instructions
 let isTwoAddress = 1 in {
@@ -834,7 +834,7 @@ def CVTDQ2PSrr : I<0x5B, MRMSrcReg, (ops VR128:$dst, VR128:$src),
 def CVTDQ2PSrm : I<0x5B, MRMSrcMem, (ops VR128:$dst, i128mem:$src),
                   "cvtdq2ps {$src, $dst|$dst, $src}",
                   [(set VR128:$dst, (int_x86_sse2_cvtdq2ps
-                                     (load addr:$src)))]>,
+                                     (bc_v4i32 (loadv2i64 addr:$src))))]>,
                  TB, Requires<[HasSSE2]>;
 
 // SSE2 instructions with XS prefix
@@ -845,7 +845,7 @@ def CVTDQ2PDrr : I<0xE6, MRMSrcReg, (ops VR128:$dst, VR128:$src),
 def CVTDQ2PDrm : I<0xE6, MRMSrcMem, (ops VR128:$dst, i64mem:$src),
                    "cvtdq2pd {$src, $dst|$dst, $src}",
                    [(set VR128:$dst, (int_x86_sse2_cvtdq2pd
-                                      (load addr:$src)))]>,
+                                      (bc_v4i32 (loadv2i64 addr:$src))))]>,
                  XS, Requires<[HasSSE2]>;
 
 def CVTPS2PIrr : PSI<0x2D, MRMSrcReg, (ops VR64:$dst, VR128:$src),
@@ -863,7 +863,7 @@ def CVTPS2DQrr : PDI<0x5B, MRMSrcReg, (ops VR128:$dst, VR128:$src),
 def CVTPS2DQrm : PDI<0x5B, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
                      "cvtps2dq {$src, $dst|$dst, $src}",
                      [(set VR128:$dst, (int_x86_sse2_cvtps2dq
-                                        (load addr:$src)))]>;
+                                        (loadv4f32 addr:$src)))]>;
 // SSE2 packed instructions with XS prefix
 def CVTTPS2DQrr : I<0x5B, MRMSrcReg, (ops VR128:$dst, VR128:$src),
                     "cvttps2dq {$src, $dst|$dst, $src}",
@@ -872,7 +872,7 @@ def CVTTPS2DQrr : I<0x5B, MRMSrcReg, (ops VR128:$dst, VR128:$src),
 def CVTTPS2DQrm : I<0x5B, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
                     "cvttps2dq {$src, $dst|$dst, $src}",
                     [(set VR128:$dst, (int_x86_sse2_cvttps2dq
-                                       (load addr:$src)))]>,
+                                       (loadv4f32 addr:$src)))]>,
                   XS, Requires<[HasSSE2]>;
 
 // SSE2 packed instructions with XD prefix
@@ -883,7 +883,7 @@ def CVTPD2DQrr : I<0xE6, MRMSrcReg, (ops VR128:$dst, VR128:$src),
 def CVTPD2DQrm : I<0xE6, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
                    "cvtpd2dq {$src, $dst|$dst, $src}",
                    [(set VR128:$dst, (int_x86_sse2_cvtpd2dq
-                                      (load addr:$src)))]>,
+                                      (loadv2f64 addr:$src)))]>,
                  XD, Requires<[HasSSE2]>;
 def CVTTPD2DQrr : PDI<0xE6, MRMSrcReg, (ops VR128:$dst, VR128:$src),
                       "cvttpd2dq {$src, $dst|$dst, $src}",
@@ -891,7 +891,7 @@ def CVTTPD2DQrr : PDI<0xE6, MRMSrcReg, (ops VR128:$dst, VR128:$src),
 def CVTTPD2DQrm : PDI<0xE6, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
                       "cvttpd2dq {$src, $dst|$dst, $src}",
                       [(set VR128:$dst, (int_x86_sse2_cvttpd2dq
-                                         (load addr:$src)))]>;
+                                         (loadv2f64 addr:$src)))]>;
 
 // SSE2 instructions without OpSize prefix
 def CVTPS2PDrr : I<0x5A, MRMSrcReg, (ops VR128:$dst, VR128:$src),
@@ -901,7 +901,7 @@ def CVTPS2PDrr : I<0x5A, MRMSrcReg, (ops VR128:$dst, VR128:$src),
 def CVTPS2PDrm : I<0x5A, MRMSrcReg, (ops VR128:$dst, f64mem:$src),
                    "cvtps2pd {$src, $dst|$dst, $src}",
                    [(set VR128:$dst, (int_x86_sse2_cvtps2pd
-                                      (load addr:$src)))]>,
+                                      (loadv4f32 addr:$src)))]>,
                  TB, Requires<[HasSSE2]>;
 
 def CVTPD2PSrr : PDI<0x5A, MRMSrcReg, (ops VR128:$dst, VR128:$src),
@@ -910,7 +910,7 @@ def CVTPD2PSrr : PDI<0x5A, MRMSrcReg, (ops VR128:$dst, VR128:$src),
 def CVTPD2PSrm : PDI<0x5A, MRMSrcReg, (ops VR128:$dst, f128mem:$src),
                      "cvtpd2ps {$src, $dst|$dst, $src}",
                      [(set VR128:$dst, (int_x86_sse2_cvtpd2ps
-                                        (load addr:$src)))]>;
+                                        (loadv2f64 addr:$src)))]>;
 
 // Arithmetic
 let isTwoAddress = 1 in {
@@ -1226,10 +1226,10 @@ def MOVDQArr : PDI<0x6F, MRMSrcReg, (ops VR128:$dst, VR128:$src),
                    "movdqa {$src, $dst|$dst, $src}", []>;
 def MOVDQArm : PDI<0x6F, MRMSrcMem, (ops VR128:$dst, i128mem:$src),
                    "movdqa {$src, $dst|$dst, $src}",
-                   [(set VR128:$dst, (loadv4i32 addr:$src))]>;
+                   [(set VR128:$dst, (loadv2i64 addr:$src))]>;
 def MOVDQAmr : PDI<0x7F, MRMDestMem, (ops i128mem:$dst, VR128:$src),
                    "movdqa {$src, $dst|$dst, $src}",
-                   [(store (v4i32 VR128:$src), addr:$dst)]>;
+                   [(store (v2i64 VR128:$src), addr:$dst)]>;
 
 // 128-bit Integer Arithmetic
 let isTwoAddress = 1 in {
@@ -1394,7 +1394,8 @@ def PSHUFDmi : PDIi8<0x70, MRMSrcMem,
                      (ops VR128:$dst, i128mem:$src1, i8imm:$src2),
                      "pshufd {$src2, $src1, $dst|$dst, $src1, $src2}",
                      [(set VR128:$dst, (v4i32 (vector_shuffle
-                                               (load addr:$src1), (undef),
+                                               (bc_v4i32 (loadv2i64 addr:$src1)),
+                                               (undef),
                                                PSHUFD_shuffle_mask:$src2)))]>;
 
 // SSE2 with ImmT == Imm8 and XS prefix.
@@ -1409,7 +1410,8 @@ def PSHUFHWmi : Ii8<0x70, MRMSrcMem,
                     (ops VR128:$dst, i128mem:$src1, i8imm:$src2),
                     "pshufhw {$src2, $src1, $dst|$dst, $src1, $src2}",
                     [(set VR128:$dst, (v8i16 (vector_shuffle
-                                              (load addr:$src1), (undef),
+                                              (bc_v8i16 (loadv2i64 addr:$src1)),
+                                              (undef),
                                               PSHUFHW_shuffle_mask:$src2)))]>,
                 XS, Requires<[HasSSE2]>;
 
@@ -1425,7 +1427,8 @@ def PSHUFLWmi : Ii8<0x70, MRMSrcMem,
                     (ops VR128:$dst, i128mem:$src1, i32i8imm:$src2),
                     "pshuflw {$src2, $src1, $dst|$dst, $src1, $src2}",
                     [(set VR128:$dst, (v8i16 (vector_shuffle
-                                              (load addr:$src1), (undef),
+                                              (bc_v8i16 (loadv2i64 addr:$src1)),
+                                              (undef),
                                               PSHUFLW_shuffle_mask:$src2)))]>,
                 XD, Requires<[HasSSE2]>;
 
@@ -1440,7 +1443,8 @@ def PUNPCKLBWrm : PDI<0x60, MRMSrcMem,
                       (ops VR128:$dst, VR128:$src1, i128mem:$src2),
                       "punpcklbw {$src2, $dst|$dst, $src2}",
                       [(set VR128:$dst,
-                        (v16i8 (vector_shuffle VR128:$src1, (load addr:$src2),
+                        (v16i8 (vector_shuffle VR128:$src1,
+                                (bc_v16i8 (loadv2i64 addr:$src2)),
                                 UNPCKL_shuffle_mask)))]>;
 def PUNPCKLWDrr : PDI<0x61, MRMSrcReg, 
                       (ops VR128:$dst, VR128:$src1, VR128:$src2),
@@ -1452,7 +1456,8 @@ def PUNPCKLWDrm : PDI<0x61, MRMSrcMem,
                       (ops VR128:$dst, VR128:$src1, i128mem:$src2),
                       "punpcklwd {$src2, $dst|$dst, $src2}",
                       [(set VR128:$dst,
-                        (v8i16 (vector_shuffle VR128:$src1, (load addr:$src2),
+                        (v8i16 (vector_shuffle VR128:$src1,
+                                (bc_v8i16 (loadv2i64 addr:$src2)),
                                 UNPCKL_shuffle_mask)))]>;
 def PUNPCKLDQrr : PDI<0x62, MRMSrcReg, 
                       (ops VR128:$dst, VR128:$src1, VR128:$src2),
@@ -1464,7 +1469,8 @@ def PUNPCKLDQrm : PDI<0x62, MRMSrcMem,
                       (ops VR128:$dst, VR128:$src1, i128mem:$src2),
                       "punpckldq {$src2, $dst|$dst, $src2}",
                       [(set VR128:$dst,
-                        (v4i32 (vector_shuffle VR128:$src1, (load addr:$src2),
+                        (v4i32 (vector_shuffle VR128:$src1,
+                                (bc_v4i32 (loadv2i64 addr:$src2)),
                                 UNPCKL_shuffle_mask)))]>;
 def PUNPCKLQDQrr : PDI<0x6C, MRMSrcReg, 
                        (ops VR128:$dst, VR128:$src1, VR128:$src2),
@@ -1476,7 +1482,8 @@ def PUNPCKLQDQrm : PDI<0x6C, MRMSrcMem,
                        (ops VR128:$dst, VR128:$src1, i128mem:$src2),
                        "punpcklqdq {$src2, $dst|$dst, $src2}",
                       [(set VR128:$dst,
-                        (v2i64 (vector_shuffle VR128:$src1, (load addr:$src2),
+                        (v2i64 (vector_shuffle VR128:$src1,
+                                (loadv2i64 addr:$src2),
                                 UNPCKL_shuffle_mask)))]>;
 
 def PUNPCKHBWrr : PDI<0x68, MRMSrcReg, 
@@ -1489,7 +1496,8 @@ def PUNPCKHBWrm : PDI<0x68, MRMSrcMem,
                       (ops VR128:$dst, VR128:$src1, i128mem:$src2),
                       "punpckhbw {$src2, $dst|$dst, $src2}",
                       [(set VR128:$dst,
-                        (v16i8 (vector_shuffle VR128:$src1, (load addr:$src2),
+                        (v16i8 (vector_shuffle VR128:$src1,
+                                (bc_v16i8 (loadv2i64 addr:$src2)),
                                 UNPCKH_shuffle_mask)))]>;
 def PUNPCKHWDrr : PDI<0x69, MRMSrcReg, 
                       (ops VR128:$dst, VR128:$src1, VR128:$src2),
@@ -1501,7 +1509,8 @@ def PUNPCKHWDrm : PDI<0x69, MRMSrcMem,
                       (ops VR128:$dst, VR128:$src1, i128mem:$src2),
                       "punpckhwd {$src2, $dst|$dst, $src2}",
                       [(set VR128:$dst,
-                        (v8i16 (vector_shuffle VR128:$src1, (load addr:$src2),
+                        (v8i16 (vector_shuffle VR128:$src1,
+                                (bc_v8i16 (loadv2i64 addr:$src2)),
                                 UNPCKH_shuffle_mask)))]>;
 def PUNPCKHDQrr : PDI<0x6A, MRMSrcReg, 
                       (ops VR128:$dst, VR128:$src1, VR128:$src2),
@@ -1513,7 +1522,8 @@ def PUNPCKHDQrm : PDI<0x6A, MRMSrcMem,
                       (ops VR128:$dst, VR128:$src1, i128mem:$src2),
                       "punpckhdq {$src2, $dst|$dst, $src2}",
                       [(set VR128:$dst,
-                        (v4i32 (vector_shuffle VR128:$src1, (load addr:$src2),
+                        (v4i32 (vector_shuffle VR128:$src1,
+                                (bc_v4i32 (loadv2i64 addr:$src2)),
                                 UNPCKH_shuffle_mask)))]>;
 def PUNPCKHQDQrr : PDI<0x6D, MRMSrcReg, 
                        (ops VR128:$dst, VR128:$src1, VR128:$src2),
@@ -1525,7 +1535,8 @@ def PUNPCKHQDQrm : PDI<0x6D, MRMSrcMem,
                       (ops VR128:$dst, VR128:$src1, i128mem:$src2),
                       "punpckhqdq {$src2, $dst|$dst, $src2}",
                       [(set VR128:$dst,
-                        (v2i64 (vector_shuffle VR128:$src1, (load addr:$src2),
+                        (v2i64 (vector_shuffle VR128:$src1,
+                                (loadv2i64 addr:$src2),
                                 UNPCKH_shuffle_mask)))]>;
 }
 
@@ -1538,7 +1549,8 @@ def PEXTRWr : PDIi8<0xC5, MRMSrcReg,
 def PEXTRWm : PDIi8<0xC5, MRMSrcMem,
                     (ops R32:$dst, i128mem:$src1, i32i8imm:$src2),
                     "pextrw {$src2, $src1, $dst|$dst, $src1, $src2}",
-                    [(set R32:$dst, (X86pextrw (loadv8i16 addr:$src1),
+                    [(set R32:$dst, (X86pextrw
+                                     (bc_v8i16 (loadv2i64 addr:$src1)),
                                      (i32 imm:$src2)))]>;
 
 let isTwoAddress = 1 in {
@@ -1773,24 +1785,12 @@ def : Pat<(v4i32 immAllOnesV), (v4i32 (V_SETALLONES))>, Requires<[HasSSE2]>;
 def : Pat<(v2i64 immAllOnesV), (v2i64 (V_SETALLONES))>, Requires<[HasSSE2]>;
 def : Pat<(v4f32 immAllOnesV), (v4f32 (V_SETALLONES))>, Requires<[HasSSE1]>;
 
-// Load 128-bit integer vector values.
-def : Pat<(v16i8 (load addr:$src)), (MOVDQArm addr:$src)>,
-      Requires<[HasSSE2]>;
-def : Pat<(v8i16 (load addr:$src)), (MOVDQArm addr:$src)>,
-      Requires<[HasSSE2]>;
-def : Pat<(v4i32 (load addr:$src)), (MOVDQArm addr:$src)>,
-      Requires<[HasSSE2]>;
-def : Pat<(v2i64 (load addr:$src)), (MOVDQArm addr:$src)>,
-      Requires<[HasSSE2]>;
-
 // Store 128-bit integer vector values.
 def : Pat<(store (v16i8 VR128:$src), addr:$dst),
           (MOVDQAmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
 def : Pat<(store (v8i16 VR128:$src), addr:$dst),
           (MOVDQAmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
 def : Pat<(store (v4i32 VR128:$src), addr:$dst),
-          (MOVDQAmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
-def : Pat<(store (v2i64 VR128:$src), addr:$dst),
           (MOVDQAmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
 
 // Scalar to v8i16 / v16i8. The source may be a R32, but only the lower 8 or
@@ -1885,21 +1885,6 @@ def : Pat<(vector_shuffle (v4f32 VR128:$src), (undef), SSE_splat_mask:$sm),
           (v4f32 (SHUFPSrr VR128:$src, VR128:$src, SSE_splat_mask:$sm))>,
       Requires<[HasSSE1]>;
 
-// Special pshuf* cases: folding (bit_convert (loadv2i64 addr)).
-def : Pat<(v4i32 (vector_shuffle (bc_v4i32 (loadv2i64 addr:$src1)), (undef),
-                  PSHUFD_shuffle_mask:$src2)),
-          (PSHUFDmi addr:$src1, PSHUFD_shuffle_mask:$src2)>,
-      Requires<[HasSSE2]>;
-def : Pat<(v8i16 (vector_shuffle (bc_v8i16 (loadv2i64 addr:$src1)), (undef),
-                  PSHUFHW_shuffle_mask:$src2)),
-          (PSHUFHWmi addr:$src1, PSHUFHW_shuffle_mask:$src2)>,
-      Requires<[HasSSE2]>;
-def : Pat<(v8i16 (vector_shuffle (bc_v8i16 (loadv2i64 addr:$src1)), (undef),
-                  PSHUFLW_shuffle_mask:$src2)),
-          (PSHUFLWmi addr:$src1, PSHUFHW_shuffle_mask:$src2)>,
-      Requires<[HasSSE2]>;
-
-
 // Special unary SHUFPSrr case.
 // FIXME: when we want non two-address code, then we should use PSHUFD?
 def : Pat<(vector_shuffle (v4f32 VR128:$src1), (undef),
@@ -1916,8 +1901,8 @@ def : Pat<(vector_shuffle (v4i32 VR128:$src1), (v4i32 VR128:$src2),
            PSHUFD_binary_shuffle_mask:$sm),
           (v4i32 (SHUFPSrr VR128:$src1, VR128:$src2,
                   PSHUFD_binary_shuffle_mask:$sm))>, Requires<[HasSSE2]>;
-def : Pat<(vector_shuffle (v4i32 VR128:$src1), (load addr:$src2),
-           PSHUFD_binary_shuffle_mask:$sm),
+def : Pat<(vector_shuffle (v4i32 VR128:$src1),
+           (bc_v4i32 (loadv2i64 addr:$src2)), PSHUFD_binary_shuffle_mask:$sm),
           (v4i32 (SHUFPSrm VR128:$src1, addr:$src2,
                   PSHUFD_binary_shuffle_mask:$sm))>, Requires<[HasSSE2]>;
 
