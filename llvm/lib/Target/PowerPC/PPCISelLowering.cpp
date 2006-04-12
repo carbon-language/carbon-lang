@@ -923,11 +923,19 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::BUILD_VECTOR:
     // If this is a case we can't handle, return null and let the default
     // expansion code take care of it.  If we CAN select this case, return Op.
-    
-    // See if this is all zeros.
+
     // FIXME: We should handle splat(-0.0), and other cases here.
-    if (ISD::isBuildVectorAllZeros(Op.Val))
+
+    // See if this is all zeros.
+    if (ISD::isBuildVectorAllZeros(Op.Val)) {
+      // Canonicalize all zero vectors to be v4i32.
+      if (Op.getValueType() != MVT::v4i32) {
+        SDOperand Z = DAG.getConstant(0, MVT::i32);
+        Z = DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32, Z, Z, Z, Z);
+        Op = DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Z);
+      }
       return Op;
+    }
     
     if (PPC::get_VSPLI_elt(Op.Val, 1, DAG).Val ||    // vspltisb
         PPC::get_VSPLI_elt(Op.Val, 2, DAG).Val ||    // vspltish

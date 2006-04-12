@@ -521,7 +521,7 @@ def VCMPGTUWo : VCMPo<646, "vcmpgtuw. $vD, $vA, $vB", v4i32>;
                       
 def V_SET0 : VXForm_setzero<1220, (ops VRRC:$vD),
                       "vxor $vD, $vD, $vD", VecFP,
-                      [(set VRRC:$vD, (v4f32 immAllZerosV))]>;
+                      [(set VRRC:$vD, (v4i32 immAllZerosV))]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -544,9 +544,6 @@ def : Pat<(int_ppc_altivec_dststt GPRC:$rA, GPRC:$rB, imm:$STRM),
 def : Pat<(v16i8 (undef)), (v16i8 (IMPLICIT_DEF_VRRC))>;
 def : Pat<(v8i16 (undef)), (v8i16 (IMPLICIT_DEF_VRRC))>;
 def : Pat<(v4i32 (undef)), (v4i32 (IMPLICIT_DEF_VRRC))>;
-def : Pat<(v16i8 immAllZerosV), (v16i8 (V_SET0))>;
-def : Pat<(v8i16 immAllZerosV), (v8i16 (V_SET0))>;
-def : Pat<(v4i32 immAllZerosV), (v4i32 (V_SET0))>;
 
 // Loads.
 def : Pat<(v16i8 (load xoaddr:$src)), (v16i8 (LVX xoaddr:$src))>;
@@ -637,7 +634,7 @@ def : Pat<(v8i16 (and VRRC:$A, (vnot VRRC:$B))),
           (v8i16 (VANDC VRRC:$A, VRRC:$B))>;
 
 def : Pat<(fmul VRRC:$vA, VRRC:$vB),
-          (VMADDFP VRRC:$vA, VRRC:$vB, (V_SET0))>; 
+          (VMADDFP VRRC:$vA, VRRC:$vB, (v4i32 (V_SET0)))>; 
 
 // Fused multiply add and multiply sub for packed float.  These are represented
 // separately from the real instructions above, for operations that must have
