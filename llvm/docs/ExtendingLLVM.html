@@ -53,9 +53,9 @@ different passes that you intend to use with your extension, and there are
 <em>many</em> LLVM analyses and transformations, so it may be quite a bit of
 work.</p>
 
-<p>Adding an <a href="#intrinsic">intrinsic function</a> is easier than adding
-an instruction, and is transparent to optimization passes which treat it as an
-unanalyzable function.  If your added functionality can be expressed as a
+<p>Adding an <a href="#intrinsic">intrinsic function</a> is far easier than
+adding an instruction, and is transparent to optimization passes.  If your added
+functionality can be expressed as a
 function call, an intrinsic function is the method of choice for LLVM
 extension.</p>
 
@@ -85,8 +85,9 @@ function and then be turned into an instruction if warranted.</p>
     what the restrictions are.  Talk to other people about it so that you are
     sure it's a good idea.</li>
 
-<li><tt>llvm/include/llvm/Intrinsics.td</tt>:
-    Add an entry for your intrinsic.</li>
+<li><tt>llvm/include/llvm/Intrinsics*.td</tt>:
+    Add an entry for your intrinsic.  Describe its memory access characteristics
+    for optimization (this controls whether it will be DCE'd, CSE'd, etc).</li>
 
 <li><tt>llvm/lib/Analysis/ConstantFolding.cpp</tt>: If it is possible to 
     constant fold your intrinsic, add support to it in the 
@@ -116,22 +117,13 @@ generator emit code that prints an error message and calls abort if executed.
 </dd>
 
 <dl>
-<dt>Add support to the SelectionDAG Instruction Selector in 
-<tt>lib/CodeGen/SelectionDAG/</tt></dt>
+<dt>Add support to the .td file for the target(s) of your choice in 
+   <tt>lib/Target/*/*.td</tt>.</dt>
 
-<dd>Since most targets in LLVM use the SelectionDAG framework for generating
-code, you will likely need to add support for your intrinsic there as well.
-This is usually accomplished by adding a new node, and then teaching the
-SelectionDAG code how to handle that node.  To do this, follow the steps in
-the <a href="#sdnode">Adding a new SelectionDAG node</a> section.</dd>
-
-<dl>
-<dt>Once you have added the new node, add code to 
-<tt>SelectionDAG/SelectionDAGISel.cpp</tt> to recognize the intrinsic.  In most
-cases, the intrinsic will just be turned into the node you just added.  For an
-example of this, see how <tt>visitIntrinsicCall</tt> handles 
-<tt>Intrinsic::ctpop_*</tt>.
-</dt>
+<dd>This is usually a matter of adding a pattern to the .td file that matches
+    the intrinsic, though it may obviously require adding the instructions you
+    want to generate as well.  There are lots of examples in the PowerPC and X86
+    backend to follow.</dd>
 
 </div>
 
