@@ -1508,8 +1508,6 @@ SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
 SDOperand SelectionDAG::getVecLoad(unsigned Count, MVT::ValueType EVT,
                                    SDOperand Chain, SDOperand Ptr,
                                    SDOperand SV) {
-  SDNode *&N = Loads[std::make_pair(Ptr, std::make_pair(Chain, EVT))];
-  if (N) return SDOperand(N, 0);
   std::vector<SDOperand> Ops;
   Ops.reserve(5);
   Ops.push_back(Chain);
