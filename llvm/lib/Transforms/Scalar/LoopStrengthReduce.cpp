@@ -882,7 +882,7 @@ unsigned LoopStrengthReduce::CheckForIVReuse(const SCEVHandle &Stride,
            I = TLI->legal_am_scale_begin(), E = TLI->legal_am_scale_end();
          I != E; ++I) {
       unsigned Scale = *I;
-      if (abs(SInt) < Scale || (SInt % Scale) != 0)
+      if (unsigned(abs(SInt)) < Scale || (SInt % Scale) != 0)
         continue;
       std::map<SCEVHandle, IVsOfOneStride>::iterator SI =
         IVsByStride.find(SCEVUnknown::getIntegerSCEV(SInt/Scale, Type::UIntTy));
