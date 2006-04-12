@@ -9,6 +9,8 @@
 
 LEVEL = ../..
 LIBRARYNAME := LLVMAsmParser
+EXTRA_DIST := Lexer.cpp.cvs Lexer.l.cvs \
+              llvmAsmParser.cpp.cvs llvmAsmParser.h.cvs llvmAsmParser.y.cvs
 
 include $(LEVEL)/Makefile.common
 
