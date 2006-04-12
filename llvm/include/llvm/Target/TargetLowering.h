@@ -524,7 +524,7 @@ public:
   /// LowerArguments - This hook must be implemented to indicate how we should
   /// lower the arguments for the specified function, into the specified DAG.
   virtual std::vector<SDOperand>
-  LowerArguments(Function &F, SelectionDAG &DAG) = 0;
+  LowerArguments(Function &F, SelectionDAG &DAG);
 
   /// LowerCallTo - This hook lowers an abstract call to a function into an
   /// actual call.  This returns a pair of operands.  The first element is the
