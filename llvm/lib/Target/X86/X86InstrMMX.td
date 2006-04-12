@@ -14,7 +14,13 @@
 //===----------------------------------------------------------------------===//
 
 // Instruction templates
-// MMXi8 - MMX instructions with ImmT == Imm8 and TB prefix.
+// MMXI   - MMX instructions with TB prefix.
+// MMX2I  - MMX / SSE2 instructions with TB and OpSize prefixes.
+// MMXIi8 - MMX instructions with ImmT == Imm8 and TB prefix.
+class MMXI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
+      : I<o, F, ops, asm, pattern>, TB, Requires<[HasMMX]>;
+class MMX2I<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
+      : I<o, F, ops, asm, pattern>, TB, OpSize, Requires<[HasSSE2]>;
 class MMXIi8<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
       : X86Inst<o, F, Imm8, ops, asm>, TB, Requires<[HasMMX]> {
   let Pattern = pattern;
@@ -51,12 +57,28 @@ def MOVQ64mr : I<0x7F, MRMDestMem, (ops i64mem:$dst, VR64:$src),
                Requires<[HasMMX]>;
 
 // Conversion instructions
+def CVTPI2PSrr : MMXI<0x2A, MRMSrcReg, (ops VR128:$dst, VR64:$src),
+                      "cvtpi2ps {$src, $dst|$dst, $src}", []>;
+def CVTPI2PSrm : MMXI<0x2A, MRMSrcMem, (ops VR128:$dst, i64mem:$src),
+                      "cvtpi2ps {$src, $dst|$dst, $src}", []>;
+def CVTPI2PDrr : MMX2I<0x2A, MRMSrcReg, (ops VR128:$dst, VR64:$src),
+                       "cvtpi2pd {$src, $dst|$dst, $src}", []>;
+def CVTPI2PDrm : MMX2I<0x2A, MRMSrcMem, (ops VR128:$dst, i64mem:$src),
+                       "cvtpi2pd {$src, $dst|$dst, $src}", []>;
 def CVTTPS2PIrr: I<0x2C, MRMSrcReg, (ops VR64:$dst, VR128:$src),
                    "cvttps2pi {$src, $dst|$dst, $src}", []>, TB,
                  Requires<[HasSSE2]>;
 def CVTTPS2PIrm: I<0x2C, MRMSrcMem, (ops VR64:$dst, f64mem:$src),
                    "cvttps2pi {$src, $dst|$dst, $src}", []>, TB,
                  Requires<[HasMMX]>;
+def CVTPS2PIrr : MMXI<0x2D, MRMSrcReg, (ops VR64:$dst, VR128:$src),
+                      "cvtps2pi {$src, $dst|$dst, $src}", []>;
+def CVTPS2PIrm : MMXI<0x2D, MRMSrcMem, (ops VR64:$dst, f64mem:$src),
+                      "cvtps2pi {$src, $dst|$dst, $src}", []>;
+def CVTPD2PIrr : MMX2I<0x2D, MRMSrcReg, (ops VR64:$dst, VR128:$src),
+                       "cvtpd2pi {$src, $dst|$dst, $src}", []>;
+def CVTPD2PIrm : MMX2I<0x2D, MRMSrcMem, (ops VR64:$dst, f128mem:$src),
+                       "cvtpd2pi {$src, $dst|$dst, $src}", []>;
 
 // Shuffle and unpack instructions
 def PSHUFWri : MMXIi8<0x70, MRMSrcReg,
