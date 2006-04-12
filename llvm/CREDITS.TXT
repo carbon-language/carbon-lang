@@ -41,7 +41,10 @@ D: Fixes to the Reassociation pass, various improvement patches
 
 N: Evan Cheng
 E: evan.cheng@apple.com
-D: X86 backend improvements
+D: X86 backend developer
+D: Instruction scheduler improvements
+D: Loop optimizer improvements
+D: Target-independent code generator improvements
 
 N: Jeff Cohen
 E: jeffc@jolt-lang.org
