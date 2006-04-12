@@ -544,6 +544,48 @@ SDOperand PPC::get_VSPLTI_elt(SDNode *N, unsigned ByteSize, SelectionDAG &DAG) {
   return SDOperand();
 }
 
+// If this is a vector of constants or undefs, get the bits.  A bit in
+// UndefBits is set if the corresponding element of the vector is an 
+// ISD::UNDEF value.  For undefs, the corresponding VectorBits values are
+// zero.   Return true if this is not an array of constants, false if it is.
+//
+// Note that VectorBits/UndefBits are returned in 'little endian' form, so
+// elements 0,1 go in VectorBits[0] and 2,3 go in VectorBits[1] for a v4i32.
+static bool GetConstantBuildVectorBits(SDNode *BV, uint64_t VectorBits[2],
+                                       uint64_t UndefBits[2]) {
+  // Start with zero'd results.
+  VectorBits[0] = VectorBits[1] = UndefBits[0] = UndefBits[1] = 0;
+  
+  unsigned EltBitSize = MVT::getSizeInBits(BV->getOperand(0).getValueType());
+  for (unsigned i = 0, e = BV->getNumOperands(); i != e; ++i) {
+    SDOperand OpVal = BV->getOperand(i);
+    
+    unsigned PartNo = i >= e/2;     // In the upper 128 bits?
+    unsigned SlotNo = i & (e/2-1);  // Which subpiece of the uint64_t it is.
+
+    uint64_t EltBits = 0;
+    if (OpVal.getOpcode() == ISD::UNDEF) {
+      uint64_t EltUndefBits = ~0U >> (32-EltBitSize);
+      UndefBits[PartNo] |= EltUndefBits << (SlotNo*EltBitSize);
+      continue;
+    } else if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(OpVal)) {
+      EltBits = CN->getValue() & (~0U >> (32-EltBitSize));
+    } else if (ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(OpVal)) {
+      assert(CN->getValueType(0) == MVT::f32 &&
+             "Only one legal FP vector type!");
+      EltBits = FloatToBits(CN->getValue());
+    } else {
+      // Nonconstant element.
+      return true;
+    }
+    
+    VectorBits[PartNo] |= EltBits << (SlotNo*EltBitSize);
+  }
+  
+  //printf("%llx %llx  %llx %llx\n", 
+  //       VectorBits[0], VectorBits[1], UndefBits[0], UndefBits[1]);
+  return false;
+}
 
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
@@ -922,12 +964,20 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   }
   case ISD::BUILD_VECTOR: {
     // If this is a case we can't handle, return null and let the default
-    // expansion code take care of it.  If we CAN select this case, return Op.
-
-    // FIXME: We should handle splat(-0.0), and other cases here.
+    // expansion code take care of it.  If we CAN select this case, return Op
+    // or something simpler.
+    
+    // If this is a vector of constants or undefs, get the bits.  A bit in
+    // UndefBits is set if the corresponding element of the vector is an 
+    // ISD::UNDEF value.  For undefs, the corresponding VectorBits values are
+    // zero. 
+    uint64_t VectorBits[2];
+    uint64_t UndefBits[2];
+    if (GetConstantBuildVectorBits(Op.Val, VectorBits, UndefBits))
+      return SDOperand();   // Not a constant vector.
 
     // See if this is all zeros.
-    if (ISD::isBuildVectorAllZeros(Op.Val)) {
+    if ((VectorBits[0] | VectorBits[1]) == 0) {
       // Canonicalize all zero vectors to be v4i32.
       if (Op.getValueType() != MVT::v4i32) {
         SDOperand Z = DAG.getConstant(0, MVT::i32);
@@ -962,6 +1012,37 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       }
       return Op;
     }
+
+    // If this is some other splat of 4-byte elements, see if we can handle it
+    // in another way.
+    // FIXME: Make this more undef happy and work with other widths (1,2 bytes).
+    if (VectorBits[0] == VectorBits[1] &&
+        unsigned(VectorBits[0]) == unsigned(VectorBits[0] >> 32)) {
+      unsigned Bits = unsigned(VectorBits[0]);
+
+      // If this is 0x8000_0000 x 4, turn into vspltisw + vslw.  If it is 
+      // 0x7FFF_FFFF x 4, turn it into not(0x8000_0000).  These are important
+      // for fneg/fabs.
+      if (Bits == 0x80000000 || Bits == 0x7FFFFFFF) {
+        // Make -1 and vspltisw -1:
+        SDOperand OnesI = DAG.getConstant(~0U, MVT::i32);
+        SDOperand OnesV = DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
+                                      OnesI, OnesI, OnesI, OnesI);
+        
+        // Make the VSLW intrinsic, computing 0x8000_0000.
+        SDOperand Res
+          = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, MVT::v4i32,
+                        DAG.getConstant(Intrinsic::ppc_altivec_vslw, MVT::i32),
+                        OnesV, OnesV);
+        
+        // If this is 0x7FFF_FFFF, xor by OnesV to invert it.
+        if (Bits == 0x7FFFFFFF)
+          Res = DAG.getNode(ISD::XOR, MVT::v4i32, Res, OnesV);
+        
+        return DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Res);
+      }
+    }
+    
       
     return SDOperand();
   }

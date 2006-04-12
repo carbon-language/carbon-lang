@@ -43,7 +43,8 @@ There are a wide range of vector constants we can generate with combinations of
 altivec instructions.  Examples
  GCC does: "t=vsplti*, r = t+t"  for constants it can't generate with one vsplti
 
- -0.0 (sign bit):  vspltisw v0,-1 / vslw v0,v0,v0
+This should be added to the ISD::BUILD_VECTOR case in 
+PPCTargetLowering::LowerOperation.
 
 //===----------------------------------------------------------------------===//
 
@@ -110,8 +111,10 @@ e.g. x86 cmov (not supported on bytes).
 
 This would fix two problems:
 1. Writing patterns multiple times.
-2. Identical operations in different types are not getting CSE'd (e.g. 
-   { 0U, 0U, 0U, 0U } and {0.0, 0.0, 0.0, 0.0}.
+2. Identical operations in different types are not getting CSE'd.
+
+We already do this for shuffle and build_vector.  We need load,undef,and,or,xor,
+etc.
 
 //===----------------------------------------------------------------------===//
 
