@@ -2230,6 +2230,125 @@ void SelectionDAGLowering::visitVACopy(CallInst &I) {
                           DAG.getSrcValue(I.getOperand(2))));
 }
 
+/// TargetLowering::LowerArguments - This is the default LowerArguments
+/// implementation, which just inserts a FORMAL_ARGUMENTS node.  FIXME: When all
+/// targets are migrated to using FORMAL_ARGUMENTS, this hook should be removed.
+std::vector<SDOperand> 
+TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
+  // Add CC# and isVararg as operands to the FORMAL_ARGUMENTS node.
+  std::vector<SDOperand> Ops;
+  Ops.push_back(DAG.getConstant(F.getCallingConv(), getPointerTy()));
+  Ops.push_back(DAG.getConstant(F.isVarArg(), getPointerTy()));
+
+  // Add one result value for each formal argument.
+  std::vector<MVT::ValueType> RetVals;
+  for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I) {
+    MVT::ValueType VT = getValueType(I->getType());
+    
+    switch (getTypeAction(VT)) {
+    default: assert(0 && "Unknown type action!");
+    case Legal: 
+      RetVals.push_back(VT);
+      break;
+    case Promote:
+      RetVals.push_back(getTypeToTransformTo(VT));
+      break;
+    case Expand:
+      if (VT != MVT::Vector) {
+        // If this is a large integer, it needs to be broken up into small
+        // integers.  Figure out what the destination type is and how many small
+        // integers it turns into.
+        MVT::ValueType NVT = getTypeToTransformTo(VT);
+        unsigned NumVals = MVT::getSizeInBits(VT)/MVT::getSizeInBits(NVT);
+        for (unsigned i = 0; i != NumVals; ++i)
+          RetVals.push_back(NVT);
+      } else {
+        // Otherwise, this is a vector type.  We only support legal vectors
+        // right now.
+        unsigned NumElems = cast<PackedType>(I->getType())->getNumElements();
+        const Type *EltTy = cast<PackedType>(I->getType())->getElementType();
+        
+        // Figure out if there is a Packed type corresponding to this Vector
+        // type.  If so, convert to the packed type.
+        MVT::ValueType TVT = MVT::getVectorType(getValueType(EltTy), NumElems);
+        if (TVT != MVT::Other && isTypeLegal(TVT)) {
+          RetVals.push_back(TVT);
+        } else {
+          assert(0 && "Don't support illegal by-val vector arguments yet!");
+        }
+      }
+      break;
+    }
+  }
+  
+  // Create the node.
+  SDNode *Result = DAG.getNode(ISD::FORMAL_ARGUMENTS, RetVals, Ops).Val;
+
+  // Set up the return result vector.
+  Ops.clear();
+  unsigned i = 0;
+  for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I) {
+    MVT::ValueType VT = getValueType(I->getType());
+    
+    switch (getTypeAction(VT)) {
+    default: assert(0 && "Unknown type action!");
+    case Legal: 
+      Ops.push_back(SDOperand(Result, i++));
+      break;
+    case Promote: {
+      SDOperand Op(Result, i++);
+      if (MVT::isInteger(VT)) {
+        unsigned AssertOp = I->getType()->isSigned() ? ISD::AssertSext 
+                                                     : ISD::AssertZext;
+        Op = DAG.getNode(AssertOp, Op.getValueType(), Op, DAG.getValueType(VT));
+        Op = DAG.getNode(ISD::TRUNCATE, VT, Op);
+      } else {
+        assert(MVT::isFloatingPoint(VT) && "Not int or FP?");
+        Op = DAG.getNode(ISD::FP_ROUND, VT, Op);
+      }
+      Ops.push_back(Op);
+      break;
+    }
+    case Expand:
+      if (VT != MVT::Vector) {
+        // If this is a large integer, it needs to be reassembled from small
+        // integers.  Figure out what the source elt type is and how many small
+        // integers it is.
+        MVT::ValueType NVT = getTypeToTransformTo(VT);
+        unsigned NumVals = MVT::getSizeInBits(VT)/MVT::getSizeInBits(NVT);
+        if (NumVals == 2) {
+          SDOperand Lo = SDOperand(Result, i++);
+          SDOperand Hi = SDOperand(Result, i++);
+          
+          if (!isLittleEndian())
+            std::swap(Lo, Hi);
+            
+          Ops.push_back(DAG.getNode(ISD::BUILD_PAIR, VT, Lo, Hi));
+        } else {
+          // Value scalarized into many values.  Unimp for now.
+          assert(0 && "Cannot expand i64 -> i16 yet!");
+        }
+      } else {
+        // Otherwise, this is a vector type.  We only support legal vectors
+        // right now.
+        unsigned NumElems = cast<PackedType>(I->getType())->getNumElements();
+        const Type *EltTy = cast<PackedType>(I->getType())->getElementType();
+        
+        // Figure out if there is a Packed type corresponding to this Vector
+        // type.  If so, convert to the packed type.
+        MVT::ValueType TVT = MVT::getVectorType(getValueType(EltTy), NumElems);
+        if (TVT != MVT::Other && isTypeLegal(TVT)) {
+          Ops.push_back(SDOperand(Result, i++));
+        } else {
+          assert(0 && "Don't support illegal by-val vector arguments yet!");
+        }
+      }
+      break;
+    }
+  }
+  return Ops;
+}
+
 // It is always conservatively correct for llvm.returnaddress and
 // llvm.frameaddress to return 0.
 std::pair<SDOperand, SDOperand>

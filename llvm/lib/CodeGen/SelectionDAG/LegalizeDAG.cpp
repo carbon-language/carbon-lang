@@ -826,7 +826,13 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Result = DAG.UpdateNodeOperands(Result, Ops);
     }
     break;
-
+    
+  case ISD::FORMAL_ARGUMENTS:
+    // The only option for this is to custom lower it.
+    Result = TLI.LowerOperation(Result, DAG);
+    assert(Result.Val && "Target didn't custom lower ISD::FORMAL_ARGUMENTS!");
+    break;
+        
   case ISD::BUILD_VECTOR:
     switch (TLI.getOperationAction(ISD::BUILD_VECTOR, Node->getValueType(0))) {
     default: assert(0 && "This action is not supported yet!");
@@ -2782,7 +2788,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     Result = DAG.getNode(ISD::SETCC, TLI.getSetCCResultTy(),Node->getOperand(0),
                          Node->getOperand(1), Node->getOperand(2));
     break;
-
+    
   case ISD::TRUNCATE:
     switch (getTypeAction(Node->getOperand(0).getValueType())) {
     case Legal:
@@ -4056,7 +4062,6 @@ SDOperand SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDOperand Op) {
   }
   }
 }
-
 
 /// ExpandOp - Expand the specified SDOperand into its two component pieces
 /// Lo&Hi.  Note that the Op MUST be an expanded type.  As a result of this, the
