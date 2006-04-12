@@ -192,8 +192,9 @@ static unsigned *getArgumentPermutation(Function* Fn, Function* NewFn) {
 Function *llvm::UpgradeIntrinsicFunction(Function* F) {
   // See if its one of the name's we're interested in.
   if (Function *R = getUpgradedIntrinsic(F)) {
-    std::cerr << "WARNING: change " << F->getName() << " to "
-              << R->getName() << "\n";
+    if (R->getName() != F->getName())
+      std::cerr << "WARNING: change " << F->getName() << " to "
+                << R->getName() << "\n";
     return R;
   }
   return 0;
