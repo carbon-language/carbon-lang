@@ -1256,25 +1256,36 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
     MVT::ValueType VT = Node->getValueType(0);
     Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Node->getOperand(2));
-    Tmp2 = Result.getValue(0);
-    Tmp3 = Result.getValue(1);
+    Tmp3 = Result.getValue(0);
+    Tmp4 = Result.getValue(1);
     
     switch (TLI.getOperationAction(Node->getOpcode(), VT)) {
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Legal: break;
     case TargetLowering::Custom:
-      Tmp1 = TLI.LowerOperation(Tmp2, DAG);
+      Tmp1 = TLI.LowerOperation(Tmp3, DAG);
       if (Tmp1.Val) {
-        Tmp2 = LegalizeOp(Tmp1);
-        Tmp3 = LegalizeOp(Tmp1.getValue(1));
+        Tmp3 = LegalizeOp(Tmp1);
+        Tmp4 = LegalizeOp(Tmp1.getValue(1));
       }
       break;
+    case TargetLowering::Promote: {
+      // Only promote a load of vector type to another.
+      assert(MVT::isVector(VT) && "Cannot promote this load!");
+      // Change base type to a different vector type.
+      MVT::ValueType NVT = TLI.getTypeToPromoteTo(Node->getOpcode(), VT);
+
+      Tmp1 = DAG.getLoad(NVT, Tmp1, Tmp2, Node->getOperand(2));
+      Tmp3 = LegalizeOp(DAG.getNode(ISD::BIT_CONVERT, VT, Tmp1));
+      Tmp4 = LegalizeOp(Tmp1.getValue(1));
+      break;
+    }
     }
     // Since loads produce two values, make sure to remember that we 
     // legalized both of them.
-    AddLegalizedOperand(SDOperand(Node, 0), Tmp2);
-    AddLegalizedOperand(SDOperand(Node, 1), Tmp3);
-    return Op.ResNo ? Tmp3 : Tmp2;
+    AddLegalizedOperand(SDOperand(Node, 0), Tmp3);
+    AddLegalizedOperand(SDOperand(Node, 1), Tmp4);
+    return Op.ResNo ? Tmp4 : Tmp3;
   }
   case ISD::EXTLOAD:
   case ISD::SEXTLOAD:
@@ -1755,7 +1766,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       MVT::ValueType NVT =
         TLI.getTypeToPromoteTo(ISD::SELECT, Tmp2.getValueType());
       unsigned ExtOp, TruncOp;
-      if (MVT::isInteger(Tmp2.getValueType())) {
+      if (MVT::isVector(Tmp2.getValueType())) {
+        ExtOp   = ISD::BIT_CONVERT;
+        TruncOp = ISD::BIT_CONVERT;
+      } else if (MVT::isInteger(Tmp2.getValueType())) {
         ExtOp   = ISD::ANY_EXTEND;
         TruncOp = ISD::TRUNCATE;
       } else {
