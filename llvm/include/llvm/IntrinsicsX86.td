@@ -265,6 +265,30 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
                          llvm_int_ty], [IntrNoMem]>;
 }
 
+// Conversion ops
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse2_cvtdq2pd : GCCBuiltin<"__builtin_ia32_cvtdq2pd">,
+              Intrinsic<[llvm_v2f64_ty, llvm_v4i32_ty], [IntrNoMem]>;
+  def int_x86_sse2_cvtdq2ps : GCCBuiltin<"__builtin_ia32_cvtdq2ps">,
+              Intrinsic<[llvm_v4f32_ty, llvm_v4i32_ty], [IntrNoMem]>;
+  def int_x86_sse2_cvtpd2dq : GCCBuiltin<"__builtin_ia32_cvtpd2dq">,
+              Intrinsic<[llvm_v4i32_ty, llvm_v2f64_ty], [IntrNoMem]>;
+  def int_x86_sse2_cvttpd2dq : GCCBuiltin<"__builtin_ia32_cvttpd2dq">,
+              Intrinsic<[llvm_v4i32_ty, llvm_v2f64_ty], [IntrNoMem]>;
+  def int_x86_sse2_cvtpd2ps : GCCBuiltin<"__builtin_ia32_cvtpd2ps">,
+              Intrinsic<[llvm_v4f32_ty, llvm_v2f64_ty], [IntrNoMem]>;
+  def int_x86_sse2_cvtps2dq : GCCBuiltin<"__builtin_ia32_cvtps2dq">,
+              Intrinsic<[llvm_v4i32_ty, llvm_v4f32_ty], [IntrNoMem]>;
+  def int_x86_sse2_cvttps2dq : GCCBuiltin<"__builtin_ia32_cvttps2dq">,
+              Intrinsic<[llvm_v4i32_ty, llvm_v4f32_ty], [IntrNoMem]>;
+  def int_x86_sse2_cvtps2pd : GCCBuiltin<"__builtin_ia32_cvtps2pd">,
+              Intrinsic<[llvm_v2f64_ty, llvm_v4f32_ty], [IntrNoMem]>;
+  def int_x86_sse2_cvtsd2si : GCCBuiltin<"__builtin_ia32_cvtsd2si">,
+              Intrinsic<[llvm_int_ty, llvm_v2f64_ty], [IntrNoMem]>;
+  def int_x86_sse2_cvttsd2si : GCCBuiltin<"__builtin_ia32_cvttsd2si">,
+              Intrinsic<[llvm_int_ty, llvm_v2f64_ty], [IntrNoMem]>;
+}
+
 // SIMD load ops
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse2_loadu_pd : GCCBuiltin<"__builtin_ia32_loadupd">,
