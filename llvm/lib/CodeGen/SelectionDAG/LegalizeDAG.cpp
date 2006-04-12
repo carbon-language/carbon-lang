@@ -2076,6 +2076,25 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Result = DAG.getNode(ISD::BUILD_VECTOR, Node->getValueType(0), Ops);
       break;
     }
+    case TargetLowering::Promote: {
+      switch (Node->getOpcode()) {
+      default:  assert(0 && "Do not know how to promote this BinOp!");
+      case ISD::AND:
+      case ISD::OR:
+      case ISD::XOR: {
+        MVT::ValueType OVT = Node->getValueType(0);
+        MVT::ValueType NVT = TLI.getTypeToPromoteTo(Node->getOpcode(), OVT);
+        assert(MVT::isVector(OVT) && "Cannot promote this BinOp!");
+        // Bit convert each of the values to the new type.
+        Tmp1 = DAG.getNode(ISD::BIT_CONVERT, NVT, Tmp1);
+        Tmp2 = DAG.getNode(ISD::BIT_CONVERT, NVT, Tmp2);
+        Result = DAG.getNode(Node->getOpcode(), NVT, Tmp1, Tmp2);
+        // Bit convert the result back the original type.
+        Result = DAG.getNode(ISD::BIT_CONVERT, OVT, Result);
+        break;
+      }
+      }
+    }
     }
     break;
     
@@ -2953,6 +2972,14 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   case ISD::AND:
   case ISD::OR:
   case ISD::XOR:
+    // The input may have strange things in the top bits of the registers, but
+    // these operations don't care.  They may have weird bits going out, but
+    // that too is okay if they are integer operations.
+    Tmp1 = PromoteOp(Node->getOperand(0));
+    Tmp2 = PromoteOp(Node->getOperand(1));
+    assert(Tmp1.getValueType() == NVT && Tmp2.getValueType() == NVT);
+    Result = DAG.getNode(Node->getOpcode(), NVT, Tmp1, Tmp2);
+    break;
   case ISD::ADD:
   case ISD::SUB:
   case ISD::MUL:
