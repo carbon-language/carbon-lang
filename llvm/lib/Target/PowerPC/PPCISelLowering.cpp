@@ -429,11 +429,11 @@ unsigned PPC::getVSPLTImmediate(SDNode *N, unsigned EltSize) {
   return cast<ConstantSDNode>(N->getOperand(0))->getValue() / EltSize;
 }
 
-/// get_VSPLI_elt - If this is a build_vector of constants which can be formed
+/// get_VSPLTI_elt - If this is a build_vector of constants which can be formed
 /// by using a vspltis[bhw] instruction of the specified element size, return
 /// the constant being splatted.  The ByteSize field indicates the number of
 /// bytes of each element [124] -> [bhw].
-SDOperand PPC::get_VSPLI_elt(SDNode *N, unsigned ByteSize, SelectionDAG &DAG) {
+SDOperand PPC::get_VSPLTI_elt(SDNode *N, unsigned ByteSize, SelectionDAG &DAG) {
   SDOperand OpVal(0, 0);
 
   // If ByteSize of the splat is bigger than the element size of the
@@ -920,7 +920,7 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     // Load it out.
     return DAG.getLoad(Op.getValueType(), Store, FIdx, DAG.getSrcValue(NULL));
   }
-  case ISD::BUILD_VECTOR:
+  case ISD::BUILD_VECTOR: {
     // If this is a case we can't handle, return null and let the default
     // expansion code take care of it.  If we CAN select this case, return Op.
 
@@ -937,13 +937,34 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       return Op;
     }
     
-    if (PPC::get_VSPLI_elt(Op.Val, 1, DAG).Val ||    // vspltisb
-        PPC::get_VSPLI_elt(Op.Val, 2, DAG).Val ||    // vspltish
-        PPC::get_VSPLI_elt(Op.Val, 4, DAG).Val)      // vspltisw
+    // Check to see if this is something we can use VSPLTI* to form.
+    MVT::ValueType CanonicalVT = MVT::Other;
+    SDNode *CST = 0;
+    
+    if ((CST = PPC::get_VSPLTI_elt(Op.Val, 4, DAG).Val))       // vspltisw
+      CanonicalVT = MVT::v4i32;
+    else if ((CST = PPC::get_VSPLTI_elt(Op.Val, 2, DAG).Val))  // vspltish
+      CanonicalVT = MVT::v8i16;
+    else if ((CST = PPC::get_VSPLTI_elt(Op.Val, 1, DAG).Val))  // vspltisb
+      CanonicalVT = MVT::v16i8;
+
+    // If this matches one of the vsplti* patterns, force it to the canonical
+    // type for the pattern.
+    if (CST) {
+      if (Op.getValueType() != CanonicalVT) {
+        // Convert the splatted element to the right element type.
+        SDOperand Elt = DAG.getNode(ISD::TRUNCATE, 
+                                    MVT::getVectorBaseType(CanonicalVT), 
+                                    SDOperand(CST, 0));
+        std::vector<SDOperand> Ops(MVT::getVectorNumElements(CanonicalVT), Elt);
+        SDOperand Res = DAG.getNode(ISD::BUILD_VECTOR, CanonicalVT, Ops);
+        Op = DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Res);
+      }
       return Op;
+    }
       
     return SDOperand();
-    
+  }
   case ISD::VECTOR_SHUFFLE: {
     SDOperand V1 = Op.getOperand(0);
     SDOperand V2 = Op.getOperand(1);

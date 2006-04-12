@@ -111,26 +111,26 @@ def VSPLTW_shuffle_mask : PatLeaf<(build_vector), [{
 
 // VSPLTISB_get_imm xform function: convert build_vector to VSPLTISB imm.
 def VSPLTISB_get_imm : SDNodeXForm<build_vector, [{
-  return PPC::get_VSPLI_elt(N, 1, *CurDAG);
+  return PPC::get_VSPLTI_elt(N, 1, *CurDAG);
 }]>;
 def vecspltisb : PatLeaf<(build_vector), [{
-  return PPC::get_VSPLI_elt(N, 1, *CurDAG).Val != 0;
+  return PPC::get_VSPLTI_elt(N, 1, *CurDAG).Val != 0;
 }], VSPLTISB_get_imm>;
 
 // VSPLTISH_get_imm xform function: convert build_vector to VSPLTISH imm.
 def VSPLTISH_get_imm : SDNodeXForm<build_vector, [{
-  return PPC::get_VSPLI_elt(N, 2, *CurDAG);
+  return PPC::get_VSPLTI_elt(N, 2, *CurDAG);
 }]>;
 def vecspltish : PatLeaf<(build_vector), [{
-  return PPC::get_VSPLI_elt(N, 2, *CurDAG).Val != 0;
+  return PPC::get_VSPLTI_elt(N, 2, *CurDAG).Val != 0;
 }], VSPLTISH_get_imm>;
 
 // VSPLTISW_get_imm xform function: convert build_vector to VSPLTISW imm.
 def VSPLTISW_get_imm : SDNodeXForm<build_vector, [{
-  return PPC::get_VSPLI_elt(N, 4, *CurDAG);
+  return PPC::get_VSPLTI_elt(N, 4, *CurDAG);
 }]>;
 def vecspltisw : PatLeaf<(build_vector), [{
-  return PPC::get_VSPLI_elt(N, 4, *CurDAG).Val != 0;
+  return PPC::get_VSPLTI_elt(N, 4, *CurDAG).Val != 0;
 }], VSPLTISW_get_imm>;
 
 //===----------------------------------------------------------------------===//
@@ -439,13 +439,13 @@ def VSRW   : VX1_Int< 644, "vsrw" , int_ppc_altivec_vsrw>;
 
 def VSPLTISB : VXForm_3<780, (ops VRRC:$vD, s5imm:$SIMM),
                        "vspltisb $vD, $SIMM", VecPerm,
-                       [(set VRRC:$vD, (v4f32 vecspltisb:$SIMM))]>;
+                       [(set VRRC:$vD, (v16i8 vecspltisb:$SIMM))]>;
 def VSPLTISH : VXForm_3<844, (ops VRRC:$vD, s5imm:$SIMM),
                        "vspltish $vD, $SIMM", VecPerm,
-                       [(set VRRC:$vD, (v4f32 vecspltish:$SIMM))]>;
+                       [(set VRRC:$vD, (v8i16 vecspltish:$SIMM))]>;
 def VSPLTISW : VXForm_3<908, (ops VRRC:$vD, s5imm:$SIMM),
                        "vspltisw $vD, $SIMM", VecPerm,
-                       [(set VRRC:$vD, (v4f32 vecspltisw:$SIMM))]>;
+                       [(set VRRC:$vD, (v4i32 vecspltisw:$SIMM))]>;
 
 // Vector Pack.
 def VPKPX   : VX1_Int<782, "vpkpx", int_ppc_altivec_vpkpx>;
@@ -540,7 +540,7 @@ def : Pat<(int_ppc_altivec_dstst GPRC:$rA, GPRC:$rB, imm:$STRM),
 def : Pat<(int_ppc_altivec_dststt GPRC:$rA, GPRC:$rB, imm:$STRM),
           (DSTST 1, imm:$STRM, GPRC:$rA, GPRC:$rB)>;
 
-// Undef/Zero.
+// Undef.
 def : Pat<(v16i8 (undef)), (v16i8 (IMPLICIT_DEF_VRRC))>;
 def : Pat<(v8i16 (undef)), (v8i16 (IMPLICIT_DEF_VRRC))>;
 def : Pat<(v4i32 (undef)), (v4i32 (IMPLICIT_DEF_VRRC))>;
@@ -601,19 +601,6 @@ def:Pat<(vector_shuffle (v16i8 VRRC:$vA), undef, VMRGHH_unary_shuffle_mask:$in),
         (VMRGHH VRRC:$vA, VRRC:$vA)>;
 def:Pat<(vector_shuffle (v16i8 VRRC:$vA), undef, VMRGHW_unary_shuffle_mask:$in),
         (VMRGHW VRRC:$vA, VRRC:$vA)>;
-
-// Immediate vector formation with vsplti*.
-def : Pat<(v16i8 vecspltisb:$invec), (v16i8 (VSPLTISB vecspltisb:$invec))>;
-def : Pat<(v16i8 vecspltish:$invec), (v16i8 (VSPLTISH vecspltish:$invec))>;
-def : Pat<(v16i8 vecspltisw:$invec), (v16i8 (VSPLTISW vecspltisw:$invec))>;
-
-def : Pat<(v8i16 vecspltisb:$invec), (v8i16 (VSPLTISB vecspltisb:$invec))>;
-def : Pat<(v8i16 vecspltish:$invec), (v8i16 (VSPLTISH vecspltish:$invec))>;
-def : Pat<(v8i16 vecspltisw:$invec), (v8i16 (VSPLTISW vecspltisw:$invec))>;
-
-def : Pat<(v4i32 vecspltisb:$invec), (v4i32 (VSPLTISB vecspltisb:$invec))>;
-def : Pat<(v4i32 vecspltish:$invec), (v4i32 (VSPLTISH vecspltish:$invec))>;
-def : Pat<(v4i32 vecspltisw:$invec), (v4i32 (VSPLTISW vecspltisw:$invec))>;
 
 // Logical Operations
 def : Pat<(v16i8 (vnot VRRC:$vA)), (v16i8 (VNOR VRRC:$vA, VRRC:$vA))>;

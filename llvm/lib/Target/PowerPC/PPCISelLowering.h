@@ -131,11 +131,11 @@ namespace llvm {
     /// specified isSplatShuffleMask VECTOR_SHUFFLE mask.
     unsigned getVSPLTImmediate(SDNode *N, unsigned EltSize);
     
-    /// get_VSPLI_elt - If this is a build_vector of constants which can be
+    /// get_VSPLTI_elt - If this is a build_vector of constants which can be
     /// formed by using a vspltis[bhw] instruction of the specified element
     /// size, return the constant being splatted.  The ByteSize field indicates
     /// the number of bytes of each element [124] -> [bhw].
-    SDOperand get_VSPLI_elt(SDNode *N, unsigned ByteSize, SelectionDAG &DAG);
+    SDOperand get_VSPLTI_elt(SDNode *N, unsigned ByteSize, SelectionDAG &DAG);
   }
   
   class PPCTargetLowering : public TargetLowering {
