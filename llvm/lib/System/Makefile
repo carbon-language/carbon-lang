@@ -11,6 +11,6 @@ LEVEL = ../..
 LIBRARYNAME = LLVMSystem
 BUILD_ARCHIVE = 1
 
-EXTRA_DIST = Unix Win32
+EXTRA_DIST = Unix Win32 README.txt
 
 include $(LEVEL)/Makefile.common

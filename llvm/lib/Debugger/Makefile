@@ -9,5 +9,6 @@
 
 LEVEL = ../..
 LIBRARYNAME = LLVMDebugger
+EXTRA_DIST = README.txt
 
 include $(LEVEL)/Makefile.common

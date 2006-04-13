@@ -9,6 +9,7 @@
 LEVEL = ../../..
 LIBRARYNAME = LLVMPowerPC
 TARGET = PPC
+EXTRA_DIST = README.txt README_ALTIVEC.txt
 
 # Make sure that tblgen is run, first thing.
 BUILT_SOURCES = PPCGenInstrNames.inc PPCGenRegisterNames.inc \

@@ -9,6 +9,7 @@
 LEVEL = ../../..
 LIBRARYNAME = LLVMX86
 TARGET = X86
+EXTRA_DIST = README.txt
 # Make sure that tblgen is run, first thing.
 BUILT_SOURCES = X86GenRegisterInfo.h.inc X86GenRegisterNames.inc \
                 X86GenRegisterInfo.inc X86GenInstrNames.inc \
