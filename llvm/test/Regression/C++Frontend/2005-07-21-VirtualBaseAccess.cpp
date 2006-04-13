@@ -1,4 +1,4 @@
-// RUN: %llvmgxx -xc++ %s -c -o - | llvm-dis | not grep cast
+// RUN: %llvmgxx -xc++ %s -c -o - | opt -die | llvm-dis | not grep cast
 
 void foo(int*);
 
