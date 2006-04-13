@@ -138,3 +138,13 @@ C = vector_shuffle A, B, <0, 1, 2, 4>
 ->  C = vsldoi A, B, 4
 
 //===----------------------------------------------------------------------===//
+
+extract_vector_elt of an arbitrary constant vector can be done with the 
+following instructions:
+
+vTemp = vec_splat(v0,2);    // 2 is the element the src is in.
+vec_ste(&destloc,0,vTemp);
+
+We can do an arbitrary non-constant value by using lvsr/perm/ste.
+
+//===----------------------------------------------------------------------===//

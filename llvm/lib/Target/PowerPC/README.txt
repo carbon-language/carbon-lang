@@ -551,12 +551,11 @@ void func(unsigned int *ret, float dx, float dy, float dz, float dw) {
 
 ===-------------------------------------------------------------------------===
 
-extract_vector_elt of an arbitrary constant vector can be done with the 
-following instructions:
+Complete the signed i32 to FP conversion code using 64-bit registers
+transformation, good for PI.  See PPCISelLowering.cpp, this comment:
 
-vTemp = vec_splat(v0,2);    // 2 is the element the src is in.
-vec_ste(&destloc,0,vTemp);
+     // FIXME: disable this lowered code.  This generates 64-bit register values,
+     // and we don't model the fact that the top part is clobbered by calls.  We
+     // need to flag these together so that the value isn't live across a call.
+     //setOperationAction(ISD::SINT_TO_FP, MVT::i32, Custom);
 
-We can do an arbitrary non-constant value by using lvsr/perm/ste.
-
-===-------------------------------------------------------------------------===
