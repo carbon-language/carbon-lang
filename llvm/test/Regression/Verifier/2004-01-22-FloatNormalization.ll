@@ -1,5 +1,5 @@
 ; RUN: not llvm-as < %s -o /dev/null -f
-; XFAIL: 3.4 
+; XFAIL: *
 
 ; make sure that invalid 'float' values are caught.
 
