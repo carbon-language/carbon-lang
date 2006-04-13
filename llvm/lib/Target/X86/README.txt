@@ -191,6 +191,18 @@ commutative, it is not matched with the load on both sides.  The dag combiner
 should be made smart enough to cannonicalize the load into the RHS of a compare
 when it can invert the result of the compare for free.
 
+How about intrinsics? An example is:
+  *res = _mm_mulhi_epu16(*A, _mm_mul_epu32(*B, *C));
+
+compiles to
+	pmuludq (%eax), %xmm0
+	movl 8(%esp), %eax
+	movdqa (%eax), %xmm1
+	pmulhuw %xmm0, %xmm1
+
+The transformation probably requires a X86 specific pass or a DAG combiner
+target specific hook.
+
 //===---------------------------------------------------------------------===//
 
 LSR should be turned on for the X86 backend and tuned to take advantage of its
