@@ -250,6 +250,34 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
                          llvm_v2f64_ty], [IntrNoMem]>;
 }
 
+// Integer arithmetic ops.
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse2_padds_b : GCCBuiltin<"__builtin_ia32_paddsb128">,
+              Intrinsic<[llvm_v16i8_ty, llvm_v16i8_ty,
+                         llvm_v16i8_ty], [IntrNoMem]>;
+  def int_x86_sse2_padds_w : GCCBuiltin<"__builtin_ia32_paddsw128">,
+              Intrinsic<[llvm_v8i16_ty, llvm_v8i16_ty,
+                         llvm_v8i16_ty], [IntrNoMem]>;
+  def int_x86_sse2_paddus_b : GCCBuiltin<"__builtin_ia32_paddusb128">,
+              Intrinsic<[llvm_v16i8_ty, llvm_v16i8_ty,
+                         llvm_v16i8_ty], [IntrNoMem]>;
+  def int_x86_sse2_paddus_w : GCCBuiltin<"__builtin_ia32_paddusw128">,
+              Intrinsic<[llvm_v8i16_ty, llvm_v8i16_ty,
+                         llvm_v8i16_ty], [IntrNoMem]>;
+  def int_x86_sse2_psubs_b : GCCBuiltin<"__builtin_ia32_psubsb128">,
+              Intrinsic<[llvm_v16i8_ty, llvm_v16i8_ty,
+                         llvm_v16i8_ty], [IntrNoMem]>;
+  def int_x86_sse2_psubs_w : GCCBuiltin<"__builtin_ia32_psubsw128">,
+              Intrinsic<[llvm_v8i16_ty, llvm_v8i16_ty,
+                         llvm_v8i16_ty], [IntrNoMem]>;
+  def int_x86_sse2_psubus_b : GCCBuiltin<"__builtin_ia32_psubusb128">,
+              Intrinsic<[llvm_v16i8_ty, llvm_v16i8_ty,
+                         llvm_v16i8_ty], [IntrNoMem]>;
+  def int_x86_sse2_psubus_w : GCCBuiltin<"__builtin_ia32_psubusw128">,
+              Intrinsic<[llvm_v8i16_ty, llvm_v8i16_ty,
+                         llvm_v8i16_ty], [IntrNoMem]>;
+}
+
 // Integer shift ops.
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse2_psll_dq : GCCBuiltin<"__builtin_ia32_pslldqi128">,
