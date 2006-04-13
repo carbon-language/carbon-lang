@@ -1,4 +1,8 @@
-// RUN: %llvmgcc -xc %s -c -o - | llvm-dis | not grep declare
+// RUN: not %llvmgcc -xc %s -S -o - 
+
+// This is a malformed program that is not caught by llvmgcc3.
+// XFAIL: llvmgcc3
+
 
 int one (int a) {
   two (a, 5);
