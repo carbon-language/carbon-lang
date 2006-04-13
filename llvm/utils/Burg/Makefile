@@ -10,7 +10,7 @@ LEVEL = ../..
 TOOLNAME = burg
 BUILT_SOURCES = gram.tab.c gram.tab.h
 
-EXTRA_DIST = gram.yc gram.tab.c gram.tab.h sample.gr
+EXTRA_DIST = gram.yc gram.tab.c gram.tab.h sample.gr burg.shar.gz COPYRIGHT Doc
 
 include $(LEVEL)/Makefile.common
 

@@ -9,6 +9,8 @@
 LEVEL = ../..
 TOOLNAME = tblgen
 USEDLIBS = LLVMSupport.a LLVMSystem.a
+EXTRA_DIST = FileLexer.cpp.cvs FileLexer.l.cvs \
+	     FileParser.cpp.cvs FileParser.h.cvs FileParser.y.cvs
 
 include $(LEVEL)/Makefile.common
 
