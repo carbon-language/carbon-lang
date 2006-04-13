@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -xc %s -S -o - | grep 'ctor_.* constant '
+// RUN: %llvmgcc -xc %s -S -o - | grep 'internal constant '
 
 // The synthetic global made by the CFE for big initializer should be marked
 // constant.
