@@ -1383,22 +1383,89 @@ def PSUBUSWrr : PDI<0xD9, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                     [(set VR128:$dst, (int_x86_sse2_psubus_w VR128:$src1,
                                        VR128:$src2))]>;
 
-def PSUBSBrm : PDI<0xE8, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
+def PSUBSBrm : PDI<0xE8, MRMSrcMem,
+                   (ops VR128:$dst, VR128:$src1, i128mem:$src2),
                    "psubsb {$src2, $dst|$dst, $src2}",
                    [(set VR128:$dst, (int_x86_sse2_psubs_b VR128:$src1,
                                       (bc_v16i8 (loadv2i64 addr:$src2))))]>;
-def PSUBSWrm : PDI<0xE9, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
+def PSUBSWrm : PDI<0xE9, MRMSrcMem,
+                   (ops VR128:$dst, VR128:$src1, i128mem:$src2),
                    "psubsw {$src2, $dst|$dst, $src2}",
                    [(set VR128:$dst, (int_x86_sse2_psubs_w VR128:$src1,
                                       (bc_v8i16 (loadv2i64 addr:$src2))))]>;
-def PSUBUSBrm : PDI<0xD8, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
+def PSUBUSBrm : PDI<0xD8, MRMSrcMem,
+                    (ops VR128:$dst, VR128:$src1, i128mem:$src2),
                     "psubusb {$src2, $dst|$dst, $src2}",
                     [(set VR128:$dst, (int_x86_sse2_psubus_b VR128:$src1,
                                        (bc_v16i8 (loadv2i64 addr:$src2))))]>;
-def PSUBUSWrm : PDI<0xD9, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
+def PSUBUSWrm : PDI<0xD9, MRMSrcMem,
+                    (ops VR128:$dst, VR128:$src1, i128mem:$src2),
                    "psubusw {$src2, $dst|$dst, $src2}",
                     [(set VR128:$dst, (int_x86_sse2_psubus_w VR128:$src1,
                                        (bc_v8i16 (loadv2i64 addr:$src2))))]>;
+
+let isCommutable = 1 in {
+def PMULHUWrr : PDI<0xE4, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                    "pmulhuw {$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst, (int_x86_sse2_pmulhu_w VR128:$src1,
+                                       VR128:$src2))]>;
+def PMULHWrr : PDI<0xE5, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                    "pmulhw {$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst, (int_x86_sse2_pmulh_w VR128:$src1,
+                                       VR128:$src2))]>;
+def PMULLWrr : PDI<0xD5, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                  "pmullw {$src2, $dst|$dst, $src2}",
+                  [(set VR128:$dst, (v8i16 (mul VR128:$src1, VR128:$src2)))]>;
+def PMULUDQrr : PDI<0xF4, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                    "pmuludq {$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst, (int_x86_sse2_pmulu_dq VR128:$src1,
+                                       VR128:$src2))]>;
+}
+
+def PMULHUWrm : PDI<0xE4, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
+                    "pmulhuw {$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst, (int_x86_sse2_pmulhu_w VR128:$src1,
+                                       (bc_v8i16 (loadv2i64 addr:$src2))))]>;
+def PMULHWrm : PDI<0xE5, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
+                    "pmulhw {$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst, (int_x86_sse2_pmulh_w VR128:$src1,
+                                       (bc_v8i16 (loadv2i64 addr:$src2))))]>;
+def PMULLWrm : PDI<0xD5, MRMSrcMem,
+                   (ops VR128:$dst, VR128:$src1, i128mem:$src2),
+                   "pmullw {$src2, $dst|$dst, $src2}",
+                   [(set VR128:$dst, (v8i16 (mul VR128:$src1,
+                                         (bc_v8i16 (loadv2i64 addr:$src2)))))]>;
+def PMULUDQrm : PDI<0xF4, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
+                    "pmuludq {$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst, (int_x86_sse2_pmulu_dq VR128:$src1,
+                                          (bc_v4i32 (loadv2i64 addr:$src2))))]>;
+
+def PMADDWDrr : PDI<0xF5, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                    "pmaddwd {$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst, (int_x86_sse2_pmadd_wd VR128:$src1,
+                                       VR128:$src2))]>;
+def PMADDWDrm : PDI<0xF5, MRMSrcMem,
+                    (ops VR128:$dst, VR128:$src1, i128mem:$src2),
+                    "pmaddwd {$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst, (int_x86_sse2_pmadd_wd VR128:$src1,
+                                       (bc_v8i16 (loadv2i64 addr:$src2))))]>;
+
+def PAVGBrr : PDI<0xE0, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                   "pavgb {$src2, $dst|$dst, $src2}",
+                   [(set VR128:$dst, (int_x86_sse2_pavg_b VR128:$src1,
+                                      VR128:$src2))]>;
+def PAVGWrr : PDI<0xE3, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                   "pavgw {$src2, $dst|$dst, $src2}",
+                   [(set VR128:$dst, (int_x86_sse2_pavg_w VR128:$src1,
+                                      VR128:$src2))]>;
+def PAVGBrm : PDI<0xE0, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
+                   "pavgb {$src2, $dst|$dst, $src2}",
+                   [(set VR128:$dst, (int_x86_sse2_pavg_b VR128:$src1,
+                                      (bc_v16i8 (loadv2i64 addr:$src2))))]>;
+def PAVGWrm : PDI<0xE3, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
+                   "pavgw {$src2, $dst|$dst, $src2}",
+                   [(set VR128:$dst, (int_x86_sse2_pavg_w VR128:$src1,
+                                      (bc_v8i16 (loadv2i64 addr:$src2))))]>;
 }
 
 let isTwoAddress = 1 in {
