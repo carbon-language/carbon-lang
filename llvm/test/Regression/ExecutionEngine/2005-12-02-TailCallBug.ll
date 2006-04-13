@@ -1,6 +1,8 @@
+; PR672
 ; RUN: llvm-as < %s | lli
 
-; PR672
+; This doesn't work on darwin/x86, xfail until PR736 is resolved.
+; XFAIL: i686-apple-darwin
 
 int %main(){ 
  %f   = cast int (int, int*, int)* %check_tail to int*
