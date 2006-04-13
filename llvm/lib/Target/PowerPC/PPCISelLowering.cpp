@@ -805,7 +805,10 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand CPI = DAG.getTargetConstantPool(C, MVT::i32, CP->getAlignment());
     SDOperand Zero = DAG.getConstant(0, MVT::i32);
     
-    if (getTargetMachine().getRelocationModel() == Reloc::Static) {
+    // If this is a non-darwin platform, we don't support non-static relo models
+    // yet.
+    if (getTargetMachine().getRelocationModel() == Reloc::Static ||
+        !getTargetMachine().getSubtarget<PPCSubtarget>().isDarwin()) {
       // Generate non-pic code that has direct accesses to the constant pool.
       // The address of the global is just (hi(&g)+lo(&g)).
       SDOperand Hi = DAG.getNode(PPCISD::Hi, MVT::i32, CPI, Zero);
@@ -813,8 +816,6 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       return DAG.getNode(ISD::ADD, MVT::i32, Hi, Lo);
     }
     
-    // Only lower ConstantPool on Darwin.
-    if (!getTargetMachine().getSubtarget<PPCSubtarget>().isDarwin()) break;
     SDOperand Hi = DAG.getNode(PPCISD::Hi, MVT::i32, CPI, Zero);
     if (getTargetMachine().getRelocationModel() == Reloc::PIC) {
       // With PIC, the first instruction is actually "GR+hi(&G)".
@@ -832,16 +833,16 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand GA = DAG.getTargetGlobalAddress(GV, MVT::i32, GSDN->getOffset());
     SDOperand Zero = DAG.getConstant(0, MVT::i32);
 
-    if (getTargetMachine().getRelocationModel() == Reloc::Static) {
+    // If this is a non-darwin platform, we don't support non-static relo models
+    // yet.
+    if (getTargetMachine().getRelocationModel() == Reloc::Static ||
+        !getTargetMachine().getSubtarget<PPCSubtarget>().isDarwin()) {
       // Generate non-pic code that has direct accesses to globals.
       // The address of the global is just (hi(&g)+lo(&g)).
       SDOperand Hi = DAG.getNode(PPCISD::Hi, MVT::i32, GA, Zero);
       SDOperand Lo = DAG.getNode(PPCISD::Lo, MVT::i32, GA, Zero);
       return DAG.getNode(ISD::ADD, MVT::i32, Hi, Lo);
     }
-    
-    // Only lower GlobalAddress on Darwin.
-    if (!getTargetMachine().getSubtarget<PPCSubtarget>().isDarwin()) break;
     
     SDOperand Hi = DAG.getNode(PPCISD::Hi, MVT::i32, GA, Zero);
     if (getTargetMachine().getRelocationModel() == Reloc::PIC) {
