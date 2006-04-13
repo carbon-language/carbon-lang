@@ -1,5 +1,5 @@
 // The code generated for this testcase should be completely typesafe!
-// RUN: %llvmgcc -xc++ -S -o - %s | not grep ' cast '
+// RUN: %llvmgcc -xc++ -S -o - %s | llvm-as | opt -die | llvm-dis | not grep ' cast '
 
 struct contained {
   unsigned X;
