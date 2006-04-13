@@ -303,6 +303,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::SUB,                MVT::v16i8, Legal);
     setOperationAction(ISD::SUB,                MVT::v8i16, Legal);
     setOperationAction(ISD::SUB,                MVT::v4i32, Legal);
+    setOperationAction(ISD::MUL,                MVT::v8i16, Legal);
     setOperationAction(ISD::MUL,                MVT::v2f64, Legal);
 
     setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v16i8, Custom);
