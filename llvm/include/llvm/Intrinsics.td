@@ -176,7 +176,7 @@ let Properties = [IntrNoMem] in {
 // NOTE: these are internal interfaces.
 def int_setjmp     : Intrinsic<[llvm_int_ty , llvm_ptr_ty]>;
 def int_longjmp    : Intrinsic<[llvm_void_ty, llvm_ptr_ty, llvm_int_ty]>;
-def int_sigsetjmp  : Intrinsic<[llvm_int_ty , llvm_ptr_ty]>;
+def int_sigsetjmp  : Intrinsic<[llvm_int_ty , llvm_ptr_ty, llvm_int_ty]>;
 def int_siglongjmp : Intrinsic<[llvm_void_ty, llvm_ptr_ty, llvm_int_ty]>;
 
 //===-------------------- Bit Manipulation Intrinsics ---------------------===//
