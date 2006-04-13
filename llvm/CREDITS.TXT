@@ -109,6 +109,7 @@ N: Andrew Lenharth
 E: alenhar2@cs.uiuc.edu
 W: http://www.lenharth.org/~andrewl/
 D: Alpha backend
+D: Sampling based profiling
 
 N: Duraid Madina
 E: duraid@octopus.com.au
