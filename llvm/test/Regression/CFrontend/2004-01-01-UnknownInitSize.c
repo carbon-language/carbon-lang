@@ -1,9 +1,9 @@
 // RUN: %llvmgcc -S %s -o /dev/null
+// XFAIL: llvmgcc3
 
 /*
  * This regression test ensures that the C front end can compile initializers
  * even when it cannot determine the size (as below).
- * XFAIL: *
 */
 struct one
 {

@@ -1,6 +1,7 @@
-// Passes with the new CFE.
+// Test that basic generic vector support works
+
 // RUN: %llvmgcc %s -S -o -
-// XFAIL: *
+// XFAIL: llvmgcc3
 
 typedef int v4si __attribute__ ((__vector_size__ (16)));
 void test(v4si *P, v4si *Q, float X) {
