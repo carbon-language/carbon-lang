@@ -1534,28 +1534,26 @@ let isCommutable = 1 in {
 def PANDrr : PDI<0xDB, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                  "pand {$src2, $dst|$dst, $src2}",
                  [(set VR128:$dst, (v2i64 (and VR128:$src1, VR128:$src2)))]>;
+def PORrr  : PDI<0xEB, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                 "por {$src2, $dst|$dst, $src2}",
+                 [(set VR128:$dst, (v2i64 (or VR128:$src1, VR128:$src2)))]>;
+def PXORrr : PDI<0xEF, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                 "pxor {$src2, $dst|$dst, $src2}",
+                 [(set VR128:$dst, (v2i64 (xor VR128:$src1, VR128:$src2)))]>;
+}
 
 def PANDrm : PDI<0xDB, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
                  "pand {$src2, $dst|$dst, $src2}",
                  [(set VR128:$dst, (v2i64 (and VR128:$src1,
                                            (load addr:$src2))))]>;
-def PORrr  : PDI<0xEB, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                 "por {$src2, $dst|$dst, $src2}",
-                 [(set VR128:$dst, (v2i64 (or VR128:$src1, VR128:$src2)))]>;
-
 def PORrm  : PDI<0xEB, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
                  "por {$src2, $dst|$dst, $src2}",
                  [(set VR128:$dst, (v2i64 (or VR128:$src1,
                                            (load addr:$src2))))]>;
-def PXORrr : PDI<0xEF, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                 "pxor {$src2, $dst|$dst, $src2}",
-                 [(set VR128:$dst, (v2i64 (xor VR128:$src1, VR128:$src2)))]>;
-
 def PXORrm : PDI<0xEF, MRMSrcMem, (ops VR128:$dst, VR128:$src1, i128mem:$src2),
                  "pxor {$src2, $dst|$dst, $src2}",
                  [(set VR128:$dst, (v2i64 (xor VR128:$src1,
                                            (load addr:$src2))))]>;
-}
 
 def PANDNrr : PDI<0xDF, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                   "pandn {$src2, $dst|$dst, $src2}",
