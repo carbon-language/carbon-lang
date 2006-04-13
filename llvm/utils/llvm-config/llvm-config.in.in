@@ -5,7 +5,7 @@
 # Synopsis: Prints out compiler options needed to build against an installed
 #           copy of LLVM.
 #
-# Syntax:   lllvm-config OPTIONS... [COMPONENTS...]
+# Syntax:   llvm-config OPTIONS... [COMPONENTS...]
 #
 # This file was written by Eric Kidd, and is placed into the public domain.
 #
