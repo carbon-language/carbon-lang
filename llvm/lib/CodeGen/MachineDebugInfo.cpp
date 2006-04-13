@@ -580,7 +580,9 @@ AnchoredDesc::AnchoredDesc(unsigned T)
 void AnchoredDesc::ApplyToFields(DIVisitor *Visitor) {
   DebugInfoDesc::ApplyToFields(Visitor);
 
-  Visitor->Apply((DebugInfoDesc *&)Anchor);
+  DebugInfoDesc *Tmp = Anchor;
+  Visitor->Apply(Tmp);
+  Anchor = (AnchorDesc*)Tmp;
 }
 
 //===----------------------------------------------------------------------===//
@@ -670,7 +672,9 @@ void TypeDesc::ApplyToFields(DIVisitor *Visitor) {
   
   Visitor->Apply(Context);
   Visitor->Apply(Name);
-  Visitor->Apply((DebugInfoDesc *&)File);
+  DebugInfoDesc* Tmp = File;
+  Visitor->Apply(Tmp);
+  File = (CompileUnitDesc*)Tmp;
   Visitor->Apply(Line);
   Visitor->Apply(Size);
   Visitor->Apply(Align);
@@ -775,7 +779,9 @@ bool DerivedTypeDesc::classof(const DebugInfoDesc *D) {
 void DerivedTypeDesc::ApplyToFields(DIVisitor *Visitor) {
   TypeDesc::ApplyToFields(Visitor);
   
-  Visitor->Apply((DebugInfoDesc *&)FromType);
+  DebugInfoDesc* Tmp = FromType;
+  Visitor->Apply(Tmp);
+  FromType = (TypeDesc*)Tmp;
 }
 
 /// getDescString - Return a string used to compose global names and labels.
@@ -975,9 +981,13 @@ void VariableDesc::ApplyToFields(DIVisitor *Visitor) {
   
   Visitor->Apply(Context);
   Visitor->Apply(Name);
-  Visitor->Apply((DebugInfoDesc *&)File);
+  DebugInfoDesc* Tmp1 = File;
+  Visitor->Apply(Tmp1);
+  File = (CompileUnitDesc*)Tmp1;
   Visitor->Apply(Line);
-  Visitor->Apply((DebugInfoDesc *&)TyDesc);
+  DebugInfoDesc* Tmp2 = TyDesc;
+  Visitor->Apply(Tmp2);
+  TyDesc = (TypeDesc*)Tmp2;
 }
 
 /// getDescString - Return a string used to compose global names and labels.
@@ -1024,9 +1034,13 @@ void GlobalDesc::ApplyToFields(DIVisitor *Visitor) {
 
   Visitor->Apply(Context);
   Visitor->Apply(Name);
-  Visitor->Apply((DebugInfoDesc *&)File);
+  DebugInfoDesc* Tmp1 = File;
+  Visitor->Apply(Tmp1);
+  File = (CompileUnitDesc*)Tmp1;
   Visitor->Apply(Line);
-  Visitor->Apply((DebugInfoDesc *&)TyDesc);
+  DebugInfoDesc* Tmp2 = TyDesc;
+  Visitor->Apply(Tmp2);
+  TyDesc = (TypeDesc*)Tmp2;
   Visitor->Apply(IsStatic);
   Visitor->Apply(IsDefinition);
 }
