@@ -1613,7 +1613,7 @@ def MOVMSKPSrr : PSI<0x50, MRMSrcReg, (ops R32:$dst, VR128:$src),
                      [(set R32:$dst, (int_x86_sse_movmsk_ps VR128:$src))]>;
 def MOVMSKPDrr : PSI<0x50, MRMSrcReg, (ops R32:$dst, VR128:$src),
                      "movmskpd {$src, $dst|$dst, $src}",
-                     [(set R32:$dst, (int_x86_sse2_movmskpd VR128:$src))]>;
+                     [(set R32:$dst, (int_x86_sse2_movmsk_pd VR128:$src))]>;
 
 def PMOVMSKBrr : PDI<0xD7, MRMSrcReg, (ops R32:$dst, VR128:$src),
                      "pmovmskb {$src, $dst|$dst, $src}",

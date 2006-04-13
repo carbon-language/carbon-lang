@@ -341,7 +341,7 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   // FIXME: Temporary workaround since 2-wide shuffle is broken.
   def int_x86_sse2_movl_dq : GCCBuiltin<"__builtin_ia32_movqv4si">,
               Intrinsic<[llvm_v4i32_ty, llvm_v4i32_ty], [IntrNoMem]>;
-  def int_x86_sse2_movmskpd : GCCBuiltin<"__builtin_ia32_movmskpd">,
+  def int_x86_sse2_movmsk_pd : GCCBuiltin<"__builtin_ia32_movmskpd">,
               Intrinsic<[llvm_int_ty, llvm_v2f64_ty], [IntrNoMem]>;
   def int_x86_sse2_pmovmskb_128 : GCCBuiltin<"__builtin_ia32_pmovmskb128">,
               Intrinsic<[llvm_int_ty, llvm_v16i8_ty], [IntrNoMem]>;
