@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | opt -instcombine | llc -march=ppc32 -mcpu=g5 | not grep vperm &&
 ; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | grep vsldoi | wc -l | grep 2 &&
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | grep vmrgh | wc -l | grep 6 &&
+; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | grep vmrgh | wc -l | grep 7 &&
 ; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | grep vmrgl | wc -l | grep 6 &&
 ; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | grep vpkuhum | wc -l | grep 1 &&
 ; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | grep vpkuwum | wc -l | grep 1
