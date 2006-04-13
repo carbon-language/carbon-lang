@@ -51,11 +51,11 @@ bool IndMemRemPass::runOnModule(Module &M) {
   //to intrinsics.  Therefor, this goes through and finds where the
   //address of free or malloc are taken and replaces those with bounce
   //functions, ensuring that all malloc and free that might happen
-  //happens through intrinsics.
+  //happen through intrinsics.
   bool changed = false;
   if (Function* F = M.getNamedFunction("free")) {
     assert(F->isExternal() && "free not external?");
-    if (F->getNumUses()) {
+    if (!F->use_empty()) {
       Function* FN = new Function(F->getFunctionType(), 
 				  GlobalValue::LinkOnceLinkage, 
 				  "free_llvm_bounce", &M);
@@ -70,7 +70,7 @@ bool IndMemRemPass::runOnModule(Module &M) {
   }
   if (Function* F = M.getNamedFunction("malloc")) {
     assert(F->isExternal() && "malloc not external?");
-    if (F->getNumUses()) {
+    if (!F->use_empty()) {
       Function* FN = new Function(F->getFunctionType(), 
 				  GlobalValue::LinkOnceLinkage, 
 				  "malloc_llvm_bounce", &M);
