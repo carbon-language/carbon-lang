@@ -1,5 +1,8 @@
 // RUN: %llvmgcc %s -S -g -o - | grep 'llvm.dbg.stoppoint.*uint 14'
 // PR664: ensure that line #'s are emitted for declarations
+
+// XFAIL: llvmgcc4
+
 short test(short br_data_0,
 short br_data_1,
 short br_data_2,
