@@ -455,6 +455,12 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse2_maskmov_dqu : GCCBuiltin<"__builtin_ia32_maskmovdqu">,
               Intrinsic<[llvm_void_ty, llvm_v16i8_ty,
                          llvm_v16i8_ty, llvm_ptr_ty], [IntrWriteMem]>;
+  def int_x86_sse2_clflush : GCCBuiltin<"__builtin_ia32_clflush">,
+              Intrinsic<[llvm_void_ty, llvm_ptr_ty], [IntrWriteMem]>;
+  def int_x86_sse2_lfence : GCCBuiltin<"__builtin_ia32_lfence">,
+              Intrinsic<[llvm_void_ty], [IntrWriteMem]>;
+  def int_x86_sse2_mfence : GCCBuiltin<"__builtin_ia32_mfence">,
+              Intrinsic<[llvm_void_ty], [IntrWriteMem]>;
 }
 
 //===----------------------------------------------------------------------===//

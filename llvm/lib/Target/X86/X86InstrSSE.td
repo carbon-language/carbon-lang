@@ -2002,12 +2002,21 @@ def MOVNTImr  :   I<0xC3, MRMDestMem, (ops i32mem:$dst, R32:$src),
                     [(int_x86_sse2_movnt_i addr:$dst, R32:$src)]>, 
                   TB, Requires<[HasSSE2]>;
 
-// Store fence
+// Flush cache
+def CLFLUSH : I<0xAE, MRM7m, (ops i8mem:$src),
+               "clflush $src", [(int_x86_sse2_clflush addr:$src)]>,
+              TB, Requires<[HasSSE2]>;
+
+// Load, store, and memory fence
 def SFENCE : I<0xAE, MRM7m, (ops),
                "sfence", [(int_x86_sse_sfence)]>, TB, Requires<[HasSSE1]>;
+def LFENCE : I<0xAE, MRM5m, (ops),
+               "lfence", [(int_x86_sse2_lfence)]>, TB, Requires<[HasSSE2]>;
+def MFENCE : I<0xAE, MRM6m, (ops),
+               "mfence", [(int_x86_sse2_mfence)]>, TB, Requires<[HasSSE2]>;
 
 // MXCSR register
-def LDMXCSR : I<0xAE, MRM2m, (ops i32mem:$src),
+def LDMXCSR : I<0xAE, MRM5m, (ops i32mem:$src),
                 "ldmxcsr $src",
                 [(int_x86_sse_ldmxcsr addr:$src)]>, TB, Requires<[HasSSE1]>;
 def STMXCSR : I<0xAE, MRM3m, (ops i32mem:$dst),
