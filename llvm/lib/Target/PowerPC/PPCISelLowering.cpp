@@ -258,6 +258,10 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   }
 }
 
+//===----------------------------------------------------------------------===//
+// Node matching predicates, for use by the tblgen matching code.
+//===----------------------------------------------------------------------===//
+
 /// isFloatingPointZero - Return true if this is 0.0 or -0.0.
 static bool isFloatingPointZero(SDOperand Op) {
   if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(Op))
@@ -544,6 +548,388 @@ SDOperand PPC::get_VSPLTI_elt(SDNode *N, unsigned ByteSize, SelectionDAG &DAG) {
   return SDOperand();
 }
 
+//===----------------------------------------------------------------------===//
+//  LowerOperation implementation
+//===----------------------------------------------------------------------===//
+
+static SDOperand LowerConstantPool(SDOperand Op, SelectionDAG &DAG) {
+  ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);
+  Constant *C = CP->get();
+  SDOperand CPI = DAG.getTargetConstantPool(C, MVT::i32, CP->getAlignment());
+  SDOperand Zero = DAG.getConstant(0, MVT::i32);
+
+  const TargetMachine &TM = DAG.getTarget();
+  
+  // If this is a non-darwin platform, we don't support non-static relo models
+  // yet.
+  if (TM.getRelocationModel() == Reloc::Static ||
+      !TM.getSubtarget<PPCSubtarget>().isDarwin()) {
+    // Generate non-pic code that has direct accesses to the constant pool.
+    // The address of the global is just (hi(&g)+lo(&g)).
+    SDOperand Hi = DAG.getNode(PPCISD::Hi, MVT::i32, CPI, Zero);
+    SDOperand Lo = DAG.getNode(PPCISD::Lo, MVT::i32, CPI, Zero);
+    return DAG.getNode(ISD::ADD, MVT::i32, Hi, Lo);
+  }
+  
+  SDOperand Hi = DAG.getNode(PPCISD::Hi, MVT::i32, CPI, Zero);
+  if (TM.getRelocationModel() == Reloc::PIC) {
+    // With PIC, the first instruction is actually "GR+hi(&G)".
+    Hi = DAG.getNode(ISD::ADD, MVT::i32,
+                     DAG.getNode(PPCISD::GlobalBaseReg, MVT::i32), Hi);
+  }
+  
+  SDOperand Lo = DAG.getNode(PPCISD::Lo, MVT::i32, CPI, Zero);
+  Lo = DAG.getNode(ISD::ADD, MVT::i32, Hi, Lo);
+  return Lo;
+}
+
+static SDOperand LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG) {
+  GlobalAddressSDNode *GSDN = cast<GlobalAddressSDNode>(Op);
+  GlobalValue *GV = GSDN->getGlobal();
+  SDOperand GA = DAG.getTargetGlobalAddress(GV, MVT::i32, GSDN->getOffset());
+  SDOperand Zero = DAG.getConstant(0, MVT::i32);
+  
+  const TargetMachine &TM = DAG.getTarget();
+
+  // If this is a non-darwin platform, we don't support non-static relo models
+  // yet.
+  if (TM.getRelocationModel() == Reloc::Static ||
+      !TM.getSubtarget<PPCSubtarget>().isDarwin()) {
+    // Generate non-pic code that has direct accesses to globals.
+    // The address of the global is just (hi(&g)+lo(&g)).
+    SDOperand Hi = DAG.getNode(PPCISD::Hi, MVT::i32, GA, Zero);
+    SDOperand Lo = DAG.getNode(PPCISD::Lo, MVT::i32, GA, Zero);
+    return DAG.getNode(ISD::ADD, MVT::i32, Hi, Lo);
+  }
+  
+  SDOperand Hi = DAG.getNode(PPCISD::Hi, MVT::i32, GA, Zero);
+  if (TM.getRelocationModel() == Reloc::PIC) {
+    // With PIC, the first instruction is actually "GR+hi(&G)".
+    Hi = DAG.getNode(ISD::ADD, MVT::i32,
+                     DAG.getNode(PPCISD::GlobalBaseReg, MVT::i32), Hi);
+  }
+  
+  SDOperand Lo = DAG.getNode(PPCISD::Lo, MVT::i32, GA, Zero);
+  Lo = DAG.getNode(ISD::ADD, MVT::i32, Hi, Lo);
+  
+  if (!GV->hasWeakLinkage() && !GV->hasLinkOnceLinkage() &&
+      (!GV->isExternal() || GV->hasNotBeenReadFromBytecode()))
+    return Lo;
+  
+  // If the global is weak or external, we have to go through the lazy
+  // resolution stub.
+  return DAG.getLoad(MVT::i32, DAG.getEntryNode(), Lo, DAG.getSrcValue(0));
+}
+
+static SDOperand LowerSETCC(SDOperand Op, SelectionDAG &DAG) {
+  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(2))->get();
+  
+  // If we're comparing for equality to zero, expose the fact that this is
+  // implented as a ctlz/srl pair on ppc, so that the dag combiner can
+  // fold the new nodes.
+  if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
+    if (C->isNullValue() && CC == ISD::SETEQ) {
+      MVT::ValueType VT = Op.getOperand(0).getValueType();
+      SDOperand Zext = Op.getOperand(0);
+      if (VT < MVT::i32) {
+        VT = MVT::i32;
+        Zext = DAG.getNode(ISD::ZERO_EXTEND, VT, Op.getOperand(0));
+      } 
+      unsigned Log2b = Log2_32(MVT::getSizeInBits(VT));
+      SDOperand Clz = DAG.getNode(ISD::CTLZ, VT, Zext);
+      SDOperand Scc = DAG.getNode(ISD::SRL, VT, Clz,
+                                  DAG.getConstant(Log2b, MVT::i32));
+      return DAG.getNode(ISD::TRUNCATE, MVT::i32, Scc);
+    }
+    // Leave comparisons against 0 and -1 alone for now, since they're usually 
+    // optimized.  FIXME: revisit this when we can custom lower all setcc
+    // optimizations.
+    if (C->isAllOnesValue() || C->isNullValue())
+      return SDOperand();
+  }
+  
+  // If we have an integer seteq/setne, turn it into a compare against zero
+  // by subtracting the rhs from the lhs, which is faster than setting a
+  // condition register, reading it back out, and masking the correct bit.
+  MVT::ValueType LHSVT = Op.getOperand(0).getValueType();
+  if (MVT::isInteger(LHSVT) && (CC == ISD::SETEQ || CC == ISD::SETNE)) {
+    MVT::ValueType VT = Op.getValueType();
+    SDOperand Sub = DAG.getNode(ISD::SUB, LHSVT, Op.getOperand(0), 
+                                Op.getOperand(1));
+    return DAG.getSetCC(VT, Sub, DAG.getConstant(0, LHSVT), CC);
+  }
+  return SDOperand();
+}
+
+static SDOperand LowerVASTART(SDOperand Op, SelectionDAG &DAG,
+                              unsigned VarArgsFrameIndex) {
+  // vastart just stores the address of the VarArgsFrameIndex slot into the
+  // memory location argument.
+  SDOperand FR = DAG.getFrameIndex(VarArgsFrameIndex, MVT::i32);
+  return DAG.getNode(ISD::STORE, MVT::Other, Op.getOperand(0), FR, 
+                     Op.getOperand(1), Op.getOperand(2));
+}
+
+static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
+  SDOperand Copy;
+  switch(Op.getNumOperands()) {
+  default:
+    assert(0 && "Do not know how to return this many arguments!");
+    abort();
+  case 1: 
+    return SDOperand(); // ret void is legal
+  case 2: {
+    MVT::ValueType ArgVT = Op.getOperand(1).getValueType();
+    unsigned ArgReg;
+    if (MVT::isVector(ArgVT))
+      ArgReg = PPC::V2;
+    else if (MVT::isInteger(ArgVT))
+      ArgReg = PPC::R3;
+    else {
+      assert(MVT::isFloatingPoint(ArgVT));
+      ArgReg = PPC::F1;
+    }
+    
+    Copy = DAG.getCopyToReg(Op.getOperand(0), ArgReg, Op.getOperand(1),
+                            SDOperand());
+    
+    // If we haven't noted the R3/F1 are live out, do so now.
+    if (DAG.getMachineFunction().liveout_empty())
+      DAG.getMachineFunction().addLiveOut(ArgReg);
+    break;
+  }
+  case 3:
+    Copy = DAG.getCopyToReg(Op.getOperand(0), PPC::R3, Op.getOperand(2), 
+                            SDOperand());
+    Copy = DAG.getCopyToReg(Copy, PPC::R4, Op.getOperand(1),Copy.getValue(1));
+    // If we haven't noted the R3+R4 are live out, do so now.
+    if (DAG.getMachineFunction().liveout_empty()) {
+      DAG.getMachineFunction().addLiveOut(PPC::R3);
+      DAG.getMachineFunction().addLiveOut(PPC::R4);
+    }
+    break;
+  }
+  return DAG.getNode(PPCISD::RET_FLAG, MVT::Other, Copy, Copy.getValue(1));
+}
+
+/// LowerSELECT_CC - Lower floating point select_cc's into fsel instruction when
+/// possible.
+static SDOperand LowerSELECT_CC(SDOperand Op, SelectionDAG &DAG) {
+  // Not FP? Not a fsel.
+  if (!MVT::isFloatingPoint(Op.getOperand(0).getValueType()) ||
+      !MVT::isFloatingPoint(Op.getOperand(2).getValueType()))
+    return SDOperand();
+  
+  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
+  
+  // Cannot handle SETEQ/SETNE.
+  if (CC == ISD::SETEQ || CC == ISD::SETNE) return SDOperand();
+  
+  MVT::ValueType ResVT = Op.getValueType();
+  MVT::ValueType CmpVT = Op.getOperand(0).getValueType();
+  SDOperand LHS = Op.getOperand(0), RHS = Op.getOperand(1);
+  SDOperand TV  = Op.getOperand(2), FV  = Op.getOperand(3);
+  
+  // If the RHS of the comparison is a 0.0, we don't need to do the
+  // subtraction at all.
+  if (isFloatingPointZero(RHS))
+    switch (CC) {
+    default: break;       // SETUO etc aren't handled by fsel.
+    case ISD::SETULT:
+    case ISD::SETLT:
+      std::swap(TV, FV);  // fsel is natively setge, swap operands for setlt
+    case ISD::SETUGE:
+    case ISD::SETGE:
+      if (LHS.getValueType() == MVT::f32)   // Comparison is always 64-bits
+        LHS = DAG.getNode(ISD::FP_EXTEND, MVT::f64, LHS);
+      return DAG.getNode(PPCISD::FSEL, ResVT, LHS, TV, FV);
+    case ISD::SETUGT:
+    case ISD::SETGT:
+      std::swap(TV, FV);  // fsel is natively setge, swap operands for setlt
+    case ISD::SETULE:
+    case ISD::SETLE:
+      if (LHS.getValueType() == MVT::f32)   // Comparison is always 64-bits
+        LHS = DAG.getNode(ISD::FP_EXTEND, MVT::f64, LHS);
+      return DAG.getNode(PPCISD::FSEL, ResVT,
+                         DAG.getNode(ISD::FNEG, MVT::f64, LHS), TV, FV);
+    }
+      
+      SDOperand Cmp;
+  switch (CC) {
+  default: break;       // SETUO etc aren't handled by fsel.
+  case ISD::SETULT:
+  case ISD::SETLT:
+    Cmp = DAG.getNode(ISD::FSUB, CmpVT, LHS, RHS);
+    if (Cmp.getValueType() == MVT::f32)   // Comparison is always 64-bits
+      Cmp = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Cmp);
+      return DAG.getNode(PPCISD::FSEL, ResVT, Cmp, FV, TV);
+  case ISD::SETUGE:
+  case ISD::SETGE:
+    Cmp = DAG.getNode(ISD::FSUB, CmpVT, LHS, RHS);
+    if (Cmp.getValueType() == MVT::f32)   // Comparison is always 64-bits
+      Cmp = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Cmp);
+      return DAG.getNode(PPCISD::FSEL, ResVT, Cmp, TV, FV);
+  case ISD::SETUGT:
+  case ISD::SETGT:
+    Cmp = DAG.getNode(ISD::FSUB, CmpVT, RHS, LHS);
+    if (Cmp.getValueType() == MVT::f32)   // Comparison is always 64-bits
+      Cmp = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Cmp);
+      return DAG.getNode(PPCISD::FSEL, ResVT, Cmp, FV, TV);
+  case ISD::SETULE:
+  case ISD::SETLE:
+    Cmp = DAG.getNode(ISD::FSUB, CmpVT, RHS, LHS);
+    if (Cmp.getValueType() == MVT::f32)   // Comparison is always 64-bits
+      Cmp = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Cmp);
+      return DAG.getNode(PPCISD::FSEL, ResVT, Cmp, TV, FV);
+  }
+  return SDOperand();
+}
+
+static SDOperand LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG) {
+  assert(MVT::isFloatingPoint(Op.getOperand(0).getValueType()));
+  SDOperand Src = Op.getOperand(0);
+  if (Src.getValueType() == MVT::f32)
+    Src = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Src);
+  
+  SDOperand Tmp;
+  switch (Op.getValueType()) {
+  default: assert(0 && "Unhandled FP_TO_SINT type in custom expander!");
+  case MVT::i32:
+    Tmp = DAG.getNode(PPCISD::FCTIWZ, MVT::f64, Src);
+    break;
+  case MVT::i64:
+    Tmp = DAG.getNode(PPCISD::FCTIDZ, MVT::f64, Src);
+    break;
+  }
+  
+  // Convert the FP value to an int value through memory.
+  SDOperand Bits = DAG.getNode(ISD::BIT_CONVERT, MVT::i64, Tmp);
+  if (Op.getValueType() == MVT::i32)
+    Bits = DAG.getNode(ISD::TRUNCATE, MVT::i32, Bits);
+  return Bits;
+}
+
+static SDOperand LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
+  if (Op.getOperand(0).getValueType() == MVT::i64) {
+    SDOperand Bits = DAG.getNode(ISD::BIT_CONVERT, MVT::f64, Op.getOperand(0));
+    SDOperand FP = DAG.getNode(PPCISD::FCFID, MVT::f64, Bits);
+    if (Op.getValueType() == MVT::f32)
+      FP = DAG.getNode(ISD::FP_ROUND, MVT::f32, FP);
+    return FP;
+  }
+  
+  assert(Op.getOperand(0).getValueType() == MVT::i32 &&
+         "Unhandled SINT_TO_FP type in custom expander!");
+  // Since we only generate this in 64-bit mode, we can take advantage of
+  // 64-bit registers.  In particular, sign extend the input value into the
+  // 64-bit register with extsw, store the WHOLE 64-bit value into the stack
+  // then lfd it and fcfid it.
+  MachineFrameInfo *FrameInfo = DAG.getMachineFunction().getFrameInfo();
+  int FrameIdx = FrameInfo->CreateStackObject(8, 8);
+  SDOperand FIdx = DAG.getFrameIndex(FrameIdx, MVT::i32);
+  
+  SDOperand Ext64 = DAG.getNode(PPCISD::EXTSW_32, MVT::i32,
+                                Op.getOperand(0));
+  
+  // STD the extended value into the stack slot.
+  SDOperand Store = DAG.getNode(PPCISD::STD_32, MVT::Other,
+                                DAG.getEntryNode(), Ext64, FIdx,
+                                DAG.getSrcValue(NULL));
+  // Load the value as a double.
+  SDOperand Ld = DAG.getLoad(MVT::f64, Store, FIdx, DAG.getSrcValue(NULL));
+  
+  // FCFID it and return it.
+  SDOperand FP = DAG.getNode(PPCISD::FCFID, MVT::f64, Ld);
+  if (Op.getValueType() == MVT::f32)
+    FP = DAG.getNode(ISD::FP_ROUND, MVT::f32, FP);
+  return FP;
+}
+
+static SDOperand LowerSHL(SDOperand Op, SelectionDAG &DAG) {
+  assert(Op.getValueType() == MVT::i64 &&
+         Op.getOperand(1).getValueType() == MVT::i32 && "Unexpected SHL!");
+  // The generic code does a fine job expanding shift by a constant.
+  if (isa<ConstantSDNode>(Op.getOperand(1))) return SDOperand();
+  
+  // Otherwise, expand into a bunch of logical ops.  Note that these ops
+  // depend on the PPC behavior for oversized shift amounts.
+  SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op.getOperand(0),
+                             DAG.getConstant(0, MVT::i32));
+  SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op.getOperand(0),
+                             DAG.getConstant(1, MVT::i32));
+  SDOperand Amt = Op.getOperand(1);
+  
+  SDOperand Tmp1 = DAG.getNode(ISD::SUB, MVT::i32,
+                               DAG.getConstant(32, MVT::i32), Amt);
+  SDOperand Tmp2 = DAG.getNode(PPCISD::SHL, MVT::i32, Hi, Amt);
+  SDOperand Tmp3 = DAG.getNode(PPCISD::SRL, MVT::i32, Lo, Tmp1);
+  SDOperand Tmp4 = DAG.getNode(ISD::OR , MVT::i32, Tmp2, Tmp3);
+  SDOperand Tmp5 = DAG.getNode(ISD::ADD, MVT::i32, Amt,
+                               DAG.getConstant(-32U, MVT::i32));
+  SDOperand Tmp6 = DAG.getNode(PPCISD::SHL, MVT::i32, Lo, Tmp5);
+  SDOperand OutHi = DAG.getNode(ISD::OR, MVT::i32, Tmp4, Tmp6);
+  SDOperand OutLo = DAG.getNode(PPCISD::SHL, MVT::i32, Lo, Amt);
+  return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, OutLo, OutHi);
+}
+
+static SDOperand LowerSRL(SDOperand Op, SelectionDAG &DAG) {
+  assert(Op.getValueType() == MVT::i64 &&
+         Op.getOperand(1).getValueType() == MVT::i32 && "Unexpected SHL!");
+  // The generic code does a fine job expanding shift by a constant.
+  if (isa<ConstantSDNode>(Op.getOperand(1))) return SDOperand();
+  
+  // Otherwise, expand into a bunch of logical ops.  Note that these ops
+  // depend on the PPC behavior for oversized shift amounts.
+  SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op.getOperand(0),
+                             DAG.getConstant(0, MVT::i32));
+  SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op.getOperand(0),
+                             DAG.getConstant(1, MVT::i32));
+  SDOperand Amt = Op.getOperand(1);
+  
+  SDOperand Tmp1 = DAG.getNode(ISD::SUB, MVT::i32,
+                               DAG.getConstant(32, MVT::i32), Amt);
+  SDOperand Tmp2 = DAG.getNode(PPCISD::SRL, MVT::i32, Lo, Amt);
+  SDOperand Tmp3 = DAG.getNode(PPCISD::SHL, MVT::i32, Hi, Tmp1);
+  SDOperand Tmp4 = DAG.getNode(ISD::OR , MVT::i32, Tmp2, Tmp3);
+  SDOperand Tmp5 = DAG.getNode(ISD::ADD, MVT::i32, Amt,
+                               DAG.getConstant(-32U, MVT::i32));
+  SDOperand Tmp6 = DAG.getNode(PPCISD::SRL, MVT::i32, Hi, Tmp5);
+  SDOperand OutLo = DAG.getNode(ISD::OR, MVT::i32, Tmp4, Tmp6);
+  SDOperand OutHi = DAG.getNode(PPCISD::SRL, MVT::i32, Hi, Amt);
+  return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, OutLo, OutHi);
+}
+
+static SDOperand LowerSRA(SDOperand Op, SelectionDAG &DAG) {
+  assert(Op.getValueType() == MVT::i64 &&
+         Op.getOperand(1).getValueType() == MVT::i32 && "Unexpected SRA!");
+  // The generic code does a fine job expanding shift by a constant.
+  if (isa<ConstantSDNode>(Op.getOperand(1))) return SDOperand();
+  
+  // Otherwise, expand into a bunch of logical ops, followed by a select_cc.
+  SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op.getOperand(0),
+                             DAG.getConstant(0, MVT::i32));
+  SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op.getOperand(0),
+                             DAG.getConstant(1, MVT::i32));
+  SDOperand Amt = Op.getOperand(1);
+  
+  SDOperand Tmp1 = DAG.getNode(ISD::SUB, MVT::i32,
+                               DAG.getConstant(32, MVT::i32), Amt);
+  SDOperand Tmp2 = DAG.getNode(PPCISD::SRL, MVT::i32, Lo, Amt);
+  SDOperand Tmp3 = DAG.getNode(PPCISD::SHL, MVT::i32, Hi, Tmp1);
+  SDOperand Tmp4 = DAG.getNode(ISD::OR , MVT::i32, Tmp2, Tmp3);
+  SDOperand Tmp5 = DAG.getNode(ISD::ADD, MVT::i32, Amt,
+                               DAG.getConstant(-32U, MVT::i32));
+  SDOperand Tmp6 = DAG.getNode(PPCISD::SRA, MVT::i32, Hi, Tmp5);
+  SDOperand OutHi = DAG.getNode(PPCISD::SRA, MVT::i32, Hi, Amt);
+  SDOperand OutLo = DAG.getSelectCC(Tmp5, DAG.getConstant(0, MVT::i32),
+                                    Tmp4, Tmp6, ISD::SETLE);
+  return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, OutLo, OutHi);
+}
+
+//===----------------------------------------------------------------------===//
+// Vector related lowering.
+//
+
 // If this is a vector of constants or undefs, get the bits.  A bit in
 // UndefBits is set if the corresponding element of the vector is an 
 // ISD::UNDEF value.  For undefs, the corresponding VectorBits values are
@@ -740,485 +1126,152 @@ static SDOperand LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
   return DAG.getNode(PPCISD::VPERM, V1.getValueType(), V1, V2, VPermMask);
 }
 
+/// LowerINTRINSIC_WO_CHAIN - If this is an intrinsic that we want to custom
+/// lower, do it, otherwise return null.
+static SDOperand LowerINTRINSIC_WO_CHAIN(SDOperand Op, SelectionDAG &DAG) {
+  unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(0))->getValue();
+  
+  // If this is a lowered altivec predicate compare, CompareOpc is set to the
+  // opcode number of the comparison.
+  int CompareOpc = -1;
+  bool isDot = false;
+  switch (IntNo) {
+  default: return SDOperand();    // Don't custom lower most intrinsics.
+  // Comparison predicates.
+  case Intrinsic::ppc_altivec_vcmpbfp_p:  CompareOpc = 966; isDot = 1; break;
+  case Intrinsic::ppc_altivec_vcmpeqfp_p: CompareOpc = 198; isDot = 1; break;
+  case Intrinsic::ppc_altivec_vcmpequb_p: CompareOpc =   6; isDot = 1; break;
+  case Intrinsic::ppc_altivec_vcmpequh_p: CompareOpc =  70; isDot = 1; break;
+  case Intrinsic::ppc_altivec_vcmpequw_p: CompareOpc = 134; isDot = 1; break;
+  case Intrinsic::ppc_altivec_vcmpgefp_p: CompareOpc = 454; isDot = 1; break;
+  case Intrinsic::ppc_altivec_vcmpgtfp_p: CompareOpc = 710; isDot = 1; break;
+  case Intrinsic::ppc_altivec_vcmpgtsb_p: CompareOpc = 774; isDot = 1; break;
+  case Intrinsic::ppc_altivec_vcmpgtsh_p: CompareOpc = 838; isDot = 1; break;
+  case Intrinsic::ppc_altivec_vcmpgtsw_p: CompareOpc = 902; isDot = 1; break;
+  case Intrinsic::ppc_altivec_vcmpgtub_p: CompareOpc = 518; isDot = 1; break;
+  case Intrinsic::ppc_altivec_vcmpgtuh_p: CompareOpc = 582; isDot = 1; break;
+  case Intrinsic::ppc_altivec_vcmpgtuw_p: CompareOpc = 646; isDot = 1; break;
+    
+    // Normal Comparisons.
+  case Intrinsic::ppc_altivec_vcmpbfp:    CompareOpc = 966; isDot = 0; break;
+  case Intrinsic::ppc_altivec_vcmpeqfp:   CompareOpc = 198; isDot = 0; break;
+  case Intrinsic::ppc_altivec_vcmpequb:   CompareOpc =   6; isDot = 0; break;
+  case Intrinsic::ppc_altivec_vcmpequh:   CompareOpc =  70; isDot = 0; break;
+  case Intrinsic::ppc_altivec_vcmpequw:   CompareOpc = 134; isDot = 0; break;
+  case Intrinsic::ppc_altivec_vcmpgefp:   CompareOpc = 454; isDot = 0; break;
+  case Intrinsic::ppc_altivec_vcmpgtfp:   CompareOpc = 710; isDot = 0; break;
+  case Intrinsic::ppc_altivec_vcmpgtsb:   CompareOpc = 774; isDot = 0; break;
+  case Intrinsic::ppc_altivec_vcmpgtsh:   CompareOpc = 838; isDot = 0; break;
+  case Intrinsic::ppc_altivec_vcmpgtsw:   CompareOpc = 902; isDot = 0; break;
+  case Intrinsic::ppc_altivec_vcmpgtub:   CompareOpc = 518; isDot = 0; break;
+  case Intrinsic::ppc_altivec_vcmpgtuh:   CompareOpc = 582; isDot = 0; break;
+  case Intrinsic::ppc_altivec_vcmpgtuw:   CompareOpc = 646; isDot = 0; break;
+  }
+  
+  assert(CompareOpc>0 && "We only lower altivec predicate compares so far!");
+  
+  // If this is a non-dot comparison, make the VCMP node.
+  if (!isDot) {
+    SDOperand Tmp = DAG.getNode(PPCISD::VCMP, Op.getOperand(2).getValueType(),
+                                Op.getOperand(1), Op.getOperand(2),
+                                DAG.getConstant(CompareOpc, MVT::i32));
+    return DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Tmp);
+  }
+  
+  // Create the PPCISD altivec 'dot' comparison node.
+  std::vector<SDOperand> Ops;
+  std::vector<MVT::ValueType> VTs;
+  Ops.push_back(Op.getOperand(2));  // LHS
+  Ops.push_back(Op.getOperand(3));  // RHS
+  Ops.push_back(DAG.getConstant(CompareOpc, MVT::i32));
+  VTs.push_back(Op.getOperand(2).getValueType());
+  VTs.push_back(MVT::Flag);
+  SDOperand CompNode = DAG.getNode(PPCISD::VCMPo, VTs, Ops);
+  
+  // Now that we have the comparison, emit a copy from the CR to a GPR.
+  // This is flagged to the above dot comparison.
+  SDOperand Flags = DAG.getNode(PPCISD::MFCR, MVT::i32,
+                                DAG.getRegister(PPC::CR6, MVT::i32),
+                                CompNode.getValue(1)); 
+  
+  // Unpack the result based on how the target uses it.
+  unsigned BitNo;   // Bit # of CR6.
+  bool InvertBit;   // Invert result?
+  switch (cast<ConstantSDNode>(Op.getOperand(1))->getValue()) {
+  default:  // Can't happen, don't crash on invalid number though.
+  case 0:   // Return the value of the EQ bit of CR6.
+    BitNo = 0; InvertBit = false;
+    break;
+  case 1:   // Return the inverted value of the EQ bit of CR6.
+    BitNo = 0; InvertBit = true;
+    break;
+  case 2:   // Return the value of the LT bit of CR6.
+    BitNo = 2; InvertBit = false;
+    break;
+  case 3:   // Return the inverted value of the LT bit of CR6.
+    BitNo = 2; InvertBit = true;
+    break;
+  }
+  
+  // Shift the bit into the low position.
+  Flags = DAG.getNode(ISD::SRL, MVT::i32, Flags,
+                      DAG.getConstant(8-(3-BitNo), MVT::i32));
+  // Isolate the bit.
+  Flags = DAG.getNode(ISD::AND, MVT::i32, Flags,
+                      DAG.getConstant(1, MVT::i32));
+  
+  // If we are supposed to, toggle the bit.
+  if (InvertBit)
+    Flags = DAG.getNode(ISD::XOR, MVT::i32, Flags,
+                        DAG.getConstant(1, MVT::i32));
+  return Flags;
+}
+
+static SDOperand LowerSCALAR_TO_VECTOR(SDOperand Op, SelectionDAG &DAG) {
+  // Create a stack slot that is 16-byte aligned.
+  MachineFrameInfo *FrameInfo = DAG.getMachineFunction().getFrameInfo();
+  int FrameIdx = FrameInfo->CreateStackObject(16, 16);
+  SDOperand FIdx = DAG.getFrameIndex(FrameIdx, MVT::i32);
+  
+  // Store the input value into Value#0 of the stack slot.
+  SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
+                                Op.getOperand(0), FIdx,DAG.getSrcValue(NULL));
+  // Load it out.
+  return DAG.getLoad(Op.getValueType(), Store, FIdx, DAG.getSrcValue(NULL));
+}
+
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
 SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default: assert(0 && "Wasn't expecting to be able to lower this!"); 
-  case ISD::BUILD_VECTOR: return LowerBUILD_VECTOR(Op, DAG);
-  case ISD::VECTOR_SHUFFLE: return LowerVECTOR_SHUFFLE(Op, DAG);
-  case ISD::FP_TO_SINT: {
-    assert(MVT::isFloatingPoint(Op.getOperand(0).getValueType()));
-    SDOperand Src = Op.getOperand(0);
-    if (Src.getValueType() == MVT::f32)
-      Src = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Src);
+  case ISD::ConstantPool:       return LowerConstantPool(Op, DAG);
+  case ISD::GlobalAddress:      return LowerGlobalAddress(Op, DAG);
+  case ISD::SETCC:              return LowerSETCC(Op, DAG);
+  case ISD::VASTART:            return LowerVASTART(Op, DAG, VarArgsFrameIndex);
+  case ISD::RET:                return LowerRET(Op, DAG);
     
-    SDOperand Tmp;
-    switch (Op.getValueType()) {
-    default: assert(0 && "Unhandled FP_TO_SINT type in custom expander!");
-    case MVT::i32:
-      Tmp = DAG.getNode(PPCISD::FCTIWZ, MVT::f64, Src);
-      break;
-    case MVT::i64:
-      Tmp = DAG.getNode(PPCISD::FCTIDZ, MVT::f64, Src);
-      break;
-    }
-   
-    // Convert the FP value to an int value through memory.
-    SDOperand Bits = DAG.getNode(ISD::BIT_CONVERT, MVT::i64, Tmp);
-    if (Op.getValueType() == MVT::i32)
-      Bits = DAG.getNode(ISD::TRUNCATE, MVT::i32, Bits);
-    return Bits;
-  }
-  case ISD::SINT_TO_FP:
-    if (Op.getOperand(0).getValueType() == MVT::i64) {
-      SDOperand Bits = DAG.getNode(ISD::BIT_CONVERT, MVT::f64, Op.getOperand(0));
-      SDOperand FP = DAG.getNode(PPCISD::FCFID, MVT::f64, Bits);
-      if (Op.getValueType() == MVT::f32)
-        FP = DAG.getNode(ISD::FP_ROUND, MVT::f32, FP);
-      return FP;
-    } else {
-      assert(Op.getOperand(0).getValueType() == MVT::i32 &&
-             "Unhandled SINT_TO_FP type in custom expander!");
-      // Since we only generate this in 64-bit mode, we can take advantage of
-      // 64-bit registers.  In particular, sign extend the input value into the
-      // 64-bit register with extsw, store the WHOLE 64-bit value into the stack
-      // then lfd it and fcfid it.
-      MachineFrameInfo *FrameInfo = DAG.getMachineFunction().getFrameInfo();
-      int FrameIdx = FrameInfo->CreateStackObject(8, 8);
-      SDOperand FIdx = DAG.getFrameIndex(FrameIdx, MVT::i32);
-      
-      SDOperand Ext64 = DAG.getNode(PPCISD::EXTSW_32, MVT::i32,
-                                    Op.getOperand(0));
+  case ISD::SELECT_CC:          return LowerSELECT_CC(Op, DAG);
+  case ISD::FP_TO_SINT:         return LowerFP_TO_SINT(Op, DAG);
+  case ISD::SINT_TO_FP:         return LowerSINT_TO_FP(Op, DAG);
 
-      // STD the extended value into the stack slot.
-      SDOperand Store = DAG.getNode(PPCISD::STD_32, MVT::Other,
-                                    DAG.getEntryNode(), Ext64, FIdx,
-                                    DAG.getSrcValue(NULL));
-      // Load the value as a double.
-      SDOperand Ld = DAG.getLoad(MVT::f64, Store, FIdx, DAG.getSrcValue(NULL));
-      
-      // FCFID it and return it.
-      SDOperand FP = DAG.getNode(PPCISD::FCFID, MVT::f64, Ld);
-      if (Op.getValueType() == MVT::f32)
-        FP = DAG.getNode(ISD::FP_ROUND, MVT::f32, FP);
-      return FP;
-    }
-    break;
+  // Lower 64-bit shifts.
+  case ISD::SHL:                return LowerSHL(Op, DAG);
+  case ISD::SRL:                return LowerSRL(Op, DAG);
+  case ISD::SRA:                return LowerSRA(Op, DAG);
 
-  case ISD::SELECT_CC: {
-    // Turn FP only select_cc's into fsel instructions.
-    if (!MVT::isFloatingPoint(Op.getOperand(0).getValueType()) ||
-        !MVT::isFloatingPoint(Op.getOperand(2).getValueType()))
-      break;
-    
-    ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
-    
-    // Cannot handle SETEQ/SETNE.
-    if (CC == ISD::SETEQ || CC == ISD::SETNE) break;
-    
-    MVT::ValueType ResVT = Op.getValueType();
-    MVT::ValueType CmpVT = Op.getOperand(0).getValueType();
-    SDOperand LHS = Op.getOperand(0), RHS = Op.getOperand(1);
-    SDOperand TV  = Op.getOperand(2), FV  = Op.getOperand(3);
-
-    // If the RHS of the comparison is a 0.0, we don't need to do the
-    // subtraction at all.
-    if (isFloatingPointZero(RHS))
-      switch (CC) {
-      default: break;       // SETUO etc aren't handled by fsel.
-      case ISD::SETULT:
-      case ISD::SETLT:
-        std::swap(TV, FV);  // fsel is natively setge, swap operands for setlt
-      case ISD::SETUGE:
-      case ISD::SETGE:
-        if (LHS.getValueType() == MVT::f32)   // Comparison is always 64-bits
-          LHS = DAG.getNode(ISD::FP_EXTEND, MVT::f64, LHS);
-        return DAG.getNode(PPCISD::FSEL, ResVT, LHS, TV, FV);
-      case ISD::SETUGT:
-      case ISD::SETGT:
-        std::swap(TV, FV);  // fsel is natively setge, swap operands for setlt
-      case ISD::SETULE:
-      case ISD::SETLE:
-        if (LHS.getValueType() == MVT::f32)   // Comparison is always 64-bits
-          LHS = DAG.getNode(ISD::FP_EXTEND, MVT::f64, LHS);
-        return DAG.getNode(PPCISD::FSEL, ResVT,
-                           DAG.getNode(ISD::FNEG, MVT::f64, LHS), TV, FV);
-      }
-    
-    SDOperand Cmp;
-    switch (CC) {
-    default: break;       // SETUO etc aren't handled by fsel.
-    case ISD::SETULT:
-    case ISD::SETLT:
-      Cmp = DAG.getNode(ISD::FSUB, CmpVT, LHS, RHS);
-      if (Cmp.getValueType() == MVT::f32)   // Comparison is always 64-bits
-        Cmp = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Cmp);
-      return DAG.getNode(PPCISD::FSEL, ResVT, Cmp, FV, TV);
-    case ISD::SETUGE:
-    case ISD::SETGE:
-      Cmp = DAG.getNode(ISD::FSUB, CmpVT, LHS, RHS);
-      if (Cmp.getValueType() == MVT::f32)   // Comparison is always 64-bits
-        Cmp = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Cmp);
-      return DAG.getNode(PPCISD::FSEL, ResVT, Cmp, TV, FV);
-    case ISD::SETUGT:
-    case ISD::SETGT:
-      Cmp = DAG.getNode(ISD::FSUB, CmpVT, RHS, LHS);
-      if (Cmp.getValueType() == MVT::f32)   // Comparison is always 64-bits
-        Cmp = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Cmp);
-      return DAG.getNode(PPCISD::FSEL, ResVT, Cmp, FV, TV);
-    case ISD::SETULE:
-    case ISD::SETLE:
-      Cmp = DAG.getNode(ISD::FSUB, CmpVT, RHS, LHS);
-      if (Cmp.getValueType() == MVT::f32)   // Comparison is always 64-bits
-        Cmp = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Cmp);
-      return DAG.getNode(PPCISD::FSEL, ResVT, Cmp, TV, FV);
-    }
-    break;
-  }
-  case ISD::SHL: {
-    assert(Op.getValueType() == MVT::i64 &&
-           Op.getOperand(1).getValueType() == MVT::i32 && "Unexpected SHL!");
-    // The generic code does a fine job expanding shift by a constant.
-    if (isa<ConstantSDNode>(Op.getOperand(1))) break;
-    
-    // Otherwise, expand into a bunch of logical ops.  Note that these ops
-    // depend on the PPC behavior for oversized shift amounts.
-    SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op.getOperand(0),
-                               DAG.getConstant(0, MVT::i32));
-    SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op.getOperand(0),
-                               DAG.getConstant(1, MVT::i32));
-    SDOperand Amt = Op.getOperand(1);
-    
-    SDOperand Tmp1 = DAG.getNode(ISD::SUB, MVT::i32,
-                                 DAG.getConstant(32, MVT::i32), Amt);
-    SDOperand Tmp2 = DAG.getNode(PPCISD::SHL, MVT::i32, Hi, Amt);
-    SDOperand Tmp3 = DAG.getNode(PPCISD::SRL, MVT::i32, Lo, Tmp1);
-    SDOperand Tmp4 = DAG.getNode(ISD::OR , MVT::i32, Tmp2, Tmp3);
-    SDOperand Tmp5 = DAG.getNode(ISD::ADD, MVT::i32, Amt,
-                                 DAG.getConstant(-32U, MVT::i32));
-    SDOperand Tmp6 = DAG.getNode(PPCISD::SHL, MVT::i32, Lo, Tmp5);
-    SDOperand OutHi = DAG.getNode(ISD::OR, MVT::i32, Tmp4, Tmp6);
-    SDOperand OutLo = DAG.getNode(PPCISD::SHL, MVT::i32, Lo, Amt);
-    return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, OutLo, OutHi);
-  }
-  case ISD::SRL: {
-    assert(Op.getValueType() == MVT::i64 &&
-           Op.getOperand(1).getValueType() == MVT::i32 && "Unexpected SHL!");
-    // The generic code does a fine job expanding shift by a constant.
-    if (isa<ConstantSDNode>(Op.getOperand(1))) break;
-    
-    // Otherwise, expand into a bunch of logical ops.  Note that these ops
-    // depend on the PPC behavior for oversized shift amounts.
-    SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op.getOperand(0),
-                               DAG.getConstant(0, MVT::i32));
-    SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op.getOperand(0),
-                               DAG.getConstant(1, MVT::i32));
-    SDOperand Amt = Op.getOperand(1);
-    
-    SDOperand Tmp1 = DAG.getNode(ISD::SUB, MVT::i32,
-                                 DAG.getConstant(32, MVT::i32), Amt);
-    SDOperand Tmp2 = DAG.getNode(PPCISD::SRL, MVT::i32, Lo, Amt);
-    SDOperand Tmp3 = DAG.getNode(PPCISD::SHL, MVT::i32, Hi, Tmp1);
-    SDOperand Tmp4 = DAG.getNode(ISD::OR , MVT::i32, Tmp2, Tmp3);
-    SDOperand Tmp5 = DAG.getNode(ISD::ADD, MVT::i32, Amt,
-                                 DAG.getConstant(-32U, MVT::i32));
-    SDOperand Tmp6 = DAG.getNode(PPCISD::SRL, MVT::i32, Hi, Tmp5);
-    SDOperand OutLo = DAG.getNode(ISD::OR, MVT::i32, Tmp4, Tmp6);
-    SDOperand OutHi = DAG.getNode(PPCISD::SRL, MVT::i32, Hi, Amt);
-    return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, OutLo, OutHi);
-  }    
-  case ISD::SRA: {
-    assert(Op.getValueType() == MVT::i64 &&
-           Op.getOperand(1).getValueType() == MVT::i32 && "Unexpected SRA!");
-    // The generic code does a fine job expanding shift by a constant.
-    if (isa<ConstantSDNode>(Op.getOperand(1))) break;
-      
-    // Otherwise, expand into a bunch of logical ops, followed by a select_cc.
-    SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op.getOperand(0),
-                               DAG.getConstant(0, MVT::i32));
-    SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op.getOperand(0),
-                               DAG.getConstant(1, MVT::i32));
-    SDOperand Amt = Op.getOperand(1);
-    
-    SDOperand Tmp1 = DAG.getNode(ISD::SUB, MVT::i32,
-                                 DAG.getConstant(32, MVT::i32), Amt);
-    SDOperand Tmp2 = DAG.getNode(PPCISD::SRL, MVT::i32, Lo, Amt);
-    SDOperand Tmp3 = DAG.getNode(PPCISD::SHL, MVT::i32, Hi, Tmp1);
-    SDOperand Tmp4 = DAG.getNode(ISD::OR , MVT::i32, Tmp2, Tmp3);
-    SDOperand Tmp5 = DAG.getNode(ISD::ADD, MVT::i32, Amt,
-                                 DAG.getConstant(-32U, MVT::i32));
-    SDOperand Tmp6 = DAG.getNode(PPCISD::SRA, MVT::i32, Hi, Tmp5);
-    SDOperand OutHi = DAG.getNode(PPCISD::SRA, MVT::i32, Hi, Amt);
-    SDOperand OutLo = DAG.getSelectCC(Tmp5, DAG.getConstant(0, MVT::i32),
-                                      Tmp4, Tmp6, ISD::SETLE);
-    return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, OutLo, OutHi);
-  }
-  case ISD::ConstantPool: {
-    ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);
-    Constant *C = CP->get();
-    SDOperand CPI = DAG.getTargetConstantPool(C, MVT::i32, CP->getAlignment());
-    SDOperand Zero = DAG.getConstant(0, MVT::i32);
-    
-    // If this is a non-darwin platform, we don't support non-static relo models
-    // yet.
-    if (getTargetMachine().getRelocationModel() == Reloc::Static ||
-        !getTargetMachine().getSubtarget<PPCSubtarget>().isDarwin()) {
-      // Generate non-pic code that has direct accesses to the constant pool.
-      // The address of the global is just (hi(&g)+lo(&g)).
-      SDOperand Hi = DAG.getNode(PPCISD::Hi, MVT::i32, CPI, Zero);
-      SDOperand Lo = DAG.getNode(PPCISD::Lo, MVT::i32, CPI, Zero);
-      return DAG.getNode(ISD::ADD, MVT::i32, Hi, Lo);
-    }
-    
-    SDOperand Hi = DAG.getNode(PPCISD::Hi, MVT::i32, CPI, Zero);
-    if (getTargetMachine().getRelocationModel() == Reloc::PIC) {
-      // With PIC, the first instruction is actually "GR+hi(&G)".
-      Hi = DAG.getNode(ISD::ADD, MVT::i32,
-                       DAG.getNode(PPCISD::GlobalBaseReg, MVT::i32), Hi);
-    }
-
-    SDOperand Lo = DAG.getNode(PPCISD::Lo, MVT::i32, CPI, Zero);
-    Lo = DAG.getNode(ISD::ADD, MVT::i32, Hi, Lo);
-    return Lo;
-  }
-  case ISD::GlobalAddress: {
-    GlobalAddressSDNode *GSDN = cast<GlobalAddressSDNode>(Op);
-    GlobalValue *GV = GSDN->getGlobal();
-    SDOperand GA = DAG.getTargetGlobalAddress(GV, MVT::i32, GSDN->getOffset());
-    SDOperand Zero = DAG.getConstant(0, MVT::i32);
-
-    // If this is a non-darwin platform, we don't support non-static relo models
-    // yet.
-    if (getTargetMachine().getRelocationModel() == Reloc::Static ||
-        !getTargetMachine().getSubtarget<PPCSubtarget>().isDarwin()) {
-      // Generate non-pic code that has direct accesses to globals.
-      // The address of the global is just (hi(&g)+lo(&g)).
-      SDOperand Hi = DAG.getNode(PPCISD::Hi, MVT::i32, GA, Zero);
-      SDOperand Lo = DAG.getNode(PPCISD::Lo, MVT::i32, GA, Zero);
-      return DAG.getNode(ISD::ADD, MVT::i32, Hi, Lo);
-    }
-    
-    SDOperand Hi = DAG.getNode(PPCISD::Hi, MVT::i32, GA, Zero);
-    if (getTargetMachine().getRelocationModel() == Reloc::PIC) {
-      // With PIC, the first instruction is actually "GR+hi(&G)".
-      Hi = DAG.getNode(ISD::ADD, MVT::i32,
-                       DAG.getNode(PPCISD::GlobalBaseReg, MVT::i32), Hi);
-    }
-    
-    SDOperand Lo = DAG.getNode(PPCISD::Lo, MVT::i32, GA, Zero);
-    Lo = DAG.getNode(ISD::ADD, MVT::i32, Hi, Lo);
-                                   
-    if (!GV->hasWeakLinkage() && !GV->hasLinkOnceLinkage() &&
-        (!GV->isExternal() || GV->hasNotBeenReadFromBytecode()))
-      return Lo;
-
-    // If the global is weak or external, we have to go through the lazy
-    // resolution stub.
-    return DAG.getLoad(MVT::i32, DAG.getEntryNode(), Lo, DAG.getSrcValue(0));
-  }
-  case ISD::SETCC: {
-    ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(2))->get();
-    
-    // If we're comparing for equality to zero, expose the fact that this is
-    // implented as a ctlz/srl pair on ppc, so that the dag combiner can
-    // fold the new nodes.
-    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
-      if (C->isNullValue() && CC == ISD::SETEQ) {
-        MVT::ValueType VT = Op.getOperand(0).getValueType();
-        SDOperand Zext = Op.getOperand(0);
-        if (VT < MVT::i32) {
-          VT = MVT::i32;
-          Zext = DAG.getNode(ISD::ZERO_EXTEND, VT, Op.getOperand(0));
-        } 
-        unsigned Log2b = Log2_32(MVT::getSizeInBits(VT));
-        SDOperand Clz = DAG.getNode(ISD::CTLZ, VT, Zext);
-        SDOperand Scc = DAG.getNode(ISD::SRL, VT, Clz,
-                                    DAG.getConstant(Log2b, getShiftAmountTy()));
-        return DAG.getNode(ISD::TRUNCATE, getSetCCResultTy(), Scc);
-      }
-      // Leave comparisons against 0 and -1 alone for now, since they're usually 
-      // optimized.  FIXME: revisit this when we can custom lower all setcc
-      // optimizations.
-      if (C->isAllOnesValue() || C->isNullValue())
-        break;
-    }
-        
-    // If we have an integer seteq/setne, turn it into a compare against zero
-    // by subtracting the rhs from the lhs, which is faster than setting a
-    // condition register, reading it back out, and masking the correct bit.
-    MVT::ValueType LHSVT = Op.getOperand(0).getValueType();
-    if (MVT::isInteger(LHSVT) && (CC == ISD::SETEQ || CC == ISD::SETNE)) {
-      MVT::ValueType VT = Op.getValueType();
-      SDOperand Sub = DAG.getNode(ISD::SUB, LHSVT, Op.getOperand(0), 
-                                  Op.getOperand(1));
-      return DAG.getSetCC(VT, Sub, DAG.getConstant(0, LHSVT), CC);
-    }
-    break;
-  }
-  case ISD::VASTART: {
-    // vastart just stores the address of the VarArgsFrameIndex slot into the
-    // memory location argument.
-    // FIXME: Replace MVT::i32 with PointerTy
-    SDOperand FR = DAG.getFrameIndex(VarArgsFrameIndex, MVT::i32);
-    return DAG.getNode(ISD::STORE, MVT::Other, Op.getOperand(0), FR, 
-                       Op.getOperand(1), Op.getOperand(2));
-  }
-  case ISD::RET: {
-    SDOperand Copy;
-    
-    switch(Op.getNumOperands()) {
-    default:
-      assert(0 && "Do not know how to return this many arguments!");
-      abort();
-    case 1: 
-      return SDOperand(); // ret void is legal
-    case 2: {
-      MVT::ValueType ArgVT = Op.getOperand(1).getValueType();
-      unsigned ArgReg;
-      if (MVT::isVector(ArgVT))
-        ArgReg = PPC::V2;
-      else if (MVT::isInteger(ArgVT))
-        ArgReg = PPC::R3;
-      else {
-        assert(MVT::isFloatingPoint(ArgVT));
-        ArgReg = PPC::F1;
-      }
-      
-      Copy = DAG.getCopyToReg(Op.getOperand(0), ArgReg, Op.getOperand(1),
-                              SDOperand());
-      
-      // If we haven't noted the R3/F1 are live out, do so now.
-      if (DAG.getMachineFunction().liveout_empty())
-        DAG.getMachineFunction().addLiveOut(ArgReg);
-      break;
-    }
-    case 3:
-      Copy = DAG.getCopyToReg(Op.getOperand(0), PPC::R3, Op.getOperand(2), 
-                              SDOperand());
-      Copy = DAG.getCopyToReg(Copy, PPC::R4, Op.getOperand(1),Copy.getValue(1));
-      // If we haven't noted the R3+R4 are live out, do so now.
-      if (DAG.getMachineFunction().liveout_empty()) {
-        DAG.getMachineFunction().addLiveOut(PPC::R3);
-        DAG.getMachineFunction().addLiveOut(PPC::R4);
-      }
-      break;
-    }
-    return DAG.getNode(PPCISD::RET_FLAG, MVT::Other, Copy, Copy.getValue(1));
-  }
-  case ISD::SCALAR_TO_VECTOR: {
-    // Create a stack slot that is 16-byte aligned.
-    MachineFrameInfo *FrameInfo = DAG.getMachineFunction().getFrameInfo();
-    int FrameIdx = FrameInfo->CreateStackObject(16, 16);
-    SDOperand FIdx = DAG.getFrameIndex(FrameIdx, MVT::i32);
-    
-    // Store the input value into Value#0 of the stack slot.
-    SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
-                                  Op.getOperand(0), FIdx,DAG.getSrcValue(NULL));
-    // Load it out.
-    return DAG.getLoad(Op.getValueType(), Store, FIdx, DAG.getSrcValue(NULL));
-  }
-  case ISD::INTRINSIC_WO_CHAIN: {
-    unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(0))->getValue();
-    
-    // If this is a lowered altivec predicate compare, CompareOpc is set to the
-    // opcode number of the comparison.
-    int CompareOpc = -1;
-    bool isDot = false;
-    switch (IntNo) {
-    default: return SDOperand();    // Don't custom lower most intrinsics.
-    // Comparison predicates.
-    case Intrinsic::ppc_altivec_vcmpbfp_p:  CompareOpc = 966; isDot = 1; break;
-    case Intrinsic::ppc_altivec_vcmpeqfp_p: CompareOpc = 198; isDot = 1; break;
-    case Intrinsic::ppc_altivec_vcmpequb_p: CompareOpc =   6; isDot = 1; break;
-    case Intrinsic::ppc_altivec_vcmpequh_p: CompareOpc =  70; isDot = 1; break;
-    case Intrinsic::ppc_altivec_vcmpequw_p: CompareOpc = 134; isDot = 1; break;
-    case Intrinsic::ppc_altivec_vcmpgefp_p: CompareOpc = 454; isDot = 1; break;
-    case Intrinsic::ppc_altivec_vcmpgtfp_p: CompareOpc = 710; isDot = 1; break;
-    case Intrinsic::ppc_altivec_vcmpgtsb_p: CompareOpc = 774; isDot = 1; break;
-    case Intrinsic::ppc_altivec_vcmpgtsh_p: CompareOpc = 838; isDot = 1; break;
-    case Intrinsic::ppc_altivec_vcmpgtsw_p: CompareOpc = 902; isDot = 1; break;
-    case Intrinsic::ppc_altivec_vcmpgtub_p: CompareOpc = 518; isDot = 1; break;
-    case Intrinsic::ppc_altivec_vcmpgtuh_p: CompareOpc = 582; isDot = 1; break;
-    case Intrinsic::ppc_altivec_vcmpgtuw_p: CompareOpc = 646; isDot = 1; break;
-
-    // Normal Comparisons.
-    case Intrinsic::ppc_altivec_vcmpbfp:    CompareOpc = 966; isDot = 0; break;
-    case Intrinsic::ppc_altivec_vcmpeqfp:   CompareOpc = 198; isDot = 0; break;
-    case Intrinsic::ppc_altivec_vcmpequb:   CompareOpc =   6; isDot = 0; break;
-    case Intrinsic::ppc_altivec_vcmpequh:   CompareOpc =  70; isDot = 0; break;
-    case Intrinsic::ppc_altivec_vcmpequw:   CompareOpc = 134; isDot = 0; break;
-    case Intrinsic::ppc_altivec_vcmpgefp:   CompareOpc = 454; isDot = 0; break;
-    case Intrinsic::ppc_altivec_vcmpgtfp:   CompareOpc = 710; isDot = 0; break;
-    case Intrinsic::ppc_altivec_vcmpgtsb:   CompareOpc = 774; isDot = 0; break;
-    case Intrinsic::ppc_altivec_vcmpgtsh:   CompareOpc = 838; isDot = 0; break;
-    case Intrinsic::ppc_altivec_vcmpgtsw:   CompareOpc = 902; isDot = 0; break;
-    case Intrinsic::ppc_altivec_vcmpgtub:   CompareOpc = 518; isDot = 0; break;
-    case Intrinsic::ppc_altivec_vcmpgtuh:   CompareOpc = 582; isDot = 0; break;
-    case Intrinsic::ppc_altivec_vcmpgtuw:   CompareOpc = 646; isDot = 0; break;
-    }
-    
-    assert(CompareOpc>0 && "We only lower altivec predicate compares so far!");
-
-    // If this is a non-dot comparison, make the VCMP node.
-    if (!isDot) {
-      SDOperand Tmp = DAG.getNode(PPCISD::VCMP, Op.getOperand(2).getValueType(),
-                                  Op.getOperand(1), Op.getOperand(2),
-                                  DAG.getConstant(CompareOpc, MVT::i32));
-      return DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Tmp);
-    }
-    
-    // Create the PPCISD altivec 'dot' comparison node.
-    std::vector<SDOperand> Ops;
-    std::vector<MVT::ValueType> VTs;
-    Ops.push_back(Op.getOperand(2));  // LHS
-    Ops.push_back(Op.getOperand(3));  // RHS
-    Ops.push_back(DAG.getConstant(CompareOpc, MVT::i32));
-    VTs.push_back(Op.getOperand(2).getValueType());
-    VTs.push_back(MVT::Flag);
-    SDOperand CompNode = DAG.getNode(PPCISD::VCMPo, VTs, Ops);
-
-    // Now that we have the comparison, emit a copy from the CR to a GPR.
-    // This is flagged to the above dot comparison.
-    SDOperand Flags = DAG.getNode(PPCISD::MFCR, MVT::i32,
-                                  DAG.getRegister(PPC::CR6, MVT::i32),
-                                  CompNode.getValue(1)); 
-
-    // Unpack the result based on how the target uses it.
-    unsigned BitNo;   // Bit # of CR6.
-    bool InvertBit;   // Invert result?
-    switch (cast<ConstantSDNode>(Op.getOperand(1))->getValue()) {
-    default:  // Can't happen, don't crash on invalid number though.
-    case 0:   // Return the value of the EQ bit of CR6.
-      BitNo = 0; InvertBit = false;
-      break;
-    case 1:   // Return the inverted value of the EQ bit of CR6.
-      BitNo = 0; InvertBit = true;
-      break;
-    case 2:   // Return the value of the LT bit of CR6.
-      BitNo = 2; InvertBit = false;
-      break;
-    case 3:   // Return the inverted value of the LT bit of CR6.
-      BitNo = 2; InvertBit = true;
-      break;
-    }
-    
-    // Shift the bit into the low position.
-    Flags = DAG.getNode(ISD::SRL, MVT::i32, Flags,
-                        DAG.getConstant(8-(3-BitNo), MVT::i32));
-    // Isolate the bit.
-    Flags = DAG.getNode(ISD::AND, MVT::i32, Flags,
-                        DAG.getConstant(1, MVT::i32));
-    
-    // If we are supposed to, toggle the bit.
-    if (InvertBit)
-      Flags = DAG.getNode(ISD::XOR, MVT::i32, Flags,
-                          DAG.getConstant(1, MVT::i32));
-    return Flags;
-  }
+  // Vector-related lowering.
+  case ISD::BUILD_VECTOR:       return LowerBUILD_VECTOR(Op, DAG);
+  case ISD::VECTOR_SHUFFLE:     return LowerVECTOR_SHUFFLE(Op, DAG);
+  case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
+  case ISD::SCALAR_TO_VECTOR:   return LowerSCALAR_TO_VECTOR(Op, DAG);
   }
   return SDOperand();
 }
+
+//===----------------------------------------------------------------------===//
+//  Other Lowering Code
+//===----------------------------------------------------------------------===//
 
 std::vector<SDOperand>
 PPCTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
@@ -1663,6 +1716,10 @@ PPCTargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
   return BB;
 }
 
+//===----------------------------------------------------------------------===//
+// Target Optimization Hooks
+//===----------------------------------------------------------------------===//
+
 SDOperand PPCTargetLowering::PerformDAGCombine(SDNode *N, 
                                                DAGCombinerInfo &DCI) const {
   TargetMachine &TM = getTargetMachine();
@@ -1750,6 +1807,10 @@ SDOperand PPCTargetLowering::PerformDAGCombine(SDNode *N,
   
   return SDOperand();
 }
+
+//===----------------------------------------------------------------------===//
+// Inline Assembly Support
+//===----------------------------------------------------------------------===//
 
 void PPCTargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
                                                        uint64_t Mask,
