@@ -833,6 +833,12 @@ bool ExtractElementInst::isValidOperands(const Value *Val, const Value *Index) {
 //                           InsertElementInst Implementation
 //===----------------------------------------------------------------------===//
 
+InsertElementInst::InsertElementInst(const InsertElementInst &IE)
+    : Instruction(IE.getType(), InsertElement, Ops, 3) {
+  Ops[0].init(IE.Ops[0], this);
+  Ops[1].init(IE.Ops[1], this);
+  Ops[2].init(IE.Ops[2], this);
+}
 InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, Value *Index,
                                      const std::string &Name,
                                      Instruction *InsertBef)
@@ -873,6 +879,13 @@ bool InsertElementInst::isValidOperands(const Value *Vec, const Value *Elt,
 //===----------------------------------------------------------------------===//
 //                      ShuffleVectorInst Implementation
 //===----------------------------------------------------------------------===//
+
+ShuffleVectorInst::ShuffleVectorInst(const ShuffleVectorInst &SV) 
+    : Instruction(SV.getType(), ShuffleVector, Ops, 3) {
+  Ops[0].init(SV.Ops[0], this);
+  Ops[1].init(SV.Ops[1], this);
+  Ops[2].init(SV.Ops[2], this);
+}
 
 ShuffleVectorInst::ShuffleVectorInst(Value *V1, Value *V2, Value *Mask,
                                      const std::string &Name,
