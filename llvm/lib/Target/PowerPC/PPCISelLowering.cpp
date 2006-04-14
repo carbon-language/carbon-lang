@@ -416,6 +416,7 @@ bool PPC::isSplatShuffleMask(SDNode *N, unsigned EltSize) {
   
   assert(isa<ConstantSDNode>(Elt) && "Invalid VECTOR_SHUFFLE mask!");
   for (unsigned i = EltSize, e = 16; i != e; i += EltSize) {
+    if (N->getOperand(i).getOpcode() == ISD::UNDEF) continue;
     assert(isa<ConstantSDNode>(N->getOperand(i)) &&
            "Invalid VECTOR_SHUFFLE mask!");
     for (unsigned j = 0; j != EltSize; ++j)
