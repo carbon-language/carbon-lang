@@ -466,6 +466,16 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 //===----------------------------------------------------------------------===//
 // SSE3
 
+// Addition / subtraction ops.
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse3_addsub_ps : GCCBuiltin<"__builtin_ia32_addsubps">,
+              Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty,
+                         llvm_v4f32_ty], [IntrNoMem]>;
+  def int_x86_sse3_addsub_pd : GCCBuiltin<"__builtin_ia32_addsubpd">,
+              Intrinsic<[llvm_v2f64_ty, llvm_v2f64_ty,
+                         llvm_v2f64_ty], [IntrNoMem]>;
+}
+
 // Horizontal ops.
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse3_hadd_ps : GCCBuiltin<"__builtin_ia32_haddps">,
@@ -480,4 +490,20 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse3_hsub_pd : GCCBuiltin<"__builtin_ia32_hsubpd">,
               Intrinsic<[llvm_v2f64_ty, llvm_v2f64_ty,
                          llvm_v2f64_ty], [IntrNoMem]>;
+}
+
+// Specialized unaligned load.
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse3_ldu_dq : GCCBuiltin<"__builtin_ia32_lddqu">,
+              Intrinsic<[llvm_v16i8_ty, llvm_ptr_ty], [IntrReadMem]>;
+}
+
+// Thread synchronization ops.
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse3_monitor : GCCBuiltin<"__builtin_ia32_monitor">,
+              Intrinsic<[llvm_void_ty, llvm_ptr_ty,
+                         llvm_uint_ty, llvm_uint_ty], [IntrWriteMem]>;
+  def int_x86_sse3_mwait : GCCBuiltin<"__builtin_ia32_mwait">,
+              Intrinsic<[llvm_void_ty, llvm_uint_ty,
+                         llvm_uint_ty], [IntrWriteMem]>;
 }

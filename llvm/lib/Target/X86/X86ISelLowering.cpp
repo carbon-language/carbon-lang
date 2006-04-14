@@ -1715,6 +1715,58 @@ bool X86::isMOVSMask(SDNode *N) {
   return true;
 }
 
+/// isMOVSHDUPMask - Return true if the specified VECTOR_SHUFFLE operand
+/// specifies a shuffle of elements that is suitable for input to MOVSHDUP.
+bool X86::isMOVSHDUPMask(SDNode *N) {
+  assert(N->getOpcode() == ISD::BUILD_VECTOR);
+
+  if (N->getNumOperands() != 4)
+    return false;
+
+  // Expect 1, 1, 3, 3
+  for (unsigned i = 0; i < 2; ++i) {
+    SDOperand Arg = N->getOperand(i);
+    if (Arg.getOpcode() == ISD::UNDEF) continue;
+    assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
+    unsigned Val = cast<ConstantSDNode>(Arg)->getValue();
+    if (Val != 1) return false;
+  }
+  for (unsigned i = 2; i < 4; ++i) {
+    SDOperand Arg = N->getOperand(i);
+    if (Arg.getOpcode() == ISD::UNDEF) continue;
+    assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
+    unsigned Val = cast<ConstantSDNode>(Arg)->getValue();
+    if (Val != 3) return false;
+  }
+  return true;
+}
+
+/// isMOVSLDUPMask - Return true if the specified VECTOR_SHUFFLE operand
+/// specifies a shuffle of elements that is suitable for input to MOVSLDUP.
+bool X86::isMOVSLDUPMask(SDNode *N) {
+  assert(N->getOpcode() == ISD::BUILD_VECTOR);
+
+  if (N->getNumOperands() != 4)
+    return false;
+
+  // Expect 0, 0, 2, 2
+  for (unsigned i = 0; i < 2; ++i) {
+    SDOperand Arg = N->getOperand(i);
+    if (Arg.getOpcode() == ISD::UNDEF) continue;
+    assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
+    unsigned Val = cast<ConstantSDNode>(Arg)->getValue();
+    if (Val != 0) return false;
+  }
+  for (unsigned i = 2; i < 4; ++i) {
+    SDOperand Arg = N->getOperand(i);
+    if (Arg.getOpcode() == ISD::UNDEF) continue;
+    assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
+    unsigned Val = cast<ConstantSDNode>(Arg)->getValue();
+    if (Val != 2) return false;
+  }
+  return true;
+}
+
 /// isSplatMask - Return true if the specified VECTOR_SHUFFLE operand specifies
 /// a splat of a single element.
 bool X86::isSplatMask(SDNode *N) {
@@ -2710,8 +2762,9 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     if (NumElems == 2)
       return Op;
 
-    if (X86::isMOVSMask(PermMask.Val))
-      // Leave the VECTOR_SHUFFLE alone. It matches MOVS{S|D}.
+    if (X86::isMOVSMask(PermMask.Val) ||
+        X86::isMOVSHDUPMask(PermMask.Val) ||
+        X86::isMOVSLDUPMask(PermMask.Val))
       return Op;
 
     if (X86::isUNPCKLMask(PermMask.Val) ||
@@ -3143,6 +3196,8 @@ X86TargetLowering::isShuffleMaskLegal(SDOperand Mask, MVT::ValueType VT) const {
   return (Mask.Val->getNumOperands() == 2 ||
           X86::isSplatMask(Mask.Val)  ||
           X86::isMOVSMask(Mask.Val)   ||
+          X86::isMOVSHDUPMask(Mask.Val) ||
+          X86::isMOVSLDUPMask(Mask.Val) ||
           X86::isPSHUFDMask(Mask.Val) ||
           isPSHUFHW_PSHUFLWMask(Mask.Val) ||
           X86::isSHUFPMask(Mask.Val)  ||

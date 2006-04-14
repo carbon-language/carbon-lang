@@ -88,6 +88,10 @@ def SSE_splat_mask : PatLeaf<(build_vector), [{
   return X86::isSplatMask(N);
 }], SHUFFLE_get_shuf_imm>;
 
+def SSE_splat_v2_mask : PatLeaf<(build_vector), [{
+  return X86::isSplatMask(N);
+}]>;
+
 def MOVLHPS_shuffle_mask : PatLeaf<(build_vector), [{
   return X86::isMOVLHPSMask(N);
 }]>;
@@ -106,6 +110,14 @@ def MOVLP_shuffle_mask : PatLeaf<(build_vector), [{
 
 def MOVS_shuffle_mask : PatLeaf<(build_vector), [{
   return X86::isMOVSMask(N);
+}]>;
+
+def MOVSHDUP_shuffle_mask : PatLeaf<(build_vector), [{
+  return X86::isMOVSHDUPMask(N);
+}]>;
+
+def MOVSLDUP_shuffle_mask : PatLeaf<(build_vector), [{
+  return X86::isMOVSLDUPMask(N);
 }]>;
 
 def UNPCKL_shuffle_mask : PatLeaf<(build_vector), [{
@@ -155,8 +167,9 @@ def PSHUFD_binary_shuffle_mask : PatLeaf<(build_vector), [{
 // PDI - SSE2 instructions with TB and OpSize prefixes.
 // PSIi8 - SSE1 instructions with ImmT == Imm8 and TB prefix.
 // PDIi8 - SSE2 instructions with ImmT == Imm8 and TB and OpSize prefixes.
+// S3I - SSE3 instructions with TB and OpSize prefixes.
+// S3SI - SSE3 instructions with XS prefix.
 // S3SI - SSE3 instructions with XD prefix.
-// S3DI - SSE3 instructions with TB and OpSize prefixes.
 class SSI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
       : I<o, F, ops, asm, pattern>, XS, Requires<[HasSSE1]>;
 class SDI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
@@ -174,8 +187,10 @@ class PDIi8<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
   let Pattern = pattern;
 }
 class S3SI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
-      : I<o, F, ops, asm, pattern>, XD, Requires<[HasSSE3]>;
+      : I<o, F, ops, asm, pattern>, XS, Requires<[HasSSE3]>;
 class S3DI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
+      : I<o, F, ops, asm, pattern>, XD, Requires<[HasSSE3]>;
+class S3I<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
       : I<o, F, ops, asm, pattern>, TB, OpSize, Requires<[HasSSE3]>;
 
 //===----------------------------------------------------------------------===//
@@ -232,18 +247,18 @@ class PD_Intrm<bits<8> o, string asm, Intrinsic IntId>
   : PDI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2), asm,
         [(set VR128:$dst, (IntId VR128:$src1, (loadv2f64 addr:$src2)))]>;
 
-class S3S_Intrr<bits<8> o, string asm, Intrinsic IntId>
-  : S3SI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2), asm,
-         [(set VR128:$dst, (v4f32 (IntId VR128:$src1, VR128:$src2)))]>;
-class S3S_Intrm<bits<8> o, string asm, Intrinsic IntId>
-  : S3SI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2), asm,
-         [(set VR128:$dst, (v4f32 (IntId VR128:$src1,
-                                   (loadv4f32 addr:$src2))))]>;
 class S3D_Intrr<bits<8> o, string asm, Intrinsic IntId>
   : S3DI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2), asm,
-         [(set VR128:$dst, (v2f64 (IntId VR128:$src1, VR128:$src2)))]>;
+         [(set VR128:$dst, (v4f32 (IntId VR128:$src1, VR128:$src2)))]>;
 class S3D_Intrm<bits<8> o, string asm, Intrinsic IntId>
   : S3DI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2), asm,
+         [(set VR128:$dst, (v4f32 (IntId VR128:$src1,
+                                   (loadv4f32 addr:$src2))))]>;
+class S3_Intrr<bits<8> o, string asm, Intrinsic IntId>
+  : S3I<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2), asm,
+         [(set VR128:$dst, (v2f64 (IntId VR128:$src1, VR128:$src2)))]>;
+class S3_Intrm<bits<8> o, string asm, Intrinsic IntId>
+  : S3I<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2), asm,
          [(set VR128:$dst, (v2f64 (IntId VR128:$src1,
                                    (loadv2f64 addr:$src2))))]>;
 
@@ -528,6 +543,13 @@ def CVTSS2SIrm: SSI<0x2D, MRMSrcMem, (ops R32:$dst, f32mem:$src),
                     "cvtss2si {$src, $dst|$dst, $src}",
                     [(set R32:$dst, (int_x86_sse_cvtss2si
                                      (loadv4f32 addr:$src)))]>;
+def CVTSD2SIrr: SDI<0x2D, MRMSrcReg, (ops R32:$dst, VR128:$src),
+                    "cvtsd2si {$src, $dst|$dst, $src}",
+                    [(set R32:$dst, (int_x86_sse2_cvtsd2si VR128:$src))]>;
+def CVTSD2SIrm: SDI<0x2D, MRMSrcMem, (ops R32:$dst, f128mem:$src),
+                    "cvtsd2si {$src, $dst|$dst, $src}",
+                    [(set R32:$dst, (int_x86_sse2_cvtsd2si
+                                     (loadv2f64 addr:$src)))]>;
 
 // Aliases for intrinsics
 def Int_CVTTSS2SIrr: SSI<0x2C, MRMSrcReg, (ops R32:$dst, VR128:$src),
@@ -714,7 +736,7 @@ def FsANDNPDrm : PDI<0x55, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f128mem:$src2)
 }
 
 //===----------------------------------------------------------------------===//
-// SSE packed FP Instructions
+// SSE packed Instructions
 //===----------------------------------------------------------------------===//
 
 // Some 'special' instructions
@@ -766,6 +788,9 @@ def MOVDQUmr :   I<0x7F, MRMDestMem, (ops i128mem:$dst, VR128:$src),
                    "movdqu {$src, $dst|$dst, $src}",
                    [(int_x86_sse2_storeu_dq addr:$dst, VR128:$src)]>,
                  XS, Requires<[HasSSE2]>;
+def LDDQUrm : S3DI<0xF0, MRMSrcMem, (ops VR128:$dst, i128mem:$src),
+                   "lddqu {$src, $dst|$dst, $src}",
+                   [(set VR128:$dst, (int_x86_sse3_ldu_dq addr:$src))]>;
 
 let isTwoAddress = 1 in {
 def MOVLPSrm : PSI<0x12, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
@@ -832,6 +857,39 @@ def MOVHLPSrr : PSI<0x12, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                       (v4f32 (vector_shuffle VR128:$src1, VR128:$src2,
                               MOVHLPS_shuffle_mask)))]>;
 }
+
+def MOVSHDUPrr : S3SI<0x16, MRMSrcReg, (ops VR128:$dst, VR128:$src),
+                      "movshdup {$src, $dst|$dst, $src}",
+                      [(set VR128:$dst, (v4f32 (vector_shuffle
+                                                VR128:$src, (undef),
+                                                MOVSHDUP_shuffle_mask)))]>;
+def MOVSHDUPrm : S3SI<0x16, MRMSrcReg, (ops VR128:$dst, f128mem:$src),
+                      "movshdup {$src, $dst|$dst, $src}",
+                      [(set VR128:$dst, (v4f32 (vector_shuffle
+                                                (loadv4f32 addr:$src), (undef),
+                                                MOVSHDUP_shuffle_mask)))]>;
+
+def MOVSLDUPrr : S3SI<0x12, MRMSrcReg, (ops VR128:$dst, VR128:$src),
+                      "movsldup {$src, $dst|$dst, $src}",
+                      [(set VR128:$dst, (v4f32 (vector_shuffle
+                                                VR128:$src, (undef),
+                                                MOVSLDUP_shuffle_mask)))]>;
+def MOVSLDUPrm : S3SI<0x12, MRMSrcReg, (ops VR128:$dst, f128mem:$src),
+                      "movsldup {$src, $dst|$dst, $src}",
+                      [(set VR128:$dst, (v4f32 (vector_shuffle
+                                                (loadv4f32 addr:$src), (undef),
+                                                MOVSLDUP_shuffle_mask)))]>;
+
+def MOVDDUPrr : S3DI<0x12, MRMSrcReg, (ops VR128:$dst, VR128:$src),
+                      "movddup {$src, $dst|$dst, $src}",
+                  [(set VR128:$dst, (v2f64 (vector_shuffle
+                                            VR128:$src, (undef),
+                                            SSE_splat_v2_mask)))]>;
+def MOVDDUPrm : S3DI<0x12, MRMSrcReg, (ops VR128:$dst, f64mem:$src),
+                  "movddup {$src, $dst|$dst, $src}",
+                  [(set VR128:$dst, (v2f64 (vector_shuffle
+                                            (loadv2f64 addr:$src), (undef),
+                                            SSE_splat_v2_mask)))]>;
 
 // SSE2 instructions without OpSize prefix
 def CVTDQ2PSrr : I<0x5B, MRMSrcReg, (ops VR128:$dst, VR128:$src),
@@ -909,15 +967,6 @@ def CVTPD2PSrm : PDI<0x5A, MRMSrcReg, (ops VR128:$dst, f128mem:$src),
                      "cvtpd2ps {$src, $dst|$dst, $src}",
                      [(set VR128:$dst, (int_x86_sse2_cvtpd2ps
                                         (loadv2f64 addr:$src)))]>;
-
-
-def CVTSD2SIrr: SDI<0x2D, MRMSrcReg, (ops R32:$dst, VR128:$src),
-                    "cvtsd2si {$src, $dst|$dst, $src}",
-                    [(set R32:$dst, (int_x86_sse2_cvtsd2si VR128:$src))]>;
-def CVTSD2SIrm: SDI<0x2D, MRMSrcMem, (ops R32:$dst, f128mem:$src),
-                    "cvtsd2si {$src, $dst|$dst, $src}",
-                    [(set R32:$dst, (int_x86_sse2_cvtsd2si
-                                     (loadv2f64 addr:$src)))]>;
 
 // Match intrinsics which expect XMM operand(s).
 // Aliases for intrinsics
@@ -1019,6 +1068,27 @@ def SUBPDrm : PDI<0x5C, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
                   "subpd {$src2, $dst|$dst, $src2}",
                   [(set VR128:$dst, (v2f64 (fsub VR128:$src1,
                                             (load addr:$src2))))]>;
+
+def ADDSUBPSrr : S3DI<0xD0, MRMSrcReg,
+                      (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                      "addsubps {$src2, $dst|$dst, $src2}",
+                      [(set VR128:$dst, (int_x86_sse3_addsub_ps VR128:$src1,
+                                         VR128:$src2))]>;
+def ADDSUBPSrm : S3DI<0xD0, MRMSrcMem,
+                      (ops VR128:$dst, VR128:$src1, f128mem:$src2),
+                      "addsubps {$src2, $dst|$dst, $src2}",
+                      [(set VR128:$dst, (int_x86_sse3_addsub_ps VR128:$src1,
+                                         (loadv4f32 addr:$src2)))]>;
+def ADDSUBPDrr : S3I<0xD0, MRMSrcReg,
+                      (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                      "addsubpd {$src2, $dst|$dst, $src2}",
+                      [(set VR128:$dst, (int_x86_sse3_addsub_pd VR128:$src1,
+                                         VR128:$src2))]>;
+def ADDSUBPDrm : S3I<0xD0, MRMSrcMem,
+                      (ops VR128:$dst, VR128:$src1, f128mem:$src2),
+                      "addsubpd {$src2, $dst|$dst, $src2}",
+                      [(set VR128:$dst, (int_x86_sse3_addsub_pd VR128:$src1,
+                                         (loadv2f64 addr:$src2)))]>;
 }
 
 def SQRTPSr : PS_Intr<0x51, "sqrtps {$src, $dst|$dst, $src}",
@@ -1300,21 +1370,21 @@ def UNPCKLPDrm : PDI<0x14, MRMSrcMem,
 
 // Horizontal ops
 let isTwoAddress = 1 in {
-def HADDPSrr : S3S_Intrr<0x7C, "haddps {$src2, $dst|$dst, $src2}",
+def HADDPSrr : S3D_Intrr<0x7C, "haddps {$src2, $dst|$dst, $src2}",
                           int_x86_sse3_hadd_ps>;
-def HADDPSrm : S3S_Intrm<0x7C, "haddps {$src2, $dst|$dst, $src2}",
+def HADDPSrm : S3D_Intrm<0x7C, "haddps {$src2, $dst|$dst, $src2}",
                           int_x86_sse3_hadd_ps>;
-def HADDPDrr : S3D_Intrr<0x7C, "haddpd {$src2, $dst|$dst, $src2}",
+def HADDPDrr : S3_Intrr<0x7C, "haddpd {$src2, $dst|$dst, $src2}",
                           int_x86_sse3_hadd_pd>;
-def HADDPDrm : S3D_Intrm<0x7C, "haddpd {$src2, $dst|$dst, $src2}",
+def HADDPDrm : S3_Intrm<0x7C, "haddpd {$src2, $dst|$dst, $src2}",
                           int_x86_sse3_hadd_pd>;
-def HSUBPSrr : S3S_Intrr<0x7C, "hsubps {$src2, $dst|$dst, $src2}",
+def HSUBPSrr : S3D_Intrr<0x7C, "hsubps {$src2, $dst|$dst, $src2}",
                           int_x86_sse3_hsub_ps>;
-def HSUBPSrm : S3S_Intrm<0x7C, "hsubps {$src2, $dst|$dst, $src2}",
+def HSUBPSrm : S3D_Intrm<0x7C, "hsubps {$src2, $dst|$dst, $src2}",
                           int_x86_sse3_hsub_ps>;
-def HSUBPDrr : S3D_Intrr<0x7C, "hsubpd {$src2, $dst|$dst, $src2}",
+def HSUBPDrr : S3_Intrr<0x7C, "hsubpd {$src2, $dst|$dst, $src2}",
                           int_x86_sse3_hsub_pd>;
-def HSUBPDrm : S3D_Intrm<0x7C, "hsubpd {$src2, $dst|$dst, $src2}",
+def HSUBPDrm : S3_Intrm<0x7C, "hsubpd {$src2, $dst|$dst, $src2}",
                           int_x86_sse3_hsub_pd>;
 }
 
@@ -2023,6 +2093,14 @@ def STMXCSR : I<0xAE, MRM3m, (ops i32mem:$dst),
                 "stmxcsr $dst",
                 [(int_x86_sse_stmxcsr addr:$dst)]>, TB, Requires<[HasSSE1]>;
 
+// Thread synchronization
+def MONITOR : I<0xC8, RawFrm, (ops), "monitor",
+                [(int_x86_sse3_monitor EAX, ECX, EDX)]>,
+              TB, Requires<[HasSSE3]>;
+def MWAIT : I<0xC9, RawFrm, (ops), "mwait",
+                [(int_x86_sse3_mwait ECX, EAX)]>,
+              TB, Requires<[HasSSE3]>;
+
 //===----------------------------------------------------------------------===//
 // Alias Instructions
 //===----------------------------------------------------------------------===//
@@ -2271,9 +2349,9 @@ def : Pat<(v16i8 (X86zexts2vec R8:$src)),
          (MOVLDI2PDIrr (V_SET0_PI), (MOVZX32rr8 R8:$src))>, Requires<[HasSSE2]>;
 
 // Splat v2f64 / v2i64
-def : Pat<(vector_shuffle (v2f64 VR128:$src), (undef), SSE_splat_mask:$sm),
+def : Pat<(vector_shuffle (v2f64 VR128:$src), (undef), SSE_splat_v2_mask:$sm),
           (v2f64 (UNPCKLPDrr VR128:$src, VR128:$src))>,   Requires<[HasSSE2]>;
-def : Pat<(vector_shuffle (v2i64 VR128:$src), (undef), SSE_splat_mask:$sm),
+def : Pat<(vector_shuffle (v2i64 VR128:$src), (undef), SSE_splat_v2_mask:$sm),
           (v2i64 (PUNPCKLQDQrr VR128:$src, VR128:$src))>, Requires<[HasSSE2]>;
 
 // Splat v4f32
@@ -2315,6 +2393,22 @@ def : Pat<(v8i16 (vector_shuffle VR128:$src, (undef),
 def : Pat<(v4i32 (vector_shuffle VR128:$src, (undef),
                   UNPCKL_v_undef_shuffle_mask)),
           (PUNPCKLDQrr VR128:$src, VR128:$src)>, Requires<[HasSSE1]>;
+
+// vector_shuffle v1, <undef> <1, 1, 3, 3>
+def : Pat<(v4i32 (vector_shuffle VR128:$src, (undef),
+                  MOVSHDUP_shuffle_mask)),
+          (MOVSHDUPrr VR128:$src)>, Requires<[HasSSE3]>;
+def : Pat<(v4i32 (vector_shuffle (bc_v4i32 (loadv2i64 addr:$src)), (undef),
+                  MOVSHDUP_shuffle_mask)),
+          (MOVSHDUPrm addr:$src)>, Requires<[HasSSE3]>;
+
+// vector_shuffle v1, <undef> <0, 0, 2, 2>
+def : Pat<(v4i32 (vector_shuffle VR128:$src, (undef),
+                  MOVSLDUP_shuffle_mask)),
+          (MOVSLDUPrr VR128:$src)>, Requires<[HasSSE3]>;
+def : Pat<(v4i32 (vector_shuffle (bc_v4i32 (loadv2i64 addr:$src)), (undef),
+                  MOVSLDUP_shuffle_mask)),
+          (MOVSLDUPrm addr:$src)>, Requires<[HasSSE3]>;
 
 // 128-bit logical shifts
 def : Pat<(int_x86_sse2_psll_dq VR128:$src1, imm:$src2),

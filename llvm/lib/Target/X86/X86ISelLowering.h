@@ -237,6 +237,14 @@ namespace llvm {
    /// specifies a shuffle of elements that is suitable for input to MOVS{S|D}.
    bool isMOVSMask(SDNode *N);
 
+   /// isMOVSHDUPMask - Return true if the specified VECTOR_SHUFFLE operand
+   /// specifies a shuffle of elements that is suitable for input to MOVSHDUP.
+   bool isMOVSHDUPMask(SDNode *N);
+
+   /// isMOVSLDUPMask - Return true if the specified VECTOR_SHUFFLE operand
+   /// specifies a shuffle of elements that is suitable for input to MOVSLDUP.
+   bool isMOVSLDUPMask(SDNode *N);
+
    /// isSplatMask - Return true if the specified VECTOR_SHUFFLE operand
    /// specifies a splat of a single element.
    bool isSplatMask(SDNode *N);
