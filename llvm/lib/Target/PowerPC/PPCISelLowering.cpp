@@ -587,11 +587,166 @@ static bool GetConstantBuildVectorBits(SDNode *BV, uint64_t VectorBits[2],
   return false;
 }
 
+// If this is a case we can't handle, return null and let the default
+// expansion code take care of it.  If we CAN select this case, and if it
+// selects to a single instruction, return Op.  Otherwise, if we can codegen
+// this case more efficiently than a constant pool load, lower it to the
+// sequence of ops that should be used.
+static SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
+  // If this is a vector of constants or undefs, get the bits.  A bit in
+  // UndefBits is set if the corresponding element of the vector is an 
+  // ISD::UNDEF value.  For undefs, the corresponding VectorBits values are
+  // zero. 
+  uint64_t VectorBits[2];
+  uint64_t UndefBits[2];
+  if (GetConstantBuildVectorBits(Op.Val, VectorBits, UndefBits))
+    return SDOperand();   // Not a constant vector.
+  
+  // See if this is all zeros.
+  if ((VectorBits[0] | VectorBits[1]) == 0) {
+    // Canonicalize all zero vectors to be v4i32.
+    if (Op.getValueType() != MVT::v4i32) {
+      SDOperand Z = DAG.getConstant(0, MVT::i32);
+      Z = DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32, Z, Z, Z, Z);
+      Op = DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Z);
+    }
+    return Op;
+  }
+  
+  // Check to see if this is something we can use VSPLTI* to form.
+  MVT::ValueType CanonicalVT = MVT::Other;
+  SDNode *CST = 0;
+  
+  if ((CST = PPC::get_VSPLTI_elt(Op.Val, 4, DAG).Val))       // vspltisw
+    CanonicalVT = MVT::v4i32;
+  else if ((CST = PPC::get_VSPLTI_elt(Op.Val, 2, DAG).Val))  // vspltish
+    CanonicalVT = MVT::v8i16;
+  else if ((CST = PPC::get_VSPLTI_elt(Op.Val, 1, DAG).Val))  // vspltisb
+    CanonicalVT = MVT::v16i8;
+  
+  // If this matches one of the vsplti* patterns, force it to the canonical
+  // type for the pattern.
+  if (CST) {
+    if (Op.getValueType() != CanonicalVT) {
+      // Convert the splatted element to the right element type.
+      SDOperand Elt = DAG.getNode(ISD::TRUNCATE, 
+                                  MVT::getVectorBaseType(CanonicalVT), 
+                                  SDOperand(CST, 0));
+      std::vector<SDOperand> Ops(MVT::getVectorNumElements(CanonicalVT), Elt);
+      SDOperand Res = DAG.getNode(ISD::BUILD_VECTOR, CanonicalVT, Ops);
+      Op = DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Res);
+    }
+    return Op;
+  }
+  
+  // If this is some other splat of 4-byte elements, see if we can handle it
+  // in another way.
+  // FIXME: Make this more undef happy and work with other widths (1,2 bytes).
+  if (VectorBits[0] == VectorBits[1] &&
+      unsigned(VectorBits[0]) == unsigned(VectorBits[0] >> 32)) {
+    unsigned Bits = unsigned(VectorBits[0]);
+    
+    // If this is 0x8000_0000 x 4, turn into vspltisw + vslw.  If it is 
+    // 0x7FFF_FFFF x 4, turn it into not(0x8000_0000).  These are important
+    // for fneg/fabs.
+    if (Bits == 0x80000000 || Bits == 0x7FFFFFFF) {
+      // Make -1 and vspltisw -1:
+      SDOperand OnesI = DAG.getConstant(~0U, MVT::i32);
+      SDOperand OnesV = DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
+                                    OnesI, OnesI, OnesI, OnesI);
+      
+      // Make the VSLW intrinsic, computing 0x8000_0000.
+      SDOperand Res
+        = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, MVT::v4i32,
+                      DAG.getConstant(Intrinsic::ppc_altivec_vslw, MVT::i32),
+                      OnesV, OnesV);
+      
+      // If this is 0x7FFF_FFFF, xor by OnesV to invert it.
+      if (Bits == 0x7FFFFFFF)
+        Res = DAG.getNode(ISD::XOR, MVT::v4i32, Res, OnesV);
+      
+      return DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Res);
+    }
+  }
+  
+  return SDOperand();
+}
+
+/// LowerVECTOR_SHUFFLE - Return the code we lower for VECTOR_SHUFFLE.  If this
+/// is a shuffle we can handle in a single instruction, return it.  Otherwise,
+/// return the code it can be lowered into.  Worst case, it can always be
+/// lowered into a vperm.
+static SDOperand LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
+  SDOperand V1 = Op.getOperand(0);
+  SDOperand V2 = Op.getOperand(1);
+  SDOperand PermMask = Op.getOperand(2);
+  
+  // Cases that are handled by instructions that take permute immediates
+  // (such as vsplt*) should be left as VECTOR_SHUFFLE nodes so they can be
+  // selected by the instruction selector.
+  if (V2.getOpcode() == ISD::UNDEF) {
+    if (PPC::isSplatShuffleMask(PermMask.Val, 1) ||
+        PPC::isSplatShuffleMask(PermMask.Val, 2) ||
+        PPC::isSplatShuffleMask(PermMask.Val, 4) ||
+        PPC::isVPKUWUMShuffleMask(PermMask.Val, true) ||
+        PPC::isVPKUHUMShuffleMask(PermMask.Val, true) ||
+        PPC::isVSLDOIShuffleMask(PermMask.Val, true) != -1 ||
+        PPC::isVMRGLShuffleMask(PermMask.Val, 1, true) ||
+        PPC::isVMRGLShuffleMask(PermMask.Val, 2, true) ||
+        PPC::isVMRGLShuffleMask(PermMask.Val, 4, true) ||
+        PPC::isVMRGHShuffleMask(PermMask.Val, 1, true) ||
+        PPC::isVMRGHShuffleMask(PermMask.Val, 2, true) ||
+        PPC::isVMRGHShuffleMask(PermMask.Val, 4, true)) {
+      return Op;
+    }
+  }
+  
+  // Altivec has a variety of "shuffle immediates" that take two vector inputs
+  // and produce a fixed permutation.  If any of these match, do not lower to
+  // VPERM.
+  if (PPC::isVPKUWUMShuffleMask(PermMask.Val, false) ||
+      PPC::isVPKUHUMShuffleMask(PermMask.Val, false) ||
+      PPC::isVSLDOIShuffleMask(PermMask.Val, false) != -1 ||
+      PPC::isVMRGLShuffleMask(PermMask.Val, 1, false) ||
+      PPC::isVMRGLShuffleMask(PermMask.Val, 2, false) ||
+      PPC::isVMRGLShuffleMask(PermMask.Val, 4, false) ||
+      PPC::isVMRGHShuffleMask(PermMask.Val, 1, false) ||
+      PPC::isVMRGHShuffleMask(PermMask.Val, 2, false) ||
+      PPC::isVMRGHShuffleMask(PermMask.Val, 4, false))
+    return Op;
+  
+  // TODO: Handle more cases, and also handle cases that are cheaper to do as
+  // multiple such instructions than as a constant pool load/vperm pair.
+  
+  // Lower this to a VPERM(V1, V2, V3) expression, where V3 is a constant
+  // vector that will get spilled to the constant pool.
+  if (V2.getOpcode() == ISD::UNDEF) V2 = V1;
+  
+  // The SHUFFLE_VECTOR mask is almost exactly what we want for vperm, except
+  // that it is in input element units, not in bytes.  Convert now.
+  MVT::ValueType EltVT = MVT::getVectorBaseType(V1.getValueType());
+  unsigned BytesPerElement = MVT::getSizeInBits(EltVT)/8;
+  
+  std::vector<SDOperand> ResultMask;
+  for (unsigned i = 0, e = PermMask.getNumOperands(); i != e; ++i) {
+    unsigned SrcElt =cast<ConstantSDNode>(PermMask.getOperand(i))->getValue();
+    
+    for (unsigned j = 0; j != BytesPerElement; ++j)
+      ResultMask.push_back(DAG.getConstant(SrcElt*BytesPerElement+j,
+                                           MVT::i8));
+  }
+  
+  SDOperand VPermMask = DAG.getNode(ISD::BUILD_VECTOR, MVT::v16i8, ResultMask);
+  return DAG.getNode(PPCISD::VPERM, V1.getValueType(), V1, V2, VPermMask);
+}
+
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
 SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default: assert(0 && "Wasn't expecting to be able to lower this!"); 
+  case ISD::BUILD_VECTOR: return LowerBUILD_VECTOR(Op, DAG);
+  case ISD::VECTOR_SHUFFLE: return LowerVECTOR_SHUFFLE(Op, DAG);
   case ISD::FP_TO_SINT: {
     assert(MVT::isFloatingPoint(Op.getOperand(0).getValueType()));
     SDOperand Src = Op.getOperand(0);
@@ -962,153 +1117,6 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
                                   Op.getOperand(0), FIdx,DAG.getSrcValue(NULL));
     // Load it out.
     return DAG.getLoad(Op.getValueType(), Store, FIdx, DAG.getSrcValue(NULL));
-  }
-  case ISD::BUILD_VECTOR: {
-    // If this is a case we can't handle, return null and let the default
-    // expansion code take care of it.  If we CAN select this case, return Op
-    // or something simpler.
-    
-    // If this is a vector of constants or undefs, get the bits.  A bit in
-    // UndefBits is set if the corresponding element of the vector is an 
-    // ISD::UNDEF value.  For undefs, the corresponding VectorBits values are
-    // zero. 
-    uint64_t VectorBits[2];
-    uint64_t UndefBits[2];
-    if (GetConstantBuildVectorBits(Op.Val, VectorBits, UndefBits))
-      return SDOperand();   // Not a constant vector.
-
-    // See if this is all zeros.
-    if ((VectorBits[0] | VectorBits[1]) == 0) {
-      // Canonicalize all zero vectors to be v4i32.
-      if (Op.getValueType() != MVT::v4i32) {
-        SDOperand Z = DAG.getConstant(0, MVT::i32);
-        Z = DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32, Z, Z, Z, Z);
-        Op = DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Z);
-      }
-      return Op;
-    }
-    
-    // Check to see if this is something we can use VSPLTI* to form.
-    MVT::ValueType CanonicalVT = MVT::Other;
-    SDNode *CST = 0;
-    
-    if ((CST = PPC::get_VSPLTI_elt(Op.Val, 4, DAG).Val))       // vspltisw
-      CanonicalVT = MVT::v4i32;
-    else if ((CST = PPC::get_VSPLTI_elt(Op.Val, 2, DAG).Val))  // vspltish
-      CanonicalVT = MVT::v8i16;
-    else if ((CST = PPC::get_VSPLTI_elt(Op.Val, 1, DAG).Val))  // vspltisb
-      CanonicalVT = MVT::v16i8;
-
-    // If this matches one of the vsplti* patterns, force it to the canonical
-    // type for the pattern.
-    if (CST) {
-      if (Op.getValueType() != CanonicalVT) {
-        // Convert the splatted element to the right element type.
-        SDOperand Elt = DAG.getNode(ISD::TRUNCATE, 
-                                    MVT::getVectorBaseType(CanonicalVT), 
-                                    SDOperand(CST, 0));
-        std::vector<SDOperand> Ops(MVT::getVectorNumElements(CanonicalVT), Elt);
-        SDOperand Res = DAG.getNode(ISD::BUILD_VECTOR, CanonicalVT, Ops);
-        Op = DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Res);
-      }
-      return Op;
-    }
-
-    // If this is some other splat of 4-byte elements, see if we can handle it
-    // in another way.
-    // FIXME: Make this more undef happy and work with other widths (1,2 bytes).
-    if (VectorBits[0] == VectorBits[1] &&
-        unsigned(VectorBits[0]) == unsigned(VectorBits[0] >> 32)) {
-      unsigned Bits = unsigned(VectorBits[0]);
-
-      // If this is 0x8000_0000 x 4, turn into vspltisw + vslw.  If it is 
-      // 0x7FFF_FFFF x 4, turn it into not(0x8000_0000).  These are important
-      // for fneg/fabs.
-      if (Bits == 0x80000000 || Bits == 0x7FFFFFFF) {
-        // Make -1 and vspltisw -1:
-        SDOperand OnesI = DAG.getConstant(~0U, MVT::i32);
-        SDOperand OnesV = DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
-                                      OnesI, OnesI, OnesI, OnesI);
-        
-        // Make the VSLW intrinsic, computing 0x8000_0000.
-        SDOperand Res
-          = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, MVT::v4i32,
-                        DAG.getConstant(Intrinsic::ppc_altivec_vslw, MVT::i32),
-                        OnesV, OnesV);
-        
-        // If this is 0x7FFF_FFFF, xor by OnesV to invert it.
-        if (Bits == 0x7FFFFFFF)
-          Res = DAG.getNode(ISD::XOR, MVT::v4i32, Res, OnesV);
-        
-        return DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Res);
-      }
-    }
-    
-      
-    return SDOperand();
-  }
-  case ISD::VECTOR_SHUFFLE: {
-    SDOperand V1 = Op.getOperand(0);
-    SDOperand V2 = Op.getOperand(1);
-    SDOperand PermMask = Op.getOperand(2);
-    
-    // Cases that are handled by instructions that take permute immediates
-    // (such as vsplt*) should be left as VECTOR_SHUFFLE nodes so they can be
-    // selected by the instruction selector.
-    if (V2.getOpcode() == ISD::UNDEF) {
-      if (PPC::isSplatShuffleMask(PermMask.Val, 1) ||
-          PPC::isSplatShuffleMask(PermMask.Val, 2) ||
-          PPC::isSplatShuffleMask(PermMask.Val, 4) ||
-          PPC::isVPKUWUMShuffleMask(PermMask.Val, true) ||
-          PPC::isVPKUHUMShuffleMask(PermMask.Val, true) ||
-          PPC::isVSLDOIShuffleMask(PermMask.Val, true) != -1 ||
-          PPC::isVMRGLShuffleMask(PermMask.Val, 1, true) ||
-          PPC::isVMRGLShuffleMask(PermMask.Val, 2, true) ||
-          PPC::isVMRGLShuffleMask(PermMask.Val, 4, true) ||
-          PPC::isVMRGHShuffleMask(PermMask.Val, 1, true) ||
-          PPC::isVMRGHShuffleMask(PermMask.Val, 2, true) ||
-          PPC::isVMRGHShuffleMask(PermMask.Val, 4, true)) {
-        return Op;
-      }
-    }
-    
-    // Altivec has a variety of "shuffle immediates" that take two vector inputs
-    // and produce a fixed permutation.  If any of these match, do not lower to
-    // VPERM.
-    if (PPC::isVPKUWUMShuffleMask(PermMask.Val, false) ||
-        PPC::isVPKUHUMShuffleMask(PermMask.Val, false) ||
-        PPC::isVSLDOIShuffleMask(PermMask.Val, false) != -1 ||
-        PPC::isVMRGLShuffleMask(PermMask.Val, 1, false) ||
-        PPC::isVMRGLShuffleMask(PermMask.Val, 2, false) ||
-        PPC::isVMRGLShuffleMask(PermMask.Val, 4, false) ||
-        PPC::isVMRGHShuffleMask(PermMask.Val, 1, false) ||
-        PPC::isVMRGHShuffleMask(PermMask.Val, 2, false) ||
-        PPC::isVMRGHShuffleMask(PermMask.Val, 4, false))
-      return Op;
-    
-    // TODO: Handle more cases, and also handle cases that are cheaper to do as
-    // multiple such instructions than as a constant pool load/vperm pair.
-    
-    // Lower this to a VPERM(V1, V2, V3) expression, where V3 is a constant
-    // vector that will get spilled to the constant pool.
-    if (V2.getOpcode() == ISD::UNDEF) V2 = V1;
-    
-    // The SHUFFLE_VECTOR mask is almost exactly what we want for vperm, except
-    // that it is in input element units, not in bytes.  Convert now.
-    MVT::ValueType EltVT = MVT::getVectorBaseType(V1.getValueType());
-    unsigned BytesPerElement = MVT::getSizeInBits(EltVT)/8;
-    
-    std::vector<SDOperand> ResultMask;
-    for (unsigned i = 0, e = PermMask.getNumOperands(); i != e; ++i) {
-      unsigned SrcElt =cast<ConstantSDNode>(PermMask.getOperand(i))->getValue();
-      
-      for (unsigned j = 0; j != BytesPerElement; ++j)
-        ResultMask.push_back(DAG.getConstant(SrcElt*BytesPerElement+j,
-                                             MVT::i8));
-    }
-    
-    SDOperand VPermMask =DAG.getNode(ISD::BUILD_VECTOR, MVT::v16i8, ResultMask);
-    return DAG.getNode(PPCISD::VPERM, V1.getValueType(), V1, V2, VPermMask);
   }
   case ISD::INTRINSIC_WO_CHAIN: {
     unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(0))->getValue();
