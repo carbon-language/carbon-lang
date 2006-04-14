@@ -19,6 +19,7 @@
 #                   LARGE_PROBLEM_SIZE enabled.
 #  -noexternals     Do not run the external tests (for cases where povray
 #                   or SPEC are not installed)
+#  -with-externals  Specify a directory where the external tests are located.
 #  -nodejagnu       Do not run feature or regression tests
 #  -parallel        Run two parallel jobs with GNU Make.
 #  -release         Build an LLVM Release version
@@ -309,6 +310,9 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   if (/^-nice$/)           { $NICE = "nice "; next; }
   if (/^-f2c$/)            {
     $CONFIGUREARGS .= " --with-f2c=$ARGV[0]"; shift; next;
+  }
+  if (/^-with-externals/)  { 
+    $CONFIGUREARGS .= "--with-externals=$ARGV[0]"; shift; next 
   }
   if (/^-gnuplotscript$/)  { $PlotScriptFilename = $ARGV[0]; shift; next; }
   if (/^-templatefile$/)   { $Template = $ARGV[0]; shift; next; }
