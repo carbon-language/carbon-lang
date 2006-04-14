@@ -28,4 +28,5 @@ $(GENFILE): $(INTRINSICTDS) $(TBLGEN)
 	$(Verb) $(TableGen) $(INTRINSICTD) -o $@ -gen-intrinsic
 
 install-local:: $(GENFILE)
-	$(DataInstall) $(GENFILE) $(PROJ_includedir)/llvm/Intrinsics.gen
+	$(Echo) Installing $(PROJ_includedir)/llvm/Intrinsics.gen
+	$(Verb) $(DataInstall) $(GENFILE) $(PROJ_includedir)/llvm/Intrinsics.gen
