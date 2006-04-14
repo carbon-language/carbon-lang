@@ -313,12 +313,36 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 
 // Integer shift ops.
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse2_psll_w :
+              Intrinsic<[llvm_v8i16_ty, llvm_v8i16_ty,
+                         llvm_v4i32_ty], [IntrNoMem]>;
+  def int_x86_sse2_psll_d :
+              Intrinsic<[llvm_v4i32_ty, llvm_v4i32_ty,
+                         llvm_v4i32_ty], [IntrNoMem]>;
+  def int_x86_sse2_psll_q :
+              Intrinsic<[llvm_v2i64_ty, llvm_v2i64_ty,
+                         llvm_v4i32_ty], [IntrNoMem]>;
   def int_x86_sse2_psll_dq : GCCBuiltin<"__builtin_ia32_pslldqi128">,
               Intrinsic<[llvm_v2i64_ty, llvm_v2i64_ty,
                          llvm_int_ty], [IntrNoMem]>;
+  def int_x86_sse2_psrl_w :
+              Intrinsic<[llvm_v8i16_ty, llvm_v8i16_ty,
+                         llvm_v4i32_ty], [IntrNoMem]>;
+  def int_x86_sse2_psrl_d :
+              Intrinsic<[llvm_v4i32_ty, llvm_v4i32_ty,
+                         llvm_v4i32_ty], [IntrNoMem]>;
+  def int_x86_sse2_psrl_q :
+              Intrinsic<[llvm_v2i64_ty, llvm_v2i64_ty,
+                         llvm_v4i32_ty], [IntrNoMem]>;
   def int_x86_sse2_psrl_dq : GCCBuiltin<"__builtin_ia32_psrldqi128">,
               Intrinsic<[llvm_v2i64_ty, llvm_v2i64_ty,
                          llvm_int_ty], [IntrNoMem]>;
+  def int_x86_sse2_psra_w :
+              Intrinsic<[llvm_v8i16_ty, llvm_v8i16_ty,
+                         llvm_v4i32_ty], [IntrNoMem]>;
+  def int_x86_sse2_psra_d :
+              Intrinsic<[llvm_v4i32_ty, llvm_v4i32_ty,
+                         llvm_v4i32_ty], [IntrNoMem]>;
 }
 
 // Conversion ops
