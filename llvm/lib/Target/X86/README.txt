@@ -810,3 +810,8 @@ destination?
 How about andps, andpd, and pand? Do we really care about the type of the packed
 elements? If not, why not always use the "ps" variants which are likely to be
 shorter.
+
+//===---------------------------------------------------------------------===//
+
+Make sure XMM registers are spilled to 128-bit locations (if not already) and
+add vector SSE opcodes to X86RegisterInfo::foldMemoryOperand().
