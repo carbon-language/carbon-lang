@@ -4630,7 +4630,7 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
   }
   
   switch (Node->getOpcode()) {
-  default: Node->dump(); assert(0 && "Unknown vector operation!");
+  default: Node->dump(); assert(0 && "Unhandled operation in SplitVectorOp!");
   case ISD::VBUILD_VECTOR: {
     std::vector<SDOperand> LoOps(Node->op_begin(), Node->op_begin()+NewNumElts);
     LoOps.push_back(NewNumEltsNode);
