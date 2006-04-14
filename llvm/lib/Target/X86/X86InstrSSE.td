@@ -1148,10 +1148,76 @@ def CMPPSrm : PSIi8<0xC2, MRMSrcMem,
                                        (load addr:$src), imm:$cc))]>;
 def CMPPDrr : PDIi8<0xC2, MRMSrcReg, 
                     (ops VR128:$dst, VR128:$src1, VR128:$src, SSECC:$cc),
-                    "cmp${cc}pd {$src, $dst|$dst, $src}", []>;
+                    "cmp${cc}pd {$src, $dst|$dst, $src}",
+                    [(set VR128:$dst, (int_x86_sse2_cmp_pd VR128:$src1,
+                                       VR128:$src, imm:$cc))]>;
 def CMPPDrm : PDIi8<0xC2, MRMSrcMem, 
                     (ops VR128:$dst, VR128:$src1, f128mem:$src, SSECC:$cc),
-                    "cmp${cc}pd {$src, $dst|$dst, $src}", []>;
+                    "cmp${cc}pd {$src, $dst|$dst, $src}",
+                    [(set VR128:$dst, (int_x86_sse2_cmp_pd VR128:$src1,
+                                       (load addr:$src), imm:$cc))]>;
+
+def PCMPEQBrr : PDI<0x74, MRMSrcReg, 
+                    (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                    "pcmpeqb {$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst, (int_x86_sse2_pcmpeq_b VR128:$src1,
+                                       VR128:$src2))]>;
+def PCMPEQBrm : PDI<0x74, MRMSrcReg, 
+                    (ops VR128:$dst, VR128:$src1, i128mem:$src2),
+                    "pcmpeqb {$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst, (int_x86_sse2_pcmpeq_b VR128:$src1,
+                                       (bc_v16i8 (loadv2i64 addr:$src2))))]>;
+def PCMPEQWrr : PDI<0x75, MRMSrcReg, 
+                    (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                    "pcmpeqw {$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst, (int_x86_sse2_pcmpeq_w VR128:$src1,
+                                       VR128:$src2))]>;
+def PCMPEQWrm : PDI<0x75, MRMSrcReg, 
+                    (ops VR128:$dst, VR128:$src1, i128mem:$src2),
+                    "pcmpeqw {$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst, (int_x86_sse2_pcmpeq_w VR128:$src1,
+                                       (bc_v8i16 (loadv2i64 addr:$src2))))]>;
+def PCMPEQDrr : PDI<0x76, MRMSrcReg, 
+                    (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                    "pcmpeqd {$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst, (int_x86_sse2_pcmpeq_d VR128:$src1,
+                                       VR128:$src2))]>;
+def PCMPEQDrm : PDI<0x76, MRMSrcReg, 
+                    (ops VR128:$dst, VR128:$src1, i128mem:$src2),
+                    "pcmpeqd {$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst, (int_x86_sse2_pcmpeq_d VR128:$src1,
+                                       (bc_v4i32 (loadv2i64 addr:$src2))))]>;
+
+def PCMPGTBrr : PDI<0x64, MRMSrcReg, 
+                    (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                    "pcmpgtb {$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst, (int_x86_sse2_pcmpgt_b VR128:$src1,
+                                       VR128:$src2))]>;
+def PCMPGTBrm : PDI<0x64, MRMSrcReg, 
+                    (ops VR128:$dst, VR128:$src1, i128mem:$src2),
+                    "pcmpgtb {$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst, (int_x86_sse2_pcmpgt_b VR128:$src1,
+                                       (bc_v16i8 (loadv2i64 addr:$src2))))]>;
+def PCMPGTWrr : PDI<0x65, MRMSrcReg, 
+                    (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                    "pcmpgtw {$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst, (int_x86_sse2_pcmpgt_w VR128:$src1,
+                                       VR128:$src2))]>;
+def PCMPGTWrm : PDI<0x65, MRMSrcReg, 
+                    (ops VR128:$dst, VR128:$src1, i128mem:$src2),
+                    "pcmpgtw {$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst, (int_x86_sse2_pcmpgt_w VR128:$src1,
+                                       (bc_v8i16 (loadv2i64 addr:$src2))))]>;
+def PCMPGTDrr : PDI<0x66, MRMSrcReg, 
+                    (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                    "pcmpgtd {$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst, (int_x86_sse2_pcmpgt_d VR128:$src1,
+                                       VR128:$src2))]>;
+def PCMPGTDrm : PDI<0x66, MRMSrcReg, 
+                    (ops VR128:$dst, VR128:$src1, i128mem:$src2),
+                    "pcmpgtd {$src2, $dst|$dst, $src2}",
+                    [(set VR128:$dst, (int_x86_sse2_pcmpgt_d VR128:$src1,
+                                       (bc_v4i32 (loadv2i64 addr:$src2))))]>;
 }
 
 // Shuffle and unpack instructions
