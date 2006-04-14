@@ -319,15 +319,9 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr* MI,
     case X86::TEST8rr:   return MakeMRInst(X86::TEST8mr ,FrameIndex, MI);
     case X86::TEST16rr:  return MakeMRInst(X86::TEST16mr,FrameIndex, MI);
     case X86::TEST32rr:  return MakeMRInst(X86::TEST32mr,FrameIndex, MI);
-    case X86::TEST8ri:   return MakeMIInst(X86::TEST8mi ,FrameIndex, MI);
-    case X86::TEST16ri:  return MakeMIInst(X86::TEST16mi,FrameIndex, MI);
-    case X86::TEST32ri:  return MakeMIInst(X86::TEST32mi,FrameIndex, MI);
     case X86::CMP8rr:    return MakeMRInst(X86::CMP8mr , FrameIndex, MI);
     case X86::CMP16rr:   return MakeMRInst(X86::CMP16mr, FrameIndex, MI);
     case X86::CMP32rr:   return MakeMRInst(X86::CMP32mr, FrameIndex, MI);
-    case X86::CMP8ri:    return MakeMIInst(X86::CMP8mi , FrameIndex, MI);
-    case X86::CMP16ri:   return MakeMIInst(X86::CMP16mi, FrameIndex, MI);
-    case X86::CMP32ri:   return MakeMIInst(X86::CMP32mi, FrameIndex, MI);
     // Alias instructions
     case X86::MOV8r0:    return MakeM0Inst(X86::MOV8mi, FrameIndex, MI);
     case X86::MOV16r0:   return MakeM0Inst(X86::MOV16mi, FrameIndex, MI);
@@ -338,13 +332,14 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr* MI,
     // Scalar SSE instructions
     case X86::MOVSSrr:   return MakeMRInst(X86::MOVSSmr, FrameIndex, MI);
     case X86::MOVSDrr:   return MakeMRInst(X86::MOVSDmr, FrameIndex, MI);
-#if 0
     // Packed SSE instructions
-    // FIXME: Can't use these until we are spilling XMM registers to
-    // 128-bit locations.
     case X86::MOVAPSrr:  return MakeMRInst(X86::MOVAPSmr, FrameIndex, MI);
     case X86::MOVAPDrr:  return MakeMRInst(X86::MOVAPDmr, FrameIndex, MI);
-#endif
+    case X86::MOVUPSrr:  return MakeMRInst(X86::MOVUPSmr, FrameIndex, MI);
+    case X86::MOVUPDrr:  return MakeMRInst(X86::MOVUPDmr, FrameIndex, MI);
+    // Alias packed SSE instructions
+    case X86::MOVPS2SSrr:return MakeMRInst(X86::MOVPS2SSmr, FrameIndex, MI);
+    case X86::MOVPDI2DIrr:return MakeMRInst(X86::MOVPDI2DImr, FrameIndex, MI);
     }
   } else if (i == 1) {
     switch(MI->getOpcode()) {
@@ -402,6 +397,9 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr* MI,
     case X86::TEST8rr:   return MakeRMInst(X86::TEST8rm ,FrameIndex, MI);
     case X86::TEST16rr:  return MakeRMInst(X86::TEST16rm,FrameIndex, MI);
     case X86::TEST32rr:  return MakeRMInst(X86::TEST32rm,FrameIndex, MI);
+    case X86::TEST8ri:   return MakeMIInst(X86::TEST8mi ,FrameIndex, MI);
+    case X86::TEST16ri:  return MakeMIInst(X86::TEST16mi,FrameIndex, MI);
+    case X86::TEST32ri:  return MakeMIInst(X86::TEST32mi,FrameIndex, MI);
     case X86::IMUL16rr:  return MakeRMInst(X86::IMUL16rm,FrameIndex, MI);
     case X86::IMUL32rr:  return MakeRMInst(X86::IMUL32rm,FrameIndex, MI);
     case X86::IMUL16rri: return MakeRMIInst(X86::IMUL16rmi, FrameIndex, MI);
@@ -411,6 +409,11 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr* MI,
     case X86::CMP8rr:    return MakeRMInst(X86::CMP8rm , FrameIndex, MI);
     case X86::CMP16rr:   return MakeRMInst(X86::CMP16rm, FrameIndex, MI);
     case X86::CMP32rr:   return MakeRMInst(X86::CMP32rm, FrameIndex, MI);
+    case X86::CMP8ri:    return MakeRMInst(X86::CMP8mi , FrameIndex, MI);
+    case X86::CMP16ri:   return MakeMIInst(X86::CMP16mi, FrameIndex, MI);
+    case X86::CMP32ri:   return MakeMIInst(X86::CMP32mi, FrameIndex, MI);
+    case X86::CMP16ri8:  return MakeMIInst(X86::CMP16mi8, FrameIndex, MI);
+    case X86::CMP32ri8:  return MakeRMInst(X86::CMP32mi8, FrameIndex, MI);
     case X86::MOVSX16rr8:return MakeRMInst(X86::MOVSX16rm8 , FrameIndex, MI);
     case X86::MOVSX32rr8:return MakeRMInst(X86::MOVSX32rm8, FrameIndex, MI);
     case X86::MOVSX32rr16:return MakeRMInst(X86::MOVSX32rm16, FrameIndex, MI);
@@ -423,16 +426,22 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr* MI,
     // Scalar SSE instructions
     case X86::MOVSSrr:   return MakeRMInst(X86::MOVSSrm, FrameIndex, MI);
     case X86::MOVSDrr:   return MakeRMInst(X86::MOVSDrm, FrameIndex, MI);
+    case X86::CVTSS2SIrr:return MakeRMInst(X86::CVTSS2SIrm, FrameIndex, MI);
     case X86::CVTTSS2SIrr:return MakeRMInst(X86::CVTTSS2SIrm, FrameIndex, MI);
+    case X86::CVTSD2SIrr:return MakeRMInst(X86::CVTSD2SIrm, FrameIndex, MI);
     case X86::CVTTSD2SIrr:return MakeRMInst(X86::CVTTSD2SIrm, FrameIndex, MI);
     case X86::CVTSS2SDrr:return MakeRMInst(X86::CVTSS2SDrm, FrameIndex, MI);
     case X86::CVTSD2SSrr:return MakeRMInst(X86::CVTSD2SSrm, FrameIndex, MI);
     case X86::CVTSI2SSrr:return MakeRMInst(X86::CVTSI2SSrm, FrameIndex, MI);
     case X86::CVTSI2SDrr:return MakeRMInst(X86::CVTSI2SDrm, FrameIndex, MI);
+    case X86::Int_CVTTSS2SIrr:
+      return MakeRMInst(X86::Int_CVTTSS2SIrm, FrameIndex, MI);
+    case X86::Int_CVTTSD2SIrr:
+      return MakeRMInst(X86::Int_CVTTSD2SIrm, FrameIndex, MI);
+    case X86::Int_CVTSI2SSrr:
+      return MakeRMInst(X86::Int_CVTSI2SSrm, FrameIndex, MI);
     case X86::SQRTSSr:  return MakeRMInst(X86::SQRTSSm, FrameIndex, MI);
     case X86::SQRTSDr:  return MakeRMInst(X86::SQRTSDm, FrameIndex, MI);
-    case X86::UCOMISSrr: return MakeRMInst(X86::UCOMISSrm, FrameIndex, MI);
-    case X86::UCOMISDrr: return MakeRMInst(X86::UCOMISDrm, FrameIndex, MI);
     case X86::ADDSSrr:   return MakeRMInst(X86::ADDSSrm, FrameIndex, MI);
     case X86::ADDSDrr:   return MakeRMInst(X86::ADDSDrm, FrameIndex, MI);
     case X86::MULSSrr:   return MakeRMInst(X86::MULSSrm, FrameIndex, MI);
@@ -443,10 +452,70 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr* MI,
     case X86::SUBSDrr:   return MakeRMInst(X86::SUBSDrm, FrameIndex, MI);
     case X86::CMPSSrr:   return MakeRMInst(X86::CMPSSrm, FrameIndex, MI);
     case X86::CMPSDrr:   return MakeRMInst(X86::CMPSDrm, FrameIndex, MI);
-#if 0
+    case X86::Int_CMPSSrr: return MakeRMInst(X86::Int_CMPSSrm, FrameIndex, MI);
+    case X86::Int_CMPSDrr: return MakeRMInst(X86::Int_CMPSDrm, FrameIndex, MI);
+    case X86::UCOMISSrr: return MakeRMInst(X86::UCOMISSrm, FrameIndex, MI);
+    case X86::UCOMISDrr: return MakeRMInst(X86::UCOMISDrm, FrameIndex, MI);
+    case X86::Int_UCOMISSrr:
+      return MakeRMInst(X86::Int_UCOMISSrm, FrameIndex, MI);
+    case X86::Int_UCOMISDrr:
+      return MakeRMInst(X86::Int_UCOMISDrm, FrameIndex, MI);
+    case X86::Int_COMISSrr:
+      return MakeRMInst(X86::Int_COMISSrm, FrameIndex, MI);
+    case X86::Int_COMISDrr:
+      return MakeRMInst(X86::Int_COMISDrm, FrameIndex, MI);
+    case X86::FsANDPSrr: return MakeRMInst(X86::FsANDPSrm, FrameIndex, MI);
+    case X86::FsANDPDrr: return MakeRMInst(X86::FsANDPDrm, FrameIndex, MI);
+    case X86::FsORPSrr:  return MakeRMInst(X86::FsORPSrm, FrameIndex, MI);
+    case X86::FsORPDrr:  return MakeRMInst(X86::FsORPDrm, FrameIndex, MI);
+    case X86::FsXORPSrr: return MakeRMInst(X86::FsXORPSrm, FrameIndex, MI);
+    case X86::FsXORPDrr: return MakeRMInst(X86::FsXORPDrm, FrameIndex, MI);
+    case X86::FsANDNPSrr: return MakeRMInst(X86::FsANDNPSrm, FrameIndex, MI);
+    case X86::FsANDNPDrr: return MakeRMInst(X86::FsANDNPDrm, FrameIndex, MI);
     // Packed SSE instructions
-    // FIXME: Can't use these until we are spilling XMM registers to
-    // 128-bit locations.
+    case X86::MOVAPSrr:  return MakeRMInst(X86::MOVAPSrm, FrameIndex, MI);
+    case X86::MOVAPDrr:  return MakeRMInst(X86::MOVAPDrm, FrameIndex, MI);
+    case X86::MOVUPSrr:  return MakeRMInst(X86::MOVUPSrm, FrameIndex, MI);
+    case X86::MOVUPDrr:  return MakeRMInst(X86::MOVUPDrm, FrameIndex, MI);
+    case X86::MOVSHDUPrr:return MakeRMInst(X86::MOVSHDUPrm, FrameIndex, MI);
+    case X86::MOVSLDUPrr:return MakeRMInst(X86::MOVSLDUPrm, FrameIndex, MI);
+    case X86::MOVDDUPrr: return MakeRMInst(X86::MOVDDUPrm, FrameIndex, MI);
+    case X86::CVTDQ2PSrr:return MakeRMInst(X86::CVTDQ2PSrm, FrameIndex, MI);
+    case X86::CVTDQ2PDrr:return MakeRMInst(X86::CVTDQ2PDrm, FrameIndex, MI);
+    case X86::CVTPS2DQrr:return MakeRMInst(X86::CVTPS2DQrm, FrameIndex, MI);
+    case X86::CVTTPS2DQrr:return MakeRMInst(X86::CVTTPS2DQrm, FrameIndex, MI);
+    case X86::CVTPD2DQrr:return MakeRMInst(X86::CVTPD2DQrm, FrameIndex, MI);
+    case X86::CVTTPD2DQrr:return MakeRMInst(X86::CVTTPD2DQrm, FrameIndex, MI);
+    case X86::CVTPS2PDrr:return MakeRMInst(X86::CVTPS2PDrm, FrameIndex, MI);
+    case X86::CVTPD2PSrr:return MakeRMInst(X86::CVTPD2PSrm, FrameIndex, MI);
+    case X86::Int_CVTSI2SDrr:
+      return MakeRMInst(X86::Int_CVTSI2SDrm, FrameIndex, MI);
+    case X86::Int_CVTSD2SSrr:
+      return MakeRMInst(X86::Int_CVTSD2SSrm, FrameIndex, MI);
+    case X86::Int_CVTSS2SDrr:
+      return MakeRMInst(X86::Int_CVTSS2SDrm, FrameIndex, MI);
+    case X86::ADDPSrr:   return MakeRMInst(X86::ADDPSrm, FrameIndex, MI);
+    case X86::ADDPDrr:   return MakeRMInst(X86::ADDPDrm, FrameIndex, MI);
+    case X86::SUBPSrr:   return MakeRMInst(X86::SUBPSrm, FrameIndex, MI);
+    case X86::SUBPDrr:   return MakeRMInst(X86::SUBPDrm, FrameIndex, MI);
+    case X86::MULPSrr:   return MakeRMInst(X86::MULPSrm, FrameIndex, MI);
+    case X86::MULPDrr:   return MakeRMInst(X86::MULPDrm, FrameIndex, MI);
+    case X86::DIVPSrr:   return MakeRMInst(X86::DIVPSrm, FrameIndex, MI);
+    case X86::DIVPDrr:   return MakeRMInst(X86::DIVPDrm, FrameIndex, MI);
+    case X86::ADDSUBPSrr:return MakeRMInst(X86::ADDSUBPSrm, FrameIndex, MI);
+    case X86::ADDSUBPDrr:return MakeRMInst(X86::ADDSUBPDrm, FrameIndex, MI);
+    case X86::HADDPSrr:  return MakeRMInst(X86::HADDPSrm, FrameIndex, MI);
+    case X86::HADDPDrr:  return MakeRMInst(X86::HADDPDrm, FrameIndex, MI);
+    case X86::HSUBPSrr:  return MakeRMInst(X86::HSUBPSrm, FrameIndex, MI);
+    case X86::HSUBPDrr:  return MakeRMInst(X86::HSUBPDrm, FrameIndex, MI);
+    case X86::SQRTPSr:   return MakeRMInst(X86::SQRTPSm, FrameIndex, MI);
+    case X86::SQRTPDr:   return MakeRMInst(X86::SQRTPDm, FrameIndex, MI);
+    case X86::RSQRTPSr:  return MakeRMInst(X86::RSQRTPSm, FrameIndex, MI);
+    case X86::RCPPSr:    return MakeRMInst(X86::RCPPSm, FrameIndex, MI);
+    case X86::MAXPSrr:   return MakeRMInst(X86::MAXPSrm, FrameIndex, MI);
+    case X86::MAXPDrr:   return MakeRMInst(X86::MAXPDrm, FrameIndex, MI);
+    case X86::MINPSrr:   return MakeRMInst(X86::MINPSrm, FrameIndex, MI);
+    case X86::MINPDrr:   return MakeRMInst(X86::MINPDrm, FrameIndex, MI);
     case X86::ANDPSrr:   return MakeRMInst(X86::ANDPSrm, FrameIndex, MI);
     case X86::ANDPDrr:   return MakeRMInst(X86::ANDPDrm, FrameIndex, MI);
     case X86::ORPSrr:    return MakeRMInst(X86::ORPSrm, FrameIndex, MI);
@@ -455,13 +524,80 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr* MI,
     case X86::XORPDrr:   return MakeRMInst(X86::XORPDrm, FrameIndex, MI);
     case X86::ANDNPSrr:  return MakeRMInst(X86::ANDNPSrm, FrameIndex, MI);
     case X86::ANDNPDrr:  return MakeRMInst(X86::ANDNPDrm, FrameIndex, MI);
-    case X86::MOVAPSrr:  return MakeRMInst(X86::MOVAPSrm, FrameIndex, MI);
-    case X86::MOVAPDrr:  return MakeRMInst(X86::MOVAPDrm, FrameIndex, MI);
-#endif
+    case X86::CMPPSrr:   return MakeRMInst(X86::CMPPSrm, FrameIndex, MI);
+    case X86::CMPPDrr:   return MakeRMInst(X86::CMPPDrm, FrameIndex, MI);
+    case X86::SHUFPSrr:  return MakeRMInst(X86::SHUFPSrm, FrameIndex, MI);
+    case X86::SHUFPDrr:  return MakeRMInst(X86::SHUFPDrm, FrameIndex, MI);
+    case X86::UNPCKHPSrr:return MakeRMInst(X86::UNPCKHPSrm, FrameIndex, MI);
+    case X86::UNPCKHPDrr:return MakeRMInst(X86::UNPCKHPDrm, FrameIndex, MI);
+    case X86::UNPCKLPSrr:return MakeRMInst(X86::UNPCKLPSrm, FrameIndex, MI);
+    case X86::UNPCKLPDrr:return MakeRMInst(X86::UNPCKLPDrm, FrameIndex, MI);
+    case X86::PADDBrr:   return MakeRMInst(X86::PADDBrm, FrameIndex, MI);
+    case X86::PADDWrr:   return MakeRMInst(X86::PADDWrm, FrameIndex, MI);
+    case X86::PADDDrr:   return MakeRMInst(X86::PADDDrm, FrameIndex, MI);
+    case X86::PADDSBrr:  return MakeRMInst(X86::PADDSBrm, FrameIndex, MI);
+    case X86::PADDSWrr:  return MakeRMInst(X86::PADDSWrm, FrameIndex, MI);
+    case X86::PSUBBrr:   return MakeRMInst(X86::PSUBBrm, FrameIndex, MI);
+    case X86::PSUBWrr:   return MakeRMInst(X86::PSUBWrm, FrameIndex, MI);
+    case X86::PSUBDrr:   return MakeRMInst(X86::PSUBDrm, FrameIndex, MI);
+    case X86::PSUBSBrr:  return MakeRMInst(X86::PSUBSBrm, FrameIndex, MI);
+    case X86::PSUBSWrr:  return MakeRMInst(X86::PSUBSWrm, FrameIndex, MI);
+    case X86::PMULHUWrr: return MakeRMInst(X86::PMULHUWrm, FrameIndex, MI);
+    case X86::PMULHWrr:  return MakeRMInst(X86::PMULHWrm, FrameIndex, MI);
+    case X86::PMULLWrr:  return MakeRMInst(X86::PMULLWrm, FrameIndex, MI);
+    case X86::PMULUDQrr: return MakeRMInst(X86::PMULUDQrm, FrameIndex, MI);
+    case X86::PMADDWDrr: return MakeRMInst(X86::PMADDWDrm, FrameIndex, MI);
+    case X86::PAVGBrr:   return MakeRMInst(X86::PAVGBrm, FrameIndex, MI);
+    case X86::PAVGWrr:   return MakeRMInst(X86::PAVGWrm, FrameIndex, MI);
+    case X86::PMAXUBrr:  return MakeRMInst(X86::PMAXUBrm, FrameIndex, MI);
+    case X86::PMAXSWrr:  return MakeRMInst(X86::PMAXSWrm, FrameIndex, MI);
+    case X86::PMINUBrr:  return MakeRMInst(X86::PMINUBrm, FrameIndex, MI);
+    case X86::PMINSWrr:  return MakeRMInst(X86::PMINSWrm, FrameIndex, MI);
+    case X86::PSADBWrr:  return MakeRMInst(X86::PSADBWrm, FrameIndex, MI);
+    case X86::PSLLWrr:   return MakeRMInst(X86::PSLLWrm, FrameIndex, MI);
+    case X86::PSLLDrr:   return MakeRMInst(X86::PSLLDrm, FrameIndex, MI);
+    case X86::PSLLQrr:   return MakeRMInst(X86::PSLLQrm, FrameIndex, MI);
+    case X86::PSRLWrr:   return MakeRMInst(X86::PSRLWrm, FrameIndex, MI);
+    case X86::PSRLDrr:   return MakeRMInst(X86::PSRLDrm, FrameIndex, MI);
+    case X86::PSRLQrr:   return MakeRMInst(X86::PSRLQrm, FrameIndex, MI);
+    case X86::PSRAWrr:   return MakeRMInst(X86::PSRAWrm, FrameIndex, MI);
+    case X86::PSRADrr:   return MakeRMInst(X86::PSRADrm, FrameIndex, MI);
+    case X86::PANDrr:    return MakeRMInst(X86::PANDrm, FrameIndex, MI);
+    case X86::PORrr:     return MakeRMInst(X86::PORrm, FrameIndex, MI);
+    case X86::PXORrr:    return MakeRMInst(X86::PXORrm, FrameIndex, MI);
+    case X86::PANDNrr:   return MakeRMInst(X86::PANDNrm, FrameIndex, MI);
+    case X86::PCMPEQBrr: return MakeRMInst(X86::PCMPEQBrm, FrameIndex, MI);
+    case X86::PCMPEQWrr: return MakeRMInst(X86::PCMPEQWrm, FrameIndex, MI);
+    case X86::PCMPEQDrr: return MakeRMInst(X86::PCMPEQDrm, FrameIndex, MI);
+    case X86::PCMPGTBrr: return MakeRMInst(X86::PCMPGTBrm, FrameIndex, MI);
+    case X86::PCMPGTWrr: return MakeRMInst(X86::PCMPGTWrm, FrameIndex, MI);
+    case X86::PCMPGTDrr: return MakeRMInst(X86::PCMPGTDrm, FrameIndex, MI);
+    case X86::PACKSSWBrr:return MakeRMInst(X86::PACKSSWBrm, FrameIndex, MI);
+    case X86::PACKSSDWrr:return MakeRMInst(X86::PACKSSDWrm, FrameIndex, MI);
+    case X86::PACKUSWBrr:return MakeRMInst(X86::PACKUSWBrm, FrameIndex, MI);
+    case X86::PSHUFDri:  return MakeRMInst(X86::PSHUFDmi, FrameIndex, MI);
+    case X86::PSHUFHWri: return MakeRMInst(X86::PSHUFHWmi, FrameIndex, MI);
+    case X86::PSHUFLWri: return MakeRMInst(X86::PSHUFLWmi, FrameIndex, MI);
+    case X86::PUNPCKLBWrr:return MakeRMInst(X86::PUNPCKLBWrm, FrameIndex, MI);
+    case X86::PUNPCKLWDrr:return MakeRMInst(X86::PUNPCKLWDrm, FrameIndex, MI);
+    case X86::PUNPCKLDQrr:return MakeRMInst(X86::PUNPCKLDQrm, FrameIndex, MI);
+    case X86::PUNPCKLQDQrr:return MakeRMInst(X86::PUNPCKLQDQrm, FrameIndex, MI);
+    case X86::PUNPCKHBWrr:return MakeRMInst(X86::PUNPCKHBWrm, FrameIndex, MI);
+    case X86::PUNPCKHWDrr:return MakeRMInst(X86::PUNPCKHWDrm, FrameIndex, MI);
+    case X86::PUNPCKHDQrr:return MakeRMInst(X86::PUNPCKHDQrm, FrameIndex, MI);
+    case X86::PUNPCKHQDQrr:return MakeRMInst(X86::PUNPCKHQDQrm, FrameIndex, MI);
+    case X86::PEXTRWri:   return MakeRMInst(X86::PEXTRWmi, FrameIndex, MI);
+    case X86::PINSRWrri:  return MakeRMInst(X86::PINSRWrmi, FrameIndex, MI);
+    // Alias packed SSE instructions
+    case X86::MOVSS2PSrr:return MakeRMInst(X86::MOVSS2PSrm, FrameIndex, MI);
+    case X86::MOVSD2PDrr:return MakeRMInst(X86::MOVSD2PDrm, FrameIndex, MI);
+    case X86::MOVDI2PDIrr:return MakeRMInst(X86::MOVDI2PDIrm, FrameIndex, MI);
+    case X86::MOVQI2PQIrr:return MakeRMInst(X86::MOVQI2PQIrm, FrameIndex, MI);
     }
   }
   if (PrintFailedFusing)
-    std::cerr << "We failed to fuse: " << *MI;
+    std::cerr << "We failed to fuse ("
+              << ((i == 1) ? "r" : "s") << "): " << *MI;
   return NULL;
 }
 
