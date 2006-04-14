@@ -24,6 +24,7 @@ namespace llvm {
 class BasicBlock;
 class ConstantInt;
 class PointerType;
+class PackedType;
 
 //===----------------------------------------------------------------------===//
 //                             AllocationInst Class
@@ -776,13 +777,7 @@ public:
 ///
 class InsertElementInst : public Instruction {
   Use Ops[3];
-  InsertElementInst(const InsertElementInst &IE) : 
-    Instruction(IE.getType(), InsertElement, Ops, 3) {
-    Ops[0].init(IE.Ops[0], this);
-    Ops[1].init(IE.Ops[1], this);
-    Ops[2].init(IE.Ops[2], this);
-  }
-
+  InsertElementInst(const InsertElementInst &IE);
 public:
   InsertElementInst(Value *Vec, Value *NewElt, Value *Idx,
                     const std::string &Name = "",Instruction *InsertBefore = 0);
@@ -798,6 +793,12 @@ public:
 
   virtual bool mayWriteToMemory() const { return false; }
 
+  /// getType - Overload to return most specific packed type.
+  ///
+  inline const PackedType *getType() const {
+    return reinterpret_cast<const PackedType*>(Instruction::getType());
+  }
+  
   /// Transparently provide more efficient getOperand methods.
   Value *getOperand(unsigned i) const {
     assert(i < 3 && "getOperand() out of range!");
@@ -828,13 +829,7 @@ public:
 ///
 class ShuffleVectorInst : public Instruction {
   Use Ops[3];
-  ShuffleVectorInst(const ShuffleVectorInst &IE) : 
-    Instruction(IE.getType(), ShuffleVector, Ops, 3) {
-      Ops[0].init(IE.Ops[0], this);
-      Ops[1].init(IE.Ops[1], this);
-      Ops[2].init(IE.Ops[2], this);
-    }
-  
+  ShuffleVectorInst(const ShuffleVectorInst &IE);  
 public:
   ShuffleVectorInst(Value *V1, Value *V2, Value *Mask,
                     const std::string &Name = "", Instruction *InsertBefor = 0);
@@ -849,6 +844,12 @@ public:
   virtual ShuffleVectorInst *clone() const;
   
   virtual bool mayWriteToMemory() const { return false; }
+  
+  /// getType - Overload to return most specific packed type.
+  ///
+  inline const PackedType *getType() const {
+    return reinterpret_cast<const PackedType*>(Instruction::getType());
+  }
   
   /// Transparently provide more efficient getOperand methods.
   Value *getOperand(unsigned i) const {
