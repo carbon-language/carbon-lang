@@ -73,14 +73,18 @@ namespace {
     std::vector<Value*> &RetVals;
     BVNImpl(std::vector<Value*> &RV) : RetVals(RV) {}
 
-    void handleBinaryInst(Instruction &I);
-    void visitBinaryOperator(BinaryOperator &I) {
-      handleBinaryInst((Instruction&)I);
-    }
-    void visitGetElementPtrInst(GetElementPtrInst &I);
     void visitCastInst(CastInst &I);
-    void visitShiftInst(ShiftInst &I) { handleBinaryInst((Instruction&)I); }
-    void visitSelectInst(SelectInst &I);
+    void visitGetElementPtrInst(GetElementPtrInst &I);
+
+    void handleBinaryInst(Instruction &I);
+    void visitBinaryOperator(Instruction &I)     { handleBinaryInst(I); }
+    void visitShiftInst(Instruction &I)          { handleBinaryInst(I); }
+    void visitExtractElementInst(Instruction &I) { handleBinaryInst(I); }
+
+    void handleTernaryInst(Instruction &I);
+    void visitSelectInst(Instruction &I)         { handleTernaryInst(I); }
+    void visitInsertElementInst(Instruction &I)  { handleTernaryInst(I); }
+    void visitShuffleVectorInst(Instruction &I)  { handleTernaryInst(I); }
     void visitInstruction(Instruction &) {
       // Cannot value number calls or terminator instructions.
     }
@@ -148,6 +152,24 @@ static inline bool isIdenticalBinaryInst(const Instruction &I1,
   return false;
 }
 
+// isIdenticalTernaryInst - Return true if the two ternary instructions are
+// identical.
+//
+static inline bool isIdenticalTernaryInst(const Instruction &I1,
+                                          const Instruction *I2) {
+  // Is it embedded in the same function?  (This could be false if LHS
+  // is a constant or global!)
+  if (I1.getParent()->getParent() != I2->getParent()->getParent())
+    return false;
+  
+  // They are identical if all operands are the same!
+  return I1.getOperand(0) == I2->getOperand(0) &&
+         I1.getOperand(1) == I2->getOperand(1) &&
+         I1.getOperand(2) == I2->getOperand(2);
+}
+
+
+
 void BVNImpl::handleBinaryInst(Instruction &I) {
   Value *LHS = I.getOperand(0);
 
@@ -199,37 +221,21 @@ void BVNImpl::visitGetElementPtrInst(GetElementPtrInst &I) {
       }
 }
 
-// isIdenticalSelectInst - Return true if the two select instructions are
-// identical.
-//
-static inline bool isIdenticalSelectInst(const SelectInst &I1,
-                                         const SelectInst *I2) {
-  // Is it embedded in the same function?  (This could be false if LHS
-  // is a constant or global!)
-  if (I1.getParent()->getParent() != I2->getParent()->getParent())
-    return false;
+void BVNImpl::handleTernaryInst(Instruction &I) {
+  Value *Op0 = I.getOperand(0);
+  Instruction *OtherInst;
   
-  // They are identical if both operands are the same!
-  return I1.getOperand(0) == I2->getOperand(0) &&
-         I1.getOperand(1) == I2->getOperand(1) &&
-         I1.getOperand(2) == I2->getOperand(2);
-    return true;
-  
-  return false;
-}
-
-void BVNImpl::visitSelectInst(SelectInst &I) {
-  Value *Cond = I.getOperand(0);
-  
-  for (Value::use_iterator UI = Cond->use_begin(), UE = Cond->use_end();
+  for (Value::use_iterator UI = Op0->use_begin(), UE = Op0->use_end();
        UI != UE; ++UI)
-    if (SelectInst *Other = dyn_cast<SelectInst>(*UI))
+    if ((OtherInst = dyn_cast<Instruction>(*UI)) && 
+        OtherInst->getOpcode() == I.getOpcode()) {
       // Check to see if this new select is not I, but has the same operands.
-      if (Other != &I && isIdenticalSelectInst(I, Other)) {
+      if (OtherInst != &I && isIdenticalTernaryInst(I, OtherInst)) {
         // These instructions are identical.  Handle the situation.
-        RetVals.push_back(Other);
+        RetVals.push_back(OtherInst);
       }
         
+    }
 }
 
 
