@@ -573,16 +573,33 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
   // Get the number of bytes to allocate from the FrameInfo
   unsigned NumBytes = MFI->getStackSize();
+  if (MFI->hasCalls() || MF.getFrameInfo()->hasVarSizedObjects()) {
+    // When we have no frame pointer, we reserve argument space for call sites
+    // in the function immediately on entry to the current function.  This
+    // eliminates the need for add/sub ESP brackets around call sites.
+    //
+    if (!hasFP(MF))
+      NumBytes += MFI->getMaxCallFrameSize();
+
+    // Round the size to a multiple of the alignment (don't forget the 4 byte
+    // offset though).
+    unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
+    NumBytes = ((NumBytes+4)+Align-1)/Align*Align - 4;
+  }
+
+  // Update frame info to pretend that this is part of the stack...
+  MFI->setStackSize(NumBytes);
+
+  if (NumBytes) {   // adjust stack pointer: ESP -= numbytes
+    unsigned Opc = NumBytes < 128 ? X86::SUB32ri8 : X86::SUB32ri;
+    MI = BuildMI(Opc, 1, X86::ESP,MachineOperand::UseAndDef).addImm(NumBytes);
+    MBB.insert(MBBI, MI);
+  }
+
   if (hasFP(MF)) {
     // Get the offset of the stack slot for the EBP register... which is
     // guaranteed to be the last slot by processFunctionBeforeFrameFinalized.
     int EBPOffset = MFI->getObjectOffset(MFI->getObjectIndexBegin())+4;
-
-    if (NumBytes) {   // adjust stack pointer: ESP -= numbytes
-      unsigned Opc = NumBytes < 128 ? X86::SUB32ri8 : X86::SUB32ri;
-      MI = BuildMI(Opc, 1, X86::ESP,MachineOperand::UseAndDef).addImm(NumBytes);
-      MBB.insert(MBBI, MI);
-    }
 
     // Save EBP into the appropriate stack slot...
     MI = addRegOffset(BuildMI(X86::MOV32mr, 5),    // mov [ESP-<offset>], EBP
@@ -596,30 +613,6 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
       MI = addRegOffset(BuildMI(X86::LEA32r, 5, X86::EBP), X86::ESP,NumBytes-4);
 
     MBB.insert(MBBI, MI);
-
-  } else {
-    if (MFI->hasCalls()) {
-      // When we have no frame pointer, we reserve argument space for call sites
-      // in the function immediately on entry to the current function.  This
-      // eliminates the need for add/sub ESP brackets around call sites.
-      //
-      NumBytes += MFI->getMaxCallFrameSize();
-
-      // Round the size to a multiple of the alignment (don't forget the 4 byte
-      // offset though).
-      unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
-      NumBytes = ((NumBytes+4)+Align-1)/Align*Align - 4;
-    }
-
-    // Update frame info to pretend that this is part of the stack...
-    MFI->setStackSize(NumBytes);
-
-    if (NumBytes) {
-      // adjust stack pointer: ESP -= numbytes
-      unsigned Opc = NumBytes < 128 ? X86::SUB32ri8 : X86::SUB32ri;
-      MI= BuildMI(Opc, 1, X86::ESP, MachineOperand::UseAndDef).addImm(NumBytes);
-      MBB.insert(MBBI, MI);
-    }
   }
 }
 
