@@ -1305,13 +1305,13 @@ def HADDPDrr : S3_Intrr<0x7C, "haddpd {$src2, $dst|$dst, $src2}",
                           int_x86_sse3_hadd_pd>;
 def HADDPDrm : S3_Intrm<0x7C, "haddpd {$src2, $dst|$dst, $src2}",
                           int_x86_sse3_hadd_pd>;
-def HSUBPSrr : S3D_Intrr<0x7C, "hsubps {$src2, $dst|$dst, $src2}",
+def HSUBPSrr : S3D_Intrr<0x7D, "hsubps {$src2, $dst|$dst, $src2}",
                           int_x86_sse3_hsub_ps>;
-def HSUBPSrm : S3D_Intrm<0x7C, "hsubps {$src2, $dst|$dst, $src2}",
+def HSUBPSrm : S3D_Intrm<0x7D, "hsubps {$src2, $dst|$dst, $src2}",
                           int_x86_sse3_hsub_ps>;
-def HSUBPDrr : S3_Intrr<0x7C, "hsubpd {$src2, $dst|$dst, $src2}",
+def HSUBPDrr : S3_Intrr<0x7D, "hsubpd {$src2, $dst|$dst, $src2}",
                           int_x86_sse3_hsub_pd>;
-def HSUBPDrm : S3_Intrm<0x7C, "hsubpd {$src2, $dst|$dst, $src2}",
+def HSUBPDrm : S3_Intrm<0x7D, "hsubpd {$src2, $dst|$dst, $src2}",
                           int_x86_sse3_hsub_pd>;
 }
 
