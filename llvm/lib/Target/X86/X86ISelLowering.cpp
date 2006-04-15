@@ -1724,12 +1724,14 @@ bool X86::isMOVSHDUPMask(SDNode *N) {
     return false;
 
   // Expect 1, 1, 3, 3
+  unsigned NumNodes = 0;
   for (unsigned i = 0; i < 2; ++i) {
     SDOperand Arg = N->getOperand(i);
     if (Arg.getOpcode() == ISD::UNDEF) continue;
     assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
     unsigned Val = cast<ConstantSDNode>(Arg)->getValue();
     if (Val != 1) return false;
+    NumNodes++;
   }
   for (unsigned i = 2; i < 4; ++i) {
     SDOperand Arg = N->getOperand(i);
@@ -1737,8 +1739,12 @@ bool X86::isMOVSHDUPMask(SDNode *N) {
     assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
     unsigned Val = cast<ConstantSDNode>(Arg)->getValue();
     if (Val != 3) return false;
+    NumNodes++;
   }
-  return true;
+
+  // Don't use movshdup if the resulting vector contains only one undef node.
+  // Use {p}shuf* instead.
+  return NumNodes > 1;
 }
 
 /// isMOVSLDUPMask - Return true if the specified VECTOR_SHUFFLE operand
@@ -1750,12 +1756,14 @@ bool X86::isMOVSLDUPMask(SDNode *N) {
     return false;
 
   // Expect 0, 0, 2, 2
+  unsigned NumNodes = 0;
   for (unsigned i = 0; i < 2; ++i) {
     SDOperand Arg = N->getOperand(i);
     if (Arg.getOpcode() == ISD::UNDEF) continue;
     assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
     unsigned Val = cast<ConstantSDNode>(Arg)->getValue();
     if (Val != 0) return false;
+    NumNodes++;
   }
   for (unsigned i = 2; i < 4; ++i) {
     SDOperand Arg = N->getOperand(i);
@@ -1763,8 +1771,12 @@ bool X86::isMOVSLDUPMask(SDNode *N) {
     assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
     unsigned Val = cast<ConstantSDNode>(Arg)->getValue();
     if (Val != 2) return false;
+    NumNodes++;
   }
-  return true;
+
+  // Don't use movsldup if the resulting vector contains only one undef node.
+  // Use {p}shuf* instead.
+  return NumNodes > 1;
 }
 
 /// isSplatMask - Return true if the specified VECTOR_SHUFFLE operand specifies
