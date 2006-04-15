@@ -137,6 +137,7 @@ namespace {
     Instruction *visitStoreInst(StoreInst &SI);
     Instruction *visitBranchInst(BranchInst &BI);
     Instruction *visitSwitchInst(SwitchInst &SI);
+    Instruction *visitInsertElementInst(InsertElementInst &IE);
     Instruction *visitExtractElementInst(ExtractElementInst &EI);
     Instruction *visitShuffleVectorInst(ShuffleVectorInst &SVI);
 
@@ -6915,6 +6916,126 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
   return 0;
 }
 
+/// CollectShuffleElements - We are building a shuffle between V and RHSVec,
+/// which are both packed values with identical types.  Return a shuffle mask
+/// that computes V.
+static Value *CollectShuffleElements(Value *V, std::vector<Constant*> &Mask,
+                                     Value *RHSVec) {
+  assert(isa<PackedType>(V->getType()) && V->getType() == RHSVec->getType() &&
+         "Invalid shuffle!");
+  unsigned NumElts = cast<PackedType>(V->getType())->getNumElements();
+
+  if (isa<UndefValue>(V)) {
+    Mask.assign(NumElts, UndefValue::get(Type::UIntTy));
+    return V;
+  } else if (isa<ConstantAggregateZero>(V)) {
+    Mask.assign(NumElts, ConstantUInt::get(Type::UIntTy, 0));
+    return V;
+  } else if (InsertElementInst *IEI = dyn_cast<InsertElementInst>(V)) {
+    // If this is an insert of an extract from some other vector, include it.
+    Value *VecOp    = IEI->getOperand(0);
+    Value *ScalarOp = IEI->getOperand(1);
+    Value *IdxOp    = IEI->getOperand(2);
+    
+    if (ExtractElementInst *EI = dyn_cast<ExtractElementInst>(ScalarOp)) {
+      if (isa<ConstantInt>(EI->getOperand(1)) && isa<ConstantInt>(IdxOp) &&
+          EI->getOperand(0)->getType() == V->getType()) {
+        unsigned ExtractedIdx =
+          cast<ConstantInt>(EI->getOperand(1))->getRawValue();
+        unsigned InsertedIdx = cast<ConstantInt>(IdxOp)->getRawValue();
+        
+        // Either the extracted from or inserted into vector must be RHSVec,
+        // otherwise we'd end up with a shuffle of three inputs.
+        if (EI->getOperand(0) == RHSVec) {
+          Value *V = CollectShuffleElements(VecOp, Mask, RHSVec);
+          Mask[InsertedIdx & (NumElts-1)] = 
+            ConstantUInt::get(Type::UIntTy, NumElts+ExtractedIdx);
+          return V;
+        }
+        
+        if (VecOp == RHSVec) {
+          Value *V = CollectShuffleElements(EI->getOperand(0), Mask, RHSVec);
+          // Everything but the extracted element is replaced with the RHS.
+          for (unsigned i = 0; i != NumElts; ++i) {
+            if (i != InsertedIdx)
+              Mask[i] = ConstantUInt::get(Type::UIntTy, NumElts+i);
+          }
+          return V;
+        }
+      }
+    }
+  }
+
+  
+  // Otherwise, can't do anything fancy.  Return an identity vector.
+  for (unsigned i = 0; i != NumElts; ++i)
+    Mask.push_back(ConstantUInt::get(Type::UIntTy, i));
+  return V;
+}
+
+Instruction *InstCombiner::visitInsertElementInst(InsertElementInst &IE) {
+  Value *VecOp    = IE.getOperand(0);
+  Value *ScalarOp = IE.getOperand(1);
+  Value *IdxOp    = IE.getOperand(2);
+  
+  // If the inserted element was extracted from some other vector, and if the 
+  // indexes are constant, try to turn this into a shufflevector operation.
+  if (ExtractElementInst *EI = dyn_cast<ExtractElementInst>(ScalarOp)) {
+    if (isa<ConstantInt>(EI->getOperand(1)) && isa<ConstantInt>(IdxOp) &&
+        EI->getOperand(0)->getType() == IE.getType()) {
+      unsigned NumVectorElts = IE.getType()->getNumElements();
+      unsigned ExtractedIdx=cast<ConstantInt>(EI->getOperand(1))->getRawValue();
+      unsigned InsertedIdx = cast<ConstantInt>(IdxOp)->getRawValue();
+      
+      if (ExtractedIdx >= NumVectorElts) // Out of range extract.
+        return ReplaceInstUsesWith(IE, VecOp);
+      
+      if (InsertedIdx >= NumVectorElts)  // Out of range insert.
+        return ReplaceInstUsesWith(IE, UndefValue::get(IE.getType()));
+      
+      // If we are extracting a value from a vector, then inserting it right
+      // back into the same place, just use the input vector.
+      if (EI->getOperand(0) == VecOp && ExtractedIdx == InsertedIdx)
+        return ReplaceInstUsesWith(IE, VecOp);      
+      
+      // We could theoretically do this for ANY input.  However, doing so could
+      // turn chains of insertelement instructions into a chain of shufflevector
+      // instructions, and right now we do not merge shufflevectors.  As such,
+      // only do this in a situation where it is clear that there is benefit.
+      if (isa<UndefValue>(VecOp) || isa<ConstantAggregateZero>(VecOp)) {
+        // Turn this into shuffle(EIOp0, VecOp, Mask).  The result has all of
+        // the values of VecOp, except then one read from EIOp0.
+        // Build a new shuffle mask.
+        std::vector<Constant*> Mask;
+        if (isa<UndefValue>(VecOp))
+          Mask.assign(NumVectorElts, UndefValue::get(Type::UIntTy));
+        else {
+          assert(isa<ConstantAggregateZero>(VecOp) && "Unknown thing");
+          Mask.assign(NumVectorElts, ConstantUInt::get(Type::UIntTy,
+                                                       NumVectorElts));
+        } 
+        Mask[InsertedIdx] = ConstantUInt::get(Type::UIntTy, ExtractedIdx);
+        return new ShuffleVectorInst(EI->getOperand(0), VecOp,
+                                     ConstantPacked::get(Mask));
+      }
+      
+      // If this insertelement isn't used by some other insertelement, turn it
+      // (and any insertelements it points to), into one big shuffle.
+      if (!IE.hasOneUse() || !isa<InsertElementInst>(IE.use_back())) {
+        std::vector<Constant*> Mask;
+        Value *InVecA = CollectShuffleElements(&IE, Mask, EI->getOperand(0));
+        
+        // We now have a shuffle of InVecA, VecOp, Mask.
+        return new ShuffleVectorInst(InVecA, EI->getOperand(0),
+                                     ConstantPacked::get(Mask));
+      }
+    }
+  }
+
+  return 0;
+}
+
+
 Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
   Value *LHS = SVI.getOperand(0);
   Value *RHS = SVI.getOperand(1);
@@ -6924,6 +7045,11 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
   
   if (isa<UndefValue>(Mask))
     return ReplaceInstUsesWith(SVI, UndefValue::get(SVI.getType()));
+  
+  // TODO: Canonicalize shuffle(undef,x) -> shuffle(x, undef).
+
+  // TODO: If we have shuffle(x, undef, mask) and any elements of mask refer to
+  // the undef, change them to undefs.
   
   // Canonicalize shuffle(x,x) -> shuffle(x,undef)
   if (LHS == RHS) {
