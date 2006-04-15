@@ -1116,7 +1116,11 @@ static SDOperand LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
   
   std::vector<SDOperand> ResultMask;
   for (unsigned i = 0, e = PermMask.getNumOperands(); i != e; ++i) {
-    unsigned SrcElt =cast<ConstantSDNode>(PermMask.getOperand(i))->getValue();
+    unsigned SrcElt;
+    if (PermMask.getOperand(i).getOpcode() == ISD::UNDEF)
+      SrcElt = 0;
+    else 
+      SrcElt = cast<ConstantSDNode>(PermMask.getOperand(i))->getValue();
     
     for (unsigned j = 0; j != BytesPerElement; ++j)
       ResultMask.push_back(DAG.getConstant(SrcElt*BytesPerElement+j,
