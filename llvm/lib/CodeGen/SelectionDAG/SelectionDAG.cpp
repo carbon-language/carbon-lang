@@ -73,6 +73,10 @@ bool ConstantFPSDNode::isExactlyValue(double V) const {
 /// isBuildVectorAllOnes - Return true if the specified node is a
 /// BUILD_VECTOR where all of the elements are ~0 or undef.
 bool ISD::isBuildVectorAllOnes(const SDNode *N) {
+  // Look through a bit convert.
+  if (N->getOpcode() == ISD::BIT_CONVERT)
+    N = N->getOperand(0).Val;
+  
   if (N->getOpcode() != ISD::BUILD_VECTOR) return false;
   
   unsigned i = 0, e = N->getNumOperands();
@@ -117,6 +121,10 @@ bool ISD::isBuildVectorAllOnes(const SDNode *N) {
 /// isBuildVectorAllZeros - Return true if the specified node is a
 /// BUILD_VECTOR where all of the elements are 0 or undef.
 bool ISD::isBuildVectorAllZeros(const SDNode *N) {
+  // Look through a bit convert.
+  if (N->getOpcode() == ISD::BIT_CONVERT)
+    N = N->getOperand(0).Val;
+  
   if (N->getOpcode() != ISD::BUILD_VECTOR) return false;
   
   unsigned i = 0, e = N->getNumOperands();
