@@ -169,7 +169,7 @@ def PSHUFD_binary_shuffle_mask : PatLeaf<(build_vector), [{
 // PDIi8 - SSE2 instructions with ImmT == Imm8 and TB and OpSize prefixes.
 // S3I - SSE3 instructions with TB and OpSize prefixes.
 // S3SI - SSE3 instructions with XS prefix.
-// S3SI - SSE3 instructions with XD prefix.
+// S3DI - SSE3 instructions with XD prefix.
 class SSI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
       : I<o, F, ops, asm, pattern>, XS, Requires<[HasSSE1]>;
 class SDI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
