@@ -394,9 +394,15 @@ def immAllZerosV: PatLeaf<(build_vector), [{
   return ISD::isBuildVectorAllZeros(N);
 }]>;
 
+def immAllOnesV_bc: PatLeaf<(bitconvert), [{
+  return ISD::isBuildVectorAllOnes(N);
+}]>;
+
+
 // Other helper fragments.
 def not  : PatFrag<(ops node:$in), (xor node:$in, immAllOnes)>;
 def vnot : PatFrag<(ops node:$in), (xor node:$in, immAllOnesV)>;
+def vnot_conv : PatFrag<(ops node:$in), (xor node:$in, immAllOnesV_bc)>;
 def ineg : PatFrag<(ops node:$in), (sub 0, node:$in)>;
 
 // extending load & truncstore fragments.
