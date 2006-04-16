@@ -464,14 +464,6 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr* MI,
       return MakeRMInst(X86::Int_COMISSrm, FrameIndex, MI);
     case X86::Int_COMISDrr:
       return MakeRMInst(X86::Int_COMISDrm, FrameIndex, MI);
-    case X86::FsANDPSrr: return MakeRMInst(X86::FsANDPSrm, FrameIndex, MI);
-    case X86::FsANDPDrr: return MakeRMInst(X86::FsANDPDrm, FrameIndex, MI);
-    case X86::FsORPSrr:  return MakeRMInst(X86::FsORPSrm, FrameIndex, MI);
-    case X86::FsORPDrr:  return MakeRMInst(X86::FsORPDrm, FrameIndex, MI);
-    case X86::FsXORPSrr: return MakeRMInst(X86::FsXORPSrm, FrameIndex, MI);
-    case X86::FsXORPDrr: return MakeRMInst(X86::FsXORPDrm, FrameIndex, MI);
-    case X86::FsANDNPSrr: return MakeRMInst(X86::FsANDNPSrm, FrameIndex, MI);
-    case X86::FsANDNPDrr: return MakeRMInst(X86::FsANDNPDrm, FrameIndex, MI);
     // Packed SSE instructions
     case X86::MOVAPSrr:  return MakeRMInst(X86::MOVAPSrm, FrameIndex, MI);
     case X86::MOVAPDrr:  return MakeRMInst(X86::MOVAPDrm, FrameIndex, MI);
