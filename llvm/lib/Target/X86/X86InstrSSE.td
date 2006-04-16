@@ -766,10 +766,10 @@ def MOVAPDmr : PDI<0x29, MRMDestMem, (ops f128mem:$dst, VR128:$src),
 
 def MOVUPSrr : PSI<0x10, MRMSrcReg, (ops VR128:$dst, VR128:$src),
                    "movups {$src, $dst|$dst, $src}", []>;
-def MOVUPSrm : PDI<0x10, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
+def MOVUPSrm : PSI<0x10, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
                    "movups {$src, $dst|$dst, $src}",
                    [(set VR128:$dst, (int_x86_sse_loadu_ps addr:$src))]>;
-def MOVUPSmr : PDI<0x11, MRMDestMem, (ops f128mem:$dst, VR128:$src),
+def MOVUPSmr : PSI<0x11, MRMDestMem, (ops f128mem:$dst, VR128:$src),
                    "movups {$src, $dst|$dst, $src}",
                    [(int_x86_sse_storeu_ps addr:$dst, VR128:$src)]>;
 def MOVUPDrr : PDI<0x10, MRMSrcReg, (ops VR128:$dst, VR128:$src),
