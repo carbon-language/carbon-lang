@@ -936,8 +936,6 @@ static SDOperand LowerSRA(SDOperand Op, SelectionDAG &DAG) {
 // ISD::UNDEF value.  For undefs, the corresponding VectorBits values are
 // zero.   Return true if this is not an array of constants, false if it is.
 //
-// Note that VectorBits/UndefBits are returned in 'little endian' form, so
-// elements 0,1 go in VectorBits[0] and 2,3 go in VectorBits[1] for a v4i32.
 static bool GetConstantBuildVectorBits(SDNode *BV, uint64_t VectorBits[2],
                                        uint64_t UndefBits[2]) {
   // Start with zero'd results.
@@ -948,7 +946,7 @@ static bool GetConstantBuildVectorBits(SDNode *BV, uint64_t VectorBits[2],
     SDOperand OpVal = BV->getOperand(i);
     
     unsigned PartNo = i >= e/2;     // In the upper 128 bits?
-    unsigned SlotNo = i & (e/2-1);  // Which subpiece of the uint64_t it is.
+    unsigned SlotNo = e/2 - (i & (e/2-1))-1;  // Which subpiece of the uint64_t.
 
     uint64_t EltBits = 0;
     if (OpVal.getOpcode() == ISD::UNDEF) {
@@ -974,6 +972,59 @@ static bool GetConstantBuildVectorBits(SDNode *BV, uint64_t VectorBits[2],
   return false;
 }
 
+// If this is a splat (repetition) of a value across the whole vector, return
+// the smallest size that splats it.  For example, "0x01010101010101..." is a
+// splat of 0x01, 0x0101, and 0x01010101.  We return SplatBits = 0x01 and 
+// SplatSize = 1 byte.
+static bool isConstantSplat(const uint64_t Bits128[2], 
+                            const uint64_t Undef128[2],
+                            unsigned &SplatBits, unsigned &SplatUndef,
+                            unsigned &SplatSize) {
+  
+  // Don't let undefs prevent splats from matching.  See if the top 64-bits are
+  // the same as the lower 64-bits, ignoring undefs.
+  if ((Bits128[0] & ~Undef128[1]) != (Bits128[1] & ~Undef128[0]))
+    return false;  // Can't be a splat if two pieces don't match.
+  
+  uint64_t Bits64  = Bits128[0] | Bits128[1];
+  uint64_t Undef64 = Undef128[0] & Undef128[1];
+  
+  // Check that the top 32-bits are the same as the lower 32-bits, ignoring
+  // undefs.
+  if ((Bits64 & (~Undef64 >> 32)) != ((Bits64 >> 32) & ~Undef64))
+    return false;  // Can't be a splat if two pieces don't match.
+
+  uint32_t Bits32  = uint32_t(Bits64) | uint32_t(Bits64 >> 32);
+  uint32_t Undef32 = uint32_t(Undef64) & uint32_t(Undef64 >> 32);
+
+  // If the top 16-bits are different than the lower 16-bits, ignoring
+  // undefs, we have an i32 splat.
+  if ((Bits32 & (~Undef32 >> 16)) != ((Bits32 >> 16) & ~Undef32)) {
+    SplatBits = Bits32;
+    SplatUndef = Undef32;
+    SplatSize = 4;
+    return true;
+  }
+  
+  uint16_t Bits16  = uint16_t(Bits32)  | uint16_t(Bits32 >> 16);
+  uint16_t Undef16 = uint16_t(Undef32) & uint16_t(Undef32 >> 16);
+
+  // If the top 8-bits are different than the lower 8-bits, ignoring
+  // undefs, we have an i16 splat.
+  if ((Bits16 & (uint16_t(~Undef16) >> 8)) != ((Bits16 >> 8) & ~Undef16)) {
+    SplatBits = Bits16;
+    SplatUndef = Undef16;
+    SplatSize = 2;
+    return true;
+  }
+  
+  // Otherwise, we have an 8-bit splat.
+  SplatBits  = uint8_t(Bits16)  | uint8_t(Bits16 >> 8);
+  SplatUndef = uint8_t(Undef16) & uint8_t(Undef16 >> 8);
+  SplatSize = 1;
+  return true;
+}
+
 // If this is a case we can't handle, return null and let the default
 // expansion code take care of it.  If we CAN select this case, and if it
 // selects to a single instruction, return Op.  Otherwise, if we can codegen
@@ -989,54 +1040,52 @@ static SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
   if (GetConstantBuildVectorBits(Op.Val, VectorBits, UndefBits))
     return SDOperand();   // Not a constant vector.
   
-  // See if this is all zeros.
-  if ((VectorBits[0] | VectorBits[1]) == 0) {
-    // Canonicalize all zero vectors to be v4i32.
-    if (Op.getValueType() != MVT::v4i32) {
-      SDOperand Z = DAG.getConstant(0, MVT::i32);
-      Z = DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32, Z, Z, Z, Z);
-      Op = DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Z);
+  // If this is a splat (repetition) of a value across the whole vector, return
+  // the smallest size that splats it.  For example, "0x01010101010101..." is a
+  // splat of 0x01, 0x0101, and 0x01010101.  We return SplatBits = 0x01 and 
+  // SplatSize = 1 byte.
+  unsigned SplatBits, SplatUndef, SplatSize;
+  if (isConstantSplat(VectorBits, UndefBits, SplatBits, SplatUndef, SplatSize)){
+    bool HasAnyUndefs = (UndefBits[0] | UndefBits[1]) != 0;
+    
+    // First, handle single instruction cases.
+    
+    // All zeros?
+    if (SplatBits == 0) {
+      // Canonicalize all zero vectors to be v4i32.
+      if (Op.getValueType() != MVT::v4i32 || HasAnyUndefs) {
+        SDOperand Z = DAG.getConstant(0, MVT::i32);
+        Z = DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32, Z, Z, Z, Z);
+        Op = DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Z);
+      }
+      return Op;
     }
-    return Op;
-  }
-  
-  // Check to see if this is something we can use VSPLTI* to form.
-  MVT::ValueType CanonicalVT = MVT::Other;
-  SDNode *CST = 0;
-  
-  if ((CST = PPC::get_VSPLTI_elt(Op.Val, 4, DAG).Val))       // vspltisw
-    CanonicalVT = MVT::v4i32;
-  else if ((CST = PPC::get_VSPLTI_elt(Op.Val, 2, DAG).Val))  // vspltish
-    CanonicalVT = MVT::v8i16;
-  else if ((CST = PPC::get_VSPLTI_elt(Op.Val, 1, DAG).Val))  // vspltisb
-    CanonicalVT = MVT::v16i8;
-  
-  // If this matches one of the vsplti* patterns, force it to the canonical
-  // type for the pattern.
-  if (CST) {
-    if (Op.getValueType() != CanonicalVT) {
-      // Convert the splatted element to the right element type.
-      SDOperand Elt = DAG.getNode(ISD::TRUNCATE, 
-                                  MVT::getVectorBaseType(CanonicalVT), 
-                                  SDOperand(CST, 0));
-      std::vector<SDOperand> Ops(MVT::getVectorNumElements(CanonicalVT), Elt);
-      SDOperand Res = DAG.getNode(ISD::BUILD_VECTOR, CanonicalVT, Ops);
-      Op = DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Res);
+
+    // If the sign extended value is in the range [-16,15], use VSPLTI[bhw].
+    int32_t SextVal= int32_t(SplatBits << (32-8*SplatSize)) >> (32-8*SplatSize);
+    if (SextVal >= -16 && SextVal <= 15) {
+      const MVT::ValueType VTys[] = { // canonical VT to use for each size.
+        MVT::v16i8, MVT::v8i16, MVT::Other, MVT::v4i32
+      };
+      MVT::ValueType CanonicalVT = VTys[SplatSize-1];
+   
+      // If this is a non-canonical splat for this value, 
+      if (Op.getValueType() != CanonicalVT || HasAnyUndefs) {
+        SDOperand Elt = DAG.getConstant(SplatBits, 
+                                        MVT::getVectorBaseType(CanonicalVT));
+        std::vector<SDOperand> Ops(MVT::getVectorNumElements(CanonicalVT), Elt);
+        SDOperand Res = DAG.getNode(ISD::BUILD_VECTOR, CanonicalVT, Ops);
+        Op = DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Res);
+      }
+      return Op;
     }
-    return Op;
-  }
-  
-  // If this is some other splat of 4-byte elements, see if we can handle it
-  // in another way.
-  // FIXME: Make this more undef happy and work with other widths (1,2 bytes).
-  if (VectorBits[0] == VectorBits[1] &&
-      unsigned(VectorBits[0]) == unsigned(VectorBits[0] >> 32)) {
-    unsigned Bits = unsigned(VectorBits[0]);
+    
     
     // If this is 0x8000_0000 x 4, turn into vspltisw + vslw.  If it is 
     // 0x7FFF_FFFF x 4, turn it into not(0x8000_0000).  These are important
     // for fneg/fabs.
-    if (Bits == 0x80000000 || Bits == 0x7FFFFFFF) {
+    if (SplatSize == 4 &&
+        SplatBits == 0x80000000 || SplatBits == (0x7FFFFFFF&~SplatUndef)) {
       // Make -1 and vspltisw -1:
       SDOperand OnesI = DAG.getConstant(~0U, MVT::i32);
       SDOperand OnesV = DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
@@ -1049,13 +1098,13 @@ static SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
                       OnesV, OnesV);
       
       // If this is 0x7FFF_FFFF, xor by OnesV to invert it.
-      if (Bits == 0x7FFFFFFF)
+      if (SplatBits == 0x80000000)
         Res = DAG.getNode(ISD::XOR, MVT::v4i32, Res, OnesV);
       
       return DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Res);
     }
   }
-  
+    
   return SDOperand();
 }
 

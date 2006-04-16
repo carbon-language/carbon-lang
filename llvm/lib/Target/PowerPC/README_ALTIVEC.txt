@@ -40,8 +40,16 @@ a load/store/lve*x sequence.
 //===----------------------------------------------------------------------===//
 
 There are a wide range of vector constants we can generate with combinations of
-altivec instructions.  Examples
- GCC does: "t=vsplti*, r = t+t"  for constants it can't generate with one vsplti
+altivec instructions.
+
+Examples, these work with all widths:
+  Splat(+/- 16,18,20,22,24,28,30):  t = vspliti I/2,  r = t+t
+  Splat(+/- 17,19,21,23,25,29):     t = vsplti +/-15, t2 = vsplti I-15, r=t + t2
+  Splat(31):                        t = vsplti FB,  r = srl t,t
+  Splat(256):  t = vsplti 1, r = vsldoi t, t, 1
+
+Lots more are listed here:
+http://www.informatik.uni-bremen.de/~hobold/AltiVec.html
 
 This should be added to the ISD::BUILD_VECTOR case in 
 PPCTargetLowering::LowerOperation.
@@ -49,19 +57,6 @@ PPCTargetLowering::LowerOperation.
 //===----------------------------------------------------------------------===//
 
 FABS/FNEG can be codegen'd with the appropriate and/xor of -0.0.
-
-//===----------------------------------------------------------------------===//
-
-Codegen the constant here with something better than a constant pool load.
-
-void %test_f(<4 x float>* %P, <4 x float>* %Q, float %X) {
-        %tmp = load <4 x float>* %Q
-        %tmp = cast <4 x float> %tmp to <4 x int>
-        %tmp1 = and <4 x int> %tmp, < int 2147483647, int 2147483647, int 2147483647, int 2147483647 > 
-        %tmp2 = cast <4 x int> %tmp1 to <4 x float>
-        store <4 x float> %tmp2, <4 x float>* %P
-        ret void
-}
 
 //===----------------------------------------------------------------------===//
 
@@ -90,11 +85,6 @@ Do not generate the MFCR/RLWINM sequence for predicate compares when the
 predicate compare is used immediately by a branch.  Just branch on the right
 cond code on CR6.
 
-//===----------------------------------------------------------------------===//
-
-SROA should turn "vector unions" into the appropriate insert/extract element
-instructions.
- 
 //===----------------------------------------------------------------------===//
 
 We need a way to teach tblgen that some operands of an intrinsic are required to
