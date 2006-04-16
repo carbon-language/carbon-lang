@@ -65,7 +65,7 @@ clobbered regs.
 
 //===----------------------------------------------------------------------===//
 
-Implement passing/returning vectors by value.
+Implement passing vectors by value.
 
 //===----------------------------------------------------------------------===//
 
@@ -75,7 +75,7 @@ of C1/C2/C3, then a load and vperm of Variable.
 //===----------------------------------------------------------------------===//
 
 We currently codegen SCALAR_TO_VECTOR as a store of the scalar to a 16-byte
-aligned stack slot, followed by a lve*x/vperm.  We should probably just store it
+aligned stack slot, followed by a load/vperm.  We should probably just store it
 to a scalar stack slot, then use lvsl/vperm to load it.  If the value is already
 in memory, this is a huge win.
 
@@ -89,22 +89,6 @@ cond code on CR6.
 
 We need a way to teach tblgen that some operands of an intrinsic are required to
 be constants.  The verifier should enforce this constraint.
-
-//===----------------------------------------------------------------------===//
-
-Instead of writting a pattern for type-agnostic operations (e.g. gen-zero, load,
-store, and, ...) in every supported type, make legalize do the work.  We should
-have a canonical type that we want operations changed to (e.g. v4i32 for
-build_vector) and legalize should change non-identical types to thse.  This is
-similar to what it does for operations that are only supported in some types,
-e.g. x86 cmov (not supported on bytes).
-
-This would fix two problems:
-1. Writing patterns multiple times.
-2. Identical operations in different types are not getting CSE'd.
-
-We already do this for shuffle and build_vector.  We need load,undef,and,or,xor,
-etc.
 
 //===----------------------------------------------------------------------===//
 

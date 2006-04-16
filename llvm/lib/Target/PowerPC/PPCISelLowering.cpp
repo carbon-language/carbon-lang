@@ -87,10 +87,6 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SELECT, MVT::i32, Expand);
   setOperationAction(ISD::SELECT, MVT::f32, Expand);
   setOperationAction(ISD::SELECT, MVT::f64, Expand);
-  setOperationAction(ISD::SELECT, MVT::v4f32, Expand);
-  setOperationAction(ISD::SELECT, MVT::v4i32, Expand);
-  setOperationAction(ISD::SELECT, MVT::v8i16, Expand);
-  setOperationAction(ISD::SELECT, MVT::v16i8, Expand);
   
   // PowerPC wants to turn select_cc of FP into fsel when possible.
   setOperationAction(ISD::SELECT_CC, MVT::f32, Custom);
@@ -178,17 +174,29 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
     // will selectively turn on ones that can be effectively codegen'd.
     for (unsigned VT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
          VT != (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++VT) {
-      // add/sub/and/or/xor are legal for all supported vector VT's.
+      // add/sub are legal for all supported vector VT's.
       setOperationAction(ISD::ADD , (MVT::ValueType)VT, Legal);
       setOperationAction(ISD::SUB , (MVT::ValueType)VT, Legal);
-      setOperationAction(ISD::AND , (MVT::ValueType)VT, Legal);
-      setOperationAction(ISD::OR  , (MVT::ValueType)VT, Legal);
-      setOperationAction(ISD::XOR , (MVT::ValueType)VT, Legal);
       
       // We promote all shuffles to v16i8.
       setOperationAction(ISD::VECTOR_SHUFFLE, (MVT::ValueType)VT, Promote);
-      AddPromotedToType(ISD::VECTOR_SHUFFLE, (MVT::ValueType)VT, MVT::v16i8);
+      AddPromotedToType (ISD::VECTOR_SHUFFLE, (MVT::ValueType)VT, MVT::v16i8);
+
+      // We promote all non-typed operations to v4i32.
+      setOperationAction(ISD::AND   , (MVT::ValueType)VT, Promote);
+      AddPromotedToType (ISD::AND   , (MVT::ValueType)VT, MVT::v4i32);
+      setOperationAction(ISD::OR    , (MVT::ValueType)VT, Promote);
+      AddPromotedToType (ISD::OR    , (MVT::ValueType)VT, MVT::v4i32);
+      setOperationAction(ISD::XOR   , (MVT::ValueType)VT, Promote);
+      AddPromotedToType (ISD::XOR   , (MVT::ValueType)VT, MVT::v4i32);
+      setOperationAction(ISD::LOAD  , (MVT::ValueType)VT, Promote);
+      AddPromotedToType (ISD::LOAD  , (MVT::ValueType)VT, MVT::v4i32);
+      setOperationAction(ISD::SELECT, (MVT::ValueType)VT, Promote);
+      AddPromotedToType (ISD::SELECT, (MVT::ValueType)VT, MVT::v4i32);
+      setOperationAction(ISD::STORE, (MVT::ValueType)VT, Promote);
+      AddPromotedToType (ISD::STORE, (MVT::ValueType)VT, MVT::v4i32);
       
+      // No other operations are legal.
       setOperationAction(ISD::MUL , (MVT::ValueType)VT, Expand);
       setOperationAction(ISD::SDIV, (MVT::ValueType)VT, Expand);
       setOperationAction(ISD::SREM, (MVT::ValueType)VT, Expand);
@@ -205,6 +213,13 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
     // with merges, splats, etc.
     setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v16i8, Custom);
 
+    setOperationAction(ISD::AND   , MVT::v4i32, Legal);
+    setOperationAction(ISD::OR    , MVT::v4i32, Legal);
+    setOperationAction(ISD::XOR   , MVT::v4i32, Legal);
+    setOperationAction(ISD::LOAD  , MVT::v4i32, Legal);
+    setOperationAction(ISD::SELECT, MVT::v4i32, Expand);
+    setOperationAction(ISD::STORE , MVT::v4i32, Legal);
+    
     addRegisterClass(MVT::v4f32, PPC::VRRCRegisterClass);
     addRegisterClass(MVT::v4i32, PPC::VRRCRegisterClass);
     addRegisterClass(MVT::v8i16, PPC::VRRCRegisterClass);

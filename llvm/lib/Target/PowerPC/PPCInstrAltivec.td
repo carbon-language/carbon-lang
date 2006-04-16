@@ -158,7 +158,7 @@ class VX2_Int<bits<11> xo, string opc, Intrinsic IntID>
 // Instruction Definitions.
 
 def IMPLICIT_DEF_VRRC : Pseudo<(ops VRRC:$rD), "; $rD = IMPLICIT_DEF_VRRC",
-                               [(set VRRC:$rD, (v4f32 (undef)))]>;
+                               [(set VRRC:$rD, (v4i32 (undef)))]>;
 
 let noResults = 1 in {
 def DSS   : DSS_Form<822, (ops u5imm:$A, u5imm:$STRM,u5imm:$ZERO1,u5imm:$ZERO2),
@@ -541,25 +541,16 @@ def : Pat<(int_ppc_altivec_dststt GPRC:$rA, GPRC:$rB, imm:$STRM),
           (DSTST 1, imm:$STRM, GPRC:$rA, GPRC:$rB)>;
 
 // Undef.
-def : Pat<(v16i8 (undef)), (v16i8 (IMPLICIT_DEF_VRRC))>;
-def : Pat<(v8i16 (undef)), (v8i16 (IMPLICIT_DEF_VRRC))>;
-def : Pat<(v4i32 (undef)), (v4i32 (IMPLICIT_DEF_VRRC))>;
+def : Pat<(v16i8 (undef)), (IMPLICIT_DEF_VRRC)>;
+def : Pat<(v8i16 (undef)), (IMPLICIT_DEF_VRRC)>;
+def : Pat<(v4f32 (undef)), (IMPLICIT_DEF_VRRC)>;
 
 // Loads.
-def : Pat<(v16i8 (load xoaddr:$src)), (v16i8 (LVX xoaddr:$src))>;
-def : Pat<(v8i16 (load xoaddr:$src)), (v8i16 (LVX xoaddr:$src))>;
 def : Pat<(v4i32 (load xoaddr:$src)), (v4i32 (LVX xoaddr:$src))>;
-def : Pat<(v4f32 (load xoaddr:$src)), (v4f32 (LVX xoaddr:$src))>;
 
 // Stores.
-def : Pat<(store (v16i8 VRRC:$rS), xoaddr:$dst),
-          (STVX (v16i8 VRRC:$rS), xoaddr:$dst)>;
-def : Pat<(store (v8i16 VRRC:$rS), xoaddr:$dst),
-          (STVX (v8i16 VRRC:$rS), xoaddr:$dst)>;
 def : Pat<(store (v4i32 VRRC:$rS), xoaddr:$dst),
           (STVX (v4i32 VRRC:$rS), xoaddr:$dst)>;
-def : Pat<(store (v4f32 VRRC:$rS), xoaddr:$dst),
-          (STVX (v4f32 VRRC:$rS), xoaddr:$dst)>;
 
 // Bit conversions.
 def : Pat<(v16i8 (bitconvert (v8i16 VRRC:$src))), (v16i8 VRRC:$src)>;
@@ -603,37 +594,11 @@ def:Pat<(vector_shuffle (v16i8 VRRC:$vA), undef, VMRGHW_unary_shuffle_mask:$in),
         (VMRGHW VRRC:$vA, VRRC:$vA)>;
 
 // Logical Operations
-def : Pat<(v16i8 (vnot VRRC:$vA)), (v16i8 (VNOR VRRC:$vA, VRRC:$vA))>;
-def : Pat<(v8i16 (vnot VRRC:$vA)), (v8i16 (VNOR VRRC:$vA, VRRC:$vA))>;
 def : Pat<(v4i32 (vnot VRRC:$vA)), (v4i32 (VNOR VRRC:$vA, VRRC:$vA))>;
-
-def : Pat<(v16i8 (vnot_conv VRRC:$vA)), (v16i8 (VNOR VRRC:$vA, VRRC:$vA))>;
-def : Pat<(v8i16 (vnot_conv VRRC:$vA)), (v8i16 (VNOR VRRC:$vA, VRRC:$vA))>;
 def : Pat<(v4i32 (vnot_conv VRRC:$vA)), (v4i32 (VNOR VRRC:$vA, VRRC:$vA))>;
 
-
-def : Pat<(v16i8 (and VRRC:$A, VRRC:$B)), (v16i8 (VAND VRRC:$A, VRRC:$B))>;
-def : Pat<(v8i16 (and VRRC:$A, VRRC:$B)), (v8i16 (VAND VRRC:$A, VRRC:$B))>;
-def : Pat<(v16i8 (or  VRRC:$A, VRRC:$B)), (v16i8 (VOR  VRRC:$A, VRRC:$B))>;
-def : Pat<(v8i16 (or  VRRC:$A, VRRC:$B)), (v8i16 (VOR  VRRC:$A, VRRC:$B))>;
-
-def : Pat<(v16i8 (xor VRRC:$A, VRRC:$B)), (v16i8 (VXOR VRRC:$A, VRRC:$B))>;
-def : Pat<(v8i16 (xor VRRC:$A, VRRC:$B)), (v8i16 (VXOR VRRC:$A, VRRC:$B))>;
-def : Pat<(v16i8 (vnot (or VRRC:$A, VRRC:$B))),(v16i8 (VNOR VRRC:$A, VRRC:$B))>;
-def : Pat<(v8i16 (vnot (or VRRC:$A, VRRC:$B))),(v8i16 (VNOR VRRC:$A, VRRC:$B))>;
-def : Pat<(v16i8 (and VRRC:$A, (vnot VRRC:$B))),
-          (v16i8 (VANDC VRRC:$A, VRRC:$B))>;
-def : Pat<(v8i16 (and VRRC:$A, (vnot VRRC:$B))),
-          (v8i16 (VANDC VRRC:$A, VRRC:$B))>;
-
-
-def : Pat<(v16i8 (vnot_conv (or VRRC:$A, VRRC:$B))),(v16i8 (VNOR VRRC:$A, VRRC:$B))>;
-def : Pat<(v8i16 (vnot_conv (or VRRC:$A, VRRC:$B))),(v8i16 (VNOR VRRC:$A, VRRC:$B))>;
-def : Pat<(v4i32 (vnot_conv (or VRRC:$A, VRRC:$B))),(v4i32 (VNOR VRRC:$A, VRRC:$B))>;
-def : Pat<(v16i8 (and VRRC:$A, (vnot_conv VRRC:$B))),
-          (v16i8 (VANDC VRRC:$A, VRRC:$B))>;
-def : Pat<(v8i16 (and VRRC:$A, (vnot_conv VRRC:$B))),
-          (v8i16 (VANDC VRRC:$A, VRRC:$B))>;
+def : Pat<(v4i32 (vnot_conv (or VRRC:$A, VRRC:$B))),
+          (v4i32 (VNOR VRRC:$A, VRRC:$B))>;
 def : Pat<(v4i32 (and VRRC:$A, (vnot_conv VRRC:$B))),
           (v4i32 (VANDC VRRC:$A, VRRC:$B))>;
 
