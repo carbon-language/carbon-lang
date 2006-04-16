@@ -852,7 +852,7 @@ def MOVSHDUPrr : S3SI<0x16, MRMSrcReg, (ops VR128:$dst, VR128:$src),
                       [(set VR128:$dst, (v4f32 (vector_shuffle
                                                 VR128:$src, (undef),
                                                 MOVSHDUP_shuffle_mask)))]>;
-def MOVSHDUPrm : S3SI<0x16, MRMSrcReg, (ops VR128:$dst, f128mem:$src),
+def MOVSHDUPrm : S3SI<0x16, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
                       "movshdup {$src, $dst|$dst, $src}",
                       [(set VR128:$dst, (v4f32 (vector_shuffle
                                                 (loadv4f32 addr:$src), (undef),
@@ -863,7 +863,7 @@ def MOVSLDUPrr : S3SI<0x12, MRMSrcReg, (ops VR128:$dst, VR128:$src),
                       [(set VR128:$dst, (v4f32 (vector_shuffle
                                                 VR128:$src, (undef),
                                                 MOVSLDUP_shuffle_mask)))]>;
-def MOVSLDUPrm : S3SI<0x12, MRMSrcReg, (ops VR128:$dst, f128mem:$src),
+def MOVSLDUPrm : S3SI<0x12, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
                       "movsldup {$src, $dst|$dst, $src}",
                       [(set VR128:$dst, (v4f32 (vector_shuffle
                                                 (loadv4f32 addr:$src), (undef),
@@ -874,10 +874,11 @@ def MOVDDUPrr : S3DI<0x12, MRMSrcReg, (ops VR128:$dst, VR128:$src),
                   [(set VR128:$dst, (v2f64 (vector_shuffle
                                             VR128:$src, (undef),
                                             SSE_splat_v2_mask)))]>;
-def MOVDDUPrm : S3DI<0x12, MRMSrcReg, (ops VR128:$dst, f64mem:$src),
+def MOVDDUPrm : S3DI<0x12, MRMSrcMem, (ops VR128:$dst, f64mem:$src),
                   "movddup {$src, $dst|$dst, $src}",
                   [(set VR128:$dst, (v2f64 (vector_shuffle
-                                            (loadv2f64 addr:$src), (undef),
+                                         (scalar_to_vector (loadf64 addr:$src)),
+                                             (undef),
                                             SSE_splat_v2_mask)))]>;
 
 // SSE2 instructions without OpSize prefix
