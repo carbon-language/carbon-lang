@@ -7046,8 +7046,6 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
   if (isa<UndefValue>(Mask))
     return ReplaceInstUsesWith(SVI, UndefValue::get(SVI.getType()));
   
-  // TODO: Canonicalize shuffle(undef,x) -> shuffle(x, undef).
-
   // TODO: If we have shuffle(x, undef, mask) and any elements of mask refer to
   // the undef, change them to undefs.
   
@@ -7075,6 +7073,28 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
     SVI.setOperand(1, UndefValue::get(RHS->getType()));
     SVI.setOperand(2, Mask);
     MadeChange = true;
+  }
+  
+  // Canonicalize shuffle(undef,x,mask) -> shuffle(x, undef,mask').
+  if (isa<UndefValue>(LHS)) {
+    // shuffle(undef,x,<0,0,0,0>) -> undef.
+    if (isa<ConstantAggregateZero>(Mask))
+      return ReplaceInstUsesWith(SVI, UndefValue::get(SVI.getType()));
+    
+    ConstantPacked *CPM = cast<ConstantPacked>(Mask);
+    std::vector<Constant*> Elts;
+    for (unsigned i = 0, e = CPM->getNumOperands(); i != e; ++i) {
+      if (isa<UndefValue>(CPM->getOperand(i)))
+        Elts.push_back(CPM->getOperand(i));
+      else {
+        unsigned EltNo = cast<ConstantUInt>(CPM->getOperand(i))->getRawValue();
+        if (EltNo >= e/2)
+          Elts.push_back(ConstantUInt::get(Type::UIntTy, EltNo-e/2));
+        else               // Referring to the undef.
+          Elts.push_back(UndefValue::get(Type::UIntTy));
+      }
+    }
+    return new ShuffleVectorInst(RHS, LHS, ConstantPacked::get(Elts));
   }
   
   if (ConstantPacked *CP = dyn_cast<ConstantPacked>(Mask)) {
