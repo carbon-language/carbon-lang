@@ -1544,6 +1544,13 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Tmp1 = TLI.LowerOperation(Result, DAG);
         if (Tmp1.Val) Result = Tmp1;
         break;
+      case TargetLowering::Promote:
+        assert(MVT::isVector(VT) && "Unknown legal promote case!");
+        Tmp3 = DAG.getNode(ISD::BIT_CONVERT, 
+                           TLI.getTypeToPromoteTo(ISD::STORE, VT), Tmp3);
+        Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp3, Tmp2, 
+                                        Node->getOperand(3));
+        break;
       }
       break;
     }
@@ -1576,6 +1583,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           Tmp3 = PackVectorOp(Node->getOperand(1), TVT);
           Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp3, Tmp2, 
                                           Node->getOperand(3));
+          Result = LegalizeOp(Result);
           break;
         } else if (NumElems == 1) {
           // Turn this into a normal store of the scalar type.
