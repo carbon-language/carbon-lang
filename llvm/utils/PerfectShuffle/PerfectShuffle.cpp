@@ -381,7 +381,9 @@ int main() {
     
     // CostSat - The cost of this operation saturated to two bits.
     unsigned CostSat = ShufTab[i].Cost;
-    if (CostSat > 3) CostSat = 3;
+    if (CostSat > 4) CostSat = 4;
+    if (CostSat == 0) CostSat = 1;
+    --CostSat;  // Cost is now between 0-3.
     
     unsigned OpNum = ShufTab[i].Op ? ShufTab[i].Op->OpNum : 0;
     assert(OpNum < 16 && "Too few bits to encode operation!");
