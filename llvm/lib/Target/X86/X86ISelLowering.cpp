@@ -309,6 +309,9 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v16i8, Custom);
     setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v8i16, Custom);
     setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v8i16, Custom);
+    setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v4i32, Custom);
+    // Implement v4f32 insert_vector_elt in terms of SSE2 v8i16 ones.
+    setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v4f32, Custom);
 
     // Custom lower build_vector, vector_shuffle, and extract_vector_elt.
     for (unsigned VT = (unsigned)MVT::v16i8; VT != (unsigned)MVT::v2i64; VT++) {
@@ -3002,14 +3005,38 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     // as its second argument.
     MVT::ValueType VT = Op.getValueType();
     MVT::ValueType BaseVT = MVT::getVectorBaseType(VT);
+    SDOperand N0 = Op.getOperand(0);
+    SDOperand N1 = Op.getOperand(1);
+    SDOperand N2 = Op.getOperand(2);
     if (MVT::getSizeInBits(BaseVT) == 16) {
-      SDOperand N1 = Op.getOperand(1);
-      SDOperand N2 = Op.getOperand(2);
       if (N1.getValueType() != MVT::i32)
         N1 = DAG.getNode(ISD::ANY_EXTEND, MVT::i32, N1);
       if (N2.getValueType() != MVT::i32)
         N2 = DAG.getConstant(cast<ConstantSDNode>(N2)->getValue(), MVT::i32);
-      return DAG.getNode(X86ISD::PINSRW, VT, Op.getOperand(0), N1, N2);
+      return DAG.getNode(X86ISD::PINSRW, VT, N0, N1, N2);
+    } else if (MVT::getSizeInBits(BaseVT) == 32) {
+      // Use two pinsrw instructions to insert a 32 bit value.
+      unsigned Idx = cast<ConstantSDNode>(N2)->getValue();
+      Idx <<= 1;
+      if (MVT::isFloatingPoint(N1.getValueType())) {
+        if (N1.getOpcode() == ISD::LOAD) {
+          // Just load directly from f32mem to R32.
+          N1 = DAG.getLoad(MVT::i32, N1.getOperand(0), N1.getOperand(1),
+                           N1.getOperand(2));
+        } else {
+          N1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, MVT::v4f32, N1);
+          N1 = DAG.getNode(ISD::BIT_CONVERT, MVT::v4i32, N1);
+          N1 = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, MVT::i32, N1,
+                           DAG.getConstant(0, MVT::i32));
+        }
+      }
+      N0 = DAG.getNode(ISD::BIT_CONVERT, MVT::v8i16, N0);
+      N0 = DAG.getNode(X86ISD::PINSRW, MVT::v8i16, N0, N1,
+                       DAG.getConstant(Idx, MVT::i32));
+      N1 = DAG.getNode(ISD::SRL, MVT::i32, N1, DAG.getConstant(16, MVT::i8));
+      N0 = DAG.getNode(X86ISD::PINSRW, MVT::v8i16, N0, N1,
+                       DAG.getConstant(Idx+1, MVT::i32));
+      return DAG.getNode(ISD::BIT_CONVERT, VT, N0);
     }
 
     return SDOperand();
