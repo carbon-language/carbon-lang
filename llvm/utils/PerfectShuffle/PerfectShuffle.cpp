@@ -375,7 +375,7 @@ int main() {
   
   // Build up the table to emit.
   std::cout << "\n// This table is 6561*4 = 26244 bytes in size.\n";
-  std::cout << "static const unsigned InstrTab[6561+1] = {\n";
+  std::cout << "static const unsigned PerfectShuffleTable[6561+1] = {\n";
   
   for (unsigned i = 0; i != 0x8889; ++i) {
     if (!isValidMask(i)) continue;
