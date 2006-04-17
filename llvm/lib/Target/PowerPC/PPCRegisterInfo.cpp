@@ -355,6 +355,22 @@ static void HandleVRSaveUpdate(MachineInstr *MI, const bool *UsedRegs) {
     if (UsedRegs[VRRegNo[i]])
       UsedRegMask |= 1 << (31-i);
   
+  // Live in and live out values already must be in the mask, so don't bother
+  // marking them.
+  MachineFunction *MF = MI->getParent()->getParent();
+  for (MachineFunction::livein_iterator I = 
+       MF->livein_begin(), E = MF->livein_end(); I != E; ++I) {
+    unsigned RegNo = PPCRegisterInfo::getRegisterNumbering(I->first);
+    if (VRRegNo[RegNo] == I->first)        // If this really is a vector reg.
+      UsedRegMask &= ~(1 << (31-RegNo));   // Doesn't need to be marked.
+  }
+  for (MachineFunction::liveout_iterator I = 
+       MF->liveout_begin(), E = MF->liveout_end(); I != E; ++I) {
+    unsigned RegNo = PPCRegisterInfo::getRegisterNumbering(*I);
+    if (VRRegNo[RegNo] == *I)              // If this really is a vector reg.
+      UsedRegMask &= ~(1 << (31-RegNo));   // Doesn't need to be marked.
+  }
+  
   unsigned SrcReg = MI->getOperand(1).getReg();
   unsigned DstReg = MI->getOperand(0).getReg();
   // If no registers are used, turn this into a copy.
