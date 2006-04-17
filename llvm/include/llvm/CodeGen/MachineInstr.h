@@ -499,6 +499,16 @@ public:
   /// clone - Create a copy of 'this' instruction that is identical in
   /// all ways except the the instruction has no parent, prev, or next.
   MachineInstr* clone() const;
+  
+  /// removeFromParent - This method unlinks 'this' from the containing basic
+  /// block, and returns it, but does not delete it.
+  MachineInstr *removeFromParent();
+  
+  /// eraseFromParent - This method unlinks 'this' from the containing basic
+  /// block and deletes it.
+  void eraseFromParent() {
+    delete removeFromParent();
+  }
 
   //
   // Debugging support
