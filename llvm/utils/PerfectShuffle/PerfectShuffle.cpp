@@ -391,7 +391,7 @@ int main() {
     
     // Encode this as 2 bits of saturated cost, 4 bits of opcodes, 13 bits of
     // LHS, and 13 bits of RHS = 32 bits.
-    unsigned Val = (CostSat << 30) | (OpNum << 27) | (LHS << 13) | RHS;
+    unsigned Val = (CostSat << 30) | (OpNum << 26) | (LHS << 13) | RHS;
 
     std::cout << "  " << Val << "U,\t// ";
     PrintMask(i, std::cout);
