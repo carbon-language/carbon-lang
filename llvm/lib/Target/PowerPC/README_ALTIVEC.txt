@@ -110,3 +110,13 @@ vec_ste(&destloc,0,vTemp);
 We can do an arbitrary non-constant value by using lvsr/perm/ste.
 
 //===----------------------------------------------------------------------===//
+
+If we want to tie instruction selection into the scheduler, we can do some
+constant formation with different instructions.  For example, we can generate
+"vsplti -1" with "vcmpequw R,R" and 1,1,1,1 with "vsubcuw R,R", both of which
+use different execution units, thus could help scheduling.
+
+This is probably only reasonable for a post-pass scheduler.
+
+//===----------------------------------------------------------------------===//
+
