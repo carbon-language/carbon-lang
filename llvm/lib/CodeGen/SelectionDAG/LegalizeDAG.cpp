@@ -433,19 +433,7 @@ bool SelectionDAGLegalize::LegalizeAllNodesNotLeadingTo(SDNode *N,
   if (OperandsLeadToDest) return true;
 
   // Okay, this node looks safe, legalize it and return false.
-  switch (getTypeAction(N->getValueType(0))) {
-  case Legal:
-    LegalizeOp(SDOperand(N, 0));
-    break;
-  case Promote:
-    PromoteOp(SDOperand(N, 0));
-    break;
-  case Expand: {
-    SDOperand X, Y;
-    ExpandOp(SDOperand(N, 0), X, Y);
-    break;
-  }
-  }
+  HandleOp(SDOperand(N, 0));
   return false;
 }
 
