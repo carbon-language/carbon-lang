@@ -867,6 +867,34 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       }
       // FALLTHROUGH
     case TargetLowering::Expand: {
+      // If the insert index is a constant, codegen this as a scalar_to_vector,
+      // then a shuffle that inserts it into the right position in the vector.
+      if (ConstantSDNode *InsertPos = dyn_cast<ConstantSDNode>(Tmp3)) {
+        SDOperand ScVec = DAG.getNode(ISD::SCALAR_TO_VECTOR, 
+                                      Tmp1.getValueType(), Tmp2);
+        
+        unsigned NumElts = MVT::getVectorNumElements(Tmp1.getValueType());
+        MVT::ValueType ShufMaskVT = MVT::getIntVectorWithNumElements(NumElts);
+        MVT::ValueType ShufMaskEltVT = MVT::getVectorBaseType(ShufMaskVT);
+        
+        // We generate a shuffle of InVec and ScVec, so the shuffle mask should
+        // be 0,1,2,3,4,5... with the appropriate element replaced with elt 0 of
+        // the RHS.
+        std::vector<SDOperand> ShufOps;
+        for (unsigned i = 0; i != NumElts; ++i) {
+          if (i != InsertPos->getValue())
+            ShufOps.push_back(DAG.getConstant(i, ShufMaskEltVT));
+          else
+            ShufOps.push_back(DAG.getConstant(NumElts, ShufMaskEltVT));
+        }
+        SDOperand ShufMask = DAG.getNode(ISD::BUILD_VECTOR, ShufMaskVT,ShufOps);
+        
+        Result = DAG.getNode(ISD::VECTOR_SHUFFLE, Tmp1.getValueType(),
+                             Tmp1, ScVec, ShufMask);
+        Result = LegalizeOp(Result);
+        break;
+      }
+      
       // If the target doesn't support this, we have to spill the input vector
       // to a temporary stack slot, update the element, then reload it.  This is
       // badness.  We could also load the value into a vector register (either
