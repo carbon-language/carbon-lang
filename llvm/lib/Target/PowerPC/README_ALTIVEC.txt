@@ -5,8 +5,8 @@ registers, to generate better spill code.
 
 //===----------------------------------------------------------------------===//
 
-Altivec support.  The first should be a single lvx from the constant pool, the
-second should be a xor/stvx:
+The first should be a single lvx from the constant pool, the second should be 
+a xor/stvx:
 
 void foo(void) {
   int x[8] __attribute__((aligned(128))) = { 1, 1, 1, 17, 1, 1, 1, 1 };
@@ -36,23 +36,6 @@ When -ffast-math is on, we can use 0.0.
 Since we know that "Vector" is 16-byte aligned and we know the element offset 
 of ".X", we should change the load into a lve*x instruction, instead of doing
 a load/store/lve*x sequence.
-
-//===----------------------------------------------------------------------===//
-
-There are a wide range of vector constants we can generate with combinations of
-altivec instructions.
-
-Examples, these work with all widths:
-  Splat(+/- 16,18,20,22,24,28,30):  t = vspliti I/2,  r = t+t
-  Splat(+/- 17,19,21,23,25,29):     t = vsplti +/-15, t2 = vsplti I-15, r=t + t2
-  Splat(31):                        t = vsplti FB,  r = srl t,t
-  Splat(256):  t = vsplti 1, r = vsldoi t, t, 1
-
-Lots more are listed here:
-http://www.informatik.uni-bremen.de/~hobold/AltiVec.html
-
-This should be added to the ISD::BUILD_VECTOR case in 
-PPCTargetLowering::LowerOperation.
 
 //===----------------------------------------------------------------------===//
 
