@@ -1127,6 +1127,9 @@ static SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
     if (SextVal >= -16 && SextVal <= 15)
       return BuildSplatI(SextVal, SplatSize, Op.getValueType(), DAG);
     
+    
+    // Two instruction sequences.
+    
     // If this value is in the range [-32,30] and is even, use:
     //    tmp = VSPLTI[bhw], result = add tmp, tmp
     if (SextVal >= -32 && SextVal <= 30 && (SextVal & 1) == 0) {
@@ -1154,7 +1157,7 @@ static SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
     unsigned SplatBitSize = SplatSize*8;
     static const char SplatCsts[] = {
       -1, 1, -2, 2, -3, 3, -4, 4, -5, 5, -6, 6, -7, 7,
-      -8, 8, -9, 9, -10, 10, -11, 11, -12, 12, -13, 14, -15
+      -8, 8, -9, 9, -10, 10, -11, 11, -12, 12, -13, 13, 14, -14, 15, -15, -16
     };
     for (unsigned idx = 0; idx < sizeof(SplatCsts)/sizeof(SplatCsts[0]); ++idx){
       // Indirect through the SplatCsts array so that we favor 'vsplti -1' for
@@ -1225,10 +1228,16 @@ static SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
     
     // Three instruction sequences.
     
-    // Otherwise, in range [17,29]:  (vsplti 15) + (vsplti C).
-    if (SextVal >= 0 && SextVal <= 29) {
-      SDOperand LHS = BuildSplatI(15, SplatSize, Op.getValueType(), DAG);
-      SDOperand RHS = BuildSplatI(SextVal-15, SplatSize, Op.getValueType(),DAG);
+    // Odd, in range [17,31]:  (vsplti C)-(vsplti -16).
+    if (SextVal >= 0 && SextVal <= 31) {
+      SDOperand LHS = BuildSplatI(SextVal-16, SplatSize, Op.getValueType(),DAG);
+      SDOperand RHS = BuildSplatI(-16, SplatSize, Op.getValueType(), DAG);
+      return DAG.getNode(ISD::SUB, Op.getValueType(), LHS, RHS);
+    }
+    // Odd, in range [-31,-17]:  (vsplti C)+(vsplti -16).
+    if (SextVal >= -31 && SextVal <= 0) {
+      SDOperand LHS = BuildSplatI(SextVal+16, SplatSize, Op.getValueType(),DAG);
+      SDOperand RHS = BuildSplatI(-16, SplatSize, Op.getValueType(), DAG);
       return DAG.getNode(ISD::ADD, Op.getValueType(), LHS, RHS);
     }
   }
