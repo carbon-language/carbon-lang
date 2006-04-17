@@ -1759,12 +1759,8 @@ bool X86::isMOVSLDUPMask(SDNode *N) {
 
 /// isSplatMask - Return true if the specified VECTOR_SHUFFLE operand specifies
 /// a splat of a single element.
-bool X86::isSplatMask(SDNode *N) {
+static bool isSplatMask(SDNode *N) {
   assert(N->getOpcode() == ISD::BUILD_VECTOR);
-
-  // We can only splat 64-bit, and 32-bit quantities.
-  if (N->getNumOperands() != 4 && N->getNumOperands() != 2)
-    return false;
 
   // This is a splat operation if each element of the permute is the same, and
   // if the value doesn't reference the second vector.
@@ -1779,6 +1775,17 @@ bool X86::isSplatMask(SDNode *N) {
 
   // Make sure it is a splat of the first vector operand.
   return cast<ConstantSDNode>(Elt)->getValue() < N->getNumOperands();
+}
+
+/// isSplatMask - Return true if the specified VECTOR_SHUFFLE operand specifies
+/// a splat of a single element and it's a 2 or 4 element mask.
+bool X86::isSplatMask(SDNode *N) {
+  assert(N->getOpcode() == ISD::BUILD_VECTOR);
+
+  // We can only splat 64-bit, and 32-bit quantities.
+  if (N->getNumOperands() != 4 && N->getNumOperands() != 2)
+    return false;
+  return ::isSplatMask(N);
 }
 
 /// getShuffleSHUFImmediate - Return the appropriate immediate to shuffle
@@ -1945,6 +1952,43 @@ static bool isLowerFromV2UpperFromV1(SDOperand Op) {
     if (!isUndefOrInRange(Op.getOperand(i), 0, NumElems))
       return false;
   return true;
+}
+
+/// getUnpacklMask - Returns a vector_shuffle mask for an unpackl operation
+/// of specified width.
+static SDOperand getUnpacklMask(unsigned NumElems, SelectionDAG &DAG) {
+  MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(NumElems);
+  MVT::ValueType BaseVT = MVT::getVectorBaseType(MaskVT);
+  std::vector<SDOperand> MaskVec;
+  for (unsigned i = 0, e = NumElems/2; i != e; ++i) {
+    MaskVec.push_back(DAG.getConstant(i,            BaseVT));
+    MaskVec.push_back(DAG.getConstant(i + NumElems, BaseVT));
+  }
+  return DAG.getNode(ISD::BUILD_VECTOR, MaskVT, MaskVec);
+}
+
+/// PromoteSplat - Promote a splat of v8i16 or v16i8 to v4i32.
+///
+static SDOperand PromoteSplat(SDOperand Op, SelectionDAG &DAG) {
+  SDOperand V1 = Op.getOperand(0);
+  SDOperand PermMask = Op.getOperand(2);
+  MVT::ValueType VT = Op.getValueType();
+  unsigned NumElems = PermMask.getNumOperands();
+  PermMask = getUnpacklMask(NumElems, DAG);
+  while (NumElems != 4) {
+    V1 = DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V1, PermMask);
+    NumElems >>= 1;
+  }
+  V1 = DAG.getNode(ISD::BIT_CONVERT, MVT::v4i32, V1);
+
+  MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(4);
+  SDOperand Zero = DAG.getConstant(0, MVT::getVectorBaseType(MaskVT));
+  std::vector<SDOperand> ZeroVec(4, Zero);
+  SDOperand SplatMask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, ZeroVec);
+  SDOperand Shuffle = DAG.getNode(ISD::VECTOR_SHUFFLE, MVT::v4i32, V1,
+                                  DAG.getNode(ISD::UNDEF, MVT::v4i32),
+                                  SplatMask);
+  return DAG.getNode(ISD::BIT_CONVERT, VT, Shuffle);
 }
 
 /// LowerOperation - Provide custom lowering hooks for some operations.
@@ -2753,8 +2797,11 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     MVT::ValueType VT = Op.getValueType();
     unsigned NumElems = PermMask.getNumOperands();
 
-    if (X86::isSplatMask(PermMask.Val))
-      return Op;
+    if (isSplatMask(PermMask.Val)) {
+      if (NumElems <= 4) return Op;
+      // Promote it to a v4i32 splat.
+      return PromoteSplat(Op, DAG);
+    }
 
     // Normalize the node to match x86 shuffle ops if needed
     if (V2.getOpcode() != ISD::UNDEF) {
@@ -2877,14 +2924,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       //         : unpcklps 1, 3 ==> Y: <?, ?, 3, 1>
       //   Step 2: unpcklps X, Y ==>    <3, 2, 1, 0>
       MVT::ValueType VT = Op.getValueType();
-      MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(NumElems);
-      MVT::ValueType BaseVT = MVT::getVectorBaseType(MaskVT);
-      std::vector<SDOperand> MaskVec;
-      for (unsigned i = 0, e = NumElems/2; i != e; ++i) {
-        MaskVec.push_back(DAG.getConstant(i,            BaseVT));
-        MaskVec.push_back(DAG.getConstant(i + NumElems, BaseVT));
-      }
-      SDOperand PermMask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, MaskVec);
+      SDOperand PermMask = getUnpacklMask(NumElems, DAG);
       std::vector<SDOperand> V(NumElems);
       for (unsigned i = 0; i < NumElems; ++i)
         V[i] = DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, Op.getOperand(i));
@@ -3208,7 +3248,7 @@ X86TargetLowering::isShuffleMaskLegal(SDOperand Mask, MVT::ValueType VT) const {
   // Only do shuffles on 128-bit vector types for now.
   if (MVT::getSizeInBits(VT) == 64) return false;
   return (Mask.Val->getNumOperands() == 2 ||
-          X86::isSplatMask(Mask.Val)  ||
+          isSplatMask(Mask.Val)  ||
           X86::isMOVSMask(Mask.Val)   ||
           X86::isMOVSHDUPMask(Mask.Val) ||
           X86::isMOVSLDUPMask(Mask.Val) ||
