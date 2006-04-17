@@ -100,6 +100,15 @@ MachineInstr* MachineInstr::clone() const {
   return new MachineInstr(*this);
 }
 
+/// removeFromParent - This method unlinks 'this' from the containing basic
+/// block, and returns it, but does not delete it.
+MachineInstr *MachineInstr::removeFromParent() {
+  assert(getParent() && "Not embedded in a basic block!");
+  getParent()->remove(this);
+  return this;
+}
+
+
 /// OperandComplete - Return true if it's illegal to add a new operand
 ///
 bool MachineInstr::OperandsComplete() const {
