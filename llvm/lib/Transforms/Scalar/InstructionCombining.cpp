@@ -5471,7 +5471,11 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     default: break;
     case Intrinsic::ppc_altivec_lvx:
     case Intrinsic::ppc_altivec_lvxl:
-      // Turn lvx -> load if the pointer is known aligned.
+    case Intrinsic::x86_sse_loadu_ps:
+    case Intrinsic::x86_sse2_loadu_pd:
+    case Intrinsic::x86_sse2_loadu_dq:
+      // Turn PPC lvx     -> load if the pointer is known aligned.
+      // Turn X86 loadups -> load if the pointer is known aligned.
       if (GetKnownAlignment(II->getOperand(1), TD) >= 16) {
         Value *Ptr = InsertCastBefore(II->getOperand(1),
                                       PointerType::get(II->getType()), CI);
@@ -5485,6 +5489,17 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         const Type *OpPtrTy = PointerType::get(II->getOperand(1)->getType());
         Value *Ptr = InsertCastBefore(II->getOperand(2), OpPtrTy, CI);
         return new StoreInst(II->getOperand(1), Ptr);
+      }
+      break;
+    case Intrinsic::x86_sse_storeu_ps:
+    case Intrinsic::x86_sse2_storeu_pd:
+    case Intrinsic::x86_sse2_storeu_dq:
+    case Intrinsic::x86_sse2_storel_dq:
+      // Turn X86 storeu -> store if the pointer is known aligned.
+      if (GetKnownAlignment(II->getOperand(1), TD) >= 16) {
+        const Type *OpPtrTy = PointerType::get(II->getOperand(2)->getType());
+        Value *Ptr = InsertCastBefore(II->getOperand(1), OpPtrTy, CI);
+        return new StoreInst(II->getOperand(2), Ptr);
       }
       break;
     case Intrinsic::ppc_altivec_vperm:
