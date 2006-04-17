@@ -1070,6 +1070,22 @@ static SDOperand BuildIntrinsicBinOp(unsigned IID, SDOperand LHS, SDOperand RHS,
                      DAG.getConstant(IID, MVT::i32), LHS, RHS);
 }
 
+/// BuildVSLDOI - Return a VECTOR_SHUFFLE that is a vsldoi of the specified
+/// amount.  The result has the specified value type.
+static SDOperand BuildVSLDOI(SDOperand LHS, SDOperand RHS, unsigned Amt,
+                             MVT::ValueType VT, SelectionDAG &DAG) {
+  // Force LHS/RHS to be the right type.
+  LHS = DAG.getNode(ISD::BIT_CONVERT, MVT::v16i8, LHS);
+  RHS = DAG.getNode(ISD::BIT_CONVERT, MVT::v16i8, RHS);
+  
+  std::vector<SDOperand> Ops;
+  for (unsigned i = 0; i != 16; ++i)
+    Ops.push_back(DAG.getConstant(i+Amt, MVT::i32));
+  SDOperand T = DAG.getNode(ISD::VECTOR_SHUFFLE, MVT::v16i8, LHS, RHS,
+                            DAG.getNode(ISD::BUILD_VECTOR, MVT::v16i8, Ops));
+  return DAG.getNode(ISD::BIT_CONVERT, VT, T);
+}
+
 // If this is a case we can't handle, return null and let the default
 // expansion code take care of it.  If we CAN select this case, and if it
 // selects to a single instruction, return Op.  Otherwise, if we can codegen
@@ -1179,10 +1195,33 @@ static SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
         return BuildIntrinsicBinOp(IIDs[SplatSize-1], Op, Op, DAG);
       }
       
-      // TODO: ROL.
+      // vsplti + rol self.
+      if (SextVal == (int)(((unsigned)i << TypeShiftAmt) |
+                           ((unsigned)i >> (SplatBitSize-TypeShiftAmt)))) {
+        Op = BuildSplatI(i, SplatSize, Op.getValueType(), DAG);
+        static const unsigned IIDs[] = { // Intrinsic to use for each size.
+          Intrinsic::ppc_altivec_vrlb, Intrinsic::ppc_altivec_vrlh, 0,
+          Intrinsic::ppc_altivec_vrlw
+        };
+        return BuildIntrinsicBinOp(IIDs[SplatSize-1], Op, Op, DAG);
+      }
+
+      // t = vsplti c, result = vsldoi t, t, 1
+      if (SextVal == ((i << 8) | (i >> (TypeShiftAmt-8)))) {
+        SDOperand T = BuildSplatI(i, SplatSize, MVT::v16i8, DAG);
+        return BuildVSLDOI(T, T, 1, Op.getValueType(), DAG);
+      }
+      // t = vsplti c, result = vsldoi t, t, 2
+      if (SextVal == ((i << 16) | (i >> (TypeShiftAmt-16)))) {
+        SDOperand T = BuildSplatI(i, SplatSize, MVT::v16i8, DAG);
+        return BuildVSLDOI(T, T, 2, Op.getValueType(), DAG);
+      }
+      // t = vsplti c, result = vsldoi t, t, 3
+      if (SextVal == ((i << 24) | (i >> (TypeShiftAmt-24)))) {
+        SDOperand T = BuildSplatI(i, SplatSize, MVT::v16i8, DAG);
+        return BuildVSLDOI(T, T, 3, Op.getValueType(), DAG);
+      }
     }
-    
-    
     
     // Three instruction sequences.
     
@@ -1224,6 +1263,10 @@ static SDOperand GeneratePerfectShuffle(unsigned PFEntry, SDOperand LHS,
     return RHS;
   }
   
+  SDOperand OpLHS, OpRHS;
+  OpLHS = GeneratePerfectShuffle(PerfectShuffleTable[LHSID], LHS, RHS, DAG);
+  OpRHS = GeneratePerfectShuffle(PerfectShuffleTable[RHSID], LHS, RHS, DAG);
+  
   unsigned ShufIdxs[16];
   switch (OpNum) {
   default: assert(0 && "Unknown i32 permute!");
@@ -1256,24 +1299,15 @@ static SDOperand GeneratePerfectShuffle(unsigned PFEntry, SDOperand LHS,
       ShufIdxs[i] = (i&3)+12;
     break;
   case OP_VSLDOI4:
-    for (unsigned i = 0; i != 16; ++i)
-      ShufIdxs[i] = i+4;
-    break;
+    return BuildVSLDOI(OpLHS, OpRHS, 4, OpLHS.getValueType(), DAG);
   case OP_VSLDOI8:
-    for (unsigned i = 0; i != 16; ++i)
-      ShufIdxs[i] = i+8;
-    break;
+    return BuildVSLDOI(OpLHS, OpRHS, 8, OpLHS.getValueType(), DAG);
   case OP_VSLDOI12:
-    for (unsigned i = 0; i != 16; ++i)
-      ShufIdxs[i] = i+12;
-    break;
+    return BuildVSLDOI(OpLHS, OpRHS, 12, OpLHS.getValueType(), DAG);
   }
   std::vector<SDOperand> Ops;
   for (unsigned i = 0; i != 16; ++i)
     Ops.push_back(DAG.getConstant(ShufIdxs[i], MVT::i32));
-  SDOperand OpLHS, OpRHS;
-  OpLHS = GeneratePerfectShuffle(PerfectShuffleTable[LHSID], LHS, RHS, DAG);
-  OpRHS = GeneratePerfectShuffle(PerfectShuffleTable[RHSID], LHS, RHS, DAG);
   
   return DAG.getNode(ISD::VECTOR_SHUFFLE, OpLHS.getValueType(), OpLHS, OpRHS,
                      DAG.getNode(ISD::BUILD_VECTOR, MVT::v16i8, Ops));
