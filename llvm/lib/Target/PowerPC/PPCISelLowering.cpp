@@ -1046,6 +1046,10 @@ static bool isConstantSplat(const uint64_t Bits128[2],
 static SDOperand BuildSplatI(int Val, unsigned SplatSize, MVT::ValueType VT,
                              SelectionDAG &DAG) {
   assert(Val >= -16 && Val <= 15 && "vsplti is out of range!");
+  
+  // Force vspltis[hw] -1 to vspltisb -1.
+  if (Val == -1) SplatSize = 1;
+  
   static const MVT::ValueType VTys[] = { // canonical VT to use for each size.
     MVT::v16i8, MVT::v8i16, MVT::Other, MVT::v4i32
   };
@@ -1056,6 +1060,14 @@ static SDOperand BuildSplatI(int Val, unsigned SplatSize, MVT::ValueType VT,
   std::vector<SDOperand> Ops(MVT::getVectorNumElements(CanonicalVT), Elt);
   SDOperand Res = DAG.getNode(ISD::BUILD_VECTOR, CanonicalVT, Ops);
   return DAG.getNode(ISD::BIT_CONVERT, VT, Res);
+}
+
+/// BuildIntrinsicBinOp - Return a binary operator intrinsic node with the
+/// specified intrinsic ID.
+static SDOperand BuildIntrinsicBinOp(unsigned IID, SDOperand LHS, SDOperand RHS,
+                                     SelectionDAG &DAG) {
+  return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, LHS.getValueType(),
+                     DAG.getConstant(IID, MVT::i32), LHS, RHS);
 }
 
 // If this is a case we can't handle, return null and let the default
@@ -1105,36 +1117,80 @@ static SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
       Op = BuildSplatI(SextVal >> 1, SplatSize, Op.getValueType(), DAG);
       return DAG.getNode(ISD::ADD, Op.getValueType(), Op, Op);
     }
+    
+    // If this is 0x8000_0000 x 4, turn into vspltisw + vslw.  If it is 
+    // 0x7FFF_FFFF x 4, turn it into not(0x8000_0000).  This is important
+    // for fneg/fabs.
+    if (SplatSize == 4 && SplatBits == (0x7FFFFFFF&~SplatUndef)) {
+      // Make -1 and vspltisw -1:
+      SDOperand OnesV = BuildSplatI(-1, 4, MVT::v4i32, DAG);
+      
+      // Make the VSLW intrinsic, computing 0x8000_0000.
+      SDOperand Res = BuildIntrinsicBinOp(Intrinsic::ppc_altivec_vslw, OnesV, 
+                                          OnesV, DAG);
+      
+      // xor by OnesV to invert it.
+      Res = DAG.getNode(ISD::XOR, MVT::v4i32, Res, OnesV);
+      return DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Res);
+    }
+
+    // Check to see if this is a wide variety of vsplti*, binop self cases.
+    unsigned SplatBitSize = SplatSize*8;
+    static const char SplatCsts[] = {
+      -1, 1, -2, 2, -3, 3, -4, 4, -5, 5, -6, 6, -7, 7,
+      -8, 8, -9, 9, -10, 10, -11, 11, -12, 12, -13, 14, -15
+    };
+    for (unsigned idx = 0; idx < sizeof(SplatCsts)/sizeof(SplatCsts[0]); ++idx){
+      // Indirect through the SplatCsts array so that we favor 'vsplti -1' for
+      // cases which are ambiguous (e.g. formation of 0x8000_0000).  'vsplti -1'
+      int i = SplatCsts[idx];
+      
+      // Figure out what shift amount will be used by altivec if shifted by i in
+      // this splat size.
+      unsigned TypeShiftAmt = i & (SplatBitSize-1);
+      
+      // vsplti + shl self.
+      if (SextVal == (i << (int)TypeShiftAmt)) {
+        Op = BuildSplatI(i, SplatSize, Op.getValueType(), DAG);
+        static const unsigned IIDs[] = { // Intrinsic to use for each size.
+          Intrinsic::ppc_altivec_vslb, Intrinsic::ppc_altivec_vslh, 0,
+          Intrinsic::ppc_altivec_vslw
+        };
+        return BuildIntrinsicBinOp(IIDs[SplatSize-1], Op, Op, DAG);
+      }
+      
+      // vsplti + srl self.
+      if (SextVal == (int)((unsigned)i >> TypeShiftAmt)) {
+        Op = BuildSplatI(i, SplatSize, Op.getValueType(), DAG);
+        static const unsigned IIDs[] = { // Intrinsic to use for each size.
+          Intrinsic::ppc_altivec_vsrb, Intrinsic::ppc_altivec_vsrh, 0,
+          Intrinsic::ppc_altivec_vsrw
+        };
+        return BuildIntrinsicBinOp(IIDs[SplatSize-1], Op, Op, DAG);
+      }
+      
+      // vsplti + sra self.
+      if (SextVal == (int)((unsigned)i >> TypeShiftAmt)) {
+        Op = BuildSplatI(i, SplatSize, Op.getValueType(), DAG);
+        static const unsigned IIDs[] = { // Intrinsic to use for each size.
+          Intrinsic::ppc_altivec_vsrab, Intrinsic::ppc_altivec_vsrah, 0,
+          Intrinsic::ppc_altivec_vsraw
+        };
+        return BuildIntrinsicBinOp(IIDs[SplatSize-1], Op, Op, DAG);
+      }
+      
+      // TODO: ROL.
+    }
+    
+    
+    
+    // Three instruction sequences.
+    
     // Otherwise, in range [17,29]:  (vsplti 15) + (vsplti C).
     if (SextVal >= 0 && SextVal <= 29) {
       SDOperand LHS = BuildSplatI(15, SplatSize, Op.getValueType(), DAG);
       SDOperand RHS = BuildSplatI(SextVal-15, SplatSize, Op.getValueType(),DAG);
       return DAG.getNode(ISD::ADD, Op.getValueType(), LHS, RHS);
-      
-    }
-
-    
-    // If this is 0x8000_0000 x 4, turn into vspltisw + vslw.  If it is 
-    // 0x7FFF_FFFF x 4, turn it into not(0x8000_0000).  These are important
-    // for fneg/fabs.
-    if (SplatSize == 4 &&
-        SplatBits == 0x80000000 || SplatBits == (0x7FFFFFFF&~SplatUndef)) {
-      // Make -1 and vspltisw -1:
-      SDOperand OnesI = DAG.getConstant(~0U, MVT::i32);
-      SDOperand OnesV = DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
-                                    OnesI, OnesI, OnesI, OnesI);
-      
-      // Make the VSLW intrinsic, computing 0x8000_0000.
-      SDOperand Res
-        = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, MVT::v4i32,
-                      DAG.getConstant(Intrinsic::ppc_altivec_vslw, MVT::i32),
-                      OnesV, OnesV);
-      
-      // If this is 0x7FFF_FFFF, xor by OnesV to invert it.
-      if (SplatBits == 0x80000000)
-        Res = DAG.getNode(ISD::XOR, MVT::v4i32, Res, OnesV);
-      
-      return DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Res);
     }
   }
     
