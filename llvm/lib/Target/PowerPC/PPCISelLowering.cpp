@@ -13,6 +13,7 @@
 
 #include "PPCISelLowering.h"
 #include "PPCTargetMachine.h"
+#include "PPCPerfectShuffle.h"
 #include "llvm/ADT/VectorExtras.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -1123,6 +1124,88 @@ static SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
   return SDOperand();
 }
 
+/// GeneratePerfectShuffle - Given an entry in the perfect-shuffle table, emit
+/// the specified operations to build the shuffle.
+static SDOperand GeneratePerfectShuffle(unsigned PFEntry, SDOperand LHS,
+                                        SDOperand RHS, SelectionDAG &DAG) {
+  unsigned OpNum = (PFEntry >> 26) & 0x0F;
+  unsigned LHSID  = (PFEntry >> 13) & ((1 << 13)-1);
+  unsigned RHSID = (PFEntry >>  0) & ((1 << 13)-1);
+  
+  enum {
+    OP_COPY = 0,   // Copy, used for things like <u,u,u,3> to say it is <0,1,2,3>
+    OP_VMRGHW,
+    OP_VMRGLW,
+    OP_VSPLTISW0,
+    OP_VSPLTISW1,
+    OP_VSPLTISW2,
+    OP_VSPLTISW3,
+    OP_VSLDOI4,
+    OP_VSLDOI8,
+    OP_VSLDOI12,
+  };
+  
+  if (OpNum == OP_COPY) {
+    if (LHSID == (1*9+2)*9+3) return LHS;
+    assert(LHSID == ((4*9+5)*9+6)*9+7 && "Illegal OP_COPY!");
+    return RHS;
+  }
+  
+  unsigned ShufIdxs[16];
+  switch (OpNum) {
+  default: assert(0 && "Unknown i32 permute!");
+  case OP_VMRGHW:
+    ShufIdxs[ 0] =  0; ShufIdxs[ 1] =  1; ShufIdxs[ 2] =  2; ShufIdxs[ 3] =  3;
+    ShufIdxs[ 4] = 16; ShufIdxs[ 5] = 17; ShufIdxs[ 6] = 18; ShufIdxs[ 7] = 19;
+    ShufIdxs[ 8] =  4; ShufIdxs[ 9] =  5; ShufIdxs[10] =  6; ShufIdxs[11] =  7;
+    ShufIdxs[12] = 20; ShufIdxs[13] = 21; ShufIdxs[14] = 22; ShufIdxs[15] = 23;
+    break;
+  case OP_VMRGLW:
+    ShufIdxs[ 0] =  8; ShufIdxs[ 1] =  9; ShufIdxs[ 2] = 10; ShufIdxs[ 3] = 11;
+    ShufIdxs[ 4] = 24; ShufIdxs[ 5] = 25; ShufIdxs[ 6] = 26; ShufIdxs[ 7] = 27;
+    ShufIdxs[ 8] = 12; ShufIdxs[ 9] = 13; ShufIdxs[10] = 14; ShufIdxs[11] = 15;
+    ShufIdxs[12] = 28; ShufIdxs[13] = 29; ShufIdxs[14] = 30; ShufIdxs[15] = 31;
+    break;
+  case OP_VSPLTISW0:
+    for (unsigned i = 0; i != 16; ++i)
+      ShufIdxs[i] = (i&3)+0;
+    break;
+  case OP_VSPLTISW1:
+    for (unsigned i = 0; i != 16; ++i)
+      ShufIdxs[i] = (i&3)+4;
+    break;
+  case OP_VSPLTISW2:
+    for (unsigned i = 0; i != 16; ++i)
+      ShufIdxs[i] = (i&3)+8;
+    break;
+  case OP_VSPLTISW3:
+    for (unsigned i = 0; i != 16; ++i)
+      ShufIdxs[i] = (i&3)+12;
+    break;
+  case OP_VSLDOI4:
+    for (unsigned i = 0; i != 16; ++i)
+      ShufIdxs[i] = i+4;
+    break;
+  case OP_VSLDOI8:
+    for (unsigned i = 0; i != 16; ++i)
+      ShufIdxs[i] = i+8;
+    break;
+  case OP_VSLDOI12:
+    for (unsigned i = 0; i != 16; ++i)
+      ShufIdxs[i] = i+12;
+    break;
+  }
+  std::vector<SDOperand> Ops;
+  for (unsigned i = 0; i != 16; ++i)
+    Ops.push_back(DAG.getConstant(ShufIdxs[i], MVT::i32));
+  SDOperand OpLHS, OpRHS;
+  OpLHS = GeneratePerfectShuffle(PerfectShuffleTable[LHSID], LHS, RHS, DAG);
+  OpRHS = GeneratePerfectShuffle(PerfectShuffleTable[RHSID], LHS, RHS, DAG);
+  
+  return DAG.getNode(ISD::VECTOR_SHUFFLE, OpLHS.getValueType(), OpLHS, OpRHS,
+                     DAG.getNode(ISD::BUILD_VECTOR, MVT::v16i8, Ops));
+}
+
 /// LowerVECTOR_SHUFFLE - Return the code we lower for VECTOR_SHUFFLE.  If this
 /// is a shuffle we can handle in a single instruction, return it.  Otherwise,
 /// return the code it can be lowered into.  Worst case, it can always be
@@ -1166,8 +1249,58 @@ static SDOperand LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
       PPC::isVMRGHShuffleMask(PermMask.Val, 4, false))
     return Op;
   
-  // TODO: Handle more cases, and also handle cases that are cheaper to do as
-  // multiple such instructions than as a constant pool load/vperm pair.
+  // Check to see if this is a shuffle of 4-byte values.  If so, we can use our
+  // perfect shuffle table to emit an optimal matching sequence.
+  unsigned PFIndexes[4];
+  bool isFourElementShuffle = true;
+  for (unsigned i = 0; i != 4 && isFourElementShuffle; ++i) { // Element number
+    unsigned EltNo = 8;   // Start out undef.
+    for (unsigned j = 0; j != 4; ++j) {  // Intra-element byte.
+      if (PermMask.getOperand(i*4+j).getOpcode() == ISD::UNDEF)
+        continue;   // Undef, ignore it.
+      
+      unsigned ByteSource = 
+        cast<ConstantSDNode>(PermMask.getOperand(i*4+j))->getValue();
+      if ((ByteSource & 3) != j) {
+        isFourElementShuffle = false;
+        break;
+      }
+      
+      if (EltNo == 8) {
+        EltNo = ByteSource/4;
+      } else if (EltNo != ByteSource/4) {
+        isFourElementShuffle = false;
+        break;
+      }
+    }
+    PFIndexes[i] = EltNo;
+  }
+    
+  // If this shuffle can be expressed as a shuffle of 4-byte elements, use the 
+  // perfect shuffle vector to determine if it is cost effective to do this as
+  // discrete instructions, or whether we should use a vperm.
+  if (isFourElementShuffle) {
+    // Compute the index in the perfect shuffle table.
+    unsigned PFTableIndex = 
+      PFIndexes[0]*9*9*9+PFIndexes[1]*9*9+PFIndexes[2]*9+PFIndexes[3];
+    
+    unsigned PFEntry = PerfectShuffleTable[PFTableIndex];
+    unsigned Cost  = (PFEntry >> 30);
+    
+    // Determining when to avoid vperm is tricky.  Many things affect the cost
+    // of vperm, particularly how many times the perm mask needs to be computed.
+    // For example, if the perm mask can be hoisted out of a loop or is already
+    // used (perhaps because there are multiple permutes with the same shuffle
+    // mask?) the vperm has a cost of 1.  OTOH, hoisting the permute mask out of
+    // the loop requires an extra register.
+    //
+    // As a compromise, we only emit discrete instructions if the shuffle can be
+    // generated in 3 or fewer operations.  When we have loop information 
+    // available, if this block is within a loop, we should avoid using vperm
+    // for 3-operation perms and use a constant pool load instead.
+    if (Cost < 3) 
+      return GeneratePerfectShuffle(PFEntry, V1, V2, DAG);
+  }
   
   // Lower this to a VPERM(V1, V2, V3) expression, where V3 is a constant
   // vector that will get spilled to the constant pool.

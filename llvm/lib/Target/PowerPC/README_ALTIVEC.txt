@@ -101,18 +101,6 @@ void test(vector int *X, vector int *Y) {
 
 //===----------------------------------------------------------------------===//
 
-There are a wide variety of vector_shuffle operations that we can do with a pair
-of instructions (e.g. a vsldoi + vpkuhum).  We should pattern match these, but
-there are a huge number of these.
-
-Specific examples:
-
-C = vector_shuffle A, B, <0, 1, 2, 4>
-->  t = vsldoi A, A, 12
-->  C = vsldoi A, B, 4
-
-//===----------------------------------------------------------------------===//
-
 extract_vector_elt of an arbitrary constant vector can be done with the 
 following instructions:
 
