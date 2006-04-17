@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/CommandLine.h"
@@ -346,6 +347,54 @@ static const unsigned short VRRegNo[] = {
  PPC::V24, PPC::V25, PPC::V26, PPC::V27, PPC::V28, PPC::V29, PPC::V30, PPC::V31
 };
 
+/// RemoveVRSaveCode - We have found that this function does not need any code
+/// to manipulate the VRSAVE register, even though it uses vector registers.
+/// This can happen when the only registers used are known to be live in or out
+/// of the function.  Remove all of the VRSAVE related code from the function.
+static void RemoveVRSaveCode(MachineInstr *MI) {
+  MachineBasicBlock *Entry = MI->getParent();
+  MachineFunction *MF = Entry->getParent();
+
+  // We know that the MTVRSAVE instruction immediately follows MI.  Remove it.
+  MachineBasicBlock::iterator MBBI = MI;
+  ++MBBI;
+  assert(MBBI != Entry->end() && MBBI->getOpcode() == PPC::MTVRSAVE);
+  MBBI->eraseFromParent();
+  
+  bool RemovedAllMTVRSAVEs = true;
+  // See if we can find and remove the MTVRSAVE instruction from all of the
+  // epilog blocks.
+  const TargetInstrInfo &TII = *MF->getTarget().getInstrInfo();
+  for (MachineFunction::iterator I = MF->begin(), E = MF->end(); I != E; ++I) {
+    // If last instruction is a return instruction, add an epilogue
+    if (!I->empty() && TII.isReturn(I->back().getOpcode())) {
+      bool FoundIt = false;
+      for (MBBI = I->end(); MBBI != I->begin(); ) {
+        --MBBI;
+        if (MBBI->getOpcode() == PPC::MTVRSAVE) {
+          MBBI->eraseFromParent();  // remove it.
+          FoundIt = true;
+          break;
+        }
+      }
+      RemovedAllMTVRSAVEs &= FoundIt;
+    }
+  }
+
+  // If we found and removed all MTVRSAVE instructions, remove the read of
+  // VRSAVE as well.
+  if (RemovedAllMTVRSAVEs) {
+    MBBI = MI;
+    assert(MBBI != Entry->begin() && "UPDATE_VRSAVE is first instr in block?");
+    --MBBI;
+    assert(MBBI->getOpcode() == PPC::MFVRSAVE && "VRSAVE instrs wandered?");
+    MBBI->eraseFromParent();
+  }
+  
+  // Finally, nuke the UPDATE_VRSAVE.
+  MI->eraseFromParent();
+}
+
 // HandleVRSaveUpdate - MI is the UPDATE_VRSAVE instruction introduced by the
 // instruction selector.  Based on the vector registers that have been used,
 // transform this into the appropriate ORI instruction.
@@ -375,9 +424,9 @@ static void HandleVRSaveUpdate(MachineInstr *MI, const bool *UsedRegs) {
   unsigned DstReg = MI->getOperand(0).getReg();
   // If no registers are used, turn this into a copy.
   if (UsedRegMask == 0) {
-    if (SrcReg != DstReg)
-      BuildMI(*MI->getParent(), MI, PPC::OR4, 2, DstReg)
-        .addReg(SrcReg).addReg(SrcReg);
+    // Remove all VRSAVE code.
+    RemoveVRSaveCode(MI);
+    return;
   } else if ((UsedRegMask & 0xFFFF) == UsedRegMask) {
     BuildMI(*MI->getParent(), MI, PPC::ORI, 2, DstReg)
         .addReg(SrcReg).addImm(UsedRegMask);
@@ -392,7 +441,7 @@ static void HandleVRSaveUpdate(MachineInstr *MI, const bool *UsedRegs) {
   }
   
   // Remove the old UPDATE_VRSAVE instruction.
-  MI->getParent()->erase(MI);
+  MI->eraseFromParent();
 }
 
 
