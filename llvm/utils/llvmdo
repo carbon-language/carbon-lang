@@ -105,6 +105,7 @@ if test -d "$TOPDIR" ; then
       \! -name 'StackerParser.h' \
       \! -name 'StackerParser.cpp' \
       \! -name 'ConfigLexer.cpp' \
+      \! -name 'PPCPerfectShuffle.h' \
      -exec $PROGRAM "$@" {} \; \
     \)
 else
