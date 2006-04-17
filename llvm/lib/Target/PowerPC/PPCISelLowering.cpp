@@ -1105,6 +1105,13 @@ static SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
       Op = BuildSplatI(SextVal >> 1, SplatSize, Op.getValueType(), DAG);
       return DAG.getNode(ISD::ADD, Op.getValueType(), Op, Op);
     }
+    // Otherwise, in range [17,29]:  (vsplti 15) + (vsplti C).
+    if (SextVal >= 0 && SextVal <= 29) {
+      SDOperand LHS = BuildSplatI(15, SplatSize, Op.getValueType(), DAG);
+      SDOperand RHS = BuildSplatI(SextVal-15, SplatSize, Op.getValueType(),DAG);
+      return DAG.getNode(ISD::ADD, Op.getValueType(), LHS, RHS);
+      
+    }
 
     
     // If this is 0x8000_0000 x 4, turn into vspltisw + vslw.  If it is 
