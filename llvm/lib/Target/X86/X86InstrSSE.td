@@ -2414,6 +2414,11 @@ def : Pat<(v4i32 (vector_shuffle (bc_v4i32 (loadv2i64 addr:$src)), (undef),
                   MOVSLDUP_shuffle_mask)),
           (MOVSLDUPrm addr:$src)>, Requires<[HasSSE3]>;
 
+// vector_shuffle v1, v2 <4, 1, 2, 3>
+def : Pat<(v4i32 (vector_shuffle VR128:$src1, VR128:$src2,
+                  MOVS_shuffle_mask)),
+          (MOVLPSrr VR128:$src1, VR128:$src2)>;
+
 // 128-bit logical shifts
 def : Pat<(int_x86_sse2_psll_dq VR128:$src1, imm:$src2),
           (v2i64 (PSLLDQri VR128:$src1, (PSxLDQ_imm imm:$src2)))>,
