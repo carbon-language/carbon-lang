@@ -449,26 +449,6 @@ X86TargetLowering::LowerCCCArguments(Function &F, SelectionDAG &DAG) {
   ReturnAddrIndex = 0;     // No return address slot generated yet.
   BytesToPopOnReturn = 0;  // Callee pops nothing.
   BytesCallerReserves = ArgOffset;
-
-  // Finally, inform the code generator which regs we return values in.
-  switch (getValueType(F.getReturnType())) {
-  default: assert(0 && "Unknown type!");
-  case MVT::isVoid: break;
-  case MVT::i1:
-  case MVT::i8:
-  case MVT::i16:
-  case MVT::i32:
-    MF.addLiveOut(X86::EAX);
-    break;
-  case MVT::i64:
-    MF.addLiveOut(X86::EAX);
-    MF.addLiveOut(X86::EDX);
-    break;
-  case MVT::f32:
-  case MVT::f64:
-    MF.addLiveOut(X86::ST0);
-    break;
-  }
   return ArgValues;
 }
 
@@ -2676,15 +2656,30 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     default:
       assert(0 && "Do not know how to return this many arguments!");
       abort();
-    case 1: 
+    case 1:    // ret void.
       return DAG.getNode(X86ISD::RET_FLAG, MVT::Other, Op.getOperand(0),
                          DAG.getConstant(getBytesToPopOnReturn(), MVT::i16));
     case 2: {
       MVT::ValueType ArgVT = Op.getOperand(1).getValueType();
-      if (MVT::isInteger(ArgVT))
+      
+      if (MVT::isVector(ArgVT)) {
+        // Integer or FP vector result -> XMM0.
+        if (DAG.getMachineFunction().liveout_empty())
+          DAG.getMachineFunction().addLiveOut(X86::XMM0);
+        Copy = DAG.getCopyToReg(Op.getOperand(0), X86::XMM0, Op.getOperand(1),
+                                SDOperand());
+      } else if (MVT::isInteger(ArgVT)) {
+        // Integer result -> EAX
+        if (DAG.getMachineFunction().liveout_empty())
+          DAG.getMachineFunction().addLiveOut(X86::EAX);
+
         Copy = DAG.getCopyToReg(Op.getOperand(0), X86::EAX, Op.getOperand(1),
                                 SDOperand());
-      else if (!X86ScalarSSE) {
+      } else if (!X86ScalarSSE) {
+        // FP return with fp-stack value.
+        if (DAG.getMachineFunction().liveout_empty())
+          DAG.getMachineFunction().addLiveOut(X86::ST0);
+
         std::vector<MVT::ValueType> Tys;
         Tys.push_back(MVT::Other);
         Tys.push_back(MVT::Flag);
@@ -2693,6 +2688,10 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
         Ops.push_back(Op.getOperand(1));
         Copy = DAG.getNode(X86ISD::FP_SET_RESULT, Tys, Ops);
       } else {
+        // FP return with ScalarSSE (return on fp-stack).
+        if (DAG.getMachineFunction().liveout_empty())
+          DAG.getMachineFunction().addLiveOut(X86::ST0);
+
         SDOperand MemLoc;
         SDOperand Chain = Op.getOperand(0);
         SDOperand Value = Op.getOperand(1);
@@ -2729,6 +2728,11 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       break;
     }
     case 3:
+      if (DAG.getMachineFunction().liveout_empty()) {
+        DAG.getMachineFunction().addLiveOut(X86::EAX);
+        DAG.getMachineFunction().addLiveOut(X86::EDX);
+      }
+
       Copy = DAG.getCopyToReg(Op.getOperand(0), X86::EDX, Op.getOperand(2), 
                               SDOperand());
       Copy = DAG.getCopyToReg(Copy, X86::EAX,Op.getOperand(1),Copy.getValue(1));
