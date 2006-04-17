@@ -295,21 +295,24 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
   }
 }
 
+/// VRRegNo - Map from a numbered VR register to its enum value.
+///
+static const unsigned short VRRegNo[] = {
+ PPC::V0 , PPC::V1 , PPC::V2 , PPC::V3 , PPC::V4 , PPC::V5 , PPC::V6 , PPC::V7 , 
+ PPC::V8 , PPC::V9 , PPC::V10, PPC::V11, PPC::V12, PPC::V13, PPC::V14, PPC::V15, 
+ PPC::V16, PPC::V17, PPC::V18, PPC::V19, PPC::V20, PPC::V21, PPC::V22, PPC::V23,
+ PPC::V24, PPC::V25, PPC::V26, PPC::V27, PPC::V28, PPC::V29, PPC::V30, PPC::V31
+};
+
 // HandleVRSaveUpdate - MI is the UPDATE_VRSAVE instruction introduced by the
 // instruction selector.  Based on the vector registers that have been used,
 // transform this into the appropriate ORI instruction.
 static void HandleVRSaveUpdate(MachineInstr *MI, const bool *UsedRegs) {
   unsigned UsedRegMask = 0;
-#define HANDLEREG(N) if (UsedRegs[PPC::V##N]) UsedRegMask |= 1 << (31-N)
-  HANDLEREG( 0); HANDLEREG( 1); HANDLEREG( 2); HANDLEREG( 3);
-  HANDLEREG( 4); HANDLEREG( 5); HANDLEREG( 6); HANDLEREG( 7);
-  HANDLEREG( 8); HANDLEREG( 9); HANDLEREG(10); HANDLEREG(11);
-  HANDLEREG(12); HANDLEREG(13); HANDLEREG(14); HANDLEREG(15);
-  HANDLEREG(16); HANDLEREG(17); HANDLEREG(18); HANDLEREG(19);
-  HANDLEREG(20); HANDLEREG(21); HANDLEREG(22); HANDLEREG(23);
-  HANDLEREG(24); HANDLEREG(25); HANDLEREG(26); HANDLEREG(27);
-  HANDLEREG(28); HANDLEREG(29); HANDLEREG(30); HANDLEREG(31);
-#undef HANDLEREG
+  for (unsigned i = 0; i != 32; ++i)
+    if (UsedRegs[VRRegNo[i]])
+      UsedRegMask |= 1 << (31-i);
+  
   unsigned SrcReg = MI->getOperand(1).getReg();
   unsigned DstReg = MI->getOperand(0).getReg();
   // If no registers are used, turn this into a copy.
