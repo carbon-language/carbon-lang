@@ -316,12 +316,6 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr* MI,
     case X86::SETGEr:    return MakeMInst( X86::SETGEm,  FrameIndex, MI);
     case X86::SETLEr:    return MakeMInst( X86::SETLEm,  FrameIndex, MI);
     case X86::SETGr:     return MakeMInst( X86::SETGm,   FrameIndex, MI);
-    case X86::TEST8rr:   return MakeMRInst(X86::TEST8mr ,FrameIndex, MI);
-    case X86::TEST16rr:  return MakeMRInst(X86::TEST16mr,FrameIndex, MI);
-    case X86::TEST32rr:  return MakeMRInst(X86::TEST32mr,FrameIndex, MI);
-    case X86::CMP8rr:    return MakeMRInst(X86::CMP8mr , FrameIndex, MI);
-    case X86::CMP16rr:   return MakeMRInst(X86::CMP16mr, FrameIndex, MI);
-    case X86::CMP32rr:   return MakeMRInst(X86::CMP32mr, FrameIndex, MI);
     // Alias instructions
     case X86::MOV8r0:    return MakeM0Inst(X86::MOV8mi, FrameIndex, MI);
     case X86::MOV16r0:   return MakeM0Inst(X86::MOV16mi, FrameIndex, MI);
@@ -394,18 +388,18 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr* MI,
     case X86::XOR8rr:    return MakeRMInst(X86::XOR8rm , FrameIndex, MI);
     case X86::XOR16rr:   return MakeRMInst(X86::XOR16rm, FrameIndex, MI);
     case X86::XOR32rr:   return MakeRMInst(X86::XOR32rm, FrameIndex, MI);
-    case X86::TEST8rr:   return MakeRMInst(X86::TEST8rm ,FrameIndex, MI);
-    case X86::TEST16rr:  return MakeRMInst(X86::TEST16rm,FrameIndex, MI);
-    case X86::TEST32rr:  return MakeRMInst(X86::TEST32rm,FrameIndex, MI);
-    case X86::TEST8ri:   return MakeMIInst(X86::TEST8mi ,FrameIndex, MI);
-    case X86::TEST16ri:  return MakeMIInst(X86::TEST16mi,FrameIndex, MI);
-    case X86::TEST32ri:  return MakeMIInst(X86::TEST32mi,FrameIndex, MI);
     case X86::IMUL16rr:  return MakeRMInst(X86::IMUL16rm,FrameIndex, MI);
     case X86::IMUL32rr:  return MakeRMInst(X86::IMUL32rm,FrameIndex, MI);
     case X86::IMUL16rri: return MakeRMIInst(X86::IMUL16rmi, FrameIndex, MI);
     case X86::IMUL32rri: return MakeRMIInst(X86::IMUL32rmi, FrameIndex, MI);
     case X86::IMUL16rri8:return MakeRMIInst(X86::IMUL16rmi8, FrameIndex, MI);
     case X86::IMUL32rri8:return MakeRMIInst(X86::IMUL32rmi8, FrameIndex, MI);
+    case X86::TEST8rr:   return MakeRMInst(X86::TEST8rm ,FrameIndex, MI);
+    case X86::TEST16rr:  return MakeRMInst(X86::TEST16rm,FrameIndex, MI);
+    case X86::TEST32rr:  return MakeRMInst(X86::TEST32rm,FrameIndex, MI);
+    case X86::TEST8ri:   return MakeMIInst(X86::TEST8mi ,FrameIndex, MI);
+    case X86::TEST16ri:  return MakeMIInst(X86::TEST16mi,FrameIndex, MI);
+    case X86::TEST32ri:  return MakeMIInst(X86::TEST32mi,FrameIndex, MI);
     case X86::CMP8rr:    return MakeRMInst(X86::CMP8rm , FrameIndex, MI);
     case X86::CMP16rr:   return MakeRMInst(X86::CMP16rm, FrameIndex, MI);
     case X86::CMP32rr:   return MakeRMInst(X86::CMP32rm, FrameIndex, MI);
