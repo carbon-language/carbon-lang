@@ -35,6 +35,48 @@
 #include <iostream>
 using namespace llvm;
 
+/// getRegisterNumbering - Given the enum value for some register, e.g.
+/// PPC::F14, return the number that it corresponds to (e.g. 14).
+unsigned PPCRegisterInfo::getRegisterNumbering(unsigned RegEnum) {
+  switch (RegEnum) {
+    case PPC::R0 :  case PPC::F0 :  case PPC::V0 : case PPC::CR0:  return  0;
+    case PPC::R1 :  case PPC::F1 :  case PPC::V1 : case PPC::CR1:  return  1;
+    case PPC::R2 :  case PPC::F2 :  case PPC::V2 : case PPC::CR2:  return  2;
+    case PPC::R3 :  case PPC::F3 :  case PPC::V3 : case PPC::CR3:  return  3;
+    case PPC::R4 :  case PPC::F4 :  case PPC::V4 : case PPC::CR4:  return  4;
+    case PPC::R5 :  case PPC::F5 :  case PPC::V5 : case PPC::CR5:  return  5;
+    case PPC::R6 :  case PPC::F6 :  case PPC::V6 : case PPC::CR6:  return  6;
+    case PPC::R7 :  case PPC::F7 :  case PPC::V7 : case PPC::CR7:  return  7;
+    case PPC::R8 :  case PPC::F8 :  case PPC::V8 : return  8;
+    case PPC::R9 :  case PPC::F9 :  case PPC::V9 : return  9;
+    case PPC::R10:  case PPC::F10:  case PPC::V10: return 10;
+    case PPC::R11:  case PPC::F11:  case PPC::V11: return 11;
+    case PPC::R12:  case PPC::F12:  case PPC::V12: return 12;
+    case PPC::R13:  case PPC::F13:  case PPC::V13: return 13;
+    case PPC::R14:  case PPC::F14:  case PPC::V14: return 14;
+    case PPC::R15:  case PPC::F15:  case PPC::V15: return 15;
+    case PPC::R16:  case PPC::F16:  case PPC::V16: return 16;
+    case PPC::R17:  case PPC::F17:  case PPC::V17: return 17;
+    case PPC::R18:  case PPC::F18:  case PPC::V18: return 18;
+    case PPC::R19:  case PPC::F19:  case PPC::V19: return 19;
+    case PPC::R20:  case PPC::F20:  case PPC::V20: return 20;
+    case PPC::R21:  case PPC::F21:  case PPC::V21: return 21;
+    case PPC::R22:  case PPC::F22:  case PPC::V22: return 22;
+    case PPC::R23:  case PPC::F23:  case PPC::V23: return 23;
+    case PPC::R24:  case PPC::F24:  case PPC::V24: return 24;
+    case PPC::R25:  case PPC::F25:  case PPC::V25: return 25;
+    case PPC::R26:  case PPC::F26:  case PPC::V26: return 26;
+    case PPC::R27:  case PPC::F27:  case PPC::V27: return 27;
+    case PPC::R28:  case PPC::F28:  case PPC::V28: return 28;
+    case PPC::R29:  case PPC::F29:  case PPC::V29: return 29;
+    case PPC::R30:  case PPC::F30:  case PPC::V30: return 30;
+    case PPC::R31:  case PPC::F31:  case PPC::V31: return 31;
+    default:
+      std::cerr << "Unhandled reg in PPCRegisterInfo::getRegisterNumbering!\n";
+      abort();
+  }
+}
+
 PPCRegisterInfo::PPCRegisterInfo()
   : PPCGenRegisterInfo(PPC::ADJCALLSTACKDOWN, PPC::ADJCALLSTACKUP) {
   ImmToIdxMap[PPC::LD]   = PPC::LDX;    ImmToIdxMap[PPC::STD]  = PPC::STDX;

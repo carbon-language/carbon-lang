@@ -26,6 +26,10 @@ class PPCRegisterInfo : public PPCGenRegisterInfo {
   std::map<unsigned, unsigned> ImmToIdxMap;
 public:
   PPCRegisterInfo();
+  
+  /// getRegisterNumbering - Given the enum value for some register, e.g.
+  /// PPC::F14, return the number that it corresponds to (e.g. 14).
+  static unsigned getRegisterNumbering(unsigned RegEnum);
 
   /// Code Generation virtual methods...
   void storeRegToStackSlot(MachineBasicBlock &MBB,
