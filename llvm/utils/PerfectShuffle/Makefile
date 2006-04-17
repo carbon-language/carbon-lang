@@ -1,4 +1,4 @@
-##===- utils/BuildShuffleTable/Makefile --------------------*- Makefile -*-===##
+##===- utils/PerfectShuffle/Makefile -----------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -8,6 +8,6 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = ../..
-TOOLNAME = llvm-BuildShuffleTable
+TOOLNAME = llvm-PerfectShuffle
 include $(LEVEL)/Makefile.common
 

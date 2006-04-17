@@ -1,4 +1,4 @@
-//===-- BuildShuffleTable.cpp - Perfect Shuffle Generator -----------------===//
+//===-- PerfectShuffle.cpp - Perfect Shuffle Generator --------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
