@@ -102,9 +102,8 @@ struct Operator {
   unsigned short OpNum;
   const char *Name;
   
-  Operator(unsigned short shufflemask, const char *name)
-    : ShuffleMask(shufflemask), Name(name) {
-    OpNum = TheOperators.size();
+  Operator(unsigned short shufflemask, const char *name, unsigned opnum)
+    : ShuffleMask(shufflemask), OpNum(opnum), Name(name) {
     TheOperators.push_back(this);
   }
   ~Operator() {
@@ -438,37 +437,57 @@ int main() {
 }
 
 
+#define GENERATE_ALTIVEC
+
+#ifdef GENERATE_ALTIVEC
 
 ///===---------------------------------------------------------------------===//
 /// The altivec instruction definitions.  This is the altivec-specific part of
 /// this file.
 ///===---------------------------------------------------------------------===//
 
+// Note that the opcode numbers here must match those in the PPC backend.
+enum {
+  OP_COPY = 0,   // Copy, used for things like <u,u,u,3> to say it is <0,1,2,3>
+  OP_VMRGHW,
+  OP_VMRGLW,
+  OP_VSPLTISW0,
+  OP_VSPLTISW1,
+  OP_VSPLTISW2,
+  OP_VSPLTISW3,
+  OP_VSLDOI4,
+  OP_VSLDOI8,
+  OP_VSLDOI12,
+};
+
 struct vmrghw : public Operator {
-  vmrghw() : Operator(0x0415, "vmrghw") {}
+  vmrghw() : Operator(0x0415, "vmrghw", OP_VMRGHW) {}
 } the_vmrghw;
 
 struct vmrglw : public Operator {
-  vmrglw() : Operator(0x2637, "vmrglw") {}
+  vmrglw() : Operator(0x2637, "vmrglw", OP_VMRGLW) {}
 } the_vmrglw;
 
 template<unsigned Elt>
 struct vspltisw : public Operator {
-  vspltisw(const char *N) : Operator(MakeMask(Elt, Elt, Elt, Elt), N) {}
+  vspltisw(const char *N, unsigned Opc)
+    : Operator(MakeMask(Elt, Elt, Elt, Elt), N, Opc) {}
 };
 
-vspltisw<0> the_vspltisw0("vspltisw0");
-vspltisw<1> the_vspltisw1("vspltisw1");
-vspltisw<2> the_vspltisw2("vspltisw2");
-vspltisw<3> the_vspltisw3("vspltisw3");
+vspltisw<0> the_vspltisw0("vspltisw0", OP_VSPLTISW0);
+vspltisw<1> the_vspltisw1("vspltisw1", OP_VSPLTISW1);
+vspltisw<2> the_vspltisw2("vspltisw2", OP_VSPLTISW2);
+vspltisw<3> the_vspltisw3("vspltisw3", OP_VSPLTISW3);
 
 template<unsigned N>
 struct vsldoi : public Operator {
-  vsldoi(const char *n) : Operator(MakeMask(N&7, (N+1)&7, (N+2)&7, (N+3)&7), n){
+  vsldoi(const char *Name, unsigned Opc)
+    : Operator(MakeMask(N&7, (N+1)&7, (N+2)&7, (N+3)&7), Name, Opc) {
   }
 };
 
-vsldoi<1> the_vsldoi1("vsldoi4");
-vsldoi<2> the_vsldoi2("vsldoi8");
-vsldoi<3> the_vsldoi3("vsldoi12");
+vsldoi<1> the_vsldoi1("vsldoi4" , OP_VSLDOI4);
+vsldoi<2> the_vsldoi2("vsldoi8" , OP_VSLDOI8);
+vsldoi<3> the_vsldoi3("vsldoi12", OP_VSLDOI12);
 
+#endif
