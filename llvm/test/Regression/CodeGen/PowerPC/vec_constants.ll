@@ -18,3 +18,6 @@ void %test1(<4 x int>* %P1, <4 x int>* %P2, <4 x float>* %P3) {
         ret void
 }
 
+<4 x int> %test2() {
+        ret <4 x int> <int 30, int 30, int 30, int 30>
+}
