@@ -1238,16 +1238,16 @@ static bool translateX86CC(ISD::CondCode SetCCOpcode, bool isFP,
     default: break;
     case ISD::SETUEQ:
     case ISD::SETEQ: X86CC = X86ISD::COND_E;  break;
-    case ISD::SETOLE: Flip = true; // Fallthrough
+    case ISD::SETOLT: Flip = true; // Fallthrough
     case ISD::SETOGT:
     case ISD::SETGT: X86CC = X86ISD::COND_A;  break;
-    case ISD::SETOLT: Flip = true; // Fallthrough
+    case ISD::SETOLE: Flip = true; // Fallthrough
     case ISD::SETOGE:
     case ISD::SETGE: X86CC = X86ISD::COND_AE; break;
-    case ISD::SETUGE: Flip = true; // Fallthrough
+    case ISD::SETUGT: Flip = true; // Fallthrough
     case ISD::SETULT:
     case ISD::SETLT: X86CC = X86ISD::COND_B;  break;
-    case ISD::SETUGT: Flip = true; // Fallthrough
+    case ISD::SETUGE: Flip = true; // Fallthrough
     case ISD::SETULE:
     case ISD::SETLE: X86CC = X86ISD::COND_BE; break;
     case ISD::SETONE:
