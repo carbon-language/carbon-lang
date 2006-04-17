@@ -1041,6 +1041,23 @@ static bool isConstantSplat(const uint64_t Bits128[2],
   return true;
 }
 
+/// BuildSplatI - Build a canonical splati of Val with an element size of
+/// SplatSize.  Cast the result to VT.
+static SDOperand BuildSplatI(int Val, unsigned SplatSize, MVT::ValueType VT,
+                             SelectionDAG &DAG) {
+  assert(Val >= -16 && Val <= 15 && "vsplti is out of range!");
+  static const MVT::ValueType VTys[] = { // canonical VT to use for each size.
+    MVT::v16i8, MVT::v8i16, MVT::Other, MVT::v4i32
+  };
+  MVT::ValueType CanonicalVT = VTys[SplatSize-1];
+  
+  // Build a canonical splat for this value.
+  SDOperand Elt = DAG.getConstant(Val, MVT::getVectorBaseType(CanonicalVT));
+  std::vector<SDOperand> Ops(MVT::getVectorNumElements(CanonicalVT), Elt);
+  SDOperand Res = DAG.getNode(ISD::BUILD_VECTOR, CanonicalVT, Ops);
+  return DAG.getNode(ISD::BIT_CONVERT, VT, Res);
+}
+
 // If this is a case we can't handle, return null and let the default
 // expansion code take care of it.  If we CAN select this case, and if it
 // selects to a single instruction, return Op.  Otherwise, if we can codegen
@@ -1079,23 +1096,16 @@ static SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
 
     // If the sign extended value is in the range [-16,15], use VSPLTI[bhw].
     int32_t SextVal= int32_t(SplatBits << (32-8*SplatSize)) >> (32-8*SplatSize);
-    if (SextVal >= -16 && SextVal <= 15) {
-      const MVT::ValueType VTys[] = { // canonical VT to use for each size.
-        MVT::v16i8, MVT::v8i16, MVT::Other, MVT::v4i32
-      };
-      MVT::ValueType CanonicalVT = VTys[SplatSize-1];
-   
-      // If this is a non-canonical splat for this value, 
-      if (Op.getValueType() != CanonicalVT || HasAnyUndefs) {
-        SDOperand Elt = DAG.getConstant(SplatBits, 
-                                        MVT::getVectorBaseType(CanonicalVT));
-        std::vector<SDOperand> Ops(MVT::getVectorNumElements(CanonicalVT), Elt);
-        SDOperand Res = DAG.getNode(ISD::BUILD_VECTOR, CanonicalVT, Ops);
-        Op = DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Res);
-      }
-      return Op;
-    }
+    if (SextVal >= -16 && SextVal <= 15)
+      return BuildSplatI(SextVal, SplatSize, Op.getValueType(), DAG);
     
+    // If this value is in the range [-32,30] and is even, use:
+    //    tmp = VSPLTI[bhw], result = add tmp, tmp
+    if (SextVal >= -32 && SextVal <= 30 && (SextVal & 1) == 0) {
+      Op = BuildSplatI(SextVal >> 1, SplatSize, Op.getValueType(), DAG);
+      return DAG.getNode(ISD::ADD, Op.getValueType(), Op, Op);
+    }
+
     
     // If this is 0x8000_0000 x 4, turn into vspltisw + vslw.  If it is 
     // 0x7FFF_FFFF x 4, turn it into not(0x8000_0000).  These are important
