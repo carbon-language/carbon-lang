@@ -25,3 +25,15 @@ void %test1(<4 x int>* %P1, <4 x int>* %P2, <4 x float>* %P3) {
 <4 x int> %test_29() {
         ret <4 x int> <int 29, int 29, int 29, int 29>
 }
+
+<8 x short> %test_n30() {
+        ret <8 x short> <short -30, short -30, short -30, short -30,
+                         short -30, short -30, short -30, short -30>
+}
+
+<16 x sbyte> %test_n104() {
+        ret <16 x sbyte> <sbyte -104, sbyte -104, sbyte -104, sbyte -104,
+                          sbyte -104, sbyte -104, sbyte -104, sbyte -104,
+                          sbyte -104, sbyte -104, sbyte -104, sbyte -104,
+                          sbyte -104, sbyte -104, sbyte -104, sbyte -104>
+}
