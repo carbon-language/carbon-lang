@@ -37,3 +37,12 @@ void %test1(<4 x int>* %P1, <4 x int>* %P2, <4 x float>* %P3) {
                           sbyte -104, sbyte -104, sbyte -104, sbyte -104,
                           sbyte -104, sbyte -104, sbyte -104, sbyte -104>
 }
+
+<4 x int> %test_vsldoi() {
+        ret <4 x int> <int 512, int 512, int 512, int 512>
+}
+
+<4 x int> %test_rol() {
+        ret <4 x int> <int -11534337, int -11534337, int -11534337, int -11534337>
+}
+
