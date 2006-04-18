@@ -561,8 +561,13 @@ void GraphBuilder::visitCallSite(CallSite CS) {
         // modified.  Preserve second graph
 	DSNodeHandle RetNH = getValueDest(**CS.arg_begin());
 	DSNodeHandle SrcNH = getValueDest(**(CS.arg_begin()+1));
-	DSNodeHandle Copy( new DSNode(*SrcNH.getNode(), SrcNH.getNode()->getParentGraph()),
-			   SrcNH.getOffset());
+	//copy dsnode
+	DSNode* copy = new DSNode(*SrcNH.getNode(), SrcNH.getNode()->getParentGraph());
+	//since this is the target memory, we only are interested in the links.
+	//the target will not wind up with a global memory object , unless it 
+	//was already there (only pointers to global memory objects)
+	copy->clearGlobals();
+	DSNodeHandle Copy( copy, SrcNH.getOffset());
 	RetNH.mergeWith(Copy);
         if (DSNode *N = RetNH.getNode())
           N->setModifiedMarker();
