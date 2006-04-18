@@ -4,7 +4,7 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <link rel="stylesheet" href="llvm.css" type="text/css">
-  <title>LLVM 1.7cvs Release Notes</title>
+  <title>LLVM 1.7 Release Notes</title>
 </head>
 <body>
 
@@ -60,38 +60,152 @@ href="http://llvm.org/releases/">releases page</a>.</p>
 
 <div class="doc_text">
 
-<p>This is the seventh public release of the LLVM Compiler Infrastructure. This
-release incorporates a large number of enhancements and additions (primarily in
-the code generator), which combine to improve the quality of the code generated
-by LLVM by up to 30% in some cases.  This release is also the first release to
-have first-class support for Mac OS X: all of the major bugs have been shaken
-out and it is now as well supported as Linux on X86.</p>
+<p>This is the eighth public release of the LLVM Compiler Infrastructure. This
+release incorporates a large number of enhancements and new features,
+including vector support (Intel SSE and Altivec), a new GCC4.0-based
+C/C++ front-end, Objective C/C++ support, inline assembly support, and many
+other big features.
+</p>
 
 </div>
 
 <!--=========================================================================-->
 <div class="doc_subsection">
-<a name="newfeatures">New Features in LLVM 1.7cvs</a>
+<a name="newfeatures">New Features in LLVM 1.7</a>
 </div>
+
+<!--_________________________________________________________________________-->
+<div class="doc_subsubsection"><a name="llvmgcc4">GCC4.0-based llvm-gcc
+front-end</a></div>
+
+<div class="doc_text">
+
+<p>LLVM 1.8 includes a brand new llvm-gcc, based on GCC 4.0.1.  This version
+of llvm-gcc solves many serious long-standing problems with llvm-gcc, including
+all of those blocked by the <a href="http://llvm.org/PR498">llvm-gcc 4 meta 
+bug</a>.  In addition, llvm-gcc4 implements support for many new features, 
+including GCC inline assembly, generic vector support, SSE and Altivec
+intrinsics, and several new GCC attributes.  In addition, llvm-gcc4 is 
+significantly faster than llvm-gcc3, respects -O options, its -c/-S options
+correspond to GCC's (they emit native code).</p>
+
+<p>If you can use it, llvm-gcc4 is offers significant new functionality, and we
+hope that it will replace llvm-gcc3 completely in a future release.  
+Unfortunately, it does not currently support C++ exception handling at all, and
+it only works on Apple Mac OS/X machines with X86 or PowerPC processors.
+</p>
+
+</div>
+
+<!--_________________________________________________________________________-->
+<div class="doc_subsubsection"><a name="inlineasm">Inline Assembly
+Support</a></div>
+
+<div class="doc_text">
+
+<p>The LLVM IR and llvm-gcc4 front-end now fully support arbitrary GCC <a 
+href="LangRef.html#inlineasm">inline assembly</a>.  The LLVM X86 and PowerPC
+code generators have initial support for it,
+being able to compile basic statements, but are missing some features.  Please
+report any inline asm statements that crash the compiler or that are miscompiled
+as bugs.</p>
+
+</div>
+
+<!--_________________________________________________________________________-->
+<div class="doc_subsubsection"><a name="newsparc">New SPARC backend</a></div>
+
+<div class="doc_text">
+
+<p>LLVM 1.7 includes a new, fully functional, SPARC backend built in the
+target-independent code generator.  This SPARC backend includes support for 
+SPARC V8 and SPARC V9 subtargets (controlling whether V9 features can be used),
+and targets the 32-bit SPARC ABI.</p>
+
+<p>The LLVM 1.7 release is the last release that will include the LLVM "SparcV9"
+backend, which was the very first LLVM native code generator.  In 1.8, it will
+be removed, replaced with the new SPARC backend.</p>
+
+</div>
+
+<!--_________________________________________________________________________-->
+<div class="doc_subsubsection"><a name="genvector">Generic Vector Support
+</a></div>
+
+<div class="doc_text">
+
+<p>LLVM now includes significantly extended support for SIMD vectors in its
+core instruction set.  It now includes three new instructions for manipulating
+vectors: <a href="LangRef.html#i_extractelement"><tt>extractelement</tt></a>,
+<a href="LangRef.html#i_insertelement"><tt>insertelement</tt></a>, and
+<a href="LangRef.html#i_shufflevector"><tt>shufflevector</tt></a>.  Further,
+many bugs in vector handling have been fixed, and vectors are now supported by
+the target-independent code generator.  For example, if a vector operation is
+not supported by a particular target, it will be correctly broken down and
+executed as scalar operations.</p>
+
+<p>Because llvm-gcc3 does not support GCC generic vectors or vector intrinsics,
+so llvm-gcc4 must be used.</p>
+</div>
+
+
+<!--_________________________________________________________________________-->
+<div class="doc_subsubsection"><a name="ssealtivec">Intel SSE and PowerPC 
+Altivec support
+</a></div>
+
+<div class="doc_text">
+
+<p>The LLVM X86 backend now supports Intel SSE 1, 2, and 3, and now uses scalar
+SSE operations to implement scalar floating point math when the target supports
+SSE1 (for floats) or SSE2 (for doubles).  Vector SSE instructions are generated
+by llvm-gcc4 when the generic vector mechanism or specific SSE intrinsics are 
+used.
+</p>
+
+<p>The LLVM PowerPC backend now supports the Altivec instruction set, including
+both GCC -maltivec and -faltivec modes.  Altivec instructions are generated
+by llvm-gcc4 when the generic vector mechanism or specific Altivec intrinsics
+are used.
+</p>
+
+</div>
+
+
+<!--_________________________________________________________________________-->
+<div class="doc_subsubsection"><a name="othernew">Other New Features</a></div>
 
 <div class="doc_text">
 <ul>
-<li>New C front-end.</li>
-<li>New SPARC backend.</li>
-<li>Inline assembly support.</li>
+<li>foo</li>
 </ul>
 </div>
 
+
 <!--=========================================================================-->
 <div class="doc_subsection">
-<a name="changes">Significant changes in LLVM 1.7cvs</a>
+<a name="changes">Significant Changes in LLVM 1.7</a>
 </div>
 
 <div class="doc_text">
 <ul>
-<li>Removed the llvm.readport/llvm.writeport/llvm.readio/llvm.writeio
-    intrinsics.</li>
-<li>Separated the other intrinsics based on type.</li>
+<li>The LLVM intrinsics used to be overloaded based on type: for example,
+    <a href="LangRef.html#int_ctpop"><tt>llvm.ctpop</tt></a> could work with any
+    integer datatype.  They are now separated into different intrinsics with
+    suffixes to denote their argument type (e.g. <tt>llvm.ctpop.i32</tt>)).  Old
+    LLVM .ll and .bc files that use these intrinsics will continue to work with
+    new LLVM versions (they are transparently upgraded by the parsers), but will
+    cause a warning to be emitted.</li>
+<li>The <tt>llvm.readport</tt>, <tt>llvm.writeport</tt>, <tt>llvm.readio</tt>,
+    and <tt>llvm.writeio</tt> intrinsics have been removed.  The first two
+    were ever only supported by the X86 backend, the last two were never
+    correctly supported by any target, and none were accessible through the
+    C front-end.  Inline assembly support can now be used to
+    implement these operations.</li>
+<li>The <tt>llvm-db</tt> tool had basic support for stepping through code, which
+    used the JIT.  This code has been removed, and DWARF emission support added
+    instead.  <tt>llvm-db</tt> still exists in CVS if someone wanted to write a
+    <tt>ptrace</tt> backend for it.</li>
 </ul>
 </div>
 
@@ -155,12 +269,12 @@ useful to some people.  In particular, if you would like to work on one of these
 components, please contact us on the llvmdev list.</p>
 
 <ul>
-<li>The following passes are incomplete or buggy, and may be removed in future
-    releases: <tt>-cee</tt></li>
-<li>The <tt>llvm-db</tt> tool is in a very early stage of development, but can
-    be used to step through programs and inspect the stack.</li>
+<li>The <tt>-cee</tt> pass is known to be buggy, and may be removed in in a 
+    future release.</li>
 <li>The IA64 code generator is experimental.</li>
 <li>The Alpha JIT is experimental.</li>
+<li>"<tt>-filetype=asm</tt>" (the default) is the only supported value for the 
+    <tt>-filetype</tt> llc option.</li>
 </ul>
 
 </div>
@@ -201,11 +315,14 @@ components, please contact us on the llvmdev list.</p>
 
 <div class="doc_text">
 
-These bugs are known for the old front-end.  The new GCC-4-based C front-end
-suffers from none of these.
+<p>
+llvm-gcc3 has many significant problems that are fixed by llvm-gcc4.  See
+    those blocked on the <a href="http://llvm.org/PR498">llvm-gcc4 meta bug</a>.
+Two signicant ones include:</p>
 
 <ul>
-<li>C99 Variable sized arrays do not release stack memory when they go out of 
+<li>With llvm-gcc3, 
+    C99 variable sized arrays do not release stack memory when they go out of 
     scope.  Thus, the following program may run out of stack space:
 <pre>
     for (i = 0; i != 1000000; ++i) {
@@ -214,7 +331,7 @@ suffers from none of these.
     }
 </pre></li>
 
-<li>Initialization of global union variables can only be done <a
+<li>With llvm-gcc3, Initialization of global union variables can only be done <a
 href="http://llvm.org/PR162">with the largest union member</a>.</li>
 
 </ul>
@@ -398,11 +515,6 @@ itself.</p>
 
 <ul>
 
-<li>The C++ front-end is based on a pre-release of the GCC 3.4 C++ parser.  This
-parser is significantly more standards compliant (and picky) than prior GCC
-versions.  For more information, see the C++ section of the <a
-href="http://gcc.gnu.org/gcc-3.4/changes.html">GCC 3.4 release notes</a>.</li>
-
 <li>Destructors for local objects are not always run when a <tt>longjmp</tt> is
     performed. In particular, destructors for objects in the <tt>longjmp</tt>ing
     function and in the <tt>setjmp</tt> receiver function may not be run.
@@ -442,6 +554,12 @@ problem probably cannot be fixed.</li>
 supported</a>.  This should not affect LLVM produced by the C or C++ 
 frontends.</li>
 
+<li>The C backend does not correctly implement the <a 
+href="LangRef.html#i_stacksave"><tt>llvm.stacksave</tt></a> or
+<a href="LangRef.html#i_stackrestore"><tt>llvm.stackrestore</tt></a> 
+intrinsics.  This means that some code compiled by it can run out of stack
+space if they depend on these (e.g. C99 varargs).</li>
+
 </ul>
 
 </div>
@@ -454,7 +572,8 @@ frontends.</li>
 <div class="doc_text">
 
 <ul>
-<li>None yet</li>
+<li><a href="http://llvm.org/PR736">Indirect calls crash JIT on 
+Darwin/x86</a>.</li>
 </ul>
 
 </div>
@@ -467,21 +586,8 @@ frontends.</li>
 <div class="doc_text">
 
 <ul>
-<li>None yet</li>
-</ul>
-
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection">
-  <a name="sparcv9-be">Known problems with the SparcV9 back-end</a>
-</div>
-
-<div class="doc_text">
-
-<ul>
-<li><a href="http://llvm.org/PR60">[sparcv9] SparcV9 backend miscompiles
-several programs in the LLVM test suite</a></li>
+<li><a href="http://llvm.org/PR642">PowerPC backend does not correctly
+implement ordered FP comparisons</a>.</li>
 </ul>
 
 </div>
@@ -534,14 +640,32 @@ programs.</li>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="sparc">Known problems with the SPARC back-end</a>
+  <a name="sparc-be">Known problems with the SPARC back-end</a>
 </div>
 
 <div class="doc_text">
 
 <ul>
-<li>None yet.</li>
+<li>None yet</li>
 </ul>
+
+</div>
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="sparcv9-be">Known problems with the SparcV9 back-end</a>
+</div>
+
+<div class="doc_text">
+
+<ul>
+<li><a href="http://llvm.org/PR60">[sparcv9] SparcV9 backend miscompiles
+several programs in the LLVM test suite</a></li>
+<li>The SparcV9 backend is slated to be removed before the LLVM 1.8 
+    release.</li>
+</ul>
+
 </div>
 
 <!-- *********************************************************************** -->
