@@ -16,6 +16,7 @@
 
 #include <iostream>
 #include <vector>
+#include <cassert>
 
 struct Operator;
 
