@@ -71,7 +71,7 @@ namespace {
     }
     virtual bool runOnModule(Module &M) { return false; }
 
-    void print(std::ostream &OS, Module *M) const {
+    virtual void print(std::ostream &OS, const Module *M) const {
       getAnalysis<CallGraph>().print(OS, M);
     }
   };
