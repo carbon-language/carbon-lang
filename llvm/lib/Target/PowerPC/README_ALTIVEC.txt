@@ -75,15 +75,6 @@ be constants.  The verifier should enforce this constraint.
 
 //===----------------------------------------------------------------------===//
 
-Implement multiply for vector integer types, to avoid the horrible scalarized
-code produced by legalize.
-
-void test(vector int *X, vector int *Y) {
-  *X = *X * *Y;
-}
-
-//===----------------------------------------------------------------------===//
-
 extract_vector_elt of an arbitrary constant vector can be done with the 
 following instructions:
 

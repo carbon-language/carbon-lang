@@ -229,6 +229,7 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::MUL, MVT::v4f32, Legal);
     setOperationAction(ISD::MUL, MVT::v4i32, Custom);
     setOperationAction(ISD::MUL, MVT::v8i16, Custom);
+    setOperationAction(ISD::MUL, MVT::v16i8, Custom);
 
     setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v4f32, Custom);
     setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v4i32, Custom);
@@ -1601,12 +1602,12 @@ static SDOperand LowerMUL(SDOperand Op, SelectionDAG &DAG) {
   } else if (Op.getValueType() == MVT::v8i16) {
     SDOperand LHS = Op.getOperand(0), RHS = Op.getOperand(1);
     
-    // Multiply the even 16-parts, producing 32-bit sums.
+    // Multiply the even 16-bit parts, producing 32-bit sums.
     SDOperand EvenParts = BuildIntrinsicOp(Intrinsic::ppc_altivec_vmuleuh,
                                            LHS, RHS, DAG, MVT::v4i32);
     EvenParts = DAG.getNode(ISD::BIT_CONVERT, MVT::v8i16, EvenParts);
     
-    // Multiply the odd 16-parts, producing 32-bit sums.
+    // Multiply the odd 16-bit parts, producing 32-bit sums.
     SDOperand OddParts = BuildIntrinsicOp(Intrinsic::ppc_altivec_vmulouh,
                                           LHS, RHS, DAG, MVT::v4i32);
     OddParts = DAG.getNode(ISD::BIT_CONVERT, MVT::v8i16, OddParts);
@@ -1620,6 +1621,28 @@ static SDOperand LowerMUL(SDOperand Op, SelectionDAG &DAG) {
     
     return DAG.getNode(ISD::VECTOR_SHUFFLE, MVT::v8i16, EvenParts, OddParts,
                        DAG.getNode(ISD::BUILD_VECTOR, MVT::v8i16, Ops));
+  } else if (Op.getValueType() == MVT::v16i8) {
+    SDOperand LHS = Op.getOperand(0), RHS = Op.getOperand(1);
+    
+    // Multiply the even 8-bit parts, producing 16-bit sums.
+    SDOperand EvenParts = BuildIntrinsicOp(Intrinsic::ppc_altivec_vmuleub,
+                                           LHS, RHS, DAG, MVT::v8i16);
+    EvenParts = DAG.getNode(ISD::BIT_CONVERT, MVT::v16i8, EvenParts);
+    
+    // Multiply the odd 8-bit parts, producing 16-bit sums.
+    SDOperand OddParts = BuildIntrinsicOp(Intrinsic::ppc_altivec_vmuloub,
+                                          LHS, RHS, DAG, MVT::v8i16);
+    OddParts = DAG.getNode(ISD::BIT_CONVERT, MVT::v16i8, OddParts);
+    
+    // Merge the results together.
+    std::vector<SDOperand> Ops;
+    for (unsigned i = 0; i != 8; ++i) {
+      Ops.push_back(DAG.getConstant(2*i+1, MVT::i8));
+      Ops.push_back(DAG.getConstant(2*i+1+16, MVT::i8));
+    }
+    
+    return DAG.getNode(ISD::VECTOR_SHUFFLE, MVT::v16i8, EvenParts, OddParts,
+                       DAG.getNode(ISD::BUILD_VECTOR, MVT::v16i8, Ops));
   } else {
     assert(0 && "Unknown mul to lower!");
     abort();
