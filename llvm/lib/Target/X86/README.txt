@@ -982,17 +982,17 @@ LBB_main_4:	# cond_true44
 	jne LBB_main_4	# cond_true44
 
 There are two problems. 1) No need to two loop induction variables. We can
-compare against 262144 * 16. 2) Poor register allocation decisions. We should
+compare against 262144 * 16. 2) Known register coalescer issue. We should
 be able eliminate one of the movaps:
 
-	addps %xmm1, %xmm2
-	subps %xmm3, %xmm2
+	addps %xmm2, %xmm1    <=== Commute!
+	subps %xmm3, %xmm1
 	movaps (%ecx), %xmm4
-	movaps %xmm2, %xmm2   <=== Eliminate!
-	addps %xmm4, %xmm2
+	movaps %xmm1, %xmm1   <=== Eliminate!
+	addps %xmm4, %xmm1
 	addl $16, %ecx
 	incl %edx
 	cmpl $262144, %edx
-	movaps %xmm3, %xmm1
+	movaps %xmm3, %xmm2
 	movaps %xmm4, %xmm3
 	jne LBB_main_4	# cond_true44
