@@ -39,28 +39,17 @@ a load/store/lve*x sequence.
 
 //===----------------------------------------------------------------------===//
 
-FABS/FNEG can be codegen'd with the appropriate and/xor of -0.0.
-
-//===----------------------------------------------------------------------===//
-
 For functions that use altivec AND have calls, we are VRSAVE'ing all call
 clobbered regs.
 
 //===----------------------------------------------------------------------===//
 
-Implement passing vectors by value.
+Implement passing vectors by value into calls and receiving them as arguments.
 
 //===----------------------------------------------------------------------===//
 
 GCC apparently tries to codegen { C1, C2, Variable, C3 } as a constant pool load
 of C1/C2/C3, then a load and vperm of Variable.
-
-//===----------------------------------------------------------------------===//
-
-We currently codegen SCALAR_TO_VECTOR as a store of the scalar to a 16-byte
-aligned stack slot, followed by a load/vperm.  We should probably just store it
-to a scalar stack slot, then use lvsl/vperm to load it.  If the value is already
-in memory, this is a huge win.
 
 //===----------------------------------------------------------------------===//
 
@@ -72,6 +61,13 @@ cond code on CR6.
 
 We need a way to teach tblgen that some operands of an intrinsic are required to
 be constants.  The verifier should enforce this constraint.
+
+//===----------------------------------------------------------------------===//
+
+We currently codegen SCALAR_TO_VECTOR as a store of the scalar to a 16-byte
+aligned stack slot, followed by a load/vperm.  We should probably just store it
+to a scalar stack slot, then use lvsl/vperm to load it.  If the value is already
+in memory this is a big win.
 
 //===----------------------------------------------------------------------===//
 
@@ -87,8 +83,9 @@ We can do an arbitrary non-constant value by using lvsr/perm/ste.
 
 If we want to tie instruction selection into the scheduler, we can do some
 constant formation with different instructions.  For example, we can generate
-"vsplti -1" with "vcmpequw R,R" and 1,1,1,1 with "vsubcuw R,R", both of which
-use different execution units, thus could help scheduling.
+"vsplti -1" with "vcmpequw R,R" and 1,1,1,1 with "vsubcuw R,R", and 0,0,0,0 with
+"vsplti 0" or "vxor", each of which use different execution units, thus could
+help scheduling.
 
 This is probably only reasonable for a post-pass scheduler.
 
