@@ -228,6 +228,7 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
     
     setOperationAction(ISD::MUL, MVT::v4f32, Legal);
     setOperationAction(ISD::MUL, MVT::v4i32, Custom);
+    setOperationAction(ISD::MUL, MVT::v8i16, Custom);
 
     setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v4f32, Custom);
     setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v4i32, Custom);
@@ -1573,31 +1574,56 @@ static SDOperand LowerSCALAR_TO_VECTOR(SDOperand Op, SelectionDAG &DAG) {
 }
 
 static SDOperand LowerMUL(SDOperand Op, SelectionDAG &DAG) {
-  assert(Op.getValueType() == MVT::v4i32 && "Unknown mul to lower!");
-  SDOperand LHS = Op.getOperand(0);
-  SDOperand RHS = Op.getOperand(1);
-  
-  SDOperand Zero  = BuildSplatI(  0, 1, MVT::v4i32, DAG);
-  SDOperand Neg16 = BuildSplatI(-16, 4, MVT::v4i32, DAG);  // +16 as shift amt.
-  
-  SDOperand RHSSwap =   // = vrlw RHS, 16
-    BuildIntrinsicOp(Intrinsic::ppc_altivec_vrlw, RHS, Neg16, DAG);
-  
-  // Shrinkify inputs to v8i16.
-  LHS = DAG.getNode(ISD::BIT_CONVERT, MVT::v8i16, LHS);
-  RHS = DAG.getNode(ISD::BIT_CONVERT, MVT::v8i16, RHS);
-  RHSSwap = DAG.getNode(ISD::BIT_CONVERT, MVT::v8i16, RHSSwap);
-  
-  // Low parts multiplied together, generating 32-bit results (we ignore the top
-  // parts).
-  SDOperand LoProd = BuildIntrinsicOp(Intrinsic::ppc_altivec_vmulouh,
-                                      LHS, RHS, DAG, MVT::v4i32);
-  
-  SDOperand HiProd = BuildIntrinsicOp(Intrinsic::ppc_altivec_vmsumuhm,
-                                      LHS, RHSSwap, Zero, DAG, MVT::v4i32);
-  // Shift the high parts up 16 bits.
-  HiProd = BuildIntrinsicOp(Intrinsic::ppc_altivec_vslw, HiProd, Neg16, DAG);
-  return DAG.getNode(ISD::ADD, MVT::v4i32, LoProd, HiProd);
+  if (Op.getValueType() == MVT::v4i32) {
+    SDOperand LHS = Op.getOperand(0), RHS = Op.getOperand(1);
+    
+    SDOperand Zero  = BuildSplatI(  0, 1, MVT::v4i32, DAG);
+    SDOperand Neg16 = BuildSplatI(-16, 4, MVT::v4i32, DAG); // +16 as shift amt.
+    
+    SDOperand RHSSwap =   // = vrlw RHS, 16
+      BuildIntrinsicOp(Intrinsic::ppc_altivec_vrlw, RHS, Neg16, DAG);
+    
+    // Shrinkify inputs to v8i16.
+    LHS = DAG.getNode(ISD::BIT_CONVERT, MVT::v8i16, LHS);
+    RHS = DAG.getNode(ISD::BIT_CONVERT, MVT::v8i16, RHS);
+    RHSSwap = DAG.getNode(ISD::BIT_CONVERT, MVT::v8i16, RHSSwap);
+    
+    // Low parts multiplied together, generating 32-bit results (we ignore the
+    // top parts).
+    SDOperand LoProd = BuildIntrinsicOp(Intrinsic::ppc_altivec_vmulouh,
+                                        LHS, RHS, DAG, MVT::v4i32);
+    
+    SDOperand HiProd = BuildIntrinsicOp(Intrinsic::ppc_altivec_vmsumuhm,
+                                        LHS, RHSSwap, Zero, DAG, MVT::v4i32);
+    // Shift the high parts up 16 bits.
+    HiProd = BuildIntrinsicOp(Intrinsic::ppc_altivec_vslw, HiProd, Neg16, DAG);
+    return DAG.getNode(ISD::ADD, MVT::v4i32, LoProd, HiProd);
+  } else if (Op.getValueType() == MVT::v8i16) {
+    SDOperand LHS = Op.getOperand(0), RHS = Op.getOperand(1);
+    
+    // Multiply the even 16-parts, producing 32-bit sums.
+    SDOperand EvenParts = BuildIntrinsicOp(Intrinsic::ppc_altivec_vmuleuh,
+                                           LHS, RHS, DAG, MVT::v4i32);
+    EvenParts = DAG.getNode(ISD::BIT_CONVERT, MVT::v8i16, EvenParts);
+    
+    // Multiply the odd 16-parts, producing 32-bit sums.
+    SDOperand OddParts = BuildIntrinsicOp(Intrinsic::ppc_altivec_vmulouh,
+                                          LHS, RHS, DAG, MVT::v4i32);
+    OddParts = DAG.getNode(ISD::BIT_CONVERT, MVT::v8i16, OddParts);
+
+    // Merge the results together.
+    std::vector<SDOperand> Ops;
+    for (unsigned i = 0; i != 4; ++i) {
+      Ops.push_back(DAG.getConstant(2*i+1, MVT::i16));
+      Ops.push_back(DAG.getConstant(2*i+1+8, MVT::i16));
+    }
+    
+    return DAG.getNode(ISD::VECTOR_SHUFFLE, MVT::v8i16, EvenParts, OddParts,
+                       DAG.getNode(ISD::BUILD_VECTOR, MVT::v8i16, Ops));
+  } else {
+    assert(0 && "Unknown mul to lower!");
+    abort();
+  }
 }
 
 /// LowerOperation - Provide custom lowering hooks for some operations.
