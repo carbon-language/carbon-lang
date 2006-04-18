@@ -549,30 +549,12 @@ void GraphBuilder::visitCallSite(CallSite CS) {
       case Intrinsic::memcpy_i64:
       case Intrinsic::memmove_i32:
       case Intrinsic::memmove_i64: {
-        //This is over aggressive.  What these functions do is not make the 
-        // targets pointers alias, but rather merge the out edges of the graphs
-        // for the pointers according to the type merging of the graphs.
-        //Simply merging the two graphs is a crude approximation to this.
-	//Instead, copy the src pointer graph, then merge the copy with the
-	//dest pointer, thus avoiding contaminating the src with info from the dest
-        //I might be wrong though.
-
         // Merge the first & second arguments, and mark the memory read and
-        // modified.  Preserve second graph
+        // modified.
 	DSNodeHandle RetNH = getValueDest(**CS.arg_begin());
-	DSNodeHandle SrcNH = getValueDest(**(CS.arg_begin()+1));
-	//copy dsnode
-	DSNode* copy = new DSNode(*SrcNH.getNode(), SrcNH.getNode()->getParentGraph());
-	//since this is the target memory, we only are interested in the links.
-	//the target will not wind up with a global memory object , unless it 
-	//was already there (only pointers to global memory objects)
-	copy->clearGlobals();
-	DSNodeHandle Copy( copy, SrcNH.getOffset());
-	RetNH.mergeWith(Copy);
+	RetNH.mergeWith(getValueDest(**(CS.arg_begin()+1)));
         if (DSNode *N = RetNH.getNode())
-          N->setModifiedMarker();
-	if (DSNode *N = SrcNH.getNode())
-	  N->setReadMarker();
+          N->setModifiedMarker()->setReadMarker();
         return;
       }
       case Intrinsic::memset_i32:
