@@ -2007,13 +2007,6 @@ def PEXTRWri : PDIi8<0xC5, MRMSrcReg,
                     "pextrw {$src2, $src1, $dst|$dst, $src1, $src2}",
                     [(set R32:$dst, (X86pextrw (v8i16 VR128:$src1),
                                      (i32 imm:$src2)))]>;
-def PEXTRWmi : PDIi8<0xC5, MRMSrcMem,
-                    (ops R32:$dst, i128mem:$src1, i32i8imm:$src2),
-                    "pextrw {$src2, $src1, $dst|$dst, $src1, $src2}",
-                    [(set R32:$dst, (X86pextrw
-                                     (bc_v8i16 (loadv2i64 addr:$src1)),
-                                     (i32 imm:$src2)))]>;
-
 let isTwoAddress = 1 in {
 def PINSRWrri : PDIi8<0xC4, MRMSrcReg,
                      (ops VR128:$dst, VR128:$src1, R32:$src2, i32i8imm:$src3),
