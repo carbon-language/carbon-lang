@@ -512,8 +512,8 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr* MI,
     case X86::ANDNPDrr:  return MakeRMInst(X86::ANDNPDrm, FrameIndex, MI);
     case X86::CMPPSrri:  return MakeRMIInst(X86::CMPPSrmi, FrameIndex, MI);
     case X86::CMPPDrri:  return MakeRMIInst(X86::CMPPDrmi, FrameIndex, MI);
-    case X86::SHUFPSrr:  return MakeRMInst(X86::SHUFPSrm, FrameIndex, MI);
-    case X86::SHUFPDrr:  return MakeRMInst(X86::SHUFPDrm, FrameIndex, MI);
+    case X86::SHUFPSrri: return MakeRMIInst(X86::SHUFPSrmi, FrameIndex, MI);
+    case X86::SHUFPDrri: return MakeRMIInst(X86::SHUFPDrmi, FrameIndex, MI);
     case X86::UNPCKHPSrr:return MakeRMInst(X86::UNPCKHPSrm, FrameIndex, MI);
     case X86::UNPCKHPDrr:return MakeRMInst(X86::UNPCKHPDrm, FrameIndex, MI);
     case X86::UNPCKLPSrr:return MakeRMInst(X86::UNPCKLPSrm, FrameIndex, MI);
@@ -561,9 +561,9 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr* MI,
     case X86::PACKSSWBrr:return MakeRMInst(X86::PACKSSWBrm, FrameIndex, MI);
     case X86::PACKSSDWrr:return MakeRMInst(X86::PACKSSDWrm, FrameIndex, MI);
     case X86::PACKUSWBrr:return MakeRMInst(X86::PACKUSWBrm, FrameIndex, MI);
-    case X86::PSHUFDri:  return MakeRMInst(X86::PSHUFDmi, FrameIndex, MI);
-    case X86::PSHUFHWri: return MakeRMInst(X86::PSHUFHWmi, FrameIndex, MI);
-    case X86::PSHUFLWri: return MakeRMInst(X86::PSHUFLWmi, FrameIndex, MI);
+    case X86::PSHUFDri:  return MakeRMIInst(X86::PSHUFDmi, FrameIndex, MI);
+    case X86::PSHUFHWri: return MakeRMIInst(X86::PSHUFHWmi, FrameIndex, MI);
+    case X86::PSHUFLWri: return MakeRMIInst(X86::PSHUFLWmi, FrameIndex, MI);
     case X86::PUNPCKLBWrr:return MakeRMInst(X86::PUNPCKLBWrm, FrameIndex, MI);
     case X86::PUNPCKLWDrr:return MakeRMInst(X86::PUNPCKLWDrm, FrameIndex, MI);
     case X86::PUNPCKLDQrr:return MakeRMInst(X86::PUNPCKLDQrm, FrameIndex, MI);
