@@ -1602,25 +1602,10 @@ static SDOperand LowerMUL(SDOperand Op, SelectionDAG &DAG) {
   } else if (Op.getValueType() == MVT::v8i16) {
     SDOperand LHS = Op.getOperand(0), RHS = Op.getOperand(1);
     
-    // Multiply the even 16-bit parts, producing 32-bit sums.
-    SDOperand EvenParts = BuildIntrinsicOp(Intrinsic::ppc_altivec_vmuleuh,
-                                           LHS, RHS, DAG, MVT::v4i32);
-    EvenParts = DAG.getNode(ISD::BIT_CONVERT, MVT::v8i16, EvenParts);
-    
-    // Multiply the odd 16-bit parts, producing 32-bit sums.
-    SDOperand OddParts = BuildIntrinsicOp(Intrinsic::ppc_altivec_vmulouh,
-                                          LHS, RHS, DAG, MVT::v4i32);
-    OddParts = DAG.getNode(ISD::BIT_CONVERT, MVT::v8i16, OddParts);
+    SDOperand Zero = BuildSplatI(0, 1, MVT::v8i16, DAG);
 
-    // Merge the results together.
-    std::vector<SDOperand> Ops;
-    for (unsigned i = 0; i != 4; ++i) {
-      Ops.push_back(DAG.getConstant(2*i+1, MVT::i16));
-      Ops.push_back(DAG.getConstant(2*i+1+8, MVT::i16));
-    }
-    
-    return DAG.getNode(ISD::VECTOR_SHUFFLE, MVT::v8i16, EvenParts, OddParts,
-                       DAG.getNode(ISD::BUILD_VECTOR, MVT::v8i16, Ops));
+    return BuildIntrinsicOp(Intrinsic::ppc_altivec_vmladduhm,
+                            LHS, RHS, Zero, DAG);
   } else if (Op.getValueType() == MVT::v16i8) {
     SDOperand LHS = Op.getOperand(0), RHS = Op.getOperand(1);
     
