@@ -56,6 +56,8 @@ unsigned X86InstrInfo::isLoadFromStackSlot(MachineInstr *MI,
   case X86::FpLD64m:
   case X86::MOVSSrm:
   case X86::MOVSDrm:
+  case X86::MOVAPSrm:
+  case X86::MOVAPDrm:
     if (MI->getOperand(1).isFrameIndex() && MI->getOperand(2).isImmediate() &&
         MI->getOperand(3).isRegister() && MI->getOperand(4).isImmediate() &&
         MI->getOperand(2).getImmedValue() == 1 &&
@@ -79,6 +81,8 @@ unsigned X86InstrInfo::isStoreToStackSlot(MachineInstr *MI,
   case X86::FpSTP64m:
   case X86::MOVSSmr:
   case X86::MOVSDmr:
+  case X86::MOVAPSmr:
+  case X86::MOVAPDmr:
     if (MI->getOperand(0).isFrameIndex() && MI->getOperand(1).isImmediate() &&
         MI->getOperand(2).isRegister() && MI->getOperand(3).isImmediate() &&
         MI->getOperand(1).getImmedValue() == 1 &&
