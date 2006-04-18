@@ -1220,25 +1220,25 @@ def CMPPDrmi : PDIi8<0xC2, MRMSrcMem,
 
 // Shuffle and unpack instructions
 let isTwoAddress = 1 in {
-def SHUFPSrr : PSIi8<0xC6, MRMSrcReg, 
+def SHUFPSrri : PSIi8<0xC6, MRMSrcReg, 
                      (ops VR128:$dst, VR128:$src1, VR128:$src2, i32i8imm:$src3),
                      "shufps {$src3, $src2, $dst|$dst, $src2, $src3}",
                      [(set VR128:$dst, (v4f32 (vector_shuffle
                                                VR128:$src1, VR128:$src2,
                                                SHUFP_shuffle_mask:$src3)))]>;
-def SHUFPSrm : PSIi8<0xC6, MRMSrcMem, 
+def SHUFPSrmi : PSIi8<0xC6, MRMSrcMem, 
                    (ops VR128:$dst, VR128:$src1, f128mem:$src2, i32i8imm:$src3),
                      "shufps {$src3, $src2, $dst|$dst, $src2, $src3}",
                      [(set VR128:$dst, (v4f32 (vector_shuffle
                                                VR128:$src1, (load addr:$src2),
                                                SHUFP_shuffle_mask:$src3)))]>;
-def SHUFPDrr : PDIi8<0xC6, MRMSrcReg, 
+def SHUFPDrri : PDIi8<0xC6, MRMSrcReg, 
                      (ops VR128:$dst, VR128:$src1, VR128:$src2, i8imm:$src3),
                      "shufpd {$src3, $src2, $dst|$dst, $src2, $src3}",
                      [(set VR128:$dst, (v2f64 (vector_shuffle
                                                VR128:$src1, VR128:$src2,
                                                SHUFP_shuffle_mask:$src3)))]>;
-def SHUFPDrm : PDIi8<0xC6, MRMSrcMem, 
+def SHUFPDrmi : PDIi8<0xC6, MRMSrcMem, 
                      (ops VR128:$dst, VR128:$src1, f128mem:$src2, i8imm:$src3),
                      "shufpd {$src3, $src2, $dst|$dst, $src2, $src3}",
                      [(set VR128:$dst, (v2f64 (vector_shuffle
@@ -2364,14 +2364,14 @@ def : Pat<(vector_shuffle (v2i64 VR128:$src), (undef), SSE_splat_v2_mask:$sm),
 
 // Splat v4f32
 def : Pat<(vector_shuffle (v4f32 VR128:$src), (undef), SSE_splat_mask:$sm),
-          (v4f32 (SHUFPSrr VR128:$src, VR128:$src, SSE_splat_mask:$sm))>,
+          (v4f32 (SHUFPSrri VR128:$src, VR128:$src, SSE_splat_mask:$sm))>,
       Requires<[HasSSE1]>;
 
-// Special unary SHUFPSrr case.
+// Special unary SHUFPSrri case.
 // FIXME: when we want non two-address code, then we should use PSHUFD?
 def : Pat<(vector_shuffle (v4f32 VR128:$src1), (undef),
            SHUFP_unary_shuffle_mask:$sm),
-       (v4f32 (SHUFPSrr VR128:$src1, VR128:$src1, SHUFP_unary_shuffle_mask:$sm))>,
+       (v4f32 (SHUFPSrri VR128:$src1, VR128:$src1, SHUFP_unary_shuffle_mask:$sm))>,
       Requires<[HasSSE1]>;
 // Unary v4f32 shuffle with PSHUF* in order to fold a load.
 def : Pat<(vector_shuffle (loadv4f32 addr:$src1), (undef),
@@ -2381,11 +2381,11 @@ def : Pat<(vector_shuffle (loadv4f32 addr:$src1), (undef),
 // Special binary v4i32 shuffle cases with SHUFPS.
 def : Pat<(vector_shuffle (v4i32 VR128:$src1), (v4i32 VR128:$src2),
            PSHUFD_binary_shuffle_mask:$sm),
-          (v4i32 (SHUFPSrr VR128:$src1, VR128:$src2,
+          (v4i32 (SHUFPSrri VR128:$src1, VR128:$src2,
                   PSHUFD_binary_shuffle_mask:$sm))>, Requires<[HasSSE2]>;
 def : Pat<(vector_shuffle (v4i32 VR128:$src1),
            (bc_v4i32 (loadv2i64 addr:$src2)), PSHUFD_binary_shuffle_mask:$sm),
-          (v4i32 (SHUFPSrm VR128:$src1, addr:$src2,
+          (v4i32 (SHUFPSrmi VR128:$src1, addr:$src2,
                   PSHUFD_binary_shuffle_mask:$sm))>, Requires<[HasSSE2]>;
 
 // vector_shuffle v1, <undef>, <0, 0, 1, 1, ...>
