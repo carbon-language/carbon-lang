@@ -66,7 +66,7 @@ public:
   }
 
   /// print - Used by the MachineFunction printer to print information about
-  /// stack objects.  Implemented in MachineFunction.cpp
+  /// constant pool objects.  Implemented in MachineFunction.cpp
   ///
   void print(std::ostream &OS) const;
 
