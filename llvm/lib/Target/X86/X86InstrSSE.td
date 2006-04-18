@@ -1196,22 +1196,22 @@ def ANDNPDrm : PDI<0x55, MRMSrcMem, (ops VR128:$dst, VR128:$src1,f128mem:$src2),
 }
 
 let isTwoAddress = 1 in {
-def CMPPSrr : PSIi8<0xC2, MRMSrcReg, 
+def CMPPSrri : PSIi8<0xC2, MRMSrcReg, 
                     (ops VR128:$dst, VR128:$src1, VR128:$src, SSECC:$cc),
                     "cmp${cc}ps {$src, $dst|$dst, $src}",
                     [(set VR128:$dst, (int_x86_sse_cmp_ps VR128:$src1,
                                        VR128:$src, imm:$cc))]>;
-def CMPPSrm : PSIi8<0xC2, MRMSrcMem, 
+def CMPPSrmi : PSIi8<0xC2, MRMSrcMem, 
                     (ops VR128:$dst, VR128:$src1, f128mem:$src, SSECC:$cc),
                     "cmp${cc}ps {$src, $dst|$dst, $src}",
                     [(set VR128:$dst, (int_x86_sse_cmp_ps VR128:$src1,
                                        (load addr:$src), imm:$cc))]>;
-def CMPPDrr : PDIi8<0xC2, MRMSrcReg, 
+def CMPPDrri : PDIi8<0xC2, MRMSrcReg, 
                     (ops VR128:$dst, VR128:$src1, VR128:$src, SSECC:$cc),
                     "cmp${cc}pd {$src, $dst|$dst, $src}",
                     [(set VR128:$dst, (int_x86_sse2_cmp_pd VR128:$src1,
                                        VR128:$src, imm:$cc))]>;
-def CMPPDrm : PDIi8<0xC2, MRMSrcMem, 
+def CMPPDrmi : PDIi8<0xC2, MRMSrcMem, 
                     (ops VR128:$dst, VR128:$src1, f128mem:$src, SSECC:$cc),
                     "cmp${cc}pd {$src, $dst|$dst, $src}",
                     [(set VR128:$dst, (int_x86_sse2_cmp_pd VR128:$src1,
