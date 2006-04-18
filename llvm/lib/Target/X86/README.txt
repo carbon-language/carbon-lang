@@ -810,3 +810,154 @@ destination?
 How about andps, andpd, and pand? Do we really care about the type of the packed
 elements? If not, why not always use the "ps" variants which are likely to be
 shorter.
+
+//===---------------------------------------------------------------------===//
+
+We are emitting bad code for this:
+
+float %test(float* %V, int %I, int %D, float %V) {
+entry:
+	%tmp = seteq int %D, 0
+	br bool %tmp, label %cond_true, label %cond_false23
+
+cond_true:
+	%tmp3 = getelementptr float* %V, int %I
+	%tmp = load float* %tmp3
+	%tmp5 = setgt float %tmp, %V
+	%tmp6 = tail call bool %llvm.isunordered.f32( float %tmp, float %V )
+	%tmp7 = or bool %tmp5, %tmp6
+	br bool %tmp7, label %UnifiedReturnBlock, label %cond_next
+
+cond_next:
+	%tmp10 = add int %I, 1
+	%tmp12 = getelementptr float* %V, int %tmp10
+	%tmp13 = load float* %tmp12
+	%tmp15 = setle float %tmp13, %V
+	%tmp16 = tail call bool %llvm.isunordered.f32( float %tmp13, float %V )
+	%tmp17 = or bool %tmp15, %tmp16
+	%retval = select bool %tmp17, float 0.000000e+00, float 1.000000e+00
+	ret float %retval
+
+cond_false23:
+	%tmp28 = tail call float %foo( float* %V, int %I, int %D, float %V )
+	ret float %tmp28
+
+UnifiedReturnBlock:		; preds = %cond_true
+	ret float 0.000000e+00
+}
+
+declare bool %llvm.isunordered.f32(float, float)
+
+declare float %foo(float*, int, int, float)
+
+
+It exposes a known load folding problem:
+
+	movss (%edx,%ecx,4), %xmm1
+	ucomiss %xmm1, %xmm0
+
+As well as this:
+
+LBB_test_2:	# cond_next
+	movss LCPI1_0, %xmm2
+	pxor %xmm3, %xmm3
+	ucomiss %xmm0, %xmm1
+	jbe LBB_test_6	# cond_next
+LBB_test_5:	# cond_next
+	movaps %xmm2, %xmm3
+LBB_test_6:	# cond_next
+	movss %xmm3, 40(%esp)
+	flds 40(%esp)
+	addl $44, %esp
+	ret
+
+Clearly it's unnecessary to clear %xmm3. It's also not clear why we are emitting
+three moves (movss, movaps, movss).
+
+//===---------------------------------------------------------------------===//
+
+External test Nurbs exposed some problems. Look for
+__ZN15Nurbs_SSE_Cubic17TessellateSurfaceE, bb cond_next140. This is what icc
+emits:
+
+        movaps    (%edx), %xmm2                                 #59.21
+        movaps    (%edx), %xmm5                                 #60.21
+        movaps    (%edx), %xmm4                                 #61.21
+        movaps    (%edx), %xmm3                                 #62.21
+        movl      40(%ecx), %ebp                                #69.49
+        shufps    $0, %xmm2, %xmm5                              #60.21
+        movl      100(%esp), %ebx                               #69.20
+        movl      (%ebx), %edi                                  #69.20
+        imull     %ebp, %edi                                    #69.49
+        addl      (%eax), %edi                                  #70.33
+        shufps    $85, %xmm2, %xmm4                             #61.21
+        shufps    $170, %xmm2, %xmm3                            #62.21
+        shufps    $255, %xmm2, %xmm2                            #63.21
+        lea       (%ebp,%ebp,2), %ebx                           #69.49
+        negl      %ebx                                          #69.49
+        lea       -3(%edi,%ebx), %ebx                           #70.33
+        shll      $4, %ebx                                      #68.37
+        addl      32(%ecx), %ebx                                #68.37
+        testb     $15, %bl                                      #91.13
+        jne       L_B1.24       # Prob 5%                       #91.13
+
+This is the llvm code after instruction scheduling:
+
+cond_next140 (0xa910740, LLVM BB @0xa90beb0):
+	%reg1078 = MOV32ri -3
+	%reg1079 = ADD32rm %reg1078, %reg1068, 1, %NOREG, 0
+	%reg1037 = MOV32rm %reg1024, 1, %NOREG, 40
+	%reg1080 = IMUL32rr %reg1079, %reg1037
+	%reg1081 = MOV32rm %reg1058, 1, %NOREG, 0
+	%reg1038 = LEA32r %reg1081, 1, %reg1080, -3
+	%reg1036 = MOV32rm %reg1024, 1, %NOREG, 32
+	%reg1082 = SHL32ri %reg1038, 4
+	%reg1039 = ADD32rr %reg1036, %reg1082
+	%reg1083 = MOVAPSrm %reg1059, 1, %NOREG, 0
+	%reg1034 = SHUFPSrr %reg1083, %reg1083, 170
+	%reg1032 = SHUFPSrr %reg1083, %reg1083, 0
+	%reg1035 = SHUFPSrr %reg1083, %reg1083, 255
+	%reg1033 = SHUFPSrr %reg1083, %reg1083, 85
+	%reg1040 = MOV32rr %reg1039
+	%reg1084 = AND32ri8 %reg1039, 15
+	CMP32ri8 %reg1084, 0
+	JE mbb<cond_next204,0xa914d30>
+
+Still ok. After register allocation:
+
+cond_next140 (0xa910740, LLVM BB @0xa90beb0):
+	%EAX = MOV32ri -3
+	%EDX = MOV32rm <fi#3>, 1, %NOREG, 0
+	ADD32rm %EAX<def&use>, %EDX, 1, %NOREG, 0
+	%EDX = MOV32rm <fi#7>, 1, %NOREG, 0
+	%EDX = MOV32rm %EDX, 1, %NOREG, 40
+	IMUL32rr %EAX<def&use>, %EDX
+	%ESI = MOV32rm <fi#5>, 1, %NOREG, 0
+	%ESI = MOV32rm %ESI, 1, %NOREG, 0
+	MOV32mr <fi#4>, 1, %NOREG, 0, %ESI
+	%EAX = LEA32r %ESI, 1, %EAX, -3
+	%ESI = MOV32rm <fi#7>, 1, %NOREG, 0
+	%ESI = MOV32rm %ESI, 1, %NOREG, 32
+	%EDI = MOV32rr %EAX
+	SHL32ri %EDI<def&use>, 4
+	ADD32rr %EDI<def&use>, %ESI
+	%XMM0 = MOVAPSrm %ECX, 1, %NOREG, 0
+	%XMM1 = MOVAPSrr %XMM0
+	SHUFPSrr %XMM1<def&use>, %XMM1, 170
+	%XMM2 = MOVAPSrr %XMM0
+	SHUFPSrr %XMM2<def&use>, %XMM2, 0
+	%XMM3 = MOVAPSrr %XMM0
+	SHUFPSrr %XMM3<def&use>, %XMM3, 255
+	SHUFPSrr %XMM0<def&use>, %XMM0, 85
+	%EBX = MOV32rr %EDI
+	AND32ri8 %EBX<def&use>, 15
+	CMP32ri8 %EBX, 0
+	JE mbb<cond_next204,0xa914d30>
+
+This looks really bad. The problem is shufps is a destructive opcode. Since it
+appears as operand two in more than one shufps ops. It resulted in a number of
+copies. Note icc also suffers from the same problem. Either the instruction
+selector should select pshufd or The register allocator can made the two-address
+to three-address transformation.
+
+It also exposes some other problems. See MOV32ri -3 and the spills.
