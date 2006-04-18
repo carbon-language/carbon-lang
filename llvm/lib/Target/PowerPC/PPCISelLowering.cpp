@@ -2203,8 +2203,30 @@ SDOperand PPCTargetLowering::PerformDAGCombine(SDNode *N,
           break;
         }
       
-      // If there are non-zero uses of the flag value, use the VCMPo node!
-      if (VCMPoNode && !VCMPoNode->hasNUsesOfValue(0, 1))
+      // If there is no VCMPo node, or if the flag value has a single use, don't
+      // transform this.
+      if (!VCMPoNode || VCMPoNode->hasNUsesOfValue(0, 1))
+        break;
+        
+      // Look at the (necessarily single) use of the flag value.  If it has a 
+      // chain, this transformation is more complex.  Note that multiple things
+      // could use the value result, which we should ignore.
+      SDNode *FlagUser = 0;
+      for (SDNode::use_iterator UI = VCMPoNode->use_begin(); 
+           FlagUser == 0; ++UI) {
+        assert(UI != VCMPoNode->use_end() && "Didn't find user!");
+        SDNode *User = *UI;
+        for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i) {
+          if (User->getOperand(i) == SDOperand(VCMPoNode, 1)) {
+            FlagUser = User;
+            break;
+          }
+        }
+      }
+      
+      // If the user is a MFCR instruction, we know this is safe.  Otherwise we
+      // give up for right now.
+      if (FlagUser->getOpcode() == PPCISD::MFCR)
         return SDOperand(VCMPoNode, 0);
     }
     break;
