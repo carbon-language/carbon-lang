@@ -96,7 +96,14 @@ namespace llvm {
       /// altivec VCMP*o instructions.  For lack of better number, we use the 
       /// opcode number encoding for the OPC field to identify the compare.  For
       /// example, 838 is VCMPGTSH.
-      VCMPo
+      VCMPo,
+      
+      /// CHAIN = COND_BRANCH CHAIN, CRRC, OPC, DESTBB [, INFLAG] - This
+      /// corresponds to the COND_BRANCH pseudo instruction.  CRRC is the
+      /// condition register to branch on, OPC is the branch opcode to use (e.g.
+      /// PPC::BLE), DESTBB is the destination block to branch to, and INFLAG is
+      /// an optional input flag argument.
+      COND_BRANCH
     };
   }
 

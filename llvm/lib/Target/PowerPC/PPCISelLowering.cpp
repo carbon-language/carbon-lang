@@ -246,6 +246,7 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   // We have target-specific dag combine patterns for the following nodes:
   setTargetDAGCombine(ISD::SINT_TO_FP);
   setTargetDAGCombine(ISD::STORE);
+  setTargetDAGCombine(ISD::BR_CC);
   
   computeRegisterProperties();
 }
@@ -1460,18 +1461,17 @@ static SDOperand LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
   return DAG.getNode(PPCISD::VPERM, V1.getValueType(), V1, V2, VPermMask);
 }
 
-/// LowerINTRINSIC_WO_CHAIN - If this is an intrinsic that we want to custom
-/// lower, do it, otherwise return null.
-static SDOperand LowerINTRINSIC_WO_CHAIN(SDOperand Op, SelectionDAG &DAG) {
-  unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(0))->getValue();
-  
-  // If this is a lowered altivec predicate compare, CompareOpc is set to the
-  // opcode number of the comparison.
-  int CompareOpc = -1;
-  bool isDot = false;
-  switch (IntNo) {
-  default: return SDOperand();    // Don't custom lower most intrinsics.
-  // Comparison predicates.
+/// getAltivecCompareInfo - Given an intrinsic, return false if it is not an
+/// altivec comparison.  If it is, return true and fill in Opc/isDot with
+/// information about the intrinsic.
+static bool getAltivecCompareInfo(SDOperand Intrin, int &CompareOpc,
+                                  bool &isDot) {
+  unsigned IntrinsicID = cast<ConstantSDNode>(Intrin.getOperand(0))->getValue();
+  CompareOpc = -1;
+  isDot = false;
+  switch (IntrinsicID) {
+  default: return false;
+    // Comparison predicates.
   case Intrinsic::ppc_altivec_vcmpbfp_p:  CompareOpc = 966; isDot = 1; break;
   case Intrinsic::ppc_altivec_vcmpeqfp_p: CompareOpc = 198; isDot = 1; break;
   case Intrinsic::ppc_altivec_vcmpequb_p: CompareOpc =   6; isDot = 1; break;
@@ -1501,10 +1501,20 @@ static SDOperand LowerINTRINSIC_WO_CHAIN(SDOperand Op, SelectionDAG &DAG) {
   case Intrinsic::ppc_altivec_vcmpgtuh:   CompareOpc = 582; isDot = 0; break;
   case Intrinsic::ppc_altivec_vcmpgtuw:   CompareOpc = 646; isDot = 0; break;
   }
+  return true;
+}
+
+/// LowerINTRINSIC_WO_CHAIN - If this is an intrinsic that we want to custom
+/// lower, do it, otherwise return null.
+static SDOperand LowerINTRINSIC_WO_CHAIN(SDOperand Op, SelectionDAG &DAG) {
+  // If this is a lowered altivec predicate compare, CompareOpc is set to the
+  // opcode number of the comparison.
+  int CompareOpc;
+  bool isDot;
+  if (!getAltivecCompareInfo(Op, CompareOpc, isDot))
+    return SDOperand();    // Don't custom lower most intrinsics.
   
-  assert(CompareOpc>0 && "We only lower altivec predicate compares so far!");
-  
-  // If this is a non-dot comparison, make the VCMP node.
+  // If this is a non-dot comparison, make the VCMP node and we are done.
   if (!isDot) {
     SDOperand Tmp = DAG.getNode(PPCISD::VCMP, Op.getOperand(2).getValueType(),
                                 Op.getOperand(1), Op.getOperand(2),
@@ -2195,6 +2205,69 @@ SDOperand PPCTargetLowering::PerformDAGCombine(SDNode *N,
       // If there are non-zero uses of the flag value, use the VCMPo node!
       if (VCMPoNode && !VCMPoNode->hasNUsesOfValue(0, 1))
         return SDOperand(VCMPoNode, 0);
+    }
+    break;
+  }
+  case ISD::BR_CC: {
+    // If this is a branch on an altivec predicate comparison, lower this so
+    // that we don't have to do a MFCR: instead, branch directly on CR6.  This
+    // lowering is done pre-legalize, because the legalizer lowers the predicate
+    // compare down to code that is difficult to reassemble.
+    ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(1))->get();
+    SDOperand LHS = N->getOperand(2), RHS = N->getOperand(3);
+    int CompareOpc;
+    bool isDot;
+    
+    if (LHS.getOpcode() == ISD::INTRINSIC_WO_CHAIN &&
+        isa<ConstantSDNode>(RHS) && (CC == ISD::SETEQ || CC == ISD::SETNE) &&
+        getAltivecCompareInfo(LHS, CompareOpc, isDot)) {
+      assert(isDot && "Can't compare against a vector result!");
+      
+      // If this is a comparison against something other than 0/1, then we know
+      // that the condition is never/always true.
+      unsigned Val = cast<ConstantSDNode>(RHS)->getValue();
+      if (Val != 0 && Val != 1) {
+        if (CC == ISD::SETEQ)      // Cond never true, remove branch.
+          return N->getOperand(0);
+        // Always !=, turn it into an unconditional branch.
+        return DAG.getNode(ISD::BR, MVT::Other, 
+                           N->getOperand(0), N->getOperand(4));
+      }
+    
+      bool BranchOnWhenPredTrue = (CC == ISD::SETEQ) ^ (Val == 0);
+      
+      // Create the PPCISD altivec 'dot' comparison node.
+      std::vector<SDOperand> Ops;
+      std::vector<MVT::ValueType> VTs;
+      Ops.push_back(LHS.getOperand(2));  // LHS of compare
+      Ops.push_back(LHS.getOperand(3));  // RHS of compare
+      Ops.push_back(DAG.getConstant(CompareOpc, MVT::i32));
+      VTs.push_back(LHS.getOperand(2).getValueType());
+      VTs.push_back(MVT::Flag);
+      SDOperand CompNode = DAG.getNode(PPCISD::VCMPo, VTs, Ops);
+      
+      // Unpack the result based on how the target uses it.
+      unsigned CompOpc;
+      switch (cast<ConstantSDNode>(LHS.getOperand(1))->getValue()) {
+      default:  // Can't happen, don't crash on invalid number though.
+      case 0:   // Branch on the value of the EQ bit of CR6.
+        CompOpc = BranchOnWhenPredTrue ? PPC::BEQ : PPC::BNE;
+        break;
+      case 1:   // Branch on the inverted value of the EQ bit of CR6.
+        CompOpc = BranchOnWhenPredTrue ? PPC::BNE : PPC::BEQ;
+        break;
+      case 2:   // Branch on the value of the LT bit of CR6.
+        CompOpc = BranchOnWhenPredTrue ? PPC::BLT : PPC::BGE;
+        break;
+      case 3:   // Branch on the inverted value of the LT bit of CR6.
+        CompOpc = BranchOnWhenPredTrue ? PPC::BGE : PPC::BLT;
+        break;
+      }
+
+      return DAG.getNode(PPCISD::COND_BRANCH, MVT::Other, N->getOperand(0),
+                         DAG.getRegister(PPC::CR6, MVT::i32),
+                         DAG.getConstant(CompOpc, MVT::i32),
+                         N->getOperand(4), CompNode.getValue(1));
     }
     break;
   }

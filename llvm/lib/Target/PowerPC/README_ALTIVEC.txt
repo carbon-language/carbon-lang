@@ -53,12 +53,6 @@ of C1/C2/C3, then a load and vperm of Variable.
 
 //===----------------------------------------------------------------------===//
 
-Do not generate the MFCR/RLWINM sequence for predicate compares when the
-predicate compare is used immediately by a branch.  Just branch on the right
-cond code on CR6.
-
-//===----------------------------------------------------------------------===//
-
 We need a way to teach tblgen that some operands of an intrinsic are required to
 be constants.  The verifier should enforce this constraint.
 

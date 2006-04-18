@@ -34,6 +34,10 @@ def SDT_PPCvcmp : SDTypeProfile<1, 3, [
   SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>, SDTCisVT<3, i32>
 ]>;
 
+def SDT_PPCcondbr : SDTypeProfile<0, 3, [
+  SDTCisVT<1, i32>, SDTCisVT<2, OtherVT>
+]>;
+
 //===----------------------------------------------------------------------===//
 // PowerPC specific DAG Nodes.
 //
@@ -73,6 +77,9 @@ def retflag       : SDNode<"PPCISD::RET_FLAG", SDT_PPCRetFlag,
 
 def PPCvcmp       : SDNode<"PPCISD::VCMP" , SDT_PPCvcmp, []>;
 def PPCvcmp_o     : SDNode<"PPCISD::VCMPo", SDT_PPCvcmp, [SDNPOutFlag]>;
+
+def PPCcondbranch : SDNode<"PPCISD::COND_BRANCH", SDT_PPCcondbr,
+                           [SDNPHasChain, SDNPOptInFlag]>;
 
 //===----------------------------------------------------------------------===//
 // PowerPC specific transformation functions and pattern fragments.
@@ -263,8 +270,9 @@ let Defs = [LR] in
 
 let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, 
     noResults = 1, PPC970_Unit = 7 in {
-  def COND_BRANCH : Pseudo<(ops CRRC:$crS, u16imm:$opc, target:$true),
-                           "; COND_BRANCH", []>;
+  def COND_BRANCH : Pseudo<(ops CRRC:$crS, u16imm:$opc, target:$dst),
+                           "; COND_BRANCH $crS, $opc, $dst",
+                           [(PPCcondbranch CRRC:$crS, imm:$opc, bb:$dst)]>;
   def B   : IForm<18, 0, 0, (ops target:$dst),
                   "b $dst", BrB,
                   [(br bb:$dst)]>;
