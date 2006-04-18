@@ -275,6 +275,7 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::MFCR:          return "PPCISD::MFCR";
   case PPCISD::VCMP:          return "PPCISD::VCMP";
   case PPCISD::VCMPo:         return "PPCISD::VCMPo";
+  case PPCISD::COND_BRANCH:   return "PPCISD::COND_BRANCH";
   }
 }
 
