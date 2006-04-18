@@ -85,3 +85,26 @@ This is probably only reasonable for a post-pass scheduler.
 
 //===----------------------------------------------------------------------===//
 
+For this function:
+
+void test(vector float *A, vector float *B) {
+  vector float C = (vector float)vec_cmpeq(*A, *B);
+  if (!vec_any_eq(*A, *B))
+    *B = (vector float){0,0,0,0};
+  *A = C;
+}
+
+we get the following basic block:
+
+	...
+        lvx v2, 0, r4
+        lvx v3, 0, r3
+        vcmpeqfp v4, v3, v2
+        vcmpeqfp. v2, v3, v2
+        bne cr6, LBB1_2 ; cond_next
+
+The vcmpeqfp/vcmpeqfp. instructions currently cannot be merged when the
+vcmpeqfp. result is used by a branch.  This can be improved.
+
+//===----------------------------------------------------------------------===//
+
