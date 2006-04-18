@@ -553,14 +553,21 @@ void GraphBuilder::visitCallSite(CallSite CS) {
         // targets pointers alias, but rather merge the out edges of the graphs
         // for the pointers according to the type merging of the graphs.
         //Simply merging the two graphs is a crude approximation to this.
+	//Instead, copy the src pointer graph, then merge the copy with the
+	//dest pointer, thus avoiding contaminating the src with info from the dest
         //I might be wrong though.
 
         // Merge the first & second arguments, and mark the memory read and
-        // modified.
-        DSNodeHandle RetNH = getValueDest(**CS.arg_begin());
-        RetNH.mergeWith(getValueDest(**(CS.arg_begin()+1)));
+        // modified.  Preserve second graph
+	DSNodeHandle RetNH = getValueDest(**CS.arg_begin());
+	DSNodeHandle SrcNH = getValueDest(**(CS.arg_begin()+1));
+	DSNodeHandle Copy( new DSNode(*SrcNH.getNode(), SrcNH.getNode()->getParentGraph()),
+			   SrcNH.getOffset());
+	RetNH.mergeWith(Copy);
         if (DSNode *N = RetNH.getNode())
-          N->setModifiedMarker()->setReadMarker();
+          N->setModifiedMarker();
+	if (DSNode *N = SrcNH.getNode())
+	  N->setReadMarker();
         return;
       }
       case Intrinsic::memset_i32:
