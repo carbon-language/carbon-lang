@@ -510,8 +510,8 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr* MI,
     case X86::XORPDrr:   return MakeRMInst(X86::XORPDrm, FrameIndex, MI);
     case X86::ANDNPSrr:  return MakeRMInst(X86::ANDNPSrm, FrameIndex, MI);
     case X86::ANDNPDrr:  return MakeRMInst(X86::ANDNPDrm, FrameIndex, MI);
-    case X86::CMPPSrr:   return MakeRMInst(X86::CMPPSrm, FrameIndex, MI);
-    case X86::CMPPDrr:   return MakeRMInst(X86::CMPPDrm, FrameIndex, MI);
+    case X86::CMPPSrri:  return MakeRMIInst(X86::CMPPSrmi, FrameIndex, MI);
+    case X86::CMPPDrri:  return MakeRMIInst(X86::CMPPDrmi, FrameIndex, MI);
     case X86::SHUFPSrr:  return MakeRMInst(X86::SHUFPSrm, FrameIndex, MI);
     case X86::SHUFPDrr:  return MakeRMInst(X86::SHUFPDrm, FrameIndex, MI);
     case X86::UNPCKHPSrr:return MakeRMInst(X86::UNPCKHPSrm, FrameIndex, MI);
