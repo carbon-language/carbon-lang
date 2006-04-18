@@ -961,3 +961,38 @@ selector should select pshufd or The register allocator can made the two-address
 to three-address transformation.
 
 It also exposes some other problems. See MOV32ri -3 and the spills.
+
+//===---------------------------------------------------------------------===//
+
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=25500
+
+LLVM is producing bad code.
+
+LBB_main_4:	# cond_true44
+	addps %xmm1, %xmm2
+	subps %xmm3, %xmm2
+	movaps (%ecx), %xmm4
+	movaps %xmm2, %xmm1
+	addps %xmm4, %xmm1
+	addl $16, %ecx
+	incl %edx
+	cmpl $262144, %edx
+	movaps %xmm3, %xmm2
+	movaps %xmm4, %xmm3
+	jne LBB_main_4	# cond_true44
+
+There are two problems. 1) No need to two loop induction variables. We can
+compare against 262144 * 16. 2) Poor register allocation decisions. We should
+be able eliminate one of the movaps:
+
+	addps %xmm1, %xmm2
+	subps %xmm3, %xmm2
+	movaps (%ecx), %xmm4
+	movaps %xmm2, %xmm2   <=== Eliminate!
+	addps %xmm4, %xmm2
+	addl $16, %ecx
+	incl %edx
+	cmpl $262144, %edx
+	movaps %xmm3, %xmm1
+	movaps %xmm4, %xmm3
+	jne LBB_main_4	# cond_true44
