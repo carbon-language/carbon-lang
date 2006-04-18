@@ -2179,6 +2179,10 @@ def MOVPD2SDrr : SDI<0x10, MRMSrcReg, (ops FR64:$dst, VR128:$src),
                      "movsd {$src, $dst|$dst, $src}",
                      [(set FR64:$dst, (vector_extract (v2f64 VR128:$src),
                                        (i32 0)))]>;
+def MOVPD2SDmr : SDI<0x11, MRMDestMem, (ops f64mem:$dst, VR128:$src),
+                     "movsd {$src, $dst|$dst, $src}",
+                     [(store (f64 (vector_extract (v2f64 VR128:$src),
+                                   (i32 0))), addr:$dst)]>;
 def MOVPDI2DIrr  : PDI<0x7E, MRMDestReg, (ops R32:$dst, VR128:$src),
                        "movd {$src, $dst|$dst, $src}",
                        [(set R32:$dst, (vector_extract (v4i32 VR128:$src),
