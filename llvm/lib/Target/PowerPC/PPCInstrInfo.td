@@ -277,8 +277,6 @@ let isBranch = 1, isTerminator = 1, hasCtrlDep = 1,
                   "b $dst", BrB,
                   [(br bb:$dst)]>;
 
-  // FIXME: 4*CR# needs to be added to the BI field!
-  // This will only work for CR0 as it stands now
   def BLT : BForm<16, 0, 0, 12, 0, (ops CRRC:$crS, target:$block),
                   "blt $crS, $block", BrB>;
   def BLE : BForm<16, 0, 0, 4,  1, (ops CRRC:$crS, target:$block),
