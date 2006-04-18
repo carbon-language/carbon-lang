@@ -171,13 +171,42 @@ are used.
 
 </div>
 
+<!--_________________________________________________________________________-->
+<div class="doc_subsubsection"><a name="othernew">Optimizer 
+Improvements</a></div>
+
+<div class="doc_text">
+<ul>
+<li>The Loop Unswitching pass (<tt>-loop-unswitch</tt>) has had several bugs
+    fixed, has several new features, and is enabled by default in llvmgcc3
+    now.</li>
+<li>The Loop Strength Reduction pass (<tt>-loop-reduce</tt>) is now enabled for
+    the X86 backend.</li>
+<li>The Instruction Combining pass (<tt>-instcombine</tt>) now includes a
+    framework and implementation for simplifying code based on whether computed
+    bits are demanded or not.</li>
+<li>The Scalar Replacement of Aggregates pass (<tt>-scalarrepl</tt>) can now
+    promote simple unions to registers.</li>
+<li>Several LLVM passes are <a href="http://llvm.org/PR681">significantly
+faster</a>.</li>
+</ul>
+</div>
+
 
 <!--_________________________________________________________________________-->
 <div class="doc_subsubsection"><a name="othernew">Other New Features</a></div>
 
 <div class="doc_text">
 <ul>
-<li>foo</li>
+<li>LLVM now supports first class global ctor/dtor initialization lists, no
+    longer forcing targets to use "__main".</li>
+<li>LLVM supports assigning globals and functions to a particular section
+    in the result executable using the GCC section attribute.</li>
+<li><a href="ExtendingLLVM.html">Adding intrinsics to LLVM</a> is now
+significantly easier.</li>
+<li>llvmgcc4 now fully supports C99 Variable Length Arrays, including dynamic
+    stack deallocation.</li>
+
 </ul>
 </div>
 
