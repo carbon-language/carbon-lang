@@ -227,6 +227,7 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
     addRegisterClass(MVT::v16i8, PPC::VRRCRegisterClass);
     
     setOperationAction(ISD::MUL, MVT::v4f32, Legal);
+    setOperationAction(ISD::MUL, MVT::v4i32, Custom);
 
     setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v4f32, Custom);
     setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v4i32, Custom);
@@ -1062,13 +1063,26 @@ static SDOperand BuildSplatI(int Val, unsigned SplatSize, MVT::ValueType VT,
   return DAG.getNode(ISD::BIT_CONVERT, VT, Res);
 }
 
-/// BuildIntrinsicBinOp - Return a binary operator intrinsic node with the
+/// BuildIntrinsicOp - Return a binary operator intrinsic node with the
 /// specified intrinsic ID.
-static SDOperand BuildIntrinsicBinOp(unsigned IID, SDOperand LHS, SDOperand RHS,
-                                     SelectionDAG &DAG) {
-  return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, LHS.getValueType(),
+static SDOperand BuildIntrinsicOp(unsigned IID, SDOperand LHS, SDOperand RHS,
+                                  SelectionDAG &DAG, 
+                                  MVT::ValueType DestVT = MVT::Other) {
+  if (DestVT == MVT::Other) DestVT = LHS.getValueType();
+  return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DestVT,
                      DAG.getConstant(IID, MVT::i32), LHS, RHS);
 }
+
+/// BuildIntrinsicOp - Return a ternary operator intrinsic node with the
+/// specified intrinsic ID.
+static SDOperand BuildIntrinsicOp(unsigned IID, SDOperand Op0, SDOperand Op1,
+                                  SDOperand Op2, SelectionDAG &DAG, 
+                                  MVT::ValueType DestVT = MVT::Other) {
+  if (DestVT == MVT::Other) DestVT = Op0.getValueType();
+  return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DestVT,
+                     DAG.getConstant(IID, MVT::i32), Op0, Op1, Op2);
+}
+
 
 /// BuildVSLDOI - Return a VECTOR_SHUFFLE that is a vsldoi of the specified
 /// amount.  The result has the specified value type.
@@ -1145,8 +1159,8 @@ static SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
       SDOperand OnesV = BuildSplatI(-1, 4, MVT::v4i32, DAG);
       
       // Make the VSLW intrinsic, computing 0x8000_0000.
-      SDOperand Res = BuildIntrinsicBinOp(Intrinsic::ppc_altivec_vslw, OnesV, 
-                                          OnesV, DAG);
+      SDOperand Res = BuildIntrinsicOp(Intrinsic::ppc_altivec_vslw, OnesV, 
+                                       OnesV, DAG);
       
       // xor by OnesV to invert it.
       Res = DAG.getNode(ISD::XOR, MVT::v4i32, Res, OnesV);
@@ -1175,7 +1189,7 @@ static SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
           Intrinsic::ppc_altivec_vslb, Intrinsic::ppc_altivec_vslh, 0,
           Intrinsic::ppc_altivec_vslw
         };
-        return BuildIntrinsicBinOp(IIDs[SplatSize-1], Op, Op, DAG);
+        return BuildIntrinsicOp(IIDs[SplatSize-1], Op, Op, DAG);
       }
       
       // vsplti + srl self.
@@ -1185,7 +1199,7 @@ static SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
           Intrinsic::ppc_altivec_vsrb, Intrinsic::ppc_altivec_vsrh, 0,
           Intrinsic::ppc_altivec_vsrw
         };
-        return BuildIntrinsicBinOp(IIDs[SplatSize-1], Op, Op, DAG);
+        return BuildIntrinsicOp(IIDs[SplatSize-1], Op, Op, DAG);
       }
       
       // vsplti + sra self.
@@ -1195,7 +1209,7 @@ static SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
           Intrinsic::ppc_altivec_vsrab, Intrinsic::ppc_altivec_vsrah, 0,
           Intrinsic::ppc_altivec_vsraw
         };
-        return BuildIntrinsicBinOp(IIDs[SplatSize-1], Op, Op, DAG);
+        return BuildIntrinsicOp(IIDs[SplatSize-1], Op, Op, DAG);
       }
       
       // vsplti + rol self.
@@ -1206,7 +1220,7 @@ static SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
           Intrinsic::ppc_altivec_vrlb, Intrinsic::ppc_altivec_vrlh, 0,
           Intrinsic::ppc_altivec_vrlw
         };
-        return BuildIntrinsicBinOp(IIDs[SplatSize-1], Op, Op, DAG);
+        return BuildIntrinsicOp(IIDs[SplatSize-1], Op, Op, DAG);
       }
 
       // t = vsplti c, result = vsldoi t, t, 1
@@ -1558,6 +1572,34 @@ static SDOperand LowerSCALAR_TO_VECTOR(SDOperand Op, SelectionDAG &DAG) {
   return DAG.getLoad(Op.getValueType(), Store, FIdx, DAG.getSrcValue(NULL));
 }
 
+static SDOperand LowerMUL(SDOperand Op, SelectionDAG &DAG) {
+  assert(Op.getValueType() == MVT::v4i32 && "Unknown mul to lower!");
+  SDOperand LHS = Op.getOperand(0);
+  SDOperand RHS = Op.getOperand(1);
+  
+  SDOperand Zero  = BuildSplatI(  0, 1, MVT::v4i32, DAG);
+  SDOperand Neg16 = BuildSplatI(-16, 4, MVT::v4i32, DAG);  // +16 as shift amt.
+  
+  SDOperand RHSSwap =   // = vrlw RHS, 16
+    BuildIntrinsicOp(Intrinsic::ppc_altivec_vrlw, RHS, Neg16, DAG);
+  
+  // Shrinkify inputs to v8i16.
+  LHS = DAG.getNode(ISD::BIT_CONVERT, MVT::v8i16, LHS);
+  RHS = DAG.getNode(ISD::BIT_CONVERT, MVT::v8i16, RHS);
+  RHSSwap = DAG.getNode(ISD::BIT_CONVERT, MVT::v8i16, RHSSwap);
+  
+  // Low parts multiplied together, generating 32-bit results (we ignore the top
+  // parts).
+  SDOperand LoProd = BuildIntrinsicOp(Intrinsic::ppc_altivec_vmulouh,
+                                      LHS, RHS, DAG, MVT::v4i32);
+  
+  SDOperand HiProd = BuildIntrinsicOp(Intrinsic::ppc_altivec_vmsumuhm,
+                                      LHS, RHSSwap, Zero, DAG, MVT::v4i32);
+  // Shift the high parts up 16 bits.
+  HiProd = BuildIntrinsicOp(Intrinsic::ppc_altivec_vslw, HiProd, Neg16, DAG);
+  return DAG.getNode(ISD::ADD, MVT::v4i32, LoProd, HiProd);
+}
+
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
 SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
@@ -1583,6 +1625,7 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::VECTOR_SHUFFLE:     return LowerVECTOR_SHUFFLE(Op, DAG);
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
   case ISD::SCALAR_TO_VECTOR:   return LowerSCALAR_TO_VECTOR(Op, DAG);
+  case ISD::MUL:                return LowerMUL(Op, DAG);
   }
   return SDOperand();
 }
