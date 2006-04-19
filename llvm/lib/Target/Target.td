@@ -144,8 +144,8 @@ class Instruction {
   // code.
   list<Predicate> Predicates = [];
 
-  // Added cost passed onto matching pattern.
-  int AddedCost  = 0;
+  // Added complexity passed onto matching pattern.
+  int AddedComplexity  = 0;
 
   // These bits capture information about the high-level semantics of the
   // instruction.
