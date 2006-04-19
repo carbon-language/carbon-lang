@@ -362,7 +362,11 @@ endif
 # If we are building a universal binary on Mac OS/X, pass extra options.  This is
 # useful to people that want to link the LLVM libraries into their universal apps.
 ifdef UNIVERSAL
-  CompileCommonOpts += -arch i386 -arch ppc -isysroot /Developer/SDKs/MACOSX10.4u.sdk/
+  CompileCommonOpts += \
+      -arch i386 -arch ppc -isysroot /Developer/SDKs/MACOSX10.4u.sdk/
+  Relink.Flags := -XCClinker -arch -XCClinker i386 -XCClinker -arch \
+      -XCClinker ppc -XCClinker \
+      -isysroot -XCClinker /Developer/SDKs/MACOSX10.4u.sdk/
   DISABLE_AUTO_DEPENDENCIES=1
 endif
 
@@ -397,7 +401,7 @@ Preprocess.CXX= $(CXX) $(CPP.Flags) $(CompileCommonOpts) $(CXX.Flags) -E
 Link          = $(LIBTOOL) $(LibTool.Flags) --mode=link $(CXX) $(CPP.Flags) \
 	        $(CompileCommonOpts) $(LD.Flags) $(Strip)
 Relink        = $(LIBTOOL) $(LibTool.Flags) --mode=link $(CXX) $(CPP.Flags) \
-                $(CompileCommonOpts)
+                $(CompileCommonOpts) $(Relink.Flags)
 LTInstall     = $(LIBTOOL) $(LibTool.Flags) --mode=install $(INSTALL) \
 		$(Install.Flags)
 ProgInstall   = $(INSTALL) $(Install.StripFlag) -m 0755 
