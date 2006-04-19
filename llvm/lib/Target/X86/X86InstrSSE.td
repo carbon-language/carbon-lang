@@ -778,7 +778,7 @@ def MOVUPDmr : PDI<0x11, MRMDestMem, (ops f128mem:$dst, VR128:$src),
                    [(int_x86_sse2_storeu_pd addr:$dst, VR128:$src)]>;
 
 let isTwoAddress = 1 in {
-let AddedComplexity = 10 in {
+let AddedComplexity = 20 in {
 def MOVLPSrm : PSI<0x12, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
                    "movlps {$src2, $dst|$dst, $src2}",
                    [(set VR128:$dst, 
@@ -832,7 +832,7 @@ def MOVHPDmr : PDI<0x17, MRMDestMem, (ops f64mem:$dst, VR128:$src),
                      addr:$dst)]>;
 
 let isTwoAddress = 1 in {
-let AddedComplexity = 10 in {
+let AddedComplexity = 20 in {
 def MOVLHPSrr : PSI<0x16, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                     "movlhps {$src2, $dst|$dst, $src2}",
                     [(set VR128:$dst,
@@ -1245,6 +1245,7 @@ def SHUFPDrmi : PDIi8<0xC6, MRMSrcMem,
                                                VR128:$src1, (load addr:$src2),
                                                SHUFP_shuffle_mask:$src3)))]>;
 
+let AddedComplexity = 10 in {
 def UNPCKHPSrr : PSI<0x15, MRMSrcReg, 
                     (ops VR128:$dst, VR128:$src1, VR128:$src2),
                     "unpckhps {$src2, $dst|$dst, $src2}",
@@ -1294,6 +1295,7 @@ def UNPCKLPDrm : PDI<0x14, MRMSrcMem,
                     [(set VR128:$dst, (v2f64 (vector_shuffle
                                               VR128:$src1, (load addr:$src2),
                                               UNPCKL_shuffle_mask)))]>;
+} // AddedComplexity
 }
 
 // Horizontal ops
@@ -2195,6 +2197,7 @@ def MOVLSD2PDrr : SDI<0x10, MRMSrcReg, (ops VR128:$dst, VR128:$src1, FR64:$src2)
 def MOVLDI2PDIrr : PDI<0x6E, MRMSrcReg, (ops VR128:$dst, VR128:$src1, R32:$src2),
                       "movd {$src2, $dst|$dst, $src2}", []>;
 
+let AddedComplexity = 20 in {
 def MOVLPSrr : SSI<0x10, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                       "movss {$src2, $dst|$dst, $src2}",
                    [(set VR128:$dst,
@@ -2205,6 +2208,7 @@ def MOVLPDrr : SDI<0x10, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                    [(set VR128:$dst,
                      (v2f64 (vector_shuffle VR128:$src1, VR128:$src2,
                              MOVS_shuffle_mask)))]>;
+}
 }
 
 // Store / copy lower 64-bits of a XMM register.
@@ -2350,10 +2354,12 @@ def : Pat<(v16i8 (X86zexts2vec R8:$src)),
          (MOVLDI2PDIrr (V_SET0_PI), (MOVZX32rr8 R8:$src))>, Requires<[HasSSE2]>;
 
 // Splat v2f64 / v2i64
+let AddedComplexity = 10 in {
 def : Pat<(vector_shuffle (v2f64 VR128:$src), (undef), SSE_splat_v2_mask:$sm),
           (v2f64 (UNPCKLPDrr VR128:$src, VR128:$src))>,   Requires<[HasSSE2]>;
 def : Pat<(vector_shuffle (v2i64 VR128:$src), (undef), SSE_splat_v2_mask:$sm),
           (v2i64 (PUNPCKLQDQrr VR128:$src, VR128:$src))>, Requires<[HasSSE2]>;
+}
 
 // Splat v4f32
 def : Pat<(vector_shuffle (v4f32 VR128:$src), (undef), SSE_splat_mask:$sm),
@@ -2382,6 +2388,7 @@ def : Pat<(vector_shuffle (v4i32 VR128:$src1),
                   PSHUFD_binary_shuffle_mask:$sm))>, Requires<[HasSSE2]>;
 
 // vector_shuffle v1, <undef>, <0, 0, 1, 1, ...>
+let AddedComplexity = 10 in {
 def : Pat<(v4f32 (vector_shuffle VR128:$src, (undef),
                   UNPCKL_v_undef_shuffle_mask)),
           (UNPCKLPSrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
@@ -2394,7 +2401,9 @@ def : Pat<(v8i16 (vector_shuffle VR128:$src, (undef),
 def : Pat<(v4i32 (vector_shuffle VR128:$src, (undef),
                   UNPCKL_v_undef_shuffle_mask)),
           (PUNPCKLDQrr VR128:$src, VR128:$src)>, Requires<[HasSSE1]>;
+}
 
+let AddedComplexity = 20 in {
 // vector_shuffle v1, <undef> <1, 1, 3, 3>
 def : Pat<(v4i32 (vector_shuffle VR128:$src, (undef),
                   MOVSHDUP_shuffle_mask)),
@@ -2410,8 +2419,9 @@ def : Pat<(v4i32 (vector_shuffle VR128:$src, (undef),
 def : Pat<(v4i32 (vector_shuffle (bc_v4i32 (loadv2i64 addr:$src)), (undef),
                   MOVSLDUP_shuffle_mask)),
           (MOVSLDUPrm addr:$src)>, Requires<[HasSSE3]>;
+}
 
-let AddedComplexity = 10 in {
+let AddedComplexity = 20 in {
 // vector_shuffle v1, v2 <0, 1, 4, 5> using MOVLHPS
 def : Pat<(v4i32 (vector_shuffle VR128:$src1, VR128:$src2,
                   MOVHP_shuffle_mask)),
