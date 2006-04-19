@@ -138,3 +138,34 @@ _test:
         blr
 
 //===----------------------------------------------------------------------===//
+
+int foo(vector float *x, vector float *y) {
+        if (vec_all_eq(*x,*y)) return 3245; 
+        else return 12;
+}
+
+A predicate compare being used in a select_cc should have the same peephole
+applied to it as a predicate compare used by a br_cc.  There should be no
+mfcr here:
+
+_foo:
+        mfspr r2, 256
+        oris r5, r2, 12288
+        mtspr 256, r5
+        li r5, 12
+        li r6, 3245
+        lvx v2, 0, r4
+        lvx v3, 0, r3
+        vcmpeqfp. v2, v3, v2
+        mfcr r3, 2
+        rlwinm r3, r3, 25, 31, 31
+        cmpwi cr0, r3, 0
+        bne cr0, LBB1_2 ; entry
+LBB1_1: ; entry
+        mr r6, r5
+LBB1_2: ; entry
+        mr r3, r6
+        mtspr 256, r2
+        blr
+
+//===----------------------------------------------------------------------===//
