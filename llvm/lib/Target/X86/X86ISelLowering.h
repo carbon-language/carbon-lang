@@ -204,10 +204,6 @@ namespace llvm {
    /// specifies a shuffle of elements that is suitable for input to SHUFP*.
    bool isSHUFPMask(SDNode *N);
 
-   /// isMOVLHPSMask - Return true if the specified VECTOR_SHUFFLE operand
-   /// specifies a shuffle of elements that is suitable for input to MOVHLPS.
-   bool isMOVLHPSMask(SDNode *N);
-
    /// isMOVHLPSMask - Return true if the specified VECTOR_SHUFFLE operand
    /// specifies a shuffle of elements that is suitable for input to MOVHLPS.
    bool isMOVHLPSMask(SDNode *N);
@@ -217,7 +213,8 @@ namespace llvm {
    bool isMOVLPMask(SDNode *N);
 
    /// isMOVHPMask - Return true if the specified VECTOR_SHUFFLE operand
-   /// specifies a shuffle of elements that is suitable for input to MOVHP{S|D}.
+   /// specifies a shuffle of elements that is suitable for input to MOVHP{S|D}
+   /// as well as MOVLHPS.
    bool isMOVHPMask(SDNode *N);
 
    /// isUNPCKLMask - Return true if the specified VECTOR_SHUFFLE operand

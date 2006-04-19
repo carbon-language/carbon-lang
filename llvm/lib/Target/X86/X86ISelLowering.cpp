@@ -1555,21 +1555,6 @@ bool X86::isMOVHLPSMask(SDNode *N) {
          isUndefOrEqual(N->getOperand(3), 3);
 }
 
-/// isMOVLHPSMask - Return true if the specified VECTOR_SHUFFLE operand
-/// specifies a shuffle of elements that is suitable for input to MOVHLPS.
-bool X86::isMOVLHPSMask(SDNode *N) {
-  assert(N->getOpcode() == ISD::BUILD_VECTOR);
-
-  if (N->getNumOperands() != 4)
-    return false;
-
-  // Expect bit0 == 0, bit1 == 1, bit2 == 4, bit3 == 5
-  return isUndefOrEqual(N->getOperand(0), 0) &&
-         isUndefOrEqual(N->getOperand(1), 1) &&
-         isUndefOrEqual(N->getOperand(2), 4) &&
-         isUndefOrEqual(N->getOperand(3), 5);
-}
-
 /// isMOVLPMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to MOVLP{S|D}.
 bool X86::isMOVLPMask(SDNode *N) {
@@ -1591,7 +1576,8 @@ bool X86::isMOVLPMask(SDNode *N) {
 }
 
 /// isMOVHPMask - Return true if the specified VECTOR_SHUFFLE operand
-/// specifies a shuffle of elements that is suitable for input to MOVHP{S|D}.
+/// specifies a shuffle of elements that is suitable for input to MOVHP{S|D}
+/// and MOVLHPS.
 bool X86::isMOVHPMask(SDNode *N) {
   assert(N->getOpcode() == ISD::BUILD_VECTOR);
 
@@ -1909,35 +1895,52 @@ static SDOperand CommuteVectorShuffle(SDOperand Op, SelectionDAG &DAG) {
   return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V2, V1, Mask);
 }
 
+/// ShouldXformToMOVHLPS - Return true if the node should be transformed to
+/// match movhlps. The lower half elements should come from upper half of
+/// V1 (and in order), and the upper half elements should come from the upper
+/// half of V2 (and in order). 
+static bool ShouldXformToMOVHLPS(SDNode *Mask) {
+  unsigned NumElems = Mask->getNumOperands();
+  if (NumElems != 4)
+    return false;
+  for (unsigned i = 0, e = 2; i != e; ++i)
+    if (!isUndefOrEqual(Mask->getOperand(i), i+2))
+      return false;
+  for (unsigned i = 2; i != 4; ++i)
+    if (!isUndefOrEqual(Mask->getOperand(i), i+4))
+      return false;
+  return true;
+}
+
 /// isScalarLoadToVector - Returns true if the node is a scalar load that
 /// is promoted to a vector.
-static inline bool isScalarLoadToVector(SDOperand Op) {
-  if (Op.getOpcode() == ISD::SCALAR_TO_VECTOR) {
-    Op = Op.getOperand(0);
-    return (Op.getOpcode() == ISD::LOAD);
+static inline bool isScalarLoadToVector(SDNode *N) {
+  if (N->getOpcode() == ISD::SCALAR_TO_VECTOR) {
+    N = N->getOperand(0).Val;
+    return (N->getOpcode() == ISD::LOAD);
   }
   return false;
 }
 
-/// ShouldXformedToMOVLP - Return true if the node should be transformed to
-/// match movlp{d|s}. The lower half elements should come from V1 (and in
-/// order), and the upper half elements should come from the upper half of
-/// V2 (not necessarily in order). And since V1 will become the source of
-/// the MOVLP, it must be a scalar load.
-static bool ShouldXformedToMOVLP(SDOperand V1, SDOperand V2, SDOperand Mask) {
-  if (isScalarLoadToVector(V1)) {
-    unsigned NumElems = Mask.getNumOperands();
-    for (unsigned i = 0, e = NumElems/2; i != e; ++i)
-      if (!isUndefOrEqual(Mask.getOperand(i), i))
-        return false;
-    for (unsigned i = NumElems/2; i != NumElems; ++i)
-      if (!isUndefOrInRange(Mask.getOperand(i),
-                            NumElems+NumElems/2, NumElems*2))
-        return false;
-    return true;
-  }
+/// ShouldXformToMOVLP{S|D} - Return true if the node should be transformed to
+/// match movlp{s|d}. The lower half elements should come from lower half of
+/// V1 (and in order), and the upper half elements should come from the upper
+/// half of V2 (and in order). And since V1 will become the source of the
+/// MOVLP, it must be either a vector load or a scalar load to vector.
+static bool ShouldXformToMOVLP(SDNode *V1, SDNode *Mask) {
+  if (V1->getOpcode() != ISD::LOAD && !isScalarLoadToVector(V1))
+    return false;
 
-  return false;
+  unsigned NumElems = Mask->getNumOperands();
+  if (NumElems != 2 && NumElems != 4)
+    return false;
+  for (unsigned i = 0, e = NumElems/2; i != e; ++i)
+    if (!isUndefOrEqual(Mask->getOperand(i), i))
+      return false;
+  for (unsigned i = NumElems/2; i != NumElems; ++i)
+    if (!isUndefOrEqual(Mask->getOperand(i), i+NumElems))
+      return false;
+  return true;
 }
 
 /// isLowerFromV2UpperFromV1 - Returns true if the shuffle mask is except
@@ -2806,29 +2809,16 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       return PromoteSplat(Op, DAG);
     }
 
-    // Normalize the node to match x86 shuffle ops if needed
-    if (V2.getOpcode() != ISD::UNDEF) {
-      bool DoSwap = false;
-
-      if (ShouldXformedToMOVLP(V1, V2, PermMask))
-        DoSwap = true;
-      else if (isLowerFromV2UpperFromV1(PermMask))
-        DoSwap = true;
-
-      if (DoSwap) {
-        Op = CommuteVectorShuffle(Op, DAG);
-        V1 = Op.getOperand(0);
-        V2 = Op.getOperand(1);
-        PermMask = Op.getOperand(2);
-      }
-    }
-
-    if (NumElems == 2)
-      return Op;
+    if (ShouldXformToMOVHLPS(PermMask.Val) ||
+        ShouldXformToMOVLP(V1.Val, PermMask.Val))
+      return CommuteVectorShuffle(Op, DAG);
 
     if (X86::isMOVSMask(PermMask.Val) ||
         X86::isMOVSHDUPMask(PermMask.Val) ||
-        X86::isMOVSLDUPMask(PermMask.Val))
+        X86::isMOVSLDUPMask(PermMask.Val) ||
+        X86::isMOVHLPSMask(PermMask.Val) ||
+        X86::isMOVHPMask(PermMask.Val) ||
+        X86::isMOVLPMask(PermMask.Val))
       return Op;
 
     if (X86::isUNPCKLMask(PermMask.Val) ||
@@ -2836,6 +2826,15 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
         X86::isUNPCKHMask(PermMask.Val))
       // Leave the VECTOR_SHUFFLE alone. It matches {P}UNPCKL*.
       return Op;
+
+    // Normalize the node to match x86 shuffle ops if needed
+    if (V2.getOpcode() != ISD::UNDEF)
+      if (isLowerFromV2UpperFromV1(PermMask)) {
+        Op = CommuteVectorShuffle(Op, DAG);
+        V1 = Op.getOperand(0);
+        V2 = Op.getOperand(1);
+        PermMask = Op.getOperand(2);
+      }
 
     // If VT is integer, try PSHUF* first, then SHUFP*.
     if (MVT::isInteger(VT)) {
