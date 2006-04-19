@@ -636,6 +636,13 @@ void GraphBuilder::visitCallSite(CallSite CS) {
                 N->setReadMarker();
           }
           return;
+        } else if (F->getName() == "memchr") {
+          DSNodeHandle RetNH = getValueDest(**CS.arg_begin());
+          DSNodeHandle Result = getValueDest(*CS.getInstruction());
+          RetNH.mergeWith(Result);
+          if (DSNode *N = RetNH.getNode())
+            N->setReadMarker();
+          return;
         } else if (F->getName() == "read" || F->getName() == "pipe" ||
                    F->getName() == "wait" || F->getName() == "time") {
           // These functions write all of their pointer operands.
