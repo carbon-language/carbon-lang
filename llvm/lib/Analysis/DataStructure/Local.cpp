@@ -591,8 +591,9 @@ void GraphBuilder::visitCallSite(CallSite CS) {
           }
         }
 
-        if (F->getName() == "calloc" || F->getName() == "posix_memalign" ||
-            F->getName() == "memalign" || F->getName() == "valloc") {
+        if ((F->isExternal() && F->getName() == "calloc") 
+            || F->getName() == "posix_memalign"
+            || F->getName() == "memalign" || F->getName() == "valloc") {
           setDestTo(*CS.getInstruction(),
                     createNode()->setHeapNodeMarker()->setModifiedMarker());
           return;
@@ -611,7 +612,10 @@ void GraphBuilder::visitCallSite(CallSite CS) {
           if (DSNode *N = RetNH.getNode())
             N->setModifiedMarker()->setReadMarker();
           return;
-
+        } else if (F->getName() == "free") {
+          // Mark that the node is written to...
+          if (DSNode *N = getValueDest(**CS.arg_begin()).getNode())
+            N->setModifiedMarker()->setHeapNodeMarker();
         } else if (F->getName() == "atoi" || F->getName() == "atof" ||
                    F->getName() == "atol" || F->getName() == "atoll" ||
                    F->getName() == "remove" || F->getName() == "unlink" ||
