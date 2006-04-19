@@ -1753,17 +1753,29 @@ static bool isSplatMask(SDNode *N) {
 
   // This is a splat operation if each element of the permute is the same, and
   // if the value doesn't reference the second vector.
-  SDOperand Elt = N->getOperand(0);
-  assert(isa<ConstantSDNode>(Elt) && "Invalid VECTOR_SHUFFLE mask!");
-  for (unsigned i = 1, e = N->getNumOperands(); i != e; ++i) {
+  unsigned NumElems = N->getNumOperands();
+  SDOperand ElementBase;
+  unsigned i = 0;
+  for (; i != NumElems; ++i) {
+    SDOperand Elt = N->getOperand(i);
+    if (ConstantSDNode *EltV = dyn_cast<ConstantSDNode>(Elt)) {
+      ElementBase = Elt;
+      break;
+    }
+  }
+
+  if (!ElementBase.Val)
+    return false;
+
+  for (; i != NumElems; ++i) {
     SDOperand Arg = N->getOperand(i);
     if (Arg.getOpcode() == ISD::UNDEF) continue;
     assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
-    if (Arg != Elt) return false;
+    if (Arg != ElementBase) return false;
   }
 
   // Make sure it is a splat of the first vector operand.
-  return cast<ConstantSDNode>(Elt)->getValue() < N->getNumOperands();
+  return cast<ConstantSDNode>(ElementBase)->getValue() < NumElems;
 }
 
 /// isSplatMask - Return true if the specified VECTOR_SHUFFLE operand specifies
@@ -1771,7 +1783,7 @@ static bool isSplatMask(SDNode *N) {
 bool X86::isSplatMask(SDNode *N) {
   assert(N->getOpcode() == ISD::BUILD_VECTOR);
 
-  // We can only splat 64-bit, and 32-bit quantities.
+  // We can only splat 64-bit, and 32-bit quantities with a single instruction.
   if (N->getNumOperands() != 4 && N->getNumOperands() != 2)
     return false;
   return ::isSplatMask(N);
