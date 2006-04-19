@@ -782,12 +782,13 @@ def MOVUPDmr : PDI<0x11, MRMDestMem, (ops f128mem:$dst, VR128:$src),
                    [(int_x86_sse2_storeu_pd addr:$dst, VR128:$src)]>;
 
 let isTwoAddress = 1 in {
+let AddedCost = 10 in {
 def MOVLPSrm : PSI<0x12, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
                    "movlps {$src2, $dst|$dst, $src2}",
                    [(set VR128:$dst, 
                      (v4f32 (vector_shuffle VR128:$src1,
                      (bc_v4f32 (v2f64 (scalar_to_vector (loadf64 addr:$src2)))),
-                             MOVLP_shuffle_mask)))]>;
+                             MOVLP_shuffle_mask)))]>, Cost<20>;
 def MOVLPDrm : PDI<0x12, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
                    "movlpd {$src2, $dst|$dst, $src2}",
                    [(set VR128:$dst, 
@@ -799,13 +800,14 @@ def MOVHPSrm : PSI<0x16, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
                    [(set VR128:$dst, 
                      (v4f32 (vector_shuffle VR128:$src1,
                      (bc_v4f32 (v2f64 (scalar_to_vector (loadf64 addr:$src2)))),
-                             MOVHP_shuffle_mask)))]>;
+                             MOVHP_shuffle_mask)))]>, Cost<20>;
 def MOVHPDrm : PDI<0x16, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
                    "movhpd {$src2, $dst|$dst, $src2}",
                    [(set VR128:$dst, 
                      (v2f64 (vector_shuffle VR128:$src1,
                              (scalar_to_vector (loadf64 addr:$src2)),
                              MOVHP_shuffle_mask)))]>;
+} // AddedCost
 }
 
 def MOVLPSmr : PSI<0x13, MRMDestMem, (ops f64mem:$dst, VR128:$src),
@@ -834,6 +836,7 @@ def MOVHPDmr : PDI<0x17, MRMDestMem, (ops f64mem:$dst, VR128:$src),
                      addr:$dst)]>;
 
 let isTwoAddress = 1 in {
+let AddedCost = 10 in {
 def MOVLHPSrr : PSI<0x16, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                     "movlhps {$src2, $dst|$dst, $src2}",
                     [(set VR128:$dst,
@@ -845,6 +848,7 @@ def MOVHLPSrr : PSI<0x12, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                     [(set VR128:$dst,
                       (v4f32 (vector_shuffle VR128:$src1, VR128:$src2,
                               MOVHLPS_shuffle_mask)))]>;
+} // AddedCost
 }
 
 def MOVSHDUPrr : S3SI<0x16, MRMSrcReg, (ops VR128:$dst, VR128:$src),
@@ -2349,6 +2353,22 @@ def : Pat<(v8i16 (X86zexts2vec R16:$src)),
 def : Pat<(v16i8 (X86zexts2vec R8:$src)),
          (MOVLDI2PDIrr (V_SET0_PI), (MOVZX32rr8 R8:$src))>, Requires<[HasSSE2]>;
 
+// MOVLP{S|D}rm / MOVHP{S|D}rm.
+let AddedCost = 10 in {
+def : Pat<(v4f32 (vector_shuffle VR128:$src1, (loadv4f32 addr:$src2),
+                  MOVLP_shuffle_mask)),
+          (MOVLPSrm VR128:$src1, addr:$src2)>, Requires<[HasSSE1]>;
+def : Pat<(v2f64 (vector_shuffle VR128:$src1, (loadv2f64 addr:$src2),
+                  MOVLP_shuffle_mask)),
+          (MOVLPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
+def : Pat<(v4f32 (vector_shuffle VR128:$src1, (loadv4f32 addr:$src2),
+                  MOVHP_shuffle_mask)),
+          (MOVHPSrm VR128:$src1, addr:$src2)>, Requires<[HasSSE1]>;
+def : Pat<(v2f64 (vector_shuffle VR128:$src1, (loadv2f64 addr:$src2),
+                  MOVHP_shuffle_mask)),
+          (MOVHPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
+}
+
 // Splat v2f64 / v2i64
 def : Pat<(vector_shuffle (v2f64 VR128:$src), (undef), SSE_splat_v2_mask:$sm),
           (v2f64 (UNPCKLPDrr VR128:$src, VR128:$src))>,   Requires<[HasSSE2]>;
@@ -2415,6 +2435,9 @@ def : Pat<(v4i32 (vector_shuffle (bc_v4i32 (loadv2i64 addr:$src)), (undef),
 def : Pat<(v4i32 (vector_shuffle VR128:$src1, VR128:$src2,
                   MOVS_shuffle_mask)),
           (MOVLPSrr VR128:$src1, VR128:$src2)>;
+def : Pat<(v2i64 (vector_shuffle VR128:$src1, VR128:$src2,
+                  MOVS_shuffle_mask)),
+          (MOVLPDrr VR128:$src1, VR128:$src2)>;
 
 // 128-bit logical shifts
 def : Pat<(int_x86_sse2_psll_dq VR128:$src1, imm:$src2),
