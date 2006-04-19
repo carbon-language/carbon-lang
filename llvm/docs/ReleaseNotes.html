@@ -87,7 +87,8 @@ bug</a>.  In addition, llvm-gcc4 implements support for many new features,
 including GCC inline assembly, generic vector support, SSE and Altivec
 intrinsics, and several new GCC attributes.  In addition, llvm-gcc4 is 
 significantly faster than llvm-gcc3, respects -O options, its -c/-S options
-correspond to GCC's (they emit native code).</p>
+correspond to GCC's (they emit native code), and it has debugging support well
+underway.</p>
 
 <p>If you can use it, llvm-gcc4 is offers significant new functionality, and we
 hope that it will replace llvm-gcc3 completely in a future release.  
@@ -172,7 +173,7 @@ are used.
 </div>
 
 <!--_________________________________________________________________________-->
-<div class="doc_subsubsection"><a name="othernew">Optimizer 
+<div class="doc_subsubsection"><a name="optimizernew">Optimizer 
 Improvements</a></div>
 
 <div class="doc_text">
@@ -187,23 +188,56 @@ Improvements</a></div>
     bits are demanded or not.</li>
 <li>The Scalar Replacement of Aggregates pass (<tt>-scalarrepl</tt>) can now
     promote simple unions to registers.</li>
+<li>The Reassociation pass (<tt>-reassociate</tt>) can now
+    factor expressions, e.g. turning "A*A+A*B" into "A*(A+B)".</li>
 <li>Several LLVM passes are <a href="http://llvm.org/PR681">significantly
 faster</a>.</li>
 </ul>
 </div>
 
+<!--_________________________________________________________________________-->
+<div class="doc_subsubsection"><a name="codgennew">Code Generator 
+Improvements</a></div>
+
+<div class="doc_text">
+<ul>
+<li>LLVM has a new prepass (before register allocation) list scheduler, which
+    supports bottom-up and top-down scheduling, pluggable priority functions and
+    pluggable hazard recognizers.  The X86 backend uses this to reduce register
+    pressure and RISC targets schedule based on operation latency.</li>
+<li>The tblgen-based target description framework introduced in LLVM 1.6 has
+    several new features, useful for targets that can fold loads and stores into
+    operations, and features that make the .td files more expressive.</li>
+<li>The instruction selector is significantly faster in 1.7 than in 1.6.</li>
+<li>The X86, Alpha and Itanium backends use new DAG-DAG instruction selectors,
+    making them easier to maintain and generate slightly better code.</li>
+<li>The X86 backend now supports generation of Scalar SSE code for scalar FP
+    expressions.  LLVM provides significantly better performance with Scalar SSE
+    instructions than it does with the Intel floating point stack 
+    instructions.</li>
+<li>The Itanium backend now has a bundling pass, which improves performance
+    by ~10% and reduces code size (previously it unconditionally inserted a stop
+    bit after every instruction).</li>
+</ul>
+</div>
 
 <!--_________________________________________________________________________-->
 <div class="doc_subsubsection"><a name="othernew">Other New Features</a></div>
 
 <div class="doc_text">
 <ul>
+<li>The Mac OS/X PowerPC and X86 backends now have initial support Darwin DWARF
+    debugging information, however, debug info generation has been disabled for
+    the 1.7 release in llvmgcc4.</li>
+<li>LLVM includes the new <a href="docs/CommandGuide/html/llvm-config.html">
+    llvm-config</a> utility, which makes it easier to build and link programs
+    against the LLVM libraries when not using the LLVM makefiles.</li>
 <li>LLVM now supports first class global ctor/dtor initialization lists, no
     longer forcing targets to use "__main".</li>
 <li>LLVM supports assigning globals and functions to a particular section
     in the result executable using the GCC section attribute.</li>
 <li><a href="ExtendingLLVM.html">Adding intrinsics to LLVM</a> is now
-significantly easier.</li>
+     significantly easier.</li>
 <li>llvmgcc4 now fully supports C99 Variable Length Arrays, including dynamic
     stack deallocation.</li>
 
@@ -218,6 +252,8 @@ significantly easier.</li>
 
 <div class="doc_text">
 <ul>
+<li>The official LLVM URL is now <a href="http://llvm.org/">
+    http://llvm.org/</a>.</li>
 <li>The LLVM intrinsics used to be overloaded based on type: for example,
     <a href="LangRef.html#int_ctpop"><tt>llvm.ctpop</tt></a> could work with any
     integer datatype.  They are now separated into different intrinsics with
