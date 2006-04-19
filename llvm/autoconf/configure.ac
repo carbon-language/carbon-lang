@@ -112,6 +112,9 @@ AC_CACHE_CHECK([type of operating system we're on],
   *-*-freebsd*) 
     llvm_cv_os_type="FreeBSD" 
     llvm_cv_platform_type="Unix" ;;
+  *-*-openbsd*) 
+    llvm_cv_os_type="OpenBSD" 
+    llvm_cv_platform_type="Unix" ;;
   *-*-hpux*) 
     llvm_cv_os_type="HP-UX" 
     llvm_cv_platform_type="Unix" ;;
