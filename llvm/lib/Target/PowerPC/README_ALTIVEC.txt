@@ -108,3 +108,33 @@ vcmpeqfp. result is used by a branch.  This can be improved.
 
 //===----------------------------------------------------------------------===//
 
+The code generated for this is truly aweful:
+
+vector float test(float a, float b) {
+ return (vector float){ 0.0, a, 0.0, 0.0}; 
+}
+
+LCPI1_0:                                        ;  float
+        .space  4
+        .text
+        .globl  _test
+        .align  4
+_test:
+        mfspr r2, 256
+        oris r3, r2, 4096
+        mtspr 256, r3
+        lis r3, ha16(LCPI1_0)
+        addi r4, r1, -32
+        stfs f1, -16(r1)
+        addi r5, r1, -16
+        lfs f0, lo16(LCPI1_0)(r3)
+        stfs f0, -32(r1)
+        lvx v2, 0, r4
+        lvx v3, 0, r5
+        vmrghw v3, v3, v2
+        vspltw v2, v2, 0
+        vmrghw v2, v2, v3
+        mtspr 256, r2
+        blr
+
+//===----------------------------------------------------------------------===//
