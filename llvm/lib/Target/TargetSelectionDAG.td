@@ -313,7 +313,7 @@ def scalar_to_vector : SDNode<"ISD::SCALAR_TO_VECTOR", SDTypeProfile<1, 1, []>,
 def vector_extract : SDNode<"ISD::EXTRACT_VECTOR_ELT",
     SDTypeProfile<1, 2, []>, []>;
 def vector_insert : SDNode<"ISD::INSERT_VECTOR_ELT",
-    SDTypeProfile<1, 3, []>, []>;
+    SDTypeProfile<1, 3, [SDTCisSameAs<0, 1>]>, []>;
 
 // Nodes for intrinsics, you should use the intrinsic itself and let tblgen use
 // these internally.  Don't reference these directly.
@@ -473,6 +473,7 @@ class Pattern<dag patternToMatch, list<dag> resultInstrs> {
   dag             PatternToMatch = patternToMatch;
   list<dag>       ResultInstrs   = resultInstrs;
   list<Predicate> Predicates     = [];  // See class Instruction in Target.td.
+  int             AddedCost      = 0;   // See class Instruction in Target.td.
 }
 
 // Pat - A simple (but common) form of a pattern, which produces a simple result

@@ -144,6 +144,9 @@ class Instruction {
   // code.
   list<Predicate> Predicates = [];
 
+  // Added cost passed onto matching pattern.
+  int AddedCost  = 0;
+
   // These bits capture information about the high-level semantics of the
   // instruction.
   bit isReturn     = 0;     // Is this instruction a return instruction?
