@@ -996,3 +996,61 @@ be able eliminate one of the movaps:
 	movaps %xmm3, %xmm2
 	movaps %xmm4, %xmm3
 	jne LBB_main_4	# cond_true44
+
+//===---------------------------------------------------------------------===//
+
+Use the 0's in the top part of movss from memory (and from other instructions
+that generate them) to build vectors more efficiently.  Consider:
+
+vector float test(float a) {
+ return (vector float){ 0.0, a, 0.0, 0.0}; 
+}
+
+We currently generate this as:
+
+_test:
+        sub %ESP, 28
+        movss %XMM0, DWORD PTR [%ESP + 32]
+        movss DWORD PTR [%ESP + 4], %XMM0
+        mov DWORD PTR [%ESP + 12], 0
+        mov DWORD PTR [%ESP + 8], 0
+        mov DWORD PTR [%ESP], 0
+        movaps %XMM0, XMMWORD PTR [%ESP]
+        add %ESP, 28
+        ret
+
+Something like this should be sufficient:
+
+_test:
+	movss %XMM0, DWORD PTR [%ESP + 4]
+	shufps %XMM0, %XMM0, 81
+	ret
+
+... which takes advantage of the zero elements provided by movss.
+Even xoring a register and shufps'ing IT would be better than the
+above code.
+
+Likewise, for this:
+
+vector float test(float a, float b) {
+ return (vector float){ b, a, 0.0, 0.0}; 
+}
+
+_test:
+        pxor %XMM0, %XMM0
+        movss %XMM1, %XMM0
+        movss %XMM2, DWORD PTR [%ESP + 4]
+        unpcklps %XMM2, %XMM1
+        movss %XMM0, DWORD PTR [%ESP + 8]
+        unpcklps %XMM0, %XMM1
+        unpcklps %XMM0, %XMM2
+        ret
+
+... where we do use pxor, it would be better to use the zero'd 
+elements that movss provides to turn this into 2 shufps's instead
+of 3 unpcklps's.
+
+Another example: {0.0, 0.0, a, b }
+
+//===---------------------------------------------------------------------===//
+
