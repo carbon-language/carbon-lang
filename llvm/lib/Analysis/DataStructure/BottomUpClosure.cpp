@@ -140,7 +140,7 @@ bool BUDataStructures::runOnModule(Module &M) {
     if (!I->isExternal() && !DSInfo.count(I)) {
 #ifndef NDEBUG
       if (MainFunc)
-        std::cerr << "*** Function unreachable from main: "
+        std::cerr << "*** BU: Function unreachable from main: "
                   << I->getName() << "\n";
 #endif
       calculateGraphs(I, Stack, NextID, ValMap);     // Calculate all graphs.
