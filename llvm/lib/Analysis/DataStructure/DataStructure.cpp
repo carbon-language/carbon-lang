@@ -532,6 +532,30 @@ bool DSNode::mergeTypeInfo(const Type *NewTy, unsigned Offset,
         return mergeTypeInfo(STy, 0);
       }
 
+      //Ty: struct { t1, t2, t3 ... tn}
+      //NewTy T offset x
+      //try merge with NewTy: struct : {t1, t2, T} if offset lands on a field in Ty
+      if (isa<StructType>(Ty)) {
+        DEBUG(std::cerr << "Ty: " << *Ty << "\nNewTy: " << *NewTy << "@" << Offset << "\n");
+        unsigned O = 0;
+        const StructType *STy = cast<StructType>(Ty);
+        const StructLayout &SL = *TD.getStructLayout(STy);
+        unsigned i = SL.getElementContainingOffset(Offset);
+        //Either we hit it exactly or give up
+        if (SL.MemberOffsets[i] != Offset) {
+          if (FoldIfIncompatible) foldNodeCompletely();
+          return true;
+        }
+        std::vector<const Type*> nt;
+        for (unsigned x = 0; x < i; ++x)
+          nt.push_back(STy->getElementType(x));
+        nt.push_back(NewTy);
+        //and merge
+        STy = StructType::get(nt);
+        DEBUG(std::cerr << "Trying with: " << *STy << "\n");
+        return mergeTypeInfo(STy, 0);
+      }
+
       std::cerr << "UNIMP: Trying to merge a growth type into "
                 << "offset != 0: Collapsing!\n";
       abort();
