@@ -3430,11 +3430,7 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
   
   for (unsigned i = 1; i < NumElems; ++i) {
     SDOperand V = Node->getOperand(i);
-    std::map<SDOperand, std::vector<unsigned> >::iterator I = Values.find(V);
-    if (I != Values.end())
-      I->second.push_back(i);
-    else
-      Values[V].push_back(i);
+    Values[V].push_back(i);
     if (V.getOpcode() != ISD::UNDEF)
       isOnlyLowElement = false;
     if (SplatValue != V)
