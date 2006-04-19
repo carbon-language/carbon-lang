@@ -1505,7 +1505,7 @@ void DAGISelEmitter::ParseInstructions() {
     PatternsToMatch.
       push_back(PatternToMatch(Instr->getValueAsListInit("Predicates"),
                                SrcPattern, DstPattern,
-                               Instr->getValueAsInt("AddedCost")));
+                               Instr->getValueAsInt("AddedComplexity")));
   }
 }
 
@@ -1582,7 +1582,7 @@ void DAGISelEmitter::ParsePatterns() {
       push_back(PatternToMatch(Patterns[i]->getValueAsListInit("Predicates"),
                                Pattern->getOnlyTree(),
                                Temp.getOnlyTree(),
-                               Patterns[i]->getValueAsInt("AddedCost")));
+                               Patterns[i]->getValueAsInt("AddedComplexity")));
   }
 }
 
@@ -1826,7 +1826,7 @@ void DAGISelEmitter::GenerateVariants() {
       PatternsToMatch.
         push_back(PatternToMatch(PatternsToMatch[i].getPredicates(),
                                  Variant, PatternsToMatch[i].getDstPattern(),
-                                 PatternsToMatch[i].getAddedCost()));
+                                 PatternsToMatch[i].getAddedComplexity()));
     }
 
     DEBUG(std::cerr << "\n");
@@ -1936,8 +1936,8 @@ struct PatternSortingPredicate {
                   PatternToMatch *RHS) {
     unsigned LHSSize = getPatternSize(LHS->getSrcPattern(), ISE);
     unsigned RHSSize = getPatternSize(RHS->getSrcPattern(), ISE);
-    LHSSize += LHS->getAddedCost();
-    RHSSize += RHS->getAddedCost();
+    LHSSize += LHS->getAddedComplexity();
+    RHSSize += RHS->getAddedComplexity();
     if (LHSSize > RHSSize) return true;   // LHS -> bigger -> less cost
     if (LHSSize < RHSSize) return false;
     
@@ -2946,9 +2946,9 @@ void DAGISelEmitter::EmitPatterns(std::vector<std::pair<PatternToMatch*,
       OS << "\n" << std::string(Indent, ' ') << "// Emits: ";
       Pattern.getDstPattern()->print(OS);
       OS << "\n";
-      unsigned AddedCost = Pattern.getAddedCost();
+      unsigned AddedComplexity = Pattern.getAddedComplexity();
       OS << std::string(Indent, ' ') << "// Pattern complexity = "
-         << getPatternSize(Pattern.getSrcPattern(), *this) + AddedCost
+         << getPatternSize(Pattern.getSrcPattern(), *this) + AddedComplexity
          << "  cost = "
          << getResultPatternCost(Pattern.getDstPattern(), *this) << "\n";
     }
@@ -2969,9 +2969,9 @@ void DAGISelEmitter::EmitPatterns(std::vector<std::pair<PatternToMatch*,
       OS << "\n" << std::string(Indent, ' ') << "// Emits: ";
       Pattern.getDstPattern()->print(OS);
       OS << "\n";
-      unsigned AddedCost = Pattern.getAddedCost();
+      unsigned AddedComplexity = Pattern.getAddedComplexity();
       OS << std::string(Indent, ' ') << "// Pattern complexity = "
-         << getPatternSize(Pattern.getSrcPattern(), *this) + AddedCost
+         << getPatternSize(Pattern.getSrcPattern(), *this) + AddedComplexity
          << "  cost = "
          << getResultPatternCost(Pattern.getDstPattern(), *this) << "\n";
     }
