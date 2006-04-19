@@ -1882,7 +1882,10 @@ static SDOperand CommuteVectorShuffle(SDOperand Op, SelectionDAG &DAG) {
 
   for (unsigned i = 0; i != NumElems; ++i) {
     SDOperand Arg = Mask.getOperand(i);
-    if (Arg.getOpcode() == ISD::UNDEF) continue;
+    if (Arg.getOpcode() == ISD::UNDEF) {
+      MaskVec.push_back(DAG.getNode(ISD::UNDEF, EltVT));
+      continue;
+    }
     assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
     unsigned Val = cast<ConstantSDNode>(Arg)->getValue();
     if (Val < NumElems)
@@ -2883,6 +2886,55 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       }
     }
 
+    if (NumElems == 4) {
+      // Break it into (shuffle shuffle_hi, shuffle_lo).
+      MVT::ValueType MaskVT = PermMask.getValueType();
+      MVT::ValueType MaskEVT = MVT::getVectorBaseType(MaskVT);
+      std::map<unsigned, std::pair<int, int> > Locs;
+      std::vector<SDOperand> LoMask(NumElems, DAG.getNode(ISD::UNDEF, MaskEVT));
+      std::vector<SDOperand> HiMask(NumElems, DAG.getNode(ISD::UNDEF, MaskEVT));
+      std::vector<SDOperand> *MaskPtr = &LoMask;
+      unsigned MaskIdx = 0;
+      unsigned LoIdx = 0;
+      unsigned HiIdx = NumElems/2;
+      for (unsigned i = 0; i != NumElems; ++i) {
+        if (i == NumElems/2) {
+          MaskPtr = &HiMask;
+          MaskIdx = 1;
+          LoIdx = 0;
+          HiIdx = NumElems/2;
+        }
+        SDOperand Elt = PermMask.getOperand(i);
+        if (Elt.getOpcode() == ISD::UNDEF) {
+          Locs[i] = std::make_pair(-1, -1);
+        } else if (cast<ConstantSDNode>(Elt)->getValue() < NumElems) {
+          Locs[i] = std::make_pair(MaskIdx, LoIdx);
+          (*MaskPtr)[LoIdx] = Elt;
+          LoIdx++;
+        } else {
+          Locs[i] = std::make_pair(MaskIdx, HiIdx);
+          (*MaskPtr)[HiIdx] = Elt;
+          HiIdx++;
+        }
+      }
+
+      SDOperand LoShuffle = DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2,
+                                DAG.getNode(ISD::BUILD_VECTOR, MaskVT, LoMask));
+      SDOperand HiShuffle = DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2,
+                                DAG.getNode(ISD::BUILD_VECTOR, MaskVT, HiMask));
+      std::vector<SDOperand> MaskOps;
+      for (unsigned i = 0; i != NumElems; ++i) {
+        if (Locs[i].first == -1) {
+          MaskOps.push_back(DAG.getNode(ISD::UNDEF, MaskEVT));
+        } else {
+          unsigned Idx = Locs[i].first * NumElems + Locs[i].second;
+          MaskOps.push_back(DAG.getConstant(Idx, MaskEVT));
+        }
+      }
+      return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, LoShuffle, HiShuffle,
+                         DAG.getNode(ISD::BUILD_VECTOR, MaskVT, MaskOps));
+    }
+
     return SDOperand();
   }
   case ISD::BUILD_VECTOR: {
@@ -3286,14 +3338,9 @@ bool
 X86TargetLowering::isShuffleMaskLegal(SDOperand Mask, MVT::ValueType VT) const {
   // Only do shuffles on 128-bit vector types for now.
   if (MVT::getSizeInBits(VT) == 64) return false;
-  return (Mask.Val->getNumOperands() == 2 ||
+  return (Mask.Val->getNumOperands() <= 4 ||
           isSplatMask(Mask.Val)  ||
-          X86::isMOVSMask(Mask.Val)   ||
-          X86::isMOVSHDUPMask(Mask.Val) ||
-          X86::isMOVSLDUPMask(Mask.Val) ||
-          X86::isPSHUFDMask(Mask.Val) ||
           isPSHUFHW_PSHUFLWMask(Mask.Val) ||
-          X86::isSHUFPMask(Mask.Val)  ||
           X86::isUNPCKLMask(Mask.Val) ||
           X86::isUNPCKL_v_undef_Mask(Mask.Val) ||
           X86::isUNPCKHMask(Mask.Val));
