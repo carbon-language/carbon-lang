@@ -5681,8 +5681,10 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   // Check to see if we are changing the return type...
   if (OldRetTy != FT->getReturnType()) {
     if (Callee->isExternal() &&
-        !OldRetTy->isLosslesslyConvertibleTo(FT->getReturnType()) &&
-        !Caller->use_empty())
+        !(OldRetTy->isLosslesslyConvertibleTo(FT->getReturnType()) ||
+          (isa<PointerType>(FT->getReturnType()) && 
+           OldRetTy->isLosslesslyConvertibleTo(TD->getIntPtrType())))
+        && !Caller->use_empty())
       return false;   // Cannot transform this return value...
 
     // If the callsite is an invoke instruction, and the return value is used by
