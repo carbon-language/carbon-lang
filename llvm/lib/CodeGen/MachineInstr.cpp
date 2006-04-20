@@ -130,8 +130,6 @@ MachineInstr::SetMachineOperandConst(unsigned i,
                                      MachineOperand::MachineOperandType opTy,
                                      int intValue) {
   assert(i < getNumOperands());          // must be explicit op
-  assert(TargetInstrDescriptors[Opcode].resultPos != (int) i &&
-         "immed. constant cannot be defined");
 
   operands[i].opType = opTy;
   operands[i].contents.value = NULL;
