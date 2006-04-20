@@ -143,7 +143,7 @@ bool SROA::performScalarRepl(Function &F) {
     // simple scalar value that can be mem2reg'd into a register value.
     bool IsNotTrivial = false;
     if (const Type *ActualType = CanConvertToScalar(AI, IsNotTrivial))
-      if (IsNotTrivial) {
+      if (IsNotTrivial && ActualType != Type::VoidTy) {
         ConvertToScalar(AI, ActualType);
         Changed = true;
         continue;
