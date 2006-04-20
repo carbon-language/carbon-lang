@@ -200,6 +200,16 @@ public:
     return true;
   }
 
+  /// isVectorClearMaskLegal - Similar to isShuffleMaskLegal. This is
+  /// used by Targets can use this to indicate if there is a suitable
+  /// VECTOR_SHUFFLE that can be used to replace a VAND with a constant
+  /// pool entry.
+  virtual bool isVectorClearMaskLegal(std::vector<SDOperand> &BVOps,
+                                      MVT::ValueType EVT,
+                                      SelectionDAG &DAG) const {
+    return false;
+  }
+
   /// getOperationAction - Return how this operation should be treated: either
   /// it is legal, needs to be promoted to a larger size, needs to be
   /// expanded to some other code sequence, or the target has a custom expander
