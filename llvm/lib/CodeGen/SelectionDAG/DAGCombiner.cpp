@@ -218,6 +218,7 @@ namespace {
     SDOperand visitVECTOR_SHUFFLE(SDNode *N);
     SDOperand visitVVECTOR_SHUFFLE(SDNode *N);
 
+    SDOperand XformToShuffleWithZero(SDNode *N);
     SDOperand ReassociateOps(unsigned Opc, SDOperand LHS, SDOperand RHS);
     
     bool SimplifySelectOps(SDNode *SELECT, SDOperand LHS, SDOperand RHS);
@@ -2774,6 +2775,66 @@ SDOperand DAGCombiner::visitVVECTOR_SHUFFLE(SDNode *N) {
   return SDOperand();
 }
 
+/// XformToShuffleWithZero - Returns a vector_shuffle if it able to transform
+/// a VAND to a vector_shuffle with the destination vector and a zero vector.
+/// e.g. VAND V, <0xffffffff, 0, 0xffffffff, 0>. ==>
+///      vector_shuffle V, Zero, <0, 4, 2, 4>
+SDOperand DAGCombiner::XformToShuffleWithZero(SDNode *N) {
+  SDOperand LHS = N->getOperand(0);
+  SDOperand RHS = N->getOperand(1);
+  if (N->getOpcode() == ISD::VAND) {
+    SDOperand DstVecSize = *(LHS.Val->op_end()-2);
+    SDOperand DstVecEVT  = *(LHS.Val->op_end()-1);
+    if (RHS.getOpcode() == ISD::VBIT_CONVERT)
+      RHS = RHS.getOperand(0);
+    if (RHS.getOpcode() == ISD::VBUILD_VECTOR) {
+      std::vector<SDOperand> IdxOps;
+      unsigned NumOps = RHS.getNumOperands();
+      unsigned NumElts = NumOps-2;
+      MVT::ValueType EVT = cast<VTSDNode>(RHS.getOperand(NumOps-1))->getVT();
+      for (unsigned i = 0; i != NumElts; ++i) {
+        SDOperand Elt = RHS.getOperand(i);
+        if (!isa<ConstantSDNode>(Elt))
+          return SDOperand();
+        else if (cast<ConstantSDNode>(Elt)->isAllOnesValue())
+          IdxOps.push_back(DAG.getConstant(i, EVT));
+        else if (cast<ConstantSDNode>(Elt)->isNullValue())
+          IdxOps.push_back(DAG.getConstant(NumElts, EVT));
+        else
+          return SDOperand();
+      }
+
+      // Let's see if the target supports this vector_shuffle.
+      if (!TLI.isVectorClearMaskLegal(IdxOps, EVT, DAG))
+        return SDOperand();
+
+      // Return the new VVECTOR_SHUFFLE node.
+      SDOperand NumEltsNode = DAG.getConstant(NumElts, MVT::i32);
+      SDOperand EVTNode = DAG.getValueType(EVT);
+      std::vector<SDOperand> Ops;
+      LHS = DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, LHS, NumEltsNode, EVTNode);
+      Ops.push_back(LHS);
+      AddToWorkList(LHS.Val);
+      std::vector<SDOperand> ZeroOps(NumElts, DAG.getConstant(0, EVT));
+      ZeroOps.push_back(NumEltsNode);
+      ZeroOps.push_back(EVTNode);
+      Ops.push_back(DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, ZeroOps));
+      IdxOps.push_back(NumEltsNode);
+      IdxOps.push_back(EVTNode);
+      Ops.push_back(DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, IdxOps));
+      Ops.push_back(NumEltsNode);
+      Ops.push_back(EVTNode);
+      SDOperand Result = DAG.getNode(ISD::VVECTOR_SHUFFLE, MVT::Vector, Ops);
+      if (NumEltsNode != DstVecSize || EVTNode != DstVecEVT) {
+        Result = DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, Result,
+                             DstVecSize, DstVecEVT);
+      }
+      return Result;
+    }
+  }
+  return SDOperand();
+}
+
 /// visitVBinOp - Visit a binary vector operation, like VADD.  IntOp indicates
 /// the scalar operation of the vop if it is operating on an integer vector
 /// (e.g. ADD) and FPOp indicates the FP version (e.g. FADD).
@@ -2783,7 +2844,9 @@ SDOperand DAGCombiner::visitVBinOp(SDNode *N, ISD::NodeType IntOp,
   ISD::NodeType ScalarOp = MVT::isInteger(EltType) ? IntOp : FPOp;
   SDOperand LHS = N->getOperand(0);
   SDOperand RHS = N->getOperand(1);
-  
+  SDOperand Shuffle = XformToShuffleWithZero(N);
+  if (Shuffle.Val) return Shuffle;
+
   // If the LHS and RHS are VBUILD_VECTOR nodes, see if we can constant fold
   // this operation.
   if (LHS.getOpcode() == ISD::VBUILD_VECTOR && 
