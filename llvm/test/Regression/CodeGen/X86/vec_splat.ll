@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep shufps
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep mulpd
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movddup
 
 void %test_v4sf(<4 x float>* %P, <4 x float>* %Q, float %X) {
 	%tmp = insertelement <4 x float> zeroinitializer, float %X, uint 0
