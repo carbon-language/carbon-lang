@@ -133,9 +133,6 @@
 				RelativePath="..\..\lib\Target\TargetMachineRegistry.cpp">
 			</File>
 			<File
-				RelativePath="..\..\lib\Target\TargetSchedInfo.cpp">
-			</File>
-			<File
 				RelativePath="..\..\lib\Target\TargetSubtarget.cpp">
 			</File>
 		</Filter>
@@ -175,9 +172,6 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Target\TargetOptions.h">
-			</File>
-			<File
-				RelativePath="..\..\include\llvm\Target\TargetSchedInfo.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Target\TargetSubtarget.h">
