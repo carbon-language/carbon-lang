@@ -1,0 +1,25 @@
+LLVMAlpha.o: LLVMCodeGen.o LLVMCore.o LLVMSelectionDAG.o libLLVMScalarOpts.a libLLVMSupport.a libLLVMTarget.a
+LLVMAsmParser.o: LLVMCore.o
+LLVMBCReader.o: LLVMCore.o libLLVMSupport.a libLLVMSystem.a
+LLVMBCWriter.o: LLVMCore.o libLLVMSupport.a
+LLVMCBackend.o: LLVMCodeGen.o LLVMCore.o libLLVMAnalysis.a libLLVMScalarOpts.a libLLVMSupport.a libLLVMTarget.a libLLVMipa.a
+LLVMCodeGen.o LLVMSelectionDAG.o libLLVMAnalysis.a libLLVMTarget.a libLLVMTransformUtils.a libLLVMipa.a libLLVMAnalysis.a libLLVMTarget.a libLLVMTransformUtils.a libLLVMipa.a: LLVMCore.o libLLVMSupport.a libLLVMSystem.a
+LLVMCore.o: libLLVMSupport.a
+LLVMDataStructure.o: LLVMCore.o libLLVMAnalysis.a libLLVMSupport.a libLLVMTarget.a
+LLVMDebugger.o: LLVMBCReader.o LLVMCore.o libLLVMSupport.a libLLVMSystem.a
+LLVMExecutionEngine.o: LLVMCore.o libLLVMSupport.a libLLVMSystem.a libLLVMTarget.a
+LLVMIA64.o: LLVMCodeGen.o LLVMCore.o LLVMSelectionDAG.o libLLVMScalarOpts.a libLLVMSupport.a libLLVMTarget.a
+LLVMInterpreter.o: LLVMCore.o LLVMExecutionEngine.o libLLVMSupport.a libLLVMSystem.a libLLVMTarget.a
+LLVMJIT.o: LLVMCore.o LLVMExecutionEngine.o libLLVMSupport.a libLLVMSystem.a libLLVMTarget.a
+LLVMPowerPC.o: LLVMCodeGen.o LLVMCore.o LLVMSelectionDAG.o libLLVMScalarOpts.a libLLVMSupport.a libLLVMTarget.a
+LLVMSparc.o: LLVMCodeGen.o LLVMCore.o LLVMSelectionDAG.o libLLVMScalarOpts.a libLLVMSupport.a libLLVMTarget.a
+LLVMX86.o: LLVMCodeGen.o LLVMCore.o LLVMSelectionDAG.o libLLVMScalarOpts.a libLLVMSupport.a libLLVMTarget.a
+LLVMbzip2.o: 
+libLLVMArchive.a: LLVMBCReader.o LLVMCore.o libLLVMSupport.a libLLVMSystem.a
+libLLVMInstrumentation.a: LLVMCore.o libLLVMScalarOpts.a libLLVMSupport.a libLLVMTransformUtils.a
+libLLVMLinker.a: LLVMBCReader.o LLVMCore.o libLLVMArchive.a libLLVMSystem.a
+libLLVMScalarOpts.a: LLVMCore.o libLLVMAnalysis.a libLLVMSupport.a libLLVMTarget.a libLLVMTransformUtils.a
+libLLVMSupport.a: LLVMbzip2.o libLLVMSystem.a
+libLLVMSystem.a: 
+libLLVMTransforms.a: LLVMCore.o libLLVMSupport.a libLLVMTarget.a libLLVMTransformUtils.a
+libLLVMipo.a: LLVMCore.o libLLVMAnalysis.a libLLVMSupport.a libLLVMTarget.a libLLVMTransformUtils.a libLLVMipa.a

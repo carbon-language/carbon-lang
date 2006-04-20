@@ -1,4 +1,4 @@
-##===- utils/llvm-config/Makefile --------------------------*- Makefile -*-===##
+##===- tools/llvm-config/Makefile --------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -21,40 +21,47 @@ SUB_CXXFLAGS = ${CPP.BaseFlags} ${CXX.Flags}
 # user to use libtool when linking against LLVM.
 SUB_LDFLAGS = 
 
+FinalLibDeps = $(PROJ_SRC_DIR)/FinalLibDeps.txt
+ifdef HAVE_PERL
+ifeq ($(HAVE_PERL),1)
+LibDeps = $(PROJ_SRC_DIR)/LibDeps.txt
+GenLibDeps = $(PROJ_SRC_ROOT)/utils/GenLibDeps.pl
 # MANUAL USE ONLY!  GenLibDeps.pl is very non-portable, so LibDeps.txt
 # should only be re-built manually.  No other rule in this file should
 # depend on LibDeps.txt.
-LibDeps.txt: $(LEVEL)/utils/GenLibDeps.pl $(LibDir)
+$(LibDeps): $(GenLibDeps) $(LibDir)
 	$(Echo) "Regenerating LibDeps.txt"
-	$(Verb) $(LLVM_SRC_ROOT)/utils/GenLibDeps.pl -flat $(LibDir) | \
-	  sort > LibDeps.txt
+	$(Verb) $(GenLibDeps) -flat $(LibDir) | sort > $(LibDeps)
 
 # Find all the cyclic dependencies between various LLVM libraries, so we
 # don't have to process them at runtime.
-FinalLibDeps.txt: find-cycles.pl # LibDeps.txt deliberately omitted.
+$(FinalLibDeps): find-cycles.pl $(LibDeps)
 	$(Echo) "Finding cyclic dependencies between LLVM libraries."
 	$(Verb) $(PERL) $< < $(PROJ_SRC_DIR)/LibDeps.txt > $@
+endif
+endif
 
 # Rerun our configure substitutions as needed.
-llvm-config.in: llvm-config.in.in $(ConfigStatusScript)
+ConfigInIn = $(PROJ_SRC_DIR)/llvm-config.in.in
+llvm-config.in: $(ConfigInIn) $(ConfigStatusScript)
 	$(Verb) cd $(PROJ_OBJ_ROOT) ; \
-		$(ConfigStatusScript) utils/llvm-config/llvm-config.in
+		$(ConfigStatusScript) tools/llvm-config/llvm-config.in
 
 # Build our final script.
-llvm-config: llvm-config.in FinalLibDeps.txt
+llvm-config: llvm-config.in $(FinalLibDeps)
 	$(Echo) "Building llvm-config script."
 	$(Verb) $(ECHO) 's,@LLVM_CXXFLAGS@,$(SUB_CXXFLAGS),' > temp.sed
 	$(Verb) $(ECHO) 's,@LLVM_LDFLAGS@,$(SUB_LDFLAGS),' >> temp.sed
 	$(Verb) $(ECHO) 's,@CORE_IS_ARCHIVE@,$(CORE_IS_ARCHIVE),' >> temp.sed
 	$(Verb) $(SED) -f temp.sed < $< > $@
 	$(Verb) $(RM) temp.sed
-	$(Verb) cat FinalLibDeps.txt >> $@
+	$(Verb) cat $(FinalLibDeps) >> $@
 	$(Verb) chmod +x llvm-config
 
 # Hook into the standard Makefile rules.
 all-local:: llvm-config
 clean-local::
-	$(Verb) $(RM) -f FinalLibDeps.txt llvm-config llvm-config.in
+	$(Verb) $(RM) -f llvm-config llvm-config.in
 install-local:: all-local
 	$(Echo) Installing llvm-config
 	$(Verb) $(MKDIR) $(PROJ_bindir)
