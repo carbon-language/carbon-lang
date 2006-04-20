@@ -2980,7 +2980,22 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       if (Elt0IsZero) return Op;
 
       // Zero extend a scalar to a vector.
-      return DAG.getNode(X86ISD::ZEXT_S2VEC, Op.getValueType(), Elt0);
+      if (Elt0.getValueType() != MVT::i64)
+        return DAG.getNode(X86ISD::ZEXT_S2VEC, Op.getValueType(), Elt0);
+
+      // See if we can turn it into a f64 op.
+      bool IsLegal = false;
+      if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Elt0)) {
+        Elt0 = DAG.getConstantFP(BitsToDouble(C->getValue()), MVT::f64);
+        IsLegal = true;
+      } else if (Elt0.getOpcode() == ISD::LOAD) {
+        Elt0 = DAG.getLoad(MVT::f64, Elt0.getOperand(0), Elt0.getOperand(1),
+                           Elt0.getOperand(2));
+        IsLegal = true;
+      }
+      if (IsLegal)
+        return DAG.getNode(ISD::BIT_CONVERT, MVT::v2i64,
+                           DAG.getNode(X86ISD::ZEXT_S2VEC, MVT::v2f64, Elt0));
     }
 
     if (Values.size() > 2) {
