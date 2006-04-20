@@ -269,9 +269,6 @@ endif
 ifndef LLVMAS
 LLVMAS   := $(LLVMToolDir)/llvm-as$(EXEEXT)
 endif
-ifndef BURG
-BURG     := $(LLVMToolDir)/burg$(EXEEXT)
-endif
 ifndef TBLGEN
 TBLGEN   := $(LLVMToolDir)/tblgen$(EXEEXT)
 endif
@@ -407,7 +404,6 @@ LTInstall     = $(LIBTOOL) $(LibTool.Flags) --mode=install $(INSTALL) \
 ProgInstall   = $(INSTALL) $(Install.StripFlag) -m 0755 
 ScriptInstall = $(INSTALL) -m 0755 
 DataInstall   = $(INSTALL) -m 0644
-Burg          = $(BURG) -I $(PROJ_SRC_DIR)
 TableGen      = $(TBLGEN) -I $(PROJ_SRC_DIR) -I$(PROJ_SRC_ROOT)/include
 Archive       = $(AR) $(AR.Flags)
 LArchive      = $(LLVMToolDir)/llvm-ar rcsf
