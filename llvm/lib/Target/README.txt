@@ -172,3 +172,21 @@ information in the constant folder, so we don't know the endianness of the
 target!
 
 //===---------------------------------------------------------------------===//
+
+Consider this:
+
+unsigned short swap_16(unsigned short v) { return (v>>8) | (v<<8); }
+
+Compiled with the ppc backend:
+
+_swap_16:
+        slwi r2, r3, 8
+        srwi r3, r3, 8
+        or r2, r3, r2
+        rlwinm r3, r2, 0, 16, 31
+        blr
+
+The rlwinm (an and by 65535) is dead.  The dag combiner should propagate bits
+better than that to see this.
+
+//===---------------------------------------------------------------------===//
