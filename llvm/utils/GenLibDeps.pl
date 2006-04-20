@@ -23,8 +23,10 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
 my $Directory = $ARGV[0];
 
 # Find the "dot" program
-chomp(my $DotPath = `which dot`);
-die "Can't find 'dot'" if (! -x "$DotPath");
+if (!$FLAT) {
+  chomp(my $DotPath = `which dot`);
+  die "Can't find 'dot'" if (! -x "$DotPath");
+}
 
 # Open the directory and read its contents, sorting by name and differentiating
 # by whether its a library (.a) or an object file (.o)
@@ -102,9 +104,9 @@ sub gen_one_entry {
     $suffix = substr($_,length($_)-1,1);
     $_ =~ s/(.*)\.[oa]/$1/;
     if ($suffix eq "a") {
-      print DOT "$lib_ns -> $_ [ weight=0 ];\n";
+      if (!$FLAT) { print DOT "$lib_ns -> $_ [ weight=0 ];\n" };
     } else {
-      print DOT "$lib_ns -> $_ [ weight=10];\n";
+      if (!$FLAT) { print DOT "$lib_ns -> $_ [ weight=10];\n" };
     }
   }
   close DF;
@@ -121,34 +123,38 @@ $| = 1;
 
 # Print the definition list tag
 if (!$FLAT) {
-  print "<dl>\n";
+    print "<dl>\n";
+
+  open DOT, "| $DotPath -Tgif > libdeps.gif";
+
+  print DOT "digraph LibDeps {size=\"40,15\"; ratio=\"1.33333\"; margin=\"0.25\"; rankdir=\"LR\"; mclimit=\"50.0\"; ordering=\"out\"; center=\"1\";\n";
+  print DOT "node [shape=\"box\",color=\"#000088\",fillcolor=\"#FFFACD\",fontcolor=\"#5577DD\",style=\"filled\",fontsize=\"24\"];\n";
+  print DOT "edge [style=\"solid\",color=\"#000088\"];\n";
 }
 
-open DOT, "| $DotPath -Tgif > libdeps.gif";
-
-print DOT "digraph LibDeps {size=\"40,15\"; ratio=\"1.33333\"; margin=\"0.25\"; rankdir=\"LR\"; mclimit=\"50.0\"; ordering=\"out\"; center=\"1\";\n";
-print DOT "node [shape=\"box\",color=\"#000088\",fillcolor=\"#FFFACD\",fontcolor=\"#5577DD\",style=\"filled\",fontsize=\"24\"];\n";
-print DOT "edge [style=\"solid\",color=\"#000088\"];\n";
 # Print libraries first
 foreach $lib (@libs) {
   gen_one_entry($lib);
 }
-print DOT "}\n";
-close DOT;
-open DOT, "| $DotPath -Tgif > objdeps.gif";
-print DOT "digraph ObjDeps {size=\"40,15\"; ratio=\"1.33333\"; margin=\"0.25\"; rankdir=\"LR\"; mclimit=\"50.0\"; ordering=\"out\"; center=\"1\";\n";
-print DOT "node [shape=\"box\",color=\"#000088\",fillcolor=\"#FFFACD\",fontcolor=\"#5577DD\",style=\"filled\",fontsize=\"24\"];\n";
-print DOT "edge [style=\"solid\",color=\"#000088\"];\n";
+
+if (!$FLAT) {
+  print DOT "}\n";
+  close DOT;
+  open DOT, "| $DotPath -Tgif > objdeps.gif";
+  print DOT "digraph ObjDeps {size=\"40,15\"; ratio=\"1.33333\"; margin=\"0.25\"; rankdir=\"LR\"; mclimit=\"50.0\"; ordering=\"out\"; center=\"1\";\n";
+  print DOT "node [shape=\"box\",color=\"#000088\",fillcolor=\"#FFFACD\",fontcolor=\"#5577DD\",style=\"filled\",fontsize=\"24\"];\n";
+  print DOT "edge [style=\"solid\",color=\"#000088\"];\n";
+}
 
 # Print objects second
 foreach $obj (@objs) {
   gen_one_entry($obj);
 }
 
-print DOT "}\n";
-close DOT;
+if (!$FLAT) {
+  print DOT "}\n";
+  close DOT;
 
 # Print end tag of definition list element
-if (!$FLAT) {
   print "</dl>\n";
 }
