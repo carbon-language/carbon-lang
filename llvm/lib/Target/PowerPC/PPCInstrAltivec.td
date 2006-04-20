@@ -603,20 +603,20 @@ def : Pat<(v4i32 (and VRRC:$A, (vnot_conv VRRC:$B))),
           (v4i32 (VANDC VRRC:$A, VRRC:$B))>;
 
 def : Pat<(fmul VRRC:$vA, VRRC:$vB),
-          (VMADDFP VRRC:$vA, VRRC:$vB, (v4i32 (V_SET0)))>; 
+          (v4f32 (VMADDFP VRRC:$vA, VRRC:$vB, (v4f32 (V_SET0))))>; 
 
 // Fused multiply add and multiply sub for packed float.  These are represented
 // separately from the real instructions above, for operations that must have
 // the additional precision, such as Newton-Rhapson (used by divide, sqrt)
 def : Pat<(PPCvmaddfp VRRC:$A, VRRC:$B, VRRC:$C),
-          (VMADDFP VRRC:$A, VRRC:$B, VRRC:$C)>;
+          (v4f32 (VMADDFP VRRC:$A, VRRC:$B, VRRC:$C))>;
 def : Pat<(PPCvnmsubfp VRRC:$A, VRRC:$B, VRRC:$C),
-          (VNMSUBFP VRRC:$A, VRRC:$B, VRRC:$C)>;
+          (v4f32 (VNMSUBFP VRRC:$A, VRRC:$B, VRRC:$C))>;
 
 def : Pat<(int_ppc_altivec_vmaddfp VRRC:$A, VRRC:$B, VRRC:$C),
-          (VMADDFP VRRC:$A, VRRC:$B, VRRC:$C)>;
+          (v4f32 (VMADDFP VRRC:$A, VRRC:$B, VRRC:$C))>;
 def : Pat<(int_ppc_altivec_vnmsubfp VRRC:$A, VRRC:$B, VRRC:$C),
-          (VNMSUBFP VRRC:$A, VRRC:$B, VRRC:$C)>;
+          (v4f32 (VNMSUBFP VRRC:$A, VRRC:$B, VRRC:$C))>;
 
 def : Pat<(PPCvperm (v16i8 VRRC:$vA), VRRC:$vB, VRRC:$vC),
           (v16i8 (VPERM VRRC:$vA, VRRC:$vB, VRRC:$vC))>;
