@@ -5683,7 +5683,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     if (Callee->isExternal() &&
         !(OldRetTy->isLosslesslyConvertibleTo(FT->getReturnType()) ||
           (isa<PointerType>(FT->getReturnType()) && 
-           OldRetTy->isLosslesslyConvertibleTo(TD->getIntPtrType())))
+           TD->getIntPtrType()->isLosslesslyConvertibleTo(OldRetTy)))
         && !Caller->use_empty())
       return false;   // Cannot transform this return value...
 
