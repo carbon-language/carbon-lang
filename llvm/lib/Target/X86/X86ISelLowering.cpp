@@ -1501,43 +1501,49 @@ bool X86::isPSHUFLWMask(SDNode *N) {
 
 /// isSHUFPMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to SHUFP*.
-bool X86::isSHUFPMask(SDNode *N) {
-  assert(N->getOpcode() == ISD::BUILD_VECTOR);
+static bool isSHUFPMask(std::vector<SDOperand> &N) {
+  unsigned NumElems = N.size();
+  if (NumElems != 2 && NumElems != 4) return false;
 
-  unsigned NumElems = N->getNumOperands();
-  if (NumElems == 2) {
-    // The only cases that ought be handled by SHUFPD is
-    // Dest { 2, 1 } <=  shuffle( Dest { 1, 0 },  Src { 3, 2 }
-    // Dest { 3, 0 } <=  shuffle( Dest { 1, 0 },  Src { 3, 2 }
-    // Expect bit 0 == 1, bit1 == 2
-    SDOperand Bit0 = N->getOperand(0);
-    SDOperand Bit1 = N->getOperand(1);
-    if (isUndefOrEqual(Bit0, 0) && isUndefOrEqual(Bit1, 3))
-      return true;
-    if (isUndefOrEqual(Bit0, 1) && isUndefOrEqual(Bit1, 2))
-      return true;
-    return false;
-  }
-
-  if (NumElems != 4) return false;
-
-  // Each half must refer to only one of the vector.
-  for (unsigned i = 0; i < 2; ++i) {
-    SDOperand Arg = N->getOperand(i);
-    if (Arg.getOpcode() == ISD::UNDEF) continue;
-    assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
-    unsigned Val = cast<ConstantSDNode>(Arg)->getValue();
-    if (Val >= 4) return false;
-  }
-  for (unsigned i = 2; i < 4; ++i) {
-    SDOperand Arg = N->getOperand(i);
-    if (Arg.getOpcode() == ISD::UNDEF) continue;
-    assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
-    unsigned Val = cast<ConstantSDNode>(Arg)->getValue();
-    if (Val < 4) return false;
-  }
+  unsigned Half = NumElems / 2;
+  for (unsigned i = 0; i < Half; ++i)
+    if (!isUndefOrInRange(N[i], 0, NumElems))
+      return false;
+  for (unsigned i = Half; i < NumElems; ++i)
+    if (!isUndefOrInRange(N[i], NumElems, NumElems*2))
+      return false;
 
   return true;
+}
+
+bool X86::isSHUFPMask(SDNode *N) {
+  assert(N->getOpcode() == ISD::BUILD_VECTOR);
+  std::vector<SDOperand> Ops(N->op_begin(), N->op_end());
+  return ::isSHUFPMask(Ops);
+}
+
+/// isCommutedSHUFP - Returns true if the shuffle mask is except
+/// the reverse of what x86 shuffles want. x86 shuffles requires the lower
+/// half elements to come from vector 1 (which would equal the dest.) and
+/// the upper half to come from vector 2.
+static bool isCommutedSHUFP(std::vector<SDOperand> &Ops) {
+  unsigned NumElems = Ops.size();
+  if (NumElems != 2 && NumElems != 4) return false;
+
+  unsigned Half = NumElems / 2;
+  for (unsigned i = 0; i < Half; ++i)
+    if (!isUndefOrInRange(Ops[i], NumElems, NumElems*2))
+      return false;
+  for (unsigned i = Half; i < NumElems; ++i)
+    if (!isUndefOrInRange(Ops[i], 0, NumElems))
+      return false;
+  return true;
+}
+
+static bool isCommutedSHUFP(SDNode *N) {
+  assert(N->getOpcode() == ISD::BUILD_VECTOR);
+  std::vector<SDOperand> Ops(N->op_begin(), N->op_end());
+  return isCommutedSHUFP(Ops);
 }
 
 /// isMOVHLPSMask - Return true if the specified VECTOR_SHUFFLE operand
@@ -1600,44 +1606,62 @@ bool X86::isMOVHPMask(SDNode *N) {
 
 /// isUNPCKLMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to UNPCKL.
-bool X86::isUNPCKLMask(SDNode *N) {
-  assert(N->getOpcode() == ISD::BUILD_VECTOR);
-
-  unsigned NumElems = N->getNumOperands();
+bool static isUNPCKLMask(std::vector<SDOperand> &N, bool V2IsSplat = false) {
+  unsigned NumElems = N.size();
   if (NumElems != 2 && NumElems != 4 && NumElems != 8 && NumElems != 16)
     return false;
 
   for (unsigned i = 0, j = 0; i != NumElems; i += 2, ++j) {
-    SDOperand BitI  = N->getOperand(i);
-    SDOperand BitI1 = N->getOperand(i+1);
+    SDOperand BitI  = N[i];
+    SDOperand BitI1 = N[i+1];
     if (!isUndefOrEqual(BitI, j))
       return false;
-    if (!isUndefOrEqual(BitI1, j + NumElems))
-      return false;
+    if (V2IsSplat) {
+      if (isUndefOrEqual(BitI1, NumElems))
+        return false;
+    } else {
+      if (!isUndefOrEqual(BitI1, j + NumElems))
+        return false;
+    }
   }
 
   return true;
 }
 
+bool X86::isUNPCKLMask(SDNode *N, bool V2IsSplat) {
+  assert(N->getOpcode() == ISD::BUILD_VECTOR);
+  std::vector<SDOperand> Ops(N->op_begin(), N->op_end());
+  return ::isUNPCKLMask(Ops, V2IsSplat);
+}
+
 /// isUNPCKHMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to UNPCKH.
-bool X86::isUNPCKHMask(SDNode *N) {
-  assert(N->getOpcode() == ISD::BUILD_VECTOR);
-
-  unsigned NumElems = N->getNumOperands();
+bool static isUNPCKHMask(std::vector<SDOperand> &N, bool V2IsSplat = false) {
+  unsigned NumElems = N.size();
   if (NumElems != 2 && NumElems != 4 && NumElems != 8 && NumElems != 16)
     return false;
 
   for (unsigned i = 0, j = 0; i != NumElems; i += 2, ++j) {
-    SDOperand BitI  = N->getOperand(i);
-    SDOperand BitI1 = N->getOperand(i+1);
+    SDOperand BitI  = N[i];
+    SDOperand BitI1 = N[i+1];
     if (!isUndefOrEqual(BitI, j + NumElems/2))
       return false;
-    if (!isUndefOrEqual(BitI1, j + NumElems/2 + NumElems))
-      return false;
+    if (V2IsSplat) {
+      if (isUndefOrEqual(BitI1, NumElems))
+        return false;
+    } else {
+      if (!isUndefOrEqual(BitI1, j + NumElems/2 + NumElems))
+        return false;
+    }
   }
 
   return true;
+}
+
+bool X86::isUNPCKHMask(SDNode *N, bool V2IsSplat) {
+  assert(N->getOpcode() == ISD::BUILD_VECTOR);
+  std::vector<SDOperand> Ops(N->op_begin(), N->op_end());
+  return ::isUNPCKHMask(Ops, V2IsSplat);
 }
 
 /// isUNPCKL_v_undef_Mask - Special case of isUNPCKLMask for canonical form
@@ -1665,23 +1689,58 @@ bool X86::isUNPCKL_v_undef_Mask(SDNode *N) {
 
 /// isMOVSMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to MOVS{S|D}.
-bool X86::isMOVSMask(SDNode *N) {
-  assert(N->getOpcode() == ISD::BUILD_VECTOR);
-
-  unsigned NumElems = N->getNumOperands();
+static bool isMOVSMask(std::vector<SDOperand> &N) {
+  unsigned NumElems = N.size();
   if (NumElems != 2 && NumElems != 4)
     return false;
 
-  if (!isUndefOrEqual(N->getOperand(0), NumElems))
+  if (!isUndefOrEqual(N[0], NumElems))
     return false;
 
   for (unsigned i = 1; i < NumElems; ++i) {
-    SDOperand Arg = N->getOperand(i);
+    SDOperand Arg = N[i];
     if (!isUndefOrEqual(Arg, i))
       return false;
   }
 
   return true;
+}
+
+bool X86::isMOVSMask(SDNode *N) {
+  assert(N->getOpcode() == ISD::BUILD_VECTOR);
+  std::vector<SDOperand> Ops(N->op_begin(), N->op_end());
+  return ::isMOVSMask(Ops);
+}
+
+/// isCommutedMOVS - Returns true if the shuffle mask is except the reverse
+/// of what x86 movs want. X86 movs requires the lowest  element to be lowest
+/// element of vector 2 and the other elements to come from vector 1 in order.
+static bool isCommutedMOVS(std::vector<SDOperand> &Ops, bool V2IsSplat = false) {
+  unsigned NumElems = Ops.size();
+  if (NumElems != 2 && NumElems != 4)
+    return false;
+
+  if (!isUndefOrEqual(Ops[0], 0))
+    return false;
+
+  for (unsigned i = 1; i < NumElems; ++i) {
+    SDOperand Arg = Ops[i];
+    if (V2IsSplat) {
+      if (!isUndefOrEqual(Arg, NumElems))
+        return false;
+    } else {
+      if (!isUndefOrEqual(Arg, i+NumElems))
+        return false;
+    }
+  }
+
+  return true;
+}
+
+static bool isCommutedMOVS(SDNode *N, bool V2IsSplat = false) {
+  assert(N->getOpcode() == ISD::BUILD_VECTOR);
+  std::vector<SDOperand> Ops(N->op_begin(), N->op_end());
+  return isCommutedMOVS(Ops);
 }
 
 /// isMOVSHDUPMask - Return true if the specified VECTOR_SHUFFLE operand
@@ -1958,21 +2017,55 @@ static bool ShouldXformToMOVLP(SDNode *V1, SDNode *Mask) {
   return true;
 }
 
-/// isLowerFromV2UpperFromV1 - Returns true if the shuffle mask is except
-/// the reverse of what x86 shuffles want. x86 shuffles requires the lower
-/// half elements to come from vector 1 (which would equal the dest.) and
-/// the upper half to come from vector 2.
-static bool isLowerFromV2UpperFromV1(SDOperand Op) {
-  assert(Op.getOpcode() == ISD::BUILD_VECTOR);
+/// isSplatVector - Returns true if N is a BUILD_VECTOR node whose elements are
+/// all the same.
+static bool isSplatVector(SDNode *N) {
+  if (N->getOpcode() != ISD::BUILD_VECTOR)
+    return false;
 
-  unsigned NumElems = Op.getNumOperands();
-  for (unsigned i = 0, e = NumElems/2; i != e; ++i)
-    if (!isUndefOrInRange(Op.getOperand(i), NumElems, NumElems*2))
-      return false;
-  for (unsigned i = NumElems/2; i != NumElems; ++i)
-    if (!isUndefOrInRange(Op.getOperand(i), 0, NumElems))
+  SDOperand SplatValue = N->getOperand(0);
+  for (unsigned i = 1, e = N->getNumOperands(); i != e; ++i)
+    if (N->getOperand(i) != SplatValue)
       return false;
   return true;
+}
+
+/// NormalizeMask - V2 is a splat, modify the mask (if needed) so all elements
+/// that point to V2 points to its first element.
+static SDOperand NormalizeMask(SDOperand Mask, SelectionDAG &DAG) {
+  assert(Mask.getOpcode() == ISD::BUILD_VECTOR);
+
+  bool Changed = false;
+  std::vector<SDOperand> MaskVec;
+  unsigned NumElems = Mask.getNumOperands();
+  for (unsigned i = 0; i != NumElems; ++i) {
+    SDOperand Arg = Mask.getOperand(i);
+    if (Arg.getOpcode() != ISD::UNDEF) {
+      unsigned Val = cast<ConstantSDNode>(Arg)->getValue();
+      if (Val > NumElems) {
+        Arg = DAG.getConstant(NumElems, Arg.getValueType());
+        Changed = true;
+      }
+    }
+    MaskVec.push_back(Arg);
+  }
+
+  if (Changed)
+    Mask = DAG.getNode(ISD::BUILD_VECTOR, Mask.getValueType(), MaskVec);
+  return Mask;
+}
+
+/// getMOVSMask - Returns a vector_shuffle mask for an movs{s|d} operation
+/// of specified width.
+static SDOperand getMOVSMask(unsigned NumElems, SelectionDAG &DAG) {
+  MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(NumElems);
+  MVT::ValueType BaseVT = MVT::getVectorBaseType(MaskVT);
+
+  std::vector<SDOperand> MaskVec;
+  MaskVec.push_back(DAG.getConstant(NumElems, BaseVT));
+  for (unsigned i = 1; i != NumElems; ++i)
+    MaskVec.push_back(DAG.getConstant(i, BaseVT));
+  return DAG.getNode(ISD::BUILD_VECTOR, MaskVT, MaskVec);
 }
 
 /// getUnpacklMask - Returns a vector_shuffle mask for an unpackl operation
@@ -1984,6 +2077,20 @@ static SDOperand getUnpacklMask(unsigned NumElems, SelectionDAG &DAG) {
   for (unsigned i = 0, e = NumElems/2; i != e; ++i) {
     MaskVec.push_back(DAG.getConstant(i,            BaseVT));
     MaskVec.push_back(DAG.getConstant(i + NumElems, BaseVT));
+  }
+  return DAG.getNode(ISD::BUILD_VECTOR, MaskVT, MaskVec);
+}
+
+/// getUnpackhMask - Returns a vector_shuffle mask for an unpackh operation
+/// of specified width.
+static SDOperand getUnpackhMask(unsigned NumElems, SelectionDAG &DAG) {
+  MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(NumElems);
+  MVT::ValueType BaseVT = MVT::getVectorBaseType(MaskVT);
+  unsigned Half = NumElems/2;
+  std::vector<SDOperand> MaskVec;
+  for (unsigned i = 0; i != Half; ++i) {
+    MaskVec.push_back(DAG.getConstant(i + Half,            BaseVT));
+    MaskVec.push_back(DAG.getConstant(i + NumElems + Half, BaseVT));
   }
   return DAG.getNode(ISD::BUILD_VECTOR, MaskVT, MaskVec);
 }
@@ -2817,16 +2924,13 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand PermMask = Op.getOperand(2);
     MVT::ValueType VT = Op.getValueType();
     unsigned NumElems = PermMask.getNumOperands();
+    bool V2IsSplat = isSplatVector(V2.Val);
 
     if (isSplatMask(PermMask.Val)) {
       if (NumElems <= 4) return Op;
       // Promote it to a v4i32 splat.
       return PromoteSplat(Op, DAG);
     }
-
-    if (ShouldXformToMOVHLPS(PermMask.Val) ||
-        ShouldXformToMOVLP(V1.Val, PermMask.Val))
-      return CommuteVectorShuffle(Op, DAG);
 
     if (X86::isMOVSMask(PermMask.Val) ||
         X86::isMOVSHDUPMask(PermMask.Val) ||
@@ -2836,15 +2940,45 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
         X86::isMOVLPMask(PermMask.Val))
       return Op;
 
-    if (X86::isUNPCKLMask(PermMask.Val) ||
-        X86::isUNPCKL_v_undef_Mask(PermMask.Val) ||
-        X86::isUNPCKHMask(PermMask.Val))
-      // Leave the VECTOR_SHUFFLE alone. It matches {P}UNPCKL*.
+    if (ShouldXformToMOVHLPS(PermMask.Val) ||
+        ShouldXformToMOVLP(V1.Val, PermMask.Val))
+      return CommuteVectorShuffle(Op, DAG);
+
+    if (isCommutedMOVS(PermMask.Val, V2IsSplat)) {
+      if (V2IsSplat) {
+        // V2 is a splat, so the mask may be malformed. That is, it may point
+        // to any V2 element. The instruction selectior won't like this. Get
+        // a corrected mask and commute to form a proper MOVS{S|D}.
+        SDOperand NewMask = getMOVSMask(NumElems, DAG);
+        Op = DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2, NewMask);
+      }
+      return CommuteVectorShuffle(Op, DAG);
+    }
+
+    if (X86::isUNPCKL_v_undef_Mask(PermMask.Val) ||
+        X86::isUNPCKLMask(PermMask.Val) ||
+        X86::isUNPCKHMask(PermMask.Val, V2IsSplat))
       return Op;
+
+    if (V2IsSplat) {
+      // Normalize mask so all entries that point to V2 points to its first
+      // element then try to match unpck{h|l} again. If match, return a 
+      // new vector_shuffle with the corrected mask.
+      SDOperand NewMask = NormalizeMask(PermMask, DAG);
+      if (NewMask.Val != PermMask.Val) {
+        if (X86::isUNPCKLMask(PermMask.Val, true)) {
+          SDOperand NewMask = getUnpacklMask(NumElems, DAG);
+          return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2, NewMask);
+        } else if (X86::isUNPCKHMask(PermMask.Val, true)) {
+          SDOperand NewMask = getUnpackhMask(NumElems, DAG);
+          return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2, NewMask);
+        }
+      }
+    }
 
     // Normalize the node to match x86 shuffle ops if needed
     if (V2.getOpcode() != ISD::UNDEF)
-      if (isLowerFromV2UpperFromV1(PermMask)) {
+      if (isCommutedSHUFP(PermMask.Val)) {
         Op = CommuteVectorShuffle(Op, DAG);
         V1 = Op.getOperand(0);
         V2 = Op.getOperand(1);
@@ -3041,7 +3175,6 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       if (Idx == 0)
         return Op;
 
-      // TODO: if Idex == 2, we can use unpckhps
       // SHUFPS the element to the lowest double word, then movss.
       MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(4);
       SDOperand IdxNode = DAG.getConstant((Idx < 2) ? Idx : Idx+4,
@@ -3371,4 +3504,18 @@ X86TargetLowering::isShuffleMaskLegal(SDOperand Mask, MVT::ValueType VT) const {
           X86::isUNPCKLMask(Mask.Val) ||
           X86::isUNPCKL_v_undef_Mask(Mask.Val) ||
           X86::isUNPCKHMask(Mask.Val));
+}
+
+bool X86TargetLowering::isVectorClearMaskLegal(std::vector<SDOperand> &BVOps,
+                                               MVT::ValueType EVT,
+                                               SelectionDAG &DAG) const {
+  unsigned NumElts = BVOps.size();
+  // Only do shuffles on 128-bit vector types for now.
+  if (MVT::getSizeInBits(EVT) * NumElts == 64) return false;
+  if (NumElts == 2) return true;
+  if (NumElts == 4) {
+    return (isMOVSMask(BVOps) || isCommutedMOVS(BVOps, true) ||
+            isSHUFPMask(BVOps) || isCommutedSHUFP(BVOps));
+  }
+  return false;
 }

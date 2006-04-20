@@ -219,11 +219,11 @@ namespace llvm {
 
    /// isUNPCKLMask - Return true if the specified VECTOR_SHUFFLE operand
    /// specifies a shuffle of elements that is suitable for input to UNPCKL.
-   bool isUNPCKLMask(SDNode *N);
+   bool isUNPCKLMask(SDNode *N, bool V2IsSplat = false);
 
    /// isUNPCKHMask - Return true if the specified VECTOR_SHUFFLE operand
    /// specifies a shuffle of elements that is suitable for input to UNPCKH.
-   bool isUNPCKHMask(SDNode *N);
+   bool isUNPCKHMask(SDNode *N, bool V2IsSplat = false);
 
    /// isUNPCKL_v_undef_Mask - Special case of isUNPCKLMask for canonical form
    /// of vector_shuffle v, v, <0, 4, 1, 5>, i.e. vector_shuffle v, undef,
@@ -333,6 +333,14 @@ namespace llvm {
     /// By default, if a target supports the VECTOR_SHUFFLE node, all mask values
     /// are assumed to be legal.
     virtual bool isShuffleMaskLegal(SDOperand Mask, MVT::ValueType VT) const;
+
+    /// isVectorClearMaskLegal - Similar to isShuffleMaskLegal. This is
+    /// used by Targets can use this to indicate if there is a suitable
+    /// VECTOR_SHUFFLE that can be used to replace a VAND with a constant
+    /// pool entry.
+    virtual bool isVectorClearMaskLegal(std::vector<SDOperand> &BVOps,
+                                        MVT::ValueType EVT,
+                                        SelectionDAG &DAG) const;
   private:
     // C Calling Convention implementation.
     std::vector<SDOperand> LowerCCCArguments(Function &F, SelectionDAG &DAG);
