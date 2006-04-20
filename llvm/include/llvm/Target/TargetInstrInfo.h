@@ -44,39 +44,37 @@ typedef unsigned InstrSchedClass;
 //  Designed to initialized statically.
 //
 
-const unsigned M_NOP_FLAG              = 1 << 0;
-const unsigned M_BRANCH_FLAG           = 1 << 1;
-const unsigned M_CALL_FLAG             = 1 << 2;
-const unsigned M_RET_FLAG              = 1 << 3;
-const unsigned M_BARRIER_FLAG          = 1 << 4;
-const unsigned M_DELAY_SLOT_FLAG       = 1 << 5;
-const unsigned M_CC_FLAG               = 1 << 6;
-const unsigned M_LOAD_FLAG             = 1 << 7;
-const unsigned M_STORE_FLAG            = 1 << 8;
+const unsigned M_BRANCH_FLAG           = 1 << 0;
+const unsigned M_CALL_FLAG             = 1 << 1;
+const unsigned M_RET_FLAG              = 1 << 2;
+const unsigned M_BARRIER_FLAG          = 1 << 3;
+const unsigned M_DELAY_SLOT_FLAG       = 1 << 4;
+const unsigned M_LOAD_FLAG             = 1 << 5;
+const unsigned M_STORE_FLAG            = 1 << 6;
 
 // M_2_ADDR_FLAG - 3-addr instructions which really work like 2-addr ones.
-const unsigned M_2_ADDR_FLAG           = 1 << 9;
+const unsigned M_2_ADDR_FLAG           = 1 << 7;
 
 // M_CONVERTIBLE_TO_3_ADDR - This is a M_2_ADDR_FLAG instruction which can be
 // changed into a 3-address instruction if the first two operands cannot be
 // assigned to the same register.  The target must implement the
 // TargetInstrInfo::convertToThreeAddress method for this instruction.
-const unsigned M_CONVERTIBLE_TO_3_ADDR = 1 << 10;
+const unsigned M_CONVERTIBLE_TO_3_ADDR = 1 << 8;
 
 // This M_COMMUTABLE - is a 2- or 3-address instruction (of the form X = op Y,
 // Z), which produces the same result if Y and Z are exchanged.
-const unsigned M_COMMUTABLE            = 1 << 11;
+const unsigned M_COMMUTABLE            = 1 << 9;
 
 // M_TERMINATOR_FLAG - Is this instruction part of the terminator for a basic
 // block?  Typically this is things like return and branch instructions.
 // Various passes use this to insert code into the bottom of a basic block, but
 // before control flow occurs.
-const unsigned M_TERMINATOR_FLAG       = 1 << 12;
+const unsigned M_TERMINATOR_FLAG       = 1 << 10;
 
 // M_USES_CUSTOM_DAG_SCHED_INSERTION - Set if this instruction requires custom
 // insertion support when the DAG scheduler is inserting it into a machine basic
 // block.
-const unsigned M_USES_CUSTOM_DAG_SCHED_INSERTION = 1 << 13;
+const unsigned M_USES_CUSTOM_DAG_SCHED_INSERTION = 1 << 11;
 
 /// TargetOperandInfo - This holds information about one operand of a machine
 /// instruction, indicating the register class for register operands, etc.
@@ -95,12 +93,6 @@ class TargetInstrDescriptor {
 public:
   const char *    Name;          // Assembly language mnemonic for the opcode.
   int             numOperands;   // Number of args; -1 if variable #args
-  int             resultPos;     // Position of the result; -1 if no result
-  unsigned        maxImmedConst; // Largest +ve constant in IMMED field or 0.
-  bool            immedIsSignExtended; // Is IMMED field sign-extended? If so,
-                                 //   smallest -ve value is -(maxImmedConst+1).
-  unsigned        numDelaySlots; // Number of delay slots after instruction
-  unsigned        latency;       // Latency in machine cycles
   InstrSchedClass schedClass;    // enum  identifying instr sched class
   unsigned        Flags;         // flags identifying machine instr class
   unsigned        TSFlags;       // Target Specific Flag values
@@ -280,70 +272,11 @@ public:
     assert(0 && "Target didn't implement insertNoop!");
     abort();
   }
-
-  //-------------------------------------------------------------------------
-  // Code generation support for creating individual machine instructions
-  //
-  // WARNING: These methods are Sparc specific
-  //
-  // DO NOT USE ANY OF THESE METHODS THEY ARE DEPRECATED!
-  //
-  //-------------------------------------------------------------------------
-
-  unsigned getNumDelaySlots(MachineOpCode Opcode) const {
-    return get(Opcode).numDelaySlots;
-  }
-  bool isCCInstr(MachineOpCode Opcode) const {
-    return get(Opcode).Flags & M_CC_FLAG;
-  }
-  bool isNop(MachineOpCode Opcode) const {
-    return get(Opcode).Flags & M_NOP_FLAG;
-  }
   
   /// hasDelaySlot - Returns true if the specified instruction has a delay slot
   /// which must be filled by the code generator.
   bool hasDelaySlot(unsigned Opcode) const {
     return get(Opcode).Flags & M_DELAY_SLOT_FLAG;
-  }
-
-  virtual bool hasResultInterlock(MachineOpCode Opcode) const {
-    return true;
-  }
-
-  //
-  // Latencies for individual instructions and instruction pairs
-  //
-  virtual int minLatency(MachineOpCode Opcode) const {
-    return get(Opcode).latency;
-  }
-
-  virtual int maxLatency(MachineOpCode Opcode) const {
-    return get(Opcode).latency;
-  }
-
-  //
-  // Which operand holds an immediate constant?  Returns -1 if none
-  //
-  virtual int getImmedConstantPos(MachineOpCode Opcode) const {
-    return -1; // immediate position is machine specific, so say -1 == "none"
-  }
-
-  // Check if the specified constant fits in the immediate field
-  // of this machine instruction
-  //
-  virtual bool constantFitsInImmedField(MachineOpCode Opcode,
-                                        int64_t intValue) const;
-
-  // Return the largest positive constant that can be held in the IMMED field
-  // of this machine instruction.
-  // isSignExtended is set to true if the value is sign-extended before use
-  // (this is true for all immediate fields in SPARC instructions).
-  // Return 0 if the instruction has no IMMED field.
-  //
-  virtual uint64_t maxImmedConstant(MachineOpCode Opcode,
-                                    bool &isSignExtended) const {
-    isSignExtended = get(Opcode).immedIsSignExtended;
-    return get(Opcode).maxImmedConst;
   }
 };
 
