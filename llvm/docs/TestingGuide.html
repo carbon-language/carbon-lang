@@ -326,8 +326,8 @@ that you might find useful when writing <tt>RUN</tt> lines.</p>
 specific platform or with a specific version of llvmgcc by using the <tt>XFAIL</tt> keyword. Xfail lines are
 specified in the comments of the test program using <tt>XFAIL</tt>,
 followed by a colon, and one or more regular expressions (separated by
-a comma) that will match against the target triplet for the
-machine. You can use * to match all targets. Here is an example of an
+a comma) that will match against the target triplet or llvmgcc version for the
+machine. You can use * to match all targets. You can specify the major or full version (i.e. 3.4) for llvmgcc. Here is an example of an
 <tt>XFAIL</tt> line:</p>
 <pre>
 ; XFAIL: darwin,sun,llvmgcc4
