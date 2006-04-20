@@ -58,7 +58,6 @@ if test -d "$TOPDIR" ; then
       -path 'docs/CommandGuide/ps/*' -o \
       -path 'docs/CommandGuide/man/*' -o \
       -path 'docs/HistoricalNotes/*' -o \
-      -path 'utils/Burg/*' -o \
       -path 'docs/img/*' -o \
       -path '*/.libs/*' \
     \) -prune  -o \( \
@@ -95,7 +94,6 @@ if test -d "$TOPDIR" ; then
       \! -name '.*' \
       \! -name '*~' \
       \! -name '#*' \
-      \! -name 'Sparc.burm.c' \
       \! -name 'Lexer.cpp' \
       \! -name 'llvmAsmParser.cpp' \
       \! -name 'llvmAsmParser.h' \
