@@ -133,7 +133,6 @@ sub ValidateDirectory
   return 0 if ($d =~ /.*Debug.*/);
   return 0 if ($d =~ /.*Release.*/);
   return 0 if ($d =~ /.*Profile.*/);
-  return 0 if ($d =~ /.*utils\/Burg.*/);
   return 0 if ($d =~ /.*docs\/CommandGuide\/html.*/);
   return 0 if ($d =~ /.*docs\/CommandGuide\/man.*/);
   return 0 if ($d =~ /.*docs\/CommandGuide\/ps.*/);
