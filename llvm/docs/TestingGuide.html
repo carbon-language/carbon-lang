@@ -323,14 +323,14 @@ platforms support grep -C.</dd>
 that you might find useful when writing <tt>RUN</tt> lines.</p>
 
 <p>Lastly, you can easily mark a test that is expected to fail on a
-specific platform by using the <tt>XFAIL</tt> keyword. Xfail lines are
+specific platform or with a specific version of llvmgcc by using the <tt>XFAIL</tt> keyword. Xfail lines are
 specified in the comments of the test program using <tt>XFAIL</tt>,
 followed by a colon, and one or more regular expressions (separated by
 a comma) that will match against the target triplet for the
 machine. You can use * to match all targets. Here is an example of an
 <tt>XFAIL</tt> line:</p>
 <pre>
-; XFAIL: darwin,sun
+; XFAIL: darwin,sun,llvmgcc4
 </pre>
 
 </div>
