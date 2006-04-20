@@ -38,26 +38,6 @@ TargetInstrInfo::~TargetInstrInfo() {
   TargetInstrDescriptors = NULL; // reset global variable
 }
 
-// FIXME: SPARCV9 SPECIFIC!
-bool TargetInstrInfo::constantFitsInImmedField(MachineOpCode opCode,
-                                               int64_t intValue) const {
-  // First, check if opCode has an immed field.
-  bool isSignExtended;
-  uint64_t maxImmedValue = maxImmedConstant(opCode, isSignExtended);
-  if (maxImmedValue != 0)
-    {
-      // NEED TO HANDLE UNSIGNED VALUES SINCE THEY MAY BECOME MUCH
-      // SMALLER AFTER CASTING TO SIGN-EXTENDED int, short, or char.
-      // See CreateUIntSetInstruction in SparcInstrInfo.cpp.
-
-      // Now check if the constant fits
-      if (intValue <= (int64_t) maxImmedValue &&
-          intValue >= -((int64_t) maxImmedValue+1))
-        return true;
-    }
-
-  return false;
-}
 
 // commuteInstruction - The default implementation of this method just exchanges
 // operand 1 and 2.
