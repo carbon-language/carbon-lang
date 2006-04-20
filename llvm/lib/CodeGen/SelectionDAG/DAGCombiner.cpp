@@ -1080,7 +1080,7 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
       // zero_extend, to avoid duplicating things.  This will later cause this
       // AND to be folded.
       CombineTo(N0.Val, Zext);
-      return SDOperand();
+      return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
     }
   }
   // fold (and (setcc x), (setcc y)) -> (setcc (and x, y))
@@ -1157,7 +1157,7 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
                                          EVT);
       AddToWorkList(N);
       CombineTo(N0.Val, ExtLoad, ExtLoad.getValue(1));
-      return SDOperand();
+      return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
     }
   }
   // fold (zext_inreg (sextload x)) -> (zextload x) iff load has one use
@@ -1172,7 +1172,7 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
                                          EVT);
       AddToWorkList(N);
       CombineTo(N0.Val, ExtLoad, ExtLoad.getValue(1));
-      return SDOperand();
+      return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
     }
   }
   
@@ -1212,7 +1212,7 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
                        N0.getOperand(2), EVT);
       AddToWorkList(N);
       CombineTo(N0.Val, Load, Load.getValue(1));
-      return SDOperand();
+      return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
     }
   }
   
@@ -1797,7 +1797,7 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
     CombineTo(N, ExtLoad);
     CombineTo(N0.Val, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
               ExtLoad.getValue(1));
-    return SDOperand();
+    return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
   }
 
   // fold (sext (sextload x)) -> (sext (truncate (sextload x)))
@@ -1810,7 +1810,7 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
     CombineTo(N, ExtLoad);
     CombineTo(N0.Val, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
               ExtLoad.getValue(1));
-    return SDOperand();
+    return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
   }
   
   return SDOperand();
@@ -1840,7 +1840,7 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
     CombineTo(N, ExtLoad);
     CombineTo(N0.Val, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
               ExtLoad.getValue(1));
-    return SDOperand();
+    return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
   }
 
   // fold (zext (zextload x)) -> (zext (truncate (zextload x)))
@@ -1853,7 +1853,7 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
     CombineTo(N, ExtLoad);
     CombineTo(N0.Val, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
               ExtLoad.getValue(1));
-    return SDOperand();
+    return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
   }
   return SDOperand();
 }
@@ -1915,7 +1915,7 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
                                        EVT);
     CombineTo(N, ExtLoad);
     CombineTo(N0.Val, ExtLoad, ExtLoad.getValue(1));
-    return SDOperand();
+    return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
   }
   // fold (sext_inreg (zextload x)) -> (sextload x) iff load has one use
   if (N0.getOpcode() == ISD::ZEXTLOAD && N0.hasOneUse() &&
@@ -1926,7 +1926,7 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
                                        EVT);
     CombineTo(N, ExtLoad);
     CombineTo(N0.Val, ExtLoad, ExtLoad.getValue(1));
-    return SDOperand();
+    return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
   }
   return SDOperand();
 }
@@ -1975,7 +1975,7 @@ SDOperand DAGCombiner::visitTRUNCATE(SDNode *N) {
     SDOperand Load = DAG.getLoad(VT, N0.getOperand(0), NewPtr,N0.getOperand(2));
     AddToWorkList(N);
     CombineTo(N0.Val, Load, Load.getValue(1));
-    return SDOperand();
+    return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
   }
   return SDOperand();
 }
