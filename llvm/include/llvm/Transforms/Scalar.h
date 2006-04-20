@@ -296,10 +296,6 @@ FunctionPass *createLowerGCPass();
 // through conditional branches.
 FunctionPass *createBlockPlacementPass();
 
-//===----------------------------------------------------------------------===//
-// This pass does partial redundancy elimination.
-FunctionPass *createPREPass();
-
 } // End llvm namespace
 
 #endif
