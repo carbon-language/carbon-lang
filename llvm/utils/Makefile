@@ -16,11 +16,6 @@ EXTRA_DIST := cgiplotNLT.pl check-each-file codegen-diff countloc.sh cvsupdate \
 	      llvm-native-gxx makellvm NightlyTest.gnuplot NightlyTest.pl \
 	      NightlyTestTemplate.html NLT.schema OldenDataRecover.pl \
 	      parseNLT.pl plotNLT.pl profile.pl RegressionFinder.pl userloc.pl \
-	      webNLT.pl vim llvm-config
+	      webNLT.pl vim
 
 include $(LEVEL)/Makefile.common
-
-# Only include llvm-config if we have Perl to build it with.
-ifeq ($(HAVE_PERL),1)
-  DIRS += llvm-config
-endif
