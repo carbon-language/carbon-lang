@@ -398,7 +398,6 @@ private:
 
 class MachineInstr {
   short Opcode;                         // the opcode
-  unsigned char numImplicitRefs;        // number of implicit operands
   std::vector<MachineOperand> operands; // the operands
   MachineInstr* prev, *next;            // links for our intrusive list
   MachineBasicBlock* parent;            // pointer to the owning basic block
@@ -442,7 +441,7 @@ public:
 
   /// Access to explicit operands of the instruction.
   ///
-  unsigned getNumOperands() const { return operands.size() - numImplicitRefs; }
+  unsigned getNumOperands() const { return operands.size(); }
 
   const MachineOperand& getOperand(unsigned i) const {
     assert(i < getNumOperands() && "getOperand() out of range!");
@@ -453,48 +452,6 @@ public:
     return operands[i];
   }
 
-  //
-  // Access to explicit or implicit operands of the instruction
-  // This returns the i'th entry in the operand vector.
-  // That represents the i'th explicit operand or the (i-N)'th implicit operand,
-  // depending on whether i < N or i >= N.
-  //
-  const MachineOperand& getExplOrImplOperand(unsigned i) const {
-    assert(i < operands.size() && "getExplOrImplOperand() out of range!");
-    return (i < getNumOperands()? getOperand(i)
-                                : getImplicitOp(i - getNumOperands()));
-  }
-
-  //
-  // Access to implicit operands of the instruction
-  //
-  unsigned getNumImplicitRefs() const{ return numImplicitRefs; }
-
-  MachineOperand& getImplicitOp(unsigned i) {
-    assert(i < numImplicitRefs && "implicit ref# out of range!");
-    return operands[i + operands.size() - numImplicitRefs];
-  }
-  const MachineOperand& getImplicitOp(unsigned i) const {
-    assert(i < numImplicitRefs && "implicit ref# out of range!");
-    return operands[i + operands.size() - numImplicitRefs];
-  }
-
-  Value* getImplicitRef(unsigned i) {
-    return getImplicitOp(i).getVRegValue();
-  }
-  const Value* getImplicitRef(unsigned i) const {
-    return getImplicitOp(i).getVRegValue();
-  }
-
-  void addImplicitRef(Value* V, bool isDef = false, bool isDefAndUse = false) {
-    ++numImplicitRefs;
-    addRegOperand(V, isDef, isDefAndUse);
-  }
-  void setImplicitRef(unsigned i, Value* V) {
-    assert(i < getNumImplicitRefs() && "setImplicitRef() out of range!");
-    SetMachineOperandVal(i + getNumOperands(),
-                         MachineOperand::MO_VirtualRegister, V);
-  }
 
   /// clone - Create a copy of 'this' instruction that is identical in
   /// all ways except the the instruction has no parent, prev, or next.
@@ -516,16 +473,6 @@ public:
   void print(std::ostream &OS, const TargetMachine *TM) const;
   void dump() const;
   friend std::ostream& operator<<(std::ostream& os, const MachineInstr& minstr);
-
-  // Define iterators to access the Value operands of the Machine Instruction.
-  // Note that these iterators only enumerate the explicit operands.
-  // begin() and end() are defined to produce these iterators.  NOTE, these are
-  // SparcV9 specific!
-  //
-  template<class _MI, class _V> class ValOpIterator;
-  typedef ValOpIterator<const MachineInstr*,const Value*> const_val_op_iterator;
-  typedef ValOpIterator<      MachineInstr*,      Value*> val_op_iterator;
-
 
   //===--------------------------------------------------------------------===//
   // Accessors to add operands when building up machine instructions
@@ -683,12 +630,6 @@ public:
   //
   // FIXME: Move this stuff to MachineOperand itself!
 
-  /// replace - Support to rewrite a machine instruction in place: for now,
-  /// simply replace() and then set new operands with Set.*Operand methods
-  /// below.
-  ///
-  void replace(short Opcode, unsigned numOperands);
-
   /// setOpcode - Replace the opcode of the current instruction with a new one.
   ///
   void setOpcode(unsigned Op) { Opcode = Op; }
@@ -711,81 +652,6 @@ public:
                               int intValue);
 
   void SetMachineOperandReg(unsigned i, int regNum);
-
-
-  unsigned substituteValue(const Value* oldVal, Value* newVal,
-                           bool defsOnly, bool notDefsAndUses,
-                           bool& someArgsWereIgnored);
-
-  // SetRegForOperand -
-  // SetRegForImplicitRef -
-  // Mark an explicit or implicit operand with its allocated physical register.
-  //
-  void SetRegForOperand(unsigned i, int regNum);
-  void SetRegForImplicitRef(unsigned i, int regNum);
-
-  //
-  // Iterator to enumerate machine operands.  NOTE, this is SPARCV9 specific!
-  //
-  template<class MITy, class VTy>
-  class ValOpIterator : public forward_iterator<VTy, ptrdiff_t> {
-    unsigned i;
-    MITy MI;
-
-    void skipToNextVal() {
-      while (i < MI->getNumOperands() &&
-             !( (MI->getOperand(i).getType() == MachineOperand::MO_VirtualRegister ||
-                 MI->getOperand(i).getType() == MachineOperand::MO_CCRegister)
-                && MI->getOperand(i).getVRegValue() != 0))
-        ++i;
-    }
-
-    inline ValOpIterator(MITy mi, unsigned I) : i(I), MI(mi) {
-      skipToNextVal();
-    }
-
-  public:
-    typedef ValOpIterator<MITy, VTy> _Self;
-
-    inline VTy operator*() const {
-      return MI->getOperand(i).getVRegValue();
-    }
-
-    const MachineOperand &getMachineOperand() const { return MI->getOperand(i);}
-          MachineOperand &getMachineOperand()       { return MI->getOperand(i);}
-
-    inline VTy operator->() const { return operator*(); }
-
-    inline bool isUse()   const { return MI->getOperand(i).isUse(); }
-    inline bool isDef()   const { return MI->getOperand(i).isDef(); }
-
-    inline _Self& operator++() { i++; skipToNextVal(); return *this; }
-    inline _Self  operator++(int) { _Self tmp = *this; ++*this; return tmp; }
-
-    inline bool operator==(const _Self &y) const {
-      return i == y.i;
-    }
-    inline bool operator!=(const _Self &y) const {
-      return !operator==(y);
-    }
-
-    static _Self begin(MITy MI) {
-      return _Self(MI, 0);
-    }
-    static _Self end(MITy MI) {
-      return _Self(MI, MI->getNumOperands());
-    }
-  };
-
-  // Note: These are Sparc-V9 specific!
-  val_op_iterator begin() { return val_op_iterator::begin(this); }
-  val_op_iterator end()   { return val_op_iterator::end(this); }
-  const_val_op_iterator begin() const {
-    return const_val_op_iterator::begin(this);
-  }
-  const_val_op_iterator end() const {
-    return const_val_op_iterator::end(this);
-  }
 };
 
 //===----------------------------------------------------------------------===//
@@ -793,7 +659,6 @@ public:
 
 std::ostream& operator<<(std::ostream &OS, const MachineInstr &MI);
 std::ostream& operator<<(std::ostream &OS, const MachineOperand &MO);
-void PrintMachineInstructions(const Function *F);
 
 } // End llvm namespace
 
