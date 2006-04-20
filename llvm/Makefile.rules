@@ -608,21 +608,6 @@ ifdef ENABLE_X86_JIT
   JIT_LIBS += LLVMX86 LLVMSelectionDAG
 endif
 
-# You can enable the SparcV9 JIT on a non-SparcV9 host by setting the flag
-# ENABLE_SPARCV9_JIT on the make command line. If not, it will still be
-# enabled automagically on an SparcV9 host.
-ifeq ($(ARCH), Sparc)
-  ENABLE_SPARCV9_JIT = 1
-endif
-
-# What the Sparc JIT requires
-ifdef ENABLE_SPARCV9_JIT
-  JIT_LIBS += LLVMSparcV9 LLVMSparcV9ModuloSched LLVMSparcV9InstrSched \
-              LLVMSparcV9LiveVar LLVMInstrumentation.a \
-              LLVMBCWriter LLVMTransforms.a LLVMipo.a LLVMipa.a \
-              LLVMDataStructure LLVMSparcV9RegAlloc
-endif
-
 # You can enable the PowerPC JIT on a non-PowerPC host by setting the flag
 # ENABLE_PPC_JIT on the make command line. If not, it will still be
 # enabled automagically on an PowerPC host.
