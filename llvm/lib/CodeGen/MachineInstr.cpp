@@ -39,7 +39,6 @@ namespace llvm {
 // Constructor for instructions with variable #operands
 MachineInstr::MachineInstr(short opcode, unsigned numOperands)
   : Opcode(opcode),
-    numImplicitRefs(0),
     operands(numOperands, MachineOperand()),
     parent(0) {
   // Make sure that we get added to a machine basicblock
@@ -52,7 +51,7 @@ MachineInstr::MachineInstr(short opcode, unsigned numOperands)
 /// Eventually, the "resizing" ctors will be phased out.
 ///
 MachineInstr::MachineInstr(short opcode, unsigned numOperands, bool XX, bool YY)
-  : Opcode(opcode), numImplicitRefs(0), parent(0) {
+  : Opcode(opcode), parent(0) {
   operands.reserve(numOperands);
   // Make sure that we get added to a machine basicblock
   LeakDetector::addGarbageObject(this);
@@ -63,7 +62,7 @@ MachineInstr::MachineInstr(short opcode, unsigned numOperands, bool XX, bool YY)
 ///
 MachineInstr::MachineInstr(MachineBasicBlock *MBB, short opcode,
                            unsigned numOperands)
-  : Opcode(opcode), numImplicitRefs(0), parent(0) {
+  : Opcode(opcode), parent(0) {
   assert(MBB && "Cannot use inserting ctor with null basic block!");
   operands.reserve(numOperands);
   // Make sure that we get added to a machine basicblock
@@ -75,7 +74,6 @@ MachineInstr::MachineInstr(MachineBasicBlock *MBB, short opcode,
 ///
 MachineInstr::MachineInstr(const MachineInstr &MI) {
   Opcode = MI.getOpcode();
-  numImplicitRefs = MI.getNumImplicitRefs();
   operands.reserve(MI.getNumOperands());
 
   // Add operands
@@ -118,18 +116,6 @@ bool MachineInstr::OperandsComplete() const {
   return false;
 }
 
-/// replace - Support for replacing opcode and operands of a MachineInstr in
-/// place. This only resets the size of the operand vector and initializes it.
-/// The new operands must be set explicitly later.
-///
-void MachineInstr::replace(short opcode, unsigned numOperands) {
-  assert(getNumImplicitRefs() == 0 &&
-         "This is probably broken because implicit refs are going to be lost.");
-  Opcode = opcode;
-  operands.clear();
-  operands.resize(numOperands, MachineOperand());
-}
-
 void MachineInstr::SetMachineOperandVal(unsigned i,
                                         MachineOperand::MachineOperandType opTy,
                                         Value* V) {
@@ -160,62 +146,6 @@ void MachineInstr::SetMachineOperandReg(unsigned i, int regNum) {
   operands[i].opType = MachineOperand::MO_MachineRegister;
   operands[i].contents.value = NULL;
   operands[i].extra.regNum = regNum;
-}
-
-// Used only by the SPARC back-end.
-void MachineInstr::SetRegForOperand(unsigned i, int regNum) {
-  assert(i < getNumOperands());          // must be explicit op
-  operands[i].setRegForValue(regNum);
-}
-
-// Used only by the SPARC back-end.
-void MachineInstr::SetRegForImplicitRef(unsigned i, int regNum) {
-  getImplicitOp(i).setRegForValue(regNum);
-}
-
-/// substituteValue - Substitute all occurrences of Value* oldVal with newVal
-/// in all operands and all implicit refs. If defsOnly == true, substitute defs
-/// only.
-///
-/// FIXME: Fold this into its single caller, at SparcInstrSelection.cpp:2865,
-/// or make it a static function in that file.
-///
-unsigned
-MachineInstr::substituteValue(const Value* oldVal, Value* newVal,
-                              bool defsOnly, bool notDefsAndUses,
-                              bool& someArgsWereIgnored)
-{
-  assert((!defsOnly || !notDefsAndUses) &&
-         "notDefsAndUses is irrelevant if defsOnly == true.");
-
-  unsigned numSubst = 0;
-
-  // Substitute operands
-  for (MachineInstr::val_op_iterator O = begin(), E = end(); O != E; ++O)
-    if (*O == oldVal)
-      if (!defsOnly ||
-          notDefsAndUses && (O.isDef() && !O.isUse()) ||
-          !notDefsAndUses && O.isDef())
-      {
-        O.getMachineOperand().contents.value = newVal;
-        ++numSubst;
-      } else
-        someArgsWereIgnored = true;
-
-  // Substitute implicit refs
-  for (unsigned i = 0, N = getNumImplicitRefs(); i < N; ++i)
-    if (getImplicitRef(i) == oldVal) {
-      MachineOperand Op = getImplicitOp(i);
-      if (!defsOnly ||
-          notDefsAndUses && (Op.isDef() && !Op.isUse()) ||
-          !notDefsAndUses && Op.isDef())
-      {
-        Op.contents.value = newVal;
-        ++numSubst;
-      } else
-        someArgsWereIgnored = true;
-    }
-  return numSubst;
 }
 
 void MachineInstr::dump() const {
@@ -357,20 +287,6 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine *TM) const {
         OS << "<def>";
   }
 
-  // code for printing implicit references
-  if (getNumImplicitRefs()) {
-    OS << "\tImplicitRefs: ";
-    for (unsigned i = 0, e = getNumImplicitRefs(); i != e; ++i) {
-      OS << "\t";
-      OutputValue(OS, getImplicitRef(i));
-      if (getImplicitOp(i).isDef())
-        if (getImplicitOp(i).isUse())
-          OS << "<def&use>";
-        else
-          OS << "<def>";
-    }
-  }
-
   OS << "\n";
 }
 
@@ -398,21 +314,6 @@ std::ostream &operator<<(std::ostream &os, const MachineInstr &MI) {
         os << "<d&u>";
       else
         os << "<d>";
-  }
-
-  // code for printing implicit references
-  unsigned NumOfImpRefs = MI.getNumImplicitRefs();
-  if (NumOfImpRefs > 0) {
-    os << "\tImplicit: ";
-    for (unsigned z = 0; z < NumOfImpRefs; z++) {
-      OutputValue(os, MI.getImplicitRef(z));
-      if (MI.getImplicitOp(z).isDef())
-          if (MI.getImplicitOp(z).isUse())
-            os << "<d&u>";
-          else
-            os << "<d>";
-      os << "\t";
-    }
   }
 
   return os << "\n";
