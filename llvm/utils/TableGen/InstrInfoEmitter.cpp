@@ -181,8 +181,7 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   unsigned ItinClass = !IsItineraries ? 0 :
             ItinClassNumber(Inst.TheDef->getValueAsDef("Itinerary")->getName());
   
-  OS << "\",\t" << NumOperands << ", -1, 0, false, 0, 0, "
-     << ItinClass
+  OS << "\",\t" << NumOperands << ", " << ItinClass
      << ", 0";
 
   // Emit all of the target indepedent flags...
