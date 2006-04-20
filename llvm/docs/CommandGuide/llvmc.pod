@@ -337,6 +337,8 @@ been read. This allows users or groups of users to conveniently create
 their own configuration directories in addition to the standard ones to which 
 they may not have write access.
 
+=back
+
 
 =head2 Unimplemented Options
 
