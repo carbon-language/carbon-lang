@@ -130,16 +130,6 @@
     <td>Skeleton for a code generation backend.</td></tr>
   <tr><td>LLVMSparc</td><td><tt>.o</tt></td>
     <td>Code generation for Sparc.</td></tr>
-  <tr><td>LLVMSparcV9</td><td><tt>.o</tt></td>
-    <td>Code generation for SparcV9.</td></tr>
-  <tr><td>LLVMSparcV9RegAlloc</td><td><tt>.a .o</tt></td>
-    <td>Graph-coloring register allocator for SparcV9.</td></tr>
-  <tr><td>LLVMSparcV9InstrSched</td><td><tt>.o</tt></td>
-    <td>Instruction scheduling for SparcV9.</td></tr>
-  <tr><td>LLVMSparcV9LiveVar</td><td><tt>.o</tt></td>
-    <td>Live variable analysis SparcV9.</td></tr>
-  <tr><td>LLVMSparcV9ModuloSched</td><td><tt>.o</tt></td>
-    <td>Modulo scheduling for SparcV9.</td></tr>
   <tr><td>LLVMTarget</td><td><tt>.a .o</tt></td>
     <td>Generic code generation utilities.</td></tr>
   <tr><td>LLVMX86</td><td><tt>.o</tt></td>
@@ -220,14 +210,6 @@
     <li>libLLVMTarget.a</li>
     <li>libLLVMTransformUtils.a</li>
     <li>LLVMCore.o</li>
-  </ul></dd>
-  <dt><b>libLLVMSparcV9RegAlloc.a</b</dt><dd><ul>
-    <li>libLLVMAnalysis.a</li>
-    <li>libLLVMSupport.a</li>
-    <li>LLVMCodeGen.o</li>
-    <li>LLVMCore.o</li>
-    <li>LLVMSparcV9LiveVar.o</li>
-    <li>LLVMSparcV9.o</li>
   </ul></dd>
   <dt><b>libLLVMSupport.a</b</dt><dd><ul>
     <li>libLLVMSystem.a</li>
@@ -377,44 +359,6 @@
     <li>libLLVMTarget.a</li>
     <li>LLVMCodeGen.o</li>
     <li>LLVMCore.o</li>
-  </ul></dd>
-  <dt><b>LLVMSparcV9.o</b</dt><dd><ul>
-    <li>libLLVMScalarOpts.a</li>
-    <li>libLLVMSparcV9RegAlloc.a</li>
-    <li>libLLVMSupport.a</li>
-    <li>libLLVMTarget.a</li>
-    <li>LLVMBCWriter.o</li>
-    <li>LLVMCodeGen.o</li>
-    <li>LLVMCore.o</li>
-    <li>LLVMSparcV9InstrSched.o</li>
-    <li>LLVMSparcV9ModuloSched.o</li>
-  </ul></dd>
-  <dt><b>LLVMSparcV9InstrSched.o</b</dt><dd><ul>
-    <li>libLLVMSupport.a</li>
-    <li>LLVMCodeGen.o</li>
-    <li>LLVMCore.o</li>
-    <li>LLVMSparcV9LiveVar.o</li>
-    <li>LLVMSparcV9.o</li>
-  </ul></dd>
-  <dt><b>LLVMSparcV9LiveVar.o</b</dt><dd><ul>
-    <li>libLLVMSupport.a</li>
-    <li>LLVMCodeGen.o</li>
-    <li>LLVMCore.o</li>
-  </ul></dd>
-  <dt><b>LLVMSparcV9ModuloSched.o</b</dt><dd><ul>
-    <li>libLLVMSupport.a</li>
-    <li>libLLVMTarget.a</li>
-    <li>LLVMCodeGen.o</li>
-    <li>LLVMCore.o</li>
-    <li>LLVMSparcV9.o</li>
-  </ul></dd>
-  <dt><b>LLVMSparcV9RegAlloc.o</b</dt><dd><ul>
-    <li>libLLVMAnalysis.a</li>
-    <li>libLLVMSupport.a</li>
-    <li>LLVMCodeGen.o</li>
-    <li>LLVMCore.o</li>
-    <li>LLVMSparcV9LiveVar.o</li>
-    <li>LLVMSparcV9.o</li>
   </ul></dd>
   <dt><b>LLVMSupport.o</b</dt><dd><ul>
     <li>libLLVMSystem.a</li>
