@@ -23,16 +23,6 @@ ifneq ($(strip $(filter CBackend,$(TARGETS_TO_BUILD))),)
 USEDLIBS += LLVMCBackend
 endif
 
-# Check for Sparc target
-ifneq ($(strip $(filter SparcV9,$(TARGETS_TO_BUILD))),)
-USEDLIBS += \
-	LLVMSparcV9ModuloSched \
-	LLVMSparcV9 \
-	LLVMSparcV9RegAlloc \
-	LLVMSparcV9InstrSched \
-	LLVMSparcV9LiveVar
-endif
-
 ifneq ($(strip $(filter Sparc,$(TARGETS_TO_BUILD))),)
 USEDLIBS += LLVMSparc
 endif
