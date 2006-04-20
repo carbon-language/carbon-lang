@@ -1367,6 +1367,52 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       }
     }
   }
+  
+  // Canonicalize an UNDEF to the RHS, even over a constant.
+  if (N1.getOpcode() == ISD::UNDEF) {
+    if (isCommutativeBinOp(Opcode)) {
+      std::swap(N1, N2);
+    } else {
+      switch (Opcode) {
+      case ISD::FP_ROUND_INREG:
+      case ISD::SIGN_EXTEND_INREG:
+      case ISD::SUB:
+      case ISD::FSUB:
+      case ISD::FDIV:
+      case ISD::FREM:
+        return N1;     // fold op(undef, arg2) -> undef
+      case ISD::UDIV:
+      case ISD::SDIV:
+      case ISD::UREM:
+      case ISD::SREM:
+        return getConstant(0, VT);    // fold op(undef, arg2) -> 0
+      }
+    }
+  }
+  
+  // Fold a bunch of operators that 
+  if (N2.getOpcode() == ISD::UNDEF) {
+    switch (Opcode) {
+    case ISD::ADD:
+    case ISD::SUB:
+    case ISD::FADD:
+    case ISD::FSUB:
+    case ISD::FMUL:
+    case ISD::FDIV:
+    case ISD::FREM:
+    case ISD::UDIV:
+    case ISD::SDIV:
+    case ISD::UREM:
+    case ISD::SREM:
+    case ISD::XOR:
+      return N2;       // fold op(arg1, undef) -> undef
+    case ISD::MUL: 
+    case ISD::AND:
+      return getConstant(0, VT);  // fold op(arg1, undef) -> 0
+    case ISD::OR:
+      return getConstant(MVT::getIntVTBitMask(VT), VT);
+    }
+  }
 
   // Finally, fold operations that do not require constants.
   switch (Opcode) {
