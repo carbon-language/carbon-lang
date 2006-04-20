@@ -603,7 +603,7 @@ def : Pat<(v4i32 (and VRRC:$A, (vnot_conv VRRC:$B))),
           (v4i32 (VANDC VRRC:$A, VRRC:$B))>;
 
 def : Pat<(fmul VRRC:$vA, VRRC:$vB),
-          (v4f32 (VMADDFP VRRC:$vA, VRRC:$vB, (v4f32 (V_SET0))))>; 
+          (v4f32 (VMADDFP VRRC:$vA, VRRC:$vB, (v4i32 (V_SET0))))>; 
 
 // Fused multiply add and multiply sub for packed float.  These are represented
 // separately from the real instructions above, for operations that must have
