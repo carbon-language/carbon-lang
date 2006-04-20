@@ -27,9 +27,4 @@ LLVMJIT.o: libLLVMSupport.a libLLVMSystem.a libLLVMTarget.a LLVMCore.o LLVMExecu
 LLVMPowerPC.o: libLLVMScalarOpts.a libLLVMSupport.a libLLVMTarget.a LLVMCodeGen.o LLVMCore.o LLVMSelectionDAG.o
 LLVMSelectionDAG.o: libLLVMSupport.a libLLVMSystem.a libLLVMTarget.a libLLVMTransformUtils.a LLVMCodeGen.o LLVMCore.o
 LLVMSparc.o: libLLVMScalarOpts.a libLLVMSupport.a libLLVMTarget.a LLVMCodeGen.o LLVMCore.o LLVMSelectionDAG.o
-LLVMSparcV9InstrSched.o: libLLVMSupport.a LLVMCodeGen.o LLVMCore.o LLVMSparcV9LiveVar.o LLVMSparcV9.o
-LLVMSparcV9LiveVar.o: libLLVMSupport.a LLVMCodeGen.o LLVMCore.o
-LLVMSparcV9ModuloSched.o: libLLVMAnalysis.a libLLVMSupport.a libLLVMTarget.a LLVMCodeGen.o LLVMCore.o LLVMSparcV9.o
-LLVMSparcV9.o: libLLVMScalarOpts.a libLLVMSupport.a libLLVMTarget.a LLVMBCWriter.o LLVMCodeGen.o LLVMCore.o LLVMSparcV9InstrSched.o LLVMSparcV9ModuloSched.o LLVMSparcV9RegAlloc.o
-LLVMSparcV9RegAlloc.o: libLLVMAnalysis.a libLLVMSupport.a LLVMCodeGen.o LLVMCore.o LLVMSparcV9LiveVar.o LLVMSparcV9.o
 LLVMX86.o: libLLVMScalarOpts.a libLLVMSupport.a libLLVMTarget.a LLVMCodeGen.o LLVMCore.o LLVMSelectionDAG.o
