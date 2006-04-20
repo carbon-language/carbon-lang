@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = ..
-DIRS = Burg TableGen fpcmp PerfectShuffle
+DIRS = TableGen fpcmp PerfectShuffle
 
 EXTRA_DIST := cgiplotNLT.pl check-each-file codegen-diff countloc.sh cvsupdate \
               DSAclean.py DSAextract.py emacs findsym.pl GenLibDeps.pl \
