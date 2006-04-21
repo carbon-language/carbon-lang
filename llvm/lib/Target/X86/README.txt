@@ -1068,8 +1068,8 @@ xorps %xmm0, %xmm0
 movss %xmm1, %xmm0
 ret
 
-Because mulss multiplies 0*0 = 0.0, the top elements of xmm1 are already zerod.
-We could compile this to:
+Because mulss doesn't modify the top 3 elements, the top elements of 
+xmm1 are already zero'd.  We could compile this to:
 
 movss 4(%esp), %xmm0
 mulss %xmm0, %xmm0
