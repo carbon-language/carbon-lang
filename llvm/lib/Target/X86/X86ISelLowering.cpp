@@ -2138,19 +2138,19 @@ static inline bool isZeroNode(SDOperand Elt) {
            cast<ConstantFPSDNode>(Elt)->isExactlyValue(0.0)));
 }
 
-/// getShuffleVectorAgainstZero - Return a vector_shuffle of a zero vector and
-/// the specified vector.
-static SDOperand getShuffleVectorAgainstZero(SDOperand Vec, MVT::ValueType VT,
+/// getShuffleVectorZeroOrUndef - Return a vector_shuffle of the specified
+/// vector and zero or undef vector.
+static SDOperand getShuffleVectorZeroOrUndef(SDOperand V2, MVT::ValueType VT,
                                              unsigned NumElems, unsigned Idx,
-                                             SelectionDAG &DAG) {
-  SDOperand ZeroV = getZeroVector(VT, DAG);
+                                             bool isZero, SelectionDAG &DAG) {
+  SDOperand V1 = isZero ? getZeroVector(VT, DAG) : DAG.getNode(ISD::UNDEF, VT);
   MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(NumElems);
   MVT::ValueType EVT = MVT::getVectorBaseType(MaskVT);
   SDOperand Zero = DAG.getConstant(0, EVT);
   std::vector<SDOperand> MaskVec(NumElems, Zero);
   MaskVec[Idx] = DAG.getConstant(NumElems, EVT);
   SDOperand Mask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, MaskVec);
-  return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, ZeroV, Vec, Mask);
+  return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2, Mask);
 }
 
 /// LowerOperation - Provide custom lowering hooks for some operations.
@@ -3005,7 +3005,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
 
     if (X86::isUNPCKL_v_undef_Mask(PermMask.Val) ||
         X86::isUNPCKLMask(PermMask.Val) ||
-        X86::isUNPCKHMask(PermMask.Val, V2IsSplat))
+        X86::isUNPCKHMask(PermMask.Val))
       return Op;
 
     if (V2IsSplat) {
@@ -3137,82 +3137,159 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       return Op;
 
     unsigned NumElems = Op.getNumOperands();
+    unsigned Half = NumElems/2;
     MVT::ValueType VT = Op.getValueType();
     MVT::ValueType EVT = MVT::getVectorBaseType(VT);
-    std::vector<unsigned> NonZeros;
+    unsigned NumZero  = 0;
+    unsigned NonZeros = 0;
     std::set<SDOperand> Values;
     for (unsigned i = 0; i < NumElems; ++i) {
-      unsigned Idx = NumElems - i - 1;
-      SDOperand Elt = Op.getOperand(Idx);
+      SDOperand Elt = Op.getOperand(i);
       Values.insert(Elt);
-      if (!isZeroNode(Elt))
-        NonZeros.push_back(Idx);
+      if (isZeroNode(Elt))
+        NumZero++;
+      else if (Elt.getOpcode() != ISD::UNDEF)
+        NonZeros |= (1 << i);
     }
 
-    if (NonZeros.size() == 0)
+    unsigned NumNonZero = CountPopulation_32(NonZeros);
+    if (NumNonZero == 0)
       return Op;
 
-    if (NonZeros.size() == 1) {
-      unsigned Idx = NonZeros[0];
-      SDOperand Item = Op.getOperand(Idx);
-      if (Idx == 0 || MVT::getSizeInBits(EVT) >= 32)
-        Item = DAG.getNode(ISD::SCALAR_TO_VECTOR,VT, Item);
-      if (Idx == 0)
-        return getShuffleVectorAgainstZero(Item, VT, NumElems, Idx, DAG);
+    // Splat is obviously ok. Let legalizer expand it to a shuffle.
+    if (Values.size() == 1)
+      return SDOperand();
 
-      // If element VT is < 32, convert it to a insert into a zero vector.
-      if (MVT::getSizeInBits(EVT) <= 16) {
-        SDOperand ZeroV;
-        if (EVT == MVT::i8) {
-          Item = DAG.getNode(ISD::ANY_EXTEND, MVT::i16, Item);
-          if ((Idx % 2) != 0)
-            Item = DAG.getNode(ISD::SHL, MVT::i16,
-                               Item, DAG.getConstant(8, MVT::i8));
-          Idx /= 2;
-          ZeroV = getZeroVector(MVT::v8i16, DAG);
-          return DAG.getNode(ISD::BIT_CONVERT, VT,
-                    DAG.getNode(ISD::INSERT_VECTOR_ELT, MVT::v8i16, ZeroV, Item,
-                                DAG.getConstant(Idx, MVT::i32)));
-        } else {
-          ZeroV = getZeroVector(VT, DAG);
-          return DAG.getNode(ISD::INSERT_VECTOR_ELT, VT, ZeroV, Item,
-                             DAG.getConstant(Idx, MVT::i32));
+    // If element VT is >= 32 bits, turn it into a number of shuffles.
+    if (NumNonZero == 1) {
+      unsigned Idx = CountTrailingZeros_32(NonZeros);
+      SDOperand Item = Op.getOperand(Idx);
+      Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, Item);
+      if (Idx == 0)
+        // Turn it into a MOVL (i.e. movss, movsd, or movd) to a zero vector.
+        return getShuffleVectorZeroOrUndef(Item, VT, NumElems, Idx,
+                                           NumZero > 0, DAG);
+
+      if (MVT::getSizeInBits(EVT) >= 32) {
+        // Turn it into a shuffle of zero and zero-extended scalar to vector.
+        Item = getShuffleVectorZeroOrUndef(Item, VT, NumElems, 0, NumZero > 0,
+                                           DAG);
+        MVT::ValueType MaskVT  = MVT::getIntVectorWithNumElements(NumElems);
+        MVT::ValueType MaskEVT = MVT::getVectorBaseType(MaskVT);
+        std::vector<SDOperand> MaskVec;
+        for (unsigned i = 0; i < NumElems; i++)
+          MaskVec.push_back(DAG.getConstant((i == Idx) ? 0 : 1, MaskEVT));
+        SDOperand Mask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, MaskVec);
+        return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, Item,
+                           DAG.getNode(ISD::UNDEF, VT), Mask);
+      }
+    }
+
+    // If element VT is < 32 bits, convert it to inserts into a zero vector.
+    if (MVT::getSizeInBits(EVT) <= 16) {
+      if (NumNonZero <= Half) {
+        SDOperand V(0, 0);
+
+        for (unsigned i = 0; i < NumNonZero; ++i) {
+          unsigned Idx = CountTrailingZeros_32(NonZeros);
+          NonZeros ^= (1 << Idx);
+          SDOperand Item = Op.getOperand(Idx);
+          if (i == 0) {
+            if (NumZero)
+              V = getZeroVector(MVT::v8i16, DAG);
+            else
+              V = DAG.getNode(ISD::UNDEF, MVT::v8i16);
+          }
+          if (EVT == MVT::i8) {
+            Item = DAG.getNode(ISD::ANY_EXTEND, MVT::i16, Item);
+            if ((Idx % 2) != 0)
+              Item = DAG.getNode(ISD::SHL, MVT::i16,
+                                 Item, DAG.getConstant(8, MVT::i8));
+            Idx /= 2;
+          }
+          V = DAG.getNode(ISD::INSERT_VECTOR_ELT, MVT::v8i16, V, Item,
+                          DAG.getConstant(Idx, MVT::i32));
+        }
+
+        if (EVT == MVT::i8)
+          V = DAG.getNode(ISD::BIT_CONVERT, VT, V);
+        return V;
+      }
+    }
+
+    std::vector<SDOperand> V(NumElems);
+    if (NumElems == 4 && NumZero > 0) {
+      for (unsigned i = 0; i < 4; ++i) {
+        bool isZero = !(NonZeros & (1 << i));
+        if (isZero)
+          V[i] = getZeroVector(VT, DAG);
+        else
+          V[i] = DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, Op.getOperand(i));
+      }
+
+      for (unsigned i = 0; i < 2; ++i) {
+        switch ((NonZeros & (0x3 << i*2)) >> (i*2)) {
+        default: break;
+        case 0:
+          V[i] = V[i*2];  // Must be a zero vector.
+          break;
+        case 1:
+          V[i] = DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V[i*2+1], V[i*2],
+                             getMOVLMask(NumElems, DAG));
+          break;
+        case 2:
+          V[i] = DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V[i*2], V[i*2+1],
+                             getMOVLMask(NumElems, DAG));
+          break;
+        case 3:
+          V[i] = DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V[i*2], V[i*2+1],
+                             getUnpacklMask(NumElems, DAG));
+          break;
         }
       }
 
-      // Turn it into a shuffle of zero and zero-extended scalar to vector.
-      Item = getShuffleVectorAgainstZero(Item, VT, NumElems, 0, DAG);
+      // Take advantage of the fact R32 to VR128 scalar_to_vector (i.e. movd)
+      // clears the upper bits. 
+      // FIXME: we can do the same for v4f32 case when we know both parts of
+      // the lower half come from scalar_to_vector (loadf32). We should do
+      // that in post legalizer dag combiner with target specific hooks.
+      if (MVT::isInteger(EVT) && (NonZeros & (0x3 << 2)) == 0)
+        return V[0];
       MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(NumElems);
-      MVT::ValueType MaskEVT = MVT::getVectorBaseType(MaskVT);
+      MVT::ValueType EVT = MVT::getVectorBaseType(MaskVT);
       std::vector<SDOperand> MaskVec;
-      for (unsigned i = 0; i < NumElems; i++)
-        MaskVec.push_back(DAG.getConstant((i == Idx) ? 0 : 1, MaskEVT));
-      SDOperand Mask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, MaskVec);
-      return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, Item,
-                         DAG.getNode(ISD::UNDEF, VT), Mask);
+      bool Reverse = (NonZeros & 0x3) == 2;
+      for (unsigned i = 0; i < 2; ++i)
+        if (Reverse)
+          MaskVec.push_back(DAG.getConstant(1-i, EVT));
+        else
+          MaskVec.push_back(DAG.getConstant(i, EVT));
+      Reverse = ((NonZeros & (0x3 << 2)) >> 2) == 2;
+      for (unsigned i = 0; i < 2; ++i)
+        if (Reverse)
+          MaskVec.push_back(DAG.getConstant(1-i+NumElems, EVT));
+        else
+          MaskVec.push_back(DAG.getConstant(i+NumElems, EVT));
+      SDOperand ShufMask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, MaskVec);
+      return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V[0], V[1], ShufMask);
     }
 
-    if (Values.size() > 2) {
-      // Expand into a number of unpckl*.
-      // e.g. for v4f32
-      //   Step 1: unpcklps 0, 2 ==> X: <?, ?, 2, 0>
-      //         : unpcklps 1, 3 ==> Y: <?, ?, 3, 1>
-      //   Step 2: unpcklps X, Y ==>    <3, 2, 1, 0>
-      SDOperand PermMask = getUnpacklMask(NumElems, DAG);
-      std::vector<SDOperand> V(NumElems);
+    // Expand into a number of unpckl*.
+    // e.g. for v4f32
+    //   Step 1: unpcklps 0, 2 ==> X: <?, ?, 2, 0>
+    //         : unpcklps 1, 3 ==> Y: <?, ?, 3, 1>
+    //   Step 2: unpcklps X, Y ==>    <3, 2, 1, 0>
+    SDOperand UnpckMask = getUnpacklMask(NumElems, DAG);
+    for (unsigned i = 0; i < NumElems; ++i)
+      V[i] = DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, Op.getOperand(i));
+    NumElems >>= 1;
+    while (NumElems != 0) {
       for (unsigned i = 0; i < NumElems; ++i)
-        V[i] = DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, Op.getOperand(i));
+        V[i] = DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V[i], V[i + NumElems],
+                           UnpckMask);
       NumElems >>= 1;
-      while (NumElems != 0) {
-        for (unsigned i = 0; i < NumElems; ++i)
-          V[i] = DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V[i], V[i + NumElems],
-                             PermMask);
-        NumElems >>= 1;
-      }
-      return V[0];
     }
-
-    return SDOperand();
+    return V[0];
   }
   case ISD::EXTRACT_VECTOR_ELT: {
     if (!isa<ConstantSDNode>(Op.getOperand(1)))
