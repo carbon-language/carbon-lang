@@ -739,7 +739,7 @@ SDOperand DAGCombiner::visitADD(SDNode *N) {
     return N1.getOperand(0);
 
   if (!MVT::isVector(VT) && SimplifyDemandedBits(SDOperand(N, 0)))
-    return SDOperand();
+    return SDOperand(N, 0);
   
   // fold (a+b) -> (a|b) iff a and b share no bits.
   if (MVT::isInteger(VT) && !MVT::isVector(VT)) {
@@ -1144,7 +1144,7 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
   // fold (and (sra)) -> (and (srl)) when possible.
   if (!MVT::isVector(VT) &&
       SimplifyDemandedBits(SDOperand(N, 0)))
-    return SDOperand();
+    return SDOperand(N, 0);
   // fold (zext_inreg (extload x)) -> (zextload x)
   if (N0.getOpcode() == ISD::EXTLOAD) {
     MVT::ValueType EVT = cast<VTSDNode>(N0.getOperand(3))->getVT();
@@ -1452,7 +1452,7 @@ SDOperand DAGCombiner::visitXOR(SDNode *N) {
   // Simplify the expression using non-local knowledge.
   if (!MVT::isVector(VT) &&
       SimplifyDemandedBits(SDOperand(N, 0)))
-    return SDOperand();
+    return SDOperand(N, 0);
   
   return SDOperand();
 }
@@ -1481,7 +1481,7 @@ SDOperand DAGCombiner::visitSHL(SDNode *N) {
   if (TLI.MaskedValueIsZero(SDOperand(N, 0), MVT::getIntVTBitMask(VT)))
     return DAG.getConstant(0, VT);
   if (SimplifyDemandedBits(SDOperand(N, 0)))
-    return SDOperand();
+    return SDOperand(N, 0);
   // fold (shl (shl x, c1), c2) -> 0 or (shl x, c1+c2)
   if (N1C && N0.getOpcode() == ISD::SHL && 
       N0.getOperand(1).getOpcode() == ISD::Constant) {
