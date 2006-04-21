@@ -201,19 +201,8 @@ void PPCJITInfo::relocate(void *Function, MachineRelocation *MR,
              "Relocation out of range!");
       *RelocPos |= (ResultPtr & ((1 << 24)-1))  << 2;
       break;
-
     case PPC::reloc_absolute_ptr_high: // Pointer relocations.
-    case PPC::reloc_absolute_ptr_low: {
-      // Pointer relocations are used for the PPC external stubs and lazy
-      // resolver pointers that the Darwin ABI likes to use.  Basically, the
-      // address of the global is actually stored in memory, and the address of
-      // the pointer is relocated into instructions instead of the pointer
-      // itself.  Because we have to keep the mapping anyway, we just return
-      // pointers to the values in the map as our new location.
-      static std::set<void*> Pointers;
-      ResultPtr = (intptr_t)&*Pointers.insert((void*)ResultPtr).first;
-    }
-      // FALL THROUGH
+    case PPC::reloc_absolute_ptr_low:
     case PPC::reloc_absolute_high:     // high bits of ref -> low 16 of instr
     case PPC::reloc_absolute_low:      // low bits of ref  -> low 16 of instr
       ResultPtr += MR->getConstantVal();

@@ -157,11 +157,6 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
   } else if (MO.isImmediate()) {
     rv = MO.getImmedValue();
   } else if (MO.isGlobalAddress() || MO.isExternalSymbol()) {
-    bool isExternal = MO.isExternalSymbol() ||
-                      MO.getGlobal()->hasWeakLinkage() ||
-                      MO.getGlobal()->hasLinkOnceLinkage() ||
-                      (MO.getGlobal()->isExternal() &&
-                       !MO.getGlobal()->hasNotBeenReadFromBytecode());
     unsigned Reloc = 0;
     if (MI.getOpcode() == PPC::BL)
       Reloc = PPC::reloc_pcrel_bx;
@@ -169,15 +164,9 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
       switch (MI.getOpcode()) {
       default: MI.dump(); assert(0 && "Unknown instruction for relocation!");
       case PPC::LIS:
-        if (isExternal)
-          Reloc = PPC::reloc_absolute_ptr_high;   // Pointer to stub
-        else
-          Reloc = PPC::reloc_absolute_high;       // Pointer to symbol
+        Reloc = PPC::reloc_absolute_high;       // Pointer to symbol
         break;
       case PPC::LA:
-        assert(!isExternal && "Something in the ISEL changed\n");
-        Reloc = PPC::reloc_absolute_low;
-        break;
       case PPC::LBZ:
       case PPC::LHA:
       case PPC::LHZ:
@@ -189,10 +178,7 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
       case PPC::STW:
       case PPC::STFS:
       case PPC::STFD:
-        if (isExternal)
-          Reloc = PPC::reloc_absolute_ptr_low;
-        else
-          Reloc = PPC::reloc_absolute_low;
+        Reloc = PPC::reloc_absolute_low;
         break;
       }
     }
