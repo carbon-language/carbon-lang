@@ -3126,9 +3126,12 @@ void SelectionDAGISel::ScheduleAndEmitDAG(SelectionDAG &DAG) {
   default: assert(0 && "Unrecognized scheduling heuristic");
   case defaultScheduling:
     if (TLI.getSchedulingPreference() == TargetLowering::SchedulingForLatency)
-      SL = createSimpleDAGScheduler(noScheduling, DAG, BB);
-    else /* TargetLowering::SchedulingForRegPressure */
+      SL = createTDListDAGScheduler(DAG, BB, CreateTargetHazardRecognizer());
+    else {
+      assert(TLI.getSchedulingPreference() ==
+             TargetLowering::SchedulingForRegPressure && "Unknown sched type!");
       SL = createBURRListDAGScheduler(DAG, BB);
+    }
     break;
   case noScheduling:
     SL = createBFS_DAGScheduler(DAG, BB);
