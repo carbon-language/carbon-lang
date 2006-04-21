@@ -150,10 +150,6 @@ namespace llvm {
       /// have to match the operand type.
       S2VEC,
 
-      /// ZEXT_S2VEC - SCALAR_TO_VECTOR with zero extension. The destination base
-      /// does not have to match the operand type.
-      ZEXT_S2VEC,
-
       /// PEXTRW - Extract a 16-bit value from a vector and zero extend it to
       /// i32, corresponds to X86::PEXTRW.
       PEXTRW,
@@ -230,9 +226,10 @@ namespace llvm {
    /// <0, 0, 1, 1>
    bool isUNPCKL_v_undef_Mask(SDNode *N);
 
-   /// isMOVSMask - Return true if the specified VECTOR_SHUFFLE operand
-   /// specifies a shuffle of elements that is suitable for input to MOVS{S|D}.
-   bool isMOVSMask(SDNode *N);
+   /// isMOVLMask - Return true if the specified VECTOR_SHUFFLE operand
+   /// specifies a shuffle of elements that is suitable for input to MOVSS,
+   /// MOVSD, and MOVD, i.e. setting the lowest element.
+   bool isMOVLMask(SDNode *N);
 
    /// isMOVSHDUPMask - Return true if the specified VECTOR_SHUFFLE operand
    /// specifies a shuffle of elements that is suitable for input to MOVSHDUP.

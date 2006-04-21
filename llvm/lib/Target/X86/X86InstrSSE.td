@@ -29,8 +29,6 @@ def X86ucomi   : SDNode<"X86ISD::UCOMI",     SDTX86CmpTest,
                         [SDNPOutFlag]>;
 def X86s2vec   : SDNode<"X86ISD::S2VEC",
                         SDTypeProfile<1, 1, []>, []>;
-def X86zexts2vec : SDNode<"X86ISD::ZEXT_S2VEC",
-                          SDTypeProfile<1, 1, []>, []>;
 def X86pextrw  : SDNode<"X86ISD::PEXTRW",
                         SDTypeProfile<1, 2, []>, []>;
 def X86pinsrw  : SDNode<"X86ISD::PINSRW",
@@ -104,8 +102,8 @@ def MOVLP_shuffle_mask : PatLeaf<(build_vector), [{
   return X86::isMOVLPMask(N);
 }]>;
 
-def MOVS_shuffle_mask : PatLeaf<(build_vector), [{
-  return X86::isMOVSMask(N);
+def MOVL_shuffle_mask : PatLeaf<(build_vector), [{
+  return X86::isMOVLMask(N);
 }]>;
 
 def MOVSHDUP_shuffle_mask : PatLeaf<(build_vector), [{
@@ -2194,20 +2192,18 @@ def MOVLSS2PSrr : SSI<0x10, MRMSrcReg, (ops VR128:$dst, VR128:$src1, FR32:$src2)
                       "movss {$src2, $dst|$dst, $src2}", []>;
 def MOVLSD2PDrr : SDI<0x10, MRMSrcReg, (ops VR128:$dst, VR128:$src1, FR64:$src2),
                       "movsd {$src2, $dst|$dst, $src2}", []>;
-def MOVLDI2PDIrr : PDI<0x6E, MRMSrcReg, (ops VR128:$dst, VR128:$src1, R32:$src2),
-                      "movd {$src2, $dst|$dst, $src2}", []>;
 
 let AddedComplexity = 20 in {
 def MOVLPSrr : SSI<0x10, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                       "movss {$src2, $dst|$dst, $src2}",
                    [(set VR128:$dst,
                      (v4f32 (vector_shuffle VR128:$src1, VR128:$src2,
-                             MOVS_shuffle_mask)))]>;
+                             MOVL_shuffle_mask)))]>;
 def MOVLPDrr : SDI<0x10, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                       "movsd {$src2, $dst|$dst, $src2}",
                    [(set VR128:$dst,
                      (v2f64 (vector_shuffle VR128:$src1, VR128:$src2,
-                             MOVS_shuffle_mask)))]>;
+                             MOVL_shuffle_mask)))]>;
 }
 }
 
@@ -2223,23 +2219,36 @@ def MOVLQ128rr : PDI<0xD6, MRMSrcReg, (ops VR128:$dst, VR128:$src),
 
 // Move to lower bits of a VR128 and zeroing upper bits.
 // Loading from memory automatically zeroing upper bits.
+let AddedComplexity = 20 in {
 def MOVZSS2PSrm : SSI<0x10, MRMSrcMem, (ops VR128:$dst, f32mem:$src),
                       "movss {$src, $dst|$dst, $src}",
-                      [(set VR128:$dst,
-                        (v4f32 (X86zexts2vec (loadf32 addr:$src))))]>;
+                      [(set VR128:$dst, (v4f32 (vector_shuffle immAllZerosV,
+                                 (v4f32 (scalar_to_vector (loadf32 addr:$src))),
+                                                MOVL_shuffle_mask)))]>;
 def MOVZSD2PDrm : SDI<0x10, MRMSrcMem, (ops VR128:$dst, f64mem:$src),
                       "movsd {$src, $dst|$dst, $src}",
-                      [(set VR128:$dst,
-                        (v2f64 (X86zexts2vec (loadf64 addr:$src))))]>;
+                      [(set VR128:$dst, (v2f64 (vector_shuffle immAllZerosV,
+                                 (v2f64 (scalar_to_vector (loadf64 addr:$src))),
+                                                MOVL_shuffle_mask)))]>;
+// movd / movq to XMM register zero-extends
+def MOVZDI2PDIrr : PDI<0x6E, MRMSrcReg, (ops VR128:$dst, R32:$src),
+                       "movd {$src, $dst|$dst, $src}",
+                      [(set VR128:$dst, (v4i32 (vector_shuffle immAllZerosV,
+                                            (v4i32 (scalar_to_vector R32:$src)),
+                                                MOVL_shuffle_mask)))]>;
 def MOVZDI2PDIrm : PDI<0x6E, MRMSrcMem, (ops VR128:$dst, i32mem:$src),
                        "movd {$src, $dst|$dst, $src}",
-                       [(set VR128:$dst,
-                         (v4i32 (X86zexts2vec (loadi32 addr:$src))))]>;
+                      [(set VR128:$dst, (v4i32 (vector_shuffle immAllZerosV,
+                                 (v4i32 (scalar_to_vector (loadi32 addr:$src))),
+                                                MOVL_shuffle_mask)))]>;
+def MOVZQI2PQIrr : PDI<0x7E, MRMSrcMem, (ops VR128:$dst, VR64:$src),
+                       "movq {$src, $dst|$dst, $src}", []>;
 def MOVZQI2PQIrm : PDI<0x7E, MRMSrcMem, (ops VR128:$dst, i64mem:$src),
                        "movq {$src, $dst|$dst, $src}",
-                       [(set VR128:$dst,
-                         (bc_v2i64 (v2f64 (X86zexts2vec
-                                           (loadf64 addr:$src)))))]>;
+                       [(set VR128:$dst, (bc_v2i64 (vector_shuffle immAllZerosV,
+                                 (v2f64 (scalar_to_vector (loadf64 addr:$src))),
+                                           MOVL_shuffle_mask)))]>;
+}
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
@@ -2341,17 +2350,23 @@ def : Pat<(v2f64 (bitconvert (v16i8 VR128:$src))), (v2f64 VR128:$src)>,
 def : Pat<(v2f64 (bitconvert (v4f32 VR128:$src))), (v2f64 VR128:$src)>,
       Requires<[HasSSE2]>;
 
-// Zeroing a VR128 then do a MOVS* to the lower bits.
-def : Pat<(v2f64 (X86zexts2vec FR64:$src)),
+// Move scalar to XMM zero-extended
+// movd to XMM register zero-extends
+let AddedComplexity = 20 in {
+def : Pat<(v8i16 (vector_shuffle immAllZerosV,
+                  (v8i16 (X86s2vec R32:$src)), MOVL_shuffle_mask)),
+          (MOVZDI2PDIrr R32:$src)>, Requires<[HasSSE2]>;
+def : Pat<(v16i8 (vector_shuffle immAllZerosV,
+                  (v16i8 (X86s2vec R32:$src)), MOVL_shuffle_mask)),
+          (MOVZDI2PDIrr R32:$src)>, Requires<[HasSSE2]>;
+// Zeroing a VR128 then do a MOVS{S|D} to the lower bits.
+def : Pat<(v2f64 (vector_shuffle immAllZerosV,
+                  (v2f64 (scalar_to_vector FR64:$src)), MOVL_shuffle_mask)),
           (MOVLSD2PDrr (V_SET0_PD), FR64:$src)>, Requires<[HasSSE2]>;
-def : Pat<(v4f32 (X86zexts2vec FR32:$src)),
+def : Pat<(v4f32 (vector_shuffle immAllZerosV,
+                  (v4f32 (scalar_to_vector FR32:$src)), MOVL_shuffle_mask)),
           (MOVLSS2PSrr (V_SET0_PS), FR32:$src)>, Requires<[HasSSE2]>;
-def : Pat<(v4i32 (X86zexts2vec R32:$src)),
-          (MOVLDI2PDIrr (V_SET0_PI), R32:$src)>, Requires<[HasSSE2]>;
-def : Pat<(v8i16 (X86zexts2vec R16:$src)),
-       (MOVLDI2PDIrr (V_SET0_PI), (MOVZX32rr16 R16:$src))>, Requires<[HasSSE2]>;
-def : Pat<(v16i8 (X86zexts2vec R8:$src)),
-         (MOVLDI2PDIrr (V_SET0_PI), (MOVZX32rr8 R8:$src))>, Requires<[HasSSE2]>;
+}
 
 // Splat v2f64 / v2i64
 let AddedComplexity = 10 in {
@@ -2448,13 +2463,13 @@ def : Pat<(v2f64 (vector_shuffle VR128:$src1, (loadv2f64 addr:$src2),
           (MOVHPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
 
 def : Pat<(v4i32 (vector_shuffle VR128:$src1, VR128:$src2,
-                  MOVS_shuffle_mask)),
+                  MOVL_shuffle_mask)),
           (MOVLPSrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
 def : Pat<(v4i32 (vector_shuffle VR128:$src1, (bc_v4i32 (loadv2i64 addr:$src2)),
                   MOVLP_shuffle_mask)),
           (MOVLPSrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
 def : Pat<(v2i64 (vector_shuffle VR128:$src1, VR128:$src2,
-                  MOVS_shuffle_mask)),
+                  MOVL_shuffle_mask)),
           (MOVLPDrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
 def : Pat<(v2i64 (vector_shuffle VR128:$src1, (loadv2i64 addr:$src2),
                   MOVHP_shuffle_mask)),

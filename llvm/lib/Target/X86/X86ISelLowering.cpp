@@ -1687,11 +1687,12 @@ bool X86::isUNPCKL_v_undef_Mask(SDNode *N) {
   return true;
 }
 
-/// isMOVSMask - Return true if the specified VECTOR_SHUFFLE operand
-/// specifies a shuffle of elements that is suitable for input to MOVS{S|D}.
-static bool isMOVSMask(std::vector<SDOperand> &N) {
+/// isMOVLMask - Return true if the specified VECTOR_SHUFFLE operand
+/// specifies a shuffle of elements that is suitable for input to MOVSS,
+/// MOVSD, and MOVD, i.e. setting the lowest element.
+static bool isMOVLMask(std::vector<SDOperand> &N) {
   unsigned NumElems = N.size();
-  if (NumElems != 2 && NumElems != 4)
+  if (NumElems != 2 && NumElems != 4 && NumElems != 8 && NumElems != 16)
     return false;
 
   if (!isUndefOrEqual(N[0], NumElems))
@@ -1706,18 +1707,18 @@ static bool isMOVSMask(std::vector<SDOperand> &N) {
   return true;
 }
 
-bool X86::isMOVSMask(SDNode *N) {
+bool X86::isMOVLMask(SDNode *N) {
   assert(N->getOpcode() == ISD::BUILD_VECTOR);
   std::vector<SDOperand> Ops(N->op_begin(), N->op_end());
-  return ::isMOVSMask(Ops);
+  return ::isMOVLMask(Ops);
 }
 
-/// isCommutedMOVS - Returns true if the shuffle mask is except the reverse
-/// of what x86 movs want. X86 movs requires the lowest  element to be lowest
+/// isCommutedMOVL - Returns true if the shuffle mask is except the reverse
+/// of what x86 movss want. X86 movs requires the lowest  element to be lowest
 /// element of vector 2 and the other elements to come from vector 1 in order.
-static bool isCommutedMOVS(std::vector<SDOperand> &Ops, bool V2IsSplat = false) {
+static bool isCommutedMOVL(std::vector<SDOperand> &Ops, bool V2IsSplat = false) {
   unsigned NumElems = Ops.size();
-  if (NumElems != 2 && NumElems != 4)
+  if (NumElems != 2 && NumElems != 4 && NumElems != 8 && NumElems != 16)
     return false;
 
   if (!isUndefOrEqual(Ops[0], 0))
@@ -1737,10 +1738,10 @@ static bool isCommutedMOVS(std::vector<SDOperand> &Ops, bool V2IsSplat = false) 
   return true;
 }
 
-static bool isCommutedMOVS(SDNode *N, bool V2IsSplat = false) {
+static bool isCommutedMOVL(SDNode *N, bool V2IsSplat = false) {
   assert(N->getOpcode() == ISD::BUILD_VECTOR);
   std::vector<SDOperand> Ops(N->op_begin(), N->op_end());
-  return isCommutedMOVS(Ops);
+  return isCommutedMOVL(Ops, V2IsSplat);
 }
 
 /// isMOVSHDUPMask - Return true if the specified VECTOR_SHUFFLE operand
@@ -2055,9 +2056,9 @@ static SDOperand NormalizeMask(SDOperand Mask, SelectionDAG &DAG) {
   return Mask;
 }
 
-/// getMOVSMask - Returns a vector_shuffle mask for an movs{s|d} operation
-/// of specified width.
-static SDOperand getMOVSMask(unsigned NumElems, SelectionDAG &DAG) {
+/// getMOVLMask - Returns a vector_shuffle mask for an movs{s|d}, movd
+/// operation of specified width.
+static SDOperand getMOVLMask(unsigned NumElems, SelectionDAG &DAG) {
   MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(NumElems);
   MVT::ValueType BaseVT = MVT::getVectorBaseType(MaskVT);
 
@@ -2095,28 +2096,61 @@ static SDOperand getUnpackhMask(unsigned NumElems, SelectionDAG &DAG) {
   return DAG.getNode(ISD::BUILD_VECTOR, MaskVT, MaskVec);
 }
 
+/// getZeroVector - Returns a vector of specified type with all zero elements.
+///
+static SDOperand getZeroVector(MVT::ValueType VT, SelectionDAG &DAG) {
+  assert(MVT::isVector(VT) && "Expected a vector type");
+  unsigned NumElems = getVectorNumElements(VT);
+  MVT::ValueType EVT = MVT::getVectorBaseType(VT);
+  bool isFP = MVT::isFloatingPoint(EVT);
+  SDOperand Zero = isFP ? DAG.getConstantFP(0.0, EVT) : DAG.getConstant(0, EVT);
+  std::vector<SDOperand> ZeroVec(NumElems, Zero);
+  return DAG.getNode(ISD::BUILD_VECTOR, VT, ZeroVec);
+}
+
 /// PromoteSplat - Promote a splat of v8i16 or v16i8 to v4i32.
 ///
 static SDOperand PromoteSplat(SDOperand Op, SelectionDAG &DAG) {
   SDOperand V1 = Op.getOperand(0);
-  SDOperand PermMask = Op.getOperand(2);
+  SDOperand Mask = Op.getOperand(2);
   MVT::ValueType VT = Op.getValueType();
-  unsigned NumElems = PermMask.getNumOperands();
-  PermMask = getUnpacklMask(NumElems, DAG);
+  unsigned NumElems = Mask.getNumOperands();
+  Mask = getUnpacklMask(NumElems, DAG);
   while (NumElems != 4) {
-    V1 = DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V1, PermMask);
+    V1 = DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V1, Mask);
     NumElems >>= 1;
   }
   V1 = DAG.getNode(ISD::BIT_CONVERT, MVT::v4i32, V1);
 
   MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(4);
-  SDOperand Zero = DAG.getConstant(0, MVT::getVectorBaseType(MaskVT));
-  std::vector<SDOperand> ZeroVec(4, Zero);
-  SDOperand SplatMask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, ZeroVec);
+  Mask = getZeroVector(MaskVT, DAG);
   SDOperand Shuffle = DAG.getNode(ISD::VECTOR_SHUFFLE, MVT::v4i32, V1,
-                                  DAG.getNode(ISD::UNDEF, MVT::v4i32),
-                                  SplatMask);
+                                  DAG.getNode(ISD::UNDEF, MVT::v4i32), Mask);
   return DAG.getNode(ISD::BIT_CONVERT, VT, Shuffle);
+}
+
+/// isZeroNode - Returns true if Elt is a constant zero or a floating point
+/// constant +0.0.
+static inline bool isZeroNode(SDOperand Elt) {
+  return ((isa<ConstantSDNode>(Elt) &&
+           cast<ConstantSDNode>(Elt)->getValue() == 0) ||
+          (isa<ConstantFPSDNode>(Elt) &&
+           cast<ConstantFPSDNode>(Elt)->isExactlyValue(0.0)));
+}
+
+/// getShuffleVectorAgainstZero - Return a vector_shuffle of a zero vector and
+/// the specified vector.
+static SDOperand getShuffleVectorAgainstZero(SDOperand Vec, MVT::ValueType VT,
+                                             unsigned NumElems, unsigned Idx,
+                                             SelectionDAG &DAG) {
+  SDOperand ZeroV = getZeroVector(VT, DAG);
+  MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(NumElems);
+  MVT::ValueType EVT = MVT::getVectorBaseType(MaskVT);
+  SDOperand Zero = DAG.getConstant(0, EVT);
+  std::vector<SDOperand> MaskVec(NumElems, Zero);
+  MaskVec[Idx] = DAG.getConstant(NumElems, EVT);
+  SDOperand Mask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, MaskVec);
+  return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, ZeroV, Vec, Mask);
 }
 
 /// LowerOperation - Provide custom lowering hooks for some operations.
@@ -2924,7 +2958,6 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand PermMask = Op.getOperand(2);
     MVT::ValueType VT = Op.getValueType();
     unsigned NumElems = PermMask.getNumOperands();
-    bool V2IsSplat = isSplatVector(V2.Val);
 
     if (isSplatMask(PermMask.Val)) {
       if (NumElems <= 4) return Op;
@@ -2932,7 +2965,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       return PromoteSplat(Op, DAG);
     }
 
-    if (X86::isMOVSMask(PermMask.Val) ||
+    if (X86::isMOVLMask(PermMask.Val) ||
         X86::isMOVSHDUPMask(PermMask.Val) ||
         X86::isMOVSLDUPMask(PermMask.Val) ||
         X86::isMOVHLPSMask(PermMask.Val) ||
@@ -2944,15 +2977,30 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
         ShouldXformToMOVLP(V1.Val, PermMask.Val))
       return CommuteVectorShuffle(Op, DAG);
 
-    if (isCommutedMOVS(PermMask.Val, V2IsSplat)) {
+    bool V1IsSplat = isSplatVector(V1.Val);
+    bool V2IsSplat = isSplatVector(V2.Val);
+    if (V1IsSplat && !V2IsSplat) {
+      Op = CommuteVectorShuffle(Op, DAG);
+      V1 = Op.getOperand(0);
+      V2 = Op.getOperand(1);
+      PermMask = Op.getOperand(2);
+      V2IsSplat = true;
+    }
+
+    if (isCommutedMOVL(PermMask.Val, V2IsSplat)) {
+      Op = CommuteVectorShuffle(Op, DAG);
+      V1 = Op.getOperand(0);
+      V2 = Op.getOperand(1);
+      PermMask = Op.getOperand(2);
       if (V2IsSplat) {
         // V2 is a splat, so the mask may be malformed. That is, it may point
         // to any V2 element. The instruction selectior won't like this. Get
         // a corrected mask and commute to form a proper MOVS{S|D}.
-        SDOperand NewMask = getMOVSMask(NumElems, DAG);
-        Op = DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2, NewMask);
+        SDOperand NewMask = getMOVLMask(NumElems, DAG);
+        if (NewMask.Val != PermMask.Val)
+          Op = DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2, NewMask);
       }
-      return CommuteVectorShuffle(Op, DAG);
+      return Op;
     }
 
     if (X86::isUNPCKL_v_undef_Mask(PermMask.Val) ||
@@ -3088,48 +3136,60 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     if (ISD::isBuildVectorAllOnes(Op.Val))
       return Op;
 
-    std::set<SDOperand> Values;
-    SDOperand Elt0 = Op.getOperand(0);
-    Values.insert(Elt0);
-    bool Elt0IsZero = (isa<ConstantSDNode>(Elt0) &&
-                       cast<ConstantSDNode>(Elt0)->getValue() == 0) ||
-      (isa<ConstantFPSDNode>(Elt0) &&
-       cast<ConstantFPSDNode>(Elt0)->isExactlyValue(0.0));
-    bool RestAreZero = true;
     unsigned NumElems = Op.getNumOperands();
-    for (unsigned i = 1; i < NumElems; ++i) {
-      SDOperand Elt = Op.getOperand(i);
-      if (ConstantFPSDNode *FPC = dyn_cast<ConstantFPSDNode>(Elt)) {
-        if (!FPC->isExactlyValue(+0.0))
-          RestAreZero = false;
-      } else if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Elt)) {
-        if (!C->isNullValue())
-          RestAreZero = false;
-      } else
-        RestAreZero = false;
+    MVT::ValueType VT = Op.getValueType();
+    MVT::ValueType EVT = MVT::getVectorBaseType(VT);
+    std::vector<unsigned> NonZeros;
+    std::set<SDOperand> Values;
+    for (unsigned i = 0; i < NumElems; ++i) {
+      unsigned Idx = NumElems - i - 1;
+      SDOperand Elt = Op.getOperand(Idx);
       Values.insert(Elt);
+      if (!isZeroNode(Elt))
+        NonZeros.push_back(Idx);
     }
 
-    if (RestAreZero) {
-      if (Elt0IsZero) return Op;
+    if (NonZeros.size() == 0)
+      return Op;
 
-      // Zero extend a scalar to a vector.
-      if (Elt0.getValueType() != MVT::i64)
-        return DAG.getNode(X86ISD::ZEXT_S2VEC, Op.getValueType(), Elt0);
+    if (NonZeros.size() == 1) {
+      unsigned Idx = NonZeros[0];
+      SDOperand Item = Op.getOperand(Idx);
+      if (Idx == 0 || MVT::getSizeInBits(EVT) >= 32)
+        Item = DAG.getNode(ISD::SCALAR_TO_VECTOR,VT, Item);
+      if (Idx == 0)
+        return getShuffleVectorAgainstZero(Item, VT, NumElems, Idx, DAG);
 
-      // See if we can turn it into a f64 op.
-      bool IsLegal = false;
-      if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Elt0)) {
-        Elt0 = DAG.getConstantFP(BitsToDouble(C->getValue()), MVT::f64);
-        IsLegal = true;
-      } else if (Elt0.getOpcode() == ISD::LOAD) {
-        Elt0 = DAG.getLoad(MVT::f64, Elt0.getOperand(0), Elt0.getOperand(1),
-                           Elt0.getOperand(2));
-        IsLegal = true;
+      // If element VT is < 32, convert it to a insert into a zero vector.
+      if (MVT::getSizeInBits(EVT) <= 16) {
+        SDOperand ZeroV;
+        if (EVT == MVT::i8) {
+          Item = DAG.getNode(ISD::ANY_EXTEND, MVT::i16, Item);
+          if ((Idx % 2) != 0)
+            Item = DAG.getNode(ISD::SHL, MVT::i16,
+                               Item, DAG.getConstant(8, MVT::i8));
+          Idx /= 2;
+          ZeroV = getZeroVector(MVT::v8i16, DAG);
+          return DAG.getNode(ISD::BIT_CONVERT, VT,
+                    DAG.getNode(ISD::INSERT_VECTOR_ELT, MVT::v8i16, ZeroV, Item,
+                                DAG.getConstant(Idx, MVT::i32)));
+        } else {
+          ZeroV = getZeroVector(VT, DAG);
+          return DAG.getNode(ISD::INSERT_VECTOR_ELT, VT, ZeroV, Item,
+                             DAG.getConstant(Idx, MVT::i32));
+        }
       }
-      if (IsLegal)
-        return DAG.getNode(ISD::BIT_CONVERT, MVT::v2i64,
-                           DAG.getNode(X86ISD::ZEXT_S2VEC, MVT::v2f64, Elt0));
+
+      // Turn it into a shuffle of zero and zero-extended scalar to vector.
+      Item = getShuffleVectorAgainstZero(Item, VT, NumElems, 0, DAG);
+      MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(NumElems);
+      MVT::ValueType MaskEVT = MVT::getVectorBaseType(MaskVT);
+      std::vector<SDOperand> MaskVec;
+      for (unsigned i = 0; i < NumElems; i++)
+        MaskVec.push_back(DAG.getConstant((i == Idx) ? 0 : 1, MaskEVT));
+      SDOperand Mask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, MaskVec);
+      return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, Item,
+                         DAG.getNode(ISD::UNDEF, VT), Mask);
     }
 
     if (Values.size() > 2) {
@@ -3138,7 +3198,6 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       //   Step 1: unpcklps 0, 2 ==> X: <?, ?, 2, 0>
       //         : unpcklps 1, 3 ==> Y: <?, ?, 3, 1>
       //   Step 2: unpcklps X, Y ==>    <3, 2, 1, 0>
-      MVT::ValueType VT = Op.getValueType();
       SDOperand PermMask = getUnpacklMask(NumElems, DAG);
       std::vector<SDOperand> V(NumElems);
       for (unsigned i = 0; i < NumElems; ++i)
@@ -3406,7 +3465,6 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::GlobalBaseReg:      return "X86ISD::GlobalBaseReg";
   case X86ISD::Wrapper:            return "X86ISD::Wrapper";
   case X86ISD::S2VEC:              return "X86ISD::S2VEC";
-  case X86ISD::ZEXT_S2VEC:         return "X86ISD::ZEXT_S2VEC";
   case X86ISD::PEXTRW:             return "X86ISD::PEXTRW";
   case X86ISD::PINSRW:             return "X86ISD::PINSRW";
   }
@@ -3514,7 +3572,7 @@ bool X86TargetLowering::isVectorClearMaskLegal(std::vector<SDOperand> &BVOps,
   if (MVT::getSizeInBits(EVT) * NumElts == 64) return false;
   if (NumElts == 2) return true;
   if (NumElts == 4) {
-    return (isMOVSMask(BVOps) || isCommutedMOVS(BVOps, true) ||
+    return (isMOVLMask(BVOps)  || isCommutedMOVL(BVOps, true) ||
             isSHUFPMask(BVOps) || isCommutedSHUFP(BVOps));
   }
   return false;
