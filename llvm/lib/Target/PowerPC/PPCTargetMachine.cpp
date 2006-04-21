@@ -129,7 +129,7 @@ bool PPCTargetMachine::addPassesToEmitFile(PassManager &PM,
 }
 
 void PPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
-  // The JIT should use dynamic-no-pic relocation model.
+  // The JIT should use the static relocation model.
   TM.setRelocationModel(Reloc::Static);
 
   // Run loop strength reduction before anything else.
