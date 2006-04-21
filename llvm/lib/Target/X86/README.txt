@@ -1054,3 +1054,72 @@ Another example: {0.0, 0.0, a, b }
 
 //===---------------------------------------------------------------------===//
 
+Consider:
+
+__m128 test(float a) {
+  return _mm_set_ps(0.0, 0.0, 0.0, a*a);
+}
+
+This compiles into:
+
+movss 4(%esp), %xmm1
+mulss %xmm1, %xmm1
+xorps %xmm0, %xmm0
+movss %xmm1, %xmm0
+ret
+
+Because mulss multiplies 0*0 = 0.0, the top elements of xmm1 are already zerod.
+We could compile this to:
+
+movss 4(%esp), %xmm0
+mulss %xmm0, %xmm0
+ret
+
+//===---------------------------------------------------------------------===//
+
+Here's a sick and twisted idea.  Consider code like this:
+
+__m128 test(__m128 a) {
+  float b = *(float*)&A;
+  ...
+  return _mm_set_ps(0.0, 0.0, 0.0, b);
+}
+
+This might compile to this code:
+
+movaps c(%esp), %xmm1
+xorps %xmm0, %xmm0
+movss %xmm1, %xmm0
+ret
+
+Now consider if the ... code caused xmm1 to get spilled.  This might produce
+this code:
+
+movaps c(%esp), %xmm1
+movaps %xmm1, c2(%esp)
+...
+
+xorps %xmm0, %xmm0
+movaps c2(%esp), %xmm1
+movss %xmm1, %xmm0
+ret
+
+However, since the reload is only used by these instructions, we could 
+"fold" it into the uses, producing something like this:
+
+movaps c(%esp), %xmm1
+movaps %xmm1, c2(%esp)
+...
+
+movss c2(%esp), %xmm0
+ret
+
+... saving two instructions.
+
+The basic idea is that a reload from a spill slot, can, if only one 4-byte 
+chunk is used, bring in 3 zeros the the one element instead of 4 elements.
+This can be used to simplify a variety of shuffle operations, where the
+elements are fixed zeros.
+
+//===---------------------------------------------------------------------===//
+
