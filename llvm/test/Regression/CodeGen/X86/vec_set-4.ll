@@ -1,4 +1,5 @@
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep pinsrw | wc -l | grep 2
+
 <2 x long> %test(short %a) {
 entry:
 	%tmp10 = insertelement <8 x short> zeroinitializer, short %a, uint 3		; <<8 x short>> [#uses=1]

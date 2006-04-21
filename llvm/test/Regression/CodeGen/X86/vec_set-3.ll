@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep shufps | wc -l | grep 1
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep shufps | wc -l | grep 1 &&
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep pshufd | wc -l | grep 1
 
 <4 x float> %test(float %a) {

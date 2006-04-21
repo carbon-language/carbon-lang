@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep xorps
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep xorps &&
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep pxor
 
 void %foo(<4 x float> *%P) {

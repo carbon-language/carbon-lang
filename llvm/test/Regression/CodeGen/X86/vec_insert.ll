@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movss  | wc -l | grep 1
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movss  | wc -l | grep 1 &&
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep pinsrw | wc -l | grep 2
 
 void %test(<4 x float>* %F, int %I) {
