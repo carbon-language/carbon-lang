@@ -44,7 +44,7 @@ my %objdefs;
 # Gather definitions from the libraries
 foreach $lib (@libs ) {
   open DEFS, 
-    "nm -g --defined-only $Directory/$lib | grep ' [ABCDGRST] ' | sed -e 's/^[0-9A-Fa-f]* [ABCDGRST] //' | sort | uniq |";
+    "nm -g $Directory/$lib | grep ' [ABCDGRST] ' | sed -e 's/^[0-9A-Fa-f]* [ABCDGRST] //' | sort | uniq |";
   while (<DEFS>) {
     chomp($_);
     $libdefs{$_} = $lib;
@@ -55,7 +55,7 @@ foreach $lib (@libs ) {
 # Gather definitions from the object files.
 foreach $obj (@objs ) {
   open DEFS, 
-    "nm -g --defined-only $Directory/$obj | grep ' [ABCDGRST] ' | sed -e 's/^[0-9A-Fa-f]* [ABCDGRST] //' | sort | uniq |";
+    "nm -g $Directory/$obj | grep ' [ABCDGRST] ' | sed -e 's/^[0-9A-Fa-f]* [ABCDGRST] //' | sort | uniq |";
   while (<DEFS>) {
     chomp($_);
     $objdefs{$_} = $obj;
@@ -76,7 +76,7 @@ sub gen_one_entry {
     print "  <dt><b>$lib</b</dt><dd><ul>\n";
   }
   open UNDEFS, 
-    "nm -u $Directory/$lib | grep ' U ' | sed -e 's/         U //' | sort | uniq |";
+    "nm -g -u $Directory/$lib | grep ' U ' | sed -e 's/         U //' | sort | uniq |";
   open DEPENDS,
     "| sort | uniq > GenLibDeps.out";
   while (<UNDEFS>) {
