@@ -1,3 +1,4 @@
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 &&
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep shuf | wc -l | grep 3
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | not grep unpck
 void %test(<4 x float>* %res, <4 x float>* %A, <4 x float>* %B, <4 x float>* %C) {
