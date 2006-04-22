@@ -35,6 +35,7 @@ IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
       // register class for predicate registers
       addRegisterClass(MVT::i1, IA64::PRRegisterClass);
 
+      setOperationAction(ISD::BRIND            , MVT::i64,   Expand);
       setOperationAction(ISD::BR_CC            , MVT::Other, Expand);
       setOperationAction(ISD::FP_ROUND_INREG   , MVT::f32  , Expand);
 

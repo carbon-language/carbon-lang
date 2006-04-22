@@ -365,10 +365,18 @@ let isBranch = 1, isTerminator = 1, noResults = 1 in
   class IBr<bits<8> opcode, dag ops, string asm, list<dag> pattern> :
         I<opcode, RawFrm, ops, asm, pattern>;
 
-// Conditional branches
+// Indirect branches
 let isBarrier = 1 in
   def JMP : IBr<0xE9, (ops brtarget:$dst), "jmp $dst", [(br bb:$dst)]>;
 
+let isBranch = 1, isTerminator = 1, noResults = 1, isBarrier = 1 in {
+  def JMP32r     : I<0xFF, MRM4r, (ops R32:$dst), "jmp{l} {*}$dst",
+                     [(brind R32:$dst)]>;
+  def JMP32m     : I<0xFF, MRM4m, (ops i32mem:$dst), "jmp{l} {*}$dst",
+                     [(brind (loadi32 addr:$dst))]>;
+}
+
+// Conditional branches
 def JE  : IBr<0x84, (ops brtarget:$dst), "je $dst",
               [(X86brcond bb:$dst, X86_COND_E)]>, TB;
 def JNE : IBr<0x85, (ops brtarget:$dst), "jne $dst",
@@ -2302,16 +2310,20 @@ def DWARF_LABEL : I<0, Pseudo, (ops i32imm:$id),
 
 // ConstantPool GlobalAddress, ExternalSymbol
 def : Pat<(i32 (X86Wrapper tconstpool  :$dst)), (MOV32ri tconstpool  :$dst)>;
+def : Pat<(i32 (X86Wrapper tjumptable  :$dst)), (MOV32ri tjumptable  :$dst)>;
 def : Pat<(i32 (X86Wrapper tglobaladdr :$dst)), (MOV32ri tglobaladdr :$dst)>;
 def : Pat<(i32 (X86Wrapper texternalsym:$dst)), (MOV32ri texternalsym:$dst)>;
 
 def : Pat<(add R32:$src1, (X86Wrapper tconstpool:$src2)),
           (ADD32ri R32:$src1, tconstpool:$src2)>;
+def : Pat<(add R32:$src1, (X86Wrapper tjumptable:$src2)),
+          (ADD32ri R32:$src1, tjumptable:$src2)>;
 def : Pat<(add R32:$src1, (X86Wrapper tglobaladdr :$src2)),
           (ADD32ri R32:$src1, tglobaladdr:$src2)>;
 def : Pat<(add R32:$src1, (X86Wrapper texternalsym:$src2)),
           (ADD32ri R32:$src1, texternalsym:$src2)>;
 
+// FIXME: can you really ever store to a constant pool?
 def : Pat<(store (X86Wrapper tconstpool:$src), addr:$dst),
           (MOV32mi addr:$dst, tconstpool:$src)>;
 def : Pat<(store (X86Wrapper tglobaladdr:$src), addr:$dst),

@@ -27,6 +27,7 @@
 #include "llvm/CodeGen/MachineDebugInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SSARegMap.h"
@@ -398,6 +399,7 @@ public:
   /// SwitchCases - Vector of CaseBlock structures used to communicate
   /// SwitchInst code generation information.
   std::vector<SelectionDAGISel::CaseBlock> SwitchCases;
+  SelectionDAGISel::JumpTable JT;
   
   /// FuncInfo - Information about the function as a whole.
   ///
@@ -406,7 +408,7 @@ public:
   SelectionDAGLowering(SelectionDAG &dag, TargetLowering &tli,
                        FunctionLoweringInfo &funcinfo)
     : TLI(tli), DAG(dag), TD(DAG.getTarget().getTargetData()),
-      FuncInfo(funcinfo) {
+      JT(0,0,0), FuncInfo(funcinfo) {
   }
 
   /// getRoot - Return the current virtual root of the Selection DAG.
@@ -474,6 +476,7 @@ public:
 
   // Helper for visitSwitch
   void visitSwitchCase(SelectionDAGISel::CaseBlock &CB);
+  void visitJumpTable(SelectionDAGISel::JumpTable &JT);
   
   // These all get lowered before this pass.
   void visitInvoke(InvokeInst &I) { assert(0 && "TODO"); }
@@ -816,6 +819,30 @@ void SelectionDAGLowering::visitSwitchCase(SelectionDAGISel::CaseBlock &CB) {
   CurMBB->addSuccessor(CB.RHSBB);
 }
 
+/// visitSwitchCase - Emits the necessary code to represent a single node in
+/// the binary search tree resulting from lowering a switch instruction.
+void SelectionDAGLowering::visitJumpTable(SelectionDAGISel::JumpTable &JT) {
+  // FIXME: Need to emit different code for PIC vs. Non-PIC, specifically,
+  // we need to add the address of the jump table to the value loaded, since
+  // the entries in the jump table will be differences rather than absolute
+  // addresses.
+  
+  // Emit the code for the jump table
+  MVT::ValueType PTy = TLI.getPointerTy();
+  unsigned PTyBytes = MVT::getSizeInBits(PTy)/8;
+  SDOperand Copy = DAG.getCopyFromReg(getRoot(), JT.Reg, PTy);
+  SDOperand IDX = DAG.getNode(ISD::MUL, PTy, Copy,
+                              DAG.getConstant(PTyBytes, PTy));
+  SDOperand ADD = DAG.getNode(ISD::ADD, PTy, IDX, DAG.getJumpTable(JT.JTI,PTy));
+  SDOperand LD  = DAG.getLoad(PTy, Copy.getValue(1), ADD, DAG.getSrcValue(0));
+  DAG.setRoot(DAG.getNode(ISD::BRIND, MVT::Other, LD.getValue(1), LD));
+
+  // Update successor info
+  for (std::set<MachineBasicBlock*>::iterator ii = JT.SuccMBBs.begin(), 
+       ee = JT.SuccMBBs.end(); ii != ee; ++ii)
+    JT.MBB->addSuccessor(*ii);
+}
+
 void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
   // Figure out which block is immediately after the current one.
   MachineBasicBlock *NextBlock = 0;
@@ -850,11 +877,88 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
   // search tree.
   Value *SV = I.getOperand(0);
   MachineBasicBlock *Default = FuncInfo.MBBMap[I.getDefaultDest()];
-  
-  // Get the current MachineFunction and LLVM basic block, for use in creating
-  // and inserting new MBBs during the creation of the binary search tree.
+
+  // Get the MachineFunction which holds the current MBB.  This is used during
+  // emission of jump tables, and when inserting any additional MBBs necessary
+  // to represent the switch.
   MachineFunction *CurMF = CurMBB->getParent();
   const BasicBlock *LLVMBB = CurMBB->getBasicBlock();
+  Reloc::Model Relocs = TLI.getTargetMachine().getRelocationModel();
+
+  // If the switch has more than 3 blocks, and is 100% dense, then emit a jump
+  // table rather than lowering the switch to a binary tree of conditional
+  // branches.
+  // FIXME: Make this work with 64 bit targets someday, possibly by always
+  // doing differences there so that entries stay 32 bits.
+  // FIXME: Make this work with PIC code
+  if (TLI.isOperationLegal(ISD::BRIND, TLI.getPointerTy()) &&
+      TLI.getPointerTy() == MVT::i32 &&
+      (Relocs == Reloc::Static || Relocs == Reloc::DynamicNoPIC) &&
+      Cases.size() > 3) {
+    uint64_t First = cast<ConstantIntegral>(Cases.front().first)->getRawValue();
+    uint64_t Last  = cast<ConstantIntegral>(Cases.back().first)->getRawValue();
+
+    // Determine density
+    // FIXME: support sub-100% density
+    if (((Last - First) + 1ULL) == (uint64_t)Cases.size()) {
+      // Create a new basic block to hold the code for loading the address
+      // of the jump table, and jumping to it.  Update successor information;
+      // we will either branch to the default case for the switch, or the jump
+      // table.
+      MachineBasicBlock *JumpTableBB = new MachineBasicBlock(LLVMBB);
+      CurMF->getBasicBlockList().insert(BBI, JumpTableBB);
+      CurMBB->addSuccessor(Default);
+      CurMBB->addSuccessor(JumpTableBB);
+      
+      // Subtract the lowest switch case value from the value being switched on
+      // and conditional branch to default mbb if the result is greater than the
+      // difference between smallest and largest cases.
+      SDOperand SwitchOp = getValue(SV);
+      MVT::ValueType VT = SwitchOp.getValueType();
+      SDOperand SUB = DAG.getNode(ISD::SUB, VT, SwitchOp, 
+                                  DAG.getConstant(First, VT));
+
+      // The SDNode we just created, which holds the value being switched on
+      // minus the the smallest case value, needs to be copied to a virtual
+      // register so it can be used as an index into the jump table in a 
+      // subsequent basic block.  This value may be smaller or larger than the
+      // target's pointer type, and therefore require extension or truncating.
+      if (VT > TLI.getPointerTy())
+        SwitchOp = DAG.getNode(ISD::TRUNCATE, TLI.getPointerTy(), SUB);
+      else
+        SwitchOp = DAG.getNode(ISD::ZERO_EXTEND, TLI.getPointerTy(), SUB);
+      unsigned JumpTableReg = FuncInfo.MakeReg(TLI.getPointerTy());
+      SDOperand CopyTo = DAG.getCopyToReg(getRoot(), JumpTableReg, SwitchOp);
+      
+      // Emit the range check for the jump table, and branch to the default
+      // block for the switch statement if the value being switched on exceeds
+      // the largest case in the switch.
+      SDOperand CMP = DAG.getSetCC(TLI.getSetCCResultTy(), SUB,
+                                   DAG.getConstant(Last-First,VT), ISD::SETUGT);
+      DAG.setRoot(DAG.getNode(ISD::BRCOND, MVT::Other, CopyTo, CMP, 
+                              DAG.getBasicBlock(Default)));
+
+      // Build a sorted vector of destination BBs, corresponding to each target
+      // of the switch.
+      // FIXME: need to insert DefaultMBB for each "hole" in the jump table,
+      // when we support jump tables with < 100% density.
+      std::set<MachineBasicBlock*> UniqueBBs;
+      std::vector<MachineBasicBlock*> DestBBs;
+      for (CaseItr ii = Cases.begin(), ee = Cases.end(); ii != ee; ++ii) {
+        DestBBs.push_back(ii->second);
+        UniqueBBs.insert(ii->second);
+      }
+      unsigned JTI = CurMF->getJumpTableInfo()->getJumpTableIndex(DestBBs);
+      
+      // Set the jump table information so that we can codegen it as a second
+      // MachineBasicBlock
+      JT.Reg = JumpTableReg;
+      JT.JTI = JTI;
+      JT.MBB = JumpTableBB;
+      JT.SuccMBBs = UniqueBBs;
+      return;
+    }
+  }
   
   // Push the initial CaseRec onto the worklist
   std::vector<CaseRec> CaseVec;
@@ -3022,9 +3126,10 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
   SDL.visit(*LLVMBB->getTerminator());
 
   // Copy over any CaseBlock records that may now exist due to SwitchInst
-  // lowering.
+  // lowering, as well as any jump table information.
   SwitchCases.clear();
   SwitchCases = SDL.SwitchCases;
+  JT = SDL.JT;
   
   // Make sure the root of the DAG is up-to-date.
   DAG.setRoot(SDL.getRoot());
@@ -3074,13 +3179,40 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
   
   // Next, now that we know what the last MBB the LLVM BB expanded is, update
   // PHI nodes in successors.
-  if (SwitchCases.empty()) {
+  if (SwitchCases.empty() && JT.Reg == 0) {
     for (unsigned i = 0, e = PHINodesToUpdate.size(); i != e; ++i) {
       MachineInstr *PHI = PHINodesToUpdate[i].first;
       assert(PHI->getOpcode() == TargetInstrInfo::PHI &&
              "This is not a machine PHI node that we are updating!");
       PHI->addRegOperand(PHINodesToUpdate[i].second);
       PHI->addMachineBasicBlockOperand(BB);
+    }
+    return;
+  }
+  
+  // If we need to emit a jump table, 
+  if (JT.Reg) {
+    assert(SwitchCases.empty() && "Cannot have jump table and lowered switch");
+    SelectionDAG SDAG(TLI, MF, getAnalysisToUpdate<MachineDebugInfo>());
+    CurDAG = &SDAG;
+    SelectionDAGLowering SDL(SDAG, TLI, FuncInfo);
+    // Set the current basic block to the mbb we wish to insert the code into
+    BB = JT.MBB;
+    SDL.setCurrentBasicBlock(BB);
+    // Emit the code
+    SDL.visitJumpTable(JT);
+    SDAG.setRoot(SDL.getRoot());
+    CodeGenAndEmitDAG(SDAG);
+    // Update PHI Nodes
+    for (unsigned pi = 0, pe = PHINodesToUpdate.size(); pi != pe; ++pi) {
+      MachineInstr *PHI = PHINodesToUpdate[pi].first;
+      MachineBasicBlock *PHIBB = PHI->getParent();
+      assert(PHI->getOpcode() == TargetInstrInfo::PHI &&
+             "This is not a machine PHI node that we are updating!");
+      if (JT.SuccMBBs.find(PHIBB) != JT.SuccMBBs.end()) {
+        PHI->addRegOperand(PHINodesToUpdate[pi].second);
+        PHI->addMachineBasicBlockOperand(BB);
+      }
     }
     return;
   }

@@ -17,6 +17,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
+#include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetMachine.h"
@@ -46,6 +47,7 @@ AsmPrinter::AsmPrinter(std::ostream &o, TargetMachine &tm)
   AlignmentIsInBytes(true),
   SwitchToSectionDirective("\t.section\t"),
   ConstantPoolSection("\t.section .rodata\n"),
+  JumpTableSection("\t.section .rodata\n"),
   StaticCtorsSection("\t.section .ctors,\"aw\",@progbits"),
   StaticDtorsSection("\t.section .dtors,\"aw\",@progbits"),
   LCOMMDirective(0),
@@ -123,6 +125,33 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
       unsigned ValEnd = CP[i].Offset + EntSize;
       // Emit inter-object padding for alignment.
       EmitZeros(CP[i+1].Offset-ValEnd);
+    }
+  }
+}
+
+/// EmitJumpTableInfo - Print assembly representations of the jump tables used
+/// by the current function to the current output stream.  
+///
+void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI) {
+  const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
+  if (JT.empty()) return;
+  const TargetData &TD = TM.getTargetData();
+  
+  // FIXME: someday we need to handle PIC jump tables
+  assert((TM.getRelocationModel() == Reloc::Static ||
+          TM.getRelocationModel() == Reloc::DynamicNoPIC) &&
+         "Unhandled relocation model emitting jump table information!");
+  
+  SwitchSection(JumpTableSection, 0);
+  EmitAlignment(Log2_32(TD.getPointerAlignment()));
+  for (unsigned i = 0, e = JT.size(); i != e; ++i) {
+    O << PrivateGlobalPrefix << "JTI" << getFunctionNumber() << '_' << i 
+      << ":\n";
+    const std::vector<MachineBasicBlock*> &JTBBs = JT[i].MBBs;
+    for (unsigned ii = 0, ee = JTBBs.size(); ii != ee; ++ii) {
+      O << Data32bitsDirective << ' ';
+      printBasicBlockLabel(JTBBs[ii]);
+      O << '\n';
     }
   }
 }
@@ -653,4 +682,13 @@ bool AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
                                        const char *ExtraCode) {
   // Target doesn't support this yet!
   return true;
+}
+
+/// printBasicBlockLabel - This method prints the label for the specified
+/// MachineBasicBlock
+void AsmPrinter::printBasicBlockLabel(const MachineBasicBlock *MBB) const {
+  O << PrivateGlobalPrefix << "LBB" 
+    << Mang->getValueName(MBB->getParent()->getFunction())
+    << "_" << MBB->getNumber() << '\t' << CommentString
+    << MBB->getBasicBlock()->getName();
 }

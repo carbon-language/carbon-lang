@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
+#include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetFrameInfo.h"
@@ -113,6 +114,7 @@ MachineFunction::MachineFunction(const Function *F,
   MFInfo = 0;
   FrameInfo = new MachineFrameInfo();
   ConstantPool = new MachineConstantPool(TM.getTargetData());
+  JumpTableInfo = new MachineJumpTableInfo(TM.getTargetData());
   BasicBlocks.Parent = this;
 }
 
@@ -122,6 +124,7 @@ MachineFunction::~MachineFunction() {
   delete MFInfo;
   delete FrameInfo;
   delete ConstantPool;
+  delete JumpTableInfo;
   delete[] UsedPhysRegs;
 }
 
@@ -132,6 +135,9 @@ void MachineFunction::print(std::ostream &OS) const {
 
   // Print Frame Information
   getFrameInfo()->print(*this, OS);
+  
+  // Print JumpTable Information
+  getJumpTableInfo()->print(OS);
 
   // Print Constant Pool
   getConstantPool()->print(OS);
@@ -331,6 +337,36 @@ void MachineFrameInfo::print(const MachineFunction &MF, std::ostream &OS) const{
 void MachineFrameInfo::dump(const MachineFunction &MF) const {
   print(MF, std::cerr);
 }
+
+
+//===----------------------------------------------------------------------===//
+//  MachineJumpTableInfo implementation
+//===----------------------------------------------------------------------===//
+
+/// getJumpTableIndex - Create a new jump table entry in the jump table info
+/// or return an existing one.
+///
+unsigned MachineJumpTableInfo::getJumpTableIndex(
+                                     std::vector<MachineBasicBlock*> &DestBBs) {
+  for (unsigned i = 0, e = JumpTables.size(); i != e; ++i)
+    if (JumpTables[i].MBBs == DestBBs)
+      return i;
+  
+  JumpTables.push_back(MachineJumpTableEntry(DestBBs));
+  return JumpTables.size()-1;
+}
+
+
+void MachineJumpTableInfo::print(std::ostream &OS) const {
+  // FIXME: this is lame, maybe we could print out the MBB numbers or something
+  // like {1, 2, 4, 5, 3, 0}
+  for (unsigned i = 0, e = JumpTables.size(); i != e; ++i) {
+    OS << "  <jt #" << i << "> has " << JumpTables[i].MBBs.size() 
+       << " entries\n";
+  }
+}
+
+void MachineJumpTableInfo::dump() const { print(std::cerr); }
 
 
 //===----------------------------------------------------------------------===//

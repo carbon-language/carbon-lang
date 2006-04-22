@@ -520,7 +520,8 @@ bool PPCDAGToDAGISel::SelectAddrImm(SDOperand N, SDOperand &Disp,
              && "Cannot handle constant offsets yet!");
       Disp = N.getOperand(1).getOperand(0);  // The global address.
       assert(Disp.getOpcode() == ISD::TargetGlobalAddress ||
-             Disp.getOpcode() == ISD::TargetConstantPool);
+             Disp.getOpcode() == ISD::TargetConstantPool ||
+             Disp.getOpcode() == ISD::TargetJumpTable);
       Base = N.getOperand(0);
       return true;  // [&g+r]
     }
@@ -661,7 +662,8 @@ bool PPCDAGToDAGISel::SelectAddrImmShift(SDOperand N, SDOperand &Disp,
              && "Cannot handle constant offsets yet!");
       Disp = N.getOperand(1).getOperand(0);  // The global address.
       assert(Disp.getOpcode() == ISD::TargetGlobalAddress ||
-             Disp.getOpcode() == ISD::TargetConstantPool);
+             Disp.getOpcode() == ISD::TargetConstantPool ||
+             Disp.getOpcode() == ISD::TargetJumpTable);
       Base = N.getOperand(0);
       return true;  // [&g+r]
     }
@@ -1239,6 +1241,15 @@ void PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     Result = CurDAG->SelectNodeTo(N, PPC::COND_BRANCH, MVT::Other, 
                                   CondCode, getI32Imm(getBCCForSetCC(CC)), 
                                   N->getOperand(4), Chain);
+    return;
+  }
+  case ISD::BRIND: {
+    SDOperand Chain, Target;
+    Select(Chain, N->getOperand(0));
+    Select(Target,N->getOperand(1));
+    Chain = SDOperand(CurDAG->getTargetNode(PPC::MTCTR, MVT::Other, Target,
+                                            Chain), 0);
+    Result = CurDAG->SelectNodeTo(N, PPC::BCTR, MVT::Other, Chain);
     return;
   }
   }

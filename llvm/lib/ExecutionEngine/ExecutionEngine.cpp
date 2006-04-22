@@ -328,7 +328,10 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
   return Result;
 }
 
-/// FIXME: document
+/// StoreValueToMemory - Stores the data in Val of type Ty at address Ptr.  Ptr
+/// is the address of the memory at which to store Val, cast to GenericValue *.
+/// It is not a pointer to a GenericValue containing the address at which to
+/// store Val.
 ///
 void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
                                          const Type *Ty) {

@@ -163,13 +163,9 @@ void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
   case MachineOperand::MO_UnextendedImmed:
     O << (int)MO.getImmedValue();
     break;
-  case MachineOperand::MO_MachineBasicBlock: {
-    MachineBasicBlock *MBBOp = MO.getMachineBasicBlock();
-    O << ".LBB" << Mang->getValueName(MBBOp->getParent()->getFunction())
-      << "_" << MBBOp->getNumber () << "\t! "
-      << MBBOp->getBasicBlock ()->getName ();
+  case MachineOperand::MO_MachineBasicBlock:
+    printBasicBlockLabel(MO.getMachineBasicBlock());
     return;
-  }
   case MachineOperand::MO_PCRelativeDisp:
     std::cerr << "Shouldn't use addPCDisp() when building Sparc MachineInstrs";
     abort ();

@@ -65,7 +65,7 @@ namespace ISD {
     // Various leaf nodes.
     STRING, BasicBlock, VALUETYPE, CONDCODE, Register,
     Constant, ConstantFP,
-    GlobalAddress, FrameIndex, ConstantPool, ExternalSymbol,
+    GlobalAddress, FrameIndex, JumpTable, ConstantPool, ExternalSymbol,
 
     // TargetConstant* - Like Constant*, but the DAG does not do any folding or
     // simplification of the constant.
@@ -77,6 +77,7 @@ namespace ISD {
     // dag, turning into a GlobalAddress operand.
     TargetGlobalAddress,
     TargetFrameIndex,
+    TargetJumpTable,
     TargetConstantPool,
     TargetExternalSymbol,
     
@@ -388,6 +389,11 @@ namespace ISD {
     // operand, the second is the MBB to branch to.
     BR,
 
+    // BRIND - Indirect branch.  The first operand is the chain, the second
+    // is the value to branch to, which must be of the same type as the target's
+    // pointer type.
+    BRIND,
+    
     // BRCOND - Conditional branch.  The first operand is the chain,
     // the second is the condition, the third is the block to branch
     // to if the condition is true.
@@ -1162,6 +1168,24 @@ public:
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::FrameIndex ||
            N->getOpcode() == ISD::TargetFrameIndex;
+  }
+};
+
+class JumpTableSDNode : public SDNode {
+  int JTI;
+protected:
+  friend class SelectionDAG;
+  JumpTableSDNode(int jti, MVT::ValueType VT, bool isTarg)
+    : SDNode(isTarg ? ISD::TargetJumpTable : ISD::JumpTable, VT), 
+    JTI(jti) {}
+public:
+    
+    int getIndex() const { return JTI; }
+  
+  static bool classof(const JumpTableSDNode *) { return true; }
+  static bool classof(const SDNode *N) {
+    return N->getOpcode() == ISD::JumpTable ||
+           N->getOpcode() == ISD::TargetJumpTable;
   }
 };
 

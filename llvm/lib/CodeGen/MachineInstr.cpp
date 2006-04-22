@@ -238,6 +238,9 @@ static void print(const MachineOperand &MO, std::ostream &OS,
   case MachineOperand::MO_ConstantPoolIndex:
     OS << "<cp#" << MO.getConstantPoolIndex() << ">";
     break;
+  case MachineOperand::MO_JumpTableIndex:
+    OS << "<jt#" << MO.getJumpTableIndex() << ">";
+    break;
   case MachineOperand::MO_GlobalAddress:
     OS << "<ga:" << ((Value*)MO.getGlobal())->getName();
     if (MO.getOffset()) OS << "+" << MO.getOffset();
@@ -376,6 +379,9 @@ std::ostream &operator<<(std::ostream &OS, const MachineOperand &MO) {
     break;
   case MachineOperand::MO_ConstantPoolIndex:
     OS << "<cp#" << MO.getConstantPoolIndex() << ">";
+    break;
+  case MachineOperand::MO_JumpTableIndex:
+    OS << "<jt#" << MO.getJumpTableIndex() << ">";
     break;
   case MachineOperand::MO_GlobalAddress:
     OS << "<ga:" << ((Value*)MO.getGlobal())->getName() << ">";

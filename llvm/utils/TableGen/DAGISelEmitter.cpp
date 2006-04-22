@@ -3225,6 +3225,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  case ISD::TargetConstant:\n"
      << "  case ISD::TargetConstantPool:\n"
      << "  case ISD::TargetFrameIndex:\n"
+     << "  case ISD::TargetJumpTable:\n"
      << "  case ISD::TargetGlobalAddress: {\n"
      << "    Result = N;\n"
      << "    return;\n"

@@ -18,6 +18,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Constant.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
+#include <set>
 
 namespace llvm {
   class SelectionDAG;
@@ -40,7 +41,7 @@ public:
   SelectionDAG *CurDAG;
   MachineBasicBlock *BB;
 
-  SelectionDAGISel(TargetLowering &tli) : TLI(tli) {}
+  SelectionDAGISel(TargetLowering &tli) : TLI(tli), JT(0,0,0) {}
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 
@@ -87,6 +88,20 @@ public:
     // ThisBB - the blcok into which to emit the code for the setcc and branches
     MachineBasicBlock *ThisBB;
   };
+  struct JumpTable {
+    JumpTable(unsigned R, unsigned J, MachineBasicBlock *me) : Reg(R), JTI(J),
+              MBB(me) {}
+    // Reg - the virtual register containing the index of the jump table entry
+    // to jump to.
+    unsigned Reg;
+    // JTI - the JumpTableIndex for this jump table in the function.
+    unsigned JTI;
+    // MBB - the MBB into which to emit the code for the indirect jump.
+    MachineBasicBlock *MBB;
+    // SuccMBBs - a vector of unique successor MBBs used for updating CFG info
+    // and PHI nodes.
+    std::set<MachineBasicBlock*> SuccMBBs;
+  };
   
 protected:
   /// Pick a safe ordering and emit instructions for each target node in the
@@ -114,6 +129,9 @@ private:
   /// SwitchCases - Vector of CaseBlock structures used to communicate
   /// SwitchInst code generation information.
   std::vector<CaseBlock> SwitchCases;
+
+  /// JT - Record which holds necessary information for emitting a jump table
+  JumpTable JT;
 };
 
 }

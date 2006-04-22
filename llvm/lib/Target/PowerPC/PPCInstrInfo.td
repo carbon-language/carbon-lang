@@ -702,7 +702,7 @@ def MTCTR : XFXForm_7_ext<31, 467, 9, (ops GPRC:$rS), "mtctr $rS", SprMTSPR>,
 
 def MTLR  : XFXForm_7_ext<31, 467, 8, (ops GPRC:$rS), "mtlr $rS", SprMTSPR>,
             PPC970_DGroup_First, PPC970_Unit_FXU;
-def MFLR  : XFXForm_1_ext<31, 339, 8, (ops GPRC:$rT), "mflr $rT",  SprMFSPR>,
+def MFLR  : XFXForm_1_ext<31, 339, 8, (ops GPRC:$rT), "mflr $rT", SprMFSPR>,
             PPC970_DGroup_First, PPC970_Unit_FXU;
 
 // Move to/from VRSAVE: despite being a SPR, the VRSAVE register is renamed like
@@ -1015,10 +1015,14 @@ def : Pat<(PPChi tglobaladdr:$in, 0), (LIS tglobaladdr:$in)>;
 def : Pat<(PPClo tglobaladdr:$in, 0), (LI tglobaladdr:$in)>;
 def : Pat<(PPChi tconstpool:$in, 0), (LIS tconstpool:$in)>;
 def : Pat<(PPClo tconstpool:$in, 0), (LI tconstpool:$in)>;
+def : Pat<(PPChi tjumptable:$in, 0), (LIS tjumptable:$in)>;
+def : Pat<(PPClo tjumptable:$in, 0), (LI tjumptable:$in)>;
 def : Pat<(add GPRC:$in, (PPChi tglobaladdr:$g, 0)),
           (ADDIS GPRC:$in, tglobaladdr:$g)>;
 def : Pat<(add GPRC:$in, (PPChi tconstpool:$g, 0)),
           (ADDIS GPRC:$in, tconstpool:$g)>;
+def : Pat<(add GPRC:$in, (PPChi tjumptable:$g, 0)),
+          (ADDIS GPRC:$in, tjumptable:$g)>;
 
 // Fused negative multiply subtract, alternate pattern
 def : Pat<(fsub F8RC:$B, (fmul F8RC:$A, F8RC:$C)),

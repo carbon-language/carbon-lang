@@ -140,6 +140,10 @@ namespace llvm {
     /// before emitting the constant pool for a function.
     const char *ConstantPoolSection;     // Defaults to "\t.section .rodata\n"
 
+    /// JumpTableSection - This is the section that we SwitchToSection right
+    /// before emitting the jump tables for a function.
+    const char *JumpTableSection;     // Defaults to "\t.section .rodata\n"
+    
     /// StaticCtorsSection - This is the directive that is emitted to switch to
     /// a section to emit the static constructor list.
     /// Defaults to "\t.section .ctors,\"aw\",@progbits".
@@ -231,6 +235,11 @@ namespace llvm {
     ///
     void EmitConstantPool(MachineConstantPool *MCP);
 
+    /// EmitJumpTableInfo - Print assembly representations of the jump tables 
+    /// used by the current function to the current output stream.  
+    ///
+    void EmitJumpTableInfo(MachineJumpTableInfo *MJTI);
+    
     /// EmitSpecialLLVMGlobal - Check to see if the specified global is a
     /// special global used by LLVM.  If so, emit it and return true, otherwise
     /// do nothing and return false.
@@ -257,6 +266,11 @@ namespace llvm {
     /// printInlineAsm - This method formats and prints the specified machine
     /// instruction that is an inline asm.
     void printInlineAsm(const MachineInstr *MI) const;
+    
+    /// printBasicBlockLabel - This method prints the label for the specified
+    /// MachineBasicBlock
+    virtual void printBasicBlockLabel(const MachineBasicBlock *MBB) const;
+    
   private:
     void EmitXXStructorList(Constant *List);
 

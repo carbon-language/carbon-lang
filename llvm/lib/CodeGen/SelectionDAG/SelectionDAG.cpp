@@ -387,6 +387,13 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
   case ISD::TargetFrameIndex:
     Erased = TargetFrameIndices.erase(cast<FrameIndexSDNode>(N)->getIndex());
     break;
+  case ISD::JumpTable:
+    Erased = JumpTableIndices.erase(cast<JumpTableSDNode>(N)->getIndex());
+    break;
+  case ISD::TargetJumpTable:
+    Erased = 
+      TargetJumpTableIndices.erase(cast<JumpTableSDNode>(N)->getIndex());
+    break;
   case ISD::ConstantPool:
     Erased = ConstantPoolIndices.
       erase(std::make_pair(cast<ConstantPoolSDNode>(N)->get(),
@@ -737,6 +744,22 @@ SDOperand SelectionDAG::getTargetFrameIndex(int FI, MVT::ValueType VT) {
   SDNode *&N = TargetFrameIndices[FI];
   if (N) return SDOperand(N, 0);
   N = new FrameIndexSDNode(FI, VT, true);
+  AllNodes.push_back(N);
+  return SDOperand(N, 0);
+}
+
+SDOperand SelectionDAG::getJumpTable(int JTI, MVT::ValueType VT) {
+  SDNode *&N = JumpTableIndices[JTI];
+  if (N) return SDOperand(N, 0);
+  N = new JumpTableSDNode(JTI, VT, false);
+  AllNodes.push_back(N);
+  return SDOperand(N, 0);
+}
+
+SDOperand SelectionDAG::getTargetJumpTable(int JTI, MVT::ValueType VT) {
+  SDNode *&N = TargetJumpTableIndices[JTI];
+  if (N) return SDOperand(N, 0);
+  N = new JumpTableSDNode(JTI, VT, true);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
@@ -2742,6 +2765,7 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::ConstantFP:    return "ConstantFP";
   case ISD::GlobalAddress: return "GlobalAddress";
   case ISD::FrameIndex:    return "FrameIndex";
+  case ISD::JumpTable:     return "JumpTable";
   case ISD::ConstantPool:  return "ConstantPool";
   case ISD::ExternalSymbol: return "ExternalSymbol";
   case ISD::INTRINSIC_WO_CHAIN: {
@@ -2759,6 +2783,7 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::TargetConstantFP:return "TargetConstantFP";
   case ISD::TargetGlobalAddress: return "TargetGlobalAddress";
   case ISD::TargetFrameIndex: return "TargetFrameIndex";
+  case ISD::TargetJumpTable:  return "TargetJumpTable";
   case ISD::TargetConstantPool:  return "TargetConstantPool";
   case ISD::TargetExternalSymbol: return "TargetExternalSymbol";
 
@@ -2849,6 +2874,7 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
 
     // Control flow instructions
   case ISD::BR:      return "br";
+  case ISD::BRIND:   return "brind";
   case ISD::BRCOND:  return "brcond";
   case ISD::BR_CC:   return "br_cc";
   case ISD::RET:     return "ret";

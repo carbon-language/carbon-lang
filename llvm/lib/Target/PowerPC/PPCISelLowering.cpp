@@ -123,6 +123,7 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   // appropriate instructions to materialize the address.
   setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
   setOperationAction(ISD::ConstantPool,  MVT::i32, Custom);
+  setOperationAction(ISD::JumpTable,     MVT::i32, Custom);
 
   // RET must be custom lowered, to meet ABI requirements
   setOperationAction(ISD::RET               , MVT::Other, Custom);
@@ -601,6 +602,36 @@ static SDOperand LowerConstantPool(SDOperand Op, SelectionDAG &DAG) {
   }
   
   SDOperand Lo = DAG.getNode(PPCISD::Lo, MVT::i32, CPI, Zero);
+  Lo = DAG.getNode(ISD::ADD, MVT::i32, Hi, Lo);
+  return Lo;
+}
+
+static SDOperand LowerJumpTable(SDOperand Op, SelectionDAG &DAG) {
+  JumpTableSDNode *JT = cast<JumpTableSDNode>(Op);
+  SDOperand JTI = DAG.getTargetJumpTable(JT->getIndex(), MVT::i32);
+  SDOperand Zero = DAG.getConstant(0, MVT::i32);
+  
+  const TargetMachine &TM = DAG.getTarget();
+  
+  // If this is a non-darwin platform, we don't support non-static relo models
+  // yet.
+  if (TM.getRelocationModel() == Reloc::Static ||
+      !TM.getSubtarget<PPCSubtarget>().isDarwin()) {
+    // Generate non-pic code that has direct accesses to the constant pool.
+    // The address of the global is just (hi(&g)+lo(&g)).
+    SDOperand Hi = DAG.getNode(PPCISD::Hi, MVT::i32, JTI, Zero);
+    SDOperand Lo = DAG.getNode(PPCISD::Lo, MVT::i32, JTI, Zero);
+    return DAG.getNode(ISD::ADD, MVT::i32, Hi, Lo);
+  }
+  
+  SDOperand Hi = DAG.getNode(PPCISD::Hi, MVT::i32, JTI, Zero);
+  if (TM.getRelocationModel() == Reloc::PIC) {
+    // With PIC, the first instruction is actually "GR+hi(&G)".
+    Hi = DAG.getNode(ISD::ADD, MVT::i32,
+                     DAG.getNode(PPCISD::GlobalBaseReg, MVT::i32), Hi);
+  }
+  
+  SDOperand Lo = DAG.getNode(PPCISD::Lo, MVT::i32, JTI, Zero);
   Lo = DAG.getNode(ISD::ADD, MVT::i32, Hi, Lo);
   return Lo;
 }
@@ -1652,6 +1683,7 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   default: assert(0 && "Wasn't expecting to be able to lower this!"); 
   case ISD::ConstantPool:       return LowerConstantPool(Op, DAG);
   case ISD::GlobalAddress:      return LowerGlobalAddress(Op, DAG);
+  case ISD::JumpTable:          return LowerJumpTable(Op, DAG);
   case ISD::SETCC:              return LowerSETCC(Op, DAG);
   case ISD::VASTART:            return LowerVASTART(Op, DAG, VarArgsFrameIndex);
   case ISD::RET:                return LowerRET(Op, DAG);

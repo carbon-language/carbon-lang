@@ -105,6 +105,7 @@ public:
     MO_MachineBasicBlock,       // MachineBasicBlock reference
     MO_FrameIndex,              // Abstract Stack Frame Index
     MO_ConstantPoolIndex,       // Address of indexed Constant in Constant Pool
+    MO_JumpTableIndex,          // Address of indexed Jump Table for switch
     MO_ExternalSymbol,          // Name of external global symbol
     MO_GlobalAddress            // Address of a global value
   };
@@ -242,6 +243,7 @@ public:
   }
   bool isFrameIndex() const { return opType == MO_FrameIndex; }
   bool isConstantPoolIndex() const { return opType == MO_ConstantPoolIndex; }
+  bool isJumpTableIndex() const { return opType == MO_JumpTableIndex; }
   bool isGlobalAddress() const { return opType == MO_GlobalAddress; }
   bool isExternalSymbol() const { return opType == MO_ExternalSymbol; }
 
@@ -283,6 +285,10 @@ public:
   }
   unsigned getConstantPoolIndex() const {
     assert(isConstantPoolIndex() && "Wrong MachineOperand accessor");
+    return (unsigned)contents.immedVal;
+  }
+  unsigned getJumpTableIndex() const {
+    assert(isJumpTableIndex() && "Wrong MachineOperand accessor");
     return (unsigned)contents.immedVal;
   }
   GlobalValue *getGlobal() const {
@@ -348,7 +354,8 @@ public:
   }
 
   void setOffset(int Offset) {
-    assert((isGlobalAddress() || isExternalSymbol() || isConstantPoolIndex()) &&
+    assert((isGlobalAddress() || isExternalSymbol() || isConstantPoolIndex() ||
+            isJumpTableIndex()) &&
         "Wrong MachineOperand accessor");
     extra.offset = Offset;
   }
@@ -611,6 +618,15 @@ public:
     operands.push_back(MachineOperand(I, MachineOperand::MO_ConstantPoolIndex));
   }
 
+  /// addJumpTableIndexOperand - Add a jump table object index to the
+  /// instruction.
+  ///
+  void addJumpTableIndexOperand(unsigned I) {
+    assert(!OperandsComplete() &&
+           "Trying to add an operand to a machine instr that is already done!");
+    operands.push_back(MachineOperand(I, MachineOperand::MO_JumpTableIndex));
+  }
+  
   void addGlobalAddressOperand(GlobalValue *GV, bool isPCRelative, int Offset) {
     assert(!OperandsComplete() &&
            "Trying to add an operand to a machine instr that is already done!");

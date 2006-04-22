@@ -18,11 +18,13 @@
 #define LLVM_CODEGEN_MACHINECODEEMITTER_H
 
 #include "llvm/Support/DataTypes.h"
+#include <map>
 
 namespace llvm {
 
 class MachineBasicBlock;
 class MachineConstantPool;
+class MachineJumpTableInfo;
 class MachineFunction;
 class MachineRelocation;
 class Value;
@@ -47,6 +49,17 @@ public:
   /// for the function.
   virtual void emitConstantPool(MachineConstantPool *MCP) {}
 
+  /// initJumpTableInfo - This callback is invoked by the JIT to allocate the
+  /// necessary memory to hold the jump tables.
+  virtual void initJumpTableInfo(MachineJumpTableInfo *MJTI) {}
+  
+  /// emitJumpTableInfo - This callback is invoked to output the jump tables
+  /// for the function.  In addition to a pointer to the MachineJumpTableInfo,
+  /// this function also takes a map of MBBs to addresses, so that the final
+  /// addresses of the MBBs can be written to the jump tables.
+  virtual void emitJumpTableInfo(MachineJumpTableInfo *MJTI,
+                                 std::map<MachineBasicBlock*,uint64_t> &MBBM) {}
+  
   /// startFunctionStub - This callback is invoked when the JIT needs the
   /// address of a function that has not been code generated yet.  The StubSize
   /// specifies the total size required by the stub.  Stubs are not allowed to
@@ -94,6 +107,11 @@ public:
   //
   virtual uint64_t getConstantPoolEntryAddress(unsigned Index) = 0;
 
+  // getJumpTablelEntryAddress - Return the address of the jump table with index
+  // 'Index' in the function that last called initJumpTableInfo.
+  //
+  virtual uint64_t getJumpTableEntryAddress(unsigned Index) = 0;
+  
   // allocateGlobal - Allocate some space for a global variable.
   virtual unsigned char* allocateGlobal(unsigned size, unsigned alignment) = 0;
 

@@ -510,6 +510,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::Register:
   case ISD::BasicBlock:
   case ISD::TargetFrameIndex:
+  case ISD::TargetJumpTable:
   case ISD::TargetConstant:
   case ISD::TargetConstantFP:
   case ISD::TargetConstantPool:
@@ -552,7 +553,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     abort();
   case ISD::GlobalAddress:
   case ISD::ExternalSymbol:
-  case ISD::ConstantPool:           // Nothing to do.
+  case ISD::ConstantPool:
+  case ISD::JumpTable: // Nothing to do.
     switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Custom:
@@ -1183,7 +1185,21 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     
     Result = DAG.UpdateNodeOperands(Result, Tmp1, Node->getOperand(1));
     break;
-
+  case ISD::BRIND:
+    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+    // Ensure that libcalls are emitted before a branch.
+    Tmp1 = DAG.getNode(ISD::TokenFactor, MVT::Other, Tmp1, LastCALLSEQ_END);
+    Tmp1 = LegalizeOp(Tmp1);
+    LastCALLSEQ_END = DAG.getEntryNode();
+    
+    switch (getTypeAction(Node->getOperand(1).getValueType())) {
+    default: assert(0 && "Indirect target must be legal type (pointer)!");
+    case Legal:
+      Tmp2 = LegalizeOp(Node->getOperand(1)); // Legalize the condition.
+      break;
+    }
+    Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
+    break;
   case ISD::BRCOND:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     // Ensure that libcalls are emitted before a return.

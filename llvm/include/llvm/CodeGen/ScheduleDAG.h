@@ -100,6 +100,7 @@ namespace llvm {
       if (isa<BasicBlockSDNode>(Node))     return true;
       if (isa<FrameIndexSDNode>(Node))     return true;
       if (isa<ConstantPoolSDNode>(Node))   return true;
+      if (isa<JumpTableSDNode>(Node))      return true;
       if (isa<ExternalSymbolSDNode>(Node)) return true;
       return false;
     }

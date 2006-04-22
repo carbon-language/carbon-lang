@@ -35,8 +35,8 @@ namespace {
   class Emitter : public MachineFunctionPass {
     const X86InstrInfo  *II;
     MachineCodeEmitter  &MCE;
-    std::map<const MachineBasicBlock*, unsigned> BasicBlockAddrs;
-    std::vector<std::pair<const MachineBasicBlock *, unsigned> > BBRefs;
+    std::map<MachineBasicBlock*, uint64_t> BasicBlockAddrs;
+    std::vector<std::pair<MachineBasicBlock *, unsigned> > BBRefs;
   public:
     explicit Emitter(MachineCodeEmitter &mce) : II(0), MCE(mce) {}
     Emitter(MachineCodeEmitter &mce, const X86InstrInfo& ii)
@@ -51,9 +51,8 @@ namespace {
     void emitInstruction(const MachineInstr &MI);
 
   private:
-    void emitBasicBlock(const MachineBasicBlock &MBB);
-
-    void emitPCRelativeBlockAddress(const MachineBasicBlock *BB);
+    void emitBasicBlock(MachineBasicBlock &MBB);
+    void emitPCRelativeBlockAddress(MachineBasicBlock *MBB);
     void emitPCRelativeValue(unsigned Address);
     void emitGlobalAddressForCall(GlobalValue *GV, bool isTailCall);
     void emitGlobalAddressForPtr(GlobalValue *GV, int Disp = 0);
@@ -84,8 +83,10 @@ bool Emitter::runOnMachineFunction(MachineFunction &MF) {
 
   MCE.startFunction(MF);
   MCE.emitConstantPool(MF.getConstantPool());
+  MCE.initJumpTableInfo(MF.getJumpTableInfo());
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
     emitBasicBlock(*I);
+  MCE.emitJumpTableInfo(MF.getJumpTableInfo(), BasicBlockAddrs);
   MCE.finishFunction(MF);
 
   // Resolve all forward branches now...
@@ -99,7 +100,7 @@ bool Emitter::runOnMachineFunction(MachineFunction &MF) {
   return false;
 }
 
-void Emitter::emitBasicBlock(const MachineBasicBlock &MBB) {
+void Emitter::emitBasicBlock(MachineBasicBlock &MBB) {
   if (uint64_t Addr = MCE.getCurrentPCValue())
     BasicBlockAddrs[&MBB] = Addr;
 
@@ -119,11 +120,10 @@ void Emitter::emitPCRelativeValue(unsigned Address) {
 /// (because this is a forward branch), it keeps track of the information
 /// necessary to resolve this address later (and emits a dummy value).
 ///
-void Emitter::emitPCRelativeBlockAddress(const MachineBasicBlock *MBB) {
+void Emitter::emitPCRelativeBlockAddress(MachineBasicBlock *MBB) {
   // If this is a backwards branch, we already know the address of the target,
   // so just emit the value.
-  std::map<const MachineBasicBlock*, unsigned>::iterator I =
-    BasicBlockAddrs.find(MBB);
+  std::map<MachineBasicBlock*,uint64_t>::iterator I = BasicBlockAddrs.find(MBB);
   if (I != BasicBlockAddrs.end()) {
     emitPCRelativeValue(I->second);
   } else {
@@ -242,6 +242,8 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
   } else if (Op3.isConstantPoolIndex()) {
     DispVal += MCE.getConstantPoolEntryAddress(Op3.getConstantPoolIndex());
     DispVal += Op3.getOffset();
+  } else if (Op3.isJumpTableIndex()) {
+    DispVal += MCE.getJumpTableEntryAddress(Op3.getJumpTableIndex());
   } else {
     DispVal = Op3.getImmedValue();
   }
@@ -445,6 +447,10 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
         assert(sizeOfImm(Desc) == 4 &&
                "Don't know how to emit non-pointer values!");
         emitExternalSymbolAddress(MO1.getSymbolName(), false, false);
+      } else if (MO1.isJumpTableIndex()) {
+        assert(sizeOfImm(Desc) == 4 &&
+               "Don't know how to emit non-pointer values!");
+        emitConstant(MCE.getJumpTableEntryAddress(MO1.getJumpTableIndex()), 4);
       } else {
         emitConstant(MO1.getImmedValue(), sizeOfImm(Desc));
       }

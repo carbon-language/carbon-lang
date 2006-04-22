@@ -115,14 +115,9 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     abort();
     return;
 
-  case MachineOperand::MO_MachineBasicBlock: {
-    MachineBasicBlock *MBBOp = MO.getMachineBasicBlock();
-    O << PrivateGlobalPrefix << "LBB"
-      << Mang->getValueName(MBBOp->getParent()->getFunction())
-      << "_" << MBBOp->getNumber() << "\t" << CommentString << " "
-      << MBBOp->getBasicBlock()->getName();
+  case MachineOperand::MO_MachineBasicBlock:
+    printBasicBlockLabel(MO.getMachineBasicBlock());
     return;
-  }
 
   case MachineOperand::MO_ConstantPoolIndex:
     O << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << "_"

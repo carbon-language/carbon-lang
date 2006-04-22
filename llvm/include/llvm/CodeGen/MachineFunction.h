@@ -29,6 +29,7 @@ class TargetMachine;
 class SSARegMap;
 class MachineFrameInfo;
 class MachineConstantPool;
+class MachineJumpTableInfo;
 
 // ilist_traits
 template <>
@@ -93,6 +94,9 @@ class MachineFunction : private Annotation {
 
   // Keep track of constants which are spilled to memory
   MachineConstantPool *ConstantPool;
+  
+  // Keep track of jump tables for switch instructions
+  MachineJumpTableInfo *JumpTableInfo;
 
   // Function-level unique numbering for MachineBasicBlocks.  When a
   // MachineBasicBlock is inserted into a MachineFunction is it automatically
@@ -138,6 +142,12 @@ public:
   ///
   MachineFrameInfo *getFrameInfo() const { return FrameInfo; }
 
+  /// getJumpTableInfo - Return the jump table info object for the current 
+  /// function.  This object contains information about jump tables for switch
+  /// instructions in the current function.
+  ///
+  MachineJumpTableInfo *getJumpTableInfo() const { return JumpTableInfo; }
+  
   /// getConstantPool - Return the constant pool object for the current
   /// function.
   ///

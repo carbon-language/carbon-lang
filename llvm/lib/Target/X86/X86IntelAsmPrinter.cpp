@@ -112,14 +112,9 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
   case MachineOperand::MO_UnextendedImmed:
     O << (int)MO.getImmedValue();
     return;
-  case MachineOperand::MO_MachineBasicBlock: {
-    MachineBasicBlock *MBBOp = MO.getMachineBasicBlock();
-    O << PrivateGlobalPrefix << "BB"
-      << Mang->getValueName(MBBOp->getParent()->getFunction())
-      << "_" << MBBOp->getNumber () << "\t# "
-      << MBBOp->getBasicBlock ()->getName ();
+  case MachineOperand::MO_MachineBasicBlock:
+    printBasicBlockLabel(MO.getMachineBasicBlock());
     return;
-  }
   case MachineOperand::MO_PCRelativeDisp:
     assert(0 && "Shouldn't use addPCDisp() when building X86 MachineInstrs");
     abort ();

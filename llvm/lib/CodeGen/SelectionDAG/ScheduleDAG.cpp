@@ -117,6 +117,9 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
   } else if (FrameIndexSDNode *FI =
              dyn_cast<FrameIndexSDNode>(Op)) {
     MI->addFrameIndexOperand(FI->getIndex());
+  } else if (JumpTableSDNode *JT =
+             dyn_cast<JumpTableSDNode>(Op)) {
+    MI->addJumpTableIndexOperand(JT->getIndex());
   } else if (ConstantPoolSDNode *CP = 
              dyn_cast<ConstantPoolSDNode>(Op)) {
     int Offset = CP->getOffset();

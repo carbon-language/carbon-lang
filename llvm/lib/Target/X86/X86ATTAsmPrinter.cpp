@@ -38,6 +38,9 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Print out constants referenced by the function
   EmitConstantPool(MF.getConstantPool());
 
+  // Print out jump tables referenced by the function
+  EmitJumpTableInfo(MF.getJumpTableInfo());
+  
   // Print out labels for the function.
   const Function *F = MF.getFunction();
   switch (F->getLinkage()) {
@@ -120,18 +123,21 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       O << '$';
     O << (int)MO.getImmedValue();
     return;
-  case MachineOperand::MO_MachineBasicBlock: {
-    MachineBasicBlock *MBBOp = MO.getMachineBasicBlock();
-    O << PrivateGlobalPrefix << "BB"
-      << Mang->getValueName(MBBOp->getParent()->getFunction())
-      << "_" << MBBOp->getNumber () << "\t# "
-      << MBBOp->getBasicBlock ()->getName ();
+  case MachineOperand::MO_MachineBasicBlock:
+    printBasicBlockLabel(MO.getMachineBasicBlock());
     return;
-  }
   case MachineOperand::MO_PCRelativeDisp:
     std::cerr << "Shouldn't use addPCDisp() when building X86 MachineInstrs";
     abort ();
     return;
+  case MachineOperand::MO_JumpTableIndex: {
+    bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
+    if (!isMemOp) O << '$';
+    O << PrivateGlobalPrefix << "JTI" << getFunctionNumber() << "_"
+      << MO.getJumpTableIndex();
+    // FIXME: PIC relocation model
+    return;
+  }
   case MachineOperand::MO_ConstantPoolIndex: {
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     if (!isMemOp) O << '$';

@@ -189,14 +189,9 @@ void IA64AsmPrinter::printOp(const MachineOperand &MO,
   case MachineOperand::MO_UnextendedImmed:
     O << /*(unsigned int)*/MO.getImmedValue();
     return;
-  case MachineOperand::MO_MachineBasicBlock: {
-    MachineBasicBlock *MBBOp = MO.getMachineBasicBlock();
-    O << PrivateGlobalPrefix << "LBB"
-      << Mang->getValueName(MBBOp->getParent()->getFunction())
-      << "_" << MBBOp->getNumber () << "\t// "
-      << MBBOp->getBasicBlock ()->getName ();
+  case MachineOperand::MO_MachineBasicBlock:
+    printBasicBlockLabel(MO.getMachineBasicBlock());
     return;
-  }
   case MachineOperand::MO_PCRelativeDisp:
     std::cerr << "Shouldn't use addPCDisp() when building IA64 MachineInstrs";
     abort ();

@@ -56,6 +56,7 @@ namespace {
     { return 0; }
 
     uint64_t getConstantPoolEntryAddress(unsigned Num) { return 0; }
+    uint64_t getJumpTableEntryAddress(unsigned Num) { return 0; }
     uint64_t getCurrentPCValue() { return 0; }
     uint64_t getCurrentPCOffset() { return 0; }
   };
@@ -97,7 +98,14 @@ namespace {
     void emitConstantPool(MachineConstantPool *MCP) {
       MCE.emitConstantPool(MCP);
     }
-
+    void initJumpTableInfo(MachineJumpTableInfo *MJTI) {
+      MCE.initJumpTableInfo(MJTI);
+    }
+    void emitJumpTableInfo(MachineJumpTableInfo *MJTI,
+                           std::map<MachineBasicBlock*,uint64_t> &MBBM) {
+      MCE.emitJumpTableInfo(MJTI, MBBM);
+    }
+    
     void startFunctionStub(unsigned StubSize) {
       MCE.startFunctionStub(StubSize);
     }
@@ -146,7 +154,9 @@ namespace {
     uint64_t getConstantPoolEntryAddress(unsigned Num) {
       return MCE.getConstantPoolEntryAddress(Num);
     }
-
+    uint64_t getJumpTableEntryAddress(unsigned Num) {
+      return MCE.getJumpTableEntryAddress(Num);
+    }
     virtual unsigned char* allocateGlobal(unsigned size, unsigned alignment)
     { return MCE.allocateGlobal(size, alignment); }
 

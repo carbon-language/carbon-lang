@@ -233,6 +233,8 @@ namespace {
       printOperand(MI, OpNo+1);
     }
     
+    virtual void printBasicBlockLabel(const MachineBasicBlock *MBB) const; 
+    
     virtual bool runOnMachineFunction(MachineFunction &F) = 0;
     virtual bool doFinalization(Module &M) = 0;
     
@@ -277,6 +279,8 @@ namespace {
       Data64bitsDirective = 0;       // we can't emit a 64-bit unit
       AlignmentIsInBytes = false;    // Alignment is by power of 2.
       ConstantPoolSection = "\t.const\t";
+      // FIXME: Conditionalize jump table section based on PIC
+      JumpTableSection = ".const";
       LCOMMDirective = "\t.lcomm\t";
       StaticCtorsSection = ".mod_init_func";
       StaticDtorsSection = ".mod_term_func";
@@ -373,13 +377,14 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
     abort();
     return;
 
-  case MachineOperand::MO_MachineBasicBlock: {
-    MachineBasicBlock *MBBOp = MO.getMachineBasicBlock();
-    O << PrivateGlobalPrefix << "BB" << getFunctionNumber() << "_"
-      << MBBOp->getNumber() << "\t; " << MBBOp->getBasicBlock()->getName();
+  case MachineOperand::MO_MachineBasicBlock:
+    printBasicBlockLabel(MO.getMachineBasicBlock());
     return;
-  }
-
+  case MachineOperand::MO_JumpTableIndex:
+    O << PrivateGlobalPrefix << "JTI" << getFunctionNumber()
+      << '_' << MO.getJumpTableIndex();
+    // FIXME: PIC relocation model
+    return;
   case MachineOperand::MO_ConstantPoolIndex:
     O << PrivateGlobalPrefix << "CPI" << getFunctionNumber()
       << '_' << MO.getConstantPoolIndex();
@@ -500,6 +505,11 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   return;
 }
 
+void PPCAsmPrinter::printBasicBlockLabel(const MachineBasicBlock *MBB) const {
+  O << PrivateGlobalPrefix << "BB" << getFunctionNumber() << "_"
+    << MBB->getNumber() << '\t' << CommentString
+    << MBB->getBasicBlock()->getName();
+}
 
 /// runOnMachineFunction - This uses the printMachineInstruction()
 /// method to print assembly for each instruction.
@@ -513,6 +523,9 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   
   // Print out constants referenced by the function
   EmitConstantPool(MF.getConstantPool());
+
+  // Print out jump tables referenced by the function
+  EmitJumpTableInfo(MF.getJumpTableInfo());
 
   // Print out labels for the function.
   const Function *F = MF.getFunction();

@@ -169,6 +169,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::RET             , MVT::Other, Custom);
   // Darwin ABI issue.
   setOperationAction(ISD::ConstantPool    , MVT::i32  , Custom);
+  setOperationAction(ISD::JumpTable       , MVT::i32  , Custom);
   setOperationAction(ISD::GlobalAddress   , MVT::i32  , Custom);
   setOperationAction(ISD::ExternalSymbol  , MVT::i32  , Custom);
   // 64-bit addm sub, shl, sra, srl (iff 32-bit x86)
@@ -2792,8 +2793,8 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     return Chain;
   }
 
-  // ConstantPool, GlobalAddress, and ExternalSymbol are lowered as their
-  // target countpart wrapped in the X86ISD::Wrapper node. Suppose N is
+  // ConstantPool, JumpTable, GlobalAddress, and ExternalSymbol are lowered as 
+  // their target countpart wrapped in the X86ISD::Wrapper node. Suppose N is
   // one of the above mentioned nodes. It has to be wrapped because otherwise
   // Select(N) returns N. So the raw TargetGlobalAddress nodes, etc. can only
   // be used to form addressing mode. These wrapped nodes will be selected
@@ -2803,6 +2804,20 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand Result = DAG.getNode(X86ISD::Wrapper, getPointerTy(),
                          DAG.getTargetConstantPool(CP->get(), getPointerTy(),
                                                    CP->getAlignment()));
+    if (Subtarget->isTargetDarwin()) {
+      // With PIC, the address is actually $g + Offset.
+      if (getTargetMachine().getRelocationModel() == Reloc::PIC)
+        Result = DAG.getNode(ISD::ADD, getPointerTy(),
+                DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()), Result);    
+    }
+
+    return Result;
+  }
+  case ISD::JumpTable: {
+    JumpTableSDNode *JT = cast<JumpTableSDNode>(Op);
+    SDOperand Result = DAG.getNode(X86ISD::Wrapper, getPointerTy(),
+                                   DAG.getTargetJumpTable(JT->getIndex(),
+                                                          getPointerTy()));
     if (Subtarget->isTargetDarwin()) {
       // With PIC, the address is actually $g + Offset.
       if (getTargetMachine().getRelocationModel() == Reloc::PIC)

@@ -20,7 +20,9 @@
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
+#include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineRelocation.h"
+#include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetJITInfo.h"
 #include "llvm/Support/Debug.h"
@@ -430,7 +432,15 @@ namespace {
     /// ConstantPoolBase - A pointer to the first entry in the constant pool.
     ///
     void *ConstantPoolBase;
-  public:
+
+    /// ConstantPool - The constant pool for the current function.
+    ///
+    MachineJumpTableInfo *JumpTable;
+    
+    /// JumpTableBase - A pointer to the first entry in the jump table.
+    ///
+    void *JumpTableBase;
+public:
     JITEmitter(JIT &jit) : MemMgr(jit.getJITInfo().needsGOT()) {
       TheJIT = &jit;
       DEBUG(std::cerr <<
@@ -441,6 +451,9 @@ namespace {
     virtual void startFunction(MachineFunction &F);
     virtual void finishFunction(MachineFunction &F);
     virtual void emitConstantPool(MachineConstantPool *MCP);
+    virtual void initJumpTableInfo(MachineJumpTableInfo *MJTI);
+    virtual void emitJumpTableInfo(MachineJumpTableInfo *MJTI,
+                                   std::map<MachineBasicBlock*,uint64_t> &MBBM);
     virtual void startFunctionStub(unsigned StubSize);
     virtual void* finishFunctionStub(const Function *F);
     virtual void emitByte(unsigned char B);
@@ -454,6 +467,7 @@ namespace {
     virtual uint64_t getCurrentPCValue();
     virtual uint64_t getCurrentPCOffset();
     virtual uint64_t getConstantPoolEntryAddress(unsigned Entry);
+    virtual uint64_t getJumpTableEntryAddress(unsigned Entry);
     virtual unsigned char* allocateGlobal(unsigned size, unsigned alignment);
 
   private:
@@ -583,6 +597,57 @@ void JITEmitter::emitConstantPool(MachineConstantPool *MCP) {
   }
 }
 
+void JITEmitter::initJumpTableInfo(MachineJumpTableInfo *MJTI) {
+  const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
+  if (JT.empty()) return;
+  
+  unsigned Size = 0;
+  unsigned EntrySize = MJTI->getEntrySize();
+  for (unsigned i = 0, e = JT.size(); i != e; ++i)
+    Size += JT[i].MBBs.size() * EntrySize;
+  
+  // Just allocate space for all the jump tables now.  We will fix up the actual
+  // MBB entries in the tables after we emit the code for each block, since then
+  // we will know the final locations of the MBBs in memory.
+  JumpTable = MJTI;
+  JumpTableBase = MemMgr.allocateConstant(Size, MJTI->getAlignment());
+}
+
+void JITEmitter::emitJumpTableInfo(MachineJumpTableInfo *MJTI,
+                                   std::map<MachineBasicBlock*,uint64_t> &MBBM){
+  const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
+  if (JT.empty()) return;
+
+  unsigned Offset = 0;
+  unsigned EntrySize = MJTI->getEntrySize();
+  
+  // For each jump table, map each target in the jump table to the address of 
+  // an emitted MachineBasicBlock.
+  for (unsigned i = 0, e = JT.size(); i != e; ++i) {
+    const std::vector<MachineBasicBlock*> &MBBs = JT[i].MBBs;
+    for (unsigned mi = 0, me = MBBs.size(); mi != me; ++mi) {
+      uint64_t addr = MBBM[MBBs[mi]];
+      GenericValue addrgv;
+      const Type *Ty;
+      if (EntrySize == 4) {
+        addrgv.UIntVal = addr;
+        Ty = Type::UIntTy;
+      } else if (EntrySize == 8) {
+        addrgv.ULongVal = addr;
+        Ty = Type::ULongTy;
+      } else {
+        assert(0 && "Unhandled jump table entry size!");
+        abort();
+      }
+      // Store the address of the basic block for this jump table slot in the
+      // memory we allocated for the jump table in 'initJumpTableInfo'
+      void *ptr = (void *)((char *)JumpTableBase + Offset);
+      TheJIT->StoreValueToMemory(addrgv, (GenericValue *)ptr, Ty);
+      Offset += EntrySize;
+    }
+  }
+}
+
 void JITEmitter::startFunctionStub(unsigned StubSize) {
   SavedCurBlock = CurBlock;  SavedCurByte = CurByte;
   CurByte = CurBlock = MemMgr.allocateStub(StubSize);
@@ -619,6 +684,22 @@ uint64_t JITEmitter::getConstantPoolEntryAddress(unsigned ConstantNum) {
          "Invalid ConstantPoolIndex!");
   return (intptr_t)ConstantPoolBase +
          ConstantPool->getConstants()[ConstantNum].Offset;
+}
+
+// getJumpTableEntryAddress - Return the address of the JumpTable with index
+// 'Index' in the jumpp table that was last initialized with 'initJumpTableInfo'
+//
+uint64_t JITEmitter::getJumpTableEntryAddress(unsigned Index) {
+  const std::vector<MachineJumpTableEntry> &JT = JumpTable->getJumpTables();
+  assert(Index < JT.size() && "Invalid jump table index!");
+  
+  unsigned Offset = 0;
+  unsigned EntrySize = JumpTable->getEntrySize();
+  
+  for (unsigned i = 0; i < Index; ++i)
+    Offset += JT[i].MBBs.size() * EntrySize;
+  
+  return (uint64_t)((char *)JumpTableBase + Offset);
 }
 
 unsigned char* JITEmitter::allocateGlobal(unsigned size, unsigned alignment)

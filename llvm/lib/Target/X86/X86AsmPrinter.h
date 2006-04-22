@@ -88,6 +88,8 @@ struct X86SharedAsmPrinter : public AsmPrinter {
        MI->getOperand(Op+3).isGlobalAddress() ||
        MI->getOperand(Op+3).isConstantPoolIndex());
   }
+
+  virtual void printBasicBlockLabel(const MachineBasicBlock *MBB) const; 
 };
 
 } // end namespace llvm

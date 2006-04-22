@@ -54,6 +54,7 @@ bool X86SharedAsmPrinter::doInitialization(Module &M) {
     ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
     PrivateGlobalPrefix = "L";     // Marker for constant pool idxs
     ConstantPoolSection = "\t.const\n";
+    JumpTableSection = "\t.const\n"; // FIXME: depends on PIC mode
     LCOMMDirective = "\t.lcomm\t";
     COMMDirectiveTakesAlignment = false;
     HasDotTypeDotSizeDirective = false;
@@ -203,6 +204,14 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
 
   AsmPrinter::doFinalization(M);
   return false; // success
+}
+
+void X86SharedAsmPrinter::printBasicBlockLabel(const MachineBasicBlock *MBB) 
+     const {
+  O << PrivateGlobalPrefix << "BB" 
+  << Mang->getValueName(MBB->getParent()->getFunction())
+  << "_" << MBB->getNumber() << '\t' << CommentString
+  << MBB->getBasicBlock()->getName();
 }
 
 /// createX86CodePrinterPass - Returns a pass that prints the X86 assembly code

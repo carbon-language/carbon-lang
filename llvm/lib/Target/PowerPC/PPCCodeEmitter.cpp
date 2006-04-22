@@ -34,7 +34,7 @@ namespace {
     // Tracks which instruction references which BasicBlock
     std::vector<std::pair<MachineBasicBlock*, unsigned*> > BBRefs;
     // Tracks where each BasicBlock starts
-    std::map<MachineBasicBlock*, long> BBLocations;
+    std::map<MachineBasicBlock*, uint64_t> BBLocations;
 
     /// getMachineOpValue - evaluates the MachineOperand of a given MachineInstr
     ///
@@ -91,8 +91,10 @@ bool PPCCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
          "JIT relocation model must be set to static or default!");
   MCE.startFunction(MF);
   MCE.emitConstantPool(MF.getConstantPool());
+  MCE.initJumpTableInfo(MF.getJumpTableInfo());
   for (MachineFunction::iterator BB = MF.begin(), E = MF.end(); BB != E; ++BB)
     emitBasicBlock(*BB);
+  MCE.emitJumpTableInfo(MF.getJumpTableInfo(), BBLocations);
   MCE.finishFunction(MF);
 
   // Resolve branches to BasicBlocks for the entire function
@@ -192,10 +194,13 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
   } else if (MO.isMachineBasicBlock()) {
     unsigned* CurrPC = (unsigned*)(intptr_t)MCE.getCurrentPCValue();
     BBRefs.push_back(std::make_pair(MO.getMachineBasicBlock(), CurrPC));
-  } else if (MO.isConstantPoolIndex()) {
-    unsigned index = MO.getConstantPoolIndex();
+  } else if (MO.isConstantPoolIndex() || MO.isJumpTableIndex()) {
+    if (MO.isConstantPoolIndex())
+      rv = MCE.getConstantPoolEntryAddress(MO.getConstantPoolIndex());
+    else
+      rv = MCE.getJumpTableEntryAddress(MO.getJumpTableIndex());
+
     unsigned Opcode = MI.getOpcode();
-    rv = MCE.getConstantPoolEntryAddress(index);
     if (Opcode == PPC::LIS || Opcode == PPC::ADDIS) {
       // lis wants hi16(addr)
       if ((short)rv < 0) rv += 1 << 16;
@@ -206,7 +211,7 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
       // These load opcodes want lo16(addr)
       rv &= 0xffff;
     } else {
-      assert(0 && "Unknown constant pool using instruction!");
+      assert(0 && "Unknown constant pool or jump table using instruction!");
     }
   } else {
     std::cerr << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
