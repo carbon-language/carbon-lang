@@ -20,7 +20,6 @@
 #ifndef LLVM_CODEGEN_MACHINEJUMPTABLEINFO_H
 #define LLVM_CODEGEN_MACHINEJUMPTABLEINFO_H
 
-#include "llvm/Target/TargetData.h"
 #include <vector>
 #include <iosfwd>
 
@@ -55,8 +54,11 @@ public:
     return JumpTables;
   }
   
-  unsigned getEntrySize() const { return TD.getPointerSize(); }
-  unsigned getAlignment() const { return TD.getPointerAlignment(); }
+  /// getEntrySize - returns the size of an individual field in a jump table 
+  unsigned getEntrySize() const;
+  
+  /// getAlignment - returns the target's preferred alignment for jump tables
+  unsigned getAlignment() const;
   
   /// print - Used by the MachineFunction printer to print information about
   /// jump tables.  Implemented in MachineFunction.cpp

@@ -102,14 +102,14 @@ public:
   /// noted with this interface.
   virtual void addRelocation(const MachineRelocation &MR) = 0;
 
-  // getConstantPoolEntryAddress - Return the address of the 'Index' entry in
-  // the constant pool that was last emitted with the 'emitConstantPool' method.
-  //
+  /// getConstantPoolEntryAddress - Return the address of the 'Index' entry in
+  /// the constant pool that was last emitted with the emitConstantPool method.
+  ///
   virtual uint64_t getConstantPoolEntryAddress(unsigned Index) = 0;
 
-  // getJumpTablelEntryAddress - Return the address of the jump table with index
-  // 'Index' in the function that last called initJumpTableInfo.
-  //
+  /// getJumpTableEntryAddress - Return the address of the jump table with index
+  /// 'Index' in the function that last called initJumpTableInfo.
+  ///
   virtual uint64_t getJumpTableEntryAddress(unsigned Index) = 0;
   
   // allocateGlobal - Allocate some space for a global variable.

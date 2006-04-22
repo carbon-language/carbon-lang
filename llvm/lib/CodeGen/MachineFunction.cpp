@@ -366,6 +366,14 @@ void MachineJumpTableInfo::print(std::ostream &OS) const {
   }
 }
 
+unsigned MachineJumpTableInfo::getEntrySize() const { 
+  return TD.getPointerSize(); 
+}
+
+unsigned MachineJumpTableInfo::getAlignment() const { 
+  return TD.getPointerAlignment(); 
+}
+
 void MachineJumpTableInfo::dump() const { print(std::cerr); }
 
 
