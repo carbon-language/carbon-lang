@@ -2323,9 +2323,6 @@ def : Pat<(add R32:$src1, (X86Wrapper tglobaladdr :$src2)),
 def : Pat<(add R32:$src1, (X86Wrapper texternalsym:$src2)),
           (ADD32ri R32:$src1, texternalsym:$src2)>;
 
-// FIXME: can you really ever store to a constant pool?
-def : Pat<(store (X86Wrapper tconstpool:$src), addr:$dst),
-          (MOV32mi addr:$dst, tconstpool:$src)>;
 def : Pat<(store (X86Wrapper tglobaladdr:$src), addr:$dst),
           (MOV32mi addr:$dst, tglobaladdr:$src)>;
 def : Pat<(store (X86Wrapper texternalsym:$src), addr:$dst),
