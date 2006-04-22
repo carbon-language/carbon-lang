@@ -166,6 +166,7 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
       case PPC::LIS:
         Reloc = PPC::reloc_absolute_high;       // Pointer to symbol
         break;
+      case PPC::LI:
       case PPC::LA:
       case PPC::LBZ:
       case PPC::LHA:
