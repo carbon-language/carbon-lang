@@ -3274,22 +3274,26 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V[0], V[1], ShufMask);
     }
 
-    // Expand into a number of unpckl*.
-    // e.g. for v4f32
-    //   Step 1: unpcklps 0, 2 ==> X: <?, ?, 2, 0>
-    //         : unpcklps 1, 3 ==> Y: <?, ?, 3, 1>
-    //   Step 2: unpcklps X, Y ==>    <3, 2, 1, 0>
-    SDOperand UnpckMask = getUnpacklMask(NumElems, DAG);
-    for (unsigned i = 0; i < NumElems; ++i)
-      V[i] = DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, Op.getOperand(i));
-    NumElems >>= 1;
-    while (NumElems != 0) {
+    if (Values.size() > 2) {
+      // Expand into a number of unpckl*.
+      // e.g. for v4f32
+      //   Step 1: unpcklps 0, 2 ==> X: <?, ?, 2, 0>
+      //         : unpcklps 1, 3 ==> Y: <?, ?, 3, 1>
+      //   Step 2: unpcklps X, Y ==>    <3, 2, 1, 0>
+      SDOperand UnpckMask = getUnpacklMask(NumElems, DAG);
       for (unsigned i = 0; i < NumElems; ++i)
-        V[i] = DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V[i], V[i + NumElems],
-                           UnpckMask);
+        V[i] = DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, Op.getOperand(i));
       NumElems >>= 1;
+      while (NumElems != 0) {
+        for (unsigned i = 0; i < NumElems; ++i)
+          V[i] = DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V[i], V[i + NumElems],
+                             UnpckMask);
+        NumElems >>= 1;
+      }
+      return V[0];
     }
-    return V[0];
+
+    return SDOperand();
   }
   case ISD::EXTRACT_VECTOR_ELT: {
     if (!isa<ConstantSDNode>(Op.getOperand(1)))
