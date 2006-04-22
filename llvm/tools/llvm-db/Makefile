@@ -9,9 +9,6 @@
 
 LEVEL = ../..
 TOOLNAME = llvm-db
-USEDLIBS = LLVMDebugger
-
-# Enable JIT support
-LLVMLIBS = JIT
+USEDLIBS = LLVMDebugger LLVMBCReader LLVMCore LLVMSupport.a LLVMbzip2 LLVMSystem.a
 
 include $(LEVEL)/Makefile.common
