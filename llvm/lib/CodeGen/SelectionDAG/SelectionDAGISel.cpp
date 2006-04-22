@@ -891,7 +891,7 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
   // FIXME: Make this work with 64 bit targets someday, possibly by always
   // doing differences there so that entries stay 32 bits.
   // FIXME: Make this work with PIC code
-  if (TLI.isOperationLegal(ISD::BRIND, TLI.getPointerTy()) &&
+  if (0 && TLI.isOperationLegal(ISD::BRIND, TLI.getPointerTy()) &&
       TLI.getPointerTy() == MVT::i32 &&
       (Relocs == Reloc::Static || Relocs == Reloc::DynamicNoPIC) &&
       Cases.size() > 3) {
