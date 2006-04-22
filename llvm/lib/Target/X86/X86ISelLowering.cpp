@@ -2977,8 +2977,8 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
         ShouldXformToMOVLP(V1.Val, PermMask.Val))
       return CommuteVectorShuffle(Op, DAG);
 
-    bool V1IsSplat = isSplatVector(V1.Val);
-    bool V2IsSplat = isSplatVector(V2.Val);
+    bool V1IsSplat = isSplatVector(V1.Val) || V1.getOpcode() == ISD::UNDEF;
+    bool V2IsSplat = isSplatVector(V2.Val) || V2.getOpcode() == ISD::UNDEF;
     if (V1IsSplat && !V2IsSplat) {
       Op = CommuteVectorShuffle(Op, DAG);
       V1 = Op.getOperand(0);
@@ -3137,6 +3137,9 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       return Op;
 
     unsigned NumElems = Op.getNumOperands();
+    if (NumElems == 2)
+      return SDOperand();
+
     unsigned Half = NumElems/2;
     MVT::ValueType VT = Op.getValueType();
     MVT::ValueType EVT = MVT::getVectorBaseType(VT);
