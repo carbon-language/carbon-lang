@@ -103,7 +103,11 @@ static void *CreateArgv(ExecutionEngine *EE,
 void ExecutionEngine::runStaticConstructorsDestructors(bool isDtors) {
   const char *Name = isDtors ? "llvm.global_dtors" : "llvm.global_ctors";
   GlobalVariable *GV = CurMod.getNamedGlobal(Name);
-  if (!GV || GV->isExternal() || !GV->hasInternalLinkage()) return;
+
+  // If this global has internal linkage, or if it has a use, then it must be
+  // an old-style (llvmgcc3) static ctor with __main linked in and in use.  If
+  // this is the case, don't execute any of the global ctors, __main will do it.
+  if (!GV || GV->isExternal() || GV->hasInternalLinkage()) return;
   
   // Should be an array of '{ int, void ()* }' structs.  The first value is the
   // init priority, which we ignore.
