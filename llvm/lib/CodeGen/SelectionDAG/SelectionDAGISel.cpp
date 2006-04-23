@@ -408,7 +408,7 @@ public:
   SelectionDAGLowering(SelectionDAG &dag, TargetLowering &tli,
                        FunctionLoweringInfo &funcinfo)
     : TLI(tli), DAG(dag), TD(DAG.getTarget().getTargetData()),
-      JT(0,0,0), FuncInfo(funcinfo) {
+      JT(0,0,0,0), FuncInfo(funcinfo) {
   }
 
   /// getRoot - Return the current virtual root of the Selection DAG.
@@ -891,7 +891,7 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
   // FIXME: Make this work with 64 bit targets someday, possibly by always
   // doing differences there so that entries stay 32 bits.
   // FIXME: Make this work with PIC code
-  if (0 && TLI.isOperationLegal(ISD::BRIND, TLI.getPointerTy()) &&
+  if (TLI.isOperationLegal(ISD::BRIND, TLI.getPointerTy()) &&
       TLI.getPointerTy() == MVT::i32 &&
       (Relocs == Reloc::Static || Relocs == Reloc::DynamicNoPIC) &&
       Cases.size() > 3) {
@@ -955,6 +955,7 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
       JT.Reg = JumpTableReg;
       JT.JTI = JTI;
       JT.MBB = JumpTableBB;
+      JT.Default = Default;
       JT.SuccMBBs = UniqueBBs;
       return;
     }
@@ -3190,12 +3191,15 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
     return;
   }
   
-  // If we need to emit a jump table, 
+  // If the JumpTable record is filled in, then we need to emit a jump table.
+  // Updating the PHI nodes is tricky in this case, since we need to determine
+  // whether the PHI is a successor of the range check MBB or the jump table MBB
   if (JT.Reg) {
     assert(SwitchCases.empty() && "Cannot have jump table and lowered switch");
     SelectionDAG SDAG(TLI, MF, getAnalysisToUpdate<MachineDebugInfo>());
     CurDAG = &SDAG;
     SelectionDAGLowering SDL(SDAG, TLI, FuncInfo);
+    MachineBasicBlock *RangeBB = BB;
     // Set the current basic block to the mbb we wish to insert the code into
     BB = JT.MBB;
     SDL.setCurrentBasicBlock(BB);
@@ -3209,9 +3213,10 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
       MachineBasicBlock *PHIBB = PHI->getParent();
       assert(PHI->getOpcode() == TargetInstrInfo::PHI &&
              "This is not a machine PHI node that we are updating!");
-      if (JT.SuccMBBs.find(PHIBB) != JT.SuccMBBs.end()) {
+      if (PHIBB == JT.Default || JT.SuccMBBs.find(PHIBB) != JT.SuccMBBs.end()) {
+        PHIBB = (PHIBB == JT.Default) ? RangeBB : BB;
         PHI->addRegOperand(PHINodesToUpdate[pi].second);
-        PHI->addMachineBasicBlockOperand(BB);
+        PHI->addMachineBasicBlockOperand(PHIBB);
       }
     }
     return;

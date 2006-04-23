@@ -41,7 +41,7 @@ public:
   SelectionDAG *CurDAG;
   MachineBasicBlock *BB;
 
-  SelectionDAGISel(TargetLowering &tli) : TLI(tli), JT(0,0,0) {}
+  SelectionDAGISel(TargetLowering &tli) : TLI(tli), JT(0,0,0,0) {}
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 
@@ -89,8 +89,8 @@ public:
     MachineBasicBlock *ThisBB;
   };
   struct JumpTable {
-    JumpTable(unsigned R, unsigned J, MachineBasicBlock *me) : Reg(R), JTI(J),
-              MBB(me) {}
+    JumpTable(unsigned R, unsigned J, MachineBasicBlock *M,
+              MachineBasicBlock *D) : Reg(R), JTI(J), MBB(M), Default(D) {}
     // Reg - the virtual register containing the index of the jump table entry
     // to jump to.
     unsigned Reg;
@@ -98,6 +98,9 @@ public:
     unsigned JTI;
     // MBB - the MBB into which to emit the code for the indirect jump.
     MachineBasicBlock *MBB;
+    // Default - the MBB of the default bb, which is a successor of the range
+    // check MBB.  This is when updating PHI nodes in successors.
+    MachineBasicBlock *Default;
     // SuccMBBs - a vector of unique successor MBBs used for updating CFG info
     // and PHI nodes.
     std::set<MachineBasicBlock*> SuccMBBs;
