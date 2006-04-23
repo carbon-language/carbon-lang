@@ -2973,6 +2973,8 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand PermMask = Op.getOperand(2);
     MVT::ValueType VT = Op.getValueType();
     unsigned NumElems = PermMask.getNumOperands();
+    bool V1IsUndef = V1.getOpcode() == ISD::UNDEF;
+    bool V2IsUndef = V2.getOpcode() == ISD::UNDEF;
 
     if (isSplatMask(PermMask.Val)) {
       if (NumElems <= 4) return Op;
@@ -2980,8 +2982,10 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       return PromoteSplat(Op, DAG);
     }
 
-    if (X86::isMOVLMask(PermMask.Val) ||
-        X86::isMOVSHDUPMask(PermMask.Val) ||
+    if (X86::isMOVLMask(PermMask.Val))
+      return (V1IsUndef) ? V2 : Op;
+      
+    if (X86::isMOVSHDUPMask(PermMask.Val) ||
         X86::isMOVSLDUPMask(PermMask.Val) ||
         X86::isMOVHLPSMask(PermMask.Val) ||
         X86::isMOVHPMask(PermMask.Val) ||
@@ -3003,6 +3007,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     }
 
     if (isCommutedMOVL(PermMask.Val, V2IsSplat)) {
+      if (V2IsUndef) return V1;
       Op = CommuteVectorShuffle(Op, DAG);
       V1 = Op.getOperand(0);
       V2 = Op.getOperand(1);
