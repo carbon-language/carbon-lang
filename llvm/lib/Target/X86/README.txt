@@ -1123,3 +1123,10 @@ elements are fixed zeros.
 
 //===---------------------------------------------------------------------===//
 
+We generate significantly worse code for this than GCC:
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=21150
+http://gcc.gnu.org/bugzilla/attachment.cgi?id=8701
+
+There is also one case we do worse on PPC.
+
+//===---------------------------------------------------------------------===//
