@@ -151,6 +151,9 @@ static MachineInstr *MakeMIInst(unsigned Opcode, unsigned FrameIndex,
     return addFrameReference(BuildMI(Opcode, 5), FrameIndex)
       .addGlobalAddress(MI->getOperand(1).getGlobal(),
                         false, MI->getOperand(1).getOffset());
+  else if (MI->getOperand(1).isJumpTableIndex())
+    return addFrameReference(BuildMI(Opcode, 5), FrameIndex)
+      .addJumpTableIndex(MI->getOperand(1).getJumpTableIndex());
   assert(0 && "Unknown operand for MakeMI!");
   return 0;
 }
