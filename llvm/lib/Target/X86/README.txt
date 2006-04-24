@@ -1075,3 +1075,35 @@ http://gcc.gnu.org/bugzilla/attachment.cgi?id=8701
 There is also one case we do worse on PPC.
 
 //===---------------------------------------------------------------------===//
+
+For this:
+
+#include <emmintrin.h>
+void test(__m128d *r, __m128d *A, double B) {
+  *r = _mm_loadl_pd(*A, &B);
+}
+
+We generates:
+
+	subl $12, %esp
+	movsd 24(%esp), %xmm0
+	movsd %xmm0, (%esp)
+	movl 20(%esp), %eax
+	movapd (%eax), %xmm0
+	movlpd (%esp), %xmm0
+	movl 16(%esp), %eax
+	movapd %xmm0, (%eax)
+	addl $12, %esp
+	ret
+
+icc generates:
+
+        movl      4(%esp), %edx                                 #3.6
+        movl      8(%esp), %eax                                 #3.6
+        movapd    (%eax), %xmm0                                 #4.22
+        movlpd    12(%esp), %xmm0                               #4.8
+        movapd    %xmm0, (%edx)                                 #4.3
+        ret                                                     #5.1
+
+So icc is smart enough to know that B is in memory so it doesn't load it and
+store it back to stack.
