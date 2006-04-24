@@ -131,6 +131,11 @@ public:
     return *this;
   }
 
+  const MachineInstrBuilder &addJumpTableIndex(unsigned Idx) const {
+    MI->addJumpTableIndexOperand(Idx);
+    return *this;
+  }
+
   const MachineInstrBuilder &addGlobalAddress(GlobalValue *GV,
                                               bool isPCRelative = false,
                                               int Offset = 0) const {
