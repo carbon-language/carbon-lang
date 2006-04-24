@@ -445,7 +445,6 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse2_packuswb_128 : GCCBuiltin<"__builtin_ia32_packuswb128">,
               Intrinsic<[llvm_v8i16_ty, llvm_v8i16_ty,
                          llvm_v8i16_ty], [IntrNoMem]>;
-  // FIXME: Temporary workaround since 2-wide shuffle is broken.
   def int_x86_sse2_movl_dq : GCCBuiltin<"__builtin_ia32_movqv4si">,
               Intrinsic<[llvm_v4i32_ty, llvm_v4i32_ty], [IntrNoMem]>;
   def int_x86_sse2_movmsk_pd : GCCBuiltin<"__builtin_ia32_movmskpd">,
@@ -461,6 +460,35 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
               Intrinsic<[llvm_void_ty], [IntrWriteMem]>;
   def int_x86_sse2_mfence : GCCBuiltin<"__builtin_ia32_mfence">,
               Intrinsic<[llvm_void_ty], [IntrWriteMem]>;
+}
+
+// Shuffles.
+// FIXME: Temporary workarounds since 2-wide shuffle is broken.
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse2_movs_d : GCCBuiltin<"__builtin_ia32_movsd">,
+              Intrinsic<[llvm_v2f64_ty, llvm_v2f64_ty,
+                         llvm_v2f64_ty], [IntrNoMem]>;
+  def int_x86_sse2_loadh_pd : GCCBuiltin<"__builtin_ia32_loadhpd">,
+              Intrinsic<[llvm_v2f64_ty, llvm_v2f64_ty,
+                         llvm_ptr_ty], [IntrReadMem]>;
+  def int_x86_sse2_loadl_pd : GCCBuiltin<"__builtin_ia32_loadlpd">,
+              Intrinsic<[llvm_v2f64_ty, llvm_v2f64_ty,
+                         llvm_ptr_ty], [IntrReadMem]>;
+  def int_x86_sse2_shuf_pd : GCCBuiltin<"__builtin_ia32_shufpd">,
+              Intrinsic<[llvm_v2f64_ty, llvm_v2f64_ty,
+                         llvm_v2f64_ty, llvm_int_ty], [IntrNoMem]>;
+  def int_x86_sse2_unpckh_pd : GCCBuiltin<"__builtin_ia32_unpckhpd">,
+              Intrinsic<[llvm_v2f64_ty, llvm_v2f64_ty,
+                         llvm_v2f64_ty], [IntrNoMem]>;
+  def int_x86_sse2_unpckl_pd : GCCBuiltin<"__builtin_ia32_unpcklpd">,
+              Intrinsic<[llvm_v2f64_ty, llvm_v2f64_ty,
+                         llvm_v2f64_ty], [IntrNoMem]>;
+  def int_x86_sse2_punpckh_qdq : GCCBuiltin<"__builtin_ia32_punpckhqdq128">,
+              Intrinsic<[llvm_v2i64_ty, llvm_v2i64_ty,
+                         llvm_v2i64_ty], [IntrNoMem]>;
+  def int_x86_sse2_punpckl_qdq : GCCBuiltin<"__builtin_ia32_punpcklqdq128">,
+              Intrinsic<[llvm_v2i64_ty, llvm_v2i64_ty,
+                         llvm_v2i64_ty], [IntrNoMem]>;
 }
 
 //===----------------------------------------------------------------------===//

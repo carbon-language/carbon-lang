@@ -2212,11 +2212,6 @@ def MOVLQ128mr : PDI<0xD6, MRMDestMem, (ops i64mem:$dst, VR128:$src),
                      "movq {$src, $dst|$dst, $src}",
                      [(int_x86_sse2_storel_dq addr:$dst, VR128:$src)]>;
 
-// FIXME: Temporary workaround since 2-wide shuffle is broken.
-def MOVLQ128rr : PDI<0xD6, MRMSrcReg, (ops VR128:$dst, VR128:$src),
-                     "movq {$src, $dst|$dst, $src}",
-                     [(set VR128:$dst, (int_x86_sse2_movl_dq VR128:$src))]>;
-
 // Move to lower bits of a VR128 and zeroing upper bits.
 // Loading from memory automatically zeroing upper bits.
 let AddedComplexity = 20 in {
@@ -2241,13 +2236,16 @@ def MOVZDI2PDIrm : PDI<0x6E, MRMSrcMem, (ops VR128:$dst, i32mem:$src),
                       [(set VR128:$dst, (v4i32 (vector_shuffle immAllZerosV,
                                  (v4i32 (scalar_to_vector (loadi32 addr:$src))),
                                                 MOVL_shuffle_mask)))]>;
-def MOVZQI2PQIrr : PDI<0x7E, MRMSrcMem, (ops VR128:$dst, VR64:$src),
-                       "movq {$src, $dst|$dst, $src}", []>;
-def MOVZQI2PQIrm : PDI<0x7E, MRMSrcMem, (ops VR128:$dst, i64mem:$src),
-                       "movq {$src, $dst|$dst, $src}",
-                       [(set VR128:$dst, (bc_v2i64 (vector_shuffle immAllZerosV,
-                                 (v2f64 (scalar_to_vector (loadf64 addr:$src))),
-                                           MOVL_shuffle_mask)))]>;
+// Moving from XMM to XMM but still clear upper 64 bits.
+def MOVZQI2PQIrr : I<0x7E, MRMSrcReg, (ops VR128:$dst, VR128:$src),
+                     "movq {$src, $dst|$dst, $src}",
+                     [(set VR128:$dst, (int_x86_sse2_movl_dq VR128:$src))]>,
+                   XS, Requires<[HasSSE2]>;
+def MOVZQI2PQIrm : I<0x7E, MRMSrcMem, (ops VR128:$dst, i64mem:$src),
+                     "movq {$src, $dst|$dst, $src}",
+                   [(set VR128:$dst, (int_x86_sse2_movl_dq
+                                      (bc_v4i32 (loadv2i64 addr:$src))))]>,
+                   XS, Requires<[HasSSE2]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2482,7 +2480,41 @@ def : Pat<(v4i32 (vector_shuffle VR128:$src1, VR128:$src2,
 def : Pat<(v2i64 (vector_shuffle VR128:$src1, VR128:$src2,
                   MOVL_shuffle_mask)),
           (MOVLPDrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
+
+// Set lowest element and zero upper elements.
+def : Pat<(bc_v2i64 (vector_shuffle immAllZerosV,
+                     (v2f64 (scalar_to_vector (loadf64 addr:$src))),
+                     MOVL_shuffle_mask)),
+          (MOVZQI2PQIrm addr:$src)>, Requires<[HasSSE2]>;
 }
+
+// FIXME: Temporary workaround since 2-wide shuffle is broken.
+def : Pat<(int_x86_sse2_movs_d  VR128:$src1, VR128:$src2),
+          (MOVLPDrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
+def : Pat<(int_x86_sse2_loadh_pd VR128:$src1, addr:$src2),
+          (MOVHPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
+def : Pat<(int_x86_sse2_loadl_pd VR128:$src1, addr:$src2),
+          (MOVLPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
+def : Pat<(int_x86_sse2_shuf_pd VR128:$src1, VR128:$src2, imm:$src3),
+          (SHUFPDrri VR128:$src1, VR128:$src2, imm:$src3)>, Requires<[HasSSE2]>;
+def : Pat<(int_x86_sse2_shuf_pd VR128:$src1, (load addr:$src2), imm:$src3),
+          (SHUFPDrmi VR128:$src1, addr:$src2, imm:$src3)>, Requires<[HasSSE2]>;
+def : Pat<(int_x86_sse2_unpckh_pd VR128:$src1, VR128:$src2),
+          (UNPCKHPDrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
+def : Pat<(int_x86_sse2_unpckh_pd VR128:$src1, (load addr:$src2)),
+          (UNPCKHPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
+def : Pat<(int_x86_sse2_unpckl_pd VR128:$src1, VR128:$src2),
+          (UNPCKLPDrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
+def : Pat<(int_x86_sse2_unpckl_pd VR128:$src1, (load addr:$src2)),
+          (UNPCKLPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
+def : Pat<(int_x86_sse2_punpckh_qdq VR128:$src1, VR128:$src2),
+          (PUNPCKHQDQrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
+def : Pat<(int_x86_sse2_punpckh_qdq VR128:$src1, (load addr:$src2)),
+          (PUNPCKHQDQrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
+def : Pat<(int_x86_sse2_punpckl_qdq VR128:$src1, VR128:$src2),
+          (PUNPCKLQDQrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
+def : Pat<(int_x86_sse2_punpckl_qdq VR128:$src1, (load addr:$src2)),
+          (PUNPCKLQDQrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
 
 // 128-bit logical shifts
 def : Pat<(int_x86_sse2_psll_dq VR128:$src1, imm:$src2),
