@@ -3236,10 +3236,6 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     MVT::ValueType EVT = MVT::getVectorBaseType(VT);
     unsigned EVTBits = MVT::getSizeInBits(EVT);
 
-    // Let legalizer expand 2-widde build_vector's.
-    if (EVTBits == 64)
-      return SDOperand();
-
     unsigned NumElems = Op.getNumOperands();
     unsigned NumZero  = 0;
     unsigned NumNonZero = 0;
@@ -3290,6 +3286,10 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
                            DAG.getNode(ISD::UNDEF, VT), Mask);
       }
     }
+
+    // Let legalizer expand 2-widde build_vector's.
+    if (EVTBits == 64)
+      return SDOperand();
 
     // If element VT is < 32 bits, convert it to inserts into a zero vector.
     if (EVTBits == 8) {
