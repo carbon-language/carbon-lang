@@ -2154,6 +2154,78 @@ static SDOperand getShuffleVectorZeroOrUndef(SDOperand V2, MVT::ValueType VT,
   return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2, Mask);
 }
 
+/// LowerBuildVectorv16i8 - Custom lower build_vector of v16i8.
+///
+static SDOperand LowerBuildVectorv16i8(SDOperand Op, unsigned NonZeros,
+                                       unsigned NumNonZero, unsigned NumZero,
+                                       SelectionDAG &DAG) {
+  if (NumNonZero > 8)
+    return SDOperand();
+
+  SDOperand V(0, 0);
+  bool First = true;
+  for (unsigned i = 0; i < 16; ++i) {
+    bool ThisIsNonZero = (NonZeros & (1 << i)) != 0;
+    if (ThisIsNonZero && First) {
+      if (NumZero)
+        V = getZeroVector(MVT::v8i16, DAG);
+      else
+        V = DAG.getNode(ISD::UNDEF, MVT::v8i16);
+      First = false;
+    }
+
+    if ((i & 1) != 0) {
+      SDOperand ThisElt(0, 0), LastElt(0, 0);
+      bool LastIsNonZero = (NonZeros & (1 << (i-1))) != 0;
+      if (LastIsNonZero) {
+        LastElt = DAG.getNode(ISD::ZERO_EXTEND, MVT::i16, Op.getOperand(i-1));
+      }
+      if (ThisIsNonZero) {
+        ThisElt = DAG.getNode(ISD::ZERO_EXTEND, MVT::i16, Op.getOperand(i));
+        ThisElt = DAG.getNode(ISD::SHL, MVT::i16,
+                              ThisElt, DAG.getConstant(8, MVT::i8));
+        if (LastIsNonZero)
+          ThisElt = DAG.getNode(ISD::OR, MVT::i16, ThisElt, LastElt);
+      } else
+        ThisElt = LastElt;
+
+      if (ThisElt.Val)
+        V = DAG.getNode(ISD::INSERT_VECTOR_ELT, MVT::v8i16, V, ThisElt,
+                        DAG.getConstant(i/2, MVT::i32));
+    }
+  }
+
+  return DAG.getNode(ISD::BIT_CONVERT, MVT::v16i8, V);
+}
+
+/// LowerBuildVectorv16i8 - Custom lower build_vector of v8i16.
+///
+static SDOperand LowerBuildVectorv8i16(SDOperand Op, unsigned NonZeros,
+                                       unsigned NumNonZero, unsigned NumZero,
+                                       SelectionDAG &DAG) {
+  if (NumNonZero > 4)
+    return SDOperand();
+
+  SDOperand V(0, 0);
+  bool First = true;
+  for (unsigned i = 0; i < 8; ++i) {
+    bool isNonZero = (NonZeros & (1 << i)) != 0;
+    if (isNonZero) {
+      if (First) {
+        if (NumZero)
+          V = getZeroVector(MVT::v8i16, DAG);
+        else
+          V = DAG.getNode(ISD::UNDEF, MVT::v8i16);
+        First = false;
+      }
+      V = DAG.getNode(ISD::INSERT_VECTOR_ELT, MVT::v8i16, V, Op.getOperand(i),
+                      DAG.getConstant(i, MVT::i32));
+    }
+  }
+
+  return V;
+}
+
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
 SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
@@ -3152,38 +3224,49 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     return SDOperand();
   }
   case ISD::BUILD_VECTOR: {
+    // All zero's are handled with pxor.
+    if (ISD::isBuildVectorAllZeros(Op.Val))
+      return Op;
+
     // All one's are handled with pcmpeqd.
     if (ISD::isBuildVectorAllOnes(Op.Val))
       return Op;
 
-    unsigned NumElems = Op.getNumOperands();
-    if (NumElems == 2)
-      return SDOperand();
-
-    unsigned Half = NumElems/2;
     MVT::ValueType VT = Op.getValueType();
     MVT::ValueType EVT = MVT::getVectorBaseType(VT);
+    unsigned EVTBits = MVT::getSizeInBits(EVT);
+
+    // Let legalizer expand 2-widde build_vector's.
+    if (EVTBits == 64)
+      return SDOperand();
+
+    unsigned NumElems = Op.getNumOperands();
     unsigned NumZero  = 0;
+    unsigned NumNonZero = 0;
     unsigned NonZeros = 0;
     std::set<SDOperand> Values;
     for (unsigned i = 0; i < NumElems; ++i) {
       SDOperand Elt = Op.getOperand(i);
-      Values.insert(Elt);
-      if (isZeroNode(Elt))
-        NumZero++;
-      else if (Elt.getOpcode() != ISD::UNDEF)
-        NonZeros |= (1 << i);
+      if (Elt.getOpcode() != ISD::UNDEF) {
+        Values.insert(Elt);
+        if (isZeroNode(Elt))
+          NumZero++;
+        else {
+          NonZeros |= (1 << i);
+          NumNonZero++;
+        }
+      }
     }
 
-    unsigned NumNonZero = CountPopulation_32(NonZeros);
     if (NumNonZero == 0)
-      return Op;
+      // Must be a mix of zero and undef. Return a zero vector.
+      return getZeroVector(VT, DAG);
 
     // Splat is obviously ok. Let legalizer expand it to a shuffle.
     if (Values.size() == 1)
       return SDOperand();
 
-    // If element VT is >= 32 bits, turn it into a number of shuffles.
+    // Special case for single non-zero element.
     if (NumNonZero == 1) {
       unsigned Idx = CountTrailingZeros_32(NonZeros);
       SDOperand Item = Op.getOperand(Idx);
@@ -3193,7 +3276,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
         return getShuffleVectorZeroOrUndef(Item, VT, NumElems, Idx,
                                            NumZero > 0, DAG);
 
-      if (MVT::getSizeInBits(EVT) >= 32) {
+      if (EVTBits == 32) {
         // Turn it into a shuffle of zero and zero-extended scalar to vector.
         Item = getShuffleVectorZeroOrUndef(Item, VT, NumElems, 0, NumZero > 0,
                                            DAG);
@@ -3209,37 +3292,17 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     }
 
     // If element VT is < 32 bits, convert it to inserts into a zero vector.
-    if (MVT::getSizeInBits(EVT) <= 16) {
-      if (NumNonZero <= Half) {
-        SDOperand V(0, 0);
-
-        for (unsigned i = 0; i < NumNonZero; ++i) {
-          unsigned Idx = CountTrailingZeros_32(NonZeros);
-          NonZeros ^= (1 << Idx);
-          SDOperand Item = Op.getOperand(Idx);
-          if (i == 0) {
-            if (NumZero)
-              V = getZeroVector(MVT::v8i16, DAG);
-            else
-              V = DAG.getNode(ISD::UNDEF, MVT::v8i16);
-          }
-          if (EVT == MVT::i8) {
-            Item = DAG.getNode(ISD::ANY_EXTEND, MVT::i16, Item);
-            if ((Idx % 2) != 0)
-              Item = DAG.getNode(ISD::SHL, MVT::i16,
-                                 Item, DAG.getConstant(8, MVT::i8));
-            Idx /= 2;
-          }
-          V = DAG.getNode(ISD::INSERT_VECTOR_ELT, MVT::v8i16, V, Item,
-                          DAG.getConstant(Idx, MVT::i32));
-        }
-
-        if (EVT == MVT::i8)
-          V = DAG.getNode(ISD::BIT_CONVERT, VT, V);
-        return V;
-      }
+    if (EVTBits == 8) {
+      SDOperand V = LowerBuildVectorv16i8(Op, NonZeros,NumNonZero,NumZero, DAG);
+      if (V.Val) return V;
     }
 
+    if (EVTBits == 16) {
+      SDOperand V = LowerBuildVectorv8i16(Op, NonZeros,NumNonZero,NumZero, DAG);
+      if (V.Val) return V;
+    }
+
+    // If element VT is == 32 bits, turn it into a number of shuffles.
     std::vector<SDOperand> V(NumElems);
     if (NumElems == 4 && NumZero > 0) {
       for (unsigned i = 0; i < 4; ++i) {
