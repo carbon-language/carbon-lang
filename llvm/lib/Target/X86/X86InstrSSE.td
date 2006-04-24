@@ -2462,18 +2462,26 @@ def : Pat<(v2f64 (vector_shuffle VR128:$src1, (loadv2f64 addr:$src2),
                   MOVHP_shuffle_mask)),
           (MOVHPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
 
-def : Pat<(v4i32 (vector_shuffle VR128:$src1, VR128:$src2,
-                  MOVL_shuffle_mask)),
-          (MOVLPSrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
 def : Pat<(v4i32 (vector_shuffle VR128:$src1, (bc_v4i32 (loadv2i64 addr:$src2)),
                   MOVLP_shuffle_mask)),
           (MOVLPSrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
+def : Pat<(v2i64 (vector_shuffle VR128:$src1, (loadv2i64 addr:$src2),
+                  MOVLP_shuffle_mask)),
+          (MOVLPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
+def : Pat<(v4i32 (vector_shuffle VR128:$src1, (bc_v4i32 (loadv2i64 addr:$src2)),
+                  MOVHP_shuffle_mask)),
+          (MOVHPSrm VR128:$src1, addr:$src2)>, Requires<[HasSSE1]>;
+def : Pat<(v2i64 (vector_shuffle VR128:$src1, (loadv2i64 addr:$src2),
+                  MOVLP_shuffle_mask)),
+          (MOVLPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
+
+// Setting the lowest element in the vector.
+def : Pat<(v4i32 (vector_shuffle VR128:$src1, VR128:$src2,
+                  MOVL_shuffle_mask)),
+          (MOVLPSrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
 def : Pat<(v2i64 (vector_shuffle VR128:$src1, VR128:$src2,
                   MOVL_shuffle_mask)),
           (MOVLPDrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
-def : Pat<(v2i64 (vector_shuffle VR128:$src1, (loadv2i64 addr:$src2),
-                  MOVHP_shuffle_mask)),
-          (MOVHPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
 }
 
 // 128-bit logical shifts
