@@ -61,8 +61,9 @@ convert the LLVM representation to machine assembly code or other languages.</p>
 
 <div class="doc_text">
 
-<p>In general, you want to follow the format of X86 or PowerPC (in
-<tt>lib/Target</tt>).</p>
+<p>In general, you want to follow the format of SPARC, X86 or PowerPC (in
+<tt>lib/Target</tt>).  SPARC is the simplest backend, and is RISC, so if
+you're working on a RISC target, it is a good one to start with.</p>
 
 <p>To create a static compiler (one that emits text assembly), you need to
 implement the following:</p>
