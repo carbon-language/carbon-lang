@@ -2385,6 +2385,9 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       break;
     }
   }
+
+  if (RetVals.size() == 0)
+    RetVals.push_back(MVT::isVoid);
   
   // Create the node.
   SDNode *Result = DAG.getNode(ISD::FORMAL_ARGUMENTS, RetVals, Ops).Val;
