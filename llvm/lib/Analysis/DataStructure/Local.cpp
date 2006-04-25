@@ -1122,13 +1122,12 @@ void GraphBuilder::MergeConstantInitIntoNode(DSNodeHandle &NH, Constant *C) {
     for (unsigned i = 0, e = CS->getNumOperands(); i != e; ++i) {
       DSNode *NHN = NH.getNode();
       //Some programmers think ending a structure with a [0 x sbyte] is cute
-      //This should be ok as the allocation type should grow this type when
-      //it is merged in if it is bigger.
       if (SL->MemberOffsets[i] < SL->StructSize) {
         DSNodeHandle NewNH(NHN, NH.getOffset()+(unsigned)SL->MemberOffsets[i]);
         MergeConstantInitIntoNode(NewNH, cast<Constant>(CS->getOperand(i)));
       } else if (SL->MemberOffsets[i] == SL->StructSize) {
         DEBUG(std::cerr << "Zero size element at end of struct\n");
+        NHN->foldNodeCompletely();
       } else {
         assert(0 && "type was smaller than offsets of of struct layout indicate");
       }
