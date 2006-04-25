@@ -86,49 +86,55 @@ void PPC32CompilationCallback() {
 #endif
 
 extern "C" void PPC32CompilationCallbackC(unsigned *IntRegs, double *FPRegs) {
-  unsigned *CameFromStub = (unsigned*)__builtin_return_address(0+1);
-  unsigned *CameFromOrig = (unsigned*)__builtin_return_address(1+1);
-  unsigned *CCStackPtr   = (unsigned*)__builtin_frame_address(0);
-//unsigned *StubStackPtr = (unsigned*)__builtin_frame_address(1);
-  unsigned *OrigStackPtr = (unsigned*)__builtin_frame_address(2+1);
+  unsigned *StubCallAddrPlus4 = (unsigned*)__builtin_return_address(0+1);
+  unsigned *OrigCallAddrPlus4 = (unsigned*)__builtin_return_address(1+1);
+  unsigned *CurStackPtr       = (unsigned*)__builtin_frame_address(0);
+  unsigned *OrigStackPtr      = (unsigned*)__builtin_frame_address(2+1);
 
-  // Adjust pointer to the branch, not the return address.
-  --CameFromStub;
+  // Adjust the pointer to the address of the call instruction in the stub
+  // emitted by emitFunctionStub, rather than the instruction after it.
+  unsigned *StubCallAddr = StubCallAddrPlus4 - 1;
+  unsigned *OrigCallAddr = OrigCallAddrPlus4 - 1;
 
-  void *Target = JITCompilerFunction(CameFromStub);
+  void *Target = JITCompilerFunction(StubCallAddr);
 
-  // Check to see if CameFromOrig[-1] is a 'bl' instruction, and if we can
-  // rewrite it to branch directly to the destination.  If so, rewrite it so it
-  // does not need to go through the stub anymore.
-  unsigned CameFromOrigInst = CameFromOrig[-1];
-  if ((CameFromOrigInst >> 26) == 18) {     // Direct call.
-    intptr_t Offset = ((intptr_t)Target-(intptr_t)CameFromOrig+4) >> 2;
+  // Check to see if *OrigCallAddr is a 'bl' instruction, and if we can rewrite
+  // it to branch directly to the destination.  If so, rewrite it so it does not
+  // need to go through the stub anymore.
+  unsigned OrigCallInst = *OrigCallAddr;
+  if ((OrigCallInst >> 26) == 18) {     // Direct call.
+    intptr_t Offset = ((intptr_t)Target - (intptr_t)OrigCallAddr) >> 2;
+    
     if (Offset >= -(1 << 23) && Offset < (1 << 23)) {   // In range?
       // Clear the original target out.
-      CameFromOrigInst &= (63 << 26) | 3;
+      OrigCallInst &= (63 << 26) | 3;
       // Fill in the new target.
-      CameFromOrigInst |= (Offset & ((1 << 24)-1)) << 2;
+      OrigCallInst |= (Offset & ((1 << 24)-1)) << 2;
       // Replace the call.
-      CameFromOrig[-1] = CameFromOrigInst;
+      *OrigCallAddr = OrigCallInst;
     }
   }
 
-  // Locate the start of the stub.  If this is a short call, adjust backwards
-  // the short amount, otherwise the full amount.
-  bool isShortStub = (*CameFromStub >> 26) == 18;
-  CameFromStub -= isShortStub ? 2 : 6;
+  // Assert that we are coming from a stub that was created with our
+  // emitFunctionStub.
+  assert((*StubCallAddr >> 26) == 19 && "Call in stub is not indirect!");
+  StubCallAddr -= 6;
 
   // Rewrite the stub with an unconditional branch to the target, for any users
   // who took the address of the stub.
-  EmitBranchToAt(CameFromStub, Target, false);
+  EmitBranchToAt(StubCallAddr, Target, false);
 
-  // Change the SP so that we pop two stack frames off when we return.
-  *CCStackPtr = (intptr_t)OrigStackPtr;
+  // Change the stored stack pointer so that we pop three stack frames:
+  // 1. PPC32CompilationCallbackC's frame
+  // 2. _PPC32CompilationCallback's frame
+  // 3. the stub's frame
+  *CurStackPtr = (intptr_t)OrigStackPtr;
 
-  // Put the address of the stub and the LR value that originally came into the
-  // stub in a place that is easy to get on the stack after we restore all regs.
-  CCStackPtr[2] = (intptr_t)Target;
-  CCStackPtr[1] = (intptr_t)CameFromOrig;
+  // Put the address of the target function to call and the address to return to
+  // after calling the target function in a place that is easy to get on the
+  // stack after we restore all regs.
+  CurStackPtr[2] = (intptr_t)Target;
+  CurStackPtr[1] = (intptr_t)OrigCallAddrPlus4;
 
   // Note, this is not a standard epilog!
 #if defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)
@@ -141,12 +147,12 @@ extern "C" void PPC32CompilationCallbackC(unsigned *IntRegs, double *FPRegs) {
   "lfd f10, 72(%0)\n" "lfd f11, 80(%0)\n" "lfd f12, 88(%0)\n"
   "lfd f13, 96(%0)\n"
   "lmw r3, 0(%1)\n"  // Load all integer regs
-  "lwz r0,4(r1)\n"   // Get CameFromOrig (LR into stub)
+  "lwz r0,4(r1)\n"   // Get OrigCallAddrPlus4 (LR value when stub was called)
   "mtlr r0\n"        // Put it in the LR register
   "lwz r0,8(r1)\n"   // Get target function pointer
   "mtctr r0\n"       // Put it into the CTR register
-  "lwz r1,0(r1)\n"   // Pop two frames off
-  "bctr\n" ::        // Return to stub!
+  "lwz r1,0(r1)\n"   // Pop three frames off
+  "bctr\n" ::        // Call target function
   "b" (FRR), "b" (IRR));
 #endif
 }
