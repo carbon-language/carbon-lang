@@ -339,6 +339,13 @@ namespace llvm {
                                         MVT::ValueType EVT,
                                         SelectionDAG &DAG) const;
   private:
+    /// Subtarget - Keep a pointer to the X86Subtarget around so that we can
+    /// make the right decision when generating code for different targets.
+    const X86Subtarget *Subtarget;
+
+    /// X86ScalarSSE - Select between SSE2 or x87 floating point ops.
+    bool X86ScalarSSE;
+
     // C Calling Convention implementation.
     std::vector<SDOperand> LowerCCCArguments(Function &F, SelectionDAG &DAG);
     std::pair<SDOperand, SDOperand>
@@ -352,12 +359,29 @@ namespace llvm {
     LowerFastCCCallTo(SDOperand Chain, const Type *RetTy, bool isTailCall,
                       SDOperand Callee, ArgListTy &Args, SelectionDAG &DAG);
 
-    /// Subtarget - Keep a pointer to the X86Subtarget around so that we can
-    /// make the right decision when generating code for different targets.
-    const X86Subtarget *Subtarget;
-
-    /// X86ScalarSSE - Select between SSE2 or x87 floating point ops.
-    bool X86ScalarSSE;
+    SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerEXTRACT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerINSERT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerSCALAR_TO_VECTOR(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerConstantPool(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerExternalSymbol(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerShift(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerFABS(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerFNEG(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerSETCC(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerSELECT(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerBRCOND(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerMEMSET(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerMEMCPY(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerJumpTable(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerREADCYCLCECOUNTER(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerVASTART(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerINTRINSIC_WO_CHAIN(SDOperand Op, SelectionDAG &DAG);
   };
 }
 
