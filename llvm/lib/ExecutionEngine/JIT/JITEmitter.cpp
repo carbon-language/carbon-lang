@@ -699,7 +699,7 @@ uint64_t JITEmitter::getJumpTableEntryAddress(unsigned Index) {
   for (unsigned i = 0; i < Index; ++i)
     Offset += JT[i].MBBs.size() * EntrySize;
   
-  return (uint64_t)((char *)JumpTableBase + Offset);
+  return (intptr_t)((char *)JumpTableBase + Offset);
 }
 
 unsigned char* JITEmitter::allocateGlobal(unsigned size, unsigned alignment)
