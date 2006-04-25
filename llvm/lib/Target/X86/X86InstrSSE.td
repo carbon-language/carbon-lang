@@ -1988,7 +1988,7 @@ def PUNPCKHDQrm : PDI<0x6A, MRMSrcMem,
                                 UNPCKH_shuffle_mask)))]>;
 def PUNPCKHQDQrr : PDI<0x6D, MRMSrcReg, 
                        (ops VR128:$dst, VR128:$src1, VR128:$src2),
-                       "punpckhdq {$src2, $dst|$dst, $src2}",
+                       "punpckhqdq {$src2, $dst|$dst, $src2}",
                       [(set VR128:$dst,
                         (v2i64 (vector_shuffle VR128:$src1, VR128:$src2,
                                 UNPCKH_shuffle_mask)))]>;
