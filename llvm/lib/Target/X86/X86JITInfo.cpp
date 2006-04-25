@@ -59,8 +59,19 @@ extern "C" {
     "movl    %esp, %ebp\n"    // Standard prologue
     "pushl   %eax\n"
     "pushl   %edx\n"          // save EAX/EDX
-#if defined(__CYGWIN__) || defined(__APPLE__)
-    "call _X86CompilationCallback2\n"
+#if defined(__CYGWIN__)
+    "call    _X86CompilationCallback2\n"
+#elif defined(__APPLE__)
+    "movl    4(%ebp), %eax\n" // load the address of return address
+    "movl    $24, %edx\n"     // if the opcode of the instruction at the
+    "cmpb    $-51, (%eax)\n"  // return address is our 0xCD marker, then
+    "movl    $12, %eax\n"     // subtract 24 from %esp to realign it to 16
+    "cmovne  %eax, %edx\n"    // bytes after the push of edx, the amount to.
+    "subl    %edx, %esp\n"    // the push of edx to keep it aligned.
+    "pushl   %edx\n"          // subtract.  Otherwise, subtract 12 bytes after
+    "call    _X86CompilationCallback2\n"
+    "popl    %edx\n"
+    "addl    %edx, %esp\n"
 #else
     "call X86CompilationCallback2\n"
 #endif
