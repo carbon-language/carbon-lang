@@ -183,8 +183,9 @@ void DSGC::verify(const DSGraph &G) {
         }
 
         if (CheckFlagsM.count(Name) && CheckFlagsM[Name] != N->getNodeFlags()) {
-          std::cerr << "Node flags are not as expected for node: " << Name
-                    << "\n";
+          std::cerr << "Node flags are not as expected for node: " << Name 
+                    << " (" << CheckFlagsM[Name] << ":" <<N->getNodeFlags()
+                    << ")\n";
           N->print(std::cerr, &G);
           abort();
         }
