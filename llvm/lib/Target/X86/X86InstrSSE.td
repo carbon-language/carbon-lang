@@ -2281,9 +2281,9 @@ def : Pat<(store (v4i32 VR128:$src), addr:$dst),
 
 // Scalar to v8i16 / v16i8. The source may be a R32, but only the lower 8 or
 // 16-bits matter.
-def : Pat<(v8i16 (X86s2vec R32:$src)), (MOVDI2PDIrr R32:$src)>,
+def : Pat<(v8i16 (X86s2vec R32:$src)), (v8i16 (MOVDI2PDIrr R32:$src))>,
       Requires<[HasSSE2]>;
-def : Pat<(v16i8 (X86s2vec R32:$src)), (MOVDI2PDIrr R32:$src)>,
+def : Pat<(v16i8 (X86s2vec R32:$src)), (v16i8 (MOVDI2PDIrr R32:$src))>,
       Requires<[HasSSE2]>;
 
 // bit_convert
@@ -2353,17 +2353,17 @@ def : Pat<(v2f64 (bitconvert (v4f32 VR128:$src))), (v2f64 VR128:$src)>,
 let AddedComplexity = 20 in {
 def : Pat<(v8i16 (vector_shuffle immAllZerosV,
                   (v8i16 (X86s2vec R32:$src)), MOVL_shuffle_mask)),
-          (MOVZDI2PDIrr R32:$src)>, Requires<[HasSSE2]>;
+          (v8i16 (MOVZDI2PDIrr R32:$src))>, Requires<[HasSSE2]>;
 def : Pat<(v16i8 (vector_shuffle immAllZerosV,
                   (v16i8 (X86s2vec R32:$src)), MOVL_shuffle_mask)),
-          (MOVZDI2PDIrr R32:$src)>, Requires<[HasSSE2]>;
+          (v16i8 (MOVZDI2PDIrr R32:$src))>, Requires<[HasSSE2]>;
 // Zeroing a VR128 then do a MOVS{S|D} to the lower bits.
 def : Pat<(v2f64 (vector_shuffle immAllZerosV,
                   (v2f64 (scalar_to_vector FR64:$src)), MOVL_shuffle_mask)),
-          (MOVLSD2PDrr (V_SET0_PD), FR64:$src)>, Requires<[HasSSE2]>;
+          (v2f64 (MOVLSD2PDrr (V_SET0_PD), FR64:$src))>, Requires<[HasSSE2]>;
 def : Pat<(v4f32 (vector_shuffle immAllZerosV,
                   (v4f32 (scalar_to_vector FR32:$src)), MOVL_shuffle_mask)),
-          (MOVLSS2PSrr (V_SET0_PS), FR32:$src)>, Requires<[HasSSE2]>;
+          (v4f32 (MOVLSS2PSrr (V_SET0_PS), FR32:$src))>, Requires<[HasSSE2]>;
 }
 
 // Splat v2f64 / v2i64
@@ -2404,115 +2404,117 @@ def : Pat<(vector_shuffle (v4i32 VR128:$src1),
 let AddedComplexity = 10 in {
 def : Pat<(v4f32 (vector_shuffle VR128:$src, (undef),
                   UNPCKL_v_undef_shuffle_mask)),
-          (UNPCKLPSrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
+          (v4f32 (UNPCKLPSrr VR128:$src, VR128:$src))>, Requires<[HasSSE2]>;
 def : Pat<(v16i8 (vector_shuffle VR128:$src, (undef),
                   UNPCKL_v_undef_shuffle_mask)),
-          (PUNPCKLBWrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
+          (v16i8 (PUNPCKLBWrr VR128:$src, VR128:$src))>, Requires<[HasSSE2]>;
 def : Pat<(v8i16 (vector_shuffle VR128:$src, (undef),
                   UNPCKL_v_undef_shuffle_mask)),
-          (PUNPCKLWDrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
+          (v8i16 (PUNPCKLWDrr VR128:$src, VR128:$src))>, Requires<[HasSSE2]>;
 def : Pat<(v4i32 (vector_shuffle VR128:$src, (undef),
                   UNPCKL_v_undef_shuffle_mask)),
-          (PUNPCKLDQrr VR128:$src, VR128:$src)>, Requires<[HasSSE1]>;
+          (v4i32 (PUNPCKLDQrr VR128:$src, VR128:$src))>, Requires<[HasSSE1]>;
 }
 
 let AddedComplexity = 20 in {
 // vector_shuffle v1, <undef> <1, 1, 3, 3>
 def : Pat<(v4i32 (vector_shuffle VR128:$src, (undef),
                   MOVSHDUP_shuffle_mask)),
-          (MOVSHDUPrr VR128:$src)>, Requires<[HasSSE3]>;
+          (v4i32 (MOVSHDUPrr VR128:$src))>, Requires<[HasSSE3]>;
 def : Pat<(v4i32 (vector_shuffle (bc_v4i32 (loadv2i64 addr:$src)), (undef),
                   MOVSHDUP_shuffle_mask)),
-          (MOVSHDUPrm addr:$src)>, Requires<[HasSSE3]>;
+          (v4i32 (MOVSHDUPrm addr:$src))>, Requires<[HasSSE3]>;
 
 // vector_shuffle v1, <undef> <0, 0, 2, 2>
 def : Pat<(v4i32 (vector_shuffle VR128:$src, (undef),
                   MOVSLDUP_shuffle_mask)),
-          (MOVSLDUPrr VR128:$src)>, Requires<[HasSSE3]>;
+          (v4i32 (MOVSLDUPrr VR128:$src))>, Requires<[HasSSE3]>;
 def : Pat<(v4i32 (vector_shuffle (bc_v4i32 (loadv2i64 addr:$src)), (undef),
                   MOVSLDUP_shuffle_mask)),
-          (MOVSLDUPrm addr:$src)>, Requires<[HasSSE3]>;
+          (v4i32 (MOVSLDUPrm addr:$src))>, Requires<[HasSSE3]>;
 }
 
 let AddedComplexity = 20 in {
 // vector_shuffle v1, v2 <0, 1, 4, 5> using MOVLHPS
 def : Pat<(v4i32 (vector_shuffle VR128:$src1, VR128:$src2,
                   MOVHP_shuffle_mask)),
-          (MOVLHPSrr VR128:$src1, VR128:$src2)>;
+          (v4i32 (MOVLHPSrr VR128:$src1, VR128:$src2))>;
 
 // vector_shuffle v1, v2 <6, 7, 2, 3> using MOVHLPS
 def : Pat<(v4i32 (vector_shuffle VR128:$src1, VR128:$src2,
                   MOVHLPS_shuffle_mask)),
-          (MOVHLPSrr VR128:$src1, VR128:$src2)>;
+          (v4i32 (MOVHLPSrr VR128:$src1, VR128:$src2))>;
 
 // vector_shuffle v1, (load v2) <4, 5, 2, 3> using MOVLPS
 // vector_shuffle v1, (load v2) <0, 1, 4, 5> using MOVHPS
 def : Pat<(v4f32 (vector_shuffle VR128:$src1, (loadv4f32 addr:$src2),
                   MOVLP_shuffle_mask)),
-          (MOVLPSrm VR128:$src1, addr:$src2)>, Requires<[HasSSE1]>;
+          (v4f32 (MOVLPSrm VR128:$src1, addr:$src2))>, Requires<[HasSSE1]>;
 def : Pat<(v2f64 (vector_shuffle VR128:$src1, (loadv2f64 addr:$src2),
                   MOVLP_shuffle_mask)),
-          (MOVLPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
+          (v2f64 (MOVLPDrm VR128:$src1, addr:$src2))>, Requires<[HasSSE2]>;
 def : Pat<(v4f32 (vector_shuffle VR128:$src1, (loadv4f32 addr:$src2),
                   MOVHP_shuffle_mask)),
-          (MOVHPSrm VR128:$src1, addr:$src2)>, Requires<[HasSSE1]>;
+          (v4f32 (MOVHPSrm VR128:$src1, addr:$src2))>, Requires<[HasSSE1]>;
 def : Pat<(v2f64 (vector_shuffle VR128:$src1, (loadv2f64 addr:$src2),
                   MOVHP_shuffle_mask)),
-          (MOVHPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
+          (v2f64 (MOVHPDrm VR128:$src1, addr:$src2))>, Requires<[HasSSE2]>;
 
 def : Pat<(v4i32 (vector_shuffle VR128:$src1, (bc_v4i32 (loadv2i64 addr:$src2)),
                   MOVLP_shuffle_mask)),
-          (MOVLPSrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
+          (v4i32 (MOVLPSrm VR128:$src1, addr:$src2))>, Requires<[HasSSE2]>;
 def : Pat<(v2i64 (vector_shuffle VR128:$src1, (loadv2i64 addr:$src2),
                   MOVLP_shuffle_mask)),
-          (MOVLPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
+          (v2i64 (MOVLPDrm VR128:$src1, addr:$src2))>, Requires<[HasSSE2]>;
 def : Pat<(v4i32 (vector_shuffle VR128:$src1, (bc_v4i32 (loadv2i64 addr:$src2)),
                   MOVHP_shuffle_mask)),
-          (MOVHPSrm VR128:$src1, addr:$src2)>, Requires<[HasSSE1]>;
+          (v4i32 (MOVHPSrm VR128:$src1, addr:$src2))>, Requires<[HasSSE1]>;
 def : Pat<(v2i64 (vector_shuffle VR128:$src1, (loadv2i64 addr:$src2),
                   MOVLP_shuffle_mask)),
-          (MOVLPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
+          (v2i64 (MOVLPDrm VR128:$src1, addr:$src2))>, Requires<[HasSSE2]>;
 
 // Setting the lowest element in the vector.
 def : Pat<(v4i32 (vector_shuffle VR128:$src1, VR128:$src2,
                   MOVL_shuffle_mask)),
-          (MOVLPSrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
+          (v4i32 (MOVLPSrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
 def : Pat<(v2i64 (vector_shuffle VR128:$src1, VR128:$src2,
                   MOVL_shuffle_mask)),
-          (MOVLPDrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
+          (v2i64 (MOVLPDrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
 
 // Set lowest element and zero upper elements.
 def : Pat<(bc_v2i64 (vector_shuffle immAllZerosV,
                      (v2f64 (scalar_to_vector (loadf64 addr:$src))),
                      MOVL_shuffle_mask)),
-          (MOVZQI2PQIrm addr:$src)>, Requires<[HasSSE2]>;
+          (v2i64 (MOVZQI2PQIrm addr:$src))>, Requires<[HasSSE2]>;
 }
 
 // FIXME: Temporary workaround since 2-wide shuffle is broken.
 def : Pat<(int_x86_sse2_movs_d  VR128:$src1, VR128:$src2),
-          (MOVLPDrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
+          (v2f64 (MOVLPDrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
 def : Pat<(int_x86_sse2_loadh_pd VR128:$src1, addr:$src2),
-          (MOVHPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
+          (v2f64 (MOVHPDrm VR128:$src1, addr:$src2))>, Requires<[HasSSE2]>;
 def : Pat<(int_x86_sse2_loadl_pd VR128:$src1, addr:$src2),
-          (MOVLPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
+          (v2f64 (MOVLPDrm VR128:$src1, addr:$src2))>, Requires<[HasSSE2]>;
 def : Pat<(int_x86_sse2_shuf_pd VR128:$src1, VR128:$src2, imm:$src3),
-          (SHUFPDrri VR128:$src1, VR128:$src2, imm:$src3)>, Requires<[HasSSE2]>;
+          (v2f64 (SHUFPDrri VR128:$src1, VR128:$src2, imm:$src3))>,
+      Requires<[HasSSE2]>;
 def : Pat<(int_x86_sse2_shuf_pd VR128:$src1, (load addr:$src2), imm:$src3),
-          (SHUFPDrmi VR128:$src1, addr:$src2, imm:$src3)>, Requires<[HasSSE2]>;
+          (v2f64 (SHUFPDrmi VR128:$src1, addr:$src2, imm:$src3))>,
+      Requires<[HasSSE2]>;
 def : Pat<(int_x86_sse2_unpckh_pd VR128:$src1, VR128:$src2),
-          (UNPCKHPDrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
+          (v2f64 (UNPCKHPDrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
 def : Pat<(int_x86_sse2_unpckh_pd VR128:$src1, (load addr:$src2)),
-          (UNPCKHPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
+          (v2f64 (UNPCKHPDrm VR128:$src1, addr:$src2))>, Requires<[HasSSE2]>;
 def : Pat<(int_x86_sse2_unpckl_pd VR128:$src1, VR128:$src2),
-          (UNPCKLPDrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
+          (v2f64 (UNPCKLPDrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
 def : Pat<(int_x86_sse2_unpckl_pd VR128:$src1, (load addr:$src2)),
-          (UNPCKLPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
+          (v2f64 (UNPCKLPDrm VR128:$src1, addr:$src2))>, Requires<[HasSSE2]>;
 def : Pat<(int_x86_sse2_punpckh_qdq VR128:$src1, VR128:$src2),
-          (PUNPCKHQDQrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
+          (v2i64 (PUNPCKHQDQrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
 def : Pat<(int_x86_sse2_punpckh_qdq VR128:$src1, (load addr:$src2)),
-          (PUNPCKHQDQrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
+          (v2i64 (PUNPCKHQDQrm VR128:$src1, addr:$src2))>, Requires<[HasSSE2]>;
 def : Pat<(int_x86_sse2_punpckl_qdq VR128:$src1, VR128:$src2),
-          (PUNPCKLQDQrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
+          (v2i64 (PUNPCKLQDQrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
 def : Pat<(int_x86_sse2_punpckl_qdq VR128:$src1, (load addr:$src2)),
           (PUNPCKLQDQrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
 
@@ -2527,20 +2529,20 @@ def : Pat<(int_x86_sse2_psrl_dq VR128:$src1, imm:$src2),
 // Some special case pandn patterns.
 def : Pat<(v2i64 (and (xor VR128:$src1, (bc_v2i64 (v4i32 immAllOnesV))),
                   VR128:$src2)),
-          (PANDNrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
+          (v2i64 (PANDNrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
 def : Pat<(v2i64 (and (xor VR128:$src1, (bc_v2i64 (v8i16 immAllOnesV))),
                   VR128:$src2)),
-          (PANDNrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
+          (v2i64 (PANDNrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
 def : Pat<(v2i64 (and (xor VR128:$src1, (bc_v2i64 (v16i8 immAllOnesV))),
                   VR128:$src2)),
-          (PANDNrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
+          (v2i64 (PANDNrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
 
 def : Pat<(v2i64 (and (xor VR128:$src1, (bc_v2i64 (v4i32 immAllOnesV))),
                   (load addr:$src2))),
-          (PANDNrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
+          (v2i64 (PANDNrm VR128:$src1, addr:$src2))>, Requires<[HasSSE2]>;
 def : Pat<(v2i64 (and (xor VR128:$src1, (bc_v2i64 (v8i16 immAllOnesV))),
                   (load addr:$src2))),
-          (PANDNrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
+          (v2i64 (PANDNrm VR128:$src1, addr:$src2))>, Requires<[HasSSE2]>;
 def : Pat<(v2i64 (and (xor VR128:$src1, (bc_v2i64 (v16i8 immAllOnesV))),
                   (load addr:$src2))),
-          (PANDNrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
+          (v2i64 (PANDNrm VR128:$src1, addr:$src2))>, Requires<[HasSSE2]>;
