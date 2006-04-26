@@ -346,15 +346,22 @@ namespace llvm {
     /// X86ScalarSSE - Select between SSE2 or x87 floating point ops.
     bool X86ScalarSSE;
 
+    /// Formal arguments lowered to load and CopyFromReg ops.
+    std::vector<SDOperand> FormalArgs;
+
     // C Calling Convention implementation.
-    std::vector<SDOperand> LowerCCCArguments(Function &F, SelectionDAG &DAG);
+    void PreprocessCCCArguments(SDOperand Op, Function &F, SelectionDAG &DAG);
+    void LowerCCCArguments(SDOperand Op, SelectionDAG &DAG);
     std::pair<SDOperand, SDOperand>
     LowerCCCCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
                    bool isTailCall,
                    SDOperand Callee, ArgListTy &Args, SelectionDAG &DAG);
 
     // Fast Calling Convention implementation.
-    std::vector<SDOperand> LowerFastCCArguments(Function &F, SelectionDAG &DAG);
+    void
+    PreprocessFastCCArguments(SDOperand Op, Function &F, SelectionDAG &DAG);
+    void
+    LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG);
     std::pair<SDOperand, SDOperand>
     LowerFastCCCallTo(SDOperand Chain, const Type *RetTy, bool isTailCall,
                       SDOperand Callee, ArgListTy &Args, SelectionDAG &DAG);
@@ -379,6 +386,7 @@ namespace llvm {
     SDOperand LowerMEMCPY(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerJumpTable(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerREADCYCLCECOUNTER(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerVASTART(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerINTRINSIC_WO_CHAIN(SDOperand Op, SelectionDAG &DAG);
