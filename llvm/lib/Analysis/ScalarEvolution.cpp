@@ -1304,6 +1304,31 @@ SCEVHandle ScalarEvolutionsImpl::createNodeForPHI(PHINode *PN) {
               return PHISCEV;
             }
           }
+        } else if (SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(BEValue)) {
+          // Otherwise, this could be a loop like this:
+          //     i = 0;  for (j = 1; ..; ++j) { ....  i = j; }
+          // In this case, j = {1,+,1}  and BEValue is j.
+          // Because the other in-value of i (0) fits the evolution of BEValue
+          // i really is an addrec evolution.
+          if (AddRec->getLoop() == L && AddRec->isAffine()) {
+            SCEVHandle StartVal = getSCEV(PN->getIncomingValue(IncomingEdge));
+
+            // If StartVal = j.start - j.stride, we can use StartVal as the
+            // initial step of the addrec evolution.
+            if (StartVal == SCEV::getMinusSCEV(AddRec->getOperand(0),
+                                               AddRec->getOperand(1))) {
+              SCEVHandle PHISCEV = 
+                 SCEVAddRecExpr::get(StartVal, AddRec->getOperand(1), L);
+
+              // Okay, for the entire analysis of this edge we assumed the PHI
+              // to be symbolic.  We now need to go back and update all of the
+              // entries for the scalars that use the PHI (except for the PHI
+              // itself) to use the new analyzed value instead of the "symbolic"
+              // value.
+              ReplaceSymbolicValueWithConcrete(PN, SymbolicName, PHISCEV);
+              return PHISCEV;
+            }
+          }
         }
 
         return SymbolicName;
