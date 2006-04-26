@@ -937,6 +937,9 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
         ArgValue = DAG.getConstantFP(0, ObjectVT);
     }
     FormalArgs.push_back(ArgValue);
+
+    if (ObjSize)
+      ArgOffset += ArgIncrement;   // Move on to the next argument.
   }
 }
 
