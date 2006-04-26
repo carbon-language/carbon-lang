@@ -55,6 +55,13 @@
   target".</li>
   </ol></li>
 
+  <li><a href="#felangs">Source Languages</a>
+  <ol>
+    <li><a href="#langs">What source languages are supported?</a></li>
+    <li><a href="#langhlsupp">What support is there for higher level source
+      language constructs for building a compiler?</a></li>
+  </ol>
+
   <li><a href="#cfe">Using the GCC Front End</a>
   <ol>
     <li>
@@ -383,6 +390,42 @@ which list dependencies for source files, and rebuild:</p>
 rebuilding.</p>
 </div>
 
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="felangs">Source Languages</a>
+</div>
+
+<div class="question"><p>What source languages are supported?</p></div>
+<div name="langs" class="answer">
+  <p>LLVM currently has full support for C and C++ source languages. These are
+  available through a special version of GCC that LLVM calls the 
+  <a href="#cfe">C Front End</a></p>
+  <p>There is an incomplete version of a Java front end available in the
+  <tt>llvm-java</tt> CVS repository. There is no documentation on this yet so
+  you'll need to download the code, compile it, and try it.</p>
+  <p>In the <tt>examples/BFtoLLVM</tt> directory is a translator for the 
+  BrainF*** language (2002 Language Specification).</p>
+  <p>In the <tt>projects/Stacker</tt> directory is a compiler and runtime
+  library for the Stacker language, a "toy" language loosely based on Forth.</p>
+  <p>The PyPy developers are working on integrating LLVM into the PyPy backend
+  so that PyPy language can translate to LLVM.</p>
+</div>
+<div name="langhlsupp" class="question">
+  <p>What support is there for a higher level source language constructs for 
+  building a compiler?</p>
+</div>
+<div class="answer">
+  <p>Currently, there isn't much. LLVM supports an intermediate representation
+  which is useful for code representation but will not support the high level
+  (abstract syntax tree) representation needed by most compilers. There are no
+  facilities for lexical nor semantica analysis. There is, however, a <i>mostly
+    implemented</i> configuration-driven 
+  <a href="CompilerDriver.html">compiler driver</a> which simplifies the task
+  of running optimizations, linking, and executable generation.</p>
+  <p>You might be interested in following the progress of the <a
+    href="http://hlvm.org">HLVM Project</a> which is attempting to address these
+  issues.</p>
+</div>
 <!-- *********************************************************************** -->
 <div class="doc_section">
   <a name="cfe">Using the GCC Front End</a>
