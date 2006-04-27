@@ -147,7 +147,7 @@ void PromoteMem2Reg::run() {
     if (AI->use_empty()) {
       // If there are no uses of the alloca, just delete it now.
       if (AST) AST->deleteValue(AI);
-      AI->getParent()->getInstList().erase(AI);
+      AI->eraseFromParent();
 
       // Remove the alloca from the Allocas list, since it has been processed
       Allocas[AllocaNum] = Allocas.back();
@@ -331,7 +331,7 @@ void PromoteMem2Reg::run() {
 
       if (AST && isa<PointerType>(PN->getType()))
         AST->deleteValue(PN);
-      PN->getParent()->getInstList().erase(PN);
+      PN->eraseFromParent();
     }
 
     // Keep the reverse mapping of the 'Allocas' array.
@@ -377,7 +377,7 @@ void PromoteMem2Reg::run() {
   // The renamer uses the Visited set to avoid infinite loops.  Clear it now.
   Visited.clear();
 
-  // Remove the allocas themselves from the function...
+  // Remove the allocas themselves from the function.
   for (unsigned i = 0, e = Allocas.size(); i != e; ++i) {
     Instruction *A = Allocas[i];
 
@@ -388,9 +388,41 @@ void PromoteMem2Reg::run() {
     if (!A->use_empty())
       A->replaceAllUsesWith(UndefValue::get(A->getType()));
     if (AST) AST->deleteValue(A);
-    A->getParent()->getInstList().erase(A);
+    A->eraseFromParent();
   }
 
+  
+  // Loop over all of the PHI nodes and see if there are any that we can get
+  // rid of because they merge all of the same incoming values.  This can
+  // happen due to undef values coming into the PHI nodes.  This process is
+  // iterative, because eliminating one PHI node can cause others to be removed.
+  bool EliminatedAPHI = true;
+  while (EliminatedAPHI) {
+    EliminatedAPHI = false;
+    
+    for (std::map<BasicBlock*, std::vector<PHINode *> >::iterator I =
+           NewPhiNodes.begin(), E = NewPhiNodes.end(); I != E; ++I) {
+      std::vector<PHINode*> &PNs = I->second;
+      for (unsigned i = 0, e = PNs.size(); i != e; ++i) {
+        if (!PNs[i]) continue;
+
+        // If this PHI node merges  one value and/or undefs, get the value.
+        if (Value *V = PNs[i]->hasConstantValue(true)) {
+          if (!isa<Instruction>(V) ||
+              properlyDominates(cast<Instruction>(V), PNs[i])) {
+            if (AST && isa<PointerType>(PNs[i]->getType()))
+              AST->deleteValue(PNs[i]);
+            PNs[i]->replaceAllUsesWith(V);
+            PNs[i]->eraseFromParent();
+            PNs[i] = 0;
+            EliminatedAPHI = true;
+            continue;
+          }
+        }
+      }
+    }
+  }
+  
   // At this point, the renamer has added entries to PHI nodes for all reachable
   // code.  Unfortunately, there may be blocks which are not reachable, which
   // the renamer hasn't traversed.  If this is the case, the PHI nodes may not
@@ -403,25 +435,11 @@ void PromoteMem2Reg::run() {
     std::vector<BasicBlock*> Preds(pred_begin(I->first), pred_end(I->first));
     std::vector<PHINode*> &PNs = I->second;
     assert(!PNs.empty() && "Empty PHI node list??");
-
-    // Loop over all of the PHI nodes and see if there are any that we can get
-    // rid of because they merge all of the same incoming values.  This can
-    // happen due to undef values coming into the PHI nodes.
     PHINode *SomePHI = 0;
     for (unsigned i = 0, e = PNs.size(); i != e; ++i)
       if (PNs[i]) {
-        if (Value *V = PNs[i]->hasConstantValue(true)) {
-          if (!isa<Instruction>(V) ||
-              properlyDominates(cast<Instruction>(V), PNs[i])) {
-            if (AST && isa<PointerType>(PNs[i]->getType()))
-              AST->deleteValue(PNs[i]);
-            PNs[i]->replaceAllUsesWith(V);
-            PNs[i]->eraseFromParent();
-            PNs[i] = 0;
-          }
-        }
-        if (PNs[i])
-          SomePHI = PNs[i];
+        SomePHI = PNs[i];
+        break;
       }
 
     // Only do work here if there the PHI nodes are missing incoming values.  We
