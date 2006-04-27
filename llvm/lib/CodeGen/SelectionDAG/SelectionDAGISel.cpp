@@ -2372,7 +2372,7 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         // right now.
         unsigned NumElems = cast<PackedType>(I->getType())->getNumElements();
         const Type *EltTy = cast<PackedType>(I->getType())->getElementType();
-        
+
         // Figure out if there is a Packed type corresponding to this Vector
         // type.  If so, convert to the packed type.
         MVT::ValueType TVT = MVT::getVectorType(getValueType(EltTy), NumElems);
@@ -2441,7 +2441,7 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         // right now.
         unsigned NumElems = cast<PackedType>(I->getType())->getNumElements();
         const Type *EltTy = cast<PackedType>(I->getType())->getElementType();
-        
+
         // Figure out if there is a Packed type corresponding to this Vector
         // type.  If so, convert to the packed type.
         MVT::ValueType TVT = MVT::getVectorType(getValueType(EltTy), NumElems);
@@ -2987,7 +2987,20 @@ LowerArguments(BasicBlock *BB, SelectionDAGLowering &SDL,
        AI != E; ++AI, ++a)
     if (!AI->use_empty()) {
       SDL.setValue(AI, Args[a]);
-      
+
+      MVT::ValueType VT = TLI.getValueType(AI->getType());
+      if (VT == MVT::Vector) {
+        // Insert a VBIT_CONVERT between the FORMAL_ARGUMENT node and its uses.
+        // Or else legalizer will balk.
+        BasicBlock::iterator InsertPt = BB->begin();
+        Value *NewVal = new CastInst(AI, AI->getType(), AI->getName(), InsertPt);
+        for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end();
+             UI != E; ++UI) {
+          Instruction *User = cast<Instruction>(*UI);
+          if (User != NewVal)
+            User->replaceUsesOfWith(AI, NewVal);
+        }
+      }
       // If this argument is live outside of the entry block, insert a copy from
       // whereever we got it to the vreg that other BB's will reference it as.
       if (FuncInfo.ValueMap.count(AI)) {
