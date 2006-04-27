@@ -349,8 +349,28 @@ namespace llvm {
     /// Formal arguments lowered to load and CopyFromReg ops.
     std::vector<SDOperand> FormalArgs;
 
+    /// Formal arguments locations (frame indices and registers).
+    struct FALocInfo {
+      enum FALocKind {
+        None,
+        StackFrameLoc,
+        LiveInRegLoc,
+      } Kind;
+
+      int Loc;
+      MVT::ValueType Typ;
+
+      FALocInfo() : Kind(None), Loc(0), Typ(MVT::isVoid) {};
+      FALocInfo(enum FALocKind k, int fi) : Kind(k), Loc(fi), Typ(MVT::isVoid) {};
+      FALocInfo(enum FALocKind k, int r, MVT::ValueType vt)
+        : Kind(k), Loc(r), Typ(vt) {};
+    };
+
+    std::vector<std::pair<FALocInfo, FALocInfo> > FormalArgLocs;
+
     // C Calling Convention implementation.
-    void PreprocessCCCArguments(SDOperand Op, Function &F, SelectionDAG &DAG);
+    void PreprocessCCCArguments(std::vector<SDOperand>Args, Function &F,
+                                SelectionDAG &DAG);
     void LowerCCCArguments(SDOperand Op, SelectionDAG &DAG);
     std::pair<SDOperand, SDOperand>
     LowerCCCCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
@@ -359,7 +379,8 @@ namespace llvm {
 
     // Fast Calling Convention implementation.
     void
-    PreprocessFastCCArguments(SDOperand Op, Function &F, SelectionDAG &DAG);
+    PreprocessFastCCArguments(std::vector<SDOperand>Args, Function &F,
+                              SelectionDAG &DAG);
     void
     LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG);
     std::pair<SDOperand, SDOperand>

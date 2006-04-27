@@ -366,12 +366,14 @@ X86TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   std::vector<SDOperand> Args = TargetLowering::LowerArguments(F, DAG);
 
   FormalArgs.clear();
+  FormalArgLocs.clear();
+
   // This sets BytesToPopOnReturn, BytesCallerReserves, etc. which have to be set
   // before the rest of the function can be lowered.
   if (F.getCallingConv() == CallingConv::Fast && EnableFastCC)
-    PreprocessFastCCArguments(Args[0], F, DAG);
+    PreprocessFastCCArguments(Args, F, DAG);
   else
-    PreprocessCCCArguments(Args[0], F, DAG);
+    PreprocessCCCArguments(Args, F, DAG);
   return Args;
 }
 
@@ -400,28 +402,74 @@ X86TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
 //                    C Calling Convention implementation
 //===----------------------------------------------------------------------===//
 
-void X86TargetLowering::PreprocessCCCArguments(SDOperand Op, Function &F,
-                                               SelectionDAG &DAG) {
-  unsigned NumArgs = Op.Val->getNumValues();
+static unsigned getFormalArgSize(MVT::ValueType ObjectVT) {
+  unsigned ObjSize = 0;
+  switch (ObjectVT) {
+  default: assert(0 && "Unhandled argument type!");
+  case MVT::i1:
+  case MVT::i8:  ObjSize = 1; break;
+  case MVT::i16: ObjSize = 2; break;
+  case MVT::i32: ObjSize = 4; break;
+  case MVT::i64: ObjSize = 8; break;
+  case MVT::f32: ObjSize = 4; break;
+  case MVT::f64: ObjSize = 8; break;
+  }
+  return ObjSize;
+}
+
+static std::vector<SDOperand> getFormalArgObjects(SDOperand Op) {
+  unsigned Opc = Op.getOpcode();
+  std::vector<SDOperand> Objs;
+  if (Opc == ISD::TRUNCATE) {
+    Op = Op.getOperand(0);
+    assert(Op.getOpcode() == ISD::AssertSext ||
+           Op.getOpcode() == ISD::AssertZext);
+    Objs.push_back(Op.getOperand(0));
+  } else if (Opc == ISD::FP_ROUND) {
+    Objs.push_back(Op.getOperand(0));
+  } else if (Opc == ISD::BUILD_PAIR) {
+    Objs.push_back(Op.getOperand(0));
+    Objs.push_back(Op.getOperand(1));
+  } else {
+    Objs.push_back(Op);
+  }
+  return Objs;
+}
+
+void X86TargetLowering::PreprocessCCCArguments(std::vector<SDOperand>Args,
+                                               Function &F, SelectionDAG &DAG) {
+  unsigned NumArgs = Args.size();
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
 
+  // Add DAG nodes to load the arguments...  On entry to a function on the X86,
+  // the stack frame looks like this:
+  //
+  // [ESP] -- return address
+  // [ESP + 4] -- first argument (leftmost lexically)
+  // [ESP + 8] -- second argument, if first argument is four bytes in size
+  //    ...
+  //
   unsigned ArgOffset = 0;   // Frame mechanisms handle retaddr slot
   for (unsigned i = 0; i < NumArgs; ++i) {
-    MVT::ValueType ObjectVT = Op.Val->getValueType(i);
-    unsigned ArgIncrement = 4;
-    unsigned ObjSize;
-    switch (ObjectVT) {
-    default: assert(0 && "Unhandled argument type!");
-    case MVT::i1:
-    case MVT::i8:  ObjSize = 1;                break;
-    case MVT::i16: ObjSize = 2;                break;
-    case MVT::i32: ObjSize = 4;                break;
-    case MVT::i64: ObjSize = ArgIncrement = 8; break;
-    case MVT::f32: ObjSize = 4;                break;
-    case MVT::f64: ObjSize = ArgIncrement = 8; break;
+    SDOperand Op = Args[i];
+    std::vector<SDOperand> Objs = getFormalArgObjects(Op);
+    for (std::vector<SDOperand>::iterator I = Objs.begin(), E = Objs.end();
+         I != E; ++I) {
+      SDOperand Obj = *I;
+      MVT::ValueType ObjectVT = Obj.getValueType();
+      unsigned ArgIncrement = 4;
+      unsigned ObjSize = getFormalArgSize(ObjectVT);
+      if (ObjSize == 8)
+        ArgIncrement = 8;
+
+      // Create the frame index object for this incoming parameter...
+      int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
+      std::pair<FALocInfo, FALocInfo> Loc =
+        std::make_pair(FALocInfo(FALocInfo::StackFrameLoc, FI), FALocInfo());
+      FormalArgLocs.push_back(Loc);
+      ArgOffset += ArgIncrement;   // Move on to the next argument...
     }
-    ArgOffset += ArgIncrement;   // Move on to the next argument...
   }
 
   // If the function takes variable number of arguments, make a frame index for
@@ -438,39 +486,13 @@ void X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG) {
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
 
-  // Add DAG nodes to load the arguments...  On entry to a function on the X86,
-  // the stack frame looks like this:
-  //
-  // [ESP] -- return address
-  // [ESP + 4] -- first argument (leftmost lexically)
-  // [ESP + 8] -- second argument, if first argument is four bytes in size
-  //    ...
-  //
-  unsigned ArgOffset = 0;   // Frame mechanisms handle retaddr slot
   for (unsigned i = 0; i < NumArgs; ++i) {
-    MVT::ValueType ObjectVT = Op.Val->getValueType(i);
-    unsigned ArgIncrement = 4;
-    unsigned ObjSize;
-    switch (ObjectVT) {
-    default: assert(0 && "Unhandled argument type!");
-    case MVT::i1:
-    case MVT::i8:  ObjSize = 1;                break;
-    case MVT::i16: ObjSize = 2;                break;
-    case MVT::i32: ObjSize = 4;                break;
-    case MVT::i64: ObjSize = ArgIncrement = 8; break;
-    case MVT::f32: ObjSize = 4;                break;
-    case MVT::f64: ObjSize = ArgIncrement = 8; break;
-    }
-    // Create the frame index object for this incoming parameter...
-    int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
-
     // Create the SelectionDAG nodes corresponding to a load from this parameter
+    unsigned FI = FormalArgLocs[i].first.Loc;
     SDOperand FIN = DAG.getFrameIndex(FI, MVT::i32);
-
-    SDOperand ArgValue = DAG.getLoad(ObjectVT, DAG.getEntryNode(), FIN,
-                                     DAG.getSrcValue(NULL));
+    SDOperand ArgValue = DAG.getLoad(Op.Val->getValueType(i),DAG.getEntryNode(),
+                                     FIN, DAG.getSrcValue(NULL));
     FormalArgs.push_back(ArgValue);
-    ArgOffset += ArgIncrement;   // Move on to the next argument...
   }
 }
 
@@ -715,13 +737,64 @@ static unsigned AddLiveIn(MachineFunction &MF, unsigned PReg,
 static unsigned FASTCC_NUM_INT_ARGS_INREGS = 0;
 
 
+static void
+DetermineFastCCFormalArgSizeNumRegs(MVT::ValueType ObjectVT,
+                                    unsigned &ObjSize, unsigned &NumIntRegs) {
+  ObjSize = 0;
+  NumIntRegs = 0;
+
+  switch (ObjectVT) {
+  default: assert(0 && "Unhandled argument type!");
+  case MVT::i1:
+  case MVT::i8:
+    if (NumIntRegs < FASTCC_NUM_INT_ARGS_INREGS)
+      NumIntRegs = 1;
+    else
+      ObjSize = 1;
+    break;
+  case MVT::i16:
+    if (NumIntRegs < FASTCC_NUM_INT_ARGS_INREGS)
+      NumIntRegs = 1;
+    else
+      ObjSize = 2;
+    break;
+  case MVT::i32:
+    if (NumIntRegs < FASTCC_NUM_INT_ARGS_INREGS)
+      NumIntRegs = 1;
+    else
+      ObjSize = 4;
+    break;
+  case MVT::i64:
+    if (NumIntRegs+2 <= FASTCC_NUM_INT_ARGS_INREGS) {
+      NumIntRegs = 2;
+    } else if (NumIntRegs+1 <= FASTCC_NUM_INT_ARGS_INREGS) {
+      NumIntRegs = 1;
+      ObjSize = 4;
+    } else
+      ObjSize = 8;
+  case MVT::f32:
+    ObjSize = 4;
+    break;
+  case MVT::f64:
+    ObjSize = 8;
+    break;
+  }
+}
+
 void
-X86TargetLowering::PreprocessFastCCArguments(SDOperand Op, Function &F,
-                                             SelectionDAG &DAG) {
-  unsigned NumArgs = Op.Val->getNumValues();
+X86TargetLowering::PreprocessFastCCArguments(std::vector<SDOperand>Args,
+                                             Function &F, SelectionDAG &DAG) {
+  unsigned NumArgs = Args.size();
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
 
+  // Add DAG nodes to load the arguments...  On entry to a function the stack
+  // frame looks like this:
+  //
+  // [ESP] -- return address
+  // [ESP + 4] -- first nonreg argument (leftmost lexically)
+  // [ESP + 8] -- second nonreg argument, if first argument is 4 bytes in size
+  //    ...
   unsigned ArgOffset = 0;   // Frame mechanisms handle retaddr slot
 
   // Keep track of the number of integer regs passed so far.  This can be either
@@ -730,53 +803,77 @@ X86TargetLowering::PreprocessFastCCArguments(SDOperand Op, Function &F,
   unsigned NumIntRegs = 0;
   
   for (unsigned i = 0; i < NumArgs; ++i) {
-    MVT::ValueType ObjectVT = Op.Val->getValueType(i);
-    unsigned ArgIncrement = 4;
-    unsigned ObjSize = 0;
-    SDOperand ArgValue;
+    SDOperand Op = Args[i];
+    std::vector<SDOperand> Objs = getFormalArgObjects(Op);
+    for (std::vector<SDOperand>::iterator I = Objs.begin(), E = Objs.end();
+         I != E; ++I) {
+      SDOperand Obj = *I;
+      MVT::ValueType ObjectVT = Obj.getValueType();
+      unsigned ArgIncrement = 4;
+      unsigned ObjSize = 0;
+      unsigned NumRegs = 0;
 
-    switch (ObjectVT) {
-    default: assert(0 && "Unhandled argument type!");
-    case MVT::i1:
-    case MVT::i8:
-      if (NumIntRegs < FASTCC_NUM_INT_ARGS_INREGS) {
-        ++NumIntRegs;
-        break;
+      DetermineFastCCFormalArgSizeNumRegs(ObjectVT, ObjSize, NumRegs);
+      if (ObjSize == 8)
+        ArgIncrement = 8;
+
+      unsigned Reg;
+      std::pair<FALocInfo,FALocInfo> Loc = std::make_pair(FALocInfo(),
+                                                          FALocInfo());
+      if (NumRegs) {
+       switch (ObjectVT) {
+       default: assert(0 && "Unhandled argument type!");
+       case MVT::i1:
+       case MVT::i8:
+         Reg = AddLiveIn(MF, NumIntRegs ? X86::DL : X86::AL,
+                         X86::R8RegisterClass);
+         Loc.first.Kind = FALocInfo::LiveInRegLoc;
+         Loc.first.Loc = Reg;
+         Loc.first.Typ = MVT::i8;
+         break;
+       case MVT::i16:
+         Reg = AddLiveIn(MF, NumIntRegs ? X86::DX : X86::AX,
+                         X86::R16RegisterClass);
+         Loc.first.Kind = FALocInfo::LiveInRegLoc;
+         Loc.first.Loc = Reg;
+         Loc.first.Typ = MVT::i16;
+         break;
+       case MVT::i32:
+         Reg = AddLiveIn(MF, NumIntRegs ? X86::EDX : X86::EAX,
+                         X86::R32RegisterClass);
+         Loc.first.Kind = FALocInfo::LiveInRegLoc;
+         Loc.first.Loc = Reg;
+         Loc.first.Typ = MVT::i32;
+         break;
+       case MVT::i64:
+         Reg = AddLiveIn(MF, NumIntRegs ? X86::EDX : X86::EAX,
+                         X86::R32RegisterClass);
+         Loc.first.Kind = FALocInfo::LiveInRegLoc;
+         Loc.first.Loc = Reg;
+         Loc.first.Typ = MVT::i32;
+         if (NumRegs == 2) {
+           Reg = AddLiveIn(MF, X86::EDX, X86::R32RegisterClass);
+           Loc.second.Kind = FALocInfo::LiveInRegLoc;
+           Loc.second.Loc = Reg;
+           Loc.second.Typ = MVT::i32;
+         }
+         break;
+       }
+      }
+      if (ObjSize) {
+        int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
+        if (ObjectVT == MVT::i64 && NumRegs) {
+          Loc.second.Kind = FALocInfo::StackFrameLoc;
+          Loc.second.Loc = FI;
+        } else {
+          Loc.first.Kind = FALocInfo::StackFrameLoc;
+          Loc.first.Loc = FI;
+        }
+        ArgOffset += ArgIncrement;   // Move on to the next argument.
       }
 
-      ObjSize = 1;
-      break;
-    case MVT::i16:
-      if (NumIntRegs < FASTCC_NUM_INT_ARGS_INREGS) {
-        ++NumIntRegs;
-        break;
-      }
-      ObjSize = 2;
-      break;
-    case MVT::i32:
-      if (NumIntRegs < FASTCC_NUM_INT_ARGS_INREGS) {
-        ++NumIntRegs;
-        break;
-      }
-      ObjSize = 4;
-      break;
-    case MVT::i64:
-      if (NumIntRegs+2 <= FASTCC_NUM_INT_ARGS_INREGS) {
-        NumIntRegs += 2;
-        break;
-      } else if (NumIntRegs+1 <= FASTCC_NUM_INT_ARGS_INREGS) {
-        ArgOffset += 4;
-        NumIntRegs = FASTCC_NUM_INT_ARGS_INREGS;
-        break;
-      }
-      ObjSize = ArgIncrement = 8;
-      break;
-    case MVT::f32: ObjSize = 4;                break;
-    case MVT::f64: ObjSize = ArgIncrement = 8; break;
+      FormalArgLocs.push_back(Loc);
     }
-
-    if (ObjSize)
-      ArgOffset += ArgIncrement;   // Move on to the next argument.
   }
 
   // Make sure the instruction takes 8n+4 bytes to make sure the start of the
@@ -815,131 +912,35 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
 
-  // Add DAG nodes to load the arguments...  On entry to a function the stack
-  // frame looks like this:
-  //
-  // [ESP] -- return address
-  // [ESP + 4] -- first nonreg argument (leftmost lexically)
-  // [ESP + 8] -- second nonreg argument, if first argument is 4 bytes in size
-  //    ...
-  unsigned ArgOffset = 0;   // Frame mechanisms handle retaddr slot
-
-  // Keep track of the number of integer regs passed so far.  This can be either
-  // 0 (neither EAX or EDX used), 1 (EAX is used) or 2 (EAX and EDX are both
-  // used).
-  unsigned NumIntRegs = 0;
-  
   for (unsigned i = 0; i < NumArgs; ++i) {
-    MVT::ValueType ObjectVT = Op.Val->getValueType(i);
-    unsigned ArgIncrement = 4;
-    unsigned ObjSize = 0;
+    MVT::ValueType VT = Op.Val->getValueType(i);
+    std::pair<FALocInfo, FALocInfo> Loc = FormalArgLocs[i];
     SDOperand ArgValue;
-    bool hasUse = !Op.Val->hasNUsesOfValue(0, i);
-
-    switch (ObjectVT) {
-    default: assert(0 && "Unhandled argument type!");
-    case MVT::i1:
-    case MVT::i8:
-      if (NumIntRegs < FASTCC_NUM_INT_ARGS_INREGS) {
-        if (hasUse) {
-          unsigned VReg = AddLiveIn(MF, NumIntRegs ? X86::DL : X86::AL,
-                                    X86::R8RegisterClass);
-          ArgValue = DAG.getCopyFromReg(DAG.getRoot(), VReg, MVT::i8);
-          DAG.setRoot(ArgValue.getValue(1));
-          if (ObjectVT == MVT::i1)
-            // FIXME: Should insert a assertzext here.
-            ArgValue = DAG.getNode(ISD::TRUNCATE, MVT::i1, ArgValue);
-        }
-        ++NumIntRegs;
-        break;
-      }
-
-      ObjSize = 1;
-      break;
-    case MVT::i16:
-      if (NumIntRegs < FASTCC_NUM_INT_ARGS_INREGS) {
-        if (hasUse) {
-          unsigned VReg = AddLiveIn(MF, NumIntRegs ? X86::DX : X86::AX,
-                                    X86::R16RegisterClass);
-          ArgValue = DAG.getCopyFromReg(DAG.getRoot(), VReg, MVT::i16);
-          DAG.setRoot(ArgValue.getValue(1));
-        }
-        ++NumIntRegs;
-        break;
-      }
-      ObjSize = 2;
-      break;
-    case MVT::i32:
-      if (NumIntRegs < FASTCC_NUM_INT_ARGS_INREGS) {
-        if (hasUse) {
-          unsigned VReg = AddLiveIn(MF, NumIntRegs ? X86::EDX : X86::EAX,
-                                    X86::R32RegisterClass);
-          ArgValue = DAG.getCopyFromReg(DAG.getRoot(), VReg, MVT::i32);
-          DAG.setRoot(ArgValue.getValue(1));
-        }
-        ++NumIntRegs;
-        break;
-      }
-      ObjSize = 4;
-      break;
-    case MVT::i64:
-      if (NumIntRegs+2 <= FASTCC_NUM_INT_ARGS_INREGS) {
-        if (hasUse) {
-          unsigned BotReg = AddLiveIn(MF, X86::EAX, X86::R32RegisterClass);
-          unsigned TopReg = AddLiveIn(MF, X86::EDX, X86::R32RegisterClass);
-
-          SDOperand Low = DAG.getCopyFromReg(DAG.getRoot(), BotReg, MVT::i32);
-          SDOperand Hi  = DAG.getCopyFromReg(Low.getValue(1), TopReg, MVT::i32);
-          DAG.setRoot(Hi.getValue(1));
-
-          ArgValue = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Low, Hi);
-        }
-        NumIntRegs += 2;
-        break;
-      } else if (NumIntRegs+1 <= FASTCC_NUM_INT_ARGS_INREGS) {
-        if (hasUse) {
-          unsigned BotReg = AddLiveIn(MF, X86::EDX, X86::R32RegisterClass);
-          SDOperand Low = DAG.getCopyFromReg(DAG.getRoot(), BotReg, MVT::i32);
-          DAG.setRoot(Low.getValue(1));
-
-          // Load the high part from memory.
-          // Create the frame index object for this incoming parameter...
-          int FI = MFI->CreateFixedObject(4, ArgOffset);
-          SDOperand FIN = DAG.getFrameIndex(FI, MVT::i32);
-          SDOperand Hi = DAG.getLoad(MVT::i32, DAG.getEntryNode(), FIN,
-                                     DAG.getSrcValue(NULL));
-          ArgValue = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Low, Hi);
-        }
-        ArgOffset += 4;
-        NumIntRegs = FASTCC_NUM_INT_ARGS_INREGS;
-        break;
-      }
-      ObjSize = ArgIncrement = 8;
-      break;
-    case MVT::f32: ObjSize = 4;                break;
-    case MVT::f64: ObjSize = ArgIncrement = 8; break;
+    if (Loc.first.Kind == FALocInfo::StackFrameLoc) {
+      // Create the SelectionDAG nodes corresponding to a load from this parameter
+      SDOperand FIN = DAG.getFrameIndex(Loc.first.Loc, MVT::i32);
+      ArgValue = DAG.getLoad(Op.Val->getValueType(i),DAG.getEntryNode(), FIN,
+                             DAG.getSrcValue(NULL));
+    } else {
+      // Must be a CopyFromReg
+      ArgValue= DAG.getCopyFromReg(DAG.getRoot(), Loc.first.Loc, Loc.first.Typ);
     }
 
-    if (ObjSize) {
-      // Create the frame index object for this incoming parameter...
-      int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
-
-      // Create the SelectionDAG nodes corresponding to a load from this
-      // parameter.
-      SDOperand FIN = DAG.getFrameIndex(FI, MVT::i32);
-
-      ArgValue = DAG.getLoad(ObjectVT, DAG.getEntryNode(), FIN,
-                             DAG.getSrcValue(NULL));
-    } else if (ArgValue.Val == 0) {
-      if (MVT::isInteger(ObjectVT))
-        ArgValue = DAG.getConstant(0, ObjectVT);
-      else
-        ArgValue = DAG.getConstantFP(0, ObjectVT);
+    if (Loc.second.Kind != FALocInfo::None) {
+      SDOperand ArgValue2;
+      if (Loc.second.Kind == FALocInfo::StackFrameLoc) {
+        // Create the SelectionDAG nodes corresponding to a load from this parameter
+        SDOperand FIN = DAG.getFrameIndex(Loc.second.Loc, MVT::i32);
+        ArgValue2 = DAG.getLoad(Op.Val->getValueType(i),DAG.getEntryNode(), FIN,
+                                DAG.getSrcValue(NULL));
+      } else {
+        // Must be a CopyFromReg
+        ArgValue2 = DAG.getCopyFromReg(DAG.getRoot(),
+                                       Loc.second.Loc, Loc.second.Typ);
+      }
+      ArgValue = DAG.getNode(ISD::BUILD_PAIR, VT, ArgValue, ArgValue2);
     }
     FormalArgs.push_back(ArgValue);
-
-    if (ObjSize)
-      ArgOffset += ArgIncrement;   // Move on to the next argument.
   }
 }
 
