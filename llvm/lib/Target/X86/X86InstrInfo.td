@@ -75,6 +75,9 @@ def X86callseq_end :
 def X86call    : SDNode<"X86ISD::CALL",     SDT_X86Call,
                         [SDNPHasChain, SDNPOutFlag, SDNPOptInFlag]>;
 
+def X86tailcall    : SDNode<"X86ISD::TAILCALL",     SDT_X86Call,
+                        [SDNPHasChain, SDNPOutFlag, SDNPOptInFlag]>;
+
 def X86rep_stos: SDNode<"X86ISD::REP_STOS", SDTX86RepStr,
                         [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
 def X86rep_movs: SDNode<"X86ISD::REP_MOVS", SDTX86RepStr,
@@ -2329,6 +2332,19 @@ def : Pat<(store (X86Wrapper texternalsym:$src), addr:$dst),
           (MOV32mi addr:$dst, texternalsym:$src)>;
 
 // Calls
+def : Pat<(X86tailcall R32:$dst),
+      (CALL32r     R32:$dst)>;
+
+def : Pat<(X86tailcall (loadi32 addr:$dst)),
+      (CALL32m addr:$dst)>;
+
+def : Pat<(X86tailcall tglobaladdr:$dst),
+          (CALLpcrel32 tglobaladdr:$dst)>;
+def : Pat<(X86tailcall texternalsym:$dst),
+          (CALLpcrel32 texternalsym:$dst)>;
+
+
+
 def : Pat<(X86call tglobaladdr:$dst),
           (CALLpcrel32 tglobaladdr:$dst)>;
 def : Pat<(X86call texternalsym:$dst),

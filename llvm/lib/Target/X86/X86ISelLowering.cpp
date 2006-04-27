@@ -1203,7 +1203,7 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
     Ops.push_back(InFlag);
 
   // FIXME: Do not generate X86ISD::TAILCALL for now.
-  Chain = DAG.getNode(X86ISD::CALL, NodeTys, Ops);
+  Chain = DAG.getNode(isTailCall ? X86ISD::TAILCALL : X86ISD::CALL, NodeTys, Ops);
   InFlag = Chain.getValue(1);
 
   NodeTys.clear();
