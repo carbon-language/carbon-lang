@@ -6959,12 +6959,23 @@ static bool CollectSingleShuffleElements(Value *V, Value *LHS, Value *RHS,
     Value *ScalarOp = IEI->getOperand(1);
     Value *IdxOp    = IEI->getOperand(2);
     
-    if (ExtractElementInst *EI = dyn_cast<ExtractElementInst>(ScalarOp)) {
-      if (isa<ConstantInt>(EI->getOperand(1)) && isa<ConstantInt>(IdxOp) &&
+    if (!isa<ConstantInt>(IdxOp))
+      return false;
+    unsigned InsertedIdx = cast<ConstantInt>(IdxOp)->getRawValue();
+    
+    if (isa<UndefValue>(ScalarOp)) {  // inserting undef into vector.
+      // Okay, we can handle this if the vector we are insertinting into is
+      // transitively ok.
+      if (CollectSingleShuffleElements(VecOp, LHS, RHS, Mask)) {
+        // If so, update the mask to reflect the inserted undef.
+        Mask[InsertedIdx] = UndefValue::get(Type::UIntTy);
+        return true;
+      }      
+    } else if (ExtractElementInst *EI = dyn_cast<ExtractElementInst>(ScalarOp)){
+      if (isa<ConstantInt>(EI->getOperand(1)) &&
           EI->getOperand(0)->getType() == V->getType()) {
         unsigned ExtractedIdx =
           cast<ConstantInt>(EI->getOperand(1))->getRawValue();
-        unsigned InsertedIdx = cast<ConstantInt>(IdxOp)->getRawValue();
         
         // This must be extracting from either LHS or RHS.
         if (EI->getOperand(0) == LHS || EI->getOperand(0) == RHS) {
