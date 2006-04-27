@@ -825,7 +825,6 @@ X86TargetLowering::PreprocessFastCCArguments(std::vector<SDOperand>Args,
       std::pair<FALocInfo,FALocInfo> Loc = std::make_pair(FALocInfo(),
                                                           FALocInfo());
       if (ObjIntRegs) {
-        NumIntRegs += ObjIntRegs;
         switch (ObjectVT) {
         default: assert(0 && "Unhandled argument type!");
         case MVT::i1:
@@ -864,6 +863,7 @@ X86TargetLowering::PreprocessFastCCArguments(std::vector<SDOperand>Args,
           }
           break;
         }
+        NumIntRegs += ObjIntRegs;
       }
       if (ObjSize) {
         int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
