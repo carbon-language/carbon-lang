@@ -232,7 +232,22 @@ ISD::CondCode ISD::getSetCCAndOperation(ISD::CondCode Op1, ISD::CondCode Op2,
     return ISD::SETCC_INVALID;
 
   // Combine all of the condition bits.
-  return ISD::CondCode(Op1 & Op2);
+  ISD::CondCode Result = ISD::CondCode(Op1 & Op2);
+  
+  // Canonicalize illegal integer setcc's.
+  if (isInteger) {
+    switch (Result) {
+    default: break;
+    case ISD::SETUO:   // e.g. SETUGT & SETULT
+      Result = ISD::SETFALSE;
+      break;
+    case ISD::SETUEQ:  // e.g. SETUGE & SETULE
+      Result = ISD::SETEQ;
+      break;
+    }
+  }
+  
+  return Result;
 }
 
 const TargetMachine &SelectionDAG::getTarget() const {
@@ -849,6 +864,19 @@ SDOperand SelectionDAG::SimplifySetCC(MVT::ValueType VT, SDOperand N1,
   case ISD::SETFALSE2: return getConstant(0, VT);
   case ISD::SETTRUE:
   case ISD::SETTRUE2:  return getConstant(1, VT);
+    
+  case ISD::SETOEQ:
+  case ISD::SETOGT:
+  case ISD::SETOGE:
+  case ISD::SETOLT:
+  case ISD::SETOLE:
+  case ISD::SETONE:
+  case ISD::SETO:
+  case ISD::SETUO:
+  case ISD::SETUEQ:
+  case ISD::SETUNE:
+    assert(!MVT::isInteger(N1.getValueType()) && "Illegal setcc for integer!");
+    break;
   }
 
   if (ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.Val)) {
