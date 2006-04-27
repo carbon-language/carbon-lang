@@ -402,6 +402,19 @@ X86TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
 //                    C Calling Convention implementation
 //===----------------------------------------------------------------------===//
 
+/// AddLiveIn - This helper function adds the specified physical register to the
+/// MachineFunction as a live in value.  It also creates a corresponding virtual
+/// register for it.
+static unsigned AddLiveIn(MachineFunction &MF, unsigned PReg,
+                          TargetRegisterClass *RC) {
+  assert(RC->contains(PReg) && "Not the correct regclass!");
+  unsigned VReg = MF.getSSARegMap()->createVirtualRegister(RC);
+  MF.addLiveIn(PReg, VReg);
+  return VReg;
+}
+
+/// getFormalArgSize - Return the minimum size of the stack frame needed to store
+/// an object of the specified type.
 static unsigned getFormalArgSize(MVT::ValueType ObjectVT) {
   unsigned ObjSize = 0;
   switch (ObjectVT) {
@@ -417,6 +430,8 @@ static unsigned getFormalArgSize(MVT::ValueType ObjectVT) {
   return ObjSize;
 }
 
+/// getFormalArgObjects - Returns itself if Op is a FORMAL_ARGUMENTS, otherwise
+/// returns the FORMAL_ARGUMENTS node(s) that made up parts of the node.
 static std::vector<SDOperand> getFormalArgObjects(SDOperand Op) {
   unsigned Opc = Op.getOpcode();
   std::vector<SDOperand> Objs;
@@ -706,17 +721,6 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
 // (when we have a global fp allocator) and do other tricks.
 //
 
-/// AddLiveIn - This helper function adds the specified physical register to the
-/// MachineFunction as a live in value.  It also creates a corresponding virtual
-/// register for it.
-static unsigned AddLiveIn(MachineFunction &MF, unsigned PReg,
-                          TargetRegisterClass *RC) {
-  assert(RC->contains(PReg) && "Not the correct regclass!");
-  unsigned VReg = MF.getSSARegMap()->createVirtualRegister(RC);
-  MF.addLiveIn(PReg, VReg);
-  return VReg;
-}
-
 // FASTCC_NUM_INT_ARGS_INREGS - This is the max number of integer arguments
 // to pass in registers.  0 is none, 1 is is "use EAX", 2 is "use EAX and
 // EDX".  Anything more is illegal.
@@ -738,8 +742,8 @@ static unsigned FASTCC_NUM_INT_ARGS_INREGS = 0;
 
 
 static void
-DetermineFastCCFormalArgSizeNumRegs(MVT::ValueType ObjectVT,
-                                    unsigned &ObjSize, unsigned &NumIntRegs) {
+HowToPassFastCCArgument(MVT::ValueType ObjectVT, unsigned NumIntRegs,
+                        unsigned &ObjSize, unsigned &ObjIntRegs) {
   ObjSize = 0;
   NumIntRegs = 0;
 
@@ -748,27 +752,27 @@ DetermineFastCCFormalArgSizeNumRegs(MVT::ValueType ObjectVT,
   case MVT::i1:
   case MVT::i8:
     if (NumIntRegs < FASTCC_NUM_INT_ARGS_INREGS)
-      NumIntRegs = 1;
+      ObjIntRegs = 1;
     else
       ObjSize = 1;
     break;
   case MVT::i16:
     if (NumIntRegs < FASTCC_NUM_INT_ARGS_INREGS)
-      NumIntRegs = 1;
+      ObjIntRegs = 1;
     else
       ObjSize = 2;
     break;
   case MVT::i32:
     if (NumIntRegs < FASTCC_NUM_INT_ARGS_INREGS)
-      NumIntRegs = 1;
+      ObjIntRegs = 1;
     else
       ObjSize = 4;
     break;
   case MVT::i64:
     if (NumIntRegs+2 <= FASTCC_NUM_INT_ARGS_INREGS) {
-      NumIntRegs = 2;
+      ObjIntRegs = 2;
     } else if (NumIntRegs+1 <= FASTCC_NUM_INT_ARGS_INREGS) {
-      NumIntRegs = 1;
+      ObjIntRegs = 1;
       ObjSize = 4;
     } else
       ObjSize = 8;
@@ -811,58 +815,59 @@ X86TargetLowering::PreprocessFastCCArguments(std::vector<SDOperand>Args,
       MVT::ValueType ObjectVT = Obj.getValueType();
       unsigned ArgIncrement = 4;
       unsigned ObjSize = 0;
-      unsigned NumRegs = 0;
+      unsigned ObjIntRegs = 0;
 
-      DetermineFastCCFormalArgSizeNumRegs(ObjectVT, ObjSize, NumRegs);
+      HowToPassFastCCArgument(ObjectVT, NumIntRegs, ObjSize, ObjIntRegs);
       if (ObjSize == 8)
         ArgIncrement = 8;
 
       unsigned Reg;
       std::pair<FALocInfo,FALocInfo> Loc = std::make_pair(FALocInfo(),
                                                           FALocInfo());
-      if (NumRegs) {
-       switch (ObjectVT) {
-       default: assert(0 && "Unhandled argument type!");
-       case MVT::i1:
-       case MVT::i8:
-         Reg = AddLiveIn(MF, NumIntRegs ? X86::DL : X86::AL,
-                         X86::R8RegisterClass);
-         Loc.first.Kind = FALocInfo::LiveInRegLoc;
-         Loc.first.Loc = Reg;
-         Loc.first.Typ = MVT::i8;
-         break;
-       case MVT::i16:
-         Reg = AddLiveIn(MF, NumIntRegs ? X86::DX : X86::AX,
-                         X86::R16RegisterClass);
-         Loc.first.Kind = FALocInfo::LiveInRegLoc;
-         Loc.first.Loc = Reg;
-         Loc.first.Typ = MVT::i16;
-         break;
-       case MVT::i32:
-         Reg = AddLiveIn(MF, NumIntRegs ? X86::EDX : X86::EAX,
-                         X86::R32RegisterClass);
-         Loc.first.Kind = FALocInfo::LiveInRegLoc;
-         Loc.first.Loc = Reg;
-         Loc.first.Typ = MVT::i32;
-         break;
-       case MVT::i64:
-         Reg = AddLiveIn(MF, NumIntRegs ? X86::EDX : X86::EAX,
-                         X86::R32RegisterClass);
-         Loc.first.Kind = FALocInfo::LiveInRegLoc;
-         Loc.first.Loc = Reg;
-         Loc.first.Typ = MVT::i32;
-         if (NumRegs == 2) {
-           Reg = AddLiveIn(MF, X86::EDX, X86::R32RegisterClass);
-           Loc.second.Kind = FALocInfo::LiveInRegLoc;
-           Loc.second.Loc = Reg;
-           Loc.second.Typ = MVT::i32;
-         }
-         break;
-       }
+      if (ObjIntRegs) {
+        NumIntRegs += ObjIntRegs;
+        switch (ObjectVT) {
+        default: assert(0 && "Unhandled argument type!");
+        case MVT::i1:
+        case MVT::i8:
+          Reg = AddLiveIn(MF, NumIntRegs ? X86::DL : X86::AL,
+                          X86::R8RegisterClass);
+          Loc.first.Kind = FALocInfo::LiveInRegLoc;
+          Loc.first.Loc = Reg;
+          Loc.first.Typ = MVT::i8;
+          break;
+        case MVT::i16:
+          Reg = AddLiveIn(MF, NumIntRegs ? X86::DX : X86::AX,
+                          X86::R16RegisterClass);
+          Loc.first.Kind = FALocInfo::LiveInRegLoc;
+          Loc.first.Loc = Reg;
+          Loc.first.Typ = MVT::i16;
+          break;
+        case MVT::i32:
+          Reg = AddLiveIn(MF, NumIntRegs ? X86::EDX : X86::EAX,
+                          X86::R32RegisterClass);
+          Loc.first.Kind = FALocInfo::LiveInRegLoc;
+          Loc.first.Loc = Reg;
+          Loc.first.Typ = MVT::i32;
+          break;
+        case MVT::i64:
+          Reg = AddLiveIn(MF, NumIntRegs ? X86::EDX : X86::EAX,
+                          X86::R32RegisterClass);
+          Loc.first.Kind = FALocInfo::LiveInRegLoc;
+          Loc.first.Loc = Reg;
+          Loc.first.Typ = MVT::i32;
+          if (ObjIntRegs == 2) {
+            Reg = AddLiveIn(MF, X86::EDX, X86::R32RegisterClass);
+            Loc.second.Kind = FALocInfo::LiveInRegLoc;
+            Loc.second.Loc = Reg;
+            Loc.second.Typ = MVT::i32;
+          }
+          break;
+        }
       }
       if (ObjSize) {
         int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
-        if (ObjectVT == MVT::i64 && NumRegs) {
+        if (ObjectVT == MVT::i64 && ObjIntRegs) {
           Loc.second.Kind = FALocInfo::StackFrameLoc;
           Loc.second.Loc = FI;
         } else {
