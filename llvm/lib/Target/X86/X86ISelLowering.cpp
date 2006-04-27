@@ -413,10 +413,13 @@ static unsigned AddLiveIn(MachineFunction &MF, unsigned PReg,
   return VReg;
 }
 
-/// getFormalArgSize - Return the minimum size of the stack frame needed to store
-/// an object of the specified type.
-static unsigned getFormalArgSize(MVT::ValueType ObjectVT) {
-  unsigned ObjSize = 0;
+/// HowToPassCCCArgument - Returns how an formal argument of the specified type
+/// should be passed. If it is through stack, returns the size of the stack
+/// frame; if it is through XMM register, returns the number of XMM registers
+/// are needed.
+static void
+HowToPassCCCArgument(MVT::ValueType ObjectVT, unsigned NumXMMRegs,
+                     unsigned &ObjSize, unsigned &ObjXMMRegs) {
   switch (ObjectVT) {
   default: assert(0 && "Unhandled argument type!");
   case MVT::i1:
@@ -426,8 +429,18 @@ static unsigned getFormalArgSize(MVT::ValueType ObjectVT) {
   case MVT::i64: ObjSize = 8; break;
   case MVT::f32: ObjSize = 4; break;
   case MVT::f64: ObjSize = 8; break;
+  case MVT::v16i8:
+  case MVT::v8i16:
+  case MVT::v4i32:
+  case MVT::v2i64:
+  case MVT::v4f32:
+  case MVT::v2f64:
+    if (NumXMMRegs < 3)
+      ObjXMMRegs = 1;
+    else
+      ObjSize = 16;
+    break;
   }
-  return ObjSize;
 }
 
 /// getFormalArgObjects - Returns itself if Op is a FORMAL_ARGUMENTS, otherwise
@@ -466,6 +479,8 @@ void X86TargetLowering::PreprocessCCCArguments(std::vector<SDOperand>Args,
   //    ...
   //
   unsigned ArgOffset = 0;   // Frame mechanisms handle retaddr slot
+  unsigned NumXMMRegs = 0;  // XMM regs used for parameter passing.
+  unsigned XMMArgRegs[] = { X86::XMM0, X86::XMM1, X86::XMM2 };
   for (unsigned i = 0; i < NumArgs; ++i) {
     SDOperand Op = Args[i];
     std::vector<SDOperand> Objs = getFormalArgObjects(Op);
@@ -474,16 +489,29 @@ void X86TargetLowering::PreprocessCCCArguments(std::vector<SDOperand>Args,
       SDOperand Obj = *I;
       MVT::ValueType ObjectVT = Obj.getValueType();
       unsigned ArgIncrement = 4;
-      unsigned ObjSize = getFormalArgSize(ObjectVT);
-      if (ObjSize == 8)
-        ArgIncrement = 8;
+      unsigned ObjSize = 0;
+      unsigned ObjXMMRegs = 0;
+      HowToPassCCCArgument(ObjectVT, NumXMMRegs, ObjSize, ObjXMMRegs);
+      if (ObjSize >= 8)
+        ArgIncrement = ObjSize;
 
-      // Create the frame index object for this incoming parameter...
-      int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
-      std::pair<FALocInfo, FALocInfo> Loc =
-        std::make_pair(FALocInfo(FALocInfo::StackFrameLoc, FI), FALocInfo());
-      FormalArgLocs.push_back(Loc);
-      ArgOffset += ArgIncrement;   // Move on to the next argument...
+      if (ObjXMMRegs) {
+        // Passed in a XMM register.
+        unsigned Reg = AddLiveIn(MF, XMMArgRegs[NumXMMRegs],
+                                 X86::VR128RegisterClass);
+        std::pair<FALocInfo, FALocInfo> Loc =
+          std::make_pair(FALocInfo(FALocInfo::LiveInRegLoc, Reg, ObjectVT),
+                         FALocInfo());
+        FormalArgLocs.push_back(Loc);
+        NumXMMRegs += ObjXMMRegs;
+      } else {
+        // Create the frame index object for this incoming parameter...
+        int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
+        std::pair<FALocInfo, FALocInfo> Loc =
+          std::make_pair(FALocInfo(FALocInfo::StackFrameLoc, FI), FALocInfo());
+        FormalArgLocs.push_back(Loc);
+        ArgOffset += ArgIncrement;   // Move on to the next argument...
+      }
     }
   }
 
@@ -502,11 +530,19 @@ void X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG) {
   MachineFrameInfo *MFI = MF.getFrameInfo();
 
   for (unsigned i = 0; i < NumArgs; ++i) {
-    // Create the SelectionDAG nodes corresponding to a load from this parameter
-    unsigned FI = FormalArgLocs[i].first.Loc;
-    SDOperand FIN = DAG.getFrameIndex(FI, MVT::i32);
-    SDOperand ArgValue = DAG.getLoad(Op.Val->getValueType(i),DAG.getEntryNode(),
-                                     FIN, DAG.getSrcValue(NULL));
+    std::pair<FALocInfo, FALocInfo> Loc = FormalArgLocs[i];
+    SDOperand ArgValue;
+    if (Loc.first.Kind == FALocInfo::StackFrameLoc) {
+      // Create the SelectionDAG nodes corresponding to a load from this parameter
+      unsigned FI = FormalArgLocs[i].first.Loc;
+      SDOperand FIN = DAG.getFrameIndex(FI, MVT::i32);
+      ArgValue = DAG.getLoad(Op.Val->getValueType(i),
+                             DAG.getEntryNode(), FIN, DAG.getSrcValue(NULL));
+    } else {
+      // Must be a CopyFromReg
+      ArgValue= DAG.getCopyFromReg(DAG.getEntryNode(), Loc.first.Loc,
+                                   Loc.first.Typ);
+    }
     FormalArgs.push_back(ArgValue);
   }
 }
@@ -741,9 +777,15 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
 static unsigned FASTCC_NUM_INT_ARGS_INREGS = 0;
 
 
+/// HowToPassFastCCArgument - Returns how an formal argument of the specified
+/// type should be passed. If it is through stack, returns the size of the stack
+/// frame; if it is through integer or XMM register, returns the number of
+/// integer or XMM registers are needed.
 static void
-HowToPassFastCCArgument(MVT::ValueType ObjectVT, unsigned NumIntRegs,
-                        unsigned &ObjSize, unsigned &ObjIntRegs) {
+HowToPassFastCCArgument(MVT::ValueType ObjectVT,
+                        unsigned NumIntRegs, unsigned NumXMMRegs,
+                        unsigned &ObjSize, unsigned &ObjIntRegs,
+                        unsigned &ObjXMMRegs) {
   ObjSize = 0;
   NumIntRegs = 0;
 
@@ -782,6 +824,17 @@ HowToPassFastCCArgument(MVT::ValueType ObjectVT, unsigned NumIntRegs,
   case MVT::f64:
     ObjSize = 8;
     break;
+  case MVT::v16i8:
+  case MVT::v8i16:
+  case MVT::v4i32:
+  case MVT::v2i64:
+  case MVT::v4f32:
+  case MVT::v2f64:
+    if (NumXMMRegs < 3)
+      ObjXMMRegs = 1;
+    else
+      ObjSize = 16;
+    break;
   }
 }
 
@@ -805,6 +858,8 @@ X86TargetLowering::PreprocessFastCCArguments(std::vector<SDOperand>Args,
   // 0 (neither EAX or EDX used), 1 (EAX is used) or 2 (EAX and EDX are both
   // used).
   unsigned NumIntRegs = 0;
+  unsigned NumXMMRegs = 0;  // XMM regs used for parameter passing.
+  unsigned XMMArgRegs[] = { X86::XMM0, X86::XMM1, X86::XMM2 };
   
   for (unsigned i = 0; i < NumArgs; ++i) {
     SDOperand Op = Args[i];
@@ -816,10 +871,12 @@ X86TargetLowering::PreprocessFastCCArguments(std::vector<SDOperand>Args,
       unsigned ArgIncrement = 4;
       unsigned ObjSize = 0;
       unsigned ObjIntRegs = 0;
+      unsigned ObjXMMRegs = 0;
 
-      HowToPassFastCCArgument(ObjectVT, NumIntRegs, ObjSize, ObjIntRegs);
-      if (ObjSize == 8)
-        ArgIncrement = 8;
+      HowToPassFastCCArgument(ObjectVT, NumIntRegs, NumXMMRegs,
+                              ObjSize, ObjIntRegs, ObjXMMRegs);
+      if (ObjSize >= 8)
+        ArgIncrement = ObjSize;
 
       unsigned Reg;
       std::pair<FALocInfo,FALocInfo> Loc = std::make_pair(FALocInfo(),
@@ -862,8 +919,20 @@ X86TargetLowering::PreprocessFastCCArguments(std::vector<SDOperand>Args,
             Loc.second.Typ = MVT::i32;
           }
           break;
+        case MVT::v16i8:
+        case MVT::v8i16:
+        case MVT::v4i32:
+        case MVT::v2i64:
+        case MVT::v4f32:
+        case MVT::v2f64:
+          Reg = AddLiveIn(MF, XMMArgRegs[NumXMMRegs], X86::VR128RegisterClass);
+          Loc.first.Kind = FALocInfo::LiveInRegLoc;
+          Loc.first.Loc = Reg;
+          Loc.first.Typ = ObjectVT;
+          break;
         }
         NumIntRegs += ObjIntRegs;
+        NumXMMRegs += ObjXMMRegs;
       }
       if (ObjSize) {
         int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
@@ -928,7 +997,8 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
                              DAG.getSrcValue(NULL));
     } else {
       // Must be a CopyFromReg
-      ArgValue= DAG.getCopyFromReg(DAG.getRoot(), Loc.first.Loc, Loc.first.Typ);
+      ArgValue= DAG.getCopyFromReg(DAG.getEntryNode(), Loc.first.Loc,
+                                   Loc.first.Typ);
     }
 
     if (Loc.second.Kind != FALocInfo::None) {
@@ -940,7 +1010,7 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
                                 DAG.getSrcValue(NULL));
       } else {
         // Must be a CopyFromReg
-        ArgValue2 = DAG.getCopyFromReg(DAG.getRoot(),
+        ArgValue2 = DAG.getCopyFromReg(DAG.getEntryNode(),
                                        Loc.second.Loc, Loc.second.Typ);
       }
       ArgValue = DAG.getNode(ISD::BUILD_PAIR, VT, ArgValue, ArgValue2);
