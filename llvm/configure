@@ -5400,7 +5400,7 @@ do
 done
 done
 
-  test -z "$ac_cv_path_BZIP2" && ac_cv_path_BZIP2="true bzip2"
+  test -z "$ac_cv_path_BZIP2" && ac_cv_path_BZIP2="echo "Skipped: bzip2 not found""
   ;;
 esac
 fi
@@ -5440,7 +5440,7 @@ do
 done
 done
 
-  test -z "$ac_cv_path_DOT" && ac_cv_path_DOT="true dot"
+  test -z "$ac_cv_path_DOT" && ac_cv_path_DOT="echo "Skipped: dot not found""
   ;;
 esac
 fi
@@ -5480,7 +5480,7 @@ do
 done
 done
 
-  test -z "$ac_cv_path_DOXYGEN" && ac_cv_path_DOXYGEN="true doxygen"
+  test -z "$ac_cv_path_DOXYGEN" && ac_cv_path_DOXYGEN="echo "Skipped: doxygen not found""
   ;;
 esac
 fi
@@ -5520,7 +5520,7 @@ do
 done
 done
 
-  test -z "$ac_cv_path_ETAGS" && ac_cv_path_ETAGS="true etags"
+  test -z "$ac_cv_path_ETAGS" && ac_cv_path_ETAGS="echo "Skipped: etags not found""
   ;;
 esac
 fi
@@ -5560,7 +5560,7 @@ do
 done
 done
 
-  test -z "$ac_cv_path_GROFF" && ac_cv_path_GROFF="true groff"
+  test -z "$ac_cv_path_GROFF" && ac_cv_path_GROFF="echo "Skipped: groff not found""
   ;;
 esac
 fi
@@ -5600,7 +5600,7 @@ do
 done
 done
 
-  test -z "$ac_cv_path_GZIP" && ac_cv_path_GZIP="true gzip"
+  test -z "$ac_cv_path_GZIP" && ac_cv_path_GZIP="echo "Skipped: gzip not found""
   ;;
 esac
 fi
@@ -5640,7 +5640,7 @@ do
 done
 done
 
-  test -z "$ac_cv_path_POD2HTML" && ac_cv_path_POD2HTML="true pod2html"
+  test -z "$ac_cv_path_POD2HTML" && ac_cv_path_POD2HTML="echo "Skipped: pod2html not found""
   ;;
 esac
 fi
@@ -5680,7 +5680,7 @@ do
 done
 done
 
-  test -z "$ac_cv_path_POD2MAN" && ac_cv_path_POD2MAN="true pod2man"
+  test -z "$ac_cv_path_POD2MAN" && ac_cv_path_POD2MAN="echo "Skipped: pod2man not found""
   ;;
 esac
 fi
@@ -5720,7 +5720,7 @@ do
 done
 done
 
-  test -z "$ac_cv_path_RUNTEST" && ac_cv_path_RUNTEST="true runtest"
+  test -z "$ac_cv_path_RUNTEST" && ac_cv_path_RUNTEST="echo "Skipped: runtest not found""
   ;;
 esac
 fi
@@ -5849,7 +5849,7 @@ do
 done
 done
 
-  test -z "$ac_cv_path_ZIP" && ac_cv_path_ZIP="true zip"
+  test -z "$ac_cv_path_ZIP" && ac_cv_path_ZIP="echo "Skipped: zip not found""
   ;;
 esac
 fi

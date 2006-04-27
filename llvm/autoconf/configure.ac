@@ -381,17 +381,17 @@ dnl Checks for documentation and testing tools that we can do without. If these
 dnl are not found then they are set to "true" which always succeeds but does
 dnl nothing. This just lets the build output show that we could have done 
 dnl something if the tool was available. 
-AC_PATH_PROG(BZIP2,[bzip2],[true bzip2])
-AC_PATH_PROG(DOT,[dot],[true dot])
-AC_PATH_PROG(DOXYGEN,[doxygen],[true doxygen])
-AC_PATH_PROG(ETAGS,[etags],[true etags])
-AC_PATH_PROG(GROFF,[groff],[true groff])
-AC_PATH_PROG(GZIP,[gzip],[true gzip])
-AC_PATH_PROG(POD2HTML,[pod2html],[true pod2html])
-AC_PATH_PROG(POD2MAN,[pod2man],[true pod2man])
-AC_PATH_PROG(RUNTEST,[runtest],[true runtest])
+AC_PATH_PROG(BZIP2,[bzip2],[echo "Skipped: bzip2 not found"])
+AC_PATH_PROG(DOT,[dot],[echo "Skipped: dot not found"])
+AC_PATH_PROG(DOXYGEN,[doxygen],[echo "Skipped: doxygen not found"])
+AC_PATH_PROG(ETAGS,[etags],[echo "Skipped: etags not found"])
+AC_PATH_PROG(GROFF,[groff],[echo "Skipped: groff not found"])
+AC_PATH_PROG(GZIP,[gzip],[echo "Skipped: gzip not found"])
+AC_PATH_PROG(POD2HTML,[pod2html],[echo "Skipped: pod2html not found"])
+AC_PATH_PROG(POD2MAN,[pod2man],[echo "Skipped: pod2man not found"])
+AC_PATH_PROG(RUNTEST,[runtest],[echo "Skipped: runtest not found"])
 DJ_AC_PATH_TCLSH
-AC_PATH_PROG(ZIP,[zip],[true zip])
+AC_PATH_PROG(ZIP,[zip],[echo "Skipped: zip not found"])
 
 dnl Determine if the linker supports the -R option.
 AC_LINK_USE_R
