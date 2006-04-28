@@ -112,6 +112,10 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   // PowerPC does not have truncstore for i1.
   setOperationAction(ISD::TRUNCSTORE, MVT::i1, Promote);
 
+  // We cannot sextinreg(i1).  Expand to shifts.
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
+  
+  
   // Support label based line numbers.
   setOperationAction(ISD::LOCATION, MVT::Other, Expand);
   setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
