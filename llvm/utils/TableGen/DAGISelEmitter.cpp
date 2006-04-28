@@ -2022,6 +2022,8 @@ private:
   // Names of all the folded nodes which produce chains.
   std::vector<std::pair<std::string, unsigned> > FoldedChains;
   std::set<std::string> Duplicates;
+  /// These nodes are being marked "in-flight" so they cannot be folded.
+  std::vector<std::string> InflightNodes;
 
   /// GeneratedCode - This is the buffer that we emit code to.  The first bool
   /// indicates whether this is an exit predicate (something that should be
@@ -2128,6 +2130,9 @@ public:
         OpNo = 1;
       if (!isRoot) {
         const SDNodeInfo &CInfo = ISE.getSDNodeInfo(N->getOperator());
+        // Not in flight?
+        emitCheck("(FoldNodeInFlight || InFlightSet.count("
+                  + RootName + ".Val) == 0)");
         // Multiple uses of actual result?
         emitCheck(RootName + ".hasOneUse()");
         EmittedUseCheck = true;
@@ -2381,6 +2386,10 @@ public:
           Code += ", Tmp" + utostr(i + ResNo);
         emitCheck(Code + ")");
 
+        for (unsigned i = 0; i < NumRes; ++i) {
+          emitCode("InFlightSet.insert(Tmp" + utostr(i+ResNo) + ".Val);");
+          InflightNodes.push_back("Tmp" + utostr(i+ResNo));
+        }
         for (unsigned i = 0; i < NumRes; ++i)
           emitCode("Select(Tmp" + utostr(i+ResNo) + ", Tmp" +
                    utostr(i+ResNo) + ");");
@@ -2392,8 +2401,9 @@ public:
         // node even if it isn't one. Don't select it.
         if (LikeLeaf)
           emitCode("Tmp" + utostr(ResNo) + " = " + Val + ";");
-        else
+        else {
           emitCode("Select(Tmp" + utostr(ResNo) + ", " + Val + ");");
+        }
 
         if (isRoot && N->isLeaf()) {
           emitCode("Result = Tmp" + utostr(ResNo) + ";");
@@ -2477,8 +2487,23 @@ public:
         }
       }
 
-      // Emit all of the operands.
+      // Make sure these operands which would be selected won't be folded while
+      // the isel traverses the DAG upward.
       std::vector<std::pair<unsigned, unsigned> > NumTemps(EmitOrder.size());
+      for (unsigned i = 0, e = EmitOrder.size(); i != e; ++i) {
+        TreePatternNode *Child = EmitOrder[i].second;
+        if (!Child->getName().empty()) {
+          std::string &Val = VariableMap[Child->getName()];
+          assert(!Val.empty() &&
+                 "Variable referenced but not defined and not caught earlier!");
+          if (Child->isLeaf() && !NodeGetComplexPattern(Child, ISE)) {
+            emitCode("InFlightSet.insert(" + Val + ".Val);");
+            InflightNodes.push_back(Val);
+          }
+        }
+      }
+
+      // Emit all of the operands.
       for (unsigned i = 0, e = EmitOrder.size(); i != e; ++i) {
         unsigned OpOrder       = EmitOrder[i].first;
         TreePatternNode *Child = EmitOrder[i].second;
@@ -2500,6 +2525,10 @@ public:
       if (HasInFlag || HasOptInFlag || HasImpInputs)
         EmitInFlagSelectCode(Pattern, "N", ChainEmitted, true);
 
+      // The operands have been selected. Remove them from InFlightSet.
+      for (std::vector<std::string>::iterator AI = InflightNodes.begin(),
+             AE = InflightNodes.end(); AI != AE; ++AI)
+        emitCode("InFlightSet.erase(" + *AI + ".Val);");
       unsigned NumResults = Inst.getNumResults();    
       unsigned ResNo = TmpNo++;
       if (!isRoot) {
@@ -3373,6 +3402,9 @@ void DAGISelEmitter::run(std::ostream &OS) {
   OS << "// Instance var to keep track of mapping of place handle nodes\n"
      << "// and their replacement nodes.\n";
   OS << "std::map<SDOperand, SDOperand> ReplaceMap;\n";
+  OS << "// Keep track of nodes that are currently being selecte and therefore\n"
+     << "// should not be folded.\n";
+  OS << "std::set<SDNode*> InFlightSet;\n";
 
   OS << "\n";
   OS << "static void findNonImmUse(SDNode* Use, SDNode* Def, bool &found, "
