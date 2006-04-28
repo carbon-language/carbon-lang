@@ -80,7 +80,7 @@ struct X86IntelAsmPrinter : public X86SharedAsmPrinter {
     printMemReference(MI, OpNo);
   }
 
-  bool printAsmMRegsiter(const MachineOperand &MO, const char Mode);
+  bool printAsmMRegister(const MachineOperand &MO, const char Mode);
   bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                        unsigned AsmVariant, const char *ExtraCode);
   bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,

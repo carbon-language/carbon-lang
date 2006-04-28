@@ -242,7 +242,7 @@ void X86IntelAsmPrinter::printPICLabel(const MachineInstr *MI, unsigned Op) {
   O << "\"L" << getFunctionNumber() << "$pb\":";
 }
 
-bool X86IntelAsmPrinter::printAsmMRegsiter(const MachineOperand &MO,
+bool X86IntelAsmPrinter::printAsmMRegister(const MachineOperand &MO,
                                            const char Mode) {
   const MRegisterInfo &RI = *TM.getRegisterInfo();
   unsigned Reg = MO.getReg();
@@ -374,7 +374,7 @@ bool X86IntelAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
     case 'h': // Print QImode high register
     case 'w': // Print HImode register
     case 'k': // Print SImode register
-      return printAsmMRegsiter(MI->getOperand(OpNo), ExtraCode[0]);
+      return printAsmMRegister(MI->getOperand(OpNo), ExtraCode[0]);
     }
   }
   
