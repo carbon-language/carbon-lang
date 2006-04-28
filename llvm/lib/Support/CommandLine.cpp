@@ -690,10 +690,10 @@ unsigned alias::getOptionWidth() const {
   return std::strlen(ArgStr)+6;
 }
 
-// Print out the option for the alias...
+// Print out the option for the alias.
 void alias::printOptionInfo(unsigned GlobalWidth) const {
   unsigned L = std::strlen(ArgStr);
-  std::cerr << "  -" << ArgStr << std::string(GlobalWidth-L-6, ' ') << " - "
+  std::cout << "  -" << ArgStr << std::string(GlobalWidth-L-6, ' ') << " - "
             << HelpStr << "\n";
 }
 
@@ -720,12 +720,12 @@ unsigned basic_parser_impl::getOptionWidth(const Option &O) const {
 //
 void basic_parser_impl::printOptionInfo(const Option &O,
                                         unsigned GlobalWidth) const {
-  std::cerr << "  -" << O.ArgStr;
+  std::cout << "  -" << O.ArgStr;
 
   if (const char *ValName = getValueName())
-    std::cerr << "=<" << getValueStr(O, ValName) << ">";
+    std::cout << "=<" << getValueStr(O, ValName) << ">";
 
-  std::cerr << std::string(GlobalWidth-getOptionWidth(O), ' ') << " - "
+  std::cout << std::string(GlobalWidth-getOptionWidth(O), ' ') << " - "
             << O.HelpStr << "\n";
 }
 
@@ -842,20 +842,20 @@ void generic_parser_base::printOptionInfo(const Option &O,
                                           unsigned GlobalWidth) const {
   if (O.hasArgStr()) {
     unsigned L = std::strlen(O.ArgStr);
-    std::cerr << "  -" << O.ArgStr << std::string(GlobalWidth-L-6, ' ')
+    std::cout << "  -" << O.ArgStr << std::string(GlobalWidth-L-6, ' ')
               << " - " << O.HelpStr << "\n";
 
     for (unsigned i = 0, e = getNumOptions(); i != e; ++i) {
       unsigned NumSpaces = GlobalWidth-strlen(getOption(i))-8;
-      std::cerr << "    =" << getOption(i) << std::string(NumSpaces, ' ')
+      std::cout << "    =" << getOption(i) << std::string(NumSpaces, ' ')
                 << " - " << getDescription(i) << "\n";
     }
   } else {
     if (O.HelpStr[0])
-      std::cerr << "  " << O.HelpStr << "\n";
+      std::cout << "  " << O.HelpStr << "\n";
     for (unsigned i = 0, e = getNumOptions(); i != e; ++i) {
       unsigned L = std::strlen(getOption(i));
-      std::cerr << "    -" << getOption(i) << std::string(GlobalWidth-L-8, ' ')
+      std::cout << "    -" << getOption(i) << std::string(GlobalWidth-L-8, ' ')
                 << " - " << getDescription(i) << "\n";
     }
   }
@@ -909,9 +909,9 @@ public:
     }
 
     if (ProgramOverview)
-      std::cerr << "OVERVIEW:" << ProgramOverview << "\n";
+      std::cout << "OVERVIEW:" << ProgramOverview << "\n";
 
-    std::cerr << "USAGE: " << ProgramName << " [options]";
+    std::cout << "USAGE: " << ProgramName << " [options]";
 
     // Print out the positional options...
     std::vector<Option*> &PosOpts = getPositionalOpts();
@@ -921,28 +921,28 @@ public:
 
     for (unsigned i = CAOpt != 0, e = PosOpts.size(); i != e; ++i) {
       if (PosOpts[i]->ArgStr[0])
-        std::cerr << " --" << PosOpts[i]->ArgStr;
-      std::cerr << " " << PosOpts[i]->HelpStr;
+        std::cout << " --" << PosOpts[i]->ArgStr;
+      std::cout << " " << PosOpts[i]->HelpStr;
     }
 
     // Print the consume after option info if it exists...
-    if (CAOpt) std::cerr << " " << CAOpt->HelpStr;
+    if (CAOpt) std::cout << " " << CAOpt->HelpStr;
 
-    std::cerr << "\n\n";
+    std::cout << "\n\n";
 
     // Compute the maximum argument length...
     MaxArgLen = 0;
     for (unsigned i = 0, e = Options.size(); i != e; ++i)
       MaxArgLen = std::max(MaxArgLen, Options[i].second->getOptionWidth());
 
-    std::cerr << "OPTIONS:\n";
+    std::cout << "OPTIONS:\n";
     for (unsigned i = 0, e = Options.size(); i != e; ++i)
       Options[i].second->printOptionInfo(MaxArgLen);
 
     // Print any extra help the user has declared.
     for (std::vector<const char *>::iterator I = MoreHelp().begin(),
           E = MoreHelp().end(); I != E; ++I)
-      std::cerr << *I;
+      std::cout << *I;
     MoreHelp().clear();
 
     // Halt the program since help information was printed
@@ -955,12 +955,12 @@ class VersionPrinter {
 public:
   void operator=(bool OptionWasSpecified) {
     if (OptionWasSpecified) {
-      std::cerr << "Low Level Virtual Machine (" << PACKAGE_NAME << ") "
+      std::cout << "Low Level Virtual Machine (" << PACKAGE_NAME << ") "
                 << PACKAGE_VERSION << " (see http://llvm.org/)";
 #ifndef NDEBUG
-      std::cerr << " DEBUG BUILD\n";
+      std::cout << " ASSERTIONS ENABLED\n";
 #else
-      std::cerr << "\n";
+      std::cout << "\n";
 #endif
       getOpts().clear();  // Don't bother making option dtors remove from map.
       exit(1);
