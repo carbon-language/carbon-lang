@@ -4435,7 +4435,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantUInt *Op1,
       // this case, C1 == C2 and C1 is 8, 16, or 32.
       if (ShiftAmt1 == ShiftAmt2) {
         const Type *SExtType = 0;
-        switch (ShiftAmt1) {
+        switch (Op0->getType()->getPrimitiveSizeInBits() - ShiftAmt1) {
         case 8 : SExtType = Type::SByteTy; break;
         case 16: SExtType = Type::ShortTy; break;
         case 32: SExtType = Type::IntTy; break;
