@@ -611,6 +611,19 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
           DesignatedReg = ReusedOperands.GetRegForReload(DesignatedReg, &MI, 
                                                       Spills, MaybeDeadStores);
         
+        // If the mapped designated register is actually the physreg we have
+        // incoming, we don't need to inserted a dead copy.
+        if (DesignatedReg == PhysReg) {
+          // If this stack slot value is already available, reuse it!
+          DEBUG(std::cerr << "Reusing SS#" << StackSlot << " from physreg "
+                          << MRI->getName(PhysReg) << " for vreg"
+                          << VirtReg
+                          << " instead of reloading into same physreg.\n");
+          MI.SetMachineOperandReg(i, PhysReg);
+          ++NumReused;
+          continue;
+        }
+        
         const TargetRegisterClass* RC =
           MBB.getParent()->getSSARegMap()->getRegClass(VirtReg);
 
