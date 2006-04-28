@@ -1899,13 +1899,6 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
   // fold (sext_in_reg x) -> (zext_in_reg x) if the sign bit is zero
   if (TLI.MaskedValueIsZero(N0, 1ULL << (EVTBits-1)))
     return DAG.getZeroExtendInReg(N0, EVT);
-  // fold (sext_in_reg (srl x)) -> sra x
-  if (N0.getOpcode() == ISD::SRL && 
-      N0.getOperand(1).getOpcode() == ISD::Constant &&
-      cast<ConstantSDNode>(N0.getOperand(1))->getValue() == EVTBits) {
-    return DAG.getNode(ISD::SRA, N0.getValueType(), N0.getOperand(0), 
-                       N0.getOperand(1));
-  }
   // fold (sext_inreg (extload x)) -> (sextload x)
   if (N0.getOpcode() == ISD::EXTLOAD && 
       EVT == cast<VTSDNode>(N0.getOperand(3))->getVT() &&
