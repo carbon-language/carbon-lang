@@ -61,7 +61,11 @@ struct X86ATTAsmPrinter : public X86SharedAsmPrinter {
     printMemReference(MI, OpNo);
   }
   
-  void printMachineInstruction(const MachineInstr *MI);
+  bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
+                       unsigned AsmVariant, const char *ExtraCode);
+  bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
+                             unsigned AsmVariant, const char *ExtraCode);
+    void printMachineInstruction(const MachineInstr *MI);
   void printSSECC(const MachineInstr *MI, unsigned Op);
   void printMemReference(const MachineInstr *MI, unsigned Op);
   void printPICLabel(const MachineInstr *MI, unsigned Op);

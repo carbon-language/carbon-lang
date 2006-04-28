@@ -264,6 +264,34 @@ void X86ATTAsmPrinter::printPICLabel(const MachineInstr *MI, unsigned Op) {
   O << "\"L" << getFunctionNumber() << "$pb\":";
 }
 
+/// PrintAsmOperand - Print out an operand for an inline asm expression.
+///
+bool X86ATTAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
+                                       unsigned AsmVariant, 
+                                       const char *ExtraCode) {
+  // Does this asm operand have a single letter operand modifier?
+  if (ExtraCode && ExtraCode[0]) {
+    if (ExtraCode[1] != 0) return true; // Unknown modifier.
+    
+    switch (ExtraCode[0]) {
+    default: return true;  // Unknown modifier.
+    }
+  }
+  
+  printOperand(MI, OpNo);
+  return false;
+}
+
+bool X86ATTAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
+                                             unsigned OpNo,
+                                             unsigned AsmVariant, 
+                                             const char *ExtraCode) {
+  if (ExtraCode && ExtraCode[0])
+    return true; // Unknown modifier.
+  printMemReference(MI, OpNo);
+  return false;
+}
+
 /// printMachineInstruction -- Print out a single X86 LLVM instruction
 /// MI in Intel syntax to the current output stream.
 ///
