@@ -63,7 +63,7 @@ void X86RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   } else if (RC == &X86::FR64RegClass) {
     Opc = X86::MOVSDmr;
   } else if (RC == &X86::VR128RegClass) {
-    Opc = X86::MOVAPDmr;
+    Opc = X86::MOVAPSmr;
   } else {
     assert(0 && "Unknown regclass");
     abort();
@@ -89,7 +89,7 @@ void X86RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   } else if (RC == &X86::FR64RegClass) {
     Opc = X86::MOVSDrm;
   } else if (RC == &X86::VR128RegClass) {
-    Opc = X86::MOVAPDrm;
+    Opc = X86::MOVAPSrm;
   } else {
     assert(0 && "Unknown regclass");
     abort();
