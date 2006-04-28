@@ -58,14 +58,6 @@ ViewSchedDAGs("view-sched-dags", cl::Hidden,
 static const bool ViewISelDAGs = 0, ViewSchedDAGs = 0;
 #endif
 
-namespace {
-static cl::opt<bool>
-NoFoldNodeInFlight(
-   "no-isel-fold-inflight",
-   cl::Hidden,
-   cl::desc("Do not attempt to fold a node even if it is being selected"));
-}
-
 // Scheduling heuristics
 enum SchedHeuristics {
   defaultScheduling,      // Let the target specify its preference.
@@ -3176,9 +3168,6 @@ void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
   DAG.Combine(true);
   
   if (ViewISelDAGs) DAG.viewGraph();
-
-  // TEMPORARY.
-  FoldNodeInFlight = !NoFoldNodeInFlight;
 
   // Third, instruction select all of the operations to machine code, adding the
   // code to the MachineBasicBlock.

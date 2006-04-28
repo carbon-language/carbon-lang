@@ -2131,8 +2131,7 @@ public:
       if (!isRoot) {
         const SDNodeInfo &CInfo = ISE.getSDNodeInfo(N->getOperator());
         // Not in flight?
-        emitCheck("(FoldNodeInFlight || InFlightSet.count("
-                  + RootName + ".Val) == 0)");
+        emitCheck("InFlightSet.count(" + RootName + ".Val) == 0");
         // Multiple uses of actual result?
         emitCheck(RootName + ".hasOneUse()");
         EmittedUseCheck = true;

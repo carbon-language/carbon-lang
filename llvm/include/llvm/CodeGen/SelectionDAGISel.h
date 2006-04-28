@@ -40,7 +40,6 @@ public:
   SSARegMap *RegMap;
   SelectionDAG *CurDAG;
   MachineBasicBlock *BB;
-  bool FoldNodeInFlight;
 
   SelectionDAGISel(TargetLowering &tli) : TLI(tli), JT(0,0,0,0) {}
 
