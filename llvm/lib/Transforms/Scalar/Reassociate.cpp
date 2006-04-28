@@ -23,10 +23,10 @@
 #define DEBUG_TYPE "reassociate"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
-#include "llvm/Type.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
@@ -754,7 +754,8 @@ void Reassociate::ReassociateBB(BasicBlock *BB) {
       }
 
     // Reject cases where it is pointless to do this.
-    if (!isa<BinaryOperator>(BI) || BI->getType()->isFloatingPoint())
+    if (!isa<BinaryOperator>(BI) || BI->getType()->isFloatingPoint() ||
+        isa<PackedType>(BI->getType()))
       continue;  // Floating point ops are not associative.
 
     // If this is a subtract instruction which is not already in negate form,
