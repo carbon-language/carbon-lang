@@ -264,6 +264,124 @@ void X86ATTAsmPrinter::printPICLabel(const MachineInstr *MI, unsigned Op) {
   O << "\"L" << getFunctionNumber() << "$pb\":";
 }
 
+
+bool X86ATTAsmPrinter::printAsmMRegsiter(const MachineOperand &MO,
+                                         const char Mode) {
+  const MRegisterInfo &RI = *TM.getRegisterInfo();
+  unsigned Reg = MO.getReg();
+  const char *Name = RI.get(Reg).Name;
+  switch (Mode) {
+  default: return true;  // Unknown mode.
+  case 'b': // Print QImode register
+    switch (Reg) {
+    default: return true;
+    case X86::AH: case X86::AL: case X86::AX: case X86::EAX:
+      Name = "al";
+      break;
+    case X86::DH: case X86::DL: case X86::DX: case X86::EDX:
+      Name = "dl";
+      break;
+    case X86::CH: case X86::CL: case X86::CX: case X86::ECX:
+      Name = "cl";
+      break;
+    case X86::BH: case X86::BL: case X86::BX: case X86::EBX:
+      Name = "bl";
+      break;
+    case X86::ESI:
+      Name = "sil";
+      break;
+    case X86::EDI:
+      Name = "dil";
+      break;
+    case X86::EBP:
+      Name = "bpl";
+      break;
+    case X86::ESP:
+      Name = "spl";
+      break;
+    }
+    break;
+  case 'h': // Print QImode high register
+    switch (Reg) {
+    default: return true;
+    case X86::AH: case X86::AL: case X86::AX: case X86::EAX:
+      Name = "al";
+      break;
+    case X86::DH: case X86::DL: case X86::DX: case X86::EDX:
+      Name = "dl";
+      break;
+    case X86::CH: case X86::CL: case X86::CX: case X86::ECX:
+      Name = "cl";
+      break;
+    case X86::BH: case X86::BL: case X86::BX: case X86::EBX:
+      Name = "bl";
+      break;
+    }
+    break;
+  case 'w': // Print HImode register
+    switch (Reg) {
+    default: return true;
+    case X86::AH: case X86::AL: case X86::AX: case X86::EAX:
+      Name = "ax";
+      break;
+    case X86::DH: case X86::DL: case X86::DX: case X86::EDX:
+      Name = "dx";
+      break;
+    case X86::CH: case X86::CL: case X86::CX: case X86::ECX:
+      Name = "cx";
+      break;
+    case X86::BH: case X86::BL: case X86::BX: case X86::EBX:
+      Name = "bx";
+      break;
+    case X86::ESI:
+      Name = "si";
+      break;
+    case X86::EDI:
+      Name = "di";
+      break;
+    case X86::EBP:
+      Name = "bp";
+      break;
+    case X86::ESP:
+      Name = "sp";
+      break;
+    }
+    break;
+  case 'k': // Print SImode register
+    switch (Reg) {
+    default: return true;
+    case X86::AH: case X86::AL: case X86::AX: case X86::EAX:
+      Name = "eax";
+      break;
+    case X86::DH: case X86::DL: case X86::DX: case X86::EDX:
+      Name = "edx";
+      break;
+    case X86::CH: case X86::CL: case X86::CX: case X86::ECX:
+      Name = "ecx";
+      break;
+    case X86::BH: case X86::BL: case X86::BX: case X86::EBX:
+      Name = "ebx";
+      break;
+    case X86::ESI:
+      Name = "esi";
+      break;
+    case X86::EDI:
+      Name = "edi";
+      break;
+    case X86::EBP:
+      Name = "ebp";
+      break;
+    case X86::ESP:
+      Name = "esp";
+      break;
+    }
+    break;
+  }
+
+  O << '%' << Name;
+  return false;
+}
+
 /// PrintAsmOperand - Print out an operand for an inline asm expression.
 ///
 bool X86ATTAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
@@ -275,6 +393,11 @@ bool X86ATTAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
     
     switch (ExtraCode[0]) {
     default: return true;  // Unknown modifier.
+    case 'b': // Print QImode register
+    case 'h': // Print QImode high register
+    case 'w': // Print HImode register
+    case 'k': // Print SImode register
+      return printAsmMRegsiter(MI->getOperand(OpNo), ExtraCode[0]);
     }
   }
   
