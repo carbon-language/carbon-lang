@@ -558,33 +558,71 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
       unsigned PhysReg;
 
       // Check to see if this stack slot is available.
-      if ((PhysReg = Spills.getSpillSlotPhysReg(StackSlot)) &&
-          // Don't reuse it for a def&use operand if we aren't allowed to change
-          // the physreg!
-          (!MO.isDef() || Spills.canClobberPhysReg(StackSlot))) {
-        // If this stack slot value is already available, reuse it!
-        DEBUG(std::cerr << "Reusing SS#" << StackSlot << " from physreg "
-                        << MRI->getName(PhysReg) << " for vreg"
-                        << VirtReg <<" instead of reloading into physreg "
-                        << MRI->getName(VRM.getPhys(VirtReg)) << "\n");
-        MI.SetMachineOperandReg(i, PhysReg);
+      if ((PhysReg = Spills.getSpillSlotPhysReg(StackSlot))) {
 
-        // The only technical detail we have is that we don't know that
-        // PhysReg won't be clobbered by a reloaded stack slot that occurs
-        // later in the instruction.  In particular, consider 'op V1, V2'.
-        // If V1 is available in physreg R0, we would choose to reuse it
-        // here, instead of reloading it into the register the allocator
-        // indicated (say R1).  However, V2 might have to be reloaded
-        // later, and it might indicate that it needs to live in R0.  When
-        // this occurs, we need to have information available that
-        // indicates it is safe to use R1 for the reload instead of R0.
+        // Don't reuse it for a def&use operand if we aren't allowed to change
+        // the physreg!
+        if (!MO.isDef() || Spills.canClobberPhysReg(StackSlot)) {
+          // If this stack slot value is already available, reuse it!
+          DEBUG(std::cerr << "Reusing SS#" << StackSlot << " from physreg "
+                          << MRI->getName(PhysReg) << " for vreg"
+                          << VirtReg <<" instead of reloading into physreg "
+                          << MRI->getName(VRM.getPhys(VirtReg)) << "\n");
+          MI.SetMachineOperandReg(i, PhysReg);
+
+          // The only technical detail we have is that we don't know that
+          // PhysReg won't be clobbered by a reloaded stack slot that occurs
+          // later in the instruction.  In particular, consider 'op V1, V2'.
+          // If V1 is available in physreg R0, we would choose to reuse it
+          // here, instead of reloading it into the register the allocator
+          // indicated (say R1).  However, V2 might have to be reloaded
+          // later, and it might indicate that it needs to live in R0.  When
+          // this occurs, we need to have information available that
+          // indicates it is safe to use R1 for the reload instead of R0.
+          //
+          // To further complicate matters, we might conflict with an alias,
+          // or R0 and R1 might not be compatible with each other.  In this
+          // case, we actually insert a reload for V1 in R1, ensuring that
+          // we can get at R0 or its alias.
+          ReusedOperands.addReuse(i, StackSlot, PhysReg,
+                                  VRM.getPhys(VirtReg), VirtReg);
+          ++NumReused;
+          continue;
+        }
+        
+        // Otherwise we have a situation where we have a two-address instruction
+        // whose mod/ref operand needs to be reloaded.  This reload is already
+        // available in some register "PhysReg", but if we used PhysReg as the
+        // operand to our 2-addr instruction, the instruction would modify
+        // PhysReg.  This isn't cool if something later uses PhysReg and expects
+        // to get its initial value.
         //
-        // To further complicate matters, we might conflict with an alias,
-        // or R0 and R1 might not be compatible with each other.  In this
-        // case, we actually insert a reload for V1 in R1, ensuring that
-        // we can get at R0 or its alias.
-        ReusedOperands.addReuse(i, StackSlot, PhysReg,
-                                VRM.getPhys(VirtReg), VirtReg);
+        // To avoid this problem, and to avoid doing a load right after a store,
+        // we emit a copy from PhysReg into the designated register for this
+        // operand.
+        unsigned DesignatedReg = VRM.getPhys(VirtReg);
+        assert(DesignatedReg && "Must map virtreg to physreg!");
+
+        // Note that, if we reused a register for a previous operand, the
+        // register we want to reload into might not actually be
+        // available.  If this occurs, use the register indicated by the
+        // reuser.
+        if (ReusedOperands.hasReuses())
+          DesignatedReg = ReusedOperands.GetRegForReload(DesignatedReg, &MI, 
+                                                      Spills, MaybeDeadStores);
+        
+        const TargetRegisterClass* RC =
+          MBB.getParent()->getSSARegMap()->getRegClass(VirtReg);
+
+        PhysRegsUsed[DesignatedReg] = true;
+        MRI->copyRegToReg(MBB, &MI, DesignatedReg, PhysReg, RC);
+        
+        // This invalidates DesignatedReg.
+        Spills.ClobberPhysReg(DesignatedReg);
+        
+        Spills.addAvailable(StackSlot, DesignatedReg);
+        MI.SetMachineOperandReg(i, DesignatedReg);
+        DEBUG(std::cerr << '\t' << *prior(MII));
         ++NumReused;
         continue;
       }
