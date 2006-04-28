@@ -18,6 +18,7 @@
 #include "X86TargetMachine.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/ADT/VectorExtras.h"
@@ -555,6 +556,11 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
   // Count how many bytes are to be pushed on the stack.
   unsigned NumBytes = 0;
 
+  // Keep track of the number of XMM regs passed so far.
+  unsigned NumXMMRegs = 0;
+  unsigned XMMArgRegs[] = { X86::XMM0, X86::XMM1, X86::XMM2 };
+
+  std::vector<SDOperand> RegValuesToPass;
   if (Args.empty()) {
     // Save zero bytes.
     Chain = DAG.getCALLSEQ_START(Chain, DAG.getConstant(0, getPointerTy()));
@@ -573,6 +579,12 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
       case MVT::f64:
         NumBytes += 8;
         break;
+      case MVT::Vector:
+        if (NumXMMRegs < 3)
+          ++NumXMMRegs;
+        else
+          NumBytes += 16;
+        break;
       }
 
     Chain = DAG.getCALLSEQ_START(Chain,
@@ -580,13 +592,10 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
 
     // Arguments go on the stack in reverse order, as specified by the ABI.
     unsigned ArgOffset = 0;
+    NumXMMRegs = 0;
     SDOperand StackPtr = DAG.getRegister(X86::ESP, MVT::i32);
     std::vector<SDOperand> Stores;
-
     for (unsigned i = 0, e = Args.size(); i != e; ++i) {
-      SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
-      PtrOff = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
-
       switch (getValueType(Args[i].second)) {
       default: assert(0 && "Unexpected ValueType for argument!");
       case MVT::i1:
@@ -601,21 +610,40 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
 
         // FALL THROUGH
       case MVT::i32:
-      case MVT::f32:
+      case MVT::f32: {
+        SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
+        PtrOff = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
         Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
                                      Args[i].first, PtrOff,
                                      DAG.getSrcValue(NULL)));
         ArgOffset += 4;
         break;
+      }
       case MVT::i64:
-      case MVT::f64:
+      case MVT::f64: {
+        SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
+        PtrOff = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
         Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
                                      Args[i].first, PtrOff,
                                      DAG.getSrcValue(NULL)));
         ArgOffset += 8;
         break;
       }
+      case MVT::Vector:
+        if (NumXMMRegs < 3) {
+          RegValuesToPass.push_back(Args[i].first);
+          NumXMMRegs++;
+        } else {
+          SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
+          PtrOff = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
+          Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                       Args[i].first, PtrOff,
+                                       DAG.getSrcValue(NULL)));
+          ArgOffset += 16;
+        }
+      }
     }
+  if (!Stores.empty())
     Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, Stores);
   }
 
@@ -646,16 +674,34 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
     break;
   }
 
+  // Build a sequence of copy-to-reg nodes chained together with token chain
+  // and flag operands which copy the outgoing args into registers.
+  SDOperand InFlag;
+  for (unsigned i = 0, e = RegValuesToPass.size(); i != e; ++i) {
+    unsigned CCReg = XMMArgRegs[i];
+    SDOperand RegToPass = RegValuesToPass[i];
+    assert(RegToPass.getValueType() == MVT::Vector);
+    unsigned NumElems = cast<ConstantSDNode>(*(RegToPass.Val->op_end()-2))->getValue();
+    MVT::ValueType EVT = cast<VTSDNode>(*(RegToPass.Val->op_end()-1))->getVT();
+    MVT::ValueType PVT = getVectorType(EVT, NumElems);
+    SDOperand CCRegNode = DAG.getRegister(CCReg, PVT);
+    RegToPass = DAG.getNode(ISD::VBIT_CONVERT, PVT, RegToPass);
+    Chain = DAG.getCopyToReg(Chain, CCRegNode, RegToPass, InFlag);
+    InFlag = Chain.getValue(1);
+  }
+
   std::vector<MVT::ValueType> NodeTys;
   NodeTys.push_back(MVT::Other);   // Returns a chain
   NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
   std::vector<SDOperand> Ops;
   Ops.push_back(Chain);
   Ops.push_back(Callee);
+  if (InFlag.Val)
+    Ops.push_back(InFlag);
 
   // FIXME: Do not generate X86ISD::TAILCALL for now.
   Chain = DAG.getNode(X86ISD::CALL, NodeTys, Ops);
-  SDOperand InFlag = Chain.getValue(1);
+  InFlag = Chain.getValue(1);
 
   NodeTys.clear();
   NodeTys.push_back(MVT::Other);   // Returns a chain
@@ -732,6 +778,16 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
         // FIXME: we would really like to remember that this FP_ROUND
         // operation is okay to eliminate if we allow excess FP precision.
         RetVal = DAG.getNode(ISD::FP_ROUND, MVT::f32, RetVal);
+      break;
+    }
+    case MVT::Vector: {
+      const PackedType *PTy = cast<PackedType>(RetTy);
+      MVT::ValueType EVT;
+      MVT::ValueType LVT;
+      unsigned NumRegs = getPackedTypeBreakdown(PTy, EVT, LVT);
+      assert(NumRegs == 1 && "Unsupported type!");
+      RetVal = DAG.getCopyFromReg(Chain, X86::XMM0, EVT, InFlag);
+      Chain = RetVal.getValue(1);
       break;
     }
     }
@@ -978,8 +1034,18 @@ X86TargetLowering::PreprocessFastCCArguments(std::vector<SDOperand>Args,
   case MVT::f64:
     MF.addLiveOut(X86::ST0);
     break;
+  case MVT::Vector: {
+    const PackedType *PTy = cast<PackedType>(F.getReturnType());
+    MVT::ValueType EVT;
+    MVT::ValueType LVT;
+    unsigned NumRegs = getPackedTypeBreakdown(PTy, EVT, LVT);
+    assert(NumRegs == 1 && "Unsupported type!");
+    MF.addLiveOut(X86::XMM0);
+    break;
+  }
   }
 }
+
 void
 X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
   unsigned NumArgs = Op.Val->getNumValues();
