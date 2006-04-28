@@ -453,7 +453,7 @@ static std::vector<SDOperand> getFormalArgObjects(SDOperand Op) {
     assert(Op.getOpcode() == ISD::AssertSext ||
            Op.getOpcode() == ISD::AssertZext);
     Objs.push_back(Op.getOperand(0));
-  } else if (Opc == ISD::FP_ROUND) {
+  } else if (Opc == ISD::FP_ROUND || Opc == ISD::VBIT_CONVERT) {
     Objs.push_back(Op.getOperand(0));
   } else if (Opc == ISD::BUILD_PAIR) {
     Objs.push_back(Op.getOperand(0));

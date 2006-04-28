@@ -2447,14 +2447,25 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       } else {
         // Otherwise, this is a vector type.  We only support legal vectors
         // right now.
-        unsigned NumElems = cast<PackedType>(I->getType())->getNumElements();
-        const Type *EltTy = cast<PackedType>(I->getType())->getElementType();
+        const PackedType *PTy = cast<PackedType>(I->getType());
+        unsigned NumElems = PTy->getNumElements();
+        const Type *EltTy = PTy->getElementType();
 
         // Figure out if there is a Packed type corresponding to this Vector
         // type.  If so, convert to the packed type.
         MVT::ValueType TVT = MVT::getVectorType(getValueType(EltTy), NumElems);
         if (TVT != MVT::Other && isTypeLegal(TVT)) {
-          Ops.push_back(SDOperand(Result, i++));
+          SDOperand N = SDOperand(Result, i++);
+          // Handle copies from generic vectors to registers.
+          MVT::ValueType PTyElementVT, PTyLegalElementVT;
+          unsigned NE = getPackedTypeBreakdown(PTy, PTyElementVT,
+                                               PTyLegalElementVT);
+          // Insert a VBIT_CONVERT of the FORMAL_ARGUMENTS to a
+          // "N x PTyElementVT" MVT::Vector type.
+          N = DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, N,
+                          DAG.getConstant(NE, MVT::i32), 
+                          DAG.getValueType(PTyElementVT));
+          Ops.push_back(N);
         } else {
           assert(0 && "Don't support illegal by-val vector arguments yet!");
         }
@@ -2996,19 +3007,6 @@ LowerArguments(BasicBlock *BB, SelectionDAGLowering &SDL,
     if (!AI->use_empty()) {
       SDL.setValue(AI, Args[a]);
 
-      MVT::ValueType VT = TLI.getValueType(AI->getType());
-      if (VT == MVT::Vector) {
-        // Insert a VBIT_CONVERT between the FORMAL_ARGUMENT node and its uses.
-        // Or else legalizer will balk.
-        BasicBlock::iterator InsertPt = BB->begin();
-        Value *NewVal = new CastInst(AI, AI->getType(), AI->getName(), InsertPt);
-        for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end();
-             UI != E; ++UI) {
-          Instruction *User = cast<Instruction>(*UI);
-          if (User != NewVal)
-            User->replaceUsesOfWith(AI, NewVal);
-        }
-      }
       // If this argument is live outside of the entry block, insert a copy from
       // whereever we got it to the vreg that other BB's will reference it as.
       if (FuncInfo.ValueMap.count(AI)) {
