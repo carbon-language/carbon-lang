@@ -48,7 +48,7 @@ extern "C" {
   asm(
     ".text\n"
     ".align 8\n"
-#if defined(__CYGWIN__) || defined(__APPLE__)
+#if defined(__CYGWIN__) || defined(__APPLE__) || defined(__MINGW32__)
     ".globl _X86CompilationCallback\n"
   "_X86CompilationCallback:\n"
 #else
@@ -59,7 +59,7 @@ extern "C" {
     "movl    %esp, %ebp\n"    // Standard prologue
     "pushl   %eax\n"
     "pushl   %edx\n"          // save EAX/EDX
-#if defined(__CYGWIN__)
+#if defined(__CYGWIN__) || defined(__MINGW32__)
     "call    _X86CompilationCallback2\n"
 #elif defined(__APPLE__)
     "movl    4(%ebp), %eax\n" // load the address of return address

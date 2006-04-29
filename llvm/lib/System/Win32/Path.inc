@@ -741,7 +741,7 @@ Path::setStatusInfoOnDisk(const StatusInfo& si) const {
 }
 
 void
-sys::CopyFile(const sys::Path &Dest, const sys::Path &Src) {
+CopyFile(const sys::Path &Dest, const sys::Path &Src) {
   // Can't use CopyFile macro defined in Windows.h because it would mess up the
   // above line.  We use the expansion it would have in a non-UNICODE build.
   if (!::CopyFileA(Src.c_str(), Dest.c_str(), false))
