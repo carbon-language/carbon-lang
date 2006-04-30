@@ -50,6 +50,10 @@ namespace {
                         clEnumVal(local,  "  local spiller"),
                         clEnumValEnd),
              cl::init(local));
+
+  // TEMPORARY option to test a fix.
+  cl::opt<bool>
+  SpillerCheckLiveOut("spiller-check-liveout", cl::Hidden);
 }
 
 //===----------------------------------------------------------------------===//
@@ -81,7 +85,8 @@ void VirtRegMap::assignVirt2StackSlot(unsigned virtReg, int frameIndex) {
 }
 
 void VirtRegMap::virtFolded(unsigned VirtReg, MachineInstr *OldMI,
-                            unsigned OpNo, MachineInstr *NewMI) {
+                            unsigned OpNo, MachineInstr *NewMI,
+                            bool LiveOut) {
   // Move previous memory references folded to new instruction.
   MI2VirtMapTy::iterator IP = MI2VirtMap.lower_bound(NewMI);
   for (MI2VirtMapTy::iterator I = MI2VirtMap.lower_bound(OldMI),
@@ -96,6 +101,7 @@ void VirtRegMap::virtFolded(unsigned VirtReg, MachineInstr *OldMI,
     MRInfo = isRef;
   } else {
     MRInfo = OldMI->getOperand(OpNo).isUse() ? isModRef : isMod;
+    if (LiveOut) MRInfo = (ModRef)(MRInfo | isLiveOut);
   }
 
   // add new memory reference
@@ -727,10 +733,14 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
           MaybeDeadStores.erase(MDSI);
         else {
           // If we get here, the store is dead, nuke it now.
-          assert(MR == VirtRegMap::isMod && "Can't be modref!");
-          MBB.erase(MDSI->second);
-          MaybeDeadStores.erase(MDSI);
-          ++NumDSE;
+          assert(!(MR & VirtRegMap::isRef) && "Can't be modref!");
+          // Don't nuke it if the value is needed in another block.
+          if (!SpillerCheckLiveOut || !(MR & VirtRegMap::isLiveOut)) {
+            DEBUG(std::cerr << " Killed store:\t" << *MDSI->second);
+            MBB.erase(MDSI->second);
+            MaybeDeadStores.erase(MDSI);
+            ++NumDSE;
+          }
         }
       }
 

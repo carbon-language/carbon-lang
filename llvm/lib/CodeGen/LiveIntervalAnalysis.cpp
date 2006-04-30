@@ -271,14 +271,15 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
             // can do this, we don't need to insert spill code.
             if (lv_)
               lv_->instructionChanged(MI, fmi);
-            vrm.virtFolded(li.reg, MI, i, fmi);
+            MachineBasicBlock &MBB = *MI->getParent();
+            bool LiveOut = li.liveAt(getInstructionIndex(&MBB.back()) +
+                                     InstrSlots::NUM);
+            vrm.virtFolded(li.reg, MI, i, fmi, LiveOut);
             mi2iMap_.erase(MI);
             i2miMap_[index/InstrSlots::NUM] = fmi;
             mi2iMap_[fmi] = index;
-            MachineBasicBlock &MBB = *MI->getParent();
             MI = MBB.insert(MBB.erase(MI), fmi);
             ++numFolded;
-
             // Folding the load/store can completely change the instruction in
             // unpredictable ways, rescan it from the beginning.
             goto for_operand;
