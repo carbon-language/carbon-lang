@@ -224,10 +224,12 @@ class InstrInfo {
 def PHI : Instruction {
   let OperandList = (ops variable_ops);
   let AsmString = "PHINODE";
+  let Namespace = "TargetInstrInfo";
 }
 def INLINEASM : Instruction {
   let OperandList = (ops variable_ops);
   let AsmString = "";
+  let Namespace = "TargetInstrInfo";
 }
 
 //===----------------------------------------------------------------------===//
