@@ -26,7 +26,7 @@ namespace llvm {
 
   class VirtRegMap {
   public:
-    enum ModRef { isRef = 1, isMod = 2, isModRef = 3, isLiveOut = 4 };
+    enum ModRef { isRef = 1, isMod = 2, isModRef = 3 };
     typedef std::multimap<MachineInstr*,
                           std::pair<unsigned, ModRef> > MI2VirtMapTy;
 
@@ -128,13 +128,20 @@ namespace llvm {
     /// folded into newMI machine instruction.  The OpNum argument indicates the
     /// operand number of OldMI that is folded.
     void virtFolded(unsigned VirtReg, MachineInstr *OldMI, unsigned OpNum,
-                    MachineInstr *NewMI, bool LiveOut);
+                    MachineInstr *NewMI);
 
     /// @brief returns the virtual registers' values folded in memory
     /// operands of this instruction
     std::pair<MI2VirtMapTy::const_iterator, MI2VirtMapTy::const_iterator>
     getFoldedVirts(MachineInstr* MI) const {
       return MI2VirtMap.equal_range(MI);
+    }
+    
+    /// RemoveFromFoldedVirtMap - Given a machine instruction in the folded
+    /// instruction map, remove the entry in the folded instruction map.
+    void RemoveFromFoldedVirtMap(MachineInstr *MI) {
+      bool ErasedAny = MI2VirtMap.erase(MI);
+      assert(ErasedAny && "Machine instr not in folded vreg map!");
     }
 
     void print(std::ostream &OS) const;
@@ -151,7 +158,7 @@ namespace llvm {
   struct Spiller {
     virtual ~Spiller();
     virtual bool runOnMachineFunction(MachineFunction &MF,
-                                      const VirtRegMap &VRM) = 0;
+                                      VirtRegMap &VRM) = 0;
   };
 
   /// createSpiller - Create an return a spiller object, as specified on the

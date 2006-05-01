@@ -272,9 +272,7 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
             if (lv_)
               lv_->instructionChanged(MI, fmi);
             MachineBasicBlock &MBB = *MI->getParent();
-            bool LiveOut = li.liveAt(getInstructionIndex(&MBB.back()) +
-                                     InstrSlots::NUM);
-            vrm.virtFolded(li.reg, MI, i, fmi, LiveOut);
+            vrm.virtFolded(li.reg, MI, i, fmi);
             mi2iMap_.erase(MI);
             i2miMap_[index/InstrSlots::NUM] = fmi;
             mi2iMap_[fmi] = index;

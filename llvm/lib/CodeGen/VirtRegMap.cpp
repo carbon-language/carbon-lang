@@ -81,8 +81,7 @@ void VirtRegMap::assignVirt2StackSlot(unsigned virtReg, int frameIndex) {
 }
 
 void VirtRegMap::virtFolded(unsigned VirtReg, MachineInstr *OldMI,
-                            unsigned OpNo, MachineInstr *NewMI,
-                            bool LiveOut) {
+                            unsigned OpNo, MachineInstr *NewMI) {
   // Move previous memory references folded to new instruction.
   MI2VirtMapTy::iterator IP = MI2VirtMap.lower_bound(NewMI);
   for (MI2VirtMapTy::iterator I = MI2VirtMap.lower_bound(OldMI),
@@ -97,7 +96,6 @@ void VirtRegMap::virtFolded(unsigned VirtReg, MachineInstr *OldMI,
     MRInfo = isRef;
   } else {
     MRInfo = OldMI->getOperand(OpNo).isUse() ? isModRef : isMod;
-    if (LiveOut) MRInfo = (ModRef)(MRInfo | isLiveOut);
   }
 
   // add new memory reference
@@ -133,12 +131,11 @@ Spiller::~Spiller() {}
 
 namespace {
   struct SimpleSpiller : public Spiller {
-    bool runOnMachineFunction(MachineFunction& mf, const VirtRegMap &VRM);
+    bool runOnMachineFunction(MachineFunction& mf, VirtRegMap &VRM);
   };
 }
 
-bool SimpleSpiller::runOnMachineFunction(MachineFunction &MF,
-                                         const VirtRegMap &VRM) {
+bool SimpleSpiller::runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
   DEBUG(std::cerr << "********** REWRITE MACHINE CODE **********\n");
   DEBUG(std::cerr << "********** Function: "
                   << MF.getFunction()->getName() << '\n');
@@ -211,7 +208,7 @@ namespace {
     const MRegisterInfo *MRI;
     const TargetInstrInfo *TII;
   public:
-    bool runOnMachineFunction(MachineFunction &MF, const VirtRegMap &VRM) {
+    bool runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
       MRI = MF.getTarget().getRegisterInfo();
       TII = MF.getTarget().getInstrInfo();
       DEBUG(std::cerr << "\n**** Local spiller rewriting function '"
@@ -223,7 +220,7 @@ namespace {
       return true;
     }
   private:
-    void RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM);
+    void RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM);
     void ClobberPhysReg(unsigned PR, std::map<int, unsigned> &SpillSlots,
                         std::multimap<unsigned, int> &PhysRegs);
     void ClobberPhysRegOnly(unsigned PR, std::map<int, unsigned> &SpillSlots,
@@ -484,7 +481,7 @@ namespace {
 
 /// rewriteMBB - Keep track of which spills are available even after the
 /// register allocator is done with them.  If possible, avoid reloading vregs.
-void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
+void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
 
   DEBUG(std::cerr << MBB.getBasicBlock()->getName() << ":\n");
 
@@ -729,14 +726,11 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
           MaybeDeadStores.erase(MDSI);
         else {
           // If we get here, the store is dead, nuke it now.
-          assert(!(MR & VirtRegMap::isRef) && "Can't be modref!");
-          // Don't nuke it if the value is needed in another block.
-          if (!(MR & VirtRegMap::isLiveOut)) {
-            DEBUG(std::cerr << " Killed store:\t" << *MDSI->second);
-            MBB.erase(MDSI->second);
-            MaybeDeadStores.erase(MDSI);
-            ++NumDSE;
-          }
+          assert(VirtRegMap::isMod && "Can't be modref!");
+          DEBUG(std::cerr << "Removed dead store:\t" << *MDSI->second);
+          MBB.erase(MDSI->second);
+          MaybeDeadStores.erase(MDSI);
+          ++NumDSE;
         }
       }
 
@@ -837,7 +831,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
         // If there is a dead store to this stack slot, nuke it now.
         MachineInstr *&LastStore = MaybeDeadStores[StackSlot];
         if (LastStore) {
-          DEBUG(std::cerr << " Killed store:\t" << *LastStore);
+          DEBUG(std::cerr << "Removed dead store:\t" << *LastStore);
           ++NumDSE;
           MBB.erase(LastStore);
         }
