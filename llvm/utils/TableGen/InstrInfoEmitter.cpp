@@ -184,6 +184,22 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   OS << "\",\t" << NumOperands << ", " << ItinClass
      << ", 0";
 
+  // Try to determine (from the pattern), if the instruction is a store.
+  bool isStore = false;
+  if (dynamic_cast<ListInit*>(Inst.TheDef->getValueInit("Pattern"))) {
+    ListInit *LI = Inst.TheDef->getValueAsListInit("Pattern");
+    if (LI && LI->getSize() > 0) {
+      DagInit *Dag = (DagInit *)LI->getElement(0);
+      DefInit *OpDef = dynamic_cast<DefInit*>(Dag->getOperator());
+      if (OpDef) {
+        Record *Operator = OpDef->getDef();
+        if (Operator->isSubClassOf("SDNode") &&
+            Operator->getValueAsString("Opcode") == "ISD::STORE")
+            isStore = true;
+      }
+    }
+  }
+
   // Emit all of the target indepedent flags...
   if (Inst.isReturn)     OS << "|M_RET_FLAG";
   if (Inst.isBranch)     OS << "|M_BRANCH_FLAG";
@@ -191,7 +207,7 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   if (Inst.hasDelaySlot) OS << "|M_DELAY_SLOT_FLAG";
   if (Inst.isCall)       OS << "|M_CALL_FLAG";
   if (Inst.isLoad)       OS << "|M_LOAD_FLAG";
-  if (Inst.isStore)      OS << "|M_STORE_FLAG";
+  if (Inst.isStore || isStore) OS << "|M_STORE_FLAG";
   if (Inst.isTwoAddress) OS << "|M_2_ADDR_FLAG";
   if (Inst.isConvertibleToThreeAddress) OS << "|M_CONVERTIBLE_TO_3_ADDR";
   if (Inst.isCommutable) OS << "|M_COMMUTABLE";
