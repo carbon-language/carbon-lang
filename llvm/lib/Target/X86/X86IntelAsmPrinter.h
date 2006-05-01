@@ -40,8 +40,7 @@ struct X86IntelAsmPrinter : public X86SharedAsmPrinter {
     const MachineOperand &MO = MI->getOperand(OpNo);
     if (MO.getType() == MachineOperand::MO_MachineRegister) {
       assert(MRegisterInfo::isPhysicalRegister(MO.getReg())&&"Not physref??");
-      // Bug Workaround: See note in Printer::doInitialization about %.
-      O << "%" << TM.getRegisterInfo()->get(MO.getReg()).Name;
+      O << TM.getRegisterInfo()->get(MO.getReg()).Name;
     } else {
       printOp(MO, Modifier);
     }

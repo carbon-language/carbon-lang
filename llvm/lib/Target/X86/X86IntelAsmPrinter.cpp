@@ -102,10 +102,9 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
     // FALLTHROUGH
   case MachineOperand::MO_MachineRegister:
     if (MRegisterInfo::isPhysicalRegister(MO.getReg()))
-      // Bug Workaround: See note in Printer::doInitialization about %.
-      O << "%" << RI.get(MO.getReg()).Name;
+      O << RI.get(MO.getReg()).Name;
     else
-      O << "%reg" << MO.getReg();
+      O << "reg" << MO.getReg();
     return;
 
   case MachineOperand::MO_SignExtendedImmed:
@@ -355,7 +354,7 @@ bool X86IntelAsmPrinter::printAsmMRegister(const MachineOperand &MO,
     break;
   }
 
-  O << '%' << Name;
+  O << Name;
   return false;
 }
 
