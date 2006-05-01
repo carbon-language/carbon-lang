@@ -712,6 +712,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
               NextMII = &MI;
               --NextMII;  // backtrack to the copy.
             }
+            VRM.RemoveFromFoldedVirtMap(&MI);
             MBB.erase(&MI);
             goto ProcessNextInst;
           }
