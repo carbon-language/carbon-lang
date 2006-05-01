@@ -50,10 +50,6 @@ namespace {
                         clEnumVal(local,  "  local spiller"),
                         clEnumValEnd),
              cl::init(local));
-
-  // TEMPORARY option to test a fix.
-  cl::opt<bool>
-  SpillerCheckLiveOut("spiller-check-liveout", cl::Hidden);
 }
 
 //===----------------------------------------------------------------------===//
@@ -735,7 +731,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
           // If we get here, the store is dead, nuke it now.
           assert(!(MR & VirtRegMap::isRef) && "Can't be modref!");
           // Don't nuke it if the value is needed in another block.
-          if (!SpillerCheckLiveOut || !(MR & VirtRegMap::isLiveOut)) {
+          if (!(MR & VirtRegMap::isLiveOut)) {
             DEBUG(std::cerr << " Killed store:\t" << *MDSI->second);
             MBB.erase(MDSI->second);
             MaybeDeadStores.erase(MDSI);
