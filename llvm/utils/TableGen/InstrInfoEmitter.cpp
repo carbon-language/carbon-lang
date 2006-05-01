@@ -195,7 +195,7 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
         Record *Operator = OpDef->getDef();
         if (Operator->isSubClassOf("SDNode") &&
             Operator->getValueAsString("Opcode") == "ISD::STORE")
-            isStore = true;
+          isStore = true;
       }
     }
   }
