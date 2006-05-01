@@ -1,5 +1,5 @@
 ; XFAIL: *
-; RUN: llvm-as < %s | llc -march=x86 -enable-x86-fastcc | grep 'jmp \*%ecx'
+; RUN: llvm-as < %s | llc -march=x86 -enable-x86-fastcc | grep 'jmp \*ecx'
 declare int %putchar(int)
 
 int %main(){ 

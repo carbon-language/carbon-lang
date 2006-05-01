@@ -6,7 +6,7 @@
 
 ; Check that the shift gets turned into an LEA.
 
-; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel | not grep 'mov %E.X, %E.X'
+; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel | not grep 'mov E.X, E.X'
 
 ; FIXME: We need live variable information about flags to do this xform safely. :(
 ; XFAIL: *

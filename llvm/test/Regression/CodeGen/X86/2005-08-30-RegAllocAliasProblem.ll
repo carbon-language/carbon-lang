@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel | not grep 'test.*%AL' || \
-; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel | not grep 'cmove.*%EAX'
+; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel | not grep 'test.*AL' || \
+; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel | not grep 'cmove.*EAX'
 
 ; This testcase was compiling to:
 ;
