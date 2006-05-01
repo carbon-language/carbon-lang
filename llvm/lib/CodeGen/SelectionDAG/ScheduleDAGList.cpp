@@ -821,9 +821,9 @@ bool ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   // This would make sure the scheduled code completed all computations and
   // the stores before the next series of computation starts.
   if (!left->isStore && right->isStore)
-    LBonus += 2;
+    LBonus += 4;
   if (left->isStore && !right->isStore)
-    RBonus += 2;
+    RBonus += 4;
 
   // Priority1 is just the number of live range genned.
   int LPriority1 = left ->NumPredsLeft - LBonus;
