@@ -137,11 +137,10 @@ namespace llvm {
       return MI2VirtMap.equal_range(MI);
     }
     
-    /// RemoveFromFoldedVirtMap - Given a machine instruction in the folded
-    /// instruction map, remove the entry in the folded instruction map.
+    /// RemoveFromFoldedVirtMap - If the specified machine instruction is in
+    /// the folded instruction map, remove its entry from the map.
     void RemoveFromFoldedVirtMap(MachineInstr *MI) {
-      bool ErasedAny = MI2VirtMap.erase(MI);
-      assert(ErasedAny && "Machine instr not in folded vreg map!");
+      MI2VirtMap.erase(MI);
     }
 
     void print(std::ostream &OS) const;

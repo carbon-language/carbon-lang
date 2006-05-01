@@ -730,6 +730,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           assert(VirtRegMap::isMod && "Can't be modref!");
           DEBUG(std::cerr << "Removed dead store:\t" << *MDSI->second);
           MBB.erase(MDSI->second);
+          VRM.RemoveFromFoldedVirtMap(MDSI->second);
           MaybeDeadStores.erase(MDSI);
           ++NumDSE;
         }
@@ -791,6 +792,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
               ++NumDCE;
               DEBUG(std::cerr << "Removing now-noop copy: " << MI);
               MBB.erase(&MI);
+              VRM.RemoveFromFoldedVirtMap(&MI);
               goto ProcessNextInst;
             }
             Spills.ClobberPhysReg(VirtReg);
@@ -825,6 +827,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
             ++NumDCE;
             DEBUG(std::cerr << "Removing now-noop copy: " << MI);
             MBB.erase(&MI);
+            VRM.RemoveFromFoldedVirtMap(&MI);
             goto ProcessNextInst;
           }
         }
@@ -835,6 +838,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           DEBUG(std::cerr << "Removed dead store:\t" << *LastStore);
           ++NumDSE;
           MBB.erase(LastStore);
+          VRM.RemoveFromFoldedVirtMap(LastStore);
         }
         LastStore = next(MII);
 
