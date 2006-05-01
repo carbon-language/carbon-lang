@@ -287,12 +287,10 @@ static void EmitInstructions(std::vector<AsmWriterInst> &Insts,
     }
   }
 
-  std::string Namespace = FirstInst.CGI->Namespace;
-
-  O << "  case " << Namespace << "::"
+  O << "  case " << FirstInst.CGI->Namespace << "::"
     << FirstInst.CGI->TheDef->getName() << ":\n";
   for (unsigned i = 0, e = SimilarInsts.size(); i != e; ++i)
-    O << "  case " << Namespace << "::"
+    O << "  case " << SimilarInsts[i].CGI->Namespace << "::"
       << SimilarInsts[i].CGI->TheDef->getName() << ":\n";
   for (unsigned i = 0, e = FirstInst.Operands.size(); i != e; ++i) {
     if (i != DifferingOperand) {
@@ -304,13 +302,13 @@ static void EmitInstructions(std::vector<AsmWriterInst> &Insts,
       // emit a switch for just this operand now.
       O << "    switch (MI->getOpcode()) {\n";
       std::vector<std::pair<std::string, AsmWriterOperand> > OpsToPrint;
-      OpsToPrint.push_back(std::make_pair(Namespace+"::"+
+      OpsToPrint.push_back(std::make_pair(FirstInst.CGI->Namespace + "::" +
                                           FirstInst.CGI->TheDef->getName(),
                                           FirstInst.Operands[i]));
 
       for (unsigned si = 0, e = SimilarInsts.size(); si != e; ++si) {
         AsmWriterInst &AWI = SimilarInsts[si];
-        OpsToPrint.push_back(std::make_pair(Namespace+"::"+
+        OpsToPrint.push_back(std::make_pair(AWI.CGI->Namespace+"::"+
                                             AWI.CGI->TheDef->getName(),
                                             AWI.Operands[i]));
       }
@@ -340,8 +338,6 @@ void AsmWriterEmitter::run(std::ostream &O) {
   "/// it returns false.\n"
     "bool " << Target.getName() << ClassName
             << "::printInstruction(const MachineInstr *MI) {\n";
-
-  std::string Namespace = Target.inst_begin()->second.Namespace;
 
   std::vector<AsmWriterInst> Instructions;
 
