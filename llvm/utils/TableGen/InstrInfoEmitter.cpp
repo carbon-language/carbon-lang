@@ -28,23 +28,31 @@ void InstrInfoEmitter::runEnums(std::ostream &OS) {
   // We must emit the PHI opcode first...
   Record *InstrInfo = Target.getInstructionSet();
 
-  std::string Namespace = Target.inst_begin()->second.Namespace;
-
-  if (!Namespace.empty())
-    OS << "namespace " << Namespace << " {\n";
-  OS << "  enum {\n";
+  std::string Namespace;
+  for (CodeGenTarget::inst_iterator II = Target.inst_begin(), 
+       E = Target.inst_end(); II != E; ++II) {
+    if (II->second.Namespace != "TargetInstrInfo") {
+      Namespace = II->second.Namespace;
+      break;
+    }
+  }
+  
+  if (Namespace.empty()) {
+    std::cerr << "No instructions defined!\n";
+    exit(1);
+  }
 
   std::vector<const CodeGenInstruction*> NumberedInstructions;
   Target.getInstructionsByEnumValue(NumberedInstructions);
 
+  OS << "namespace " << Namespace << " {\n";
+  OS << "  enum {\n";
   for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i) {
     OS << "    " << NumberedInstructions[i]->TheDef->getName()
-       << ", \t// " << i << "\n";
+       << "\t= " << i << ",\n";
   }
-  OS << "    INSTRUCTION_LIST_END\n";
-  OS << "  };\n";
-  if (!Namespace.empty())
-    OS << "}\n";
+  OS << "    INSTRUCTION_LIST_END = " << NumberedInstructions.size() << "\n";
+  OS << "  };\n}\n";
   OS << "} // End llvm namespace \n";
 }
 
