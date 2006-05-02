@@ -731,9 +731,8 @@ bool AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
 void AsmPrinter::printBasicBlockLabel(const MachineBasicBlock *MBB,
                                       bool printColon,
                                       bool printComment) const {
-  O << PrivateGlobalPrefix << "LBB" 
-    << Mang->getValueName(MBB->getParent()->getFunction())
-    << "_" << MBB->getNumber();
+  O << PrivateGlobalPrefix << "BB" << FunctionNumber << "_"
+    << MBB->getNumber();
   if (printColon)
     O << ':';
   if (printComment)
