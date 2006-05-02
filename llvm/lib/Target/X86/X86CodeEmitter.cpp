@@ -116,7 +116,7 @@ void Emitter::emitBasicBlock(MachineBasicBlock &MBB) {
 /// emitPCRelativeValue - Emit a 32-bit PC relative address.
 ///
 void Emitter::emitPCRelativeValue(unsigned Address) {
-  MCE.emitWord(Address-MCE.getCurrentPCValue()-4);
+  MCE.emitWordLE(Address-MCE.getCurrentPCValue()-4);
 }
 
 /// emitPCRelativeBlockAddress - This method emits the PC relative address of
@@ -134,7 +134,7 @@ void Emitter::emitPCRelativeBlockAddress(MachineBasicBlock *MBB) {
     // Otherwise, remember where this reference was and where it is to so we can
     // deal with it later.
     BBRefs.push_back(std::make_pair(MBB, MCE.getCurrentPCValue()));
-    MCE.emitWord(0);
+    MCE.emitWordLE(0);
   }
 }
 
@@ -145,7 +145,7 @@ void Emitter::emitGlobalAddressForCall(GlobalValue *GV, bool isTailCall) {
   MCE.addRelocation(MachineRelocation(MCE.getCurrentPCOffset(),
                                       X86::reloc_pcrel_word, GV, 0,
                                       !isTailCall /*Doesn'tNeedStub*/));
-  MCE.emitWord(0);
+  MCE.emitWordLE(0);
 }
 
 /// emitGlobalAddress - Emit the specified address to the code stream assuming
@@ -155,7 +155,7 @@ void Emitter::emitGlobalAddressForCall(GlobalValue *GV, bool isTailCall) {
 void Emitter::emitGlobalAddressForPtr(GlobalValue *GV, int Disp /* = 0 */) {
   MCE.addRelocation(MachineRelocation(MCE.getCurrentPCOffset(),
                                       X86::reloc_absolute_word, GV));
-  MCE.emitWord(Disp);   // The relocated value will be added to the displacement
+  MCE.emitWordLE(Disp); // The relocated value will be added to the displacement
 }
 
 /// emitExternalSymbolAddress - Arrange for the address of an external symbol to
@@ -165,7 +165,7 @@ void Emitter::emitExternalSymbolAddress(const char *ES, bool isPCRelative,
                                         bool isTailCall) {
   MCE.addRelocation(MachineRelocation(MCE.getCurrentPCOffset(),
           isPCRelative ? X86::reloc_pcrel_word : X86::reloc_absolute_word, ES));
-  MCE.emitWord(0);
+  MCE.emitWordLE(0);
 }
 
 /// N86 namespace - Native X86 Register numbers... used by X86 backend.

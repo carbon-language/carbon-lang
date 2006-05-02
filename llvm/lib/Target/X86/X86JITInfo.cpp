@@ -170,14 +170,14 @@ void *X86JITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
   if (Fn != X86CompilationCallback) {
     MCE.startFunctionStub(5);
     MCE.emitByte(0xE9);
-    MCE.emitWord((intptr_t)Fn-MCE.getCurrentPCValue()-4);
+    MCE.emitWordLE((intptr_t)Fn-MCE.getCurrentPCValue()-4);
     return MCE.finishFunctionStub(0);
   }
 
   MCE.startFunctionStub(6);
   MCE.emitByte(0xE8);   // Call with 32 bit pc-rel destination...
 
-  MCE.emitWord((intptr_t)Fn-MCE.getCurrentPCValue()-4);
+  MCE.emitWordLE((intptr_t)Fn-MCE.getCurrentPCValue()-4);
 
   MCE.emitByte(0xCD);   // Interrupt - Just a marker identifying the stub!
   return MCE.finishFunctionStub(0);

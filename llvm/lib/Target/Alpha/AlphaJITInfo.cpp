@@ -197,7 +197,7 @@ void *AlphaJITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
   MCE.startFunctionStub(19*4);
   void* Addr = (void*)(intptr_t)MCE.getCurrentPCValue();
   for (int x = 0; x < 19; ++ x)
-    MCE.emitWord(0);
+    MCE.emitWordLE(0);
   EmitBranchToAt(Addr, Fn);
   DEBUG(std::cerr << "Emitting Stub to " << Fn << " at [" << Addr << "]\n");
   return MCE.finishFunctionStub(0);

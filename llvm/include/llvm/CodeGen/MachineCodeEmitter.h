@@ -112,14 +112,29 @@ public:
       *CurBufferPtr++ = B;
   }
 
-  /// emitWord - This callback is invoked when a word needs to be written to the
-  /// output stream.
+  /// emitWordLE - This callback is invoked when a 32-bit word needs to be
+  /// written to the output stream in little-endian format.
   ///
-  void emitWord(unsigned W) {
-    // FIXME: handle endian mismatches for .o file emission.
+  void emitWordLE(unsigned W) {
     if (CurBufferPtr+4 <= BufferEnd) {
-      *(unsigned*)CurBufferPtr = W;
-      CurBufferPtr += 4;
+      *CurBufferPtr++ = (unsigned char)(W >>  0);
+      *CurBufferPtr++ = (unsigned char)(W >>  8);
+      *CurBufferPtr++ = (unsigned char)(W >> 16);
+      *CurBufferPtr++ = (unsigned char)(W >> 24);
+    } else {
+      CurBufferPtr = BufferEnd;
+    }
+  }
+  
+  /// emitWordBE - This callback is invoked when a 32-bit word needs to be
+  /// written to the output stream in big-endian format.
+  ///
+  void emitWordBE(unsigned W) {
+    if (CurBufferPtr+4 <= BufferEnd) {
+      *CurBufferPtr++ = (unsigned char)(W >> 24);
+      *CurBufferPtr++ = (unsigned char)(W >> 16);
+      *CurBufferPtr++ = (unsigned char)(W >>  8);
+      *CurBufferPtr++ = (unsigned char)(W >>  0);
     } else {
       CurBufferPtr = BufferEnd;
     }

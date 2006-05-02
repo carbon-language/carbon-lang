@@ -168,23 +168,23 @@ void *PPCJITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
   if (Fn != PPC32CompilationCallback) {
     MCE.startFunctionStub(4*4);
     void *Addr = (void*)(intptr_t)MCE.getCurrentPCValue();
-    MCE.emitWord(0);
-    MCE.emitWord(0);
-    MCE.emitWord(0);
-    MCE.emitWord(0);
+    MCE.emitWordBE(0);
+    MCE.emitWordBE(0);
+    MCE.emitWordBE(0);
+    MCE.emitWordBE(0);
     EmitBranchToAt(Addr, Fn, false);
     return MCE.finishFunctionStub(0);
   }
 
   MCE.startFunctionStub(4*7);
-  MCE.emitWord(0x9421ffe0);     // stwu    r1,-32(r1)
-  MCE.emitWord(0x7d6802a6);     // mflr r11
-  MCE.emitWord(0x91610028);     // stw r11, 40(r1)
+  MCE.emitWordBE(0x9421ffe0);     // stwu    r1,-32(r1)
+  MCE.emitWordBE(0x7d6802a6);     // mflr r11
+  MCE.emitWordBE(0x91610028);     // stw r11, 40(r1)
   void *Addr = (void*)(intptr_t)MCE.getCurrentPCValue();
-  MCE.emitWord(0);
-  MCE.emitWord(0);
-  MCE.emitWord(0);
-  MCE.emitWord(0);
+  MCE.emitWordBE(0);
+  MCE.emitWordBE(0);
+  MCE.emitWordBE(0);
+  MCE.emitWordBE(0);
   EmitBranchToAt(Addr, Fn, true/*is call*/);
   return MCE.finishFunctionStub(0);
 }

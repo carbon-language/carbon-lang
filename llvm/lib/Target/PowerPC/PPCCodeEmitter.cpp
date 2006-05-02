@@ -54,10 +54,6 @@ namespace {
     ///
     void emitBasicBlock(MachineBasicBlock &MBB);
 
-    /// emitWord - write a 32-bit word to memory at the current PC
-    ///
-    void emitWord(unsigned w) { MCE.emitWord(w); }
-
     /// getValueBit - return the particular bit of Val
     ///
     unsigned getValueBit(int64_t Val, unsigned bit) { return (Val >> bit) & 1; }
@@ -133,7 +129,7 @@ void PPCCodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
     unsigned Opcode = MI.getOpcode();
     switch (MI.getOpcode()) {
     default:
-      emitWord(getBinaryCodeForInstr(*I));
+      MCE.emitWordBE(getBinaryCodeForInstr(*I));
       break;
     case PPC::IMPLICIT_DEF_GPR:
     case PPC::IMPLICIT_DEF_F8:
