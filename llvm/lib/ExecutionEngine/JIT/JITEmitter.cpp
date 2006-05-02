@@ -54,10 +54,10 @@ namespace {
   class JITMemoryManager {
     std::list<sys::MemoryBlock> Blocks; // List of blocks allocated by the JIT
     unsigned char *FunctionBase; // Start of the function body area
-    unsigned char *GlobalBase; // Start of the Global area
+    unsigned char *GlobalBase;   // Start of the Global area
     unsigned char *ConstantBase; // Memory allocated for constant pools
     unsigned char *CurStubPtr, *CurFunctionPtr, *CurConstantPtr, *CurGlobalPtr;
-    unsigned char *GOTBase; //Target Specific reserved memory
+    unsigned char *GOTBase;      // Target Specific reserved memory
 
     // centralize memory block allocation
     sys::MemoryBlock getNewMemoryBlock(unsigned size);
@@ -72,9 +72,13 @@ namespace {
                                          unsigned Alignment);
     inline unsigned char *startFunctionBody();
     inline void endFunctionBody(unsigned char *FunctionEnd);
-    inline unsigned char* getGOTBase() const;
-
-    inline bool isManagingGOT() const;
+    
+    unsigned char *getGOTBase() const {
+      return GOTBase;
+    }
+    bool isManagingGOT() const {
+      return GOTBase != NULL;
+    }
   };
 }
 
@@ -117,7 +121,7 @@ JITMemoryManager::~JITMemoryManager() {
 unsigned char *JITMemoryManager::allocateStub(unsigned StubSize) {
   CurStubPtr -= StubSize;
   if (CurStubPtr < FunctionBase) {
-    //FIXME: allocate a new block
+    // FIXME: allocate a new block
     std::cerr << "JIT ran out of memory for function stubs!\n";
     abort();
   }
@@ -167,14 +171,6 @@ unsigned char *JITMemoryManager::startFunctionBody() {
 void JITMemoryManager::endFunctionBody(unsigned char *FunctionEnd) {
   assert(FunctionEnd > CurFunctionPtr);
   CurFunctionPtr = FunctionEnd;
-}
-
-unsigned char* JITMemoryManager::getGOTBase() const {
-  return GOTBase;
-}
-
-bool JITMemoryManager::isManagingGOT() const {
-  return GOTBase != NULL;
 }
 
 sys::MemoryBlock JITMemoryManager::getNewMemoryBlock(unsigned size) {
@@ -439,9 +435,7 @@ namespace {
 public:
     JITEmitter(JIT &jit) : MemMgr(jit.getJITInfo().needsGOT()) {
       TheJIT = &jit;
-      DEBUG(std::cerr <<
-            (MemMgr.isManagingGOT() ? "JIT is managing GOT\n"
-             : "JIT is not managing GOT\n"));
+      DEBUG(if (MemMgr.isManagingGOT()) std::cerr << "JIT is managing a GOT\n");
     }
 
     virtual void startFunction(MachineFunction &F);
