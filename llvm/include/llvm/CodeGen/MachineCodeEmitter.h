@@ -77,12 +77,6 @@ public:
   ///
   virtual void emitByte(unsigned char B) {}
 
-  /// emitWordAt - This callback is invoked when a word needs to be written to
-  /// the output stream at a different position than the current PC (for
-  /// instance, when performing relocations).
-  ///
-  virtual void emitWordAt(unsigned W, unsigned *Ptr) {}
-
   /// emitWord - This callback is invoked when a word needs to be written to the
   /// output stream.
   ///
