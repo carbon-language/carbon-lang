@@ -1126,27 +1126,6 @@ Don't know if unpckhpd is faster. But it is shorter.
 
 //===---------------------------------------------------------------------===//
 
-typedef short  v8i16 __attribute__ ((__vector_size__ (16)));
-v8i16 test(v8i16 x, v8i16 y) {
-  return x + y;
-}
-
-compiles to
-
-_test:
-	paddw %xmm0, %xmm1
-	movaps %xmm1, %xmm0
-	ret
-
-It should be
-
-	paddw %xmm1, %xmm0
-	ret
-
-since paddw is commutative.
-
-//===---------------------------------------------------------------------===//
-
 This testcase:
 
 %G1 = weak global <4 x float> zeroinitializer           ; <<4 x float>*> [#uses=1]
