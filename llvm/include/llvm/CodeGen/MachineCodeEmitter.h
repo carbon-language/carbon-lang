@@ -31,19 +31,50 @@ class Value;
 class GlobalValue;
 class Function;
 
+/// MachineCodeEmitter - This class defines two sorts of methods: those for
+/// emitting the actual bytes of machine code, and those for emitting auxillary
+/// structures, such as jump tables, relocations, etc.
+///
+/// Emission of machine code is complicated by the fact that we don't (in
+/// general) know the size of the machine code that we're about to emit before
+/// we emit it.  As such, we preallocate a certain amount of memory, and set the
+/// BufferBegin/BufferEnd pointers to the start and end of the buffer.  As we
+/// emit machine instructions, we advance the CurBufferPtr to indicate the
+/// location of the next byte to emit.  In the case of a buffer overflow (we
+/// need to emit more machine code than we have allocated space for), the
+/// CurBufferPtr will saturate to BufferEnd and ignore stores.  Once the entire
+/// function has been emitted, the overflow condition is checked, and if it has
+/// occurred, more memory is allocated, and we reemit the code into it.
+/// 
 class MachineCodeEmitter {
+protected:
+  /// BufferBegin/BufferEnd - Pointers to the start and end of the memory
+  /// allocated for this code buffer.
+  unsigned char *BufferBegin, *BufferEnd;
+  
+  /// CurBufferPtr - Pointer to the next byte of memory to fill when emitting 
+  /// code.  This is guranteed to be in the range [BufferBegin,BufferEnd].  If
+  /// this pointer is at BufferEnd, it will never move due to code emission, and
+  /// all code emission requests will be ignored (this is the buffer overflow
+  /// condition).
+  unsigned char *CurBufferPtr;
 public:
   virtual ~MachineCodeEmitter() {}
 
   /// startFunction - This callback is invoked when the specified function is
-  /// about to be code generated.
+  /// about to be code generated.  This initializes the BufferBegin/End/Ptr
+  /// fields.
   ///
   virtual void startFunction(MachineFunction &F) {}
 
   /// finishFunction - This callback is invoked when the specified function has
-  /// finished code generation.
+  /// finished code generation.  If a buffer overflow has occurred, this method
+  /// returns true (the callee is required to try again), otherwise it returns
+  /// false.
   ///
-  virtual void finishFunction(MachineFunction &F) {}
+  virtual bool finishFunction(MachineFunction &F) {
+    return CurBufferPtr == BufferEnd;
+  }
 
   /// emitConstantPool - This callback is invoked to output the constant pool
   /// for the function.
@@ -63,7 +94,8 @@ public:
   /// startFunctionStub - This callback is invoked when the JIT needs the
   /// address of a function that has not been code generated yet.  The StubSize
   /// specifies the total size required by the stub.  Stubs are not allowed to
-  /// have constant pools, the can only use the other emit* methods.
+  /// have constant pools, the can only use the other emitByte*/emitWord*
+  /// methods.
   ///
   virtual void startFunctionStub(unsigned StubSize) {}
 
@@ -75,22 +107,36 @@ public:
   /// emitByte - This callback is invoked when a byte needs to be written to the
   /// output stream.
   ///
-  virtual void emitByte(unsigned char B) {}
+  void emitByte(unsigned char B) {
+    if (CurBufferPtr != BufferEnd)
+      *CurBufferPtr++ = B;
+  }
 
   /// emitWord - This callback is invoked when a word needs to be written to the
   /// output stream.
   ///
-  virtual void emitWord(unsigned W) = 0;
+  void emitWord(unsigned W) {
+    // FIXME: handle endian mismatches for .o file emission.
+    if (CurBufferPtr+4 <= BufferEnd) {
+      *(unsigned*)CurBufferPtr = W;
+      CurBufferPtr += 4;
+    } else {
+      CurBufferPtr = BufferEnd;
+    }
+  }
 
   /// getCurrentPCValue - This returns the address that the next emitted byte
   /// will be output to.
   ///
-  virtual uint64_t getCurrentPCValue() = 0;
-
+  virtual intptr_t getCurrentPCValue() const {
+    return (intptr_t)CurBufferPtr;
+  }
 
   /// getCurrentPCOffset - Return the offset from the start of the emitted
   /// buffer that we are currently writing to.
-  virtual uint64_t getCurrentPCOffset() = 0;
+  intptr_t getCurrentPCOffset() const {
+    return CurBufferPtr-BufferBegin;
+  }
 
   /// addRelocation - Whenever a relocatable address is needed, it should be
   /// noted with this interface.
@@ -108,12 +154,6 @@ public:
   
   // allocateGlobal - Allocate some space for a global variable.
   virtual unsigned char* allocateGlobal(unsigned size, unsigned alignment) = 0;
-
-  /// createFilePrinterEmitter - Return a dynamically allocated
-  /// machine code emitter, which prints binary code to a file.  This
-  /// can be used for debugging users of the MachineCodeEmitter interface.
-  ///
-  static MachineCodeEmitter *createFilePrinterEmitter(MachineCodeEmitter&);
 };
 
 } // End llvm namespace

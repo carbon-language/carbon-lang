@@ -89,13 +89,17 @@ bool PPCCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
   assert((MF.getTarget().getRelocationModel() != Reloc::Default ||
           MF.getTarget().getRelocationModel() != Reloc::Static) &&
          "JIT relocation model must be set to static or default!");
-  MCE.startFunction(MF);
-  MCE.emitConstantPool(MF.getConstantPool());
-  MCE.initJumpTableInfo(MF.getJumpTableInfo());
-  for (MachineFunction::iterator BB = MF.begin(), E = MF.end(); BB != E; ++BB)
-    emitBasicBlock(*BB);
-  MCE.emitJumpTableInfo(MF.getJumpTableInfo(), BBLocations);
-  MCE.finishFunction(MF);
+  do {
+    BBRefs.clear();
+    BBLocations.clear();
+
+    MCE.startFunction(MF);
+    MCE.emitConstantPool(MF.getConstantPool());
+    MCE.initJumpTableInfo(MF.getJumpTableInfo());
+    for (MachineFunction::iterator BB = MF.begin(), E = MF.end(); BB != E; ++BB)
+      emitBasicBlock(*BB);
+    MCE.emitJumpTableInfo(MF.getJumpTableInfo(), BBLocations);
+  } while (MCE.finishFunction(MF));
 
   // Resolve branches to BasicBlocks for the entire function
   for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {

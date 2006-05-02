@@ -56,23 +56,11 @@ namespace llvm {
     ELFCodeEmitter(ELFWriter &ew) : EW(ew), OutBuffer(0) {}
 
     void startFunction(MachineFunction &F);
-    void finishFunction(MachineFunction &F);
+    bool finishFunction(MachineFunction &F);
 
     void emitConstantPool(MachineConstantPool *MCP) {
       if (MCP->isEmpty()) return;
       assert(0 && "unimp");
-    }
-    virtual void emitByte(unsigned char B) {
-      OutBuffer->push_back(B);
-    }
-    virtual void emitWord(unsigned W) {
-      assert(0 && "ni");
-    }
-    virtual uint64_t getCurrentPCValue() {
-      return OutBuffer->size();
-    }
-    virtual uint64_t getCurrentPCOffset() {
-      return OutBuffer->size()-FnStart;
     }
     void addRelocation(const MachineRelocation &MR) {
       assert(0 && "relo not handled yet!");
@@ -113,6 +101,10 @@ void ELFCodeEmitter::startFunction(MachineFunction &F) {
                       ELFWriter::ELFSection::SHF_EXECINSTR |
                       ELFWriter::ELFSection::SHF_ALLOC);
   OutBuffer = &ES->SectionData;
+  std::cerr << "FIXME: This code needs to be updated for changes in the"
+            << " CodeEmitter interfaces.  In particular, this should set "
+            << "BufferBegin/BufferEnd/CurBufferPtr, not deal with OutBuffer!";
+  abort();
 
   // Upgrade the section alignment if required.
   if (ES->Align < Align) ES->Align = Align;
@@ -127,7 +119,7 @@ void ELFCodeEmitter::startFunction(MachineFunction &F) {
 
 /// finishFunction - This callback is invoked after the function is completely
 /// finished.
-void ELFCodeEmitter::finishFunction(MachineFunction &F) {
+bool ELFCodeEmitter::finishFunction(MachineFunction &F) {
   // We now know the size of the function, add a symbol to represent it.
   ELFWriter::ELFSym FnSym(F.getFunction());
 
@@ -157,6 +149,7 @@ void ELFCodeEmitter::finishFunction(MachineFunction &F) {
 
   // Finally, add it to the symtab.
   EW.SymbolTable.push_back(FnSym);
+  return false;
 }
 
 //===----------------------------------------------------------------------===//

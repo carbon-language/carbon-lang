@@ -80,11 +80,15 @@ FunctionPass *llvm::createAlphaCodeEmitterPass(MachineCodeEmitter &MCE) {
 bool AlphaCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
   II = ((AlphaTargetMachine&)MF.getTarget()).getInstrInfo();
 
-  MCE.startFunction(MF);
-  MCE.emitConstantPool(MF.getConstantPool());
-  for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
-    emitBasicBlock(*I);
-  MCE.finishFunction(MF);
+  do {
+    BBRefs.clear();
+    BasicBlockAddrs.clear();
+    
+    MCE.startFunction(MF);
+    MCE.emitConstantPool(MF.getConstantPool());
+    for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
+      emitBasicBlock(*I);
+  } while (MCE.finishFunction(MF));
 
   // Resolve all forward branches now...
   for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {

@@ -413,13 +413,9 @@ namespace {
   class JITEmitter : public MachineCodeEmitter {
     JITMemoryManager MemMgr;
 
-    // CurBlock - The start of the current block of memory.  CurByte - The
-    // current byte being emitted to.
-    unsigned char *CurBlock, *CurByte;
-
     // When outputting a function stub in the context of some other function, we
-    // save CurBlock and CurByte here.
-    unsigned char *SavedCurBlock, *SavedCurByte;
+    // save BufferBegin/BufferEnd/CurBufferPtr here.
+    unsigned char *SavedBufferBegin, *SavedBufferEnd, *SavedCurBufferPtr;
 
     /// Relocations - These are the relocations that the function needs, as
     /// emitted.
@@ -449,22 +445,18 @@ public:
     }
 
     virtual void startFunction(MachineFunction &F);
-    virtual void finishFunction(MachineFunction &F);
+    virtual bool finishFunction(MachineFunction &F);
     virtual void emitConstantPool(MachineConstantPool *MCP);
     virtual void initJumpTableInfo(MachineJumpTableInfo *MJTI);
     virtual void emitJumpTableInfo(MachineJumpTableInfo *MJTI,
                                    std::map<MachineBasicBlock*,uint64_t> &MBBM);
     virtual void startFunctionStub(unsigned StubSize);
     virtual void* finishFunctionStub(const Function *F);
-    virtual void emitByte(unsigned char B);
-    virtual void emitWord(unsigned W);
 
     virtual void addRelocation(const MachineRelocation &MR) {
       Relocations.push_back(MR);
     }
 
-    virtual uint64_t getCurrentPCValue();
-    virtual uint64_t getCurrentPCOffset();
     virtual uint64_t getConstantPoolEntryAddress(unsigned Entry);
     virtual uint64_t getJumpTableEntryAddress(unsigned Entry);
     virtual unsigned char* allocateGlobal(unsigned size, unsigned alignment);
@@ -511,13 +503,16 @@ void *JITEmitter::getPointerToGlobal(GlobalValue *V, void *Reference,
 }
 
 void JITEmitter::startFunction(MachineFunction &F) {
-  CurByte = CurBlock = MemMgr.startFunctionBody();
-  TheJIT->addGlobalMapping(F.getFunction(), CurBlock);
+  BufferBegin = CurBufferPtr = MemMgr.startFunctionBody();
+  TheJIT->updateGlobalMapping(F.getFunction(), BufferBegin);
+  
+  /// FIXME: implement out of space handling correctly!
+  BufferEnd = (unsigned char*)(intptr_t)~0ULL;
 }
 
-void JITEmitter::finishFunction(MachineFunction &F) {
-  MemMgr.endFunctionBody(CurByte);
-  NumBytes += CurByte-CurBlock;
+bool JITEmitter::finishFunction(MachineFunction &F) {
+  MemMgr.endFunctionBody(CurBufferPtr);
+  NumBytes += getCurrentPCOffset();
 
   if (!Relocations.empty()) {
     NumRelos += Relocations.size();
@@ -534,7 +529,7 @@ void JITEmitter::finishFunction(MachineFunction &F) {
           ResultPtr = getJITResolver(this).getExternalFunctionStub(ResultPtr);
       } else if (MR.isGlobalValue())
         ResultPtr = getPointerToGlobal(MR.getGlobalValue(),
-                                       CurBlock+MR.getMachineCodeOffset(),
+                                       BufferBegin+MR.getMachineCodeOffset(),
                                        MR.doesntNeedFunctionStub());
       else //ConstantPoolIndex
         ResultPtr =
@@ -557,25 +552,26 @@ void JITEmitter::finishFunction(MachineFunction &F) {
       }
     }
 
-    TheJIT->getJITInfo().relocate(CurBlock, &Relocations[0],
+    TheJIT->getJITInfo().relocate(BufferBegin, &Relocations[0],
                                   Relocations.size(), MemMgr.getGOTBase());
   }
 
   //Update the GOT entry for F to point to the new code.
   if(MemMgr.isManagingGOT()) {
-    unsigned idx = getJITResolver(this).getGOTIndexForAddr((void*)CurBlock);
-    if (((void**)MemMgr.getGOTBase())[idx] != (void*)CurBlock) {
-      DEBUG(std::cerr << "GOT was out of date for " << (void*)CurBlock
+    unsigned idx = getJITResolver(this).getGOTIndexForAddr((void*)BufferBegin);
+    if (((void**)MemMgr.getGOTBase())[idx] != (void*)BufferBegin) {
+      DEBUG(std::cerr << "GOT was out of date for " << (void*)BufferBegin
             << " pointing at " << ((void**)MemMgr.getGOTBase())[idx] << "\n");
-      ((void**)MemMgr.getGOTBase())[idx] = (void*)CurBlock;
+      ((void**)MemMgr.getGOTBase())[idx] = (void*)BufferBegin;
     }
   }
 
-  DEBUG(std::cerr << "JIT: Finished CodeGen of [" << (void*)CurBlock
+  DEBUG(std::cerr << "JIT: Finished CodeGen of [" << (void*)BufferBegin
                   << "] Function: " << F.getFunction()->getName()
-                  << ": " << CurByte-CurBlock << " bytes of text, "
+                  << ": " << getCurrentPCOffset() << " bytes of text, "
                   << Relocations.size() << " relocations\n");
   Relocations.clear();
+  return false;
 }
 
 void JITEmitter::emitConstantPool(MachineConstantPool *MCP) {
@@ -648,26 +644,20 @@ void JITEmitter::emitJumpTableInfo(MachineJumpTableInfo *MJTI,
 }
 
 void JITEmitter::startFunctionStub(unsigned StubSize) {
-  SavedCurBlock = CurBlock;  SavedCurByte = CurByte;
-  CurByte = CurBlock = MemMgr.allocateStub(StubSize);
+  SavedBufferBegin = BufferBegin;
+  SavedBufferEnd = BufferEnd;
+  SavedCurBufferPtr = CurBufferPtr;
+  
+  BufferBegin = CurBufferPtr = MemMgr.allocateStub(StubSize);
+  BufferEnd = BufferBegin+StubSize+1;
 }
 
 void *JITEmitter::finishFunctionStub(const Function *F) {
-  NumBytes += CurByte-CurBlock;
-  std::swap(CurBlock, SavedCurBlock);
-  CurByte = SavedCurByte;
-  return SavedCurBlock;
-}
-
-void JITEmitter::emitByte(unsigned char B) {
-  *CurByte++ = B;   // Write the byte to memory
-}
-
-void JITEmitter::emitWord(unsigned W) {
-  // This won't work if the endianness of the host and target don't agree!  (For
-  // a JIT this can't happen though.  :)
-  *(unsigned*)CurByte = W;
-  CurByte += sizeof(unsigned);
+  NumBytes += getCurrentPCOffset();
+  std::swap(SavedBufferBegin, BufferBegin);
+  BufferEnd = SavedBufferEnd;
+  CurBufferPtr = SavedCurBufferPtr;
+  return SavedBufferBegin;
 }
 
 // getConstantPoolEntryAddress - Return the address of the 'ConstantNum' entry
@@ -700,17 +690,6 @@ uint64_t JITEmitter::getJumpTableEntryAddress(unsigned Index) {
 unsigned char* JITEmitter::allocateGlobal(unsigned size, unsigned alignment)
 {
   return MemMgr.allocateGlobal(size, alignment);
-}
-
-// getCurrentPCValue - This returns the address that the next emitted byte
-// will be output to.
-//
-uint64_t JITEmitter::getCurrentPCValue() {
-  return (intptr_t)CurByte;
-}
-
-uint64_t JITEmitter::getCurrentPCOffset() {
-  return (intptr_t)CurByte-(intptr_t)CurBlock;
 }
 
 // getPointerToNamedFunction - This function is used as a global wrapper to

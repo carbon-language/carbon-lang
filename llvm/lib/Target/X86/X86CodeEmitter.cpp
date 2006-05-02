@@ -81,13 +81,17 @@ bool Emitter::runOnMachineFunction(MachineFunction &MF) {
          "JIT relocation model must be set to static or default!");
   II = ((X86TargetMachine&)MF.getTarget()).getInstrInfo();
 
-  MCE.startFunction(MF);
-  MCE.emitConstantPool(MF.getConstantPool());
-  MCE.initJumpTableInfo(MF.getJumpTableInfo());
-  for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
-    emitBasicBlock(*I);
-  MCE.emitJumpTableInfo(MF.getJumpTableInfo(), BasicBlockAddrs);
-  MCE.finishFunction(MF);
+  do {
+    BBRefs.clear();
+    BasicBlockAddrs.clear();
+
+    MCE.startFunction(MF);
+    MCE.emitConstantPool(MF.getConstantPool());
+    MCE.initJumpTableInfo(MF.getJumpTableInfo());
+    for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
+      emitBasicBlock(*I);
+    MCE.emitJumpTableInfo(MF.getJumpTableInfo(), BasicBlockAddrs);
+  } while (MCE.finishFunction(MF));
 
   // Resolve all forward branches now.
   for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {
