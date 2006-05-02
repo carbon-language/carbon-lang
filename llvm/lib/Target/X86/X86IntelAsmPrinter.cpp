@@ -15,11 +15,30 @@
 
 #include "X86IntelAsmPrinter.h"
 #include "X86.h"
+#include "llvm/Constants.h"
 #include "llvm/Module.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
+
+X86IntelAsmPrinter::X86IntelAsmPrinter(std::ostream &O, X86TargetMachine &TM)
+    : X86SharedAsmPrinter(O, TM) {
+  CommentString = ";";
+  GlobalPrefix = "_";
+  PrivateGlobalPrefix = "$";
+  AlignDirective = "\talign\t";
+  ZeroDirective = 0;
+  AsciiDirective = "\tdb\t";
+  AscizDirective = 0;
+  Data8bitsDirective = "\t.db\t";
+  Data16bitsDirective = "\t.dw\t";
+  Data32bitsDirective = "\t.dd\t";
+  Data64bitsDirective = "\t.dq\t";
+  HasDotTypeDotSizeDirective = false;
+
+  O << "\t.686\n\t.model flat\n\toption dotname\n";
+}
 
 /// runOnMachineFunction - This uses the printMachineInstruction()
 /// method to print assembly for each instruction.
@@ -38,12 +57,11 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   EmitConstantPool(MF.getConstantPool());
 
   // Print out labels for the function.
-  SwitchSection("\t.text\n", MF.getFunction());
+  SwitchSection(".code\n", MF.getFunction());
   EmitAlignment(4);
-  O << "\t.globl\t" << CurrentFnName << "\n";
-  if (HasDotTypeDotSizeDirective)
-    O << "\t.type\t" << CurrentFnName << ", @function\n";
-  O << CurrentFnName << ":\n";
+  if (MF.getFunction()->getLinkage() == GlobalValue::ExternalLinkage)
+    O << "\tpublic " << CurrentFnName << "\n";
+  O << CurrentFnName << "\tproc near\n";
   
   if (forDarwin) {
     // Emit pre-function debug information.
@@ -70,6 +88,8 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     // Emit post-function debug information.
     DW.EndFunction();
   }
+
+  O << CurrentFnName << "\tendp\n";
 
   // We didn't modify anything.
   return false;
@@ -403,16 +423,74 @@ void X86IntelAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 
 bool X86IntelAsmPrinter::doInitialization(Module &M) {
   X86SharedAsmPrinter::doInitialization(M);
-  // Tell gas we are outputting Intel syntax (not AT&T syntax) assembly.
-  //
-  // Bug: gas in `intel_syntax noprefix' mode interprets the symbol `Sp' in an
-  // instruction as a reference to the register named sp, and if you try to
-  // reference a symbol `Sp' (e.g. `mov ECX, OFFSET Sp') then it gets lowercased
-  // before being looked up in the symbol table. This creates spurious
-  // `undefined symbol' errors when linking. Workaround: Do not use `noprefix'
-  // mode, and decorate all register names with percent signs.
-  O << "\t.intel_syntax\n";
+  Mang->markCharUnacceptable('.');
   return false;
+}
+
+void X86IntelAsmPrinter::EmitZeros(uint64_t NumZeros) const {
+  if (NumZeros) {
+    O << "\tdb " << NumZeros << " dup(0)\n";
+  }
+}
+
+void X86IntelAsmPrinter::EmitString(const ConstantArray *CVA) const {
+  unsigned NumElts = CVA->getNumOperands();
+  if (NumElts) {
+    // ML does not have escape sequences except '' for '.  It also has a maximum
+    // string length of 255.
+    unsigned len = 0;
+    bool inString = false;
+    for (unsigned i = 0; i < NumElts; i++) {
+      int n = cast<ConstantInt>(CVA->getOperand(i))->getRawValue() & 255;
+      if (len == 0)
+        O << "\tdb ";
+
+      if (n >= 32 && n <= 127) {
+        if (!inString) {
+          if (len > 0) {
+            O << ",'";
+            len += 2;
+          } else {
+            O << "'";
+            len++;
+          }
+          inString = true;
+        }
+        if (n == '\'') {
+          O << "'";
+          len++;
+        }
+        O << char(n);
+      } else {
+        if (inString) {
+          O << "'";
+          len++;
+          inString = false;
+        }
+        if (len > 0) {
+          O << ",";
+          len++;
+        }
+        O << n;
+        len += 1 + (n > 9) + (n > 99);
+      }
+
+      if (len > 60) {
+        if (inString) {
+          O << "'";
+          inString = false;
+        }
+        O << "\n";
+        len = 0;
+      }
+    }
+
+    if (len > 0) {
+      if (inString)
+        O << "'";
+      O << "\n";
+    }
+  }
 }
 
 // Include the auto-generated portion of the assembly writer.

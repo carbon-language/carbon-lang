@@ -21,6 +21,7 @@
 
 namespace llvm {
   class Constant;
+  class ConstantArray;
   class Mangler;
   class GlobalVariable;
 
@@ -253,7 +254,11 @@ namespace llvm {
 
     /// EmitZeros - Emit a block of zeros.
     ///
-    void EmitZeros(uint64_t NumZeros) const;
+    virtual void EmitZeros(uint64_t NumZeros) const;
+
+    /// EmitString - Emit a zero-byte-terminated string constant.
+    ///
+    virtual void EmitString(const ConstantArray *CVA) const;
 
     /// EmitConstantValueOnly - Print out the specified constant, without a
     /// storage class.  Only constants of first-class type are allowed here.

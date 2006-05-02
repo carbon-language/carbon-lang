@@ -372,6 +372,21 @@ static void printAsCString(std::ostream &O, const ConstantArray *CVA,
   O << "\"";
 }
 
+/// EmitString - Emit a zero-byte-terminated string constant.
+///
+void AsmPrinter::EmitString(const ConstantArray *CVA) const {
+  unsigned NumElts = CVA->getNumOperands();
+  if (AscizDirective && NumElts && 
+      cast<ConstantInt>(CVA->getOperand(NumElts-1))->getRawValue() == 0) {
+    O << AscizDirective;
+    printAsCString(O, CVA, NumElts-1);
+  } else {
+    O << AsciiDirective;
+    printAsCString(O, CVA, NumElts);
+  }
+  O << "\n";
+}
+
 /// EmitGlobalConstant - Print a general LLVM constant to the .s file.
 ///
 void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
@@ -382,16 +397,7 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
     return;
   } else if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV)) {
     if (CVA->isString()) {
-      unsigned NumElts = CVA->getNumOperands();
-      if (AscizDirective && NumElts && 
-          cast<ConstantInt>(CVA->getOperand(NumElts-1))->getRawValue() == 0) {
-        O << AscizDirective;
-        printAsCString(O, CVA, NumElts-1);
-      } else {
-        O << AsciiDirective;
-        printAsCString(O, CVA, NumElts);
-      }
-      O << "\n";
+      EmitString(CVA);
     } else { // Not a string.  Print the values in successive locations
       for (unsigned i = 0, e = CVA->getNumOperands(); i != e; ++i)
         EmitGlobalConstant(CVA->getOperand(i));

@@ -21,8 +21,7 @@
 namespace llvm {
 
 struct X86IntelAsmPrinter : public X86SharedAsmPrinter {
- X86IntelAsmPrinter(std::ostream &O, X86TargetMachine &TM)
-    : X86SharedAsmPrinter(O, TM) { }
+  X86IntelAsmPrinter(std::ostream &O, X86TargetMachine &TM);
 
   virtual const char *getPassName() const {
     return "X86 Intel-Style Assembly Printer";
@@ -84,13 +83,16 @@ struct X86IntelAsmPrinter : public X86SharedAsmPrinter {
                        unsigned AsmVariant, const char *ExtraCode);
   bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
                              unsigned AsmVariant, const char *ExtraCode);
-    void printMachineInstruction(const MachineInstr *MI);
+  void printMachineInstruction(const MachineInstr *MI);
   void printOp(const MachineOperand &MO, const char *Modifier = 0);
   void printSSECC(const MachineInstr *MI, unsigned Op);
   void printMemReference(const MachineInstr *MI, unsigned Op);
   void printPICLabel(const MachineInstr *MI, unsigned Op);
   bool runOnMachineFunction(MachineFunction &F);
   bool doInitialization(Module &M);
+
+  virtual void EmitZeros(uint64_t NumZeros) const;
+  virtual void EmitString(const ConstantArray *CVA) const;
 };
 
 } // end namespace llvm
