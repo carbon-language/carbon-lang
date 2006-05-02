@@ -60,23 +60,51 @@ asm(
     ".align 2\n"
     ".globl _PPC32CompilationCallback\n"
 "_PPC32CompilationCallback:\n"
-    // Make space for 29 ints r[3-31] and 14 doubles f[0-13]
-    "stwu r1, -272(r1)\n"
-    "mflr r11\n"
-    "stw r11, 280(r1)\n"    // Set up a proper stack frame
-    "stmw r3, 156(r1)\n"    // Save all of the integer registers
+    // Make space for 8 ints r[3-10] and 13 doubles f[1-13] and the 
+    // FIXME: need to save v[0-19] for altivec?
+    // Set up a proper stack frame
+    "stwu r1, -208(r1)\n"
+    "mflr r0\n"
+    "stw r0,  216(r1)\n"
+    // Save all int arg registers
+    "stw r10, 204(r1)\n"    "stw r9,  200(r1)\n"
+    "stw r8,  196(r1)\n"    "stw r7,  192(r1)\n"
+    "stw r6,  188(r1)\n"    "stw r5,  184(r1)\n"
+    "stw r4,  180(r1)\n"    "stw r3,  176(r1)\n"
     // Save all call-clobbered FP regs.
-    "stfd f1, 44(r1)\n"  "stfd f2, 52(r1)\n"  "stfd f3, 60(r1)\n"
-    "stfd f4, 68(r1)\n" "stfd f5, 76(r1)\n" "stfd f6, 84(r1)\n"
-    "stfd f7, 92(r1)\n" "stfd f8, 100(r1)\n" "stfd f9, 108(r1)\n"
-    "stfd f10, 116(r1)\n" "stfd f11, 124(r1)\n" "stfd f12, 132(r1)\n"
-    "stfd f13, 140(r1)\n"
-
-    // Now that everything is saved, go to the C compilation callback function,
-    // passing the address of the intregs and fpregs.
-    "addi r3, r1, 156\n"  // &IntRegs[0]
-    "addi r4, r1, 44\n"   // &FPRegs[0]
+    "stfd f13, 168(r1)\n"   "stfd f12, 160(r1)\n"
+    "stfd f11, 152(r1)\n"   "stfd f10, 144(r1)\n"
+    "stfd f9,  136(r1)\n"   "stfd f8,  128(r1)\n"
+    "stfd f7,  120(r1)\n"   "stfd f6,  112(r1)\n"
+    "stfd f5,  104(r1)\n"   "stfd f4,   96(r1)\n"
+    "stfd f3,   88(r1)\n"   "stfd f2,   80(r1)\n"
+    "stfd f1,   72(r1)\n"
+    // Arguments to Compilation Callback:
+    // r3 - our lr (address of the call instruction in stub plus 4)
+    // r4 - stub's lr (address of instruction that called the stub plus 4)
+    "mr   r3, r0\n"
+    "lwz  r2, 208(r1)\n" // stub's frame
+    "lwz  r4, 8(r2)\n" // stub's lr
     "bl _PPC32CompilationCallbackC\n"
+    "mtctr r3\n"
+    // Restore all int arg registers
+    "lwz r10, 204(r1)\n"    "lwz r9,  200(r1)\n"
+    "lwz r8,  196(r1)\n"    "lwz r7,  192(r1)\n"
+    "lwz r6,  188(r1)\n"    "lwz r5,  184(r1)\n"
+    "lwz r4,  180(r1)\n"    "lwz r3,  176(r1)\n"
+    // Restore all FP arg registers
+    "lfd f13, 168(r1)\n"    "lfd f12, 160(r1)\n"
+    "lfd f11, 152(r1)\n"    "lfd f10, 144(r1)\n"
+    "lfd f9,  136(r1)\n"    "lfd f8,  128(r1)\n"
+    "lfd f7,  120(r1)\n"    "lfd f6,  112(r1)\n"
+    "lfd f5,  104(r1)\n"    "lfd f4,   96(r1)\n"
+    "lfd f3,   88(r1)\n"    "lfd f2,   80(r1)\n"
+    "lfd f1,   72(r1)\n"
+    // Pop 3 frames off the stack and branch to target
+    "lwz  r1, 208(r1)\n"
+    "lwz  r2, 8(r1)\n"
+    "mtlr r2\n"
+    "bctr\n"
     );
 #else
 void PPC32CompilationCallback() {
@@ -85,12 +113,8 @@ void PPC32CompilationCallback() {
 }
 #endif
 
-extern "C" void PPC32CompilationCallbackC(unsigned *IntRegs, double *FPRegs) {
-  unsigned *StubCallAddrPlus4 = (unsigned*)__builtin_return_address(0+1);
-  unsigned *OrigCallAddrPlus4 = (unsigned*)__builtin_return_address(1+1);
-  unsigned *CurStackPtr       = (unsigned*)__builtin_frame_address(0);
-  unsigned *OrigStackPtr      = (unsigned*)__builtin_frame_address(2+1);
-
+extern "C" unsigned *PPC32CompilationCallbackC(unsigned *StubCallAddrPlus4,
+                                               unsigned *OrigCallAddrPlus4) {
   // Adjust the pointer to the address of the call instruction in the stub
   // emitted by emitFunctionStub, rather than the instruction after it.
   unsigned *StubCallAddr = StubCallAddrPlus4 - 1;
@@ -124,37 +148,10 @@ extern "C" void PPC32CompilationCallbackC(unsigned *IntRegs, double *FPRegs) {
   // who took the address of the stub.
   EmitBranchToAt(StubCallAddr, Target, false);
 
-  // Change the stored stack pointer so that we pop three stack frames:
-  // 1. PPC32CompilationCallbackC's frame
-  // 2. _PPC32CompilationCallback's frame
-  // 3. the stub's frame
-  *CurStackPtr = (intptr_t)OrigStackPtr;
-
   // Put the address of the target function to call and the address to return to
   // after calling the target function in a place that is easy to get on the
   // stack after we restore all regs.
-  CurStackPtr[2] = (intptr_t)Target;
-  CurStackPtr[1] = (intptr_t)OrigCallAddrPlus4;
-
-  // Note, this is not a standard epilog!
-#if defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)
-  register unsigned *IRR asm ("r2") = IntRegs;
-  register double   *FRR asm ("r3") = FPRegs;
-  __asm__ __volatile__ (
-  "lfd f1, 0(%0)\n"  "lfd f2, 8(%0)\n"  "lfd f3, 16(%0)\n"
-  "lfd f4, 24(%0)\n" "lfd f5, 32(%0)\n" "lfd f6, 40(%0)\n"
-  "lfd f7, 48(%0)\n" "lfd f8, 56(%0)\n" "lfd f9, 64(%0)\n"
-  "lfd f10, 72(%0)\n" "lfd f11, 80(%0)\n" "lfd f12, 88(%0)\n"
-  "lfd f13, 96(%0)\n"
-  "lmw r3, 0(%1)\n"  // Load all integer regs
-  "lwz r0,4(r1)\n"   // Get OrigCallAddrPlus4 (LR value when stub was called)
-  "mtlr r0\n"        // Put it in the LR register
-  "lwz r0,8(r1)\n"   // Get target function pointer
-  "mtctr r0\n"       // Put it into the CTR register
-  "lwz r1,0(r1)\n"   // Pop three frames off
-  "bctr\n" ::        // Call target function
-  "b" (FRR), "b" (IRR));
-#endif
+  return (unsigned *)Target;
 }
 
 
