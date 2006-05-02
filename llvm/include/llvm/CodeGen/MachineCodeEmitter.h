@@ -115,12 +115,6 @@ public:
   // allocateGlobal - Allocate some space for a global variable.
   virtual unsigned char* allocateGlobal(unsigned size, unsigned alignment) = 0;
 
-  /// createDebugEmitter - Return a dynamically allocated machine
-  /// code emitter, which just prints the opcodes and fields out the cout.  This
-  /// can be used for debugging users of the MachineCodeEmitter interface.
-  ///
-  static MachineCodeEmitter *createDebugEmitter();
-
   /// createFilePrinterEmitter - Return a dynamically allocated
   /// machine code emitter, which prints binary code to a file.  This
   /// can be used for debugging users of the MachineCodeEmitter interface.
