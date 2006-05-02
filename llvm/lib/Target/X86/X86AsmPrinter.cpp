@@ -206,18 +206,6 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
   return false; // success
 }
 
-void X86SharedAsmPrinter::printBasicBlockLabel(const MachineBasicBlock *MBB,
-                                               bool printColon,
-                                               bool printComment) const {
-  O << PrivateGlobalPrefix << "BB" 
-    << Mang->getValueName(MBB->getParent()->getFunction()) << "_" 
-    << MBB->getNumber();
-  if (printColon)
-    O << ':';
-  if (printComment)
-    O << '\t' << CommentString << MBB->getBasicBlock()->getName();
-}
-
 /// createX86CodePrinterPass - Returns a pass that prints the X86 assembly code
 /// for a MachineFunction to the given output stream, using the given target
 /// machine description.
