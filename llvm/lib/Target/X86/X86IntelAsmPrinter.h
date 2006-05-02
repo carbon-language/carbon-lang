@@ -90,7 +90,9 @@ struct X86IntelAsmPrinter : public X86SharedAsmPrinter {
   void printPICLabel(const MachineInstr *MI, unsigned Op);
   bool runOnMachineFunction(MachineFunction &F);
   bool doInitialization(Module &M);
+  bool doFinalization(Module &M);
 
+  virtual void SwitchSection(const char *NewSection, const GlobalValue *GV);
   virtual void EmitZeros(uint64_t NumZeros) const;
   virtual void EmitString(const ConstantArray *CVA) const;
 };

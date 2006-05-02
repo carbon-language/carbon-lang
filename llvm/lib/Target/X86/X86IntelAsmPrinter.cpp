@@ -36,8 +36,6 @@ X86IntelAsmPrinter::X86IntelAsmPrinter(std::ostream &O, X86TargetMachine &TM)
   Data32bitsDirective = "\t.dd\t";
   Data64bitsDirective = "\t.dq\t";
   HasDotTypeDotSizeDirective = false;
-
-  O << "\t.686\n\t.model flat\n\toption dotname\n";
 }
 
 /// runOnMachineFunction - This uses the printMachineInstruction()
@@ -57,7 +55,7 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   EmitConstantPool(MF.getConstantPool());
 
   // Print out labels for the function.
-  SwitchSection(".code\n", MF.getFunction());
+  SwitchSection(".code", MF.getFunction());
   EmitAlignment(4);
   if (MF.getFunction()->getLinkage() == GlobalValue::ExternalLinkage)
     O << "\tpublic " << CurrentFnName << "\n";
@@ -424,7 +422,54 @@ void X86IntelAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 bool X86IntelAsmPrinter::doInitialization(Module &M) {
   X86SharedAsmPrinter::doInitialization(M);
   Mang->markCharUnacceptable('.');
+  PrivateGlobalPrefix = "$";  // need this here too :(
+  O << "\t.686\n\t.model flat\n\n";
+
+  // Emit declarations for external functions.
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
+    if (I->isExternal())
+      O << "\textern " << Mang->getValueName(I) << ":near\n";
+
+  // Emit declarations for external globals.
+  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
+       I != E; ++I) {
+    if (I->isExternal())
+      O << "\textern " << Mang->getValueName(I) << ":byte\n";
+  }
+
   return false;
+}
+
+bool X86IntelAsmPrinter::doFinalization(Module &M) {
+  X86SharedAsmPrinter::doFinalization(M);
+  if (CurrentSection != "")
+    O << CurrentSection << "\tends\n";
+  O << "\tend\n";
+  return false;
+}
+
+void X86IntelAsmPrinter::SwitchSection(const char *NewSection,
+                                       const GlobalValue *GV) {
+  if (*NewSection == 0)
+    return;
+  
+  std::string NS;
+  bool isData = strcmp(NewSection , ".data") == 0;
+
+  if (GV && GV->hasSection())
+    NS = GV->getSection();
+  else if (isData)
+    NS = "_data";
+  else
+    NS = "_text";
+
+  if (CurrentSection != NS) {
+    if (CurrentSection != "")
+      O << CurrentSection << "\tends\n";
+    CurrentSection = NS;
+    O << CurrentSection << (isData ? "\tsegment 'DATA'\n"
+                                   : "\tsegment 'CODE'\n");
+  }
 }
 
 void X86IntelAsmPrinter::EmitZeros(uint64_t NumZeros) const {

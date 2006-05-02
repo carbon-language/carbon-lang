@@ -26,10 +26,12 @@ namespace llvm {
   class GlobalVariable;
 
   class AsmPrinter : public MachineFunctionPass {
+  protected:
     /// CurrentSection - The current section we are emitting to.  This is
     /// controlled and used by the SwitchSection method.
     std::string CurrentSection;
     
+  private:
     /// FunctionNumber - This provides a unique ID for each function emitted in
     /// this translation unit.  It is autoincremented by SetupMachineFunction,
     /// and can be accessed with getFunctionNumber() and 
@@ -185,7 +187,7 @@ namespace llvm {
     /// If the new section is an empty string, this method forgets what the
     /// current section is, but does not emit a .section directive.
     ///
-    void SwitchSection(const char *NewSection, const GlobalValue *GV);
+    virtual void SwitchSection(const char *NewSection, const GlobalValue *GV);
 
     /// getPreferredAlignmentLog - Return the preferred alignment of the
     /// specified global, returned in log form.  This includes an explicitly
