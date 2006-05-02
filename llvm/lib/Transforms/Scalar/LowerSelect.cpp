@@ -47,6 +47,8 @@ namespace {
   X("lowerselect", "Lower select instructions to branches");
 }
 
+// Publically exposed interface to pass...
+const PassInfo *llvm::LowerSelectID = X.getPassInfo();
 //===----------------------------------------------------------------------===//
 // This pass converts SelectInst instructions into conditional branch and PHI
 // instructions.  If the OnlyFP flag is set to true, then only floating point

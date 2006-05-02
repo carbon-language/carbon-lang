@@ -163,6 +163,7 @@ FunctionPass *createLoopUnrollPass();
 //   ret int %Y
 //
 FunctionPass *createPromoteMemoryToRegisterPass();
+extern const PassInfo *PromoteMemoryToRegisterID;
 
 //===----------------------------------------------------------------------===//
 //
@@ -240,31 +241,36 @@ FunctionPass *createLoopSimplifyPass();
 extern const PassInfo *LoopSimplifyID;
 
 //===----------------------------------------------------------------------===//
+// This pass converts SelectInst instructions into conditional branch and PHI
+// instructions.  If the OnlyFP flag is set to true, then only floating point
+// select instructions are lowered.
+//
+FunctionPass *createLowerSelectPass(bool OnlyFP = false);
+extern const PassInfo *LowerSelectID;
+
+//===----------------------------------------------------------------------===//
+//
+// LowerAllocations Pass - Turn malloc and free instructions into %malloc and
+// %free calls.
+//
+//   AU.addRequiredID(LowerAllocationsID);
+//
+FunctionPass *createLowerAllocationsPass(bool LowerMallocArgToInteger = false);
+extern const PassInfo *LowerAllocationsID;
+
+//===----------------------------------------------------------------------===//
 //
 // This pass eliminates call instructions to the current function which occur
 // immediately before return instructions.
 //
 FunctionPass *createTailCallEliminationPass();
 
-
-//===----------------------------------------------------------------------===//
-// This pass convert malloc and free instructions to %malloc & %free function
-// calls.
-//
-FunctionPass *createLowerAllocationsPass(bool LowerMallocArgToInteger = false);
-
 //===----------------------------------------------------------------------===//
 // This pass converts SwitchInst instructions into a sequence of chained binary
 // branch instructions.
 //
 FunctionPass *createLowerSwitchPass();
-
-//===----------------------------------------------------------------------===//
-// This pass converts SelectInst instructions into conditional branch and PHI
-// instructions.  If the OnlyFP flag is set to true, then only floating point
-// select instructions are lowered.
-//
-FunctionPass *createLowerSelectPass(bool OnlyFP = false);
+extern const PassInfo *LowerSwitchID;
 
 //===----------------------------------------------------------------------===//
 // This pass converts PackedType operations into low-level scalar operations.

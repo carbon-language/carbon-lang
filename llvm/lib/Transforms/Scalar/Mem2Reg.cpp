@@ -74,6 +74,8 @@ bool PromotePass::runOnFunction(Function &F) {
   return Changed;
 }
 
+// Publically exposed interface to pass...
+const PassInfo *llvm::PromoteMemoryToRegisterID = X.getPassInfo();
 // createPromoteMemoryToRegister - Provide an entry point to create this pass.
 //
 FunctionPass *llvm::createPromoteMemoryToRegisterPass() {
