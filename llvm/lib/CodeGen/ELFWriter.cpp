@@ -65,9 +65,6 @@ namespace llvm {
     virtual void emitByte(unsigned char B) {
       OutBuffer->push_back(B);
     }
-    virtual void emitWordAt(unsigned W, unsigned *Ptr) {
-      assert(0 && "ni");
-    }
     virtual void emitWord(unsigned W) {
       assert(0 && "ni");
     }

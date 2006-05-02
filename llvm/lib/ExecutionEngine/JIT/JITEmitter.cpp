@@ -458,7 +458,6 @@ public:
     virtual void* finishFunctionStub(const Function *F);
     virtual void emitByte(unsigned char B);
     virtual void emitWord(unsigned W);
-    virtual void emitWordAt(unsigned W, unsigned *Ptr);
 
     virtual void addRelocation(const MachineRelocation &MR) {
       Relocations.push_back(MR);
@@ -669,10 +668,6 @@ void JITEmitter::emitWord(unsigned W) {
   // a JIT this can't happen though.  :)
   *(unsigned*)CurByte = W;
   CurByte += sizeof(unsigned);
-}
-
-void JITEmitter::emitWordAt(unsigned W, unsigned *Ptr) {
-  *Ptr = W;
 }
 
 // getConstantPoolEntryAddress - Return the address of the 'ConstantNum' entry

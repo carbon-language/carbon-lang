@@ -14,7 +14,6 @@
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include <fstream>
 #include <iostream>
-
 using namespace llvm;
 
 namespace {
@@ -104,9 +103,6 @@ namespace {
 
     void emitWord(unsigned W) {
       MCE.emitWord(W);
-    }
-    void emitWordAt(unsigned W, unsigned *Ptr) {
-      MCE.emitWordAt(W, Ptr);
     }
     uint64_t getConstantPoolEntryAddress(unsigned Num) {
       return MCE.getConstantPoolEntryAddress(Num);
