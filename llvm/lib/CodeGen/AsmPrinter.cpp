@@ -47,6 +47,7 @@ AsmPrinter::AsmPrinter(std::ostream &o, TargetMachine &tm)
   AlignDirective("\t.align\t"),
   AlignmentIsInBytes(true),
   SwitchToSectionDirective("\t.section\t"),
+  MLSections(false),
   ConstantPoolSection("\t.section .rodata\n"),
   JumpTableSection("\t.section .rodata\n"),
   StaticCtorsSection("\t.section .ctors,\"aw\",@progbits"),
@@ -63,16 +64,47 @@ AsmPrinter::AsmPrinter(std::ostream &o, TargetMachine &tm)
 ///
 void AsmPrinter::SwitchSection(const char *NewSection, const GlobalValue *GV) {
   std::string NS;
-  
-  if (GV && GV->hasSection())
-    NS = SwitchToSectionDirective + GV->getSection();
-  else
-    NS = std::string("\t")+NewSection;
-  
-  if (CurrentSection != NS) {
-    CurrentSection = NS;
-    if (!CurrentSection.empty())
-      O << CurrentSection << '\n';
+
+  // Microsoft ML/MASM has a fundamentally different approach to handling
+  // sections.
+
+  if (MLSections) {
+    if (*NewSection == 0) {
+      // Simply end the current section, if any.
+      if (CurrentSection != "") {
+        O << CurrentSection << "\tends\n";
+        CurrentSection = "";
+      }
+      return;
+    }
+
+    bool isData = strcmp(NewSection , ".data") == 0;
+
+    if (GV && GV->hasSection())
+      NS = GV->getSection();
+    else if (isData)
+      NS = "_data";
+    else
+      NS = "_text";
+
+    if (CurrentSection != NS) {
+      if (CurrentSection != "")
+        O << CurrentSection << "\tends\n";
+      CurrentSection = NS;
+      O << CurrentSection << (isData ? "\tsegment 'DATA'\n"
+                                     : "\tsegment 'CODE'\n");
+    }
+  } else {
+    if (GV && GV->hasSection())
+      NS = SwitchToSectionDirective + GV->getSection();
+    else
+      NS = std::string("\t")+NewSection;
+    
+    if (CurrentSection != NS) {
+      CurrentSection = NS;
+      if (!CurrentSection.empty())
+        O << CurrentSection << '\n';
+    }
   }
 }
 

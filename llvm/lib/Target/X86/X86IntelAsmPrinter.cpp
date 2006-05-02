@@ -28,6 +28,7 @@ X86IntelAsmPrinter::X86IntelAsmPrinter(std::ostream &O, X86TargetMachine &TM)
   GlobalPrefix = "_";
   PrivateGlobalPrefix = "$";
   AlignDirective = "\talign\t";
+  MLSections = true;
   ZeroDirective = "\tdb\t";
   ZeroDirectiveSuffix = " dup(0)";
   AsciiDirective = "\tdb\t";
@@ -443,34 +444,9 @@ bool X86IntelAsmPrinter::doInitialization(Module &M) {
 
 bool X86IntelAsmPrinter::doFinalization(Module &M) {
   X86SharedAsmPrinter::doFinalization(M);
-  if (CurrentSection != "")
-    O << CurrentSection << "\tends\n";
+  SwitchSection("", 0);
   O << "\tend\n";
   return false;
-}
-
-void X86IntelAsmPrinter::SwitchSection(const char *NewSection,
-                                       const GlobalValue *GV) {
-  if (*NewSection == 0)
-    return;
-  
-  std::string NS;
-  bool isData = strcmp(NewSection , ".data") == 0;
-
-  if (GV && GV->hasSection())
-    NS = GV->getSection();
-  else if (isData)
-    NS = "_data";
-  else
-    NS = "_text";
-
-  if (CurrentSection != NS) {
-    if (CurrentSection != "")
-      O << CurrentSection << "\tends\n";
-    CurrentSection = NS;
-    O << CurrentSection << (isData ? "\tsegment 'DATA'\n"
-                                   : "\tsegment 'CODE'\n");
-  }
 }
 
 void X86IntelAsmPrinter::EmitString(const ConstantArray *CVA) const {
