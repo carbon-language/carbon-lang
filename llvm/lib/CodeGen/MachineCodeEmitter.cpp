@@ -12,55 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/MachineCodeEmitter.h"
-#include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/Function.h"
 #include <fstream>
 #include <iostream>
-#include <ios>
 
 using namespace llvm;
 
 namespace {
-  struct DebugMachineCodeEmitter : public MachineCodeEmitter {
-    void startFunction(MachineFunction &F) {
-      std::cout << "\n**** Writing machine code for function: "
-                << F.getFunction()->getName() << "\n";
-    }
-    void finishFunction(MachineFunction &F) {
-      std::cout << "\n";
-    }
-    void startFunctionStub(unsigned StubSize) {
-      std::cout << "\n--- Function stub:\n";
-    }
-    void *finishFunctionStub(const Function *F) {
-      std::cout << "\n--- End of stub for Function\n";
-      return 0;
-    }
-
-    void emitByte(unsigned char B) {
-      std::cout << "0x" << std::hex << (unsigned int)B << std::dec << " ";
-    }
-    void emitWord(unsigned W) {
-      std::cout << "0x" << std::hex << W << std::dec << " ";
-    }
-    void emitWordAt(unsigned W, unsigned *Ptr) {
-      std::cout << "0x" << std::hex << W << std::dec << " (at "
-                << (void*) Ptr << ") ";
-    }
-
-    void addRelocation(const MachineRelocation &MR) {
-      std::cout << "<relocation> ";
-    }
-
-    virtual unsigned char* allocateGlobal(unsigned size, unsigned alignment)
-    { return 0; }
-
-    uint64_t getConstantPoolEntryAddress(unsigned Num) { return 0; }
-    uint64_t getJumpTableEntryAddress(unsigned Num) { return 0; }
-    uint64_t getCurrentPCValue() { return 0; }
-    uint64_t getCurrentPCOffset() { return 0; }
-  };
-
   class FilePrinterEmitter : public MachineCodeEmitter {
     std::ofstream actual;
     std::ostream &o;
@@ -170,15 +127,6 @@ namespace {
       return MCE.addRelocation(MR);
     }
   };
-}
-
-/// createDebugMachineCodeEmitter - Return a dynamically allocated machine
-/// code emitter, which just prints the opcodes and fields out the cout.  This
-/// can be used for debugging users of the MachineCodeEmitter interface.
-///
-MachineCodeEmitter *
-MachineCodeEmitter::createDebugEmitter() {
-  return new DebugMachineCodeEmitter();
 }
 
 MachineCodeEmitter *
