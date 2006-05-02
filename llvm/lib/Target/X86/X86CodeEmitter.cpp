@@ -89,11 +89,11 @@ bool Emitter::runOnMachineFunction(MachineFunction &MF) {
   MCE.emitJumpTableInfo(MF.getJumpTableInfo(), BasicBlockAddrs);
   MCE.finishFunction(MF);
 
-  // Resolve all forward branches now...
+  // Resolve all forward branches now.
   for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {
     unsigned Location = BasicBlockAddrs[BBRefs[i].first];
     unsigned Ref = BBRefs[i].second;
-    MCE.emitWordAt(Location-Ref-4, (unsigned*)(intptr_t)Ref);
+    *((unsigned*)(intptr_t)Ref) = Location-Ref-4;
   }
   BBRefs.clear();
   BasicBlockAddrs.clear();
