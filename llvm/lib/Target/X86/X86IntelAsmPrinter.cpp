@@ -72,10 +72,10 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
     // Print a label for the basic block if there are any predecessors.
-    if (I->pred_begin() != I->pred_end())
-      O << PrivateGlobalPrefix << "BB" << CurrentFnName << "_" << I->getNumber()
-        << ":\t"
-        << CommentString << " " << I->getBasicBlock()->getName() << "\n";
+    if (I->pred_begin() != I->pred_end()) {
+      printBasicBlockLabel(I, true);
+      O << '\n';
+    }
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II) {
       // Print the assembly for the instruction.

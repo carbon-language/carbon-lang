@@ -276,7 +276,9 @@ namespace llvm {
     
     /// printBasicBlockLabel - This method prints the label for the specified
     /// MachineBasicBlock
-    virtual void printBasicBlockLabel(const MachineBasicBlock *MBB) const;
+    virtual void printBasicBlockLabel(const MachineBasicBlock *MBB,
+                                      bool printColon = false,
+                                      bool printComment = true) const;
     
   private:
     void EmitXXStructorList(Constant *List);

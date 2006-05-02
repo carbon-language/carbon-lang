@@ -191,9 +191,8 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
-    // Print a label for the basic block.
-    O << PrivateGlobalPrefix << "LBB" << CurrentFnName << "_" << I->getNumber()
-      << ":\t" << CommentString << " " << I->getBasicBlock()->getName() << "\n";
+    printBasicBlockLabel(I, true);
+    O << '\n';
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II) {
       // Print the assembly for the instruction.

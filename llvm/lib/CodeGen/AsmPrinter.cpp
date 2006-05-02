@@ -728,9 +728,14 @@ bool AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
 
 /// printBasicBlockLabel - This method prints the label for the specified
 /// MachineBasicBlock
-void AsmPrinter::printBasicBlockLabel(const MachineBasicBlock *MBB) const {
+void AsmPrinter::printBasicBlockLabel(const MachineBasicBlock *MBB,
+                                      bool printColon,
+                                      bool printComment) const {
   O << PrivateGlobalPrefix << "LBB" 
     << Mang->getValueName(MBB->getParent()->getFunction())
-    << "_" << MBB->getNumber() << '\t' << CommentString
-    << MBB->getBasicBlock()->getName();
+    << "_" << MBB->getNumber();
+  if (printColon)
+    O << ':';
+  if (printComment)
+    O << '\t' << CommentString << MBB->getBasicBlock()->getName();
 }

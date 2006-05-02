@@ -116,10 +116,10 @@ bool SparcAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
     // Print a label for the basic block.
-    if (I != MF.begin())
-      O << ".LBB" << Mang->getValueName(MF.getFunction ())
-        << "_" << I->getNumber () << ":\t! "
-        << I->getBasicBlock ()->getName () << "\n";
+    if (I != MF.begin()) {
+      printBasicBlockLabel(I, true);
+      O << '\n';
+    }
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II) {
       // Print the assembly for the instruction.

@@ -233,7 +233,9 @@ namespace {
       printOperand(MI, OpNo+1);
     }
     
-    virtual void printBasicBlockLabel(const MachineBasicBlock *MBB) const; 
+    virtual void printBasicBlockLabel(const MachineBasicBlock *MBB,
+                                      bool printColon = false,
+                                      bool printComment = true) const;
     
     virtual bool runOnMachineFunction(MachineFunction &F) = 0;
     virtual bool doFinalization(Module &M) = 0;
@@ -505,10 +507,15 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   return;
 }
 
-void PPCAsmPrinter::printBasicBlockLabel(const MachineBasicBlock *MBB) const {
+void PPCAsmPrinter::printBasicBlockLabel(const MachineBasicBlock *MBB,
+                                         bool printColon,
+                                         bool printComment) const {
   O << PrivateGlobalPrefix << "BB" << getFunctionNumber() << "_"
-    << MBB->getNumber() << '\t' << CommentString
-    << MBB->getBasicBlock()->getName();
+    << MBB->getNumber();
+  if (printColon)
+    O << ':';
+  if (printComment)
+    O << '\t' << CommentString << MBB->getBasicBlock()->getName();
 }
 
 /// runOnMachineFunction - This uses the printMachineInstruction()
@@ -557,11 +564,8 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
        I != E; ++I) {
     // Print a label for the basic block.
     if (I != MF.begin()) {
-      O << PrivateGlobalPrefix << "BB" << getFunctionNumber() << '_'
-        << I->getNumber() << ":\t";
-      if (!I->getBasicBlock()->getName().empty())
-        O << CommentString << " " << I->getBasicBlock()->getName();
-      O << "\n";
+      printBasicBlockLabel(I, true);
+      O << '\n';
     }
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II) {
