@@ -93,7 +93,6 @@ struct X86IntelAsmPrinter : public X86SharedAsmPrinter {
   bool doFinalization(Module &M);
 
   virtual void SwitchSection(const char *NewSection, const GlobalValue *GV);
-  virtual void EmitZeros(uint64_t NumZeros) const;
   virtual void EmitString(const ConstantArray *CVA) const;
 };
 

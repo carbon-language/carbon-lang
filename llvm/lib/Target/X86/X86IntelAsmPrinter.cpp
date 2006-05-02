@@ -28,7 +28,8 @@ X86IntelAsmPrinter::X86IntelAsmPrinter(std::ostream &O, X86TargetMachine &TM)
   GlobalPrefix = "_";
   PrivateGlobalPrefix = "$";
   AlignDirective = "\talign\t";
-  ZeroDirective = 0;
+  ZeroDirective = "\tdb\t";
+  ZeroDirectiveSuffix = " dup(0)";
   AsciiDirective = "\tdb\t";
   AscizDirective = 0;
   Data8bitsDirective = "\t.db\t";
@@ -469,12 +470,6 @@ void X86IntelAsmPrinter::SwitchSection(const char *NewSection,
     CurrentSection = NS;
     O << CurrentSection << (isData ? "\tsegment 'DATA'\n"
                                    : "\tsegment 'CODE'\n");
-  }
-}
-
-void X86IntelAsmPrinter::EmitZeros(uint64_t NumZeros) const {
-  if (NumZeros) {
-    O << "\tdb " << NumZeros << " dup(0)\n";
   }
 }
 

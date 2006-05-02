@@ -37,6 +37,7 @@ AsmPrinter::AsmPrinter(std::ostream &o, TargetMachine &tm)
   InlineAsmStart("#APP\n\t"),
   InlineAsmEnd("\t#NO_APP\n"),
   ZeroDirective("\t.zero\t"),
+  ZeroDirectiveSuffix(0),
   AsciiDirective("\t.ascii\t"),
   AscizDirective("\t.asciz\t"),
   Data8bitsDirective("\t.byte\t"),
@@ -240,9 +241,12 @@ void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV) const {
 ///
 void AsmPrinter::EmitZeros(uint64_t NumZeros) const {
   if (NumZeros) {
-    if (ZeroDirective)
-      O << ZeroDirective << NumZeros << "\n";
-    else {
+    if (ZeroDirective) {
+      O << ZeroDirective << NumZeros;
+      if (ZeroDirectiveSuffix)
+        O << ZeroDirectiveSuffix;
+      O << "\n";
+    } else {
       for (; NumZeros; --NumZeros)
         O << Data8bitsDirective << "0\n";
     }

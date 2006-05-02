@@ -101,6 +101,7 @@ namespace llvm {
     /// "\t.zero\t" and "\t.space\t".  If this is set to null, the
     /// Data*bitsDirective's will be used to emit zero bytes.
     const char *ZeroDirective;   // Defaults to "\t.zero\t"
+    const char *ZeroDirectiveSuffix;  // Defaults to ""
 
     /// AsciiDirective - This directive allows emission of an ascii string with
     /// the standard C escape characters embedded into it.
@@ -256,7 +257,7 @@ namespace llvm {
 
     /// EmitZeros - Emit a block of zeros.
     ///
-    virtual void EmitZeros(uint64_t NumZeros) const;
+    void EmitZeros(uint64_t NumZeros) const;
 
     /// EmitString - Emit a zero-byte-terminated string constant.
     ///
