@@ -90,8 +90,6 @@ bool PPCCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
     BBLocations.clear();
 
     MCE.startFunction(MF);
-    MCE.emitConstantPool(MF.getConstantPool());
-    MCE.initJumpTableInfo(MF.getJumpTableInfo());
     for (MachineFunction::iterator BB = MF.begin(), E = MF.end(); BB != E; ++BB)
       emitBasicBlock(*BB);
     MCE.emitJumpTableInfo(MF.getJumpTableInfo(), BBLocations);

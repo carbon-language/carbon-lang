@@ -81,7 +81,6 @@ bool AlphaCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
     BasicBlockAddrs.clear();
     
     MCE.startFunction(MF);
-    MCE.emitConstantPool(MF.getConstantPool());
     for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
       emitBasicBlock(*I);
   } while (MCE.finishFunction(MF));

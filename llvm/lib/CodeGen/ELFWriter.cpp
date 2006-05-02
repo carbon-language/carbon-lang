@@ -58,10 +58,6 @@ namespace llvm {
     void startFunction(MachineFunction &F);
     bool finishFunction(MachineFunction &F);
 
-    void emitConstantPool(MachineConstantPool *MCP) {
-      if (MCP->isEmpty()) return;
-      assert(0 && "unimp");
-    }
     void addRelocation(const MachineRelocation &MR) {
       assert(0 && "relo not handled yet!");
     }
@@ -73,6 +69,12 @@ namespace llvm {
       assert(0 && "JT not implementated yet!");
       return 0;
     }
+    
+    virtual void emitJumpTableInfo(MachineJumpTableInfo *MJTI,
+                                   std::map<MachineBasicBlock*,uint64_t> &MBBM){
+      assert(0 && "JT not implementated yet!");
+    }
+
 
     /// JIT SPECIFIC FUNCTIONS - DO NOT IMPLEMENT THESE HERE!
     void startFunctionStub(unsigned StubSize) {

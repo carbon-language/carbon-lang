@@ -54,8 +54,7 @@ namespace {
   class JITMemoryManager {
     std::list<sys::MemoryBlock> Blocks; // List of blocks allocated by the JIT
     unsigned char *FunctionBase; // Start of the function body area
-    unsigned char *ConstantBase; // Memory allocated for constant pools
-    unsigned char *CurStubPtr, *CurFunctionPtr, *CurConstantPtr;
+    unsigned char *CurStubPtr, *CurFunctionPtr;
     unsigned char *GOTBase;      // Target Specific reserved memory
 
     // centralize memory block allocation
@@ -65,8 +64,6 @@ namespace {
     ~JITMemoryManager();
 
     inline unsigned char *allocateStub(unsigned StubSize);
-    inline unsigned char *allocateConstant(unsigned ConstantSize,
-                                           unsigned Alignment);
     inline unsigned char *startFunctionBody();
     inline void endFunctionBody(unsigned char *FunctionEnd);
     
@@ -82,20 +79,14 @@ namespace {
 JITMemoryManager::JITMemoryManager(bool useGOT) {
   // Allocate a 16M block of memory for functions
   sys::MemoryBlock FunBlock = getNewMemoryBlock(16 << 20);
-  // Allocate a 1M block of memory for Constants
-  sys::MemoryBlock ConstBlock = getNewMemoryBlock(1 << 20);
 
   Blocks.push_front(FunBlock);
-  Blocks.push_front(ConstBlock);
 
   FunctionBase = reinterpret_cast<unsigned char*>(FunBlock.base());
-  ConstantBase = reinterpret_cast<unsigned char*>(ConstBlock.base());
 
   // Allocate stubs backwards from the base, allocate functions forward
   // from the base.
   CurStubPtr = CurFunctionPtr = FunctionBase + 512*1024;// Use 512k for stubs
-
-  CurConstantPtr = ConstantBase + ConstBlock.size();
 
   // Allocate the GOT.
   GOTBase = NULL;
@@ -117,23 +108,6 @@ unsigned char *JITMemoryManager::allocateStub(unsigned StubSize) {
     abort();
   }
   return CurStubPtr;
-}
-
-unsigned char *JITMemoryManager::allocateConstant(unsigned ConstantSize,
-                                                  unsigned Alignment) {
-  // Reserve space and align pointer.
-  CurConstantPtr -= ConstantSize;
-  CurConstantPtr =
-    (unsigned char *)((intptr_t)CurConstantPtr & ~((intptr_t)Alignment - 1));
-
-  if (CurConstantPtr < ConstantBase) {
-    //Either allocate another MB or 2xConstantSize
-    sys::MemoryBlock ConstBlock = getNewMemoryBlock(2 * ConstantSize);
-    ConstantBase = reinterpret_cast<unsigned char*>(ConstBlock.base());
-    CurConstantPtr = ConstantBase + ConstBlock.size();
-    return allocateConstant(ConstantSize, Alignment);
-  }
-  return CurConstantPtr;
 }
 
 unsigned char *JITMemoryManager::startFunctionBody() {
@@ -414,10 +388,12 @@ public:
 
     virtual void startFunction(MachineFunction &F);
     virtual bool finishFunction(MachineFunction &F);
-    virtual void emitConstantPool(MachineConstantPool *MCP);
-    virtual void initJumpTableInfo(MachineJumpTableInfo *MJTI);
+    
+    void emitConstantPool(MachineConstantPool *MCP);
+    void initJumpTableInfo(MachineJumpTableInfo *MJTI);
     virtual void emitJumpTableInfo(MachineJumpTableInfo *MJTI,
                                    std::map<MachineBasicBlock*,uint64_t> &MBBM);
+    
     virtual void startFunctionStub(unsigned StubSize);
     virtual void* finishFunctionStub(const Function *F);
 
@@ -471,10 +447,16 @@ void *JITEmitter::getPointerToGlobal(GlobalValue *V, void *Reference,
 
 void JITEmitter::startFunction(MachineFunction &F) {
   BufferBegin = CurBufferPtr = MemMgr.startFunctionBody();
-  TheJIT->updateGlobalMapping(F.getFunction(), BufferBegin);
   
   /// FIXME: implement out of space handling correctly!
   BufferEnd = (unsigned char*)(intptr_t)~0ULL;
+  
+  emitConstantPool(F.getConstantPool());
+  initJumpTableInfo(F.getJumpTableInfo());
+
+  // About to start emitting the machine code for the function.
+  // FIXME: align it?
+  TheJIT->updateGlobalMapping(F.getFunction(), CurBufferPtr);
 }
 
 bool JITEmitter::finishFunction(MachineFunction &F) {
@@ -548,10 +530,11 @@ void JITEmitter::emitConstantPool(MachineConstantPool *MCP) {
   unsigned Size = Constants.back().Offset;
   Size += TheJIT->getTargetData().getTypeSize(Constants.back().Val->getType());
 
-  ConstantPoolBase = MemMgr.allocateConstant(Size, 
-                                       1 << MCP->getConstantPoolAlignment());
+  ConstantPoolBase = allocateSpace(Size, 1 << MCP->getConstantPoolAlignment());
   ConstantPool = MCP;
-  
+
+  if (ConstantPoolBase == 0) return;  // Buffer overflow.
+
   // Initialize the memory for all of the constant pool entries.
   for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
     void *CAddr = (char*)ConstantPoolBase+Constants[i].Offset;
@@ -563,22 +546,23 @@ void JITEmitter::initJumpTableInfo(MachineJumpTableInfo *MJTI) {
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   if (JT.empty()) return;
   
-  unsigned Size = 0;
-  unsigned EntrySize = MJTI->getEntrySize();
+  unsigned NumEntries = 0;
   for (unsigned i = 0, e = JT.size(); i != e; ++i)
-    Size += JT[i].MBBs.size() * EntrySize;
-  
+    NumEntries += JT[i].MBBs.size();
+
+  unsigned EntrySize = MJTI->getEntrySize();
+
   // Just allocate space for all the jump tables now.  We will fix up the actual
   // MBB entries in the tables after we emit the code for each block, since then
   // we will know the final locations of the MBBs in memory.
   JumpTable = MJTI;
-  JumpTableBase = MemMgr.allocateConstant(Size, MJTI->getAlignment());
+  JumpTableBase = allocateSpace(NumEntries * EntrySize, MJTI->getAlignment());
 }
 
 void JITEmitter::emitJumpTableInfo(MachineJumpTableInfo *MJTI,
                                    std::map<MachineBasicBlock*,uint64_t> &MBBM){
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
-  if (JT.empty()) return;
+  if (JT.empty() || JumpTableBase == 0) return;
 
   unsigned Offset = 0;
   unsigned EntrySize = MJTI->getEntrySize();

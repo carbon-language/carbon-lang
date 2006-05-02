@@ -65,31 +65,21 @@ public:
   /// about to be code generated.  This initializes the BufferBegin/End/Ptr
   /// fields.
   ///
-  virtual void startFunction(MachineFunction &F) {}
+  virtual void startFunction(MachineFunction &F) = 0;
 
   /// finishFunction - This callback is invoked when the specified function has
   /// finished code generation.  If a buffer overflow has occurred, this method
   /// returns true (the callee is required to try again), otherwise it returns
   /// false.
   ///
-  virtual bool finishFunction(MachineFunction &F) {
-    return CurBufferPtr == BufferEnd;
-  }
-
-  /// emitConstantPool - This callback is invoked to output the constant pool
-  /// for the function.
-  virtual void emitConstantPool(MachineConstantPool *MCP) {}
-
-  /// initJumpTableInfo - This callback is invoked by the JIT to allocate the
-  /// necessary memory to hold the jump tables.
-  virtual void initJumpTableInfo(MachineJumpTableInfo *MJTI) {}
+  virtual bool finishFunction(MachineFunction &F) = 0;
   
   /// emitJumpTableInfo - This callback is invoked to output the jump tables
   /// for the function.  In addition to a pointer to the MachineJumpTableInfo,
   /// this function also takes a map of MBBs to addresses, so that the final
   /// addresses of the MBBs can be written to the jump tables.
   virtual void emitJumpTableInfo(MachineJumpTableInfo *MJTI,
-                                 std::map<MachineBasicBlock*,uint64_t> &MBBM) {}
+                              std::map<MachineBasicBlock*,uint64_t> &MBBM) = 0;
   
   /// startFunctionStub - This callback is invoked when the JIT needs the
   /// address of a function that has not been code generated yet.  The StubSize
@@ -97,12 +87,12 @@ public:
   /// have constant pools, the can only use the other emitByte*/emitWord*
   /// methods.
   ///
-  virtual void startFunctionStub(unsigned StubSize) {}
+  virtual void startFunctionStub(unsigned StubSize) = 0;
 
   /// finishFunctionStub - This callback is invoked to terminate a function
   /// stub.
   ///
-  virtual void *finishFunctionStub(const Function *F) { return 0; }
+  virtual void *finishFunctionStub(const Function *F) = 0;
 
   /// emitByte - This callback is invoked when a byte needs to be written to the
   /// output stream.

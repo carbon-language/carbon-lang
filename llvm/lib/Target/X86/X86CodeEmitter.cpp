@@ -86,8 +86,6 @@ bool Emitter::runOnMachineFunction(MachineFunction &MF) {
     BasicBlockAddrs.clear();
 
     MCE.startFunction(MF);
-    MCE.emitConstantPool(MF.getConstantPool());
-    MCE.initJumpTableInfo(MF.getJumpTableInfo());
     for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
       emitBasicBlock(*I);
     MCE.emitJumpTableInfo(MF.getJumpTableInfo(), BasicBlockAddrs);
