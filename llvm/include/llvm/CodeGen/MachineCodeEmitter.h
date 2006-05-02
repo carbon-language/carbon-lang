@@ -166,9 +166,6 @@ public:
   /// 'Index' in the function that last called initJumpTableInfo.
   ///
   virtual uint64_t getJumpTableEntryAddress(unsigned Index) = 0;
-  
-  // allocateGlobal - Allocate some space for a global variable.
-  virtual unsigned char* allocateGlobal(unsigned size, unsigned alignment) = 0;
 };
 
 } // End llvm namespace

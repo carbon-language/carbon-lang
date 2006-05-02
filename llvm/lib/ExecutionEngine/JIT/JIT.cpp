@@ -301,10 +301,22 @@ void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
     // If the global hasn't been emitted to memory yet, allocate space.  We will
     // actually initialize the global after current function has finished
     // compilation.
-    uint64_t S = getTargetData().getTypeSize(GV->getType()->getElementType());
-    unsigned char A =
-      getTargetData().getTypeAlignment(GV->getType()->getElementType());
-    Ptr = MCE->allocateGlobal(S, A);
+    const Type *GlobalType = GV->getType()->getElementType();
+    size_t S = getTargetData().getTypeSize(GlobalType);
+    size_t A = getTargetData().getTypeAlignment(GlobalType);
+    if (A <= 8) {
+      Ptr = malloc(S);
+    } else {
+      // Allocate S+A bytes of memory, then use an aligned pointer within that
+      // space.
+      Ptr = malloc(S+A);
+      unsigned MisAligned = ((intptr_t)Ptr & (A-1));
+      unsigned Offset = MisAligned ? (A-MisAligned) : 0;
+      
+      // Trim the tail off the memory block.
+      realloc(Ptr, S+Offset);
+      Ptr = (char*)Ptr + Offset;
+    }
     state.getPendingGlobals(locked).push_back(GV);
   }
   addGlobalMapping(GV, Ptr);

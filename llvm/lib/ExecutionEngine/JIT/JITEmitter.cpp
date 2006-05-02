@@ -54,9 +54,8 @@ namespace {
   class JITMemoryManager {
     std::list<sys::MemoryBlock> Blocks; // List of blocks allocated by the JIT
     unsigned char *FunctionBase; // Start of the function body area
-    unsigned char *GlobalBase;   // Start of the Global area
     unsigned char *ConstantBase; // Memory allocated for constant pools
-    unsigned char *CurStubPtr, *CurFunctionPtr, *CurConstantPtr, *CurGlobalPtr;
+    unsigned char *CurStubPtr, *CurFunctionPtr, *CurConstantPtr;
     unsigned char *GOTBase;      // Target Specific reserved memory
 
     // centralize memory block allocation
@@ -68,8 +67,6 @@ namespace {
     inline unsigned char *allocateStub(unsigned StubSize);
     inline unsigned char *allocateConstant(unsigned ConstantSize,
                                            unsigned Alignment);
-    inline unsigned char* allocateGlobal(unsigned Size,
-                                         unsigned Alignment);
     inline unsigned char *startFunctionBody();
     inline void endFunctionBody(unsigned char *FunctionEnd);
     
@@ -87,28 +84,22 @@ JITMemoryManager::JITMemoryManager(bool useGOT) {
   sys::MemoryBlock FunBlock = getNewMemoryBlock(16 << 20);
   // Allocate a 1M block of memory for Constants
   sys::MemoryBlock ConstBlock = getNewMemoryBlock(1 << 20);
-  // Allocate a 1M Block of memory for Globals
-  sys::MemoryBlock GVBlock = getNewMemoryBlock(1 << 20);
 
   Blocks.push_front(FunBlock);
   Blocks.push_front(ConstBlock);
-  Blocks.push_front(GVBlock);
 
   FunctionBase = reinterpret_cast<unsigned char*>(FunBlock.base());
   ConstantBase = reinterpret_cast<unsigned char*>(ConstBlock.base());
-  GlobalBase = reinterpret_cast<unsigned char*>(GVBlock.base());
 
   // Allocate stubs backwards from the base, allocate functions forward
   // from the base.
   CurStubPtr = CurFunctionPtr = FunctionBase + 512*1024;// Use 512k for stubs
 
   CurConstantPtr = ConstantBase + ConstBlock.size();
-  CurGlobalPtr = GlobalBase + GVBlock.size();
 
-  //Allocate the GOT just like a global array
+  // Allocate the GOT.
   GOTBase = NULL;
-  if (useGOT)
-    GOTBase = allocateGlobal(sizeof(void*) * 8192, 8);
+  if (useGOT) GOTBase = (unsigned char*)malloc(sizeof(void*) * 8192);
 }
 
 JITMemoryManager::~JITMemoryManager() {
@@ -143,23 +134,6 @@ unsigned char *JITMemoryManager::allocateConstant(unsigned ConstantSize,
     return allocateConstant(ConstantSize, Alignment);
   }
   return CurConstantPtr;
-}
-
-unsigned char *JITMemoryManager::allocateGlobal(unsigned Size,
-                                                unsigned Alignment) {
- // Reserve space and align pointer.
-  CurGlobalPtr -= Size;
-  CurGlobalPtr =
-    (unsigned char *)((intptr_t)CurGlobalPtr & ~((intptr_t)Alignment - 1));
-
-  if (CurGlobalPtr < GlobalBase) {
-    //Either allocate another MB or 2xSize
-    sys::MemoryBlock GVBlock =  getNewMemoryBlock(2 * Size);
-    GlobalBase = reinterpret_cast<unsigned char*>(GVBlock.base());
-    CurGlobalPtr = GlobalBase + GVBlock.size();
-    return allocateGlobal(Size, Alignment);
-  }
-  return CurGlobalPtr;
 }
 
 unsigned char *JITMemoryManager::startFunctionBody() {
@@ -453,7 +427,6 @@ public:
 
     virtual uint64_t getConstantPoolEntryAddress(unsigned Entry);
     virtual uint64_t getJumpTableEntryAddress(unsigned Entry);
-    virtual unsigned char* allocateGlobal(unsigned size, unsigned alignment);
 
   private:
     void *getPointerToGlobal(GlobalValue *GV, void *Reference, bool NoNeedStub);
@@ -679,11 +652,6 @@ uint64_t JITEmitter::getJumpTableEntryAddress(unsigned Index) {
     Offset += JT[i].MBBs.size() * EntrySize;
   
   return (intptr_t)((char *)JumpTableBase + Offset);
-}
-
-unsigned char* JITEmitter::allocateGlobal(unsigned size, unsigned alignment)
-{
-  return MemMgr.allocateGlobal(size, alignment);
 }
 
 // getPointerToNamedFunction - This function is used as a global wrapper to
