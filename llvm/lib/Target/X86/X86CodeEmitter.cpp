@@ -35,7 +35,6 @@ namespace {
   class Emitter : public MachineFunctionPass {
     const X86InstrInfo  *II;
     MachineCodeEmitter  &MCE;
-    std::vector<uint64_t> BasicBlockAddrs;
     std::vector<std::pair<MachineBasicBlock *, unsigned> > BBRefs;
   public:
     explicit Emitter(MachineCodeEmitter &mce) : II(0), MCE(mce) {}
@@ -83,30 +82,24 @@ bool Emitter::runOnMachineFunction(MachineFunction &MF) {
 
   do {
     BBRefs.clear();
-    BasicBlockAddrs.clear();
 
     MCE.startFunction(MF);
     for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
       emitBasicBlock(*I);
-    MCE.emitJumpTableInfo(MF.getJumpTableInfo(), BasicBlockAddrs);
   } while (MCE.finishFunction(MF));
 
   // Resolve all forward branches now.
   for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {
-    unsigned Location = BasicBlockAddrs[BBRefs[i].first->getNumber()];
+    unsigned Location = MCE.getMachineBasicBlockAddress(BBRefs[i].first);
     unsigned Ref = BBRefs[i].second;
     *((unsigned*)(intptr_t)Ref) = Location-Ref-4;
   }
   BBRefs.clear();
-  BasicBlockAddrs.clear();
   return false;
 }
 
 void Emitter::emitBasicBlock(MachineBasicBlock &MBB) {
-  if (BasicBlockAddrs.size() <= (unsigned)MBB.getNumber())
-    BasicBlockAddrs.resize((MBB.getNumber()+1)*2);
-  BasicBlockAddrs[MBB.getNumber()] = MCE.getCurrentPCValue();
-
+  MCE.StartMachineBasicBlock(&MBB);
   for (MachineBasicBlock::const_iterator I = MBB.begin(), E = MBB.end();
        I != E; ++I)
     emitInstruction(*I);
@@ -118,23 +111,15 @@ void Emitter::emitPCRelativeValue(unsigned Address) {
   MCE.emitWordLE(Address-MCE.getCurrentPCValue()-4);
 }
 
-/// emitPCRelativeBlockAddress - This method emits the PC relative address of
-/// the specified basic block, or if the basic block hasn't been emitted yet
-/// (because this is a forward branch), it keeps track of the information
-/// necessary to resolve this address later (and emits a dummy value).
+/// emitPCRelativeBlockAddress - This method keeps track of the information
+/// necessary to resolve the address of this block later and emits a dummy
+/// value.
 ///
 void Emitter::emitPCRelativeBlockAddress(MachineBasicBlock *MBB) {
-  // If this is a backwards branch, we already know the address of the target,
-  // so just emit the value.
-  unsigned MBBNo = MBB->getNumber();
-  if (MBBNo < BasicBlockAddrs.size() && BasicBlockAddrs[MBBNo]) {
-    emitPCRelativeValue(BasicBlockAddrs[MBBNo]);
-  } else {
-    // Otherwise, remember where this reference was and where it is to so we can
-    // deal with it later.
-    BBRefs.push_back(std::make_pair(MBB, MCE.getCurrentPCValue()));
-    MCE.emitWordLE(0);
-  }
+  // Remember where this reference was and where it is to so we can
+  // deal with it later.
+  BBRefs.push_back(std::make_pair(MBB, MCE.getCurrentPCValue()));
+  MCE.emitWordLE(0);
 }
 
 /// emitGlobalAddressForCall - Emit the specified address to the code stream

@@ -74,13 +74,6 @@ public:
   ///
   virtual bool finishFunction(MachineFunction &F) = 0;
   
-  /// emitJumpTableInfo - This callback is invoked to output the jump tables
-  /// for the function.  In addition to a pointer to the MachineJumpTableInfo,
-  /// this function also takes a map of MBB IDs to addresses, so that the final
-  /// addresses of the MBBs can be written to the jump tables.
-  virtual void emitJumpTableInfo(MachineJumpTableInfo *MJTI,
-                                 std::vector<uint64_t> &MBBM) = 0;
-  
   /// startFunctionStub - This callback is invoked when the JIT needs the
   /// address of a function that has not been code generated yet.  The StubSize
   /// specifies the total size required by the stub.  Stubs are not allowed to
@@ -158,7 +151,11 @@ public:
     }
     return Result;
   }
-  
+
+  /// StartMachineBasicBlock - This should be called by the target when a new
+  /// basic block is about to be emitted.  This way the MCE knows where the
+  /// start of the block is, and can implement getMachineBasicBlockAddress.
+  virtual void StartMachineBasicBlock(MachineBasicBlock *MBB) = 0;
   
   /// getCurrentPCValue - This returns the address that the next emitted byte
   /// will be output to.
@@ -177,15 +174,24 @@ public:
   /// noted with this interface.
   virtual void addRelocation(const MachineRelocation &MR) = 0;
 
+  
+  /// FIXME: These should all be handled with relocations!
+  
   /// getConstantPoolEntryAddress - Return the address of the 'Index' entry in
   /// the constant pool that was last emitted with the emitConstantPool method.
   ///
-  virtual uint64_t getConstantPoolEntryAddress(unsigned Index) = 0;
+  virtual intptr_t getConstantPoolEntryAddress(unsigned Index) const = 0;
 
   /// getJumpTableEntryAddress - Return the address of the jump table with index
   /// 'Index' in the function that last called initJumpTableInfo.
   ///
-  virtual uint64_t getJumpTableEntryAddress(unsigned Index) = 0;
+  virtual intptr_t getJumpTableEntryAddress(unsigned Index) const = 0;
+  
+  /// getMachineBasicBlockAddress - Return the address of the specified
+  /// MachineBasicBlock, only usable after the label for the MBB has been
+  /// emitted.
+  ///
+  virtual intptr_t getMachineBasicBlockAddress(MachineBasicBlock *MBB) const= 0;
 };
 
 } // End llvm namespace

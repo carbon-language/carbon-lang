@@ -61,20 +61,23 @@ namespace llvm {
     void addRelocation(const MachineRelocation &MR) {
       assert(0 && "relo not handled yet!");
     }
-    virtual uint64_t getConstantPoolEntryAddress(unsigned Index) {
+    
+    virtual void StartMachineBasicBlock(MachineBasicBlock *MBB) {
+    }
+
+    virtual intptr_t getConstantPoolEntryAddress(unsigned Index) const {
       assert(0 && "CP not implementated yet!");
       return 0;
     }
-    virtual uint64_t getJumpTableEntryAddress(unsigned Index) {
+    virtual intptr_t getJumpTableEntryAddress(unsigned Index) const {
       assert(0 && "JT not implementated yet!");
       return 0;
     }
-    
-    virtual void emitJumpTableInfo(MachineJumpTableInfo *MJTI,
-                                   std::vector<uint64_t> &MBBM) {
-      assert(0 && "JT not implementated yet!");
-    }
 
+    virtual intptr_t getMachineBasicBlockAddress(MachineBasicBlock *MBB) const {
+      assert(0 && "JT not implementated yet!");
+      return 0;
+    }
 
     /// JIT SPECIFIC FUNCTIONS - DO NOT IMPLEMENT THESE HERE!
     void startFunctionStub(unsigned StubSize) {

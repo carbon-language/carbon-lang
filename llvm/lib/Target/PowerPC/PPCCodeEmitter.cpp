@@ -33,9 +33,7 @@ namespace {
 
     // Tracks which instruction references which BasicBlock
     std::vector<std::pair<MachineBasicBlock*, unsigned*> > BBRefs;
-    // Tracks where each BasicBlock starts, indexes by BB number.
-    std::vector<uint64_t> BasicBlockAddrs;
-
+    
     /// getMachineOpValue - evaluates the MachineOperand of a given MachineInstr
     ///
     int getMachineOpValue(MachineInstr &MI, MachineOperand &MO);
@@ -87,17 +85,15 @@ bool PPCCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
          "JIT relocation model must be set to static or default!");
   do {
     BBRefs.clear();
-    BasicBlockAddrs.clear();
 
     MCE.startFunction(MF);
     for (MachineFunction::iterator BB = MF.begin(), E = MF.end(); BB != E; ++BB)
       emitBasicBlock(*BB);
-    MCE.emitJumpTableInfo(MF.getJumpTableInfo(), BasicBlockAddrs);
   } while (MCE.finishFunction(MF));
 
   // Resolve branches to BasicBlocks for the entire function
   for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {
-    intptr_t Location = BasicBlockAddrs[BBRefs[i].first->getNumber()];
+    intptr_t Location = MCE.getMachineBasicBlockAddress(BBRefs[i].first);
     unsigned *Ref = BBRefs[i].second;
     DEBUG(std::cerr << "Fixup @ " << (void*)Ref << " to " << (void*)Location
                     << "\n");
@@ -115,15 +111,13 @@ bool PPCCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
     }
   }
   BBRefs.clear();
-  BasicBlockAddrs.clear();
 
   return false;
 }
 
 void PPCCodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
-  if (BasicBlockAddrs.size() <= (unsigned)MBB.getNumber())
-    BasicBlockAddrs.resize((MBB.getNumber()+1)*2);
-  BasicBlockAddrs[MBB.getNumber()] = MCE.getCurrentPCValue();
+  MCE.StartMachineBasicBlock(&MBB);
+  
   for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end(); I != E; ++I){
     MachineInstr &MI = *I;
     unsigned Opcode = MI.getOpcode();
@@ -145,8 +139,8 @@ void PPCCodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
 
 int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
 
-  int rv = 0; // Return value; defaults to 0 for unhandled cases
-                  // or things that get fixed up later by the JIT.
+  intptr_t rv = 0; // Return value; defaults to 0 for unhandled cases
+                   // or things that get fixed up later by the JIT.
   if (MO.isRegister()) {
     rv = PPCRegisterInfo::getRegisterNumbering(MO.getReg());
 

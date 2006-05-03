@@ -35,8 +35,7 @@ namespace {
   class AlphaCodeEmitter : public MachineFunctionPass {
     const AlphaInstrInfo  *II;
     MachineCodeEmitter  &MCE;
-    std::vector<unsigned*> BasicBlockAddrs;
-    std::vector<std::pair<const MachineBasicBlock *, unsigned*> > BBRefs;
+    std::vector<std::pair<MachineBasicBlock *, unsigned*> > BBRefs;
 
     /// getMachineOpValue - evaluates the MachineOperand of a given MachineInstr
     ///
@@ -78,7 +77,6 @@ bool AlphaCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
 
   do {
     BBRefs.clear();
-    BasicBlockAddrs.clear();
     
     MCE.startFunction(MF);
     for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
@@ -87,7 +85,8 @@ bool AlphaCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
 
   // Resolve all forward branches now...
   for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {
-    unsigned* Location = BasicBlockAddrs[BBRefs[i].first->getNumber()];
+    unsigned* Location =
+      (unsigned*)MCE.getMachineBasicBlockAddress(BBRefs[i].first);
     unsigned* Ref = (unsigned*)BBRefs[i].second;
     intptr_t BranchTargetDisp = 
       (((unsigned char*)Location  - (unsigned char*)Ref) >> 2) - 1;
@@ -97,17 +96,11 @@ bool AlphaCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
     *Ref |= (BranchTargetDisp & ((1 << 21)-1));
   }
   BBRefs.clear();
-  BasicBlockAddrs.clear();
-
   return false;
 }
 
 void AlphaCodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
-  if (BasicBlockAddrs.size() <= (unsigned)MBB.getNumber())
-    BasicBlockAddrs.resize((MBB.getNumber()+1)*2);
-
-  BasicBlockAddrs[MBB.getNumber()] = (unsigned*)MCE.getCurrentPCValue();
-
+  MCE.StartMachineBasicBlock(&MBB);
   for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
        I != E; ++I) {
     MachineInstr &MI = *I;
