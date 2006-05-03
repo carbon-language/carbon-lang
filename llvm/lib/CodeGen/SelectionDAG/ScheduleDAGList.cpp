@@ -33,13 +33,6 @@
 using namespace llvm;
 
 namespace {
-  // TEMPORARY option to test a fix.
-  cl::opt<bool>
-  SchedIgnorStore("sched-ignore-store", cl::Hidden);
-
-}
-
-namespace {
   Statistic<> NumNoops ("scheduler", "Number of noops inserted");
   Statistic<> NumStalls("scheduler", "Number of pipeline stalls");
 
@@ -58,7 +51,6 @@ namespace {
     short NumSuccsLeft;                 // # of succs not scheduled.
     short NumChainPredsLeft;            // # of chain preds not scheduled.
     short NumChainSuccsLeft;            // # of chain succs not scheduled.
-    bool isStore          : 1;          // Is a store.
     bool isTwoAddress     : 1;          // Is a two-address instruction.
     bool isDefNUseOperand : 1;          // Is a def&use operand.
     bool isPending        : 1;          // True once pending.
@@ -71,9 +63,9 @@ namespace {
     
     SUnit(SDNode *node, unsigned nodenum)
       : Node(node), NumPredsLeft(0), NumSuccsLeft(0),
-      NumChainPredsLeft(0), NumChainSuccsLeft(0), isStore(false),
-      isTwoAddress(false), isDefNUseOperand(false),
-      isPending(false), isAvailable(false), isScheduled(false), 
+      NumChainPredsLeft(0), NumChainSuccsLeft(0),
+        isTwoAddress(false), isDefNUseOperand(false), isPending(false),
+      isAvailable(false), isScheduled(false),
       Latency(0), CycleBound(0), Cycle(0), NodeNum(nodenum) {}
     
     void dump(const SelectionDAG *G) const;
@@ -82,7 +74,7 @@ namespace {
 }
 
 void SUnit::dump(const SelectionDAG *G) const {
-  std::cerr << "SU: ";
+  std::cerr << "SU(" << NodeNum << "): ";
   Node->dump(G);
   std::cerr << "\n";
   if (FlaggedNodes.size() != 0) {
@@ -325,11 +317,13 @@ void ScheduleDAGList::BuildSchedUnits() {
     
     if (MainNode->isTargetOpcode()) {
       unsigned Opc = MainNode->getTargetOpcode();
-      if (TII->isTwoAddrInstr(Opc))
+      if (TII->isTwoAddrInstr(Opc)) {
         SU->isTwoAddress = true;
-      if (TII->isStore(Opc))
-        if (!SchedIgnorStore)
-          SU->isStore = true;
+        SDNode *OpN = MainNode->getOperand(0).Val;
+        SUnit *OpSU = SUnitMap[OpN];
+        if (OpSU)
+          OpSU->isDefNUseOperand = true;
+      }
     }
     
     // Find all predecessors and successors of the group.
@@ -345,7 +339,7 @@ void ScheduleDAGList::BuildSchedUnits() {
         SUnit *OpSU = SUnitMap[OpN];
         assert(OpSU && "Node has no SUnit!");
         if (OpSU == SU) continue;           // In the same group.
-        
+
         MVT::ValueType OpVT = N->getOperand(i).getValueType();
         assert(OpVT != MVT::Flag && "Flagged nodes should be in same sunit!");
         bool isChain = OpVT == MVT::Other;
@@ -470,6 +464,7 @@ void ScheduleDAGList::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
   DEBUG(SU->dump(&DAG));
   SU->Cycle = CurCycle;
 
+  AvailableQueue->ScheduledNode(SU);
   Sequence.push_back(SU);
 
   // Bottom up: release predecessors
@@ -480,6 +475,8 @@ void ScheduleDAGList::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
     // calculate directly.
     if (!I->second)
       SU->NumPredsLeft--;
+    else
+      SU->NumChainPredsLeft--;
   }
 }
 
@@ -499,9 +496,9 @@ void ScheduleDAGList::ListScheduleBottomUp() {
   // While Available queue is not empty, grab the node with the highest
   // priority. If it is not ready put it back. Schedule the node.
   std::vector<SUnit*> NotReady;
+  SUnit *CurrNode = NULL;
   while (!AvailableQueue->empty()) {
     SUnit *CurrNode = AvailableQueue->pop();
-
     while (!isReady(CurrNode, CurrCycle)) {
       NotReady.push_back(CurrNode);
       CurrNode = AvailableQueue->pop();
@@ -514,7 +511,6 @@ void ScheduleDAGList::ListScheduleBottomUp() {
     ScheduleNodeBottomUp(CurrNode, CurrCycle);
     CurrCycle++;
     CurrNode->isScheduled = true;
-    AvailableQueue->ScheduledNode(CurrNode);
   }
 
   // Add entry node last
@@ -748,12 +744,12 @@ namespace {
     const std::vector<SUnit> *SUnits;
     
     // SethiUllmanNumbers - The SethiUllman number for each node.
-    std::vector<unsigned> SethiUllmanNumbers;
+    std::vector<int> SethiUllmanNumbers;
     
     std::priority_queue<SUnit*, std::vector<SUnit*>, ls_rr_sort> Queue;
   public:
-    RegReductionPriorityQueue() : Queue(ls_rr_sort(this)) {
-    }
+    RegReductionPriorityQueue() :
+    Queue(ls_rr_sort(this)) {}
     
     void initNodes(const std::vector<SUnit> &sunits) {
       SUnits = &sunits;
@@ -765,7 +761,7 @@ namespace {
       SethiUllmanNumbers.clear();
     }
     
-    unsigned getSethiUllmanNumber(unsigned NodeNum) const {
+    int getSethiUllmanNumber(unsigned NodeNum) const {
       assert(NodeNum < SethiUllmanNumbers.size());
       return SethiUllmanNumbers[NodeNum];
     }
@@ -785,88 +781,89 @@ namespace {
       Queue.pop();
       return V;
     }
+
   private:
     void CalculatePriorities();
-    unsigned CalcNodePriority(const SUnit *SU);
+    int CalcNodePriority(const SUnit *SU);
   };
 }
 
 bool ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   unsigned LeftNum  = left->NodeNum;
   unsigned RightNum = right->NodeNum;
-  
-  int LBonus = (int)left ->isDefNUseOperand;
-  int RBonus = (int)right->isDefNUseOperand;
+  bool LIsTarget = left->Node->isTargetOpcode();
+  bool RIsTarget = right->Node->isTargetOpcode();
+  int LPriority = SPQ->getSethiUllmanNumber(LeftNum);
+  int RPriority = SPQ->getSethiUllmanNumber(RightNum);
+  bool LIsFloater = LIsTarget && (LPriority == 1 || LPriority == 0);
+  bool RIsFloater = RIsTarget && (RPriority == 1 || RPriority == 0);
 
-  // Special tie breaker: if two nodes share a operand, the one that
-  // use it as a def&use operand is preferred.
-  if (left->isTwoAddress && !right->isTwoAddress) {
-    SDNode *DUNode = left->Node->getOperand(0).Val;
-    if (DUNode->isOperand(right->Node))
-      LBonus++;
-  }
-  if (!left->isTwoAddress && right->isTwoAddress) {
-    SDNode *DUNode = right->Node->getOperand(0).Val;
-    if (DUNode->isOperand(left->Node))
-      RBonus++;
-  }
-  
-  // Push stores up as much as possible. This really help code like this:
-  //   load
-  //   compute
-  //   store
-  //   load
-  //   compute
-  //   store
-  // This would make sure the scheduled code completed all computations and
-  // the stores before the next series of computation starts.
-  if (!left->isStore && right->isStore)
-    LBonus += 4;
-  if (left->isStore && !right->isStore)
-    RBonus += 4;
+  // Schedule floaters (e.g. load from some constant address) and immediate use
+  // of floaters (with no other operands) just before the use.
+  if (LIsFloater && !RIsFloater)
+    LPriority += 2;
+  else if (!LIsFloater && RIsFloater)
+    RPriority += 2;
 
-  // Priority1 is just the number of live range genned.
-  int LPriority1 = left ->NumPredsLeft - LBonus;
-  int RPriority1 = right->NumPredsLeft - RBonus;
-  int LPriority2 = SPQ->getSethiUllmanNumber(LeftNum) + LBonus;
-  int RPriority2 = SPQ->getSethiUllmanNumber(RightNum) + RBonus;
-  
-  if (LPriority1 > RPriority1)
+  // Special tie breaker: if two nodes share a operand, the one that use it
+  // as a def&use operand is preferred.
+  if (LIsTarget && RIsTarget) {
+    if (left->isTwoAddress && !right->isTwoAddress) {
+      SDNode *DUNode = left->Node->getOperand(0).Val;
+      if (DUNode->isOperand(right->Node))
+        LPriority += 2;
+    }
+    if (!left->isTwoAddress && right->isTwoAddress) {
+      SDNode *DUNode = right->Node->getOperand(0).Val;
+      if (DUNode->isOperand(left->Node))
+        RPriority += 2;
+    }
+  }
+
+  if (LPriority < RPriority)
     return true;
-  else if (LPriority1 == RPriority1)
-    if (LPriority2 < RPriority2)
+  else if (LPriority == RPriority)
+    if (left->NumPredsLeft > right->NumPredsLeft)
       return true;
-    else if (LPriority2 == RPriority2)
+    else if (left->NumPredsLeft == right->NumPredsLeft)
       if (left->CycleBound > right->CycleBound) 
         return true;
-  
   return false;
 }
 
 
 /// CalcNodePriority - Priority is the Sethi Ullman number. 
 /// Smaller number is the higher priority.
-unsigned RegReductionPriorityQueue::CalcNodePriority(const SUnit *SU) {
-  unsigned &SethiUllmanNumber = SethiUllmanNumbers[SU->NodeNum];
+int RegReductionPriorityQueue::CalcNodePriority(const SUnit *SU) {
+  int &SethiUllmanNumber = SethiUllmanNumbers[SU->NodeNum];
   if (SethiUllmanNumber != 0)
     return SethiUllmanNumber;
-  
-  if (SU->Preds.size() == 0) {
+
+  unsigned Opc = SU->Node->getOpcode();
+  if (Opc == ISD::TokenFactor || Opc == ISD::CopyToReg)
+    SethiUllmanNumber = INT_MAX - 10;
+  else if (SU->NumSuccsLeft == 0)
+    // If SU does not have a use, i.e. it doesn't produce a value that would
+    // be consumed (e.g. store), then it terminates a chain of computation.
+    // Give it a small SethiUllman number so it will be scheduled right before its
+    // predecessors that it doesn't lengthen their live ranges.
+    SethiUllmanNumber = INT_MIN + 10;
+  else if (SU->NumPredsLeft == 0 && Opc != ISD::CopyFromReg)
     SethiUllmanNumber = 1;
-  } else {
+  else {
     int Extra = 0;
     for (std::set<std::pair<SUnit*, bool> >::const_iterator
          I = SU->Preds.begin(), E = SU->Preds.end(); I != E; ++I) {
-      if (I->second) continue;  // ignore chain preds.
+      if (I->second) continue;  // ignore chain preds
       SUnit *PredSU = I->first;
-      unsigned PredSethiUllman = CalcNodePriority(PredSU);
+      int PredSethiUllman = CalcNodePriority(PredSU);
       if (PredSethiUllman > SethiUllmanNumber) {
         SethiUllmanNumber = PredSethiUllman;
         Extra = 0;
-      } else if (PredSethiUllman == SethiUllmanNumber)
+      } else if (PredSethiUllman == SethiUllmanNumber && !I->second)
         Extra++;
     }
-    
+
     SethiUllmanNumber += Extra;
   }
   
@@ -964,7 +961,7 @@ public:
     // single predecessor has a higher priority, since scheduling it will make
     // the node available.
     void ScheduledNode(SUnit *Node);
-    
+
 private:
     void CalculatePriorities();
     int CalcLatency(const SUnit &SU);
