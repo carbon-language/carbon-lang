@@ -50,7 +50,6 @@ namespace {
     void emitInstruction(const MachineInstr &MI);
 
   private:
-    void emitBasicBlock(MachineBasicBlock &MBB);
     void emitPCRelativeBlockAddress(MachineBasicBlock *MBB);
     void emitPCRelativeValue(unsigned Address);
     void emitGlobalAddressForCall(GlobalValue *GV, bool isTailCall);
@@ -84,8 +83,13 @@ bool Emitter::runOnMachineFunction(MachineFunction &MF) {
     BBRefs.clear();
 
     MCE.startFunction(MF);
-    for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
-      emitBasicBlock(*I);
+    for (MachineFunction::iterator MBB = MF.begin(), E = MF.end(); 
+         MBB != E; ++MBB) {
+      MCE.StartMachineBasicBlock(MBB);
+      for (MachineBasicBlock::const_iterator I = MBB->begin(), E = MBB->end();
+           I != E; ++I)
+        emitInstruction(*I);
+    }
   } while (MCE.finishFunction(MF));
 
   // Resolve all forward branches now.
@@ -96,13 +100,6 @@ bool Emitter::runOnMachineFunction(MachineFunction &MF) {
   }
   BBRefs.clear();
   return false;
-}
-
-void Emitter::emitBasicBlock(MachineBasicBlock &MBB) {
-  MCE.StartMachineBasicBlock(&MBB);
-  for (MachineBasicBlock::const_iterator I = MBB.begin(), E = MBB.end();
-       I != E; ++I)
-    emitInstruction(*I);
 }
 
 /// emitPCRelativeValue - Emit a 32-bit PC relative address.
