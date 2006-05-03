@@ -30,7 +30,6 @@
 #include "llvm/System/Memory.h"
 #include <algorithm>
 #include <iostream>
-#include <list>
 using namespace llvm;
 
 namespace {
@@ -52,7 +51,7 @@ namespace {
   /// are emitting is.  This never bothers to release the memory, because when
   /// we are ready to destroy the JIT, the program exits.
   class JITMemoryManager {
-    std::list<sys::MemoryBlock> Blocks; // List of blocks allocated by the JIT
+    std::vector<sys::MemoryBlock> Blocks; // Memory blocks allocated by the JIT
     unsigned char *FunctionBase; // Start of the function body area
     unsigned char *CurStubPtr, *CurFunctionPtr;
     unsigned char *GOTBase;      // Target Specific reserved memory
@@ -80,8 +79,6 @@ JITMemoryManager::JITMemoryManager(bool useGOT) {
   // Allocate a 16M block of memory for functions
   sys::MemoryBlock FunBlock = getNewMemoryBlock(16 << 20);
 
-  Blocks.push_front(FunBlock);
-
   FunctionBase = reinterpret_cast<unsigned char*>(FunBlock.base());
 
   // Allocate stubs backwards from the base, allocate functions forward
@@ -94,9 +91,8 @@ JITMemoryManager::JITMemoryManager(bool useGOT) {
 }
 
 JITMemoryManager::~JITMemoryManager() {
-  for (std::list<sys::MemoryBlock>::iterator ib = Blocks.begin(),
-       ie = Blocks.end(); ib != ie; ++ib)
-    sys::Memory::ReleaseRWX(*ib);
+  for (unsigned i = 0, e = Blocks.size(); i != e; ++i)
+    sys::Memory::ReleaseRWX(Blocks[i]);
   Blocks.clear();
 }
 
@@ -122,20 +118,16 @@ void JITMemoryManager::endFunctionBody(unsigned char *FunctionEnd) {
 }
 
 sys::MemoryBlock JITMemoryManager::getNewMemoryBlock(unsigned size) {
-  const sys::MemoryBlock* BOld = 0;
-  if (Blocks.size())
-    BOld = &Blocks.front();
-  //never allocate less than 1 MB
-  sys::MemoryBlock B;
   try {
-    B = sys::Memory::AllocateRWX(std::max(((unsigned)1 << 20), size), BOld);
-  } catch (std::string& err) {
+    const sys::MemoryBlock *BOld = Blocks.empty() ? 0 : &Blocks.front();
+    sys::MemoryBlock B = sys::Memory::AllocateRWX(size, BOld);
+    Blocks.push_back(B);
+    return B;
+  } catch (std::string &err) {
     std::cerr << "Allocation failed when allocating new memory in the JIT\n";
     std::cerr << err << "\n";
     abort();
   }
-  Blocks.push_front(B);
-  return B;
 }
 
 //===----------------------------------------------------------------------===//
