@@ -107,9 +107,7 @@ unsigned char *JITMemoryManager::allocateStub(unsigned StubSize) {
 }
 
 unsigned char *JITMemoryManager::startFunctionBody() {
-  // Round up to an even multiple of 8 bytes, this should eventually be target
-  // specific.
-  return (unsigned char*)(((intptr_t)CurFunctionPtr + 7) & ~7);
+  return CurFunctionPtr;
 }
 
 void JITMemoryManager::endFunctionBody(unsigned char *FunctionEnd) {
@@ -447,7 +445,7 @@ void JITEmitter::startFunction(MachineFunction &F) {
   initJumpTableInfo(F.getJumpTableInfo());
 
   // About to start emitting the machine code for the function.
-  // FIXME: align it?
+  emitAlignment(std::max(F.getFunction()->getAlignment(), 8U));
   TheJIT->updateGlobalMapping(F.getFunction(), CurBufferPtr);
 }
 
