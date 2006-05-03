@@ -6,7 +6,7 @@
 #           libraries. The output of this script should periodically replace 
 #           the similar content in the UsingLibraries.html document.
 #
-# Syntax:   GenLibDeps.pl <directory_with_libraries_in_it>
+# Syntax:   GenLibDeps.pl [-flat] <directory_with_libraries_in_it>
 #
 
 # Parse arguments... 
@@ -76,7 +76,7 @@ sub gen_one_entry {
     print "  <dt><b>$lib</b</dt><dd><ul>\n";
   }
   open UNDEFS, 
-    "nm -g -u $Directory/$lib | grep ' U ' | sed -e 's/         U //' | sort | uniq |";
+    "nm -g -u $Directory/$lib | sed -e 's/^  *U //' | sort | uniq |";
   open DEPENDS,
     "| sort | uniq > GenLibDeps.out";
   while (<UNDEFS>) {
