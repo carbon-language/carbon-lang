@@ -517,6 +517,9 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
       else if (MI.getOperand(4).isGlobalAddress())
         emitGlobalAddressForPtr(MI.getOperand(4).getGlobal(),
                                 MI.getOperand(4).getOffset());
+      else if (MI.getOperand(4).isJumpTableIndex())
+        emitConstant(MCE.getJumpTableEntryAddress(MI.getOperand(4)
+                                                    .getJumpTableIndex()), 4);
       else
         assert(0 && "Unknown operand!");
     }
