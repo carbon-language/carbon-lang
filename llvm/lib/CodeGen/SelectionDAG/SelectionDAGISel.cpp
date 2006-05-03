@@ -225,9 +225,9 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
     if (AllocaInst *AI = dyn_cast<AllocaInst>(I))
       if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(AI->getArraySize())) {
         const Type *Ty = AI->getAllocatedType();
-        uint64_t TySize = TLI.getTargetData().getTypeSize(Ty);
+        uint64_t TySize = TLI.getTargetData()->getTypeSize(Ty);
         unsigned Align = 
-          std::max((unsigned)TLI.getTargetData().getTypeAlignment(Ty),
+          std::max((unsigned)TLI.getTargetData()->getTypeAlignment(Ty),
                    AI->getAlignment());
 
         // If the alignment of the value is smaller than the size of the value,
@@ -394,7 +394,7 @@ public:
   // implemented with a libcall, etc.
   TargetLowering &TLI;
   SelectionDAG &DAG;
-  const TargetData &TD;
+  const TargetData *TD;
 
   /// SwitchCases - Vector of CaseBlock structures used to communicate
   /// SwitchInst code generation information.
@@ -1202,7 +1202,7 @@ void SelectionDAGLowering::visitShuffleVector(User &I) {
 void SelectionDAGLowering::visitGetElementPtr(User &I) {
   SDOperand N = getValue(I.getOperand(0));
   const Type *Ty = I.getOperand(0)->getType();
-  const Type *UIntPtrTy = TD.getIntPtrType();
+  const Type *UIntPtrTy = TD->getIntPtrType();
 
   for (GetElementPtrInst::op_iterator OI = I.op_begin()+1, E = I.op_end();
        OI != E; ++OI) {
@@ -1211,7 +1211,7 @@ void SelectionDAGLowering::visitGetElementPtr(User &I) {
       unsigned Field = cast<ConstantUInt>(Idx)->getValue();
       if (Field) {
         // N = N + Offset
-        uint64_t Offset = TD.getStructLayout(StTy)->MemberOffsets[Field];
+        uint64_t Offset = TD->getStructLayout(StTy)->MemberOffsets[Field];
         N = DAG.getNode(ISD::ADD, N.getValueType(), N,
                         getIntPtrConstant(Offset));
       }
@@ -1225,15 +1225,15 @@ void SelectionDAGLowering::visitGetElementPtr(User &I) {
 
         uint64_t Offs;
         if (ConstantSInt *CSI = dyn_cast<ConstantSInt>(CI))
-          Offs = (int64_t)TD.getTypeSize(Ty)*CSI->getValue();
+          Offs = (int64_t)TD->getTypeSize(Ty)*CSI->getValue();
         else
-          Offs = TD.getTypeSize(Ty)*cast<ConstantUInt>(CI)->getValue();
+          Offs = TD->getTypeSize(Ty)*cast<ConstantUInt>(CI)->getValue();
         N = DAG.getNode(ISD::ADD, N.getValueType(), N, getIntPtrConstant(Offs));
         continue;
       }
       
       // N = N + Idx * ElementSize;
-      uint64_t ElementSize = TD.getTypeSize(Ty);
+      uint64_t ElementSize = TD->getTypeSize(Ty);
       SDOperand IdxN = getValue(Idx);
 
       // If the index is smaller or larger than intptr_t, truncate or extend
@@ -1271,8 +1271,8 @@ void SelectionDAGLowering::visitAlloca(AllocaInst &I) {
     return;   // getValue will auto-populate this.
 
   const Type *Ty = I.getAllocatedType();
-  uint64_t TySize = TLI.getTargetData().getTypeSize(Ty);
-  unsigned Align = std::max((unsigned)TLI.getTargetData().getTypeAlignment(Ty),
+  uint64_t TySize = TLI.getTargetData()->getTypeSize(Ty);
+  unsigned Align = std::max((unsigned)TLI.getTargetData()->getTypeAlignment(Ty),
                             I.getAlignment());
 
   SDOperand AllocSize = getValue(I.getArraySize());
@@ -2267,12 +2267,12 @@ void SelectionDAGLowering::visitMalloc(MallocInst &I) {
     Src = DAG.getNode(ISD::ZERO_EXTEND, IntPtr, Src);
 
   // Scale the source by the type size.
-  uint64_t ElementSize = TD.getTypeSize(I.getType()->getElementType());
+  uint64_t ElementSize = TD->getTypeSize(I.getType()->getElementType());
   Src = DAG.getNode(ISD::MUL, Src.getValueType(),
                     Src, getIntPtrConstant(ElementSize));
 
   std::vector<std::pair<SDOperand, const Type*> > Args;
-  Args.push_back(std::make_pair(Src, TLI.getTargetData().getIntPtrType()));
+  Args.push_back(std::make_pair(Src, TLI.getTargetData()->getIntPtrType()));
 
   std::pair<SDOperand,SDOperand> Result =
     TLI.LowerCallTo(getRoot(), I.getType(), false, CallingConv::C, true,
@@ -2285,7 +2285,7 @@ void SelectionDAGLowering::visitMalloc(MallocInst &I) {
 void SelectionDAGLowering::visitFree(FreeInst &I) {
   std::vector<std::pair<SDOperand, const Type*> > Args;
   Args.push_back(std::make_pair(getValue(I.getOperand(0)),
-                                TLI.getTargetData().getIntPtrType()));
+                                TLI.getTargetData()->getIntPtrType()));
   MVT::ValueType IntPtr = TLI.getPointerTy();
   std::pair<SDOperand,SDOperand> Result =
     TLI.LowerCallTo(getRoot(), Type::VoidTy, false, CallingConv::C, true,
@@ -2766,7 +2766,7 @@ static Value *InsertGEPComputeCode(Value *&V, BasicBlock *BB, Instruction *GEPI,
 /// stores that use it.  In this case, decompose the GEP and move constant
 /// indices into blocks that use it.
 static void OptimizeGEPExpression(GetElementPtrInst *GEPI,
-                                  const TargetData &TD) {
+                                  const TargetData *TD) {
   // If this GEP is only used inside the block it is defined in, there is no
   // need to rewrite it.
   bool isUsedOutsideDefBB = false;
@@ -2797,7 +2797,7 @@ static void OptimizeGEPExpression(GetElementPtrInst *GEPI,
   // Otherwise, decompose the GEP instruction into multiplies and adds.  Sum the
   // constant offset (which we now know is non-zero) and deal with it later.
   uint64_t ConstantOffset = 0;
-  const Type *UIntPtrTy = TD.getIntPtrType();
+  const Type *UIntPtrTy = TD->getIntPtrType();
   Value *Ptr = new CastInst(GEPI->getOperand(0), UIntPtrTy, "", GEPI);
   const Type *Ty = GEPI->getOperand(0)->getType();
 
@@ -2807,7 +2807,7 @@ static void OptimizeGEPExpression(GetElementPtrInst *GEPI,
     if (const StructType *StTy = dyn_cast<StructType>(Ty)) {
       unsigned Field = cast<ConstantUInt>(Idx)->getValue();
       if (Field)
-        ConstantOffset += TD.getStructLayout(StTy)->MemberOffsets[Field];
+        ConstantOffset += TD->getStructLayout(StTy)->MemberOffsets[Field];
       Ty = StTy->getElementType(Field);
     } else {
       Ty = cast<SequentialType>(Ty)->getElementType();
@@ -2817,9 +2817,9 @@ static void OptimizeGEPExpression(GetElementPtrInst *GEPI,
         if (CI->getRawValue() == 0) continue;
         
         if (ConstantSInt *CSI = dyn_cast<ConstantSInt>(CI))
-          ConstantOffset += (int64_t)TD.getTypeSize(Ty)*CSI->getValue();
+          ConstantOffset += (int64_t)TD->getTypeSize(Ty)*CSI->getValue();
         else
-          ConstantOffset+=TD.getTypeSize(Ty)*cast<ConstantUInt>(CI)->getValue();
+          ConstantOffset+=TD->getTypeSize(Ty)*cast<ConstantUInt>(CI)->getValue();
         continue;
       }
       
@@ -2828,7 +2828,7 @@ static void OptimizeGEPExpression(GetElementPtrInst *GEPI,
       // Cast Idx to UIntPtrTy if needed.
       Idx = new CastInst(Idx, UIntPtrTy, "", GEPI);
       
-      uint64_t ElementSize = TD.getTypeSize(Ty);
+      uint64_t ElementSize = TD->getTypeSize(Ty);
       // Mask off bits that should not be set.
       ElementSize &= ~0ULL >> (64-UIntPtrTy->getPrimitiveSizeInBits());
       Constant *SizeCst = ConstantUInt::get(UIntPtrTy, ElementSize);

@@ -1075,7 +1075,7 @@ void DwarfWriter::EmitInt64(uint64_t Value) const {
   if (Asm->Data64bitsDirective) {
     O << Asm->Data64bitsDirective << "0x" << std::hex << Value << std::dec;
   } else {
-    if (TD.isBigEndian()) {
+    if (TD->isBigEndian()) {
       EmitInt32(unsigned(Value >> 32)); O << "\n";
       EmitInt32(unsigned(Value));
     } else {
@@ -1361,7 +1361,7 @@ DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc, CompileUnit *Unit) {
           Offset -= FieldOffset;
           
           // Maybe we need to work from the other end.
-          if (TD.isLittleEndian()) Offset = FieldSize - (Offset + Size);
+          if (TD->isLittleEndian()) Offset = FieldSize - (Offset + Size);
           
           Member->AddUInt(DW_AT_byte_size, 0, FieldSize >> 3);
           Member->AddUInt(DW_AT_bit_size, 0, Size);

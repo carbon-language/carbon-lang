@@ -302,8 +302,8 @@ void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
     // actually initialize the global after current function has finished
     // compilation.
     const Type *GlobalType = GV->getType()->getElementType();
-    size_t S = getTargetData().getTypeSize(GlobalType);
-    size_t A = getTargetData().getTypeAlignment(GlobalType);
+    size_t S = getTargetData()->getTypeSize(GlobalType);
+    size_t A = getTargetData()->getTypeAlignment(GlobalType);
     if (A <= 8) {
       Ptr = malloc(S);
     } else {

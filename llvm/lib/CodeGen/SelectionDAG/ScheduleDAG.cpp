@@ -130,10 +130,10 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
         Align = 3;  // always 8-byte align doubles.
       else {
         Align = TM.getTargetData()
-          .getTypeAlignmentShift(CP->get()->getType());
+          ->getTypeAlignmentShift(CP->get()->getType());
         if (Align == 0) {
           // Alignment of packed types.  FIXME!
-          Align = TM.getTargetData().getTypeSize(CP->get()->getType());
+          Align = TM.getTargetData()->getTypeSize(CP->get()->getType());
           Align = Log2_64(Align);
         }
       }

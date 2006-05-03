@@ -42,11 +42,11 @@ struct MachineConstantPoolEntry {
 };
   
 class MachineConstantPool {
-  const TargetData &TD;
+  const TargetData *TD;
   unsigned PoolAlignment;
   std::vector<MachineConstantPoolEntry> Constants;
 public:
-  MachineConstantPool(const TargetData &td) : TD(td), PoolAlignment(1) {}
+  MachineConstantPool(const TargetData *td) : TD(td), PoolAlignment(1) {}
     
   /// getConstantPoolAlignment - Return the log2 of the alignment required by
   /// the whole constant pool, of which the first element must be aligned.

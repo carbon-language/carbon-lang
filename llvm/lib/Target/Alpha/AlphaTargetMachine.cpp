@@ -54,7 +54,8 @@ unsigned AlphaTargetMachine::getJITMatchQuality() {
 }
 
 AlphaTargetMachine::AlphaTargetMachine(const Module &M, const std::string &FS)
-  : TargetMachine("alpha", true),
+  : TargetMachine("alpha"),
+    DataLayout("alpha", true),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 16, 0),
     JITInfo(*this),
     Subtarget(M, FS)

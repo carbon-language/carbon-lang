@@ -27,8 +27,8 @@ TargetLowering::TargetLowering(TargetMachine &tm)
   // All operations default to being supported.
   memset(OpActions, 0, sizeof(OpActions));
 
-  IsLittleEndian = TD.isLittleEndian();
-  ShiftAmountTy = SetCCResultTy = PointerTy = getValueType(TD.getIntPtrType());
+  IsLittleEndian = TD->isLittleEndian();
+  ShiftAmountTy = SetCCResultTy = PointerTy = getValueType(TD->getIntPtrType());
   ShiftAmtHandling = Undefined;
   memset(RegClassForVT, 0,MVT::LAST_VALUETYPE*sizeof(TargetRegisterClass*));
   memset(TargetDAGCombineArray, 0, 

@@ -1986,7 +1986,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // Otherwise, the target does not support this operation.  Lower the
       // operation to an explicit libcall as appropriate.
       MVT::ValueType IntPtr = TLI.getPointerTy();
-      const Type *IntPtrTy = TLI.getTargetData().getIntPtrType();
+      const Type *IntPtrTy = TLI.getTargetData()->getIntPtrType();
       std::vector<std::pair<SDOperand, const Type*> > Args;
 
       const char *FnName = 0;
@@ -2781,8 +2781,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         // slots and always reusing the same one.  We currently always create
         // new ones, as reuse may inhibit scheduling.
         const Type *Ty = MVT::getTypeForValueType(ExtraVT);
-        unsigned TySize = (unsigned)TLI.getTargetData().getTypeSize(Ty);
-        unsigned Align  = TLI.getTargetData().getTypeAlignment(Ty);
+        unsigned TySize = (unsigned)TLI.getTargetData()->getTypeSize(Ty);
+        unsigned Align  = TLI.getTargetData()->getTypeAlignment(Ty);
         MachineFunction &MF = DAG.getMachineFunction();
         int SSFI =
           MF.getFrameInfo()->CreateStackObject((unsigned)TySize, Align);

@@ -26,6 +26,7 @@
 namespace llvm {
 
 class X86TargetMachine : public TargetMachine {
+  const TargetData DataLayout;       // Calculates type size & alignment
   X86InstrInfo      InstrInfo;
   X86Subtarget      Subtarget;
   TargetFrameInfo   FrameInfo;
@@ -42,6 +43,7 @@ public:
   virtual const MRegisterInfo    *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }
+  virtual const TargetData       *getTargetData() const { return &DataLayout; }
 
   virtual bool addPassesToEmitMachineCode(FunctionPassManager &PM,
                                           MachineCodeEmitter &MCE);

@@ -158,8 +158,8 @@ ELFWriter::ELFWriter(std::ostream &o, TargetMachine &tm) : O(o), TM(tm) {
   e_machine = 0;  // e_machine defaults to 'No Machine'
   e_flags = 0;    // e_flags defaults to 0, no flags.
 
-  is64Bit = TM.getTargetData().getPointerSizeInBits() == 64;
-  isLittleEndian = TM.getTargetData().isLittleEndian();
+  is64Bit = TM.getTargetData()->getPointerSizeInBits() == 64;
+  isLittleEndian = TM.getTargetData()->isLittleEndian();
 
   // Create the machine code emitter object for this target.
   MCE = new ELFCodeEmitter(*this);
@@ -233,8 +233,8 @@ void ELFWriter::EmitGlobal(GlobalVariable *GV) {
   }
 
   const Type *GVType = (const Type*)GV->getType();
-  unsigned Align = TM.getTargetData().getTypeAlignment(GVType);
-  unsigned Size  = TM.getTargetData().getTypeSize(GVType);
+  unsigned Align = TM.getTargetData()->getTypeAlignment(GVType);
+  unsigned Size  = TM.getTargetData()->getTypeSize(GVType);
 
   // If this global has a zero initializer, it is part of the .bss or common
   // section.

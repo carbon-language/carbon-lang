@@ -54,18 +54,18 @@ public:
              unsigned char ByteAl  = 1, unsigned char BoolAl   = 1);
 
   // Copy constructor
-  TargetData (const TargetData &TD) :
+  TargetData (const TargetData *TD) :
     ImmutablePass(),
-    LittleEndian(TD.isLittleEndian()),
-    BoolAlignment(TD.getBoolAlignment()),
-    ByteAlignment(TD.getByteAlignment()),
-    ShortAlignment(TD.getShortAlignment()),
-    IntAlignment(TD.getIntAlignment()),
-    LongAlignment(TD.getLongAlignment()),
-    FloatAlignment(TD.getFloatAlignment()),
-    DoubleAlignment(TD.getDoubleAlignment()),
-    PointerSize(TD.getPointerSize()),
-    PointerAlignment(TD.getPointerAlignment()) {
+    LittleEndian(TD->isLittleEndian()),
+    BoolAlignment(TD->getBoolAlignment()),
+    ByteAlignment(TD->getByteAlignment()),
+    ShortAlignment(TD->getShortAlignment()),
+    IntAlignment(TD->getIntAlignment()),
+    LongAlignment(TD->getLongAlignment()),
+    FloatAlignment(TD->getFloatAlignment()),
+    DoubleAlignment(TD->getDoubleAlignment()),
+    PointerSize(TD->getPointerSize()),
+    PointerAlignment(TD->getPointerAlignment()) {
   }
 
   TargetData(const std::string &ToolName, const Module *M);

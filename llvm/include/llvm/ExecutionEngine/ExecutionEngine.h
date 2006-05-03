@@ -67,8 +67,8 @@ class ExecutionEngine {
 protected:
   ModuleProvider *MP;
 
-  void setTargetData(const TargetData &td) {
-    TD = &td;
+  void setTargetData(const TargetData *td) {
+    TD = td;
   }
 
   // To avoid having libexecutionengine depend on the JIT and interpreter
@@ -88,7 +88,7 @@ public:
   virtual ~ExecutionEngine();
 
   Module &getModule() const { return CurMod; }
-  const TargetData &getTargetData() const { return *TD; }
+  const TargetData *getTargetData() const { return TD; }
 
   /// create - This is the factory method for creating an execution engine which
   /// is appropriate for the current machine.

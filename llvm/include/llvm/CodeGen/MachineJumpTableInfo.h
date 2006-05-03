@@ -37,10 +37,10 @@ struct MachineJumpTableEntry {
 };
   
 class MachineJumpTableInfo {
-  const TargetData &TD;
+  const TargetData *TD;
   std::vector<MachineJumpTableEntry> JumpTables;
 public:
-  MachineJumpTableInfo(const TargetData &td) : TD(td) {}
+  MachineJumpTableInfo(const TargetData *td) : TD(td) {}
     
   /// getJumpTableIndex - Create a new jump table or return an existing one.
   ///

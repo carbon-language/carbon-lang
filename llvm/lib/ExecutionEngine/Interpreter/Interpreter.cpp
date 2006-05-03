@@ -71,7 +71,7 @@ Interpreter::Interpreter(Module *M, bool isLittleEndian, bool isLongPointer)
        isLongPointer ? 8 : 4) {
 
   memset(&ExitValue, 0, sizeof(ExitValue));
-  setTargetData(TD);
+  setTargetData(&TD);
   // Initialize the "backend"
   initializeExecutionEngine();
   initializeExternalFunctions();

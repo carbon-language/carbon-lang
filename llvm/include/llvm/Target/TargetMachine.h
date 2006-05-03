@@ -50,19 +50,11 @@ namespace Reloc {
 ///
 class TargetMachine {
   const std::string Name;
-  const TargetData DataLayout;       // Calculates type size & alignment
 
   TargetMachine(const TargetMachine&);   // DO NOT IMPLEMENT
   void operator=(const TargetMachine&);  // DO NOT IMPLEMENT
 protected: // Can only create subclasses...
-  TargetMachine(const std::string &name, bool LittleEndian = false,
-                unsigned char PtrSize = 8, unsigned char PtrAl = 8,
-                unsigned char DoubleAl = 8, unsigned char FloatAl = 4,
-                unsigned char LongAl = 8, unsigned char IntAl = 4,
-                unsigned char ShortAl = 2, unsigned char ByteAl = 1,
-                unsigned char BoolAl = 1);
-
-  TargetMachine(const std::string &name, const TargetData &TD);
+  TargetMachine(const std::string &name) : Name(name) { };
 
   /// This constructor is used for targets that support arbitrary TargetData
   /// layouts, like the C backend.  It initializes the TargetData to match that
@@ -101,7 +93,7 @@ public:
   virtual const TargetInstrInfo        *getInstrInfo() const { return 0; }
   virtual const TargetFrameInfo        *getFrameInfo() const { return 0; }
   virtual       TargetLowering    *getTargetLowering() const { return 0; }
-  const TargetData &getTargetData() const { return DataLayout; }
+  virtual const TargetData            *getTargetData() const { return 0; }
 
   /// getSubtarget - This method returns a pointer to the specified type of
   /// TargetSubtarget.  In debug builds, it verifies that the object being

@@ -69,23 +69,9 @@ namespace {
 //---------------------------------------------------------------------------
 // TargetMachine Class
 //
-TargetMachine::TargetMachine(const std::string &name, bool LittleEndian,
-                             unsigned char PtrSize, unsigned char PtrAl,
-                             unsigned char DoubleAl, unsigned char FloatAl,
-                             unsigned char LongAl, unsigned char IntAl,
-                             unsigned char ShortAl, unsigned char ByteAl,
-                             unsigned char BoolAl)
-  : Name(name), DataLayout(name, LittleEndian,
-                           PtrSize, PtrAl, DoubleAl, FloatAl, LongAl,
-                           IntAl, ShortAl, ByteAl, BoolAl) {
-}
-
-TargetMachine::TargetMachine(const std::string &name, const TargetData &TD)
-  : Name(name), DataLayout(TD) {
-}
 
 TargetMachine::TargetMachine(const std::string &name, const Module &M)
-  : Name(name), DataLayout(name, &M) {
+  : Name(name) {
 }
 
 TargetMachine::~TargetMachine() {

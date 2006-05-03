@@ -277,7 +277,7 @@ bool IA64AsmPrinter::doInitialization(Module &M) {
 }
 
 bool IA64AsmPrinter::doFinalization(Module &M) {
-  const TargetData &TD = TM.getTargetData();
+  const TargetData *TD = TM.getTargetData();
   
   // Print out module-level global variables here.
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
@@ -290,19 +290,19 @@ bool IA64AsmPrinter::doFinalization(Module &M) {
       O << "\n\n";
       std::string name = Mang->getValueName(I);
       Constant *C = I->getInitializer();
-      unsigned Size = TD.getTypeSize(C->getType());
-      unsigned Align = TD.getTypeAlignmentShift(C->getType());
+      unsigned Size = TD->getTypeSize(C->getType());
+      unsigned Align = TD->getTypeAlignmentShift(C->getType());
       
       if (C->isNullValue() &&
           (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
            I->hasWeakLinkage() /* FIXME: Verify correct */)) {
         SwitchSection(".data", I);
         if (I->hasInternalLinkage()) {
-          O << "\t.lcomm " << name << "#," << TD.getTypeSize(C->getType())
+          O << "\t.lcomm " << name << "#," << TD->getTypeSize(C->getType())
           << "," << (1 << Align);
           O << "\t\t// ";
         } else {
-          O << "\t.common " << name << "#," << TD.getTypeSize(C->getType())
+          O << "\t.common " << name << "#," << TD->getTypeSize(C->getType())
           << "," << (1 << Align);
           O << "\t\t// ";
         }

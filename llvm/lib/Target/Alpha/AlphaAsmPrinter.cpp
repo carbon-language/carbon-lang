@@ -221,7 +221,7 @@ bool AlphaAsmPrinter::doInitialization(Module &M)
 }
 
 bool AlphaAsmPrinter::doFinalization(Module &M) {
-  const TargetData &TD = TM.getTargetData();
+  const TargetData *TD = TM.getTargetData();
 
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I)
     if (I->hasInitializer()) {   // External global require no code
@@ -232,8 +232,8 @@ bool AlphaAsmPrinter::doFinalization(Module &M) {
       O << "\n\n";
       std::string name = Mang->getValueName(I);
       Constant *C = I->getInitializer();
-      unsigned Size = TD.getTypeSize(C->getType());
-      //      unsigned Align = TD.getTypeAlignmentShift(C->getType());
+      unsigned Size = TD->getTypeSize(C->getType());
+      //      unsigned Align = TD->getTypeAlignmentShift(C->getType());
       unsigned Align = getPreferredAlignmentLog(I);
 
       if (C->isNullValue() &&
@@ -243,7 +243,7 @@ bool AlphaAsmPrinter::doFinalization(Module &M) {
         if (I->hasInternalLinkage())
           O << "\t.local " << name << "\n";
 
-        O << "\t.comm " << name << "," << TD.getTypeSize(C->getType())
+        O << "\t.comm " << name << "," << TD->getTypeSize(C->getType())
           << "," << (1 << Align)
           <<  "\n";
       } else {

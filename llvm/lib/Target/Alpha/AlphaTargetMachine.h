@@ -26,11 +26,12 @@ namespace llvm {
 class GlobalValue;
 
 class AlphaTargetMachine : public TargetMachine {
+  const TargetData DataLayout;       // Calculates type size & alignment
   AlphaInstrInfo InstrInfo;
   TargetFrameInfo FrameInfo;
   AlphaJITInfo JITInfo;
   AlphaSubtarget Subtarget;
-
+  
 public:
   AlphaTargetMachine(const Module &M, const std::string &FS);
 
@@ -40,6 +41,7 @@ public:
   virtual const MRegisterInfo *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }
+  virtual const TargetData       *getTargetData() const { return &DataLayout; }
   virtual TargetJITInfo* getJITInfo() {
     return &JITInfo;
   }

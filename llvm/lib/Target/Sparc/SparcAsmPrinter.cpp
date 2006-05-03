@@ -232,7 +232,7 @@ bool SparcAsmPrinter::doInitialization(Module &M) {
 }
 
 bool SparcAsmPrinter::doFinalization(Module &M) {
-  const TargetData &TD = TM.getTargetData();
+  const TargetData *TD = TM.getTargetData();
 
   // Print out module-level global variables here.
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
@@ -245,8 +245,8 @@ bool SparcAsmPrinter::doFinalization(Module &M) {
       O << "\n\n";
       std::string name = Mang->getValueName(I);
       Constant *C = I->getInitializer();
-      unsigned Size = TD.getTypeSize(C->getType());
-      unsigned Align = TD.getTypeAlignment(C->getType());
+      unsigned Size = TD->getTypeSize(C->getType());
+      unsigned Align = TD->getTypeAlignment(C->getType());
 
       if (C->isNullValue() &&
           (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
@@ -255,8 +255,8 @@ bool SparcAsmPrinter::doFinalization(Module &M) {
         if (I->hasInternalLinkage())
           O << "\t.local " << name << "\n";
 
-        O << "\t.comm " << name << "," << TD.getTypeSize(C->getType())
-          << "," << (unsigned)TD.getTypeAlignment(C->getType());
+        O << "\t.comm " << name << "," << TD->getTypeSize(C->getType())
+          << "," << (unsigned)TD->getTypeAlignment(C->getType());
         O << "\t\t! ";
         WriteAsOperand(O, I, true, true, &M);
         O << "\n";

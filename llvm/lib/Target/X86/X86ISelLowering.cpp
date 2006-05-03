@@ -3522,7 +3522,7 @@ SDOperand X86TargetLowering::LowerMEMSET(SDOperand Op, SelectionDAG &DAG) {
   if ((Align & 3) != 0 ||
       (I && I->getValue() < Subtarget->getMinRepStrSizeThreshold())) {
     MVT::ValueType IntPtr = getPointerTy();
-    const Type *IntPtrTy = getTargetData().getIntPtrType();
+    const Type *IntPtrTy = getTargetData()->getIntPtrType();
     std::vector<std::pair<SDOperand, const Type*> > Args;
     Args.push_back(std::make_pair(Op.getOperand(1), IntPtrTy));
     // Extend the ubyte argument to be an int value for the call.
@@ -3655,7 +3655,7 @@ SDOperand X86TargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
   if ((Align & 3) != 0 ||
       (I && I->getValue() < Subtarget->getMinRepStrSizeThreshold())) {
     MVT::ValueType IntPtr = getPointerTy();
-    const Type *IntPtrTy = getTargetData().getIntPtrType();
+    const Type *IntPtrTy = getTargetData()->getIntPtrType();
     std::vector<std::pair<SDOperand, const Type*> > Args;
     Args.push_back(std::make_pair(Op.getOperand(1), IntPtrTy));
     Args.push_back(std::make_pair(Op.getOperand(2), IntPtrTy));

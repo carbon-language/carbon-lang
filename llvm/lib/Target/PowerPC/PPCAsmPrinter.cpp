@@ -582,7 +582,7 @@ bool DarwinAsmPrinter::doInitialization(Module &M) {
 }
 
 bool DarwinAsmPrinter::doFinalization(Module &M) {
-  const TargetData &TD = TM.getTargetData();
+  const TargetData *TD = TM.getTargetData();
 
   // Print out module-level global variables here.
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
@@ -595,7 +595,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
     
     std::string name = Mang->getValueName(I);
     Constant *C = I->getInitializer();
-    unsigned Size = TD.getTypeSize(C->getType());
+    unsigned Size = TD->getTypeSize(C->getType());
     unsigned Align = getPreferredAlignmentLog(I);
 
     if (C->isNullValue() && /* FIXME: Verify correct */
@@ -761,7 +761,7 @@ bool AIXAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
 bool AIXAsmPrinter::doInitialization(Module &M) {
   SwitchSection("", 0);
-  const TargetData &TD = TM.getTargetData();
+  const TargetData *TD = TM.getTargetData();
 
   O << "\t.machine \"ppc64\"\n"
     << "\t.toc\n"
@@ -810,7 +810,7 @@ bool AIXAsmPrinter::doInitialization(Module &M) {
 }
 
 bool AIXAsmPrinter::doFinalization(Module &M) {
-  const TargetData &TD = TM.getTargetData();
+  const TargetData *TD = TM.getTargetData();
   // Print out module-level global variables
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I) {
@@ -821,8 +821,8 @@ bool AIXAsmPrinter::doFinalization(Module &M) {
     if (I->hasInternalLinkage()) {
       O << "\t.lcomm " << Name << ",16,_global.bss_c";
     } else {
-      O << "\t.comm " << Name << "," << TD.getTypeSize(I->getType())
-        << "," << Log2_32((unsigned)TD.getTypeAlignment(I->getType()));
+      O << "\t.comm " << Name << "," << TD->getTypeSize(I->getType())
+        << "," << Log2_32((unsigned)TD->getTypeAlignment(I->getType()));
     }
     O << "\t\t" << CommentString << " ";
     WriteAsOperand(O, I, false, true, &M);

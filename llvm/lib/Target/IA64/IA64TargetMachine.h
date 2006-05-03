@@ -23,6 +23,7 @@
 namespace llvm {
 
 class IA64TargetMachine : public TargetMachine {
+  const TargetData DataLayout;       // Calculates type size & alignment
   IA64InstrInfo      InstrInfo;
   TargetFrameInfo    FrameInfo;
   //IA64JITInfo      JITInfo;
@@ -36,6 +37,7 @@ public:
   virtual const MRegisterInfo    *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }
+  virtual const TargetData       *getTargetData() const { return &DataLayout; }
 
   virtual bool addPassesToEmitFile(PassManager &PM, std::ostream &Out,
                                    CodeGenFileType FileType, bool Fast);

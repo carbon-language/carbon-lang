@@ -367,11 +367,11 @@ void MachineJumpTableInfo::print(std::ostream &OS) const {
 }
 
 unsigned MachineJumpTableInfo::getEntrySize() const { 
-  return TD.getPointerSize(); 
+  return TD->getPointerSize(); 
 }
 
 unsigned MachineJumpTableInfo::getAlignment() const { 
-  return TD.getPointerAlignment(); 
+  return TD->getPointerAlignment(); 
 }
 
 void MachineJumpTableInfo::dump() const { print(std::cerr); }
@@ -400,7 +400,7 @@ unsigned MachineConstantPool::getConstantPoolIndex(Constant *C,
   unsigned Offset = 0;
   if (!Constants.empty()) {
     Offset = Constants.back().Offset;
-    Offset += TD.getTypeSize(Constants.back().Val->getType());
+    Offset += TD->getTypeSize(Constants.back().Val->getType());
     Offset = (Offset+AlignMask)&~AlignMask;
   }
   

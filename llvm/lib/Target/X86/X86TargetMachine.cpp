@@ -68,7 +68,8 @@ unsigned X86TargetMachine::getModuleMatchQuality(const Module &M) {
 /// X86TargetMachine ctor - Create an ILP32 architecture model
 ///
 X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS)
-  : TargetMachine("X86", true, 4, 4, 4, 4, 4),
+  : TargetMachine("X86"),
+    DataLayout("X86", true, 4, 4, 4, 4, 4),
     Subtarget(M, FS),
     FrameInfo(TargetFrameInfo::StackGrowsDown,
               Subtarget.getStackAlignment(), -4),

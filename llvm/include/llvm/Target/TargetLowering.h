@@ -78,7 +78,7 @@ public:
   virtual ~TargetLowering();
 
   TargetMachine &getTargetMachine() const { return TM; }
-  const TargetData &getTargetData() const { return TD; }
+  const TargetData *getTargetData() const { return TD; }
 
   bool isLittleEndian() const { return IsLittleEndian; }
   MVT::ValueType getPointerTy() const { return PointerTy; }
@@ -648,7 +648,7 @@ private:
   std::vector<unsigned> LegalAddressScales;
   
   TargetMachine &TM;
-  const TargetData &TD;
+  const TargetData *TD;
 
   /// IsLittleEndian - True if this is a little endian target.
   ///

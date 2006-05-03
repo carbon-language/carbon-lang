@@ -85,7 +85,7 @@ protected:
   AsmPrinter *Asm;
   
   /// TD - Target data.
-  const TargetData &TD;
+  const TargetData *TD;
   
   /// RI - Register Information.
   const MRegisterInfo *RI;

@@ -25,6 +25,7 @@ namespace llvm {
 class Module;
 
 class SparcTargetMachine : public TargetMachine {
+  const TargetData DataLayout;       // Calculates type size & alignment
   SparcSubtarget Subtarget;
   SparcInstrInfo InstrInfo;
   TargetFrameInfo FrameInfo;
@@ -37,7 +38,7 @@ public:
   virtual const MRegisterInfo *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }
-
+  virtual const TargetData       *getTargetData() const { return &DataLayout; }
   static unsigned getModuleMatchQuality(const Module &M);
 
   virtual bool addPassesToEmitFile(PassManager &PM, std::ostream &Out,

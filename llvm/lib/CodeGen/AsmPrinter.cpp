@@ -144,7 +144,7 @@ void AsmPrinter::SetupMachineFunction(MachineFunction &MF) {
 void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
   const std::vector<MachineConstantPoolEntry> &CP = MCP->getConstants();
   if (CP.empty()) return;
-  const TargetData &TD = TM.getTargetData();
+  const TargetData *TD = TM.getTargetData();
   
   SwitchSection(ConstantPoolSection, 0);
   EmitAlignment(MCP->getConstantPoolAlignment());
@@ -154,7 +154,7 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
     WriteTypeSymbolic(O, CP[i].Val->getType(), 0) << '\n';
     EmitGlobalConstant(CP[i].Val);
     if (i != e-1) {
-      unsigned EntSize = TM.getTargetData().getTypeSize(CP[i].Val->getType());
+      unsigned EntSize = TM.getTargetData()->getTypeSize(CP[i].Val->getType());
       unsigned ValEnd = CP[i].Offset + EntSize;
       // Emit inter-object padding for alignment.
       EmitZeros(CP[i+1].Offset-ValEnd);
@@ -168,7 +168,7 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
 void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI) {
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   if (JT.empty()) return;
-  const TargetData &TD = TM.getTargetData();
+  const TargetData *TD = TM.getTargetData();
   
   // FIXME: someday we need to handle PIC jump tables
   assert((TM.getRelocationModel() == Reloc::Static ||
@@ -176,7 +176,7 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI) {
          "Unhandled relocation model emitting jump table information!");
   
   SwitchSection(JumpTableSection, 0);
-  EmitAlignment(Log2_32(TD.getPointerAlignment()));
+  EmitAlignment(Log2_32(TD->getPointerAlignment()));
   for (unsigned i = 0, e = JT.size(); i != e; ++i) {
     O << PrivateGlobalPrefix << "JTI" << getFunctionNumber() << '_' << i 
       << ":\n";
@@ -242,7 +242,7 @@ void AsmPrinter::EmitXXStructorList(Constant *List) {
 /// specified global, returned in log form.  This includes an explicitly
 /// requested alignment (if the global has one).
 unsigned AsmPrinter::getPreferredAlignmentLog(const GlobalVariable *GV) const {
-  unsigned Alignment = TM.getTargetData().getTypeAlignmentShift(GV->getType());
+  unsigned Alignment = TM.getTargetData()->getTypeAlignmentShift(GV->getType());
   if (GV->getAlignment() > (1U << Alignment))
     Alignment = Log2_32(GV->getAlignment());
   
@@ -253,7 +253,7 @@ unsigned AsmPrinter::getPreferredAlignmentLog(const GlobalVariable *GV) const {
     if (Alignment < 4) {
       // If the global is not external, see if it is large.  If so, give it a
       // larger alignment.
-      if (TM.getTargetData().getTypeSize(GV->getType()->getElementType()) > 128)
+      if (TM.getTargetData()->getTypeSize(GV->getType()->getElementType()) > 128)
         Alignment = 4;    // 16-byte alignment.
     }
   }
@@ -310,13 +310,13 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
     else
       O << GlobalVarAddrPrefix << Mang->getValueName(GV) << GlobalVarAddrSuffix;
   } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
-    const TargetData &TD = TM.getTargetData();
+    const TargetData *TD = TM.getTargetData();
     switch(CE->getOpcode()) {
     case Instruction::GetElementPtr: {
       // generate a symbolic expression for the byte address
       const Constant *ptrVal = CE->getOperand(0);
       std::vector<Value*> idxVec(CE->op_begin()+1, CE->op_end());
-      if (int64_t Offset = TD.getIndexedOffset(ptrVal->getType(), idxVec)) {
+      if (int64_t Offset = TD->getIndexedOffset(ptrVal->getType(), idxVec)) {
         if (Offset)
           O << "(";
         EmitConstantValueOnly(ptrVal);
@@ -344,7 +344,7 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
               || (isa<PointerType>(Ty)
                   && (OpTy == Type::LongTy || OpTy == Type::ULongTy
                       || OpTy == Type::IntTy || OpTy == Type::UIntTy))
-              || (((TD.getTypeSize(Ty) >= TD.getTypeSize(OpTy))
+              || (((TD->getTypeSize(Ty) >= TD->getTypeSize(OpTy))
                    && OpTy->isLosslesslyConvertibleTo(Ty))))
              && "FIXME: Don't yet support this kind of constant cast expr");
       EmitConstantValueOnly(Op);
@@ -426,10 +426,10 @@ void AsmPrinter::EmitString(const ConstantArray *CVA) const {
 /// EmitGlobalConstant - Print a general LLVM constant to the .s file.
 ///
 void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
-  const TargetData &TD = TM.getTargetData();
+  const TargetData *TD = TM.getTargetData();
 
   if (CV->isNullValue() || isa<UndefValue>(CV)) {
-    EmitZeros(TD.getTypeSize(CV->getType()));
+    EmitZeros(TD->getTypeSize(CV->getType()));
     return;
   } else if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV)) {
     if (CVA->isString()) {
@@ -441,13 +441,13 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
     return;
   } else if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV)) {
     // Print the fields in successive locations. Pad to align if needed!
-    const StructLayout *cvsLayout = TD.getStructLayout(CVS->getType());
+    const StructLayout *cvsLayout = TD->getStructLayout(CVS->getType());
     uint64_t sizeSoFar = 0;
     for (unsigned i = 0, e = CVS->getNumOperands(); i != e; ++i) {
       const Constant* field = CVS->getOperand(i);
 
       // Check if padding is needed and insert one or more 0s.
-      uint64_t fieldSize = TD.getTypeSize(field->getType());
+      uint64_t fieldSize = TD->getTypeSize(field->getType());
       uint64_t padSize = ((i == e-1? cvsLayout->StructSize
                            : cvsLayout->MemberOffsets[i+1])
                           - cvsLayout->MemberOffsets[i]) - fieldSize;
@@ -470,7 +470,7 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
       if (Data64bitsDirective)
         O << Data64bitsDirective << DoubleToBits(Val) << "\t" << CommentString
           << " double value: " << Val << "\n";
-      else if (TD.isBigEndian()) {
+      else if (TD->isBigEndian()) {
         O << Data32bitsDirective << unsigned(DoubleToBits(Val) >> 32)
           << "\t" << CommentString << " double most significant word "
           << Val << "\n";
@@ -497,7 +497,7 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
 
       if (Data64bitsDirective)
         O << Data64bitsDirective << Val << "\n";
-      else if (TD.isBigEndian()) {
+      else if (TD->isBigEndian()) {
         O << Data32bitsDirective << unsigned(Val >> 32)
           << "\t" << CommentString << " Double-word most significant word "
           << Val << "\n";
@@ -533,7 +533,7 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
     O << Data16bitsDirective;
     break;
   case Type::PointerTyID:
-    if (TD.getPointerSize() == 8) {
+    if (TD->getPointerSize() == 8) {
       O << Data64bitsDirective;
       break;
     }

@@ -518,7 +518,7 @@ void JITEmitter::emitConstantPool(MachineConstantPool *MCP) {
   if (Constants.empty()) return;
 
   unsigned Size = Constants.back().Offset;
-  Size += TheJIT->getTargetData().getTypeSize(Constants.back().Val->getType());
+  Size += TheJIT->getTargetData()->getTypeSize(Constants.back().Val->getType());
 
   ConstantPoolBase = allocateSpace(Size, 1 << MCP->getConstantPoolAlignment());
   ConstantPool = MCP;

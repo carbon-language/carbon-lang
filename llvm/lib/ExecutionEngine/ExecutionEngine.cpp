@@ -70,7 +70,7 @@ const GlobalValue *ExecutionEngine::getGlobalValueAtAddress(void *Addr) {
 //
 static void *CreateArgv(ExecutionEngine *EE,
                         const std::vector<std::string> &InputArgv) {
-  unsigned PtrSize = EE->getTargetData().getPointerSize();
+  unsigned PtrSize = EE->getTargetData()->getPointerSize();
   char *Result = new char[(InputArgv.size()+1)*PtrSize];
 
   DEBUG(std::cerr << "ARGV = " << (void*)Result << "\n");
@@ -218,7 +218,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       uint64_t Offset =
         TD->getIndexedOffset(CE->getOperand(0)->getType(), Indexes);
 
-      if (getTargetData().getPointerSize() == 4)
+      if (getTargetData()->getPointerSize() == 4)
         Result.IntVal += Offset;
       else
         Result.LongVal += Offset;
@@ -335,7 +335,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
 ///
 void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
                                          const Type *Ty) {
-  if (getTargetData().isLittleEndian()) {
+  if (getTargetData()->isLittleEndian()) {
     switch (Ty->getTypeID()) {
     case Type::BoolTyID:
     case Type::UByteTyID:
@@ -352,7 +352,7 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
                             Ptr->Untyped[2] = (Val.UIntVal >> 16) & 255;
                             Ptr->Untyped[3] = (Val.UIntVal >> 24) & 255;
                             break;
-    case Type::PointerTyID: if (getTargetData().getPointerSize() == 4)
+    case Type::PointerTyID: if (getTargetData()->getPointerSize() == 4)
                               goto Store4BytesLittleEndian;
     case Type::DoubleTyID:
     case Type::ULongTyID:
@@ -386,7 +386,7 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
                             Ptr->Untyped[1] = (Val.UIntVal >> 16) & 255;
                             Ptr->Untyped[0] = (Val.UIntVal >> 24) & 255;
                             break;
-    case Type::PointerTyID: if (getTargetData().getPointerSize() == 4)
+    case Type::PointerTyID: if (getTargetData()->getPointerSize() == 4)
                               goto Store4BytesBigEndian;
     case Type::DoubleTyID:
     case Type::ULongTyID:
@@ -411,7 +411,7 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
 GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
                                                   const Type *Ty) {
   GenericValue Result;
-  if (getTargetData().isLittleEndian()) {
+  if (getTargetData()->isLittleEndian()) {
     switch (Ty->getTypeID()) {
     case Type::BoolTyID:
     case Type::UByteTyID:
@@ -428,7 +428,7 @@ GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
                                             ((unsigned)Ptr->Untyped[2] << 16) |
                                             ((unsigned)Ptr->Untyped[3] << 24);
                             break;
-    case Type::PointerTyID: if (getTargetData().getPointerSize() == 4)
+    case Type::PointerTyID: if (getTargetData()->getPointerSize() == 4)
                               goto Load4BytesLittleEndian;
     case Type::DoubleTyID:
     case Type::ULongTyID:
@@ -462,7 +462,7 @@ GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
                                             ((unsigned)Ptr->Untyped[1] << 16) |
                                             ((unsigned)Ptr->Untyped[0] << 24);
                             break;
-    case Type::PointerTyID: if (getTargetData().getPointerSize() == 4)
+    case Type::PointerTyID: if (getTargetData()->getPointerSize() == 4)
                               goto Load4BytesBigEndian;
     case Type::DoubleTyID:
     case Type::ULongTyID:
@@ -491,7 +491,7 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
     return;
   } else if (const ConstantPacked *CP = dyn_cast<ConstantPacked>(Init)) {
     unsigned ElementSize =
-      getTargetData().getTypeSize(CP->getType()->getElementType());
+      getTargetData()->getTypeSize(CP->getType()->getElementType());
     for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
       InitializeMemory(CP->getOperand(i), (char*)Addr+i*ElementSize);
     return;
@@ -500,7 +500,7 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
     StoreValueToMemory(Val, (GenericValue*)Addr, Init->getType());
     return;
   } else if (isa<ConstantAggregateZero>(Init)) {
-    memset(Addr, 0, (size_t)getTargetData().getTypeSize(Init->getType()));
+    memset(Addr, 0, (size_t)getTargetData()->getTypeSize(Init->getType()));
     return;
   }
 
@@ -508,7 +508,7 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
   case Type::ArrayTyID: {
     const ConstantArray *CPA = cast<ConstantArray>(Init);
     unsigned ElementSize =
-      getTargetData().getTypeSize(CPA->getType()->getElementType());
+      getTargetData()->getTypeSize(CPA->getType()->getElementType());
     for (unsigned i = 0, e = CPA->getNumOperands(); i != e; ++i)
       InitializeMemory(CPA->getOperand(i), (char*)Addr+i*ElementSize);
     return;
@@ -517,7 +517,7 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
   case Type::StructTyID: {
     const ConstantStruct *CPS = cast<ConstantStruct>(Init);
     const StructLayout *SL =
-      getTargetData().getStructLayout(cast<StructType>(CPS->getType()));
+      getTargetData()->getStructLayout(cast<StructType>(CPS->getType()));
     for (unsigned i = 0, e = CPS->getNumOperands(); i != e; ++i)
       InitializeMemory(CPS->getOperand(i), (char*)Addr+SL->MemberOffsets[i]);
     return;
@@ -534,7 +534,7 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
 /// their initializers into the memory.
 ///
 void ExecutionEngine::emitGlobals() {
-  const TargetData &TD = getTargetData();
+  const TargetData *TD = getTargetData();
 
   // Loop over all of the global variables in the program, allocating the memory
   // to hold them.
@@ -546,7 +546,7 @@ void ExecutionEngine::emitGlobals() {
       const Type *Ty = I->getType()->getElementType();
 
       // Allocate some memory for it!
-      unsigned Size = TD.getTypeSize(Ty);
+      unsigned Size = TD->getTypeSize(Ty);
       addGlobalMapping(I, new char[Size]);
     } else {
       // External variable reference. Try to use the dynamic loader to
@@ -577,7 +577,7 @@ void ExecutionEngine::EmitGlobalVariable(const GlobalVariable *GV) {
   DEBUG(std::cerr << "Global '" << GV->getName() << "' -> " << GA << "\n");
 
   const Type *ElTy = GV->getType()->getElementType();
-  size_t GVSize = (size_t)getTargetData().getTypeSize(ElTy);
+  size_t GVSize = (size_t)getTargetData()->getTypeSize(ElTy);
   if (GA == 0) {
     // If it's not already specified, allocate memory for the global.
     GA = new char[GVSize];

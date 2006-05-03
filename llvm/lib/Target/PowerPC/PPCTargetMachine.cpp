@@ -58,7 +58,8 @@ unsigned PPCTargetMachine::getModuleMatchQuality(const Module &M) {
 }
 
 PPCTargetMachine::PPCTargetMachine(const Module &M, const std::string &FS)
-: TargetMachine("PowerPC", false, 4, 4, 4, 4, 4, 4, 2, 1, 1),
+: TargetMachine("PowerPC"),
+  DataLayout("PowerPC", false, 4, 4, 4, 4, 4),
   Subtarget(M, FS), FrameInfo(*this, false), JITInfo(*this),
   TLInfo(*this), InstrItins(Subtarget.getInstrItineraryData()) {
   if (TargetDefault == PPCTarget) {

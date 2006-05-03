@@ -143,7 +143,7 @@ int main(int argc, char **argv) {
     std::auto_ptr<TargetMachine> target(MArch->CtorFn(mod, FeaturesStr));
     assert(target.get() && "Could not allocate target machine!");
     TargetMachine &Target = *target.get();
-    const TargetData &TD = Target.getTargetData();
+    const TargetData *TD = Target.getTargetData();
 
     // Build up all of the passes that we want to do to the module...
     PassManager Passes;

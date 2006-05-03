@@ -84,7 +84,7 @@ bool X86SharedAsmPrinter::doInitialization(Module &M) {
 }
 
 bool X86SharedAsmPrinter::doFinalization(Module &M) {
-  const TargetData &TD = TM.getTargetData();
+  const TargetData *TD = TM.getTargetData();
 
   // Print out module-level global variables here.
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
@@ -97,7 +97,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     
     std::string name = Mang->getValueName(I);
     Constant *C = I->getInitializer();
-    unsigned Size = TD.getTypeSize(C->getType());
+    unsigned Size = TD->getTypeSize(C->getType());
     unsigned Align = getPreferredAlignmentLog(I);
 
     if (C->isNullValue() && /* FIXME: Verify correct */
