@@ -2481,6 +2481,14 @@ def : Pat<(v2i64 (vector_shuffle VR128:$src1, VR128:$src2,
                   MOVL_shuffle_mask)),
           (v2i64 (MOVLPDrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
 
+// vector_shuffle v1, v2 <4, 5, 2, 3> using MOVLPDrr (movsd)
+def : Pat<(v4f32 (vector_shuffle VR128:$src1, VR128:$src2,
+                  MOVLP_shuffle_mask)),
+          (v4f32 (MOVLPDrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
+def : Pat<(v4i32 (vector_shuffle VR128:$src1, VR128:$src2,
+                  MOVLP_shuffle_mask)),
+          (v4i32 (MOVLPDrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
+
 // Set lowest element and zero upper elements.
 def : Pat<(bc_v2i64 (vector_shuffle immAllZerosV,
                      (v2f64 (scalar_to_vector (loadf64 addr:$src))),
