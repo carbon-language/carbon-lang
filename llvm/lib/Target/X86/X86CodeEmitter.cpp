@@ -35,7 +35,7 @@ namespace {
   class Emitter : public MachineFunctionPass {
     const X86InstrInfo  *II;
     MachineCodeEmitter  &MCE;
-    std::map<MachineBasicBlock*, uint64_t> BasicBlockAddrs;
+    std::vector<uint64_t> BasicBlockAddrs;
     std::vector<std::pair<MachineBasicBlock *, unsigned> > BBRefs;
   public:
     explicit Emitter(MachineCodeEmitter &mce) : II(0), MCE(mce) {}
@@ -93,7 +93,7 @@ bool Emitter::runOnMachineFunction(MachineFunction &MF) {
 
   // Resolve all forward branches now.
   for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {
-    unsigned Location = BasicBlockAddrs[BBRefs[i].first];
+    unsigned Location = BasicBlockAddrs[BBRefs[i].first->getNumber()];
     unsigned Ref = BBRefs[i].second;
     *((unsigned*)(intptr_t)Ref) = Location-Ref-4;
   }
@@ -103,8 +103,9 @@ bool Emitter::runOnMachineFunction(MachineFunction &MF) {
 }
 
 void Emitter::emitBasicBlock(MachineBasicBlock &MBB) {
-  if (uint64_t Addr = MCE.getCurrentPCValue())
-    BasicBlockAddrs[&MBB] = Addr;
+  if (BasicBlockAddrs.size() <= (unsigned)MBB.getNumber())
+    BasicBlockAddrs.resize((MBB.getNumber()+1)*2);
+  BasicBlockAddrs[MBB.getNumber()] = MCE.getCurrentPCValue();
 
   for (MachineBasicBlock::const_iterator I = MBB.begin(), E = MBB.end();
        I != E; ++I)
@@ -125,9 +126,9 @@ void Emitter::emitPCRelativeValue(unsigned Address) {
 void Emitter::emitPCRelativeBlockAddress(MachineBasicBlock *MBB) {
   // If this is a backwards branch, we already know the address of the target,
   // so just emit the value.
-  std::map<MachineBasicBlock*,uint64_t>::iterator I = BasicBlockAddrs.find(MBB);
-  if (I != BasicBlockAddrs.end()) {
-    emitPCRelativeValue(I->second);
+  unsigned MBBNo = MBB->getNumber();
+  if (MBBNo < BasicBlockAddrs.size() && BasicBlockAddrs[MBBNo]) {
+    emitPCRelativeValue(BasicBlockAddrs[MBBNo]);
   } else {
     // Otherwise, remember where this reference was and where it is to so we can
     // deal with it later.

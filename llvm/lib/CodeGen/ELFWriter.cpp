@@ -71,7 +71,7 @@ namespace llvm {
     }
     
     virtual void emitJumpTableInfo(MachineJumpTableInfo *MJTI,
-                                   std::map<MachineBasicBlock*,uint64_t> &MBBM){
+                                   std::vector<uint64_t> &MBBM) {
       assert(0 && "JT not implementated yet!");
     }
 

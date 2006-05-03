@@ -392,7 +392,7 @@ public:
     void emitConstantPool(MachineConstantPool *MCP);
     void initJumpTableInfo(MachineJumpTableInfo *MJTI);
     virtual void emitJumpTableInfo(MachineJumpTableInfo *MJTI,
-                                   std::map<MachineBasicBlock*,uint64_t> &MBBM);
+                                   std::vector<uint64_t> &MBBM);
     
     virtual void startFunctionStub(unsigned StubSize);
     virtual void* finishFunctionStub(const Function *F);
@@ -560,7 +560,7 @@ void JITEmitter::initJumpTableInfo(MachineJumpTableInfo *MJTI) {
 }
 
 void JITEmitter::emitJumpTableInfo(MachineJumpTableInfo *MJTI,
-                                   std::map<MachineBasicBlock*,uint64_t> &MBBM){
+                                   std::vector<uint64_t> &MBBM) {
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   if (JT.empty() || JumpTableBase == 0) return;
 
@@ -576,7 +576,7 @@ void JITEmitter::emitJumpTableInfo(MachineJumpTableInfo *MJTI,
     // Store the address of the basic block for this jump table slot in the
     // memory we allocated for the jump table in 'initJumpTableInfo'
     for (unsigned mi = 0, me = MBBs.size(); mi != me; ++mi)
-      *SlotPtr++ = (intptr_t)MBBM[MBBs[mi]];
+      *SlotPtr++ = (intptr_t)MBBM[MBBs[mi]->getNumber()];
   }
 }
 

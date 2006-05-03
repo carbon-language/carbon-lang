@@ -18,7 +18,7 @@
 #define LLVM_CODEGEN_MACHINECODEEMITTER_H
 
 #include "llvm/Support/DataTypes.h"
-#include <map>
+#include <vector>
 
 namespace llvm {
 
@@ -76,10 +76,10 @@ public:
   
   /// emitJumpTableInfo - This callback is invoked to output the jump tables
   /// for the function.  In addition to a pointer to the MachineJumpTableInfo,
-  /// this function also takes a map of MBBs to addresses, so that the final
+  /// this function also takes a map of MBB IDs to addresses, so that the final
   /// addresses of the MBBs can be written to the jump tables.
   virtual void emitJumpTableInfo(MachineJumpTableInfo *MJTI,
-                              std::map<MachineBasicBlock*,uint64_t> &MBBM) = 0;
+                                 std::vector<uint64_t> &MBBM) = 0;
   
   /// startFunctionStub - This callback is invoked when the JIT needs the
   /// address of a function that has not been code generated yet.  The StubSize

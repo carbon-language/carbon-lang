@@ -33,8 +33,8 @@ namespace {
 
     // Tracks which instruction references which BasicBlock
     std::vector<std::pair<MachineBasicBlock*, unsigned*> > BBRefs;
-    // Tracks where each BasicBlock starts
-    std::map<MachineBasicBlock*, uint64_t> BBLocations;
+    // Tracks where each BasicBlock starts, indexes by BB number.
+    std::vector<uint64_t> BasicBlockAddrs;
 
     /// getMachineOpValue - evaluates the MachineOperand of a given MachineInstr
     ///
@@ -87,17 +87,17 @@ bool PPCCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
          "JIT relocation model must be set to static or default!");
   do {
     BBRefs.clear();
-    BBLocations.clear();
+    BasicBlockAddrs.clear();
 
     MCE.startFunction(MF);
     for (MachineFunction::iterator BB = MF.begin(), E = MF.end(); BB != E; ++BB)
       emitBasicBlock(*BB);
-    MCE.emitJumpTableInfo(MF.getJumpTableInfo(), BBLocations);
+    MCE.emitJumpTableInfo(MF.getJumpTableInfo(), BasicBlockAddrs);
   } while (MCE.finishFunction(MF));
 
   // Resolve branches to BasicBlocks for the entire function
   for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {
-    intptr_t Location = BBLocations[BBRefs[i].first];
+    intptr_t Location = BasicBlockAddrs[BBRefs[i].first->getNumber()];
     unsigned *Ref = BBRefs[i].second;
     DEBUG(std::cerr << "Fixup @ " << (void*)Ref << " to " << (void*)Location
                     << "\n");
@@ -115,13 +115,15 @@ bool PPCCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
     }
   }
   BBRefs.clear();
-  BBLocations.clear();
+  BasicBlockAddrs.clear();
 
   return false;
 }
 
 void PPCCodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
-  BBLocations[&MBB] = MCE.getCurrentPCValue();
+  if (BasicBlockAddrs.size() <= (unsigned)MBB.getNumber())
+    BasicBlockAddrs.resize((MBB.getNumber()+1)*2);
+  BasicBlockAddrs[MBB.getNumber()] = MCE.getCurrentPCValue();
   for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end(); I != E; ++I){
     MachineInstr &MI = *I;
     unsigned Opcode = MI.getOpcode();
