@@ -197,9 +197,13 @@ void CallInst::init(Value *Func, const std::vector<Value*> &Params) {
 
   assert((Params.size() == FTy->getNumParams() ||
           (FTy->isVarArg() && Params.size() > FTy->getNumParams())) &&
-         "Calling a function with bad signature");
-  for (unsigned i = 0, e = Params.size(); i != e; ++i)
+         "Calling a function with bad signature!");
+  for (unsigned i = 0, e = Params.size(); i != e; ++i) {
+    assert((i >= FTy->getNumParams() || 
+            FTy->getParamType(i) == Params[i]->getType()) &&
+           "Calling a function with a bad signature!");
     OL[i+1].init(Params[i], this);
+  }
 }
 
 void CallInst::init(Value *Func, Value *Actual1, Value *Actual2) {
@@ -213,8 +217,14 @@ void CallInst::init(Value *Func, Value *Actual1, Value *Actual2) {
     cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
 
   assert((FTy->getNumParams() == 2 ||
-          (FTy->isVarArg() && FTy->getNumParams() == 0)) &&
+          (FTy->isVarArg() && FTy->getNumParams() < 2)) &&
          "Calling a function with bad signature");
+  assert((0 >= FTy->getNumParams() || 
+          FTy->getParamType(0) == Actual1->getType()) &&
+         "Calling a function with a bad signature!");
+  assert((1 >= FTy->getNumParams() || 
+          FTy->getParamType(1) == Actual2->getType()) &&
+         "Calling a function with a bad signature!");
 }
 
 void CallInst::init(Value *Func, Value *Actual) {
@@ -229,6 +239,9 @@ void CallInst::init(Value *Func, Value *Actual) {
   assert((FTy->getNumParams() == 1 ||
           (FTy->isVarArg() && FTy->getNumParams() == 0)) &&
          "Calling a function with bad signature");
+  assert((0 == FTy->getNumParams() || 
+          FTy->getParamType(0) == Actual->getType()) &&
+         "Calling a function with a bad signature!");
 }
 
 void CallInst::init(Value *Func) {
@@ -339,8 +352,13 @@ void InvokeInst::init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
          (FTy->isVarArg() && Params.size() > FTy->getNumParams()) &&
          "Calling a function with bad signature");
 
-  for (unsigned i = 0, e = Params.size(); i != e; i++)
+  for (unsigned i = 0, e = Params.size(); i != e; i++) {
+    assert((i >= FTy->getNumParams() || 
+            FTy->getParamType(i) == Params[i]->getType()) &&
+           "Invoking a function with a bad signature!");
+    
     OL[i+3].init(Params[i], this);
+  }
 }
 
 InvokeInst::InvokeInst(Value *Fn, BasicBlock *IfNormal,
