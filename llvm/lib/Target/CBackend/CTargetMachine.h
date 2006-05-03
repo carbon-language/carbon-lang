@@ -23,7 +23,7 @@ struct CTargetMachine : public TargetMachine {
 
   CTargetMachine(const Module &M, const std::string &FS)
     : TargetMachine("CBackend", M),
-      DataLayout("CBackend") {}
+      DataLayout("CBackend", &M) {}
 
   // This is the only thing that actually does anything here.
   virtual bool addPassesToEmitFile(PassManager &PM, std::ostream &Out,
