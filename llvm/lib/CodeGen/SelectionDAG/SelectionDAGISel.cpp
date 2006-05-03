@@ -836,11 +836,6 @@ void SelectionDAGLowering::visitJumpTable(SelectionDAGISel::JumpTable &JT) {
   SDOperand ADD = DAG.getNode(ISD::ADD, PTy, IDX, DAG.getJumpTable(JT.JTI,PTy));
   SDOperand LD  = DAG.getLoad(PTy, Copy.getValue(1), ADD, DAG.getSrcValue(0));
   DAG.setRoot(DAG.getNode(ISD::BRIND, MVT::Other, LD.getValue(1), LD));
-
-  // Update successor info
-  for (std::set<MachineBasicBlock*>::iterator ii = JT.SuccMBBs.begin(), 
-       ee = JT.SuccMBBs.end(); ii != ee; ++ii)
-    JT.MBB->addSuccessor(*ii);
 }
 
 void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
@@ -885,22 +880,18 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
   const BasicBlock *LLVMBB = CurMBB->getBasicBlock();
   Reloc::Model Relocs = TLI.getTargetMachine().getRelocationModel();
 
-  // If the switch has more than 3 blocks, and is 100% dense, then emit a jump
-  // table rather than lowering the switch to a binary tree of conditional
+  // If the switch has more than 5 blocks, and at least 75% dense, then emit a
+  // jump table rather than lowering the switch to a binary tree of conditional
   // branches.
-  // FIXME: Make this work with 64 bit targets someday, possibly by always
-  // doing differences there so that entries stay 32 bits.
   // FIXME: Make this work with PIC code
   if (TLI.isOperationLegal(ISD::BRIND, TLI.getPointerTy()) &&
-      TLI.getPointerTy() == MVT::i32 &&
       (Relocs == Reloc::Static || Relocs == Reloc::DynamicNoPIC) &&
-      Cases.size() > 3) {
+      Cases.size() > 5) {
     uint64_t First = cast<ConstantIntegral>(Cases.front().first)->getRawValue();
     uint64_t Last  = cast<ConstantIntegral>(Cases.back().first)->getRawValue();
-
-    // Determine density
-    // FIXME: support sub-100% density
-    if (((Last - First) + 1ULL) == (uint64_t)Cases.size()) {
+    double Density = (double)Cases.size() / (double)((Last - First) + 1ULL);
+    
+    if (Density >= 0.75) {
       // Create a new basic block to hold the code for loading the address
       // of the jump table, and jumping to it.  Update successor information;
       // we will either branch to the default case for the switch, or the jump
@@ -938,16 +929,31 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
       DAG.setRoot(DAG.getNode(ISD::BRCOND, MVT::Other, CopyTo, CMP, 
                               DAG.getBasicBlock(Default)));
 
-      // Build a sorted vector of destination BBs, corresponding to each target
-      // of the switch.
-      // FIXME: need to insert DefaultMBB for each "hole" in the jump table,
-      // when we support jump tables with < 100% density.
+      // Build a vector of destination BBs, corresponding to each target
+      // of the jump table.  If the value of the jump table slot corresponds to
+      // a case statement, push the case's BB onto the vector, otherwise, push
+      // the default BB.
       std::set<MachineBasicBlock*> UniqueBBs;
       std::vector<MachineBasicBlock*> DestBBs;
-      for (CaseItr ii = Cases.begin(), ee = Cases.end(); ii != ee; ++ii) {
-        DestBBs.push_back(ii->second);
-        UniqueBBs.insert(ii->second);
+      uint64_t TEI = First;
+      for (CaseItr ii = Cases.begin(), ee = Cases.end(); ii != ee; ++TEI) {
+        if (cast<ConstantIntegral>(ii->first)->getRawValue() == TEI) {
+          DestBBs.push_back(ii->second);
+          UniqueBBs.insert(ii->second);
+          ++ii;
+        } else {
+          DestBBs.push_back(Default);
+          UniqueBBs.insert(Default);
+        }
       }
+      
+      // Update successor info
+      for (std::set<MachineBasicBlock*>::iterator ii = UniqueBBs.begin(), 
+           ee = UniqueBBs.end(); ii != ee; ++ii)
+        JumpTableBB->addSuccessor(*ii);
+      
+      // Create a jump table index for this jump table, or return an existing
+      // one.
       unsigned JTI = CurMF->getJumpTableInfo()->getJumpTableIndex(DestBBs);
       
       // Set the jump table information so that we can codegen it as a second
@@ -956,7 +962,6 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
       JT.JTI = JTI;
       JT.MBB = JumpTableBB;
       JT.Default = Default;
-      JT.SuccMBBs = UniqueBBs;
       return;
     }
   }
@@ -3227,10 +3232,13 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
       MachineBasicBlock *PHIBB = PHI->getParent();
       assert(PHI->getOpcode() == TargetInstrInfo::PHI &&
              "This is not a machine PHI node that we are updating!");
-      if (PHIBB == JT.Default || JT.SuccMBBs.find(PHIBB) != JT.SuccMBBs.end()) {
-        PHIBB = (PHIBB == JT.Default) ? RangeBB : BB;
+      if (PHIBB == JT.Default) {
         PHI->addRegOperand(PHINodesToUpdate[pi].second);
-        PHI->addMachineBasicBlockOperand(PHIBB);
+        PHI->addMachineBasicBlockOperand(RangeBB);
+      }
+      if (BB->succ_end() != std::find(BB->succ_begin(),BB->succ_end(), PHIBB)) {
+        PHI->addRegOperand(PHINodesToUpdate[pi].second);
+        PHI->addMachineBasicBlockOperand(BB);
       }
     }
     return;
