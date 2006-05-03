@@ -9,9 +9,14 @@
 
 LEVEL = ../..
 
-EXTRA_DIST = LibDeps.txt llvm-config.in.in find-cycles.pl
+EXTRA_DIST = LibDeps.txt FinalLibDeps.txt llvm-config.in.in find-cycles.pl
 
 include $(LEVEL)/Makefile.common
+
+# If we don't have Perl, we can't generate the library dependencies upon which 
+# llvm-config depends. Therefore, only if we detect perl will we do anything
+# useful.
+ifeq ($(HAVE_PERL),1)
 
 # Combine preprocessor flags (except for -I) and CXX flags.
 SUB_CXXFLAGS = ${CPP.BaseFlags} ${CXX.Flags}
@@ -21,10 +26,8 @@ SUB_CXXFLAGS = ${CPP.BaseFlags} ${CXX.Flags}
 # user to use libtool when linking against LLVM.
 SUB_LDFLAGS = 
 
-FinalLibDeps = $(PROJ_SRC_DIR)/FinalLibDeps.txt
-ifdef HAVE_PERL
-ifeq ($(HAVE_PERL),1)
-LibDeps = $(PROJ_SRC_DIR)/LibDeps.txt
+FinalLibDeps = $(PROJ_OBJ_DIR)/FinalLibDeps.txt
+LibDeps = $(PROJ_OBJ_DIR)/LibDeps.txt
 GenLibDeps = $(PROJ_SRC_ROOT)/utils/GenLibDeps.pl
 # MANUAL USE ONLY!  GenLibDeps.pl is very non-portable, so LibDeps.txt
 # should only be re-built manually.  No other rule in this file should
@@ -37,9 +40,7 @@ $(LibDeps): $(GenLibDeps) $(LibDir)
 # don't have to process them at runtime.
 $(FinalLibDeps): find-cycles.pl $(LibDeps)
 	$(Echo) "Finding cyclic dependencies between LLVM libraries."
-	$(Verb) $(PERL) $< < $(PROJ_SRC_DIR)/LibDeps.txt > $@
-endif
-endif
+	$(Verb) $(PERL) $< < $(LibDeps) > $@
 
 # Rerun our configure substitutions as needed.
 ConfigInIn = $(PROJ_SRC_DIR)/llvm-config.in.in
@@ -56,13 +57,23 @@ llvm-config: llvm-config.in $(FinalLibDeps)
 	$(Verb) $(SED) -f temp.sed < $< > $@
 	$(Verb) $(RM) temp.sed
 	$(Verb) cat $(FinalLibDeps) >> $@
-	$(Verb) chmod +x llvm-config
+	$(Verb) chmod +x $@
 
+else
+# We don't have perl, just generate a dummy llvm-config
+llvm-config:
+	$(Echo) "Building place holder llvm-config script."
+	$(Verb) $(ECHO) 'echo llvm-config: Perl not found so llvm-config could not be generated' >> $@
+	$(Verb) chmod +x $@
+
+endif
 # Hook into the standard Makefile rules.
 all-local:: llvm-config
 clean-local::
-	$(Verb) $(RM) -f llvm-config llvm-config.in
+	$(Verb) $(RM) -f llvm-config llvm-config.in $(FinalLibDeps) $(LibDeps) \
+	  GenLibDeps.out
 install-local:: all-local
 	$(Echo) Installing llvm-config
 	$(Verb) $(MKDIR) $(PROJ_bindir)
 	$(Verb) $(ScriptInstall) llvm-config $(PROJ_bindir)
+
