@@ -565,32 +565,18 @@ void JITEmitter::emitJumpTableInfo(MachineJumpTableInfo *MJTI,
   if (JT.empty() || JumpTableBase == 0) return;
 
   unsigned Offset = 0;
-  unsigned EntrySize = MJTI->getEntrySize();
+  assert(MJTI->getEntrySize() == sizeof(void*) && "Cross JIT'ing?");
   
   // For each jump table, map each target in the jump table to the address of 
   // an emitted MachineBasicBlock.
+  intptr_t *SlotPtr = (intptr_t*)JumpTableBase;
+
   for (unsigned i = 0, e = JT.size(); i != e; ++i) {
     const std::vector<MachineBasicBlock*> &MBBs = JT[i].MBBs;
-    for (unsigned mi = 0, me = MBBs.size(); mi != me; ++mi) {
-      uint64_t addr = MBBM[MBBs[mi]];
-      GenericValue addrgv;
-      const Type *Ty;
-      if (EntrySize == 4) {
-        addrgv.UIntVal = addr;
-        Ty = Type::UIntTy;
-      } else if (EntrySize == 8) {
-        addrgv.ULongVal = addr;
-        Ty = Type::ULongTy;
-      } else {
-        assert(0 && "Unhandled jump table entry size!");
-        abort();
-      }
-      // Store the address of the basic block for this jump table slot in the
-      // memory we allocated for the jump table in 'initJumpTableInfo'
-      void *ptr = (void *)((char *)JumpTableBase + Offset);
-      TheJIT->StoreValueToMemory(addrgv, (GenericValue *)ptr, Ty);
-      Offset += EntrySize;
-    }
+    // Store the address of the basic block for this jump table slot in the
+    // memory we allocated for the jump table in 'initJumpTableInfo'
+    for (unsigned mi = 0, me = MBBs.size(); mi != me; ++mi)
+      *SlotPtr++ = (intptr_t)MBBM[MBBs[mi]];
   }
 }
 
