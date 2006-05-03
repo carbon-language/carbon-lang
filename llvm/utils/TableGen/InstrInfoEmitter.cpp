@@ -201,9 +201,11 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
       DefInit *OpDef = dynamic_cast<DefInit*>(Dag->getOperator());
       if (OpDef) {
         Record *Operator = OpDef->getDef();
-        if (Operator->isSubClassOf("SDNode") &&
-            Operator->getValueAsString("Opcode") == "ISD::STORE")
-          isStore = true;
+        if (Operator->isSubClassOf("SDNode")) {
+          const std::string Opcode = Operator->getValueAsString("Opcode");
+          if (Opcode == "ISD::STORE" || Opcode == "ISD::TRUNCSTORE")
+            isStore = true;
+        }
       }
     }
   }
