@@ -180,10 +180,10 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
       }
     }
     if (MO.isGlobalAddress())
-      MCE.addRelocation(MachineRelocation(MCE.getCurrentPCOffset(),
+      MCE.addRelocation(MachineRelocation::getGV(MCE.getCurrentPCOffset(),
                                           Reloc, MO.getGlobal(), 0));
     else
-      MCE.addRelocation(MachineRelocation(MCE.getCurrentPCOffset(),
+      MCE.addRelocation(MachineRelocation::getExtSym(MCE.getCurrentPCOffset(),
                                           Reloc, MO.getSymbolName(), 0));
   } else if (MO.isMachineBasicBlock()) {
     unsigned* CurrPC = (unsigned*)(intptr_t)MCE.getCurrentPCValue();

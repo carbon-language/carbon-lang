@@ -45,7 +45,7 @@ class MachineRelocation {
   
   /// Offset - This is the offset from the start of the code buffer of the
   /// relocation to perform.
-  unsigned Offset;
+  intptr_t Offset;
   
   /// ConstantVal - A field that may be used by the target relocation type.
   intptr_t ConstantVal;
@@ -64,35 +64,62 @@ class MachineRelocation {
   bool GOTRelative        : 1; // Should this relocation be relative to the GOT?
 
 public:
-  MachineRelocation(unsigned offset, unsigned RelocationType, GlobalValue *GV,
-                    intptr_t cst = 0, bool DoesntNeedFunctionStub = 0,
-                    bool GOTrelative = 0)
-    : Offset(offset), ConstantVal(cst), TargetReloType(RelocationType),
-      AddrType(isGV), DoesntNeedFnStub(DoesntNeedFunctionStub),
-      GOTRelative(GOTrelative){
+  /// MachineRelocation::getGV - Return a relocation entry for a GlobalValue.
+  ///
+  static MachineRelocation getGV(intptr_t offset, unsigned RelocationType, 
+                                 GlobalValue *GV, intptr_t cst = 0,
+                                 bool DoesntNeedFunctionStub = 0,
+                                 bool GOTrelative = 0) {
     assert((RelocationType & ~63) == 0 && "Relocation type too large!");
-    Target.GV = GV;
+    MachineRelocation Result;
+    Result.Offset = offset;
+    Result.ConstantVal = cst;
+    Result.TargetReloType = RelocationType;
+    Result.AddrType = isGV;
+    Result.DoesntNeedFnStub = DoesntNeedFunctionStub;
+    Result.GOTRelative = GOTrelative;
+    Result.Target.GV = GV;
+    return Result;
   }
 
-  MachineRelocation(unsigned offset, unsigned RelocationType, const char *ES,
-                    intptr_t cst = 0, bool GOTrelative = 0)
-    : Offset(offset), ConstantVal(cst), TargetReloType(RelocationType),
-      AddrType(isExtSym), DoesntNeedFnStub(false), GOTRelative(GOTrelative) {
+  /// MachineRelocation::getExtSym - Return a relocation entry for an external
+  /// symbol, like "free".
+  ///
+  static MachineRelocation getExtSym(intptr_t offset, unsigned RelocationType, 
+                                     const char *ES, intptr_t cst = 0,
+                                     bool GOTrelative = 0) {
     assert((RelocationType & ~63) == 0 && "Relocation type too large!");
-    Target.ExtSym = ES;
+    MachineRelocation Result;
+    Result.Offset = offset;
+    Result.ConstantVal = cst;
+    Result.TargetReloType = RelocationType;
+    Result.AddrType = isExtSym;
+    Result.DoesntNeedFnStub = false;
+    Result.GOTRelative = GOTrelative;
+    Result.Target.ExtSym = ES;
+    return Result;
   }
 
-  MachineRelocation(unsigned offset, unsigned RelocationType, unsigned CPI,
-                    intptr_t cst = 0)
-    : Offset(offset), ConstantVal(cst), TargetReloType(RelocationType),
-      AddrType(isConstPool), DoesntNeedFnStub(false), GOTRelative(0) {
+  /// MachineRelocation::getConstPool - Return a relocation entry for a constant
+  /// pool entry.
+  ///
+  static MachineRelocation getConstPool(intptr_t offset,unsigned RelocationType,
+                                        unsigned CPI, intptr_t cst = 0) {
     assert((RelocationType & ~63) == 0 && "Relocation type too large!");
-    Target.ConstPool = CPI;
+    MachineRelocation Result;
+    Result.Offset = offset;
+    Result.ConstantVal = cst;
+    Result.TargetReloType = RelocationType;
+    Result.AddrType = isConstPool;
+    Result.DoesntNeedFnStub = false;
+    Result.GOTRelative = false;
+    Result.Target.ConstPool = CPI;
+    return Result;
   }
 
   /// getMachineCodeOffset - Return the offset into the code buffer that the
   /// relocation should be performed.
-  unsigned getMachineCodeOffset() const {
+  intptr_t getMachineCodeOffset() const {
     return Offset;
   }
 

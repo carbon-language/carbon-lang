@@ -215,15 +215,15 @@ int AlphaCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
       abort();
     }
     if (MO.isGlobalAddress())
-      MCE.addRelocation(MachineRelocation((unsigned)MCE.getCurrentPCOffset(),
+      MCE.addRelocation(MachineRelocation::getGV(MCE.getCurrentPCOffset(),
                                           Reloc, MO.getGlobal(), Offset,
                                           false, useGOT));
     else if (MO.isExternalSymbol())
-      MCE.addRelocation(MachineRelocation((unsigned)MCE.getCurrentPCOffset(),
+      MCE.addRelocation(MachineRelocation::getExtSym(MCE.getCurrentPCOffset(),
                                           Reloc, MO.getSymbolName(), Offset,
                                           true));
     else
-      MCE.addRelocation(MachineRelocation((unsigned)MCE.getCurrentPCOffset(),
+    MCE.addRelocation(MachineRelocation::getConstPool(MCE.getCurrentPCOffset(),
                                           Reloc, MO.getConstantPoolIndex(),
                                           Offset));
   } else if (MO.isMachineBasicBlock()) {

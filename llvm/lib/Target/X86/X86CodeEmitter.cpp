@@ -123,7 +123,7 @@ void Emitter::emitPCRelativeBlockAddress(MachineBasicBlock *MBB) {
 /// assuming this is part of a function call, which is PC relative.
 ///
 void Emitter::emitGlobalAddressForCall(GlobalValue *GV, bool isTailCall) {
-  MCE.addRelocation(MachineRelocation(MCE.getCurrentPCOffset(),
+  MCE.addRelocation(MachineRelocation::getGV(MCE.getCurrentPCOffset(),
                                       X86::reloc_pcrel_word, GV, 0,
                                       !isTailCall /*Doesn'tNeedStub*/));
   MCE.emitWordLE(0);
@@ -134,7 +134,7 @@ void Emitter::emitGlobalAddressForCall(GlobalValue *GV, bool isTailCall) {
 /// PC relative.
 ///
 void Emitter::emitGlobalAddressForPtr(GlobalValue *GV, int Disp /* = 0 */) {
-  MCE.addRelocation(MachineRelocation(MCE.getCurrentPCOffset(),
+  MCE.addRelocation(MachineRelocation::getGV(MCE.getCurrentPCOffset(),
                                       X86::reloc_absolute_word, GV));
   MCE.emitWordLE(Disp); // The relocated value will be added to the displacement
 }
@@ -144,7 +144,7 @@ void Emitter::emitGlobalAddressForPtr(GlobalValue *GV, int Disp /* = 0 */) {
 /// relative.
 void Emitter::emitExternalSymbolAddress(const char *ES, bool isPCRelative,
                                         bool isTailCall) {
-  MCE.addRelocation(MachineRelocation(MCE.getCurrentPCOffset(),
+  MCE.addRelocation(MachineRelocation::getExtSym(MCE.getCurrentPCOffset(),
           isPCRelative ? X86::reloc_pcrel_word : X86::reloc_absolute_word, ES));
   MCE.emitWordLE(0);
 }
