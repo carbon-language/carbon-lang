@@ -487,20 +487,20 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
         // If the target REALLY wants a stub for this function, emit it now.
         if (!MR.doesntNeedFunctionStub())
           ResultPtr = getJITResolver(this).getExternalFunctionStub(ResultPtr);
-      } else if (MR.isGlobalValue())
+      } else if (MR.isGlobalValue()) {
         ResultPtr = getPointerToGlobal(MR.getGlobalValue(),
                                        BufferBegin+MR.getMachineCodeOffset(),
                                        MR.doesntNeedFunctionStub());
-      else //ConstantPoolIndex
-        ResultPtr =
-       (void*)(intptr_t)getConstantPoolEntryAddress(MR.getConstantPoolIndex());
+      } else {
+        assert(MR.isConstantPoolIndex());
+        ResultPtr=(void*)getConstantPoolEntryAddress(MR.getConstantPoolIndex());
+      }
 
       MR.setResultPointer(ResultPtr);
 
       // if we are managing the GOT and the relocation wants an index,
       // give it one
-      if (MemMgr.isManagingGOT() && !MR.isConstantPoolIndex() &&
-          MR.isGOTRelative()) {
+      if (MemMgr.isManagingGOT() && MR.isGOTRelative()) {
         unsigned idx = getJITResolver(this).getGOTIndexForAddr(ResultPtr);
         MR.setGOTIndex(idx);
         if (((void**)MemMgr.getGOTBase())[idx] != ResultPtr) {
@@ -516,7 +516,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
                                   Relocations.size(), MemMgr.getGOTBase());
   }
 
-  //Update the GOT entry for F to point to the new code.
+  // Update the GOT entry for F to point to the new code.
   if(MemMgr.isManagingGOT()) {
     unsigned idx = getJITResolver(this).getGOTIndexForAddr((void*)BufferBegin);
     if (((void**)MemMgr.getGOTBase())[idx] != (void*)BufferBegin) {
