@@ -130,14 +130,22 @@ public:
     }
   }
 
-  /// allocateSpace - Allocate a block of space in the current output buffer,
-  /// returning null (and setting conditions to indicate buffer overflow) on
-  /// failure.  Alignment is the alignment in bytes of the buffer desired.
-  void *allocateSpace(intptr_t Size, unsigned Alignment) {
+  /// emitAlignment - Move the CurBufferPtr pointer up the the specified
+  /// alignment (saturated to BufferEnd of course).
+  void emitAlignment(unsigned Alignment) {
     if (Alignment == 0) Alignment = 1;
     // Move the current buffer ptr up to the specified alignment.
     CurBufferPtr =
       (unsigned char*)(((intptr_t)CurBufferPtr+Alignment-1) & ~(Alignment-1));
+    if (CurBufferPtr > BufferEnd)
+      CurBufferPtr = BufferEnd;
+  }
+  
+  /// allocateSpace - Allocate a block of space in the current output buffer,
+  /// returning null (and setting conditions to indicate buffer overflow) on
+  /// failure.  Alignment is the alignment in bytes of the buffer desired.
+  void *allocateSpace(intptr_t Size, unsigned Alignment) {
+    emitAlignment(Alignment);
     void *Result = CurBufferPtr;
     
     // Allocate the space.
