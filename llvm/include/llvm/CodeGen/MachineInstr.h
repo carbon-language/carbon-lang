@@ -74,15 +74,8 @@ public:
 
 private:
   union {
-    Value*  value;      // BasicBlockVal for a label operand.
-                        // ConstantVal for a non-address immediate.
-                        // Virtual register for an SSA operand,
-                        //   including hidden operands required for
-                        //   the generated machine code.
-                        // LLVM global for MO_GlobalAddress.
-
+    GlobalValue *GV;    // LLVM global for MO_GlobalAddress.
     int64_t immedVal;   // Constant value for an explicit constant
-
     MachineBasicBlock *MBB;     // For MO_MachineBasicBlock type
     const char *SymbolName;     // For MO_ExternalSymbol type
   } contents;
@@ -90,36 +83,32 @@ private:
   char flags;                   // see bit field definitions above
   MachineOperandType opType:8;  // Pack into 8 bits efficiently after flags.
   union {
-    int regNum;                 // register number for an explicit register
-                                // will be set for a value after reg allocation
-
-    int offset;                 // Offset to address of global or external, only
-                                // valid for MO_GlobalAddress, MO_ExternalSym
-                                // and MO_ConstantPoolIndex
+    int regNum;     // register number for an explicit register
+    int offset;     // Offset to address of global or external, only
+                    // valid for MO_GlobalAddress, MO_ExternalSym
+                    // and MO_ConstantPoolIndex
   } extra;
 
-  void zeroContents () {
-    memset (&contents, 0, sizeof (contents));
-    memset (&extra, 0, sizeof (extra));
+  void zeroContents() {
+    contents.immedVal = 0;
+    extra.offset = 0;
   }
 
   MachineOperand(int64_t ImmVal, MachineOperandType OpTy, int Offset = 0)
     : flags(0), opType(OpTy) {
-    zeroContents ();
     contents.immedVal = ImmVal;
     extra.offset = Offset;
   }
 
   MachineOperand(int Reg, MachineOperandType OpTy, UseType UseTy)
     : flags(UseTy), opType(OpTy) {
-    zeroContents ();
+    zeroContents();
     extra.regNum = Reg;
   }
 
   MachineOperand(GlobalValue *V, int Offset = 0)
     : flags(MachineOperand::Use), opType(MachineOperand::MO_GlobalAddress) {
-    zeroContents ();
-    contents.value = (Value*)V;
+    contents.GV = V;
     extra.offset = Offset;
   }
 
@@ -206,7 +195,7 @@ public:
   }
   GlobalValue *getGlobal() const {
     assert(isGlobalAddress() && "Wrong MachineOperand accessor");
-    return (GlobalValue*)contents.value;
+    return contents.GV;
   }
   int getOffset() const {
     assert((isGlobalAddress() || isExternalSymbol() || isConstantPoolIndex()) &&
@@ -476,10 +465,6 @@ public:
 
   // Access to set the operands when building the machine instruction
   //
-  void SetMachineOperandVal(unsigned i,
-                            MachineOperand::MachineOperandType operandType,
-                            Value* V);
-
   void SetMachineOperandConst(unsigned i,
                               MachineOperand::MachineOperandType operandType,
                               int intValue);

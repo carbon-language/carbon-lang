@@ -107,33 +107,22 @@ bool MachineInstr::OperandsComplete() const {
   return false;
 }
 
-void MachineInstr::SetMachineOperandVal(unsigned i,
-                                        MachineOperand::MachineOperandType opTy,
-                                        Value* V) {
-  assert(i < operands.size());          // may be explicit or implicit op
-  operands[i].opType = opTy;
-  operands[i].contents.value = V;
-  operands[i].extra.regNum = -1;
-}
-
 void
 MachineInstr::SetMachineOperandConst(unsigned i,
                                      MachineOperand::MachineOperandType opTy,
                                      int intValue) {
-  assert(i < getNumOperands());          // must be explicit op
-
+  assert(i < getNumOperands());
   operands[i].opType = opTy;
-  operands[i].contents.value = NULL;
   operands[i].contents.immedVal = intValue;
   operands[i].extra.regNum = -1;
   operands[i].flags = 0;
 }
 
 void MachineInstr::SetMachineOperandReg(unsigned i, int regNum) {
-  assert(i < getNumOperands());          // must be explicit op
+  assert(i < getNumOperands());
 
   operands[i].opType = MachineOperand::MO_VirtualRegister;
-  operands[i].contents.value = NULL;
+  operands[i].contents.GV = NULL;
   operands[i].extra.regNum = regNum;
 }
 
