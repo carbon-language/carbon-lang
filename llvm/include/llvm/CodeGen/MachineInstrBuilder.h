@@ -47,20 +47,6 @@ public:
     return *this;
   }
 
-  /// addZImm - Add a new zero extended immediate operand...
-  ///
-  const MachineInstrBuilder &addZImm(unsigned Val) const {
-    MI->addImmOperand(Val);
-    return *this;
-  }
-
-  /// addImm64 - Add a new 64-bit immediate operand...
-  ///
-  const MachineInstrBuilder &addImm64(uint64_t Val) const {
-    MI->addImmOperand(Val);
-    return *this;
-  }
-
   const MachineInstrBuilder &addMBB(MachineBasicBlock *MBB) const {
     MI->addMachineBasicBlockOperand(MBB);
     return *this;
@@ -99,7 +85,7 @@ public:
 /// allow for memory efficient representation of machine instructions.
 ///
 inline MachineInstrBuilder BuildMI(int Opcode, unsigned NumOperands) {
-  return MachineInstrBuilder(new MachineInstr(Opcode, NumOperands, true, true));
+  return MachineInstrBuilder(new MachineInstr(Opcode, NumOperands));
 }
 
 /// BuildMI - This version of the builder sets up the first operand as a
@@ -110,8 +96,8 @@ inline MachineInstrBuilder BuildMI(
   int Opcode, unsigned NumOperands,
   unsigned DestReg,
   MachineOperand::UseType useType = MachineOperand::Def) {
-  return MachineInstrBuilder(new MachineInstr(Opcode, NumOperands+1,
-                                   true, true)).addReg(DestReg, useType);
+  return MachineInstrBuilder(new MachineInstr(Opcode, NumOperands+1))
+               .addReg(DestReg, useType);
 }
 
 /// BuildMI - This version of the builder inserts the newly-built
@@ -124,7 +110,7 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
                                    MachineBasicBlock::iterator I,
                                    int Opcode, unsigned NumOperands,
                                    unsigned DestReg) {
-  MachineInstr *MI = new MachineInstr(Opcode, NumOperands+1, true, true);
+  MachineInstr *MI = new MachineInstr(Opcode, NumOperands+1);
   BB.insert(I, MI);
   return MachineInstrBuilder(MI).addReg(DestReg, MachineOperand::Def);
 }
@@ -136,7 +122,7 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
 inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
                                    MachineBasicBlock::iterator I,
                                    int Opcode, unsigned NumOperands) {
-  MachineInstr *MI = new MachineInstr(Opcode, NumOperands, true, true);
+  MachineInstr *MI = new MachineInstr(Opcode, NumOperands);
   BB.insert(I, MI);
   return MachineInstrBuilder(MI);
 }

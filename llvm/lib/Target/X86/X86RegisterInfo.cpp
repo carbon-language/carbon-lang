@@ -139,14 +139,14 @@ static MachineInstr *MakeMRIInst(unsigned Opcode, unsigned FrameIndex,
                                  MachineInstr *MI) {
   return addFrameReference(BuildMI(Opcode, 6), FrameIndex)
       .addReg(MI->getOperand(1).getReg())
-      .addZImm(MI->getOperand(2).getImmedValue());
+      .addImm(MI->getOperand(2).getImmedValue());
 }
 
 static MachineInstr *MakeMIInst(unsigned Opcode, unsigned FrameIndex,
                                 MachineInstr *MI) {
   if (MI->getOperand(1).isImmediate())
     return addFrameReference(BuildMI(Opcode, 5), FrameIndex)
-      .addZImm(MI->getOperand(1).getImmedValue());
+      .addImm(MI->getOperand(1).getImmedValue());
   else if (MI->getOperand(1).isGlobalAddress())
     return addFrameReference(BuildMI(Opcode, 5), FrameIndex)
       .addGlobalAddress(MI->getOperand(1).getGlobal(),
@@ -160,7 +160,7 @@ static MachineInstr *MakeMIInst(unsigned Opcode, unsigned FrameIndex,
 
 static MachineInstr *MakeM0Inst(unsigned Opcode, unsigned FrameIndex,
                                 MachineInstr *MI) {
-  return addFrameReference(BuildMI(Opcode, 5), FrameIndex).addZImm(0);
+  return addFrameReference(BuildMI(Opcode, 5), FrameIndex).addImm(0);
 }
 
 static MachineInstr *MakeRMInst(unsigned Opcode, unsigned FrameIndex,
@@ -174,7 +174,7 @@ static MachineInstr *MakeRMIInst(unsigned Opcode, unsigned FrameIndex,
                                  MachineInstr *MI) {
   const MachineOperand& op = MI->getOperand(0);
   return addFrameReference(BuildMI(Opcode, 6, op.getReg(), op.getUseType()),
-                        FrameIndex).addZImm(MI->getOperand(2).getImmedValue());
+                        FrameIndex).addImm(MI->getOperand(2).getImmedValue());
 }
 
 
@@ -620,7 +620,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       MachineInstr *New = 0;
       if (Old->getOpcode() == X86::ADJCALLSTACKDOWN) {
         New=BuildMI(X86::SUB32ri, 1, X86::ESP, MachineOperand::UseAndDef)
-              .addZImm(Amount);
+              .addImm(Amount);
       } else {
         assert(Old->getOpcode() == X86::ADJCALLSTACKUP);
         // factor out the amount the callee already popped.
@@ -629,7 +629,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
         if (Amount) {
           unsigned Opc = Amount < 128 ? X86::ADD32ri8 : X86::ADD32ri;
           New = BuildMI(Opc, 1, X86::ESP,
-                        MachineOperand::UseAndDef).addZImm(Amount);
+                        MachineOperand::UseAndDef).addImm(Amount);
         }
       }
 
@@ -644,7 +644,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       unsigned Opc = CalleeAmt < 128 ? X86::SUB32ri8 : X86::SUB32ri;
       MachineInstr *New =
         BuildMI(Opc, 1, X86::ESP,
-                MachineOperand::UseAndDef).addZImm(CalleeAmt);
+                MachineOperand::UseAndDef).addImm(CalleeAmt);
       MBB.insert(I, New);
     }
   }
@@ -793,11 +793,11 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
       if (NumBytes > 0) {
         unsigned Opc = NumBytes < 128 ? X86::ADD32ri8 : X86::ADD32ri;
         BuildMI(MBB, MBBI, Opc, 2)
-          .addReg(X86::ESP, MachineOperand::UseAndDef).addZImm(NumBytes);
+          .addReg(X86::ESP, MachineOperand::UseAndDef).addImm(NumBytes);
       } else if ((int)NumBytes < 0) {
         unsigned Opc = -NumBytes < 128 ? X86::SUB32ri8 : X86::SUB32ri;
         BuildMI(MBB, MBBI, Opc, 2)
-          .addReg(X86::ESP, MachineOperand::UseAndDef).addZImm(-NumBytes);
+          .addReg(X86::ESP, MachineOperand::UseAndDef).addImm(-NumBytes);
       }
     }
   }

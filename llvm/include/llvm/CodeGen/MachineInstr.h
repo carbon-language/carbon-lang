@@ -261,23 +261,8 @@ public:
 
 
 //===----------------------------------------------------------------------===//
-// class MachineInstr
-//
-// Purpose:
-//   Representation of each machine instruction.
-//
-//   MachineOpCode must be an enum, defined separately for each target.
-//   E.g., It is defined in SparcInstructionSelection.h for the SPARC.
-//
-//  There are 2 kinds of operands:
-//
-//  (1) Explicit operands of the machine instruction in vector operands[]
-//
-//  (2) "Implicit operands" are values implicitly used or defined by the
-//      machine instruction, such as arguments to a CALL, return value of
-//      a CALL (if any), and return value of a RETURN.
-//===----------------------------------------------------------------------===//
-
+/// MachineInstr - Representation of each machine instruction.
+///
 class MachineInstr {
   short Opcode;                         // the opcode
   std::vector<MachineOperand> operands; // the operands
@@ -287,9 +272,7 @@ class MachineInstr {
   // OperandComplete - Return true if it's illegal to add a new operand
   bool OperandsComplete() const;
 
-  //Constructor used by clone() method
   MachineInstr(const MachineInstr&);
-
   void operator=(const MachineInstr&); // DO NOT IMPLEMENT
 
   // Intrusive list support
@@ -297,12 +280,9 @@ class MachineInstr {
   friend struct ilist_traits<MachineInstr>;
 
 public:
-  /// MachineInstr ctor - This constructor only does a _reserve_ of the
-  /// operands, not a resize for them.  It is expected that if you use this that
-  /// you call add* methods below to fill up the operands, instead of the Set
-  /// methods.  Eventually, the "resizing" ctors will be phased out.
-  ///
-  MachineInstr(short Opcode, unsigned numOperands, bool XX, bool YY);
+  /// MachineInstr ctor - This constructor reserve's space for numOperand
+  /// operands.
+  MachineInstr(short Opcode, unsigned numOperands);
 
   /// MachineInstr ctor - Work exactly the same as the ctor above, except that
   /// the MachineInstr is created and added to the end of the specified basic

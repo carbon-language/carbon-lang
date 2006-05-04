@@ -184,7 +184,7 @@ void ScheduleDAG::EmitNode(SDNode *Node,
 #endif
 
     // Create the new machine instruction.
-    MachineInstr *MI = new MachineInstr(Opc, NumMIOperands, true, true);
+    MachineInstr *MI = new MachineInstr(Opc, NumMIOperands);
     
     // Add result register values for things that are defined by this
     // instruction.

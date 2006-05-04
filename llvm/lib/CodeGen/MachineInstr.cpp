@@ -41,7 +41,7 @@ namespace llvm {
 /// add* methods below to fill up the operands, instead of the Set methods.
 /// Eventually, the "resizing" ctors will be phased out.
 ///
-MachineInstr::MachineInstr(short opcode, unsigned numOperands, bool XX, bool YY)
+MachineInstr::MachineInstr(short opcode, unsigned numOperands)
   : Opcode(opcode), parent(0) {
   operands.reserve(numOperands);
   // Make sure that we get added to a machine basicblock
