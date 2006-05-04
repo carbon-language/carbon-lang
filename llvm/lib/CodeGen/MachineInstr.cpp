@@ -176,18 +176,6 @@ static void print(const MachineOperand &MO, std::ostream &OS,
 
   if (TM) MRI = TM->getRegisterInfo();
 
-  bool CloseParen = true;
-  if (MO.isHiBits32())
-    OS << "%lm(";
-  else if (MO.isLoBits32())
-    OS << "%lo(";
-  else if (MO.isHiBits64())
-    OS << "%hh(";
-  else if (MO.isLoBits64())
-    OS << "%hm(";
-  else
-    CloseParen = false;
-
   switch (MO.getType()) {
   case MachineOperand::MO_VirtualRegister:
     if (MO.getVRegValue()) {
@@ -235,9 +223,6 @@ static void print(const MachineOperand &MO, std::ostream &OS,
   default:
     assert(0 && "Unrecognized operand type");
   }
-
-  if (CloseParen)
-    OS << ")";
 }
 
 void MachineInstr::print(std::ostream &OS, const TargetMachine *TM) const {
@@ -272,8 +257,7 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine *TM) const {
   OS << "\n";
 }
 
-namespace llvm {
-std::ostream &operator<<(std::ostream &os, const MachineInstr &MI) {
+std::ostream &llvm::operator<<(std::ostream &os, const MachineInstr &MI) {
   // If the instruction is embedded into a basic block, we can find the target
   // info for the instruction.
   if (const MachineBasicBlock *MBB = MI.getParent()) {
@@ -301,16 +285,7 @@ std::ostream &operator<<(std::ostream &os, const MachineInstr &MI) {
   return os << "\n";
 }
 
-std::ostream &operator<<(std::ostream &OS, const MachineOperand &MO) {
-  if (MO.isHiBits32())
-    OS << "%lm(";
-  else if (MO.isLoBits32())
-    OS << "%lo(";
-  else if (MO.isHiBits64())
-    OS << "%hh(";
-  else if (MO.isLoBits64())
-    OS << "%hm(";
-
+std::ostream &llvm::operator<<(std::ostream &OS, const MachineOperand &MO) {
   switch (MO.getType()) {
   case MachineOperand::MO_VirtualRegister:
     if (MO.hasAllocatedReg())
@@ -356,10 +331,5 @@ std::ostream &operator<<(std::ostream &OS, const MachineOperand &MO) {
     break;
   }
 
-  if (MO.isHiBits32() || MO.isLoBits32() || MO.isHiBits64() || MO.isLoBits64())
-    OS << ")";
-
   return OS;
-}
-
 }

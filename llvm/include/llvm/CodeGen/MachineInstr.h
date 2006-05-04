@@ -75,10 +75,6 @@ private:
   enum {
     DEFFLAG     = 0x01,       // this is a def of the operand
     USEFLAG     = 0x02,       // this is a use of the operand
-    HIFLAG32    = 0x04,       // operand is %hi32(value_or_immedVal)
-    LOFLAG32    = 0x08,       // operand is %lo32(value_or_immedVal)
-    HIFLAG64    = 0x10,       // operand is %hi64(value_or_immedVal)
-    LOFLAG64    = 0x20,       // operand is %lo64(value_or_immedVal)
     PCRELATIVE  = 0x40        // Operand is relative to PC, not a global address
   };
 
@@ -215,13 +211,6 @@ public:
   ///
   UseType getUseType() const { return UseType(flags & (USEFLAG|DEFFLAG)); }
 
-  /// isPCRelative - This returns the value of the PCRELATIVE flag, which
-  /// indicates whether this operand should be emitted as a PC relative value
-  /// instead of a global address.  This is used for operands of the forms:
-  /// MachineBasicBlock, GlobalAddress, ExternalSymbol
-  ///
-  bool isPCRelative() const { return (flags & PCRELATIVE) != 0; }
-
   /// isRegister - Return true if this operand is a register operand.  The X86
   /// backend currently can't decide whether to use MO_MR or MO_VR to represent
   /// them, so we accept both.
@@ -307,10 +296,6 @@ public:
   MachineOperand& setUse          ()       { flags |= USEFLAG; return *this; }
   bool            isDef           () const { return flags & DEFFLAG; }
   MachineOperand& setDef          ()       { flags |= DEFFLAG; return *this; }
-  bool            isHiBits32      () const { return flags & HIFLAG32; }
-  bool            isLoBits32      () const { return flags & LOFLAG32; }
-  bool            isHiBits64      () const { return flags & HIFLAG64; }
-  bool            isLoBits64      () const { return flags & LOFLAG64; }
 
   /// hasAllocatedReg - Returns true iff a machine register has been
   /// allocated to this operand.

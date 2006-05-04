@@ -440,7 +440,6 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
       } else if (MO1.isGlobalAddress()) {
         assert(sizeOfImm(Desc) == 4 &&
                "Don't know how to emit non-pointer values!");
-        assert(!MO1.isPCRelative() && "Function pointer ref is PC relative?");
         emitGlobalAddressForPtr(MO1.getGlobal(), MO1.getOffset());
       } else if (MO1.isExternalSymbol()) {
         assert(sizeOfImm(Desc) == 4 &&
