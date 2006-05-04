@@ -180,10 +180,8 @@ void IA64AsmPrinter::printOp(const MachineOperand &MO,
     }
     // FALLTHROUGH
   case MachineOperand::MO_MachineRegister:
-  case MachineOperand::MO_CCRegister: {
     O << RI.get(MO.getReg()).Name;
     return;
-  }
 
   case MachineOperand::MO_SignExtendedImmed:
   case MachineOperand::MO_UnextendedImmed:
@@ -192,11 +190,6 @@ void IA64AsmPrinter::printOp(const MachineOperand &MO,
   case MachineOperand::MO_MachineBasicBlock:
     printBasicBlockLabel(MO.getMachineBasicBlock());
     return;
-  case MachineOperand::MO_PCRelativeDisp:
-    std::cerr << "Shouldn't use addPCDisp() when building IA64 MachineInstrs";
-    abort ();
-    return;
-
   case MachineOperand::MO_ConstantPoolIndex: {
     O << "@gprel(" << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << "_"
       << MO.getConstantPoolIndex() << ")";

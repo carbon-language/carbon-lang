@@ -126,10 +126,6 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   case MachineOperand::MO_MachineBasicBlock:
     printBasicBlockLabel(MO.getMachineBasicBlock());
     return;
-  case MachineOperand::MO_PCRelativeDisp:
-    std::cerr << "Shouldn't use addPCDisp() when building X86 MachineInstrs";
-    abort ();
-    return;
   case MachineOperand::MO_JumpTableIndex: {
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     if (!isMemOp) O << '$';

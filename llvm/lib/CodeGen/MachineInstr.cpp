@@ -199,14 +199,6 @@ static void print(const MachineOperand &MO, std::ostream &OS,
     if (MO.hasAllocatedReg())
       OutputReg(OS, MO.getReg(), MRI);
     break;
-  case MachineOperand::MO_CCRegister:
-    OS << "%ccreg";
-    OutputValue(OS, MO.getVRegValue());
-    if (MO.hasAllocatedReg()) {
-      OS << "==";
-      OutputReg(OS, MO.getReg(), MRI);
-    }
-    break;
   case MachineOperand::MO_MachineRegister:
     OutputReg(OS, MO.getMachineRegNum(), MRI);
     break;
@@ -216,17 +208,6 @@ static void print(const MachineOperand &MO, std::ostream &OS,
   case MachineOperand::MO_UnextendedImmed:
     OS << (long)MO.getImmedValue();
     break;
-  case MachineOperand::MO_PCRelativeDisp: {
-    const Value* opVal = MO.getVRegValue();
-    bool isLabel = isa<Function>(opVal) || isa<BasicBlock>(opVal);
-    OS << "%disp(" << (isLabel? "label " : "addr-of-val ");
-    if (opVal->hasName())
-      OS << opVal->getName();
-    else
-      OS << (const void*) opVal;
-    OS << ")";
-    break;
-  }
   case MachineOperand::MO_MachineBasicBlock:
     OS << "mbb<"
        << ((Value*)MO.getMachineBasicBlock()->getBasicBlock())->getName()
@@ -341,14 +322,6 @@ std::ostream &operator<<(std::ostream &OS, const MachineOperand &MO) {
       OutputValue(OS, MO.getVRegValue());
     }
     break;
-  case MachineOperand::MO_CCRegister:
-    OS << "%ccreg";
-    OutputValue(OS, MO.getVRegValue());
-    if (MO.hasAllocatedReg()) {
-      OS << "==";
-      OutputReg(OS, MO.getReg());
-    }
-    break;
   case MachineOperand::MO_MachineRegister:
     OutputReg(OS, MO.getMachineRegNum());
     break;
@@ -358,17 +331,6 @@ std::ostream &operator<<(std::ostream &OS, const MachineOperand &MO) {
   case MachineOperand::MO_UnextendedImmed:
     OS << (long)MO.getImmedValue();
     break;
-  case MachineOperand::MO_PCRelativeDisp: {
-    const Value* opVal = MO.getVRegValue();
-    bool isLabel = isa<Function>(opVal) || isa<BasicBlock>(opVal);
-    OS << "%disp(" << (isLabel? "label " : "addr-of-val ");
-    if (opVal->hasName())
-      OS << opVal->getName();
-    else
-      OS << (const void*) opVal;
-    OS << ")";
-    break;
-  }
   case MachineOperand::MO_MachineBasicBlock:
     OS << "<mbb:"
        << ((Value*)MO.getMachineBasicBlock()->getBasicBlock())->getName()

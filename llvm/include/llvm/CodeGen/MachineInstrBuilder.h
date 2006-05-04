@@ -55,36 +55,11 @@ public:
     return *this;
   }
 
-  /// addReg - Add an LLVM value that is to be used as a register...
-  ///
-  const MachineInstrBuilder &addCCReg(
-    Value *V,
-    MachineOperand::UseType Ty = MachineOperand::Use) const {
-    MI->addCCRegOperand(V, Ty);
-    return *this;
-  }
-
   /// addRegDef - Add an LLVM value that is to be defined as a register... this
   /// is the same as addReg(V, MachineOperand::Def).
   ///
   const MachineInstrBuilder &addRegDef(Value *V) const {
     return addReg(V, MachineOperand::Def);
-  }
-
-  /// addPCDisp - Add an LLVM value to be treated as a PC relative
-  /// displacement...
-  ///
-  const MachineInstrBuilder &addPCDisp(Value *V) const {
-    MI->addPCDispOperand(V);
-    return *this;
-  }
-
-  /// addMReg - Add a machine register operand...
-  ///
-  const MachineInstrBuilder &addMReg(int Reg, MachineOperand::UseType Ty
-                                        = MachineOperand::Use) const {
-    MI->addMachineRegOperand(Reg, Ty);
-    return *this;
   }
 
   /// addImm - Add a new immediate operand.

@@ -166,10 +166,6 @@ void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
   case MachineOperand::MO_MachineBasicBlock:
     printBasicBlockLabel(MO.getMachineBasicBlock());
     return;
-  case MachineOperand::MO_PCRelativeDisp:
-    std::cerr << "Shouldn't use addPCDisp() when building Sparc MachineInstrs";
-    abort ();
-    return;
   case MachineOperand::MO_GlobalAddress:
     O << Mang->getValueName(MO.getGlobal());
     break;

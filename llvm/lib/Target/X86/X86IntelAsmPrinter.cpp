@@ -134,10 +134,6 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
   case MachineOperand::MO_MachineBasicBlock:
     printBasicBlockLabel(MO.getMachineBasicBlock());
     return;
-  case MachineOperand::MO_PCRelativeDisp:
-    assert(0 && "Shouldn't use addPCDisp() when building X86 MachineInstrs");
-    abort ();
-    return;
   case MachineOperand::MO_ConstantPoolIndex: {
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     if (!isMemOp) O << "OFFSET ";

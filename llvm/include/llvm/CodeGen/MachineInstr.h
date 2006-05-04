@@ -98,10 +98,8 @@ public:
   enum MachineOperandType {
     MO_VirtualRegister,         // virtual register for *value
     MO_MachineRegister,         // pre-assigned machine register `regNum'
-    MO_CCRegister,
     MO_SignExtendedImmed,
     MO_UnextendedImmed,
-    MO_PCRelativeDisp,
     MO_MachineBasicBlock,       // MachineBasicBlock reference
     MO_FrameIndex,              // Abstract Stack Frame Index
     MO_ConstantPoolIndex,       // Address of indexed Constant in Constant Pool
@@ -237,7 +235,6 @@ public:
   /// Accessors that tell you what kind of MachineOperand you're looking at.
   ///
   bool isMachineBasicBlock() const { return opType == MO_MachineBasicBlock; }
-  bool isPCRelativeDisp() const { return opType == MO_PCRelativeDisp; }
   bool isImmediate() const {
     return opType == MO_SignExtendedImmed || opType == MO_UnextendedImmed;
   }
@@ -251,16 +248,14 @@ public:
   /// has one. This is deprecated and only used by the SPARC v9 backend.
   ///
   Value* getVRegValueOrNull() const {
-    return (opType == MO_VirtualRegister || opType == MO_CCRegister ||
-            isPCRelativeDisp()) ? contents.value : NULL;
+    return opType == MO_VirtualRegister ? contents.value : NULL;
   }
 
   /// MachineOperand accessors that only work on certain types of
   /// MachineOperand...
   ///
   Value* getVRegValue() const {
-    assert ((opType == MO_VirtualRegister || opType == MO_CCRegister
-             || isPCRelativeDisp()) && "Wrong MachineOperand accessor");
+    assert(opType == MO_VirtualRegister && "Wrong MachineOperand accessor");
     return contents.value;
   }
   int getMachineRegNum() const {
@@ -322,8 +317,7 @@ public:
   ///
   bool hasAllocatedReg() const {
     return (extra.regNum >= 0 &&
-            (opType == MO_VirtualRegister || opType == MO_CCRegister ||
-             opType == MO_MachineRegister));
+            (opType == MO_VirtualRegister || opType == MO_MachineRegister));
   }
 
   /// getReg - Returns the register number. It is a runtime error to call this
@@ -361,25 +355,6 @@ public:
   }
 
   friend std::ostream& operator<<(std::ostream& os, const MachineOperand& mop);
-
-  /// markHi32, markLo32, etc. - These methods are deprecated and only used by
-  /// the SPARC v9 back-end.
-  ///
-  void markHi32()      { flags |= HIFLAG32; }
-  void markLo32()      { flags |= LOFLAG32; }
-  void markHi64()      { flags |= HIFLAG64; }
-  void markLo64()      { flags |= LOFLAG64; }
-
-private:
-  /// setRegForValue - Replaces the Value with its corresponding physical
-  /// register after register allocation is complete. This is deprecated
-  /// and only used by the SPARC v9 back-end.
-  ///
-  void setRegForValue(int reg) {
-    assert(opType == MO_VirtualRegister || opType == MO_CCRegister ||
-           opType == MO_MachineRegister);
-    extra.regNum = reg;
-  }
 
   friend class MachineInstr;
 };
@@ -507,15 +482,6 @@ public:
                                       UTy, isPCRelative));
   }
 
-  void addCCRegOperand(Value *V,
-                       MachineOperand::UseType UTy = MachineOperand::Use) {
-    assert(!OperandsComplete() &&
-           "Trying to add an operand to a machine instr that is already done!");
-    operands.push_back(MachineOperand(V, MachineOperand::MO_CCRegister, UTy,
-                                      false));
-  }
-
-
   /// addRegOperand - Add a symbolic virtual register reference...
   ///
   void addRegOperand(int reg, bool isDef) {
@@ -534,15 +500,6 @@ public:
            "Trying to add an operand to a machine instr that is already done!");
     operands.push_back(
       MachineOperand(reg, MachineOperand::MO_VirtualRegister, UTy));
-  }
-
-  /// addPCDispOperand - Add a PC relative displacement operand to the MI
-  ///
-  void addPCDispOperand(Value *V) {
-    assert(!OperandsComplete() &&
-           "Trying to add an operand to a machine instr that is already done!");
-    operands.push_back(
-      MachineOperand(V, MachineOperand::MO_PCRelativeDisp,MachineOperand::Use));
   }
 
   /// addMachineRegOperand - Add a virtual register operand to this MachineInstr

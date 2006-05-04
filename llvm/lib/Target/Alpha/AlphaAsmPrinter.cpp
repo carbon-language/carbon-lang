@@ -100,18 +100,12 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     }
     // FALLTHROUGH
   case MachineOperand::MO_MachineRegister:
-  case MachineOperand::MO_CCRegister:
     O << RI.get(MO.getReg()).Name;
     return;
 
   case MachineOperand::MO_SignExtendedImmed:
   case MachineOperand::MO_UnextendedImmed:
     std::cerr << "printOp() does not handle immediate values\n";
-    abort();
-    return;
-
-  case MachineOperand::MO_PCRelativeDisp:
-    std::cerr << "Shouldn't use addPCDisp() when building Alpha MachineInstrs";
     abort();
     return;
 
