@@ -200,7 +200,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
         for (unsigned i = 1, e = mi->getNumOperands(); i != e; ++i) {
           if (mi->getOperand(i).isRegister() &&
               mi->getOperand(i).getReg() == regB)
-            mi->SetMachineOperandReg(i, regA);
+            mi->getOperand(i).setReg(regA);
         }
       }
 

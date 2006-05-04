@@ -136,8 +136,8 @@ MachineInstr *PPCInstrInfo::commuteInstruction(MachineInstr *MI) const {
   // Swap op1/op2
   unsigned Reg1 = MI->getOperand(1).getReg();
   unsigned Reg2 = MI->getOperand(2).getReg();
-  MI->SetMachineOperandReg(2, Reg1);
-  MI->SetMachineOperandReg(1, Reg2);
+  MI->getOperand(2).setReg(Reg1);
+  MI->getOperand(1).setReg(Reg2);
   
   // Swap the mask around.
   unsigned MB = MI->getOperand(4).getImmedValue();

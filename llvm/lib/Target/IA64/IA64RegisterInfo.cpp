@@ -155,7 +155,7 @@ void IA64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const
   // choose a base register: ( hasFP? framepointer : stack pointer )
   unsigned BaseRegister = FP ? IA64::r5 : IA64::r12;
   // Add the base register
-  MI.SetMachineOperandReg(i, BaseRegister);
+  MI.getOperand(i).ChangeToRegister(BaseRegister);
 
   // Now add the frame object offset to the offset from r1.
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
@@ -168,7 +168,7 @@ void IA64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const
   // XXX: we use 'r22' as another hack+slash temporary register here :(
   if ( Offset <= 8191 && Offset >= -8192) { // smallish offset
     //fix up the old:
-    MI.SetMachineOperandReg(i, IA64::r22);
+    MI.getOperand(i).ChangeToRegister(IA64::r22);
     MI.getOperand(i).setUse(); // mark r22 as being used
                                // (the bundler wants to know this)
     //insert the new
@@ -177,7 +177,7 @@ void IA64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const
     MBB.insert(II, nMI);
   } else { // it's big
     //fix up the old:
-    MI.SetMachineOperandReg(i, IA64::r22);
+    MI.getOperand(i).ChangeToRegister(IA64::r22);
     MI.getOperand(i).setUse(); // mark r22 as being used
                                // (the bundler wants to know this)
     MachineInstr* nMI;

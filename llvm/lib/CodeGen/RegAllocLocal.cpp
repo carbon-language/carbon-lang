@@ -443,7 +443,7 @@ MachineInstr *RA::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
   // and return.
   if (unsigned PR = getVirt2PhysRegMapSlot(VirtReg)) {
     MarkPhysRegRecentlyUsed(PR);          // Already have this value available!
-    MI->SetMachineOperandReg(OpNum, PR);  // Assign the input register
+    MI->getOperand(OpNum).setReg(PR);  // Assign the input register
     return MI;
   }
 
@@ -481,7 +481,7 @@ MachineInstr *RA::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
   ++NumLoads;    // Update statistics
 
   PhysRegsEverUsed[PhysReg] = true;
-  MI->SetMachineOperandReg(OpNum, PhysReg);  // Assign the input register
+  MI->getOperand(OpNum).setReg(PhysReg);  // Assign the input register
   return MI;
 }
 
@@ -599,7 +599,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
           DestPhysReg = getReg(MBB, MI, DestVirtReg);
         PhysRegsEverUsed[DestPhysReg] = true;
         markVirtRegModified(DestVirtReg);
-        MI->SetMachineOperandReg(i, DestPhysReg);  // Assign the output register
+        MI->getOperand(i).setReg(DestPhysReg);  // Assign the output register
       }
     }
 

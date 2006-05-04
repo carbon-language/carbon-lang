@@ -216,7 +216,7 @@ AlphaRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
   int FrameIndex = MI.getOperand(i).getFrameIndex();
 
   // Add the base register of R30 (SP) or R15 (FP).
-  MI.SetMachineOperandReg(i + 1, FP ? Alpha::R15 : Alpha::R30);
+  MI.getOperand(i + 1).ChangeToRegister(FP ? Alpha::R15 : Alpha::R30);
 
   // Now add the frame object offset to the offset from the virtual frame index.
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
@@ -233,15 +233,14 @@ AlphaRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
     //so in this case, we need to use a temporary register, and move the original
     //inst off the SP/FP
     //fix up the old:
-    MI.SetMachineOperandReg(i + 1, Alpha::R28);
-    MI.SetMachineOperandConst(i, MachineOperand::MO_Immediate,
-                              getLower16(Offset));
+    MI.getOperand(i + 1).ChangeToRegister(Alpha::R28);
+    MI.getOperand(i).ChangeToImmediate(getLower16(Offset));
     //insert the new
     MachineInstr* nMI=BuildMI(Alpha::LDAH, 2, Alpha::R28)
       .addImm(getUpper16(Offset)).addReg(FP ? Alpha::R15 : Alpha::R30);
     MBB.insert(II, nMI);
   } else {
-    MI.SetMachineOperandConst(i, MachineOperand::MO_Immediate, Offset);
+    MI.getOperand(i).ChangeToImmediate(Offset);
   }
 }
 

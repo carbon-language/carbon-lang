@@ -107,25 +107,6 @@ bool MachineInstr::OperandsComplete() const {
   return false;
 }
 
-void
-MachineInstr::SetMachineOperandConst(unsigned i,
-                                     MachineOperand::MachineOperandType opTy,
-                                     int intValue) {
-  assert(i < getNumOperands());
-  operands[i].opType = opTy;
-  operands[i].contents.immedVal = intValue;
-  operands[i].extra.regNum = -1;
-  operands[i].flags = 0;
-}
-
-void MachineInstr::SetMachineOperandReg(unsigned i, int regNum) {
-  assert(i < getNumOperands());
-
-  operands[i].opType = MachineOperand::MO_VirtualRegister;
-  operands[i].contents.GV = NULL;
-  operands[i].extra.regNum = regNum;
-}
-
 void MachineInstr::dump() const {
   std::cerr << "  " << *this;
 }

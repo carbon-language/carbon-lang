@@ -46,7 +46,7 @@ MachineInstr *TargetInstrInfo::commuteInstruction(MachineInstr *MI) const {
          "This only knows how to commute register operands so far");
   unsigned Reg1 = MI->getOperand(1).getReg();
   unsigned Reg2 = MI->getOperand(1).getReg();
-  MI->SetMachineOperandReg(2, Reg1);
-  MI->SetMachineOperandReg(1, Reg2);
+  MI->getOperand(2).setReg(Reg1);
+  MI->getOperand(1).setReg(Reg2);
   return MI;
 }

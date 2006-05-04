@@ -135,8 +135,8 @@ SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
   if (Offset >= -4096 && Offset <= 4095) {
     // If the offset is small enough to fit in the immediate field, directly
     // encode it.
-    MI.SetMachineOperandReg(i, SP::I6);
-    MI.SetMachineOperandConst(i+1, MachineOperand::MO_Immediate, Offset);
+    MI.getOperand(i).ChangeToRegister(SP::I6);
+    MI.getOperand(i+1).ChangeToImmediate(Offset);
   } else {
     // Otherwise, emit a G1 = SETHI %hi(offset).  FIXME: it would be better to 
     // scavenge a register here instead of reserving G1 all of the time.
@@ -146,9 +146,8 @@ SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
     BuildMI(*MI.getParent(), II, SP::ADDrr, 2, 
             SP::G1).addReg(SP::G1).addReg(SP::I6);
     // Insert: G1+%lo(offset) into the user.
-    MI.SetMachineOperandReg(i, SP::G1);
-    MI.SetMachineOperandConst(i+1, MachineOperand::MO_Immediate,
-                              Offset & ((1 << 10)-1));
+    MI.getOperand(i).ChangeToRegister(SP::G1);
+    MI.getOperand(i+1).ChangeToImmediate(Offset & ((1 << 10)-1));
   }
 }
 

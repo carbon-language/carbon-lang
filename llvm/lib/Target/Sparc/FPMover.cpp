@@ -104,8 +104,8 @@ bool FPMover::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
       else
         assert(0 && "Unknown opcode!");
         
-      MI->SetMachineOperandReg(0, EvenDestReg);
-      MI->SetMachineOperandReg(1, EvenSrcReg);
+      MI->getOperand(0).setReg(EvenDestReg);
+      MI->getOperand(1).setReg(EvenSrcReg);
       DEBUG(std::cerr << "FPMover: the modified instr is: " << *MI);
       // Insert copy for the other half of the double.
       if (DestDReg != SrcDReg) {

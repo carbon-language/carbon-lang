@@ -182,7 +182,7 @@ bool SimpleSpiller::runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
               }
             }
             PhysRegsUsed[PhysReg] = true;
-            MI.SetMachineOperandReg(i, PhysReg);
+            MI.getOperand(i).setReg(PhysReg);
           } else {
             PhysRegsUsed[MO.getReg()] = true;
           }
@@ -458,7 +458,7 @@ namespace {
             // Any stores to this stack slot are not dead anymore.
             MaybeDeadStores.erase(NewOp.StackSlot);
             
-            MI->SetMachineOperandReg(NewOp.Operand, NewPhysReg);
+            MI->getOperand(NewOp.Operand).setReg(NewPhysReg);
             
             Spills.addAvailable(NewOp.StackSlot, NewPhysReg);
             ++NumLoads;
@@ -536,7 +536,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         // This virtual register was assigned a physreg!
         unsigned Phys = VRM.getPhys(VirtReg);
         PhysRegsUsed[Phys] = true;
-        MI.SetMachineOperandReg(i, Phys);
+        MI.getOperand(i).setReg(Phys);
         continue;
       }
       
@@ -567,7 +567,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
                           << MRI->getName(PhysReg) << " for vreg"
                           << VirtReg <<" instead of reloading into physreg "
                           << MRI->getName(VRM.getPhys(VirtReg)) << "\n");
-          MI.SetMachineOperandReg(i, PhysReg);
+          MI.getOperand(i).setReg(PhysReg);
 
           // The only technical detail we have is that we don't know that
           // PhysReg won't be clobbered by a reloaded stack slot that occurs
@@ -618,7 +618,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
                           << MRI->getName(PhysReg) << " for vreg"
                           << VirtReg
                           << " instead of reloading into same physreg.\n");
-          MI.SetMachineOperandReg(i, PhysReg);
+          MI.getOperand(i).setReg(PhysReg);
           ++NumReused;
           continue;
         }
@@ -633,7 +633,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         Spills.ClobberPhysReg(DesignatedReg);
         
         Spills.addAvailable(StackSlot, DesignatedReg);
-        MI.SetMachineOperandReg(i, DesignatedReg);
+        MI.getOperand(i).setReg(DesignatedReg);
         DEBUG(std::cerr << '\t' << *prior(MII));
         ++NumReused;
         continue;
@@ -662,7 +662,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       MaybeDeadStores.erase(StackSlot);
       Spills.addAvailable(StackSlot, PhysReg);
       ++NumLoads;
-      MI.SetMachineOperandReg(i, PhysReg);
+      MI.getOperand(i).setReg(PhysReg);
       DEBUG(std::cerr << '\t' << *prior(MII));
     }
 
@@ -817,7 +817,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         PhysRegsUsed[PhysReg] = true;
         MRI->storeRegToStackSlot(MBB, next(MII), PhysReg, StackSlot, RC);
         DEBUG(std::cerr << "Store:\t" << *next(MII));
-        MI.SetMachineOperandReg(i, PhysReg);
+        MI.getOperand(i).setReg(PhysReg);
 
         // Check to see if this is a noop copy.  If so, eliminate the
         // instruction before considering the dest reg to be changed.

@@ -211,7 +211,7 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
             Virt2PhysRegMap[virtualReg] = physReg;
           }
         }
-        MI->SetMachineOperandReg(i, physReg);
+        MI->getOperand(i).setReg(physReg);
         DEBUG(std::cerr << "virt: " << virtualReg <<
               ", phys: " << op.getReg() << "\n");
       }

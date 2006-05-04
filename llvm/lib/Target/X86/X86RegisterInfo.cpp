@@ -665,7 +665,7 @@ void X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
 
   // This must be part of a four operand memory reference.  Replace the
   // FrameIndex with base register with EBP.  Add add an offset to the offset.
-  MI.SetMachineOperandReg(i, hasFP(MF) ? X86::EBP : X86::ESP);
+  MI.getOperand(i).ChangeToRegister(hasFP(MF) ? X86::EBP : X86::ESP);
 
   // Now add the frame object offset to the offset from EBP.
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex) +
@@ -676,7 +676,7 @@ void X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
   else
     Offset += 4;  // Skip the saved EBP
 
-  MI.SetMachineOperandConst(i+3, MachineOperand::MO_Immediate, Offset);
+  MI.getOperand(i+3).ChangeToImmediate(Offset);
 }
 
 void

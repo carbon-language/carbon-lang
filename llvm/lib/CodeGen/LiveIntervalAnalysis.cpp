@@ -187,7 +187,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
               MRegisterInfo::isVirtualRegister(mop.getReg())) {
             // replace register with representative register
             unsigned reg = rep(mop.getReg());
-            mii->SetMachineOperandReg(i, reg);
+            mii->getOperand(i).setReg(reg);
 
             LiveInterval &RegInt = getInterval(reg);
             RegInt.weight +=
@@ -263,7 +263,7 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
           if (NewRegLiveIn && mop.isUse()) {
             // We already emitted a reload of this value, reuse it for
             // subsequent operands.
-            MI->SetMachineOperandReg(i, NewRegLiveIn);
+            MI->getOperand(i).setReg(NewRegLiveIn);
             DEBUG(std::cerr << "\t\t\t\treused reload into reg" << NewRegLiveIn
                             << " for operand #" << i << '\n');
           } else if (MachineInstr* fmi = mri_->foldMemoryOperand(MI, i, slot)) {
@@ -300,7 +300,7 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
 
             // create a new register for this spill
             NewRegLiveIn = mf_->getSSARegMap()->createVirtualRegister(rc);
-            MI->SetMachineOperandReg(i, NewRegLiveIn);
+            MI->getOperand(i).setReg(NewRegLiveIn);
             vrm.grow();
             vrm.assignVirt2StackSlot(NewRegLiveIn, slot);
             LiveInterval& nI = getOrCreateInterval(NewRegLiveIn);

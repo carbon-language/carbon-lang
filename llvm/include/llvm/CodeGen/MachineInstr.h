@@ -234,7 +234,7 @@ public:
     extra.regNum = Reg;
   }
 
-  void setImmedValue(int immVal) {
+  void setImmedValue(int64_t immVal) {
     assert(isImmediate() && "Wrong MachineOperand mutator");
     contents.immedVal = immVal;
   }
@@ -244,6 +244,22 @@ public:
             isJumpTableIndex()) &&
         "Wrong MachineOperand accessor");
     extra.offset = Offset;
+  }
+  
+  /// ChangeToImmediate - Replace this operand with a new immediate operand of
+  /// the specified value.  If an operand is known to be an immediate already,
+  /// the setImmedValue method should be used.
+  void ChangeToImmediate(int64_t ImmVal) {
+    opType = MO_Immediate;
+    contents.immedVal = ImmVal;
+  }
+
+  /// ChangeToRegister - Replace this operand with a new register operand of
+  /// the specified value.  If an operand is known to be an register already,
+  /// the setReg method should be used.
+  void ChangeToRegister(unsigned Reg) {
+    opType = MO_VirtualRegister;
+    extra.regNum = Reg;
   }
 
   friend std::ostream& operator<<(std::ostream& os, const MachineOperand& mop);
@@ -436,7 +452,6 @@ public:
   //===--------------------------------------------------------------------===//
   // Accessors used to modify instructions in place.
   //
-  // FIXME: Move this stuff to MachineOperand itself!
 
   /// setOpcode - Replace the opcode of the current instruction with a new one.
   ///
@@ -448,14 +463,6 @@ public:
   void RemoveOperand(unsigned i) {
     operands.erase(operands.begin()+i);
   }
-
-  // Access to set the operands when building the machine instruction
-  //
-  void SetMachineOperandConst(unsigned i,
-                              MachineOperand::MachineOperandType operandType,
-                              int intValue);
-
-  void SetMachineOperandReg(unsigned i, int regNum);
 };
 
 //===----------------------------------------------------------------------===//

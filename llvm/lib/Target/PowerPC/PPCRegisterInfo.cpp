@@ -294,7 +294,7 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
   int FrameIndex = MI.getOperand(i).getFrameIndex();
 
   // Replace the FrameIndex with base register with GPR1 (SP) or GPR31 (FP).
-  MI.SetMachineOperandReg(i, hasFP(MF) ? PPC::R31 : PPC::R1);
+  MI.getOperand(i).ChangeToRegister(hasFP(MF) ? PPC::R31 : PPC::R1);
 
   // Take into account whether it's an add or mem instruction
   unsigned OffIdx = (i == 2) ? 1 : 2;
@@ -321,8 +321,8 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
            "No indexed form of load or store available!");
     unsigned NewOpcode = ImmToIdxMap.find(MI.getOpcode())->second;
     MI.setOpcode(NewOpcode);
-    MI.SetMachineOperandReg(1, MI.getOperand(i).getReg());
-    MI.SetMachineOperandReg(2, PPC::R0);
+    MI.getOperand(1).ChangeToRegister(MI.getOperand(i).getReg());
+    MI.getOperand(2).ChangeToRegister(PPC::R0);
   } else {
     switch (MI.getOpcode()) {
     case PPC::LWA:
@@ -333,7 +333,7 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
       Offset >>= 2;    // The actual encoded value has the low two bits zero.
       break;
     }
-    MI.SetMachineOperandConst(OffIdx, MachineOperand::MO_Immediate, Offset);
+    MI.getOperand(OffIdx).ChangeToImmediate(Offset);
   }
 }
 
