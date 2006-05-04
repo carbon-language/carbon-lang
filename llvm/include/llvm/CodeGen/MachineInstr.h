@@ -32,8 +32,6 @@ class GlobalValue;
 template <typename T> struct ilist_traits;
 template <typename T> struct ilist;
 
-typedef short MachineOpCode;
-
 //===----------------------------------------------------------------------===//
 // class MachineOperand
 //
@@ -77,64 +75,53 @@ private:
     int64_t immedVal;   // Constant value for an explicit constant
     MachineBasicBlock *MBB;     // For MO_MachineBasicBlock type
     const char *SymbolName;     // For MO_ExternalSymbol type
+    unsigned RegNo;            // For MO_Register number for an explicit register
   } contents;
 
   char flags;                   // see bit field definitions above
   MachineOperandType opType:8;  // Pack into 8 bits efficiently after flags.
-  union {
-    int regNum;     // register number for an explicit register
-    int offset;     // Offset to address of global or external, only
-                    // valid for MO_GlobalAddress, MO_ExternalSym
-                    // and MO_ConstantPoolIndex
-  } extra;
-
-  void zeroContents() {
-    contents.immedVal = 0;
-    extra.offset = 0;
-  }
+  
+  /// offset - Offset to address of global or external, only valid for
+  /// MO_GlobalAddress, MO_ExternalSym and MO_ConstantPoolIndex
+  int offset;
 
   MachineOperand(int64_t ImmVal) : flags(0), opType(MO_Immediate) {
     contents.immedVal = ImmVal;
-    extra.offset = 0;
+    offset = 0;
   }
 
-  MachineOperand(unsigned Idx, MachineOperandType OpTy)
-    : flags(0), opType(OpTy) {
+  MachineOperand(unsigned Idx, MachineOperandType OpTy): flags(0), opType(OpTy){
     contents.immedVal = Idx;
-    extra.offset = 0;
+    offset = 0;
   }
   
   MachineOperand(int Reg, MachineOperandType OpTy, UseType UseTy)
     : flags(UseTy), opType(OpTy) {
-    zeroContents();
-    extra.regNum = Reg;
+    contents.RegNo = Reg;
+    offset = 0;
   }
 
   MachineOperand(GlobalValue *V, int Offset = 0)
     : flags(MachineOperand::Use), opType(MachineOperand::MO_GlobalAddress) {
     contents.GV = V;
-    extra.offset = Offset;
+    offset = Offset;
   }
 
   MachineOperand(MachineBasicBlock *mbb)
     : flags(0), opType(MO_MachineBasicBlock) {
-    zeroContents ();
     contents.MBB = mbb;
+    offset = 0;
   }
 
   MachineOperand(const char *SymName, int Offset)
     : flags(0), opType(MO_ExternalSymbol) {
-    zeroContents ();
     contents.SymbolName = SymName;
-    extra.offset = Offset;
+    offset = Offset;
   }
 
 public:
-  MachineOperand(const MachineOperand &M)
-    : flags(M.flags), opType(M.opType) {
-    zeroContents ();
-    contents = M.contents;
-    extra = M.extra;
+  MachineOperand(const MachineOperand &M) {
+    *this = M;
   }
 
   ~MachineOperand() {}
@@ -143,7 +130,7 @@ public:
     contents = MO.contents;
     flags    = MO.flags;
     opType   = MO.opType;
-    extra    = MO.extra;
+    offset   = MO.offset;
     return *this;
   }
 
@@ -197,7 +184,7 @@ public:
   int getOffset() const {
     assert((isGlobalAddress() || isExternalSymbol() || isConstantPoolIndex()) &&
         "Wrong MachineOperand accessor");
-    return extra.offset;
+    return offset;
   }
   const char *getSymbolName() const {
     assert(isExternalSymbol() && "Wrong MachineOperand accessor");
@@ -216,14 +203,14 @@ public:
   ///
   unsigned getReg() const {
     assert(isRegister() && "This is not a register operand!");
-    return extra.regNum;
+    return contents.RegNo;
   }
 
   /// MachineOperand mutators.
   ///
   void setReg(unsigned Reg) {
     assert(isRegister() && "This is not a register operand!");
-    extra.regNum = Reg;
+    contents.RegNo = Reg;
   }
 
   void setImmedValue(int64_t immVal) {
@@ -235,7 +222,7 @@ public:
     assert((isGlobalAddress() || isExternalSymbol() || isConstantPoolIndex() ||
             isJumpTableIndex()) &&
         "Wrong MachineOperand accessor");
-    extra.offset = Offset;
+    offset = Offset;
   }
   
   /// ChangeToImmediate - Replace this operand with a new immediate operand of
@@ -251,7 +238,7 @@ public:
   /// the setReg method should be used.
   void ChangeToRegister(unsigned Reg) {
     opType = MO_Register;
-    extra.regNum = Reg;
+    contents.RegNo = Reg;
   }
 
   friend std::ostream& operator<<(std::ostream& os, const MachineOperand& mop);
