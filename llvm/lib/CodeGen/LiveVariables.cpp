@@ -296,14 +296,12 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
                  "Didn't find an entry for our predecessor??");
           if (MI->getOperand(i+1).getMachineBasicBlock() == MBB) {
             MachineOperand &MO = MI->getOperand(i);
-            if (!MO.getVRegValueOrNull()) {
-              VarInfo &VRInfo = getVarInfo(MO.getReg());
-              assert(VRInfo.DefInst && "Register use before def (or no def)!");
+            VarInfo &VRInfo = getVarInfo(MO.getReg());
+            assert(VRInfo.DefInst && "Register use before def (or no def)!");
 
-              // Only mark it alive only in the block we are representing.
-              MarkVirtRegAliveInBlock(VRInfo, MBB);
-              break;   // Found the PHI entry for this block.
-            }
+            // Only mark it alive only in the block we are representing.
+            MarkVirtRegAliveInBlock(VRInfo, MBB);
+            break;   // Found the PHI entry for this block.
           }
         }
       }

@@ -37,35 +37,8 @@ typedef short MachineOpCode;
 //===----------------------------------------------------------------------===//
 // class MachineOperand
 //
-// Purpose:
 //   Representation of each machine instruction operand.
-//   This class is designed so that you can allocate a vector of operands
-//   first and initialize each one later.
 //
-//   E.g, for this VM instruction:
-//     ptr = alloca type, numElements
-//   we generate 2 machine instructions on the SPARC:
-//
-//    mul Constant, Numelements -> Reg
-//    add %sp, Reg -> Ptr
-//
-//   Each instruction has 3 operands, listed above.  Of those:
-//   - Reg, NumElements, and Ptr are of operand type MO_Register.
-//   - Constant is of operand type MO_SignExtendedImmed on the SPARC.
-//
-//   For the register operands, the virtual register type is as follows:
-//
-//   - Reg will be of virtual register type MO_MInstrVirtualReg.  The field
-//     MachineInstr* minstr will point to the instruction that computes reg.
-//
-//   - NumElements will be of virtual register type MO_VirtualReg.
-//     The field Value* value identifies the value.
-//
-//   - Ptr will also be of virtual register type MO_VirtualReg.
-//     Again, the field Value* value identifies the value.
-//
-//===----------------------------------------------------------------------===//
-
 struct MachineOperand {
 private:
   // Bit fields of the flags variable used for different operand properties
@@ -130,15 +103,11 @@ private:
     memset (&extra, 0, sizeof (extra));
   }
 
-  MachineOperand(int64_t ImmVal = 0,
-        MachineOperandType OpTy = MO_VirtualRegister, int Offset = 0)
+  MachineOperand(int64_t ImmVal, MachineOperandType OpTy, int Offset = 0)
     : flags(0), opType(OpTy) {
     zeroContents ();
     contents.immedVal = ImmVal;
-    if (OpTy == MachineOperand::MO_ConstantPoolIndex)
-      extra.offset = Offset;
-    else
-      extra.regNum = -1;
+    extra.offset = Offset;
   }
 
   MachineOperand(int Reg, MachineOperandType OpTy, UseType UseTy)
@@ -147,10 +116,8 @@ private:
     extra.regNum = Reg;
   }
 
-  MachineOperand(GlobalValue *V, MachineOperandType OpTy, UseType UseTy,
-                 int Offset = 0)
-    : flags(UseTy), opType(OpTy) {
-    assert(OpTy == MachineOperand::MO_GlobalAddress);
+  MachineOperand(GlobalValue *V, int Offset = 0)
+    : flags(MachineOperand::Use), opType(MachineOperand::MO_GlobalAddress) {
     zeroContents ();
     contents.value = (Value*)V;
     extra.offset = Offset;
@@ -160,7 +127,6 @@ private:
     : flags(0), opType(MO_MachineBasicBlock) {
     zeroContents ();
     contents.MBB = mbb;
-    extra.regNum = -1;
   }
 
   MachineOperand(const char *SymName, int Offset)
@@ -196,11 +162,7 @@ public:
   ///
   UseType getUseType() const { return UseType(flags & (USEFLAG|DEFFLAG)); }
 
-  /// isRegister - Return true if this operand is a register operand.  The X86
-  /// backend currently can't decide whether to use MO_MR or MO_VR to represent
-  /// them, so we accept both.
-  ///
-  /// Note: The sparc backend should not use this method.
+  /// isRegister - Return true if this operand is a register operand.
   ///
   bool isRegister() const {
     return opType == MO_VirtualRegister;
@@ -218,20 +180,6 @@ public:
   bool isGlobalAddress() const { return opType == MO_GlobalAddress; }
   bool isExternalSymbol() const { return opType == MO_ExternalSymbol; }
 
-  /// getVRegValueOrNull - Get the Value* out of a MachineOperand if it
-  /// has one. This is deprecated and only used by the SPARC v9 backend.
-  ///
-  Value* getVRegValueOrNull() const {
-    return opType == MO_VirtualRegister ? contents.value : NULL;
-  }
-
-  /// MachineOperand accessors that only work on certain types of
-  /// MachineOperand...
-  ///
-  Value* getVRegValue() const {
-    assert(opType == MO_VirtualRegister && "Wrong MachineOperand accessor");
-    return contents.value;
-  }
   int64_t getImmedValue() const {
     assert(isImmediate() && "Wrong MachineOperand accessor");
     return contents.immedVal;
@@ -293,18 +241,11 @@ public:
     return extra.regNum;
   }
 
-  /// MachineOperand mutators...
+  /// MachineOperand mutators.
   ///
   void setReg(unsigned Reg) {
-    // This method's comment used to say: 'TODO: get rid of this duplicate
-    // code.' It's not clear where the duplication is.
     assert(hasAllocatedReg() && "This operand cannot have a register number!");
     extra.regNum = Reg;
-  }
-
-  void setValueReg(Value *val) {
-    assert(getVRegValueOrNull() != 0 && "Original operand must of type Value*");
-    contents.value = val;
   }
 
   void setImmedValue(int immVal) {
@@ -362,8 +303,6 @@ class MachineInstr {
   friend struct ilist_traits<MachineInstr>;
 
 public:
-  MachineInstr(short Opcode, unsigned numOperands);
-
   /// MachineInstr ctor - This constructor only does a _reserve_ of the
   /// operands, not a resize for them.  It is expected that if you use this that
   /// you call add* methods below to fill up the operands, instead of the Set
@@ -510,9 +449,7 @@ public:
   void addGlobalAddressOperand(GlobalValue *GV, int Offset) {
     assert(!OperandsComplete() &&
            "Trying to add an operand to a machine instr that is already done!");
-    operands.push_back(
-      MachineOperand(GV, MachineOperand::MO_GlobalAddress,
-                     MachineOperand::Use, Offset));
+    operands.push_back(MachineOperand(GV, Offset));
   }
 
   /// addExternalSymbolOperand - Add an external symbol operand to this instr

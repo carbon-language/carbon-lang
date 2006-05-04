@@ -47,7 +47,7 @@ void ilist_traits<MachineBasicBlock>::removeNodeFromList(MachineBasicBlock* N) {
 
 
 MachineInstr* ilist_traits<MachineInstr>::createSentinel() {
-  MachineInstr* dummy = new MachineInstr(0, 0);
+  MachineInstr* dummy = new MachineInstr(0, 0, true, true);
   LeakDetector::removeGarbageObject(dummy);
   return dummy;
 }

@@ -432,12 +432,7 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
     MCE.emitByte(BaseOpcode + getX86RegNum(MI.getOperand(0).getReg()));
     if (MI.getNumOperands() == 2) {
       const MachineOperand &MO1 = MI.getOperand(1);
-      if (Value *V = MO1.getVRegValueOrNull()) {
-        assert(0 && "??");
-        assert(sizeOfImm(Desc) == 4 &&
-               "Don't know how to emit non-pointer values!");
-        emitGlobalAddressForPtr(cast<GlobalValue>(V));
-      } else if (MO1.isGlobalAddress()) {
+      if (MO1.isGlobalAddress()) {
         assert(sizeOfImm(Desc) == 4 &&
                "Don't know how to emit non-pointer values!");
         emitGlobalAddressForPtr(MO1.getGlobal(), MO1.getOffset());

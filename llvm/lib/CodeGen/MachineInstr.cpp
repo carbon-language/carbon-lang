@@ -36,15 +36,6 @@ namespace llvm {
   extern const TargetInstrDescriptor *TargetInstrDescriptors;
 }
 
-// Constructor for instructions with variable #operands
-MachineInstr::MachineInstr(short opcode, unsigned numOperands)
-  : Opcode(opcode),
-    operands(numOperands, MachineOperand()),
-    parent(0) {
-  // Make sure that we get added to a machine basicblock
-  LeakDetector::addGarbageObject(this);
-}
-
 /// MachineInstr ctor - This constructor only does a _reserve_ of the operands,
 /// not a resize for them.  It is expected that if you use this that you call
 /// add* methods below to fill up the operands, instead of the Set methods.
@@ -178,14 +169,7 @@ static void print(const MachineOperand &MO, std::ostream &OS,
 
   switch (MO.getType()) {
   case MachineOperand::MO_VirtualRegister:
-    if (MO.getVRegValue()) {
-      OS << "%reg";
-      OutputValue(OS, MO.getVRegValue());
-      if (MO.hasAllocatedReg())
-        OS << "==";
-    }
-    if (MO.hasAllocatedReg())
-      OutputReg(OS, MO.getReg(), MRI);
+    OutputReg(OS, MO.getReg(), MRI);
     break;
   case MachineOperand::MO_SignExtendedImmed:
     OS << (long)MO.getImmedValue();
@@ -285,14 +269,7 @@ std::ostream &llvm::operator<<(std::ostream &os, const MachineInstr &MI) {
 std::ostream &llvm::operator<<(std::ostream &OS, const MachineOperand &MO) {
   switch (MO.getType()) {
   case MachineOperand::MO_VirtualRegister:
-    if (MO.hasAllocatedReg())
-      OutputReg(OS, MO.getReg());
-
-    if (MO.getVRegValue()) {
-      if (MO.hasAllocatedReg()) OS << "==";
-      OS << "%vreg";
-      OutputValue(OS, MO.getVRegValue());
-    }
+    OutputReg(OS, MO.getReg());
     break;
   case MachineOperand::MO_SignExtendedImmed:
     OS << (long)MO.getImmedValue();
