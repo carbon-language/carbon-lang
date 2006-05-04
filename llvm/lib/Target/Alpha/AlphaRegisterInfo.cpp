@@ -234,14 +234,14 @@ AlphaRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
     //inst off the SP/FP
     //fix up the old:
     MI.SetMachineOperandReg(i + 1, Alpha::R28);
-    MI.SetMachineOperandConst(i, MachineOperand::MO_SignExtendedImmed,
+    MI.SetMachineOperandConst(i, MachineOperand::MO_Immediate,
                               getLower16(Offset));
     //insert the new
     MachineInstr* nMI=BuildMI(Alpha::LDAH, 2, Alpha::R28)
       .addImm(getUpper16(Offset)).addReg(FP ? Alpha::R15 : Alpha::R30);
     MBB.insert(II, nMI);
   } else {
-    MI.SetMachineOperandConst(i, MachineOperand::MO_SignExtendedImmed, Offset);
+    MI.SetMachineOperandConst(i, MachineOperand::MO_Immediate, Offset);
   }
 }
 

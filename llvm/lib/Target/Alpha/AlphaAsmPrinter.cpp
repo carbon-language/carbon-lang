@@ -97,8 +97,7 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     O << RI.get(MO.getReg()).Name;
     return;
 
-  case MachineOperand::MO_SignExtendedImmed:
-  case MachineOperand::MO_UnextendedImmed:
+  case MachineOperand::MO_Immediate:
     std::cerr << "printOp() does not handle immediate values\n";
     abort();
     return;

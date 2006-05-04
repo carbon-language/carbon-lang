@@ -29,9 +29,9 @@ inline const MachineInstrBuilder&
 addFrameReference(const MachineInstrBuilder &MIB, int FI, int Offset = 0,
                   bool mem = true) {
   if (mem)
-    return MIB.addSImm(Offset).addFrameIndex(FI);
+    return MIB.addImm(Offset).addFrameIndex(FI);
   else
-    return MIB.addFrameIndex(FI).addSImm(Offset);
+    return MIB.addFrameIndex(FI).addImm(Offset);
 }
 
 /// addConstantPoolReference - This function is used to add a reference to the
@@ -43,7 +43,7 @@ addFrameReference(const MachineInstrBuilder &MIB, int FI, int Offset = 0,
 inline const MachineInstrBuilder&
 addConstantPoolReference(const MachineInstrBuilder &MIB, unsigned CPI,
                          int Offset = 0) {
-  return MIB.addSImm(Offset).addConstantPoolIndex(CPI);
+  return MIB.addImm(Offset).addConstantPoolIndex(CPI);
 }
 
 } // End llvm namespace

@@ -62,8 +62,7 @@ public:
 
   enum MachineOperandType {
     MO_VirtualRegister,         // virtual register for *value
-    MO_SignExtendedImmed,
-    MO_UnextendedImmed,
+    MO_Immediate,               // Immediate Operand
     MO_MachineBasicBlock,       // MachineBasicBlock reference
     MO_FrameIndex,              // Abstract Stack Frame Index
     MO_ConstantPoolIndex,       // Address of indexed Constant in Constant Pool
@@ -160,9 +159,7 @@ public:
   /// Accessors that tell you what kind of MachineOperand you're looking at.
   ///
   bool isMachineBasicBlock() const { return opType == MO_MachineBasicBlock; }
-  bool isImmediate() const {
-    return opType == MO_SignExtendedImmed || opType == MO_UnextendedImmed;
-  }
+  bool isImmediate() const { return opType == MO_Immediate; }
   bool isFrameIndex() const { return opType == MO_FrameIndex; }
   bool isConstantPoolIndex() const { return opType == MO_ConstantPoolIndex; }
   bool isJumpTableIndex() const { return opType == MO_JumpTableIndex; }
@@ -380,7 +377,7 @@ public:
     assert(!OperandsComplete() &&
            "Trying to add an operand to a machine instr that is already done!");
     operands.push_back(
-      MachineOperand(intValue, MachineOperand::MO_UnextendedImmed));
+      MachineOperand(intValue, MachineOperand::MO_Immediate));
   }
 
   /// addZeroExtImm64Operand - Add a zero extended 64-bit constant argument
@@ -389,18 +386,7 @@ public:
   void addZeroExtImm64Operand(uint64_t intValue) {
     assert(!OperandsComplete() &&
            "Trying to add an operand to a machine instr that is already done!");
-    operands.push_back(
-      MachineOperand(intValue, MachineOperand::MO_UnextendedImmed));
-  }
-
-  /// addSignExtImmOperand - Add a zero extended constant argument to the
-  /// machine instruction.
-  ///
-  void addSignExtImmOperand(int intValue) {
-    assert(!OperandsComplete() &&
-           "Trying to add an operand to a machine instr that is already done!");
-    operands.push_back(
-      MachineOperand(intValue, MachineOperand::MO_SignExtendedImmed));
+    operands.push_back(MachineOperand(intValue, MachineOperand::MO_Immediate));
   }
 
   void addMachineBasicBlockOperand(MachineBasicBlock *MBB) {

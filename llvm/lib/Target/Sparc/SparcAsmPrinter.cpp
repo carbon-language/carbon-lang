@@ -153,8 +153,7 @@ void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
       O << "%reg" << MO.getReg();
     break;
 
-  case MachineOperand::MO_SignExtendedImmed:
-  case MachineOperand::MO_UnextendedImmed:
+  case MachineOperand::MO_Immediate:
     O << (int)MO.getImmedValue();
     break;
   case MachineOperand::MO_MachineBasicBlock:
@@ -192,8 +191,7 @@ void SparcAsmPrinter::printMemOperand(const MachineInstr *MI, int opNum,
   if (OpTy == MachineOperand::MO_VirtualRegister &&
       MI->getOperand(opNum+1).getReg() == SP::G0)
     return;   // don't print "+%g0"
-  if ((OpTy == MachineOperand::MO_SignExtendedImmed ||
-       OpTy == MachineOperand::MO_UnextendedImmed) &&
+  if (OpTy == MachineOperand::MO_Immediate &&
       MI->getOperand(opNum+1).getImmedValue() == 0)
     return;   // don't print "+0"
   

@@ -122,11 +122,11 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       MachineInstr *New;
       if (Old->getOpcode() == IA64::ADJUSTCALLSTACKDOWN) {
         New=BuildMI(IA64::ADDIMM22, 2, IA64::r12).addReg(IA64::r12)
-          .addSImm(-Amount);
+          .addImm(-Amount);
       } else {
         assert(Old->getOpcode() == IA64::ADJUSTCALLSTACKUP);
         New=BuildMI(IA64::ADDIMM22, 2, IA64::r12).addReg(IA64::r12)
-          .addSImm(Amount);
+          .addImm(Amount);
       }
 
       // Replace the pseudo instruction with a new instruction...
@@ -173,7 +173,7 @@ void IA64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const
                                // (the bundler wants to know this)
     //insert the new
     MachineInstr* nMI=BuildMI(IA64::ADDIMM22, 2, IA64::r22)
-      .addReg(BaseRegister).addSImm(Offset);
+      .addReg(BaseRegister).addImm(Offset);
     MBB.insert(II, nMI);
   } else { // it's big
     //fix up the old:
@@ -181,7 +181,7 @@ void IA64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const
     MI.getOperand(i).setUse(); // mark r22 as being used
                                // (the bundler wants to know this)
     MachineInstr* nMI;
-    nMI=BuildMI(IA64::MOVLIMM64, 1, IA64::r22).addSImm(Offset);
+    nMI=BuildMI(IA64::MOVLIMM64, 1, IA64::r22).addImm(Offset);
     MBB.insert(II, nMI);
     nMI=BuildMI(IA64::ADD, 2, IA64::r22).addReg(BaseRegister)
       .addReg(IA64::r22);
@@ -272,7 +272,7 @@ void IA64RegisterInfo::emitPrologue(MachineFunction &MF) const {
     MI=BuildMI(IA64::ADDIMM22, 2, IA64::r12).addReg(IA64::r12).addImm(-NumBytes);
     MBB.insert(MBBI, MI);
   } else { // we use r22 as a scratch register here
-    MI=BuildMI(IA64::MOVLIMM64, 1, IA64::r22).addSImm(-NumBytes);
+    MI=BuildMI(IA64::MOVLIMM64, 1, IA64::r22).addImm(-NumBytes);
     // FIXME: MOVLSI32 expects a _u_32imm
     MBB.insert(MBBI, MI);  // first load the decrement into r22
     MI=BuildMI(IA64::ADD, 2, IA64::r12).addReg(IA64::r12).addReg(IA64::r22);

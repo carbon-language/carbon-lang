@@ -107,8 +107,7 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
       O << "reg" << MO.getReg();
     return;
 
-  case MachineOperand::MO_SignExtendedImmed:
-  case MachineOperand::MO_UnextendedImmed:
+  case MachineOperand::MO_Immediate:
     O << (int)MO.getImmedValue();
     return;
   case MachineOperand::MO_MachineBasicBlock:

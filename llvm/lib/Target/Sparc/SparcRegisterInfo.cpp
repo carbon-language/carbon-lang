@@ -111,7 +111,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
   if (MI.getOpcode() == SP::ADJCALLSTACKDOWN)
     Size = -Size;
   if (Size)
-    BuildMI(MBB, I, SP::ADDri, 2, SP::O6).addReg(SP::O6).addSImm(Size);
+    BuildMI(MBB, I, SP::ADDri, 2, SP::O6).addReg(SP::O6).addImm(Size);
   MBB.erase(I);
 }
 
@@ -136,7 +136,7 @@ SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
     // If the offset is small enough to fit in the immediate field, directly
     // encode it.
     MI.SetMachineOperandReg(i, SP::I6);
-    MI.SetMachineOperandConst(i+1, MachineOperand::MO_SignExtendedImmed,Offset);
+    MI.SetMachineOperandConst(i+1, MachineOperand::MO_Immediate, Offset);
   } else {
     // Otherwise, emit a G1 = SETHI %hi(offset).  FIXME: it would be better to 
     // scavenge a register here instead of reserving G1 all of the time.
@@ -147,7 +147,7 @@ SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
             SP::G1).addReg(SP::G1).addReg(SP::I6);
     // Insert: G1+%lo(offset) into the user.
     MI.SetMachineOperandReg(i, SP::G1);
-    MI.SetMachineOperandConst(i+1, MachineOperand::MO_SignExtendedImmed,
+    MI.SetMachineOperandConst(i+1, MachineOperand::MO_Immediate,
                               Offset & ((1 << 10)-1));
   }
 }

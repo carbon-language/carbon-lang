@@ -269,10 +269,10 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
       // Replace the pseudo instruction with a new instruction...
       if (Old->getOpcode() == PPC::ADJCALLSTACKDOWN) {
-        BuildMI(MBB, I, PPC::ADDI, 2, PPC::R1).addReg(PPC::R1).addSImm(-Amount);
+        BuildMI(MBB, I, PPC::ADDI, 2, PPC::R1).addReg(PPC::R1).addImm(-Amount);
       } else {
         assert(Old->getOpcode() == PPC::ADJCALLSTACKUP);
-        BuildMI(MBB, I, PPC::ADDI, 2, PPC::R1).addReg(PPC::R1).addSImm(Amount);
+        BuildMI(MBB, I, PPC::ADDI, 2, PPC::R1).addReg(PPC::R1).addImm(Amount);
       }
     }
   }
@@ -311,7 +311,7 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
   if (Offset > 32767 || Offset < -32768) {
     // Insert a set of r0 with the full offset value before the ld, st, or add
     MachineBasicBlock *MBB = MI.getParent();
-    BuildMI(*MBB, II, PPC::LIS, 1, PPC::R0).addSImm(Offset >> 16);
+    BuildMI(*MBB, II, PPC::LIS, 1, PPC::R0).addImm(Offset >> 16);
     BuildMI(*MBB, II, PPC::ORI, 2, PPC::R0).addReg(PPC::R0).addImm(Offset);
     
     // convert into indexed form of the instruction
@@ -333,8 +333,7 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
       Offset >>= 2;    // The actual encoded value has the low two bits zero.
       break;
     }
-    MI.SetMachineOperandConst(OffIdx, MachineOperand::MO_SignExtendedImmed,
-                              Offset);
+    MI.SetMachineOperandConst(OffIdx, MachineOperand::MO_Immediate, Offset);
   }
 }
 
@@ -511,14 +510,14 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     BuildMI(MBB, MBBI, PPC::RLWINM, 4, PPC::R0)
       .addReg(PPC::R1).addImm(0).addImm(32-Log2_32(MaxAlign)).addImm(31);
     BuildMI(MBB, MBBI, PPC::SUBFIC,2,PPC::R0).addReg(PPC::R0)
-      .addSImm(MaxAlign-NumBytes);
+      .addImm(MaxAlign-NumBytes);
     BuildMI(MBB, MBBI, PPC::STWUX, 3)
       .addReg(PPC::R1).addReg(PPC::R1).addReg(PPC::R0);
   } else if (NumBytes <= 32768) {
-    BuildMI(MBB, MBBI, PPC::STWU, 3).addReg(PPC::R1).addSImm(NegNumbytes)
+    BuildMI(MBB, MBBI, PPC::STWU, 3).addReg(PPC::R1).addImm(NegNumbytes)
       .addReg(PPC::R1);
   } else {
-    BuildMI(MBB, MBBI, PPC::LIS, 1, PPC::R0).addSImm(NegNumbytes >> 16);
+    BuildMI(MBB, MBBI, PPC::LIS, 1, PPC::R0).addImm(NegNumbytes >> 16);
     BuildMI(MBB, MBBI, PPC::ORI, 2, PPC::R0).addReg(PPC::R0)
       .addImm(NegNumbytes & 0xFFFF);
     BuildMI(MBB, MBBI, PPC::STWUX, 3).addReg(PPC::R1).addReg(PPC::R1)
@@ -534,13 +533,13 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     MachineLocation Src(MachineLocation::VirtualFP, NegNumbytes);
     Moves.push_back(new MachineMove(LabelID, Dst, Src));
 
-    BuildMI(MBB, MBBI, PPC::DWARF_LABEL, 1).addSImm(LabelID);
+    BuildMI(MBB, MBBI, PPC::DWARF_LABEL, 1).addImm(LabelID);
   }
   
   // If there is a frame pointer, copy R1 (SP) into R31 (FP)
   if (HasFP) {
     BuildMI(MBB, MBBI, PPC::STW, 3)
-      .addReg(PPC::R31).addSImm(GPRSize).addReg(PPC::R1);
+      .addReg(PPC::R31).addImm(GPRSize).addReg(PPC::R1);
     BuildMI(MBB, MBBI, PPC::OR4, 2, PPC::R31).addReg(PPC::R1).addReg(PPC::R1);
   }
 }
@@ -564,16 +563,16 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
     // its stack slot.
     if (hasFP(MF)) {
       BuildMI(MBB, MBBI, PPC::LWZ, 2, PPC::R31)
-          .addSImm(GPRSize).addReg(PPC::R31);
+          .addImm(GPRSize).addReg(PPC::R31);
     }
     
     // The loaded (or persistent) stack pointer value is offseted by the 'stwu'
     // on entry to the function.  Add this offset back now.
     if (NumBytes < 32768 && TargetAlign >= MFI->getMaxAlignment()) {
       BuildMI(MBB, MBBI, PPC::ADDI, 2, PPC::R1)
-          .addReg(PPC::R1).addSImm(NumBytes);
+          .addReg(PPC::R1).addImm(NumBytes);
     } else {
-      BuildMI(MBB, MBBI, PPC::LWZ, 2, PPC::R1).addSImm(0).addReg(PPC::R1);
+      BuildMI(MBB, MBBI, PPC::LWZ, 2, PPC::R1).addImm(0).addReg(PPC::R1);
     }
   }
 }

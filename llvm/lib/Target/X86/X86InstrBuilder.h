@@ -61,7 +61,7 @@ inline const MachineInstrBuilder &addDirectMem(const MachineInstrBuilder &MIB,
                                                unsigned Reg) {
   // Because memory references are always represented with four
   // values, this adds: Reg, [1, NoReg, 0] to the instruction.
-  return MIB.addReg(Reg).addZImm(1).addReg(0).addSImm(0);
+  return MIB.addReg(Reg).addZImm(1).addReg(0).addImm(0);
 }
 
 
@@ -71,14 +71,14 @@ inline const MachineInstrBuilder &addDirectMem(const MachineInstrBuilder &MIB,
 ///
 inline const MachineInstrBuilder &addRegOffset(const MachineInstrBuilder &MIB,
                                                unsigned Reg, int Offset) {
-  return MIB.addReg(Reg).addZImm(1).addReg(0).addSImm(Offset);
+  return MIB.addReg(Reg).addZImm(1).addReg(0).addImm(Offset);
 }
 
 /// addRegReg - This function is used to add a memory reference of the form:
 /// [Reg + Reg].
 inline const MachineInstrBuilder &addRegReg(const MachineInstrBuilder &MIB,
                                             unsigned Reg1, unsigned Reg2) {
-  return MIB.addReg(Reg1).addZImm(1).addReg(Reg2).addSImm(0);
+  return MIB.addReg(Reg1).addZImm(1).addReg(Reg2).addImm(0);
 }
 
 inline const MachineInstrBuilder &addFullAddress(const MachineInstrBuilder &MIB,
@@ -95,7 +95,7 @@ inline const MachineInstrBuilder &addFullAddress(const MachineInstrBuilder &MIB,
   if (AM.GV)
     return MIB.addGlobalAddress(AM.GV, AM.Disp);
   else
-    return MIB.addSImm(AM.Disp);
+    return MIB.addImm(AM.Disp);
 }
 
 /// addFrameReference - This function is used to add a reference to the base of
@@ -105,7 +105,7 @@ inline const MachineInstrBuilder &addFullAddress(const MachineInstrBuilder &MIB,
 ///
 inline const MachineInstrBuilder &
 addFrameReference(const MachineInstrBuilder &MIB, int FI, int Offset = 0) {
-  return MIB.addFrameIndex(FI).addZImm(1).addReg(0).addSImm(Offset);
+  return MIB.addFrameIndex(FI).addZImm(1).addReg(0).addImm(Offset);
 }
 
 /// addConstantPoolReference - This function is used to add a reference to the
@@ -117,7 +117,7 @@ addFrameReference(const MachineInstrBuilder &MIB, int FI, int Offset = 0) {
 inline const MachineInstrBuilder &
 addConstantPoolReference(const MachineInstrBuilder &MIB, unsigned CPI,
                          int Offset = 0) {
-  return MIB.addConstantPoolIndex(CPI).addZImm(1).addReg(0).addSImm(Offset);
+  return MIB.addConstantPoolIndex(CPI).addZImm(1).addReg(0).addImm(Offset);
 }
 
 } // End llvm namespace

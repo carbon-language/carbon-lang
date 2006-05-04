@@ -47,13 +47,6 @@ public:
     return *this;
   }
 
-  /// addSImm - Add a new sign extended immediate operand...
-  ///
-  const MachineInstrBuilder &addSImm(int val) const {
-    MI->addSignExtImmOperand(val);
-    return *this;
-  }
-
   /// addZImm - Add a new zero extended immediate operand...
   ///
   const MachineInstrBuilder &addZImm(unsigned Val) const {

@@ -676,7 +676,7 @@ void X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const{
   else
     Offset += 4;  // Skip the saved EBP
 
-  MI.SetMachineOperandConst(i+3, MachineOperand::MO_SignExtendedImmed, Offset);
+  MI.SetMachineOperandConst(i+3, MachineOperand::MO_Immediate, Offset);
 }
 
 void

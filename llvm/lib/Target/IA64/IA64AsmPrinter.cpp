@@ -170,16 +170,15 @@ bool IA64AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 }
 
 void IA64AsmPrinter::printOp(const MachineOperand &MO,
-                                 bool isBRCALLinsn /* = false */) {
+                             bool isBRCALLinsn /* = false */) {
   const MRegisterInfo &RI = *TM.getRegisterInfo();
   switch (MO.getType()) {
   case MachineOperand::MO_VirtualRegister:
     O << RI.get(MO.getReg()).Name;
     return;
 
-  case MachineOperand::MO_SignExtendedImmed:
-  case MachineOperand::MO_UnextendedImmed:
-    O << /*(unsigned int)*/MO.getImmedValue();
+  case MachineOperand::MO_Immediate:
+    O << MO.getImmedValue();
     return;
   case MachineOperand::MO_MachineBasicBlock:
     printBasicBlockLabel(MO.getMachineBasicBlock());

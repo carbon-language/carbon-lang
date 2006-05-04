@@ -160,10 +160,7 @@ static void print(const MachineOperand &MO, std::ostream &OS,
   case MachineOperand::MO_VirtualRegister:
     OutputReg(OS, MO.getReg(), MRI);
     break;
-  case MachineOperand::MO_SignExtendedImmed:
-    OS << (long)MO.getImmedValue();
-    break;
-  case MachineOperand::MO_UnextendedImmed:
+  case MachineOperand::MO_Immediate:
     OS << (long)MO.getImmedValue();
     break;
   case MachineOperand::MO_MachineBasicBlock:
@@ -260,10 +257,7 @@ std::ostream &llvm::operator<<(std::ostream &OS, const MachineOperand &MO) {
   case MachineOperand::MO_VirtualRegister:
     OutputReg(OS, MO.getReg());
     break;
-  case MachineOperand::MO_SignExtendedImmed:
-    OS << (long)MO.getImmedValue();
-    break;
-  case MachineOperand::MO_UnextendedImmed:
+  case MachineOperand::MO_Immediate:
     OS << (long)MO.getImmedValue();
     break;
   case MachineOperand::MO_MachineBasicBlock:
