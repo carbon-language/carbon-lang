@@ -46,22 +46,6 @@ public:
     return *this;
   }
 
-  /// addReg - Add an LLVM value that is to be used as a register...
-  ///
-  const MachineInstrBuilder &addReg(
-    Value *V,
-    MachineOperand::UseType Ty = MachineOperand::Use) const {
-    MI->addRegOperand(V, Ty);
-    return *this;
-  }
-
-  /// addRegDef - Add an LLVM value that is to be defined as a register... this
-  /// is the same as addReg(V, MachineOperand::Def).
-  ///
-  const MachineInstrBuilder &addRegDef(Value *V) const {
-    return addReg(V, MachineOperand::Def);
-  }
-
   /// addImm - Add a new immediate operand.
   ///
   const MachineInstrBuilder &addImm(int Val) const {
@@ -112,15 +96,13 @@ public:
   }
 
   const MachineInstrBuilder &addGlobalAddress(GlobalValue *GV,
-                                              bool isPCRelative = false,
                                               int Offset = 0) const {
-    MI->addGlobalAddressOperand(GV, isPCRelative, Offset);
+    MI->addGlobalAddressOperand(GV, Offset);
     return *this;
   }
 
-  const MachineInstrBuilder &addExternalSymbol(const char *FnName,
-                                               bool isPCRelative = false) const{
-    MI->addExternalSymbolOperand(FnName, isPCRelative);
+  const MachineInstrBuilder &addExternalSymbol(const char *FnName) const{
+    MI->addExternalSymbolOperand(FnName);
     return *this;
   }
 };

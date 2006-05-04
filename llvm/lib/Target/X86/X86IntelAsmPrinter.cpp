@@ -115,12 +115,6 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
   const MRegisterInfo &RI = *TM.getRegisterInfo();
   switch (MO.getType()) {
   case MachineOperand::MO_VirtualRegister:
-    if (Value *V = MO.getVRegValueOrNull()) {
-      O << "<" << V->getName() << ">";
-      return;
-    }
-    // FALLTHROUGH
-  case MachineOperand::MO_MachineRegister:
     if (MRegisterInfo::isPhysicalRegister(MO.getReg()))
       O << RI.get(MO.getReg()).Name;
     else

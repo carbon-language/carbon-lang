@@ -110,7 +110,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
     MI->addRegOperand(R->getReg(), MachineOperand::Use);
   } else if (GlobalAddressSDNode *TGA =
              dyn_cast<GlobalAddressSDNode>(Op)) {
-    MI->addGlobalAddressOperand(TGA->getGlobal(), false, TGA->getOffset());
+    MI->addGlobalAddressOperand(TGA->getGlobal(), TGA->getOffset());
   } else if (BasicBlockSDNode *BB =
              dyn_cast<BasicBlockSDNode>(Op)) {
     MI->addMachineBasicBlockOperand(BB->getBasicBlock());
@@ -143,7 +143,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
     MI->addConstantPoolIndexOperand(Idx, Offset);
   } else if (ExternalSymbolSDNode *ES = 
              dyn_cast<ExternalSymbolSDNode>(Op)) {
-    MI->addExternalSymbolOperand(ES->getSymbol(), false);
+    MI->addExternalSymbolOperand(ES->getSymbol());
   } else {
     assert(Op.getValueType() != MVT::Other &&
            Op.getValueType() != MVT::Flag &&
@@ -296,7 +296,7 @@ void ScheduleDAG::EmitNode(SDNode *Node,
       // Add the asm string as an external symbol operand.
       const char *AsmStr =
         cast<ExternalSymbolSDNode>(Node->getOperand(1))->getSymbol();
-      MI->addExternalSymbolOperand(AsmStr, false);
+      MI->addExternalSymbolOperand(AsmStr);
       
       // Add all of the operand registers to the instruction.
       for (unsigned i = 2; i != NumOps;) {
@@ -311,13 +311,13 @@ void ScheduleDAG::EmitNode(SDNode *Node,
         case 1:  // Use of register.
           for (; NumVals; --NumVals, ++i) {
             unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();
-            MI->addMachineRegOperand(Reg, MachineOperand::Use);
+            MI->addRegOperand(Reg, MachineOperand::Use);
           }
           break;
         case 2:   // Def of register.
           for (; NumVals; --NumVals, ++i) {
             unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();
-            MI->addMachineRegOperand(Reg, MachineOperand::Def);
+            MI->addRegOperand(Reg, MachineOperand::Def);
           }
           break;
         case 3: { // Immediate.

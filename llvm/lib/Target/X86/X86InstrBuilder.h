@@ -93,7 +93,7 @@ inline const MachineInstrBuilder &addFullAddress(const MachineInstrBuilder &MIB,
     assert (0);
   MIB.addZImm(AM.Scale).addReg(AM.IndexReg);
   if (AM.GV)
-    return MIB.addGlobalAddress(AM.GV, false, AM.Disp);
+    return MIB.addGlobalAddress(AM.GV, AM.Disp);
   else
     return MIB.addSImm(AM.Disp);
 }

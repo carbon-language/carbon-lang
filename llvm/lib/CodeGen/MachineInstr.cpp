@@ -141,7 +141,7 @@ MachineInstr::SetMachineOperandConst(unsigned i,
 void MachineInstr::SetMachineOperandReg(unsigned i, int regNum) {
   assert(i < getNumOperands());          // must be explicit op
 
-  operands[i].opType = MachineOperand::MO_MachineRegister;
+  operands[i].opType = MachineOperand::MO_VirtualRegister;
   operands[i].contents.value = NULL;
   operands[i].extra.regNum = regNum;
 }
@@ -186,9 +186,6 @@ static void print(const MachineOperand &MO, std::ostream &OS,
     }
     if (MO.hasAllocatedReg())
       OutputReg(OS, MO.getReg(), MRI);
-    break;
-  case MachineOperand::MO_MachineRegister:
-    OutputReg(OS, MO.getMachineRegNum(), MRI);
     break;
   case MachineOperand::MO_SignExtendedImmed:
     OS << (long)MO.getImmedValue();
@@ -296,9 +293,6 @@ std::ostream &llvm::operator<<(std::ostream &OS, const MachineOperand &MO) {
       OS << "%vreg";
       OutputValue(OS, MO.getVRegValue());
     }
-    break;
-  case MachineOperand::MO_MachineRegister:
-    OutputReg(OS, MO.getMachineRegNum());
     break;
   case MachineOperand::MO_SignExtendedImmed:
     OS << (long)MO.getImmedValue();

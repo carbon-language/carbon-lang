@@ -58,9 +58,6 @@ typedef short MachineOpCode;
 //   - Reg will be of virtual register type MO_MInstrVirtualReg.  The field
 //     MachineInstr* minstr will point to the instruction that computes reg.
 //
-//   - %sp will be of virtual register type MO_MachineReg.
-//     The field regNum identifies the machine register.
-//
 //   - NumElements will be of virtual register type MO_VirtualReg.
 //     The field Value* value identifies the value.
 //
@@ -75,7 +72,6 @@ private:
   enum {
     DEFFLAG     = 0x01,       // this is a def of the operand
     USEFLAG     = 0x02,       // this is a use of the operand
-    PCRELATIVE  = 0x40        // Operand is relative to PC, not a global address
   };
 
 public:
@@ -93,7 +89,6 @@ public:
 
   enum MachineOperandType {
     MO_VirtualRegister,         // virtual register for *value
-    MO_MachineRegister,         // pre-assigned machine register `regNum'
     MO_SignExtendedImmed,
     MO_UnextendedImmed,
     MO_MachineBasicBlock,       // MachineBasicBlock reference
@@ -152,18 +147,9 @@ private:
     extra.regNum = Reg;
   }
 
-  MachineOperand(Value *V, MachineOperandType OpTy, UseType UseTy,
-                 bool isPCRelative = false)
-    : flags(UseTy | (isPCRelative?PCRELATIVE:0)), opType(OpTy) {
-    assert(OpTy != MachineOperand::MO_GlobalAddress);
-    zeroContents();
-    contents.value = V;
-    extra.regNum = -1;
-  }
-
   MachineOperand(GlobalValue *V, MachineOperandType OpTy, UseType UseTy,
-                 bool isPCRelative = false, int Offset = 0)
-    : flags(UseTy | (isPCRelative?PCRELATIVE:0)), opType(OpTy) {
+                 int Offset = 0)
+    : flags(UseTy), opType(OpTy) {
     assert(OpTy == MachineOperand::MO_GlobalAddress);
     zeroContents ();
     contents.value = (Value*)V;
@@ -177,8 +163,8 @@ private:
     extra.regNum = -1;
   }
 
-  MachineOperand(const char *SymName, bool isPCRelative, int Offset)
-    : flags(isPCRelative?PCRELATIVE:0), opType(MO_ExternalSymbol) {
+  MachineOperand(const char *SymName, int Offset)
+    : flags(0), opType(MO_ExternalSymbol) {
     zeroContents ();
     contents.SymbolName = SymName;
     extra.offset = Offset;
@@ -191,7 +177,6 @@ public:
     contents = M.contents;
     extra = M.extra;
   }
-
 
   ~MachineOperand() {}
 
@@ -218,7 +203,7 @@ public:
   /// Note: The sparc backend should not use this method.
   ///
   bool isRegister() const {
-    return opType == MO_MachineRegister || opType == MO_VirtualRegister;
+    return opType == MO_VirtualRegister;
   }
 
   /// Accessors that tell you what kind of MachineOperand you're looking at.
@@ -246,10 +231,6 @@ public:
   Value* getVRegValue() const {
     assert(opType == MO_VirtualRegister && "Wrong MachineOperand accessor");
     return contents.value;
-  }
-  int getMachineRegNum() const {
-    assert(opType == MO_MachineRegister && "Wrong MachineOperand accessor");
-    return extra.regNum;
   }
   int64_t getImmedValue() const {
     assert(isImmediate() && "Wrong MachineOperand accessor");
@@ -301,8 +282,7 @@ public:
   /// allocated to this operand.
   ///
   bool hasAllocatedReg() const {
-    return (extra.regNum >= 0 &&
-            (opType == MO_VirtualRegister || opType == MO_MachineRegister));
+    return extra.regNum >= 0 && opType == MO_VirtualRegister;
   }
 
   /// getReg - Returns the register number. It is a runtime error to call this
@@ -445,28 +425,6 @@ public:
   // Accessors to add operands when building up machine instructions
   //
 
-  /// addRegOperand - Add a MO_VirtualRegister operand to the end of the
-  /// operands list...
-  ///
-  void addRegOperand(Value *V, bool isDef, bool isDefAndUse=false) {
-    assert(!OperandsComplete() &&
-           "Trying to add an operand to a machine instr that is already done!");
-    operands.push_back(
-      MachineOperand(V, MachineOperand::MO_VirtualRegister,
-                     !isDef ? MachineOperand::Use :
-                     (isDefAndUse ? MachineOperand::UseAndDef :
-                      MachineOperand::Def)));
-  }
-
-  void addRegOperand(Value *V,
-                     MachineOperand::UseType UTy = MachineOperand::Use,
-                     bool isPCRelative = false) {
-    assert(!OperandsComplete() &&
-           "Trying to add an operand to a machine instr that is already done!");
-    operands.push_back(MachineOperand(V, MachineOperand::MO_VirtualRegister,
-                                      UTy, isPCRelative));
-  }
-
   /// addRegOperand - Add a symbolic virtual register reference...
   ///
   void addRegOperand(int reg, bool isDef) {
@@ -485,26 +443,6 @@ public:
            "Trying to add an operand to a machine instr that is already done!");
     operands.push_back(
       MachineOperand(reg, MachineOperand::MO_VirtualRegister, UTy));
-  }
-
-  /// addMachineRegOperand - Add a virtual register operand to this MachineInstr
-  ///
-  void addMachineRegOperand(int reg, bool isDef) {
-    assert(!OperandsComplete() &&
-           "Trying to add an operand to a machine instr that is already done!");
-    operands.push_back(
-      MachineOperand(reg, MachineOperand::MO_MachineRegister,
-                     isDef ? MachineOperand::Def : MachineOperand::Use));
-  }
-
-  /// addMachineRegOperand - Add a virtual register operand to this MachineInstr
-  ///
-  void addMachineRegOperand(int reg,
-                            MachineOperand::UseType UTy = MachineOperand::Use) {
-    assert(!OperandsComplete() &&
-           "Trying to add an operand to a machine instr that is already done!");
-    operands.push_back(
-      MachineOperand(reg, MachineOperand::MO_MachineRegister, UTy));
   }
 
   /// addZeroExtImmOperand - Add a zero extended constant argument to the
@@ -569,18 +507,18 @@ public:
     operands.push_back(MachineOperand(I, MachineOperand::MO_JumpTableIndex));
   }
   
-  void addGlobalAddressOperand(GlobalValue *GV, bool isPCRelative, int Offset) {
+  void addGlobalAddressOperand(GlobalValue *GV, int Offset) {
     assert(!OperandsComplete() &&
            "Trying to add an operand to a machine instr that is already done!");
     operands.push_back(
       MachineOperand(GV, MachineOperand::MO_GlobalAddress,
-                     MachineOperand::Use, isPCRelative, Offset));
+                     MachineOperand::Use, Offset));
   }
 
   /// addExternalSymbolOperand - Add an external symbol operand to this instr
   ///
-  void addExternalSymbolOperand(const char *SymName, bool isPCRelative) {
-    operands.push_back(MachineOperand(SymName, isPCRelative, 0));
+  void addExternalSymbolOperand(const char *SymName) {
+    operands.push_back(MachineOperand(SymName, 0));
   }
 
   //===--------------------------------------------------------------------===//

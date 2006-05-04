@@ -147,12 +147,6 @@ void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
   }
   switch (MO.getType()) {
   case MachineOperand::MO_VirtualRegister:
-    if (Value *V = MO.getVRegValueOrNull()) {
-      O << "<" << V->getName() << ">";
-      break;
-    }
-    // FALLTHROUGH
-  case MachineOperand::MO_MachineRegister:
     if (MRegisterInfo::isPhysicalRegister(MO.getReg()))
       O << "%" << LowercaseString (RI.get(MO.getReg()).Name);
     else
@@ -195,8 +189,7 @@ void SparcAsmPrinter::printMemOperand(const MachineInstr *MI, int opNum,
   
   MachineOperand::MachineOperandType OpTy = MI->getOperand(opNum+1).getType();
   
-  if ((OpTy == MachineOperand::MO_VirtualRegister ||
-       OpTy == MachineOperand::MO_MachineRegister) &&
+  if (OpTy == MachineOperand::MO_VirtualRegister &&
       MI->getOperand(opNum+1).getReg() == SP::G0)
     return;   // don't print "+%g0"
   if ((OpTy == MachineOperand::MO_SignExtendedImmed ||

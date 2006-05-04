@@ -150,7 +150,7 @@ static MachineInstr *MakeMIInst(unsigned Opcode, unsigned FrameIndex,
   else if (MI->getOperand(1).isGlobalAddress())
     return addFrameReference(BuildMI(Opcode, 5), FrameIndex)
       .addGlobalAddress(MI->getOperand(1).getGlobal(),
-                        false, MI->getOperand(1).getOffset());
+                        MI->getOperand(1).getOffset());
   else if (MI->getOperand(1).isJumpTableIndex())
     return addFrameReference(BuildMI(Opcode, 5), FrameIndex)
       .addJumpTableIndex(MI->getOperand(1).getJumpTableIndex());

@@ -37,8 +37,8 @@ struct X86IntelAsmPrinter : public X86SharedAsmPrinter {
   void printOperand(const MachineInstr *MI, unsigned OpNo,
                     const char *Modifier = 0) {
     const MachineOperand &MO = MI->getOperand(OpNo);
-    if (MO.getType() == MachineOperand::MO_MachineRegister) {
-      assert(MRegisterInfo::isPhysicalRegister(MO.getReg())&&"Not physref??");
+    if (MO.getType() == MachineOperand::MO_VirtualRegister) {
+      assert(MRegisterInfo::isPhysicalRegister(MO.getReg()) && "Not physreg??");
       O << TM.getRegisterInfo()->get(MO.getReg()).Name;
     } else {
       printOp(MO, Modifier);

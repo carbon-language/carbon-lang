@@ -263,7 +263,8 @@ void AlphaRegisterInfo::emitPrologue(MachineFunction &MF) const {
     .addReg(Alpha::R29).addImm(curgpdist);
 
   //evil const_cast until MO stuff setup to handle const
-  BuildMI(MBB, MBBI, Alpha::ALTENT, 1).addGlobalAddress(const_cast<Function*>(MF.getFunction()), true);
+  BuildMI(MBB, MBBI, Alpha::ALTENT, 1)
+    .addGlobalAddress(const_cast<Function*>(MF.getFunction()));
 
   // Get the number of bytes to allocate from the FrameInfo
   long NumBytes = MFI->getStackSize();

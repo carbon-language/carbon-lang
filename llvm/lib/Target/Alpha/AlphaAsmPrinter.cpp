@@ -77,7 +77,7 @@ FunctionPass *llvm::createAlphaCodePrinterPass (std::ostream &o,
 void AlphaAsmPrinter::printOperand(const MachineInstr *MI, int opNum)
 {
   const MachineOperand &MO = MI->getOperand(opNum);
-  if (MO.getType() == MachineOperand::MO_MachineRegister) {
+  if (MO.getType() == MachineOperand::MO_VirtualRegister) {
     assert(MRegisterInfo::isPhysicalRegister(MO.getReg())&&"Not physreg??");
     O << TM.getRegisterInfo()->get(MO.getReg()).Name;
   } else if (MO.isImmediate()) {
@@ -94,12 +94,6 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
 
   switch (MO.getType()) {
   case MachineOperand::MO_VirtualRegister:
-    if (Value *V = MO.getVRegValueOrNull()) {
-      O << "<" << V->getName() << ">";
-      return;
-    }
-    // FALLTHROUGH
-  case MachineOperand::MO_MachineRegister:
     O << RI.get(MO.getReg()).Name;
     return;
 
