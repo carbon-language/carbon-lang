@@ -71,11 +71,11 @@ public:
 
 private:
   union {
-    GlobalValue *GV;    // LLVM global for MO_GlobalAddress.
-    int64_t immedVal;   // Constant value for an explicit constant
-    MachineBasicBlock *MBB;     // For MO_MachineBasicBlock type
-    const char *SymbolName;     // For MO_ExternalSymbol type
-    unsigned RegNo;            // For MO_Register number for an explicit register
+    GlobalValue *GV;          // For MO_GlobalAddress.
+    MachineBasicBlock *MBB;   // For MO_MachineBasicBlock.
+    const char *SymbolName;   // For MO_ExternalSymbol.
+    unsigned RegNo;           // For MO_Register.
+    int64_t immedVal;         // For MO_Immediate and MO_*Index.
   } contents;
 
   char flags;                   // see bit field definitions above

@@ -9,14 +9,10 @@
 //
 // Methods common to all machine instructions.
 //
-// FIXME: Now that MachineInstrs have parent pointers, they should always
-// print themselves using their MachineFunction's TargetMachine.
-//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/Value.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/MRegisterInfo.h"
