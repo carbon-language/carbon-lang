@@ -43,7 +43,7 @@ namespace llvm {
 ///
 MachineInstr::MachineInstr(short opcode, unsigned numOperands)
   : Opcode(opcode), parent(0) {
-  operands.reserve(numOperands);
+  Operands.reserve(numOperands);
   // Make sure that we get added to a machine basicblock
   LeakDetector::addGarbageObject(this);
 }
@@ -55,7 +55,7 @@ MachineInstr::MachineInstr(MachineBasicBlock *MBB, short opcode,
                            unsigned numOperands)
   : Opcode(opcode), parent(0) {
   assert(MBB && "Cannot use inserting ctor with null basic block!");
-  operands.reserve(numOperands);
+  Operands.reserve(numOperands);
   // Make sure that we get added to a machine basicblock
   LeakDetector::addGarbageObject(this);
   MBB->push_back(this);  // Add instruction to end of basic block!
@@ -65,11 +65,11 @@ MachineInstr::MachineInstr(MachineBasicBlock *MBB, short opcode,
 ///
 MachineInstr::MachineInstr(const MachineInstr &MI) {
   Opcode = MI.getOpcode();
-  operands.reserve(MI.getNumOperands());
+  Operands.reserve(MI.getNumOperands());
 
   // Add operands
-  for (unsigned i = 0; i < MI.getNumOperands(); ++i)
-    operands.push_back(MachineOperand(MI.getOperand(i)));
+  for (unsigned i = 0; i != MI.getNumOperands(); ++i)
+    Operands.push_back(MI.getOperand(i));
 
   // Set parent, next, and prev to null
   parent = 0;
@@ -80,13 +80,6 @@ MachineInstr::MachineInstr(const MachineInstr &MI) {
 
 MachineInstr::~MachineInstr() {
   LeakDetector::removeGarbageObject(this);
-}
-
-/// clone - Create a copy of 'this' instruction that is identical in all ways
-/// except the following: the new instruction has no parent and it has no name
-///
-MachineInstr* MachineInstr::clone() const {
-  return new MachineInstr(*this);
 }
 
 /// removeFromParent - This method unlinks 'this' from the containing basic
@@ -109,15 +102,6 @@ bool MachineInstr::OperandsComplete() const {
 
 void MachineInstr::dump() const {
   std::cerr << "  " << *this;
-}
-
-static inline std::ostream& OutputValue(std::ostream &os, const Value* val) {
-  os << "(val ";
-  os << (void*) val;                // print address always
-  if (val && val->hasName())
-    os << " " << val->getName();    // print name also, if available
-  os << ")";
-  return os;
 }
 
 static inline void OutputReg(std::ostream &os, unsigned RegNo,

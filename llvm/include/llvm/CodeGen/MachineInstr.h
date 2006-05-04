@@ -85,40 +85,7 @@ private:
   /// MO_GlobalAddress, MO_ExternalSym and MO_ConstantPoolIndex
   int offset;
 
-  MachineOperand(int64_t ImmVal) : flags(0), opType(MO_Immediate) {
-    contents.immedVal = ImmVal;
-    offset = 0;
-  }
-
-  MachineOperand(unsigned Idx, MachineOperandType OpTy): flags(0), opType(OpTy){
-    contents.immedVal = Idx;
-    offset = 0;
-  }
-  
-  MachineOperand(int Reg, MachineOperandType OpTy, UseType UseTy)
-    : flags(UseTy), opType(OpTy) {
-    contents.RegNo = Reg;
-    offset = 0;
-  }
-
-  MachineOperand(GlobalValue *V, int Offset = 0)
-    : flags(MachineOperand::Use), opType(MachineOperand::MO_GlobalAddress) {
-    contents.GV = V;
-    offset = Offset;
-  }
-
-  MachineOperand(MachineBasicBlock *mbb)
-    : flags(0), opType(MO_MachineBasicBlock) {
-    contents.MBB = mbb;
-    offset = 0;
-  }
-
-  MachineOperand(const char *SymName, int Offset)
-    : flags(0), opType(MO_ExternalSymbol) {
-    contents.SymbolName = SymName;
-    offset = Offset;
-  }
-
+  MachineOperand() {}
 public:
   MachineOperand(const MachineOperand &M) {
     *this = M;
@@ -252,7 +219,7 @@ public:
 ///
 class MachineInstr {
   short Opcode;                         // the opcode
-  std::vector<MachineOperand> operands; // the operands
+  std::vector<MachineOperand> Operands; // the operands
   MachineInstr* prev, *next;            // links for our intrusive list
   MachineBasicBlock* parent;            // pointer to the owning basic block
 
@@ -288,21 +255,21 @@ public:
 
   /// Access to explicit operands of the instruction.
   ///
-  unsigned getNumOperands() const { return operands.size(); }
+  unsigned getNumOperands() const { return Operands.size(); }
 
   const MachineOperand& getOperand(unsigned i) const {
     assert(i < getNumOperands() && "getOperand() out of range!");
-    return operands[i];
+    return Operands[i];
   }
   MachineOperand& getOperand(unsigned i) {
     assert(i < getNumOperands() && "getOperand() out of range!");
-    return operands[i];
+    return Operands[i];
   }
 
 
   /// clone - Create a copy of 'this' instruction that is identical in
   /// all ways except the the instruction has no parent, prev, or next.
-  MachineInstr* clone() const;
+  MachineInstr* clone() const { return new MachineInstr(*this); }
   
   /// removeFromParent - This method unlinks 'this' from the containing basic
   /// block, and returns it, but does not delete it.
@@ -322,70 +289,87 @@ public:
   friend std::ostream& operator<<(std::ostream& os, const MachineInstr& minstr);
 
   //===--------------------------------------------------------------------===//
-  // Accessors to add operands when building up machine instructions
+  // Accessors to add operands when building up machine instructions.
   //
 
-  /// addRegOperand - Add a symbolic virtual register reference...
+  /// addRegOperand - Add a register operand.
   ///
-  void addRegOperand(int reg,
+  void addRegOperand(unsigned Reg,
                      MachineOperand::UseType UTy = MachineOperand::Use) {
-    assert(!OperandsComplete() &&
-           "Trying to add an operand to a machine instr that is already done!");
-    operands.push_back(
-      MachineOperand(reg, MachineOperand::MO_Register, UTy));
+    MachineOperand &Op = AddNewOperand();
+    Op.opType = MachineOperand::MO_Register;
+    Op.flags = UTy;
+    Op.contents.RegNo = Reg;
+    Op.offset = 0;
   }
 
   /// addImmOperand - Add a zero extended constant argument to the
   /// machine instruction.
   ///
   void addImmOperand(int64_t Val) {
-    assert(!OperandsComplete() &&
-           "Trying to add an operand to a machine instr that is already done!");
-    operands.push_back(MachineOperand(Val));
+    MachineOperand &Op = AddNewOperand();
+    Op.opType = MachineOperand::MO_Immediate;
+    Op.flags = 0;
+    Op.contents.immedVal = Val;
+    Op.offset = 0;
   }
 
   void addMachineBasicBlockOperand(MachineBasicBlock *MBB) {
-    assert(!OperandsComplete() &&
-           "Trying to add an operand to a machine instr that is already done!");
-    operands.push_back(MachineOperand(MBB));
+    MachineOperand &Op = AddNewOperand();
+    Op.opType = MachineOperand::MO_MachineBasicBlock;
+    Op.flags = 0;
+    Op.contents.MBB = MBB;
+    Op.offset = 0;
   }
 
   /// addFrameIndexOperand - Add an abstract frame index to the instruction
   ///
   void addFrameIndexOperand(unsigned Idx) {
-    assert(!OperandsComplete() &&
-           "Trying to add an operand to a machine instr that is already done!");
-    operands.push_back(MachineOperand(Idx, MachineOperand::MO_FrameIndex));
+    MachineOperand &Op = AddNewOperand();
+    Op.opType = MachineOperand::MO_FrameIndex;
+    Op.flags = 0;
+    Op.contents.immedVal = Idx;
+    Op.offset = 0;
   }
 
   /// addConstantPoolndexOperand - Add a constant pool object index to the
   /// instruction.
   ///
-  void addConstantPoolIndexOperand(unsigned I, int Offset=0) {
-    assert(!OperandsComplete() &&
-           "Trying to add an operand to a machine instr that is already done!");
-    operands.push_back(MachineOperand(I, MachineOperand::MO_ConstantPoolIndex));
+  void addConstantPoolIndexOperand(unsigned Idx, int Offset) {
+    MachineOperand &Op = AddNewOperand();
+    Op.opType = MachineOperand::MO_ConstantPoolIndex;
+    Op.flags = 0;
+    Op.contents.immedVal = Idx;
+    Op.offset = Offset;
   }
 
   /// addJumpTableIndexOperand - Add a jump table object index to the
   /// instruction.
   ///
-  void addJumpTableIndexOperand(unsigned I) {
-    assert(!OperandsComplete() &&
-           "Trying to add an operand to a machine instr that is already done!");
-    operands.push_back(MachineOperand(I, MachineOperand::MO_JumpTableIndex));
+  void addJumpTableIndexOperand(unsigned Idx) {
+    MachineOperand &Op = AddNewOperand();
+    Op.opType = MachineOperand::MO_JumpTableIndex;
+    Op.flags = 0;
+    Op.contents.immedVal = Idx;
+    Op.offset = 0;
   }
   
   void addGlobalAddressOperand(GlobalValue *GV, int Offset) {
-    assert(!OperandsComplete() &&
-           "Trying to add an operand to a machine instr that is already done!");
-    operands.push_back(MachineOperand(GV, Offset));
+    MachineOperand &Op = AddNewOperand();
+    Op.opType = MachineOperand::MO_GlobalAddress;
+    Op.flags = 0;
+    Op.contents.GV = GV;
+    Op.offset = Offset;
   }
 
   /// addExternalSymbolOperand - Add an external symbol operand to this instr
   ///
   void addExternalSymbolOperand(const char *SymName) {
-    operands.push_back(MachineOperand(SymName, 0));
+    MachineOperand &Op = AddNewOperand();
+    Op.opType = MachineOperand::MO_ExternalSymbol;
+    Op.flags = 0;
+    Op.contents.SymbolName = SymName;
+    Op.offset = 0;
   }
 
   //===--------------------------------------------------------------------===//
@@ -400,7 +384,14 @@ public:
   /// fewer operand than it started with.
   ///
   void RemoveOperand(unsigned i) {
-    operands.erase(operands.begin()+i);
+    Operands.erase(Operands.begin()+i);
+  }
+private:
+  MachineOperand &AddNewOperand() {
+    assert(!OperandsComplete() &&
+           "Trying to add an operand to a machine instr that is already done!");
+    Operands.push_back(MachineOperand());
+    return Operands.back();
   }
 };
 
