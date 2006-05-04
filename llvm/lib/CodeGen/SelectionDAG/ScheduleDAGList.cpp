@@ -20,6 +20,8 @@
 
 #define DEBUG_TYPE "sched"
 #include "llvm/CodeGen/ScheduleDAG.h"
+#include "llvm/CodeGen/SSARegMap.h"
+#include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/Debug.h"
@@ -31,6 +33,11 @@
 #include <vector>
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
+
+namespace {
+  cl::opt<bool>
+  SchedVertically("sched-vertically", cl::Hidden);
+}
 
 namespace {
   Statistic<> NumNoops ("scheduler", "Number of noops inserted");
@@ -63,10 +70,10 @@ namespace {
     
     SUnit(SDNode *node, unsigned nodenum)
       : Node(node), NumPredsLeft(0), NumSuccsLeft(0),
-      NumChainPredsLeft(0), NumChainSuccsLeft(0),
-        isTwoAddress(false), isDefNUseOperand(false), isPending(false),
-      isAvailable(false), isScheduled(false),
-      Latency(0), CycleBound(0), Cycle(0), NodeNum(nodenum) {}
+        NumChainPredsLeft(0), NumChainSuccsLeft(0),
+        isTwoAddress(false), isDefNUseOperand(false),
+        isPending(false), isAvailable(false), isScheduled(false),
+        Latency(0), CycleBound(0), Cycle(0), NodeNum(nodenum) {}
     
     void dump(const SelectionDAG *G) const;
     void dumpAll(const SelectionDAG *G) const;
@@ -141,6 +148,8 @@ public:
   
   virtual void push_all(const std::vector<SUnit *> &Nodes) = 0;
   virtual SUnit *pop() = 0;
+
+  virtual void RemoveFromPriorityQueue(SUnit *SU) = 0;
   
   /// ScheduledNode - As each node is scheduled, this method is invoked.  This
   /// allows the priority function to adjust the priority of node that have
@@ -160,6 +169,7 @@ class ScheduleDAGList : public ScheduleDAG {
 private:
   // SDNode to SUnit mapping (many to one).
   std::map<SDNode*, SUnit*> SUnitMap;
+
   // The schedule.  Null SUnit*'s represent noop instructions.
   std::vector<SUnit*> Sequence;
   
@@ -180,10 +190,16 @@ private:
   /// added to the AvailableQueue.  This keeps track of each SUnit and the
   /// number of cycles left to execute before the operation is available.
   std::vector<std::pair<unsigned, SUnit*> > PendingQueue;
-  
+
   /// HazardRec - The hazard recognizer to use.
   HazardRecognizer *HazardRec;
-  
+
+  /// OpenNodes - Nodes with open live ranges, i.e. predecessors or successors
+  /// of scheduled nodes which are not themselves scheduled.
+  std::map<const TargetRegisterClass*, std::set<SUnit*> > OpenNodes;
+
+  std::map<const TargetRegisterClass*, unsigned> RegPressureLimits;
+
 public:
   ScheduleDAGList(SelectionDAG &dag, MachineBasicBlock *bb,
                   const TargetMachine &tm, bool isbottomup,
@@ -206,7 +222,8 @@ private:
   SUnit *NewSUnit(SDNode *N);
   void ReleasePred(SUnit *PredSU, bool isChain, unsigned CurCycle);
   void ReleaseSucc(SUnit *SuccSU, bool isChain);
-  void ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle);
+  void ScheduleNodeBottomUp(SUnit *SU, unsigned& CurCycle, bool Veritical=true);
+  void ScheduleVertically(SUnit *SU, unsigned& CurCycle);
   void ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle);
   void ListScheduleTopDown();
   void ListScheduleBottomUp();
@@ -424,6 +441,41 @@ void ScheduleDAGList::Schedule() {
 //  Bottom-Up Scheduling
 //===----------------------------------------------------------------------===//
 
+static const TargetRegisterClass *getRegClass(SUnit *SU,
+                                              const TargetInstrInfo *TII,
+                                              const MRegisterInfo *MRI,
+                                              SSARegMap *RegMap) {
+  if (SU->Node->isTargetOpcode()) {
+    unsigned Opc = SU->Node->getTargetOpcode();
+    const TargetInstrDescriptor &II = TII->get(Opc);
+    return II.OpInfo->RegClass;
+  } else {
+    assert(SU->Node->getOpcode() == ISD::CopyFromReg);
+    unsigned SrcReg = cast<RegisterSDNode>(SU->Node->getOperand(1))->getReg();
+    if (MRegisterInfo::isVirtualRegister(SrcReg))
+      return RegMap->getRegClass(SrcReg);
+    else {
+      for (MRegisterInfo::regclass_iterator I = MRI->regclass_begin(),
+             E = MRI->regclass_end(); I != E; ++I)
+        if ((*I)->hasType(SU->Node->getValueType(0)) &&
+            (*I)->contains(SrcReg))
+          return *I;
+      assert(false && "Couldn't find register class for reg copy!");
+    }
+    return NULL;
+  }
+}
+
+static unsigned getNumResults(SUnit *SU) {
+  unsigned NumResults = 0;
+  for (unsigned i = 0, e = SU->Node->getNumValues(); i != e; ++i) {
+    MVT::ValueType VT = SU->Node->getValueType(i);
+    if (VT != MVT::Other && VT != MVT::Flag)
+      NumResults++;
+  }
+  return NumResults;
+}
+
 /// ReleasePred - Decrement the NumSuccsLeft count of a predecessor. Add it to
 /// the Available queue is the count reaches zero. Also update its cycle bound.
 void ScheduleDAGList::ReleasePred(SUnit *PredSU, bool isChain, 
@@ -455,11 +507,106 @@ void ScheduleDAGList::ReleasePred(SUnit *PredSU, bool isChain,
       AvailableQueue->push(PredSU);
     }
   }
+
+  if (getNumResults(PredSU) > 0) {
+    const TargetRegisterClass *RegClass = getRegClass(PredSU, TII, MRI, RegMap);
+    OpenNodes[RegClass].insert(PredSU);
+  }
 }
+
+/// SharesOperandWithTwoAddr - Check if there is a unscheduled two-address node
+/// with which SU shares an operand. If so, returns the node.
+static SUnit *SharesOperandWithTwoAddr(SUnit *SU) {
+  assert(!SU->isTwoAddress && "Node cannot be two-address op");
+  for (std::set<std::pair<SUnit*, bool> >::iterator I = SU->Preds.begin(),
+         E = SU->Preds.end(); I != E; ++I) {
+    if (I->second) continue;
+    SUnit *PredSU = I->first;
+    for (std::set<std::pair<SUnit*, bool> >::iterator II =
+           PredSU->Succs.begin(), EE = PredSU->Succs.end(); II != EE; ++II) {
+      if (II->second) continue;
+      SUnit *SSU = II->first;
+      if (SSU->isTwoAddress && !SSU->isScheduled) {
+        return SSU;
+      }
+    }
+  }
+  return NULL;
+}
+
+static bool isFloater(const SUnit *SU) {
+  unsigned Opc = SU->Node->getOpcode();
+  return (Opc != ISD::CopyFromReg && SU->NumPredsLeft == 0);
+}
+
+static bool isSimpleFloaterUse(const SUnit *SU) {
+  unsigned NumOps = 0;
+  for (std::set<std::pair<SUnit*, bool> >::iterator I = SU->Preds.begin(),
+         E = SU->Preds.end(); I != E; ++I) {
+    if (I->second) continue;
+    if (++NumOps > 1)
+      return false;
+    if (!isFloater(I->first))
+      return false;
+  }
+  return true;
+}
+
+/// ScheduleVertically - Schedule vertically. That is, follow up the D&U chain
+/// (of two-address code) and schedule floaters aggressively.
+void ScheduleDAGList::ScheduleVertically(SUnit *SU, unsigned& CurCycle) {
+  // Try scheduling Def&Use operand if register pressure is low.
+  const TargetRegisterClass *RegClass = getRegClass(SU, TII, MRI, RegMap);
+  unsigned Pressure = OpenNodes[RegClass].size();
+  unsigned Limit = RegPressureLimits[RegClass];
+
+  // See if we can schedule any predecessor that takes no registers.
+  for (std::set<std::pair<SUnit*, bool> >::iterator I = SU->Preds.begin(),
+         E = SU->Preds.end(); I != E; ++I) {
+    if (I->second) continue;
+
+    SUnit *PredSU = I->first;
+    if (!PredSU->isAvailable || PredSU->isScheduled)
+      continue;
+
+    if (isFloater(PredSU)) {
+      DEBUG(std::cerr<<"*** Scheduling floater\n");
+      AvailableQueue->RemoveFromPriorityQueue(PredSU);
+      ScheduleNodeBottomUp(PredSU, CurCycle, false);
+    }
+  }
+
+  SUnit *DUSU = NULL;
+  if (SU->isTwoAddress && Pressure < Limit) {
+    DUSU = SUnitMap[SU->Node->getOperand(0).Val];
+    if (!DUSU->isAvailable || DUSU->isScheduled)
+      DUSU = NULL;
+    else if (!DUSU->isTwoAddress) {
+      SUnit *SSU = SharesOperandWithTwoAddr(DUSU);
+      if (SSU && SSU->isAvailable) {
+        AvailableQueue->RemoveFromPriorityQueue(SSU);
+        ScheduleNodeBottomUp(SSU, CurCycle, false);
+        Pressure = OpenNodes[RegClass].size();
+        if (Pressure >= Limit)
+          DUSU = NULL;
+      }
+    }
+  }
+
+  if (DUSU) {
+    DEBUG(std::cerr<<"*** Low register pressure: scheduling D&U operand\n");
+    AvailableQueue->RemoveFromPriorityQueue(DUSU);
+    ScheduleNodeBottomUp(DUSU, CurCycle, false);
+    Pressure = OpenNodes[RegClass].size();
+    ScheduleVertically(DUSU, CurCycle);
+  }
+}
+
 /// ScheduleNodeBottomUp - Add the node to the schedule. Decrement the pending
 /// count of its predecessors. If a predecessor pending count is zero, add it to
 /// the Available queue.
-void ScheduleDAGList::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
+void ScheduleDAGList::ScheduleNodeBottomUp(SUnit *SU, unsigned& CurCycle,
+                                           bool Vertical) {
   DEBUG(std::cerr << "*** Scheduling [" << CurCycle << "]: ");
   DEBUG(SU->dump(&DAG));
   SU->Cycle = CurCycle;
@@ -469,48 +616,66 @@ void ScheduleDAGList::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
 
   // Bottom up: release predecessors
   for (std::set<std::pair<SUnit*, bool> >::iterator I = SU->Preds.begin(),
-         E = SU->Preds.end(); I != E; ++I) {
+         E = SU->Preds.end(); I != E; ++I)
     ReleasePred(I->first, I->second, CurCycle);
-    // FIXME: This is something used by the priority function that it should
-    // calculate directly.
-    if (!I->second)
-      SU->NumPredsLeft--;
-    else
-      SU->NumChainPredsLeft--;
+  SU->isScheduled = true;
+  CurCycle++;
+
+  if (getNumResults(SU) != 0) {
+    const TargetRegisterClass *RegClass = getRegClass(SU, TII, MRI, RegMap);
+    OpenNodes[RegClass].erase(SU);
+
+    if (SchedVertically && Vertical)
+      ScheduleVertically(SU, CurCycle);
   }
 }
 
 /// isReady - True if node's lower cycle bound is less or equal to the current
 /// scheduling cycle. Always true if all nodes have uniform latency 1.
-static inline bool isReady(SUnit *SU, unsigned CurrCycle) {
-  return SU->CycleBound <= CurrCycle;
+static inline bool isReady(SUnit *SU, unsigned CurCycle) {
+  return SU->CycleBound <= CurCycle;
 }
 
 /// ListScheduleBottomUp - The main loop of list scheduling for bottom-up
 /// schedulers.
 void ScheduleDAGList::ListScheduleBottomUp() {
-  unsigned CurrCycle = 0;
+  // Determine rough register pressure limit.
+  for (MRegisterInfo::regclass_iterator RCI = MRI->regclass_begin(),
+         E = MRI->regclass_end(); RCI != E; ++RCI) {
+    const TargetRegisterClass *RC = *RCI;
+    unsigned Limit = RC->getNumRegs();
+    Limit = (Limit > 2) ? Limit - 2 : 0;
+    std::map<const TargetRegisterClass*, unsigned>::iterator RPI =
+      RegPressureLimits.find(RC);
+    if (RPI == RegPressureLimits.end())
+      RegPressureLimits[RC] = Limit;
+    else {
+      unsigned &OldLimit = RegPressureLimits[RC];
+      if (Limit < OldLimit)
+        OldLimit = Limit;
+    }
+  }
+
+  unsigned CurCycle = 0;
   // Add root to Available queue.
   AvailableQueue->push(SUnitMap[DAG.getRoot().Val]);
 
   // While Available queue is not empty, grab the node with the highest
   // priority. If it is not ready put it back. Schedule the node.
   std::vector<SUnit*> NotReady;
-  SUnit *CurrNode = NULL;
+  SUnit *CurNode = NULL;
   while (!AvailableQueue->empty()) {
-    SUnit *CurrNode = AvailableQueue->pop();
-    while (!isReady(CurrNode, CurrCycle)) {
-      NotReady.push_back(CurrNode);
-      CurrNode = AvailableQueue->pop();
+    SUnit *CurNode = AvailableQueue->pop();
+    while (!isReady(CurNode, CurCycle)) {
+      NotReady.push_back(CurNode);
+      CurNode = AvailableQueue->pop();
     }
     
     // Add the nodes that aren't ready back onto the available list.
     AvailableQueue->push_all(NotReady);
     NotReady.clear();
 
-    ScheduleNodeBottomUp(CurrNode, CurrCycle);
-    CurrCycle++;
-    CurrNode->isScheduled = true;
+    ScheduleNodeBottomUp(CurNode, CurCycle);
   }
 
   // Add entry node last
@@ -574,7 +739,6 @@ void ScheduleDAGList::ReleaseSucc(SUnit *SuccSU, bool isChain) {
     }
     
     PendingQueue.push_back(std::make_pair(AvailableCycle, SuccSU));
-    SuccSU->isPending = true;
   }
 }
 
@@ -782,6 +946,27 @@ namespace {
       return V;
     }
 
+    /// RemoveFromPriorityQueue - This is a really inefficient way to remove a
+    /// node from a priority queue.  We should roll our own heap to make this
+    /// better or something.
+    void RemoveFromPriorityQueue(SUnit *SU) {
+      std::vector<SUnit*> Temp;
+      
+      assert(!Queue.empty() && "Not in queue!");
+      while (Queue.top() != SU) {
+        Temp.push_back(Queue.top());
+        Queue.pop();
+        assert(!Queue.empty() && "Not in queue!");
+      }
+
+      // Remove the node from the PQ.
+      Queue.pop();
+      
+      // Add all the other nodes back.
+      for (unsigned i = 0, e = Temp.size(); i != e; ++i)
+        Queue.push(Temp[i]);
+    }
+
   private:
     void CalculatePriorities();
     int CalcNodePriority(const SUnit *SU);
@@ -797,13 +982,16 @@ bool ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   int RPriority = SPQ->getSethiUllmanNumber(RightNum);
   bool LIsFloater = LIsTarget && (LPriority == 1 || LPriority == 0);
   bool RIsFloater = RIsTarget && (RPriority == 1 || RPriority == 0);
+  int LBonus = 0;
+  int RBonus = 0;
 
-  // Schedule floaters (e.g. load from some constant address) and immediate use
-  // of floaters (with no other operands) just before the use.
-  if (LIsFloater && !RIsFloater)
-    LPriority += 2;
-  else if (!LIsFloater && RIsFloater)
-    RPriority += 2;
+  // Schedule floaters (e.g. load from some constant address) and those nodes
+  // with a single predecessor each first. They maintain / reduce register
+  // pressure.
+  if (LIsFloater)
+    LBonus += 2;
+  if (RIsFloater)
+    RBonus += 2;
 
   // Special tie breaker: if two nodes share a operand, the one that use it
   // as a def&use operand is preferred.
@@ -811,21 +999,21 @@ bool ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
     if (left->isTwoAddress && !right->isTwoAddress) {
       SDNode *DUNode = left->Node->getOperand(0).Val;
       if (DUNode->isOperand(right->Node))
-        LPriority += 2;
+        LBonus += 2;
     }
     if (!left->isTwoAddress && right->isTwoAddress) {
       SDNode *DUNode = right->Node->getOperand(0).Val;
       if (DUNode->isOperand(left->Node))
-        RPriority += 2;
+        RBonus += 2;
     }
   }
 
-  if (LPriority < RPriority)
+  if (LPriority+LBonus < RPriority+RBonus)
     return true;
-  else if (LPriority == RPriority)
+  else if (LPriority+LBonus == RPriority+RBonus)
     if (left->NumPredsLeft > right->NumPredsLeft)
       return true;
-    else if (left->NumPredsLeft == right->NumPredsLeft)
+    else if (left->NumPredsLeft+LBonus == right->NumPredsLeft+RBonus)
       if (left->CycleBound > right->CycleBound) 
         return true;
   return false;
@@ -955,18 +1143,7 @@ public:
       Queue.pop();
       return V;
     }
-    
-    // ScheduledNode - As nodes are scheduled, we look to see if there are any
-    // successor nodes that have a single unscheduled predecessor.  If so, that
-    // single predecessor has a higher priority, since scheduling it will make
-    // the node available.
-    void ScheduledNode(SUnit *Node);
-
-private:
-    void CalculatePriorities();
-    int CalcLatency(const SUnit &SU);
-    void AdjustPriorityOfUnscheduledPreds(SUnit *SU);
-    
+        
     /// RemoveFromPriorityQueue - This is a really inefficient way to remove a
     /// node from a priority queue.  We should roll our own heap to make this
     /// better or something.
@@ -987,6 +1164,17 @@ private:
       for (unsigned i = 0, e = Temp.size(); i != e; ++i)
         Queue.push(Temp[i]);
     }
+
+    // ScheduledNode - As nodes are scheduled, we look to see if there are any
+    // successor nodes that have a single unscheduled predecessor.  If so, that
+    // single predecessor has a higher priority, since scheduling it will make
+    // the node available.
+    void ScheduledNode(SUnit *Node);
+
+private:
+    void CalculatePriorities();
+    int CalcLatency(const SUnit &SU);
+    void AdjustPriorityOfUnscheduledPreds(SUnit *SU);
   };
 }
 
