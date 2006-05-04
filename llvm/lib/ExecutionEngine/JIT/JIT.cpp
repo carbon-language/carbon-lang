@@ -47,7 +47,7 @@ JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji)
   // Add target data
   MutexGuard locked(lock);
   FunctionPassManager& PM = state.getPM(locked);
-  PM.add(new TargetData(TM.getTargetData()));
+  PM.add(new TargetData(*TM.getTargetData()));
 
   // Compile LLVM Code down to machine code in the intermediate representation
   TJI.addPassesToJITCompile(PM);
