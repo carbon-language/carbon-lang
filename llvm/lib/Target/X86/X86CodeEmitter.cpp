@@ -57,6 +57,8 @@ namespace {
     void emitExternalSymbolAddress(const char *ES, bool isPCRelative,
                                    bool isTailCall);
 
+    void emitDisplacementField(const MachineOperand *RelocOp, int DispVal);
+
     void emitRegModRMByte(unsigned ModRMReg, unsigned RegOpcodeField);
     void emitSIBByte(unsigned SS, unsigned Index, unsigned Base);
     void emitConstant(unsigned Val, unsigned Size);
@@ -211,19 +213,39 @@ void Emitter::emitConstant(unsigned Val, unsigned Size) {
   }
 }
 
+/// isDisp8 - Return true if this signed displacement fits in a 8-bit 
+/// sign-extended field. 
 static bool isDisp8(int Value) {
   return Value == (signed char)Value;
+}
+
+void Emitter::emitDisplacementField(const MachineOperand *RelocOp,
+                                    int DispVal) {
+  // If this is a simple integer displacement that doesn't require a relocation,
+  // emit it now.
+  if (!RelocOp) {
+    emitConstant(DispVal, 4);
+    return;
+  }
+  
+  // Otherwise, this is something that requires a relocation.  Emit it as such
+  // now.
+  if (RelocOp->isGlobalAddress()) {
+    emitGlobalAddressForPtr(RelocOp->getGlobal(), RelocOp->getOffset());
+  } else {
+    assert(0 && "Unknown value to relocate!");
+  }
 }
 
 void Emitter::emitMemModRMByte(const MachineInstr &MI,
                                unsigned Op, unsigned RegOpcodeField) {
   const MachineOperand &Op3 = MI.getOperand(Op+3);
-  GlobalValue *GV = 0;
   int DispVal = 0;
-
+  const MachineOperand *DispForReloc = 0;
+  
+  // Figure out what sort of displacement we have to handle here.
   if (Op3.isGlobalAddress()) {
-    GV = Op3.getGlobal();
-    DispVal = Op3.getOffset();
+    DispForReloc = &Op3;
   } else if (Op3.isConstantPoolIndex()) {
     DispVal += MCE.getConstantPoolEntryAddress(Op3.getConstantPoolIndex());
     DispVal += Op3.getOffset();
@@ -244,27 +266,21 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
     if (BaseReg == 0) {  // Just a displacement?
       // Emit special case [disp32] encoding
       MCE.emitByte(ModRMByte(0, RegOpcodeField, 5));
-      if (GV)
-        emitGlobalAddressForPtr(GV, DispVal);
-      else
-        emitConstant(DispVal, 4);
+      
+      emitDisplacementField(DispForReloc, DispVal);
     } else {
       unsigned BaseRegNo = getX86RegNum(BaseReg);
-      if (GV) {
-        // Emit the most general non-SIB encoding: [REG+disp32]
-        MCE.emitByte(ModRMByte(2, RegOpcodeField, BaseRegNo));
-        emitGlobalAddressForPtr(GV, DispVal);
-      } else if (DispVal == 0 && BaseRegNo != N86::EBP) {
+      if (!DispForReloc && DispVal == 0 && BaseRegNo != N86::EBP) {
         // Emit simple indirect register encoding... [EAX] f.e.
         MCE.emitByte(ModRMByte(0, RegOpcodeField, BaseRegNo));
-      } else if (isDisp8(DispVal)) {
+      } else if (!DispForReloc && isDisp8(DispVal)) {
         // Emit the disp8 encoding... [REG+disp8]
         MCE.emitByte(ModRMByte(1, RegOpcodeField, BaseRegNo));
         emitConstant(DispVal, 1);
       } else {
         // Emit the most general non-SIB encoding: [REG+disp32]
         MCE.emitByte(ModRMByte(2, RegOpcodeField, BaseRegNo));
-        emitConstant(DispVal, 4);
+        emitDisplacementField(DispForReloc, DispVal);
       }
     }
 
@@ -278,8 +294,8 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
       // MOD=0, BASE=5, to JUST get the index, scale, and displacement.
       MCE.emitByte(ModRMByte(0, RegOpcodeField, 4));
       ForceDisp32 = true;
-    } else if (GV) {
-      // Emit the normal disp32 encoding...
+    } else if (DispForReloc) {
+      // Emit the normal disp32 encoding.
       MCE.emitByte(ModRMByte(2, RegOpcodeField, 4));
       ForceDisp32 = true;
     } else if (DispVal == 0 && BaseReg != X86::EBP) {
@@ -314,13 +330,10 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
     }
 
     // Do we need to output a displacement?
-    if (DispVal != 0 || ForceDisp32 || ForceDisp8) {
-      if (!ForceDisp32 && isDisp8(DispVal))
-        emitConstant(DispVal, 1);
-      else if (GV)
-        emitGlobalAddressForPtr(GV, DispVal);
-      else
-        emitConstant(DispVal, 4);
+    if (ForceDisp8) {
+      emitConstant(DispVal, 1);
+    } else if (DispVal != 0 || ForceDisp32) {
+      emitDisplacementField(DispForReloc, DispVal);
     }
   }
 }
@@ -420,6 +433,7 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
     if (MI.getNumOperands() == 2) {
       const MachineOperand &MO1 = MI.getOperand(1);
       if (Value *V = MO1.getVRegValueOrNull()) {
+        assert(0 && "??");
         assert(sizeOfImm(Desc) == 4 &&
                "Don't know how to emit non-pointer values!");
         emitGlobalAddressForPtr(cast<GlobalValue>(V));
