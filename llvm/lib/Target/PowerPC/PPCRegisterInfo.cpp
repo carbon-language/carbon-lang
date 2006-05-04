@@ -102,9 +102,8 @@ PPCRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     BuildMI(MBB, MI, PPC::MFLR, 1, PPC::R11);
     addFrameReference(BuildMI(MBB, MI, PPC::STW, 3).addReg(PPC::R11), FrameIdx);
   } else if (RC == PPC::CRRCRegisterClass) {
-    // FIXME: We use R0 here, because it isn't available for RA.
-    BuildMI(MBB, MI, PPC::MFCR, 0, PPC::R0);
-    addFrameReference(BuildMI(MBB, MI, PPC::STW, 3).addReg(PPC::R0), FrameIdx);
+    BuildMI(MBB, MI, PPC::MFCR, 0, PPC::R11);
+    addFrameReference(BuildMI(MBB, MI, PPC::STW, 3).addReg(PPC::R11), FrameIdx);
   } else if (RC == PPC::GPRCRegisterClass) {
     addFrameReference(BuildMI(MBB, MI, PPC::STW, 3).addReg(SrcReg),FrameIdx);
   } else if (RC == PPC::G8RCRegisterClass) {
@@ -119,7 +118,7 @@ PPCRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     // Dest = LVX R0, R11
     // 
     // FIXME: We use R0 here, because it isn't available for RA.
-    addFrameReference(BuildMI(MBB, MI, PPC::ADDI, 2, PPC::R0), FrameIdx, 0, 0);
+    addFrameReference(BuildMI(MBB, MI, PPC::ADDI, 1, PPC::R0), FrameIdx, 0, 0);
     BuildMI(MBB, MI, PPC::STVX, 3)
       .addReg(SrcReg).addReg(PPC::R0).addReg(PPC::R0);
   } else {
@@ -137,9 +136,8 @@ PPCRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     addFrameReference(BuildMI(MBB, MI, PPC::LWZ, 2, PPC::R11), FrameIdx);
     BuildMI(MBB, MI, PPC::MTLR, 1).addReg(PPC::R11);
   } else if (RC == PPC::CRRCRegisterClass) {
-    // FIXME: We use R0 here, because it isn't available for RA.
-    addFrameReference(BuildMI(MBB, MI, PPC::LWZ, 2, PPC::R0), FrameIdx);
-    BuildMI(MBB, MI, PPC::MTCRF, 1, DestReg).addReg(PPC::R0);
+    addFrameReference(BuildMI(MBB, MI, PPC::LWZ, 2, PPC::R11), FrameIdx);
+    BuildMI(MBB, MI, PPC::MTCRF, 1, DestReg).addReg(PPC::R11);
   } else if (RC == PPC::GPRCRegisterClass) {
     addFrameReference(BuildMI(MBB, MI, PPC::LWZ, 2, DestReg), FrameIdx);
   } else if (RC == PPC::G8RCRegisterClass) {
@@ -154,7 +152,7 @@ PPCRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     // Dest = LVX R0, R11
     // 
     // FIXME: We use R0 here, because it isn't available for RA.
-    addFrameReference(BuildMI(MBB, MI, PPC::ADDI, 2, PPC::R0), FrameIdx, 0, 0);
+    addFrameReference(BuildMI(MBB, MI, PPC::ADDI, 1, PPC::R0), FrameIdx, 0, 0);
     BuildMI(MBB, MI, PPC::LVX, 2, DestReg).addReg(PPC::R0).addReg(PPC::R0);
   } else {
     assert(0 && "Unknown regclass!");

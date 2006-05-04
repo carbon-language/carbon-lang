@@ -264,21 +264,6 @@ def VRRC : RegisterClass<"PPC", [v16i8,v8i16,v4i32,v4f32], 128,
   V6, V7, V8, V9, V10, V11, V12, V13, V14, V15, V16, V17, V18, V19, V20, V21,
   V22, V23, V24, V25, V26, V27, V28, V29, V30, V31]>;
 
-def CRRC : RegisterClass<"PPC", [i32], 32, [CR0, CR1, CR5, CR6, CR7, CR2, CR3, CR4]>
-{
-  let MethodProtos = [{
-    iterator allocation_order_begin(MachineFunction &MF) const;
-    iterator allocation_order_end(MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    CRRCClass::iterator
-    CRRCClass::allocation_order_begin(MachineFunction &MF) const {
-      return begin();
-    }
-    CRRCClass::iterator
-    CRRCClass::allocation_order_end(MachineFunction &MF) const {
-      return end()-3;
-    }
-  }];
-}
-
+def CRRC : RegisterClass<"PPC", [i32], 32, [CR0, CR1, CR5, CR6, CR7, CR2, 
+  CR3, CR4]>;
+  
