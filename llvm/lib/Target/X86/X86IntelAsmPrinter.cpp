@@ -24,20 +24,6 @@ using namespace llvm;
 
 X86IntelAsmPrinter::X86IntelAsmPrinter(std::ostream &O, X86TargetMachine &TM)
     : X86SharedAsmPrinter(O, TM) {
-  CommentString = ";";
-  GlobalPrefix = "_";
-  PrivateGlobalPrefix = "$";
-  AlignDirective = "\talign\t";
-  MLSections = true;
-  ZeroDirective = "\tdb\t";
-  ZeroDirectiveSuffix = " dup(0)";
-  AsciiDirective = "\tdb\t";
-  AscizDirective = 0;
-  Data8bitsDirective = "\t.db\t";
-  Data16bitsDirective = "\t.dw\t";
-  Data32bitsDirective = "\t.dd\t";
-  Data64bitsDirective = "\t.dq\t";
-  HasDotTypeDotSizeDirective = false;
 }
 
 /// runOnMachineFunction - This uses the printMachineInstruction()
@@ -413,8 +399,22 @@ void X86IntelAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 
 bool X86IntelAsmPrinter::doInitialization(Module &M) {
   X86SharedAsmPrinter::doInitialization(M);
+  CommentString = ";";
+  GlobalPrefix = "_";
+  PrivateGlobalPrefix = "$";
+  AlignDirective = "\talign\t";
+  MLSections = true;
+  ZeroDirective = "\tdb\t";
+  ZeroDirectiveSuffix = " dup(0)";
+  AsciiDirective = "\tdb\t";
+  AscizDirective = 0;
+  Data8bitsDirective = "\t.db\t";
+  Data16bitsDirective = "\t.dw\t";
+  Data32bitsDirective = "\t.dd\t";
+  Data64bitsDirective = "\t.dq\t";
+  HasDotTypeDotSizeDirective = false;
   Mang->markCharUnacceptable('.');
-  PrivateGlobalPrefix = "$";  // need this here too :(
+
   O << "\t.686\n\t.model flat\n\n";
 
   // Emit declarations for external functions.
@@ -427,6 +427,8 @@ bool X86IntelAsmPrinter::doInitialization(Module &M) {
        I != E; ++I) {
     if (I->isExternal())
       O << "\textern " << Mang->getValueName(I) << ":byte\n";
+    else if (I->getLinkage() == GlobalValue::ExternalLinkage)
+      O << "\tpublic " << Mang->getValueName(I) << "\n";
   }
 
   return false;
