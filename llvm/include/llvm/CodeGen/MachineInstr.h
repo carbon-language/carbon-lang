@@ -150,16 +150,11 @@ public:
   ///
   UseType getUseType() const { return UseType(flags & (USEFLAG|DEFFLAG)); }
 
-  /// isRegister - Return true if this operand is a register operand.
-  ///
-  bool isRegister() const {
-    return opType == MO_VirtualRegister;
-  }
-
   /// Accessors that tell you what kind of MachineOperand you're looking at.
   ///
-  bool isMachineBasicBlock() const { return opType == MO_MachineBasicBlock; }
+  bool isRegister() const { return opType == MO_VirtualRegister; }
   bool isImmediate() const { return opType == MO_Immediate; }
+  bool isMachineBasicBlock() const { return opType == MO_MachineBasicBlock; }
   bool isFrameIndex() const { return opType == MO_FrameIndex; }
   bool isConstantPoolIndex() const { return opType == MO_ConstantPoolIndex; }
   bool isJumpTableIndex() const { return opType == MO_JumpTableIndex; }
@@ -212,25 +207,17 @@ public:
   bool            isDef           () const { return flags & DEFFLAG; }
   MachineOperand& setDef          ()       { flags |= DEFFLAG; return *this; }
 
-  /// hasAllocatedReg - Returns true iff a machine register has been
-  /// allocated to this operand.
-  ///
-  bool hasAllocatedReg() const {
-    return extra.regNum >= 0 && opType == MO_VirtualRegister;
-  }
-
-  /// getReg - Returns the register number. It is a runtime error to call this
-  /// if a register is not allocated.
+  /// getReg - Returns the register number.
   ///
   unsigned getReg() const {
-    assert(hasAllocatedReg());
+    assert(isRegister() && "This is not a register operand!");
     return extra.regNum;
   }
 
   /// MachineOperand mutators.
   ///
   void setReg(unsigned Reg) {
-    assert(hasAllocatedReg() && "This operand cannot have a register number!");
+    assert(isRegister() && "This is not a register operand!");
     extra.regNum = Reg;
   }
 
