@@ -37,7 +37,12 @@ AsmWriterFlavor("x86-asm-syntax",
                            clEnumVal(att,   "  Emit AT&T-style assembly"),
                            clEnumVal(intel, "  Emit Intel-style assembly"),
                            clEnumValEnd),
-                cl::init(att));
+#ifdef _MSC_VER
+                cl::init(intel)
+#else
+                cl::init(att)
+#endif
+                );
 
 /// doInitialization
 bool X86SharedAsmPrinter::doInitialization(Module &M) {
