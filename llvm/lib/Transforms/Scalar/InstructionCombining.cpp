@@ -456,6 +456,8 @@ static void ComputeMaskedBits(Value *V, uint64_t Mask, uint64_t &KnownZero,
   Instruction *I = dyn_cast<Instruction>(V);
   if (!I) return;
 
+  Mask &= V->getType()->getIntegralTypeMask();
+  
   switch (I->getOpcode()) {
   case Instruction::And:
     // If either the LHS or the RHS are Zero, the result is zero.
@@ -713,6 +715,8 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, uint64_t DemandedMask,
   Instruction *I = dyn_cast<Instruction>(V);
   if (!I) return false;        // Only analyze instructions.
 
+  DemandedMask &= V->getType()->getIntegralTypeMask();
+  
   uint64_t KnownZero2, KnownOne2;
   switch (I->getOpcode()) {
   default: break;
