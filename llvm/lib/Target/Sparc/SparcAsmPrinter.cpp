@@ -146,7 +146,7 @@ void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     CloseParen = true;
   }
   switch (MO.getType()) {
-  case MachineOperand::MO_VirtualRegister:
+  case MachineOperand::MO_Register:
     if (MRegisterInfo::isPhysicalRegister(MO.getReg()))
       O << "%" << LowercaseString (RI.get(MO.getReg()).Name);
     else
@@ -188,16 +188,16 @@ void SparcAsmPrinter::printMemOperand(const MachineInstr *MI, int opNum,
   
   MachineOperand::MachineOperandType OpTy = MI->getOperand(opNum+1).getType();
   
-  if (OpTy == MachineOperand::MO_VirtualRegister &&
+  if (MI->getOperand(opNum+1).isRegister() &&
       MI->getOperand(opNum+1).getReg() == SP::G0)
     return;   // don't print "+%g0"
-  if (OpTy == MachineOperand::MO_Immediate &&
+  if (MI->getOperand(opNum+1).isImmediate() &&
       MI->getOperand(opNum+1).getImmedValue() == 0)
     return;   // don't print "+0"
   
   O << "+";
-  if (OpTy == MachineOperand::MO_GlobalAddress ||
-      OpTy == MachineOperand::MO_ConstantPoolIndex) {
+  if (MI->getOperand(opNum+1).isGlobalAddress() ||
+      MI->getOperand(opNum+1).isConstantPoolIndex()) {
     O << "%lo(";
     printOperand(MI, opNum+1);
     O << ")";

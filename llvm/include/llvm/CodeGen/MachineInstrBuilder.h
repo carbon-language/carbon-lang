@@ -42,22 +42,22 @@ public:
 
   /// addImm - Add a new immediate operand.
   ///
-  const MachineInstrBuilder &addImm(int Val) const {
-    MI->addZeroExtImmOperand(Val);
+  const MachineInstrBuilder &addImm(int64_t Val) const {
+    MI->addImmOperand(Val);
     return *this;
   }
 
   /// addZImm - Add a new zero extended immediate operand...
   ///
   const MachineInstrBuilder &addZImm(unsigned Val) const {
-    MI->addZeroExtImmOperand(Val);
+    MI->addImmOperand(Val);
     return *this;
   }
 
   /// addImm64 - Add a new 64-bit immediate operand...
   ///
   const MachineInstrBuilder &addImm64(uint64_t Val) const {
-    MI->addZeroExtImm64Operand(Val);
+    MI->addImmOperand(Val);
     return *this;
   }
 

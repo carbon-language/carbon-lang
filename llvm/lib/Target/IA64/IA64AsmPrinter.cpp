@@ -66,7 +66,7 @@ namespace {
     // This method is used by the tablegen'erated instruction printer.
     void printOperand(const MachineInstr *MI, unsigned OpNo){
       const MachineOperand &MO = MI->getOperand(OpNo);
-      if (MO.getType() == MachineOperand::MO_VirtualRegister) {
+      if (MO.getType() == MachineOperand::MO_Register) {
         assert(MRegisterInfo::isPhysicalRegister(MO.getReg())&&"Not physref??");
         //XXX Bug Workaround: See note in Printer::doInitialization about %.
         O << TM.getRegisterInfo()->get(MO.getReg()).Name;
@@ -173,7 +173,7 @@ void IA64AsmPrinter::printOp(const MachineOperand &MO,
                              bool isBRCALLinsn /* = false */) {
   const MRegisterInfo &RI = *TM.getRegisterInfo();
   switch (MO.getType()) {
-  case MachineOperand::MO_VirtualRegister:
+  case MachineOperand::MO_Register:
     O << RI.get(MO.getReg()).Name;
     return;
 

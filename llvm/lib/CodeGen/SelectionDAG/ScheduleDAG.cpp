@@ -104,7 +104,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
     }
   } else if (ConstantSDNode *C =
              dyn_cast<ConstantSDNode>(Op)) {
-    MI->addZeroExtImm64Operand(C->getValue());
+    MI->addImmOperand(C->getValue());
   } else if (RegisterSDNode*R =
              dyn_cast<RegisterSDNode>(Op)) {
     MI->addRegOperand(R->getReg(), MachineOperand::Use);
@@ -303,7 +303,7 @@ void ScheduleDAG::EmitNode(SDNode *Node,
         unsigned Flags = cast<ConstantSDNode>(Node->getOperand(i))->getValue();
         unsigned NumVals = Flags >> 3;
         
-        MI->addZeroExtImm64Operand(Flags);
+        MI->addImmOperand(Flags);
         ++i;  // Skip the ID value.
         
         switch (Flags & 7) {
@@ -323,7 +323,7 @@ void ScheduleDAG::EmitNode(SDNode *Node,
         case 3: { // Immediate.
           assert(NumVals == 1 && "Unknown immediate value!");
           uint64_t Val = cast<ConstantSDNode>(Node->getOperand(i))->getValue();
-          MI->addZeroExtImm64Operand(Val);
+          MI->addImmOperand(Val);
           ++i;
           break;
         }

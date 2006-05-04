@@ -86,7 +86,7 @@ namespace {
 
     void printOperand(const MachineInstr *MI, unsigned OpNo) {
       const MachineOperand &MO = MI->getOperand(OpNo);
-      if (MO.getType() == MachineOperand::MO_VirtualRegister) {
+      if (MO.isRegister()) {
         assert(MRegisterInfo::isPhysicalRegister(MO.getReg())&&"Not physreg??");
         O << TM.getRegisterInfo()->get(MO.getReg()).Name;
       } else if (MO.isImmediate()) {

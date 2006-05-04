@@ -100,7 +100,7 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
                                  const char *Modifier) {
   const MRegisterInfo &RI = *TM.getRegisterInfo();
   switch (MO.getType()) {
-  case MachineOperand::MO_VirtualRegister:
+  case MachineOperand::MO_Register:
     if (MRegisterInfo::isPhysicalRegister(MO.getReg()))
       O << RI.get(MO.getReg()).Name;
     else

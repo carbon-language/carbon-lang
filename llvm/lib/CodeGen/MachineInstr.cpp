@@ -138,7 +138,7 @@ static void print(const MachineOperand &MO, std::ostream &OS,
   if (TM) MRI = TM->getRegisterInfo();
 
   switch (MO.getType()) {
-  case MachineOperand::MO_VirtualRegister:
+  case MachineOperand::MO_Register:
     OutputReg(OS, MO.getReg(), MRI);
     break;
   case MachineOperand::MO_Immediate:
@@ -235,7 +235,7 @@ std::ostream &llvm::operator<<(std::ostream &os, const MachineInstr &MI) {
 
 std::ostream &llvm::operator<<(std::ostream &OS, const MachineOperand &MO) {
   switch (MO.getType()) {
-  case MachineOperand::MO_VirtualRegister:
+  case MachineOperand::MO_Register:
     OutputReg(OS, MO.getReg());
     break;
   case MachineOperand::MO_Immediate:

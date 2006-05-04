@@ -61,7 +61,7 @@ public:
   };
 
   enum MachineOperandType {
-    MO_VirtualRegister,         // virtual register for *value
+    MO_Register,                // Register operand.
     MO_Immediate,               // Immediate Operand
     MO_MachineBasicBlock,       // MachineBasicBlock reference
     MO_FrameIndex,              // Abstract Stack Frame Index
@@ -93,12 +93,17 @@ private:
     extra.offset = 0;
   }
 
-  MachineOperand(int64_t ImmVal, MachineOperandType OpTy, int Offset = 0)
-    : flags(0), opType(OpTy) {
+  MachineOperand(int64_t ImmVal) : flags(0), opType(MO_Immediate) {
     contents.immedVal = ImmVal;
-    extra.offset = Offset;
+    extra.offset = 0;
   }
 
+  MachineOperand(unsigned Idx, MachineOperandType OpTy)
+    : flags(0), opType(OpTy) {
+    contents.immedVal = Idx;
+    extra.offset = 0;
+  }
+  
   MachineOperand(int Reg, MachineOperandType OpTy, UseType UseTy)
     : flags(UseTy), opType(OpTy) {
     zeroContents();
@@ -152,7 +157,7 @@ public:
 
   /// Accessors that tell you what kind of MachineOperand you're looking at.
   ///
-  bool isRegister() const { return opType == MO_VirtualRegister; }
+  bool isRegister() const { return opType == MO_Register; }
   bool isImmediate() const { return opType == MO_Immediate; }
   bool isMachineBasicBlock() const { return opType == MO_MachineBasicBlock; }
   bool isFrameIndex() const { return opType == MO_FrameIndex; }
@@ -245,7 +250,7 @@ public:
   /// the specified value.  If an operand is known to be an register already,
   /// the setReg method should be used.
   void ChangeToRegister(unsigned Reg) {
-    opType = MO_VirtualRegister;
+    opType = MO_Register;
     extra.regNum = Reg;
   }
 
@@ -355,41 +360,21 @@ public:
 
   /// addRegOperand - Add a symbolic virtual register reference...
   ///
-  void addRegOperand(int reg, bool isDef) {
-    assert(!OperandsComplete() &&
-           "Trying to add an operand to a machine instr that is already done!");
-    operands.push_back(
-      MachineOperand(reg, MachineOperand::MO_VirtualRegister,
-                     isDef ? MachineOperand::Def : MachineOperand::Use));
-  }
-
-  /// addRegOperand - Add a symbolic virtual register reference...
-  ///
   void addRegOperand(int reg,
                      MachineOperand::UseType UTy = MachineOperand::Use) {
     assert(!OperandsComplete() &&
            "Trying to add an operand to a machine instr that is already done!");
     operands.push_back(
-      MachineOperand(reg, MachineOperand::MO_VirtualRegister, UTy));
+      MachineOperand(reg, MachineOperand::MO_Register, UTy));
   }
 
-  /// addZeroExtImmOperand - Add a zero extended constant argument to the
+  /// addImmOperand - Add a zero extended constant argument to the
   /// machine instruction.
   ///
-  void addZeroExtImmOperand(int intValue) {
+  void addImmOperand(int64_t Val) {
     assert(!OperandsComplete() &&
            "Trying to add an operand to a machine instr that is already done!");
-    operands.push_back(
-      MachineOperand(intValue, MachineOperand::MO_Immediate));
-  }
-
-  /// addZeroExtImm64Operand - Add a zero extended 64-bit constant argument
-  /// to the machine instruction.
-  ///
-  void addZeroExtImm64Operand(uint64_t intValue) {
-    assert(!OperandsComplete() &&
-           "Trying to add an operand to a machine instr that is already done!");
-    operands.push_back(MachineOperand(intValue, MachineOperand::MO_Immediate));
+    operands.push_back(MachineOperand(Val));
   }
 
   void addMachineBasicBlockOperand(MachineBasicBlock *MBB) {
