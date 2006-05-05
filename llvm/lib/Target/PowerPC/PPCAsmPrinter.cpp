@@ -282,7 +282,8 @@ namespace {
       LCOMMDirective = "\t.lcomm\t";
       StaticCtorsSection = ".mod_init_func";
       StaticDtorsSection = ".mod_term_func";
-      InlineAsmStart = InlineAsmEnd = "";  // Don't use #APP/#NO_APP
+      InlineAsmStart = "# InlineAsm Start";
+      InlineAsmEnd = "# InlineAsm End";
     }
 
     virtual const char *getPassName() const {
