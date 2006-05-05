@@ -2763,6 +2763,49 @@ static Value *InsertGEPComputeCode(Value *&V, BasicBlock *BB, Instruction *GEPI,
   return V = Ptr;
 }
 
+/// OptimizeNoopCopyExpression - We have determined that the specified cast
+/// instruction is a noop copy (e.g. it's casting from one pointer type to
+/// another, int->uint, or int->sbyte on PPC.
+static void OptimizeNoopCopyExpression(CastInst *CI) {
+  BasicBlock *DefBB = CI->getParent();
+  
+  /// InsertedCasts - Only insert a cast in each block once.
+  std::map<BasicBlock*, CastInst*> InsertedCasts;
+  
+  for (Value::use_iterator UI = CI->use_begin(), E = CI->use_end(); 
+       UI != E; ) {
+    Use &TheUse = UI.getUse();
+    Instruction *User = cast<Instruction>(*UI);
+    
+    // Figure out which BB this cast is used in.  For PHI's this is the
+    // appropriate predecessor block.
+    BasicBlock *UserBB = User->getParent();
+    if (PHINode *PN = dyn_cast<PHINode>(User)) {
+      unsigned OpVal = UI.getOperandNo()/2;
+      UserBB = PN->getIncomingBlock(OpVal);
+    }
+    
+    // Preincrement use iterator so we don't invalidate it.
+    ++UI;
+    
+    // If this user is in the same block as the cast, don't change the cast.
+    if (UserBB == DefBB) continue;
+    
+    // If we have already inserted a cast into this block, use it.
+    CastInst *&InsertedCast = InsertedCasts[UserBB];
+
+    if (!InsertedCast) {
+      BasicBlock::iterator InsertPt = UserBB->begin();
+      while (isa<PHINode>(InsertPt)) ++InsertPt;
+      
+      InsertedCast = 
+        new CastInst(CI->getOperand(0), CI->getType(), "", InsertPt);
+    }
+    
+    // Replace a use of the cast with a use of the new casat.
+    TheUse = InsertedCast;
+  }
+}
 
 /// OptimizeGEPExpression - Since we are doing basic-block-at-a-time instruction
 /// selection, we want to be a bit careful about some things.  In particular, if
@@ -2890,8 +2933,10 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
   // constants, this way the load of the constant into a vreg will not be placed
   // into MBBs that are used some other way.
   //
-  // In this pass we also look for GEP instructions that are used across basic
-  // blocks and rewrites them to improve basic-block-at-a-time selection.
+  // In this pass we also look for GEP and cast instructions that are used
+  // across basic blocks and rewrite them to improve basic-block-at-a-time
+  // selection.
+  //
   // 
   for (Function::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
     PHINode *PN;
@@ -2901,9 +2946,37 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
         if (isa<Constant>(PN->getIncomingValue(i)))
           SplitCriticalEdge(PN->getIncomingBlock(i), BB);
     
-    for (BasicBlock::iterator E = BB->end(); BBI != E; )
-      if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(BBI++))
+    for (BasicBlock::iterator E = BB->end(); BBI != E; ) {
+      Instruction *I = BBI++;
+      if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(I)) {
         OptimizeGEPExpression(GEPI, TLI.getTargetData());
+      } else if (CastInst *CI = dyn_cast<CastInst>(I)) {
+        // If this is a noop copy, sink it into user blocks to reduce the number
+        // of virtual registers that must be created and coallesced.
+        MVT::ValueType SrcVT = TLI.getValueType(CI->getOperand(0)->getType());
+        MVT::ValueType DstVT = TLI.getValueType(CI->getType());
+        
+        // This is an fp<->int conversion?
+        if (MVT::isInteger(SrcVT) != MVT::isInteger(DstVT))
+          continue;
+        
+        // If this is an extension, it will be a zero or sign extension, which
+        // isn't a noop.
+        if (SrcVT < DstVT) continue;
+        
+        // If these values will be promoted, find out what they will be promoted
+        // to.  This helps us consider truncates on PPC as noop copies when they
+        // are.
+        if (TLI.getTypeAction(SrcVT) == TargetLowering::Promote)
+          SrcVT = TLI.getTypeToTransformTo(SrcVT);
+        if (TLI.getTypeAction(DstVT) == TargetLowering::Promote)
+          DstVT = TLI.getTypeToTransformTo(DstVT);
+
+        // If, after promotion, these are the same types, this is a noop copy.
+        if (SrcVT == DstVT)
+          OptimizeNoopCopyExpression(CI);
+      }
+    }
   }
   
   FunctionLoweringInfo FuncInfo(TLI, Fn, MF);
