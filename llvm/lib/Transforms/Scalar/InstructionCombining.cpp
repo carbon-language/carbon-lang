@@ -2640,6 +2640,19 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         }
   }
 
+  // fold (and (cast A), (cast B)) -> (cast (and A, B))
+  if (CastInst *Op0C = dyn_cast<CastInst>(Op0)) {
+    if (CastInst *Op1C = dyn_cast<CastInst>(Op1))
+      if (Op0C->getOperand(0)->getType() == Op1C->getOperand(0)->getType() &&
+          Op0C->getOperand(0)->getType()->isIntegral()) {
+        Instruction *NewOp = BinaryOperator::createAnd(Op0C->getOperand(0),
+                                                       Op1C->getOperand(0),
+                                                       I.getName());
+        InsertNewInstBefore(NewOp, I);
+        return new CastInst(NewOp, I.getType());
+      }
+  }
+
   return Changed ? &I : 0;
 }
 
@@ -2865,6 +2878,20 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
           }
         }
   }
+    
+  // fold (or (cast A), (cast B)) -> (cast (or A, B))
+  if (CastInst *Op0C = dyn_cast<CastInst>(Op0)) {
+    if (CastInst *Op1C = dyn_cast<CastInst>(Op1))
+      if (Op0C->getOperand(0)->getType() == Op1C->getOperand(0)->getType() &&
+          Op0C->getOperand(0)->getType()->isIntegral()) {
+        Instruction *NewOp = BinaryOperator::createOr(Op0C->getOperand(0),
+                                                      Op1C->getOperand(0),
+                                                      I.getName());
+        InsertNewInstBefore(NewOp, I);
+        return new CastInst(NewOp, I.getType());
+      }
+  }
+      
 
   return Changed ? &I : 0;
 }
@@ -3030,6 +3057,19 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
     if (Instruction *R = AssociativeOpt(I, FoldSetCCLogical(*this, RHS)))
       return R;
 
+  // fold (xor (cast A), (cast B)) -> (cast (xor A, B))
+  if (CastInst *Op0C = dyn_cast<CastInst>(Op0)) {
+    if (CastInst *Op1C = dyn_cast<CastInst>(Op1))
+      if (Op0C->getOperand(0)->getType() == Op1C->getOperand(0)->getType() &&
+          Op0C->getOperand(0)->getType()->isIntegral()) {
+        Instruction *NewOp = BinaryOperator::createXor(Op0C->getOperand(0),
+                                                       Op1C->getOperand(0),
+                                                       I.getName());
+        InsertNewInstBefore(NewOp, I);
+        return new CastInst(NewOp, I.getType());
+      }
+  }
+    
   return Changed ? &I : 0;
 }
 
