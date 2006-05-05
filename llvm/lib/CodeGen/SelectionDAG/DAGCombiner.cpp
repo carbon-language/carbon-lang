@@ -1069,11 +1069,13 @@ SDOperand DAGCombiner::SimplifyBinOpWithSameOpcodeHands(SDNode *N) {
     return DAG.getNode(ISD::TRUNCATE, VT, ORNode);
   }
   
-  // fold (and (shl/srl/sra x), (shl/srl/sra y)) -> (shl/srl/sra (and x, y))
-  // fold (or  (shl/srl/sra x), (shl/srl/sra y)) -> (shl/srl/sra (or  x, y))
-  // fold (xor (shl/srl/sra x), (shl/srl/sra y)) -> (shl/srl/sra (xor x, y))
+  
+  // For each of OP in SHL/SRL/SRA/AND...
+  //   fold (and (OP x, z), (OP y, z)) -> (OP (and x, y), z)
+  //   fold (or  (OP x, z), (OP y, z)) -> (OP (or  x, y), z)
+  //   fold (xor (OP x, z), (OP y, z)) -> (OP (xor x, y), z)
   if ((N0.getOpcode() == ISD::SHL || N0.getOpcode() == ISD::SRL ||
-       N0.getOpcode() == ISD::SRA) &&
+       N0.getOpcode() == ISD::SRA || N0.getOpcode() == ISD::AND) &&
       N0.getOperand(1) == N1.getOperand(1)) {
     SDOperand ORNode = DAG.getNode(N->getOpcode(),
                                    N0.getOperand(0).getValueType(),
