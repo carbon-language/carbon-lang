@@ -188,6 +188,7 @@ namespace {
     SDOperand visitSETCC(SDNode *N);
     SDOperand visitSIGN_EXTEND(SDNode *N);
     SDOperand visitZERO_EXTEND(SDNode *N);
+    SDOperand visitANY_EXTEND(SDNode *N);
     SDOperand visitSIGN_EXTEND_INREG(SDNode *N);
     SDOperand visitTRUNCATE(SDNode *N);
     SDOperand visitBIT_CONVERT(SDNode *N);
@@ -628,6 +629,7 @@ SDOperand DAGCombiner::visit(SDNode *N) {
   case ISD::SETCC:              return visitSETCC(N);
   case ISD::SIGN_EXTEND:        return visitSIGN_EXTEND(N);
   case ISD::ZERO_EXTEND:        return visitZERO_EXTEND(N);
+  case ISD::ANY_EXTEND:         return visitANY_EXTEND(N);
   case ISD::SIGN_EXTEND_INREG:  return visitSIGN_EXTEND_INREG(N);
   case ISD::TRUNCATE:           return visitTRUNCATE(N);
   case ISD::BIT_CONVERT:        return visitBIT_CONVERT(N);
@@ -1868,6 +1870,55 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
   }
   return SDOperand();
 }
+
+SDOperand DAGCombiner::visitANY_EXTEND(SDNode *N) {
+  SDOperand N0 = N->getOperand(0);
+  ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
+  MVT::ValueType VT = N->getValueType(0);
+  
+  // fold (aext c1) -> c1
+  if (N0C)
+    return DAG.getNode(ISD::ANY_EXTEND, VT, N0);
+  // fold (aext (aext x)) -> (aext x)
+  // fold (aext (zext x)) -> (zext x)
+  // fold (aext (sext x)) -> (sext x)
+  if (N0.getOpcode() == ISD::ANY_EXTEND  ||
+      N0.getOpcode() == ISD::ZERO_EXTEND ||
+      N0.getOpcode() == ISD::SIGN_EXTEND)
+    return DAG.getNode(N0.getOpcode(), VT, N0.getOperand(0));
+  
+  // fold (aext (truncate x)) -> x iff x size == zext size.
+  if (N0.getOpcode() == ISD::TRUNCATE && N0.getOperand(0).getValueType() == VT)
+    return N0.getOperand(0);
+  // fold (aext (load x)) -> (aext (truncate (extload x)))
+  if (N0.getOpcode() == ISD::LOAD && N0.hasOneUse() &&
+      (!AfterLegalize||TLI.isOperationLegal(ISD::EXTLOAD, N0.getValueType()))) {
+    SDOperand ExtLoad = DAG.getExtLoad(ISD::EXTLOAD, VT, N0.getOperand(0),
+                                       N0.getOperand(1), N0.getOperand(2),
+                                       N0.getValueType());
+    CombineTo(N, ExtLoad);
+    CombineTo(N0.Val, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
+              ExtLoad.getValue(1));
+    return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
+  }
+  
+  // fold (aext (zextload x)) -> (aext (truncate (zextload x)))
+  // fold (aext (sextload x)) -> (aext (truncate (sextload x)))
+  // fold (aext ( extload x)) -> (aext (truncate (extload  x)))
+  if ((N0.getOpcode() == ISD::ZEXTLOAD || N0.getOpcode() == ISD::EXTLOAD ||
+       N0.getOpcode() == ISD::SEXTLOAD) &&
+      N0.hasOneUse()) {
+    SDOperand ExtLoad = DAG.getNode(N0.getOpcode(), VT, N0.getOperand(0),
+                                    N0.getOperand(1), N0.getOperand(2),
+                                    N0.getOperand(3));
+    CombineTo(N, ExtLoad);
+    CombineTo(N0.Val, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
+              ExtLoad.getValue(1));
+    return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
+  }
+  return SDOperand();
+}
+
 
 SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
