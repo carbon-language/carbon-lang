@@ -2733,6 +2733,60 @@ void SelectionDAGISel::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 
+/// OptimizeNoopCopyExpression - We have determined that the specified cast
+/// instruction is a noop copy (e.g. it's casting from one pointer type to
+/// another, int->uint, or int->sbyte on PPC.
+///
+/// Return true if any changes are made.
+static bool OptimizeNoopCopyExpression(CastInst *CI) {
+  BasicBlock *DefBB = CI->getParent();
+  
+  /// InsertedCasts - Only insert a cast in each block once.
+  std::map<BasicBlock*, CastInst*> InsertedCasts;
+  
+  bool MadeChange = false;
+  for (Value::use_iterator UI = CI->use_begin(), E = CI->use_end(); 
+       UI != E; ) {
+    Use &TheUse = UI.getUse();
+    Instruction *User = cast<Instruction>(*UI);
+    
+    // Figure out which BB this cast is used in.  For PHI's this is the
+    // appropriate predecessor block.
+    BasicBlock *UserBB = User->getParent();
+    if (PHINode *PN = dyn_cast<PHINode>(User)) {
+      unsigned OpVal = UI.getOperandNo()/2;
+      UserBB = PN->getIncomingBlock(OpVal);
+    }
+    
+    // Preincrement use iterator so we don't invalidate it.
+    ++UI;
+    
+    // If this user is in the same block as the cast, don't change the cast.
+    if (UserBB == DefBB) continue;
+    
+    // If we have already inserted a cast into this block, use it.
+    CastInst *&InsertedCast = InsertedCasts[UserBB];
+
+    if (!InsertedCast) {
+      BasicBlock::iterator InsertPt = UserBB->begin();
+      while (isa<PHINode>(InsertPt)) ++InsertPt;
+      
+      InsertedCast = 
+        new CastInst(CI->getOperand(0), CI->getType(), "", InsertPt);
+      MadeChange = true;
+    }
+    
+    // Replace a use of the cast with a use of the new casat.
+    TheUse = InsertedCast;
+  }
+  
+  // If we removed all uses, nuke the cast.
+  if (CI->use_empty())
+    CI->eraseFromParent();
+  
+  return MadeChange;
+}
+
 /// InsertGEPComputeCode - Insert code into BB to compute Ptr+PtrOffset,
 /// casting to the type of GEPI.
 static Value *InsertGEPComputeCode(Value *&V, BasicBlock *BB, Instruction *GEPI,
@@ -2763,49 +2817,51 @@ static Value *InsertGEPComputeCode(Value *&V, BasicBlock *BB, Instruction *GEPI,
   return V = Ptr;
 }
 
-/// OptimizeNoopCopyExpression - We have determined that the specified cast
-/// instruction is a noop copy (e.g. it's casting from one pointer type to
-/// another, int->uint, or int->sbyte on PPC.
-static void OptimizeNoopCopyExpression(CastInst *CI) {
-  BasicBlock *DefBB = CI->getParent();
-  
-  /// InsertedCasts - Only insert a cast in each block once.
-  std::map<BasicBlock*, CastInst*> InsertedCasts;
-  
-  for (Value::use_iterator UI = CI->use_begin(), E = CI->use_end(); 
-       UI != E; ) {
-    Use &TheUse = UI.getUse();
-    Instruction *User = cast<Instruction>(*UI);
+/// ReplaceUsesOfGEPInst - Replace all uses of RepPtr with inserted code to
+/// compute its value.  The RepPtr value can be computed with Ptr+PtrOffset. One
+/// trivial way of doing this would be to evaluate Ptr+PtrOffset in RepPtr's
+/// block, then ReplaceAllUsesWith'ing everything.  However, we would prefer to
+/// sink PtrOffset into user blocks where doing so will likely allow us to fold
+/// the constant add into a load or store instruction.  Additionally, if a user
+/// is a pointer-pointer cast, we look through it to find its users.
+static void ReplaceUsesOfGEPInst(Instruction *RepPtr, Value *Ptr, 
+                                 Constant *PtrOffset, BasicBlock *DefBB,
+                                 GetElementPtrInst *GEPI,
+                                 std::map<BasicBlock*,Value*> &InsertedExprs) {
+  while (!RepPtr->use_empty()) {
+    Instruction *User = cast<Instruction>(RepPtr->use_back());
     
-    // Figure out which BB this cast is used in.  For PHI's this is the
-    // appropriate predecessor block.
-    BasicBlock *UserBB = User->getParent();
-    if (PHINode *PN = dyn_cast<PHINode>(User)) {
-      unsigned OpVal = UI.getOperandNo()/2;
-      UserBB = PN->getIncomingBlock(OpVal);
-    }
-    
-    // Preincrement use iterator so we don't invalidate it.
-    ++UI;
-    
-    // If this user is in the same block as the cast, don't change the cast.
-    if (UserBB == DefBB) continue;
-    
-    // If we have already inserted a cast into this block, use it.
-    CastInst *&InsertedCast = InsertedCasts[UserBB];
-
-    if (!InsertedCast) {
-      BasicBlock::iterator InsertPt = UserBB->begin();
-      while (isa<PHINode>(InsertPt)) ++InsertPt;
+    // If the user is a Pointer-Pointer cast, recurse.
+    if (isa<CastInst>(User) && isa<PointerType>(User->getType())) {
+      ReplaceUsesOfGEPInst(User, Ptr, PtrOffset, DefBB, GEPI, InsertedExprs);
       
-      InsertedCast = 
-        new CastInst(CI->getOperand(0), CI->getType(), "", InsertPt);
+      // Drop the use of RepPtr. The cast is dead.  Don't delete it now, else we
+      // could invalidate an iterator.
+      User->setOperand(0, UndefValue::get(RepPtr->getType()));
+      continue;
     }
     
-    // Replace a use of the cast with a use of the new casat.
-    TheUse = InsertedCast;
+    // If this is a load of the pointer, or a store through the pointer, emit
+    // the increment into the load/store block.
+    Value *NewVal;
+    if (isa<LoadInst>(User) ||
+        (isa<StoreInst>(User) && User->getOperand(0) != RepPtr)) {
+      NewVal = InsertGEPComputeCode(InsertedExprs[User->getParent()], 
+                                    User->getParent(), GEPI,
+                                    Ptr, PtrOffset);
+    } else {
+      // If this use is not foldable into the addressing mode, use a version 
+      // emitted in the GEP block.
+      NewVal = InsertGEPComputeCode(InsertedExprs[DefBB], DefBB, GEPI, 
+                                    Ptr, PtrOffset);
+    }
+    
+    if (GEPI->getType() != RepPtr->getType())
+      NewVal = new CastInst(NewVal, RepPtr->getType(), "", User);
+    User->replaceUsesOfWith(RepPtr, NewVal);
   }
 }
+
 
 /// OptimizeGEPExpression - Since we are doing basic-block-at-a-time instruction
 /// selection, we want to be a bit careful about some things.  In particular, if
@@ -2813,7 +2869,7 @@ static void OptimizeNoopCopyExpression(CastInst *CI) {
 /// defined, the addressing expression of the GEP cannot be folded into loads or
 /// stores that use it.  In this case, decompose the GEP and move constant
 /// indices into blocks that use it.
-static void OptimizeGEPExpression(GetElementPtrInst *GEPI,
+static bool OptimizeGEPExpression(GetElementPtrInst *GEPI,
                                   const TargetData *TD) {
   // If this GEP is only used inside the block it is defined in, there is no
   // need to rewrite it.
@@ -2826,21 +2882,36 @@ static void OptimizeGEPExpression(GetElementPtrInst *GEPI,
       break;
     }
   }
-  if (!isUsedOutsideDefBB) return;
+  if (!isUsedOutsideDefBB) return false;
 
   // If this GEP has no non-zero constant indices, there is nothing we can do,
   // ignore it.
   bool hasConstantIndex = false;
+  bool hasVariableIndex = false;
   for (GetElementPtrInst::op_iterator OI = GEPI->op_begin()+1,
        E = GEPI->op_end(); OI != E; ++OI) {
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(*OI))
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(*OI)) {
       if (CI->getRawValue()) {
         hasConstantIndex = true;
         break;
       }
+    } else {
+      hasVariableIndex = true;
+    }
   }
+  
+  // If this is a "GEP X, 0, 0, 0", turn this into a cast.
+  if (!hasConstantIndex && !hasVariableIndex) {
+    Value *NC = new CastInst(GEPI->getOperand(0), GEPI->getType(), 
+                             GEPI->getName(), GEPI);
+    GEPI->replaceAllUsesWith(NC);
+    GEPI->eraseFromParent();
+    return true;
+  }
+  
   // If this is a GEP &Alloca, 0, 0, forward subst the frame index into uses.
-  if (!hasConstantIndex && !isa<AllocaInst>(GEPI->getOperand(0))) return;
+  if (!hasConstantIndex && !isa<AllocaInst>(GEPI->getOperand(0)))
+    return false;
   
   // Otherwise, decompose the GEP instruction into multiplies and adds.  Sum the
   // constant offset (which we now know is non-zero) and deal with it later.
@@ -2900,28 +2971,12 @@ static void OptimizeGEPExpression(GetElementPtrInst *GEPI,
   // won't be foldable as addresses, so we might as well share the computation).
   
   std::map<BasicBlock*,Value*> InsertedExprs;
-  while (!GEPI->use_empty()) {
-    Instruction *User = cast<Instruction>(GEPI->use_back());
-
-    // If this use is not foldable into the addressing mode, use a version 
-    // emitted in the GEP block.
-    Value *NewVal;
-    if (!isa<LoadInst>(User) &&
-        (!isa<StoreInst>(User) || User->getOperand(0) == GEPI)) {
-      NewVal = InsertGEPComputeCode(InsertedExprs[DefBB], DefBB, GEPI, 
-                                    Ptr, PtrOffset);
-    } else {
-      // Otherwise, insert the code in the User's block so it can be folded into
-      // any users in that block.
-      NewVal = InsertGEPComputeCode(InsertedExprs[User->getParent()], 
-                                    User->getParent(), GEPI, 
-                                    Ptr, PtrOffset);
-    }
-    User->replaceUsesOfWith(GEPI, NewVal);
-  }
+  ReplaceUsesOfGEPInst(GEPI, Ptr, PtrOffset, DefBB, GEPI, InsertedExprs);
   
   // Finally, the GEP is dead, remove it.
   GEPI->eraseFromParent();
+  
+  return true;
 }
 
 bool SelectionDAGISel::runOnFunction(Function &Fn) {
@@ -2938,6 +2993,9 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
   // selection.
   //
   // 
+  bool MadeChange = true;
+  while (MadeChange) {
+    MadeChange = false;
   for (Function::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
     PHINode *PN;
     BasicBlock::iterator BBI;
@@ -2949,7 +3007,7 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
     for (BasicBlock::iterator E = BB->end(); BBI != E; ) {
       Instruction *I = BBI++;
       if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(I)) {
-        OptimizeGEPExpression(GEPI, TLI.getTargetData());
+        MadeChange |= OptimizeGEPExpression(GEPI, TLI.getTargetData());
       } else if (CastInst *CI = dyn_cast<CastInst>(I)) {
         // If this is a noop copy, sink it into user blocks to reduce the number
         // of virtual registers that must be created and coallesced.
@@ -2974,9 +3032,10 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
 
         // If, after promotion, these are the same types, this is a noop copy.
         if (SrcVT == DstVT)
-          OptimizeNoopCopyExpression(CI);
+          MadeChange |= OptimizeNoopCopyExpression(CI);
       }
     }
+  }
   }
   
   FunctionLoweringInfo FuncInfo(TLI, Fn, MF);
