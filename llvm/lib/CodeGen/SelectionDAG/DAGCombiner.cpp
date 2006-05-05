@@ -1615,6 +1615,18 @@ SDOperand DAGCombiner::visitSRL(SDNode *N) {
                        DAG.getConstant(c1 + c2, N1.getValueType()));
   }
   
+  // fold (srl (anyextend x), c) -> (anyextend (srl x, c))
+  if (N1C && N0.getOpcode() == ISD::ANY_EXTEND) {
+    // Shifting in all undef bits?
+    MVT::ValueType SmallVT = N0.getOperand(0).getValueType();
+    if (N1C->getValue() >= MVT::getSizeInBits(SmallVT))
+      return DAG.getNode(ISD::UNDEF, VT);
+
+    SDOperand SmallShift = DAG.getNode(ISD::SRL, SmallVT, N0.getOperand(0), N1);
+    AddToWorkList(SmallShift.Val);
+    return DAG.getNode(ISD::ANY_EXTEND, VT, SmallShift);
+  }
+  
   // fold (srl (ctlz x), "5") -> x  iff x has one bit set (the low bit).
   if (N1C && N0.getOpcode() == ISD::CTLZ && 
       N1C->getValue() == Log2_32(MVT::getSizeInBits(VT))) {
