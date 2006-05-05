@@ -306,6 +306,11 @@ def zextloadi32i8  : PatFrag<(ops node:$ptr), (i32 (zextload node:$ptr, i8))>;
 def zextloadi32i16 : PatFrag<(ops node:$ptr), (i32 (zextload node:$ptr, i16))>;
 
 def extloadi8i1    : PatFrag<(ops node:$ptr), (i8  (extload node:$ptr, i1))>;
+def extloadi16i1   : PatFrag<(ops node:$ptr), (i16 (extload node:$ptr, i1))>;
+def extloadi32i1   : PatFrag<(ops node:$ptr), (i32 (extload node:$ptr, i1))>;
+def extloadi16i8   : PatFrag<(ops node:$ptr), (i16 (extload node:$ptr, i8))>;
+def extloadi32i8   : PatFrag<(ops node:$ptr), (i32 (extload node:$ptr, i8))>;
+def extloadi32i16  : PatFrag<(ops node:$ptr), (i32 (extload node:$ptr, i16))>;
 
 //===----------------------------------------------------------------------===//
 // Instruction templates...
@@ -2393,7 +2398,12 @@ def : Pat<(zextloadi16i1 addr:$src), (MOVZX16rm8 addr:$src)>;
 def : Pat<(zextloadi32i1 addr:$src), (MOVZX32rm8 addr:$src)>;
 
 // extload bool -> extload byte
-def : Pat<(extloadi8i1 addr:$src), (MOV8rm addr:$src)>;
+def : Pat<(extloadi8i1 addr:$src),   (MOV8rm      addr:$src)>;
+def : Pat<(extloadi16i1 addr:$src),  (MOVZX16rm8  addr:$src)>;
+def : Pat<(extloadi32i1 addr:$src),  (MOVZX32rm8  addr:$src)>;
+def : Pat<(extloadi16i8 addr:$src),  (MOVZX16rm8  addr:$src)>;
+def : Pat<(extloadi32i8 addr:$src),  (MOVZX32rm8  addr:$src)>;
+def : Pat<(extloadi32i16 addr:$src), (MOVZX32rm16 addr:$src)>;
 
 // anyext -> zext
 def : Pat<(i16 (anyext R8 :$src)), (MOVZX16rr8  R8 :$src)>;
