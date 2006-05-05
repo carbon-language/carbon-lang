@@ -2642,9 +2642,10 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
 
   // fold (and (cast A), (cast B)) -> (cast (and A, B))
   if (CastInst *Op0C = dyn_cast<CastInst>(Op0)) {
+    const Type *SrcTy = Op0C->getOperand(0)->getType();
     if (CastInst *Op1C = dyn_cast<CastInst>(Op1))
-      if (Op0C->getOperand(0)->getType() == Op1C->getOperand(0)->getType() &&
-          Op0C->getOperand(0)->getType()->isIntegral()) {
+      if (SrcTy == Op1C->getOperand(0)->getType() && SrcTy->isIntegral() &&
+          !SrcTy->isLosslesslyConvertibleTo(Op0C->getType())) {
         Instruction *NewOp = BinaryOperator::createAnd(Op0C->getOperand(0),
                                                        Op1C->getOperand(0),
                                                        I.getName());
@@ -2881,9 +2882,10 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     
   // fold (or (cast A), (cast B)) -> (cast (or A, B))
   if (CastInst *Op0C = dyn_cast<CastInst>(Op0)) {
+    const Type *SrcTy = Op0C->getOperand(0)->getType();
     if (CastInst *Op1C = dyn_cast<CastInst>(Op1))
-      if (Op0C->getOperand(0)->getType() == Op1C->getOperand(0)->getType() &&
-          Op0C->getOperand(0)->getType()->isIntegral()) {
+      if (SrcTy == Op1C->getOperand(0)->getType() && SrcTy->isIntegral() &&
+          !SrcTy->isLosslesslyConvertibleTo(Op0C->getType())) {
         Instruction *NewOp = BinaryOperator::createOr(Op0C->getOperand(0),
                                                       Op1C->getOperand(0),
                                                       I.getName());
@@ -3059,9 +3061,10 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
 
   // fold (xor (cast A), (cast B)) -> (cast (xor A, B))
   if (CastInst *Op0C = dyn_cast<CastInst>(Op0)) {
+    const Type *SrcTy = Op0C->getOperand(0)->getType();
     if (CastInst *Op1C = dyn_cast<CastInst>(Op1))
-      if (Op0C->getOperand(0)->getType() == Op1C->getOperand(0)->getType() &&
-          Op0C->getOperand(0)->getType()->isIntegral()) {
+      if (SrcTy == Op1C->getOperand(0)->getType() && SrcTy->isIntegral() &&
+          !SrcTy->isLosslesslyConvertibleTo(Op0C->getType())) {
         Instruction *NewOp = BinaryOperator::createXor(Op0C->getOperand(0),
                                                        Op1C->getOperand(0),
                                                        I.getName());
