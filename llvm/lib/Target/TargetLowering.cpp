@@ -607,6 +607,16 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
     break;
   }
+  case ISD::TRUNCATE: {
+    if (SimplifyDemandedBits(Op.getOperand(0), DemandedMask,
+                             KnownZero, KnownOne, TLO, Depth+1))
+      return true;
+    assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
+    uint64_t OutMask = MVT::getIntVTBitMask(Op.getValueType());
+    KnownZero &= OutMask;
+    KnownOne &= OutMask;
+    break;
+  }
   case ISD::AssertZext: {
     MVT::ValueType VT = cast<VTSDNode>(Op.getOperand(1))->getVT();
     uint64_t InMask = MVT::getIntVTBitMask(VT);
@@ -863,6 +873,14 @@ void TargetLowering::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
     ComputeMaskedBits(Op.getOperand(0), Mask & MVT::getIntVTBitMask(VT),
                       KnownZero, KnownOne, Depth+1);
     return;
+  }
+  case ISD::TRUNCATE: {
+    ComputeMaskedBits(Op.getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
+    assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
+    uint64_t OutMask = MVT::getIntVTBitMask(Op.getValueType());
+    KnownZero &= OutMask;
+    KnownOne &= OutMask;
+    break;
   }
   case ISD::AssertZext: {
     MVT::ValueType VT = cast<VTSDNode>(Op.getOperand(1))->getVT();
