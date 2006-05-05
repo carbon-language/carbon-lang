@@ -140,6 +140,12 @@ public:
   UserTy *operator->() const { return operator*(); }
 
   Use &getUse() const { return *U; }
+  
+  /// getOperandNo - Return the operand # of this use in its User.
+  ///
+  unsigned getOperandNo() const {
+    return U - U->getUser()->op_begin();
+  }
 };
 
 
