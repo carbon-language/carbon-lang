@@ -34,8 +34,8 @@ AsmPrinter::AsmPrinter(std::ostream &o, TargetMachine &tm)
   GlobalVarAddrSuffix(""),
   FunctionAddrPrefix(""),
   FunctionAddrSuffix(""),
-  InlineAsmStart("#APP\n\t"),
-  InlineAsmEnd("\t#NO_APP\n"),
+  InlineAsmStart("#APP"),
+  InlineAsmEnd("#NO_APP"),
   ZeroDirective("\t.zero\t"),
   ZeroDirectiveSuffix(0),
   AsciiDirective("\t.ascii\t"),
@@ -558,7 +558,7 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
 /// printInlineAsm - This method formats and prints the specified machine
 /// instruction that is an inline asm.
 void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
-  O << InlineAsmStart;
+  O << InlineAsmStart << "\n\t";
   unsigned NumOperands = MI->getNumOperands();
   
   // Count the number of register definitions.
@@ -583,13 +583,17 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
       // Not a special case, emit the string section literally.
       const char *LiteralEnd = LastEmitted+1;
       while (*LiteralEnd && *LiteralEnd != '{' && *LiteralEnd != '|' &&
-             *LiteralEnd != '}' && *LiteralEnd != '$')
+             *LiteralEnd != '}' && *LiteralEnd != '$' && *LiteralEnd != '\n')
         ++LiteralEnd;
       if (CurVariant == -1 || CurVariant == AsmPrinterVariant)
         O.write(LastEmitted, LiteralEnd-LastEmitted);
       LastEmitted = LiteralEnd;
       break;
     }
+    case '\n':
+      ++LastEmitted;   // Consume newline character.
+      O << "\n\t";     // Indent code with newline.
+      break;
     case '$': {
       ++LastEmitted;   // Consume '$' character.
       if (*LastEmitted == '$') { // $$ -> $
@@ -707,7 +711,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
       break;
     }
   }
-  O << "\n" << InlineAsmEnd;
+  O << "\n\t" << InlineAsmEnd << "\n";
 }
 
 /// PrintAsmOperand - Print the specified operand of MI, an INLINEASM
