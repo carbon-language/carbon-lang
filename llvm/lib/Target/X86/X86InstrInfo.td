@@ -351,6 +351,17 @@ def IMPLICIT_DEF_R32  : I<0, Pseudo, (ops R32:$dst),
 // Nop
 def NOOP : I<0x90, RawFrm, (ops), "nop", []>;
 
+// Truncate
+def TRUNC_R32_R8  : I<0x89, MRMDestReg, (ops R8:$dst, R32:$src),
+                      "mov{l} {$src, ${dst:trunc32}|${dst:trunc32}, $src}",
+                      [(set R8:$dst, (trunc R32:$src))]>;
+def TRUNC_R32_R16 : I<0x89, MRMDestReg, (ops R16:$dst, R32:$src),
+                      "mov{l} {$src, ${dst:trunc32}|${dst:trunc32}, $src}",
+                      [(set R16:$dst, (trunc R32:$src))]>;
+def TRUNC_R16_R8  : I<0x89, MRMDestReg, (ops R8:$dst, R16:$src),
+                      "mov{w} {$src, ${dst:trunc16}|${dst:trunc16}, $src}",
+                      [(set R8:$dst, (trunc R16:$src))]>;
+
 //===----------------------------------------------------------------------===//
 //  Control Flow Instructions...
 //

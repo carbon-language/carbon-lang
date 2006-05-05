@@ -68,6 +68,11 @@ struct X86RegisterInfo : public X86GenRegisterInfo {
   unsigned getFrameRegister(MachineFunction &MF) const;
 };
 
+// getX86SubSuperRegister - X86 utility function. It returns the sub or super
+// register of a specific X86 register.
+// e.g. getX86SubSuperRegister(X86::EAX, MVT::i16) return X86:AX
+unsigned getX86SubSuperRegister(unsigned, MVT::ValueType, bool High=false);
+
 } // End llvm namespace
 
 #endif

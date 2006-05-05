@@ -791,45 +791,6 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
 #endif
       return;
     }
-
-    case ISD::TRUNCATE: {
-      unsigned Reg;
-      MVT::ValueType VT;
-      switch (Node->getOperand(0).getValueType()) {
-        default: assert(0 && "Unknown truncate!");
-        case MVT::i16: Reg = X86::AX;  Opc = X86::MOV16rr; VT = MVT::i16; break;
-        case MVT::i32: Reg = X86::EAX; Opc = X86::MOV32rr; VT = MVT::i32; break;
-      }
-      SDOperand Tmp0, Tmp1;
-      Select(Tmp0, Node->getOperand(0));
-      Select(Tmp1, SDOperand(CurDAG->getTargetNode(Opc, VT, Tmp0), 0));
-      SDOperand InFlag = SDOperand(0,0);
-      Result = CurDAG->getCopyToReg(CurDAG->getEntryNode(), Reg, Tmp1, InFlag);
-      SDOperand Chain = Result.getValue(0);
-      InFlag = Result.getValue(1);
-
-      switch (NVT) {
-        default: assert(0 && "Unknown truncate!");
-        case MVT::i8:  Reg = X86::AL;  Opc = X86::MOV8rr;  VT = MVT::i8;  break;
-        case MVT::i16: Reg = X86::AX;  Opc = X86::MOV16rr; VT = MVT::i16; break;
-      }
-
-      Result = CurDAG->getCopyFromReg(Chain, Reg, VT, InFlag);
-      if (N.Val->hasOneUse())
-        Result = CurDAG->SelectNodeTo(N.Val, Opc, VT, Result);
-      else
-        Result = CodeGenMap[N] =
-          SDOperand(CurDAG->getTargetNode(Opc, VT, Result), 0);
-
-#ifndef NDEBUG
-      DEBUG(std::cerr << std::string(Indent-2, ' '));
-      DEBUG(std::cerr << "== ");
-      DEBUG(Result.Val->dump(CurDAG));
-      DEBUG(std::cerr << "\n");
-      Indent -= 2;
-#endif
-      return;
-    }
   }
 
   SelectCode(Result, N);

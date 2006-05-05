@@ -108,13 +108,20 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   const MachineOperand &MO = MI->getOperand(OpNo);
   const MRegisterInfo &RI = *TM.getRegisterInfo();
   switch (MO.getType()) {
-  case MachineOperand::MO_Register:
+  case MachineOperand::MO_Register: {
     assert(MRegisterInfo::isPhysicalRegister(MO.getReg()) &&
            "Virtual registers should not make it this far!");
     O << '%';
-    for (const char *Name = RI.get(MO.getReg()).Name; *Name; ++Name)
+    unsigned Reg = MO.getReg();
+    if (Modifier && strncmp(Modifier, "trunc", strlen("trunc")) == 0) {
+      MVT::ValueType VT = (strcmp(Modifier,"trunc16") == 0)
+        ? MVT::i16 : MVT::i32;
+      Reg = getX86SubSuperRegister(Reg, VT);
+    }
+    for (const char *Name = RI.get(Reg).Name; *Name; ++Name)
       O << (char)tolower(*Name);
     return;
+  }
 
   case MachineOperand::MO_Immediate:
     if (!Modifier || strcmp(Modifier, "debug") != 0)
@@ -263,116 +270,25 @@ bool X86ATTAsmPrinter::printAsmMRegister(const MachineOperand &MO,
                                          const char Mode) {
   const MRegisterInfo &RI = *TM.getRegisterInfo();
   unsigned Reg = MO.getReg();
-  const char *Name = RI.get(Reg).Name;
   switch (Mode) {
   default: return true;  // Unknown mode.
   case 'b': // Print QImode register
-    switch (Reg) {
-    default: return true;
-    case X86::AH: case X86::AL: case X86::AX: case X86::EAX:
-      Name = "al";
-      break;
-    case X86::DH: case X86::DL: case X86::DX: case X86::EDX:
-      Name = "dl";
-      break;
-    case X86::CH: case X86::CL: case X86::CX: case X86::ECX:
-      Name = "cl";
-      break;
-    case X86::BH: case X86::BL: case X86::BX: case X86::EBX:
-      Name = "bl";
-      break;
-    case X86::ESI:
-      Name = "sil";
-      break;
-    case X86::EDI:
-      Name = "dil";
-      break;
-    case X86::EBP:
-      Name = "bpl";
-      break;
-    case X86::ESP:
-      Name = "spl";
-      break;
-    }
+    Reg = getX86SubSuperRegister(Reg, MVT::i8);
     break;
   case 'h': // Print QImode high register
-    switch (Reg) {
-    default: return true;
-    case X86::AH: case X86::AL: case X86::AX: case X86::EAX:
-      Name = "al";
-      break;
-    case X86::DH: case X86::DL: case X86::DX: case X86::EDX:
-      Name = "dl";
-      break;
-    case X86::CH: case X86::CL: case X86::CX: case X86::ECX:
-      Name = "cl";
-      break;
-    case X86::BH: case X86::BL: case X86::BX: case X86::EBX:
-      Name = "bl";
-      break;
-    }
+    Reg = getX86SubSuperRegister(Reg, MVT::i8, true);
     break;
   case 'w': // Print HImode register
-    switch (Reg) {
-    default: return true;
-    case X86::AH: case X86::AL: case X86::AX: case X86::EAX:
-      Name = "ax";
-      break;
-    case X86::DH: case X86::DL: case X86::DX: case X86::EDX:
-      Name = "dx";
-      break;
-    case X86::CH: case X86::CL: case X86::CX: case X86::ECX:
-      Name = "cx";
-      break;
-    case X86::BH: case X86::BL: case X86::BX: case X86::EBX:
-      Name = "bx";
-      break;
-    case X86::ESI:
-      Name = "si";
-      break;
-    case X86::EDI:
-      Name = "di";
-      break;
-    case X86::EBP:
-      Name = "bp";
-      break;
-    case X86::ESP:
-      Name = "sp";
-      break;
-    }
+    Reg = getX86SubSuperRegister(Reg, MVT::i16);
     break;
   case 'k': // Print SImode register
-    switch (Reg) {
-    default: return true;
-    case X86::AH: case X86::AL: case X86::AX: case X86::EAX:
-      Name = "eax";
-      break;
-    case X86::DH: case X86::DL: case X86::DX: case X86::EDX:
-      Name = "edx";
-      break;
-    case X86::CH: case X86::CL: case X86::CX: case X86::ECX:
-      Name = "ecx";
-      break;
-    case X86::BH: case X86::BL: case X86::BX: case X86::EBX:
-      Name = "ebx";
-      break;
-    case X86::ESI:
-      Name = "esi";
-      break;
-    case X86::EDI:
-      Name = "edi";
-      break;
-    case X86::EBP:
-      Name = "ebp";
-      break;
-    case X86::ESP:
-      Name = "esp";
-      break;
-    }
+    Reg = getX86SubSuperRegister(Reg, MVT::i32);
     break;
   }
 
-  O << '%' << Name;
+  O << '%';
+  for (const char *Name = RI.get(Reg).Name; *Name; ++Name)
+    O << (char)tolower(*Name);
   return false;
 }
 
@@ -438,6 +354,26 @@ void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
     default:
       break;
     }
+  }
+
+  // See if a truncate instruction can be turned into a nop.
+  switch (MI->getOpcode()) {
+  default: break;
+  case X86::TRUNC_R32_R16:
+  case X86::TRUNC_R32_R8:
+  case X86::TRUNC_R16_R8: {
+    const MachineOperand &MO0 = MI->getOperand(0);
+    const MachineOperand &MO1 = MI->getOperand(1);
+    unsigned Reg0 = MO0.getReg();
+    unsigned Reg1 = MO1.getReg();
+    if (MI->getOpcode() == X86::TRUNC_R16_R8)
+      Reg0 = getX86SubSuperRegister(Reg0, MVT::i16);
+    else
+      Reg0 = getX86SubSuperRegister(Reg0, MVT::i32);
+    if (Reg0 == Reg1)
+      O << CommentString << " TRUNCATE ";
+    break;
+  }
   }
 
   // Call the autogenerated instruction printer routines.

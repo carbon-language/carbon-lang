@@ -811,5 +811,81 @@ unsigned X86RegisterInfo::getFrameRegister(MachineFunction &MF) const {
   return hasFP(MF) ? X86::EBP : X86::ESP;
 }
 
+namespace llvm {
+unsigned getX86SubSuperRegister(unsigned Reg, MVT::ValueType VT, bool High) {
+  switch (VT) {
+  default: return Reg;
+  case MVT::i8:
+    if (High) {
+      switch (Reg) {
+      default: return Reg;
+      case X86::AH: case X86::AL: case X86::AX: case X86::EAX:
+        return X86::AH;
+      case X86::DH: case X86::DL: case X86::DX: case X86::EDX:
+        return X86::DH;
+      case X86::CH: case X86::CL: case X86::CX: case X86::ECX:
+        return X86::CH;
+      case X86::BH: case X86::BL: case X86::BX: case X86::EBX:
+        return X86::BH;
+      }
+    } else {
+      switch (Reg) {
+      default: return Reg;
+      case X86::AH: case X86::AL: case X86::AX: case X86::EAX:
+        return X86::AL;
+      case X86::DH: case X86::DL: case X86::DX: case X86::EDX:
+        return X86::DL;
+      case X86::CH: case X86::CL: case X86::CX: case X86::ECX:
+        return X86::CL;
+      case X86::BH: case X86::BL: case X86::BX: case X86::EBX:
+        return X86::BL;
+      }
+    }
+  case MVT::i16:
+    switch (Reg) {
+    default: return Reg;
+    case X86::AH: case X86::AL: case X86::AX: case X86::EAX:
+      return X86::AX;
+    case X86::DH: case X86::DL: case X86::DX: case X86::EDX:
+      return X86::DX;
+    case X86::CH: case X86::CL: case X86::CX: case X86::ECX:
+      return X86::CX;
+    case X86::BH: case X86::BL: case X86::BX: case X86::EBX:
+      return X86::BX;
+    case X86::ESI:
+      return X86::SI;
+    case X86::EDI:
+      return X86::DI;
+    case X86::EBP:
+      return X86::BP;
+    case X86::ESP:
+      return X86::SP;
+    }
+  case MVT::i32:
+    switch (Reg) {
+    default: return true;
+    case X86::AH: case X86::AL: case X86::AX: case X86::EAX:
+      return X86::EAX;
+    case X86::DH: case X86::DL: case X86::DX: case X86::EDX:
+      return X86::EDX;
+    case X86::CH: case X86::CL: case X86::CX: case X86::ECX:
+      return X86::ECX;
+    case X86::BH: case X86::BL: case X86::BX: case X86::EBX:
+      return X86::EBX;
+    case X86::SI:
+      return X86::ESI;
+    case X86::DI:
+      return X86::EDI;
+    case X86::BP:
+      return X86::EBP;
+    case X86::SP:
+      return X86::ESP;
+    }
+  }
+
+  return Reg;
+}
+}
+
 #include "X86GenRegisterInfo.inc"
 
