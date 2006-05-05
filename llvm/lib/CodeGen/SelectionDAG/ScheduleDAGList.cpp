@@ -541,7 +541,7 @@ static bool isFloater(const SUnit *SU) {
 
 static bool isSimpleFloaterUse(const SUnit *SU) {
   unsigned NumOps = 0;
-  for (std::set<std::pair<SUnit*, bool> >::iterator I = SU->Preds.begin(),
+  for (std::set<std::pair<SUnit*, bool> >::const_iterator I = SU->Preds.begin(),
          E = SU->Preds.end(); I != E; ++I) {
     if (I->second) continue;
     if (++NumOps > 1)
