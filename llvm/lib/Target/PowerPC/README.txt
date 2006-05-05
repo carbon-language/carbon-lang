@@ -559,3 +559,36 @@ transformation, good for PI.  See PPCISelLowering.cpp, this comment:
      // need to flag these together so that the value isn't live across a call.
      //setOperationAction(ISD::SINT_TO_FP, MVT::i32, Custom);
 
+===-------------------------------------------------------------------------===
+
+Another missed rlwimi case:
+
+void %foo(uint *%tmp) {
+        %tmp = load uint* %tmp          ; <uint> [#uses=3]
+        %tmp1 = shr uint %tmp, ubyte 31         ; <uint> [#uses=1]
+        %tmp1 = cast uint %tmp1 to ubyte                ; <ubyte> [#uses=1]
+        %tmp4.mask = shr uint %tmp, ubyte 30            ; <uint> [#uses=1]
+        %tmp4.mask = cast uint %tmp4.mask to ubyte              ; <ubyte> [#uses=1]
+        %tmp = or ubyte %tmp4.mask, %tmp1               ; <ubyte> [#uses=1]
+        %tmp10 = cast ubyte %tmp to uint                ; <uint> [#uses=1]
+        %tmp11 = shl uint %tmp10, ubyte 31              ; <uint> [#uses=1]
+        %tmp12 = and uint %tmp, 2147483647              ; <uint> [#uses=1]
+        %tmp13 = or uint %tmp11, %tmp12         ; <uint> [#uses=1]
+        store uint %tmp13, uint* %tmp
+        ret void
+}
+
+We emit:
+
+_foo:
+        lwz r2, 0(r3)
+        srwi r4, r2, 30
+        srwi r5, r2, 31
+        or r4, r4, r5
+        slwi r4, r4, 31
+        rlwimi r4, r2, 0, 1, 31
+        stw r4, 0(r3)
+        blr
+
+I *think* that could use another rlwimi.
+
