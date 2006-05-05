@@ -1045,16 +1045,18 @@ SDOperand DAGCombiner::SimplifyBinOpWithSameOpcodeHands(SDNode *N) {
   MVT::ValueType VT = N0.getValueType();
   assert(N0.getOpcode() == N1.getOpcode() && "Bad input!");
   
-  // fold (and (zext x), (zext y)) -> (zext (and x, y))
-  // fold (or  (zext x), (zext y)) -> (zext (or  x, y))
-  // fold (xor (zext x), (zext y)) -> (zext (xor x, y))
-  if (N0.getOpcode() == ISD::ZERO_EXTEND &&
+  // For each of OP in AND/OR/XOR:
+  // fold (OP (zext x), (zext y)) -> (zext (OP x, y))
+  // fold (OP (sext x), (sext y)) -> (sext (OP x, y))
+  // fold (OP (aext x), (aext y)) -> (aext (OP x, y))
+  if ((N0.getOpcode() == ISD::ZERO_EXTEND || N0.getOpcode() == ISD::ANY_EXTEND||
+       N0.getOpcode() == ISD::SIGN_EXTEND) &&
       N0.getOperand(0).getValueType() == N1.getOperand(0).getValueType()) {
     SDOperand ORNode = DAG.getNode(N->getOpcode(), 
                                    N0.getOperand(0).getValueType(),
                                    N0.getOperand(0), N1.getOperand(0));
     AddToWorkList(ORNode.Val);
-    return DAG.getNode(ISD::ZERO_EXTEND, VT, ORNode);
+    return DAG.getNode(N0.getOpcode(), VT, ORNode);
   }
   
   // fold (and (trunc x), (trunc y)) -> (trunc (and x, y))
