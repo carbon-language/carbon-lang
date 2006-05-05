@@ -2413,6 +2413,20 @@ SDOperand DAGCombiner::visitFP_EXTEND(SDNode *N) {
   // fold (fp_extend c1fp) -> c1fp
   if (N0CFP)
     return DAG.getNode(ISD::FP_EXTEND, VT, N0);
+  
+  // fold (fpext (load x)) -> (fpext (fpround (extload x)))
+  if (N0.getOpcode() == ISD::LOAD && N0.hasOneUse() &&
+      (!AfterLegalize||TLI.isOperationLegal(ISD::EXTLOAD, N0.getValueType()))) {
+    SDOperand ExtLoad = DAG.getExtLoad(ISD::EXTLOAD, VT, N0.getOperand(0),
+                                       N0.getOperand(1), N0.getOperand(2),
+                                       N0.getValueType());
+    CombineTo(N, ExtLoad);
+    CombineTo(N0.Val, DAG.getNode(ISD::FP_ROUND, N0.getValueType(), ExtLoad),
+              ExtLoad.getValue(1));
+    return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
+  }
+  
+  
   return SDOperand();
 }
 
