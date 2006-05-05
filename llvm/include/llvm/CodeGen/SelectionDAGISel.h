@@ -101,9 +101,6 @@ public:
     // Default - the MBB of the default bb, which is a successor of the range
     // check MBB.  This is when updating PHI nodes in successors.
     MachineBasicBlock *Default;
-    // SuccMBBs - a vector of unique successor MBBs used for updating CFG info
-    // and PHI nodes.
-    std::set<MachineBasicBlock*> SuccMBBs;
   };
   
 protected:
