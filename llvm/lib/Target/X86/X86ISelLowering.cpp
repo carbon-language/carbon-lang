@@ -207,10 +207,6 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     addRegisterClass(MVT::f32, X86::FR32RegisterClass);
     addRegisterClass(MVT::f64, X86::FR64RegisterClass);
 
-    // SSE has no load+extend ops
-    setOperationAction(ISD::EXTLOAD,  MVT::f32, Expand);
-    setOperationAction(ISD::ZEXTLOAD, MVT::f32, Expand);
-
     // Use ANDPD to simulate FABS.
     setOperationAction(ISD::FABS , MVT::f64, Custom);
     setOperationAction(ISD::FABS , MVT::f32, Custom);

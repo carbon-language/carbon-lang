@@ -526,7 +526,7 @@ def CVTSS2SDrr: I<0x5A, MRMSrcReg, (ops FR64:$dst, FR32:$src),
                 Requires<[HasSSE2]>;
 def CVTSS2SDrm: I<0x5A, MRMSrcMem, (ops FR64:$dst, f32mem:$src),
                  "cvtss2sd {$src, $dst|$dst, $src}",
-                 [(set FR64:$dst, (fextend (loadf32 addr:$src)))]>, XS,
+                 [(set FR64:$dst, (extload addr:$src, f32))]>, XS,
                 Requires<[HasSSE2]>;
 
 // Match intrinsics which expect XMM operand(s).
