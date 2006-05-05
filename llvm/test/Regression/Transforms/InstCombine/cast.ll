@@ -177,3 +177,11 @@ float* %test28([4 x float]* %A) {
 	ret float* %c
 }
 
+uint %test29(uint %c1, uint %c2) {
+	%tmp1 = cast uint %c1 to ubyte
+        %tmp4.mask = cast uint %c2 to ubyte
+        %tmp = or ubyte %tmp4.mask, %tmp1
+        %tmp10 = cast ubyte %tmp to uint
+	ret uint %tmp10
+}
+
