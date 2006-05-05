@@ -222,6 +222,7 @@ namespace {
     SDOperand ReassociateOps(unsigned Opc, SDOperand LHS, SDOperand RHS);
     
     bool SimplifySelectOps(SDNode *SELECT, SDOperand LHS, SDOperand RHS);
+    SDOperand SimplifyBinOpWithSameOpcodeHands(SDNode *N);
     SDOperand SimplifySelect(SDOperand N0, SDOperand N1, SDOperand N2);
     SDOperand SimplifySelectCC(SDOperand N0, SDOperand N1, SDOperand N2, 
                                SDOperand N3, ISD::CondCode CC);
@@ -1035,6 +1036,53 @@ SDOperand DAGCombiner::visitMULHU(SDNode *N) {
   return SDOperand();
 }
 
+/// SimplifyBinOpWithSameOpcodeHands - If this is a binary operator with
+/// two operands of the same opcode, try to simplify it.
+SDOperand DAGCombiner::SimplifyBinOpWithSameOpcodeHands(SDNode *N) {
+  SDOperand N0 = N->getOperand(0), N1 = N->getOperand(1);
+  MVT::ValueType VT = N0.getValueType();
+  assert(N0.getOpcode() == N1.getOpcode() && "Bad input!");
+  
+  // fold (and (zext x), (zext y)) -> (zext (and x, y))
+  // fold (or  (zext x), (zext y)) -> (zext (or  x, y))
+  // fold (xor (zext x), (zext y)) -> (zext (xor x, y))
+  if (N0.getOpcode() == ISD::ZERO_EXTEND &&
+      N0.getOperand(0).getValueType() == N1.getOperand(0).getValueType()) {
+    SDOperand ORNode = DAG.getNode(N->getOpcode(), 
+                                   N0.getOperand(0).getValueType(),
+                                   N0.getOperand(0), N1.getOperand(0));
+    AddToWorkList(ORNode.Val);
+    return DAG.getNode(ISD::ZERO_EXTEND, VT, ORNode);
+  }
+  
+  // fold (and (trunc x), (trunc y)) -> (trunc (and x, y))
+  // fold (or  (trunc x), (trunc y)) -> (trunc (or  x, y))
+  // fold (xor (trunc x), (trunc y)) -> (trunc (xor x, y))
+  if (N0.getOpcode() == ISD::TRUNCATE &&
+      N0.getOperand(0).getValueType() == N1.getOperand(0).getValueType()) {
+    SDOperand ORNode = DAG.getNode(N->getOpcode(),
+                                   N0.getOperand(0).getValueType(),
+                                   N0.getOperand(0), N1.getOperand(0));
+    AddToWorkList(ORNode.Val);
+    return DAG.getNode(ISD::TRUNCATE, VT, ORNode);
+  }
+  
+  // fold (and (shl/srl/sra x), (shl/srl/sra y)) -> (shl/srl/sra (and x, y))
+  // fold (or  (shl/srl/sra x), (shl/srl/sra y)) -> (shl/srl/sra (or  x, y))
+  // fold (xor (shl/srl/sra x), (shl/srl/sra y)) -> (shl/srl/sra (xor x, y))
+  if ((N0.getOpcode() == ISD::SHL || N0.getOpcode() == ISD::SRL ||
+       N0.getOpcode() == ISD::SRA) &&
+      N0.getOperand(1) == N1.getOperand(1)) {
+    SDOperand ORNode = DAG.getNode(N->getOpcode(),
+                                   N0.getOperand(0).getValueType(),
+                                   N0.getOperand(0), N1.getOperand(0));
+    AddToWorkList(ORNode.Val);
+    return DAG.getNode(N0.getOpcode(), VT, ORNode, N0.getOperand(1));
+  }
+  
+  return SDOperand();
+}
+
 SDOperand DAGCombiner::visitAND(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   SDOperand N1 = N->getOperand(1);
@@ -1121,25 +1169,13 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
         return DAG.getSetCC(N0.getValueType(), LL, LR, Result);
     }
   }
-  // fold (and (zext x), (zext y)) -> (zext (and x, y))
-  if (N0.getOpcode() == ISD::ZERO_EXTEND && 
-      N1.getOpcode() == ISD::ZERO_EXTEND &&
-      N0.getOperand(0).getValueType() == N1.getOperand(0).getValueType()) {
-    SDOperand ANDNode = DAG.getNode(ISD::AND, N0.getOperand(0).getValueType(),
-                                    N0.getOperand(0), N1.getOperand(0));
-    AddToWorkList(ANDNode.Val);
-    return DAG.getNode(ISD::ZERO_EXTEND, VT, ANDNode);
+
+  // Simplify: and (op x...), (op y...)  -> (op (and x, y))
+  if (N0.getOpcode() == N1.getOpcode()) {
+    SDOperand Tmp = SimplifyBinOpWithSameOpcodeHands(N);
+    if (Tmp.Val) return Tmp;
   }
-  // fold (and (shl/srl/sra x), (shl/srl/sra y)) -> (shl/srl/sra (and x, y))
-  if (((N0.getOpcode() == ISD::SHL && N1.getOpcode() == ISD::SHL) ||
-       (N0.getOpcode() == ISD::SRL && N1.getOpcode() == ISD::SRL) ||
-       (N0.getOpcode() == ISD::SRA && N1.getOpcode() == ISD::SRA)) &&
-      N0.getOperand(1) == N1.getOperand(1)) {
-    SDOperand ANDNode = DAG.getNode(ISD::AND, N0.getOperand(0).getValueType(),
-                                    N0.getOperand(0), N1.getOperand(0));
-    AddToWorkList(ANDNode.Val);
-    return DAG.getNode(N0.getOpcode(), VT, ANDNode, N0.getOperand(1));
-  }
+  
   // fold (and (sign_extend_inreg x, i16 to i32), 1) -> (and x, 1)
   // fold (and (sra)) -> (and (srl)) when possible.
   if (!MVT::isVector(VT) &&
@@ -1292,25 +1328,13 @@ SDOperand DAGCombiner::visitOR(SDNode *N) {
         return DAG.getSetCC(N0.getValueType(), LL, LR, Result);
     }
   }
-  // fold (or (zext x), (zext y)) -> (zext (or x, y))
-  if (N0.getOpcode() == ISD::ZERO_EXTEND && 
-      N1.getOpcode() == ISD::ZERO_EXTEND &&
-      N0.getOperand(0).getValueType() == N1.getOperand(0).getValueType()) {
-    SDOperand ORNode = DAG.getNode(ISD::OR, N0.getOperand(0).getValueType(),
-                                   N0.getOperand(0), N1.getOperand(0));
-    AddToWorkList(ORNode.Val);
-    return DAG.getNode(ISD::ZERO_EXTEND, VT, ORNode);
+  
+  // Simplify: or (op x...), (op y...)  -> (op (or x, y))
+  if (N0.getOpcode() == N1.getOpcode()) {
+    SDOperand Tmp = SimplifyBinOpWithSameOpcodeHands(N);
+    if (Tmp.Val) return Tmp;
   }
-  // fold (or (shl/srl/sra x), (shl/srl/sra y)) -> (shl/srl/sra (or x, y))
-  if (((N0.getOpcode() == ISD::SHL && N1.getOpcode() == ISD::SHL) ||
-       (N0.getOpcode() == ISD::SRL && N1.getOpcode() == ISD::SRL) ||
-       (N0.getOpcode() == ISD::SRA && N1.getOpcode() == ISD::SRA)) &&
-      N0.getOperand(1) == N1.getOperand(1)) {
-    SDOperand ORNode = DAG.getNode(ISD::OR, N0.getOperand(0).getValueType(),
-                                   N0.getOperand(0), N1.getOperand(0));
-    AddToWorkList(ORNode.Val);
-    return DAG.getNode(N0.getOpcode(), VT, ORNode, N0.getOperand(1));
-  }
+
   // canonicalize shl to left side in a shl/srl pair, to match rotate
   if (N0.getOpcode() == ISD::SRL && N1.getOpcode() == ISD::SHL)
     std::swap(N0, N1);
@@ -1429,26 +1453,13 @@ SDOperand DAGCombiner::visitXOR(SDNode *N) {
       return DAG.getNode(ISD::BUILD_VECTOR, VT, Ops);
     }
   }
-  // fold (xor (zext x), (zext y)) -> (zext (xor x, y))
-  if (N0.getOpcode() == ISD::ZERO_EXTEND && 
-      N1.getOpcode() == ISD::ZERO_EXTEND &&
-      N0.getOperand(0).getValueType() == N1.getOperand(0).getValueType()) {
-    SDOperand XORNode = DAG.getNode(ISD::XOR, N0.getOperand(0).getValueType(),
-                                   N0.getOperand(0), N1.getOperand(0));
-    AddToWorkList(XORNode.Val);
-    return DAG.getNode(ISD::ZERO_EXTEND, VT, XORNode);
+  
+  // Simplify: xor (op x...), (op y...)  -> (op (xor x, y))
+  if (N0.getOpcode() == N1.getOpcode()) {
+    SDOperand Tmp = SimplifyBinOpWithSameOpcodeHands(N);
+    if (Tmp.Val) return Tmp;
   }
-  // fold (xor (shl/srl/sra x), (shl/srl/sra y)) -> (shl/srl/sra (xor x, y))
-  if (((N0.getOpcode() == ISD::SHL && N1.getOpcode() == ISD::SHL) ||
-       (N0.getOpcode() == ISD::SRL && N1.getOpcode() == ISD::SRL) ||
-       (N0.getOpcode() == ISD::SRA && N1.getOpcode() == ISD::SRA)) &&
-      N0.getOperand(1) == N1.getOperand(1)) {
-    SDOperand XORNode = DAG.getNode(ISD::XOR, N0.getOperand(0).getValueType(),
-                                    N0.getOperand(0), N1.getOperand(0));
-    AddToWorkList(XORNode.Val);
-    return DAG.getNode(N0.getOpcode(), VT, XORNode, N0.getOperand(1));
-  }
-
+  
   // Simplify the expression using non-local knowledge.
   if (!MVT::isVector(VT) &&
       SimplifyDemandedBits(SDOperand(N, 0)))
