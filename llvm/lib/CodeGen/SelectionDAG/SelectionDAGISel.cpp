@@ -2789,8 +2789,9 @@ static bool OptimizeNoopCopyExpression(CastInst *CI) {
 
 /// InsertGEPComputeCode - Insert code into BB to compute Ptr+PtrOffset,
 /// casting to the type of GEPI.
-static Value *InsertGEPComputeCode(Value *&V, BasicBlock *BB, Instruction *GEPI,
-                                   Value *Ptr, Value *PtrOffset) {
+static Instruction *InsertGEPComputeCode(Instruction *&V, BasicBlock *BB,
+                                         Instruction *GEPI, Value *Ptr,
+                                         Value *PtrOffset) {
   if (V) return V;   // Already computed.
   
   BasicBlock::iterator InsertPt;
@@ -2813,8 +2814,7 @@ static Value *InsertGEPComputeCode(Value *&V, BasicBlock *BB, Instruction *GEPI,
   
   // Add the offset, cast it to the right type.
   Ptr = BinaryOperator::createAdd(Ptr, PtrOffset, "", InsertPt);
-  Ptr = new CastInst(Ptr, GEPI->getType(), "", InsertPt);
-  return V = Ptr;
+  return V = new CastInst(Ptr, GEPI->getType(), "", InsertPt);
 }
 
 /// ReplaceUsesOfGEPInst - Replace all uses of RepPtr with inserted code to
@@ -2827,7 +2827,7 @@ static Value *InsertGEPComputeCode(Value *&V, BasicBlock *BB, Instruction *GEPI,
 static void ReplaceUsesOfGEPInst(Instruction *RepPtr, Value *Ptr, 
                                  Constant *PtrOffset, BasicBlock *DefBB,
                                  GetElementPtrInst *GEPI,
-                                 std::map<BasicBlock*,Value*> &InsertedExprs) {
+                           std::map<BasicBlock*,Instruction*> &InsertedExprs) {
   while (!RepPtr->use_empty()) {
     Instruction *User = cast<Instruction>(RepPtr->use_back());
     
@@ -2843,7 +2843,7 @@ static void ReplaceUsesOfGEPInst(Instruction *RepPtr, Value *Ptr,
     
     // If this is a load of the pointer, or a store through the pointer, emit
     // the increment into the load/store block.
-    Value *NewVal;
+    Instruction *NewVal;
     if (isa<LoadInst>(User) ||
         (isa<StoreInst>(User) && User->getOperand(0) != RepPtr)) {
       NewVal = InsertGEPComputeCode(InsertedExprs[User->getParent()], 
@@ -2856,8 +2856,11 @@ static void ReplaceUsesOfGEPInst(Instruction *RepPtr, Value *Ptr,
                                     Ptr, PtrOffset);
     }
     
-    if (GEPI->getType() != RepPtr->getType())
-      NewVal = new CastInst(NewVal, RepPtr->getType(), "", User);
+    if (GEPI->getType() != RepPtr->getType()) {
+      BasicBlock::iterator IP = NewVal;
+      ++IP;
+      NewVal = new CastInst(NewVal, RepPtr->getType(), "", IP);
+    }
     User->replaceUsesOfWith(RepPtr, NewVal);
   }
 }
@@ -2970,7 +2973,7 @@ static bool OptimizeGEPExpression(GetElementPtrInst *GEPI,
   // block, otherwise we use a canonical version right next to the gep (these 
   // won't be foldable as addresses, so we might as well share the computation).
   
-  std::map<BasicBlock*,Value*> InsertedExprs;
+  std::map<BasicBlock*,Instruction*> InsertedExprs;
   ReplaceUsesOfGEPInst(GEPI, Ptr, PtrOffset, DefBB, GEPI, InsertedExprs);
   
   // Finally, the GEP is dead, remove it.
