@@ -1335,6 +1335,14 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val);
   ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.Val);
   if (N1C) {
+    if (Opcode == ISD::SIGN_EXTEND_INREG) {
+      int64_t Val = N1C->getValue();
+      unsigned FromBits = MVT::getSizeInBits(cast<VTSDNode>(N2)->getVT());
+      Val <<= 64-FromBits;
+      Val >>= 64-FromBits;
+      return getConstant(Val, VT);
+    }
+    
     if (N2C) {
       uint64_t C1 = N1C->getValue(), C2 = N2C->getValue();
       switch (Opcode) {
@@ -1441,7 +1449,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     }
   }
   
-  // Fold a bunch of operators that 
+  // Fold a bunch of operators when the RHS is undef. 
   if (N2.getOpcode() == ISD::UNDEF) {
     switch (Opcode) {
     case ISD::ADD:
