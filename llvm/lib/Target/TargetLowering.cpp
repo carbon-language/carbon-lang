@@ -995,6 +995,101 @@ void TargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
   KnownOne = 0;
 }
 
+/// ComputeNumSignBits - Return the number of times the sign bit of the
+/// register is replicated into the other bits.  We know that at least 1 bit
+/// is always equal to the sign bit (itself), but other cases can give us
+/// information.  For example, immediately after an "SRA X, 2", we know that
+/// the top 3 bits are all equal to each other, so we return 3.
+unsigned TargetLowering::ComputeNumSignBits(SDOperand Op, unsigned Depth) const{
+  MVT::ValueType VT = Op.getValueType();
+  assert(MVT::isInteger(VT) && "Invalid VT!");
+  unsigned VTBits = MVT::getSizeInBits(VT);
+  unsigned Tmp, Tmp2;
+  
+  if (Depth == 6)
+    return 1;  // Limit search depth.
+
+  switch (Op.getOpcode()) {
+  default: 
+    // Allow the target to implement this method for its nodes.
+    if (Op.getOpcode() >= ISD::BUILTIN_OP_END) {
+  case ISD::INTRINSIC_WO_CHAIN:
+  case ISD::INTRINSIC_W_CHAIN:
+  case ISD::INTRINSIC_VOID:
+      unsigned NumBits = ComputeNumSignBitsForTargetNode(Op, Depth);
+      if (NumBits > 1) return NumBits;
+    }
+    
+    // FIXME: Should use computemaskedbits to look at the top bits.
+    return 1;
+    
+  case ISD::AssertSext:
+    Tmp = MVT::getSizeInBits(cast<VTSDNode>(Op.getOperand(1))->getVT());
+    return VTBits-Tmp+1;
+  case ISD::AssertZext:
+    Tmp = MVT::getSizeInBits(cast<VTSDNode>(Op.getOperand(1))->getVT());
+    return VTBits-Tmp;
+
+  case ISD::SIGN_EXTEND_INREG:
+    // Max of the input and what this extends.
+    Tmp = MVT::getSizeInBits(cast<VTSDNode>(Op.getOperand(1))->getVT());
+    Tmp = VTBits-Tmp+1;
+    
+    Tmp2 = ComputeNumSignBits(Op.getOperand(0), Depth+1);
+    return std::max(Tmp, Tmp2);
+
+  case ISD::SRA:
+    Tmp = ComputeNumSignBits(Op.getOperand(0), Depth+1);
+    // SRA X, C   -> adds C sign bits.
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
+      Tmp += C->getValue();
+      if (Tmp > VTBits) Tmp = VTBits;
+    }
+    return Tmp;
+    
+  case ISD::ADD:
+  case ISD::SUB:
+    // Add and sub can have at most one carry bit.  Thus we know that the output
+    // is, at worst, one more bit than the inputs.
+    Tmp = ComputeNumSignBits(Op.getOperand(0), Depth+1);
+    if (Tmp == 1) return 1;
+    Tmp2 = ComputeNumSignBits(Op.getOperand(1), Depth+1);
+    if (Tmp2 == 1) return 1;
+    return std::min(Tmp, Tmp2)-1;
+    
+  //case ISD::ZEXTLOAD:   // 16 bits known
+  //case ISD::SEXTLOAD:   // 17 bits known
+  //case ISD::Constant:
+  //case ISD::SIGN_EXTEND:
+  //
+  }
+  
+#if 0
+  // fold (sext_in_reg (setcc x)) -> setcc x iff (setcc x) == 0 or -1
+  if (N0.getOpcode() == ISD::SETCC &&
+      TLI.getSetCCResultContents() == 
+      TargetLowering::ZeroOrNegativeOneSetCCResult)
+    return N0;
+#endif
+}
+
+
+
+/// ComputeNumSignBitsForTargetNode - This method can be implemented by
+/// targets that want to expose additional information about sign bits to the
+/// DAG Combiner.
+unsigned TargetLowering::ComputeNumSignBitsForTargetNode(SDOperand Op,
+                                                         unsigned Depth) const {
+  assert((Op.getOpcode() >= ISD::BUILTIN_OP_END ||
+          Op.getOpcode() == ISD::INTRINSIC_WO_CHAIN ||
+          Op.getOpcode() == ISD::INTRINSIC_W_CHAIN ||
+          Op.getOpcode() == ISD::INTRINSIC_VOID) &&
+         "Should use ComputeNumSignBits if you don't know whether Op"
+         " is a target node!");
+  return 1;
+}
+
+
 SDOperand TargetLowering::
 PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const {
   // Default implementation: no optimization.
