@@ -389,6 +389,19 @@ public:
                                               uint64_t &KnownOne,
                                               unsigned Depth = 0) const;
 
+  /// ComputeNumSignBits - Return the number of times the sign bit of the
+  /// register is replicated into the other bits.  We know that at least 1 bit
+  /// is always equal to the sign bit (itself), but other cases can give us
+  /// information.  For example, immediately after an "SRA X, 2", we know that
+  /// the top 3 bits are all equal to each other, so we return 3.
+  unsigned ComputeNumSignBits(SDOperand Op, unsigned Depth = 0) const;
+  
+  /// ComputeNumSignBitsForTargetNode - This method can be implemented by
+  /// targets that want to expose additional information about sign bits to the
+  /// DAG Combiner.
+  virtual unsigned ComputeNumSignBitsForTargetNode(SDOperand Op,
+                                                   unsigned Depth = 0) const;
+  
   struct DAGCombinerInfo {
     void *DC;  // The DAG Combiner object.
     bool BeforeLegalize;
