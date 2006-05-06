@@ -1176,8 +1176,29 @@ unsigned TargetLowering::ComputeNumSignBits(SDOperand Op, unsigned Depth) const{
     if (NumBits > 1) return NumBits;
   }
   
-  // FIXME: Should use computemaskedbits to look at the top bits.
-  return 1;
+  // Finally, if we can prove that the top bits of the result are 0's or 1's,
+  // use this information.
+  uint64_t KnownZero, KnownOne;
+  uint64_t Mask = MVT::getIntVTBitMask(VT);
+  ComputeMaskedBits(Op, Mask, KnownZero, KnownOne, Depth);
+  
+  uint64_t SignBit = MVT::getIntVTSignBit(VT);
+  if (KnownZero & SignBit) {        // SignBit is 0
+    Mask = KnownZero;
+  } else if (KnownOne & SignBit) {  // SignBit is 1;
+    Mask = KnownOne;
+  } else {
+    // Nothing known.
+    return 1;
+  }
+  
+  // Okay, we know that the sign bit in Mask is set.  Use CLZ to determine
+  // the number of identical bits in the top of the input value.
+  Mask ^= ~0ULL;
+  Mask <<= 64-VTBits;
+  // Return # leading zeros.  We use 'min' here in case Val was zero before
+  // shifting.  We don't want to return '64' as for an i32 "0".
+  return std::min(VTBits, CountLeadingZeros_64(Mask));
 }
 
 
