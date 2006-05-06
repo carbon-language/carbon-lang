@@ -304,6 +304,137 @@ static Value *isCast(Value *V) {
   return 0;
 }
 
+enum CastType {
+  Noop     = 0,
+  Truncate = 1,
+  Signext  = 2,
+  Zeroext  = 3
+};
+
+/// getCastType - In the future, we will split the cast instruction into these
+/// various types.  Until then, we have to do the analysis here.
+static CastType getCastType(const Type *Src, const Type *Dest) {
+  assert(Src->isIntegral() && Dest->isIntegral() &&
+         "Only works on integral types!");
+  unsigned SrcSize = Src->getPrimitiveSizeInBits();
+  unsigned DestSize = Dest->getPrimitiveSizeInBits();
+  
+  if (SrcSize == DestSize) return Noop;
+  if (SrcSize > DestSize)  return Truncate;
+  if (Src->isSigned()) return Signext;
+  return Zeroext;
+}
+
+
+// isEliminableCastOfCast - Return true if it is valid to eliminate the CI
+// instruction.
+//
+static bool isEliminableCastOfCast(const Type *SrcTy, const Type *MidTy,
+                                   const Type *DstTy, TargetData *TD) {
+  
+  // It is legal to eliminate the instruction if casting A->B->A if the sizes
+  // are identical and the bits don't get reinterpreted (for example
+  // int->float->int would not be allowed).
+  if (SrcTy == DstTy && SrcTy->isLosslesslyConvertibleTo(MidTy))
+    return true;
+  
+  // If we are casting between pointer and integer types, treat pointers as
+  // integers of the appropriate size for the code below.
+  if (isa<PointerType>(SrcTy)) SrcTy = TD->getIntPtrType();
+  if (isa<PointerType>(MidTy)) MidTy = TD->getIntPtrType();
+  if (isa<PointerType>(DstTy)) DstTy = TD->getIntPtrType();
+  
+  // Allow free casting and conversion of sizes as long as the sign doesn't
+  // change...
+  if (SrcTy->isIntegral() && MidTy->isIntegral() && DstTy->isIntegral()) {
+    CastType FirstCast = getCastType(SrcTy, MidTy);
+    CastType SecondCast = getCastType(MidTy, DstTy);
+    
+    // Capture the effect of these two casts.  If the result is a legal cast,
+    // the CastType is stored here, otherwise a special code is used.
+    static const unsigned CastResult[] = {
+      // First cast is noop
+      0, 1, 2, 3,
+      // First cast is a truncate
+      1, 1, 4, 4,         // trunc->extend is not safe to eliminate
+                          // First cast is a sign ext
+      2, 5, 2, 4,         // signext->zeroext never ok
+                          // First cast is a zero ext
+      3, 5, 3, 3,
+    };
+    
+    unsigned Result = CastResult[FirstCast*4+SecondCast];
+    switch (Result) {
+    default: assert(0 && "Illegal table value!");
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+      // FIXME: in the future, when LLVM has explicit sign/zeroextends and
+      // truncates, we could eliminate more casts.
+      return (unsigned)getCastType(SrcTy, DstTy) == Result;
+    case 4:
+      return false;  // Not possible to eliminate this here.
+    case 5:
+      // Sign or zero extend followed by truncate is always ok if the result
+      // is a truncate or noop.
+      CastType ResultCast = getCastType(SrcTy, DstTy);
+      if (ResultCast == Noop || ResultCast == Truncate)
+        return true;
+        // Otherwise we are still growing the value, we are only safe if the
+        // result will match the sign/zeroextendness of the result.
+        return ResultCast == FirstCast;
+    }
+  }
+  
+  // If this is a cast from 'float -> double -> integer', cast from
+  // 'float -> integer' directly, as the value isn't changed by the 
+  // float->double conversion.
+  if (SrcTy->isFloatingPoint() && MidTy->isFloatingPoint() &&
+      DstTy->isIntegral() && 
+      SrcTy->getPrimitiveSize() < MidTy->getPrimitiveSize())
+    return true;
+  
+  // Packed type conversions don't modify bits.
+  if (isa<PackedType>(SrcTy) && isa<PackedType>(MidTy) &&isa<PackedType>(DstTy))
+    return true;
+  
+  return false;
+}
+
+/// ValueRequiresCast - Return true if the cast from "V to Ty" actually results
+/// in any code being generated.  It does not require codegen if V is simple
+/// enough or if the cast can be folded into other casts.
+static bool ValueRequiresCast(const Value *V, const Type *Ty, TargetData *TD) {
+  if (V->getType() == Ty || isa<Constant>(V)) return false;
+  
+  // If this is a noop cast, it isn't real codegen.
+  if (V->getType()->isLosslesslyConvertibleTo(Ty))
+    return false;
+
+  // If this is another cast that can be elimianted, it isn't codegen either.
+  if (const CastInst *CI = dyn_cast<CastInst>(V))
+    if (isEliminableCastOfCast(CI->getOperand(0)->getType(), CI->getType(), Ty,
+                               TD))
+      return false;
+  return true;
+}
+
+/// InsertOperandCastBefore - This inserts a cast of V to DestTy before the
+/// InsertBefore instruction.  This is specialized a bit to avoid inserting
+/// casts that are known to not do anything...
+///
+Value *InstCombiner::InsertOperandCastBefore(Value *V, const Type *DestTy,
+                                             Instruction *InsertBefore) {
+  if (V->getType() == DestTy) return V;
+  if (Constant *C = dyn_cast<Constant>(V))
+    return ConstantExpr::getCast(C, DestTy);
+  
+  CastInst *CI = new CastInst(V, DestTy, V->getName());
+  InsertNewInstBefore(CI, *InsertBefore);
+  return CI;
+}
+
 // SimplifyCommutative - This performs a few simplifications for commutative
 // operators:
 //
@@ -2645,7 +2776,9 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
     const Type *SrcTy = Op0C->getOperand(0)->getType();
     if (CastInst *Op1C = dyn_cast<CastInst>(Op1))
       if (SrcTy == Op1C->getOperand(0)->getType() && SrcTy->isIntegral() &&
-          !SrcTy->isLosslesslyConvertibleTo(Op0C->getType())) {
+          // Only do this if the casts both really cause code to be generated.
+          ValueRequiresCast(Op0C->getOperand(0), I.getType(), TD) &&
+          ValueRequiresCast(Op1C->getOperand(0), I.getType(), TD)) {
         Instruction *NewOp = BinaryOperator::createAnd(Op0C->getOperand(0),
                                                        Op1C->getOperand(0),
                                                        I.getName());
@@ -2885,7 +3018,9 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     const Type *SrcTy = Op0C->getOperand(0)->getType();
     if (CastInst *Op1C = dyn_cast<CastInst>(Op1))
       if (SrcTy == Op1C->getOperand(0)->getType() && SrcTy->isIntegral() &&
-          !SrcTy->isLosslesslyConvertibleTo(Op0C->getType())) {
+          // Only do this if the casts both really cause code to be generated.
+          ValueRequiresCast(Op0C->getOperand(0), I.getType(), TD) &&
+          ValueRequiresCast(Op1C->getOperand(0), I.getType(), TD)) {
         Instruction *NewOp = BinaryOperator::createOr(Op0C->getOperand(0),
                                                       Op1C->getOperand(0),
                                                       I.getName());
@@ -3064,7 +3199,9 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
     const Type *SrcTy = Op0C->getOperand(0)->getType();
     if (CastInst *Op1C = dyn_cast<CastInst>(Op1))
       if (SrcTy == Op1C->getOperand(0)->getType() && SrcTy->isIntegral() &&
-          !SrcTy->isLosslesslyConvertibleTo(Op0C->getType())) {
+          // Only do this if the casts both really cause code to be generated.
+          ValueRequiresCast(Op0C->getOperand(0), I.getType(), TD) &&
+          ValueRequiresCast(Op1C->getOperand(0), I.getType(), TD)) {
         Instruction *NewOp = BinaryOperator::createXor(Op0C->getOperand(0),
                                                        Op1C->getOperand(0),
                                                        I.getName());
@@ -4500,127 +4637,6 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantUInt *Op1,
   return 0;
 }
 
-enum CastType {
-  Noop     = 0,
-  Truncate = 1,
-  Signext  = 2,
-  Zeroext  = 3
-};
-
-/// getCastType - In the future, we will split the cast instruction into these
-/// various types.  Until then, we have to do the analysis here.
-static CastType getCastType(const Type *Src, const Type *Dest) {
-  assert(Src->isIntegral() && Dest->isIntegral() &&
-         "Only works on integral types!");
-  unsigned SrcSize = Src->getPrimitiveSizeInBits();
-  unsigned DestSize = Dest->getPrimitiveSizeInBits();
-
-  if (SrcSize == DestSize) return Noop;
-  if (SrcSize > DestSize)  return Truncate;
-  if (Src->isSigned()) return Signext;
-  return Zeroext;
-}
-
-
-// isEliminableCastOfCast - Return true if it is valid to eliminate the CI
-// instruction.
-//
-static bool isEliminableCastOfCast(const Type *SrcTy, const Type *MidTy,
-                                   const Type *DstTy, TargetData *TD) {
-
-  // It is legal to eliminate the instruction if casting A->B->A if the sizes
-  // are identical and the bits don't get reinterpreted (for example
-  // int->float->int would not be allowed).
-  if (SrcTy == DstTy && SrcTy->isLosslesslyConvertibleTo(MidTy))
-    return true;
-
-  // If we are casting between pointer and integer types, treat pointers as
-  // integers of the appropriate size for the code below.
-  if (isa<PointerType>(SrcTy)) SrcTy = TD->getIntPtrType();
-  if (isa<PointerType>(MidTy)) MidTy = TD->getIntPtrType();
-  if (isa<PointerType>(DstTy)) DstTy = TD->getIntPtrType();
-
-  // Allow free casting and conversion of sizes as long as the sign doesn't
-  // change...
-  if (SrcTy->isIntegral() && MidTy->isIntegral() && DstTy->isIntegral()) {
-    CastType FirstCast = getCastType(SrcTy, MidTy);
-    CastType SecondCast = getCastType(MidTy, DstTy);
-
-    // Capture the effect of these two casts.  If the result is a legal cast,
-    // the CastType is stored here, otherwise a special code is used.
-    static const unsigned CastResult[] = {
-      // First cast is noop
-      0, 1, 2, 3,
-      // First cast is a truncate
-      1, 1, 4, 4,         // trunc->extend is not safe to eliminate
-      // First cast is a sign ext
-      2, 5, 2, 4,         // signext->zeroext never ok
-      // First cast is a zero ext
-      3, 5, 3, 3,
-    };
-
-    unsigned Result = CastResult[FirstCast*4+SecondCast];
-    switch (Result) {
-    default: assert(0 && "Illegal table value!");
-    case 0:
-    case 1:
-    case 2:
-    case 3:
-      // FIXME: in the future, when LLVM has explicit sign/zeroextends and
-      // truncates, we could eliminate more casts.
-      return (unsigned)getCastType(SrcTy, DstTy) == Result;
-    case 4:
-      return false;  // Not possible to eliminate this here.
-    case 5:
-      // Sign or zero extend followed by truncate is always ok if the result
-      // is a truncate or noop.
-      CastType ResultCast = getCastType(SrcTy, DstTy);
-      if (ResultCast == Noop || ResultCast == Truncate)
-        return true;
-      // Otherwise we are still growing the value, we are only safe if the
-      // result will match the sign/zeroextendness of the result.
-      return ResultCast == FirstCast;
-    }
-  }
-  
-  // If this is a cast from 'float -> double -> integer', cast from
-  // 'float -> integer' directly, as the value isn't changed by the 
-  // float->double conversion.
-  if (SrcTy->isFloatingPoint() && MidTy->isFloatingPoint() &&
-      DstTy->isIntegral() && 
-      SrcTy->getPrimitiveSize() < MidTy->getPrimitiveSize())
-    return true;
-  
-  // Packed type conversions don't modify bits.
-  if (isa<PackedType>(SrcTy) && isa<PackedType>(MidTy) &&isa<PackedType>(DstTy))
-    return true;
-  
-  return false;
-}
-
-static bool ValueRequiresCast(const Value *V, const Type *Ty, TargetData *TD) {
-  if (V->getType() == Ty || isa<Constant>(V)) return false;
-  if (const CastInst *CI = dyn_cast<CastInst>(V))
-    if (isEliminableCastOfCast(CI->getOperand(0)->getType(), CI->getType(), Ty,
-                               TD))
-      return false;
-  return true;
-}
-
-/// InsertOperandCastBefore - This inserts a cast of V to DestTy before the
-/// InsertBefore instruction.  This is specialized a bit to avoid inserting
-/// casts that are known to not do anything...
-///
-Value *InstCombiner::InsertOperandCastBefore(Value *V, const Type *DestTy,
-                                             Instruction *InsertBefore) {
-  if (V->getType() == DestTy) return V;
-  if (Constant *C = dyn_cast<Constant>(V))
-    return ConstantExpr::getCast(C, DestTy);
-
-  CastInst *CI = new CastInst(V, DestTy, V->getName());
-  InsertNewInstBefore(CI, *InsertBefore);
-  return CI;
-}
 
 /// DecomposeSimpleLinearExpr - Analyze 'Val', seeing if it is a simple linear
 /// expression.  If so, decompose it, returning some value X, such that Val is
