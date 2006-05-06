@@ -3998,14 +3998,34 @@ getRegClassForInlineAsmConstraint(const std::string &Constraint,
     default: break;  // Unknown constriant letter
     case 'r':   // GENERAL_REGS
     case 'R':   // LEGACY_REGS
-      return make_vector<unsigned>(X86::EAX, X86::EBX, X86::ECX, X86::EDX,
-                                   X86::ESI, X86::EDI, X86::EBP, X86::ESP, 0);
+      if (VT == MVT::i32)
+        return make_vector<unsigned>(X86::EAX, X86::EDX, X86::ECX, X86::EBX,
+                                     X86::ESI, X86::EDI, X86::EBP, X86::ESP, 0);
+      else if (VT == MVT::i16)
+        return make_vector<unsigned>(X86::AX, X86::DX, X86::CX, X86::BX, 
+                                     X86::SI, X86::DI, X86::BP, X86::SP, 0);
+      else if (VT == MVT::i8)
+        return make_vector<unsigned>(X86::AL, X86::DL, X86::CL, X86::DL, 0);
+      break;
     case 'l':   // INDEX_REGS
-      return make_vector<unsigned>(X86::EAX, X86::EBX, X86::ECX, X86::EDX,
-                                   X86::ESI, X86::EDI, X86::EBP, 0);
+      if (VT == MVT::i32)
+        return make_vector<unsigned>(X86::EAX, X86::EDX, X86::ECX, X86::EBX,
+                                     X86::ESI, X86::EDI, X86::EBP, 0);
+      else if (VT == MVT::i16)
+        return make_vector<unsigned>(X86::AX, X86::DX, X86::CX, X86::BX, 
+                                     X86::SI, X86::DI, X86::BP, 0);
+      else if (VT == MVT::i8)
+        return make_vector<unsigned>(X86::AL, X86::DL, X86::CL, X86::DL, 0);
+      break;
     case 'q':   // Q_REGS (GENERAL_REGS in 64-bit mode)
     case 'Q':   // Q_REGS
-      return make_vector<unsigned>(X86::EAX, X86::EBX, X86::ECX, X86::EDX, 0);
+      if (VT == MVT::i32)
+        return make_vector<unsigned>(X86::EAX, X86::EDX, X86::ECX, X86::EBX, 0);
+      else if (VT == MVT::i16)
+        return make_vector<unsigned>(X86::AX, X86::DX, X86::CX, X86::BX, 0);
+      else if (VT == MVT::i8)
+        return make_vector<unsigned>(X86::AL, X86::DL, X86::CL, X86::DL, 0);
+        break;
     case 'x':   // SSE_REGS if SSE1 allowed
       if (Subtarget->hasSSE1())
         return make_vector<unsigned>(X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3,
