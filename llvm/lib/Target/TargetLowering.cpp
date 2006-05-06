@@ -608,9 +608,41 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
     break;
   }
   case ISD::TRUNCATE: {
+    // Simplify the input, using demanded bit information, and compute the known
+    // zero/one bits live out.
     if (SimplifyDemandedBits(Op.getOperand(0), DemandedMask,
                              KnownZero, KnownOne, TLO, Depth+1))
       return true;
+    
+    // If the input is only used by this truncate, see if we can shrink it based
+    // on the known demanded bits.
+    if (Op.getOperand(0).Val->hasOneUse()) {
+      SDOperand In = Op.getOperand(0);
+      switch (In.getOpcode()) {
+      default: break;
+      case ISD::SRL:
+        // Shrink SRL by a constant if none of the high bits shifted in are
+        // demanded.
+        if (ConstantSDNode *ShAmt = dyn_cast<ConstantSDNode>(In.getOperand(1))){
+          uint64_t HighBits = MVT::getIntVTBitMask(In.getValueType());
+          HighBits &= ~MVT::getIntVTBitMask(Op.getValueType());
+          HighBits >>= ShAmt->getValue();
+          
+          if (ShAmt->getValue() < MVT::getSizeInBits(Op.getValueType()) &&
+              (DemandedMask & HighBits) == 0) {
+            // None of the shifted in bits are needed.  Add a truncate of the
+            // shift input, then shift it.
+            SDOperand NewTrunc = TLO.DAG.getNode(ISD::TRUNCATE, 
+                                                 Op.getValueType(), 
+                                                 In.getOperand(0));
+            return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::SRL,Op.getValueType(),
+                                                   NewTrunc, In.getOperand(1)));
+          }
+        }
+        break;
+      }
+    }
+    
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
     uint64_t OutMask = MVT::getIntVTBitMask(Op.getValueType());
     KnownZero &= OutMask;
