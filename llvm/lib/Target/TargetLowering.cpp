@@ -1068,16 +1068,6 @@ unsigned TargetLowering::ComputeNumSignBits(SDOperand Op, unsigned Depth) const{
       return Tmp - C->getValue();
     }
     break;
-  case ISD::ADD:
-  case ISD::SUB:
-    // Add and sub can have at most one carry bit.  Thus we know that the output
-    // is, at worst, one more bit than the inputs.
-    Tmp = ComputeNumSignBits(Op.getOperand(0), Depth+1);
-    if (Tmp == 1) return 1;  // Early out.
-    Tmp2 = ComputeNumSignBits(Op.getOperand(1), Depth+1);
-    if (Tmp2 == 1) return 1;
-    return std::min(Tmp, Tmp2)-1;
-    
   case ISD::AND:
   case ISD::OR:
   case ISD::XOR:    // NOT is handled here.
@@ -1097,6 +1087,83 @@ unsigned TargetLowering::ComputeNumSignBits(SDOperand Op, unsigned Depth) const{
     // If setcc returns 0/-1, all bits are sign bits.
     if (getSetCCResultContents() == ZeroOrNegativeOneSetCCResult)
       return VTBits;
+    break;
+  case ISD::ROTL:
+  case ISD::ROTR:
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
+      unsigned RotAmt = C->getValue() & (VTBits-1);
+      
+      // Handle rotate right by N like a rotate left by 32-N.
+      if (Op.getOpcode() == ISD::ROTR)
+        RotAmt = (VTBits-RotAmt) & (VTBits-1);
+
+      // If we aren't rotating out all of the known-in sign bits, return the
+      // number that are left.  This handles rotl(sext(x), 1) for example.
+      Tmp = ComputeNumSignBits(Op.getOperand(0), Depth+1);
+      if (Tmp > RotAmt+1) return Tmp-RotAmt;
+    }
+    break;
+  case ISD::ADD:
+    // Add can have at most one carry bit.  Thus we know that the output
+    // is, at worst, one more bit than the inputs.
+    Tmp = ComputeNumSignBits(Op.getOperand(0), Depth+1);
+    if (Tmp == 1) return 1;  // Early out.
+      
+    // Special case decrementing a value (ADD X, -1):
+    if (ConstantSDNode *CRHS = dyn_cast<ConstantSDNode>(Op.getOperand(0)))
+      if (CRHS->isAllOnesValue()) {
+        uint64_t KnownZero, KnownOne;
+        uint64_t Mask = MVT::getIntVTBitMask(VT);
+        ComputeMaskedBits(Op.getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
+        
+        // If the input is known to be 0 or 1, the output is 0/-1, which is all
+        // sign bits set.
+        if ((KnownZero|1) == Mask)
+          return VTBits;
+        
+        // If we are subtracting one from a positive number, there is no carry
+        // out of the result.
+        if (KnownZero & MVT::getIntVTSignBit(VT))
+          return Tmp;
+      }
+      
+    Tmp2 = ComputeNumSignBits(Op.getOperand(1), Depth+1);
+    if (Tmp2 == 1) return 1;
+      return std::min(Tmp, Tmp2)-1;
+    break;
+    
+  case ISD::SUB:
+    Tmp2 = ComputeNumSignBits(Op.getOperand(1), Depth+1);
+    if (Tmp2 == 1) return 1;
+      
+    // Handle NEG.
+    if (ConstantSDNode *CLHS = dyn_cast<ConstantSDNode>(Op.getOperand(0)))
+      if (CLHS->getValue() == 0) {
+        uint64_t KnownZero, KnownOne;
+        uint64_t Mask = MVT::getIntVTBitMask(VT);
+        ComputeMaskedBits(Op.getOperand(1), Mask, KnownZero, KnownOne, Depth+1);
+        // If the input is known to be 0 or 1, the output is 0/-1, which is all
+        // sign bits set.
+        if ((KnownZero|1) == Mask)
+          return VTBits;
+        
+        // If the input is known to be positive (the sign bit is known clear),
+        // the output of the NEG has the same number of sign bits as the input.
+        if (KnownZero & MVT::getIntVTSignBit(VT))
+          return Tmp2;
+        
+        // Otherwise, we treat this like a SUB.
+      }
+    
+    // Sub can have at most one carry bit.  Thus we know that the output
+    // is, at worst, one more bit than the inputs.
+    Tmp = ComputeNumSignBits(Op.getOperand(0), Depth+1);
+    if (Tmp == 1) return 1;  // Early out.
+      return std::min(Tmp, Tmp2)-1;
+    break;
+  case ISD::TRUNCATE:
+    // FIXME: it's tricky to do anything useful for this, but it is an important
+    // case for targets like X86.
     break;
   }
   
