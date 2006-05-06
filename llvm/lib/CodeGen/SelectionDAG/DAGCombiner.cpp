@@ -1937,6 +1937,11 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
     SDOperand Truncate = DAG.getConstant(N0C->getValue(), EVT);
     return DAG.getNode(ISD::SIGN_EXTEND, VT, Truncate);
   }
+  
+  // If the input is already sign extended, just drop the extend.
+  if (TLI.ComputeNumSignBits(N0) >= MVT::getSizeInBits(VT)-EVTBits+1)
+    return N0;
+  
   // fold (sext_in_reg (sext_in_reg x, VT2), VT1) -> (sext_in_reg x, minVT) pt1
   if (N0.getOpcode() == ISD::SIGN_EXTEND_INREG && 
       cast<VTSDNode>(N0.getOperand(1))->getVT() <= EVT) {
@@ -1946,11 +1951,6 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
   if (N0.getOpcode() == ISD::SIGN_EXTEND_INREG &&
       EVT < cast<VTSDNode>(N0.getOperand(1))->getVT()) {
     return DAG.getNode(ISD::SIGN_EXTEND_INREG, VT, N0.getOperand(0), N1);
-  }
-  // fold (sext_in_reg (assert_sext x)) -> (assert_sext x)
-  if (N0.getOpcode() == ISD::AssertSext && 
-      cast<VTSDNode>(N0.getOperand(1))->getVT() <= EVT) {
-    return N0;
   }
   // fold (sext_in_reg (sextload x)) -> (sextload x)
   if (N0.getOpcode() == ISD::SEXTLOAD && 
