@@ -1010,19 +1010,7 @@ unsigned TargetLowering::ComputeNumSignBits(SDOperand Op, unsigned Depth) const{
     return 1;  // Limit search depth.
 
   switch (Op.getOpcode()) {
-  default: 
-    // Allow the target to implement this method for its nodes.
-    if (Op.getOpcode() >= ISD::BUILTIN_OP_END) {
-  case ISD::INTRINSIC_WO_CHAIN:
-  case ISD::INTRINSIC_W_CHAIN:
-  case ISD::INTRINSIC_VOID:
-      unsigned NumBits = ComputeNumSignBitsForTargetNode(Op, Depth);
-      if (NumBits > 1) return NumBits;
-    }
-    
-    // FIXME: Should use computemaskedbits to look at the top bits.
-    return 1;
-    
+  default: break;
   case ISD::AssertSext:
     Tmp = MVT::getSizeInBits(cast<VTSDNode>(Op.getOperand(1))->getVT());
     return VTBits-Tmp+1;
@@ -1030,6 +1018,31 @@ unsigned TargetLowering::ComputeNumSignBits(SDOperand Op, unsigned Depth) const{
     Tmp = MVT::getSizeInBits(cast<VTSDNode>(Op.getOperand(1))->getVT());
     return VTBits-Tmp;
 
+  case ISD::SEXTLOAD:    // '17' bits known
+    Tmp = MVT::getSizeInBits(cast<VTSDNode>(Op.getOperand(3))->getVT());
+    return VTBits-Tmp+1;
+  case ISD::ZEXTLOAD:    // '16' bits known
+    Tmp = MVT::getSizeInBits(cast<VTSDNode>(Op.getOperand(3))->getVT());
+    return VTBits-Tmp;
+    
+  case ISD::Constant: {
+    uint64_t Val = cast<ConstantSDNode>(Op)->getValue();
+    // If negative, invert the bits, then look at it.
+    if (Val & MVT::getIntVTSignBit(VT))
+      Val = ~Val;
+    
+    // Shift the bits so they are the leading bits in the int64_t.
+    Val <<= 64-VTBits;
+    
+    // Return # leading zeros.  We use 'min' here in case Val was zero before
+    // shifting.  We don't want to return '64' as for an i32 "0".
+    return std::min(VTBits, CountLeadingZeros_64(Val));
+  }
+    
+  case ISD::SIGN_EXTEND:
+    Tmp = VTBits-MVT::getSizeInBits(Op.getOperand(0).getValueType());
+    return ComputeNumSignBits(Op.getOperand(0), Depth+1) + Tmp;
+    
   case ISD::SIGN_EXTEND_INREG:
     // Max of the input and what this extends.
     Tmp = MVT::getSizeInBits(cast<VTSDNode>(Op.getOperand(1))->getVT());
@@ -1046,31 +1059,58 @@ unsigned TargetLowering::ComputeNumSignBits(SDOperand Op, unsigned Depth) const{
       if (Tmp > VTBits) Tmp = VTBits;
     }
     return Tmp;
-    
+  case ISD::SHL:
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
+      // shl destroys sign bits.
+      Tmp = ComputeNumSignBits(Op.getOperand(0), Depth+1);
+      if (C->getValue() >= VTBits ||      // Bad shift.
+          C->getValue() >= Tmp) break;    // Shifted all sign bits out.
+      return Tmp - C->getValue();
+    }
+    break;
   case ISD::ADD:
   case ISD::SUB:
     // Add and sub can have at most one carry bit.  Thus we know that the output
     // is, at worst, one more bit than the inputs.
     Tmp = ComputeNumSignBits(Op.getOperand(0), Depth+1);
-    if (Tmp == 1) return 1;
+    if (Tmp == 1) return 1;  // Early out.
     Tmp2 = ComputeNumSignBits(Op.getOperand(1), Depth+1);
     if (Tmp2 == 1) return 1;
     return std::min(Tmp, Tmp2)-1;
     
-  //case ISD::ZEXTLOAD:   // 16 bits known
-  //case ISD::SEXTLOAD:   // 17 bits known
-  //case ISD::Constant:
-  //case ISD::SIGN_EXTEND:
-  //
+  case ISD::AND:
+  case ISD::OR:
+  case ISD::XOR:    // NOT is handled here.
+    // Logical binary ops preserve the number of sign bits.
+    Tmp = ComputeNumSignBits(Op.getOperand(0), Depth+1);
+    if (Tmp == 1) return 1;  // Early out.
+    Tmp2 = ComputeNumSignBits(Op.getOperand(1), Depth+1);
+    return std::min(Tmp, Tmp2);
+
+  case ISD::SELECT:
+    Tmp = ComputeNumSignBits(Op.getOperand(0), Depth+1);
+    if (Tmp == 1) return 1;  // Early out.
+    Tmp2 = ComputeNumSignBits(Op.getOperand(1), Depth+1);
+    return std::min(Tmp, Tmp2);
+    
+  case ISD::SETCC:
+    // If setcc returns 0/-1, all bits are sign bits.
+    if (getSetCCResultContents() == ZeroOrNegativeOneSetCCResult)
+      return VTBits;
+    break;
   }
   
-#if 0
-  // fold (sext_in_reg (setcc x)) -> setcc x iff (setcc x) == 0 or -1
-  if (N0.getOpcode() == ISD::SETCC &&
-      TLI.getSetCCResultContents() == 
-      TargetLowering::ZeroOrNegativeOneSetCCResult)
-    return N0;
-#endif
+  // Allow the target to implement this method for its nodes.
+  if (Op.getOpcode() >= ISD::BUILTIN_OP_END ||
+      Op.getOpcode() == ISD::INTRINSIC_WO_CHAIN || 
+      Op.getOpcode() == ISD::INTRINSIC_W_CHAIN ||
+      Op.getOpcode() == ISD::INTRINSIC_VOID) {
+    unsigned NumBits = ComputeNumSignBitsForTargetNode(Op, Depth);
+    if (NumBits > 1) return NumBits;
+  }
+  
+  // FIXME: Should use computemaskedbits to look at the top bits.
+  return 1;
 }
 
 
