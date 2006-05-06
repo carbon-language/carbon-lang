@@ -30,12 +30,6 @@ X86IntelAsmPrinter::X86IntelAsmPrinter(std::ostream &O, X86TargetMachine &TM)
 /// method to print assembly for each instruction.
 ///
 bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  if (forDarwin) {
-    // Let PassManager know we need debug information and relay
-    // the MachineDebugInfo address on to DwarfWriter.
-    DW.SetDebugInfo(&getAnalysis<MachineDebugInfo>());
-  }
-
   SetupMachineFunction(MF);
   O << "\n\n";
 
@@ -49,11 +43,6 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     O << "\tpublic " << CurrentFnName << "\n";
   O << CurrentFnName << "\tproc near\n";
   
-  if (forDarwin) {
-    // Emit pre-function debug information.
-    DW.BeginFunction(&MF);
-  }
-
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
@@ -68,11 +57,6 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       O << "\t";
       printMachineInstruction(II);
     }
-  }
-
-  if (forDarwin) {
-    // Emit post-function debug information.
-    DW.EndFunction();
   }
 
   O << CurrentFnName << "\tendp\n";
@@ -124,8 +108,6 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
     if (!isMemOp) O << "OFFSET ";
     O << "[" << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << "_"
       << MO.getConstantPoolIndex();
-    if (forDarwin && TM.getRelocationModel() == Reloc::PIC)
-      O << "-\"L" << getFunctionNumber() << "$pb\"";
     int Offset = MO.getOffset();
     if (Offset > 0)
       O << " + " << Offset;
@@ -138,29 +120,7 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     if (!isMemOp && !isCallOp) O << "OFFSET ";
-    if (forDarwin && TM.getRelocationModel() != Reloc::Static) {
-      GlobalValue *GV = MO.getGlobal();
-      std::string Name = Mang->getValueName(GV);
-      if (!isMemOp && !isCallOp) O << '$';
-      // Link-once, External, or Weakly-linked global variables need
-      // non-lazily-resolved stubs
-      if (GV->isExternal() || GV->hasWeakLinkage() ||
-          GV->hasLinkOnceLinkage()) {
-        // Dynamically-resolved functions need a stub for the function.
-        if (isCallOp && isa<Function>(GV) && cast<Function>(GV)->isExternal()) {
-          FnStubs.insert(Name);
-          O << "L" << Name << "$stub";
-        } else {
-          GVStubs.insert(Name);
-          O << "L" << Name << "$non_lazy_ptr";
-        }
-      } else {
-        O << Mang->getValueName(GV);
-      }
-      if (!isCallOp && TM.getRelocationModel() == Reloc::PIC)
-        O << "-\"L" << getFunctionNumber() << "$pb\"";
-    } else
-      O << Mang->getValueName(MO.getGlobal());
+    O << Mang->getValueName(MO.getGlobal());
     int Offset = MO.getOffset();
     if (Offset > 0)
       O << " + " << Offset;
@@ -170,13 +130,6 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
   }
   case MachineOperand::MO_ExternalSymbol: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
-    if (isCallOp && forDarwin && TM.getRelocationModel() != Reloc::Static) {
-      std::string Name(GlobalPrefix);
-      Name += MO.getSymbolName();
-      FnStubs.insert(Name);
-      O << "L" << Name << "$stub";
-      return;
-    }
     if (!isCallOp) O << "OFFSET ";
     O << GlobalPrefix << MO.getSymbolName();
     return;
@@ -330,20 +283,22 @@ void X86IntelAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 }
 
 bool X86IntelAsmPrinter::doInitialization(Module &M) {
-  X86SharedAsmPrinter::doInitialization(M);
-  CommentString = ";";
+  MLSections = true;
   GlobalPrefix = "_";
+  CommentString = ";";
+
+  X86SharedAsmPrinter::doInitialization(M);
+
   PrivateGlobalPrefix = "$";
   AlignDirective = "\talign\t";
-  MLSections = true;
   ZeroDirective = "\tdb\t";
   ZeroDirectiveSuffix = " dup(0)";
   AsciiDirective = "\tdb\t";
   AscizDirective = 0;
-  Data8bitsDirective = "\t.db\t";
-  Data16bitsDirective = "\t.dw\t";
-  Data32bitsDirective = "\t.dd\t";
-  Data64bitsDirective = "\t.dq\t";
+  Data8bitsDirective = "\tdb\t";
+  Data16bitsDirective = "\tdw\t";
+  Data32bitsDirective = "\tdd\t";
+  Data64bitsDirective = "\tdq\t";
   HasDotTypeDotSizeDirective = false;
   Mang->markCharUnacceptable('.');
 
@@ -354,23 +309,77 @@ bool X86IntelAsmPrinter::doInitialization(Module &M) {
     if (I->isExternal())
       O << "\textern " << Mang->getValueName(I) << ":near\n";
 
-  // Emit declarations for external globals.
+  // Emit declarations for external globals.  Note that VC++ always declares
+  // external globals to have type byte, and if that's good enough for VC++...
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I) {
     if (I->isExternal())
       O << "\textern " << Mang->getValueName(I) << ":byte\n";
-    else if (I->getLinkage() == GlobalValue::ExternalLinkage)
-      O << "\tpublic " << Mang->getValueName(I) << "\n";
   }
 
   return false;
 }
 
 bool X86IntelAsmPrinter::doFinalization(Module &M) {
-  X86SharedAsmPrinter::doFinalization(M);
+  const TargetData *TD = TM.getTargetData();
+
+  // Print out module-level global variables here.
+  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
+       I != E; ++I) {
+    if (I->isExternal()) continue;   // External global require no code
+    
+    // Check to see if this is a special global used by LLVM, if so, emit it.
+    if (EmitSpecialLLVMGlobal(I))
+      continue;
+    
+    std::string name = Mang->getValueName(I);
+    Constant *C = I->getInitializer();
+    unsigned Size = TD->getTypeSize(C->getType());
+    unsigned Align = getPreferredAlignmentLog(I);
+    bool bCustomSegment = false;
+
+    switch (I->getLinkage()) {
+    case GlobalValue::LinkOnceLinkage:
+    case GlobalValue::WeakLinkage:
+      SwitchSection("", 0);
+      O << name << "?\tsegment common 'COMMON'\n";
+      bCustomSegment = true;
+      // FIXME: the default alignment is 16 bytes, but 1, 2, 4, and 256
+      // are also available.
+      break;
+    case GlobalValue::AppendingLinkage:
+      SwitchSection("", 0);
+      O << name << "?\tsegment public 'DATA'\n";
+      bCustomSegment = true;
+      // FIXME: the default alignment is 16 bytes, but 1, 2, 4, and 256
+      // are also available.
+      break;
+    case GlobalValue::ExternalLinkage:
+      O << "\tpublic " << name << "\n";
+      // FALL THROUGH
+    case GlobalValue::InternalLinkage:
+      SwitchSection(".data", I);
+      break;
+    default:
+      assert(0 && "Unknown linkage type!");
+    }
+
+    if (!bCustomSegment)
+      EmitAlignment(Align, I);
+
+    O << name << ":\t\t\t\t" << CommentString << " " << I->getName() << '\n';
+
+    EmitGlobalConstant(C);
+
+    if (bCustomSegment)
+      O << name << "?\tends\n";
+  }
+  
+  // Bypass X86SharedAsmPrinter::doFinalization().
+  AsmPrinter::doFinalization(M);
   SwitchSection("", 0);
   O << "\tend\n";
-  return false;
+  return false; // success
 }
 
 void X86IntelAsmPrinter::EmitString(const ConstantArray *CVA) const {

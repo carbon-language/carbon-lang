@@ -90,6 +90,9 @@ bool X86SharedAsmPrinter::doInitialization(Module &M) {
 }
 
 bool X86SharedAsmPrinter::doFinalization(Module &M) {
+  // Note: this code is not shared by the Intel printer as it is too different
+  // from how MASM does things.  When making changes here don't forget to look
+  // at X86IntelAsmPrinter::doFinalization().
   const TargetData *TD = TM.getTargetData();
 
   // Print out module-level global variables here.

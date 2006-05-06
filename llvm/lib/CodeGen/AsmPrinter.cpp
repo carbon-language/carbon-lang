@@ -71,9 +71,9 @@ void AsmPrinter::SwitchSection(const char *NewSection, const GlobalValue *GV) {
   if (MLSections) {
     if (*NewSection == 0) {
       // Simply end the current section, if any.
-      if (CurrentSection != "") {
-        O << CurrentSection << "\tends\n";
-        CurrentSection = "";
+      if (!CurrentSection.empty()) {
+        O << CurrentSection << "\tends\n\n";
+        CurrentSection.clear();
       }
       return;
     }
@@ -88,8 +88,8 @@ void AsmPrinter::SwitchSection(const char *NewSection, const GlobalValue *GV) {
       NS = "_text";
 
     if (CurrentSection != NS) {
-      if (CurrentSection != "")
-        O << CurrentSection << "\tends\n";
+      if (!CurrentSection.empty())
+        O << CurrentSection << "\tends\n\n";
       CurrentSection = NS;
       O << CurrentSection << (isData ? "\tsegment 'DATA'\n"
                                      : "\tsegment 'CODE'\n");
