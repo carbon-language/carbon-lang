@@ -1664,33 +1664,30 @@ SDOperand DAGCombiner::visitSRL(SDNode *N) {
 
 SDOperand DAGCombiner::visitCTLZ(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
-  ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   MVT::ValueType VT = N->getValueType(0);
 
   // fold (ctlz c1) -> c2
-  if (N0C)
+  if (isa<ConstantSDNode>(N0))
     return DAG.getNode(ISD::CTLZ, VT, N0);
   return SDOperand();
 }
 
 SDOperand DAGCombiner::visitCTTZ(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
-  ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   MVT::ValueType VT = N->getValueType(0);
   
   // fold (cttz c1) -> c2
-  if (N0C)
+  if (isa<ConstantSDNode>(N0))
     return DAG.getNode(ISD::CTTZ, VT, N0);
   return SDOperand();
 }
 
 SDOperand DAGCombiner::visitCTPOP(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
-  ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   MVT::ValueType VT = N->getValueType(0);
   
   // fold (ctpop c1) -> c2
-  if (N0C)
+  if (isa<ConstantSDNode>(N0))
     return DAG.getNode(ISD::CTPOP, VT, N0);
   return SDOperand();
 }
@@ -1790,21 +1787,24 @@ SDOperand DAGCombiner::visitSETCC(SDNode *N) {
 
 SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
-  ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   MVT::ValueType VT = N->getValueType(0);
 
   // fold (sext c1) -> c1
-  if (N0C)
+  if (ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0))
     return DAG.getNode(ISD::SIGN_EXTEND, VT, N0);
+  
   // fold (sext (sext x)) -> (sext x)
-  if (N0.getOpcode() == ISD::SIGN_EXTEND)
+  // fold (sext (aext x)) -> (sext x)
+  if (N0.getOpcode() == ISD::SIGN_EXTEND || N0.getOpcode() == ISD::ANY_EXTEND)
     return DAG.getNode(ISD::SIGN_EXTEND, VT, N0.getOperand(0));
+  
   // fold (sext (truncate x)) -> (sextinreg x) iff x size == sext size.
   if (N0.getOpcode() == ISD::TRUNCATE && N0.getOperand(0).getValueType() == VT&&
       (!AfterLegalize || 
        TLI.isOperationLegal(ISD::SIGN_EXTEND_INREG, N0.getValueType())))
     return DAG.getNode(ISD::SIGN_EXTEND_INREG, VT, N0.getOperand(0),
                        DAG.getValueType(N0.getValueType()));
+  
   // fold (sext (load x)) -> (sext (truncate (sextload x)))
   if (N0.getOpcode() == ISD::LOAD && N0.hasOneUse() &&
       (!AfterLegalize||TLI.isOperationLegal(ISD::SEXTLOAD, N0.getValueType()))){
@@ -1835,14 +1835,14 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
 
 SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
-  ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   MVT::ValueType VT = N->getValueType(0);
 
   // fold (zext c1) -> c1
-  if (N0C)
+  if (ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0))
     return DAG.getNode(ISD::ZERO_EXTEND, VT, N0);
   // fold (zext (zext x)) -> (zext x)
-  if (N0.getOpcode() == ISD::ZERO_EXTEND)
+  // fold (zext (aext x)) -> (zext x)
+  if (N0.getOpcode() == ISD::ZERO_EXTEND || N0.getOpcode() == ISD::ANY_EXTEND)
     return DAG.getNode(ISD::ZERO_EXTEND, VT, N0.getOperand(0));
   // fold (zext (truncate x)) -> (zextinreg x) iff x size == zext size.
   if (N0.getOpcode() == ISD::TRUNCATE && N0.getOperand(0).getValueType() == VT&&
@@ -1877,11 +1877,10 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
 
 SDOperand DAGCombiner::visitANY_EXTEND(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
-  ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   MVT::ValueType VT = N->getValueType(0);
   
   // fold (aext c1) -> c1
-  if (N0C)
+  if (isa<ConstantSDNode>(N0))
     return DAG.getNode(ISD::ANY_EXTEND, VT, N0);
   // fold (aext (aext x)) -> (aext x)
   // fold (aext (zext x)) -> (zext x)
@@ -1927,16 +1926,13 @@ SDOperand DAGCombiner::visitANY_EXTEND(SDNode *N) {
 SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   SDOperand N1 = N->getOperand(1);
-  ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   MVT::ValueType VT = N->getValueType(0);
   MVT::ValueType EVT = cast<VTSDNode>(N1)->getVT();
   unsigned EVTBits = MVT::getSizeInBits(EVT);
   
   // fold (sext_in_reg c1) -> c1
-  if (N0C) {
-    SDOperand Truncate = DAG.getConstant(N0C->getValue(), EVT);
-    return DAG.getNode(ISD::SIGN_EXTEND, VT, Truncate);
-  }
+  if (isa<ConstantSDNode>(N0))
+    return DAG.getNode(ISD::SIGN_EXTEND_INREG, VT, N0, N1);
   
   // If the input is already sign extended, just drop the extension.
   if (TLI.ComputeNumSignBits(N0) >= MVT::getSizeInBits(VT)-EVTBits+1)
@@ -1978,14 +1974,13 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
 
 SDOperand DAGCombiner::visitTRUNCATE(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
-  ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   MVT::ValueType VT = N->getValueType(0);
 
   // noop truncate
   if (N0.getValueType() == N->getValueType(0))
     return N0;
   // fold (truncate c1) -> c1
-  if (N0C)
+  if (isa<ConstantSDNode>(N0))
     return DAG.getNode(ISD::TRUNCATE, VT, N0);
   // fold (truncate (truncate x)) -> (truncate x)
   if (N0.getOpcode() == ISD::TRUNCATE)
