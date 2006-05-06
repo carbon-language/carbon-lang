@@ -1938,30 +1938,16 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
     return DAG.getNode(ISD::SIGN_EXTEND, VT, Truncate);
   }
   
-  // If the input is already sign extended, just drop the extend.
+  // If the input is already sign extended, just drop the extension.
   if (TLI.ComputeNumSignBits(N0) >= MVT::getSizeInBits(VT)-EVTBits+1)
     return N0;
   
-  // fold (sext_in_reg (sext_in_reg x, VT2), VT1) -> (sext_in_reg x, minVT) pt1
-  if (N0.getOpcode() == ISD::SIGN_EXTEND_INREG && 
-      cast<VTSDNode>(N0.getOperand(1))->getVT() <= EVT) {
-    return N0;
-  }
   // fold (sext_in_reg (sext_in_reg x, VT2), VT1) -> (sext_in_reg x, minVT) pt2
   if (N0.getOpcode() == ISD::SIGN_EXTEND_INREG &&
       EVT < cast<VTSDNode>(N0.getOperand(1))->getVT()) {
     return DAG.getNode(ISD::SIGN_EXTEND_INREG, VT, N0.getOperand(0), N1);
   }
-  // fold (sext_in_reg (sextload x)) -> (sextload x)
-  if (N0.getOpcode() == ISD::SEXTLOAD && 
-      cast<VTSDNode>(N0.getOperand(3))->getVT() <= EVT) {
-    return N0;
-  }
-  // fold (sext_in_reg (setcc x)) -> setcc x iff (setcc x) == 0 or -1
-  if (N0.getOpcode() == ISD::SETCC &&
-      TLI.getSetCCResultContents() == 
-        TargetLowering::ZeroOrNegativeOneSetCCResult)
-    return N0;
+  
   // fold (sext_in_reg x) -> (zext_in_reg x) if the sign bit is zero
   if (TLI.MaskedValueIsZero(N0, 1ULL << (EVTBits-1)))
     return DAG.getZeroExtendInReg(N0, EVT);
