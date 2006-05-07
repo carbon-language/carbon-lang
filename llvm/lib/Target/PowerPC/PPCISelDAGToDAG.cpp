@@ -391,15 +391,7 @@ static bool isIntImmediate(SDOperand N, unsigned& Imm) {
 
 /// SelectBitfieldInsert - turn an or of two masked values into
 /// the rotate left word immediate then mask insert (rlwimi) instruction.
-/// Returns true on success, false if the caller still needs to select OR.
-///
-/// Patterns matched:
-/// 1. or shl, and   5. or and, and
-/// 2. or and, shl   6. or shl, shr
-/// 3. or shr, and   7. or shr, shl
-/// 4. or and, shr
 SDNode *PPCDAGToDAGISel::SelectBitfieldInsert(SDNode *N) {
-  bool IsRotate = false;
   unsigned TgtMask = 0xFFFFFFFF, InsMask = 0xFFFFFFFF, SH = 0;
   unsigned Value;
   
@@ -409,89 +401,56 @@ SDNode *PPCDAGToDAGISel::SelectBitfieldInsert(SDNode *N) {
   unsigned Op0Opc = Op0.getOpcode();
   unsigned Op1Opc = Op1.getOpcode();
   
-  // Verify that we have the correct opcodes
-  if (ISD::SHL != Op0Opc && ISD::SRL != Op0Opc && ISD::AND != Op0Opc)
-    return false;
-  if (ISD::SHL != Op1Opc && ISD::SRL != Op1Opc && ISD::AND != Op1Opc)
-    return false;
+  uint64_t LKZ, LKO, RKZ, RKO;
+  TLI.ComputeMaskedBits(Op0, TgtMask, LKZ, LKO);
+  TLI.ComputeMaskedBits(Op1, TgtMask, RKZ, RKO);
   
-  // Generate Mask value for Target
-  if (isIntImmediate(Op0.getOperand(1), Value)) {
-    switch(Op0Opc) {
-    case ISD::SHL: TgtMask <<= Value; break;
-    case ISD::SRL: TgtMask >>= Value; break;
-    case ISD::AND: TgtMask &= Value; break;
-    }
-  } else {
-    return 0;
-  }
-  
-  // Generate Mask value for Insert
-  if (!isIntImmediate(Op1.getOperand(1), Value))
-    return 0;
-  
-  switch(Op1Opc) {
-  case ISD::SHL:
-    SH = Value;
-    InsMask <<= SH;
-    if (Op0Opc == ISD::SRL) IsRotate = true;
-    break;
-  case ISD::SRL:
-    SH = Value;
-    InsMask >>= SH;
-    SH = 32-SH;
-    if (Op0Opc == ISD::SHL) IsRotate = true;
-    break;
-  case ISD::AND:
-    InsMask &= Value;
-    break;
-  }
-  
-  // If both of the inputs are ANDs and one of them has a logical shift by
-  // constant as its input, make that AND the inserted value so that we can
-  // combine the shift into the rotate part of the rlwimi instruction
-  bool IsAndWithShiftOp = false;
-  if (Op0Opc == ISD::AND && Op1Opc == ISD::AND) {
-    if (Op1.getOperand(0).getOpcode() == ISD::SHL ||
-        Op1.getOperand(0).getOpcode() == ISD::SRL) {
-      if (isIntImmediate(Op1.getOperand(0).getOperand(1), Value)) {
-        SH = Op1.getOperand(0).getOpcode() == ISD::SHL ? Value : 32 - Value;
-        IsAndWithShiftOp = true;
-      }
-    } else if (Op0.getOperand(0).getOpcode() == ISD::SHL ||
-               Op0.getOperand(0).getOpcode() == ISD::SRL) {
-      if (isIntImmediate(Op0.getOperand(0).getOperand(1), Value)) {
-        std::swap(Op0, Op1);
-        std::swap(TgtMask, InsMask);
-        SH = Op1.getOperand(0).getOpcode() == ISD::SHL ? Value : 32 - Value;
-        IsAndWithShiftOp = true;
+  // FIXME: rotrwi / rotlwi
+  if ((LKZ | RKZ) == 0x00000000FFFFFFFFULL) {
+    unsigned PInsMask = ~RKZ;
+    unsigned PTgtMask = ~LKZ;
+
+    // If the LHS has a foldable shift, then swap it to the RHS so that we can
+    // fold the shift into the insert.
+    if (Op0Opc == ISD::AND && Op1Opc == ISD::AND) {
+      if (Op0.getOperand(0).getOpcode() == ISD::SHL ||
+          Op0.getOperand(0).getOpcode() == ISD::SRL) {
+        if (Op1.getOperand(0).getOpcode() != ISD::SHL &&
+            Op1.getOperand(0).getOpcode() != ISD::SRL) {
+          std::swap(Op0, Op1);
+          std::swap(Op0Opc, Op1Opc);
+          std::swap(PInsMask, PTgtMask);
+        }
       }
     }
-  }
-  
-  // Verify that the Target mask and Insert mask together form a full word mask
-  // and that the Insert mask is a run of set bits (which implies both are runs
-  // of set bits).  Given that, Select the arguments and generate the rlwimi
-  // instruction.
-  unsigned MB, ME;
-  if (((TgtMask & InsMask) == 0) && isRunOfOnes(InsMask, MB, ME)) {
-    bool fullMask = (TgtMask ^ InsMask) == 0xFFFFFFFF;
-    bool Op0IsAND = Op0Opc == ISD::AND;
-    // Check for rotlwi / rotrwi here, a special case of bitfield insert
-    // where both bitfield halves are sourced from the same value.
-    if (IsRotate && fullMask &&
-        N->getOperand(0).getOperand(0) == N->getOperand(1).getOperand(0)) {
-      SDOperand Tmp;
-      Select(Tmp, N->getOperand(0).getOperand(0));
-      return CurDAG->getTargetNode(PPC::RLWINM, MVT::i32, Tmp,
-                                   getI32Imm(SH), getI32Imm(0), getI32Imm(31));
+    
+    unsigned MB, ME;
+    if (isRunOfOnes(PInsMask, MB, ME)) {
+      SDOperand Tmp1, Tmp2, Tmp3;
+      bool DisjointMask = (PTgtMask ^ PInsMask) == 0xFFFFFFFF;
+
+      if ((Op1Opc == ISD::SHL || Op1Opc == ISD::SRL) &&
+          isIntImmediate(Op1.getOperand(1), Value)) {
+        Op1 = Op1.getOperand(0);
+        SH  = (Op1Opc == ISD::SHL) ? Value : 32 - Value;
+      }
+      if (Op1Opc == ISD::AND) {
+        unsigned SHOpc = Op1.getOperand(0).getOpcode();
+        if ((SHOpc == ISD::SHL || SHOpc == ISD::SRL) &&
+            isIntImmediate(Op1.getOperand(0).getOperand(1), Value)) {
+          Op1 = Op1.getOperand(0).getOperand(0);
+          SH  = (SHOpc == ISD::SHL) ? Value : 32 - Value;
+        } else {
+          Op1 = Op1.getOperand(0);
+        }
+      }
+      
+      Tmp3 = (Op0Opc == ISD::AND && DisjointMask) ? Op0.getOperand(0) : Op0;
+      Select(Tmp1, Tmp3);
+      Select(Tmp2, Op1);
+      return CurDAG->getTargetNode(PPC::RLWIMI, MVT::i32, Tmp1, Tmp2,
+                                   getI32Imm(SH), getI32Imm(MB), getI32Imm(ME));
     }
-    SDOperand Tmp1, Tmp2;
-    Select(Tmp1, ((Op0IsAND && fullMask) ? Op0.getOperand(0) : Op0));
-    Select(Tmp2, (IsAndWithShiftOp ? Op1.getOperand(0).getOperand(0)
-                                   : Op1.getOperand(0)));
-    return CurDAG->getTargetNode(PPC::RLWIMI, MVT::i32, Tmp1, Tmp2,
-                                 getI32Imm(SH), getI32Imm(MB), getI32Imm(ME));
   }
   return 0;
 }
