@@ -47,8 +47,8 @@ let Namespace = "X86" in {
   def AL : RegisterGroup<"AL", [AX,EAX]>, DwarfRegNum<0>;
   def CL : RegisterGroup<"CL", [CX,ECX]>, DwarfRegNum<2>;
   def DL : RegisterGroup<"DL", [DX,EDX]>, DwarfRegNum<1>;
-  def BL : RegisterGroup<"BL", [BX,EBX]>, DwarfRegNum<0>;
-  def AH : RegisterGroup<"AH", [AX,EAX]>, DwarfRegNum<2>;
+  def BL : RegisterGroup<"BL", [BX,EBX]>, DwarfRegNum<3>;
+  def AH : RegisterGroup<"AH", [AX,EAX]>, DwarfRegNum<0>;
   def CH : RegisterGroup<"CH", [CX,ECX]>, DwarfRegNum<2>;
   def DH : RegisterGroup<"DH", [DX,EDX]>, DwarfRegNum<1>;
   def BH : RegisterGroup<"BH", [BX,EBX]>, DwarfRegNum<3>;
