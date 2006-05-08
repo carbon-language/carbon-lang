@@ -405,7 +405,6 @@ SDNode *PPCDAGToDAGISel::SelectBitfieldInsert(SDNode *N) {
   TLI.ComputeMaskedBits(Op0, TgtMask, LKZ, LKO);
   TLI.ComputeMaskedBits(Op1, TgtMask, RKZ, RKO);
   
-  // FIXME: rotrwi / rotlwi
   if ((LKZ | RKZ) == 0x00000000FFFFFFFFULL) {
     unsigned PInsMask = ~RKZ;
     unsigned PTgtMask = ~LKZ;
