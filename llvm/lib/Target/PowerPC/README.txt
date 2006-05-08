@@ -492,18 +492,23 @@ transformation, good for PI.  See PPCISelLowering.cpp, this comment:
 
 ===-------------------------------------------------------------------------===
 
-void %foo(uint *%tmp) {
-        %tmp = load uint* %tmp          ; <uint> [#uses=3]
-        %tmp1 = shr uint %tmp, ubyte 31         ; <uint> [#uses=1]
-        %tmp1 = cast uint %tmp1 to ubyte                ; <ubyte> [#uses=1]
-        %tmp4.mask = shr uint %tmp, ubyte 30            ; <uint> [#uses=1]
-        %tmp4.mask = cast uint %tmp4.mask to ubyte              ; <ubyte> [#uses=1]
-        %tmp = or ubyte %tmp4.mask, %tmp1               ; <ubyte> [#uses=1]
-        %tmp10 = cast ubyte %tmp to uint                ; <uint> [#uses=1]
-        %tmp11 = shl uint %tmp10, ubyte 31              ; <uint> [#uses=1]
-        %tmp12 = and uint %tmp, 2147483647              ; <uint> [#uses=1]
-        %tmp13 = or uint %tmp11, %tmp12         ; <uint> [#uses=1]
-        store uint %tmp13, uint* %tmp
+%struct.B = type { ubyte, [3 x ubyte] }
+
+void %foo(%struct.B* %b) {
+entry:
+        %tmp = cast %struct.B* %b to uint*              ; <uint*> [#uses=1]
+        %tmp = load uint* %tmp          ; <uint> [#uses=1]
+        %tmp3 = cast %struct.B* %b to uint*             ; <uint*> [#uses=1]
+        %tmp4 = load uint* %tmp3                ; <uint> [#uses=1]
+        %tmp8 = cast %struct.B* %b to uint*             ; <uint*> [#uses=2]
+        %tmp9 = load uint* %tmp8                ; <uint> [#uses=1]
+        %tmp4.mask17 = shl uint %tmp4, ubyte 1          ; <uint> [#uses=1]
+        %tmp1415 = and uint %tmp4.mask17, 2147483648            ; <uint> [#uses=1]
+        %tmp.masked = and uint %tmp, 2147483648         ; <uint> [#uses=1]
+        %tmp11 = or uint %tmp1415, %tmp.masked          ; <uint> [#uses=1]
+        %tmp12 = and uint %tmp9, 2147483647             ; <uint> [#uses=1]
+        %tmp13 = or uint %tmp12, %tmp11         ; <uint> [#uses=1]
+        store uint %tmp13, uint* %tmp8
         ret void
 }
 
@@ -511,15 +516,14 @@ We emit:
 
 _foo:
         lwz r2, 0(r3)
-        srwi r4, r2, 30
-        srwi r5, r2, 31
-        or r4, r4, r5
-        rlwimi r2, r4, 31, 0, 0
+        slwi r4, r2, 1
+        or r4, r4, r2
+        rlwimi r2, r4, 0, 0, 0
         stw r2, 0(r3)
         blr
 
-What this code is really doing is ORing bit 0 with bit 1.  We could codegen this
-as:
+We could collapse a bunch of those ORs and ANDs and generate the following
+equivalent code:
 
 _foo:
         lwz r2, 0(r3)
@@ -527,21 +531,3 @@ _foo:
         or r2, r2, r4
         stw r2, 0(r3)
         blr
-
-===-------------------------------------------------------------------------===
-
-Distilled from the code above, something wacky is going in the optimizers before
-code generation time...
-
-unsigned foo(unsigned x) {
-  return (unsigned)((unsigned char)(x >> 30) | (unsigned char)(x >> 31)) << 31;
-}
-
-unsigned bar(unsigned x) {
-  return ((x >> 30) | (x >> 31)) << 31;
-}
-
-generate different code when -O is passed to llvm-gcc.  However, when no
-optimization is specified and the output is passed into opt with just -mem2reg
-and -instcombine, the good code comes out of both. Something is happening before
-instcombine to confuse it, and not delete the no-op casts.
