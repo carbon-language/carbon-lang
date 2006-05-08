@@ -21,6 +21,7 @@
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/MutexGuard.h"
 #include "llvm/System/DynamicLibrary.h"
 #include "llvm/Target/TargetData.h"
 #include <iostream>
@@ -47,6 +48,73 @@ ExecutionEngine::~ExecutionEngine() {
   delete MP;
 }
 
+/// addGlobalMapping - Tell the execution engine that the specified global is
+/// at the specified location.  This is used internally as functions are JIT'd
+/// and as global variables are laid out in memory.  It can and should also be
+/// used by clients of the EE that want to have an LLVM global overlay
+/// existing data in memory.
+void ExecutionEngine::addGlobalMapping(const GlobalValue *GV, void *Addr) {
+  MutexGuard locked(lock);
+  
+  void *&CurVal = state.getGlobalAddressMap(locked)[GV];
+  assert((CurVal == 0 || Addr == 0) && "GlobalMapping already established!");
+  CurVal = Addr;
+  
+  // If we are using the reverse mapping, add it too
+  if (!state.getGlobalAddressReverseMap(locked).empty()) {
+    const GlobalValue *&V = state.getGlobalAddressReverseMap(locked)[Addr];
+    assert((V == 0 || GV == 0) && "GlobalMapping already established!");
+    V = GV;
+  }
+}
+
+/// clearAllGlobalMappings - Clear all global mappings and start over again
+/// use in dynamic compilation scenarios when you want to move globals
+void ExecutionEngine::clearAllGlobalMappings() {
+  MutexGuard locked(lock);
+  
+  state.getGlobalAddressMap(locked).clear();
+  state.getGlobalAddressReverseMap(locked).clear();
+}
+
+/// updateGlobalMapping - Replace an existing mapping for GV with a new
+/// address.  This updates both maps as required.  If "Addr" is null, the
+/// entry for the global is removed from the mappings.
+void ExecutionEngine::updateGlobalMapping(const GlobalValue *GV, void *Addr) {
+  MutexGuard locked(lock);
+  
+  // Deleting from the mapping?
+  if (Addr == 0) {
+    state.getGlobalAddressMap(locked).erase(GV);
+    if (!state.getGlobalAddressReverseMap(locked).empty())
+      state.getGlobalAddressReverseMap(locked).erase(Addr);
+    return;
+  }
+  
+  void *&CurVal = state.getGlobalAddressMap(locked)[GV];
+  if (CurVal && !state.getGlobalAddressReverseMap(locked).empty())
+    state.getGlobalAddressReverseMap(locked).erase(CurVal);
+  CurVal = Addr;
+  
+  // If we are using the reverse mapping, add it too
+  if (!state.getGlobalAddressReverseMap(locked).empty()) {
+    const GlobalValue *&V = state.getGlobalAddressReverseMap(locked)[Addr];
+    assert((V == 0 || GV == 0) && "GlobalMapping already established!");
+    V = GV;
+  }
+}
+
+/// getPointerToGlobalIfAvailable - This returns the address of the specified
+/// global value if it is has already been codegen'd, otherwise it returns null.
+///
+void *ExecutionEngine::getPointerToGlobalIfAvailable(const GlobalValue *GV) {
+  MutexGuard locked(lock);
+  
+  std::map<const GlobalValue*, void*>::iterator I =
+  state.getGlobalAddressMap(locked).find(GV);
+  return I != state.getGlobalAddressMap(locked).end() ? I->second : 0;
+}
+
 /// getGlobalValueAtAddress - Return the LLVM global value object that starts
 /// at the specified address.
 ///
@@ -55,9 +123,11 @@ const GlobalValue *ExecutionEngine::getGlobalValueAtAddress(void *Addr) {
 
   // If we haven't computed the reverse mapping yet, do so first.
   if (state.getGlobalAddressReverseMap(locked).empty()) {
-    for (std::map<const GlobalValue*, void *>::iterator I =
-           state.getGlobalAddressMap(locked).begin(), E = state.getGlobalAddressMap(locked).end(); I != E; ++I)
-      state.getGlobalAddressReverseMap(locked).insert(std::make_pair(I->second, I->first));
+    for (std::map<const GlobalValue*, void *>::iterator
+         I = state.getGlobalAddressMap(locked).begin(),
+         E = state.getGlobalAddressMap(locked).end(); I != E; ++I)
+      state.getGlobalAddressReverseMap(locked).insert(std::make_pair(I->second,
+                                                                     I->first));
   }
 
   std::map<void *, const GlobalValue*>::iterator I =

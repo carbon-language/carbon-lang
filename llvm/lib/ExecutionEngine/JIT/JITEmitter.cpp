@@ -26,6 +26,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetJITInfo.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/MutexGuard.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/System/Memory.h"
 #include <algorithm>
@@ -336,7 +337,14 @@ void *JIT::getPointerToFunctionOrStub(Function *F) {
   return getJITResolver(MCE).getFunctionStub(F);
 }
 
-
+/// freeMachineCodeForFunction - release machine code memory for given Function.
+///
+void JIT::freeMachineCodeForFunction(Function *F) {
+  // Delete translation for this from the ExecutionEngine, so it will get
+  // retranslated next time it is used.
+  updateGlobalMapping(F, 0);
+  
+}
 
 //===----------------------------------------------------------------------===//
 // JITEmitter code.

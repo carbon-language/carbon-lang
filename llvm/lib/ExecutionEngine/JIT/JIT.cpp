@@ -22,6 +22,7 @@
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
+#include "llvm/Support/MutexGuard.h"
 #include "llvm/System/DynamicLibrary.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetJITInfo.h"
@@ -349,8 +350,3 @@ void *JIT::recompileAndRelinkFunction(Function *F) {
   return Addr;
 }
 
-/// freeMachineCodeForFunction - release machine code memory for given Function
-///
-void JIT::freeMachineCodeForFunction(Function *F) {
-  // currently a no-op
-}
