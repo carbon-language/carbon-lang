@@ -136,6 +136,10 @@ def R32 : RegisterClass<"X86", [i32], 32,
   }];
 }
 
+// R16, R32 subclasses which contain registers that have R8 sub-registers.
+def R16_ : RegisterClass<"X86", [i16], 16, [AX, CX, DX, BX]>;
+def R32_ : RegisterClass<"X86", [i32], 32, [EAX, ECX, EDX, EBX]>;
+
 // Scalar SSE2 floating point registers.
 def FR32 : RegisterClass<"X86", [f32], 32,
                          [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>;

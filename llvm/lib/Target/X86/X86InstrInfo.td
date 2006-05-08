@@ -357,15 +357,13 @@ def IMPLICIT_DEF_R32  : I<0, Pseudo, (ops R32:$dst),
 def NOOP : I<0x90, RawFrm, (ops), "nop", []>;
 
 // Truncate
-def TRUNC_R32_R8  : I<0x89, MRMDestReg, (ops R8:$dst, R32:$src),
-                      "mov{l} {$src, ${dst:trunc32}|${dst:trunc32}, $src}",
-                      [(set R8:$dst, (trunc R32:$src))]>;
+def TRUNC_R32_R8  : I<0x88, MRMDestReg, (ops R8:$dst, R32_:$src),
+                      "mov{b} {${src:trunc8}, $dst|$dst, ${src:trunc8}", []>;
+def TRUNC_R16_R8  : I<0x88, MRMDestReg, (ops R8:$dst, R16_:$src),
+                      "mov{b} {${src:trunc8}, $dst|$dst, ${src:trunc8}}", []>;
 def TRUNC_R32_R16 : I<0x89, MRMDestReg, (ops R16:$dst, R32:$src),
-                      "mov{l} {$src, ${dst:trunc32}|${dst:trunc32}, $src}",
+                      "mov{w} {${src:trunc16}, $dst|$dst, ${src:trunc16}}",
                       [(set R16:$dst, (trunc R32:$src))]>;
-def TRUNC_R16_R8  : I<0x89, MRMDestReg, (ops R8:$dst, R16:$src),
-                      "mov{w} {$src, ${dst:trunc16}|${dst:trunc16}, $src}",
-                      [(set R8:$dst, (trunc R16:$src))]>;
 
 //===----------------------------------------------------------------------===//
 //  Control Flow Instructions...
@@ -2309,6 +2307,26 @@ def MOV16r0  : I<0x31, MRMInitReg,  (ops R16:$dst),
 def MOV32r0  : I<0x31, MRMInitReg,  (ops R32:$dst), 
                  "xor{l} $dst, $dst",
                  [(set R32:$dst, 0)]>;
+
+// Basic operations on R16 / R32 subclasses R16_ and R32_ which contains only
+// those registers that have R8 sub-registers (i.e. AX - DX, EAX - EDX).
+def MOV16to16_ : I<0x89, MRMDestReg, (ops R16_:$dst, R16:$src),
+                "mov{w} {$src, $dst|$dst, $src}", []>, OpSize;
+def MOV32to32_ : I<0x89, MRMDestReg, (ops R32_:$dst, R32:$src),
+                "mov{l} {$src, $dst|$dst, $src}", []>;
+
+def MOV16_rr : I<0x89, MRMDestReg, (ops R16_:$dst, R16_:$src),
+                "mov{w} {$src, $dst|$dst, $src}", []>, OpSize;
+def MOV32_rr : I<0x89, MRMDestReg, (ops R32_:$dst, R32_:$src),
+                "mov{l} {$src, $dst|$dst, $src}", []>;
+def MOV16_rm : I<0x8B, MRMSrcMem, (ops R16_:$dst, i16mem:$src),
+                "mov{w} {$src, $dst|$dst, $src}", []>, OpSize;
+def MOV32_rm : I<0x8B, MRMSrcMem, (ops R32_:$dst, i32mem:$src),
+                "mov{l} {$src, $dst|$dst, $src}", []>;
+def MOV16_mr : I<0x89, MRMDestMem, (ops i16mem:$dst, R16_:$src),
+                "mov{w} {$src, $dst|$dst, $src}", []>, OpSize;
+def MOV32_mr : I<0x89, MRMDestMem, (ops i32mem:$dst, R32_:$src),
+                "mov{l} {$src, $dst|$dst, $src}", []>;
 
 //===----------------------------------------------------------------------===//
 // DWARF Pseudo Instructions

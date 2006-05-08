@@ -791,6 +791,44 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
 #endif
       return;
     }
+
+    case ISD::TRUNCATE: {
+      if (NVT == MVT::i8) {
+        unsigned Opc2;
+        MVT::ValueType VT;
+        switch (Node->getOperand(0).getValueType()) {
+        default: assert(0 && "Unknown truncate!");
+        case MVT::i16:
+          Opc = X86::MOV16to16_;
+          VT = MVT::i16;
+          Opc2 = X86::TRUNC_R16_R8;
+          break;
+        case MVT::i32:
+          Opc = X86::MOV32to32_;
+          VT = MVT::i32;
+          if (NVT == MVT::i16)
+            Opc2 = X86::TRUNC_R32_R16;
+          else
+            Opc2 = X86::TRUNC_R32_R8;
+          break;
+        }
+
+        SDOperand Tmp0, Tmp1;
+        Select(Tmp0, Node->getOperand(0));
+        Tmp1 = SDOperand(CurDAG->getTargetNode(Opc, VT, Tmp0), 0);
+        Result = CodeGenMap[N] =
+          SDOperand(CurDAG->getTargetNode(Opc2, NVT, Tmp1), 0);
+      
+#ifndef NDEBUG
+        DEBUG(std::cerr << std::string(Indent-2, ' '));
+        DEBUG(std::cerr << "== ");
+        DEBUG(Result.Val->dump(CurDAG));
+        DEBUG(std::cerr << "\n");
+        Indent -= 2;
+#endif
+        return;
+      }
+    }
   }
 
   SelectCode(Result, N);

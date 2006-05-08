@@ -89,7 +89,7 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
       unsigned Reg = MO.getReg();
       if (Modifier && strncmp(Modifier, "trunc", strlen("trunc")) == 0) {
         MVT::ValueType VT = (strcmp(Modifier,"trunc16") == 0)
-          ? MVT::i16 : MVT::i32;
+          ? MVT::i16 : MVT::i8;
         Reg = getX86SubSuperRegister(Reg, VT);
       }
       O << RI.get(Reg).Name;
@@ -268,12 +268,13 @@ void X86IntelAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
     const MachineOperand &MO1 = MI->getOperand(1);
     unsigned Reg0 = MO0.getReg();
     unsigned Reg1 = MO1.getReg();
-    if (MI->getOpcode() == X86::TRUNC_R16_R8)
-      Reg0 = getX86SubSuperRegister(Reg0, MVT::i16);
+    if (MI->getOpcode() == X86::TRUNC_R32_R16)
+      Reg1 = getX86SubSuperRegister(Reg1, MVT::i16);
     else
-      Reg0 = getX86SubSuperRegister(Reg0, MVT::i32);
-    if (Reg0 == Reg1)
-      O << CommentString << " TRUNCATE ";
+      Reg1 = getX86SubSuperRegister(Reg1, MVT::i8);
+    O << CommentString << " TRUNCATE ";
+    if (Reg0 != Reg1)
+      O << "\n\t";
     break;
   }
   }
