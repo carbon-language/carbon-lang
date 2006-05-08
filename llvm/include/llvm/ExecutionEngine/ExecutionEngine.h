@@ -19,7 +19,7 @@
 #include <map>
 #include <cassert>
 #include <string>
-#include "llvm/Support/MutexGuard.h"
+#include "llvm/System/Mutex.h"
 
 namespace llvm {
 
@@ -32,6 +32,7 @@ class Module;
 class ModuleProvider;
 class TargetData;
 class Type;
+class MutexGuard;
 
 class ExecutionEngineState {
 private:
@@ -114,58 +115,27 @@ public:
                         const char * const * envp);
 
 
-  void addGlobalMapping(const GlobalValue *GV, void *Addr) {
-    MutexGuard locked(lock);
-
-    void *&CurVal = state.getGlobalAddressMap(locked)[GV];
-    assert((CurVal == 0 || Addr == 0) && "GlobalMapping already established!");
-    CurVal = Addr;
-
-    // If we are using the reverse mapping, add it too
-    if (!state.getGlobalAddressReverseMap(locked).empty()) {
-      const GlobalValue *&V = state.getGlobalAddressReverseMap(locked)[Addr];
-      assert((V == 0 || GV == 0) && "GlobalMapping already established!");
-      V = GV;
-    }
-  }
-
+  /// addGlobalMapping - Tell the execution engine that the specified global is
+  /// at the specified location.  This is used internally as functions are JIT'd
+  /// and as global variables are laid out in memory.  It can and should also be
+  /// used by clients of the EE that want to have an LLVM global overlay
+  /// existing data in memory.
+  void addGlobalMapping(const GlobalValue *GV, void *Addr);
+  
   /// clearAllGlobalMappings - Clear all global mappings and start over again
   /// use in dynamic compilation scenarios when you want to move globals
-  void clearAllGlobalMappings() {
-    MutexGuard locked(lock);
-
-    state.getGlobalAddressMap(locked).clear();
-    state.getGlobalAddressReverseMap(locked).clear();
-  }
-
+  void clearAllGlobalMappings();
+  
   /// updateGlobalMapping - Replace an existing mapping for GV with a new
-  /// address.  This updates both maps as required.
-  void updateGlobalMapping(const GlobalValue *GV, void *Addr) {
-    MutexGuard locked(lock);
-
-    void *&CurVal = state.getGlobalAddressMap(locked)[GV];
-    if (CurVal && !state.getGlobalAddressReverseMap(locked).empty())
-      state.getGlobalAddressReverseMap(locked).erase(CurVal);
-    CurVal = Addr;
-
-    // If we are using the reverse mapping, add it too
-    if (!state.getGlobalAddressReverseMap(locked).empty()) {
-      const GlobalValue *&V = state.getGlobalAddressReverseMap(locked)[Addr];
-      assert((V == 0 || GV == 0) && "GlobalMapping already established!");
-      V = GV;
-    }
-  }
-
+  /// address.  This updates both maps as required.  If "Addr" is null, the
+  /// entry for the global is removed from the mappings.
+  void updateGlobalMapping(const GlobalValue *GV, void *Addr);
+  
   /// getPointerToGlobalIfAvailable - This returns the address of the specified
-  /// global value if it is available, otherwise it returns null.
+  /// global value if it is has already been codegen'd, otherwise it returns
+  /// null.
   ///
-  void *getPointerToGlobalIfAvailable(const GlobalValue *GV) {
-    MutexGuard locked(lock);
-
-    std::map<const GlobalValue*, void*>::iterator I =
-      state.getGlobalAddressMap(locked).find(GV);
-    return I != state.getGlobalAddressMap(locked).end() ? I->second : 0;
-  }
+  void *getPointerToGlobalIfAvailable(const GlobalValue *GV);
 
   /// getPointerToGlobal - This returns the address of the specified global
   /// value.  This may involve code generation if it's a function.
