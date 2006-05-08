@@ -516,10 +516,17 @@ _foo:
         srwi r4, r2, 30
         srwi r5, r2, 31
         or r4, r4, r5
-        slwi r4, r4, 31
-        rlwimi r4, r2, 0, 1, 31
-        stw r4, 0(r3)
+        rlwimi r2, r4, 31, 0, 0
+        stw r2, 0(r3)
         blr
 
-I *think* that could use another rlwimi.
+What this code is really doing is ORing bit 0 with bit 1.  We could codegen this
+as:
 
+_foo:
+        lwz r2, 0(r3)
+        slwi r4, r2, 1
+        rlwinm r4, r4, 0, 0, 0
+        or r2, r2, r4
+        stw r2, 0(r3)
+        blr

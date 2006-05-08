@@ -392,25 +392,25 @@ static bool isIntImmediate(SDOperand N, unsigned& Imm) {
 /// SelectBitfieldInsert - turn an or of two masked values into
 /// the rotate left word immediate then mask insert (rlwimi) instruction.
 SDNode *PPCDAGToDAGISel::SelectBitfieldInsert(SDNode *N) {
-  unsigned TgtMask = 0xFFFFFFFF, InsMask = 0xFFFFFFFF, SH = 0;
-  unsigned Value;
-  
   SDOperand Op0 = N->getOperand(0);
   SDOperand Op1 = N->getOperand(1);
   
-  unsigned Op0Opc = Op0.getOpcode();
-  unsigned Op1Opc = Op1.getOpcode();
-  
   uint64_t LKZ, LKO, RKZ, RKO;
-  TLI.ComputeMaskedBits(Op0, TgtMask, LKZ, LKO);
-  TLI.ComputeMaskedBits(Op1, TgtMask, RKZ, RKO);
+  TLI.ComputeMaskedBits(Op0, 0xFFFFFFFFULL, LKZ, LKO);
+  TLI.ComputeMaskedBits(Op1, 0xFFFFFFFFULL, RKZ, RKO);
   
-  if ((LKZ | RKZ) == 0x00000000FFFFFFFFULL) {
-    unsigned PInsMask = ~RKZ;
-    unsigned PTgtMask = ~LKZ;
+  unsigned TargetMask = LKZ;
+  unsigned InsertMask = RKZ;
+  
+  if ((TargetMask | InsertMask) == 0xFFFFFFFF) {
+    unsigned Op0Opc = Op0.getOpcode();
+    unsigned Op1Opc = Op1.getOpcode();
+    unsigned Value, SH = 0;
+    TargetMask = ~TargetMask;
+    InsertMask = ~InsertMask;
 
-    // If the LHS has a foldable shift, then swap it to the RHS so that we can
-    // fold the shift into the insert.
+    // If the LHS has a foldable shift and the RHS does not, then swap it to the
+    // RHS so that we can fold the shift into the insert.
     if (Op0Opc == ISD::AND && Op1Opc == ISD::AND) {
       if (Op0.getOperand(0).getOpcode() == ISD::SHL ||
           Op0.getOperand(0).getOpcode() == ISD::SRL) {
@@ -418,15 +418,22 @@ SDNode *PPCDAGToDAGISel::SelectBitfieldInsert(SDNode *N) {
             Op1.getOperand(0).getOpcode() != ISD::SRL) {
           std::swap(Op0, Op1);
           std::swap(Op0Opc, Op1Opc);
-          std::swap(PInsMask, PTgtMask);
+          std::swap(TargetMask, InsertMask);
         }
+      }
+    } else if (Op0Opc == ISD::SHL || Op0Opc == ISD::SRL) {
+      if (Op1Opc == ISD::AND && Op1.getOperand(0).getOpcode() != ISD::SHL &&
+          Op1.getOperand(0).getOpcode() != ISD::SRL) {
+        std::swap(Op0, Op1);
+        std::swap(Op0Opc, Op1Opc);
+        std::swap(TargetMask, InsertMask);
       }
     }
     
     unsigned MB, ME;
-    if (isRunOfOnes(PInsMask, MB, ME)) {
+    if (isRunOfOnes(InsertMask, MB, ME)) {
       SDOperand Tmp1, Tmp2, Tmp3;
-      bool DisjointMask = (PTgtMask ^ PInsMask) == 0xFFFFFFFF;
+      bool DisjointMask = (TargetMask ^ InsertMask) == 0xFFFFFFFF;
 
       if ((Op1Opc == ISD::SHL || Op1Opc == ISD::SRL) &&
           isIntImmediate(Op1.getOperand(1), Value)) {
