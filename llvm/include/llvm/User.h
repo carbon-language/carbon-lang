@@ -112,6 +112,13 @@ template<> struct simplify_type<User::const_op_iterator> {
 template<> struct simplify_type<const User::const_op_iterator>
   : public simplify_type<User::const_op_iterator> {};
 
+
+// value_use_iterator::getOperandNo - Requires the definition of the User class.
+template<typename UserTy>
+unsigned value_use_iterator<UserTy>::getOperandNo() const {
+  return U - U->getUser()->op_begin();
+}
+
 } // End llvm namespace
 
 #endif

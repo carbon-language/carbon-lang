@@ -141,11 +141,10 @@ public:
 
   Use &getUse() const { return *U; }
   
-  /// getOperandNo - Return the operand # of this use in its User.
+  /// getOperandNo - Return the operand # of this use in its User.  Defined in
+  /// User.h
   ///
-  unsigned getOperandNo() const {
-    return U - U->getUser()->op_begin();
-  }
+  unsigned getOperandNo() const;
 };
 
 
