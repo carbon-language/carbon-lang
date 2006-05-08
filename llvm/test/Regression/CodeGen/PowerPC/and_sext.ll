@@ -21,3 +21,9 @@ short %test2(short %X, short %x) {
         ret short %retval
 }
 
+short %test3(uint %X) {
+        %tmp1 = shr uint %X, ubyte 16
+        %tmp1 = cast uint %tmp1 to short
+        ret short %tmp1
+}
+
