@@ -1821,9 +1821,9 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   // fold (sext ( extload x)) -> (sext (truncate (sextload x)))
   if ((N0.getOpcode() == ISD::SEXTLOAD || N0.getOpcode() == ISD::EXTLOAD) &&
       N0.hasOneUse()) {
-    SDOperand ExtLoad = DAG.getNode(ISD::SEXTLOAD, VT, N0.getOperand(0),
-                                    N0.getOperand(1), N0.getOperand(2),
-                                    N0.getOperand(3));
+    MVT::ValueType EVT = cast<VTSDNode>(N0.getOperand(3))->getVT();
+    SDOperand ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, N0.getOperand(0),
+                                       N0.getOperand(1), N0.getOperand(2), EVT);
     CombineTo(N, ExtLoad);
     CombineTo(N0.Val, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
               ExtLoad.getValue(1));
@@ -1864,9 +1864,9 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
   // fold (zext ( extload x)) -> (zext (truncate (zextload x)))
   if ((N0.getOpcode() == ISD::ZEXTLOAD || N0.getOpcode() == ISD::EXTLOAD) &&
       N0.hasOneUse()) {
-    SDOperand ExtLoad = DAG.getNode(ISD::ZEXTLOAD, VT, N0.getOperand(0),
-                                    N0.getOperand(1), N0.getOperand(2),
-                                    N0.getOperand(3));
+    MVT::ValueType EVT = cast<VTSDNode>(N0.getOperand(3))->getVT();
+    SDOperand ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, N0.getOperand(0),
+                                       N0.getOperand(1), N0.getOperand(2), EVT);
     CombineTo(N, ExtLoad);
     CombineTo(N0.Val, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
               ExtLoad.getValue(1));
@@ -1911,9 +1911,9 @@ SDOperand DAGCombiner::visitANY_EXTEND(SDNode *N) {
   if ((N0.getOpcode() == ISD::ZEXTLOAD || N0.getOpcode() == ISD::EXTLOAD ||
        N0.getOpcode() == ISD::SEXTLOAD) &&
       N0.hasOneUse()) {
-    SDOperand ExtLoad = DAG.getNode(N0.getOpcode(), VT, N0.getOperand(0),
-                                    N0.getOperand(1), N0.getOperand(2),
-                                    N0.getOperand(3));
+    MVT::ValueType EVT = cast<VTSDNode>(N0.getOperand(3))->getVT();
+    SDOperand ExtLoad = DAG.getExtLoad(N0.getOpcode(), VT, N0.getOperand(0),
+                                       N0.getOperand(1), N0.getOperand(2), EVT);
     CombineTo(N, ExtLoad);
     CombineTo(N0.Val, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
               ExtLoad.getValue(1));
