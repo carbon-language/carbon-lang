@@ -467,8 +467,14 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
       HighBits <<= MVT::getSizeInBits(VT) - ShAmt;
       uint64_t TypeMask = MVT::getIntVTBitMask(VT);
       
-      if (SimplifyDemandedBits(Op.getOperand(0),
-                               (DemandedMask << ShAmt) & TypeMask,
+      uint64_t InDemandedMask = (DemandedMask << ShAmt) & TypeMask;
+
+      // If any of the demanded bits are produced by the sign extension, we also
+      // demand the input sign bit.
+      if (HighBits & DemandedMask)
+        InDemandedMask |= MVT::getIntVTSignBit(VT);
+      
+      if (SimplifyDemandedBits(Op.getOperand(0), InDemandedMask,
                                KnownZero, KnownOne, TLO, Depth+1))
         return true;
       assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
