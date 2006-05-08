@@ -880,9 +880,9 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
   const BasicBlock *LLVMBB = CurMBB->getBasicBlock();
   Reloc::Model Relocs = TLI.getTargetMachine().getRelocationModel();
 
-  // If the switch has more than 5 blocks, and at least 75% dense, then emit a
-  // jump table rather than lowering the switch to a binary tree of conditional
-  // branches.
+  // If the switch has more than 5 blocks, and at least 31.25% dense, and the 
+  // target supports indirect branches, then emit a jump table rather than 
+  // lowering the switch to a binary tree of conditional branches.
   // FIXME: Make this work with PIC code
   if (TLI.isOperationLegal(ISD::BRIND, TLI.getPointerTy()) &&
       (Relocs == Reloc::Static || Relocs == Reloc::DynamicNoPIC) &&
@@ -891,7 +891,7 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
     uint64_t Last  = cast<ConstantIntegral>(Cases.back().first)->getRawValue();
     double Density = (double)Cases.size() / (double)((Last - First) + 1ULL);
     
-    if (Density >= 0.75) {
+    if (Density >= 0.3125) {
       // Create a new basic block to hold the code for loading the address
       // of the jump table, and jumping to it.  Update successor information;
       // we will either branch to the default case for the switch, or the jump
