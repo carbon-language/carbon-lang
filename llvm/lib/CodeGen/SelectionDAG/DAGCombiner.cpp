@@ -1948,17 +1948,25 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
       EVT < cast<VTSDNode>(N0.getOperand(1))->getVT()) {
     return DAG.getNode(ISD::SIGN_EXTEND_INREG, VT, N0.getOperand(0), N1);
   }
-  
-  // fold (sext_in_reg (srl X, 24), i8) -> sra X, 24
-  if (N0.getOpcode() == ISD::SRL) {
-    if (ConstantSDNode *ShAmt = dyn_cast<ConstantSDNode>(N0.getOperand(1)))
-      if (ShAmt->getValue()+EVTBits == MVT::getSizeInBits(VT))
-        return DAG.getNode(ISD::SRA, VT, N0.getOperand(0), N0.getOperand(1));
-  }
-  
+
   // fold (sext_in_reg x) -> (zext_in_reg x) if the sign bit is zero
   if (TLI.MaskedValueIsZero(N0, 1ULL << (EVTBits-1)))
     return DAG.getZeroExtendInReg(N0, EVT);
+  
+  // fold (sext_in_reg (srl X, 24), i8) -> sra X, 24
+  // fold (sext_in_reg (srl X, 23), i8) -> sra X, 23 iff possible.
+  // We already fold "(sext_in_reg (srl X, 25), i8) -> srl X, 25" above.
+  if (N0.getOpcode() == ISD::SRL) {
+    if (ConstantSDNode *ShAmt = dyn_cast<ConstantSDNode>(N0.getOperand(1)))
+      if (ShAmt->getValue()+EVTBits <= MVT::getSizeInBits(VT)) {
+        // We can turn this into an SRA iff the input to the SRL is already sign
+        // extended enough.
+        unsigned InSignBits = TLI.ComputeNumSignBits(N0.getOperand(0));
+        if (MVT::getSizeInBits(VT)-(ShAmt->getValue()+EVTBits) < InSignBits)
+          return DAG.getNode(ISD::SRA, VT, N0.getOperand(0), N0.getOperand(1));
+      }
+  }
+  
   // fold (sext_inreg (extload x)) -> (sextload x)
   if (N0.getOpcode() == ISD::EXTLOAD && 
       EVT == cast<VTSDNode>(N0.getOperand(3))->getVT() &&
