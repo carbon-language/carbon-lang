@@ -525,8 +525,7 @@ as:
 
 _foo:
         lwz r2, 0(r3)
-        slwi r4, r2, 1
-        rlwinm r4, r4, 0, 0, 0
+        rlwinm r4, r2, 1, 0, 0
         or r2, r2, r4
         stw r2, 0(r3)
         blr
