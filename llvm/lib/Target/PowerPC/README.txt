@@ -492,8 +492,6 @@ transformation, good for PI.  See PPCISelLowering.cpp, this comment:
 
 ===-------------------------------------------------------------------------===
 
-Another missed rlwimi case:
-
 void %foo(uint *%tmp) {
         %tmp = load uint* %tmp          ; <uint> [#uses=3]
         %tmp1 = shr uint %tmp, ubyte 31         ; <uint> [#uses=1]
@@ -529,3 +527,21 @@ _foo:
         or r2, r2, r4
         stw r2, 0(r3)
         blr
+
+===-------------------------------------------------------------------------===
+
+Distilled from the code above, something wacky is going in the optimizers before
+code generation time...
+
+unsigned foo(unsigned x) {
+  return (unsigned)((unsigned char)(x >> 30) | (unsigned char)(x >> 31)) << 31;
+}
+
+unsigned bar(unsigned x) {
+  return ((x >> 30) | (x >> 31)) << 31;
+}
+
+generate different code when -O is passed to llvm-gcc.  However, when no
+optimization is specified and the output is passed into opt with just -mem2reg
+and -instcombine, the good code comes out of both. Something is happening before
+instcombine to confuse it, and not delete the no-op casts.
