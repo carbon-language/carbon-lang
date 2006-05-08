@@ -1176,3 +1176,40 @@ andl $65535, %EAX
 The former can also be used when the two-addressy nature of the 'and' would
 require a copy to be inserted (in X86InstrInfo::convertToThreeAddress).
 
+//===---------------------------------------------------------------------===//
+
+This code generates ugly code, probably due to costs being off or something:
+
+void %test(float* %P, <4 x float>* %P2 ) {
+        %xFloat0.688 = load float* %P
+        %loadVector37.712 = load <4 x float>* %P2
+        %inFloat3.713 = insertelement <4 x float> %loadVector37.712, float 0.000000e+00, uint 3
+        store <4 x float> %inFloat3.713, <4 x float>* %P2
+        ret void
+}
+
+Generates:
+
+_test:
+        pxor %xmm0, %xmm0
+        movd %xmm0, %eax        ;; EAX = 0!
+        movl 8(%esp), %ecx
+        movaps (%ecx), %xmm0
+        pinsrw $6, %eax, %xmm0
+        shrl $16, %eax          ;; EAX = 0 again!
+        pinsrw $7, %eax, %xmm0
+        movaps %xmm0, (%ecx)
+        ret
+
+It would be better to generate:
+
+_test:
+        movl 8(%esp), %ecx
+        movaps (%ecx), %xmm0
+	xor %eax, %eax
+        pinsrw $6, %eax, %xmm0
+        pinsrw $7, %eax, %xmm0
+        movaps %xmm0, (%ecx)
+        ret
+
+or use pxor (to make a zero vector) and shuffle (to insert it).
