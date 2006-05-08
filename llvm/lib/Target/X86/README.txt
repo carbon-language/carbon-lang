@@ -1166,4 +1166,13 @@ pressure.  The scheduling issue is more pronounced without -static.
 The 2) marked instructions are the lowered form of the 1,undef,3,4 
 shufflevector.  It seems that there should be a better way to do it :)
 
+//===---------------------------------------------------------------------===//
+
+If shorter, we should use things like:
+movzwl %ax, %eax
+instead of:
+andl $65535, %EAX
+
+The former can also be used when the two-addressy nature of the 'and' would
+require a copy to be inserted (in X86InstrInfo::convertToThreeAddress).
 
