@@ -1575,6 +1575,11 @@ SDOperand DAGCombiner::visitSRA(SDNode *N) {
     }
   }
   
+  // Simplify, based on bits shifted out of the LHS. 
+  if (N1C && SimplifyDemandedBits(SDOperand(N, 0)))
+    return SDOperand(N, 0);
+  
+  
   // If the sign bit is known to be zero, switch this to a SRL.
   if (TLI.MaskedValueIsZero(N0, MVT::getIntVTSignBit(VT)))
     return DAG.getNode(ISD::SRL, VT, N0, N1);
