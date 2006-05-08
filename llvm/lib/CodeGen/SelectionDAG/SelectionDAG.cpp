@@ -1439,11 +1439,14 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       case ISD::FSUB:
       case ISD::FDIV:
       case ISD::FREM:
+      case ISD::SRA:
         return N1;     // fold op(undef, arg2) -> undef
       case ISD::UDIV:
       case ISD::SDIV:
       case ISD::UREM:
       case ISD::SREM:
+      case ISD::SRL:
+      case ISD::SHL:
         return getConstant(0, VT);    // fold op(undef, arg2) -> 0
       }
     }
@@ -1467,9 +1470,13 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       return N2;       // fold op(arg1, undef) -> undef
     case ISD::MUL: 
     case ISD::AND:
+    case ISD::SRL:
+    case ISD::SHL:
       return getConstant(0, VT);  // fold op(arg1, undef) -> 0
     case ISD::OR:
       return getConstant(MVT::getIntVTBitMask(VT), VT);
+    case ISD::SRA:
+      return N1;
     }
   }
 
