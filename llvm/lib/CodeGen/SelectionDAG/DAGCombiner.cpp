@@ -1936,7 +1936,7 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
   unsigned EVTBits = MVT::getSizeInBits(EVT);
   
   // fold (sext_in_reg c1) -> c1
-  if (isa<ConstantSDNode>(N0))
+  if (isa<ConstantSDNode>(N0) || N0.getOpcode() == ISD::UNDEF)
     return DAG.getNode(ISD::SIGN_EXTEND_INREG, VT, N0, N1);
   
   // If the input is already sign extended, just drop the extension.
@@ -1947,6 +1947,13 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
   if (N0.getOpcode() == ISD::SIGN_EXTEND_INREG &&
       EVT < cast<VTSDNode>(N0.getOperand(1))->getVT()) {
     return DAG.getNode(ISD::SIGN_EXTEND_INREG, VT, N0.getOperand(0), N1);
+  }
+  
+  // fold (sext_in_reg (srl X, 24), i8) -> sra X, 24
+  if (N0.getOpcode() == ISD::SRL) {
+    if (ConstantSDNode *ShAmt = dyn_cast<ConstantSDNode>(N0.getOperand(1)))
+      if (ShAmt->getValue()+EVTBits == MVT::getSizeInBits(VT))
+        return DAG.getNode(ISD::SRA, VT, N0.getOperand(0), N0.getOperand(1));
   }
   
   // fold (sext_in_reg x) -> (zext_in_reg x) if the sign bit is zero
