@@ -89,6 +89,16 @@ void RegisterInfoEmitter::runHeader(std::ostream &OS) {
   OS << "} // End llvm namespace \n";
 }
 
+bool isSubRegisterClass(const CodeGenRegisterClass &RC,
+                        std::set<Record*> &RegSet) {
+  for (unsigned i = 0, e = RC.Elements.size(); i != e; ++i) {
+    Record *Reg = RC.Elements[i];
+    if (!RegSet.count(Reg))
+      return false;
+  }
+  return true;
+}
+
 // RegisterInfoEmitter::run - Main register file description emitter.
 //
 void RegisterInfoEmitter::run(std::ostream &OS) {
@@ -130,7 +140,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
     }
     OS << "\n  };\n\n";
   }
-  
+
   // Emit the ValueType arrays for each RegisterClass
   for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc) {
     const CodeGenRegisterClass &RC = RegisterClasses[rc];
@@ -155,12 +165,48 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
     for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i)
       OS << "  " << RegisterClasses[i].getName()  << "Class\t"
          << RegisterClasses[i].getName() << "RegClass;\n";
-    
+
+    OS << "\n";
+    // Emit the sub-classes array for each RegisterClass
+    for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc) {
+      const CodeGenRegisterClass &RC = RegisterClasses[rc];
+
+      // Give the register class a legal C name if it's anonymous.
+      std::string Name = RC.TheDef->getName();
+
+      std::set<Record*> RegSet;
+      for (unsigned i = 0, e = RC.Elements.size(); i != e; ++i) {
+        Record *Reg = RC.Elements[i];
+        RegSet.insert(Reg);
+      }
+
+      OS << "  // " << Name 
+         << " Register Class sub-classes...\n  const TargetRegisterClass* "
+         << Name << "Subclasses [] = {\n    ";
+
+      bool Empty = true;
+      for (unsigned rc2 = 0, e2 = RegisterClasses.size(); rc2 != e2; ++rc2) {
+        const CodeGenRegisterClass &RC2 = RegisterClasses[rc2];
+        if (rc == rc2 || RC2.Elements.size() > RC.Elements.size() ||
+            RC.SpillSize != RC2.SpillSize || !isSubRegisterClass(RC2, RegSet))
+          continue;
+      
+        if (!Empty) OS << ", ";
+        OS << "&" << getQualifiedName(RC2.TheDef) << "RegClass";
+        Empty = false;
+      }
+
+      OS << (!Empty ? ", " : "") << "NULL";
+      OS << "\n  };\n\n";
+    }
+
     for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
       const CodeGenRegisterClass &RC = RegisterClasses[i];
       OS << RC.MethodBodies << "\n";
       OS << RC.getName() << "Class::" << RC.getName() 
-         << "Class()  : TargetRegisterClass(" << RC.getName() + "VTs" << ", "
+         << "Class()  : TargetRegisterClass("
+         << RC.getName() + "VTs" << ", "
+         << RC.getName() + "Subclasses" << ", "
          << RC.SpillSize/8 << ", "
          << RC.SpillAlignment/8 << ", " << RC.getName() << ", "
          << RC.getName() << " + " << RC.Elements.size() << ") {}\n";
