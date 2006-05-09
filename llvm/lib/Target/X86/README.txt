@@ -1126,48 +1126,6 @@ Don't know if unpckhpd is faster. But it is shorter.
 
 //===---------------------------------------------------------------------===//
 
-This testcase:
-
-%G1 = weak global <4 x float> zeroinitializer           ; <<4 x float>*> [#uses=1]
-%G2 = weak global <4 x float> zeroinitializer           ; <<4 x float>*> [#uses=1]
-%G3 = weak global <4 x float> zeroinitializer           ; <<4 x float>*> [#uses=1]
-%G4 = weak global <4 x float> zeroinitializer           ; <<4 x float>*> [#uses=1]
-
-implementation   ; Functions:
-
-void %test() {
-        %tmp = load <4 x float>* %G1            ; <<4 x float>> [#uses=2]
-        %tmp2 = load <4 x float>* %G2           ; <<4 x float>> [#uses=2]
-        %tmp135 = shufflevector <4 x float> %tmp, <4 x float> %tmp2, <4 x uint> < uint 0, uint 4, uint 1, uint 5 >            ; <<4 x float>> [#uses=1]
-        store <4 x float> %tmp135, <4 x float>* %G3
-        %tmp293 = shufflevector <4 x float> %tmp, <4 x float> %tmp2, <4 x uint> < uint 1, uint undef, uint 3, uint 4 >        ; <<4 x float>> [#uses=1]
-        store <4 x float> %tmp293, <4 x float>* %G4
-        ret void
-}
-
-Compiles (llc -march=x86 -mcpu=yonah -relocation-model=static) to:
-
-_test:
-        movaps _G2, %xmm0
-        movaps _G1, %xmm1
-        movaps %xmm1, %xmm2
-2)      shufps $3, %xmm0, %xmm2
-        movaps %xmm1, %xmm3
-2)      shufps $1, %xmm0, %xmm3
-1)      unpcklps %xmm0, %xmm1
-2)      shufps $128, %xmm2, %xmm3
-1)      movaps %xmm1, _G3
-        movaps %xmm3, _G4
-        ret
-
-The 1) marked instructions could be scheduled better for reduced register 
-pressure.  The scheduling issue is more pronounced without -static.
-
-The 2) marked instructions are the lowered form of the 1,undef,3,4 
-shufflevector.  It seems that there should be a better way to do it :)
-
-//===---------------------------------------------------------------------===//
-
 If shorter, we should use things like:
 movzwl %ax, %eax
 instead of:
