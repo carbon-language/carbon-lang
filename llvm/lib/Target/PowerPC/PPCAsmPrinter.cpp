@@ -511,10 +511,10 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
-    SwitchToTextSection(".text", F);
+    SwitchToTextSection("\t.text", F);
     break;
   case Function::ExternalLinkage:
-    SwitchToTextSection(".text", F);
+    SwitchToTextSection("\t.text", F);
     O << "\t.globl\t" << CurrentFnName << "\n";
     break;
   case Function::WeakLinkage:
@@ -595,10 +595,10 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
         O << "\t.zerofill __DATA, __common, " << name << ", "
           << Size << ", " << Align;
       } else if (I->hasInternalLinkage()) {
-        SwitchToDataSection(".data", I);
+        SwitchToDataSection("\t.data", I);
         O << LCOMMDirective << name << "," << Size << "," << Align;
       } else {
-        SwitchToDataSection(".data", I);
+        SwitchToDataSection("\t.data", I);
         O << ".comm " << name << "," << Size;
       }
       O << "\t\t; '" << I->getName() << "'\n";
@@ -618,7 +618,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
         O << "\t.globl " << name << "\n";
         // FALL THROUGH
       case GlobalValue::InternalLinkage:
-        SwitchToDataSection(".data", I);
+        SwitchToDataSection("\t.data", I);
         break;
       default:
         std::cerr << "Unknown linkage type!";
