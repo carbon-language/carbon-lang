@@ -3071,8 +3071,26 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   case ISD::FREM:
   case ISD::FCOPYSIGN:
     // These operators require that their input be fp extended.
-    Tmp1 = PromoteOp(Node->getOperand(0));
-    Tmp2 = PromoteOp(Node->getOperand(1));
+    switch (getTypeAction(Node->getOperand(0).getValueType())) {
+      case Legal:
+        Tmp1 = LegalizeOp(Node->getOperand(0));
+        break;
+      case Promote:
+        Tmp1 = PromoteOp(Node->getOperand(0));
+        break;
+      case Expand:
+        assert(0 && "not implemented");
+    }
+    switch (getTypeAction(Node->getOperand(1).getValueType())) {
+      case Legal:
+        Tmp2 = LegalizeOp(Node->getOperand(1));
+        break;
+      case Promote:
+        Tmp2 = PromoteOp(Node->getOperand(1));
+        break;
+      case Expand:
+        assert(0 && "not implemented");
+    }
     Result = DAG.getNode(Node->getOpcode(), NVT, Tmp1, Tmp2);
     
     // Perform FP_ROUND: this is probably overly pessimistic.
