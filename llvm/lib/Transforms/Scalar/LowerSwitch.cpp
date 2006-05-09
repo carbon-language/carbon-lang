@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
@@ -32,7 +33,15 @@ namespace {
   /// modifies the CFG!
   class LowerSwitch : public FunctionPass {
   public:
-    bool runOnFunction(Function &F);
+    virtual bool runOnFunction(Function &F);
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      // This is a cluster of orthogonal Transforms
+      AU.addPreserved<UnifyFunctionExitNodes>();
+      AU.addPreservedID(PromoteMemoryToRegisterID);
+      AU.addPreservedID(LowerSelectID);
+    }
+
     typedef std::pair<Constant*, BasicBlock*> Case;
     typedef std::vector<Case>::iterator       CaseItr;
   private:

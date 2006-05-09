@@ -19,6 +19,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
@@ -37,7 +38,11 @@ namespace {
     LowerSelect(bool onlyfp = false) : OnlyFP(onlyfp) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      // Doesn't really preserve anything.  It can certainly destroy the CFG.
+      // This certainly destroys the CFG.
+      // This is a cluster of orthogonal Transforms:
+      AU.addPreserved<UnifyFunctionExitNodes>();
+      AU.addPreservedID(PromoteMemoryToRegisterID);
+      AU.addPreservedID(LowerSwitchID);
     }
 
     bool runOnFunction(Function &F);

@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
@@ -39,6 +40,12 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<TargetData>();
       AU.setPreservesCFG();
+
+      // This is a cluster of orthogonal Transforms:
+      AU.addPreserved<UnifyFunctionExitNodes>();
+      AU.addPreservedID(PromoteMemoryToRegisterID);
+      AU.addPreservedID(LowerSelectID);
+      AU.addPreservedID(LowerSwitchID);
     }
 
     /// doPassInitialization - For the lower allocations pass, this ensures that

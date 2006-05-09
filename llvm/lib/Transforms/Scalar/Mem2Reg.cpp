@@ -14,6 +14,7 @@
 
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
+#include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Instructions.h"
 #include "llvm/Function.h"
@@ -37,6 +38,10 @@ namespace {
       AU.addRequired<DominanceFrontier>();
       AU.addRequired<TargetData>();
       AU.setPreservesCFG();
+      // This is a cluster of orthogonal Transforms
+      AU.addPreserved<UnifyFunctionExitNodes>();
+      AU.addPreservedID(LowerSelectID);
+      AU.addPreservedID(LowerSwitchID);
     }
   };
 
