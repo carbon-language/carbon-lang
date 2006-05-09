@@ -37,7 +37,7 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   EmitConstantPool(MF.getConstantPool());
 
   // Print out labels for the function.
-  SwitchSection(".code", MF.getFunction());
+  SwitchToTextSection(".code", MF.getFunction());
   EmitAlignment(4);
   if (MF.getFunction()->getLinkage() == GlobalValue::ExternalLinkage)
     O << "\tpublic " << CurrentFnName << "\n";
@@ -342,14 +342,14 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
     switch (I->getLinkage()) {
     case GlobalValue::LinkOnceLinkage:
     case GlobalValue::WeakLinkage:
-      SwitchSection("", 0);
+      SwitchToDataSection("", 0);
       O << name << "?\tsegment common 'COMMON'\n";
       bCustomSegment = true;
       // FIXME: the default alignment is 16 bytes, but 1, 2, 4, and 256
       // are also available.
       break;
     case GlobalValue::AppendingLinkage:
-      SwitchSection("", 0);
+      SwitchToDataSection("", 0);
       O << name << "?\tsegment public 'DATA'\n";
       bCustomSegment = true;
       // FIXME: the default alignment is 16 bytes, but 1, 2, 4, and 256
@@ -359,7 +359,7 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
       O << "\tpublic " << name << "\n";
       // FALL THROUGH
     case GlobalValue::InternalLinkage:
-      SwitchSection(".data", I);
+      SwitchToDataSection(".data", I);
       break;
     default:
       assert(0 && "Unknown linkage type!");
@@ -378,7 +378,7 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
   
   // Bypass X86SharedAsmPrinter::doFinalization().
   AsmPrinter::doFinalization(M);
-  SwitchSection("", 0);
+  SwitchToDataSection("", 0);
   O << "\tend\n";
   return false; // success
 }

@@ -46,25 +46,26 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
-    SwitchSection(".text", F);
+    SwitchToTextSection(".text", F);
     EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
     break;
   case Function::ExternalLinkage:
-    SwitchSection(".text", F);
+    SwitchToTextSection(".text", F);
     EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
     O << "\t.globl\t" << CurrentFnName << "\n";
     break;
   case Function::WeakLinkage:
   case Function::LinkOnceLinkage:
     if (forDarwin) {
-      SwitchSection(".section __TEXT,__textcoal_nt,coalesced,pure_instructions",
-                    F);
+      SwitchToTextSection(
+                ".section __TEXT,__textcoal_nt,coalesced,pure_instructions", F);
       O << "\t.globl\t" << CurrentFnName << "\n";
       O << "\t.weak_definition\t" << CurrentFnName << "\n";
     } else {
       EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
       O << "\t.section\t.llvm.linkonce.t." << CurrentFnName
         << ",\"ax\",@progbits\n";
+      SwitchToTextSection("", F);
       O << "\t.weak " << CurrentFnName << "\n";
     }
     break;

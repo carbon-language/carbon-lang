@@ -59,10 +59,11 @@ AsmPrinter::AsmPrinter(std::ostream &o, TargetMachine &tm)
 }
 
 
-/// SwitchSection - Switch to the specified section of the executable if we
-/// are not already in it!
+/// SwitchToTextSection - Switch to the specified text section of the executable
+/// if we are not already in it!
 ///
-void AsmPrinter::SwitchSection(const char *NewSection, const GlobalValue *GV) {
+void AsmPrinter::SwitchToTextSection(const char *NewSection,
+                                     const GlobalValue *GV) {
   std::string NS;
 
   // Microsoft ML/MASM has a fundamentally different approach to handling
@@ -78,12 +79,8 @@ void AsmPrinter::SwitchSection(const char *NewSection, const GlobalValue *GV) {
       return;
     }
 
-    bool isData = strcmp(NewSection , ".data") == 0;
-
     if (GV && GV->hasSection())
       NS = GV->getSection();
-    else if (isData)
-      NS = "_data";
     else
       NS = "_text";
 
@@ -91,8 +88,7 @@ void AsmPrinter::SwitchSection(const char *NewSection, const GlobalValue *GV) {
       if (!CurrentSection.empty())
         O << CurrentSection << "\tends\n\n";
       CurrentSection = NS;
-      O << CurrentSection << (isData ? "\tsegment 'DATA'\n"
-                                     : "\tsegment 'CODE'\n");
+      O << CurrentSection << "\tsegment 'CODE'\n";
     }
   } else {
     if (GV && GV->hasSection())
@@ -108,6 +104,52 @@ void AsmPrinter::SwitchSection(const char *NewSection, const GlobalValue *GV) {
   }
 }
 
+/// SwitchToTextSection - Switch to the specified text section of the executable
+/// if we are not already in it!
+///
+void AsmPrinter::SwitchToDataSection(const char *NewSection,
+                                     const GlobalValue *GV) {
+  std::string NS;
+  
+  // Microsoft ML/MASM has a fundamentally different approach to handling
+  // sections.
+  
+  if (MLSections) {
+    if (*NewSection == 0) {
+      // Simply end the current section, if any.
+      if (!CurrentSection.empty()) {
+        O << CurrentSection << "\tends\n\n";
+        CurrentSection.clear();
+      }
+      return;
+    }
+    
+    if (GV && GV->hasSection())
+      NS = GV->getSection();
+    else
+      NS = "_data";
+    
+    if (CurrentSection != NS) {
+      if (!CurrentSection.empty())
+        O << CurrentSection << "\tends\n\n";
+      CurrentSection = NS;
+      O << CurrentSection << "\tsegment 'DATA'\n";
+    }
+  } else {
+    if (GV && GV->hasSection())
+      NS = SwitchToSectionDirective + GV->getSection();
+    else
+      NS = std::string("\t")+NewSection;
+    
+    if (CurrentSection != NS) {
+      CurrentSection = NS;
+      if (!CurrentSection.empty())
+        O << CurrentSection << '\n';
+    }
+  }
+}
+
+
 bool AsmPrinter::doInitialization(Module &M) {
   Mang = new Mangler(M, GlobalPrefix);
   
@@ -116,7 +158,7 @@ bool AsmPrinter::doInitialization(Module &M) {
       << M.getModuleInlineAsm()
       << "\n" << CommentString << " End of file scope inline assembly\n";
 
-  SwitchSection("", 0);   // Reset back to no section.
+  SwitchToDataSection("", 0);   // Reset back to no section.
   
   if (MachineDebugInfo *DebugInfo = getAnalysisToUpdate<MachineDebugInfo>()) {
     DebugInfo->AnalyzeModule(M);
@@ -146,7 +188,7 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
   if (CP.empty()) return;
   const TargetData *TD = TM.getTargetData();
   
-  SwitchSection(ConstantPoolSection, 0);
+  SwitchToDataSection(ConstantPoolSection, 0);
   EmitAlignment(MCP->getConstantPoolAlignment());
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     O << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << '_' << i
@@ -175,7 +217,7 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI) {
           TM.getRelocationModel() == Reloc::DynamicNoPIC) &&
          "Unhandled relocation model emitting jump table information!");
   
-  SwitchSection(JumpTableSection, 0);
+  SwitchToDataSection(JumpTableSection, 0);
   EmitAlignment(Log2_32(TD->getPointerAlignment()));
   for (unsigned i = 0, e = JT.size(); i != e; ++i) {
     O << PrivateGlobalPrefix << "JTI" << getFunctionNumber() << '_' << i 
@@ -204,14 +246,14 @@ bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
     return true;  // No need to emit this at all.
 
   if (GV->getName() == "llvm.global_ctors" && GV->use_empty()) {
-    SwitchSection(StaticCtorsSection, 0);
+    SwitchToDataSection(StaticCtorsSection, 0);
     EmitAlignment(2, 0);
     EmitXXStructorList(GV->getInitializer());
     return true;
   } 
   
   if (GV->getName() == "llvm.global_dtors" && GV->use_empty()) {
-    SwitchSection(StaticDtorsSection, 0);
+    SwitchToDataSection(StaticDtorsSection, 0);
     EmitAlignment(2, 0);
     EmitXXStructorList(GV->getInitializer());
     return true;

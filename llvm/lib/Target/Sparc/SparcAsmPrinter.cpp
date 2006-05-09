@@ -98,8 +98,8 @@ bool SparcAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   CurrentFnName = Mang->getValueName(MF.getFunction());
 
   // Print out labels for the function.
-  O << "\t.text\n";
-  O << "\t.align 16\n";
+  SwitchToTextSection(".text", MF.getFunction());
+  EmitAlignment(4, MF.getFunction());
   O << "\t.globl\t" << CurrentFnName << "\n";
   O << "\t.type\t" << CurrentFnName << ", #function\n";
   O << CurrentFnName << ":\n";
@@ -238,7 +238,7 @@ bool SparcAsmPrinter::doFinalization(Module &M) {
       if (C->isNullValue() &&
           (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
            I->hasWeakLinkage() /* FIXME: Verify correct */)) {
-        SwitchSection(".data", I);
+        SwitchToDataSection(".data", I);
         if (I->hasInternalLinkage())
           O << "\t.local " << name << "\n";
 
@@ -253,7 +253,7 @@ bool SparcAsmPrinter::doFinalization(Module &M) {
         case GlobalValue::WeakLinkage:   // FIXME: Verify correct for weak.
           // Nonnull linkonce -> weak
           O << "\t.weak " << name << "\n";
-          SwitchSection("", I);
+          SwitchToDataSection("", I);
           O << "\t.section\t\".llvm.linkonce.d." << name
             << "\",\"aw\",@progbits\n";
           break;
@@ -267,9 +267,9 @@ bool SparcAsmPrinter::doFinalization(Module &M) {
           // FALL THROUGH
         case GlobalValue::InternalLinkage:
           if (C->isNullValue())
-            SwitchSection(".bss", I);
+            SwitchToDataSection(".bss", I);
           else
-            SwitchSection(".data", I);
+            SwitchToDataSection(".data", I);
           break;
         case GlobalValue::GhostLinkage:
           std::cerr << "Should not have any unmaterialized functions!\n";

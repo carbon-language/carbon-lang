@@ -511,16 +511,16 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
-    SwitchSection(".text", F);
+    SwitchToTextSection(".text", F);
     break;
   case Function::ExternalLinkage:
-    SwitchSection(".text", F);
+    SwitchToTextSection(".text", F);
     O << "\t.globl\t" << CurrentFnName << "\n";
     break;
   case Function::WeakLinkage:
   case Function::LinkOnceLinkage:
-    SwitchSection(".section __TEXT,__textcoal_nt,coalesced,pure_instructions",
-                  F);
+    SwitchToTextSection(
+                ".section __TEXT,__textcoal_nt,coalesced,pure_instructions", F);
     O << "\t.globl\t" << CurrentFnName << "\n";
     O << "\t.weak_definition\t" << CurrentFnName << "\n";
     break;
@@ -595,10 +595,10 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
         O << "\t.zerofill __DATA, __common, " << name << ", "
           << Size << ", " << Align;
       } else if (I->hasInternalLinkage()) {
-        SwitchSection(".data", I);
+        SwitchToDataSection(".data", I);
         O << LCOMMDirective << name << "," << Size << "," << Align;
       } else {
-        SwitchSection(".data", I);
+        SwitchToDataSection(".data", I);
         O << ".comm " << name << "," << Size;
       }
       O << "\t\t; '" << I->getName() << "'\n";
@@ -608,7 +608,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
       case GlobalValue::WeakLinkage:
         O << "\t.globl " << name << '\n'
           << "\t.weak_definition " << name << '\n';
-        SwitchSection(".section __DATA,__datacoal_nt,coalesced", I);
+        SwitchToDataSection(".section __DATA,__datacoal_nt,coalesced", I);
         break;
       case GlobalValue::AppendingLinkage:
         // FIXME: appending linkage variables should go into a section of
@@ -618,7 +618,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
         O << "\t.globl " << name << "\n";
         // FALL THROUGH
       case GlobalValue::InternalLinkage:
-        SwitchSection(".data", I);
+        SwitchToDataSection(".data", I);
         break;
       default:
         std::cerr << "Unknown linkage type!";
@@ -636,8 +636,8 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
   if (TM.getRelocationModel() == Reloc::PIC) {
     for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end();
          i != e; ++i) {
-      SwitchSection(".section __TEXT,__picsymbolstub1,symbol_stubs,"
-                    "pure_instructions,32", 0);
+      SwitchToTextSection(".section __TEXT,__picsymbolstub1,symbol_stubs,"
+                          "pure_instructions,32", 0);
       EmitAlignment(2);
       O << "L" << *i << "$stub:\n";
       O << "\t.indirect_symbol " << *i << "\n";
@@ -650,7 +650,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
       O << "\tlwzu r12,lo16(L" << *i << "$lazy_ptr-L0$" << *i << ")(r11)\n";
       O << "\tmtctr r12\n";
       O << "\tbctr\n";
-      SwitchSection(".lazy_symbol_pointer", 0);
+      SwitchToDataSection(".lazy_symbol_pointer", 0);
       O << "L" << *i << "$lazy_ptr:\n";
       O << "\t.indirect_symbol " << *i << "\n";
       O << "\t.long dyld_stub_binding_helper\n";
@@ -658,8 +658,8 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
   } else {
     for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end();
          i != e; ++i) {
-      SwitchSection(".section __TEXT,__symbol_stub1,symbol_stubs,"
-                    "pure_instructions,16", 0);
+      SwitchToTextSection(".section __TEXT,__symbol_stub1,symbol_stubs,"
+                          "pure_instructions,16", 0);
       EmitAlignment(4);
       O << "L" << *i << "$stub:\n";
       O << "\t.indirect_symbol " << *i << "\n";
@@ -667,7 +667,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
       O << "\tlwzu r12,lo16(L" << *i << "$lazy_ptr)(r11)\n";
       O << "\tmtctr r12\n";
       O << "\tbctr\n";
-      SwitchSection(".lazy_symbol_pointer", 0);
+      SwitchToDataSection(".lazy_symbol_pointer", 0);
       O << "L" << *i << "$lazy_ptr:\n";
       O << "\t.indirect_symbol " << *i << "\n";
       O << "\t.long dyld_stub_binding_helper\n";
@@ -678,7 +678,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
 
   // Output stubs for external and common global variables.
   if (GVStubs.begin() != GVStubs.end()) {
-    SwitchSection(".non_lazy_symbol_pointer", 0);
+    SwitchToDataSection(".non_lazy_symbol_pointer", 0);
     for (std::set<std::string>::iterator I = GVStubs.begin(),
          E = GVStubs.end(); I != E; ++I) {
       O << "L" << *I << "$non_lazy_ptr:\n";
@@ -747,7 +747,7 @@ bool AIXAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 }
 
 bool AIXAsmPrinter::doInitialization(Module &M) {
-  SwitchSection("", 0);
+  SwitchToDataSection("", 0);
   const TargetData *TD = TM.getTargetData();
 
   O << "\t.machine \"ppc64\"\n"

@@ -119,7 +119,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
           O << "\t.zerofill __DATA__, __common, " << name << ", "
             << Size << ", " << Align;
       } else {
-        SwitchSection(".data", I);
+        SwitchToDataSection(".data", I);
         if (LCOMMDirective != NULL) {
           if (I->hasInternalLinkage()) {
             O << LCOMMDirective << name << "," << Size;
@@ -143,7 +143,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
         if (forDarwin) {
           O << "\t.globl " << name << "\n"
             << "\t.weak_definition " << name << "\n";
-          SwitchSection(".section __DATA,__datacoal_nt,coalesced", I);
+          SwitchToDataSection(".section __DATA,__datacoal_nt,coalesced", I);
         } else {
           O << "\t.section\t.llvm.linkonce.d." << name << ",\"aw\",@progbits\n";
           O << "\t.weak " << name << "\n";
@@ -157,7 +157,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
         O << "\t.globl " << name << "\n";
         // FALL THROUGH
       case GlobalValue::InternalLinkage:
-        SwitchSection(".data", I);
+        SwitchToDataSection(".data", I);
         break;
       default:
         assert(0 && "Unknown linkage type!");
@@ -175,14 +175,14 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
   }
   
   if (forDarwin) {
-    SwitchSection("", 0);
+    SwitchToDataSection("", 0);
 
     // Output stubs for dynamically-linked functions
     unsigned j = 1;
     for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end();
          i != e; ++i, ++j) {
-      SwitchSection(".section __IMPORT,__jump_table,symbol_stubs,"
-                    "self_modifying_code+pure_instructions,5", 0);
+      SwitchToDataSection(".section __IMPORT,__jump_table,symbol_stubs,"
+                          "self_modifying_code+pure_instructions,5", 0);
       O << "L" << *i << "$stub:\n";
       O << "\t.indirect_symbol " << *i << "\n";
       O << "\thlt ; hlt ; hlt ; hlt ; hlt\n";
@@ -192,7 +192,8 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
 
     // Output stubs for external and common global variables.
     if (GVStubs.begin() != GVStubs.end())
-      SwitchSection(".section __IMPORT,__pointers,non_lazy_symbol_pointers", 0);
+      SwitchToDataSection(
+                    ".section __IMPORT,__pointers,non_lazy_symbol_pointers", 0);
     for (std::set<std::string>::iterator i = GVStubs.begin(), e = GVStubs.end();
          i != e; ++i) {
       O << "L" << *i << "$non_lazy_ptr:\n";

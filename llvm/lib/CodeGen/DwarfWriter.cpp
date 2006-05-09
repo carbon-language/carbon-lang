@@ -1647,33 +1647,33 @@ void DwarfWriter::ConstructRootScope(DebugScope *RootScope) {
 ///
 void DwarfWriter::EmitInitial() const {
   // Dwarf sections base addresses.
-  Asm->SwitchSection(DwarfFrameSection, 0);
+  Asm->SwitchToDataSection(DwarfFrameSection, 0);
   EmitLabel("section_frame", 0);
-  Asm->SwitchSection(DwarfInfoSection, 0);
+  Asm->SwitchToDataSection(DwarfInfoSection, 0);
   EmitLabel("section_info", 0);
   EmitLabel("info", 0);
-  Asm->SwitchSection(DwarfAbbrevSection, 0);
+  Asm->SwitchToDataSection(DwarfAbbrevSection, 0);
   EmitLabel("section_abbrev", 0);
   EmitLabel("abbrev", 0);
-  Asm->SwitchSection(DwarfARangesSection, 0);
+  Asm->SwitchToDataSection(DwarfARangesSection, 0);
   EmitLabel("section_aranges", 0);
-  Asm->SwitchSection(DwarfMacInfoSection, 0);
+  Asm->SwitchToDataSection(DwarfMacInfoSection, 0);
   EmitLabel("section_macinfo", 0);
-  Asm->SwitchSection(DwarfLineSection, 0);
+  Asm->SwitchToDataSection(DwarfLineSection, 0);
   EmitLabel("section_line", 0);
   EmitLabel("line", 0);
-  Asm->SwitchSection(DwarfLocSection, 0);
+  Asm->SwitchToDataSection(DwarfLocSection, 0);
   EmitLabel("section_loc", 0);
-  Asm->SwitchSection(DwarfPubNamesSection, 0);
+  Asm->SwitchToDataSection(DwarfPubNamesSection, 0);
   EmitLabel("section_pubnames", 0);
-  Asm->SwitchSection(DwarfStrSection, 0);
+  Asm->SwitchToDataSection(DwarfStrSection, 0);
   EmitLabel("section_str", 0);
-  Asm->SwitchSection(DwarfRangesSection, 0);
+  Asm->SwitchToDataSection(DwarfRangesSection, 0);
   EmitLabel("section_ranges", 0);
 
-  Asm->SwitchSection(TextSection, 0);
+  Asm->SwitchToDataSection(TextSection, 0);
   EmitLabel("text_begin", 0);
-  Asm->SwitchSection(DataSection, 0);
+  Asm->SwitchToDataSection(DataSection, 0);
   EmitLabel("data_begin", 0);
 }
 
@@ -1849,7 +1849,7 @@ void DwarfWriter::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
 ///
 void DwarfWriter::EmitDebugInfo() const {
   // Start debug info section.
-  Asm->SwitchSection(DwarfInfoSection, 0);
+  Asm->SwitchToDataSection(DwarfInfoSection, 0);
   
   // Process each compile unit.
   for (unsigned i = 0, N = CompileUnits.size(); i < N; ++i) {
@@ -1884,7 +1884,7 @@ void DwarfWriter::EmitAbbreviations() const {
   // Check to see if it is worth the effort.
   if (!Abbreviations.empty()) {
     // Start the debug abbrev section.
-    Asm->SwitchSection(DwarfAbbrevSection, 0);
+    Asm->SwitchToDataSection(DwarfAbbrevSection, 0);
     
     EmitLabel("abbrev_begin", 0);
     
@@ -1918,7 +1918,7 @@ void DwarfWriter::EmitDebugLines() const {
   const int MaxLineDelta = 255 + MinLineDelta;
 
   // Start the dwarf line section.
-  Asm->SwitchSection(DwarfLineSection, 0);
+  Asm->SwitchToDataSection(DwarfLineSection, 0);
   
   // Construct the section header.
   
@@ -2061,7 +2061,7 @@ void DwarfWriter::EmitInitialDebugFrame() {
       AddressSize : -AddressSize;
 
   // Start the dwarf frame section.
-  Asm->SwitchSection(DwarfFrameSection, 0);
+  Asm->SwitchToDataSection(DwarfFrameSection, 0);
 
   EmitDifference("frame_common_end", 0,
                  "frame_common_begin", 0);
@@ -2090,7 +2090,7 @@ void DwarfWriter::EmitInitialDebugFrame() {
 /// section.
 void DwarfWriter::EmitFunctionDebugFrame() {
   // Start the dwarf frame section.
-  Asm->SwitchSection(DwarfFrameSection, 0);
+  Asm->SwitchToDataSection(DwarfFrameSection, 0);
   
   EmitDifference("frame_end", SubprogramCount,
                  "frame_begin", SubprogramCount);
@@ -2119,7 +2119,7 @@ void DwarfWriter::EmitFunctionDebugFrame() {
 ///
 void DwarfWriter::EmitDebugPubNames() {
   // Start the dwarf pubnames section.
-  Asm->SwitchSection(DwarfPubNamesSection, 0);
+  Asm->SwitchToDataSection(DwarfPubNamesSection, 0);
     
   // Process each compile unit.
   for (unsigned i = 0, N = CompileUnits.size(); i < N; ++i) {
@@ -2166,7 +2166,7 @@ void DwarfWriter::EmitDebugStr() {
   // Check to see if it is worth the effort.
   if (!StringPool.empty()) {
     // Start the dwarf str section.
-    Asm->SwitchSection(DwarfStrSection, 0);
+    Asm->SwitchToDataSection(DwarfStrSection, 0);
     
     // For each of strings in the string pool.
     for (unsigned StringID = 1, N = StringPool.size();
@@ -2186,7 +2186,7 @@ void DwarfWriter::EmitDebugStr() {
 ///
 void DwarfWriter::EmitDebugLoc() {
   // Start the dwarf loc section.
-  Asm->SwitchSection(DwarfLocSection, 0);
+  Asm->SwitchToDataSection(DwarfLocSection, 0);
   
   O << "\n";
 }
@@ -2195,7 +2195,7 @@ void DwarfWriter::EmitDebugLoc() {
 ///
 void DwarfWriter::EmitDebugARanges() {
   // Start the dwarf aranges section.
-  Asm->SwitchSection(DwarfARangesSection, 0);
+  Asm->SwitchToDataSection(DwarfARangesSection, 0);
   
   // FIXME - Mock up
 #if 0
@@ -2236,7 +2236,7 @@ void DwarfWriter::EmitDebugARanges() {
 ///
 void DwarfWriter::EmitDebugRanges() {
   // Start the dwarf ranges section.
-  Asm->SwitchSection(DwarfRangesSection, 0);
+  Asm->SwitchToDataSection(DwarfRangesSection, 0);
   
   O << "\n";
 }
@@ -2245,7 +2245,7 @@ void DwarfWriter::EmitDebugRanges() {
 ///
 void DwarfWriter::EmitDebugMacInfo() {
   // Start the dwarf macinfo section.
-  Asm->SwitchSection(DwarfMacInfoSection, 0);
+  Asm->SwitchToDataSection(DwarfMacInfoSection, 0);
   
   O << "\n";
 }
@@ -2381,9 +2381,9 @@ void DwarfWriter::EndModule() {
   EOL("Dwarf End Module");
   
   // Standard sections final addresses.
-  Asm->SwitchSection(TextSection, 0);
+  Asm->SwitchToTextSection(TextSection, 0);
   EmitLabel("text_end", 0);
-  Asm->SwitchSection(DataSection, 0);
+  Asm->SwitchToDataSection(DataSection, 0);
   EmitLabel("data_end", 0);
   
   // Compute DIE offsets and sizes.

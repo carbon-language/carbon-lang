@@ -142,7 +142,8 @@ bool IA64AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   EmitConstantPool(MF.getConstantPool());
 
   // Print out labels for the function.
-  SwitchSection("\n\t.section .text, \"ax\", \"progbits\"\n", MF.getFunction());
+  SwitchToTextSection("\n\t.section .text, \"ax\", \"progbits\"\n", 
+                      MF.getFunction());
   // ^^  means "Allocated instruXions in mem, initialized"
   EmitAlignment(5);
   O << "\t.global\t" << CurrentFnName << "\n";
@@ -282,7 +283,7 @@ bool IA64AsmPrinter::doFinalization(Module &M) {
       if (C->isNullValue() &&
           (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
            I->hasWeakLinkage() /* FIXME: Verify correct */)) {
-        SwitchSection(".data", I);
+        SwitchToDataSection(".data", I);
         if (I->hasInternalLinkage()) {
           O << "\t.lcomm " << name << "#," << TD->getTypeSize(C->getType())
           << "," << (1 << Align);
@@ -302,7 +303,7 @@ bool IA64AsmPrinter::doFinalization(Module &M) {
             O << "\t.weak " << name << "\n";
             O << "\t.section\t.llvm.linkonce.d." << name
               << ", \"aw\", \"progbits\"\n";
-            SwitchSection("", I);
+            SwitchToDataSection("", I);
             break;
           case GlobalValue::AppendingLinkage:
             // FIXME: appending linkage variables should go into a section of
@@ -312,7 +313,7 @@ bool IA64AsmPrinter::doFinalization(Module &M) {
             O << "\t.global " << name << "\n";
             // FALL THROUGH
           case GlobalValue::InternalLinkage:
-            SwitchSection(C->isNullValue() ? ".bss" : ".data", I);
+            SwitchToDataSection(C->isNullValue() ? ".bss" : ".data", I);
             break;
           case GlobalValue::GhostLinkage:
             std::cerr << "GhostLinkage cannot appear in IA64AsmPrinter!\n";

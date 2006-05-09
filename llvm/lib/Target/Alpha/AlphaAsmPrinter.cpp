@@ -151,7 +151,7 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out labels for the function.
   const Function *F = MF.getFunction();
-  SwitchSection(".text", F);
+  SwitchToTextSection(".text", F);
   EmitAlignment(4, F);
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
@@ -221,7 +221,7 @@ bool AlphaAsmPrinter::doFinalization(Module &M) {
       if (C->isNullValue() &&
           (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
            I->hasWeakLinkage() /* FIXME: Verify correct */)) {
-        SwitchSection("\t.section .data", I);
+        SwitchToDataSection("\t.section .data", I);
         if (I->hasInternalLinkage())
           O << "\t.local " << name << "\n";
 
@@ -235,7 +235,7 @@ bool AlphaAsmPrinter::doFinalization(Module &M) {
           // Nonnull linkonce -> weak
           O << "\t.weak " << name << "\n";
           O << "\t.section\t.llvm.linkonce.d." << name << ",\"aw\",@progbits\n";
-          SwitchSection("", I);
+          SwitchToDataSection("", I);
           break;
         case GlobalValue::AppendingLinkage:
           // FIXME: appending linkage variables should go into a section of
@@ -245,8 +245,8 @@ bool AlphaAsmPrinter::doFinalization(Module &M) {
           O << "\t.globl " << name << "\n";
           // FALL THROUGH
         case GlobalValue::InternalLinkage:
-          SwitchSection(C->isNullValue() ? "\t.section .bss" : 
-                        "\t.section .data", I);
+          SwitchToDataSection(C->isNullValue() ? "\t.section .bss" : 
+                              "\t.section .data", I);
           break;
         case GlobalValue::GhostLinkage:
           std::cerr << "GhostLinkage cannot appear in AlphaAsmPrinter!\n";
