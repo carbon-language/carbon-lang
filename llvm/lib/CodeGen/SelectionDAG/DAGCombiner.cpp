@@ -76,7 +76,7 @@ namespace {
     SDOperand CombineTo(SDNode *N, const std::vector<SDOperand> &To) {
       ++NodesCombined;
       DEBUG(std::cerr << "\nReplacing "; N->dump();
-            std::cerr << "\nWith: "; To[0].Val->dump();
+            std::cerr << "\nWith: "; To[0].Val->dump(&DAG);
             std::cerr << " and " << To.size()-1 << " other values\n");
       std::vector<SDNode*> NowDead;
       DAG.ReplaceAllUsesWith(N, To, &NowDead);
@@ -128,7 +128,7 @@ namespace {
       // Replace the old value with the new one.
       ++NodesCombined;
       DEBUG(std::cerr << "\nReplacing "; TLO.Old.Val->dump();
-            std::cerr << "\nWith: "; TLO.New.Val->dump());
+            std::cerr << "\nWith: "; TLO.New.Val->dump(&DAG));
 
       std::vector<SDNode*> NowDead;
       DAG.ReplaceAllUsesOfValueWith(TLO.Old, TLO.New, NowDead);
@@ -577,7 +577,7 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
       // mechanics for us, we have no work to do in this case.
       if (RV.Val != N) {
         DEBUG(std::cerr << "\nReplacing "; N->dump();
-              std::cerr << "\nWith: "; RV.Val->dump();
+              std::cerr << "\nWith: "; RV.Val->dump(&DAG);
               std::cerr << '\n');
         std::vector<SDNode*> NowDead;
         DAG.ReplaceAllUsesWith(N, std::vector<SDOperand>(1, RV), &NowDead);
