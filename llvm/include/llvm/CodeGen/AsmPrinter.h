@@ -137,7 +137,18 @@ namespace llvm {
     /// emit a global to an arbitrary section.  The section name is emited after
     /// this.
     const char *SwitchToSectionDirective;  // Defaults to "\t.section\t"
-    bool MLSections;  // True if Microsoft ML assembler is targetted
+    
+    /// TextSectionStartSuffix - This is printed after each start of section
+    /// directive for text sections.
+    const char *TextSectionStartSuffix;        // Defaults to "".
+
+    /// DataSectionStartSuffix - This is printed after each start of section
+    /// directive for data sections.
+    const char *DataSectionStartSuffix;        // Defaults to "".
+    
+    /// SectionEndDirectiveSuffix - If non-null, the asm printer will close each
+    /// section with the section name and this suffix printed.
+    const char *SectionEndDirectiveSuffix; // Defaults to null.
     
     /// ConstantPoolSection - This is the section that we SwitchToSection right
     /// before emitting the constant pool for a function.
