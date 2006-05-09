@@ -381,8 +381,7 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
   
   // Bypass X86SharedAsmPrinter::doFinalization().
   AsmPrinter::doFinalization(M);
-  SwitchToDataSection("_data", 0);
-  O << "_data\tends\n";
+  SwitchToDataSection("", 0);
   O << "\tend\n";
   return false; // success
 }
