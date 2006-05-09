@@ -305,6 +305,7 @@ bool X86IntelAsmPrinter::doInitialization(Module &M) {
   
   DefaultTextSection = "_text";
   DefaultDataSection = "_data";
+  SwitchToSectionDirective = "";
 
   O << "\t.686\n\t.model flat\n\n";
 
