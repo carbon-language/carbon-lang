@@ -106,7 +106,7 @@ public:
   /// one of the enums that is coming soon (down below)...
   ///
   unsigned getOpcode() const { return getValueType() - InstructionVal; }
-  virtual const char *getOpcodeName() const {
+  const char *getOpcodeName() const {
     return getOpcodeName(getOpcode());
   }
   static const char* getOpcodeName(unsigned OpCode);
