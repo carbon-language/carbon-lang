@@ -35,8 +35,8 @@
 using namespace llvm;
 
 namespace {
-  cl::opt<bool>
-  SchedVertically("sched-vertically", cl::Hidden);
+  cl::opt<bool> SchedVertically("sched-vertically", cl::Hidden);
+  cl::opt<bool> SchedLowerDefNUse("sched-lower-defnuse", cl::Hidden);
 }
 
 namespace {
@@ -198,6 +198,8 @@ private:
   /// of scheduled nodes which are not themselves scheduled.
   std::map<const TargetRegisterClass*, std::set<SUnit*> > OpenNodes;
 
+  /// RegPressureLimits - Keep track of upper limit of register pressure for
+  /// each register class that allows the scheduler to go into vertical mode.
   std::map<const TargetRegisterClass*, unsigned> RegPressureLimits;
 
 public:
@@ -418,7 +420,7 @@ void ScheduleDAGList::Schedule() {
   
   // Build scheduling units.
   BuildSchedUnits();
-  
+
   AvailableQueue->initNodes(SUnits);
   
   // Execute the actual scheduling loop Top-Down or Bottom-Up as appropriate.
@@ -917,6 +919,9 @@ namespace {
     
     void initNodes(const std::vector<SUnit> &sunits) {
       SUnits = &sunits;
+      // Add pseudo dependency edges for two-address nodes.
+      if (SchedLowerDefNUse)
+        AddPseudoTwoAddrDeps();
       // Calculate node priorities.
       CalculatePriorities();
     }
@@ -968,6 +973,7 @@ namespace {
     }
 
   private:
+    void AddPseudoTwoAddrDeps();
     void CalculatePriorities();
     int CalcNodePriority(const SUnit *SU);
   };
@@ -993,18 +999,20 @@ bool ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   if (RIsFloater)
     RBonus += 2;
 
-  // Special tie breaker: if two nodes share a operand, the one that use it
-  // as a def&use operand is preferred.
-  if (LIsTarget && RIsTarget) {
-    if (left->isTwoAddress && !right->isTwoAddress) {
-      SDNode *DUNode = left->Node->getOperand(0).Val;
-      if (DUNode->isOperand(right->Node))
-        LBonus += 2;
-    }
-    if (!left->isTwoAddress && right->isTwoAddress) {
-      SDNode *DUNode = right->Node->getOperand(0).Val;
-      if (DUNode->isOperand(left->Node))
-        RBonus += 2;
+  if (!SchedLowerDefNUse) {
+    // Special tie breaker: if two nodes share a operand, the one that use it
+    // as a def&use operand is preferred.
+    if (LIsTarget && RIsTarget) {
+      if (left->isTwoAddress && !right->isTwoAddress) {
+        SDNode *DUNode = left->Node->getOperand(0).Val;
+        if (DUNode->isOperand(right->Node))
+          LBonus += 2;
+      }
+      if (!left->isTwoAddress && right->isTwoAddress) {
+        SDNode *DUNode = right->Node->getOperand(0).Val;
+        if (DUNode->isOperand(left->Node))
+          RBonus += 2;
+      }
     }
   }
 
@@ -1019,6 +1027,88 @@ bool ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   return false;
 }
 
+static inline bool isCopyFromLiveIn(const SUnit *SU) {
+  SDNode *N = SU->Node;
+  return N->getOpcode() == ISD::CopyFromReg &&
+    N->getOperand(N->getNumOperands()-1).getValueType() != MVT::Flag;
+}
+
+// FIXME: This is probably too slow!
+static void isReachable(SUnit *SU, SUnit *TargetSU,
+                        std::set<SUnit *> &Visited, bool &Reached) {
+  if (Reached) return;
+  if (SU == TargetSU) {
+    Reached = true;
+    return;
+  }
+  if (!Visited.insert(SU).second) return;
+
+  for (std::set<std::pair<SUnit*, bool> >::iterator I = SU->Preds.begin(),
+         E = SU->Preds.end(); I != E; ++I)
+    isReachable(I->first, TargetSU, Visited, Reached);
+}
+
+static bool isReachable(SUnit *SU, SUnit *TargetSU) {
+  std::set<SUnit *> Visited;
+  bool Reached = false;
+  isReachable(SU, TargetSU, Visited, Reached);
+  return Reached;
+}
+
+static SUnit *getDefUsePredecessor(SUnit *SU) {
+  SDNode *DU = SU->Node->getOperand(0).Val;
+  for (std::set<std::pair<SUnit*, bool> >::iterator
+         I = SU->Preds.begin(), E = SU->Preds.end(); I != E; ++I) {
+    if (I->second) continue;  // ignore chain preds
+    SUnit *PredSU = I->first;
+    if (PredSU->Node == DU)
+      return PredSU;
+  }
+
+  // Must be flagged.
+  return NULL;
+}
+
+static bool canClobber(SUnit *SU, SUnit *Op) {
+  if (SU->isTwoAddress)
+    return Op == getDefUsePredecessor(SU);
+  return false;
+}
+
+/// AddPseudoTwoAddrDeps - If two nodes share an operand and one of them uses
+/// it as a def&use operand. Add a pseudo control edge from it to the other
+/// node (if it won't create a cycle) so the two-address one will be scheduled
+/// first (lower in the schedule).
+void RegReductionPriorityQueue::AddPseudoTwoAddrDeps() {
+  for (unsigned i = 0, e = SUnits->size(); i != e; ++i) {
+    SUnit *SU = (SUnit *)&((*SUnits)[i]);
+    SDNode *Node = SU->Node;
+    if (!Node->isTargetOpcode())
+      continue;
+
+    if (SU->isTwoAddress) {
+      unsigned Depth = SU->Node->getNodeDepth();
+      SUnit *DUSU = getDefUsePredecessor(SU);
+      if (!DUSU) continue;
+
+      for (std::set<std::pair<SUnit*, bool> >::iterator I = DUSU->Succs.begin(),
+             E = DUSU->Succs.end(); I != E; ++I) {
+        SUnit *SuccSU = I->first;
+        if (SuccSU != SU && !canClobber(SuccSU, DUSU)) {
+          if (SuccSU->Node->getNodeDepth() <= Depth+2 &&
+              !isReachable(SuccSU, SU)) {
+            DEBUG(std::cerr << "Adding an edge from SU # " << SU->NodeNum
+                  << " to SU #" << SuccSU->NodeNum << "\n");
+            if (SU->Preds.insert(std::make_pair(SuccSU, true)).second)
+              SU->NumChainPredsLeft++;
+            if (SuccSU->Succs.insert(std::make_pair(SU, true)).second)
+              SuccSU->NumChainSuccsLeft++;
+          }
+        }
+      }
+    }
+  }
+}
 
 /// CalcNodePriority - Priority is the Sethi Ullman number. 
 /// Smaller number is the higher priority.
@@ -1036,7 +1126,8 @@ int RegReductionPriorityQueue::CalcNodePriority(const SUnit *SU) {
     // Give it a small SethiUllman number so it will be scheduled right before its
     // predecessors that it doesn't lengthen their live ranges.
     SethiUllmanNumber = INT_MIN + 10;
-  else if (SU->NumPredsLeft == 0 && Opc != ISD::CopyFromReg)
+  else if (SU->NumPredsLeft == 0 &&
+           (Opc != ISD::CopyFromReg || isCopyFromLiveIn(SU)))
     SethiUllmanNumber = 1;
   else {
     int Extra = 0;
@@ -1143,7 +1234,7 @@ public:
       Queue.pop();
       return V;
     }
-        
+
     /// RemoveFromPriorityQueue - This is a really inefficient way to remove a
     /// node from a priority queue.  We should roll our own heap to make this
     /// better or something.
