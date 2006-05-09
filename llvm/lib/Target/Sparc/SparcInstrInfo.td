@@ -516,24 +516,24 @@ def SMULri  : F3_2<2, 0b001011,
 /*
 //===-------------------------
 // Sparc Example
-defm intinst<id OPC1, id OPC2, bits Opc, string asmstr, SDNode code> {
+defm intinst{OPC1, OPC2}<bits Opc, string asmstr, SDNode code> {
   def OPC1 : F3_1<2, Opc, asmstr, (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
                   [(set IntRegs:$dst, (code IntRegs:$b, IntRegs:$c))]>;
   def OPC2 : F3_2<2, Opc, asmstr, (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
                   [(set IntRegs:$dst, (code IntRegs:$b, simm13:$c))]>;
 }
-defm intinst_np<id OPC1, id OPC2, bits Opc, string asmstr> {
+defm intinst_np{OPC1, OPC2}<bits Opc, string asmstr> {
   def OPC1 : F3_1<2, Opc, asmstr, (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
                   []>;
   def OPC2 : F3_2<2, Opc, asmstr, (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
                   []>;
 }
 
-def intinstnp< ADDXrr,  ADDXri, 0b001000,  "addx $b, $c, $dst">;
-def intinst  <  SUBrr,   SUBri, 0b000100,   "sub $b, $c, $dst",  sub>;
-def intinstnp< SUBXrr,  SUBXri, 0b001100,  "subx $b, $c, $dst">;
-def intinst  <SUBCCrr, SUBCCri, 0b010100, "subcc $b, $c, $dst",  SPcmpicc>;
-def intinst  < SMULrr,  SMULri, 0b001011,  "smul $b, $c, $dst",  mul>;
+def { ADDXrr,  ADDXri} : intinstnp<0b001000,  "addx $b, $c, $dst">;
+def {  SUBrr,   SUBri} : intinst  <0b000100,   "sub $b, $c, $dst",  sub>;
+def intinstnp{ SUBXrr,  SUBXri}<0b001100,  "subx $b, $c, $dst">;
+def intinst  {SUBCCrr, SUBCCri}<0b010100, "subcc $b, $c, $dst",  SPcmpicc>;
+def intinst  { SMULrr,  SMULri}<0b001011,  "smul $b, $c, $dst",  mul>;
 
 //===-------------------------
 // X86 Example
