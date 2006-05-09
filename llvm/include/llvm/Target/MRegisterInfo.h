@@ -47,14 +47,18 @@ public:
   typedef const unsigned* const_iterator;
 
   typedef const MVT::ValueType* vt_iterator;
+  typedef const TargetRegisterClass** sc_iterator;
 private:
   const vt_iterator VTs;
+  const sc_iterator SubClasses;
   const unsigned RegSize, Alignment;    // Size & Alignment of register in bytes
   const iterator RegsBegin, RegsEnd;
 public:
-  TargetRegisterClass(const MVT::ValueType *vts, unsigned RS, unsigned Al,
-                      iterator RB, iterator RE)
-    : VTs(vts), RegSize(RS), Alignment(Al), RegsBegin(RB), RegsEnd(RE) {}
+  TargetRegisterClass(const MVT::ValueType *vts,
+                      const TargetRegisterClass **scs,
+                      unsigned RS, unsigned Al, iterator RB, iterator RE)
+    : VTs(vts), SubClasses(scs),
+    RegSize(RS), Alignment(Al), RegsBegin(RB), RegsEnd(RE) {}
   virtual ~TargetRegisterClass() {}     // Allow subclasses
 
   // begin/end - Return all of the registers in this class.
@@ -87,20 +91,38 @@ public:
     return false;
   }
   
-  /// vt_begin - Loop over all of the value types that can be represented by
-  /// values in this register class.
+  /// vt_begin / vt_end - Loop over all of the value types that can be
+  /// represented by values in this register class.
   vt_iterator vt_begin() const {
     return VTs;
   }
 
-  /// vt_begin - Loop over all of the value types that can be represented by
-  /// values in this register class.
   vt_iterator vt_end() const {
     vt_iterator I = VTs;
     while (*I != MVT::Other) ++I;
     return I;
   }
+
+  /// hasSubRegClass - return true if the specified TargetRegisterClass is a
+  /// sub-register class of this TargetRegisterClass.
+  bool hasSubRegClass(const TargetRegisterClass *cs) const {
+    for (int i = 0; SubClasses[i] != NULL; ++i) 
+      if (SubClasses[i] == cs)
+        return true;
+    return false;
+  }
+
+  /// subclasses_begin / subclasses_end - Loop over all of the sub-classes of
+  /// this register class.
+  sc_iterator subclasses_begin() const {
+    return SubClasses;
+  }
   
+  sc_iterator subclasses_end() const {
+    sc_iterator I = SubClasses;
+    while (*I != NULL) ++I;
+    return I;
+  }
   
   /// allocation_order_begin/end - These methods define a range of registers
   /// which specify the registers in this class that are valid to register
