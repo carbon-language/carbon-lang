@@ -30725,7 +30725,7 @@ if test "$llvm_cv_llvmgcc_sanity" = "yes" ; then
   llvmgccdir=`echo "$llvmcc1path" | sed 's,/libexec/.*,,'`
   LLVMGCCDIR=$llvmgccdir
 
-  llvmgccversion=`"$LLVMGCC" -v 2>&1 | grep '^gcc version' | sed 's/^gcc version \([0-9.]*\).*/\1/'`
+  llvmgccversion=`"$LLVMGCC" -dumpversion 2>&1 | sed 's/^\([0-9.]*\).*/\1/'`
   llvmgccmajvers=`echo $llvmgccversion | sed 's/^\([0-9]\).*/\1/'`
   LLVMGCC_VERSION=$llvmgccversion
 
