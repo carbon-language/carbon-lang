@@ -46,11 +46,11 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
-    SwitchToTextSection(".text", F);
+    SwitchToTextSection(DefaultTextSection, F);
     EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
     break;
   case Function::ExternalLinkage:
-    SwitchToTextSection(".text", F);
+    SwitchToTextSection(DefaultTextSection, F);
     EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
     O << "\t.globl\t" << CurrentFnName << "\n";
     break;

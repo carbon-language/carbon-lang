@@ -37,7 +37,7 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   EmitConstantPool(MF.getConstantPool());
 
   // Print out labels for the function.
-  SwitchToTextSection(".code", MF.getFunction());
+  SwitchToTextSection("_text", MF.getFunction());
   EmitAlignment(4);
   if (MF.getFunction()->getLinkage() == GlobalValue::ExternalLinkage)
     O << "\tpublic " << CurrentFnName << "\n";
@@ -302,6 +302,9 @@ bool X86IntelAsmPrinter::doInitialization(Module &M) {
   Data64bitsDirective = "\tdq\t";
   HasDotTypeDotSizeDirective = false;
   Mang->markCharUnacceptable('.');
+  
+  DefaultTextSection = "_text";
+  DefaultDataSection = "_data";
 
   O << "\t.686\n\t.model flat\n\n";
 
@@ -359,7 +362,7 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
       O << "\tpublic " << name << "\n";
       // FALL THROUGH
     case GlobalValue::InternalLinkage:
-      SwitchToDataSection(".data", I);
+      SwitchToDataSection(DefaultDataSection, I);
       break;
     default:
       assert(0 && "Unknown linkage type!");
@@ -378,7 +381,8 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
   
   // Bypass X86SharedAsmPrinter::doFinalization().
   AsmPrinter::doFinalization(M);
-  SwitchToDataSection("", 0);
+  SwitchToDataSection("_data", 0);
+  O << "_data\tends\n";
   O << "\tend\n";
   return false; // success
 }

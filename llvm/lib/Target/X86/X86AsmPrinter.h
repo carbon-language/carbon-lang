@@ -69,6 +69,10 @@ struct X86SharedAsmPrinter : public AsmPrinter {
   }
 
   bool forDarwin;  // FIXME: eliminate.
+  
+  const char *DefaultTextSection;   // "_text" for MASM, ".text" for others.
+  const char *DefaultDataSection;   // "_data" for MASM, ".data" for others.
+  
 
   // Necessary for Darwin to print out the apprioriate types of linker stubs
   std::set<std::string> FnStubs, GVStubs, LinkOnceStubs;

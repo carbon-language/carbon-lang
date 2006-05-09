@@ -50,6 +50,8 @@ bool X86SharedAsmPrinter::doInitialization(Module &M) {
   
   forDarwin = false;
   PrivateGlobalPrefix = ".L";
+  DefaultTextSection = ".text";
+  DefaultDataSection = ".data";
   
   switch (Subtarget->TargetType) {
   case X86Subtarget::isDarwin:
@@ -119,7 +121,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
           O << "\t.zerofill __DATA__, __common, " << name << ", "
             << Size << ", " << Align;
       } else {
-        SwitchToDataSection(".data", I);
+        SwitchToDataSection(DefaultDataSection, I);
         if (LCOMMDirective != NULL) {
           if (I->hasInternalLinkage()) {
             O << LCOMMDirective << name << "," << Size;
@@ -157,7 +159,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
         O << "\t.globl " << name << "\n";
         // FALL THROUGH
       case GlobalValue::InternalLinkage:
-        SwitchToDataSection(".data", I);
+        SwitchToDataSection(DefaultDataSection, I);
         break;
       default:
         assert(0 && "Unknown linkage type!");
