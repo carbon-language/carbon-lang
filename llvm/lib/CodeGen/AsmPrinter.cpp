@@ -47,7 +47,9 @@ AsmPrinter::AsmPrinter(std::ostream &o, TargetMachine &tm)
   AlignDirective("\t.align\t"),
   AlignmentIsInBytes(true),
   SwitchToSectionDirective("\t.section\t"),
-  MLSections(false),
+  TextSectionStartSuffix(""),
+  DataSectionStartSuffix(""),
+  SectionEndDirectiveSuffix(0),
   ConstantPoolSection("\t.section .rodata\n"),
   JumpTableSection("\t.section .rodata\n"),
   StaticCtorsSection("\t.section .ctors,\"aw\",@progbits"),
@@ -73,20 +75,14 @@ void AsmPrinter::SwitchToTextSection(const char *NewSection,
   // If we're already in this section, we're done.
   if (CurrentSection == NS) return;
 
-  // Microsoft ML/MASM has a fundamentally different approach to handling
-  // sections.
+  // Close the current section, if applicable.
+  if (SectionEndDirectiveSuffix && !CurrentSection.empty())
+    O << CurrentSection << SectionEndDirectiveSuffix << "\n";
 
-  if (MLSections) {
-    if (!CurrentSection.empty())
-      O << CurrentSection << "\tends\n\n";
-    CurrentSection = NS;
-    if (!CurrentSection.empty())
-      O << CurrentSection << "\tsegment 'CODE'\n";
-  } else {
-    CurrentSection = NS;
-    if (!CurrentSection.empty())
-      O << CurrentSection << '\n';
-  }
+  CurrentSection = NS;
+
+  if (!CurrentSection.empty())
+    O << CurrentSection << TextSectionStartSuffix << '\n';
 }
 
 /// SwitchToTextSection - Switch to the specified text section of the executable
@@ -103,20 +99,14 @@ void AsmPrinter::SwitchToDataSection(const char *NewSection,
   // If we're already in this section, we're done.
   if (CurrentSection == NS) return;
 
-  // Microsoft ML/MASM has a fundamentally different approach to handling
-  // sections.
+  // Close the current section, if applicable.
+  if (SectionEndDirectiveSuffix && !CurrentSection.empty())
+    O << CurrentSection << SectionEndDirectiveSuffix << "\n";
+
+  CurrentSection = NS;
   
-  if (MLSections) {
-    if (!CurrentSection.empty())
-      O << CurrentSection << "\tends\n\n";
-    CurrentSection = NS;
-    if (!CurrentSection.empty())
-      O << CurrentSection << "\tsegment 'DATA'\n";
-  } else {
-    CurrentSection = NS;
-    if (!CurrentSection.empty())
-      O << CurrentSection << '\n';
-  }
+  if (!CurrentSection.empty())
+    O << CurrentSection << DataSectionStartSuffix << '\n';
 }
 
 

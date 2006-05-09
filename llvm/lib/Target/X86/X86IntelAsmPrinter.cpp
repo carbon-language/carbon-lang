@@ -284,7 +284,6 @@ void X86IntelAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 }
 
 bool X86IntelAsmPrinter::doInitialization(Module &M) {
-  MLSections = true;
   GlobalPrefix = "_";
   CommentString = ";";
 
@@ -306,6 +305,9 @@ bool X86IntelAsmPrinter::doInitialization(Module &M) {
   DefaultTextSection = "_text";
   DefaultDataSection = "_data";
   SwitchToSectionDirective = "";
+  TextSectionStartSuffix = "\tsegment 'CODE'";
+  DataSectionStartSuffix = "\tsegment 'DATA'";
+  SectionEndDirectiveSuffix = "\tends\n";
 
   O << "\t.686\n\t.model flat\n\n";
 
