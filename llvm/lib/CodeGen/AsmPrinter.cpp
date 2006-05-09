@@ -68,7 +68,7 @@ void AsmPrinter::SwitchToTextSection(const char *NewSection,
                                      const GlobalValue *GV) {
   std::string NS;
   if (GV && GV->hasSection())
-    NS = GV->getSection();
+    NS = SwitchToSectionDirective + GV->getSection();
   else
     NS = NewSection;
   
