@@ -179,16 +179,32 @@ namespace llvm {
     AsmPrinter(std::ostream &o, TargetMachine &TM);
     
   public:
-    /// SwitchSection - Switch to the specified section of the executable if we
-    /// are not already in it!  If GV is non-null and if the global has an
+    /// SwitchToTextSection - Switch to the specified section of the executable
+    /// if we are not already in it!  If GV is non-null and if the global has an
     /// explicitly requested section, we switch to the section indicated for the
     /// global instead of NewSection.
     ///
     /// If the new section is an empty string, this method forgets what the
     /// current section is, but does not emit a .section directive.
     ///
-    void SwitchSection(const char *NewSection, const GlobalValue *GV);
+    /// This method is used when about to emit executable code.
+    ///
+    void SwitchToTextSection(const char *NewSection, const GlobalValue *GV);
 
+    /// SwitchToDataSection - Switch to the specified section of the executable
+    /// if we are not already in it!  If GV is non-null and if the global has an
+    /// explicitly requested section, we switch to the section indicated for the
+    /// global instead of NewSection.
+    ///
+    /// If the new section is an empty string, this method forgets what the
+    /// current section is, but does not emit a .section directive.
+    ///
+    /// This method is used when about to emit data.  For most assemblers, this
+    /// is the same as the SwitchToTextSection method, but not all assemblers
+    /// are the same.
+    ///
+    void SwitchToDataSection(const char *NewSection, const GlobalValue *GV);
+    
     /// getPreferredAlignmentLog - Return the preferred alignment of the
     /// specified global, returned in log form.  This includes an explicitly
     /// requested alignment (if the global has one).
