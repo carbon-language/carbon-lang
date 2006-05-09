@@ -70,19 +70,10 @@ void AsmPrinter::SwitchToTextSection(const char *NewSection,
   // sections.
 
   if (MLSections) {
-    if (*NewSection == 0) {
-      // Simply end the current section, if any.
-      if (!CurrentSection.empty()) {
-        O << CurrentSection << "\tends\n\n";
-        CurrentSection.clear();
-      }
-      return;
-    }
-
     if (GV && GV->hasSection())
       NS = GV->getSection();
     else
-      NS = "_text";
+      NS = NewSection;
 
     if (CurrentSection != NS) {
       if (!CurrentSection.empty())
@@ -115,19 +106,10 @@ void AsmPrinter::SwitchToDataSection(const char *NewSection,
   // sections.
   
   if (MLSections) {
-    if (*NewSection == 0) {
-      // Simply end the current section, if any.
-      if (!CurrentSection.empty()) {
-        O << CurrentSection << "\tends\n\n";
-        CurrentSection.clear();
-      }
-      return;
-    }
-    
     if (GV && GV->hasSection())
       NS = GV->getSection();
     else
-      NS = "_data";
+      NS = NewSection;
     
     if (CurrentSection != NS) {
       if (!CurrentSection.empty())
