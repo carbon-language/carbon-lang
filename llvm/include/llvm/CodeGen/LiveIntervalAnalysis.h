@@ -167,9 +167,11 @@ namespace llvm {
                                    unsigned SrcReg, unsigned DestReg,
                                    bool isLiveIn = false);
 
-    /// Return true if the two specified registers belong to different
-    /// register classes.  The registers may be either phys or virt regs.
-    bool differingRegisterClasses(unsigned RegA, unsigned RegB) const;
+    /// Return true if the two specified registers belong to the same or
+    /// compatible register classes.  The registers may be either phys or
+    /// virt regs.
+    bool compatibleRegisterClasses(unsigned RegA, unsigned RegB,
+                                   bool &Swap) const;
 
     bool AdjustIfAllOverlappingRangesAreCopiesFrom(LiveInterval &IntA,
                                                    LiveInterval &IntB,
