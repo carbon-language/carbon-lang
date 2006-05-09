@@ -123,7 +123,7 @@ void AsmPrinter::SwitchToDataSection(const char *NewSection,
     if (GV && GV->hasSection())
       NS = SwitchToSectionDirective + GV->getSection();
     else
-      NS = std::string("\t")+NewSection;
+      NS = NewSection;
     
     if (CurrentSection != NS) {
       CurrentSection = NS;
