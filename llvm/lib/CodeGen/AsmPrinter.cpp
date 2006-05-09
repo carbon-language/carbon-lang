@@ -102,34 +102,27 @@ void AsmPrinter::SwitchToTextSection(const char *NewSection,
 void AsmPrinter::SwitchToDataSection(const char *NewSection,
                                      const GlobalValue *GV) {
   std::string NS;
+  if (GV && GV->hasSection())
+    NS = SwitchToSectionDirective + GV->getSection();
+  else
+    NS = NewSection;
   
+  // If we're already in this section, we're done.
+  if (CurrentSection == NS) return;
+
   // Microsoft ML/MASM has a fundamentally different approach to handling
   // sections.
   
   if (MLSections) {
-    if (GV && GV->hasSection())
-      NS = GV->getSection();
-    else
-      NS = NewSection;
-    
-    if (CurrentSection != NS) {
-      if (!CurrentSection.empty())
-        O << CurrentSection << "\tends\n\n";
-      CurrentSection = NS;
-      if (!CurrentSection.empty())
-        O << CurrentSection << "\tsegment 'DATA'\n";
-    }
+    if (!CurrentSection.empty())
+      O << CurrentSection << "\tends\n\n";
+    CurrentSection = NS;
+    if (!CurrentSection.empty())
+      O << CurrentSection << "\tsegment 'DATA'\n";
   } else {
-    if (GV && GV->hasSection())
-      NS = SwitchToSectionDirective + GV->getSection();
-    else
-      NS = NewSection;
-    
-    if (CurrentSection != NS) {
-      CurrentSection = NS;
-      if (!CurrentSection.empty())
-        O << CurrentSection << '\n';
-    }
+    CurrentSection = NS;
+    if (!CurrentSection.empty())
+      O << CurrentSection << '\n';
   }
 }
 
