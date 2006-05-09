@@ -79,7 +79,8 @@ void AsmPrinter::SwitchToTextSection(const char *NewSection,
       if (!CurrentSection.empty())
         O << CurrentSection << "\tends\n\n";
       CurrentSection = NS;
-      O << CurrentSection << "\tsegment 'CODE'\n";
+      if (!CurrentSection.empty())
+        O << CurrentSection << "\tsegment 'CODE'\n";
     }
   } else {
     if (GV && GV->hasSection())
@@ -115,7 +116,8 @@ void AsmPrinter::SwitchToDataSection(const char *NewSection,
       if (!CurrentSection.empty())
         O << CurrentSection << "\tends\n\n";
       CurrentSection = NS;
-      O << CurrentSection << "\tsegment 'DATA'\n";
+      if (!CurrentSection.empty())
+        O << CurrentSection << "\tsegment 'DATA'\n";
     }
   } else {
     if (GV && GV->hasSection())
