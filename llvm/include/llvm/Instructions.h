@@ -104,13 +104,20 @@ public:
   MallocInst(const Type *Ty, Value *ArraySize, const std::string &Name,
              BasicBlock *InsertAtEnd)
     : AllocationInst(Ty, ArraySize, Malloc, 0, Name, InsertAtEnd) {}
+  
+  explicit MallocInst(const Type *Ty, const std::string &Name,
+                      Instruction *InsertBefore = 0)
+    : AllocationInst(Ty, 0, Malloc, 0, Name, InsertBefore) {}
+  MallocInst(const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd)
+    : AllocationInst(Ty, 0, Malloc, 0, Name, InsertAtEnd) {}
+  
   MallocInst(const Type *Ty, Value *ArraySize, unsigned Align, 
              const std::string &Name, BasicBlock *InsertAtEnd)
-  : AllocationInst(Ty, ArraySize, Malloc, Align, Name, InsertAtEnd) {}
-  explicit MallocInst(const Type *Ty, Value *ArraySize, unsigned Align,
+    : AllocationInst(Ty, ArraySize, Malloc, Align, Name, InsertAtEnd) {}
+  MallocInst(const Type *Ty, Value *ArraySize, unsigned Align,
                       const std::string &Name = "",
                       Instruction *InsertBefore = 0)
-  : AllocationInst(Ty, ArraySize, Malloc, Align, Name, InsertBefore) {}
+    : AllocationInst(Ty, ArraySize, Malloc, Align, Name, InsertBefore) {}
   
   virtual MallocInst *clone() const;
 
@@ -141,13 +148,19 @@ public:
   AllocaInst(const Type *Ty, Value *ArraySize, const std::string &Name,
              BasicBlock *InsertAtEnd)
     : AllocationInst(Ty, ArraySize, Alloca, 0, Name, InsertAtEnd) {}
+
+  AllocaInst(const Type *Ty, const std::string &Name,
+             Instruction *InsertBefore = 0)
+    : AllocationInst(Ty, 0, Alloca, 0, Name, InsertBefore) {}
+  AllocaInst(const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd)
+    : AllocationInst(Ty, 0, Alloca, 0, Name, InsertAtEnd) {}
+  
+  AllocaInst(const Type *Ty, Value *ArraySize, unsigned Align,
+             const std::string &Name = "", Instruction *InsertBefore = 0)
+    : AllocationInst(Ty, ArraySize, Alloca, Align, Name, InsertBefore) {}
   AllocaInst(const Type *Ty, Value *ArraySize, unsigned Align,
              const std::string &Name, BasicBlock *InsertAtEnd)
-  : AllocationInst(Ty, ArraySize, Alloca, Align, Name, InsertAtEnd) {}
-  explicit AllocaInst(const Type *Ty, Value *ArraySize, unsigned Align,
-                      const std::string &Name = "",
-                      Instruction *InsertBefore = 0)
-  : AllocationInst(Ty, ArraySize, Alloca, Align, Name, InsertBefore) {}
+    : AllocationInst(Ty, ArraySize, Alloca, Align, Name, InsertAtEnd) {}
   
   virtual AllocaInst *clone() const;
 
