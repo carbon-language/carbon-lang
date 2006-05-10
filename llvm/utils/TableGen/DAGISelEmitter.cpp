@@ -2445,22 +2445,27 @@ public:
       const CodeGenTarget &CGT = ISE.getTargetInfo();
       CodeGenInstruction &II = CGT.getInstruction(Op->getName());
       const DAGInstruction &Inst = ISE.getInstruction(Op);
-      bool HasImpInputs  = Inst.getNumImpOperands() > 0;
-      bool HasImpResults = Inst.getNumImpResults() > 0;
-      bool HasOptInFlag = isRoot &&
+      TreePattern *InstPat = Inst.getPattern();
+      TreePatternNode *InstPatNode =
+        isRoot ? (InstPat ? InstPat->getOnlyTree() : Pattern)
+               : (InstPat ? InstPat->getOnlyTree() : NULL);
+      if (InstPatNode && InstPatNode->getOperator()->getName() == "set") {
+        InstPatNode = InstPatNode->getChild(1);
+      }
+      bool HasImpInputs  = isRoot && Inst.getNumImpOperands() > 0;
+      bool HasImpResults = isRoot && Inst.getNumImpResults() > 0;
+      bool NodeHasOptInFlag = isRoot &&
         PatternHasProperty(Pattern, SDNodeInfo::SDNPOptInFlag, ISE);
-      bool HasInFlag  = isRoot &&
+      bool NodeHasInFlag  = isRoot &&
         PatternHasProperty(Pattern, SDNodeInfo::SDNPInFlag, ISE);
-      bool NodeHasOutFlag = HasImpResults ||
-        (isRoot && PatternHasProperty(Pattern, SDNodeInfo::SDNPOutFlag, ISE));
-      bool NodeHasChain =
-        NodeHasProperty(Pattern, SDNodeInfo::SDNPHasChain, ISE);
-      bool HasChain   = II.hasCtrlDep ||
-        (isRoot && PatternHasProperty(Pattern, SDNodeInfo::SDNPHasChain, ISE));
+      bool NodeHasOutFlag = HasImpResults || (isRoot &&
+        PatternHasProperty(Pattern, SDNodeInfo::SDNPOutFlag, ISE));
+      bool NodeHasChain = InstPatNode &&
+        PatternHasProperty(InstPatNode, SDNodeInfo::SDNPHasChain, ISE);
 
-      if (HasInFlag || NodeHasOutFlag || HasOptInFlag || HasImpInputs)
+      if (NodeHasInFlag || NodeHasOutFlag || NodeHasOptInFlag || HasImpInputs)
         emitDecl("InFlag");
-      if (HasOptInFlag)
+      if (NodeHasOptInFlag)
         emitCode("bool HasOptInFlag = false;");
 
       // How many results is this pattern expected to produce?
@@ -2518,41 +2523,23 @@ public:
       }
 
       // Emit all the chain and CopyToReg stuff.
-      bool ChainEmitted = HasChain;
-      if (HasChain)
+      bool ChainEmitted = NodeHasChain;
+      if (NodeHasChain)
         emitCode("Select(" + ChainName + ", " + ChainName + ");");
-      if (HasInFlag || HasOptInFlag || HasImpInputs)
+      if (NodeHasInFlag || NodeHasOptInFlag || HasImpInputs)
         EmitInFlagSelectCode(Pattern, "N", ChainEmitted, true);
 
-      // The operands have been selected. Remove them from InFlightSet.
-      for (std::vector<std::string>::iterator AI = InflightNodes.begin(),
-             AE = InflightNodes.end(); AI != AE; ++AI)
-        emitCode("InFlightSet.erase(" + *AI + ".Val);");
+      if (isRoot) {
+        // The operands have been selected. Remove them from InFlightSet.
+        for (std::vector<std::string>::iterator AI = InflightNodes.begin(),
+               AE = InflightNodes.end(); AI != AE; ++AI)
+          emitCode("InFlightSet.erase(" + *AI + ".Val);");
+      }
+
       unsigned NumResults = Inst.getNumResults();    
       unsigned ResNo = TmpNo++;
-      if (!isRoot) {
-        emitDecl("Tmp" + utostr(ResNo));
-        std::string Code =
-          "Tmp" + utostr(ResNo) + " = SDOperand(CurDAG->getTargetNode(" +
-          II.Namespace + "::" + II.TheDef->getName();
-        if (N->getTypeNum(0) != MVT::isVoid)
-          Code += ", MVT::" + getEnumName(N->getTypeNum(0));
-        if (NodeHasOutFlag)
-          Code += ", MVT::Flag";
-
-        unsigned LastOp = 0;
-        for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
-          LastOp = Ops[i];
-          Code += ", Tmp" + utostr(LastOp);
-        }
-        emitCode(Code + "), 0);");
-        if (HasChain) {
-          // Must have at least one result
-          emitCode(ChainName + " = Tmp" + utostr(LastOp) + ".getValue(" +
-                   utostr(NumResults) + ");");
-        }
-      } else if (HasChain || NodeHasOutFlag) {
-        if (HasOptInFlag) {
+      if (!isRoot || NodeHasChain || NodeHasOutFlag || NodeHasOptInFlag) {
+        if (NodeHasOptInFlag) {
           unsigned FlagNo = (unsigned) NodeHasChain + Pattern->getNumChildren();
           emitDecl("ResNode", true);
           emitCode("if (HasOptInFlag)");
@@ -2565,7 +2552,7 @@ public:
             if (N->getTypeNum(0) != MVT::isVoid)
               Code += ", MVT::" + getEnumName(N->getTypeNum(0));
           }
-          if (HasChain)
+          if (NodeHasChain)
             Code += ", MVT::Other";
           if (NodeHasOutFlag)
             Code += ", MVT::Flag";
@@ -2573,7 +2560,7 @@ public:
           // Inputs.
           for (unsigned i = 0, e = Ops.size(); i != e; ++i)
             Code += ", Tmp" + utostr(Ops[i]);
-          if (HasChain)  Code += ", " + ChainName;
+          if (NodeHasChain)  Code += ", " + ChainName;
           emitCode(Code + ", InFlag);");
 
           emitCode("else");
@@ -2584,7 +2571,7 @@ public:
           // Result types.
           if (NumResults > 0 && N->getTypeNum(0) != MVT::isVoid)
             Code += ", MVT::" + getEnumName(N->getTypeNum(0));
-          if (HasChain)
+          if (NodeHasChain)
             Code += ", MVT::Other";
           if (NodeHasOutFlag)
             Code += ", MVT::Flag";
@@ -2592,18 +2579,27 @@ public:
           // Inputs.
           for (unsigned i = 0, e = Ops.size(); i != e; ++i)
             Code += ", Tmp" + utostr(Ops[i]);
-          if (HasChain) Code += ", " + ChainName + ");";
+          if (NodeHasChain) Code += ", " + ChainName + ");";
           emitCode(Code);
         } else {
-          emitDecl("ResNode", true);
-          std::string Code = "ResNode = CurDAG->getTargetNode(" +
+          std::string Code;
+          if (!isRoot) {
+            std::string NodeName = "Tmp" + utostr(ResNo);
+            emitDecl(NodeName);
+            Code = NodeName + " = SDOperand(";
+          } else {
+            std::string NodeName = "ResNode";
+            emitDecl(NodeName, true);
+            Code = NodeName + " = ";
+          }
+          Code += "CurDAG->getTargetNode(" +
             II.Namespace + "::" + II.TheDef->getName();
 
           // Output order: results, chain, flags
           // Result types.
           if (NumResults > 0 && N->getTypeNum(0) != MVT::isVoid)
             Code += ", MVT::" + getEnumName(N->getTypeNum(0));
-          if (HasChain)
+          if (NodeHasChain)
             Code += ", MVT::Other";
           if (NodeHasOutFlag)
             Code += ", MVT::Flag";
@@ -2611,10 +2607,16 @@ public:
           // Inputs.
           for (unsigned i = 0, e = Ops.size(); i != e; ++i)
             Code += ", Tmp" + utostr(Ops[i]);
-          if (HasChain) Code += ", " + ChainName;
-          if (HasInFlag || HasImpInputs) Code += ", InFlag";
-          emitCode(Code + ");");
+          if (NodeHasChain) Code += ", " + ChainName;
+          if (NodeHasInFlag || HasImpInputs) Code += ", InFlag";
+          if (!isRoot)
+            emitCode(Code + "), 0);");
+          else
+            emitCode(Code + ");");
         }
+
+        if (!isRoot)
+          return std::make_pair(1, ResNo);
 
         if (NewTF)
           emitCode("if (OldTF) "
@@ -2627,7 +2629,7 @@ public:
 
         if (NodeHasOutFlag)
           emitCode("InFlag = SDOperand(ResNode, " + 
-                   utostr(NumResults + (unsigned)HasChain) + ");");
+                   utostr(NumResults + (unsigned)NodeHasChain) + ");");
 
         if (HasImpResults && EmitCopyFromRegs(N, ChainEmitted)) {
           emitCode("SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, "
@@ -2635,7 +2637,9 @@ public:
           NumResults = 1;
         }
 
-        if (NodeHasChain) {
+        bool InputHasChain =
+          NodeHasProperty(Pattern, SDNodeInfo::SDNPHasChain, ISE);
+        if (InputHasChain) {
           emitCode("SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, " + 
                    utostr(PatResults) + ", ResNode, " +
                    utostr(NumResults) + ");");
@@ -2664,11 +2668,11 @@ public:
 
         if (NodeHasOutFlag)
           emitCode("SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, " +
-                   utostr(PatResults + (unsigned)NodeHasChain) +
+                   utostr(PatResults + (unsigned)InputHasChain) +
                    ", InFlag.Val, InFlag.ResNo);");
 
         // User does not expect the instruction would produce a chain!
-        bool AddedChain = HasChain && !NodeHasChain;
+        bool AddedChain = NodeHasChain && !InputHasChain;
         if (AddedChain && NodeHasOutFlag) {
           if (PatResults == 0) {
             emitCode("Result = SDOperand(ResNode, N.ResNo+1);");
@@ -2693,7 +2697,7 @@ public:
           Code += ", MVT::Flag";
         for (unsigned i = 0, e = Ops.size(); i != e; ++i)
           Code += ", Tmp" + utostr(Ops[i]);
-        if (HasInFlag || HasImpInputs)
+        if (NodeHasInFlag || HasImpInputs)
           Code += ", InFlag";
         emitCode(Code + ");");
         emitCode("} else {");
@@ -2706,7 +2710,7 @@ public:
           Code += ", MVT::Flag";
         for (unsigned i = 0, e = Ops.size(); i != e; ++i)
           Code += ", Tmp" + utostr(Ops[i]);
-        if (HasInFlag || HasImpInputs)
+        if (NodeHasInFlag || HasImpInputs)
           Code += ", InFlag";
         emitCode(Code + ");");
         emitCode("  SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, N.ResNo, "
