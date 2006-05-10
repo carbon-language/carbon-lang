@@ -892,12 +892,13 @@ void ScheduleDAGList::ListScheduleTopDown() {
 // to reduce register pressure.
 // 
 namespace {
+  template<class SF>
   class RegReductionPriorityQueue;
   
   /// Sorting functions for the Available queue.
   struct ls_rr_sort : public std::binary_function<SUnit*, SUnit*, bool> {
-    RegReductionPriorityQueue *SPQ;
-    ls_rr_sort(RegReductionPriorityQueue *spq) : SPQ(spq) {}
+    RegReductionPriorityQueue<ls_rr_sort> *SPQ;
+    ls_rr_sort(RegReductionPriorityQueue<ls_rr_sort> *spq) : SPQ(spq) {}
     ls_rr_sort(const ls_rr_sort &RHS) : SPQ(RHS.SPQ) {}
     
     bool operator()(const SUnit* left, const SUnit* right) const;
@@ -905,6 +906,7 @@ namespace {
 }  // end anonymous namespace
 
 namespace {
+  template<class SF>
   class RegReductionPriorityQueue : public SchedulingPriorityQueue {
     // SUnits - The SUnits for the current graph.
     const std::vector<SUnit> *SUnits;
@@ -912,7 +914,7 @@ namespace {
     // SethiUllmanNumbers - The SethiUllman number for each node.
     std::vector<int> SethiUllmanNumbers;
     
-    std::priority_queue<SUnit*, std::vector<SUnit*>, ls_rr_sort> Queue;
+    std::priority_queue<SUnit*, std::vector<SUnit*>, SF> Queue;
   public:
     RegReductionPriorityQueue() :
     Queue(ls_rr_sort(this)) {}
@@ -1079,7 +1081,8 @@ static bool canClobber(SUnit *SU, SUnit *Op) {
 /// it as a def&use operand. Add a pseudo control edge from it to the other
 /// node (if it won't create a cycle) so the two-address one will be scheduled
 /// first (lower in the schedule).
-void RegReductionPriorityQueue::AddPseudoTwoAddrDeps() {
+template<class SF>
+void RegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
   for (unsigned i = 0, e = SUnits->size(); i != e; ++i) {
     SUnit *SU = (SUnit *)&((*SUnits)[i]);
     SDNode *Node = SU->Node;
@@ -1112,7 +1115,8 @@ void RegReductionPriorityQueue::AddPseudoTwoAddrDeps() {
 
 /// CalcNodePriority - Priority is the Sethi Ullman number. 
 /// Smaller number is the higher priority.
-int RegReductionPriorityQueue::CalcNodePriority(const SUnit *SU) {
+template<class SF>
+int RegReductionPriorityQueue<SF>::CalcNodePriority(const SUnit *SU) {
   int &SethiUllmanNumber = SethiUllmanNumbers[SU->NodeNum];
   if (SethiUllmanNumber != 0)
     return SethiUllmanNumber;
@@ -1150,7 +1154,8 @@ int RegReductionPriorityQueue::CalcNodePriority(const SUnit *SU) {
 }
 
 /// CalculatePriorities - Calculate priorities of all scheduling units.
-void RegReductionPriorityQueue::CalculatePriorities() {
+template<class SF>
+void RegReductionPriorityQueue<SF>::CalculatePriorities() {
   SethiUllmanNumbers.assign(SUnits->size(), 0);
   
   for (unsigned i = 0, e = SUnits->size(); i != e; ++i)
@@ -1386,7 +1391,7 @@ void LatencyPriorityQueue::AdjustPriorityOfUnscheduledPreds(SUnit *SU) {
 llvm::ScheduleDAG* llvm::createBURRListDAGScheduler(SelectionDAG &DAG,
                                                     MachineBasicBlock *BB) {
   return new ScheduleDAGList(DAG, BB, DAG.getTarget(), true, 
-                             new RegReductionPriorityQueue(),
+                             new RegReductionPriorityQueue<ls_rr_sort>(),
                              new HazardRecognizer());
 }
 
