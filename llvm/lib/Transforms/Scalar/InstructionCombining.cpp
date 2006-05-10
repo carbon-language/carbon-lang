@@ -48,7 +48,6 @@
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/PatternMatch.h"
-#include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
@@ -7318,17 +7317,83 @@ static bool TryToSinkInstruction(Instruction *I, BasicBlock *DestBlock) {
   return true;
 }
 
+
+/// AddReachableCodeToWorklist - Walk the function in depth-first order, adding
+/// all reachable code to the worklist.
+///
+/// This has a couple of tricks to make the code faster and more powerful.  In
+/// particular, we constant fold and DCE instructions as we go, to avoid adding
+/// them to the worklist (this significantly speeds up instcombine on code where
+/// many instructions are dead or constant).  Additionally, if we find a branch
+/// whose condition is a known constant, we only visit the reachable successors.
+///
+static void AddReachableCodeToWorklist(BasicBlock *BB, 
+                                       std::set<BasicBlock*> &Visited,
+                                       std::vector<Instruction*> &WorkList) {
+  // We have now visited this block!  If we've already been here, bail out.
+  if (!Visited.insert(BB).second) return;
+    
+  for (BasicBlock::iterator BBI = BB->begin(), E = BB->end(); BBI != E; ) {
+    Instruction *Inst = BBI++;
+    
+    // DCE instruction if trivially dead.
+    if (isInstructionTriviallyDead(Inst)) {
+      ++NumDeadInst;
+      DEBUG(std::cerr << "IC: DCE: " << *Inst);
+      Inst->eraseFromParent();
+      continue;
+    }
+    
+    // ConstantProp instruction if trivially constant.
+    if (Constant *C = ConstantFoldInstruction(Inst)) {
+      DEBUG(std::cerr << "IC: ConstFold to: " << *C << " from: " << *Inst);
+      Inst->replaceAllUsesWith(C);
+      ++NumConstProp;
+      Inst->eraseFromParent();
+      continue;
+    }
+    
+    WorkList.push_back(Inst);
+  }
+
+  // Recursively visit successors.  If this is a branch or switch on a constant,
+  // only visit the reachable successor.
+  TerminatorInst *TI = BB->getTerminator();
+  if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
+    if (BI->isConditional() && isa<ConstantBool>(BI->getCondition())) {
+      bool CondVal = cast<ConstantBool>(BI->getCondition())->getValue();
+      AddReachableCodeToWorklist(BI->getSuccessor(!CondVal), Visited, WorkList);
+      return;
+    }
+  } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
+    if (ConstantInt *Cond = dyn_cast<ConstantInt>(SI->getCondition())) {
+      // See if this is an explicit destination.
+      for (unsigned i = 1, e = SI->getNumSuccessors(); i != e; ++i)
+        if (SI->getCaseValue(i) == Cond) {
+          AddReachableCodeToWorklist(SI->getSuccessor(i), Visited, WorkList);
+          return;
+        }
+      
+      // Otherwise it is the default destination.
+      AddReachableCodeToWorklist(SI->getSuccessor(0), Visited, WorkList);
+      return;
+    }
+  }
+  
+  for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
+    AddReachableCodeToWorklist(TI->getSuccessor(i), Visited, WorkList);
+}
+
 bool InstCombiner::runOnFunction(Function &F) {
   bool Changed = false;
   TD = &getAnalysis<TargetData>();
 
   {
-    // Populate the worklist with the reachable instructions.
+    // Do a depth-first traversal of the function, populate the worklist with
+    // the reachable instructions.  Ignore blocks that are not reachable.  Keep
+    // track of which blocks we visit.
     std::set<BasicBlock*> Visited;
-    for (df_ext_iterator<BasicBlock*> BB = df_ext_begin(&F.front(), Visited),
-           E = df_ext_end(&F.front(), Visited); BB != E; ++BB)
-      for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
-        WorkList.push_back(I);
+    AddReachableCodeToWorklist(F.begin(), Visited, WorkList);
 
     // Do a quick scan over the function.  If we find any blocks that are
     // unreachable, remove any instructions inside of them.  This prevents
@@ -7397,7 +7462,7 @@ bool InstCombiner::runOnFunction(Function &F) {
       ReplaceInstUsesWith(*I, C);
 
       ++NumConstProp;
-      I->getParent()->getInstList().erase(I);
+      I->eraseFromParent();
       removeFromWorkList(I);
       continue;
     }
