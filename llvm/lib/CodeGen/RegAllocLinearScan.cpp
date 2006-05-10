@@ -406,6 +406,14 @@ static void RevertVectorIteratorsTo(RA::IntervalPtrs &V, unsigned Point) {
   }
 }
 
+static bool isZeroLengthInterval(LiveInterval *li) {
+  for (LiveInterval::Ranges::const_iterator
+         i = li->ranges.begin(), e = li->ranges.end(); i != e; ++i)
+    if (i->end - i->start > LiveIntervals::InstrSlots::NUM)
+      return false;
+  return true;
+}
+
 
 /// assignRegOrStackSlotAtInterval - assign a register if one is available, or
 /// spill.
@@ -557,10 +565,16 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   DEBUG(std::cerr << "\t\tregister with min weight: "
         << mri_->getName(minReg) << " (" << minWeight << ")\n");
 
+  // If the live interval legnth is essentially zero, i.e. in every live range
+  // the use follows def immediately, it doesn't make sense to spill it and
+  // hope it will be easier to allocate for this li.
+  if (isZeroLengthInterval(cur))
+    DEBUG(std::cerr << "\t\tavoid spilling zero length live interval: "
+          << *cur << '\n';);
   // if the current has the minimum weight, we need to spill it and
   // add any added intervals back to unhandled, and restart
   // linearscan.
-  if (cur->weight <= minWeight) {
+  else if (cur->weight <= minWeight) {
     DEBUG(std::cerr << "\t\t\tspilling(c): " << *cur << '\n';);
     int slot = vrm_->assignVirt2StackSlot(cur->reg);
     std::vector<LiveInterval*> added =
