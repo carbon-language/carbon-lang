@@ -2462,6 +2462,8 @@ public:
         PatternHasProperty(Pattern, SDNodeInfo::SDNPOutFlag, ISE));
       bool NodeHasChain = InstPatNode &&
         PatternHasProperty(InstPatNode, SDNodeInfo::SDNPHasChain, ISE);
+      bool InputHasChain = isRoot &&
+        NodeHasProperty(Pattern, SDNodeInfo::SDNPHasChain, ISE);
 
       if (NodeHasInFlag || NodeHasOutFlag || NodeHasOptInFlag || HasImpInputs)
         emitDecl("InFlag");
@@ -2538,7 +2540,8 @@ public:
 
       unsigned NumResults = Inst.getNumResults();    
       unsigned ResNo = TmpNo++;
-      if (!isRoot || NodeHasChain || NodeHasOutFlag || NodeHasOptInFlag) {
+      if (!isRoot || InputHasChain || NodeHasChain || NodeHasOutFlag ||
+          NodeHasOptInFlag) {
         if (NodeHasOptInFlag) {
           unsigned FlagNo = (unsigned) NodeHasChain + Pattern->getNumChildren();
           emitDecl("ResNode", true);
@@ -2548,7 +2551,7 @@ public:
 
           // Output order: results, chain, flags
           // Result types.
-          if (NumResults > 0) { 
+          if (PatResults > 0) { 
             if (N->getTypeNum(0) != MVT::isVoid)
               Code += ", MVT::" + getEnumName(N->getTypeNum(0));
           }
@@ -2569,7 +2572,7 @@ public:
 
           // Output order: results, chain, flags
           // Result types.
-          if (NumResults > 0 && N->getTypeNum(0) != MVT::isVoid)
+          if (PatResults > 0 && N->getTypeNum(0) != MVT::isVoid)
             Code += ", MVT::" + getEnumName(N->getTypeNum(0));
           if (NodeHasChain)
             Code += ", MVT::Other";
@@ -2581,14 +2584,20 @@ public:
             Code += ", Tmp" + utostr(Ops[i]);
           if (NodeHasChain) Code += ", " + ChainName + ");";
           emitCode(Code);
+
+          if (NodeHasChain)
+            // Remember which op produces the chain.
+            emitCode(ChainName + " = SDOperand(ResNode" +
+                     ", " + utostr(PatResults) + ");");
         } else {
           std::string Code;
+          std::string NodeName;
           if (!isRoot) {
-            std::string NodeName = "Tmp" + utostr(ResNo);
+            NodeName = "Tmp" + utostr(ResNo);
             emitDecl(NodeName);
             Code = NodeName + " = SDOperand(";
           } else {
-            std::string NodeName = "ResNode";
+            NodeName = "ResNode";
             emitDecl(NodeName, true);
             Code = NodeName + " = ";
           }
@@ -2613,6 +2622,15 @@ public:
             emitCode(Code + "), 0);");
           else
             emitCode(Code + ");");
+
+          if (NodeHasChain)
+            // Remember which op produces the chain.
+            if (!isRoot)
+              emitCode(ChainName + " = SDOperand(" + NodeName +
+                       ".Val, " + utostr(PatResults) + ");");
+            else
+              emitCode(ChainName + " = SDOperand(" + NodeName +
+                       ", " + utostr(PatResults) + ");");
         }
 
         if (!isRoot)
@@ -2637,16 +2655,14 @@ public:
           NumResults = 1;
         }
 
-        bool InputHasChain =
-          NodeHasProperty(Pattern, SDNodeInfo::SDNPHasChain, ISE);
         if (InputHasChain) {
           emitCode("SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, " + 
-                   utostr(PatResults) + ", ResNode, " +
-                   utostr(NumResults) + ");");
+                   utostr(PatResults) + ", " + ChainName + ".Val, " +
+                   ChainName + ".ResNo" + ");");
           if (DoReplace)
             emitCode("if (N.ResNo == 0) AddHandleReplacement(N.Val, " +
-                     utostr(PatResults) + ", " + "ResNode, " +
-                     utostr(NumResults) + ");");
+                     utostr(PatResults) + ", " + ChainName + ".Val, " +
+                     ChainName + ".ResNo" + ");");
         }
 
         if (FoldedChains.size() > 0) {
@@ -2682,6 +2698,16 @@ public:
             emitCode("else");
             emitCode("  Result = SDOperand(ResNode, N.ResNo+1);");
           }
+        } else if (InputHasChain && !NodeHasChain) {
+          // One of the inner node produces a chain.
+          emitCode("if (N.ResNo < " + utostr(PatResults) + ")");
+          emitCode("  Result = SDOperand(ResNode, N.ResNo);");
+          if (NodeHasOutFlag) {
+            emitCode("else if (N.ResNo > " + utostr(PatResults) + ")");
+            emitCode("  Result = SDOperand(ResNode, N.ResNo-1);");
+          }
+          emitCode("else");
+          emitCode("  Result = SDOperand(" + ChainName + ".Val, " + ChainName + ".ResNo);");
         } else {
           emitCode("Result = SDOperand(ResNode, N.ResNo);");
         }
