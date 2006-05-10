@@ -505,9 +505,12 @@ void BranchInst::setSuccessorV(unsigned idx, BasicBlock *B) {
 static Value *getAISize(Value *Amt) {
   if (!Amt)
     Amt = ConstantUInt::get(Type::UIntTy, 1);
-  else
+  else {
+    assert(!isa<BasicBlock>(Amt) &&
+           "Passed basic block into allocation size parameter!  Ue other ctor");
     assert(Amt->getType() == Type::UIntTy &&
            "Malloc/Allocation array size != UIntTy!");
+  }
   return Amt;
 }
 
