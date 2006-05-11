@@ -166,6 +166,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
       OS << "  " << RegisterClasses[i].getName()  << "Class\t"
          << RegisterClasses[i].getName() << "RegClass;\n";
 
+    std::map<unsigned, std::set<unsigned> > SuperClassMap;
     OS << "\n";
     // Emit the sub-classes array for each RegisterClass
     for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc) {
@@ -194,11 +195,47 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
         if (!Empty) OS << ", ";
         OS << "&" << getQualifiedName(RC2.TheDef) << "RegClass";
         Empty = false;
+
+        std::map<unsigned, std::set<unsigned> >::iterator SCMI =
+          SuperClassMap.find(rc2);
+        if (SCMI == SuperClassMap.end()) {
+          SuperClassMap.insert(std::make_pair(rc2, std::set<unsigned>()));
+          SCMI = SuperClassMap.find(rc2);
+        }
+        SCMI->second.insert(rc);
       }
 
       OS << (!Empty ? ", " : "") << "NULL";
       OS << "\n  };\n\n";
     }
+
+    for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc) {
+      const CodeGenRegisterClass &RC = RegisterClasses[rc];
+
+      // Give the register class a legal C name if it's anonymous.
+      std::string Name = RC.TheDef->getName();
+
+      OS << "  // " << Name 
+         << " Register Class super-classes...\n  const TargetRegisterClass* "
+         << Name << "Superclasses [] = {\n    ";
+
+      bool Empty = true;
+      std::map<unsigned, std::set<unsigned> >::iterator I =
+        SuperClassMap.find(rc);
+      if (I != SuperClassMap.end()) {
+        for (std::set<unsigned>::iterator II = I->second.begin(),
+               EE = I->second.end(); II != EE; ++II) {
+          const CodeGenRegisterClass &RC2 = RegisterClasses[*II];
+          if (!Empty) OS << ", ";
+          OS << "&" << getQualifiedName(RC2.TheDef) << "RegClass";
+          Empty = false;        
+        }
+      }
+
+      OS << (!Empty ? ", " : "") << "NULL";
+      OS << "\n  };\n\n";
+    }
+
 
     for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
       const CodeGenRegisterClass &RC = RegisterClasses[i];
@@ -207,6 +244,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
          << "Class()  : TargetRegisterClass("
          << RC.getName() + "VTs" << ", "
          << RC.getName() + "Subclasses" << ", "
+         << RC.getName() + "Superclasses" << ", "
          << RC.SpillSize/8 << ", "
          << RC.SpillAlignment/8 << ", " << RC.getName() << ", "
          << RC.getName() << " + " << RC.Elements.size() << ") {}\n";
