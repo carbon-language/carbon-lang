@@ -78,9 +78,9 @@ namespace {
       return (FreeRangeHeader*)((char*)this-PrevSize);
     }
     
-    /// MakeFreeBlock - Turn an allocated block into a free block, adjusting
+    /// FreeBlock - Turn an allocated block into a free block, adjusting
     /// bits in the object headers, and adding an end of region memory block.
-    FreeRangeHeader &MakeFreeBlock(FreeRangeHeader *FreeList);
+    FreeRangeHeader *FreeBlock(FreeRangeHeader *FreeList);
     
     /// TrimAllocationToSize - If this allocated block is significantly larger
     /// than NewSize, split it into two pieces (where the former is NewSize
@@ -146,19 +146,27 @@ FreeRangeHeader *FreeRangeHeader::AllocateBlock() {
   return RemoveFromFreeList();
 }
 
-/// MakeFreeBlock - Turn an allocated block into a free block, adjusting
+/// FreeBlock - Turn an allocated block into a free block, adjusting
 /// bits in the object headers, and adding an end of region memory block.
 /// If possible, coallesce this block with neighboring blocks.  Return the
-/// FreeRangeHeader this block ends up in, which may be != this if it got
-/// coallesced.
-FreeRangeHeader &MemoryRangeHeader::MakeFreeBlock(FreeRangeHeader *FreeList) {
+/// FreeRangeHeader to allocate from.
+FreeRangeHeader *MemoryRangeHeader::FreeBlock(FreeRangeHeader *FreeList) {
   MemoryRangeHeader *FollowingBlock = &getBlockAfter();
   assert(ThisAllocated && "This block is already allocated!");
   assert(FollowingBlock->PrevAllocated && "Flags out of sync!");
   
+  FreeRangeHeader *FreeListToReturn = FreeList;
+  
   // If the block after this one is free, merge it into this block.
   if (!FollowingBlock->ThisAllocated) {
     FreeRangeHeader &FollowingFreeBlock = *(FreeRangeHeader *)FollowingBlock;
+    // "FreeList" always needs to be a valid free block.  If we're about to
+    // coallesce with it, update our notion of what the free list is.
+    if (&FollowingFreeBlock == FreeList) {
+      FreeList = FollowingFreeBlock.Next;
+      FreeListToReturn = 0;
+      assert(&FollowingFreeBlock != FreeList && "No tombstone block?");
+    }
     FollowingFreeBlock.RemoveFromFreeList();
     
     // Include the following block into this one.
@@ -174,7 +182,7 @@ FreeRangeHeader &MemoryRangeHeader::MakeFreeBlock(FreeRangeHeader *FreeList) {
   
   if (FreeRangeHeader *PrevFreeBlock = getFreeBlockBefore()) {
     PrevFreeBlock->GrowBlock(PrevFreeBlock->BlockSize + BlockSize);
-    return *PrevFreeBlock;
+    return FreeListToReturn ? FreeListToReturn : PrevFreeBlock;
   }
 
   // Otherwise, mark this block free.
@@ -188,7 +196,7 @@ FreeRangeHeader &MemoryRangeHeader::MakeFreeBlock(FreeRangeHeader *FreeList) {
   // Add a marker at the end of the block, indicating the size of this free
   // block.
   FreeBlock.SetEndOfBlockSizeMarker();
-  return FreeBlock;
+  return FreeListToReturn ? FreeListToReturn : &FreeBlock;
 }
 
 /// GrowBlock - The block after this block just got deallocated.  Merge it
@@ -197,6 +205,7 @@ void FreeRangeHeader::GrowBlock(uintptr_t NewSize) {
   assert(NewSize > BlockSize && "Not growing block?");
   BlockSize = NewSize;
   SetEndOfBlockSizeMarker();
+  getBlockAfter().PrevAllocated = 0;
 }
 
 /// TrimAllocationToSize - If this allocated block is significantly larger
@@ -304,7 +313,19 @@ namespace {
     /// deallocateMemForFunction - Deallocate all memory for the specified
     /// function body.
     void deallocateMemForFunction(const Function *F) {
+      std::map<const Function*, MemoryRangeHeader*>::iterator
+        I = FunctionBlocks.find(F);
+      if (I == FunctionBlocks.end()) return;
       
+      // Find the block that is allocated for this function.
+      MemoryRangeHeader *MemRange = I->second;
+      assert(MemRange->ThisAllocated && "Block isn't allocated!");
+      
+      // Free the memory.
+      FreeMemoryList = MemRange->FreeBlock(FreeMemoryList);
+      
+      // Finally, remove this entry from FunctionBlocks.
+      FunctionBlocks.erase(I);
     }
   };
 }
@@ -349,9 +370,9 @@ JITMemoryManager::JITMemoryManager(bool useGOT) {
 
   /// Add a tiny allocated region so that Mem2 is never coallesced away.
   MemoryRangeHeader *Mem1 = (MemoryRangeHeader*)Mem2-1;
-  Mem2->ThisAllocated = 1;
-  Mem2->PrevAllocated = 0;
-  Mem2->BlockSize     = (char*)Mem2 - (char*)Mem1;
+  Mem1->ThisAllocated = 1;
+  Mem1->PrevAllocated = 0;
+  Mem1->BlockSize     = (char*)Mem2 - (char*)Mem1;
   
   // Add a FreeRangeHeader to the start of the function body region, indicating
   // that the space is free.  Mark the previous block allocated so we never look
@@ -359,7 +380,7 @@ JITMemoryManager::JITMemoryManager(bool useGOT) {
   FreeRangeHeader *Mem0 = (FreeRangeHeader*)CurStubPtr;
   Mem0->ThisAllocated = 0;
   Mem0->PrevAllocated = 1;
-  Mem0->BlockSize = (unsigned char*)Mem1-(unsigned char*)Mem0;
+  Mem0->BlockSize = (char*)Mem1-(char*)Mem0;
   Mem0->SetEndOfBlockSizeMarker();
   Mem0->AddToFreeList(Mem2);
   
