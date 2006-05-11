@@ -58,36 +58,28 @@ ViewSchedDAGs("view-sched-dags", cl::Hidden,
 static const bool ViewISelDAGs = 0, ViewSchedDAGs = 0;
 #endif
 
-// Scheduling heuristics
-enum SchedHeuristics {
-  defaultScheduling,      // Let the target specify its preference.
-  noScheduling,           // No scheduling, emit breadth first sequence.
-  simpleScheduling,       // Two pass, min. critical path, max. utilization.
-  simpleNoItinScheduling, // Same as above exact using generic latency.
-  listSchedulingBURR,     // Bottom up reg reduction list scheduling.
-  listSchedulingTD        // Top-down list scheduler.
-};
-
 namespace {
-  cl::opt<SchedHeuristics>
+  cl::opt<ScheduleDAG::SchedHeuristics>
   ISHeuristic(
     "sched",
     cl::desc("Choose scheduling style"),
-    cl::init(defaultScheduling),
+    cl::init(ScheduleDAG::defaultScheduling),
     cl::values(
-      clEnumValN(defaultScheduling, "default",
+      clEnumValN(ScheduleDAG::defaultScheduling, "default",
                  "Target preferred scheduling style"),
-      clEnumValN(noScheduling, "none",
+      clEnumValN(ScheduleDAG::noScheduling, "none",
                  "No scheduling: breadth first sequencing"),
-      clEnumValN(simpleScheduling, "simple",
+      clEnumValN(ScheduleDAG::simpleScheduling, "simple",
                  "Simple two pass scheduling: minimize critical path "
                  "and maximize processor utilization"),
-      clEnumValN(simpleNoItinScheduling, "simple-noitin",
+      clEnumValN(ScheduleDAG::simpleNoItinScheduling, "simple-noitin",
                  "Simple two pass scheduling: Same as simple "
                  "except using generic latency"),
-      clEnumValN(listSchedulingBURR, "list-burr",
-                 "Bottom up register reduction list scheduling"),
-      clEnumValN(listSchedulingTD, "list-td",
+      clEnumValN(ScheduleDAG::listSchedulingBURR, "list-burr",
+                 "Bottom-up register reduction list scheduling"),
+      clEnumValN(ScheduleDAG::listSchedulingTDRR, "list-tdrr",
+                 "Top-down register reduction list scheduling"),
+      clEnumValN(ScheduleDAG::listSchedulingTD, "list-td",
                  "Top-down list scheduler"),
       clEnumValEnd));
 } // namespace
@@ -3418,7 +3410,7 @@ void SelectionDAGISel::ScheduleAndEmitDAG(SelectionDAG &DAG) {
 
   switch (ISHeuristic) {
   default: assert(0 && "Unrecognized scheduling heuristic");
-  case defaultScheduling:
+  case ScheduleDAG::defaultScheduling:
     if (TLI.getSchedulingPreference() == TargetLowering::SchedulingForLatency)
       SL = createTDListDAGScheduler(DAG, BB, CreateTargetHazardRecognizer());
     else {
@@ -3427,19 +3419,22 @@ void SelectionDAGISel::ScheduleAndEmitDAG(SelectionDAG &DAG) {
       SL = createBURRListDAGScheduler(DAG, BB);
     }
     break;
-  case noScheduling:
+  case ScheduleDAG::noScheduling:
     SL = createBFS_DAGScheduler(DAG, BB);
     break;
-  case simpleScheduling:
+  case ScheduleDAG::simpleScheduling:
     SL = createSimpleDAGScheduler(false, DAG, BB);
     break;
-  case simpleNoItinScheduling:
+  case ScheduleDAG::simpleNoItinScheduling:
     SL = createSimpleDAGScheduler(true, DAG, BB);
     break;
-  case listSchedulingBURR:
+  case ScheduleDAG::listSchedulingBURR:
     SL = createBURRListDAGScheduler(DAG, BB);
     break;
-  case listSchedulingTD:
+  case ScheduleDAG::listSchedulingTDRR:
+    SL = createTDRRListDAGScheduler(DAG, BB);
+    break;
+  case ScheduleDAG::listSchedulingTD:
     SL = createTDListDAGScheduler(DAG, BB, CreateTargetHazardRecognizer());
     break;
   }

@@ -17,6 +17,8 @@
 
 #include "llvm/CodeGen/SelectionDAG.h"
 
+#include <set>
+
 namespace llvm {
   struct InstrStage;
   class MachineConstantPool;
@@ -71,8 +73,88 @@ namespace llvm {
     }
   };
   
+  /// SUnit - Scheduling unit. It's an wrapper around either a single SDNode or
+  /// a group of nodes flagged together.
+  struct SUnit {
+    SDNode *Node;                       // Representative node.
+    std::vector<SDNode*> FlaggedNodes;  // All nodes flagged to Node.
+    
+    // Preds/Succs - The SUnits before/after us in the graph.  The boolean value
+    // is true if the edge is a token chain edge, false if it is a value edge. 
+    std::set<std::pair<SUnit*,bool> > Preds;  // All sunit predecessors.
+    std::set<std::pair<SUnit*,bool> > Succs;  // All sunit successors.
+
+    short NumPreds;                     // # of preds.
+    short NumSuccs;                     // # of sucss.
+    short NumPredsLeft;                 // # of preds not scheduled.
+    short NumSuccsLeft;                 // # of succs not scheduled.
+    short NumChainPredsLeft;            // # of chain preds not scheduled.
+    short NumChainSuccsLeft;            // # of chain succs not scheduled.
+    bool isTwoAddress     : 1;          // Is a two-address instruction.
+    bool isDefNUseOperand : 1;          // Is a def&use operand.
+    bool isPending        : 1;          // True once pending.
+    bool isAvailable      : 1;          // True once available.
+    bool isScheduled      : 1;          // True once scheduled.
+    unsigned short Latency;             // Node latency.
+    unsigned CycleBound;                // Upper/lower cycle to be scheduled at.
+    unsigned Cycle;                     // Once scheduled, the cycle of the op.
+    unsigned Depth;                     // Node depth;
+    unsigned Height;                    // Node height;
+    unsigned NodeNum;                   // Entry # of node in the node vector.
+    
+    SUnit(SDNode *node, unsigned nodenum)
+      : Node(node), NumPreds(0), NumSuccs(0), NumPredsLeft(0), NumSuccsLeft(0),
+        NumChainPredsLeft(0), NumChainSuccsLeft(0),
+        isTwoAddress(false), isDefNUseOperand(false),
+        isPending(false), isAvailable(false), isScheduled(false),
+        Latency(0), CycleBound(0), Cycle(0), Depth(0), Height(0),
+        NodeNum(nodenum) {}
+    
+    void dump(const SelectionDAG *G) const;
+    void dumpAll(const SelectionDAG *G) const;
+  };
+
+  //===--------------------------------------------------------------------===//
+  /// SchedulingPriorityQueue - This interface is used to plug different
+  /// priorities computation algorithms into the list scheduler. It implements
+  /// the interface of a standard priority queue, where nodes are inserted in 
+  /// arbitrary order and returned in priority order.  The computation of the
+  /// priority and the representation of the queue are totally up to the
+  /// implementation to decide.
+  /// 
+  class SchedulingPriorityQueue {
+  public:
+    virtual ~SchedulingPriorityQueue() {}
+  
+    virtual void initNodes(const std::vector<SUnit> &SUnits) = 0;
+    virtual void releaseState() = 0;
+  
+    virtual bool empty() const = 0;
+    virtual void push(SUnit *U) = 0;
+  
+    virtual void push_all(const std::vector<SUnit *> &Nodes) = 0;
+    virtual SUnit *pop() = 0;
+
+    /// ScheduledNode - As each node is scheduled, this method is invoked.  This
+    /// allows the priority function to adjust the priority of node that have
+    /// already been emitted.
+    virtual void ScheduledNode(SUnit *Node) {}
+  };
+
   class ScheduleDAG {
   public:
+
+    // Scheduling heuristics
+    enum SchedHeuristics {
+      defaultScheduling,      // Let the target specify its preference.
+      noScheduling,           // No scheduling, emit breadth first sequence.
+      simpleScheduling,       // Two pass, min. critical path, max. utilization.
+      simpleNoItinScheduling, // Same as above exact using generic latency.
+      listSchedulingBURR,     // Bottom-up reg reduction list scheduling.
+      listSchedulingTDRR,     // Top-down reg reduction list scheduling.
+      listSchedulingTD        // Top-down list scheduler.
+    };
+
     SelectionDAG &DAG;                    // DAG of the current basic block
     MachineBasicBlock *BB;                // Current basic block
     const TargetMachine &TM;              // Target processor
@@ -80,6 +162,10 @@ namespace llvm {
     const MRegisterInfo *MRI;             // Target processor register info
     SSARegMap *RegMap;                    // Virtual/real register map
     MachineConstantPool *ConstPool;       // Target constant pool
+    std::vector<SUnit*> Sequence;         // The schedule.  Null SUnit*'s represent
+                                          // noop instructions.
+    std::map<SDNode*, SUnit*> SUnitMap;   // SDNode to SUnit mapping (n -> 1).
+    std::vector<SUnit> SUnits;            // The scheduling units.
 
     ScheduleDAG(SelectionDAG &dag, MachineBasicBlock *bb,
                 const TargetMachine &tm)
@@ -105,6 +191,23 @@ namespace llvm {
       return false;
     }
 
+    /// NewSUnit - Creates a new SUnit and return a ptr to it.
+    ///
+    SUnit *NewSUnit(SDNode *N) {
+      SUnits.push_back(SUnit(N, SUnits.size()));
+      return &SUnits.back();
+    }
+
+    /// BuildSchedUnits - Build SUnits from the selection dag that we are input.
+    /// This SUnit graph is similar to the SelectionDAG, but represents flagged
+    /// together nodes with a single SUnit.
+    void BuildSchedUnits();
+
+    /// CalculateDepths, CalculateHeights - Calculate node depth / height.
+    ///
+    void CalculateDepths();
+    void CalculateHeights();
+
     /// EmitNode - Generate machine code for an node and needed dependencies.
     /// VRBaseMap contains, for each already emitted node, the first virtual
     /// register number for the results of the node.
@@ -115,6 +218,9 @@ namespace llvm {
     ///
     void EmitNoop();
     
+    void EmitSchedule();
+
+    void dumpSchedule() const;
 
     /// Schedule - Order nodes according to selected style.
     ///
@@ -136,6 +242,11 @@ namespace llvm {
   /// createBURRListDAGScheduler - This creates a bottom up register usage
   /// reduction list scheduler.
   ScheduleDAG* createBURRListDAGScheduler(SelectionDAG &DAG,
+                                          MachineBasicBlock *BB);
+  
+  /// createTDRRListDAGScheduler - This creates a top down register usage
+  /// reduction list scheduler.
+  ScheduleDAG* createTDRRListDAGScheduler(SelectionDAG &DAG,
                                           MachineBasicBlock *BB);
   
   /// createTDListDAGScheduler - This creates a top-down list scheduler with

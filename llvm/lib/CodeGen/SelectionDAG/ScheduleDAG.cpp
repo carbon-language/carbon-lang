@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "sched"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -20,9 +21,184 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetLowering.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
+#include <iostream>
 using namespace llvm;
 
+
+/// BuildSchedUnits - Build SUnits from the selection dag that we are input.
+/// This SUnit graph is similar to the SelectionDAG, but represents flagged
+/// together nodes with a single SUnit.
+void ScheduleDAG::BuildSchedUnits() {
+  // Reserve entries in the vector for each of the SUnits we are creating.  This
+  // ensure that reallocation of the vector won't happen, so SUnit*'s won't get
+  // invalidated.
+  SUnits.reserve(std::distance(DAG.allnodes_begin(), DAG.allnodes_end()));
+  
+  const InstrItineraryData &InstrItins = TM.getInstrItineraryData();
+  
+  for (SelectionDAG::allnodes_iterator NI = DAG.allnodes_begin(),
+       E = DAG.allnodes_end(); NI != E; ++NI) {
+    if (isPassiveNode(NI))  // Leaf node, e.g. a TargetImmediate.
+      continue;
+    
+    // If this node has already been processed, stop now.
+    if (SUnitMap[NI]) continue;
+    
+    SUnit *NodeSUnit = NewSUnit(NI);
+    
+    // See if anything is flagged to this node, if so, add them to flagged
+    // nodes.  Nodes can have at most one flag input and one flag output.  Flags
+    // are required the be the last operand and result of a node.
+    
+    // Scan up, adding flagged preds to FlaggedNodes.
+    SDNode *N = NI;
+    while (N->getNumOperands() &&
+           N->getOperand(N->getNumOperands()-1).getValueType() == MVT::Flag) {
+      N = N->getOperand(N->getNumOperands()-1).Val;
+      NodeSUnit->FlaggedNodes.push_back(N);
+      SUnitMap[N] = NodeSUnit;
+    }
+    
+    // Scan down, adding this node and any flagged succs to FlaggedNodes if they
+    // have a user of the flag operand.
+    N = NI;
+    while (N->getValueType(N->getNumValues()-1) == MVT::Flag) {
+      SDOperand FlagVal(N, N->getNumValues()-1);
+      
+      // There are either zero or one users of the Flag result.
+      bool HasFlagUse = false;
+      for (SDNode::use_iterator UI = N->use_begin(), E = N->use_end(); 
+           UI != E; ++UI)
+        if (FlagVal.isOperand(*UI)) {
+          HasFlagUse = true;
+          NodeSUnit->FlaggedNodes.push_back(N);
+          SUnitMap[N] = NodeSUnit;
+          N = *UI;
+          break;
+        }
+          if (!HasFlagUse) break;
+    }
+    
+    // Now all flagged nodes are in FlaggedNodes and N is the bottom-most node.
+    // Update the SUnit
+    NodeSUnit->Node = N;
+    SUnitMap[N] = NodeSUnit;
+    
+    // Compute the latency for the node.  We use the sum of the latencies for
+    // all nodes flagged together into this SUnit.
+    if (InstrItins.isEmpty()) {
+      // No latency information.
+      NodeSUnit->Latency = 1;
+    } else {
+      NodeSUnit->Latency = 0;
+      if (N->isTargetOpcode()) {
+        unsigned SchedClass = TII->getSchedClass(N->getTargetOpcode());
+        InstrStage *S = InstrItins.begin(SchedClass);
+        InstrStage *E = InstrItins.end(SchedClass);
+        for (; S != E; ++S)
+          NodeSUnit->Latency += S->Cycles;
+      }
+      for (unsigned i = 0, e = NodeSUnit->FlaggedNodes.size(); i != e; ++i) {
+        SDNode *FNode = NodeSUnit->FlaggedNodes[i];
+        if (FNode->isTargetOpcode()) {
+          unsigned SchedClass = TII->getSchedClass(FNode->getTargetOpcode());
+          InstrStage *S = InstrItins.begin(SchedClass);
+          InstrStage *E = InstrItins.end(SchedClass);
+          for (; S != E; ++S)
+            NodeSUnit->Latency += S->Cycles;
+        }
+      }
+    }
+  }
+  
+  // Pass 2: add the preds, succs, etc.
+  for (unsigned su = 0, e = SUnits.size(); su != e; ++su) {
+    SUnit *SU = &SUnits[su];
+    SDNode *MainNode = SU->Node;
+    
+    if (MainNode->isTargetOpcode()) {
+      unsigned Opc = MainNode->getTargetOpcode();
+      if (TII->isTwoAddrInstr(Opc)) {
+        SU->isTwoAddress = true;
+        SDNode *OpN = MainNode->getOperand(0).Val;
+        SUnit *OpSU = SUnitMap[OpN];
+        if (OpSU)
+          OpSU->isDefNUseOperand = true;
+      }
+    }
+    
+    // Find all predecessors and successors of the group.
+    // Temporarily add N to make code simpler.
+    SU->FlaggedNodes.push_back(MainNode);
+    
+    for (unsigned n = 0, e = SU->FlaggedNodes.size(); n != e; ++n) {
+      SDNode *N = SU->FlaggedNodes[n];
+      
+      for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+        SDNode *OpN = N->getOperand(i).Val;
+        if (isPassiveNode(OpN)) continue;   // Not scheduled.
+        SUnit *OpSU = SUnitMap[OpN];
+        assert(OpSU && "Node has no SUnit!");
+        if (OpSU == SU) continue;           // In the same group.
+
+        MVT::ValueType OpVT = N->getOperand(i).getValueType();
+        assert(OpVT != MVT::Flag && "Flagged nodes should be in same sunit!");
+        bool isChain = OpVT == MVT::Other;
+        
+        if (SU->Preds.insert(std::make_pair(OpSU, isChain)).second) {
+          if (!isChain) {
+            SU->NumPreds++;
+            SU->NumPredsLeft++;
+          } else {
+            SU->NumChainPredsLeft++;
+          }
+        }
+        if (OpSU->Succs.insert(std::make_pair(SU, isChain)).second) {
+          if (!isChain) {
+            OpSU->NumSuccs++;
+            OpSU->NumSuccsLeft++;
+          } else {
+            OpSU->NumChainSuccsLeft++;
+          }
+        }
+      }
+    }
+    
+    // Remove MainNode from FlaggedNodes again.
+    SU->FlaggedNodes.pop_back();
+  }
+  
+  return;
+}
+
+static void CalculateDepths(SUnit *SU, unsigned Depth) {
+  if (Depth > SU->Depth) SU->Depth = Depth;
+  for (std::set<std::pair<SUnit*, bool> >::iterator I = SU->Succs.begin(),
+         E = SU->Succs.end(); I != E; ++I)
+    CalculateDepths(I->first, Depth+1);
+}
+
+void ScheduleDAG::CalculateDepths() {
+  SUnit *Entry = SUnitMap[DAG.getEntryNode().Val];
+  ::CalculateDepths(Entry, 0U);
+  for (unsigned i = 0, e = SUnits.size(); i != e; ++i)
+    if (SUnits[i].Preds.size() == 0 && &SUnits[i] != Entry) {
+      ::CalculateDepths(&SUnits[i], 0U);
+    }
+}
+
+static void CalculateHeights(SUnit *SU, unsigned Height) {
+  if (Height > SU->Height) SU->Height = Height;
+  for (std::set<std::pair<SUnit*, bool> >::iterator I = SU->Preds.begin(),
+         E = SU->Preds.end(); I != E; ++I)
+    CalculateHeights(I->first, Height+1);
+}
+void ScheduleDAG::CalculateHeights() {
+  SUnit *Root = SUnitMap[DAG.getRoot().Val];
+  ::CalculateHeights(Root, 0U);
+}
 
 /// CountResults - The results of target nodes have register or immediate
 /// operands first, then an optional chain, and optional flag operands (which do
@@ -348,6 +524,32 @@ void ScheduleDAG::EmitNoop() {
   TII->insertNoop(*BB, BB->end());
 }
 
+/// EmitSchedule - Emit the machine code in scheduled order.
+void ScheduleDAG::EmitSchedule() {
+  std::map<SDNode*, unsigned> VRBaseMap;
+  for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
+    if (SUnit *SU = Sequence[i]) {
+      for (unsigned j = 0, ee = SU->FlaggedNodes.size(); j != ee; j++)
+        EmitNode(SU->FlaggedNodes[j], VRBaseMap);
+      EmitNode(SU->Node, VRBaseMap);
+    } else {
+      // Null SUnit* is a noop.
+      EmitNoop();
+    }
+  }
+}
+
+/// dump - dump the schedule.
+void ScheduleDAG::dumpSchedule() const {
+  for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
+    if (SUnit *SU = Sequence[i])
+      SU->dump(&DAG);
+    else
+      std::cerr << "**** NOOP ****\n";
+  }
+}
+
+
 /// Run - perform scheduling.
 ///
 MachineBasicBlock *ScheduleDAG::Run() {
@@ -360,4 +562,53 @@ MachineBasicBlock *ScheduleDAG::Run() {
   return BB;
 }
 
+/// SUnit - Scheduling unit. It's an wrapper around either a single SDNode or
+/// a group of nodes flagged together.
+void SUnit::dump(const SelectionDAG *G) const {
+  std::cerr << "SU(" << NodeNum << "): ";
+  Node->dump(G);
+  std::cerr << "\n";
+  if (FlaggedNodes.size() != 0) {
+    for (unsigned i = 0, e = FlaggedNodes.size(); i != e; i++) {
+      std::cerr << "    ";
+      FlaggedNodes[i]->dump(G);
+      std::cerr << "\n";
+    }
+  }
+}
 
+void SUnit::dumpAll(const SelectionDAG *G) const {
+  dump(G);
+
+  std::cerr << "  # preds left       : " << NumPredsLeft << "\n";
+  std::cerr << "  # succs left       : " << NumSuccsLeft << "\n";
+  std::cerr << "  # chain preds left : " << NumChainPredsLeft << "\n";
+  std::cerr << "  # chain succs left : " << NumChainSuccsLeft << "\n";
+  std::cerr << "  Latency            : " << Latency << "\n";
+  std::cerr << "  Depth              : " << Depth << "\n";
+  std::cerr << "  Height             : " << Height << "\n";
+
+  if (Preds.size() != 0) {
+    std::cerr << "  Predecessors:\n";
+    for (std::set<std::pair<SUnit*,bool> >::const_iterator I = Preds.begin(),
+           E = Preds.end(); I != E; ++I) {
+      if (I->second)
+        std::cerr << "   ch  ";
+      else
+        std::cerr << "   val ";
+      I->first->dump(G);
+    }
+  }
+  if (Succs.size() != 0) {
+    std::cerr << "  Successors:\n";
+    for (std::set<std::pair<SUnit*, bool> >::const_iterator I = Succs.begin(),
+           E = Succs.end(); I != E; ++I) {
+      if (I->second)
+        std::cerr << "   ch  ";
+      else
+        std::cerr << "   val ";
+      I->first->dump(G);
+    }
+  }
+  std::cerr << "\n";
+}
