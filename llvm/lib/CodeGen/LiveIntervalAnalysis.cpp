@@ -80,6 +80,15 @@ void LiveIntervals::releaseMemory()
 }
 
 
+static bool isZeroLengthInterval(LiveInterval *li) {
+  for (LiveInterval::Ranges::const_iterator
+         i = li->ranges.begin(), e = li->ranges.end(); i != e; ++i)
+    if (i->end - i->start > LiveIntervals::InstrSlots::NUM)
+      return false;
+  return true;
+}
+
+
 /// runOnMachineFunction - Register allocate the whole function
 ///
 bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
@@ -197,6 +206,16 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
         ++mii;
       }
     }
+  }
+
+  for (iterator I = begin(), E = end(); I != E; ++I) {
+    LiveInterval &li = I->second;
+    if (MRegisterInfo::isVirtualRegister(li.reg))
+      // If the live interval legnth is essentially zero, i.e. in every live
+      // range the use follows def immediately, it doesn't make sense to spill
+      // it and hope it will be easier to allocate for this li.
+      if (isZeroLengthInterval(&li))
+        li.weight = float(HUGE_VAL);
   }
 
   DEBUG(dump());
