@@ -49,15 +49,18 @@ public:
   typedef const MVT::ValueType* vt_iterator;
   typedef const TargetRegisterClass** sc_iterator;
 private:
+  bool  isSubClass;
   const vt_iterator VTs;
   const sc_iterator SubClasses;
+  const sc_iterator SuperClasses;
   const unsigned RegSize, Alignment;    // Size & Alignment of register in bytes
   const iterator RegsBegin, RegsEnd;
 public:
   TargetRegisterClass(const MVT::ValueType *vts,
-                      const TargetRegisterClass **scs,
+                      const TargetRegisterClass **subcs,
+                      const TargetRegisterClass **supcs,
                       unsigned RS, unsigned Al, iterator RB, iterator RE)
-    : VTs(vts), SubClasses(scs),
+    : VTs(vts), SubClasses(subcs), SuperClasses(supcs),
     RegSize(RS), Alignment(Al), RegsBegin(RB), RegsEnd(RE) {}
   virtual ~TargetRegisterClass() {}     // Allow subclasses
 
@@ -120,6 +123,27 @@ public:
   
   sc_iterator subclasses_end() const {
     sc_iterator I = SubClasses;
+    while (*I != NULL) ++I;
+    return I;
+  }
+  
+  /// hasSuperRegClass - return true if the specified TargetRegisterClass is a
+  /// super-register class of this TargetRegisterClass.
+  bool hasSuperRegClass(const TargetRegisterClass *cs) const {
+    for (int i = 0; SuperClasses[i] != NULL; ++i) 
+      if (SuperClasses[i] == cs)
+        return true;
+    return false;
+  }
+
+  /// superclasses_begin / superclasses_end - Loop over all of the super-classes
+  /// of this register class.
+  sc_iterator superclasses_begin() const {
+    return SuperClasses;
+  }
+  
+  sc_iterator superclasses_end() const {
+    sc_iterator I = SuperClasses;
     while (*I != NULL) ++I;
     return I;
   }
