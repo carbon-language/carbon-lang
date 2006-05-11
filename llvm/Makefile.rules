@@ -629,7 +629,7 @@ ifdef ENABLE_ALPHA_JIT
 endif
 
 LLVMLIBS := $(JIT_LIBS) LLVMScalarOpts.a LLVMTransformUtils.a LLVMAnalysis.a \
-            LLVMBCReader LLVMCore LLVMSupport.a LLVMTarget.a LLVMbzip2 \
+            LLVMBCReader LLVMTarget.a LLVMCore LLVMSupport.a LLVMbzip2 \
             LLVMSystem.a $(PLATFORMLIBDL)
 endif
 
