@@ -53,7 +53,9 @@ unsigned X86InstrInfo::isLoadFromStackSlot(MachineInstr *MI,
   default: break;
   case X86::MOV8rm:
   case X86::MOV16rm:
+  case X86::MOV16_rm:
   case X86::MOV32rm:
+  case X86::MOV32_rm:
   case X86::FpLD64m:
   case X86::MOVSSrm:
   case X86::MOVSDrm:
@@ -78,7 +80,9 @@ unsigned X86InstrInfo::isStoreToStackSlot(MachineInstr *MI,
   default: break;
   case X86::MOV8mr:
   case X86::MOV16mr:
+  case X86::MOV16_mr:
   case X86::MOV32mr:
+  case X86::MOV32_mr:
   case X86::FpSTP64m:
   case X86::MOVSSmr:
   case X86::MOVSDmr:
