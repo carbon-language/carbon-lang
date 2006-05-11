@@ -7317,6 +7317,33 @@ static bool TryToSinkInstruction(Instruction *I, BasicBlock *DestBlock) {
   return true;
 }
 
+/// OptimizeConstantExpr - Given a constant expression and target data layout
+/// information, symbolically evaluation the constant expr to something simpler
+/// if possible.
+static Constant *OptimizeConstantExpr(ConstantExpr *CE, const TargetData *TD) {
+  if (!TD) return CE;
+  
+  Constant *Ptr = CE->getOperand(0);
+  if (CE->getOpcode() == Instruction::GetElementPtr && Ptr->isNullValue() &&
+      cast<PointerType>(Ptr->getType())->getElementType()->isSized()) {
+    // If this is a constant expr gep that is effectively computing an
+    // "offsetof", fold it into 'cast int Size to T*' instead of 'gep 0, 0, 12'
+    bool isFoldableGEP = true;
+    for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i)
+      if (!isa<ConstantInt>(CE->getOperand(i)))
+        isFoldableGEP = false;
+    if (isFoldableGEP) {
+      std::vector<Value*> Ops(CE->op_begin()+1, CE->op_end());
+      uint64_t Offset = TD->getIndexedOffset(Ptr->getType(), Ops);
+      Constant *C = ConstantUInt::get(Type::ULongTy, Offset);
+      C = ConstantExpr::getCast(C, TD->getIntPtrType());
+      return ConstantExpr::getCast(C, CE->getType());
+    }
+  }
+  
+  return CE;
+}
+
 
 /// AddReachableCodeToWorklist - Walk the function in depth-first order, adding
 /// all reachable code to the worklist.
@@ -7329,7 +7356,8 @@ static bool TryToSinkInstruction(Instruction *I, BasicBlock *DestBlock) {
 ///
 static void AddReachableCodeToWorklist(BasicBlock *BB, 
                                        std::set<BasicBlock*> &Visited,
-                                       std::vector<Instruction*> &WorkList) {
+                                       std::vector<Instruction*> &WorkList,
+                                       const TargetData *TD) {
   // We have now visited this block!  If we've already been here, bail out.
   if (!Visited.insert(BB).second) return;
     
@@ -7346,6 +7374,8 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
     
     // ConstantProp instruction if trivially constant.
     if (Constant *C = ConstantFoldInstruction(Inst)) {
+      if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
+        C = OptimizeConstantExpr(CE, TD);
       DEBUG(std::cerr << "IC: ConstFold to: " << *C << " from: " << *Inst);
       Inst->replaceAllUsesWith(C);
       ++NumConstProp;
@@ -7362,7 +7392,8 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
   if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
     if (BI->isConditional() && isa<ConstantBool>(BI->getCondition())) {
       bool CondVal = cast<ConstantBool>(BI->getCondition())->getValue();
-      AddReachableCodeToWorklist(BI->getSuccessor(!CondVal), Visited, WorkList);
+      AddReachableCodeToWorklist(BI->getSuccessor(!CondVal), Visited, WorkList,
+                                 TD);
       return;
     }
   } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
@@ -7370,18 +7401,18 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
       // See if this is an explicit destination.
       for (unsigned i = 1, e = SI->getNumSuccessors(); i != e; ++i)
         if (SI->getCaseValue(i) == Cond) {
-          AddReachableCodeToWorklist(SI->getSuccessor(i), Visited, WorkList);
+          AddReachableCodeToWorklist(SI->getSuccessor(i), Visited, WorkList,TD);
           return;
         }
       
       // Otherwise it is the default destination.
-      AddReachableCodeToWorklist(SI->getSuccessor(0), Visited, WorkList);
+      AddReachableCodeToWorklist(SI->getSuccessor(0), Visited, WorkList, TD);
       return;
     }
   }
   
   for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
-    AddReachableCodeToWorklist(TI->getSuccessor(i), Visited, WorkList);
+    AddReachableCodeToWorklist(TI->getSuccessor(i), Visited, WorkList, TD);
 }
 
 bool InstCombiner::runOnFunction(Function &F) {
@@ -7393,7 +7424,7 @@ bool InstCombiner::runOnFunction(Function &F) {
     // the reachable instructions.  Ignore blocks that are not reachable.  Keep
     // track of which blocks we visit.
     std::set<BasicBlock*> Visited;
-    AddReachableCodeToWorklist(F.begin(), Visited, WorkList);
+    AddReachableCodeToWorklist(F.begin(), Visited, WorkList, TD);
 
     // Do a quick scan over the function.  If we find any blocks that are
     // unreachable, remove any instructions inside of them.  This prevents
@@ -7418,10 +7449,9 @@ bool InstCombiner::runOnFunction(Function &F) {
     Instruction *I = WorkList.back();  // Get an instruction from the worklist
     WorkList.pop_back();
 
-    // Check to see if we can DCE or ConstantPropagate the instruction...
-    // Check to see if we can DIE the instruction...
+    // Check to see if we can DCE the instruction.
     if (isInstructionTriviallyDead(I)) {
-      // Add operands to the worklist...
+      // Add operands to the worklist.
       if (I->getNumOperands() < 4)
         AddUsesToWorkList(*I);
       ++NumDeadInst;
@@ -7433,31 +7463,13 @@ bool InstCombiner::runOnFunction(Function &F) {
       continue;
     }
 
-    // Instruction isn't dead, see if we can constant propagate it...
+    // Instruction isn't dead, see if we can constant propagate it.
     if (Constant *C = ConstantFoldInstruction(I)) {
-      Value* Ptr = I->getOperand(0);
-      if (isa<GetElementPtrInst>(I) &&
-          cast<Constant>(Ptr)->isNullValue() &&
-          !isa<ConstantPointerNull>(C) &&
-          cast<PointerType>(Ptr->getType())->getElementType()->isSized()) {
-        // If this is a constant expr gep that is effectively computing an
-        // "offsetof", fold it into 'cast int X to T*' instead of 'gep 0, 0, 12'
-        bool isFoldableGEP = true;
-        for (unsigned i = 1, e = I->getNumOperands(); i != e; ++i)
-          if (!isa<ConstantInt>(I->getOperand(i)))
-            isFoldableGEP = false;
-        if (isFoldableGEP) {
-          uint64_t Offset = TD->getIndexedOffset(Ptr->getType(),
-                             std::vector<Value*>(I->op_begin()+1, I->op_end()));
-          C = ConstantUInt::get(Type::ULongTy, Offset);
-          C = ConstantExpr::getCast(C, TD->getIntPtrType());
-          C = ConstantExpr::getCast(C, I->getType());
-        }
-      }
-
+      if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
+        C = OptimizeConstantExpr(CE, TD);
       DEBUG(std::cerr << "IC: ConstFold to: " << *C << " from: " << *I);
 
-      // Add operands to the worklist...
+      // Add operands to the worklist.
       AddUsesToWorkList(*I);
       ReplaceInstUsesWith(*I, C);
 
