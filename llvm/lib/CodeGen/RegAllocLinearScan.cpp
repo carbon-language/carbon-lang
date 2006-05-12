@@ -551,15 +551,32 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   }
   
   // If we didn't find a register that is spillable, try aliases?
+  if (!minReg) {
+    for (TargetRegisterClass::iterator i = RC->allocation_order_begin(*mf_),
+           e = RC->allocation_order_end(*mf_); i != e; ++i) {
+      unsigned reg = *i;
+      // No need to worry about if the alias register size < regsize of RC.
+      // We are going to spill all registers that alias it anyway.
+      for (const unsigned* as = mri_->getAliasSet(reg); *as; ++as) {
+        if (minWeight > SpillWeights[*as]) {
+          minWeight = SpillWeights[*as];
+          minReg = *as;
+        }
+      }
+    }
+
+    // All registers must have inf weight. Just grab one!
+    if (!minReg)
+      minReg = *RC->allocation_order_begin(*mf_);
+  }
   
-// FIXME:  assert(minReg && "Didn't find any reg!");
   DEBUG(std::cerr << "\t\tregister with min weight: "
         << mri_->getName(minReg) << " (" << minWeight << ")\n");
 
   // if the current has the minimum weight, we need to spill it and
   // add any added intervals back to unhandled, and restart
   // linearscan.
-  if (cur->weight <= minWeight) {
+  if (cur->weight != float(HUGE_VAL) && cur->weight <= minWeight) {
     DEBUG(std::cerr << "\t\t\tspilling(c): " << *cur << '\n';);
     int slot = vrm_->assignVirt2StackSlot(cur->reg);
     std::vector<LiveInterval*> added =
