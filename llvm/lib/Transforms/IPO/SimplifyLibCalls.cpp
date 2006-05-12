@@ -386,7 +386,7 @@ struct ExitInMainOptimization : public LibCallOptimization {
           // Create a return instruction that we'll replace the call with.
           // Note that the argument of the return is the argument of the call
           // instruction.
-          ReturnInst* ri = new ReturnInst(ci->getOperand(1), ci);
+          new ReturnInst(ci->getOperand(1), ci);
 
           // Split the block at the call instruction which places it in a new
           // basic block.
@@ -444,7 +444,6 @@ public:
   /// @brief Optimize the strcat library function
   virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC) {
     // Extract some information from the instruction
-    Module* M = ci->getParent()->getParent()->getParent();
     Value* dest = ci->getOperand(1);
     Value* src  = ci->getOperand(2);
 
@@ -807,9 +806,6 @@ public:
     // terminator as well.
     len++;
 
-    // Extract some information from the instruction
-    Module* M = ci->getParent()->getParent()->getParent();
-
     // We have enough information to now generate the memcpy call to
     // do the concatenation for us.
     std::vector<Value*> vals;
@@ -996,7 +992,7 @@ struct memcmpOptimization : public LibCallOptimization {
         Value *G1 = new GetElementPtrInst(Op1Cast, One, "next1v", CI);
         Value *G2 = new GetElementPtrInst(Op2Cast, One, "next2v", CI);
         Value *S1V2 = new LoadInst(G1, LHS->getName()+".val2", CI);
-        Value *S2V2 = new LoadInst(G1, RHS->getName()+".val2", CI);
+        Value *S2V2 = new LoadInst(G2, RHS->getName()+".val2", CI);
         Value *D2 = BinaryOperator::createSub(S1V2, S2V2,
                                               CI->getName()+".d1", CI);
         Value *Or = BinaryOperator::createOr(D1, D2, CI->getName()+".res", CI);

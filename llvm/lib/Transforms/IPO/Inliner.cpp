@@ -41,7 +41,6 @@ Inliner::Inliner() : InlineThreshold(InlineLimit) {}
 // do so and update the CallGraph for this operation.
 static bool InlineCallIfPossible(CallSite CS, CallGraph &CG,
                                  const std::set<Function*> &SCCFunctions) {
-  Function *Caller = CS.getInstruction()->getParent()->getParent();
   Function *Callee = CS.getCalledFunction();
   if (!InlineFunction(CS, &CG)) return false;
 
