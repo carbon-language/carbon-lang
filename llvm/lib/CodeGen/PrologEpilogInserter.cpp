@@ -102,7 +102,6 @@ FunctionPass *llvm::createPrologEpilogCodeInserter() { return new PEI(); }
 void PEI::calculateCallerSavedRegisters(MachineFunction &Fn) {
   const MRegisterInfo *RegInfo = Fn.getTarget().getRegisterInfo();
   const TargetFrameInfo *TFI = Fn.getTarget().getFrameInfo();
-  const TargetInstrInfo &TII = *Fn.getTarget().getInstrInfo();
 
   // Get the callee saved register list...
   const unsigned *CSRegs = RegInfo->getCalleeSaveRegs();
