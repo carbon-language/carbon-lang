@@ -15,6 +15,7 @@
 #define IA64TARGETMACHINE_H
 
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/PassManager.h"
 #include "IA64InstrInfo.h"

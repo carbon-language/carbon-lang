@@ -15,6 +15,7 @@
 
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Target/SubtargetFeature.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/Scalar.h"

@@ -15,6 +15,7 @@
 #define SPARCTARGETMACHINE_H
 
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/PassManager.h"
 #include "SparcInstrInfo.h"

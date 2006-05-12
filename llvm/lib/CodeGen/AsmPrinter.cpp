@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include <iostream>
 #include <cerrno>

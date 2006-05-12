@@ -20,6 +20,7 @@
 #include "PPCInstrInfo.h"
 #include "PPCISelLowering.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetData.h"
 
 namespace llvm {
 class PassManager;
