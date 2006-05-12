@@ -392,12 +392,14 @@ JITMemoryManager::JITMemoryManager(bool useGOT) {
 
   // Allocate the GOT.
   GOTBase = NULL;
-  if (useGOT) GOTBase = (unsigned char*)malloc(sizeof(void*) * 8192);
+  if (useGOT) GOTBase = new unsigned char[sizeof(void*) * 8192];
 }
 
 JITMemoryManager::~JITMemoryManager() {
   for (unsigned i = 0, e = Blocks.size(); i != e; ++i)
     sys::Memory::ReleaseRWX(Blocks[i]);
+  
+  delete[] GOTBase;
   Blocks.clear();
 }
 
