@@ -26,8 +26,6 @@ void InstrInfoEmitter::runEnums(std::ostream &OS) {
   CodeGenTarget Target;
 
   // We must emit the PHI opcode first...
-  Record *InstrInfo = Target.getInstructionSet();
-
   std::string Namespace;
   for (CodeGenTarget::inst_iterator II = Target.inst_begin(), 
        E = Target.inst_end(); II != E; ++II) {
