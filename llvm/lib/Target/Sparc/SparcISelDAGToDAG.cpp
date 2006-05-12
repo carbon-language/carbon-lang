@@ -469,7 +469,6 @@ SparcTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
                                  bool isVarArg, unsigned CC,
                                  bool isTailCall, SDOperand Callee, 
                                  ArgListTy &Args, SelectionDAG &DAG) {
-  MachineFunction &MF = DAG.getMachineFunction();
   // Count the size of the outgoing arguments.
   unsigned ArgsSize = 0;
   for (unsigned i = 0, e = Args.size(); i != e; ++i) {
