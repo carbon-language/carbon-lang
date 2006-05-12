@@ -360,7 +360,7 @@ Module *BugDriver::ExtractMappedBlocksFromModule(const
     std::cout << "*** Basic Block extraction failed, please report a bug!\n";
     M = swapProgramIn(M);
     EmitProgressBytecode("basicblockextractfail", true);
-    M = swapProgramIn(M);
+    swapProgramIn(M);
   }
   return Ret;
 }
