@@ -217,7 +217,12 @@ ISD::CondCode ISD::getSetCCOrOperation(ISD::CondCode Op1, ISD::CondCode Op2,
   // If the N and U bits get set then the resultant comparison DOES suddenly
   // care about orderedness, and is true when ordered.
   if (Op > ISD::SETTRUE2)
-    Op &= ~16;     // Clear the N bit.
+    Op &= ~16;     // Clear the U bit if the N bit is set.
+  
+  // Canonicalize illegal integer setcc's.
+  if (isInteger && Op == ISD::SETUNE)  // e.g. SETUGT | SETULT
+    Op = ISD::SETNE;
+  
   return ISD::CondCode(Op);
 }
 
