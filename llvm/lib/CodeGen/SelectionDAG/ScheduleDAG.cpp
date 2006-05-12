@@ -120,13 +120,10 @@ void ScheduleDAG::BuildSchedUnits() {
     
     if (MainNode->isTargetOpcode()) {
       unsigned Opc = MainNode->getTargetOpcode();
-      if (TII->isTwoAddrInstr(Opc)) {
+      if (TII->isTwoAddrInstr(Opc))
         SU->isTwoAddress = true;
-        SDNode *OpN = MainNode->getOperand(0).Val;
-        SUnit *OpSU = SUnitMap[OpN];
-        if (OpSU)
-          OpSU->isDefNUseOperand = true;
-      }
+      if (TII->isCommutableInstr(Opc))
+        SU->isCommutable = true;
     }
     
     // Find all predecessors and successors of the group.
@@ -391,7 +388,18 @@ void ScheduleDAG::EmitNode(SDNode *Node,
     // instruction as appropriate.
     for (unsigned i = 0; i != NodeOperands; ++i)
       AddOperand(MI, Node->getOperand(i), i+NumResults, &II, VRBaseMap);
-    
+
+    // Commute node if it has been determined to be profitable.
+    if (CommuteSet.count(Node)) {
+      MachineInstr *NewMI = TII->commuteInstruction(MI);
+      if (NewMI == 0)
+        DEBUG(std::cerr << "Sched: COMMUTING FAILED!\n");
+      else {
+        DEBUG(std::cerr << "Sched: COMMUTED TO: " << *NewMI);
+        MI = NewMI;
+      }
+    }
+
     // Now that we have emitted all operands, emit this instruction itself.
     if ((II.Flags & M_USES_CUSTOM_DAG_SCHED_INSERTION) == 0) {
       BB->insert(BB->end(), MI);

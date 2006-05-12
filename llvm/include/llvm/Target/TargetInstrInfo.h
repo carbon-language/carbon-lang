@@ -165,6 +165,9 @@ public:
   bool isTwoAddrInstr(MachineOpCode Opcode) const {
     return get(Opcode).Flags & M_2_ADDR_FLAG;
   }
+  bool isCommutableInstr(MachineOpCode Opcode) const {
+    return get(Opcode).Flags & M_COMMUTABLE;
+  }
   bool isTerminatorInstr(unsigned Opcode) const {
     return get(Opcode).Flags & M_TERMINATOR_FLAG;
   }

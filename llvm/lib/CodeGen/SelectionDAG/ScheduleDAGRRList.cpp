@@ -30,7 +30,7 @@
 using namespace llvm;
 
 namespace {
-  cl::opt<bool> SchedLowerDefNUse("sched-lower-defnuse", cl::Hidden);
+  cl::opt<bool> SchedCommuteNodes("sched-commute-nodes", cl::Hidden);
 }
 
 namespace {
@@ -70,6 +70,7 @@ private:
   void ScheduleNodeTopDown(SUnit *SU, unsigned& CurCycle);
   void ListScheduleTopDown();
   void ListScheduleBottomUp();
+  void CommuteNodesToReducePressure();
 };
 }  // end anonymous namespace
 
@@ -95,6 +96,9 @@ void ScheduleDAGRRList::Schedule() {
     ListScheduleTopDown();
   
   AvailableQueue->releaseState();
+
+  if (SchedCommuteNodes)
+    CommuteNodesToReducePressure();
   
   DEBUG(std::cerr << "*** Final schedule ***\n");
   DEBUG(dumpSchedule());
@@ -104,6 +108,41 @@ void ScheduleDAGRRList::Schedule() {
   EmitSchedule();
 }
 
+/// CommuteNodesToReducePressure - Is a node is two-address and commutable, and
+/// it is not the last use of its first operand, add it to the CommuteSet if
+/// possible. It will be commuted when it is translated to a MI.
+void ScheduleDAGRRList::CommuteNodesToReducePressure() {
+  std::set<SUnit *> OperandSeen;
+  for (unsigned i = Sequence.size()-1; i != 0; --i) {  // Ignore first node.
+    SUnit *SU = Sequence[i];
+    if (!SU) continue;
+    if (SU->isTwoAddress && SU->isCommutable) {
+      SDNode *OpN = SU->Node->getOperand(0).Val;
+      SUnit *OpSU = SUnitMap[OpN];
+      if (OpSU && OperandSeen.count(OpSU) == 1) {
+        // Ok, so SU is not the last use of OpSU, but SU is two-address so
+        // it will clobber OpSU. Try to commute it if possible.
+        bool DoCommute = true;
+        for (unsigned j = 1, e = SU->Node->getNumOperands(); j != e; ++j) {
+          OpN = SU->Node->getOperand(j).Val;
+          OpSU = SUnitMap[OpN];
+          if (OpSU && OperandSeen.count(OpSU) == 1) {
+            DoCommute = false;
+            break;
+          }
+        }
+        if (DoCommute)
+          CommuteSet.insert(SU->Node);
+      }
+    }
+
+    for (std::set<std::pair<SUnit*, bool> >::iterator I = SU->Preds.begin(),
+           E = SU->Preds.end(); I != E; ++I) {
+      if (!I->second)
+        OperandSeen.insert(I->first);
+    }
+  }
+}
 
 //===----------------------------------------------------------------------===//
 //  Bottom-Up Scheduling
@@ -436,8 +475,7 @@ namespace {
     void initNodes(const std::vector<SUnit> &sunits) {
       SUnits = &sunits;
       // Add pseudo dependency edges for two-address nodes.
-      if (SchedLowerDefNUse)
-        AddPseudoTwoAddrDeps();
+      AddPseudoTwoAddrDeps();
       // Calculate node priorities.
       CalculatePriorities();
     }
@@ -513,23 +551,6 @@ bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   if (RIsFloater)
     RBonus += 2;
 
-  if (!SchedLowerDefNUse) {
-    // Special tie breaker: if two nodes share a operand, the one that use it
-    // as a def&use operand is preferred.
-    if (LIsTarget && RIsTarget) {
-      if (left->isTwoAddress && !right->isTwoAddress) {
-        SDNode *DUNode = left->Node->getOperand(0).Val;
-        if (DUNode->isOperand(right->Node))
-          LBonus += 2;
-      }
-      if (!left->isTwoAddress && right->isTwoAddress) {
-        SDNode *DUNode = right->Node->getOperand(0).Val;
-        if (DUNode->isOperand(left->Node))
-          RBonus += 2;
-      }
-    }
-  }
-
   if (LPriority+LBonus < RPriority+RBonus)
     return true;
   else if (LPriority+LBonus == RPriority+RBonus)
@@ -602,16 +623,17 @@ void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
       continue;
 
     if (SU->isTwoAddress) {
-      unsigned Depth = SU->Node->getNodeDepth();
       SUnit *DUSU = getDefUsePredecessor(SU);
       if (!DUSU) continue;
 
       for (std::set<std::pair<SUnit*, bool> >::iterator I = DUSU->Succs.begin(),
              E = DUSU->Succs.end(); I != E; ++I) {
+        if (I->second) continue;
         SUnit *SuccSU = I->first;
-        if (SuccSU != SU && !canClobber(SuccSU, DUSU)) {
-          if (SuccSU->Node->getNodeDepth() <= Depth+2 &&
-              !isReachable(SuccSU, SU)) {
+        if (SuccSU != SU &&
+            (!canClobber(SuccSU, DUSU) ||
+             (SchedCommuteNodes && !SU->isCommutable && SuccSU->isCommutable))){
+          if (SuccSU->Depth <= SU->Depth+2 && !isReachable(SuccSU, SU)) {
             DEBUG(std::cerr << "Adding an edge from SU # " << SU->NodeNum
                   << " to SU #" << SuccSU->NodeNum << "\n");
             if (SU->Preds.insert(std::make_pair(SuccSU, true)).second)

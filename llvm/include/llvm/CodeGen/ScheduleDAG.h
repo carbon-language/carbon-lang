@@ -91,7 +91,7 @@ namespace llvm {
     short NumChainPredsLeft;            // # of chain preds not scheduled.
     short NumChainSuccsLeft;            // # of chain succs not scheduled.
     bool isTwoAddress     : 1;          // Is a two-address instruction.
-    bool isDefNUseOperand : 1;          // Is a def&use operand.
+    bool isCommutable     : 1;          // Is a commutable instruction.
     bool isPending        : 1;          // True once pending.
     bool isAvailable      : 1;          // True once available.
     bool isScheduled      : 1;          // True once scheduled.
@@ -105,7 +105,7 @@ namespace llvm {
     SUnit(SDNode *node, unsigned nodenum)
       : Node(node), NumPreds(0), NumSuccs(0), NumPredsLeft(0), NumSuccsLeft(0),
         NumChainPredsLeft(0), NumChainSuccsLeft(0),
-        isTwoAddress(false), isDefNUseOperand(false),
+        isTwoAddress(false), isCommutable(false),
         isPending(false), isAvailable(false), isScheduled(false),
         Latency(0), CycleBound(0), Cycle(0), Depth(0), Height(0),
         NodeNum(nodenum) {}
@@ -162,10 +162,11 @@ namespace llvm {
     const MRegisterInfo *MRI;             // Target processor register info
     SSARegMap *RegMap;                    // Virtual/real register map
     MachineConstantPool *ConstPool;       // Target constant pool
-    std::vector<SUnit*> Sequence;         // The schedule.  Null SUnit*'s represent
-                                          // noop instructions.
+    std::vector<SUnit*> Sequence;         // The schedule. Null SUnit*'s
+                                          // represent noop instructions.
     std::map<SDNode*, SUnit*> SUnitMap;   // SDNode to SUnit mapping (n -> 1).
     std::vector<SUnit> SUnits;            // The scheduling units.
+    std::set<SDNode*> CommuteSet;         // Nodes the should be commuted.
 
     ScheduleDAG(SelectionDAG &dag, MachineBasicBlock *bb,
                 const TargetMachine &tm)
