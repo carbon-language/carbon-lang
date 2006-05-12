@@ -22,7 +22,9 @@
 #include "llvm/Constants.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/ADT/StringExtras.h"
 #include <algorithm>
+#include <cstdlib>
 using namespace llvm;
 
 // Handle the Pass registration stuff necessary to use TargetData's.
@@ -116,6 +118,69 @@ TargetData::TargetData(const std::string &TargetName,
   ShortAlignment   = ShortAl;
   ByteAlignment    = ByteAl;
   BoolAlignment    = BoolAl;
+}
+
+TargetData::TargetData(const std::string &TargetName,
+                       const std::string &TargetDescription) {
+  std::string temp = TargetDescription;
+  
+  LittleEndian = false;
+  PointerSize = 8;
+  PointerAlignment   = 8;
+  DoubleAlignment = 8;
+  FloatAlignment = 4;
+  LongAlignment   = 8;
+  IntAlignment   = 4;
+  ShortAlignment  = 2;
+  ByteAlignment  = 1;
+  BoolAlignment   = 1;
+  
+  while (temp.length() > 0) {
+    std::string token = getToken(temp, "-");
+    
+    switch(token[0]) {
+    case 'E':
+		LittleEndian = false;
+        break;
+    case 'e':
+		LittleEndian = true;
+    	break;
+    case 'p':
+		PointerSize = atoi(getToken(token,":").c_str()) / 8;
+		PointerAlignment = atoi(getToken(token,":").c_str()) / 8;
+		break;
+    case 'd':
+		token = getToken(token,":"); //Ignore the size
+		DoubleAlignment = atoi(getToken(token,":").c_str()) / 8;
+        break;
+    case 'f':
+		token = getToken(token, ":"); //Ignore the size
+		FloatAlignment = atoi(getToken(token, ":").c_str()) / 8;
+    	break;
+    case 'l':
+		token = getToken(token, ":"); //Ignore the size
+		LongAlignment = atoi(getToken(token, ":").c_str()) / 8;
+    	break;
+    case 'i':
+		token = getToken(token, ":"); //Ignore the size
+		IntAlignment = atoi(getToken(token, ":").c_str()) / 8;
+    	break;
+    case 's':
+		token = getToken(token, ":"); //Ignore the size
+		ShortAlignment = atoi(getToken(token, ":").c_str()) / 8;
+    	break;
+    case 'b':
+		token = getToken(token, ":"); //Ignore the size
+		ByteAlignment = atoi(getToken(token, ":").c_str()) / 8;
+    	break;
+    case 'B':
+		token = getToken(token, ":"); //Ignore the size
+		BoolAlignment = atoi(getToken(token, ":").c_str()) / 8;
+    	break;
+    default:
+    	break;
+    }
+  }
 }
 
 TargetData::TargetData(const std::string &ToolName, const Module *M) {
