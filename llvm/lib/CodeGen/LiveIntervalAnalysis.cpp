@@ -724,12 +724,9 @@ void LiveIntervals::joinIntervalsInMachineBB(MachineBasicBlock *MBB) {
           MRegisterInfo::isPhysicalRegister(DestReg))
         continue;
 
-      // If they are not of compatible register classes, we cannot join them.
-      bool Swap = false;
-      if (!compatibleRegisterClasses(SrcReg, DestReg, Swap)) {
-        DEBUG(std::cerr << "Register classes aren't compatible!\n");
+      // If they are not of the same register class, we cannot join them.
+      if (differingRegisterClasses(SrcReg, DestReg))
         continue;
-      }
 
       LiveInterval &SrcInt = getInterval(SrcReg);
       LiveInterval &DestInt = getInterval(DestReg);
@@ -763,7 +760,7 @@ void LiveIntervals::joinIntervalsInMachineBB(MachineBasicBlock *MBB) {
         DestInt.join(SrcInt, MIDefIdx);
         DEBUG(std::cerr << "Joined.  Result = " << DestInt << "\n");
 
-        if (!Swap && !MRegisterInfo::isPhysicalRegister(SrcReg)) {
+        if (!MRegisterInfo::isPhysicalRegister(SrcReg)) {
           r2iMap_.erase(SrcReg);
           r2rMap_[SrcReg] = DestReg;
         } else {
@@ -825,33 +822,24 @@ void LiveIntervals::joinIntervals() {
              std::cerr << "  reg " << i << " -> reg " << r2rMap_[i] << "\n");
 }
 
-/// Return true if the two specified registers belong to same or compatible
-/// register classes. The registers may be either phys or virt regs.
-bool LiveIntervals::compatibleRegisterClasses(unsigned RegA, unsigned RegB,
-                                                 bool &Swap) const {
+/// Return true if the two specified registers belong to different register
+/// classes.  The registers may be either phys or virt regs.
+bool LiveIntervals::differingRegisterClasses(unsigned RegA,
+                                             unsigned RegB) const {
 
   // Get the register classes for the first reg.
   if (MRegisterInfo::isPhysicalRegister(RegA)) {
     assert(MRegisterInfo::isVirtualRegister(RegB) &&
            "Shouldn't consider two physregs!");
-    return mf_->getSSARegMap()->getRegClass(RegB)->contains(RegA);
+    return !mf_->getSSARegMap()->getRegClass(RegB)->contains(RegA);
   }
 
   // Compare against the regclass for the second reg.
-  const TargetRegisterClass *RegClassA = mf_->getSSARegMap()->getRegClass(RegA);
-  if (MRegisterInfo::isVirtualRegister(RegB)) {
-    const TargetRegisterClass *RegClassB=mf_->getSSARegMap()->getRegClass(RegB);
-    if (RegClassA == RegClassB)
-      return true;
-    else {
-      if (RegClassB->hasSubRegClass(RegClassA)) {
-        Swap = true;
-        return true;
-      }
-      return RegClassA->hasSubRegClass(RegClassB);
-    }
-  } else
-    return RegClassA->contains(RegB);
+  const TargetRegisterClass *RegClass = mf_->getSSARegMap()->getRegClass(RegA);
+  if (MRegisterInfo::isVirtualRegister(RegB))
+    return RegClass != mf_->getSSARegMap()->getRegClass(RegB);
+  else
+    return !RegClass->contains(RegB);
 }
 
 bool LiveIntervals::overlapsAliases(const LiveInterval *LHS,
