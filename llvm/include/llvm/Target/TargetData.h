@@ -94,6 +94,11 @@ public:
   unsigned char getPointerSize()       const { return      PointerSize; }
   unsigned char getPointerSizeInBits() const { return    8*PointerSize; }
 
+  /// getStringRepresentation - Return the string representation of the
+  /// TargetData.  This representation is in the same format accepted by the
+  /// string constructor above.
+  std::string getStringRepresentation() const;
+
   /// getTypeSize - Return the number of bytes necessary to hold the specified
   /// type.
   ///

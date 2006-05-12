@@ -25,6 +25,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
 #include <cstdlib>
+#include <sstream>
 using namespace llvm;
 
 // Handle the Pass registration stuff necessary to use TargetData's.
@@ -216,6 +217,26 @@ TargetData::~TargetData() {
       Layouts = 0;
     }
   }
+}
+
+std::string TargetData::getStringRepresentation() const {
+  std::stringstream repr;
+  
+  if (LittleEndian)
+    repr << "e";
+  else
+    repr << "E";
+  
+  repr << "-p:" << (PointerSize * 8) << ":" << (PointerAlignment * 8);
+  repr << "-d:64:" << (DoubleAlignment * 8);
+  repr << "-f:32:" << (FloatAlignment * 8);
+  repr << "-l:64:" << (LongAlignment * 8);
+  repr << "-i:32:" << (IntAlignment * 8);
+  repr << "-s:16:" << (ShortAlignment * 8);
+  repr << "-b:8:" << (ByteAlignment * 8);
+  repr << "-B:8:" << (BoolAlignment * 8);
+  
+  return repr.str();
 }
 
 const StructLayout *TargetData::getStructLayout(const StructType *Ty) const {
