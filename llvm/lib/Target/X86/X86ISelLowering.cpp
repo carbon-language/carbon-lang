@@ -524,7 +524,6 @@ void X86TargetLowering::PreprocessCCCArguments(std::vector<SDOperand>Args,
 void X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG) {
   unsigned NumArgs = Op.Val->getNumValues();
   MachineFunction &MF = DAG.getMachineFunction();
-  MachineFrameInfo *MFI = MF.getFrameInfo();
 
   for (unsigned i = 0; i < NumArgs; ++i) {
     std::pair<FALocInfo, FALocInfo> Loc = FormalArgLocs[i];
@@ -1046,7 +1045,6 @@ void
 X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
   unsigned NumArgs = Op.Val->getNumValues();
   MachineFunction &MF = DAG.getMachineFunction();
-  MachineFrameInfo *MFI = MF.getFrameInfo();
 
   for (unsigned i = 0; i < NumArgs; ++i) {
     MVT::ValueType VT = Op.Val->getValueType(i);
