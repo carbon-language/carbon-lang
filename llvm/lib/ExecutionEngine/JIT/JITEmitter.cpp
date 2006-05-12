@@ -321,6 +321,9 @@ namespace {
       MemoryRangeHeader *MemRange = I->second;
       assert(MemRange->ThisAllocated && "Block isn't allocated!");
       
+      // Fill the buffer with garbage!
+      DEBUG(memset(MemRange+1, 0xCD, MemRange->BlockSize-sizeof(*MemRange)));
+      
       // Free the memory.
       FreeMemoryList = MemRange->FreeBlock(FreeMemoryList);
       
