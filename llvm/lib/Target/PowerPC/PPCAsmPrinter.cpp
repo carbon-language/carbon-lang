@@ -748,7 +748,6 @@ bool AIXAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
 bool AIXAsmPrinter::doInitialization(Module &M) {
   SwitchToDataSection("", 0);
-  const TargetData *TD = TM.getTargetData();
 
   O << "\t.machine \"ppc64\"\n"
     << "\t.toc\n"
