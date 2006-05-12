@@ -1722,7 +1722,6 @@ PPCTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   //
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  MachineBasicBlock& BB = MF.front();
   SSARegMap *RegMap = MF.getSSARegMap();
   std::vector<SDOperand> ArgValues;
   
