@@ -147,7 +147,6 @@ void AsmPrinter::SetupMachineFunction(MachineFunction &MF) {
 void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
   const std::vector<MachineConstantPoolEntry> &CP = MCP->getConstants();
   if (CP.empty()) return;
-  const TargetData *TD = TM.getTargetData();
   
   SwitchToDataSection(ConstantPoolSection, 0);
   EmitAlignment(MCP->getConstantPoolAlignment());
