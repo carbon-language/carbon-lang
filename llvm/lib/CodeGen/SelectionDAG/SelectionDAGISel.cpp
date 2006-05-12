@@ -1199,7 +1199,6 @@ void SelectionDAGLowering::visitShuffleVector(User &I) {
 void SelectionDAGLowering::visitGetElementPtr(User &I) {
   SDOperand N = getValue(I.getOperand(0));
   const Type *Ty = I.getOperand(0)->getType();
-  const Type *UIntPtrTy = TD->getIntPtrType();
 
   for (GetElementPtrInst::op_iterator OI = I.op_begin()+1, E = I.op_end();
        OI != E; ++OI) {
@@ -3456,7 +3455,6 @@ SelectInlineAsmMemoryOperands(std::vector<SDOperand> &Ops, SelectionDAG &DAG) {
   Ops.push_back(InOps[0]);  // input chain.
   Ops.push_back(InOps[1]);  // input asm string.
 
-  const char *AsmStr = cast<ExternalSymbolSDNode>(InOps[1])->getSymbol();
   unsigned i = 2, e = InOps.size();
   if (InOps[e-1].getValueType() == MVT::Flag)
     --e;  // Don't process a flag operand if it is here.
