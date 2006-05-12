@@ -806,10 +806,7 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
         case MVT::i32:
           Opc = X86::MOV32to32_;
           VT = MVT::i32;
-          if (NVT == MVT::i16)
-            Opc2 = X86::TRUNC_R32_R16;
-          else
-            Opc2 = X86::TRUNC_R32_R8;
+          Opc2 = X86::TRUNC_R32_R8;
           break;
         }
 
