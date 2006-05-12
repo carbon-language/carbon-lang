@@ -41,8 +41,6 @@ namespace {
 #ifndef NDEBUG
 template<typename GT>
 static void CheckAllGraphs(Module *M, GT &ECGraphs) {
-  DSGraph &GG = ECGraphs.getGlobalsGraph();
-
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (!I->isExternal()) {
       DSGraph &G = ECGraphs.getDSGraph(*I);
