@@ -363,6 +363,8 @@ Archive::loadSymbolTable() {
     At += mbr->getSize();
     if ((intptr_t(At) & 1) == 1)
       At++;
+    delete mbr;
+    // Can't be any more symtab headers so just advance
     FirstFile = At;
   } else {
     // There's no symbol table in the file. We have to rebuild it from scratch
