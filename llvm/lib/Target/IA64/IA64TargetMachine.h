@@ -34,7 +34,9 @@ public:
 
   virtual const IA64InstrInfo      *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo    *getFrameInfo() const { return &FrameInfo; }
-  virtual       IA64TargetLowering *getTargetLowering() const { return &TLInfo; }
+  virtual       IA64TargetLowering *getTargetLowering() const { 
+    return const_cast<IA64TargetLowering*>(&TLInfo);
+  }
   virtual const MRegisterInfo    *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }
