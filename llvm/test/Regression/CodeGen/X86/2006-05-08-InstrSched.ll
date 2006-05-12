@@ -1,5 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -relocation-model=static -sched-lower-defnuse &&
-; RUN: llvm-as < %s | llc -march=x86 -relocation-model=static -sched-lower-defnuse | not grep 'xorb $16, %cl'
+; RUN: llvm-as < %s | llc -march=x86 -relocation-model=static | not grep 'xorb $16, %cl'
 
 %A = external global ushort*
 %B = external global uint
