@@ -93,6 +93,7 @@ DynamicLibrary::~DynamicLibrary() {
       if (*I == a_handle) {
         // Note: don't use the swap/pop_back trick here. Order is important.
         OpenedHandles.erase(I);
+        return;
       }
     }
   }

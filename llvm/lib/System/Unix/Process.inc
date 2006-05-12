@@ -95,7 +95,7 @@ Process::GetTimeUsage(TimeValue& elapsed, TimeValue& user_time,
                       TimeValue& sys_time)
 {
   elapsed = TimeValue::now();
-#if defined(HAVE_GETRUSAGE)
+#if 0 // defined(HAVE_GETRUSAGE)
   struct rusage usage;
   ::getrusage(RUSAGE_SELF, &usage);
   user_time = TimeValue( 
