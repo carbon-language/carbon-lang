@@ -365,7 +365,7 @@ static bool isRotateAndMask(SDNode *N, unsigned Mask, bool IsShiftMask,
   
   // if the mask doesn't intersect any Indeterminant bits
   if (Mask && !(Mask & Indeterminant)) {
-    SH = Shift;
+    SH = Shift & 31;
     // make sure the mask is still a mask (wrap arounds may not be)
     return isRunOfOnes(Mask, MB, ME);
   }
@@ -431,7 +431,7 @@ SDNode *PPCDAGToDAGISel::SelectBitfieldInsert(SDNode *N) {
     }
     
     unsigned MB, ME;
-    if (isRunOfOnes(InsertMask, MB, ME)) {
+    if (InsertMask && isRunOfOnes(InsertMask, MB, ME)) {
       SDOperand Tmp1, Tmp2, Tmp3;
       bool DisjointMask = (TargetMask ^ InsertMask) == 0xFFFFFFFF;
 
@@ -454,6 +454,7 @@ SDNode *PPCDAGToDAGISel::SelectBitfieldInsert(SDNode *N) {
       Tmp3 = (Op0Opc == ISD::AND && DisjointMask) ? Op0.getOperand(0) : Op0;
       Select(Tmp1, Tmp3);
       Select(Tmp2, Op1);
+      SH &= 31;
       return CurDAG->getTargetNode(PPC::RLWIMI, MVT::i32, Tmp1, Tmp2,
                                    getI32Imm(SH), getI32Imm(MB), getI32Imm(ME));
     }
@@ -1149,7 +1150,7 @@ void PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
       SDOperand Val;
       Select(Val, N->getOperand(0).getOperand(0));
       Result = CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, 
-                                    Val, getI32Imm(SH & 0x1F), getI32Imm(MB),
+                                    Val, getI32Imm(SH), getI32Imm(MB),
                                     getI32Imm(ME));
       return;
     }
