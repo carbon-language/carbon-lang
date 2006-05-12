@@ -1775,7 +1775,7 @@ SDOperand DAGCombiner::visitSELECT_CC(SDNode *N) {
   
   // Determine if the condition we're dealing with is constant
   SDOperand SCC = SimplifySetCC(TLI.getSetCCResultTy(), N0, N1, CC, false);
-  ConstantSDNode *SCCC = dyn_cast_or_null<ConstantSDNode>(SCC.Val);
+  //ConstantSDNode *SCCC = dyn_cast_or_null<ConstantSDNode>(SCC.Val);
   
   // fold select_cc lhs, rhs, x, x, cc -> x
   if (N2 == N3)
@@ -3055,7 +3055,7 @@ SDOperand DAGCombiner::SimplifySelectCC(SDOperand N0, SDOperand N1,
                                         ISD::CondCode CC) {
   
   MVT::ValueType VT = N2.getValueType();
-  ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0.Val);
+  //ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0.Val);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val);
   ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.Val);
   ConstantSDNode *N3C = dyn_cast<ConstantSDNode>(N3.Val);
