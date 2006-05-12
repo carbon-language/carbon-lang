@@ -680,7 +680,8 @@ SDOperand DAGCombiner::visitTokenFactor(SDNode *N) {
   // If the token factor has two operands and one is the entry token, replace
   // the token factor with the other operand.
   if (N->getNumOperands() == 2) {
-    if (N->getOperand(0).getOpcode() == ISD::EntryToken)
+    if (N->getOperand(0).getOpcode() == ISD::EntryToken ||
+        N->getOperand(0) == N->getOperand(1))
       return N->getOperand(1);
     if (N->getOperand(1).getOpcode() == ISD::EntryToken)
       return N->getOperand(0);
@@ -694,8 +695,11 @@ SDOperand DAGCombiner::visitTokenFactor(SDNode *N) {
       Changed = true;
       for (unsigned j = 0, e = Op.getNumOperands(); j != e; ++j)
         Ops.push_back(Op.getOperand(j));
-    } else {
+    } else if (i == 0 || N->getOperand(i) != N->getOperand(i-1)) {
       Ops.push_back(Op);
+    } else {
+      // Deleted an operand that was the same as the last one.
+      Changed = true;
     }
   }
   if (Changed)
