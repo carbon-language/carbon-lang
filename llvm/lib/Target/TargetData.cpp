@@ -140,45 +140,45 @@ TargetData::TargetData(const std::string &TargetName,
     
     switch(token[0]) {
     case 'E':
-		LittleEndian = false;
-        break;
+      LittleEndian = false;
+      break;
     case 'e':
-		LittleEndian = true;
-    	break;
+      LittleEndian = true;
+      break;
     case 'p':
-		PointerSize = atoi(getToken(token,":").c_str()) / 8;
-		PointerAlignment = atoi(getToken(token,":").c_str()) / 8;
-		break;
+      PointerSize = atoi(getToken(token,":").c_str()) / 8;
+      PointerAlignment = atoi(getToken(token,":").c_str()) / 8;
+      break;
     case 'd':
-		token = getToken(token,":"); //Ignore the size
-		DoubleAlignment = atoi(getToken(token,":").c_str()) / 8;
-        break;
+      token = getToken(token,":"); //Ignore the size
+      DoubleAlignment = atoi(getToken(token,":").c_str()) / 8;
+      break;
     case 'f':
-		token = getToken(token, ":"); //Ignore the size
-		FloatAlignment = atoi(getToken(token, ":").c_str()) / 8;
-    	break;
+      token = getToken(token, ":"); //Ignore the size
+      FloatAlignment = atoi(getToken(token, ":").c_str()) / 8;
+      break;
     case 'l':
-		token = getToken(token, ":"); //Ignore the size
-		LongAlignment = atoi(getToken(token, ":").c_str()) / 8;
-    	break;
+      token = getToken(token, ":"); //Ignore the size
+      LongAlignment = atoi(getToken(token, ":").c_str()) / 8;
+      break;
     case 'i':
-		token = getToken(token, ":"); //Ignore the size
-		IntAlignment = atoi(getToken(token, ":").c_str()) / 8;
-    	break;
+      token = getToken(token, ":"); //Ignore the size
+      IntAlignment = atoi(getToken(token, ":").c_str()) / 8;
+      break;
     case 's':
-		token = getToken(token, ":"); //Ignore the size
-		ShortAlignment = atoi(getToken(token, ":").c_str()) / 8;
-    	break;
+      token = getToken(token, ":"); //Ignore the size
+      ShortAlignment = atoi(getToken(token, ":").c_str()) / 8;
+      break;
     case 'b':
-		token = getToken(token, ":"); //Ignore the size
-		ByteAlignment = atoi(getToken(token, ":").c_str()) / 8;
-    	break;
+      token = getToken(token, ":"); //Ignore the size
+      ByteAlignment = atoi(getToken(token, ":").c_str()) / 8;
+      break;
     case 'B':
-		token = getToken(token, ":"); //Ignore the size
-		BoolAlignment = atoi(getToken(token, ":").c_str()) / 8;
-    	break;
+      token = getToken(token, ":"); //Ignore the size
+      BoolAlignment = atoi(getToken(token, ":").c_str()) / 8;
+      break;
     default:
-    	break;
+      break;
     }
   }
 }
