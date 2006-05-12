@@ -325,7 +325,6 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
 {
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  MachineBasicBlock& BB = MF.front();
   std::vector<SDOperand> ArgValues;
 
   unsigned args_int[] = {
