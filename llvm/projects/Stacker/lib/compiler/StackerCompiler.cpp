@@ -675,9 +675,9 @@ StackerCompiler::handle_definition( char * name, Function* f )
 {
     // Look up the function name in the module to see if it was forward
     // declared.
+#if 0
     Function* existing_function = TheModule->getNamedFunction( name );
 
-#if 0
     // If the function already exists...
     if ( existing_function )
     {
