@@ -195,8 +195,6 @@ Value *llvm::ConvertExpressionToType(Value *V, const Type *Ty,
 
   ValueMapCache::ExprMapTy::iterator VMCI = VMC.ExprMap.find(V);
   if (VMCI != VMC.ExprMap.end()) {
-    const Value *GV = VMCI->second;
-    const Type *GTy = VMCI->second->getType();
     assert(VMCI->second->getType() == Ty);
 
     if (Instruction *I = dyn_cast<Instruction>(V))
@@ -518,8 +516,6 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
     return false;
 
   case Instruction::Store: {
-    StoreInst *SI = cast<StoreInst>(I);
-
     if (V == I->getOperand(0)) {
       ValueTypeCache::iterator CTMI = CTMap.find(I->getOperand(1));
       if (CTMI != CTMap.end()) {   // Operand #1 is in the table already?
