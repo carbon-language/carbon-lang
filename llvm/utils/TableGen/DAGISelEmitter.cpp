@@ -2870,7 +2870,6 @@ private:
     if (Op->isSubClassOf("Instruction")) {
       const DAGInstruction &Inst = ISE.getInstruction(Op);
       const CodeGenTarget &CGT = ISE.getTargetInfo();
-      CodeGenInstruction &II = CGT.getInstruction(Op->getName());
       unsigned NumImpResults  = Inst.getNumImpResults();
       for (unsigned i = 0; i < NumImpResults; i++) {
         Record *RR = Inst.getImpResult(i);
