@@ -23,10 +23,14 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
 my $Directory = $ARGV[0];
 
 # Find the "dot" program
+my $DotPath="";
 if (!$FLAT) {
-  chomp(my $DotPath = `which dot`);
+  chomp($DotPath = `which dot`);
   die "Can't find 'dot'" if (! -x "$DotPath");
 }
+
+chomp(my $nmPath=`which nm`);
+die "Can't find 'nm'" if (! -x "$nmPath");
 
 # Open the directory and read its contents, sorting by name and differentiating
 # by whether its a library (.a) or an object file (.o)
@@ -44,7 +48,7 @@ my %objdefs;
 # Gather definitions from the libraries
 foreach $lib (@libs ) {
   open DEFS, 
-    "nm -g $Directory/$lib | grep ' [ABCDGRST] ' | sed -e 's/^[0-9A-Fa-f]* [ABCDGRST] //' | sort | uniq |";
+    "$nmPath -g $Directory/$lib | grep ' [ABCDGRST] ' | sed -e 's/^[0-9A-Fa-f]* [ABCDGRST] //' | sort | uniq |";
   while (<DEFS>) {
     chomp($_);
     $libdefs{$_} = $lib;
@@ -55,7 +59,7 @@ foreach $lib (@libs ) {
 # Gather definitions from the object files.
 foreach $obj (@objs ) {
   open DEFS, 
-    "nm -g $Directory/$obj | grep ' [ABCDGRST] ' | sed -e 's/^[0-9A-Fa-f]* [ABCDGRST] //' | sort | uniq |";
+    "$nmPath -g $Directory/$obj | grep ' [ABCDGRST] ' | sed -e 's/^[0-9A-Fa-f]* [ABCDGRST] //' | sort | uniq |";
   while (<DEFS>) {
     chomp($_);
     $objdefs{$_} = $obj;
@@ -76,7 +80,7 @@ sub gen_one_entry {
     print "  <dt><b>$lib</b</dt><dd><ul>\n";
   }
   open UNDEFS, 
-    "nm -g -u $Directory/$lib | sed -e 's/^  *U //' | sort | uniq |";
+    "$nmPath -g -u $Directory/$lib | sed -e 's/^  *U //' | sort | uniq |";
   open DEPENDS,
     "| sort | uniq > GenLibDeps.out";
   while (<UNDEFS>) {
