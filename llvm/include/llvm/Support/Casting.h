@@ -15,6 +15,8 @@
 #ifndef LLVM_SUPPORT_CASTING_H
 #define LLVM_SUPPORT_CASTING_H
 
+#include <cassert>
+
 namespace llvm {
 
 //===----------------------------------------------------------------------===//
