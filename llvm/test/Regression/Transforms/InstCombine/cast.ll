@@ -185,3 +185,12 @@ uint %test29(uint %c1, uint %c2) {
 	ret uint %tmp10
 }
 
+uint %test30(uint %c1) {
+        %c2 = cast uint %c1 to ubyte
+        %c3 = xor ubyte %c2, 1     
+        %c4 = cast ubyte %c3 to uint
+        ret uint %c4
+}
+
+
+
