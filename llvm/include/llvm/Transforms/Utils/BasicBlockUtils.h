@@ -86,9 +86,10 @@ inline bool SplitCriticalEdge(BasicBlock *Succ, pred_iterator PI, Pass *P = 0) {
 
 inline bool SplitCriticalEdge(BasicBlock *Src, BasicBlock *Dst, Pass *P = 0) {
   TerminatorInst *TI = Src->getTerminator();
-  for (unsigned i = 0, e = TI->getNumSuccessors(); ; ++i)
+  for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
     if (TI->getSuccessor(i) == Dst)
       return SplitCriticalEdge(TI, i, P);
+  return false;
 }
 } // End llvm namespace
 
