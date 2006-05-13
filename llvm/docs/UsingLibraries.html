@@ -112,28 +112,28 @@
     <td>Uncategorized transformation passes.</td></tr>
   <tr><td>LLVMTransformUtils</td><td><tt>.a .o</tt></td>
     <td>Transformation utilities.</td></tr>
-  <tr><td>LLVMProfilePaths</td><td><tt>.o</tt></td>
-    <td>Profile paths for instrumentation.</td></tr>
 
   <tr><th colspan="3">Code Generation Libraries </th></tr>
   <tr><td>LLVMCodeGen</td><td><tt>.o</tt></td>
     <td>Native code generation infrastructure</td></tr>
 
   <tr><th colspan="3">Target Libraries</th></tr>
+  <tr><td>LLVMAlpha</td><td><tt>.o</tt></td>
+    <td>Code generation for Alpha architecture</td></tr>
   <tr><td>LLVMCBackend</td><td><tt>.o</tt></td>
     <td>'C' language code generator.</td></tr>
+  <tr><td>LLVMIA64</td><td><tt>.o</tt></td>
+    <td>Code generation for IA64 architecture</td></tr>
   <tr><td>LLVMPowerPC</td><td><tt>.o</tt></td>
-    <td>PowerPC code generation backend</td></tr>
+    <td>Code generation for PowerPC architecture</td></tr>
   <tr><td>LLVMSelectionDAG</td><td><tt>.o</tt></td>
-    <td>Aggressive instruction selector for directed acyclic graphs.</td></tr>
-  <tr><td>LLVMSkeleton</td><td><tt>.a .o</tt></td>
-    <td>Skeleton for a code generation backend.</td></tr>
+    <td>Aggressive instruction selector for directed acyclic graphs</td></tr>
   <tr><td>LLVMSparc</td><td><tt>.o</tt></td>
-    <td>Code generation for Sparc.</td></tr>
+    <td>Code generation for Sparc architecture</td></tr>
   <tr><td>LLVMTarget</td><td><tt>.a .o</tt></td>
     <td>Generic code generation utilities.</td></tr>
   <tr><td>LLVMX86</td><td><tt>.o</tt></td>
-    <td>Intel x86 code generation backend</td></tr>
+    <td>Code generation for Intel x86 architecture</td></tr>
 
   <tr><th colspan="3">Runtime Libraries</th></tr>
   <tr><td>LLVMInterpreter</td><td><tt>.o</tt></td>
@@ -142,8 +142,6 @@
     <td>Bytecode JIT Compiler</td></tr>
   <tr><td>LLVMExecutionEngine</td><td><tt>.o</tt></td>
     <td>Virtual machine engine</td></tr>
-  <tr><td>LLVMexecve</td><td><tt>.o</tt></td>
-    <td>execve(2) replacement for llee</td></tr>
 </table>
 </div>
 
@@ -175,25 +173,18 @@
   alphabetically.</p>
 <dl>
   <dt><b>libLLVMAnalysis.a</b</dt><dd><ul>
-    <li>libLLVMScalarOpts.a</li>
     <li>libLLVMSupport.a</li>
     <li>libLLVMTarget.a</li>
-    <li>libLLVMTransformUtils.a</li>
     <li>LLVMCore.o</li>
   </ul></dd>
   <dt><b>libLLVMArchive.a</b</dt><dd><ul>
     <li>libLLVMSupport.a</li>
     <li>libLLVMSystem.a</li>
     <li>LLVMBCReader.o</li>
-  </ul></dd>
-  <dt><b>libLLVMDataStructure.a</b</dt><dd><ul>
-    <li>libLLVMAnalysis.a</li>
-    <li>libLLVMSupport.a</li>
-    <li>libLLVMTarget.a</li>
-    <li>libLLVMTransformUtils.a</li>
     <li>LLVMCore.o</li>
   </ul></dd>
   <dt><b>libLLVMInstrumentation.a</b</dt><dd><ul>
+    <li>libLLVMScalarOpts.a</li>
     <li>libLLVMSupport.a</li>
     <li>libLLVMTransformUtils.a</li>
     <li>LLVMCore.o</li>
@@ -215,19 +206,21 @@
     <li>libLLVMSystem.a</li>
     <li>LLVMbzip2.o</li>
   </ul></dd>
-  <dt><b>libLLVMSystem.a</b</dt><dd></dd>
+  <dt><b>libLLVMSystem.a</b</dt><dd><ul>
+  </ul></dd>
   <dt><b>libLLVMTarget.a</b</dt><dd><ul>
     <li>libLLVMSupport.a</li>
     <li>LLVMCore.o</li>
+    <li>LLVMSelectionDAG.o</li>
   </ul></dd>
   <dt><b>libLLVMTransformUtils.a</b</dt><dd><ul>
     <li>libLLVMAnalysis.a</li>
+    <li>libLLVMipa.a</li>
     <li>libLLVMScalarOpts.a</li>
     <li>libLLVMSupport.a</li>
     <li>LLVMCore.o</li>
   </ul></dd>
   <dt><b>libLLVMTransforms.a</b</dt><dd><ul>
-    <li>libLLVMAnalysis.a</li>
     <li>libLLVMSupport.a</li>
     <li>libLLVMTarget.a</li>
     <li>libLLVMTransformUtils.a</li>
@@ -241,18 +234,18 @@
   <dt><b>libLLVMipo.a</b</dt><dd><ul>
     <li>libLLVMAnalysis.a</li>
     <li>libLLVMipa.a</li>
-    <li>libLLVMScalarOpts.a</li>
     <li>libLLVMSupport.a</li>
     <li>libLLVMTarget.a</li>
     <li>libLLVMTransformUtils.a</li>
     <li>LLVMCore.o</li>
   </ul></dd>
-  <dt><b>LLVMAnalysis.o</b</dt><dd><ul>
+  <dt><b>LLVMAlpha.o</b</dt><dd><ul>
     <li>libLLVMScalarOpts.a</li>
     <li>libLLVMSupport.a</li>
     <li>libLLVMTarget.a</li>
-    <li>libLLVMTransformUtils.a</li>
+    <li>LLVMCodeGen.o</li>
     <li>LLVMCore.o</li>
+    <li>LLVMSelectionDAG.o</li>
   </ul></dd>
   <dt><b>LLVMAsmParser.o</b</dt><dd><ul>
     <li>LLVMCore.o</li>
@@ -272,6 +265,7 @@
     <li>libLLVMScalarOpts.a</li>
     <li>libLLVMSupport.a</li>
     <li>libLLVMTarget.a</li>
+    <li>LLVMCodeGen.o</li>
     <li>LLVMCore.o</li>
   </ul></dd>
   <dt><b>LLVMCodeGen.o</b</dt><dd><ul>
@@ -287,29 +281,27 @@
     <li>libLLVMAnalysis.a</li>
     <li>libLLVMSupport.a</li>
     <li>libLLVMTarget.a</li>
-    <li>libLLVMTransformUtils.a</li>
     <li>LLVMCore.o</li>
   </ul></dd>
   <dt><b>LLVMDebugger.o</b</dt><dd><ul>
     <li>libLLVMSupport.a</li>
     <li>libLLVMSystem.a</li>
     <li>LLVMBCReader.o</li>
-    <li>LLVMCodeGen.o</li>
     <li>LLVMCore.o</li>
-    <li>LLVMExecutionEngine.o</li>
   </ul></dd>
   <dt><b>LLVMExecutionEngine.o</b</dt><dd><ul>
     <li>libLLVMSupport.a</li>
     <li>libLLVMSystem.a</li>
     <li>libLLVMTarget.a</li>
     <li>LLVMCore.o</li>
-    <li>LLVMInterpreter.o</li>
-    <li>LLVMJIT.o</li>
   </ul></dd>
-  <dt><b>LLVMInstrumentation.o</b</dt><dd><ul>
+  <dt><b>LLVMIA64.o</b</dt><dd><ul>
+    <li>libLLVMScalarOpts.a</li>
     <li>libLLVMSupport.a</li>
-    <li>libLLVMTransformUtils.a</li>
+    <li>libLLVMTarget.a</li>
+    <li>LLVMCodeGen.o</li>
     <li>LLVMCore.o</li>
+    <li>LLVMSelectionDAG.o</li>
   </ul></dd>
   <dt><b>LLVMInterpreter.o</b</dt><dd><ul>
     <li>libLLVMSupport.a</li>
@@ -322,6 +314,7 @@
     <li>libLLVMSupport.a</li>
     <li>libLLVMSystem.a</li>
     <li>libLLVMTarget.a</li>
+    <li>LLVMCodeGen.o</li>
     <li>LLVMCore.o</li>
     <li>LLVMExecutionEngine.o</li>
   </ul></dd>
@@ -331,25 +324,13 @@
     <li>libLLVMTarget.a</li>
     <li>LLVMCodeGen.o</li>
     <li>LLVMCore.o</li>
-  </ul></dd>
-  <dt><b>LLVMProfilePaths.o</b</dt><dd><ul>
-    <li>libLLVMInstrumentation.a</li>
-    <li>libLLVMSupport.a</li>
-    <li>LLVMCore.o</li>
-  </ul></dd>
-  <dt><b>LLVMScalarOpts.o</b</dt><dd><ul>
-    <li>libLLVMAnalysis.a</li>
-    <li>libLLVMSupport.a</li>
-    <li>libLLVMTarget.a</li>
-    <li>libLLVMTransformUtils.a</li>
-    <li>LLVMCore.o</li>
+    <li>LLVMSelectionDAG.o</li>
   </ul></dd>
   <dt><b>LLVMSelectionDAG.o</b</dt><dd><ul>
-    <li>LLVMCodeGen.o</li>
-    <li>LLVMCore.o</li>
-  </ul></dd>
-  <dt><b>LLVMSkeleton.o</b</dt><dd><ul>
+    <li>libLLVMSupport.a</li>
+    <li>libLLVMSystem.a</li>
     <li>libLLVMTarget.a</li>
+    <li>libLLVMTransformUtils.a</li>
     <li>LLVMCodeGen.o</li>
     <li>LLVMCore.o</li>
   </ul></dd>
@@ -359,28 +340,7 @@
     <li>libLLVMTarget.a</li>
     <li>LLVMCodeGen.o</li>
     <li>LLVMCore.o</li>
-  </ul></dd>
-  <dt><b>LLVMSupport.o</b</dt><dd><ul>
-    <li>libLLVMSystem.a</li>
-    <li>LLVMbzip2.o</li>
-  </ul></dd>
-  <dt><b>LLVMSystem.o</b</dt><dd></dd>
-  <dt><b>LLVMTarget.o</b</dt><dd><ul>
-    <li>libLLVMSupport.a</li>
-    <li>LLVMCore.o</li>
-  </ul></dd>
-  <dt><b>LLVMTransformUtils.o</b</dt><dd><ul>
-    <li>libLLVMAnalysis.a</li>
-    <li>libLLVMScalarOpts.a</li>
-    <li>libLLVMSupport.a</li>
-    <li>LLVMCore.o</li>
-  </ul></dd>
-  <dt><b>LLVMTransforms.o</b</dt><dd><ul>
-    <li>libLLVMAnalysis.a</li>
-    <li>libLLVMSupport.a</li>
-    <li>libLLVMTarget.a</li>
-    <li>libLLVMTransformUtils.a</li>
-    <li>LLVMCore.o</li>
+    <li>LLVMSelectionDAG.o</li>
   </ul></dd>
   <dt><b>LLVMX86.o</b</dt><dd><ul>
     <li>libLLVMScalarOpts.a</li>
@@ -388,21 +348,9 @@
     <li>libLLVMTarget.a</li>
     <li>LLVMCodeGen.o</li>
     <li>LLVMCore.o</li>
+    <li>LLVMSelectionDAG.o</li>
   </ul></dd>
-  <dt><b>LLVMbzip2.o</b</dt><dd></dd>
-  <dt><b>LLVMipa.o</b</dt><dd><ul>
-    <li>libLLVMAnalysis.a</li>
-    <li>libLLVMSupport.a</li>
-    <li>LLVMCore.o</li>
-  </ul></dd>
-  <dt><b>LLVMipo.o</b</dt><dd><ul>
-    <li>libLLVMAnalysis.a</li>
-    <li>libLLVMipa.a</li>
-    <li>libLLVMScalarOpts.a</li>
-    <li>libLLVMSupport.a</li>
-    <li>libLLVMTarget.a</li>
-    <li>libLLVMTransformUtils.a</li>
-    <li>LLVMCore.o</li>
+  <dt><b>LLVMbzip2.o</b</dt><dd><ul>
   </ul></dd>
 </dl>
 </div>
