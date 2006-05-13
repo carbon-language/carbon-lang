@@ -3012,14 +3012,6 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   case ISD::AND:
   case ISD::OR:
   case ISD::XOR:
-    // The input may have strange things in the top bits of the registers, but
-    // these operations don't care.  They may have weird bits going out, but
-    // that too is okay if they are integer operations.
-    Tmp1 = PromoteOp(Node->getOperand(0));
-    Tmp2 = PromoteOp(Node->getOperand(1));
-    assert(Tmp1.getValueType() == NVT && Tmp2.getValueType() == NVT);
-    Result = DAG.getNode(Node->getOpcode(), NVT, Tmp1, Tmp2);
-    break;
   case ISD::ADD:
   case ISD::SUB:
   case ISD::MUL:
