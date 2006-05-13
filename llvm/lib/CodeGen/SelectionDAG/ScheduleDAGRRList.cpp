@@ -82,6 +82,8 @@ void ScheduleDAGRRList::Schedule() {
   
   // Build scheduling units.
   BuildSchedUnits();
+  DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
+        SUnits[su].dumpAll(&DAG));
 
   CalculateDepths();
   CalculateHeights();
@@ -531,6 +533,40 @@ namespace {
   };
 }
 
+static bool isFloater(const SUnit *SU) {
+  if (SU->Node->isTargetOpcode()) {
+    if (SU->NumPreds == 0)
+      return true;
+    if (SU->NumPreds == 1) {
+      for (std::set<std::pair<SUnit*, bool> >::iterator I = SU->Preds.begin(),
+             E = SU->Preds.end(); I != E; ++I) {
+        if (I->second) continue;
+
+        SUnit *PredSU = I->first;
+        unsigned Opc = PredSU->Node->getOpcode();
+        if (Opc != ISD::EntryToken && Opc != ISD::TokenFactor &&
+            Opc != ISD::CopyFromReg && Opc != ISD::CopyToReg)
+          return false;
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
+static bool isSimpleFloaterUse(const SUnit *SU) {
+  unsigned NumOps = 0;
+  for (std::set<std::pair<SUnit*, bool> >::iterator I = SU->Preds.begin(),
+         E = SU->Preds.end(); I != E; ++I) {
+    if (I->second) continue;
+    if (++NumOps > 1)
+      return false;
+    if (!isFloater(I->first))
+      return false;
+  }
+  return true;
+}
+
 // Bottom up
 bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   unsigned LeftNum  = left->NodeNum;
@@ -539,27 +575,43 @@ bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   bool RIsTarget = right->Node->isTargetOpcode();
   int LPriority = SPQ->getSethiUllmanNumber(LeftNum);
   int RPriority = SPQ->getSethiUllmanNumber(RightNum);
-  bool LIsFloater = LIsTarget && (LPriority == 1 || LPriority == 0);
-  bool RIsFloater = RIsTarget && (RPriority == 1 || RPriority == 0);
   int LBonus = 0;
   int RBonus = 0;
 
   // Schedule floaters (e.g. load from some constant address) and those nodes
   // with a single predecessor each first. They maintain / reduce register
   // pressure.
-  if (LIsFloater)
+  if (isFloater(left) || isSimpleFloaterUse(left))
     LBonus += 2;
-  if (RIsFloater)
+  if (isFloater(right) || isSimpleFloaterUse(right))
     RBonus += 2;
+
+  // Special tie breaker: if two nodes share a operand, the one that use it
+  // as a def&use operand is preferred.
+  if (LIsTarget && RIsTarget) {
+    if (left->isTwoAddress && !right->isTwoAddress) {
+      SDNode *DUNode = left->Node->getOperand(0).Val;
+      if (DUNode->isOperand(right->Node))
+        LBonus += 2;
+    }
+    if (!left->isTwoAddress && right->isTwoAddress) {
+      SDNode *DUNode = right->Node->getOperand(0).Val;
+      if (DUNode->isOperand(left->Node))
+        RBonus += 2;
+    }
+  }
 
   if (LPriority+LBonus < RPriority+RBonus)
     return true;
   else if (LPriority+LBonus == RPriority+RBonus)
-    if (left->NumPredsLeft > right->NumPredsLeft)
+    if (left->Height > right->Height)
       return true;
-    else if (left->NumPredsLeft+LBonus == right->NumPredsLeft+RBonus)
-      if (left->CycleBound > right->CycleBound) 
+    else if (left->Height == right->Height)
+      if (left->Depth < right->Depth)
         return true;
+      else if (left->Depth == right->Depth)
+        if (left->CycleBound > right->CycleBound) 
+          return true;
   return false;
 }
 
@@ -634,7 +686,7 @@ void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
         if (SuccSU != SU &&
             (!canClobber(SuccSU, DUSU) ||
              (SchedCommuteNodes && !SU->isCommutable && SuccSU->isCommutable))){
-          if (SuccSU->Depth <= SU->Depth+2 && !isReachable(SuccSU, SU)) {
+          if (SuccSU->Depth == SU->Depth && !isReachable(SuccSU, SU)) {
             DEBUG(std::cerr << "Adding an edge from SU # " << SU->NodeNum
                   << " to SU #" << SuccSU->NodeNum << "\n");
             if (SU->Preds.insert(std::make_pair(SuccSU, true)).second)
@@ -665,9 +717,11 @@ int BURegReductionPriorityQueue<SF>::CalcNodePriority(const SUnit *SU) {
     // Give it a small SethiUllman number so it will be scheduled right before its
     // predecessors that it doesn't lengthen their live ranges.
     SethiUllmanNumber = INT_MIN + 10;
+  // FIXME: remove this else if? It seems to reduce register spills but often
+  // ends up increasing runtime. Need to investigate.
   else if (SU->NumPredsLeft == 0 &&
            (Opc != ISD::CopyFromReg || isCopyFromLiveIn(SU)))
-    SethiUllmanNumber = 1;
+    SethiUllmanNumber = INT_MAX - 10;
   else {
     int Extra = 0;
     for (std::set<std::pair<SUnit*, bool> >::const_iterator

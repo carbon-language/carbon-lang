@@ -171,26 +171,26 @@ void ScheduleDAG::BuildSchedUnits() {
   return;
 }
 
-static void CalculateDepths(SUnit *SU, unsigned Depth, unsigned Max) {
-  if (Depth > SU->Depth) {
+static void CalculateDepths(SUnit *SU, unsigned Depth) {
+  if (SU->Depth == 0 || Depth > SU->Depth) {
     SU->Depth = Depth;
     for (std::set<std::pair<SUnit*, bool> >::iterator I = SU->Succs.begin(),
            E = SU->Succs.end(); I != E; ++I)
-      CalculateDepths(I->first, Depth+1, Max);
+      CalculateDepths(I->first, Depth+1);
   }
 }
 
 void ScheduleDAG::CalculateDepths() {
   SUnit *Entry = SUnitMap[DAG.getEntryNode().Val];
-  ::CalculateDepths(Entry, 0U, SUnits.size());
+  ::CalculateDepths(Entry, 0U);
   for (unsigned i = 0, e = SUnits.size(); i != e; ++i)
     if (SUnits[i].Preds.size() == 0 && &SUnits[i] != Entry) {
-      ::CalculateDepths(&SUnits[i], 0U, SUnits.size());
+      ::CalculateDepths(&SUnits[i], 0U);
     }
 }
 
 static void CalculateHeights(SUnit *SU, unsigned Height) {
-  if (Height > SU->Height) {
+  if (SU->Height == 0 || Height > SU->Height) {
     SU->Height = Height;
     for (std::set<std::pair<SUnit*, bool> >::iterator I = SU->Preds.begin(),
            E = SU->Preds.end(); I != E; ++I)
