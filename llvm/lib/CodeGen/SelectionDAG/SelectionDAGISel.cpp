@@ -58,28 +58,39 @@ ViewSchedDAGs("view-sched-dags", cl::Hidden,
 static const bool ViewISelDAGs = 0, ViewSchedDAGs = 0;
 #endif
 
+// Scheduling heuristics
+enum SchedHeuristics {
+  defaultScheduling,      // Let the target specify its preference.
+  noScheduling,           // No scheduling, emit breadth first sequence.
+  simpleScheduling,       // Two pass, min. critical path, max. utilization.
+  simpleNoItinScheduling, // Same as above exact using generic latency.
+  listSchedulingBURR,     // Bottom-up reg reduction list scheduling.
+  listSchedulingTDRR,     // Top-down reg reduction list scheduling.
+  listSchedulingTD        // Top-down list scheduler.
+};
+
 namespace {
-  cl::opt<ScheduleDAG::SchedHeuristics>
+  cl::opt<SchedHeuristics>
   ISHeuristic(
     "sched",
     cl::desc("Choose scheduling style"),
-    cl::init(ScheduleDAG::defaultScheduling),
+    cl::init(defaultScheduling),
     cl::values(
-      clEnumValN(ScheduleDAG::defaultScheduling, "default",
+      clEnumValN(defaultScheduling, "default",
                  "Target preferred scheduling style"),
-      clEnumValN(ScheduleDAG::noScheduling, "none",
+      clEnumValN(noScheduling, "none",
                  "No scheduling: breadth first sequencing"),
-      clEnumValN(ScheduleDAG::simpleScheduling, "simple",
+      clEnumValN(simpleScheduling, "simple",
                  "Simple two pass scheduling: minimize critical path "
                  "and maximize processor utilization"),
-      clEnumValN(ScheduleDAG::simpleNoItinScheduling, "simple-noitin",
+      clEnumValN(simpleNoItinScheduling, "simple-noitin",
                  "Simple two pass scheduling: Same as simple "
                  "except using generic latency"),
-      clEnumValN(ScheduleDAG::listSchedulingBURR, "list-burr",
+      clEnumValN(listSchedulingBURR, "list-burr",
                  "Bottom-up register reduction list scheduling"),
-      clEnumValN(ScheduleDAG::listSchedulingTDRR, "list-tdrr",
+      clEnumValN(listSchedulingTDRR, "list-tdrr",
                  "Top-down register reduction list scheduling"),
-      clEnumValN(ScheduleDAG::listSchedulingTD, "list-td",
+      clEnumValN(listSchedulingTD, "list-td",
                  "Top-down list scheduler"),
       clEnumValEnd));
 } // namespace
@@ -3409,7 +3420,7 @@ void SelectionDAGISel::ScheduleAndEmitDAG(SelectionDAG &DAG) {
 
   switch (ISHeuristic) {
   default: assert(0 && "Unrecognized scheduling heuristic");
-  case ScheduleDAG::defaultScheduling:
+  case defaultScheduling:
     if (TLI.getSchedulingPreference() == TargetLowering::SchedulingForLatency)
       SL = createTDListDAGScheduler(DAG, BB, CreateTargetHazardRecognizer());
     else {
@@ -3418,22 +3429,22 @@ void SelectionDAGISel::ScheduleAndEmitDAG(SelectionDAG &DAG) {
       SL = createBURRListDAGScheduler(DAG, BB);
     }
     break;
-  case ScheduleDAG::noScheduling:
+  case noScheduling:
     SL = createBFS_DAGScheduler(DAG, BB);
     break;
-  case ScheduleDAG::simpleScheduling:
+  case simpleScheduling:
     SL = createSimpleDAGScheduler(false, DAG, BB);
     break;
-  case ScheduleDAG::simpleNoItinScheduling:
+  case simpleNoItinScheduling:
     SL = createSimpleDAGScheduler(true, DAG, BB);
     break;
-  case ScheduleDAG::listSchedulingBURR:
+  case listSchedulingBURR:
     SL = createBURRListDAGScheduler(DAG, BB);
     break;
-  case ScheduleDAG::listSchedulingTDRR:
+  case listSchedulingTDRR:
     SL = createTDRRListDAGScheduler(DAG, BB);
     break;
-  case ScheduleDAG::listSchedulingTD:
+  case listSchedulingTD:
     SL = createTDListDAGScheduler(DAG, BB, CreateTargetHazardRecognizer());
     break;
   }

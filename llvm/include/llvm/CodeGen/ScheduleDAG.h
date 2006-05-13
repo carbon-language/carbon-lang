@@ -143,18 +143,6 @@ namespace llvm {
 
   class ScheduleDAG {
   public:
-
-    // Scheduling heuristics
-    enum SchedHeuristics {
-      defaultScheduling,      // Let the target specify its preference.
-      noScheduling,           // No scheduling, emit breadth first sequence.
-      simpleScheduling,       // Two pass, min. critical path, max. utilization.
-      simpleNoItinScheduling, // Same as above exact using generic latency.
-      listSchedulingBURR,     // Bottom-up reg reduction list scheduling.
-      listSchedulingTDRR,     // Top-down reg reduction list scheduling.
-      listSchedulingTD        // Top-down list scheduler.
-    };
-
     SelectionDAG &DAG;                    // DAG of the current basic block
     MachineBasicBlock *BB;                // Current basic block
     const TargetMachine &TM;              // Target processor
