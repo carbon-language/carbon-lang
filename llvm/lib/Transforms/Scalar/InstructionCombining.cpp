@@ -256,6 +256,8 @@ namespace {
     Instruction *InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
                                  bool Inside, Instruction &IB);
     Instruction *PromoteCastOfAllocation(CastInst &CI, AllocationInst &AI);
+    
+    Value *EvaluateInDifferentType(Value *V, const Type *Ty);
   };
 
   RegisterOpt<InstCombiner> X("instcombine", "Combine redundant instructions");
@@ -4779,6 +4781,71 @@ Instruction *InstCombiner::PromoteCastOfAllocation(CastInst &CI,
   return ReplaceInstUsesWith(CI, New);
 }
 
+/// CanEvaluateInDifferentType - Return true if we can take the specified value
+/// and return it without inserting any new casts.  This is used by code that
+/// tries to decide whether promoting or shrinking integer operations to wider
+/// or smaller types will allow us to eliminate a truncate or extend.
+static bool CanEvaluateInDifferentType(Value *V, const Type *Ty,
+                                       int &NumCastsRemoved) {
+  if (isa<Constant>(V)) return true;
+  
+  Instruction *I = dyn_cast<Instruction>(V);
+  if (!I || !I->hasOneUse()) return false;
+  
+  switch (I->getOpcode()) {
+  case Instruction::And:
+  case Instruction::Or:
+  case Instruction::Xor:
+    // These operators can all arbitrarily be extended or truncated.
+    return CanEvaluateInDifferentType(I->getOperand(0), Ty, NumCastsRemoved) &&
+           CanEvaluateInDifferentType(I->getOperand(1), Ty, NumCastsRemoved);
+  case Instruction::Cast:
+    // If this is a cast from the destination type, we can trivially eliminate
+    // it, and this will remove a cast overall.
+    if (I->getOperand(0)->getType() == Ty) {
+      ++NumCastsRemoved;
+      return true;
+    }
+    // TODO: Can handle more cases here.
+    break;
+  }
+  
+  return false;
+}
+
+/// EvaluateInDifferentType - Given an expression that 
+/// CanEvaluateInDifferentType returns true for, actually insert the code to
+/// evaluate the expression.
+Value *InstCombiner::EvaluateInDifferentType(Value *V, const Type *Ty) {
+  if (Constant *C = dyn_cast<Constant>(V))
+    return ConstantExpr::getCast(C, Ty);
+
+  // Otherwise, it must be an instruction.
+  Instruction *I = cast<Instruction>(V);
+  Instruction *Res;
+  switch (I->getOpcode()) {
+  case Instruction::And:
+  case Instruction::Or:
+  case Instruction::Xor: {
+    Value *LHS = EvaluateInDifferentType(I->getOperand(0), Ty);
+    Value *RHS = EvaluateInDifferentType(I->getOperand(1), Ty);
+    Res = BinaryOperator::create((Instruction::BinaryOps)I->getOpcode(),
+                                 LHS, RHS, I->getName());
+    break;
+  }
+  case Instruction::Cast:
+    // If this is a cast from the destination type, return the input.
+    if (I->getOperand(0)->getType() == Ty)
+      return I->getOperand(0);
+    
+    // TODO: Can handle more cases here.
+    assert(0 && "Unreachable!");
+    break;
+  }
+  
+  return InsertNewInstBefore(Res, *I);
+}
+
 
 // CastInst simplification
 //
@@ -4906,6 +4973,58 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
   if (Instruction *SrcI = dyn_cast<Instruction>(Src))
     if (SrcI->hasOneUse() && Src->getType()->isIntegral() &&
         CI.getType()->isInteger()) {  // Don't mess with casts to bool here
+      
+      int NumCastsRemoved = 0;
+      if (CanEvaluateInDifferentType(SrcI, CI.getType(), NumCastsRemoved)) {
+        // If this cast is a truncate, evaluting in a different type always
+        // eliminates the cast, so it is always a win.  If this is a noop-cast
+        // this just removes a noop cast which isn't pointful, but simplifies
+        // the code.  If this is a zero-extension, we need to do an AND to
+        // maintain the clear top-part of the computation, so we require that
+        // the input have eliminated at least one cast.  If this is a sign
+        // extension, we insert two new casts (to do the extension) so we
+        // require that two casts have been eliminated.
+        bool DoXForm;
+        switch (getCastType(Src->getType(), CI.getType())) {
+        default: assert(0 && "Unknown cast type!");
+        case Noop:
+        case Truncate:
+          DoXForm = true;
+          break;
+        case Zeroext:
+          DoXForm = NumCastsRemoved >= 1;
+          break;
+        case Signext:
+          DoXForm = NumCastsRemoved >= 2;
+          break;
+        }
+        
+        if (DoXForm) {
+          Value *Res = EvaluateInDifferentType(SrcI, CI.getType());
+          assert(Res->getType() == CI.getType());
+          switch (getCastType(Src->getType(), CI.getType())) {
+          default: assert(0 && "Unknown cast type!");
+          case Noop:
+          case Truncate:
+            // Just replace this cast with the result.
+            return ReplaceInstUsesWith(CI, Res);
+          case Zeroext: {
+            // We need to emit an AND to clear the high bits.
+            unsigned SrcBitSize = Src->getType()->getPrimitiveSizeInBits();
+            unsigned DestBitSize = CI.getType()->getPrimitiveSizeInBits();
+            assert(SrcBitSize < DestBitSize && "Not a zext?");
+            Constant *C = ConstantUInt::get(Type::ULongTy, (1 << SrcBitSize)-1);
+            C = ConstantExpr::getCast(C, CI.getType());
+            return BinaryOperator::createAnd(Res, C);
+          }
+          case Signext:
+            // We need to emit a cast to truncate, then a cast to sext.
+            return new CastInst(InsertCastBefore(Res, Src->getType(), CI),
+                                CI.getType());
+          }
+        }
+      }
+      
       const Type *DestTy = CI.getType();
       unsigned SrcBitSize = Src->getType()->getPrimitiveSizeInBits();
       unsigned DestBitSize = DestTy->getPrimitiveSizeInBits();
