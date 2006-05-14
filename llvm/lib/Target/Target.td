@@ -70,8 +70,9 @@ class RegisterClass<string namespace, list<ValueType> regTypes, int alignment,
                     list<Register> regList> {
   string Namespace = namespace;
 
-  // RegType - Specify the ValueType of the registers in this register class.
-  // Note that all registers in a register class must have the same ValueType.
+  // RegType - Specify the list ValueType of the registers in this register
+  // class.  Note that all registers in a register class must have the same
+  // ValueTypes.
   //
   list<ValueType> RegTypes = regTypes;
 
