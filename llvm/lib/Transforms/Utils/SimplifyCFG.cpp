@@ -118,7 +118,7 @@ static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
   
   // If the PHI nodes in BB are only used by instructions in Succ, we are ok if
   // BB and Succ have no common predecessors.
-  for (BasicBlock::iterator I = BB->begin(); isa<PHINode>(I) && IsSafe; ++I) {
+  for (BasicBlock::iterator I = BB->begin(); isa<PHINode>(I); ++I) {
     PHINode *PN = cast<PHINode>(I);
     for (Value::use_iterator UI = PN->use_begin(), E = PN->use_end(); UI != E;
          ++UI)
