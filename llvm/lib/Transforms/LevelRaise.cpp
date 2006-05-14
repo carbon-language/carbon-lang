@@ -103,7 +103,6 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
 
   if (CastInst *CI = dyn_cast<CastInst>(I)) {
     Value       *Src    = CI->getOperand(0);
-    Instruction *SrcI   = dyn_cast<Instruction>(Src); // Nonnull if instr source
     const Type  *DestTy = CI->getType();
 
     // Peephole optimize the following instruction:

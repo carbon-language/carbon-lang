@@ -901,8 +901,6 @@ HoistTerminator:
 /// across this block.
 static bool BlockIsSimpleEnoughToThreadThrough(BasicBlock *BB) {
   BranchInst *BI = cast<BranchInst>(BB->getTerminator());
-  Value *Cond = BI->getCondition();
-  
   unsigned Size = 0;
   
   // If this basic block contains anything other than a PHI (which controls the
