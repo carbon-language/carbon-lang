@@ -52,7 +52,11 @@ bool BugDriver::writeProgramToFile(const std::string &Filename,
                                std::ios::binary;
   std::ofstream Out(Filename.c_str(), io_mode);
   if (!Out.good()) return true;
-  WriteBytecodeToFile(M ? M : Program, Out, /*compression=*/true);
+  try {
+    WriteBytecodeToFile(M ? M : Program, Out, /*compression=*/true);
+  } catch (...) {
+    return true;
+  }
   return false;
 }
 
