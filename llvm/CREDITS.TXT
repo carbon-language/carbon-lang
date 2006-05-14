@@ -55,6 +55,10 @@ N: John T. Criswell
 E: criswell@uiuc.edu
 D: Autoconf support, QMTest database, documentation improvements
 
+N: Rafael Avila de Espindola
+E: rafael.espindola@gmail.com
+D: The ARM backend
+
 N: Alkis Evlogimenos
 E: alkis@evlogimenos.com
 D: Linear scan register allocator, many codegen improvements, Java frontend
