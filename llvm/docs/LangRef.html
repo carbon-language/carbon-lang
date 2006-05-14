@@ -1371,7 +1371,7 @@ branches or with a lookup table.</p>
 
 <pre>
   &lt;result&gt; = invoke [<a href="#callingconv">cconv</a>] &lt;ptr to function ty&gt; %&lt;function ptr val&gt;(&lt;function args&gt;) 
-                to label &lt;normal label&gt; except label &lt;exception label&gt;
+                to label &lt;normal label&gt; unwind label &lt;exception label&gt;
 </pre>
 
 <h5>Overview:</h5>
@@ -1432,9 +1432,9 @@ exception.  Additionally, this is important for implementation of
 <h5>Example:</h5>
 <pre>
   %retval = invoke int %Test(int 15)             to label %Continue
-              except label %TestCleanup     <i>; {int}:retval set</i>
+              unwind label %TestCleanup     <i>; {int}:retval set</i>
   %retval = invoke <a href="#callingconv">coldcc</a> int %Test(int 15)             to label %Continue
-              except label %TestCleanup     <i>; {int}:retval set</i>
+              unwind label %TestCleanup     <i>; {int}:retval set</i>
 </pre>
 </div>
 
