@@ -54,7 +54,12 @@ int main() {
   BB->getInstList().push_back(new ReturnInst(Add));
 
   // Output the bytecode file to stdout
-  WriteBytecodeToFile(M, std::cout);
+  try {
+    WriteBytecodeToFile(M, std::cout);
+  } catch (const std::string &Error) {
+    std::cerr << "Error writing file: " << Error << "\n";
+    return 1;
+  }
 
   // Delete the module and all of its contents.
   delete M;
