@@ -667,7 +667,7 @@ StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile,
 // message on bad indexes for a gep instruction.
 //
 static inline const Type *checkType(const Type *Ty) {
-  assert(Ty && "Invalid indices for type!");
+  assert(Ty && "Invalid GetElementPtrInst indices for type!");
   return Ty;
 }
 

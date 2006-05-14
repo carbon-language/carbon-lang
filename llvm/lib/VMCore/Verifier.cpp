@@ -693,7 +693,6 @@ void Verifier::visitInstruction(Instruction &I) {
 ///
 void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   Function *IF = CI.getCalledFunction();
-  const FunctionType *FTy = IF->getFunctionType();
   Assert1(IF->isExternal(), "Intrinsic functions should never be defined!", IF);
   
 #define GET_INTRINSIC_VERIFIER
