@@ -312,7 +312,9 @@ static int GenerateNative(const std::string &OutputFilename,
   args.push_back(0);
 
   // Run the compiler to assembly and link together the program.
-  return sys::Program::ExecuteAndWait(gcc, &args[0], (const char**)clean_env);
+  int R = sys::Program::ExecuteAndWait(gcc, &args[0], (const char**)clean_env);
+  delete [] clean_env;
+  return R;
 }
 
 /// EmitShellScript - Output the wrapper file that invokes the JIT on the LLVM
