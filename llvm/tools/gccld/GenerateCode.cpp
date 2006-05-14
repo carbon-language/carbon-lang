@@ -438,7 +438,9 @@ int llvm::GenerateNative(const std::string &OutputFilename,
 
   // Run the compiler to assembly and link together the program.
   if (Verbose) dumpArgs(&args[0]);
-  int Res = sys::Program::ExecuteAndWait(gcc, &args[0], (const char**)clean_env);
+  int Res = sys::Program::ExecuteAndWait(gcc, &args[0],(const char**)clean_env);
+
+  delete [] clean_env;
 
   while (!StringsToDelete.empty()) {
     free(StringsToDelete.back());
