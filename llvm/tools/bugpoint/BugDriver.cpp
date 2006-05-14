@@ -94,24 +94,29 @@ bool BugDriver::addSources(const std::vector<std::string> &Filenames) {
   assert(Program == 0 && "Cannot call addSources multiple times!");
   assert(!Filenames.empty() && "Must specify at least on input filename!");
 
-  // Load the first input file...
-  Program = ParseInputFile(Filenames[0]);
-  if (Program == 0) return true;
-  if (!run_as_child)
-    std::cout << "Read input file      : '" << Filenames[0] << "'\n";
-
-  for (unsigned i = 1, e = Filenames.size(); i != e; ++i) {
-    std::auto_ptr<Module> M(ParseInputFile(Filenames[i]));
-    if (M.get() == 0) return true;
-
+  try {
+    // Load the first input file.
+    Program = ParseInputFile(Filenames[0]);
+    if (Program == 0) return true;
     if (!run_as_child)
-      std::cout << "Linking in input file: '" << Filenames[i] << "'\n";
-    std::string ErrorMessage;
-    if (Linker::LinkModules(Program, M.get(), &ErrorMessage)) {
-      std::cerr << ToolName << ": error linking in '" << Filenames[i] << "': "
-                << ErrorMessage << '\n';
-      return true;
+      std::cout << "Read input file      : '" << Filenames[0] << "'\n";
+
+    for (unsigned i = 1, e = Filenames.size(); i != e; ++i) {
+      std::auto_ptr<Module> M(ParseInputFile(Filenames[i]));
+      if (M.get() == 0) return true;
+
+      if (!run_as_child)
+        std::cout << "Linking in input file: '" << Filenames[i] << "'\n";
+      std::string ErrorMessage;
+      if (Linker::LinkModules(Program, M.get(), &ErrorMessage)) {
+        std::cerr << ToolName << ": error linking in '" << Filenames[i] << "': "
+                  << ErrorMessage << '\n';
+        return true;
+      }
     }
+  } catch (const std::string &Error) {
+    std::cerr << ToolName << ": error reading input '" << Error << "'\n";
+    return true;
   }
 
   if (!run_as_child)
