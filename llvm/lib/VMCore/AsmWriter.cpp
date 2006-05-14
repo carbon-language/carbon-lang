@@ -582,7 +582,7 @@ static void WriteAsOperandInternal(std::ostream &Out, const Value *V,
         Slot = Machine->getSlot(V);
       } else {
         Machine = createSlotMachine(V);
-        if (Machine == 0)
+        if (Machine)
           Slot = Machine->getSlot(V);
         else
           Slot = -1;
