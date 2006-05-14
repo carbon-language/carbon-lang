@@ -4793,9 +4793,6 @@ static bool CanEvaluateInDifferentType(Value *V, const Type *Ty,
   if (!I || !I->hasOneUse()) return false;
   
   switch (I->getOpcode()) {
-  case Instruction::Add:
-  case Instruction::Sub:
-  case Instruction::Mul:
   case Instruction::And:
   case Instruction::Or:
   case Instruction::Xor:
@@ -4827,9 +4824,6 @@ Value *InstCombiner::EvaluateInDifferentType(Value *V, const Type *Ty) {
   Instruction *I = cast<Instruction>(V);
   Instruction *Res;
   switch (I->getOpcode()) {
-  case Instruction::Add:
-  case Instruction::Sub:
-  case Instruction::Mul:
   case Instruction::And:
   case Instruction::Or:
   case Instruction::Xor: {
