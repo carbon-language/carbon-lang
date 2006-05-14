@@ -74,7 +74,8 @@ inline bool SplitCriticalEdge(BasicBlock *BB, succ_iterator SI, Pass *P = 0) {
 /// SplitCriticalEdge - If the edge from *PI to BB is not critical, return
 /// false.  Otherwise, split all edges between the two blocks and return true.
 /// This updates all of the same analyses as the other SplitCriticalEdge
-/// function.
+/// function.  If P is specified, it updates the analyses
+/// described above.
 inline bool SplitCriticalEdge(BasicBlock *Succ, pred_iterator PI, Pass *P = 0) {
   bool MadeChange = false;
   TerminatorInst *TI = (*PI)->getTerminator();
@@ -84,12 +85,19 @@ inline bool SplitCriticalEdge(BasicBlock *Succ, pred_iterator PI, Pass *P = 0) {
   return MadeChange;
 }
 
+/// SplitCriticalEdge - If an edge from Src to Dst is critical, split the edge
+/// and return true, otherwise return false.  This method requires that there be
+/// an edge between the two blocks.  If P is specified, it updates the analyses
+/// described above.
 inline bool SplitCriticalEdge(BasicBlock *Src, BasicBlock *Dst, Pass *P = 0) {
   TerminatorInst *TI = Src->getTerminator();
-  for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
+  unsigned i = 0;
+  while (1) {
+    assert(i != TI->getNumSuccessors() && "Edge doesn't exist!");
     if (TI->getSuccessor(i) == Dst)
       return SplitCriticalEdge(TI, i, P);
-  return false;
+    ++i;
+  }
 }
 } // End llvm namespace
 
