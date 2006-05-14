@@ -48,6 +48,11 @@ ifneq ($(strip $(filter IA64,$(TARGETS_TO_BUILD))),)
 USEDLIBS += LLVMIA64
 endif
 
+#Check for ARM Target
+ifneq ($(strip $(filter ARM,$(TARGETS_TO_BUILD))),)
+USEDLIBS += LLVMARM
+endif
+
 USEDLIBS += \
 	LLVMSelectionDAG \
 	LLVMCodeGen \
