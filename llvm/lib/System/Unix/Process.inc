@@ -132,9 +132,7 @@ void Process::PreventCoreFiles() {
 #if HAVE_SETRLIMIT
   struct rlimit rlim;
   rlim.rlim_cur = rlim.rlim_max = 0;
-  int res = setrlimit(RLIMIT_CORE, &rlim);
-  if (res != 0)
-    ThrowErrno("Can't prevent core file generation");
+  setrlimit(RLIMIT_CORE, &rlim);
 #endif
 }
 
