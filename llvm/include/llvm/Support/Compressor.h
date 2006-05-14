@@ -57,6 +57,7 @@ namespace llvm {
       /// writing when this method is called. The stream will not be closed by
       /// this method.  The \p hint argument indicates which type of
       /// compression the caller would *prefer*.
+      /// @throws std::string explaining error if a compression error occurs
       /// @returns The amount of data written to \p out.
       /// @brief Compress memory to a file.
       static size_t compressToStream(
@@ -68,6 +69,7 @@ namespace llvm {
       /// This method decompresses a block of memory pointed to by \p in with
       /// size \p size to a new block of memory, \p out, \p that was allocated
       /// by malloc. It is the caller's responsibility to free \p out.
+      /// @throws std::string explaining error if a decompression error occurs
       /// @returns The size of the output buffer \p out.
       /// @brief Decompress memory to a new memory buffer.
       static size_t decompressToNewBuffer(
@@ -80,6 +82,7 @@ namespace llvm {
       /// size \p size to a stream. The stream \p out must be open and ready for
       /// writing when this method is called. The stream will not be closed by
       /// this method.
+      /// @throws std::string explaining error if a decompression error occurs
       /// @returns The amount of data written to \p out.
       /// @brief Decompress memory to a stream.
       static size_t decompressToStream(
