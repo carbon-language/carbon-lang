@@ -107,7 +107,8 @@ void DynamicLibrary::LoadLibraryPermanently(const char* filename) {
     a_handle = lt_dlopenext(filename);
 
   if (a_handle == 0)
-    throw std::string("Can't open :") + filename + ": " + lt_dlerror();
+    throw std::string("Can't open :") +
+          (filename ? filename : "<current process>") + ": " + lt_dlerror();
 
   lt_dlmakeresident(a_handle);
 
