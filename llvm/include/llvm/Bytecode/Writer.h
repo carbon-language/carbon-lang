@@ -28,6 +28,10 @@
 
 namespace llvm {
   class Module;
+  /// WriteBytecodeToFile - Write the specified module to the specified output
+  /// stream.  If compress is set to true, try to use compression when writing
+  /// out the file.  This throws an std::string if there is an error writing
+  /// the file.
   void WriteBytecodeToFile(const Module *M, std::ostream &Out,
                            bool compress = true);
 } // End llvm namespace
