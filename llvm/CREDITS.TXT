@@ -13,6 +13,10 @@ E: vadve@cs.uiuc.edu
 W: http://www.cs.uiuc.edu/~vadve/
 D: The Sparc64 backend, provider of much wisdom, and motivator for LLVM
 
+N: Owen Anderson
+E: resistor@mac.com
+D: TargetData refactoring, random improvements
+
 N: Henrik Bach
 D: MingW Win32 API portability layer
 
