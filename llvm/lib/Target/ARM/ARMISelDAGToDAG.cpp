@@ -62,6 +62,7 @@ ARMTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
                                  bool isTailCall, SDOperand Callee,
                                  ArgListTy &Args, SelectionDAG &DAG) {
   assert(0 && "Not implemented");
+  abort();
 }
 
 static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
@@ -84,6 +85,7 @@ SDOperand ARMTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default:
     assert(0 && "Should not custom lower this!");
+    abort();
   case ISD::RET:
     return LowerRET(Op, DAG);
   }
