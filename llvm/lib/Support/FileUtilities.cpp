@@ -241,5 +241,8 @@ int llvm::DiffFilesWithTolerance(const sys::Path &FileA,
   } catch (const std::string &Msg) {
     if (Error) *Error = Msg;
     return 2;
+  } catch (...) {
+    *Error = "Unknown Exception Occurred";
+    return 2;
   }
 }
