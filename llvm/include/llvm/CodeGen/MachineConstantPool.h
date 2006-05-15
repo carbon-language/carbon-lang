@@ -7,15 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// The MachineConstantPool class keeps track of constants referenced by a
-// function which must be spilled to memory.  This is used for constants which
-// are unable to be used directly as operands to instructions, which typically
-// include floating point and large integer constants.
-//
-// Instructions reference the address of these constant pool constants through
-// the use of MO_ConstantPoolIndex values.  When emitting assembly or machine
-// code, these virtual address references are converted to refer to the
-// address of the function constant pool values.
+/// @file This file declares the MachineConstantPool class which is an abstract
+/// constant pool to keep track of constants referenced by a function.
 //
 //===----------------------------------------------------------------------===//
 
@@ -30,22 +23,32 @@ namespace llvm {
 class Constant;
 class TargetData;
 
-/// MachineConstantPoolEntry - One entry in the constant pool.
-///
+/// This class is a data container for one entry in a MachineConstantPool.
+/// It contains a pointer to the value and an offset from the start of
+/// the constant pool.
+/// @brief An entry in a MachineConstantPool
 struct MachineConstantPoolEntry {
-  /// Val - The constant itself.
-  Constant *Val;
-  /// Offset - The offset of the constant from the start of the constant pool.
-  unsigned Offset;
-  
+  Constant *Val;   ///< The constant itself.
+  unsigned Offset; ///< The offset of the constant from the start of the pool.
   MachineConstantPoolEntry(Constant *V, unsigned O) : Val(V), Offset(O) {}
 };
   
+/// The MachineConstantPool class keeps track of constants referenced by a
+/// function which must be spilled to memory.  This is used for constants which
+/// are unable to be used directly as operands to instructions, which typically
+/// include floating point and large integer constants.
+///
+/// Instructions reference the address of these constant pool constants through
+/// the use of MO_ConstantPoolIndex values.  When emitting assembly or machine
+/// code, these virtual address references are converted to refer to the
+/// address of the function constant pool values.
+/// @brief The machine constant pool.
 class MachineConstantPool {
-  const TargetData *TD;
-  unsigned PoolAlignment;
-  std::vector<MachineConstantPoolEntry> Constants;
+  const TargetData *TD;   ///< The machine's TargetData.
+  unsigned PoolAlignment; ///< The alignment for the pool.
+  std::vector<MachineConstantPoolEntry> Constants; ///< The pool of constants.
 public:
+  /// @brief The only constructor.
   MachineConstantPool(const TargetData *td) : TD(td), PoolAlignment(1) {}
     
   /// getConstantPoolAlignment - Return the log2 of the alignment required by
@@ -54,11 +57,9 @@ public:
   
   /// getConstantPoolIndex - Create a new entry in the constant pool or return
   /// an existing one.  User must specify an alignment in bytes for the object.
-  ///
   unsigned getConstantPoolIndex(Constant *C, unsigned Alignment);
   
   /// isEmpty - Return true if this constant pool contains no constants.
-  ///
   bool isEmpty() const { return Constants.empty(); }
 
   const std::vector<MachineConstantPoolEntry> &getConstants() const {
