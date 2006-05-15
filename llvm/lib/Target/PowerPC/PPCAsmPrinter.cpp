@@ -350,13 +350,7 @@ FunctionPass *llvm::createAIXAsmPrinter(std::ostream &o, PPCTargetMachine &tm) {
 #include "PPCGenAsmWriter.inc"
 
 void PPCAsmPrinter::printOp(const MachineOperand &MO) {
-  const MRegisterInfo &RI = *TM.getRegisterInfo();
-  int new_symbol;
-
   switch (MO.getType()) {
-    O << RI.get(MO.getReg()).Name;
-    return;
-
   case MachineOperand::MO_Immediate:
     std::cerr << "printOp() does not handle immediate values\n";
     abort();
