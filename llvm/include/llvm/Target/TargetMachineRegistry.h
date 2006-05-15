@@ -70,7 +70,13 @@ namespace llvm {
   /// RegisterTarget - This class is used to make targets automatically register
   /// themselves with the tool they are linked.  Targets should define an
   /// instance of this and implement the static methods described in the
-  /// TargetMachine comments..
+  /// TargetMachine comments.
+  /// The type 'TargetMachineImpl' should provide a constructor with two 
+  /// parameters:
+  /// - const Module& M: the module that is being compiled:
+  /// - const std::string& FS: target-specific string describing target 
+  ///   flavour.
+  
   template<class TargetMachineImpl>
   struct RegisterTarget : public TargetMachineRegistry::Entry {
     RegisterTarget(const char *Name, const char *ShortDesc) :
