@@ -72,7 +72,9 @@ class RegisterClass<string namespace, list<ValueType> regTypes, int alignment,
 
   // RegType - Specify the list ValueType of the registers in this register
   // class.  Note that all registers in a register class must have the same
-  // ValueTypes.
+  // ValueTypes.  This is a list because some targets permit storing different 
+  // types in same register, for example vector values with 128-bit total size,
+  // but different count/size of items, like SSE on x86.
   //
   list<ValueType> RegTypes = regTypes;
 
