@@ -558,7 +558,7 @@ public:
   virtual std::pair<SDOperand, SDOperand>
   LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
               unsigned CallingConv, bool isTailCall, SDOperand Callee,
-              ArgListTy &Args, SelectionDAG &DAG) = 0;
+              ArgListTy &Args, SelectionDAG &DAG);
 
   /// LowerFrameReturnAddress - This hook lowers a call to llvm.returnaddress or
   /// llvm.frameaddress (depending on the value of the first argument).  The
