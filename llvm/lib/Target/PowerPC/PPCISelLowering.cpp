@@ -738,9 +738,9 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
   SDOperand Root = Op.getOperand(0);
   
   unsigned ArgOffset = 24;
-  unsigned GPR_remaining = 8;
-  unsigned FPR_remaining = 13;
-  unsigned VR_remaining  = 12;
+  const unsigned Num_GPR_Regs = 8;
+  const unsigned Num_FPR_Regs = 13;
+  const unsigned Num_VR_Regs  = 12;
   unsigned GPR_idx = 0, FPR_idx = 0, VR_idx = 0;
   static const unsigned GPR[] = {
     PPC::R3, PPC::R4, PPC::R5, PPC::R6,
@@ -772,11 +772,10 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
       // All int arguments reserve stack space.
       ArgOffset += 4;
 
-      if (GPR_remaining > 0) {
+      if (GPR_idx != Num_GPR_Regs) {
         unsigned VReg = RegMap->createVirtualRegister(&PPC::GPRCRegClass);
         MF.addLiveIn(GPR[GPR_idx], VReg);
         ArgVal = DAG.getCopyFromReg(Root, VReg, MVT::i32);
-        --GPR_remaining;
         ++GPR_idx;
       } else {
         needsLoad = true;
@@ -789,12 +788,12 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
 
       // Every 4 bytes of argument space consumes one of the GPRs available for
       // argument passing.
-      if (GPR_remaining > 0) {
-        unsigned delta = (GPR_remaining > 1 && ObjSize == 8) ? 2 : 1;
-        GPR_remaining -= delta;
-        GPR_idx += delta;
+      if (GPR_idx != Num_GPR_Regs) {
+        ++GPR_idx;
+        if (ObjSize == 8 && GPR_idx != Num_GPR_Regs)
+          ++GPR_idx;
       }
-      if (FPR_remaining > 0) {
+      if (FPR_idx != Num_FPR_Regs) {
         unsigned VReg;
         if (ObjectVT == MVT::f32)
           VReg = RegMap->createVirtualRegister(&PPC::F4RCRegClass);
@@ -802,7 +801,6 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
           VReg = RegMap->createVirtualRegister(&PPC::F8RCRegClass);
         MF.addLiveIn(FPR[FPR_idx], VReg);
         ArgVal = DAG.getCopyFromReg(Root, VReg, ObjectVT);
-        --FPR_remaining;
         ++FPR_idx;
       } else {
         needsLoad = true;
@@ -813,11 +811,10 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
     case MVT::v8i16:
     case MVT::v16i8:
       // Note that vector arguments in registers don't reserve stack space.
-      if (VR_remaining > 0) {
+      if (VR_idx != Num_VR_Regs) {
         unsigned VReg = RegMap->createVirtualRegister(&PPC::VRRCRegClass);
         MF.addLiveIn(VR[VR_idx], VReg);
         ArgVal = DAG.getCopyFromReg(Root, VReg, ObjectVT);
-        --VR_remaining;
         ++VR_idx;
       } else {
         // This should be simple, but requires getting 16-byte aligned stack
@@ -857,7 +854,7 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
     // to their spots on the stack so that they may be loaded by deferencing the
     // result of va_next.
     std::vector<SDOperand> MemOps;
-    for (; GPR_remaining > 0; --GPR_remaining, ++GPR_idx) {
+    for (; GPR_idx != Num_GPR_Regs; ++GPR_idx) {
       unsigned VReg = RegMap->createVirtualRegister(&PPC::GPRCRegClass);
       MF.addLiveIn(GPR[GPR_idx], VReg);
       SDOperand Val = DAG.getCopyFromReg(Root, VReg, MVT::i32);
