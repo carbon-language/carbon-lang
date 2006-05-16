@@ -632,6 +632,9 @@ AC_SUBST(SHLIBEXT,$libltdl_cv_shlibext)
 # Translate the various configuration directories and other basic
 # information into substitutions that will end up in Makefile.config.in 
 # that these configured values can be used by the makefiles
+if test "${prefix}" == "NONE" ; then
+  prefix="/usr/local"
+fi
 eval LLVM_PREFIX="${prefix}";
 eval LLVM_BINDIR="${prefix}/bin";
 eval LLVM_LIBDIR="${prefix}/lib";
