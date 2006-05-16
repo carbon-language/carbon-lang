@@ -565,12 +565,8 @@ static std::vector<unsigned char> getImplicitType(Record *R, bool NotRegisters,
   } else if (R->isSubClassOf("Register")) {
     if (NotRegisters) 
       return Unknown;
-    // If the register appears in exactly one regclass, and the regclass has one
-    // value type, use it as the known type.
     const CodeGenTarget &T = TP.getDAGISelEmitter().getTargetInfo();
-    if (const CodeGenRegisterClass *RC = T.getRegisterClassForRegister(R))
-      return ConvertVTs(RC->getValueTypes());
-    return Unknown;
+    return T.getRegisterVTs(R);
   } else if (R->isSubClassOf("ValueType") || R->isSubClassOf("CondCode")) {
     // Using a VTSDNode or CondCodeSDNode.
     return Other;
@@ -607,7 +603,10 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
         // At some point, it may make sense for this tree pattern to have
         // multiple types.  Assert here that it does not, so we revisit this
         // code when appropriate.
-        assert(getExtTypes().size() == 1 && "TreePattern has too many types!");
+        assert(getExtTypes().size() >= 1 && "TreePattern does not have a type!");
+        MVT::ValueType VT = getTypeNum(0);
+        for (unsigned i = 1, e = getExtTypes().size(); i != e; ++i)
+          assert(getTypeNum(i) == VT && "TreePattern has too many types!");
         
         unsigned Size = MVT::getSizeInBits(getTypeNum(0));
         // Make sure that the value is representable for this type.

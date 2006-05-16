@@ -110,6 +110,10 @@ public:
     }
     return FoundRC;
   }
+
+  /// getRegisterVTs - Find the union of all possible ValueTypes for the
+  /// specified physical register.
+  std::vector<unsigned char> getRegisterVTs(Record *R) const;
   
   const std::vector<MVT::ValueType> &getLegalValueTypes() const {
     if (LegalValueTypes.empty()) ReadLegalValueTypes();

@@ -163,6 +163,23 @@ void CodeGenTarget::ReadRegisterClasses() const {
   RegisterClasses.assign(RegClasses.begin(), RegClasses.end());
 }
 
+std::vector<unsigned char> CodeGenTarget::getRegisterVTs(Record *R) const {
+  std::vector<unsigned char> Result;
+  const std::vector<CodeGenRegisterClass> &RCs = getRegisterClasses();
+  for (unsigned i = 0, e = RCs.size(); i != e; ++i) {
+    const CodeGenRegisterClass &RC = RegisterClasses[i];
+    for (unsigned ei = 0, ee = RC.Elements.size(); ei != ee; ++ei) {
+      if (R == RC.Elements[ei]) {
+        const std::vector<MVT::ValueType> &InVTs = RC.getValueTypes();
+        for (unsigned i = 0, e = InVTs.size(); i != e; ++i)
+          Result.push_back(InVTs[i]);
+      }
+    }
+  }
+  return Result;
+}
+
+
 CodeGenRegisterClass::CodeGenRegisterClass(Record *R) : TheDef(R) {
   // Rename anonymous register classes.
   if (R->getName().size() > 9 && R->getName()[9] == '.') {
