@@ -542,6 +542,9 @@ void X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG) {
     }
     FormalArgs.push_back(ArgValue);
   }
+  // Provide a chain.  Note that this isn't the right one, but it works as well
+  // as before.
+  FormalArgs.push_back(DAG.getEntryNode());
 }
 
 std::pair<SDOperand, SDOperand>
@@ -1081,6 +1084,10 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
     }
     FormalArgs.push_back(ArgValue);
   }
+
+  // Provide a chain.  Note that this isn't the right one, but it works as well
+  // as before.
+  FormalArgs.push_back(DAG.getEntryNode());
 }
 
 std::pair<SDOperand, SDOperand>
