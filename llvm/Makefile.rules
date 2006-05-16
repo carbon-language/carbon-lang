@@ -404,7 +404,8 @@ LTInstall     = $(LIBTOOL) $(LibTool.Flags) --mode=install $(INSTALL) \
 ProgInstall   = $(INSTALL) $(Install.StripFlag) -m 0755 
 ScriptInstall = $(INSTALL) -m 0755 
 DataInstall   = $(INSTALL) -m 0644
-TableGen      = $(TBLGEN) -I $(PROJ_SRC_DIR) -I$(PROJ_SRC_ROOT)/include
+TableGen      = $(TBLGEN) -I $(PROJ_SRC_DIR) -I$(PROJ_SRC_ROOT)/include \
+                -I $(PROJ_SRC_ROOT)/lib/Target      
 Archive       = $(AR) $(AR.Flags)
 LArchive      = $(LLVMToolDir)/llvm-ar rcsf
 ifdef RANLIB

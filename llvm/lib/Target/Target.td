@@ -118,7 +118,7 @@ class DwarfRegNum<int N> {
 //===----------------------------------------------------------------------===//
 // Pull in the common support for scheduling
 //
-include "../TargetSchedule.td"
+include "TargetSchedule.td"
 
 class Predicate; // Forward def
 
@@ -327,4 +327,4 @@ class Processor<string n, ProcessorItineraries pi, list<SubtargetFeature> f> {
 //===----------------------------------------------------------------------===//
 // Pull in the common support for DAG isel generation
 //
-include "../TargetSelectionDAG.td"
+include "TargetSelectionDAG.td"
