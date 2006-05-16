@@ -641,7 +641,7 @@ endif
 #---------------------------------------------------------
 # Some versions of gcc on Alpha produce too many symbols, so use a .a file
 ifeq ($(ARCH),Alpha)
-USEDLIBS :=  $(subst LLVMCore, LLVMCore.a, $(USEDLIBS))
+USEDLIBS := $(subst LLVMCore, LLVMCore.a, $(USEDLIBS))
 LLVMLIBS := $(subst LLVMCore, LLVMCore.a, $(LLVMLIBS))
 CORE_IS_ARCHIVE := 1
 else
@@ -950,8 +950,8 @@ endif
 
 $(ToolBuildPath): $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths)
 	$(Echo) Linking $(BuildMode) executable $(TOOLNAME) $(StripWarnMsg)
-	$(Verb) $(Link) -o $@ $(TOOLLINKOPTS) $(ObjectsO) $(LLVMLibsOptions) \
-        $(ProjLibsOptions) $(ExtraLibs) $(TOOLLINKOPTSB) $(LIBS)
+	$(Verb) $(Link) -o $@ $(TOOLLINKOPTS) $(ObjectsO) $(ProjLibsOptions) \
+	$(LLVMLibsOptions) $(ExtraLibs) $(TOOLLINKOPTSB) $(LIBS)
 	$(Echo) ======= Finished Linking $(BuildMode) Executable $(TOOLNAME) \
           $(StripWarnMsg) 
 
