@@ -25,6 +25,7 @@
 #include "llvm/Type.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include <map>
+#include <list>
 
 namespace llvm {
   class Value;
@@ -648,6 +649,15 @@ public:
   legal_am_scale_iterator legal_am_scale_end() const {
     return LegalAddressScales.end();
   }
+
+  //===--------------------------------------------------------------------===//
+  // Div utility functions
+  //
+  SDOperand BuildSDIV(SDNode *N, SelectionDAG &DAG, 
+		      std::list<SDNode*>* Created) const;
+  SDOperand BuildUDIV(SDNode *N, SelectionDAG &DAG, 
+		      std::list<SDNode*>* Created) const;
+
 
 protected:
   /// addLegalAddressScale - Add a integer (> 1) value which can be used as

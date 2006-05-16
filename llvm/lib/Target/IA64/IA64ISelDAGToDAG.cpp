@@ -81,9 +81,6 @@ namespace {
     /// operation.
     bool SelectAddr(SDOperand Addr, SDOperand &Op1, SDOperand &Op2);
 
-    SDOperand BuildSDIVSequence(SDNode *N);
-    SDOperand BuildUDIVSequence(SDNode *N);
-    
     /// InstructionSelectBasicBlock - This callback is invoked by
     /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
     virtual void InstructionSelectBasicBlock(SelectionDAG &DAG);

@@ -1330,3 +1330,268 @@ bool TargetLowering::isLegalAddressImmediate(int64_t V) const {
 bool TargetLowering::isLegalAddressImmediate(GlobalValue *GV) const {
   return false;
 }
+
+
+// Magic for divide replacement
+
+struct ms {
+  int64_t m;  // magic number
+  int64_t s;  // shift amount
+};
+
+struct mu {
+  uint64_t m; // magic number
+  int64_t a;  // add indicator
+  int64_t s;  // shift amount
+};
+
+/// magic - calculate the magic numbers required to codegen an integer sdiv as
+/// a sequence of multiply and shifts.  Requires that the divisor not be 0, 1,
+/// or -1.
+static ms magic32(int32_t d) {
+  int32_t p;
+  uint32_t ad, anc, delta, q1, r1, q2, r2, t;
+  const uint32_t two31 = 0x80000000U;
+  struct ms mag;
+  
+  ad = abs(d);
+  t = two31 + ((uint32_t)d >> 31);
+  anc = t - 1 - t%ad;   // absolute value of nc
+  p = 31;               // initialize p
+  q1 = two31/anc;       // initialize q1 = 2p/abs(nc)
+  r1 = two31 - q1*anc;  // initialize r1 = rem(2p,abs(nc))
+  q2 = two31/ad;        // initialize q2 = 2p/abs(d)
+  r2 = two31 - q2*ad;   // initialize r2 = rem(2p,abs(d))
+  do {
+    p = p + 1;
+    q1 = 2*q1;        // update q1 = 2p/abs(nc)
+    r1 = 2*r1;        // update r1 = rem(2p/abs(nc))
+    if (r1 >= anc) {  // must be unsigned comparison
+      q1 = q1 + 1;
+      r1 = r1 - anc;
+    }
+    q2 = 2*q2;        // update q2 = 2p/abs(d)
+    r2 = 2*r2;        // update r2 = rem(2p/abs(d))
+    if (r2 >= ad) {   // must be unsigned comparison
+      q2 = q2 + 1;
+      r2 = r2 - ad;
+    }
+    delta = ad - r2;
+  } while (q1 < delta || (q1 == delta && r1 == 0));
+  
+  mag.m = (int32_t)(q2 + 1); // make sure to sign extend
+  if (d < 0) mag.m = -mag.m; // resulting magic number
+  mag.s = p - 32;            // resulting shift
+  return mag;
+}
+
+/// magicu - calculate the magic numbers required to codegen an integer udiv as
+/// a sequence of multiply, add and shifts.  Requires that the divisor not be 0.
+static mu magicu32(uint32_t d) {
+  int32_t p;
+  uint32_t nc, delta, q1, r1, q2, r2;
+  struct mu magu;
+  magu.a = 0;               // initialize "add" indicator
+  nc = - 1 - (-d)%d;
+  p = 31;                   // initialize p
+  q1 = 0x80000000/nc;       // initialize q1 = 2p/nc
+  r1 = 0x80000000 - q1*nc;  // initialize r1 = rem(2p,nc)
+  q2 = 0x7FFFFFFF/d;        // initialize q2 = (2p-1)/d
+  r2 = 0x7FFFFFFF - q2*d;   // initialize r2 = rem((2p-1),d)
+  do {
+    p = p + 1;
+    if (r1 >= nc - r1 ) {
+      q1 = 2*q1 + 1;  // update q1
+      r1 = 2*r1 - nc; // update r1
+    }
+    else {
+      q1 = 2*q1; // update q1
+      r1 = 2*r1; // update r1
+    }
+    if (r2 + 1 >= d - r2) {
+      if (q2 >= 0x7FFFFFFF) magu.a = 1;
+      q2 = 2*q2 + 1;     // update q2
+      r2 = 2*r2 + 1 - d; // update r2
+    }
+    else {
+      if (q2 >= 0x80000000) magu.a = 1;
+      q2 = 2*q2;     // update q2
+      r2 = 2*r2 + 1; // update r2
+    }
+    delta = d - 1 - r2;
+  } while (p < 64 && (q1 < delta || (q1 == delta && r1 == 0)));
+  magu.m = q2 + 1; // resulting magic number
+  magu.s = p - 32;  // resulting shift
+  return magu;
+}
+
+/// magic - calculate the magic numbers required to codegen an integer sdiv as
+/// a sequence of multiply and shifts.  Requires that the divisor not be 0, 1,
+/// or -1.
+static ms magic64(int64_t d) {
+  int64_t p;
+  uint64_t ad, anc, delta, q1, r1, q2, r2, t;
+  const uint64_t two63 = 9223372036854775808ULL; // 2^63
+  struct ms mag;
+  
+  ad = d >= 0 ? d : -d;
+  t = two63 + ((uint64_t)d >> 63);
+  anc = t - 1 - t%ad;   // absolute value of nc
+  p = 63;               // initialize p
+  q1 = two63/anc;       // initialize q1 = 2p/abs(nc)
+  r1 = two63 - q1*anc;  // initialize r1 = rem(2p,abs(nc))
+  q2 = two63/ad;        // initialize q2 = 2p/abs(d)
+  r2 = two63 - q2*ad;   // initialize r2 = rem(2p,abs(d))
+  do {
+    p = p + 1;
+    q1 = 2*q1;        // update q1 = 2p/abs(nc)
+    r1 = 2*r1;        // update r1 = rem(2p/abs(nc))
+    if (r1 >= anc) {  // must be unsigned comparison
+      q1 = q1 + 1;
+      r1 = r1 - anc;
+    }
+    q2 = 2*q2;        // update q2 = 2p/abs(d)
+    r2 = 2*r2;        // update r2 = rem(2p/abs(d))
+    if (r2 >= ad) {   // must be unsigned comparison
+      q2 = q2 + 1;
+      r2 = r2 - ad;
+    }
+    delta = ad - r2;
+  } while (q1 < delta || (q1 == delta && r1 == 0));
+  
+  mag.m = q2 + 1;
+  if (d < 0) mag.m = -mag.m; // resulting magic number
+  mag.s = p - 64;            // resulting shift
+  return mag;
+}
+
+/// magicu - calculate the magic numbers required to codegen an integer udiv as
+/// a sequence of multiply, add and shifts.  Requires that the divisor not be 0.
+static mu magicu64(uint64_t d)
+{
+  int64_t p;
+  uint64_t nc, delta, q1, r1, q2, r2;
+  struct mu magu;
+  magu.a = 0;               // initialize "add" indicator
+  nc = - 1 - (-d)%d;
+  p = 63;                   // initialize p
+  q1 = 0x8000000000000000ull/nc;       // initialize q1 = 2p/nc
+  r1 = 0x8000000000000000ull - q1*nc;  // initialize r1 = rem(2p,nc)
+  q2 = 0x7FFFFFFFFFFFFFFFull/d;        // initialize q2 = (2p-1)/d
+  r2 = 0x7FFFFFFFFFFFFFFFull - q2*d;   // initialize r2 = rem((2p-1),d)
+  do {
+    p = p + 1;
+    if (r1 >= nc - r1 ) {
+      q1 = 2*q1 + 1;  // update q1
+      r1 = 2*r1 - nc; // update r1
+    }
+    else {
+      q1 = 2*q1; // update q1
+      r1 = 2*r1; // update r1
+    }
+    if (r2 + 1 >= d - r2) {
+      if (q2 >= 0x7FFFFFFFFFFFFFFFull) magu.a = 1;
+      q2 = 2*q2 + 1;     // update q2
+      r2 = 2*r2 + 1 - d; // update r2
+    }
+    else {
+      if (q2 >= 0x8000000000000000ull) magu.a = 1;
+      q2 = 2*q2;     // update q2
+      r2 = 2*r2 + 1; // update r2
+    }
+    delta = d - 1 - r2;
+  } while (p < 64 && (q1 < delta || (q1 == delta && r1 == 0)));
+  magu.m = q2 + 1; // resulting magic number
+  magu.s = p - 64;  // resulting shift
+  return magu;
+}
+
+/// BuildSDIVSequence - Given an ISD::SDIV node expressing a divide by constant,
+/// return a DAG expression to select that will generate the same value by
+/// multiplying by a magic number.  See:
+/// <http://the.wall.riscom.net/books/proc/ppc/cwg/code2.html>
+SDOperand TargetLowering::BuildSDIV(SDNode *N, SelectionDAG &DAG, 
+				    std::list<SDNode*>* Created) const {
+  MVT::ValueType VT = N->getValueType(0);
+  
+  // Check to see if we can do this.
+  if (!isTypeLegal(VT) || (VT != MVT::i32 && VT != MVT::i64))
+    return SDOperand();       // BuildSDIV only operates on i32 or i64
+  if (!isOperationLegal(ISD::MULHS, VT))
+    return SDOperand();       // Make sure the target supports MULHS.
+  
+  int64_t d = cast<ConstantSDNode>(N->getOperand(1))->getSignExtended();
+  ms magics = (VT == MVT::i32) ? magic32(d) : magic64(d);
+  
+  // Multiply the numerator (operand 0) by the magic value
+  SDOperand Q = DAG.getNode(ISD::MULHS, VT, N->getOperand(0),
+                            DAG.getConstant(magics.m, VT));
+  // If d > 0 and m < 0, add the numerator
+  if (d > 0 && magics.m < 0) { 
+    Q = DAG.getNode(ISD::ADD, VT, Q, N->getOperand(0));
+    if (Created)
+      Created->push_back(Q.Val);
+  }
+  // If d < 0 and m > 0, subtract the numerator.
+  if (d < 0 && magics.m > 0) {
+    Q = DAG.getNode(ISD::SUB, VT, Q, N->getOperand(0));
+    if (Created)
+      Created->push_back(Q.Val);
+  }
+  // Shift right algebraic if shift value is nonzero
+  if (magics.s > 0) {
+    Q = DAG.getNode(ISD::SRA, VT, Q, 
+                    DAG.getConstant(magics.s, getShiftAmountTy()));
+    if (Created)
+      Created->push_back(Q.Val);
+  }
+  // Extract the sign bit and add it to the quotient
+  SDOperand T =
+    DAG.getNode(ISD::SRL, VT, Q, DAG.getConstant(MVT::getSizeInBits(VT)-1,
+                                                 getShiftAmountTy()));
+  if (Created)
+    Created->push_back(T.Val);
+  return DAG.getNode(ISD::ADD, VT, Q, T);
+}
+
+/// BuildUDIVSequence - Given an ISD::UDIV node expressing a divide by constant,
+/// return a DAG expression to select that will generate the same value by
+/// multiplying by a magic number.  See:
+/// <http://the.wall.riscom.net/books/proc/ppc/cwg/code2.html>
+SDOperand TargetLowering::BuildUDIV(SDNode *N, SelectionDAG &DAG,
+				    std::list<SDNode*>* Created) const {
+  MVT::ValueType VT = N->getValueType(0);
+  
+  // Check to see if we can do this.
+  if (!isTypeLegal(VT) || (VT != MVT::i32 && VT != MVT::i64))
+    return SDOperand();       // BuildUDIV only operates on i32 or i64
+  if (!isOperationLegal(ISD::MULHU, VT))
+    return SDOperand();       // Make sure the target supports MULHU.
+  
+  uint64_t d = cast<ConstantSDNode>(N->getOperand(1))->getValue();
+  mu magics = (VT == MVT::i32) ? magicu32(d) : magicu64(d);
+  
+  // Multiply the numerator (operand 0) by the magic value
+  SDOperand Q = DAG.getNode(ISD::MULHU, VT, N->getOperand(0),
+                            DAG.getConstant(magics.m, VT));
+  if (Created)
+    Created->push_back(Q.Val);
+
+  if (magics.a == 0) {
+    return DAG.getNode(ISD::SRL, VT, Q, 
+                       DAG.getConstant(magics.s, getShiftAmountTy()));
+  } else {
+    SDOperand NPQ = DAG.getNode(ISD::SUB, VT, N->getOperand(0), Q);
+    if (Created)
+      Created->push_back(NPQ.Val);
+    NPQ = DAG.getNode(ISD::SRL, VT, NPQ, 
+                      DAG.getConstant(1, getShiftAmountTy()));
+    if (Created)
+      Created->push_back(NPQ.Val);
+    NPQ = DAG.getNode(ISD::ADD, VT, NPQ, Q);
+    if (Created)
+      Created->push_back(NPQ.Val);
+    return DAG.getNode(ISD::SRL, VT, NPQ, 
+                       DAG.getConstant(magics.s-1, getShiftAmountTy()));
+  }
+}
