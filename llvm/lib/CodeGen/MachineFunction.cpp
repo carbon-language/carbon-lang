@@ -152,6 +152,9 @@ void MachineFunction::print(std::ostream &OS) const {
         OS << " " << MRI->getName(I->first);
       else
         OS << " Reg #" << I->first;
+      
+      if (I->second)
+        OS << " in VR#" << I->second << " ";
     }
     OS << "\n";
   }
