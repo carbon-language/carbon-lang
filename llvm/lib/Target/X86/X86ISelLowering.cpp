@@ -365,8 +365,8 @@ X86TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   FormalArgs.clear();
   FormalArgLocs.clear();
 
-  // This sets BytesToPopOnReturn, BytesCallerReserves, etc. which have to be set
-  // before the rest of the function can be lowered.
+  // This sets BytesToPopOnReturn, BytesCallerReserves, etc. which have to be
+  // set before the rest of the function can be lowered.
   if (F.getCallingConv() == CallingConv::Fast && EnableFastCC)
     PreprocessFastCCArguments(Args, F, DAG);
   else
@@ -522,14 +522,15 @@ void X86TargetLowering::PreprocessCCCArguments(std::vector<SDOperand>Args,
 }
 
 void X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG) {
-  unsigned NumArgs = Op.Val->getNumValues();
+  unsigned NumArgs = Op.Val->getNumValues() - 1;
   MachineFunction &MF = DAG.getMachineFunction();
 
   for (unsigned i = 0; i < NumArgs; ++i) {
     std::pair<FALocInfo, FALocInfo> Loc = FormalArgLocs[i];
     SDOperand ArgValue;
     if (Loc.first.Kind == FALocInfo::StackFrameLoc) {
-      // Create the SelectionDAG nodes corresponding to a load from this parameter
+      // Create the SelectionDAG nodes corresponding to a load from this
+      // parameter.
       unsigned FI = FormalArgLocs[i].first.Loc;
       SDOperand FIN = DAG.getFrameIndex(FI, MVT::i32);
       ArgValue = DAG.getLoad(Op.Val->getValueType(i),
@@ -676,7 +677,8 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
     unsigned CCReg = XMMArgRegs[i];
     SDOperand RegToPass = RegValuesToPass[i];
     assert(RegToPass.getValueType() == MVT::Vector);
-    unsigned NumElems = cast<ConstantSDNode>(*(RegToPass.Val->op_end()-2))->getValue();
+    unsigned NumElems =
+      cast<ConstantSDNode>(*(RegToPass.Val->op_end()-2))->getValue();
     MVT::ValueType EVT = cast<VTSDNode>(*(RegToPass.Val->op_end()-1))->getVT();
     MVT::ValueType PVT = getVectorType(EVT, NumElems);
     SDOperand CCRegNode = DAG.getRegister(CCReg, PVT);
@@ -1043,7 +1045,7 @@ X86TargetLowering::PreprocessFastCCArguments(std::vector<SDOperand>Args,
 
 void
 X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
-  unsigned NumArgs = Op.Val->getNumValues();
+  unsigned NumArgs = Op.Val->getNumValues()-1;
   MachineFunction &MF = DAG.getMachineFunction();
 
   for (unsigned i = 0; i < NumArgs; ++i) {
@@ -1051,9 +1053,10 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
     std::pair<FALocInfo, FALocInfo> Loc = FormalArgLocs[i];
     SDOperand ArgValue;
     if (Loc.first.Kind == FALocInfo::StackFrameLoc) {
-      // Create the SelectionDAG nodes corresponding to a load from this parameter
+      // Create the SelectionDAG nodes corresponding to a load from this
+      // parameter.
       SDOperand FIN = DAG.getFrameIndex(Loc.first.Loc, MVT::i32);
-      ArgValue = DAG.getLoad(Op.Val->getValueType(i),DAG.getEntryNode(), FIN,
+      ArgValue = DAG.getLoad(Op.Val->getValueType(i), DAG.getEntryNode(), FIN,
                              DAG.getSrcValue(NULL));
     } else {
       // Must be a CopyFromReg
@@ -1064,10 +1067,11 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
     if (Loc.second.Kind != FALocInfo::None) {
       SDOperand ArgValue2;
       if (Loc.second.Kind == FALocInfo::StackFrameLoc) {
-        // Create the SelectionDAG nodes corresponding to a load from this parameter
+        // Create the SelectionDAG nodes corresponding to a load from this
+        // parameter.
         SDOperand FIN = DAG.getFrameIndex(Loc.second.Loc, MVT::i32);
-        ArgValue2 = DAG.getLoad(Op.Val->getValueType(i),DAG.getEntryNode(), FIN,
-                                DAG.getSrcValue(NULL));
+        ArgValue2 = DAG.getLoad(Op.Val->getValueType(i), DAG.getEntryNode(),
+                                FIN, DAG.getSrcValue(NULL));
       } else {
         // Must be a CopyFromReg
         ArgValue2 = DAG.getCopyFromReg(DAG.getEntryNode(),
@@ -1263,7 +1267,8 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
     Ops.push_back(InFlag);
 
   // FIXME: Do not generate X86ISD::TAILCALL for now.
-  Chain = DAG.getNode(isTailCall ? X86ISD::TAILCALL : X86ISD::CALL, NodeTys, Ops);
+  Chain = DAG.getNode(isTailCall ? X86ISD::TAILCALL : X86ISD::CALL,
+                      NodeTys, Ops);
   InFlag = Chain.getValue(1);
 
   NodeTys.clear();
@@ -2812,10 +2817,12 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
       }
     }
 
-    SDOperand LoShuffle = DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2,
-                                      DAG.getNode(ISD::BUILD_VECTOR, MaskVT, LoMask));
-    SDOperand HiShuffle = DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2,
-                                      DAG.getNode(ISD::BUILD_VECTOR, MaskVT, HiMask));
+    SDOperand LoShuffle =
+      DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2,
+                  DAG.getNode(ISD::BUILD_VECTOR, MaskVT, LoMask));
+    SDOperand HiShuffle = 
+      DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2,
+                  DAG.getNode(ISD::BUILD_VECTOR, MaskVT, HiMask));
     std::vector<SDOperand> MaskOps;
     for (unsigned i = 0; i != NumElems; ++i) {
       if (Locs[i].first == -1) {
@@ -2978,12 +2985,14 @@ SDOperand
 X86TargetLowering::LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG) {
   GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   SDOperand Result = DAG.getNode(X86ISD::Wrapper, getPointerTy(),
-                                 DAG.getTargetGlobalAddress(GV, getPointerTy()));
+                                 DAG.getTargetGlobalAddress(GV,
+                                                            getPointerTy()));
   if (Subtarget->isTargetDarwin()) {
     // With PIC, the address is actually $g + Offset.
     if (getTargetMachine().getRelocationModel() == Reloc::PIC)
       Result = DAG.getNode(ISD::ADD, getPointerTy(),
-                           DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()), Result);
+                           DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()),
+                           Result);
 
     // For Darwin, external and weak symbols are indirect, so we want to load
     // the value at address GV, not the value of GV itself. This means that
@@ -3002,12 +3011,14 @@ SDOperand
 X86TargetLowering::LowerExternalSymbol(SDOperand Op, SelectionDAG &DAG) {
   const char *Sym = cast<ExternalSymbolSDNode>(Op)->getSymbol();
   SDOperand Result = DAG.getNode(X86ISD::Wrapper, getPointerTy(),
-                                 DAG.getTargetExternalSymbol(Sym, getPointerTy()));
+                                 DAG.getTargetExternalSymbol(Sym,
+                                                             getPointerTy()));
   if (Subtarget->isTargetDarwin()) {
     // With PIC, the address is actually $g + Offset.
     if (getTargetMachine().getRelocationModel() == Reloc::PIC)
       Result = DAG.getNode(ISD::ADD, getPointerTy(),
-                           DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()), Result);
+                           DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()),
+                           Result);
   }
 
   return Result;
@@ -3391,7 +3402,8 @@ SDOperand X86TargetLowering::LowerJumpTable(SDOperand Op, SelectionDAG &DAG) {
     // With PIC, the address is actually $g + Offset.
     if (getTargetMachine().getRelocationModel() == Reloc::PIC)
       Result = DAG.getNode(ISD::ADD, getPointerTy(),
-                           DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()), Result);    
+                           DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()),
+                           Result);    
   }
 
   return Result;
@@ -3494,7 +3506,7 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
 SDOperand
 X86TargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
   if (FormalArgs.size() == 0) {
-    unsigned CC = cast<ConstantSDNode>(Op.getOperand(0))->getValue();
+    unsigned CC = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
     if (CC == CallingConv::Fast && EnableFastCC)
       LowerFastCCArguments(Op, DAG);
     else

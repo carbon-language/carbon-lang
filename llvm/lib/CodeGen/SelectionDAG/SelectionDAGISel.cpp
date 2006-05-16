@@ -2349,6 +2349,7 @@ std::vector<SDOperand>
 TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   // Add CC# and isVararg as operands to the FORMAL_ARGUMENTS node.
   std::vector<SDOperand> Ops;
+  Ops.push_back(DAG.getRoot());
   Ops.push_back(DAG.getConstant(F.getCallingConv(), getPointerTy()));
   Ops.push_back(DAG.getConstant(F.isVarArg(), getPointerTy()));
 
@@ -2393,11 +2394,12 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     }
   }
 
-  if (RetVals.size() == 0)
-    RetVals.push_back(MVT::isVoid);
+  RetVals.push_back(MVT::Other);
   
   // Create the node.
   SDNode *Result = DAG.getNode(ISD::FORMAL_ARGUMENTS, RetVals, Ops).Val;
+  
+  DAG.setRoot(SDOperand(Result, Result->getNumValues()-1));
 
   // Set up the return result vector.
   Ops.clear();
