@@ -1500,7 +1500,7 @@ static mu magicu64(uint64_t d)
       r2 = 2*r2 + 1; // update r2
     }
     delta = d - 1 - r2;
-  } while (p < 64 && (q1 < delta || (q1 == delta && r1 == 0)));
+  } while (p < 128 && (q1 < delta || (q1 == delta && r1 == 0)));
   magu.m = q2 + 1; // resulting magic number
   magu.s = p - 64;  // resulting shift
   return magu;
