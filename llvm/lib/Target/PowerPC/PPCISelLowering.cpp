@@ -877,6 +877,152 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
   return DAG.getNode(ISD::MERGE_VALUES, RetVT, ArgValues);
 }
 
+static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
+  SDOperand Chain = Op.getOperand(0);
+  unsigned CallingConv= cast<ConstantSDNode>(Op.getOperand(1))->getValue();
+  bool isVarArg       = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
+  bool isTailCall     = cast<ConstantSDNode>(Op.getOperand(3))->getValue() != 0;
+  SDOperand Callee    = Op.getOperand(4);
+  
+  // args_to_use will accumulate outgoing args for the PPCISD::CALL case in
+  // SelectExpr to use to put the arguments in the appropriate registers.
+  std::vector<SDOperand> args_to_use;
+  
+  // Count how many bytes are to be pushed on the stack, including the linkage
+  // area, and parameter passing area.
+  unsigned NumBytes = 24;
+  
+  if (Op.getNumOperands() == 5) {
+    Chain = DAG.getCALLSEQ_START(Chain, DAG.getConstant(NumBytes, MVT::i32));
+  } else {
+    for (unsigned i = 5, e = Op.getNumOperands(); i != e; ++i)
+      NumBytes += MVT::getSizeInBits(Op.getOperand(i).getValueType())/8;
+        
+    // Just to be safe, we'll always reserve the full 24 bytes of linkage area
+    // plus 32 bytes of argument space in case any called code gets funky on us.
+    // (Required by ABI to support var arg)
+    if (NumBytes < 56) NumBytes = 56;
+    
+    // Adjust the stack pointer for the new arguments...
+    // These operations are automatically eliminated by the prolog/epilog pass
+    Chain = DAG.getCALLSEQ_START(Chain,
+                                 DAG.getConstant(NumBytes, MVT::i32));
+    
+    // Set up a copy of the stack pointer for use loading and storing any
+    // arguments that may not fit in the registers available for argument
+    // passing.
+    SDOperand StackPtr = DAG.getRegister(PPC::R1, MVT::i32);
+    
+    // Figure out which arguments are going to go in registers, and which in
+    // memory.  Also, if this is a vararg function, floating point operations
+    // must be stored to our stack, and loaded into integer regs as well, if
+    // any integer regs are available for argument passing.
+    unsigned ArgOffset = 24;
+    unsigned GPR_remaining = 8;
+    unsigned FPR_remaining = 13;
+    
+    std::vector<SDOperand> MemOps;
+    for (unsigned i = 5, e = Op.getNumOperands(); i != e; ++i) {
+      SDOperand Arg = Op.getOperand(i);
+      
+      // PtrOff will be used to store the current argument to the stack if a
+      // register cannot be found for it.
+      SDOperand PtrOff = DAG.getConstant(ArgOffset, StackPtr.getValueType());
+      PtrOff = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
+      switch (Arg.getValueType()) {
+      default: assert(0 && "Unexpected ValueType for argument!");
+      case MVT::i32:
+        if (GPR_remaining > 0) {
+          args_to_use.push_back(Arg);
+          --GPR_remaining;
+        } else {
+          MemOps.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                       Arg, PtrOff, DAG.getSrcValue(NULL)));
+        }
+        ArgOffset += 4;
+        break;
+      case MVT::f32:
+      case MVT::f64:
+        if (FPR_remaining > 0) {
+          args_to_use.push_back(Arg);
+          --FPR_remaining;
+          if (isVarArg) {
+            SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                          Arg, PtrOff,
+                                          DAG.getSrcValue(NULL));
+            MemOps.push_back(Store);
+            // Float varargs are always shadowed in available integer registers
+            if (GPR_remaining > 0) {
+              SDOperand Load = DAG.getLoad(MVT::i32, Store, PtrOff,
+                                           DAG.getSrcValue(NULL));
+              MemOps.push_back(Load.getValue(1));
+              args_to_use.push_back(Load);
+              --GPR_remaining;
+            }
+            if (GPR_remaining > 0 && Arg.getValueType() == MVT::f64) {
+              SDOperand ConstFour = DAG.getConstant(4, PtrOff.getValueType());
+              PtrOff = DAG.getNode(ISD::ADD, MVT::i32, PtrOff, ConstFour);
+              SDOperand Load = DAG.getLoad(MVT::i32, Store, PtrOff,
+                                           DAG.getSrcValue(NULL));
+              MemOps.push_back(Load.getValue(1));
+              args_to_use.push_back(Load);
+              --GPR_remaining;
+            }
+          } else {
+            // If we have any FPRs remaining, we may also have GPRs remaining.
+            // Args passed in FPRs consume either 1 (f32) or 2 (f64) available
+            // GPRs.
+            if (GPR_remaining > 0) {
+              args_to_use.push_back(DAG.getNode(ISD::UNDEF, MVT::i32));
+              --GPR_remaining;
+            }
+            if (GPR_remaining > 0 && Arg.getValueType() == MVT::f64) {
+              args_to_use.push_back(DAG.getNode(ISD::UNDEF, MVT::i32));
+              --GPR_remaining;
+            }
+          }
+        } else {
+          MemOps.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                       Arg, PtrOff, DAG.getSrcValue(NULL)));
+        }
+        ArgOffset += (Arg.getValueType() == MVT::f32) ? 4 : 8;
+        break;
+      }
+    }
+    if (!MemOps.empty())
+      Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, MemOps);
+  }
+  
+  std::vector<MVT::ValueType> RetVals(Op.Val->value_begin(), 
+                                      Op.Val->value_end());
+  
+  // If the callee is a GlobalAddress node (quite common, every direct call is)
+  // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
+  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
+    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), MVT::i32);
+  
+  std::vector<SDOperand> Ops;
+  Ops.push_back(Chain);
+  Ops.push_back(Callee);
+  Ops.insert(Ops.end(), args_to_use.begin(), args_to_use.end());
+  SDOperand TheCall = DAG.getNode(PPCISD::CALL, RetVals, Ops);
+  
+  Chain = TheCall.getValue(TheCall.Val->getNumValues()-1);
+  Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
+                      DAG.getConstant(NumBytes, MVT::i32));
+  
+  std::vector<MVT::ValueType> RetVT(Op.Val->value_begin(),
+                                    Op.Val->value_end());
+  Ops.clear();
+  
+  for (unsigned i = 0, e = TheCall.Val->getNumValues()-1; i != e; ++i)
+    Ops.push_back(SDOperand(TheCall.Val, i));
+  Ops.push_back(Chain);
+  SDOperand Res = DAG.getNode(ISD::MERGE_VALUES, RetVT, Ops);
+  
+  return Res.getValue(Op.ResNo);
+}
+
 static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
   SDOperand Copy;
   switch(Op.getNumOperands()) {
@@ -1842,6 +1988,7 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::VASTART:            return LowerVASTART(Op, DAG, VarArgsFrameIndex);
   case ISD::FORMAL_ARGUMENTS:   return LowerFORMAL_ARGUMENTS(Op, DAG,
                                                              VarArgsFrameIndex);
+  case ISD::CALL:               return LowerCALL(Op, DAG);
   case ISD::RET:                return LowerRET(Op, DAG);
     
   case ISD::SELECT_CC:          return LowerSELECT_CC(Op, DAG);
@@ -1866,217 +2013,6 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
 //===----------------------------------------------------------------------===//
 //  Other Lowering Code
 //===----------------------------------------------------------------------===//
-
-std::pair<SDOperand, SDOperand>
-PPCTargetLowering::LowerCallTo(SDOperand Chain,
-                               const Type *RetTy, bool isVarArg,
-                               unsigned CallingConv, bool isTailCall,
-                               SDOperand Callee, ArgListTy &Args,
-                               SelectionDAG &DAG) {
-  // args_to_use will accumulate outgoing args for the PPCISD::CALL case in
-  // SelectExpr to use to put the arguments in the appropriate registers.
-  std::vector<SDOperand> args_to_use;
-  
-  // Count how many bytes are to be pushed on the stack, including the linkage
-  // area, and parameter passing area.
-  unsigned NumBytes = 24;
-  
-  if (Args.empty()) {
-    Chain = DAG.getCALLSEQ_START(Chain,
-                                 DAG.getConstant(NumBytes, getPointerTy()));
-  } else {
-    for (unsigned i = 0, e = Args.size(); i != e; ++i) {
-      switch (getValueType(Args[i].second)) {
-      default: assert(0 && "Unknown value type!");
-      case MVT::i1:
-      case MVT::i8:
-      case MVT::i16:
-      case MVT::i32:
-      case MVT::f32:
-        NumBytes += 4;
-        break;
-      case MVT::i64:
-      case MVT::f64:
-        NumBytes += 8;
-        break;
-      }
-    }
-        
-    // Just to be safe, we'll always reserve the full 24 bytes of linkage area
-    // plus 32 bytes of argument space in case any called code gets funky on us.
-    // (Required by ABI to support var arg)
-    if (NumBytes < 56) NumBytes = 56;
-    
-    // Adjust the stack pointer for the new arguments...
-    // These operations are automatically eliminated by the prolog/epilog pass
-    Chain = DAG.getCALLSEQ_START(Chain,
-                                 DAG.getConstant(NumBytes, getPointerTy()));
-    
-    // Set up a copy of the stack pointer for use loading and storing any
-    // arguments that may not fit in the registers available for argument
-    // passing.
-    SDOperand StackPtr = DAG.getRegister(PPC::R1, MVT::i32);
-    
-    // Figure out which arguments are going to go in registers, and which in
-    // memory.  Also, if this is a vararg function, floating point operations
-    // must be stored to our stack, and loaded into integer regs as well, if
-    // any integer regs are available for argument passing.
-    unsigned ArgOffset = 24;
-    unsigned GPR_remaining = 8;
-    unsigned FPR_remaining = 13;
-    
-    std::vector<SDOperand> MemOps;
-    for (unsigned i = 0, e = Args.size(); i != e; ++i) {
-      // PtrOff will be used to store the current argument to the stack if a
-      // register cannot be found for it.
-      SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
-      PtrOff = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
-      MVT::ValueType ArgVT = getValueType(Args[i].second);
-      
-      switch (ArgVT) {
-      default: assert(0 && "Unexpected ValueType for argument!");
-      case MVT::i1:
-      case MVT::i8:
-      case MVT::i16:
-        // Promote the integer to 32 bits.  If the input type is signed use a
-        // sign extend, otherwise use a zero extend.
-        if (Args[i].second->isSigned())
-          Args[i].first =DAG.getNode(ISD::SIGN_EXTEND, MVT::i32, Args[i].first);
-        else
-          Args[i].first =DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, Args[i].first);
-        // FALL THROUGH
-      case MVT::i32:
-        if (GPR_remaining > 0) {
-          args_to_use.push_back(Args[i].first);
-          --GPR_remaining;
-        } else {
-          MemOps.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                       Args[i].first, PtrOff,
-                                       DAG.getSrcValue(NULL)));
-        }
-        ArgOffset += 4;
-        break;
-      case MVT::i64:
-        // If we have one free GPR left, we can place the upper half of the i64
-        // in it, and store the other half to the stack.  If we have two or more
-        // free GPRs, then we can pass both halves of the i64 in registers.
-        if (GPR_remaining > 0) {
-          SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32,
-                                   Args[i].first, DAG.getConstant(1, MVT::i32));
-          SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32,
-                                   Args[i].first, DAG.getConstant(0, MVT::i32));
-          args_to_use.push_back(Hi);
-          --GPR_remaining;
-          if (GPR_remaining > 0) {
-            args_to_use.push_back(Lo);
-            --GPR_remaining;
-          } else {
-            SDOperand ConstFour = DAG.getConstant(4, getPointerTy());
-            PtrOff = DAG.getNode(ISD::ADD, MVT::i32, PtrOff, ConstFour);
-            MemOps.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                         Lo, PtrOff, DAG.getSrcValue(NULL)));
-          }
-        } else {
-          MemOps.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                       Args[i].first, PtrOff,
-                                       DAG.getSrcValue(NULL)));
-        }
-        ArgOffset += 8;
-        break;
-      case MVT::f32:
-      case MVT::f64:
-        if (FPR_remaining > 0) {
-          args_to_use.push_back(Args[i].first);
-          --FPR_remaining;
-          if (isVarArg) {
-            SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                          Args[i].first, PtrOff,
-                                          DAG.getSrcValue(NULL));
-            MemOps.push_back(Store);
-            // Float varargs are always shadowed in available integer registers
-            if (GPR_remaining > 0) {
-              SDOperand Load = DAG.getLoad(MVT::i32, Store, PtrOff,
-                                           DAG.getSrcValue(NULL));
-              MemOps.push_back(Load.getValue(1));
-              args_to_use.push_back(Load);
-              --GPR_remaining;
-            }
-            if (GPR_remaining > 0 && MVT::f64 == ArgVT) {
-              SDOperand ConstFour = DAG.getConstant(4, getPointerTy());
-              PtrOff = DAG.getNode(ISD::ADD, MVT::i32, PtrOff, ConstFour);
-              SDOperand Load = DAG.getLoad(MVT::i32, Store, PtrOff,
-                                           DAG.getSrcValue(NULL));
-              MemOps.push_back(Load.getValue(1));
-              args_to_use.push_back(Load);
-              --GPR_remaining;
-            }
-          } else {
-            // If we have any FPRs remaining, we may also have GPRs remaining.
-            // Args passed in FPRs consume either 1 (f32) or 2 (f64) available
-            // GPRs.
-            if (GPR_remaining > 0) {
-              args_to_use.push_back(DAG.getNode(ISD::UNDEF, MVT::i32));
-              --GPR_remaining;
-            }
-            if (GPR_remaining > 0 && MVT::f64 == ArgVT) {
-              args_to_use.push_back(DAG.getNode(ISD::UNDEF, MVT::i32));
-              --GPR_remaining;
-            }
-          }
-        } else {
-          MemOps.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                       Args[i].first, PtrOff,
-                                       DAG.getSrcValue(NULL)));
-        }
-        ArgOffset += (ArgVT == MVT::f32) ? 4 : 8;
-        break;
-      }
-    }
-    if (!MemOps.empty())
-      Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, MemOps);
-  }
-  
-  std::vector<MVT::ValueType> RetVals;
-  MVT::ValueType RetTyVT = getValueType(RetTy);
-  MVT::ValueType ActualRetTyVT = RetTyVT;
-  if (RetTyVT >= MVT::i1 && RetTyVT <= MVT::i16)
-    ActualRetTyVT = MVT::i32;   // Promote result to i32.
-    
-  if (RetTyVT == MVT::i64) {
-    RetVals.push_back(MVT::i32);
-    RetVals.push_back(MVT::i32);
-  } else if (RetTyVT != MVT::isVoid) {
-    RetVals.push_back(ActualRetTyVT);
-  }
-  RetVals.push_back(MVT::Other);
-  
-  // If the callee is a GlobalAddress node (quite common, every direct call is)
-  // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
-  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
-    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), MVT::i32);
-  
-  std::vector<SDOperand> Ops;
-  Ops.push_back(Chain);
-  Ops.push_back(Callee);
-  Ops.insert(Ops.end(), args_to_use.begin(), args_to_use.end());
-  SDOperand TheCall = DAG.getNode(PPCISD::CALL, RetVals, Ops);
-  Chain = TheCall.getValue(TheCall.Val->getNumValues()-1);
-  Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
-                      DAG.getConstant(NumBytes, getPointerTy()));
-  SDOperand RetVal = TheCall;
-  
-  // If the result is a small value, add a note so that we keep track of the
-  // information about whether it is sign or zero extended.
-  if (RetTyVT != ActualRetTyVT) {
-    RetVal = DAG.getNode(RetTy->isSigned() ? ISD::AssertSext : ISD::AssertZext,
-                         MVT::i32, RetVal, DAG.getValueType(RetTyVT));
-    RetVal = DAG.getNode(ISD::TRUNCATE, RetTyVT, RetVal);
-  } else if (RetTyVT == MVT::i64) {
-    RetVal = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, RetVal, RetVal.getValue(1));
-  }
-  
-  return std::make_pair(RetVal, Chain);
-}
 
 MachineBasicBlock *
 PPCTargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,

@@ -166,14 +166,6 @@ namespace llvm {
                                                 uint64_t &KnownZero, 
                                                 uint64_t &KnownOne,
                                                 unsigned Depth = 0) const;
-    
-    /// LowerCallTo - This hook lowers an abstract call to a function into an
-    /// actual call.
-    virtual std::pair<SDOperand, SDOperand>
-      LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
-                  unsigned CC,
-                  bool isTailCall, SDOperand Callee, ArgListTy &Args,
-                  SelectionDAG &DAG);
 
     virtual MachineBasicBlock *InsertAtEndOfBasicBlock(MachineInstr *MI,
                                                        MachineBasicBlock *MBB);
