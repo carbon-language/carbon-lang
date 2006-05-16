@@ -3519,7 +3519,11 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
     else
       LowerCCCArguments(Op, DAG);
   }
-  return FormalArgs[Op.ResNo];
+  
+  // Return the new list of results.
+  std::vector<MVT::ValueType> RetVTs(Op.Val->value_begin(),
+                                     Op.Val->value_end());
+  return DAG.getNode(ISD::MERGE_VALUES, RetVTs, FormalArgs);
 }
 
 SDOperand X86TargetLowering::LowerMEMSET(SDOperand Op, SelectionDAG &DAG) {
