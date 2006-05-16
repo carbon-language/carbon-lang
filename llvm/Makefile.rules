@@ -396,9 +396,9 @@ BCCompile.CXX = $(LLVMGXXWITHPATH) $(CPP.Flags) $(CompileCommonOpts) \
                 $(CXX.Flags)
 Preprocess.CXX= $(CXX) $(CPP.Flags) $(CompileCommonOpts) $(CXX.Flags) -E
 Link          = $(LIBTOOL) $(LibTool.Flags) --mode=link $(CXX) $(CPP.Flags) \
-	        $(CompileCommonOpts) $(LD.Flags) $(Strip)
+	        $(CXX.Flags) $(CompileCommonOpts) $(LD.Flags) $(Strip)
 Relink        = $(LIBTOOL) $(LibTool.Flags) --mode=link $(CXX) $(CPP.Flags) \
-                $(CompileCommonOpts) $(Relink.Flags)
+                $(CXX.Flags) $(CompileCommonOpts) $(Relink.Flags)
 LTInstall     = $(LIBTOOL) $(LibTool.Flags) --mode=install $(INSTALL) \
 		$(Install.Flags)
 ProgInstall   = $(INSTALL) $(Install.StripFlag) -m 0755 
