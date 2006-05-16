@@ -2841,6 +2841,7 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::INLINEASM:     return "inlineasm";
   case ISD::HANDLENODE:    return "handlenode";
   case ISD::FORMAL_ARGUMENTS: return "formal_arguments";
+  case ISD::CALL:          return "call";
     
   // Unary operators
   case ISD::FABS:   return "fabs";

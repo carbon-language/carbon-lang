@@ -2344,7 +2344,8 @@ void SelectionDAGLowering::visitVACopy(CallInst &I) {
 
 /// TargetLowering::LowerArguments - This is the default LowerArguments
 /// implementation, which just inserts a FORMAL_ARGUMENTS node.  FIXME: When all
-/// targets are migrated to using FORMAL_ARGUMENTS, this hook should be removed.
+/// targets are migrated to using FORMAL_ARGUMENTS, this hook should be 
+/// integrated into SDISel.
 std::vector<SDOperand> 
 TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   // Add CC# and isVararg as operands to the FORMAL_ARGUMENTS node.
@@ -2477,8 +2478,145 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   return Ops;
 }
 
+
+/// TargetLowering::LowerCallTo - This is the default LowerCallTo
+/// implementation, which just inserts an ISD::CALL node, which is later custom
+/// lowered by the target to something concrete.  FIXME: When all targets are
+/// migrated to using ISD::CALL, this hook should be integrated into SDISel.
+std::pair<SDOperand, SDOperand>
+TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
+                            unsigned CallingConv, bool isTailCall, 
+                            SDOperand Callee,
+                            ArgListTy &Args, SelectionDAG &DAG) {
+  std::vector<SDOperand> Ops;
+  Ops.push_back(Chain);   // Op#0 - Chain
+  Ops.push_back(DAG.getConstant(CallingConv, getPointerTy())); // Op#1 - CC
+  Ops.push_back(DAG.getConstant(isVarArg, getPointerTy()));    // Op#2 - VarArg
+  Ops.push_back(DAG.getConstant(isTailCall, getPointerTy()));  // Op#3 - Tail
+  Ops.push_back(Callee);
+  
+  // Handle all of the outgoing arguments.
+  for (unsigned i = 0, e = Args.size(); i != e; ++i) {
+    MVT::ValueType VT = getValueType(Args[i].second);
+    SDOperand Op = Args[i].first;
+    switch (getTypeAction(VT)) {
+    default: assert(0 && "Unknown type action!");
+    case Legal: 
+      Ops.push_back(Op);
+      break;
+    case Promote:
+      if (MVT::isInteger(VT)) {
+        unsigned ExtOp = Args[i].second->isSigned() ? 
+                                  ISD::SIGN_EXTEND : ISD::ZERO_EXTEND; 
+        Op = DAG.getNode(ExtOp, getTypeToTransformTo(VT), Op);
+      } else {
+        assert(MVT::isFloatingPoint(VT) && "Not int or FP?");
+        Op = DAG.getNode(ISD::FP_EXTEND, getTypeToTransformTo(VT), Op);
+      }
+      Ops.push_back(Op);
+      break;
+    case Expand:
+      if (VT != MVT::Vector) {
+        // If this is a large integer, it needs to be broken down into small
+        // integers.  Figure out what the source elt type is and how many small
+        // integers it is.
+        MVT::ValueType NVT = getTypeToTransformTo(VT);
+        unsigned NumVals = MVT::getSizeInBits(VT)/MVT::getSizeInBits(NVT);
+        if (NumVals == 2) {
+          SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, NVT, Op,
+                                     DAG.getConstant(0, getPointerTy()));
+          SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, NVT, Op,
+                                     DAG.getConstant(1, getPointerTy()));
+          if (!isLittleEndian())
+            std::swap(Lo, Hi);
+          
+          Ops.push_back(Lo);
+          Ops.push_back(Hi);
+        } else {
+          // Value scalarized into many values.  Unimp for now.
+          assert(0 && "Cannot expand i64 -> i16 yet!");
+        }
+      } else {
+        assert(0 && "Doesn't handle vectors yet!");
+      }
+      break;
+    }
+  }
+  
+  // Figure out the result value types.
+  std::vector<MVT::ValueType> RetTys;
+
+  if (RetTy != Type::VoidTy) {
+    MVT::ValueType VT = getValueType(RetTy);
+    switch (getTypeAction(VT)) {
+    default: assert(0 && "Unknown type action!");
+    case Legal:
+      RetTys.push_back(VT);
+      break;
+    case Promote:
+      RetTys.push_back(getTypeToTransformTo(VT));
+      break;
+    case Expand:
+      if (VT != MVT::Vector) {
+        // If this is a large integer, it needs to be reassembled from small
+        // integers.  Figure out what the source elt type is and how many small
+        // integers it is.
+        MVT::ValueType NVT = getTypeToTransformTo(VT);
+        unsigned NumVals = MVT::getSizeInBits(VT)/MVT::getSizeInBits(NVT);
+        for (unsigned i = 0; i != NumVals; ++i)
+          RetTys.push_back(NVT);
+      } else {
+        assert(0 && "Doesn't handle vectors yet!");
+      }
+    }    
+  }
+  
+  RetTys.push_back(MVT::Other);  // Always has a chain.
+  
+  // Finally, create the CALL node.
+  SDOperand Res = DAG.getNode(ISD::CALL, RetTys, Ops);
+  
+  // This returns a pair of operands.  The first element is the
+  // return value for the function (if RetTy is not VoidTy).  The second
+  // element is the outgoing token chain.
+  SDOperand ResVal;
+  if (RetTys.size() != 1) {
+    MVT::ValueType VT = getValueType(RetTy);
+    if (RetTys.size() == 2) {
+      ResVal = Res;
+      
+      // If this value was promoted, truncate it down.
+      if (ResVal.getValueType() != VT) {
+        if (MVT::isInteger(VT)) {
+          unsigned AssertOp = RetTy->isSigned() ?
+                                  ISD::AssertSext : ISD::AssertZext;
+          ResVal = DAG.getNode(AssertOp, ResVal.getValueType(), ResVal, 
+                               DAG.getValueType(VT));
+          ResVal = DAG.getNode(ISD::TRUNCATE, VT, ResVal);
+        } else {
+          assert(MVT::isFloatingPoint(VT));
+          ResVal = DAG.getNode(ISD::FP_ROUND, VT, ResVal);
+        }
+      }
+    } else if (RetTys.size() == 3) {
+      ResVal = DAG.getNode(ISD::BUILD_PAIR, VT, 
+                           Res.getValue(0), Res.getValue(1));
+      
+    } else {
+      assert(0 && "Case not handled yet!");
+    }
+  }
+  
+  return std::make_pair(ResVal, Res.getValue(Res.Val->getNumValues()-1));
+}
+
+
+
 // It is always conservatively correct for llvm.returnaddress and
 // llvm.frameaddress to return 0.
+//
+// FIXME: Change this to insert a FRAMEADDR/RETURNADDR node, and have that be
+// expanded to 0 if the target wants.
 std::pair<SDOperand, SDOperand>
 TargetLowering::LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain,
                                         unsigned Depth, SelectionDAG &DAG) {
