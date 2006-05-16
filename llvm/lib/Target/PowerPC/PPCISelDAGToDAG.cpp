@@ -137,8 +137,8 @@ namespace {
       return "PowerPC DAG->DAG Pattern Instruction Selection";
     } 
     
-    /// CreateTargetHazardRecognizer - Return the hazard recognizer to use for this
-    /// target when scheduling the DAG.
+    /// CreateTargetHazardRecognizer - Return the hazard recognizer to use for
+    /// this target when scheduling the DAG.
     virtual HazardRecognizer *CreateTargetHazardRecognizer() {
       // Should use subtarget info to pick the right hazard recognizer.  For
       // now, always return a PPC970 recognizer.
@@ -813,8 +813,8 @@ SDOperand PPCDAGToDAGISel::SelectSETCC(SDOperand Op) {
         Op = SDOperand(CurDAG->getTargetNode(PPC::NOR, MVT::i32, Op, Op), 0);
         SDNode *AD = CurDAG->getTargetNode(PPC::ADDIC, MVT::i32, MVT::Flag,
                                            Op, getI32Imm(~0U));
-        return CurDAG->SelectNodeTo(N, PPC::SUBFE, MVT::i32, SDOperand(AD, 0), Op, 
-                                    SDOperand(AD, 1));
+        return CurDAG->SelectNodeTo(N, PPC::SUBFE, MVT::i32, SDOperand(AD, 0),
+                                    Op, SDOperand(AD, 1));
       }
       case ISD::SETLT: {
         SDOperand AD = SDOperand(CurDAG->getTargetNode(PPC::ADDI, MVT::i32, Op,
@@ -908,7 +908,7 @@ SDOperand PPCDAGToDAGISel::SelectCALL(SDOperand Op) {
     CallOpcode = PPC::BCTRL;
   }
   
-  unsigned GPR_idx = 0, FPR_idx = 0;
+  unsigned GPR_idx = 0, FPR_idx = 0, VR_idx = 0;
   static const unsigned GPR[] = {
     PPC::R3, PPC::R4, PPC::R5, PPC::R6,
     PPC::R7, PPC::R8, PPC::R9, PPC::R10,
@@ -916,6 +916,10 @@ SDOperand PPCDAGToDAGISel::SelectCALL(SDOperand Op) {
   static const unsigned FPR[] = {
     PPC::F1, PPC::F2, PPC::F3, PPC::F4, PPC::F5, PPC::F6, PPC::F7,
     PPC::F8, PPC::F9, PPC::F10, PPC::F11, PPC::F12, PPC::F13
+  };
+  static const unsigned VR[] = {
+    PPC::V2, PPC::V3, PPC::V4, PPC::V5, PPC::V6, PPC::V7, PPC::V8,
+    PPC::V9, PPC::V10, PPC::V11, PPC::V12, PPC::V13
   };
   
   SDOperand InFlag;  // Null incoming flag value.
@@ -926,11 +930,13 @@ SDOperand PPCDAGToDAGISel::SelectCALL(SDOperand Op) {
     if (RegTy == MVT::i32) {
       assert(GPR_idx < 8 && "Too many int args");
       DestReg = GPR[GPR_idx++];
-    } else {
-      assert(MVT::isFloatingPoint(N->getOperand(i).getValueType()) &&
-             "Unpromoted integer arg?");
+    } else if (MVT::isFloatingPoint(N->getOperand(i).getValueType())) {
       assert(FPR_idx < 13 && "Too many fp args");
       DestReg = FPR[FPR_idx++];
+    } else {
+      assert(MVT::isVector(N->getOperand(i).getValueType()) && "unknown arg!");
+      assert(VR_idx < 12 && "Too many vector args");
+      DestReg = VR[VR_idx++];
     }
     
     if (N->getOperand(i).getOpcode() != ISD::UNDEF) {
@@ -955,28 +961,36 @@ SDOperand PPCDAGToDAGISel::SelectCALL(SDOperand Op) {
   
   // If the call has results, copy the values out of the ret val registers.
   switch (N->getValueType(0)) {
-    default: assert(0 && "Unexpected ret value!");
-    case MVT::Other: break;
-    case MVT::i32:
-      if (N->getValueType(1) == MVT::i32) {
-        Chain = CurDAG->getCopyFromReg(Chain, PPC::R4, MVT::i32, 
-                                       Chain.getValue(1)).getValue(1);
-        CallResults.push_back(Chain.getValue(0));
-        Chain = CurDAG->getCopyFromReg(Chain, PPC::R3, MVT::i32,
-                                       Chain.getValue(2)).getValue(1);
-        CallResults.push_back(Chain.getValue(0));
-      } else {
-        Chain = CurDAG->getCopyFromReg(Chain, PPC::R3, MVT::i32,
-                                       Chain.getValue(1)).getValue(1);
-        CallResults.push_back(Chain.getValue(0));
-      }
-      break;
-    case MVT::f32:
-    case MVT::f64:
-      Chain = CurDAG->getCopyFromReg(Chain, PPC::F1, N->getValueType(0),
+  default: assert(0 && "Unexpected ret value!");
+  case MVT::Other: break;
+  case MVT::i32:
+    if (N->getValueType(1) == MVT::i32) {
+      Chain = CurDAG->getCopyFromReg(Chain, PPC::R4, MVT::i32, 
                                      Chain.getValue(1)).getValue(1);
       CallResults.push_back(Chain.getValue(0));
-      break;
+      Chain = CurDAG->getCopyFromReg(Chain, PPC::R3, MVT::i32,
+                                     Chain.getValue(2)).getValue(1);
+      CallResults.push_back(Chain.getValue(0));
+    } else {
+      Chain = CurDAG->getCopyFromReg(Chain, PPC::R3, MVT::i32,
+                                     Chain.getValue(1)).getValue(1);
+      CallResults.push_back(Chain.getValue(0));
+    }
+    break;
+  case MVT::f32:
+  case MVT::f64:
+    Chain = CurDAG->getCopyFromReg(Chain, PPC::F1, N->getValueType(0),
+                                   Chain.getValue(1)).getValue(1);
+    CallResults.push_back(Chain.getValue(0));
+    break;
+  case MVT::v4f32:
+  case MVT::v4i32:
+  case MVT::v8i16:
+  case MVT::v16i8:
+    Chain = CurDAG->getCopyFromReg(Chain, PPC::V2, N->getValueType(0),
+                                   Chain.getValue(1)).getValue(1);
+    CallResults.push_back(Chain.getValue(0));
+    break;
   }
   
   CallResults.push_back(Chain);

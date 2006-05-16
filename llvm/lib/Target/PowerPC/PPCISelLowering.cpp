@@ -920,7 +920,8 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     unsigned ArgOffset = 24;
     unsigned GPR_remaining = 8;
     unsigned FPR_remaining = 13;
-    
+    unsigned VR_remaining  = 12;
+
     std::vector<SDOperand> MemOps;
     for (unsigned i = 5, e = Op.getNumOperands(); i != e; ++i) {
       SDOperand Arg = Op.getOperand(i);
@@ -986,6 +987,16 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
                                        Arg, PtrOff, DAG.getSrcValue(NULL)));
         }
         ArgOffset += (Arg.getValueType() == MVT::f32) ? 4 : 8;
+        break;
+      case MVT::v4f32:
+      case MVT::v4i32:
+      case MVT::v8i16:
+      case MVT::v16i8:
+        assert(!isVarArg && "Don't support passing vectors to varargs yet!");
+        assert(VR_remaining &&
+               "Don't support passing more than 12 vector args yet!");
+        args_to_use.push_back(Arg);
+        --VR_remaining;
         break;
       }
     }
