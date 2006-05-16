@@ -123,6 +123,13 @@ namespace ISD {
     /// It must be custom legalized.
     /// 
     FORMAL_ARGUMENTS,
+    
+    /// RV1, RV2...RVn, CHAIN = CALL(CHAIN, CC#, ISVARARG, ISTAILCALL, CALLEE,
+    ///                              ARG0, ARG1, ... ARGn)
+    /// This node represents a fully general function call, before the legalizer
+    /// runs.  This has one result value for each argument, plus a chain result.
+    /// It must be custom legalized.
+    CALL,
 
     // EXTRACT_ELEMENT - This is used to get the first or second (determined by
     // a Constant, which is required to be operand #1), element of the aggregate
