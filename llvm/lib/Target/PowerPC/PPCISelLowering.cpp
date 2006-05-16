@@ -761,7 +761,6 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
   for (unsigned ArgNo = 0, e = Op.Val->getNumValues()-1; ArgNo != e; ++ArgNo) {
     SDOperand ArgVal;
     bool needsLoad = false;
-    bool ArgLive = !Op.Val->hasNUsesOfValue(0, ArgNo);
     MVT::ValueType ObjectVT = Op.getValue(ArgNo).getValueType();
     unsigned ObjSize = MVT::getSizeInBits(ObjectVT)/8;
 
@@ -773,13 +772,6 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
       // All int arguments reserve stack space.
       ArgOffset += 4;
 
-      if (!ArgLive) {
-        if (GPR_remaining > 0) {
-          --GPR_remaining;
-          ++GPR_idx;
-        }
-        break;
-      }
       if (GPR_remaining > 0) {
         unsigned VReg = RegMap->createVirtualRegister(&PPC::GPRCRegClass);
         MF.addLiveIn(GPR[GPR_idx], VReg);
@@ -802,13 +794,6 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
         GPR_remaining -= delta;
         GPR_idx += delta;
       }
-      if (!ArgLive) {
-        if (FPR_remaining > 0) {
-          --FPR_remaining;
-          ++FPR_idx;
-        }        
-        break;
-      }
       if (FPR_remaining > 0) {
         unsigned VReg;
         if (ObjectVT == MVT::f32)
@@ -828,13 +813,6 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
     case MVT::v8i16:
     case MVT::v16i8:
       // Note that vector arguments in registers don't reserve stack space.
-      if (!ArgLive) {
-        if (VR_remaining > 0) {
-          --VR_remaining;
-          ++VR_idx;
-        }
-        break;
-      }
       if (VR_remaining > 0) {
         unsigned VReg = RegMap->createVirtualRegister(&PPC::VRRCRegClass);
         MF.addLiveIn(VR[VR_idx], VReg);
@@ -853,14 +831,19 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
     // We need to load the argument to a virtual register if we determined above
     // that we ran out of physical registers of the appropriate type
     if (needsLoad) {
-      int FI = MFI->CreateFixedObject(ObjSize, CurArgOffset);
-      SDOperand FIN = DAG.getFrameIndex(FI, MVT::i32);
-      ArgVal = DAG.getLoad(ObjectVT, Root, FIN,
-                           DAG.getSrcValue(NULL));
+      // If the argument is actually used, emit a load from the right stack
+      // slot.
+      if (!Op.Val->hasNUsesOfValue(0, ArgNo)) {
+        int FI = MFI->CreateFixedObject(ObjSize, CurArgOffset);
+        SDOperand FIN = DAG.getFrameIndex(FI, MVT::i32);
+        ArgVal = DAG.getLoad(ObjectVT, Root, FIN,
+                             DAG.getSrcValue(NULL));
+      } else {
+        // Don't emit a dead load.
+        ArgVal = DAG.getNode(ISD::UNDEF, ObjectVT);
+      }
     }
     
-    if (ArgVal.Val == 0)
-      ArgVal = DAG.getNode(ISD::UNDEF, ObjectVT);
     ArgValues.push_back(ArgVal);
   }
   
