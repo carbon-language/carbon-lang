@@ -360,14 +360,14 @@ void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   // See if a truncate instruction can be turned into a nop.
   switch (MI->getOpcode()) {
   default: break;
-  case X86::TRUNC_R32_R16:
-  case X86::TRUNC_R32_R8:
-  case X86::TRUNC_R16_R8: {
+  case X86::TRUNC_GR32_GR16:
+  case X86::TRUNC_GR32_GR8:
+  case X86::TRUNC_GR16_GR8: {
     const MachineOperand &MO0 = MI->getOperand(0);
     const MachineOperand &MO1 = MI->getOperand(1);
     unsigned Reg0 = MO0.getReg();
     unsigned Reg1 = MO1.getReg();
-    if (MI->getOpcode() == X86::TRUNC_R32_R16)
+    if (MI->getOpcode() == X86::TRUNC_GR32_GR16)
       Reg1 = getX86SubSuperRegister(Reg1, MVT::i16);
     else
       Reg1 = getX86SubSuperRegister(Reg1, MVT::i8);

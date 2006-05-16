@@ -393,9 +393,9 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
       assert(0 && "psuedo instructions should be removed before code emission");
     case X86::IMPLICIT_USE:
     case X86::IMPLICIT_DEF:
-    case X86::IMPLICIT_DEF_R8:
-    case X86::IMPLICIT_DEF_R16:
-    case X86::IMPLICIT_DEF_R32:
+    case X86::IMPLICIT_DEF_GR8:
+    case X86::IMPLICIT_DEF_GR16:
+    case X86::IMPLICIT_DEF_GR32:
     case X86::IMPLICIT_DEF_FR32:
     case X86::IMPLICIT_DEF_FR64:
     case X86::IMPLICIT_DEF_VR64:

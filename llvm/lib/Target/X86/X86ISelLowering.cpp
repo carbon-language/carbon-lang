@@ -67,9 +67,9 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   addLegalAddressScale(3);
   
   // Set up the register classes.
-  addRegisterClass(MVT::i8, X86::R8RegisterClass);
-  addRegisterClass(MVT::i16, X86::R16RegisterClass);
-  addRegisterClass(MVT::i32, X86::R32RegisterClass);
+  addRegisterClass(MVT::i8, X86::GR8RegisterClass);
+  addRegisterClass(MVT::i16, X86::GR16RegisterClass);
+  addRegisterClass(MVT::i32, X86::GR32RegisterClass);
 
   // Promote all UINT_TO_FP to larger SINT_TO_FP's, as X86 doesn't have this
   // operation.
@@ -940,33 +940,33 @@ X86TargetLowering::PreprocessFastCCArguments(std::vector<SDOperand>Args,
         case MVT::i1:
         case MVT::i8:
           Reg = AddLiveIn(MF, NumIntRegs ? X86::DL : X86::AL,
-                          X86::R8RegisterClass);
+                          X86::GR8RegisterClass);
           Loc.first.Kind = FALocInfo::LiveInRegLoc;
           Loc.first.Loc = Reg;
           Loc.first.Typ = MVT::i8;
           break;
         case MVT::i16:
           Reg = AddLiveIn(MF, NumIntRegs ? X86::DX : X86::AX,
-                          X86::R16RegisterClass);
+                          X86::GR16RegisterClass);
           Loc.first.Kind = FALocInfo::LiveInRegLoc;
           Loc.first.Loc = Reg;
           Loc.first.Typ = MVT::i16;
           break;
         case MVT::i32:
           Reg = AddLiveIn(MF, NumIntRegs ? X86::EDX : X86::EAX,
-                          X86::R32RegisterClass);
+                          X86::GR32RegisterClass);
           Loc.first.Kind = FALocInfo::LiveInRegLoc;
           Loc.first.Loc = Reg;
           Loc.first.Typ = MVT::i32;
           break;
         case MVT::i64:
           Reg = AddLiveIn(MF, NumIntRegs ? X86::EDX : X86::EAX,
-                          X86::R32RegisterClass);
+                          X86::GR32RegisterClass);
           Loc.first.Kind = FALocInfo::LiveInRegLoc;
           Loc.first.Loc = Reg;
           Loc.first.Typ = MVT::i32;
           if (ObjIntRegs == 2) {
-            Reg = AddLiveIn(MF, X86::EDX, X86::R32RegisterClass);
+            Reg = AddLiveIn(MF, X86::EDX, X86::GR32RegisterClass);
             Loc.second.Kind = FALocInfo::LiveInRegLoc;
             Loc.second.Loc = Reg;
             Loc.second.Typ = MVT::i32;
@@ -1563,7 +1563,7 @@ X86TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
 
     // Load the old value of the high byte of the control word...
     unsigned OldCW =
-      F->getSSARegMap()->createVirtualRegister(X86::R16RegisterClass);
+      F->getSSARegMap()->createVirtualRegister(X86::GR16RegisterClass);
     addFrameReference(BuildMI(BB, X86::MOV16rm, 4, OldCW), CWFrameIdx);
 
     // Set the high part to be round to zero...
@@ -2558,7 +2558,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
       }
     }
 
-    // Take advantage of the fact R32 to VR128 scalar_to_vector (i.e. movd)
+    // Take advantage of the fact GR32 to VR128 scalar_to_vector (i.e. movd)
     // clears the upper bits. 
     // FIXME: we can do the same for v4f32 case when we know both parts of
     // the lower half come from scalar_to_vector (loadf32). We should do
@@ -2899,7 +2899,7 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
 
 SDOperand
 X86TargetLowering::LowerINSERT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
-  // Transform it so it match pinsrw which expects a 16-bit value in a R32
+  // Transform it so it match pinsrw which expects a 16-bit value in a GR32
   // as its second argument.
   MVT::ValueType VT = Op.getValueType();
   MVT::ValueType BaseVT = MVT::getVectorBaseType(VT);
@@ -2930,7 +2930,7 @@ X86TargetLowering::LowerINSERT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
       Idx <<= 1;
       if (MVT::isFloatingPoint(N1.getValueType())) {
         if (N1.getOpcode() == ISD::LOAD) {
-          // Just load directly from f32mem to R32.
+          // Just load directly from f32mem to GR32.
           N1 = DAG.getLoad(MVT::i32, N1.getOperand(0), N1.getOperand(1),
                            N1.getOperand(2));
         } else {

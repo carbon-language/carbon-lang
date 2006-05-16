@@ -509,7 +509,7 @@ SDOperand X86DAGToDAGISel::getGlobalBaseReg() {
     SSARegMap *RegMap = BB->getParent()->getSSARegMap();
     // FIXME: when we get to LP64, we will need to create the appropriate
     // type of register here.
-    GlobalBaseReg = RegMap->createVirtualRegister(X86::R32RegisterClass);
+    GlobalBaseReg = RegMap->createVirtualRegister(X86::GR32RegisterClass);
     BuildMI(FirstMBB, MBBI, X86::MovePCtoStack, 0);
     BuildMI(FirstMBB, MBBI, X86::POP32r, 1, GlobalBaseReg);
   }
@@ -801,12 +801,12 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
         case MVT::i16:
           Opc = X86::MOV16to16_;
           VT = MVT::i16;
-          Opc2 = X86::TRUNC_R16_R8;
+          Opc2 = X86::TRUNC_GR16_GR8;
           break;
         case MVT::i32:
           Opc = X86::MOV32to32_;
           VT = MVT::i32;
-          Opc2 = X86::TRUNC_R32_R8;
+          Opc2 = X86::TRUNC_GR32_GR8;
           break;
         }
 

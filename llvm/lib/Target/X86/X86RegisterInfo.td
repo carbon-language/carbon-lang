@@ -103,15 +103,15 @@ let Namespace = "X86" in {
 // dependences between upper and lower parts of the register.  BL and BH are
 // last because they are call clobbered. Both Athlon and P4 chips suffer this
 // issue.
-def R8  : RegisterClass<"X86", [i8],  8, [AL, CL, DL, AH, CH, DH, BL, BH]>;
+def GR8  : RegisterClass<"X86", [i8],  8, [AL, CL, DL, AH, CH, DH, BL, BH]>;
 
-def R16 : RegisterClass<"X86", [i16], 16, [AX, CX, DX, SI, DI, BX, BP, SP]> {
+def GR16 : RegisterClass<"X86", [i16], 16, [AX, CX, DX, SI, DI, BX, BP, SP]> {
   let MethodProtos = [{
     iterator allocation_order_end(MachineFunction &MF) const;
   }];
   let MethodBodies = [{
-    R16Class::iterator
-    R16Class::allocation_order_end(MachineFunction &MF) const {
+    GR16Class::iterator
+    GR16Class::allocation_order_end(MachineFunction &MF) const {
       if (hasFP(MF))     // Does the function dedicate EBP to being a frame ptr?
         return end()-2;  // If so, don't allocate SP or BP
       else
@@ -120,14 +120,14 @@ def R16 : RegisterClass<"X86", [i16], 16, [AX, CX, DX, SI, DI, BX, BP, SP]> {
   }];
 }
 
-def R32 : RegisterClass<"X86", [i32], 32, 
-                        [EAX, ECX, EDX, ESI, EDI, EBX, EBP, ESP]> {
+def GR32 : RegisterClass<"X86", [i32], 32, 
+                         [EAX, ECX, EDX, ESI, EDI, EBX, EBP, ESP]> {
   let MethodProtos = [{
     iterator allocation_order_end(MachineFunction &MF) const;
   }];
   let MethodBodies = [{
-    R32Class::iterator
-    R32Class::allocation_order_end(MachineFunction &MF) const {
+    GR32Class::iterator
+    GR32Class::allocation_order_end(MachineFunction &MF) const {
       if (hasFP(MF))     // Does the function dedicate EBP to being a frame ptr?
         return end()-2;  // If so, don't allocate ESP or EBP
       else
@@ -136,9 +136,9 @@ def R32 : RegisterClass<"X86", [i32], 32,
   }];
 }
 
-// R16, R32 subclasses which contain registers that have R8 sub-registers.
-def R16_ : RegisterClass<"X86", [i16], 16, [AX, CX, DX, BX]>;
-def R32_ : RegisterClass<"X86", [i32], 32, [EAX, ECX, EDX, EBX]>;
+// GR16, GR32 subclasses which contain registers that have R8 sub-registers.
+def GR16_ : RegisterClass<"X86", [i16], 16, [AX, CX, DX, BX]>;
+def GR32_ : RegisterClass<"X86", [i32], 32, [EAX, ECX, EDX, EBX]>;
 
 // Scalar SSE2 floating point registers.
 def FR32 : RegisterClass<"X86", [f32], 32,

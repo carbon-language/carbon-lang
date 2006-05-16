@@ -36,7 +36,7 @@ def : Pat<(v4i16 (undef)), (IMPLICIT_DEF_VR64)>,  Requires<[HasMMX]>;
 def : Pat<(v2i32 (undef)), (IMPLICIT_DEF_VR64)>,  Requires<[HasMMX]>;
 
 // Move Instructions
-def MOVD64rr : I<0x6E, MRMSrcReg, (ops VR64:$dst, R32:$src),
+def MOVD64rr : I<0x6E, MRMSrcReg, (ops VR64:$dst, GR32:$src),
                  "movd {$src, $dst|$dst, $src}", []>, TB,
                Requires<[HasMMX]>;
 def MOVD64rm : I<0x6E, MRMSrcMem, (ops VR64:$dst, i32mem:$src),

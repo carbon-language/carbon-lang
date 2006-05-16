@@ -488,33 +488,33 @@ def Int_MINSDrm : SD_Intrm<0x5D, "minsd {$src2, $dst|$dst, $src2}",
 }
 
 // Conversion instructions
-def CVTTSS2SIrr: SSI<0x2C, MRMSrcReg, (ops R32:$dst, FR32:$src),
+def CVTTSS2SIrr: SSI<0x2C, MRMSrcReg, (ops GR32:$dst, FR32:$src),
                     "cvttss2si {$src, $dst|$dst, $src}",
-                    [(set R32:$dst, (fp_to_sint FR32:$src))]>;
-def CVTTSS2SIrm: SSI<0x2C, MRMSrcMem, (ops R32:$dst, f32mem:$src),
+                    [(set GR32:$dst, (fp_to_sint FR32:$src))]>;
+def CVTTSS2SIrm: SSI<0x2C, MRMSrcMem, (ops GR32:$dst, f32mem:$src),
                     "cvttss2si {$src, $dst|$dst, $src}",
-                    [(set R32:$dst, (fp_to_sint (loadf32 addr:$src)))]>;
-def CVTTSD2SIrr: SDI<0x2C, MRMSrcReg, (ops R32:$dst, FR64:$src),
+                    [(set GR32:$dst, (fp_to_sint (loadf32 addr:$src)))]>;
+def CVTTSD2SIrr: SDI<0x2C, MRMSrcReg, (ops GR32:$dst, FR64:$src),
                     "cvttsd2si {$src, $dst|$dst, $src}",
-                    [(set R32:$dst, (fp_to_sint FR64:$src))]>;
-def CVTTSD2SIrm: SDI<0x2C, MRMSrcMem, (ops R32:$dst, f64mem:$src),
+                    [(set GR32:$dst, (fp_to_sint FR64:$src))]>;
+def CVTTSD2SIrm: SDI<0x2C, MRMSrcMem, (ops GR32:$dst, f64mem:$src),
                     "cvttsd2si {$src, $dst|$dst, $src}",
-                    [(set R32:$dst, (fp_to_sint (loadf64 addr:$src)))]>;
+                    [(set GR32:$dst, (fp_to_sint (loadf64 addr:$src)))]>;
 def CVTSD2SSrr: SDI<0x5A, MRMSrcReg, (ops FR32:$dst, FR64:$src),
                    "cvtsd2ss {$src, $dst|$dst, $src}",
                    [(set FR32:$dst, (fround FR64:$src))]>;
 def CVTSD2SSrm: SDI<0x5A, MRMSrcMem, (ops FR32:$dst, f64mem:$src), 
                    "cvtsd2ss {$src, $dst|$dst, $src}",
                    [(set FR32:$dst, (fround (loadf64 addr:$src)))]>;
-def CVTSI2SSrr: SSI<0x2A, MRMSrcReg, (ops FR32:$dst, R32:$src),
+def CVTSI2SSrr: SSI<0x2A, MRMSrcReg, (ops FR32:$dst, GR32:$src),
                   "cvtsi2ss {$src, $dst|$dst, $src}",
-                  [(set FR32:$dst, (sint_to_fp R32:$src))]>;
+                  [(set FR32:$dst, (sint_to_fp GR32:$src))]>;
 def CVTSI2SSrm: SSI<0x2A, MRMSrcMem, (ops FR32:$dst, i32mem:$src),
                    "cvtsi2ss {$src, $dst|$dst, $src}",
                    [(set FR32:$dst, (sint_to_fp (loadi32 addr:$src)))]>;
-def CVTSI2SDrr: SDI<0x2A, MRMSrcReg, (ops FR64:$dst, R32:$src),
+def CVTSI2SDrr: SDI<0x2A, MRMSrcReg, (ops FR64:$dst, GR32:$src),
                    "cvtsi2sd {$src, $dst|$dst, $src}",
-                   [(set FR64:$dst, (sint_to_fp R32:$src))]>;
+                   [(set FR64:$dst, (sint_to_fp GR32:$src))]>;
 def CVTSI2SDrm: SDI<0x2A, MRMSrcMem, (ops FR64:$dst, i32mem:$src),
                    "cvtsi2sd {$src, $dst|$dst, $src}",
                    [(set FR64:$dst, (sint_to_fp (loadi32 addr:$src)))]>;
@@ -530,43 +530,43 @@ def CVTSS2SDrm: I<0x5A, MRMSrcMem, (ops FR64:$dst, f32mem:$src),
                 Requires<[HasSSE2]>;
 
 // Match intrinsics which expect XMM operand(s).
-def CVTSS2SIrr: SSI<0x2D, MRMSrcReg, (ops R32:$dst, VR128:$src),
+def CVTSS2SIrr: SSI<0x2D, MRMSrcReg, (ops GR32:$dst, VR128:$src),
                     "cvtss2si {$src, $dst|$dst, $src}",
-                    [(set R32:$dst, (int_x86_sse_cvtss2si VR128:$src))]>;
-def CVTSS2SIrm: SSI<0x2D, MRMSrcMem, (ops R32:$dst, f32mem:$src),
+                    [(set GR32:$dst, (int_x86_sse_cvtss2si VR128:$src))]>;
+def CVTSS2SIrm: SSI<0x2D, MRMSrcMem, (ops GR32:$dst, f32mem:$src),
                     "cvtss2si {$src, $dst|$dst, $src}",
-                    [(set R32:$dst, (int_x86_sse_cvtss2si
+                    [(set GR32:$dst, (int_x86_sse_cvtss2si
                                      (loadv4f32 addr:$src)))]>;
-def CVTSD2SIrr: SDI<0x2D, MRMSrcReg, (ops R32:$dst, VR128:$src),
+def CVTSD2SIrr: SDI<0x2D, MRMSrcReg, (ops GR32:$dst, VR128:$src),
                     "cvtsd2si {$src, $dst|$dst, $src}",
-                    [(set R32:$dst, (int_x86_sse2_cvtsd2si VR128:$src))]>;
-def CVTSD2SIrm: SDI<0x2D, MRMSrcMem, (ops R32:$dst, f128mem:$src),
+                    [(set GR32:$dst, (int_x86_sse2_cvtsd2si VR128:$src))]>;
+def CVTSD2SIrm: SDI<0x2D, MRMSrcMem, (ops GR32:$dst, f128mem:$src),
                     "cvtsd2si {$src, $dst|$dst, $src}",
-                    [(set R32:$dst, (int_x86_sse2_cvtsd2si
+                    [(set GR32:$dst, (int_x86_sse2_cvtsd2si
                                      (loadv2f64 addr:$src)))]>;
 
 // Aliases for intrinsics
-def Int_CVTTSS2SIrr: SSI<0x2C, MRMSrcReg, (ops R32:$dst, VR128:$src),
+def Int_CVTTSS2SIrr: SSI<0x2C, MRMSrcReg, (ops GR32:$dst, VR128:$src),
                     "cvttss2si {$src, $dst|$dst, $src}",
-                    [(set R32:$dst, (int_x86_sse_cvttss2si VR128:$src))]>;
-def Int_CVTTSS2SIrm: SSI<0x2C, MRMSrcMem, (ops R32:$dst, f32mem:$src),
+                    [(set GR32:$dst, (int_x86_sse_cvttss2si VR128:$src))]>;
+def Int_CVTTSS2SIrm: SSI<0x2C, MRMSrcMem, (ops GR32:$dst, f32mem:$src),
                     "cvttss2si {$src, $dst|$dst, $src}",
-                    [(set R32:$dst, (int_x86_sse_cvttss2si
+                    [(set GR32:$dst, (int_x86_sse_cvttss2si
                                      (loadv4f32 addr:$src)))]>;
-def Int_CVTTSD2SIrr: SDI<0x2C, MRMSrcReg, (ops R32:$dst, VR128:$src),
+def Int_CVTTSD2SIrr: SDI<0x2C, MRMSrcReg, (ops GR32:$dst, VR128:$src),
                          "cvttsd2si {$src, $dst|$dst, $src}",
-                         [(set R32:$dst, (int_x86_sse2_cvttsd2si VR128:$src))]>;
-def Int_CVTTSD2SIrm: SDI<0x2C, MRMSrcMem, (ops R32:$dst, f128mem:$src),
+                         [(set GR32:$dst, (int_x86_sse2_cvttsd2si VR128:$src))]>;
+def Int_CVTTSD2SIrm: SDI<0x2C, MRMSrcMem, (ops GR32:$dst, f128mem:$src),
                          "cvttsd2si {$src, $dst|$dst, $src}",
-                         [(set R32:$dst, (int_x86_sse2_cvttsd2si
+                         [(set GR32:$dst, (int_x86_sse2_cvttsd2si
                                           (loadv2f64 addr:$src)))]>;
 
 let isTwoAddress = 1 in {
 def Int_CVTSI2SSrr: SSI<0x2A, MRMSrcReg,
-                        (ops VR128:$dst, VR128:$src1, R32:$src2),
+                        (ops VR128:$dst, VR128:$src1, GR32:$src2),
                         "cvtsi2ss {$src2, $dst|$dst, $src2}",
                         [(set VR128:$dst, (int_x86_sse_cvtsi2ss VR128:$src1,
-                                           R32:$src2))]>;
+                                           GR32:$src2))]>;
 def Int_CVTSI2SSrm: SSI<0x2A, MRMSrcMem,
                         (ops VR128:$dst, VR128:$src1, i32mem:$src2),
                         "cvtsi2ss {$src2, $dst|$dst, $src2}",
@@ -960,10 +960,10 @@ def CVTPD2PSrm : PDI<0x5A, MRMSrcReg, (ops VR128:$dst, f128mem:$src),
 // Aliases for intrinsics
 let isTwoAddress = 1 in {
 def Int_CVTSI2SDrr: SDI<0x2A, MRMSrcReg,
-                        (ops VR128:$dst, VR128:$src1, R32:$src2),
+                        (ops VR128:$dst, VR128:$src1, GR32:$src2),
                         "cvtsi2sd {$src2, $dst|$dst, $src2}",
                         [(set VR128:$dst, (int_x86_sse2_cvtsi2sd VR128:$src1,
-                                           R32:$src2))]>;
+                                           GR32:$src2))]>;
 def Int_CVTSI2SDrm: SDI<0x2A, MRMSrcMem,
                         (ops VR128:$dst, VR128:$src1, i32mem:$src2),
                         "cvtsi2sd {$src2, $dst|$dst, $src2}",
@@ -2003,16 +2003,16 @@ def PUNPCKHQDQrm : PDI<0x6D, MRMSrcMem,
 
 // Extract / Insert
 def PEXTRWri : PDIi8<0xC5, MRMSrcReg,
-                    (ops R32:$dst, VR128:$src1, i32i8imm:$src2),
+                    (ops GR32:$dst, VR128:$src1, i32i8imm:$src2),
                     "pextrw {$src2, $src1, $dst|$dst, $src1, $src2}",
-                    [(set R32:$dst, (X86pextrw (v8i16 VR128:$src1),
+                    [(set GR32:$dst, (X86pextrw (v8i16 VR128:$src1),
                                      (i32 imm:$src2)))]>;
 let isTwoAddress = 1 in {
 def PINSRWrri : PDIi8<0xC4, MRMSrcReg,
-                     (ops VR128:$dst, VR128:$src1, R32:$src2, i32i8imm:$src3),
+                     (ops VR128:$dst, VR128:$src1, GR32:$src2, i32i8imm:$src3),
                      "pinsrw {$src3, $src2, $dst|$dst, $src2, $src3}",
                      [(set VR128:$dst, (v8i16 (X86pinsrw (v8i16 VR128:$src1),
-                                               R32:$src2, (i32 imm:$src3))))]>;
+                                               GR32:$src2, (i32 imm:$src3))))]>;
 def PINSRWrmi : PDIi8<0xC4, MRMSrcMem,
                      (ops VR128:$dst, VR128:$src1, i16mem:$src2, i32i8imm:$src3),
                      "pinsrw {$src3, $src2, $dst|$dst, $src2, $src3}",
@@ -2027,16 +2027,16 @@ def PINSRWrmi : PDIi8<0xC4, MRMSrcMem,
 //===----------------------------------------------------------------------===//
 
 // Mask creation
-def MOVMSKPSrr : PSI<0x50, MRMSrcReg, (ops R32:$dst, VR128:$src),
+def MOVMSKPSrr : PSI<0x50, MRMSrcReg, (ops GR32:$dst, VR128:$src),
                      "movmskps {$src, $dst|$dst, $src}",
-                     [(set R32:$dst, (int_x86_sse_movmsk_ps VR128:$src))]>;
-def MOVMSKPDrr : PSI<0x50, MRMSrcReg, (ops R32:$dst, VR128:$src),
+                     [(set GR32:$dst, (int_x86_sse_movmsk_ps VR128:$src))]>;
+def MOVMSKPDrr : PSI<0x50, MRMSrcReg, (ops GR32:$dst, VR128:$src),
                      "movmskpd {$src, $dst|$dst, $src}",
-                     [(set R32:$dst, (int_x86_sse2_movmsk_pd VR128:$src))]>;
+                     [(set GR32:$dst, (int_x86_sse2_movmsk_pd VR128:$src))]>;
 
-def PMOVMSKBrr : PDI<0xD7, MRMSrcReg, (ops R32:$dst, VR128:$src),
+def PMOVMSKBrr : PDI<0xD7, MRMSrcReg, (ops GR32:$dst, VR128:$src),
                      "pmovmskb {$src, $dst|$dst, $src}",
-                     [(set R32:$dst, (int_x86_sse2_pmovmskb_128 VR128:$src))]>;
+                     [(set GR32:$dst, (int_x86_sse2_pmovmskb_128 VR128:$src))]>;
 
 // Conditional store
 def MASKMOVDQU : PDI<0xF7, RawFrm, (ops VR128:$src, VR128:$mask),
@@ -2064,9 +2064,9 @@ def MOVNTPDmr : PDI<0x2B, MRMDestMem, (ops i128mem:$dst, VR128:$src),
 def MOVNTDQmr : PDI<0xE7, MRMDestMem, (ops f128mem:$dst, VR128:$src),
                     "movntdq {$src, $dst|$dst, $src}",
                     [(int_x86_sse2_movnt_dq addr:$dst, VR128:$src)]>;
-def MOVNTImr  :   I<0xC3, MRMDestMem, (ops i32mem:$dst, R32:$src),
+def MOVNTImr  :   I<0xC3, MRMDestMem, (ops i32mem:$dst, GR32:$src),
                     "movnti {$src, $dst|$dst, $src}",
-                    [(int_x86_sse2_movnt_i addr:$dst, R32:$src)]>, 
+                    [(int_x86_sse2_movnt_i addr:$dst, GR32:$src)]>, 
                   TB, Requires<[HasSSE2]>;
 
 // Flush cache
@@ -2136,10 +2136,10 @@ def MOVSD2PDrm : SDI<0x10, MRMSrcMem, (ops VR128:$dst, f64mem:$src),
                      [(set VR128:$dst, 
                        (v2f64 (scalar_to_vector (loadf64 addr:$src))))]>;
 
-def MOVDI2PDIrr : PDI<0x6E, MRMSrcReg, (ops VR128:$dst, R32:$src),
+def MOVDI2PDIrr : PDI<0x6E, MRMSrcReg, (ops VR128:$dst, GR32:$src),
                       "movd {$src, $dst|$dst, $src}",
                       [(set VR128:$dst,
-                        (v4i32 (scalar_to_vector R32:$src)))]>;
+                        (v4i32 (scalar_to_vector GR32:$src)))]>;
 def MOVDI2PDIrm : PDI<0x6E, MRMSrcMem, (ops VR128:$dst, i32mem:$src),
                       "movd {$src, $dst|$dst, $src}",
                       [(set VR128:$dst,
@@ -2176,9 +2176,9 @@ def MOVPD2SDmr : SDI<0x11, MRMDestMem, (ops f64mem:$dst, VR128:$src),
                      "movsd {$src, $dst|$dst, $src}",
                      [(store (f64 (vector_extract (v2f64 VR128:$src),
                                    (i32 0))), addr:$dst)]>;
-def MOVPDI2DIrr  : PDI<0x7E, MRMDestReg, (ops R32:$dst, VR128:$src),
+def MOVPDI2DIrr  : PDI<0x7E, MRMDestReg, (ops GR32:$dst, VR128:$src),
                        "movd {$src, $dst|$dst, $src}",
-                       [(set R32:$dst, (vector_extract (v4i32 VR128:$src),
+                       [(set GR32:$dst, (vector_extract (v4i32 VR128:$src),
                                         (i32 0)))]>;
 def MOVPDI2DImr  : PDI<0x7E, MRMDestMem, (ops i32mem:$dst, VR128:$src),
                        "movd {$src, $dst|$dst, $src}",
@@ -2226,10 +2226,10 @@ def MOVZSD2PDrm : SDI<0x10, MRMSrcMem, (ops VR128:$dst, f64mem:$src),
                                  (v2f64 (scalar_to_vector (loadf64 addr:$src))),
                                                 MOVL_shuffle_mask)))]>;
 // movd / movq to XMM register zero-extends
-def MOVZDI2PDIrr : PDI<0x6E, MRMSrcReg, (ops VR128:$dst, R32:$src),
+def MOVZDI2PDIrr : PDI<0x6E, MRMSrcReg, (ops VR128:$dst, GR32:$src),
                        "movd {$src, $dst|$dst, $src}",
                       [(set VR128:$dst, (v4i32 (vector_shuffle immAllZerosV,
-                                            (v4i32 (scalar_to_vector R32:$src)),
+                                            (v4i32 (scalar_to_vector GR32:$src)),
                                                 MOVL_shuffle_mask)))]>;
 def MOVZDI2PDIrm : PDI<0x6E, MRMSrcMem, (ops VR128:$dst, i32mem:$src),
                        "movd {$src, $dst|$dst, $src}",
@@ -2279,11 +2279,11 @@ def : Pat<(store (v8i16 VR128:$src), addr:$dst),
 def : Pat<(store (v4i32 VR128:$src), addr:$dst),
           (MOVDQAmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
 
-// Scalar to v8i16 / v16i8. The source may be a R32, but only the lower 8 or
+// Scalar to v8i16 / v16i8. The source may be a GR32, but only the lower 8 or
 // 16-bits matter.
-def : Pat<(v8i16 (X86s2vec R32:$src)), (v8i16 (MOVDI2PDIrr R32:$src))>,
+def : Pat<(v8i16 (X86s2vec GR32:$src)), (v8i16 (MOVDI2PDIrr GR32:$src))>,
       Requires<[HasSSE2]>;
-def : Pat<(v16i8 (X86s2vec R32:$src)), (v16i8 (MOVDI2PDIrr R32:$src))>,
+def : Pat<(v16i8 (X86s2vec GR32:$src)), (v16i8 (MOVDI2PDIrr GR32:$src))>,
       Requires<[HasSSE2]>;
 
 // bit_convert
@@ -2352,11 +2352,11 @@ def : Pat<(v2f64 (bitconvert (v4f32 VR128:$src))), (v2f64 VR128:$src)>,
 // movd to XMM register zero-extends
 let AddedComplexity = 20 in {
 def : Pat<(v8i16 (vector_shuffle immAllZerosV,
-                  (v8i16 (X86s2vec R32:$src)), MOVL_shuffle_mask)),
-          (v8i16 (MOVZDI2PDIrr R32:$src))>, Requires<[HasSSE2]>;
+                  (v8i16 (X86s2vec GR32:$src)), MOVL_shuffle_mask)),
+          (v8i16 (MOVZDI2PDIrr GR32:$src))>, Requires<[HasSSE2]>;
 def : Pat<(v16i8 (vector_shuffle immAllZerosV,
-                  (v16i8 (X86s2vec R32:$src)), MOVL_shuffle_mask)),
-          (v16i8 (MOVZDI2PDIrr R32:$src))>, Requires<[HasSSE2]>;
+                  (v16i8 (X86s2vec GR32:$src)), MOVL_shuffle_mask)),
+          (v16i8 (MOVZDI2PDIrr GR32:$src))>, Requires<[HasSSE2]>;
 // Zeroing a VR128 then do a MOVS{S|D} to the lower bits.
 def : Pat<(v2f64 (vector_shuffle immAllZerosV,
                   (v2f64 (scalar_to_vector FR64:$src)), MOVL_shuffle_mask)),
