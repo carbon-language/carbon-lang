@@ -2470,6 +2470,7 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
           Ops.push_back(N);
         } else {
           assert(0 && "Don't support illegal by-val vector arguments yet!");
+          abort();
         }
       }
       break;
@@ -2537,7 +2538,26 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
           assert(0 && "Cannot expand i64 -> i16 yet!");
         }
       } else {
-        assert(0 && "Doesn't handle vectors yet!");
+        // Otherwise, this is a vector type.  We only support legal vectors
+        // right now.
+        const PackedType *PTy = cast<PackedType>(Args[i].second);
+        unsigned NumElems = PTy->getNumElements();
+        const Type *EltTy = PTy->getElementType();
+        
+        // Figure out if there is a Packed type corresponding to this Vector
+        // type.  If so, convert to the packed type.
+        MVT::ValueType TVT = MVT::getVectorType(getValueType(EltTy), NumElems);
+        if (TVT != MVT::Other && isTypeLegal(TVT)) {
+          // Handle copies from generic vectors to registers.
+          MVT::ValueType PTyElementVT, PTyLegalElementVT;
+          unsigned NE = getPackedTypeBreakdown(PTy, PTyElementVT,
+                                               PTyLegalElementVT);
+          // Insert a VBIT_CONVERT of the MVT::Vector type to the packed type.
+          Ops.push_back(DAG.getNode(ISD::VBIT_CONVERT, TVT, Op));
+        } else {
+          assert(0 && "Don't support illegal by-val vector call args yet!");
+          abort();
+        }
       }
       break;
     }
@@ -2566,7 +2586,21 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
         for (unsigned i = 0; i != NumVals; ++i)
           RetTys.push_back(NVT);
       } else {
-        assert(0 && "Doesn't handle vectors yet!");
+        // Otherwise, this is a vector type.  We only support legal vectors
+        // right now.
+        const PackedType *PTy = cast<PackedType>(RetTy);
+        unsigned NumElems = PTy->getNumElements();
+        const Type *EltTy = PTy->getElementType();
+        
+        // Figure out if there is a Packed type corresponding to this Vector
+        // type.  If so, convert to the packed type.
+        MVT::ValueType TVT = MVT::getVectorType(getValueType(EltTy), NumElems);
+        if (TVT != MVT::Other && isTypeLegal(TVT)) {
+          RetTys.push_back(TVT);
+        } else {
+          assert(0 && "Don't support illegal by-val vector call results yet!");
+          abort();
+        }
       }
     }    
   }
@@ -2587,7 +2621,30 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
       
       // If this value was promoted, truncate it down.
       if (ResVal.getValueType() != VT) {
-        if (MVT::isInteger(VT)) {
+        if (VT == MVT::Vector) {
+          // Insert a VBITCONVERT to convert from the packed result type to the
+          // MVT::Vector type.
+          unsigned NumElems = cast<PackedType>(RetTy)->getNumElements();
+          const Type *EltTy = cast<PackedType>(RetTy)->getElementType();
+          
+          // Figure out if there is a Packed type corresponding to this Vector
+          // type.  If so, convert to the packed type.
+          MVT::ValueType TVT = MVT::getVectorType(getValueType(EltTy), NumElems);
+          if (TVT != MVT::Other && isTypeLegal(TVT)) {
+            // Handle copies from generic vectors to registers.
+            MVT::ValueType PTyElementVT, PTyLegalElementVT;
+            unsigned NE = getPackedTypeBreakdown(cast<PackedType>(RetTy),
+                                                 PTyElementVT,
+                                                 PTyLegalElementVT);
+            // Insert a VBIT_CONVERT of the FORMAL_ARGUMENTS to a
+            // "N x PTyElementVT" MVT::Vector type.
+            ResVal = DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, ResVal,
+                                 DAG.getConstant(NE, MVT::i32), 
+                                 DAG.getValueType(PTyElementVT));
+          } else {
+            abort();
+          }
+        } else if (MVT::isInteger(VT)) {
           unsigned AssertOp = RetTy->isSigned() ?
                                   ISD::AssertSext : ISD::AssertZext;
           ResVal = DAG.getNode(AssertOp, ResVal.getValueType(), ResVal, 
