@@ -819,9 +819,18 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     
   case ISD::FORMAL_ARGUMENTS:
     // The only option for this is to custom lower it.
-    Result = TLI.LowerOperation(Result, DAG);
+    Result = TLI.LowerOperation(Result.getValue(0), DAG);
     assert(Result.Val && "Target didn't custom lower ISD::FORMAL_ARGUMENTS!");
-    break;
+    
+    // Since FORMAL_ARGUMENTS nodes produce multiple values, make sure to
+    // remember that we legalized all of them, so it doesn't get relegalized.
+    for (unsigned i = 0, e = Result.Val->getNumValues(); i != e; ++i) {
+      Tmp1 = LegalizeOp(Result.getValue(i));
+      if (Op.ResNo == i)
+        Tmp2 = Tmp1;
+      AddLegalizedOperand(SDOperand(Node, i), Tmp1);
+    }
+    return Tmp2;
         
   case ISD::BUILD_VECTOR:
     switch (TLI.getOperationAction(ISD::BUILD_VECTOR, Node->getValueType(0))) {
