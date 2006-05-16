@@ -1307,7 +1307,7 @@ static SDOperand GeneratePerfectShuffle(unsigned PFEntry, SDOperand LHS,
   unsigned RHSID = (PFEntry >>  0) & ((1 << 13)-1);
   
   enum {
-    OP_COPY = 0,   // Copy, used for things like <u,u,u,3> to say it is <0,1,2,3>
+    OP_COPY = 0,  // Copy, used for things like <u,u,u,3> to say it is <0,1,2,3>
     OP_VMRGHW,
     OP_VMRGLW,
     OP_VSPLTISW0,
@@ -1978,9 +1978,9 @@ PPCTargetLowering::LowerCallTo(SDOperand Chain,
         // free GPRs, then we can pass both halves of the i64 in registers.
         if (GPR_remaining > 0) {
           SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32,
-                                     Args[i].first, DAG.getConstant(1, MVT::i32));
+                                   Args[i].first, DAG.getConstant(1, MVT::i32));
           SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32,
-                                     Args[i].first, DAG.getConstant(0, MVT::i32));
+                                   Args[i].first, DAG.getConstant(0, MVT::i32));
           args_to_use.push_back(Hi);
           --GPR_remaining;
           if (GPR_remaining > 0) {
