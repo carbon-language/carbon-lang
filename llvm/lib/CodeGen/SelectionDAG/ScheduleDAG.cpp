@@ -539,6 +539,20 @@ void ScheduleDAG::EmitNoop() {
 
 /// EmitSchedule - Emit the machine code in scheduled order.
 void ScheduleDAG::EmitSchedule() {
+  // If this is the first basic block in the function, and if it has live ins
+  // that need to be copied into vregs, emit the copies into the top of the
+  // block before emitting the code for the block.
+  MachineFunction &MF = DAG.getMachineFunction();
+  if (&MF.front() == BB && MF.livein_begin() != MF.livein_end()) {
+    for (MachineFunction::livein_iterator LI = MF.livein_begin(),
+         E = MF.livein_end(); LI != E; ++LI)
+      if (LI->second)
+        MRI->copyRegToReg(*MF.begin(), MF.begin()->end(), LI->second,
+                          LI->first, RegMap->getRegClass(LI->second));
+  }
+  
+  
+  // Finally, emit the code for all of the scheduled instructions.
   std::map<SDNode*, unsigned> VRBaseMap;
   for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
     if (SUnit *SU = Sequence[i]) {

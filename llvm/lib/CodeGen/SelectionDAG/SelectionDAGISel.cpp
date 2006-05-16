@@ -3150,23 +3150,10 @@ LowerArguments(BasicBlock *BB, SelectionDAGLowering &SDL,
       }
     }
 
-  // Next, if the function has live ins that need to be copied into vregs,
-  // emit the copies now, into the top of the block.
-  MachineFunction &MF = SDL.DAG.getMachineFunction();
-  if (MF.livein_begin() != MF.livein_end()) {
-    SSARegMap *RegMap = MF.getSSARegMap();
-    const MRegisterInfo &MRI = *MF.getTarget().getRegisterInfo();
-    for (MachineFunction::livein_iterator LI = MF.livein_begin(),
-         E = MF.livein_end(); LI != E; ++LI)
-      if (LI->second)
-        MRI.copyRegToReg(*MF.begin(), MF.begin()->end(), LI->second,
-                         LI->first, RegMap->getRegClass(LI->second));
-  }
-    
   // Finally, if the target has anything special to do, allow it to do so.
+  // FIXME: this should insert code into the DAG!
   EmitFunctionEntryCode(F, SDL.DAG.getMachineFunction());
 }
-
 
 void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
        std::vector<std::pair<MachineInstr*, unsigned> > &PHINodesToUpdate,
