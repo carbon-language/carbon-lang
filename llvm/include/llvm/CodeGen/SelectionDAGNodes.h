@@ -115,12 +115,13 @@ namespace ISD {
     // UNDEF - An undefined node
     UNDEF,
     
-    /// FORMAL_ARGUMENTS(CC#, ISVARARG) - This node represents the formal
+    /// FORMAL_ARGUMENTS(CHAIN, CC#, ISVARARG) - This node represents the formal
     /// arguments for a function.  CC# is a Constant value indicating the
     /// calling convention of the function, and ISVARARG is a flag that
     /// indicates whether the function is varargs or not.  This node has one
-    /// result value for each incoming argument, and is typically custom
-    /// legalized.
+    /// result value for each incoming argument, plus one for the output chain.
+    /// It must be custom legalized.
+    /// 
     FORMAL_ARGUMENTS,
 
     // EXTRACT_ELEMENT - This is used to get the first or second (determined by
