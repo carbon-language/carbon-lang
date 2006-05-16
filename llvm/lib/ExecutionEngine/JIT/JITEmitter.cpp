@@ -815,9 +815,11 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
     }
   }
 
-  DEBUG(std::cerr << "JIT: Finished CodeGen of [" << (void*)BufferBegin
+  DEBUG(void *FnStart = TheJIT->getPointerToGlobalIfAvailable(F.getFunction());
+        char *FnEnd   = (char*)getCurrentPCOffset();
+        std::cerr << "JIT: Finished CodeGen of [" << FnStart
                   << "] Function: " << F.getFunction()->getName()
-                  << ": " << getCurrentPCOffset() << " bytes of text, "
+                  << ": " << (FnEnd-(char*)FnStart) << " bytes of text, "
                   << Relocations.size() << " relocations\n");
   Relocations.clear();
   return false;
