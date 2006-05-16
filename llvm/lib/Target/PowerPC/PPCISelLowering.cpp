@@ -727,6 +727,161 @@ static SDOperand LowerVASTART(SDOperand Op, SelectionDAG &DAG,
                      Op.getOperand(1), Op.getOperand(2));
 }
 
+static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
+                                       int &VarArgsFrameIndex) {
+  // TODO: add description of PPC stack frame format, or at least some docs.
+  //
+  MachineFunction &MF = DAG.getMachineFunction();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  SSARegMap *RegMap = MF.getSSARegMap();
+  std::vector<SDOperand> ArgValues;
+  SDOperand Root = Op.getOperand(0);
+  
+  unsigned ArgOffset = 24;
+  unsigned GPR_remaining = 8;
+  unsigned FPR_remaining = 13;
+  unsigned VR_remaining  = 12;
+  unsigned GPR_idx = 0, FPR_idx = 0, VR_idx = 0;
+  static const unsigned GPR[] = {
+    PPC::R3, PPC::R4, PPC::R5, PPC::R6,
+    PPC::R7, PPC::R8, PPC::R9, PPC::R10,
+  };
+  static const unsigned FPR[] = {
+    PPC::F1, PPC::F2, PPC::F3, PPC::F4, PPC::F5, PPC::F6, PPC::F7,
+    PPC::F8, PPC::F9, PPC::F10, PPC::F11, PPC::F12, PPC::F13
+  };
+  static const unsigned VR[] = {
+    PPC::V2, PPC::V3, PPC::V4, PPC::V5, PPC::V6, PPC::V7, PPC::V8,
+    PPC::V9, PPC::V10, PPC::V11, PPC::V12, PPC::V13
+  };
+  
+  // Add DAG nodes to load the arguments or copy them out of registers.  On
+  // entry to a function on PPC, the arguments start at offset 24, although the
+  // first ones are often in registers.
+  for (unsigned ArgNo = 0, e = Op.Val->getNumValues()-1; ArgNo != e; ++ArgNo) {
+    SDOperand ArgVal;
+    bool needsLoad = false;
+    bool ArgLive = !Op.Val->hasNUsesOfValue(0, ArgNo);
+    MVT::ValueType ObjectVT = Op.getValue(ArgNo).getValueType();
+    unsigned ObjSize = MVT::getSizeInBits(ObjectVT)/8;
+
+    switch (ObjectVT) {
+    default: assert(0 && "Unhandled argument type!");
+    case MVT::i32:
+      if (!ArgLive) break;
+      if (GPR_remaining > 0) {
+        unsigned VReg = RegMap->createVirtualRegister(&PPC::GPRCRegClass);
+        MF.addLiveIn(GPR[GPR_idx], VReg);
+        ArgVal = DAG.getCopyFromReg(Root, VReg, MVT::i32);
+      } else {
+        needsLoad = true;
+      }
+      break;
+    case MVT::f32:
+    case MVT::f64:
+      if (!ArgLive) {
+        if (FPR_remaining > 0) {
+          --FPR_remaining;
+          ++FPR_idx;
+        }        
+        break;
+      }
+      if (FPR_remaining > 0) {
+        unsigned VReg;
+        if (ObjectVT == MVT::f32)
+          VReg = RegMap->createVirtualRegister(&PPC::F4RCRegClass);
+        else
+          VReg = RegMap->createVirtualRegister(&PPC::F8RCRegClass);
+        MF.addLiveIn(FPR[FPR_idx], VReg);
+        ArgVal = DAG.getCopyFromReg(Root, VReg, ObjectVT);
+        --FPR_remaining;
+        ++FPR_idx;
+      } else {
+        needsLoad = true;
+      }
+      break;
+    case MVT::v4f32:
+    case MVT::v4i32:
+    case MVT::v8i16:
+    case MVT::v16i8:
+      if (!ArgLive) {
+        if (VR_remaining > 0) {
+          --VR_remaining;
+          ++VR_idx;
+        }
+        break;
+      }
+      if (VR_remaining > 0) {
+        unsigned VReg = RegMap->createVirtualRegister(&PPC::VRRCRegClass);
+        MF.addLiveIn(VR[VR_idx], VReg);
+        ArgVal = DAG.getCopyFromReg(Root, VReg, ObjectVT);
+        --VR_remaining;
+        ++VR_idx;
+      } else {
+        // This should be simple, but requires getting 16-byte aligned stack
+        // values.
+        assert(0 && "Loading VR argument not implemented yet!");
+        needsLoad = true;
+      }
+      break;
+    }
+    
+    // We need to load the argument to a virtual register if we determined above
+    // that we ran out of physical registers of the appropriate type
+    if (needsLoad) {
+      int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
+      SDOperand FIN = DAG.getFrameIndex(FI, MVT::i32);
+      ArgVal = DAG.getLoad(ObjectVT, Root, FIN,
+                           DAG.getSrcValue(NULL));
+    }
+    
+    // Every 4 bytes of argument space consumes one of the GPRs available for
+    // argument passing.
+    if (GPR_remaining > 0) {
+      unsigned delta = (GPR_remaining > 1 && ObjSize == 8) ? 2 : 1;
+      GPR_remaining -= delta;
+      GPR_idx += delta;
+    }
+    ArgOffset += ObjSize;
+    
+    if (ArgVal.Val == 0)
+      ArgVal = DAG.getNode(ISD::UNDEF, ObjectVT);
+    ArgValues.push_back(ArgVal);
+  }
+  
+  // If the function takes variable number of arguments, make a frame index for
+  // the start of the first vararg value... for expansion of llvm.va_start.
+  bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
+  if (isVarArg) {
+    VarArgsFrameIndex = MFI->CreateFixedObject(4, ArgOffset);
+    SDOperand FIN = DAG.getFrameIndex(VarArgsFrameIndex, MVT::i32);
+    // If this function is vararg, store any remaining integer argument regs
+    // to their spots on the stack so that they may be loaded by deferencing the
+    // result of va_next.
+    std::vector<SDOperand> MemOps;
+    for (; GPR_remaining > 0; --GPR_remaining, ++GPR_idx) {
+      unsigned VReg = RegMap->createVirtualRegister(&PPC::GPRCRegClass);
+      MF.addLiveIn(GPR[GPR_idx], VReg);
+      SDOperand Val = DAG.getCopyFromReg(Root, VReg, MVT::i32);
+      SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Val.getValue(1),
+                                    Val, FIN, DAG.getSrcValue(NULL));
+      MemOps.push_back(Store);
+      // Increment the address by four for the next argument to store
+      SDOperand PtrOff = DAG.getConstant(4, MVT::i32);
+      FIN = DAG.getNode(ISD::ADD, MVT::i32, FIN, PtrOff);
+    }
+    if (!MemOps.empty())
+      Root = DAG.getNode(ISD::TokenFactor, MVT::Other, MemOps);
+  }
+  
+  ArgValues.push_back(Root);
+ 
+  // Return the new list of results.
+  std::vector<MVT::ValueType> RetVT(Op.Val->value_begin(),
+                                    Op.Val->value_end());
+  return DAG.getNode(ISD::MERGE_VALUES, RetVT, ArgValues);
+}
+
 static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
   SDOperand Copy;
   switch(Op.getNumOperands()) {
@@ -1690,6 +1845,8 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::JumpTable:          return LowerJumpTable(Op, DAG);
   case ISD::SETCC:              return LowerSETCC(Op, DAG);
   case ISD::VASTART:            return LowerVASTART(Op, DAG, VarArgsFrameIndex);
+  case ISD::FORMAL_ARGUMENTS:   return LowerFORMAL_ARGUMENTS(Op, DAG,
+                                                             VarArgsFrameIndex);
   case ISD::RET:                return LowerRET(Op, DAG);
     
   case ISD::SELECT_CC:          return LowerSELECT_CC(Op, DAG);
@@ -1714,174 +1871,6 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
 //===----------------------------------------------------------------------===//
 //  Other Lowering Code
 //===----------------------------------------------------------------------===//
-
-std::vector<SDOperand>
-PPCTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
-  //
-  // add beautiful description of PPC stack frame format, or at least some docs
-  //
-  MachineFunction &MF = DAG.getMachineFunction();
-  MachineFrameInfo *MFI = MF.getFrameInfo();
-  SSARegMap *RegMap = MF.getSSARegMap();
-  std::vector<SDOperand> ArgValues;
-  
-  unsigned ArgOffset = 24;
-  unsigned GPR_remaining = 8;
-  unsigned FPR_remaining = 13;
-  unsigned GPR_idx = 0, FPR_idx = 0;
-  static const unsigned GPR[] = {
-    PPC::R3, PPC::R4, PPC::R5, PPC::R6,
-    PPC::R7, PPC::R8, PPC::R9, PPC::R10,
-  };
-  static const unsigned FPR[] = {
-    PPC::F1, PPC::F2, PPC::F3, PPC::F4, PPC::F5, PPC::F6, PPC::F7,
-    PPC::F8, PPC::F9, PPC::F10, PPC::F11, PPC::F12, PPC::F13
-  };
-  
-  // Add DAG nodes to load the arguments...  On entry to a function on PPC,
-  // the arguments start at offset 24, although they are likely to be passed
-  // in registers.
-  for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I) {
-    SDOperand newroot, argt;
-    unsigned ObjSize;
-    bool needsLoad = false;
-    bool ArgLive = !I->use_empty();
-    MVT::ValueType ObjectVT = getValueType(I->getType());
-    
-    switch (ObjectVT) {
-    default: assert(0 && "Unhandled argument type!");
-    case MVT::i1:
-    case MVT::i8:
-    case MVT::i16:
-    case MVT::i32:
-      ObjSize = 4;
-      if (!ArgLive) break;
-      if (GPR_remaining > 0) {
-        unsigned VReg = RegMap->createVirtualRegister(&PPC::GPRCRegClass);
-        MF.addLiveIn(GPR[GPR_idx], VReg);
-        argt = newroot = DAG.getCopyFromReg(DAG.getRoot(), VReg, MVT::i32);
-        if (ObjectVT != MVT::i32) {
-          unsigned AssertOp = I->getType()->isSigned() ? ISD::AssertSext 
-                                                       : ISD::AssertZext;
-          argt = DAG.getNode(AssertOp, MVT::i32, argt, 
-                             DAG.getValueType(ObjectVT));
-          argt = DAG.getNode(ISD::TRUNCATE, ObjectVT, argt);
-        }
-      } else {
-        needsLoad = true;
-      }
-      break;
-    case MVT::i64:
-      ObjSize = 8;
-      if (!ArgLive) break;
-      if (GPR_remaining > 0) {
-        SDOperand argHi, argLo;
-        unsigned VReg = RegMap->createVirtualRegister(&PPC::GPRCRegClass);
-        MF.addLiveIn(GPR[GPR_idx], VReg);
-        argHi = DAG.getCopyFromReg(DAG.getRoot(), VReg, MVT::i32);
-        // If we have two or more remaining argument registers, then both halves
-        // of the i64 can be sourced from there.  Otherwise, the lower half will
-        // have to come off the stack.  This can happen when an i64 is preceded
-        // by 28 bytes of arguments.
-        if (GPR_remaining > 1) {
-          unsigned VReg = RegMap->createVirtualRegister(&PPC::GPRCRegClass);
-          MF.addLiveIn(GPR[GPR_idx+1], VReg);
-          argLo = DAG.getCopyFromReg(argHi, VReg, MVT::i32);
-        } else {
-          int FI = MFI->CreateFixedObject(4, ArgOffset+4);
-          SDOperand FIN = DAG.getFrameIndex(FI, MVT::i32);
-          argLo = DAG.getLoad(MVT::i32, DAG.getEntryNode(), FIN,
-                              DAG.getSrcValue(NULL));
-        }
-        // Build the outgoing arg thingy
-        argt = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, argLo, argHi);
-        newroot = argLo;
-      } else {
-        needsLoad = true;
-      }
-      break;
-    case MVT::f32:
-    case MVT::f64:
-      ObjSize = (ObjectVT == MVT::f64) ? 8 : 4;
-      if (!ArgLive) {
-        if (FPR_remaining > 0) {
-          --FPR_remaining;
-          ++FPR_idx;
-        }        
-        break;
-      }
-      if (FPR_remaining > 0) {
-        unsigned VReg;
-        if (ObjectVT == MVT::f32)
-          VReg = RegMap->createVirtualRegister(&PPC::F4RCRegClass);
-        else
-          VReg = RegMap->createVirtualRegister(&PPC::F8RCRegClass);
-        MF.addLiveIn(FPR[FPR_idx], VReg);
-        argt = newroot = DAG.getCopyFromReg(DAG.getRoot(), VReg, ObjectVT);
-        --FPR_remaining;
-        ++FPR_idx;
-      } else {
-        needsLoad = true;
-      }
-      break;
-    }
-    
-    // We need to load the argument to a virtual register if we determined above
-    // that we ran out of physical registers of the appropriate type
-    if (needsLoad) {
-      unsigned SubregOffset = 0;
-      if (ObjectVT == MVT::i8 || ObjectVT == MVT::i1) SubregOffset = 3;
-      if (ObjectVT == MVT::i16) SubregOffset = 2;
-      int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
-      SDOperand FIN = DAG.getFrameIndex(FI, MVT::i32);
-      FIN = DAG.getNode(ISD::ADD, MVT::i32, FIN,
-                        DAG.getConstant(SubregOffset, MVT::i32));
-      argt = newroot = DAG.getLoad(ObjectVT, DAG.getEntryNode(), FIN,
-                                   DAG.getSrcValue(NULL));
-    }
-    
-    // Every 4 bytes of argument space consumes one of the GPRs available for
-    // argument passing.
-    if (GPR_remaining > 0) {
-      unsigned delta = (GPR_remaining > 1 && ObjSize == 8) ? 2 : 1;
-      GPR_remaining -= delta;
-      GPR_idx += delta;
-    }
-    ArgOffset += ObjSize;
-    if (newroot.Val)
-      DAG.setRoot(newroot.getValue(1));
-    
-    ArgValues.push_back(argt);
-  }
-  
-  // If the function takes variable number of arguments, make a frame index for
-  // the start of the first vararg value... for expansion of llvm.va_start.
-  if (F.isVarArg()) {
-    VarArgsFrameIndex = MFI->CreateFixedObject(4, ArgOffset);
-    SDOperand FIN = DAG.getFrameIndex(VarArgsFrameIndex, MVT::i32);
-    // If this function is vararg, store any remaining integer argument regs
-    // to their spots on the stack so that they may be loaded by deferencing the
-    // result of va_next.
-    std::vector<SDOperand> MemOps;
-    for (; GPR_remaining > 0; --GPR_remaining, ++GPR_idx) {
-      unsigned VReg = RegMap->createVirtualRegister(&PPC::GPRCRegClass);
-      MF.addLiveIn(GPR[GPR_idx], VReg);
-      SDOperand Val = DAG.getCopyFromReg(DAG.getRoot(), VReg, MVT::i32);
-      SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Val.getValue(1),
-                                    Val, FIN, DAG.getSrcValue(NULL));
-      MemOps.push_back(Store);
-      // Increment the address by four for the next argument to store
-      SDOperand PtrOff = DAG.getConstant(4, getPointerTy());
-      FIN = DAG.getNode(ISD::ADD, MVT::i32, FIN, PtrOff);
-    }
-    if (!MemOps.empty()) {
-      MemOps.push_back(DAG.getRoot());
-      DAG.setRoot(DAG.getNode(ISD::TokenFactor, MVT::Other, MemOps));
-    }
-  }
-  
-  return ArgValues;
-}
 
 std::pair<SDOperand, SDOperand>
 PPCTargetLowering::LowerCallTo(SDOperand Chain,

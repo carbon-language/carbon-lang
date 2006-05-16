@@ -166,10 +166,6 @@ namespace llvm {
                                                 uint64_t &KnownZero, 
                                                 uint64_t &KnownOne,
                                                 unsigned Depth = 0) const;
-    /// LowerArguments - This hook must be implemented to indicate how we should
-    /// lower the arguments for the specified function, into the specified DAG.
-    virtual std::vector<SDOperand>
-      LowerArguments(Function &F, SelectionDAG &DAG);
     
     /// LowerCallTo - This hook lowers an abstract call to a function into an
     /// actual call.
