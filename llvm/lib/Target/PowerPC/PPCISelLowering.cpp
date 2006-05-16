@@ -765,20 +765,43 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
     MVT::ValueType ObjectVT = Op.getValue(ArgNo).getValueType();
     unsigned ObjSize = MVT::getSizeInBits(ObjectVT)/8;
 
+    unsigned CurArgOffset = ArgOffset;
+    
     switch (ObjectVT) {
     default: assert(0 && "Unhandled argument type!");
     case MVT::i32:
-      if (!ArgLive) break;
+      // All int arguments reserve stack space.
+      ArgOffset += 4;
+
+      if (!ArgLive) {
+        if (GPR_remaining > 0) {
+          --GPR_remaining;
+          ++GPR_idx;
+        }
+        break;
+      }
       if (GPR_remaining > 0) {
         unsigned VReg = RegMap->createVirtualRegister(&PPC::GPRCRegClass);
         MF.addLiveIn(GPR[GPR_idx], VReg);
         ArgVal = DAG.getCopyFromReg(Root, VReg, MVT::i32);
+        --GPR_remaining;
+        ++GPR_idx;
       } else {
         needsLoad = true;
       }
       break;
     case MVT::f32:
     case MVT::f64:
+      // All FP arguments reserve stack space.
+      ArgOffset += ObjSize;
+
+      // Every 4 bytes of argument space consumes one of the GPRs available for
+      // argument passing.
+      if (GPR_remaining > 0) {
+        unsigned delta = (GPR_remaining > 1 && ObjSize == 8) ? 2 : 1;
+        GPR_remaining -= delta;
+        GPR_idx += delta;
+      }
       if (!ArgLive) {
         if (FPR_remaining > 0) {
           --FPR_remaining;
@@ -804,6 +827,7 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
     case MVT::v4i32:
     case MVT::v8i16:
     case MVT::v16i8:
+      // Note that vector arguments in registers don't reserve stack space.
       if (!ArgLive) {
         if (VR_remaining > 0) {
           --VR_remaining;
@@ -829,20 +853,11 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
     // We need to load the argument to a virtual register if we determined above
     // that we ran out of physical registers of the appropriate type
     if (needsLoad) {
-      int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
+      int FI = MFI->CreateFixedObject(ObjSize, CurArgOffset);
       SDOperand FIN = DAG.getFrameIndex(FI, MVT::i32);
       ArgVal = DAG.getLoad(ObjectVT, Root, FIN,
                            DAG.getSrcValue(NULL));
     }
-    
-    // Every 4 bytes of argument space consumes one of the GPRs available for
-    // argument passing.
-    if (GPR_remaining > 0) {
-      unsigned delta = (GPR_remaining > 1 && ObjSize == 8) ? 2 : 1;
-      GPR_remaining -= delta;
-      GPR_idx += delta;
-    }
-    ArgOffset += ObjSize;
     
     if (ArgVal.Val == 0)
       ArgVal = DAG.getNode(ISD::UNDEF, ObjectVT);
