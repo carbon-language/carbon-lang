@@ -137,6 +137,7 @@ E: morten@hue.no
 D: Visual C++ compatibility fixes 
 
 N: Vladimir Prus
+W: http://vladimir_prus.blogspot.com
 E: ghost@cs.msu.su
 D: Made inst_iterator behave like a proper iterator, LowerConstantExprs pass
 
