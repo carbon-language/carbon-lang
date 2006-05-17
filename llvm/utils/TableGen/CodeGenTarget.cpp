@@ -58,7 +58,7 @@ std::string llvm::getName(MVT::ValueType T) {
   case MVT::v2f32: return "v2f32";
   case MVT::v4f32: return "v4f32";
   case MVT::v2f64: return "v2f64";
-  case MVT::iPTR:  return "TLI.getPointetTy()";
+  case MVT::iPTR:  return "TLI.getPointerTy()";
   default: assert(0 && "ILLEGAL VALUE TYPE!"); return "";
   }
 }
@@ -88,7 +88,7 @@ std::string llvm::getEnumName(MVT::ValueType T) {
   case MVT::v2f32: return "MVT::v2f32";
   case MVT::v4f32: return "MVT::v4f32";
   case MVT::v2f64: return "MVT::v2f64";
-  case MVT::iPTR:  return "TLI.getPointetTy()";
+  case MVT::iPTR:  return "TLI.getPointerTy()";
   default: assert(0 && "ILLEGAL VALUE TYPE!"); return "";
   }
 }
