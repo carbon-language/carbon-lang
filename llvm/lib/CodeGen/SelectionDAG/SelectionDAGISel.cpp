@@ -2455,25 +2455,15 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 
         // Figure out if there is a Packed type corresponding to this Vector
         // type.  If so, convert to the packed type.
-        bool Supported = false;
         MVT::ValueType TVT = MVT::getVectorType(getValueType(EltTy), NumElems);
-        if (TVT != MVT::Other) {
+        if (TVT != MVT::Other && isTypeLegal(TVT)) {
           SDOperand N = SDOperand(Result, i++);
           // Handle copies from generic vectors to registers.
-          MVT::ValueType PTyElementVT, PTyLegalElementVT;
-          unsigned NE = getPackedTypeBreakdown(PTy, PTyElementVT,
-                                               PTyLegalElementVT);
-          // FIXME: handle NE > 1 cases.
-          if (NE == 1) {
-            N = DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, N,
-                            DAG.getConstant(NumElems, MVT::i32), 
-                            DAG.getValueType(getValueType(EltTy)));
-            Ops.push_back(N);
-            Supported = true;
-          }
-        }
-
-        if (!Supported) {
+          N = DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, N,
+                          DAG.getConstant(NumElems, MVT::i32), 
+                          DAG.getValueType(getValueType(EltTy)));
+          Ops.push_back(N);
+        } else {
           assert(0 && "Don't support illegal by-val vector arguments yet!");
           abort();
         }
@@ -2633,16 +2623,11 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
           // type.  If so, convert to the packed type.
           MVT::ValueType TVT = MVT::getVectorType(getValueType(EltTy), NumElems);
           if (TVT != MVT::Other && isTypeLegal(TVT)) {
-            // Handle copies from generic vectors to registers.
-            MVT::ValueType PTyElementVT, PTyLegalElementVT;
-            unsigned NE = getPackedTypeBreakdown(cast<PackedType>(RetTy),
-                                                 PTyElementVT,
-                                                 PTyLegalElementVT);
             // Insert a VBIT_CONVERT of the FORMAL_ARGUMENTS to a
             // "N x PTyElementVT" MVT::Vector type.
             ResVal = DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, ResVal,
-                                 DAG.getConstant(NE, MVT::i32), 
-                                 DAG.getValueType(PTyElementVT));
+                                 DAG.getConstant(NumElems, MVT::i32), 
+                                 DAG.getValueType(getValueType(EltTy)));
           } else {
             abort();
           }
