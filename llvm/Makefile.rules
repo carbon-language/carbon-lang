@@ -472,9 +472,7 @@ $(RecursiveTargets)::
 	    $(MKDIR) $$dir; \
 	    $(CP) $(PROJ_SRC_DIR)/$$dir/Makefile $$dir/Makefile; \
 	  fi; \
-	  if [ ! -f $$dir/LLVM_DO_NOT_BUILD ]; then \
-	    ($(MAKE) -C $$dir $@ ) || exit 1; \
-	  fi ; \
+	  ($(MAKE) -C $$dir $@ ) || exit 1; \
 	done
 endif
 
@@ -489,9 +487,7 @@ $(RecursiveTargets)::
 	    $(MKDIR) $$dir; \
 	    $(CP) $(PROJ_SRC_DIR)/$$dir/Makefile $$dir/Makefile; \
 	  fi; \
-	  if [ ! -f $$dir/LLVM_DO_NOT_BUILD ]; then \
-	    ($(MAKE) -C $$dir $@ ) || exit 0; \
-	  fi ; \
+	  ($(MAKE) -C $$dir $@ ) || exit 0; \
 	done
 endif
 
@@ -517,9 +513,7 @@ $(ParallelTargets) :
 	  $(MKDIR) $(@D); \
 	  $(CP) $(PROJ_SRC_DIR)/$(@D)/Makefile $(@D)/Makefile; \
 	fi; \
-	if [ ! -f $$dir/LLVM_DO_NOT_BUILD ]; then \
-	  $(MAKE) -C $(@D) $(subst $(@D)/.make,,$@) ; \
-	fi
+	$(MAKE) -C $(@D) $(subst $(@D)/.make,,$@) ;
 endif
 
 #---------------------------------------------------------
@@ -537,9 +531,7 @@ $(RecursiveTargets)::
 	      $(MKDIR) $$dir; \
 	      $(CP) $(PROJ_SRC_DIR)/$$dir/Makefile $$dir/Makefile; \
 	    fi; \
-	    if [ ! -f $$dir/LLVM_DO_NOT_BUILD ]; then \
-	      ($(MAKE) -C$$dir $@ ) || exit 1; \
-	    fi ; \
+	    ($(MAKE) -C$$dir $@ ) || exit 1; \
 	  fi \
 	done
 endif

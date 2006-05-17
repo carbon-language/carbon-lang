@@ -7,7 +7,7 @@
 # 
 #===------------------------------------------------------------------------===#
 LEVEL = .
-DIRS = lib/System lib/Support utils lib
+DIRS = lib/System lib/Support utils lib/VMCore lib
 
 include $(LEVEL)/Makefile.config 
 
