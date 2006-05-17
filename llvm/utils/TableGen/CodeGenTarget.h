@@ -43,7 +43,6 @@ std::string getEnumName(MVT::ValueType T);
 class CodeGenTarget {
   Record *TargetRec;
   std::vector<Record*> CalleeSavedRegisters;
-  MVT::ValueType PointerType;
 
   mutable std::map<std::string, CodeGenInstruction> Instructions;
   mutable std::vector<CodeGenRegister> Registers;
@@ -62,8 +61,6 @@ public:
   const std::vector<Record*> &getCalleeSavedRegisters() const {
     return CalleeSavedRegisters;
   }
-
-  MVT::ValueType getPointerType() const { return PointerType; }
 
   /// getInstructionSet - Return the InstructionSet object.
   ///

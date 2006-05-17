@@ -169,9 +169,14 @@ namespace llvm {
     void setName(const std::string &N) { Name = N; }
     
     bool isLeaf() const { return Val != 0; }
-    bool hasTypeSet() const { return Types[0] < MVT::LAST_VALUETYPE; }
+    bool hasTypeSet() const {
+      return (Types[0] < MVT::LAST_VALUETYPE) || (Types[0] == MVT::iPTR);
+    }
     bool isTypeCompletelyUnknown() const {
       return Types[0] == MVT::isUnknown;
+    }
+    bool isTypeDynamicallyResolved() const {
+      return Types[0] == MVT::iPTR;
     }
     MVT::ValueType getTypeNum(unsigned Num) const {
       assert(hasTypeSet() && "Doesn't have a type yet!");
@@ -247,7 +252,7 @@ namespace llvm {
     /// ContainsUnresolvedType - Return true if this tree contains any
     /// unresolved types.
     bool ContainsUnresolvedType() const {
-      if (!hasTypeSet()) return true;
+      if (!hasTypeSet() && !isTypeDynamicallyResolved()) return true;
       for (unsigned i = 0, e = getNumChildren(); i != e; ++i)
         if (getChild(i)->ContainsUnresolvedType()) return true;
       return false;

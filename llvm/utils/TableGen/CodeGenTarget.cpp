@@ -30,12 +30,7 @@ AsmWriterNum("asmwriternum", cl::init(0),
 /// getValueType - Return the MCV::ValueType that the specified TableGen record
 /// corresponds to.
 MVT::ValueType llvm::getValueType(Record *Rec, const CodeGenTarget *CGT) {
-  MVT::ValueType VT = (MVT::ValueType)Rec->getValueAsInt("Value");
-  if (VT == MVT::iPTR) {
-    assert(CGT && "Use a pointer type in a place that isn't supported yet!");
-    VT = CGT->getPointerType();
-  }
-  return VT;
+  return (MVT::ValueType)Rec->getValueAsInt("Value");
 }
 
 std::string llvm::getName(MVT::ValueType T) {
@@ -63,35 +58,37 @@ std::string llvm::getName(MVT::ValueType T) {
   case MVT::v2f32: return "v2f32";
   case MVT::v4f32: return "v4f32";
   case MVT::v2f64: return "v2f64";
+  case MVT::iPTR:  return "TLI.getPointetTy()";
   default: assert(0 && "ILLEGAL VALUE TYPE!"); return "";
   }
 }
 
 std::string llvm::getEnumName(MVT::ValueType T) {
   switch (T) {
-  case MVT::Other: return "Other";
-  case MVT::i1:    return "i1";
-  case MVT::i8:    return "i8";
-  case MVT::i16:   return "i16";
-  case MVT::i32:   return "i32";
-  case MVT::i64:   return "i64";
-  case MVT::i128:  return "i128";
-  case MVT::f32:   return "f32";
-  case MVT::f64:   return "f64";
-  case MVT::f80:   return "f80";
-  case MVT::f128:  return "f128";
-  case MVT::Flag:  return "Flag";
-  case MVT::isVoid:return "isVoid";
-  case MVT::v8i8:  return "v8i8";
-  case MVT::v4i16: return "v4i16";
-  case MVT::v2i32: return "v2i32";
-  case MVT::v16i8: return "v16i8";
-  case MVT::v8i16: return "v8i16";
-  case MVT::v4i32: return "v4i32";
-  case MVT::v2i64: return "v2i64";
-  case MVT::v2f32: return "v2f32";
-  case MVT::v4f32: return "v4f32";
-  case MVT::v2f64: return "v2f64";
+  case MVT::Other: return "MVT::Other";
+  case MVT::i1:    return "MVT::i1";
+  case MVT::i8:    return "MVT::i8";
+  case MVT::i16:   return "MVT::i16";
+  case MVT::i32:   return "MVT::i32";
+  case MVT::i64:   return "MVT::i64";
+  case MVT::i128:  return "MVT::i128";
+  case MVT::f32:   return "MVT::f32";
+  case MVT::f64:   return "MVT::f64";
+  case MVT::f80:   return "MVT::f80";
+  case MVT::f128:  return "MVT::f128";
+  case MVT::Flag:  return "MVT::Flag";
+  case MVT::isVoid:return "MVT::isVoid";
+  case MVT::v8i8:  return "MVT::v8i8";
+  case MVT::v4i16: return "MVT::v4i16";
+  case MVT::v2i32: return "MVT::v2i32";
+  case MVT::v16i8: return "MVT::v16i8";
+  case MVT::v8i16: return "MVT::v8i16";
+  case MVT::v4i32: return "MVT::v4i32";
+  case MVT::v2i64: return "MVT::v2i64";
+  case MVT::v2f32: return "MVT::v2f32";
+  case MVT::v4f32: return "MVT::v4f32";
+  case MVT::v2f64: return "MVT::v2f64";
+  case MVT::iPTR:  return "TLI.getPointetTy()";
   default: assert(0 && "ILLEGAL VALUE TYPE!"); return "";
   }
 }
@@ -104,7 +101,7 @@ std::ostream &llvm::operator<<(std::ostream &OS, MVT::ValueType T) {
 
 /// getTarget - Return the current instance of the Target class.
 ///
-CodeGenTarget::CodeGenTarget() : PointerType(MVT::Other) {
+CodeGenTarget::CodeGenTarget() {
   std::vector<Record*> Targets = Records.getAllDerivedDefinitions("Target");
   if (Targets.size() == 0)
     throw std::string("ERROR: No 'Target' subclasses defined!");
@@ -114,7 +111,6 @@ CodeGenTarget::CodeGenTarget() : PointerType(MVT::Other) {
 
   // Read in all of the CalleeSavedRegisters.
   CalleeSavedRegisters =TargetRec->getValueAsListOfDefs("CalleeSavedRegisters");
-  PointerType = getValueType(TargetRec->getValueAsDef("PointerType"));
 }
 
 

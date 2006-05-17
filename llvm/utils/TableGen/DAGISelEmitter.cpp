@@ -156,7 +156,7 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
     return NodeToApply->UpdateNodeType(x.SDTCisVT_Info.VT, TP);
   case SDTCisPtrTy: {
     // Operand must be same as target pointer type.
-    return NodeToApply->UpdateNodeType(CGT.getPointerType(), TP);
+    return NodeToApply->UpdateNodeType(MVT::iPTR, TP);
   }
   case SDTCisInt: {
     // If there is only one integer type supported, this must be it.
@@ -346,6 +346,18 @@ bool TreePatternNode::UpdateNodeType(const std::vector<unsigned char> &ExtVTs,
     setTypes(ExtVTs);
     return true;
   }
+
+  if (getExtTypeNum(0) == MVT::iPTR) {
+    if (ExtVTs[0] == MVT::iPTR || ExtVTs[0] == MVT::isInt)
+      return false;
+    if (isExtIntegerInVTs(ExtVTs)) {
+      std::vector<unsigned char> FVTs = FilterEVTs(ExtVTs, MVT::isInteger);
+      if (FVTs.size()) {
+        setTypes(ExtVTs);
+        return true;
+      }
+    }
+  }
   
   if (ExtVTs[0] == MVT::isInt && isExtIntegerInVTs(getExtTypes())) {
     assert(hasTypeSet() && "should be handled above!");
@@ -355,6 +367,16 @@ bool TreePatternNode::UpdateNodeType(const std::vector<unsigned char> &ExtVTs,
     setTypes(FVTs);
     return true;
   }
+  if (ExtVTs[0] == MVT::iPTR && isExtIntegerInVTs(getExtTypes())) {
+    //assert(hasTypeSet() && "should be handled above!");
+    std::vector<unsigned char> FVTs = FilterEVTs(getExtTypes(), MVT::isInteger);
+    if (getExtTypes() == FVTs)
+      return false;
+    if (FVTs.size()) {
+      setTypes(FVTs);
+      return true;
+    }
+  }      
   if (ExtVTs[0] == MVT::isFP  && isExtFloatingPointInVTs(getExtTypes())) {
     assert(hasTypeSet() && "should be handled above!");
     std::vector<unsigned char> FVTs =
@@ -374,7 +396,11 @@ bool TreePatternNode::UpdateNodeType(const std::vector<unsigned char> &ExtVTs,
       (getExtTypeNum(0) == MVT::isFP  && isExtFloatingPointInVTs(ExtVTs))) {
     setTypes(ExtVTs);
     return true;
-  }      
+  }
+  if (getExtTypeNum(0) == MVT::isInt && ExtVTs[0] == MVT::iPTR) {
+    setTypes(ExtVTs);
+    return true;
+  }
 
   if (isLeaf()) {
     dump();
@@ -402,6 +428,7 @@ void TreePatternNode::print(std::ostream &OS) const {
   case MVT::isInt: OS << ":isInt"; break;
   case MVT::isFP : OS << ":isFP"; break;
   case MVT::isUnknown: ; /*OS << ":?";*/ break;
+  case MVT::iPTR:  OS << ":iPTR"; break;
   default:  OS << ":" << getTypeNum(0); break;
   }
 
@@ -603,19 +630,22 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
         // At some point, it may make sense for this tree pattern to have
         // multiple types.  Assert here that it does not, so we revisit this
         // code when appropriate.
-        assert(getExtTypes().size() >= 1 && "TreePattern does not have a type!");
+        assert(getExtTypes().size() >= 1 && "TreePattern doesn't have a type!");
         MVT::ValueType VT = getTypeNum(0);
         for (unsigned i = 1, e = getExtTypes().size(); i != e; ++i)
           assert(getTypeNum(i) == VT && "TreePattern has too many types!");
         
-        unsigned Size = MVT::getSizeInBits(getTypeNum(0));
-        // Make sure that the value is representable for this type.
-        if (Size < 32) {
-          int Val = (II->getValue() << (32-Size)) >> (32-Size);
-          if (Val != II->getValue())
-            TP.error("Sign-extended integer value '" + itostr(II->getValue()) +
-                     "' is out of range for type 'MVT::" + 
-                     getEnumName(getTypeNum(0)) + "'!");
+        VT = getTypeNum(0);
+        if (VT != MVT::iPTR) {
+          unsigned Size = MVT::getSizeInBits(VT);
+          // Make sure that the value is representable for this type.
+          if (Size < 32) {
+            int Val = (II->getValue() << (32-Size)) >> (32-Size);
+            if (Val != II->getValue())
+              TP.error("Sign-extended integer value '" + itostr(II->getValue())+
+                       "' is out of range for type '" + 
+                       getEnumName(getTypeNum(0)) + "'!");
+          }
         }
       }
       
@@ -652,8 +682,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
                utostr(getNumChildren()-1) + " operands!");
 
     // Apply type info to the intrinsic ID.
-    MVT::ValueType PtrTy = ISE.getTargetInfo().getPointerType();
-    MadeChange |= getChild(0)->UpdateNodeType(PtrTy, TP);
+    MadeChange |= getChild(0)->UpdateNodeType(MVT::iPTR, TP);
     
     for (unsigned i = 1, e = getNumChildren(); i != e; ++i) {
       MVT::ValueType OpVT = Int.ArgVTs[i];
@@ -1862,10 +1891,11 @@ static const ComplexPattern *NodeGetComplexPattern(TreePatternNode *N,
 /// patterns before small ones.  This is used to determine the size of a
 /// pattern.
 static unsigned getPatternSize(TreePatternNode *P, DAGISelEmitter &ISE) {
-  assert(isExtIntegerInVTs(P->getExtTypes()) || 
-         isExtFloatingPointInVTs(P->getExtTypes()) ||
-         P->getExtTypeNum(0) == MVT::isVoid ||
-         P->getExtTypeNum(0) == MVT::Flag && 
+  assert((isExtIntegerInVTs(P->getExtTypes()) || 
+          isExtFloatingPointInVTs(P->getExtTypes()) ||
+          P->getExtTypeNum(0) == MVT::isVoid ||
+          P->getExtTypeNum(0) == MVT::Flag ||
+          P->getExtTypeNum(0) == MVT::iPTR) && 
          "Not a valid pattern node to size!");
   unsigned Size = 2;  // The node itself.
   // If the root node is a ConstantSDNode, increases its size.
@@ -2340,7 +2370,7 @@ public:
         emitDecl("Tmp" + utostr(ResNo));
         emitCode("Tmp" + utostr(ResNo) + 
                  " = CurDAG->getTargetConstant(Tmp" + utostr(ResNo) + 
-                 "C, MVT::" + getEnumName(N->getTypeNum(0)) + ");");
+                 "C, " + getEnumName(N->getTypeNum(0)) + ");");
       } else if (!N->isLeaf() && N->getOperator()->getName() == "texternalsym"){
         Record *Op = OperatorMap[N->getName()];
         // Transform ExternalSymbol to TargetExternalSymbol
@@ -2348,7 +2378,7 @@ public:
           emitDecl("Tmp" + utostr(ResNo));
           emitCode("Tmp" + utostr(ResNo) + " = CurDAG->getTarget"
                    "ExternalSymbol(cast<ExternalSymbolSDNode>(" +
-                   Val + ")->getSymbol(), MVT::" +
+                   Val + ")->getSymbol(), " +
                    getEnumName(N->getTypeNum(0)) + ");");
         } else {
           emitDecl("Tmp" + utostr(ResNo));
@@ -2361,7 +2391,7 @@ public:
           emitDecl("Tmp" + utostr(ResNo));
           emitCode("Tmp" + utostr(ResNo) + " = CurDAG->getTarget"
                    "GlobalAddress(cast<GlobalAddressSDNode>(" + Val +
-                   ")->getGlobal(), MVT::" + getEnumName(N->getTypeNum(0)) +
+                   ")->getGlobal(), " + getEnumName(N->getTypeNum(0)) +
                    ");");
         } else {
           emitDecl("Tmp" + utostr(ResNo));
@@ -2420,7 +2450,7 @@ public:
         if (DI->getDef()->isSubClassOf("Register")) {
           emitDecl("Tmp" + utostr(ResNo));
           emitCode("Tmp" + utostr(ResNo) + " = CurDAG->getRegister(" +
-                   ISE.getQualifiedName(DI->getDef()) + ", MVT::" +
+                   ISE.getQualifiedName(DI->getDef()) + ", " +
                    getEnumName(N->getTypeNum(0)) + ");");
           return std::make_pair(1, ResNo);
         }
@@ -2430,7 +2460,7 @@ public:
         emitDecl("Tmp" + utostr(ResNo));
         emitCode("Tmp" + utostr(ResNo) + 
                  " = CurDAG->getTargetConstant(" + itostr(II->getValue()) +
-                 ", MVT::" + getEnumName(N->getTypeNum(0)) + ");");
+                 ", " + getEnumName(N->getTypeNum(0)) + ");");
         return std::make_pair(1, ResNo);
       }
     
@@ -2552,7 +2582,7 @@ public:
           // Result types.
           if (PatResults > 0) { 
             if (N->getTypeNum(0) != MVT::isVoid)
-              Code += ", MVT::" + getEnumName(N->getTypeNum(0));
+              Code += ", " + getEnumName(N->getTypeNum(0));
           }
           if (NodeHasChain)
             Code += ", MVT::Other";
@@ -2572,7 +2602,7 @@ public:
           // Output order: results, chain, flags
           // Result types.
           if (PatResults > 0 && N->getTypeNum(0) != MVT::isVoid)
-            Code += ", MVT::" + getEnumName(N->getTypeNum(0));
+            Code += ", " + getEnumName(N->getTypeNum(0));
           if (NodeHasChain)
             Code += ", MVT::Other";
           if (NodeHasOutFlag)
@@ -2606,7 +2636,7 @@ public:
           // Output order: results, chain, flags
           // Result types.
           if (NumResults > 0 && N->getTypeNum(0) != MVT::isVoid)
-            Code += ", MVT::" + getEnumName(N->getTypeNum(0));
+            Code += ", " + getEnumName(N->getTypeNum(0));
           if (NodeHasChain)
             Code += ", MVT::Other";
           if (NodeHasOutFlag)
@@ -2717,7 +2747,7 @@ public:
         std::string Code = "  Result = CurDAG->SelectNodeTo(N.Val, " +
           II.Namespace + "::" + II.TheDef->getName();
         if (N->getTypeNum(0) != MVT::isVoid)
-          Code += ", MVT::" + getEnumName(N->getTypeNum(0));
+          Code += ", " + getEnumName(N->getTypeNum(0));
         if (NodeHasOutFlag)
           Code += ", MVT::Flag";
         for (unsigned i = 0, e = Ops.size(); i != e; ++i)
@@ -2730,7 +2760,7 @@ public:
         Code = "  ResNode = CurDAG->getTargetNode(" +
                II.Namespace + "::" + II.TheDef->getName();
         if (N->getTypeNum(0) != MVT::isVoid)
-          Code += ", MVT::" + getEnumName(N->getTypeNum(0));
+          Code += ", " + getEnumName(N->getTypeNum(0));
         if (NodeHasOutFlag)
           Code += ", MVT::Flag";
         for (unsigned i = 0, e = Ops.size(); i != e; ++i)
@@ -2834,7 +2864,7 @@ private:
                        RootName + utostr(OpNo) + ");");
               emitCode("ResNode = CurDAG->getCopyToReg(" + ChainName +
                        ", CurDAG->getRegister(" + ISE.getQualifiedName(RR) +
-                       ", MVT::" + getEnumName(RVT) + "), " +
+                       ", " + getEnumName(RVT) + "), " +
                        RootName + utostr(OpNo) + ", InFlag).Val;");
               emitCode(ChainName + " = SDOperand(ResNode, 0);");
               emitCode("InFlag = SDOperand(ResNode, 1);");
@@ -2882,7 +2912,7 @@ private:
               ChainName = "Chain";
             }
             emitCode("ResNode = CurDAG->getCopyFromReg(" + ChainName + ", " +
-                     ISE.getQualifiedName(RR) + ", MVT::" + getEnumName(RVT) +
+                     ISE.getQualifiedName(RR) + ", " + getEnumName(RVT) +
                      ", InFlag).Val;");
             emitCode(ChainName + " = SDOperand(ResNode, 1);");
             emitCode("InFlag = SDOperand(ResNode, 2);");
