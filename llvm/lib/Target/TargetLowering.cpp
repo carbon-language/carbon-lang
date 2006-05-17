@@ -144,7 +144,7 @@ const char *TargetLowering::getTargetNodeName(unsigned Opcode) const {
 }
 
 /// getPackedTypeBreakdown - Packed types are broken down into some number of
-/// legal first class types. For example, <8 x float> maps to 2 MVT::v2f32
+/// legal first class types. For example, <8 x float> maps to 2 MVT::v4f32
 /// with Altivec or SSE1, or 8 promoted MVT::f64 values with the X86 FP stack.
 ///
 /// This method returns the number and type of the resultant breakdown.
