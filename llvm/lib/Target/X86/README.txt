@@ -1171,3 +1171,15 @@ _test:
         ret
 
 or use pxor (to make a zero vector) and shuffle (to insert it).
+
+//===---------------------------------------------------------------------===//
+
+Bad codegen:
+
+char foo(int x) { return x; }
+
+_foo:
+	movl 4(%esp), %eax
+	shll $24, %eax
+	sarl $24, %eax
+	ret
