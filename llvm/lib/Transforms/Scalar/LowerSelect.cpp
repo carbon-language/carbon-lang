@@ -39,10 +39,12 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       // This certainly destroys the CFG.
-      // This is a cluster of orthogonal Transforms:
+      // This is a cluster of orthogonal Transforms:	
       AU.addPreserved<UnifyFunctionExitNodes>();
       AU.addPreservedID(PromoteMemoryToRegisterID);
       AU.addPreservedID(LowerSwitchID);
+      AU.addPreservedID(LowerInvokePassID);
+      AU.addPreservedID(LowerAllocationsID);
     }
 
     bool runOnFunction(Function &F);

@@ -34,14 +34,16 @@ namespace {
   class LowerSwitch : public FunctionPass {
   public:
     virtual bool runOnFunction(Function &F);
-
+    
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      // This is a cluster of orthogonal Transforms
+      // This is a cluster of orthogonal Transforms	
       AU.addPreserved<UnifyFunctionExitNodes>();
       AU.addPreservedID(PromoteMemoryToRegisterID);
       AU.addPreservedID(LowerSelectID);
+      AU.addPreservedID(LowerInvokePassID);
+      AU.addPreservedID(LowerAllocationsID);
     }
-
+        
     typedef std::pair<Constant*, BasicBlock*> Case;
     typedef std::vector<Case>::iterator       CaseItr;
   private:

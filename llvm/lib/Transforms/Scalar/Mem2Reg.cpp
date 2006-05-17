@@ -38,10 +38,12 @@ namespace {
       AU.addRequired<DominanceFrontier>();
       AU.addRequired<TargetData>();
       AU.setPreservesCFG();
-      // This is a cluster of orthogonal Transforms
+      // This is a cluster of orthogonal Transforms	
       AU.addPreserved<UnifyFunctionExitNodes>();
       AU.addPreservedID(LowerSelectID);
       AU.addPreservedID(LowerSwitchID);
+      AU.addPreservedID(LowerInvokePassID);
+      AU.addPreservedID(LowerAllocationsID);
     }
   };
 

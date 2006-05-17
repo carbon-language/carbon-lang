@@ -41,11 +41,12 @@ namespace {
       AU.addRequired<TargetData>();
       AU.setPreservesCFG();
 
-      // This is a cluster of orthogonal Transforms:
+      // This is a cluster of orthogonal Transforms:	
       AU.addPreserved<UnifyFunctionExitNodes>();
       AU.addPreservedID(PromoteMemoryToRegisterID);
       AU.addPreservedID(LowerSelectID);
       AU.addPreservedID(LowerSwitchID);
+      AU.addPreservedID(LowerInvokePassID);
     }
 
     /// doPassInitialization - For the lower allocations pass, this ensures that
