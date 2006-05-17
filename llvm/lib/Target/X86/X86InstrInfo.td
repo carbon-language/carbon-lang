@@ -94,7 +94,7 @@ def X86Wrapper : SDNode<"X86ISD::Wrapper",  SDTX86Wrapper>;
 
 // *mem - Operand definitions for the funky X86 addressing mode operands.
 //
-class X86MemOperand<string printMethod> : Operand<i32> {
+class X86MemOperand<string printMethod> : Operand<iPTR> {
   let PrintMethod = printMethod;
   let NumMIOperands = 4;
   let MIOperandInfo = (ops GR32, i8imm, GR32, i32imm);
@@ -131,8 +131,8 @@ def brtarget : Operand<OtherVT>;
 //
 
 // Define X86 specific addressing mode.
-def addr    : ComplexPattern<i32, 4, "SelectAddr", []>;
-def leaaddr : ComplexPattern<i32, 4, "SelectLEAAddr",
+def addr    : ComplexPattern<iPTR, 4, "SelectAddr", []>;
+def leaaddr : ComplexPattern<iPTR, 4, "SelectLEAAddr",
                              [add, mul, shl, frameindex]>;
 
 //===----------------------------------------------------------------------===//
