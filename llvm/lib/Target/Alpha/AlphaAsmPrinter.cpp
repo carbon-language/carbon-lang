@@ -82,6 +82,7 @@ void AlphaAsmPrinter::printOperand(const MachineInstr *MI, int opNum)
     O << TM.getRegisterInfo()->get(MO.getReg()).Name;
   } else if (MO.isImmediate()) {
     O << MO.getImmedValue();
+    assert(MO.getImmedValue() < (1 << 30));
   } else {
     printOp(MO);
   }
