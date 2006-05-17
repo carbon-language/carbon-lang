@@ -2551,25 +2551,12 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
         
         // Figure out if there is a Packed type corresponding to this Vector
         // type.  If so, convert to the packed type.
-        bool Supported = false;
         MVT::ValueType TVT = MVT::getVectorType(getValueType(EltTy), NumElems);
-        if (TVT != MVT::Other) {
-          // Handle copies from generic vectors to registers.
-          MVT::ValueType PTyElementVT, PTyLegalElementVT;
-          unsigned NE = getPackedTypeBreakdown(PTy, PTyElementVT,
-                                               PTyLegalElementVT);
-          // FIXME: handle NE > 1 cases.
-          if (NE == 1) {
-            // Insert a VBIT_CONVERT of the MVT::Vector type to the packed type.
-            Op = DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, Op,
-                             DAG.getConstant(NumElems, MVT::i32), 
-                             DAG.getValueType(getValueType(EltTy)));
-            Ops.push_back(Op);
-            Supported = true;
-          }
-        }
-
-        if (!Supported) {
+        if (TVT != MVT::Other && isTypeLegal(TVT)) {
+          // Insert a VBIT_CONVERT of the MVT::Vector type to the packed type.
+          Op = DAG.getNode(ISD::VBIT_CONVERT, TVT, Op);
+          Ops.push_back(Op);
+        } else {
           assert(0 && "Don't support illegal by-val vector call args yet!");
           abort();
         }
