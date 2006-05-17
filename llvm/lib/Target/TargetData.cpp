@@ -139,7 +139,9 @@ TargetData::TargetData(const std::string &TargetName,
   while (temp.length() > 0) {
     std::string token = getToken(temp, "-");
     
-    switch(token[0]) {
+    char signal = getToken(token, ":")[0];
+    
+    switch(signal) {
     case 'E':
       LittleEndian = false;
       break;
