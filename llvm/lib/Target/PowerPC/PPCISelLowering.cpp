@@ -276,6 +276,8 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::EXTSW_32:      return "PPCISD::EXTSW_32";
   case PPCISD::STD_32:        return "PPCISD::STD_32";
   case PPCISD::CALL:          return "PPCISD::CALL";
+  case PPCISD::MTCTR:         return "PPCISD::MTCTR";
+  case PPCISD::BCTRL:         return "PPCISD::BCTRL";
   case PPCISD::RET_FLAG:      return "PPCISD::RET_FLAG";
   case PPCISD::MFCR:          return "PPCISD::MFCR";
   case PPCISD::VCMP:          return "PPCISD::VCMP";
@@ -877,6 +879,21 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
   return DAG.getNode(ISD::MERGE_VALUES, RetVT, ArgValues);
 }
 
+/// isCallCompatibleAddress - Return the immediate to use if the specified
+/// 32-bit value is representable in the immediate field of a BxA instruction.
+static SDNode *isBLACompatibleAddress(SDOperand Op, SelectionDAG &DAG) {
+  ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op);
+  if (!C) return 0;
+  
+  int Addr = C->getValue();
+  if ((Addr & 3) != 0 ||  // Low 2 bits are implicitly zero.
+      (Addr << 6 >> 6) != Addr)
+    return 0;  // Top 6 bits have to be sext of immediate.
+  
+  return DAG.getConstant((int)C->getValue() >> 2, MVT::i32).Val;
+}
+
+
 static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   SDOperand Chain = Op.getOperand(0);
   unsigned CallingConv= cast<ConstantSDNode>(Op.getOperand(1))->getValue();
@@ -1026,22 +1043,59 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     InFlag = Chain.getValue(1);
   }
   
-  // If the callee is a GlobalAddress node (quite common, every direct call is)
-  // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
+  std::vector<MVT::ValueType> NodeTys;
+  
+  // If the callee is a GlobalAddress/ExternalSymbol node (quite common, every
+  // direct call is) turn it into a TargetGlobalAddress/TargetExternalSymbol
+  // node so that legalize doesn't hack it.
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
     Callee = DAG.getTargetGlobalAddress(G->getGlobal(), Callee.getValueType());
+  else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
+    Callee = DAG.getTargetExternalSymbol(S->getSymbol(), Callee.getValueType());
+  else if (SDNode *Dest = isBLACompatibleAddress(Callee, DAG))
+    // If this is an absolute destination address, use the munged value.
+    Callee = SDOperand(Dest, 0);
+  else {
+    // Otherwise, this is an indirect call.  We have to use a MTCTR/BCTRL pair
+    // to do the call, we can't use PPCISD::CALL.
+    std::vector<SDOperand> Ops;
+    Ops.push_back(Chain);
+    Ops.push_back(Callee);
+    NodeTys.push_back(MVT::Other);
+    NodeTys.push_back(MVT::Flag);
+    
+    if (InFlag.Val)
+      Ops.push_back(InFlag);
+    Chain = DAG.getNode(PPCISD::MTCTR, NodeTys, Ops);
+    InFlag = Chain.getValue(1);
+    
+    // Copy the callee address into R12 on darwin.
+    Chain = DAG.getCopyToReg(Chain, PPC::R12, Callee, InFlag);
+    InFlag = Chain.getValue(1);
+
+    NodeTys.clear();
+    NodeTys.push_back(MVT::Other);
+    NodeTys.push_back(MVT::Flag);
+    Ops.clear();
+    Ops.push_back(Chain);
+    Ops.push_back(InFlag);
+    Chain = DAG.getNode(PPCISD::BCTRL, NodeTys, Ops);
+    InFlag = Chain.getValue(1);
+    Callee.Val = 0;
+  }
 
   // Create the PPCISD::CALL node itself.
-  std::vector<MVT::ValueType> NodeTys;
-  NodeTys.push_back(MVT::Other);   // Returns a chain
-  NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
-  std::vector<SDOperand> Ops;
-  Ops.push_back(Chain);
-  Ops.push_back(Callee);
-  if (InFlag.Val)
-    Ops.push_back(InFlag);
-  Chain = DAG.getNode(PPCISD::CALL, NodeTys, Ops);
-  InFlag = Chain.getValue(1);
+  if (Callee.Val) {
+    NodeTys.push_back(MVT::Other);   // Returns a chain
+    NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
+    std::vector<SDOperand> Ops;
+    Ops.push_back(Chain);
+    Ops.push_back(Callee);
+    if (InFlag.Val)
+      Ops.push_back(InFlag);
+    Chain = DAG.getNode(PPCISD::CALL, NodeTys, Ops);
+    InFlag = Chain.getValue(1);
+  }
   
   std::vector<SDOperand> ResultVals;
   NodeTys.clear();
@@ -1086,6 +1140,11 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
                       DAG.getConstant(NumBytes, MVT::i32));
   NodeTys.push_back(MVT::Other);
   
+  // If the function returns void, just return the chain.
+  if (ResultVals.empty())
+    return Chain;
+  
+  // Otherwise, merge everything together with a MERGE_VALUES node.
   ResultVals.push_back(Chain);
   SDOperand Res = DAG.getNode(ISD::MERGE_VALUES, NodeTys, ResultVals);
   return Res.getValue(Op.ResNo);

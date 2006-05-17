@@ -24,7 +24,6 @@ def SDT_PPCShiftOp : SDTypeProfile<1, 2, [   // PPCshl, PPCsra, PPCsrl
   SDTCisVT<0, i32>, SDTCisVT<1, i32>, SDTCisVT<2, i32>
 ]>;
 def SDT_PPCCallSeq : SDTypeProfile<0, 1, [ SDTCisVT<0, i32> ]>;
-def SDT_PPCRetFlag : SDTypeProfile<0, 0, []>;
 
 def SDT_PPCvperm   : SDTypeProfile<1, 3, [
   SDTCisVT<3, v16i8>, SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>
@@ -73,10 +72,14 @@ def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_PPCCallSeq,[SDNPHasChain]>;
 def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_PPCCallSeq,[SDNPHasChain]>;
 
 def SDT_PPCCall   : SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
-def call          : SDNode<"PPCISD::CALL", SDT_PPCCall,
+def PPCcall       : SDNode<"PPCISD::CALL", SDT_PPCCall,
                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+def PPCmtctr      : SDNode<"PPCISD::MTCTR", SDT_PPCCall,
+                           [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+def PPCbctrl      : SDNode<"PPCISD::BCTRL", SDTRet,
+	                   [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
-def retflag       : SDNode<"PPCISD::RET_FLAG", SDT_PPCRetFlag,
+def retflag       : SDNode<"PPCISD::RET_FLAG", SDTRet,
 	                   [SDNPHasChain, SDNPOptInFlag]>;
 
 def PPCvcmp       : SDNode<"PPCISD::VCMP" , SDT_PPCvcmp, []>;
@@ -308,11 +311,11 @@ let isCall = 1, noResults = 1, PPC970_Unit = 7,
           CR0,CR1,CR5,CR6,CR7] in {
   // Convenient aliases for call instructions
   def BL  : IForm<18, 0, 1, (ops calltarget:$func), 
-                            "bl $func", BrB, []>;
+                            "bl $func", BrB, []>;  // See Pat patterns below.
   def BLA : IForm<18, 1, 1, (ops aaddr:$func),
-                            "bla $func", BrB, []>;
+                            "bla $func", BrB, [(PPCcall imm:$func)]>;
   def BCTRL : XLForm_2_ext<19, 528, 20, 0, 1, (ops), "bctrl", BrB,
-                           []>;
+                           [(PPCbctrl)]>;
 }
 
 // D-Form instructions.  Most instructions that perform an operation on a
@@ -701,8 +704,10 @@ def MCRF   : XLForm_3<19, 0, (ops CRRC:$BF, CRRC:$BFA),
 //
 def MFCTR : XFXForm_1_ext<31, 339, 9, (ops GPRC:$rT), "mfctr $rT", SprMFSPR>,
             PPC970_DGroup_First, PPC970_Unit_FXU;
+let Pattern = [(PPCmtctr GPRC:$rS)] in {
 def MTCTR : XFXForm_7_ext<31, 467, 9, (ops GPRC:$rS), "mtctr $rS", SprMTSPR>,
             PPC970_DGroup_First, PPC970_Unit_FXU;
+}
 
 def MTLR  : XFXForm_7_ext<31, 467, 8, (ops GPRC:$rS), "mtlr $rS", SprMTSPR>,
             PPC970_DGroup_First, PPC970_Unit_FXU;
@@ -1013,7 +1018,13 @@ def : Pat<(rotl GPRC:$in, GPRC:$sh),
           (RLWNM GPRC:$in, GPRC:$sh, 0, 31)>;
 def : Pat<(rotl GPRC:$in, (i32 imm:$imm)),
           (RLWINM GPRC:$in, imm:$imm, 0, 31)>;
-          
+
+// Calls
+def : Pat<(PPCcall tglobaladdr:$dst),
+          (BL tglobaladdr:$dst)>;
+def : Pat<(PPCcall texternalsym:$dst),
+          (BL texternalsym:$dst)>;
+
 // Hi and Lo for Darwin Global Addresses.
 def : Pat<(PPChi tglobaladdr:$in, 0), (LIS tglobaladdr:$in)>;
 def : Pat<(PPClo tglobaladdr:$in, 0), (LI tglobaladdr:$in)>;

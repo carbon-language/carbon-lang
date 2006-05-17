@@ -152,7 +152,6 @@ namespace {
     
 private:
     SDOperand SelectSETCC(SDOperand Op);
-    SDOperand SelectCALL(SDOperand Op);
   };
 }
 
@@ -864,66 +863,6 @@ SDOperand PPCDAGToDAGISel::SelectSETCC(SDOperand Op) {
   }
 }
 
-/// isCallCompatibleAddress - Return true if the specified 32-bit value is
-/// representable in the immediate field of a Bx instruction.
-static bool isCallCompatibleAddress(ConstantSDNode *C) {
-  int Addr = C->getValue();
-  if (Addr & 3) return false;  // Low 2 bits are implicitly zero.
-  return (Addr << 6 >> 6) == Addr;  // Top 6 bits have to be sext of immediate.
-}
-
-SDOperand PPCDAGToDAGISel::SelectCALL(SDOperand Op) {
-  SDNode *N = Op.Val;
-  SDOperand Chain, Flag;
-  Select(Chain, N->getOperand(0));
-  if (N->getNumOperands() == 3) // input flag
-    Select(Flag, N->getOperand(2));
-  
-  unsigned CallOpcode;
-
-  std::vector<SDOperand> CallArgs;
-  if (GlobalAddressSDNode *GASD =
-      dyn_cast<GlobalAddressSDNode>(N->getOperand(1))) {
-    CallOpcode = PPC::BL;
-    CallArgs.push_back(N->getOperand(1));
-  } else if (ExternalSymbolSDNode *ESSDN =
-             dyn_cast<ExternalSymbolSDNode>(N->getOperand(1))) {
-    CallOpcode = PPC::BL;
-    CallArgs.push_back(N->getOperand(1));
-  } else if (isa<ConstantSDNode>(N->getOperand(1)) &&
-             isCallCompatibleAddress(cast<ConstantSDNode>(N->getOperand(1)))) {
-    ConstantSDNode *C = cast<ConstantSDNode>(N->getOperand(1));
-    CallOpcode = PPC::BLA;
-    CallArgs.push_back(getI32Imm((int)C->getValue() >> 2));
-  } else {
-    // Copy the callee address into the CTR register.
-    SDOperand Callee;
-    Select(Callee, N->getOperand(1));
-    if (Flag.Val)
-      Chain = SDOperand(CurDAG->getTargetNode(PPC::MTCTR, MVT::Other, MVT::Flag,
-                                              Callee, Chain, Flag), 0);
-    else
-      Chain = SDOperand(CurDAG->getTargetNode(PPC::MTCTR, MVT::Other, MVT::Flag,
-                                              Callee, Chain), 0);
-    Flag = Chain.getValue(1);
-    
-    // Copy the callee address into R12 on darwin.
-    Chain = CurDAG->getCopyToReg(Chain, PPC::R12, Callee, Flag);
-    Flag = Chain.getValue(1);
-
-    CallOpcode = PPC::BCTRL;
-  }
-  
-  // Emit the call itself.
-  CallArgs.push_back(Chain);
-  if (Flag.Val)
-    CallArgs.push_back(Flag);
-  Chain = SDOperand(CurDAG->getTargetNode(CallOpcode, MVT::Other, MVT::Flag,
-                                          CallArgs), 0);
-  CodeGenMap[Op.getValue(0)] = Chain;
-  CodeGenMap[Op.getValue(1)] = Chain.getValue(1);
-  return Chain.getValue(Op.ResNo);
-}
 
 // Select - Convert the specified operand from a target-independent to a
 // target-specific node if it hasn't already been changed.
@@ -946,9 +885,6 @@ void PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
   default: break;
   case ISD::SETCC:
     Result = SelectSETCC(Op);
-    return;
-  case PPCISD::CALL:
-    Result = SelectCALL(Op);
     return;
   case PPCISD::GlobalBaseReg:
     Result = getGlobalBaseReg();

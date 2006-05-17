@@ -75,8 +75,16 @@ namespace llvm {
       /// STD_32 - This is the STD instruction for use with "32-bit" registers.
       STD_32,
       
-      /// CALL - A function call.
+      /// CALL - A direct function call.
       CALL,
+      
+      /// CHAIN,FLAG = MTCTR(VAL, CHAIN[, INFLAG]) - Directly corresponds to a
+      /// MTCTR instruction.
+      MTCTR,
+      
+      /// CHAIN,FLAG = BCTRL(CHAIN, INFLAG) - Directly corresponds to a
+      /// BCTRL instruction.
+      BCTRL,
       
       /// Return with a flag operand, matched by 'blr'
       RET_FLAG,
