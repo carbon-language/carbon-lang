@@ -1183,3 +1183,12 @@ _foo:
 	shll $24, %eax
 	sarl $24, %eax
 	ret
+
+//===---------------------------------------------------------------------===//
+
+Some useful information in the Apple Altivec / SSE Migration Guide:
+
+http://developer.apple.com/documentation/Performance/Conceptual/
+Accelerate_sse_migration/index.html
+
+e.g. SSE select using and, andnot, or. Various SSE compare translations.
