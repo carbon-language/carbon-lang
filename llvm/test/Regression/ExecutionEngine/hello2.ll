@@ -8,10 +8,10 @@
 
 implementation
 
-declare void %printf([13 x sbyte]*)
+declare void %printf([13 x sbyte]*,...)
 
 void %bar() {
-  call void %printf([13 x sbyte]* %msg)
+  call void([13 x sbyte]*,...)* %printf([13 x sbyte]* %msg)
   ret void 
 }
 
