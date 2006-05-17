@@ -889,120 +889,126 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   std::vector<SDOperand> args_to_use;
   
   // Count how many bytes are to be pushed on the stack, including the linkage
-  // area, and parameter passing area.
+  // area, and parameter passing area.  We start with 24 bytes, which is
+  // prereserved space for [SP][CR][LR][3 x unused].
   unsigned NumBytes = 24;
   
-  if (Op.getNumOperands() == 5) {
-    Chain = DAG.getCALLSEQ_START(Chain, DAG.getConstant(NumBytes, MVT::i32));
-  } else {
-    for (unsigned i = 5, e = Op.getNumOperands(); i != e; ++i)
-      NumBytes += MVT::getSizeInBits(Op.getOperand(i).getValueType())/8;
-        
-    // Just to be safe, we'll always reserve the full 24 bytes of linkage area
-    // plus 32 bytes of argument space in case any called code gets funky on us.
-    // (Required by ABI to support var arg)
-    if (NumBytes < 56) NumBytes = 56;
-    
-    // Adjust the stack pointer for the new arguments...
-    // These operations are automatically eliminated by the prolog/epilog pass
-    Chain = DAG.getCALLSEQ_START(Chain,
-                                 DAG.getConstant(NumBytes, MVT::i32));
-    
-    // Set up a copy of the stack pointer for use loading and storing any
-    // arguments that may not fit in the registers available for argument
-    // passing.
-    SDOperand StackPtr = DAG.getRegister(PPC::R1, MVT::i32);
-    
-    // Figure out which arguments are going to go in registers, and which in
-    // memory.  Also, if this is a vararg function, floating point operations
-    // must be stored to our stack, and loaded into integer regs as well, if
-    // any integer regs are available for argument passing.
-    unsigned ArgOffset = 24;
-    unsigned GPR_remaining = 8;
-    unsigned FPR_remaining = 13;
-    unsigned VR_remaining  = 12;
+  // Add up all the space actually used.
+  for (unsigned i = 5, e = Op.getNumOperands(); i != e; ++i)
+    NumBytes += MVT::getSizeInBits(Op.getOperand(i).getValueType())/8;
 
-    std::vector<SDOperand> MemOps;
-    for (unsigned i = 5, e = Op.getNumOperands(); i != e; ++i) {
-      SDOperand Arg = Op.getOperand(i);
-      
-      // PtrOff will be used to store the current argument to the stack if a
-      // register cannot be found for it.
-      SDOperand PtrOff = DAG.getConstant(ArgOffset, StackPtr.getValueType());
-      PtrOff = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
-      switch (Arg.getValueType()) {
-      default: assert(0 && "Unexpected ValueType for argument!");
-      case MVT::i32:
-        if (GPR_remaining > 0) {
-          args_to_use.push_back(Arg);
-          --GPR_remaining;
-        } else {
-          MemOps.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                       Arg, PtrOff, DAG.getSrcValue(NULL)));
-        }
-        ArgOffset += 4;
-        break;
-      case MVT::f32:
-      case MVT::f64:
-        if (FPR_remaining > 0) {
-          args_to_use.push_back(Arg);
-          --FPR_remaining;
-          if (isVarArg) {
-            SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                          Arg, PtrOff,
-                                          DAG.getSrcValue(NULL));
-            MemOps.push_back(Store);
-            // Float varargs are always shadowed in available integer registers
-            if (GPR_remaining > 0) {
-              SDOperand Load = DAG.getLoad(MVT::i32, Store, PtrOff,
-                                           DAG.getSrcValue(NULL));
-              MemOps.push_back(Load.getValue(1));
-              args_to_use.push_back(Load);
-              --GPR_remaining;
-            }
-            if (GPR_remaining > 0 && Arg.getValueType() == MVT::f64) {
-              SDOperand ConstFour = DAG.getConstant(4, PtrOff.getValueType());
-              PtrOff = DAG.getNode(ISD::ADD, MVT::i32, PtrOff, ConstFour);
-              SDOperand Load = DAG.getLoad(MVT::i32, Store, PtrOff,
-                                           DAG.getSrcValue(NULL));
-              MemOps.push_back(Load.getValue(1));
-              args_to_use.push_back(Load);
-              --GPR_remaining;
-            }
-          } else {
-            // If we have any FPRs remaining, we may also have GPRs remaining.
-            // Args passed in FPRs consume either 1 (f32) or 2 (f64) available
-            // GPRs.
-            if (GPR_remaining > 0) {
-              args_to_use.push_back(DAG.getNode(ISD::UNDEF, MVT::i32));
-              --GPR_remaining;
-            }
-            if (GPR_remaining > 0 && Arg.getValueType() == MVT::f64) {
-              args_to_use.push_back(DAG.getNode(ISD::UNDEF, MVT::i32));
-              --GPR_remaining;
-            }
+  // If we are calling what looks like a varargs function on the caller side,
+  // there are two cases:
+  //  1) The callee uses va_start.
+  //  2) The callee doesn't use va_start.
+  //
+  // In the case of #1, the prolog code will store up to 8 GPR argument
+  // registers to the stack, allowing va_start to index over them in memory.
+  // Because we cannot tell the difference (on the caller side) between #1/#2,
+  // we have to conservatively assume we have #1.  As such, make sure we have
+  // at least enough stack space for the caller to store the 8 GPRs.
+  if (isVarArg && Op.getNumOperands() > 5 && NumBytes < 56)
+    NumBytes = 56;
+  
+  // Adjust the stack pointer for the new arguments...
+  // These operations are automatically eliminated by the prolog/epilog pass
+  Chain = DAG.getCALLSEQ_START(Chain,
+                               DAG.getConstant(NumBytes, MVT::i32));
+  
+  // Set up a copy of the stack pointer for use loading and storing any
+  // arguments that may not fit in the registers available for argument
+  // passing.
+  SDOperand StackPtr = DAG.getRegister(PPC::R1, MVT::i32);
+  
+  // Figure out which arguments are going to go in registers, and which in
+  // memory.  Also, if this is a vararg function, floating point operations
+  // must be stored to our stack, and loaded into integer regs as well, if
+  // any integer regs are available for argument passing.
+  unsigned ArgOffset = 24;
+  unsigned GPR_remaining = 8;
+  unsigned FPR_remaining = 13;
+  unsigned VR_remaining  = 12;
+
+  std::vector<SDOperand> MemOps;
+  for (unsigned i = 5, e = Op.getNumOperands(); i != e; ++i) {
+    SDOperand Arg = Op.getOperand(i);
+    
+    // PtrOff will be used to store the current argument to the stack if a
+    // register cannot be found for it.
+    SDOperand PtrOff = DAG.getConstant(ArgOffset, StackPtr.getValueType());
+    PtrOff = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
+    switch (Arg.getValueType()) {
+    default: assert(0 && "Unexpected ValueType for argument!");
+    case MVT::i32:
+      if (GPR_remaining > 0) {
+        args_to_use.push_back(Arg);
+        --GPR_remaining;
+      } else {
+        MemOps.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                     Arg, PtrOff, DAG.getSrcValue(NULL)));
+      }
+      ArgOffset += 4;
+      break;
+    case MVT::f32:
+    case MVT::f64:
+      if (FPR_remaining > 0) {
+        args_to_use.push_back(Arg);
+        --FPR_remaining;
+        if (isVarArg) {
+          SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                        Arg, PtrOff,
+                                        DAG.getSrcValue(NULL));
+          MemOps.push_back(Store);
+          // Float varargs are always shadowed in available integer registers
+          if (GPR_remaining > 0) {
+            SDOperand Load = DAG.getLoad(MVT::i32, Store, PtrOff,
+                                         DAG.getSrcValue(NULL));
+            MemOps.push_back(Load.getValue(1));
+            args_to_use.push_back(Load);
+            --GPR_remaining;
+          }
+          if (GPR_remaining > 0 && Arg.getValueType() == MVT::f64) {
+            SDOperand ConstFour = DAG.getConstant(4, PtrOff.getValueType());
+            PtrOff = DAG.getNode(ISD::ADD, MVT::i32, PtrOff, ConstFour);
+            SDOperand Load = DAG.getLoad(MVT::i32, Store, PtrOff,
+                                         DAG.getSrcValue(NULL));
+            MemOps.push_back(Load.getValue(1));
+            args_to_use.push_back(Load);
+            --GPR_remaining;
           }
         } else {
-          MemOps.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                       Arg, PtrOff, DAG.getSrcValue(NULL)));
+          // If we have any FPRs remaining, we may also have GPRs remaining.
+          // Args passed in FPRs consume either 1 (f32) or 2 (f64) available
+          // GPRs.
+          if (GPR_remaining > 0) {
+            args_to_use.push_back(DAG.getNode(ISD::UNDEF, MVT::i32));
+            --GPR_remaining;
+          }
+          if (GPR_remaining > 0 && Arg.getValueType() == MVT::f64) {
+            args_to_use.push_back(DAG.getNode(ISD::UNDEF, MVT::i32));
+            --GPR_remaining;
+          }
         }
-        ArgOffset += (Arg.getValueType() == MVT::f32) ? 4 : 8;
-        break;
-      case MVT::v4f32:
-      case MVT::v4i32:
-      case MVT::v8i16:
-      case MVT::v16i8:
-        assert(!isVarArg && "Don't support passing vectors to varargs yet!");
-        assert(VR_remaining &&
-               "Don't support passing more than 12 vector args yet!");
-        args_to_use.push_back(Arg);
-        --VR_remaining;
-        break;
+      } else {
+        MemOps.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                     Arg, PtrOff, DAG.getSrcValue(NULL)));
       }
+      ArgOffset += (Arg.getValueType() == MVT::f32) ? 4 : 8;
+      break;
+    case MVT::v4f32:
+    case MVT::v4i32:
+    case MVT::v8i16:
+    case MVT::v16i8:
+      assert(!isVarArg && "Don't support passing vectors to varargs yet!");
+      assert(VR_remaining &&
+             "Don't support passing more than 12 vector args yet!");
+      args_to_use.push_back(Arg);
+      --VR_remaining;
+      break;
     }
-    if (!MemOps.empty())
-      Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, MemOps);
   }
+  if (!MemOps.empty())
+    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, MemOps);
   
   std::vector<MVT::ValueType> RetVals(Op.Val->value_begin(), 
                                       Op.Val->value_end());
