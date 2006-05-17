@@ -26,6 +26,14 @@ using namespace llvm;
 /// respectively) refer to the right globals.
 ///
 Module *llvm::CloneModule(const Module *M) {
+  // Create the value map that maps things from the old module over to the new
+  // module.
+  std::map<const Value*, Value*> ValueMap;
+
+  return CloneModule(M, ValueMap);
+}
+
+Module *llvm::CloneModule(const Module *M, std::map<const Value*, Value*> &ValueMap) {
   // First off, we need to create the new module...
   Module *New = new Module(M->getModuleIdentifier());
   New->setEndianness(M->getEndianness());
@@ -43,10 +51,6 @@ Module *llvm::CloneModule(const Module *M) {
   // Copy all of the dependent libraries over.
   for (Module::lib_iterator I = M->lib_begin(), E = M->lib_end(); I != E; ++I)
     New->addLibrary(*I);
-
-  // Create the value map that maps things from the old module over to the new
-  // module.
-  std::map<const Value*, Value*> ValueMap;
 
   // Loop over all of the global variables, making corresponding globals in the
   // new module.  Here we add them to the ValueMap and to the new Module.  We

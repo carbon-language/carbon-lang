@@ -37,6 +37,7 @@ class CallGraph;
 /// CloneModule - Return an exact copy of the specified module
 ///
 Module *CloneModule(const Module *M);
+Module *CloneModule(const Module *M, std::map<const Value*, Value*> &ValueMap);
 
 /// ClonedCodeInfo - This struct can be used to capture information about code
 /// being cloned, while it is being cloned.
