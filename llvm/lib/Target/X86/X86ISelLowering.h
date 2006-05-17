@@ -369,7 +369,7 @@ namespace llvm {
     std::vector<std::pair<FALocInfo, FALocInfo> > FormalArgLocs;
 
     // C Calling Convention implementation.
-    void PreprocessCCCArguments(std::vector<SDOperand>Args, Function &F,
+    void PreprocessCCCArguments(std::vector<SDOperand> &Args, Function &F,
                                 SelectionDAG &DAG);
     void LowerCCCArguments(SDOperand Op, SelectionDAG &DAG);
     std::pair<SDOperand, SDOperand>
@@ -379,7 +379,7 @@ namespace llvm {
 
     // Fast Calling Convention implementation.
     void
-    PreprocessFastCCArguments(std::vector<SDOperand>Args, Function &F,
+    PreprocessFastCCArguments(std::vector<SDOperand> &Args, Function &F,
                               SelectionDAG &DAG);
     void
     LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG);

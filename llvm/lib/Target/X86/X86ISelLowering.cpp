@@ -461,7 +461,7 @@ static std::vector<SDOperand> getFormalArgObjects(SDOperand Op) {
   return Objs;
 }
 
-void X86TargetLowering::PreprocessCCCArguments(std::vector<SDOperand>Args,
+void X86TargetLowering::PreprocessCCCArguments(std::vector<SDOperand> &Args,
                                                Function &F, SelectionDAG &DAG) {
   unsigned NumArgs = Args.size();
   MachineFunction &MF = DAG.getMachineFunction();
@@ -895,7 +895,7 @@ HowToPassFastCCArgument(MVT::ValueType ObjectVT,
 }
 
 void
-X86TargetLowering::PreprocessFastCCArguments(std::vector<SDOperand>Args,
+X86TargetLowering::PreprocessFastCCArguments(std::vector<SDOperand> &Args,
                                              Function &F, SelectionDAG &DAG) {
   unsigned NumArgs = Args.size();
   MachineFunction &MF = DAG.getMachineFunction();
