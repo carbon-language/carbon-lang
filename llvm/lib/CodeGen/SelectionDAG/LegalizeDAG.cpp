@@ -820,13 +820,15 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::FORMAL_ARGUMENTS:
   case ISD::CALL:
     // The only option for this is to custom lower it.
-    Result = TLI.LowerOperation(Result.getValue(0), DAG);
-    assert(Result.Val && "Target didn't custom lower this node!");
+    Tmp3 = TLI.LowerOperation(Result.getValue(0), DAG);
+    assert(Tmp3.Val && "Target didn't custom lower this node!");
+    assert(Tmp3.Val->getNumValues() == Result.Val->getNumValues() &&
+           "Lowering call/formal_arguments produced unexpected # results!");
     
     // Since CALL/FORMAL_ARGUMENTS nodes produce multiple values, make sure to
     // remember that we legalized all of them, so it doesn't get relegalized.
-    for (unsigned i = 0, e = Result.Val->getNumValues(); i != e; ++i) {
-      Tmp1 = LegalizeOp(Result.getValue(i));
+    for (unsigned i = 0, e = Tmp3.Val->getNumValues(); i != e; ++i) {
+      Tmp1 = LegalizeOp(Tmp3.getValue(i));
       if (Op.ResNo == i)
         Tmp2 = Tmp1;
       AddLegalizedOperand(SDOperand(Node, i), Tmp1);
@@ -1056,8 +1058,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
     // Merge in the last call, to ensure that this call start after the last
     // call ended.
-    Tmp1 = DAG.getNode(ISD::TokenFactor, MVT::Other, Tmp1, LastCALLSEQ_END);
-    Tmp1 = LegalizeOp(Tmp1);
+    if (LastCALLSEQ_END.getOpcode() != ISD::EntryNode) {
+      Tmp1 = DAG.getNode(ISD::TokenFactor, MVT::Other, Tmp1, LastCALLSEQ_END);
+      Tmp1 = LegalizeOp(Tmp1);
+    }
       
     // Do not try to legalize the target-specific arguments (#1+).
     if (Tmp1 != Node->getOperand(0)) {
