@@ -529,19 +529,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // If this is a target node, legalize it by legalizing the operands then
       // passing it through.
       std::vector<SDOperand> Ops;
-      bool Changed = false;
-      for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
+      for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i)
         Ops.push_back(LegalizeOp(Node->getOperand(i)));
-        Changed = Changed || Node->getOperand(i) != Ops.back();
-      }
-      if (Changed)
-        if (Node->getNumValues() == 1)
-          Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Ops);
-        else {
-          std::vector<MVT::ValueType> VTs(Node->value_begin(),
-                                          Node->value_end());
-          Result = DAG.getNode(Node->getOpcode(), VTs, Ops);
-        }
+
+      Result = DAG.UpdateNodeOperands(Result.getValue(0), Ops);
 
       for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
         AddLegalizedOperand(Op.getValue(i), Result.getValue(i));
@@ -1058,7 +1049,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
     // Merge in the last call, to ensure that this call start after the last
     // call ended.
-    if (LastCALLSEQ_END.getOpcode() != ISD::EntryNode) {
+    if (LastCALLSEQ_END.getOpcode() != ISD::EntryToken) {
       Tmp1 = DAG.getNode(ISD::TokenFactor, MVT::Other, Tmp1, LastCALLSEQ_END);
       Tmp1 = LegalizeOp(Tmp1);
     }
