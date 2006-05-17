@@ -271,10 +271,6 @@ class Target {
   // saved registers for a target.
   list<Register> CalleeSavedRegisters = [];
   
-  // PointerType - Specify the value type to be used to represent pointers in
-  // this target.  Typically this is an i32 or i64 type.
-  ValueType PointerType;
-
   // InstructionSet - Instruction set description for this target.
   InstrInfo InstructionSet;
 

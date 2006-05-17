@@ -81,9 +81,6 @@ def PPCInstrInfo : InstrInfo {
 
 
 def PPC : Target {
-  // Pointers on PPC are 32-bits in size.
-  let PointerType = i32;
-
   // Information about the instructions.
   let InstructionSet = PPCInstrInfo;
 

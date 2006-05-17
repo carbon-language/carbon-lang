@@ -91,10 +91,6 @@ def IA64 : Target {
    */
   ];
 
-  // We don't go anywhere near the LP32 variant of IA64 as 
-  // sometimes seen in (for example) HP-UX
-  let PointerType = i64;
-
   // Our instruction set
   let InstructionSet = IA64InstrInfo;
 

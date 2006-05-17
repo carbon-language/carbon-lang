@@ -75,9 +75,6 @@ def : Proc<"ultrasparc3-vis", [FeatureV9, FeatureV8Deprecated, FeatureVIS]>;
 //===----------------------------------------------------------------------===//
 
 def Sparc : Target {
-  // Pointers are 32-bits in size.
-  let PointerType = i32;
-
   // FIXME: Specify callee-saved registers
   let CalleeSavedRegisters = [];
 

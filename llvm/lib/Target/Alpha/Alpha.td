@@ -65,9 +65,6 @@ def : Processor<"ev67"   , Alpha21264Itineraries, [FeatureFIX, FeatureCIX]>;
 
 
 def Alpha : Target {
-  // Pointers on Alpha are 64-bits in size.
-  let PointerType = i64;
-
   let CalleeSavedRegisters = 
 	//saved regs
 	[R9, R10, R11, R12, R13, R14, 

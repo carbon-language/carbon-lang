@@ -40,9 +40,6 @@ def ARMInstrInfo : InstrInfo {
 //===----------------------------------------------------------------------===//
 
 def ARM : Target {
-  // Pointers are 32-bits in size.
-  let PointerType = i32;
-
   // FIXME: Specify callee-saved registers
   let CalleeSavedRegisters = [];
 

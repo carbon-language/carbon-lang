@@ -133,9 +133,6 @@ def X86 : Target {
   // Specify the callee saved registers.
   let CalleeSavedRegisters = [ESI, EDI, EBX, EBP];
 
-  // Yes, pointers are 32-bits in size.
-  let PointerType = i32;
-
   // Information about the instructions...
   let InstructionSet = X86InstrInfo;
 
