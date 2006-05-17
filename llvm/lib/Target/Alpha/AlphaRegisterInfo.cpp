@@ -166,7 +166,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
     // 'sub ESP, <amt>' and the adjcallstackdown instruction into 'add ESP,
     // <amt>'
     MachineInstr *Old = I;
-    unsigned Amount = Old->getOperand(0).getImmedValue();
+    uint64_t Amount = Old->getOperand(0).getImmedValue();
     if (Amount != 0) {
       // We need to keep the stack aligned properly.  To do this, we round the
       // amount of space needed for the outgoing arguments up to the next
