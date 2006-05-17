@@ -874,129 +874,55 @@ static bool isCallCompatibleAddress(ConstantSDNode *C) {
 
 SDOperand PPCDAGToDAGISel::SelectCALL(SDOperand Op) {
   SDNode *N = Op.Val;
-  SDOperand Chain;
+  SDOperand Chain, Flag;
   Select(Chain, N->getOperand(0));
+  if (N->getNumOperands() == 3) // input flag
+    Select(Flag, N->getOperand(2));
   
   unsigned CallOpcode;
-  std::vector<SDOperand> CallOperands;
-  
+
+  std::vector<SDOperand> CallArgs;
   if (GlobalAddressSDNode *GASD =
       dyn_cast<GlobalAddressSDNode>(N->getOperand(1))) {
     CallOpcode = PPC::BL;
-    CallOperands.push_back(N->getOperand(1));
+    CallArgs.push_back(N->getOperand(1));
   } else if (ExternalSymbolSDNode *ESSDN =
              dyn_cast<ExternalSymbolSDNode>(N->getOperand(1))) {
     CallOpcode = PPC::BL;
-    CallOperands.push_back(N->getOperand(1));
+    CallArgs.push_back(N->getOperand(1));
   } else if (isa<ConstantSDNode>(N->getOperand(1)) &&
              isCallCompatibleAddress(cast<ConstantSDNode>(N->getOperand(1)))) {
     ConstantSDNode *C = cast<ConstantSDNode>(N->getOperand(1));
     CallOpcode = PPC::BLA;
-    CallOperands.push_back(getI32Imm((int)C->getValue() >> 2));
+    CallArgs.push_back(getI32Imm((int)C->getValue() >> 2));
   } else {
     // Copy the callee address into the CTR register.
     SDOperand Callee;
     Select(Callee, N->getOperand(1));
-    Chain = SDOperand(CurDAG->getTargetNode(PPC::MTCTR, MVT::Other, Callee,
-                                            Chain), 0);
+    if (Flag.Val)
+      Chain = SDOperand(CurDAG->getTargetNode(PPC::MTCTR, MVT::Other, MVT::Flag,
+                                              Callee, Chain, Flag), 0);
+    else
+      Chain = SDOperand(CurDAG->getTargetNode(PPC::MTCTR, MVT::Other, MVT::Flag,
+                                              Callee, Chain), 0);
+    Flag = Chain.getValue(1);
     
     // Copy the callee address into R12 on darwin.
-    SDOperand R12 = CurDAG->getRegister(PPC::R12, MVT::i32);
-    Chain = CurDAG->getNode(ISD::CopyToReg, MVT::Other, Chain, R12, Callee);
+    Chain = CurDAG->getCopyToReg(Chain, PPC::R12, Callee, Flag);
+    Flag = Chain.getValue(1);
 
-    CallOperands.push_back(R12);
     CallOpcode = PPC::BCTRL;
   }
   
-  unsigned GPR_idx = 0, FPR_idx = 0, VR_idx = 0;
-  static const unsigned GPR[] = {
-    PPC::R3, PPC::R4, PPC::R5, PPC::R6,
-    PPC::R7, PPC::R8, PPC::R9, PPC::R10,
-  };
-  static const unsigned FPR[] = {
-    PPC::F1, PPC::F2, PPC::F3, PPC::F4, PPC::F5, PPC::F6, PPC::F7,
-    PPC::F8, PPC::F9, PPC::F10, PPC::F11, PPC::F12, PPC::F13
-  };
-  static const unsigned VR[] = {
-    PPC::V2, PPC::V3, PPC::V4, PPC::V5, PPC::V6, PPC::V7, PPC::V8,
-    PPC::V9, PPC::V10, PPC::V11, PPC::V12, PPC::V13
-  };
-  
-  SDOperand InFlag;  // Null incoming flag value.
-  
-  for (unsigned i = 2, e = N->getNumOperands(); i != e; ++i) {
-    unsigned DestReg = 0;
-    MVT::ValueType RegTy = N->getOperand(i).getValueType();
-    if (RegTy == MVT::i32) {
-      assert(GPR_idx < 8 && "Too many int args");
-      DestReg = GPR[GPR_idx++];
-    } else if (MVT::isFloatingPoint(N->getOperand(i).getValueType())) {
-      assert(FPR_idx < 13 && "Too many fp args");
-      DestReg = FPR[FPR_idx++];
-    } else {
-      assert(MVT::isVector(N->getOperand(i).getValueType()) && "unknown arg!");
-      assert(VR_idx < 12 && "Too many vector args");
-      DestReg = VR[VR_idx++];
-    }
-    
-    if (N->getOperand(i).getOpcode() != ISD::UNDEF) {
-      SDOperand Val;
-      Select(Val, N->getOperand(i));
-      Chain = CurDAG->getCopyToReg(Chain, DestReg, Val, InFlag);
-      InFlag = Chain.getValue(1);
-      CallOperands.push_back(CurDAG->getRegister(DestReg, RegTy));
-    }
-  }
-  
-  // Finally, once everything is in registers to pass to the call, emit the
-  // call itself.
-  if (InFlag.Val)
-    CallOperands.push_back(InFlag);   // Strong dep on register copies.
-  else
-    CallOperands.push_back(Chain);    // Weak dep on whatever occurs before
+  // Emit the call itself.
+  CallArgs.push_back(Chain);
+  if (Flag.Val)
+    CallArgs.push_back(Flag);
   Chain = SDOperand(CurDAG->getTargetNode(CallOpcode, MVT::Other, MVT::Flag,
-                                          CallOperands), 0);
-  
-  std::vector<SDOperand> CallResults;
-  
-  // If the call has results, copy the values out of the ret val registers.
-  switch (N->getValueType(0)) {
-  default: assert(0 && "Unexpected ret value!");
-  case MVT::Other: break;
-  case MVT::i32:
-    if (N->getValueType(1) == MVT::i32) {
-      Chain = CurDAG->getCopyFromReg(Chain, PPC::R4, MVT::i32, 
-                                     Chain.getValue(1)).getValue(1);
-      CallResults.push_back(Chain.getValue(0));
-      Chain = CurDAG->getCopyFromReg(Chain, PPC::R3, MVT::i32,
-                                     Chain.getValue(2)).getValue(1);
-      CallResults.push_back(Chain.getValue(0));
-    } else {
-      Chain = CurDAG->getCopyFromReg(Chain, PPC::R3, MVT::i32,
-                                     Chain.getValue(1)).getValue(1);
-      CallResults.push_back(Chain.getValue(0));
-    }
-    break;
-  case MVT::f32:
-  case MVT::f64:
-    Chain = CurDAG->getCopyFromReg(Chain, PPC::F1, N->getValueType(0),
-                                   Chain.getValue(1)).getValue(1);
-    CallResults.push_back(Chain.getValue(0));
-    break;
-  case MVT::v4f32:
-  case MVT::v4i32:
-  case MVT::v8i16:
-  case MVT::v16i8:
-    Chain = CurDAG->getCopyFromReg(Chain, PPC::V2, N->getValueType(0),
-                                   Chain.getValue(1)).getValue(1);
-    CallResults.push_back(Chain.getValue(0));
-    break;
-  }
-  
-  CallResults.push_back(Chain);
-  for (unsigned i = 0, e = CallResults.size(); i != e; ++i)
-    CodeGenMap[Op.getValue(i)] = CallResults[i];
-  return CallResults[Op.ResNo];
+                                          CallArgs), 0);
+  CodeGenMap[Op.getValue(0)] = Chain;
+  CodeGenMap[Op.getValue(1)] = Chain.getValue(1);
+  return Chain.getValue(Op.ResNo);
 }
 
 // Select - Convert the specified operand from a target-independent to a

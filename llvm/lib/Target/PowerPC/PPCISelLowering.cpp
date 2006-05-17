@@ -925,11 +925,25 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   // must be stored to our stack, and loaded into integer regs as well, if
   // any integer regs are available for argument passing.
   unsigned ArgOffset = 24;
-  unsigned GPR_remaining = 8;
-  unsigned FPR_remaining = 13;
-  unsigned VR_remaining  = 12;
-
-  std::vector<SDOperand> MemOps;
+  unsigned GPR_idx = 0, FPR_idx = 0, VR_idx = 0;
+  static const unsigned GPR[] = {
+    PPC::R3, PPC::R4, PPC::R5, PPC::R6,
+    PPC::R7, PPC::R8, PPC::R9, PPC::R10,
+  };
+  static const unsigned FPR[] = {
+    PPC::F1, PPC::F2, PPC::F3, PPC::F4, PPC::F5, PPC::F6, PPC::F7,
+    PPC::F8, PPC::F9, PPC::F10, PPC::F11, PPC::F12, PPC::F13
+  };
+  static const unsigned VR[] = {
+    PPC::V2, PPC::V3, PPC::V4, PPC::V5, PPC::V6, PPC::V7, PPC::V8,
+    PPC::V9, PPC::V10, PPC::V11, PPC::V12, PPC::V13
+  };
+  const unsigned NumGPRs = sizeof(GPR)/sizeof(GPR[0]);
+  const unsigned NumFPRs = sizeof(FPR)/sizeof(FPR[0]);
+  const unsigned NumVRs  = sizeof( VR)/sizeof( VR[0]);
+  
+  std::vector<std::pair<unsigned, SDOperand> > RegsToPass;
+  std::vector<SDOperand> MemOpChains;
   for (unsigned i = 5, e = Op.getNumOperands(); i != e; ++i) {
     SDOperand Arg = Op.getOperand(i);
     
@@ -940,58 +954,52 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     switch (Arg.getValueType()) {
     default: assert(0 && "Unexpected ValueType for argument!");
     case MVT::i32:
-      if (GPR_remaining > 0) {
-        args_to_use.push_back(Arg);
-        --GPR_remaining;
+      if (GPR_idx != NumGPRs) {
+        RegsToPass.push_back(std::make_pair(GPR[GPR_idx++], Arg));
       } else {
-        MemOps.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                     Arg, PtrOff, DAG.getSrcValue(NULL)));
+        MemOpChains.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                          Arg, PtrOff, DAG.getSrcValue(NULL)));
       }
       ArgOffset += 4;
       break;
     case MVT::f32:
     case MVT::f64:
-      if (FPR_remaining > 0) {
-        args_to_use.push_back(Arg);
-        --FPR_remaining;
+      if (FPR_idx != NumFPRs) {
+        RegsToPass.push_back(std::make_pair(FPR[FPR_idx++], Arg));
+
         if (isVarArg) {
           SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Chain,
                                         Arg, PtrOff,
                                         DAG.getSrcValue(NULL));
-          MemOps.push_back(Store);
+          MemOpChains.push_back(Store);
+
           // Float varargs are always shadowed in available integer registers
-          if (GPR_remaining > 0) {
+          if (GPR_idx != NumGPRs) {
             SDOperand Load = DAG.getLoad(MVT::i32, Store, PtrOff,
                                          DAG.getSrcValue(NULL));
-            MemOps.push_back(Load.getValue(1));
-            args_to_use.push_back(Load);
-            --GPR_remaining;
+            MemOpChains.push_back(Load.getValue(1));
+            RegsToPass.push_back(std::make_pair(GPR[GPR_idx++], Load));
           }
-          if (GPR_remaining > 0 && Arg.getValueType() == MVT::f64) {
+          if (GPR_idx != NumGPRs && Arg.getValueType() == MVT::f64) {
             SDOperand ConstFour = DAG.getConstant(4, PtrOff.getValueType());
             PtrOff = DAG.getNode(ISD::ADD, MVT::i32, PtrOff, ConstFour);
             SDOperand Load = DAG.getLoad(MVT::i32, Store, PtrOff,
                                          DAG.getSrcValue(NULL));
-            MemOps.push_back(Load.getValue(1));
-            args_to_use.push_back(Load);
-            --GPR_remaining;
+            MemOpChains.push_back(Load.getValue(1));
+            RegsToPass.push_back(std::make_pair(GPR[GPR_idx++], Load));
           }
         } else {
           // If we have any FPRs remaining, we may also have GPRs remaining.
           // Args passed in FPRs consume either 1 (f32) or 2 (f64) available
           // GPRs.
-          if (GPR_remaining > 0) {
-            args_to_use.push_back(DAG.getNode(ISD::UNDEF, MVT::i32));
-            --GPR_remaining;
-          }
-          if (GPR_remaining > 0 && Arg.getValueType() == MVT::f64) {
-            args_to_use.push_back(DAG.getNode(ISD::UNDEF, MVT::i32));
-            --GPR_remaining;
-          }
+          if (GPR_idx != NumGPRs)
+            ++GPR_idx;
+          if (GPR_idx != NumGPRs && Arg.getValueType() == MVT::f64)
+            ++GPR_idx;
         }
       } else {
-        MemOps.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                     Arg, PtrOff, DAG.getSrcValue(NULL)));
+        MemOpChains.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                          Arg, PtrOff, DAG.getSrcValue(NULL)));
       }
       ArgOffset += (Arg.getValueType() == MVT::f32) ? 4 : 8;
       break;
@@ -1000,43 +1008,86 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     case MVT::v8i16:
     case MVT::v16i8:
       assert(!isVarArg && "Don't support passing vectors to varargs yet!");
-      assert(VR_remaining &&
+      assert(VR_idx != NumVRs &&
              "Don't support passing more than 12 vector args yet!");
-      args_to_use.push_back(Arg);
-      --VR_remaining;
+      RegsToPass.push_back(std::make_pair(VR[VR_idx++], Arg));
       break;
     }
   }
-  if (!MemOps.empty())
-    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, MemOps);
+  if (!MemOpChains.empty())
+    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, MemOpChains);
   
-  std::vector<MVT::ValueType> RetVals(Op.Val->value_begin(), 
-                                      Op.Val->value_end());
+  // Build a sequence of copy-to-reg nodes chained together with token chain
+  // and flag operands which copy the outgoing args into the appropriate regs.
+  SDOperand InFlag;
+  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
+    Chain = DAG.getCopyToReg(Chain, RegsToPass[i].first, RegsToPass[i].second,
+                             InFlag);
+    InFlag = Chain.getValue(1);
+  }
   
   // If the callee is a GlobalAddress node (quite common, every direct call is)
   // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
-    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), MVT::i32);
-  
+    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), Callee.getValueType());
+
+  // Create the PPCISD::CALL node itself.
+  std::vector<MVT::ValueType> NodeTys;
+  NodeTys.push_back(MVT::Other);   // Returns a chain
+  NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
   std::vector<SDOperand> Ops;
   Ops.push_back(Chain);
   Ops.push_back(Callee);
-  Ops.insert(Ops.end(), args_to_use.begin(), args_to_use.end());
-  SDOperand TheCall = DAG.getNode(PPCISD::CALL, RetVals, Ops);
+  if (InFlag.Val)
+    Ops.push_back(InFlag);
+  Chain = DAG.getNode(PPCISD::CALL, NodeTys, Ops);
+  InFlag = Chain.getValue(1);
   
-  Chain = TheCall.getValue(TheCall.Val->getNumValues()-1);
+  std::vector<SDOperand> ResultVals;
+  NodeTys.clear();
+  
+  // If the call has results, copy the values out of the ret val registers.
+  switch (Op.Val->getValueType(0)) {
+  default: assert(0 && "Unexpected ret value!");
+  case MVT::Other: break;
+  case MVT::i32:
+    if (Op.Val->getValueType(1) == MVT::i32) {
+      Chain = DAG.getCopyFromReg(Chain, PPC::R4, MVT::i32, InFlag).getValue(1);
+      ResultVals.push_back(Chain.getValue(0));
+      Chain = DAG.getCopyFromReg(Chain, PPC::R3, MVT::i32,
+                                 Chain.getValue(2)).getValue(1);
+      ResultVals.push_back(Chain.getValue(0));
+      NodeTys.push_back(MVT::i32);
+    } else {
+      Chain = DAG.getCopyFromReg(Chain, PPC::R3, MVT::i32, InFlag).getValue(1);
+      ResultVals.push_back(Chain.getValue(0));
+    }
+    NodeTys.push_back(MVT::i32);
+    break;
+  case MVT::f32:
+  case MVT::f64:
+    Chain = DAG.getCopyFromReg(Chain, PPC::F1, Op.Val->getValueType(0),
+                               InFlag).getValue(1);
+    ResultVals.push_back(Chain.getValue(0));
+    NodeTys.push_back(Op.Val->getValueType(0));
+    break;
+  case MVT::v4f32:
+  case MVT::v4i32:
+  case MVT::v8i16:
+  case MVT::v16i8:
+    Chain = DAG.getCopyFromReg(Chain, PPC::V2, Op.Val->getValueType(0),
+                                   InFlag).getValue(1);
+    ResultVals.push_back(Chain.getValue(0));
+    NodeTys.push_back(Op.Val->getValueType(0));
+    break;
+  }
+  
   Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
                       DAG.getConstant(NumBytes, MVT::i32));
+  NodeTys.push_back(MVT::Other);
   
-  std::vector<MVT::ValueType> RetVT(Op.Val->value_begin(),
-                                    Op.Val->value_end());
-  Ops.clear();
-  
-  for (unsigned i = 0, e = TheCall.Val->getNumValues()-1; i != e; ++i)
-    Ops.push_back(SDOperand(TheCall.Val, i));
-  Ops.push_back(Chain);
-  SDOperand Res = DAG.getNode(ISD::MERGE_VALUES, RetVT, Ops);
-  
+  ResultVals.push_back(Chain);
+  SDOperand Res = DAG.getNode(ISD::MERGE_VALUES, NodeTys, ResultVals);
   return Res.getValue(Op.ResNo);
 }
 

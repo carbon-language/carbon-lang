@@ -72,6 +72,10 @@ def PPCstd_32     : SDNode<"PPCISD::STD_32"    , SDTStore, [SDNPHasChain]>;
 def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_PPCCallSeq,[SDNPHasChain]>;
 def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_PPCCallSeq,[SDNPHasChain]>;
 
+def SDT_PPCCall   : SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
+def call          : SDNode<"PPCISD::CALL", SDT_PPCCall,
+                           [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+
 def retflag       : SDNode<"PPCISD::RET_FLAG", SDT_PPCRetFlag,
 	                   [SDNPHasChain, SDNPOptInFlag]>;
 
@@ -303,11 +307,11 @@ let isCall = 1, noResults = 1, PPC970_Unit = 7,
           LR,CTR,
           CR0,CR1,CR5,CR6,CR7] in {
   // Convenient aliases for call instructions
-  def BL  : IForm<18, 0, 1, (ops calltarget:$func, variable_ops), 
+  def BL  : IForm<18, 0, 1, (ops calltarget:$func), 
                             "bl $func", BrB, []>;
-  def BLA : IForm<18, 1, 1, (ops aaddr:$func, variable_ops),
+  def BLA : IForm<18, 1, 1, (ops aaddr:$func),
                             "bla $func", BrB, []>;
-  def BCTRL : XLForm_2_ext<19, 528, 20, 0, 1, (ops variable_ops), "bctrl", BrB,
+  def BCTRL : XLForm_2_ext<19, 528, 20, 0, 1, (ops), "bctrl", BrB,
                            []>;
 }
 
