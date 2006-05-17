@@ -490,6 +490,10 @@ transformation, good for PI.  See PPCISelLowering.cpp, this comment:
      // need to flag these together so that the value isn't live across a call.
      //setOperationAction(ISD::SINT_TO_FP, MVT::i32, Custom);
 
+Also, if the registers are spilled to the stack, we have to ensure that all
+64-bits of them are save/restored, otherwise we will miscompile the code.  It
+sounds like we need to get the 64-bit register classes going.
+
 ===-------------------------------------------------------------------------===
 
 %struct.B = type { ubyte, [3 x ubyte] }
