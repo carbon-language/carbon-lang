@@ -267,10 +267,6 @@ def DefaultAsmWriter : AsmWriter;
 // Target - This class contains the "global" target information
 //
 class Target {
-  // CalleeSavedRegisters - As you might guess, this is a list of the callee
-  // saved registers for a target.
-  list<Register> CalleeSavedRegisters = [];
-  
   // InstructionSet - Instruction set description for this target.
   InstrInfo InstructionSet;
 
