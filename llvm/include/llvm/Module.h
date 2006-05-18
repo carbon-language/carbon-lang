@@ -94,8 +94,7 @@ private:
   SymbolTable *SymTab;           ///< Symbol Table for the module
   std::string ModuleID;          ///< Human readable identifier for the module
   std::string TargetTriple;      ///< Platform target triple Module compiled on
-  Endianness  Endian;            ///< Endianness assumed in the module
-  PointerSize PtrSize;           ///< Pointer size assumed in the module
+  std::string DataLayout;        ///< Target data description
 
   friend class Constant;
 
@@ -123,11 +122,11 @@ public:
 
   /// Get the target endian information.
   /// @returns Endianess - an enumeration for the endianess of the target
-  Endianness getEndianness() const { return Endian; }
+  Endianness getEndianness() const;
 
   /// Get the target pointer size.
   /// @returns PointerSize - an enumeration for the size of the target's pointer
-  PointerSize getPointerSize() const { return PtrSize; }
+  PointerSize getPointerSize() const;
 
   /// Get any module-scope inline assembly blocks.
   /// @returns a string containing the module-scope inline assembly blocks.
@@ -144,10 +143,10 @@ public:
   void setTargetTriple(const std::string &T) { TargetTriple = T; }
 
   /// Set the target endian information.
-  void setEndianness(Endianness E) { Endian = E; }
+  void setEndianness(Endianness E);
 
   /// Set the target pointer size.
-  void setPointerSize(PointerSize PS) { PtrSize = PS; }
+  void setPointerSize(PointerSize PS);
 
   /// Set the module-scope inline assembly blocks.
   void setModuleInlineAsm(const std::string &Asm) { GlobalScopeAsm = Asm; }

@@ -16,10 +16,12 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/LeakDetector.h"
 #include "SymbolTableListTraitsImpl.h"
 #include <algorithm>
 #include <cstdarg>
+#include <cstdlib>
 #include <iostream>
 #include <map>
 using namespace llvm;
@@ -61,7 +63,7 @@ template class SymbolTableListTraits<Function, Module, Module>;
 //
 
 Module::Module(const std::string &MID)
-  : ModuleID(MID), Endian(AnyEndianness), PtrSize(AnyPointerSize) {
+  : ModuleID(MID), DataLayout("") {
   FunctionList.setItemParent(this);
   FunctionList.setParent(this);
   GlobalList.setItemParent(this);
@@ -82,6 +84,63 @@ Module::~Module() {
 // Module::dump() - Allow printing from debugger
 void Module::dump() const {
   print(std::cerr);
+}
+
+/// Target endian information...
+Module::Endianness Module::getEndianness() const {
+  std::string temp = DataLayout;
+  
+  while (temp.length() > 0) {
+    std::string token = getToken(temp, "-");
+    
+    if (token[0] == 'e') {
+      return LittleEndian;
+    } else if (token[0] == 'E') {
+      return BigEndian;
+    }
+  }
+  
+  return AnyEndianness;
+}
+
+void Module::setEndianness(Endianness E) {
+  if (DataLayout.compare("") != 0 && E != AnyEndianness)
+    DataLayout.insert(0, "-");
+  
+  if (E == LittleEndian)
+    DataLayout.insert(0, "e");
+  else if (E == BigEndian)
+    DataLayout.insert(0, "E");
+}
+
+/// Target Pointer Size information...
+Module::PointerSize Module::getPointerSize() const {
+  std::string temp = DataLayout;
+  
+  while (temp.length() > 0) {
+    std::string token = getToken(temp, "-");
+    char signal = getToken(token, ":")[0];
+    
+    if (signal == 'p') {
+      int size = atoi(getToken(token, ":").c_str());
+      if (size == 32)
+        return Pointer32;
+      else if (size == 64)
+        return Pointer64;
+    }
+  }
+  
+  return AnyPointerSize;
+}
+
+void Module::setPointerSize(PointerSize PS) {
+  if (DataLayout.compare("") != 0 && PS != AnyPointerSize)
+    DataLayout.insert(0, "-");
+  
+  if (PS == Pointer32)
+    DataLayout.insert(0, "p:32:32");
+  else if (PS == Pointer64)
+    DataLayout.insert(0, "p:64:64");
 }
 
 //===----------------------------------------------------------------------===//
