@@ -93,7 +93,7 @@ proc llvm-runtest { programs objdir srcdir subdir target_triplet llvmgcc llvmgxx
 	} else {
 
 	    #run script and catch errors
-	    set retval [ catch {exec /bin/sh $script >& $output} ]
+	    set retval [ catch {exec /bin/sh $script >& $output} errmsg ]
 	    
 	    if { $retval == 1 } {
 		#Get output
@@ -105,10 +105,10 @@ proc llvm-runtest { programs objdir srcdir subdir target_triplet llvmgcc llvmgxx
 		switch $outcome {
 		    PASS {
 			file delete $output
-			fail "$test: \n$result"
+			fail "$test: \n$errmsg\n$result"
 		    }
 		    XFAIL {
-			xfail "$test: \n$result"
+			xfail "$test: \n$errmsg\n$result"
 		    }
 		    default {
 			file delete $output
