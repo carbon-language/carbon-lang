@@ -189,6 +189,12 @@ def ops;
 /// of operands.
 def variable_ops;
 
+/// ptr_rc definition - Mark this operand as being a pointer value whose
+/// register class is resolved dynamically via a callback to TargetInstrInfo.
+/// FIXME: We should probably change this to a class which contain a list of
+/// flags. But currently we have but one flag.
+def ptr_rc;
+
 /// Operand Types - These provide the built-in operand types that may be used
 /// by a target.  Targets can optionally provide their own operand types as
 /// needed, though this should not be needed for RISC targets.
