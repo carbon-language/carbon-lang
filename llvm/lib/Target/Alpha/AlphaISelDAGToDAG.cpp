@@ -377,8 +377,8 @@ void AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     break;
 
   case ISD::AND: {
-    ConstantSDNode* SC;
-    ConstantSDNode* MC;
+    ConstantSDNode* SC = NULL;
+    ConstantSDNode* MC = NULL;
     if (N->getOperand(0).getOpcode() == ISD::SRL &&
 	(MC = dyn_cast<ConstantSDNode>(N->getOperand(1))) &&
 	(SC = dyn_cast<ConstantSDNode>(N->getOperand(0).getOperand(1))))
