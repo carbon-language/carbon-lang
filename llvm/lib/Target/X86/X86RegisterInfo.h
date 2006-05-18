@@ -47,10 +47,18 @@ struct X86RegisterInfo : public X86GenRegisterInfo {
   /// folding and return true, otherwise it should return false.  If it folds
   /// the instruction, it is likely that the MachineInstruction the iterator
   /// references has been changed.
-  virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
-                                          unsigned OpNum,
-                                          int FrameIndex) const;
+  MachineInstr* foldMemoryOperand(MachineInstr* MI,
+                                  unsigned OpNum,
+                                  int FrameIndex) const;
 
+  /// getCalleeSaveRegs - Return a null-terminated list of all of the
+  /// callee-save registers on this target.
+  const unsigned *getCalleeSaveRegs() const;
+
+  /// getCalleeSaveRegClasses - Return a null-terminated list of the preferred
+  /// register classes to spill each callee-saved register with.  The order and
+  /// length of this list match the getCalleeSaveRegs() list.
+  const TargetRegisterClass* const* getCalleeSaveRegClasses() const;
 
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
                                      MachineBasicBlock &MBB,

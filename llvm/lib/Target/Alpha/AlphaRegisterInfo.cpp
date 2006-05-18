@@ -145,6 +145,33 @@ void AlphaRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
   }
 }
 
+const unsigned* AlphaRegisterInfo::getCalleeSaveRegs() const {
+  static const unsigned CalleeSaveRegs[] = {
+    Alpha::R9, Alpha::R10,
+    Alpha::R11, Alpha::R12,
+    Alpha::R13, Alpha::R14,
+    Alpha::F2, Alpha::F3,
+    Alpha::F4, Alpha::F5,
+    Alpha::F6, Alpha::F7,
+    Alpha::F8, Alpha::F9,  0
+  };
+  return CalleeSaveRegs;
+}
+
+const TargetRegisterClass* const*
+AlphaRegisterInfo::getCalleeSaveRegClasses() const {
+  static const TargetRegisterClass * const CalleeSaveRegClasses[] = {
+    &Alpha::GPRCRegClass, &Alpha::GPRCRegClass,
+    &Alpha::GPRCRegClass, &Alpha::GPRCRegClass,
+    &Alpha::GPRCRegClass, &Alpha::GPRCRegClass,
+    &Alpha::F8RCRegClass, &Alpha::F8RCRegClass,
+    &Alpha::F8RCRegClass, &Alpha::F8RCRegClass,
+    &Alpha::F8RCRegClass, &Alpha::F8RCRegClass,
+    &Alpha::F8RCRegClass, &Alpha::F8RCRegClass,  0
+  };
+  return CalleeSaveRegClasses;
+}
+
 //===----------------------------------------------------------------------===//
 // Stack Frame Processing methods
 //===----------------------------------------------------------------------===//

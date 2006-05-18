@@ -65,17 +65,6 @@ def : Processor<"ev67"   , Alpha21264Itineraries, [FeatureFIX, FeatureCIX]>;
 
 
 def Alpha : Target {
-  let CalleeSavedRegisters = 
-	//saved regs
-	[R9, R10, R11, R12, R13, R14, 
-	//Frame pointer
-//	R15, 
-	//return address
-//	R26, 
-	//Stack Pointer
-//	R30,
-         F2, F3, F4, F5, F6, F7, F8, F9];
-
   // Pull in Instruction Info:
   let InstructionSet = AlphaInstrInfo;
 }

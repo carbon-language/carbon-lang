@@ -58,6 +58,17 @@ MachineInstr *ARMRegisterInfo::foldMemoryOperand(MachineInstr* MI,
   return NULL;
 }
 
+const unsigned* ARMRegisterInfo::getCalleeSaveRegs() const {
+  static const unsigned CalleeSaveRegs[] = { 0 };
+  return CalleeSaveRegs;
+}
+
+const TargetRegisterClass* const *
+ARMRegisterInfo::getCalleeSaveRegClasses() const {
+  static const TargetRegisterClass * const CalleeSaveRegClasses[] = { 0 };
+  return CalleeSaveRegClasses;
+}
+
 void ARMRegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {

@@ -90,6 +90,21 @@ void IA64RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
     BuildMI(MBB, MI, IA64::MOV, 1, DestReg).addReg(SrcReg);
 }
 
+const unsigned* IA64RegisterInfo::getCalleeSaveRegs() const {
+  static const unsigned CalleeSaveRegs[] = {
+    IA64::r5,  0
+  };
+  return CalleeSaveRegs;
+}
+
+const TargetRegisterClass* const*
+IA64RegisterInfo::getCalleeSaveRegClasses() const {
+  static const TargetRegisterClass * const CalleeSaveRegClasses[] = {
+    &IA64::GRRegClass,  0
+  };
+  return CalleeSaveRegClasses;
+}
+
 //===----------------------------------------------------------------------===//
 // Stack Frame Processing methods
 //===----------------------------------------------------------------------===//

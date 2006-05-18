@@ -45,6 +45,10 @@ struct ARMRegisterInfo : public ARMGenRegisterInfo {
                                           unsigned OpNum,
                                           int FrameIndex) const;
 
+  const unsigned *getCalleeSaveRegs() const;
+
+  const TargetRegisterClass* const* getCalleeSaveRegClasses() const;
+
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
                                      MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator I) const;

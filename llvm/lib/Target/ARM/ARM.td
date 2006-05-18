@@ -40,9 +40,6 @@ def ARMInstrInfo : InstrInfo {
 //===----------------------------------------------------------------------===//
 
 def ARM : Target {
-  // FIXME: Specify callee-saved registers
-  let CalleeSavedRegisters = [];
-
   // Pull in Instruction Info:
   let InstructionSet = ARMInstrInfo;
 }

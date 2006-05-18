@@ -103,6 +103,18 @@ MachineInstr *SparcRegisterInfo::foldMemoryOperand(MachineInstr* MI,
   return 0;
 }
 
+const unsigned* SparcRegisterInfo::getCalleeSaveRegs() const {
+  static const unsigned CalleeSaveRegs[] = { 0 };
+  return CalleeSaveRegs;
+}
+
+const TargetRegisterClass* const*
+SparcRegisterInfo::getCalleeSaveRegClasses() const {
+  static const TargetRegisterClass * const CalleeSaveRegClasses[] = { 0 };
+  return CalleeSaveRegClasses;
+}
+
+
 void SparcRegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {

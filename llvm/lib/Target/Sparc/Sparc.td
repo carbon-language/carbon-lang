@@ -75,9 +75,6 @@ def : Proc<"ultrasparc3-vis", [FeatureV9, FeatureV8Deprecated, FeatureVIS]>;
 //===----------------------------------------------------------------------===//
 
 def Sparc : Target {
-  // FIXME: Specify callee-saved registers
-  let CalleeSavedRegisters = [];
-
   // Pull in Instruction Info:
   let InstructionSet = SparcInstrInfo;
 }

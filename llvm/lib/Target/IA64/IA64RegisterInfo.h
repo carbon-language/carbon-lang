@@ -40,6 +40,10 @@ struct IA64RegisterInfo : public IA64GenRegisterInfo {
                     unsigned DestReg, unsigned SrcReg,
                     const TargetRegisterClass *RC) const;
 
+  const unsigned *getCalleeSaveRegs() const;
+
+  const TargetRegisterClass* const* getCalleeSaveRegClasses() const;
+
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
                                      MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator MI) const;

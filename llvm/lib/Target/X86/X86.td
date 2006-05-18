@@ -130,9 +130,6 @@ def IntelAsmWriter : AsmWriter {
 
 
 def X86 : Target {
-  // Specify the callee saved registers.
-  let CalleeSavedRegisters = [ESI, EDI, EBX, EBP];
-
   // Information about the instructions...
   let InstructionSet = X86InstrInfo;
 

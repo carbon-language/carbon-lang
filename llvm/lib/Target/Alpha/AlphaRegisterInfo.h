@@ -42,6 +42,10 @@ struct AlphaRegisterInfo : public AlphaGenRegisterInfo {
                     unsigned DestReg, unsigned SrcReg,
                     const TargetRegisterClass *RC) const;
 
+  const unsigned *getCalleeSaveRegs() const;
+
+  const TargetRegisterClass* const* getCalleeSaveRegClasses() const;
+
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
                                      MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator I) const;

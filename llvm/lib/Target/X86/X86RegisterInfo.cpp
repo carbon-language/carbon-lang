@@ -600,6 +600,22 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr* MI,
   return NULL;
 }
 
+const unsigned *X86RegisterInfo::getCalleeSaveRegs() const {
+  static const unsigned CalleeSaveRegs[] = {
+    X86::ESI, X86::EDI, X86::EBX, X86::EBP,  0
+  };
+  return CalleeSaveRegs;
+}
+
+const TargetRegisterClass* const*
+X86RegisterInfo::getCalleeSaveRegClasses() const {
+  static const TargetRegisterClass * const CalleeSaveRegClasses[] = {
+    &X86::GR32RegClass, &X86::GR32RegClass,
+    &X86::GR32RegClass, &X86::GR32RegClass,  0
+  };
+  return CalleeSaveRegClasses;
+}
+
 //===----------------------------------------------------------------------===//
 // Stack Frame Processing methods
 //===----------------------------------------------------------------------===//
