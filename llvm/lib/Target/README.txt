@@ -190,3 +190,21 @@ The rlwinm (an and by 65535) is dead.  The dag combiner should propagate bits
 better than that to see this.
 
 //===---------------------------------------------------------------------===//
+
+Add support for conditional increments, and other related patterns.  Instead
+of:
+
+	movl 136(%esp), %eax
+	cmpl $0, %eax
+	je LBB16_2	#cond_next
+LBB16_1:	#cond_true
+	incl _foo
+LBB16_2:	#cond_next
+
+emit:
+	movl	_foo, %eax
+	cmpl	$1, %edi
+	sbbl	$-1, %eax
+	movl	%eax, _foo
+
+//===---------------------------------------------------------------------===//
