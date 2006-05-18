@@ -49,7 +49,7 @@ void ARMRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
                                      unsigned DestReg, unsigned SrcReg,
                                      const TargetRegisterClass *RC) const {
   assert (RC == ARM::IntRegsRegisterClass);
-  BuildMI(MBB, I, ARM::mov, 1, DestReg).addReg(SrcReg);
+  BuildMI(MBB, I, ARM::movrr, 1, DestReg).addReg(SrcReg);
 }
 
 MachineInstr *ARMRegisterInfo::foldMemoryOperand(MachineInstr* MI,

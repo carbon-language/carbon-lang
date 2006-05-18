@@ -42,6 +42,8 @@ def ADJCALLSTACKDOWN : InstARM<(ops i32imm:$amt),
                                "!ADJCALLSTACKDOWN $amt",
                                [(callseq_start imm:$amt)]>;
 
+def BX: InstARM<(ops), "bx", [(retflag)]>;
+
 def ldr   : InstARM<(ops IntRegs:$dst, IntRegs:$addr),
                      "ldr $dst, [$addr]",
                      [(set IntRegs:$dst, (load IntRegs:$addr))]>;
@@ -50,5 +52,8 @@ def str  : InstARM<(ops IntRegs:$src, IntRegs:$addr),
                     "str $src, [$addr]",
                     [(store IntRegs:$src, IntRegs:$addr)]>;
 
-def mov   : InstARM<(ops IntRegs:$dst, IntRegs:$b),
-                    "mov $dst, $b", []>;
+def movrr   : InstARM<(ops IntRegs:$dst, IntRegs:$src),
+                       "mov $dst, $src", []>;
+
+def movri   : InstARM<(ops IntRegs:$dst, i32imm:$src),
+                       "mov $dst, $src", [(set IntRegs:$dst, imm:$src)]>;

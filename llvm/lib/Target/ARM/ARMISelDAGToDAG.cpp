@@ -81,11 +81,17 @@ static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
   return DAG.getNode(ARMISD::RET_FLAG, MVT::Other, Copy, Copy.getValue(1));
 }
 
+static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
+  assert(0 && "Not implemented");
+}
+
 SDOperand ARMTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default:
     assert(0 && "Should not custom lower this!");
     abort();
+  case ISD::FORMAL_ARGUMENTS:
+    return LowerFORMAL_ARGUMENTS(Op, DAG);
   case ISD::RET:
     return LowerRET(Op, DAG);
   }
