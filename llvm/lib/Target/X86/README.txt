@@ -380,6 +380,21 @@ bool %test(int %X) {
 
 This may just be a matter of using 'test' to write bigger patterns for X86cmp.
 
+An important case is comparison against zero:
+
+if (X == 0) ...
+
+instead of:
+
+	cmpl $0, %eax
+	je LBB4_2	#cond_next
+
+use:
+	test %eax, %eax
+	jz LBB4_2
+
+which is smaller.
+
 //===---------------------------------------------------------------------===//
 
 SSE should implement 'select_cc' using 'emulated conditional moves' that use
