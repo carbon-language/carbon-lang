@@ -120,7 +120,7 @@ namespace X86II {
     // This two-bit field describes the size of an immediate operand.  Zero is
     // unused so that we can tell if we forgot to set a value.
     ImmShift = 11,
-    ImmMask  = 7 << ImmShift,
+    ImmMask  = 3 << ImmShift,
     Imm8     = 1 << ImmShift,
     Imm16    = 2 << ImmShift,
     Imm32    = 3 << ImmShift,
@@ -161,8 +161,7 @@ namespace X86II {
     // SpecialFP - Special instruction forms.  Dispatch by opcode explicitly.
     SpecialFP  = 7 << FPTypeShift,
 
-    // Bit 15 is unused.
-    OpcodeShift   = 17,
+    OpcodeShift   = 16,
     OpcodeMask    = 0xFF << OpcodeShift,
     // Bits 25 -> 31 are unused
   };

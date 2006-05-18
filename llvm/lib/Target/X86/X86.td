@@ -114,7 +114,7 @@ def X86InstrInfo : InstrInfo {
                        7,
                        11,
                        13,
-                       17];
+                       16];
 }
 
 // The X86 target supports two different syntaxes for emitting machine code.
