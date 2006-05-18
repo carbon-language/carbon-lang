@@ -108,9 +108,6 @@ CodeGenTarget::CodeGenTarget() {
   if (Targets.size() != 1)
     throw std::string("ERROR: Multiple subclasses of Target defined!");
   TargetRec = Targets[0];
-
-  // Read in all of the CalleeSavedRegisters.
-  CalleeSavedRegisters =TargetRec->getValueAsListOfDefs("CalleeSavedRegisters");
 }
 
 

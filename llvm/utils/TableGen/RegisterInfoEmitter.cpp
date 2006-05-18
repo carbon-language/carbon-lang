@@ -59,8 +59,6 @@ void RegisterInfoEmitter::runHeader(std::ostream &OS) {
   OS << "struct " << ClassName << " : public MRegisterInfo {\n"
      << "  " << ClassName
      << "(int CallFrameSetupOpcode = -1, int CallFrameDestroyOpcode = -1);\n"
-     << "  const unsigned* getCalleeSaveRegs() const;\n"
-     << "  const TargetRegisterClass* const *getCalleeSaveRegClasses() const;\n"
      << "  int getDwarfRegNum(unsigned RegNum) const;\n"
      << "};\n\n";
 
@@ -333,36 +331,6 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
      << ", RegisterClasses, RegisterClasses+" << RegisterClasses.size() <<",\n "
      << "                 CallFrameSetupOpcode, CallFrameDestroyOpcode) {}\n\n";
 
-  // Emit the getCalleeSaveRegs method.
-  OS << "const unsigned* " << ClassName << "::getCalleeSaveRegs() const {\n"
-     << "  static const unsigned CalleeSaveRegs[] = {\n    ";
-
-  const std::vector<Record*> &CSR = Target.getCalleeSavedRegisters();
-  for (unsigned i = 0, e = CSR.size(); i != e; ++i)
-    OS << getQualifiedName(CSR[i]) << ", ";
-  OS << " 0\n  };\n  return CalleeSaveRegs;\n}\n\n";
-  
-  // Emit information about the callee saved register classes.
-  OS << "const TargetRegisterClass* const*\n" << ClassName
-     << "::getCalleeSaveRegClasses() const {\n"
-     << "  static const TargetRegisterClass * const "
-     << "CalleeSaveRegClasses[] = {\n    ";
-  
-  for (unsigned i = 0, e = CSR.size(); i != e; ++i) {
-    Record *R = CSR[i];
-    std::multimap<Record*, const CodeGenRegisterClass*>::iterator I, E;
-    tie(I, E) = RegClassesBelongedTo.equal_range(R);
-    if (I == E)
-      throw "Callee saved register '" + R->getName() +
-            "' must belong to a register class for spilling.\n";
-    const CodeGenRegisterClass *RC = (I++)->second;
-    for (; I != E; ++I)
-      if (RC->SpillSize < I->second->SpillSize)
-        RC = I->second;
-    OS << "&" << getQualifiedName(RC->TheDef) << "RegClass, ";
-  }
-  OS << " 0\n  };\n  return CalleeSaveRegClasses;\n}\n\n";
- 
   // Emit information about the dwarf register numbers.
   OS << "int " << ClassName << "::getDwarfRegNum(unsigned RegNum) const {\n";
   OS << "  static const int DwarfRegNums[] = { -1, // NoRegister";
