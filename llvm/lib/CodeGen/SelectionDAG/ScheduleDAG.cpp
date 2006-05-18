@@ -229,16 +229,17 @@ static unsigned CountOperands(SDNode *Node) {
 static unsigned CreateVirtualRegisters(MachineInstr *MI,
                                        unsigned NumResults,
                                        SSARegMap *RegMap,
+                                       const TargetInstrInfo *TII,
                                        const TargetInstrDescriptor &II) {
   // Create the result registers for this node and add the result regs to
   // the machine instruction.
-  const TargetOperandInfo *OpInfo = II.OpInfo;
-  unsigned ResultReg = RegMap->createVirtualRegister(OpInfo[0].RegClass);
+  unsigned ResultReg =
+    RegMap->createVirtualRegister(TII->getInstrOperandRegClass(&II, 0));
   MI->addRegOperand(ResultReg, MachineOperand::Def);
   for (unsigned i = 1; i != NumResults; ++i) {
-    assert(OpInfo[i].RegClass && "Isn't a register operand!");
-    MI->addRegOperand(RegMap->createVirtualRegister(OpInfo[i].RegClass),
-                      MachineOperand::Def);
+    const TargetRegisterClass *RC = TII->getInstrOperandRegClass(&II, i);
+    assert(RC && "Isn't a register operand!");
+    MI->addRegOperand(RegMap->createVirtualRegister(RC), MachineOperand::Def);
   }
   return ResultReg;
 }
@@ -275,9 +276,9 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
     // Verify that it is right.
     assert(MRegisterInfo::isVirtualRegister(VReg) && "Not a vreg?");
     if (II) {
-      assert(II->OpInfo[IIOpNum].RegClass &&
-             "Don't have operand info for this instruction!");
-      assert(RegMap->getRegClass(VReg) == II->OpInfo[IIOpNum].RegClass &&
+      const TargetRegisterClass *RC = TII->getInstrOperandRegClass(II, IIOpNum);
+      assert(RC && "Don't have operand info for this instruction!");
+      assert(RegMap->getRegClass(VReg) == RC &&
              "Register class of operand and regclass of use don't agree!");
     }
   } else if (ConstantSDNode *C =
@@ -332,9 +333,9 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
     // Verify that it is right.
     assert(MRegisterInfo::isVirtualRegister(VReg) && "Not a vreg?");
     if (II) {
-      assert(II->OpInfo[IIOpNum].RegClass &&
-             "Don't have operand info for this instruction!");
-      assert(RegMap->getRegClass(VReg) == II->OpInfo[IIOpNum].RegClass &&
+      const TargetRegisterClass *RC = TII->getInstrOperandRegClass(II, IIOpNum);
+      assert(RC && "Don't have operand info for this instruction!");
+      assert(RegMap->getRegClass(VReg) == RC &&
              "Register class of operand and regclass of use don't agree!");
     }
   }
@@ -387,7 +388,7 @@ void ScheduleDAG::EmitNode(SDNode *Node,
     
     // Otherwise, create new virtual registers.
     if (NumResults && VRBase == 0)
-      VRBase = CreateVirtualRegisters(MI, NumResults, RegMap, II);
+      VRBase = CreateVirtualRegisters(MI, NumResults, RegMap, TII, II);
     
     // Emit all of the actual operands of this instruction, adding them to the
     // instruction as appropriate.

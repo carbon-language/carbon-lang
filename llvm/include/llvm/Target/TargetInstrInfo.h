@@ -76,6 +76,11 @@ const unsigned M_TERMINATOR_FLAG       = 1 << 10;
 // block.
 const unsigned M_USES_CUSTOM_DAG_SCHED_INSERTION = 1 << 11;
 
+// Machine operand flags
+// M_LOOK_UP_PTR_REG_CLASS - Set if this operand is a pointer value and it
+// requires a callback to look up its register class.
+const unsigned M_LOOK_UP_PTR_REG_CLASS = 1 << 0;
+
 /// TargetOperandInfo - This holds information about one operand of a machine
 /// instruction, indicating the register class for register operands, etc.
 ///
@@ -84,7 +89,7 @@ public:
   /// RegClass - This specifies the register class of the operand if the
   /// operand is a register.  If not, this contains null.
   const TargetRegisterClass *RegClass;
-  
+  unsigned Flags;
   /// Currently no other information.
 };
 
@@ -135,6 +140,13 @@ public:
 
   const char *getName(MachineOpCode Opcode) const {
     return get(Opcode).Name;
+  }
+
+  const TargetRegisterClass
+  *getInstrOperandRegClass(const TargetInstrDescriptor *II, unsigned Op) const {
+    const TargetOperandInfo &toi = II->OpInfo[Op];
+    return (toi.Flags & M_LOOK_UP_PTR_REG_CLASS)
+           ? getPointerRegClass() : toi.RegClass;
   }
 
   int getNumOperands(MachineOpCode Opcode) const {
@@ -273,6 +285,13 @@ public:
   virtual void insertNoop(MachineBasicBlock &MBB, 
                           MachineBasicBlock::iterator MI) const {
     assert(0 && "Target didn't implement insertNoop!");
+    abort();
+  }
+
+  /// getPointerRegClass - Returns a TargetRegisterClass used for pointer
+  /// values.
+  virtual const TargetRegisterClass *getPointerRegClass() const {
+    assert(0 && "Target didn't implement getPointerRegClass!");
     abort();
   }
   
