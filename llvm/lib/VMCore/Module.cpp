@@ -89,58 +89,60 @@ void Module::dump() const {
 /// Target endian information...
 Module::Endianness Module::getEndianness() const {
   std::string temp = DataLayout;
+  Module::Endianness ret = AnyEndianness;
   
-  while (temp.length() > 0) {
+  while (!temp.empty()) {
     std::string token = getToken(temp, "-");
     
     if (token[0] == 'e') {
-      return LittleEndian;
+      ret = LittleEndian;
     } else if (token[0] == 'E') {
-      return BigEndian;
+      ret = BigEndian;
     }
   }
   
-  return AnyEndianness;
+  return ret;
 }
 
 void Module::setEndianness(Endianness E) {
-  if (DataLayout.compare("") != 0 && E != AnyEndianness)
-    DataLayout.insert(0, "-");
+  if (!DataLayout.empty() && E != AnyEndianness)
+    DataLayout += "-";
   
   if (E == LittleEndian)
-    DataLayout.insert(0, "e");
+    DataLayout += "e";
   else if (E == BigEndian)
-    DataLayout.insert(0, "E");
+    DataLayout += "E";
 }
 
 /// Target Pointer Size information...
 Module::PointerSize Module::getPointerSize() const {
   std::string temp = DataLayout;
+  Module::PointerSize ret = AnyPointerSize;
   
-  while (temp.length() > 0) {
+  while (!temp.empty()) {
     std::string token = getToken(temp, "-");
     char signal = getToken(token, ":")[0];
     
     if (signal == 'p') {
       int size = atoi(getToken(token, ":").c_str());
       if (size == 32)
-        return Pointer32;
+        ret = Pointer32;
       else if (size == 64)
-        return Pointer64;
+        ret = Pointer64;
     }
   }
   
-  return AnyPointerSize;
+  return ret;
 }
 
 void Module::setPointerSize(PointerSize PS) {
-  if (DataLayout.compare("") != 0 && PS != AnyPointerSize)
-    DataLayout.insert(0, "-");
+  if (!DataLayout.empty() && PS != AnyPointerSize)
+    DataLayout += "-";
   
   if (PS == Pointer32)
-    DataLayout.insert(0, "p:32:32");
+    DataLayout += "p:32:32";
   else if (PS == Pointer64)
-    DataLayout.insert(0, "p:64:64");
+    DataLayout += "p:64:64";
 }
 
 //===----------------------------------------------------------------------===//
