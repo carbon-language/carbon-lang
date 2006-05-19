@@ -380,8 +380,9 @@ X86TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
                                bool isTailCall,
                                SDOperand Callee, ArgListTy &Args,
                                SelectionDAG &DAG) {
-  assert((!isVarArg || CallingConv == CallingConv::C) &&
-         "Only C takes varargs!");
+  assert((!isVarArg || CallingConv == CallingConv::C || 
+          CallingConv == CallingConv::CSRet) &&
+         "Only CCC/CSRet takes varargs!");
 
   // If the callee is a GlobalAddress node (quite common, every direct call is)
   // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
