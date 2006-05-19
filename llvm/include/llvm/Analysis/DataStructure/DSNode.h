@@ -182,7 +182,7 @@ public:
     delete this;
   }
 
-  /// hasLink - Return true if this memory object has a link in slot #LinkNo
+  /// hasLink - Return true if this memory object has a link in slot LinkNo
   ///
   bool hasLink(unsigned Offset) const {
     assert((Offset & ((1 << DS::PointerShift)-1)) == 0 &&

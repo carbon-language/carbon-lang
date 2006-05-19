@@ -927,7 +927,7 @@ public:
   ///
   unsigned getNumIncomingValues() const { return getNumOperands()/2; }
 
-  /// getIncomingValue - Return incoming value #x
+  /// getIncomingValue - Return incoming value number x
   ///
   Value *getIncomingValue(unsigned i) const {
     assert(i*2 < getNumOperands() && "Invalid value number!");
@@ -941,7 +941,7 @@ public:
     return i*2;
   }
 
-  /// getIncomingBlock - Return incoming basic block #x
+  /// getIncomingBlock - Return incoming basic block number x
   ///
   BasicBlock *getIncomingBlock(unsigned i) const {
     return reinterpret_cast<BasicBlock*>(getOperand(i*2+1));

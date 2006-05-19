@@ -82,7 +82,8 @@ namespace llvm {
     /// will enclose any GlobalVariable that points to a function.
     /// For example, this is used by the IA64 backend to materialize
     /// function descriptors, by decorating the ".data8" object with the
-    /// @fptr( ) link-relocation operator.
+    /// \literal @fptr( ) \endliteral
+    /// link-relocation operator.
     ///
     const char *FunctionAddrPrefix;       // Defaults to ""
     const char *FunctionAddrSuffix;       // Defaults to ""
@@ -173,7 +174,8 @@ namespace llvm {
     /// LCOMMDirective - This is the name of a directive (if supported) that can
     /// be used to efficiently declare a local (internal) block of zero
     /// initialized data in the .bss/.data section.  The syntax expected is:
-    ///    <LCOMMDirective> SYMBOLNAME LENGTHINBYTES, ALIGNMENT
+    /// \literal <LCOMMDirective> SYMBOLNAME LENGTHINBYTES, ALIGNMENT
+    /// \endliteral
     const char *LCOMMDirective;          // Defaults to null.
     
     const char *COMMDirective;           // Defaults to "\t.comm\t".

@@ -279,7 +279,8 @@ public:
   void EmitInt64(uint64_t Value) const;
   
   /// EmitString - Emit a string with quotes and a null terminator.
-  /// Special characters are emitted properly. (Eg. '\t')
+  /// Special characters are emitted properly. 
+  /// \literal (Eg. '\t') \endliteral
   void EmitString(const std::string &String) const;
 
   /// PrintLabelName - Print label name in form used by Dwarf writer.

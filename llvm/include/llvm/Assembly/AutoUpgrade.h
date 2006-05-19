@@ -43,9 +43,11 @@ namespace llvm {
   /// if it is a call to an old overloaded intrinsic. If it is, a new CallInst 
   /// is created that uses the correct Function and possibly casts the 
   /// argument and result to an unsigned type.
-  /// @param CI The CallInst to potentially auto-upgrade.
   /// @brief Get replacement instruction for overloaded intrinsic function call.
-  void UpgradeIntrinsicCall(CallInst* CI, Function* newF = 0);
+  void UpgradeIntrinsicCall(
+    CallInst* CI, ///< The CallInst to potentially auto-upgrade.
+    Function* newF = 0 ///< The new function for the call replacement.
+  );
 
   /// Upgrade both the function and all the calls made to it, if that function
   /// needs to be upgraded. This is like a combination of the above two

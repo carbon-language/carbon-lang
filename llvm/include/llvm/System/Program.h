@@ -46,9 +46,6 @@ namespace sys {
       /// environment and other configuration settings of the invoking program.
       /// If Path::executable() does not return true when this function is
       /// called then a std::string is thrown.
-      /// @param path A sys::Path object providing the path of the program to be
-      /// executed. It is presumed this is the result of the FindProgramByName
-      /// method.
       /// @returns an integer result code indicating the status of the program.
       /// A zero or positive value indicates the result code of the program. A
       /// negative value is the signal number on which it terminated.
@@ -57,7 +54,9 @@ namespace sys {
       /// @see FindProgrambyName
       /// @brief Executes the program with the given set of \p args.
       static int ExecuteAndWait(
-        const Path& path,  ///< The path to the program to execute
+        const Path& path,  ///< sys::Path object providing the path of the 
+          ///< program to be executed. It is presumed this is the result of 
+          ///< the FindProgramByName method.
         const char** args, ///< A vector of strings that are passed to the
           ///< program.  The first element should be the name of the program.
           ///< The list *must* be terminated by a null char* entry.

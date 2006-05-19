@@ -45,7 +45,7 @@ namespace sys {
       DynamicLibrary();
 
       /// This is the constructor for DynamicLibrary instances. It will open
-      /// the dynamic library specified by the \filename Path.
+      /// the dynamic library specified by the filename Path.
       /// @throws std::string indicating why the library couldn't be opened.
       /// @brief Open a dynamic library.
       DynamicLibrary(const char* filename);
