@@ -2360,9 +2360,9 @@ def : Pat<(add GR32:$src1, (X86Wrapper tglobaladdr :$src2)),
 def : Pat<(add GR32:$src1, (X86Wrapper texternalsym:$src2)),
           (ADD32ri GR32:$src1, texternalsym:$src2)>;
 
-def : Pat<(store (X86Wrapper tglobaladdr:$src), addr:$dst),
+def : Pat<(store (i32 (X86Wrapper tglobaladdr:$src)), addr:$dst),
           (MOV32mi addr:$dst, tglobaladdr:$src)>;
-def : Pat<(store (X86Wrapper texternalsym:$src), addr:$dst),
+def : Pat<(store (i32 (X86Wrapper texternalsym:$src)), addr:$dst),
           (MOV32mi addr:$dst, texternalsym:$src)>;
 
 // Calls
