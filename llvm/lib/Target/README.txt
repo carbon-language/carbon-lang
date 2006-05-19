@@ -220,3 +220,22 @@ Doing so could allow SROA of the destination pointers.  See also:
 http://gcc.gnu.org/bugzilla/show_bug.cgi?id=17687
 
 //===---------------------------------------------------------------------===//
+
+Scalar Repl cannot currently promote this testcase to 'ret long cst':
+
+        %struct.X = type { int, int }
+        %struct.Y = type { %struct.X }
+ulong %bar() {
+        %retval = alloca %struct.Y, align 8             ; <%struct.Y*> [#uses=3]
+        %tmp12 = getelementptr %struct.Y* %retval, int 0, uint 0, uint 0                ; <int*> [#uses=1]
+        store int 0, int* %tmp12
+        %tmp15 = getelementptr %struct.Y* %retval, int 0, uint 0, uint 1                ; <int*> [#uses=1]
+        store int 1, int* %tmp15
+        %retval = cast %struct.Y* %retval to ulong*             ; <ulong*> [#uses=1]
+        %retval = load ulong* %retval           ; <ulong> [#uses=1]
+        ret ulong %retval
+}
+
+it should be extended to do so.
+
+//===---------------------------------------------------------------------===//
