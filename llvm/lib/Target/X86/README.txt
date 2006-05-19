@@ -31,62 +31,6 @@ though?  http://gcc.gnu.org/bugzilla/show_bug.cgi?id=14224
 
 //===---------------------------------------------------------------------===//
 
-Some targets (e.g. athlons) prefer freep to fstp ST(0):
-http://gcc.gnu.org/ml/gcc-patches/2004-04/msg00659.html
-
-//===---------------------------------------------------------------------===//
-
-On darwin/x86, we should codegen:
-
-        ret double 0.000000e+00
-
-as fld0/ret, not as:
-
-        movl $0, 4(%esp)
-        movl $0, (%esp)
-        fldl (%esp)
-	...
-        ret
-
-//===---------------------------------------------------------------------===//
-
-This should use fiadd on chips where it is profitable:
-double foo(double P, int *I) { return P+*I; }
-
-We have fiadd patterns now but the followings have the same cost and
-complexity. We need a way to specify the later is more profitable.
-
-def FpADD32m  : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
-                    [(set RFP:$dst, (fadd RFP:$src1,
-                                     (extloadf64f32 addr:$src2)))]>;
-                // ST(0) = ST(0) + [mem32]
-
-def FpIADD32m : FpI<(ops RFP:$dst, RFP:$src1, i32mem:$src2), OneArgFPRW,
-                    [(set RFP:$dst, (fadd RFP:$src1,
-                                     (X86fild addr:$src2, i32)))]>;
-                // ST(0) = ST(0) + [mem32int]
-
-//===---------------------------------------------------------------------===//
-
-The FP stackifier needs to be global.  Also, it should handle simple permutates
-to reduce number of shuffle instructions, e.g. turning:
-
-fld P	->		fld Q
-fld Q			fld P
-fxch
-
-or:
-
-fxch	->		fucomi
-fucomi			jl X
-jg X
-
-Ideas:
-http://gcc.gnu.org/ml/gcc-patches/2004-11/msg02410.html
-
-
-//===---------------------------------------------------------------------===//
-
 Improvements to the multiply -> shift/add algorithm:
 http://gcc.gnu.org/ml/gcc-patches/2004-08/msg01590.html
 
@@ -136,11 +80,6 @@ allocator. Delay codegen until post register allocation.
 
 //===---------------------------------------------------------------------===//
 
-Add a target specific hook to DAG combiner to handle SINT_TO_FP and
-FP_TO_SINT when the source operand is already in memory.
-
-//===---------------------------------------------------------------------===//
-
 Model X86 EFLAGS as a real register to avoid redudant cmp / test. e.g.
 
 	cmpl $1, %eax
@@ -181,24 +120,6 @@ flags.
 
 //===---------------------------------------------------------------------===//
 
-Open code rint,floor,ceil,trunc:
-http://gcc.gnu.org/ml/gcc-patches/2004-08/msg02006.html
-http://gcc.gnu.org/ml/gcc-patches/2004-08/msg02011.html
-
-//===---------------------------------------------------------------------===//
-
-Combine: a = sin(x), b = cos(x) into a,b = sincos(x).
-
-Expand these to calls of sin/cos and stores:
-      double sincos(double x, double *sin, double *cos);
-      float sincosf(float x, float *sin, float *cos);
-      long double sincosl(long double x, long double *sin, long double *cos);
-
-Doing so could allow SROA of the destination pointers.  See also:
-http://gcc.gnu.org/bugzilla/show_bug.cgi?id=17687
-
-//===---------------------------------------------------------------------===//
-
 The instruction selector sometimes misses folding a load into a compare.  The
 pattern is written as (cmp reg, (load p)).  Because the compare isn't 
 commutative, it is not matched with the load on both sides.  The dag combiner
@@ -216,11 +137,6 @@ compiles to
 
 The transformation probably requires a X86 specific pass or a DAG combiner
 target specific hook.
-
-//===---------------------------------------------------------------------===//
-
-LSR should be turned on for the X86 backend and tuned to take advantage of its
-addressing modes.
 
 //===---------------------------------------------------------------------===//
 
@@ -293,11 +209,6 @@ The pattern isel got this one right.
 
 //===---------------------------------------------------------------------===//
 
-We need to lower switch statements to tablejumps when appropriate instead of
-always into binary branch trees.
-
-//===---------------------------------------------------------------------===//
-
 SSE doesn't have [mem] op= reg instructions.  If we have an SSE instruction
 like this:
 
@@ -348,12 +259,6 @@ We currently emit:
 
 This is a bugpoint reduced testcase, which is why the testcase doesn't make
 much sense (e.g. its an infinite loop). :)
-
-//===---------------------------------------------------------------------===//
-
-None of the FPStack instructions are handled in
-X86RegisterInfo::foldMemoryOperand, which prevents the spiller from
-folding spill code into the instructions.
 
 //===---------------------------------------------------------------------===//
 
@@ -824,11 +729,6 @@ _test:
 	movddup 8(%esp), %xmm0
 	movapd %xmm0, (%eax)
 	ret
-
-//===---------------------------------------------------------------------===//
-
-A Mac OS X IA-32 specific ABI bug wrt returning value > 8 bytes:
-http://llvm.org/bugs/show_bug.cgi?id=729
 
 //===---------------------------------------------------------------------===//
 
