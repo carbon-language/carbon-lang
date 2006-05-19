@@ -36,6 +36,20 @@ http://gcc.gnu.org/ml/gcc-patches/2004-04/msg00659.html
 
 //===---------------------------------------------------------------------===//
 
+On darwin/x86, we should codegen:
+
+        ret double 0.000000e+00
+
+as fld0/ret, not as:
+
+        movl $0, 4(%esp)
+        movl $0, (%esp)
+        fldl (%esp)
+	...
+        ret
+
+//===---------------------------------------------------------------------===//
+
 This should use fiadd on chips where it is profitable:
 double foo(double P, int *I) { return P+*I; }
 
