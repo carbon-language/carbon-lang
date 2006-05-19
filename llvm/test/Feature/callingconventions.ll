@@ -11,6 +11,11 @@ coldcc void %bar() {
   ret void
 }
 
+csretcc void %structret({sbyte}* %P) {
+  call csretcc void %structret({sbyte}* %P)
+  ret void
+}
+
 
 cc0 void %foo2() {
   ret void
