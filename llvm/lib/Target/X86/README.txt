@@ -539,3 +539,41 @@ _foo:
 	ret
 
 //===---------------------------------------------------------------------===//
+
+Consider this:
+
+typedef struct pair { float A, B; } pair;
+void pairtest(pair P, float *FP) {
+        *FP = P.A+P.B;
+}
+
+We currently generate this code with llvmgcc4:
+
+_pairtest:
+        subl $12, %esp
+        movl 20(%esp), %eax
+        movl %eax, 4(%esp)
+        movl 16(%esp), %eax
+        movl %eax, (%esp)
+        movss (%esp), %xmm0
+        addss 4(%esp), %xmm0
+        movl 24(%esp), %eax
+        movss %xmm0, (%eax)
+        addl $12, %esp
+        ret
+
+we should be able to generate:
+_pairtest:
+        movss 4(%esp), %xmm0
+        movl 12(%esp), %eax
+        addss 8(%esp), %xmm0
+        movss %xmm0, (%eax)
+        ret
+
+The issue is that llvmgcc4 is forcing the struct to memory, then passing it as
+integer chunks.  It does this so that structs like {short,short} are passed in
+a single 32-bit integer stack slot.  We should handle the safe cases above much
+nicer, while still handling the hard cases.
+
+//===---------------------------------------------------------------------===//
+
