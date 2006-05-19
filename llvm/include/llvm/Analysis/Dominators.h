@@ -140,7 +140,8 @@ public:
 /// ImmediateDominators Class - Concrete subclass of ImmediateDominatorsBase
 /// that is used to compute a normal immediate dominator set.
 ///
-struct ImmediateDominators : public ImmediateDominatorsBase {
+class ImmediateDominators : public ImmediateDominatorsBase {
+public:
   ImmediateDominators() : ImmediateDominatorsBase(false) {}
 
   BasicBlock *getRoot() const {
@@ -169,7 +170,8 @@ private:
 /// is unreachable in this function, the set will be empty.  This cannot happen
 /// for reachable code, because every block dominates at least itself.
 ///
-struct DominatorSetBase : public DominatorBase {
+class DominatorSetBase : public DominatorBase {
+public:
   typedef std::set<BasicBlock*> DomSetType;    // Dom set for a bb
   // Map of dom sets
   typedef std::map<BasicBlock*, DomSetType> DomSetMapType;
@@ -255,7 +257,8 @@ public:
 /// DominatorSet Class - Concrete subclass of DominatorSetBase that is used to
 /// compute a normal dominator set.
 ///
-struct DominatorSet : public DominatorSetBase {
+class DominatorSet : public DominatorSetBase {
+public:
   DominatorSet() : DominatorSetBase(false) {}
 
   virtual bool runOnFunction(Function &F);
@@ -280,7 +283,8 @@ struct DominatorSet : public DominatorSetBase {
 //===----------------------------------------------------------------------===//
 /// DominatorTree - Calculate the immediate dominator tree for a function.
 ///
-struct DominatorTreeBase : public DominatorBase {
+class DominatorTreeBase : public DominatorBase {
+public:
   class Node;
 protected:
   std::map<BasicBlock*, Node*> Nodes;
@@ -395,7 +399,8 @@ public:
 /// ET-Forest Class - Class used to construct forwards and backwards 
 /// ET-Forests
 ///
-struct ETForestBase : public DominatorBase {
+class ETForestBase : public DominatorBase {
+public:
   ETForestBase(bool isPostDom) : DominatorBase(isPostDom), Nodes(), 
                                  DFSInfoValid(false), SlowQueries(0) {}
   
@@ -491,7 +496,8 @@ protected:
 /// ETForest Class - Concrete subclass of ETForestBase that is used to
 /// compute a forwards ET-Forest.
 
-struct ETForest : public ETForestBase {
+class ETForest : public ETForestBase {
+public:
   ETForest() : ETForestBase(false) {}
 
   BasicBlock *getRoot() const {
@@ -515,7 +521,8 @@ struct ETForest : public ETForestBase {
 /// DominatorTree Class - Concrete subclass of DominatorTreeBase that is used to
 /// compute a normal dominator tree.
 ///
-struct DominatorTree : public DominatorTreeBase {
+class DominatorTree : public DominatorTreeBase {
+public:
   DominatorTree() : DominatorTreeBase(false) {}
 
   BasicBlock *getRoot() const {
@@ -569,7 +576,8 @@ template <> struct GraphTraits<DominatorTree*>
 //===----------------------------------------------------------------------===//
 /// DominanceFrontier - Calculate the dominance frontiers for a function.
 ///
-struct DominanceFrontierBase : public DominatorBase {
+class DominanceFrontierBase : public DominatorBase {
+public:
   typedef std::set<BasicBlock*>             DomSetType;    // Dom set for a bb
   typedef std::map<BasicBlock*, DomSetType> DomSetMapType; // Dom set map
 protected:
@@ -615,7 +623,8 @@ public:
 /// DominatorTree Class - Concrete subclass of DominatorTreeBase that is used to
 /// compute a normal dominator tree.
 ///
-struct DominanceFrontier : public DominanceFrontierBase {
+class DominanceFrontier : public DominanceFrontierBase {
+public:
   DominanceFrontier() : DominanceFrontierBase(false) {}
 
   BasicBlock *getRoot() const {
