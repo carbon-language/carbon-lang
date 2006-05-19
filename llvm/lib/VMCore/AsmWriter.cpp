@@ -953,6 +953,7 @@ void AssemblyWriter::printFunction(const Function *F) {
   // Print the calling convention.
   switch (F->getCallingConv()) {
   case CallingConv::C: break;   // default
+  case CallingConv::CSRet: Out << "csretcc "; break;
   case CallingConv::Fast: Out << "fastcc "; break;
   case CallingConv::Cold: Out << "coldcc "; break;
   default: Out << "cc" << F->getCallingConv() << " "; break;
