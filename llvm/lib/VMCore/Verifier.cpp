@@ -302,9 +302,6 @@ void Verifier::verifySymbolTable(SymbolTable &ST) {
 // visitFunction - Verify that a function is ok.
 //
 void Verifier::visitFunction(Function &F) {
-  Assert1(!F.isVarArg() || F.getCallingConv() == CallingConv::C,
-          "Varargs functions must have C calling conventions!", &F);
-
   // Check function arguments.
   const FunctionType *FT = F.getFunctionType();
   unsigned NumArgs = F.getArgumentList().size();
@@ -316,6 +313,24 @@ void Verifier::visitFunction(Function &F) {
           F.getReturnType() == Type::VoidTy,
           "Functions cannot return aggregate values!", &F);
 
+  // Check that this function meets the restrictions on this calling convention.
+  switch (F.getCallingConv()) {
+  default:
+    break;
+  case CallingConv::C:
+    break;
+  case CallingConv::CSRet:
+    Assert1(FT->getReturnType() == Type::VoidTy && 
+            FT->getNumParams() > 0 && isa<PointerType>(FT->getParamType(0)),
+            "Invalid struct-return function!", &F);
+    break;
+  case CallingConv::Fast:
+  case CallingConv::Cold:
+    Assert1(!F.isVarArg(),
+            "Varargs functions must have C calling conventions!", &F);
+    break;
+  }
+  
   // Check that the argument values match the function type for this function...
   unsigned i = 0;
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I, ++i) {
