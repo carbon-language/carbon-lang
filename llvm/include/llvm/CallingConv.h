@@ -27,6 +27,13 @@ namespace CallingConv {
     // As with typical C calling conventions, the callee/caller have to tolerate
     // certain amounts of prototype mismatch.
     C = 0,
+    
+    /// CSRet - C Struct Return calling convention.  This convention requires
+    /// that the function return void and take a pointer as the first argument
+    /// of the struct.  This is used by targets which need to distinguish
+    /// between C functions returning a structure, and C functions taking a
+    /// structure pointer as the first argument to the function.
+    CSRet = 1,
 
 
     // Generic LLVM calling conventions.  None of these calling conventions
