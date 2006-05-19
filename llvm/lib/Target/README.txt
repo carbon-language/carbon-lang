@@ -208,3 +208,15 @@ emit:
 	movl	%eax, _foo
 
 //===---------------------------------------------------------------------===//
+
+Combine: a = sin(x), b = cos(x) into a,b = sincos(x).
+
+Expand these to calls of sin/cos and stores:
+      double sincos(double x, double *sin, double *cos);
+      float sincosf(float x, float *sin, float *cos);
+      long double sincosl(long double x, long double *sin, long double *cos);
+
+Doing so could allow SROA of the destination pointers.  See also:
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=17687
+
+//===---------------------------------------------------------------------===//
