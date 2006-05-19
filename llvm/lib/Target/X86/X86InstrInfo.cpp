@@ -152,12 +152,14 @@ MachineInstr *X86InstrInfo::convertToThreeAddress(MachineInstr *MI) const {
     return addRegReg(BuildMI(X86::LEA16r, 5, Dest), Src,
                      MI->getOperand(2).getReg());
   case X86::ADD32ri:
+  case X86::ADD32ri8:
     assert(MI->getNumOperands() == 3 && "Unknown add instruction!");
     if (MI->getOperand(2).isImmediate())
       return addRegOffset(BuildMI(X86::LEA32r, 5, Dest), Src,
                           MI->getOperand(2).getImmedValue());
     return 0;
   case X86::ADD16ri:
+  case X86::ADD16ri8:
     if (DisableLEA16) return 0;
     assert(MI->getNumOperands() == 3 && "Unknown add instruction!");
     if (MI->getOperand(2).isImmediate())
