@@ -734,8 +734,9 @@ void BytecodeWriter::outputInstruction(const Instruction &I) {
       // If this is the escape sequence for call, emit the tailcall/cc info.
       const CallInst &CI = cast<CallInst>(I);
       ++NumOperands;
-      if (NumOperands < 3) {
-        Slots[NumOperands-1] = (CI.getCallingConv() << 1)|unsigned(CI.isTailCall());
+      if (NumOperands <= 3) {
+        Slots[NumOperands-1] =
+          (CI.getCallingConv() << 1)|unsigned(CI.isTailCall());
         if (Slots[NumOperands-1] > MaxOpSlot)
           MaxOpSlot = Slots[NumOperands-1];
       }
