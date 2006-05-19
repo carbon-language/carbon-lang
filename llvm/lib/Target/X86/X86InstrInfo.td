@@ -268,22 +268,24 @@ def X86_COND_S   : PatLeaf<(i8 15)>;
 def i16immSExt8  : PatLeaf<(i16 imm), [{
   // i16immSExt8 predicate - True if the 16-bit immediate fits in a 8-bit
   // sign extended field.
-  return (int)N->getValue() == (signed char)N->getValue();
+  return (int16_t)N->getValue() == (int8_t)N->getValue();
 }]>;
 
 def i32immSExt8  : PatLeaf<(i32 imm), [{
   // i32immSExt8 predicate - True if the 32-bit immediate fits in a 8-bit
   // sign extended field.
-  return (int)N->getValue() == (signed char)N->getValue();
+  return (int32_t)N->getValue() == (int8_t)N->getValue();
 }]>;
 
 def i16immZExt8  : PatLeaf<(i16 imm), [{
   // i16immZExt8 predicate - True if the 16-bit immediate fits in a 8-bit zero
   // extended field.
-  return (unsigned)N->getValue() == (unsigned char)N->getValue();
+  return (uint16_t)N->getValue() == (uint8_t)N->getValue();
 }]>;
 
 // Helper fragments for loads.
+def loadiPTR : PatFrag<(ops node:$ptr), (iPTR (load node:$ptr))>;
+
 def loadi8  : PatFrag<(ops node:$ptr), (i8  (load node:$ptr))>;
 def loadi16 : PatFrag<(ops node:$ptr), (i16 (load node:$ptr))>;
 def loadi32 : PatFrag<(ops node:$ptr), (i32 (load node:$ptr))>;
@@ -390,7 +392,7 @@ let isBranch = 1, isTerminator = 1, noResults = 1, isBarrier = 1 in {
   def JMP32r     : I<0xFF, MRM4r, (ops GR32:$dst), "jmp{l} {*}$dst",
                      [(brind GR32:$dst)]>;
   def JMP32m     : I<0xFF, MRM4m, (ops i32mem:$dst), "jmp{l} {*}$dst",
-                     [(brind (loadi32 addr:$dst))]>;
+                     [(brind (loadiPTR addr:$dst))]>;
 }
 
 // Conditional branches
@@ -441,7 +443,7 @@ let isCall = 1, noResults = 1 in
     def CALL32r     : I<0xFF, MRM2r, (ops GR32:$dst), "call {*}$dst",
                       [(X86call GR32:$dst)]>;
     def CALL32m     : I<0xFF, MRM2m, (ops i32mem:$dst), "call {*}$dst",
-                      [(X86call (loadi32 addr:$dst))]>;
+                      [(X86call (loadiPTR addr:$dst))]>;
   }
 
 // Tail call stuff.
@@ -1743,8 +1745,6 @@ def ADD16ri  : Ii16<0x81, MRM0r, (ops GR16:$dst, GR16:$src1, i16imm:$src2),
 def ADD32ri  : Ii32<0x81, MRM0r, (ops GR32:$dst, GR32:$src1, i32imm:$src2),
                     "add{l} {$src2, $dst|$dst, $src2}",
                     [(set GR32:$dst, (add GR32:$src1, imm:$src2))]>;
-}
-
 def ADD16ri8 : Ii8<0x83, MRM0r, (ops GR16:$dst, GR16:$src1, i16i8imm:$src2),
                    "add{w} {$src2, $dst|$dst, $src2}",
                    [(set GR16:$dst, (add GR16:$src1, i16immSExt8:$src2))]>,
@@ -1752,6 +1752,7 @@ def ADD16ri8 : Ii8<0x83, MRM0r, (ops GR16:$dst, GR16:$src1, i16i8imm:$src2),
 def ADD32ri8 : Ii8<0x83, MRM0r, (ops GR32:$dst, GR32:$src1, i32i8imm:$src2),
                    "add{l} {$src2, $dst|$dst, $src2}",
                    [(set GR32:$dst, (add GR32:$src1, i32immSExt8:$src2))]>;
+}
 
 let isTwoAddress = 0 in {
   def ADD8mr   : I<0x00, MRMDestMem, (ops i8mem :$dst, GR8 :$src2),
@@ -2369,7 +2370,7 @@ def : Pat<(store (i32 (X86Wrapper texternalsym:$src)), addr:$dst),
 def : Pat<(X86tailcall GR32:$dst),
       (CALL32r     GR32:$dst)>;
 
-def : Pat<(X86tailcall (loadi32 addr:$dst)),
+def : Pat<(X86tailcall (loadiPTR addr:$dst)),
       (CALL32m addr:$dst)>;
 
 def : Pat<(X86tailcall tglobaladdr:$dst),
