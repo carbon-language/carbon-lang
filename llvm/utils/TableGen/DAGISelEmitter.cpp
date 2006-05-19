@@ -2808,7 +2808,7 @@ public:
   bool InsertOneTypeCheck(TreePatternNode *Pat, TreePatternNode *Other,
                           const std::string &Prefix) {
     // Did we find one?
-    if (!Pat->hasTypeSet()) {
+    if (Pat->getExtTypes() != Other->getExtTypes()) {
       // Move a type over from 'other' to 'pat'.
       Pat->setTypes(Other->getExtTypes());
       emitCheck(Prefix + ".Val->getValueType(0) == MVT::" +
