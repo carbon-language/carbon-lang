@@ -218,6 +218,7 @@ sideeffect      { return SIDEEFFECT; }
 
 cc              { return CC_TOK; }
 ccc             { return CCC_TOK; }
+csretcc         { return CSRETCC_TOK; }
 fastcc          { return FASTCC_TOK; }
 coldcc          { return COLDCC_TOK; }
 

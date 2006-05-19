@@ -981,7 +981,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %token TO DOTDOTDOT NULL_TOK UNDEF CONST INTERNAL LINKONCE WEAK  APPENDING
 %token OPAQUE NOT EXTERNAL TARGET TRIPLE ENDIAN POINTERSIZE LITTLE BIG ALIGN
 %token DEPLIBS CALL TAIL ASM_TOK MODULE SIDEEFFECT
-%token CC_TOK CCC_TOK FASTCC_TOK COLDCC_TOK
+%token CC_TOK CCC_TOK CSRETCC_TOK FASTCC_TOK COLDCC_TOK
 %type <UIntVal> OptCallingConv
 
 // Basic Block Terminating Operators
@@ -1054,6 +1054,7 @@ OptLinkage : INTERNAL  { $$ = GlobalValue::InternalLinkage; } |
 
 OptCallingConv : /*empty*/      { $$ = CallingConv::C; } |
                  CCC_TOK        { $$ = CallingConv::C; } |
+                 CSRETCC_TOK    { $$ = CallingConv::CSRet; } |
                  FASTCC_TOK     { $$ = CallingConv::Fast; } |
                  COLDCC_TOK     { $$ = CallingConv::Cold; } |
                  CC_TOK EUINT64VAL {
