@@ -68,10 +68,10 @@ void llvm::ReplaceInstWithInst(Instruction *From, Instruction *To) {
 }
 
 /// RemoveSuccessor - Change the specified terminator instruction such that its
-/// successor #SuccNum no longer exists.  Because this reduces the outgoing
+/// successor SuccNum no longer exists.  Because this reduces the outgoing
 /// degree of the current basic block, the actual terminator instruction itself
-/// may have to be changed.  In the case where the last successor of the block is
-/// deleted, a return instruction is inserted in its place which can cause a
+/// may have to be changed.  In the case where the last successor of the block 
+/// is deleted, a return instruction is inserted in its place which can cause a
 /// surprising change in program behavior if it is not expected.
 ///
 void llvm::RemoveSuccessor(TerminatorInst *TI, unsigned SuccNum) {
