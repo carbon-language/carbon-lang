@@ -954,8 +954,8 @@ void AssemblyWriter::printFunction(const Function *F) {
   switch (F->getCallingConv()) {
   case CallingConv::C: break;   // default
   case CallingConv::CSRet: Out << "csretcc "; break;
-  case CallingConv::Fast: Out << "fastcc "; break;
-  case CallingConv::Cold: Out << "coldcc "; break;
+  case CallingConv::Fast:  Out << "fastcc "; break;
+  case CallingConv::Cold:  Out << "coldcc "; break;
   default: Out << "cc" << F->getCallingConv() << " "; break;
   }
 
@@ -1143,9 +1143,9 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     // Print the calling convention being used.
     switch (CI->getCallingConv()) {
     case CallingConv::C: break;   // default
-    case CallingConv::CSRet: Out << "csretcc "; break;
-    case CallingConv::Fast: Out << " fastcc"; break;
-    case CallingConv::Cold: Out << " coldcc"; break;
+    case CallingConv::CSRet: Out << " csretcc"; break;
+    case CallingConv::Fast:  Out << " fastcc"; break;
+    case CallingConv::Cold:  Out << " coldcc"; break;
     default: Out << " cc" << CI->getCallingConv(); break;
     }
 
@@ -1181,9 +1181,9 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     // Print the calling convention being used.
     switch (II->getCallingConv()) {
     case CallingConv::C: break;   // default
-    case CallingConv::CSRet: Out << "csretcc "; break;
-    case CallingConv::Fast: Out << " fastcc"; break;
-    case CallingConv::Cold: Out << " coldcc"; break;
+    case CallingConv::CSRet: Out << " csretcc"; break;
+    case CallingConv::Fast:  Out << " fastcc"; break;
+    case CallingConv::Cold:  Out << " coldcc"; break;
     default: Out << " cc" << II->getCallingConv(); break;
     }
 
