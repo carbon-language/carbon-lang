@@ -832,6 +832,8 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
 #endif
         return;
       }
+
+      break;
     }
 
     case X86ISD::CALL:
@@ -884,6 +886,7 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
           return;
         }
       }
+      break;
     }
   }
 
