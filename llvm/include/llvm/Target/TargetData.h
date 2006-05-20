@@ -54,7 +54,7 @@ public:
              unsigned char ByteAl  = 1, unsigned char BoolAl   = 1);
 
   /// Constructs a TargetData from a string of the following format:
-  /// "E-p:64:64-d:64:64-f:32:32-l:64:64-i:32:32-s:16:16-b:8:8-B:8:8"
+  /// "E-p:64:64-d:64-f:32-l:64-i:32-s:16-b:8-B:8"
   /// The above string is considered the default, and any values not specified
   /// in the string will be assumed to be as above.
   TargetData(const std::string &TargetName,
