@@ -69,7 +69,7 @@ unsigned X86TargetMachine::getModuleMatchQuality(const Module &M) {
 ///
 X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS)
   : TargetMachine("X86"),
-    DataLayout("X86", true, 4, 4, 4, 4, 4),
+    DataLayout(std::string("X86"), std::string("e-p:32:32-d:64:32-l:64:32")),
     Subtarget(M, FS),
     FrameInfo(TargetFrameInfo::StackGrowsDown,
               Subtarget.getStackAlignment(), -4),

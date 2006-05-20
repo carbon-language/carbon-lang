@@ -32,7 +32,7 @@ namespace {
 ///
 SparcTargetMachine::SparcTargetMachine(const Module &M, const std::string &FS)
   : TargetMachine("Sparc"),
-    DataLayout("Sparc", false, 4, 4),
+    DataLayout(std::string("Sparc"), std::string("e-p:32:32")),
     Subtarget(M, FS), InstrInfo(Subtarget),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 8, 0) {
 }

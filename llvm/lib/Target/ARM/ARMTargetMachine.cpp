@@ -33,7 +33,7 @@ namespace {
 ///
 ARMTargetMachine::ARMTargetMachine(const Module &M, const std::string &FS)
   : TargetMachine("ARM"),
-    DataLayout("ARM", false, 4, 4),
+    DataLayout(std::string("ARM"), std::string("E-p:32:32")),
     InstrInfo(),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 8, 0) {
 }

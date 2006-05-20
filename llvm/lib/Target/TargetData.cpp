@@ -123,6 +123,10 @@ TargetData::TargetData(const std::string &TargetName,
 
 TargetData::TargetData(const std::string &TargetName,
                        const std::string &TargetDescription) {
+  assert(!TargetName.empty() &&
+         "ERROR: Tool did not specify a target data to use!");
+
+                       
   std::string temp = TargetDescription;
   
   LittleEndian = false;
@@ -136,7 +140,7 @@ TargetData::TargetData(const std::string &TargetName,
   ByteAlignment  = 1;
   BoolAlignment   = 1;
   
-  while (temp.length() > 0) {
+  while (!temp.empty()) {
     std::string token = getToken(temp, "-");
     
     char signal = getToken(token, ":")[0];
