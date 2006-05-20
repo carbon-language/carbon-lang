@@ -840,13 +840,18 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
     case X86ISD::TAILCALL: {
       // Handle indirect call which folds a load here. This never matches by
       // the TableGen generated code since the load's chain result is read by
-      // the callseq_start node.
+      // the callseq_start node or by a TokenFactor which feeds into the
+      // callseq_start.
       SDOperand N1 = Node->getOperand(1);
       if (N1.getOpcode() == ISD::LOAD && N1.hasOneUse() &&
           !CodeGenMap.count(N1.getValue(0))) {
         SDOperand Chain = Node->getOperand(0);
         SDNode *CallStart = FindCallStartFromCall(Chain.Val);
-        if (!CallStart || CallStart->getOperand(0).Val != N1.Val)
+        if (!CallStart) break;
+        SDNode *CSOp0 = CallStart->getOperand(0).Val;
+        if (! (CSOp0 == N1.Val ||
+               (CSOp0->getOpcode() == ISD::TokenFactor &&
+                N1.Val->isOperand(CSOp0))))
           break;
         SDOperand Base, Scale, Index, Disp;
         if (SelectAddr(N1.getOperand(1), Base, Scale, Index, Disp)) {
@@ -872,8 +877,13 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
 
           SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val,  0, Chain.Val,
                                            Chain.ResNo);
-          SelectionDAG::InsertISelMapEntry(CodeGenMap, N1.Val, 1, ResNode, 0);
           SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val,  1, ResNode, 1);
+          // CALLSEQ_START needs a chain! It can't be ResNode, that would cause
+          // a cycle. It should be the chain of the load.
+          Select(Chain, N1.getOperand(0));
+          SelectionDAG::InsertISelMapEntry(CodeGenMap, N1.Val, 1, Chain.Val,
+                                           Chain.ResNo);
+          AddHandleReplacement(N1.Val, 1, Chain.Val, Chain.ResNo);
           Result = SDOperand(ResNode, 0);
 
 #ifndef NDEBUG
