@@ -4822,7 +4822,7 @@ Value *InstCombiner::EvaluateInDifferentType(Value *V, const Type *Ty) {
 
   // Otherwise, it must be an instruction.
   Instruction *I = cast<Instruction>(V);
-  Instruction *Res;
+  Instruction *Res = 0;
   switch (I->getOpcode()) {
   case Instruction::And:
   case Instruction::Or:
