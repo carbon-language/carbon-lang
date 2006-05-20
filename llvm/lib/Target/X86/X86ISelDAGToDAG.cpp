@@ -516,6 +516,13 @@ SDOperand X86DAGToDAGISel::getGlobalBaseReg() {
   return CurDAG->getRegister(GlobalBaseReg, MVT::i32);
 }
 
+static SDNode *FindCallStartFromCall(SDNode *Node) {
+  if (Node->getOpcode() == ISD::CALLSEQ_START) return Node;
+    assert(Node->getOperand(0).getValueType() == MVT::Other &&
+         "Node doesn't have a token chain argument!");
+  return FindCallStartFromCall(Node->getOperand(0).Val);
+}
+
 void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
   SDNode *Node = N.Val;
   MVT::ValueType NVT = Node->getValueType(0);
@@ -824,6 +831,57 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
         Indent -= 2;
 #endif
         return;
+      }
+    }
+
+    case X86ISD::CALL: {
+      // Handle indirect call which folds a load here. This never matches by
+      // the TableGen generated code since the load's chain result is read by
+      // the callseq_start node.
+      SDOperand N1 = Node->getOperand(1);
+      if (N1.getOpcode() == ISD::LOAD && N1.hasOneUse() &&
+          !CodeGenMap.count(N1.getValue(0))) {
+        SDOperand Chain = Node->getOperand(0);
+        SDNode *CallStart = FindCallStartFromCall(Chain.Val);
+        if (!CallStart || CallStart->getOperand(0).Val != N1.Val)
+          break;
+        SDOperand Base, Scale, Index, Disp;
+        if (SelectAddr(N1.getOperand(1), Base, Scale, Index, Disp)) {
+          Select(Base,  Base);
+          Select(Scale, Scale);
+          Select(Index, Index);
+          Select(Disp,  Disp);
+          Select(Chain, Chain);
+          bool HasOptInFlag = false;
+          SDOperand InFlag;
+          if (N.getNumOperands() == 3) {
+            Select(InFlag, N.getOperand(2));
+            HasOptInFlag = true;
+          }
+          SDNode *ResNode;
+          if (HasOptInFlag)
+            ResNode = CurDAG->getTargetNode(X86::CALL32m, MVT::Other, MVT::Flag,
+                                            Base, Scale, Index, Disp, Chain,
+                                            InFlag);
+          else
+            ResNode = CurDAG->getTargetNode(X86::CALL32m, MVT::Other, MVT::Flag,
+                                            Base, Scale, Index, Disp, Chain);
+
+          SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val,  0, Chain.Val,
+                                           Chain.ResNo);
+          SelectionDAG::InsertISelMapEntry(CodeGenMap, N1.Val, 1, ResNode, 0);
+          SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val,  1, ResNode, 1);
+          Result = SDOperand(ResNode, 0);
+
+#ifndef NDEBUG
+          DEBUG(std::cerr << std::string(Indent-2, ' '));
+          DEBUG(std::cerr << "== ");
+          DEBUG(Result.Val->dump(CurDAG));
+          DEBUG(std::cerr << "\n");
+          Indent -= 2;
+#endif
+          return;
+        }
       }
     }
   }
