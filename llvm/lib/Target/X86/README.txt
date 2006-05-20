@@ -577,3 +577,13 @@ nicer, while still handling the hard cases.
 
 //===---------------------------------------------------------------------===//
 
+Some ideas for instruction selection code simplification: 1. A pre-pass to
+determine which chain producing node can or cannot be folded. The generated
+isel code would then use the information. 2. The same pre-pass can force
+ordering of TokenFactor operands to allow load / store folding. 3. During isel,
+instead of recursively going up the chain operand chain, mark the chain operand
+as available and put it in some work list. Select other nodes in the normal
+manner. The chain operands are selected after all other nodes are selected. Uses
+of chain nodes are modified after instruction selection is completed.
+
+
