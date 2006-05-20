@@ -75,7 +75,7 @@ def X86callseq_end :
 def X86call    : SDNode<"X86ISD::CALL",     SDT_X86Call,
                         [SDNPHasChain, SDNPOutFlag, SDNPOptInFlag]>;
 
-def X86tailcall    : SDNode<"X86ISD::TAILCALL",     SDT_X86Call,
+def X86tailcall: SDNode<"X86ISD::TAILCALL",     SDT_X86Call,
                         [SDNPHasChain, SDNPOutFlag, SDNPOptInFlag]>;
 
 def X86rep_stos: SDNode<"X86ISD::REP_STOS", SDTX86RepStr,
@@ -442,8 +442,7 @@ let isCall = 1, noResults = 1 in
                       []>;
     def CALL32r     : I<0xFF, MRM2r, (ops GR32:$dst), "call {*}$dst",
                       [(X86call GR32:$dst)]>;
-    def CALL32m     : I<0xFF, MRM2m, (ops i32mem:$dst), "call {*}$dst",
-                      [(X86call (loadiPTR addr:$dst))]>;
+    def CALL32m     : I<0xFF, MRM2m, (ops i32mem:$dst), "call {*}$dst", []>;
   }
 
 // Tail call stuff.
@@ -2369,9 +2368,6 @@ def : Pat<(store (i32 (X86Wrapper texternalsym:$src)), addr:$dst),
 // Calls
 def : Pat<(X86tailcall GR32:$dst),
       (CALL32r     GR32:$dst)>;
-
-def : Pat<(X86tailcall (loadiPTR addr:$dst)),
-      (CALL32m addr:$dst)>;
 
 def : Pat<(X86tailcall tglobaladdr:$dst),
           (CALLpcrel32 tglobaladdr:$dst)>;

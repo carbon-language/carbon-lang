@@ -834,7 +834,8 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
       }
     }
 
-    case X86ISD::CALL: {
+    case X86ISD::CALL:
+    case X86ISD::TAILCALL: {
       // Handle indirect call which folds a load here. This never matches by
       // the TableGen generated code since the load's chain result is read by
       // the callseq_start node.
