@@ -239,3 +239,15 @@ ulong %bar() {
 it should be extended to do so.
 
 //===---------------------------------------------------------------------===//
+
+Turn this into a single byte store with no load (the other 3 bytes are
+unmodified):
+
+void %test(uint* %P) {
+	%tmp = load uint* %P
+        %tmp14 = or uint %tmp, 3305111552
+        %tmp15 = and uint %tmp14, 3321888767
+        store uint %tmp15, uint* %P
+        ret void
+}
+
