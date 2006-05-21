@@ -3150,7 +3150,7 @@ else
 fi;
 case "$withval" in
   default) WITH_LLVMGCCDIR=default ;;
-  /*)      WITH_LLVMGCCDIR=$withval ;;
+  /* | [A-Za-z]:[\\/]*)      WITH_LLVMGCCDIR=$withval ;;
   *) { { echo "$as_me:$LINENO: error: Invalid path for --with-llvmgccdir. Provide full path" >&5
 echo "$as_me: error: Invalid path for --with-llvmgccdir. Provide full path" >&2;}
    { (exit 1); exit 1; }; } ;;

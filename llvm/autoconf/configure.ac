@@ -320,7 +320,7 @@ AC_ARG_WITH(llvmgccdir,
     withval=default)
 case "$withval" in
   default) WITH_LLVMGCCDIR=default ;;
-  /*)      WITH_LLVMGCCDIR=$withval ;;
+  /* | [[A-Za-z]]:[[\\/]]*)      WITH_LLVMGCCDIR=$withval ;;
   *) AC_MSG_ERROR([Invalid path for --with-llvmgccdir. Provide full path]) ;;
 esac
 
