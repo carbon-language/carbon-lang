@@ -586,4 +586,23 @@ as available and put it in some work list. Select other nodes in the normal
 manner. The chain operands are selected after all other nodes are selected. Uses
 of chain nodes are modified after instruction selection is completed.
 
+//===---------------------------------------------------------------------===//
 
+Another instruction selector deficiency:
+
+void %bar() {
+	%tmp = load int (int)** %foo
+	%tmp = tail call int %tmp( int 3 )
+	ret void
+}
+
+_bar:
+	subl $12, %esp
+	movl L_foo$non_lazy_ptr, %eax
+	movl (%eax), %eax
+	call *%eax
+	addl $12, %esp
+	ret
+
+The current isel scheme will not allow the load to be folded in the call since
+the load's chain result is read by the callseq_start.
