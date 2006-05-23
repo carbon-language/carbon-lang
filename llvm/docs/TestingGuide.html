@@ -108,9 +108,10 @@ regression tests are in the main "llvm" module under the directory
 programs in C and C++ is in the <tt>llvm-test</tt> module. This module should 
 be checked out to the <tt>llvm/projects</tt> directory. When you
 <tt>configure</tt> the <tt>llvm</tt> module, the <tt>llvm-test</tt> module
-will be automatically configured. Alternatively, you can configure the <tt>llvm-test</tt> module manually.</p>
-<p>To run all of the simple tests in LLVM using DejaGNU, use the master Makefile in the
-<tt>llvm/test</tt> directory:</p>
+will be automatically configured. Alternatively, you can configure the
+ <tt>llvm-test</tt> module manually.</p>
+<p>To run all of the simple tests in LLVM using DejaGNU, use the master Makefile
+ in the <tt>llvm/test</tt> directory:</p>
 <pre>
 % gmake -C llvm/test
 </pre>
@@ -323,11 +324,13 @@ platforms support grep -C.</dd>
 that you might find useful when writing <tt>RUN</tt> lines.</p>
 
 <p>Lastly, you can easily mark a test that is expected to fail on a
-specific platform or with a specific version of llvmgcc by using the <tt>XFAIL</tt> keyword. Xfail lines are
+specific platform or with a specific version of llvmgcc by using the
+ <tt>XFAIL</tt> keyword. Xfail lines are
 specified in the comments of the test program using <tt>XFAIL</tt>,
 followed by a colon, and one or more regular expressions (separated by
 a comma) that will match against the target triplet or llvmgcc version for the
-machine. You can use * to match all targets. You can specify the major or full version (i.e. 3.4) for llvmgcc. Here is an example of an
+machine. You can use * to match all targets. You can specify the major or full
+ version (i.e. 3.4) for llvmgcc. Here is an example of an
 <tt>XFAIL</tt> line:</p>
 <pre>
 ; XFAIL: darwin,sun,llvmgcc4
@@ -402,8 +405,8 @@ specify the following configuration options:</p>
 <i>are not</i> executed inside of the LLVM source tree. This is because the
 test suite creates temporary files during execution.</p>
 
-<p>The master Makefile in llvm/test is capable of running only the DejaGNU driven
-tests. By default, it will run all of these tests.</p>
+<p>The master Makefile in llvm/test is capable of running only the DejaGNU
+driven tests. By default, it will run all of these tests.</p>
 
 <p>To run only the DejaGNU driven tests, run <tt>gmake</tt> at the
 command line in <tt>llvm/test</tt>.  To run a specific directory of tests, use
@@ -432,7 +435,8 @@ directory to run them.</p>
     properly configured.</li>
     <li>Use the <tt>configure</tt> script found in the <tt>llvm-test</tt> source
     directory:<br/>
-    <tt>$LLVM_SRC_ROOT/projects/llvm-test/configure --with-llvmsrc=$LLVM_SRC_ROOT --with-llvmobj=$LLVM_OBJ_ROOT</tt>
+    <tt>$LLVM_SRC_ROOT/projects/llvm-test/configure
+     --with-llvmsrc=$LLVM_SRC_ROOT --with-llvmobj=$LLVM_OBJ_ROOT</tt>
     </li>
   </ol>
   <li>gmake</li>
@@ -483,11 +487,12 @@ programs don't break as well as keep track of LLVM's progress over time.</p>
 <p>If you'd like to set up an instance of the nightly tester to run on your
 machine, take a look at the comments at the top of the
 <tt>utils/NightlyTester.pl</tt> file.  We usually run it from a crontab entry
-that looks ilke this:</p>
+that looks like this:</p>
 
 <div class="doc_code">
 <pre>
-5 3 * * *  $HOME/llvm/utils/NightlyTest.pl -parallel $CVSROOT $HOME/buildtest-X86 $HOME/cvs/testresults-X86
+5 3 * * *  $HOME/llvm/utils/NightlyTest.pl -parallel $CVSROOT \
+           $HOME/buildtest $HOME/cvs/testresults
 </pre>
 </div>
 
@@ -506,8 +511,10 @@ export PATH=/proj/install/bin:$LLVMGCCDIR/bin:$PATH
 export LD_LIBRARY_PATH=/proj/install/lib
 cd $BASE
 cp /proj/work/llvm/llvm/utils/NightlyTest.pl .
-nice ./NightlyTest.pl -nice -release -verbose -parallel -enable-linscan -noexternals 2&gt;&amp;1 &gt; output.log
-mail -s 'X86 nightly tester results' <a href="http://mail.cs.uiuc.edu/mailman/listinfo/llvm-testresults">llvm-testresults@cs.uiuc.edu</a> &lt; output.log
+nice ./NightlyTest.pl -nice -release -verbose -parallel -enable-linscan \
+   -noexternals 2&gt;&amp;1 &gt; output.log
+mail -s 'X86 nightly tester results' <a href="http://mail.cs.uiuc.edu/mailman/\
+   listinfo/llvm-testresults">llvm-testresults@cs.uiuc.edu</a> &lt; output.log
 </pre>
 </div>
 
