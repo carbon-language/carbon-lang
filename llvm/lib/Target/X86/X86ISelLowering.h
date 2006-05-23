@@ -282,11 +282,6 @@ namespace llvm {
     ///
     virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
 
-    /// LowerArguments - This hook must be implemented to indicate how we should
-    /// lower the arguments for the specified function, into the specified DAG.
-    virtual std::vector<SDOperand>
-    LowerArguments(Function &F, SelectionDAG &DAG);
-
     /// LowerCallTo - This hook lowers an abstract call to a function into an
     /// actual call.
     virtual std::pair<SDOperand, SDOperand>
@@ -346,42 +341,15 @@ namespace llvm {
     /// X86ScalarSSE - Select between SSE2 or x87 floating point ops.
     bool X86ScalarSSE;
 
-    /// Formal arguments lowered to load and CopyFromReg ops.
-    std::vector<SDOperand> FormalArgs;
-
-    /// Formal arguments locations (frame indices and registers).
-    struct FALocInfo {
-      enum FALocKind {
-        None,
-        StackFrameLoc,
-        LiveInRegLoc,
-      } Kind;
-
-      int Loc;
-      MVT::ValueType Typ;
-
-      FALocInfo() : Kind(None), Loc(0), Typ(MVT::isVoid) {};
-      FALocInfo(enum FALocKind k, int fi) : Kind(k), Loc(fi), Typ(MVT::isVoid) {};
-      FALocInfo(enum FALocKind k, int r, MVT::ValueType vt)
-        : Kind(k), Loc(r), Typ(vt) {};
-    };
-
-    std::vector<std::pair<FALocInfo, FALocInfo> > FormalArgLocs;
-
     // C Calling Convention implementation.
-    void PreprocessCCCArguments(std::vector<SDOperand> &Args, Function &F,
-                                SelectionDAG &DAG);
-    void LowerCCCArguments(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerCCCArguments(SDOperand Op, SelectionDAG &DAG);
     std::pair<SDOperand, SDOperand>
     LowerCCCCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
                    bool isTailCall, unsigned CallingConv,
                    SDOperand Callee, ArgListTy &Args, SelectionDAG &DAG);
 
     // Fast Calling Convention implementation.
-    void
-    PreprocessFastCCArguments(std::vector<SDOperand> &Args, Function &F,
-                              SelectionDAG &DAG);
-    void
+    SDOperand
     LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG);
     std::pair<SDOperand, SDOperand>
     LowerFastCCCallTo(SDOperand Chain, const Type *RetTy, bool isTailCall,
