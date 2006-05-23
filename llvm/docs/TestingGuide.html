@@ -24,7 +24,11 @@
   <li><a href="#tree">LLVM Test Suite Tree</a></li>
   <li><a href="#dgstructure">DejaGNU Structure</a></li>
   <li><a href="#progstructure"><tt>llvm-test</tt> Structure</a></li>
-  <li><a href="#run">Running the LLVM Tests</a></li>
+  <li><a href="#run">Running the LLVM Tests</a>
+    <ul>
+      <li><a href="#customtest">Writing custom tests for llvm-test</a></li>
+    </ul>
+  </li>
   <li><a href="#nightly">Running the nightly tester</a></li>
 </ol>
 
@@ -157,8 +161,9 @@ test suite is in the <tt>llvm-test</tt> module under the main directory.</p>
 
 </div>
 
-<div class="doc_subsection"><a name="codefragments">Code Fragments</a> 
-</div>
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsection"><a name="codefragments">Code Fragments</a></div>
+<!-- _______________________________________________________________________ -->
 
 <div class="doc_text">
 
@@ -175,7 +180,9 @@ determine correct behavior.</p>
 
 </div>
 
+<!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="wholeprograms">Whole Programs</a></div>
+<!-- _______________________________________________________________________ -->
 
 <div class="doc_text">
 
@@ -470,6 +477,78 @@ a test fails, a large &lt;program&gt; FAILED message will be displayed.  This
 will help you separate benign warnings from actual test failures.</p>
 
 </div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsection">
+<a name="customtest">Writing custom tests for llvm-test</a></div>
+<!-- _______________________________________________________________________ -->
+
+<div class="doc_text">
+
+<p>Assuming you can run llvm-test, (e.g. "<tt>gmake TEST=nightly report</tt>"
+should work), it is really easy to run optimizations or code generator
+components against every program in the tree, collecting statistics or running
+custom checks for correctness.  At base, this is how the nightly tester works,
+it's just one example of a general framework.</p>
+
+<p>Lets say that you have an LLVM optimization pass, and you want to see how
+many times it triggers.  First thing you should do is add an LLVM
+<a href="ProgrammersManual.html#Statistic">statistic</a> to your pass, which
+will tally counts of things you care about.</p>
+
+<p>Following this, you can set up a test and a report that collects these and
+formats them for easy viewing.  This consists of two files, an
+"<tt>llvm-test/TEST.XXX.Makefile</tt>" fragment (where XXX is the name of your
+test) and an "<tt>llvm-test/TEST.XXX.report</tt>" file that indicates how to
+format the output into a table.  There are many example reports of various
+levels of sophistication included with llvm-test, and the framework is very
+general.</p>
+
+<p>If you are interested in testing an optimization pass, check out the
+"libcalls" test as an example.  It can be run like this:<p>
+
+<div class="doc_code">
+<pre>
+% cd llvm/projects/llvm-test/MultiSource/Benchmarks  # or some other level
+% make TEST=libcalls report
+</pre>
+</div>
+
+<p>This will do a bunch of stuff, then eventually print a table like this:</p>
+
+<div class="doc_code">
+<pre>
+Name                                  | total | #exit |
+...
+FreeBench/analyzer/analyzer           | 51    | 6     | 
+FreeBench/fourinarow/fourinarow       | 1     | 1     | 
+FreeBench/neural/neural               | 19    | 9     | 
+FreeBench/pifft/pifft                 | 5     | 3     | 
+MallocBench/cfrac/cfrac               | 1     | *     | 
+MallocBench/espresso/espresso         | 52    | 12    | 
+MallocBench/gs/gs                     | 4     | *     | 
+Prolangs-C/TimberWolfMC/timberwolfmc  | 302   | *     | 
+Prolangs-C/agrep/agrep                | 33    | 12    | 
+Prolangs-C/allroots/allroots          | *     | *     | 
+Prolangs-C/assembler/assembler        | 47    | *     | 
+Prolangs-C/bison/mybison              | 74    | *     | 
+...
+</pre>
+</div>
+
+<p>This basically is grepping the -stats output and displaying it in a table.
+You can also use the "TEST=libcalls report.html" target to get the table in HTML
+form, similarly for report.csv and report.tex.</p>
+
+<p>The source for this is in llvm-test/TEST.libcalls.*.  The format is pretty
+simple: the Makefile indicates how to run the test (in this case, 
+"<tt>opt -simplify-libcalls -stats</tt>"), and the report contains one line for
+each column of the output.  The first value is the header for the column and the
+second is the regex to grep the output of the command for.  There are lots of
+example reports that can do fancy stuff.</p>
+
+</div>
+
 
 <!--=========================================================================-->
 <div class="doc_section"><a name="nightly">Running the nightly tester</a></div>
