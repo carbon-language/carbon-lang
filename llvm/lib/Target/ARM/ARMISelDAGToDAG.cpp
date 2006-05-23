@@ -82,7 +82,42 @@ static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
 }
 
 static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
-  assert(0 && "Not implemented");
+  MachineFunction &MF = DAG.getMachineFunction();
+  SSARegMap *RegMap = MF.getSSARegMap();
+  std::vector<SDOperand> ArgValues;
+  SDOperand Root = Op.getOperand(0);
+
+  unsigned reg_idx = 0;
+  unsigned num_regs = 4;
+
+  static const unsigned REGS[] = {
+    ARM::R0, ARM::R1, ARM::R2, ARM::R3
+  };
+
+  for (unsigned ArgNo = 0, e = Op.Val->getNumValues()-1; ArgNo != e; ++ArgNo) {
+    SDOperand ArgVal;
+
+    MVT::ValueType ObjectVT = Op.getValue(ArgNo).getValueType();
+    assert (ObjectVT == MVT::i32);
+
+    assert(reg_idx < num_regs);
+    unsigned VReg = RegMap->createVirtualRegister(&ARM::IntRegsRegClass);
+    MF.addLiveIn(REGS[reg_idx], VReg);
+    ArgVal = DAG.getCopyFromReg(Root, VReg, MVT::i32);
+    ++reg_idx;
+
+    ArgValues.push_back(ArgVal);
+  }
+
+  bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
+  assert(!isVarArg);
+
+  ArgValues.push_back(Root);
+
+  // Return the new list of results.
+  std::vector<MVT::ValueType> RetVT(Op.Val->value_begin(),
+                                    Op.Val->value_end());
+  return DAG.getNode(ISD::MERGE_VALUES, RetVT, ArgValues);
 }
 
 SDOperand ARMTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {

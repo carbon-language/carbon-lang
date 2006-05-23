@@ -85,8 +85,50 @@ FunctionPass *llvm::createARMCodePrinterPass(std::ostream &o,
 /// method to print assembly for each instruction.
 ///
 bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  assert(0 && "not implemented");
-  // We didn't modify anything.
+  SetupMachineFunction(MF);
+  O << "\n\n";
+
+  // Print out constants referenced by the function
+  EmitConstantPool(MF.getConstantPool());
+
+  // Print out jump tables referenced by the function
+  EmitJumpTableInfo(MF.getJumpTableInfo());
+
+  // Print out labels for the function.
+  const Function *F = MF.getFunction();
+  switch (F->getLinkage()) {
+  default: assert(0 && "Unknown linkage type!");
+  case Function::InternalLinkage:
+    SwitchToTextSection("\t.text", F);
+    break;
+  case Function::ExternalLinkage:
+    SwitchToTextSection("\t.text", F);
+    O << "\t.globl\t" << CurrentFnName << "\n";
+    break;
+  case Function::WeakLinkage:
+  case Function::LinkOnceLinkage:
+    assert(0 && "Not implemented");
+    break;
+  }
+  EmitAlignment(4, F);
+  O << CurrentFnName << ":\n";
+
+  // Print out code for the function.
+  for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
+       I != E; ++I) {
+    // Print a label for the basic block.
+    if (I != MF.begin()) {
+      printBasicBlockLabel(I, true);
+      O << '\n';
+    }
+    for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
+         II != E; ++II) {
+      // Print the assembly for the instruction.
+      O << "\t";
+      printInstruction(II);
+    }
+  }
+
   return false;
 }
 
@@ -109,7 +151,6 @@ bool ARMAsmPrinter::doInitialization(Module &M) {
 }
 
 bool ARMAsmPrinter::doFinalization(Module &M) {
-  assert(0 && "not implemented");
   AsmPrinter::doFinalization(M);
   return false; // success
 }

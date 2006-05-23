@@ -27,11 +27,6 @@ ARMInstrInfo::ARMInstrInfo()
 ///
 bool ARMInstrInfo::isMoveInstr(const MachineInstr &MI,
                                  unsigned &SrcReg, unsigned &DstReg) const {
-  // We look for 3 kinds of patterns here:
-  // or with G0 or 0
-  // add with G0 or 0
-  // fmovs or FpMOVD (pseudo double move).
-  assert(0 && "not implemented");
   return false;
 }
 
