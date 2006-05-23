@@ -497,7 +497,8 @@ SDOperand X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG) 
 
   // If the function takes variable number of arguments, make a frame index for
   // the start of the first vararg value... for expansion of llvm.va_start.
-  if (MF.getFunction()->isVarArg())
+  bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
+  if (isVarArg)
     VarArgsFrameIndex = MFI->CreateFixedObject(1, ArgOffset);
   ReturnAddrIndex = 0;     // No return address slot generated yet.
   BytesToPopOnReturn = 0;  // Callee pops nothing.
