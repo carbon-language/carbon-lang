@@ -26,6 +26,7 @@ namespace llvm {
   bool NoFramePointerElim;
   bool NoExcessFPPrecision;
   bool UnsafeFPMath;
+  bool FiniteOnlyFPMath;
   Reloc::Model RelocationModel;
 };
 namespace {
@@ -47,6 +48,11 @@ namespace {
   EnableUnsafeFPMath("enable-unsafe-fp-math",
                cl::desc("Enable optimizations that may decrease FP precision"),
                cl::location(UnsafeFPMath),
+               cl::init(false));
+  cl::opt<bool, true>
+  EnableFiniteOnltFPMath("enable-finite-only-fp-math",
+               cl::desc("Enable optimizations that assumes non- NaNs / +-Infs"),
+               cl::location(FiniteOnlyFPMath),
                cl::init(false));
   cl::opt<llvm::Reloc::Model, true>
   DefRelocationModel(
