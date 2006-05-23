@@ -6,34 +6,7 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// The MachineFrameInfo class represents an abstract stack frame until
-// prolog/epilog code is inserted.  This class is key to allowing stack frame
-// representation optimizations, such as frame pointer elimination.  It also
-// allows more mundane (but still important) optimizations, such as reordering
-// of abstract objects on the stack frame.
-//
-// To support this, the class assigns unique integer identifiers to stack
-// objects requested clients.  These identifiers are negative integers for fixed
-// stack objects (such as arguments passed on the stack) or positive for objects
-// that may be reordered.  Instructions which refer to stack objects use a
-// special MO_FrameIndex operand to represent these frame indexes.
-//
-// Because this class keeps track of all references to the stack frame, it knows
-// when a variable sized object is allocated on the stack.  This is the sole
-// condition which prevents frame pointer elimination, which is an important
-// optimization on register-poor architectures.  Because original variable sized
-// alloca's in the source program are the only source of variable sized stack
-// objects, it is safe to decide whether there will be any variable sized
-// objects before all stack objects are known (for example, register allocator
-// spill code never needs variable sized objects).
-//
-// When prolog/epilog code emission is performed, the final stack frame is built
-// and the machine instructions are modified to refer to the actual stack
-// offsets of the object, eliminating all MO_FrameIndex operands from the
-// program.
-//
-//===----------------------------------------------------------------------===//
+
 
 #ifndef LLVM_CODEGEN_MACHINEFRAMEINFO_H
 #define LLVM_CODEGEN_MACHINEFRAMEINFO_H
@@ -47,6 +20,36 @@ class Type;
 class MachineDebugInfo;
 class MachineFunction;
 
+
+/// The MachineFrameInfo class represents an abstract stack frame until
+/// prolog/epilog code is inserted.  This class is key to allowing stack frame
+/// representation optimizations, such as frame pointer elimination.  It also
+/// allows more mundane (but still important) optimizations, such as reordering
+/// of abstract objects on the stack frame.
+///
+/// To support this, the class assigns unique integer identifiers to stack
+/// objects requested clients.  These identifiers are negative integers for
+/// fixed stack objects (such as arguments passed on the stack) or positive
+/// for objects that may be reordered.  Instructions which refer to stack
+/// objects use a special MO_FrameIndex operand to represent these frame
+/// indexes.
+///
+/// Because this class keeps track of all references to the stack frame, it
+/// knows when a variable sized object is allocated on the stack.  This is the
+/// sole condition which prevents frame pointer elimination, which is an
+/// important optimization on register-poor architectures.  Because original
+/// variable sized alloca's in the source program are the only source of
+/// variable sized stack objects, it is safe to decide whether there will be
+/// any variable sized objects before all stack objects are known (for
+/// example, register allocator spill code never needs variable sized
+/// objects).
+///
+/// When prolog/epilog code emission is performed, the final stack frame is
+/// built and the machine instructions are modified to refer to the actual
+/// stack offsets of the object, eliminating all MO_FrameIndex operands from
+/// the program.
+///
+/// @brief Abstract Stack Frame Information
 class MachineFrameInfo {
 
   // StackObject - Represent a single object allocated on the stack.
