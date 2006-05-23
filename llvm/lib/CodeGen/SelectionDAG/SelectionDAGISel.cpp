@@ -1105,8 +1105,7 @@ void SelectionDAGLowering::visitSetCC(User &I,ISD::CondCode SignedOpcode,
   SDOperand Op1 = getValue(I.getOperand(0));
   SDOperand Op2 = getValue(I.getOperand(1));
   ISD::CondCode Opcode = SignedOpcode;
-  if ((!UnsafeFPMath && !FiniteOnlyFPMath) &&
-      I.getOperand(0)->getType()->isFloatingPoint())
+  if (!FiniteOnlyFPMath() && I.getOperand(0)->getType()->isFloatingPoint())
     Opcode = FPOpcode;
   else if (I.getOperand(0)->getType()->isUnsigned())
     Opcode = UnsignedOpcode;

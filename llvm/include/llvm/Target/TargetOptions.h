@@ -39,14 +39,15 @@ namespace llvm {
   /// this flag is off (the default), the code generator is not allowed to
   /// produce results that are "less precise" than IEEE allows.  This includes
   /// use of X86 instructions like FSIN and FCOS instead of libcalls.
+  /// UnsafeFPMath implies FiniteOnlyFPMath.
   extern bool UnsafeFPMath;
 
-  /// FiniteOnlyFPMath - This is enabled when the -enable-finite-only-fp-math
-  /// flag is specified on the command line. When this flag is off (default),
+  /// FiniteOnlyFPMath - This returns true when the -enable-finite-only-fp-math
+  /// option is specified on the command line. If this returns false (default),
   /// the code generator is not allowed to assume that FP arithmetic arguments
-  /// and results are never NaNs or +-Infs. This includes ignoring parity flag
-  /// (PF) when checking for FP equality.
-  extern bool FiniteOnlyFPMath;
+  /// and results are never NaNs or +-Infs.
+  extern bool FiniteOnlyFPMathOption;
+  extern bool FiniteOnlyFPMath();
 } // End llvm namespace
 
 #endif

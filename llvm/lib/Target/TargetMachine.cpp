@@ -26,7 +26,7 @@ namespace llvm {
   bool NoFramePointerElim;
   bool NoExcessFPPrecision;
   bool UnsafeFPMath;
-  bool FiniteOnlyFPMath;
+  bool FiniteOnlyFPMathOption;
   Reloc::Model RelocationModel;
 };
 namespace {
@@ -52,7 +52,7 @@ namespace {
   cl::opt<bool, true>
   EnableFiniteOnltFPMath("enable-finite-only-fp-math",
                cl::desc("Enable optimizations that assumes non- NaNs / +-Infs"),
-               cl::location(FiniteOnlyFPMath),
+               cl::location(FiniteOnlyFPMathOption),
                cl::init(false));
   cl::opt<llvm::Reloc::Model, true>
   DefRelocationModel(
@@ -93,3 +93,11 @@ Reloc::Model TargetMachine::getRelocationModel() {
 void TargetMachine::setRelocationModel(Reloc::Model Model) {
   RelocationModel = Model;
 }
+
+namespace llvm {
+  /// FiniteOnlyFPMath - This returns true when the -enable-finite-only-fp-math
+  /// option is specified on the command line. If this returns false (default),
+  /// the code generator is not allowed to assume that FP arithmetic arguments
+  /// and results are never NaNs or +-Infs.
+  bool FiniteOnlyFPMath() { return UnsafeFPMath || FiniteOnlyFPMathOption; }
+};
