@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CTargetMachine.h"
+#include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
@@ -115,6 +116,9 @@ namespace {
                             const std::string &VariableName = "",
                             bool IgnoreName = false);
 
+    void printStructReturnPointerFunctionType(std::ostream &Out,
+                                              const PointerType *Ty);
+    
     void writeOperand(Value *Operand);
     void writeOperandInternal(Value *Operand);
 
@@ -298,6 +302,35 @@ bool CBackendNameAllUsedStructsAndMergeFunctions::runOnModule(Module &M) {
   return Changed;
 }
 
+/// printStructReturnPointerFunctionType - This is like printType for a struct
+/// return type, except, instead of printing the type as void (*)(Struct*, ...)
+/// print it as "Struct (*)(...)", for struct return functions.
+void CWriter::printStructReturnPointerFunctionType(std::ostream &Out,
+                                                   const PointerType *TheTy) {
+  const FunctionType *FTy = cast<FunctionType>(TheTy->getElementType());
+  std::stringstream FunctionInnards;
+  FunctionInnards << " (*) (";
+  bool PrintedType = false;
+
+  FunctionType::param_iterator I = FTy->param_begin(), E = FTy->param_end();
+  const Type *RetTy = cast<PointerType>(I->get())->getElementType();
+  for (++I; I != E; ++I) {
+    if (PrintedType)
+      FunctionInnards << ", ";
+    printType(FunctionInnards, *I, "");
+    PrintedType = true;
+  }
+  if (FTy->isVarArg()) {
+    if (PrintedType)
+      FunctionInnards << ", ...";
+  } else if (!PrintedType) {
+    FunctionInnards << "void";
+  }
+  FunctionInnards << ')';
+  std::string tstr = FunctionInnards.str();
+  printType(Out, RetTy, tstr);
+}
+
 
 // Pass the Type* and the variable name and this prints out the variable
 // declaration.
@@ -332,24 +365,24 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
 
   switch (Ty->getTypeID()) {
   case Type::FunctionTyID: {
-    const FunctionType *MTy = cast<FunctionType>(Ty);
+    const FunctionType *FTy = cast<FunctionType>(Ty);
     std::stringstream FunctionInnards;
     FunctionInnards << " (" << NameSoFar << ") (";
-    for (FunctionType::param_iterator I = MTy->param_begin(),
-           E = MTy->param_end(); I != E; ++I) {
-      if (I != MTy->param_begin())
+    for (FunctionType::param_iterator I = FTy->param_begin(),
+           E = FTy->param_end(); I != E; ++I) {
+      if (I != FTy->param_begin())
         FunctionInnards << ", ";
       printType(FunctionInnards, *I, "");
     }
-    if (MTy->isVarArg()) {
-      if (MTy->getNumParams())
+    if (FTy->isVarArg()) {
+      if (FTy->getNumParams())
         FunctionInnards << ", ...";
-    } else if (!MTy->getNumParams()) {
+    } else if (!FTy->getNumParams()) {
       FunctionInnards << "void";
     }
     FunctionInnards << ')';
     std::string tstr = FunctionInnards.str();
-    printType(Out, MTy->getReturnType(), tstr);
+    printType(Out, FTy->getReturnType(), tstr);
     return Out;
   }
   case Type::StructTyID: {
@@ -1223,6 +1256,9 @@ void CWriter::printContainedStructs(const Type *Ty,
 }
 
 void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
+  /// isCStructReturn - Should this function actually return a struct by-value?
+  bool isCStructReturn = F->getCallingConv() == CallingConv::CSRet;
+  
   if (F->hasInternalLinkage()) Out << "static ";
 
   // Loop over the arguments, printing them...
@@ -1233,55 +1269,97 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   // Print out the name...
   FunctionInnards << Mang->getValueName(F) << '(';
 
+  bool PrintedArg = false;
   if (!F->isExternal()) {
     if (!F->arg_empty()) {
+      Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
+      
+      // If this is a struct-return function, don't print the hidden
+      // struct-return argument.
+      if (isCStructReturn) {
+        assert(I != E && "Invalid struct return function!");
+        ++I;
+      }
+      
       std::string ArgName;
-      if (F->arg_begin()->hasName() || !Prototype)
-        ArgName = Mang->getValueName(F->arg_begin());
-      printType(FunctionInnards, F->arg_begin()->getType(), ArgName);
-      for (Function::const_arg_iterator I = ++F->arg_begin(), E = F->arg_end();
-           I != E; ++I) {
-        FunctionInnards << ", ";
+      for (; I != E; ++I) {
+        if (PrintedArg) FunctionInnards << ", ";
         if (I->hasName() || !Prototype)
           ArgName = Mang->getValueName(I);
         else
           ArgName = "";
         printType(FunctionInnards, I->getType(), ArgName);
+        PrintedArg = true;
       }
     }
   } else {
-    // Loop over the arguments, printing them...
-    for (FunctionType::param_iterator I = FT->param_begin(),
-           E = FT->param_end(); I != E; ++I) {
-      if (I != FT->param_begin()) FunctionInnards << ", ";
+    // Loop over the arguments, printing them.
+    FunctionType::param_iterator I = FT->param_begin(), E = FT->param_end();
+    
+    // If this is a struct-return function, don't print the hidden
+    // struct-return argument.
+    if (isCStructReturn) {
+      assert(I != E && "Invalid struct return function!");
+      ++I;
+    }
+    
+    for (; I != E; ++I) {
+      if (PrintedArg) FunctionInnards << ", ";
       printType(FunctionInnards, *I);
+      PrintedArg = true;
     }
   }
 
   // Finish printing arguments... if this is a vararg function, print the ...,
   // unless there are no known types, in which case, we just emit ().
   //
-  if (FT->isVarArg() && FT->getNumParams()) {
-    if (FT->getNumParams()) FunctionInnards << ", ";
+  if (FT->isVarArg() && PrintedArg) {
+    if (PrintedArg) FunctionInnards << ", ";
     FunctionInnards << "...";  // Output varargs portion of signature!
-  } else if (!FT->isVarArg() && FT->getNumParams() == 0) {
+  } else if (!FT->isVarArg() && !PrintedArg) {
     FunctionInnards << "void"; // ret() -> ret(void) in C.
   }
   FunctionInnards << ')';
-  // Print out the return type and the entire signature for that matter
-  printType(Out, F->getReturnType(), FunctionInnards.str());
+  
+  // Get the return tpe for the function.
+  const Type *RetTy;
+  if (!isCStructReturn)
+    RetTy = F->getReturnType();
+  else {
+    // If this is a struct-return function, print the struct-return type.
+    RetTy = cast<PointerType>(FT->getParamType(0))->getElementType();
+  }
+    
+  // Print out the return type and the signature built above.
+  printType(Out, RetTy, FunctionInnards.str());
 }
 
 void CWriter::printFunction(Function &F) {
   printFunctionSignature(&F, false);
   Out << " {\n";
+  
+  // If this is a struct return function, handle the result with magic.
+  if (F.getCallingConv() == CallingConv::CSRet) {
+    const Type *StructTy =
+      cast<PointerType>(F.arg_begin()->getType())->getElementType();
+    Out << "  ";
+    printType(Out, StructTy, "StructReturn");
+    Out << ";  /* Struct return temporary */\n";
 
+    Out << "  ";
+    printType(Out, F.arg_begin()->getType(), Mang->getValueName(F.arg_begin()));
+    Out << " = &StructReturn;\n";
+  }
+
+  bool PrintedVar = false;
+  
   // print local variable information for the function
   for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E; ++I)
     if (const AllocaInst *AI = isDirectAlloca(&*I)) {
       Out << "  ";
       printType(Out, AI->getAllocatedType(), Mang->getValueName(AI));
       Out << ";    /* Address-exposed local */\n";
+      PrintedVar = true;
     } else if (I->getType() != Type::VoidTy && !isInlinableInst(*I)) {
       Out << "  ";
       printType(Out, I->getType(), Mang->getValueName(&*I));
@@ -1293,9 +1371,11 @@ void CWriter::printFunction(Function &F) {
                   Mang->getValueName(&*I)+"__PHI_TEMPORARY");
         Out << ";\n";
       }
+      PrintedVar = true;
     }
 
-  Out << '\n';
+  if (PrintedVar)
+    Out << '\n';
 
   if (F.hasExternalLinkage() && F.getName() == "main")
     Out << "  CODE_FOR_MAIN();\n";
@@ -1366,6 +1446,12 @@ void CWriter::printBasicBlock(BasicBlock *BB) {
 // necessary because we use the instruction classes as opaque types...
 //
 void CWriter::visitReturnInst(ReturnInst &I) {
+  // If this is a struct return function, return the temporary struct.
+  if (I.getParent()->getParent()->getCallingConv() == CallingConv::CSRet) {
+    Out << "  return StructReturn;\n";
+    return;
+  }
+  
   // Don't output a void return if this is the last basic block in the function
   if (I.getNumOperands() == 0 &&
       &*--I.getParent()->getParent()->end() == I.getParent() &&
@@ -1729,70 +1815,80 @@ void CWriter::visitCallInst(CallInst &I) {
 
   Value *Callee = I.getCalledValue();
 
-  // GCC is really a PITA.  It does not permit codegening casts of functions to
-  // function pointers if they are in a call (it generates a trap instruction
-  // instead!).  We work around this by inserting a cast to void* in between the
-  // function and the function pointer cast.  Unfortunately, we can't just form
-  // the constant expression here, because the folder will immediately nuke it.
-  //
-  // Note finally, that this is completely unsafe.  ANSI C does not guarantee
-  // that void* and function pointers have the same size. :( To deal with this
-  // in the common case, we handle casts where the number of arguments passed
-  // match exactly.
-  //
+  // If this is a call to a struct-return function, assign to the first
+  // parameter instead of passing it to the call.
+  bool isStructRet = I.getCallingConv() == CallingConv::CSRet;
+  if (isStructRet) {
+    Out << "*(";
+    writeOperand(I.getOperand(1));
+    Out << ") = ";
+  }
+  
   if (I.isTailCall()) Out << " /*tail*/ ";
-  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Callee))
-    if (CE->getOpcode() == Instruction::Cast)
-      if (Function *RF = dyn_cast<Function>(CE->getOperand(0))) {
-        const FunctionType *RFTy = RF->getFunctionType();
-        if (RFTy->getNumParams() == I.getNumOperands()-1) {
-          // If the call site expects a value, and the actual callee doesn't
-          // provide one, return 0.
-          if (I.getType() != Type::VoidTy &&
-              RFTy->getReturnType() == Type::VoidTy)
-            Out << "0 /*actual callee doesn't return value*/; ";
-          Callee = RF;
-        } else {
-          // Ok, just cast the pointer type.
-          Out << "((";
-          printType(Out, CE->getType());
-          Out << ")(void*)";
-          printConstant(RF);
-          Out << ')';
-          WroteCallee = true;
-        }
-      }
 
   const PointerType  *PTy   = cast<PointerType>(Callee->getType());
   const FunctionType *FTy   = cast<FunctionType>(PTy->getElementType());
-  const Type         *RetTy = FTy->getReturnType();
+  
+  if (!WroteCallee) {
+    // If this is an indirect call to a struct return function, we need to cast
+    // the pointer.
+    bool NeedsCast = isStructRet && !isa<Function>(Callee);
 
-  if (!WroteCallee) writeOperand(Callee);
+    // GCC is a real PITA.  It does not permit codegening casts of functions to
+    // function pointers if they are in a call (it generates a trap instruction
+    // instead!).  We work around this by inserting a cast to void* in between
+    // the function and the function pointer cast.  Unfortunately, we can't just
+    // form the constant expression here, because the folder will immediately
+    // nuke it.
+    //
+    // Note finally, that this is completely unsafe.  ANSI C does not guarantee
+    // that void* and function pointers have the same size. :( To deal with this
+    // in the common case, we handle casts where the number of arguments passed
+    // match exactly.
+    //
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Callee))
+      if (CE->getOpcode() == Instruction::Cast)
+        if (Function *RF = dyn_cast<Function>(CE->getOperand(0))) {
+          NeedsCast = true;
+          Callee = RF;
+        }
+  
+    if (NeedsCast) {
+      // Ok, just cast the pointer type.
+      Out << "((";
+      if (!isStructRet)
+        printType(Out, I.getCalledValue()->getType());
+      else
+        printStructReturnPointerFunctionType(Out, 
+                             cast<PointerType>(I.getCalledValue()->getType()));
+      Out << ")(void*)";
+    }
+    writeOperand(Callee);
+    if (NeedsCast) Out << ')';
+  }
+
   Out << '(';
 
   unsigned NumDeclaredParams = FTy->getNumParams();
 
-  if (I.getNumOperands() != 1) {
-    CallSite::arg_iterator AI = I.op_begin()+1, AE = I.op_end();
-    if (NumDeclaredParams && (*AI)->getType() != FTy->getParamType(0)) {
+  CallSite::arg_iterator AI = I.op_begin()+1, AE = I.op_end();
+  unsigned ArgNo = 0;
+  if (isStructRet) {   // Skip struct return argument.
+    ++AI;
+    ++ArgNo;
+  }
+      
+  bool PrintedArg = false;
+  for (; AI != AE; ++AI, ++ArgNo) {
+    if (PrintedArg) Out << ", ";
+    if (ArgNo < NumDeclaredParams &&
+        (*AI)->getType() != FTy->getParamType(ArgNo)) {
       Out << '(';
-      printType(Out, FTy->getParamType(0));
+      printType(Out, FTy->getParamType(ArgNo));
       Out << ')';
     }
-
     writeOperand(*AI);
-
-    unsigned ArgNo;
-    for (ArgNo = 1, ++AI; AI != AE; ++AI, ++ArgNo) {
-      Out << ", ";
-      if (ArgNo < NumDeclaredParams &&
-          (*AI)->getType() != FTy->getParamType(ArgNo)) {
-        Out << '(';
-        printType(Out, FTy->getParamType(ArgNo));
-        Out << ')';
-      }
-      writeOperand(*AI);
-    }
+    PrintedArg = true;
   }
   Out << ')';
 }
