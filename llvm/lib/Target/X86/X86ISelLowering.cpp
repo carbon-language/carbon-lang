@@ -393,7 +393,8 @@ X86TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
 
   if (CallingConv == CallingConv::Fast && EnableFastCC)
     return LowerFastCCCallTo(Chain, RetTy, isTailCall, Callee, Args, DAG);
-  return  LowerCCCCallTo(Chain, RetTy, isVarArg, isTailCall, Callee, Args, DAG);
+  return  LowerCCCCallTo(Chain, RetTy, isVarArg, isTailCall, CallingConv,
+                         Callee, Args, DAG);
 }
 
 //===----------------------------------------------------------------------===//
@@ -520,6 +521,12 @@ void X86TargetLowering::PreprocessCCCArguments(std::vector<SDOperand> &Args,
   ReturnAddrIndex = 0;     // No return address slot generated yet.
   BytesToPopOnReturn = 0;  // Callee pops nothing.
   BytesCallerReserves = ArgOffset;
+  
+  // If this is a struct return on Darwin/X86, the callee pops the hidden struct
+  // pointer.
+  if (F.getCallingConv() == CallingConv::CSRet &&
+      Subtarget->isTargetDarwin())
+    BytesToPopOnReturn = 4;
 }
 
 void X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG) {
@@ -551,6 +558,7 @@ void X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG) {
 std::pair<SDOperand, SDOperand>
 X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
                                   bool isVarArg, bool isTailCall,
+                                  unsigned CallingConv,
                                   SDOperand Callee, ArgListTy &Args,
                                   SelectionDAG &DAG) {
   // Count how many bytes are to be pushed on the stack.
@@ -704,13 +712,21 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
   Chain = DAG.getNode(X86ISD::CALL, NodeTys, Ops);
   InFlag = Chain.getValue(1);
 
+  // Create the CALLSEQ_END node.
+  unsigned NumBytesForCalleeToPush = 0;
+
+  // If this is is a call to a struct-return function on Darwin/X86, the callee
+  // pops the hidden struct pointer, so we have to push it back.
+  if (CallingConv == CallingConv::CSRet && Subtarget->isTargetDarwin())
+    NumBytesForCalleeToPush = 4;
+  
   NodeTys.clear();
   NodeTys.push_back(MVT::Other);   // Returns a chain
   NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
   Ops.clear();
   Ops.push_back(Chain);
   Ops.push_back(DAG.getConstant(NumBytes, getPointerTy()));
-  Ops.push_back(DAG.getConstant(0, getPointerTy()));
+  Ops.push_back(DAG.getConstant(NumBytesForCalleeToPush, getPointerTy()));
   Ops.push_back(InFlag);
   Chain = DAG.getNode(ISD::CALLSEQ_END, NodeTys, Ops);
   InFlag = Chain.getValue(1);

@@ -374,7 +374,7 @@ namespace llvm {
     void LowerCCCArguments(SDOperand Op, SelectionDAG &DAG);
     std::pair<SDOperand, SDOperand>
     LowerCCCCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
-                   bool isTailCall,
+                   bool isTailCall, unsigned CallingConv,
                    SDOperand Callee, ArgListTy &Args, SelectionDAG &DAG);
 
     // Fast Calling Convention implementation.
