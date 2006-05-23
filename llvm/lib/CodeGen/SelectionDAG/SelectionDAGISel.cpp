@@ -512,13 +512,20 @@ public:
     visitShift(I, I.getType()->isUnsigned() ? ISD::SRL : ISD::SRA);
   }
 
-  void visitSetCC(User &I, ISD::CondCode SignedOpc, ISD::CondCode UnsignedOpc);
-  void visitSetEQ(User &I) { visitSetCC(I, ISD::SETEQ, ISD::SETEQ); }
-  void visitSetNE(User &I) { visitSetCC(I, ISD::SETNE, ISD::SETNE); }
-  void visitSetLE(User &I) { visitSetCC(I, ISD::SETLE, ISD::SETULE); }
-  void visitSetGE(User &I) { visitSetCC(I, ISD::SETGE, ISD::SETUGE); }
-  void visitSetLT(User &I) { visitSetCC(I, ISD::SETLT, ISD::SETULT); }
-  void visitSetGT(User &I) { visitSetCC(I, ISD::SETGT, ISD::SETUGT); }
+  void visitSetCC(User &I, ISD::CondCode SignedOpc, ISD::CondCode UnsignedOpc,
+                  ISD::CondCode FPOpc);
+  void visitSetEQ(User &I) { visitSetCC(I, ISD::SETEQ, ISD::SETEQ, 
+                                        ISD::SETOEQ); }
+  void visitSetNE(User &I) { visitSetCC(I, ISD::SETNE, ISD::SETNE,
+                                        ISD::SETUNE); }
+  void visitSetLE(User &I) { visitSetCC(I, ISD::SETLE, ISD::SETULE,
+                                        ISD::SETOLE); }
+  void visitSetGE(User &I) { visitSetCC(I, ISD::SETGE, ISD::SETUGE,
+                                        ISD::SETOGE); }
+  void visitSetLT(User &I) { visitSetCC(I, ISD::SETLT, ISD::SETULT,
+                                        ISD::SETOLT); }
+  void visitSetGT(User &I) { visitSetCC(I, ISD::SETGT, ISD::SETUGT,
+                                        ISD::SETOGT); }
 
   void visitExtractElement(User &I);
   void visitInsertElement(User &I);
@@ -1092,11 +1099,15 @@ void SelectionDAGLowering::visitShift(User &I, unsigned Opcode) {
 }
 
 void SelectionDAGLowering::visitSetCC(User &I,ISD::CondCode SignedOpcode,
-                                      ISD::CondCode UnsignedOpcode) {
+                                      ISD::CondCode UnsignedOpcode,
+                                      ISD::CondCode FPOpcode) {
   SDOperand Op1 = getValue(I.getOperand(0));
   SDOperand Op2 = getValue(I.getOperand(1));
   ISD::CondCode Opcode = SignedOpcode;
-  if (I.getOperand(0)->getType()->isUnsigned())
+  if ((!UnsafeFPMath && !FiniteOnlyFPMath) &&
+      I.getOperand(0)->getType()->isFloatingPoint())
+    Opcode = FPOpcode;
+  else if (I.getOperand(0)->getType()->isUnsigned())
     Opcode = UnsignedOpcode;
   setValue(&I, DAG.getSetCC(MVT::i1, Op1, Op2, Opcode));
 }
