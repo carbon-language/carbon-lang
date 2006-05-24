@@ -200,7 +200,7 @@ install-bytecode:: install-bytecode-local
 
 ifdef ENABLE_PROFILING
   BuildMode := Profile
-  CXX.Flags := -O3 -felide-constructors -finline-functions -pg
+  CXX.Flags := -O3 -pg
   C.Flags   := -O3 -pg
   LD.Flags  := -O3 -pg 
 else
@@ -213,7 +213,7 @@ else
       OmitFramePointer := -fomit-frame-pointer
     endif
     endif
-    CXX.Flags := -O3 -finline-functions -felide-constructors $(OmitFramePointer)
+    CXX.Flags := -O3 $(OmitFramePointer)
     C.Flags   := -O3 $(OmitFramePointer)
     LD.Flags  := -O3
   else
