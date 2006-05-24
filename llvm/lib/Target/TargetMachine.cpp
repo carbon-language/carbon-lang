@@ -100,4 +100,4 @@ namespace llvm {
   /// the code generator is not allowed to assume that FP arithmetic arguments
   /// and results are never NaNs or +-Infs.
   bool FiniteOnlyFPMath() { return UnsafeFPMath || FiniteOnlyFPMathOption; }
-};
+}
