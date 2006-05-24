@@ -1216,17 +1216,21 @@ static SDOperand LowerSELECT_CC(SDOperand Op, SelectionDAG &DAG) {
     switch (CC) {
     default: break;       // SETUO etc aren't handled by fsel.
     case ISD::SETULT:
+    case ISD::SETOLT:
     case ISD::SETLT:
       std::swap(TV, FV);  // fsel is natively setge, swap operands for setlt
     case ISD::SETUGE:
+    case ISD::SETOGE:
     case ISD::SETGE:
       if (LHS.getValueType() == MVT::f32)   // Comparison is always 64-bits
         LHS = DAG.getNode(ISD::FP_EXTEND, MVT::f64, LHS);
       return DAG.getNode(PPCISD::FSEL, ResVT, LHS, TV, FV);
     case ISD::SETUGT:
+    case ISD::SETOGT:
     case ISD::SETGT:
       std::swap(TV, FV);  // fsel is natively setge, swap operands for setlt
     case ISD::SETULE:
+    case ISD::SETOLE:
     case ISD::SETLE:
       if (LHS.getValueType() == MVT::f32)   // Comparison is always 64-bits
         LHS = DAG.getNode(ISD::FP_EXTEND, MVT::f64, LHS);
@@ -1238,24 +1242,28 @@ static SDOperand LowerSELECT_CC(SDOperand Op, SelectionDAG &DAG) {
   switch (CC) {
   default: break;       // SETUO etc aren't handled by fsel.
   case ISD::SETULT:
+  case ISD::SETOLT:
   case ISD::SETLT:
     Cmp = DAG.getNode(ISD::FSUB, CmpVT, LHS, RHS);
     if (Cmp.getValueType() == MVT::f32)   // Comparison is always 64-bits
       Cmp = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Cmp);
       return DAG.getNode(PPCISD::FSEL, ResVT, Cmp, FV, TV);
   case ISD::SETUGE:
+  case ISD::SETOGE:
   case ISD::SETGE:
     Cmp = DAG.getNode(ISD::FSUB, CmpVT, LHS, RHS);
     if (Cmp.getValueType() == MVT::f32)   // Comparison is always 64-bits
       Cmp = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Cmp);
       return DAG.getNode(PPCISD::FSEL, ResVT, Cmp, TV, FV);
   case ISD::SETUGT:
+  case ISD::SETOGT:
   case ISD::SETGT:
     Cmp = DAG.getNode(ISD::FSUB, CmpVT, RHS, LHS);
     if (Cmp.getValueType() == MVT::f32)   // Comparison is always 64-bits
       Cmp = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Cmp);
       return DAG.getNode(PPCISD::FSEL, ResVT, Cmp, FV, TV);
   case ISD::SETULE:
+  case ISD::SETOLE:
   case ISD::SETLE:
     Cmp = DAG.getNode(ISD::FSUB, CmpVT, RHS, LHS);
     if (Cmp.getValueType() == MVT::f32)   // Comparison is always 64-bits
