@@ -208,6 +208,7 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
       setOperationAction(ISD::SREM, (MVT::ValueType)VT, Expand);
       setOperationAction(ISD::UDIV, (MVT::ValueType)VT, Expand);
       setOperationAction(ISD::UREM, (MVT::ValueType)VT, Expand);
+      setOperationAction(ISD::FDIV, (MVT::ValueType)VT, Expand);
       setOperationAction(ISD::EXTRACT_VECTOR_ELT, (MVT::ValueType)VT, Expand);
       setOperationAction(ISD::INSERT_VECTOR_ELT, (MVT::ValueType)VT, Expand);
       setOperationAction(ISD::BUILD_VECTOR, (MVT::ValueType)VT, Expand);
