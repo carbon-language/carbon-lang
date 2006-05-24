@@ -206,6 +206,8 @@ void PPCDAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   // Select target instructions for the DAG.
   DAG.setRoot(SelectRoot(DAG.getRoot()));
   CodeGenMap.clear();
+  HandleMap.clear();
+  ReplaceMap.clear();
   DAG.RemoveDeadNodes();
   
   // Emit machine code to BB.

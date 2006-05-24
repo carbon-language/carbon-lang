@@ -161,6 +161,8 @@ void ARMDAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
 
   DAG.setRoot(SelectRoot(DAG.getRoot()));
   CodeGenMap.clear();
+  HandleMap.clear();
+  ReplaceMap.clear();
   DAG.RemoveDeadNodes();
 
   ScheduleAndEmitDAG(DAG);

@@ -186,6 +186,8 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   DEBUG(std::cerr << "===== Instruction selection ends:\n");
 #endif
   CodeGenMap.clear();
+  HandleMap.clear();
+  ReplaceMap.clear();
   DAG.RemoveDeadNodes();
 
   // Emit machine code to BB. 
