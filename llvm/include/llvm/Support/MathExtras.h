@@ -76,7 +76,7 @@ inline bool isPowerOf2_32(unsigned Value) {
 // isPowerOf2_64 - This function returns true if the argument is a power of two
 // > 0 (64 bit edition.)
 inline bool isPowerOf2_64(uint64_t Value) {
-  return Value && !(Value & (Value - 1LL));
+  return Value && !(Value & (Value - int64_t(1L)));
 }
 
 // ByteSwap_16 - This function returns a byte-swapped representation of the

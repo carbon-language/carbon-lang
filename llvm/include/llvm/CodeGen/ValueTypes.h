@@ -203,13 +203,13 @@ namespace MVT {  // MVT = Machine Value Types
   /// bits in the specified integer value type.
   static inline uint64_t getIntVTBitMask(ValueType VT) {
     assert(isInteger(VT) && !isVector(VT) && "Only applies to int scalars!");
-    return ~0ULL >> (64-getSizeInBits(VT));
+    return ~uint64_t(0UL) >> (64-getSizeInBits(VT));
   }
   /// MVT::getIntVTSignBit - Return an integer with a 1 in the position of the
   /// sign bit for the specified integer value type.
   static inline uint64_t getIntVTSignBit(ValueType VT) {
     assert(isInteger(VT) && !isVector(VT) && "Only applies to int scalars!");
-    return 1ULL << (getSizeInBits(VT)-1);
+    return uint64_t(1UL) << (getSizeInBits(VT)-1);
   }
 
   /// MVT::getValueTypeString - This function returns value type as a string,

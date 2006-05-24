@@ -139,7 +139,7 @@ int main(int argc, char **argv) {
     sort(FunctionCounts.begin(), FunctionCounts.end(),
               PairSecondSortReverse<Function*>());
 
-    unsigned long long TotalExecutions = 0;
+    uint64_t TotalExecutions = 0;
     for (unsigned i = 0, e = FunctionCounts.size(); i != e; ++i)
       TotalExecutions += FunctionCounts[i].second;
 

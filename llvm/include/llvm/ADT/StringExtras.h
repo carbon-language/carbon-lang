@@ -39,7 +39,7 @@ static inline std::string utohexstr(uint64_t X) {
   return std::string(BufPtr);
 }
 
-static inline std::string utostr(unsigned long long X, bool isNeg = false) {
+static inline std::string utostr(uint64_t X, bool isNeg = false) {
   char Buffer[40];
   char *BufPtr = Buffer+39;
 
@@ -56,7 +56,7 @@ static inline std::string utostr(unsigned long long X, bool isNeg = false) {
 }
 
 static inline std::string utostr(unsigned long X, bool isNeg = false) {
-  return utostr(static_cast<unsigned long long>(X), isNeg);
+  return utostr(static_cast<uint64_t>(X), isNeg);
 }
 
 static inline std::string utostr(unsigned X, bool isNeg = false) {
@@ -76,7 +76,7 @@ static inline std::string utostr(unsigned X, bool isNeg = false) {
   return std::string(BufPtr);
 }
 
-static inline std::string itostr(long long X) {
+static inline std::string itostr(int64_t X) {
   if (X < 0)
     return utostr(static_cast<uint64_t>(-X), true);
   else

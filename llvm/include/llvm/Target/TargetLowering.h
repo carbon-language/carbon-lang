@@ -512,7 +512,7 @@ protected:
                           LegalizeAction Action) {
     assert(VT < 32 && Op < sizeof(OpActions)/sizeof(OpActions[0]) &&
            "Table isn't big enough!");
-    OpActions[Op] &= ~(3ULL << VT*2);
+    OpActions[Op] &= ~(uint64_t(3UL) << VT*2);
     OpActions[Op] |= (uint64_t)Action << VT*2;
   }
   

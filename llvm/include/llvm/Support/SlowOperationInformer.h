@@ -57,7 +57,7 @@ namespace llvm {
     void progress(unsigned Current, unsigned Maximum) {
       assert(Maximum != 0 &&
              "Shouldn't be doing work if there is nothing to do!");
-      progress(Current*1000ULL/Maximum);
+      progress(Current*uint64_t(1000UL)/Maximum);
     }
   };
 } // end namespace llvm

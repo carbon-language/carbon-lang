@@ -239,7 +239,7 @@ public:
   /// sbyte/ubyte, 0xFFFF for shorts, etc.
   uint64_t getIntegralTypeMask() const {
     assert(isIntegral() && "This only works for integral types!");
-    return ~0ULL >> (64-getPrimitiveSizeInBits());
+    return ~uint64_t(0UL) >> (64-getPrimitiveSizeInBits());
   }
 
   /// getForwaredType - Return the type that this type has been resolved to if

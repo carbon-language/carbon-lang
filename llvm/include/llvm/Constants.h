@@ -58,7 +58,7 @@ public:
   /// type.
   inline uint64_t getZExtValue() const {
     unsigned Size = getType()->getPrimitiveSizeInBits();
-    return Val.Unsigned & (~0ULL >> (64-Size));
+    return Val.Unsigned & (~uint64_t(0UL) >> (64-Size));
   }
 
   /// getSExtValue - Return the constant sign extended as appropriate for this
