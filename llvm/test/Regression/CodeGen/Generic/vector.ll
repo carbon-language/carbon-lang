@@ -56,6 +56,15 @@ void %test_fmul(%f8 *%P, %f8* %Q, %f8 *%S) {
   store %f8 %R, %f8 *%S
   ret void
 }
+
+void %test_div(%f8 *%P, %f8* %Q, %f8 *%S) {
+  %p = load %f8* %P
+  %q = load %f8* %Q
+  %R = div %f8 %p, %q
+  store %f8 %R, %f8 *%S
+  ret void
+}
+
 ;;; TEST VECTOR CONSTRUCTS
 
 void %test_cst(%f4 *%P, %f4 *%S) {
