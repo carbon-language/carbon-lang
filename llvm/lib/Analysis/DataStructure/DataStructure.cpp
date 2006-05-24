@@ -43,7 +43,7 @@ namespace {
   DSAFieldLimit("dsa-field-limit", cl::Hidden,
                 cl::desc("Number of fields to track before collapsing a node"),
                 cl::init(256));
-};
+}
 
 #if 0
 #define TIME_REGION(VARNAME, DESC) \

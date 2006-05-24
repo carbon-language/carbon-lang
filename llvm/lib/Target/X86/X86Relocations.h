@@ -25,7 +25,7 @@ namespace llvm {
 
       // reloc_absolute_word - Absolute relocation, just add the relocated value
       // to the value already in memory.
-      reloc_absolute_word = 1,
+      reloc_absolute_word = 1
     };
   }
 }

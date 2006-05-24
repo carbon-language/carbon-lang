@@ -42,7 +42,7 @@ namespace llvm {
       CALL,
 
       /// DIVCALL - used for special library calls for div and rem
-      DivCall,
+      DivCall
 
     };
   }

@@ -23,7 +23,7 @@ using namespace llvm;
 
 enum CompressionTypes {
   COMP_TYPE_NONE  = '0',
-  COMP_TYPE_BZIP2 = '2',
+  COMP_TYPE_BZIP2 = '2'
 };
 
 static int getdata(char*& buffer, size_t &size,

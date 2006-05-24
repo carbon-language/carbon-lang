@@ -75,7 +75,7 @@ namespace llvm {
       FCC_UGE = 12+16,  // Unordered or Greater or Equal
       FCC_LE  = 13+16,  // Less or Equal
       FCC_ULE = 14+16,  // Unordered or Less or Equal
-      FCC_O   = 15+16,  // Ordered
+      FCC_O   = 15+16   // Ordered
     };
   }
   

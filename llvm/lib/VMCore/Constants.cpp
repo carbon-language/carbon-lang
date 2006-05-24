@@ -529,7 +529,7 @@ bool ConstantFP::isValueValidForType(const Type *Ty, double Val) {
   case Type::DoubleTyID:
     return true;          // This is the largest type...
   }
-};
+}
 
 //===----------------------------------------------------------------------===//
 //                      Factory Function Implementation

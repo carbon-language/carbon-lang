@@ -50,7 +50,7 @@ namespace llvm {
       // relocated to point to a POINTER to the indicated global.  The low-16
       // bits of the instruction are rewritten with the low 16-bits of the
       // address of the pointer.
-      reloc_absolute_ptr_low,
+      reloc_absolute_ptr_low
     };
   }
 }

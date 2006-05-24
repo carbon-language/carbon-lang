@@ -64,7 +64,7 @@ handleSubstitution(llvm::ConfigLexerTokens token) {
   }
   YY_FATAL_ERROR("Substitition tokens not allowed in names" ); 
   return ERRORTOK;
-};
+}
 
 inline llvm::ConfigLexerTokens handleValueContext(llvm::ConfigLexerTokens token) {
   ConfigLexerState.StringVal = yytext;

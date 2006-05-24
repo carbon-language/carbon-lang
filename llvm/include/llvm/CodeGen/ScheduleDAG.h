@@ -41,7 +41,7 @@ namespace llvm {
     enum HazardType {
       NoHazard,      // This instruction can be emitted at this cycle.
       Hazard,        // This instruction can't be emitted at this cycle.
-      NoopHazard,    // This instruction can't be emitted, and needs noops.
+      NoopHazard     // This instruction can't be emitted, and needs noops.
     };
     
     /// getHazardType - Return the hazard type of emitting this node.  There are

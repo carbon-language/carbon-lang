@@ -26,4 +26,4 @@ namespace llvm {
     void IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNum,
                                  GlobalValue *CounterArray);
   };
-};
+}

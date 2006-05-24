@@ -42,4 +42,4 @@ namespace llvm {
 int IsInf (float f)  { return isinf (f); }
 int IsInf (double d) { return isinf (d); }
 
-}; // end namespace llvm;
+} // end namespace llvm;

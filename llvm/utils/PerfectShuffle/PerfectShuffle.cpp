@@ -460,7 +460,7 @@ enum {
   OP_VSPLTISW3,
   OP_VSLDOI4,
   OP_VSLDOI8,
-  OP_VSLDOI12,
+  OP_VSLDOI12
 };
 
 struct vmrghw : public Operator {

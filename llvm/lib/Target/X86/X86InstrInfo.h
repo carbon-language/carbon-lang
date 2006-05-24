@@ -162,7 +162,7 @@ namespace X86II {
     SpecialFP  = 7 << FPTypeShift,
 
     OpcodeShift   = 16,
-    OpcodeMask    = 0xFF << OpcodeShift,
+    OpcodeMask    = 0xFF << OpcodeShift
     // Bits 25 -> 31 are unused
   };
 }

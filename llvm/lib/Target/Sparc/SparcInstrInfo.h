@@ -29,7 +29,7 @@ namespace SPII {
     Store = (1<<2),
     DelaySlot = (1<<3)
   };
-};
+}
 
 class SparcInstrInfo : public TargetInstrInfo {
   const SparcRegisterInfo RI;

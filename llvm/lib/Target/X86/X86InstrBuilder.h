@@ -35,7 +35,7 @@ namespace llvm {
 struct X86AddressMode {
   enum {
     RegBase,
-    FrameIndexBase,
+    FrameIndexBase
   } BaseType;
 
   union {

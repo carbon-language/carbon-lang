@@ -1748,7 +1748,7 @@ static SDOperand GeneratePerfectShuffle(unsigned PFEntry, SDOperand LHS,
     OP_VSPLTISW3,
     OP_VSLDOI4,
     OP_VSLDOI8,
-    OP_VSLDOI12,
+    OP_VSLDOI12
   };
   
   if (OpNum == OP_COPY) {

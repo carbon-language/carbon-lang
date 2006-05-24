@@ -80,7 +80,7 @@ enum ArchiveOperation {
   QuickAppend,      ///< Quickly append to end of archive
   ReplaceOrInsert,  ///< Replace or Insert members
   DisplayTable,     ///< Display the table of contents
-  Extract,          ///< Extract files back to file system
+  Extract           ///< Extract files back to file system
 };
 
 // Modifiers to follow operation to vary behavior

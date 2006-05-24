@@ -28,7 +28,7 @@ namespace llvm {
   bool UnsafeFPMath;
   bool FiniteOnlyFPMathOption;
   Reloc::Model RelocationModel;
-};
+}
 namespace {
   cl::opt<bool, true> PrintCode("print-machineinstrs",
     cl::desc("Print generated machine code"),
@@ -70,7 +70,7 @@ namespace {
       clEnumValN(Reloc::DynamicNoPIC, "dynamic-no-pic",
                  "Relocatable external references, non-relocatable code"),
       clEnumValEnd));
-};
+}
 
 //---------------------------------------------------------------------------
 // TargetMachine Class

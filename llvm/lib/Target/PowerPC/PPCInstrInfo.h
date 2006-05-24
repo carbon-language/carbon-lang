@@ -44,7 +44,7 @@ enum {
   /// PPC970_Mask/Shift - This is a bitmask that selects the pipeline type that
   /// an instruction is issued to.
   PPC970_Shift = 3,
-  PPC970_Mask = 0x07 << PPC970_Shift,
+  PPC970_Mask = 0x07 << PPC970_Shift
 };
 enum PPC970_Unit {
   /// These are the various PPC970 execution unit pipelines.  Each instruction
@@ -56,7 +56,7 @@ enum PPC970_Unit {
   PPC970_CRU    = 4 << PPC970_Shift,   // Control Register Unit
   PPC970_VALU   = 5 << PPC970_Shift,   // Vector ALU
   PPC970_VPERM  = 6 << PPC970_Shift,   // Vector Permute Unit
-  PPC970_BRU    = 7 << PPC970_Shift,   // Branch Unit
+  PPC970_BRU    = 7 << PPC970_Shift    // Branch Unit
 };
 }
   

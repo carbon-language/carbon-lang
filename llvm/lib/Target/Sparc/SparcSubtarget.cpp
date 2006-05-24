@@ -40,4 +40,4 @@ SparcSubtarget::SparcSubtarget(const Module &M, const std::string &FS) {
   // Unless explicitly enabled, disable the V9 instructions.
   if (!EnableV9)
     IsV9 = false;
-};
+}

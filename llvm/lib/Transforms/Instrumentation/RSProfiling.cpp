@@ -162,7 +162,7 @@ namespace {
 
   RegisterOpt<ProfilerRS> X("insert-rs-profiling-framework",
 			   "Insert random sampling instrumentation  framework");
-};
+}
 
 //Local utilities
 static void ReplacePhiPred(BasicBlock* btarget, 

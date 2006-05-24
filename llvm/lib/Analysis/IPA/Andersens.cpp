@@ -192,7 +192,7 @@ namespace {
     enum {
       UniversalSet = 0,
       NullPtr      = 1,
-      NullObject   = 2,
+      NullObject   = 2
     };
 
   public:

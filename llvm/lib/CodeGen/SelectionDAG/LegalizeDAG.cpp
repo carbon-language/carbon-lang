@@ -65,7 +65,7 @@ class SelectionDAGLegalize {
   enum LegalizeAction {
     Legal,      // The target natively supports this operation.
     Promote,    // This operation should be executed in a larger type.
-    Expand,     // Try to expand this to other ops, otherwise use a libcall.
+    Expand      // Try to expand this to other ops, otherwise use a libcall.
   };
   
   /// ValueTypeActions - This is a bitvector that contains two bits for each

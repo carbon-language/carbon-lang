@@ -102,7 +102,7 @@ enum ConfigLexerTokens {
   TRUETOK,           ///< A boolean true value (true/yes/on)
   VERBOSE_SUBST,     ///< The substitution item %verbose%
   VERSION_TOK,       ///< The name "version" (and variants)
-  WOPTS_SUBST,       ///< The %WOpts% substitution
+  WOPTS_SUBST        ///< The %WOpts% substitution
 };
 
 extern ConfigLexerTokens Configlex();

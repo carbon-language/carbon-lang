@@ -47,7 +47,7 @@ namespace {
   struct X86ISelAddressMode {
     enum {
       RegBase,
-      FrameIndexBase,
+      FrameIndexBase
     } BaseType;
 
     struct {            // This is really a union, discriminated by BaseType!

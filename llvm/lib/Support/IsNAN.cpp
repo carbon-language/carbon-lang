@@ -31,4 +31,4 @@ namespace llvm {
 int IsNAN (float f)  { return isnan (f); }
 int IsNAN (double d) { return isnan (d); }
 
-}; // end namespace llvm;
+} // end namespace llvm;

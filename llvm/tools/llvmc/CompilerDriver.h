@@ -65,7 +65,7 @@ namespace llvm {
         PREPROCESSES_FLAG    = 0x0002, ///< Does this action preprocess?
         TRANSLATES_FLAG      = 0x0004, ///< Does this action translate?
         OUTPUT_IS_ASM_FLAG   = 0x0008, ///< Action produces .ll files?
-        FLAGS_MASK           = 0x000F, ///< Union of all flags
+        FLAGS_MASK           = 0x000F  ///< Union of all flags
       };
 
       /// This type is the input list to the CompilerDriver. It provides
@@ -131,7 +131,7 @@ namespace llvm {
         EMIT_RAW_FLAG        = 0x0080, ///< Emit raw, unoptimized bytecode
         KEEP_TEMPS_FLAG      = 0x0100, ///< Don't delete temporary files
         STRIP_OUTPUT_FLAG    = 0x0200, ///< Strip symbols from linked output
-        DRIVER_FLAGS_MASK    = 0x03FF, ///< Union of the above flags
+        DRIVER_FLAGS_MASK    = 0x03FF  ///< Union of the above flags
       };
 
     /// @}

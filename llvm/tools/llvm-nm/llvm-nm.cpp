@@ -63,7 +63,7 @@ namespace {
   bool MultipleFiles = false;
 
   std::string ToolName;
-};
+}
 
 char TypeCharForSymbol (GlobalValue &GV) {
   if (GV.isExternal ())                                     return 'U';

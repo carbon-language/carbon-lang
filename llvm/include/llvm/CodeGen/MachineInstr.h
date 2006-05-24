@@ -42,7 +42,7 @@ private:
   // Bit fields of the flags variable used for different operand properties
   enum {
     DEFFLAG     = 0x01,       // this is a def of the operand
-    USEFLAG     = 0x02,       // this is a use of the operand
+    USEFLAG     = 0x02        // this is a use of the operand
   };
 
 public:

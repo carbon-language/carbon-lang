@@ -27,7 +27,7 @@ struct ListReducer {
   enum TestResult {
     NoFailure,         // No failure of the predicate was detected
     KeepSuffix,        // The suffix alone satisfies the predicate
-    KeepPrefix,        // The prefix alone satisfies the predicate
+    KeepPrefix         // The prefix alone satisfies the predicate
   };
 
   virtual ~ListReducer() {}

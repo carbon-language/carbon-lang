@@ -31,7 +31,7 @@ using namespace llvm;
 namespace ARMISD {
   enum {
     FIRST_NUMBER = ISD::BUILTIN_OP_END+ARM::INSTRUCTION_LIST_END,
-    RET_FLAG,
+    RET_FLAG
   };
 }
 

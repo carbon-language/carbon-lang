@@ -60,7 +60,7 @@ namespace {
 
   RegisterPass<TwoAddressInstructionPass>
   X("twoaddressinstruction", "Two-Address instruction pass");
-};
+}
 
 const PassInfo *llvm::TwoAddressInstructionPassID = X.getPassInfo();
 

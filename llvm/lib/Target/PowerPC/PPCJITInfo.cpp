@@ -165,7 +165,7 @@ PPCJITInfo::getLazyResolverFunction(JITCompilerFn Fn) {
 void *PPCJITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
   // If this is just a call to an external function, emit a branch instead of a
   // call.  The code is the same except for one bit of the last instruction.
-  if (Fn != PPC32CompilationCallback) {
+  if (Fn != (void*)PPC32CompilationCallback) {
     MCE.startFunctionStub(4*4);
     void *Addr = (void*)(intptr_t)MCE.getCurrentPCValue();
     MCE.emitWordBE(0);

@@ -167,7 +167,7 @@ X86JITInfo::getLazyResolverFunction(JITCompilerFn F) {
 }
 
 void *X86JITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
-  if (Fn != X86CompilationCallback) {
+  if (Fn != (void*)X86CompilationCallback) {
     MCE.startFunctionStub(5);
     MCE.emitByte(0xE9);
     MCE.emitWordLE((intptr_t)Fn-MCE.getCurrentPCValue()-4);

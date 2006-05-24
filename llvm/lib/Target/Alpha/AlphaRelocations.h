@@ -23,7 +23,7 @@ namespace llvm {
       reloc_gprellow,
       reloc_gprelhigh,
       reloc_gpdist,
-      reloc_bsr,
+      reloc_bsr
     };
   }
 }
