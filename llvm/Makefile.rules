@@ -208,7 +208,10 @@ else
     BuildMode := Release
     # Don't use -fomit-frame-pointer on FreeBSD
     ifneq ($(OS),FreeBSD)
+    # Don't use -fomit-frame-pointer on Darwin, it breaks backtraces.
+    ifneq ($(OS),Darwin)
       OmitFramePointer := -fomit-frame-pointer
+    endif
     endif
     CXX.Flags := -O3 -finline-functions -felide-constructors $(OmitFramePointer)
     C.Flags   := -O3 $(OmitFramePointer)
