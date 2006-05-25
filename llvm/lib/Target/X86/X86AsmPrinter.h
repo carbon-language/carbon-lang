@@ -57,7 +57,9 @@ struct X86SharedAsmPrinter : public AsmPrinter {
   X86DwarfWriter DW;
 
   X86SharedAsmPrinter(std::ostream &O, X86TargetMachine &TM)
-    : AsmPrinter(O, TM), DW(O, this), forDarwin(false) { }
+    : AsmPrinter(O, TM), DW(O, this) {
+    Subtarget = &TM.getSubtarget<X86Subtarget>();
+  }
 
   bool doInitialization(Module &M);
   bool doFinalization(Module &M);
@@ -68,11 +70,9 @@ struct X86SharedAsmPrinter : public AsmPrinter {
     MachineFunctionPass::getAnalysisUsage(AU);
   }
 
-  bool forDarwin;  // FIXME: eliminate.
-  
   const char *DefaultTextSection;   // "_text" for MASM, ".text" for others.
   const char *DefaultDataSection;   // "_data" for MASM, ".data" for others.
-  
+  const X86Subtarget *Subtarget;
 
   // Necessary for Darwin to print out the apprioriate types of linker stubs
   std::set<std::string> FnStubs, GVStubs, LinkOnceStubs;

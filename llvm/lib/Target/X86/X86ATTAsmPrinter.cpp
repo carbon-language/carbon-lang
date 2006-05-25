@@ -26,11 +26,9 @@ using namespace llvm;
 /// method to print assembly for each instruction.
 ///
 bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  //  if (forDarwin) {
-    // Let PassManager know we need debug information and relay
-    // the MachineDebugInfo address on to DwarfWriter.
-    DW.SetDebugInfo(&getAnalysis<MachineDebugInfo>());
-    //  }
+  // Let PassManager know we need debug information and relay
+  // the MachineDebugInfo address on to DwarfWriter.
+  DW.SetDebugInfo(&getAnalysis<MachineDebugInfo>());
 
   SetupMachineFunction(MF);
   O << "\n\n";
@@ -56,11 +54,17 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     break;
   case Function::WeakLinkage:
   case Function::LinkOnceLinkage:
-    if (forDarwin) {
+    if (Subtarget->TargetType == X86Subtarget::isDarwin) {
       SwitchToTextSection(
                 ".section __TEXT,__textcoal_nt,coalesced,pure_instructions", F);
       O << "\t.globl\t" << CurrentFnName << "\n";
       O << "\t.weak_definition\t" << CurrentFnName << "\n";
+    } else if (Subtarget->TargetType == X86Subtarget::isCygwin) {
+      EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
+      O << "\t.section\t.llvm.linkonce.t." << CurrentFnName
+        << ",\"ax\"\n";
+      SwitchToTextSection("", F);
+      O << "\t.weak " << CurrentFnName << "\n";
     } else {
       EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
       O << "\t.section\t.llvm.linkonce.t." << CurrentFnName
@@ -72,7 +76,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   }
   O << CurrentFnName << ":\n";
 
-  if (forDarwin) {
+  if (Subtarget->TargetType == X86Subtarget::isDarwin) {
     // Emit pre-function debug information.
     DW.BeginFunction(&MF);
   }
@@ -95,7 +99,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   if (HasDotTypeDotSizeDirective)
     O << "\t.size " << CurrentFnName << ", .-" << CurrentFnName << "\n";
 
-  if (forDarwin) {
+  if (Subtarget->TargetType == X86Subtarget::isDarwin) {
     // Emit post-function debug information.
     DW.EndFunction();
   }
@@ -145,7 +149,8 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     if (!isMemOp) O << '$';
     O << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << "_"
       << MO.getConstantPoolIndex();
-    if (forDarwin && TM.getRelocationModel() == Reloc::PIC)
+    if (Subtarget->TargetType == X86Subtarget::isDarwin && 
+        TM.getRelocationModel() == Reloc::PIC)
       O << "-\"L" << getFunctionNumber() << "$pb\"";
     int Offset = MO.getOffset();
     if (Offset > 0)
@@ -159,7 +164,8 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     if (!isMemOp && !isCallOp) O << '$';
     // Darwin block shameless ripped from PPCAsmPrinter.cpp
-    if (forDarwin && TM.getRelocationModel() != Reloc::Static) {
+    if (Subtarget->TargetType == X86Subtarget::isDarwin && 
+        TM.getRelocationModel() != Reloc::Static) {
       GlobalValue *GV = MO.getGlobal();
       std::string Name = Mang->getValueName(GV);
       // Link-once, External, or Weakly-linked global variables need
@@ -190,7 +196,9 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   }
   case MachineOperand::MO_ExternalSymbol: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
-    if (isCallOp && forDarwin && TM.getRelocationModel() != Reloc::Static) {
+    if (isCallOp && 
+        Subtarget->TargetType == X86Subtarget::isDarwin && 
+        TM.getRelocationModel() != Reloc::Static) {
       std::string Name(GlobalPrefix);
       Name += MO.getSymbolName();
       FnStubs.insert(Name);
@@ -332,7 +340,7 @@ bool X86ATTAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   ++EmittedInsts;
   // This works around some Darwin assembler bugs.
-  if (forDarwin) {
+  if (Subtarget->TargetType == X86Subtarget::isDarwin) {
     switch (MI->getOpcode()) {
     case X86::REP_MOVSB:
       O << "rep/movsb (%esi),(%edi)\n";

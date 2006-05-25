@@ -182,6 +182,6 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS) {
 #endif
   }
 
-  if (TargetType == isDarwin)
+  if (TargetType == isDarwin || TargetType == isCygwin)
     stackAlignment = 16;
 }
