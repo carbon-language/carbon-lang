@@ -403,27 +403,6 @@ HowToPassCCCArgument(MVT::ValueType ObjectVT, unsigned NumXMMRegs,
   }
 }
 
-/// getFormalArgObjects - Returns itself if Op is a FORMAL_ARGUMENTS, otherwise
-/// returns the FORMAL_ARGUMENTS node(s) that made up parts of the node.
-static std::vector<SDOperand> getFormalArgObjects(SDOperand Op) {
-  unsigned Opc = Op.getOpcode();
-  std::vector<SDOperand> Objs;
-  if (Opc == ISD::TRUNCATE) {
-    Op = Op.getOperand(0);
-    assert(Op.getOpcode() == ISD::AssertSext ||
-           Op.getOpcode() == ISD::AssertZext);
-    Objs.push_back(Op.getOperand(0));
-  } else if (Opc == ISD::FP_ROUND || Opc == ISD::VBIT_CONVERT) {
-    Objs.push_back(Op.getOperand(0));
-  } else if (Opc == ISD::BUILD_PAIR) {
-    Objs.push_back(Op.getOperand(0));
-    Objs.push_back(Op.getOperand(1));
-  } else {
-    Objs.push_back(Op);
-  }
-  return Objs;
-}
-
 SDOperand X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG) {
   unsigned NumArgs = Op.Val->getNumValues() - 1;
   MachineFunction &MF = DAG.getMachineFunction();
