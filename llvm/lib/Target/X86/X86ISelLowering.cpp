@@ -555,14 +555,15 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG) {
     switch (Arg.getValueType()) {
     default: assert(0 && "Unexpected ValueType for argument!");
     case MVT::i8:
-    case MVT::i16:
+    case MVT::i16: {
       // Promote the integer to 32 bits.  If the input type is signed use a
       // sign extend, otherwise use a zero extend.
       unsigned ExtOp =
         dyn_cast<ConstantSDNode>(Op.getOperand(5+2*i+1))->getValue() ?
         ISD::SIGN_EXTEND : ISD::ZERO_EXTEND;
       Arg = DAG.getNode(ExtOp, MVT::i32, Arg);
-      // Fallthrough
+    }
+    // Fallthrough
 
     case MVT::i32:
     case MVT::f32: {
@@ -690,7 +691,6 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG) {
   case MVT::v2i64:
   case MVT::v4f32:
   case MVT::v2f64:
-  case MVT::Vector:
     Chain = DAG.getCopyFromReg(Chain, X86::XMM0, RetVT, InFlag).getValue(1);
     ResultVals.push_back(Chain.getValue(0));
     NodeTys.push_back(RetVT);
@@ -979,15 +979,14 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
   case MVT::f64:
     MF.addLiveOut(X86::ST0);
     break;
-  case MVT::Vector: {
-    const PackedType *PTy = cast<PackedType>(MF.getFunction()->getReturnType());
-    MVT::ValueType EVT;
-    MVT::ValueType LVT;
-    unsigned NumRegs = getPackedTypeBreakdown(PTy, EVT, LVT);
-    assert(NumRegs == 1 && "Unsupported type!");
+  case MVT::v16i8:
+  case MVT::v8i16:
+  case MVT::v4i32:
+  case MVT::v2i64:
+  case MVT::v4f32:
+  case MVT::v2f64:
     MF.addLiveOut(X86::XMM0);
     break;
-  }
   }
 
   // Return the new list of results.
@@ -1046,13 +1045,12 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
     case MVT::v4i32:
     case MVT::v2i64:
     case MVT::v4f32:
-    case MVT::v2f64: {
+    case MVT::v2f64:
       if (NumXMMRegs < 3)
         NumXMMRegs++;
       else
         NumBytes += 16;
       break;
-    }
     }
   }
 
@@ -1106,7 +1104,7 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
     case MVT::v4i32:
     case MVT::v2i64:
     case MVT::v4f32:
-    case MVT::v2f64: {
+    case MVT::v2f64:
       if (NumXMMRegs < 3) {
         RegsToPass.push_back(std::make_pair(XMMArgRegs[NumXMMRegs], Arg));
         NumXMMRegs++;
@@ -1117,7 +1115,6 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
                                           Arg, PtrOff, DAG.getSrcValue(NULL)));
         ArgOffset += 16;
       }
-    }
     }
   }
 
@@ -1202,7 +1199,6 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
   case MVT::v2i64:
   case MVT::v4f32:
   case MVT::v2f64:
-  case MVT::Vector:
     Chain = DAG.getCopyFromReg(Chain, X86::XMM0, RetVT, InFlag).getValue(1);
     ResultVals.push_back(Chain.getValue(0));
     NodeTys.push_back(RetVT);
