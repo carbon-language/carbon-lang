@@ -901,7 +901,8 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   bool isVarArg       = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
   bool isTailCall     = cast<ConstantSDNode>(Op.getOperand(3))->getValue() != 0;
   SDOperand Callee    = Op.getOperand(4);
-  
+  unsigned NumOps     = (Op.getNumOperands() - 5) / 2;
+
   // args_to_use will accumulate outgoing args for the PPCISD::CALL case in
   // SelectExpr to use to put the arguments in the appropriate registers.
   std::vector<SDOperand> args_to_use;
@@ -912,8 +913,8 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   unsigned NumBytes = 24;
   
   // Add up all the space actually used.
-  for (unsigned i = 5, e = Op.getNumOperands(); i != e; ++i)
-    NumBytes += MVT::getSizeInBits(Op.getOperand(i).getValueType())/8;
+  for (unsigned i = 0; i != NumOps; ++i)
+    NumBytes += MVT::getSizeInBits(Op.getOperand(5+2*i).getValueType())/8;
 
   // If we are calling what looks like a varargs function on the caller side,
   // there are two cases:
@@ -962,8 +963,8 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   
   std::vector<std::pair<unsigned, SDOperand> > RegsToPass;
   std::vector<SDOperand> MemOpChains;
-  for (unsigned i = 5, e = Op.getNumOperands(); i != e; ++i) {
-    SDOperand Arg = Op.getOperand(i);
+  for (unsigned i = 0; i != NumOps; ++i) {
+    SDOperand Arg = Op.getOperand(5+2*i);
     
     // PtrOff will be used to store the current argument to the stack if a
     // register cannot be found for it.
