@@ -2407,20 +2407,32 @@ public:
         std::string Fn = CP->getSelectFunc();
         NumRes = CP->getNumOperands();
         for (unsigned i = 0; i < NumRes; ++i)
-          emitDecl("Tmp" + utostr(i+ResNo));
+          emitDecl("CPTmp" + utostr(i+ResNo));
 
-        std::string Code = Fn + "(" + Val;
+        std::string Code = "bool Match = " + Fn + "(" + Val;
         for (unsigned i = 0; i < NumRes; i++)
-          Code += ", Tmp" + utostr(i + ResNo);
-        emitCheck(Code + ")");
+          Code += ", CPTmp" + utostr(i + ResNo);
+        emitCode(Code + ");");
+        if (InflightNodes.size()) {
+          // Remove the in-flight nodes if the ComplexPattern does not match!
+          emitCode("if (!Match) {");
+          for (std::vector<std::string>::iterator AI = InflightNodes.begin(),
+                 AE = InflightNodes.end(); AI != AE; ++AI)
+            emitCode("  InFlightSet.erase(" + *AI + ".Val);");
+          emitCode("}");
+        }
+
+        emitCheck("Match");
 
         for (unsigned i = 0; i < NumRes; ++i) {
-          emitCode("InFlightSet.insert(Tmp" + utostr(i+ResNo) + ".Val);");
-          InflightNodes.push_back("Tmp" + utostr(i+ResNo));
+          emitCode("InFlightSet.insert(CPTmp" + utostr(i+ResNo) + ".Val);");
+          InflightNodes.push_back("CPTmp" + utostr(i+ResNo));
         }
-        for (unsigned i = 0; i < NumRes; ++i)
-          emitCode("Select(Tmp" + utostr(i+ResNo) + ", Tmp" +
+        for (unsigned i = 0; i < NumRes; ++i) {
+          emitDecl("Tmp" + utostr(i+ResNo));
+          emitCode("Select(Tmp" + utostr(i+ResNo) + ", CPTmp" +
                    utostr(i+ResNo) + ");");
+        }
 
         TmpNo = ResNo + NumRes;
       } else {
@@ -2524,7 +2536,6 @@ public:
 
       // Make sure these operands which would be selected won't be folded while
       // the isel traverses the DAG upward.
-      std::vector<std::pair<unsigned, unsigned> > NumTemps(EmitOrder.size());
       for (unsigned i = 0, e = EmitOrder.size(); i != e; ++i) {
         TreePatternNode *Child = EmitOrder[i].second;
         if (!Child->getName().empty()) {
@@ -2539,6 +2550,7 @@ public:
       }
 
       // Emit all of the operands.
+      std::vector<std::pair<unsigned, unsigned> > NumTemps(EmitOrder.size());
       for (unsigned i = 0, e = EmitOrder.size(); i != e; ++i) {
         unsigned OpOrder       = EmitOrder[i].first;
         TreePatternNode *Child = EmitOrder[i].second;
