@@ -40,13 +40,6 @@ namespace {
   public:
     ARMTargetLowering(TargetMachine &TM);
     virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
-
-    virtual std::pair<SDOperand, SDOperand>
-      LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
-                  unsigned CC,
-                  bool isTailCall, SDOperand Callee, ArgListTy &Args,
-                  SelectionDAG &DAG);
-
   };
 
 }
@@ -56,11 +49,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::RET, MVT::Other, Custom);
 }
 
-std::pair<SDOperand, SDOperand>
-ARMTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
-                                 bool isVarArg, unsigned CC,
-                                 bool isTailCall, SDOperand Callee,
-                                 ArgListTy &Args, SelectionDAG &DAG) {
+static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   assert(0 && "Not implemented");
   abort();
 }
@@ -127,6 +116,8 @@ SDOperand ARMTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     abort();
   case ISD::FORMAL_ARGUMENTS:
     return LowerFORMAL_ARGUMENTS(Op, DAG);
+  case ISD::CALL:
+    return LowerCALL(Op, DAG);
   case ISD::RET:
     return LowerRET(Op, DAG);
   }
