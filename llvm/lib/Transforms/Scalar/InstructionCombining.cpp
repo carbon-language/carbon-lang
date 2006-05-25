@@ -7024,6 +7024,25 @@ static bool CheapToScalarize(Value *V, bool isConstant) {
   return false;
 }
 
+/// getShuffleMask - Read and decode a shufflevector mask.  It turns undef
+/// elements into values that are larger than the #elts in the input.
+static std::vector<unsigned> getShuffleMask(const ShuffleVectorInst *SVI) {
+  unsigned NElts = SVI->getType()->getNumElements();
+  if (isa<ConstantAggregateZero>(SVI->getOperand(2)))
+    return std::vector<unsigned>(NElts, 0);
+  if (isa<UndefValue>(SVI->getOperand(2)))
+    return std::vector<unsigned>(NElts, 2*NElts);
+
+  std::vector<unsigned> Result;
+  const ConstantPacked *CP = cast<ConstantPacked>(SVI->getOperand(2));
+  for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
+    if (isa<UndefValue>(CP->getOperand(i)))
+      Result.push_back(NElts*2);  // undef -> 8
+    else
+      Result.push_back(cast<ConstantUInt>(CP->getOperand(i))->getValue());
+  return Result;
+}
+
 /// FindScalarElement - Given a vector and an element number, see if the scalar
 /// value is already around as a register, for example if it were inserted then
 /// extracted from the vector.
@@ -7053,18 +7072,13 @@ static Value *FindScalarElement(Value *V, unsigned EltNo) {
     // vector input.
     return FindScalarElement(III->getOperand(0), EltNo);
   } else if (ShuffleVectorInst *SVI = dyn_cast<ShuffleVectorInst>(V)) {
-    if (isa<ConstantAggregateZero>(SVI->getOperand(2))) {
-      return FindScalarElement(SVI->getOperand(0), 0);
-    } else if (ConstantPacked *CP = 
-                   dyn_cast<ConstantPacked>(SVI->getOperand(2))) {
-      if (isa<UndefValue>(CP->getOperand(EltNo)))
-        return UndefValue::get(PTy->getElementType());
-      unsigned InEl = cast<ConstantUInt>(CP->getOperand(EltNo))->getValue();
-      if (InEl < Width)
-        return FindScalarElement(SVI->getOperand(0), InEl);
-      else
-        return FindScalarElement(SVI->getOperand(1), InEl - Width);
-    }
+    unsigned InEl = getShuffleMask(SVI)[EltNo];
+    if (InEl < Width)
+      return FindScalarElement(SVI->getOperand(0), InEl);
+    else if (InEl < Width*2)
+      return FindScalarElement(SVI->getOperand(1), InEl - Width);
+    else
+      return UndefValue::get(PTy->getElementType());
   }
   
   // Otherwise, we don't know.
@@ -7144,28 +7158,18 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
       // If this is extracting an element from a shufflevector, figure out where
       // it came from and extract from the appropriate input element instead.
       if (ConstantUInt *Elt = dyn_cast<ConstantUInt>(EI.getOperand(1))) {
-        unsigned ExtractedIdx = Elt->getValue();
-        if (ConstantPacked *CP = dyn_cast<ConstantPacked>(SVI->getOperand(2))) {
-          unsigned Idx = 0;
-          if (ConstantUInt *CI = 
-              dyn_cast<ConstantUInt>(CP->getOperand(ExtractedIdx)))
-            Idx = CI->getValue();
-          Value *Src;
-          if (Idx < CP->getNumOperands())
-            Src = SVI->getOperand(0);
-          else {
-            Idx -= CP->getNumOperands();
-            Src = SVI->getOperand(0);
-          }
-          return new ExtractElementInst(Src,
-                                        ConstantUInt::get(Type::UIntTy, Idx));
-     
-        } else if (isa<ConstantAggregateZero>(SVI->getOperand(2))) {
-          // If extracting from a splat of the 0th element, return an extract
-          // of the zero'th element of the input to the splat.
-          return new ExtractElementInst(SVI->getOperand(0),
-                                        ConstantUInt::get(Type::UIntTy, 0));
+        unsigned SrcIdx = getShuffleMask(SVI)[Elt->getValue()];
+        Value *Src;
+        if (SrcIdx < SVI->getType()->getNumElements())
+          Src = SVI->getOperand(0);
+        else if (SrcIdx < SVI->getType()->getNumElements()*2) {
+          SrcIdx -= SVI->getType()->getNumElements();
+          Src = SVI->getOperand(1);
+        } else {
+          return ReplaceInstUsesWith(EI, UndefValue::get(EI.getType()));
         }
+        return new ExtractElementInst(Src,
+                                      ConstantUInt::get(Type::UIntTy, SrcIdx));
       }
     }
   }
@@ -7373,84 +7377,53 @@ Instruction *InstCombiner::visitInsertElementInst(InsertElementInst &IE) {
 Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
   Value *LHS = SVI.getOperand(0);
   Value *RHS = SVI.getOperand(1);
-  Constant *Mask = cast<Constant>(SVI.getOperand(2));
+  std::vector<unsigned> Mask = getShuffleMask(&SVI);
 
   bool MadeChange = false;
   
-  if (isa<UndefValue>(Mask))
+  if (isa<UndefValue>(SVI.getOperand(2)))
     return ReplaceInstUsesWith(SVI, UndefValue::get(SVI.getType()));
   
   // TODO: If we have shuffle(x, undef, mask) and any elements of mask refer to
   // the undef, change them to undefs.
   
-  // Canonicalize shuffle(x,x) -> shuffle(x,undef)
-  if (LHS == RHS) {
-    if (isa<UndefValue>(LHS)) {
+  // Canonicalize shuffle(x    ,x,mask) -> shuffle(x, undef,mask')
+  // Canonicalize shuffle(undef,x,mask) -> shuffle(x, undef,mask').
+  if (LHS == RHS || isa<UndefValue>(LHS)) {
+    if (isa<UndefValue>(LHS) && LHS == RHS) {
       // shuffle(undef,undef,mask) -> undef.
       return ReplaceInstUsesWith(SVI, LHS);
     }
     
-    if (!isa<ConstantAggregateZero>(Mask)) {
-      // Remap any references to RHS to use LHS.
-      ConstantPacked *CP = cast<ConstantPacked>(Mask);
-      std::vector<Constant*> Elts;
-      for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i) {
-        Elts.push_back(CP->getOperand(i));
-        if (isa<UndefValue>(CP->getOperand(i)))
-          continue;
-        unsigned MV = cast<ConstantInt>(CP->getOperand(i))->getRawValue();
-        if (MV >= e)
-          Elts.back() = ConstantUInt::get(Type::UIntTy, MV & (e-1));
-      }
-      Mask = ConstantPacked::get(Elts);
+    // Remap any references to RHS to use LHS.
+    std::vector<Constant*> Elts;
+    for (unsigned i = 0, e = Mask.size(); i != e; ++i) {
+      if (Mask[i] > 2*e)
+        Elts.push_back(UndefValue::get(Type::UIntTy));
+      else
+        Elts.push_back(ConstantUInt::get(Type::UIntTy, Mask[i] & (e-1)));
     }
+    SVI.setOperand(0, SVI.getOperand(1));
     SVI.setOperand(1, UndefValue::get(RHS->getType()));
-    SVI.setOperand(2, Mask);
+    SVI.setOperand(2, ConstantPacked::get(Elts));
     MadeChange = true;
   }
   
-  // Canonicalize shuffle(undef,x,mask) -> shuffle(x, undef,mask').
-  if (isa<UndefValue>(LHS)) {
-    // shuffle(undef,x,<0,0,0,0>) -> undef.
-    if (isa<ConstantAggregateZero>(Mask))
-      return ReplaceInstUsesWith(SVI, UndefValue::get(SVI.getType()));
+  // Analyze the shuffle, are the LHS or RHS and identity shuffle?
+  bool isLHSID = true, isRHSID = true;
     
-    ConstantPacked *CPM = cast<ConstantPacked>(Mask);
-    std::vector<Constant*> Elts;
-    for (unsigned i = 0, e = CPM->getNumOperands(); i != e; ++i) {
-      if (isa<UndefValue>(CPM->getOperand(i)))
-        Elts.push_back(CPM->getOperand(i));
-      else {
-        unsigned EltNo = cast<ConstantUInt>(CPM->getOperand(i))->getRawValue();
-        if (EltNo >= e)
-          Elts.push_back(ConstantUInt::get(Type::UIntTy, EltNo-e));
-        else               // Referring to the undef.
-          Elts.push_back(UndefValue::get(Type::UIntTy));
-      }
-    }
-    return new ShuffleVectorInst(RHS, LHS, ConstantPacked::get(Elts));
+  for (unsigned i = 0, e = Mask.size(); i != e; ++i) {
+    if (Mask[i] >= e*2) continue;  // Ignore undef values.
+    // Is this an identity shuffle of the LHS value?
+    isLHSID &= (Mask[i] == i);
+      
+    // Is this an identity shuffle of the RHS value?
+    isRHSID &= (Mask[i]-e == i);
   }
-  
-  if (ConstantPacked *CP = dyn_cast<ConstantPacked>(Mask)) {
-    bool isLHSID = true, isRHSID = true;
-    
-    // Analyze the shuffle.
-    for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i) {
-      if (isa<UndefValue>(CP->getOperand(i)))
-        continue;
-      unsigned MV = cast<ConstantInt>(CP->getOperand(i))->getRawValue();
-      
-      // Is this an identity shuffle of the LHS value?
-      isLHSID &= (MV == i);
-      
-      // Is this an identity shuffle of the RHS value?
-      isRHSID &= (MV-e == i);
-    }
 
-    // Eliminate identity shuffles.
-    if (isLHSID) return ReplaceInstUsesWith(SVI, LHS);
-    if (isRHSID) return ReplaceInstUsesWith(SVI, RHS);
-  }
+  // Eliminate identity shuffles.
+  if (isLHSID) return ReplaceInstUsesWith(SVI, LHS);
+  if (isRHSID) return ReplaceInstUsesWith(SVI, RHS);
   
   return MadeChange ? &SVI : 0;
 }
