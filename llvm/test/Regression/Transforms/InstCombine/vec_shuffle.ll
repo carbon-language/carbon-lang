@@ -22,3 +22,15 @@ float %test3(%T %A, %T %B, float %f) {
         ret float %E
 }
 
+int %test4(<4 x int> %X) {
+        %tmp152.i53899.i = shufflevector <4 x int> %X, <4 x int> undef, <4 x uint> zeroinitializer
+        %tmp34 = extractelement <4 x int> %tmp152.i53899.i, uint 0
+        ret int %tmp34
+}
+
+int %test5(<4 x int> %X) {
+        %tmp152.i53899.i = shufflevector <4 x int> %X, <4 x int> undef, <4 x uint> <uint 3, uint 2, uint undef, uint undef>
+        %tmp34 = extractelement <4 x int> %tmp152.i53899.i, uint 0
+        ret int %tmp34
+}
+
