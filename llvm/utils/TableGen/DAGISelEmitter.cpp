@@ -3481,13 +3481,11 @@ void DAGISelEmitter::run(std::ostream &OS) {
   OS << "  if (found || !Visited.insert(Use).second) return;\n";
   OS << "  for (unsigned i = 0, e = Use->getNumOperands(); i != e; ++i) {\n";
   OS << "    SDNode *N = Use->getOperand(i).Val;\n";
-  OS << "    if (N->getNodeDepth() >= Def->getNodeDepth()) {\n";
-  OS << "      if (N != Def) {\n";
-  OS << "        findNonImmUse(N, Def, found, Visited);\n";
-  OS << "      } else {\n";
-  OS << "        found = true;\n";
-  OS << "        break;\n";
-  OS << "      }\n";
+  OS << "    if (N != Def) {\n";
+  OS << "      findNonImmUse(N, Def, found, Visited);\n";
+  OS << "    } else {\n";
+  OS << "      found = true;\n";
+  OS << "      break;\n";
   OS << "    }\n";
   OS << "  }\n";
   OS << "}\n";
