@@ -274,7 +274,7 @@ Constant *llvm::ConstantFoldLoadThroughGEPConstantExpr(Constant *C,
     } else if (ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand())) {
       if (const ArrayType *ATy = dyn_cast<ArrayType>(*I)) {
         if ((uint64_t)CI->getRawValue() >= ATy->getNumElements())
-          C = UndefValue::get(ATy->getElementType());
+         return 0;
         if (ConstantArray *CA = dyn_cast<ConstantArray>(C))
           C = CA->getOperand((unsigned)CI->getRawValue());
         else if (isa<ConstantAggregateZero>(C))
@@ -285,7 +285,7 @@ Constant *llvm::ConstantFoldLoadThroughGEPConstantExpr(Constant *C,
           return 0;
       } else if (const PackedType *PTy = dyn_cast<PackedType>(*I)) {
         if ((uint64_t)CI->getRawValue() >= PTy->getNumElements())
-          C = UndefValue::get(PTy->getElementType());
+          return 0;
         if (ConstantPacked *CP = dyn_cast<ConstantPacked>(C))
           C = CP->getOperand((unsigned)CI->getRawValue());
         else if (isa<ConstantAggregateZero>(C))
