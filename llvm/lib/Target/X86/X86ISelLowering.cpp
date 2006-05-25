@@ -510,13 +510,12 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG) {
     case MVT::v4i32:
     case MVT::v2i64:
     case MVT::v4f32:
-    case MVT::v2f64: {
+    case MVT::v2f64:
       if (NumXMMRegs < 3)
         ++NumXMMRegs;
       else
         NumBytes += 16;
       break;
-    }
     }
   }
 
@@ -567,7 +566,7 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG) {
     case MVT::v4i32:
     case MVT::v2i64:
     case MVT::v4f32:
-    case MVT::v2f64: {
+    case MVT::v2f64:
       if (NumXMMRegs < 3) {
         RegsToPass.push_back(std::make_pair(XMMArgRegs[NumXMMRegs], Arg));
         NumXMMRegs++;
@@ -578,7 +577,6 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG) {
                                           Arg, PtrOff, DAG.getSrcValue(NULL)));
         ArgOffset += 16;
       }
-    }
     }
   }
 
@@ -1013,6 +1011,7 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
         ++NumIntRegs;
         break;
       }
+      // Fall through
     case MVT::f32:
       NumBytes += 4;
       break;
