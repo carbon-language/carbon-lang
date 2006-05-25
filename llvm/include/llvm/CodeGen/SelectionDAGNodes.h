@@ -125,10 +125,10 @@ namespace ISD {
     FORMAL_ARGUMENTS,
     
     /// RV1, RV2...RVn, CHAIN = CALL(CHAIN, CC#, ISVARARG, ISTAILCALL, CALLEE,
-    ///                              ARG0, ARG1, ... ARGn)
+    ///                              ARG0, SIGN0, ARG1, SIGN1, ... ARGn, SIGNn)
     /// This node represents a fully general function call, before the legalizer
-    /// runs.  This has one result value for each argument, plus a chain result.
-    /// It must be custom legalized.
+    /// runs.  This has one result value for each argument / signness pair, plus
+    /// a chain result. It must be custom legalized.
     CALL,
 
     // EXTRACT_ELEMENT - This is used to get the first or second (determined by
