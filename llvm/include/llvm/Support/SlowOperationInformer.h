@@ -33,6 +33,7 @@
 
 #include <string>
 #include <cassert>
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
   class SlowOperationInformer {
