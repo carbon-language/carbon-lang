@@ -75,12 +75,18 @@ static SPCC::CondCodes IntCondCCodeToICC(ISD::CondCode CC) {
 static SPCC::CondCodes FPCondCCodeToFCC(ISD::CondCode CC) {
   switch (CC) {
   default: assert(0 && "Unknown fp condition code!");
-  case ISD::SETEQ:  return SPCC::FCC_E;
-  case ISD::SETNE:  return SPCC::FCC_NE;
-  case ISD::SETLT:  return SPCC::FCC_L;
-  case ISD::SETGT:  return SPCC::FCC_G;
-  case ISD::SETLE:  return SPCC::FCC_LE;
-  case ISD::SETGE:  return SPCC::FCC_GE;
+  case ISD::SETEQ:
+  case ISD::SETOEQ: return SPCC::FCC_E;
+  case ISD::SETNE:
+  case ISD::SETUNE: return SPCC::FCC_NE;
+  case ISD::SETLT:
+  case ISD::SETOLT: return SPCC::FCC_L;
+  case ISD::SETGT:
+  case ISD::SETOGT: return SPCC::FCC_G;
+  case ISD::SETLE:
+  case ISD::SETOLE: return SPCC::FCC_LE;
+  case ISD::SETGE:
+  case ISD::SETOGE: return SPCC::FCC_GE;
   case ISD::SETULT: return SPCC::FCC_UL;
   case ISD::SETULE: return SPCC::FCC_ULE;
   case ISD::SETUGT: return SPCC::FCC_UG;
