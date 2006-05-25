@@ -34,3 +34,11 @@ int %test5(<4 x int> %X) {
         ret int %tmp34
 }
 
+float %test6(<4 x float> %X) {
+        %X = cast <4 x float> %X to <4 x int>
+        %tmp152.i53899.i = shufflevector <4 x int> %X, <4 x int> undef, <4 x uint> zeroinitializer
+        %tmp152.i53900.i = cast <4 x int> %tmp152.i53899.i to <4 x float>
+        %tmp34 = extractelement <4 x float> %tmp152.i53900.i, uint 0
+        ret float %tmp34
+}
+
