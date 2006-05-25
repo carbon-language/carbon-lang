@@ -413,7 +413,7 @@ static bool ValueRequiresCast(const Value *V, const Type *Ty, TargetData *TD) {
   if (V->getType()->isLosslesslyConvertibleTo(Ty))
     return false;
 
-  // If this is another cast that can be elimianted, it isn't codegen either.
+  // If this is another cast that can be eliminated, it isn't codegen either.
   if (const CastInst *CI = dyn_cast<CastInst>(V))
     if (isEliminableCastOfCast(CI->getOperand(0)->getType(), CI->getType(), Ty,
                                TD))
@@ -4970,7 +4970,7 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
   // If the source value is an instruction with only this use, we can attempt to
   // propagate the cast into the instruction.  Also, only handle integral types
   // for now.
-  if (Instruction *SrcI = dyn_cast<Instruction>(Src))
+  if (Instruction *SrcI = dyn_cast<Instruction>(Src)) {
     if (SrcI->hasOneUse() && Src->getType()->isIntegral() &&
         CI.getType()->isInteger()) {  // Don't mess with casts to bool here
       
@@ -5152,6 +5152,35 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
         break;
       }
     }
+    
+    if (SrcI->hasOneUse()) {
+      if (ShuffleVectorInst *SVI = dyn_cast<ShuffleVectorInst>(SrcI)) {
+        // Okay, we have (cast (shuffle ..)).  We know this cast is a bitconvert
+        // because the inputs are known to be a vector.  Check to see if this is
+        // a cast to a vector with the same # elts.
+        if (isa<PackedType>(CI.getType()) && 
+            cast<PackedType>(CI.getType())->getNumElements() == 
+                  SVI->getType()->getNumElements()) {
+          CastInst *Tmp;
+          // If either of the operands is a cast from CI.getType(), then
+          // evaluating the shuffle in the casted destination's type will allow
+          // us to eliminate at least one cast.
+          if (((Tmp = dyn_cast<CastInst>(SVI->getOperand(0))) && 
+               Tmp->getOperand(0)->getType() == CI.getType()) ||
+              ((Tmp = dyn_cast<CastInst>(SVI->getOperand(1))) && 
+               Tmp->getOperand(1)->getType() == CI.getType())) {
+            Value *LHS = InsertOperandCastBefore(SVI->getOperand(0),
+                                                 CI.getType(), &CI);
+            Value *RHS = InsertOperandCastBefore(SVI->getOperand(1),
+                                                 CI.getType(), &CI);
+            // Return a new shuffle vector.  Use the same element ID's, as we
+            // know the vector types match #elts.
+            return new ShuffleVectorInst(LHS, RHS, SVI->getOperand(2));
+          }
+        }
+      }
+    }
+  }
       
   return 0;
 }
