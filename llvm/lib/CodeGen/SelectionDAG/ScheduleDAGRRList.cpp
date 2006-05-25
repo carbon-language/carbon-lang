@@ -31,10 +31,6 @@
 using namespace llvm;
 
 namespace {
-  cl::opt<bool> SchedCommuteNodes("sched-commute-nodes", cl::Hidden);
-}
-
-namespace {
 //===----------------------------------------------------------------------===//
 /// ScheduleDAGRRList - The actual register reduction list scheduler
 /// implementation.  This supports both top-down and bottom-up scheduling.
@@ -100,8 +96,7 @@ void ScheduleDAGRRList::Schedule() {
   
   AvailableQueue->releaseState();
 
-  if (SchedCommuteNodes)
-    CommuteNodesToReducePressure();
+  CommuteNodesToReducePressure();
   
   DEBUG(std::cerr << "*** Final schedule ***\n");
   DEBUG(dumpSchedule());
@@ -685,7 +680,7 @@ void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
         SUnit *SuccSU = I->first;
         if (SuccSU != SU &&
             (!canClobber(SuccSU, DUSU) ||
-             (SchedCommuteNodes && !SU->isCommutable && SuccSU->isCommutable))){
+             (!SU->isCommutable && SuccSU->isCommutable))){
           if (SuccSU->Depth == SU->Depth && !isReachable(SuccSU, SU)) {
             DEBUG(std::cerr << "Adding an edge from SU # " << SU->NodeNum
                   << " to SU #" << SuccSU->NodeNum << "\n");
