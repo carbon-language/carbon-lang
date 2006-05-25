@@ -757,8 +757,10 @@ static unsigned getCRIdxForSetCC(ISD::CondCode CC, bool& Inv) {
   case ISD::SETULE:
   case ISD::SETLE:  Inv = true;   return 1;
   case ISD::SETOEQ:  // FIXME: This is incorrect see PR642.
+  case ISD::SETUEQ:
   case ISD::SETEQ:  Inv = false;  return 2;
   case ISD::SETONE:  // FIXME: This is incorrect see PR642.
+  case ISD::SETUNE:
   case ISD::SETNE:  Inv = true;   return 2;
   case ISD::SETO:   Inv = true;   return 3;
   case ISD::SETUO:  Inv = false;  return 3;
