@@ -7072,7 +7072,7 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
       return ReplaceInstUsesWith(EI, Elt);
   }
   
-  if (Instruction *I = dyn_cast<Instruction>(EI.getOperand(0)))
+  if (Instruction *I = dyn_cast<Instruction>(EI.getOperand(0))) {
     if (I->hasOneUse()) {
       // Push extractelement into predecessor operation if legal and
       // profitable to do so
@@ -7097,20 +7097,49 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
                                 I->getName() + ".gep");
         InsertNewInstBefore(GEP, EI);
         return new LoadInst(GEP);
-      } else if (InsertElementInst *IE = dyn_cast<InsertElementInst>(I)) {
-        // Extracting the inserted element?
-        if (IE->getOperand(2) == EI.getOperand(1))
-          return ReplaceInstUsesWith(EI, IE->getOperand(1));
-        // If the inserted and extracted elements are constants, they must not
-        // be the same value, extract from the pre-inserted value instead.
-        if (isa<Constant>(IE->getOperand(2)) &&
-            isa<Constant>(EI.getOperand(1))) {
-          AddUsesToWorkList(EI);
-          EI.setOperand(0, IE->getOperand(0));
-          return &EI;
+      }
+    }
+    if (InsertElementInst *IE = dyn_cast<InsertElementInst>(I)) {
+      // Extracting the inserted element?
+      if (IE->getOperand(2) == EI.getOperand(1))
+        return ReplaceInstUsesWith(EI, IE->getOperand(1));
+      // If the inserted and extracted elements are constants, they must not
+      // be the same value, extract from the pre-inserted value instead.
+      if (isa<Constant>(IE->getOperand(2)) &&
+          isa<Constant>(EI.getOperand(1))) {
+        AddUsesToWorkList(EI);
+        EI.setOperand(0, IE->getOperand(0));
+        return &EI;
+      }
+    } else if (ShuffleVectorInst *SVI = dyn_cast<ShuffleVectorInst>(I)) {
+      // If this is extracting an element from a shufflevector, figure out where
+      // it came from and extract from the appropriate input element instead.
+      if (ConstantUInt *Elt = dyn_cast<ConstantUInt>(EI.getOperand(1))) {
+        unsigned ExtractedIdx = Elt->getValue();
+        if (ConstantPacked *CP = dyn_cast<ConstantPacked>(SVI->getOperand(2))) {
+          unsigned Idx = 0;
+          if (ConstantUInt *CI = 
+              dyn_cast<ConstantUInt>(CP->getOperand(ExtractedIdx)))
+            Idx = CI->getValue();
+          Value *Src;
+          if (Idx < CP->getNumOperands())
+            Src = SVI->getOperand(0);
+          else {
+            Idx -= CP->getNumOperands();
+            Src = SVI->getOperand(0);
+          }
+          return new ExtractElementInst(Src,
+                                        ConstantUInt::get(Type::UIntTy, Idx));
+     
+        } else if (isa<ConstantAggregateZero>(SVI->getOperand(2))) {
+          // If extracting from a splat of the 0th element, return an extract
+          // of the zero'th element of the input to the splat.
+          return new ExtractElementInst(SVI->getOperand(0),
+                                        ConstantUInt::get(Type::UIntTy, 0));
         }
       }
     }
+  }
   return 0;
 }
 
