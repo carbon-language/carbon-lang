@@ -1,5 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -sched-commute-nodes &&
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -sched-commute-nodes -stats 2>&1 | grep 'asm-printer' | grep 39
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -stats 2>&1 | grep 'asm-printer' | grep 39
 
 void %foo(int* %mc, int* %bp, int* %ms, int* %xmb, int* %mpp, int* %tpmm, int* %ip, int* %tpim, int* %dpp, int* %tpdm, int* %bpi, int %M) {
 entry:
