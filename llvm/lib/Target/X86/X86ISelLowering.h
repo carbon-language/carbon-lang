@@ -282,13 +282,6 @@ namespace llvm {
     ///
     virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
 
-    /// LowerCallTo - This hook lowers an abstract call to a function into an
-    /// actual call.
-    virtual std::pair<SDOperand, SDOperand>
-    LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg, unsigned CC,
-                bool isTailCall, SDOperand Callee, ArgListTy &Args,
-                SelectionDAG &DAG);
-
     virtual std::pair<SDOperand, SDOperand>
     LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain, unsigned Depth,
                             SelectionDAG &DAG);
@@ -343,17 +336,11 @@ namespace llvm {
 
     // C Calling Convention implementation.
     SDOperand LowerCCCArguments(SDOperand Op, SelectionDAG &DAG);
-    std::pair<SDOperand, SDOperand>
-    LowerCCCCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
-                   bool isTailCall, unsigned CallingConv,
-                   SDOperand Callee, ArgListTy &Args, SelectionDAG &DAG);
+    SDOperand LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG);
 
     // Fast Calling Convention implementation.
-    SDOperand
-    LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG);
-    std::pair<SDOperand, SDOperand>
-    LowerFastCCCallTo(SDOperand Chain, const Type *RetTy, bool isTailCall,
-                      SDOperand Callee, ArgListTy &Args, SelectionDAG &DAG);
+    SDOperand LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG);
 
     SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG);
@@ -374,6 +361,7 @@ namespace llvm {
     SDOperand LowerMEMSET(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerMEMCPY(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerJumpTable(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerREADCYCLCECOUNTER(SDOperand Op, SelectionDAG &DAG);

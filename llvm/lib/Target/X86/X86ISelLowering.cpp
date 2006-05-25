@@ -358,29 +358,6 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   allowUnalignedMemoryAccesses = true; // x86 supports it!
 }
 
-std::pair<SDOperand, SDOperand>
-X86TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
-                               bool isVarArg, unsigned CallingConv,
-                               bool isTailCall,
-                               SDOperand Callee, ArgListTy &Args,
-                               SelectionDAG &DAG) {
-  assert((!isVarArg || CallingConv == CallingConv::C || 
-          CallingConv == CallingConv::CSRet) &&
-         "Only CCC/CSRet takes varargs!");
-
-  // If the callee is a GlobalAddress node (quite common, every direct call is)
-  // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
-  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
-    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy());
-  else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
-    Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
-
-  if (CallingConv == CallingConv::Fast && EnableFastCC)
-    return LowerFastCCCallTo(Chain, RetTy, isTailCall, Callee, Args, DAG);
-  return  LowerCCCCallTo(Chain, RetTy, isVarArg, isTailCall, CallingConv,
-                         Callee, Args, DAG);
-}
-
 //===----------------------------------------------------------------------===//
 //                    C Calling Convention implementation
 //===----------------------------------------------------------------------===//
@@ -516,149 +493,133 @@ SDOperand X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG) 
   return DAG.getNode(ISD::MERGE_VALUES, RetVTs, ArgValues);
 }
 
-std::pair<SDOperand, SDOperand>
-X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
-                                  bool isVarArg, bool isTailCall,
-                                  unsigned CallingConv,
-                                  SDOperand Callee, ArgListTy &Args,
-                                  SelectionDAG &DAG) {
-  // Count how many bytes are to be pushed on the stack.
-  unsigned NumBytes = 0;
+
+SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG) {
+  SDOperand Chain     = Op.getOperand(0);
+  unsigned CallingConv= cast<ConstantSDNode>(Op.getOperand(1))->getValue();
+  bool isVarArg       = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
+  bool isTailCall     = cast<ConstantSDNode>(Op.getOperand(3))->getValue() != 0;
+  SDOperand Callee    = Op.getOperand(4);
+  MVT::ValueType RetVT= Op.Val->getValueType(0);
+  unsigned NumOps     = (Op.getNumOperands() - 5) / 2;
 
   // Keep track of the number of XMM regs passed so far.
   unsigned NumXMMRegs = 0;
-  unsigned XMMArgRegs[] = { X86::XMM0, X86::XMM1, X86::XMM2 };
+  static const unsigned XMMArgRegs[] = {
+    X86::XMM0, X86::XMM1, X86::XMM2
+  };
 
-  std::vector<SDOperand> RegValuesToPass;
-  if (Args.empty()) {
-    // Save zero bytes.
-    Chain = DAG.getCALLSEQ_START(Chain, DAG.getConstant(0, getPointerTy()));
-  } else {
-    for (unsigned i = 0, e = Args.size(); i != e; ++i)
-      switch (getValueType(Args[i].second)) {
-      default: assert(0 && "Unknown value type!");
-      case MVT::i1:
-      case MVT::i8:
-      case MVT::i16:
-      case MVT::i32:
-      case MVT::f32:
-        NumBytes += 4;
-        break;
-      case MVT::i64:
-      case MVT::f64:
-        NumBytes += 8;
-        break;
-      case MVT::Vector:
-        if (NumXMMRegs < 3)
-          ++NumXMMRegs;
-        else
-          NumBytes += 16;
-        break;
-      }
+  // Count how many bytes are to be pushed on the stack.
+  unsigned NumBytes = 0;
+  for (unsigned i = 0; i != NumOps; ++i) {
+    SDOperand Arg = Op.getOperand(5+2*i);
 
-    Chain = DAG.getCALLSEQ_START(Chain,
-                                 DAG.getConstant(NumBytes, getPointerTy()));
+    switch (Arg.getValueType()) {
+    default: assert(0 && "Unexpected ValueType for argument!");
+    case MVT::i8:
+    case MVT::i16:
+    case MVT::i32:
+    case MVT::f32:
+      NumBytes += 4;
+      break;
+    case MVT::i64:
+    case MVT::f64:
+      NumBytes += 8;
+      break;
+    case MVT::v16i8:
+    case MVT::v8i16:
+    case MVT::v4i32:
+    case MVT::v2i64:
+    case MVT::v4f32:
+    case MVT::v2f64: {
+      if (NumXMMRegs < 3)
+        ++NumXMMRegs;
+      else
+        NumBytes += 16;
+      break;
+    }
+    }
+  }
 
-    // Arguments go on the stack in reverse order, as specified by the ABI.
-    unsigned ArgOffset = 0;
-    NumXMMRegs = 0;
-    SDOperand StackPtr = DAG.getRegister(X86::ESP, MVT::i32);
-    std::vector<SDOperand> Stores;
-    for (unsigned i = 0, e = Args.size(); i != e; ++i) {
-      switch (getValueType(Args[i].second)) {
-      default: assert(0 && "Unexpected ValueType for argument!");
-      case MVT::i1:
-      case MVT::i8:
-      case MVT::i16:
-        // Promote the integer to 32 bits.  If the input type is signed use a
-        // sign extend, otherwise use a zero extend.
-        if (Args[i].second->isSigned())
-          Args[i].first =DAG.getNode(ISD::SIGN_EXTEND, MVT::i32, Args[i].first);
-        else
-          Args[i].first =DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, Args[i].first);
+  Chain = DAG.getCALLSEQ_START(Chain,DAG.getConstant(NumBytes, getPointerTy()));
 
-        // FALL THROUGH
-      case MVT::i32:
-      case MVT::f32: {
+  // Arguments go on the stack in reverse order, as specified by the ABI.
+  unsigned ArgOffset = 0;
+  NumXMMRegs = 0;
+  std::vector<std::pair<unsigned, SDOperand> > RegsToPass;
+  std::vector<SDOperand> MemOpChains;
+  SDOperand StackPtr = DAG.getRegister(X86::ESP, getPointerTy());
+  for (unsigned i = 0; i != NumOps; ++i) {
+    SDOperand Arg = Op.getOperand(5+2*i);
+
+    switch (Arg.getValueType()) {
+    default: assert(0 && "Unexpected ValueType for argument!");
+    case MVT::i8:
+    case MVT::i16:
+      // Promote the integer to 32 bits.  If the input type is signed use a
+      // sign extend, otherwise use a zero extend.
+      unsigned ExtOp =
+        dyn_cast<ConstantSDNode>(Op.getOperand(5+2*i+1))->getValue() ?
+        ISD::SIGN_EXTEND : ISD::ZERO_EXTEND;
+      Arg = DAG.getNode(ExtOp, MVT::i32, Arg);
+      // Fallthrough
+
+    case MVT::i32:
+    case MVT::f32: {
+      SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
+      PtrOff = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, PtrOff);
+      MemOpChains.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                        Arg, PtrOff, DAG.getSrcValue(NULL)));
+      ArgOffset += 4;
+      break;
+    }
+    case MVT::i64:
+    case MVT::f64: {
+      SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
+      PtrOff = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, PtrOff);
+      MemOpChains.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                        Arg, PtrOff, DAG.getSrcValue(NULL)));
+      ArgOffset += 8;
+      break;
+    }
+    case MVT::v16i8:
+    case MVT::v8i16:
+    case MVT::v4i32:
+    case MVT::v2i64:
+    case MVT::v4f32:
+    case MVT::v2f64: {
+      if (NumXMMRegs < 3) {
+        RegsToPass.push_back(std::make_pair(XMMArgRegs[NumXMMRegs], Arg));
+        NumXMMRegs++;
+      } else {
         SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
-        PtrOff = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
-        Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                     Args[i].first, PtrOff,
-                                     DAG.getSrcValue(NULL)));
-        ArgOffset += 4;
-        break;
-      }
-      case MVT::i64:
-      case MVT::f64: {
-        SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
-        PtrOff = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
-        Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                     Args[i].first, PtrOff,
-                                     DAG.getSrcValue(NULL)));
-        ArgOffset += 8;
-        break;
-      }
-      case MVT::Vector:
-        if (NumXMMRegs < 3) {
-          RegValuesToPass.push_back(Args[i].first);
-          NumXMMRegs++;
-        } else {
-          SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
-          PtrOff = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
-          Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                       Args[i].first, PtrOff,
-                                       DAG.getSrcValue(NULL)));
-          ArgOffset += 16;
-        }
+        PtrOff = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, PtrOff);
+        MemOpChains.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                          Arg, PtrOff, DAG.getSrcValue(NULL)));
+        ArgOffset += 16;
       }
     }
-  if (!Stores.empty())
-    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, Stores);
+    }
   }
 
-  std::vector<MVT::ValueType> RetVals;
-  MVT::ValueType RetTyVT = getValueType(RetTy);
-  RetVals.push_back(MVT::Other);
-
-  // The result values produced have to be legal.  Promote the result.
-  switch (RetTyVT) {
-  case MVT::isVoid: break;
-  default:
-    RetVals.push_back(RetTyVT);
-    break;
-  case MVT::i1:
-  case MVT::i8:
-  case MVT::i16:
-    RetVals.push_back(MVT::i32);
-    break;
-  case MVT::f32:
-    if (X86ScalarSSE)
-      RetVals.push_back(MVT::f32);
-    else
-      RetVals.push_back(MVT::f64);
-    break;
-  case MVT::i64:
-    RetVals.push_back(MVT::i32);
-    RetVals.push_back(MVT::i32);
-    break;
-  }
+  if (!MemOpChains.empty())
+    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, MemOpChains);
 
   // Build a sequence of copy-to-reg nodes chained together with token chain
   // and flag operands which copy the outgoing args into registers.
   SDOperand InFlag;
-  for (unsigned i = 0, e = RegValuesToPass.size(); i != e; ++i) {
-    unsigned CCReg = XMMArgRegs[i];
-    SDOperand RegToPass = RegValuesToPass[i];
-    assert(RegToPass.getValueType() == MVT::Vector);
-    unsigned NumElems =
-      cast<ConstantSDNode>(*(RegToPass.Val->op_end()-2))->getValue();
-    MVT::ValueType EVT = cast<VTSDNode>(*(RegToPass.Val->op_end()-1))->getVT();
-    MVT::ValueType PVT = getVectorType(EVT, NumElems);
-    SDOperand CCRegNode = DAG.getRegister(CCReg, PVT);
-    RegToPass = DAG.getNode(ISD::VBIT_CONVERT, PVT, RegToPass);
-    Chain = DAG.getCopyToReg(Chain, CCRegNode, RegToPass, InFlag);
+  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
+    Chain = DAG.getCopyToReg(Chain, RegsToPass[i].first, RegsToPass[i].second,
+                             InFlag);
     InFlag = Chain.getValue(1);
   }
+
+  // If the callee is a GlobalAddress node (quite common, every direct call is)
+  // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
+  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
+    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy());
+  else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
+    Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
 
   std::vector<MVT::ValueType> NodeTys;
   NodeTys.push_back(MVT::Other);   // Returns a chain
@@ -669,8 +630,8 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
   if (InFlag.Val)
     Ops.push_back(InFlag);
 
-  // FIXME: Do not generate X86ISD::TAILCALL for now.
-  Chain = DAG.getNode(X86ISD::CALL, NodeTys, Ops);
+  Chain = DAG.getNode(isTailCall ? X86ISD::TAILCALL : X86ISD::CALL,
+                      NodeTys, Ops);
   InFlag = Chain.getValue(1);
 
   // Create the CALLSEQ_END node.
@@ -683,95 +644,109 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
   
   NodeTys.clear();
   NodeTys.push_back(MVT::Other);   // Returns a chain
-  NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
+  if (RetVT != MVT::Other)
+    NodeTys.push_back(MVT::Flag);  // Returns a flag for retval copy to use.
   Ops.clear();
   Ops.push_back(Chain);
   Ops.push_back(DAG.getConstant(NumBytes, getPointerTy()));
   Ops.push_back(DAG.getConstant(NumBytesForCalleeToPush, getPointerTy()));
   Ops.push_back(InFlag);
   Chain = DAG.getNode(ISD::CALLSEQ_END, NodeTys, Ops);
-  InFlag = Chain.getValue(1);
+  if (RetVT != MVT::Other)
+    InFlag = Chain.getValue(1);
   
-  SDOperand RetVal;
-  if (RetTyVT != MVT::isVoid) {
-    switch (RetTyVT) {
-    default: assert(0 && "Unknown value type to return!");
-    case MVT::i1:
-    case MVT::i8:
-      RetVal = DAG.getCopyFromReg(Chain, X86::AL, MVT::i8, InFlag);
-      Chain = RetVal.getValue(1);
-      if (RetTyVT == MVT::i1) 
-        RetVal = DAG.getNode(ISD::TRUNCATE, MVT::i1, RetVal);
-      break;
-    case MVT::i16:
-      RetVal = DAG.getCopyFromReg(Chain, X86::AX, MVT::i16, InFlag);
-      Chain = RetVal.getValue(1);
-      break;
-    case MVT::i32:
-      RetVal = DAG.getCopyFromReg(Chain, X86::EAX, MVT::i32, InFlag);
-      Chain = RetVal.getValue(1);
-      break;
-    case MVT::i64: {
-      SDOperand Lo = DAG.getCopyFromReg(Chain, X86::EAX, MVT::i32, InFlag);
-      SDOperand Hi = DAG.getCopyFromReg(Lo.getValue(1), X86::EDX, MVT::i32, 
-                                        Lo.getValue(2));
-      RetVal = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Lo, Hi);
-      Chain = Hi.getValue(1);
-      break;
+  std::vector<SDOperand> ResultVals;
+  NodeTys.clear();
+  switch (RetVT) {
+  default: assert(0 && "Unknown value type to return!");
+  case MVT::Other: break;
+  case MVT::i8:
+    Chain = DAG.getCopyFromReg(Chain, X86::AL, MVT::i8, InFlag).getValue(1);
+    ResultVals.push_back(Chain.getValue(0));
+    NodeTys.push_back(MVT::i8);
+    break;
+  case MVT::i16:
+    Chain = DAG.getCopyFromReg(Chain, X86::AX, MVT::i16, InFlag).getValue(1);
+    ResultVals.push_back(Chain.getValue(0));
+    NodeTys.push_back(MVT::i16);
+    break;
+  case MVT::i32:
+    if (Op.Val->getValueType(1) == MVT::i32) {
+      Chain = DAG.getCopyFromReg(Chain, X86::EAX, MVT::i32, InFlag).getValue(1);
+      ResultVals.push_back(Chain.getValue(0));
+      Chain = DAG.getCopyFromReg(Chain, X86::EDX, MVT::i32,
+                                 Chain.getValue(2)).getValue(1);
+      ResultVals.push_back(Chain.getValue(0));
+      NodeTys.push_back(MVT::i32);
+    } else {
+      Chain = DAG.getCopyFromReg(Chain, X86::EAX, MVT::i32, InFlag).getValue(1);
+      ResultVals.push_back(Chain.getValue(0));
     }
-    case MVT::f32:
-    case MVT::f64: {
-      std::vector<MVT::ValueType> Tys;
-      Tys.push_back(MVT::f64);
+    NodeTys.push_back(MVT::i32);
+    break;
+  case MVT::v16i8:
+  case MVT::v8i16:
+  case MVT::v4i32:
+  case MVT::v2i64:
+  case MVT::v4f32:
+  case MVT::v2f64:
+  case MVT::Vector:
+    Chain = DAG.getCopyFromReg(Chain, X86::XMM0, RetVT, InFlag).getValue(1);
+    ResultVals.push_back(Chain.getValue(0));
+    NodeTys.push_back(RetVT);
+    break;
+  case MVT::f32:
+  case MVT::f64: {
+    std::vector<MVT::ValueType> Tys;
+    Tys.push_back(MVT::f64);
+    Tys.push_back(MVT::Other);
+    Tys.push_back(MVT::Flag);
+    std::vector<SDOperand> Ops;
+    Ops.push_back(Chain);
+    Ops.push_back(InFlag);
+    SDOperand RetVal = DAG.getNode(X86ISD::FP_GET_RESULT, Tys, Ops);
+    Chain  = RetVal.getValue(1);
+    InFlag = RetVal.getValue(2);
+    if (X86ScalarSSE) {
+      // FIXME: Currently the FST is flagged to the FP_GET_RESULT. This
+      // shouldn't be necessary except that RFP cannot be live across
+      // multiple blocks. When stackifier is fixed, they can be uncoupled.
+      MachineFunction &MF = DAG.getMachineFunction();
+      int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
+      SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
+      Tys.clear();
       Tys.push_back(MVT::Other);
-      Tys.push_back(MVT::Flag);
-      std::vector<SDOperand> Ops;
+      Ops.clear();
       Ops.push_back(Chain);
+      Ops.push_back(RetVal);
+      Ops.push_back(StackSlot);
+      Ops.push_back(DAG.getValueType(RetVT));
       Ops.push_back(InFlag);
-      RetVal = DAG.getNode(X86ISD::FP_GET_RESULT, Tys, Ops);
-      Chain  = RetVal.getValue(1);
-      InFlag = RetVal.getValue(2);
-      if (X86ScalarSSE) {
-        // FIXME: Currently the FST is flagged to the FP_GET_RESULT. This
-        // shouldn't be necessary except that RFP cannot be live across
-        // multiple blocks. When stackifier is fixed, they can be uncoupled.
-        MachineFunction &MF = DAG.getMachineFunction();
-        int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
-        SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
-        Tys.clear();
-        Tys.push_back(MVT::Other);
-        Ops.clear();
-        Ops.push_back(Chain);
-        Ops.push_back(RetVal);
-        Ops.push_back(StackSlot);
-        Ops.push_back(DAG.getValueType(RetTyVT));
-        Ops.push_back(InFlag);
-        Chain = DAG.getNode(X86ISD::FST, Tys, Ops);
-        RetVal = DAG.getLoad(RetTyVT, Chain, StackSlot,
-                             DAG.getSrcValue(NULL));
-        Chain = RetVal.getValue(1);
-      }
-
-      if (RetTyVT == MVT::f32 && !X86ScalarSSE)
-        // FIXME: we would really like to remember that this FP_ROUND
-        // operation is okay to eliminate if we allow excess FP precision.
-        RetVal = DAG.getNode(ISD::FP_ROUND, MVT::f32, RetVal);
-      break;
-    }
-    case MVT::Vector: {
-      const PackedType *PTy = cast<PackedType>(RetTy);
-      MVT::ValueType EVT;
-      MVT::ValueType LVT;
-      unsigned NumRegs = getPackedTypeBreakdown(PTy, EVT, LVT);
-      assert(NumRegs == 1 && "Unsupported type!");
-      RetVal = DAG.getCopyFromReg(Chain, X86::XMM0, EVT, InFlag);
+      Chain = DAG.getNode(X86ISD::FST, Tys, Ops);
+      RetVal = DAG.getLoad(RetVT, Chain, StackSlot,
+                           DAG.getSrcValue(NULL));
       Chain = RetVal.getValue(1);
-      break;
     }
-    }
+
+    if (RetVT == MVT::f32 && !X86ScalarSSE)
+      // FIXME: we would really like to remember that this FP_ROUND
+      // operation is okay to eliminate if we allow excess FP precision.
+      RetVal = DAG.getNode(ISD::FP_ROUND, MVT::f32, RetVal);
+    ResultVals.push_back(RetVal);
+    NodeTys.push_back(RetVT);
+    break;
+  }
   }
 
-  return std::make_pair(RetVal, Chain);
+  // If the function returns void, just return the chain.
+  if (ResultVals.empty())
+    return Chain;
+  
+  // Otherwise, merge everything together with a MERGE_VALUES node.
+  NodeTys.push_back(MVT::Other);
+  ResultVals.push_back(Chain);
+  SDOperand Res = DAG.getNode(ISD::MERGE_VALUES, NodeTys, ResultVals);
+  return Res.getValue(Op.ResNo);
 }
 
 //===----------------------------------------------------------------------===//
@@ -894,7 +869,10 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
   // used).
   unsigned NumIntRegs = 0;
   unsigned NumXMMRegs = 0;  // XMM regs used for parameter passing.
-  unsigned XMMArgRegs[] = { X86::XMM0, X86::XMM1, X86::XMM2 };
+
+  static const unsigned XMMArgRegs[] = {
+    X86::XMM0, X86::XMM1, X86::XMM2
+  };
   
   for (unsigned i = 0; i < NumArgs; ++i) {
     MVT::ValueType ObjectVT = Op.getValue(i).getValueType();
@@ -1018,10 +996,15 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
   return DAG.getNode(ISD::MERGE_VALUES, RetVTs, ArgValues);
 }
 
-std::pair<SDOperand, SDOperand>
-X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
-                                     bool isTailCall, SDOperand Callee,
-                                     ArgListTy &Args, SelectionDAG &DAG) {
+ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG) {
+  SDOperand Chain     = Op.getOperand(0);
+  unsigned CallingConv= cast<ConstantSDNode>(Op.getOperand(1))->getValue();
+  bool isVarArg       = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
+  bool isTailCall     = cast<ConstantSDNode>(Op.getOperand(3))->getValue() != 0;
+  SDOperand Callee    = Op.getOperand(4);
+  MVT::ValueType RetVT= Op.Val->getValueType(0);
+  unsigned NumOps     = (Op.getNumOperands() - 5) / 2;
+
   // Count how many bytes are to be pushed on the stack.
   unsigned NumBytes = 0;
 
@@ -1029,11 +1012,22 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
   // 0 (neither EAX or EDX used), 1 (EAX is used) or 2 (EAX and EDX are both
   // used).
   unsigned NumIntRegs = 0;
+  unsigned NumXMMRegs = 0;  // XMM regs used for parameter passing.
 
-  for (unsigned i = 0, e = Args.size(); i != e; ++i)
-    switch (getValueType(Args[i].second)) {
+  static const unsigned GPRArgRegs[][2] = {
+    { X86::AL,  X86::DL },
+    { X86::AX,  X86::DX },
+    { X86::EAX, X86::EDX }
+  };
+  static const unsigned XMMArgRegs[] = {
+    X86::XMM0, X86::XMM1, X86::XMM2
+  };
+
+  for (unsigned i = 0; i != NumOps; ++i) {
+    SDOperand Arg = Op.getOperand(5+2*i);
+
+    switch (Arg.getValueType()) {
     default: assert(0 && "Unknown value type!");
-    case MVT::i1:
     case MVT::i8:
     case MVT::i16:
     case MVT::i32:
@@ -1041,25 +1035,26 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
         ++NumIntRegs;
         break;
       }
-      // fall through
     case MVT::f32:
       NumBytes += 4;
       break;
-    case MVT::i64:
-      if (NumIntRegs+2 <= FASTCC_NUM_INT_ARGS_INREGS) {
-        NumIntRegs += 2;
-        break;
-      } else if (NumIntRegs+1 <= FASTCC_NUM_INT_ARGS_INREGS) {
-        NumIntRegs = FASTCC_NUM_INT_ARGS_INREGS;
-        NumBytes += 4;
-        break;
-      }
-
-      // fall through
     case MVT::f64:
       NumBytes += 8;
       break;
+    case MVT::v16i8:
+    case MVT::v8i16:
+    case MVT::v4i32:
+    case MVT::v2i64:
+    case MVT::v4f32:
+    case MVT::v2f64: {
+      if (NumXMMRegs < 3)
+        NumXMMRegs++;
+      else
+        NumBytes += 16;
+      break;
     }
+    }
+  }
 
   // Make sure the instruction takes 8n+4 bytes to make sure the start of the
   // arguments and the arguments after the retaddr has been pushed are aligned.
@@ -1070,127 +1065,80 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
 
   // Arguments go on the stack in reverse order, as specified by the ABI.
   unsigned ArgOffset = 0;
-  SDOperand StackPtr = DAG.getRegister(X86::ESP, MVT::i32);
   NumIntRegs = 0;
-  std::vector<SDOperand> Stores;
-  std::vector<SDOperand> RegValuesToPass;
-  for (unsigned i = 0, e = Args.size(); i != e; ++i) {
-    switch (getValueType(Args[i].second)) {
+  std::vector<std::pair<unsigned, SDOperand> > RegsToPass;
+  std::vector<SDOperand> MemOpChains;
+  SDOperand StackPtr = DAG.getRegister(X86::ESP, getPointerTy());
+  for (unsigned i = 0; i != NumOps; ++i) {
+    SDOperand Arg = Op.getOperand(5+2*i);
+
+    switch (Arg.getValueType()) {
     default: assert(0 && "Unexpected ValueType for argument!");
-    case MVT::i1:
-      Args[i].first = DAG.getNode(ISD::ANY_EXTEND, MVT::i8, Args[i].first);
-      // Fall through.
     case MVT::i8:
     case MVT::i16:
     case MVT::i32:
       if (NumIntRegs < FASTCC_NUM_INT_ARGS_INREGS) {
-        RegValuesToPass.push_back(Args[i].first);
+        RegsToPass.push_back(
+              std::make_pair(GPRArgRegs[Arg.getValueType()-MVT::i8][NumIntRegs],
+                             Arg));
         ++NumIntRegs;
         break;
       }
       // Fall through
     case MVT::f32: {
       SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
-      PtrOff = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
-      Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                   Args[i].first, PtrOff,
-                                   DAG.getSrcValue(NULL)));
+      PtrOff = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, PtrOff);
+      MemOpChains.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                        Arg, PtrOff, DAG.getSrcValue(NULL)));
       ArgOffset += 4;
       break;
     }
-    case MVT::i64:
-       // Can pass (at least) part of it in regs?
-      if (NumIntRegs < FASTCC_NUM_INT_ARGS_INREGS) {
-        SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32,
-                                   Args[i].first, DAG.getConstant(1, MVT::i32));
-        SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32,
-                                   Args[i].first, DAG.getConstant(0, MVT::i32));
-        RegValuesToPass.push_back(Lo);
-        ++NumIntRegs;
-        
-        // Pass both parts in regs?
-        if (NumIntRegs < FASTCC_NUM_INT_ARGS_INREGS) {
-          RegValuesToPass.push_back(Hi);
-          ++NumIntRegs;
-        } else {
-          // Pass the high part in memory.
-          SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
-          PtrOff = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
-          Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                       Hi, PtrOff, DAG.getSrcValue(NULL)));
-          ArgOffset += 4;
-        }
-        break;
-      }
-      // Fall through
-    case MVT::f64:
+    case MVT::f64: {
       SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
-      PtrOff = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
-      Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                   Args[i].first, PtrOff,
-                                   DAG.getSrcValue(NULL)));
+      PtrOff = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, PtrOff);
+      MemOpChains.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                        Arg, PtrOff, DAG.getSrcValue(NULL)));
       ArgOffset += 8;
       break;
     }
+    case MVT::v16i8:
+    case MVT::v8i16:
+    case MVT::v4i32:
+    case MVT::v2i64:
+    case MVT::v4f32:
+    case MVT::v2f64: {
+      if (NumXMMRegs < 3) {
+        RegsToPass.push_back(std::make_pair(XMMArgRegs[NumXMMRegs], Arg));
+        NumXMMRegs++;
+      } else {
+        SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
+        PtrOff = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, PtrOff);
+        MemOpChains.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                          Arg, PtrOff, DAG.getSrcValue(NULL)));
+        ArgOffset += 16;
+      }
+    }
+    }
   }
-  if (!Stores.empty())
-    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, Stores);
 
-  // Make sure the instruction takes 8n+4 bytes to make sure the start of the
-  // arguments and the arguments after the retaddr has been pushed are aligned.
-  if ((ArgOffset & 7) == 0)
-    ArgOffset += 4;
-
-  std::vector<MVT::ValueType> RetVals;
-  MVT::ValueType RetTyVT = getValueType(RetTy);
-
-  RetVals.push_back(MVT::Other);
-
-  // The result values produced have to be legal.  Promote the result.
-  switch (RetTyVT) {
-  case MVT::isVoid: break;
-  default:
-    RetVals.push_back(RetTyVT);
-    break;
-  case MVT::i1:
-  case MVT::i8:
-  case MVT::i16:
-    RetVals.push_back(MVT::i32);
-    break;
-  case MVT::f32:
-    if (X86ScalarSSE)
-      RetVals.push_back(MVT::f32);
-    else
-      RetVals.push_back(MVT::f64);
-    break;
-  case MVT::i64:
-    RetVals.push_back(MVT::i32);
-    RetVals.push_back(MVT::i32);
-    break;
-  }
+  if (!MemOpChains.empty())
+    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, MemOpChains);
 
   // Build a sequence of copy-to-reg nodes chained together with token chain
   // and flag operands which copy the outgoing args into registers.
   SDOperand InFlag;
-  for (unsigned i = 0, e = RegValuesToPass.size(); i != e; ++i) {
-    unsigned CCReg;
-    SDOperand RegToPass = RegValuesToPass[i];
-    switch (RegToPass.getValueType()) {
-    default: assert(0 && "Bad thing to pass in regs");
-    case MVT::i8:
-      CCReg = (i == 0) ? X86::AL  : X86::DL;
-      break;
-    case MVT::i16:
-      CCReg = (i == 0) ? X86::AX  : X86::DX;
-      break;
-    case MVT::i32:
-      CCReg = (i == 0) ? X86::EAX : X86::EDX;
-      break;
-    }
-
-    Chain = DAG.getCopyToReg(Chain, CCReg, RegToPass, InFlag);
+  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
+    Chain = DAG.getCopyToReg(Chain, RegsToPass[i].first, RegsToPass[i].second,
+                             InFlag);
     InFlag = Chain.getValue(1);
   }
+
+  // If the callee is a GlobalAddress node (quite common, every direct call is)
+  // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
+  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
+    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy());
+  else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
+    Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
 
   std::vector<MVT::ValueType> NodeTys;
   NodeTys.push_back(MVT::Other);   // Returns a chain
@@ -1208,85 +1156,110 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
 
   NodeTys.clear();
   NodeTys.push_back(MVT::Other);   // Returns a chain
-  NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
+  if (RetVT != MVT::Other)
+    NodeTys.push_back(MVT::Flag);  // Returns a flag for retval copy to use.
   Ops.clear();
   Ops.push_back(Chain);
-  Ops.push_back(DAG.getConstant(ArgOffset, getPointerTy()));
-  Ops.push_back(DAG.getConstant(ArgOffset, getPointerTy()));
+  Ops.push_back(DAG.getConstant(NumBytes, getPointerTy()));
+  Ops.push_back(DAG.getConstant(NumBytes, getPointerTy()));
   Ops.push_back(InFlag);
   Chain = DAG.getNode(ISD::CALLSEQ_END, NodeTys, Ops);
-  InFlag = Chain.getValue(1);
+  if (RetVT != MVT::Other)
+    InFlag = Chain.getValue(1);
   
-  SDOperand RetVal;
-  if (RetTyVT != MVT::isVoid) {
-    switch (RetTyVT) {
-    default: assert(0 && "Unknown value type to return!");
-    case MVT::i1:
-    case MVT::i8:
-      RetVal = DAG.getCopyFromReg(Chain, X86::AL, MVT::i8, InFlag);
-      Chain = RetVal.getValue(1);
-      if (RetTyVT == MVT::i1) 
-        RetVal = DAG.getNode(ISD::TRUNCATE, MVT::i1, RetVal);
-      break;
-    case MVT::i16:
-      RetVal = DAG.getCopyFromReg(Chain, X86::AX, MVT::i16, InFlag);
-      Chain = RetVal.getValue(1);
-      break;
-    case MVT::i32:
-      RetVal = DAG.getCopyFromReg(Chain, X86::EAX, MVT::i32, InFlag);
-      Chain = RetVal.getValue(1);
-      break;
-    case MVT::i64: {
-      SDOperand Lo = DAG.getCopyFromReg(Chain, X86::EAX, MVT::i32, InFlag);
-      SDOperand Hi = DAG.getCopyFromReg(Lo.getValue(1), X86::EDX, MVT::i32, 
-                                        Lo.getValue(2));
-      RetVal = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Lo, Hi);
-      Chain = Hi.getValue(1);
-      break;
+  std::vector<SDOperand> ResultVals;
+  NodeTys.clear();
+  switch (RetVT) {
+  default: assert(0 && "Unknown value type to return!");
+  case MVT::Other: break;
+  case MVT::i8:
+    Chain = DAG.getCopyFromReg(Chain, X86::AL, MVT::i8, InFlag).getValue(1);
+    ResultVals.push_back(Chain.getValue(0));
+    NodeTys.push_back(MVT::i8);
+    break;
+  case MVT::i16:
+    Chain = DAG.getCopyFromReg(Chain, X86::AX, MVT::i16, InFlag).getValue(1);
+    ResultVals.push_back(Chain.getValue(0));
+    NodeTys.push_back(MVT::i16);
+    break;
+  case MVT::i32:
+    if (Op.Val->getValueType(1) == MVT::i32) {
+      Chain = DAG.getCopyFromReg(Chain, X86::EAX, MVT::i32, InFlag).getValue(1);
+      ResultVals.push_back(Chain.getValue(0));
+      Chain = DAG.getCopyFromReg(Chain, X86::EDX, MVT::i32,
+                                 Chain.getValue(2)).getValue(1);
+      ResultVals.push_back(Chain.getValue(0));
+      NodeTys.push_back(MVT::i32);
+    } else {
+      Chain = DAG.getCopyFromReg(Chain, X86::EAX, MVT::i32, InFlag).getValue(1);
+      ResultVals.push_back(Chain.getValue(0));
     }
-    case MVT::f32:
-    case MVT::f64: {
-      std::vector<MVT::ValueType> Tys;
-      Tys.push_back(MVT::f64);
+    NodeTys.push_back(MVT::i32);
+    break;
+  case MVT::v16i8:
+  case MVT::v8i16:
+  case MVT::v4i32:
+  case MVT::v2i64:
+  case MVT::v4f32:
+  case MVT::v2f64:
+  case MVT::Vector:
+    Chain = DAG.getCopyFromReg(Chain, X86::XMM0, RetVT, InFlag).getValue(1);
+    ResultVals.push_back(Chain.getValue(0));
+    NodeTys.push_back(RetVT);
+    break;
+  case MVT::f32:
+  case MVT::f64: {
+    std::vector<MVT::ValueType> Tys;
+    Tys.push_back(MVT::f64);
+    Tys.push_back(MVT::Other);
+    Tys.push_back(MVT::Flag);
+    std::vector<SDOperand> Ops;
+    Ops.push_back(Chain);
+    Ops.push_back(InFlag);
+    SDOperand RetVal = DAG.getNode(X86ISD::FP_GET_RESULT, Tys, Ops);
+    Chain  = RetVal.getValue(1);
+    InFlag = RetVal.getValue(2);
+    if (X86ScalarSSE) {
+      // FIXME: Currently the FST is flagged to the FP_GET_RESULT. This
+      // shouldn't be necessary except that RFP cannot be live across
+      // multiple blocks. When stackifier is fixed, they can be uncoupled.
+      MachineFunction &MF = DAG.getMachineFunction();
+      int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
+      SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
+      Tys.clear();
       Tys.push_back(MVT::Other);
-      Tys.push_back(MVT::Flag);
-      std::vector<SDOperand> Ops;
+      Ops.clear();
       Ops.push_back(Chain);
+      Ops.push_back(RetVal);
+      Ops.push_back(StackSlot);
+      Ops.push_back(DAG.getValueType(RetVT));
       Ops.push_back(InFlag);
-      RetVal = DAG.getNode(X86ISD::FP_GET_RESULT, Tys, Ops);
-      Chain  = RetVal.getValue(1);
-      InFlag = RetVal.getValue(2);
-      if (X86ScalarSSE) {
-        // FIXME: Currently the FST is flagged to the FP_GET_RESULT. This
-        // shouldn't be necessary except that RFP cannot be live across
-        // multiple blocks. When stackifier is fixed, they can be uncoupled.
-        MachineFunction &MF = DAG.getMachineFunction();
-        int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
-        SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
-        Tys.clear();
-        Tys.push_back(MVT::Other);
-        Ops.clear();
-        Ops.push_back(Chain);
-        Ops.push_back(RetVal);
-        Ops.push_back(StackSlot);
-        Ops.push_back(DAG.getValueType(RetTyVT));
-        Ops.push_back(InFlag);
-        Chain = DAG.getNode(X86ISD::FST, Tys, Ops);
-        RetVal = DAG.getLoad(RetTyVT, Chain, StackSlot,
-                             DAG.getSrcValue(NULL));
-        Chain = RetVal.getValue(1);
-      }
+      Chain = DAG.getNode(X86ISD::FST, Tys, Ops);
+      RetVal = DAG.getLoad(RetVT, Chain, StackSlot,
+                           DAG.getSrcValue(NULL));
+      Chain = RetVal.getValue(1);
+    }
 
-      if (RetTyVT == MVT::f32 && !X86ScalarSSE)
-        // FIXME: we would really like to remember that this FP_ROUND
-        // operation is okay to eliminate if we allow excess FP precision.
-        RetVal = DAG.getNode(ISD::FP_ROUND, MVT::f32, RetVal);
-      break;
-    }
-    }
+    if (RetVT == MVT::f32 && !X86ScalarSSE)
+      // FIXME: we would really like to remember that this FP_ROUND
+      // operation is okay to eliminate if we allow excess FP precision.
+      RetVal = DAG.getNode(ISD::FP_ROUND, MVT::f32, RetVal);
+    ResultVals.push_back(RetVal);
+    NodeTys.push_back(RetVT);
+    break;
+  }
   }
 
-  return std::make_pair(RetVal, Chain);
+
+  // If the function returns void, just return the chain.
+  if (ResultVals.empty())
+    return Chain;
+  
+  // Otherwise, merge everything together with a MERGE_VALUES node.
+  NodeTys.push_back(MVT::Other);
+  ResultVals.push_back(Chain);
+  SDOperand Res = DAG.getNode(ISD::MERGE_VALUES, NodeTys, ResultVals);
+  return Res.getValue(Op.ResNo);
 }
 
 SDOperand X86TargetLowering::getReturnAddressFrameIndex(SelectionDAG &DAG) {
@@ -3344,6 +3317,14 @@ SDOperand X86TargetLowering::LowerJumpTable(SDOperand Op, SelectionDAG &DAG) {
   return Result;
 }
 
+SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
+  unsigned CallingConv= cast<ConstantSDNode>(Op.getOperand(1))->getValue();
+  if (CallingConv == CallingConv::Fast && EnableFastCC)
+    return LowerFastCCCallTo(Op, DAG);
+  else
+    return LowerCCCCallTo(Op, DAG);
+}
+
 SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
   SDOperand Copy;
     
@@ -3860,6 +3841,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::SELECT:             return LowerSELECT(Op, DAG);
   case ISD::BRCOND:             return LowerBRCOND(Op, DAG);
   case ISD::JumpTable:          return LowerJumpTable(Op, DAG);
+  case ISD::CALL:               return LowerCALL(Op, DAG);
   case ISD::RET:                return LowerRET(Op, DAG);
   case ISD::FORMAL_ARGUMENTS:   return LowerFORMAL_ARGUMENTS(Op, DAG);
   case ISD::MEMSET:             return LowerMEMSET(Op, DAG);
