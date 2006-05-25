@@ -182,6 +182,7 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   Indent = 0;
 #endif
   DAG.setRoot(SelectRoot(DAG.getRoot()));
+  assert(InFlightSet.empty() && "ISel InFlightSet has not been emptied!");
 #ifndef NDEBUG
   DEBUG(std::cerr << "===== Instruction selection ends:\n");
 #endif

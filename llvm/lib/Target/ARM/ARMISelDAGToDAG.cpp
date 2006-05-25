@@ -160,6 +160,7 @@ void ARMDAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   DEBUG(BB->dump());
 
   DAG.setRoot(SelectRoot(DAG.getRoot()));
+  assert(InFlightSet.empty() && "ISel InFlightSet has not been emptied!");
   CodeGenMap.clear();
   HandleMap.clear();
   ReplaceMap.clear();
