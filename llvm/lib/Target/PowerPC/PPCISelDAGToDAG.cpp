@@ -714,8 +714,10 @@ static unsigned getBCCForSetCC(ISD::CondCode CC) {
   switch (CC) {
   default: assert(0 && "Unknown condition!"); abort();
   case ISD::SETOEQ:    // FIXME: This is incorrect see PR642.
+  case ISD::SETUEQ:
   case ISD::SETEQ:  return PPC::BEQ;
   case ISD::SETONE:    // FIXME: This is incorrect see PR642.
+  case ISD::SETUNE:
   case ISD::SETNE:  return PPC::BNE;
   case ISD::SETOLT:    // FIXME: This is incorrect see PR642.
   case ISD::SETULT:
