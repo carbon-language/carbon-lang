@@ -133,7 +133,37 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 }
 
 void ARMAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
-  assert(0 && "not implemented");
+  const MachineOperand &MO = MI->getOperand (opNum);
+  const MRegisterInfo &RI = *TM.getRegisterInfo();
+  switch (MO.getType()) {
+  case MachineOperand::MO_Register:
+    if (MRegisterInfo::isPhysicalRegister(MO.getReg()))
+      O << LowercaseString (RI.get(MO.getReg()).Name);
+    else
+      assert(0 && "not implemented");
+    break;
+  case MachineOperand::MO_Immediate:
+    O << "#" << (int)MO.getImmedValue();
+    break;
+  case MachineOperand::MO_MachineBasicBlock:
+    assert(0 && "not implemented");
+    abort();
+    return;
+  case MachineOperand::MO_GlobalAddress:
+    assert(0 && "not implemented");
+    abort();
+    break;
+  case MachineOperand::MO_ExternalSymbol:
+    assert(0 && "not implemented");
+    abort();
+    break;
+  case MachineOperand::MO_ConstantPoolIndex:
+    assert(0 && "not implemented");
+    abort();
+    break;
+  default:
+    O << "<unknown operand type>"; abort (); break;
+  }
 }
 
 void ARMAsmPrinter::printMemOperand(const MachineInstr *MI, int opNum,
