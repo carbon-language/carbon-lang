@@ -442,6 +442,9 @@ SDOperand X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG) 
       ArgValues.push_back(ArgValue);
       NumXMMRegs += ObjXMMRegs;
     } else {
+      // XMM arguments have to be aligned on 16-byte boundary.
+      if (ObjSize == 16)
+        ArgOffset = ((ArgOffset + 15) / 16) * 16;
       // Create the frame index object for this incoming parameter...
       int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
       SDOperand FIN = DAG.getFrameIndex(FI, getPointerTy());
@@ -516,8 +519,11 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG) {
     case MVT::v2f64:
       if (NumXMMRegs < 4)
         ++NumXMMRegs;
-      else
+      else {
+        // XMM arguments have to be aligned on 16-byte boundary.
+        NumBytes = ((NumBytes + 15) / 16) * 16;
         NumBytes += 16;
+      }
       break;
     }
   }
@@ -574,6 +580,8 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG) {
         RegsToPass.push_back(std::make_pair(XMMArgRegs[NumXMMRegs], Arg));
         NumXMMRegs++;
       } else {
+        // XMM arguments have to be aligned on 16-byte boundary.
+        ArgOffset = ((ArgOffset + 15) / 16) * 16;
         SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
         PtrOff = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, PtrOff);
         MemOpChains.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
@@ -911,6 +919,9 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
     }
 
     if (ObjSize) {
+      // XMM arguments have to be aligned on 16-byte boundary.
+      if (ObjSize == 16)
+        ArgOffset = ((ArgOffset + 15) / 16) * 16;
       // Create the SelectionDAG nodes corresponding to a load from this
       // parameter.
       int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
@@ -1027,8 +1038,11 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
     case MVT::v2f64:
       if (NumXMMRegs < 4)
         NumXMMRegs++;
-      else
+      else {
+        // XMM arguments have to be aligned on 16-byte boundary.
+        NumBytes = ((NumBytes + 15) / 16) * 16;
         NumBytes += 16;
+      }
       break;
     }
   }
@@ -1088,6 +1102,8 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
         RegsToPass.push_back(std::make_pair(XMMArgRegs[NumXMMRegs], Arg));
         NumXMMRegs++;
       } else {
+        // XMM arguments have to be aligned on 16-byte boundary.
+        ArgOffset = ((ArgOffset + 15) / 16) * 16;
         SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
         PtrOff = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, PtrOff);
         MemOpChains.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
