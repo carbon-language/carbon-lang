@@ -98,7 +98,7 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
     return;
 
   case MachineOperand::MO_Immediate:
-    O << (int)MO.getImmedValue();
+    O << MO.getImmedValue();
     return;
   case MachineOperand::MO_MachineBasicBlock:
     printBasicBlockLabel(MO.getMachineBasicBlock());

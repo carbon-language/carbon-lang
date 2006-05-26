@@ -131,7 +131,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   case MachineOperand::MO_Immediate:
     if (!Modifier || strcmp(Modifier, "debug") != 0)
       O << '$';
-    O << (int)MO.getImmedValue();
+    O << MO.getImmedValue();
     return;
   case MachineOperand::MO_MachineBasicBlock:
     printBasicBlockLabel(MO.getMachineBasicBlock());
