@@ -416,7 +416,7 @@ SDOperand X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG) 
   //
   // [ESP] -- return address
   // [ESP + 4] -- first argument (leftmost lexically)
-  // [ESP + 8] -- second argument, if first argument is four bytes in size
+  // [ESP + 8] -- second argument, if first argument is <= 4 bytes in size
   //    ...
   //
   unsigned ArgOffset = 0;   // Frame mechanisms handle retaddr slot
@@ -838,7 +838,7 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
   //
   // [ESP] -- return address
   // [ESP + 4] -- first nonreg argument (leftmost lexically)
-  // [ESP + 8] -- second nonreg argument, if first argument is 4 bytes in size
+  // [ESP + 8] -- second nonreg argument, if 1st argument is <= 4 bytes in size
   //    ...
   unsigned ArgOffset = 0;   // Frame mechanisms handle retaddr slot
 
