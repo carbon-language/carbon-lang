@@ -48,7 +48,7 @@ namespace {
     DominanceFrontier *DF;   // Current Dominance Frontier
     
     virtual bool runOnFunction(Function &F);
-    bool LCSSA::visitSubloop(Loop* L);
+    bool visitSubloop(Loop* L);
     
     /// This transformation requires natural loop information & requires that
     /// loop preheaders be inserted into the CFG...
