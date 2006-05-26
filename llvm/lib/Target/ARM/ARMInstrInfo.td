@@ -42,7 +42,11 @@ def ADJCALLSTACKDOWN : InstARM<(ops i32imm:$amt),
                                "!ADJCALLSTACKDOWN $amt",
                                [(callseq_start imm:$amt)]>;
 
-def BX: InstARM<(ops), "bx", [(retflag)]>;
+//bx supports other registers as operands. So this looks like a
+//hack. Maybe a ret should be expanded to a "branch lr" and bx
+//declared as a regular instruction
+
+def BX: InstARM<(ops), "bx lr", [(retflag)]>;
 
 def ldr   : InstARM<(ops IntRegs:$dst, IntRegs:$addr),
                      "ldr $dst, [$addr]",

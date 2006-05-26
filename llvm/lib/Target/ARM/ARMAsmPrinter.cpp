@@ -44,6 +44,7 @@ namespace {
       ZeroDirective = "\t.skip\t";
       CommentString = "!";
       ConstantPoolSection = "\t.section \".rodata\",#alloc\n";
+      AlignmentIsInBytes = false;
     }
 
     /// We name each basic block in a Function with a unique number, so
@@ -110,7 +111,7 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     assert(0 && "Not implemented");
     break;
   }
-  EmitAlignment(4, F);
+  EmitAlignment(2, F);
   O << CurrentFnName << ":\n";
 
   // Print out code for the function.
