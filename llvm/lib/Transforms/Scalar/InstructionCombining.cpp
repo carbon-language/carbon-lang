@@ -7398,18 +7398,26 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
     // Remap any references to RHS to use LHS.
     std::vector<Constant*> Elts;
     for (unsigned i = 0, e = Mask.size(); i != e; ++i) {
-      if (Mask[i] > 2*e)
+      if (Mask[i] >= 2*e)
         Elts.push_back(UndefValue::get(Type::UIntTy));
-      else
-        Elts.push_back(ConstantUInt::get(Type::UIntTy, Mask[i] & (e-1)));
+      else {
+        if ((Mask[i] >= e && isa<UndefValue>(RHS)) ||
+            (Mask[i] <  e && isa<UndefValue>(LHS)))
+          Mask[i] = 2*e;     // Turn into undef.
+        else
+          Mask[i] &= (e-1);  // Force to LHS.
+        Elts.push_back(ConstantUInt::get(Type::UIntTy, Mask[i]));
+      }
     }
     SVI.setOperand(0, SVI.getOperand(1));
     SVI.setOperand(1, UndefValue::get(RHS->getType()));
     SVI.setOperand(2, ConstantPacked::get(Elts));
+    LHS = SVI.getOperand(0);
+    RHS = SVI.getOperand(1);
     MadeChange = true;
   }
   
-  // Analyze the shuffle, are the LHS or RHS and identity shuffle?
+  // Analyze the shuffle, are the LHS or RHS and identity shuffles?
   bool isLHSID = true, isRHSID = true;
     
   for (unsigned i = 0, e = Mask.size(); i != e; ++i) {
@@ -7424,6 +7432,44 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
   // Eliminate identity shuffles.
   if (isLHSID) return ReplaceInstUsesWith(SVI, LHS);
   if (isRHSID) return ReplaceInstUsesWith(SVI, RHS);
+  
+  // If the LHS is a shufflevector itself, see if we can combine it with this
+  // one without producing an unusual shuffle.  Here we are really conservative:
+  // we are absolutely afraid of producing a shuffle mask not in the input
+  // program, because the code gen may not be smart enough to turn a merged
+  // shuffle into two specific shuffles: it may produce worse code.  As such,
+  // we only merge two shuffles if the result is one of the two input shuffle
+  // masks.  In this case, merging the shuffles just removes one instruction,
+  // which we know is safe.  This is good for things like turning:
+  // (splat(splat)) -> splat.
+  if (ShuffleVectorInst *LHSSVI = dyn_cast<ShuffleVectorInst>(LHS)) {
+    if (isa<UndefValue>(RHS)) {
+      std::vector<unsigned> LHSMask = getShuffleMask(LHSSVI);
+
+      std::vector<unsigned> NewMask;
+      for (unsigned i = 0, e = Mask.size(); i != e; ++i)
+        if (Mask[i] >= 2*e)
+          NewMask.push_back(2*e);
+        else
+          NewMask.push_back(LHSMask[Mask[i]]);
+      
+      // If the result mask is equal to the src shuffle or this shuffle mask, do
+      // the replacement.
+      if (NewMask == LHSMask || NewMask == Mask) {
+        std::vector<Constant*> Elts;
+        for (unsigned i = 0, e = NewMask.size(); i != e; ++i) {
+          if (NewMask[i] >= e*2) {
+            Elts.push_back(UndefValue::get(Type::UIntTy));
+          } else {
+            Elts.push_back(ConstantUInt::get(Type::UIntTy, NewMask[i]));
+          }
+        }
+        return new ShuffleVectorInst(LHSSVI->getOperand(0),
+                                     LHSSVI->getOperand(1),
+                                     ConstantPacked::get(Elts));
+      }
+    }
+  }
   
   return MadeChange ? &SVI : 0;
 }
