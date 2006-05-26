@@ -122,7 +122,7 @@ static void print(const MachineOperand &MO, std::ostream &OS,
     OutputReg(OS, MO.getReg(), MRI);
     break;
   case MachineOperand::MO_Immediate:
-    OS << (long)MO.getImmedValue();
+    OS << MO.getImmedValue();
     break;
   case MachineOperand::MO_MachineBasicBlock:
     OS << "mbb<"
