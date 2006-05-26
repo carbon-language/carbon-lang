@@ -428,7 +428,7 @@ SDOperand X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG) 
     unsigned ObjSize = 0;
     unsigned ObjXMMRegs = 0;
     HowToPassCCCArgument(ObjectVT, NumXMMRegs, ObjSize, ObjXMMRegs);
-    if (ObjSize >= 8)
+    if (ObjSize > 4)
       ArgIncrement = ObjSize;
 
     SDOperand ArgValue;
@@ -861,7 +861,7 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
 
     HowToPassFastCCArgument(ObjectVT, NumIntRegs, NumXMMRegs,
                             ObjSize, ObjIntRegs, ObjXMMRegs);
-    if (ObjSize >= 8)
+    if (ObjSize > 4)
       ArgIncrement = ObjSize;
 
     unsigned Reg;
