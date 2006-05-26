@@ -384,7 +384,6 @@ HowToPassCCCArgument(MVT::ValueType ObjectVT, unsigned NumXMMRegs,
 
   switch (ObjectVT) {
   default: assert(0 && "Unhandled argument type!");
-  case MVT::i1:
   case MVT::i8:  ObjSize = 1; break;
   case MVT::i16: ObjSize = 2; break;
   case MVT::i32: ObjSize = 4; break;
@@ -780,7 +779,6 @@ HowToPassFastCCArgument(MVT::ValueType ObjectVT,
 
   switch (ObjectVT) {
   default: assert(0 && "Unhandled argument type!");
-  case MVT::i1:
   case MVT::i8:
     if (NumIntRegs < FASTCC_NUM_INT_ARGS_INREGS)
       ObjIntRegs = 1;
@@ -871,7 +869,6 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
     if (ObjIntRegs || ObjXMMRegs) {
       switch (ObjectVT) {
       default: assert(0 && "Unhandled argument type!");
-      case MVT::i1:
       case MVT::i8:
         Reg = AddLiveIn(MF, NumIntRegs ? X86::DL : X86::AL,
                         X86::GR8RegisterClass);
@@ -945,7 +942,6 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
   switch (getValueType(MF.getFunction()->getReturnType())) {
   default: assert(0 && "Unknown type!");
   case MVT::isVoid: break;
-  case MVT::i1:
   case MVT::i8:
   case MVT::i16:
   case MVT::i32:
