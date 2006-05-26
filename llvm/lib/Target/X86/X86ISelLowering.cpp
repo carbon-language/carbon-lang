@@ -396,7 +396,7 @@ HowToPassCCCArgument(MVT::ValueType ObjectVT, unsigned NumXMMRegs,
   case MVT::v2i64:
   case MVT::v4f32:
   case MVT::v2f64:
-    if (NumXMMRegs < 3)
+    if (NumXMMRegs < 4)
       ObjXMMRegs = 1;
     else
       ObjSize = 16;
@@ -421,7 +421,9 @@ SDOperand X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG) 
   //
   unsigned ArgOffset = 0;   // Frame mechanisms handle retaddr slot
   unsigned NumXMMRegs = 0;  // XMM regs used for parameter passing.
-  unsigned XMMArgRegs[] = { X86::XMM0, X86::XMM1, X86::XMM2 };
+  static const unsigned XMMArgRegs[] = {
+    X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3
+  };
   for (unsigned i = 0; i < NumArgs; ++i) {
     MVT::ValueType ObjectVT = Op.getValue(i).getValueType();
     unsigned ArgIncrement = 4;
@@ -486,7 +488,7 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG) {
   // Keep track of the number of XMM regs passed so far.
   unsigned NumXMMRegs = 0;
   static const unsigned XMMArgRegs[] = {
-    X86::XMM0, X86::XMM1, X86::XMM2
+    X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3
   };
 
   // Count how many bytes are to be pushed on the stack.
@@ -512,7 +514,7 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG) {
     case MVT::v2i64:
     case MVT::v4f32:
     case MVT::v2f64:
-      if (NumXMMRegs < 3)
+      if (NumXMMRegs < 4)
         ++NumXMMRegs;
       else
         NumBytes += 16;
@@ -568,7 +570,7 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG) {
     case MVT::v2i64:
     case MVT::v4f32:
     case MVT::v2f64:
-      if (NumXMMRegs < 3) {
+      if (NumXMMRegs < 4) {
         RegsToPass.push_back(std::make_pair(XMMArgRegs[NumXMMRegs], Arg));
         NumXMMRegs++;
       } else {
@@ -817,7 +819,7 @@ HowToPassFastCCArgument(MVT::ValueType ObjectVT,
   case MVT::v2i64:
   case MVT::v4f32:
   case MVT::v2f64:
-    if (NumXMMRegs < 3)
+    if (NumXMMRegs < 4)
       ObjXMMRegs = 1;
     else
       ObjSize = 16;
@@ -849,7 +851,7 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
   unsigned NumXMMRegs = 0;  // XMM regs used for parameter passing.
 
   static const unsigned XMMArgRegs[] = {
-    X86::XMM0, X86::XMM1, X86::XMM2
+    X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3
   };
   
   for (unsigned i = 0; i < NumArgs; ++i) {
@@ -995,7 +997,7 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
     { X86::EAX, X86::EDX }
   };
   static const unsigned XMMArgRegs[] = {
-    X86::XMM0, X86::XMM1, X86::XMM2
+    X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3
   };
 
   for (unsigned i = 0; i != NumOps; ++i) {
@@ -1023,7 +1025,7 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
     case MVT::v2i64:
     case MVT::v4f32:
     case MVT::v2f64:
-      if (NumXMMRegs < 3)
+      if (NumXMMRegs < 4)
         NumXMMRegs++;
       else
         NumBytes += 16;
@@ -1082,7 +1084,7 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
     case MVT::v2i64:
     case MVT::v4f32:
     case MVT::v2f64:
-      if (NumXMMRegs < 3) {
+      if (NumXMMRegs < 4) {
         RegsToPass.push_back(std::make_pair(XMMArgRegs[NumXMMRegs], Arg));
         NumXMMRegs++;
       } else {
