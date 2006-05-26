@@ -375,7 +375,7 @@ static unsigned AddLiveIn(MachineFunction &MF, unsigned PReg,
 
 /// HowToPassCCCArgument - Returns how an formal argument of the specified type
 /// should be passed. If it is through stack, returns the size of the stack
-/// frame; if it is through XMM register, returns the number of XMM registers
+/// slot; if it is through XMM register, returns the number of XMM registers
 /// are needed.
 static void
 HowToPassCCCArgument(MVT::ValueType ObjectVT, unsigned NumXMMRegs,
@@ -766,7 +766,7 @@ static unsigned FASTCC_NUM_INT_ARGS_INREGS = 0;
 
 /// HowToPassFastCCArgument - Returns how an formal argument of the specified
 /// type should be passed. If it is through stack, returns the size of the stack
-/// frame; if it is through integer or XMM register, returns the number of
+/// slot; if it is through integer or XMM register, returns the number of
 /// integer or XMM registers are needed.
 static void
 HowToPassFastCCArgument(MVT::ValueType ObjectVT,
