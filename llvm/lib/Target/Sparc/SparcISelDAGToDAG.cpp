@@ -857,7 +857,7 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       abort();
     case 1: 
       return SDOperand(); // ret void is legal
-    case 2: {
+    case 3: {
       unsigned ArgReg;
       switch(Op.getOperand(1).getValueType()) {
       default: assert(0 && "Unknown type to return!");
@@ -869,8 +869,8 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
                               SDOperand());
       break;
     }
-    case 3:
-      Copy = DAG.getCopyToReg(Op.getOperand(0), SP::I0, Op.getOperand(2), 
+    case 5:
+      Copy = DAG.getCopyToReg(Op.getOperand(0), SP::I0, Op.getOperand(3), 
                               SDOperand());
       Copy = DAG.getCopyToReg(Copy, SP::I1, Op.getOperand(1), Copy.getValue(1));
       break;

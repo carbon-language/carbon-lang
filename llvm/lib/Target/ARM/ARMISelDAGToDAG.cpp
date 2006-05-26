@@ -62,8 +62,8 @@ static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
     abort();
   case 1:
     return SDOperand(); // ret void is legal
-  case 2:
-    Copy = DAG.getCopyToReg(Op.getOperand(0), ARM::R0, Op.getOperand(1), SDOperand());
+  case 3:
+    Copy = DAG.getCopyToReg(Op.getOperand(0), ARM::R0, Op.getOperand(2), SDOperand());
     break;
   }
 

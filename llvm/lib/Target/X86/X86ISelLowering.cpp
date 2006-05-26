@@ -3326,7 +3326,7 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
     case 1:    // ret void.
       return DAG.getNode(X86ISD::RET_FLAG, MVT::Other, Op.getOperand(0),
                         DAG.getConstant(getBytesToPopOnReturn(), MVT::i16));
-    case 2: {
+    case 3: {
       MVT::ValueType ArgVT = Op.getOperand(1).getValueType();
       
       if (MVT::isVector(ArgVT)) {
@@ -3394,13 +3394,13 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
       }
       break;
     }
-    case 3:
+    case 5:
       if (DAG.getMachineFunction().liveout_empty()) {
         DAG.getMachineFunction().addLiveOut(X86::EAX);
         DAG.getMachineFunction().addLiveOut(X86::EDX);
       }
 
-      Copy = DAG.getCopyToReg(Op.getOperand(0), X86::EDX, Op.getOperand(2), 
+      Copy = DAG.getCopyToReg(Op.getOperand(0), X86::EDX, Op.getOperand(3), 
                               SDOperand());
       Copy = DAG.getCopyToReg(Copy, X86::EAX,Op.getOperand(1),Copy.getValue(1));
       break;

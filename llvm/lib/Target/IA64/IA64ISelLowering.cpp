@@ -562,7 +562,7 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       AR_PFSVal = DAG.getCopyToReg(AR_PFSVal.getValue(1), IA64::AR_PFS, 
                                    AR_PFSVal);
       return DAG.getNode(IA64ISD::RET_FLAG, MVT::Other, AR_PFSVal);
-    case 2: {
+    case 3: {
       // Copy the result into the output register & restore ar.pfs
       MVT::ValueType ArgVT = Op.getOperand(1).getValueType();
       unsigned ArgReg = MVT::isInteger(ArgVT) ? IA64::r8 : IA64::F8;

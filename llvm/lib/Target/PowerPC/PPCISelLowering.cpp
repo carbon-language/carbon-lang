@@ -1160,7 +1160,7 @@ static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
     abort();
   case 1: 
     return SDOperand(); // ret void is legal
-  case 2: {
+  case 3: {
     MVT::ValueType ArgVT = Op.getOperand(1).getValueType();
     unsigned ArgReg;
     if (MVT::isVector(ArgVT))
@@ -1180,8 +1180,8 @@ static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
       DAG.getMachineFunction().addLiveOut(ArgReg);
     break;
   }
-  case 3:
-    Copy = DAG.getCopyToReg(Op.getOperand(0), PPC::R3, Op.getOperand(2), 
+  case 5:
+    Copy = DAG.getCopyToReg(Op.getOperand(0), PPC::R3, Op.getOperand(3), 
                             SDOperand());
     Copy = DAG.getCopyToReg(Copy, PPC::R4, Op.getOperand(1),Copy.getValue(1));
     // If we haven't noted the R3+R4 are live out, do so now.

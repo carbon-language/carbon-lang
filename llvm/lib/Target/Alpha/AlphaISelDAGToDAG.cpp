@@ -231,7 +231,7 @@ void AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     Select(Chain, N->getOperand(0));     // Token chain.
     SDOperand InFlag(0,0);
 
-    if (N->getNumOperands() == 2) {
+    if (N->getNumOperands() == 3) {
       SDOperand Val;
       Select(Val, N->getOperand(1));
       if (N->getOperand(1).getValueType() == MVT::i64) {
