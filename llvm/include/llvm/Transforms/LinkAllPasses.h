@@ -69,6 +69,7 @@ namespace {
       (void) llvm::createIndVarSimplifyPass();
       (void) llvm::createInstructionCombiningPass();
       (void) llvm::createInternalizePass(false);
+      (void) llvm::createLCSSAPass();
       (void) llvm::createLICMPass();
       (void) llvm::createLoadValueNumberingPass();
       (void) llvm::createLoopExtractorPass();

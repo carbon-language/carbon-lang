@@ -302,6 +302,11 @@ FunctionPass *createLowerGCPass();
 // through conditional branches.
 FunctionPass *createBlockPlacementPass();
 
+//===----------------------------------------------------------------------===//
+// This pass inserts phi nodes at loop boundaries to simplify other loop 
+// optimizations.
+FunctionPass *createLCSSAPass();
+
 } // End llvm namespace
 
 #endif
