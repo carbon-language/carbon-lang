@@ -1,4 +1,4 @@
-//===-- LCSSA.cpp - Convert loops into loop-closed SSA form         ------===//
+//===-- LCSSA.cpp - Convert loops into loop-closed SSA form ---------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -27,14 +27,14 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/Transforms/Scalar.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include <iostream>
+#include <algorithm>
 #include <set>
 #include <vector>
 
@@ -44,26 +44,28 @@ namespace {
   class LCSSA : public FunctionPass {
   public:
     LoopInfo *LI;  // Loop information
-    
-    // LoopProcessWorklist - List of loops we need to process.
-    std::vector<Loop*> LoopProcessWorklist;
+    DominatorTree *DT;       // Dominator Tree for the current Loop...
+    DominanceFrontier *DF;   // Current Dominance Frontier
     
     virtual bool runOnFunction(Function &F);
-    
-    bool visitLoop(Loop *L, Value *V);
+    bool LCSSA::visitSubloop(Loop* L);
     
     /// This transformation requires natural loop information & requires that
     /// loop preheaders be inserted into the CFG...
     ///
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesCFG();
       AU.addRequiredID(LoopSimplifyID);
       AU.addPreservedID(LoopSimplifyID);
       AU.addRequired<LoopInfo>();
       AU.addPreserved<LoopInfo>();
+      AU.addRequired<DominatorTree>(); // Not sure if this one will actually
+                                       // be needed.
+      AU.addRequired<DominanceFrontier>();
     }
   private:
-    void addSubloopsToWorklist(Loop* L);
-    std::set<Value*> loopValuesUsedOutsideLoop(Loop *L);
+    std::set<Instruction*> getLoopValuesUsedOutsideLoop(Loop *L,
+                                           std::vector<BasicBlock*> LoopBlocks);
   };
   
   RegisterOpt<LCSSA> X("lcssa", "Loop-Closed SSA Form Pass");
@@ -74,84 +76,66 @@ FunctionPass *llvm::createLCSSAPass() { return new LCSSA(); }
 bool LCSSA::runOnFunction(Function &F) {
   bool changed = false;
   LI = &getAnalysis<LoopInfo>();
+  DF = &getAnalysis<DominanceFrontier>();
+  DT = &getAnalysis<DominatorTree>();
     
   for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I) {
-    addSubloopsToWorklist(*I);
-    LoopProcessWorklist.push_back(*I);
-  }
-      
-  for (std::vector<Loop*>::iterator I = LoopProcessWorklist.begin(),
-       E = LoopProcessWorklist.end(); I != E; ++I) {
-    std::set<Value*> AffectedValues = loopValuesUsedOutsideLoop(*I);
-    if (!AffectedValues.empty()) {
-      for (std::set<Value*>::iterator VI = AffectedValues.begin(),
-           VE = AffectedValues.end(); VI != VE; ++VI)
-        changed |= visitLoop(*I, *VI);
-    }
+    changed |= visitSubloop(*I);
   }
       
   return changed;
 }
 
-bool LCSSA::visitLoop(Loop *L, Value* V) {
-  // We will be doing lots of "loop contains block" queries.  Loop::contains is
-  // linear time, use a set to speed this up.
-  std::set<BasicBlock*> LoopBlocks;
-
-  for (Loop::block_iterator BB = L->block_begin(), E = L->block_end();
-       BB != E; ++BB)
-    LoopBlocks.insert(*BB);
+bool LCSSA::visitSubloop(Loop* L) {
+  for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
+    visitSubloop(*I);
+  
+  // Speed up queries by creating a sorted list of blocks
+  std::vector<BasicBlock*> LoopBlocks(L->block_begin(), L->block_end());
+  std::sort(LoopBlocks.begin(), LoopBlocks.end());
+  
+  std::set<Instruction*> AffectedValues = getLoopValuesUsedOutsideLoop(L,
+                                           LoopBlocks);
   
   std::vector<BasicBlock*> exitBlocks;
   L->getExitBlocks(exitBlocks);
   
-  for (std::vector<BasicBlock*>::iterator BBI = exitBlocks.begin(),
-       BBE = exitBlocks.end(); BBI != BBE; ++BBI) {
-    PHINode *phi = new PHINode(V->getType(), "lcssa");
-    (*BBI)->getInstList().insert((*BBI)->front(), phi);
+  for (std::set<Instruction*>::iterator I = AffectedValues.begin(),
+       E = AffectedValues.end(); I != E; ++I) {
+    for (std::vector<BasicBlock*>::iterator BBI = exitBlocks.begin(),
+         BBE = exitBlocks.end(); BBI != BBE; ++BBI) {
+      PHINode *phi = new PHINode((*I)->getType(), "lcssa");
+      (*BBI)->getInstList().insert((*BBI)->front(), phi);
     
-    for (pred_iterator PI = pred_begin(*BBI), PE = pred_end(*BBI); PI != PE;
-         ++PI)
-      phi->addIncoming(V, *PI);
+      for (pred_iterator PI = pred_begin(*BBI), PE = pred_end(*BBI); PI != PE;
+           ++PI)
+        phi->addIncoming(*I, *PI);
+    }
+  
+    for (Value::use_iterator UI = (*I)->use_begin(), UE = (*I)->use_end();
+         UI != UE; ++UI) {
+      BasicBlock *UserBB = cast<Instruction>(*UI)->getParent();
+      if (!std::binary_search(LoopBlocks.begin(), LoopBlocks.end(), UserBB))
+        ; // FIXME: This should update the SSA form.
+    }
   }
   
-  for (Value::use_iterator UI = V->use_begin(), UE = V->use_end(); UI != UE;
-       ++UI) {
-    BasicBlock *UserBB = cast<Instruction>(*UI)->getParent();
-    if (!LoopBlocks.count(UserBB))
-      ; // FIXME: This should update the SSA form through the rest of the graph.
-  }
-  
-  return false;
+  return true; // FIXME: Should be more intelligent in our return value.
 }
 
-void LCSSA::addSubloopsToWorklist(Loop* L) {
-  for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I) {
-    addSubloopsToWorklist(*I);
-    LoopProcessWorklist.push_back(*I);
-  }
-}
+/// getLoopValuesUsedOutsideLoop - Return any values defined in the loop that
+/// are used by instructions outside of it.
+std::set<Instruction*> LCSSA::getLoopValuesUsedOutsideLoop(Loop *L, 
+                                         std::vector<BasicBlock*> LoopBlocks) {
 
-/// loopValuesUsedOutsideLoop - Return true if there are any values defined in
-/// the loop that are used by instructions outside of it.
-std::set<Value*> LCSSA::loopValuesUsedOutsideLoop(Loop *L) {
-  std::set<Value*> AffectedValues;
-
-  // We will be doing lots of "loop contains block" queries.  Loop::contains is
-  // linear time, use a set to speed this up.
-  std::set<BasicBlock*> LoopBlocks;
-
-  for (Loop::block_iterator BB = L->block_begin(), E = L->block_end();
-       BB != E; ++BB)
-    LoopBlocks.insert(*BB);
-  
+  std::set<Instruction*> AffectedValues;  
   for (Loop::block_iterator BB = L->block_begin(), E = L->block_end();
        BB != E; ++BB) {
     for (BasicBlock::iterator I = (*BB)->begin(), E = (*BB)->end(); I != E; ++I)
       for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;
            ++UI) {
         BasicBlock *UserBB = cast<Instruction>(*UI)->getParent();
-        if (!LoopBlocks.count(UserBB))
+        if (!std::binary_search(LoopBlocks.begin(), LoopBlocks.end(), UserBB))
           AffectedValues.insert(I);
       }
   }
