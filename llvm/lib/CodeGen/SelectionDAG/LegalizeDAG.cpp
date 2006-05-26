@@ -1453,17 +1453,18 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     LastCALLSEQ_END = DAG.getEntryNode();
       
     switch (Node->getNumOperands()) {
-    case 2:  // ret val
+    case 3:  // ret val
       Tmp2 = Node->getOperand(1);
+      Tmp3 = Node->getOperand(2);  // Signness
       switch (getTypeAction(Tmp2.getValueType())) {
       case Legal:
-        Result = DAG.UpdateNodeOperands(Result, Tmp1, LegalizeOp(Tmp2));
+        Result = DAG.UpdateNodeOperands(Result, Tmp1, LegalizeOp(Tmp2), Tmp3);
         break;
       case Expand:
         if (Tmp2.getValueType() != MVT::Vector) {
           SDOperand Lo, Hi;
           ExpandOp(Tmp2, Lo, Hi);
-          Result = DAG.getNode(ISD::RET, MVT::Other, Tmp1, Lo, Hi);
+          Result = DAG.getNode(ISD::RET, MVT::Other, Tmp1, Lo, Tmp3, Hi, Tmp3);
         } else {
           SDNode *InVal = Tmp2.Val;
           unsigned NumElems =
@@ -1476,11 +1477,11 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           if (TVT != MVT::Other && TLI.isTypeLegal(TVT)) {
             // Turn this into a return of the packed type.
             Tmp2 = PackVectorOp(Tmp2, TVT);
-            Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
+            Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3);
           } else if (NumElems == 1) {
             // Turn this into a return of the scalar type.
             Tmp2 = PackVectorOp(Tmp2, EVT);
-            Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
+            Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3);
             
             // FIXME: Returns of gcc generic vectors smaller than a legal type
             // should be returned in integer registers!
@@ -1493,14 +1494,14 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
             // type should be returned by reference!
             SDOperand Lo, Hi;
             SplitVectorOp(Tmp2, Lo, Hi);
-            Result = DAG.getNode(ISD::RET, MVT::Other, Tmp1, Lo, Hi);
+            Result = DAG.getNode(ISD::RET, MVT::Other, Tmp1, Lo, Tmp3, Hi, Tmp3);
             Result = LegalizeOp(Result);
           }
         }
         break;
       case Promote:
         Tmp2 = PromoteOp(Node->getOperand(1));
-        Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
+        Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3);
         Result = LegalizeOp(Result);
         break;
       }
@@ -1511,10 +1512,11 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     default: { // ret <values>
       std::vector<SDOperand> NewValues;
       NewValues.push_back(Tmp1);
-      for (unsigned i = 1, e = Node->getNumOperands(); i != e; ++i)
+      for (unsigned i = 1, e = Node->getNumOperands(); i < e; i += 2)
         switch (getTypeAction(Node->getOperand(i).getValueType())) {
         case Legal:
           NewValues.push_back(LegalizeOp(Node->getOperand(i)));
+          NewValues.push_back(Node->getOperand(i+1));
           break;
         case Expand: {
           SDOperand Lo, Hi;
@@ -1522,7 +1524,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                  "FIXME: TODO: implement returning non-legal vector types!");
           ExpandOp(Node->getOperand(i), Lo, Hi);
           NewValues.push_back(Lo);
+          NewValues.push_back(Node->getOperand(i+1));
           NewValues.push_back(Hi);
+          NewValues.push_back(Node->getOperand(i+1));
           break;
         }
         case Promote:

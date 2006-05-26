@@ -722,10 +722,13 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
   NewValues.push_back(getRoot());
   for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
     SDOperand RetOp = getValue(I.getOperand(i));
+    bool isSigned = I.getOperand(i)->getType()->isSigned();
     
     // If this is an integer return value, we need to promote it ourselves to
     // the full width of a register, since LegalizeOp will use ANY_EXTEND rather
     // than sign/zero.
+    // FIXME: C calling convention requires the return type to be promoted to
+    // at least 32-bit. But this is not necessary for non-C calling conventions.
     if (MVT::isInteger(RetOp.getValueType()) && 
         RetOp.getValueType() < MVT::i64) {
       MVT::ValueType TmpVT;
@@ -734,12 +737,13 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
       else
         TmpVT = MVT::i32;
 
-      if (I.getOperand(i)->getType()->isSigned())
+      if (isSigned)
         RetOp = DAG.getNode(ISD::SIGN_EXTEND, TmpVT, RetOp);
       else
         RetOp = DAG.getNode(ISD::ZERO_EXTEND, TmpVT, RetOp);
     }
     NewValues.push_back(RetOp);
+    NewValues.push_back(DAG.getConstant(isSigned, MVT::i32));
   }
   DAG.setRoot(DAG.getNode(ISD::RET, MVT::Other, NewValues));
 }
