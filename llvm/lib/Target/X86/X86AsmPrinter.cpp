@@ -129,7 +129,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
           } else
             O << COMMDirective  << name << "," << Size;
         } else {
-          if (Subtarget->TargetType == X86Subtarget::isCygwin) {
+          if (Subtarget->TargetType != X86Subtarget::isCygwin) {
             if (I->hasInternalLinkage())
               O << "\t.local\t" << name << "\n";
           }
