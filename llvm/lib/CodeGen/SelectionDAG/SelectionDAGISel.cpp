@@ -2515,7 +2515,7 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
     default: assert(0 && "Unknown type action!");
     case Legal: 
       Ops.push_back(Op);
-      Ops.push_back(DAG.getConstant(isSigned, MVT::i1));
+      Ops.push_back(DAG.getConstant(isSigned, MVT::i32));
       break;
     case Promote:
       if (MVT::isInteger(VT)) {
@@ -2526,7 +2526,7 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
         Op = DAG.getNode(ISD::FP_EXTEND, getTypeToTransformTo(VT), Op);
       }
       Ops.push_back(Op);
-      Ops.push_back(DAG.getConstant(isSigned, MVT::i1));
+      Ops.push_back(DAG.getConstant(isSigned, MVT::i32));
       break;
     case Expand:
       if (VT != MVT::Vector) {
@@ -2544,9 +2544,9 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
             std::swap(Lo, Hi);
           
           Ops.push_back(Lo);
-          Ops.push_back(DAG.getConstant(isSigned, MVT::i1));
+          Ops.push_back(DAG.getConstant(isSigned, MVT::i32));
           Ops.push_back(Hi);
-          Ops.push_back(DAG.getConstant(isSigned, MVT::i1));
+          Ops.push_back(DAG.getConstant(isSigned, MVT::i32));
         } else {
           // Value scalarized into many values.  Unimp for now.
           assert(0 && "Cannot expand i64 -> i16 yet!");
@@ -2565,7 +2565,7 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
           // Insert a VBIT_CONVERT of the MVT::Vector type to the packed type.
           Op = DAG.getNode(ISD::VBIT_CONVERT, TVT, Op);
           Ops.push_back(Op);
-          Ops.push_back(DAG.getConstant(isSigned, MVT::i1));
+          Ops.push_back(DAG.getConstant(isSigned, MVT::i32));
         } else {
           assert(0 && "Don't support illegal by-val vector call args yet!");
           abort();
