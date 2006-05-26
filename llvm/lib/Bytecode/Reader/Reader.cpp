@@ -830,7 +830,15 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
 
     if (Opcode == 61 || Opcode == 59)
       isTailCall = true;
-
+    
+    if (Opcode == 58) {
+      isTailCall = Oprnds.back() & 1;
+      CallingConv = Oprnds.back() >> 1;
+      Oprnds.pop_back();
+    } else if (Opcode == 59 || Opcode == 60) {
+      CallingConv = CallingConv::Fast;
+    }
+    
     // Check to make sure we have a pointer to function type
     const PointerType *PTy = dyn_cast<PointerType>(F->getType());
     if (PTy == 0) error("Call to non function pointer value!");
@@ -840,13 +848,6 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
     std::vector<Value *> Params;
     if (!FTy->isVarArg()) {
       FunctionType::param_iterator It = FTy->param_begin();
-
-      if (Opcode == 58) {
-        isTailCall = Oprnds.back() & 1;
-        CallingConv = Oprnds.back() >> 1;
-        Oprnds.pop_back();
-      } else if (Opcode == 59 || Opcode == 60)
-        CallingConv = CallingConv::Fast;
 
       for (unsigned i = 1, e = Oprnds.size(); i != e; ++i) {
         if (It == FTy->param_end())

@@ -527,7 +527,8 @@ void BytecodeWriter::outputInstrVarArgsCall(const Instruction *I,
     // variable argument.
     NumFixedOperands = 3+NumParams;
   }
-  output_vbr(2 * I->getNumOperands()-NumFixedOperands);
+  output_vbr(2 * I->getNumOperands()-NumFixedOperands +
+             unsigned(Opcode == 56 || Opcode == 58));
 
   // The type for the function has already been emitted in the type field of the
   // instruction.  Just emit the slot # now.
@@ -547,6 +548,14 @@ void BytecodeWriter::outputInstrVarArgsCall(const Instruction *I,
     Slot = Table.getSlot(I->getOperand(i));
     assert(Slot >= 0 && "No slot number for value!?!?");
     output_vbr((unsigned)Slot);
+  }
+  
+  // If this is the escape sequence for call, emit the tailcall/cc info.
+  if (Opcode == 58) {
+    const CallInst *CI = cast<CallInst>(I);
+    output_vbr((CI->getCallingConv() << 1) | unsigned(CI->isTailCall()));
+  } else if (Opcode == 56) {    // Invoke escape sequence.
+    output_vbr(cast<InvokeInst>(I)->getCallingConv());
   }
 }
 
