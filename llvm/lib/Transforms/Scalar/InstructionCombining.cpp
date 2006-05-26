@@ -6833,8 +6833,22 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
       break;
     }
     
+    // If this is a load, we have to stop.  However, if the loaded value is from
+    // the pointer we're loading and is producing the pointer we're storing,
+    // then *this* store is dead (X = load P; store X -> P).
+    if (LoadInst *LI = dyn_cast<LoadInst>(BBI)) {
+      if (LI == Val && LI->getOperand(0) == Ptr) {
+        EraseInstFromFunction(SI);
+        ++NumCombined;
+        return 0;
+      }
+      // Otherwise, this is a load from some other location.  Stores before it
+      // may not be dead.
+      break;
+    }
+    
     // Don't skip over loads or things that can modify memory.
-    if (BBI->mayWriteToMemory() || isa<LoadInst>(BBI))
+    if (BBI->mayWriteToMemory())
       break;
   }
   
