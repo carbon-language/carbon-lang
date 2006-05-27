@@ -574,7 +574,8 @@ template <> struct GraphTraits<DominatorTree*>
 };
 
 //===----------------------------------------------------------------------===//
-/// DominanceFrontier - Calculate the dominance frontiers for a function.
+/// DominanceFrontierBase - Common base class for computing forward and inverse
+/// dominance frontiers for a function.
 ///
 class DominanceFrontierBase : public DominatorBase {
 public:
@@ -620,8 +621,8 @@ public:
 
 
 //===-------------------------------------
-/// DominatorTree Class - Concrete subclass of DominatorTreeBase that is used to
-/// compute a normal dominator tree.
+/// DominanceFrontier Class - Concrete subclass of DominanceFrontierBase that is
+/// used to compute a forward dominator frontiers.
 ///
 class DominanceFrontier : public DominanceFrontierBase {
 public:
