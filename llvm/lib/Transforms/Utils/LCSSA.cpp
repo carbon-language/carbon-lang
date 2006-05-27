@@ -36,12 +36,13 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/CFG.h"
 #include <algorithm>
+#include <map>
 #include <vector>
 
 using namespace llvm;
 
 namespace {
-  static Statistic<> NumLCSSA("lcssa", "Number of times LCSSA was applied");
+  static Statistic<> NumLCSSA("lcssa", "Number of live out of a loop");
   
   class LCSSA : public FunctionPass {
   public:
@@ -64,8 +65,7 @@ namespace {
       AU.addPreservedID(LoopSimplifyID);
       AU.addRequired<LoopInfo>();
       AU.addPreserved<LoopInfo>();
-      AU.addRequired<DominatorTree>(); // Not sure if this one will actually
-                                       // be needed.
+      AU.addRequired<DominatorTree>();
       AU.addRequired<DominanceFrontier>();
     }
   private:
@@ -105,6 +105,11 @@ bool LCSSA::visitSubloop(Loop* L) {
   std::vector<BasicBlock*> exitBlocks;
   L->getExitBlocks(exitBlocks);
   
+  // Phi nodes that need to be IDF-processed
+  std::vector<PHINode*> workList;
+  
+  // Iterate over all affected values for this loop and insert Phi nodes
+  // for them in the appropriate exit blocks
   for (std::set<Instruction*>::iterator I = AffectedValues.begin(),
        E = AffectedValues.end(); I != E; ++I) {
     ++NumLCSSA; // We are applying the transformation
@@ -112,19 +117,57 @@ bool LCSSA::visitSubloop(Loop* L) {
          BBE = exitBlocks.end(); BBI != BBE; ++BBI) {
       PHINode *phi = new PHINode((*I)->getType(), "lcssa");
       (*BBI)->getInstList().insert((*BBI)->front(), phi);
+      workList.push_back(phi);
     
+      // Since LoopSimplify has been run, we know that all of these predecessors
+      // are in the loop, so just hook them up in the obvious manner.
       for (pred_iterator PI = pred_begin(*BBI), PE = pred_end(*BBI); PI != PE;
            ++PI)
         phi->addIncoming(*I, *PI);
     }
-  
-    for (Value::use_iterator UI = (*I)->use_begin(), UE = (*I)->use_end();
-         UI != UE; ++UI) {
-      BasicBlock *UserBB = cast<Instruction>(*UI)->getParent();
-      if (!std::binary_search(LoopBlocks.begin(), LoopBlocks.end(), UserBB))
-        ; // FIXME: This should update the SSA form.
-    }
   }
+  
+  // Calculate the IDF of these LCSSA Phi nodes, inserting new Phi's where
+  // necessary.  Keep track of these new Phi's in DFPhis.
+  std::map<BasicBlock*, PHINode*> DFPhis;
+  for (std::vector<PHINode*>::iterator I = workList.begin(),
+       E = workList.end(); I != E; ++I) {
+    
+    // Get the current Phi's DF, and insert Phi nodes.  Add these new
+    // nodes to our worklist.
+    DominanceFrontier::const_iterator it = DF->find((*I)->getParent());
+    if (it != DF->end()) {
+      const DominanceFrontier::DomSetType &S = it->second;
+      for (DominanceFrontier::DomSetType::const_iterator P = S.begin(),
+             PE = S.end(); P != PE; ++P) {
+        if (DFPhis[*P] == 0) {
+          // Still doesn't have operands...
+          PHINode *phi = new PHINode((*I)->getType(), "lcssa");
+          (*P)->getInstList().insert((*P)->front(), phi);
+          DFPhis[*P] = phi;
+          
+          workList.push_back(phi);
+        }
+      }
+    }
+    
+    // Get the predecessor blocks of the current Phi, and use them to hook up
+    // the operands of the current Phi to any members of DFPhis that dominate
+    // it.  This is a nop for the Phis inserted directly in the exit blocks,
+    // since they are not dominated by any members of DFPhis.
+    for (pred_iterator PI = pred_begin((*I)->getParent()),
+         E = pred_end((*I)->getParent()); PI != E; ++PI)
+      for (std::map<BasicBlock*, PHINode*>::iterator MI = DFPhis.begin(),
+           ME = DFPhis.end(); MI != ME; ++MI)
+        if (DT->getNode((*MI).first)->dominates(DT->getNode(*PI))) {
+          (*I)->addIncoming((*MI).second, *PI);
+          
+          // Since dominate() is not cheap, don't do it more than we have to.
+          break;
+        }
+  }
+  
+  // FIXME: Should update all uses.
   
   return true; // FIXME: Should be more intelligent in our return value.
 }
