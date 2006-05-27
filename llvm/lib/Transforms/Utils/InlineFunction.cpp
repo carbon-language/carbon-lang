@@ -193,20 +193,24 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG) {
   std::vector<ReturnInst*> Returns;
   ClonedCodeInfo InlinedFunctionInfo;
   { // Scope to destroy ValueMap after cloning.
-    // Calculate the vector of arguments to pass into the function cloner...
     std::map<const Value*, Value*> ValueMap;
+
+    // Calculate the vector of arguments to pass into the function cloner, which
+    // matches up the formal to the actual argument values.
     assert(std::distance(CalledFunc->arg_begin(), CalledFunc->arg_end()) ==
            std::distance(CS.arg_begin(), CS.arg_end()) &&
            "No varargs calls can be inlined!");
-
     CallSite::arg_iterator AI = CS.arg_begin();
     for (Function::const_arg_iterator I = CalledFunc->arg_begin(),
            E = CalledFunc->arg_end(); I != E; ++I, ++AI)
       ValueMap[I] = *AI;
 
-    // Clone the entire body of the callee into the caller.
-    CloneFunctionInto(Caller, CalledFunc, ValueMap, Returns, ".i",
-                      &InlinedFunctionInfo);
+    // We want the inliner to prune the code as it copies.  We would LOVE to
+    // have no dead or constant instructions leftover after inlining occurs
+    // (which can happen, e.g., because an argument was constant), but we'll be
+    // happy with whatever the cloner can do.
+    CloneAndPruneFunctionInto(Caller, CalledFunc, ValueMap, Returns, ".i",
+                              &InlinedFunctionInfo);
   }
 
   // Remember the first block that is newly cloned over.
