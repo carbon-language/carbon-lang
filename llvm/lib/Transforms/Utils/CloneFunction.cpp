@@ -311,7 +311,7 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
       for (; (PN = dyn_cast<PHINode>(I)); ++I) {
         for (unsigned pred = 0, e = NumPreds; pred != e; ++pred) {
           if (BasicBlock *MappedBlock = 
-                   cast<BasicBlock>(ValueMap[PN->getIncomingBlock(pred)])) {
+               cast_or_null<BasicBlock>(ValueMap[PN->getIncomingBlock(pred)])) {
             Value *InVal = MapValue(PN->getIncomingValue(pred), ValueMap);
             assert(InVal && "Unknown input value?");
             PN->setIncomingValue(pred, InVal);
