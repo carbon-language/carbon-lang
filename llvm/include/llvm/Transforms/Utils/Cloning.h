@@ -130,6 +130,19 @@ void CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
                        const char *NameSuffix = "", 
                        ClonedCodeInfo *CodeInfo = 0);
 
+/// CloneAndPruneFunctionInto - This works exactly like CloneFunctionInto,
+/// except that it does some simple constant prop and DCE on the fly.  The
+/// effect of this is to copy significantly less code in cases where (for
+/// example) a function call with constant arguments is inlined, and those
+/// constant arguments cause a significant amount of code in the callee to be
+/// dead.  Since this doesn't produce an exactly copy of the input, it can't be
+/// used for things like CloneFunction or CloneModule.
+void CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
+                               std::map<const Value*, Value*> &ValueMap,
+                               std::vector<ReturnInst*> &Returns,
+                               const char *NameSuffix = "", 
+                               ClonedCodeInfo *CodeInfo = 0);
+
 
 /// CloneTraceInto - Clone T into NewFunc. Original<->clone mapping is
 /// saved in ValueMap.
