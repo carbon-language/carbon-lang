@@ -47,6 +47,10 @@ namespace ISD {
   /// SelectionDAG.
   ///
   enum NodeType {
+    // DELETED_NODE - This is an illegal flag value that is used to catch
+    // errors.  This opcode is not a legal opcode for any node.
+    DELETED_NODE,
+    
     // EntryToken - This is the marker used to indicate the start of the region.
     EntryToken,
 
@@ -712,6 +716,7 @@ class SDNode {
 public:
   virtual ~SDNode() {
     assert(NumOperands == 0 && "Operand list not cleared before deletion");
+    NodeType = ISD::DELETED_NODE;
   }
   
   //===--------------------------------------------------------------------===//
