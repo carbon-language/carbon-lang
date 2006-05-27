@@ -392,6 +392,8 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
     
     // If nothing happened, try a target-specific DAG combine.
     if (RV.Val == 0) {
+      assert(N->getOpcode() != ISD::DELETED_NODE &&
+             "Node was deleted but visit returned NULL!");
       if (N->getOpcode() >= ISD::BUILTIN_OP_END ||
           TLI.hasTargetDAGCombine((ISD::NodeType)N->getOpcode()))
         RV = TLI.PerformDAGCombine(N, DagCombineInfo);
@@ -404,6 +406,10 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
       // CombineTo was used.  Since CombineTo takes care of the worklist 
       // mechanics for us, we have no work to do in this case.
       if (RV.Val != N) {
+        assert(N->getOpcode() != ISD::DELETED_NODE &&
+               RV.Val->getOpcode() != ISD::DELETED_NODE &&
+               "Node was deleted but visit returned new node!");
+
         DEBUG(std::cerr << "\nReplacing "; N->dump();
               std::cerr << "\nWith: "; RV.Val->dump(&DAG);
               std::cerr << '\n');
@@ -1573,9 +1579,11 @@ SDOperand DAGCombiner::visitSELECT(SDNode *N) {
   // fold X ? Y : X --> X ? Y : 0 --> X & Y
   if (MVT::i1 == VT && N0 == N2)
     return DAG.getNode(ISD::AND, VT, N0, N1);
+  
   // If we can fold this based on the true/false value, do so.
   if (SimplifySelectOps(N, N1, N2))
-    return SDOperand();
+    return SDOperand(N, 0);  // Don't revisit N.
+  
   // fold selects based on a setcc into other things, such as min/max/abs
   if (N0.getOpcode() == ISD::SETCC)
     // FIXME:
@@ -1611,7 +1619,7 @@ SDOperand DAGCombiner::visitSELECT_CC(SDNode *N) {
   
   // If we can fold this based on the true/false value, do so.
   if (SimplifySelectOps(N, N2, N3))
-    return SDOperand();
+    return SDOperand(N, 0);  // Don't revisit N.
   
   // fold select_cc into other things, such as min/max/abs
   return SimplifySelectCC(N0, N1, N2, N3, CC);
@@ -2814,7 +2822,10 @@ SDOperand DAGCombiner::SimplifySelect(SDOperand N0, SDOperand N1, SDOperand N2){
 
 /// SimplifySelectOps - Given a SELECT or a SELECT_CC node, where LHS and RHS
 /// are the two values being selected between, see if we can simplify the
-/// select.
+/// select.  Callers of this should assume that TheSelect is deleted if this
+/// returns true.  As such, they should return the appropriate thing (e.g. the
+/// node) back to the top-level of the DAG combiner loop to avoid it being
+/// looked at.
 ///
 bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDOperand LHS, 
                                     SDOperand RHS) {
@@ -3247,7 +3258,7 @@ SDOperand DAGCombiner::SimplifySetCC(MVT::ValueType VT, SDOperand N0,
             // Perform the xform if C1 is a single bit.
             if ((C1 & (C1-1)) == 0) {
               return DAG.getNode(ISD::SRL, VT, N0,
-                             DAG.getConstant(Log2_64(C1),TLI.getShiftAmountTy()));
+                          DAG.getConstant(Log2_64(C1),TLI.getShiftAmountTy()));
             }
           }
         }
