@@ -31,18 +31,22 @@
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/CFG.h"
 #include <algorithm>
-#include <set>
 #include <vector>
 
 using namespace llvm;
 
 namespace {
+  static Statistic<> NumLCSSA("lcssa", "Number of times LCSSA was applied");
+  
   class LCSSA : public FunctionPass {
   public:
+    
+  
     LoopInfo *LI;  // Loop information
     DominatorTree *DT;       // Dominator Tree for the current Loop...
     DominanceFrontier *DF;   // Current Dominance Frontier
@@ -51,7 +55,8 @@ namespace {
     bool visitSubloop(Loop* L);
     
     /// This transformation requires natural loop information & requires that
-    /// loop preheaders be inserted into the CFG...
+    /// loop preheaders be inserted into the CFG.  It maintains both of these,
+    /// as well as the CFG.  It also requires dominator information.
     ///
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
@@ -102,6 +107,7 @@ bool LCSSA::visitSubloop(Loop* L) {
   
   for (std::set<Instruction*>::iterator I = AffectedValues.begin(),
        E = AffectedValues.end(); I != E; ++I) {
+    ++NumLCSSA; // We are applying the transformation
     for (std::vector<BasicBlock*>::iterator BBI = exitBlocks.begin(),
          BBE = exitBlocks.end(); BBI != BBE; ++BBI) {
       PHINode *phi = new PHINode((*I)->getType(), "lcssa");
