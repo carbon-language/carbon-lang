@@ -27,6 +27,10 @@ CLEANED_TESTSUITE := $(patsubst %/,%,$(TESTSUITE))
 RUNTESTFLAGS := --tool $(CLEANED_TESTSUITE)
 endif
 
+ifndef RUNLLVM2CPP
+RUNTESTFLAGS += --ignore llvm2cpp.exp
+endif
+
 check-local:: site.exp
 	PATH="$(LLVMToolDir):$(LLVMExmplDir):$(LLVM_SRC_ROOT)/test/Scripts:$(PATH)" \
 	$(RUNTEST) $(RUNTESTFLAGS)
@@ -43,6 +47,10 @@ site.exp: Makefile $(LLVM_OBJ_ROOT)/Makefile.config
 	@echo 'set target_triplet "$(TARGET_TRIPLE)"' >> site.tmp
 	@echo 'set llvmgcc_version "$(LLVMGCC_VERSION)"' >> site.tmp
 	@echo 'set prcontext "$(TCLSH) $(LLVM_SRC_ROOT)/test/Scripts/prcontext.tcl"' >> site.tmp
+	@echo 'set tooldir "$(ToolDir)"' >>site.tmp
+	@echo 'set libdir "$(LibDir)"' >>site.tmp
+	@echo 'set srcroot "$(LLVM_SRC_ROOT)"' >>site.tmp
+	@echo 'set objroot "$(LLVM_OBJ_ROOT)"' >>site.tmp
 	@echo 'set srcdir "$(LLVM_SRC_ROOT)/test"' >>site.tmp
 	@echo 'set objdir "$(LLVM_OBJ_ROOT)/test"' >>site.tmp
 	@echo 'set llvmgcc "PATH=\"$(LLVMToolDir):$(PATH)\" \"$(LLVMGCC)\""' >> site.tmp
