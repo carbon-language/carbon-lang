@@ -7,12 +7,12 @@
 
 proc llvm2cpp-test { files } {
 #  if { $env(LLVM_RUNLLVM2CPP_TEST) == 1 } {
-    global subdir tooldir libdir objdir srcdir objroot srcroot 
+    global subdir llvmtoolsdir llvmlibsdir objdir srcdir objroot srcroot 
     set timeout 30
     set path [file join $objdir $subdir]
-    set llvm2cpp [file join $tooldir llvm2cpp ]
-    set llvmas [file join $tooldir llvm-as ]
-    set llvmdis [file join $tooldir llvm-dis ]
+    set llvm2cpp [file join $llvmtoolsdir llvm2cpp ]
+    set llvmas [file join $llvmtoolsdir llvm-as ]
+    set llvmdis [file join $llvmtoolsdir llvm-dis ]
 
     #Make Output Directory if it does not exist already
     if { [file exists path] } {
@@ -49,8 +49,7 @@ proc llvm2cpp-test { files } {
       }
 
       set retval [ catch { 
-        exec -keepnewline gcc -g -D__STDC_LIMIT_MACROS -o $executable $generated -I$srcroot/include -I$objroot/include -L$libdir $libdir/LLVMCore.o -lLLVMSupport $libdir/LLVMbzip2.o -lLLVMSystem -lstdc++ } msg ]
-
+        exec -keepnewline gcc -g -D__STDC_LIMIT_MACROS -o $executable $generated -I$srcroot/include -I$objroot/include -L$llvmlibsdir $llvmlibsdir/LLVMCore.o -lLLVMSupport $llvmlibsdir/LLVMbzip2.o -lLLVMSystem -lstdc++ } msg ] 
       if { $retval != 0 } {
         fail "$test: gcc returned $retval\n$msg"
         continue
