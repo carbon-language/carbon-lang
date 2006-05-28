@@ -42,7 +42,8 @@
 using namespace llvm;
 
 namespace {
-  static Statistic<> NumLCSSA("lcssa", "Number of live out of a loop");
+  static Statistic<> NumLCSSA("lcssa",
+                              "Number of live out of a loop variables");
   
   class LCSSA : public FunctionPass {
   public:
@@ -125,50 +126,49 @@ bool LCSSA::visitSubloop(Loop* L) {
            ++PI)
         phi->addIncoming(*I, *PI);
     }
-  }
   
-  // Calculate the IDF of these LCSSA Phi nodes, inserting new Phi's where
-  // necessary.  Keep track of these new Phi's in DFPhis.
-  std::map<BasicBlock*, PHINode*> DFPhis;
-  for (std::vector<PHINode*>::iterator I = workList.begin(),
-       E = workList.end(); I != E; ++I) {
+    // Calculate the IDF of these LCSSA Phi nodes, inserting new Phi's where
+    // necessary.  Keep track of these new Phi's in DFPhis.
+    std::map<BasicBlock*, PHINode*> DFPhis;
+    for (std::vector<PHINode*>::iterator DFI = workList.begin(),
+         E = workList.end(); DFI != E; ++DFI) {
     
-    // Get the current Phi's DF, and insert Phi nodes.  Add these new
-    // nodes to our worklist.
-    DominanceFrontier::const_iterator it = DF->find((*I)->getParent());
-    if (it != DF->end()) {
-      const DominanceFrontier::DomSetType &S = it->second;
-      for (DominanceFrontier::DomSetType::const_iterator P = S.begin(),
+      // Get the current Phi's DF, and insert Phi nodes.  Add these new
+      // nodes to our worklist.
+      DominanceFrontier::const_iterator it = DF->find((*DFI)->getParent());
+      if (it != DF->end()) {
+        const DominanceFrontier::DomSetType &S = it->second;
+        for (DominanceFrontier::DomSetType::const_iterator P = S.begin(),
              PE = S.end(); P != PE; ++P) {
-        if (DFPhis[*P] == 0) {
-          // Still doesn't have operands...
-          PHINode *phi = new PHINode((*I)->getType(), "lcssa");
-          (*P)->getInstList().insert((*P)->front(), phi);
-          DFPhis[*P] = phi;
+          if (DFPhis[*P] == 0) {
+            // Still doesn't have operands...
+            PHINode *phi = new PHINode((*DFI)->getType(), "lcssa");
+            (*P)->getInstList().insert((*P)->front(), phi);
+            DFPhis[*P] = phi;
           
-          workList.push_back(phi);
+            workList.push_back(phi);
+          }
         }
       }
-    }
     
-    // Get the predecessor blocks of the current Phi, and use them to hook up
-    // the operands of the current Phi to any members of DFPhis that dominate
-    // it.  This is a nop for the Phis inserted directly in the exit blocks,
-    // since they are not dominated by any members of DFPhis.
-    for (pred_iterator PI = pred_begin((*I)->getParent()),
-         E = pred_end((*I)->getParent()); PI != E; ++PI)
-      for (std::map<BasicBlock*, PHINode*>::iterator MI = DFPhis.begin(),
-           ME = DFPhis.end(); MI != ME; ++MI)
-        if (DT->getNode((*MI).first)->dominates(DT->getNode(*PI))) {
-          (*I)->addIncoming((*MI).second, *PI);
+      // Get the predecessor blocks of the current Phi, and use them to hook up
+      // the operands of the current Phi to any members of DFPhis that dominate
+      // it.  This is a nop for the Phis inserted directly in the exit blocks,
+      // since they are not dominated by any members of DFPhis.
+      for (pred_iterator PI = pred_begin((*DFI)->getParent()),
+           E = pred_end((*DFI)->getParent()); PI != E; ++PI)
+        for (std::map<BasicBlock*, PHINode*>::iterator MI = DFPhis.begin(),
+             ME = DFPhis.end(); MI != ME; ++MI)
+          if (DT->getNode((*MI).first)->dominates(DT->getNode(*PI))) {
+            (*DFI)->addIncoming((*MI).second, *PI);
           
-          // Since dominate() is not cheap, don't do it more than we have to.
-          break;
-        }
+            // Since dominate() is not cheap, don't do it more than we have to.
+            break;
+          }
+    }
+  
+    // FIXME: Should update all uses.
   }
-  
-  // FIXME: Should update all uses.
-  
   return true; // FIXME: Should be more intelligent in our return value.
 }
 
