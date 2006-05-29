@@ -13,7 +13,7 @@
 //   llvm-as [options] x.ll - Read LLVM asm from the x.ll file, write bytecode
 //                            to the x.bc file.
 //
-//===------------------------------------------------------------------------===
+//===----------------------------------------------------------------------===//
 
 #include "llvm/Module.h"
 #include "llvm/Assembly/Parser.h"
