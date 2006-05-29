@@ -22,6 +22,7 @@
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/DataStructure/DataStructure.h"
+#include "llvm/Analysis/CallTargets.h"
 #include "llvm/Function.h"
 #include <cstdlib>
 
@@ -50,6 +51,7 @@ namespace {
       (void)new llvm::PostDominatorSet();
       (void)new llvm::FindUsedTypes();
       (void)new llvm::ScalarEvolution();
+      (void)new llvm::CallTargetFinder();
       ((llvm::Function*)0)->viewCFGOnly();
       llvm::AliasSetTracker X(*(llvm::AliasAnalysis*)0);
       X.add((llvm::Value*)0, 0);  // for -print-alias-sets
