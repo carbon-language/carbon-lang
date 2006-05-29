@@ -1,4 +1,4 @@
-//===--- llvm-as.cpp - The low-level LLVM assembler -----------------------===//
+//===--- llvm2cpp.cpp - LLVM IR to C++ Translator -------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,11 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This utility may be invoked in the following manner:
-//   llvm-as --help         - Output information about command line switches
-//   llvm-as [options]      - Read LLVM asm from stdin, write bytecode to stdout
-//   llvm-as [options] x.ll - Read LLVM asm from the x.ll file, write bytecode
-//                            to the x.bc file.
+// This program converts an input LLVM assembly file (.ll) into a C++ source
+// file that makes calls to the LLVM C++ API to produce the same module. The
+// generated program verifies what it built and then runs the PrintAssemblyPass
+// to reproduce the input originally given to llvm2cpp.
+//
+// Use the --help option for help with command line options.
 //
 //===------------------------------------------------------------------------===
 
