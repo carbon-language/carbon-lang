@@ -66,7 +66,7 @@ public:
   // it's processed.
   //
   bool runOnFunction(Function &F) {
-    (*Out) << Banner << (Value&)F;
+    (*Out) << Banner << static_cast<Value&>(F);
     return false;
   }
 
