@@ -1,4 +1,5 @@
 ; RUN: llvm-as < %s | opt -lcssa | llvm-dis | grep "%lcssa = phi int"
+; RUN: llvm-as < %s | opt -lcssa | llvm-dis | grep "%X4 = add int 3, %lcssa"
 
 void %lcssa(bool %S2) {
 entry:
