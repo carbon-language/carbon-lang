@@ -10,7 +10,8 @@
 // This file declares the CompilerDriver class which implements the bulk of the
 // LLVM Compiler Driver program (llvmc).
 //
-//===------------------------------------------------------------------------===
+//===----------------------------------------------------------------------===//
+
 #ifndef LLVM_TOOLS_LLVMC_COMPILERDRIVER_H
 #define LLVM_TOOLS_LLVMC_COMPILERDRIVER_H
 

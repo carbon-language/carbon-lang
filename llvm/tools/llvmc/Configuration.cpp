@@ -10,7 +10,7 @@
 // This file implements the parsing of configuration files for the LLVM Compiler
 // Driver (llvmc).
 //
-//===------------------------------------------------------------------------===
+//===----------------------------------------------------------------------===//
 
 #include "Configuration.h"
 #include "ConfigLexer.h"

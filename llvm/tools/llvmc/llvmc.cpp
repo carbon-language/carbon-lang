@@ -12,7 +12,7 @@
 //  tools' manual page (docs/CommandGuide/html/llvmc.html) or run the tool with
 //  the --help option.
 //
-//===------------------------------------------------------------------------===
+//===----------------------------------------------------------------------===//
 
 #include "CompilerDriver.h"
 #include "Configuration.h"
@@ -24,9 +24,9 @@
 using namespace llvm;
 
 namespace {
-//===------------------------------------------------------------------------===
+//===----------------------------------------------------------------------===//
 //===          PHASE OPTIONS
-//===------------------------------------------------------------------------===
+//===----------------------------------------------------------------------===//
 cl::opt<CompilerDriver::Phases> FinalPhase(cl::Optional,
   cl::desc("Choose final phase of compilation:"),
   cl::init(CompilerDriver::LINKING),
@@ -43,9 +43,9 @@ cl::opt<CompilerDriver::Phases> FinalPhase(cl::Optional,
   )
 );
 
-//===------------------------------------------------------------------------===
+//===----------------------------------------------------------------------===//
 //===          OPTIMIZATION OPTIONS
-//===------------------------------------------------------------------------===
+//===----------------------------------------------------------------------===//
 cl::opt<CompilerDriver::OptimizationLevels> OptLevel(cl::ZeroOrMore,
   cl::desc("Choose level of optimization to apply:"),
   cl::init(CompilerDriver::OPT_FAST_COMPILE),
@@ -66,9 +66,9 @@ cl::opt<CompilerDriver::OptimizationLevels> OptLevel(cl::ZeroOrMore,
   )
 );
 
-//===------------------------------------------------------------------------===
+//===----------------------------------------------------------------------===//
 //===          TOOL OPTIONS
-//===------------------------------------------------------------------------===
+//===----------------------------------------------------------------------===//
 
 cl::list<std::string> PreprocessorToolOpts("Tpre", cl::ZeroOrMore,
   cl::desc("Pass specific options to the pre-processor"),
@@ -115,9 +115,9 @@ cl::list<std::string> BOpt("B", cl::ZeroOrMore, cl::Prefix,
   cl::desc("Specify path to find llvmc sub-tools"),
   cl::value_desc("dir"));
 
-//===------------------------------------------------------------------------===
+//===----------------------------------------------------------------------===//
 //===          INPUT OPTIONS
-//===------------------------------------------------------------------------===
+//===----------------------------------------------------------------------===//
 
 cl::list<std::string> LibPaths("L", cl::Prefix,
   cl::desc("Specify a library search path"), cl::value_desc("dir"));
@@ -133,9 +133,9 @@ cl::list<std::string> Defines("D", cl::Prefix,
   cl::desc("Specify a pre-processor symbol to define"),
   cl::value_desc("symbol"));
 
-//===------------------------------------------------------------------------===
+//===----------------------------------------------------------------------===//
 //===          OUTPUT OPTIONS
-//===------------------------------------------------------------------------===
+//===----------------------------------------------------------------------===//
 
 cl::opt<std::string> OutputFilename("o",
   cl::desc("Override output filename"), cl::value_desc("file"));
@@ -156,9 +156,9 @@ cl::opt<std::string> PrintFileName("print-fname", cl::Optional,
   cl::value_desc("file"),
   cl::desc("Print the full path for the option's value"));
 
-//===------------------------------------------------------------------------===
+//===----------------------------------------------------------------------===//
 //===          INFORMATION OPTIONS
-//===------------------------------------------------------------------------===
+//===----------------------------------------------------------------------===//
 
 cl::opt<bool> DryRun("dry-run", cl::Optional, cl::init(false),
   cl::desc("Do everything but perform the compilation actions"));
@@ -184,9 +184,9 @@ cl::opt<bool> TimeActions("time-actions", cl::Optional, cl::init(false),
 cl::opt<bool> ShowStats("stats", cl::Optional, cl::init(false),
   cl::desc("Print statistics accumulated during optimization"));
 
-//===------------------------------------------------------------------------===
+//===----------------------------------------------------------------------===//
 //===          ADVANCED OPTIONS
-//===------------------------------------------------------------------------===
+//===----------------------------------------------------------------------===//
 
 static cl::opt<std::string> ConfigDir("config-dir", cl::Optional,
   cl::desc("Specify configuration directory to override defaults"),
@@ -201,9 +201,9 @@ static cl::opt<bool> PipeCommands("pipe", cl::Optional,
 static cl::opt<bool> KeepTemps("keep-temps", cl::Optional,
   cl::desc("Don't delete temporary files created by llvmc"));
 
-//===------------------------------------------------------------------------===
+//===----------------------------------------------------------------------===//
 //===          POSITIONAL OPTIONS
-//===------------------------------------------------------------------------===
+//===----------------------------------------------------------------------===//
 
 static cl::list<std::string> Files(cl::Positional, cl::ZeroOrMore,
   cl::desc("[Sources/objects/libraries]"));
@@ -212,9 +212,9 @@ static cl::list<std::string> Languages("x", cl::ZeroOrMore,
   cl::desc("Specify the source language for subsequent files"),
   cl::value_desc("language"));
 
-//===------------------------------------------------------------------------===
+//===----------------------------------------------------------------------===//
 //===          GetFileType - determine type of a file
-//===------------------------------------------------------------------------===
+//===----------------------------------------------------------------------===//
 const std::string GetFileType(const std::string& fname, unsigned pos) {
   static std::vector<std::string>::iterator langIt = Languages.begin();
   static std::string CurrLang = "";

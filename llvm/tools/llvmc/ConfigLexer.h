@@ -9,7 +9,8 @@
 //
 // This file declares the types and data needed by ConfigLexer.l
 //
-//===------------------------------------------------------------------------===
+//===----------------------------------------------------------------------===//
+
 #ifndef LLVM_TOOLS_LLVMC_CONFIGLEXER_H
 #define LLVM_TOOLS_LLVMC_CONFIGLEXER_H
 

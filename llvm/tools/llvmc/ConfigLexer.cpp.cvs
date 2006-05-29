@@ -27,7 +27,6 @@
 #define YY_FLEX_MINOR_VERSION 5
 
 #include <stdio.h>
-#include <unistd.h>
 
 
 /* cfront 1.2 defines "c_plusplus" instead of "__cplusplus" */
@@ -41,6 +40,7 @@
 #ifdef __cplusplus
 
 #include <stdlib.h>
+#include <unistd.h>
 
 /* Use prototypes in function declarations. */
 #define YY_USE_PROTOS
@@ -1246,7 +1246,7 @@ static char *yy_last_accepting_cpos;
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
-#line 1 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 1 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 #define INITIAL 0
 /*===- ConfigLexer.l - Scanner for CompilerDriver Config Files -*- C++ -*--===//
 // 
@@ -1262,7 +1262,7 @@ char *yytext;
 //
 //===----------------------------------------------------------------------===*/
 #define YY_NEVER_INTERACTIVE 1
-#line 29 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 29 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 
 #include "ConfigLexer.h"
 
@@ -1458,10 +1458,10 @@ YY_MALLOC_DECL
 YY_DECL
 	{
 	register yy_state_type yy_current_state;
-	register char *yy_cp = NULL, *yy_bp = NULL;
+	register char *yy_cp, *yy_bp;
 	register int yy_act;
 
-#line 114 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 114 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 
 
 #line 1468 "ConfigLexer.cpp"
@@ -1545,12 +1545,12 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 116 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 116 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { if (ConfigLexerState.in_value) return SPACE; }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 118 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 118 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { /* Ignore comments */
                   ConfigLexerState.in_value = false; 
                   ConfigLexerState.lineNum++; 
@@ -1559,14 +1559,14 @@ YY_RULE_SETUP
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 124 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 124 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { ConfigLexerState.lineNum++; 
                   /* Don't return EOLTOK! */
                 }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 128 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 128 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { ConfigLexerState.in_value = false; 
                   ConfigLexerState.lineNum++; 
                   return EOLTOK; 
@@ -1574,249 +1574,249 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 133 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 133 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { ConfigLexerState.in_value = true; 
                   return EQUALS; 
                 }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 137 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 137 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return SEPARATOR; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 139 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 139 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleNameContext(VERSION_TOK); }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 141 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 141 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleNameContext(LANG); }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 142 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 142 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleNameContext(LIBS); }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 143 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 143 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleNameContext(NAME); }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 144 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 144 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleNameContext(OPT1); }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 145 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 145 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleNameContext(OPT2); }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 146 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 146 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleNameContext(OPT3); }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 147 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 147 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleNameContext(OPT4); }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 148 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 148 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleNameContext(OPT5); }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 150 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 150 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleNameContext(PREPROCESSOR); }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 151 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 151 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleNameContext(COMMAND); }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 152 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 152 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleNameContext(REQUIRED); }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 154 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 154 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleNameContext(TRANSLATOR); }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 155 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 155 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleNameContext(PREPROCESSES); }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 156 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 156 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleNameContext(OUTPUT); }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 158 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 158 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleNameContext(OPTIMIZER); }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 159 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 159 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleNameContext(TRANSLATES); }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 161 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 161 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleNameContext(ASSEMBLER); }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 163 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 163 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleNameContext(LINKER); }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 165 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 165 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleSubstitution(ARGS_SUBST); }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 166 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 166 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleSubstitution(BINDIR_SUBST); }      
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 167 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 167 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleSubstitution(DEFS_SUBST); }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 168 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 168 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleSubstitution(IN_SUBST); }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 169 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 169 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleSubstitution(INCLS_SUBST); }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 170 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 170 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleSubstitution(LIBDIR_SUBST); }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 171 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 171 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleSubstitution(LIBS_SUBST); }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 172 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 172 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleSubstitution(LLVMGCCDIR_SUBST); }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 173 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 173 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleSubstitution(LLVMGCCARCH_SUBST); }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 174 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 174 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleSubstitution(LLVMGCC_SUBST); }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 175 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 175 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleSubstitution(LLVMGXX_SUBST); }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 176 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 176 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleSubstitution(LLVMCC1_SUBST); }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 177 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 177 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleSubstitution(LLVMCC1PLUS_SUBST); }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 178 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 178 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleSubstitution(OPT_SUBST); }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 179 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 179 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleSubstitution(OUT_SUBST); }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 180 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 180 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleSubstitution(STATS_SUBST); }
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 181 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 181 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleSubstitution(TARGET_SUBST); }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 182 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 182 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleSubstitution(TIME_SUBST); }
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 183 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 183 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleSubstitution(VERBOSE_SUBST); }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 184 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 184 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleSubstitution(FOPTS_SUBST); }
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 185 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 185 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleSubstitution(MOPTS_SUBST); }
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 186 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 186 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleSubstitution(WOPTS_SUBST); }
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 188 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 188 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleValueContext(ASSEMBLY); }
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 189 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 189 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleValueContext(BYTECODE); }
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 190 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 190 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleValueContext(TRUETOK); }
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 191 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 191 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { return handleValueContext(FALSETOK); }
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 193 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 193 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { ConfigLexerState.StringVal = yytext; return OPTION; }
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 194 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 194 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { ConfigLexerState.StringVal = yytext+1;  // Nuke start quote
                   ConfigLexerState.StringVal.erase(
                   --ConfigLexerState.StringVal.end());
@@ -1825,12 +1825,12 @@ YY_RULE_SETUP
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 199 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 199 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 { YY_FATAL_ERROR("Invalid substitution token"); }
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 201 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 201 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 ECHO;
 	YY_BREAK
 #line 1837 "ConfigLexer.cpp"
@@ -2216,7 +2216,6 @@ register char *yy_bp;
 #endif	/* ifndef YY_NO_UNPUT */
 
 
-#ifndef YY_NO_INPUT
 #ifdef __cplusplus
 static int yyinput()
 #else
@@ -2288,7 +2287,7 @@ static int input()
 
 	return c;
 	}
-#endif /* YY_NO_INPUT */
+
 
 #ifdef YY_USE_PROTOS
 void yyrestart( FILE *input_file )
@@ -2399,6 +2398,11 @@ YY_BUFFER_STATE b;
 	}
 
 
+#ifndef YY_ALWAYS_INTERACTIVE
+#ifndef YY_NEVER_INTERACTIVE
+extern int isatty YY_PROTO(( int ));
+#endif
+#endif
 
 #ifdef YY_USE_PROTOS
 void yy_init_buffer( YY_BUFFER_STATE b, FILE *file )
@@ -2716,5 +2720,5 @@ int main()
 	return 0;
 	}
 #endif
-#line 201 "/proj/llvm/build/../llvm/tools/llvmc/ConfigLexer.l"
+#line 201 "/Users/sabre/cvs/llvm/tools/llvmc/ConfigLexer.l"
 

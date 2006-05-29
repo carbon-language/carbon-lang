@@ -10,7 +10,8 @@
 // This file declares the LLVMC_ConfigDataProvider class which implements the
 // generation of ConfigData objects for the CompilerDriver.
 //
-//===------------------------------------------------------------------------===
+//===----------------------------------------------------------------------===//
+
 #ifndef LLVM_TOOLS_LLVMC_CONFIGDATA_H
 #define LLVM_TOOLS_LLVMC_CONFIGDATA_H
 

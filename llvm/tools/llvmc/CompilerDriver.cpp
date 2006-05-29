@@ -10,7 +10,7 @@
 //
 // This file implements the bulk of the LLVM Compiler Driver (llvmc).
 //
-//===------------------------------------------------------------------------===
+//===----------------------------------------------------------------------===//
 
 #include "CompilerDriver.h"
 #include "ConfigLexer.h"
