@@ -1120,6 +1120,13 @@ CppWriter::printTypeDefInternal(const Type* Ty) {
       assert(!"Invalid TypeID");
   }
 
+  // If the type had a name, make sure we recreate it.
+  const std::string* progTypeName = 
+    findTypeName(TheModule->getSymbolTable(),Ty);
+  if (progTypeName)
+    Out << "mod->addTypeName(\"" << *progTypeName << "\", " 
+        << typeName << ");\n";
+
   // Pop us off the type stack
   TypeStack.pop_back();
 
@@ -1989,6 +1996,7 @@ void WriteModuleToCppFile(Module* mod, std::ostream& o) {
   SlotMachine SlotTable(mod);
   CppWriter W(o, SlotTable, mod);
   W.write(mod);
+  o << "return mod;\n";
   o << "}\n";
 }
 

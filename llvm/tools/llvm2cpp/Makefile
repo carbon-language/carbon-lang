@@ -13,11 +13,16 @@ USEDLIBS = LLVMAsmParser LLVMBCWriter LLVMCore \
 
 include $(LEVEL)/Makefile.common
 
-tryit: all-local recurty.cpp globalvars.cpp
+CPPFILESTOTRY = recurty.cpp globalvars.cpp
+tryit: all-local $(CPPFILESTOTRY)
 
-%.cpp : %.ll
+%.cpp : %.ll $(ToolDir)/llvm2cpp
 	llvm2cpp $*.ll -f -o $*.cpp
-	gcc -I$(LLVM_SRC_ROOT)/include -I$(LLVM_OBJ_ROOT)/include -g \
+
+% : %.cpp Makefile
+	gcc -Wall -I$(LLVM_SRC_ROOT)/include -I$(LLVM_OBJ_ROOT)/include -g \
 	-D__STDC_LIMIT_MACROS -L$(LibDir) $(LibDir)/LLVMCore.o -lLLVMSupport \
-	$(LibDir)/LLVMbzip2.o -lLLVMSystem -lstdc++ \
+	$(LibDir)/LLVMbzip2.o -lLLVMSystem -lstdc++ -Wno-unused \
 	$*.cpp -o $*
+
+#$(CPPFILESTOTRY): $(ToolDir)/llvm2cpp
