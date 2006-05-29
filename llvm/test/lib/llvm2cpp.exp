@@ -31,6 +31,7 @@ proc llvm2cpp-test { files } {
       set executable [file join Output $filename.exe]
       set output [file join Output $filename.gen]
       set assembly [file join Output $filename.asm]
+      set testname [file rootname $filename]
 
       set retval [ catch { 
         exec -keepnewline $llvmas $test -o - | $llvmdis -f -o $assembly } msg ] 
@@ -41,7 +42,7 @@ proc llvm2cpp-test { files } {
       }
 
       set retval [ catch { 
-        exec -keepnewline $llvm2cpp -f -o $generated $test } msg]
+        exec -keepnewline $llvm2cpp -f -o $generated < $test } msg]
 
       if { $retval != 0 } {
         fail "$test: llvm2cpp returned $retval\n$msg"
@@ -55,19 +56,18 @@ proc llvm2cpp-test { files } {
         continue
       }
 
-      set retval [ catch { 
-        exec -keepnewline $executable > $output } msg ]
-
+      set retval [ catch { exec -keepnewline $executable > $output } msg ]
       if { $retval != 0 } {
-        fail "$test: $filename returned $retval\n$msg"
+        set execname [file tail $executable]
+        fail "$test: $execname returned $retval:\n$msg"
         continue
       } 
 
       set retval [ catch { 
-        exec -keepnewline diff -u $assembly $generated } msg ]
+        exec -keepnewline diff $assembly $output } msg ]
 
       if { $retval != 0 } {
-        fail "$test: diff returned $retval\n$msg"
+        fail "$test: diff returned $retval:\n$msg"
         continue
       }
       pass "$test"
