@@ -21,7 +21,7 @@
 
 using namespace llvm;
 
-#define DEBUG_SYMBOL_TABLE 0
+#define DEBUG_SYMBOL_TABLE 1
 #define DEBUG_ABSTYPE 0
 
 SymbolTable::~SymbolTable() {
@@ -167,7 +167,7 @@ Type* SymbolTable::remove(type_iterator Entry) {
 
 #if DEBUG_SYMBOL_TABLE
   dump();
-  std::cerr << " Removing Value: " << Result->getName() << "\n";
+  std::cerr << " Removing type: " << Entry->first << "\n";
 #endif
 
   tmap.erase(Entry);
