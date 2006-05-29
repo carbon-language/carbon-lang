@@ -111,6 +111,7 @@ bool LCSSA::visitSubloop(Loop* L) {
   
   // Iterate over all affected values for this loop and insert Phi nodes
   // for them in the appropriate exit blocks
+  std::map<BasicBlock*, PHINode*> ExitPhis;
   for (std::set<Instruction*>::iterator I = AffectedValues.begin(),
        E = AffectedValues.end(); I != E; ++I) {
     ++NumLCSSA; // We are applying the transformation
@@ -119,6 +120,7 @@ bool LCSSA::visitSubloop(Loop* L) {
       PHINode *phi = new PHINode((*I)->getType(), "lcssa");
       (*BBI)->getInstList().insert((*BBI)->front(), phi);
       workList.push_back(phi);
+      ExitPhis[*BBI] = phi;
     
       // Since LoopSimplify has been run, we know that all of these predecessors
       // are in the loop, so just hook them up in the obvious manner.
@@ -166,9 +168,40 @@ bool LCSSA::visitSubloop(Loop* L) {
             break;
           }
     }
-  
-    // FIXME: Should update all uses.
+    
+    
+    
+    // Find all uses of the affected value, and replace them with the
+    // appropriate Phi.
+    for (Instruction::use_iterator UI = (*I)->use_begin(), UE=(*I)->use_end();
+         UI != UE; ++UI) {
+      Instruction* use = cast<Instruction>(*UI);
+      
+      // Don't need to update uses within the loop body
+      if (!std::binary_search(LoopBlocks.begin(), LoopBlocks.end(),
+          use->getParent())) {
+          
+        for (std::map<BasicBlock*, PHINode*>::iterator DI = ExitPhis.begin(),
+             DE = ExitPhis.end(); DI != DE; ++DI) {
+          if (DT->getNode((*DI).first)->dominates( \
+              DT->getNode(use->getParent())) && use != (*DI).second) {
+            use->replaceUsesOfWith(*I, (*DI).second);
+            break;
+          }
+        }
+          
+        for (std::map<BasicBlock*, PHINode*>::iterator DI = DFPhis.begin(),
+             DE = DFPhis.end(); DI != DE; ++DI) {
+          if (DT->getNode((*DI).first)->dominates( \
+              DT->getNode(use->getParent()))) {
+            use->replaceUsesOfWith(*I, (*DI).second);
+            break;
+          }
+        }
+      }
+    }
   }
+  
   return true; // FIXME: Should be more intelligent in our return value.
 }
 
