@@ -21,7 +21,7 @@
 
 using namespace llvm;
 
-#define DEBUG_SYMBOL_TABLE 1
+#define DEBUG_SYMBOL_TABLE 0
 #define DEBUG_ABSTYPE 0
 
 SymbolTable::~SymbolTable() {
