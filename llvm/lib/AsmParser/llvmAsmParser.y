@@ -72,7 +72,7 @@ static struct PerModuleInfo {
   std::map<ValID, PATypeHolder> LateResolveTypes;
 
   /// PlaceHolderInfo - When temporary placeholder objects are created, remember
-  /// how they were referenced and one which line of the input they came from so
+  /// how they were referenced and on which line of the input they came from so
   /// that we can resolve them later and print error messages as appropriate.
   std::map<Value*, std::pair<ValID, int> > PlaceHolderInfo;
 

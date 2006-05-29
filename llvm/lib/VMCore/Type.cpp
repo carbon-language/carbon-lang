@@ -1246,7 +1246,7 @@ void Type::removeAbstractTypeUser(AbstractTypeUser *U) const {
 }
 
 
-// refineAbstractTypeTo - This function is used to when it is discovered that
+// refineAbstractTypeTo - This function is used when it is discovered that
 // the 'this' abstract type is actually equivalent to the NewType specified.
 // This causes all users of 'this' to switch to reference the more concrete type
 // NewType and for 'this' to be deleted.
