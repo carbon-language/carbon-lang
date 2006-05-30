@@ -6,30 +6,7 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This file contains the declaration of the Type class.  For more "Type" type
-// stuff, look in DerivedTypes.h.
-//
-// Note that instances of the Type class are immutable: once they are created,
-// they are never changed.  Also note that only one instance of a particular
-// type is ever created.  Thus seeing if two types are equal is a matter of
-// doing a trivial pointer comparison.
-//
-// Types, once allocated, are never free'd, unless they are an abstract type
-// that is resolved to a more concrete type.
-//
-// Opaque types are simple derived types with no state.  There may be many
-// different Opaque type objects floating around, but two are only considered
-// identical if they are pointer equals of each other.  This allows us to have
-// two opaque types that end up resolving to different concrete types later.
-//
-// Opaque types are also kinda weird and scary and different because they have
-// to keep a list of uses of the type.  When, through linking, parsing, or
-// bytecode reading, they become resolved, they need to find and update all
-// users of the unknown type, causing them to reference a new, more concrete
-// type.  Opaque types are deleted when their use list dwindles to zero users.
-//
-//===----------------------------------------------------------------------===//
+
 
 #ifndef LLVM_TYPE_H
 #define LLVM_TYPE_H
@@ -53,6 +30,31 @@ class StructType;
 class PackedType;
 class TypeMapBase;
 
+/// This file contains the declaration of the Type class.  For more "Type" type
+/// stuff, look in DerivedTypes.h.
+///
+/// The instances of the Type class are immutable: once they are created,
+/// they are never changed.  Also note that only one instance of a particular
+/// type is ever created.  Thus seeing if two types are equal is a matter of
+/// doing a trivial pointer comparison. To enforce that no two equal instances
+/// are created, Type instances can only be created via static factory methods 
+/// in class Type and in derived classes.
+/// 
+/// Once allocated, Types are never free'd, unless they are an abstract type
+/// that is resolved to a more concrete type.
+///
+/// Opaque types are simple derived types with no state.  There may be many
+/// different Opaque type objects floating around, but two are only considered
+/// identical if they are pointer equals of each other.  This allows us to have
+/// two opaque types that end up resolving to different concrete types later.
+///
+/// Opaque types are also kinda weird and scary and different because they have
+/// to keep a list of uses of the type.  When, through linking, parsing, or
+/// bytecode reading, they become resolved, they need to find and update all
+/// users of the unknown type, causing them to reference a new, more concrete
+/// type.  Opaque types are deleted when their use list dwindles to zero users.
+///
+/// @brief Root of type hierarchy
 class Type : public AbstractTypeUser {
 public:
   ///===-------------------------------------------------------------------===//
