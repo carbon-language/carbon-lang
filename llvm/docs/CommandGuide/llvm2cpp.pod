@@ -70,6 +70,22 @@ read from the standard input then the module name will be '<stdin>'. This option
 overrides both these default actions and specifies that the module name used
 must be F<moduleName>.
 
+=item B<-funcname> F<functionName>
+
+Specify the name of the function to be generated. The generated code contains a
+single function that produces the input module. By default its name is
+I<makeLLVMModule>. The B<-funcname> option overrides this default and allows
+you to control the name of the generated function. This is handy in conjunction
+with the B<-fragment> option when you only want B<llvm2cpp> to generate a
+single function that produces the module. With both options, such generated code
+could be I<#included> into another program.
+
+=item B<-fragment>
+
+This boolean option tells B<llvm2cpp> to generate only a program fragment. By
+deault B<llvm2cpp> generates a full program. With this option specified, only a
+single function that generates the input module will be generated.
+
 =back
 
 =head1 EXIT STATUS
