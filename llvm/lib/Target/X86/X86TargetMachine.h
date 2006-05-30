@@ -27,10 +27,10 @@
 namespace llvm {
 
 class X86TargetMachine : public TargetMachine {
-  const TargetData DataLayout;       // Calculates type size & alignment
-  X86InstrInfo      InstrInfo;
   X86Subtarget      Subtarget;
+  const TargetData DataLayout;       // Calculates type size & alignment
   TargetFrameInfo   FrameInfo;
+  X86InstrInfo      InstrInfo;
   X86JITInfo        JITInfo;
   X86TargetLowering TLInfo;
 public:

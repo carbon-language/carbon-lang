@@ -13,13 +13,16 @@
 
 #include "X86InstrInfo.h"
 #include "X86.h"
-#include "X86InstrBuilder.h"
-#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "X86GenInstrInfo.inc"
+#include "X86InstrBuilder.h"
+#include "X86Subtarget.h"
+#include "X86TargetMachine.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 using namespace llvm;
 
-X86InstrInfo::X86InstrInfo()
-  : TargetInstrInfo(X86Insts, sizeof(X86Insts)/sizeof(X86Insts[0])) {
+X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
+  : TargetInstrInfo(X86Insts, sizeof(X86Insts)/sizeof(X86Insts[0])),
+    TM(tm) {
 }
 
 
@@ -122,13 +125,12 @@ MachineInstr *X86InstrInfo::convertToThreeAddress(MachineInstr *MI) const {
   case X86::SHUFPSrri: {
     assert(MI->getNumOperands() == 4 && "Unknown shufps instruction!");
     const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
-    if (Subtarget->hasSSE2()) {
-      unsigned A = MI->getOperand(0).getReg();
-      unsigned B = MI->getOperand(1).getReg();
-      unsigned C = MI->getOperand(2).getReg();
-      unsigned M = MI->getOperand(3).getImmedValue();
-      return BuildMI(X86::PSHUFDri, 2, A).addReg(B).addImm(M);
-    }
+    if (!Subtarget->hasSSE2()) return 0;
+    unsigned A = MI->getOperand(0).getReg();
+    unsigned B = MI->getOperand(1).getReg();
+    unsigned C = MI->getOperand(2).getReg();
+    unsigned M = MI->getOperand(3).getImmedValue();
+    return BuildMI(X86::PSHUFDri, 2, A).addReg(B).addImm(M);
   }
   }
 

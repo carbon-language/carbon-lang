@@ -18,6 +18,7 @@
 #include "X86RegisterInfo.h"
 
 namespace llvm {
+  class X86TargetMachine;
 
 /// X86II - This namespace holds all of the target specific flags that
 /// instruction info tracks.
@@ -168,9 +169,10 @@ namespace X86II {
 }
 
 class X86InstrInfo : public TargetInstrInfo {
+  X86TargetMachine &TM;
   const X86RegisterInfo RI;
 public:
-  X86InstrInfo();
+  X86InstrInfo(X86TargetMachine &tm);
 
   /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
   /// such, whenever a client has an instance of instruction info, it should
