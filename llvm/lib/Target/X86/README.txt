@@ -622,3 +622,30 @@ How about implementing truncate / anyext as a property of machine instruction
 operand? i.e. Print as 32-bit super-class register / 16-bit sub-class register.
 Do this for the cases where a truncate / anyext is guaranteed to be eliminated.
 For IA32 that is truncate from 32 to 16 and anyext from 16 to 32.
+
+//===---------------------------------------------------------------------===//
+
+For this:
+
+int test(int a)
+{
+  return a * 3;
+}
+
+We currently emits
+	imull $3, 4(%esp), %eax
+
+Perhaps this is what we really should generate is? Is imull three or four
+cycles? Note: ICC generates this:
+	movl	4(%esp), %eax
+	leal	(%eax,%eax,2), %eax
+
+The current instruction priority is based on pattern complexity. The former is
+more "complex" because it folds a load so the latter will not be emitted.
+
+Perhaps we should use AddedComplexity to give LEA32r a higher priority? We
+should always try to match LEA first since the LEA matching code does some
+estimate to determine whether the match is profitable.
+
+However, if we care more about code size, then imull is better. It's two bytes
+shorter than movl + leal.
