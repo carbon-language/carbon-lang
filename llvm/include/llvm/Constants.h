@@ -345,6 +345,13 @@ protected:
 public:
   /// get() - Static factory methods - Return objects of the specified value
   static Constant *get(const ArrayType *T, const std::vector<Constant*> &);
+
+  /// This method constructs a ConstantArray and initializes it with a text
+  /// string. The default behavior (len==0) causes the null terminator to
+  /// be copied as well. However, in some situations this is not desired so
+  /// if len <= Initializer.length() (but not 0) then only that portion of
+  /// the string is copied and there is no null termination. If len >
+  /// than Initializer's length then the function asserts out (don't do that).
   static Constant *get(const std::string &Initializer, unsigned len = 0);
 
   /// getType - Specialize the getType() method to always return an ArrayType,
