@@ -121,11 +121,14 @@ MachineInstr *X86InstrInfo::convertToThreeAddress(MachineInstr *MI) const {
   default: break;
   case X86::SHUFPSrri: {
     assert(MI->getNumOperands() == 4 && "Unknown shufps instruction!");
-    unsigned A = MI->getOperand(0).getReg();
-    unsigned B = MI->getOperand(1).getReg();
-    unsigned C = MI->getOperand(2).getReg();
-    unsigned M = MI->getOperand(3).getImmedValue();
-    return BuildMI(X86::PSHUFDri, 2, A).addReg(B).addImm(M);
+    const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
+    if (Subtarget->hasSSE2()) {
+      unsigned A = MI->getOperand(0).getReg();
+      unsigned B = MI->getOperand(1).getReg();
+      unsigned C = MI->getOperand(2).getReg();
+      unsigned M = MI->getOperand(3).getImmedValue();
+      return BuildMI(X86::PSHUFDri, 2, A).addReg(B).addImm(M);
+    }
   }
   }
 
