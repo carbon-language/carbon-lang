@@ -392,6 +392,30 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
     }
     break;
   }
+
+  case ISD::OR: {
+    if (!Available) {
+      X86ISelAddressMode Backup = AM;
+      // Look for (x << c1) | c2 where (c2 < c1)
+      ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.Val->getOperand(0));
+      if (CN && !MatchAddress(N.Val->getOperand(1), AM, false)) {
+        if (AM.GV == NULL && AM.Disp == 0 && CN->getValue() < AM.Scale) {
+          AM.Disp = CN->getValue();
+          return false;
+        }
+      }
+      AM = Backup;
+      CN = dyn_cast<ConstantSDNode>(N.Val->getOperand(1));
+      if (CN && !MatchAddress(N.Val->getOperand(0), AM, false)) {
+        if (AM.GV == NULL && AM.Disp == 0 && CN->getValue() < AM.Scale) {
+          AM.Disp = CN->getValue();
+          return false;
+        }
+      }
+      AM = Backup;
+    }
+    break;
+  }
   }
 
   // Is the base register already occupied?

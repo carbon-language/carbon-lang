@@ -133,7 +133,7 @@ def brtarget : Operand<OtherVT>;
 // Define X86 specific addressing mode.
 def addr    : ComplexPattern<iPTR, 4, "SelectAddr", []>;
 def leaaddr : ComplexPattern<iPTR, 4, "SelectLEAAddr",
-                             [add, mul, shl, frameindex]>;
+                             [add, mul, shl, or, frameindex]>;
 
 //===----------------------------------------------------------------------===//
 // X86 Instruction Format Definitions.
