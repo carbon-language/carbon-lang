@@ -356,6 +356,7 @@ public:
     }
     
     SUnit *pop() {
+      if (empty()) return NULL;
       SUnit *V = Queue.top();
       Queue.pop();
       return V;
