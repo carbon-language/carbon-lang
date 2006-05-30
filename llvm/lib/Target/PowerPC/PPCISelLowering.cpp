@@ -916,18 +916,13 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   for (unsigned i = 0; i != NumOps; ++i)
     NumBytes += MVT::getSizeInBits(Op.getOperand(5+2*i).getValueType())/8;
 
-  // If we are calling what looks like a varargs function on the caller side,
-  // there are two cases:
-  //  1) The callee uses va_start.
-  //  2) The callee doesn't use va_start.
-  //
-  // In the case of #1, the prolog code will store up to 8 GPR argument
-  // registers to the stack, allowing va_start to index over them in memory.
-  // Because we cannot tell the difference (on the caller side) between #1/#2,
-  // we have to conservatively assume we have #1.  As such, make sure we have
-  // at least enough stack space for the caller to store the 8 GPRs.
-  if (isVarArg && Op.getNumOperands() > 5 && NumBytes < 56)
-    NumBytes = 56;
+  // The prolog code of the callee may store up to 8 GPR argument registers to
+  // the stack, allowing va_start to index over them in memory if its varargs.
+  // Because we cannot tell if this is needed on the caller side, we have to
+  // conservatively assume that it is needed.  As such, make sure we have at
+  // least enough stack space for the caller to store the 8 GPRs.
+  if (NumBytes < 24+8*4)
+    NumBytes = 24+8*4;
   
   // Adjust the stack pointer for the new arguments...
   // These operations are automatically eliminated by the prolog/epilog pass
