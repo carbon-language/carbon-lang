@@ -251,3 +251,22 @@ void %test(uint* %P) {
         ret void
 }
 
+//===---------------------------------------------------------------------===//
+
+dag/inst combine "clz(x)>>5 -> x==0" for 32-bit x.
+
+Compile:
+
+int bar(int x)
+{
+  int t = __builtin_clz(x);
+  return -(t>>5);
+}
+
+to:
+
+_bar:   addic r3,r3,-1
+        subfe r3,r3,r3
+        blr
+
+
