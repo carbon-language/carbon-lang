@@ -1,0 +1,88 @@
+=pod
+
+=head1 NAME
+
+llvm2xpp - LLVM assembler to LLVM C++ IR translator
+
+=head1 SYNOPSIS
+
+B<llvm2cpp> [I<options>] [I<filename>]
+
+=head1 DESCRIPTION
+
+B<llvm2cpp> translates from human readable LLVM assembly (.ll files) to a 
+corresponding C++ source file that will make calls against the LLVM C++ API to
+build the same module as the input. By default, the C++ output is a complete
+program that builds the module, verifies it and then emits the module as
+LLVM assembly again. This technique assists with testing because the input to
+B<llvm2cpp> and the output of the generated C++ program should be identical.
+
+If F<filename> is omitted or is C<->, then B<llvm2cpp> reads its input from
+standard input.
+
+If an output file is not specified with the B<-o> option, then
+B<llvm-as> sends its output to a file or standard output by following
+these rules:
+
+=over 
+
+=item *
+
+If the input is standard input, then the output is standard output.
+
+=item *
+
+If the input is a file that ends with C<.ll>, then the output file is of
+the same name, except that the suffix is changed to C<.cpp>.
+
+=item *
+
+If the input is a file that does not end with the C<.ll> suffix, then the
+output file has the same name as the input file, except that the C<.cpp>
+suffix is appended.
+
+=back
+
+=head1 OPTIONS
+
+=over
+
+=item B<-f>
+
+Force overwrite.  Normally, B<llvm2cpp> will refuse to overwrite an
+output file that already exists.  With this option, B<llvm2cpp>
+will overwrite the output file and replace it with new C++ source code.
+
+=item B<--help>
+
+Print a summary of command line options.
+
+=item B<-o> F<filename>
+
+Specify the output file name.  If F<filename> is C<->, then B<llvm2cpp>
+sends its output to standard output.
+
+=item B<-modname> F<moduleName>
+
+Specify the name of the module to be generated. Normally the generated program
+creates a module that has the same name as the input file. If the input file was
+read from the standard input then the module name will be '<stdin>'. This option
+overrides both these default actions and specifies that the module name used
+must be F<moduleName>.
+
+=back
+
+=head1 EXIT STATUS
+
+If B<llvm2cpp> succeeds, it will exit with 0.  Otherwise, if an error
+occurs, it will exit with a non-zero value.
+
+=head1 SEE ALSO
+
+L<llvm-as|llvm-as>
+
+=head1 AUTHORS
+
+Maintained by the LLVM Team (L<http://llvm.org>).
+
+=cut
