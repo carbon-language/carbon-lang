@@ -6,73 +6,76 @@
 # the original input to llvm2cpp.
 
 proc llvm2cpp-test { files } {
-#  if { $env(LLVM_RUNLLVM2CPP_TEST) == 1 } {
-    global subdir llvmtoolsdir llvmlibsdir objdir srcdir objroot srcroot 
-    set timeout 30
-    set path [file join $objdir $subdir]
-    set llvm2cpp [file join $llvmtoolsdir llvm2cpp ]
-    set llvmas [file join $llvmtoolsdir llvm-as ]
-    set llvmdis [file join $llvmtoolsdir llvm-dis ]
+  global subdir llvmtoolsdir llvmlibsdir objdir srcdir objroot srcroot 
+  set timeout 30
+  set path [file join $objdir $subdir]
+  set llvm2cpp [file join $llvmtoolsdir llvm2cpp ]
+  set llvmas [file join $llvmtoolsdir llvm-as ]
+  set llvmdis [file join $llvmtoolsdir llvm-dis ]
 
-    #Make Output Directory if it does not exist already
-    if { [file exists path] } {
-	cd $path
-    } else {
-	file mkdir $path
-	cd $path
+  #Make Output Directory if it does not exist already
+  if { [file exists path] } {
+      cd $path
+  } else {
+      file mkdir $path
+      cd $path
+  }
+  
+  file mkdir Output
+
+  foreach test $files {
+      
+    set filename [file tail $test]
+    set generated [file join Output $filename.cpp]
+    set executable [file join Output $filename.exe]
+    set output [file join Output $filename.gen]
+    set assembly [file join Output $filename.asm]
+    set testname [file rootname $filename]
+    set bytecode [file join Output $filename.bc]
+
+    # Note that the stderr for llvm-as must be redirected to /dev/null because
+    # otherwise exec will see the msgs and return 1 even though they are only 
+    # warnings. If real errors are generated on stderr then llvm-as will return
+    # a non-zero retval anyway so we're good.
+    set retval [ catch { 
+      exec -keepnewline $llvmas $test -o - | $llvmdis -f -o $assembly 2>/dev/null } msg ]
+
+    if { $retval != 0 } {
+      fail "$test: llvm-as/llvm-dis returned $retval\n$msg"
+      continue 
     }
-    
-    file mkdir Output
- 
-    foreach test $files {
-	
-      set filename [file tail $test]
-      set generated [file join Output $filename.cpp]
-      set executable [file join Output $filename.exe]
-      set output [file join Output $filename.gen]
-      set assembly [file join Output $filename.asm]
-      set testname [file rootname $filename]
 
-      set retval [ catch { 
-        exec -keepnewline $llvmas $test -o - | $llvmdis -f -o $assembly } msg ] 
+    set retval [ catch { 
+      exec -keepnewline $llvm2cpp -f -o $generated < $test 2>/dev/null } msg]
 
-      if { $retval != 0 } {
-        fail "$test: llvm-as/llvm-dis returned $retval\n$msg"
-        continue 
-      }
-
-      set retval [ catch { 
-        exec -keepnewline $llvm2cpp -f -o $generated < $test } msg]
-
-      if { $retval != 0 } {
-        fail "$test: llvm2cpp returned $retval\n$msg"
-        continue
-      }
-
-      set retval [ catch { 
-        exec -keepnewline gcc -g -D__STDC_LIMIT_MACROS -o $executable $generated -I$srcroot/include -I$objroot/include -L$llvmlibsdir $llvmlibsdir/LLVMCore.o -lLLVMSupport $llvmlibsdir/LLVMbzip2.o -lLLVMSystem -lstdc++ } msg ] 
-      if { $retval != 0 } {
-        fail "$test: gcc returned $retval\n$msg"
-        continue
-      }
-
-      set retval [ catch { exec -keepnewline $executable > $output } msg ]
-      if { $retval != 0 } {
-        set execname [file tail $executable]
-        fail "$test: $execname returned $retval:\n$msg"
-        continue
-      } 
-
-      set retval [ catch { 
-        exec -keepnewline diff $assembly $output } msg ]
-
-      if { $retval != 0 } {
-        fail "$test: diff returned $retval:\n$msg"
-        continue
-      }
-      pass "$test"
+    if { $retval != 0 } {
+      fail "$test: llvm2cpp returned $retval\n$msg"
+      continue
     }
-#  }
+
+    set retval [ catch { 
+      exec -keepnewline gcc -g -D__STDC_LIMIT_MACROS -o $executable $generated -I$srcroot/include -I$objroot/include -L$llvmlibsdir $llvmlibsdir/LLVMCore.o -lLLVMSupport $llvmlibsdir/LLVMbzip2.o -lLLVMSystem -lstdc++ } msg ] 
+    if { $retval != 0 } {
+      fail "$test: gcc returned $retval\n$msg"
+      continue
+    }
+
+    set retval [ catch { exec -keepnewline $executable > $output } msg ]
+    if { $retval != 0 } {
+      set execname [file tail $executable]
+      fail "$test: $execname returned $retval:\n$msg"
+      continue
+    } 
+
+    set retval [ catch { 
+      exec -keepnewline diff $assembly $output } msg ]
+
+    if { $retval != 0 } {
+      fail "$test: diff returned $retval:\n$msg"
+      continue
+    }
+    pass "$test"
+  }
 }
 
 
