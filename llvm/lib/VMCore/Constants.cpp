@@ -930,21 +930,17 @@ void ConstantArray::destroyConstant() {
 /// Otherwise, the length parameter specifies how much of the string to use 
 /// and it won't be null terminated.
 ///
-Constant *ConstantArray::get(const std::string &Str, unsigned length) {
-  assert(length <= Str.length() && "Invalid length for string");
+Constant *ConstantArray::get(const std::string &Str, bool AddNull) {
   std::vector<Constant*> ElementVals;
-
-  unsigned copy_len = (length == 0 ? Str.length() : length);
-  for (unsigned i = 0; i < copy_len; ++i)
+  for (unsigned i = 0; i < Str.length(); ++i)
     ElementVals.push_back(ConstantSInt::get(Type::SByteTy, Str[i]));
 
   // Add a null terminator to the string...
-  if (length == 0) {
+  if (AddNull) {
     ElementVals.push_back(ConstantSInt::get(Type::SByteTy, 0));
-    copy_len++;
   }
 
-  ArrayType *ATy = ArrayType::get(Type::SByteTy, copy_len);
+  ArrayType *ATy = ArrayType::get(Type::SByteTy, ElementVals.size());
   return ConstantArray::get(ATy, ElementVals);
 }
 

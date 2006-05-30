@@ -347,12 +347,12 @@ public:
   static Constant *get(const ArrayType *T, const std::vector<Constant*> &);
 
   /// This method constructs a ConstantArray and initializes it with a text
-  /// string. The default behavior (len==0) causes the null terminator to
-  /// be copied as well. However, in some situations this is not desired so
-  /// if len <= Initializer.length() (but not 0) then only that portion of
-  /// the string is copied and there is no null termination. If len >
-  /// than Initializer's length then the function asserts out (don't do that).
-  static Constant *get(const std::string &Initializer, unsigned len = 0);
+  /// string. The default behavior (AddNull==true) causes a null terminator to
+  /// be placed at the end of the array. This effectively increases the length
+  /// of the array by one (you've been warned).  However, in some situations 
+  /// this is not desired so if AddNull==false then the string is copied without
+  /// null termination. 
+  static Constant *get(const std::string &Initializer, bool AddNull = true);
 
   /// getType - Specialize the getType() method to always return an ArrayType,
   /// which reduces the amount of casting needed in parts of the compiler.
