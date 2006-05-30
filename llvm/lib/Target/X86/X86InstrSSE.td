@@ -391,20 +391,22 @@ def RCPSSm : SSI<0x53, MRMSrcMem, (ops FR32:$dst, f32mem:$src),
                  "rcpss {$src, $dst|$dst, $src}", []>;
 
 let isTwoAddress = 1 in {
+let isCommutable = 1 in {
 def MAXSSrr : SSI<0x5F, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
-                  "maxss {$src2, $dst|$dst, $src2}", []>;
-def MAXSSrm : SSI<0x5F, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f32mem:$src2),
                   "maxss {$src2, $dst|$dst, $src2}", []>;
 def MAXSDrr : SDI<0x5F, MRMSrcReg, (ops FR64:$dst, FR32:$src1, FR64:$src2),
                   "maxsd {$src2, $dst|$dst, $src2}", []>;
-def MAXSDrm : SDI<0x5F, MRMSrcMem, (ops FR64:$dst, FR32:$src1, f64mem:$src2),
-                  "maxsd {$src2, $dst|$dst, $src2}", []>;
 def MINSSrr : SSI<0x5D, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
-                  "minss {$src2, $dst|$dst, $src2}", []>;
-def MINSSrm : SSI<0x5D, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f32mem:$src2),
                   "minss {$src2, $dst|$dst, $src2}", []>;
 def MINSDrr : SDI<0x5D, MRMSrcReg, (ops FR64:$dst, FR32:$src1, FR64:$src2),
                   "minsd {$src2, $dst|$dst, $src2}", []>;
+}
+def MAXSSrm : SSI<0x5F, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f32mem:$src2),
+                  "maxss {$src2, $dst|$dst, $src2}", []>;
+def MAXSDrm : SDI<0x5F, MRMSrcMem, (ops FR64:$dst, FR32:$src1, f64mem:$src2),
+                  "maxsd {$src2, $dst|$dst, $src2}", []>;
+def MINSSrm : SSI<0x5D, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f32mem:$src2),
+                  "minss {$src2, $dst|$dst, $src2}", []>;
 def MINSDrm : SDI<0x5D, MRMSrcMem, (ops FR64:$dst, FR32:$src1, f64mem:$src2),
                   "minsd {$src2, $dst|$dst, $src2}", []>;
 }
@@ -469,20 +471,22 @@ def Int_RCPSSm   : SS_Intm<0x53, "rcpss {$src, $dst|$dst, $src}",
                            int_x86_sse_rcp_ss>;
 
 let isTwoAddress = 1 in {
+let isCommutable = 1 in {
 def Int_MAXSSrr : SS_Intrr<0x5F, "maxss {$src2, $dst|$dst, $src2}",
-                           int_x86_sse_max_ss>;
-def Int_MAXSSrm : SS_Intrm<0x5F, "maxss {$src2, $dst|$dst, $src2}",
                            int_x86_sse_max_ss>;
 def Int_MAXSDrr : SD_Intrr<0x5F, "maxsd {$src2, $dst|$dst, $src2}",
                            int_x86_sse2_max_sd>;
-def Int_MAXSDrm : SD_Intrm<0x5F, "maxsd {$src2, $dst|$dst, $src2}",
-                           int_x86_sse2_max_sd>;
 def Int_MINSSrr : SS_Intrr<0x5D, "minss {$src2, $dst|$dst, $src2}",
-                           int_x86_sse_min_ss>;
-def Int_MINSSrm : SS_Intrm<0x5D, "minss {$src2, $dst|$dst, $src2}",
                            int_x86_sse_min_ss>;
 def Int_MINSDrr : SD_Intrr<0x5D, "minsd {$src2, $dst|$dst, $src2}",
                            int_x86_sse2_min_sd>;
+}
+def Int_MAXSSrm : SS_Intrm<0x5F, "maxss {$src2, $dst|$dst, $src2}",
+                           int_x86_sse_max_ss>;
+def Int_MAXSDrm : SD_Intrm<0x5F, "maxsd {$src2, $dst|$dst, $src2}",
+                           int_x86_sse2_max_sd>;
+def Int_MINSSrm : SS_Intrm<0x5D, "minss {$src2, $dst|$dst, $src2}",
+                           int_x86_sse_min_ss>;
 def Int_MINSDrm : SD_Intrm<0x5D, "minsd {$src2, $dst|$dst, $src2}",
                            int_x86_sse2_min_sd>;
 }
@@ -1098,20 +1102,22 @@ def RCPPSm : PS_Intm<0x53, "rcpps {$src, $dst|$dst, $src}",
                      int_x86_sse_rcp_ps>;
 
 let isTwoAddress = 1 in {
+let isCommutable = 1 in {
 def MAXPSrr : PS_Intrr<0x5F, "maxps {$src2, $dst|$dst, $src2}",
-                       int_x86_sse_max_ps>;
-def MAXPSrm : PS_Intrm<0x5F, "maxps {$src2, $dst|$dst, $src2}",
                        int_x86_sse_max_ps>;
 def MAXPDrr : PD_Intrr<0x5F, "maxpd {$src2, $dst|$dst, $src2}",
                        int_x86_sse2_max_pd>;
-def MAXPDrm : PD_Intrm<0x5F, "maxpd {$src2, $dst|$dst, $src2}",
-                       int_x86_sse2_max_pd>;
 def MINPSrr : PS_Intrr<0x5D, "minps {$src2, $dst|$dst, $src2}",
-                       int_x86_sse_min_ps>;
-def MINPSrm : PS_Intrm<0x5D, "minps {$src2, $dst|$dst, $src2}",
                        int_x86_sse_min_ps>;
 def MINPDrr : PD_Intrr<0x5D, "minpd {$src2, $dst|$dst, $src2}",
                        int_x86_sse2_min_pd>;
+}
+def MAXPSrm : PS_Intrm<0x5F, "maxps {$src2, $dst|$dst, $src2}",
+                       int_x86_sse_max_ps>;
+def MAXPDrm : PD_Intrm<0x5F, "maxpd {$src2, $dst|$dst, $src2}",
+                       int_x86_sse2_max_pd>;
+def MINPSrm : PS_Intrm<0x5D, "minps {$src2, $dst|$dst, $src2}",
+                       int_x86_sse_min_ps>;
 def MINPDrm : PD_Intrm<0x5D, "minpd {$src2, $dst|$dst, $src2}",
                        int_x86_sse2_min_pd>;
 }
