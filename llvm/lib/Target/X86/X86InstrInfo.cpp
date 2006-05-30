@@ -102,7 +102,6 @@ unsigned X86InstrInfo::isStoreToStackSlot(MachineInstr *MI,
 }
 
 
-
 /// convertToThreeAddress - This method must be implemented by targets that
 /// set the M_CONVERTIBLE_TO_3_ADDR flag.  When this flag is set, the target
 /// may be able to convert a two-address instruction into a true
@@ -117,6 +116,18 @@ MachineInstr *X86InstrInfo::convertToThreeAddress(MachineInstr *MI) const {
   // All instructions input are two-addr instructions.  Get the known operands.
   unsigned Dest = MI->getOperand(0).getReg();
   unsigned Src = MI->getOperand(1).getReg();
+
+  switch (MI->getOpcode()) {
+  default: break;
+  case X86::SHUFPSrri: {
+    assert(MI->getNumOperands() == 4 && "Unknown shufps instruction!");
+    unsigned A = MI->getOperand(0).getReg();
+    unsigned B = MI->getOperand(1).getReg();
+    unsigned C = MI->getOperand(2).getReg();
+    unsigned M = MI->getOperand(3).getImmedValue();
+    return BuildMI(X86::PSHUFDri, 2, A).addReg(B).addImm(M);
+  }
+  }
 
   // FIXME: None of these instructions are promotable to LEAs without
   // additional information.  In particular, LEA doesn't set the flags that

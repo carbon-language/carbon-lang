@@ -1218,6 +1218,7 @@ def CMPPDrmi : PDIi8<0xC2, MRMSrcMem,
 
 // Shuffle and unpack instructions
 let isTwoAddress = 1 in {
+let isConvertibleToThreeAddress = 1 in // Convert to pshufd
 def SHUFPSrri : PSIi8<0xC6, MRMSrcReg, 
                      (ops VR128:$dst, VR128:$src1, VR128:$src2, i32i8imm:$src3),
                      "shufps {$src3, $src2, $dst|$dst, $src2, $src3}",
