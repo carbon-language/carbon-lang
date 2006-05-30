@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -relocation-model=static | grep 'movl _last' | wc -l | grep 2
+; RUN: llvm-as < %s | llc -march=x86 -mtriple=i686-apple-darwin8.6.1 -relocation-model=static | grep 'movl _last' | wc -l | grep 2
 
 %block = external global ubyte*		; <ubyte**> [#uses=1]
 %last = external global int		; <int*> [#uses=3]
