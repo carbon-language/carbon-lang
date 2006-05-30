@@ -660,3 +660,7 @@ http://developer.apple.com/documentation/Performance/Conceptual/
 Accelerate_sse_migration/index.html
 
 e.g. SSE select using and, andnot, or. Various SSE compare translations.
+
+//===---------------------------------------------------------------------===//
+
+Add hooks to commute some CMPP operations.
