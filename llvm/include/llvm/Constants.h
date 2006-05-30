@@ -345,7 +345,7 @@ protected:
 public:
   /// get() - Static factory methods - Return objects of the specified value
   static Constant *get(const ArrayType *T, const std::vector<Constant*> &);
-  static Constant *get(const std::string &Initializer);
+  static Constant *get(const std::string &Initializer, unsigned len = 0);
 
   /// getType - Specialize the getType() method to always return an ArrayType,
   /// which reduces the amount of casting needed in parts of the compiler.

@@ -924,20 +924,27 @@ void ConstantArray::destroyConstant() {
   destroyConstantImpl();
 }
 
-// ConstantArray::get(const string&) - Return an array that is initialized to
-// contain the specified string.  A null terminator is added to the specified
-// string so that it may be used in a natural way...
-//
-Constant *ConstantArray::get(const std::string &Str) {
+/// ConstantArray::get(const string&) - Return an array that is initialized to
+/// contain the specified string.  If length is zero then a null terminator is 
+/// added to the specified string so that it may be used in a natural way. 
+/// Otherwise, the length parameter specifies how much of the string to use 
+/// and it won't be null terminated.
+///
+Constant *ConstantArray::get(const std::string &Str, unsigned length) {
+  assert(length <= Str.length() && "Invalid length for string");
   std::vector<Constant*> ElementVals;
 
-  for (unsigned i = 0; i < Str.length(); ++i)
+  unsigned copy_len = (length == 0 ? Str.length() : length);
+  for (unsigned i = 0; i < copy_len; ++i)
     ElementVals.push_back(ConstantSInt::get(Type::SByteTy, Str[i]));
 
   // Add a null terminator to the string...
-  ElementVals.push_back(ConstantSInt::get(Type::SByteTy, 0));
+  if (length == 0) {
+    ElementVals.push_back(ConstantSInt::get(Type::SByteTy, 0));
+    copy_len++;
+  }
 
-  ArrayType *ATy = ArrayType::get(Type::SByteTy, Str.length()+1);
+  ArrayType *ATy = ArrayType::get(Type::SByteTy, copy_len);
   return ConstantArray::get(ATy, ElementVals);
 }
 
