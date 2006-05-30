@@ -363,8 +363,9 @@ ifeq ($(OS),HP-UX)
   CompileCommonOpts := -D_REENTRANT -D_HPUX_SOURCE
 endif
 
-# If we are building a universal binary on Mac OS/X, pass extra options.  This is
-# useful to people that want to link the LLVM libraries into their universal apps.
+# If we are building a universal binary on Mac OS/X, pass extra options.  This
+# is useful to people that want to link the LLVM libraries into their universal
+# apps.
 ifdef UNIVERSAL
   CompileCommonOpts += \
       -arch i386 -arch ppc -isysroot /Developer/SDKs/MACOSX10.4u.sdk/
@@ -374,11 +375,9 @@ ifdef UNIVERSAL
   DISABLE_AUTO_DEPENDENCIES=1
 endif
 
-# Temporary workaround for a Mac OSX / x86 compatibility issue.
+# Temporary workaround for a Mac OSX compatibility issue.
 ifeq ($(OS),Darwin)
-ifeq ($(ARCH),x86)
   CXX.Flags += -fno-use-cxa-atexit
-endif
 endif
 
 LD.Flags      += -L$(LibDir) -L$(LLVMLibDir) 
@@ -786,7 +785,8 @@ else
 all-local:: $(LibName.BCA)
 
 ifdef EXPORTED_SYMBOL_FILE
-BCLinkLib = $(GCCLD) -L$(CFERuntimeLibDir) -internalize-public-api-file=$(EXPORTED_SYMBOL_FILE)
+BCLinkLib = $(GCCLD) -L$(CFERuntimeLibDir) \
+                     -internalize-public-api-file=$(EXPORTED_SYMBOL_FILE)
 
 $(LibName.BCA): $(ObjectsBC) $(LibDir)/.dir $(GCCLD) \
                 $(LLVMToolDir)/llvm-ar
