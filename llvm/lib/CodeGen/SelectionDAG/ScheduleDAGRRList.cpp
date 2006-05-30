@@ -63,8 +63,8 @@ public:
 private:
   void ReleasePred(SUnit *PredSU, bool isChain, unsigned CurCycle);
   void ReleaseSucc(SUnit *SuccSU, bool isChain, unsigned CurCycle);
-  void ScheduleNodeBottomUp(SUnit *SU, unsigned& CurCycle);
-  void ScheduleNodeTopDown(SUnit *SU, unsigned& CurCycle);
+  void ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle);
+  void ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle);
   void ListScheduleTopDown();
   void ListScheduleBottomUp();
   void CommuteNodesToReducePressure();
@@ -78,8 +78,6 @@ void ScheduleDAGRRList::Schedule() {
   
   // Build scheduling units.
   BuildSchedUnits();
-  DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
-        SUnits[su].dumpAll(&DAG));
 
   CalculateDepths();
   CalculateHeights();
@@ -217,7 +215,7 @@ void ScheduleDAGRRList::ReleasePred(SUnit *PredSU, bool isChain,
 /// ScheduleNodeBottomUp - Add the node to the schedule. Decrement the pending
 /// count of its predecessors. If a predecessor pending count is zero, add it to
 /// the Available queue.
-void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU, unsigned& CurCycle) {
+void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
   DEBUG(std::cerr << "*** Scheduling [" << CurCycle << "]: ");
   DEBUG(SU->dump(&DAG));
   SU->Cycle = CurCycle;
@@ -230,7 +228,6 @@ void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU, unsigned& CurCycle) {
          E = SU->Preds.end(); I != E; ++I)
     ReleasePred(I->first, I->second, CurCycle);
   SU->isScheduled = true;
-  CurCycle++;
 }
 
 /// isReady - True if node's lower cycle bound is less or equal to the current
@@ -252,7 +249,7 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
   SUnit *CurNode = NULL;
   while (!AvailableQueue->empty()) {
     SUnit *CurNode = AvailableQueue->pop();
-    while (!isReady(CurNode, CurCycle)) {
+    while (CurNode && !isReady(CurNode, CurCycle)) {
       NotReady.push_back(CurNode);
       CurNode = AvailableQueue->pop();
     }
@@ -261,7 +258,9 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
     AvailableQueue->push_all(NotReady);
     NotReady.clear();
 
-    ScheduleNodeBottomUp(CurNode, CurCycle);
+    if (CurNode != NULL)
+      ScheduleNodeBottomUp(CurNode, CurCycle);
+    CurCycle++;
   }
 
   // Add entry node last
@@ -328,7 +327,7 @@ void ScheduleDAGRRList::ReleaseSucc(SUnit *SuccSU, bool isChain,
 /// ScheduleNodeTopDown - Add the node to the schedule. Decrement the pending
 /// count of its successors. If a successor pending count is zero, add it to
 /// the Available queue.
-void ScheduleDAGRRList::ScheduleNodeTopDown(SUnit *SU, unsigned& CurCycle) {
+void ScheduleDAGRRList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
   DEBUG(std::cerr << "*** Scheduling [" << CurCycle << "]: ");
   DEBUG(SU->dump(&DAG));
   SU->Cycle = CurCycle;
@@ -341,7 +340,6 @@ void ScheduleDAGRRList::ScheduleNodeTopDown(SUnit *SU, unsigned& CurCycle) {
          E = SU->Succs.end(); I != E; ++I)
     ReleaseSucc(I->first, I->second, CurCycle);
   SU->isScheduled = true;
-  CurCycle++;
 }
 
 void ScheduleDAGRRList::ListScheduleTopDown() {
@@ -359,6 +357,7 @@ void ScheduleDAGRRList::ListScheduleTopDown() {
   
   // Emit the entry node first.
   ScheduleNodeTopDown(Entry, CurCycle);
+  CurCycle++;
 
   // While Available queue is not empty, grab the node with the highest
   // priority. If it is not ready put it back. Schedule the node.
@@ -366,7 +365,7 @@ void ScheduleDAGRRList::ListScheduleTopDown() {
   SUnit *CurNode = NULL;
   while (!AvailableQueue->empty()) {
     SUnit *CurNode = AvailableQueue->pop();
-    while (!isReady(CurNode, CurCycle)) {
+    while (CurNode && !isReady(CurNode, CurCycle)) {
       NotReady.push_back(CurNode);
       CurNode = AvailableQueue->pop();
     }
@@ -375,7 +374,9 @@ void ScheduleDAGRRList::ListScheduleTopDown() {
     AvailableQueue->push_all(NotReady);
     NotReady.clear();
 
-    ScheduleNodeTopDown(CurNode, CurCycle);
+    if (CurNode != NULL)
+      ScheduleNodeTopDown(CurNode, CurCycle);
+    CurCycle++;
   }
   
   
@@ -453,6 +454,7 @@ namespace {
     }
     
     SUnit *pop() {
+      if (empty()) return NULL;
       SUnit *V = Queue.top();
       Queue.pop();
       return V;
