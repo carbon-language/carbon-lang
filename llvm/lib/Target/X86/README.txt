@@ -606,3 +606,19 @@ _bar:
 
 The current isel scheme will not allow the load to be folded in the call since
 the load's chain result is read by the callseq_start.
+
+//===---------------------------------------------------------------------===//
+
+Don't forget to find a way to squash noop truncates in the JIT environment.
+
+//===---------------------------------------------------------------------===//
+
+Implement anyext in the same manner as truncate that would allow them to be
+eliminated.
+
+//===---------------------------------------------------------------------===//
+
+How about implementing truncate / anyext as a property of machine instruction
+operand? i.e. Print as 32-bit super-class register / 16-bit sub-class register.
+Do this for the cases where a truncate / anyext is guaranteed to be eliminated.
+For IA32 that is truncate from 32 to 16 and anyext from 16 to 32.
