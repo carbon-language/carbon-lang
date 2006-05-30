@@ -28,13 +28,6 @@
 #include <set>
 using namespace llvm;
 
-namespace ARMISD {
-  enum {
-    FIRST_NUMBER = ISD::BUILTIN_OP_END+ARM::INSTRUCTION_LIST_END,
-    RET_FLAG
-  };
-}
-
 namespace {
   class ARMTargetLowering : public TargetLowering {
   public:
@@ -63,11 +56,12 @@ static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
   case 1:
     return SDOperand(); // ret void is legal
   case 3:
-    Copy = DAG.getCopyToReg(Op.getOperand(0), ARM::R0, Op.getOperand(2), SDOperand());
+    Copy = DAG.getCopyToReg(Op.getOperand(0), ARM::R0, Op.getOperand(1), SDOperand());
     break;
   }
+  SDOperand LR = DAG.getRegister(ARM::R14, MVT::i32);
 
-  return DAG.getNode(ARMISD::RET_FLAG, MVT::Other, Copy, Copy.getValue(1));
+  return DAG.getNode(ISD::BRIND, MVT::Other, Copy, LR);
 }
 
 static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {

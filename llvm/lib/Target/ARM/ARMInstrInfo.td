@@ -30,10 +30,6 @@ def SDT_ARMCallSeq : SDTypeProfile<0, 1, [ SDTCisVT<0, i32> ]>;
 def callseq_start  : SDNode<"ISD::CALLSEQ_START", SDT_ARMCallSeq, [SDNPHasChain]>;
 def callseq_end    : SDNode<"ISD::CALLSEQ_END",   SDT_ARMCallSeq, [SDNPHasChain]>;
 
-def SDT_ARMRetFlag : SDTypeProfile<0, 0, []>;
-def retflag        : SDNode<"ARMISD::RET_FLAG", SDT_ARMRetFlag,
-	                    [SDNPHasChain, SDNPOptInFlag]>;
-
 def ADJCALLSTACKUP : InstARM<(ops i32imm:$amt),
                             "!ADJCALLSTACKUP $amt",
                             [(callseq_end imm:$amt)]>;
@@ -42,11 +38,7 @@ def ADJCALLSTACKDOWN : InstARM<(ops i32imm:$amt),
                                "!ADJCALLSTACKDOWN $amt",
                                [(callseq_start imm:$amt)]>;
 
-//bx supports other registers as operands. So this looks like a
-//hack. Maybe a ret should be expanded to a "branch lr" and bx
-//declared as a regular instruction
-
-def BX: InstARM<(ops), "bx lr", [(retflag)]>;
+def bxr: InstARM<(ops IntRegs:$dst), "bx $dst", [(brind IntRegs:$dst)]>;
 
 def ldr   : InstARM<(ops IntRegs:$dst, IntRegs:$addr),
                      "ldr $dst, [$addr]",
