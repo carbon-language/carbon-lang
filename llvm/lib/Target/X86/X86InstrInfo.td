@@ -706,14 +706,6 @@ def IDIV16m: I<0xF7, MRM7m, (ops i16mem:$src),     // DX:AX/[mem16] = AX,DX
 def IDIV32m: I<0xF7, MRM7m, (ops i32mem:$src),     // EDX:EAX/[mem32] = EAX,EDX
                "idiv{l} $src", []>, Imp<[EAX,EDX],[EAX,EDX]>;
 
-// Sign-extenders for division.
-def CBW : I<0x98, RawFrm, (ops),
-            "{cbtw|cbw}", []>, Imp<[AL],[AH]>;   // AX = signext(AL)
-def CWD : I<0x99, RawFrm, (ops),
-            "{cwtd|cwd}", []>, Imp<[AX],[DX]>;   // DX:AX = signext(AX)
-def CDQ : I<0x99, RawFrm, (ops),
-            "{cltd|cdq}", []>, Imp<[EAX],[EDX]>; // EDX:EAX = signext(EAX)
-          
 
 //===----------------------------------------------------------------------===//
 //  Two address Instructions...
@@ -2285,6 +2277,16 @@ def MOVZX32rm16: I<0xB7, MRMSrcMem, (ops GR32:$dst, i16mem:$src),
                    "movz{wl|x} {$src, $dst|$dst, $src}",
                    [(set GR32:$dst, (zextloadi32i16 addr:$src))]>, TB;
 
+def CBW : I<0x98, RawFrm, (ops),
+            "{cbtw|cbw}", []>, Imp<[AL],[AX]>;   // AX = signext(AL)
+def CWDE : I<0x98, RawFrm, (ops),
+            "{cwtl|cwde}", []>, Imp<[AX],[EAX]>;   // EAX = signext(AX)
+
+def CWD : I<0x99, RawFrm, (ops),
+            "{cwtd|cwd}", []>, Imp<[AX],[AX,DX]>;   // DX:AX = signext(AX)
+def CDQ : I<0x99, RawFrm, (ops),
+            "{cltd|cdq}", []>, Imp<[EAX],[EAX,EDX]>; // EDX:EAX = signext(EAX)
+          
 //===----------------------------------------------------------------------===//
 // Miscellaneous Instructions
 //===----------------------------------------------------------------------===//
