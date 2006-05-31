@@ -57,18 +57,16 @@ will overwrite the output file and replace it with new C++ source code.
 
 Print a summary of command line options.
 
+=item B<-f> 
+
+Normally, B<llvm2cpp> will not overwrite an existing output file. With this
+option, that default behavior is changed and the program will overwrite existing
+output files.
+
 =item B<-o> F<filename>
 
 Specify the output file name.  If F<filename> is C<->, then B<llvm2cpp>
 sends its output to standard output.
-
-=item B<-modname> F<moduleName>
-
-Specify the name of the module to be generated. Normally the generated program
-creates a module that has the same name as the input file. If the input file was
-read from the standard input then the module name will be '<stdin>'. This option
-overrides both these default actions and specifies that the module name used
-must be F<moduleName>.
 
 =item B<-funcname> F<functionName>
 
@@ -80,11 +78,107 @@ with the B<-fragment> option when you only want B<llvm2cpp> to generate a
 single function that produces the module. With both options, such generated code
 could be I<#included> into another program.
 
-=item B<-fragment>
+=item B<-for>
 
-This boolean option tells B<llvm2cpp> to generate only a program fragment. By
-deault B<llvm2cpp> generates a full program. With this option specified, only a
-single function that generates the input module will be generated.
+Specify the name of the thing for which C++ code should be generated. By default
+the entire input module is re-generated. However, use of the various B<-gen-*>
+options can restrict what is produced. This option indicates what that
+restriction is.
+
+=item B<-gen-program>
+
+Specify that the output should be a complete program. Such program will recreate
+B<llvm2cpp>'s input as an LLVM module, verify that module, and then write out
+the module in LLVM assembly format. This is useful for doing identity tests
+where the output of the generated program is identical to the input to
+B<llvm2cpp>. The LLVM DejaGnu test suite can make use of this fact. This is the
+default form of generated output.
+
+If the B<-for> option is given with this option, it specifies the module
+identifier to use for the module created.
+
+=item B<-gen-module>
+
+Specify that the output should be a function that regenerates the module. It is
+assumed that this output will be #included into another program that has already
+arranged for the correct header files to be #included. The function generated
+takes no arguments and returns a I<Module*>. 
+
+If the B<-for> option is given with this option, it specifies the module
+identifier to use in creating the module returned by the generated function.
+
+=item B<-gen-contents>
+
+Specify that the output should be a function that adds the contents of the input
+module to another module. It is assumed that the output will be #included into
+another program that has already arranged for the correct header files to be
+#included. The function generated takes a single argument of type I<Module*> and
+returns that argument. Note that Module level attributes such as endianess,
+pointer size, target triple and inline asm are not passed on from the input
+module to the destination module. Only the sub-elements of the module (types,
+constants, functions, global variables) will be added to the input module.
+
+If the B<-for> option is given with this option, it specifies the module
+identifier to set in the input module by the generated function.
+
+=item B<-gen-function>
+
+Specify that the output should be a function that produces the definitions
+necessary for a specific function to be added to a module.  It is assumed that 
+the output will be #included into another program that has already arranged 
+for the correct header files to be #included. The function generated takes a 
+single argument of type I<Module*> and returns the I<Function*> that it added to
+the module.  Note that only those things (types, constants, etc.) directly 
+needed in the definition of the function will be placed in the generated
+function. 
+
+The B<-for> option must be given with this option or an error will be produced.
+The value of the option must be the name of a function in the input module for
+which code should be generated. If the named function does not exist an error
+will be produced.
+
+=item B<-gen-variable>
+
+Specify that the output should be a function that produces the definitions
+necessary for a specific global variable to be added to a module. It is assumed
+that the output will be #included into another program that has already arranged
+for the correct header files to be #included. The function generated takes a
+single argument of type I<Module*> and returns the I<GlobalVariable*> that it 
+added to the module. Note that only those things (types, constants, etc.)
+directly needed in the definition of the global variable will be placed in the
+generated function.
+
+The B<-for> option must be given with this option or an error will be produced.
+THe value of the option must be the name of a global variable in the input
+module for which code should be generated. If the named global variable does not
+exist an error will be produced.
+
+=item B<-gen-type>
+
+Specify that the output should be a function that produces the definitions
+necessary for specific type to be added to a module. It is assumed that the
+otuput will be #included into another program that has already arranged for the
+correct header files to be #included. The function generated take a single
+argument of type I<Module*> and returns the I<Type*> that it added to the
+module. Note that the generated function will only add the necessary type
+definitions to (possibly recursively) define the requested type.
+
+The B<-for> option must be given with this option or an error will be produced.
+The value of the option must be the name of a global type in the input module
+for which code should be generated. If the named type does not exist an error
+will be produced.
+
+=item B<-stats>
+
+Show pass statistics (not interesting in this program).
+
+=item B<-time-passes>
+
+Show pass timing statistics (not interesting in this program).
+
+=item B<-version>
+
+Show the version number of this program.
 
 =back
 
@@ -95,10 +189,10 @@ occurs, it will exit with a non-zero value.
 
 =head1 SEE ALSO
 
-L<llvm-as|llvm-as>
+L<llvm-as|llvm-as> L<tblgen|tblgen>
 
 =head1 AUTHORS
 
-Maintained by the LLVM Team (L<http://llvm.org>).
+Written by Reid Spencer (L<http://hlvm.org>).
 
 =cut
