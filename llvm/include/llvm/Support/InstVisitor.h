@@ -6,46 +6,7 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This template class is used to define instruction visitors in a typesafe
-// manner without having to use lots of casts and a big switch statement (in
-// your code that is).  The win here is that if instructions are added in the
-// future, they will be added to the InstVisitor<T> class, allowing you to
-// automatically support them (if you handle on of their superclasses).
-//
-// Note that this library is specifically designed as a template to avoid
-// virtual function call overhead.  Defining and using an InstVisitor is just as
-// efficient as having your own switch statement over the instruction opcode.
-//
-// InstVisitor Usage:
-//   You define InstVisitors from inheriting from the InstVisitor base class
-// and "overriding" functions in your class.  I say "overriding" because this
-// class is defined in terms of statically resolved overloading, not virtual
-// functions.  As an example, here is a visitor that counts the number of malloc
-// instructions processed:
-//
-//  // Declare the class.  Note that we derive from InstVisitor instantiated
-//  // with _our new subclasses_ type.
-//  //
-//  struct CountMallocVisitor : public InstVisitor<CountMallocVisitor> {
-//    unsigned Count;
-//    CountMallocVisitor() : Count(0) {}
-//
-//    void visitMallocInst(MallocInst *MI) { ++Count; }
-//  };
-//
-//  And this class would be used like this:
-//    CountMallocVistor CMV;
-//    CMV.visit(function);
-//    NumMallocs = CMV.Count;
-//
-// Returning a value from the visitation function:
-//   The InstVisitor class takes an optional second template argument that
-// specifies what type the instruction visitation functions should return.  If
-// you specify this, you *MUST* provide an implementation of visitInstruction
-// though!.
-//
-//===----------------------------------------------------------------------===//
+
 
 #ifndef LLVM_SUPPORT_INSTVISITOR_H
 #define LLVM_SUPPORT_INSTVISITOR_H
@@ -71,6 +32,51 @@ class AllocationInst;
                visit##CLASS_TO_VISIT(static_cast<CLASS_TO_VISIT&>(I))
 
 
+/// @brief Base class for instruction visitors
+///
+/// Instruction visitors are used when you want to perform different action for
+/// different kinds of instruction without without having to use lots of casts 
+/// and a big switch statement (in your code that is). 
+///
+/// To define your own visitor, inherit from this class, specifying your
+/// new type for the 'SubClass' template parameter, and "override" visitXXX
+/// functions in your class. I say "overriding" because this class is defined 
+/// in terms of statically resolved overloading, not virtual functions.  
+/// 
+/// For example, here is a visitor that counts the number of malloc 
+/// instructions processed:
+///
+///  /// Declare the class.  Note that we derive from InstVisitor instantiated
+///  /// with _our new subclasses_ type.
+///  ///
+///  struct CountMallocVisitor : public InstVisitor<CountMallocVisitor> {
+///    unsigned Count;
+///    CountMallocVisitor() : Count(0) {}
+///
+///    void visitMallocInst(MallocInst *MI) { ++Count; }
+///  };
+///
+///  And this class would be used like this:
+///    CountMallocVistor CMV;
+///    CMV.visit(function);
+///    NumMallocs = CMV.Count;
+///
+/// The defined has 'visit' methods for Instruction, and also for BasicBlock,
+/// Function, and Module, which recursively process all conained instructions.
+///
+/// Note that if you don't implement visitXXX for some instruction type,
+/// the visitXXX method for instruction superclass will be invoked. So
+/// if instructions are added in the future, they will be automatically
+/// supported, if you handle on of their superclasses.
+///
+/// The optional second template argument specifies the type that instruction 
+/// visitation functions should return. If you specify this, you *MUST* provide 
+/// an implementation of visitInstruction though!.
+///
+/// Note that this class is specifically designed as a template to avoid
+/// virtual function call overhead.  Defining and using an InstVisitor is just
+/// as efficient as having your own switch statement over the instruction
+/// opcode.
 template<typename SubClass, typename RetTy=void>
 class InstVisitor {
   //===--------------------------------------------------------------------===//
