@@ -39,23 +39,7 @@ static inline std::string utohexstr(uint64_t X) {
   return std::string(BufPtr);
 }
 
-static inline std::string utostr(uint64_t X, bool isNeg = false) {
-  char Buffer[40];
-  char *BufPtr = Buffer+39;
-
-  *BufPtr = 0;                  // Null terminate buffer...
-  if (X == 0) *--BufPtr = '0';  // Handle special case...
-
-  while (X) {
-    *--BufPtr = '0' + char(X % 10);
-    X /= 10;
-  }
-
-  if (isNeg) *--BufPtr = '-';   // Add negative sign...
-  return std::string(BufPtr);
-}
-
-static inline std::string utostr(uint32_t X, bool isNeg = false) {
+static inline std::string utostr_32(uint32_t X, bool isNeg = false) {
   char Buffer[20];
   char *BufPtr = Buffer+19;
 
@@ -72,18 +56,31 @@ static inline std::string utostr(uint32_t X, bool isNeg = false) {
   return std::string(BufPtr);
 }
 
+static inline std::string utostr(uint64_t X, bool isNeg = false) {
+  if (X == (uint32_t)X)
+    return utostr_32((uint32_t)X, isNeg);
+  
+  char Buffer[40];
+  char *BufPtr = Buffer+39;
+  
+  *BufPtr = 0;                  // Null terminate buffer...
+  if (X == 0) *--BufPtr = '0';  // Handle special case...
+  
+  while (X) {
+    *--BufPtr = '0' + char(X % 10);
+    X /= 10;
+  }
+  
+  if (isNeg) *--BufPtr = '-';   // Add negative sign...
+  return std::string(BufPtr);
+}
+
+
 static inline std::string itostr(int64_t X) {
   if (X < 0)
     return utostr(static_cast<uint64_t>(-X), true);
   else
     return utostr(static_cast<uint64_t>(X));
-}
-
-static inline std::string itostr(int32_t X) {
-  if (X < 0)
-    return utostr(static_cast<unsigned>(-X), true);
-  else
-    return utostr(static_cast<unsigned>(X));
 }
 
 static inline std::string ftostr(double V) {
