@@ -42,6 +42,11 @@ class TypeMapBase;
 /// 
 /// Once allocated, Types are never free'd, unless they are an abstract type
 /// that is resolved to a more concrete type.
+/// 
+/// Types themself don't have a name, and can be named either by:
+/// - using SymbolTable instance, typically from some Module,
+/// - using convenience methods in the Module class (which uses module's 
+///    SymbolTable too).
 ///
 /// Opaque types are simple derived types with no state.  There may be many
 /// different Opaque type objects floating around, but two are only considered
