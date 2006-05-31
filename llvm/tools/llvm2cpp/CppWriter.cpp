@@ -71,7 +71,8 @@ public:
 
   const Module* getModule() { return TheModule; }
 
-  void printModule(const Module *M);
+  void printModule();
+  void printFragment();
 
 private:
   void printTypes(const Module* M);
@@ -321,60 +322,23 @@ CppWriter::getCppName(const Type* Ty)
   return TypeNames[Ty] = name;
 }
 
-void CppWriter::printModule(const Module *M) {
-  Out << "\n// Module Construction\n";
-  Out << "Module* mod = new Module(\"";
-  if (!ModName.empty())
-    printEscapedString(ModName);
-  else if (M->getModuleIdentifier() == "-")
-    printEscapedString("<stdin>");
-  else 
-    printEscapedString(M->getModuleIdentifier());
-  Out << "\");\n";
-  Out << "mod->setEndianness(";
-  switch (M->getEndianness()) {
-    case Module::LittleEndian: Out << "Module::LittleEndian);\n"; break;
-    case Module::BigEndian:    Out << "Module::BigEndian);\n";    break;
-    case Module::AnyEndianness:Out << "Module::AnyEndianness);\n";  break;
-  }
-  Out << "mod->setPointerSize(";
-  switch (M->getPointerSize()) {
-    case Module::Pointer32:      Out << "Module::Pointer32);\n"; break;
-    case Module::Pointer64:      Out << "Module::Pointer64);\n"; break;
-    case Module::AnyPointerSize: Out << "Module::AnyPointerSize);\n"; break;
-  }
-  if (!M->getTargetTriple().empty())
-    Out << "mod->setTargetTriple(\"" << M->getTargetTriple() << "\");\n";
-
-  if (!M->getModuleInlineAsm().empty()) {
-    Out << "mod->setModuleInlineAsm(\"";
-    printEscapedString(M->getModuleInlineAsm());
-    Out << "\");\n";
-  }
-  
-  // Loop over the dependent libraries and emit them.
-  Module::lib_iterator LI = M->lib_begin();
-  Module::lib_iterator LE = M->lib_end();
-  while (LI != LE) {
-    Out << "mod->addLibrary(\"" << *LI << "\");\n";
-    ++LI;
-  }
-
+void CppWriter::printFragment() {
   // Print out all the type definitions
   Out << "\n// Type Definitions\n";
-  printTypes(M);
+  printTypes(TheModule);
 
   // Functions can call each other and global variables can reference them so 
   // define all the functions first before emitting their function bodies.
   Out << "\n// Function Declarations\n";
-  for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
+  for (Module::const_iterator I = TheModule->begin(), E = TheModule->end(); 
+       I != E; ++I)
     printFunctionHead(I);
 
   // Process the global variables declarations. We can't initialze them until
   // after the constants are printed so just print a header for each global
   Out << "\n// Global Variable Declarations\n";
-  for (Module::const_global_iterator I = M->global_begin(), E = M->global_end();
-       I != E; ++I) {
+  for (Module::const_global_iterator I = TheModule->global_begin(), 
+       E = TheModule->global_end(); I != E; ++I) {
     printGlobalHead(I);
   }
 
@@ -382,20 +346,21 @@ void CppWriter::printModule(const Module *M) {
   // through GlobalValues. All GlobalValues have been declared at this point
   // so we can proceed to generate the constants.
   Out << "\n// Constant Definitions\n";
-  printConstants(M);
+  printConstants(TheModule);
 
   // Process the global variables definitions now that all the constants have
   // been emitted. These definitions just couple the gvars with their constant
   // initializers.
   Out << "\n// Global Variable Definitions\n";
-  for (Module::const_global_iterator I = M->global_begin(), E = M->global_end();
-       I != E; ++I) {
+  for (Module::const_global_iterator I = TheModule->global_begin(), 
+       E = TheModule->global_end(); I != E; ++I) {
     printGlobalBody(I);
   }
 
   // Finally, we can safely put out all of the function bodies.
   Out << "\n// Function Definitions\n";
-  for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I) {
+  for (Module::const_iterator I = TheModule->begin(), E = TheModule->end(); 
+       I != E; ++I) {
     if (!I->isExternal()) {
       Out << "\n// Function: " << I->getName() << " (" << getCppName(I) 
           << ")\n{\n";
@@ -403,6 +368,48 @@ void CppWriter::printModule(const Module *M) {
       Out << "}\n";
     }
   }
+}
+
+void CppWriter::printModule() {
+  Out << "\n// Module Construction\n";
+  Out << "Module* mod = new Module(\"";
+  if (!ModName.empty())
+    printEscapedString(ModName);
+  else if (TheModule->getModuleIdentifier() == "-")
+    printEscapedString("<stdin>");
+  else 
+    printEscapedString(TheModule->getModuleIdentifier());
+  Out << "\");\n";
+  Out << "mod->setEndianness(";
+  switch (TheModule->getEndianness()) {
+    case Module::LittleEndian: Out << "Module::LittleEndian);\n"; break;
+    case Module::BigEndian:    Out << "Module::BigEndian);\n";    break;
+    case Module::AnyEndianness:Out << "Module::AnyEndianness);\n";  break;
+  }
+  Out << "mod->setPointerSize(";
+  switch (TheModule->getPointerSize()) {
+    case Module::Pointer32:      Out << "Module::Pointer32);\n"; break;
+    case Module::Pointer64:      Out << "Module::Pointer64);\n"; break;
+    case Module::AnyPointerSize: Out << "Module::AnyPointerSize);\n"; break;
+  }
+  if (!TheModule->getTargetTriple().empty())
+    Out << "mod->setTargetTriple(\"" << TheModule->getTargetTriple() 
+        << "\");\n";
+
+  if (!TheModule->getModuleInlineAsm().empty()) {
+    Out << "mod->setModuleInlineAsm(\"";
+    printEscapedString(TheModule->getModuleInlineAsm());
+    Out << "\");\n";
+  }
+  
+  // Loop over the dependent libraries and emit them.
+  Module::lib_iterator LI = TheModule->lib_begin();
+  Module::lib_iterator LE = TheModule->lib_end();
+  while (LI != LE) {
+    Out << "mod->addLibrary(\"" << *LI << "\");\n";
+    ++LI;
+  }
+  printFragment();
 }
 
 void
@@ -1303,13 +1310,14 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname)
 namespace llvm {
 
 void WriteModuleToCppFile(Module* mod, std::ostream& o) {
+  o << "// Generated by llvm2cpp - DO NOT MODIFY!\n\n";
   std::string fname = FuncName.getValue();
   if (fname.empty())
     fname = "makeLLVMModule";
   if (Fragment) {
-    o << "Module* " << fname << "() {\n";
+    o << "Module* " << fname << "(Module *mod) {\n";
     CppWriter W(o, mod);
-    W.printModule(mod);
+    W.printFragment();
     o << "return mod;\n";
     o << "}\n";
   } else {
@@ -1342,7 +1350,7 @@ void WriteModuleToCppFile(Module* mod, std::ostream& o) {
     o << "}\n\n";
     o << "Module* " << fname << "() {\n";
     CppWriter W(o, mod);
-    W.printModule(mod);
+    W.printModule();
     o << "return mod;\n";
     o << "}\n";
   }
