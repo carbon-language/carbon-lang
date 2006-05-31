@@ -32,15 +32,35 @@
 using namespace llvm;
 
 static cl::opt<std::string>
-ModName("modname", cl::desc("Specify the module name to use"),
-        cl::value_desc("module name"));
-
-static cl::opt<std::string>
 FuncName("funcname", cl::desc("Specify the name of the generated function"),
          cl::value_desc("function name"));
 
-static cl::opt<bool>
-Fragment("fragment", cl::desc("Don't generate a complete program"));
+enum WhatToGenerate {
+  GenProgram,
+  GenModule,
+  GenContents,
+  GenFunction,
+  GenVariable,
+  GenType
+};
+
+static cl::opt<WhatToGenerate> GenerationType(cl::Optional,
+  cl::desc("Choose what kind of output to generate"),
+  cl::init(GenProgram),
+  cl::values(
+    clEnumValN(GenProgram, "gen-program",  "Generate a complete program"),
+    clEnumValN(GenModule,  "gen-module",   "Generate a module definition"),
+    clEnumValN(GenContents,"gen-contents", "Generate contents of a module"),
+    clEnumValN(GenFunction,"gen-function", "Generate a function definition"),
+    clEnumValN(GenVariable,"gen-variable", "Generate a variable definition"),
+    clEnumValN(GenType,    "gen-type",     "Generate a type definition"),
+    clEnumValEnd
+  )
+);
+
+static cl::opt<std::string> NameToGenerate("for", cl::Optional,
+  cl::desc("Specify the name of the thing to generate"),
+  cl::init("!bad!"));
 
 namespace {
 typedef std::vector<const Type*> TypeList;
@@ -52,6 +72,7 @@ typedef std::set<const Value*> ValueSet;
 typedef std::map<const Value*,std::string> ForwardRefMap;
 
 class CppWriter {
+  const char* progname;
   std::ostream &Out;
   const Module *TheModule;
   unsigned long uniqueNum;
@@ -65,41 +86,109 @@ class CppWriter {
   ForwardRefMap ForwardRefs;
 
 public:
-  inline CppWriter(std::ostream &o, const Module *M)
-    : Out(o), TheModule(M), uniqueNum(0), TypeNames(),
+  inline CppWriter(std::ostream &o, const Module *M, const char* pn="llvm2cpp")
+    : progname(pn), Out(o), TheModule(M), uniqueNum(0), TypeNames(),
       ValueNames(), UnresolvedTypes(), TypeStack() { }
 
   const Module* getModule() { return TheModule; }
 
-  void printModule();
-  void printFragment();
+  void printProgram(const std::string& fname, const std::string& modName );
+  void printModule(const std::string& fname, const std::string& modName );
+  void printContents(const std::string& fname, const std::string& modName );
+  void printFunction(const std::string& fname, const std::string& funcName );
+  void printVariable(const std::string& fname, const std::string& varName );
+  void printType(const std::string& fname, const std::string& typeName );
+
+  void error(const std::string& msg);
 
 private:
+  void printLinkageType(GlobalValue::LinkageTypes LT);
+  void printCallingConv(unsigned cc);
+  void printEscapedString(const std::string& str);
+  void printCFP(const ConstantFP* CFP);
+
+  std::string getCppName(const Type* val);
+  inline void printCppName(const Type* val);
+
+  std::string getCppName(const Value* val);
+  inline void printCppName(const Value* val);
+
+  bool printTypeInternal(const Type* Ty);
+  inline void printType(const Type* Ty);
   void printTypes(const Module* M);
-  void printConstants(const Module* M);
+
   void printConstant(const Constant *CPV);
-  void printGlobalHead(const GlobalVariable *GV);
-  void printGlobalBody(const GlobalVariable *GV);
+  void printConstants(const Module* M);
+
+  void printVariableUses(const GlobalVariable *GV);
+  void printVariableHead(const GlobalVariable *GV);
+  void printVariableBody(const GlobalVariable *GV);
+
+  void printFunctionUses(const Function *F);
   void printFunctionHead(const Function *F);
   void printFunctionBody(const Function *F);
   void printInstruction(const Instruction *I, const std::string& bbname);
-  void printSymbolTable(const SymbolTable &ST);
-  void printLinkageType(GlobalValue::LinkageTypes LT);
-  void printCallingConv(unsigned cc);
-
-  std::string getCppName(const Type* val);
-  std::string getCppName(const Value* val);
-  inline void printCppName(const Value* val);
-  inline void printCppName(const Type* val);
-  bool isOnStack(const Type*) const;
-  inline void printTypeDef(const Type* Ty);
-  bool printTypeDefInternal(const Type* Ty);
-  void printEscapedString(const std::string& str);
-
   std::string getOpName(Value*);
 
-  void printCFP(const ConstantFP* CFP);
+  void printModuleBody();
+
 };
+
+inline void
+sanitize(std::string& str) {
+  for (size_t i = 0; i < str.length(); ++i)
+    if (!isalnum(str[i]) && str[i] != '_')
+      str[i] = '_';
+}
+
+inline const char* 
+getTypePrefix(const Type* Ty ) {
+  const char* prefix;
+  switch (Ty->getTypeID()) {
+    case Type::VoidTyID:     prefix = "void_"; break;
+    case Type::BoolTyID:     prefix = "bool_"; break; 
+    case Type::UByteTyID:    prefix = "ubyte_"; break;
+    case Type::SByteTyID:    prefix = "sbyte_"; break;
+    case Type::UShortTyID:   prefix = "ushort_"; break;
+    case Type::ShortTyID:    prefix = "short_"; break;
+    case Type::UIntTyID:     prefix = "uint_"; break;
+    case Type::IntTyID:      prefix = "int_"; break;
+    case Type::ULongTyID:    prefix = "ulong_"; break;
+    case Type::LongTyID:     prefix = "long_"; break;
+    case Type::FloatTyID:    prefix = "float_"; break;
+    case Type::DoubleTyID:   prefix = "double_"; break;
+    case Type::LabelTyID:    prefix = "label_"; break;
+    case Type::FunctionTyID: prefix = "func_"; break;
+    case Type::StructTyID:   prefix = "struct_"; break;
+    case Type::ArrayTyID:    prefix = "array_"; break;
+    case Type::PointerTyID:  prefix = "ptr_"; break;
+    case Type::PackedTyID:   prefix = "packed_"; break;
+    case Type::OpaqueTyID:   prefix = "opaque_"; break;
+    default:                 prefix = "other_"; break;
+  }
+  return prefix;
+}
+
+// Looks up the type in the symbol table and returns a pointer to its name or
+// a null pointer if it wasn't found. Note that this isn't the same as the
+// Mode::getTypeName function which will return an empty string, not a null
+// pointer if the name is not found.
+inline const std::string* 
+findTypeName(const SymbolTable& ST, const Type* Ty)
+{
+  SymbolTable::type_const_iterator TI = ST.type_begin();
+  SymbolTable::type_const_iterator TE = ST.type_end();
+  for (;TI != TE; ++TI)
+    if (TI->second == Ty)
+      return &(TI->first);
+  return 0;
+}
+
+void
+CppWriter::error(const std::string& msg) {
+  std::cerr << progname << ": " << msg << "\n";
+  exit(2);
+}
 
 // printCFP - Print a floating point constant .. very carefully :)
 // This makes sure that conversion to/from floating yields the same binary
@@ -141,27 +230,35 @@ CppWriter::printCFP(const ConstantFP *CFP) {
 #endif
 }
 
-std::string
-CppWriter::getOpName(Value* V) {
-  if (!isa<Instruction>(V) || DefinedValues.find(V) != DefinedValues.end())
-    return getCppName(V);
+void
+CppWriter::printCallingConv(unsigned cc){
+  // Print the calling convention.
+  switch (cc) {
+    case CallingConv::C:     Out << "CallingConv::C"; break;
+    case CallingConv::CSRet: Out << "CallingConv::CSRet"; break;
+    case CallingConv::Fast:  Out << "CallingConv::Fast"; break;
+    case CallingConv::Cold:  Out << "CallingConv::Cold"; break;
+    case CallingConv::FirstTargetCC: Out << "CallingConv::FirstTargetCC"; break;
+    default:                 Out << cc; break;
+  }
+}
 
-  // See if its alread in the map of forward references, if so just return the
-  // name we already set up for it
-  ForwardRefMap::const_iterator I = ForwardRefs.find(V);
-  if (I != ForwardRefs.end())
-    return I->second;
-
-  // This is a new forward reference. Generate a unique name for it
-  std::string result(std::string("fwdref_") + utostr(uniqueNum++));
-
-  // Yes, this is a hack. An Argument is the smallest instantiable value that
-  // we can make as a placeholder for the real value. We'll replace these
-  // Argument instances later.
-  Out << "  Argument* " << result << " = new Argument(" 
-      << getCppName(V->getType()) << ");\n";
-  ForwardRefs[V] = result;
-  return result;
+void 
+CppWriter::printLinkageType(GlobalValue::LinkageTypes LT) {
+  switch (LT) {
+    case GlobalValue::InternalLinkage:  
+      Out << "GlobalValue::InternalLinkage"; break;
+    case GlobalValue::LinkOnceLinkage:  
+      Out << "GlobalValue::LinkOnceLinkage "; break;
+    case GlobalValue::WeakLinkage:      
+      Out << "GlobalValue::WeakLinkage"; break;
+    case GlobalValue::AppendingLinkage: 
+      Out << "GlobalValue::AppendingLinkage"; break;
+    case GlobalValue::ExternalLinkage: 
+      Out << "GlobalValue::ExternalLinkage"; break;
+    case GlobalValue::GhostLinkage:
+      Out << "GlobalValue::GhostLinkage"; break;
+  }
 }
 
 // printEscapedString - Print each character of the specified string, escaping
@@ -178,92 +275,6 @@ CppWriter::printEscapedString(const std::string &Str) {
           << (char)(((C&15) < 10) ? ((C&15)+'0') : ((C&15)-10+'A'));
     }
   }
-}
-
-inline void
-sanitize(std::string& str) {
-  for (size_t i = 0; i < str.length(); ++i)
-    if (!isalnum(str[i]) && str[i] != '_')
-      str[i] = '_';
-}
-
-inline const char* 
-getTypePrefix(const Type* Ty ) {
-  const char* prefix;
-  switch (Ty->getTypeID()) {
-    case Type::VoidTyID:     prefix = "void_"; break;
-    case Type::BoolTyID:     prefix = "bool_"; break; 
-    case Type::UByteTyID:    prefix = "ubyte_"; break;
-    case Type::SByteTyID:    prefix = "sbyte_"; break;
-    case Type::UShortTyID:   prefix = "ushort_"; break;
-    case Type::ShortTyID:    prefix = "short_"; break;
-    case Type::UIntTyID:     prefix = "uint_"; break;
-    case Type::IntTyID:      prefix = "int_"; break;
-    case Type::ULongTyID:    prefix = "ulong_"; break;
-    case Type::LongTyID:     prefix = "long_"; break;
-    case Type::FloatTyID:    prefix = "float_"; break;
-    case Type::DoubleTyID:   prefix = "double_"; break;
-    case Type::LabelTyID:    prefix = "label_"; break;
-    case Type::FunctionTyID: prefix = "func_"; break;
-    case Type::StructTyID:   prefix = "struct_"; break;
-    case Type::ArrayTyID:    prefix = "array_"; break;
-    case Type::PointerTyID:  prefix = "ptr_"; break;
-    case Type::PackedTyID:   prefix = "packed_"; break;
-    case Type::OpaqueTyID:   prefix = "opaque_"; break;
-    default:                 prefix = "other_"; break;
-  }
-  return prefix;
-}
-
-std::string
-CppWriter::getCppName(const Value* val) {
-  std::string name;
-  ValueMap::iterator I = ValueNames.find(val);
-  if (I != ValueNames.end() && I->first == val)
-    return  I->second;
-
-  if (const GlobalVariable* GV = dyn_cast<GlobalVariable>(val)) {
-    name = std::string("gvar_") + 
-           getTypePrefix(GV->getType()->getElementType());
-  } else if (const Function* F = dyn_cast<Function>(val)) {
-    name = std::string("func_");
-  } else if (const Constant* C = dyn_cast<Constant>(val)) {
-    name = std::string("const_") + getTypePrefix(C->getType());
-  } else {
-    name = getTypePrefix(val->getType());
-  }
-  name += (val->hasName() ? val->getName() : utostr(uniqueNum++));
-  sanitize(name);
-  NameSet::iterator NI = UsedNames.find(name);
-  if (NI != UsedNames.end())
-    name += std::string("_") + utostr(uniqueNum++);
-  UsedNames.insert(name);
-  return ValueNames[val] = name;
-}
-
-void
-CppWriter::printCppName(const Value* val) {
-  printEscapedString(getCppName(val));
-}
-
-void
-CppWriter::printCppName(const Type* Ty)
-{
-  printEscapedString(getCppName(Ty));
-}
-
-// Gets the C++ name for a type. Returns true if we already saw the type,
-// false otherwise.
-//
-inline const std::string* 
-findTypeName(const SymbolTable& ST, const Type* Ty)
-{
-  SymbolTable::type_const_iterator TI = ST.type_begin();
-  SymbolTable::type_const_iterator TE = ST.type_end();
-  for (;TI != TE; ++TI)
-    if (TI->second == Ty)
-      return &(TI->first);
-  return 0;
 }
 
 std::string
@@ -286,7 +297,7 @@ CppWriter::getCppName(const Type* Ty)
       case Type::DoubleTyID:   return "Type::DoubleTy";
       case Type::LabelTyID:    return "Type::LabelTy";
       default:
-        assert(!"Can't get here");
+        error("Invalid primitive type");
         break;
     }
     return "Type::VoidTy"; // shouldn't be returned, but make it sensible
@@ -322,188 +333,45 @@ CppWriter::getCppName(const Type* Ty)
   return TypeNames[Ty] = name;
 }
 
-void CppWriter::printFragment() {
-  // Print out all the type definitions
-  Out << "\n// Type Definitions\n";
-  printTypes(TheModule);
-
-  // Functions can call each other and global variables can reference them so 
-  // define all the functions first before emitting their function bodies.
-  Out << "\n// Function Declarations\n";
-  for (Module::const_iterator I = TheModule->begin(), E = TheModule->end(); 
-       I != E; ++I)
-    printFunctionHead(I);
-
-  // Process the global variables declarations. We can't initialze them until
-  // after the constants are printed so just print a header for each global
-  Out << "\n// Global Variable Declarations\n";
-  for (Module::const_global_iterator I = TheModule->global_begin(), 
-       E = TheModule->global_end(); I != E; ++I) {
-    printGlobalHead(I);
-  }
-
-  // Print out all the constants definitions. Constants don't recurse except
-  // through GlobalValues. All GlobalValues have been declared at this point
-  // so we can proceed to generate the constants.
-  Out << "\n// Constant Definitions\n";
-  printConstants(TheModule);
-
-  // Process the global variables definitions now that all the constants have
-  // been emitted. These definitions just couple the gvars with their constant
-  // initializers.
-  Out << "\n// Global Variable Definitions\n";
-  for (Module::const_global_iterator I = TheModule->global_begin(), 
-       E = TheModule->global_end(); I != E; ++I) {
-    printGlobalBody(I);
-  }
-
-  // Finally, we can safely put out all of the function bodies.
-  Out << "\n// Function Definitions\n";
-  for (Module::const_iterator I = TheModule->begin(), E = TheModule->end(); 
-       I != E; ++I) {
-    if (!I->isExternal()) {
-      Out << "\n// Function: " << I->getName() << " (" << getCppName(I) 
-          << ")\n{\n";
-      printFunctionBody(I);
-      Out << "}\n";
-    }
-  }
+void
+CppWriter::printCppName(const Type* Ty)
+{
+  printEscapedString(getCppName(Ty));
 }
 
-void CppWriter::printModule() {
-  Out << "\n// Module Construction\n";
-  Out << "Module* mod = new Module(\"";
-  if (!ModName.empty())
-    printEscapedString(ModName);
-  else if (TheModule->getModuleIdentifier() == "-")
-    printEscapedString("<stdin>");
-  else 
-    printEscapedString(TheModule->getModuleIdentifier());
-  Out << "\");\n";
-  Out << "mod->setEndianness(";
-  switch (TheModule->getEndianness()) {
-    case Module::LittleEndian: Out << "Module::LittleEndian);\n"; break;
-    case Module::BigEndian:    Out << "Module::BigEndian);\n";    break;
-    case Module::AnyEndianness:Out << "Module::AnyEndianness);\n";  break;
-  }
-  Out << "mod->setPointerSize(";
-  switch (TheModule->getPointerSize()) {
-    case Module::Pointer32:      Out << "Module::Pointer32);\n"; break;
-    case Module::Pointer64:      Out << "Module::Pointer64);\n"; break;
-    case Module::AnyPointerSize: Out << "Module::AnyPointerSize);\n"; break;
-  }
-  if (!TheModule->getTargetTriple().empty())
-    Out << "mod->setTargetTriple(\"" << TheModule->getTargetTriple() 
-        << "\");\n";
+std::string
+CppWriter::getCppName(const Value* val) {
+  std::string name;
+  ValueMap::iterator I = ValueNames.find(val);
+  if (I != ValueNames.end() && I->first == val)
+    return  I->second;
 
-  if (!TheModule->getModuleInlineAsm().empty()) {
-    Out << "mod->setModuleInlineAsm(\"";
-    printEscapedString(TheModule->getModuleInlineAsm());
-    Out << "\");\n";
+  if (const GlobalVariable* GV = dyn_cast<GlobalVariable>(val)) {
+    name = std::string("gvar_") + 
+           getTypePrefix(GV->getType()->getElementType());
+  } else if (const Function* F = dyn_cast<Function>(val)) {
+    name = std::string("func_");
+  } else if (const Constant* C = dyn_cast<Constant>(val)) {
+    name = std::string("const_") + getTypePrefix(C->getType());
+  } else {
+    name = getTypePrefix(val->getType());
   }
-  
-  // Loop over the dependent libraries and emit them.
-  Module::lib_iterator LI = TheModule->lib_begin();
-  Module::lib_iterator LE = TheModule->lib_end();
-  while (LI != LE) {
-    Out << "mod->addLibrary(\"" << *LI << "\");\n";
-    ++LI;
-  }
-  printFragment();
+  name += (val->hasName() ? val->getName() : utostr(uniqueNum++));
+  sanitize(name);
+  NameSet::iterator NI = UsedNames.find(name);
+  if (NI != UsedNames.end())
+    name += std::string("_") + utostr(uniqueNum++);
+  UsedNames.insert(name);
+  return ValueNames[val] = name;
 }
 
 void
-CppWriter::printCallingConv(unsigned cc){
-  // Print the calling convention.
-  switch (cc) {
-    case CallingConv::C:     Out << "CallingConv::C"; break;
-    case CallingConv::CSRet: Out << "CallingConv::CSRet"; break;
-    case CallingConv::Fast:  Out << "CallingConv::Fast"; break;
-    case CallingConv::Cold:  Out << "CallingConv::Cold"; break;
-    case CallingConv::FirstTargetCC: Out << "CallingConv::FirstTargetCC"; break;
-    default:                 Out << cc; break;
-  }
-}
-
-void 
-CppWriter::printLinkageType(GlobalValue::LinkageTypes LT) {
-  switch (LT) {
-    case GlobalValue::InternalLinkage:  
-      Out << "GlobalValue::InternalLinkage"; break;
-    case GlobalValue::LinkOnceLinkage:  
-      Out << "GlobalValue::LinkOnceLinkage "; break;
-    case GlobalValue::WeakLinkage:      
-      Out << "GlobalValue::WeakLinkage"; break;
-    case GlobalValue::AppendingLinkage: 
-      Out << "GlobalValue::AppendingLinkage"; break;
-    case GlobalValue::ExternalLinkage: 
-      Out << "GlobalValue::ExternalLinkage"; break;
-    case GlobalValue::GhostLinkage:
-      Out << "GlobalValue::GhostLinkage"; break;
-  }
-}
-
-void CppWriter::printGlobalHead(const GlobalVariable *GV) {
-  Out << "\n";
-  Out << "GlobalVariable* ";
-  printCppName(GV);
-  Out << " = new GlobalVariable(\n";
-  Out << "  /*Type=*/";
-  printCppName(GV->getType()->getElementType());
-  Out << ",\n";
-  Out << "  /*isConstant=*/" << (GV->isConstant()?"true":"false") 
-      << ",\n  /*Linkage=*/";
-  printLinkageType(GV->getLinkage());
-  Out << ",\n  /*Initializer=*/0, ";
-  if (GV->hasInitializer()) {
-    Out << "// has initializer, specified below";
-  }
-  Out << "\n  /*Name=*/\"";
-  printEscapedString(GV->getName());
-  Out << "\",\n  mod);\n";
-
-  if (GV->hasSection()) {
-    printCppName(GV);
-    Out << "->setSection(\"";
-    printEscapedString(GV->getSection());
-    Out << "\");\n";
-  }
-  if (GV->getAlignment()) {
-    printCppName(GV);
-    Out << "->setAlignment(" << utostr(GV->getAlignment()) << ");\n";
-  };
-}
-
-void 
-CppWriter::printGlobalBody(const GlobalVariable *GV) {
-  if (GV->hasInitializer()) {
-    printCppName(GV);
-    Out << "->setInitializer(";
-    //if (!isa<GlobalValue(GV->getInitializer()))
-    //else 
-      Out << getCppName(GV->getInitializer()) << ");\n";
-  }
+CppWriter::printCppName(const Value* val) {
+  printEscapedString(getCppName(val));
 }
 
 bool
-CppWriter::isOnStack(const Type* Ty) const {
-  TypeList::const_iterator TI = 
-    std::find(TypeStack.begin(),TypeStack.end(),Ty);
-  return TI != TypeStack.end();
-}
-
-// Prints a type definition. Returns true if it could not resolve all the types
-// in the definition but had to use a forward reference.
-void
-CppWriter::printTypeDef(const Type* Ty) {
-  assert(TypeStack.empty());
-  TypeStack.clear();
-  printTypeDefInternal(Ty);
-  assert(TypeStack.empty());
-}
-
-bool
-CppWriter::printTypeDefInternal(const Type* Ty) {
+CppWriter::printTypeInternal(const Type* Ty) {
   // We don't print definitions for primitive types
   if (Ty->isPrimitiveType())
     return false;
@@ -520,7 +388,8 @@ CppWriter::printTypeDefInternal(const Type* Ty) {
   // the type could appear in multiple places on the stack. Once the opaque
   // definition is issued, it must not be re-issued. Consequently we have to
   // check the UnresolvedTypes list as well.
-  if (isOnStack(Ty)) {
+  TypeList::const_iterator TI = std::find(TypeStack.begin(),TypeStack.end(),Ty);
+  if (TI != TypeStack.end()) {
     TypeMap::const_iterator I = UnresolvedTypes.find(Ty);
     if (I == UnresolvedTypes.end()) {
       Out << "PATypeHolder " << typeName << "_fwd = OpaqueType::get();\n";
@@ -543,14 +412,14 @@ CppWriter::printTypeDefInternal(const Type* Ty) {
       FunctionType::param_iterator PE = FT->param_end();
       for (; PI != PE; ++PI) {
         const Type* argTy = static_cast<const Type*>(*PI);
-        bool isForward = printTypeDefInternal(argTy);
+        bool isForward = printTypeInternal(argTy);
         std::string argName(getCppName(argTy));
         Out << typeName << "_args.push_back(" << argName;
         if (isForward)
           Out << "_fwd";
         Out << ");\n";
       }
-      bool isForward = printTypeDefInternal(FT->getReturnType());
+      bool isForward = printTypeInternal(FT->getReturnType());
       std::string retTypeName(getCppName(FT->getReturnType()));
       Out << "FunctionType* " << typeName << " = FunctionType::get(\n"
           << "  /*Result=*/" << retTypeName;
@@ -567,7 +436,7 @@ CppWriter::printTypeDefInternal(const Type* Ty) {
       StructType::element_iterator EE = ST->element_end();
       for (; EI != EE; ++EI) {
         const Type* fieldTy = static_cast<const Type*>(*EI);
-        bool isForward = printTypeDefInternal(fieldTy);
+        bool isForward = printTypeInternal(fieldTy);
         std::string fieldName(getCppName(fieldTy));
         Out << typeName << "_fields.push_back(" << fieldName;
         if (isForward)
@@ -581,7 +450,7 @@ CppWriter::printTypeDefInternal(const Type* Ty) {
     case Type::ArrayTyID: {
       const ArrayType* AT = cast<ArrayType>(Ty);
       const Type* ET = AT->getElementType();
-      bool isForward = printTypeDefInternal(ET);
+      bool isForward = printTypeInternal(ET);
       std::string elemName(getCppName(ET));
       Out << "ArrayType* " << typeName << " = ArrayType::get("
           << elemName << (isForward ? "_fwd" : "") 
@@ -591,7 +460,7 @@ CppWriter::printTypeDefInternal(const Type* Ty) {
     case Type::PointerTyID: {
       const PointerType* PT = cast<PointerType>(Ty);
       const Type* ET = PT->getElementType();
-      bool isForward = printTypeDefInternal(ET);
+      bool isForward = printTypeInternal(ET);
       std::string elemName(getCppName(ET));
       Out << "PointerType* " << typeName << " = PointerType::get("
           << elemName << (isForward ? "_fwd" : "") << ");\n";
@@ -600,7 +469,7 @@ CppWriter::printTypeDefInternal(const Type* Ty) {
     case Type::PackedTyID: {
       const PackedType* PT = cast<PackedType>(Ty);
       const Type* ET = PT->getElementType();
-      bool isForward = printTypeDefInternal(ET);
+      bool isForward = printTypeInternal(ET);
       std::string elemName(getCppName(ET));
       Out << "PackedType* " << typeName << " = PackedType::get("
           << elemName << (isForward ? "_fwd" : "") 
@@ -613,7 +482,7 @@ CppWriter::printTypeDefInternal(const Type* Ty) {
       break;
     }
     default:
-      assert(!"Invalid TypeID");
+      error("Invalid TypeID");
   }
 
   // If the type had a name, make sure we recreate it.
@@ -658,6 +527,16 @@ CppWriter::printTypeDefInternal(const Type* Ty) {
   return false;
 }
 
+// Prints a type definition. Returns true if it could not resolve all the types
+// in the definition but had to use a forward reference.
+void
+CppWriter::printType(const Type* Ty) {
+  assert(TypeStack.empty());
+  TypeStack.clear();
+  printTypeInternal(Ty);
+  assert(TypeStack.empty());
+}
+
 void
 CppWriter::printTypes(const Module* M) {
 
@@ -674,7 +553,7 @@ CppWriter::printTypes(const Module* M) {
       Out << "\", " << getCppName(TI->second) << ");\n";
     // For everything else, define the type
     } else {
-      printTypeDef(TI->second);
+      printType(TI->second);
     }
   }
 
@@ -682,60 +561,35 @@ CppWriter::printTypes(const Module* M) {
   for (Module::const_global_iterator I = TheModule->global_begin(), 
        E = TheModule->global_end(); I != E; ++I) {
     if (I->hasInitializer())
-      printTypeDef(I->getInitializer()->getType());
-    printTypeDef(I->getType());
+      printType(I->getInitializer()->getType());
+    printType(I->getType());
   }
 
   // Add all the functions to the table
   for (Module::const_iterator FI = TheModule->begin(), FE = TheModule->end();
        FI != FE; ++FI) {
-    printTypeDef(FI->getReturnType());
-    printTypeDef(FI->getFunctionType());
+    printType(FI->getReturnType());
+    printType(FI->getFunctionType());
     // Add all the function arguments
     for(Function::const_arg_iterator AI = FI->arg_begin(),
         AE = FI->arg_end(); AI != AE; ++AI) {
-      printTypeDef(AI->getType());
+      printType(AI->getType());
     }
 
     // Add all of the basic blocks and instructions
     for (Function::const_iterator BB = FI->begin(),
          E = FI->end(); BB != E; ++BB) {
-      printTypeDef(BB->getType());
+      printType(BB->getType());
       for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E; 
            ++I) {
-        printTypeDef(I->getType());
+        printType(I->getType());
         for (unsigned i = 0; i < I->getNumOperands(); ++i)
-          printTypeDef(I->getOperand(i)->getType());
+          printType(I->getOperand(i)->getType());
       }
     }
   }
 }
 
-void
-CppWriter::printConstants(const Module* M) {
-  // Add all of the global variables to the value table...
-  for (Module::const_global_iterator I = TheModule->global_begin(), 
-       E = TheModule->global_end(); I != E; ++I)
-    if (I->hasInitializer())
-      printConstant(I->getInitializer());
-
-  // Traverse the LLVM functions looking for constants
-  for (Module::const_iterator FI = TheModule->begin(), FE = TheModule->end();
-       FI != FE; ++FI) {
-    // Add all of the basic blocks and instructions
-    for (Function::const_iterator BB = FI->begin(),
-         E = FI->end(); BB != E; ++BB) {
-      for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E; 
-           ++I) {
-        for (unsigned i = 0; i < I->getNumOperands(); ++i) {
-          if (Constant* C = dyn_cast<Constant>(I->getOperand(i))) {
-            printConstant(C);
-          }
-        }
-      }
-    }
-  }
-}
 
 // printConstant - Print out a constant pool entry...
 void CppWriter::printConstant(const Constant *CV) {
@@ -777,34 +631,7 @@ void CppWriter::printConstant(const Constant *CV) {
   } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV)) {
     Out << "ConstantFP* " << constName << " = ConstantFP::get(" << typeName 
         << ", ";
-    char buffer[64];
-    sprintf(buffer,"%A",CFP->getValue());
-    // We would like to output the FP constant value in exponential notation,
-    // but we cannot do this if doing so will lose precision.  Check here to
-    // make sure that we only output it in exponential format if we can parse
-    // the value back and get the same value.
-    //
-    std::string StrVal = ftostr(CFP->getValue());
-
-    // Check to make sure that the stringized number is not some string like
-    // "Inf" or NaN, that atof will accept, but the lexer will not.  Check that
-    // the string matches the "[-+]?[0-9]" regex.
-    //
-    if (((StrVal[0] >= '0' && StrVal[0] <= '9') ||
-        ((StrVal[0] == '-' || StrVal[0] == '+') &&
-         (StrVal[1] >= '0' && StrVal[1] <= '9'))) &&
-        (atof(StrVal.c_str()) == CFP->getValue())) 
-    {
-      Out << StrVal;
-    } else {
-
-      // Otherwise we could not reparse it to exactly the same value, so we must
-      // output the string in hexadecimal format!
-      assert(sizeof(double) == sizeof(uint64_t) &&
-             "assuming that double is 64 bits!");
-      Out << "0x" << std::hex << DoubleToBits(CFP->getValue()) << std::dec 
-          << "ULL /* " << StrVal << " */";
-    }
+    printCFP(CFP);
     Out << ");";
   } else if (const ConstantArray *CA = dyn_cast<ConstantArray>(CV)) {
     if (CA->isString() && CA->getType()->getElementType() == Type::SByteTy) {
@@ -896,7 +723,7 @@ void CppWriter::printConstant(const Constant *CV) {
         case Instruction::InsertElement:  Out << "getInsertElement"; break;
         case Instruction::ShuffleVector:  Out << "getShuffleVector"; break;
         default:
-          assert(!"Invalid constant expression");
+          error("Invalid constant expression");
           break;
       }
       Out << getCppName(CE->getOperand(0));
@@ -905,97 +732,129 @@ void CppWriter::printConstant(const Constant *CV) {
       Out << ");";
     }
   } else {
-    assert(!"Bad Constant");
+    error("Bad Constant");
     Out << "Constant* " << constName << " = 0; ";
   }
   Out << "\n";
 }
 
-void CppWriter::printFunctionHead(const Function* F) {
-  Out << "\nFunction* " << getCppName(F) << " = new Function(\n"
-      << "  /*Type=*/" << getCppName(F->getFunctionType()) << ",\n"
-      << "  /*Linkage=*/";
-  printLinkageType(F->getLinkage());
-  Out << ",\n  /*Name=*/\"";
-  printEscapedString(F->getName());
-  Out << "\", mod); " 
-      << (F->isExternal()? "// (external, no body)" : "") << "\n";
-  printCppName(F);
-  Out << "->setCallingConv(";
-  printCallingConv(F->getCallingConv());
-  Out << ");\n";
-  if (F->hasSection()) {
-    printCppName(F);
-    Out << "->setSection(\"" << F->getSection() << "\");\n";
-  }
-  if (F->getAlignment()) {
-    printCppName(F);
-    Out << "->setAlignment(" << F->getAlignment() << ");\n";
+void
+CppWriter::printConstants(const Module* M) {
+  // Traverse all the global variables looking for constant initializers
+  for (Module::const_global_iterator I = TheModule->global_begin(), 
+       E = TheModule->global_end(); I != E; ++I)
+    if (I->hasInitializer())
+      printConstant(I->getInitializer());
+
+  // Traverse the LLVM functions looking for constants
+  for (Module::const_iterator FI = TheModule->begin(), FE = TheModule->end();
+       FI != FE; ++FI) {
+    // Add all of the basic blocks and instructions
+    for (Function::const_iterator BB = FI->begin(),
+         E = FI->end(); BB != E; ++BB) {
+      for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E; 
+           ++I) {
+        for (unsigned i = 0; i < I->getNumOperands(); ++i) {
+          if (Constant* C = dyn_cast<Constant>(I->getOperand(i))) {
+            printConstant(C);
+          }
+        }
+      }
+    }
   }
 }
 
-void CppWriter::printFunctionBody(const Function *F) {
-  if (F->isExternal())
-    return; // external functions have no bodies.
-
-  // Clear the DefinedValues and ForwardRefs maps because we can't have 
-  // cross-function forward refs
-  ForwardRefs.clear();
-  DefinedValues.clear();
-
-  // Create all the argument values
-  if (!F->arg_empty()) {
-    Out << "  Function::arg_iterator args = " << getCppName(F) 
-        << "->arg_begin();\n";
-  }
-  for (Function::const_arg_iterator AI = F->arg_begin(), AE = F->arg_end();
-       AI != AE; ++AI) {
-    Out << "  Value* " << getCppName(AI) << " = args++;\n";
-    if (AI->hasName())
-      Out << "  " << getCppName(AI) << "->setName(\"" << AI->getName() 
-          << "\");\n";
-  }
-
-  // Create all the basic blocks
-  Out << "\n";
-  for (Function::const_iterator BI = F->begin(), BE = F->end(); 
-       BI != BE; ++BI) {
-    std::string bbname(getCppName(BI));
-    Out << "  BasicBlock* " << bbname << " = new BasicBlock(\"";
-    if (BI->hasName())
-      printEscapedString(BI->getName());
-    Out << "\"," << getCppName(BI->getParent()) << ",0);\n";
-  }
-
-  // Output all of its basic blocks... for the function
-  for (Function::const_iterator BI = F->begin(), BE = F->end(); 
-       BI != BE; ++BI) {
-    std::string bbname(getCppName(BI));
-    Out << "\n  // Block " << BI->getName() << " (" << bbname << ")\n";
-
-    // Output all of the instructions in the basic block...
-    for (BasicBlock::const_iterator I = BI->begin(), E = BI->end(); 
-         I != E; ++I) {
-      printInstruction(I,bbname);
+void CppWriter::printVariableUses(const GlobalVariable *GV) {
+  Out << "\n// Type Definitions\n";
+  printType(GV->getType());
+  if (GV->hasInitializer()) {
+    Constant* Init = GV->getInitializer();
+    printType(Init->getType());
+    if (Function* F = dyn_cast<Function>(Init)) {
+      Out << "\n// Function Declarations\n";
+      printFunctionHead(F);
+    } else if (GlobalVariable* gv = dyn_cast<GlobalVariable>(Init)) {
+      Out << "\n// Global Variable Declarations\n";
+      printVariableHead(gv);
+    } else  {
+      Out << "\n// Constant Definitions\n";
+      printConstant(gv);
+    }
+    if (GlobalVariable* gv = dyn_cast<GlobalVariable>(Init)) {
+      Out << "\n// Global Variable Definitions\n";
+      printVariableBody(gv);
     }
   }
+}
 
-  // Loop over the ForwardRefs and resolve them now that all instructions
-  // are generated.
-  if (!ForwardRefs.empty())
-    Out << "\n  // Resolve Forward References\n";
-  while (!ForwardRefs.empty()) {
-    ForwardRefMap::iterator I = ForwardRefs.begin();
-    Out << "  " << I->second << "->replaceAllUsesWith(" 
-        << getCppName(I->first) << "); delete " << I->second << ";\n";
-    ForwardRefs.erase(I);
+void CppWriter::printVariableHead(const GlobalVariable *GV) {
+  Out << "\n";
+  Out << "GlobalVariable* ";
+  printCppName(GV);
+  Out << " = new GlobalVariable(\n";
+  Out << "  /*Type=*/";
+  printCppName(GV->getType()->getElementType());
+  Out << ",\n";
+  Out << "  /*isConstant=*/" << (GV->isConstant()?"true":"false") 
+      << ",\n  /*Linkage=*/";
+  printLinkageType(GV->getLinkage());
+  Out << ",\n  /*Initializer=*/0, ";
+  if (GV->hasInitializer()) {
+    Out << "// has initializer, specified below";
   }
+  Out << "\n  /*Name=*/\"";
+  printEscapedString(GV->getName());
+  Out << "\",\n  mod);\n";
+
+  if (GV->hasSection()) {
+    printCppName(GV);
+    Out << "->setSection(\"";
+    printEscapedString(GV->getSection());
+    Out << "\");\n";
+  }
+  if (GV->getAlignment()) {
+    printCppName(GV);
+    Out << "->setAlignment(" << utostr(GV->getAlignment()) << ");\n";
+  };
+}
+
+void 
+CppWriter::printVariableBody(const GlobalVariable *GV) {
+  if (GV->hasInitializer()) {
+    printCppName(GV);
+    Out << "->setInitializer(";
+    //if (!isa<GlobalValue(GV->getInitializer()))
+    //else 
+      Out << getCppName(GV->getInitializer()) << ");\n";
+  }
+}
+
+std::string
+CppWriter::getOpName(Value* V) {
+  if (!isa<Instruction>(V) || DefinedValues.find(V) != DefinedValues.end())
+    return getCppName(V);
+
+  // See if its alread in the map of forward references, if so just return the
+  // name we already set up for it
+  ForwardRefMap::const_iterator I = ForwardRefs.find(V);
+  if (I != ForwardRefs.end())
+    return I->second;
+
+  // This is a new forward reference. Generate a unique name for it
+  std::string result(std::string("fwdref_") + utostr(uniqueNum++));
+
+  // Yes, this is a hack. An Argument is the smallest instantiable value that
+  // we can make as a placeholder for the real value. We'll replace these
+  // Argument instances later.
+  Out << "  Argument* " << result << " = new Argument(" 
+      << getCppName(V->getType()) << ");\n";
+  ForwardRefs[V] = result;
+  return result;
 }
 
 // printInstruction - This member is called for each Instruction in a function.
 void 
-CppWriter::printInstruction(const Instruction *I, const std::string& bbname) 
-{
+CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
   std::string iName(getCppName(I));
 
   // Before we emit this instruction, we need to take care of generating any
@@ -1023,7 +882,7 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname)
       } else if (br->getNumOperands() == 1) {
         Out << opNames[0] << ", ";
       } else {
-        assert(!"branch with 2 operands?");
+        error("Branch with 2 operands?");
       }
       Out << bbname << ");";
       break;
@@ -1305,54 +1164,406 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname)
   delete [] opNames;
 }
 
+// Print out the types, constants and declarations needed by one function
+void CppWriter::printFunctionUses(const Function* F) {
+
+  Out << "\n// Type Definitions\n";
+  // Print the function's return type
+  printType(F->getReturnType());
+
+  // Print the function's function type
+  printType(F->getFunctionType());
+
+  // Print the types of each of the function's arguments
+  for(Function::const_arg_iterator AI = F->arg_begin(), AE = F->arg_end(); 
+      AI != AE; ++AI) {
+    printType(AI->getType());
+  }
+
+  // Print type definitions for every type referenced by an instruction and
+  // make a note of any global values or constants that are referenced
+  std::vector<GlobalValue*> gvs;
+  std::vector<Constant*> consts;
+  for (Function::const_iterator BB = F->begin(), BE = F->end(); BB != BE; ++BB){
+    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); 
+         I != E; ++I) {
+      // Print the type of the instruction itself
+      printType(I->getType());
+
+      // Print the type of each of the instruction's operands
+      for (unsigned i = 0; i < I->getNumOperands(); ++i) {
+        Value* operand = I->getOperand(i);
+        printType(operand->getType());
+        if (GlobalValue* GV = dyn_cast<GlobalValue>(operand))
+          gvs.push_back(GV);
+        else if (Constant* C = dyn_cast<Constant>(operand))
+          consts.push_back(C);
+      }
+    }
+  }
+
+  // Print the function declarations for any functions encountered
+  Out << "\n// Function Declarations\n";
+  for (std::vector<GlobalValue*>::iterator I = gvs.begin(), E = gvs.end();
+       I != E; ++I) {
+    if (Function* F = dyn_cast<Function>(*I))
+      printFunctionHead(F);
+  }
+
+  // Print the global variable declarations for any variables encountered
+  Out << "\n// Global Variable Declarations\n";
+  for (std::vector<GlobalValue*>::iterator I = gvs.begin(), E = gvs.end();
+       I != E; ++I) {
+    if (GlobalVariable* F = dyn_cast<GlobalVariable>(*I))
+      printVariableHead(F);
+  }
+
+  // Print the constants found
+  Out << "\n// Constant Definitions\n";
+  for (std::vector<Constant*>::iterator I = consts.begin(), E = consts.end();
+       I != E; ++I) {
+      printConstant(F);
+  }
+
+  // Process the global variables definitions now that all the constants have
+  // been emitted. These definitions just couple the gvars with their constant
+  // initializers.
+  Out << "\n// Global Variable Definitions\n";
+  for (std::vector<GlobalValue*>::iterator I = gvs.begin(), E = gvs.end();
+       I != E; ++I) {
+    if (GlobalVariable* GV = dyn_cast<GlobalVariable>(*I))
+      printVariableBody(GV);
+  }
+}
+
+void CppWriter::printFunctionHead(const Function* F) {
+  Out << "\nFunction* " << getCppName(F) << " = new Function(\n"
+      << "  /*Type=*/" << getCppName(F->getFunctionType()) << ",\n"
+      << "  /*Linkage=*/";
+  printLinkageType(F->getLinkage());
+  Out << ",\n  /*Name=*/\"";
+  printEscapedString(F->getName());
+  Out << "\", mod); " 
+      << (F->isExternal()? "// (external, no body)" : "") << "\n";
+  printCppName(F);
+  Out << "->setCallingConv(";
+  printCallingConv(F->getCallingConv());
+  Out << ");\n";
+  if (F->hasSection()) {
+    printCppName(F);
+    Out << "->setSection(\"" << F->getSection() << "\");\n";
+  }
+  if (F->getAlignment()) {
+    printCppName(F);
+    Out << "->setAlignment(" << F->getAlignment() << ");\n";
+  }
+}
+
+void CppWriter::printFunctionBody(const Function *F) {
+  if (F->isExternal())
+    return; // external functions have no bodies.
+
+  // Clear the DefinedValues and ForwardRefs maps because we can't have 
+  // cross-function forward refs
+  ForwardRefs.clear();
+  DefinedValues.clear();
+
+  // Create all the argument values
+  if (!F->arg_empty()) {
+    Out << "  Function::arg_iterator args = " << getCppName(F) 
+        << "->arg_begin();\n";
+  }
+  for (Function::const_arg_iterator AI = F->arg_begin(), AE = F->arg_end();
+       AI != AE; ++AI) {
+    Out << "  Value* " << getCppName(AI) << " = args++;\n";
+    if (AI->hasName())
+      Out << "  " << getCppName(AI) << "->setName(\"" << AI->getName() 
+          << "\");\n";
+  }
+
+  // Create all the basic blocks
+  Out << "\n";
+  for (Function::const_iterator BI = F->begin(), BE = F->end(); 
+       BI != BE; ++BI) {
+    std::string bbname(getCppName(BI));
+    Out << "  BasicBlock* " << bbname << " = new BasicBlock(\"";
+    if (BI->hasName())
+      printEscapedString(BI->getName());
+    Out << "\"," << getCppName(BI->getParent()) << ",0);\n";
+  }
+
+  // Output all of its basic blocks... for the function
+  for (Function::const_iterator BI = F->begin(), BE = F->end(); 
+       BI != BE; ++BI) {
+    std::string bbname(getCppName(BI));
+    Out << "\n  // Block " << BI->getName() << " (" << bbname << ")\n";
+
+    // Output all of the instructions in the basic block...
+    for (BasicBlock::const_iterator I = BI->begin(), E = BI->end(); 
+         I != E; ++I) {
+      printInstruction(I,bbname);
+    }
+  }
+
+  // Loop over the ForwardRefs and resolve them now that all instructions
+  // are generated.
+  if (!ForwardRefs.empty())
+    Out << "\n  // Resolve Forward References\n";
+  while (!ForwardRefs.empty()) {
+    ForwardRefMap::iterator I = ForwardRefs.begin();
+    Out << "  " << I->second << "->replaceAllUsesWith(" 
+        << getCppName(I->first) << "); delete " << I->second << ";\n";
+    ForwardRefs.erase(I);
+  }
+}
+
+void CppWriter::printModuleBody() {
+  // Print out all the type definitions
+  Out << "\n// Type Definitions\n";
+  printTypes(TheModule);
+
+  // Functions can call each other and global variables can reference them so 
+  // define all the functions first before emitting their function bodies.
+  Out << "\n// Function Declarations\n";
+  for (Module::const_iterator I = TheModule->begin(), E = TheModule->end(); 
+       I != E; ++I)
+    printFunctionHead(I);
+
+  // Process the global variables declarations. We can't initialze them until
+  // after the constants are printed so just print a header for each global
+  Out << "\n// Global Variable Declarations\n";
+  for (Module::const_global_iterator I = TheModule->global_begin(), 
+       E = TheModule->global_end(); I != E; ++I) {
+    printVariableHead(I);
+  }
+
+  // Print out all the constants definitions. Constants don't recurse except
+  // through GlobalValues. All GlobalValues have been declared at this point
+  // so we can proceed to generate the constants.
+  Out << "\n// Constant Definitions\n";
+  printConstants(TheModule);
+
+  // Process the global variables definitions now that all the constants have
+  // been emitted. These definitions just couple the gvars with their constant
+  // initializers.
+  Out << "\n// Global Variable Definitions\n";
+  for (Module::const_global_iterator I = TheModule->global_begin(), 
+       E = TheModule->global_end(); I != E; ++I) {
+    printVariableBody(I);
+  }
+
+  // Finally, we can safely put out all of the function bodies.
+  Out << "\n// Function Definitions\n";
+  for (Module::const_iterator I = TheModule->begin(), E = TheModule->end(); 
+       I != E; ++I) {
+    if (!I->isExternal()) {
+      Out << "\n// Function: " << I->getName() << " (" << getCppName(I) 
+          << ")\n{\n";
+      printFunctionBody(I);
+      Out << "}\n";
+    }
+  }
+}
+
+void CppWriter::printProgram(
+  const std::string& fname, 
+  const std::string& mName
+) {
+  Out << "#include <llvm/Module.h>\n";
+  Out << "#include <llvm/DerivedTypes.h>\n";
+  Out << "#include <llvm/Constants.h>\n";
+  Out << "#include <llvm/GlobalVariable.h>\n";
+  Out << "#include <llvm/Function.h>\n";
+  Out << "#include <llvm/CallingConv.h>\n";
+  Out << "#include <llvm/BasicBlock.h>\n";
+  Out << "#include <llvm/Instructions.h>\n";
+  Out << "#include <llvm/InlineAsm.h>\n";
+  Out << "#include <llvm/Pass.h>\n";
+  Out << "#include <llvm/PassManager.h>\n";
+  Out << "#include <llvm/Analysis/Verifier.h>\n";
+  Out << "#include <llvm/Assembly/PrintModulePass.h>\n";
+  Out << "#include <algorithm>\n";
+  Out << "#include <iostream>\n\n";
+  Out << "using namespace llvm;\n\n";
+  Out << "Module* " << fname << "();\n\n";
+  Out << "int main(int argc, char**argv) {\n";
+  Out << "  Module* Mod = makeLLVMModule();\n";
+  Out << "  verifyModule(*Mod, PrintMessageAction);\n";
+  Out << "  std::cerr.flush();\n";
+  Out << "  std::cout.flush();\n";
+  Out << "  PassManager PM;\n";
+  Out << "  PM.add(new PrintModulePass(&std::cout));\n";
+  Out << "  PM.run(*Mod);\n";
+  Out << "  return 0;\n";
+  Out << "}\n\n";
+  printModule(fname,mName);
+}
+
+void CppWriter::printModule(
+  const std::string& fname, 
+  const std::string& mName
+) {
+  Out << "\nModule* " << fname << "() {\n";
+  Out << "\n// Module Construction\n";
+  Out << "\nmod = new Module(\"" << mName << "\");\n";
+  Out << "mod->setEndianness(";
+  switch (TheModule->getEndianness()) {
+    case Module::LittleEndian: Out << "Module::LittleEndian);\n"; break;
+    case Module::BigEndian:    Out << "Module::BigEndian);\n";    break;
+    case Module::AnyEndianness:Out << "Module::AnyEndianness);\n";  break;
+  }
+  Out << "mod->setPointerSize(";
+  switch (TheModule->getPointerSize()) {
+    case Module::Pointer32:      Out << "Module::Pointer32);\n"; break;
+    case Module::Pointer64:      Out << "Module::Pointer64);\n"; break;
+    case Module::AnyPointerSize: Out << "Module::AnyPointerSize);\n"; break;
+  }
+  if (!TheModule->getTargetTriple().empty())
+    Out << "mod->setTargetTriple(\"" << TheModule->getTargetTriple() 
+        << "\");\n";
+
+  if (!TheModule->getModuleInlineAsm().empty()) {
+    Out << "mod->setModuleInlineAsm(\"";
+    printEscapedString(TheModule->getModuleInlineAsm());
+    Out << "\");\n";
+  }
+  
+  // Loop over the dependent libraries and emit them.
+  Module::lib_iterator LI = TheModule->lib_begin();
+  Module::lib_iterator LE = TheModule->lib_end();
+  while (LI != LE) {
+    Out << "mod->addLibrary(\"" << *LI << "\");\n";
+    ++LI;
+  }
+  printModuleBody();
+  Out << "\nreturn mod;\n";
+  Out << "}\n";
+}
+
+void CppWriter::printContents(
+  const std::string& fname, // Name of generated function
+  const std::string& mName // Name of module generated module
+) {
+  Out << "\nModule* " << fname << "(Module *mod) {\n";
+  Out << "\nmod->setModuleIdentifier(\"" << mName << "\");\n";
+  Out << "\");\n";
+  printModuleBody();
+  Out << "\nreturn mod;\n";
+  Out << "\n}\n";
+}
+
+void CppWriter::printFunction(
+  const std::string& fname, // Name of generated function
+  const std::string& funcName // Name of function to generate
+) {
+  const Function* F = TheModule->getNamedFunction(funcName);
+  if (!F) {
+    error(std::string("Function '") + funcName + "' not found in input module");
+    return;
+  }
+  Out << "\nFunction* " << fname << "(Module *mod) {\n";
+  printFunctionUses(F);
+  printFunctionHead(F);
+  printFunctionBody(F);
+  Out << "return " << getCppName(F) << ";\n";
+  Out << "}\n";
+}
+
+void CppWriter::printVariable(
+  const std::string& fname,  /// Name of generated function
+  const std::string& varName // Name of variable to generate
+) {
+  const GlobalVariable* GV = TheModule->getNamedGlobal(varName);
+
+  if (!GV) {
+    error(std::string("Variable '") + varName + "' not found in input module");
+    return;
+  }
+  Out << "\nGlobalVariable* " << fname << "(Module *mod) {\n";
+  printVariableUses(GV);
+  printVariableHead(GV);
+  printVariableBody(GV);
+  Out << "return " << getCppName(GV) << ";\n";
+  Out << "}\n";
+}
+
+void CppWriter::printType(
+  const std::string& fname,  /// Name of generated function
+  const std::string& typeName // Name of type to generate
+) {
+  const Type* Ty = TheModule->getTypeByName(typeName);
+  if (!Ty) {
+    error(std::string("Type '") + typeName + "' not found in input module");
+    return;
+  }
+  Out << "\nType* " << fname << "(Module *mod) {\n";
+  printType(Ty);
+  Out << "return " << getCppName(Ty) << ";\n";
+  Out << "}\n";
+}
+
 }  // end anonymous llvm
 
 namespace llvm {
 
 void WriteModuleToCppFile(Module* mod, std::ostream& o) {
+  // Initialize a CppWriter for us to use
+  CppWriter W(o, mod);
+
+  // Emit a header
   o << "// Generated by llvm2cpp - DO NOT MODIFY!\n\n";
+
+  // Get the name of the function we're supposed to generate
   std::string fname = FuncName.getValue();
-  if (fname.empty())
-    fname = "makeLLVMModule";
-  if (Fragment) {
-    o << "Module* " << fname << "(Module *mod) {\n";
-    CppWriter W(o, mod);
-    W.printFragment();
-    o << "return mod;\n";
-    o << "}\n";
-  } else {
-    o << "#include <llvm/Module.h>\n";
-    o << "#include <llvm/DerivedTypes.h>\n";
-    o << "#include <llvm/Constants.h>\n";
-    o << "#include <llvm/GlobalVariable.h>\n";
-    o << "#include <llvm/Function.h>\n";
-    o << "#include <llvm/CallingConv.h>\n";
-    o << "#include <llvm/BasicBlock.h>\n";
-    o << "#include <llvm/Instructions.h>\n";
-    o << "#include <llvm/InlineAsm.h>\n";
-    o << "#include <llvm/Pass.h>\n";
-    o << "#include <llvm/PassManager.h>\n";
-    o << "#include <llvm/Analysis/Verifier.h>\n";
-    o << "#include <llvm/Assembly/PrintModulePass.h>\n";
-    o << "#include <algorithm>\n";
-    o << "#include <iostream>\n\n";
-    o << "using namespace llvm;\n\n";
-    o << "Module* " << fname << "();\n\n";
-    o << "int main(int argc, char**argv) {\n";
-    o << "  Module* Mod = makeLLVMModule();\n";
-    o << "  verifyModule(*Mod, PrintMessageAction);\n";
-    o << "  std::cerr.flush();\n";
-    o << "  std::cout.flush();\n";
-    o << "  PassManager PM;\n";
-    o << "  PM.add(new PrintModulePass(&std::cout));\n";
-    o << "  PM.run(*Mod);\n";
-    o << "  return 0;\n";
-    o << "}\n\n";
-    o << "Module* " << fname << "() {\n";
-    CppWriter W(o, mod);
-    W.printModule();
-    o << "return mod;\n";
-    o << "}\n";
+
+  // Get the name of the thing we are to generate
+  std::string tgtname = NameToGenerate.getValue();
+  if (GenerationType == GenModule || 
+      GenerationType == GenContents || 
+      GenerationType == GenProgram) {
+    if (tgtname == "!bad!") {
+      if (mod->getModuleIdentifier() == "-")
+        tgtname = "<stdin>";
+      else
+        tgtname = mod->getModuleIdentifier();
+    }
+  } else if (tgtname == "!bad!") {
+    W.error("You must use the -for option with -gen-{function,variable,type}");
+  }
+
+  switch (WhatToGenerate(GenerationType)) {
+    case GenProgram:
+      if (fname.empty())
+        fname = "makeLLVMModule";
+      W.printProgram(fname,tgtname);
+      break;
+    case GenModule:
+      if (fname.empty())
+        fname = "makeLLVMModule";
+      W.printModule(fname,tgtname);
+      break;
+    case GenContents:
+      if (fname.empty())
+        fname = "makeLLVMModuleContents";
+      W.printContents(fname,tgtname);
+      break;
+    case GenFunction:
+      if (fname.empty())
+        fname = "makeLLVMFunction";
+      W.printFunction(fname,tgtname);
+      break;
+    case GenVariable:
+      if (fname.empty())
+        fname = "makeLLVMVariable";
+      W.printVariable(fname,tgtname);
+      break;
+    case GenType:
+      if (fname.empty())
+        fname = "makeLLVMType";
+      W.printType(fname,tgtname);
+      break;
+    default:
+      W.error("Invalid generation option");
   }
 }
 
