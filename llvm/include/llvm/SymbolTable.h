@@ -16,6 +16,7 @@
 #define LLVM_SYMBOL_TABLE_H
 
 #include "llvm/Value.h"
+#include "llvm/Support/DataTypes.h"
 #include <map>
 
 namespace llvm {
@@ -292,7 +293,7 @@ private:
 
   /// This value is used to retain the last unique value used
   /// by getUniqueName to generate unique names.
-  mutable uint64_t LastUnique;
+  mutable uint32_t LastUnique;
 
 /// @}
 
