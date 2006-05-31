@@ -4437,7 +4437,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantUInt *Op1,
                                             Op0BO->getName());
             InsertNewInstBefore(YS, I); // (Y << C)
             Instruction *X =
-              BinaryOperator::create(Op0BO->getOpcode(), YS, V1,
+              BinaryOperator::create(Op0BO->getOpcode(), V1, YS,
                                      Op0BO->getOperand(0)->getName());
             InsertNewInstBefore(X, I);  // (X + (Y << C))
             Constant *C2 = ConstantInt::getAllOnesValue(X->getType());
@@ -4445,6 +4445,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantUInt *Op1,
             return BinaryOperator::createAnd(X, C2);
           }
           
+          // Turn (((X >> C)&CC) + Y) << C  ->  (X + (Y << C)) & (CC << C)
           if (isLeftShift && Op0BO->getOperand(0)->hasOneUse() &&
               match(Op0BO->getOperand(0),
                     m_And(m_Shr(m_Value(V1), m_Value(V2)),
@@ -4460,7 +4461,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantUInt *Op1,
                                         V1->getName()+".mask");
             InsertNewInstBefore(XM, I); // X & (CC << C)
             
-            return BinaryOperator::create(Op0BO->getOpcode(), YS, XM);
+            return BinaryOperator::create(Op0BO->getOpcode(), XM, YS);
           }
           
           break;
