@@ -2778,6 +2778,14 @@ SDOperand DAGCombiner::visitVBinOp(SDNode *N, ISD::NodeType IntOp,
            RHSOp.getOpcode() != ISD::Constant &&
            RHSOp.getOpcode() != ISD::ConstantFP))
         break;
+      // Can't fold divide by zero.
+      if (N->getOpcode() == ISD::VSDIV || N->getOpcode() == ISD::VUDIV) {
+        if ((RHSOp.getOpcode() == ISD::Constant &&
+             cast<ConstantSDNode>(RHSOp.Val)->isNullValue()) ||
+            (RHSOp.getOpcode() == ISD::ConstantFP &&
+             !cast<ConstantFPSDNode>(RHSOp.Val)->getValue()))
+          break;
+      }
       Ops.push_back(DAG.getNode(ScalarOp, EltType, LHSOp, RHSOp));
       AddToWorkList(Ops.back().Val);
       assert((Ops.back().getOpcode() == ISD::UNDEF ||
