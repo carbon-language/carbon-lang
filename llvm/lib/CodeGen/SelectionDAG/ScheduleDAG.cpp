@@ -402,8 +402,10 @@ void ScheduleDAG::EmitNode(SDNode *Node,
         DEBUG(std::cerr << "Sched: COMMUTING FAILED!\n");
       else {
         DEBUG(std::cerr << "Sched: COMMUTED TO: " << *NewMI);
-        delete MI;
-        MI = NewMI;
+        if (MI != NewMI) {
+          delete MI;
+          MI = NewMI;
+        }
       }
     }
 
