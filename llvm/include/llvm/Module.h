@@ -179,7 +179,7 @@ public:
   /// getNamedFunction - Return the first function in the module with the
   /// specified name, of arbitrary type.  This method returns null if a function
   /// with the specified name is not found.
-  Function *getNamedFunction(const std::string &Name);
+  Function *getNamedFunction(const std::string &Name) const;
 
 /// @}
 /// @name Global Variable Accessors 
@@ -197,7 +197,7 @@ public:
   /// getNamedGlobal - Return the first global variable in the module with the
   /// specified name, of arbitrary type.  This method returns null if a global
   /// with the specified name is not found.
-  GlobalVariable *getNamedGlobal(const std::string &Name);
+  GlobalVariable *getNamedGlobal(const std::string &Name) const;
   
 /// @}
 /// @name Type Accessors

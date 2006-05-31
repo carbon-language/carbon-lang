@@ -250,16 +250,16 @@ Function *Module::getMainFunction() {
 /// specified name, of arbitrary type.  This method returns null if a function
 /// with the specified name is not found.
 ///
-Function *Module::getNamedFunction(const std::string &Name) {
+Function *Module::getNamedFunction(const std::string &Name) const {
   // Loop over all of the functions, looking for the function desired
-  Function *Found = 0;
-  for (iterator I = begin(), E = end(); I != E; ++I)
+  const Function *Found = 0;
+  for (const_iterator I = begin(), E = end(); I != E; ++I)
     if (I->getName() == Name)
       if (I->isExternal())
         Found = I;
       else
-        return I;
-  return Found; // Non-external function not found...
+        return const_cast<Function*>(&(*I));
+  return const_cast<Function*>(Found); // Non-external function not found...
 }
 
 //===----------------------------------------------------------------------===//
@@ -287,13 +287,13 @@ GlobalVariable *Module::getGlobalVariable(const std::string &Name,
 /// specified name, of arbitrary type.  This method returns null if a global
 /// with the specified name is not found.
 ///
-GlobalVariable *Module::getNamedGlobal(const std::string &Name) {
+GlobalVariable *Module::getNamedGlobal(const std::string &Name) const {
   // FIXME: This would be much faster with a symbol table that doesn't
   // discriminate based on type!
-  for (global_iterator I = global_begin(), E = global_end();
+  for (const_global_iterator I = global_begin(), E = global_end();
        I != E; ++I)
     if (I->getName() == Name) 
-      return I;
+      return const_cast<GlobalVariable*>(&(*I));
   return 0;
 }
 
