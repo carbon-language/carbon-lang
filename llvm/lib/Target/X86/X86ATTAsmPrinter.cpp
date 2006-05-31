@@ -118,8 +118,8 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
            "Virtual registers should not make it this far!");
     O << '%';
     unsigned Reg = MO.getReg();
-    if (Modifier && strncmp(Modifier, "trunc", strlen("trunc")) == 0) {
-      MVT::ValueType VT = (strcmp(Modifier,"trunc16") == 0)
+    if (Modifier && strncmp(Modifier, "subreg", strlen("subreg")) == 0) {
+      MVT::ValueType VT = (strcmp(Modifier,"subreg16") == 0)
         ? MVT::i16 : MVT::i8;
       Reg = getX86SubSuperRegister(Reg, VT);
     }

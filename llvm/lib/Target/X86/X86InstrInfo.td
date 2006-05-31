@@ -360,11 +360,11 @@ def NOOP : I<0x90, RawFrm, (ops), "nop", []>;
 
 // Truncate
 def TRUNC_GR32_GR8  : I<0x88, MRMDestReg, (ops GR8:$dst, GR32_:$src),
-                      "mov{b} {${src:trunc8}, $dst|$dst, ${src:trunc8}", []>;
+                      "mov{b} {${src:subreg8}, $dst|$dst, ${src:subreg8}", []>;
 def TRUNC_GR16_GR8  : I<0x88, MRMDestReg, (ops GR8:$dst, GR16_:$src),
-                      "mov{b} {${src:trunc8}, $dst|$dst, ${src:trunc8}}", []>;
+                      "mov{b} {${src:subreg8}, $dst|$dst, ${src:subreg8}}", []>;
 def TRUNC_GR32_GR16 : I<0x89, MRMDestReg, (ops GR16:$dst, GR32:$src),
-                      "mov{w} {${src:trunc16}, $dst|$dst, ${src:trunc16}}",
+                      "mov{w} {${src:subreg16}, $dst|$dst, ${src:subreg16}}",
                       [(set GR16:$dst, (trunc GR32:$src))]>;
 
 //===----------------------------------------------------------------------===//
