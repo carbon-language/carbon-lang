@@ -2758,11 +2758,8 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
     unsigned Idx = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
     if (Idx == 0)
       return Op;
-
     // SHUFPS the element to the lowest double word, then movss.
     MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(4);
-    SDOperand IdxNode = DAG.getConstant((Idx < 2) ? Idx : Idx+4,
-                                        MVT::getVectorBaseType(MaskVT));
     std::vector<SDOperand> IdxVec;
     IdxVec.push_back(DAG.getConstant(Idx, MVT::getVectorBaseType(MaskVT)));
     IdxVec.push_back(DAG.getNode(ISD::UNDEF, MVT::getVectorBaseType(MaskVT)));
