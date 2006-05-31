@@ -75,7 +75,7 @@ class CppWriter {
   const char* progname;
   std::ostream &Out;
   const Module *TheModule;
-  unsigned long uniqueNum;
+  uint64_t uniqueNum;
   TypeMap TypeNames;
   ValueMap ValueNames;
   TypeMap UnresolvedTypes;
