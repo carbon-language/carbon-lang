@@ -292,7 +292,7 @@ private:
 
   /// This value is used to retain the last unique value used
   /// by getUniqueName to generate unique names.
-  mutable unsigned long LastUnique;
+  mutable uint64_t LastUnique;
 
 /// @}
 

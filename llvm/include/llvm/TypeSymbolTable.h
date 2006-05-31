@@ -138,7 +138,7 @@ private:
 /// @{
 private:
   TypeMap tmap; ///< This is the mapping of names to types.
-  mutable unsigned long LastUnique; ///< Counter for tracking unique names
+  mutable uint64_t LastUnique; ///< Counter for tracking unique names
 
 /// @}
 

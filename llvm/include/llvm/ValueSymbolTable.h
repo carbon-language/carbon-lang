@@ -127,7 +127,7 @@ public:
 /// @{
 private:
   ValueMap vmap;                    ///< The map that holds the symbol table.
-  mutable unsigned long LastUnique; ///< Counter for tracking unique names
+  mutable uint64_t LastUnique; ///< Counter for tracking unique names
 
 /// @}
 
