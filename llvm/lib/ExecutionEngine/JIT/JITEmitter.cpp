@@ -494,7 +494,7 @@ namespace {
       MutexGuard locked(TheJIT->lock);
       /// Get the target-specific JIT resolver function.
       state.getStubToFunctionMap(locked)[Location] = F;
-      return (void*)LazyResolverFn;
+      return (void*)(intptr_t)LazyResolverFn;
     }
 
     /// getGOTIndexForAddress - Return a new or existing index in the GOT for
@@ -527,7 +527,7 @@ void *JITResolver::getFunctionStub(Function *F) {
 
   // Call the lazy resolver function unless we already KNOW it is an external
   // function, in which case we just skip the lazy resolution step.
-  void *Actual = (void*)LazyResolverFn;
+  void *Actual = (void*)(intptr_t)LazyResolverFn;
   if (F->isExternal() && F->hasExternalLinkage())
     Actual = TheJIT->getPointerToFunction(F);
 
@@ -535,7 +535,7 @@ void *JITResolver::getFunctionStub(Function *F) {
   // resolver function.
   Stub = TheJIT->getJITInfo().emitFunctionStub(Actual, MCE);
 
-  if (Actual != (void*)LazyResolverFn) {
+  if (Actual != (void*)(intptr_t)LazyResolverFn) {
     // If we are getting the stub for an external function, we really want the
     // address of the stub in the GlobalAddressMap for the JIT, not the address
     // of the external function.

@@ -94,7 +94,7 @@ GenericValue JIT::runFunction(Function *F,
           isa<PointerType>(FTy->getParamType(1)) &&
           isa<PointerType>(FTy->getParamType(2))) {
         int (*PF)(int, char **, const char **) =
-          (int(*)(int, char **, const char **))FPtr;
+          (int(*)(int, char **, const char **))(intptr_t)FPtr;
 
         // Call the function.
         GenericValue rv;
@@ -107,7 +107,7 @@ GenericValue JIT::runFunction(Function *F,
       if ((FTy->getParamType(0) == Type::IntTy ||
            FTy->getParamType(0) == Type::UIntTy) &&
           isa<PointerType>(FTy->getParamType(1))) {
-        int (*PF)(int, char **) = (int(*)(int, char **))FPtr;
+        int (*PF)(int, char **) = (int(*)(int, char **))(intptr_t)FPtr;
 
         // Call the function.
         GenericValue rv;
@@ -120,7 +120,7 @@ GenericValue JIT::runFunction(Function *F,
           (FTy->getParamType(0) == Type::IntTy ||
            FTy->getParamType(0) == Type::UIntTy)) {
         GenericValue rv;
-        int (*PF)(int) = (int(*)(int))FPtr;
+        int (*PF)(int) = (int(*)(int))(intptr_t)FPtr;
         rv.IntVal = PF(ArgValues[0].IntVal);
         return rv;
       }
@@ -134,33 +134,33 @@ GenericValue JIT::runFunction(Function *F,
     switch (RetTy->getTypeID()) {
     default: assert(0 && "Unknown return type for function call!");
     case Type::BoolTyID:
-      rv.BoolVal = ((bool(*)())FPtr)();
+      rv.BoolVal = ((bool(*)())(intptr_t)FPtr)();
       return rv;
     case Type::SByteTyID:
     case Type::UByteTyID:
-      rv.SByteVal = ((char(*)())FPtr)();
+      rv.SByteVal = ((char(*)())(intptr_t)FPtr)();
       return rv;
     case Type::ShortTyID:
     case Type::UShortTyID:
-      rv.ShortVal = ((short(*)())FPtr)();
+      rv.ShortVal = ((short(*)())(intptr_t)FPtr)();
       return rv;
     case Type::VoidTyID:
     case Type::IntTyID:
     case Type::UIntTyID:
-      rv.IntVal = ((int(*)())FPtr)();
+      rv.IntVal = ((int(*)())(intptr_t)FPtr)();
       return rv;
     case Type::LongTyID:
     case Type::ULongTyID:
-      rv.LongVal = ((int64_t(*)())FPtr)();
+      rv.LongVal = ((int64_t(*)())(intptr_t)FPtr)();
       return rv;
     case Type::FloatTyID:
-      rv.FloatVal = ((float(*)())FPtr)();
+      rv.FloatVal = ((float(*)())(intptr_t)FPtr)();
       return rv;
     case Type::DoubleTyID:
-      rv.DoubleVal = ((double(*)())FPtr)();
+      rv.DoubleVal = ((double(*)())(intptr_t)FPtr)();
       return rv;
     case Type::PointerTyID:
-      return PTOGV(((void*(*)())FPtr)());
+      return PTOGV(((void*(*)())(intptr_t)FPtr)());
     }
   }
 
