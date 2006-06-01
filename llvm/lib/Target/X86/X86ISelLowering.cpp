@@ -874,7 +874,7 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
     if (ObjSize > 4)
       ArgIncrement = ObjSize;
 
-    unsigned Reg;
+    unsigned Reg = 0;
     SDOperand ArgValue;
     if (ObjIntRegs || ObjXMMRegs) {
       switch (ObjectVT) {
