@@ -57,8 +57,8 @@ static inline std::string utostr_32(uint32_t X, bool isNeg = false) {
 }
 
 static inline std::string utostr(uint64_t X, bool isNeg = false) {
-  if (X == (uint32_t)X)
-    return utostr_32((uint32_t)X, isNeg);
+  if (X == uint32_t(X))
+    return utostr_32(uint32_t(X), isNeg);
   
   char Buffer[40];
   char *BufPtr = Buffer+39;
