@@ -1405,7 +1405,7 @@ void CppWriter::printModule(
 ) {
   Out << "\nModule* " << fname << "() {\n";
   Out << "\n// Module Construction\n";
-  Out << "\nmod = new Module(\"" << mName << "\");\n";
+  Out << "\nModule* mod = new Module(\"" << mName << "\");\n";
   Out << "mod->setEndianness(";
   switch (TheModule->getEndianness()) {
     case Module::LittleEndian: Out << "Module::LittleEndian);\n"; break;
