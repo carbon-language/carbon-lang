@@ -90,13 +90,15 @@ static int jit_atexit(void (*Fn)(void)) {
 /// for resolving library symbols, not code generated symbols.
 ///
 void *JIT::getPointerToNamedFunction(const std::string &Name) {
-  // Check to see if this is one of the functions we want to intercept...
-  if (Name == "exit") return (void*)&jit_exit;
-  if (Name == "atexit") return (void*)&jit_atexit;
+  // Check to see if this is one of the functions we want to intercept.  Note,
+  // we cast to intptr_t here to silence a -pedantic warning that complains
+  // about casting a function pointer to a normal pointer.
+  if (Name == "exit") return (void*)(intptr_t)&jit_exit;
+  if (Name == "atexit") return (void*)(intptr_t)&jit_atexit;
 
   // If the program does not have a linked in __main function, allow it to run,
   // but print a warning.
-  if (Name == "__main") return (void*)&__mainFunc;
+  if (Name == "__main") return (void*)(intptr_t)&__mainFunc;
 
   // If it's an external function, look it up in the process image...
   void *Ptr = sys::DynamicLibrary::SearchForAddressOfSymbol(Name);
