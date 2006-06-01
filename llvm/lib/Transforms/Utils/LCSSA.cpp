@@ -204,8 +204,6 @@ void LCSSA::processInstruction(Instruction* Instr,
        II != IE; ++II) {
     if (PHINode* phi = dyn_cast<PHINode>(*II)) {
       for (unsigned int i = 0; i < phi->getNumIncomingValues(); ++i) {
-        // FIXME: Replace a Phi entry if and only if the corresponding 
-        // predecessor is dominated.
         Instruction* dominator = 
                         getValueDominatingBlock(phi->getIncomingBlock(i), Phis);
         
