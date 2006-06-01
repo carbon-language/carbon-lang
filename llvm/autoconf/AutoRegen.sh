@@ -7,22 +7,14 @@ outfile=configure
 configfile=configure.ac
 test -d autoconf && test -f autoconf/$configfile && cd autoconf
 test -f $configfile || die "Can't find 'autoconf' dir; please cd into it first"
-autoconf --version | egrep '2\.59' > /dev/null
-if test $? -ne 0 ; then
-  die "Your autoconf was not detected as being 2.59"
-fi
-aclocal --version | egrep '1\.9\.2' > /dev/null
-if test $? -ne 0 ; then
-  die "Your aclocal was not detected as being 1.9.2"
-fi
-autoheader --version | egrep '2\.59' > /dev/null
-if test $? -ne 0 ; then
-  die "Your autoheader was not detected as being 2.59"
-fi
+autoconf --version | grep '2\.59' > /dev/null
+test $? -eq 0 || die "Your autoconf was not detected as being 2.59"
+aclocal --version | grep '^aclocal.*1\.9\.2' > /dev/null
+test $? -eq 0 || die "Your aclocal was not detected as being 1.9.2"
+autoheader --version | grep '^autoheader.*2\.59' > /dev/null
+test $? -eq 0 || die "Your autoheader was not detected as being 2.59"
 libtool --version | grep '1\.5\.10' > /dev/null
-if test $? -ne 0 ; then
-  die "Your libtool was not detected as being 1.5.10"
-fi
+test $? -eq 0 || die "Your libtool was not detected as being 1.5.10"
 echo ""
 echo "### NOTE: ############################################################"
 echo "### If you get *any* warnings from autoconf below you MUST fix the"
