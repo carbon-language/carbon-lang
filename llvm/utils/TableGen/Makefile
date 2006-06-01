@@ -14,6 +14,10 @@ EXTRA_DIST = FileLexer.cpp.cvs FileLexer.l.cvs \
 
 include $(LEVEL)/Makefile.common
 
+# Disable -pedantic for tblgen
+CompileCommonOpts := $(filter-out -pedantic,$(CompileCommonOpts))
+CompileCommonOpts := $(filter-out -Wno-long-long,$(CompileCommonOpts))
+
 #
 # Make the source file depend on the header file.  In this way, dependencies
 # (which depend on the source file) won't get generated until bison is done
