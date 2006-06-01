@@ -201,6 +201,9 @@ OBJ_ROOT := .
 # When ENABLE_DOXYGEN is enabled, the doxygen documentation will be built
 ENABLE_DOXYGEN = @ENABLE_DOXYGEN@
 
+# Do we want to enable threads?
+ENABLE_THREADS := @ENABLE_THREADS@
+
 # This option tells the Makefiles to produce verbose output.
 # It essentially prints the commands that make is executing
 #VERBOSE = 1
