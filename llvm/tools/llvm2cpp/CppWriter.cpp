@@ -1446,7 +1446,6 @@ void CppWriter::printContents(
 ) {
   Out << "\nModule* " << fname << "(Module *mod) {\n";
   Out << "\nmod->setModuleIdentifier(\"" << mName << "\");\n";
-  Out << "\");\n";
   printModuleBody();
   Out << "\nreturn mod;\n";
   Out << "\n}\n";
