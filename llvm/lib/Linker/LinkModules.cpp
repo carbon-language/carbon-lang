@@ -262,19 +262,18 @@ static void PrintMap(const std::map<const Value*, Value*> &M) {
 
 // RemapOperand - Use ValueMap to convert references from one module to another.
 // This is somewhat sophisticated in that it can automatically handle constant
-// references correctly as well...
+// references correctly as well.
 static Value *RemapOperand(const Value *In,
                            std::map<const Value*, Value*> &ValueMap) {
   std::map<const Value*,Value*>::const_iterator I = ValueMap.find(In);
   if (I != ValueMap.end()) return I->second;
 
   // Check to see if it's a constant that we are interesting in transforming.
+  Value *Result = 0;
   if (const Constant *CPV = dyn_cast<Constant>(In)) {
     if ((!isa<DerivedType>(CPV->getType()) && !isa<ConstantExpr>(CPV)) ||
         isa<ConstantAggregateZero>(CPV))
       return const_cast<Constant*>(CPV);   // Simple constants stay identical.
-
-    Constant *Result = 0;
 
     if (const ConstantArray *CPA = dyn_cast<ConstantArray>(CPV)) {
       std::vector<Constant*> Operands(CPA->getNumOperands());
@@ -350,11 +349,16 @@ static Value *RemapOperand(const Value *In,
     } else {
       assert(0 && "Unknown type of derived type constant value!");
     }
-
-    // Cache the mapping in our local map structure...
+  } else if (isa<InlineAsm>(In)) {
+    Result = const_cast<Value*>(In);
+  }
+  
+  // Cache the mapping in our local map structure...
+  if (Result) {
     ValueMap.insert(std::make_pair(In, Result));
     return Result;
   }
+  
 
   std::cerr << "LinkModules ValueMap: \n";
   PrintMap(ValueMap);
