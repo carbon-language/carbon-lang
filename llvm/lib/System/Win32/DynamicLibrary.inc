@@ -14,12 +14,18 @@
 #include "Win32.h"
 
 #ifdef __MINGW32__
-#include <imagehlp.h>
+ #include <imagehlp.h>
 #else
-#include <dbghelp.h>
+ #include <dbghelp.h>
 #endif
 
-#pragma comment(lib, "dbghelp.lib")
+#ifdef __MINGW32__
+ #if (HAVE_LIBIMAGEHLP != 1)
+  #error "libimagehlp.a should be present"
+ #endif
+#else
+ #pragma comment(lib, "dbghelp.lib")
+#endif
 
 namespace llvm {
 using namespace sys;

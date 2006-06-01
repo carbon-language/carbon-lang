@@ -16,7 +16,13 @@
 #include <malloc.h>
 #include <io.h>
 
-#pragma comment(lib, "psapi.lib")
+#ifdef __MINGW32__
+ #if (HAVE_LIBPSAPI != 1)
+  #error "libpsapi.a should be present"
+ #endif
+#else
+ #pragma comment(lib, "psapi.lib")
+#endif
 
 //===----------------------------------------------------------------------===//
 //=== WARNING: Implementation here must contain only Win32 specific code 

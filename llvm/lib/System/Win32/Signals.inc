@@ -16,14 +16,20 @@
 #include <vector>
 
 #ifdef __MINGW32__
-#include <imagehlp.h>
+ #include <imagehlp.h>
 #else
-#include <dbghelp.h>
+ #include <dbghelp.h>
 #endif
 #include <psapi.h>
 
-#pragma comment(lib, "psapi.lib")
-#pragma comment(lib, "dbghelp.lib")
+#ifdef __MINGW32__
+ #if ((HAVE_LIBIMAGEHLP != 1) || (HAVE_LIBPSAPI != 1))
+  #error "libimagehlp.a & libpsapi.a should be present"
+ #endif
+#else
+ #pragma comment(lib, "psapi.lib")
+ #pragma comment(lib, "dbghelp.lib")
+#endif
 
 // Forward declare.
 static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep);

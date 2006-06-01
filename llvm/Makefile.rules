@@ -200,7 +200,11 @@ install-bytecode:: install-bytecode-local
 
 # OPTIMIZE_OPTION - The optimization level option we want to build LLVM with
 # this can be overridden on the make command line.
-OPTIMIZE_OPTION := -O3
+ifneq ($(OS),MingW)
+  OPTIMIZE_OPTION := -O3
+else
+  OPTIMIZE_OPTION := -O2
+endif
 
 ifdef ENABLE_PROFILING
   BuildMode := Profile
