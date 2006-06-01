@@ -25148,7 +25148,8 @@ fi
 if test "$llvm_cv_os_type" == "MingW" ; then
 
 
-for ac_header in imagehlp.h psapi.h
+
+for ac_header in windows.h imagehlp.h psapi.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 if eval "test \"\${$as_ac_Header+set}\" = set"; then
