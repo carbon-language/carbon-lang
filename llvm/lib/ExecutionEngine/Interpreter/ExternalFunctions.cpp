@@ -71,11 +71,12 @@ static ExFunc lookupFunction(const Function *F) {
 
   ExFunc FnPtr = FuncNames[ExtName];
   if (FnPtr == 0)
-    FnPtr = (ExFunc)sys::DynamicLibrary::SearchForAddressOfSymbol(ExtName);
+    FnPtr = 
+      (ExFunc)(intptr_t)sys::DynamicLibrary::SearchForAddressOfSymbol(ExtName);
   if (FnPtr == 0)
     FnPtr = FuncNames["lle_X_"+F->getName()];
   if (FnPtr == 0)  // Try calling a generic function... if it exists...
-    FnPtr = (ExFunc)sys::DynamicLibrary::SearchForAddressOfSymbol(
+    FnPtr = (ExFunc)(intptr_t)sys::DynamicLibrary::SearchForAddressOfSymbol(
             ("lle_X_"+F->getName()).c_str());
   if (FnPtr != 0)
     Functions.insert(std::make_pair(F, FnPtr));  // Cache for later
