@@ -87,3 +87,5 @@ ifeq ($(BuildMode),Debug)
 	$(Echo) '*****' make an optimized build.
 endif
 
+check-llvm2cpp:
+	$(MAKE) check TESTSUITE=Feature RUNLLVM2CPP=1
