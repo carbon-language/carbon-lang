@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
 TOOLNAME = llvmc
-USEDLIBS = LLVMBCReader LLVMCore LLVMSupport.a LLVMbzip2 LLVMSystem.a
+USEDLIBS = LLVMBCReader.a LLVMCore.a LLVMSupport.a LLVMbzip2.a LLVMSystem.a
 CONFIG_FILES = c cpp ll
 EXTRA_DIST = c cpp ll ConfigLexer.cpp.cvs ConfigLexer.l.cvs
 

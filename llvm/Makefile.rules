@@ -357,7 +357,7 @@ endif
 # Options To Invoke Tools
 #----------------------------------------------------------
 
-CompileCommonOpts := -Wall -W -Wwrite-strings -Wno-unused
+CompileCommonOpts := -Wall -W -Wwrite-strings -Wno-unused 
 
 ifeq ($(OS),HP-UX)
   CompileCommonOpts := -D_REENTRANT -D_HPUX_SOURCE
@@ -628,7 +628,7 @@ ifdef ENABLE_ALPHA_JIT
 endif
 
 LLVMLIBS := $(JIT_LIBS) LLVMScalarOpts.a LLVMTransformUtils.a LLVMAnalysis.a \
-            LLVMBCReader LLVMTarget.a LLVMCore LLVMSupport.a LLVMbzip2 \
+            LLVMBCReader.a LLVMTarget.a LLVMCore.a LLVMSupport.a LLVMbzip2.a \
             LLVMSystem.a $(PLATFORMLIBDL)
 endif
 

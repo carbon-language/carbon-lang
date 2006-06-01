@@ -8,13 +8,9 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
 LIBRARYNAME = LLVMCore
+BUILD_ARCHIVE = 1
 
 BUILT_SOURCES = $(PROJ_SRC_ROOT)/include/llvm/Intrinsics.gen
-
-include $(LEVEL)/Makefile.config
-ifeq ($(ARCH),Alpha)
-BUILD_ARCHIVE = 1
-endif
 
 include $(LEVEL)/Makefile.common
 

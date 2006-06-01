@@ -9,5 +9,5 @@
 LEVEL = ../..
 
 TOOLNAME = llvm-dis
-USEDLIBS = LLVMBCReader LLVMCore LLVMSupport.a LLVMbzip2 LLVMSystem.a
+USEDLIBS = LLVMBCReader.a LLVMCore.a LLVMSupport.a LLVMbzip2.a LLVMSystem.a
 include $(LEVEL)/Makefile.common

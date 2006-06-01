@@ -15,3 +15,5 @@ EXPORTED_SYMBOL_FILE = $(PROJ_SRC_DIR)/../gc_exported_symbols.lst
 
 include $(LEVEL)/Makefile.common
 
+CompileCommonOpts := $(filter-out -pedantic,$(CompileCommonOpts))
+CompileCommonOpts := $(filter-out -Wno-long-long,$(CompileCommonOpts))

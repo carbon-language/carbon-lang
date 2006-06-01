@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
 TOOLNAME = llvm-as
-USEDLIBS = LLVMAsmParser LLVMBCWriter LLVMCore \
-           LLVMSupport.a LLVMbzip2 LLVMSystem.a
+USEDLIBS = LLVMAsmParser.a LLVMBCWriter.a LLVMCore.a \
+           LLVMSupport.a LLVMbzip2.a LLVMSystem.a
 
 include $(LEVEL)/Makefile.common

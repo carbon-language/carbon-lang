@@ -1,4 +1,4 @@
-##===- runtime/GCCLibraries/libc/Makefile ------------------------------*- Makefile -*-===##
+##===- runtime/GCCLibraries/libc/Makefile ------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -15,3 +15,5 @@ BYTECODE_DESTINATION = $(CFERuntimeLibDir)
 
 include $(LEVEL)/Makefile.common
 
+CompileCommonOpts := $(filter-out -pedantic,$(CompileCommonOpts))
+CompileCommonOpts := $(filter-out -Wno-long-long,$(CompileCommonOpts))

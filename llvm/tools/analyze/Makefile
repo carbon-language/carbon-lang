@@ -8,9 +8,9 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
 TOOLNAME = analyze
-USEDLIBS = LLVMAsmParser LLVMBCReader LLVMAnalysis.a LLVMipa.a \
+USEDLIBS = LLVMAsmParser.a LLVMBCReader.a LLVMAnalysis.a LLVMipa.a \
            LLVMDataStructure \
 	   LLVMScalarOpts.a LLVMTransforms.a LLVMTarget.a LLVMScalarOpts.a \
-	   LLVMTransformUtils.a LLVMCore LLVMSupport.a LLVMbzip2 LLVMSystem.a
+	   LLVMTransformUtils.a LLVMCore.a LLVMSupport.a LLVMbzip2.a LLVMSystem.a
 
 include $(LEVEL)/Makefile.common

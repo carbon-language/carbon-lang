@@ -56,17 +56,17 @@ endif
 USEDLIBS += \
 	LLVMSelectionDAG \
 	LLVMCodeGen \
-	LLVMTarget.a \
+	LLVMTarget \
 	LLVMipa.a \
 	LLVMTransforms.a \
 	LLVMScalarOpts.a \
 	LLVMTransformUtils.a \
 	LLVMAnalysis.a \
-	LLVMBCReader \
-	LLVMBCWriter \
-	LLVMCore \
+	LLVMBCReader.a \
+	LLVMBCWriter.a \
+	LLVMCore.a \
 	LLVMSupport.a \
-	LLVMbzip2 \
+	LLVMbzip2.a \
 	LLVMSystem.a
 
 include $(LLVM_SRC_ROOT)/Makefile.rules

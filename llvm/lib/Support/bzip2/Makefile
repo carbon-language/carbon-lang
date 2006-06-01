@@ -8,6 +8,7 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../../..
 LIBRARYNAME = LLVMbzip2
+BUILD_ARCHIVE = 1
 SOURCES = blocksort.c huffman.c crctable.c randtable.c compress.c decompress.c \
 	  bzlib.c
 EXTRA_DIST = bzlib.h bzlib_private.h CHANGES LICENSE README \
