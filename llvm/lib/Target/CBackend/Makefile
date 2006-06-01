@@ -9,5 +9,4 @@
 
 LEVEL = ../../..
 LIBRARYNAME = LLVMCBackend
-CXXFLAGS += -pedantic -Wno-long-long
 include $(LEVEL)/Makefile.common

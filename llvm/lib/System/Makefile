@@ -14,3 +14,6 @@ BUILD_ARCHIVE = 1
 EXTRA_DIST = Unix Win32 README.txt
 
 include $(LEVEL)/Makefile.common
+
+CompileCommonOpts := $(filter-out -pedantic,$(CompileCommonOpts))
+CompileCommonOpts := $(filter-out -Wno-long-long,$(CompileCommonOpts))

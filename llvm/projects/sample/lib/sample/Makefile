@@ -19,3 +19,5 @@ LOADABLE_MODULE=1
 #
 include $(LEVEL)/Makefile.common
 
+CompileCommonOpts := $(filter-out -pedantic,$(CompileCommonOpts))
+CompileCommonOpts := $(filter-out -Wno-long-long,$(CompileCommonOpts))

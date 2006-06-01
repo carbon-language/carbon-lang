@@ -357,7 +357,8 @@ endif
 # Options To Invoke Tools
 #----------------------------------------------------------
 
-CompileCommonOpts := -Wall -W -Wwrite-strings -Wno-unused 
+CompileCommonOpts := -Wall -W -Wwrite-strings -Wno-unused -Wno-long-long \
+                     -pedantic 
 
 ifeq ($(OS),HP-UX)
   CompileCommonOpts := -D_REENTRANT -D_HPUX_SOURCE
