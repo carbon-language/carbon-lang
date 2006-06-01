@@ -360,6 +360,5 @@ PostDominanceFrontier::calculate(const PostDominatorTree &DT,
 }
 
 // stub - a dummy function to make linking work ok.
-void PostDominanceFrontier::stub() {
-}
+int PostDominanceFrontier::stub;
 

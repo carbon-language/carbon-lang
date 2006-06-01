@@ -55,12 +55,12 @@ public:
   }
 
   // stub - dummy function, just ignore it
-  static void stub();
+  static int stub;
 };
 
 // Make sure that any clients of this file link in PostDominators.cpp
 static IncludeFile
-FIND_USED_TYPES_INCLUDE_FILE((void*)(&FindUsedTypes::stub));
+FIND_USED_TYPES_INCLUDE_FILE(&FindUsedTypes::stub);
 
 } // End llvm namespace
 

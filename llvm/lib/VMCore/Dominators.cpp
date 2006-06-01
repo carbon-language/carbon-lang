@@ -304,7 +304,7 @@ bool DominatorSet::runOnFunction(Function &F) {
   return false;
 }
 
-void DominatorSet::stub() {}
+int DominatorSet::stub;
 
 namespace llvm {
 static std::ostream &operator<<(std::ostream &o,

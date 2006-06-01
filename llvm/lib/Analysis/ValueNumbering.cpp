@@ -239,4 +239,4 @@ void BVNImpl::handleTernaryInst(Instruction &I) {
 }
 
 
-void llvm::BasicValueNumberingStub() { }
+int llvm::BasicValueNumberingStub; // to ensure linkage of this file

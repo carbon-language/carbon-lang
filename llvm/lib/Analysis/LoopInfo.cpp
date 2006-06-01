@@ -86,7 +86,7 @@ void Loop::dump() const {
 //===----------------------------------------------------------------------===//
 // LoopInfo implementation
 //
-void LoopInfo::stub() {}
+int LoopInfo::stub;
 
 bool LoopInfo::runOnFunction(Function &) {
   releaseMemory();

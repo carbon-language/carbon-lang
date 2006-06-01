@@ -129,7 +129,7 @@ struct PostDominanceFrontier : public DominanceFrontierBase {
   }
 
   // stub - dummy function, just ignore it
-  static void stub();
+  static int stub;
 
 private:
   const DomSetType &calculate(const PostDominatorTree &DT,
@@ -138,7 +138,7 @@ private:
 
 // Make sure that any clients of this file link in PostDominators.cpp
 static IncludeFile
-POST_DOMINATOR_INCLUDE_FILE((void*)&PostDominanceFrontier::stub);
+POST_DOMINATOR_INCLUDE_FILE(&PostDominanceFrontier::stub);
 
 } // End llvm namespace
 

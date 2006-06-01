@@ -321,8 +321,8 @@ public:
 // the risk of AliasAnalysis being used, but the default implementation not
 // being linked into the tool that uses it.
 //
-extern void BasicAAStub();
-static IncludeFile HDR_INCLUDE_BASICAA_CPP((void*)&BasicAAStub);
+extern int BasicAAStub;
+static IncludeFile HDR_INCLUDE_BASICAA_CPP(&BasicAAStub);
 
 } // End llvm namespace
 

@@ -155,7 +155,7 @@ public:
   void dump() const;
   
   // stub - dummy function, just ignore it
-  static void stub();
+  static int stub;
 protected:
 
   // destroy - Release memory for the call graph
@@ -289,7 +289,7 @@ template<> struct GraphTraits<const CallGraph*> :
 
 // Make sure that any clients of this file link in CallGraph.cpp
 static IncludeFile
-CALLGRAPH_INCLUDE_FILE((void*)&CallGraph::stub);
+CALLGRAPH_INCLUDE_FILE(&CallGraph::stub);
 
 extern void BasicCallGraphStub();
 static IncludeFile HDR_INCLUDE_CALLGRAPH_CPP((void*)&BasicCallGraphStub);

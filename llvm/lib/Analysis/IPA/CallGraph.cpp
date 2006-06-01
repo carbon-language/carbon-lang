@@ -258,7 +258,7 @@ CallGraphNode *CallGraph::getOrInsertFunction(const Function *F) {
 
 
 
-void CallGraph::stub() {}
+int CallGraph::stub; // to ensure linkage of this file.
 
 void CallGraphNode::print(std::ostream &OS) const {
   if (Function *F = getFunction())

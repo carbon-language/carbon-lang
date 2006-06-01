@@ -65,9 +65,9 @@ struct ValueNumbering {
   }
 };
 
-extern void BasicValueNumberingStub();
+extern int BasicValueNumberingStub;
 static IncludeFile
-HDR_INCLUDE_VALUENUMBERING_CPP((void*)&BasicValueNumberingStub);
+HDR_INCLUDE_VALUENUMBERING_CPP(&BasicValueNumberingStub);
 
 } // End llvm namespace
 

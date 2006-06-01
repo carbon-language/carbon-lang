@@ -27,7 +27,7 @@
 using namespace llvm;
 
 // Make sure that anything that uses AliasAnalysis pulls in this file...
-void llvm::BasicAAStub() {}
+int llvm::BasicAAStub;
 
 namespace {
   /// NoAA - This class implements the -no-aa pass, which always returns "I

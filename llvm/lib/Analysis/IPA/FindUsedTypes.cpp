@@ -25,7 +25,7 @@ static RegisterAnalysis<FindUsedTypes>
 X("printusedtypes", "Find Used Types");
 
 // stub to help linkage
-void FindUsedTypes::stub() {}
+int FindUsedTypes::stub; // to ensure linkage of this file
 
 // IncorporateType - Incorporate one type and all of its subtypes into the
 // collection of used types.
