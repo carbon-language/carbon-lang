@@ -136,6 +136,9 @@
 /* Define if the gv program is available */
 #undef HAVE_GV
 
+/* Define to 1 if you have the <imagehlp.h> header file. */
+#undef HAVE_IMAGEHLP_H
+
 /* Define to 1 if you have the `index' function. */
 #undef HAVE_INDEX
 
@@ -166,8 +169,14 @@
 /* Define to 1 if you have the `elf' library (-lelf). */
 #undef HAVE_LIBELF
 
+/* Define to 1 if you have the `imagehlp' library (-limagehlp). */
+#undef HAVE_LIBIMAGEHLP
+
 /* Define to 1 if you have the `m' library (-lm). */
 #undef HAVE_LIBM
+
+/* Define to 1 if you have the `psapi' library (-lpsapi). */
+#undef HAVE_LIBPSAPI
 
 /* Define to 1 if you have the `pthread' library (-lpthread). */
 #undef HAVE_LIBPTHREAD
@@ -245,6 +254,9 @@
 
 /* Define to have the %a format string */
 #undef HAVE_PRINTF_A
+
+/* Define to 1 if you have the <psapi.h> header file. */
+#undef HAVE_PSAPI_H
 
 /* Define to 1 if you have the <pthread.h> header file. */
 #undef HAVE_PTHREAD_H

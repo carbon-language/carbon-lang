@@ -486,6 +486,11 @@ dnl===-----------------------------------------------------------------------===
 dnl libelf is for sparc only; we can ignore it if we don't have it
 AC_CHECK_LIB(elf, elf_begin)
 AC_CHECK_LIB(m,sin)
+if test "$llvm_cv_os_type" == "MingW" ; then
+  AC_CHECK_HEADERS([imagehlp.h psapi.h])
+  AC_CHECK_LIB(imagehlp,[SymGetOptions])
+  AC_CHECK_LIB(psapi,[GetProcessMemoryInfo])
+fi
 
 dnl lt_dlopen may be required for plugin support.
 AC_SEARCH_LIBS(lt_dlopen,ltdl,AC_DEFINE([HAVE_LT_DLOPEN],[1],
