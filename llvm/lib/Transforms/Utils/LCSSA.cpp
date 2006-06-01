@@ -36,7 +36,7 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/CFG.h"
 #include <algorithm>
-#include <iostream>
+#include <cassert>
 #include <map>
 #include <vector>
 
@@ -143,17 +143,12 @@ void LCSSA::processInstruction(Instruction* Instr,
   std::vector<PHINode*> workList;
   
   for (std::vector<BasicBlock*>::const_iterator BBI = exitBlocks.begin(),
-      BBE = exitBlocks.end(); BBI != BBE; ++BBI) {
-    PHINode *phi = new PHINode(Instr->getType(), "lcssa", (*BBI)->begin());
-    workList.push_back(phi);
-    Phis[*BBI] = phi;
-    
-    // Since LoopSimplify has been run, we know that all of these predecessors
-    // are in the loop, so just hook them up in the obvious manner.
-    //for (pred_iterator PI = pred_begin(*BBI), PE = pred_end(*BBI); PI != PE;
-    //     ++PI)
-    //  phi->addIncoming(Instr, *PI);
-  }
+      BBE = exitBlocks.end(); BBI != BBE; ++BBI)
+    if (DT->getNode(Instr->getParent())->dominates(DT->getNode(*BBI))) {
+      PHINode *phi = new PHINode(Instr->getType(), "lcssa", (*BBI)->begin());
+      workList.push_back(phi);
+      Phis[*BBI] = phi;
+    }
   
   // Calculate the IDF of these LCSSA Phi nodes, inserting new Phi's where
   // necessary.  Keep track of these new Phi's in Phis.
@@ -170,8 +165,7 @@ void LCSSA::processInstruction(Instruction* Instr,
            PE = S.end(); P != PE; ++P) {
         if (Phis[*P] == 0) {
           // Still doesn't have operands...
-          PHINode *phi = new PHINode(Instr->getType(), "lcssa");
-          (*P)->getInstList().insert((*P)->front(), phi);
+          PHINode *phi = new PHINode(Instr->getType(), "lcssa", (*P)->begin());
           Phis[*P] = phi;
           
           workList.push_back(phi);
@@ -208,8 +202,21 @@ void LCSSA::processInstruction(Instruction* Instr,
   
   for (std::vector<Instruction*>::iterator II = Uses.begin(), IE = Uses.end();
        II != IE; ++II) {
-    (*II)->replaceUsesOfWith(Instr, getValueDominatingBlock((*II)->getParent(),
-                                                          Phis));
+    if (PHINode* phi = dyn_cast<PHINode>(*II)) {
+      for (unsigned int i = 0; i < phi->getNumIncomingValues(); ++i) {
+        // FIXME: Replace a Phi entry if and only if the corresponding 
+        // predecessor is dominated.
+        Instruction* dominator = 
+                        getValueDominatingBlock(phi->getIncomingBlock(i), Phis);
+        
+        if (phi->getIncomingValue(i) == Instr)
+          phi->setIncomingValue(i, dominator);
+      }
+    } else {
+       (*II)->replaceUsesOfWith(Instr,
+                                getValueDominatingBlock((*II)->getParent(),
+                                Phis));
+    }
   }
 }
 
@@ -241,12 +248,17 @@ std::set<Instruction*> LCSSA::getLoopValuesUsedOutsideLoop(Loop *L,
 
 Instruction *LCSSA::getValueDominatingBlock(BasicBlock *BB,
                                   std::map<BasicBlock*, Instruction*> PotDoms) {
-  for (std::map<BasicBlock*, Instruction*>::iterator MI = PotDoms.begin(),
-       ME = PotDoms.end(); MI != ME; ++MI)
-    if (DT->getNode((*MI).first)->dominates(DT->getNode(BB)))
-      return (*MI).second;
+  DominatorTree::Node* bbNode = DT->getNode(BB);
+  while (bbNode != 0) {
+    std::map<BasicBlock*, Instruction*>::iterator I =
+                                               PotDoms.find(bbNode->getBlock());
+    if (I != PotDoms.end()) {
+      return (*I).second;
+    }
+    bbNode = bbNode->getIDom();
+  }
   
-  // FIXME: Should assert false
+  assert(0 && "No dominating value found.");
   
   return 0;
 }
