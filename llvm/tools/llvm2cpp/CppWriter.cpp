@@ -25,6 +25,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Config/config.h"
 #include <algorithm>
 #include <iostream>
 #include <set>
@@ -40,6 +41,7 @@ enum WhatToGenerate {
   GenModule,
   GenContents,
   GenFunction,
+  GenInline,
   GenVariable,
   GenType
 };
@@ -52,6 +54,7 @@ static cl::opt<WhatToGenerate> GenerationType(cl::Optional,
     clEnumValN(GenModule,  "gen-module",   "Generate a module definition"),
     clEnumValN(GenContents,"gen-contents", "Generate contents of a module"),
     clEnumValN(GenFunction,"gen-function", "Generate a function definition"),
+    clEnumValN(GenInline,  "gen-inline",   "Generate an inline function"),
     clEnumValN(GenVariable,"gen-variable", "Generate a variable definition"),
     clEnumValN(GenType,    "gen-type",     "Generate a type definition"),
     clEnumValEnd
@@ -84,11 +87,12 @@ class CppWriter {
   TypeSet DefinedTypes;
   ValueSet DefinedValues;
   ForwardRefMap ForwardRefs;
+  bool is_inline;
 
 public:
   inline CppWriter(std::ostream &o, const Module *M, const char* pn="llvm2cpp")
     : progname(pn), Out(o), TheModule(M), uniqueNum(0), TypeNames(),
-      ValueNames(), UnresolvedTypes(), TypeStack() { }
+      ValueNames(), UnresolvedTypes(), TypeStack(), is_inline(false) { }
 
   const Module* getModule() { return TheModule; }
 
@@ -96,6 +100,7 @@ public:
   void printModule(const std::string& fname, const std::string& modName );
   void printContents(const std::string& fname, const std::string& modName );
   void printFunction(const std::string& fname, const std::string& funcName );
+  void printInline(const std::string& fname, const std::string& funcName );
   void printVariable(const std::string& fname, const std::string& varName );
   void printType(const std::string& fname, const std::string& typeName );
 
@@ -195,6 +200,11 @@ CppWriter::error(const std::string& msg) {
 // result so that we don't lose precision.
 void 
 CppWriter::printCFP(const ConstantFP *CFP) {
+  Out << "ConstantFP::get(";
+  if (CFP->getType() == Type::DoubleTy)
+    Out << "Type::DoubleTy, ";
+  else
+    Out << "Type::FloatTy, ";
 #if HAVE_PRINTF_A
   char Buffer[100];
   sprintf(Buffer, "%A", CFP->getValue());
@@ -202,32 +212,37 @@ CppWriter::printCFP(const ConstantFP *CFP) {
        !strncmp(Buffer, "-0x", 3) ||
        !strncmp(Buffer, "+0x", 3)) &&
       (atof(Buffer) == CFP->getValue()))
-    Out << Buffer;
+    if (CFP->getType() == Type::DoubleTy)
+      Out << "BitsToDouble(" << Buffer << ")";
+    else
+      Out << "BitsToFloat(" << Buffer << ")";
   else {
-#else
-  std::string StrVal = ftostr(CFP->getValue());
-
-  while (StrVal[0] == ' ')
-    StrVal.erase(StrVal.begin());
-
-  // Check to make sure that the stringized number is not some string like "Inf"
-  // or NaN.  Check that the string matches the "[-+]?[0-9]" regex.
-  if (((StrVal[0] >= '0' && StrVal[0] <= '9') ||
-      ((StrVal[0] == '-' || StrVal[0] == '+') &&
-       (StrVal[1] >= '0' && StrVal[1] <= '9'))) &&
-      (atof(StrVal.c_str()) == CFP->getValue()))
-    Out << StrVal;
-  else if (CFP->getType() == Type::DoubleTy) {
-    Out << "0x" << std::hex << DoubleToBits(CFP->getValue()) << std::dec
-        << "ULL /* " << StrVal << " */";
-  } else  {
-    Out << "0x" << std::hex << FloatToBits(CFP->getValue()) << std::dec
-        << "U /* " << StrVal << " */";
-  }
 #endif
+    std::string StrVal = ftostr(CFP->getValue());
+
+    while (StrVal[0] == ' ')
+      StrVal.erase(StrVal.begin());
+
+    // Check to make sure that the stringized number is not some string like 
+    // "Inf" or NaN.  Check that the string matches the "[-+]?[0-9]" regex.
+    if (((StrVal[0] >= '0' && StrVal[0] <= '9') ||
+        ((StrVal[0] == '-' || StrVal[0] == '+') &&
+         (StrVal[1] >= '0' && StrVal[1] <= '9'))) &&
+        (atof(StrVal.c_str()) == CFP->getValue()))
+      if (CFP->getType() == Type::DoubleTy)
+        Out <<  StrVal;
+      else
+        Out << StrVal;
+    else if (CFP->getType() == Type::DoubleTy)
+      Out << "BitsToDouble(0x" << std::hex << DoubleToBits(CFP->getValue()) 
+          << std::dec << "ULL) /* " << StrVal << " */";
+    else 
+      Out << "BitsToFloat(0x" << std::hex << FloatToBits(CFP->getValue()) 
+          << std::dec << "U) /* " << StrVal << " */";
 #if HAVE_PRINTF_A
   }
 #endif
+  Out << ")";
 }
 
 void
@@ -353,6 +368,19 @@ CppWriter::getCppName(const Value* val) {
     name = std::string("func_");
   } else if (const Constant* C = dyn_cast<Constant>(val)) {
     name = std::string("const_") + getTypePrefix(C->getType());
+  } else if (const Argument* Arg = dyn_cast<Argument>(val)) {
+    if (is_inline) {
+      unsigned argNum = std::distance(Arg->getParent()->arg_begin(),
+          Function::const_arg_iterator(Arg)) + 1;
+      name = std::string("arg_") + utostr(argNum);
+      NameSet::iterator NI = UsedNames.find(name);
+      if (NI != UsedNames.end())
+        name += std::string("_") + utostr(uniqueNum++);
+      UsedNames.insert(name);
+      return ValueNames[val] = name;
+    } else {
+      name = getTypePrefix(val->getType());
+    }
   } else {
     name = getTypePrefix(val->getType());
   }
@@ -629,10 +657,9 @@ void CppWriter::printConstant(const Constant *CV) {
     Out << "ConstantPointerNull* " << constName 
         << " = ConstanPointerNull::get(" << typeName << ");";
   } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV)) {
-    Out << "ConstantFP* " << constName << " = ConstantFP::get(" << typeName 
-        << ", ";
+    Out << "ConstantFP* " << constName << " = ";
     printCFP(CFP);
-    Out << ");";
+    Out << ";";
   } else if (const ConstantArray *CA = dyn_cast<ConstantArray>(CV)) {
     if (CA->isString() && CA->getType()->getElementType() == Type::SByteTy) {
       Out << "Constant* " << constName << " = ConstantArray::get(\"";
@@ -788,9 +815,13 @@ void CppWriter::printVariableUses(const GlobalVariable *GV) {
 }
 
 void CppWriter::printVariableHead(const GlobalVariable *GV) {
-  Out << "\n";
-  Out << "GlobalVariable* ";
-  printCppName(GV);
+  Out << "\nGlobalVariable* " << getCppName(GV);
+  if (is_inline) {
+     Out << " = mod->getGlobalVariable(";
+     printEscapedString(GV->getName());
+     Out << ", " << getCppName(GV->getType()->getElementType()) << ",true)\n";
+     Out << "if (!" << getCppName(GV) << ") {\n  " << getCppName(GV);
+  }
   Out << " = new GlobalVariable(\n";
   Out << "  /*Type=*/";
   printCppName(GV->getType()->getElementType());
@@ -816,6 +847,8 @@ void CppWriter::printVariableHead(const GlobalVariable *GV) {
     printCppName(GV);
     Out << "->setAlignment(" << utostr(GV->getAlignment()) << ");\n";
   };
+  if (is_inline)
+    Out << "}\n";
 }
 
 void 
@@ -1168,16 +1201,18 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
 void CppWriter::printFunctionUses(const Function* F) {
 
   Out << "\n// Type Definitions\n";
-  // Print the function's return type
-  printType(F->getReturnType());
+  if (!is_inline) {
+    // Print the function's return type
+    printType(F->getReturnType());
 
-  // Print the function's function type
-  printType(F->getFunctionType());
+    // Print the function's function type
+    printType(F->getFunctionType());
 
-  // Print the types of each of the function's arguments
-  for(Function::const_arg_iterator AI = F->arg_begin(), AE = F->arg_end(); 
-      AI != AE; ++AI) {
-    printType(AI->getType());
+    // Print the types of each of the function's arguments
+    for(Function::const_arg_iterator AI = F->arg_begin(), AE = F->arg_end(); 
+        AI != AE; ++AI) {
+      printType(AI->getType());
+    }
   }
 
   // Print type definitions for every type referenced by an instruction and
@@ -1206,8 +1241,10 @@ void CppWriter::printFunctionUses(const Function* F) {
   Out << "\n// Function Declarations\n";
   for (std::vector<GlobalValue*>::iterator I = gvs.begin(), E = gvs.end();
        I != E; ++I) {
-    if (Function* F = dyn_cast<Function>(*I))
-      printFunctionHead(F);
+    if (Function* Fun = dyn_cast<Function>(*I)) {
+      if (!is_inline || Fun != F)
+        printFunctionHead(Fun);
+    }
   }
 
   // Print the global variable declarations for any variables encountered
@@ -1222,7 +1259,7 @@ void CppWriter::printFunctionUses(const Function* F) {
   Out << "\n// Constant Definitions\n";
   for (std::vector<Constant*>::iterator I = consts.begin(), E = consts.end();
        I != E; ++I) {
-      printConstant(F);
+      printConstant(*I);
   }
 
   // Process the global variables definitions now that all the constants have
@@ -1237,7 +1274,15 @@ void CppWriter::printFunctionUses(const Function* F) {
 }
 
 void CppWriter::printFunctionHead(const Function* F) {
-  Out << "\nFunction* " << getCppName(F) << " = new Function(\n"
+  Out << "\nFunction* " << getCppName(F); 
+  if (is_inline) {
+    Out << " = mod->getFunction(\"";
+    printEscapedString(F->getName());
+    Out << "\", " << getCppName(F->getFunctionType()) << ");\n";
+    Out << "if (!" << getCppName(F) << ") {\n";
+    Out << getCppName(F);
+  }
+  Out<< " = new Function(\n"
       << "  /*Type=*/" << getCppName(F->getFunctionType()) << ",\n"
       << "  /*Linkage=*/";
   printLinkageType(F->getLinkage());
@@ -1257,6 +1302,9 @@ void CppWriter::printFunctionHead(const Function* F) {
     printCppName(F);
     Out << "->setAlignment(" << F->getAlignment() << ");\n";
   }
+  if (is_inline) {
+    Out << "}\n";
+  }
 }
 
 void CppWriter::printFunctionBody(const Function *F) {
@@ -1269,16 +1317,18 @@ void CppWriter::printFunctionBody(const Function *F) {
   DefinedValues.clear();
 
   // Create all the argument values
-  if (!F->arg_empty()) {
-    Out << "  Function::arg_iterator args = " << getCppName(F) 
-        << "->arg_begin();\n";
-  }
-  for (Function::const_arg_iterator AI = F->arg_begin(), AE = F->arg_end();
-       AI != AE; ++AI) {
-    Out << "  Value* " << getCppName(AI) << " = args++;\n";
-    if (AI->hasName())
-      Out << "  " << getCppName(AI) << "->setName(\"" << AI->getName() 
-          << "\");\n";
+  if (!is_inline) {
+    if (!F->arg_empty()) {
+      Out << "  Function::arg_iterator args = " << getCppName(F) 
+          << "->arg_begin();\n";
+    }
+    for (Function::const_arg_iterator AI = F->arg_begin(), AE = F->arg_end();
+         AI != AE; ++AI) {
+      Out << "  Value* " << getCppName(AI) << " = args++;\n";
+      if (AI->hasName())
+        Out << "  " << getCppName(AI) << "->setName(\"" << AI->getName() 
+            << "\");\n";
+    }
   }
 
   // Create all the basic blocks
@@ -1315,6 +1365,32 @@ void CppWriter::printFunctionBody(const Function *F) {
         << getCppName(I->first) << "); delete " << I->second << ";\n";
     ForwardRefs.erase(I);
   }
+}
+
+void CppWriter::printInline(const std::string& fname, const std::string& func) {
+  const Function* F = TheModule->getNamedFunction(func);
+  if (!F) {
+    error(std::string("Function '") + func + "' not found in input module");
+    return;
+  }
+  if (F->isExternal()) {
+    error(std::string("Function '") + func + "' is external!");
+    return;
+  }
+  Out << "\nBasicBlock* " << fname << "(Module* mod, Function *" 
+      << getCppName(F);
+  unsigned arg_count = 1;
+  for (Function::const_arg_iterator AI = F->arg_begin(), AE = F->arg_end();
+       AI != AE; ++AI) {
+    Out << ", Value* arg_" << arg_count;
+  }
+  Out << ") {\n";
+  is_inline = true;
+  printFunctionUses(F);
+  printFunctionBody(F);
+  is_inline = false;
+  Out << "return " << getCppName(F->begin()) << ";\n";
+  Out << "}\n";
 }
 
 void CppWriter::printModuleBody() {
@@ -1378,6 +1454,7 @@ void CppWriter::printProgram(
   Out << "#include <llvm/BasicBlock.h>\n";
   Out << "#include <llvm/Instructions.h>\n";
   Out << "#include <llvm/InlineAsm.h>\n";
+  Out << "#include <llvm/Support/MathExtras.h>\n";
   Out << "#include <llvm/Pass.h>\n";
   Out << "#include <llvm/PassManager.h>\n";
   Out << "#include <llvm/Analysis/Verifier.h>\n";
@@ -1550,6 +1627,11 @@ void WriteModuleToCppFile(Module* mod, std::ostream& o) {
       if (fname.empty())
         fname = "makeLLVMFunction";
       W.printFunction(fname,tgtname);
+      break;
+    case GenInline:
+      if (fname.empty())
+        fname = "makeLLVMInline";
+      W.printInline(fname,tgtname);
       break;
     case GenVariable:
       if (fname.empty())
