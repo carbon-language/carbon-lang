@@ -137,6 +137,17 @@ The value of the option must be the name of a function in the input module for
 which code should be generated. If the named function does not exist an error
 will be produced.
 
+=item B<-gen-inline>
+
+This option is very analagous to B<-gen-function> except that the generated
+function will not re-produce the target function's definition. Instead, the body
+of the target function is inserted into some other function passed as an
+argument to the generated function. Similarly any arguments to the function must
+be passed to the generated function. The result of the generated function is the
+first basic block of the target function.
+
+The B<-for> option works the same way as it does for B<-gen-function>.
+
 =item B<-gen-variable>
 
 Specify that the output should be a function that produces the definitions
