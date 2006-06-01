@@ -167,7 +167,9 @@ X86JITInfo::getLazyResolverFunction(JITCompilerFn F) {
 }
 
 void *X86JITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
-  if (Fn != (void*)X86CompilationCallback) {
+  // Note, we cast to intptr_t here to silence a -pedantic warning that 
+  // complains about casting a function pointer to a normal pointer.
+  if (Fn != (void*)(intptr_t)X86CompilationCallback) {
     MCE.startFunctionStub(5);
     MCE.emitByte(0xE9);
     MCE.emitWordLE((intptr_t)Fn-MCE.getCurrentPCValue()-4);
