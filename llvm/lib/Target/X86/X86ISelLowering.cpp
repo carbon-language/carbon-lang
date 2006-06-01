@@ -380,7 +380,7 @@ static unsigned AddLiveIn(MachineFunction &MF, unsigned PReg,
 static void
 HowToPassCCCArgument(MVT::ValueType ObjectVT, unsigned NumXMMRegs,
                      unsigned &ObjSize, unsigned &ObjXMMRegs) {
-  NumXMMRegs = 0;
+  ObjXMMRegs = 0;
 
   switch (ObjectVT) {
   default: assert(0 && "Unhandled argument type!");
@@ -784,8 +784,8 @@ HowToPassFastCCArgument(MVT::ValueType ObjectVT,
                         unsigned &ObjSize, unsigned &ObjIntRegs,
                         unsigned &ObjXMMRegs) {
   ObjSize = 0;
-  NumIntRegs = 0;
-  NumXMMRegs = 0;
+  ObjIntRegs = 0;
+  ObjXMMRegs = 0;
 
   switch (ObjectVT) {
   default: assert(0 && "Unhandled argument type!");
