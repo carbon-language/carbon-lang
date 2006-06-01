@@ -291,8 +291,8 @@ template<> struct GraphTraits<const CallGraph*> :
 static IncludeFile
 CALLGRAPH_INCLUDE_FILE(&CallGraph::stub);
 
-extern void BasicCallGraphStub();
-static IncludeFile HDR_INCLUDE_CALLGRAPH_CPP((void*)&BasicCallGraphStub);
+extern int BasicCallGraphStub;
+static IncludeFile HDR_INCLUDE_CALLGRAPH_CPP(&BasicCallGraphStub);
 
 } // End llvm namespace
 

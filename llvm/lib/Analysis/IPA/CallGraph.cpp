@@ -19,7 +19,7 @@
 #include <iostream>
 using namespace llvm;
 
-void llvm::BasicCallGraphStub() {}
+int llvm::BasicCallGraphStub;
 
 static bool isOnlyADirectCall(Function *F, CallSite CS) {
   if (!CS.getInstruction()) return false;
