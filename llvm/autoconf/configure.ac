@@ -487,7 +487,8 @@ dnl libelf is for sparc only; we can ignore it if we don't have it
 AC_CHECK_LIB(elf, elf_begin)
 AC_CHECK_LIB(m,sin)
 if test "$llvm_cv_os_type" == "MingW" ; then
-  AC_CHECK_HEADERS([windows.h imagehlp.h psapi.h])
+  AC_CHECK_HEADERS([windows.h])
+  AC_CHECK_HEADERS([imagehlp.h psapi.h])
   AC_CHECK_LIB(imagehlp,[SymGetOptions])
   AC_CHECK_LIB(psapi,[GetProcessMemoryInfo])
 fi
