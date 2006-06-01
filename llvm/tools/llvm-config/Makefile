@@ -49,7 +49,7 @@ llvm-config.in: $(ConfigInIn) $(ConfigStatusScript)
 		$(ConfigStatusScript) tools/llvm-config/llvm-config.in
 
 # Build our final script.
-llvm-config: llvm-config.in $(FinalLibDeps)
+$(ToolDir)/llvm-config: llvm-config.in $(FinalLibDeps)
 	$(Echo) "Building llvm-config script."
 	$(Verb) $(ECHO) 's,@LLVM_CXXFLAGS@,$(SUB_CXXFLAGS),' > temp.sed
 	$(Verb) $(ECHO) 's,@LLVM_LDFLAGS@,$(SUB_LDFLAGS),' >> temp.sed
@@ -61,19 +61,19 @@ llvm-config: llvm-config.in $(FinalLibDeps)
 
 else
 # We don't have perl, just generate a dummy llvm-config
-llvm-config:
+$(ToolDir)/llvm-config:
 	$(Echo) "Building place holder llvm-config script."
 	$(Verb) $(ECHO) 'echo llvm-config: Perl not found so llvm-config could not be generated' >> $@
 	$(Verb) chmod +x $@
 
 endif
 # Hook into the standard Makefile rules.
-all-local:: llvm-config
+all-local:: $(ToolDir)/llvm-config
 clean-local::
-	$(Verb) $(RM) -f llvm-config llvm-config.in $(FinalLibDeps) $(LibDeps) \
-	  GenLibDeps.out
+	$(Verb) $(RM) -f $(ToolDir)/llvm-config llvm-config.in $(FinalLibDeps) \
+	  $(LibDeps) GenLibDeps.out
 install-local:: all-local
 	$(Echo) Installing llvm-config
 	$(Verb) $(MKDIR) $(PROJ_bindir)
-	$(Verb) $(ScriptInstall) llvm-config $(PROJ_bindir)
+	$(Verb) $(ScriptInstall) $(ToolDir)/llvm-config $(PROJ_bindir)
 
