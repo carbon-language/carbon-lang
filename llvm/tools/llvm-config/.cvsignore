@@ -1,5 +1,6 @@
 FinalLibDeps.txt
+GenLibDeps.out
+LibDeps.txt
 libdeps.gif
-llvm-config
 llvm-config.in
 objdeps.gif
