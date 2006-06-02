@@ -17,9 +17,6 @@ use warnings;
 #---- begin autoconf values ----
 my $VERSION             = q{@PACKAGE_VERSION@};
 my $PREFIX              = q{@LLVM_PREFIX@};
-my $BINDIR              = "$PREFIX/bin";
-my $INCLUDEDIR          = "$PREFIX/include";
-my $LIBDIR              = "$PREFIX/lib";
 my $ARCH                = lc(q{@ARCH@});
 my $TARGET_HAS_JIT      = q{@TARGET_HAS_JIT@};
 my @TARGETS_BUILT       = map { lc($_) } qw{@TARGETS_TO_BUILD@};
@@ -49,15 +46,15 @@ foreach my $arg (@ARGV) {
         } elsif ($arg eq "--prefix") {
             $has_opt = 1; print "$PREFIX\n";
         } elsif ($arg eq "--bindir") {
-            $has_opt = 1; print "$BINDIR\n";
+            $has_opt = 1; print "$PREFIX/bin\n";
         } elsif ($arg eq "--includedir") {
-            $has_opt = 1; print "$INCLUDEDIR\n";
+            $has_opt = 1; print "$PREFIX/include\n";
         } elsif ($arg eq "--libdir") {
-            $has_opt = 1; print "$LIBDIR\n";
+            $has_opt = 1; print "$PREFIX/lib\n";
         } elsif ($arg eq "--cxxflags") {
-            $has_opt = 1; print "-I$INCLUDEDIR $CXXFLAGS\n";
+            $has_opt = 1; print "-I$PREFIX/include $CXXFLAGS\n";
         } elsif ($arg eq "--ldflags") {
-            $has_opt = 1; print "-L$LIBDIR $LDFLAGS\n";
+            $has_opt = 1; print "-L$PREFIX/lib $LDFLAGS\n";
         } elsif ($arg eq "--libs") {
             $has_opt = 1; $want_libs = 1;
         } elsif ($arg eq "--libnames") {
@@ -140,7 +137,7 @@ sub fix_library_names (@) {
         if (defined $basename) {
             push @result, "-l$basename";
         } else {
-            push @result, "$LIBDIR/$lib";
+            push @result, "$PREFIX/lib/$lib";
         }
     }
     return @result;
