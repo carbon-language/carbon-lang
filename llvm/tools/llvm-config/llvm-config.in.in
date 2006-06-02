@@ -169,7 +169,6 @@ sub find_best_engine;
 sub expand_names (@);
 sub find_all_required_sets (@);
 sub find_all_required_sets_helper ($$@);
-sub maybe_fix_core (@);
 
 # Each "set" contains one or more libraries which must be included as a
 # group (due to cyclic dependencies).  Sets are represented as a Perl array
@@ -192,11 +191,10 @@ sub expand_dependecies (@) {
     my @required_sets = find_all_required_sets(expand_names(@libs));
     my @sorted_sets = topologically_sort_sets(@required_sets);
 
-    # Expand the library sets into libraries, and apply any
-    # platform-specific hackery.
+    # Expand the library sets into libraries.
     my @result;
     foreach my $set (@sorted_sets) { push @result, @{$set}; }
-    return maybe_fix_core(@result);
+    return @result;
 }
 
 # Load in the raw dependency data stored at the end of this file.
@@ -350,17 +348,6 @@ sub topologically_sort_sets (@) {
         die "Can't find a library with no dependencies";
     }
     return reverse(@result);
-}
-
-# Nasty hack to work around the fact that LLVMCore changes file type on
-# certain platforms.
-sub maybe_fix_core (@) {
-    my @libs = @_;
-    my @result;
-    foreach my $lib (@libs) {
-        push @result, $lib;
-    }
-    return @result;
 }
 
 # Our library dependency data will be added after the '__END__' token, and will
