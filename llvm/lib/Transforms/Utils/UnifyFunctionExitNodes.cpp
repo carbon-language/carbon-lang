@@ -25,6 +25,8 @@ using namespace llvm;
 static RegisterOpt<UnifyFunctionExitNodes>
 X("mergereturn", "Unify function exit nodes");
 
+int UnifyFunctionExitNodes::stub;
+
 Pass *llvm::createUnifyFunctionExitNodesPass() {
   return new UnifyFunctionExitNodes();
 }
