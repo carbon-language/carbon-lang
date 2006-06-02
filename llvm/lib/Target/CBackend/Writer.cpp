@@ -833,7 +833,7 @@ void CWriter::writeOperand(Value *Operand) {
 static void generateCompilerSpecificCode(std::ostream& Out) {
   // Alloca is hard to get, and we don't want to include stdlib.h here.
   Out << "/* get a declaration for alloca */\n"
-      << "#if defined(__CYGWIN__)\n"
+      << "#if defined(__CYGWIN__) || defined(__MINGW32__)\n"
       << "extern void *_alloca(unsigned long);\n"
       << "#define alloca(x) _alloca(x)\n"
       << "#elif defined(__APPLE__)\n"
