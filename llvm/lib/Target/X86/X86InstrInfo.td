@@ -523,7 +523,7 @@ def REP_MOVSB : I<0xA4, RawFrm, (ops), "{rep;movsb|rep movsb}",
 def REP_MOVSW : I<0xA5, RawFrm, (ops), "{rep;movsw|rep movsw}",
                   [(X86rep_movs i16)]>,
                 Imp<[ECX,EDI,ESI], [ECX,EDI,ESI]>, REP, OpSize;
-def REP_MOVSD : I<0xA5, RawFrm, (ops), "{rep;movsd|rep movsd}",
+def REP_MOVSD : I<0xA5, RawFrm, (ops), "{rep;movsl|rep movsd}",
                   [(X86rep_movs i32)]>,
                 Imp<[ECX,EDI,ESI], [ECX,EDI,ESI]>, REP;
 
