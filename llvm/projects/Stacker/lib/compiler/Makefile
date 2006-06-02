@@ -11,4 +11,9 @@ ifdef PARSE_DEBUG
 INCLUDES += -DPARSE_DEBUG
 endif
 
+# Disable -pedantic for this library, as bison output isn't necessarily 
+# -pedantic clean.
+CompileCommonOpts := $(filter-out -pedantic,$(CompileCommonOpts))
+CompileCommonOpts := $(filter-out -Wno-long-long,$(CompileCommonOpts))
+
 $(ObjDir)/Lexer.o : $(PROJ_SRC_DIR)/StackerParser.h
