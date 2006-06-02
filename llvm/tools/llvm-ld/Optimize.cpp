@@ -174,7 +174,7 @@ void Optimize(Module* M) {
     sys::DynamicLibrary dll(I->c_str());
     typedef void (*OptimizeFunc)(PassManager&,int);
     OptimizeFunc OF = OptimizeFunc(
-        dll.GetAddressOfSymbol("RunOptimizations"));
+        (intptr_t)dll.GetAddressOfSymbol("RunOptimizations"));
     if (OF == 0) {
       throw std::string("Optimization Module '") + *I +
         "' is missing the RunOptimizations symbol";
