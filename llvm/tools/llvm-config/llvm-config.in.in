@@ -15,9 +15,29 @@ use strict;
 use warnings;
 
 #---- begin autoconf values ----
+my $PACKAGE_NAME        = q{@PACKAGE_NAME@};
 my $VERSION             = q{@PACKAGE_VERSION@};
 my $PREFIX              = q{@LLVM_PREFIX@};
+my $BINDIR              = "$PREFIX/bin";
+my $INCLUDEDIR          = "$PREFIX/include";
+my $LIBDIR              = "$PREFIX/lib";
+my $LLVM_CONFIGTIME     = q{@LLVM_CONFIGTIME@};
+my $LLVM_SRC_ROOT       = q{@abs_top_srcdir@};
+my $LLVM_OBJ_ROOT       = q{@abs_top_builddir@};
+my $LLVM_ON_WIN32       = q{@LLVM_ON_WIN32@};
+my $LLVM_ON_UNIX        = q{@LLVM_ON_UNIX@};
+my $LLVMGCCDIR          = q{@LLVMGCCDIR@};
+my $LLVMGCC             = q{@LLVMGCC@};
+my $LLVMGXX             = q{@LLVMGXX@};
+my $LLVMGCC_VERSION     = q{@LLVMGCC_VERSION@};
+my $LLVMGCC_MAJVERS     = q{@LLVMGCC_MAJVERS@};
+my $ENDIAN              = q{@ENDIAN@};
+my $SHLIBEXT            = q{@SHLIBEXT@};
+my $EXEEXT              = q{@EXEEXT@};
+my $OS                  = q{@OS@};
 my $ARCH                = lc(q{@ARCH@});
+my $TARGET_TRIPLE       = q{@target@};
+my $TARGETS_TO_BUILD    = q{@TARGETS_TO_BUILD@};
 my $TARGET_HAS_JIT      = q{@TARGET_HAS_JIT@};
 my @TARGETS_BUILT       = map { lc($_) } qw{@TARGETS_TO_BUILD@};
 #---- end autoconf values ----
