@@ -47,6 +47,7 @@ my @TARGETS_BUILT       = map { lc($_) } qw{@TARGETS_TO_BUILD@};
 #---- begin Makefile values ----
 my $CXXFLAGS            = q{@LLVM_CXXFLAGS@};
 my $LDFLAGS             = q{@LLVM_LDFLAGS@};
+my $LLVM_BUILDMODE      = q{@LLVM_BUILDMODE@};
 #---- end Makefile values ----
 
 # Convert the current executable name into its directory (e.g. ".").

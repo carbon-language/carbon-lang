@@ -53,6 +53,7 @@ $(ToolDir)/llvm-config: llvm-config.in $(FinalLibDeps)
 	$(Echo) "Building llvm-config script."
 	$(Verb) $(ECHO) 's,@LLVM_CXXFLAGS@,$(SUB_CXXFLAGS),' > temp.sed
 	$(Verb) $(ECHO) 's,@LLVM_LDFLAGS@,$(SUB_LDFLAGS),' >> temp.sed
+	$(Verb) $(ECHO) 's,@LLVM_BUILDMODE@,$(BuildMode),' >> temp.sed
 	$(Verb) $(SED) -f temp.sed < $< > $@
 	$(Verb) $(RM) temp.sed
 	$(Verb) cat $(FinalLibDeps) >> $@
