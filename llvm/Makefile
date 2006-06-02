@@ -21,7 +21,11 @@ else
     else
       $(warning Skipping runtime libraries, llvm-gcc 4 detected.)
     endif
-    OPTIONAL_DIRS := examples projects
+
+    # Don't install examples or projects.
+    ifneq ($(MAKECMDGOALS),install)
+      OPTIONAL_DIRS := examples projects
+    endif
     DIRS += docs
   endif
 endif
