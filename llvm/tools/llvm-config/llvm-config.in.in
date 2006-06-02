@@ -95,6 +95,8 @@ foreach my $arg (@ARGV) {
     if ($arg =~ /^-/) {
         if ($arg eq "--version") {
             $has_opt = 1; print "$VERSION\n";
+        } elsif ($arg eq "--use-current-dir-as-prefix") {
+           # NOOP, remove!
         } elsif ($arg eq "--prefix") {
             $has_opt = 1; print "$PREFIX\n";
         } elsif ($arg eq "--bindir") {
