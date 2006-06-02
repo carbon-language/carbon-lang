@@ -12,3 +12,6 @@ USEDLIBS = LLVMAsmParser.a LLVMBCWriter.a LLVMCore.a \
            LLVMSupport.a LLVMbzip2.a LLVMSystem.a
 
 include $(LEVEL)/Makefile.common
+
+CompileCommonOpts := $(filter-out -pedantic,$(CompileCommonOpts))
+CompileCommonOpts := $(filter-out -Wno-long-long,$(CompileCommonOpts))
