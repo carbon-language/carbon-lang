@@ -66,17 +66,17 @@ chomp($ABS_RUN_DIR);
 my $ABS_OBJ_ROOT = `cd $LLVM_OBJ_ROOT/$LLVM_BUILDMODE; pwd`;
 chomp($ABS_OBJ_ROOT);
 
-my $INCLUDEDIR = "$PREFIX/include";
-my $LIBDIR     = "$PREFIX/lib";
-my $BINDIR     = "$PREFIX/bin";
-$LIBDIR     = "$ABS_RUN_DIR/lib";
-$BINDIR     = "$ABS_RUN_DIR/bin";
+my $INCLUDEDIR = "$ABS_RUN_DIR/include";
+my $LIBDIR     = "$ABS_RUN_DIR/lib";
+my $BINDIR     = "$ABS_RUN_DIR/bin";
 if ($ABS_RUN_DIR eq $ABS_OBJ_ROOT) {
   # If we are running out of the build directory, the include dir is in the
   # srcdir.
   $INCLUDEDIR = "$LLVM_SRC_ROOT/include";
 } else {
-  $INCLUDEDIR = "$ABS_RUN_DIR/include";
+  # If installed, ignore the prefix the tree was configured with, use the
+  # current prefix.
+  $PREFIX = $ABS_RUN_DIR;
 }
 
 sub usage;
@@ -115,6 +115,12 @@ foreach my $arg (@ARGV) {
             $has_opt = 1; print join(' ', name_map_entries), "\n";
         } elsif ($arg eq "--targets-built") {
             $has_opt = 1; print join(' ', @TARGETS_BUILT), "\n";
+        } elsif ($arg eq "--build-mode") {
+            $has_opt = 1; print "$LLVM_BUILDMODE\n";
+        } elsif ($arg eq "--obj-root") {
+            $has_opt = 1; print `cd $LLVM_OBJ_ROOT/; pwd` . "\n";
+        } elsif ($arg eq "--src-root") {
+            $has_opt = 1; print `cd $LLVM_SRC_ROOT/; pwd` . "\n";
         } else {
             usage();
         }
@@ -159,17 +165,20 @@ LLVM.  Typically called from 'configure' scripts.  Examples:
   llvm-config --libs engine bcreader scalaropts
 
 Options:
-  --version              LLVM version.
-  --prefix               Installation prefix.
+  --version              Print LLVM version.
+  --prefix               Print the installation prefix.
+  --src-root             Print the source root LLVM was built from.
+  --obj-root             Print the object root used to build LLVM.
   --bindir               Directory containing LLVM executables.
   --includedir           Directory containing LLVM headers.
   --libdir               Directory containing LLVM libraries.
   --cxxflags             C++ compiler flags for files that include LLVM headers.
-  --ldflags              Linker flags.
+  --ldflags              Print Linker flags.
   --libs                 Libraries needed to link against LLVM components.
   --libnames             Bare library names for in-tree builds.
   --components           List of all possible components.
   --targets-built        List of all targets currently built.
+  --build-mode           Print build mode of LLVM tree (e.g. Debug or Release).
 Typical components:
   all                    All LLVM libraries (default).
   backend                Either a native backend or the C backend.
