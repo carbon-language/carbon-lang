@@ -744,17 +744,17 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
       default: assert(0 && "Unsupported VT!");
       case MVT::i8:
         LoReg = X86::AL;  HiReg = X86::AH;
-        ClrOpcode  = X86::MOV8ri;
+        ClrOpcode  = X86::MOV8r0;
         SExtOpcode = X86::CBW;
         break;
       case MVT::i16:
         LoReg = X86::AX;  HiReg = X86::DX;
-        ClrOpcode  = X86::MOV16ri;
+        ClrOpcode  = X86::MOV16r0;
         SExtOpcode = X86::CWD;
         break;
       case MVT::i32:
         LoReg = X86::EAX; HiReg = X86::EDX;
-        ClrOpcode  = X86::MOV32ri;
+        ClrOpcode  = X86::MOV32r0;
         SExtOpcode = X86::CDQ;
         break;
       }
@@ -783,9 +783,7 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
           SDOperand(CurDAG->getTargetNode(SExtOpcode, MVT::Flag, InFlag), 0);
       } else {
         // Zero out the high part, effectively zero extending the input.
-        SDOperand ClrNode =
-          SDOperand(CurDAG->getTargetNode(ClrOpcode, NVT,
-                                         CurDAG->getTargetConstant(0, NVT)), 0);
+        SDOperand ClrNode = SDOperand(CurDAG->getTargetNode(ClrOpcode, NVT), 0);
         Chain  = CurDAG->getCopyToReg(Chain, CurDAG->getRegister(HiReg, NVT),
                                       ClrNode, InFlag);
         InFlag = Chain.getValue(1);
