@@ -136,9 +136,6 @@
 /* Define if the gv program is available */
 #undef HAVE_GV
 
-/* Define to 1 if you have the <imagehlp.h> header file. */
-#undef HAVE_IMAGEHLP_H
-
 /* Define to 1 if you have the `index' function. */
 #undef HAVE_INDEX
 
@@ -254,9 +251,6 @@
 
 /* Define to have the %a format string */
 #undef HAVE_PRINTF_A
-
-/* Define to 1 if you have the <psapi.h> header file. */
-#undef HAVE_PSAPI_H
 
 /* Define to 1 if you have the <pthread.h> header file. */
 #undef HAVE_PTHREAD_H
