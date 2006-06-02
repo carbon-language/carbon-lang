@@ -50,8 +50,34 @@ my $LDFLAGS             = q{@LLVM_LDFLAGS@};
 my $LLVM_BUILDMODE      = q{@LLVM_BUILDMODE@};
 #---- end Makefile values ----
 
+# Figure out where llvm-config is being run from.  Primarily, we care if it has
+# been installed, or is running from the build directory, which changes the
+# locations of some files.
+
 # Convert the current executable name into its directory (e.g. ".").
-my ($PARTIALDIR) = ($0 =~ /^(.*)\/.*$/);
+my ($RUN_DIR) = ($0 =~ /^(.*)\/.*$/);
+
+# Turn the directory into an absolute directory on the file system, also pop up
+# from "bin" into the build or prefix dir.
+my $ABS_RUN_DIR = `cd $RUN_DIR/..; pwd`;
+chomp($ABS_RUN_DIR);
+
+# Compute the absolute object directory build, e.g. "foo/llvm/Debug".
+my $ABS_OBJ_ROOT = `cd $LLVM_OBJ_ROOT/$LLVM_BUILDMODE; pwd`;
+chomp($ABS_OBJ_ROOT);
+
+my $INCLUDEDIR = "$PREFIX/include";
+my $LIBDIR     = "$PREFIX/lib";
+my $BINDIR     = "$PREFIX/bin";
+$LIBDIR     = "$ABS_RUN_DIR/lib";
+$BINDIR     = "$ABS_RUN_DIR/bin";
+if ($ABS_RUN_DIR eq $ABS_OBJ_ROOT) {
+  # If we are running out of the build directory, the include dir is in the
+  # srcdir.
+  $INCLUDEDIR = "$LLVM_SRC_ROOT/include";
+} else {
+  $INCLUDEDIR = "$ABS_RUN_DIR/include";
+}
 
 sub usage;
 sub fix_library_names (@);
@@ -69,23 +95,18 @@ foreach my $arg (@ARGV) {
     if ($arg =~ /^-/) {
         if ($arg eq "--version") {
             $has_opt = 1; print "$VERSION\n";
-        } elsif ($arg eq "--use-current-dir-as-prefix") {
-            # Convert the scripts executable dir into a full absolute directory.
-            my $ABSDIR = `cd $PARTIALDIR/..; pwd`;
-            chomp($ABSDIR);
-            $PREFIX = $ABSDIR;
         } elsif ($arg eq "--prefix") {
             $has_opt = 1; print "$PREFIX\n";
         } elsif ($arg eq "--bindir") {
-            $has_opt = 1; print "$PREFIX/bin\n";
+            $has_opt = 1; print "$BINDIR\n";
         } elsif ($arg eq "--includedir") {
-            $has_opt = 1; print "$PREFIX/include\n";
+            $has_opt = 1; print "$INCLUDEDIR\n";
         } elsif ($arg eq "--libdir") {
-            $has_opt = 1; print "$PREFIX/lib\n";
+            $has_opt = 1; print "$LIBDIR\n";
         } elsif ($arg eq "--cxxflags") {
-            $has_opt = 1; print "-I$PREFIX/include $CXXFLAGS\n";
+            $has_opt = 1; print "-I$INCLUDEDIR $CXXFLAGS\n";
         } elsif ($arg eq "--ldflags") {
-            $has_opt = 1; print "-L$PREFIX/lib $LDFLAGS\n";
+            $has_opt = 1; print "-L$LIBDIR $LDFLAGS\n";
         } elsif ($arg eq "--libs") {
             $has_opt = 1; $want_libs = 1;
         } elsif ($arg eq "--libnames") {
@@ -168,7 +189,7 @@ sub fix_library_names (@) {
         if (defined $basename) {
             push @result, "-l$basename";
         } else {
-            push @result, "$PREFIX/lib/$lib";
+            push @result, "$LIBDIR/$lib";
         }
     }
     return @result;
