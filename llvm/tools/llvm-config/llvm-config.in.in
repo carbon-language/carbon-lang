@@ -17,9 +17,9 @@ use warnings;
 #---- begin autoconf values ----
 my $VERSION             = q{@PACKAGE_VERSION@};
 my $PREFIX              = q{@LLVM_PREFIX@};
-my $BINDIR              = q{@LLVM_BINDIR@};
-my $INCLUDEDIR          = q{@LLVM_INCLUDEDIR@};
-my $LIBDIR              = q{@LLVM_LIBDIR@};
+my $BINDIR              = "$PREFIX/bin";
+my $INCLUDEDIR          = "$PREFIX/include";
+my $LIBDIR              = "$PREFIX/lib";
 my $ARCH                = lc(q{@ARCH@});
 my $TARGET_HAS_JIT      = q{@TARGET_HAS_JIT@};
 my @TARGETS_BUILT       = map { lc($_) } qw{@TARGETS_TO_BUILD@};
@@ -28,7 +28,6 @@ my @TARGETS_BUILT       = map { lc($_) } qw{@TARGETS_TO_BUILD@};
 #---- begin Makefile values ----
 my $CXXFLAGS            = q{@LLVM_CXXFLAGS@};
 my $LDFLAGS             = q{@LLVM_LDFLAGS@};
-my $CORE_IS_ARCHIVE     = q{@CORE_IS_ARCHIVE@};
 #---- end Makefile values ----
 
 sub usage;
@@ -359,11 +358,7 @@ sub maybe_fix_core (@) {
     my @libs = @_;
     my @result;
     foreach my $lib (@libs) {
-        if ($lib eq "LLVMCore.o" && $CORE_IS_ARCHIVE) {
-            push @result, "libLLVMCore.a";
-        } else {
-            push @result, $lib;
-        }
+        push @result, $lib;
     }
     return @result;
 }
