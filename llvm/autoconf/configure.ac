@@ -352,6 +352,8 @@ AC_PROG_RANLIB
 AC_PATH_PROG(RM,   [rm],   [rm])
 AC_PATH_PROG(SED,  [sed],  [sed])
 AC_PATH_PROG(TAR,  [tar],  [gtar])
+
+dnl Looking for misc. graph plotting software
 AC_PATH_PROG(GRAPHVIZ, [Graphviz], [echo Graphviz])
 if test "$GRAPHVIZ" != "echo Graphviz" ; then
   AC_DEFINE([HAVE_GRAPHVIZ],[1],[Define if the Graphviz program is available])
@@ -363,6 +365,12 @@ if test "$GV" != "echo gv" ; then
   AC_DEFINE([HAVE_GV],[1],[Define if the gv program is available])
   AC_DEFINE_UNQUOTED([LLVM_PATH_GV],"$GV",
    [Define to path to gv program if found or 'echo gv' otherwise])
+fi
+AC_PATH_PROG(DOTTY, [dotty], [echo dotty])
+if test "$DOTTY" != "echo dotty" ; then
+  AC_DEFINE([HAVE_DOTTY],[1],[Define if the dotty program is available])
+  AC_DEFINE_UNQUOTED([LLVM_PATH_DOTTY],"$DOTTY",
+   [Define to path to dotty program if found or 'echo dotty' otherwise])
 fi
 
 dnl Look for a sufficiently recent version of Perl.

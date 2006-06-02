@@ -82,6 +82,9 @@
 /* Define to 1 if you have the <dl.h> header file. */
 #undef HAVE_DL_H
 
+/* Define if the dotty program is available */
+#undef HAVE_DOTTY
+
 /* Define if you have the _dyld_func_lookup function. */
 #undef HAVE_DYLD
 
@@ -421,6 +424,9 @@
 
 /* Define if this is Win32ish platform */
 #undef LLVM_ON_WIN32
+
+/* Define to path to dotty program if found or 'echo dotty' otherwise */
+#undef LLVM_PATH_DOTTY
 
 /* Define to path to Graphviz program if found or 'echo Graphviz' otherwise */
 #undef LLVM_PATH_GRAPHVIZ
