@@ -27,6 +27,9 @@ my $CXXFLAGS            = q{@LLVM_CXXFLAGS@};
 my $LDFLAGS             = q{@LLVM_LDFLAGS@};
 #---- end Makefile values ----
 
+# Convert the current executable name into its directory (e.g. ".").
+my ($PARTIALDIR) = ($0 =~ /^(.*)\/.*$/);
+
 sub usage;
 sub fix_library_names (@);
 sub expand_dependecies (@);
@@ -43,6 +46,11 @@ foreach my $arg (@ARGV) {
     if ($arg =~ /^-/) {
         if ($arg eq "--version") {
             $has_opt = 1; print "$VERSION\n";
+        } elsif ($arg eq "--use-current-dir-as-prefix") {
+            # Convert the scripts executable dir into a full absolute directory.
+            my $ABSDIR = `cd $PARTIALDIR/..; pwd`;
+            chomp($ABSDIR);
+            $PREFIX = $ABSDIR;
         } elsif ($arg eq "--prefix") {
             $has_opt = 1; print "$PREFIX\n";
         } elsif ($arg eq "--bindir") {
