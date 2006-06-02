@@ -15,6 +15,11 @@ EXTRA_DIST := Lexer.cpp.cvs Lexer.l.cvs \
 
 include $(LEVEL)/Makefile.common
 
+# Disable -pedantic for this library, as bison output isn't necessarily 
+# -pedantic clean.
+CompileCommonOpts := $(filter-out -pedantic,$(CompileCommonOpts))
+CompileCommonOpts := $(filter-out -Wno-long-long,$(CompileCommonOpts))
+
 #
 # Make the object code file for the lexer depend upon the header file generated
 # by the Bison parser.  This prevents the Lexer from being compiled before the
