@@ -129,6 +129,8 @@ namespace {
                      SDOperand &Base, SDOperand &Scale,
                      SDOperand &Index, SDOperand &Disp);
 
+    void EmitSpecialCodeForMain(MachineBasicBlock *BB, MachineFrameInfo *MFI);
+
     inline void getAddressOperands(X86ISelAddressMode &AM, SDOperand &Base, 
                                    SDOperand &Scale, SDOperand &Index,
                                    SDOperand &Disp) {
@@ -250,8 +252,11 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
 
 /// EmitSpecialCodeForMain - Emit any code that needs to be executed only in
 /// the main function.
-static void EmitSpecialCodeForMain(MachineBasicBlock *BB,
-                                   MachineFrameInfo *MFI) {
+void X86DAGToDAGISel::EmitSpecialCodeForMain(MachineBasicBlock *BB,
+                                             MachineFrameInfo *MFI) {
+  if (Subtarget->TargetType == X86Subtarget::isCygwin)
+    BuildMI(BB, X86::CALLpcrel32, 1).addExternalSymbol("__main");
+
   // Switch the FPU to 64-bit precision mode for better compatibility and speed.
   int CWFrameIdx = MFI->CreateStackObject(2, 2);
   addFrameReference(BuildMI(BB, X86::FNSTCW16m, 4), CWFrameIdx);

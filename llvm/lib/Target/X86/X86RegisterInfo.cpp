@@ -14,9 +14,12 @@
 
 #include "X86.h"
 #include "X86RegisterInfo.h"
+#include "X86Subtarget.h"
+#include "X86TargetMachine.h"
 #include "X86InstrBuilder.h"
 #include "llvm/Constants.h"
 #include "llvm/Type.h"
+#include "llvm/Function.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -635,7 +638,14 @@ X86RegisterInfo::getCalleeSaveRegClasses() const {
 // if frame pointer elimination is disabled.
 //
 static bool hasFP(MachineFunction &MF) {
-  return NoFramePointerElim || MF.getFrameInfo()->hasVarSizedObjects();
+  const Function* Fn = MF.getFunction();
+  const X86Subtarget* Subtarget =  &MF.getTarget().getSubtarget<X86Subtarget>();
+         
+  return (NoFramePointerElim || 
+          MF.getFrameInfo()->hasVarSizedObjects() ||
+          (Fn->hasExternalLinkage() &&
+           Fn->getName() == "main" &&
+           Subtarget->TargetType == X86Subtarget::isCygwin));
 }
 
 void X86RegisterInfo::
@@ -730,6 +740,9 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
+  unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
+  const Function* Fn = MF.getFunction();
+  const X86Subtarget* Subtarget = &MF.getTarget().getSubtarget<X86Subtarget>();
   MachineInstr *MI;
 
   // Get the number of bytes to allocate from the FrameInfo
@@ -744,7 +757,6 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
     // Round the size to a multiple of the alignment (don't forget the 4 byte
     // offset though).
-    unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
     NumBytes = ((NumBytes+4)+Align-1)/Align*Align - 4;
   }
 
@@ -773,6 +785,13 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     else                  // lea EBP, [ESP+StackSize]
       MI = addRegOffset(BuildMI(X86::LEA32r, 5, X86::EBP), X86::ESP,NumBytes-4);
 
+    MBB.insert(MBBI, MI);
+  }
+
+  // If it's main() on Cygwin\Mingw32 we should align stack as well
+  if (Fn->hasExternalLinkage() && Fn->getName() == "main" &&
+      Subtarget->TargetType == X86Subtarget::isCygwin) {
+    MI = BuildMI(X86::AND32ri, 2, X86::ESP).addImm(-Align);
     MBB.insert(MBBI, MI);
   }
 }
