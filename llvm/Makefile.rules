@@ -643,14 +643,6 @@ endif
 # (defined by the user's project) and "LLVM" libs (defined 
 # by the # LLVM project).
 #---------------------------------------------------------
-# Some versions of gcc on Alpha produce too many symbols, so use a .a file
-ifeq ($(ARCH),Alpha)
-USEDLIBS := $(subst LLVMCore, LLVMCore.a, $(USEDLIBS))
-LLVMLIBS := $(subst LLVMCore, LLVMCore.a, $(LLVMLIBS))
-CORE_IS_ARCHIVE := 1
-else
-CORE_IS_ARCHIVE := 0
-endif
 
 ProjLibsOptions := $(patsubst %.a.o, -l%, $(addsuffix .o, $(USEDLIBS)))
 ProjLibsOptions := $(patsubst %.o, $(LibDir)/%.o,  $(ProjLibsOptions))
