@@ -6,10 +6,12 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
 #===------------------------------------------------------------------------===#
+
 LEVEL = .
 DIRS = lib/System lib/Support utils lib/VMCore lib
 
 include $(LEVEL)/Makefile.config 
+
 
 ifeq ($(MAKECMDGOALS),tools-only)
   DIRS += tools
@@ -22,15 +24,23 @@ else
       $(warning Skipping runtime libraries, llvm-gcc 4 detected.)
     endif
 
-    # Don't install examples or projects.
-    ifneq ($(MAKECMDGOALS),install)
-      OPTIONAL_DIRS := examples projects
-    endif
     DIRS += docs
   endif
 endif
+
+# Don't install utils, they are only used to build LLVM.
+#
+ifeq ($(MAKECMDGOALS),install)
+  DIRS := $(filter-out utils, $(DIRS))
+
+  # Don't install examples or projects.
+  OPTIONAL_DIRS :=
+endif
+
+
 EXTRA_DIST := test llvm.spec include win32 Xcode
 
+# Include the main makefile machinery.
 include $(LLVM_SRC_ROOT)/Makefile.rules
 
 # Specify options to pass to configure script when we're
