@@ -1,14 +1,19 @@
 #!@PERL@
+##===- tools/llvm-config ---------------------------------------*- perl -*-===##
+# 
+#                     The LLVM Compiler Infrastructure
 #
-# Program:  llvm-config
+# This file was developed by Eric Kidd and is distributed under
+# the University of Illinois Open Source License. See LICENSE.TXT for details.
+# 
+##===----------------------------------------------------------------------===##
 #
 # Synopsis: Prints out compiler options needed to build against an installed
 #           copy of LLVM.
 #
 # Syntax:   llvm-config OPTIONS... [COMPONENTS...]
-#
-# This file was written by Eric Kidd, and is placed into the public domain.
-#
+# 
+##===----------------------------------------------------------------------===##
 
 use 5.006;
 use strict;
