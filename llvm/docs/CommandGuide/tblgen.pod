@@ -108,12 +108,8 @@ Show the version number of this program.
 If B<tblgen> succeeds, it will exit with 0.  Otherwise, if an error
 occurs, it will exit with a non-zero value.
 
-=head1 SEE ALSO
-
-L<llvm2cpp|llvm2cpp>
-
 =head1 AUTHORS
 
-Mainteind by The LLVM Team (L<http://llvm.org>).
+Maintained by The LLVM Team (L<http://llvm.org>).
 
 =cut
