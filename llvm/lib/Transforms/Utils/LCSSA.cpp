@@ -36,9 +36,7 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/CFG.h"
 #include <algorithm>
-#include <cassert>
 #include <map>
-#include <vector>
 
 using namespace llvm;
 
@@ -69,7 +67,6 @@ namespace {
       AU.addRequiredID(LoopSimplifyID);
       AU.addPreservedID(LoopSimplifyID);
       AU.addRequired<LoopInfo>();
-      AU.addPreserved<LoopInfo>();
       AU.addRequired<DominatorTree>();
       AU.addRequired<DominanceFrontier>();
     }
@@ -137,6 +134,10 @@ void LCSSA::processInstruction(Instruction* Instr,
   ++NumLCSSA; // We are applying the transformation
   
   std::map<BasicBlock*, Instruction*> Phis;
+  
+  // Add the base instruction to the Phis list.  This makes tracking down
+  // the dominating values easier when we're filling in Phi nodes.  This will
+  // be removed later, before we perform use replacement.
   Phis[Instr->getParent()] = Instr;
   
   // Phi nodes that need to be IDF-processed
@@ -150,11 +151,18 @@ void LCSSA::processInstruction(Instruction* Instr,
       Phis[*BBI] = phi;
     }
   
+  // Phi nodes that need to have their incoming values filled.
+  std::vector<PHINode*> needIncomingValues;
+  
   // Calculate the IDF of these LCSSA Phi nodes, inserting new Phi's where
   // necessary.  Keep track of these new Phi's in Phis.
   while (!workList.empty()) {
     PHINode *CurPHI = workList.back();
     workList.pop_back();
+    
+    // Even though we've removed this Phi from the work list, we still need
+    // to fill in its incoming values.
+    needIncomingValues.push_back(CurPHI);
     
     // Get the current Phi's DF, and insert Phi nodes.  Add these new
     // nodes to our worklist.
@@ -172,14 +180,14 @@ void LCSSA::processInstruction(Instruction* Instr,
         }
       }
     }
-    
-    // Get the predecessor blocks of the current Phi, and use them to hook up
-    // the operands of the current Phi to any members of DFPhis that dominate
-    // it.  This is a nop for the Phis inserted directly in the exit blocks,
-    // since they are not dominated by any members of DFPhis.
-    for (pred_iterator PI = pred_begin(CurPHI->getParent()),
-         E = pred_end(CurPHI->getParent()); PI != E; ++PI)
-      CurPHI->addIncoming(getValueDominatingBlock(*PI, Phis),
+  }
+  
+  // Fill in all Phis we've inserted that need their incoming values filled in.
+  for (std::vector<PHINode*>::iterator IVI = needIncomingValues.begin(),
+       IVE = needIncomingValues.end(); IVI != IVE; ++IVI) {
+    for (pred_iterator PI = pred_begin((*IVI)->getParent()),
+         E = pred_end((*IVI)->getParent()); PI != E; ++PI)
+      (*IVI)->addIncoming(getValueDominatingBlock(*PI, Phis),
                           *PI);
   }
   
@@ -197,7 +205,8 @@ void LCSSA::processInstruction(Instruction* Instr,
       Uses.push_back(use);
   }
   
-  // Deliberately remove the initial instruction from Phis set.
+  // Deliberately remove the initial instruction from Phis set.  It would mess
+  // up use-replacement.
   Phis.erase(Instr->getParent());
   
   for (std::vector<Instruction*>::iterator II = Uses.begin(), IE = Uses.end();
