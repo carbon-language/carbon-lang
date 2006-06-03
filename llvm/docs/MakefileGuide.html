@@ -662,6 +662,13 @@
     <dt><a name="LIBRARYNAME"><tt>LIBRARYNAME</tt></a></dt>
     <dd>Specify the name of the library to be built. (Required For
     Libraries)</dd>
+    <dt><a name="LINK_LIBS_IN_SHARED"><tt>LINK_LIBS_IN_SHARED</tt></a></dt>
+    <dd>By default, shared library linking will ignore any libraries specified
+    with the <a href="LLVMLIBS">LLVMLIBS</a> or <a href="USEDLIBS">USEDLIBS</a>.
+    This prevents shared libs from including things that will be in the LLVM
+    tool the shared library will be loaded into. However, sometimes it is useful
+    to link certain libraries into your shared library and this option enables
+    that feature.</dd>
     <dt><a name="LLVMLIBS"><tt>LLVMLIBS</tt></a></dt>
     <dd>Specifies the set of libraries from the LLVM $(ObjDir) that will be
     linked into the tool or library.</dd>
