@@ -538,6 +538,9 @@ _foo:
 	sarl $24, %eax
 	ret
 
+SIGN_EXTEND_INREG can be implemented as (sext (trunc)) to take advantage of 
+sub-registers.
+
 //===---------------------------------------------------------------------===//
 
 Consider this:
@@ -649,3 +652,19 @@ estimate to determine whether the match is profitable.
 
 However, if we care more about code size, then imull is better. It's two bytes
 shorter than movl + leal.
+
+//===---------------------------------------------------------------------===//
+
+Implement CTTZ, CTLZ with bsf and bsr.
+
+//===---------------------------------------------------------------------===//
+
+It appears gcc place string data with linkonce linkage in
+.section __TEXT,__const_coal,coalesced instead of
+.section __DATA,__const_coal,coalesced.
+Take a look at darwin.h, there are other Darwin assembler directives that we
+do not make use of.
+
+//===---------------------------------------------------------------------===//
+
+We should handle __attribute__ ((__visibility__ ("hidden"))).
