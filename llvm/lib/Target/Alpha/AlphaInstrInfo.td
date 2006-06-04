@@ -694,28 +694,87 @@ def FCMOVNET : FPForm<0x17, 0x02B, "fcmovne $RCOND,$RTRUE,$RDEST", [], s_fcmov>;
 //Select double
 def : Pat<(select (seteq F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
       (FCMOVNET F8RC:$sf, F8RC:$st, (CMPTEQ F8RC:$RA, F8RC:$RB))>;
+def : Pat<(select (setoeq F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
+      (FCMOVNET F8RC:$sf, F8RC:$st, (CMPTEQ F8RC:$RA, F8RC:$RB))>;
+def : Pat<(select (setueq F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
+      (FCMOVNET F8RC:$sf, F8RC:$st, (CMPTEQ F8RC:$RA, F8RC:$RB))>;
+
 def : Pat<(select (setne F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
       (FCMOVEQT F8RC:$sf, F8RC:$st, (CMPTEQ F8RC:$RA, F8RC:$RB))>;
+def : Pat<(select (setone F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
+      (FCMOVEQT F8RC:$sf, F8RC:$st, (CMPTEQ F8RC:$RA, F8RC:$RB))>;
+def : Pat<(select (setune F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
+      (FCMOVEQT F8RC:$sf, F8RC:$st, (CMPTEQ F8RC:$RA, F8RC:$RB))>;
+
 def : Pat<(select (setgt F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
       (FCMOVNET F8RC:$sf, F8RC:$st, (CMPTLT F8RC:$RB, F8RC:$RA))>;
+def : Pat<(select (setogt F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
+      (FCMOVNET F8RC:$sf, F8RC:$st, (CMPTLT F8RC:$RB, F8RC:$RA))>;
+def : Pat<(select (setugt F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
+      (FCMOVNET F8RC:$sf, F8RC:$st, (CMPTLT F8RC:$RB, F8RC:$RA))>;
+
 def : Pat<(select (setge F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
       (FCMOVNET F8RC:$sf, F8RC:$st, (CMPTLE F8RC:$RB, F8RC:$RA))>;
+def : Pat<(select (setoge F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
+      (FCMOVNET F8RC:$sf, F8RC:$st, (CMPTLE F8RC:$RB, F8RC:$RA))>;
+def : Pat<(select (setuge F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
+      (FCMOVNET F8RC:$sf, F8RC:$st, (CMPTLE F8RC:$RB, F8RC:$RA))>;
+
 def : Pat<(select (setlt F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
       (FCMOVNET F8RC:$sf, F8RC:$st, (CMPTLT F8RC:$RA, F8RC:$RB))>;
+def : Pat<(select (setolt F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
+      (FCMOVNET F8RC:$sf, F8RC:$st, (CMPTLT F8RC:$RA, F8RC:$RB))>;
+def : Pat<(select (setult F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
+      (FCMOVNET F8RC:$sf, F8RC:$st, (CMPTLT F8RC:$RA, F8RC:$RB))>;
+
 def : Pat<(select (setle F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
       (FCMOVNET F8RC:$sf, F8RC:$st, (CMPTLE F8RC:$RA, F8RC:$RB))>;
+def : Pat<(select (setole F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
+      (FCMOVNET F8RC:$sf, F8RC:$st, (CMPTLE F8RC:$RA, F8RC:$RB))>;
+def : Pat<(select (setule F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
+      (FCMOVNET F8RC:$sf, F8RC:$st, (CMPTLE F8RC:$RA, F8RC:$RB))>;
+
 //Select single
 def : Pat<(select (seteq F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
       (FCMOVNES F4RC:$sf, F4RC:$st, (CMPTEQ F8RC:$RA, F8RC:$RB))>;
+def : Pat<(select (setoeq F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
+      (FCMOVNES F4RC:$sf, F4RC:$st, (CMPTEQ F8RC:$RA, F8RC:$RB))>;
+def : Pat<(select (setueq F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
+      (FCMOVNES F4RC:$sf, F4RC:$st, (CMPTEQ F8RC:$RA, F8RC:$RB))>;
+
 def : Pat<(select (setne F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
       (FCMOVEQS F4RC:$sf, F4RC:$st, (CMPTEQ F8RC:$RA, F8RC:$RB))>;
+def : Pat<(select (setone F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
+      (FCMOVEQS F4RC:$sf, F4RC:$st, (CMPTEQ F8RC:$RA, F8RC:$RB))>;
+def : Pat<(select (setune F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
+      (FCMOVEQS F4RC:$sf, F4RC:$st, (CMPTEQ F8RC:$RA, F8RC:$RB))>;
+
 def : Pat<(select (setgt F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
       (FCMOVNES F4RC:$sf, F4RC:$st, (CMPTLT F8RC:$RB, F8RC:$RA))>;
+def : Pat<(select (setogt F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
+      (FCMOVNES F4RC:$sf, F4RC:$st, (CMPTLT F8RC:$RB, F8RC:$RA))>;
+def : Pat<(select (setugt F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
+      (FCMOVNES F4RC:$sf, F4RC:$st, (CMPTLT F8RC:$RB, F8RC:$RA))>;
+
 def : Pat<(select (setge F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
       (FCMOVNES F4RC:$sf, F4RC:$st, (CMPTLE F8RC:$RB, F8RC:$RA))>;
+def : Pat<(select (setoge F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
+      (FCMOVNES F4RC:$sf, F4RC:$st, (CMPTLE F8RC:$RB, F8RC:$RA))>;
+def : Pat<(select (setuge F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
+      (FCMOVNES F4RC:$sf, F4RC:$st, (CMPTLE F8RC:$RB, F8RC:$RA))>;
+
 def : Pat<(select (setlt F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
       (FCMOVNES F4RC:$sf, F4RC:$st, (CMPTLT F8RC:$RA, F8RC:$RB))>;
+def : Pat<(select (setolt F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
+      (FCMOVNES F4RC:$sf, F4RC:$st, (CMPTLT F8RC:$RA, F8RC:$RB))>;
+def : Pat<(select (setult F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
+      (FCMOVNES F4RC:$sf, F4RC:$st, (CMPTLT F8RC:$RA, F8RC:$RB))>;
+
 def : Pat<(select (setle F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
+      (FCMOVNES F4RC:$sf, F4RC:$st, (CMPTLE F8RC:$RA, F8RC:$RB))>;
+def : Pat<(select (setole F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
+      (FCMOVNES F4RC:$sf, F4RC:$st, (CMPTLE F8RC:$RA, F8RC:$RB))>;
+def : Pat<(select (setule F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
       (FCMOVNES F4RC:$sf, F4RC:$st, (CMPTLE F8RC:$RA, F8RC:$RB))>;
 
 
@@ -793,18 +852,79 @@ def : Pat<(brcond (setne GPRC:$RA, GPRC:$RB), bb:$DISP),
           (BEQ (CMPEQ GPRC:$RA, GPRC:$RB), bb:$DISP)>;
 def : Pat<(brcond (setne GPRC:$RA, immUExt8:$L), bb:$DISP),
           (BEQ (CMPEQi GPRC:$RA, immUExt8:$L), bb:$DISP)>;
+
 def : Pat<(brcond (seteq F8RC:$RA, F8RC:$RB), bb:$DISP),
           (FBNE  (CMPTEQ F8RC:$RA, F8RC:$RB), bb:$DISP)>;
+def : Pat<(brcond (setoeq F8RC:$RA, F8RC:$RB), bb:$DISP),
+          (FBNE  (CMPTEQ F8RC:$RA, F8RC:$RB), bb:$DISP)>;
+def : Pat<(brcond (setueq F8RC:$RA, F8RC:$RB), bb:$DISP),
+          (FBNE  (CMPTEQ F8RC:$RA, F8RC:$RB), bb:$DISP)>;
+
 def : Pat<(brcond (setlt F8RC:$RA, F8RC:$RB), bb:$DISP),
           (FBNE  (CMPTLT F8RC:$RA, F8RC:$RB), bb:$DISP)>;
+def : Pat<(brcond (setolt F8RC:$RA, F8RC:$RB), bb:$DISP),
+          (FBNE  (CMPTLT F8RC:$RA, F8RC:$RB), bb:$DISP)>;
+def : Pat<(brcond (setult F8RC:$RA, F8RC:$RB), bb:$DISP),
+          (FBNE  (CMPTLT F8RC:$RA, F8RC:$RB), bb:$DISP)>;
+
 def : Pat<(brcond (setle F8RC:$RA, F8RC:$RB), bb:$DISP),
           (FBNE  (CMPTLE F8RC:$RA, F8RC:$RB), bb:$DISP)>;
+def : Pat<(brcond (setole F8RC:$RA, F8RC:$RB), bb:$DISP),
+          (FBNE  (CMPTLE F8RC:$RA, F8RC:$RB), bb:$DISP)>;
+def : Pat<(brcond (setule F8RC:$RA, F8RC:$RB), bb:$DISP),
+          (FBNE  (CMPTLE F8RC:$RA, F8RC:$RB), bb:$DISP)>;
+
 def : Pat<(brcond (setgt F8RC:$RA, F8RC:$RB), bb:$DISP),
           (FBNE  (CMPTLT F8RC:$RB, F8RC:$RA), bb:$DISP)>;
+def : Pat<(brcond (setogt F8RC:$RA, F8RC:$RB), bb:$DISP),
+          (FBNE  (CMPTLT F8RC:$RB, F8RC:$RA), bb:$DISP)>;
+def : Pat<(brcond (setugt F8RC:$RA, F8RC:$RB), bb:$DISP),
+          (FBNE  (CMPTLT F8RC:$RB, F8RC:$RA), bb:$DISP)>;
+
 def : Pat<(brcond (setge F8RC:$RA, F8RC:$RB), bb:$DISP),
           (FBNE  (CMPTLE F8RC:$RB, F8RC:$RA), bb:$DISP)>;
+def : Pat<(brcond (setoge F8RC:$RA, F8RC:$RB), bb:$DISP),
+          (FBNE  (CMPTLE F8RC:$RB, F8RC:$RA), bb:$DISP)>;
+def : Pat<(brcond (setuge F8RC:$RA, F8RC:$RB), bb:$DISP),
+          (FBNE  (CMPTLE F8RC:$RB, F8RC:$RA), bb:$DISP)>;
+
 def : Pat<(brcond (setne F8RC:$RA, F8RC:$RB), bb:$DISP),
           (FBEQ  (CMPTEQ F8RC:$RA, F8RC:$RB), bb:$DISP)>;
+def : Pat<(brcond (setone F8RC:$RA, F8RC:$RB), bb:$DISP),
+          (FBEQ  (CMPTEQ F8RC:$RA, F8RC:$RB), bb:$DISP)>;
+def : Pat<(brcond (setune F8RC:$RA, F8RC:$RB), bb:$DISP),
+          (FBEQ  (CMPTEQ F8RC:$RA, F8RC:$RB), bb:$DISP)>;
+
+
+def : Pat<(brcond (setoeq F8RC:$RA, immFPZ), bb:$DISP),
+          (FBEQ F8RC:$RA,bb:$DISP)>;
+def : Pat<(brcond (setueq F8RC:$RA, immFPZ), bb:$DISP),
+          (FBEQ F8RC:$RA,bb:$DISP)>;
+
+def : Pat<(brcond (setoge F8RC:$RA, immFPZ), bb:$DISP),
+          (FBGE F8RC:$RA,bb:$DISP)>;
+def : Pat<(brcond (setuge F8RC:$RA, immFPZ), bb:$DISP),
+          (FBGE F8RC:$RA,bb:$DISP)>;
+
+def : Pat<(brcond (setogt F8RC:$RA, immFPZ), bb:$DISP),
+          (FBGT F8RC:$RA,bb:$DISP)>;
+def : Pat<(brcond (setugt F8RC:$RA, immFPZ), bb:$DISP),
+          (FBGT F8RC:$RA,bb:$DISP)>;
+
+def : Pat<(brcond (setole F8RC:$RA, immFPZ), bb:$DISP),
+          (FBLE F8RC:$RA,bb:$DISP)>;
+def : Pat<(brcond (setule F8RC:$RA, immFPZ), bb:$DISP),
+          (FBLE F8RC:$RA,bb:$DISP)>;
+
+def : Pat<(brcond (setolt F8RC:$RA, immFPZ), bb:$DISP),
+          (FBLT F8RC:$RA,bb:$DISP)>;
+def : Pat<(brcond (setult F8RC:$RA, immFPZ), bb:$DISP),
+          (FBLT F8RC:$RA,bb:$DISP)>;
+
+def : Pat<(brcond (setone F8RC:$RA, immFPZ), bb:$DISP),
+          (FBNE F8RC:$RA,bb:$DISP)>;
+def : Pat<(brcond (setune F8RC:$RA, immFPZ), bb:$DISP),
+          (FBNE F8RC:$RA,bb:$DISP)>;
 
 //End Branches
 
