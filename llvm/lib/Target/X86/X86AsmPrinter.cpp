@@ -146,7 +146,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
         if (Subtarget->TargetType == X86Subtarget::isDarwin) {
           O << "\t.globl " << name << "\n"
             << "\t.weak_definition " << name << "\n";
-          SwitchToDataSection(".section __DATA,__datacoal_nt,coalesced", I);
+          SwitchToDataSection(".section __DATA,__const_coal,coalesced", I);
         } else if (Subtarget->TargetType == X86Subtarget::isCygwin) {
           O << "\t.section\t.llvm.linkonce.d." << name << ",\"aw\"\n"
             << "\t.weak " << name << "\n";
