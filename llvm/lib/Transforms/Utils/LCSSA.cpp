@@ -50,7 +50,7 @@ namespace {
     
   
     LoopInfo *LI;  // Loop information
-    DominatorTree *DT;       // Dominator Tree for the current Loop...
+    DominatorTree *DT;       // Dominator Tree for the current Function...
     DominanceFrontier *DF;   // Current Dominance Frontier
     std::vector<BasicBlock*> *LoopBlocks;
     
@@ -149,7 +149,8 @@ void LCSSA::processInstruction(Instruction* Instr,
   for (std::vector<BasicBlock*>::const_iterator BBI = exitBlocks.begin(),
       BBE = exitBlocks.end(); BBI != BBE; ++BBI)
     if (DT->getNode(Instr->getParent())->dominates(DT->getNode(*BBI))) {
-      PHINode *phi = new PHINode(Instr->getType(), "lcssa", (*BBI)->begin());
+      PHINode *phi = new PHINode(Instr->getType(), Instr->getName()+".lcssa",
+                                 (*BBI)->begin());
       workList.push_back(phi);
       Phis[*BBI] = phi;
     }
@@ -174,12 +175,15 @@ void LCSSA::processInstruction(Instruction* Instr,
       const DominanceFrontier::DomSetType &S = it->second;
       for (DominanceFrontier::DomSetType::const_iterator P = S.begin(),
            PE = S.end(); P != PE; ++P) {
-        Instruction *&Phi = Phis[*P];
-        if (Phi == 0) {
-          // Still doesn't have operands...
-          Phi = new PHINode(Instr->getType(), "lcssa", (*P)->begin());
+        if (DT->getNode(Instr->getParent())->dominates(DT->getNode(*P))) {
+          Instruction *&Phi = Phis[*P];
+          if (Phi == 0) {
+            // Still doesn't have operands...
+            Phi = new PHINode(Instr->getType(), Instr->getName()+".lcssa",
+                              (*P)->begin());
           
-          workList.push_back(cast<PHINode>(Phi));
+            workList.push_back(cast<PHINode>(Phi));
+          }
         }
       }
     }
@@ -200,17 +204,10 @@ void LCSSA::processInstruction(Instruction* Instr,
   for (Instruction::use_iterator UI = Instr->use_begin(), UE = Instr->use_end();
        UI != UE; ++UI) {
     Instruction* use = cast<Instruction>(*UI);
-    // Don't need to update uses within the loop body, and we don't want to
-    // overwrite the Phi nodes that we inserted into the exit blocks either.
-    if (!inLoopBlocks(use->getParent()) &&
-        !(std::binary_search(exitBlocks.begin(), exitBlocks.end(),
-        use->getParent()) && isa<PHINode>(use)))
+    // Don't need to update uses within the loop body.
+    if (!inLoopBlocks(use->getParent()))
       Uses.push_back(use);
   }
-  
-  // Deliberately remove the initial instruction from Phis set.  It would mess
-  // up use-replacement.
-  Phis.erase(Instr->getParent());
   
   for (std::vector<Instruction*>::iterator II = Uses.begin(), IE = Uses.end();
        II != IE; ++II) {
