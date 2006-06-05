@@ -222,8 +222,9 @@ Path::isFile() const {
   BOOL rc = GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi);
   if (rc)
     return !(fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
-  else if (GetLastError() != ERROR_NOT_FOUND)
-    ThrowError(std::string(path) + ": Can't get status: ");
+  else if (GetLastError() != ERROR_FILE_NOT_FOUND) {
+    ThrowError("isFile(): " + std::string(path) + ": Can't get status: ");
+  }
   return false;
 }
 
@@ -233,8 +234,8 @@ Path::isDirectory() const {
   BOOL rc = GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi);
   if (rc)
     return fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
-  else if (GetLastError() != ERROR_NOT_FOUND)
-    ThrowError(std::string(path) + ": Can't get status: ");
+  else if (GetLastError() != ERROR_FILE_NOT_FOUND)
+    ThrowError("isDirectory(): " + std::string(path) + ": Can't get status: ");
   return false;
 }
 
@@ -244,8 +245,8 @@ Path::isHidden() const {
   BOOL rc = GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi);
   if (rc)
     return fi.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN;
-  else if (GetLastError() != ERROR_NOT_FOUND)
-    ThrowError(std::string(path) + ": Can't get status: ");
+  else if (GetLastError() != ERROR_FILE_NOT_FOUND)
+    ThrowError("isHidden(): " + std::string(path) + ": Can't get status: ");
   return false;
 }
 
@@ -336,7 +337,7 @@ void
 Path::getStatusInfo(StatusInfo& info) const {
   WIN32_FILE_ATTRIBUTE_DATA fi;
   if (!GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi))
-    ThrowError(std::string(path) + ": Can't get status: ");
+    ThrowError("getStatusInfo():" + std::string(path) + ": Can't get status: ");
 
   info.fileSize = fi.nFileSizeHigh;
   info.fileSize <<= 32;
