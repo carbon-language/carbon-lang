@@ -7,9 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the very important Value class.  This is subclassed by a
-// bunch of other important classes, like Instruction, Function, Type, etc...
-//
+// This file declares the Value class. 
 // This file also defines the Use<> template for users of value.
 //
 //===----------------------------------------------------------------------===//
@@ -38,9 +36,16 @@ class SymbolTable;
 //                                 Value Class
 //===----------------------------------------------------------------------===//
 
-/// Value - The base class of all values computed by a program that may be used
-/// as operands to other values.
+/// This is a very important LLVM class. It is the base class of all values 
+/// computed by a program that may be used as operands to other values. Value is
+/// the super class of other important classes such as Instruction and Function.
+/// All Values have a Type. Type is not a subclass of Value. All types can have
+/// a name and they should belong to some Module. Setting the name on the Value
+/// automatically update's the module's symbol table.
 ///
+/// Every value has a "use list" that keeps track of which other Values are
+/// using this Value.
+/// @brief LLVM Value Representation
 class Value {
   unsigned short SubclassID;         // Subclass identifier (for isa/dyn_cast)
 protected:
@@ -133,13 +138,10 @@ public:
   ///
   void addUse(Use &U) { U.addToList(&UseList); }
 
-  /// getValueType - Return an ID for the concrete type of this object.  This is
-  /// used to implement the classof checks.  This should not be used for any
-  /// other purpose, as the values may change as LLVM evolves.  Also, note that
-  /// starting with the InstructionVal value, the value stored is actually the
-  /// Instruction opcode, so there are more than just these values possible here
-  /// (and Instruction must be last).
-  ///
+  /// An enumeration for keeping track of the concrete subclass of Value that
+  /// is actually instantiated. Values of this enumeration are kept in the 
+  /// Value classes SubclassID field. They are used for concrete type
+  /// identification.
   enum ValueTy {
     ArgumentVal,              // This is an instance of Argument
     BasicBlockVal,            // This is an instance of BasicBlock
@@ -163,6 +165,14 @@ public:
     ConstantFirstVal = FunctionVal,
     ConstantLastVal  = ConstantPointerNullVal
   };
+
+  /// getValueType - Return an ID for the concrete type of this object.  This is
+  /// used to implement the classof checks.  This should not be used for any
+  /// other purpose, as the values may change as LLVM evolves.  Also, note that
+  /// starting with the InstructionVal value, the value stored is actually the
+  /// Instruction opcode, so there are more than just these values possible here
+  /// (and Instruction must be last).
+  ///
   unsigned getValueType() const {
     return SubclassID;
   }

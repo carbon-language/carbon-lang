@@ -7,21 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// The AbstractTypeUser class is an interface to be implemented by classes who
-// could possible use an abstract type.  Abstract types are denoted by the
-// isAbstract flag set to true in the Type class.  These are classes that
-// contain an Opaque type in their structure somehow.
-//
-// Classes must implement this interface so that they may be notified when an
-// abstract type is resolved.  Abstract types may be resolved into more concrete
-// types through: linking, parsing, and bytecode reading.  When this happens,
-// all of the users of the type must be updated to reference the new, more
-// concrete type.  They are notified through the AbstractTypeUser interface.
-//
-// In addition to this, AbstractTypeUsers must keep the use list of the
-// potentially abstract type that they reference up-to-date.  To do this in a
-// nice, transparent way, the PATypeHandle class is used to hold "Potentially
-// Abstract Types", and keep the use list of the abstract types up-to-date.
+// This file declares the AbstractTypeUser class.
 //
 //===----------------------------------------------------------------------===//
 
@@ -42,6 +28,23 @@ namespace llvm {
 class Type;
 class DerivedType;
 
+/// The AbstractTypeUser class is an interface to be implemented by classes who
+/// could possibly use an abstract type.  Abstract types are denoted by the
+/// isAbstract flag set to true in the Type class.  These are classes that
+/// contain an Opaque type in their structure somewhere.
+///
+/// Classes must implement this interface so that they may be notified when an
+/// abstract type is resolved.  Abstract types may be resolved into more 
+/// concrete types through: linking, parsing, and bytecode reading.  When this 
+/// happens, all of the users of the type must be updated to reference the new,
+/// more concrete type.  They are notified through the AbstractTypeUser 
+/// interface.
+///
+/// In addition to this, AbstractTypeUsers must keep the use list of the
+/// potentially abstract type that they reference up-to-date.  To do this in a
+/// nice, transparent way, the PATypeHandle class is used to hold "Potentially
+/// Abstract Types", and keep the use list of the abstract types up-to-date.
+/// @brief LLVM Abstract Type User Representation
 class AbstractTypeUser {
 protected:
   virtual ~AbstractTypeUser();                        // Derive from me

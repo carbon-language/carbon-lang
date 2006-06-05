@@ -7,8 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines a set of enums which specify the assigned numeric values
-// for known llvm calling conventions.
+// This file defines LLVM's set of calling conventions. 
 //
 //===----------------------------------------------------------------------===//
 
@@ -21,6 +20,9 @@ namespace llvm {
 /// the well-known calling conventions.
 ///
 namespace CallingConv {
+  /// A set of enums which specify the assigned numeric values for known llvm 
+  /// calling conventions.
+  /// @brief LLVM Calling Convention Representation
   enum ID {
     // C - The default llvm calling convention, compatible with C.  This
     // convention is the only calling convention that supports varargs calls.

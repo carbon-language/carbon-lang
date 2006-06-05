@@ -8,21 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 //
-// This file contains the declaration of the BasicBlock class, which represents
-// a single basic block in the VM.
-//
-// Note that basic blocks themselves are Value's, because they are referenced
-// by instructions like branches and can go in switch tables and stuff...
-//
-///===---------------------------------------------------------------------===//
-//
-// Note that well formed basic blocks are formed of a list of instructions
-// followed by a single TerminatorInst instruction.  TerminatorInst's may not
-// occur in the middle of basic blocks, and must terminate the blocks.
-//
-// This code allows malformed basic blocks to occur, because it may be useful
-// in the intermediate stage modification to a program.
-//
+// This file contains the declaration of the BasicBlock class.
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_BASICBLOCK_H
@@ -46,6 +32,20 @@ template<> struct ilist_traits<Instruction>
   static iplist<Instruction> &getList(BasicBlock *BB);
 };
 
+/// This represents a single basic block in LLVM. A basic block is simply a
+/// container of instructions that execute sequentially. Basic blocks are Values
+/// because they are referenced by instructions such as branches and switch
+/// tables. The type of a BasicBlock is "Type::LabelTy" because the basic block
+/// represents a label to which a branch can jump.
+///
+/// A well formed basic block is formed of a list of non-terminating 
+/// instructions followed by a single TerminatorInst instruction.  
+/// TerminatorInst's may not occur in the middle of basic blocks, and must 
+/// terminate the blocks. The BasicBlock class allows malformed basic blocks to
+/// occur because it may be useful in the intermediate stage of constructing or
+/// modifying a program. However, the verifier will ensure that basic blocks
+/// are "well formed".
+/// @brief LLVM Basic Block Representation
 class BasicBlock : public Value {       // Basic blocks are data objects also
 public:
   typedef iplist<Instruction> InstListType;

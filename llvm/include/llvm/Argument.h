@@ -7,8 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the Argument class, which represents an incoming formal
-// argument to a Function.
+// This file declares the Argument class. 
 //
 //===----------------------------------------------------------------------===//
 
@@ -23,6 +22,11 @@ template<typename SC> struct ilist_traits;
 template<typename ValueSubClass, typename ItemParentClass, typename SymTabClass,
          typename SubClass> class SymbolTableListTraits;
 
+/// A class to represent an incoming formal argument to a Function. An argument
+/// is a very simple Value. It is essentially a named (optional) type. When used
+/// in the body of a function, it represents the value of the actual argument
+/// the function was called with.
+/// @brief LLVM Argument representation  
 class Argument : public Value {  // Defined in the Function.cpp file
   Function *Parent;
 
