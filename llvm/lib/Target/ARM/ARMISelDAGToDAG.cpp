@@ -49,17 +49,27 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
 
 static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
   SDOperand Copy;
+  SDOperand Chain = Op.getOperand(0);
   switch(Op.getNumOperands()) {
   default:
     assert(0 && "Do not know how to return this many arguments!");
     abort();
-  case 1:
-    return SDOperand(); // ret void is legal
+  case 1: {
+    SDOperand LR = DAG.getRegister(ARM::R14, MVT::i32);
+    return DAG.getNode(ISD::BRIND, MVT::Other, Chain, LR);
+  }
   case 3:
-    Copy = DAG.getCopyToReg(Op.getOperand(0), ARM::R0, Op.getOperand(1), SDOperand());
+    Copy = DAG.getCopyToReg(Chain, ARM::R0, Op.getOperand(1), SDOperand());
+    if (DAG.getMachineFunction().liveout_empty())
+      DAG.getMachineFunction().addLiveOut(ARM::R0);
     break;
   }
+
   SDOperand LR = DAG.getRegister(ARM::R14, MVT::i32);
+
+  //bug: the copy and branch should be linked with a flag so that the
+  //scheduller can't move an instruction that destroys R0 in between them
+  //return DAG.getNode(ISD::BRIND, MVT::Other, Copy, LR, Copy.getValue(1));
 
   return DAG.getNode(ISD::BRIND, MVT::Other, Copy, LR);
 }
