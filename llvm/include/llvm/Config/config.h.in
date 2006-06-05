@@ -82,6 +82,9 @@
 /* Define to 1 if you have the <dl.h> header file. */
 #undef HAVE_DL_H
 
+/* Define if the dot program is available */
+#undef HAVE_DOT
+
 /* Define if the dotty program is available */
 #undef HAVE_DOTTY
 
@@ -424,6 +427,9 @@
 
 /* Define if this is Win32ish platform */
 #undef LLVM_ON_WIN32
+
+/* Define to path to dot program if found or 'echo dot' otherwise */
+#undef LLVM_PATH_DOT
 
 /* Define to path to dotty program if found or 'echo dotty' otherwise */
 #undef LLVM_PATH_DOTTY

@@ -357,19 +357,41 @@ dnl Looking for misc. graph plotting software
 AC_PATH_PROG(GRAPHVIZ, [Graphviz], [echo Graphviz])
 if test "$GRAPHVIZ" != "echo Graphviz" ; then
   AC_DEFINE([HAVE_GRAPHVIZ],[1],[Define if the Graphviz program is available])
-  AC_DEFINE_UNQUOTED([LLVM_PATH_GRAPHVIZ],"$GRAPHVIZ",
+  dnl If we're targeting for mingw we should emit windows paths, not msys
+  if test "$llvm_cv_os_type" == "MingW" ; then
+    GRAPHVIZ=`echo $GRAPHVIZ | sed 's/^\/\([[A-Za-z]]\)\//\1:\//' `
+  fi
+  AC_DEFINE_UNQUOTED([LLVM_PATH_GRAPHVIZ],"$GRAPHVIZ${EXEEXT}",
    [Define to path to Graphviz program if found or 'echo Graphviz' otherwise])
 fi
-AC_PATH_PROG(GV, [gv], [echo gv])
+AC_PATH_PROG(DOT, [dot], [echo dot])
+if test "$DOT" != "echo dot" ; then
+  AC_DEFINE([HAVE_DOT],[1],[Define if the dot program is available])
+  dnl If we're targeting for mingw we should emit windows paths, not msys
+  if test "$llvm_cv_os_type" == "MingW" ; then
+    DOT=`echo $DOT | sed 's/^\/\([[A-Za-z]]\)\//\1:\//' `
+  fi
+  AC_DEFINE_UNQUOTED([LLVM_PATH_DOT],"$DOT${EXEEXT}",
+   [Define to path to dot program if found or 'echo dot' otherwise])
+fi
+AC_PATH_PROGS(GV, [gv gsview32], [echo gv])
 if test "$GV" != "echo gv" ; then
   AC_DEFINE([HAVE_GV],[1],[Define if the gv program is available])
-  AC_DEFINE_UNQUOTED([LLVM_PATH_GV],"$GV",
+  dnl If we're targeting for mingw we should emit windows paths, not msys
+  if test "$llvm_cv_os_type" == "MingW" ; then
+    GV=`echo $GV | sed 's/^\/\([[A-Za-z]]\)\//\1:\//' `
+  fi
+  AC_DEFINE_UNQUOTED([LLVM_PATH_GV],"$GV${EXEEXT}",
    [Define to path to gv program if found or 'echo gv' otherwise])
 fi
 AC_PATH_PROG(DOTTY, [dotty], [echo dotty])
 if test "$DOTTY" != "echo dotty" ; then
   AC_DEFINE([HAVE_DOTTY],[1],[Define if the dotty program is available])
-  AC_DEFINE_UNQUOTED([LLVM_PATH_DOTTY],"$DOTTY",
+  dnl If we're targeting for mingw we should emit windows paths, not msys
+  if test "$llvm_cv_os_type" == "MingW" ; then
+    DOTTY=`echo $DOTTY | sed 's/^\/\([[A-Za-z]]\)\//\1:\//' `
+  fi
+  AC_DEFINE_UNQUOTED([LLVM_PATH_DOTTY],"$DOTTY${EXEEXT}",
    [Define to path to dotty program if found or 'echo dotty' otherwise])
 fi
 
@@ -390,7 +412,6 @@ dnl are not found then they are set to "true" which always succeeds but does
 dnl nothing. This just lets the build output show that we could have done 
 dnl something if the tool was available. 
 AC_PATH_PROG(BZIP2,[bzip2],[echo "Skipped: bzip2 not found"])
-AC_PATH_PROG(DOT,[dot],[echo "Skipped: dot not found"])
 AC_PATH_PROG(DOXYGEN,[doxygen],[echo "Skipped: doxygen not found"])
 AC_PATH_PROG(ETAGS,[etags],[echo "Skipped: etags not found"])
 AC_PATH_PROG(GROFF,[groff],[echo "Skipped: groff not found"])
