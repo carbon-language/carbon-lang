@@ -951,24 +951,6 @@ public:
   }
 };
 
-class VersionPrinter {
-public:
-  void operator=(bool OptionWasSpecified) {
-    if (OptionWasSpecified) {
-      std::cout << "Low Level Virtual Machine (" << PACKAGE_NAME << ") "
-                << PACKAGE_VERSION << " (see http://llvm.org/)";
-#ifndef NDEBUG
-      std::cout << " ASSERTIONS ENABLED\n";
-#else
-      std::cout << "\n";
-#endif
-      getOpts().clear();  // Don't bother making option dtors remove from map.
-      exit(1);
-    }
-  }
-};
-
-
 // Define the two HelpPrinter instances that are used to print out help, or
 // help-hidden...
 //
@@ -982,6 +964,31 @@ HOp("help", cl::desc("Display available options (--help-hidden for more)"),
 cl::opt<HelpPrinter, true, parser<bool> >
 HHOp("help-hidden", cl::desc("Display all available options"),
      cl::location(HiddenPrinter), cl::Hidden, cl::ValueDisallowed);
+
+void (*OverrideVersionPrinter)() = 0;
+
+class VersionPrinter {
+public:
+  void operator=(bool OptionWasSpecified) {
+    if (OptionWasSpecified) {
+      if (OverrideVersionPrinter == 0) {
+        std::cout << "Low Level Virtual Machine (" << PACKAGE_NAME << ") "
+                  << PACKAGE_VERSION << " (see http://llvm.org/)";
+#ifndef NDEBUG
+        std::cout << " ASSERTIONS ENABLED\n";
+#else
+        std::cout << "\n";
+#endif
+        getOpts().clear();  // Don't bother making option dtors remove from map.
+        exit(1);
+      } else {
+        (*OverrideVersionPrinter)();
+        exit(1);
+      }
+    }
+  }
+};
+
 
 // Define the --version option that prints out the LLVM version for the tool
 VersionPrinter VersionPrinterInstance;
@@ -1001,4 +1008,8 @@ void cl::PrintHelpMessage() {
   // --help option was given or not. Since we're circumventing that we have
   // to make it look like --help was given, so we assign true.
   NormalPrinter = true;
+}
+
+void cl::SetVersionPrinter(void (*func)()) {
+  OverrideVersionPrinter = func;
 }
