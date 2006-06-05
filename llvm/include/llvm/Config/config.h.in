@@ -194,6 +194,9 @@
    the current directory to the dynamic linker search path. */
 #undef HAVE_LINK_R
 
+/* Define to 1 if you have the `longjmp' function. */
+#undef HAVE_LONGJMP
+
 /* Define if lt_dlopen() is available on this platform */
 #undef HAVE_LT_DLOPEN
 
@@ -285,14 +288,26 @@
 /* Define to 1 if you have the `sbrk' function. */
 #undef HAVE_SBRK
 
+/* Define to 1 if you have the `setjmp' function. */
+#undef HAVE_SETJMP
+
+/* Define to 1 if you have the <setjmp.h> header file. */
+#undef HAVE_SETJMP_H
+
 /* Define to 1 if you have the `setrlimit' function. */
 #undef HAVE_SETRLIMIT
 
 /* Define if you have the shl_load function. */
 #undef HAVE_SHL_LOAD
 
+/* Define to 1 if you have the `siglongjmp' function. */
+#undef HAVE_SIGLONGJMP
+
 /* Define to 1 if you have the <signal.h> header file. */
 #undef HAVE_SIGNAL_H
+
+/* Define to 1 if you have the `sigsetjmp' function. */
+#undef HAVE_SIGSETJMP
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
@@ -397,6 +412,12 @@
 
 /* Define to 1 if you have the <windows.h> header file. */
 #undef HAVE_WINDOWS_H
+
+/* Define to 1 if you have the `_longjmp' function. */
+#undef HAVE__LONGJMP
+
+/* Define to 1 if you have the `_setjmp' function. */
+#undef HAVE__SETJMP
 
 /* Installation directory for binary executables */
 #undef LLVM_BINDIR
