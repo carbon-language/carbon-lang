@@ -60,6 +60,8 @@
             <tt>cl::ParseCommandLineOptions</tt> function</a></li>
         <li><a href="#cl::ParseEnvironmentOptions">The 
             <tt>cl::ParseEnvironmentOptions</tt> function</a></li>
+        <li><a href="#cl::SetVersionPrinter">The cl::SetVersionPrinter
+          function</a></li>
         <li><a href="#cl::opt">The <tt>cl::opt</tt> class</a></li>
         <li><a href="#cl::list">The <tt>cl::list</tt> class</a></li>
         <li><a href="#cl::bits">The <tt>cl::bits</tt> class</a></li>
@@ -1505,6 +1507,27 @@ input.</p>
 
 </div>
 
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="cl::SetVersionPrinter">The <tt>cl::SetVersionPrinter</tt>
+  function</a>
+</div>
+
+<div class="doc_text">
+
+<p>The <tt>cl::SetVersionPrinter</tt> function is designed to be called
+directly from <tt>main</tt>, and <i>before</i>
+<tt>cl::ParseCommandLineOptions</tt>. Its use is optional. It simply arranges
+for a function to be called in response to the <tt>--version</tt> option instead
+of having the <tt>CommandLine</tt> library print out the usual version string
+for LLVM. This is useful for programs that are not part of LLVM but wish to use
+the <tt>CommandLine</tt> facilities. Such programs should just define a small
+function that takes no arguments and returns <tt>void</tt> and that prints out
+whatever version information is appropriate for the program. Pass the address
+of that function to <tt>cl::SetVersionPrinter</tt> to arrange for it to be
+called when the <tt>--version</tt> option is given by the user.</p>
+
+</div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
   <a name="cl::opt">The <tt>cl::opt</tt> class</a>
