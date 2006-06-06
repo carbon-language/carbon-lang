@@ -15,8 +15,9 @@
 #include "X86.h"
 #include "X86RegisterInfo.h"
 #include "X86Subtarget.h"
-#include "X86TargetMachine.h"
 #include "X86InstrBuilder.h"
+#include "X86MachineFunctionInfo.h"
+#include "X86TargetMachine.h"
 #include "llvm/Constants.h"
 #include "llvm/Type.h"
 #include "llvm/Function.h"
@@ -638,14 +639,9 @@ X86RegisterInfo::getCalleeSaveRegClasses() const {
 // if frame pointer elimination is disabled.
 //
 static bool hasFP(MachineFunction &MF) {
-  const Function* Fn = MF.getFunction();
-  const X86Subtarget* Subtarget =  &MF.getTarget().getSubtarget<X86Subtarget>();
-         
   return (NoFramePointerElim || 
           MF.getFrameInfo()->hasVarSizedObjects() ||
-          (Fn->hasExternalLinkage() &&
-           Fn->getName() == "main" &&
-           Subtarget->TargetType == X86Subtarget::isCygwin));
+          MF.getInfo<X86FunctionInfo>()->getForceFramePointer());
 }
 
 void X86RegisterInfo::

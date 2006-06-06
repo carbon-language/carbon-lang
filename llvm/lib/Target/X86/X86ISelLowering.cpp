@@ -15,6 +15,7 @@
 #include "X86.h"
 #include "X86InstrBuilder.h"
 #include "X86ISelLowering.h"
+#include "X86MachineFunctionInfo.h"
 #include "X86TargetMachine.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
@@ -3409,6 +3410,13 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
 
 SDOperand
 X86TargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
+  MachineFunction &MF = DAG.getMachineFunction();
+  const Function* Fn = MF.getFunction();
+  if (Fn->hasExternalLinkage() &&
+      Fn->getName() == "main" &&
+      Subtarget->TargetType == X86Subtarget::isCygwin)
+    MF.getInfo<X86FunctionInfo>()->setForceFramePointer(true);
+
   unsigned CC = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
   if (CC == CallingConv::Fast && EnableFastCC)
     return LowerFastCCArguments(Op, DAG);
