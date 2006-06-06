@@ -78,7 +78,8 @@ namespace {
                                   
     /// inLoop - returns true if the given block is within the current loop
     const bool inLoop(BasicBlock* B) {
-           return std::binary_search(LoopBlocks.begin(), LoopBlocks.end(), B); }
+      return std::binary_search(LoopBlocks.begin(), LoopBlocks.end(), B);
+    }
   };
   
   RegisterOpt<LCSSA> X("lcssa", "Loop-Closed SSA Form Pass");
@@ -242,8 +243,7 @@ SetVector<Instruction*> LCSSA::getLoopValuesUsedOutsideLoop(Loop *L) {
       for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;
            ++UI) {
         BasicBlock *UserBB = cast<Instruction>(*UI)->getParent();
-        if (!std::binary_search(LoopBlocks.begin(), LoopBlocks.end(), UserBB))
-        {
+        if (!inLoop(UserBB)) {
           AffectedValues.insert(I);
           break;
         }
