@@ -69,6 +69,12 @@ Similar to B<--libs>, but prints the bare filenames of the libraries
 without B<-l> or pathnames.  Useful for linking against a not-yet-installed
 copy of LLVM.
 
+=item B<--libfiles>
+
+Similar to B<--libs>, but print the full path to each library file.  This is
+useful when creating makefile dependencies, to ensure that a tool is relinked if
+any library it uses changes.
+
 =item B<--components>
 
 Print all valid component names.
