@@ -63,7 +63,8 @@ my $ABS_RUN_DIR = `cd $RUN_DIR/..; pwd`;
 chomp($ABS_RUN_DIR);
 
 # Compute the absolute object directory build, e.g. "foo/llvm/Debug".
-my $ABS_OBJ_ROOT = `cd $LLVM_OBJ_ROOT/$LLVM_BUILDMODE; pwd`;
+my $ABS_OBJ_ROOT = "$LLVM_OBJ_ROOT/$LLVM_BUILDMODE";
+$ABS_OBJ_ROOT = `cd $ABS_OBJ_ROOT; pwd` if (-d $ABS_OBJ_ROOT);
 chomp($ABS_OBJ_ROOT);
 
 my $INCLUDEDIR = "$ABS_RUN_DIR/include";
