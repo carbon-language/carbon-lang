@@ -1779,11 +1779,17 @@ void CWriter::visitCallInst(CallInst &I) {
         Out << ')';
         return;
       case Intrinsic::setjmp:
+#if defined(HAVE__SETJMP) && defined(HAVE__LONGJMP)
+        Out << "_";  // Use _setjmp on systems that support it!
+#endif
         Out << "setjmp(*(jmp_buf*)";
         writeOperand(I.getOperand(1));
         Out << ')';
         return;
       case Intrinsic::longjmp:
+#if defined(HAVE__SETJMP) && defined(HAVE__LONGJMP)
+        Out << "_";  // Use _longjmp on systems that support it!
+#endif
         Out << "longjmp(*(jmp_buf*)";
         writeOperand(I.getOperand(1));
         Out << ", ";
