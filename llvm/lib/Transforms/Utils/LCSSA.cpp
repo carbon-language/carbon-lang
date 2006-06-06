@@ -52,7 +52,7 @@ namespace {
     LoopInfo *LI;  // Loop information
     DominatorTree *DT;       // Dominator Tree for the current Function...
     DominanceFrontier *DF;   // Current Dominance Frontier
-    std::vector<BasicBlock*> *LoopBlocks;
+    std::vector<BasicBlock*> LoopBlocks;
     
     virtual bool runOnFunction(Function &F);
     bool visitSubloop(Loop* L);
@@ -76,8 +76,9 @@ namespace {
     Instruction *getValueDominatingBlock(BasicBlock *BB,
                                   std::map<BasicBlock*, Instruction*>& PotDoms);
                                   
-    bool inLoopBlocks(BasicBlock* B) { return std::binary_search(
-                                   LoopBlocks->begin(), LoopBlocks->end(), B); }
+    /// inLoop - returns true if the given block is within the current loop
+    const bool inLoop(BasicBlock* B) {
+           return std::binary_search(LoopBlocks.begin(), LoopBlocks.end(), B); }
   };
   
   RegisterOpt<LCSSA> X("lcssa", "Loop-Closed SSA Form Pass");
@@ -90,7 +91,6 @@ bool LCSSA::runOnFunction(Function &F) {
   LI = &getAnalysis<LoopInfo>();
   DF = &getAnalysis<DominanceFrontier>();
   DT = &getAnalysis<DominatorTree>();
-  LoopBlocks = new std::vector<BasicBlock*>;
     
   for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I) {
     changed |= visitSubloop(*I);
@@ -104,9 +104,9 @@ bool LCSSA::visitSubloop(Loop* L) {
     visitSubloop(*I);
   
   // Speed up queries by creating a sorted list of blocks
-  LoopBlocks->clear();
-  LoopBlocks->insert(LoopBlocks->end(), L->block_begin(), L->block_end());
-  std::sort(LoopBlocks->begin(), LoopBlocks->end());
+  LoopBlocks.clear();
+  LoopBlocks.insert(LoopBlocks.end(), L->block_begin(), L->block_end());
+  std::sort(LoopBlocks.begin(), LoopBlocks.end());
   
   SetVector<Instruction*> AffectedValues = getLoopValuesUsedOutsideLoop(L);
   
@@ -127,7 +127,7 @@ bool LCSSA::visitSubloop(Loop* L) {
     processInstruction(*I, exitBlocks);
   }
   
-  return true; // FIXME: Should be more intelligent in our return value.
+  return true;
 }
 
 /// processInstruction - 
@@ -205,7 +205,7 @@ void LCSSA::processInstruction(Instruction* Instr,
        UI != UE; ++UI) {
     Instruction* use = cast<Instruction>(*UI);
     // Don't need to update uses within the loop body.
-    if (!inLoopBlocks(use->getParent()))
+    if (!inLoop(use->getParent()))
       Uses.push_back(use);
   }
   
@@ -242,7 +242,7 @@ SetVector<Instruction*> LCSSA::getLoopValuesUsedOutsideLoop(Loop *L) {
       for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;
            ++UI) {
         BasicBlock *UserBB = cast<Instruction>(*UI)->getParent();
-        if (!std::binary_search(LoopBlocks->begin(), LoopBlocks->end(), UserBB))
+        if (!std::binary_search(LoopBlocks.begin(), LoopBlocks.end(), UserBB))
         {
           AffectedValues.insert(I);
           break;
