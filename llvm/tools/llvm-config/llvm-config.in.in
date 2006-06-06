@@ -81,6 +81,7 @@ if ($ABS_RUN_DIR eq $ABS_OBJ_ROOT) {
 
 sub usage;
 sub fix_library_names (@);
+sub fix_library_files (@);
 sub expand_dependecies (@);
 sub name_map_entries;
 
@@ -90,6 +91,7 @@ my @components;
 my $has_opt = 0;
 my $want_libs = 0;
 my $want_libnames = 0;
+my $want_libfiles = 0;
 my $want_components = 0;
 foreach my $arg (@ARGV) {
     if ($arg =~ /^-/) {
@@ -113,6 +115,8 @@ foreach my $arg (@ARGV) {
             $has_opt = 1; $want_libs = 1;
         } elsif ($arg eq "--libnames") {
             $has_opt = 1; $want_libnames = 1;
+        } elsif ($arg eq "--libfiles") {
+            $has_opt = 1; $want_libfiles = 1;
         } elsif ($arg eq "--components") {
             $has_opt = 1; print join(' ', name_map_entries), "\n";
         } elsif ($arg eq "--targets-built") {
@@ -140,14 +144,11 @@ if (@components == 0) {
 }
 
 # Handle any arguments which require building our dependency graph.
-if ($want_libs || $want_libnames) {
+if ($want_libs || $want_libnames || $want_libfiles) {
     my @libs = expand_dependecies(@components);
-    if ($want_libs) {
-        print join(' ', fix_library_names(@libs)), "\n";
-    }
-    if ($want_libnames) {
-        print join(' ',  @libs), "\n";
-    }
+    print join(' ', fix_library_names(@libs)), "\n" if ($want_libs);
+    print join(' ',  @libs), "\n" if ($want_libnames);
+    print join(' ', fix_library_files(@libs)), "\n" if ($want_libfiles);
 }
 
 exit 0;
@@ -178,6 +179,7 @@ Options:
   --ldflags              Print Linker flags.
   --libs                 Libraries needed to link against LLVM components.
   --libnames             Bare library names for in-tree builds.
+  --libfiles             Fully qualified library filenames for makefile depends.
   --components           List of all possible components.
   --targets-built        List of all targets currently built.
   --build-mode           Print build mode of LLVM tree (e.g. Debug or Release).
@@ -206,6 +208,16 @@ sub fix_library_names (@) {
     return @result;
 }
 
+# Turn the list of libraries into a list of files.
+sub fix_library_files(@) {
+    my @libs = @_;
+    my @result;
+    foreach my $lib (@libs) {
+        # Transform the bare library name into a filename.
+        push @result, "$LIBDIR/$lib";
+    }
+    return @result;
+}
 
 #==========================================================================
 #  Library Dependency Analysis
