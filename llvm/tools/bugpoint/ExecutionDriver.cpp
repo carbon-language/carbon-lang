@@ -20,6 +20,7 @@
 #include "llvm/Support/SystemUtils.h"
 #include <fstream>
 #include <iostream>
+
 using namespace llvm;
 
 namespace {
@@ -66,6 +67,10 @@ namespace {
   TimeoutValue("timeout", cl::init(300), cl::value_desc("seconds"),
                cl::desc("Number of seconds program is allowed to run before it "
                         "is killed (default is 300s), 0 disables timeout"));
+
+  cl::list<std::string>
+    AdditionalLinkerArgs("Xlinker", 
+      cl::desc("Additional arguments to pass to the linker"));
 }
 
 namespace llvm {
@@ -218,9 +223,19 @@ std::string BugDriver::executeProgram(std::string OutputFile,
   if (!SharedObj.empty())
     SharedObjs.push_back(SharedObj);
 
-  // Actually execute the program!
-  int RetVal = AI->ExecuteProgram(BytecodeFile, InputArgv, InputFile,
-                                  OutputFile, SharedObjs, TimeoutValue);
+  
+  // If this is an LLC or CBE run, then the GCC compiler might get run to 
+  // compile the program. If so, we should pass the user's -Xlinker options
+  // as the GCCArgs.
+  int RetVal = 0;
+  if (InterpreterSel == RunLLC || InterpreterSel == RunCBE)
+    RetVal = AI->ExecuteProgram(BytecodeFile, InputArgv, InputFile,
+                                OutputFile, AdditionalLinkerArgs, SharedObjs, 
+                                TimeoutValue);
+  else 
+    RetVal = AI->ExecuteProgram(BytecodeFile, InputArgv, InputFile,
+                                OutputFile, std::vector<std::string>(), 
+                                SharedObjs, TimeoutValue);
 
   if (RetVal == -1) {
     std::cerr << "<timeout>";

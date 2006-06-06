@@ -63,8 +63,9 @@ public:
                      FileType fileType,
                      const std::string &InputFile,
                      const std::string &OutputFile,
-                     const std::vector<std::string> &SharedLibs =
-                         std::vector<std::string>(), unsigned Timeout = 0);
+                     const std::vector<std::string> &GCCArgs =
+                         std::vector<std::string>(), 
+                     unsigned Timeout = 0);
 
   /// MakeSharedObject - This compiles the specified file (which is either a .c
   /// file or a .s file) into a shared object.
@@ -110,6 +111,8 @@ public:
                              const std::vector<std::string> &Args,
                              const std::string &InputFile,
                              const std::string &OutputFile,
+                             const std::vector<std::string> &GCCArgs =
+                               std::vector<std::string>(),
                              const std::vector<std::string> &SharedLibs =
                                std::vector<std::string>(),
                              unsigned Timeout = 0) = 0;
@@ -140,6 +143,8 @@ public:
                              const std::vector<std::string> &Args,
                              const std::string &InputFile,
                              const std::string &OutputFile,
+                             const std::vector<std::string> &GCCArgs =
+                               std::vector<std::string>(),
                              const std::vector<std::string> &SharedLibs =
                                std::vector<std::string>(),
                              unsigned Timeout = 0);
@@ -177,6 +182,8 @@ public:
                              const std::vector<std::string> &Args,
                              const std::string &InputFile,
                              const std::string &OutputFile,
+                             const std::vector<std::string> &GCCArgs =
+                               std::vector<std::string>(),
                              const std::vector<std::string> &SharedLibs =
                                 std::vector<std::string>(),
                              unsigned Timeout = 0);

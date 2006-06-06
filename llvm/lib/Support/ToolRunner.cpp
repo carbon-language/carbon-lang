@@ -88,6 +88,7 @@ namespace {
                                const std::vector<std::string> &Args,
                                const std::string &InputFile,
                                const std::string &OutputFile,
+                               const std::vector<std::string> &GCCArgs,
                                const std::vector<std::string> &SharedLibs =
                                std::vector<std::string>(),
                                unsigned Timeout = 0);
@@ -98,12 +99,16 @@ int LLI::ExecuteProgram(const std::string &Bytecode,
                         const std::vector<std::string> &Args,
                         const std::string &InputFile,
                         const std::string &OutputFile,
+                        const std::vector<std::string> &GCCArgs,
                         const std::vector<std::string> &SharedLibs,
                         unsigned Timeout) {
   if (!SharedLibs.empty())
     throw ToolExecutionError("LLI currently does not support "
                              "loading shared libraries.");
 
+  if (!GCCArgs.empty())
+    throw ToolExecutionError("LLI currently does not support "
+                             "GCC Arguments.");
   std::vector<const char*> LLIArgs;
   LLIArgs.push_back(LLIPath.c_str());
   LLIArgs.push_back("-force-interpreter=true");
@@ -184,6 +189,7 @@ int LLC::ExecuteProgram(const std::string &Bytecode,
                         const std::vector<std::string> &Args,
                         const std::string &InputFile,
                         const std::string &OutputFile,
+                        const std::vector<std::string> &ArgsForGCC,
                         const std::vector<std::string> &SharedLibs,
                         unsigned Timeout) {
 
@@ -191,9 +197,12 @@ int LLC::ExecuteProgram(const std::string &Bytecode,
   OutputAsm(Bytecode, OutputAsmFile);
   FileRemover OutFileRemover(OutputAsmFile);
 
+  std::vector<std::string> GCCArgs(ArgsForGCC);
+  GCCArgs.insert(GCCArgs.end(),SharedLibs.begin(),SharedLibs.end());
+
   // Assuming LLC worked, compile the result with GCC and run it.
   return gcc->ExecuteProgram(OutputAsmFile.toString(), Args, GCC::AsmFile,
-                             InputFile, OutputFile, SharedLibs, Timeout);
+                             InputFile, OutputFile, GCCArgs, Timeout);
 }
 
 /// createLLC - Try to find the LLC executable
@@ -234,8 +243,11 @@ namespace {
                                const std::vector<std::string> &Args,
                                const std::string &InputFile,
                                const std::string &OutputFile,
+                               const std::vector<std::string> &GCCArgs =
+                                 std::vector<std::string>(),
                                const std::vector<std::string> &SharedLibs =
-                               std::vector<std::string>(), unsigned Timeout =0);
+                                 std::vector<std::string>(), 
+                               unsigned Timeout =0 );
   };
 }
 
@@ -243,8 +255,11 @@ int JIT::ExecuteProgram(const std::string &Bytecode,
                         const std::vector<std::string> &Args,
                         const std::string &InputFile,
                         const std::string &OutputFile,
+                        const std::vector<std::string> &GCCArgs,
                         const std::vector<std::string> &SharedLibs,
                         unsigned Timeout) {
+  if (!GCCArgs.empty())
+    throw ToolExecutionError("JIT does not support GCC Arguments.");
   // Construct a vector of parameters, incorporating those from the command-line
   std::vector<const char*> JITArgs;
   JITArgs.push_back(LLIPath.c_str());
@@ -329,6 +344,7 @@ int CBE::ExecuteProgram(const std::string &Bytecode,
                         const std::vector<std::string> &Args,
                         const std::string &InputFile,
                         const std::string &OutputFile,
+                        const std::vector<std::string> &ArgsForGCC,
                         const std::vector<std::string> &SharedLibs,
                         unsigned Timeout) {
   sys::Path OutputCFile;
@@ -336,8 +352,10 @@ int CBE::ExecuteProgram(const std::string &Bytecode,
 
   FileRemover CFileRemove(OutputCFile);
 
+  std::vector<std::string> GCCArgs(ArgsForGCC);
+  GCCArgs.insert(GCCArgs.end(),SharedLibs.begin(),SharedLibs.end());
   return gcc->ExecuteProgram(OutputCFile.toString(), Args, GCC::CFile,
-                             InputFile, OutputFile, SharedLibs, Timeout);
+                             InputFile, OutputFile, GCCArgs, Timeout);
 }
 
 /// createCBE - Try to find the 'llc' executable
@@ -369,15 +387,11 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
                         FileType fileType,
                         const std::string &InputFile,
                         const std::string &OutputFile,
-                        const std::vector<std::string> &SharedLibs,
-                        unsigned Timeout) {
+                        const std::vector<std::string> &ArgsForGCC,
+                        unsigned Timeout ) {
   std::vector<const char*> GCCArgs;
 
   GCCArgs.push_back(GCCPath.c_str());
-
-  // Specify the shared libraries to link in...
-  for (unsigned i = 0, e = SharedLibs.size(); i != e; ++i)
-    GCCArgs.push_back(SharedLibs[i].c_str());
 
   // Specify -x explicitly in case the extension is wonky
   GCCArgs.push_back("-x");
@@ -395,6 +409,14 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
   sys::Path OutputBinary (ProgramFile+".gcc.exe");
   OutputBinary.makeUnique();
   GCCArgs.push_back(OutputBinary.c_str()); // Output to the right file...
+
+  // Add any arguments intended for GCC. We locate them here because this is
+  // most likely -L and -l options that need to come before other libraries but
+  // after the source. Other options won't be sensitive to placement on the
+  // command line, so this should be safe.
+  for (unsigned i = 0, e = ArgsForGCC.size(); i != e; ++i)
+    GCCArgs.push_back(ArgsForGCC[i].c_str());
+
   GCCArgs.push_back("-lm");                // Hard-code the math library...
   GCCArgs.push_back("-O2");                // Optimize the program a bit...
 #if defined (HAVE_LINK_R)
