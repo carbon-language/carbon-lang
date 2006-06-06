@@ -27,12 +27,10 @@ SUB_CXXFLAGS = ${CPP.BaseFlags} ${CXX.Flags}
 SUB_LDFLAGS = 
 
 FinalLibDeps = $(PROJ_OBJ_DIR)/FinalLibDeps.txt
-LibDeps = $(PROJ_OBJ_DIR)/LibDeps.txt
-GenLibDeps = $(PROJ_SRC_ROOT)/utils/GenLibDeps.pl
-# MANUAL USE ONLY!  GenLibDeps.pl is very non-portable, so LibDeps.txt
-# should only be re-built manually.  No other rule in this file should
-# depend on LibDeps.txt.
-$(LibDeps): $(GenLibDeps) $(LibDir)
+LibDeps      = $(PROJ_OBJ_DIR)/LibDeps.txt
+GenLibDeps   = $(PROJ_SRC_ROOT)/utils/GenLibDeps.pl
+
+$(LibDeps): $(GenLibDeps) $(LibDir) $(wildcard $(LibDir)/*.a $(LibDir)/*.o)
 	$(Echo) "Regenerating LibDeps.txt"
 	$(Verb) $(GenLibDeps) -flat $(LibDir) | sort > $(LibDeps)
 
