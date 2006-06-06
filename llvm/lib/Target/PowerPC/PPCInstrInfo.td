@@ -318,6 +318,14 @@ let isCall = 1, noResults = 1, PPC970_Unit = 7,
                            [(PPCbctrl)]>;
 }
 
+// DCB* instructions.
+def DCBZ : DCB_Form<1014, 0, (ops memrr:$dst),
+                    "dcbz $dst", LdStDCBF, [(int_ppc_dcbz xoaddr:$dst)]>,
+                    PPC970_DGroup_Single;
+def DCBZL : DCB_Form<1014, 1, (ops memrr:$dst),
+                     "dcbzl $dst", LdStDCBF, [(int_ppc_dcbzl xoaddr:$dst)]>,
+                     PPC970_DGroup_Single;
+                       
 // D-Form instructions.  Most instructions that perform an operation on a
 // register and an immediate are of this type.
 //

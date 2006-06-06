@@ -15,6 +15,15 @@
 // Definitions for all PowerPC intrinsics.
 //
 
+// Non-altivec intrinsics.
+let TargetPrefix = "ppc" in {  // All intrinsics start with "llvm.ppc.".
+  // dcbz instruction.
+  def int_ppc_dcbz :  Intrinsic<[llvm_void_ty, llvm_ptr_ty], [IntrWriteMem]>;
+  // dcbzl (PPC970) instruction.
+  def int_ppc_dcbzl : Intrinsic<[llvm_void_ty, llvm_ptr_ty], [IntrWriteMem]>;
+}
+
+
 let TargetPrefix = "ppc" in {  // All PPC intrinsics start with "llvm.ppc.".
   /// PowerPC_Vec_Intrinsic - Base class for all altivec intrinsics.
   class PowerPC_Vec_Intrinsic<string GCCIntSuffix, list<LLVMType> types,

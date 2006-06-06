@@ -325,6 +325,23 @@ class XForm_28<bits<6> opcode, bits<10> xo, dag OL, string asmstr,
   : XForm_base_r3xo<opcode, xo, OL, asmstr, itin, pattern> {
 }
 
+// DCB_Form - Form X instruction, used for dcb* instructions.
+class DCB_Form<bits<10> xo, bits<5> immfield, dag OL, string asmstr, 
+                      InstrItinClass itin, list<dag> pattern>
+  : I<31, OL, asmstr, itin> {
+  bits<5> A;
+  bits<5> B;
+
+  let Pattern = pattern;
+
+  let Inst{6-10}  = immfield;
+  let Inst{11-15} = A;
+  let Inst{16-20} = B;
+  let Inst{21-30} = xo;
+  let Inst{31}    = 0;
+}
+
+
 // DSS_Form - Form X instruction, used for altivec dss* instructions.
 class DSS_Form<bits<10> xo, dag OL, string asmstr, 
                       InstrItinClass itin, list<dag> pattern>
