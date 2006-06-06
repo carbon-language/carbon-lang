@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "BugDriver.h"
+#include "ToolRunner.h"
 #include "ListReducer.h"
 #include "llvm/Constant.h"
 #include "llvm/Instructions.h"
@@ -23,7 +24,6 @@
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/Support/ToolRunner.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Support/FileUtilities.h"

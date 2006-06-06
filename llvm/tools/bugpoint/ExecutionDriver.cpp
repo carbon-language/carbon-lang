@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "BugDriver.h"
-#include "llvm/Support/ToolRunner.h"
+#include "ToolRunner.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FileUtilities.h"
