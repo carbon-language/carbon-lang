@@ -5169,7 +5169,7 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
           if (((Tmp = dyn_cast<CastInst>(SVI->getOperand(0))) && 
                Tmp->getOperand(0)->getType() == CI.getType()) ||
               ((Tmp = dyn_cast<CastInst>(SVI->getOperand(1))) && 
-               Tmp->getOperand(1)->getType() == CI.getType())) {
+               Tmp->getOperand(0)->getType() == CI.getType())) {
             Value *LHS = InsertOperandCastBefore(SVI->getOperand(0),
                                                  CI.getType(), &CI);
             Value *RHS = InsertOperandCastBefore(SVI->getOperand(1),
