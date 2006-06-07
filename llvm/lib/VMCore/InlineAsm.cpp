@@ -208,3 +208,5 @@ bool InlineAsm::Verify(const FunctionType *Ty, const std::string &ConstStr) {
   if (Ty->getNumParams() != NumInputs) return false;
   return true;
 }
+
+DEFINING_FILE_FOR(InlineAsm)

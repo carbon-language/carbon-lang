@@ -16,6 +16,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/System/Signals.h"
+#include "llvm/LinkAllVMCore.h"
 #include <iostream>
 
 using namespace llvm;

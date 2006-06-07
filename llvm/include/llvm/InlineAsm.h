@@ -17,6 +17,7 @@
 #define LLVM_INLINEASM_H
 
 #include "llvm/Value.h"
+#include "llvm/Support/IncludeFile.h"
 #include <vector>
 
 namespace llvm {
@@ -35,7 +36,7 @@ class InlineAsm : public Value {
   
   InlineAsm(const FunctionType *Ty, const std::string &AsmString,
             const std::string &Constraints, bool hasSideEffects);
-  ~InlineAsm();
+  virtual ~InlineAsm();
 public:
 
   /// InlineAsm::get - Return the the specified uniqued inline asm string.
@@ -127,5 +128,8 @@ public:
 };
 
 } // End llvm namespace
+
+// Make sure the InlineAsm.cpp file is linked when this one is #included.
+FORCE_DEFINING_FILE_TO_BE_LINKED(InlineAsm)
 
 #endif

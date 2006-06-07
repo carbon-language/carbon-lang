@@ -20,6 +20,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/LinkAllVMCore.h"
 #include "llvm/Linker.h"
 #include "llvm/System/Program.h"
 #include "llvm/Module.h"
@@ -77,8 +78,11 @@ static cl::opt<bool>DisableCompression("disable-compression",cl::init(false),
   cl::desc("Disable writing of compressed bytecode files"));
 
 static cl::list<std::string> PostLinkOpts("post-link-opts",
-  cl::value_desc("path to post-link optimization programs"),
+  cl::value_desc("path"),
   cl::desc("Run one or more optimization programs after linking"));
+
+static cl::list<std::string> XLinker("Xlinker", cl::value_desc("option"),
+  cl::desc("Pass options to the system linker"));
 
 // Compatibility options that are ignored but supported by LD
 static cl::opt<std::string> CO3("soname", cl::Hidden,
@@ -92,6 +96,7 @@ static cl::opt<bool> CO5("eh-frame-hdr", cl::Hidden,
 
 static  cl::opt<std::string> CO6("h", cl::Hidden,
   cl::desc("Compatibility option: ignored"));
+
 
 /// This is just for convenience so it doesn't have to be passed around
 /// everywhere.
@@ -303,12 +308,25 @@ static int GenerateNative(const std::string &OutputFilename,
   args.push_back(OutputFilename.c_str());
   args.push_back(InputFilename.c_str());
 
+  // Add in the library paths
+  for (unsigned index = 0; index < LibPaths.size(); index++) {
+    args.push_back("-L");
+    args.push_back(LibPaths[index].c_str());
+  }
+
+  // Add the requested options
+  for (unsigned index = 0; index < XLinker.size(); index++) {
+    args.push_back(XLinker[index].c_str());
+    args.push_back(Libraries[index].c_str());
+  }
+
   // Add in the libraries to link.
   for (unsigned index = 0; index < Libraries.size(); index++)
     if (Libraries[index] != "crtend") {
       args.push_back("-l");
       args.push_back(Libraries[index].c_str());
     }
+
   args.push_back(0);
 
   // Run the compiler to assembly and link together the program.

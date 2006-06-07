@@ -28,6 +28,7 @@
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Config/config.h"
+#include "llvm/LinkAllVMCore.h"
 #include <fstream>
 #include <iostream>
 #include <memory>

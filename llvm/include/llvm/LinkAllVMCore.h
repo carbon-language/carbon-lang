@@ -17,9 +17,11 @@
 #define LLVM_LINKALLVMCORE_H
 
 #include "llvm/Support/IncludeFile.h"
+#include "llvm/Support/Mangler.h"
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/InlineAsm.h"
 #include "llvm/Analysis/Verifier.h"
 
 namespace {

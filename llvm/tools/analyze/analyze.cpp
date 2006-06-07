@@ -27,6 +27,7 @@
 #include "llvm/System/Signals.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/Timer.h"
+#include "llvm/LinkAllVMCore.h"
 #include <algorithm>
 
 using namespace llvm;

@@ -200,3 +200,6 @@ Mangler::Mangler(Module &M, const char *prefix)
   for (Module::global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I)
     InsertName(I, Names);
 }
+
+// Cause this file to be linked in when Support/Mangler.h is #included
+DEFINING_FILE_FOR(Mangler)
