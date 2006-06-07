@@ -213,7 +213,7 @@ bool LoopUnroll::visitLoop(Loop *L) {
 
     // We don't want to reprocess entries with PHI nodes in them.  For this
     // reason, we look at each operand of each user exactly once, performing the
-    // stubstitution exactly once.
+    // substitution exactly once.
     for (std::set<User*>::iterator UI = Users.begin(), E = Users.end(); UI != E;
          ++UI) {
       Instruction *I = cast<Instruction>(*UI);
