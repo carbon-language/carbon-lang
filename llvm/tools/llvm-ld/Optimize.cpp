@@ -73,7 +73,7 @@ static cl::alias ExportDynamic("export-dynamic",
   cl::desc("Alias for -disable-internalize"));
 
 static cl::list<std::string> LoadableModules("load",
-  cl::value_desc("path to loadable optimization module"),
+  cl::value_desc("path"),
   cl::desc("Load an optimization module and run it"));
 
 // A utility function that adds a pass to the pass manager but will also add
