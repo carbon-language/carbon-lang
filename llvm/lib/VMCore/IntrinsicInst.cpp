@@ -71,7 +71,5 @@ std::string DbgStopPointInst::getDirectory() const {
 }
 
 //===----------------------------------------------------------------------===//
-/// LinkIntrinsicInstStub -- This is a hack to make sure that programs that
-/// #include IntrinsicInst.h also link this file. See Support/IncludeFile.h
-/// for further details.
-char llvm::LinkIntrinsicInstStub;
+/// Ensure that users of IntrinsicInst.h will link with this module.
+DEFINING_FILE_FOR(IntrinsicInst)

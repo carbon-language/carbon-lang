@@ -128,18 +128,14 @@ struct PostDominanceFrontier : public DominanceFrontierBase {
     AU.addRequired<PostDominatorTree>();
   }
 
-  // stub - dummy function, just ignore it
-  static int stub;
-
 private:
   const DomSetType &calculate(const PostDominatorTree &DT,
                               const DominatorTree::Node *Node);
 };
 
-// Make sure that any clients of this file link in PostDominators.cpp
-static IncludeFile
-POST_DOMINATOR_INCLUDE_FILE(&PostDominanceFrontier::stub);
-
 } // End llvm namespace
+
+// Make sure that any clients of this file link in PostDominators.cpp
+FORCE_DEFINING_FILE_TO_BE_LINKED(PostDominanceFrontier)
 
 #endif

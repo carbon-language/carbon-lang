@@ -65,10 +65,9 @@ struct ValueNumbering {
   }
 };
 
-extern int BasicValueNumberingStub;
-static IncludeFile
-HDR_INCLUDE_VALUENUMBERING_CPP(&BasicValueNumberingStub);
-
 } // End llvm namespace
+
+// Force any file including this header to get the implementation as well
+FORCE_DEFINING_FILE_TO_BE_LINKED(BasicValueNumbering)
 
 #endif

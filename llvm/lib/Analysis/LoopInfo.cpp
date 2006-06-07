@@ -86,8 +86,6 @@ void Loop::dump() const {
 //===----------------------------------------------------------------------===//
 // LoopInfo implementation
 //
-int LoopInfo::stub;
-
 bool LoopInfo::runOnFunction(Function &) {
   releaseMemory();
   Calculate(getAnalysis<ETForest>());    // Update
@@ -557,3 +555,6 @@ Loop *Loop::removeChildLoop(iterator I) {
 void Loop::removeBlockFromLoop(BasicBlock *BB) {
   RemoveFromVector(Blocks, BB);
 }
+
+// Ensure this file gets linked when LoopInfo.h is used.
+DEFINING_FILE_FOR(LoopInfo)

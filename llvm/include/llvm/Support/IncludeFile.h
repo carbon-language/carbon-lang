@@ -27,13 +27,15 @@
 /// And, foo.cp would use:<br/>
 /// <tt>DEFINING_FILE_FOR(foo)</tt><br/>
 #define FORCE_DEFINING_FILE_TO_BE_LINKED(name) \
-  extern char name ## LinkVar; \
-  static IncludeFile name ## LinkObj ( &name ## LinkVar )
+  namespace llvm { \
+    extern char name ## LinkVar; \
+    static IncludeFile name ## LinkObj ( &name ## LinkVar ); \
+  } 
 
 /// This macro is the counterpart to FORCE_DEFINING_FILE_TO_BE_LINKED. It should
 /// be used in a .cpp file to define the name referenced in a header file that
 /// will cause linkage of the .cpp file. It should only be used at extern level.
-#define DEFINING_FILE_FOR(name) char name
+#define DEFINING_FILE_FOR(name) namespace llvm { char name ## LinkVar; }
 
 namespace llvm {
 

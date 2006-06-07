@@ -239,4 +239,5 @@ void BVNImpl::handleTernaryInst(Instruction &I) {
 }
 
 
-int llvm::BasicValueNumberingStub; // to ensure linkage of this file
+// Ensure that users of ValueNumbering.h will link with this file
+DEFINING_FILE_FOR(BasicValueNumbering)

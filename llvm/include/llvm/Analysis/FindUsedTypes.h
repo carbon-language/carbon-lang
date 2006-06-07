@@ -53,15 +53,11 @@ public:
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
   }
-
-  // stub - dummy function, just ignore it
-  static int stub;
 };
 
-// Make sure that any clients of this file link in PostDominators.cpp
-static IncludeFile
-FIND_USED_TYPES_INCLUDE_FILE(&FindUsedTypes::stub);
-
 } // End llvm namespace
+
+// Make sure that any clients of this file link in PostDominators.cpp
+FORCE_DEFINING_FILE_TO_BE_LINKED(FindUsedTypes)
 
 #endif

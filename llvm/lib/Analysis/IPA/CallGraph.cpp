@@ -19,8 +19,6 @@
 #include <iostream>
 using namespace llvm;
 
-int llvm::BasicCallGraphStub;
-
 static bool isOnlyADirectCall(Function *F, CallSite CS) {
   if (!CS.getInstruction()) return false;
   for (CallSite::arg_iterator I = CS.arg_begin(), E = CS.arg_end(); I != E; ++I)
@@ -256,10 +254,6 @@ CallGraphNode *CallGraph::getOrInsertFunction(const Function *F) {
   return CGN = new CallGraphNode(const_cast<Function*>(F));
 }
 
-
-
-int CallGraph::stub; // to ensure linkage of this file.
-
 void CallGraphNode::print(std::ostream &OS) const {
   if (Function *F = getFunction())
     OS << "Call graph node for function: '" << F->getName() <<"'\n";
@@ -297,3 +291,6 @@ void CallGraphNode::removeAnyCallEdgeTo(CallGraphNode *Callee) {
       --i; --e;
     }
 }
+
+// Enuse that users of CallGraph.h also link with this file
+DEFINING_FILE_FOR(CallGraph)

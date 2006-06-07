@@ -304,8 +304,6 @@ bool DominatorSet::runOnFunction(Function &F) {
   return false;
 }
 
-int DominatorSet::stub;
-
 namespace llvm {
 static std::ostream &operator<<(std::ostream &o,
                                 const std::set<BasicBlock*> &BBs) {
@@ -933,3 +931,5 @@ void ETForestBase::print(std::ostream &o, const Module *) const {
   }
   o << "\n";
 }
+
+DEFINING_FILE_FOR(DominatorSet)

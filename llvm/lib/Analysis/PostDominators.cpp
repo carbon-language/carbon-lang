@@ -359,6 +359,5 @@ PostDominanceFrontier::calculate(const PostDominatorTree &DT,
   return S;
 }
 
-// stub - a dummy function to make linking work ok.
-int PostDominanceFrontier::stub;
-
+// Ensure that this .cpp file gets linked when PostDominators.h is used.
+DEFINING_FILE_FOR(PostDominanceFrontier)

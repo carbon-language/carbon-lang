@@ -652,9 +652,9 @@ private:
 };
 
 
-// Make sure that any clients of this file link in Dominators.cpp
-static IncludeFile
-DOMINATORS_INCLUDE_FILE(&DominatorSet::stub);
 } // End llvm namespace
+
+// Make sure that any clients of this file link in Dominators.cpp
+FORCE_DEFINING_FILE_TO_BE_LINKED(DominatorSet)
 
 #endif

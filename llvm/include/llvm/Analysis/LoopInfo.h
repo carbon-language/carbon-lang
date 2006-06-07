@@ -295,7 +295,6 @@ public:
   /// BasicBlocks to loops.
   void removeBlock(BasicBlock *BB);
 
-  static int stub;  // Noop
 private:
   void Calculate(ETForest &EF);
   Loop *ConsiderForLoop(BasicBlock *BB, ETForest &EF);
@@ -303,10 +302,6 @@ private:
   void InsertLoopInto(Loop *L, Loop *Parent);
 };
 
-
-// Make sure that any clients of this file link in LoopInfo.cpp
-static IncludeFile
-LOOP_INFO_INCLUDE_FILE(&LoopInfo::stub);
 
 // Allow clients to walk the list of nested loops...
 template <> struct GraphTraits<const Loop*> {
@@ -336,5 +331,8 @@ template <> struct GraphTraits<Loop*> {
 };
 
 } // End llvm namespace
+
+// Make sure that any clients of this file link in LoopInfo.cpp
+FORCE_DEFINING_FILE_TO_BE_LINKED(LoopInfo)
 
 #endif

@@ -318,14 +318,13 @@ public:
   }
 };
 
+} // End llvm namespace
+
 // Because of the way .a files work, we must force the BasicAA implementation to
 // be pulled in if the AliasAnalysis header is included.  Otherwise we run
 // the risk of AliasAnalysis being used, but the default implementation not
 // being linked into the tool that uses it.
-//
-extern int BasicAAStub;
-static IncludeFile HDR_INCLUDE_BASICAA_CPP(&BasicAAStub);
-
-} // End llvm namespace
+FORCE_DEFINING_FILE_TO_BE_LINKED(AliasAnalysis)
+FORCE_DEFINING_FILE_TO_BE_LINKED(BasicAliasAnalysis)
 
 #endif

@@ -314,11 +314,10 @@ namespace llvm {
     }
   };
 
-// A hack to ensure that the IntrinsicInst.cpp file gets added as a dependency
-// of any file that 
-extern char LinkIntrinsicInstStub;
-static IncludeFile LinkIntrinsicInst(&LinkIntrinsicInstStub);
-
 }
+
+// Ensure that the IntrinsicInst.cpp file gets added as a dependency of any 
+// file that includes this header
+FORCE_DEFINING_FILE_TO_BE_LINKED(IntrinsicInst)
 
 #endif

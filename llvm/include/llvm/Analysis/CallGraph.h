@@ -287,13 +287,9 @@ template<> struct GraphTraits<const CallGraph*> :
   static nodes_iterator nodes_end  (const CallGraph *CG) { return CG->end(); }
 };
 
-// Make sure that any clients of this file link in CallGraph.cpp
-static IncludeFile
-CALLGRAPH_INCLUDE_FILE(&CallGraph::stub);
-
-extern int BasicCallGraphStub;
-static IncludeFile HDR_INCLUDE_CALLGRAPH_CPP(&BasicCallGraphStub);
-
 } // End llvm namespace
+
+// Make sure that any clients of this file link in CallGraph.cpp
+FORCE_DEFINING_FILE_TO_BE_LINKED(CallGraph)
 
 #endif

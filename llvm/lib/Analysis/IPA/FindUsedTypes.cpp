@@ -24,9 +24,6 @@ using namespace llvm;
 static RegisterAnalysis<FindUsedTypes>
 X("printusedtypes", "Find Used Types");
 
-// stub to help linkage
-int FindUsedTypes::stub; // to ensure linkage of this file
-
 // IncorporateType - Incorporate one type and all of its subtypes into the
 // collection of used types.
 //
@@ -104,3 +101,6 @@ void FindUsedTypes::print(std::ostream &o, const Module *M) const {
            E = UsedTypes.end(); I != E; ++I)
       o << "  " << **I << "\n";
 }
+
+// Ensure that this file gets linked in when FindUsedTypes.h is used.
+DEFINING_FILE_FOR(FindUsedTypes)
