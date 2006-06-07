@@ -43,6 +43,8 @@
 #                   override the default.
 #  -ldflags         Next argument specifies that linker options that override
 #                   the default.
+#  -extraflags      Next argument specifies extra options that are passed to
+#                   compile the tests.
 #
 #  ---------------- Options to configure llvm-test ----------------------------
 #  -spec2000path    Path to the benchspec directory in the SPEC 2000 distro
@@ -312,7 +314,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
     $CONFIGUREARGS .= " --with-f2c=$ARGV[0]"; shift; next;
   }
   if (/^-with-externals/)  { 
-    $CONFIGUREARGS .= "--with-externals=$ARGV[0]"; shift; next 
+    $CONFIGUREARGS .= " --with-externals=$ARGV[0]"; shift; next 
   }
   if (/^-gnuplotscript$/)  { $PlotScriptFilename = $ARGV[0]; shift; next; }
   if (/^-templatefile$/)   { $Template = $ARGV[0]; shift; next; }
@@ -331,6 +333,9 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   }
   if (/^-ldflags/)         {
     $MAKEOPTS = "$MAKEOPTS LD.Flags=\'$ARGV[0]\'"; shift; next;
+  }
+  if (/^-extraflags/)         {
+    $PROGTESTOPTS .= " EXTRA_FLAGS=\'$ARGV[0]\'"; shift; next;
   }
   if (/^-noexternals$/)    { $NOEXTERNALS = 1; next; }
   if (/^-nodejagnu$/)      { $NODEJAGNU = 1; next; }
