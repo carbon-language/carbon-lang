@@ -275,7 +275,7 @@ void SlotCalculator::incorporateFunction(const Function *F) {
   SC_DEBUG("begin processFunction!\n");
 
   // If we emitted all of the function constants, build a compaction table.
-  if ( ModuleContainsAllFunctionConstants)
+  if (ModuleContainsAllFunctionConstants)
     buildCompactionTable(F);
 
   // Update the ModuleLevel entries to be accurate.
@@ -465,7 +465,7 @@ void SlotCalculator::buildCompactionTable(const Function *F) {
   for (const_inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
     getOrCreateCompactionTableSlot(I->getType());
     for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op)
-      if (isa<Constant>(I->getOperand(op)))
+      if (isa<Constant>(I->getOperand(op)) || isa<InlineAsm>(I->getOperand(op)))
         getOrCreateCompactionTableSlot(I->getOperand(op));
   }
 
