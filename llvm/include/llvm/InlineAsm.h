@@ -35,6 +35,7 @@ class InlineAsm : public Value {
   
   InlineAsm(const FunctionType *Ty, const std::string &AsmString,
             const std::string &Constraints, bool hasSideEffects);
+  ~InlineAsm();
 public:
 
   /// InlineAsm::get - Return the the specified uniqued inline asm string.
