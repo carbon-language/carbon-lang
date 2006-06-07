@@ -74,6 +74,10 @@ namespace sys {
           ///< this function will wait until the child finishes or forever if
           ///< it doesn't.
       );
+      // These methods change the specified standard stream (stdin or stdout) to
+      // binary mode.
+      static void ChangeStdinToBinary();
+      static void ChangeStdoutToBinary();
   };
 }
 }

@@ -19,6 +19,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/System/MappedFile.h"
+#include "llvm/System/Program.h"
 #include <cerrno>
 #include <iostream>
 #include <memory>
@@ -132,6 +133,7 @@ namespace {
 BytecodeStdinReader::BytecodeStdinReader( BytecodeHandler* H )
   : BytecodeReader(H)
 {
+  sys::Program::ChangeStdinToBinary();
   char Buffer[4096*4];
 
   // Read in all of the data from stdin, we cannot mmap stdin...

@@ -29,6 +29,7 @@
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/Compressor.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/System/Program.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Statistic.h"
 #include <cstring>
@@ -1216,6 +1217,11 @@ void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
 void llvm::WriteBytecodeToFile(const Module *M, std::ostream &Out,
                                bool compress ) {
   assert(M && "You can't write a null module!!");
+
+  // Make sure that std::cout is put into binary mode for systems
+  // that care.
+  if (&Out == std::cout)
+    sys::Program::ChangeStdoutToBinary();
 
   // Create a vector of unsigned char for the bytecode output. We
   // reserve 256KBytes of space in the vector so that we avoid doing

@@ -227,4 +227,12 @@ Program::ExecuteAndWait(const Path& path,
     
 }
 
+void Program::ChangeStdinToBinary(){
+  // Do nothing, as Unix doesn't differentiate between text and binary.
+}
+
+void Program::ChangeStdoutToBinary(){
+  // Do nothing, as Unix doesn't differentiate between text and binary.
+}
+
 }

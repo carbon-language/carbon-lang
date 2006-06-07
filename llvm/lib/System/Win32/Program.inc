@@ -12,8 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "Win32.h"
+#include <cstdio>
 #include <malloc.h>
 #include <io.h>
+#include <fcntl.h>
 
 //===----------------------------------------------------------------------===//
 //=== WARNING: Implementation here must contain only Win32 specific code 
@@ -216,6 +218,18 @@ Program::ExecuteAndWait(const Path& path,
   }
 
   return status;
+}
+
+void Program::ChangeStdinToBinary(){
+  int result = _setmode( _fileno(stdin), _O_BINARY );
+  if( result == -1 )
+    throw std::string("Cannot set input mode on stdin to binary.");
+}
+
+void Program::ChangeStdoutToBinary(){
+  int result = _setmode( _fileno(stdout), _O_BINARY );
+  if( result == -1 )
+    throw std::string("Cannot set output mode on stdout to binary.");
 }
 
 }
