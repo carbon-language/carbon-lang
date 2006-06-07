@@ -31,7 +31,7 @@
 #define LLVM_ANALYSIS_ALIAS_ANALYSIS_H
 
 #include "llvm/Support/CallSite.h"
-#include "llvm/Pass.h"    // Need this for IncludeFile
+#include "llvm/Support/IncludeFile.h"
 
 namespace llvm {
 
@@ -39,6 +39,8 @@ class LoadInst;
 class StoreInst;
 class VAArgInst;
 class TargetData;
+class Pass;
+class AnalysisUsage;
 
 class AliasAnalysis {
 protected:

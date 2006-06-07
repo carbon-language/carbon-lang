@@ -25,6 +25,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Pass.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Instructions.h"
 #include "llvm/Type.h"

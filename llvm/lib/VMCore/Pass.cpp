@@ -23,9 +23,6 @@
 #include <set>
 using namespace llvm;
 
-// IncludeFile - Stub function used to help linking out.
-IncludeFile::IncludeFile(void*) {}
-
 //===----------------------------------------------------------------------===//
 //   AnalysisID Class Implementation
 //

@@ -21,6 +21,7 @@
 #ifndef LLVM_PASS_SUPPORT_H
 #define LLVM_PASS_SUPPORT_H
 
+#include "llvm/Support/IncludeFile.h"
 // No need to include Pass.h, we are being included by it!
 
 namespace llvm {
@@ -365,17 +366,6 @@ struct PassRegistrationListener {
   /// enumeratePasses on this PassRegistrationListener object.
   ///
   virtual void passEnumerate(const PassInfo *P) {}
-};
-
-
-//===---------------------------------------------------------------------------
-/// IncludeFile class - This class is used as a hack to make sure that the
-/// implementation of a header file is included into a tool that uses the
-/// header.  This is solely to overcome problems linking .a files and not
-/// getting the implementation of passes we need.
-///
-struct IncludeFile {
-  IncludeFile(void *);
 };
 
 } // End llvm namespace

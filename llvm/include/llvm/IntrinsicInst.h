@@ -28,6 +28,7 @@
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/Support/IncludeFile.h"
 
 namespace llvm {
   /// IntrinsicInst - A useful wrapper class for inspecting calls to intrinsic
@@ -312,6 +313,12 @@ namespace llvm {
       return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));
     }
   };
+
+// A hack to ensure that the IntrinsicInst.cpp file gets added as a dependency
+// of any file that 
+extern char LinkIntrinsicInstStub;
+static IncludeFile LinkIntrinsicInst(&LinkIntrinsicInstStub);
+
 }
 
 #endif
