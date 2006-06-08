@@ -1804,9 +1804,12 @@ void RegsForValue::getCopyToRegs(SDOperand Val, SelectionDAG &DAG,
     // If there is a single register and the types differ, this must be
     // a promotion.
     if (RegVT != ValueVT) {
-      if (MVT::isInteger(RegVT))
-        Val = DAG.getNode(ISD::ANY_EXTEND, RegVT, Val);
-      else
+      if (MVT::isInteger(RegVT)) {
+        if (RegVT < ValueVT)
+          Val = DAG.getNode(ISD::TRUNCATE, RegVT, Val);
+        else
+          Val = DAG.getNode(ISD::ANY_EXTEND, RegVT, Val);
+      } else
         Val = DAG.getNode(ISD::FP_EXTEND, RegVT, Val);
     }
     Chain = DAG.getCopyToReg(Chain, Regs[0], Val, Flag);
