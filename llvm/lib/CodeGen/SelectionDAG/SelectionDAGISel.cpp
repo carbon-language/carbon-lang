@@ -1780,15 +1780,19 @@ SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
       return DAG.getNode(ISD::BUILD_PAIR, ValueVT, Hi, Val);
   }
 
-  // Otherwise, if the return value was promoted, truncate it to the
+  // Otherwise, if the return value was promoted or extended, truncate it to the
   // appropriate type.
   if (RegVT == ValueVT)
     return Val;
   
-  if (MVT::isInteger(RegVT))
-    return DAG.getNode(ISD::TRUNCATE, ValueVT, Val);
-  else
+  if (MVT::isInteger(RegVT)) {
+    if (ValueVT < RegVT)
+      return DAG.getNode(ISD::TRUNCATE, ValueVT, Val);
+    else
+      return DAG.getNode(ISD::ANY_EXTEND, ValueVT, Val);
+  } else {
     return DAG.getNode(ISD::FP_ROUND, ValueVT, Val);
+  }
 }
 
 /// getCopyToRegs - Emit a series of CopyToReg nodes that copies the
@@ -1895,14 +1899,17 @@ GetRegistersForValue(const std::string &ConstrCode,
   if (PhysReg.first) {
     if (VT == MVT::Other)
       ValueVT = *PhysReg.second->vt_begin();
-    RegVT = VT;
+    
+    // Get the actual register value type.  This is important, because the user
+    // may have asked for (e.g.) the AX register in i32 type.  We need to
+    // remember that AX is actually i16 to get the right extension.
+    RegVT = *PhysReg.second->vt_begin();
     
     // This is a explicit reference to a physical register.
     Regs.push_back(PhysReg.first);
 
     // If this is an expanded reference, add the rest of the regs to Regs.
     if (NumRegs != 1) {
-      RegVT = *PhysReg.second->vt_begin();
       TargetRegisterClass::iterator I = PhysReg.second->begin();
       TargetRegisterClass::iterator E = PhysReg.second->end();
       for (; *I != PhysReg.first; ++I)
