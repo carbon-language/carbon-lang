@@ -340,7 +340,7 @@ Path::getStatusInfo(StatusInfo& info) const {
     ThrowError("getStatusInfo():" + std::string(path) + ": Can't get status: ");
 
   info.fileSize = fi.nFileSizeHigh;
-  info.fileSize <<= 32;
+  info.fileSize <<= sizeof(fi.nFileSizeHigh)*8;
   info.fileSize += fi.nFileSizeLow;
 
   info.mode = fi.dwFileAttributes & FILE_ATTRIBUTE_READONLY ? 0555 : 0777;

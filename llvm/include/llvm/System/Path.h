@@ -67,7 +67,7 @@ namespace sys {
       struct StatusInfo {
         StatusInfo() : fileSize(0), modTime(0,0), mode(0777), user(999),
                        group(999), isDir(false) { }
-        size_t      fileSize;   ///< Size of the file in bytes
+        uint64_t    fileSize;   ///< Size of the file in bytes
         TimeValue   modTime;    ///< Time of file's modification
         uint32_t    mode;       ///< Mode of the file, if applicable
         uint32_t    user;       ///< User ID of owner, if applicable
