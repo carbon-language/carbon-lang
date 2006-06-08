@@ -656,24 +656,30 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
       // operand!
       if (CurVariant == -1 || CurVariant == AsmPrinterVariant) {
         unsigned OpNo = 1;
-        
+
+        bool Error = false;
+
         // Scan to find the machine operand number for the operand.
         for (; Val; --Val) {
+          if (OpNo >= MI->getNumOperands()) break;
           unsigned OpFlags = MI->getOperand(OpNo).getImmedValue();
           OpNo += (OpFlags >> 3) + 1;
         }
-        
-        unsigned OpFlags = MI->getOperand(OpNo).getImmedValue();
-        ++OpNo;  // Skip over the ID number.
 
-        bool Error;
-        AsmPrinter *AP = const_cast<AsmPrinter*>(this);
-        if ((OpFlags & 7) == 4 /*ADDR MODE*/) {
-          Error = AP->PrintAsmMemoryOperand(MI, OpNo, AsmPrinterVariant,
-                                            Modifier[0] ? Modifier : 0);
+        if (OpNo >= MI->getNumOperands()) {
+          Error = true;
         } else {
-          Error = AP->PrintAsmOperand(MI, OpNo, AsmPrinterVariant,
-                                      Modifier[0] ? Modifier : 0);
+          unsigned OpFlags = MI->getOperand(OpNo).getImmedValue();
+          ++OpNo;  // Skip over the ID number.
+
+          AsmPrinter *AP = const_cast<AsmPrinter*>(this);
+          if ((OpFlags & 7) == 4 /*ADDR MODE*/) {
+            Error = AP->PrintAsmMemoryOperand(MI, OpNo, AsmPrinterVariant,
+                                              Modifier[0] ? Modifier : 0);
+          } else {
+            Error = AP->PrintAsmOperand(MI, OpNo, AsmPrinterVariant,
+                                        Modifier[0] ? Modifier : 0);
+          }
         }
         if (Error) {
           std::cerr << "Invalid operand found in inline asm: '"
