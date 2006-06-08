@@ -128,7 +128,13 @@ namespace {
     bool TryFoldLoad(SDOperand P, SDOperand N,
                      SDOperand &Base, SDOperand &Scale,
                      SDOperand &Index, SDOperand &Disp);
-
+    /// SelectInlineAsmMemoryOperand - Implement addressing mode selection for
+    /// inline asm expressions.
+    virtual bool SelectInlineAsmMemoryOperand(const SDOperand &Op,
+                                              char ConstraintCode,
+                                              std::vector<SDOperand> &OutOps,
+                                              SelectionDAG &DAG);
+    
     void EmitSpecialCodeForMain(MachineBasicBlock *BB, MachineFrameInfo *MFI);
 
     inline void getAddressOperands(X86ISelAddressMode &AM, SDOperand &Base, 
@@ -874,6 +880,28 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
   DEBUG(std::cerr << "\n");
   Indent -= 2;
 #endif
+}
+
+bool X86DAGToDAGISel::
+SelectInlineAsmMemoryOperand(const SDOperand &Op, char ConstraintCode,
+                             std::vector<SDOperand> &OutOps, SelectionDAG &DAG){
+  SDOperand Op0, Op1, Op2, Op3;
+  switch (ConstraintCode) {
+  case 'o':   // offsetable        ??
+  case 'v':   // not offsetable    ??
+  default: return true;
+  case 'm':   // memory
+    if (!SelectAddr(Op, Op0, Op1, Op2, Op3))
+      return true;
+    break;
+  }
+  
+  OutOps.resize(4);
+  Select(OutOps[0], Op0);
+  Select(OutOps[1], Op1);
+  Select(OutOps[2], Op2);
+  Select(OutOps[3], Op3);
+  return false;
 }
 
 /// createX86ISelDag - This pass converts a legalized DAG into a 
