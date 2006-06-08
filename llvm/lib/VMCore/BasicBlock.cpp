@@ -123,7 +123,7 @@ const TerminatorInst *const BasicBlock::getTerminator() const {
 
 Instruction* BasicBlock::getFirstNonPHI()
 {
-    BasicBlock::iterator i = begin(), e = end();
+    BasicBlock::iterator i = begin();
     // All valid basic blocks should have a terminator,
     // which is not a PHINode. If we have invalid basic
     // block we'll get assert when dereferencing past-the-end
