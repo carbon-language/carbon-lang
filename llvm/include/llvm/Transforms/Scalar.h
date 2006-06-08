@@ -306,6 +306,7 @@ FunctionPass *createBlockPlacementPass();
 // This pass inserts phi nodes at loop boundaries to simplify other loop 
 // optimizations.
 FunctionPass *createLCSSAPass();
+extern const PassInfo *LCSSAID;
 
 } // End llvm namespace
 

@@ -86,7 +86,9 @@ namespace {
 }
 
 FunctionPass *llvm::createLCSSAPass() { return new LCSSA(); }
+const PassInfo *llvm::LCSSAID = X.getPassInfo();
 
+/// runOnFunction - Process all loops in the function, inner-most out.
 bool LCSSA::runOnFunction(Function &F) {
   bool changed = false;
   LI = &getAnalysis<LoopInfo>();
@@ -100,6 +102,8 @@ bool LCSSA::runOnFunction(Function &F) {
   return changed;
 }
 
+/// visitSubloop - Recursively process all subloops, and then process the given
+/// loop if it has live-out values.
 bool LCSSA::visitSubloop(Loop* L) {
   for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
     visitSubloop(*I);
@@ -131,7 +135,8 @@ bool LCSSA::visitSubloop(Loop* L) {
   return true;
 }
 
-/// processInstruction - 
+/// processInstruction - Given a live-out instruction, insert LCSSA Phi nodes,
+/// eliminate all out-of-loop uses.
 void LCSSA::processInstruction(Instruction* Instr,
                                const std::vector<BasicBlock*>& exitBlocks)
 {
@@ -252,6 +257,8 @@ SetVector<Instruction*> LCSSA::getLoopValuesUsedOutsideLoop(Loop *L) {
   return AffectedValues;
 }
 
+/// getValueDominatingBlock - Return the value within the potential dominators
+/// map that dominates the given block.
 Instruction *LCSSA::getValueDominatingBlock(BasicBlock *BB,
                                  std::map<BasicBlock*, Instruction*>& PotDoms) {
   DominatorTree::Node* bbNode = DT->getNode(BB);
