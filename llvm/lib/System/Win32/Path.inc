@@ -121,7 +121,7 @@ Path::GetTemporaryDirectory() {
 
   // Append a subdirectory passed on our process id so multiple LLVMs don't
   // step on each other's toes.
-  sprintf(pathname, "LLVM_%u", GetCurrentProcessId());
+  sprintf(pathname, "LLVM_%u", unsigned(GetCurrentProcessId()));
   result.appendComponent(pathname);
 
   // If there's a directory left over from a previous LLVM execution that
