@@ -91,7 +91,14 @@ public:
   ///
   TerminatorInst *getTerminator();
   const TerminatorInst *const getTerminator() const;
-
+  
+  /// Returns a pointer to the first instructon in this block that is not a 
+  /// PHINode instruction. When adding instruction to the beginning of the
+  /// basic block, they should be added before the returned value, not before
+  /// the first instruction, which might be PHI.
+  /// Returns 0 is there's no non-PHI instruction.
+  Instruction* getFirstNonPHI();
+  
   /// removeFromParent - This method unlinks 'this' from the containing
   /// function, but does not delete it.
   ///

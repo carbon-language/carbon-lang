@@ -121,6 +121,17 @@ const TerminatorInst *const BasicBlock::getTerminator() const {
   return dyn_cast<TerminatorInst>(&InstList.back());
 }
 
+Instruction* BasicBlock::getFirstNonPHI()
+{
+    BasicBlock::iterator i = begin(), e = end();
+    // All valid basic blocks should have a terminator,
+    // which is not a PHINode. If we have invalid basic
+    // block we'll get assert when dereferencing past-the-end
+    // iterator.
+    while (isa<PHINode>(i)) ++i;
+    return &*i;
+}
+
 void BasicBlock::dropAllReferences() {
   for(iterator I = begin(), E = end(); I != E; ++I)
     I->dropAllReferences();
