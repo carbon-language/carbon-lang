@@ -3413,8 +3413,8 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
   MachineFunction &MF = DAG.getMachineFunction();
   const Function* Fn = MF.getFunction();
   if (Fn->hasExternalLinkage() &&
-      Fn->getName() == "main" &&
-      Subtarget->TargetType == X86Subtarget::isCygwin)
+      Subtarget->TargetType == X86Subtarget::isCygwin &&
+      Fn->getName() == "main")
     MF.getInfo<X86FunctionInfo>()->setForceFramePointer(true);
 
   unsigned CC = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
