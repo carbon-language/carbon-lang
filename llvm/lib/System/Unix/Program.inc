@@ -29,8 +29,6 @@
 #include <fcntl.h>
 #endif
 
-extern char** environ;
-
 namespace llvm {
 using namespace sys;
 
@@ -147,13 +145,11 @@ Program::ExecuteAndWait(const Path& path,
         }
       }
 
-      // Set up the environment
-      char** env = environ;
-      if (envp != 0)
-        env = (char**) envp;
-
       // Execute!
-      execve (path.c_str(), (char** const)args, env);
+      if (envp != 0)
+        execve (path.c_str(), (char** const)args, (char**)envp);
+      else
+        execv (path.c_str(), (char** const)args);
       // If the execve() failed, we should exit and let the parent pick up
       // our non-zero exit status.
       exit (errno);
