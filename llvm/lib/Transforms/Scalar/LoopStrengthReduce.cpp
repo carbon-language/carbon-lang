@@ -1074,6 +1074,9 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
         if (L->contains(User.Inst->getParent()))
           User.Inst->moveBefore(LatchBlock->getTerminator());
       }
+      if (RewriteOp->getType() != ReplacedTy)
+        RewriteOp = SCEVExpander::InsertCastOfTo(RewriteOp, ReplacedTy);
+
       SCEVHandle RewriteExpr = SCEVUnknown::get(RewriteOp);
 
       // Clear the SCEVExpander's expression map so that we are guaranteed
