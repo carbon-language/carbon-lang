@@ -2748,7 +2748,8 @@ public:
             emitCode("  Result = SDOperand(ResNode, N.ResNo-1);");
           }
           emitCode("else");
-          emitCode("  Result = SDOperand(" + ChainName + ".Val, " + ChainName + ".ResNo);");
+          emitCode("  Result = SDOperand(" + ChainName + ".Val, " +
+                   ChainName + ".ResNo);");
         } else {
           emitCode("Result = SDOperand(ResNode, N.ResNo);");
         }
@@ -2780,8 +2781,8 @@ public:
         if (NodeHasInFlag || HasImpInputs)
           Code += ", InFlag";
         emitCode(Code + ");");
-        emitCode("  SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, N.ResNo, "
-                 "ResNode, 0);");
+        emitCode("  SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, N.ResNo"
+                 ", ResNode, 0);");
         emitCode("  Result = SDOperand(ResNode, 0);");
         emitCode("}");
       }
@@ -3544,7 +3545,7 @@ void DAGISelEmitter::run(std::ostream &OS) {
      << "E = From.Val->use_end(); UI != E; ++UI) {\n";
   OS << "      SDNode *Use = *UI;\n";
   OS << "      std::vector<SDOperand> Ops;\n";
-  OS << "      for (unsigned i = 0, e = Use->getNumOperands(); i != e; ++i) {\n";
+  OS << "      for (unsigned i = 0, e = Use->getNumOperands(); i != e; ++i){\n";
   OS << "        SDOperand O = Use->getOperand(i);\n";
   OS << "        if (O.Val == From.Val)\n";
   OS << "          Ops.push_back(To);\n";
