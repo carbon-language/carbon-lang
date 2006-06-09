@@ -405,6 +405,8 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
 #endif
   }
   GCCArgs.push_back(ProgramFile.c_str());  // Specify the input filename...
+  GCCArgs.push_back("-x");
+  GCCArgs.push_back("none");
   GCCArgs.push_back("-o");
   sys::Path OutputBinary (ProgramFile+".gcc.exe");
   OutputBinary.makeUnique();
