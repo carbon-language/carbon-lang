@@ -18,8 +18,14 @@
 
 namespace llvm {
 
+/// X86FunctionInfo - This class is derived from MachineFunction private
+/// X86 target-specific information for each MachineFunction.
 class X86FunctionInfo : public MachineFunctionInfo {
-  bool ForceFramePointer;  // Function requires use of frame pointer.
+  // ForceFramePointer - True if the function is required to use of frame
+  // pointer for reasons other than it containing dynamic allocation or 
+  // that FP eliminatation is turned off. For example, Cygwin main function
+  // contains stack pointer re-alignment code which requires FP.
+  bool ForceFramePointer;
 public:
   X86FunctionInfo(MachineFunction& MF) : ForceFramePointer(false) {}
   bool getForceFramePointer() const { return ForceFramePointer;} 
