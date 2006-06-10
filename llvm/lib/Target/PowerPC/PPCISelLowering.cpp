@@ -1041,6 +1041,11 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   }
   
   std::vector<MVT::ValueType> NodeTys;
+  NodeTys.push_back(MVT::Other);   // Returns a chain
+  NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
+
+  std::vector<SDOperand> Ops;
+  unsigned CallOpc = PPCISD::CALL;
   
   // If the callee is a GlobalAddress/ExternalSymbol node (quite common, every
   // direct call is) turn it into a TargetGlobalAddress/TargetExternalSymbol
@@ -1055,11 +1060,8 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   else {
     // Otherwise, this is an indirect call.  We have to use a MTCTR/BCTRL pair
     // to do the call, we can't use PPCISD::CALL.
-    std::vector<SDOperand> Ops;
     Ops.push_back(Chain);
     Ops.push_back(Callee);
-    NodeTys.push_back(MVT::Other);
-    NodeTys.push_back(MVT::Flag);
     
     if (InFlag.Val)
       Ops.push_back(InFlag);
@@ -1075,25 +1077,27 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     NodeTys.push_back(MVT::Flag);
     Ops.clear();
     Ops.push_back(Chain);
-    Ops.push_back(InFlag);
-    Chain = DAG.getNode(PPCISD::BCTRL, NodeTys, Ops);
-    InFlag = Chain.getValue(1);
+    CallOpc = PPCISD::BCTRL;
     Callee.Val = 0;
   }
 
-  // Create the PPCISD::CALL node itself.
+  // If this is a direct call, pass the chain and the callee.
   if (Callee.Val) {
-    NodeTys.push_back(MVT::Other);   // Returns a chain
-    NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
-    std::vector<SDOperand> Ops;
     Ops.push_back(Chain);
     Ops.push_back(Callee);
-    if (InFlag.Val)
-      Ops.push_back(InFlag);
-    Chain = DAG.getNode(PPCISD::CALL, NodeTys, Ops);
-    InFlag = Chain.getValue(1);
   }
   
+  // Add argument registers to the end of the list so that they are known live
+  // into the call.
+  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i)
+    Ops.push_back(DAG.getRegister(RegsToPass[i].first, 
+                                  RegsToPass[i].second.getValueType()));
+  
+  if (InFlag.Val)
+    Ops.push_back(InFlag);
+  Chain = DAG.getNode(CallOpc, NodeTys, Ops);
+  InFlag = Chain.getValue(1);
+
   std::vector<SDOperand> ResultVals;
   NodeTys.clear();
   
