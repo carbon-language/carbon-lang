@@ -152,6 +152,8 @@ namespace {
     
 private:
     SDOperand SelectSETCC(SDOperand Op);
+    void MySelect_PPCbctrl(SDOperand &Result, SDOperand N);
+    void MySelect_PPCcall(SDOperand &Result, SDOperand N);
   };
 }
 
@@ -1093,6 +1095,7 @@ void PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     return;
   }
   case ISD::BRIND: {
+    // FIXME: Should custom lower this.
     SDOperand Chain, Target;
     Select(Chain, N->getOperand(0));
     Select(Target,N->getOperand(1));
@@ -1101,9 +1104,163 @@ void PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     Result = CurDAG->SelectNodeTo(N, PPC::BCTR, MVT::Other, Chain);
     return;
   }
+  // FIXME: These are manually selected because tblgen isn't handling varargs
+  // nodes correctly.
+  case PPCISD::BCTRL:            MySelect_PPCbctrl(Result, Op); return;
+  case PPCISD::CALL:             MySelect_PPCcall(Result, Op); return;
   }
   
   SelectCode(Result, Op);
+}
+
+
+// FIXME: This is manually selected because tblgen isn't handling varargs nodes
+// correctly.
+void PPCDAGToDAGISel::MySelect_PPCbctrl(SDOperand &Result, SDOperand N) {
+  SDOperand Chain(0, 0);
+  SDOperand InFlag(0, 0);
+  SDNode *ResNode;
+  
+  bool hasFlag =
+    N.getOperand(N.getNumOperands()-1).getValueType() == MVT::Flag;
+
+  std::vector<SDOperand> Ops;
+  // Push varargs arguments, including optional flag.
+  for (unsigned i = 1, e = N.getNumOperands()-hasFlag; i != e; ++i) {
+    Select(Chain, N.getOperand(i));
+    Ops.push_back(Chain);
+  }
+
+  Select(Chain, N.getOperand(0));
+  Ops.push_back(Chain);
+
+  if (hasFlag) {
+    Select(Chain, N.getOperand(N.getNumOperands()-1));
+    Ops.push_back(Chain);
+  }
+  
+  ResNode = CurDAG->getTargetNode(PPC::BCTRL, MVT::Other, MVT::Flag, Ops);
+  Chain = SDOperand(ResNode, 0);
+  InFlag = SDOperand(ResNode, 1);
+  SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 0, Chain.Val,
+                                   Chain.ResNo);
+  SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 1, InFlag.Val,
+                                   InFlag.ResNo);
+  Result = SDOperand(ResNode, N.ResNo);
+  return;
+}
+
+// FIXME: This is manually selected because tblgen isn't handling varargs nodes
+// correctly.
+void PPCDAGToDAGISel::MySelect_PPCcall(SDOperand &Result, SDOperand N) {
+  SDOperand Chain(0, 0);
+  SDOperand InFlag(0, 0);
+  SDOperand N1(0, 0);
+  SDOperand Tmp0(0, 0);
+  SDNode *ResNode;
+  Chain = N.getOperand(0);
+  N1 = N.getOperand(1);
+  
+  // Pattern: (PPCcall:void (imm:i32):$func)
+  // Emits: (BLA:void (imm:i32):$func)
+  // Pattern complexity = 4  cost = 1
+  if (N1.getOpcode() == ISD::Constant) {
+    unsigned Tmp0C = (unsigned)cast<ConstantSDNode>(N1)->getValue();
+    
+    std::vector<SDOperand> Ops;
+    Ops.push_back(CurDAG->getTargetConstant(Tmp0C, MVT::i32));
+
+    bool hasFlag =
+      N.getOperand(N.getNumOperands()-1).getValueType() == MVT::Flag;
+    
+    // Push varargs arguments, not including optional flag.
+    for (unsigned i = 2, e = N.getNumOperands()-hasFlag; i != e; ++i) {
+      Select(Chain, N.getOperand(i));
+      Ops.push_back(Chain);
+    }
+    Select(Chain, N.getOperand(0));
+    Ops.push_back(Chain);
+    if (hasFlag) {
+      Select(Chain, N.getOperand(N.getNumOperands()-1));
+      Ops.push_back(Chain);
+    }
+    ResNode = CurDAG->getTargetNode(PPC::BLA, MVT::Other, MVT::Flag, Ops);
+    
+    Chain = SDOperand(ResNode, 0);
+    InFlag = SDOperand(ResNode, 1);
+    SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 0, Chain.Val, Chain.ResNo);
+    SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 1, InFlag.Val, InFlag.ResNo);
+    Result = SDOperand(ResNode, N.ResNo);
+    return;
+  }
+  
+  // Pattern: (PPCcall:void (tglobaladdr:i32):$dst)
+  // Emits: (BL:void (tglobaladdr:i32):$dst)
+  // Pattern complexity = 4  cost = 1
+  if (N1.getOpcode() == ISD::TargetGlobalAddress) {
+    std::vector<SDOperand> Ops;
+    Ops.push_back(N1);
+    
+    bool hasFlag =
+      N.getOperand(N.getNumOperands()-1).getValueType() == MVT::Flag;
+
+    // Push varargs arguments, not including optional flag.
+    for (unsigned i = 2, e = N.getNumOperands()-hasFlag; i != e; ++i) {
+      Select(Chain, N.getOperand(i));
+      Ops.push_back(Chain);
+    }
+    Select(Chain, N.getOperand(0));
+    Ops.push_back(Chain);
+    if (hasFlag) {
+      Select(Chain, N.getOperand(N.getNumOperands()-1));
+      Ops.push_back(Chain);
+    }
+    
+    ResNode = CurDAG->getTargetNode(PPC::BL, MVT::Other, MVT::Flag, Ops);
+    
+    Chain = SDOperand(ResNode, 0);
+    InFlag = SDOperand(ResNode, 1);
+    SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 0, Chain.Val, Chain.ResNo);
+    SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 1, InFlag.Val, InFlag.ResNo);
+    Result = SDOperand(ResNode, N.ResNo);
+    return;
+  }
+  
+  // Pattern: (PPCcall:void (texternalsym:i32):$dst)
+  // Emits: (BL:void (texternalsym:i32):$dst)
+  // Pattern complexity = 4  cost = 1
+  if (N1.getOpcode() == ISD::TargetExternalSymbol) {
+    std::vector<SDOperand> Ops;
+    Ops.push_back(N1);
+    
+    bool hasFlag =
+      N.getOperand(N.getNumOperands()-1).getValueType() == MVT::Flag;
+
+    // Push varargs arguments, not including optional flag.
+    for (unsigned i = 2, e = N.getNumOperands()-hasFlag; i != e; ++i) {
+      Select(Chain, N.getOperand(i));
+      Ops.push_back(Chain);
+    }
+    Select(Chain, N.getOperand(0));
+    Ops.push_back(Chain);
+    if (hasFlag) {
+      Select(Chain, N.getOperand(N.getNumOperands()-1));
+      Ops.push_back(Chain);
+    }
+    
+    ResNode = CurDAG->getTargetNode(PPC::BL, MVT::Other, MVT::Flag, Ops);
+
+    Chain = SDOperand(ResNode, 0);
+    InFlag = SDOperand(ResNode, 1);
+    SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 0, Chain.Val, Chain.ResNo);
+    SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 1, InFlag.Val, InFlag.ResNo);
+    Result = SDOperand(ResNode, N.ResNo);
+    return;
+  }
+  std::cerr << "Cannot yet select: ";
+  N.Val->dump(CurDAG);
+  std::cerr << '\n';
+  abort();
 }
 
 
