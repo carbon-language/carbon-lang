@@ -863,6 +863,8 @@ static ValueMap<char, Type, ConstantAggregateZero> AggZeroConstants;
 static char getValType(ConstantAggregateZero *CPZ) { return 0; }
 
 Constant *ConstantAggregateZero::get(const Type *Ty) {
+  assert((isa<StructType>(Ty) || isa<ArrayType>(Ty) || isa<PackedType>(Ty)) &&
+         "Cannot create an aggregate zero of non-aggregate type!");
   return AggZeroConstants.getOrCreate(Ty, 0);
 }
 
