@@ -132,6 +132,8 @@ bool LCSSA::visitSubloop(Loop* L) {
     processInstruction(*I, exitBlocks);
   }
   
+  assert(L->isLCSSAForm());
+  
   return true;
 }
 

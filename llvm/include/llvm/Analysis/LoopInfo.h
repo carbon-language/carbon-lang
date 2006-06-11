@@ -146,6 +146,9 @@ public:
   /// this returns null.
   ///
   Value *getTripCount() const;
+  
+  /// isLCSSAForm - Return true if the Loop is in LCSSA form
+  bool isLCSSAForm() const;
 
   //===--------------------------------------------------------------------===//
   // APIs for updating loop information after changing the CFG
