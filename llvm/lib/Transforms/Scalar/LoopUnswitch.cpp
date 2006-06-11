@@ -73,8 +73,6 @@ namespace {
       AU.addPreservedID(LoopSimplifyID);
       AU.addRequired<LoopInfo>();
       AU.addPreserved<LoopInfo>();
-      AU.addRequiredID(LCSSAID);
-      AU.addPreservedID(LCSSAID);
     }
 
   private:
@@ -201,8 +199,6 @@ bool LoopUnswitch::visitLoop(Loop *L) {
       }
   }
     
-  assert(L->isLCSSAForm());
-  
   return Changed;
 }
 

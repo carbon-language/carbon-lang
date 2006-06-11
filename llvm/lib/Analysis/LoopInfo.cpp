@@ -479,22 +479,6 @@ Value *Loop::getTripCount() const {
   return 0;
 }
 
-/// isLCSSAForm - Return true if the Loop is in LCSSA form
-bool Loop::isLCSSAForm() const {  
-  for (Loop::block_iterator BB = block_begin(), E = block_end();
-       BB != E; ++BB) {
-    for (BasicBlock::iterator I = (*BB)->begin(), E = (*BB)->end(); I != E; ++I)
-      for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;
-           ++UI) {
-        BasicBlock *UserBB = cast<Instruction>(*UI)->getParent();
-        if (!isa<PHINode>(*UI) && !contains(UserBB)) {
-          return false;
-        }
-      }
-  }
-  
-  return true;
-}
 
 //===-------------------------------------------------------------------===//
 // APIs for updating loop information after changing the CFG

@@ -98,7 +98,7 @@ bool LCSSA::runOnFunction(Function &F) {
   for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I) {
     changed |= visitSubloop(*I);
   }
-  
+      
   return changed;
 }
 
@@ -131,8 +131,6 @@ bool LCSSA::visitSubloop(Loop* L) {
        E = AffectedValues.end(); I != E; ++I) {
     processInstruction(*I, exitBlocks);
   }
-  
-  assert(L->isLCSSAForm());
   
   return true;
 }
