@@ -74,30 +74,49 @@ static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
   return DAG.getNode(ISD::BRIND, MVT::Other, Copy, LR);
 }
 
-static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
+static SDOperand LowerFORMAL_ARGUMENT(SDOperand Op, SelectionDAG &DAG,
+				      unsigned ArgNo) {
   MachineFunction &MF = DAG.getMachineFunction();
-  SSARegMap *RegMap = MF.getSSARegMap();
-  std::vector<SDOperand> ArgValues;
+  MVT::ValueType ObjectVT = Op.getValue(ArgNo).getValueType();
+  assert (ObjectVT == MVT::i32);
   SDOperand Root = Op.getOperand(0);
+  SSARegMap *RegMap = MF.getSSARegMap();
 
-  unsigned reg_idx = 0;
   unsigned num_regs = 4;
-
   static const unsigned REGS[] = {
     ARM::R0, ARM::R1, ARM::R2, ARM::R3
   };
 
-  for (unsigned ArgNo = 0, e = Op.Val->getNumValues()-1; ArgNo != e; ++ArgNo) {
-    SDOperand ArgVal;
-
-    MVT::ValueType ObjectVT = Op.getValue(ArgNo).getValueType();
-    assert (ObjectVT == MVT::i32);
-
-    assert(reg_idx < num_regs);
+  if(ArgNo < num_regs) {
     unsigned VReg = RegMap->createVirtualRegister(&ARM::IntRegsRegClass);
-    MF.addLiveIn(REGS[reg_idx], VReg);
-    ArgVal = DAG.getCopyFromReg(Root, VReg, MVT::i32);
-    ++reg_idx;
+    MF.addLiveIn(REGS[ArgNo], VReg);
+    return DAG.getCopyFromReg(Root, VReg, MVT::i32);
+  } else {
+    // If the argument is actually used, emit a load from the right stack
+      // slot.
+    if (!Op.Val->hasNUsesOfValue(0, ArgNo)) {
+      //hack
+      unsigned ArgOffset = 0;
+
+      MachineFrameInfo *MFI = MF.getFrameInfo();
+      unsigned ObjSize = MVT::getSizeInBits(ObjectVT)/8;
+      int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
+      SDOperand FIN = DAG.getFrameIndex(FI, MVT::i32);
+      return DAG.getLoad(ObjectVT, Root, FIN,
+			 DAG.getSrcValue(NULL));
+    } else {
+      // Don't emit a dead load.
+      return DAG.getNode(ISD::UNDEF, ObjectVT);
+    }
+  }
+}
+
+static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
+  std::vector<SDOperand> ArgValues;
+  SDOperand Root = Op.getOperand(0);
+
+  for (unsigned ArgNo = 0, e = Op.Val->getNumValues()-1; ArgNo != e; ++ArgNo) {
+    SDOperand ArgVal = LowerFORMAL_ARGUMENT(Op, DAG, ArgNo);
 
     ArgValues.push_back(ArgVal);
   }
@@ -164,8 +183,24 @@ void ARMDAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   ScheduleAndEmitDAG(DAG);
 }
 
+static void SelectFrameIndex(SelectionDAG *CurDAG, SDOperand &Result, SDNode *N) {
+  int FI = cast<FrameIndexSDNode>(N)->getIndex();
+  Result = CurDAG->SelectNodeTo(N, ARM::movrr, MVT::i32,
+				CurDAG->getTargetFrameIndex(FI, MVT::i32));
+}
+
 void ARMDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
-  SelectCode(Result, Op);
+  SDNode *N = Op.Val;
+
+  switch (N->getOpcode()) {
+  default:
+    SelectCode(Result, Op);
+    break;
+
+  case ISD::FrameIndex:
+    SelectFrameIndex(CurDAG, Result, N);
+    break;
+  }
 }
 
 }  // end anonymous namespace
