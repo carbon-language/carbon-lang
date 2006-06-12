@@ -155,13 +155,16 @@ void LCSSA::processInstruction(Instruction* Instr,
   std::vector<PHINode*> workList;
   
   for (std::vector<BasicBlock*>::const_iterator BBI = exitBlocks.begin(),
-      BBE = exitBlocks.end(); BBI != BBE; ++BBI)
-    if (DT->getNode(Instr->getParent())->dominates(DT->getNode(*BBI))) {
-      PHINode *phi = new PHINode(Instr->getType(), Instr->getName()+".lcssa",
+      BBE = exitBlocks.end(); BBI != BBE; ++BBI) {
+    Instruction*& phi = Phis[*BBI];
+    if (phi == 0 &&
+        DT->getNode(Instr->getParent())->dominates(DT->getNode(*BBI))) {
+      phi = new PHINode(Instr->getType(), Instr->getName()+".lcssa",
                                  (*BBI)->begin());
-      workList.push_back(phi);
+      workList.push_back(cast<PHINode>(phi));
       Phis[*BBI] = phi;
     }
+  }
   
   // Phi nodes that need to have their incoming values filled.
   std::vector<PHINode*> needIncomingValues;
