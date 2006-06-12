@@ -102,7 +102,19 @@ PPCRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     BuildMI(MBB, MI, PPC::MFLR, 1, PPC::R11);
     addFrameReference(BuildMI(MBB, MI, PPC::STW, 3).addReg(PPC::R11), FrameIdx);
   } else if (RC == PPC::CRRCRegisterClass) {
+    // We need to store the CR in the low 4-bits of the saved value.  First,
+    // issue a MFCR to save all of the CRBits.
     BuildMI(MBB, MI, PPC::MFCR, 0, PPC::R11);
+    
+    // If the saved register wasn't CR0, shift the bits left so that they are in
+    // CR0's slot.
+    if (SrcReg != PPC::CR0) {
+      unsigned ShiftBits = PPCRegisterInfo::getRegisterNumbering(SrcReg)*4;
+      // rlwinm r11, r11, ShiftBits, 0, 31.
+      BuildMI(MBB, MI, PPC::RLWINM, 4, PPC::R11)
+        .addReg(PPC::R11).addImm(ShiftBits).addImm(0).addImm(31);
+    }
+    
     addFrameReference(BuildMI(MBB, MI, PPC::STW, 3).addReg(PPC::R11), FrameIdx);
   } else if (RC == PPC::GPRCRegisterClass) {
     addFrameReference(BuildMI(MBB, MI, PPC::STW, 3).addReg(SrcReg),FrameIdx);
@@ -137,6 +149,16 @@ PPCRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     BuildMI(MBB, MI, PPC::MTLR, 1).addReg(PPC::R11);
   } else if (RC == PPC::CRRCRegisterClass) {
     addFrameReference(BuildMI(MBB, MI, PPC::LWZ, 2, PPC::R11), FrameIdx);
+    
+    // If the reloaded register isn't CR0, shift the bits right so that they are
+    // in the right CR's slot.
+    if (DestReg != PPC::CR0) {
+      unsigned ShiftBits = PPCRegisterInfo::getRegisterNumbering(DestReg)*4;
+      // rlwinm r11, r11, 32-ShiftBits, 0, 31.
+      BuildMI(MBB, MI, PPC::RLWINM, 4, PPC::R11)
+        .addReg(PPC::R11).addImm(32-ShiftBits).addImm(0).addImm(31);
+    }
+    
     BuildMI(MBB, MI, PPC::MTCRF, 1, DestReg).addReg(PPC::R11);
   } else if (RC == PPC::GPRCRegisterClass) {
     addFrameReference(BuildMI(MBB, MI, PPC::LWZ, 2, DestReg), FrameIdx);
@@ -407,8 +429,8 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
 /// VRRegNo - Map from a numbered VR register to its enum value.
 ///
 static const unsigned short VRRegNo[] = {
- PPC::V0 , PPC::V1 , PPC::V2 , PPC::V3 , PPC::V4 , PPC::V5 , PPC::V6 , PPC::V7 , 
- PPC::V8 , PPC::V9 , PPC::V10, PPC::V11, PPC::V12, PPC::V13, PPC::V14, PPC::V15, 
+ PPC::V0 , PPC::V1 , PPC::V2 , PPC::V3 , PPC::V4 , PPC::V5 , PPC::V6 , PPC::V7 ,
+ PPC::V8 , PPC::V9 , PPC::V10, PPC::V11, PPC::V12, PPC::V13, PPC::V14, PPC::V15,
  PPC::V16, PPC::V17, PPC::V18, PPC::V19, PPC::V20, PPC::V21, PPC::V22, PPC::V23,
  PPC::V24, PPC::V25, PPC::V26, PPC::V27, PPC::V28, PPC::V29, PPC::V30, PPC::V31
 };
