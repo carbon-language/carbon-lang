@@ -128,6 +128,8 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   setOperationAction(ISD::VAARG,   MVT::Other, Custom);
   setOperationAction(ISD::VAARG,   MVT::i32,   Custom);
 
+  setOperationAction(ISD::RET,     MVT::Other, Custom);
+
   setStackPointerRegisterToSaveRestore(Alpha::R30);
 
   setOperationAction(ISD::ConstantFP, MVT::f64, Expand);
@@ -154,6 +156,7 @@ const char *AlphaTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case AlphaISD::GlobalBaseReg: return "Alpha::GlobalBaseReg";
   case AlphaISD::CALL:   return "Alpha::CALL";
   case AlphaISD::DivCall: return "Alpha::DivCall";
+  case AlphaISD::RET_FLAG: return "Alpha::RET_FLAG";
   }
 }
 
@@ -175,116 +178,121 @@ const char *AlphaTargetLowering::getTargetNodeName(unsigned Opcode) const {
 // //#define GP    $29
 // //#define SP    $30
 
-std::vector<SDOperand>
-AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
-{
+static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
+				       int &VarArgsBase,
+				       int &VarArgsOffset,
+				       unsigned int &GP,
+				       unsigned int &RA) {
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
+  SSARegMap *RegMap = MF.getSSARegMap();
   std::vector<SDOperand> ArgValues;
+  SDOperand Root = Op.getOperand(0);
+
+  GP = AddLiveIn(MF, Alpha::R29, &Alpha::GPRCRegClass);
+  RA = AddLiveIn(MF, Alpha::R26, &Alpha::GPRCRegClass);
 
   unsigned args_int[] = {
     Alpha::R16, Alpha::R17, Alpha::R18, Alpha::R19, Alpha::R20, Alpha::R21};
   unsigned args_float[] = {
     Alpha::F16, Alpha::F17, Alpha::F18, Alpha::F19, Alpha::F20, Alpha::F21};
-
-  int count = 0;
-
-  GP = AddLiveIn(MF, Alpha::R29, getRegClassFor(MVT::i64));
-  RA = AddLiveIn(MF, Alpha::R26, getRegClassFor(MVT::i64));
-
-  for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I)
-  {
+  
+  for (unsigned ArgNo = 0, e = Op.Val->getNumValues()-1; ArgNo != e; ++ArgNo) {
     SDOperand argt;
-    if (count  < 6) {
+    MVT::ValueType ObjectVT = Op.getValue(ArgNo).getValueType();
+    SDOperand ArgVal;
+
+    if (ArgNo  < 6) {
       unsigned Vreg;
-      MVT::ValueType VT = getValueType(I->getType());
-      switch (VT) {
+      switch (ObjectVT) {
       default:
-        std::cerr << "Unknown Type " << VT << "\n";
+        std::cerr << "Unknown Type " << ObjectVT << "\n";
         abort();
       case MVT::f64:
       case MVT::f32:
-        args_float[count] = AddLiveIn(MF, args_float[count], getRegClassFor(VT));
-        argt = DAG.getCopyFromReg(DAG.getRoot(), args_float[count], VT);
-        DAG.setRoot(argt.getValue(1));
+        args_float[ArgNo] = AddLiveIn(MF, args_float[ArgNo], 
+				      &Alpha::F8RCRegClass);
+        ArgVal = DAG.getCopyFromReg(Root, args_float[ArgNo], ObjectVT);
         break;
-      case MVT::i1:
-      case MVT::i8:
-      case MVT::i16:
-      case MVT::i32:
       case MVT::i64:
-        args_int[count] = AddLiveIn(MF, args_int[count], getRegClassFor(MVT::i64));
-        argt = DAG.getCopyFromReg(DAG.getRoot(), args_int[count], MVT::i64);
-        DAG.setRoot(argt.getValue(1));
-        if (VT != MVT::i64) {
-          unsigned AssertOp = 
-            I->getType()->isSigned() ? ISD::AssertSext : ISD::AssertZext;
-          argt = DAG.getNode(AssertOp, MVT::i64, argt, 
-                             DAG.getValueType(VT));
-          argt = DAG.getNode(ISD::TRUNCATE, VT, argt);
-        }
+        args_int[ArgNo] = AddLiveIn(MF, args_int[ArgNo], 
+				    &Alpha::GPRCRegClass);
+        ArgVal = DAG.getCopyFromReg(Root, args_int[ArgNo], MVT::i64);
         break;
       }
     } else { //more args
       // Create the frame index object for this incoming parameter...
-      int FI = MFI->CreateFixedObject(8, 8 * (count - 6));
+      int FI = MFI->CreateFixedObject(8, 8 * (ArgNo - 6));
 
       // Create the SelectionDAG nodes corresponding to a load
       //from this parameter
       SDOperand FIN = DAG.getFrameIndex(FI, MVT::i64);
-      argt = DAG.getLoad(getValueType(I->getType()),
-                         DAG.getEntryNode(), FIN, DAG.getSrcValue(NULL));
+      ArgVal = DAG.getLoad(ObjectVT, Root, FIN, DAG.getSrcValue(NULL));
     }
-    ++count;
-    ArgValues.push_back(argt);
+    ArgValues.push_back(ArgVal);
   }
 
   // If the functions takes variable number of arguments, copy all regs to stack
-  if (F.isVarArg()) {
-    VarArgsOffset = count * 8;
+  bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
+  if (isVarArg) {
+    VarArgsOffset = (Op.Val->getNumValues()-1) * 8;
     std::vector<SDOperand> LS;
     for (int i = 0; i < 6; ++i) {
       if (MRegisterInfo::isPhysicalRegister(args_int[i]))
-        args_int[i] = AddLiveIn(MF, args_int[i], getRegClassFor(MVT::i64));
-      SDOperand argt = DAG.getCopyFromReg(DAG.getRoot(), args_int[i], MVT::i64);
+        args_int[i] = AddLiveIn(MF, args_int[i], &Alpha::GPRCRegClass);
+      SDOperand argt = DAG.getCopyFromReg(Root, args_int[i], MVT::i64);
       int FI = MFI->CreateFixedObject(8, -8 * (6 - i));
       if (i == 0) VarArgsBase = FI;
       SDOperand SDFI = DAG.getFrameIndex(FI, MVT::i64);
-      LS.push_back(DAG.getNode(ISD::STORE, MVT::Other, DAG.getRoot(), argt,
+      LS.push_back(DAG.getNode(ISD::STORE, MVT::Other, Root, argt,
                                SDFI, DAG.getSrcValue(NULL)));
 
       if (MRegisterInfo::isPhysicalRegister(args_float[i]))
-        args_float[i] = AddLiveIn(MF, args_float[i], getRegClassFor(MVT::f64));
-      argt = DAG.getCopyFromReg(DAG.getRoot(), args_float[i], MVT::f64);
+        args_float[i] = AddLiveIn(MF, args_float[i], &Alpha::F8RCRegClass);
+      argt = DAG.getCopyFromReg(Root, args_float[i], MVT::f64);
       FI = MFI->CreateFixedObject(8, - 8 * (12 - i));
       SDFI = DAG.getFrameIndex(FI, MVT::i64);
-      LS.push_back(DAG.getNode(ISD::STORE, MVT::Other, DAG.getRoot(), argt,
+      LS.push_back(DAG.getNode(ISD::STORE, MVT::Other, Root, argt,
                                SDFI, DAG.getSrcValue(NULL)));
     }
 
     //Set up a token factor with all the stack traffic
-    DAG.setRoot(DAG.getNode(ISD::TokenFactor, MVT::Other, LS));
+    Root = DAG.getNode(ISD::TokenFactor, MVT::Other, LS);
   }
 
-  // Finally, inform the code generator which regs we return values in.
-  switch (getValueType(F.getReturnType())) {
-  default: assert(0 && "Unknown type!");
-  case MVT::isVoid: break;
-  case MVT::i1:
-  case MVT::i8:
-  case MVT::i16:
-  case MVT::i32:
-  case MVT::i64:
-    MF.addLiveOut(Alpha::R0);
-    break;
-  case MVT::f32:
-  case MVT::f64:
-    MF.addLiveOut(Alpha::F0);
+  ArgValues.push_back(Root);
+
+  // Return the new list of results.
+  std::vector<MVT::ValueType> RetVT(Op.Val->value_begin(),
+                                    Op.Val->value_end());
+  return DAG.getNode(ISD::MERGE_VALUES, RetVT, ArgValues);
+}
+
+static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
+  SDOperand Copy;
+  switch (Op.getNumOperands()) {
+  default:
+    assert(0 && "Do not know how to return this many arguments!");
+    abort();
+  case 1: 
+    return SDOperand(); // ret void is legal
+  case 3: {
+    MVT::ValueType ArgVT = Op.getOperand(1).getValueType();
+    unsigned ArgReg;
+    if (MVT::isInteger(ArgVT))
+      ArgReg = Alpha::R0;
+    else {
+      assert(MVT::isFloatingPoint(ArgVT));
+      ArgReg = Alpha::F0;
+    }
+    Copy = DAG.getCopyToReg(Op.getOperand(0), ArgReg, Op.getOperand(1),
+                            SDOperand());
+    if(DAG.getMachineFunction().liveout_empty())
+      DAG.getMachineFunction().addLiveOut(ArgReg);
     break;
   }
-
-  //return the arguments+
-  return ArgValues;
+  }
+  return DAG.getNode(AlphaISD::RET_FLAG, MVT::Other, Copy, Copy.getValue(1));
 }
 
 std::pair<SDOperand, SDOperand>
@@ -371,7 +379,12 @@ static int getUID()
 ///
 SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
-  default: assert(0 && "Wasn't expecting to be able to lower this!"); 
+  default: assert(0 && "Wasn't expecting to be able to lower this!");
+  case ISD::FORMAL_ARGUMENTS: return LowerFORMAL_ARGUMENTS(Op, DAG, 
+							   VarArgsBase,
+							   VarArgsOffset,
+							   GP, RA);
+  case ISD::RET: return LowerRET(Op,DAG);
   case ISD::SINT_TO_FP: {
     assert(MVT::i64 == Op.getOperand(0).getValueType() && 
            "Unhandled SINT_TO_FP type in custom expander!");

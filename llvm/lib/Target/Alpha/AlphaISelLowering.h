@@ -42,7 +42,10 @@ namespace llvm {
       CALL,
 
       /// DIVCALL - used for special library calls for div and rem
-      DivCall
+      DivCall,
+      
+      /// return flag operand
+      RET_FLAG
 
     };
   }
@@ -63,11 +66,6 @@ namespace llvm {
 
     //Friendly names for dumps
     const char *getTargetNodeName(unsigned Opcode) const;
-
-    /// LowerArguments - This hook must be implemented to indicate how we should
-    /// lower the arguments for the specified function, into the specified DAG.
-    virtual std::vector<SDOperand>
-    LowerArguments(Function &F, SelectionDAG &DAG);
 
     /// LowerCallTo - This hook lowers an abstract call to a function into an
     /// actual call.

@@ -346,7 +346,7 @@ void AlphaRegisterInfo::emitEpilogue(MachineFunction &MF,
                                      MachineBasicBlock &MBB) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
-  assert(MBBI->getOpcode() == Alpha::RETDAG
+  assert(MBBI->getOpcode() == Alpha::RETDAG || MBBI->getOpcode() == Alpha::RETDAGp
          && "Can only insert epilog into returning blocks");
 
   bool FP = hasFP(MF);

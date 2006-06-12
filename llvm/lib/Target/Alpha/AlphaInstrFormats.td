@@ -75,6 +75,20 @@ class MbrForm<bits<6> opcode, bits<2> TB, dag OL, string asmstr, InstrItinClass 
   let Inst{15-14} = TB;
   let Inst{13-0} = disp;
 }
+class MbrpForm<bits<6> opcode, bits<2> TB, dag OL, string asmstr, list<dag> pattern, InstrItinClass itin>
+    : InstAlpha<opcode, asmstr, itin> {
+  let Pattern=pattern;
+  bits<5> Ra;
+  bits<5> Rb;
+  bits<14> disp;
+
+  let OperandList = OL;
+
+  let Inst{25-21} = Ra;
+  let Inst{20-16} = Rb;
+  let Inst{15-14} = TB;
+  let Inst{13-0} = disp;
+}
 
 //3.3.2
 def target : Operand<OtherVT> {}

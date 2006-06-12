@@ -28,6 +28,9 @@ def Alpha_gprello : SDNode<"AlphaISD::GPRelLo",   SDTIntBinOp, []>;
 def Alpha_gprelhi : SDNode<"AlphaISD::GPRelHi",   SDTIntBinOp, []>;
 def Alpha_rellit  : SDNode<"AlphaISD::RelLit",    SDTIntBinOp, []>;
 
+def retflag       : SDNode<"AlphaISD::RET_FLAG", SDTRet,
+	                   [SDNPHasChain, SDNPOptInFlag]>;
+
 // These are target-independent nodes, but have target-specific formats.
 def SDT_AlphaCallSeq : SDTypeProfile<0, 1, [ SDTCisVT<0, i64> ]>;
 def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_AlphaCallSeq,[SDNPHasChain]>;
@@ -425,8 +428,10 @@ def : Pat<(setune GPRC:$X, GPRC:$Y), (CMPEQi (CMPEQ GPRC:$X, GPRC:$Y), 0)>;
 def : Pat<(setune GPRC:$X, immUExt8:$Y), (CMPEQi (CMPEQ GPRC:$X, immUExt8:$Y), 0)>;
 
 
-let isReturn = 1, isTerminator = 1, noResults = 1, Ra = 31, Rb = 26, disp = 1, Uses = [R26] in 
+let isReturn = 1, isTerminator = 1, noResults = 1, Ra = 31, Rb = 26, disp = 1, Uses = [R26] in {
   def RETDAG : MbrForm< 0x1A, 0x02, (ops), "ret $$31,($$26),1", s_jsr>; //Return from subroutine
+  def RETDAGp : MbrpForm< 0x1A, 0x02, (ops), "ret $$31,($$26),1", [(retflag)], s_jsr>; //Return from subroutine
+}
 
 def JMP : MbrForm< 0x1A, 0x00, (ops GPRC:$RD, GPRC:$RS, GPRC:$DISP), "jmp $RD,($RS),$DISP", s_jsr>; //Jump
 let isCall = 1, noResults = 1, Ra = 26,
