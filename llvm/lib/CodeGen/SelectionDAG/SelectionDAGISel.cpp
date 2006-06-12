@@ -869,6 +869,7 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
     if (DefaultMBB != NextBlock)
       DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, getRoot(),
                               DAG.getBasicBlock(DefaultMBB)));
+    CurMBB->addSuccessor(DefaultMBB);
     return;
   }
   
