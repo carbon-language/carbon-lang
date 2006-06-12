@@ -1515,12 +1515,21 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
               // keep getting unwound.
               if (PBIOp != -1 && PBI->getSuccessor(PBIOp) == BB)
                 PBIOp = BIOp = -1;
-              
+
               // Finally, if everything is ok, fold the branches to logical ops.
               if (PBIOp != -1) {
                 BasicBlock *CommonDest = PBI->getSuccessor(PBIOp);
                 BasicBlock *OtherDest  = BI->getSuccessor(BIOp ^ 1);
 
+                // If OtherDest *is* BB, then this is a basic block with just
+                // a conditional branch in it, where one edge (OtherDesg) goes
+                // back to the block.  We know that the program doesn't get
+                // stuck in the infinite loop, so the condition must be such
+                // that OtherDest isn't branched through. Forward to CommonDest,
+                // and avoid an infinite loop at optimizer time.
+                if (OtherDest == BB)
+                  OtherDest = CommonDest;
+                
                 DEBUG(std::cerr << "FOLDING BRs:" << *PBI->getParent()
                                 << "AND: " << *BI->getParent());
                                 
