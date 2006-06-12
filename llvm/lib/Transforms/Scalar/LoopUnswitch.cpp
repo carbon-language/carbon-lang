@@ -73,6 +73,8 @@ namespace {
       AU.addPreservedID(LoopSimplifyID);
       AU.addRequired<LoopInfo>();
       AU.addPreserved<LoopInfo>();
+      AU.addRequiredID(LCSSAID);
+      AU.addPreservedID(LCSSAID);
     }
 
   private:
@@ -154,6 +156,8 @@ static Value *FindLIVLoopCondition(Value *Cond, Loop *L, bool &Changed) {
 }
 
 bool LoopUnswitch::visitLoop(Loop *L) {
+  assert(L->isLCSSAForm());
+  
   bool Changed = false;
   
   // Loop over all of the basic blocks in the loop.  If we find an interior
@@ -198,7 +202,9 @@ bool LoopUnswitch::visitLoop(Loop *L) {
         }
       }
   }
-    
+  
+  assert(L->isLCSSAForm());
+  
   return Changed;
 }
 
