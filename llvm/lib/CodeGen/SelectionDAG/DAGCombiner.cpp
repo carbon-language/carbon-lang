@@ -3454,10 +3454,10 @@ SDOperand DAGCombiner::SimplifySetCC(MVT::ValueType VT, SDOperand N0,
 /// multiplying by a magic number.  See:
 /// <http://the.wall.riscom.net/books/proc/ppc/cwg/code2.html>
 SDOperand DAGCombiner::BuildSDIV(SDNode *N) {
-  std::list<SDNode*> Built;
+  std::vector<SDNode*> Built;
   SDOperand S = TLI.BuildSDIV(N, DAG, &Built);
 
-  for (std::list<SDNode*>::iterator ii = Built.begin(), ee = Built.end();
+  for (std::vector<SDNode*>::iterator ii = Built.begin(), ee = Built.end();
        ii != ee; ++ii)
     AddToWorkList(*ii);
   return S;
@@ -3468,10 +3468,10 @@ SDOperand DAGCombiner::BuildSDIV(SDNode *N) {
 /// multiplying by a magic number.  See:
 /// <http://the.wall.riscom.net/books/proc/ppc/cwg/code2.html>
 SDOperand DAGCombiner::BuildUDIV(SDNode *N) {
-  std::list<SDNode*> Built;
+  std::vector<SDNode*> Built;
   SDOperand S = TLI.BuildUDIV(N, DAG, &Built);
 
-  for (std::list<SDNode*>::iterator ii = Built.begin(), ee = Built.end();
+  for (std::vector<SDNode*>::iterator ii = Built.begin(), ee = Built.end();
        ii != ee; ++ii)
     AddToWorkList(*ii);
   return S;

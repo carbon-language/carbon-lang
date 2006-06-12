@@ -25,7 +25,6 @@
 #include "llvm/Type.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include <map>
-#include <list>
 
 namespace llvm {
   class Value;
@@ -654,9 +653,9 @@ public:
   // Div utility functions
   //
   SDOperand BuildSDIV(SDNode *N, SelectionDAG &DAG, 
-		      std::list<SDNode*>* Created) const;
+		      std::vector<SDNode*>* Created) const;
   SDOperand BuildUDIV(SDNode *N, SelectionDAG &DAG, 
-		      std::list<SDNode*>* Created) const;
+		      std::vector<SDNode*>* Created) const;
 
 
 protected:
