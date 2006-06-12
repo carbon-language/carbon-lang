@@ -102,20 +102,21 @@ PPCRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     BuildMI(MBB, MI, PPC::MFLR, 1, PPC::R11);
     addFrameReference(BuildMI(MBB, MI, PPC::STW, 3).addReg(PPC::R11), FrameIdx);
   } else if (RC == PPC::CRRCRegisterClass) {
+    // FIXME: We use R0 here, because it isn't available for RA.
     // We need to store the CR in the low 4-bits of the saved value.  First,
     // issue a MFCR to save all of the CRBits.
-    BuildMI(MBB, MI, PPC::MFCR, 0, PPC::R11);
+    BuildMI(MBB, MI, PPC::MFCR, 0, PPC::R0);
     
     // If the saved register wasn't CR0, shift the bits left so that they are in
     // CR0's slot.
     if (SrcReg != PPC::CR0) {
       unsigned ShiftBits = PPCRegisterInfo::getRegisterNumbering(SrcReg)*4;
-      // rlwinm r11, r11, ShiftBits, 0, 31.
-      BuildMI(MBB, MI, PPC::RLWINM, 4, PPC::R11)
-        .addReg(PPC::R11).addImm(ShiftBits).addImm(0).addImm(31);
+      // rlwinm r0, r0, ShiftBits, 0, 31.
+      BuildMI(MBB, MI, PPC::RLWINM, 4, PPC::R0)
+        .addReg(PPC::R0).addImm(ShiftBits).addImm(0).addImm(31);
     }
     
-    addFrameReference(BuildMI(MBB, MI, PPC::STW, 3).addReg(PPC::R11), FrameIdx);
+    addFrameReference(BuildMI(MBB, MI, PPC::STW, 3).addReg(PPC::R0), FrameIdx);
   } else if (RC == PPC::GPRCRegisterClass) {
     addFrameReference(BuildMI(MBB, MI, PPC::STW, 3).addReg(SrcReg),FrameIdx);
   } else if (RC == PPC::G8RCRegisterClass) {
@@ -148,18 +149,19 @@ PPCRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     addFrameReference(BuildMI(MBB, MI, PPC::LWZ, 2, PPC::R11), FrameIdx);
     BuildMI(MBB, MI, PPC::MTLR, 1).addReg(PPC::R11);
   } else if (RC == PPC::CRRCRegisterClass) {
-    addFrameReference(BuildMI(MBB, MI, PPC::LWZ, 2, PPC::R11), FrameIdx);
+    // FIXME: We use R0 here, because it isn't available for RA.
+    addFrameReference(BuildMI(MBB, MI, PPC::LWZ, 2, PPC::R0), FrameIdx);
     
     // If the reloaded register isn't CR0, shift the bits right so that they are
     // in the right CR's slot.
     if (DestReg != PPC::CR0) {
       unsigned ShiftBits = PPCRegisterInfo::getRegisterNumbering(DestReg)*4;
       // rlwinm r11, r11, 32-ShiftBits, 0, 31.
-      BuildMI(MBB, MI, PPC::RLWINM, 4, PPC::R11)
-        .addReg(PPC::R11).addImm(32-ShiftBits).addImm(0).addImm(31);
+      BuildMI(MBB, MI, PPC::RLWINM, 4, PPC::R0)
+        .addReg(PPC::R0).addImm(32-ShiftBits).addImm(0).addImm(31);
     }
     
-    BuildMI(MBB, MI, PPC::MTCRF, 1, DestReg).addReg(PPC::R11);
+    BuildMI(MBB, MI, PPC::MTCRF, 1, DestReg).addReg(PPC::R0);
   } else if (RC == PPC::GPRCRegisterClass) {
     addFrameReference(BuildMI(MBB, MI, PPC::LWZ, 2, DestReg), FrameIdx);
   } else if (RC == PPC::G8RCRegisterClass) {
