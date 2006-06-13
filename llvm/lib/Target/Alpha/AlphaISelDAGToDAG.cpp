@@ -124,7 +124,7 @@ namespace {
     
 private:
     SDOperand getGlobalBaseReg();
-    SDOperand getRASaveReg();
+    SDOperand getGlobalRetAddr();
     SDOperand SelectCALL(SDOperand Op);
 
   };
@@ -141,7 +141,7 @@ SDOperand AlphaDAGToDAGISel::getGlobalBaseReg() {
 
 /// getRASaveReg - Grab the return address
 ///
-SDOperand AlphaDAGToDAGISel::getRASaveReg() {
+SDOperand AlphaDAGToDAGISel::getGlobalRetAddr() {
   return CurDAG->getCopyFromReg(CurDAG->getEntryNode(),
                                 AlphaLowering.getVRegRA(), 
                                 MVT::i64);
@@ -197,6 +197,9 @@ void AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
   case AlphaISD::GlobalBaseReg: 
     Result = getGlobalBaseReg();
     return;
+  case AlphaISD::GlobalRetAddr:
+    Result = getGlobalRetAddr();
+    return;
   
   case AlphaISD::DivCall: {
     SDOperand Chain = CurDAG->getEntryNode();
@@ -226,30 +229,6 @@ void AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     return;
   }
 
-  case ISD::RET: {
-    SDOperand Chain;
-    Select(Chain, N->getOperand(0));     // Token chain.
-    SDOperand InFlag(0,0);
-
-    if (N->getNumOperands() == 3) {
-      SDOperand Val;
-      Select(Val, N->getOperand(1));
-      if (N->getOperand(1).getValueType() == MVT::i64) {
-        Chain = CurDAG->getCopyToReg(Chain, Alpha::R0, Val, InFlag);
-        InFlag = Chain.getValue(1);
-      } else if (N->getOperand(1).getValueType() == MVT::f64 ||
-                 N->getOperand(1).getValueType() == MVT::f32) {
-        Chain = CurDAG->getCopyToReg(Chain, Alpha::F0, Val, InFlag);
-        InFlag = Chain.getValue(1);
-      }
-    }
-    Chain = CurDAG->getCopyToReg(Chain, Alpha::R26, getRASaveReg(), InFlag);
-    InFlag = Chain.getValue(1);
-    
-    // Finally, select this to a ret instruction.
-    Result = CurDAG->SelectNodeTo(N, Alpha::RETDAG, MVT::Other, Chain, InFlag);
-    return;
-  }
   case ISD::Constant: {
     uint64_t uval = cast<ConstantSDNode>(N)->getValue();
     
@@ -468,7 +447,6 @@ SDOperand AlphaDAGToDAGISel::SelectCALL(SDOperand Op) {
      } else
        assert(0 && "Unknown operand"); 
    }
-
 
    // Finally, once everything is in registers to pass to the call, emit the
    // call itself.

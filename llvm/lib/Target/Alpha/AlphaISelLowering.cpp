@@ -154,6 +154,7 @@ const char *AlphaTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case AlphaISD::GPRelLo: return "Alpha::GPRelLo";
   case AlphaISD::RelLit: return "Alpha::RelLit";
   case AlphaISD::GlobalBaseReg: return "Alpha::GlobalBaseReg";
+  case AlphaISD::GlobalRetAddr: return "Alpha::GlobalRetAddr";
   case AlphaISD::CALL:   return "Alpha::CALL";
   case AlphaISD::DivCall: return "Alpha::DivCall";
   case AlphaISD::RET_FLAG: return "Alpha::RET_FLAG";
@@ -268,14 +269,17 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
   return DAG.getNode(ISD::MERGE_VALUES, RetVT, ArgValues);
 }
 
-static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
-  SDOperand Copy;
+static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG, unsigned int RA) {
+  SDOperand Copy = DAG.getCopyToReg(Op.getOperand(0), Alpha::R26, 
+				    DAG.getNode(AlphaISD::GlobalRetAddr, MVT::i64),
+				    SDOperand());
   switch (Op.getNumOperands()) {
   default:
     assert(0 && "Do not know how to return this many arguments!");
     abort();
   case 1: 
-    return SDOperand(); // ret void is legal
+    break;
+    //return SDOperand(); // ret void is legal
   case 3: {
     MVT::ValueType ArgVT = Op.getOperand(1).getValueType();
     unsigned ArgReg;
@@ -285,8 +289,7 @@ static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
       assert(MVT::isFloatingPoint(ArgVT));
       ArgReg = Alpha::F0;
     }
-    Copy = DAG.getCopyToReg(Op.getOperand(0), ArgReg, Op.getOperand(1),
-                            SDOperand());
+    Copy = DAG.getCopyToReg(Copy, ArgReg, Op.getOperand(1), Copy.getValue(1));
     if(DAG.getMachineFunction().liveout_empty())
       DAG.getMachineFunction().addLiveOut(ArgReg);
     break;
@@ -384,7 +387,7 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
 							   VarArgsBase,
 							   VarArgsOffset,
 							   GP, RA);
-  case ISD::RET: return LowerRET(Op,DAG);
+  case ISD::RET: return LowerRET(Op,DAG, getVRegRA());
   case ISD::SINT_TO_FP: {
     assert(MVT::i64 == Op.getOperand(0).getValueType() && 
            "Unhandled SINT_TO_FP type in custom expander!");

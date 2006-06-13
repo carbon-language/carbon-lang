@@ -37,6 +37,9 @@ namespace llvm {
 
       /// GlobalBaseReg - used to restore the GOT ptr
       GlobalBaseReg,
+
+      /// GlobalRetAddr - used to restore the return address
+      GlobalRetAddr,
       
       /// CALL - Normal call.
       CALL,
