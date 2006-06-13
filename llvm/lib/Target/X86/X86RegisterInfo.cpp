@@ -740,7 +740,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   const Function* Fn = MF.getFunction();
   const X86Subtarget* Subtarget = &MF.getTarget().getSubtarget<X86Subtarget>();
   MachineInstr *MI;
-
+  
   // Get the number of bytes to allocate from the FrameInfo
   unsigned NumBytes = MFI->getStackSize();
   if (MFI->hasCalls() || MF.getFrameInfo()->hasVarSizedObjects()) {
@@ -760,9 +760,20 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   MFI->setStackSize(NumBytes);
 
   if (NumBytes) {   // adjust stack pointer: ESP -= numbytes
-    unsigned Opc = NumBytes < 128 ? X86::SUB32ri8 : X86::SUB32ri;
-    MI = BuildMI(Opc, 1, X86::ESP,MachineOperand::UseAndDef).addImm(NumBytes);
-    MBB.insert(MBBI, MI);
+    if (NumBytes >= 4096 && Subtarget->TargetType == X86Subtarget::isCygwin) {
+      // Function prologue calls _alloca to probe the stack when allocating  
+      // more than 4k bytes in one go. Touching the stack at 4K increments is  
+      // necessary to ensure that the guard pages used by the OS virtual memory
+      // manager are allocated in correct sequence.
+      MI = BuildMI(X86::MOV32ri, 2, X86::EAX).addImm(NumBytes);
+      MBB.insert(MBBI, MI);
+      MI = BuildMI(X86::CALLpcrel32, 1).addExternalSymbol("_alloca");
+      MBB.insert(MBBI, MI);
+    } else {
+      unsigned Opc = NumBytes < 128 ? X86::SUB32ri8 : X86::SUB32ri;
+      MI = BuildMI(Opc, 1, X86::ESP,MachineOperand::UseAndDef).addImm(NumBytes);
+      MBB.insert(MBBI, MI);
+    }
   }
 
   if (hasFP(MF)) {
@@ -788,6 +799,12 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   if (Fn->hasExternalLinkage() && Fn->getName() == "main" &&
       Subtarget->TargetType == X86Subtarget::isCygwin) {
     MI = BuildMI(X86::AND32ri, 2, X86::ESP).addImm(-Align);
+    MBB.insert(MBBI, MI);
+
+    // Probe the stack
+    MI = BuildMI(X86::MOV32ri, 2, X86::EAX).addImm(Align);
+    MBB.insert(MBBI, MI);
+    MI = BuildMI(X86::CALLpcrel32, 1).addExternalSymbol("_alloca");
     MBB.insert(MBBI, MI);
   }
 }
