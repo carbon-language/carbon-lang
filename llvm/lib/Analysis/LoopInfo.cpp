@@ -487,7 +487,12 @@ bool Loop::isLCSSAForm() const {
       for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;
            ++UI) {
         BasicBlock *UserBB = cast<Instruction>(*UI)->getParent();
-        if (!isa<PHINode>(*UI) && !contains(UserBB)) {
+        if (PHINode* p = dyn_cast<PHINode>(*UI)) {
+          unsigned OperandNo = UI.getOperandNo();
+          UserBB = p->getIncomingBlock(OperandNo/2);
+        }
+        
+        if (!contains(UserBB)) {
           return false;
         }
       }
