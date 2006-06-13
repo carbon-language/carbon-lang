@@ -121,6 +121,13 @@ TreePatternNode *SDTypeConstraint::getOperandNum(unsigned OpNo,
   assert(NumResults <= 1 &&
          "We only work with nodes with zero or one result so far!");
   
+  if (OpNo >= (NumResults + N->getNumChildren())) {
+    std::cerr << "Invalid operand number " << OpNo << " ";
+    N->dump();
+    std::cerr << '\n';
+    exit(1);
+  }
+
   if (OpNo < NumResults)
     return N;  // FIXME: need value #
   else
