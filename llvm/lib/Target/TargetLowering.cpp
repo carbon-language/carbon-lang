@@ -442,10 +442,7 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
       unsigned ShAmt = SA->getValue();
       
       // Compute the new bits that are at the top now.
-      uint64_t HighBits = (1ULL << ShAmt)-1;
-      HighBits <<= MVT::getSizeInBits(VT) - ShAmt;
       uint64_t TypeMask = MVT::getIntVTBitMask(VT);
-      
       if (SimplifyDemandedBits(Op.getOperand(0), 
                                (DemandedMask << ShAmt) & TypeMask,
                                KnownZero, KnownOne, TLO, Depth+1))
@@ -455,7 +452,10 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
       KnownOne  &= TypeMask;
       KnownZero >>= ShAmt;
       KnownOne  >>= ShAmt;
-      KnownZero |= HighBits;  // high bits known zero.
+
+      uint64_t HighBits = (1ULL << ShAmt)-1;
+      HighBits <<= MVT::getSizeInBits(VT) - ShAmt;
+      KnownZero |= HighBits;  // High bits known zero.
     }
     break;
   case ISD::SRA:
@@ -464,14 +464,14 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
       unsigned ShAmt = SA->getValue();
       
       // Compute the new bits that are at the top now.
-      uint64_t HighBits = (1ULL << ShAmt)-1;
-      HighBits <<= MVT::getSizeInBits(VT) - ShAmt;
       uint64_t TypeMask = MVT::getIntVTBitMask(VT);
       
       uint64_t InDemandedMask = (DemandedMask << ShAmt) & TypeMask;
 
       // If any of the demanded bits are produced by the sign extension, we also
       // demand the input sign bit.
+      uint64_t HighBits = (1ULL << ShAmt)-1;
+      HighBits <<= MVT::getSizeInBits(VT) - ShAmt;
       if (HighBits & DemandedMask)
         InDemandedMask |= MVT::getIntVTSignBit(VT);
       
@@ -481,12 +481,12 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
       assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
       KnownZero &= TypeMask;
       KnownOne  &= TypeMask;
-      KnownZero >>= SA->getValue();
-      KnownOne  >>= SA->getValue();
+      KnownZero >>= ShAmt;
+      KnownOne  >>= ShAmt;
       
       // Handle the sign bits.
       uint64_t SignBit = MVT::getIntVTSignBit(VT);
-      SignBit >>= SA->getValue();  // Adjust to where it is now in the mask.
+      SignBit >>= ShAmt;  // Adjust to where it is now in the mask.
       
       // If the input sign bit is known to be zero, or if none of the top bits
       // are demanded, turn this into an unsigned shift right.
@@ -780,50 +780,66 @@ void TargetLowering::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
   case ISD::SHL:
     // (shl X, C1) & C2 == 0   iff   (X & C2 >>u C1) == 0
     if (ConstantSDNode *SA = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
-      uint64_t LowBits = (1ULL << SA->getValue())-1;
-      Mask >>= SA->getValue();
-      ComputeMaskedBits(Op.getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
+      ComputeMaskedBits(Op.getOperand(0), Mask >> SA->getValue(),
+                        KnownZero, KnownOne, Depth+1);
       assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
       KnownZero <<= SA->getValue();
       KnownOne  <<= SA->getValue();
-      KnownZero |= LowBits;  // low bits known zero
-      KnownOne &= ~LowBits;  // and known not to be one.
+      KnownZero |= (1ULL << SA->getValue())-1;  // low bits known zero.
     }
     return;
   case ISD::SRL:
     // (ushr X, C1) & C2 == 0   iff  (-1 >> C1) & C2 == 0
     if (ConstantSDNode *SA = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
-      uint64_t HighBits = (1ULL << SA->getValue())-1;
-      HighBits <<= MVT::getSizeInBits(Op.getValueType())-SA->getValue();
-      Mask <<= SA->getValue();
-      ComputeMaskedBits(Op.getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
+      MVT::ValueType VT = Op.getValueType();
+      unsigned ShAmt = SA->getValue();
+
+      uint64_t TypeMask = MVT::getIntVTBitMask(VT);
+      ComputeMaskedBits(Op.getOperand(0), (Mask << ShAmt) & TypeMask,
+                        KnownZero, KnownOne, Depth+1);
       assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
-      KnownZero >>= SA->getValue();
-      KnownOne  >>= SA->getValue();
-      KnownZero |= HighBits;  // high bits known zero
-      KnownOne  &= ~HighBits; // and known not to be one.
+      KnownZero &= TypeMask;
+      KnownOne  &= TypeMask;
+      KnownZero >>= ShAmt;
+      KnownOne  >>= ShAmt;
+
+      uint64_t HighBits = (1ULL << ShAmt)-1;
+      HighBits <<= MVT::getSizeInBits(VT)-ShAmt;
+      KnownZero |= HighBits;  // High bits known zero.
     }
     return;
   case ISD::SRA:
     if (ConstantSDNode *SA = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
-      uint64_t HighBits = (1ULL << SA->getValue())-1;
-      HighBits <<= MVT::getSizeInBits(Op.getValueType())-SA->getValue();
-      Mask <<= SA->getValue();
-      ComputeMaskedBits(Op.getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
-      assert((KnownZero & KnownOne) == 0&&"Bits known to be one AND zero?"); 
-      KnownZero >>= SA->getValue();
-      KnownOne  >>= SA->getValue();
+      MVT::ValueType VT = Op.getValueType();
+      unsigned ShAmt = SA->getValue();
+
+      // Compute the new bits that are at the top now.
+      uint64_t TypeMask = MVT::getIntVTBitMask(VT);
+
+      uint64_t InDemandedMask = (Mask << ShAmt) & TypeMask;
+      // If any of the demanded bits are produced by the sign extension, we also
+      // demand the input sign bit.
+      uint64_t HighBits = (1ULL << ShAmt)-1;
+      HighBits <<= MVT::getSizeInBits(VT) - ShAmt;
+      if (HighBits & Mask)
+        InDemandedMask |= MVT::getIntVTSignBit(VT);
+      
+      ComputeMaskedBits(Op.getOperand(0), InDemandedMask, KnownZero, KnownOne,
+                        Depth+1);
+      assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
+      KnownZero &= TypeMask;
+      KnownOne  &= TypeMask;
+      KnownZero >>= ShAmt;
+      KnownOne  >>= ShAmt;
       
       // Handle the sign bits.
-      uint64_t SignBit = 1ULL << (MVT::getSizeInBits(Op.getValueType())-1);
-      SignBit >>= SA->getValue();  // Adjust to where it is now in the mask.
+      uint64_t SignBit = MVT::getIntVTSignBit(VT);
+      SignBit >>= ShAmt;  // Adjust to where it is now in the mask.
       
       if (KnownZero & SignBit) {       
-        KnownZero |= HighBits;  // New bits are known zero
-        KnownOne  &= ~HighBits; // and known not to be one.
+        KnownZero |= HighBits;  // New bits are known zero.
       } else if (KnownOne & SignBit) {
-        KnownOne  |= HighBits;  // New bits are known one
-        KnownZero &= ~HighBits; // and known not to be zero.
+        KnownOne  |= HighBits;  // New bits are known one.
       }
     }
     return;
