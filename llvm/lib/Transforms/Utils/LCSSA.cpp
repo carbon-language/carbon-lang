@@ -91,6 +91,7 @@ const PassInfo *llvm::LCSSAID = X.getPassInfo();
 /// runOnFunction - Process all loops in the function, inner-most out.
 bool LCSSA::runOnFunction(Function &F) {
   bool changed = false;
+  
   LI = &getAnalysis<LoopInfo>();
   DF = &getAnalysis<DominanceFrontier>();
   DT = &getAnalysis<DominatorTree>();
@@ -107,7 +108,7 @@ bool LCSSA::runOnFunction(Function &F) {
 bool LCSSA::visitSubloop(Loop* L) {
   for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
     visitSubloop(*I);
-  
+    
   // Speed up queries by creating a sorted list of blocks
   LoopBlocks.clear();
   LoopBlocks.insert(LoopBlocks.end(), L->block_begin(), L->block_end());
@@ -162,7 +163,6 @@ void LCSSA::processInstruction(Instruction* Instr,
       phi = new PHINode(Instr->getType(), Instr->getName()+".lcssa",
                                  (*BBI)->begin());
       workList.push_back(cast<PHINode>(phi));
-      Phis[*BBI] = phi;
     }
   }
   
@@ -253,6 +253,11 @@ SetVector<Instruction*> LCSSA::getLoopValuesUsedOutsideLoop(Loop *L) {
       for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;
            ++UI) {
         BasicBlock *UserBB = cast<Instruction>(*UI)->getParent();
+        if (PHINode* p = dyn_cast<PHINode>(*UI)) {
+          unsigned OperandNo = UI.getOperandNo();
+          UserBB = p->getIncomingBlock(OperandNo/2);
+        }
+        
         if (!inLoop(UserBB)) {
           AffectedValues.insert(I);
           break;
