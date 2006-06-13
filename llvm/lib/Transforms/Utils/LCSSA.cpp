@@ -215,6 +215,12 @@ void LCSSA::processInstruction(Instruction* Instr,
   for (Instruction::use_iterator UI = Instr->use_begin(), UE = Instr->use_end();
        UI != UE; ++UI) {
     Instruction* use = cast<Instruction>(*UI);
+    BasicBlock* UserBB = use->getParent();
+    if (PHINode* p = dyn_cast<PHINode>(use)) {
+      unsigned OperandNo = UI.getOperandNo();
+      UserBB = p->getIncomingBlock(OperandNo/2);
+    }
+    
     // Don't need to update uses within the loop body.
     if (!inLoop(use->getParent()))
       Uses.push_back(use);
