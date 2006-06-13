@@ -286,12 +286,12 @@ void AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
       bool isNE = false;
       switch(CC) {
       default: N->dump(); assert(0 && "Unknown FP comparison!");
-      case ISD::SETEQ: Opc = Alpha::CMPTEQ; break;
-      case ISD::SETLT: Opc = Alpha::CMPTLT; break;
-      case ISD::SETLE: Opc = Alpha::CMPTLE; break;
-      case ISD::SETGT: Opc = Alpha::CMPTLT; rev = true; break;
-      case ISD::SETGE: Opc = Alpha::CMPTLE; rev = true; break;
-      case ISD::SETNE: Opc = Alpha::CMPTEQ; isNE = true; break;
+      case ISD::SETEQ: case ISD::SETOEQ: case ISD::SETUEQ: Opc = Alpha::CMPTEQ; break;
+      case ISD::SETLT: case ISD::SETOLT: case ISD::SETULT: Opc = Alpha::CMPTLT; break;
+      case ISD::SETLE: case ISD::SETOLE: case ISD::SETULE: Opc = Alpha::CMPTLE; break;
+      case ISD::SETGT: case ISD::SETOGT: case ISD::SETUGT: Opc = Alpha::CMPTLT; rev = true; break;
+      case ISD::SETGE: case ISD::SETOGE: case ISD::SETUGE: Opc = Alpha::CMPTLE; rev = true; break;
+      case ISD::SETNE: case ISD::SETONE: case ISD::SETUNE: Opc = Alpha::CMPTEQ; isNE = true; break;
       };
       SDOperand tmp1, tmp2;
       Select(tmp1, N->getOperand(0));
