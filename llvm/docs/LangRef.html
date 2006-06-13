@@ -350,6 +350,9 @@ symbol table entries. Here is an example of the "hello world" module:</p>
 <i>; External declaration of the puts function</i>
 <a href="#functionstructure">declare</a> int %puts(sbyte*)                                            <i>; int(sbyte*)* </i>
 
+<i>; Global variable / Function body section separator</i>
+implementation
+
 <i>; Definition of main function</i>
 int %main() {                                                        <i>; int()* </i>
         <i>; Convert [13x sbyte]* to sbyte *...</i>
@@ -372,6 +375,13 @@ where both functions and global variables are global values.  Global values are
 represented by a pointer to a memory location (in this case, a pointer to an
 array of char, and a pointer to a function), and have one of the following <a
 href="#linkage">linkage types</a>.</p>
+
+<p>Due to a limitation in the current LLVM assembly parser (it is limited by
+one-token lookahead), modules are split into two pieces by the "implementation"
+keyword.  Global variable prototypes and definitions must occur before the
+keyword, and function definitions must occur after it.  Function prototypes may
+occur either before or after it.  In the future, the implementation keyword may
+become a noop, if the parser gets smarter.</p>
 
 </div>
 
