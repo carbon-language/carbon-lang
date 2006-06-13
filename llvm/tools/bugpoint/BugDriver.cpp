@@ -62,9 +62,10 @@ std::string llvm::getPassesString(const std::vector<const PassInfo*> &Passes) {
   return Result;
 }
 
-BugDriver::BugDriver(const char *toolname, bool as_child)
+BugDriver::BugDriver(const char *toolname, bool as_child, unsigned timeout)
   : ToolName(toolname), ReferenceOutputFile(OutputFile),
-    Program(0), Interpreter(0), cbe(0), gcc(0), run_as_child(as_child) {}
+    Program(0), Interpreter(0), cbe(0), gcc(0), run_as_child(as_child),
+    Timeout(timeout) {}
 
 
 /// ParseInputFile - Given a bytecode or assembly input filename, parse and

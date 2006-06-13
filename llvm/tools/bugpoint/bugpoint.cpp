@@ -36,6 +36,11 @@ static cl::list<std::string>
 InputFilenames(cl::Positional, cl::OneOrMore,
                cl::desc("<input llvm ll/bc files>"));
 
+static cl::opt<unsigned>
+TimeoutValue("timeout", cl::init(300), cl::value_desc("seconds"),
+             cl::desc("Number of seconds program is allowed to run before it "
+                      "is killed (default is 300s), 0 disables timeout"));
+
 // The AnalysesList is automatically populated with registered Passes by the
 // PassNameParser.
 //
@@ -57,7 +62,7 @@ int main(int argc, char **argv) {
   sys::PrintStackTraceOnErrorSignal();
   sys::SetInterruptFunction(BugpointInterruptFunction);
   
-  BugDriver D(argv[0],AsChild);
+  BugDriver D(argv[0],AsChild,TimeoutValue);
   if (D.addSources(InputFilenames)) return 1;
   D.addPasses(PassList.begin(), PassList.end());
 

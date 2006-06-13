@@ -63,11 +63,6 @@ namespace {
                 cl::desc("Additional shared objects to load "
                          "into executing programs"));
 
-  cl::opt<unsigned>
-  TimeoutValue("timeout", cl::init(300), cl::value_desc("seconds"),
-               cl::desc("Number of seconds program is allowed to run before it "
-                        "is killed (default is 300s), 0 disables timeout"));
-
   cl::list<std::string>
     AdditionalLinkerArgs("Xlinker", 
       cl::desc("Additional arguments to pass to the linker"));
@@ -231,11 +226,11 @@ std::string BugDriver::executeProgram(std::string OutputFile,
   if (InterpreterSel == RunLLC || InterpreterSel == RunCBE)
     RetVal = AI->ExecuteProgram(BytecodeFile, InputArgv, InputFile,
                                 OutputFile, AdditionalLinkerArgs, SharedObjs, 
-                                TimeoutValue);
+                                Timeout);
   else 
     RetVal = AI->ExecuteProgram(BytecodeFile, InputArgv, InputFile,
                                 OutputFile, std::vector<std::string>(), 
-                                SharedObjs, TimeoutValue);
+                                SharedObjs, Timeout);
 
   if (RetVal == -1) {
     std::cerr << "<timeout>";

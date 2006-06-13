@@ -48,13 +48,14 @@ class BugDriver {
   CBE *cbe;
   GCC *gcc;
   bool run_as_child;
+  unsigned Timeout;
 
   // FIXME: sort out public/private distinctions...
   friend class ReducePassList;
   friend class ReduceMisCodegenFunctions;
 
 public:
-  BugDriver(const char *toolname, bool as_child);
+  BugDriver(const char *toolname, bool as_child, unsigned timeout);
 
   const std::string &getToolName() const { return ToolName; }
 

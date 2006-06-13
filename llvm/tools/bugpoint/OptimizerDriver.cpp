@@ -179,7 +179,7 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
   args[n++] = 0;
 
   sys::Path prog(sys::Program::FindProgramByName(ToolName));
-  int result = sys::Program::ExecuteAndWait(prog,args);
+  int result = sys::Program::ExecuteAndWait(prog,args,0,0,Timeout);
 
   // If we are supposed to delete the bytecode file or if the passes crashed,
   // remove it now.  This may fail if the file was never created, but that's ok.
