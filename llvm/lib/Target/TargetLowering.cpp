@@ -780,12 +780,14 @@ void TargetLowering::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
   case ISD::SHL:
     // (shl X, C1) & C2 == 0   iff   (X & C2 >>u C1) == 0
     if (ConstantSDNode *SA = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
+      uint64_t LowBits = (1ULL << SA->getValue())-1;
       Mask >>= SA->getValue();
       ComputeMaskedBits(Op.getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
       assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
       KnownZero <<= SA->getValue();
       KnownOne  <<= SA->getValue();
-      KnownZero |= (1ULL << SA->getValue())-1;  // low bits known zero.
+      KnownZero |= LowBits;  // low bits known zero
+      KnownOne &= ~LowBits;  // and known not to be one.
     }
     return;
   case ISD::SRL:
@@ -798,7 +800,8 @@ void TargetLowering::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
       assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
       KnownZero >>= SA->getValue();
       KnownOne  >>= SA->getValue();
-      KnownZero |= HighBits;  // high bits known zero.
+      KnownZero |= HighBits;  // high bits known zero
+      KnownOne  &= ~HighBits; // and known not to be one.
     }
     return;
   case ISD::SRA:
@@ -815,10 +818,12 @@ void TargetLowering::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
       uint64_t SignBit = 1ULL << (MVT::getSizeInBits(Op.getValueType())-1);
       SignBit >>= SA->getValue();  // Adjust to where it is now in the mask.
       
-      if (KnownZero & SignBit) {       // New bits are known zero.
-        KnownZero |= HighBits;
-      } else if (KnownOne & SignBit) { // New bits are known one.
-        KnownOne |= HighBits;
+      if (KnownZero & SignBit) {       
+        KnownZero |= HighBits;  // New bits are known zero
+        KnownOne  &= ~HighBits; // and known not to be one.
+      } else if (KnownOne & SignBit) {
+        KnownOne  |= HighBits;  // New bits are known one
+        KnownZero &= ~HighBits; // and known not to be zero.
       }
     }
     return;
