@@ -262,10 +262,10 @@ public:
     Elements.push_back(ConstantUInt::get(Type::UIntTy, Field));
   }
   virtual void Apply(int64_t &Field) {
-    Elements.push_back(ConstantSInt::get(Type::IntTy, Field));
+    Elements.push_back(ConstantSInt::get(Type::LongTy, Field));
   }
   virtual void Apply(uint64_t &Field) {
-    Elements.push_back(ConstantUInt::get(Type::UIntTy, Field));
+    Elements.push_back(ConstantUInt::get(Type::ULongTy, Field));
   }
   virtual void Apply(bool &Field) {
     Elements.push_back(ConstantBool::get(Field));
@@ -345,10 +345,10 @@ public:
     Fields.push_back(Type::UIntTy);
   }
   virtual void Apply(int64_t &Field) {
-    Fields.push_back(Type::IntTy);
+    Fields.push_back(Type::LongTy);
   }
   virtual void Apply(uint64_t &Field) {
-    Fields.push_back(Type::UIntTy);
+    Fields.push_back(Type::ULongTy);
   }
   virtual void Apply(bool &Field) {
     Fields.push_back(Type::BoolTy);

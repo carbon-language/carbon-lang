@@ -1646,7 +1646,11 @@ void DwarfWriter::ConstructRootScope(DebugScope *RootScope) {
 /// EmitInitial - Emit initial Dwarf declarations.  This is necessary for cc
 /// tools to recognize the object file contains Dwarf information.
 ///
-void DwarfWriter::EmitInitial() const {
+void DwarfWriter::EmitInitial() {
+  // Check to see if we already emitted intial headers.
+  if (didInitial) return;
+  didInitial = true;
+  
   // Dwarf sections base addresses.
   Asm->SwitchToDataSection(DwarfFrameSection, 0);
   EmitLabel("section_frame", 0);
@@ -1676,6 +1680,9 @@ void DwarfWriter::EmitInitial() const {
   EmitLabel("text_begin", 0);
   Asm->SwitchToDataSection(DataSection, 0);
   EmitLabel("data_begin", 0);
+  
+  // Emit common frame information.
+  EmitInitialDebugFrame();
 }
 
 /// EmitDIE - Recusively Emits a debug information entry.
@@ -2286,35 +2293,6 @@ void DwarfWriter::ConstructSubprogramDIEs() {
   }
 }
 
-/// ShouldEmitDwarf - Determine if Dwarf declarations should be made.
-///
-bool DwarfWriter::ShouldEmitDwarf() {
-  // Check if debug info is present.
-  if (!DebugInfo || !DebugInfo->hasInfo()) return false;
-  
-  // Make sure initial declarations are made.
-  if (!didInitial) {
-    EmitInitial();
-  
-    // Emit common frame information.
-    EmitInitialDebugFrame();
-  
-    // Create all the compile unit DIEs.
-    ConstructCompileUnitDIEs();
-    
-    // Create DIEs for each of the externally visible global variables.
-    ConstructGlobalDIEs();
-
-    // Create DIEs for each of the externally visible subprograms.
-    ConstructSubprogramDIEs();
-
-    didInitial = true;
-  }
-  
-  // Okay to emit.
-  return true;
-}
-
 //===----------------------------------------------------------------------===//
 // Main entry points.
 //
@@ -2328,6 +2306,8 @@ DwarfWriter::DwarfWriter(std::ostream &OS, AsmPrinter *A)
 , MF(NULL)
 , DebugInfo(NULL)
 , didInitial(false)
+, shouldEmit(false)
+, IsNormalText(false)
 , SubprogramCount(0)
 , CompileUnits()
 , Abbreviations()
@@ -2363,7 +2343,23 @@ DwarfWriter::~DwarfWriter() {
 /// SetDebugInfo - Set DebugInfo when it's known that pass manager has
 /// created it.  Set by the target AsmPrinter.
 void DwarfWriter::SetDebugInfo(MachineDebugInfo *DI) {
-  DebugInfo = DI;
+  // Make sure initial declarations are made.
+  if (!DebugInfo && DI->hasInfo()) {
+    DebugInfo = DI;
+    shouldEmit = true;
+    
+    // Emit initial sections
+    EmitInitial();
+  
+    // Create all the compile unit DIEs.
+    ConstructCompileUnitDIEs();
+    
+    // Create DIEs for each of the externally visible global variables.
+    ConstructGlobalDIEs();
+
+    // Create DIEs for each of the externally visible subprograms.
+    ConstructSubprogramDIEs();
+  }
 }
 
 /// BeginModule - Emit all Dwarf sections that should come prior to the content.
@@ -2420,17 +2416,24 @@ void DwarfWriter::EndModule() {
 
 /// BeginFunction - Gather pre-function debug information.  Assumes being 
 /// emitted immediately after the function entry point.
-void DwarfWriter::BeginFunction(MachineFunction *MF) {
+void DwarfWriter::BeginFunction(MachineFunction *MF, bool IsNormalText) {
   this->MF = MF;
+  // FIXME - should be able to debug coalesced functions.
+  this->IsNormalText = IsNormalText;
   
-  // Begin accumulating function debug information.
-  DebugInfo->BeginFunction(MF);
+  // FIXME - should be able to debug coalesced functions.
+  if (IsNormalText) {
+    // Begin accumulating function debug information.
+    DebugInfo->BeginFunction(MF);
+    
+    if (!ShouldEmitDwarf()) return;
+    EOL("Dwarf Begin Function");
   
-  if (!ShouldEmitDwarf()) return;
-  EOL("Dwarf Begin Function");
-  
-  // Assumes in correct section after the entry point.
-  EmitLabel("func_begin", ++SubprogramCount);
+    // Assumes in correct section after the entry point.
+    EmitLabel("func_begin", ++SubprogramCount);
+  } else {
+    ShouldEmitDwarf();
+  }
 }
 
 /// EndFunction - Gather and emit post-function debug information.
@@ -2439,14 +2442,17 @@ void DwarfWriter::EndFunction() {
   if (!ShouldEmitDwarf()) return;
   EOL("Dwarf End Function");
   
-  // Define end label for subprogram.
-  EmitLabel("func_end", SubprogramCount);
+  // FIXME - should be able to debug coalesced functions.
+  if (IsNormalText) {
+    // Define end label for subprogram.
+    EmitLabel("func_end", SubprogramCount);
   
-  // Construct scopes for subprogram.
-  ConstructRootScope(DebugInfo->getRootScope());
-  
-  // Emit function frame information.
-  EmitFunctionDebugFrame();
+    // Construct scopes for subprogram.
+    ConstructRootScope(DebugInfo->getRootScope());
+    
+    // Emit function frame information.
+    EmitFunctionDebugFrame();
+  }
   
   // Clear function debug information.
   DebugInfo->EndFunction();

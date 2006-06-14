@@ -106,6 +106,15 @@ protected:
   ///
   bool didInitial;
   
+  /// shouldEmit - Flag to indicate if debug information should be emitted.
+  ///
+  bool shouldEmit;
+  
+  /// IsNormalText - Flag to indicate if routine is not special case text
+  /// (coalesced.)
+  // FIXME - should be able to debug coalesced functions.
+  bool IsNormalText;
+
   /// SubprogramCount - The running count of functions being compiled.
   ///
   unsigned SubprogramCount;
@@ -372,7 +381,7 @@ private:
 
   /// EmitInitial - Emit initial Dwarf declarations.
   ///
-  void EmitInitial() const;
+  void EmitInitial();
   
   /// EmitDIE - Recusively Emits a debug information entry.
   ///
@@ -448,9 +457,8 @@ private:
   void ConstructSubprogramDIEs();
 
   /// ShouldEmitDwarf - Returns true if Dwarf declarations should be made.
-  /// When called it also checks to see if debug info is newly available.  if
-  /// so the initial Dwarf headers are emitted.
-  bool ShouldEmitDwarf();
+  ///
+  bool ShouldEmitDwarf() const { return shouldEmit; }
 
 public:
   
@@ -475,11 +483,15 @@ public:
   
   /// BeginFunction - Gather pre-function debug information.  Assumes being 
   /// emitted immediately after the function entry point.
-  void BeginFunction(MachineFunction *MF);
+  void BeginFunction(MachineFunction *MF, bool IsNormalText);
   
   /// EndFunction - Gather and emit post-function debug information.
   ///
   void EndFunction();
+  
+  /// NonFunction - Function does not have a true body.
+  ///
+  void NonFunction();
 };
 
 } // end llvm namespace
