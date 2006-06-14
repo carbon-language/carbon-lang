@@ -617,6 +617,13 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG) {
   std::vector<SDOperand> Ops;
   Ops.push_back(Chain);
   Ops.push_back(Callee);
+
+  // Add argument registers to the end of the list so that they are known live
+  // into the call.
+  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i)
+    Ops.push_back(DAG.getRegister(RegsToPass[i].first, 
+                                  RegsToPass[i].second.getValueType()));
+
   if (InFlag.Val)
     Ops.push_back(InFlag);
 
@@ -985,7 +992,7 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
   return DAG.getNode(ISD::MERGE_VALUES, RetVTs, ArgValues);
 }
 
- SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG) {
+SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG) {
   SDOperand Chain     = Op.getOperand(0);
   unsigned CallingConv= cast<ConstantSDNode>(Op.getOperand(1))->getValue();
   bool isVarArg       = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
@@ -1139,6 +1146,13 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
   std::vector<SDOperand> Ops;
   Ops.push_back(Chain);
   Ops.push_back(Callee);
+
+  // Add argument registers to the end of the list so that they are known live
+  // into the call.
+  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i)
+    Ops.push_back(DAG.getRegister(RegsToPass[i].first, 
+                                  RegsToPass[i].second.getValueType()));
+
   if (InFlag.Val)
     Ops.push_back(InFlag);
 
