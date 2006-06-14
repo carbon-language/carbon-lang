@@ -664,3 +664,32 @@ e.g. SSE select using and, andnot, or. Various SSE compare translations.
 //===---------------------------------------------------------------------===//
 
 Add hooks to commute some CMPP operations.
+
+//===---------------------------------------------------------------------===//
+
+Implement some missing insert/extract element operations without going through
+the stack.  Testcase here:
+CodeGen/X86/vec_ins_extract.ll
+corresponds to this C code:
+
+typedef float vectorfloat __attribute__((vector_size(16)));
+void test(vectorfloat *F, float f) {
+  vectorfloat G = *F + *F;
+  *((float*)&G) = f;
+  *F = G + G;
+}
+void test2(vectorfloat *F, float f) {
+  vectorfloat G = *F + *F;
+  ((float*)&G)[2] = f;
+  *F = G + G;
+}
+void test3(vectorfloat *F, float *f) {
+  vectorfloat G = *F + *F;
+  *f = ((float*)&G)[2];
+}
+void test4(vectorfloat *F, float *f) {
+  vectorfloat G = *F + *F;
+  *f = *((float*)&G);
+}
+
+//===---------------------------------------------------------------------===//
