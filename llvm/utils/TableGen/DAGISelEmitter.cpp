@@ -2500,6 +2500,7 @@ public:
       if (InstPatNode && InstPatNode->getOperator()->getName() == "set") {
         InstPatNode = InstPatNode->getChild(1);
       }
+      bool HasVarOps     = isRoot && II.hasVariableNumberOfOperands;
       bool HasImpInputs  = isRoot && Inst.getNumImpOperands() > 0;
       bool HasImpResults = isRoot && Inst.getNumImpResults() > 0;
       bool NodeHasOptInFlag = isRoot &&
@@ -2515,10 +2516,11 @@ public:
 
       if (NodeHasInFlag || NodeHasOutFlag || NodeHasOptInFlag || HasImpInputs)
         emitDecl("InFlag");
-      if (NodeHasOptInFlag) {
-        emitCode("bool HasOptInFlag = "
+      if (NodeHasOptInFlag)
+        emitCode("bool HasInFlag = "
              "N.getOperand(N.getNumOperands()-1).getValueType() == MVT::Flag;");
-      }
+      if (HasVarOps)
+        emitCode("std::vector<SDOperand> Ops;");
 
       // How many results is this pattern expected to produce?
       unsigned PatResults = 0;
@@ -2581,7 +2583,7 @@ public:
       if (NodeHasInFlag || HasImpInputs)
         EmitInFlagSelectCode(Pattern, "N", ChainEmitted, true);
       if (NodeHasOptInFlag) {
-        emitCode("if (HasOptInFlag)");
+        emitCode("if (HasInFlag)");
         emitCode("  Select(InFlag, N.getOperand(N.getNumOperands()-1));");
       }
 
@@ -2596,96 +2598,87 @@ public:
       unsigned ResNo = TmpNo++;
       if (!isRoot || InputHasChain || NodeHasChain || NodeHasOutFlag ||
           NodeHasOptInFlag) {
-        if (NodeHasOptInFlag) {
-          unsigned FlagNo = (unsigned) NodeHasChain + Pattern->getNumChildren();
-          emitDecl("ResNode", true);
-          emitCode("if (HasOptInFlag)");
-          std::string Code = "  ResNode = CurDAG->getTargetNode(" +
-             II.Namespace + "::" + II.TheDef->getName();
-
-          // Output order: results, chain, flags
-          // Result types.
-          if (PatResults > 0) { 
-            if (N->getTypeNum(0) != MVT::isVoid)
-              Code += ", " + getEnumName(N->getTypeNum(0));
-          }
-          if (NodeHasChain)
-            Code += ", MVT::Other";
-          if (NodeHasOutFlag)
-            Code += ", MVT::Flag";
-
-          // Inputs.
-          for (unsigned i = 0, e = Ops.size(); i != e; ++i)
-            Code += ", Tmp" + utostr(Ops[i]);
-          if (NodeHasChain)  Code += ", " + ChainName;
-          emitCode(Code + ", InFlag);");
-
-          emitCode("else");
-          Code = "  ResNode = CurDAG->getTargetNode(" + II.Namespace + "::" +
-                 II.TheDef->getName();
-
-          // Output order: results, chain, flags
-          // Result types.
-          if (PatResults > 0 && N->getTypeNum(0) != MVT::isVoid)
-            Code += ", " + getEnumName(N->getTypeNum(0));
-          if (NodeHasChain)
-            Code += ", MVT::Other";
-          if (NodeHasOutFlag)
-            Code += ", MVT::Flag";
-
-          // Inputs.
-          for (unsigned i = 0, e = Ops.size(); i != e; ++i)
-            Code += ", Tmp" + utostr(Ops[i]);
-          if (NodeHasChain) Code += ", " + ChainName + ");";
-          emitCode(Code);
-
-          if (NodeHasChain)
-            // Remember which op produces the chain.
-            emitCode(ChainName + " = SDOperand(ResNode" +
-                     ", " + utostr(PatResults) + ");");
+        std::string Code;
+        std::string Code2;
+        std::string NodeName;
+        if (!isRoot) {
+          NodeName = "Tmp" + utostr(ResNo);
+          emitDecl(NodeName);
+          Code2 = NodeName + " = SDOperand(";
         } else {
-          std::string Code;
-          std::string NodeName;
-          if (!isRoot) {
-            NodeName = "Tmp" + utostr(ResNo);
-            emitDecl(NodeName);
-            Code = NodeName + " = SDOperand(";
-          } else {
-            NodeName = "ResNode";
-            emitDecl(NodeName, true);
-            Code = NodeName + " = ";
-          }
-          Code += "CurDAG->getTargetNode(" +
-            II.Namespace + "::" + II.TheDef->getName();
-
-          // Output order: results, chain, flags
-          // Result types.
-          if (NumResults > 0 && N->getTypeNum(0) != MVT::isVoid)
-            Code += ", " + getEnumName(N->getTypeNum(0));
-          if (NodeHasChain)
-            Code += ", MVT::Other";
-          if (NodeHasOutFlag)
-            Code += ", MVT::Flag";
-
-          // Inputs.
-          for (unsigned i = 0, e = Ops.size(); i != e; ++i)
-            Code += ", Tmp" + utostr(Ops[i]);
-          if (NodeHasChain) Code += ", " + ChainName;
-          if (NodeHasInFlag || HasImpInputs) Code += ", InFlag";
-          if (!isRoot)
-            emitCode(Code + "), 0);");
-          else
-            emitCode(Code + ");");
-
-          if (NodeHasChain)
-            // Remember which op produces the chain.
-            if (!isRoot)
-              emitCode(ChainName + " = SDOperand(" + NodeName +
-                       ".Val, " + utostr(PatResults) + ");");
-            else
-              emitCode(ChainName + " = SDOperand(" + NodeName +
-                       ", " + utostr(PatResults) + ");");
+          NodeName = "ResNode";
+          emitDecl(NodeName, true);
+          Code2 = NodeName + " = ";
         }
+        Code = "CurDAG->getTargetNode(" +
+          II.Namespace + "::" + II.TheDef->getName();
+
+        // Output order: results, chain, flags
+        // Result types.
+        if (NumResults > 0 && N->getTypeNum(0) != MVT::isVoid)
+          Code += ", " + getEnumName(N->getTypeNum(0));
+        if (NodeHasChain)
+          Code += ", MVT::Other";
+        if (NodeHasOutFlag)
+          Code += ", MVT::Flag";
+
+        // Inputs.
+        for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
+          if (HasVarOps)
+            emitCode("Ops.push_back(Tmp" + utostr(Ops[i]) + ");");
+          else
+            Code += ", Tmp" + utostr(Ops[i]);
+        }
+
+        if (HasVarOps) {
+          if (NodeHasInFlag || HasImpInputs)
+            emitCode("for (unsigned i = 2, e = N.getNumOperands()-1; "
+                     "i != e; ++i) {");
+          else if (NodeHasOptInFlag) 
+            emitCode("for (unsigned i = 2, e = N.getNumOperands()-HasInFlag; "
+                     "i != e; ++i) {");
+          else
+            emitCode("for (unsigned i = 2, e = N.getNumOperands(); "
+                     "i != e; ++i) {");
+          emitCode("  SDOperand VarOp(0, 0);");
+          emitCode("  Select(VarOp, N.getOperand(i));");
+          emitCode("  Ops.push_back(VarOp);");
+          emitCode("}");
+        }
+
+        if (NodeHasChain) {
+          if (HasVarOps)
+            emitCode("Ops.push_back(" + ChainName + ");");
+          else
+            Code += ", " + ChainName;
+        }
+        if (NodeHasInFlag || HasImpInputs) {
+          if (HasVarOps)
+            emitCode("Ops.push_back(InFlag);");
+          else
+            Code += ", InFlag";
+        } else if (NodeHasOptInFlag && HasVarOps) {
+          emitCode("if (HasInFlag)");
+          emitCode("  Ops.push_back(InFlag);");
+        }
+
+        if (HasVarOps)
+          Code += ", Ops";
+        else if (NodeHasOptInFlag)
+          Code = "HasInFlag ? " + Code + ", InFlag) : " + Code;
+
+        if (!isRoot)
+          Code += "), 0";
+        emitCode(Code2 + Code + ");");
+
+        if (NodeHasChain)
+          // Remember which op produces the chain.
+          if (!isRoot)
+            emitCode(ChainName + " = SDOperand(" + NodeName +
+                     ".Val, " + utostr(PatResults) + ");");
+          else
+            emitCode(ChainName + " = SDOperand(" + NodeName +
+                     ", " + utostr(PatResults) + ");");
 
         if (!isRoot)
           return std::make_pair(1, ResNo);
