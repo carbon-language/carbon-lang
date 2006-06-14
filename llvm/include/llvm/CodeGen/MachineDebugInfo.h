@@ -90,22 +90,34 @@ public:
 ///
 class DebugInfoDesc {
 private:
+  enum {
+    tag_mask = 0x0000ffff,
+    version_shift = 16
+  };
+
+
   unsigned Tag;                         // Content indicator.  Dwarf values are
                                         // used but that does not limit use to
                                         // Dwarf writers.
   
 protected:
-  DebugInfoDesc(unsigned T) : Tag(T) {}
+  DebugInfoDesc(unsigned T) : Tag(T | (LLVMDebugVersion << version_shift)) {}
   
 public:
   virtual ~DebugInfoDesc() {}
 
   // Accessors
-  unsigned getTag()          const { return Tag; }
+  unsigned getTag()          const { return Tag & tag_mask; }
+  unsigned getVersion()      const { return Tag >> version_shift; }
   
-  /// TagFromGlobal - Returns the Tag number from a debug info descriptor
-  /// GlobalVariable.  Return DIIValid if operand is not an unsigned int.
+  /// TagFromGlobal - Returns the tag number from a debug info descriptor
+  /// GlobalVariable.   Return DIIValid if operand is not an unsigned int. 
   static unsigned TagFromGlobal(GlobalVariable *GV);
+
+  /// VersionFromGlobal - Returns the version number from a debug info
+  /// descriptor GlobalVariable.  Return DIIValid if operand is not an unsigned
+  /// int.
+  static unsigned VersionFromGlobal(GlobalVariable *GV);
 
   /// DescFactory - Create an instance of debug info descriptor based on Tag.
   /// Return NULL if not a recognized Tag.
@@ -216,7 +228,6 @@ public:
 /// source/header file.
 class CompileUnitDesc : public AnchoredDesc {
 private:  
-  unsigned DebugVersion;                // LLVM debug version when produced.
   unsigned Language;                    // Language number (ex. DW_LANG_C89.)
   std::string FileName;                 // Source file name.
   std::string Directory;                // Source file directory.
@@ -227,7 +238,6 @@ public:
   
   
   // Accessors
-  unsigned getDebugVersion()              const { return DebugVersion; }
   unsigned getLanguage()                  const { return Language; }
   const std::string &getFileName()        const { return FileName; }
   const std::string &getDirectory()       const { return Directory; }
@@ -242,10 +252,6 @@ public:
   // Implement isa/cast/dyncast.
   static bool classof(const CompileUnitDesc *) { return true; }
   static bool classof(const DebugInfoDesc *D);
-  
-  /// DebugVersionFromGlobal - Returns the version number from a compile unit
-  /// GlobalVariable.  Return DIIValid if operand is not an unsigned int.
-  static unsigned DebugVersionFromGlobal(GlobalVariable *GV);
   
   /// ApplyToFields - Target the visitor to the fields of the CompileUnitDesc.
   ///
@@ -702,16 +708,12 @@ public:
 /// into DebugInfoDesc objects.
 class DIDeserializer {
 private:
-  unsigned DebugVersion;                // Version of debug information in use.
   std::map<GlobalVariable *, DebugInfoDesc *> GlobalDescs;
                                         // Previously defined gloabls.
   
 public:
-  DIDeserializer() : DebugVersion(LLVMDebugVersion) {}
+  DIDeserializer() {}
   ~DIDeserializer() {}
-  
-  // Accessors
-  unsigned getDebugVersion() const { return DebugVersion; }
   
   /// Deserialize - Reconstitute a GlobalVariable into it's component
   /// DebugInfoDesc objects.
@@ -780,14 +782,12 @@ private:
     Invalid,
     Valid
   };
-  unsigned DebugVersion;                // Version of debug information in use.
   std::map<GlobalVariable *, unsigned> Validity;// Tracks prior results.
   std::map<unsigned, unsigned> Counts;  // Count of fields per Tag type.
   
 public:
   DIVerifier()
-  : DebugVersion(LLVMDebugVersion)
-  , Validity()
+  : Validity()
   , Counts()
   {}
   ~DIVerifier() {}
@@ -1039,15 +1039,10 @@ public:
     std::vector<T *> AnchoredDescs;
     for (unsigned i = 0, N = Globals.size(); i < N; ++i) {
       GlobalVariable *GV = Globals[i];
-      unsigned Tag = DebugInfoDesc::TagFromGlobal(GV);
       
-      if (isa<CompileUnitDesc>(&Desc)) {
-        unsigned DebugVersion = CompileUnitDesc::DebugVersionFromGlobal(GV);
-        // FIXME - In the short term, changes are too drastic to continue.
-        if (DebugVersion != LLVMDebugVersion) break;
-      }
-      
-      if (Tag == Desc.getTag()) {
+      // FIXME - In the short term, changes are too drastic to continue.
+      if (DebugInfoDesc::TagFromGlobal(GV) == Desc.getTag() &&
+          DebugInfoDesc::VersionFromGlobal(GV) == LLVMDebugVersion) {
         AnchoredDescs.push_back(cast<T>(DR.Deserialize(GV)));
       }
     }

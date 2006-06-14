@@ -455,11 +455,20 @@ public:
 
 //===----------------------------------------------------------------------===//
 
-/// TagFromGlobal - Returns the Tag number from a debug info descriptor
-/// GlobalVariable.  
+/// TagFromGlobal - Returns the tag number from a debug info descriptor
+/// GlobalVariable.   Return DIIValid if operand is not an unsigned int. 
 unsigned DebugInfoDesc::TagFromGlobal(GlobalVariable *GV) {
   ConstantUInt *C = getUIntOperand(GV, 0);
-  return C ? (unsigned)C->getValue() : (unsigned)DW_TAG_invalid;
+  return C ? ((unsigned)C->getValue() & tag_mask) : (unsigned)DW_TAG_invalid;
+}
+
+/// VersionFromGlobal - Returns the version number from a debug info
+/// descriptor GlobalVariable.  Return DIIValid if operand is not an unsigned
+/// int.
+unsigned  DebugInfoDesc::VersionFromGlobal(GlobalVariable *GV) {
+  ConstantUInt *C = getUIntOperand(GV, 0);
+  return C ? ((unsigned)C->getValue() >> version_shift) :
+             (unsigned)DW_TAG_invalid;
 }
 
 /// DescFactory - Create an instance of debug info descriptor based on Tag.
@@ -563,6 +572,7 @@ const char *AnchorDesc::getTypeString() const {
 #ifndef NDEBUG
 void AnchorDesc::dump() {
   std::cerr << getDescString() << " "
+            << "Version(" << getVersion() << "), "
             << "Tag(" << getTag() << "), "
             << "AnchorTag(" << AnchorTag << ")\n";
 }
@@ -589,7 +599,6 @@ void AnchoredDesc::ApplyToFields(DIVisitor *Visitor) {
 
 CompileUnitDesc::CompileUnitDesc()
 : AnchoredDesc(DW_TAG_compile_unit)
-, DebugVersion(LLVMDebugVersion)
 , Language(0)
 , FileName("")
 , Directory("")
@@ -601,19 +610,11 @@ bool CompileUnitDesc::classof(const DebugInfoDesc *D) {
   return D->getTag() == DW_TAG_compile_unit;
 }
 
-/// DebugVersionFromGlobal - Returns the version number from a compile unit
-/// GlobalVariable.
-unsigned CompileUnitDesc::DebugVersionFromGlobal(GlobalVariable *GV) {
-  ConstantUInt *C = getUIntOperand(GV, 2);
-  return C ? (unsigned)C->getValue() : (unsigned)DW_TAG_invalid;
-}
-  
 /// ApplyToFields - Target the visitor to the fields of the CompileUnitDesc.
 ///
 void CompileUnitDesc::ApplyToFields(DIVisitor *Visitor) {
   AnchoredDesc::ApplyToFields(Visitor);
 
-  Visitor->Apply(DebugVersion);
   Visitor->Apply(Language);
   Visitor->Apply(FileName);
   Visitor->Apply(Directory);
@@ -642,9 +643,9 @@ const char *CompileUnitDesc::getAnchorString() const {
 #ifndef NDEBUG
 void CompileUnitDesc::dump() {
   std::cerr << getDescString() << " "
+            << "Version(" << getVersion() << "), "
             << "Tag(" << getTag() << "), "
             << "Anchor(" << getAnchor() << "), "
-            << "DebugVersion(" << DebugVersion << "), "
             << "Language(" << Language << "), "
             << "FileName(\"" << FileName << "\"), "
             << "Directory(\"" << Directory << "\"), "
@@ -696,6 +697,7 @@ const char *TypeDesc::getTypeString() const {
 #ifndef NDEBUG
 void TypeDesc::dump() {
   std::cerr << getDescString() << " "
+            << "Version(" << getVersion() << "), "
             << "Tag(" << getTag() << "), "
             << "Context(" << Context << "), "
             << "Name(\"" << Name << "\"), "
@@ -742,6 +744,7 @@ const char *BasicTypeDesc::getTypeString() const {
 #ifndef NDEBUG
 void BasicTypeDesc::dump() {
   std::cerr << getDescString() << " "
+            << "Version(" << getVersion() << "), "
             << "Tag(" << getTag() << "), "
             << "Context(" << getContext() << "), "
             << "Name(\"" << getName() << "\"), "
@@ -799,6 +802,7 @@ const char *DerivedTypeDesc::getTypeString() const {
 #ifndef NDEBUG
 void DerivedTypeDesc::dump() {
   std::cerr << getDescString() << " "
+            << "Version(" << getVersion() << "), "
             << "Tag(" << getTag() << "), "
             << "Context(" << getContext() << "), "
             << "Name(\"" << getName() << "\"), "
@@ -853,6 +857,7 @@ const char *CompositeTypeDesc::getTypeString() const {
 #ifndef NDEBUG
 void CompositeTypeDesc::dump() {
   std::cerr << getDescString() << " "
+            << "Version(" << getVersion() << "), "
             << "Tag(" << getTag() << "), "
             << "Context(" << getContext() << "), "
             << "Name(\"" << getName() << "\"), "
@@ -901,6 +906,7 @@ const char *SubrangeDesc::getTypeString() const {
 #ifndef NDEBUG
 void SubrangeDesc::dump() {
   std::cerr << getDescString() << " "
+            << "Version(" << getVersion() << "), "
             << "Tag(" << getTag() << "), "
             << "Lo(" << Lo << "), "
             << "Hi(" << Hi << ")\n";
@@ -944,6 +950,7 @@ const char *EnumeratorDesc::getTypeString() const {
 #ifndef NDEBUG
 void EnumeratorDesc::dump() {
   std::cerr << getDescString() << " "
+            << "Version(" << getVersion() << "), "
             << "Tag(" << getTag() << "), "
             << "Name(" << Name << "), "
             << "Value(" << Value << ")\n";
@@ -1005,6 +1012,7 @@ const char *VariableDesc::getTypeString() const {
 #ifndef NDEBUG
 void VariableDesc::dump() {
   std::cerr << getDescString() << " "
+            << "Version(" << getVersion() << "), "
             << "Tag(" << getTag() << "), "
             << "Context(" << Context << "), "
             << "Name(\"" << Name << "\"), "
@@ -1087,6 +1095,7 @@ const char *GlobalVariableDesc::getAnchorString() const {
 #ifndef NDEBUG
 void GlobalVariableDesc::dump() {
   std::cerr << getDescString() << " "
+            << "Version(" << getVersion() << "), "
             << "Tag(" << getTag() << "), "
             << "Anchor(" << getAnchor() << "), "
             << "Name(\"" << getName() << "\"), "
@@ -1138,6 +1147,7 @@ const char *SubprogramDesc::getAnchorString() const {
 #ifndef NDEBUG
 void SubprogramDesc::dump() {
   std::cerr << getDescString() << " "
+            << "Version(" << getVersion() << "), "
             << "Tag(" << getTag() << "), "
             << "Anchor(" << getAnchor() << "), "
             << "Name(\"" << getName() << "\"), "
@@ -1184,6 +1194,7 @@ const char *BlockDesc::getTypeString() const {
 #ifndef NDEBUG
 void BlockDesc::dump() {
   std::cerr << getDescString() << " "
+            << "Version(" << getVersion() << "), "
             << "Tag(" << getTag() << "),"
             << "Context(" << Context << ")\n";
 }
@@ -1204,11 +1215,6 @@ DebugInfoDesc *DIDeserializer::Deserialize(GlobalVariable *GV) {
 
   // Get the Tag from the global.
   unsigned Tag = DebugInfoDesc::TagFromGlobal(GV);
-  
-  // Get the debug version if a compile unit.
-  if (Tag == DW_TAG_compile_unit) {
-    DebugVersion = CompileUnitDesc::DebugVersionFromGlobal(GV);
-  }
   
   // Create an empty instance of the correct sort.
   Slot = DebugInfoDesc::DescFactory(Tag);
@@ -1366,16 +1372,6 @@ bool DIVerifier::Verify(GlobalVariable *GV) {
   // Check for user defined descriptors.
   if (Tag == DW_TAG_invalid) return true;
 
-  // If a compile unit we need the debug version.
-  if (Tag == DW_TAG_compile_unit) {
-    DebugVersion = CompileUnitDesc::DebugVersionFromGlobal(GV);
-    // FIXME - In the short term, changes are too drastic to continue.
-    if (DebugVersion != LLVMDebugVersion) {
-      ValiditySlot = Invalid;
-      return false;
-    }
-  }
-  
   // Construct an empty DebugInfoDesc.
   DebugInfoDesc *DD = DebugInfoDesc::DescFactory(Tag);
   
