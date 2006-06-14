@@ -74,8 +74,12 @@ namespace {
   private:
     SetVector<Instruction*> getLoopValuesUsedOutsideLoop(Loop *L);
     Instruction *getValueDominatingBlock(BasicBlock *BB,
+                                 std::map<BasicBlock*, Instruction*>& PotDoms) {
+      return getValueDominatingDTNode(DT->getNode(BB), PotDoms);
+    }
+    Instruction *getValueDominatingDTNode(DominatorTree::Node *Node,
                                   std::map<BasicBlock*, Instruction*>& PotDoms);
-                                  
+                                      
     /// inLoop - returns true if the given block is within the current loop
     const bool inLoop(BasicBlock* B) {
       return std::binary_search(LoopBlocks.begin(), LoopBlocks.end(), B);
@@ -237,8 +241,8 @@ void LCSSA::processInstruction(Instruction* Instr,
         }
       }
     } else {
-       Value *NewVal = getValueDominatingBlock((*II)->getParent(), Phis);
-       (*II)->replaceUsesOfWith(Instr, NewVal);
+      Value *NewVal = getValueDominatingBlock((*II)->getParent(), Phis);
+      (*II)->replaceUsesOfWith(Instr, NewVal);
     }
   }
 }
@@ -275,19 +279,12 @@ SetVector<Instruction*> LCSSA::getLoopValuesUsedOutsideLoop(Loop *L) {
 
 /// getValueDominatingBlock - Return the value within the potential dominators
 /// map that dominates the given block.
-Instruction *LCSSA::getValueDominatingBlock(BasicBlock *BB,
-                                 std::map<BasicBlock*, Instruction*>& PotDoms) {
-  DominatorTree::Node* bbNode = DT->getNode(BB);
-  while (bbNode != 0) {
-    std::map<BasicBlock*, Instruction*>::iterator I =
-                                               PotDoms.find(bbNode->getBlock());
-    if (I != PotDoms.end()) {
-      return (*I).second;
-    }
-    bbNode = bbNode->getIDom();
-  }
+Instruction *LCSSA::getValueDominatingDTNode(DominatorTree::Node *Node,
+                              std::map<BasicBlock*, Instruction*>& PotDoms) {
+  assert(Node != 0 && "Didn't find dom value?");
+  Instruction *&CacheSlot = PotDoms[Node->getBlock()];
+  if (CacheSlot) return CacheSlot;
   
-  assert(0 && "No dominating value found.");
-  
-  return 0;
+  // Otherwise, return the value of the idom and remember this for next time.
+  return CacheSlot = getValueDominatingDTNode(Node->getIDom(), PotDoms);
 }
