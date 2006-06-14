@@ -401,7 +401,7 @@ bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val,Loop *L){
                     << Cost << "\n");
     return false;
   }
-      
+   
   // If this is a trivial condition to unswitch (which results in no code
   // duplication), do it now.
   Constant *CondVal;
@@ -456,6 +456,18 @@ BasicBlock *LoopUnswitch::SplitEdge(BasicBlock *BB, BasicBlock *Succ) {
     // If the successor only has a single pred, split the top of the successor
     // block.
     assert(SP == BB && "CFG broken");
+    
+    // If this block has a single predecessor, remove any phi nodes.  Unswitch
+    // expect that, after split the edges from inside the loop to the exit
+    // block, that there will be no phi nodes in the new exit block.  Single
+    // entry phi nodes break this assumption.
+    BasicBlock::iterator I = Succ->begin();
+    while (PHINode *PN = dyn_cast<PHINode>(I)) {
+      PN->replaceAllUsesWith(PN->getIncomingValue(0));
+      PN->eraseFromParent();
+      I = Succ->begin();
+    }
+    
     return SplitBlock(Succ, Succ->begin());
   } else {
     // Otherwise, if BB has a single successor, split it at the bottom of the
