@@ -2515,8 +2515,10 @@ public:
 
       if (NodeHasInFlag || NodeHasOutFlag || NodeHasOptInFlag || HasImpInputs)
         emitDecl("InFlag");
-      if (NodeHasOptInFlag)
-        emitCode("bool HasOptInFlag = false;");
+      if (NodeHasOptInFlag) {
+        emitCode("bool HasOptInFlag = "
+             "N.getOperand(N.getNumOperands()-1).getValueType() == MVT::Flag;");
+      }
 
       // How many results is this pattern expected to produce?
       unsigned PatResults = 0;
@@ -2576,8 +2578,12 @@ public:
       bool ChainEmitted = NodeHasChain;
       if (NodeHasChain)
         emitCode("Select(" + ChainName + ", " + ChainName + ");");
-      if (NodeHasInFlag || NodeHasOptInFlag || HasImpInputs)
+      if (NodeHasInFlag || HasImpInputs)
         EmitInFlagSelectCode(Pattern, "N", ChainEmitted, true);
+      if (NodeHasOptInFlag) {
+        emitCode("if (HasOptInFlag)");
+        emitCode("  Select(InFlag, N.getOperand(N.getNumOperands()-1));");
+      }
 
       if (isRoot) {
         // The operands have been selected. Remove them from InFlightSet.
@@ -2854,7 +2860,6 @@ private:
     unsigned OpNo =
       (unsigned) NodeHasProperty(N, SDNodeInfo::SDNPHasChain, ISE);
     bool HasInFlag = NodeHasProperty(N, SDNodeInfo::SDNPInFlag, ISE);
-    bool HasOptInFlag = NodeHasProperty(N, SDNodeInfo::SDNPOptInFlag, ISE);
     for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i, ++OpNo) {
       TreePatternNode *Child = N->getChild(i);
       if (!Child->isLeaf()) {
@@ -2894,20 +2899,9 @@ private:
       }
     }
 
-    if (HasInFlag || HasOptInFlag) {
-      std::string Code;
-      if (HasOptInFlag) {
-        emitCode("if (" + RootName + ".getNumOperands() == " + utostr(OpNo+1) +
-                 ") {");
-        Code = "  ";
-      }
-      emitCode(Code + "Select(InFlag, " + RootName +
+    if (HasInFlag)
+      emitCode("Select(InFlag, " + RootName +
                ".getOperand(" + utostr(OpNo) + "));");
-      if (HasOptInFlag) {
-        emitCode("  HasOptInFlag = true;");
-        emitCode("}");
-      }
-    }
   }
 
   /// EmitCopyFromRegs - Emit code to copy result to physical registers
