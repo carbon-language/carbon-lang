@@ -68,7 +68,7 @@ inline bind_ty<Value> m_Value(Value *&V) { return V; }
 inline bind_ty<ConstantInt> m_ConstantInt(ConstantInt *&CI) { return CI; }
 
 //===----------------------------------------------------------------------===//
-// Matchers for specific binary operators
+// Matchers for specific binary operators.
 //
 
 template<typename LHS_t, typename RHS_t, 
@@ -157,13 +157,13 @@ inline BinaryOp_match<LHS, RHS, Instruction::Shr,
 // Matchers for binary classes
 //
 
-template<typename LHS_t, typename RHS_t, typename Class>
+template<typename LHS_t, typename RHS_t, typename Class, typename OpcType>
 struct BinaryOpClass_match {
-  Instruction::BinaryOps &Opcode;
+  OpcType &Opcode;
   LHS_t L;
   RHS_t R;
 
-  BinaryOpClass_match(Instruction::BinaryOps &Op, const LHS_t &LHS,
+  BinaryOpClass_match(OpcType &Op, const LHS_t &LHS,
                       const RHS_t &RHS)
     : Opcode(Op), L(LHS), R(RHS) {}
 
@@ -184,11 +184,26 @@ struct BinaryOpClass_match {
 };
 
 template<typename LHS, typename RHS>
-inline BinaryOpClass_match<LHS, RHS, SetCondInst>
+inline BinaryOpClass_match<LHS, RHS, SetCondInst, Instruction::BinaryOps>
 m_SetCond(Instruction::BinaryOps &Op, const LHS &L, const RHS &R) {
-  return BinaryOpClass_match<LHS, RHS, SetCondInst>(Op, L, R);
+  return BinaryOpClass_match<LHS, RHS, 
+                             SetCondInst, Instruction::BinaryOps>(Op, L, R);
 }
 
+template<typename LHS, typename RHS>
+inline BinaryOpClass_match<LHS, RHS, ShiftInst, Instruction::OtherOps>
+m_Shift(Instruction::OtherOps &Op, const LHS &L, const RHS &R) {
+  return BinaryOpClass_match<LHS, RHS, 
+                             ShiftInst, Instruction::OtherOps>(Op, L, R);
+}
+
+template<typename LHS, typename RHS>
+inline BinaryOpClass_match<LHS, RHS, ShiftInst, Instruction::OtherOps>
+m_Shift(const LHS &L, const RHS &R) {
+  Instruction::OtherOps Op; 
+  return BinaryOpClass_match<LHS, RHS, 
+                             ShiftInst, Instruction::OtherOps>(Op, L, R);
+}
 
 //===----------------------------------------------------------------------===//
 // Matchers for unary operators
