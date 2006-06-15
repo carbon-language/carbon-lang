@@ -136,7 +136,8 @@ namespace {
     /// specified value into the registers specified by this object.  This uses 
     /// Chain/Flag as the input and updates them for the output Chain/Flag.
     void getCopyToRegs(SDOperand Val, SelectionDAG &DAG,
-                       SDOperand &Chain, SDOperand &Flag) const;
+                       SDOperand &Chain, SDOperand &Flag,
+                       MVT::ValueType PtrVT) const;
     
     /// AddInlineAsmOperands - Add this value to the specified inlineasm node
     /// operand list.  This adds the code marker and includes the number of 
@@ -1800,7 +1801,8 @@ SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
 /// specified value into the registers specified by this object.  This uses 
 /// Chain/Flag as the input and updates them for the output Chain/Flag.
 void RegsForValue::getCopyToRegs(SDOperand Val, SelectionDAG &DAG,
-                                 SDOperand &Chain, SDOperand &Flag) const {
+                                 SDOperand &Chain, SDOperand &Flag,
+                                 MVT::ValueType PtrVT) const {
   if (Regs.size() == 1) {
     // If there is a single register and the types differ, this must be
     // a promotion.
@@ -1822,7 +1824,7 @@ void RegsForValue::getCopyToRegs(SDOperand Val, SelectionDAG &DAG,
     
     for (unsigned i = 0, e = R.size(); i != e; ++i) {
       SDOperand Part = DAG.getNode(ISD::EXTRACT_ELEMENT, RegVT, Val, 
-                                   DAG.getConstant(i, MVT::i32));
+                                   DAG.getConstant(i, PtrVT));
       Chain = DAG.getCopyToReg(Chain, R[i], Part, Flag);
       Flag = Chain.getValue(1);
     }
@@ -2184,7 +2186,8 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
         }
         
         // Use the produced MatchedRegs object to 
-        MatchedRegs.getCopyToRegs(InOperandVal, DAG, Chain, Flag);
+        MatchedRegs.getCopyToRegs(InOperandVal, DAG, Chain, Flag,
+                                  TLI.getPointerTy());
         MatchedRegs.AddInlineAsmOperands(1 /*REGUSE*/, DAG, AsmNodeOperands);
         break;
       }
@@ -2232,7 +2235,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
       // FIXME: should be match fail.
       assert(!InRegs.Regs.empty() && "Couldn't allocate input reg!");
 
-      InRegs.getCopyToRegs(InOperandVal, DAG, Chain, Flag);
+      InRegs.getCopyToRegs(InOperandVal, DAG, Chain, Flag, TLI.getPointerTy());
       
       InRegs.AddInlineAsmOperands(1/*REGUSE*/, DAG, AsmNodeOperands);
       break;
@@ -3300,7 +3303,7 @@ CopyValueToVirtualRegister(SelectionDAGLowering &SDL, Value *V, unsigned Reg) {
     SDOperand Root = SDL.getRoot();
     for (unsigned i = 0; i != NE; ++i) {
       SDOperand Elt = DAG.getNode(ISD::VEXTRACT_VECTOR_ELT, PTyElementVT,
-                                  Op, DAG.getConstant(i, MVT::i32));
+                                  Op, DAG.getConstant(i, TLI.getPointerTy()));
       if (PTyElementVT == PTyLegalElementVT) {
         // Elements are legal.
         OutChains.push_back(DAG.getCopyToReg(Root, Reg++, Elt));
@@ -3315,9 +3318,9 @@ CopyValueToVirtualRegister(SelectionDAGLowering &SDL, Value *V, unsigned Reg) {
         // Elements are expanded.
         // The src value is expanded into multiple registers.
         SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, PTyLegalElementVT,
-                                   Elt, DAG.getConstant(0, MVT::i32));
+                                   Elt, DAG.getConstant(0, TLI.getPointerTy()));
         SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, PTyLegalElementVT,
-                                   Elt, DAG.getConstant(1, MVT::i32));
+                                   Elt, DAG.getConstant(1, TLI.getPointerTy()));
         OutChains.push_back(DAG.getCopyToReg(Root, Reg++, Lo));
         OutChains.push_back(DAG.getCopyToReg(Root, Reg++, Hi));
       }
@@ -3333,9 +3336,9 @@ CopyValueToVirtualRegister(SelectionDAGLowering &SDL, Value *V, unsigned Reg) {
   } else  {
     // The src value is expanded into multiple registers.
     SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, DestVT,
-                               Op, DAG.getConstant(0, MVT::i32));
+                               Op, DAG.getConstant(0, TLI.getPointerTy()));
     SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, DestVT,
-                               Op, DAG.getConstant(1, MVT::i32));
+                               Op, DAG.getConstant(1, TLI.getPointerTy()));
     Op = DAG.getCopyToReg(SDL.getRoot(), Reg, Lo);
     return DAG.getCopyToReg(Op, Reg+1, Hi);
   }
