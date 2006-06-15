@@ -250,6 +250,9 @@ unsigned AsmPrinter::getPreferredAlignmentLog(const GlobalVariable *GV) const {
     Alignment = Log2_32(GV->getAlignment());
   
   if (GV->hasInitializer()) {
+    // Always round up alignment of global doubles to 8 bytes.
+    if (GV->getType()->getElementType() == Type::DoubleTy && Alignment < 3)
+      Alignment = 3;
     if (Alignment < 4) {
       // If the global is not external, see if it is large.  If so, give it a
       // larger alignment.
