@@ -1193,6 +1193,7 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
       break;
     }
   }
+  DefinedValues.insert(I);
   Out << "\n";
   delete [] opNames;
 }
