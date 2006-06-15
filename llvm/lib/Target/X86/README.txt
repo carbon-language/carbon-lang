@@ -668,3 +668,37 @@ do not make use of.
 //===---------------------------------------------------------------------===//
 
 We should handle __attribute__ ((__visibility__ ("hidden"))).
+
+//===---------------------------------------------------------------------===//
+
+Consider:
+int foo(int *a, int t) {
+int x;
+for (x=0; x<40; ++x)
+   t = t + a[x] + x;
+return t;
+}
+
+We generate:
+LBB1_1: #cond_true
+        movl %ecx, %esi
+        movl (%edx,%eax,4), %edi
+        movl %esi, %ecx
+        addl %edi, %ecx
+        addl %eax, %ecx
+        incl %eax
+        cmpl $40, %eax
+        jne LBB1_1      #cond_true
+
+GCC generates:
+
+L2:
+        addl    (%ecx,%edx,4), %eax
+        addl    %edx, %eax
+        addl    $1, %edx
+        cmpl    $40, %edx
+        jne     L2
+
+Smells like a register coallescing/reassociation issue.
+
+//===---------------------------------------------------------------------===//
