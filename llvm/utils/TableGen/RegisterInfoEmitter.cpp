@@ -151,7 +151,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
       << " Register Class Value Types...\n  const MVT::ValueType " << Name
       << "[] = {\n    ";
     for (unsigned i = 0, e = RC.VTs.size(); i != e; ++i)
-      OS << "MVT::" << RC.VTs[i] << ", ";
+      OS << RC.VTs[i] << ", ";
     OS << "MVT::Other\n  };\n\n";
   }
   OS << "}  // end anonymous namespace\n\n";

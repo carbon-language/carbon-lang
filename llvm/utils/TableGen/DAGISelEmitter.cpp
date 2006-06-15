@@ -2830,7 +2830,7 @@ public:
     if (Pat->getExtTypes() != Other->getExtTypes()) {
       // Move a type over from 'other' to 'pat'.
       Pat->setTypes(Other->getExtTypes());
-      emitCheck(Prefix + ".Val->getValueType(0) == MVT::" +
+      emitCheck(Prefix + ".Val->getValueType(0) == " +
                 getName(Pat->getTypeNum(0)));
       return true;
     }
