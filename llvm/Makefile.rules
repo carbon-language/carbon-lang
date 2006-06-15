@@ -373,10 +373,10 @@ endif
 # apps.
 ifdef UNIVERSAL
   CompileCommonOpts += \
-      -arch i386 -arch ppc -isysroot /Developer/SDKs/MACOSX10.4u.sdk/
+      -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.4u.sdk/
   Relink.Flags := -XCClinker -arch -XCClinker i386 -XCClinker -arch \
       -XCClinker ppc -XCClinker \
-      -isysroot -XCClinker /Developer/SDKs/MACOSX10.4u.sdk/
+      -isysroot -XCClinker /Developer/SDKs/MacOSX10.4u.sdk/
   DISABLE_AUTO_DEPENDENCIES=1
 endif
 
