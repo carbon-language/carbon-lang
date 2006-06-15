@@ -2784,7 +2784,7 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
     Vec = DAG.getNode(ISD::VECTOR_SHUFFLE, Vec.getValueType(),
                       Vec, Vec, Mask);
     return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, VT, Vec,
-                       DAG.getConstant(0, MVT::i32));
+                       DAG.getConstant(0, getPointerTy()));
   } else if (MVT::getSizeInBits(VT) == 64) {
     SDOperand Vec = Op.getOperand(0);
     unsigned Idx = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
@@ -2802,7 +2802,7 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
     Vec = DAG.getNode(ISD::VECTOR_SHUFFLE, Vec.getValueType(),
                       Vec, DAG.getNode(ISD::UNDEF, Vec.getValueType()), Mask);
     return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, VT, Vec,
-                       DAG.getConstant(0, MVT::i32));
+                       DAG.getConstant(0, getPointerTy()));
   }
 
   return SDOperand();
@@ -2848,15 +2848,15 @@ X86TargetLowering::LowerINSERT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
           N1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, MVT::v4f32, N1);
           N1 = DAG.getNode(ISD::BIT_CONVERT, MVT::v4i32, N1);
           N1 = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, MVT::i32, N1,
-                           DAG.getConstant(0, MVT::i32));
+                           DAG.getConstant(0, getPointerTy()));
         }
       }
       N0 = DAG.getNode(ISD::BIT_CONVERT, MVT::v8i16, N0);
       N0 = DAG.getNode(X86ISD::PINSRW, MVT::v8i16, N0, N1,
-                       DAG.getConstant(Idx, MVT::i32));
+                       DAG.getConstant(Idx, getPointerTy()));
       N1 = DAG.getNode(ISD::SRL, MVT::i32, N1, DAG.getConstant(16, MVT::i8));
       N0 = DAG.getNode(X86ISD::PINSRW, MVT::v8i16, N0, N1,
-                       DAG.getConstant(Idx+1, MVT::i32));
+                       DAG.getConstant(Idx+1, getPointerTy()));
       return DAG.getNode(ISD::BIT_CONVERT, VT, N0);
     }
   }

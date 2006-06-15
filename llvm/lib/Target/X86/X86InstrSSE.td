@@ -811,11 +811,11 @@ def MOVHPDrm : PDI<0x16, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
 def MOVLPSmr : PSI<0x13, MRMDestMem, (ops f64mem:$dst, VR128:$src),
                    "movlps {$src, $dst|$dst, $src}",
                    [(store (f64 (vector_extract (bc_v2f64 (v4f32 VR128:$src)),
-                                 (i32 0))), addr:$dst)]>;
+                                 (iPTR 0))), addr:$dst)]>;
 def MOVLPDmr : PDI<0x13, MRMDestMem, (ops f64mem:$dst, VR128:$src),
                    "movlpd {$src, $dst|$dst, $src}",
                    [(store (f64 (vector_extract (v2f64 VR128:$src),
-                                 (i32 0))), addr:$dst)]>;
+                                 (iPTR 0))), addr:$dst)]>;
 
 // v2f64 extract element 1 is always custom lowered to unpack high to low
 // and extract element 0 so the non-store version isn't too horrible.
@@ -824,13 +824,13 @@ def MOVHPSmr : PSI<0x17, MRMDestMem, (ops f64mem:$dst, VR128:$src),
                    [(store (f64 (vector_extract
                                  (v2f64 (vector_shuffle
                                          (bc_v2f64 (v4f32 VR128:$src)), (undef),
-                                         UNPCKH_shuffle_mask)), (i32 0))),
+                                         UNPCKH_shuffle_mask)), (iPTR 0))),
                      addr:$dst)]>;
 def MOVHPDmr : PDI<0x17, MRMDestMem, (ops f64mem:$dst, VR128:$src),
                    "movhpd {$src, $dst|$dst, $src}",
                    [(store (f64 (vector_extract
                                  (v2f64 (vector_shuffle VR128:$src, (undef),
-                                         UNPCKH_shuffle_mask)), (i32 0))),
+                                         UNPCKH_shuffle_mask)), (iPTR 0))),
                      addr:$dst)]>;
 
 let isTwoAddress = 1 in {
@@ -2020,14 +2020,14 @@ def PINSRWrri : PDIi8<0xC4, MRMSrcReg,
                      (ops VR128:$dst, VR128:$src1, GR32:$src2, i32i8imm:$src3),
                      "pinsrw {$src3, $src2, $dst|$dst, $src2, $src3}",
                      [(set VR128:$dst, (v8i16 (X86pinsrw (v8i16 VR128:$src1),
-                                               GR32:$src2, (i32 imm:$src3))))]>;
+                                               GR32:$src2, (iPTR imm:$src3))))]>;
 def PINSRWrmi : PDIi8<0xC4, MRMSrcMem,
                      (ops VR128:$dst, VR128:$src1, i16mem:$src2, i32i8imm:$src3),
                      "pinsrw {$src3, $src2, $dst|$dst, $src2, $src3}",
                      [(set VR128:$dst,
                        (v8i16 (X86pinsrw (v8i16 VR128:$src1),
                                (i32 (anyext (loadi16 addr:$src2))),
-                               (i32 imm:$src3))))]>;
+                               (iPTR imm:$src3))))]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2166,32 +2166,32 @@ def MOVQI2PQIrm : I<0x7E, MRMSrcMem, (ops VR128:$dst, i64mem:$src),
 // FIXME: may not be able to eliminate this movss with coalescing the src and
 // dest register classes are different. We really want to write this pattern
 // like this:
-// def : Pat<(f32 (vector_extract (v4f32 VR128:$src), (i32 0))),
+// def : Pat<(f32 (vector_extract (v4f32 VR128:$src), (iPTR 0))),
 //           (f32 FR32:$src)>;
 def MOVPS2SSrr : SSI<0x10, MRMSrcReg, (ops FR32:$dst, VR128:$src),
                      "movss {$src, $dst|$dst, $src}",
                      [(set FR32:$dst, (vector_extract (v4f32 VR128:$src),
-                                       (i32 0)))]>;
+                                       (iPTR 0)))]>;
 def MOVPS2SSmr : SSI<0x11, MRMDestMem, (ops f32mem:$dst, VR128:$src),
                      "movss {$src, $dst|$dst, $src}",
                      [(store (f32 (vector_extract (v4f32 VR128:$src),
-                                   (i32 0))), addr:$dst)]>;
+                                   (iPTR 0))), addr:$dst)]>;
 def MOVPD2SDrr : SDI<0x10, MRMSrcReg, (ops FR64:$dst, VR128:$src),
                      "movsd {$src, $dst|$dst, $src}",
                      [(set FR64:$dst, (vector_extract (v2f64 VR128:$src),
-                                       (i32 0)))]>;
+                                       (iPTR 0)))]>;
 def MOVPD2SDmr : SDI<0x11, MRMDestMem, (ops f64mem:$dst, VR128:$src),
                      "movsd {$src, $dst|$dst, $src}",
                      [(store (f64 (vector_extract (v2f64 VR128:$src),
-                                   (i32 0))), addr:$dst)]>;
+                                   (iPTR 0))), addr:$dst)]>;
 def MOVPDI2DIrr  : PDI<0x7E, MRMDestReg, (ops GR32:$dst, VR128:$src),
                        "movd {$src, $dst|$dst, $src}",
                        [(set GR32:$dst, (vector_extract (v4i32 VR128:$src),
-                                        (i32 0)))]>;
+                                        (iPTR 0)))]>;
 def MOVPDI2DImr  : PDI<0x7E, MRMDestMem, (ops i32mem:$dst, VR128:$src),
                        "movd {$src, $dst|$dst, $src}",
                        [(store (i32 (vector_extract (v4i32 VR128:$src),
-                                     (i32 0))), addr:$dst)]>;
+                                     (iPTR 0))), addr:$dst)]>;
 
 // Move to lower bits of a VR128, leaving upper bits alone.
 // Three operand (but two address) aliases.
