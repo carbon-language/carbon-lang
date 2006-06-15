@@ -256,7 +256,8 @@ namespace {
     Instruction *InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
                                  bool Inside, Instruction &IB);
     Instruction *PromoteCastOfAllocation(CastInst &CI, AllocationInst &AI);
-    
+    Instruction *MatchBSwap(BinaryOperator &I);
+
     Value *EvaluateInDifferentType(Value *V, const Type *Ty);
   };
 
@@ -2791,6 +2792,128 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   return Changed ? &I : 0;
 }
 
+/// CollectBSwapParts - Look to see if the specified value defines a single byte
+/// in the result.  If it does, and if the specified byte hasn't been filled in
+/// yet, fill it in and return false.
+static bool CollectBSwapParts(Value *V, std::vector<Value*> &ByteValues) {
+  Instruction *I = dyn_cast<Instruction>(V);
+  if (I == 0) return true;
+
+  // If this is an or instruction, it is an inner node of the bswap.
+  if (I->getOpcode() == Instruction::Or)
+    return CollectBSwapParts(I->getOperand(0), ByteValues) ||
+           CollectBSwapParts(I->getOperand(1), ByteValues);
+  
+  // If this is a shift by a constant int, and it is "24", then its operand
+  // defines a byte.  We only handle unsigned types here.
+  if (isa<ShiftInst>(I) && isa<ConstantInt>(I->getOperand(1))) {
+    // Not shifting the entire input by N-1 bytes?
+    if (cast<ConstantInt>(I->getOperand(1))->getRawValue() !=
+        8*(ByteValues.size()-1))
+      return true;
+    
+    unsigned DestNo;
+    if (I->getOpcode() == Instruction::Shl) {
+      // X << 24 defines the top byte with the lowest of the input bytes.
+      DestNo = ByteValues.size()-1;
+    } else {
+      // X >>u 24 defines the low byte with the highest of the input bytes.
+      DestNo = 0;
+    }
+    
+    // If the destination byte value is already defined, the values are or'd
+    // together, which isn't a bswap (unless it's an or of the same bits).
+    if (ByteValues[DestNo] && ByteValues[DestNo] != I->getOperand(0))
+      return true;
+    ByteValues[DestNo] = I->getOperand(0);
+    return false;
+  }
+  
+  // Otherwise, we can only handle and(shift X, imm), imm).  Bail out of if we
+  // don't have this.
+  Value *Shift = 0, *ShiftLHS = 0;
+  ConstantInt *AndAmt = 0, *ShiftAmt = 0;
+  if (!match(I, m_And(m_Value(Shift), m_ConstantInt(AndAmt))) ||
+      !match(Shift, m_Shift(m_Value(ShiftLHS), m_ConstantInt(ShiftAmt))))
+    return true;
+  Instruction *SI = cast<Instruction>(Shift);
+
+  // Make sure that the shift amount is by a multiple of 8 and isn't too big.
+  if (ShiftAmt->getRawValue() & 7 ||
+      ShiftAmt->getRawValue() > 8*ByteValues.size())
+    return true;
+  
+  // Turn 0xFF -> 0, 0xFF00 -> 1, 0xFF0000 -> 2, etc.
+  unsigned DestByte;
+  for (DestByte = 0; DestByte != ByteValues.size(); ++DestByte)
+    if (AndAmt->getRawValue() == uint64_t(0xFF) << 8*DestByte)
+      break;
+  // Unknown mask for bswap.
+  if (DestByte == ByteValues.size()) return true;
+  
+  unsigned ShiftBytes = ShiftAmt->getRawValue()/8;
+  unsigned SrcByte;
+  if (SI->getOpcode() == Instruction::Shl)
+    SrcByte = DestByte - ShiftBytes;
+  else
+    SrcByte = DestByte + ShiftBytes;
+  
+  // If the SrcByte isn't a bswapped value from the DestByte, reject it.
+  if (SrcByte != ByteValues.size()-DestByte-1)
+    return true;
+  
+  // If the destination byte value is already defined, the values are or'd
+  // together, which isn't a bswap (unless it's an or of the same bits).
+  if (ByteValues[DestByte] && ByteValues[DestByte] != SI->getOperand(0))
+    return true;
+  ByteValues[DestByte] = SI->getOperand(0);
+  return false;
+}
+
+/// MatchBSwap - Given an OR instruction, check to see if this is a bswap idiom.
+/// If so, insert the new bswap intrinsic and return it.
+Instruction *InstCombiner::MatchBSwap(BinaryOperator &I) {
+  // We can only handle bswap of unsigned integers, and cannot bswap one byte.
+  if (!I.getType()->isUnsigned() || I.getType() == Type::UByteTy)
+    return 0;
+  
+  /// ByteValues - For each byte of the result, we keep track of which value
+  /// defines each byte.
+  std::vector<Value*> ByteValues;
+  ByteValues.resize(I.getType()->getPrimitiveSize());
+    
+  // Try to find all the pieces corresponding to the bswap.
+  if (CollectBSwapParts(I.getOperand(0), ByteValues) ||
+      CollectBSwapParts(I.getOperand(1), ByteValues))
+    return 0;
+  
+  // Check to see if all of the bytes come from the same value.
+  Value *V = ByteValues[0];
+  if (V == 0) return 0;  // Didn't find a byte?  Must be zero.
+  
+  // Check to make sure that all of the bytes come from the same value.
+  for (unsigned i = 1, e = ByteValues.size(); i != e; ++i)
+    if (ByteValues[i] != V)
+      return 0;
+    
+  // If they do then *success* we can turn this into a bswap.  Figure out what
+  // bswap to make it into.
+  Module *M = I.getParent()->getParent()->getParent();
+  const char *FnName;
+  if (I.getType() == Type::UShortTy)
+    FnName = "llvm.bswap.i16";
+  else if (I.getType() == Type::UIntTy)
+    FnName = "llvm.bswap.i32";
+  else if (I.getType() == Type::ULongTy)
+    FnName = "llvm.bswap.i64";
+  else
+    assert(0 && "Unknown integer type!");
+  Function *F = M->getOrInsertFunction(FnName, I.getType(), I.getType(), NULL);
+  
+  return new CallInst(F, V);
+}
+
+
 Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
@@ -2850,6 +2973,13 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     if (A == Op0 || B == Op0)    // A | (A & ?)  --> A
       return ReplaceInstUsesWith(I, Op0);
 
+  // (A | B) | C  and  A | (B | C)  -> bswap if possible.
+  if (match(Op0, m_Or(m_Value(), m_Value())) ||
+      match(Op1, m_Or(m_Value(), m_Value()))) {
+    if (Instruction *BSwap = MatchBSwap(I))
+      return BSwap;
+  }
+  
   // (X^C)|Y -> (X|Y)^C iff Y&C == 0
   if (Op0->hasOneUse() && match(Op0, m_Xor(m_Value(A), m_ConstantInt(C1))) &&
       MaskedValueIsZero(Op1, C1->getZExtValue())) {
