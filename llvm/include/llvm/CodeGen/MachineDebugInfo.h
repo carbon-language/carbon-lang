@@ -57,7 +57,7 @@ class StructType;
 // Debug info constants.
 
 enum {
-  LLVMDebugVersion = 3                  // Current version of debug information.
+  LLVMDebugVersion = 4                  // Current version of debug information.
 };
 
 //===----------------------------------------------------------------------===//
@@ -400,13 +400,16 @@ public:
 /// array/struct types (eg., arrays, struct, union, enums.)
 class CompositeTypeDesc : public DerivedTypeDesc {
 private:
+  bool IsVector;                        // packed/vector array
   std::vector<DebugInfoDesc *> Elements;// Information used to compose type.
 
 public:
   CompositeTypeDesc(unsigned T);
   
   // Accessors
+  bool isVector() const { return IsVector; }
   std::vector<DebugInfoDesc *> &getElements() { return Elements; }
+  void setIsVector() { IsVector = true; }
 
   // Implement isa/cast/dyncast.
   static bool classof(const CompositeTypeDesc *) { return true; }

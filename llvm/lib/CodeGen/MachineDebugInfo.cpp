@@ -817,6 +817,7 @@ void DerivedTypeDesc::dump() {
 
 CompositeTypeDesc::CompositeTypeDesc(unsigned T)
 : DerivedTypeDesc(T)
+, IsVector(false)
 , Elements()
 {}
   
@@ -839,6 +840,7 @@ bool CompositeTypeDesc::classof(const DebugInfoDesc *D) {
 void CompositeTypeDesc::ApplyToFields(DIVisitor *Visitor) {
   DerivedTypeDesc::ApplyToFields(Visitor);
   
+  Visitor->Apply(IsVector);
   Visitor->Apply(Elements);
 }
 

@@ -246,17 +246,17 @@ namespace {
     : DwarfWriter(o, ap)
     {
       needsSet = true;
-      DwarfAbbrevSection = ".section __DWARFA,__debug_abbrev";
-      DwarfInfoSection = ".section __DWARFA,__debug_info";
-      DwarfLineSection = ".section __DWARFA,__debug_line";
-      DwarfFrameSection = ".section __DWARFA,__debug_frame";
-      DwarfPubNamesSection = ".section __DWARFA,__debug_pubnames";
-      DwarfPubTypesSection = ".section __DWARFA,__debug_pubtypes";
-      DwarfStrSection = ".section __DWARFA,__debug_str";
-      DwarfLocSection = ".section __DWARFA,__debug_loc";
-      DwarfARangesSection = ".section __DWARFA,__debug_aranges";
-      DwarfRangesSection = ".section __DWARFA,__debug_ranges";
-      DwarfMacInfoSection = ".section __DWARFA,__debug_macinfo";
+      DwarfAbbrevSection = ".section __DWARF,__debug_abbrev";
+      DwarfInfoSection = ".section __DWARF,__debug_info";
+      DwarfLineSection = ".section __DWARF,__debug_line";
+      DwarfFrameSection = ".section __DWARF,__debug_frame";
+      DwarfPubNamesSection = ".section __DWARF,__debug_pubnames";
+      DwarfPubTypesSection = ".section __DWARF,__debug_pubtypes";
+      DwarfStrSection = ".section __DWARF,__debug_str";
+      DwarfLocSection = ".section __DWARF,__debug_loc";
+      DwarfARangesSection = ".section __DWARF,__debug_aranges";
+      DwarfRangesSection = ".section __DWARF,__debug_ranges";
+      DwarfMacInfoSection = ".section __DWARF,__debug_macinfo";
       TextSection = ".text";
       DataSection = ".data";
     }

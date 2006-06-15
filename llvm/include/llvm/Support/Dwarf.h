@@ -37,10 +37,10 @@ enum llvm_dwarf_constants {
   DW_TAG_arg_variable = 0x101,          // Tag for argument variables.
   DW_TAG_return_variable = 0x102,       // Tag for return variables.
   
-  DW_TAG_user_base = 0x1000,             // Recommended base for user tags.
+  DW_TAG_user_base = 0x1000,            // Recommended base for user tags.
   
-  DW_CIE_VERSION = 1,                    // Common frame information version.
-  DW_CIE_ID	 = 0xffffffff                // Common frame information mark.
+  DW_CIE_VERSION = 1,                   // Common frame information version.
+  DW_CIE_ID	 = 0xffffffff               // Common frame information mark.
 };
 
 enum dwarf_constants {
@@ -198,6 +198,13 @@ enum dwarf_constants {
   DW_AT_elemental = 0x66,
   DW_AT_pure = 0x67,
   DW_AT_recursive = 0x68,
+  DW_AT_sf_names = 0x2101,
+  DW_AT_src_info = 0x2102,
+  DW_AT_mac_info = 0x2103,
+  DW_AT_src_coords = 0x2104,
+  DW_AT_body_begin = 0x2105,
+  DW_AT_body_end = 0x2106,
+  DW_AT_GNU_vector = 0x2107,
   DW_AT_lo_user = 0x2000,
   DW_AT_hi_user = 0x3fff,
 

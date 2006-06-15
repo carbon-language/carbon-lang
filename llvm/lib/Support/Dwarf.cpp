@@ -188,6 +188,13 @@ const char *AttributeString(unsigned Attribute) {
     case DW_AT_elemental:                  return "AT_elemental";
     case DW_AT_pure:                       return "AT_pure";
     case DW_AT_recursive:                  return "AT_recursive";
+    case DW_AT_sf_names:                   return "AT_sf_names";
+    case DW_AT_src_info:                   return "AT_src_info";
+    case DW_AT_mac_info:                   return "AT_mac_info";
+    case DW_AT_src_coords:                 return "AT_src_coords";
+    case DW_AT_body_begin:                 return "AT_body_begin";
+    case DW_AT_body_end:                   return "AT_body_end";
+    case DW_AT_GNU_vector:                 return "AT_GNU_vector";
     case DW_AT_lo_user:                    return "AT_lo_user";
     case DW_AT_hi_user:                    return "AT_hi_user";
   }

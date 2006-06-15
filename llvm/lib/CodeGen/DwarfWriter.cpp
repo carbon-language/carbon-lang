@@ -1265,7 +1265,7 @@ DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc, CompileUnit *Unit) {
     // Fundamental types like int, float, bool
     Slot = Ty = new DIE(DW_TAG_base_type);
     unsigned Encoding = BasicTy->getEncoding();
-    Ty->AddUInt  (DW_AT_encoding,  DW_FORM_data1, Encoding);
+    Ty->AddUInt(DW_AT_encoding,  DW_FORM_data1, Encoding);
   } else if (DerivedTypeDesc *DerivedTy = dyn_cast<DerivedTypeDesc>(TyDesc)) {
     // Create specific DIE.
     Slot = Ty = new DIE(DerivedTy->getTag());
@@ -1287,6 +1287,12 @@ DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc, CompileUnit *Unit) {
         Ty->AddDIEntry(DW_AT_type, DW_FORM_ref4,
                        NewType(Context, FromTy, Unit));
       }
+      
+      // check for vector type
+      if (CompTy->isVector()) {
+        Ty->AddUInt(DW_AT_GNU_vector, DW_FORM_flag, 1);
+      }
+      
       // Don't emit size attribute.
       Size = 0;
       
@@ -1419,7 +1425,8 @@ CompileUnit *DwarfWriter::NewCompileUnit(CompileUnitDesc *UnitDesc,
                                          unsigned ID) {
   // Construct debug information entry.
   DIE *Die = new DIE(DW_TAG_compile_unit);
-  Die->AddLabel (DW_AT_stmt_list, DW_FORM_data4,  DWLabel("line", 0));
+  Die->AddDelta (DW_AT_stmt_list, DW_FORM_data4,  DWLabel("line", 0),
+                                                  DWLabel("section_line", 0));
   Die->AddLabel (DW_AT_high_pc,   DW_FORM_addr,   DWLabel("text_end", 0));
   Die->AddLabel (DW_AT_low_pc,    DW_FORM_addr,   DWLabel("text_begin", 0));
   Die->AddString(DW_AT_producer,  DW_FORM_string, UnitDesc->getProducer());
@@ -1842,7 +1849,7 @@ void DwarfWriter::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
         int stackGrowth =
             Asm->TM.getFrameInfo()->getStackGrowthDirection() ==
               TargetFrameInfo::StackGrowsUp ?
-            AddressSize : -AddressSize;
+                AddressSize : -AddressSize;
         
         EmitULEB128Bytes(Src.getOffset() / stackGrowth);
         EOL("Offset");
@@ -1875,7 +1882,8 @@ void DwarfWriter::EmitDebugInfo() const {
                              
       EmitInt32(ContentSize);  EOL("Length of Compilation Unit Info");
       EmitInt16(DWARF_VERSION); EOL("DWARF version number");
-      EmitReference("abbrev_begin", 0); EOL("Offset Into Abbrev. Section");
+      EmitDifference("abbrev_begin", 0, "section_abbrev", 0);
+      EOL("Offset Into Abbrev. Section");
       EmitInt8(AddressSize); EOL("Address Size (in bytes)");
     
       EmitDIE(Die);

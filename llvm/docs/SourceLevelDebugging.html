@@ -575,6 +575,7 @@ NULL derived type.</p>
     uint,   ;; Size in bits
     uint,   ;; Alignment in bits
     uint,   ;; Offset in bits
+    bool,   ;; Is vector flag
     {  }*   ;; Reference to array of member descriptors
   }
 </pre>
@@ -589,6 +590,8 @@ are possible tag values;</p>
   DW_TAG_structure_type = 19
   DW_TAG_union_type = 23
 </pre>
+
+<p>The vector flag indicates that an array type is a native packed vector.</p>
 
 <p>The members of array types (tag = <tt>DW_TAG_array_type</tt>) are <a
 href="#format_subrange">subrange descriptors</a>, each representing the range of
@@ -1600,7 +1603,8 @@ struct Color {
     uint 96, 
     uint 32, 
     uint 0, 
-    {  }* null, 
+    {  }* null,
+    bool false,
     {  }* cast ([3 x {  }*]* %llvm.dbg.array to {  }*) }, section "llvm.metadata"
 %str2 = internal constant [6 x sbyte] c"Color\00", section "llvm.metadata"
 
@@ -1693,6 +1697,7 @@ enum Trees {
     uint 32, 
     uint 0, 
     {  }* null, 
+    bool false,
     {  }* cast ([3 x {  }*]* %llvm.dbg.array to {  }*) }, section "llvm.metadata"
 %str1 = internal constant [6 x sbyte] c"Trees\00", section "llvm.metadata"
 
