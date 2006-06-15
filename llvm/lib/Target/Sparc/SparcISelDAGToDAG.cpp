@@ -564,9 +564,9 @@ SparcTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
       }
       
       // Split the value into top and bottom part.  Top part goes in a reg.
-      SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Val, 
+      SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, getPointerTy(), Val, 
                                  DAG.getConstant(1, MVT::i32));
-      SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Val,
+      SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, getPointerTy(), Val,
                                  DAG.getConstant(0, MVT::i32));
       RegValuesToPass.push_back(Hi);
       

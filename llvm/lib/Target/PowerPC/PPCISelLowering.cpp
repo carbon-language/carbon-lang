@@ -1334,7 +1334,8 @@ static SDOperand LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
   return FP;
 }
 
-static SDOperand LowerSHL(SDOperand Op, SelectionDAG &DAG) {
+static SDOperand LowerSHL(SDOperand Op, SelectionDAG &DAG,
+                          MVT::ValueType PtrVT) {
   assert(Op.getValueType() == MVT::i64 &&
          Op.getOperand(1).getValueType() == MVT::i32 && "Unexpected SHL!");
   // The generic code does a fine job expanding shift by a constant.
@@ -1343,9 +1344,9 @@ static SDOperand LowerSHL(SDOperand Op, SelectionDAG &DAG) {
   // Otherwise, expand into a bunch of logical ops.  Note that these ops
   // depend on the PPC behavior for oversized shift amounts.
   SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op.getOperand(0),
-                             DAG.getConstant(0, MVT::i32));
+                             DAG.getConstant(0, PtrVT));
   SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op.getOperand(0),
-                             DAG.getConstant(1, MVT::i32));
+                             DAG.getConstant(1, PtrVT));
   SDOperand Amt = Op.getOperand(1);
   
   SDOperand Tmp1 = DAG.getNode(ISD::SUB, MVT::i32,
@@ -1361,7 +1362,8 @@ static SDOperand LowerSHL(SDOperand Op, SelectionDAG &DAG) {
   return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, OutLo, OutHi);
 }
 
-static SDOperand LowerSRL(SDOperand Op, SelectionDAG &DAG) {
+static SDOperand LowerSRL(SDOperand Op, SelectionDAG &DAG,
+                          MVT::ValueType PtrVT) {
   assert(Op.getValueType() == MVT::i64 &&
          Op.getOperand(1).getValueType() == MVT::i32 && "Unexpected SHL!");
   // The generic code does a fine job expanding shift by a constant.
@@ -1370,9 +1372,9 @@ static SDOperand LowerSRL(SDOperand Op, SelectionDAG &DAG) {
   // Otherwise, expand into a bunch of logical ops.  Note that these ops
   // depend on the PPC behavior for oversized shift amounts.
   SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op.getOperand(0),
-                             DAG.getConstant(0, MVT::i32));
+                             DAG.getConstant(0, PtrVT));
   SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op.getOperand(0),
-                             DAG.getConstant(1, MVT::i32));
+                             DAG.getConstant(1, PtrVT));
   SDOperand Amt = Op.getOperand(1);
   
   SDOperand Tmp1 = DAG.getNode(ISD::SUB, MVT::i32,
@@ -1388,7 +1390,8 @@ static SDOperand LowerSRL(SDOperand Op, SelectionDAG &DAG) {
   return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, OutLo, OutHi);
 }
 
-static SDOperand LowerSRA(SDOperand Op, SelectionDAG &DAG) {
+static SDOperand LowerSRA(SDOperand Op, SelectionDAG &DAG,
+                          MVT::ValueType PtrVT) {
   assert(Op.getValueType() == MVT::i64 &&
          Op.getOperand(1).getValueType() == MVT::i32 && "Unexpected SRA!");
   // The generic code does a fine job expanding shift by a constant.
@@ -1396,9 +1399,9 @@ static SDOperand LowerSRA(SDOperand Op, SelectionDAG &DAG) {
   
   // Otherwise, expand into a bunch of logical ops, followed by a select_cc.
   SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op.getOperand(0),
-                             DAG.getConstant(0, MVT::i32));
+                             DAG.getConstant(0, PtrVT));
   SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op.getOperand(0),
-                             DAG.getConstant(1, MVT::i32));
+                             DAG.getConstant(1, PtrVT));
   SDOperand Amt = Op.getOperand(1);
   
   SDOperand Tmp1 = DAG.getNode(ISD::SUB, MVT::i32,
@@ -2132,9 +2135,9 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::SINT_TO_FP:         return LowerSINT_TO_FP(Op, DAG);
 
   // Lower 64-bit shifts.
-  case ISD::SHL:                return LowerSHL(Op, DAG);
-  case ISD::SRL:                return LowerSRL(Op, DAG);
-  case ISD::SRA:                return LowerSRA(Op, DAG);
+  case ISD::SHL:                return LowerSHL(Op, DAG, getPointerTy());
+  case ISD::SRL:                return LowerSRL(Op, DAG, getPointerTy());
+  case ISD::SRA:                return LowerSRA(Op, DAG, getPointerTy());
 
   // Vector-related lowering.
   case ISD::BUILD_VECTOR:       return LowerBUILD_VECTOR(Op, DAG);
