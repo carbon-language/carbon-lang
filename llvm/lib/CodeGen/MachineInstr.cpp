@@ -91,7 +91,8 @@ MachineInstr *MachineInstr::removeFromParent() {
 ///
 bool MachineInstr::OperandsComplete() const {
   int NumOperands = TargetInstrDescriptors[Opcode].numOperands;
-  if (NumOperands >= 0 && getNumOperands() >= (unsigned)NumOperands)
+  if ((TargetInstrDescriptors[Opcode].Flags & M_VARIABLE_OPS) == 0 &&
+      getNumOperands() >= (unsigned)NumOperands)
     return true;  // Broken: we have all the operands of this instruction!
   return false;
 }

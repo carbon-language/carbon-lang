@@ -358,7 +358,8 @@ void ScheduleDAG::EmitNode(SDNode *Node,
     unsigned NodeOperands = CountOperands(Node);
     unsigned NumMIOperands = NodeOperands + NumResults;
 #ifndef NDEBUG
-    assert((unsigned(II.numOperands) == NumMIOperands || II.numOperands == -1)&&
+    assert((unsigned(II.numOperands) == NumMIOperands ||
+            (II.Flags & M_VARIABLE_OPS)) &&
            "#operands for dag node doesn't match .td file!"); 
 #endif
 

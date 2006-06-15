@@ -76,6 +76,10 @@ const unsigned M_TERMINATOR_FLAG       = 1 << 10;
 // block.
 const unsigned M_USES_CUSTOM_DAG_SCHED_INSERTION = 1 << 11;
 
+// M_VARIABLE_OPS - Set if this instruction can have a variable number of extra
+// operands in addition to the minimum number operands specified.
+const unsigned M_VARIABLE_OPS = 1 << 12;
+
 // Machine operand flags
 // M_LOOK_UP_PTR_REG_CLASS - Set if this operand is a pointer value and it
 // requires a callback to look up its register class.
@@ -97,7 +101,7 @@ public:
 class TargetInstrDescriptor {
 public:
   const char *    Name;          // Assembly language mnemonic for the opcode.
-  int             numOperands;   // Number of args; -1 if variable #args
+  unsigned        numOperands;   // Num of args (may be more if variable_ops).
   InstrSchedClass schedClass;    // enum  identifying instr sched class
   unsigned        Flags;         // flags identifying machine instr class
   unsigned        TSFlags;       // Target Specific Flag values
@@ -144,6 +148,11 @@ public:
 
   const TargetRegisterClass
   *getInstrOperandRegClass(const TargetInstrDescriptor *II, unsigned Op) const {
+    if (Op >= II->numOperands) {
+      if (II->Flags & M_VARIABLE_OPS)
+        return NULL;
+      assert(false && "Invalid operand # of instruction");
+    }
     const TargetOperandInfo &toi = II->OpInfo[Op];
     return (toi.Flags & M_LOOK_UP_PTR_REG_CLASS)
            ? getPointerRegClass() : toi.RegClass;
@@ -210,6 +219,10 @@ public:
   /// machine basic block.
   bool usesCustomDAGSchedInsertionHook(unsigned Opcode) const {
     return get(Opcode).Flags & M_USES_CUSTOM_DAG_SCHED_INSERTION;
+  }
+
+  bool hasVariableOperands(MachineOpCode Opcode) const {
+    return get(Opcode).Flags & M_VARIABLE_OPS;
   }
 
   /// Return true if the instruction is a register to register move

@@ -64,9 +64,6 @@ void InstrInfoEmitter::printDefList(const std::vector<Record*> &Uses,
 
 static std::vector<Record*> GetOperandInfo(const CodeGenInstruction &Inst) {
   std::vector<Record*> Result;
-  if (Inst.hasVariableNumberOfOperands)
-    return Result;  // No info for variable operand instrs.
-
   for (unsigned i = 0, e = Inst.OperandList.size(); i != e; ++i) {
     if (Inst.OperandList[i].Rec->isSubClassOf("RegisterClass")) {
       Result.push_back(Inst.OperandList[i].Rec);
@@ -170,15 +167,13 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
                          std::map<std::vector<Record*>, unsigned> &EmittedLists,
                                std::map<std::vector<Record*>, unsigned> &OpInfo,
                                   std::ostream &OS) {
-  int NumOperands;
-  if (Inst.hasVariableNumberOfOperands)
-    NumOperands = -1;
-  else if (!Inst.OperandList.empty())
+  int MinOperands;
+  if (!Inst.OperandList.empty())
     // Each logical operand can be multiple MI operands.
-    NumOperands = Inst.OperandList.back().MIOperandNo +
+    MinOperands = Inst.OperandList.back().MIOperandNo +
                   Inst.OperandList.back().MINumOperands;
   else
-    NumOperands = 0;
+    MinOperands = 0;
   
   OS << "  { \"";
   if (Inst.Name.empty())
@@ -189,7 +184,7 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   unsigned ItinClass = !IsItineraries ? 0 :
             ItinClassNumber(Inst.TheDef->getValueAsDef("Itinerary")->getName());
   
-  OS << "\",\t" << NumOperands << ", " << ItinClass
+  OS << "\",\t" << MinOperands << ", " << ItinClass
      << ", 0";
 
   // Try to determine (from the pattern), if the instruction is a store.
@@ -224,6 +219,8 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   if (Inst.isTerminator) OS << "|M_TERMINATOR_FLAG";
   if (Inst.usesCustomDAGSchedInserter)
     OS << "|M_USES_CUSTOM_DAG_SCHED_INSERTION";
+  if (Inst.hasVariableNumberOfOperands)
+    OS << "|M_VARIABLE_OPS";
   OS << ", 0";
 
   // Emit all of the target-specific flags...
