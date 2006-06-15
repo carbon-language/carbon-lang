@@ -491,6 +491,26 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
   // loop over each instruction
   MachineBasicBlock::iterator MII = MBB.begin();
   const TargetInstrInfo &TII = *TM->getInstrInfo();
+  
+  // If this is the first basic block in the machine function, add live-in
+  // registers as active.
+  if (&MBB == &*MF->begin()) {
+    for (MachineFunction::livein_iterator I = MF->livein_begin(),
+         E = MF->livein_end(); I != E; ++I) {
+      unsigned Reg = I->first;
+      PhysRegsEverUsed[Reg] = true;
+      PhysRegsUsed[Reg] = 0;            // It is free and reserved now
+      PhysRegsUseOrder.push_back(Reg);
+      for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
+           *AliasSet; ++AliasSet) {
+        PhysRegsUseOrder.push_back(*AliasSet);
+        PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
+        PhysRegsEverUsed[*AliasSet] = true;
+      }
+    }    
+  }
+  
+  // Otherwise, sequentially allocate each instruction in the MBB.
   while (MII != MBB.end()) {
     MachineInstr *MI = MII++;
     const TargetInstrDescriptor &TID = TII.get(MI->getOpcode());
