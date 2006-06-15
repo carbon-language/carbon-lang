@@ -536,6 +536,8 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
     break;
   case Type::PointerTyID:
     if (TD->getPointerSize() == 8) {
+      assert(Data64bitsDirective &&
+             "Target cannot handle 64-bit pointer exprs!");
       O << Data64bitsDirective;
       break;
     }
