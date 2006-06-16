@@ -26,44 +26,63 @@ namespace llvm {
 class PassManager;
 class GlobalValue;
 
+/// PPCTargetMachine - Common code between 32-bit and 64-bit PowerPC targets.
+///
 class PPCTargetMachine : public TargetMachine {
-  const TargetData DataLayout;       // Calculates type size & alignment
-  PPCInstrInfo           InstrInfo;
-  PPCSubtarget           Subtarget;
-  PPCFrameInfo           FrameInfo;
-  PPCJITInfo             JITInfo;
-  PPCTargetLowering      TLInfo;
-  InstrItineraryData     InstrItins;
+  PPCSubtarget        Subtarget;
+  const TargetData    DataLayout;       // Calculates type size & alignment
+  PPCInstrInfo        InstrInfo;
+  PPCFrameInfo        FrameInfo;
+  PPCJITInfo          JITInfo;
+  PPCTargetLowering   TLInfo;
+  InstrItineraryData  InstrItins;
 public:
-  PPCTargetMachine(const Module &M, const std::string &FS);
+  PPCTargetMachine(const Module &M, const std::string &FS, bool is64Bit);
 
   virtual const PPCInstrInfo     *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }
   virtual       TargetJITInfo    *getJITInfo()         { return &JITInfo; }
-  virtual const TargetSubtarget  *getSubtargetImpl() const{ return &Subtarget; }
   virtual       PPCTargetLowering *getTargetLowering() const { 
    return const_cast<PPCTargetLowering*>(&TLInfo); 
   }
   virtual const MRegisterInfo    *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }
-  virtual const TargetData       *getTargetData() const { return &DataLayout; }
+  
+  virtual const TargetData    *getTargetData() const    { return &DataLayout; }
+  virtual const PPCSubtarget  *getSubtargetImpl() const { return &Subtarget; }
   virtual const InstrItineraryData getInstrItineraryData() const {  
     return InstrItins;
   }
   
 
-  static unsigned getJITMatchQuality();
-
-  static unsigned getModuleMatchQuality(const Module &M);
-  
   virtual bool addPassesToEmitFile(PassManager &PM, std::ostream &Out,
                                    CodeGenFileType FileType, bool Fast);
   
   bool addPassesToEmitMachineCode(FunctionPassManager &PM,
                                   MachineCodeEmitter &MCE);
 };
+
+/// PPC32TargetMachine - PowerPC 32-bit target machine.
+///
+class PPC32TargetMachine : public PPCTargetMachine {
+public:
+  PPC32TargetMachine(const Module &M, const std::string &FS);
   
+  static unsigned getJITMatchQuality();
+  static unsigned getModuleMatchQuality(const Module &M);
+};
+
+/// PPC64TargetMachine - PowerPC 64-bit target machine.
+///
+class PPC64TargetMachine : public PPCTargetMachine {
+public:
+  PPC64TargetMachine(const Module &M, const std::string &FS);
+  
+  static unsigned getJITMatchQuality();
+  static unsigned getModuleMatchQuality(const Module &M);
+};
+
 } // end namespace llvm
 
 #endif

@@ -29,19 +29,29 @@ using namespace llvm;
 
 namespace {
   // Register the targets
-  RegisterTarget<PPCTargetMachine>
-  X("ppc32", "  PowerPC");
+  RegisterTarget<PPC32TargetMachine>
+  X("ppc32", "  PowerPC 32");
+  RegisterTarget<PPC64TargetMachine>
+  Y("ppc64", "  PowerPC 64");
 }
 
-unsigned PPCTargetMachine::getJITMatchQuality() {
+unsigned PPC32TargetMachine::getJITMatchQuality() {
 #if defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)
-  return 10;
+  if (sizeof(void*) == 4)
+    return 10;
 #else
   return 0;
 #endif
 }
+unsigned PPC64TargetMachine::getJITMatchQuality() {
+#if defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)
+  if (sizeof(void*) == 8)
+    return 10 * 0/*FIXME: not PPC64-JIT support yet! */;
+#endif
+  return 0;
+}
 
-unsigned PPCTargetMachine::getModuleMatchQuality(const Module &M) {
+unsigned PPC32TargetMachine::getModuleMatchQuality(const Module &M) {
   // We strongly match "powerpc-*".
   std::string TT = M.getTargetTriple();
   if (TT.size() >= 8 && std::string(TT.begin(), TT.begin()+8) == "powerpc-")
@@ -57,11 +67,31 @@ unsigned PPCTargetMachine::getModuleMatchQuality(const Module &M) {
   return getJITMatchQuality()/2;
 }
 
-PPCTargetMachine::PPCTargetMachine(const Module &M, const std::string &FS)
-: TargetMachine("PowerPC"),
-  DataLayout(std::string("PowerPC"), std::string("E-p:32:32-d:32-l:32")),
-  Subtarget(M, FS), FrameInfo(*this, false), JITInfo(*this),
-  TLInfo(*this), InstrItins(Subtarget.getInstrItineraryData()) {
+unsigned PPC64TargetMachine::getModuleMatchQuality(const Module &M) {
+  // We strongly match "powerpc64-*".
+  std::string TT = M.getTargetTriple();
+  if (TT.size() >= 10 && std::string(TT.begin(), TT.begin()+10) == "powerpc64-")
+    return 20;
+  
+  if (M.getEndianness()  == Module::BigEndian &&
+      M.getPointerSize() == Module::Pointer64)
+    return 10;                                   // Weak match
+  else if (M.getEndianness() != Module::AnyEndianness ||
+           M.getPointerSize() != Module::AnyPointerSize)
+    return 0;                                    // Match for some other target
+  
+  return getJITMatchQuality()/2;
+}
+
+
+PPCTargetMachine::PPCTargetMachine(const Module &M, const std::string &FS,
+                                   bool is64Bit)
+  : TargetMachine("PowerPC"), Subtarget(M, FS, is64Bit),
+    DataLayout(std::string("PowerPC"), 
+               std::string(Subtarget.getTargetDataString())),
+    FrameInfo(*this, false), JITInfo(*this), TLInfo(*this),
+    InstrItins(Subtarget.getInstrItineraryData()) {
+
   if (TargetDefault == PPCTarget) {
     if (Subtarget.isAIX()) PPCTarget = TargetAIX;
     if (Subtarget.isDarwin()) PPCTarget = TargetDarwin;
@@ -71,6 +101,15 @@ PPCTargetMachine::PPCTargetMachine(const Module &M, const std::string &FS)
       setRelocationModel(Reloc::DynamicNoPIC);
     else
       setRelocationModel(Reloc::PIC);
+}
+
+PPC32TargetMachine::PPC32TargetMachine(const Module &M, const std::string &FS) 
+  : PPCTargetMachine(M, FS, false) {
+}
+
+
+PPC64TargetMachine::PPC64TargetMachine(const Module &M, const std::string &FS)
+  : PPCTargetMachine(M, FS, true) {
 }
 
 /// addPassesToEmitFile - Add passes to the specified pass manager to implement
