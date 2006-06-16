@@ -45,20 +45,16 @@ class TargetData : public ImmutablePass {
   unsigned char PointerAlignment;      // Defaults to 8 bytes
 
 public:
-  TargetData(const std::string &TargetName = "",
-             bool LittleEndian = false,
-             unsigned char PtrSize = 8,
-             unsigned char PtrAl   = 8, unsigned char DoubleAl = 8,
-             unsigned char FloatAl = 4, unsigned char LongAl   = 8,
-             unsigned char IntAl   = 4, unsigned char ShortAl  = 2,
-             unsigned char ByteAl  = 1, unsigned char BoolAl   = 1);
-
   /// Constructs a TargetData from a string of the following format:
   /// "E-p:64:64-d:64-f:32-l:64-i:32-s:16-b:8-B:8"
   /// The above string is considered the default, and any values not specified
   /// in the string will be assumed to be as above.
-  TargetData(const std::string &TargetName,
-             const std::string &TargetDescription);
+  TargetData(const std::string &TargetName = "",
+             const std::string &TargetDescription = "") {
+    assert(!TargetName.empty() &&
+           "ERROR: Tool did not specify a target data to use!");
+    init(TargetDescription);
+  }
   
   // Copy constructor
   TargetData (const TargetData &TD) :
@@ -78,6 +74,11 @@ public:
   TargetData(const std::string &ToolName, const Module *M);
   ~TargetData();  // Not virtual, do not subclass this class
 
+  /// init - Specify configuration if not available at ctor time.
+  ///
+  void init(const std::string &TargetDescription);
+  
+  
   /// Target endianness...
   bool          isLittleEndian()       const { return     LittleEndian; }
   bool          isBigEndian()          const { return    !LittleEndian; }

@@ -95,38 +95,7 @@ unsigned StructLayout::getElementContainingOffset(uint64_t Offset) const {
 //                       TargetData Class Implementation
 //===----------------------------------------------------------------------===//
 
-TargetData::TargetData(const std::string &TargetName,
-                       bool isLittleEndian, unsigned char PtrSize,
-                       unsigned char PtrAl, unsigned char DoubleAl,
-                       unsigned char FloatAl, unsigned char LongAl,
-                       unsigned char IntAl, unsigned char ShortAl,
-                       unsigned char ByteAl, unsigned char BoolAl) {
-
-  // If this assert triggers, a pass "required" TargetData information, but the
-  // top level tool did not provide one for it.  We do not want to default
-  // construct, or else we might end up using a bad endianness or pointer size!
-  //
-  assert(!TargetName.empty() &&
-         "ERROR: Tool did not specify a target data to use!");
-
-  LittleEndian     = isLittleEndian;
-  PointerSize      = PtrSize;
-  PointerAlignment = PtrAl;
-  DoubleAlignment  = DoubleAl;
-  FloatAlignment   = FloatAl;
-  LongAlignment    = LongAl;
-  IntAlignment     = IntAl;
-  ShortAlignment   = ShortAl;
-  ByteAlignment    = ByteAl;
-  BoolAlignment    = BoolAl;
-}
-
-TargetData::TargetData(const std::string &TargetName,
-                       const std::string &TargetDescription) {
-  assert(!TargetName.empty() &&
-         "ERROR: Tool did not specify a target data to use!");
-
-                       
+void TargetData::init(const std::string &TargetDescription) {
   std::string temp = TargetDescription;
   
   LittleEndian = false;
