@@ -56,8 +56,14 @@ bool CompleteBUDataStructures::runOnModule(Module &M) {
   }
 
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (!I->isExternal() && !DSInfo.count(I))
+    if (!I->isExternal() && !DSInfo.count(I)) {
+#ifndef NDEBUG
+      if (MainFunc)
+        std::cerr << "*** CBU: Function unreachable from main: "
+                  << I->getName() << "\n";
+#endif
       calculateSCCGraphs(getOrCreateGraph(*I), Stack, NextID, ValMap);
+    }
 
   GlobalsGraph->removeTriviallyDeadNodes();
 
