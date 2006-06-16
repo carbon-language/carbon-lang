@@ -21,5 +21,3 @@ short s1625 = sm16 + sm25;
 return s0734 + s1625;
 }
 
-// FIXME: PR735
-// XFAIL: llvmgcc4
