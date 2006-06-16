@@ -370,13 +370,19 @@ endif
 
 # If we are building a universal binary on Mac OS/X, pass extra options.  This
 # is useful to people that want to link the LLVM libraries into their universal
-# apps.
+# apps.  The UNIVERSAL_SDK_PATH variable can optionally be specified as a path
+# to the SDK to use.  For Mac OS/X 10.4 Intel machines, the traditional one is:
+#   UNIVERSAL_SDK_PATH=/Developer/SDKs/MacOSX10.4u.sdk/
 ifdef UNIVERSAL
-  CompileCommonOpts += \
-      -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.4u.sdk/
+  CompileCommonOpts += -arch i386 -arch ppc
   Relink.Flags := -XCClinker -arch -XCClinker i386 -XCClinker -arch \
-      -XCClinker ppc -XCClinker \
-      -isysroot -XCClinker /Developer/SDKs/MacOSX10.4u.sdk/
+                  -XCClinker ppc
+  ifdef UNIVERSAL_SDK_PATH
+    CompileCommonOpts += -isysroot $(UNIVERSAL_SDK_PATH)
+    Relink.Flags      += -XCClinker -isysroot -XCClinker $(UNIVERSAL_SDK_PATH)
+  endif
+
+  # Building universal cannot compute dependencies automatically.
   DISABLE_AUTO_DEPENDENCIES=1
 endif
 
