@@ -134,7 +134,7 @@ int main(int argc, char **argv) {
     PassManager Passes;
 
     // Add an appropriate TargetData instance for this module...
-    Passes.add(new TargetData("opt", M.get()));
+    Passes.add(new TargetData(M.get()));
 
     // Create a new optimization pass for each one specified on the command line
     for (unsigned i = 0; i < OptimizationList.size(); ++i) {

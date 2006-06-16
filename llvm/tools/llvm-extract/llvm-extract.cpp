@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
     // In addition to deleting all other functions, we also want to spiff it
     // up a little bit.  Do this now.
     PassManager Passes;
-    Passes.add(new TargetData("extract", M.get())); // Use correct TargetData
+    Passes.add(new TargetData(M.get())); // Use correct TargetData
     // Either isolate the function or delete it from the Module
     Passes.add(createFunctionExtractionPass(F, DeleteFn));
     Passes.add(createGlobalDCEPass());             // Delete unreachable globals

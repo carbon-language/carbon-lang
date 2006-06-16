@@ -192,7 +192,7 @@ int main(int argc, char **argv) {
     PassManager Passes;
 
     // Add an appropriate TargetData instance for this module...
-    Passes.add(new TargetData("gccas", M.get()));
+    Passes.add(new TargetData(M.get()));
 
     // Add all of the transformation passes to the pass manager to do the cleanup
     // and optimization of the GCC output.

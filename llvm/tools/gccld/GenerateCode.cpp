@@ -207,7 +207,7 @@ int llvm::GenerateBytecode(Module *M, int StripLevel, bool Internalize,
   if (Verify) Passes.add(createVerifierPass());
 
   // Add an appropriate TargetData instance for this module...
-  addPass(Passes, new TargetData("gccld", M));
+  addPass(Passes, new TargetData(M));
 
   // Often if the programmer does not specify proper prototypes for the
   // functions they are calling, they end up calling a vararg version of the

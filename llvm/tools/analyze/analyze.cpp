@@ -148,7 +148,7 @@ int main(int argc, char **argv) {
     PassManager Passes;
 
     // Add an appropriate TargetData instance for this module...
-    Passes.add(new TargetData("analyze", CurMod));
+    Passes.add(new TargetData(CurMod));
 
     // Make sure the input LLVM is well formed.
     if (!NoVerify)

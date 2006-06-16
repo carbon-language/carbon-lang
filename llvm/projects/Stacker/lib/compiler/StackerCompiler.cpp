@@ -264,7 +264,7 @@ StackerCompiler::compile(
         // Set up a pass manager
         PassManager Passes;
         // Add in the passes we want to execute
-        Passes.add(new TargetData("stkrc",TheModule));
+        Passes.add(new TargetData(TheModule));
         // Verify we start with valid
         Passes.add(createVerifierPass());
 

@@ -104,7 +104,7 @@ int BugDriver::runPassesAsChild(const std::vector<const PassInfo*> &Passes) {
 
   PassManager PM;
   // Make sure that the appropriate target data is always used...
-  PM.add(new TargetData("bugpoint", Program));
+  PM.add(new TargetData(Program));
 
   for (unsigned i = 0, e = Passes.size(); i != e; ++i) {
     if (Passes[i]->getNormalCtor())

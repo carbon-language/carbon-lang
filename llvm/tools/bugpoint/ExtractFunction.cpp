@@ -80,7 +80,7 @@ Module *BugDriver::deleteInstructionFromProgram(const Instruction *I,
   // Spiff up the output a little bit.
   PassManager Passes;
   // Make sure that the appropriate target data is always used...
-  Passes.add(new TargetData("bugpoint", Result));
+  Passes.add(new TargetData(Result));
 
   /// FIXME: If this used runPasses() like the methods below, we could get rid
   /// of the -disable-* options!
