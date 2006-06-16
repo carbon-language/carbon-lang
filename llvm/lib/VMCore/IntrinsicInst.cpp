@@ -61,13 +61,13 @@ Value *DbgInfoIntrinsic::StripCast(Value *C) {
 std::string DbgStopPointInst::getFileName() const {
   GlobalVariable *GV = cast<GlobalVariable>(getContext());
   ConstantStruct *CS = cast<ConstantStruct>(GV->getInitializer());
-  return CS->getOperand(4)->getStringValue();
+  return CS->getOperand(3)->getStringValue();
 }
 
 std::string DbgStopPointInst::getDirectory() const {
   GlobalVariable *GV = cast<GlobalVariable>(getContext());
   ConstantStruct *CS = cast<ConstantStruct>(GV->getInitializer());
-  return CS->getOperand(5)->getStringValue();
+  return CS->getOperand(4)->getStringValue();
 }
 
 //===----------------------------------------------------------------------===//
