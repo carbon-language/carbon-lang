@@ -33,8 +33,8 @@ protected:
 
   /// Used by the ISel to turn in optimizations for POWER4-derived architectures
   bool IsGigaProcessor;
-  bool Is64Bit;
-  bool Has64BitRegs;
+  bool Has64BitSupport;
+  bool Use64BitRegs;
   bool HasAltivec;
   bool HasFSQRT;
   bool HasSTFIWX;
@@ -66,12 +66,12 @@ public:
 
   bool hasFSQRT() const { return HasFSQRT; }
   bool hasSTFIWX() const { return HasSTFIWX; }
-  bool has64BitRegs() const { return Has64BitRegs; }
+  bool use64BitRegs() const { return Use64BitRegs; }
   bool hasAltivec() const { return HasAltivec; }
   
   bool isAIX() const { return IsAIX; }
   bool isDarwin() const { return IsDarwin; }
-  bool is64Bit() const { return Is64Bit; }
+  bool has64BitSupport() const { return Has64BitSupport; }
   bool isGigaProcessor() const { return IsGigaProcessor; }
 };
 } // End llvm namespace

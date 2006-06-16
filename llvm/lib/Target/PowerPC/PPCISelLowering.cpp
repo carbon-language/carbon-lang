@@ -146,7 +146,7 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   // We want to custom lower some of our intrinsics.
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
   
-  if (TM.getSubtarget<PPCSubtarget>().is64Bit()) {
+  if (TM.getSubtarget<PPCSubtarget>().has64BitSupport()) {
     // They also have instructions for converting between i64 and fp.
     setOperationAction(ISD::FP_TO_SINT, MVT::i64, Custom);
     setOperationAction(ISD::SINT_TO_FP, MVT::i64, Custom);
@@ -163,7 +163,7 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::FP_TO_UINT, MVT::i32, Expand);
   }
 
-  if (TM.getSubtarget<PPCSubtarget>().has64BitRegs()) {
+  if (TM.getSubtarget<PPCSubtarget>().use64BitRegs()) {
     // 64 bit PowerPC implementations can support i64 types directly
     addRegisterClass(MVT::i64, PPC::G8RCRegisterClass);
     // BUILD_PAIR can't be handled natively, and should be expanded to shl/or
@@ -2227,7 +2227,7 @@ SDOperand PPCTargetLowering::PerformDAGCombine(SDNode *N,
   switch (N->getOpcode()) {
   default: break;
   case ISD::SINT_TO_FP:
-    if (TM.getSubtarget<PPCSubtarget>().is64Bit()) {
+    if (TM.getSubtarget<PPCSubtarget>().has64BitSupport()) {
       if (N->getOperand(0).getOpcode() == ISD::FP_TO_SINT) {
         // Turn (sint_to_fp (fp_to_sint X)) -> fctidz/fcfid without load/stores.
         // We allow the src/dst to be either f32/f64, but the intermediate
