@@ -452,7 +452,8 @@ static bool LinkGlobals(Module *Dest, Module *Src,
   SymbolTable *ST = (SymbolTable*)&Dest->getSymbolTable();
 
   // Loop over all of the globals in the src module, mapping them over as we go
-  for (Module::global_iterator I = Src->global_begin(), E = Src->global_end(); I != E; ++I) {
+  for (Module::global_iterator I = Src->global_begin(), E = Src->global_end();
+       I != E; ++I) {
     GlobalVariable *SGV = I;
     GlobalVariable *DGV = 0;
     // Check to see if may have to link the global.
@@ -487,7 +488,9 @@ static bool LinkGlobals(Module *Dest, Module *Src,
         new GlobalVariable(SGV->getType()->getElementType(),
                            SGV->isConstant(), SGV->getLinkage(), /*init*/0,
                            SGV->getName(), Dest);
-
+      // Propagate alignment info.
+      NewDGV->setAlignment(SGV->getAlignment());
+      
       // If the LLVM runtime renamed the global, but it is an externally visible
       // symbol, DGV must be an existing global with internal linkage.  Rename
       // it.
@@ -509,12 +512,18 @@ static bool LinkGlobals(Module *Dest, Module *Src,
                            SGV->isConstant(), SGV->getLinkage(), /*init*/0,
                            "", Dest);
 
+      // Propagate alignment info.
+      NewDGV->setAlignment(std::max(DGV->getAlignment(), SGV->getAlignment()));
+
       // Make sure to remember this mapping...
       ValueMap.insert(std::make_pair(SGV, NewDGV));
 
       // Keep track that this is an appending variable...
       AppendingVars.insert(std::make_pair(SGV->getName(), NewDGV));
     } else {
+      // Propagate alignment info.
+      DGV->setAlignment(std::max(DGV->getAlignment(), SGV->getAlignment()));
+
       // Otherwise, perform the mapping as instructed by GetLinkageResult.  If
       // the types don't match, and if we are to link from the source, nuke DGV
       // and create a new one of the appropriate type.
@@ -522,6 +531,7 @@ static bool LinkGlobals(Module *Dest, Module *Src,
         GlobalVariable *NewDGV =
           new GlobalVariable(SGV->getType()->getElementType(),
                              DGV->isConstant(), DGV->getLinkage());
+        NewDGV->setAlignment(DGV->getAlignment());
         Dest->getGlobalList().insert(DGV, NewDGV);
         DGV->replaceAllUsesWith(ConstantExpr::getCast(NewDGV, DGV->getType()));
         DGV->eraseFromParent();
@@ -560,7 +570,8 @@ static bool LinkGlobalInits(Module *Dest, const Module *Src,
                             std::string *Err) {
 
   // Loop over all of the globals in the src module, mapping them over as we go
-  for (Module::const_global_iterator I = Src->global_begin(), E = Src->global_end(); I != E; ++I){
+  for (Module::const_global_iterator I = Src->global_begin(),
+       E = Src->global_end(); I != E; ++I) {
     const GlobalVariable *SGV = I;
 
     if (SGV->hasInitializer()) {      // Only process initialized GV's
@@ -709,7 +720,8 @@ static bool LinkFunctionBody(Function *Dest, Function *Src,
           *OI = RemapOperand(*OI, GlobalMap);
 
   // There is no need to map the arguments anymore.
-  for (Function::arg_iterator I = Src->arg_begin(), E = Src->arg_end(); I != E; ++I)
+  for (Function::arg_iterator I = Src->arg_begin(), E = Src->arg_end();
+       I != E; ++I)
     GlobalMap.erase(I);
 
   return false;
@@ -892,7 +904,8 @@ Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
   // it's functionality here.
   std::map<std::string, GlobalValue*> GlobalsByName;
 
-  for (Module::global_iterator I = Dest->global_begin(), E = Dest->global_end(); I != E; ++I) {
+  for (Module::global_iterator I = Dest->global_begin(), E = Dest->global_end();
+       I != E; ++I) {
     // Add all of the appending globals already in the Dest module to
     // AppendingVars.
     if (I->hasAppendingLinkage())
