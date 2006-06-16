@@ -145,7 +145,7 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
   assert(NumResults <= 1 &&
          "We only work with nodes with zero or one result so far!");
   
-  // Check that the number of operands is sane.
+  // Check that the number of operands is sane.  Negative operands -> varargs.
   if (NodeInfo.getNumOperands() >= 0) {
     if (N->getNumChildren() != (unsigned)NodeInfo.getNumOperands())
       TP.error(N->getOperator()->getName() + " node requires exactly " +
