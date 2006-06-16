@@ -14,24 +14,10 @@
 #include "PPCSubtarget.h"
 #include "PPC.h"
 #include "llvm/Module.h"
-#include "llvm/Support/CommandLine.h"
 #include "PPCGenSubtarget.inc"
 #include <iostream>
-
 using namespace llvm;
-PPCTargetEnum llvm::PPCTarget = TargetDefault;
 
-namespace llvm {
-  cl::opt<PPCTargetEnum, true>
-  PPCTargetArg(cl::desc("Force generation of code for a specific PPC target:"),
-               cl::values(
-                          clEnumValN(TargetAIX,  "aix", "  Enable AIX codegen"),
-                          clEnumValN(TargetDarwin,"darwin",
-                                     "  Enable Darwin codegen"),
-                          clEnumValEnd),
-               cl::location(PPCTarget), cl::init(TargetDefault));  
-} 
- 
 #if defined(__APPLE__)
 #include <mach/mach.h>
 #include <mach/mach_host.h>
@@ -115,7 +101,9 @@ PPCSubtarget::PPCSubtarget(const Module &M, const std::string &FS, bool is64Bit)
   // if one cannot be determined, to true.
   const std::string& TT = M.getTargetTriple();
   if (TT.length() > 5) {
-    IsDarwin = TT.find("darwin") != std::string::npos;
+    IsDarwin = TT.find("-darwin") != std::string::npos;
+    if (!IsDarwin)
+      IsAIX = TT.find("-aix") != std::string::npos;
   } else if (TT.empty()) {
 #if defined(_POWER)
     IsAIX = true;

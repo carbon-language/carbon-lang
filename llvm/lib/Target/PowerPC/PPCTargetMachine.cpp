@@ -91,10 +91,6 @@ PPCTargetMachine::PPCTargetMachine(const Module &M, const std::string &FS,
     FrameInfo(*this, false), JITInfo(*this), TLInfo(*this),
     InstrItins(Subtarget.getInstrItineraryData()) {
 
-  if (TargetDefault == PPCTarget) {
-    if (Subtarget.isAIX()) PPCTarget = TargetAIX;
-    if (Subtarget.isDarwin()) PPCTarget = TargetDarwin;
-  }
   if (getRelocationModel() == Reloc::Default)
     if (Subtarget.isDarwin())
       setRelocationModel(Reloc::DynamicNoPIC);
@@ -153,15 +149,10 @@ bool PPCTargetMachine::addPassesToEmitFile(PassManager &PM,
 
   // Decide which asm printer to use.  If the user has not specified one on
   // the command line, choose whichever one matches the default (current host).
-  switch (PPCTarget) {
-  case TargetAIX:
+  if (Subtarget.isAIX())
     PM.add(createAIXAsmPrinter(Out, *this));
-    break;
-  case TargetDefault:
-  case TargetDarwin:
+  else
     PM.add(createDarwinAsmPrinter(Out, *this));
-    break;
-  }
 
   PM.add(createMachineCodeDeleter());
   return false;

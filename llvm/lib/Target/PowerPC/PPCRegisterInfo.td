@@ -215,7 +215,7 @@ def GPRC : RegisterClass<"PPC", [i32], 32,
   let MethodBodies = [{
     GPRCClass::iterator
     GPRCClass::allocation_order_begin(MachineFunction &MF) const {
-      return begin() + ((TargetAIX == PPCTarget) ? 1 : 0);
+      return begin();
     }
     GPRCClass::iterator
     GPRCClass::allocation_order_end(MachineFunction &MF) const {
@@ -238,7 +238,7 @@ def G8RC : RegisterClass<"PPC", [i64], 64,
   let MethodBodies = [{
     G8RCClass::iterator
     G8RCClass::allocation_order_begin(MachineFunction &MF) const {
-      return begin() + ((TargetAIX == PPCTarget) ? 1 : 0);
+      return begin();
     }
     G8RCClass::iterator
     G8RCClass::allocation_order_end(MachineFunction &MF) const {

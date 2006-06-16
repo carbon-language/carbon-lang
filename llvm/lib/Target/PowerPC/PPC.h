@@ -21,17 +21,10 @@ namespace llvm {
 
 class FunctionPass;
 class PPCTargetMachine;
-
-enum PPCTargetEnum {
-  TargetDefault, TargetAIX, TargetDarwin
-};
-
 FunctionPass *createPPCBranchSelectionPass();
 FunctionPass *createPPCISelDag(PPCTargetMachine &TM);
 FunctionPass *createDarwinAsmPrinter(std::ostream &OS, PPCTargetMachine &TM);
 FunctionPass *createAIXAsmPrinter(std::ostream &OS, PPCTargetMachine &TM);
-
-extern PPCTargetEnum PPCTarget;
 } // end namespace llvm;
 
 // GCC #defines PPC on Linux but we use it as our namespace name
