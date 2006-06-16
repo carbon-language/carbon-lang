@@ -22,7 +22,7 @@
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/DataStructure/DataStructure.h"
-#include "llvm/Analysis/CallTargets.h"
+#include "llvm/Analysis/DataStructure/CallTargets.h"
 #include "llvm/Function.h"
 #include <cstdlib>
 

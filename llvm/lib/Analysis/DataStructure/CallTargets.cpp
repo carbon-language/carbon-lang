@@ -21,7 +21,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/DataStructure/DataStructure.h"
 #include "llvm/Analysis/DataStructure/DSGraph.h"
-#include "llvm/Analysis/CallTargets.h"
+#include "llvm/Analysis/DataStructure/CallTargets.h"
 #include "llvm/ADT/Statistic.h"
 #include <iostream>
 #include "llvm/Constants.h"
