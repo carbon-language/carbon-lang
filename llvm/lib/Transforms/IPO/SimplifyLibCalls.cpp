@@ -1340,7 +1340,7 @@ public:
         if (!puts_func)
           return false;
         std::vector<Value*> args;
-        args.push_back(ci->getOperand(2));
+        args.push_back(CastToCStr(ci->getOperand(2), *ci));
         new CallInst(puts_func,args,ci->getName(),ci);
         ci->replaceAllUsesWith(ConstantSInt::get(Type::IntTy,len));
         break;
@@ -1474,7 +1474,7 @@ public:
           if (!fputs_func)
             return false;
           std::vector<Value*> args;
-          args.push_back(ci->getOperand(3));
+          args.push_back(CastToCStr(ci->getOperand(3), *ci));
           args.push_back(ci->getOperand(1));
           new CallInst(fputs_func,args,ci->getName(),ci);
           ci->replaceAllUsesWith(ConstantSInt::get(Type::IntTy,len));
