@@ -419,14 +419,10 @@ def CMPI  : DForm_5<11, (ops CRRC:$crD, i1imm:$L, GPRC:$rA, s16imm:$imm),
                     "cmpi $crD, $L, $rA, $imm", IntCompare>;
 def CMPWI : DForm_5_ext<11, (ops CRRC:$crD, GPRC:$rA, s16imm:$imm),
                         "cmpwi $crD, $rA, $imm", IntCompare>;
-def CMPDI : DForm_5_ext<11, (ops CRRC:$crD, GPRC:$rA, s16imm:$imm),
-                        "cmpdi $crD, $rA, $imm", IntCompare>, isPPC64;
 def CMPLI  : DForm_6<10, (ops CRRC:$dst, i1imm:$size, GPRC:$src1, u16imm:$src2),
                      "cmpli $dst, $size, $src1, $src2", IntCompare>;
 def CMPLWI : DForm_6_ext<10, (ops CRRC:$dst, GPRC:$src1, u16imm:$src2),
                          "cmplwi $dst, $src1, $src2", IntCompare>;
-def CMPLDI : DForm_6_ext<10, (ops CRRC:$dst, GPRC:$src1, u16imm:$src2),
-                         "cmpldi $dst, $src1, $src2", IntCompare>, isPPC64;
 }
 let isLoad = 1, PPC970_Unit = 2 in {
 def LFS : DForm_8<48, (ops F4RC:$rD, memri:$src),
@@ -445,31 +441,6 @@ def STFD : DForm_9<54, (ops F8RC:$rS, memri:$dst),
                    [(store F8RC:$rS, iaddr:$dst)]>;
 }
 
-// DS-Form instructions.  Load/Store instructions available in PPC-64
-//
-let isLoad = 1, PPC970_Unit = 2 in {
-def LWA  : DSForm_1<58, 2, (ops GPRC:$rT, s16immX4:$DS, GPRC:$rA),
-                    "lwa $rT, $DS($rA)", LdStLWA,
-                    []>, isPPC64, PPC970_DGroup_Cracked;
-def LD   : DSForm_2<58, 0, (ops GPRC:$rT, s16immX4:$DS, GPRC:$rA),
-                    "ld $rT, $DS($rA)", LdStLD,
-                    []>, isPPC64;
-}
-let isStore = 1, noResults = 1, PPC970_Unit = 2 in {
-def STD  : DSForm_2<62, 0, (ops GPRC:$rT, s16immX4:$DS, GPRC:$rA),
-                    "std $rT, $DS($rA)", LdStSTD,
-                    []>, isPPC64;
-
-// STD_32/STDX_32 - Just like STD/STDX, but uses a '32-bit' input register.
-def STD_32  : DSForm_2<62, 0, (ops GPRC:$rT, memrix:$dst),
-                       "std $rT, $dst", LdStSTD,
-                       [(PPCstd_32  GPRC:$rT, ixaddr:$dst)]>, isPPC64;
-def STDX_32  : XForm_8<31, 149, (ops GPRC:$rT, memrr:$dst),
-                       "stdx $rT, $dst", LdStSTD,
-                       [(PPCstd_32  GPRC:$rT, xaddr:$dst)]>, isPPC64,
-                       PPC970_DGroup_Cracked;
-}
-
 // X-Form instructions.  Most instructions that perform an operation on a
 // register and another register are of this type.
 //
@@ -484,16 +455,9 @@ def LHAX : XForm_1<31, 343, (ops GPRC:$rD, memrr:$src),
 def LHZX : XForm_1<31, 279, (ops GPRC:$rD, memrr:$src),
                    "lhzx $rD, $src", LdStGeneral,
                    [(set GPRC:$rD, (zextload xaddr:$src, i16))]>;
-def LWAX : XForm_1<31, 341, (ops G8RC:$rD, memrr:$src),
-                   "lwax $rD, $src", LdStLHA,
-                   [(set G8RC:$rD, (sextload xaddr:$src, i32))]>, isPPC64,
-                   PPC970_DGroup_Cracked;
 def LWZX : XForm_1<31,  23, (ops GPRC:$rD, memrr:$src),
                    "lwzx $rD, $src", LdStGeneral,
                    [(set GPRC:$rD, (load xaddr:$src))]>;
-def LDX  : XForm_1<31,  21, (ops G8RC:$rD, memrr:$src),
-                   "ldx $rD, $src", LdStLD,
-                   [(set G8RC:$rD, (load xaddr:$src))]>, isPPC64;
 }
 
 let PPC970_Unit = 1 in {  // FXU Operations.
@@ -512,15 +476,6 @@ def ANDC : XForm_6<31,  60, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
 def OR4  : XForm_6<31, 444, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "or $rA, $rS, $rB", IntGeneral,
                    [(set GPRC:$rA, (or GPRC:$rS, GPRC:$rB))]>;
-def OR8  : XForm_6<31, 444, (ops G8RC:$rA, G8RC:$rS, G8RC:$rB),
-                   "or $rA, $rS, $rB", IntGeneral,
-                   [(set G8RC:$rA, (or G8RC:$rS, G8RC:$rB))]>;
-def OR4To8  : XForm_6<31, 444, (ops G8RC:$rA, GPRC:$rS, GPRC:$rB),
-                   "or $rA, $rS, $rB", IntGeneral,
-                   []>;
-def OR8To4  : XForm_6<31, 444, (ops GPRC:$rA, G8RC:$rS, G8RC:$rB),
-                   "or $rA, $rS, $rB", IntGeneral,
-                   []>;
 def NOR  : XForm_6<31, 124, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "nor $rA, $rS, $rB", IntGeneral,
                    [(set GPRC:$rA, (not (or GPRC:$rS, GPRC:$rB)))]>;
@@ -536,21 +491,12 @@ def EQV  : XForm_6<31, 284, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
 def XOR  : XForm_6<31, 316, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "xor $rA, $rS, $rB", IntGeneral,
                    [(set GPRC:$rA, (xor GPRC:$rS, GPRC:$rB))]>;                   
-def SLD  : XForm_6<31,  27, (ops G8RC:$rA, G8RC:$rS, G8RC:$rB),
-                   "sld $rA, $rS, $rB", IntRotateD,
-                   [(set G8RC:$rA, (shl G8RC:$rS, G8RC:$rB))]>, isPPC64;
 def SLW  : XForm_6<31,  24, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "slw $rA, $rS, $rB", IntGeneral,
                    [(set GPRC:$rA, (PPCshl GPRC:$rS, GPRC:$rB))]>;
-def SRD  : XForm_6<31, 539, (ops G8RC:$rA, G8RC:$rS, G8RC:$rB),
-                   "srd $rA, $rS, $rB", IntRotateD,
-                   [(set G8RC:$rA, (srl G8RC:$rS, G8RC:$rB))]>, isPPC64;
 def SRW  : XForm_6<31, 536, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "srw $rA, $rS, $rB", IntGeneral,
                    [(set GPRC:$rA, (PPCsrl GPRC:$rS, GPRC:$rB))]>;
-def SRAD : XForm_6<31, 794, (ops G8RC:$rA, G8RC:$rS, G8RC:$rB),
-                   "srad $rA, $rS, $rB", IntRotateD,
-                   [(set G8RC:$rA, (sra G8RC:$rS, G8RC:$rB))]>, isPPC64;
 def SRAW : XForm_6<31, 792, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "sraw $rA, $rS, $rB", IntShift,
                    [(set GPRC:$rA, (PPCsra GPRC:$rS, GPRC:$rB))]>;
@@ -571,12 +517,6 @@ def STWX  : XForm_8<31, 151, (ops GPRC:$rS, memrr:$dst),
 def STWUX : XForm_8<31, 183, (ops GPRC:$rS, GPRC:$rA, GPRC:$rB),
                    "stwux $rS, $rA, $rB", LdStGeneral,
                    []>;
-def STDX  : XForm_8<31, 149, (ops GPRC:$rS, GPRC:$rA, GPRC:$rB),
-                   "stdx $rS, $rA, $rB", LdStSTD,
-                   []>, isPPC64, PPC970_DGroup_Cracked;
-def STDUX : XForm_8<31, 181, (ops GPRC:$rS, GPRC:$rA, GPRC:$rB),
-                   "stdux $rS, $rA, $rB", LdStSTD,
-                   []>, isPPC64;
 }
 let PPC970_Unit = 1 in {  // FXU Operations.
 def SRAWI : XForm_10<31, 824, (ops GPRC:$rA, GPRC:$rS, u5imm:$SH), 
@@ -591,13 +531,6 @@ def EXTSB  : XForm_11<31, 954, (ops GPRC:$rA, GPRC:$rS),
 def EXTSH  : XForm_11<31, 922, (ops GPRC:$rA, GPRC:$rS),
                       "extsh $rA, $rS", IntGeneral,
                       [(set GPRC:$rA, (sext_inreg GPRC:$rS, i16))]>;
-def EXTSW  : XForm_11<31, 986, (ops G8RC:$rA, G8RC:$rS),
-                      "extsw $rA, $rS", IntGeneral,
-                      [(set G8RC:$rA, (sext_inreg G8RC:$rS, i32))]>, isPPC64;
-/// EXTSW_32 - Just like EXTSW, but works on '32-bit' registers.
-def EXTSW_32 : XForm_11<31, 986, (ops GPRC:$rA, GPRC:$rS),
-                      "extsw $rA, $rS", IntGeneral,
-                      [(set GPRC:$rA, (PPCextsw_32 GPRC:$rS))]>, isPPC64;
 
 def CMP    : XForm_16<31, 0, (ops CRRC:$crD, i1imm:$long, GPRC:$rA, GPRC:$rB),
                       "cmp $crD, $long, $rA, $rB", IntCompare>;
@@ -605,12 +538,8 @@ def CMPL   : XForm_16<31, 32, (ops CRRC:$crD, i1imm:$long, GPRC:$rA, GPRC:$rB),
                       "cmpl $crD, $long, $rA, $rB", IntCompare>;
 def CMPW   : XForm_16_ext<31, 0, (ops CRRC:$crD, GPRC:$rA, GPRC:$rB),
                           "cmpw $crD, $rA, $rB", IntCompare>;
-def CMPD   : XForm_16_ext<31, 0, (ops CRRC:$crD, GPRC:$rA, GPRC:$rB),
-                          "cmpd $crD, $rA, $rB", IntCompare>, isPPC64;
 def CMPLW  : XForm_16_ext<31, 32, (ops CRRC:$crD, GPRC:$rA, GPRC:$rB),
                           "cmplw $crD, $rA, $rB", IntCompare>;
-def CMPLD  : XForm_16_ext<31, 32, (ops CRRC:$crD, GPRC:$rA, GPRC:$rB),
-                          "cmpld $crD, $rA, $rB", IntCompare>, isPPC64;
 }
 let PPC970_Unit = 3 in {  // FPU Operations.
 //def FCMPO  : XForm_17<63, 32, (ops CRRC:$crD, FPRC:$fA, FPRC:$fB),
@@ -629,12 +558,6 @@ def LFDX   : XForm_25<31, 599, (ops F8RC:$frD, memrr:$src),
                       [(set F8RC:$frD, (load xaddr:$src))]>;
 }
 let PPC970_Unit = 3 in {  // FPU Operations.
-def FCFID  : XForm_26<63, 846, (ops F8RC:$frD, F8RC:$frB),
-                      "fcfid $frD, $frB", FPGeneral,
-                      [(set F8RC:$frD, (PPCfcfid F8RC:$frB))]>, isPPC64;
-def FCTIDZ : XForm_26<63, 815, (ops F8RC:$frD, F8RC:$frB),
-                      "fctidz $frD, $frB", FPGeneral,
-                      [(set F8RC:$frD, (PPCfctidz F8RC:$frB))]>, isPPC64;
 def FCTIWZ : XForm_26<63, 15, (ops F8RC:$frD, F8RC:$frB),
                       "fctiwz $frD, $frB", FPGeneral,
                       [(set F8RC:$frD, (PPCfctiwz F8RC:$frB))]>;
@@ -741,20 +664,13 @@ def MFOCRF: XFXForm_5a<31, 19, (ops GPRC:$rT, crbitm:$FXM),
                        "mfcr $rT, $FXM", SprMFCR>,
             PPC970_DGroup_First, PPC970_Unit_CRU;
 
-// XS-Form instructions.  Just 'sradi'
-//
 let PPC970_Unit = 1 in {  // FXU Operations.
-def SRADI  : XSForm_1<31, 413, (ops GPRC:$rA, GPRC:$rS, u6imm:$SH),
-                      "sradi $rA, $rS, $SH", IntRotateD>, isPPC64;
 
 // XO-Form instructions.  Arithmetic instructions that can set overflow bit
 //
 def ADD4  : XOForm_1<31, 266, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "add $rT, $rA, $rB", IntGeneral,
                      [(set GPRC:$rT, (add GPRC:$rA, GPRC:$rB))]>;
-def ADD8  : XOForm_1<31, 266, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
-                     "add $rT, $rA, $rB", IntGeneral,
-                     [(set G8RC:$rT, (add G8RC:$rA, G8RC:$rB))]>;
 def ADDC  : XOForm_1<31, 10, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "addc $rT, $rA, $rB", IntGeneral,
                      [(set GPRC:$rT, (addc GPRC:$rA, GPRC:$rB))]>,
@@ -762,14 +678,6 @@ def ADDC  : XOForm_1<31, 10, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
 def ADDE  : XOForm_1<31, 138, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "adde $rT, $rA, $rB", IntGeneral,
                      [(set GPRC:$rT, (adde GPRC:$rA, GPRC:$rB))]>;
-def DIVD  : XOForm_1<31, 489, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
-                     "divd $rT, $rA, $rB", IntDivD,
-                     [(set G8RC:$rT, (sdiv G8RC:$rA, G8RC:$rB))]>, isPPC64,
-                     PPC970_DGroup_First, PPC970_DGroup_Cracked;
-def DIVDU : XOForm_1<31, 457, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
-                     "divdu $rT, $rA, $rB", IntDivD,
-                     [(set G8RC:$rT, (udiv G8RC:$rA, G8RC:$rB))]>, isPPC64,
-                     PPC970_DGroup_First, PPC970_DGroup_Cracked;
 def DIVW  : XOForm_1<31, 491, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "divw $rT, $rA, $rB", IntDivW,
                      [(set GPRC:$rT, (sdiv GPRC:$rA, GPRC:$rB))]>,
@@ -778,21 +686,12 @@ def DIVWU : XOForm_1<31, 459, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "divwu $rT, $rA, $rB", IntDivW,
                      [(set GPRC:$rT, (udiv GPRC:$rA, GPRC:$rB))]>,
                      PPC970_DGroup_First, PPC970_DGroup_Cracked;
-def MULHD : XOForm_1<31, 73, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
-                     "mulhd $rT, $rA, $rB", IntMulHW,
-                     [(set G8RC:$rT, (mulhs G8RC:$rA, G8RC:$rB))]>;
-def MULHDU : XOForm_1<31, 9, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
-                     "mulhdu $rT, $rA, $rB", IntMulHWU,
-                     [(set G8RC:$rT, (mulhu G8RC:$rA, G8RC:$rB))]>;
 def MULHW : XOForm_1<31, 75, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "mulhw $rT, $rA, $rB", IntMulHW,
                      [(set GPRC:$rT, (mulhs GPRC:$rA, GPRC:$rB))]>;
 def MULHWU : XOForm_1<31, 11, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "mulhwu $rT, $rA, $rB", IntMulHWU,
                      [(set GPRC:$rT, (mulhu GPRC:$rA, GPRC:$rB))]>;
-def MULLD : XOForm_1<31, 233, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
-                     "mulld $rT, $rA, $rB", IntMulHD,
-                     [(set G8RC:$rT, (mul G8RC:$rA, G8RC:$rB))]>, isPPC64;
 def MULLW : XOForm_1<31, 235, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "mullw $rT, $rA, $rB", IntMulHW,
                      [(set GPRC:$rT, (mul GPRC:$rA, GPRC:$rB))]>;
@@ -930,10 +829,6 @@ def RLWIMI : MForm_2<20,
                      (ops GPRC:$rA, GPRC:$rSi, GPRC:$rS, u5imm:$SH, u5imm:$MB, 
                       u5imm:$ME), "rlwimi $rA, $rS, $SH, $MB, $ME", IntRotate,
                       []>, PPC970_DGroup_Cracked;
-def RLDIMI : MDForm_1<30, 3,
-                      (ops G8RC:$rA, G8RC:$rSi, G8RC:$rS, u6imm:$SH, u6imm:$MB),
-                      "rldimi $rA, $rS, $SH, $MB", IntRotateD,
-                      []>, isPPC64;
 }
 def RLWINM : MForm_2<21,
                      (ops GPRC:$rA, GPRC:$rS, u5imm:$SH, u5imm:$MB, u5imm:$ME),
@@ -947,17 +842,6 @@ def RLWNM  : MForm_2<23,
                      (ops GPRC:$rA, GPRC:$rS, GPRC:$rB, u5imm:$MB, u5imm:$ME),
                      "rlwnm $rA, $rS, $rB, $MB, $ME", IntGeneral,
                      []>;
-
-// MD-Form instructions.  64 bit rotate instructions.
-//
-def RLDICL : MDForm_1<30, 0,
-                      (ops G8RC:$rA, G8RC:$rS, u6imm:$SH, u6imm:$MB),
-                      "rldicl $rA, $rS, $SH, $MB", IntRotateD,
-                      []>, isPPC64;
-def RLDICR : MDForm_1<30, 1,
-                      (ops G8RC:$rA, G8RC:$rS, u6imm:$SH, u6imm:$ME),
-                      "rldicr $rA, $rS, $SH, $ME", IntRotateD,
-                      []>, isPPC64;
 }
 
 
@@ -1002,24 +886,11 @@ def : Pat<(sub  immSExt16:$imm, GPRC:$in),
 // Return void support.
 def : Pat<(ret), (BLR)>;
 
-// 64-bit support
-def : Pat<(i64 (zext GPRC:$in)),
-          (RLDICL (OR4To8 GPRC:$in, GPRC:$in), 0, 32)>;
-def : Pat<(i64 (anyext GPRC:$in)),
-          (OR4To8 GPRC:$in, GPRC:$in)>;
-def : Pat<(i32 (trunc G8RC:$in)),
-          (OR8To4 G8RC:$in, G8RC:$in)>;
-
-// SHL
+// SHL/SRL
 def : Pat<(shl GPRC:$in, (i32 imm:$imm)),
           (RLWINM GPRC:$in, imm:$imm, 0, (SHL32 imm:$imm))>;
-def : Pat<(shl G8RC:$in, (i64 imm:$imm)),
-          (RLDICR G8RC:$in, imm:$imm, (SHL64 imm:$imm))>;
-// SRL
 def : Pat<(srl GPRC:$in, (i32 imm:$imm)),
           (RLWINM GPRC:$in, (SRL32 imm:$imm), imm:$imm, 31)>;
-def : Pat<(srl G8RC:$in, (i64 imm:$imm)),
-          (RLDICL G8RC:$in, (SRL64 imm:$imm), imm:$imm)>;
 
 // ROTL
 def : Pat<(rotl GPRC:$in, GPRC:$sh),
@@ -1088,3 +959,4 @@ def : Pat<(f64 (extload xaddr:$src, f32)),
 
 
 include "PPCInstrAltivec.td"
+include "PPCInstr64Bit.td"
