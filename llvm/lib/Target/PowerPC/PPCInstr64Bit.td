@@ -105,6 +105,13 @@ def RLDICR : MDForm_1<30, 1,
 
 
 let isLoad = 1, PPC970_Unit = 2 in {
+def LWA  : DSForm_1<58, 2, (ops GPRC:$rT, s16immX4:$DS, GPRC:$rA),
+                    "lwa $rT, $DS($rA)", LdStLWA,
+                    []>, isPPC64, PPC970_DGroup_Cracked;
+def LD   : DSForm_2<58, 0, (ops GPRC:$rT, s16immX4:$DS, GPRC:$rA),
+                    "ld $rT, $DS($rA)", LdStLD,
+                    []>, isPPC64;
+
 def LWAX : XForm_1<31, 341, (ops G8RC:$rD, memrr:$src),
                    "lwax $rD, $src", LdStLHA,
                    [(set G8RC:$rD, (sextload xaddr:$src, i32))]>, isPPC64,
@@ -113,23 +120,18 @@ def LDX  : XForm_1<31,  21, (ops G8RC:$rD, memrr:$src),
                    "ldx $rD, $src", LdStLD,
                    [(set G8RC:$rD, (load xaddr:$src))]>, isPPC64;
 }
-
-
-// DS-Form instructions.  Load/Store instructions available in PPC-64
-//
-let isLoad = 1, PPC970_Unit = 2 in {
-def LWA  : DSForm_1<58, 2, (ops GPRC:$rT, s16immX4:$DS, GPRC:$rA),
-                    "lwa $rT, $DS($rA)", LdStLWA,
-                    []>, isPPC64, PPC970_DGroup_Cracked;
-def LD   : DSForm_2<58, 0, (ops GPRC:$rT, s16immX4:$DS, GPRC:$rA),
-                    "ld $rT, $DS($rA)", LdStLD,
-                    []>, isPPC64;
-}
 let isStore = 1, noResults = 1, PPC970_Unit = 2 in {
 def STD  : DSForm_2<62, 0, (ops GPRC:$rT, s16immX4:$DS, GPRC:$rA),
                     "std $rT, $DS($rA)", LdStSTD,
                     []>, isPPC64;
 
+def STDX  : XForm_8<31, 149, (ops GPRC:$rS, GPRC:$rA, GPRC:$rB),
+                   "stdx $rS, $rA, $rB", LdStSTD,
+                   []>, isPPC64, PPC970_DGroup_Cracked;
+def STDUX : XForm_8<31, 181, (ops GPRC:$rS, GPRC:$rA, GPRC:$rB),
+                   "stdux $rS, $rA, $rB", LdStSTD,
+                   []>, isPPC64;
+                   
 // STD_32/STDX_32 - Just like STD/STDX, but uses a '32-bit' input register.
 def STD_32  : DSForm_2<62, 0, (ops GPRC:$rT, memrix:$dst),
                        "std $rT, $dst", LdStSTD,
@@ -138,13 +140,6 @@ def STDX_32  : XForm_8<31, 149, (ops GPRC:$rT, memrr:$dst),
                        "stdx $rT, $dst", LdStSTD,
                        [(PPCstd_32  GPRC:$rT, xaddr:$dst)]>, isPPC64,
                        PPC970_DGroup_Cracked;
-
-def STDX  : XForm_8<31, 149, (ops GPRC:$rS, GPRC:$rA, GPRC:$rB),
-                   "stdx $rS, $rA, $rB", LdStSTD,
-                   []>, isPPC64, PPC970_DGroup_Cracked;
-def STDUX : XForm_8<31, 181, (ops GPRC:$rS, GPRC:$rA, GPRC:$rB),
-                   "stdux $rS, $rA, $rB", LdStSTD,
-                   []>, isPPC64;
 }
 
 

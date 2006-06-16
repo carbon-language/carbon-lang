@@ -183,13 +183,13 @@ def s16immX4  : Operand<i32> {   // Multiply imm by 4 before printing.
 def target : Operand<OtherVT> {
   let PrintMethod = "printBranchOperand";
 }
-def calltarget : Operand<i32> {
+def calltarget : Operand<iPTR> {
   let PrintMethod = "printCallOperand";
 }
-def aaddr : Operand<i32> {
+def aaddr : Operand<iPTR> {
   let PrintMethod = "printAbsAddrOperand";
 }
-def piclabel: Operand<i32> {
+def piclabel: Operand<iPTR> {
   let PrintMethod = "printPICLabel";
 }
 def symbolHi: Operand<i32> {
@@ -202,27 +202,27 @@ def crbitm: Operand<i8> {
   let PrintMethod = "printcrbitm";
 }
 // Address operands
-def memri : Operand<i32> {
+def memri : Operand<iPTR> {
   let PrintMethod = "printMemRegImm";
   let NumMIOperands = 2;
   let MIOperandInfo = (ops i32imm, GPRC);
 }
-def memrr : Operand<i32> {
+def memrr : Operand<iPTR> {
   let PrintMethod = "printMemRegReg";
   let NumMIOperands = 2;
   let MIOperandInfo = (ops GPRC, GPRC);
 }
-def memrix : Operand<i32> {   // memri where the imm is shifted 2 bits.
+def memrix : Operand<iPTR> {   // memri where the imm is shifted 2 bits.
   let PrintMethod = "printMemRegImmShifted";
   let NumMIOperands = 2;
   let MIOperandInfo = (ops i32imm, GPRC);
 }
 
 // Define PowerPC specific addressing mode.
-def iaddr  : ComplexPattern<i32, 2, "SelectAddrImm",    []>;
-def xaddr  : ComplexPattern<i32, 2, "SelectAddrIdx",    []>;
-def xoaddr : ComplexPattern<i32, 2, "SelectAddrIdxOnly",[]>;
-def ixaddr : ComplexPattern<i32, 2, "SelectAddrImmShift", []>; // "std"
+def iaddr  : ComplexPattern<iPTR, 2, "SelectAddrImm",    []>;
+def xaddr  : ComplexPattern<iPTR, 2, "SelectAddrIdx",    []>;
+def xoaddr : ComplexPattern<iPTR, 2, "SelectAddrIdxOnly",[]>;
+def ixaddr : ComplexPattern<iPTR, 2, "SelectAddrImmShift", []>; // "std"
 
 //===----------------------------------------------------------------------===//
 // PowerPC Instruction Predicate Definitions.
@@ -956,7 +956,6 @@ def : Pat<(f64 (extload iaddr:$src, f32)),
           (FMRSD (LFS iaddr:$src))>;
 def : Pat<(f64 (extload xaddr:$src, f32)),
           (FMRSD (LFSX xaddr:$src))>;
-
 
 include "PPCInstrAltivec.td"
 include "PPCInstr64Bit.td"
