@@ -24,6 +24,8 @@
 
 namespace {
 
+bool StackTraceRequested = false; 
+
 /// InterruptFunction - The function to call if ctrl-c is pressed.
 void (*InterruptFunction)() = 0;
 
@@ -132,7 +134,8 @@ RETSIGTYPE SignalHandler(int Sig) {
 
   // Otherwise if it is a fault (like SEGV) output the stacktrace to
   // STDERR (if we can) and reissue the signal to die...
-  PrintStackTrace();
+  if (StackTraceRequested)
+    PrintStackTrace();
   signal(Sig, SIG_DFL);
 }
 
@@ -178,6 +181,7 @@ void sys::RemoveDirectoryOnSignal(const llvm::sys::Path& path) {
 /// PrintStackTraceOnErrorSignal - When an error signal (such as SIBABRT or
 /// SIGSEGV) is delivered to the process, print a stack trace and then exit.
 void sys::PrintStackTraceOnErrorSignal() {
+  StackTraceRequested = true;
   std::for_each(KillSigs, KillSigsEnd, RegisterHandler);
 }
 
