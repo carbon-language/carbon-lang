@@ -221,6 +221,23 @@ public:
   /// @brief Return the size_t type -- syntactic shortcut
   const Type* getIntPtrType() const { return TD->getIntPtrType(); }
 
+  /// @brief Return a Function* for the putchar libcall
+  Function* get_putchar() {
+    if (!putchar_func)
+      putchar_func = M->getOrInsertFunction("putchar", Type::IntTy, Type::IntTy,
+                                            NULL);
+    return putchar_func;
+  }
+
+  /// @brief Return a Function* for the puts libcall
+  Function* get_puts() {
+    if (!puts_func)
+      puts_func = M->getOrInsertFunction("puts", Type::IntTy,
+                                         PointerType::get(Type::SByteTy),
+                                         NULL);
+    return puts_func;
+  }
+
   /// @brief Return a Function* for the fputc libcall
   Function* get_fputc(const Type* FILEptr_type) {
     if (!fputc_func)
@@ -318,6 +335,8 @@ private:
   void reset(Module& mod) {
     M = &mod;
     TD = &getAnalysis<TargetData>();
+    putchar_func = 0;
+    puts_func = 0;
     fputc_func = 0;
     fputs_func = 0;
     fwrite_func = 0;
@@ -335,6 +354,7 @@ private:
 
 private:
   /// Caches for function pointers.
+  Function *putchar_func, *puts_func;
   Function *fputc_func, *fputs_func, *fwrite_func;
   Function *memcpy_func, *memchr_func;
   Function* sqrt_func;
@@ -1264,10 +1284,94 @@ public:
   }
 } PowOptimizer;
 
+/// This LibCallOptimization will simplify calls to the "printf" library
+/// function. It looks for cases where the result of printf is not used and the
+/// operation can be reduced to something simpler.
+/// @brief Simplify the printf library function.
+struct PrintfOptimization : public LibCallOptimization {
+public:
+  /// @brief Default Constructor
+  PrintfOptimization() : LibCallOptimization("printf",
+      "Number of 'printf' calls simplified") {}
+
+  /// @brief Make sure that the "printf" function has the right prototype
+  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC){
+    // Just make sure this has at least 1 arguments
+    return (f->arg_size() >= 1);
+  }
+
+  /// @brief Perform the printf optimization.
+  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC) {
+    // If the call has more than 2 operands, we can't optimize it
+    if (ci->getNumOperands() > 3 || ci->getNumOperands() <= 2)
+      return false;
+
+    // If the result of the printf call is used, none of these optimizations
+    // can be made.
+    if (!ci->use_empty())
+      return false;
+
+    // All the optimizations depend on the length of the first argument and the
+    // fact that it is a constant string array. Check that now
+    uint64_t len = 0;
+    ConstantArray* CA = 0;
+    if (!getConstantStringLength(ci->getOperand(1), len, &CA))
+      return false;
+
+    if (len != 2 && len != 3)
+      return false;
+
+    // The first character has to be a %
+    if (ConstantInt* CI = dyn_cast<ConstantInt>(CA->getOperand(0)))
+      if (CI->getRawValue() != '%')
+        return false;
+
+    // Get the second character and switch on its value
+    ConstantInt* CI = dyn_cast<ConstantInt>(CA->getOperand(1));
+    switch (CI->getRawValue()) {
+      case 's':
+      {
+        if (len != 3 ||
+            dyn_cast<ConstantInt>(CA->getOperand(2))->getRawValue() != '\n')
+          return false;
+
+        // printf("%s\n",str) -> puts(str)
+        Function* puts_func = SLC.get_puts();
+        if (!puts_func)
+          return false;
+        std::vector<Value*> args;
+        args.push_back(ci->getOperand(2));
+        new CallInst(puts_func,args,ci->getName(),ci);
+        ci->replaceAllUsesWith(ConstantSInt::get(Type::IntTy,len));
+        break;
+      }
+      case 'c':
+      {
+        // printf("%c",c) -> putchar(c)
+        if (len != 2)
+          return false;
+
+        Function* putchar_func = SLC.get_putchar();
+        if (!putchar_func)
+          return false;
+        CastInst* cast = new CastInst(ci->getOperand(2), Type::IntTy,
+                                      CI->getName()+".int", ci);
+        new CallInst(putchar_func, cast, "", ci);
+        ci->replaceAllUsesWith(ConstantSInt::get(Type::IntTy, 1));
+        break;
+      }
+      default:
+        return false;
+    }
+    ci->eraseFromParent();
+    return true;
+  }
+} PrintfOptimizer;
+
 /// This LibCallOptimization will simplify calls to the "fprintf" library
 /// function. It looks for cases where the result of fprintf is not used and the
 /// operation can be reduced to something simpler.
-/// @brief Simplify the pow library function.
+/// @brief Simplify the fprintf library function.
 struct FPrintFOptimization : public LibCallOptimization {
 public:
   /// @brief Default Constructor
@@ -1379,15 +1483,13 @@ public:
       }
       case 'c':
       {
-        ConstantInt* CI = dyn_cast<ConstantInt>(ci->getOperand(3));
-        if (!CI)
-          return false;
-
+        // fprintf(file,"%c",c) -> fputc(c,file)
         const Type* FILEptr_type = ci->getOperand(1)->getType();
         Function* fputc_func = SLC.get_fputc(FILEptr_type);
         if (!fputc_func)
           return false;
-        CastInst* cast = new CastInst(CI,Type::IntTy,CI->getName()+".int",ci);
+        CastInst* cast = new CastInst(ci->getOperand(3), Type::IntTy,
+                                      CI->getName()+".int", ci);
         new CallInst(fputc_func,cast,ci->getOperand(1),"",ci);
         ci->replaceAllUsesWith(ConstantSInt::get(Type::IntTy,1));
         break;
@@ -1403,7 +1505,7 @@ public:
 /// This LibCallOptimization will simplify calls to the "sprintf" library
 /// function. It looks for cases where the result of sprintf is not used and the
 /// operation can be reduced to something simpler.
-/// @brief Simplify the pow library function.
+/// @brief Simplify the sprintf library function.
 struct SPrintFOptimization : public LibCallOptimization {
 public:
   /// @brief Default Constructor
@@ -1530,7 +1632,7 @@ public:
 /// This LibCallOptimization will simplify calls to the "fputs" library
 /// function. It looks for cases where the result of fputs is not used and the
 /// operation can be reduced to something simpler.
-/// @brief Simplify the pow library function.
+/// @brief Simplify the puts library function.
 struct PutsOptimization : public LibCallOptimization {
 public:
   /// @brief Default Constructor
