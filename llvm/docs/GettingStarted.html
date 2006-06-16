@@ -515,6 +515,9 @@ the "<tt>convert_from_eh_region_ranges_1</tt>" GCC function.</p>
    to a newer version of GCC.</p>
 <p><b>IA-64 GCC 4.0.0</b>: The IA-64 version of GCC 4.0.0 is known to
    miscompile LLVM.</p>
+<p><b>Apple Xcode 2.3</b>: GCC crashes when compiling LLVM at -O3 (which is the
+   default with ENABLE_OPTIMIZED=1.  To work around this, build with 
+   "ENABLE_OPTIMIZED=1 OPTIMIZE_OPTION=-O2".</p>
 </div>
 
 
