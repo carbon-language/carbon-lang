@@ -152,7 +152,7 @@ void TargetData::init(const std::string &TargetDescription) {
   }
 }
 
-TargetData::TargetData(const std::string &ToolName, const Module *M) {
+TargetData::TargetData(const Module *M) {
   LittleEndian     = M->getEndianness() != Module::BigEndian;
   PointerSize      = M->getPointerSize() != Module::Pointer64 ? 4 : 8;
   PointerAlignment = PointerSize;

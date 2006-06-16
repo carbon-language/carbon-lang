@@ -32,9 +32,7 @@ namespace {
 /// TargetMachine ctor - Create an ILP32 architecture model
 ///
 ARMTargetMachine::ARMTargetMachine(const Module &M, const std::string &FS)
-  : TargetMachine("ARM"),
-    DataLayout(std::string("ARM"), std::string("E-p:32:32")),
-    InstrInfo(),
+  : TargetMachine("ARM"), DataLayout("E-p:32:32"),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 8, 0) {
 }
 

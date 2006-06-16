@@ -23,8 +23,7 @@ struct CTargetMachine : public TargetMachine {
   const TargetData DataLayout;       // Calculates type size & alignment
 
   CTargetMachine(const Module &M, const std::string &FS)
-    : TargetMachine("CBackend", M),
-      DataLayout("CBackend", &M) {}
+    : TargetMachine("CBackend", M), DataLayout(&M) {}
 
   // This is the only thing that actually does anything here.
   virtual bool addPassesToEmitFile(PassManager &PM, std::ostream &Out,

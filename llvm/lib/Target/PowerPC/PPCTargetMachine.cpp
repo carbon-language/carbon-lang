@@ -87,8 +87,7 @@ unsigned PPC64TargetMachine::getModuleMatchQuality(const Module &M) {
 PPCTargetMachine::PPCTargetMachine(const Module &M, const std::string &FS,
                                    bool is64Bit)
   : TargetMachine("PowerPC"), Subtarget(M, FS, is64Bit),
-    DataLayout(std::string("PowerPC"), 
-               std::string(Subtarget.getTargetDataString())),
+    DataLayout(Subtarget.getTargetDataString()),
     FrameInfo(*this, false), JITInfo(*this), TLInfo(*this),
     InstrItins(Subtarget.getInstrItineraryData()) {
 
