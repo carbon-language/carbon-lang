@@ -16,6 +16,7 @@
 #include "llvm/Module.h"
 #include "llvm/Support/CommandLine.h"
 #include "PPCGenSubtarget.inc"
+#include <iostream>
 
 using namespace llvm;
 PPCTargetEnum llvm::PPCTarget = TargetDefault;
@@ -75,6 +76,7 @@ PPCSubtarget::PPCSubtarget(const Module &M, const std::string &FS, bool is64Bit)
   , IsGigaProcessor(false)
   , Has64BitSupport(false)
   , Use64BitRegs(false)
+  , IsPPC64(is64Bit)
   , HasAltivec(false)
   , HasFSQRT(false)
   , HasSTFIWX(false)
@@ -90,6 +92,25 @@ PPCSubtarget::PPCSubtarget(const Module &M, const std::string &FS, bool is64Bit)
   // Parse features string.
   ParseSubtargetFeatures(FS, CPU);
 
+  // If we are generating code for ppc64, verify that options make sense.
+  if (is64Bit) {
+    if (!has64BitSupport()) {
+      std::cerr << "PPC: Generation of 64-bit code for a 32-bit processor "
+                   "requested.  Ignoring 32-bit processor feature.\n";
+      Has64BitSupport = true;
+      // Silently force 64-bit register use on ppc64.
+      Use64BitRegs = true;
+    }
+  }
+  
+  // If the user requested use of 64-bit regs, but the cpu selected doesn't
+  // support it, warn and ignore.
+  if (use64BitRegs() && !has64BitSupport()) {
+    std::cerr << "PPC: 64-bit registers requested on CPU without support.  "
+                 "Disabling 64-bit register use.\n";
+    Use64BitRegs = false;
+  }
+  
   // Set the boolean corresponding to the current target triple, or the default
   // if one cannot be determined, to true.
   const std::string& TT = M.getTargetTriple();

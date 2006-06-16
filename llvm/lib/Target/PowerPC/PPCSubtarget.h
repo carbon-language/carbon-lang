@@ -35,6 +35,7 @@ protected:
   bool IsGigaProcessor;
   bool Has64BitSupport;
   bool Use64BitRegs;
+  bool IsPPC64;
   bool HasAltivec;
   bool HasFSQRT;
   bool HasSTFIWX;
@@ -58,21 +59,35 @@ public:
   /// getInstrItins - Return the instruction itineraies based on subtarget 
   /// selection.
   const InstrItineraryData getInstrItineraryData() const { return InstrItins; }
-  
+
+  /// getTargetDataString - Return the pointer size and type alignment
+  /// properties of this subtarget.
   const char *getTargetDataString() const {
-    // FIXME: Make is64Bit be for the processor, not the target.
-    return true ? "E-p:32:32-d:32-l:32" : "E-p:64:64-d:32-l:32";
+    return isPPC64() ? "E-p:64:64-d:32-l:32" : "E-p:32:32-d:32-l:32";
   }
 
+  /// isPPC64 - Return true if we are generating code for 64-bit pointer mode.
+  ///
+  bool isPPC64() const { return IsPPC64; }
+  
+  /// has64BitSupport - Return true if the selected CPU supports 64-bit
+  /// instructions, regardless of whether we are in 32-bit or 64-bit mode.
+  bool has64BitSupport() const { return Has64BitSupport; }
+  
+  /// use64BitRegs - Return true if in 64-bit mode or if we should use 64-bit
+  /// registers in 32-bit mode when possible.  This can only true if
+  /// has64BitSupport() returns true.
+  bool use64BitRegs() const { return Use64BitRegs; }
+  
+  
+  // Specific obvious features.
   bool hasFSQRT() const { return HasFSQRT; }
   bool hasSTFIWX() const { return HasSTFIWX; }
-  bool use64BitRegs() const { return Use64BitRegs; }
   bool hasAltivec() const { return HasAltivec; }
+  bool isGigaProcessor() const { return IsGigaProcessor; }
   
   bool isAIX() const { return IsAIX; }
   bool isDarwin() const { return IsDarwin; }
-  bool has64BitSupport() const { return Has64BitSupport; }
-  bool isGigaProcessor() const { return IsGigaProcessor; }
 };
 } // End llvm namespace
 
