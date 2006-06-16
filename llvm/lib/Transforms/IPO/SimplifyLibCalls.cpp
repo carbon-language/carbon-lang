@@ -229,6 +229,15 @@ public:
     return fputc_func;
   }
 
+  /// @brief Return a Function* for the fputs libcall
+  Function* get_fputs(const Type* FILEptr_type) {
+    if (!fputs_func)
+      fputs_func = M->getOrInsertFunction("fputs", Type::IntTy,
+                                          PointerType::get(Type::SByteTy),
+                                          FILEptr_type, NULL);
+    return fputs_func;
+  }
+
   /// @brief Return a Function* for the fwrite libcall
   Function* get_fwrite(const Type* FILEptr_type) {
     if (!fwrite_func)
@@ -310,6 +319,7 @@ private:
     M = &mod;
     TD = &getAnalysis<TargetData>();
     fputc_func = 0;
+    fputs_func = 0;
     fwrite_func = 0;
     memcpy_func = 0;
     memchr_func = 0;
@@ -325,7 +335,7 @@ private:
 
 private:
   /// Caches for function pointers.
-  Function *fputc_func, *fwrite_func;
+  Function *fputc_func, *fputs_func, *fwrite_func;
   Function *memcpy_func, *memchr_func;
   Function* sqrt_func;
   Function *strcpy_func, *strlen_func;
@@ -1340,21 +1350,31 @@ public:
       {
         uint64_t len = 0;
         ConstantArray* CA = 0;
-        if (!getConstantStringLength(ci->getOperand(3), len, &CA))
-          return false;
-
-        // fprintf(file,"%s",str) -> fwrite(fmt,strlen(fmt),1,file)
-        const Type* FILEptr_type = ci->getOperand(1)->getType();
-        Function* fwrite_func = SLC.get_fwrite(FILEptr_type);
-        if (!fwrite_func)
-          return false;
-        std::vector<Value*> args;
-        args.push_back(CastToCStr(ci->getOperand(3), *ci));
-        args.push_back(ConstantUInt::get(SLC.getIntPtrType(),len));
-        args.push_back(ConstantUInt::get(SLC.getIntPtrType(),1));
-        args.push_back(ci->getOperand(1));
-        new CallInst(fwrite_func,args,ci->getName(),ci);
-        ci->replaceAllUsesWith(ConstantSInt::get(Type::IntTy,len));
+        if (getConstantStringLength(ci->getOperand(3), len, &CA)) {
+          // fprintf(file,"%s",str) -> fwrite(str,strlen(str),1,file)
+          const Type* FILEptr_type = ci->getOperand(1)->getType();
+          Function* fwrite_func = SLC.get_fwrite(FILEptr_type);
+          if (!fwrite_func)
+            return false;
+          std::vector<Value*> args;
+          args.push_back(CastToCStr(ci->getOperand(3), *ci));
+          args.push_back(ConstantUInt::get(SLC.getIntPtrType(),len));
+          args.push_back(ConstantUInt::get(SLC.getIntPtrType(),1));
+          args.push_back(ci->getOperand(1));
+          new CallInst(fwrite_func,args,ci->getName(),ci);
+          ci->replaceAllUsesWith(ConstantSInt::get(Type::IntTy,len));
+        } else {
+          // fprintf(file,"%s",str) -> fputs(str,file)
+          const Type* FILEptr_type = ci->getOperand(1)->getType();
+          Function* fputs_func = SLC.get_fputs(FILEptr_type);
+          if (!fputs_func)
+            return false;
+          std::vector<Value*> args;
+          args.push_back(ci->getOperand(3));
+          args.push_back(ci->getOperand(1));
+          new CallInst(fputs_func,args,ci->getName(),ci);
+          ci->replaceAllUsesWith(ConstantSInt::get(Type::IntTy,len));
+        }
         break;
       }
       case 'c':
