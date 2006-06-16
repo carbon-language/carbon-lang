@@ -58,7 +58,7 @@ ExecutionEngine *Interpreter::create(ModuleProvider *MP) {
 //===----------------------------------------------------------------------===//
 // Interpreter ctor - Initialize stuff
 //
-Interpreter::Interpreter(Module *M) : ExecutionEngine(M), TD("lli", M) {
+Interpreter::Interpreter(Module *M) : ExecutionEngine(M), TD(M) {
       
   memset(&ExitValue, 0, sizeof(ExitValue));
   setTargetData(&TD);
