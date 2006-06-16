@@ -45,19 +45,26 @@ class TargetData : public ImmutablePass {
   unsigned char PointerAlignment;      // Defaults to 8 bytes
 
 public:
+  /// Default ctor - This has to exist, because this is a pass, but it should
+  /// never be used.
+  TargetData() {
+    assert(0 && "ERROR: Bad TargetData ctor used.  "
+           "Tool did not specify a TargetData to use?");
+    abort();
+  }
+    
   /// Constructs a TargetData from a string of the following format:
   /// "E-p:64:64-d:64-f:32-l:64-i:32-s:16-b:8-B:8"
   /// The above string is considered the default, and any values not specified
   /// in the string will be assumed to be as above.
-  TargetData(const std::string &TargetName = "",
-             const std::string &TargetDescription = "") {
-    assert(!TargetName.empty() &&
-           "ERROR: Tool did not specify a target data to use!");
+  TargetData(const std::string &TargetDescription) {
     init(TargetDescription);
   }
-  
-  // Copy constructor
-  TargetData (const TargetData &TD) :
+
+  /// Initialize target data from properties stored in the module.
+  TargetData(const Module *M);
+
+  TargetData(const TargetData &TD) : 
     ImmutablePass(),
     LittleEndian(TD.isLittleEndian()),
     BoolAlignment(TD.getBoolAlignment()),
@@ -71,7 +78,6 @@ public:
     PointerAlignment(TD.getPointerAlignment()) {
   }
 
-  TargetData(const std::string &ToolName, const Module *M);
   ~TargetData();  // Not virtual, do not subclass this class
 
   /// init - Specify configuration if not available at ctor time.
