@@ -760,8 +760,14 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
   
   emitJumpTableInfo(F.getJumpTableInfo());
   
-  MemMgr.endFunctionBody(F.getFunction(), BufferBegin, CurBufferPtr);
-  NumBytes += getCurrentPCOffset();
+  // FnStart is the start of the text, not the start of the constant pool and
+  // other per-function data.
+  unsigned char *FnStart =
+    (unsigned char *)TheJIT->getPointerToGlobalIfAvailable(F.getFunction());
+  unsigned char *FnEnd   = CurBufferPtr;
+  
+  MemMgr.endFunctionBody(F.getFunction(), BufferBegin, FnEnd);
+  NumBytes += FnEnd-FnStart;
 
   if (!Relocations.empty()) {
     NumRelos += Relocations.size();
@@ -815,11 +821,9 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
     }
   }
 
-  DEBUG(void *FnStart = TheJIT->getPointerToGlobalIfAvailable(F.getFunction());
-        char *FnEnd   = (char*)getCurrentPCOffset();
-        std::cerr << "JIT: Finished CodeGen of [" << FnStart
+  DEBUG(std::cerr << "JIT: Finished CodeGen of [" << (void*)FnStart
                   << "] Function: " << F.getFunction()->getName()
-                  << ": " << (FnEnd-(char*)FnStart) << " bytes of text, "
+                  << ": " << (FnEnd-FnStart) << " bytes of text, "
                   << Relocations.size() << " relocations\n");
   Relocations.clear();
   return false;
