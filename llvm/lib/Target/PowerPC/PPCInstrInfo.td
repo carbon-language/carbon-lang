@@ -205,17 +205,17 @@ def crbitm: Operand<i8> {
 def memri : Operand<iPTR> {
   let PrintMethod = "printMemRegImm";
   let NumMIOperands = 2;
-  let MIOperandInfo = (ops i32imm, GPRC);
+  let MIOperandInfo = (ops i32imm, ptr_rc);
 }
 def memrr : Operand<iPTR> {
   let PrintMethod = "printMemRegReg";
   let NumMIOperands = 2;
-  let MIOperandInfo = (ops GPRC, GPRC);
+  let MIOperandInfo = (ops ptr_rc, ptr_rc);
 }
 def memrix : Operand<iPTR> {   // memri where the imm is shifted 2 bits.
   let PrintMethod = "printMemRegImmShifted";
   let NumMIOperands = 2;
-  let MIOperandInfo = (ops i32imm, GPRC);
+  let MIOperandInfo = (ops i32imm, ptr_rc);
 }
 
 // Define PowerPC specific addressing mode.
