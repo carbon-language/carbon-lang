@@ -90,7 +90,8 @@ static const char *GetCurrentX86CPU() {
         case 9:
         case 13: return "pentium-m";
         case 14: return "yonah";
-        default: return "i686";
+        default:
+          return (Model > 14) ? "yonah" : "i686";
         }
       case 15: {
         switch (Model) {
