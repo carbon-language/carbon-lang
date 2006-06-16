@@ -39,37 +39,27 @@ ExecutionEngine *Interpreter::create(ModuleProvider *MP) {
     return 0;  // error materializing the module.
   }
   
-  bool isLittleEndian = false;
-  switch (M->getEndianness()) {
-  case Module::LittleEndian: isLittleEndian = true; break;
-  case Module::BigEndian:    isLittleEndian = false; break;
-  case Module::AnyPointerSize:
+  if (M->getEndianness() == Module::AnyEndianness) {
     int Test = 0;
     *(char*)&Test = 1;    // Return true if the host is little endian
-    isLittleEndian = (Test == 1);
-    break;
+    bool isLittleEndian = (Test == 1);
+    M->setEndianness(isLittleEndian ? Module::LittleEndian : Module::BigEndian);
   }
 
-  bool isLongPointer = false;
-  switch (M->getPointerSize()) {
-  case Module::Pointer32: isLongPointer = false; break;
-  case Module::Pointer64: isLongPointer = true; break;
-  case Module::AnyPointerSize:
-    isLongPointer = (sizeof(void*) == 8);  // Follow host
-    break;
+  if (M->getPointerSize() == Module::AnyPointerSize) {
+    // Follow host.
+    bool Ptr64 = sizeof(void*) == 8;
+    M->setPointerSize(Ptr64 ? Module::Pointer64 : Module::Pointer32);
   }
 
-  return new Interpreter(M, isLittleEndian, isLongPointer);
+  return new Interpreter(M);
 }
 
 //===----------------------------------------------------------------------===//
 // Interpreter ctor - Initialize stuff
 //
-Interpreter::Interpreter(Module *M, bool isLittleEndian, bool isLongPointer)
-  : ExecutionEngine(M),
-    TD("lli", isLittleEndian, isLongPointer ? 8 : 4, isLongPointer ? 8 : 4,
-       isLongPointer ? 8 : 4) {
-
+Interpreter::Interpreter(Module *M) : ExecutionEngine(M), TD("lli", M) {
+      
   memset(&ExitValue, 0, sizeof(ExitValue));
   setTargetData(&TD);
   // Initialize the "backend"

@@ -94,7 +94,7 @@ class Interpreter : public ExecutionEngine, public InstVisitor<Interpreter> {
   std::vector<Function*> AtExitHandlers;
 
 public:
-  Interpreter(Module *M, bool isLittleEndian, bool isLongPointer);
+  Interpreter(Module *M);
   ~Interpreter();
 
   /// runAtExitHandlers - Run any functions registered by the program's calls to
