@@ -459,7 +459,8 @@ public:
 /// GlobalVariable.   Return DIIValid if operand is not an unsigned int. 
 unsigned DebugInfoDesc::TagFromGlobal(GlobalVariable *GV) {
   ConstantUInt *C = getUIntOperand(GV, 0);
-  return C ? ((unsigned)C->getValue() & tag_mask) : (unsigned)DW_TAG_invalid;
+  return C ? ((unsigned)C->getValue() & ~LLVMDebugVersionMask) :
+             (unsigned)DW_TAG_invalid;
 }
 
 /// VersionFromGlobal - Returns the version number from a debug info
@@ -467,7 +468,7 @@ unsigned DebugInfoDesc::TagFromGlobal(GlobalVariable *GV) {
 /// int.
 unsigned  DebugInfoDesc::VersionFromGlobal(GlobalVariable *GV) {
   ConstantUInt *C = getUIntOperand(GV, 0);
-  return C ? ((unsigned)C->getValue() >> version_shift) :
+  return C ? ((unsigned)C->getValue() & LLVMDebugVersionMask) :
              (unsigned)DW_TAG_invalid;
 }
 
@@ -491,7 +492,8 @@ DebugInfoDesc *DebugInfoDesc::DescFactory(unsigned Tag) {
   case DW_TAG_array_type:
   case DW_TAG_structure_type:
   case DW_TAG_union_type:
-  case DW_TAG_enumeration_type: return new CompositeTypeDesc(Tag);
+  case DW_TAG_enumeration_type:
+  case DW_TAG_vector_type:      return new CompositeTypeDesc(Tag);
   case DW_TAG_subrange_type:    return new SubrangeDesc();
   case DW_TAG_enumerator:       return new EnumeratorDesc();
   case DW_TAG_return_variable:
@@ -590,9 +592,7 @@ AnchoredDesc::AnchoredDesc(unsigned T)
 void AnchoredDesc::ApplyToFields(DIVisitor *Visitor) {
   DebugInfoDesc::ApplyToFields(Visitor);
 
-  DebugInfoDesc *Tmp = Anchor;
-  Visitor->Apply(Tmp);
-  Anchor = (AnchorDesc*)Tmp;
+  Visitor->Apply(Anchor);
 }
 
 //===----------------------------------------------------------------------===//
@@ -673,9 +673,7 @@ void TypeDesc::ApplyToFields(DIVisitor *Visitor) {
   
   Visitor->Apply(Context);
   Visitor->Apply(Name);
-  DebugInfoDesc* Tmp = File;
-  Visitor->Apply(Tmp);
-  File = (CompileUnitDesc*)Tmp;
+  Visitor->Apply(File);
   Visitor->Apply(Line);
   Visitor->Apply(Size);
   Visitor->Apply(Align);
@@ -782,9 +780,7 @@ bool DerivedTypeDesc::classof(const DebugInfoDesc *D) {
 void DerivedTypeDesc::ApplyToFields(DIVisitor *Visitor) {
   TypeDesc::ApplyToFields(Visitor);
   
-  DebugInfoDesc* Tmp = FromType;
-  Visitor->Apply(Tmp);
-  FromType = (TypeDesc*)Tmp;
+  Visitor->Apply(FromType);
 }
 
 /// getDescString - Return a string used to compose global names and labels.
@@ -817,7 +813,6 @@ void DerivedTypeDesc::dump() {
 
 CompositeTypeDesc::CompositeTypeDesc(unsigned T)
 : DerivedTypeDesc(T)
-, IsVector(false)
 , Elements()
 {}
   
@@ -829,6 +824,7 @@ bool CompositeTypeDesc::classof(const DebugInfoDesc *D) {
   case DW_TAG_structure_type:
   case DW_TAG_union_type:
   case DW_TAG_enumeration_type:
+  case DW_TAG_vector_type:
     return true;
   default: break;
   }
@@ -838,9 +834,8 @@ bool CompositeTypeDesc::classof(const DebugInfoDesc *D) {
 /// ApplyToFields - Target the visitor to the fields of the CompositeTypeDesc.
 ///
 void CompositeTypeDesc::ApplyToFields(DIVisitor *Visitor) {
-  DerivedTypeDesc::ApplyToFields(Visitor);
-  
-  Visitor->Apply(IsVector);
+  DerivedTypeDesc::ApplyToFields(Visitor);  
+
   Visitor->Apply(Elements);
 }
 
@@ -990,13 +985,9 @@ void VariableDesc::ApplyToFields(DIVisitor *Visitor) {
   
   Visitor->Apply(Context);
   Visitor->Apply(Name);
-  DebugInfoDesc* Tmp1 = File;
-  Visitor->Apply(Tmp1);
-  File = (CompileUnitDesc*)Tmp1;
+  Visitor->Apply(File);
   Visitor->Apply(Line);
-  DebugInfoDesc* Tmp2 = TyDesc;
-  Visitor->Apply(Tmp2);
-  TyDesc = (TypeDesc*)Tmp2;
+  Visitor->Apply(TyDesc);
 }
 
 /// getDescString - Return a string used to compose global names and labels.
@@ -1044,13 +1035,9 @@ void GlobalDesc::ApplyToFields(DIVisitor *Visitor) {
 
   Visitor->Apply(Context);
   Visitor->Apply(Name);
-  DebugInfoDesc* Tmp1 = File;
-  Visitor->Apply(Tmp1);
-  File = (CompileUnitDesc*)Tmp1;
+  Visitor->Apply(File);
   Visitor->Apply(Line);
-  DebugInfoDesc* Tmp2 = TyDesc;
-  Visitor->Apply(Tmp2);
-  TyDesc = (TypeDesc*)Tmp2;
+  Visitor->Apply(TyDesc);
   Visitor->Apply(IsStatic);
   Visitor->Apply(IsDefinition);
 }

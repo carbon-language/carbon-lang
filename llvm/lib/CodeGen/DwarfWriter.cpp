@@ -1276,21 +1276,23 @@ DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc, CompileUnit *Unit) {
                      NewType(Context, FromTy, Unit));
     }
   } else if (CompositeTypeDesc *CompTy = dyn_cast<CompositeTypeDesc>(TyDesc)) {
+    // Fetch tag
+    unsigned Tag = CompTy->getTag();
+    
     // Create specific DIE.
-    Slot = Ty = new DIE(CompTy->getTag());
+    Slot = Ty = Tag == DW_TAG_vector_type ? new DIE(DW_TAG_array_type) :
+                                            new DIE(Tag);
+    
     std::vector<DebugInfoDesc *> &Elements = CompTy->getElements();
     
-    switch (CompTy->getTag()) {
+    switch (Tag) {
+    case DW_TAG_vector_type: Ty->AddUInt(DW_AT_GNU_vector, DW_FORM_flag, 1);
+      // Fall thru
     case DW_TAG_array_type: {
       // Add element type.
       if (TypeDesc *FromTy = CompTy->getFromType()) {
         Ty->AddDIEntry(DW_AT_type, DW_FORM_ref4,
                        NewType(Context, FromTy, Unit));
-      }
-      
-      // check for vector type
-      if (CompTy->isVector()) {
-        Ty->AddUInt(DW_AT_GNU_vector, DW_FORM_flag, 1);
       }
       
       // Don't emit size attribute.

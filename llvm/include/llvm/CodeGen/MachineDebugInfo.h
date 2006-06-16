@@ -57,7 +57,8 @@ class StructType;
 // Debug info constants.
 
 enum {
-  LLVMDebugVersion = 4                  // Current version of debug information.
+  LLVMDebugVersion = (4 << 16),         // Current version of debug information.
+  LLVMDebugVersionMask = 0xffff0000     // Mask for version number.
 };
 
 //===----------------------------------------------------------------------===//
@@ -90,25 +91,20 @@ public:
 ///
 class DebugInfoDesc {
 private:
-  enum {
-    tag_mask = 0x0000ffff,
-    version_shift = 16
-  };
-
-
   unsigned Tag;                         // Content indicator.  Dwarf values are
                                         // used but that does not limit use to
                                         // Dwarf writers.
   
 protected:
-  DebugInfoDesc(unsigned T) : Tag(T | (LLVMDebugVersion << version_shift)) {}
+  DebugInfoDesc(unsigned T) : Tag(T | LLVMDebugVersion) {}
   
 public:
   virtual ~DebugInfoDesc() {}
 
   // Accessors
-  unsigned getTag()          const { return Tag & tag_mask; }
-  unsigned getVersion()      const { return Tag >> version_shift; }
+  unsigned getTag()          const { return Tag & ~LLVMDebugVersionMask; }
+  unsigned getVersion()      const { return Tag &  LLVMDebugVersionMask; }
+  void setTag(unsigned T)          { Tag = T | LLVMDebugVersion; }
   
   /// TagFromGlobal - Returns the tag number from a debug info descriptor
   /// GlobalVariable.   Return DIIValid if operand is not an unsigned int. 
@@ -199,7 +195,7 @@ public:
 /// descriptors.
 class AnchoredDesc : public DebugInfoDesc {
 private:  
-  AnchorDesc *Anchor;                   // Anchor for all descriptors of the
+  DebugInfoDesc *Anchor;                // Anchor for all descriptors of the
                                         // same type.
 
 protected:
@@ -208,8 +204,8 @@ protected:
 
 public:  
   // Accessors.
-  AnchorDesc *getAnchor() const { return Anchor; }
-  void setAnchor(AnchorDesc *A) { Anchor = A; }
+  AnchorDesc *getAnchor() const { return static_cast<AnchorDesc *>(Anchor); }
+  void setAnchor(AnchorDesc *A) { Anchor = static_cast<DebugInfoDesc *>(A); }
 
   //===--------------------------------------------------------------------===//
   // Subclasses should supply the following virtual methods.
@@ -282,7 +278,7 @@ class TypeDesc : public DebugInfoDesc {
 private:
   DebugInfoDesc *Context;               // Context debug descriptor.
   std::string Name;                     // Type name (may be empty.)
-  CompileUnitDesc *File;                // Defined compile unit (may be NULL.)
+  DebugInfoDesc *File;                  // Defined compile unit (may be NULL.)
   unsigned Line;                        // Defined line# (may be zero.)
   uint64_t Size;                        // Type bit size (may be zero.)
   uint64_t Align;                       // Type bit alignment (may be zero.)
@@ -294,14 +290,18 @@ public:
   // Accessors
   DebugInfoDesc *getContext()                const { return Context; }
   const std::string &getName()               const { return Name; }
-  CompileUnitDesc *getFile()                 const { return File; }
+  CompileUnitDesc *getFile() const {
+    return static_cast<CompileUnitDesc *>(File);
+  }
   unsigned getLine()                         const { return Line; }
   uint64_t getSize()                         const { return Size; }
   uint64_t getAlign()                        const { return Align; }
   uint64_t getOffset()                       const { return Offset; }
   void setContext(DebugInfoDesc *C)                { Context = C; }
   void setName(const std::string &N)               { Name = N; }
-  void setFile(CompileUnitDesc *U)                 { File = U; }
+  void setFile(CompileUnitDesc *U) {
+    File = static_cast<DebugInfoDesc *>(U);
+  }
   void setLine(unsigned L)                         { Line = L; }
   void setSize(uint64_t S)                         { Size = S; }
   void setAlign(uint64_t A)                        { Align = A; }
@@ -365,14 +365,18 @@ public:
 /// derived types (eg., typedef, pointer, reference.)
 class DerivedTypeDesc : public TypeDesc {
 private:
-  TypeDesc *FromType;                   // Type derived from.
+  DebugInfoDesc *FromType;              // Type derived from.
 
 public:
   DerivedTypeDesc(unsigned T);
   
   // Accessors
-  TypeDesc *getFromType()                    const { return FromType; }
-  void setFromType(TypeDesc *F)                    { FromType = F; }
+  TypeDesc *getFromType() const {
+    return static_cast<TypeDesc *>(FromType);
+  }
+  void setFromType(TypeDesc *F) {
+    FromType = static_cast<DebugInfoDesc *>(F);
+  }
 
   // Implement isa/cast/dyncast.
   static bool classof(const DerivedTypeDesc *) { return true; }
@@ -400,16 +404,13 @@ public:
 /// array/struct types (eg., arrays, struct, union, enums.)
 class CompositeTypeDesc : public DerivedTypeDesc {
 private:
-  bool IsVector;                        // packed/vector array
   std::vector<DebugInfoDesc *> Elements;// Information used to compose type.
 
 public:
   CompositeTypeDesc(unsigned T);
   
   // Accessors
-  bool isVector() const { return IsVector; }
   std::vector<DebugInfoDesc *> &getElements() { return Elements; }
-  void setIsVector() { IsVector = true; }
 
   // Implement isa/cast/dyncast.
   static bool classof(const CompositeTypeDesc *) { return true; }
@@ -516,9 +517,9 @@ class VariableDesc : public DebugInfoDesc {
 private:
   DebugInfoDesc *Context;               // Context debug descriptor.
   std::string Name;                     // Type name (may be empty.)
-  CompileUnitDesc *File;                // Defined compile unit (may be NULL.)
+  DebugInfoDesc *File;                  // Defined compile unit (may be NULL.)
   unsigned Line;                        // Defined line# (may be zero.)
-  TypeDesc *TyDesc;                     // Type of variable.
+  DebugInfoDesc *TyDesc;                // Type of variable.
 
 public:
   VariableDesc(unsigned T);
@@ -526,14 +527,22 @@ public:
   // Accessors
   DebugInfoDesc *getContext()                const { return Context; }
   const std::string &getName()               const { return Name; }
-  CompileUnitDesc *getFile()                 const { return File; }
+  CompileUnitDesc *getFile() const {
+    return static_cast<CompileUnitDesc *>(File);
+  }
   unsigned getLine()                         const { return Line; }
-  TypeDesc *getType()                        const { return TyDesc; }
+  TypeDesc *getType() const {
+    return static_cast<TypeDesc *>(TyDesc);
+  }
   void setContext(DebugInfoDesc *C)                { Context = C; }
   void setName(const std::string &N)               { Name = N; }
-  void setFile(CompileUnitDesc *U)                 { File = U; }
+  void setFile(CompileUnitDesc *U) {
+    File = static_cast<DebugInfoDesc *>(U);
+  }
   void setLine(unsigned L)                         { Line = L; }
-  void setType(TypeDesc *T)                        { TyDesc = T; }
+  void setType(TypeDesc *T) {
+    TyDesc = static_cast<DebugInfoDesc *>(T);
+  }
   
   // Implement isa/cast/dyncast.
   static bool classof(const VariableDesc *) { return true; }
@@ -563,9 +572,9 @@ class GlobalDesc : public AnchoredDesc {
 private:
   DebugInfoDesc *Context;               // Context debug descriptor.
   std::string Name;                     // Global name.
-  CompileUnitDesc *File;                // Defined compile unit (may be NULL.)
+  DebugInfoDesc *File;                  // Defined compile unit (may be NULL.)
   unsigned Line;                        // Defined line# (may be zero.)
-  TypeDesc *TyDesc;                     // Type debug descriptor.
+  DebugInfoDesc *TyDesc;                // Type debug descriptor.
   bool IsStatic;                        // Is the global a static.
   bool IsDefinition;                    // Is the global defined in context.
   
@@ -576,16 +585,24 @@ public:
   // Accessors
   DebugInfoDesc *getContext()                const { return Context; }
   const std::string &getName()               const { return Name; }
-  CompileUnitDesc *getFile()                 const { return File; }
+  CompileUnitDesc *getFile() const {
+    return static_cast<CompileUnitDesc *>(File);
+  }
   unsigned getLine()                         const { return Line; }
-  TypeDesc *getType()                        const { return TyDesc; }
+  TypeDesc *getType() const {
+    return static_cast<TypeDesc *>(TyDesc);
+  }
   bool isStatic()                            const { return IsStatic; }
   bool isDefinition()                        const { return IsDefinition; }
   void setContext(DebugInfoDesc *C)                { Context = C; }
   void setName(const std::string &N)               { Name = N; }
-  void setFile(CompileUnitDesc *U)                 { File = U; }
+  void setFile(CompileUnitDesc *U) {
+    File = static_cast<DebugInfoDesc *>(U);
+  }
   void setLine(unsigned L)                         { Line = L; }
-  void setType(TypeDesc *T)                        { TyDesc = T; }
+  void setType(TypeDesc *T) {
+    TyDesc = static_cast<DebugInfoDesc *>(T);
+  }
   void setIsStatic(bool IS)                        { IsStatic = IS; }
   void setIsDefinition(bool ID)                    { IsDefinition = ID; }
 

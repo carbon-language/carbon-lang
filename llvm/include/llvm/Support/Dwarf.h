@@ -37,6 +37,8 @@ enum llvm_dwarf_constants {
   DW_TAG_arg_variable = 0x101,          // Tag for argument variables.
   DW_TAG_return_variable = 0x102,       // Tag for return variables.
   
+  DW_TAG_vector_type = 0x103,           // Tag for vector types.
+  
   DW_TAG_user_base = 0x1000,            // Recommended base for user tags.
   
   DW_CIE_VERSION = 1,                   // Common frame information version.
