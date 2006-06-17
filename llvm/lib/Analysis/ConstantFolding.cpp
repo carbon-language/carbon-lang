@@ -76,7 +76,8 @@ llvm::canConstantFoldCallTo(Function *F) {
     case 'p':
       return Name == "pow";
     case 's':
-      return Name == "sin" || Name == "sinh" || Name == "sqrt";
+      return Name == "sin" || Name == "sinh" || 
+             Name == "sqrt" || Name == "sqrtf";
     case 't':
       return Name == "tan" || Name == "tanh";
     default:
@@ -150,6 +151,8 @@ llvm::ConstantFoldCall(Function *F, const std::vector<Constant*> &Operands) {
             return ConstantFP::get(Ty, sinh(V));
           else if (Name == "sqrt" && V >= 0)
             return ConstantFP::get(Ty, sqrt(V));
+          else if (Name == "sqrtf" && V >= 0)
+            return ConstantFP::get(Ty, sqrt((float)V));
           break;
         case 't':
           if (Name == "tan")
