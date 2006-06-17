@@ -62,9 +62,10 @@ enum PPC970_Unit {
   
   
 class PPCInstrInfo : public TargetInstrInfo {
+  PPCTargetMachine &TM;
   const PPCRegisterInfo RI;
 public:
-  PPCInstrInfo();
+  PPCInstrInfo(PPCTargetMachine &TM);
 
   /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
   /// such, whenever a client has an instance of instruction info, it should
@@ -72,7 +73,10 @@ public:
   ///
   virtual const MRegisterInfo &getRegisterInfo() const { return RI; }
 
-  //
+  /// getPointerRegClass - Return the register class to use to hold pointers.
+  /// This is used for addressing modes.
+  virtual const TargetRegisterClass *getPointerRegClass() const;  
+
   // Return true if the instruction is a register to register move and
   // leave the source and dest operands in the passed parameters.
   //

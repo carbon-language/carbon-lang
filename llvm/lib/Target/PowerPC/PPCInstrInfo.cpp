@@ -13,13 +13,23 @@
 
 #include "PPCInstrInfo.h"
 #include "PPCGenInstrInfo.inc"
-#include "PPC.h"
+#include "PPCTargetMachine.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include <iostream>
 using namespace llvm;
 
-PPCInstrInfo::PPCInstrInfo()
-  : TargetInstrInfo(PPCInsts, sizeof(PPCInsts)/sizeof(PPCInsts[0])) {}
+PPCInstrInfo::PPCInstrInfo(PPCTargetMachine &tm)
+  : TargetInstrInfo(PPCInsts, sizeof(PPCInsts)/sizeof(PPCInsts[0])), TM(tm) {}
+
+/// getPointerRegClass - Return the register class to use to hold pointers.
+/// This is used for addressing modes.
+const TargetRegisterClass *PPCInstrInfo::getPointerRegClass() const {
+  if (TM.getSubtargetImpl()->isPPC64())
+    return &PPC::G8RCRegClass;
+  else
+    return &PPC::GPRCRegClass;
+}
+
 
 bool PPCInstrInfo::isMoveInstr(const MachineInstr& MI,
                                unsigned& sourceReg,
