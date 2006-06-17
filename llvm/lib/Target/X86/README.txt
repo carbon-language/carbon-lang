@@ -702,3 +702,5 @@ L2:
 Smells like a register coallescing/reassociation issue.
 
 //===---------------------------------------------------------------------===//
+
+Use cpuid to auto-detect CPU features such as SSE, SSE2, and SSE3.
