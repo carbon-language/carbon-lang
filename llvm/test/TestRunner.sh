@@ -13,7 +13,8 @@
 FILENAME=$1
 TESTNAME=$1
 SUBST=$1
-OUTPUT=Output/$FILENAME.out
+FILENAME_ONLY=`basename $1`
+OUTPUT=Output/$FILENAME_ONLY.out
 
 # create the output directory if it does not already exist
 mkdir Output > /dev/null 2>&1
