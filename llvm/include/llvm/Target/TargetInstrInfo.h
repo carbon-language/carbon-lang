@@ -149,8 +149,7 @@ public:
   const TargetRegisterClass
   *getInstrOperandRegClass(const TargetInstrDescriptor *II, unsigned Op) const {
     if (Op >= II->numOperands) {
-      if (!(II->Flags & M_VARIABLE_OPS))
-        assert(false && "Invalid operand # of instruction");
+      assert((II->Flags & M_VARIABLE_OPS)&& "Invalid operand # of instruction");
       return NULL;
     }
     const TargetOperandInfo &toi = II->OpInfo[Op];
