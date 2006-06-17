@@ -321,11 +321,26 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L) {
               HasConstantItCount) {
             // Find out if this predictably varying value is actually used
             // outside of the loop.  "extra" as opposed to "intra".
-            std::vector<User*> ExtraLoopUsers;
+            std::vector<Instruction*> ExtraLoopUsers;
             for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
-                 UI != E; ++UI)
-              if (!L->contains(cast<Instruction>(*UI)->getParent()))
-                ExtraLoopUsers.push_back(*UI);
+                 UI != E; ++UI) {
+              Instruction *User = cast<Instruction>(*UI);
+              if (!L->contains(User->getParent())) {
+                // If this is a PHI node in the exit block and we're inserting,
+                // into the exit block, it must have a single entry.  In this
+                // case, we can't insert the code after the PHI and have the PHI
+                // still use it.  Instead, don't insert the the PHI.
+                if (PHINode *PN = dyn_cast<PHINode>(User)) {
+                  // FIXME: This is a case where LCSSA pessimizes code, this
+                  // should be fixed better.
+                  if (PN->getNumOperands() == 2 && 
+                      PN->getParent() == BlockToInsertInto)
+                    continue;
+                }
+                ExtraLoopUsers.push_back(User);
+              }
+            }
+            
             if (!ExtraLoopUsers.empty()) {
               // Okay, this instruction has a user outside of the current loop
               // and varies predictably in this loop.  Evaluate the value it
