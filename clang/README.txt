@@ -47,7 +47,7 @@ Preprocessor:
  * #line / #file directives
  * Detection of "atomic" headers (#ifndef/#define), #pragma once support.
  * Function-style #define & macro expansion
- * -E & -C & -P output.
+ * -C & -P output modes.
 
 Traditional Preprocessor:
  * All.
