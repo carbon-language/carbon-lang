@@ -1,0 +1,241 @@
+//===--- TokenKinds.def - C Family Token Kind Database ----------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by Chris Lattner and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+//  This file defines the TokenKind database.  This includes normal tokens like
+//  tok::ampamp (corresponding to the && token) as well as keywords for various
+//  languages.  Users of this file must optionally #define the TOK/KEYWORD/ALIAS
+//  macros to make use of this file.
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef TOK
+#define TOK(X)
+#endif
+#ifndef KEYWORD
+#define KEYWORD(X,Y) TOK(kw ## X)
+#endif
+#ifndef ALIAS
+#define ALIAS(X,Y)
+#endif
+
+TOK(unknown)             // Not a token.
+TOK(eof)                 // End of file.
+TOK(eom)                 // End of macro (end of line inside a macro).
+
+// C99 6.4.2: Identifiers.
+TOK(identifier)          // abcde123
+
+// C99 6.4.4.1: Integer Constants
+// C99 6.4.4.2: Floating Constants
+TOK(numeric_constant)    // 0x123
+
+// C99 6.4.4: Character Constants
+TOK(char_constant)       // 'a'   L'b'
+
+// C99 6.4.5: String Literals.
+TOK(string_literal)      // "foo"  L"foo"
+TOK(angle_string_literal)// <foo>
+
+// C99 6.4.6: Punctuators.
+TOK(l_square)            // [
+TOK(r_square)            // ]
+TOK(l_paren)             // (
+TOK(r_paren)             // )
+TOK(l_brace)             // {
+TOK(r_brace)             // }
+TOK(period)              // .
+TOK(ellipsis)            // ...
+TOK(amp)                 // &
+TOK(ampamp)              // &&
+TOK(ampequal)            // &=
+TOK(star)                // *
+TOK(starequal)           // *=
+TOK(plus)                // +
+TOK(plusplus)            // ++
+TOK(plusequal)           // +=
+TOK(minus)               // -
+TOK(arrow)               // ->
+TOK(minusminus)          // --
+TOK(minusequal)          // -=
+TOK(tilde)               // ~
+TOK(exclaim)             // !
+TOK(exclaimequal)        // !=
+TOK(slash)               // /
+TOK(slashequal)          // /=
+TOK(percent)             // %
+TOK(percentequal)        // %=
+TOK(less)                // <
+TOK(lessless)            // <<
+TOK(lessequal)           // <=
+TOK(lesslessequal)       // <<=
+TOK(greater)             // >
+TOK(greatergreater)      // >>
+TOK(greaterequal)        // >=
+TOK(greatergreaterequal) // >>=
+TOK(caret)               // ^
+TOK(caretequal)          // ^=
+TOK(pipe)                // |
+TOK(pipepipe)            // ||
+TOK(pipeequal)           // |=
+TOK(question)            // ?
+TOK(colon)               // :
+TOK(semi)                // ;
+TOK(equal)               // =
+TOK(equalequal)          // ==
+TOK(comma)               // ,
+TOK(hash)                // #
+TOK(hashhash)            // ##
+
+// C++ Support
+TOK(periodstar)          // .*
+TOK(arrowstar)           // ->*
+TOK(coloncolon)          // ::
+
+// GNU C++ Extensions
+TOK(lessquestionequal)   // <?=
+TOK(greaterquestionequal)// >?=
+TOK(lessquestion)        // <?
+TOK(greaterquestion)     // >?
+
+// Objective C support.
+TOK(at)                  // @
+
+// at_identifier         // @foo
+// at_string             // @"foo"
+
+
+// C99 6.4.1: Keywords.  These turn into kw_* tokens.  The _ prefix is used to
+// prevent the __VA_ARGS__ token from appearing here.
+// Flags allowed:
+//   NOTC90 - In C90, this token is never available.
+//   EXTC90 - In C90, this token is an extension that is enabled unless strict.
+//   NOTC99 - In C99, this token is never available.
+//   EXTC99 - In C99, this token is an extension that is enabled unless strict.
+//   NOTCPP - In C++, this token is never available.
+//   EXTCPP - In C++, this token is an extension that is enabled unless strict.
+//
+KEYWORD(_auto                        , 0)
+KEYWORD(_break                       , 0)
+KEYWORD(_case                        , 0)
+KEYWORD(_char                        , 0)
+KEYWORD(_const                       , 0)
+KEYWORD(_continue                    , 0)
+KEYWORD(_default                     , 0)
+KEYWORD(_do                          , 0)
+KEYWORD(_double                      , 0)
+KEYWORD(_else                        , 0)
+KEYWORD(_enum                        , 0)
+KEYWORD(_extern                      , 0)
+KEYWORD(_float                       , 0)
+KEYWORD(_for                         , 0)
+KEYWORD(_goto                        , 0)
+KEYWORD(_if                          , 0)
+KEYWORD(_inline                      , EXTC90)  // Ext in C90, ok in C99/C++
+KEYWORD(_int                         , 0)
+KEYWORD(_long                        , 0)
+KEYWORD(_register                    , 0)
+KEYWORD(_restrict                    , NOTC90)    // Not in C90
+KEYWORD(_return                      , 0)
+KEYWORD(_short                       , 0)
+KEYWORD(_signed                      , 0)
+KEYWORD(_sizeof                      , 0)
+KEYWORD(_static                      , 0)
+KEYWORD(_struct                      , 0)
+KEYWORD(_switch                      , 0)
+KEYWORD(_typedef                     , 0)
+KEYWORD(_union                       , 0)
+KEYWORD(_unsigned                    , 0)
+KEYWORD(_void                        , 0)
+KEYWORD(_volatile                    , 0)
+KEYWORD(_while                       , 0)
+KEYWORD(__Bool                       , NOTC90|NOTCPP)  // C99 only
+KEYWORD(__Complex                    , NOTC90)         // C99/C++
+KEYWORD(__Imaginary                  , NOTC90|NOTCPP)  // C90 only
+
+// Special tokens to the compiler.
+KEYWORD(___VA_ARGS__                 , EXTC90|EXTCPP) // Only in C99.
+KEYWORD(___func__                    , EXTC90|EXTCPP) // Only in C99.
+KEYWORD(___FUNCTION__                , EXTC90|EXTC99|EXTCPP) // GCC Extension.
+KEYWORD(___PRETTY_FUNCTION__         , EXTC90|EXTC99|EXTCPP) // GCC Extension.
+
+// C++
+KEYWORD(_asm                         , EXTC90|EXTC99) // Exts in C90/C99
+KEYWORD(_catch                       , NOTC90|NOTC99)
+KEYWORD(_class                       , NOTC90|NOTC99)
+KEYWORD(_const_cast                  , NOTC90|NOTC99)
+KEYWORD(_delete                      , NOTC90|NOTC99)
+KEYWORD(_dynamic_cast                , NOTC90|NOTC99)
+KEYWORD(_explicit                    , NOTC90|NOTC99)
+KEYWORD(_export                      , NOTC90|NOTC99)
+KEYWORD(_false                       , NOTC90|NOTC99)
+KEYWORD(_friend                      , NOTC90|NOTC99)
+KEYWORD(_mutable                     , NOTC90|NOTC99)
+KEYWORD(_namespace                   , NOTC90|NOTC99)
+KEYWORD(_new                         , NOTC90|NOTC99)
+KEYWORD(_operator                    , NOTC90|NOTC99)
+KEYWORD(_private                     , NOTC90|NOTC99)
+KEYWORD(_protected                   , NOTC90|NOTC99)
+KEYWORD(_public                      , NOTC90|NOTC99)
+KEYWORD(_reinterpret_cast            , NOTC90|NOTC99)
+KEYWORD(_static_cast                 , NOTC90|NOTC99)
+KEYWORD(_template                    , NOTC90|NOTC99)
+KEYWORD(_this                        , NOTC90|NOTC99)
+KEYWORD(_throw                       , NOTC90|NOTC99)
+KEYWORD(_true                        , NOTC90|NOTC99)
+KEYWORD(_try                         , NOTC90|NOTC99)
+KEYWORD(_typename                    , NOTC90|NOTC99)
+KEYWORD(_typeid                      , NOTC90|NOTC99)
+KEYWORD(_using                       , NOTC90|NOTC99)
+KEYWORD(_virtual                     , NOTC90|NOTC99)
+KEYWORD(_wchar_t                     , NOTC90|NOTC99)
+
+// GNU Extensions.
+KEYWORD(__Decimal32                  , EXTC90|EXTC99|EXTCPP)
+KEYWORD(__Decimal64                  , EXTC90|EXTC99|EXTCPP)
+KEYWORD(__Decimal128                 , EXTC90|EXTC99|EXTCPP)
+KEYWORD(_typeof                      , EXTC90|EXTC99|EXTCPP)
+KEYWORD(___null                      , NOTC90|NOTC99|EXTCPP) // C++-only Extensn
+KEYWORD(___alignof                   , EXTC90|EXTC99|EXTCPP)
+KEYWORD(___attribute                 , EXTC90|EXTC99|EXTCPP)
+KEYWORD(___builtin_choose_expr       , EXTC90|EXTC99|EXTCPP)
+KEYWORD(___builtin_offsetof          , EXTC90|EXTC99|EXTCPP)
+KEYWORD(___builtin_types_compatible_p, EXTC90|EXTC99|EXTCPP)
+KEYWORD(___builtin_va_arg            , EXTC90|EXTC99|EXTCPP)
+KEYWORD(___extension__               , 0)     // Not treated as an extension!
+KEYWORD(___imag                      , EXTC90|EXTC99|EXTCPP)
+KEYWORD(___label__                   , EXTC90|EXTC99|EXTCPP)
+KEYWORD(___real                      , EXTC90|EXTC99|EXTCPP)
+KEYWORD(___thread                    , EXTC90|EXTC99|EXTCPP)
+
+// Alternate spelling for various tokens.  There are GCC extensions in all
+// languages, but should not be disabled in strict conformance mode.
+ALIAS("__attribute__", __attribute)
+ALIAS("__const"      , const      )
+ALIAS("__const__"    , const      )
+ALIAS("__alignof__"  , __alignof  )
+ALIAS("__asm"        , asm        )
+ALIAS("__asm__"      , asm        )
+ALIAS("__complex"    , _Complex   )
+ALIAS("__complex__"  , _Complex   )
+ALIAS("__imag__"     , __imag     )
+ALIAS("__inline"     , inline     )
+ALIAS("__inline__"   , inline     )
+ALIAS("__real__"     , __real     )
+ALIAS("__restrict"   , restrict   )
+ALIAS("__restrict__" , restrict   )
+ALIAS("__signed"     , signed     )
+ALIAS("__signed__"   , signed     )
+ALIAS("__typeof"     , typeof     )
+ALIAS("__typeof__"   , typeof     )
+ALIAS("__volatile"   , volatile   )
+ALIAS("__volatile__" , volatile   )
+
+#undef ALIAS
+#undef KEYWORD
+#undef TOK

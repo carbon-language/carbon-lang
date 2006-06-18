@@ -1,0 +1,156 @@
+//===-- DiagnosticKinds.def - C Family Diagnostic Kind Database -*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by Chris Lattner and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+//  This file defines the DiagnosticKind database.
+//
+//===----------------------------------------------------------------------===//
+
+// Flags for diagnostic:
+//
+//   DIAG_TYPE - Allows one of:
+//     NOTE      - Informational message.
+//     WARNING   - Warning.
+//     EXTENSION - Notification that an extension to the language is being used.
+//     ERROR     - Error, compilation will stop after parsing completes.
+//     FATAL     - Fatal error: parsing must stop.
+
+
+//===----------------------------------------------------------------------===//
+// Lexer Diagnostics
+//===----------------------------------------------------------------------===//
+
+DIAG(null_in_string, WARNING,
+     "null character(s) preserved in string literal")
+DIAG(null_in_char  , WARNING,
+     "null character(s) preserved in character literal")
+DIAG(null_in_file  , WARNING,
+     "null character ignored")
+DIAG(nested_block_comment, WARNING,
+     "\"/*\" within block comment")
+DIAG(escaped_newline_block_comment_end, WARNING,
+     "escaped newline between */ characters at block comment end")
+DIAG(min_max_deprecated, WARNING,
+     "minimum/maximum operators are deprecated")
+DIAG(backslash_newline_space, WARNING,
+     "backslash and newline separated by space")
+
+// Trigraphs.
+DIAG(trigraph_ignored, WARNING, "trigraph ignored")
+DIAG(trigraph_ignored_block_comment, WARNING,
+     "ignored trigraph would end block comment")
+DIAG(trigraph_ends_block_comment, WARNING,
+     "trigraph ends block comment")
+DIAG(trigraph_converted, WARNING,
+     "trigraph converted to '%s' character")
+
+DIAG(ext_multi_line_bcpl_comment, EXTENSION,
+     "multi-line // comment")
+DIAG(ext_bcpl_comment, EXTENSION,
+     "// comments are not allowed in this language")
+DIAG(ext_no_newline_eof, EXTENSION,
+     "no newline at end of file")
+DIAG(ext_backslash_newline_eof, EXTENSION,
+     "backslash-newline at end of file")
+DIAG(ext_dollar_in_identifier, EXTENSION,
+     "'$' in identifier")
+
+DIAG(ext_token_used, EXTENSION,
+     "Extension used")
+
+DIAG(err_unterminated_string, ERROR,
+     "missing terminating \" character")
+DIAG(err_unterminated_char, ERROR,
+     "missing terminating ' character")
+DIAG(err_empty_character, ERROR,
+     "empty character constant")
+DIAG(err_unterminated_block_comment, ERROR,
+     "unterminated /* comment")
+DIAG(err_stray_character, ERROR,
+     "stray character in program")
+
+//===----------------------------------------------------------------------===//
+// Preprocessor Diagnostics
+//===----------------------------------------------------------------------===//
+
+DIAG(pp_hash_warning, WARNING,
+     "#warning%s")
+DIAG(pp_include_next_in_primary, WARNING,
+     "#include_next in primary source file")
+DIAG(pp_include_next_absolute_path, WARNING,
+     "#include_next with absolute path")
+DIAG(ext_c99_whitespace_required_after_macro_name, WARNING,
+     "ISO C99 requires whitespace after the macro name")
+
+DIAG(ext_pp_import_directive, EXTENSION,
+     "#import is a language extension")
+DIAG(ext_pp_include_next_directive, EXTENSION,
+     "#include_next is a language extension")
+DIAG(ext_pp_warning_directive, EXTENSION,
+     "#warning is a language extension")
+DIAG(ext_pp_extra_tokens_at_eol, EXTENSION,
+     "extra tokens at end of %s directive")
+DIAG(ext_pp_comma_expr, EXTENSION,
+     "comma operator in operand of #if")
+
+DIAG(err_pp_invalid_directive, ERROR,
+     "invalid preprocessing directive")
+DIAG(err_pp_hash_error, ERROR,
+     "#error%s")
+DIAG(err_pp_file_not_found, ERROR,
+     "file not found")
+DIAG(err_pp_empty_filename, ERROR,
+     "empty filename")
+DIAG(err_pp_include_too_deep, ERROR,
+     "#include nested too deeply")
+DIAG(err_pp_expects_filename, ERROR,
+     "expected \"FILENAME\" or <FILENAME>")
+DIAG(err_pp_macro_not_identifier, ERROR,
+     "macro names must be identifiers")
+DIAG(err_pp_missing_macro_name, ERROR,
+     "macro name missing")
+DIAG(err_pp_unterminated_conditional, ERROR,
+     "unterminated conditional directive")
+DIAG(pp_err_else_after_else, ERROR,
+     "#else after #else")
+DIAG(pp_err_elif_after_else, ERROR,
+     "#elif after #else")
+DIAG(pp_err_else_without_if, ERROR,
+     "#else without #if")
+DIAG(pp_err_elif_without_if, ERROR,
+     "#elif without #if")
+DIAG(err_pp_endif_without_if, ERROR,
+     "#endif without #if")
+DIAG(err_pp_expected_value_in_expr, ERROR,
+     "expected value in expression")
+DIAG(err_pp_missing_val_before_operator, ERROR,
+     "missing value before operator")
+DIAG(err_pp_expected_rparen, ERROR,
+     "expected ')' in preprocessor expression")
+DIAG(err_pp_expected_eol, ERROR,
+     "expected end of line in preprocessor expression")
+DIAG(err_pp_defined_requires_identifier, ERROR,
+     "operator \"defined\" requires an identifier")
+DIAG(err_pp_missing_rparen, ERROR,
+     "missing ')' after \"defined\"")
+DIAG(err_pp_colon_without_question, ERROR,
+     "':' without preceding '?'")
+DIAG(err_pp_question_without_colon, ERROR,
+     "'?' without following ':'")
+DIAG(err_pp_division_by_zero, ERROR,
+     "division by zero in preprocessor expression")
+DIAG(err_pp_remainder_by_zero, ERROR,
+     "remainder by zero in preprocessor expression")
+
+DIAG(err_pp_expr_bad_token, ERROR,
+     "token is not valid in preprocessor expressions")
+
+// Should be a sorry?
+DIAG(err_pp_I_dash_not_supported, ERROR,
+     "-I- not supported, please use -iquote instead")
+#undef DIAG
