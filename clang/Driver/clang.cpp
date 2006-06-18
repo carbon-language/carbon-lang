@@ -104,7 +104,7 @@ public:
   
   void PrintIncludeStack(SourceLocation Pos);
 
-  virtual bool HandleDiagnostic(Diagnostic::Level DiagLevel,
+  virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
                                 SourceLocation Pos,
                                 diag::kind ID, const std::string &Msg);
 };
@@ -125,7 +125,7 @@ PrintIncludeStack(SourceLocation Pos) {
 }
 
 
-bool DiagnosticPrinterSTDERR::HandleDiagnostic(Diagnostic::Level Level, 
+void DiagnosticPrinterSTDERR::HandleDiagnostic(Diagnostic::Level Level, 
                                                SourceLocation Pos,
                                                diag::kind ID, 
                                                const std::string &Extra) {
@@ -206,7 +206,6 @@ bool DiagnosticPrinterSTDERR::HandleDiagnostic(Diagnostic::Level Level,
     // Print out the caret itself.
     std::cerr << Indent << "^\n";
   }
-  return false;
 }
 
 
@@ -595,7 +594,7 @@ void DoPrintPreprocessedInput(Preprocessor &PP) {
   char Buffer[256];
   bool isFirstToken = true;
   do {
-    if (PP.Lex(Tok)) return;
+    PP.Lex(Tok);
 
     // If this token is at the start of a line.  Emit the \n and indentation.
     // FIXME: this shouldn't use the isAtStartOfLine flag.  This should use a
@@ -709,7 +708,7 @@ int main(int argc, char **argv) {
 
     // Lex the file, which will read all the macros.
     LexerToken Tok;
-    if (PP.Lex(Tok)) return 1;
+    PP.Lex(Tok);
     assert(Tok.getKind() == tok::eof && "Didn't read entire file!");
     
     // Once we've read this, we're done.
@@ -739,8 +738,7 @@ int main(int argc, char **argv) {
   case RunPreprocessorOnly: {        // Just lex as fast as we can, no output.
     LexerToken Tok;
     do {
-      if (PP.Lex(Tok))
-        break;
+      PP.Lex(Tok);
     } while (Tok.getKind() != tok::eof);
     break;
   }
@@ -752,8 +750,7 @@ int main(int argc, char **argv) {
   case DumpTokens: {                 // Token dump mode.
     LexerToken Tok;
     do {
-      if (PP.Lex(Tok))
-        break;
+      PP.Lex(Tok);
       Tok.dump(true);
       std::cerr << "\n";
     } while (Tok.getKind() != tok::eof);

@@ -214,7 +214,7 @@ public:
   /// return the tok::eof token.  Return true if an error occurred and
   /// compilation should terminate, false if normal.  This implicitly involves
   /// the preprocessor.
-  bool Lex(LexerToken &Result) {
+  void Lex(LexerToken &Result) {
     // Start a new token.
     Result.StartToken(this);
     
@@ -226,13 +226,8 @@ public:
     }
    
     // Get a token.
-    return LexTokenInternal(Result);
+    LexTokenInternal(Result);
   }
-  
-  /// LexIncludeFilename - After the preprocessor has parsed a #include, lex and
-  /// (potentially) macro expand the filename.  If the sequence parsed is not
-  /// lexically legal, emit a diagnostic and return a result EOM token.
-  bool LexIncludeFilename(LexerToken &Result);
   
   /// ReadToEndOfLine - Read the rest of the current preprocessor line as an
   /// uninterpreted string.  This switches the lexer out of directive mode.
@@ -264,7 +259,7 @@ public:
   
   /// Diag - Forwarding function for diagnostics.  This translate a source
   /// position in the current buffer into a SourceLocation object for rendering.
-  bool Diag(const char *Loc, unsigned DiagID,
+  void Diag(const char *Loc, unsigned DiagID,
             const std::string &Msg = "") const;
 
   /// getSourceLocation - Return a source location identifier for the specified
@@ -278,7 +273,7 @@ private:
   /// LexTokenInternal - Internal interface to lex a preprocessing token. Called
   /// by Lex.
   ///
-  bool LexTokenInternal(LexerToken &Result);
+  void LexTokenInternal(LexerToken &Result);
     
   
   //===--------------------------------------------------------------------===//
@@ -394,19 +389,25 @@ private:
   // Other lexer functions.
   
   // Part of block comment parsing.
-  bool isBlockCommentEndOfEscapedNewLine(const char *CurPtr, char &PrevChar);
+  bool isEndOfBlockCommentWithEscapedNewLine(const char *CurPtr);
   
   // Helper functions to lex the remainder of a token of the specific type.
-  bool LexIdentifier         (LexerToken &Result, const char *CurPtr);
-  bool LexNumericConstant    (LexerToken &Result, const char *CurPtr);
-  bool LexStringLiteral      (LexerToken &Result, const char *CurPtr);
-  bool LexAngledStringLiteral(LexerToken &Result, const char *CurPtr);
-  bool LexCharConstant       (LexerToken &Result, const char *CurPtr);
-  bool LexEndOfFile          (LexerToken &Result, const char *CurPtr);
+  void LexIdentifier         (LexerToken &Result, const char *CurPtr);
+  void LexNumericConstant    (LexerToken &Result, const char *CurPtr);
+  void LexStringLiteral      (LexerToken &Result, const char *CurPtr);
+  void LexAngledStringLiteral(LexerToken &Result, const char *CurPtr);
+  void LexCharConstant       (LexerToken &Result, const char *CurPtr);
+  void LexEndOfFile          (LexerToken &Result, const char *CurPtr);
   
-  bool SkipWhitespace        (LexerToken &Result, const char *CurPtr);
-  bool SkipBCPLComment       (LexerToken &Result, const char *CurPtr);
-  bool SkipBlockComment      (LexerToken &Result, const char *CurPtr);
+  void SkipWhitespace        (LexerToken &Result, const char *CurPtr);
+  void SkipBCPLComment       (LexerToken &Result, const char *CurPtr);
+  void SkipBlockComment      (LexerToken &Result, const char *CurPtr);
+  
+  
+  /// LexIncludeFilename - After the preprocessor has parsed a #include, lex and
+  /// (potentially) macro expand the filename.  If the sequence parsed is not
+  /// lexically legal, emit a diagnostic and return a result EOM token.
+  void LexIncludeFilename(LexerToken &Result);
 };
 
 

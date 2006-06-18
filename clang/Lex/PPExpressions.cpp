@@ -30,47 +30,37 @@ using namespace clang;
 ///
 /// MinPrec is the minimum precedence that this range of the expression is
 /// allowed to include.
-bool Preprocessor::EvaluateDirectiveExpression(bool &Result) {
+void Preprocessor::EvaluateDirectiveExpression(bool &Result) {
   // Peek ahead one token.
   LexerToken Tok;
-  if (Lex(Tok)) return true;
+  Lex(Tok);
 
   // In error cases, bail out with false value.
   Result = false;
   
-  bool StopParse = false;
-  
   int ResVal = 0;
-  if (EvaluateValue(ResVal, Tok, StopParse)) {
+  if (EvaluateValue(ResVal, Tok) ||
+      EvaluateDirectiveSubExpr(ResVal, 1, Tok)) {
     // Skip the rest of the macro line.
-    if (!StopParse && Tok.getKind() != tok::eom)
-      StopParse |= DiscardUntilEndOfDirective();
-    return StopParse;
-  }
-  
-  if (EvaluateDirectiveSubExpr(ResVal, 1, Tok, StopParse)) {
-    // Skip the rest of the macro line.
-    if (!StopParse && Tok.getKind() != tok::eom)
-      StopParse |= DiscardUntilEndOfDirective();
-    return StopParse;
+    if (Tok.getKind() != tok::eom)
+      DiscardUntilEndOfDirective();
+    return;
   }
   
   // If we aren't at the tok::eom token, something bad happened, like an extra
   // ')' token.
   if (Tok.getKind() != tok::eom) {
-    return Diag(Tok, diag::err_pp_expected_eol) ||
-           DiscardUntilEndOfDirective();
+    Diag(Tok, diag::err_pp_expected_eol);
+    DiscardUntilEndOfDirective();
   }
   
   Result = ResVal != 0;
-  return false;
 }
 
 /// EvaluateValue - Evaluate the token PeekTok (and any others needed) and
 /// return the computed value in Result.  Return true if there was an error
-/// parsing, setting StopParse if parsing should be aborted.
-bool Preprocessor::EvaluateValue(int &Result, LexerToken &PeekTok, 
-                                 bool &StopParse) {
+/// parsing.
+bool Preprocessor::EvaluateValue(int &Result, LexerToken &PeekTok) {
   Result = 0;
   
   // If this token's spelling is a pp-identifier, check to see if it is
@@ -81,7 +71,8 @@ bool Preprocessor::EvaluateValue(int &Result, LexerToken &PeekTok,
     // into a simple 0.
     if (strcmp(II->getName(), "defined")) {
       Result = 0;
-      return (StopParse = Lex(PeekTok));
+      Lex(PeekTok);
+      return false;
     }
 
     // Handle "defined X" and "defined(X)".
@@ -91,20 +82,20 @@ bool Preprocessor::EvaluateValue(int &Result, LexerToken &PeekTok,
     DisableMacroExpansion = true;
 
     // Get the next token.
-    if ((StopParse = Lex(PeekTok))) return true;
+    Lex(PeekTok);
 
     // Two options, it can either be a pp-identifier or a (.
     bool InParens = false;
     if (PeekTok.getKind() == tok::l_paren) {
       // Found a paren, remember we saw it and skip it.
       InParens = true;
-      if ((StopParse = Lex(PeekTok))) return true;
+      Lex(PeekTok);
     }
     
     // If we don't have a pp-identifier now, this is an error.
     if ((II = PeekTok.getIdentifierInfo()) == 0) {
       DisableMacroExpansion = false;
-      StopParse = Diag(PeekTok, diag::err_pp_defined_requires_identifier);
+      Diag(PeekTok, diag::err_pp_defined_requires_identifier);
       return true;
     }
     
@@ -112,16 +103,16 @@ bool Preprocessor::EvaluateValue(int &Result, LexerToken &PeekTok,
     Result = II->getMacroInfo() != 0;
 
     // Consume identifier.
-    if ((StopParse = Lex(PeekTok))) return true;
+    Lex(PeekTok);
 
     // If we are in parens, ensure we have a trailing ).
     if (InParens) {
       if (PeekTok.getKind() != tok::r_paren) {
-        StopParse = Diag(PeekTok, diag::err_pp_missing_rparen);
+        Diag(PeekTok, diag::err_pp_missing_rparen);
         return true;
       }
       // Consume the ).
-      if ((StopParse = Lex(PeekTok))) return true;
+      Lex(PeekTok);
     }
     
     DisableMacroExpansion = false;
@@ -130,55 +121,55 @@ bool Preprocessor::EvaluateValue(int &Result, LexerToken &PeekTok,
   
   switch (PeekTok.getKind()) {
   default:  // Non-value token.
-    StopParse = Diag(PeekTok, diag::err_pp_expr_bad_token);
+    Diag(PeekTok, diag::err_pp_expr_bad_token);
     return true;
   case tok::eom:
   case tok::r_paren:
     // If there is no expression, report and exit.
-    StopParse = Diag(PeekTok, diag::err_pp_expected_value_in_expr);
+    Diag(PeekTok, diag::err_pp_expected_value_in_expr);
     return true;
   case tok::numeric_constant: {
     // FIXME: faster.  FIXME: track signs.
     std::string Spell = Lexer::getSpelling(PeekTok, getLangOptions());
     // FIXME: COMPUTE integer constants CORRECTLY.
     Result = atoi(Spell.c_str());
-    return (StopParse = Lex(PeekTok));
+    Lex(PeekTok);
+    return false;
   }
   case tok::l_paren:
-    if (StopParse = Lex(PeekTok)) return true;  // Eat the (.
-    // Parse the value.
-    if (EvaluateValue(Result, PeekTok, StopParse)) return true;
-      
-    // If there are any binary operators involved, parse them.
-    if (EvaluateDirectiveSubExpr(Result, 1, PeekTok, StopParse))
-      return StopParse;
+    Lex(PeekTok);  // Eat the (.
+    // Parse the value and if there are any binary operators involved, parse
+    // them.
+    if (EvaluateValue(Result, PeekTok) ||
+        EvaluateDirectiveSubExpr(Result, 1, PeekTok))
+      return true;
 
     if (PeekTok.getKind() != tok::r_paren) {
-      StopParse = Diag(PeekTok, diag::err_pp_expected_rparen);
+      Diag(PeekTok, diag::err_pp_expected_rparen);
       return true;
     }
-    if (StopParse = Lex(PeekTok)) return true;  // Eat the ).
+    Lex(PeekTok);  // Eat the ).
     return false;
  
   case tok::plus:
     // Unary plus doesn't modify the value.
-    if (StopParse = Lex(PeekTok)) return true;
-    return EvaluateValue(Result, PeekTok, StopParse);
+    Lex(PeekTok);
+    return EvaluateValue(Result, PeekTok);
   case tok::minus:
-    if (StopParse = Lex(PeekTok)) return true;
-    if (EvaluateValue(Result, PeekTok, StopParse)) return true;
+    Lex(PeekTok);
+    if (EvaluateValue(Result, PeekTok)) return true;
     Result = -Result;
     return false;
     
   case tok::tilde:
-    if (StopParse = Lex(PeekTok)) return true;
-    if (EvaluateValue(Result, PeekTok, StopParse)) return true;
+    Lex(PeekTok);
+    if (EvaluateValue(Result, PeekTok)) return true;
     Result = ~Result;
     return false;
     
   case tok::exclaim:
-    if (StopParse = Lex(PeekTok)) return true;
-    if (EvaluateValue(Result, PeekTok, StopParse)) return true;
+    Lex(PeekTok);
+    if (EvaluateValue(Result, PeekTok)) return true;
     Result = !Result;
     return false;
     
@@ -240,12 +231,11 @@ static unsigned getPrecedence(tok::TokenKind Kind) {
 /// EvaluateDirectiveSubExpr - Evaluate the subexpression whose first token is
 /// PeekTok, and whose precedence is PeekPrec.
 bool Preprocessor::EvaluateDirectiveSubExpr(int &LHS, unsigned MinPrec,
-                                            LexerToken &PeekTok,
-                                            bool &StopParse) {
+                                            LexerToken &PeekTok) {
   unsigned PeekPrec = getPrecedence(PeekTok.getKind());
   // If this token isn't valid, report the error.
   if (PeekPrec == ~0U) {
-    StopParse = Diag(PeekTok, diag::err_pp_expr_bad_token);
+    Diag(PeekTok, diag::err_pp_expr_bad_token);
     return true;
   }
   
@@ -259,11 +249,11 @@ bool Preprocessor::EvaluateDirectiveSubExpr(int &LHS, unsigned MinPrec,
 
     // Consume the operator, saving the operator token for error reporting.
     LexerToken OpToken = PeekTok;
-    if (StopParse = Lex(PeekTok)) return true;
+    Lex(PeekTok);
 
     int RHS;
     // Parse the RHS of the operator.
-    if (EvaluateValue(RHS, PeekTok, StopParse)) return true;
+    if (EvaluateValue(RHS, PeekTok)) return true;
 
     // Remember the precedence of this operator and get the precedence of the
     // operator immediately to the right of the RHS.
@@ -272,7 +262,7 @@ bool Preprocessor::EvaluateDirectiveSubExpr(int &LHS, unsigned MinPrec,
 
     // If this token isn't valid, report the error.
     if (PeekPrec == ~0U) {
-      StopParse = Diag(PeekTok, diag::err_pp_expr_bad_token);
+      Diag(PeekTok, diag::err_pp_expr_bad_token);
       return true;
     }
     
@@ -282,7 +272,7 @@ bool Preprocessor::EvaluateDirectiveSubExpr(int &LHS, unsigned MinPrec,
     // more tightly with RHS than we do, evaluate it completely first.
     if (ThisPrec < PeekPrec ||
         (ThisPrec == PeekPrec && isRightAssoc)) {
-      if (EvaluateDirectiveSubExpr(RHS, ThisPrec+1, PeekTok, StopParse))
+      if (EvaluateDirectiveSubExpr(RHS, ThisPrec+1, PeekTok))
         return true;
       PeekPrec = getPrecedence(PeekTok.getKind());
     }
@@ -292,14 +282,14 @@ bool Preprocessor::EvaluateDirectiveSubExpr(int &LHS, unsigned MinPrec,
     default: assert(0 && "Unknown operator token!");
     case tok::percent:
       if (RHS == 0) {
-        StopParse = Diag(OpToken, diag::err_pp_remainder_by_zero);
+        Diag(OpToken, diag::err_pp_remainder_by_zero);
         return true;
       }
       LHS %= RHS;
       break;
     case tok::slash:
       if (RHS == 0) {
-        StopParse = Diag(OpToken, diag::err_pp_division_by_zero);
+        Diag(OpToken, diag::err_pp_division_by_zero);
         return true;
       }
       LHS /= RHS;
@@ -327,26 +317,25 @@ bool Preprocessor::EvaluateDirectiveSubExpr(int &LHS, unsigned MinPrec,
     case tok::ampamp:          LHS = LHS && RHS; break;
     case tok::pipepipe:        LHS = LHS || RHS; break;
     case tok::comma:
-      if ((StopParse = Diag(OpToken, diag::ext_pp_comma_expr)))
-        return true;
+      Diag(OpToken, diag::ext_pp_comma_expr);
       LHS = RHS; // LHS = LHS,RHS -> RHS.
       break; 
     case tok::question: {
       // Parse the : part of the expression.
       if (PeekTok.getKind() != tok::colon) {
-        StopParse = Diag(OpToken, diag::err_pp_question_without_colon);
+        Diag(OpToken, diag::err_pp_question_without_colon);
         return true;
       }
       // Consume the :.
-      if (StopParse = Lex(PeekTok)) return true;
+      Lex(PeekTok);
 
       // Evaluate the value after the :.
       int AfterColonVal = 0;
-      if (EvaluateValue(AfterColonVal, PeekTok, StopParse)) return true;
+      if (EvaluateValue(AfterColonVal, PeekTok)) return true;
 
       // Parse anything after the : RHS that has a higher precedence than ?.
       if (EvaluateDirectiveSubExpr(AfterColonVal, ThisPrec+1,
-                                   PeekTok, StopParse))
+                                   PeekTok))
         return true;
       
       // Now that we have the condition, the LHS and the RHS of the :, evaluate.
@@ -358,7 +347,7 @@ bool Preprocessor::EvaluateDirectiveSubExpr(int &LHS, unsigned MinPrec,
     }
     case tok::colon:
       // Don't allow :'s to float around without being part of ?: exprs.
-      StopParse = Diag(OpToken, diag::err_pp_colon_without_question);
+      Diag(OpToken, diag::err_pp_colon_without_question);
       return true;
     }
   }

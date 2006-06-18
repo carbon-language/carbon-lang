@@ -90,10 +90,9 @@ public:
   /// the DiagnosticClient.
   Level getDiagnosticLevel(unsigned DiagID) const;
   
-  /// Report - Issue the message to the client. If the client wants us to stop
-  /// compilation, return true, otherwise return false.  DiagID is a member of
-  /// the diag::kind enum.  
-  bool Report(SourceLocation Pos, unsigned DiagID,
+  /// Report - Issue the message to the client.  DiagID is a member of the
+  /// diag::kind enum.  
+  void Report(SourceLocation Pos, unsigned DiagID,
               const std::string &Extra = "");
 };
 
@@ -105,9 +104,8 @@ public:
   virtual ~DiagnosticClient();
   
   /// HandleDiagnostic - Handle this diagnostic, reporting it to the user or 
-  /// capturing it to a log as needed.  If this returns true, compilation will
-  /// be gracefully terminated, otherwise compilation will continue.
-  virtual bool HandleDiagnostic(Diagnostic::Level DiagLevel, SourceLocation Pos,
+  /// capturing it to a log as needed.
+  virtual void HandleDiagnostic(Diagnostic::Level DiagLevel, SourceLocation Pos,
                                 diag::kind ID, const std::string &Msg) = 0;
 };
 

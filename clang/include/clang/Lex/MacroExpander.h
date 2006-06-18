@@ -53,8 +53,7 @@ public:
   MacroInfo &getMacro() const { return Macro; }
 
   /// Lex - Lex and return a token from this macro stream.
-  bool Lex(LexerToken &Tok);
-  
+  void Lex(LexerToken &Tok);
 };
   
 }  // end namespace llvm

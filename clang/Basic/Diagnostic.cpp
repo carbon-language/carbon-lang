@@ -100,18 +100,17 @@ Diagnostic::Level Diagnostic::getDiagnosticLevel(unsigned DiagID) const {
 /// Report - Issue the message to the client. If the client wants us to stop
 /// compilation, return true, otherwise return false.  DiagID is a member of
 /// the diag::kind enum.  
-bool Diagnostic::Report(SourceLocation Pos, unsigned DiagID,
+void Diagnostic::Report(SourceLocation Pos, unsigned DiagID,
                         const std::string &Extra) {
   // Figure out the diagnostic level of this message.
   Diagnostic::Level DiagLevel = getDiagnosticLevel(DiagID);
   
-  // If the client doesn't care about this message, don't map to the code.
+  // If the client doesn't care about this message, don't issue it.
   if (DiagLevel == Diagnostic::Ignored)
-    return false;
+    return;
   
   // Finally, report it.
-  return Client.HandleDiagnostic(DiagLevel, Pos, (diag::kind)DiagID, Extra) ||
-         DiagLevel == Fatal;
+  Client.HandleDiagnostic(DiagLevel, Pos, (diag::kind)DiagID, Extra);
 }
 
 DiagnosticClient::~DiagnosticClient() {}

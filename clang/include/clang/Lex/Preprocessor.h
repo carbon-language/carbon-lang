@@ -241,38 +241,37 @@ public:
   void EnterSourceFile(unsigned CurFileID, const DirectoryLookup *Dir);
 
   /// EnterMacro - Add a Macro to the top of the include stack and start lexing
-  /// tokens from it instead of the current buffer.  Return true on failure.
-  bool EnterMacro(LexerToken &Identifier);
+  /// tokens from it instead of the current buffer.
+  void EnterMacro(LexerToken &Identifier);
   
   
   /// Lex - To lex a token from the preprocessor, just pull a token from the
   /// current lexer or macro object.
-  bool Lex(LexerToken &Result) {
+  void Lex(LexerToken &Result) {
     if (CurLexer)
-      return CurLexer->Lex(Result);
+      CurLexer->Lex(Result);
     else
-      return CurMacroExpander->Lex(Result);
+      CurMacroExpander->Lex(Result);
   }
   
   /// LexUnexpandedToken - This is just like Lex, but this disables macro
   /// expansion of identifier tokens.
-  bool LexUnexpandedToken(LexerToken &Result) {
+  void LexUnexpandedToken(LexerToken &Result) {
     // Disable macro expansion.
     bool OldVal = DisableMacroExpansion;
     DisableMacroExpansion = true;
     // Lex the token.
-    bool ResVal = Lex(Result);
+    Lex(Result);
     
     // Reenable it.
     DisableMacroExpansion = OldVal;
-    return ResVal;
   }
   
   /// Diag - Forwarding function for diagnostics.  This emits a diagnostic at
   /// the specified LexerToken's location, translating the token's start
   /// position in the current buffer into a SourcePosition object for rendering.
-  bool Diag(const LexerToken &Tok, unsigned DiagID, const std::string &Msg="");  
-  bool Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg="");  
+  void Diag(const LexerToken &Tok, unsigned DiagID, const std::string &Msg="");  
+  void Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg="");  
   
   void PrintStats();
 
@@ -284,23 +283,22 @@ public:
   /// identifier and has filled in the tokens IdentifierInfo member.  This
   /// callback potentially macro expands it or turns it into a named token (like
   /// 'for').
-  bool HandleIdentifier(LexerToken &Identifier);
+  void HandleIdentifier(LexerToken &Identifier);
 
   /// HandleEndOfFile - This callback is invoked when the lexer hits the end of
   /// the current file.  This either returns the EOF token or pops a level off
   /// the include stack and keeps going.
-  bool HandleEndOfFile(LexerToken &Result);
+  void HandleEndOfFile(LexerToken &Result);
   
   /// HandleEndOfMacro - This callback is invoked when the lexer hits the end of
-  /// the current macro.  This either returns the EOF token or pops a level off
-  /// the include stack and keeps going.
-  bool HandleEndOfMacro(LexerToken &Result);
+  /// the current macro line.
+  void HandleEndOfMacro(LexerToken &Result);
   
   /// HandleDirective - This callback is invoked when the lexer sees a # token
   /// at the start of a line.  This consumes the directive, modifies the 
   /// lexer/preprocessor state, and advances the lexer(s) so that the next token
   /// read is the correct one.
-  bool HandleDirective(LexerToken &Result);
+  void HandleDirective(LexerToken &Result);
 
 private:
   /// getFileInfo - Return the PerFileInfo structure for the specified
@@ -309,16 +307,16 @@ private:
 
   /// DiscardUntilEndOfDirective - Read and discard all tokens remaining on the
   /// current line until the tok::eom token is found.
-  bool DiscardUntilEndOfDirective();
+  void DiscardUntilEndOfDirective();
 
   /// ReadMacroName - Lex and validate a macro name, which occurs after a
   /// #define or #undef.  This emits a diagnostic, sets the token kind to eom,
   /// and discards the rest of the macro line if the macro name is invalid.
-  bool ReadMacroName(LexerToken &MacroNameTok);
+  void ReadMacroName(LexerToken &MacroNameTok);
   
   /// CheckEndOfDirective - Ensure that the next token is a tok::eom token.  If
   /// not, emit a diagnostic and consume up until the eom.
-  bool CheckEndOfDirective(const char *Directive);
+  void CheckEndOfDirective(const char *Directive);
   
   /// SkipExcludedConditionalBlock - We just read a #if or related directive and
   /// decided that the subsequent tokens are in the #if'd out portion of the
@@ -328,46 +326,45 @@ private:
   /// FoundElse is false, then #else directives are ok, if not, then we have
   /// already seen one so a #else directive is a duplicate.  When this returns,
   /// the caller can lex the first valid token.
-  bool SkipExcludedConditionalBlock(const char *IfTokenLoc,
+  void SkipExcludedConditionalBlock(const char *IfTokenLoc,
                                     bool FoundNonSkipPortion, bool FoundElse);
   
   /// EvaluateDirectiveExpression - Evaluate an integer constant expression that
   /// may occur after a #if or #elif directive.  Sets Result to the result of
-  /// the expression.  Returns false normally, true if lexing must be aborted.
-  bool EvaluateDirectiveExpression(bool &Result);
+  /// the expression.
+  void EvaluateDirectiveExpression(bool &Result);
   /// EvaluateValue - Used to implement EvaluateDirectiveExpression,
   /// see PPExpressions.cpp.
-  bool EvaluateValue(int &Result, LexerToken &PeekTok, bool &StopParse);
+  bool EvaluateValue(int &Result, LexerToken &PeekTok);
   /// EvaluateDirectiveSubExpr - Used to implement EvaluateDirectiveExpression,
   /// see PPExpressions.cpp.
   bool EvaluateDirectiveSubExpr(int &LHS, unsigned MinPrec,
-                                LexerToken &PeekTok, bool &StopParse);
+                                LexerToken &PeekTok);
   
   //===--------------------------------------------------------------------===//
   /// Handle*Directive - implement the various preprocessor directives.  These
   /// should side-effect the current preprocessor object so that the next call
-  /// to Lex() will return the appropriate token next.  If a fatal error occurs
-  /// return true, otherwise return false.
+  /// to Lex() will return the appropriate token next.
   
-  bool HandleUserDiagnosticDirective(LexerToken &Result, bool isWarning);
+  void HandleUserDiagnosticDirective(LexerToken &Result, bool isWarning);
   
   // File inclusion.
-  bool HandleIncludeDirective(LexerToken &Result,
+  void HandleIncludeDirective(LexerToken &Result,
                               const DirectoryLookup *LookupFrom = 0,
                               bool isImport = false);
-  bool HandleIncludeNextDirective(LexerToken &Result);
-  bool HandleImportDirective(LexerToken &Result);
+  void HandleIncludeNextDirective(LexerToken &Result);
+  void HandleImportDirective(LexerToken &Result);
   
   // Macro handling.
-  bool HandleDefineDirective(LexerToken &Result);
-  bool HandleUndefDirective(LexerToken &Result);
+  void HandleDefineDirective(LexerToken &Result);
+  void HandleUndefDirective(LexerToken &Result);
   
   // Conditional Inclusion.
-  bool HandleIfdefDirective(LexerToken &Result, bool isIfndef);
-  bool HandleIfDirective(LexerToken &Result);
-  bool HandleEndifDirective(LexerToken &Result);
-  bool HandleElseDirective(LexerToken &Result);
-  bool HandleElifDirective(LexerToken &Result);
+  void HandleIfdefDirective(LexerToken &Result, bool isIfndef);
+  void HandleIfDirective(LexerToken &Result);
+  void HandleEndifDirective(LexerToken &Result);
+  void HandleElseDirective(LexerToken &Result);
+  void HandleElifDirective(LexerToken &Result);
 };
 
 }  // end namespace clang

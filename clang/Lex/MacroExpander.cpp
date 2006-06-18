@@ -18,7 +18,7 @@ using namespace llvm;
 using namespace clang;
 
 /// Lex - Lex and return a token from this macro stream.
-bool MacroExpander::Lex(LexerToken &Tok) {
+void MacroExpander::Lex(LexerToken &Tok) {
   // Lexing off the end of the macro, pop this macro off the expansion stack.
   if (CurToken == Macro.getNumTokens())
     return PP.HandleEndOfMacro(Tok);
@@ -38,5 +38,4 @@ bool MacroExpander::Lex(LexerToken &Tok) {
     return PP.HandleIdentifier(Tok);
 
   // Otherwise, return a normal token.
-  return false;
 }

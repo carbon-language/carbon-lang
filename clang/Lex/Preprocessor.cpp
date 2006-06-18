@@ -110,23 +110,23 @@ void Preprocessor::AddKeywords() {
 /// Diag - Forwarding function for diagnostics.  This emits a diagnostic at
 /// the specified LexerToken's location, translating the token's start
 /// position in the current buffer into a SourcePosition object for rendering.
-bool Preprocessor::Diag(SourceLocation Loc, unsigned DiagID, 
+void Preprocessor::Diag(SourceLocation Loc, unsigned DiagID, 
                         const std::string &Msg) {
   // If we are in a '#if 0' block, don't emit any diagnostics for notes,
   // warnings or extensions.
   if (isSkipping() && Diagnostic::isNoteWarningOrExtension(DiagID))
-    return false;
+    return;
   
-  return Diags.Report(Loc, DiagID, Msg);
+  Diags.Report(Loc, DiagID, Msg);
 }
-bool Preprocessor::Diag(const LexerToken &Tok, unsigned DiagID,
+void Preprocessor::Diag(const LexerToken &Tok, unsigned DiagID,
                         const std::string &Msg) {
   // If we are in a '#if 0' block, don't emit any diagnostics for notes,
   // warnings or extensions.
   if (isSkipping() && Diagnostic::isNoteWarningOrExtension(DiagID))
-    return false;
+    return;
   
-  return Diag(Tok.getSourceLocation(), DiagID, Msg);
+  Diag(Tok.getSourceLocation(), DiagID, Msg);
 }
 
 void Preprocessor::PrintStats() {
@@ -251,8 +251,8 @@ void Preprocessor::EnterSourceFile(unsigned FileID,
 }
 
 /// EnterMacro - Add a Macro to the top of the include stack and start lexing
-/// tokens from it instead of the current buffer.  Return true on failure.
-bool Preprocessor::EnterMacro(LexerToken &Tok) {
+/// tokens from it instead of the current buffer.
+void Preprocessor::EnterMacro(LexerToken &Tok) {
   IdentifierTokenInfo *Identifier = Tok.getIdentifierInfo();
   MacroInfo &MI = *Identifier->getMacroInfo();
   SourceLocation ExpandLoc = Tok.getSourceLocation();
@@ -277,7 +277,6 @@ bool Preprocessor::EnterMacro(LexerToken &Tok) {
   CurMacroExpander = new MacroExpander(MI, MacroID, *this,
                                        Tok.isAtStartOfLine(), 
                                        Tok.hasLeadingSpace());
-  return false;
 }
 
 
@@ -288,12 +287,12 @@ bool Preprocessor::EnterMacro(LexerToken &Tok) {
 /// HandleIdentifier - This callback is invoked when the lexer reads an
 /// identifier.  This callback looks up the identifier in the map and/or
 /// potentially macro expands it or turns it into a named token (like 'for').
-bool Preprocessor::HandleIdentifier(LexerToken &Identifier) {
+void Preprocessor::HandleIdentifier(LexerToken &Identifier) {
   if (Identifier.getIdentifierInfo() == 0) {
     // If we are skipping tokens (because we are in a #if 0 block), there will
     // be no identifier info, just return the token.
     assert(isSkipping() && "Token isn't an identifier?");
-    return false;
+    return;
   }
   IdentifierTokenInfo &ITI = *Identifier.getIdentifierInfo();
   
@@ -313,7 +312,7 @@ bool Preprocessor::HandleIdentifier(LexerToken &Identifier) {
         bool HadLeadingSpace = Identifier.hasLeadingSpace();
         bool IsAtStartOfLine = Identifier.isAtStartOfLine();
         
-        if (Lex(Identifier)) return true;
+        Lex(Identifier);
         
         // If the identifier isn't on some OTHER line, inherit the leading
         // whitespace/first-on-a-line property of this token.  This handles
@@ -324,7 +323,7 @@ bool Preprocessor::HandleIdentifier(LexerToken &Identifier) {
           if (HadLeadingSpace) Identifier.SetFlag(LexerToken::LeadingSpace);
         }
         ++NumFastMacroExpanded;
-        return false;
+        return;
         
       } else if (MI->getNumTokens() == 1 &&
                  // Don't handle identifiers, which might need recursive
@@ -353,12 +352,11 @@ bool Preprocessor::HandleIdentifier(LexerToken &Identifier) {
         // Since this is not an identifier token, it can't be macro expanded, so
         // we're done.
         ++NumFastMacroExpanded;
-        return false;
+        return;
       }
     
       // Start expanding the macro (FIXME, pass arguments).
-      if (EnterMacro(Identifier))
-        return true;
+      EnterMacro(Identifier);
     
       // Now that the macro is at the top of the include stack, ask the
       // preprocessor to read the next token from it.
@@ -371,15 +369,13 @@ bool Preprocessor::HandleIdentifier(LexerToken &Identifier) {
   Identifier.SetKind(ITI.getTokenID());
     
   // If this is an extension token, diagnose its use.
-  if (ITI.isExtensionToken() && Diag(Identifier, diag::ext_token_used))
-    return true;
-  return false;  
+  if (ITI.isExtensionToken()) Diag(Identifier, diag::ext_token_used);
 }
 
 /// HandleEndOfFile - This callback is invoked when the lexer hits the end of
 /// the current file.  This either returns the EOF token or pops a level off
 /// the include stack and keeps going.
-bool Preprocessor::HandleEndOfFile(LexerToken &Result) {
+void Preprocessor::HandleEndOfFile(LexerToken &Result) {
   assert(!CurMacroExpander &&
          "Ending a file when currently in a macro!");
   
@@ -392,7 +388,7 @@ bool Preprocessor::HandleEndOfFile(LexerToken &Result) {
     Result.SetKind(tok::eof);
     Result.SetStart(CurLexer->BufferEnd);
     Result.SetEnd(CurLexer->BufferEnd);
-    return false;
+    return;
   }
   
   // If this is a #include'd file, pop it off the include stack and continue
@@ -414,13 +410,11 @@ bool Preprocessor::HandleEndOfFile(LexerToken &Result) {
   // We're done with the #included file.
   delete CurLexer;
   CurLexer = 0;
-  return false;
 }
 
 /// HandleEndOfMacro - This callback is invoked when the lexer hits the end of
-/// the current macro.  This either returns the EOF token or pops a level off
-/// the include stack and keeps going.
-bool Preprocessor::HandleEndOfMacro(LexerToken &Result) {
+/// the current macro line.
+void Preprocessor::HandleEndOfMacro(LexerToken &Result) {
   assert(CurMacroExpander && !CurLexer &&
          "Ending a macro when currently in a #include file!");
 
@@ -447,29 +441,26 @@ bool Preprocessor::HandleEndOfMacro(LexerToken &Result) {
 
 /// DiscardUntilEndOfDirective - Read and discard all tokens remaining on the
 /// current line until the tok::eom token is found.
-bool Preprocessor::DiscardUntilEndOfDirective() {
+void Preprocessor::DiscardUntilEndOfDirective() {
   LexerToken Tmp;
   do {
-    if (LexUnexpandedToken(Tmp)) return true;
+    LexUnexpandedToken(Tmp);
   } while (Tmp.getKind() != tok::eom);
-  return false;
 }
 
 /// ReadMacroName - Lex and validate a macro name, which occurs after a
 /// #define or #undef.  This sets the token kind to eom and discards the rest
 /// of the macro line if the macro name is invalid.
-bool Preprocessor::ReadMacroName(LexerToken &MacroNameTok) {
+void Preprocessor::ReadMacroName(LexerToken &MacroNameTok) {
   // Read the token, don't allow macro expansion on it.
-  if (LexUnexpandedToken(MacroNameTok))
-    return true;
+  LexUnexpandedToken(MacroNameTok);
   
   // Missing macro name?
   if (MacroNameTok.getKind() == tok::eom)
     return Diag(MacroNameTok, diag::err_pp_missing_macro_name);
   
   if (MacroNameTok.getIdentifierInfo() == 0) {
-    if (Diag(MacroNameTok, diag::err_pp_macro_not_identifier))
-      return true;
+    Diag(MacroNameTok, diag::err_pp_macro_not_identifier);
     // Fall through on error.
   } else if (0) {
     // FIXME: Error if defining a C++ named operator.
@@ -479,7 +470,7 @@ bool Preprocessor::ReadMacroName(LexerToken &MacroNameTok) {
     // in C99 6.10.8.4.
   } else {
     // Okay, we got a good identifier node.  Return it.
-    return false;
+    return;
   }
   
   
@@ -491,17 +482,15 @@ bool Preprocessor::ReadMacroName(LexerToken &MacroNameTok) {
 
 /// CheckEndOfDirective - Ensure that the next token is a tok::eom token.  If
 /// not, emit a diagnostic and consume up until the eom.
-bool Preprocessor::CheckEndOfDirective(const char *DirType) {
+void Preprocessor::CheckEndOfDirective(const char *DirType) {
   LexerToken Tmp;
-  if (Lex(Tmp)) return true;
+  Lex(Tmp);
   // There should be no tokens after the directive, but we allow them as an
   // extension.
   if (Tmp.getKind() != tok::eom) {
-    if (Diag(Tmp, diag::ext_pp_extra_tokens_at_eol, DirType) ||
-        DiscardUntilEndOfDirective())
-      return true;
+    Diag(Tmp, diag::ext_pp_extra_tokens_at_eol, DirType);
+    DiscardUntilEndOfDirective();
   }
-  return false;
 }
 
 
@@ -514,7 +503,7 @@ bool Preprocessor::CheckEndOfDirective(const char *DirType) {
 /// is true, then #else directives are ok, if not, then we have already seen one
 /// so a #else directive is a duplicate.  When this returns, the caller can lex
 /// the first valid token.
-bool Preprocessor::SkipExcludedConditionalBlock(const char *IfTokenLoc,
+void Preprocessor::SkipExcludedConditionalBlock(const char *IfTokenLoc,
                                                 bool FoundNonSkipPortion,
                                                 bool FoundElse) {
   ++NumSkipped;
@@ -536,7 +525,7 @@ bool Preprocessor::SkipExcludedConditionalBlock(const char *IfTokenLoc,
   SkippingContents = true;
   LexerToken Tok;
   while (1) {
-    if (CurLexer->Lex(Tok)) return true;
+    CurLexer->Lex(Tok);
     
     // If this is the end of the buffer, we have an error.  The lexer will have
     // already handled this error condition, so just return and let the caller
@@ -553,7 +542,7 @@ bool Preprocessor::SkipExcludedConditionalBlock(const char *IfTokenLoc,
     CurLexer->ParsingPreprocessorDirective = true;
     
     // Read the next token, the directive flavor.
-    if (LexUnexpandedToken(Tok)) return true;
+    LexUnexpandedToken(Tok);
     
     // If this isn't an identifier directive (e.g. is "# 1\n" or "#\n", or
     // something bogus), skip it.
@@ -581,13 +570,13 @@ bool Preprocessor::SkipExcludedConditionalBlock(const char *IfTokenLoc,
       if (Directive == "if" || Directive == "ifdef" || Directive == "ifndef") {
         // We know the entire #if/#ifdef/#ifndef block will be skipped, don't
         // bother parsing the condition.
-        if (DiscardUntilEndOfDirective()) return true;
+        DiscardUntilEndOfDirective();
         CurLexer->pushConditionalLevel(Tok.getStart(), /*wasskipping*/true,
                                        /*foundnonskip*/false,/*fnddelse*/false);
       }
     } else if (FirstChar == 'e') {
       if (Directive == "endif") {
-        if (CheckEndOfDirective("#endif")) return true;
+        CheckEndOfDirective("#endif");
         PPConditionalInfo CondInfo;
         CondInfo.WasSkipping = true; // Silence bogus warning.
         bool InCond = CurLexer->popConditionalLevel(CondInfo);
@@ -600,12 +589,11 @@ bool Preprocessor::SkipExcludedConditionalBlock(const char *IfTokenLoc,
         // #else directive in a skipping conditional.  If not in some other
         // skipping conditional, and if #else hasn't already been seen, enter it
         // as a non-skipping conditional.
-        if (CheckEndOfDirective("#else")) return true;
+        CheckEndOfDirective("#else");
         PPConditionalInfo &CondInfo = CurLexer->peekConditionalLevel();
         
         // If this is a #else with a #else before it, report the error.
-        if (CondInfo.FoundElse && Diag(Tok, diag::pp_err_else_after_else))
-          return true;
+        if (CondInfo.FoundElse) Diag(Tok, diag::pp_err_else_after_else);
         
         // Note that we've seen a #else in this conditional.
         CondInfo.FoundElse = true;
@@ -623,7 +611,7 @@ bool Preprocessor::SkipExcludedConditionalBlock(const char *IfTokenLoc,
         // If this is in a skipping block or if we're already handled this #if
         // block, don't bother parsing the condition.
         if (CondInfo.WasSkipping || CondInfo.FoundNonSkip) {
-          if (DiscardUntilEndOfDirective()) return true;
+          DiscardUntilEndOfDirective();
           ShouldEnter = false;
         } else {
           // Evaluate the #elif condition!
@@ -633,14 +621,12 @@ bool Preprocessor::SkipExcludedConditionalBlock(const char *IfTokenLoc,
           // looked up, etc, inside the #elif expression.
           assert(SkippingContents && "We have to be skipping here!");
           SkippingContents = false;
-          if (EvaluateDirectiveExpression(ShouldEnter))
-            return true;
+          EvaluateDirectiveExpression(ShouldEnter);
           SkippingContents = true;
         }
         
         // If this is a #elif with a #else before it, report the error.
-        if (CondInfo.FoundElse && Diag(Tok, diag::pp_err_elif_after_else))
-          return true;
+        if (CondInfo.FoundElse) Diag(Tok, diag::pp_err_elif_after_else);
         
         // If this condition is true, enter it!
         if (ShouldEnter) {
@@ -657,8 +643,6 @@ bool Preprocessor::SkipExcludedConditionalBlock(const char *IfTokenLoc,
   // of the file, just stop skipping and return to lexing whatever came after
   // the #if block.
   SkippingContents = false;
-
-  return false;
 }
 
 //===----------------------------------------------------------------------===//
@@ -669,7 +653,7 @@ bool Preprocessor::SkipExcludedConditionalBlock(const char *IfTokenLoc,
 /// at the start of a line.  This consumes the directive, modifies the 
 /// lexer/preprocessor state, and advances the lexer(s) so that the next token
 /// read is the correct one.
-bool Preprocessor::HandleDirective(LexerToken &Result) {
+void Preprocessor::HandleDirective(LexerToken &Result) {
   // FIXME: TRADITIONAL: # with whitespace before it not recognized by K&R?
   
   // We just parsed a # character at the start of a line, so we're in directive
@@ -680,13 +664,12 @@ bool Preprocessor::HandleDirective(LexerToken &Result) {
   ++NumDirectives;
   
   // Read the next token, the directive flavor.
-  if (LexUnexpandedToken(Result))
-    return true;   // Bail out.
+  LexUnexpandedToken(Result);
   
   switch (Result.getKind()) {
   default: break;
   case tok::eom:
-    return false;   // null directive.
+    return;   // null directive.
 
 #if 0
   case tok::numeric_constant:
@@ -737,10 +720,10 @@ bool Preprocessor::HandleDirective(LexerToken &Result) {
 #if 1
         // Read the rest of the PP line.
         do {
-          if (Lex(Result)) return true;
+          Lex(Result);
         } while (Result.getKind() != tok::eom);
         
-        return false;
+        return;
 #endif
       } else if (Directive == "assert") {
         isExtension = true;
@@ -749,9 +732,10 @@ bool Preprocessor::HandleDirective(LexerToken &Result) {
     case 7:
       if (Directive == "include")  // Handle #include.
         return HandleIncludeDirective(Result);
-      if (Directive == "warning")
-        return Diag(Result, diag::ext_pp_warning_directive) ||
-               HandleUserDiagnosticDirective(Result, true);
+      if (Directive == "warning") {
+        Diag(Result, diag::ext_pp_warning_directive);
+        HandleUserDiagnosticDirective(Result, true);
+      }
       break;
     case 8:
       if (Directive == "unassert") {
@@ -767,19 +751,17 @@ bool Preprocessor::HandleDirective(LexerToken &Result) {
   }
   
   // If we reached here, the preprocessing token is not valid!
-  if (Diag(Result, diag::err_pp_invalid_directive))
-    return true;
+  Diag(Result, diag::err_pp_invalid_directive);
   
   // Read the rest of the PP line.
   do {
-    if (Lex(Result)) return true;
+    Lex(Result);
   } while (Result.getKind() != tok::eom);
   
   // Okay, we're done parsing the directive.
-  return false;
 }
 
-bool Preprocessor::HandleUserDiagnosticDirective(LexerToken &Result, 
+void Preprocessor::HandleUserDiagnosticDirective(LexerToken &Result, 
                                                  bool isWarning) {
   // Read the rest of the line raw.  We do this because we don't want macros
   // to be expanded and we don't require that the tokens be valid preprocessing
@@ -796,17 +778,16 @@ bool Preprocessor::HandleUserDiagnosticDirective(LexerToken &Result,
 /// file to be included from the lexer, then include it!  This is a common
 /// routine with functionality shared between #include, #include_next and
 /// #import.
-bool Preprocessor::HandleIncludeDirective(LexerToken &IncludeTok,
+void Preprocessor::HandleIncludeDirective(LexerToken &IncludeTok,
                                           const DirectoryLookup *LookupFrom,
                                           bool isImport) {
   ++NumIncluded;
   LexerToken FilenameTok;
-  if (CurLexer->LexIncludeFilename(FilenameTok))
-    return true;
+  CurLexer->LexIncludeFilename(FilenameTok);
   
   // If the token kind is EOM, the error has already been diagnosed.
   if (FilenameTok.getKind() == tok::eom)
-    return false;
+    return;
 
   // Check that we don't have infinite #include recursion.
   if (IncludeStack.size() == MaxAllowedIncludeStackDepth-1)
@@ -853,12 +834,12 @@ bool Preprocessor::HandleIncludeDirective(LexerToken &IncludeTok,
     FileInfo.isImport = true;
     
     // Has this already been #import'ed or #include'd?
-    if (FileInfo.NumIncludes) return false;
+    if (FileInfo.NumIncludes) return;
   } else {
     // Otherwise, if this is a #include of a file that was previously #import'd
     // or if this is the second #include of a #pragma once file, ignore it.
     if (FileInfo.isImport)
-      return false;
+      return;
   }
 
   // Look up the file, create a File ID for it.
@@ -872,15 +853,12 @@ bool Preprocessor::HandleIncludeDirective(LexerToken &IncludeTok,
 
   // Increment the number of times this file has been included.
   ++FileInfo.NumIncludes;
-  
-  return false;
 }
 
 /// HandleIncludeNextDirective - Implements #include_next.
 ///
-bool Preprocessor::HandleIncludeNextDirective(LexerToken &IncludeNextTok) {
-  if (Diag(IncludeNextTok, diag::ext_pp_include_next_directive))
-    return true;
+void Preprocessor::HandleIncludeNextDirective(LexerToken &IncludeNextTok) {
+  Diag(IncludeNextTok, diag::ext_pp_include_next_directive);
   
   // #include_next is like #include, except that we start searching after
   // the current found directory.  If we can't do this, issue a
@@ -888,11 +866,9 @@ bool Preprocessor::HandleIncludeNextDirective(LexerToken &IncludeNextTok) {
   const DirectoryLookup *Lookup = CurNextDirLookup;
   if (IncludeStack.empty()) {
     Lookup = 0;
-    if (Diag(IncludeNextTok, diag::pp_include_next_in_primary))
-      return true;
+    Diag(IncludeNextTok, diag::pp_include_next_in_primary);
   } else if (Lookup == 0) {
-    if (Diag(IncludeNextTok, diag::pp_include_next_absolute_path))
-      return true;
+    Diag(IncludeNextTok, diag::pp_include_next_absolute_path);
   }
   
   return HandleIncludeDirective(IncludeNextTok, Lookup);
@@ -900,8 +876,8 @@ bool Preprocessor::HandleIncludeNextDirective(LexerToken &IncludeNextTok) {
 
 /// HandleImportDirective - Implements #import.
 ///
-bool Preprocessor::HandleImportDirective(LexerToken &ImportTok) {
-  if (Diag(ImportTok, diag::ext_pp_import_directive)) return true;
+void Preprocessor::HandleImportDirective(LexerToken &ImportTok) {
+  Diag(ImportTok, diag::ext_pp_import_directive);
   
   return HandleIncludeDirective(ImportTok, 0, true);
 }
@@ -909,35 +885,32 @@ bool Preprocessor::HandleImportDirective(LexerToken &ImportTok) {
 /// HandleDefineDirective - Implements #define.  This consumes the entire macro
 /// line then lets the caller lex the next real token.
 ///
-bool Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
+void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
   ++NumDefined;
   LexerToken MacroNameTok;
-  if (ReadMacroName(MacroNameTok))
-    return true;
+  ReadMacroName(MacroNameTok);
   
   // Error reading macro name?  If so, diagnostic already issued.
   if (MacroNameTok.getKind() == tok::eom)
-    return false;
+    return;
   
   MacroInfo *MI = new MacroInfo(MacroNameTok.getSourceLocation());
   
   LexerToken Tok;
-  if (LexUnexpandedToken(Tok)) return true;
+  LexUnexpandedToken(Tok);
   
   if (Tok.getKind() == tok::eom) {
     // If there is no body to this macro, we have no special handling here.
   } else if (Tok.getKind() == tok::l_paren && !Tok.hasLeadingSpace()) {
     // This is a function-like macro definition.
     //assert(0 && "Function-like macros not implemented!");
-#warning function like macros
     return DiscardUntilEndOfDirective();
 
   } else if (!Tok.hasLeadingSpace()) {
     // C99 requires whitespace between the macro definition and the body.  Emit
     // a diagnostic for something like "#define X+".
     if (Features.C99) {
-      if (Diag(Tok, diag::ext_c99_whitespace_required_after_macro_name))
-        return true;
+      Diag(Tok, diag::ext_c99_whitespace_required_after_macro_name);
     } else {
       // FIXME: C90/C++ do not get this diagnostic, but it does get a similar
       // one in some cases!
@@ -955,7 +928,7 @@ bool Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
     // FIXME: See create_iso_definition.
     
     // Get the next token of the macro.
-    if (LexUnexpandedToken(Tok)) return true;
+    LexUnexpandedToken(Tok);
   }
   
   // Finally, if this identifier already had a macro defined for it, verify that
@@ -968,30 +941,28 @@ bool Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
   }
   
   MacroNameTok.getIdentifierInfo()->setMacroInfo(MI);
-  return false;
 }
 
 
 /// HandleUndefDirective - Implements #undef.
 ///
-bool Preprocessor::HandleUndefDirective(LexerToken &UndefTok) {
+void Preprocessor::HandleUndefDirective(LexerToken &UndefTok) {
   ++NumUndefined;
   LexerToken MacroNameTok;
-  if (ReadMacroName(MacroNameTok))
-    return true;
+  ReadMacroName(MacroNameTok);
   
   // Error reading macro name?  If so, diagnostic already issued.
   if (MacroNameTok.getKind() == tok::eom)
-    return false;
+    return;
   
   // Check to see if this is the last token on the #undef line.
-  if (CheckEndOfDirective("#undef")) return true;
+  CheckEndOfDirective("#undef");
   
   // Okay, we finally have a valid identifier to undef.
   MacroInfo *MI = MacroNameTok.getIdentifierInfo()->getMacroInfo();
   
   // If the macro is not defined, this is a noop undef, just return.
-  if (MI == 0) return false;
+  if (MI == 0) return;
   
 #if 0 // FIXME: implement warn_unused_macros.
   if (CPP_OPTION (pfile, warn_unused_macros))
@@ -1001,72 +972,67 @@ bool Preprocessor::HandleUndefDirective(LexerToken &UndefTok) {
   // Free macro definition.
   delete MI;
   MacroNameTok.getIdentifierInfo()->setMacroInfo(0);
-  return false;
 }
 
 
 /// HandleIfdefDirective - Implements the #ifdef/#ifndef directive.  isIfndef is
 /// true when this is a #ifndef directive.
 ///
-bool Preprocessor::HandleIfdefDirective(LexerToken &Result, bool isIfndef) {
+void Preprocessor::HandleIfdefDirective(LexerToken &Result, bool isIfndef) {
   ++NumIf;
   LexerToken DirectiveTok = Result;
   
   LexerToken MacroNameTok;
-  if (ReadMacroName(MacroNameTok))
-    return true;
+  ReadMacroName(MacroNameTok);
   
   // Error reading macro name?  If so, diagnostic already issued.
   if (MacroNameTok.getKind() == tok::eom)
-    return false;
+    return;
   
   // Check to see if this is the last token on the #if[n]def line.
-  if (CheckEndOfDirective("#ifdef")) return true;
+  CheckEndOfDirective("#ifdef");
   
   // Should we include the stuff contained by this directive?
   if (!MacroNameTok.getIdentifierInfo()->getMacroInfo() == isIfndef) {
     // Yes, remember that we are inside a conditional, then lex the next token.
     CurLexer->pushConditionalLevel(DirectiveTok.getStart(), /*wasskip*/false,
                                    /*foundnonskip*/true, /*foundelse*/false);
-    return false;
   } else {
     // No, skip the contents of this block and return the first token after it.
-    return SkipExcludedConditionalBlock(DirectiveTok.getStart(),
-                                        /*Foundnonskip*/false, 
-                                        /*FoundElse*/false);
+    SkipExcludedConditionalBlock(DirectiveTok.getStart(),
+                                 /*Foundnonskip*/false, 
+                                 /*FoundElse*/false);
   }
 }
 
 /// HandleIfDirective - Implements the #if directive.
 ///
-bool Preprocessor::HandleIfDirective(LexerToken &IfToken) {
+void Preprocessor::HandleIfDirective(LexerToken &IfToken) {
   ++NumIf;
   const char *Start = CurLexer->BufferPtr;
 
   bool ConditionalTrue = false;
-  if (EvaluateDirectiveExpression(ConditionalTrue))
-    return true;
+  EvaluateDirectiveExpression(ConditionalTrue);
   
   // Should we include the stuff contained by this directive?
   if (ConditionalTrue) {
     // Yes, remember that we are inside a conditional, then lex the next token.
     CurLexer->pushConditionalLevel(IfToken.getStart(), /*wasskip*/false,
                                    /*foundnonskip*/true, /*foundelse*/false);
-    return false;
   } else {
     // No, skip the contents of this block and return the first token after it.
-    return SkipExcludedConditionalBlock(IfToken.getStart(),
-                                        /*Foundnonskip*/false, 
-                                        /*FoundElse*/false);
+    SkipExcludedConditionalBlock(IfToken.getStart(),
+                                 /*Foundnonskip*/false, 
+                                 /*FoundElse*/false);
   }
 }
 
 /// HandleEndifDirective - Implements the #endif directive.
 ///
-bool Preprocessor::HandleEndifDirective(LexerToken &EndifToken) {
+void Preprocessor::HandleEndifDirective(LexerToken &EndifToken) {
   ++NumEndif;
   // Check that this is the whole directive.
-  if (CheckEndOfDirective("#endif")) return true;
+  CheckEndOfDirective("#endif");
   
   PPConditionalInfo CondInfo;
   if (CurLexer->popConditionalLevel(CondInfo)) {
@@ -1076,22 +1042,20 @@ bool Preprocessor::HandleEndifDirective(LexerToken &EndifToken) {
   
   assert(!CondInfo.WasSkipping && !isSkipping() &&
          "This code should only be reachable in the non-skipping case!");
-  return false;
 }
 
 
-bool Preprocessor::HandleElseDirective(LexerToken &Result) {
+void Preprocessor::HandleElseDirective(LexerToken &Result) {
   ++NumElse;
   // #else directive in a non-skipping conditional... start skipping.
-  if (CheckEndOfDirective("#else")) return true;
+  CheckEndOfDirective("#else");
   
   PPConditionalInfo CI;
   if (CurLexer->popConditionalLevel(CI))
     return Diag(Result, diag::pp_err_else_without_if);
 
   // If this is a #else with a #else before it, report the error.
-  if (CI.FoundElse && Diag(Result, diag::pp_err_else_after_else))
-    return true;
+  if (CI.FoundElse) Diag(Result, diag::pp_err_else_after_else);
   
   // Finally, skip the rest of the contents of this block and return the first
   // token after it.
@@ -1099,20 +1063,19 @@ bool Preprocessor::HandleElseDirective(LexerToken &Result) {
                                       /*FoundElse*/true);
 }
 
-bool Preprocessor::HandleElifDirective(LexerToken &ElifToken) {
+void Preprocessor::HandleElifDirective(LexerToken &ElifToken) {
   ++NumElse;
   // #elif directive in a non-skipping conditional... start skipping.
   // We don't care what the condition is, because we will always skip it (since
   // the block immediately before it was included).
-  if (DiscardUntilEndOfDirective()) return true;
+  DiscardUntilEndOfDirective();
 
   PPConditionalInfo CI;
   if (CurLexer->popConditionalLevel(CI))
     return Diag(ElifToken, diag::pp_err_elif_without_if);
   
   // If this is a #elif with a #else before it, report the error.
-  if (CI.FoundElse && Diag(ElifToken, diag::pp_err_elif_after_else))
-    return true;
+  if (CI.FoundElse) Diag(ElifToken, diag::pp_err_elif_after_else);
 
   // Finally, skip the rest of the contents of this block and return the first
   // token after it.

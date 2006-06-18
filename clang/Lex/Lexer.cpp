@@ -176,9 +176,9 @@ SourceLocation Lexer::getSourceLocation(const char *Loc) const {
 
 /// Diag - Forwarding function for diagnostics.  This translate a source
 /// position in the current buffer into a SourceLocation object for rendering.
-bool Lexer::Diag(const char *Loc, unsigned DiagID,
+void Lexer::Diag(const char *Loc, unsigned DiagID,
                  const std::string &Msg) const {
-  return PP.Diag(getSourceLocation(Loc), DiagID, Msg);
+  PP.Diag(getSourceLocation(Loc), DiagID, Msg);
 }
 
 //===----------------------------------------------------------------------===//
@@ -434,7 +434,7 @@ unsigned Lexer::getSpelling(const LexerToken &Tok, char *Buffer,
 // Helper methods for lexing.
 //===----------------------------------------------------------------------===//
 
-bool Lexer::LexIdentifier(LexerToken &Result, const char *CurPtr) {
+void Lexer::LexIdentifier(LexerToken &Result, const char *CurPtr) {
   // Match [_A-Za-z0-9]*, we have already matched [_A-Za-z$]
   unsigned Size;
   unsigned char C = *CurPtr++;
@@ -479,8 +479,7 @@ FinishIdentifier:
       if (!Features.DollarIdents) goto FinishIdentifier;
       
       // Otherwise, emit a diagnostic and continue.
-      if (Diag(CurPtr, diag::ext_dollar_in_identifier))
-        return true;
+      Diag(CurPtr, diag::ext_dollar_in_identifier);
       CurPtr = ConsumeChar(CurPtr, Size, Result);
       C = getCharAndSize(CurPtr, Size);
       continue;
@@ -504,7 +503,7 @@ FinishIdentifier:
 /// LexNumericConstant - Lex the remainer of a integer or floating point
 /// constant. From[-1] is the first character lexed.  Return the end of the
 /// constant.
-bool Lexer::LexNumericConstant(LexerToken &Result, const char *CurPtr) {
+void Lexer::LexNumericConstant(LexerToken &Result, const char *CurPtr) {
   unsigned Size;
   char C = getCharAndSize(CurPtr, Size);
   char PrevCh = 0;
@@ -527,12 +526,11 @@ bool Lexer::LexNumericConstant(LexerToken &Result, const char *CurPtr) {
 
   // Update the end of token position as well as the BufferPtr instance var.
   Result.SetEnd(BufferPtr = CurPtr);
-  return false;
 }
 
 /// LexStringLiteral - Lex the remainder of a string literal, after having lexed
 /// either " or L".
-bool Lexer::LexStringLiteral(LexerToken &Result, const char *CurPtr) {
+void Lexer::LexStringLiteral(LexerToken &Result, const char *CurPtr) {
   const char *NulCharacter = 0; // Does this string contain the \0 character?
   
   char C = getAndAdvanceChar(CurPtr, Result);
@@ -543,8 +541,7 @@ bool Lexer::LexStringLiteral(LexerToken &Result, const char *CurPtr) {
       C = getAndAdvanceChar(CurPtr, Result);
     } else if (C == '\n' || C == '\r' ||             // Newline.
                (C == 0 && CurPtr-1 == BufferEnd)) {  // End of file.
-      if (Diag(Result.getStart(), diag::err_unterminated_string))
-        return true;
+      Diag(Result.getStart(), diag::err_unterminated_string);
       BufferPtr = CurPtr-1;
       return LexTokenInternal(Result);
     } else if (C == 0) {
@@ -553,19 +550,17 @@ bool Lexer::LexStringLiteral(LexerToken &Result, const char *CurPtr) {
     C = getAndAdvanceChar(CurPtr, Result);
   }
   
-  if (NulCharacter && Diag(NulCharacter, diag::null_in_string))
-    return true;
+  if (NulCharacter) Diag(NulCharacter, diag::null_in_string);
 
   Result.SetKind(tok::string_literal);
 
   // Update the end of token position as well as the BufferPtr instance var.
   Result.SetEnd(BufferPtr = CurPtr);
-  return false;
 }
 
 /// LexAngledStringLiteral - Lex the remainder of an angled string literal,
 /// after having lexed the '<' character.  This is used for #include filenames.
-bool Lexer::LexAngledStringLiteral(LexerToken &Result, const char *CurPtr) {
+void Lexer::LexAngledStringLiteral(LexerToken &Result, const char *CurPtr) {
   const char *NulCharacter = 0; // Does this string contain the \0 character?
   
   char C = getAndAdvanceChar(CurPtr, Result);
@@ -576,8 +571,7 @@ bool Lexer::LexAngledStringLiteral(LexerToken &Result, const char *CurPtr) {
       C = getAndAdvanceChar(CurPtr, Result);
     } else if (C == '\n' || C == '\r' ||             // Newline.
                (C == 0 && CurPtr-1 == BufferEnd)) {  // End of file.
-      if (Diag(Result.getStart(), diag::err_unterminated_string))
-        return true;
+      Diag(Result.getStart(), diag::err_unterminated_string);
       BufferPtr = CurPtr-1;
       return LexTokenInternal(Result);
     } else if (C == 0) {
@@ -586,27 +580,24 @@ bool Lexer::LexAngledStringLiteral(LexerToken &Result, const char *CurPtr) {
     C = getAndAdvanceChar(CurPtr, Result);
   }
   
-  if (NulCharacter && Diag(NulCharacter, diag::null_in_string))
-    return true;
+  if (NulCharacter) Diag(NulCharacter, diag::null_in_string);
   
   Result.SetKind(tok::angle_string_literal);
   
   // Update the end of token position as well as the BufferPtr instance var.
   Result.SetEnd(BufferPtr = CurPtr);
-  return false;
 }
 
 
 /// LexCharConstant - Lex the remainder of a character constant, after having
 /// lexed either ' or L'.
-bool Lexer::LexCharConstant(LexerToken &Result, const char *CurPtr) {
+void Lexer::LexCharConstant(LexerToken &Result, const char *CurPtr) {
   const char *NulCharacter = 0; // Does this character contain the \0 character?
 
   // Handle the common case of 'x' and '\y' efficiently.
   char C = getAndAdvanceChar(CurPtr, Result);
   if (C == '\'') {
-    if (Diag(Result.getStart(), diag::err_empty_character))
-      return true;
+    Diag(Result.getStart(), diag::err_empty_character);
     BufferPtr = CurPtr;
     return LexTokenInternal(Result);
   } else if (C == '\\') {
@@ -626,8 +617,7 @@ bool Lexer::LexCharConstant(LexerToken &Result, const char *CurPtr) {
         C = getAndAdvanceChar(CurPtr, Result);
       } else if (C == '\n' || C == '\r' ||               // Newline.
                  (C == 0 && CurPtr-1 == BufferEnd)) {    // End of file.
-        if (Diag(Result.getStart(), diag::err_unterminated_char))
-          return true;
+        Diag(Result.getStart(), diag::err_unterminated_char);
         BufferPtr = CurPtr-1;
         return LexTokenInternal(Result);
       } else if (C == 0) {
@@ -637,19 +627,17 @@ bool Lexer::LexCharConstant(LexerToken &Result, const char *CurPtr) {
     } while (C != '\'');
   }
   
-  if (NulCharacter && Diag(NulCharacter, diag::null_in_char))
-    return true;
+  if (NulCharacter) Diag(NulCharacter, diag::null_in_char);
 
   Result.SetKind(tok::char_constant);
   
   // Update the end of token position as well as the BufferPtr instance var.
   Result.SetEnd(BufferPtr = CurPtr);
-  return false;
 }
 
 /// SkipWhitespace - Efficiently skip over a series of whitespace characters.
 /// Update BufferPtr to point to the next non-whitespace character and return.
-bool Lexer::SkipWhitespace(LexerToken &Result, const char *CurPtr) {
+void Lexer::SkipWhitespace(LexerToken &Result, const char *CurPtr) {
   // Whitespace - Skip it, then return the token after the whitespace.
   unsigned char Char = *CurPtr;  // Skip consequtive spaces efficiently.
   while (1) {
@@ -664,7 +652,7 @@ bool Lexer::SkipWhitespace(LexerToken &Result, const char *CurPtr) {
     if (ParsingPreprocessorDirective) {
       // End of preprocessor directive line, let LexTokenInternal handle this.
       BufferPtr = CurPtr;
-      return false;
+      return;
     }
     
     // ok, but handle newline.
@@ -691,18 +679,16 @@ bool Lexer::SkipWhitespace(LexerToken &Result, const char *CurPtr) {
     return SkipBlockComment(Result, CurPtr+2);
   }
   BufferPtr = CurPtr;
-  return false;
 }
 
 // SkipBCPLComment - We have just read the // characters from input.  Skip until
 // we find the newline character thats terminate the comment.  Then update
 /// BufferPtr and return.
-bool Lexer::SkipBCPLComment(LexerToken &Result, const char *CurPtr) {
+void Lexer::SkipBCPLComment(LexerToken &Result, const char *CurPtr) {
   // If BCPL comments aren't explicitly enabled for this language, emit an
   // extension warning.
   if (!Features.BCPLComment) {
-    if (Diag(Result.getStart(), diag::ext_bcpl_comment))
-      return true;
+    Diag(Result.getStart(), diag::ext_bcpl_comment);
     
     // Mark them enabled so we only emit one warning for this translation
     // unit.
@@ -740,8 +726,8 @@ bool Lexer::SkipBCPLComment(LexerToken &Result, const char *CurPtr) {
     if (CurPtr != OldPtr+1) {
       for (; OldPtr != CurPtr; ++OldPtr)
         if (OldPtr[0] == '\n' || OldPtr[0] == '\r') {
-          if (Diag(OldPtr-1, diag::ext_multi_line_bcpl_comment))
-            return true;
+          Diag(OldPtr-1, diag::ext_multi_line_bcpl_comment);
+          break;
         }
     }
     
@@ -754,7 +740,7 @@ bool Lexer::SkipBCPLComment(LexerToken &Result, const char *CurPtr) {
   // return immediately, so that the lexer can return this as an EOM token.
   if (ParsingPreprocessorDirective) {
     BufferPtr = CurPtr;
-    return false;
+    return;
   }
   
   // Otherwise, eat the \n character.  We don't care if this is a \n\r or
@@ -775,20 +761,18 @@ bool Lexer::SkipBCPLComment(LexerToken &Result, const char *CurPtr) {
   }
 
   BufferPtr = CurPtr;
-  return false;
+  return;
 
 FoundEOF:   // If we ran off the end of the buffer, return EOF.
   BufferPtr = CurPtr-1;
-  return false;
+  return;
 }
 
-/// isEndOfEscapedNewLine - Return true if the specified newline character
-/// (either \n or \r) is part of an escaped newline sequence.  Issue a
+/// isBlockCommentEndOfEscapedNewLine - Return true if the specified newline
+/// character (either \n or \r) is part of an escaped newline sequence.  Issue a
 /// diagnostic if so.  We know that the is inside of a block comment.
-bool Lexer::isBlockCommentEndOfEscapedNewLine(const char *CurPtr,
-                                              char &PrevChar) {
+bool Lexer::isEndOfBlockCommentWithEscapedNewLine(const char *CurPtr) {
   assert(CurPtr[0] == '\n' || CurPtr[0] == '\r');
-  PrevChar = 0;
   
   // Back up off the newline.
   --CurPtr;
@@ -812,37 +796,32 @@ bool Lexer::isBlockCommentEndOfEscapedNewLine(const char *CurPtr,
   
   // If we have a slash, we know this is an escaped newline.
   if (*CurPtr == '\\') {
-    PrevChar = CurPtr[-1];
-    if (PrevChar != '*') return false;
+    if (CurPtr[-1] != '*') return false;
   } else {
     // It isn't a slash, is it the ?? / trigraph?
-    if (*CurPtr != '/' || CurPtr[-1] != '?' || CurPtr[-2] != '?')
+    if (CurPtr[0] != '/' || CurPtr[-1] != '?' || CurPtr[-2] != '?' ||
+        CurPtr[-3] != '*')
       return false;
-    // This is the trigraph.  Emit a stern warning!
-    if ((PrevChar = CurPtr[-3]) != '*') return false;
+    
+    // This is the trigraph ending the comment.  Emit a stern warning!
     CurPtr -= 2;
 
     // If no trigraphs are enabled, warn that we ignored this trigraph and
     // ignore this * character.
     if (!Features.Trigraphs) {
-      PrevChar = 0;
-      return Diag(CurPtr, diag::trigraph_ignored_block_comment);
-    } else {
-      if (Diag(CurPtr, diag::trigraph_ends_block_comment))
-        return true;
+      Diag(CurPtr, diag::trigraph_ignored_block_comment);
+      return false;
     }
+    Diag(CurPtr, diag::trigraph_ends_block_comment);
   }
   
   // Warn about having an escaped newline between the */ characters.
-  if (Diag(CurPtr, diag::escaped_newline_block_comment_end))
-    return true;
+  Diag(CurPtr, diag::escaped_newline_block_comment_end);
   
   // If there was space between the backslash and newline, warn about it.
-  if (HasSpace &&
-      Diag(CurPtr, diag::backslash_newline_space))
-    return true;
+  if (HasSpace) Diag(CurPtr, diag::backslash_newline_space);
   
-  return false;
+  return true;
 }
 
 /// SkipBlockComment - We have just read the /* characters from input.  Read
@@ -851,17 +830,16 @@ bool Lexer::isBlockCommentEndOfEscapedNewLine(const char *CurPtr,
 /// because they cannot cause the comment to end.  The only thing that can
 /// happen is the comment could end with an escaped newline between the */ end
 /// of comment.
-bool Lexer::SkipBlockComment(LexerToken &Result, const char *CurPtr) {
+void Lexer::SkipBlockComment(LexerToken &Result, const char *CurPtr) {
   // Scan one character past where we should, looking for a '/' character.  Once
   // we find it, check to see if it was preceeded by a *.  This common
   // optimization helps people who like to put a lot of * characters in their
   // comments.
   unsigned char C = *CurPtr++;
   if (C == 0 && CurPtr == BufferEnd+1) {
-    if (Diag(Result.getStart(), diag::err_unterminated_block_comment))
-      return true;
+    Diag(Result.getStart(), diag::err_unterminated_block_comment);
     BufferPtr = CurPtr-1;
-    return false;
+    return;
   }
   
   while (1) {
@@ -876,10 +854,7 @@ bool Lexer::SkipBlockComment(LexerToken &Result, const char *CurPtr) {
         break;
       
       if ((CurPtr[-2] == '\n' || CurPtr[-2] == '\r')) {
-        char Prev;
-        if (isBlockCommentEndOfEscapedNewLine(CurPtr-2, Prev))
-          return true;
-        if (Prev == '*') {
+        if (isEndOfBlockCommentWithEscapedNewLine(CurPtr-2)) {
           // We found the final */, though it had an escaped newline between the
           // * and /.  We're done!
           break;
@@ -889,17 +864,15 @@ bool Lexer::SkipBlockComment(LexerToken &Result, const char *CurPtr) {
         // If this is a /* inside of the comment, emit a warning.  Don't do this
         // if this is a /*/, which will end the comment.  This misses cases with
         // embedded escaped newlines, but oh well.
-        if (Diag(CurPtr-1, diag::nested_block_comment))
-          return true;
+        Diag(CurPtr-1, diag::nested_block_comment);
       }
     } else if (C == 0 && CurPtr == BufferEnd+1) {
-      if (Diag(Result.getStart(), diag::err_unterminated_block_comment))
-        return true;
+      Diag(Result.getStart(), diag::err_unterminated_block_comment);
       // Note: the user probably forgot a */.  We could continue immediately
       // after the /*, but this would involve lexing a lot of what really is the
       // comment, which surely would confuse the parser.
       BufferPtr = CurPtr-1;
-      return false;
+      return;
     }
     C = *CurPtr++;
   }
@@ -915,7 +888,6 @@ bool Lexer::SkipBlockComment(LexerToken &Result, const char *CurPtr) {
   // Otherwise, just return so that the next character will be lexed as a token.
   BufferPtr = CurPtr;
   Result.SetFlag(LexerToken::LeadingSpace);
-  return false;
 }
 
 //===----------------------------------------------------------------------===//
@@ -924,7 +896,7 @@ bool Lexer::SkipBlockComment(LexerToken &Result, const char *CurPtr) {
 
 /// LexIncludeFilename - After the preprocessor has parsed a #include, lex and
 /// (potentially) macro expand the filename.
-bool Lexer::LexIncludeFilename(LexerToken &Result) {
+void Lexer::LexIncludeFilename(LexerToken &Result) {
   assert(ParsingPreprocessorDirective &&
          ParsingFilename == false &&
          "Must be in a preprocessing directive!");
@@ -934,33 +906,30 @@ bool Lexer::LexIncludeFilename(LexerToken &Result) {
   
   // There should be exactly two tokens here if everything is good: first the
   // filename, then the EOM.
-  if (Lex(Result)) return true;
+  Lex(Result);
 
   // We should have gotten the filename now.
   ParsingFilename = false;
 
   // No filename?
-  if (Result.getKind() == tok::eom)
-    return Diag(Result.getStart(), diag::err_pp_expects_filename);
+  if (Result.getKind() == tok::eom) {
+    Diag(Result.getStart(), diag::err_pp_expects_filename);
+    return;
+  }
   
   // Verify that there is nothing after the filename, other than EOM.
   LexerToken EndTok;
-  if (Lex(EndTok)) return true;
+  Lex(EndTok);
 
   if (EndTok.getKind() != tok::eom) {
-    if (Diag(Result.getStart(), diag::err_pp_expects_filename))
-      return true;
+    Diag(Result.getStart(), diag::err_pp_expects_filename);
     
     // Lex until the end of the preprocessor directive line.
-    while (EndTok.getKind() != tok::eom) {
-      if (Lex(EndTok)) return true;
-    }
+    while (EndTok.getKind() != tok::eom)
+      Lex(EndTok);
     
     Result.SetKind(tok::eom);
   }
-  
-  // We're done now.
-  return false;
 }
 
 /// ReadToEndOfLine - Read the rest of the current preprocessor line as an
@@ -996,9 +965,8 @@ std::string Lexer::ReadToEndOfLine() {
       BufferPtr = CurPtr-1;
       
       // Next, lex the character, which should handle the EOM transition.
-      bool Err = Lex(Tmp);
+      Lex(Tmp);
       assert(Tmp.getKind() == tok::eom && "Unexpected token!");
-      assert(!Err && "Shouldn't have error exiting macro!");
       
       // Finally, we're done, return the string we found.
       return Result;
@@ -1008,7 +976,7 @@ std::string Lexer::ReadToEndOfLine() {
 
 /// LexEndOfFile - CurPtr points to the end of this file.  Handle this
 /// condition, reporting diagnostics and handling other edge cases as required.
-bool Lexer::LexEndOfFile(LexerToken &Result, const char *CurPtr) {
+void Lexer::LexEndOfFile(LexerToken &Result, const char *CurPtr) {
   // If we hit the end of the file while parsing a preprocessor directive,
   // end the preprocessor directive first.  The next token returned will
   // then be the end of file.
@@ -1018,24 +986,21 @@ bool Lexer::LexEndOfFile(LexerToken &Result, const char *CurPtr) {
     Result.SetKind(tok::eom);
     // Update the end of token position as well as the BufferPtr instance var.
     Result.SetEnd(BufferPtr = CurPtr);
-    return false;
+    return;
   }        
 
   // If we are in a #if directive, emit an error.
   while (!ConditionalStack.empty()) {
-    if (Diag(ConditionalStack.back().IfLoc,
-             diag::err_pp_unterminated_conditional))
-      return true;
+    Diag(ConditionalStack.back().IfLoc, diag::err_pp_unterminated_conditional);
     ConditionalStack.pop_back();
   }  
   
   // If the file was empty or didn't end in a newline, issue a pedwarn.
-  if (CurPtr[-1] != '\n' && CurPtr[-1] != '\r' && 
-      Diag(BufferEnd, diag::ext_no_newline_eof))
-    return true;
+  if (CurPtr[-1] != '\n' && CurPtr[-1] != '\r')
+    Diag(BufferEnd, diag::ext_no_newline_eof);
   
   BufferPtr = CurPtr;
-  return PP.HandleEndOfFile(Result);
+  PP.HandleEndOfFile(Result);
 }
 
 
@@ -1046,7 +1011,7 @@ bool Lexer::LexEndOfFile(LexerToken &Result, const char *CurPtr) {
 /// preprocessing token, not a normal token, as such, it is an internal
 /// interface.  It assumes that the Flags of result have been cleared before
 /// calling this.
-bool Lexer::LexTokenInternal(LexerToken &Result) {
+void Lexer::LexTokenInternal(LexerToken &Result) {
 LexNextToken:
   // New token, can't need cleaning yet.
   Result.ClearFlag(LexerToken::NeedsCleaning);
@@ -1065,10 +1030,9 @@ LexNextToken:
     if (CurPtr-1 == BufferEnd)
       return LexEndOfFile(Result, CurPtr-1);  // Retreat back into the file.
     
-    if (Diag(CurPtr-1, diag::null_in_file))
-      return true;
+    Diag(CurPtr-1, diag::null_in_file);
     Result.SetFlag(LexerToken::LeadingSpace);
-    if (SkipWhitespace(Result, CurPtr)) return true;
+    SkipWhitespace(Result, CurPtr);
     goto LexNextToken;   // GCC isn't tail call eliminating.
   case '\n':
   case '\r':
@@ -1088,14 +1052,14 @@ LexNextToken:
     Result.SetFlag(LexerToken::StartOfLine);
     // No leading whitespace seen so far.
     Result.ClearFlag(LexerToken::LeadingSpace);
-    if (SkipWhitespace(Result, CurPtr)) return true;
+    SkipWhitespace(Result, CurPtr);
     goto LexNextToken;   // GCC isn't tail call eliminating.
   case ' ':
   case '\t':
   case '\f':
   case '\v':
     Result.SetFlag(LexerToken::LeadingSpace);
-    if (SkipWhitespace(Result, CurPtr)) return true;
+    SkipWhitespace(Result, CurPtr);
     goto LexNextToken;   // GCC isn't tail call eliminating.
 
   case 'L':
@@ -1242,13 +1206,11 @@ LexNextToken:
     Char = getCharAndSize(CurPtr, SizeTmp);
     if (Char == '/') {         // BCPL comment.
       Result.SetFlag(LexerToken::LeadingSpace);
-      if (SkipBCPLComment(Result, ConsumeChar(CurPtr, SizeTmp, Result)))
-        return true;
+      SkipBCPLComment(Result, ConsumeChar(CurPtr, SizeTmp, Result));
       goto LexNextToken;   // GCC isn't tail call eliminating.
     } else if (Char == '*') {  // /**/ comment.
       Result.SetFlag(LexerToken::LeadingSpace);
-      if (SkipBlockComment(Result, ConsumeChar(CurPtr, SizeTmp, Result)))
-        return true;
+      SkipBlockComment(Result, ConsumeChar(CurPtr, SizeTmp, Result));
       goto LexNextToken;   // GCC isn't tail call eliminating.
     } else if (Char == '=') {
       Result.SetKind(tok::slashequal);
@@ -1281,7 +1243,7 @@ LexNextToken:
         // FIXME: -fpreprocessed mode??
         if (Result.isAtStartOfLine() && !PP.isSkipping()) {
           BufferPtr = CurPtr;
-          if (PP.HandleDirective(Result)) return true;
+          PP.HandleDirective(Result);
           
           // As an optimization, if the preprocessor didn't switch lexers, tail
           // recurse.
@@ -1326,8 +1288,7 @@ LexNextToken:
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else if (Features.CPPMinMax && Char == '?') {     // <?
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
-      if (Diag(Result.getStart(), diag::min_max_deprecated))
-        return true;
+      Diag(Result.getStart(), diag::min_max_deprecated);
 
       if (getCharAndSize(CurPtr, SizeTmp) == '=') {     // <?= 
         Result.SetKind(tok::lessquestionequal);
@@ -1354,8 +1315,7 @@ LexNextToken:
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else if (Features.CPPMinMax && Char == '?') {
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
-      if (Diag(Result.getStart(), diag::min_max_deprecated))
-        return true;
+      Diag(Result.getStart(), diag::min_max_deprecated);
 
       if (getCharAndSize(CurPtr, SizeTmp) == '=') {
         Result.SetKind(tok::greaterquestionequal);    // >?=
@@ -1428,7 +1388,7 @@ LexNextToken:
       // FIXME: not in preprocessed mode??
       if (Result.isAtStartOfLine() && !PP.isSkipping()) {
         BufferPtr = CurPtr;
-        if (PP.HandleDirective(Result)) return true;
+        PP.HandleDirective(Result);
         
         // As an optimization, if the preprocessor didn't switch lexers, tail
         // recurse.
@@ -1456,18 +1416,15 @@ LexNextToken:
       Result.SetKind(tok::at);
       break;
     } else if (CurPtr[-1] == '$' && Features.DollarIdents) {// $ in identifiers.
-      if (Diag(CurPtr-1, diag::ext_dollar_in_identifier))
-        return true;
+      Diag(CurPtr-1, diag::ext_dollar_in_identifier);
       return LexIdentifier(Result, CurPtr);
     }
     
-    if (!PP.isSkipping() && Diag(CurPtr-1, diag::err_stray_character))
-      return true;
+    if (!PP.isSkipping()) Diag(CurPtr-1, diag::err_stray_character);
     BufferPtr = CurPtr;
     goto LexNextToken;   // GCC isn't tail call eliminating.
   }
   
   // Update the end of token position as well as the BufferPtr instance var.
   Result.SetEnd(BufferPtr = CurPtr);
-  return false;
 }
