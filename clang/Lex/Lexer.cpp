@@ -75,20 +75,12 @@ SourceLocation LexerToken::getSourceLocation() const {
 
 /// dump - Print the token to stderr, used for debugging.
 ///
-void LexerToken::dump(bool DumpFlags) const {
+void LexerToken::dump(const LangOptions &Features, bool DumpFlags) const {
   std::cerr << clang::tok::getTokenName(Kind) << " '";
   
-  if (needsCleaning()) {
-    if (getLexer())
-      std::cerr << getLexer()->getSpelling(*this);
-    else {
-      // FIXME: expansion from macros clears location info. Testcase:
-      // #define TWELVE 1\    <whitespace only>
-      // 2
-      // TWELVE
-      std::cerr << "*unspelled*" << std::string(getStart(), getEnd());
-    }
-  } else
+  if (needsCleaning())
+    std::cerr << Lexer::getSpelling(*this, Features);
+  else
     std::cerr << std::string(getStart(), getEnd());
   std::cerr << "'";
   

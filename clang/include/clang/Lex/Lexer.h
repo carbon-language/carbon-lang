@@ -93,8 +93,6 @@ public:
   /// start of the token having already been set.
   void SetEnd(const char *End) { Length = End-Start; }
   
-  const Lexer *getLexer() const { return TheLexer; }
-  
   /// ClearFlags - Reset all flags to cleared.
   ///
   void StartToken(const Lexer *L) {
@@ -150,7 +148,7 @@ public:
   
   /// dump - Print the token to stderr, used for debugging.
   ///
-  void dump(bool DumpFlags = false) const;
+  void dump(const LangOptions &Features, bool DumpFlags = false) const;
 };
 
 /// PPConditionalInfo - Information about the conditional stack (#if directives)

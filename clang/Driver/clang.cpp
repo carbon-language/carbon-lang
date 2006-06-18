@@ -751,7 +751,7 @@ int main(int argc, char **argv) {
     LexerToken Tok;
     do {
       PP.Lex(Tok);
-      Tok.dump(true);
+      Tok.dump(Options, true);
       std::cerr << "\n";
     } while (Tok.getKind() != tok::eof);
     break;

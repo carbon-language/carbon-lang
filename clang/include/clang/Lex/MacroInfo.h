@@ -94,7 +94,7 @@ public:
   
   /// dump - Print the macro to stderr, used for debugging.
   ///
-  void dump() const;
+  void dump(const LangOptions &Features) const;
   
   // Todo:
   // bool isDefinedInSystemHeader() { Look this up based on Location }
