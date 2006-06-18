@@ -196,11 +196,6 @@ public:
     if (SkippingContents) return 0;
     return &IdentifierInfo.get(NameStart, NameEnd);
   }
-  IdentifierTokenInfo *getIdentifierInfo(const std::string &Name) {
-    // If we are in a "#if 0" block, don't bother lookup up identifiers.
-    if (SkippingContents) return 0;
-    return &IdentifierInfo.get(Name);
-  }
   
   /// AddKeyword - This method is used to associate a token ID with specific
   /// identifiers because they are language keywords.  This causes the lexer to
@@ -217,7 +212,8 @@ public:
     // and extensions are disabled.
     if (Flags+Features.NoExtensions >= 2) return;
     
-    IdentifierTokenInfo &Info = *getIdentifierInfo(Keyword);
+    const char *Str = &Keyword[0];
+    IdentifierTokenInfo &Info = *getIdentifierInfo(Str, Str+Keyword.size());
     Info.setTokenID(TokenCode);
     Info.setIsExtensionToken(Flags == 1);
   }
