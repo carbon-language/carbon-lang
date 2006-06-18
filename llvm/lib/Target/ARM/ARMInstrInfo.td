@@ -53,3 +53,7 @@ def movrr   : InstARM<(ops IntRegs:$dst, IntRegs:$src),
 
 def movri   : InstARM<(ops IntRegs:$dst, i32imm:$src),
                        "mov $dst, $src", [(set IntRegs:$dst, imm:$src)]>;
+
+def addri   : InstARM<(ops IntRegs:$dst, IntRegs:$a, i32imm:$b),
+                       "add $dst, $a, $b",
+		       [(set IntRegs:$dst, (add IntRegs:$a, imm:$b))]>;

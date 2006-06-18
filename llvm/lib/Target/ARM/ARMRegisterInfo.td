@@ -50,7 +50,13 @@ def IntRegs : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
   let MethodBodies = [{
     IntRegsClass::iterator
     IntRegsClass::allocation_order_end(MachineFunction &MF) const {
-      return end() - 1;
+      // r15 == Program Counter
+      // r14 == Link Register
+      // r13 == Stack Pointer
+      // r12 == ip (scratch)
+      // r11 == Frame Pointer
+      // r10 == Stack Limit
+      return end() - 4;
     }
   }];
 }
