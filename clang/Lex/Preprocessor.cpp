@@ -734,7 +734,7 @@ void Preprocessor::HandleDirective(LexerToken &Result) {
         return HandleIncludeDirective(Result);
       if (Directive == "warning") {
         Diag(Result, diag::ext_pp_warning_directive);
-        HandleUserDiagnosticDirective(Result, true);
+        return HandleUserDiagnosticDirective(Result, true);
       }
       break;
     case 8:
