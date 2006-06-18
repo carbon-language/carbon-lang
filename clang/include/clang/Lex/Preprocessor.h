@@ -332,12 +332,10 @@ private:
   /// EvaluateDirectiveExpression - Evaluate an integer constant expression that
   /// may occur after a #if or #elif directive.  Sets Result to the result of
   /// the expression.
-  void EvaluateDirectiveExpression(bool &Result);
-  /// EvaluateValue - Used to implement EvaluateDirectiveExpression,
-  /// see PPExpressions.cpp.
+  bool EvaluateDirectiveExpression();
+  /// EvaluateValue/EvaluateDirectiveSubExpr - Used to implement
+  /// EvaluateDirectiveExpression, see PPExpressions.cpp.
   bool EvaluateValue(int &Result, LexerToken &PeekTok);
-  /// EvaluateDirectiveSubExpr - Used to implement EvaluateDirectiveExpression,
-  /// see PPExpressions.cpp.
   bool EvaluateDirectiveSubExpr(int &LHS, unsigned MinPrec,
                                 LexerToken &PeekTok);
   

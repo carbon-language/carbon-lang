@@ -30,21 +30,18 @@ using namespace clang;
 ///
 /// MinPrec is the minimum precedence that this range of the expression is
 /// allowed to include.
-void Preprocessor::EvaluateDirectiveExpression(bool &Result) {
+bool Preprocessor::EvaluateDirectiveExpression() {
   // Peek ahead one token.
   LexerToken Tok;
   Lex(Tok);
 
-  // In error cases, bail out with false value.
-  Result = false;
-  
   int ResVal = 0;
   if (EvaluateValue(ResVal, Tok) ||
       EvaluateDirectiveSubExpr(ResVal, 1, Tok)) {
     // Skip the rest of the macro line.
     if (Tok.getKind() != tok::eom)
       DiscardUntilEndOfDirective();
-    return;
+    return false;
   }
   
   // If we aren't at the tok::eom token, something bad happened, like an extra
@@ -54,7 +51,7 @@ void Preprocessor::EvaluateDirectiveExpression(bool &Result) {
     DiscardUntilEndOfDirective();
   }
   
-  Result = ResVal != 0;
+  return ResVal != 0;
 }
 
 /// EvaluateValue - Evaluate the token PeekTok (and any others needed) and

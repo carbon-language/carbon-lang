@@ -621,7 +621,7 @@ void Preprocessor::SkipExcludedConditionalBlock(const char *IfTokenLoc,
           // looked up, etc, inside the #elif expression.
           assert(SkippingContents && "We have to be skipping here!");
           SkippingContents = false;
-          EvaluateDirectiveExpression(ShouldEnter);
+          ShouldEnter = EvaluateDirectiveExpression();
           SkippingContents = true;
         }
         
@@ -1011,8 +1011,7 @@ void Preprocessor::HandleIfDirective(LexerToken &IfToken) {
   ++NumIf;
   const char *Start = CurLexer->BufferPtr;
 
-  bool ConditionalTrue = false;
-  EvaluateDirectiveExpression(ConditionalTrue);
+  bool ConditionalTrue = EvaluateDirectiveExpression();
   
   // Should we include the stuff contained by this directive?
   if (ConditionalTrue) {
