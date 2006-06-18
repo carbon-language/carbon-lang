@@ -273,6 +273,24 @@ public:
   void Diag(const LexerToken &Tok, unsigned DiagID, const std::string &Msg="");  
   void Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg="");  
   
+  /// getSpelling() - Return the 'spelling' of the Tok token.  The spelling of a
+  /// token is the characters used to represent the token in the source file
+  /// after trigraph expansion and escaped-newline folding.  In particular, this
+  /// wants to get the true, uncanonicalized, spelling of things like digraphs
+  /// UCNs, etc.
+  std::string getSpelling(const LexerToken &Tok) const;
+  
+  /// getSpelling - This method is used to get the spelling of a token into a
+  /// preallocated buffer, instead of as an std::string.  The caller is required
+  /// to allocate enough space for the token, which is guaranteed to be at least
+  /// Tok.getLength() bytes long.  The length of the actual result is returned.
+  unsigned getSpelling(const LexerToken &Tok, char *Buffer) const;
+  
+  /// DumpToken - Print the token to stderr, used for debugging.
+  ///
+  void DumpToken(const LexerToken &Tok, bool DumpFlags = false) const;
+  void DumpMacro(const MacroInfo &MI) const;
+  
   void PrintStats();
 
   //===--------------------------------------------------------------------===//
@@ -326,7 +344,7 @@ private:
   /// FoundElse is false, then #else directives are ok, if not, then we have
   /// already seen one so a #else directive is a duplicate.  When this returns,
   /// the caller can lex the first valid token.
-  void SkipExcludedConditionalBlock(const char *IfTokenLoc,
+  void SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
                                     bool FoundNonSkipPortion, bool FoundElse);
   
   /// EvaluateDirectiveExpression - Evaluate an integer constant expression that

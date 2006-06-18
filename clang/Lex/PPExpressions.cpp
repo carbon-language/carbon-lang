@@ -127,7 +127,7 @@ bool Preprocessor::EvaluateValue(int &Result, LexerToken &PeekTok) {
     return true;
   case tok::numeric_constant: {
     // FIXME: faster.  FIXME: track signs.
-    std::string Spell = Lexer::getSpelling(PeekTok, getLangOptions());
+    std::string Spell = getSpelling(PeekTok);
     // FIXME: COMPUTE integer constants CORRECTLY.
     Result = atoi(Spell.c_str());
     Lex(PeekTok);

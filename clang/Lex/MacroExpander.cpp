@@ -17,7 +17,18 @@
 using namespace llvm;
 using namespace clang;
 
+MacroExpander::MacroExpander(LexerToken &Tok, Preprocessor &pp)
+  : Macro(*Tok.getIdentifierInfo()->getMacroInfo()), PP(pp), CurToken(0),
+    InstantiateLoc(Tok.getSourceLocation()),
+    AtStartOfLine(Tok.isAtStartOfLine()),
+    HasLeadingSpace(Tok.hasLeadingSpace()) {
+}
+
+
+
+
 /// Lex - Lex and return a token from this macro stream.
+///
 void MacroExpander::Lex(LexerToken &Tok) {
   // Lexing off the end of the macro, pop this macro off the expansion stack.
   if (CurToken == Macro.getNumTokens())
@@ -25,6 +36,7 @@ void MacroExpander::Lex(LexerToken &Tok) {
   
   // Get the next token to return.
   Tok = Macro.getReplacementToken(CurToken++);
+  //Tok.SetLocation(InstantiateLoc);
 
   // If this is the first token, set the lexical properties of the token to
   // match the lexical properties of the macro identifier.

@@ -109,6 +109,16 @@ unsigned SourceManager::createFileID(const InfoRec *File,
   return Result;
 }
 
+/// getCharacterData - Return a pointer to the start of the specified location
+/// in the appropriate SourceBuffer.  This returns null if it cannot be
+/// computed (e.g. invalid SourceLocation).
+const char *SourceManager::getCharacterData(SourceLocation SL) const {
+  if (unsigned FileID = SL.getFileID())
+    return getFileInfo(FileID)->Buffer->getBufferStart() + getFilePos(SL);
+  return 0;
+}
+
+
 /// getColumnNumber - Return the column # for the specified include position.
 /// this is significantly cheaper to compute than the line number.  This returns
 /// zero if the column number isn't known.

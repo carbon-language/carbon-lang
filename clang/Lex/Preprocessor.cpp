@@ -129,6 +129,33 @@ void Preprocessor::Diag(const LexerToken &Tok, unsigned DiagID,
   Diag(Tok.getSourceLocation(), DiagID, Msg);
 }
 
+
+void Preprocessor::DumpToken(const LexerToken &Tok, bool DumpFlags) const {
+  std::cerr << tok::getTokenName(Tok.getKind()) << " '"
+            << getSpelling(Tok) << "'";
+  
+  if (!DumpFlags) return;
+  std::cerr << "\t";
+  if (Tok.isAtStartOfLine())
+    std::cerr << " [StartOfLine]";
+  if (Tok.hasLeadingSpace())
+    std::cerr << " [LeadingSpace]";
+  if (Tok.needsCleaning()) {
+    const char *Start = SourceMgr.getCharacterData(Tok.getSourceLocation());
+    std::cerr << " [UnClean='" << std::string(Start, Start+Tok.getLength())
+              << "']";
+  }
+}
+
+void Preprocessor::DumpMacro(const MacroInfo &MI) const {
+  std::cerr << "MACRO: ";
+  for (unsigned i = 0, e = MI.getNumTokens(); i != e; ++i) {
+    DumpToken(MI.getReplacementToken(i));
+    std::cerr << "  ";
+  }
+  std::cerr << "\n";
+}
+
 void Preprocessor::PrintStats() {
   std::cerr << "\n*** Preprocessor Stats:\n";
   std::cerr << FileInfo.size() << " files tracked.\n";
@@ -159,6 +186,73 @@ void Preprocessor::PrintStats() {
             << NumFastMacroExpanded << " on the fast path.\n";
   if (MaxMacroStackDepth > 1)
     std::cerr << "  " << MaxMacroStackDepth << " max macroexpand stack depth\n";
+}
+
+//===----------------------------------------------------------------------===//
+// Token Spelling
+//===----------------------------------------------------------------------===//
+
+
+/// getSpelling() - Return the 'spelling' of this token.  The spelling of a
+/// token are the characters used to represent the token in the source file
+/// after trigraph expansion and escaped-newline folding.  In particular, this
+/// wants to get the true, uncanonicalized, spelling of things like digraphs
+/// UCNs, etc.
+std::string Preprocessor::getSpelling(const LexerToken &Tok) const {
+  assert((int)Tok.getLength() >= 0 && "Token character range is bogus!");
+  
+  // If this token contains nothing interesting, return it directly.
+  const char *TokStart = SourceMgr.getCharacterData(Tok.getSourceLocation());
+  assert(TokStart && "Token has invalid location!");
+  if (!Tok.needsCleaning())
+    return std::string(TokStart, TokStart+Tok.getLength());
+  
+  // Otherwise, hard case, relex the characters into the string.
+  std::string Result;
+  Result.reserve(Tok.getLength());
+  
+  for (const char *Ptr = TokStart, *End = TokStart+Tok.getLength();
+       Ptr != End; ) {
+    unsigned CharSize;
+    Result.push_back(Lexer::getCharAndSizeNoWarn(Ptr, CharSize, Features));
+    Ptr += CharSize;
+  }
+  assert(Result.size() != unsigned(Tok.getLength()) &&
+         "NeedsCleaning flag set on something that didn't need cleaning!");
+  return Result;
+}
+
+/// getSpelling - This method is used to get the spelling of a token into a
+/// preallocated buffer, instead of as an std::string.  The caller is required
+/// to allocate enough space for the token, which is guaranteed to be at least
+/// Tok.getLength() bytes long.  The actual length of the token is returned.
+unsigned Preprocessor::getSpelling(const LexerToken &Tok, char *Buffer) const {
+  assert((int)Tok.getLength() >= 0 && "Token character range is bogus!");
+  
+  const char *TokStart = SourceMgr.getCharacterData(Tok.getSourceLocation());
+  assert(TokStart && "Token has invalid location!");
+
+  // If this token contains nothing interesting, return it directly.
+  if (!Tok.needsCleaning()) {
+    unsigned Size = Tok.getLength();
+    memcpy(Buffer, TokStart, Size);
+    return Size;
+  }
+  // Otherwise, hard case, relex the characters into the string.
+  std::string Result;
+  Result.reserve(Tok.getLength());
+  
+  char *OutBuf = Buffer;
+  for (const char *Ptr = TokStart, *End = TokStart+Tok.getLength();
+       Ptr != End; ) {
+    unsigned CharSize;
+    *OutBuf++ = Lexer::getCharAndSizeNoWarn(Ptr, CharSize, Features);
+    Ptr += CharSize;
+  }
+  assert(unsigned(OutBuf-Buffer) != Tok.getLength() &&
+         "NeedsCleaning flag set on something that didn't need cleaning!");
+  
+  return OutBuf-Buffer;
 }
 
 //===----------------------------------------------------------------------===//
@@ -256,7 +350,7 @@ void Preprocessor::EnterMacro(LexerToken &Tok) {
   IdentifierTokenInfo *Identifier = Tok.getIdentifierInfo();
   MacroInfo &MI = *Identifier->getMacroInfo();
   SourceLocation ExpandLoc = Tok.getSourceLocation();
-  unsigned MacroID = SourceMgr.getMacroID(Identifier, ExpandLoc);
+  //unsigned MacroID = SourceMgr.getMacroID(Identifier, ExpandLoc);
   if (CurLexer) {
     IncludeStack.push_back(IncludeStackInfo(CurLexer, CurNextDirLookup));
     CurLexer         = 0;
@@ -274,9 +368,7 @@ void Preprocessor::EnterMacro(LexerToken &Tok) {
   // expanded.
   MI.DisableMacro();
   
-  CurMacroExpander = new MacroExpander(MI, MacroID, *this,
-                                       Tok.isAtStartOfLine(), 
-                                       Tok.hasLeadingSpace());
+  CurMacroExpander = new MacroExpander(Tok, *this);
 }
 
 
@@ -384,10 +476,10 @@ void Preprocessor::HandleEndOfFile(LexerToken &Result) {
   // SkipExcludedConditionalBlock.  The Lexer will have already have issued
   // errors for the unterminated #if's on the conditional stack.
   if (isSkipping()) {
-    Result.StartToken(CurLexer);
+    Result.StartToken();
+    CurLexer->BufferPtr = CurLexer->BufferEnd;
+    CurLexer->FormTokenWithChars(Result, CurLexer->BufferEnd);
     Result.SetKind(tok::eof);
-    Result.SetStart(CurLexer->BufferEnd);
-    Result.SetEnd(CurLexer->BufferEnd);
     return;
   }
   
@@ -402,10 +494,10 @@ void Preprocessor::HandleEndOfFile(LexerToken &Result) {
     return Lex(Result);
   }
   
-  Result.StartToken(CurLexer);
+  Result.StartToken();
+  CurLexer->BufferPtr = CurLexer->BufferEnd;
+  CurLexer->FormTokenWithChars(Result, CurLexer->BufferEnd);
   Result.SetKind(tok::eof);
-  Result.SetStart(CurLexer->BufferEnd);
-  Result.SetEnd(CurLexer->BufferEnd);
   
   // We're done with the #included file.
   delete CurLexer;
@@ -503,7 +595,7 @@ void Preprocessor::CheckEndOfDirective(const char *DirType) {
 /// is true, then #else directives are ok, if not, then we have already seen one
 /// so a #else directive is a duplicate.  When this returns, the caller can lex
 /// the first valid token.
-void Preprocessor::SkipExcludedConditionalBlock(const char *IfTokenLoc,
+void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
                                                 bool FoundNonSkipPortion,
                                                 bool FoundElse) {
   ++NumSkipped;
@@ -556,7 +648,8 @@ void Preprocessor::SkipExcludedConditionalBlock(const char *IfTokenLoc,
     // to spell an i/e in a strange way that is another letter.  Skipping this
     // allows us to avoid computing the spelling for #define/#undef and other
     // common directives.
-    char FirstChar = Tok.getStart()[0];
+    // FIXME: This should use a bit in the identifier information!
+    char FirstChar = SourceMgr.getCharacterData(Tok.getSourceLocation())[0];
     if (FirstChar >= 'a' && FirstChar <= 'z' && 
         FirstChar != 'i' && FirstChar != 'e') {
       CurLexer->ParsingPreprocessorDirective = false;
@@ -564,15 +657,17 @@ void Preprocessor::SkipExcludedConditionalBlock(const char *IfTokenLoc,
     }
     
     // Strip out trigraphs and embedded newlines.
-    std::string Directive = Lexer::getSpelling(Tok, Features);
+    std::string Directive = getSpelling(Tok);
     FirstChar = Directive[0];
     if (FirstChar == 'i' && Directive[1] == 'f') {
       if (Directive == "if" || Directive == "ifdef" || Directive == "ifndef") {
         // We know the entire #if/#ifdef/#ifndef block will be skipped, don't
         // bother parsing the condition.
         DiscardUntilEndOfDirective();
-        CurLexer->pushConditionalLevel(Tok.getStart(), /*wasskipping*/true,
-                                       /*foundnonskip*/false,/*fnddelse*/false);
+        CurLexer->pushConditionalLevel(Tok.getSourceLocation(),
+                                       /*wasskipping*/true,
+                                       /*foundnonskip*/false,
+                                       /*fnddelse*/false);
       }
     } else if (FirstChar == 'e') {
       if (Directive == "endif") {
@@ -682,7 +777,7 @@ void Preprocessor::HandleDirective(LexerToken &Result) {
     return HandleIfDirective(Result);
   case tok::identifier:
     // Strip out trigraphs and embedded newlines.
-    std::string Directive = Lexer::getSpelling(Result, Features);
+    std::string Directive = getSpelling(Result);
     bool isExtension = false;
     switch (Directive.size()) {
     case 4:
@@ -794,7 +889,7 @@ void Preprocessor::HandleIncludeDirective(LexerToken &IncludeTok,
     return Diag(FilenameTok, diag::err_pp_include_too_deep);
   
   // Get the text form of the filename.
-  std::string Filename = CurLexer->getSpelling(FilenameTok);
+  std::string Filename = getSpelling(FilenameTok);
   assert(!Filename.empty() && "Can't have tokens with empty spellings!");
   
   // Make sure the filename is <x> or "x".
@@ -995,11 +1090,12 @@ void Preprocessor::HandleIfdefDirective(LexerToken &Result, bool isIfndef) {
   // Should we include the stuff contained by this directive?
   if (!MacroNameTok.getIdentifierInfo()->getMacroInfo() == isIfndef) {
     // Yes, remember that we are inside a conditional, then lex the next token.
-    CurLexer->pushConditionalLevel(DirectiveTok.getStart(), /*wasskip*/false,
+    CurLexer->pushConditionalLevel(DirectiveTok.getSourceLocation(),
+                                   /*wasskip*/false,
                                    /*foundnonskip*/true, /*foundelse*/false);
   } else {
     // No, skip the contents of this block and return the first token after it.
-    SkipExcludedConditionalBlock(DirectiveTok.getStart(),
+    SkipExcludedConditionalBlock(DirectiveTok.getSourceLocation(),
                                  /*Foundnonskip*/false, 
                                  /*FoundElse*/false);
   }
@@ -1016,11 +1112,12 @@ void Preprocessor::HandleIfDirective(LexerToken &IfToken) {
   // Should we include the stuff contained by this directive?
   if (ConditionalTrue) {
     // Yes, remember that we are inside a conditional, then lex the next token.
-    CurLexer->pushConditionalLevel(IfToken.getStart(), /*wasskip*/false,
+    CurLexer->pushConditionalLevel(IfToken.getSourceLocation(),
+                                   /*wasskip*/false,
                                    /*foundnonskip*/true, /*foundelse*/false);
   } else {
     // No, skip the contents of this block and return the first token after it.
-    SkipExcludedConditionalBlock(IfToken.getStart(),
+    SkipExcludedConditionalBlock(IfToken.getSourceLocation(),
                                  /*Foundnonskip*/false, 
                                  /*FoundElse*/false);
   }

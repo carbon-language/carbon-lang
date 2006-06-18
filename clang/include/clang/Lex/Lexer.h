@@ -15,6 +15,7 @@
 #define LLVM_CLANG_LEXER_H
 
 #include "clang/Basic/TokenKinds.h"
+#include "clang/Basic/SourceLocation.h"
 #include <string>
 #include <vector>
 
@@ -53,12 +54,9 @@ struct LangOptions {
 /// information as possible about each returned token.  This is expected to be
 /// compressed into a smaller form if memory footprint is important.
 class LexerToken {
-  /// The start and end of the token text itself.
-  const char *Start;
+  /// The location and length of the token text itself.
+  SourceLocation Loc;
   unsigned Length;
-  
-  /// TheLexer - The lexer object this token came from.
-  const Lexer *TheLexer;
   
   /// IdentifierInfo - If this was an identifier, this points to the uniqued
   /// information about this identifier.
@@ -84,26 +82,20 @@ public:
   tok::TokenKind getKind() const { return Kind; }
   void SetKind(tok::TokenKind K) { Kind = K; }
 
-  const char *getStart() const { return Start; }
-  const char *getEnd() const { return Start+Length; }
+  /// getLocation - Return a source location identifier for the specified
+  /// offset in the current file.
+  SourceLocation getSourceLocation() const { return Loc; }
   unsigned getLength() const { return Length; }
-  void SetStart(const char *S) { Start = S; }
+
+  void SetLocation(SourceLocation L) { Loc = L; }
+  void SetLength(unsigned Len) { Length = Len; }
   
-  /// SetEnd - Specify the length of the token as lexed.  This relies on the
-  /// start of the token having already been set.
-  void SetEnd(const char *End) { Length = End-Start; }
-  
-  /// ClearFlags - Reset all flags to cleared.
+  /// StartToken - Reset all flags to cleared.
   ///
-  void StartToken(const Lexer *L) {
+  void StartToken() {
     Flags = 0;
     IdentifierInfo = 0;
-    TheLexer = L;
-  }
-  
-  /// ClearPosition - Mark this token as not having a position, FIXME temporary.
-  void ClearPosition() {
-    TheLexer = 0;
+    Loc = SourceLocation();
   }
   
   IdentifierTokenInfo *getIdentifierInfo() const { return IdentifierInfo; }
@@ -129,10 +121,6 @@ public:
       ClearFlag(Flag);
   }
   
-  /// getSourceLocation - Return a source location identifier for the specified
-  /// offset in the current file.
-  SourceLocation getSourceLocation() const;
-  
   /// isAtStartOfLine - Return true if this token is at the start of a line.
   ///
   bool isAtStartOfLine() const { return Flags & StartOfLine; }
@@ -145,17 +133,14 @@ public:
   /// newlines in it.
   ///
   bool needsCleaning() const { return Flags & NeedsCleaning; }
-  
-  /// dump - Print the token to stderr, used for debugging.
-  ///
-  void dump(const LangOptions &Features, bool DumpFlags = false) const;
 };
 
 /// PPConditionalInfo - Information about the conditional stack (#if directives)
 /// currently active.
 struct PPConditionalInfo {
   /// IfLoc - Location where the conditional started.
-  const char *IfLoc;
+  ///
+  SourceLocation IfLoc;
   
   /// WasSkipping - True if this was contained in a skipping directive, e.g.
   /// in a "#if 0" block.
@@ -219,7 +204,7 @@ public:
   /// the preprocessor.
   void Lex(LexerToken &Result) {
     // Start a new token.
-    Result.StartToken(this);
+    Result.StartToken();
     
     // NOTE, any changes here should also change code after calls to 
     // Preprocessor::HandleDirective
@@ -236,30 +221,7 @@ public:
   /// uninterpreted string.  This switches the lexer out of directive mode.
   std::string ReadToEndOfLine();
   
-  /// getSpelling() - Return the 'spelling' of the Tok token.  The spelling of a
-  /// token is the characters used to represent the token in the source file
-  /// after trigraph expansion and escaped-newline folding.  In particular, this
-  /// wants to get the true, uncanonicalized, spelling of things like digraphs
-  /// UCNs, etc.
-  static std::string getSpelling(const LexerToken &Tok,
-                                 const LangOptions &Features);
-  std::string getSpelling(const LexerToken &Tok) const {
-    assert(this && "Can't get the spelling of a token with a null lexer!");
-    return getSpelling(Tok, Features);
-  }
-
-  /// getSpelling - This method is used to get the spelling of a token into a
-  /// preallocated buffer, instead of as an std::string.  The caller is required
-  /// to allocate enough space for the token, which is guaranteed to be at most
-  /// Tok.End-Tok.Start bytes long.  The actual length of the token is returned.
-  static unsigned getSpelling(const LexerToken &Tok, char *Buffer,
-                              const LangOptions &Features);
-  unsigned getSpelling(const LexerToken &Tok, char *Buffer) const {
-    assert(this && "Can't get the spelling of a token with a null lexer!");
-    return getSpelling(Tok, Buffer, Features);
-  }
-  
-  
+ 
   /// Diag - Forwarding function for diagnostics.  This translate a source
   /// position in the current buffer into a SourceLocation object for rendering.
   void Diag(const char *Loc, unsigned DiagID,
@@ -277,7 +239,18 @@ private:
   /// by Lex.
   ///
   void LexTokenInternal(LexerToken &Result);
-    
+
+  /// FormTokenWithChars - When we lex a token, we have identified a span
+  /// starting at BufferPtr, going to TokEnd that forms the token.  This method
+  /// takes that range and assigns it to the token as its location and size.  In
+  /// addition, since tokens cannot overlap, this also updates BufferPtr to be
+  /// TokEnd.
+  void FormTokenWithChars(LexerToken &Result, const char *TokEnd) {
+    Result.SetLocation(getSourceLocation(BufferPtr));
+    Result.SetLength(TokEnd-BufferPtr);
+    BufferPtr = TokEnd;
+  }
+  
   
   //===--------------------------------------------------------------------===//
   // Lexer character reading interfaces.
@@ -349,6 +322,25 @@ private:
   /// method.
   char getCharAndSizeSlow(const char *Ptr, unsigned &Size, LexerToken *Tok = 0);
   
+  /// getCharAndSizeNoWarn - Like the getCharAndSize method, but does not ever
+  /// emit a warning.
+  static inline char getCharAndSizeNoWarn(const char *Ptr, unsigned &Size,
+                                          const LangOptions &Features) {
+    // If this is not a trigraph and not a UCN or escaped newline, return
+    // quickly.
+    if (Ptr[0] != '?' && Ptr[0] != '\\') {
+      Size = 1;
+      return *Ptr;
+    }
+    
+    Size = 0;
+    return getCharAndSizeSlowNoWarn(Ptr, Size, Features);
+  }
+  
+  /// getCharAndSizeSlowNoWarn - Same as getCharAndSizeSlow, but never emits a
+  /// diagnostic.
+  static char getCharAndSizeSlowNoWarn(const char *Ptr, unsigned &Size,
+                                       const LangOptions &Features);
   
   //===--------------------------------------------------------------------===//
   // #if directive handling.
@@ -356,7 +348,7 @@ private:
   /// pushConditionalLevel - When we enter a #if directive, this keeps track of
   /// what we are currently in for diagnostic emission (e.g. #if with missing
   /// #endif).
-  void pushConditionalLevel(const char *DirectiveStart, bool WasSkipping,
+  void pushConditionalLevel(SourceLocation DirectiveStart, bool WasSkipping,
                             bool FoundNonSkip, bool FoundElse) {
     PPConditionalInfo CI;
     CI.IfLoc = DirectiveStart;

@@ -103,21 +103,12 @@ public:
   }
   
   
-  /// getMacroID - Get or create a new FileID that represents a macro with the
-  /// specified identifier being expanded at the specified position.  This can
-  /// never fail.
-  unsigned getMacroID(const IdentifierTokenInfo *Identifier,
-                      SourceLocation ExpandPos) {
-    // FIXME: Implement ID's for macro expansions!
-    return ExpandPos.getFileID();
-  }
-  
   /// getBuffer - Return the buffer for the specified FileID.
   ///
   const SourceBuffer *getBuffer(unsigned FileID) {
     return getFileInfo(FileID)->Buffer;
   }
-
+  
   /// getIncludeLoc - Return the location of the #include for the specified
   /// FileID.
   SourceLocation getIncludeLoc(unsigned FileID) const {
@@ -135,6 +126,11 @@ public:
     return IncludePos.getRawFilePos() +
            (ChunkNo << SourceLocation::FilePosBits);
   }
+  
+  /// getCharacterData - Return a pointer to the start of the specified location
+  /// in the appropriate SourceBuffer.  This returns null if it cannot be
+  /// computed (e.g. invalid SourceLocation).
+  const char *getCharacterData(SourceLocation SL) const;
   
   /// getColumnNumber - Return the column # for the specified include position.
   /// this is significantly cheaper to compute than the line number.  This

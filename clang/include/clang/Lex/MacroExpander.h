@@ -14,6 +14,8 @@
 #ifndef LLVM_CLANG_MACROEXPANDER_H
 #define LLVM_CLANG_MACROEXPANDER_H
 
+#include "clang/Basic/SourceLocation.h"
+
 namespace llvm {
 namespace clang {
   class MacroInfo;
@@ -28,10 +30,6 @@ class MacroExpander {
   ///
   MacroInfo &Macro;
 
-  /// CurMacroID - This encodes the instantiation point of the macro being
-  /// expanded and the include stack.
-  unsigned CurMacroID;
-  
   /// PP - The current preprocessor object we are expanding for.
   ///
   Preprocessor &PP;
@@ -39,16 +37,16 @@ class MacroExpander {
   /// CurToken - This is the next token that Lex will return.
   unsigned CurToken;
   
+  /// InstantiateLoc - The source location where this macro was instantiated.
+  ///
+  SourceLocation InstantiateLoc;
+  
   /// Lexical information about the expansion point of the macro: the identifier
   /// that the macro expanded from had these properties.
   bool AtStartOfLine, HasLeadingSpace;
   
 public:
-  MacroExpander(MacroInfo &macro, unsigned MacroID, Preprocessor &pp,
-                bool atStartOfLine, bool hasLeadingSpace)
-    : Macro(macro), CurMacroID(MacroID), PP(pp), CurToken(0),
-      AtStartOfLine(atStartOfLine), HasLeadingSpace(hasLeadingSpace) {
-  }
+  MacroExpander(LexerToken &Tok, Preprocessor &pp);
   
   MacroInfo &getMacro() const { return Macro; }
 

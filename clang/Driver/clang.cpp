@@ -627,12 +627,11 @@ void DoPrintPreprocessedInput(Preprocessor &PP) {
     isFirstToken = false;    
     
     if (Tok.getLength() < 256) {
-      unsigned Len = Lexer::getSpelling(Tok, Buffer, PP.getLangOptions());
+      unsigned Len = PP.getSpelling(Tok, Buffer);
       Buffer[Len] = 0;
       std::cout << Buffer;
     } else {
-      std::string S = Lexer::getSpelling(Tok, PP.getLangOptions());
-      std::cout << S;
+      std::cout << PP.getSpelling(Tok);
     }
   } while (Tok.getKind() != tok::eof);
   std::cout << "\n";
@@ -644,8 +643,6 @@ void DoPrintPreprocessedInput(Preprocessor &PP) {
 
 static cl::opt<std::string>
 InputFilename(cl::Positional, cl::desc("<input file>"), cl::init("-"));
-
-void PrintIdentStats();
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " llvm cfe\n");
@@ -751,7 +748,7 @@ int main(int argc, char **argv) {
     LexerToken Tok;
     do {
       PP.Lex(Tok);
-      Tok.dump(Options, true);
+      PP.DumpToken(Tok, true);
       std::cerr << "\n";
     } while (Tok.getKind() != tok::eof);
     break;

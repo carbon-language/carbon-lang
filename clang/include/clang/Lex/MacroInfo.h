@@ -14,7 +14,6 @@
 #ifndef LLVM_CLANG_MACROINFO_H
 #define LLVM_CLANG_MACROINFO_H
 
-#include "clang/Basic/SourceLocation.h"
 #include "clang/Lex/Lexer.h"
 #include <vector>
 
@@ -72,10 +71,9 @@ public:
   /// AddTokenToBody - Add the specified token to the replacement text for the
   /// macro.
   void AddTokenToBody(const LexerToken &Tok) {
-    ReplacementTokens.push_back(Tok);
     // FIXME: Remember where this token came from, do something intelligent with
     // its location.
-    ReplacementTokens.back().ClearPosition();
+    ReplacementTokens.push_back(Tok);
   }
   
   /// isEnabled - Return true if this macro is enabled: in other words, that we
@@ -91,10 +89,6 @@ public:
     assert(!isDisabled && "Cannot disable an already-disabled macro!");
     isDisabled = true;
   }
-  
-  /// dump - Print the macro to stderr, used for debugging.
-  ///
-  void dump(const LangOptions &Features) const;
   
   // Todo:
   // bool isDefinedInSystemHeader() { Look this up based on Location }
