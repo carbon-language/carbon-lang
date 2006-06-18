@@ -771,7 +771,8 @@ FoundEOF:   // If we ran off the end of the buffer, return EOF.
 /// isBlockCommentEndOfEscapedNewLine - Return true if the specified newline
 /// character (either \n or \r) is part of an escaped newline sequence.  Issue a
 /// diagnostic if so.  We know that the is inside of a block comment.
-bool Lexer::isEndOfBlockCommentWithEscapedNewLine(const char *CurPtr) {
+static bool isEndOfBlockCommentWithEscapedNewLine(const char *CurPtr, 
+                                                  Lexer *L) {
   assert(CurPtr[0] == '\n' || CurPtr[0] == '\r');
   
   // Back up off the newline.
@@ -808,18 +809,18 @@ bool Lexer::isEndOfBlockCommentWithEscapedNewLine(const char *CurPtr) {
 
     // If no trigraphs are enabled, warn that we ignored this trigraph and
     // ignore this * character.
-    if (!Features.Trigraphs) {
-      Diag(CurPtr, diag::trigraph_ignored_block_comment);
+    if (!L->getFeatures().Trigraphs) {
+      L->Diag(CurPtr, diag::trigraph_ignored_block_comment);
       return false;
     }
-    Diag(CurPtr, diag::trigraph_ends_block_comment);
+    L->Diag(CurPtr, diag::trigraph_ends_block_comment);
   }
   
   // Warn about having an escaped newline between the */ characters.
-  Diag(CurPtr, diag::escaped_newline_block_comment_end);
+  L->Diag(CurPtr, diag::escaped_newline_block_comment_end);
   
   // If there was space between the backslash and newline, warn about it.
-  if (HasSpace) Diag(CurPtr, diag::backslash_newline_space);
+  if (HasSpace) L->Diag(CurPtr, diag::backslash_newline_space);
   
   return true;
 }
@@ -854,7 +855,7 @@ void Lexer::SkipBlockComment(LexerToken &Result, const char *CurPtr) {
         break;
       
       if ((CurPtr[-2] == '\n' || CurPtr[-2] == '\r')) {
-        if (isEndOfBlockCommentWithEscapedNewLine(CurPtr-2)) {
+        if (isEndOfBlockCommentWithEscapedNewLine(CurPtr-2, this)) {
           // We found the final */, though it had an escaped newline between the
           // * and /.  We're done!
           break;

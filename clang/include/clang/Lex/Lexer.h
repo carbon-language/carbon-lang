@@ -388,9 +388,6 @@ private:
   //===--------------------------------------------------------------------===//
   // Other lexer functions.
   
-  // Part of block comment parsing.
-  bool isEndOfBlockCommentWithEscapedNewLine(const char *CurPtr);
-  
   // Helper functions to lex the remainder of a token of the specific type.
   void LexIdentifier         (LexerToken &Result, const char *CurPtr);
   void LexNumericConstant    (LexerToken &Result, const char *CurPtr);
