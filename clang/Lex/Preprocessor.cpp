@@ -126,7 +126,7 @@ void Preprocessor::Diag(const LexerToken &Tok, unsigned DiagID,
   if (isSkipping() && Diagnostic::isNoteWarningOrExtension(DiagID))
     return;
   
-  Diag(Tok.getSourceLocation(), DiagID, Msg);
+  Diag(Tok.getLocation(), DiagID, Msg);
 }
 
 
@@ -141,7 +141,7 @@ void Preprocessor::DumpToken(const LexerToken &Tok, bool DumpFlags) const {
   if (Tok.hasLeadingSpace())
     std::cerr << " [LeadingSpace]";
   if (Tok.needsCleaning()) {
-    const char *Start = SourceMgr.getCharacterData(Tok.getSourceLocation());
+    const char *Start = SourceMgr.getCharacterData(Tok.getLocation());
     std::cerr << " [UnClean='" << std::string(Start, Start+Tok.getLength())
               << "']";
   }
@@ -202,7 +202,7 @@ std::string Preprocessor::getSpelling(const LexerToken &Tok) const {
   assert((int)Tok.getLength() >= 0 && "Token character range is bogus!");
   
   // If this token contains nothing interesting, return it directly.
-  const char *TokStart = SourceMgr.getCharacterData(Tok.getSourceLocation());
+  const char *TokStart = SourceMgr.getCharacterData(Tok.getLocation());
   assert(TokStart && "Token has invalid location!");
   if (!Tok.needsCleaning())
     return std::string(TokStart, TokStart+Tok.getLength());
@@ -229,7 +229,7 @@ std::string Preprocessor::getSpelling(const LexerToken &Tok) const {
 unsigned Preprocessor::getSpelling(const LexerToken &Tok, char *Buffer) const {
   assert((int)Tok.getLength() >= 0 && "Token character range is bogus!");
   
-  const char *TokStart = SourceMgr.getCharacterData(Tok.getSourceLocation());
+  const char *TokStart = SourceMgr.getCharacterData(Tok.getLocation());
   assert(TokStart && "Token has invalid location!");
 
   // If this token contains nothing interesting, return it directly.
@@ -349,7 +349,7 @@ void Preprocessor::EnterSourceFile(unsigned FileID,
 void Preprocessor::EnterMacro(LexerToken &Tok) {
   IdentifierTokenInfo *Identifier = Tok.getIdentifierInfo();
   MacroInfo &MI = *Identifier->getMacroInfo();
-  SourceLocation ExpandLoc = Tok.getSourceLocation();
+  SourceLocation ExpandLoc = Tok.getLocation();
   //unsigned MacroID = SourceMgr.getMacroID(Identifier, ExpandLoc);
   if (CurLexer) {
     IncludeStack.push_back(IncludeStackInfo(CurLexer, CurNextDirLookup));
@@ -649,7 +649,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
     // allows us to avoid computing the spelling for #define/#undef and other
     // common directives.
     // FIXME: This should use a bit in the identifier information!
-    char FirstChar = SourceMgr.getCharacterData(Tok.getSourceLocation())[0];
+    char FirstChar = SourceMgr.getCharacterData(Tok.getLocation())[0];
     if (FirstChar >= 'a' && FirstChar <= 'z' && 
         FirstChar != 'i' && FirstChar != 'e') {
       CurLexer->ParsingPreprocessorDirective = false;
@@ -664,8 +664,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
         // We know the entire #if/#ifdef/#ifndef block will be skipped, don't
         // bother parsing the condition.
         DiscardUntilEndOfDirective();
-        CurLexer->pushConditionalLevel(Tok.getSourceLocation(),
-                                       /*wasskipping*/true,
+        CurLexer->pushConditionalLevel(Tok.getLocation(), /*wasskipping*/true,
                                        /*foundnonskip*/false,
                                        /*fnddelse*/false);
       }
@@ -939,7 +938,7 @@ void Preprocessor::HandleIncludeDirective(LexerToken &IncludeTok,
 
   // Look up the file, create a File ID for it.
   unsigned FileID = 
-    SourceMgr.createFileID(File, FilenameTok.getSourceLocation());
+    SourceMgr.createFileID(File, FilenameTok.getLocation());
   if (FileID == 0)
     return Diag(FilenameTok, diag::err_pp_file_not_found);
 
@@ -989,7 +988,7 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
   if (MacroNameTok.getKind() == tok::eom)
     return;
   
-  MacroInfo *MI = new MacroInfo(MacroNameTok.getSourceLocation());
+  MacroInfo *MI = new MacroInfo(MacroNameTok.getLocation());
   
   LexerToken Tok;
   LexUnexpandedToken(Tok);
@@ -1090,12 +1089,11 @@ void Preprocessor::HandleIfdefDirective(LexerToken &Result, bool isIfndef) {
   // Should we include the stuff contained by this directive?
   if (!MacroNameTok.getIdentifierInfo()->getMacroInfo() == isIfndef) {
     // Yes, remember that we are inside a conditional, then lex the next token.
-    CurLexer->pushConditionalLevel(DirectiveTok.getSourceLocation(),
-                                   /*wasskip*/false,
+    CurLexer->pushConditionalLevel(DirectiveTok.getLocation(), /*wasskip*/false,
                                    /*foundnonskip*/true, /*foundelse*/false);
   } else {
     // No, skip the contents of this block and return the first token after it.
-    SkipExcludedConditionalBlock(DirectiveTok.getSourceLocation(),
+    SkipExcludedConditionalBlock(DirectiveTok.getLocation(),
                                  /*Foundnonskip*/false, 
                                  /*FoundElse*/false);
   }
@@ -1112,13 +1110,11 @@ void Preprocessor::HandleIfDirective(LexerToken &IfToken) {
   // Should we include the stuff contained by this directive?
   if (ConditionalTrue) {
     // Yes, remember that we are inside a conditional, then lex the next token.
-    CurLexer->pushConditionalLevel(IfToken.getSourceLocation(),
-                                   /*wasskip*/false,
+    CurLexer->pushConditionalLevel(IfToken.getLocation(), /*wasskip*/false,
                                    /*foundnonskip*/true, /*foundelse*/false);
   } else {
     // No, skip the contents of this block and return the first token after it.
-    SkipExcludedConditionalBlock(IfToken.getSourceLocation(),
-                                 /*Foundnonskip*/false, 
+    SkipExcludedConditionalBlock(IfToken.getLocation(), /*Foundnonskip*/false, 
                                  /*FoundElse*/false);
   }
 }

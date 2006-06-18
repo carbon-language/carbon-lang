@@ -607,7 +607,7 @@ void DoPrintPreprocessedInput(Preprocessor &PP) {
       // Print out space characters so that the first token on a line is
       // indented for easy reading.
       unsigned ColNo = 
-        PP.getSourceManager().getColumnNumber(Tok.getSourceLocation());
+        PP.getSourceManager().getColumnNumber(Tok.getLocation());
       
       // This hack prevents stuff like:
       // #define HASH #

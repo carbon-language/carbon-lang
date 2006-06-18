@@ -57,7 +57,7 @@ public:
 
   /// getLocation - Return a source location identifier for the specified
   /// offset in the current file.
-  SourceLocation getSourceLocation() const { return Loc; }
+  SourceLocation getLocation() const { return Loc; }
   unsigned getLength() const { return Length; }
 
   void SetLocation(SourceLocation L) { Loc = L; }

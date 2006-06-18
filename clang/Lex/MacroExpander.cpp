@@ -19,7 +19,7 @@ using namespace clang;
 
 MacroExpander::MacroExpander(LexerToken &Tok, Preprocessor &pp)
   : Macro(*Tok.getIdentifierInfo()->getMacroInfo()), PP(pp), CurToken(0),
-    InstantiateLoc(Tok.getSourceLocation()),
+    InstantiateLoc(Tok.getLocation()),
     AtStartOfLine(Tok.isAtStartOfLine()),
     HasLeadingSpace(Tok.hasLeadingSpace()) {
 }
