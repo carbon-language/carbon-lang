@@ -86,10 +86,10 @@ void LexerToken::dump(bool DumpFlags) const {
       // #define TWELVE 1\    <whitespace only>
       // 2
       // TWELVE
-      std::cerr << "*unspelled*" << std::string(Start, End);
+      std::cerr << "*unspelled*" << std::string(getStart(), getEnd());
     }
   } else
-    std::cerr << std::string(Start, End);
+    std::cerr << std::string(getStart(), getEnd());
   std::cerr << "'";
   
   if (DumpFlags) {
@@ -99,7 +99,7 @@ void LexerToken::dump(bool DumpFlags) const {
     if (hasLeadingSpace())
       std::cerr << " [LeadingSpace]";
     if (needsCleaning())
-      std::cerr << " [Spelling='" << std::string(Start, End) << "']";
+      std::cerr << " [Spelling='" << std::string(getStart(), getEnd()) << "']";
   }
 }
 
@@ -387,14 +387,14 @@ std::string Lexer::getSpelling(const LexerToken &Tok,
   
   // Otherwise, hard case, relex the characters into the string.
   std::string Result;
-  Result.reserve(Tok.getEnd()-Tok.getStart());
+  Result.reserve(Tok.getLength());
   
   for (const char *Ptr = Tok.getStart(), *End = Tok.getEnd(); Ptr != End; ) {
     unsigned CharSize;
     Result.push_back(getCharAndSizeNoWarn(Ptr, CharSize, Features));
     Ptr += CharSize;
   }
-  assert(Result.size() != unsigned(Tok.getEnd()-Tok.getStart()) &&
+  assert(Result.size() != unsigned(Tok.getLength()) &&
          "NeedsCleaning flag set on something that didn't need cleaning!");
   return Result;
 }
@@ -409,13 +409,13 @@ unsigned Lexer::getSpelling(const LexerToken &Tok, char *Buffer,
 
   // If this token contains nothing interesting, return it directly.
   if (!Tok.needsCleaning()) {
-    unsigned Size = Tok.getEnd()-Tok.getStart();
+    unsigned Size = Tok.getLength();
     memcpy(Buffer, Tok.getStart(), Size);
     return Size;
   }
   // Otherwise, hard case, relex the characters into the string.
   std::string Result;
-  Result.reserve(Tok.getEnd()-Tok.getStart());
+  Result.reserve(Tok.getLength());
   
   char *OutBuf = Buffer;
   for (const char *Ptr = Tok.getStart(), *End = Tok.getEnd(); Ptr != End; ) {
@@ -423,7 +423,7 @@ unsigned Lexer::getSpelling(const LexerToken &Tok, char *Buffer,
     *OutBuf++ = getCharAndSizeNoWarn(Ptr, CharSize, Features);
     Ptr += CharSize;
   }
-  assert(OutBuf-Buffer != Tok.getEnd()-Tok.getStart() &&
+  assert(unsigned(OutBuf-Buffer) != Tok.getLength() &&
          "NeedsCleaning flag set on something that didn't need cleaning!");
   
   return OutBuf-Buffer;
@@ -459,7 +459,7 @@ FinishIdentifier:
       SpelledTokEnd   = Result.getEnd();
     } else {
       // Cleaning needed, alloca a buffer, clean into it, then use the buffer.
-      char *TmpBuf = (char*)alloca(Result.getEnd()-Result.getStart());
+      char *TmpBuf = (char*)alloca(Result.getLength());
       unsigned Size = getSpelling(Result, TmpBuf);
       SpelledTokStart = TmpBuf;
       SpelledTokEnd = TmpBuf+Size;

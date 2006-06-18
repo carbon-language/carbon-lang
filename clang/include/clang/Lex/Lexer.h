@@ -54,7 +54,8 @@ struct LangOptions {
 /// compressed into a smaller form if memory footprint is important.
 class LexerToken {
   /// The start and end of the token text itself.
-  const char *Start, *End;
+  const char *Start;
+  unsigned Length;
   
   /// TheLexer - The lexer object this token came from.
   const Lexer *TheLexer;
@@ -84,9 +85,13 @@ public:
   void SetKind(tok::TokenKind K) { Kind = K; }
 
   const char *getStart() const { return Start; }
-  const char *getEnd() const { return End; }
+  const char *getEnd() const { return Start+Length; }
+  unsigned getLength() const { return Length; }
   void SetStart(const char *S) { Start = S; }
-  void SetEnd  (const char *E) { End = E; }
+  
+  /// SetEnd - Specify the length of the token as lexed.  This relies on the
+  /// start of the token having already been set.
+  void SetEnd(const char *End) { Length = End-Start; }
   
   const Lexer *getLexer() const { return TheLexer; }
   

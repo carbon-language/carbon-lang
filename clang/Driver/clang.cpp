@@ -626,7 +626,7 @@ void DoPrintPreprocessedInput(Preprocessor &PP) {
     }
     isFirstToken = false;    
     
-    if (Tok.getEnd()-Tok.getStart() < 256) {
+    if (Tok.getLength() < 256) {
       unsigned Len = Lexer::getSpelling(Tok, Buffer, PP.getLangOptions());
       Buffer[Len] = 0;
       std::cout << Buffer;
