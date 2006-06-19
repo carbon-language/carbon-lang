@@ -2152,7 +2152,7 @@ void DwarfWriter::EmitDebugPubNames() {
       
       EmitInt16(DWARF_VERSION); EOL("DWARF Version");
       
-      EmitReference("info_begin", Unit->getID());
+      EmitDifference("info_begin", Unit->getID(), "section_info", 0);
       EOL("Offset of Compilation Unit Info");
 
       EmitDifference("info_end", Unit->getID(), "info_begin", Unit->getID());
