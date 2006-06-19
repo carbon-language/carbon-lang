@@ -938,7 +938,10 @@ void DSNode::mergeWith(const DSNodeHandle &NH, unsigned Offset) {
   // two node handles, since "this" may get merged away at intermediate steps.
   DSNodeHandle CurNodeH(this, Offset);
   DSNodeHandle NHCopy(NH);
-  DSNode::MergeNodes(CurNodeH, NHCopy);
+  if (CurNodeH.getOffset() >= NHCopy.getOffset())
+    DSNode::MergeNodes(CurNodeH, NHCopy);
+  else
+    DSNode::MergeNodes(NHCopy, CurNodeH);
 }
 
 
@@ -1594,6 +1597,13 @@ void DSGraph::mergeInGraph(const DSCallSite &CS,
     for (afc_iterator I = Graph.afc_begin(), E = Graph.afc_end(); I!=E; ++I)
       if (SCCFinder.PathExistsToClonedNode(*I))
         AuxCallToCopy.push_back(&*I);
+      else if (I->isIndirectCall()){
+ 	//If the call node doesn't have any callees, clone it
+ 	std::vector< Function *> List;
+ 	I->getCalleeNode()->addFullFunctionList(List);
+ 	if (!List.size())
+ 	  AuxCallToCopy.push_back(&*I);
+       }
 
   const DSScalarMap &GSM = Graph.getScalarMap();
   for (DSScalarMap::global_iterator GI = GSM.global_begin(),
@@ -2395,5 +2405,21 @@ void DSGraph::computeCalleeCallerMapping(DSCallSite CS, const Function &Callee,
            E = CalleeSM.global_end(); GI != E; ++GI)
       if (CallerSM.global_count(*GI))
         computeNodeMapping(CalleeSM[*GI], CallerSM[*GI], NodeMap);
+  }
+}
+
+/// updateFromGlobalGraph - This function rematerializes global nodes and
+/// nodes reachable from them from the globals graph into the current graph.
+///
+void DSGraph::updateFromGlobalGraph() {
+  TIME_REGION(X, "updateFromGlobalGraph");
+  ReachabilityCloner RC(*this, *GlobalsGraph, 0);
+
+  // Clone the non-up-to-date global nodes into this graph.
+  for (DSScalarMap::global_iterator I = getScalarMap().global_begin(),
+         E = getScalarMap().global_end(); I != E; ++I) {
+    DSScalarMap::iterator It = GlobalsGraph->ScalarMap.find(*I);
+    if (It != GlobalsGraph->ScalarMap.end())
+      RC.merge(getNodeForValue(*I), It->second);
   }
 }
