@@ -116,6 +116,9 @@ protected:
   /// GlobalECs - The equivalence classes for each global value that is merged
   /// with other global values in the DSGraphs.
   EquivalenceClasses<GlobalValue*> GlobalECs;
+
+  std::map<CallSite, std::vector<Function*> > AlreadyInlined;
+
 public:
   ~BUDataStructures() { releaseMyMemory(); }
 
@@ -134,6 +137,12 @@ public:
       return *I->second;
     return const_cast<BUDataStructures*>(this)->
                    CreateGraphForExternalFunction(F);
+  }
+  
+  /// DSGraphExists - Is the DSGraph computed for this function?
+  ///
+  bool doneDSGraph(const Function *F) const {
+    return (DSInfo.find(const_cast<Function*>(F)) != DSInfo.end());
   }
 
   DSGraph &getGlobalsGraph() const { return *GlobalsGraph; }
@@ -176,7 +185,7 @@ public:
   }
 
 private:
-  void calculateGraph(DSGraph &G);
+  bool calculateGraph(DSGraph &G);
 
   DSGraph &getOrCreateGraph(Function *F);
 
