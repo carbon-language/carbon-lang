@@ -614,6 +614,12 @@ bool CompileUnitDesc::classof(const DebugInfoDesc *D) {
 ///
 void CompileUnitDesc::ApplyToFields(DIVisitor *Visitor) {
   AnchoredDesc::ApplyToFields(Visitor);
+  
+  // Handle cases out of sync with compiler.
+  if (getVersion() == 0) {
+    unsigned DebugVersion;
+    Visitor->Apply(DebugVersion);
+  }
 
   Visitor->Apply(Language);
   Visitor->Apply(FileName);

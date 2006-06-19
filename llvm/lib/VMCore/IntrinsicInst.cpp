@@ -29,6 +29,7 @@
 
 #include "llvm/Constants.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/CodeGen/MachineDebugInfo.h"
 
 using namespace llvm;
 
@@ -59,12 +60,16 @@ Value *DbgInfoIntrinsic::StripCast(Value *C) {
 ///
 
 std::string DbgStopPointInst::getFileName() const {
+  // Once the operand indices are verified, update this assert
+  assert(LLVMDebugVersion == (4 << 16) && "Verify operand indices");
   GlobalVariable *GV = cast<GlobalVariable>(getContext());
   ConstantStruct *CS = cast<ConstantStruct>(GV->getInitializer());
   return CS->getOperand(3)->getStringValue();
 }
 
 std::string DbgStopPointInst::getDirectory() const {
+  // Once the operand indices are verified, update this assert
+  assert(LLVMDebugVersion == (4 << 16) && "Verify operand indices");
   GlobalVariable *GV = cast<GlobalVariable>(getContext());
   ConstantStruct *CS = cast<ConstantStruct>(GV->getInitializer());
   return CS->getOperand(4)->getStringValue();
