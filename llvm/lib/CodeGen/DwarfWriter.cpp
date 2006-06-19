@@ -1205,7 +1205,7 @@ DWLabel DwarfWriter::NewString(const std::string &String) {
 
 /// AddSourceLine - Add location information to specified debug information
 /// entry.
-void DwarfWriter::AddSourceLine(DIE *Die, CompileUnitDesc *File, unsigned Line) {
+void DwarfWriter::AddSourceLine(DIE *Die, CompileUnitDesc *File, unsigned Line){
   if (File && Line) {
     CompileUnit *FileUnit = FindCompileUnit(File);
     unsigned FileID = FileUnit->getID();
@@ -1598,7 +1598,7 @@ void DwarfWriter::ConstructScope(DebugScope *ParentScope,
     // Define the Scope debug information entry.
     DebugScope *Scope = Scopes[j];
     // FIXME - Ignore inlined functions for the time being.
-    if (Scope->getParent()) continue;
+    if (!Scope->getParent()) continue;
     
     DIE *ScopeDie = new DIE(DW_TAG_lexical_block);
     
@@ -2081,6 +2081,7 @@ void DwarfWriter::EmitInitialDebugFrame() {
   // Start the dwarf frame section.
   Asm->SwitchToDataSection(DwarfFrameSection, 0);
 
+  EmitLabel("frame_common", 0);
   EmitDifference("frame_common_end", 0,
                  "frame_common_begin", 0);
   EOL("Length of Common Information Entry");
@@ -2116,7 +2117,8 @@ void DwarfWriter::EmitFunctionDebugFrame() {
   
   EmitLabel("frame_begin", SubprogramCount);
   
-  EmitReference("section_frame", 0); EOL("FDE CIE offset");
+  EmitDifference("frame_common", 0, "section_frame", 0);
+  EOL("FDE CIE offset");
 
   EmitReference("func_begin", SubprogramCount); EOL("FDE initial location");
   EmitDifference("func_end", SubprogramCount,
