@@ -173,13 +173,10 @@ class PSI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
 class PDI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
       : I<o, F, ops, asm, pattern>, TB, OpSize, Requires<[HasSSE2]>;
 class PSIi8<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
-      : X86Inst<o, F, Imm8, ops, asm>, TB, Requires<[HasSSE1]> {
-  let Pattern = pattern;
-}
+      : Ii8<o, F, ops, asm, pattern>, TB, Requires<[HasSSE1]>;
 class PDIi8<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
-      : X86Inst<o, F, Imm8, ops, asm>, TB, OpSize, Requires<[HasSSE2]> {
-  let Pattern = pattern;
-}
+      : Ii8<o, F, ops, asm, pattern>, TB, OpSize, Requires<[HasSSE2]>;
+
 class S3SI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
       : I<o, F, ops, asm, pattern>, XS, Requires<[HasSSE3]>;
 class S3DI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
