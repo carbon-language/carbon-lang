@@ -227,12 +227,12 @@ def sext_0x0000_0000_FFFF_FFFF_i16 : PatLeaf<(imm), [{
 def : Pat<(i64 sext_0x0000_0000_FFFF_FFFF_i16:$imm),
           (ORI8 (LIS8 (HI16 imm:$imm)), (LO16 imm:$imm))>;
 
-// zext(0x0000_0000_FFFF_FFFF, i16) -> xoris (li lo16(imm)), imm>>16
-def zext_0x0000_0000_FFFF_FFFF_i16 : PatLeaf<(imm), [{
-  return (N->getValue() & 0xFFFFFFFF00000000ULL) == 0;
+// zext(0x0000_0000_FFFF_7FFF, i16) -> oris (li lo16(imm)), imm>>16
+def zext_0x0000_0000_FFFF_7FFF_i16 : PatLeaf<(imm), [{
+  return (N->getValue() & 0xFFFFFFFF00008000ULL) == 0;
 }]>;
-def : Pat<(i64 zext_0x0000_0000_FFFF_FFFF_i16:$imm),
-          (XORIS8 (LI8 (LO16 imm:$imm)), (HI16 imm:$imm))>;
+def : Pat<(i64 zext_0x0000_0000_FFFF_7FFF_i16:$imm),
+          (ORIS8 (LI8 (LO16 imm:$imm)), (HI16 imm:$imm))>;
 
 
 
