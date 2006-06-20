@@ -103,6 +103,9 @@ TARGET_TRIPLE=@target@
 # Targets that we should build
 TARGETS_TO_BUILD=@TARGETS_TO_BUILD@
 
+# Extra options to compile LLVM with
+EXTRA_OPTIONS=@EXTRA_OPTIONS@
+
 # Endian-ness of the target
 ENDIAN=@ENDIAN@
 
