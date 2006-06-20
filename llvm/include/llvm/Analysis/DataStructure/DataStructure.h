@@ -16,6 +16,7 @@
 
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Support/CallSite.h"
 #include "llvm/ADT/hash_map"
 #include "llvm/ADT/hash_set"
 #include "llvm/ADT/EquivalenceClasses.h"
@@ -25,7 +26,6 @@ namespace llvm {
 class Type;
 class Instruction;
 class GlobalValue;
-class CallSite;
 class DSGraph;
 class DSCallSite;
 class DSNode;
