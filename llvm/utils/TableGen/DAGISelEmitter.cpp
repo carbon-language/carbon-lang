@@ -1554,11 +1554,41 @@ void DAGISelEmitter::ParsePatterns() {
     // Inline pattern fragments into it.
     Pattern->InlinePatternFragments();
     
-    // Infer as many types as possible.  If we cannot infer all of them, we can
-    // never do anything with this pattern: report it to the user.
-    if (!Pattern->InferAllTypes())
-      Pattern->error("Could not infer all types in pattern!");
+    ListInit *LI = Patterns[i]->getValueAsListInit("ResultInstrs");
+    if (LI->getSize() == 0) continue;  // no pattern.
+    
+    // Parse the instruction.
+    TreePattern *Result = new TreePattern(Patterns[i], LI, false, *this);
+    
+    // Inline pattern fragments into it.
+    Result->InlinePatternFragments();
 
+    if (Result->getNumTrees() != 1)
+      Result->error("Cannot handle instructions producing instructions "
+                    "with temporaries yet!");
+    
+    bool IterateInference;
+    do {
+      // Infer as many types as possible.  If we cannot infer all of them, we
+      // can never do anything with this pattern: report it to the user.
+      if (!Pattern->InferAllTypes())
+        Pattern->error("Could not infer all types in pattern!");
+      
+      // Infer as many types as possible.  If we cannot infer all of them, we can
+      // never do anything with this pattern: report it to the user.
+      if (!Result->InferAllTypes())
+        Result->error("Could not infer all types in pattern result!");
+     
+      // Apply the type of the result to the source pattern.  This helps us
+      // resolve cases where the input type is known to be a pointer type (which
+      // is considered resolved), but the result knows it needs to be 32- or
+      // 64-bits.  Infer the other way for good measure.
+      IterateInference = Pattern->getOnlyTree()->
+        UpdateNodeType(Result->getOnlyTree()->getExtTypes(), *Result);
+      IterateInference |= Result->getOnlyTree()->
+        UpdateNodeType(Pattern->getOnlyTree()->getExtTypes(), *Result);
+    } while (IterateInference);
+    
     // Validate that the input pattern is correct.
     {
       std::map<std::string, TreePatternNode*> InstInputs;
@@ -1569,24 +1599,6 @@ void DAGISelEmitter::ParsePatterns() {
                                   InstInputs, InstResults,
                                   InstImpInputs, InstImpResults);
     }
-    
-    ListInit *LI = Patterns[i]->getValueAsListInit("ResultInstrs");
-    if (LI->getSize() == 0) continue;  // no pattern.
-    
-    // Parse the instruction.
-    TreePattern *Result = new TreePattern(Patterns[i], LI, false, *this);
-    
-    // Inline pattern fragments into it.
-    Result->InlinePatternFragments();
-    
-    // Infer as many types as possible.  If we cannot infer all of them, we can
-    // never do anything with this pattern: report it to the user.
-    if (!Result->InferAllTypes())
-      Result->error("Could not infer all types in pattern result!");
-   
-    if (Result->getNumTrees() != 1)
-      Result->error("Cannot handle instructions producing instructions "
-                    "with temporaries yet!");
 
     // Promote the xform function to be an explicit node if set.
     std::vector<TreePatternNode*> ResultNodeOperands;
