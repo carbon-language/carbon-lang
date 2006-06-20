@@ -215,6 +215,17 @@ def FCTIDZ : XForm_26<63, 815, (ops F8RC:$frD, F8RC:$frB),
 // Instruction Patterns
 //
 
+def HI32_48 : SDNodeXForm<imm, [{
+  // Transformation function: shift the immediate value down into the low bits.
+  return getI32Imm((unsigned short)(N->getValue() >> 32));
+}]>;
+
+def HI48_64 : SDNodeXForm<imm, [{
+  // Transformation function: shift the immediate value down into the low bits.
+  return getI32Imm((unsigned short)(N->getValue() >> 48));
+}]>;
+
+
 // Immediate support.
 // Handled above:
 //   sext(0x0000_0000_0000_FFFF,  i8) -> li imm
@@ -234,6 +245,25 @@ def zext_0x0000_0000_FFFF_7FFF_i16 : PatLeaf<(imm), [{
 def : Pat<(i64 zext_0x0000_0000_FFFF_7FFF_i16:$imm),
           (ORIS8 (LI8 (LO16 imm:$imm)), (HI16 imm:$imm))>;
 
+// zext(0x0000_0000_FFFF_FFFF, i16) -> oris (ori (li 0), lo16(imm)), imm>>16
+def zext_0x0000_0000_FFFF_FFFF_i16 : PatLeaf<(imm), [{
+  return (N->getValue() & 0xFFFFFFFF00000000ULL) == 0;
+}]>;
+def : Pat<(i64 zext_0x0000_0000_FFFF_FFFF_i16:$imm),
+          (ORIS8 (ORI8 (LI8 0), (LO16 imm:$imm)), (HI16 imm:$imm))>;
+
+
+// Fully general (and most expensive: 6 instructions!) immediate pattern.
+def : Pat<(i64 imm:$imm),
+          (ORI8 
+             (ORIS8 
+                (RLDICR
+                   (ORI8
+                      (LIS8 (HI48_64 imm:$imm)),
+                      (HI32_48 imm:$imm)),
+                   32, 31),
+                (HI16 imm:$imm)),
+             (LO16 imm:$imm))>;
 
 
 // Extensions and truncates to/from 32-bit regs.
