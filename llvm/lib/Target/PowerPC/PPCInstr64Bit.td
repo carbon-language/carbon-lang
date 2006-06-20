@@ -32,9 +32,6 @@ def symbolLo64 : Operand<i64> {
 let PPC970_Unit = 1 in {  // FXU Operations.
 
 // Copies, extends, truncates.
-def OR8  : XForm_6<31, 444, (ops G8RC:$rA, G8RC:$rS, G8RC:$rB),
-                   "or $rA, $rS, $rB", IntGeneral,
-                   [(set G8RC:$rA, (or G8RC:$rS, G8RC:$rB))]>;
 def OR4To8  : XForm_6<31, 444, (ops G8RC:$rA, GPRC:$rS, GPRC:$rB),
                    "or $rA, $rS, $rB", IntGeneral,
                    []>;
@@ -50,6 +47,32 @@ def LIS8 : DForm_2_r0<15, (ops G8RC:$rD, symbolHi64:$imm),
                       [(set G8RC:$rD, imm16ShiftedSExt:$imm)]>;
 
 // Logical ops.
+def NAND8: XForm_6<31, 476, (ops G8RC:$rA, G8RC:$rS, G8RC:$rB),
+                   "nand $rA, $rS, $rB", IntGeneral,
+                   [(set G8RC:$rA, (not (and G8RC:$rS, G8RC:$rB)))]>;
+def AND8 : XForm_6<31,  28, (ops G8RC:$rA, G8RC:$rS, G8RC:$rB),
+                   "and $rA, $rS, $rB", IntGeneral,
+                   [(set G8RC:$rA, (and G8RC:$rS, G8RC:$rB))]>;
+def ANDC8: XForm_6<31,  60, (ops G8RC:$rA, G8RC:$rS, G8RC:$rB),
+                   "andc $rA, $rS, $rB", IntGeneral,
+                   [(set G8RC:$rA, (and G8RC:$rS, (not G8RC:$rB)))]>;
+def OR8  : XForm_6<31, 444, (ops G8RC:$rA, G8RC:$rS, G8RC:$rB),
+                   "or $rA, $rS, $rB", IntGeneral,
+                   [(set G8RC:$rA, (or G8RC:$rS, G8RC:$rB))]>;
+def NOR8 : XForm_6<31, 124, (ops G8RC:$rA, G8RC:$rS, G8RC:$rB),
+                   "nor $rA, $rS, $rB", IntGeneral,
+                   [(set G8RC:$rA, (not (or G8RC:$rS, G8RC:$rB)))]>;
+def ORC8 : XForm_6<31, 412, (ops G8RC:$rA, G8RC:$rS, G8RC:$rB),
+                   "orc $rA, $rS, $rB", IntGeneral,
+                   [(set G8RC:$rA, (or G8RC:$rS, (not G8RC:$rB)))]>;
+def EQV8 : XForm_6<31, 284, (ops G8RC:$rA, G8RC:$rS, G8RC:$rB),
+                   "eqv $rA, $rS, $rB", IntGeneral,
+                   [(set G8RC:$rA, (not (xor G8RC:$rS, G8RC:$rB)))]>;
+def XOR8 : XForm_6<31, 316, (ops G8RC:$rA, G8RC:$rS, G8RC:$rB),
+                   "xor $rA, $rS, $rB", IntGeneral,
+                   [(set G8RC:$rA, (xor G8RC:$rS, G8RC:$rB))]>;
+
+// Logical ops with immediate.
 def ANDIo8  : DForm_4<28, (ops G8RC:$dst, G8RC:$src1, u16imm:$src2),
                       "andi. $dst, $src1, $src2", IntGeneral,
                       [(set G8RC:$dst, (and G8RC:$src1, immZExt16:$src2))]>,
@@ -252,6 +275,8 @@ def zext_0x0000_0000_FFFF_FFFF_i16 : PatLeaf<(imm), [{
 def : Pat<(i64 zext_0x0000_0000_FFFF_FFFF_i16:$imm),
           (ORIS8 (ORI8 (LI8 0), (LO16 imm:$imm)), (HI16 imm:$imm))>;
 
+// FIXME: Handle smart forms where the top 32-bits are set.  Right now, stuff
+// like 0xABCD0123BCDE0000 hits the case below, which produces ORI R, R, 0's! 
 
 // Fully general (and most expensive: 6 instructions!) immediate pattern.
 def : Pat<(i64 imm:$imm),
