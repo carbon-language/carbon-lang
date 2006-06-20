@@ -12,12 +12,31 @@
 //
 //===----------------------------------------------------------------------===//
 
+//===----------------------------------------------------------------------===//
+// 64-bit operands.
+//
+def symbolHi64 : Operand<i64> {
+  let PrintMethod = "printSymbolHi";
+}
+def symbolLo64 : Operand<i64> {
+  let PrintMethod = "printSymbolLo";
+}
+
+
+
 
 //===----------------------------------------------------------------------===//
 // Fixed point instructions.
 //
 
 let PPC970_Unit = 1 in {  // FXU Operations.
+
+def LI8  : DForm_2_r0<14, (ops G8RC:$rD, symbolLo64:$imm),
+                      "li $rD, $imm", IntGeneral,
+                      [(set G8RC:$rD, immSExt16:$imm)]>;
+def LIS8 : DForm_2_r0<15, (ops G8RC:$rD, symbolHi64:$imm),
+                      "lis $rD, $imm", IntGeneral,
+                      [(set G8RC:$rD, imm16Shifted:$imm)]>;
 
 def OR8  : XForm_6<31, 444, (ops G8RC:$rA, G8RC:$rS, G8RC:$rB),
                    "or $rA, $rS, $rB", IntGeneral,
@@ -32,6 +51,10 @@ def OR8To4  : XForm_6<31, 444, (ops GPRC:$rA, G8RC:$rS, G8RC:$rB),
 def ADD8  : XOForm_1<31, 266, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
                      "add $rT, $rA, $rB", IntGeneral,
                      [(set G8RC:$rT, (add G8RC:$rA, G8RC:$rB))]>;
+def ADDIS8 : DForm_2<15, (ops G8RC:$rD, G8RC:$rA, symbolHi64:$imm),
+                     "addis $rD, $rA, $imm", IntGeneral,
+                     [(set G8RC:$rD, (add G8RC:$rA, imm16Shifted:$imm))]>;
+
 def MULHD : XOForm_1<31, 73, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
                      "mulhd $rT, $rA, $rB", IntMulHW,
                      [(set G8RC:$rT, (mulhs G8RC:$rA, G8RC:$rB))]>;
@@ -163,7 +186,6 @@ def FCTIDZ : XForm_26<63, 815, (ops F8RC:$frD, F8RC:$frB),
 //===----------------------------------------------------------------------===//
 // Instruction Patterns
 //
-
 // Extensions and truncates to/from 32-bit regs.
 def : Pat<(i64 (zext GPRC:$in)),
           (RLDICL (OR4To8 GPRC:$in, GPRC:$in), 0, 32)>;
@@ -177,3 +199,17 @@ def : Pat<(shl G8RC:$in, (i64 imm:$imm)),
           (RLDICR G8RC:$in, imm:$imm, (SHL64 imm:$imm))>;
 def : Pat<(srl G8RC:$in, (i64 imm:$imm)),
           (RLDICL G8RC:$in, (SRL64 imm:$imm), imm:$imm)>;
+
+// Hi and Lo for Darwin Global Addresses.
+def : Pat<(PPChi tglobaladdr:$in, 0), (LIS8 tglobaladdr:$in)>;
+def : Pat<(PPClo tglobaladdr:$in, 0), (LI8  tglobaladdr:$in)>;
+def : Pat<(PPChi tconstpool:$in , 0), (LIS8 tconstpool:$in)>;
+def : Pat<(PPClo tconstpool:$in , 0), (LI8  tconstpool:$in)>;
+def : Pat<(PPChi tjumptable:$in , 0), (LIS8 tjumptable:$in)>;
+def : Pat<(PPClo tjumptable:$in , 0), (LI8  tjumptable:$in)>;
+def : Pat<(add G8RC:$in, (PPChi tglobaladdr:$g, 0)),
+          (ADDIS8 G8RC:$in, tglobaladdr:$g)>;
+def : Pat<(add G8RC:$in, (PPChi tconstpool:$g, 0)),
+          (ADDIS8 G8RC:$in, tconstpool:$g)>;
+def : Pat<(add G8RC:$in, (PPChi tjumptable:$g, 0)),
+          (ADDIS8 G8RC:$in, tjumptable:$g)>;
