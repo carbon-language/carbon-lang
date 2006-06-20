@@ -1568,17 +1568,16 @@ void DAGISelEmitter::ParsePatterns() {
                     "with temporaries yet!");
     
     bool IterateInference;
+    bool InferredAllPatternTypes, InferredAllResultTypes;
     do {
       // Infer as many types as possible.  If we cannot infer all of them, we
       // can never do anything with this pattern: report it to the user.
-      if (!Pattern->InferAllTypes())
-        Pattern->error("Could not infer all types in pattern!");
+      InferredAllPatternTypes = Pattern->InferAllTypes();
       
       // Infer as many types as possible.  If we cannot infer all of them, we can
       // never do anything with this pattern: report it to the user.
-      if (!Result->InferAllTypes())
-        Result->error("Could not infer all types in pattern result!");
-     
+      InferredAllResultTypes = Result->InferAllTypes();
+
       // Apply the type of the result to the source pattern.  This helps us
       // resolve cases where the input type is known to be a pointer type (which
       // is considered resolved), but the result knows it needs to be 32- or
@@ -1588,6 +1587,13 @@ void DAGISelEmitter::ParsePatterns() {
       IterateInference |= Result->getOnlyTree()->
         UpdateNodeType(Pattern->getOnlyTree()->getExtTypes(), *Result);
     } while (IterateInference);
+
+    // Verify that we inferred enough types that we can do something with the
+    // pattern and result.  If these fire the user has to add type casts.
+    if (!InferredAllPatternTypes)
+      Pattern->error("Could not infer all types in pattern!");
+    if (!InferredAllResultTypes)
+      Result->error("Could not infer all types in pattern result!");
     
     // Validate that the input pattern is correct.
     {
