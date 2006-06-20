@@ -937,7 +937,8 @@ static void generateCompilerSpecificCode(std::ostream& Out) {
   Out << "#define CODE_FOR_MAIN() /* Any target-specific code for main()*/\n";
   // On X86, set the FP control word to 64-bits of precision instead of 80 bits.
   Out << "#if defined(__GNUC__) && !defined(__llvm__)\n"
-      << "#if defined(i386) || defined(__i386__) || defined(__i386)\n"
+      << "#if defined(i386) || defined(__i386__) || defined(__i386) || "
+      << "defined(__x86_64__)\n"
       << "#undef CODE_FOR_MAIN\n"
       << "#define CODE_FOR_MAIN() \\\n"
       << "  {short F;__asm__ (\"fnstcw %0\" : \"=m\" (*&F)); \\\n"
