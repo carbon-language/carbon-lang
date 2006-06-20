@@ -483,9 +483,6 @@ def NAND : XForm_6<31, 476, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
 def AND  : XForm_6<31,  28, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "and $rA, $rS, $rB", IntGeneral,
                    [(set GPRC:$rA, (and GPRC:$rS, GPRC:$rB))]>;
-def ANDo : XForm_6<31,  28, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
-                   "and. $rA, $rS, $rB", IntGeneral,
-                   []>, isDOT;
 def ANDC : XForm_6<31,  60, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "andc $rA, $rS, $rB", IntGeneral,
                    [(set GPRC:$rA, (and GPRC:$rS, (not GPRC:$rB)))]>;
@@ -495,9 +492,6 @@ def OR4  : XForm_6<31, 444, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
 def NOR  : XForm_6<31, 124, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "nor $rA, $rS, $rB", IntGeneral,
                    [(set GPRC:$rA, (not (or GPRC:$rS, GPRC:$rB)))]>;
-def ORo  : XForm_6<31, 444, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
-                   "or. $rA, $rS, $rB", IntGeneral,
-                   []>, isDOT;
 def ORC  : XForm_6<31, 412, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "orc $rA, $rS, $rB", IntGeneral,
                    [(set GPRC:$rA, (or GPRC:$rS, (not GPRC:$rB)))]>;
