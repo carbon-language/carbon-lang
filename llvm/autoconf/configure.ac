@@ -69,6 +69,7 @@ do
       "CVS") ;;
       "sample")       AC_CONFIG_SUBDIRS([projects/sample])    ;;
       "Stacker")      AC_CONFIG_SUBDIRS([projects/Stacker])   ;;
+      "privbracket")  AC_CONFIG_SUBDIRS([projects/privbracket]) ;;
       "llvm-test")    AC_CONFIG_SUBDIRS([projects/llvm-test]) ;;
       "llvm-reopt")   AC_CONFIG_SUBDIRS([projects/llvm-reopt]);;
       "llvm-gcc")     AC_CONFIG_SUBDIRS([projects/llvm-gcc])  ;;
