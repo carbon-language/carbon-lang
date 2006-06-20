@@ -64,11 +64,25 @@ public:
   /// from the start of the file, instead you should use
   /// SourceManager::getFilePos.  This method will be incorrect for large files.
   unsigned getRawFilePos() const { return ID & ((1 << FilePosBits)-1); }
+  
+  
+  /// getRawEncoding - When a SourceLocation itself cannot be used, this returns
+  /// an (opaque) 32-bit integer encoding for it.  This should only be passed
+  /// to SourceLocation::getFromRawEncoding, it should not be inspected
+  /// directly.
+  unsigned getRawEncoding() const { return ID; }
+  
+  /// getFromRawEncoding - Turn a raw encoding of a SourceLocation object into
+  /// a real SourceLocation.
+  static SourceLocation getFromRawEncoding(unsigned Encoding) {
+    SourceLocation X;
+    X.ID = Encoding;
+    return X;
+  }
 };
 
 inline bool operator==(const SourceLocation &LHS, const SourceLocation &RHS) {
-  return LHS.getFileID() == RHS.getFileID() &&
-         LHS.getRawFilePos() == RHS.getRawFilePos();
+  return LHS.getRawEncoding() == RHS.getRawEncoding();
 }
 
 inline bool operator!=(const SourceLocation &LHS, const SourceLocation &RHS) {

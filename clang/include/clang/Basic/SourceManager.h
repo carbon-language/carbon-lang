@@ -26,11 +26,10 @@ class SourceBuffer;
 class SourceManager;
 class FileEntry;
 class IdentifierTokenInfo;
-  
-/// SourceManager - This file handles loading and caching of source files into
-/// memory.  This object owns the SourceBuffer objects for all of the loaded
-/// files and assigns unique FileID's for each unique #include chain.
-class SourceManager {
+
+/// SrcMgr - Private classes that are part of the SourceManager implementation.
+///
+namespace SrcMgr {
   /// FileInfo - Once instance of this struct is kept for every file loaded or
   /// used.  This object owns the SourceBuffer object.
   struct FileInfo {
@@ -49,39 +48,111 @@ class SourceManager {
   };
   
   typedef std::pair<const FileEntry * const, FileInfo> InfoRec;
-  
-  /// FileIDInfo - Information about a FileID, basically just the file that it
-  /// represents and include stack information.
+
+  /// FileIDInfo - Information about a FileID, basically just the logical file
+  /// that it represents and include stack information.  A SourceLocation is a
+  /// byte offset from the start of this.
+  ///
+  /// FileID's are used to compute the location of a character in memory as well
+  /// as the logical source location, which can be differ from the physical
+  /// location.  It is different when #line's are active or when macros have
+  /// been expanded.
+  ///
+  /// Each FileID has include stack information, indicating where it came from.
+  /// For the primary translation unit, it comes from SourceLocation() aka 0.
+  ///
+  /// There are three types of FileID's:
+  ///   1. Normal SourceBuffer (file).  These are represented by a "InfoRec *",
+  ///      describing the source file, and a Chunk number, which factors into
+  ///      the SourceLocation's offset from the start of the buffer.
+  ///   2. Macro Expansions.  These indicate that the logical location is
+  ///      totally different than the physical location.  The logical source
+  ///      location is specified with an explicit SourceLocation object.
+  ///
   struct FileIDInfo {
+    enum FileIDType {
+      NormalBuffer,
+      MacroExpansion
+    };
+    
+    /// The type of this FileID.
+    FileIDType IDType : 2;
+    
     /// IncludeLoc - The location of the #include that brought in this file.
     /// This SourceLocation object has a FileId of 0 for the main file.
     SourceLocation IncludeLoc;
     
-    /// ChunkNo - Really large files are broken up into chunks that are each
-    /// (1 << SourceLocation::FilePosBits) in size.  This specifies the chunk
-    /// number of this FileID.
-    unsigned ChunkNo;
-    
-    /// FileInfo - Information about the file itself.
+    /// This union is discriminated by IDType.
     ///
-    const InfoRec *Info;
+    union {
+      struct NormalBufferInfo {
+        /// ChunkNo - Really large buffers are broken up into chunks that are
+        /// each (1 << SourceLocation::FilePosBits) in size.  This specifies the
+        /// chunk number of this FileID.
+        unsigned ChunkNo;
+        
+        /// FileInfo - Information about the source buffer itself.
+        ///
+        const InfoRec *Info;
+      } NormalBuffer;
+      
+      /// MacroTokenLoc - This is the raw encoding of a SourceLocation which
+      /// indicates the physical location of the macro token.
+      unsigned MacroTokenLoc;
+    } u;
     
-    FileIDInfo(SourceLocation IL, unsigned CN, const InfoRec *Inf)
-      : IncludeLoc(IL), ChunkNo(CN), Info(Inf) {}
+    /// getNormalBuffer - Return a FileIDInfo object for a normal buffer
+    /// reference.
+    static FileIDInfo getNormalBuffer(SourceLocation IL, unsigned CN,
+                                      const InfoRec *Inf) {
+      FileIDInfo X;
+      X.IDType = NormalBuffer;
+      X.IncludeLoc = IL;
+      X.u.NormalBuffer.ChunkNo = CN;
+      X.u.NormalBuffer.Info = Inf;
+      return X;
+    }
+    
+    /// getMacroExpansion - Return a FileID for a macro expansion.  IL specifies
+    /// the instantiation location, 
+    static FileIDInfo getMacroExpansion(SourceLocation IL,
+                                        SourceLocation TokenLoc) {
+      FileIDInfo X;
+      X.IDType = MacroExpansion;
+      X.IncludeLoc = IL;
+      X.u.MacroTokenLoc = TokenLoc.getRawEncoding();
+      return X;
+    }
+    
+    unsigned getNormalBufferChunkNo() const {
+      assert(IDType == NormalBuffer && "Not a normal buffer!");
+      return u.NormalBuffer.ChunkNo;
+    }
+
+    const InfoRec *getNormalBufferInfo() const {
+      assert(IDType == NormalBuffer && "Not a normal buffer!");
+      return u.NormalBuffer.Info;
+    }
   };
-  
+}  // end SrcMgr namespace.
+
+
+/// SourceManager - This file handles loading and caching of source files into
+/// memory.  This object owns the SourceBuffer objects for all of the loaded
+/// files and assigns unique FileID's for each unique #include chain.
+class SourceManager {
   /// FileInfos - Memoized information about all of the files tracked by this
   /// SourceManager.
-  std::map<const FileEntry *, FileInfo> FileInfos;
+  std::map<const FileEntry *, SrcMgr::FileInfo> FileInfos;
   
   /// MemBufferInfos - Information about various memory buffers that we have
   /// read in.  This is a list, instead of a vector, because we need pointers to
   /// the FileInfo objects to be stable.
-  std::list<InfoRec> MemBufferInfos;
+  std::list<SrcMgr::InfoRec> MemBufferInfos;
   
   /// FileIDs - Information about each FileID.  FileID #0 is not valid, so all
   /// entries are off by one.
-  std::vector<FileIDInfo> FileIDs;
+  std::vector<SrcMgr::FileIDInfo> FileIDs;
 public:
   ~SourceManager();
   
@@ -89,7 +160,7 @@ public:
   /// being #included from the specified IncludePosition.  This returns 0 on
   /// error and translates NULL into standard input.
   unsigned createFileID(const FileEntry *SourceFile, SourceLocation IncludePos){
-    const InfoRec *IR = getInfoRec(SourceFile);
+    const SrcMgr::InfoRec *IR = getInfoRec(SourceFile);
     if (IR == 0) return 0;    // Error opening file?
     return createFileID(IR, IncludePos);
   }
@@ -98,8 +169,7 @@ public:
   /// specified memory buffer.  This does no caching of the buffer and takes
   /// ownership of the SourceBuffer, so only pass a SourceBuffer to this once.
   unsigned createFileIDForMemBuffer(const SourceBuffer *Buffer) {
-    const InfoRec *IR = createMemBufferInfoRec(Buffer);
-    return createFileID(IR, SourceLocation());
+    return createFileID(createMemBufferInfoRec(Buffer), SourceLocation());
   }
   
   
@@ -122,7 +192,7 @@ public:
     assert(IncludePos.getFileID()-1 < FileIDs.size() && "Invalid FileID!");
     // If this file has been split up into chunks, factor in the chunk number
     // that the FileID references.
-    unsigned ChunkNo = FileIDs[IncludePos.getFileID()-1].ChunkNo;
+    unsigned ChunkNo=FileIDs[IncludePos.getFileID()-1].getNormalBufferChunkNo();
     return IncludePos.getRawFilePos() +
            (ChunkNo << SourceLocation::FilePosBits);
   }
@@ -135,19 +205,19 @@ public:
   /// getColumnNumber - Return the column # for the specified include position.
   /// this is significantly cheaper to compute than the line number.  This
   /// returns zero if the column number isn't known.
-  unsigned getColumnNumber(SourceLocation IncludePos) const;
+  unsigned getColumnNumber(SourceLocation Loc) const;
   
   /// getLineNumber - Given a SourceLocation, return the physical line number
   /// for the position indicated.  This requires building and caching a table of
   /// line offsets for the SourceBuffer, so this is not cheap: use only when
   /// about to emit a diagnostic.
-  unsigned getLineNumber(SourceLocation IncludePos);
+  unsigned getLineNumber(SourceLocation Loc);
 
   /// getFileEntryForFileID - Return the FileEntry record for the specified
   /// FileID if one exists.
   const FileEntry *getFileEntryForFileID(unsigned FileID) const {
     assert(FileID-1 < FileIDs.size() && "Invalid FileID!");
-    return FileIDs[FileID-1].Info->first;
+    return FileIDs[FileID-1].getNormalBufferInfo()->first;
   }
   
   /// PrintStats - Print statistics to stderr.
@@ -157,29 +227,29 @@ private:
   /// createFileID - Create a new fileID for the specified InfoRec and include
   /// position.  This works regardless of whether the InfoRec corresponds to a
   /// file or some other input source.
-  unsigned createFileID(const InfoRec *File, SourceLocation IncludePos);
+  unsigned createFileID(const SrcMgr::InfoRec *File, SourceLocation IncludePos);
     
   /// getFileInfo - Create or return a cached FileInfo for the specified file.
   /// This returns null on failure.
-  const InfoRec *getInfoRec(const FileEntry *SourceFile);
+  const SrcMgr::InfoRec *getInfoRec(const FileEntry *SourceFile);
   
   /// createMemBufferInfoRec - Create a new info record for the specified memory
   /// buffer.  This does no caching.
-  const InfoRec *createMemBufferInfoRec(const SourceBuffer *Buffer);
+  const SrcMgr::InfoRec *createMemBufferInfoRec(const SourceBuffer *Buffer);
 
-  const InfoRec *getInfoRec(unsigned FileID) const {
+  const SrcMgr::InfoRec *getInfoRec(unsigned FileID) const {
     assert(FileID-1 < FileIDs.size() && "Invalid FileID!");
-    return FileIDs[FileID-1].Info;
+    return FileIDs[FileID-1].getNormalBufferInfo();
   }
   
-  FileInfo *getFileInfo(unsigned FileID) const {
-    if (const InfoRec *IR = getInfoRec(FileID))
-      return const_cast<FileInfo *>(&IR->second);
+  SrcMgr::FileInfo *getFileInfo(unsigned FileID) const {
+    if (const SrcMgr::InfoRec *IR = getInfoRec(FileID))
+      return const_cast<SrcMgr::FileInfo *>(&IR->second);
     return 0;
   }
-  FileInfo *getFileInfo(const FileEntry *SourceFile) {
-    if (const InfoRec *IR = getInfoRec(SourceFile))
-      return const_cast<FileInfo *>(&IR->second);
+  SrcMgr::FileInfo *getFileInfo(const FileEntry *SourceFile) {
+    if (const SrcMgr::InfoRec *IR = getInfoRec(SourceFile))
+      return const_cast<SrcMgr::FileInfo *>(&IR->second);
     return 0;
   }
 };

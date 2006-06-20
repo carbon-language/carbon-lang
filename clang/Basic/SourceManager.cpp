@@ -19,6 +19,7 @@
 #include <iostream>
 using namespace llvm;
 using namespace clang;
+using namespace SrcMgr;
 
 SourceManager::~SourceManager() {
   for (std::map<const FileEntry *, FileInfo>::iterator I = FileInfos.begin(),
@@ -36,7 +37,7 @@ SourceManager::~SourceManager() {
 
 /// getFileInfo - Create or return a cached FileInfo for the specified file.
 ///
-const SourceManager::InfoRec *
+const InfoRec *
 SourceManager::getInfoRec(const FileEntry *FileEnt) {
   assert(FileEnt && "Didn't specify a file entry to use?");
   // Do we already have information about this file?
@@ -68,7 +69,7 @@ SourceManager::getInfoRec(const FileEntry *FileEnt) {
 
 /// createMemBufferInfoRec - Create a new info record for the specified memory
 /// buffer.  This does no caching.
-const SourceManager::InfoRec *
+const InfoRec *
 SourceManager::createMemBufferInfoRec(const SourceBuffer *Buffer) {
   // Add a new info record to the MemBufferInfos list and return it.
   FileInfo FI;
@@ -91,7 +92,7 @@ unsigned SourceManager::createFileID(const InfoRec *File,
   // FilePos field.
   unsigned FileSize = File->second.Buffer->getBufferSize();
   if (FileSize+1 < (1 << SourceLocation::FilePosBits)) {
-    FileIDs.push_back(FileIDInfo(IncludePos, 0, File));
+    FileIDs.push_back(FileIDInfo::getNormalBuffer(IncludePos, 0, File));
     return FileIDs.size();
   }
   
@@ -100,7 +101,7 @@ unsigned SourceManager::createFileID(const InfoRec *File,
 
   unsigned ChunkNo = 0;
   while (1) {
-    FileIDs.push_back(FileIDInfo(IncludePos, ChunkNo++, File));
+    FileIDs.push_back(FileIDInfo::getNormalBuffer(IncludePos, ChunkNo++, File));
 
     if (FileSize+1 < (1 << SourceLocation::FilePosBits)) break;
     FileSize -= (1 << SourceLocation::FilePosBits);
