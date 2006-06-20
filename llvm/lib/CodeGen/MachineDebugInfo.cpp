@@ -493,7 +493,8 @@ DebugInfoDesc *DebugInfoDesc::DescFactory(unsigned Tag) {
   case DW_TAG_structure_type:
   case DW_TAG_union_type:
   case DW_TAG_enumeration_type:
-  case DW_TAG_vector_type:      return new CompositeTypeDesc(Tag);
+  case DW_TAG_vector_type:
+  case DW_TAG_subroutine_type:  return new CompositeTypeDesc(Tag);
   case DW_TAG_subrange_type:    return new SubrangeDesc();
   case DW_TAG_enumerator:       return new EnumeratorDesc();
   case DW_TAG_return_variable:
@@ -831,6 +832,7 @@ bool CompositeTypeDesc::classof(const DebugInfoDesc *D) {
   case DW_TAG_union_type:
   case DW_TAG_enumeration_type:
   case DW_TAG_vector_type:
+  case DW_TAG_subroutine_type:
     return true;
   default: break;
   }
