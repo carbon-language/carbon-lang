@@ -2312,21 +2312,21 @@ def : Pat<(v4i32 (bitconvert (v2f64 VR128:$src))), (v4i32 VR128:$src)>,
       Requires<[HasSSE2]>;
 def : Pat<(v4i32 (bitconvert (v4f32 VR128:$src))), (v4i32 VR128:$src)>,
       Requires<[HasSSE2]>;
-def : Pat<(v8i16 (bitconvert (v2i64 VR128:$src))), (v4i32 VR128:$src)>,
+def : Pat<(v8i16 (bitconvert (v2i64 VR128:$src))), (v8i16 VR128:$src)>,
       Requires<[HasSSE2]>;
-def : Pat<(v8i16 (bitconvert (v4i32 VR128:$src))), (v4i32 VR128:$src)>,
+def : Pat<(v8i16 (bitconvert (v4i32 VR128:$src))), (v8i16 VR128:$src)>,
       Requires<[HasSSE2]>;
-def : Pat<(v8i16 (bitconvert (v16i8 VR128:$src))), (v4i32 VR128:$src)>,
+def : Pat<(v8i16 (bitconvert (v16i8 VR128:$src))), (v8i16 VR128:$src)>,
       Requires<[HasSSE2]>;
 def : Pat<(v8i16 (bitconvert (v2f64 VR128:$src))), (v8i16 VR128:$src)>,
       Requires<[HasSSE2]>;
 def : Pat<(v8i16 (bitconvert (v4f32 VR128:$src))), (v8i16 VR128:$src)>,
       Requires<[HasSSE2]>;
-def : Pat<(v16i8 (bitconvert (v2i64 VR128:$src))), (v4i32 VR128:$src)>,
+def : Pat<(v16i8 (bitconvert (v2i64 VR128:$src))), (v16i8 VR128:$src)>,
       Requires<[HasSSE2]>;
-def : Pat<(v16i8 (bitconvert (v4i32 VR128:$src))), (v4i32 VR128:$src)>,
+def : Pat<(v16i8 (bitconvert (v4i32 VR128:$src))), (v16i8 VR128:$src)>,
       Requires<[HasSSE2]>;
-def : Pat<(v16i8 (bitconvert (v8i16 VR128:$src))), (v4i32 VR128:$src)>,
+def : Pat<(v16i8 (bitconvert (v8i16 VR128:$src))), (v16i8 VR128:$src)>,
       Requires<[HasSSE2]>;
 def : Pat<(v16i8 (bitconvert (v2f64 VR128:$src))), (v16i8 VR128:$src)>,
       Requires<[HasSSE2]>;
