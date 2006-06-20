@@ -140,9 +140,21 @@ def immZExt16  : PatLeaf<(imm), [{
   return (unsigned)N->getValue() == (unsigned short)N->getValue();
 }], LO16>;
 
-def imm16Shifted : PatLeaf<(imm), [{
-  // imm16Shifted predicate - True if only bits in the top 16-bits of the
-  // immediate are set.  Used by instructions like 'addis'.
+// imm16Shifted* - These match immediates where the low 16-bits are zero.  There
+// are two forms: imm16ShiftedSExt and imm16ShiftedZExt.  These two forms are
+// identical in 32-bit mode, but in 64-bit mode, they return true if the
+// immediate fits into a sign/zero extended 32-bit immediate (with the low bits
+// clear).
+def imm16ShiftedZExt : PatLeaf<(imm), [{
+  // imm16ShiftedZExt predicate - True if only bits in the top 16-bits of the
+  // immediate are set.  Used by instructions like 'xoris'.
+  return (N->getValue() & ~uint64_t(0xFFFF0000)) == 0;
+}], HI16>;
+
+def imm16ShiftedSExt : PatLeaf<(imm), [{
+  // imm16ShiftedSExt predicate - True if only bits in the top 16-bits of the
+  // immediate are set.  Used by instructions like 'addis'.  Identical to 
+  // imm16ShiftedZExt in 32-bit mode.
   if (N->getValue() & 0xFFFF) return false;
   if (N->getValueType(0) == MVT::i32)
     return true;
@@ -364,7 +376,7 @@ def ADDICo : DForm_2<13, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
                      []>;
 def ADDIS  : DForm_2<15, (ops GPRC:$rD, GPRC:$rA, symbolHi:$imm),
                      "addis $rD, $rA, $imm", IntGeneral,
-                     [(set GPRC:$rD, (add GPRC:$rA, imm16Shifted:$imm))]>;
+                     [(set GPRC:$rD, (add GPRC:$rA, imm16ShiftedSExt:$imm))]>;
 def LA     : DForm_2<14, (ops GPRC:$rD, GPRC:$rA, symbolLo:$sym),
                      "la $rD, $sym($rA)", IntGeneral,
                      [(set GPRC:$rD, (add GPRC:$rA,
@@ -380,7 +392,7 @@ def LI  : DForm_2_r0<14, (ops GPRC:$rD, symbolLo:$imm),
                      [(set GPRC:$rD, immSExt16:$imm)]>;
 def LIS : DForm_2_r0<15, (ops GPRC:$rD, symbolHi:$imm),
                      "lis $rD, $imm", IntGeneral,
-                     [(set GPRC:$rD, imm16Shifted:$imm)]>;
+                     [(set GPRC:$rD, imm16ShiftedSExt:$imm)]>;
 }
 let isStore = 1, noResults = 1, PPC970_Unit = 2 in {
 def STB  : DForm_3<38, (ops GPRC:$rS, memri:$src),
@@ -403,20 +415,20 @@ def ANDIo : DForm_4<28, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                     isDOT;
 def ANDISo : DForm_4<29, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                     "andis. $dst, $src1, $src2", IntGeneral,
-                    [(set GPRC:$dst, (and GPRC:$src1, imm16Shifted:$src2))]>,
+                    [(set GPRC:$dst, (and GPRC:$src1,imm16ShiftedZExt:$src2))]>,
                     isDOT;
 def ORI   : DForm_4<24, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                     "ori $dst, $src1, $src2", IntGeneral,
                     [(set GPRC:$dst, (or GPRC:$src1, immZExt16:$src2))]>;
 def ORIS  : DForm_4<25, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                     "oris $dst, $src1, $src2", IntGeneral,
-                    [(set GPRC:$dst, (or GPRC:$src1, imm16Shifted:$src2))]>;
+                    [(set GPRC:$dst, (or GPRC:$src1, imm16ShiftedZExt:$src2))]>;
 def XORI  : DForm_4<26, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                     "xori $dst, $src1, $src2", IntGeneral,
                     [(set GPRC:$dst, (xor GPRC:$src1, immZExt16:$src2))]>;
 def XORIS : DForm_4<27, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                     "xoris $dst, $src1, $src2", IntGeneral,
-                    [(set GPRC:$dst, (xor GPRC:$src1, imm16Shifted:$src2))]>;
+                    [(set GPRC:$dst, (xor GPRC:$src1,imm16ShiftedZExt:$src2))]>;
 def NOP   : DForm_4_zero<24, (ops), "nop", IntGeneral,
                          []>;
 def CMPI  : DForm_5<11, (ops CRRC:$crD, i1imm:$L, GPRC:$rA, s16imm:$imm),

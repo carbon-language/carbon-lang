@@ -31,13 +31,7 @@ def symbolLo64 : Operand<i64> {
 
 let PPC970_Unit = 1 in {  // FXU Operations.
 
-def LI8  : DForm_2_r0<14, (ops G8RC:$rD, symbolLo64:$imm),
-                      "li $rD, $imm", IntGeneral,
-                      [(set G8RC:$rD, immSExt16:$imm)]>;
-def LIS8 : DForm_2_r0<15, (ops G8RC:$rD, symbolHi64:$imm),
-                      "lis $rD, $imm", IntGeneral,
-                      [(set G8RC:$rD, imm16Shifted:$imm)]>;
-
+// Copies, extends, truncates.
 def OR8  : XForm_6<31, 444, (ops G8RC:$rA, G8RC:$rS, G8RC:$rB),
                    "or $rA, $rS, $rB", IntGeneral,
                    [(set G8RC:$rA, (or G8RC:$rS, G8RC:$rB))]>;
@@ -47,13 +41,47 @@ def OR4To8  : XForm_6<31, 444, (ops G8RC:$rA, GPRC:$rS, GPRC:$rB),
 def OR8To4  : XForm_6<31, 444, (ops GPRC:$rA, G8RC:$rS, G8RC:$rB),
                    "or $rA, $rS, $rB", IntGeneral,
                    []>;
+
+def LI8  : DForm_2_r0<14, (ops G8RC:$rD, symbolLo64:$imm),
+                      "li $rD, $imm", IntGeneral,
+                      [(set G8RC:$rD, immSExt16:$imm)]>;
+def LIS8 : DForm_2_r0<15, (ops G8RC:$rD, symbolHi64:$imm),
+                      "lis $rD, $imm", IntGeneral,
+                      [(set G8RC:$rD, imm16ShiftedSExt:$imm)]>;
+
+// Logical ops.
+def ANDIo8  : DForm_4<28, (ops G8RC:$dst, G8RC:$src1, u16imm:$src2),
+                      "andi. $dst, $src1, $src2", IntGeneral,
+                      [(set G8RC:$dst, (and G8RC:$src1, immZExt16:$src2))]>,
+                      isDOT;
+def ANDISo8 : DForm_4<29, (ops G8RC:$dst, G8RC:$src1, u16imm:$src2),
+                     "andis. $dst, $src1, $src2", IntGeneral,
+                    [(set G8RC:$dst, (and G8RC:$src1,imm16ShiftedZExt:$src2))]>,
+                     isDOT;
+def ORI8    : DForm_4<24, (ops G8RC:$dst, G8RC:$src1, u16imm:$src2),
+                      "ori $dst, $src1, $src2", IntGeneral,
+                      [(set G8RC:$dst, (or G8RC:$src1, immZExt16:$src2))]>;
+def ORIS8   : DForm_4<25, (ops G8RC:$dst, G8RC:$src1, u16imm:$src2),
+                      "oris $dst, $src1, $src2", IntGeneral,
+                    [(set G8RC:$dst, (or G8RC:$src1, imm16ShiftedZExt:$src2))]>;
+def XORI8   : DForm_4<26, (ops G8RC:$dst, G8RC:$src1, u16imm:$src2),
+                      "xori $dst, $src1, $src2", IntGeneral,
+                      [(set G8RC:$dst, (xor G8RC:$src1, immZExt16:$src2))]>;
+def XORIS8  : DForm_4<27, (ops G8RC:$dst, G8RC:$src1, u16imm:$src2),
+                      "xoris $dst, $src1, $src2", IntGeneral,
+                   [(set G8RC:$dst, (xor G8RC:$src1, imm16ShiftedZExt:$src2))]>;
+
+
                    
 def ADD8  : XOForm_1<31, 266, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
                      "add $rT, $rA, $rB", IntGeneral,
                      [(set G8RC:$rT, (add G8RC:$rA, G8RC:$rB))]>;
 def ADDIS8 : DForm_2<15, (ops G8RC:$rD, G8RC:$rA, symbolHi64:$imm),
                      "addis $rD, $rA, $imm", IntGeneral,
-                     [(set G8RC:$rD, (add G8RC:$rA, imm16Shifted:$imm))]>;
+                     [(set G8RC:$rD, (add G8RC:$rA, imm16ShiftedSExt:$imm))]>;
+
+
+
 
 def MULHD : XOForm_1<31, 73, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
                      "mulhd $rT, $rA, $rB", IntMulHW,
@@ -186,6 +214,28 @@ def FCTIDZ : XForm_26<63, 815, (ops F8RC:$frD, F8RC:$frB),
 //===----------------------------------------------------------------------===//
 // Instruction Patterns
 //
+
+// Immediate support.
+// Handled above:
+//   sext(0x0000_0000_0000_FFFF,  i8) -> li imm
+//   sext(0x0000_0000_FFFF_0000, i16) -> lis imm>>16
+
+// sext(0x0000_0000_FFFF_FFFF,  i16)  -> lis + ori
+def sext_0x0000_0000_FFFF_FFFF_i16 : PatLeaf<(imm), [{
+  return N->getValue() == (uint64_t)(int32_t)N->getValue();
+}]>;
+def : Pat<(i64 sext_0x0000_0000_FFFF_FFFF_i16:$imm),
+          (ORI8 (LIS8 (HI16 imm:$imm)), (LO16 imm:$imm))>;
+
+// zext(0x0000_0000_FFFF_FFFF, i16) -> xoris (li lo16(imm)), imm>>16
+def zext_0x0000_0000_FFFF_FFFF_i16 : PatLeaf<(imm), [{
+  return (N->getValue() & 0xFFFFFFFF00000000ULL) == 0;
+}]>;
+def : Pat<(i64 zext_0x0000_0000_FFFF_FFFF_i16:$imm),
+          (XORIS8 (LI8 (LO16 imm:$imm)), (HI16 imm:$imm))>;
+
+
+
 // Extensions and truncates to/from 32-bit regs.
 def : Pat<(i64 (zext GPRC:$in)),
           (RLDICL (OR4To8 GPRC:$in, GPRC:$in), 0, 32)>;
