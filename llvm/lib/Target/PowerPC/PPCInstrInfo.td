@@ -122,12 +122,15 @@ def HA16 : SDNodeXForm<imm, [{
 def immSExt16  : PatLeaf<(imm), [{
   // immSExt16 predicate - True if the immediate fits in a 16-bit sign extended
   // field.  Used by instructions like 'addi'.
-  return (int)N->getValue() == (short)N->getValue();
+  if (N->getValueType(0) == MVT::i32)
+    return (int32_t)N->getValue() == (short)N->getValue();
+  else
+    return (int64_t)N->getValue() == (short)N->getValue();
 }]>;
 def immZExt16  : PatLeaf<(imm), [{
   // immZExt16 predicate - True if the immediate fits in a 16-bit zero extended
   // field.  Used by instructions like 'ori'.
-  return (unsigned)N->getValue() == (unsigned short)N->getValue();
+  return (uint64_t)N->getValue() == (unsigned short)N->getValue();
 }], LO16>;
 
 // imm16Shifted* - These match immediates where the low 16-bits are zero.  There
