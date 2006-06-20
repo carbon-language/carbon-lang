@@ -143,7 +143,11 @@ def immZExt16  : PatLeaf<(imm), [{
 def imm16Shifted : PatLeaf<(imm), [{
   // imm16Shifted predicate - True if only bits in the top 16-bits of the
   // immediate are set.  Used by instructions like 'addis'.
-  return ((unsigned)N->getValue() & 0xFFFF0000U) == (unsigned)N->getValue();
+  if (N->getValue() & 0xFFFF) return false;
+  if (N->getValueType(0) == MVT::i32)
+    return true;
+  // For 64-bit, make sure it is sext right.
+  return N->getValue() == (uint64_t)(int)N->getValue();
 }], HI16>;
 
 
