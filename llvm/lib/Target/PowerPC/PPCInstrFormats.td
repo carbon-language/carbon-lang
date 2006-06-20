@@ -785,7 +785,6 @@ class VXRForm_1<bits<10> xo, dag OL, string asmstr,
 class Pseudo<dag OL, string asmstr, list<dag> pattern>
     : I<0, OL, asmstr, NoItinerary> {
   let PPC64 = 0;
-  let VMX = 0;
   let Pattern = pattern;
   let Inst{31-0} = 0;
 }

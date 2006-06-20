@@ -97,19 +97,9 @@ def SHL32 : SDNodeXForm<imm, [{
   return getI32Imm(31 - N->getValue());
 }]>;
 
-def SHL64 : SDNodeXForm<imm, [{
-  // Transformation function: 63 - imm
-  return getI32Imm(63 - N->getValue());
-}]>;
-
 def SRL32 : SDNodeXForm<imm, [{
   // Transformation function: 32 - imm
   return N->getValue() ? getI32Imm(32 - N->getValue()) : getI32Imm(0);
-}]>;
-
-def SRL64 : SDNodeXForm<imm, [{
-  // Transformation function: 64 - imm
-  return N->getValue() ? getI32Imm(64 - N->getValue()) : getI32Imm(0);
 }]>;
 
 def LO16 : SDNodeXForm<imm, [{
@@ -485,7 +475,7 @@ def AND  : XForm_6<31,  28, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
 def ANDC : XForm_6<31,  60, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "andc $rA, $rS, $rB", IntGeneral,
                    [(set GPRC:$rA, (and GPRC:$rS, (not GPRC:$rB)))]>;
-def OR4  : XForm_6<31, 444, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def OR   : XForm_6<31, 444, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "or $rA, $rS, $rB", IntGeneral,
                    [(set GPRC:$rA, (or GPRC:$rS, GPRC:$rB))]>;
 def NOR  : XForm_6<31, 124, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),

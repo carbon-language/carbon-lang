@@ -22,7 +22,29 @@ def symbolLo64 : Operand<i64> {
   let PrintMethod = "printSymbolLo";
 }
 
+//===----------------------------------------------------------------------===//
+// 64-bit transformation functions.
+//
 
+def SHL64 : SDNodeXForm<imm, [{
+  // Transformation function: 63 - imm
+  return getI32Imm(63 - N->getValue());
+}]>;
+
+def SRL64 : SDNodeXForm<imm, [{
+  // Transformation function: 64 - imm
+  return N->getValue() ? getI32Imm(64 - N->getValue()) : getI32Imm(0);
+}]>;
+
+def HI32_48 : SDNodeXForm<imm, [{
+  // Transformation function: shift the immediate value down into the low bits.
+  return getI32Imm((unsigned short)(N->getValue() >> 32));
+}]>;
+
+def HI48_64 : SDNodeXForm<imm, [{
+  // Transformation function: shift the immediate value down into the low bits.
+  return getI32Imm((unsigned short)(N->getValue() >> 48));
+}]>;
 
 
 //===----------------------------------------------------------------------===//
@@ -237,17 +259,6 @@ def FCTIDZ : XForm_26<63, 815, (ops F8RC:$frD, F8RC:$frB),
 //===----------------------------------------------------------------------===//
 // Instruction Patterns
 //
-
-def HI32_48 : SDNodeXForm<imm, [{
-  // Transformation function: shift the immediate value down into the low bits.
-  return getI32Imm((unsigned short)(N->getValue() >> 32));
-}]>;
-
-def HI48_64 : SDNodeXForm<imm, [{
-  // Transformation function: shift the immediate value down into the low bits.
-  return getI32Imm((unsigned short)(N->getValue() >> 48));
-}]>;
-
 
 // Immediate support.
 // Handled above:

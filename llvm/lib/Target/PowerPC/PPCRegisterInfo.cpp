@@ -189,7 +189,7 @@ void PPCRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
                                    unsigned DestReg, unsigned SrcReg,
                                    const TargetRegisterClass *RC) const {
   if (RC == PPC::GPRCRegisterClass) {
-    BuildMI(MBB, MI, PPC::OR4, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
+    BuildMI(MBB, MI, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
   } else if (RC == PPC::G8RCRegisterClass) {
     BuildMI(MBB, MI, PPC::OR8, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
   } else if (RC == PPC::F4RCRegisterClass) {
@@ -282,7 +282,7 @@ MachineInstr *PPCRegisterInfo::foldMemoryOperand(MachineInstr *MI,
   // it takes more than one instruction to store it.
   unsigned Opc = MI->getOpcode();
   
-  if ((Opc == PPC::OR4 &&
+  if ((Opc == PPC::OR &&
        MI->getOperand(1).getReg() == MI->getOperand(2).getReg())) {
     if (OpNum == 0) {  // move -> store
       unsigned InReg = MI->getOperand(1).getReg();
@@ -631,7 +631,7 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   if (HasFP) {
     BuildMI(MBB, MBBI, PPC::STW, 3)
       .addReg(PPC::R31).addImm(GPRSize).addReg(PPC::R1);
-    BuildMI(MBB, MBBI, PPC::OR4, 2, PPC::R31).addReg(PPC::R1).addReg(PPC::R1);
+    BuildMI(MBB, MBBI, PPC::OR, 2, PPC::R31).addReg(PPC::R1).addReg(PPC::R1);
   }
 }
 

@@ -35,7 +35,7 @@ bool PPCInstrInfo::isMoveInstr(const MachineInstr& MI,
                                unsigned& sourceReg,
                                unsigned& destReg) const {
   MachineOpCode oc = MI.getOpcode();
-  if (oc == PPC::OR4 || oc == PPC::OR8 || oc == PPC::VOR ||
+  if (oc == PPC::OR || oc == PPC::OR8 || oc == PPC::VOR ||
       oc == PPC::OR4To8 || oc == PPC::OR8To4) {                // or r1, r2, r2
     assert(MI.getNumOperands() == 3 &&
            MI.getOperand(0).isRegister() &&
