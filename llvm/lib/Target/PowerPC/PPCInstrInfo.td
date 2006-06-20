@@ -167,7 +167,6 @@ def imm16ShiftedSExt : PatLeaf<(imm), [{
 // PowerPC Flag Definitions.
 
 class isPPC64 { bit PPC64 = 1; }
-class isVMX   { bit VMX = 1; }
 class isDOT   {
   list<Register> Defs = [CR0];
   bit RC  = 1;

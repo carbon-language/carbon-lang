@@ -16,7 +16,6 @@ class I<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin>
   field bits<32> Inst;
 
   bit PPC64 = 0;  // Default value, override with isPPC64
-  bit VMX = 0;    // Default value, override with isVMX
 
   let Name = "";
   let Namespace = "PPC";
