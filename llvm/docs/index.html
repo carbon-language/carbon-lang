@@ -33,28 +33,13 @@
 </div>
 
 <!--=======================================================================-->
-<div class="doc_section"><a name="llvmdesign">LLVM Design</a></div>
+<div class="doc_section"><a name="llvmdesign">LLVM Design &amp; Overview</a></div>
 <!--=======================================================================-->
 
 <ul>
-<li><a href="http://llvm.org/pubs/2004-01-30-CGO-LLVM.html">LLVM: A
-Compilation Framework for Lifelong Program Analysis &amp; Transformation</a>: -
-Describes the LLVM instruction set and compilation strategy.  This should be the
-first document you read to get an overview of LLVM.</li>
+<li><a href="LangRef.html">LLVM Language Reference Manual</a> - Defines the LLVM
+intermediate representation.</li>
 
-<li><a href="LangRef.html">LLVM Reference Manual</a> - Defines the LLVM
-intermediate representation, the assembly form of the different nodes, and
-provides reference information about the different tools in LLVM.</li>
-
-<li><a href="BytecodeFormat.html">LLVM Bytecode File Format</a></li>
-
-</ul>
-
-<!--=======================================================================-->
-<div class="doc_section"><a name="llvmpubs">LLVM Publications</a></div>
-<!--=======================================================================-->
-
-<ul>
 <li>"<a href="http://llvm.org/pubs/2006-04-25-GelatoLLVMIntro.html">Introduction to the LLVM Compiler Infrastructure</a>" - Presentation describing LLVM.</li>
 <li>"<a href="http://llvm.org/pubs/2004-09-22-LCPCLLVMTutorial.html">The LLVM Compiler Framework and
 Infrastructure Tutorial</a>" - Tutorial for writing passes, exploring the system.</li>
@@ -62,6 +47,7 @@ Infrastructure Tutorial</a>" - Tutorial for writing passes, exploring the system
 Lifelong Program Analysis &amp; Transformation</a>" - Design overview.</li>
 <li>"<a href="http://llvm.org/pubs/2002-12-LattnerMSThesis.html">LLVM: An Infrastructure for
 Multi-Stage Optimization</a>" - More details (somewhat old now).</li>
+
 </ul>
 
 <!--=======================================================================-->
@@ -135,6 +121,9 @@ href="irc://irc.oftc.net/llvm">join #llvm on irc.oftc.net</a> directly.</li>
 <!--=======================================================================-->
 
 <ul>
+<li><a href="LangRef.html">LLVM Language Reference Manual</a> - Defines the LLVM
+intermediate representation and the assembly form of the different nodes.</li>
+
 <li><a href="ProgrammersManual.html">The LLVM Programmers Manual</a> -
 Introduction to the general layout of the LLVM sourcebase, important classes
 and APIs, and some tips &amp; tricks.</li>
@@ -219,6 +208,8 @@ reducer description and usage information.</li>
 <li><a href="CompilerDriver.html">Compiler Driver (llvmc)</a> - This document
 describes the design and configuration of the LLVM compiler driver tool,
 <tt>llvmc</tt>.</li>
+
+<li><a href="BytecodeFormat.html">LLVM Bytecode File Format</a></li>
 
 <li><a href="SystemLibrary.html">System Library</a> - This document describes
 the LLVM System Library (<tt>lib/System</tt>) and how to keep LLVM source code
