@@ -490,7 +490,7 @@ def EQV  : XForm_6<31, 284, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    [(set GPRC:$rA, (not (xor GPRC:$rS, GPRC:$rB)))]>;
 def XOR  : XForm_6<31, 316, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "xor $rA, $rS, $rB", IntGeneral,
-                   [(set GPRC:$rA, (xor GPRC:$rS, GPRC:$rB))]>;                   
+                   [(set GPRC:$rA, (xor GPRC:$rS, GPRC:$rB))]>;
 def SLW  : XForm_6<31,  24, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "slw $rA, $rS, $rB", IntGeneral,
                    [(set GPRC:$rA, (PPCshl GPRC:$rS, GPRC:$rB))]>;
@@ -936,25 +936,25 @@ def : Pat<(srl GPRC:$rS, GPRC:$rB),
 def : Pat<(shl GPRC:$rS, GPRC:$rB),
           (SLW GPRC:$rS, GPRC:$rB)>;
 
-def : Pat<(i32 (zextload iaddr:$src, i1)),
+def : Pat<(zextload iaddr:$src, i1),
           (LBZ iaddr:$src)>;
-def : Pat<(i32 (zextload xaddr:$src, i1)),
+def : Pat<(zextload xaddr:$src, i1),
           (LBZX xaddr:$src)>;
-def : Pat<(i32 (extload iaddr:$src, i1)),
+def : Pat<(extload iaddr:$src, i1),
           (LBZ iaddr:$src)>;
-def : Pat<(i32 (extload xaddr:$src, i1)),
+def : Pat<(extload xaddr:$src, i1),
           (LBZX xaddr:$src)>;
-def : Pat<(i32 (extload iaddr:$src, i8)),
+def : Pat<(extload iaddr:$src, i8),
           (LBZ iaddr:$src)>;
-def : Pat<(i32 (extload xaddr:$src, i8)),
+def : Pat<(extload xaddr:$src, i8),
           (LBZX xaddr:$src)>;
-def : Pat<(i32 (extload iaddr:$src, i16)),
+def : Pat<(extload iaddr:$src, i16),
           (LHZ iaddr:$src)>;
-def : Pat<(i32 (extload xaddr:$src, i16)),
+def : Pat<(extload xaddr:$src, i16),
           (LHZX xaddr:$src)>;
-def : Pat<(f64 (extload iaddr:$src, f32)),
+def : Pat<(extload iaddr:$src, f32),
           (FMRSD (LFS iaddr:$src))>;
-def : Pat<(f64 (extload xaddr:$src, f32)),
+def : Pat<(extload xaddr:$src, f32),
           (FMRSD (LFSX xaddr:$src))>;
 
 include "PPCInstrAltivec.td"

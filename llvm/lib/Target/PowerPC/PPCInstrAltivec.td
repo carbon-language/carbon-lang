@@ -546,7 +546,7 @@ def : Pat<(v8i16 (undef)), (IMPLICIT_DEF_VRRC)>;
 def : Pat<(v4f32 (undef)), (IMPLICIT_DEF_VRRC)>;
 
 // Loads.
-def : Pat<(v4i32 (load xoaddr:$src)), (v4i32 (LVX xoaddr:$src))>;
+def : Pat<(v4i32 (load xoaddr:$src)), (LVX xoaddr:$src)>;
 
 // Stores.
 def : Pat<(store (v4i32 VRRC:$rS), xoaddr:$dst),
@@ -594,29 +594,29 @@ def:Pat<(vector_shuffle (v16i8 VRRC:$vA), undef, VMRGHW_unary_shuffle_mask:$in),
         (VMRGHW VRRC:$vA, VRRC:$vA)>;
 
 // Logical Operations
-def : Pat<(v4i32 (vnot VRRC:$vA)), (v4i32 (VNOR VRRC:$vA, VRRC:$vA))>;
-def : Pat<(v4i32 (vnot_conv VRRC:$vA)), (v4i32 (VNOR VRRC:$vA, VRRC:$vA))>;
+def : Pat<(v4i32 (vnot VRRC:$vA)),      (VNOR VRRC:$vA, VRRC:$vA)>;
+def : Pat<(v4i32 (vnot_conv VRRC:$vA)), (VNOR VRRC:$vA, VRRC:$vA)>;
 
 def : Pat<(v4i32 (vnot_conv (or VRRC:$A, VRRC:$B))),
-          (v4i32 (VNOR VRRC:$A, VRRC:$B))>;
+          (VNOR VRRC:$A, VRRC:$B)>;
 def : Pat<(v4i32 (and VRRC:$A, (vnot_conv VRRC:$B))),
-          (v4i32 (VANDC VRRC:$A, VRRC:$B))>;
+          (VANDC VRRC:$A, VRRC:$B)>;
 
 def : Pat<(fmul VRRC:$vA, VRRC:$vB),
-          (v4f32 (VMADDFP VRRC:$vA, VRRC:$vB, (v4i32 (V_SET0))))>; 
+          (VMADDFP VRRC:$vA, VRRC:$vB, (v4i32 (V_SET0)))>; 
 
 // Fused multiply add and multiply sub for packed float.  These are represented
 // separately from the real instructions above, for operations that must have
 // the additional precision, such as Newton-Rhapson (used by divide, sqrt)
 def : Pat<(PPCvmaddfp VRRC:$A, VRRC:$B, VRRC:$C),
-          (v4f32 (VMADDFP VRRC:$A, VRRC:$B, VRRC:$C))>;
+          (VMADDFP VRRC:$A, VRRC:$B, VRRC:$C)>;
 def : Pat<(PPCvnmsubfp VRRC:$A, VRRC:$B, VRRC:$C),
-          (v4f32 (VNMSUBFP VRRC:$A, VRRC:$B, VRRC:$C))>;
+          (VNMSUBFP VRRC:$A, VRRC:$B, VRRC:$C)>;
 
 def : Pat<(int_ppc_altivec_vmaddfp VRRC:$A, VRRC:$B, VRRC:$C),
-          (v4f32 (VMADDFP VRRC:$A, VRRC:$B, VRRC:$C))>;
+          (VMADDFP VRRC:$A, VRRC:$B, VRRC:$C)>;
 def : Pat<(int_ppc_altivec_vnmsubfp VRRC:$A, VRRC:$B, VRRC:$C),
-          (v4f32 (VNMSUBFP VRRC:$A, VRRC:$B, VRRC:$C))>;
+          (VNMSUBFP VRRC:$A, VRRC:$B, VRRC:$C)>;
 
 def : Pat<(PPCvperm (v16i8 VRRC:$vA), VRRC:$vB, VRRC:$vC),
-          (v16i8 (VPERM VRRC:$vA, VRRC:$vB, VRRC:$vC))>;
+          (VPERM VRRC:$vA, VRRC:$vB, VRRC:$vC)>;
