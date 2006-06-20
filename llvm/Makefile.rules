@@ -362,7 +362,7 @@ endif
 #----------------------------------------------------------
 
 CompileCommonOpts := -Wall -W -Wwrite-strings -Wno-unused -Wno-long-long \
-                     -pedantic 
+                     -pedantic $(EXTRA_OPTIONS)
 
 ifeq ($(OS),HP-UX)
   CompileCommonOpts := -D_REENTRANT -D_HPUX_SOURCE
