@@ -436,7 +436,14 @@ void TreePatternNode::print(std::ostream &OS) const {
   case MVT::isFP : OS << ":isFP"; break;
   case MVT::isUnknown: ; /*OS << ":?";*/ break;
   case MVT::iPTR:  OS << ":iPTR"; break;
-  default:  OS << ":" << getTypeNum(0); break;
+  default: {
+    std::string VTName = llvm::getName(getTypeNum(0));
+    // Strip off MVT:: prefix if present.
+    if (VTName.substr(0,5) == "MVT::")
+      VTName = VTName.substr(5);
+    OS << ":" << VTName;
+    break;
+  }
   }
 
   if (!isLeaf()) {
