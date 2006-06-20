@@ -590,6 +590,7 @@ are possible tag values;</p>
   DW_TAG_structure_type = 19
   DW_TAG_union_type = 23
   DW_TAG_vector_type = 259
+  DW_TAG_subroutine_type = 46
 </pre>
 
 <p>The vector flag indicates that an array type is a native packed vector.</p>
@@ -609,6 +610,10 @@ for the set.</p>
 href="#format_basic_type">basic</a>, <a href="#format_derived_type">derived</a>
 or <a href="#format_composite_type">composite</a> type descriptors, each
 representing a field member of the structure or union.</p>
+
+<p>The the first member of subroutine (tag = <tt>DW_TAG_subroutine_type</tt>)
+types is the type of the return value for the subroutine.  The remaining
+elements are the formal arguments to the subroutine.</p>
 
 <p><a href="#format_composite_type">Composite type</a> location can be
 determined from the compile unit and line number.  The size, alignment and
