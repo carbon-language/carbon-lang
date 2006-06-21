@@ -588,24 +588,76 @@ static void ReadPrologFiles(Preprocessor &PP, std::vector<char> &Buf) {
 // Preprocessed output mode.
 //===----------------------------------------------------------------------===//
 
+static unsigned EModeCurLine;
+static std::string EModeCurFilename;
+static Preprocessor *EModePP;
+static bool EmodeEmittedTokensOnThisLine;
+
+static void MoveToLine(unsigned LineNo) {
+  // If this line is "close enough" to the original line, just print newlines,
+  // otherwise print a #line directive.
+  if (LineNo-EModeCurLine < 8) {
+    for (; EModeCurLine != LineNo; ++EModeCurLine)
+      std::cout << "\n";
+  } else {
+    if (EmodeEmittedTokensOnThisLine) {
+      std::cout << "\n";
+      EmodeEmittedTokensOnThisLine = false;
+    }
+    
+    std::cout << "# " << LineNo << " " << EModeCurFilename;
+
+    // FIXME: calculate system file right.
+    std::cout << " 3";
+
+    std::cout << "\n";
+    EModeCurLine = LineNo;
+  } 
+}
+
+/// HandleFileChange - Whenever the preprocessor enters or exits a #include file
+/// it invokes this handler.  Update our conception of the current 
+static void HandleFileChange(SourceLocation Loc, bool EnteringFile) {
+  SourceManager &SourceMgr = EModePP->getSourceManager();
+
+  // If we are entering a new #include, make sure to skip ahead to the line the
+  // #include directive was at.
+  if (EnteringFile) {
+    SourceLocation IncludeLoc = SourceMgr.getIncludeLoc(Loc.getFileID());
+    MoveToLine(SourceMgr.getLineNumber(IncludeLoc));
+  }
+  
+  EModeCurLine = SourceMgr.getLineNumber(Loc);
+  // FIXME: escape filename right.
+  EModeCurFilename = '"' + SourceMgr.getSourceName(Loc) + '"';
+  
+  if (EmodeEmittedTokensOnThisLine) {
+    std::cout << "\n";
+    EmodeEmittedTokensOnThisLine = false;
+  }
+  std::cout << "# " << EModeCurLine << " " << EModeCurFilename;
+  if (EnteringFile) 
+    std::cout << " 1";
+  else
+    std::cout << " 2";
+  
+  // FIXME: calculate system file right.
+  std::cout << " 3";
+    
+  std::cout << "\n";
+}
+
+
 /// HandleFirstTokOnLine - When emitting a preprocessed file in -E mode, this
 /// is called for the first token on each new line.
-static void HandleFirstTokOnLine(LexerToken &Tok, Preprocessor &PP,
-                                 unsigned &CurLine) {
+static void HandleFirstTokOnLine(LexerToken &Tok, Preprocessor &PP) {
   // Figure out what line we went to and insert the appropriate number of
   // newline characters.
   unsigned LineNo = PP.getSourceManager().getLineNumber(Tok.getLocation());
   
-  // If this line is "close enough" to the original line, just print newlines,
-  // otherwise print a #line directive.
-  if (LineNo-CurLine < 8) {
-    for (; CurLine != LineNo; ++CurLine)
-      std::cout << "\n";
-  } else {
-    // FIXME: filename too.
-    std::cout << "\n# " << LineNo << "\n";
-    CurLine = LineNo;
-  }
+  // Move to the specified line.
+  MoveToLine(LineNo);
+
   
   // Print out space characters so that the first token on a line is
   // indented for easy reading.
@@ -630,7 +682,12 @@ static void HandleFirstTokOnLine(LexerToken &Tok, Preprocessor &PP,
 void DoPrintPreprocessedInput(Preprocessor &PP) {
   LexerToken Tok;
   char Buffer[256];
-  unsigned CurLine = 1;
+  EModeCurLine = 0;
+  EModeCurFilename = "\"<uninit>\"";
+  PP.setFileChangeHandler(HandleFileChange);
+  EModePP = &PP;
+  EmodeEmittedTokensOnThisLine = false;
+  
   do {
     PP.Lex(Tok);
 
@@ -640,7 +697,7 @@ void DoPrintPreprocessedInput(Preprocessor &PP) {
     // FIXME: For some tests, this fails just because there is no col# info from
     // macro expansions!
     if (Tok.isAtStartOfLine()) {
-      HandleFirstTokOnLine(Tok, PP, CurLine);
+      HandleFirstTokOnLine(Tok, PP);
     } else if (Tok.hasLeadingSpace()) {
       std::cout << ' ';
     }
@@ -652,6 +709,7 @@ void DoPrintPreprocessedInput(Preprocessor &PP) {
     } else {
       std::cout << PP.getSpelling(Tok);
     }
+    EmodeEmittedTokensOnThisLine = true;
   } while (Tok.getKind() != tok::eof);
   std::cout << "\n";
 }

@@ -87,6 +87,13 @@ class Preprocessor {
   std::vector<DirectoryLookup> SearchDirs;
   unsigned SystemDirIdx;
   bool NoCurDirSearch;
+
+  /// FileChangeHandler - This callback is invoked whenever a source file is
+  /// entered or exited.  The SourceLocation indicates the new location, and
+  /// EnteringFile indicates whether this is because we are entering a new
+  /// #include'd file (when true) or whether we're exiting one because we ran
+  /// off the end (when false).
+  void (*FileChangeHandler)(SourceLocation Loc, bool EnteringFile);
   
   enum {
     /// MaxIncludeStackDepth - Maximum depth of #includes.
@@ -103,7 +110,6 @@ class Preprocessor {
   
   /// CurLexer - This is the current top of the stack that we're lexing from if
   /// not expanding a macro.  One of CurLexer and CurMacroExpander must be null.
-  ///
   Lexer *CurLexer;
   
   /// CurDirLookup - The next DirectoryLookup structure to search for a file if
@@ -184,6 +190,16 @@ public:
     SystemDirIdx = systemDirIdx;
     NoCurDirSearch = noCurDirSearch;
   }
+  
+  /// setFileChangeHandler - Set the callback invoked whenever a source file is
+  /// entered or exited.  The SourceLocation indicates the new location, and
+  /// EnteringFile indicates whether this is because we are entering a new
+  /// #include'd file (when true) or whether we're exiting one because we ran
+  /// off the end (when false).
+  void setFileChangeHandler(void (*Handler)(SourceLocation, bool)) {
+    FileChangeHandler = Handler;
+  }
+  
   
   /// getIdentifierInfo - Return information about the specified preprocessor
   /// identifier token.  The version of this method that takes two character
@@ -302,7 +318,7 @@ public:
   /// HandleEndOfFile - This callback is invoked when the lexer hits the end of
   /// the current file.  This either returns the EOF token or pops a level off
   /// the include stack and keeps going.
-  void HandleEndOfFile(LexerToken &Result);
+  void HandleEndOfFile(LexerToken &Result, bool isEndOfMacro = false);
   
   /// HandleEndOfMacro - This callback is invoked when the lexer hits the end of
   /// the current macro line.

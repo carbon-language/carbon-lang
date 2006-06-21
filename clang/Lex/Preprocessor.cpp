@@ -55,10 +55,13 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
   NumEnteredSourceFiles = NumMacroExpanded = NumFastMacroExpanded = 0;
   MaxIncludeStackDepth = MaxMacroStackDepth = 0;
   NumSkipped = 0;
-      
+    
   // Macro expansion is enabled.
   DisableMacroExpansion = false;
   SkippingContents = false;
+
+  // There is no file-change handler yet.
+  FileChangeHandler = 0;
 }
 
 Preprocessor::~Preprocessor() {
@@ -342,6 +345,10 @@ void Preprocessor::EnterSourceFile(unsigned FileID,
   
   CurLexer         = new Lexer(Buffer, FileID, *this);
   CurNextDirLookup = NextDir;
+  
+  // Notify the client, if desired, that we are in a new source file.
+  if (FileChangeHandler)
+    FileChangeHandler(CurLexer->getSourceLocation(CurLexer->BufferStart), true);
 }
 
 /// EnterMacro - Add a Macro to the top of the include stack and start lexing
@@ -464,7 +471,7 @@ void Preprocessor::HandleIdentifier(LexerToken &Identifier) {
 /// HandleEndOfFile - This callback is invoked when the lexer hits the end of
 /// the current file.  This either returns the EOF token or pops a level off
 /// the include stack and keeps going.
-void Preprocessor::HandleEndOfFile(LexerToken &Result) {
+void Preprocessor::HandleEndOfFile(LexerToken &Result, bool isEndOfMacro) {
   assert(!CurMacroExpander &&
          "Ending a file when currently in a macro!");
   
@@ -488,6 +495,12 @@ void Preprocessor::HandleEndOfFile(LexerToken &Result) {
     CurLexer         = IncludeStack.back().TheLexer;
     CurNextDirLookup = IncludeStack.back().TheDirLookup;
     IncludeStack.pop_back();
+
+    // Notify the client, if desired, that we are in a new source file.
+    if (FileChangeHandler && !isEndOfMacro)
+      FileChangeHandler(CurLexer->getSourceLocation(CurLexer->BufferPtr),
+                        false);
+    
     return Lex(Result);
   }
   
@@ -519,7 +532,7 @@ void Preprocessor::HandleEndOfMacro(LexerToken &Result) {
   } else {
     CurMacroExpander = 0;
     // Handle this like a #include file being popped off the stack.
-    return HandleEndOfFile(Result);
+    return HandleEndOfFile(Result, true);
   }
 }
 
