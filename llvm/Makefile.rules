@@ -981,56 +981,40 @@ ifeq ($(OS),HP-UX)
   DISABLE_AUTO_DEPENDENCIES=1
 endif
 
+ifdef SHARED_LIBRARY
+PIC_FLAG = "(PIC)"
+MAYBE_PIC_Compile.CXX = $(LTCompile.CXX)
+MAYBE_PIC_Compile.C = $(LTCompile.C)
+else
+MAYBE_PIC_Compile.CXX = $(Compile.CXX)
+MAYBE_PIC_Compile.C = $(Compile.C)
+endif
+
 # Provide rule sets for when dependency generation is enabled
 ifndef DISABLE_AUTO_DEPENDENCIES
 
 #---------------------------------------------------------
 # Create .lo files in the ObjDir directory from the .cpp and .c files...
 #---------------------------------------------------------
-ifdef SHARED_LIBRARY
 
 $(ObjDir)/%.lo $(ObjDir)/%.o: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
-	$(Echo) "Compiling $*.cpp for $(BuildMode) build (PIC)"
-	$(Verb) if $(LTCompile.CXX) -MD -MT $@ -MP -MF $(ObjDir)/$*.LACXXd $< -o $@ ;\
-	then $(MV) -f "$(ObjDir)/$*.LACXXd" "$(ObjDir)/$*.d"; \
-	else $(RM) -f "$(ObjDir)/$*.LACXXd"; exit 1; fi
+	$(Echo) "Compiling $*.cpp for $(BuildMode) build " $(PIC_FLAG)
+	$(Verb) if $(MAYBE_PIC_Compile.CXX) -MD -MT $@ -MP -MF $(ObjDir)/$*.LACXXd $< -o $@ ;\
+	  then $(MV) -f "$(ObjDir)/$*.LACXXd" "$(ObjDir)/$*.d"; \
+	  else $(RM) -f "$(ObjDir)/$*.LACXXd"; exit 1; fi
 
 $(ObjDir)/%.lo $(ObjDir)/%.o: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
-	$(Echo) "Compiling $*.cc for $(BuildMode) build (PIC)"
-	$(Verb) if $(LTCompile.CXX) -MD -MT $@ -MP -MF $(ObjDir)/$*.LACXXd $< -o $@ ;\
+	$(Echo) "Compiling $*.cc for $(BuildMode) build" $(PIC_FLAG)
+	$(Verb) if $(MAYBE_PIC_Compile.CXX) -MD -MT $@ -MP -MF $(ObjDir)/$*.LACXXd $< -o $@ ;\
 	then $(MV) -f "$(ObjDir)/$*.LACXXd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.LACXXd"; exit 1; fi
 
 $(ObjDir)/%.lo $(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
-	$(Echo) "Compiling $*.c for $(BuildMode) build (PIC)"
-	$(Verb) if $(LTCompile.C) -MD -MT $@ -MP -MF $(ObjDir)/$*.LACd $< -o $@ ; \
+	$(Echo) "Compiling $*.c for $(BuildMode) build" $(PIC_FLAG)
+	$(Verb) if $(MAYBE_PIC_Compile.C) -MD -MT $@ -MP -MF $(ObjDir)/$*.LACd $< -o $@ ; \
 	then $(MV) -f "$(ObjDir)/$*.LACd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.LACd"; exit 1; fi
 
-#---------------------------------------------------------
-# Create .o files in the ObjDir directory from the .cpp and .c files...
-#---------------------------------------------------------
-else
-
-$(ObjDir)/%.o: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
-	$(Echo) "Compiling $*.cpp for $(BuildMode) build"
-	$(Verb) if $(Compile.CXX) -MD -MT $@ -MP -MF $(ObjDir)/$*.CXXd $< -o $@ ; \
-	then $(MV) -f "$(ObjDir)/$*.CXXd" "$(ObjDir)/$*.d"; \
-	else $(RM) -f "$(ObjDir)/$*.CXXd"; exit 1; fi
-
-$(ObjDir)/%.o: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
-	$(Echo) "Compiling $*.cc for $(BuildMode) build"
-	$(Verb) if $(Compile.CXX) -MD -MT $@ -MP -MF $(ObjDir)/$*.CXXd $< -o $@ ; \
-	then $(MV) -f "$(ObjDir)/$*.CXXd" "$(ObjDir)/$*.d"; \
-	else $(RM) -f "$(ObjDir)/$*.CXXd"; exit 1; fi
-
-$(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
-	$(Echo) "Compiling $*.c for $(BuildMode) build"
-	$(Verb) if $(Compile.C) -MD -MT $@ -MP -MF $(ObjDir)/$*.Cd $< -o $@ ; \
-	then $(MV) -f "$(ObjDir)/$*.Cd" "$(ObjDir)/$*.d"; \
-	else $(RM) -f "$(ObjDir)/$*.Cd"; exit 1; fi
-
-endif
 
 ## Rules for building preprocessed (.i/.ii) outputs.
 $(BuildMode)/%.ii: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
@@ -1074,34 +1058,17 @@ $(ObjDir)/%.ll: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 # Provide alternate rule sets if dependencies are disabled
 else
 
-ifdef SHARED_LIBRARY
-
 $(ObjDir)/%.lo $(ObjDir)/%.o: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
-	$(Echo) "Compiling $*.cpp for $(BuildMode) build (PIC)"
-	$(LTCompile.CXX) $< -o $@ 
+	$(Echo) "Compiling $*.cpp for $(BuildMode) build" $(PIC_FLAG)
+	$(MAYBE_PIC_Compile.CXX) $< -o $@ 
 
 $(ObjDir)/%.lo $(ObjDir)/%.o: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
-	$(Echo) "Compiling $*.cc for $(BuildMode) build (PIC)"
-	$(LTCompile.CXX) $< -o $@ 
+	$(Echo) "Compiling $*.cc for $(BuildMode) build" $(PIC_FLAG)
+	$(MAYBE_PIC_Compile.CXX) $< -o $@ 
 
 $(ObjDir)/%.lo $(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
-	$(Echo) "Compiling $*.c for $(BuildMode) build (PIC)"
-	$(LTCompile.C) $< -o $@ 
-
-else
-
-$(ObjDir)/%.o: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
-	$(Echo) "Compiling $*.cpp for $(BuildMode) build"
-	$(Compile.CXX) $< -o $@ 
-
-$(ObjDir)/%.o: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
-	$(Echo) "Compiling $*.cc for $(BuildMode) build"
-	$(Compile.CXX) $< -o $@ 
-
-$(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
-	$(Echo) "Compiling $*.c for $(BuildMode) build"
-	$(Compile.C) $< -o $@ 
-endif
+	$(Echo) "Compiling $*.c for $(BuildMode) build" $(PIC_FLAG)
+	$(MAYBE_PIC_Compile.C) $< -o $@ 
 
 $(ObjDir)/%.ll: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build (bytecode)"
