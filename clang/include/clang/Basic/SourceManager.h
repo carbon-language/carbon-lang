@@ -258,16 +258,22 @@ private:
     
   /// Return the InfoRec structure for the specified FileID.  This is always the
   /// physical reference for the ID.
-  const SrcMgr::InfoRec *getInfoRec(unsigned FileID) const {
-    const SrcMgr::FileIDInfo *FIDInfo = getFIDInfo(FileID);
-
+  const SrcMgr::InfoRec *getInfoRec(const SrcMgr::FileIDInfo *FIDInfo) const {
     // For Macros, the physical loc is specified by the MacroTokenFileID.
     if (FIDInfo->IDType == SrcMgr::FileIDInfo::MacroExpansion)
       FIDInfo = &FileIDs[FIDInfo->u.MacroTokenFileID-1];
     
     return FIDInfo->getNormalBufferInfo();
   }
+  const SrcMgr::InfoRec *getInfoRec(unsigned FileID) const {
+    return getInfoRec(getFIDInfo(FileID));
+  }
   
+  SrcMgr::FileInfo *getFileInfo(const SrcMgr::FileIDInfo *FIDInfo) const {
+    if (const SrcMgr::InfoRec *IR = getInfoRec(FIDInfo))
+      return const_cast<SrcMgr::FileInfo *>(&IR->second);
+    return 0;
+  }
   SrcMgr::FileInfo *getFileInfo(unsigned FileID) const {
     if (const SrcMgr::InfoRec *IR = getInfoRec(FileID))
       return const_cast<SrcMgr::FileInfo *>(&IR->second);

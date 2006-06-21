@@ -159,7 +159,16 @@ unsigned SourceManager::getColumnNumber(SourceLocation IncludePos) const {
 /// line offsets for the SourceBuffer, so this is not cheap: use only when
 /// about to emit a diagnostic.
 unsigned SourceManager::getLineNumber(SourceLocation IncludePos) {
-  FileInfo *FileInfo = getFileInfo(IncludePos.getFileID());
+  unsigned FileID = IncludePos.getFileID();
+  // If this is a macro, we need to get the instantiation location.
+  const SrcMgr::FileIDInfo *FIDInfo = getFIDInfo(FileID);
+  if (FIDInfo->IDType == SrcMgr::FileIDInfo::MacroExpansion) {
+    IncludePos = FIDInfo->IncludeLoc;
+    FileID = IncludePos.getFileID();
+    FIDInfo = getFIDInfo(FileID);
+  }
+
+  FileInfo *FileInfo = getFileInfo(FileID);
   
   // If this is the first use of line information for this buffer, compute the
   /// SourceLineCache for it on demand. 
