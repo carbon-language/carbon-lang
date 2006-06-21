@@ -588,11 +588,49 @@ static void ReadPrologFiles(Preprocessor &PP, std::vector<char> &Buf) {
 // Preprocessed output mode.
 //===----------------------------------------------------------------------===//
 
+/// HandleFirstTokOnLine - When emitting a preprocessed file in -E mode, this
+/// is called for the first token on each new line.
+static void HandleFirstTokOnLine(LexerToken &Tok, Preprocessor &PP,
+                                 unsigned &CurLine) {
+  // Figure out what line we went to and insert the appropriate number of
+  // newline characters.
+  unsigned LineNo = PP.getSourceManager().getLineNumber(Tok.getLocation());
+  
+  // If this line is "close enough" to the original line, just print newlines,
+  // otherwise print a #line directive.
+  if (LineNo-CurLine < 8) {
+    for (; CurLine != LineNo; ++CurLine)
+      std::cout << "\n";
+  } else {
+    // FIXME: filename too.
+    std::cout << "\n# " << LineNo << "\n";
+    CurLine = LineNo;
+  }
+  
+  // Print out space characters so that the first token on a line is
+  // indented for easy reading.
+  unsigned ColNo = 
+    PP.getSourceManager().getColumnNumber(Tok.getLocation());
+  
+  // This hack prevents stuff like:
+  // #define HASH #
+  // HASH define foo bar
+  // From having the # character end up at column 1, which makes it so it
+  // is not handled as a #define next time through the preprocessor if in
+  // -fpreprocessed mode.
+  if (ColNo <= 1 && Tok.getKind() == tok::hash)
+    std::cout << ' ';
+  
+  // Otherwise, indent the appropriate number of spaces.
+  for (; ColNo > 1; --ColNo)
+    std::cout << ' ';
+}
+
 /// DoPrintPreprocessedInput - This implements -E mode.
 void DoPrintPreprocessedInput(Preprocessor &PP) {
   LexerToken Tok;
   char Buffer[256];
-  bool isFirstToken = true;
+  unsigned CurLine = 1;
   do {
     PP.Lex(Tok);
 
@@ -602,29 +640,10 @@ void DoPrintPreprocessedInput(Preprocessor &PP) {
     // FIXME: For some tests, this fails just because there is no col# info from
     // macro expansions!
     if (Tok.isAtStartOfLine()) {
-      if (!isFirstToken)
-        std::cout << "\n";
-      // Print out space characters so that the first token on a line is
-      // indented for easy reading.
-      unsigned ColNo = 
-        PP.getSourceManager().getColumnNumber(Tok.getLocation());
-      
-      // This hack prevents stuff like:
-      // #define HASH #
-      // HASH define foo bar
-      // From having the # character end up at column 1, which makes it so it
-      // is not handled as a #define next time through the preprocessor if in
-      // -fpreprocessed mode.
-      if (ColNo <= 1 && Tok.getKind() == tok::hash)
-        std::cout << ' ';
-      
-      for (; ColNo > 1; --ColNo)
-        std::cout << ' ';
-      
+      HandleFirstTokOnLine(Tok, PP, CurLine);
     } else if (Tok.hasLeadingSpace()) {
       std::cout << ' ';
     }
-    isFirstToken = false;    
     
     if (Tok.getLength() < 256) {
       unsigned Len = PP.getSpelling(Tok, Buffer);
