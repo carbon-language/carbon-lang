@@ -580,3 +580,42 @@ SDOperand AlphaTargetLowering::CustomPromoteOperation(SDOperand Op,
   // The code in LowerOperation already handles i32 vaarg
   return LowerOperation(Op, DAG);
 }
+
+
+//Inline Asm
+
+/// getConstraintType - Given a constraint letter, return the type of
+/// constraint it is for this target.
+AlphaTargetLowering::ConstraintType 
+AlphaTargetLowering::getConstraintType(char ConstraintLetter) const {
+  switch (ConstraintLetter) {
+  default: break;
+  case 'f':
+    return C_RegisterClass;
+  }  
+  return TargetLowering::getConstraintType(ConstraintLetter);
+}
+
+std::vector<unsigned> AlphaTargetLowering::
+getRegClassForInlineAsmConstraint(const std::string &Constraint,
+                                  MVT::ValueType VT) const {
+  if (Constraint.size() == 1) {
+    switch (Constraint[0]) {
+    default: break;  // Unknown constriant letter
+    case 'f': 
+      return make_vector<unsigned>(Alpha::F0 , Alpha::F1 , Alpha::F2 ,
+				   Alpha::F3 , Alpha::F4 , Alpha::F5 , 
+				   Alpha::F6 , Alpha::F7 , Alpha::F8 , 
+				   Alpha::F9 , Alpha::F10, Alpha::F11, 
+                                   Alpha::F12, Alpha::F13, Alpha::F14, 
+				   Alpha::F15, Alpha::F16, Alpha::F17, 
+				   Alpha::F18, Alpha::F19, Alpha::F20, 
+				   Alpha::F21, Alpha::F22, Alpha::F23, 
+                                   Alpha::F24, Alpha::F25, Alpha::F26, 
+				   Alpha::F27, Alpha::F28, Alpha::F29, 
+				   Alpha::F30, Alpha::F31, 0);
+    }
+  }
+  
+  return std::vector<unsigned>();
+}

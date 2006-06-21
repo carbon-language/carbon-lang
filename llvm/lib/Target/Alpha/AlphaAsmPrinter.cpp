@@ -59,6 +59,9 @@ namespace {
     bool runOnMachineFunction(MachineFunction &F);
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);
+
+    bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
+                         unsigned AsmVariant, const char *ExtraCode);
   };
 } // end of anonymous namespace
 
@@ -263,5 +266,14 @@ bool AlphaAsmPrinter::doFinalization(Module &M) {
     }
 
   AsmPrinter::doFinalization(M);
+  return false;
+}
+
+/// PrintAsmOperand - Print out an operand for an inline asm expression.
+///
+bool AlphaAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
+                                    unsigned AsmVariant, 
+                                    const char *ExtraCode) {
+  printOperand(MI, OpNo);
   return false;
 }

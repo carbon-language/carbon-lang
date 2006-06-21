@@ -15,6 +15,7 @@
 #ifndef LLVM_TARGET_ALPHA_ALPHAISELLOWERING_H
 #define LLVM_TARGET_ALPHA_ALPHAISELLOWERING_H
 
+#include "llvm/ADT/VectorExtras.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "Alpha.h"
@@ -76,6 +77,12 @@ namespace llvm {
     LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg, unsigned CC,
                 bool isTailCall, SDOperand Callee, ArgListTy &Args,
                 SelectionDAG &DAG);
+
+    ConstraintType getConstraintType(char ConstraintLetter) const;
+
+    std::vector<unsigned> 
+      getRegClassForInlineAsmConstraint(const std::string &Constraint,
+                                        MVT::ValueType VT) const;
 
     void restoreGP(MachineBasicBlock* BB);
     void restoreRA(MachineBasicBlock* BB);
