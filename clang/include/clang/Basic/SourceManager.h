@@ -226,6 +226,11 @@ public:
   /// line offsets for the SourceBuffer, so this is not cheap: use only when
   /// about to emit a diagnostic.
   unsigned getLineNumber(SourceLocation Loc);
+  
+  /// getSourceName - This method returns the name of the file or buffer that
+  /// the SourceLocation specifies.  This can be modified with #line directives,
+  /// etc.
+  std::string getSourceName(SourceLocation Loc);
 
   /// getFileEntryForFileID - Return the FileEntry record for the specified
   /// FileID if one exists.
@@ -262,7 +267,6 @@ private:
     // For Macros, the physical loc is specified by the MacroTokenFileID.
     if (FIDInfo->IDType == SrcMgr::FileIDInfo::MacroExpansion)
       FIDInfo = &FileIDs[FIDInfo->u.MacroTokenFileID-1];
-    
     return FIDInfo->getNormalBufferInfo();
   }
   const SrcMgr::InfoRec *getInfoRec(unsigned FileID) const {

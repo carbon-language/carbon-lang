@@ -133,18 +133,18 @@ const char *SourceManager::getCharacterData(SourceLocation SL) const {
 /// getColumnNumber - Return the column # for the specified include position.
 /// this is significantly cheaper to compute than the line number.  This returns
 /// zero if the column number isn't known.
-unsigned SourceManager::getColumnNumber(SourceLocation IncludePos) const {
-  unsigned FileID = IncludePos.getFileID();
+unsigned SourceManager::getColumnNumber(SourceLocation Loc) const {
+  unsigned FileID = Loc.getFileID();
   if (FileID == 0) return 0;
   
   // If this is a macro, we need to get the instantiation location.
   const SrcMgr::FileIDInfo *FIDInfo = getFIDInfo(FileID);
   if (FIDInfo->IDType == SrcMgr::FileIDInfo::MacroExpansion) {
-    IncludePos = FIDInfo->IncludeLoc;
-    FileID = IncludePos.getFileID();
+    Loc = FIDInfo->IncludeLoc;
+    FileID = Loc.getFileID();
   }
   
-  unsigned FilePos = getFilePos(IncludePos);
+  unsigned FilePos = getFilePos(Loc);
   const SourceBuffer *Buffer = getBuffer(FileID);
   const char *Buf = Buffer->getBufferStart();
 
@@ -154,17 +154,35 @@ unsigned SourceManager::getColumnNumber(SourceLocation IncludePos) const {
   return FilePos-LineStart+1;
 }
 
+/// getSourceName - This method returns the name of the file or buffer that
+/// the SourceLocation specifies.  This can be modified with #line directives,
+/// etc.
+std::string SourceManager::getSourceName(SourceLocation Loc) {
+  unsigned FileID = Loc.getFileID();
+  if (FileID == 0) return "";
+  
+  // If this is a macro, we need to get the instantiation location.
+  const SrcMgr::FileIDInfo *FIDInfo = getFIDInfo(FileID);
+  if (FIDInfo->IDType == SrcMgr::FileIDInfo::MacroExpansion) {
+    Loc = FIDInfo->IncludeLoc;
+    FIDInfo = getFIDInfo(Loc.getFileID());
+  }
+  
+  return getFileInfo(FIDInfo)->Buffer->getBufferIdentifier();
+}
+
+
 /// getLineNumber - Given a SourceLocation, return the physical line number
 /// for the position indicated.  This requires building and caching a table of
 /// line offsets for the SourceBuffer, so this is not cheap: use only when
 /// about to emit a diagnostic.
-unsigned SourceManager::getLineNumber(SourceLocation IncludePos) {
-  unsigned FileID = IncludePos.getFileID();
+unsigned SourceManager::getLineNumber(SourceLocation Loc) {
+  unsigned FileID = Loc.getFileID();
   // If this is a macro, we need to get the instantiation location.
   const SrcMgr::FileIDInfo *FIDInfo = getFIDInfo(FileID);
   if (FIDInfo->IDType == SrcMgr::FileIDInfo::MacroExpansion) {
-    IncludePos = FIDInfo->IncludeLoc;
-    FileID = IncludePos.getFileID();
+    Loc = FIDInfo->IncludeLoc;
+    FileID = Loc.getFileID();
     FIDInfo = getFIDInfo(FileID);
   }
 
@@ -226,7 +244,7 @@ unsigned SourceManager::getLineNumber(SourceLocation IncludePos) {
   // type approaches to make good (tight?) initial guesses based on the
   // assumption that all lines are the same average size.
   unsigned *Pos = std::lower_bound(SourceLineCache, SourceLineCache+NumLines,
-                                   getFilePos(IncludePos)+1);
+                                   getFilePos(Loc)+1);
   return Pos-SourceLineCache;
 }
 
