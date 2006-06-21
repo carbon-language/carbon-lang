@@ -408,7 +408,7 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
 
   case X86II::RawFrm:
     MCE.emitByte(BaseOpcode);
-    if (MI.getNumOperands() == 1) {
+    if (Desc.numOperands == 1) {
       const MachineOperand &MO = MI.getOperand(0);
       if (MO.isMachineBasicBlock()) {
         emitPCRelativeBlockAddress(MO.getMachineBasicBlock());
