@@ -40,9 +40,10 @@ protected:
                  const std::string &Name = "", Instruction *InsertBefore = 0);
   AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy, unsigned Align,
                  const std::string &Name, BasicBlock *InsertAtEnd);
-
 public:
-
+  // Out of line virtual method, so the vtable, etc has a home.
+  virtual ~AllocationInst();
+  
   /// isArrayAllocation - Return true if there is an allocation size parameter
   /// to the allocation instruction that is not 1.
   ///

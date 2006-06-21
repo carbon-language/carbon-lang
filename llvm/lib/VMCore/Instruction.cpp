@@ -43,6 +43,12 @@ Instruction::Instruction(const Type *ty, unsigned it, Use *Ops, unsigned NumOps,
   InsertAtEnd->getInstList().push_back(this);
 }
 
+// Out of line virtual method, so the vtable, etc has a home.
+Instruction::~Instruction() {
+  assert(Parent == 0 && "Instruction still linked in the program!");
+}
+
+
 void Instruction::setOpcode(unsigned opc) {
   setValueType(Value::InstructionVal + opc);
 }

@@ -61,6 +61,10 @@ struct StatRecord {
 
 static std::vector<StatRecord> *AccumStats = 0;
 
+// Out of line virtual dtor, to give the vtable etc a home.
+StatisticBase::~StatisticBase() {
+}
+
 // Print information when destroyed, iff command line option is specified
 void StatisticBase::destroy() const {
   if (Enabled && hasSomeData()) {

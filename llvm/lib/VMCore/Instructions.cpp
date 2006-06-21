@@ -34,6 +34,8 @@ void CallSite::setCallingConv(unsigned CC) {
 }
 
 
+
+
 //===----------------------------------------------------------------------===//
 //                            TerminatorInst Class
 //===----------------------------------------------------------------------===//
@@ -48,6 +50,13 @@ TerminatorInst::TerminatorInst(Instruction::TermOps iType,
   : Instruction(Type::VoidTy, iType, Ops, NumOps, "", IAE) {
 }
 
+// Out of line virtual method, so the vtable, etc has a home.
+TerminatorInst::~TerminatorInst() {
+}
+
+// Out of line virtual method, so the vtable, etc has a home.
+UnaryInstruction::~UnaryInstruction() {
+}
 
 
 //===----------------------------------------------------------------------===//
@@ -530,6 +539,10 @@ AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
                      Name, InsertAtEnd), Alignment(Align) {
   assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
   assert(Ty != Type::VoidTy && "Cannot allocate void!");
+}
+
+// Out of line virtual method, so the vtable, etc has a home.
+AllocationInst::~AllocationInst() {
 }
 
 bool AllocationInst::isArrayAllocation() const {

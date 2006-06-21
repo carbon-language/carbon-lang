@@ -52,11 +52,9 @@ protected:
   Instruction(const Type *Ty, unsigned iType, Use *Ops, unsigned NumOps,
               const std::string &Name, BasicBlock *InsertAtEnd);
 public:
-
-  ~Instruction() {
-    assert(Parent == 0 && "Instruction still linked in the program!");
-  }
-
+  // Out of line virtual method, so the vtable, etc has a home.
+  ~Instruction();
+  
   /// mayWriteToMemory - Return true if this instruction may modify memory.
   ///
   virtual bool mayWriteToMemory() const { return false; }

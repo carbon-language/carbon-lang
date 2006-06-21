@@ -37,7 +37,8 @@ protected:
   StatisticBase(const char *name, const char *desc) : Name(name), Desc(desc) {
     ++NumStats;  // Keep track of how many stats are created...
   }
-  virtual ~StatisticBase() {}
+  // Out of line virtual dtor, to give the vtable etc a home.
+  virtual ~StatisticBase();
 
   // destroy - Called by subclass dtor so that we can still invoke virtual
   // functions on the subclass.

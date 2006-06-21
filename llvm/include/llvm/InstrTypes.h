@@ -43,6 +43,9 @@ protected:
                  const std::string &Name, BasicBlock *InsertAtEnd)
     : Instruction(Ty, iType, Ops, NumOps, Name, InsertAtEnd) {}
 
+  // Out of line virtual method, so the vtable, etc has a home.
+  ~TerminatorInst();
+
   /// Virtual methods - Terminators should overload these and provide inline
   /// overrides of non-V methods.
   virtual BasicBlock *getSuccessorV(unsigned idx) const = 0;
@@ -96,6 +99,8 @@ protected:
     : Instruction(Ty, iType, &Op, 1, Name, IAE), Op(V, this) {
   }
 public:
+  // Out of line virtual method, so the vtable, etc has a home.
+  ~UnaryInstruction();
 
   // Transparently provide more efficient getOperand methods.
   Value *getOperand(unsigned i) const {
