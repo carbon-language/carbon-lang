@@ -25,12 +25,12 @@ namespace llvm {
 
 // Hi_32 - This function returns the high 32 bits of a 64 bit value.
 inline unsigned Hi_32(uint64_t Value) {
-  return (unsigned)(Value >> 32);
+  return static_cast<unsigned>(Value >> 32);
 }
 
 // Lo_32 - This function returns the low 32 bits of a 64 bit value.
 inline unsigned Lo_32(uint64_t Value) {
-  return (unsigned)Value;
+  return static_cast<unsigned>(Value);
 }
 
 // is?Type - these functions produce optimal testing for integer data types.
