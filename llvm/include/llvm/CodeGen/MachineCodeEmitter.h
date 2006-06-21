@@ -129,7 +129,8 @@ public:
     if (Alignment == 0) Alignment = 1;
     // Move the current buffer ptr up to the specified alignment.
     CurBufferPtr =
-      (unsigned char*)(((intptr_t)CurBufferPtr+Alignment-1) & ~(Alignment-1));
+      (unsigned char*)(((intptr_t)CurBufferPtr+Alignment-1) &
+                       ~(intptr_t)(Alignment-1));
     if (CurBufferPtr > BufferEnd)
       CurBufferPtr = BufferEnd;
   }
