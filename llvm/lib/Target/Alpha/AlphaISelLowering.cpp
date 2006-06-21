@@ -210,9 +210,13 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
         std::cerr << "Unknown Type " << ObjectVT << "\n";
         abort();
       case MVT::f64:
-      case MVT::f32:
         args_float[ArgNo] = AddLiveIn(MF, args_float[ArgNo], 
 				      &Alpha::F8RCRegClass);
+        ArgVal = DAG.getCopyFromReg(Root, args_float[ArgNo], ObjectVT);
+        break;
+      case MVT::f32:
+        args_float[ArgNo] = AddLiveIn(MF, args_float[ArgNo], 
+				      &Alpha::F4RCRegClass);
         ArgVal = DAG.getCopyFromReg(Root, args_float[ArgNo], ObjectVT);
         break;
       case MVT::i64:
