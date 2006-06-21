@@ -34,12 +34,24 @@ inline unsigned Lo_32(uint64_t Value) {
 }
 
 // is?Type - these functions produce optimal testing for integer data types.
-inline bool isInt8  (int Value)     { return (  signed char )Value == Value; }
-inline bool isUInt8 (int Value)     { return (unsigned char )Value == Value; }
-inline bool isInt16 (int Value)     { return (  signed short)Value == Value; }
-inline bool isUInt16(int Value)     { return (unsigned short)Value == Value; }
-inline bool isInt32 (int64_t Value) { return (  signed int  )Value == Value; }
-inline bool isUInt32(int64_t Value) { return (unsigned int  )Value == Value; }
+inline bool isInt8  (int Value)     { 
+  return static_cast<signed char>(Value) == Value; 
+}
+inline bool isUInt8 (int Value)     { 
+  return static_cast<unsigned char>(Value) == Value; 
+}
+inline bool isInt16 (int Value)     { 
+  return static_cast<signed short>(Value) == Value; 
+}
+inline bool isUInt16(int Value)     { 
+  return static_cast<unsigned short>(Value) == Value; 
+}
+inline bool isInt32 (int64_t Value) { 
+  return static_cast<signed int>(Value) == Value; 
+}
+inline bool isUInt32(int64_t Value) { 
+  return static_cast<unsigned int>(Value) == Value; 
+}
 
 // isMask_32 - This function returns true if the argument is a sequence of ones  
 // starting at the least significant bit with the remainder zero (32 bit version.)
