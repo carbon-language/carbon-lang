@@ -67,7 +67,9 @@ namespace SrcMgr {
   ///      the SourceLocation's offset from the start of the buffer.
   ///   2. Macro Expansions.  These indicate that the logical location is
   ///      totally different than the physical location.  The logical source
-  ///      location is specified with an explicit SourceLocation object.
+  ///      location is specified by the IncludeLoc.  The physical location is
+  ///      the FilePos of the token's SourceLocation combined with the FileID
+  ///      from MacroTokenFileID.
   ///
   struct FileIDInfo {
     enum FileIDType {
@@ -76,7 +78,7 @@ namespace SrcMgr {
     };
     
     /// The type of this FileID.
-    FileIDType IDType : 2;
+    FileIDType IDType;
     
     /// IncludeLoc - The location of the #include that brought in this file.
     /// This SourceLocation object has a FileId of 0 for the main file.
@@ -96,9 +98,9 @@ namespace SrcMgr {
         const InfoRec *Info;
       } NormalBuffer;
       
-      /// MacroTokenLoc - This is the raw encoding of a SourceLocation which
-      /// indicates the physical location of the macro token.
-      unsigned MacroTokenLoc;
+      /// MacroTokenFileID - This is the File ID that contains the characters
+      /// that make up the expanded token.
+      unsigned MacroTokenFileID;
     } u;
     
     /// getNormalBuffer - Return a FileIDInfo object for a normal buffer
@@ -114,13 +116,14 @@ namespace SrcMgr {
     }
     
     /// getMacroExpansion - Return a FileID for a macro expansion.  IL specifies
-    /// the instantiation location, 
+    /// the instantiation location, and MacroFID specifies the FileID that the
+    /// token's characters come from. 
     static FileIDInfo getMacroExpansion(SourceLocation IL,
-                                        SourceLocation TokenLoc) {
+                                        unsigned MacroFID) {
       FileIDInfo X;
       X.IDType = MacroExpansion;
       X.IncludeLoc = IL;
-      X.u.MacroTokenLoc = TokenLoc.getRawEncoding();
+      X.u.MacroTokenFileID = MacroFID;
       return X;
     }
     
@@ -172,10 +175,15 @@ public:
     return createFileID(createMemBufferInfoRec(Buffer), SourceLocation());
   }
   
+  /// createFileIDForMacroExp - Return a new FileID for a macro expansion at
+  /// SourcePos, where the macro token character came from PhysicalFileID.
+  ///
+  unsigned createFileIDForMacroExp(SourceLocation SourcePos, 
+                                   unsigned PhysicalFileID);
   
   /// getBuffer - Return the buffer for the specified FileID.
   ///
-  const SourceBuffer *getBuffer(unsigned FileID) {
+  const SourceBuffer *getBuffer(unsigned FileID) const {
     return getFileInfo(FileID)->Buffer;
   }
   
@@ -187,12 +195,18 @@ public:
   }
   
   /// getFilePos - This (efficient) method returns the offset from the start of
-  /// the file that the specified SourceLocation represents.
+  /// the file that the specified SourceLocation represents.  This returns the
+  /// location of the physical character data, not the logical file position.
   unsigned getFilePos(SourceLocation IncludePos) const {
-    assert(IncludePos.getFileID()-1 < FileIDs.size() && "Invalid FileID!");
+    const SrcMgr::FileIDInfo *FIDInfo = getFIDInfo(IncludePos.getFileID());
+
+    // For Macros, the physical loc is specified by the MacroTokenFileID.
+    if (FIDInfo->IDType == SrcMgr::FileIDInfo::MacroExpansion)
+      FIDInfo = &FileIDs[FIDInfo->u.MacroTokenFileID-1];
+    
     // If this file has been split up into chunks, factor in the chunk number
     // that the FileID references.
-    unsigned ChunkNo=FileIDs[IncludePos.getFileID()-1].getNormalBufferChunkNo();
+    unsigned ChunkNo = FIDInfo->getNormalBufferChunkNo();
     return IncludePos.getRawFilePos() +
            (ChunkNo << SourceLocation::FilePosBits);
   }
@@ -237,9 +251,21 @@ private:
   /// buffer.  This does no caching.
   const SrcMgr::InfoRec *createMemBufferInfoRec(const SourceBuffer *Buffer);
 
-  const SrcMgr::InfoRec *getInfoRec(unsigned FileID) const {
+  const SrcMgr::FileIDInfo *getFIDInfo(unsigned FileID) const {
     assert(FileID-1 < FileIDs.size() && "Invalid FileID!");
-    return FileIDs[FileID-1].getNormalBufferInfo();
+    return &FileIDs[FileID-1];
+  }
+    
+  /// Return the InfoRec structure for the specified FileID.  This is always the
+  /// physical reference for the ID.
+  const SrcMgr::InfoRec *getInfoRec(unsigned FileID) const {
+    const SrcMgr::FileIDInfo *FIDInfo = getFIDInfo(FileID);
+
+    // For Macros, the physical loc is specified by the MacroTokenFileID.
+    if (FIDInfo->IDType == SrcMgr::FileIDInfo::MacroExpansion)
+      FIDInfo = &FileIDs[FIDInfo->u.MacroTokenFileID-1];
+    
+    return FIDInfo->getNormalBufferInfo();
   }
   
   SrcMgr::FileInfo *getFileInfo(unsigned FileID) const {

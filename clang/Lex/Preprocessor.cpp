@@ -349,8 +349,6 @@ void Preprocessor::EnterSourceFile(unsigned FileID,
 void Preprocessor::EnterMacro(LexerToken &Tok) {
   IdentifierTokenInfo *Identifier = Tok.getIdentifierInfo();
   MacroInfo &MI = *Identifier->getMacroInfo();
-  SourceLocation ExpandLoc = Tok.getLocation();
-  //unsigned MacroID = SourceMgr.getMacroID(Identifier, ExpandLoc);
   if (CurLexer) {
     IncludeStack.push_back(IncludeStackInfo(CurLexer, CurNextDirLookup));
     CurLexer         = 0;
@@ -367,7 +365,6 @@ void Preprocessor::EnterMacro(LexerToken &Tok) {
   // Mark the macro as currently disabled, so that it is not recursively
   // expanded.
   MI.DisableMacro();
-  
   CurMacroExpander = new MacroExpander(Tok, *this);
 }
 

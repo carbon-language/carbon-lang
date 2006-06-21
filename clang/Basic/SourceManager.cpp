@@ -110,6 +110,16 @@ unsigned SourceManager::createFileID(const InfoRec *File,
   return Result;
 }
 
+/// createFileIDForMacroExp - Return a new FileID for a macro expansion at
+/// SourcePos, where the macro token character came from PhysicalFileID.
+///
+unsigned SourceManager::createFileIDForMacroExp(SourceLocation SourcePos, 
+                                                unsigned PhysicalFileID) {
+  FileIDs.push_back(FileIDInfo::getMacroExpansion(SourcePos, PhysicalFileID));
+  return FileIDs.size();
+}
+
+
 /// getCharacterData - Return a pointer to the start of the specified location
 /// in the appropriate SourceBuffer.  This returns null if it cannot be
 /// computed (e.g. invalid SourceLocation).
@@ -126,9 +136,16 @@ const char *SourceManager::getCharacterData(SourceLocation SL) const {
 unsigned SourceManager::getColumnNumber(SourceLocation IncludePos) const {
   unsigned FileID = IncludePos.getFileID();
   if (FileID == 0) return 0;
-  FileInfo *FileInfo = getFileInfo(FileID);
+  
+  // If this is a macro, we need to get the instantiation location.
+  const SrcMgr::FileIDInfo *FIDInfo = getFIDInfo(FileID);
+  if (FIDInfo->IDType == SrcMgr::FileIDInfo::MacroExpansion) {
+    IncludePos = FIDInfo->IncludeLoc;
+    FileID = IncludePos.getFileID();
+  }
+  
   unsigned FilePos = getFilePos(IncludePos);
-  const SourceBuffer *Buffer = FileInfo->Buffer;
+  const SourceBuffer *Buffer = getBuffer(FileID);
   const char *Buf = Buffer->getBufferStart();
 
   unsigned LineStart = FilePos;
@@ -211,6 +228,19 @@ void SourceManager::PrintStats() const {
   std::cerr << FileInfos.size() << " files mapped, " << MemBufferInfos.size()
             << " mem buffers mapped, " << FileIDs.size() 
             << " file ID's allocated.\n";
+  unsigned NumBuffers = 0, NumMacros = 0;
+  for (unsigned i = 0, e = FileIDs.size(); i != e; ++i) {
+    if (FileIDs[i].IDType == FileIDInfo::NormalBuffer)
+      ++NumBuffers;
+    else if (FileIDs[i].IDType == FileIDInfo::MacroExpansion)
+      ++NumMacros;
+    else
+      assert(0 && "Unknown FileID!");
+  }
+  std::cerr << "  " << NumBuffers << " normal buffer FileID's, "
+            << NumMacros << " macro expansion FileID's.\n";
+    
+  
   
   unsigned NumLineNumsComputed = 0;
   unsigned NumFileBytesMapped = 0;
