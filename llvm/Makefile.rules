@@ -1015,21 +1015,6 @@ $(ObjDir)/%.lo $(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 	then $(MV) -f "$(ObjDir)/$*.LACd" "$(ObjDir)/$*.d"; \
 	else $(RM) -f "$(ObjDir)/$*.LACd"; exit 1; fi
 
-
-## Rules for building preprocessed (.i/.ii) outputs.
-$(BuildMode)/%.ii: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
-	$(Echo) "Compiling $*.cpp for $(BuildMode) build to .ii file"
-	$(Verb) $(Preprocess.CXX) $< -o $@
-
-$(BuildMode)/%.ii: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
-	$(Echo) "Compiling $*.cc for $(BuildMode) build to .ii file"
-	$(Verb) $(Preprocess.CXX) $< -o $@
-
- $(BuildMode)/%.i: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
-	$(Echo) "Compiling $*.c for $(BuildMode) build to .i file"
-	$(Verb) $(Preprocess.C) $< -o $@
-
-
 #---------------------------------------------------------
 # Create .bc files in the ObjDir directory from .cpp .cc and .c files...
 #---------------------------------------------------------
@@ -1083,6 +1068,34 @@ $(ObjDir)/%.ll: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(BCCompile.C) $< -o $@ -S -emit-llvm
 
 endif
+
+
+## Rules for building preprocessed (.i/.ii) outputs.
+$(BuildMode)/%.ii: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
+	$(Echo) "Compiling $*.cpp for $(BuildMode) build to .ii file"
+	$(Verb) $(Preprocess.CXX) $< -o $@
+
+$(BuildMode)/%.ii: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
+	$(Echo) "Compiling $*.cc for $(BuildMode) build to .ii file"
+	$(Verb) $(Preprocess.CXX) $< -o $@
+
+ $(BuildMode)/%.i: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
+	$(Echo) "Compiling $*.c for $(BuildMode) build to .i file"
+	$(Verb) $(Preprocess.C) $< -o $@
+
+
+$(ObjDir)/%.s: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
+	$(Echo) "Compiling $*.cpp to asm for $(BuildMode) build" $(PIC_FLAG)
+	$(MAYBE_PIC_Compile.CXX) $< -o $@ -S
+
+$(ObjDir)/%.s: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
+	$(Echo) "Compiling $*.cc to asm for $(BuildMode) build" $(PIC_FLAG)
+	$(MAYBE_PIC_Compile.CXX) $< -o $@ -S
+
+$(ObjDir)/%.s: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
+	$(Echo) "Compiling $*.c to asm for $(BuildMode) build" $(PIC_FLAG)
+	$(MAYBE_PIC_Compile.C) $< -o $@ -S
+
 
 # make the C and C++ compilers strip debug info out of bytecode libraries.
 ifdef DEBUG_RUNTIME
