@@ -591,6 +591,7 @@ AlphaTargetLowering::getConstraintType(char ConstraintLetter) const {
   switch (ConstraintLetter) {
   default: break;
   case 'f':
+  case 'r':
     return C_RegisterClass;
   }  
   return TargetLowering::getConstraintType(ConstraintLetter);
@@ -614,6 +615,19 @@ getRegClassForInlineAsmConstraint(const std::string &Constraint,
                                    Alpha::F24, Alpha::F25, Alpha::F26, 
 				   Alpha::F27, Alpha::F28, Alpha::F29, 
 				   Alpha::F30, Alpha::F31, 0);
+    case 'r': 
+      return make_vector<unsigned>(Alpha::R0 , Alpha::R1 , Alpha::R2 , 
+				   Alpha::R3 , Alpha::R4 , Alpha::R5 , 
+				   Alpha::R6 , Alpha::R7 , Alpha::R8 , 
+				   Alpha::R9 , Alpha::R10, Alpha::R11, 
+                                   Alpha::R12, Alpha::R13, Alpha::R14, 
+				   Alpha::R15, Alpha::R16, Alpha::R17, 
+				   Alpha::R18, Alpha::R19, Alpha::R20, 
+				   Alpha::R21, Alpha::R22, Alpha::R23, 
+                                   Alpha::R24, Alpha::R25, Alpha::R26, 
+				   Alpha::R27, Alpha::R28, Alpha::R29, 
+				   Alpha::R30, Alpha::R31, 0);
+ 
     }
   }
   
