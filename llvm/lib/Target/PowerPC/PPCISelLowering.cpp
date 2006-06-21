@@ -733,8 +733,8 @@ static SDOperand LowerVASTART(SDOperand Op, SelectionDAG &DAG,
                      Op.getOperand(1), Op.getOperand(2));
 }
 
-static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
-                                       int &VarArgsFrameIndex) {
+static SDOperand LowerFORMAL_ARGUMENTS_32(SDOperand Op, SelectionDAG &DAG,
+                                          int &VarArgsFrameIndex) {
   // TODO: add description of PPC stack frame format, or at least some docs.
   //
   MachineFunction &MF = DAG.getMachineFunction();
@@ -881,6 +881,11 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
   std::vector<MVT::ValueType> RetVT(Op.Val->value_begin(),
                                     Op.Val->value_end());
   return DAG.getNode(ISD::MERGE_VALUES, RetVT, ArgValues);
+}
+
+static SDOperand LowerFORMAL_ARGUMENTS_64(SDOperand Op, SelectionDAG &DAG,
+                                          int &VarArgsFrameIndex) {
+  return LowerFORMAL_ARGUMENTS_32(Op, DAG, VarArgsFrameIndex);
 }
 
 /// isCallCompatibleAddress - Return the immediate to use if the specified
@@ -1165,13 +1170,15 @@ static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
   case 3: {
     MVT::ValueType ArgVT = Op.getOperand(1).getValueType();
     unsigned ArgReg;
-    if (MVT::isVector(ArgVT))
-      ArgReg = PPC::V2;
-    else if (MVT::isInteger(ArgVT))
+    if (ArgVT == MVT::i32) {
       ArgReg = PPC::R3;
-    else {
-      assert(MVT::isFloatingPoint(ArgVT));
+    } else if (ArgVT == MVT::i64) {
+      ArgReg = PPC::X3;
+    } else if (MVT::isFloatingPoint(ArgVT)) {
       ArgReg = PPC::F1;
+    } else {
+      assert(MVT::isVector(ArgVT));
+      ArgReg = PPC::V2;
     }
     
     Copy = DAG.getCopyToReg(Op.getOperand(0), ArgReg, Op.getOperand(1),
@@ -2128,8 +2135,11 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::JumpTable:          return LowerJumpTable(Op, DAG);
   case ISD::SETCC:              return LowerSETCC(Op, DAG);
   case ISD::VASTART:            return LowerVASTART(Op, DAG, VarArgsFrameIndex);
-  case ISD::FORMAL_ARGUMENTS:   return LowerFORMAL_ARGUMENTS(Op, DAG,
-                                                             VarArgsFrameIndex);
+  case ISD::FORMAL_ARGUMENTS:
+    if (getPointerTy() == MVT::i32)
+      return LowerFORMAL_ARGUMENTS_32(Op, DAG, VarArgsFrameIndex);
+    else
+      return LowerFORMAL_ARGUMENTS_64(Op, DAG, VarArgsFrameIndex);
   case ISD::CALL:               return LowerCALL(Op, DAG);
   case ISD::RET:                return LowerRET(Op, DAG);
     
