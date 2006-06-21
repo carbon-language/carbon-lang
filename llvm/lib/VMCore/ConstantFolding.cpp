@@ -86,6 +86,7 @@ namespace {
 // This class also provides subclasses with typesafe implementations of methods
 // so that don't have to do type casting.
 //
+namespace {
 template<class ArgType, class SubClassName>
 class TemplateRules : public ConstRules {
 
@@ -210,7 +211,7 @@ class TemplateRules : public ConstRules {
 public:
   virtual ~TemplateRules() {}
 };
-
+}  // end anonymous namespace
 
 
 //===----------------------------------------------------------------------===//
@@ -219,12 +220,14 @@ public:
 //
 // EmptyRules provides a concrete base class of ConstRules that does nothing
 //
+namespace {
 struct EmptyRules : public TemplateRules<Constant, EmptyRules> {
   static Constant *EqualTo(const Constant *V1, const Constant *V2) {
     if (V1 == V2) return ConstantBool::True;
     return 0;
   }
 };
+}  // end anonymous namespace
 
 
 
@@ -234,6 +237,7 @@ struct EmptyRules : public TemplateRules<Constant, EmptyRules> {
 //
 // BoolRules provides a concrete base class of ConstRules for the 'bool' type.
 //
+namespace {
 struct BoolRules : public TemplateRules<ConstantBool, BoolRules> {
 
   static Constant *LessThan(const ConstantBool *V1, const ConstantBool *V2) {
@@ -275,6 +279,7 @@ struct BoolRules : public TemplateRules<ConstantBool, BoolRules> {
   DEF_CAST(Double, ConstantFP  , double)
 #undef DEF_CAST
 };
+}  // end anonymous namespace
 
 
 //===----------------------------------------------------------------------===//
@@ -284,6 +289,7 @@ struct BoolRules : public TemplateRules<ConstantBool, BoolRules> {
 // NullPointerRules provides a concrete base class of ConstRules for null
 // pointers.
 //
+namespace {
 struct NullPointerRules : public TemplateRules<ConstantPointerNull,
                                                NullPointerRules> {
   static Constant *EqualTo(const Constant *V1, const Constant *V2) {
@@ -328,6 +334,7 @@ struct NullPointerRules : public TemplateRules<ConstantPointerNull,
     return ConstantPointerNull::get(PTy);
   }
 };
+}  // end anonymous namespace
 
 //===----------------------------------------------------------------------===//
 //                          ConstantPackedRules Class
@@ -349,6 +356,7 @@ static Constant *EvalVectorOp(const ConstantPacked *V1,
 /// PackedTypeRules provides a concrete base class of ConstRules for
 /// ConstantPacked operands.
 ///
+namespace {
 struct ConstantPackedRules
   : public TemplateRules<ConstantPacked, ConstantPackedRules> {
   
@@ -397,6 +405,7 @@ struct ConstantPackedRules
     return 0;
   }
 };
+}  // end anonymous namespace
 
 
 //===----------------------------------------------------------------------===//
@@ -407,8 +416,10 @@ struct ConstantPackedRules
 /// PackedType operands, where both operands are not ConstantPacked.  The usual
 /// cause for this is that one operand is a ConstantAggregateZero.
 ///
+namespace {
 struct GeneralPackedRules : public TemplateRules<Constant, GeneralPackedRules> {
 };
+}  // end anonymous namespace
 
 
 //===----------------------------------------------------------------------===//
@@ -419,6 +430,7 @@ struct GeneralPackedRules : public TemplateRules<Constant, GeneralPackedRules> {
 // different types.  This allows the C++ compiler to automatically generate our
 // constant handling operations in a typesafe and accurate manner.
 //
+namespace {
 template<class ConstantClass, class BuiltinType, Type **Ty, class SuperClass>
 struct DirectRules : public TemplateRules<ConstantClass, SuperClass> {
   static Constant *Add(const ConstantClass *V1, const ConstantClass *V2) {
@@ -478,6 +490,7 @@ struct DirectRules : public TemplateRules<ConstantClass, SuperClass> {
   DEF_CAST(Double, ConstantFP  , double)
 #undef DEF_CAST
 };
+}  // end anonymous namespace
 
 
 //===----------------------------------------------------------------------===//
@@ -487,6 +500,7 @@ struct DirectRules : public TemplateRules<ConstantClass, SuperClass> {
 // DirectIntRules provides implementations of functions that are valid on
 // integer types, but not all types in general.
 //
+namespace {
 template <class ConstantClass, class BuiltinType, Type **Ty>
 struct DirectIntRules
   : public DirectRules<ConstantClass, BuiltinType, Ty,
@@ -534,6 +548,7 @@ struct DirectIntRules
     return ConstantClass::get(*Ty, R);
   }
 };
+}  // end anonymous namespace
 
 
 //===----------------------------------------------------------------------===//
@@ -543,6 +558,7 @@ struct DirectIntRules
 /// DirectFPRules provides implementations of functions that are valid on
 /// floating point types, but not all types in general.
 ///
+namespace {
 template <class ConstantClass, class BuiltinType, Type **Ty>
 struct DirectFPRules
   : public DirectRules<ConstantClass, BuiltinType, Ty,
@@ -561,6 +577,7 @@ struct DirectFPRules
     return ConstantClass::get(*Ty, R);
   }
 };
+}  // end anonymous namespace
 
 
 /// ConstRules::get - This method returns the constant rules implementation that
