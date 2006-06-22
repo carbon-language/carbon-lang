@@ -677,25 +677,46 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
       CurLexer->ParsingPreprocessorDirective = false;
       continue;
     }
-    
+
     // If the first letter isn't i or e, it isn't intesting to us.  We know that
     // this is safe in the face of spelling differences, because there is no way
     // to spell an i/e in a strange way that is another letter.  Skipping this
-    // allows us to avoid computing the spelling for #define/#undef and other
-    // common directives.
-    // FIXME: This should use a bit in the identifier information!
-    char FirstChar = SourceMgr.getCharacterData(Tok.getLocation())[0];
+    // allows us to avoid looking up the identifier info for #define/#undef and
+    // other common directives.
+    const char *RawCharData = SourceMgr.getCharacterData(Tok.getLocation());
+    char FirstChar = RawCharData[0];
     if (FirstChar >= 'a' && FirstChar <= 'z' && 
         FirstChar != 'i' && FirstChar != 'e') {
       CurLexer->ParsingPreprocessorDirective = false;
       continue;
     }
     
-    // Strip out trigraphs and embedded newlines.
-    std::string Directive = getSpelling(Tok);
-    FirstChar = Directive[0];
+    // Get the identifier name without trigraphs or embedded newlines.  Note
+    // that we can't use Tok.getIdentifierInfo() because its lookup is disabled
+    // when skipping.
+    // TODO: could do this with zero copies in the no-clean case by using
+    // strncmp below.
+    char Directive[20];
+    unsigned IdLen;
+    if (!Tok.needsCleaning() && Tok.getLength() < 20) {
+      IdLen = Tok.getLength();
+      memcpy(Directive, RawCharData, IdLen);
+      Directive[IdLen] = 0;
+    } else {
+      std::string DirectiveStr = getSpelling(Tok);
+      IdLen = DirectiveStr.size();
+      if (IdLen >= 20) {
+        CurLexer->ParsingPreprocessorDirective = false;
+        continue;
+      }
+      memcpy(Directive, &DirectiveStr[0], IdLen);
+      Directive[IdLen] = 0;
+    }
+    
     if (FirstChar == 'i' && Directive[1] == 'f') {
-      if (Directive == "if" || Directive == "ifdef" || Directive == "ifndef") {
+      if ((IdLen == 2) ||   // "if"
+          (IdLen == 5 && !strcmp(Directive+2, "def")) ||   // "ifdef"
+          (IdLen == 6 && !strcmp(Directive+2, "ndef"))) {  // "ifndef"
         // We know the entire #if/#ifdef/#ifndef block will be skipped, don't
         // bother parsing the condition.
         DiscardUntilEndOfDirective();
@@ -704,7 +725,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
                                        /*fnddelse*/false);
       }
     } else if (FirstChar == 'e') {
-      if (Directive == "endif") {
+      if (IdLen == 5 && !strcmp(Directive+1, "ndif")) {  // "endif"
         CheckEndOfDirective("#endif");
         PPConditionalInfo CondInfo;
         CondInfo.WasSkipping = true; // Silence bogus warning.
@@ -714,7 +735,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
         // If we popped the outermost skipping block, we're done skipping!
         if (!CondInfo.WasSkipping)
           break;
-      } else if (Directive == "else") {
+      } else if (IdLen == 4 && !strcmp(Directive+1, "lse")) { // "else".
         // #else directive in a skipping conditional.  If not in some other
         // skipping conditional, and if #else hasn't already been seen, enter it
         // as a non-skipping conditional.
@@ -733,7 +754,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
           CondInfo.FoundNonSkip = true;
           break;
         }
-      } else if (Directive == "elif") {
+      } else if (IdLen == 4 && !strcmp(Directive+1, "lif")) {  // "elif".
         PPConditionalInfo &CondInfo = CurLexer->peekConditionalLevel();
 
         bool ShouldEnter;
