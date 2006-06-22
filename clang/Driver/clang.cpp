@@ -592,6 +592,7 @@ static unsigned EModeCurLine;
 static std::string EModeCurFilename;
 static Preprocessor *EModePP;
 static bool EmodeEmittedTokensOnThisLine;
+static DirectoryLookup::DirType EmodeFileType =DirectoryLookup::NormalHeaderDir;
 
 static void MoveToLine(unsigned LineNo) {
   // If this line is "close enough" to the original line, just print newlines,
@@ -607,9 +608,11 @@ static void MoveToLine(unsigned LineNo) {
     
     std::cout << "# " << LineNo << " " << EModeCurFilename;
 
-    // FIXME: calculate system file right.
-    std::cout << " 3";
-
+    if (EmodeFileType == DirectoryLookup::SystemHeaderDir)
+      std::cout << " 3";
+    else if (EmodeFileType == DirectoryLookup::ExternCSystemHeaderDir)
+      std::cout << " 3 4";
+    
     std::cout << "\n";
     EModeCurLine = LineNo;
   } 
@@ -617,7 +620,8 @@ static void MoveToLine(unsigned LineNo) {
 
 /// HandleFileChange - Whenever the preprocessor enters or exits a #include file
 /// it invokes this handler.  Update our conception of the current 
-static void HandleFileChange(SourceLocation Loc, bool EnteringFile) {
+static void HandleFileChange(SourceLocation Loc, bool EnteringFile,
+                             DirectoryLookup::DirType FileType) {
   SourceManager &SourceMgr = EModePP->getSourceManager();
 
   // If we are entering a new #include, make sure to skip ahead to the line the
@@ -630,6 +634,7 @@ static void HandleFileChange(SourceLocation Loc, bool EnteringFile) {
   EModeCurLine = SourceMgr.getLineNumber(Loc);
   // FIXME: escape filename right.
   EModeCurFilename = '"' + SourceMgr.getSourceName(Loc) + '"';
+  EmodeFileType = FileType;
   
   if (EmodeEmittedTokensOnThisLine) {
     std::cout << "\n";
@@ -641,8 +646,10 @@ static void HandleFileChange(SourceLocation Loc, bool EnteringFile) {
   else
     std::cout << " 2";
   
-  // FIXME: calculate system file right.
-  std::cout << " 3";
+  if (FileType == DirectoryLookup::SystemHeaderDir)
+    std::cout << " 3";
+  else if (FileType == DirectoryLookup::ExternCSystemHeaderDir)
+    std::cout << " 3 4";
     
   std::cout << "\n";
 }

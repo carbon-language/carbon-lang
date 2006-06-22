@@ -48,7 +48,7 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
                            FileManager &FM, SourceManager &SM) 
   : Diags(diags), Features(opts), FileMgr(FM), SourceMgr(SM),
     SystemDirIdx(0), NoCurDirSearch(false),
-    CurLexer(0), CurNextDirLookup(0), CurMacroExpander(0) {
+    CurLexer(0), CurDirLookup(0), CurMacroExpander(0) {
   // Clear stats.
   NumDirectives = NumIncluded = NumDefined = NumUndefined = NumPragma = 0;
   NumIf = NumElse = NumEndif = 0;
@@ -267,11 +267,11 @@ unsigned Preprocessor::getSpelling(const LexerToken &Tok, char *Buffer) const {
 /// return null on failure.  isAngled indicates whether the file reference is
 /// for system #include's or not (i.e. using <> instead of "").
 const FileEntry *Preprocessor::LookupFile(const std::string &Filename, 
-                                          bool isSystem,
+                                          bool isAngled,
                                           const DirectoryLookup *FromDir,
-                                          const DirectoryLookup *&NextDir) {
+                                          const DirectoryLookup *&CurDir) {
   assert(CurLexer && "Cannot enter a #include inside a macro expansion!");
-  NextDir = 0;
+  CurDir = 0;
   
   // If 'Filename' is absolute, check to see if it exists and no searching.
   // FIXME: this should be a sys::Path interface, this doesn't handle things
@@ -286,23 +286,28 @@ const FileEntry *Preprocessor::LookupFile(const std::string &Filename,
   
   // Step #0, unless disabled, check to see if the file is in the #includer's
   // directory.  This search is not done for <> headers.
-  if (!isSystem && !FromDir && !NoCurDirSearch) {
+  if (!isAngled && !FromDir && !NoCurDirSearch) {
     const FileEntry *CurFE = 
       SourceMgr.getFileEntryForFileID(CurLexer->getCurFileID());
     if (CurFE) {
+      // Concatenate the requested file onto the directory.
+      // FIXME: should be in sys::Path.
       if (const FileEntry *FE = 
             FileMgr.getFile(CurFE->getDir()->getName()+"/"+Filename)) {
-        if (CurNextDirLookup)
-          NextDir = CurNextDirLookup;
+        if (CurDirLookup)
+          CurDir = CurDirLookup;
         else
-          NextDir = &SearchDirs[0];
+          CurDir = 0;
+        
+        // This file is a system header or C++ unfriendly if the old file is.
+        getFileInfo(FE).DirInfo = getFileInfo(CurFE).DirInfo;
         return FE;
       }
     }
   }
   
   // If this is a system #include, ignore the user #include locs.
-  unsigned i = isSystem ? SystemDirIdx : 0;
+  unsigned i = isAngled ? SystemDirIdx : 0;
 
   // If this is a #include_next request, start searching after the directory the
   // file was found in.
@@ -315,7 +320,10 @@ const FileEntry *Preprocessor::LookupFile(const std::string &Filename,
     // FIXME: should be in sys::Path.
     if (const FileEntry *FE = 
           FileMgr.getFile(SearchDirs[i].getDir()->getName()+"/"+Filename)) {
-      NextDir = &SearchDirs[i+1];
+      CurDir = &SearchDirs[i];
+      
+      // This file is a system header or C++ unfriendly if the dir is.
+      getFileInfo(FE).DirInfo = CurDir->getDirCharacteristic();
       return FE;
     }
   }
@@ -328,12 +336,12 @@ const FileEntry *Preprocessor::LookupFile(const std::string &Filename,
 /// start lexing tokens from it instead of the current buffer.  Return true
 /// on failure.
 void Preprocessor::EnterSourceFile(unsigned FileID,
-                                   const DirectoryLookup *NextDir) {
+                                   const DirectoryLookup *CurDir) {
   ++NumEnteredSourceFiles;
   
   // Add the current lexer to the include stack.
   if (CurLexer) {
-    IncludeStack.push_back(IncludeStackInfo(CurLexer, CurNextDirLookup));
+    IncludeStack.push_back(IncludeStackInfo(CurLexer, CurDirLookup));
   } else {
     assert(CurMacroExpander == 0 && "Cannot #include a file inside a macro!");
   }
@@ -343,12 +351,21 @@ void Preprocessor::EnterSourceFile(unsigned FileID,
   
   const SourceBuffer *Buffer = SourceMgr.getBuffer(FileID);
   
-  CurLexer         = new Lexer(Buffer, FileID, *this);
-  CurNextDirLookup = NextDir;
+  CurLexer     = new Lexer(Buffer, FileID, *this);
+  CurDirLookup = CurDir;
   
   // Notify the client, if desired, that we are in a new source file.
-  if (FileChangeHandler)
-    FileChangeHandler(CurLexer->getSourceLocation(CurLexer->BufferStart), true);
+  if (FileChangeHandler) {
+    DirectoryLookup::DirType FileType = DirectoryLookup::NormalHeaderDir;
+    
+    // Get the file entry for the current file.
+    if (const FileEntry *FE = 
+          SourceMgr.getFileEntryForFileID(CurLexer->getCurFileID()))
+      FileType = getFileInfo(FE).DirInfo;
+    
+    FileChangeHandler(CurLexer->getSourceLocation(CurLexer->BufferStart), true,
+                      FileType);
+  }
 }
 
 /// EnterMacro - Add a Macro to the top of the include stack and start lexing
@@ -357,9 +374,9 @@ void Preprocessor::EnterMacro(LexerToken &Tok) {
   IdentifierTokenInfo *Identifier = Tok.getIdentifierInfo();
   MacroInfo &MI = *Identifier->getMacroInfo();
   if (CurLexer) {
-    IncludeStack.push_back(IncludeStackInfo(CurLexer, CurNextDirLookup));
-    CurLexer         = 0;
-    CurNextDirLookup = 0;
+    IncludeStack.push_back(IncludeStackInfo(CurLexer, CurDirLookup));
+    CurLexer     = 0;
+    CurDirLookup = 0;
   } else if (CurMacroExpander) {
     MacroStack.push_back(CurMacroExpander);
   }
@@ -492,14 +509,22 @@ void Preprocessor::HandleEndOfFile(LexerToken &Result, bool isEndOfMacro) {
   if (!IncludeStack.empty()) {
     // We're done with the #included file.
     delete CurLexer;
-    CurLexer         = IncludeStack.back().TheLexer;
-    CurNextDirLookup = IncludeStack.back().TheDirLookup;
+    CurLexer     = IncludeStack.back().TheLexer;
+    CurDirLookup = IncludeStack.back().TheDirLookup;
     IncludeStack.pop_back();
 
     // Notify the client, if desired, that we are in a new source file.
-    if (FileChangeHandler && !isEndOfMacro)
+    if (FileChangeHandler && !isEndOfMacro) {
+      DirectoryLookup::DirType FileType = DirectoryLookup::NormalHeaderDir;
+      
+      // Get the file entry for the current file.
+      if (const FileEntry *FE = 
+            SourceMgr.getFileEntryForFileID(CurLexer->getCurFileID()))
+        FileType = getFileInfo(FE).DirInfo;
+
       FileChangeHandler(CurLexer->getSourceLocation(CurLexer->BufferPtr),
-                        false);
+                        false, FileType);
+    }
     
     return Lex(Result);
   }
@@ -923,8 +948,8 @@ void Preprocessor::HandleIncludeDirective(LexerToken &IncludeTok,
     return Diag(FilenameTok, diag::err_pp_empty_filename);
   
   // Search include directories.
-  const DirectoryLookup *NextDir;
-  const FileEntry *File = LookupFile(Filename, isAngled, LookupFrom, NextDir);
+  const DirectoryLookup *CurDir;
+  const FileEntry *File = LookupFile(Filename, isAngled, LookupFrom, CurDir);
   if (File == 0)
     return Diag(FilenameTok, diag::err_pp_file_not_found);
   
@@ -953,7 +978,7 @@ void Preprocessor::HandleIncludeDirective(LexerToken &IncludeTok,
     return Diag(FilenameTok, diag::err_pp_file_not_found);
 
   // Finally, if all is good, enter the new file!
-  EnterSourceFile(FileID, NextDir);
+  EnterSourceFile(FileID, CurDir);
 
   // Increment the number of times this file has been included.
   ++FileInfo.NumIncludes;
@@ -967,12 +992,15 @@ void Preprocessor::HandleIncludeNextDirective(LexerToken &IncludeNextTok) {
   // #include_next is like #include, except that we start searching after
   // the current found directory.  If we can't do this, issue a
   // diagnostic.
-  const DirectoryLookup *Lookup = CurNextDirLookup;
+  const DirectoryLookup *Lookup = CurDirLookup;
   if (IncludeStack.empty()) {
     Lookup = 0;
     Diag(IncludeNextTok, diag::pp_include_next_in_primary);
   } else if (Lookup == 0) {
     Diag(IncludeNextTok, diag::pp_include_next_absolute_path);
+  } else {
+    // Start looking up in the next directory.
+    ++Lookup;
   }
   
   return HandleIncludeDirective(IncludeNextTok, Lookup);

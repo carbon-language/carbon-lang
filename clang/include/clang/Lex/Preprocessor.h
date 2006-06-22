@@ -93,7 +93,8 @@ class Preprocessor {
   /// EnteringFile indicates whether this is because we are entering a new
   /// #include'd file (when true) or whether we're exiting one because we ran
   /// off the end (when false).
-  void (*FileChangeHandler)(SourceLocation Loc, bool EnteringFile);
+  void (*FileChangeHandler)(SourceLocation Loc, bool EnteringFile,
+                            DirectoryLookup::DirType FileType);
   
   enum {
     /// MaxIncludeStackDepth - Maximum depth of #includes.
@@ -112,9 +113,10 @@ class Preprocessor {
   /// not expanding a macro.  One of CurLexer and CurMacroExpander must be null.
   Lexer *CurLexer;
   
-  /// CurDirLookup - The next DirectoryLookup structure to search for a file if
-  /// CurLexer is non-null.  This allows us to implement #include_next.
-  const DirectoryLookup *CurNextDirLookup;
+  /// CurLookup - The DirectoryLookup structure used to find the current
+  /// FileEntry, if CurLexer is non-null and if applicable.  This allows us to
+  /// implement #include_next and find directory-specific properties.
+  const DirectoryLookup *CurDirLookup;
   
   /// IncludeStack - This keeps track of the stack of files currently #included,
   /// not counting CurLexer.
@@ -139,14 +141,20 @@ class Preprocessor {
   /// PreFileInfo - The preprocessor keeps track of this information for each
   /// file that is #included.
   struct PerFileInfo {
-    // isImport - True if this is a #import'd or #pragma once file.
-    bool isImport;
+    /// isImport - True if this is a #import'd or #pragma once file.
+    bool isImport : 1;
     
-    // NumIncludes - This is the number of times the file has been included
-    // already.
+    /// DirInfo - Keep track of whether this is a system header, and if so,
+    /// whether it is C++ clean or not.  This can be set by the include paths or
+    /// by #pragma gcc system_header.
+    DirectoryLookup::DirType DirInfo : 2;
+    
+    /// NumIncludes - This is the number of times the file has been included
+    /// already.
     unsigned short NumIncludes;
     
-    PerFileInfo() : isImport(false), NumIncludes(0) {}
+    PerFileInfo() : isImport(false), DirInfo(DirectoryLookup::NormalHeaderDir),
+                    NumIncludes(0) {}
   };
   
   /// FileInfo - This contains all of the preprocessor-specific data about files
@@ -196,7 +204,8 @@ public:
   /// EnteringFile indicates whether this is because we are entering a new
   /// #include'd file (when true) or whether we're exiting one because we ran
   /// off the end (when false).
-  void setFileChangeHandler(void (*Handler)(SourceLocation, bool)) {
+  void setFileChangeHandler(void (*Handler)(SourceLocation, bool,
+                                            DirectoryLookup::DirType)) {
     FileChangeHandler = Handler;
   }
   
@@ -239,14 +248,14 @@ public:
   void AddKeywords();
 
   /// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
-  /// return null on failure.  isSystem indicates whether the file reference is
-  /// for system #include's or not.  If successful, this returns 'UsedDir', the
+  /// return null on failure.  isAngled indicates whether the file reference is
+  /// a <> reference.  If successful, this returns 'UsedDir', the
   /// DirectoryLookup member the file was found in, or null if not applicable.
-  /// If FromDir is non-null, the directory search should start with the entry
-  /// after the indicated lookup.  This is used to implement #include_next.
-  const FileEntry *LookupFile(const std::string &Filename, bool isSystem,
+  /// If CurDir is non-null, the file was found in the specified directory
+  /// search location.  This is used to implement #include_next.
+  const FileEntry *LookupFile(const std::string &Filename, bool isAngled,
                               const DirectoryLookup *FromDir,
-                              const DirectoryLookup *&NextDir);
+                              const DirectoryLookup *&CurDir);
   
   /// EnterSourceFile - Add a source file to the top of the include stack and
   /// start lexing tokens from it instead of the current buffer.
