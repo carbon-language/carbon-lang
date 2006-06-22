@@ -54,8 +54,7 @@ namespace {
     void emitPCRelativeValue(unsigned Address);
     void emitGlobalAddressForCall(GlobalValue *GV, bool isTailCall);
     void emitGlobalAddressForPtr(GlobalValue *GV, int Disp = 0);
-    void emitExternalSymbolAddress(const char *ES, bool isPCRelative,
-                                   bool isTailCall);
+    void emitExternalSymbolAddress(const char *ES, bool isPCRelative);
 
     void emitDisplacementField(const MachineOperand *RelocOp, int DispVal);
 
@@ -144,8 +143,7 @@ void Emitter::emitGlobalAddressForPtr(GlobalValue *GV, int Disp /* = 0 */) {
 /// emitExternalSymbolAddress - Arrange for the address of an external symbol to
 /// be emitted to the current location in the function, and allow it to be PC
 /// relative.
-void Emitter::emitExternalSymbolAddress(const char *ES, bool isPCRelative,
-                                        bool isTailCall) {
+void Emitter::emitExternalSymbolAddress(const char *ES, bool isPCRelative) {
   MCE.addRelocation(MachineRelocation::getExtSym(MCE.getCurrentPCOffset(),
           isPCRelative ? X86::reloc_pcrel_word : X86::reloc_absolute_word, ES));
   MCE.emitWordLE(0);
@@ -417,9 +415,7 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
                           Opcode == X86::TAILJMPr || Opcode == X86::TAILJMPm;
         emitGlobalAddressForCall(MO.getGlobal(), isTailCall);
       } else if (MO.isExternalSymbol()) {
-        bool isTailCall = Opcode == X86::TAILJMPd ||
-                          Opcode == X86::TAILJMPr || Opcode == X86::TAILJMPm;
-        emitExternalSymbolAddress(MO.getSymbolName(), true, isTailCall);
+        emitExternalSymbolAddress(MO.getSymbolName(), true);
       } else if (MO.isImmediate()) {
         emitConstant(MO.getImmedValue(), sizeOfImm(Desc));
       } else {
@@ -439,7 +435,7 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
       } else if (MO1.isExternalSymbol()) {
         assert(sizeOfImm(Desc) == 4 &&
                "Don't know how to emit non-pointer values!");
-        emitExternalSymbolAddress(MO1.getSymbolName(), false, false);
+        emitExternalSymbolAddress(MO1.getSymbolName(), false);
       } else if (MO1.isJumpTableIndex()) {
         assert(sizeOfImm(Desc) == 4 &&
                "Don't know how to emit non-pointer values!");
