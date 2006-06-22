@@ -810,40 +810,40 @@ void Preprocessor::HandleDirective(LexerToken &Result) {
   case tok::kw_if:
     return HandleIfDirective(Result);
   case tok::identifier:
-    // Strip out trigraphs and embedded newlines.
-    std::string Directive = getSpelling(Result);
+    // Get the identifier name without trigraphs or embedded newlines.
+    const char *Directive = Result.getIdentifierInfo()->getName();
     bool isExtension = false;
-    switch (Directive.size()) {
+    switch (Result.getIdentifierInfo()->getNameLength()) {
     case 4:
-      if (Directive == "line")
+      if (Directive[0] == 'l' && !strcmp(Directive, "line"))
         ;
-      if (Directive == "elif")
+      if (Directive[0] == 'e' && !strcmp(Directive, "elif"))
         return HandleElifDirective(Result);
-      if (Directive == "sccs") {
+      if (Directive[0] == 's' && !strcmp(Directive, "sccs")) {
         isExtension = true;
         // SCCS is the same as #ident.
       }
       break;
     case 5:
-      if (Directive == "endif")
+      if (Directive[0] == 'e' && !strcmp(Directive, "endif"))
         return HandleEndifDirective(Result);
-      if (Directive == "ifdef")
+      if (Directive[0] == 'i' && !strcmp(Directive, "ifdef"))
         return HandleIfdefDirective(Result, false);
-      if (Directive == "undef")
+      if (Directive[0] == 'u' && !strcmp(Directive, "undef"))
         return HandleUndefDirective(Result);
-      if (Directive == "error")
+      if (Directive[0] == 'e' && !strcmp(Directive, "error"))
         return HandleUserDiagnosticDirective(Result, false);
-      if (Directive == "ident")
+      if (Directive[0] == 'i' && !strcmp(Directive, "ident"))
         isExtension = true;
       break;
     case 6:
-      if (Directive == "define")
+      if (Directive[0] == 'd' && !strcmp(Directive, "define"))
         return HandleDefineDirective(Result);
-      if (Directive == "ifndef")
+      if (Directive[0] == 'i' && !strcmp(Directive, "ifndef"))
         return HandleIfdefDirective(Result, true);
-      if (Directive == "import")
+      if (Directive[0] == 'i' && !strcmp(Directive, "import"))
         return HandleImportDirective(Result);
-      if (Directive == "pragma") {
+      if (Directive[0] == 'p' && !strcmp(Directive, "pragma")) {
         // FIXME: implement #pragma
         ++NumPragma;
 #if 1
@@ -854,26 +854,26 @@ void Preprocessor::HandleDirective(LexerToken &Result) {
         
         return;
 #endif
-      } else if (Directive == "assert") {
+      } else if (Directive[0] == 'a' && !strcmp(Directive, "assert")) {
         isExtension = true;
       }
       break;
     case 7:
-      if (Directive == "include")  // Handle #include.
-        return HandleIncludeDirective(Result);
-      if (Directive == "warning") {
+      if (Directive[0] == 'i' && !strcmp(Directive, "include"))
+        return HandleIncludeDirective(Result);            // Handle #include.
+      if (Directive[0] == 'w' && !strcmp(Directive, "warning")) {
         Diag(Result, diag::ext_pp_warning_directive);
         return HandleUserDiagnosticDirective(Result, true);
       }
       break;
     case 8:
-      if (Directive == "unassert") {
+      if (Directive[0] == 'u' && !strcmp(Directive, "unassert")) {
         isExtension = true;
       }
       break;
     case 12:
-      if (Directive == "include_next") // Handle #include_next.
-        return HandleIncludeNextDirective(Result);
+      if (Directive[0] == 'i' && !strcmp(Directive, "include_next"))
+        return HandleIncludeNextDirective(Result);      // Handle #include_next.
       break;
     }
     break;
