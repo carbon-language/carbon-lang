@@ -39,7 +39,8 @@ class MachineRelocation {
     isResult,         // Relocation has be transformed into its result pointer.
     isGV,             // The Target.GV field is valid.
     isExtSym,         // The Target.ExtSym field is valid.
-    isConstPool,      // The Target.ConstPool field is valid.
+    isConstPool,      // Relocation of constant pool address.
+    isJumpTable,      // Relocation of jump table address.
     isGOTIndex        // The Target.GOTIndex field is valid.
   };
   
@@ -54,7 +55,7 @@ class MachineRelocation {
     void *Result;        // If this has been resolved to a resolved pointer
     GlobalValue *GV;     // If this is a pointer to an LLVM global
     const char *ExtSym;  // If this is a pointer to a named symbol
-    unsigned ConstPool;  // In this is a pointer to a constant pool entry
+    unsigned Index;      // Constant pool / jump table index
     unsigned GOTIndex;   // Index in the GOT of this symbol/global
   } Target;
 
@@ -113,7 +114,24 @@ public:
     Result.AddrType = isConstPool;
     Result.DoesntNeedFnStub = false;
     Result.GOTRelative = false;
-    Result.Target.ConstPool = CPI;
+    Result.Target.Index = CPI;
+    return Result;
+  }
+
+  /// MachineRelocation::getJumpTable - Return a relocation entry for a jump
+  /// table entry.
+  ///
+  static MachineRelocation getJumpTable(intptr_t offset,unsigned RelocationType,
+                                        unsigned JTI, intptr_t cst = 0) {
+    assert((RelocationType & ~63) == 0 && "Relocation type too large!");
+    MachineRelocation Result;
+    Result.Offset = offset;
+    Result.ConstantVal = cst;
+    Result.TargetReloType = RelocationType;
+    Result.AddrType = isJumpTable;
+    Result.DoesntNeedFnStub = false;
+    Result.GOTRelative = false;
+    Result.Target.Index = JTI;
     return Result;
   }
 
@@ -154,6 +172,12 @@ public:
     return AddrType == isConstPool;
   }
 
+  /// isJumpTableIndex - Return true if this is a jump table reference.
+  ///
+  bool isJumpTableIndex() const {
+    return AddrType == isJumpTable;
+  }
+
   /// isGOTRelative - Return true the target wants the index into the GOT of
   /// the symbol rather than the address of the symbol.
   bool isGOTRelative() const {
@@ -187,7 +211,14 @@ public:
   /// the index into the constant pool.
   unsigned getConstantPoolIndex() const {
     assert(isConstantPoolIndex() && "This is not a constant pool reference!");
-    return Target.ConstPool;
+    return Target.Index;
+  }
+
+  /// getJumpTableIndex - If this is a jump table reference, return
+  /// the index into the jump table.
+  unsigned getJumpTableIndex() const {
+    assert(isJumpTableIndex() && "This is not a jump table reference!");
+    return Target.Index;
   }
 
   /// getResultPointer - Once this has been resolved to point to an actual
