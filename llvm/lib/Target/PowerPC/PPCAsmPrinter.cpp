@@ -489,8 +489,6 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 ///
 bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   DW.SetDebugInfo(&getAnalysis<MachineDebugInfo>());
-  // FIXME - should be able to debug coalesced functions.
-  bool IsNormalText = true;
 
   SetupMachineFunction(MF);
   O << "\n\n";
@@ -518,14 +516,13 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
                 ".section __TEXT,__textcoal_nt,coalesced,pure_instructions", F);
     O << "\t.globl\t" << CurrentFnName << "\n";
     O << "\t.weak_definition\t" << CurrentFnName << "\n";
-    IsNormalText = false;
     break;
   }
   EmitAlignment(4, F);
   O << CurrentFnName << ":\n";
 
   // Emit pre-function debug information.
-  DW.BeginFunction(&MF, IsNormalText);
+  DW.BeginFunction(&MF);
 
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();

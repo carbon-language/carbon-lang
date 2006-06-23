@@ -29,8 +29,6 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Let PassManager know we need debug information and relay
   // the MachineDebugInfo address on to DwarfWriter.
   DW.SetDebugInfo(&getAnalysis<MachineDebugInfo>());
-  // FIXME - should be able to debug coalesced functions.
-  bool IsNormalText = true;
 
   SetupMachineFunction(MF);
   O << "\n\n";
@@ -74,14 +72,13 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       SwitchToTextSection("", F);
       O << "\t.weak " << CurrentFnName << "\n";
     }
-    IsNormalText = false;
     break;
   }
   O << CurrentFnName << ":\n";
 
   if (Subtarget->TargetType == X86Subtarget::isDarwin) {
     // Emit pre-function debug information.
-    DW.BeginFunction(&MF, IsNormalText);
+    DW.BeginFunction(&MF);
   }
 
   // Print out code for the function.

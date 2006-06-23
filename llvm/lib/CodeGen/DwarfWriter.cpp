@@ -1446,8 +1446,8 @@ CompileUnit *DwarfWriter::NewCompileUnit(CompileUnitDesc *UnitDesc,
   DIE *Die = new DIE(DW_TAG_compile_unit);
   Die->AddDelta (DW_AT_stmt_list, DW_FORM_data4,  DWLabel("line", 0),
                                                   DWLabel("section_line", 0));
-  Die->AddLabel (DW_AT_high_pc,   DW_FORM_addr,   DWLabel("text_end", 0));
-  Die->AddLabel (DW_AT_low_pc,    DW_FORM_addr,   DWLabel("text_begin", 0));
+//  Die->AddLabel (DW_AT_high_pc,   DW_FORM_addr,   DWLabel("text_end", 0));
+//  Die->AddLabel (DW_AT_low_pc,    DW_FORM_addr,   DWLabel("text_begin", 0));
   Die->AddString(DW_AT_producer,  DW_FORM_string, UnitDesc->getProducer());
   Die->AddUInt  (DW_AT_language,  DW_FORM_data1,  UnitDesc->getLanguage());
   Die->AddString(DW_AT_name,      DW_FORM_string, UnitDesc->getFileName());
@@ -1702,11 +1702,11 @@ void DwarfWriter::EmitInitial() {
   Asm->SwitchToDataSection(DwarfRangesSection, 0);
   EmitLabel("section_ranges", 0);
 
-  Asm->SwitchToDataSection(TextSection, 0);
+  Asm->SwitchToTextSection(TextSection, 0);
   EmitLabel("text_begin", 0);
   Asm->SwitchToDataSection(DataSection, 0);
   EmitLabel("data_begin", 0);
-  
+
   // Emit common frame information.
   EmitInitialDebugFrame();
 }
@@ -2011,76 +2011,86 @@ void DwarfWriter::EmitDebugLines() const {
   
   EmitLabel("line_prolog_end", 0);
   
-  // Emit line information
-  const std::vector<SourceLineInfo *> &LineInfos = DebugInfo->getSourceLines();
-  
-  // Dwarf assumes we start with first line of first source file.
-  unsigned Source = 1;
-  unsigned Line = 1;
-  
-  // Construct rows of the address, source, line, column matrix.
-  for (unsigned i = 0, N = LineInfos.size(); i < N; ++i) {
-    SourceLineInfo *LineInfo = LineInfos[i];
+  // A sequence for each text section.
+  for (unsigned j = 0, M = SectionSourceLines.size(); j < M; ++j) {
+    // Isolate current sections line info.
+    const std::vector<SourceLineInfo *> &LineInfos = SectionSourceLines[j];
     
     if (DwarfVerbose) {
-      unsigned SourceID = LineInfo->getSourceID();
-      const SourceFileInfo &SourceFile = SourceFiles[SourceID];
-      unsigned DirectoryID = SourceFile.getDirectoryID();
       O << "\t"
         << Asm->CommentString << " "
-        << Directories[DirectoryID]
-        << SourceFile.getName() << ":"
-        << LineInfo->getLine() << "\n"; 
+        << "Section "
+        << SectionMap[j + 1].c_str() << "\n";
     }
 
-    // Define the line address.
+    // Dwarf assumes we start with first line of first source file.
+    unsigned Source = 1;
+    unsigned Line = 1;
+    
+    // Construct rows of the address, source, line, column matrix.
+    for (unsigned i = 0, N = LineInfos.size(); i < N; ++i) {
+      SourceLineInfo *LineInfo = LineInfos[i];
+      
+      if (DwarfVerbose) {
+        unsigned SourceID = LineInfo->getSourceID();
+        const SourceFileInfo &SourceFile = SourceFiles[SourceID];
+        unsigned DirectoryID = SourceFile.getDirectoryID();
+        O << "\t"
+          << Asm->CommentString << " "
+          << Directories[DirectoryID]
+          << SourceFile.getName() << ":"
+          << LineInfo->getLine() << "\n"; 
+      }
+
+      // Define the line address.
+      EmitInt8(0); EOL("Extended Op");
+      EmitInt8(4 + 1); EOL("Op size");
+      EmitInt8(DW_LNE_set_address); EOL("DW_LNE_set_address");
+      EmitReference("loc",  LineInfo->getLabelID()); EOL("Location label");
+      
+      // If change of source, then switch to the new source.
+      if (Source != LineInfo->getSourceID()) {
+        Source = LineInfo->getSourceID();
+        EmitInt8(DW_LNS_set_file); EOL("DW_LNS_set_file");
+        EmitULEB128Bytes(Source); EOL("New Source");
+      }
+      
+      // If change of line.
+      if (Line != LineInfo->getLine()) {
+        // Determine offset.
+        int Offset = LineInfo->getLine() - Line;
+        int Delta = Offset - MinLineDelta;
+        
+        // Update line.
+        Line = LineInfo->getLine();
+        
+        // If delta is small enough and in range...
+        if (Delta >= 0 && Delta < (MaxLineDelta - 1)) {
+          // ... then use fast opcode.
+          EmitInt8(Delta - MinLineDelta); EOL("Line Delta");
+        } else {
+          // ... otherwise use long hand.
+          EmitInt8(DW_LNS_advance_line); EOL("DW_LNS_advance_line");
+          EmitSLEB128Bytes(Offset); EOL("Line Offset");
+          EmitInt8(DW_LNS_copy); EOL("DW_LNS_copy");
+        }
+      } else {
+        // Copy the previous row (different address or source)
+        EmitInt8(DW_LNS_copy); EOL("DW_LNS_copy");
+      }
+    }
+
+    // Define last address of section.
     EmitInt8(0); EOL("Extended Op");
     EmitInt8(4 + 1); EOL("Op size");
     EmitInt8(DW_LNE_set_address); EOL("DW_LNE_set_address");
-    EmitReference("loc",  LineInfo->getLabelID()); EOL("Location label");
-    
-    // If change of source, then switch to the new source.
-    if (Source != LineInfo->getSourceID()) {
-      Source = LineInfo->getSourceID();
-      EmitInt8(DW_LNS_set_file); EOL("DW_LNS_set_file");
-      EmitULEB128Bytes(Source); EOL("New Source");
-    }
-    
-    // If change of line.
-    if (Line != LineInfo->getLine()) {
-      // Determine offset.
-      int Offset = LineInfo->getLine() - Line;
-      int Delta = Offset - MinLineDelta;
-      
-      // Update line.
-      Line = LineInfo->getLine();
-      
-      // If delta is small enough and in range...
-      if (Delta >= 0 && Delta < (MaxLineDelta - 1)) {
-        // ... then use fast opcode.
-        EmitInt8(Delta - MinLineDelta); EOL("Line Delta");
-      } else {
-        // ... otherwise use long hand.
-        EmitInt8(DW_LNS_advance_line); EOL("DW_LNS_advance_line");
-        EmitSLEB128Bytes(Offset); EOL("Line Offset");
-        EmitInt8(DW_LNS_copy); EOL("DW_LNS_copy");
-      }
-    } else {
-      // Copy the previous row (different address or source)
-      EmitInt8(DW_LNS_copy); EOL("DW_LNS_copy");
-    }
+    EmitReference("section_end", j + 1); EOL("Section end label");
+
+    // Mark end of matrix.
+    EmitInt8(0); EOL("DW_LNE_end_sequence");
+    EmitULEB128Bytes(1);  O << "\n";
+    EmitInt8(1); O << "\n";
   }
-
-  // Define last address.
-  EmitInt8(0); EOL("Extended Op");
-  EmitInt8(4 + 1); EOL("Op size");
-  EmitInt8(DW_LNE_set_address); EOL("DW_LNE_set_address");
-  EmitReference("text_end", 0); EOL("Location label");
-
-  // Mark end of matrix.
-  EmitInt8(0); EOL("DW_LNE_end_sequence");
-  EmitULEB128Bytes(1);  O << "\n";
-  EmitInt8(1); O << "\n";
   
   EmitLabel("line_end", 0);
   
@@ -2336,14 +2346,14 @@ DwarfWriter::DwarfWriter(std::ostream &OS, AsmPrinter *A)
 , DebugInfo(NULL)
 , didInitial(false)
 , shouldEmit(false)
-, IsNormalText(false)
 , SubprogramCount(0)
 , CompileUnits()
 , Abbreviations()
 , StringPool()
 , DescToUnitMap()
 , DescToDieMap()
-, TypeToDieMap()
+, SectionMap()
+, SectionSourceLines()
 , AddressSize(sizeof(int32_t))
 , hasLEB128(false)
 , hasDotLoc(false)
@@ -2388,6 +2398,9 @@ void DwarfWriter::SetDebugInfo(MachineDebugInfo *DI) {
 
     // Create DIEs for each of the externally visible subprograms.
     ConstructSubprogramDIEs();
+    
+    // Prime section data.
+    SectionMap.insert(std::string("\t") + TextSection);
   }
 }
 
@@ -2411,6 +2424,12 @@ void DwarfWriter::EndModule() {
   EmitLabel("text_end", 0);
   Asm->SwitchToDataSection(DataSection, 0);
   EmitLabel("data_end", 0);
+  
+  // End text sections.
+  for (unsigned i = 1, N = SectionMap.size(); i <= N; ++i) {
+    Asm->SwitchToTextSection(SectionMap[i].c_str(), 0);
+    EmitLabel("section_end", i);
+  }
   
   // Compute DIE offsets and sizes.
   SizeAndOffsets();
@@ -2445,24 +2464,17 @@ void DwarfWriter::EndModule() {
 
 /// BeginFunction - Gather pre-function debug information.  Assumes being 
 /// emitted immediately after the function entry point.
-void DwarfWriter::BeginFunction(MachineFunction *MF, bool IsNormalText) {
+void DwarfWriter::BeginFunction(MachineFunction *MF) {
   this->MF = MF;
-  // FIXME - should be able to debug coalesced functions.
-  this->IsNormalText = IsNormalText;
   
-  // FIXME - should be able to debug coalesced functions.
-  if (IsNormalText) {
-    // Begin accumulating function debug information.
-    DebugInfo->BeginFunction(MF);
-    
-    if (!ShouldEmitDwarf()) return;
-    EOL("Dwarf Begin Function");
+  if (!ShouldEmitDwarf()) return;
+  EOL("Dwarf Begin Function");
+
+  // Begin accumulating function debug information.
+  DebugInfo->BeginFunction(MF);
   
-    // Assumes in correct section after the entry point.
-    EmitLabel("func_begin", ++SubprogramCount);
-  } else {
-    ShouldEmitDwarf();
-  }
+  // Assumes in correct section after the entry point.
+  EmitLabel("func_begin", ++SubprogramCount);
 }
 
 /// EndFunction - Gather and emit post-function debug information.
@@ -2471,18 +2483,31 @@ void DwarfWriter::EndFunction() {
   if (!ShouldEmitDwarf()) return;
   EOL("Dwarf End Function");
   
-  // FIXME - should be able to debug coalesced functions.
-  if (IsNormalText) {
-    // Define end label for subprogram.
-    EmitLabel("func_end", SubprogramCount);
-  
-    // Construct scopes for subprogram.
-    ConstructRootScope(DebugInfo->getRootScope());
+  // Define end label for subprogram.
+  EmitLabel("func_end", SubprogramCount);
     
-    // Emit function frame information.
-    EmitFunctionDebugFrame();
+  // Get function line info.
+  std::vector<SourceLineInfo *> &LineInfos = DebugInfo->getSourceLines();
+
+  if (!LineInfos.empty()) {
+    // Get section line info.
+    unsigned ID = SectionMap.insert(Asm->CurrentSection);
+    if (SectionSourceLines.size() < ID) SectionSourceLines.resize(ID);
+    std::vector<SourceLineInfo *> &SectionLineInfos =SectionSourceLines[ID-1];
+    // Append the function info to section info.
+    SectionLineInfos.insert(SectionLineInfos.end(),
+                            LineInfos.begin(), LineInfos.end());
   }
   
+  // Construct scopes for subprogram.
+  ConstructRootScope(DebugInfo->getRootScope());
+  
+  // Emit function frame information.
+  EmitFunctionDebugFrame();
+  
+  // Reset the line numbers for the next function.
+  LineInfos.clear();
+
   // Clear function debug information.
   DebugInfo->EndFunction();
 }

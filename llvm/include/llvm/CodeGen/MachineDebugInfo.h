@@ -1031,9 +1031,9 @@ public:
     return SourceFiles;
   }
   
-  /// getSourceLines - Return a vector of source lines.  Vector index + 1
-  /// equals label ID.
-  const std::vector<SourceLineInfo *> &getSourceLines() const {
+  /// getSourceLines - Return a vector of source lines.
+  ///
+  std::vector<SourceLineInfo *> &getSourceLines() {
     return Lines;
   }
   

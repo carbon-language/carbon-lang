@@ -47,6 +47,7 @@ class MachineMove;
 class Module;
 class MRegisterInfo;
 class SubprogramDesc;
+class SourceLineInfo;
 class TargetData;
 class Type;
 class TypeDesc;
@@ -110,11 +111,6 @@ protected:
   ///
   bool shouldEmit;
   
-  /// IsNormalText - Flag to indicate if routine is not special case text
-  /// (coalesced.)
-  // FIXME - should be able to debug coalesced functions.
-  bool IsNormalText;
-
   /// SubprogramCount - The running count of functions being compiled.
   ///
   unsigned SubprogramCount;
@@ -144,10 +140,13 @@ protected:
   /// descriptors to debug information entries.
   std::map<DebugInfoDesc *, DIE *> DescToDieMap;
   
-  /// TypeToDieMap - Type to DIEType map.
+  /// SectionMap - Provides a unique id per text section.
   ///
-  // FIXME - Should not be needed.
-  std::map<Type *, DIE *> TypeToDieMap;
+  UniqueVector<std::string> SectionMap;
+  
+  /// SectionSourceLines - Tracks line numbers per text section.
+  ///
+  std::vector<std::vector<SourceLineInfo *> > SectionSourceLines;
   
   //===--------------------------------------------------------------------===//
   // Properties to be set by the derived class ctor, used to configure the
@@ -483,7 +482,7 @@ public:
   
   /// BeginFunction - Gather pre-function debug information.  Assumes being 
   /// emitted immediately after the function entry point.
-  void BeginFunction(MachineFunction *MF, bool IsNormalText);
+  void BeginFunction(MachineFunction *MF);
   
   /// EndFunction - Gather and emit post-function debug information.
   ///
