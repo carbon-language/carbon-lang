@@ -416,8 +416,9 @@ void Preprocessor::HandleIdentifier(LexerToken &Identifier) {
     return;
   }
   IdentifierTokenInfo &ITI = *Identifier.getIdentifierInfo();
-  
-  // FIXME: Check for poisoning in ITI?
+
+  if (ITI.isPoisoned())
+    Diag(Identifier, diag::err_pp_used_poisoned_id);
   
   if (MacroInfo *MI = ITI.getMacroInfo()) {
     if (MI->isEnabled() && !DisableMacroExpansion) {
@@ -1260,21 +1261,67 @@ void Preprocessor::HandlePragmaDirective(LexerToken &PragmaTok) {
   PragmaHandlers->HandlePragma(*this, Tok);
   
   // If the pragma handler didn't read the rest of the line, consume it now.
-  if (CurLexer->ParsingPreprocessorDirective) {
-    do {
-      LexUnexpandedToken(Tok);
-    } while (Tok.getKind() != tok::eom);
-  }
+  if (CurLexer->ParsingPreprocessorDirective)
+    DiscardUntilEndOfDirective();
 }
 
 /// HandlePragmaOnce - Handle #pragma once.  OnceTok is the 'once'.
+///
 void Preprocessor::HandlePragmaOnce(LexerToken &OnceTok) {
   if (IncludeStack.empty()) {
     Diag(OnceTok, diag::pp_pragma_once_in_main_file);
     return;
   }
+  
+  // FIXME: implement the _Pragma thing.
+  assert(CurLexer && "Cannot have a pragma in a macro expansion yet!");
+  
+  // Mark the file as a once-only file now.
+  const FileEntry *File = 
+    SourceMgr.getFileEntryForFileID(CurLexer->getCurFileID());
+  getFileInfo(File).isImport = true;
 }
 
+/// HandlePragmaPoison - Handle #pragma GCC poison.  PoisonTok is the 'poison'.
+///
+void Preprocessor::HandlePragmaPoison(LexerToken &PoisonTok) {
+  LexerToken Tok;
+  assert(!SkippingContents && "Why are we handling pragmas while skipping?");
+  while (1) {
+    // Read the next token to poison.  While doing this, pretend that we are
+    // skipping while reading the identifier to poison.
+    // This avoids errors on code like:
+    //   #pragma GCC poison X
+    //   #pragma GCC poison X
+    SkippingContents = true;
+    LexUnexpandedToken(Tok);
+    SkippingContents = false;
+    
+    // If we reached the end of line, we're done.
+    if (Tok.getKind() == tok::eom) return;
+    
+    // Can only poison identifiers.
+    if (Tok.getKind() != tok::identifier) {
+      Diag(Tok, diag::err_pp_invalid_poison);
+      return;
+    }
+    
+    // Look up the identifier info for the token.
+    std::string TokStr = getSpelling(Tok);
+    IdentifierTokenInfo *II = 
+      getIdentifierInfo(&TokStr[0], &TokStr[0]+TokStr.size());
+    
+    // Already poisoned.
+    if (II->isPoisoned()) continue;
+    
+    // If this is a macro identifier, emit a warning.
+    if (II->getMacroInfo())
+      Diag(Tok, diag::pp_poisoning_existing_macro);
+    
+    // Finally, poison it!
+    II->setIsPoisoned();
+  }
+}
 
 /// AddPragmaHandler - Add the specified pragma handler to the preprocessor.
 /// If 'Namespace' is non-null, then it is a token required to exist on the
@@ -1308,6 +1355,7 @@ void Preprocessor::AddPragmaHandler(const char *Namespace,
   InsertNS->AddPragma(Handler);
 }
 
+namespace {
 class PragmaOnceHandler : public PragmaHandler {
 public:
   PragmaOnceHandler(const IdentifierTokenInfo *OnceID) : PragmaHandler(OnceID){}
@@ -1317,10 +1365,19 @@ public:
   }
 };
 
+class PragmaPoisonHandler : public PragmaHandler {
+public:
+  PragmaPoisonHandler(const IdentifierTokenInfo *ID) : PragmaHandler(ID) {}
+  virtual void HandlePragma(Preprocessor &PP, LexerToken &PoisonTok) {
+    PP.HandlePragmaPoison(PoisonTok);
+  }
+};
+}
+
 
 /// RegisterBuiltinPragmas - Install the standard preprocessor pragmas:
 /// #pragma GCC poison/system_header/dependency and #pragma once.
 void Preprocessor::RegisterBuiltinPragmas() {
   AddPragmaHandler(0, new PragmaOnceHandler(getIdentifierInfo("once")));
-  
+  AddPragmaHandler("GCC", new PragmaPoisonHandler(getIdentifierInfo("poison")));
 }

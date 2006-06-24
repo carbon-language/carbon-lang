@@ -427,6 +427,7 @@ private:
   void HandlePragmaDirective(LexerToken &Result);
 public:
   void HandlePragmaOnce(LexerToken &OnceTok);
+  void HandlePragmaPoison(LexerToken &PoisonTok);
 };
 
 }  // end namespace clang

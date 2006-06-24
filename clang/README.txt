@@ -40,12 +40,11 @@ Lexer:
    See GCC options: -ftarget-charset and -ftarget-wide-charset.
  * Universal character support.  Experimental in GCC, enabled with
    -fextended-identifiers.
- * Poisoned identifiers.
  * -fpreprocessed mode.
 
 Preprocessor:
  * #line / #file directives
- * Detection of "atomic" headers (#ifndef/#define), #pragma once support.
+ * Detection of "atomic" headers (#ifndef/#define).
  * Function-style #define & macro expansion
  * -C & -P output modes.
 

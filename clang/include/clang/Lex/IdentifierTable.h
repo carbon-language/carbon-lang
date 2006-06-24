@@ -30,8 +30,9 @@ namespace clang {
 class IdentifierTokenInfo {
   unsigned NameLen;        // String that is the identifier.
   MacroInfo *Macro;        // Set if this identifier is #define'd.
-  tok::TokenKind TokenID:8;// Nonzero if this is a front-end token.
-  bool IsExtension : 1;    // True if this token is a language extension.
+  tok::TokenKind TokenID:8;// Front-end token ID or tok::identifier.
+  bool IsExtension : 1;    // True if this identifier is a language extension.
+  bool IsPoisoned  : 1;    // True if this identifier is poisoned.
   void *FETokenInfo;       // Managed by the language front-end.
   friend class IdentifierTable;
 public:
@@ -67,6 +68,12 @@ public:
   bool isExtensionToken() const { return IsExtension; }
   void setIsExtensionToken(bool Val) { IsExtension = Val; }
   
+  /// setIsPoisoned - Mark this identifier as poisoned.  After poisoning, the
+  /// Preprocessor will emit an error every time this token is used.
+  void setIsPoisoned() { IsPoisoned = true; }
+  
+  /// isPoisoned - Return true if this token has been poisoned.
+  bool isPoisoned() const { return IsPoisoned; }
   
   /// getFETokenInfo/setFETokenInfo - The language front-end is allowed to
   /// associate arbitrary metadata with this token.

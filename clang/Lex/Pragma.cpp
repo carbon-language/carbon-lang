@@ -32,4 +32,3 @@ void PragmaNamespace::HandlePragma(Preprocessor &PP, LexerToken &Tok) {
   // Otherwise, pass it down.
   Handler->HandlePragma(PP, Tok);
 }
-

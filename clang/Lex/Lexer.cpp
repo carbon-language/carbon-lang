@@ -19,8 +19,6 @@
 // WARNING: `%.*s' is not in NFC
 //
 // Other:
-// ERROR  : attempt to use poisoned \"%s\"
-//
 // TODO: Options to support:
 //    -fexec-charset,-fwide-exec-charset
 //

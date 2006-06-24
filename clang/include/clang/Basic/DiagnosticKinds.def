@@ -88,6 +88,8 @@ DIAG(ext_c99_whitespace_required_after_macro_name, WARNING,
      "ISO C99 requires whitespace after the macro name")
 DIAG(pp_pragma_once_in_main_file, WARNING,
      "#pragma once in main file")
+DIAG(pp_poisoning_existing_macro, WARNING,
+     "poisoning existing macro")
 
 DIAG(ext_pp_import_directive, EXTENSION,
      "#import is a language extension")
@@ -148,9 +150,12 @@ DIAG(err_pp_division_by_zero, ERROR,
      "division by zero in preprocessor expression")
 DIAG(err_pp_remainder_by_zero, ERROR,
      "remainder by zero in preprocessor expression")
-
 DIAG(err_pp_expr_bad_token, ERROR,
      "token is not valid in preprocessor expressions")
+DIAG(err_pp_invalid_poison, ERROR,
+     "can only poison identifier tokens")
+DIAG(err_pp_used_poisoned_id, ERROR,
+     "attempt to use a poisoned identifier")
 
 // Should be a sorry?
 DIAG(err_pp_I_dash_not_supported, ERROR,
