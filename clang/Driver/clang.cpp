@@ -148,7 +148,7 @@ void DiagnosticPrinterSTDERR::HandleDiagnostic(Diagnostic::Level Level,
     // Compute the column number.  Rewind from the current position to the start
     // of the line.
     ColNo = SourceMgr.getColumnNumber(Pos);
-    LineStart = FilePos-ColNo-1;  // Column # is 1-based
+    LineStart = FilePos-ColNo+1;  // Column # is 1-based
   
     // Compute the line end.  Scan forward from the error position to the end of
     // the line.
