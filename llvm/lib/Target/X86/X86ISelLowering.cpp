@@ -762,26 +762,6 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG) {
 // (when we have a global fp allocator) and do other tricks.
 //
 
-// FASTCC_NUM_INT_ARGS_INREGS - This is the max number of integer arguments
-// to pass in registers.  0 is none, 1 is is "use EAX", 2 is "use EAX and
-// EDX".  Anything more is illegal.
-//
-// FIXME: The linscan register allocator currently has problem with
-// coalescing.  At the time of this writing, whenever it decides to coalesce
-// a physreg with a virtreg, this increases the size of the physreg's live
-// range, and the live range cannot ever be reduced.  This causes problems if
-// too many physregs are coaleced with virtregs, which can cause the register
-// allocator to wedge itself.
-//
-// This code triggers this problem more often if we pass args in registers,
-// so disable it until this is fixed.
-//
-// NOTE: this isn't marked const, so that GCC doesn't emit annoying warnings
-// about code being dead.
-//
-static unsigned FASTCC_NUM_INT_ARGS_INREGS = 0;
-
-
 /// HowToPassFastCCArgument - Returns how an formal argument of the specified
 /// type should be passed. If it is through stack, returns the size of the stack
 /// slot; if it is through integer or XMM register, returns the number of
@@ -798,30 +778,38 @@ HowToPassFastCCArgument(MVT::ValueType ObjectVT,
   switch (ObjectVT) {
   default: assert(0 && "Unhandled argument type!");
   case MVT::i8:
+#if FASTCC_NUM_INT_ARGS_INREGS > 0
     if (NumIntRegs < FASTCC_NUM_INT_ARGS_INREGS)
       ObjIntRegs = 1;
     else
+#endif
       ObjSize = 1;
     break;
   case MVT::i16:
+#if FASTCC_NUM_INT_ARGS_INREGS > 0
     if (NumIntRegs < FASTCC_NUM_INT_ARGS_INREGS)
       ObjIntRegs = 1;
     else
+#endif
       ObjSize = 2;
     break;
   case MVT::i32:
+#if FASTCC_NUM_INT_ARGS_INREGS > 0
     if (NumIntRegs < FASTCC_NUM_INT_ARGS_INREGS)
       ObjIntRegs = 1;
     else
+#endif
       ObjSize = 4;
     break;
   case MVT::i64:
+#if FASTCC_NUM_INT_ARGS_INREGS > 0
     if (NumIntRegs+2 <= FASTCC_NUM_INT_ARGS_INREGS) {
       ObjIntRegs = 2;
     } else if (NumIntRegs+1 <= FASTCC_NUM_INT_ARGS_INREGS) {
       ObjIntRegs = 1;
       ObjSize = 4;
     } else
+#endif
       ObjSize = 8;
   case MVT::f32:
     ObjSize = 4;
@@ -1027,10 +1015,12 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG) 
     case MVT::i8:
     case MVT::i16:
     case MVT::i32:
+#if FASTCC_NUM_INT_ARGS_INREGS > 0
       if (NumIntRegs < FASTCC_NUM_INT_ARGS_INREGS) {
         ++NumIntRegs;
         break;
       }
+#endif
       // Fall through
     case MVT::f32:
       NumBytes += 4;
@@ -1076,6 +1066,7 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG) 
     case MVT::i8:
     case MVT::i16:
     case MVT::i32:
+#if FASTCC_NUM_INT_ARGS_INREGS > 0
       if (NumIntRegs < FASTCC_NUM_INT_ARGS_INREGS) {
         RegsToPass.push_back(
               std::make_pair(GPRArgRegs[Arg.getValueType()-MVT::i8][NumIntRegs],
@@ -1083,6 +1074,7 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG) 
         ++NumIntRegs;
         break;
       }
+#endif
       // Fall through
     case MVT::f32: {
       SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());

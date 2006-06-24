@@ -370,4 +370,20 @@ namespace llvm {
   };
 }
 
+// FASTCC_NUM_INT_ARGS_INREGS - This is the max number of integer arguments
+// to pass in registers.  0 is none, 1 is is "use EAX", 2 is "use EAX and
+// EDX".  Anything more is illegal.
+//
+// FIXME: The linscan register allocator currently has problem with
+// coalescing.  At the time of this writing, whenever it decides to coalesce
+// a physreg with a virtreg, this increases the size of the physreg's live
+// range, and the live range cannot ever be reduced.  This causes problems if
+// too many physregs are coaleced with virtregs, which can cause the register
+// allocator to wedge itself.
+//
+// This code triggers this problem more often if we pass args in registers,
+// so disable it until this is fixed.
+//
+#define FASTCC_NUM_INT_ARGS_INREGS 0
+
 #endif    // X86ISELLOWERING_H

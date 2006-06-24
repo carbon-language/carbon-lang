@@ -57,26 +57,28 @@ extern "C" {
 #endif
     "pushl   %ebp\n"
     "movl    %esp, %ebp\n"    // Standard prologue
+#if FASTCC_NUM_INT_ARGS_INREGS > 0
     "pushl   %eax\n"
-    "pushl   %edx\n"          // save EAX/EDX
-#if defined(__CYGWIN__) || defined(__MINGW32__)
+    "pushl   %edx\n"          // Save EAX/EDX
+#endif
+#if defined(__APPLE__)
+    "andl    $-16, %esp\n"    // Align ESP on 16-byte boundary
+#endif
+#if defined(__CYGWIN__) || defined(__MINGW32__) || defined(__APPLE__)
     "call    _X86CompilationCallback2\n"
-#elif defined(__APPLE__)
-    "movl    4(%ebp), %eax\n" // load the address of return address
-    "movl    $24, %edx\n"     // if the opcode of the instruction at the
-    "cmpb    $-51, (%eax)\n"  // return address is our 0xCD marker, then
-    "movl    $12, %eax\n"     // subtract 24 from %esp to realign it to 16
-    "cmovne  %eax, %edx\n"    // bytes after the push of edx, the amount to.
-    "subl    %edx, %esp\n"    // the push of edx to keep it aligned.
-    "pushl   %edx\n"          // subtract.  Otherwise, subtract 12 bytes after
-    "call    _X86CompilationCallback2\n"
-    "popl    %edx\n"
-    "addl    %edx, %esp\n"
 #else
-    "call X86CompilationCallback2\n"
+    "call    X86CompilationCallback2\n"
+#endif
+#if defined(__APPLE__)
+    "movl    %ebp, %esp\n"    // Restore ESP
+#endif
+#if FASTCC_NUM_INT_ARGS_INREGS > 0
+#if defined(__APPLE__)
+    "subl    $8, %esp\n"
 #endif
     "popl    %edx\n"
     "popl    %eax\n"
+#endif
     "popl    %ebp\n"
     "ret\n");
 #else
