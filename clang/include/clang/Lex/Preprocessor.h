@@ -28,6 +28,8 @@ class SourceManager;
 class FileManager;
 class DirectoryEntry;
 class FileEntry;
+class PragmaNamespace;
+class PragmaHandler;
 
 /// DirectoryLookup - This class is used to specify the search order for
 /// directories in #include directives.
@@ -108,6 +110,10 @@ class Preprocessor {
   /// IdentifierInfo - This is mapping/lookup information for all identifiers in
   /// the program, including program keywords.
   IdentifierTable IdentifierInfo;
+  
+  /// PragmaHandlers - This tracks all of the pragmas that the client registered
+  /// with this preprocessor.
+  PragmaNamespace *PragmaHandlers;
   
   /// CurLexer - This is the current top of the stack that we're lexing from if
   /// not expanding a macro.  One of CurLexer and CurMacroExpander must be null.
@@ -221,6 +227,9 @@ public:
     if (SkippingContents) return 0;
     return &IdentifierInfo.get(NameStart, NameEnd);
   }
+  IdentifierTokenInfo *getIdentifierInfo(const char *NameStr) {
+    return getIdentifierInfo(NameStr, NameStr+strlen(NameStr));
+  }
   
   /// AddKeyword - This method is used to associate a token ID with specific
   /// identifiers because they are language keywords.  This causes the lexer to
@@ -246,6 +255,12 @@ public:
   /// AddKeywords - Add all keywords to the symbol table.
   ///
   void AddKeywords();
+  
+  
+  /// AddPragmaHandler - Add the specified pragma handler to the preprocessor.
+  /// If 'Namespace' is non-null, then it is a token required to exist on the
+  /// pragma line before the pragma string starts, e.g. "STDC" or "GCC".
+  void AddPragmaHandler(const char *Namespace, PragmaHandler *Handler);
 
   /// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
   /// return null on failure.  isAngled indicates whether the file reference is
@@ -339,6 +354,9 @@ public:
   /// read is the correct one.
   void HandleDirective(LexerToken &Result);
 
+  /// CheckEndOfDirective - Ensure that the next token is a tok::eom token.  If
+  /// not, emit a diagnostic and consume up until the eom.
+  void CheckEndOfDirective(const char *Directive);
 private:
   /// getFileInfo - Return the PerFileInfo structure for the specified
   /// FileEntry.
@@ -352,10 +370,6 @@ private:
   /// #define or #undef.  This emits a diagnostic, sets the token kind to eom,
   /// and discards the rest of the macro line if the macro name is invalid.
   void ReadMacroName(LexerToken &MacroNameTok);
-  
-  /// CheckEndOfDirective - Ensure that the next token is a tok::eom token.  If
-  /// not, emit a diagnostic and consume up until the eom.
-  void CheckEndOfDirective(const char *Directive);
   
   /// SkipExcludedConditionalBlock - We just read a #if or related directive and
   /// decided that the subsequent tokens are in the #if'd out portion of the
@@ -378,6 +392,10 @@ private:
   bool EvaluateDirectiveSubExpr(int &LHS, unsigned MinPrec,
                                 LexerToken &PeekTok);
   
+  /// RegisterBuiltinPragmas - Install the standard preprocessor pragmas:
+  /// #pragma GCC poison/system_header/dependency and #pragma once.
+  void RegisterBuiltinPragmas();
+  
   //===--------------------------------------------------------------------===//
   /// Handle*Directive - implement the various preprocessor directives.  These
   /// should side-effect the current preprocessor object so that the next call
@@ -386,22 +404,29 @@ private:
   void HandleUserDiagnosticDirective(LexerToken &Result, bool isWarning);
   
   // File inclusion.
-  void HandleIncludeDirective(LexerToken &Result,
+  void HandleIncludeDirective(LexerToken &Tok,
                               const DirectoryLookup *LookupFrom = 0,
                               bool isImport = false);
-  void HandleIncludeNextDirective(LexerToken &Result);
-  void HandleImportDirective(LexerToken &Result);
+  void HandleIncludeNextDirective(LexerToken &Tok);
+  void HandleImportDirective(LexerToken &Tok);
   
   // Macro handling.
-  void HandleDefineDirective(LexerToken &Result);
-  void HandleUndefDirective(LexerToken &Result);
+  void HandleDefineDirective(LexerToken &Tok);
+  void HandleUndefDirective(LexerToken &Tok);
+  // HandleAssertDirective(LexerToken &Tok);
+  // HandleUnassertDirective(LexerToken &Tok);
   
   // Conditional Inclusion.
-  void HandleIfdefDirective(LexerToken &Result, bool isIfndef);
-  void HandleIfDirective(LexerToken &Result);
-  void HandleEndifDirective(LexerToken &Result);
-  void HandleElseDirective(LexerToken &Result);
-  void HandleElifDirective(LexerToken &Result);
+  void HandleIfdefDirective(LexerToken &Tok, bool isIfndef);
+  void HandleIfDirective(LexerToken &Tok);
+  void HandleEndifDirective(LexerToken &Tok);
+  void HandleElseDirective(LexerToken &Tok);
+  void HandleElifDirective(LexerToken &Tok);
+  
+  // Pragmas.
+  void HandlePragmaDirective(LexerToken &Result);
+public:
+  void HandlePragmaOnce(LexerToken &OnceTok);
 };
 
 }  // end namespace clang

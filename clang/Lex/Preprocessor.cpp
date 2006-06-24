@@ -35,6 +35,7 @@
 
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/MacroInfo.h"
+#include "clang/Lex/Pragma.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
@@ -62,6 +63,10 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
 
   // There is no file-change handler yet.
   FileChangeHandler = 0;
+  
+  // Initialize the pragma handlers.
+  PragmaHandlers = new PragmaNamespace(0);
+  RegisterBuiltinPragmas();
 }
 
 Preprocessor::~Preprocessor() {
@@ -72,6 +77,9 @@ Preprocessor::~Preprocessor() {
     delete IncludeStack.back().TheLexer;
     IncludeStack.pop_back();
   }
+  
+  // Release pragma information.
+  delete PragmaHandlers;
 }
 
 /// getFileInfo - Return the PerFileInfo structure for the specified
@@ -837,11 +845,11 @@ void Preprocessor::HandleDirective(LexerToken &Result) {
     switch (Result.getIdentifierInfo()->getNameLength()) {
     case 4:
       if (Directive[0] == 'l' && !strcmp(Directive, "line"))
-        ;
+        ;  // FIXME: implement #line
       if (Directive[0] == 'e' && !strcmp(Directive, "elif"))
         return HandleElifDirective(Result);
       if (Directive[0] == 's' && !strcmp(Directive, "sccs")) {
-        isExtension = true;
+        isExtension = true;  // FIXME: implement #sccs
         // SCCS is the same as #ident.
       }
       break;
@@ -855,7 +863,7 @@ void Preprocessor::HandleDirective(LexerToken &Result) {
       if (Directive[0] == 'e' && !strcmp(Directive, "error"))
         return HandleUserDiagnosticDirective(Result, false);
       if (Directive[0] == 'i' && !strcmp(Directive, "ident"))
-        isExtension = true;
+        isExtension = true;  // FIXME: implement #ident
       break;
     case 6:
       if (Directive[0] == 'd' && !strcmp(Directive, "define"))
@@ -864,20 +872,10 @@ void Preprocessor::HandleDirective(LexerToken &Result) {
         return HandleIfdefDirective(Result, true);
       if (Directive[0] == 'i' && !strcmp(Directive, "import"))
         return HandleImportDirective(Result);
-      if (Directive[0] == 'p' && !strcmp(Directive, "pragma")) {
-        // FIXME: implement #pragma
-        ++NumPragma;
-#if 1
-        // Read the rest of the PP line.
-        do {
-          Lex(Result);
-        } while (Result.getKind() != tok::eom);
-        
-        return;
-#endif
-      } else if (Directive[0] == 'a' && !strcmp(Directive, "assert")) {
-        isExtension = true;
-      }
+      if (Directive[0] == 'p' && !strcmp(Directive, "pragma"))
+        return HandlePragmaDirective(Result);
+      if (Directive[0] == 'a' && !strcmp(Directive, "assert"))
+        isExtension = true;  // FIXME: implement #assert
       break;
     case 7:
       if (Directive[0] == 'i' && !strcmp(Directive, "include"))
@@ -889,7 +887,7 @@ void Preprocessor::HandleDirective(LexerToken &Result) {
       break;
     case 8:
       if (Directive[0] == 'u' && !strcmp(Directive, "unassert")) {
-        isExtension = true;
+        isExtension = true;  // FIXME: implement #unassert
       }
       break;
     case 12:
@@ -923,6 +921,10 @@ void Preprocessor::HandleUserDiagnosticDirective(LexerToken &Result,
   unsigned DiagID = isWarning ? diag::pp_hash_warning : diag::err_pp_hash_error;
   return Diag(Result, DiagID, Message);
 }
+
+//===----------------------------------------------------------------------===//
+// Preprocessor Include Directive Handling.
+//===----------------------------------------------------------------------===//
 
 /// HandleIncludeDirective - The "#include" tokens have just been read, read the
 /// file to be included from the lexer, then include it!  This is a common
@@ -1035,6 +1037,10 @@ void Preprocessor::HandleImportDirective(LexerToken &ImportTok) {
   return HandleIncludeDirective(ImportTok, 0, true);
 }
 
+//===----------------------------------------------------------------------===//
+// Preprocessor Macro Directive Handling.
+//===----------------------------------------------------------------------===//
+
 /// HandleDefineDirective - Implements #define.  This consumes the entire macro
 /// line then lets the caller lex the next real token.
 ///
@@ -1127,6 +1133,10 @@ void Preprocessor::HandleUndefDirective(LexerToken &UndefTok) {
   MacroNameTok.getIdentifierInfo()->setMacroInfo(0);
 }
 
+
+//===----------------------------------------------------------------------===//
+// Preprocessor Conditional Directive Handling.
+//===----------------------------------------------------------------------===//
 
 /// HandleIfdefDirective - Implements the #ifdef/#ifndef directive.  isIfndef is
 /// true when this is a #ifndef directive.
@@ -1232,4 +1242,85 @@ void Preprocessor::HandleElifDirective(LexerToken &ElifToken) {
   // token after it.
   return SkipExcludedConditionalBlock(CI.IfLoc, /*Foundnonskip*/true,
                                       /*FoundElse*/CI.FoundElse);
+}
+
+
+//===----------------------------------------------------------------------===//
+// Preprocessor Pragma Directive Handling.
+//===----------------------------------------------------------------------===//
+
+/// HandlePragmaDirective - The "#pragma" directive has been parsed with
+/// PragmaTok containing the "pragma" identifier.  Lex the rest of the pragma,
+/// passing it to the registered pragma handlers.
+void Preprocessor::HandlePragmaDirective(LexerToken &PragmaTok) {
+  ++NumPragma;
+  
+  // Invoke the first level of pragma handlers which reads the namespace id.
+  LexerToken Tok;
+  PragmaHandlers->HandlePragma(*this, Tok);
+  
+  // If the pragma handler didn't read the rest of the line, consume it now.
+  if (CurLexer->ParsingPreprocessorDirective) {
+    do {
+      LexUnexpandedToken(Tok);
+    } while (Tok.getKind() != tok::eom);
+  }
+}
+
+/// HandlePragmaOnce - Handle #pragma once.  OnceTok is the 'once'.
+void Preprocessor::HandlePragmaOnce(LexerToken &OnceTok) {
+  if (IncludeStack.empty()) {
+    Diag(OnceTok, diag::pp_pragma_once_in_main_file);
+    return;
+  }
+}
+
+
+/// AddPragmaHandler - Add the specified pragma handler to the preprocessor.
+/// If 'Namespace' is non-null, then it is a token required to exist on the
+/// pragma line before the pragma string starts, e.g. "STDC" or "GCC".
+void Preprocessor::AddPragmaHandler(const char *Namespace, 
+                                    PragmaHandler *Handler) {
+  PragmaNamespace *InsertNS = PragmaHandlers;
+  
+  // If this is specified to be in a namespace, step down into it.
+  if (Namespace) {
+    IdentifierTokenInfo *NSID = getIdentifierInfo(Namespace);
+    
+    // If there is already a pragma handler with the name of this namespace,
+    // we either have an error (directive with the same name as a namespace) or
+    // we already have the namespace to insert into.
+    if (PragmaHandler *Existing = PragmaHandlers->FindHandler(NSID)) {
+      InsertNS = Existing->getIfNamespace();
+      assert(InsertNS != 0 && "Cannot have a pragma namespace and pragma"
+             " handler with the same name!");
+    } else {
+      // Otherwise, this namespace doesn't exist yet, create and insert the
+      // handler for it.
+      InsertNS = new PragmaNamespace(NSID);
+      PragmaHandlers->AddPragma(InsertNS);
+    }
+  }
+  
+  // Check to make sure we don't already have a pragma for this identifier.
+  assert(!InsertNS->FindHandler(Handler->getName()) &&
+         "Pragma handler already exists for this identifier!");
+  InsertNS->AddPragma(Handler);
+}
+
+class PragmaOnceHandler : public PragmaHandler {
+public:
+  PragmaOnceHandler(const IdentifierTokenInfo *OnceID) : PragmaHandler(OnceID){}
+  virtual void HandlePragma(Preprocessor &PP, LexerToken &OnceTok) {
+    PP.CheckEndOfDirective("#pragma once");
+    PP.HandlePragmaOnce(OnceTok);
+  }
+};
+
+
+/// RegisterBuiltinPragmas - Install the standard preprocessor pragmas:
+/// #pragma GCC poison/system_header/dependency and #pragma once.
+void Preprocessor::RegisterBuiltinPragmas() {
+  AddPragmaHandler(0, new PragmaOnceHandler(getIdentifierInfo("once")));
+  
 }

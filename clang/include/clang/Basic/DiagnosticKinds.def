@@ -86,6 +86,8 @@ DIAG(pp_include_next_absolute_path, WARNING,
      "#include_next with absolute path")
 DIAG(ext_c99_whitespace_required_after_macro_name, WARNING,
      "ISO C99 requires whitespace after the macro name")
+DIAG(pp_pragma_once_in_main_file, WARNING,
+     "#pragma once in main file")
 
 DIAG(ext_pp_import_directive, EXTENSION,
      "#import is a language extension")
