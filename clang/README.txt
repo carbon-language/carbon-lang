@@ -46,7 +46,7 @@ Preprocessor:
  * #line / #file directives
  * Detection of "atomic" headers (#ifndef/#define).
  * Function-style #define & macro expansion
- * -C & -P output modes.
+ * -C output mode in -E mode.
 
 Traditional Preprocessor:
  * All.

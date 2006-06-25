@@ -589,6 +589,9 @@ static void ReadPrologFiles(Preprocessor &PP, std::vector<char> &Buf) {
 // Preprocessed output mode.
 //===----------------------------------------------------------------------===//
 
+static cl::opt<bool>
+DisableLineMarkers("P", cl::desc("Disable linemarker output in -E mode"));
+
 static unsigned EModeCurLine;
 static std::string EModeCurFilename;
 static Preprocessor *EModePP;
@@ -606,6 +609,9 @@ static void MoveToLine(unsigned LineNo) {
       std::cout << "\n";
       EmodeEmittedTokensOnThisLine = false;
     }
+
+    EModeCurLine = LineNo;
+    if (DisableLineMarkers) return;
     
     std::cout << "# " << LineNo << " " << EModeCurFilename;
 
@@ -613,9 +619,7 @@ static void MoveToLine(unsigned LineNo) {
       std::cout << " 3";
     else if (EmodeFileType == DirectoryLookup::ExternCSystemHeaderDir)
       std::cout << " 3 4";
-    
     std::cout << "\n";
-    EModeCurLine = LineNo;
   } 
 }
 
@@ -634,10 +638,9 @@ static void HandleFileChange(SourceLocation Loc,
   } else if (Reason == Preprocessor::SystemHeaderPragma) {
     MoveToLine(SourceMgr.getLineNumber(Loc));
     
-    // GCC emits the # directive for this directive on the line AFTER the
+    // TODO GCC emits the # directive for this directive on the line AFTER the
     // directive and emits a bunch of spaces that aren't needed.  Emulate this
     // strange behavior.
-    //std::cout << "       \n";
   }
   
   EModeCurLine = SourceMgr.getLineNumber(Loc);
@@ -649,6 +652,9 @@ static void HandleFileChange(SourceLocation Loc,
     std::cout << "\n";
     EmodeEmittedTokensOnThisLine = false;
   }
+  
+  if (DisableLineMarkers) return;
+  
   std::cout << "# " << EModeCurLine << " " << EModeCurFilename;
   switch (Reason) {
   case Preprocessor::EnterFile:
