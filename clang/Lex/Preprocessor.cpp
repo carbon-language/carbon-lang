@@ -417,7 +417,9 @@ void Preprocessor::HandleIdentifier(LexerToken &Identifier) {
   }
   IdentifierTokenInfo &ITI = *Identifier.getIdentifierInfo();
 
-  if (ITI.isPoisoned())
+  // If this identifier was poisoned, and if it was not produced from a macro
+  // expansion, emit an error.
+  if (ITI.isPoisoned() && CurLexer)
     Diag(Identifier, diag::err_pp_used_poisoned_id);
   
   if (MacroInfo *MI = ITI.getMacroInfo()) {
