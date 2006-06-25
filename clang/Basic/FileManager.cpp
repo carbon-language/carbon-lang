@@ -113,11 +113,12 @@ const FileEntry *FileManager::getFile(const std::string &Filename) {
   
   if (UFE)  // Already have an entry with this inode, return it.
     return Ent = UFE;
-  
+
   // Otherwise, we don't have this directory yet, add it.
   FileEntry *FE = new FileEntry();
-  FE->Size      = StatBuf.st_size;
   FE->Name      = Filename;
+  FE->Size      = StatBuf.st_size;
+  FE->ModTime   = StatBuf.st_mtime;
   FE->Dir       = DirInfo;
   FE->UID       = NextFileUID++;
   return Ent = UFE = FE;

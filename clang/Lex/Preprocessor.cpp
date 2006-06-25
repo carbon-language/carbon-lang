@@ -938,40 +938,25 @@ void Preprocessor::HandleIncludeDirective(LexerToken &IncludeTok,
                                           bool isImport) {
   ++NumIncluded;
   LexerToken FilenameTok;
-  CurLexer->LexIncludeFilename(FilenameTok);
+  std::string Filename = CurLexer->LexIncludeFilename(FilenameTok);
   
   // If the token kind is EOM, the error has already been diagnosed.
   if (FilenameTok.getKind() == tok::eom)
     return;
+  
+  // Verify that there is nothing after the filename, other than EOM.  Use the
+  // preprocessor to lex this in case lexing the filename entered a macro.
+  CheckEndOfDirective("#include");
 
   // Check that we don't have infinite #include recursion.
   if (IncludeStack.size() == MaxAllowedIncludeStackDepth-1)
     return Diag(FilenameTok, diag::err_pp_include_too_deep);
   
-  // Get the text form of the filename.
-  std::string Filename = getSpelling(FilenameTok);
-  assert(!Filename.empty() && "Can't have tokens with empty spellings!");
-  
-  // Make sure the filename is <x> or "x".
-  bool isAngled;
-  if (Filename[0] == '<') {
-    isAngled = true;
-    if (Filename[Filename.size()-1] != '>')
-      return Diag(FilenameTok, diag::err_pp_expects_filename);
-  } else if (Filename[0] == '"') {
-    isAngled = false;
-    if (Filename[Filename.size()-1] != '"')
-      return Diag(FilenameTok, diag::err_pp_expects_filename);
-  } else {
-    return Diag(FilenameTok, diag::err_pp_expects_filename);
-  }
+  // Find out whether the filename is <x> or "x".
+  bool isAngled = Filename[0] == '<';
   
   // Remove the quotes.
   Filename = std::string(Filename.begin()+1, Filename.end()-1);
-  
-  // Diagnose #include "" as invalid.
-  if (Filename.empty())
-    return Diag(FilenameTok, diag::err_pp_empty_filename);
   
   // Search include directories.
   const DirectoryLookup *CurDir;
@@ -1325,6 +1310,8 @@ void Preprocessor::HandlePragmaPoison(LexerToken &PoisonTok) {
   }
 }
 
+/// HandlePragmaSystemHeader - Implement #pragma GCC system_header.  We know
+/// that the whole directive has been parsed.
 void Preprocessor::HandlePragmaSystemHeader(LexerToken &SysHeaderTok) {
   if (IncludeStack.empty()) {
     Diag(SysHeaderTok, diag::pp_pragma_sysheader_in_main_file);
@@ -1342,6 +1329,52 @@ void Preprocessor::HandlePragmaSystemHeader(LexerToken &SysHeaderTok) {
     FileChangeHandler(CurLexer->getSourceLocation(CurLexer->BufferPtr),
                       SystemHeaderPragma, DirectoryLookup::SystemHeaderDir);
 }
+
+/// HandlePragmaDependency - Handle #pragma GCC dependency "foo" blah.
+///
+void Preprocessor::HandlePragmaDependency(LexerToken &DependencyTok) {
+  LexerToken FilenameTok;
+  std::string Filename = CurLexer->LexIncludeFilename(FilenameTok);
+
+  // If the token kind is EOM, the error has already been diagnosed.
+  if (FilenameTok.getKind() == tok::eom)
+    return;
+  
+  // Find out whether the filename is <x> or "x".
+  bool isAngled = Filename[0] == '<';
+  
+  // Remove the quotes.
+  Filename = std::string(Filename.begin()+1, Filename.end()-1);
+  
+  // Search include directories.
+  const DirectoryLookup *CurDir;
+  const FileEntry *File = LookupFile(Filename, isAngled, 0, CurDir);
+  if (File == 0)
+    return Diag(FilenameTok, diag::err_pp_file_not_found);
+  
+  Lexer *TheLexer = CurLexer;
+  if (TheLexer == 0) {
+    assert(!IncludeStack.empty() && "No current lexer?");
+    TheLexer = IncludeStack.back().TheLexer;
+  }
+  const FileEntry *CurFile =
+    SourceMgr.getFileEntryForFileID(TheLexer->getCurFileID());
+
+  // If this file is older than the file it depends on, emit a diagnostic.
+  if (CurFile && CurFile->getModificationTime() < File->getModificationTime()) {
+    // Lex tokens at the end of the message and include them in the message.
+    std::string Message;
+    Lex(DependencyTok);
+    while (DependencyTok.getKind() != tok::eom) {
+      Message += getSpelling(DependencyTok) + " ";
+      Lex(DependencyTok);
+    }
+    
+    Message.erase(Message.end()-1);
+    Diag(FilenameTok, diag::pp_out_of_date_dependency, Message);
+  }
+}
+
 
 /// AddPragmaHandler - Add the specified pragma handler to the preprocessor.
 /// If 'Namespace' is non-null, then it is a token required to exist on the
@@ -1398,6 +1431,12 @@ struct PragmaSystemHeaderHandler : public PragmaHandler {
     PP.CheckEndOfDirective("#pragma");
   }
 };
+struct PragmaDependencyHandler : public PragmaHandler {
+  PragmaDependencyHandler(const IdentifierTokenInfo *ID) : PragmaHandler(ID) {}
+  virtual void HandlePragma(Preprocessor &PP, LexerToken &DepToken) {
+    PP.HandlePragmaDependency(DepToken);
+  }
+};
 }
 
 
@@ -1408,4 +1447,6 @@ void Preprocessor::RegisterBuiltinPragmas() {
   AddPragmaHandler("GCC", new PragmaPoisonHandler(getIdentifierInfo("poison")));
   AddPragmaHandler("GCC", new PragmaSystemHeaderHandler(
                                           getIdentifierInfo("system_header")));
+  AddPragmaHandler("GCC", new PragmaDependencyHandler(
+                                          getIdentifierInfo("dependency")));
 }

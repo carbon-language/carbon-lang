@@ -92,6 +92,8 @@ DIAG(pp_pragma_sysheader_in_main_file, WARNING,
      "#pragma system_header ignored in main file")
 DIAG(pp_poisoning_existing_macro, WARNING,
      "poisoning existing macro")
+DIAG(pp_out_of_date_dependency, WARNING,
+     "current file is older than dependency %s")
 
 DIAG(ext_pp_import_directive, EXTENSION,
      "#import is a language extension")

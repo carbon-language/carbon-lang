@@ -783,7 +783,7 @@ void Lexer::SkipBlockComment(LexerToken &Result, const char *CurPtr) {
 
 /// LexIncludeFilename - After the preprocessor has parsed a #include, lex and
 /// (potentially) macro expand the filename.
-void Lexer::LexIncludeFilename(LexerToken &Result) {
+std::string Lexer::LexIncludeFilename(LexerToken &FilenameTok) {
   assert(ParsingPreprocessorDirective &&
          ParsingFilename == false &&
          "Must be in a preprocessing directive!");
@@ -791,33 +791,49 @@ void Lexer::LexIncludeFilename(LexerToken &Result) {
   // We are now parsing a filename!
   ParsingFilename = true;
   
-  // There should be exactly two tokens here if everything is good: first the
-  // filename, then the EOM.
-  Lex(Result);
+  // Lex the filename.
+  Lex(FilenameTok);
 
   // We should have gotten the filename now.
   ParsingFilename = false;
 
   // No filename?
-  if (Result.getKind() == tok::eom) {
-    PP.Diag(Result, diag::err_pp_expects_filename);
-    return;
+  if (FilenameTok.getKind() == tok::eom) {
+    PP.Diag(FilenameTok, diag::err_pp_expects_filename);
+    return "";
   }
   
-  // Verify that there is nothing after the filename, other than EOM.  Use the
-  // preprocessor to lex this in case lexing the filename entered a macro.
-  LexerToken EndTok;
-  PP.Lex(EndTok);
-
-  if (EndTok.getKind() != tok::eom) {
-    PP.Diag(EndTok, diag::ext_pp_extra_tokens_at_eol, "#include");
-    
-    // Lex until the end of the preprocessor directive line.
-    while (EndTok.getKind() != tok::eom)
-      PP.Lex(EndTok);
-    
-    Result.SetKind(tok::eom);
+  // Get the text form of the filename.
+  std::string Filename = PP.getSpelling(FilenameTok);
+  assert(!Filename.empty() && "Can't have tokens with empty spellings!");
+  
+  // Make sure the filename is <x> or "x".
+  if (Filename[0] == '<') {
+    if (Filename[Filename.size()-1] != '>') {
+      PP.Diag(FilenameTok, diag::err_pp_expects_filename);
+      FilenameTok.SetKind(tok::eom);
+      return "";
+    }
+  } else if (Filename[0] == '"') {
+    if (Filename[Filename.size()-1] != '"') {
+      PP.Diag(FilenameTok, diag::err_pp_expects_filename);
+      FilenameTok.SetKind(tok::eom);
+      return "";
+    }
+  } else {
+    PP.Diag(FilenameTok, diag::err_pp_expects_filename);
+    FilenameTok.SetKind(tok::eom);
+    return "";
   }
+  
+  // Diagnose #include "" as invalid.
+  if (Filename.size() == 2) {
+    PP.Diag(FilenameTok, diag::err_pp_empty_filename);
+    FilenameTok.SetKind(tok::eom);
+    return "";
+  }
+        
+  return Filename;
 }
 
 /// ReadToEndOfLine - Read the rest of the current preprocessor line as an

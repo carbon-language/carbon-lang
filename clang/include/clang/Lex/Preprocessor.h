@@ -433,6 +433,7 @@ public:
   void HandlePragmaOnce(LexerToken &OnceTok);
   void HandlePragmaPoison(LexerToken &PoisonTok);
   void HandlePragmaSystemHeader(LexerToken &SysHeaderTok);
+  void HandlePragmaDependency(LexerToken &DependencyTok);
 };
 
 }  // end namespace clang

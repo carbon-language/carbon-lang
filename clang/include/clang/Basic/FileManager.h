@@ -38,6 +38,7 @@ public:
 class FileEntry {
   std::string Name;           // Name of the directory.
   off_t Size;                 // File size in bytes.
+  time_t ModTime;             // Modification time of file.
   const DirectoryEntry *Dir;  // Directory file lives in.
   unsigned UID;               // A unique (small) ID for the file.
   FileEntry() {}
@@ -47,6 +48,7 @@ public:
   const std::string &getName() const { return Name; }
   off_t getSize() const { return Size; }
   unsigned getUID() const { return UID; }
+  time_t getModificationTime() const { return ModTime; }
   
   /// getDir - Return the directory the file lives in.
   ///

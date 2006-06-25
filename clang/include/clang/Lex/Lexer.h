@@ -288,8 +288,9 @@ private:
   
   /// LexIncludeFilename - After the preprocessor has parsed a #include, lex and
   /// (potentially) macro expand the filename.  If the sequence parsed is not
-  /// lexically legal, emit a diagnostic and return a result EOM token.
-  void LexIncludeFilename(LexerToken &Result);
+  /// lexically legal, emit a diagnostic and return a result EOM token.  Return
+  /// the spelled and checked filename.
+  std::string LexIncludeFilename(LexerToken &Result);
 };
 
 
