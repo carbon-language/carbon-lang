@@ -23,6 +23,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Lex/Preprocessor.h"
+#include "clang/Lex/Pragma.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceBuffer.h"
@@ -699,6 +700,27 @@ static void HandleFirstTokOnLine(LexerToken &Tok, Preprocessor &PP) {
     std::cout << ' ';
 }
 
+struct UnknownPragmaHandler : public PragmaHandler {
+  const char *Prefix;
+  UnknownPragmaHandler(const char *prefix) : PragmaHandler(0), Prefix(prefix) {}
+  virtual void HandlePragma(Preprocessor &PP, LexerToken &PragmaTok) {
+    // Figure out what line we went to and insert the appropriate number of
+    // newline characters.
+    MoveToLine(PP.getSourceManager().getLineNumber(PragmaTok.getLocation()));
+    std::cout << Prefix;
+    
+    // Read and print all of the pragma tokens.
+    while (PragmaTok.getKind() != tok::eom) {
+      if (PragmaTok.hasLeadingSpace())
+        std::cout << ' ';
+      std::cout << PP.getSpelling(PragmaTok);
+      PP.Lex(PragmaTok);
+    }
+    std::cout << "\n";
+  }
+};
+
+
 /// DoPrintPreprocessedInput - This implements -E mode.
 void DoPrintPreprocessedInput(Preprocessor &PP) {
   LexerToken Tok;
@@ -709,6 +731,8 @@ void DoPrintPreprocessedInput(Preprocessor &PP) {
   EModePP = &PP;
   EmodeEmittedTokensOnThisLine = false;
   
+  PP.AddPragmaHandler(0, new UnknownPragmaHandler("#pragma"));
+  PP.AddPragmaHandler("GCC", new UnknownPragmaHandler("#pragma GCC"));
   do {
     PP.Lex(Tok);
 
