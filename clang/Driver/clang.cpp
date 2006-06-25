@@ -620,15 +620,23 @@ static void MoveToLine(unsigned LineNo) {
 
 /// HandleFileChange - Whenever the preprocessor enters or exits a #include file
 /// it invokes this handler.  Update our conception of the current 
-static void HandleFileChange(SourceLocation Loc, bool EnteringFile,
+static void HandleFileChange(SourceLocation Loc,
+                             Preprocessor::FileChangeReason Reason,
                              DirectoryLookup::DirType FileType) {
   SourceManager &SourceMgr = EModePP->getSourceManager();
 
-  // If we are entering a new #include, make sure to skip ahead to the line the
+  // Unless we are exiting a #include, make sure to skip ahead to the line the
   // #include directive was at.
-  if (EnteringFile) {
+  if (Reason == Preprocessor::EnterFile) {
     SourceLocation IncludeLoc = SourceMgr.getIncludeLoc(Loc.getFileID());
     MoveToLine(SourceMgr.getLineNumber(IncludeLoc));
+  } else if (Reason == Preprocessor::SystemHeaderPragma) {
+    MoveToLine(SourceMgr.getLineNumber(Loc));
+    
+    // GCC emits the # directive for this directive on the line AFTER the
+    // directive and emits a bunch of spaces that aren't needed.  Emulate this
+    // strange behavior.
+    //std::cout << "       \n";
   }
   
   EModeCurLine = SourceMgr.getLineNumber(Loc);
@@ -641,10 +649,16 @@ static void HandleFileChange(SourceLocation Loc, bool EnteringFile,
     EmodeEmittedTokensOnThisLine = false;
   }
   std::cout << "# " << EModeCurLine << " " << EModeCurFilename;
-  if (EnteringFile) 
+  switch (Reason) {
+  case Preprocessor::EnterFile:
     std::cout << " 1";
-  else
+    break;
+  case Preprocessor::ExitFile:
     std::cout << " 2";
+    break;
+  case Preprocessor::SystemHeaderPragma: break;
+  case Preprocessor::RenameFile: break;
+  }
   
   if (FileType == DirectoryLookup::SystemHeaderDir)
     std::cout << " 3";

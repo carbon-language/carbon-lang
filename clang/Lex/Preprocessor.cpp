@@ -371,8 +371,8 @@ void Preprocessor::EnterSourceFile(unsigned FileID,
           SourceMgr.getFileEntryForFileID(CurLexer->getCurFileID()))
       FileType = getFileInfo(FE).DirInfo;
     
-    FileChangeHandler(CurLexer->getSourceLocation(CurLexer->BufferStart), true,
-                      FileType);
+    FileChangeHandler(CurLexer->getSourceLocation(CurLexer->BufferStart),
+                      EnterFile, FileType);
   }
 }
 
@@ -532,7 +532,7 @@ void Preprocessor::HandleEndOfFile(LexerToken &Result, bool isEndOfMacro) {
         FileType = getFileInfo(FE).DirInfo;
 
       FileChangeHandler(CurLexer->getSourceLocation(CurLexer->BufferPtr),
-                        false, FileType);
+                        ExitFile, FileType);
     }
     
     return Lex(Result);
@@ -1323,6 +1323,24 @@ void Preprocessor::HandlePragmaPoison(LexerToken &PoisonTok) {
   }
 }
 
+void Preprocessor::HandlePragmaSystemHeader(LexerToken &SysHeaderTok) {
+  if (IncludeStack.empty()) {
+    Diag(SysHeaderTok, diag::pp_pragma_sysheader_in_main_file);
+    return;
+  }
+  
+  // Mark the file as a system header.
+  const FileEntry *File = 
+    SourceMgr.getFileEntryForFileID(CurLexer->getCurFileID());
+  getFileInfo(File).DirInfo = DirectoryLookup::SystemHeaderDir;
+  
+  
+  // Notify the client, if desired, that we are in a new source file.
+  if (FileChangeHandler)
+    FileChangeHandler(CurLexer->getSourceLocation(CurLexer->BufferPtr),
+                      SystemHeaderPragma, DirectoryLookup::SystemHeaderDir);
+}
+
 /// AddPragmaHandler - Add the specified pragma handler to the preprocessor.
 /// If 'Namespace' is non-null, then it is a token required to exist on the
 /// pragma line before the pragma string starts, e.g. "STDC" or "GCC".
@@ -1356,8 +1374,7 @@ void Preprocessor::AddPragmaHandler(const char *Namespace,
 }
 
 namespace {
-class PragmaOnceHandler : public PragmaHandler {
-public:
+struct PragmaOnceHandler : public PragmaHandler {
   PragmaOnceHandler(const IdentifierTokenInfo *OnceID) : PragmaHandler(OnceID){}
   virtual void HandlePragma(Preprocessor &PP, LexerToken &OnceTok) {
     PP.CheckEndOfDirective("#pragma once");
@@ -1365,11 +1382,18 @@ public:
   }
 };
 
-class PragmaPoisonHandler : public PragmaHandler {
-public:
+struct PragmaPoisonHandler : public PragmaHandler {
   PragmaPoisonHandler(const IdentifierTokenInfo *ID) : PragmaHandler(ID) {}
   virtual void HandlePragma(Preprocessor &PP, LexerToken &PoisonTok) {
     PP.HandlePragmaPoison(PoisonTok);
+  }
+};
+
+struct PragmaSystemHeaderHandler : public PragmaHandler {
+  PragmaSystemHeaderHandler(const IdentifierTokenInfo *ID) : PragmaHandler(ID){}
+  virtual void HandlePragma(Preprocessor &PP, LexerToken &SHToken) {
+    PP.HandlePragmaSystemHeader(SHToken);
+    PP.CheckEndOfDirective("#pragma");
   }
 };
 }
@@ -1380,4 +1404,6 @@ public:
 void Preprocessor::RegisterBuiltinPragmas() {
   AddPragmaHandler(0, new PragmaOnceHandler(getIdentifierInfo("once")));
   AddPragmaHandler("GCC", new PragmaPoisonHandler(getIdentifierInfo("poison")));
+  AddPragmaHandler("GCC", new PragmaSystemHeaderHandler(
+                                          getIdentifierInfo("system_header")));
 }

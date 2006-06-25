@@ -89,13 +89,17 @@ class Preprocessor {
   std::vector<DirectoryLookup> SearchDirs;
   unsigned SystemDirIdx;
   bool NoCurDirSearch;
-
+public:
+  enum FileChangeReason {
+    EnterFile, ExitFile, SystemHeaderPragma, RenameFile
+  };
+private:
   /// FileChangeHandler - This callback is invoked whenever a source file is
   /// entered or exited.  The SourceLocation indicates the new location, and
   /// EnteringFile indicates whether this is because we are entering a new
   /// #include'd file (when true) or whether we're exiting one because we ran
   /// off the end (when false).
-  void (*FileChangeHandler)(SourceLocation Loc, bool EnteringFile,
+  void (*FileChangeHandler)(SourceLocation Loc, FileChangeReason Reason,
                             DirectoryLookup::DirType FileType);
   
   enum {
@@ -210,7 +214,7 @@ public:
   /// EnteringFile indicates whether this is because we are entering a new
   /// #include'd file (when true) or whether we're exiting one because we ran
   /// off the end (when false).
-  void setFileChangeHandler(void (*Handler)(SourceLocation, bool,
+  void setFileChangeHandler(void (*Handler)(SourceLocation, FileChangeReason,
                                             DirectoryLookup::DirType)) {
     FileChangeHandler = Handler;
   }
@@ -428,6 +432,7 @@ private:
 public:
   void HandlePragmaOnce(LexerToken &OnceTok);
   void HandlePragmaPoison(LexerToken &PoisonTok);
+  void HandlePragmaSystemHeader(LexerToken &SysHeaderTok);
 };
 
 }  // end namespace clang
