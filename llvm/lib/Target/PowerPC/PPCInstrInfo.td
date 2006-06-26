@@ -530,10 +530,6 @@ def EXTSH  : XForm_11<31, 922, (ops GPRC:$rA, GPRC:$rS),
                       "extsh $rA, $rS", IntGeneral,
                       [(set GPRC:$rA, (sext_inreg GPRC:$rS, i16))]>;
 
-def CMP    : XForm_16<31, 0, (ops CRRC:$crD, i1imm:$long, GPRC:$rA, GPRC:$rB),
-                      "cmp $crD, $long, $rA, $rB", IntCompare>;
-def CMPL   : XForm_16<31, 32, (ops CRRC:$crD, i1imm:$long, GPRC:$rA, GPRC:$rB),
-                      "cmpl $crD, $long, $rA, $rB", IntCompare>;
 def CMPW   : XForm_16_ext<31, 0, (ops CRRC:$crD, GPRC:$rA, GPRC:$rB),
                           "cmpw $crD, $rA, $rB", IntCompare>;
 def CMPLW  : XForm_16_ext<31, 32, (ops CRRC:$crD, GPRC:$rA, GPRC:$rB),
