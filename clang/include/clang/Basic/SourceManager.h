@@ -189,10 +189,7 @@ public:
   
   /// getIncludeLoc - Return the location of the #include for the specified
   /// FileID.
-  SourceLocation getIncludeLoc(unsigned FileID) const {
-    assert(FileID-1 < FileIDs.size() && "Invalid FileID!");
-    return FileIDs[FileID-1].IncludeLoc;
-  }
+  SourceLocation getIncludeLoc(unsigned FileID) const;
   
   /// getFilePos - This (efficient) method returns the offset from the start of
   /// the file that the specified SourceLocation represents.  This returns the

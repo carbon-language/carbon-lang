@@ -129,6 +129,18 @@ const char *SourceManager::getCharacterData(SourceLocation SL) const {
   return 0;
 }
 
+/// getIncludeLoc - Return the location of the #include for the specified
+/// FileID.
+SourceLocation SourceManager::getIncludeLoc(unsigned FileID) const {
+  const SrcMgr::FileIDInfo *FIDInfo = getFIDInfo(FileID);
+
+  // For Macros, the physical loc is specified by the MacroTokenFileID.
+  if (FIDInfo->IDType == SrcMgr::FileIDInfo::MacroExpansion)
+    FIDInfo = &FileIDs[FIDInfo->u.MacroTokenFileID-1];
+  
+  return FIDInfo->IncludeLoc;
+}  
+
 
 /// getColumnNumber - Return the column # for the specified include position.
 /// this is significantly cheaper to compute than the line number.  This returns
