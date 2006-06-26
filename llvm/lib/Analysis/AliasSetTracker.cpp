@@ -435,6 +435,17 @@ void AliasSetTracker::deleteValue(Value *PtrVal) {
   // Notify the alias analysis implementation that this value is gone.
   AA.deleteValue(PtrVal);
 
+  // If this is a call instruction, remove the callsite from the appropriate
+  // AliasSet.
+  CallSite CS = CallSite::get(PtrVal);
+  if (CS.getInstruction()) {
+    Function *F = CS.getCalledFunction();
+    if (!F || !AA.doesNotAccessMemory(F)) {
+      if (AliasSet *AS = findAliasSetForCallSite(CS))
+        AS->removeCallSite(CS);
+    }
+  }
+
   // First, look up the PointerRec for this pointer.
   hash_map<Value*, AliasSet::PointerRec>::iterator I = PointerMap.find(PtrVal);
   if (I == PointerMap.end()) return;  // Noop
