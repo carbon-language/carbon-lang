@@ -15,6 +15,12 @@
 //===----------------------------------------------------------------------===//
 // 64-bit operands.
 //
+def s16imm64 : Operand<i64> {
+  let PrintMethod = "printS16ImmOperand";
+}
+def u16imm64 : Operand<i64> {
+  let PrintMethod = "printU16ImmOperand";
+}
 def symbolHi64 : Operand<i64> {
   let PrintMethod = "printSymbolHi";
 }
@@ -121,6 +127,9 @@ def XORIS8  : DForm_4<27, (ops G8RC:$dst, G8RC:$src1, u16imm:$src2),
 def ADD8  : XOForm_1<31, 266, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
                      "add $rT, $rA, $rB", IntGeneral,
                      [(set G8RC:$rT, (add G8RC:$rA, G8RC:$rB))]>;
+def ADDI8  : DForm_2<14, (ops G8RC:$rD, G8RC:$rA, s16imm64:$imm),
+                     "addi $rD, $rA, $imm", IntGeneral,
+                     [(set G8RC:$rD, (add G8RC:$rA, immSExt16:$imm))]>;
 def ADDIS8 : DForm_2<15, (ops G8RC:$rD, G8RC:$rA, symbolHi64:$imm),
                      "addis $rD, $rA, $imm", IntGeneral,
                      [(set G8RC:$rD, (add G8RC:$rA, imm16ShiftedSExt:$imm))]>;
@@ -135,15 +144,14 @@ def MULHDU : XOForm_1<31, 9, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
                      "mulhdu $rT, $rA, $rB", IntMulHWU,
                      [(set G8RC:$rT, (mulhu G8RC:$rA, G8RC:$rB))]>;
 
-def CMPDI : DForm_5_ext<11, (ops CRRC:$crD, GPRC:$rA, s16imm:$imm),
-                        "cmpdi $crD, $rA, $imm", IntCompare>, isPPC64;
-
-def CMPLDI : DForm_6_ext<10, (ops CRRC:$dst, GPRC:$src1, u16imm:$src2),
-                         "cmpldi $dst, $src1, $src2", IntCompare>, isPPC64;
-def CMPD   : XForm_16_ext<31, 0, (ops CRRC:$crD, GPRC:$rA, GPRC:$rB),
+def CMPD   : XForm_16_ext<31, 0, (ops CRRC:$crD, G8RC:$rA, G8RC:$rB),
                           "cmpd $crD, $rA, $rB", IntCompare>, isPPC64;
-def CMPLD  : XForm_16_ext<31, 32, (ops CRRC:$crD, GPRC:$rA, GPRC:$rB),
+def CMPLD  : XForm_16_ext<31, 32, (ops CRRC:$crD, G8RC:$rA, G8RC:$rB),
                           "cmpld $crD, $rA, $rB", IntCompare>, isPPC64;
+def CMPDI  : DForm_5_ext<11, (ops CRRC:$crD, G8RC:$rA, s16imm:$imm),
+                         "cmpdi $crD, $rA, $imm", IntCompare>, isPPC64;
+def CMPLDI : DForm_6_ext<10, (ops CRRC:$dst, G8RC:$src1, u16imm:$src2),
+                         "cmpldi $dst, $src1, $src2", IntCompare>, isPPC64;
 
 def SLD  : XForm_6<31,  27, (ops G8RC:$rA, G8RC:$rS, G8RC:$rB),
                    "sld $rA, $rS, $rB", IntRotateD,
@@ -161,6 +169,9 @@ def EXTSW  : XForm_11<31, 986, (ops G8RC:$rA, G8RC:$rS),
 def EXTSW_32 : XForm_11<31, 986, (ops GPRC:$rA, GPRC:$rS),
                       "extsw $rA, $rS", IntGeneral,
                       [(set GPRC:$rA, (PPCextsw_32 GPRC:$rS))]>, isPPC64;
+def EXTSW_32_64 : XForm_11<31, 986, (ops G8RC:$rA, GPRC:$rS),
+                      "extsw $rA, $rS", IntGeneral,
+                      [(set G8RC:$rA, (sext GPRC:$rS))]>, isPPC64;
 
 def SRADI  : XSForm_1<31, 413, (ops GPRC:$rA, GPRC:$rS, u6imm:$SH),
                       "sradi $rA, $rS, $SH", IntRotateD>, isPPC64;
@@ -175,6 +186,7 @@ def DIVDU : XOForm_1<31, 457, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
 def MULLD : XOForm_1<31, 233, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
                      "mulld $rT, $rA, $rB", IntMulHD,
                      [(set G8RC:$rT, (mul G8RC:$rA, G8RC:$rB))]>, isPPC64;
+
 
 let isTwoAddress = 1, isCommutable = 1 in {
 def RLDIMI : MDForm_1<30, 3,
@@ -192,7 +204,7 @@ def RLDICR : MDForm_1<30, 1,
                       (ops G8RC:$rA, G8RC:$rS, u6imm:$SH, u6imm:$ME),
                       "rldicr $rA, $rS, $SH, $ME", IntRotateD,
                       []>, isPPC64;
-}
+}  // End FXU Operations.
 
 
 //===----------------------------------------------------------------------===//
