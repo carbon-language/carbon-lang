@@ -260,6 +260,23 @@ unsigned SourceManager::getLineNumber(SourceLocation Loc) {
   return Pos-SourceLineCache;
 }
 
+/// getSourceFilePos - This method returns the *logical* offset from the start
+/// of the file that the specified SourceLocation represents.  This returns
+/// the location of the *logical* character data, not the physical file
+/// position.  In the case of macros, for example, this returns where the
+/// macro was instantiated, not where the characters for the macro can be
+/// found.
+unsigned SourceManager::getSourceFilePos(SourceLocation Loc) const {
+ 
+  // If this is a macro, we need to get the instantiation location.
+  const SrcMgr::FileIDInfo *FIDInfo = getFIDInfo(Loc.getFileID());
+  if (FIDInfo->IDType == SrcMgr::FileIDInfo::MacroExpansion)
+    return getFilePos(FIDInfo->IncludeLoc);
+  
+  return getFilePos(Loc);
+}
+
+
 /// PrintStats - Print statistics to stderr.
 ///
 void SourceManager::PrintStats() const {

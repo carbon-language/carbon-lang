@@ -143,6 +143,15 @@ namespace SrcMgr {
 /// SourceManager - This file handles loading and caching of source files into
 /// memory.  This object owns the SourceBuffer objects for all of the loaded
 /// files and assigns unique FileID's for each unique #include chain.
+///
+/// The SourceManager can be queried for information about SourceLocation
+/// objects, turning them into either physical or logical locations.  Physical
+/// locations represent where the bytes corresponding to a token came from and
+/// logical locations represent where the location is in the user's view.  In
+/// the case of a macro expansion, for example, the physical location indicates
+/// where the expanded token came from and the logical location specifies where
+/// it was expanded.  Logical locations are also influenced by #line directives,
+/// etc.
 class SourceManager {
   /// FileInfos - Memoized information about all of the files tracked by this
   /// SourceManager.
@@ -194,8 +203,8 @@ public:
   /// getFilePos - This (efficient) method returns the offset from the start of
   /// the file that the specified SourceLocation represents.  This returns the
   /// location of the physical character data, not the logical file position.
-  unsigned getFilePos(SourceLocation IncludePos) const {
-    const SrcMgr::FileIDInfo *FIDInfo = getFIDInfo(IncludePos.getFileID());
+  unsigned getFilePos(SourceLocation Loc) const {
+    const SrcMgr::FileIDInfo *FIDInfo = getFIDInfo(Loc.getFileID());
 
     // For Macros, the physical loc is specified by the MacroTokenFileID.
     if (FIDInfo->IDType == SrcMgr::FileIDInfo::MacroExpansion)
@@ -204,8 +213,7 @@ public:
     // If this file has been split up into chunks, factor in the chunk number
     // that the FileID references.
     unsigned ChunkNo = FIDInfo->getNormalBufferChunkNo();
-    return IncludePos.getRawFilePos() +
-           (ChunkNo << SourceLocation::FilePosBits);
+    return Loc.getRawFilePos() + (ChunkNo << SourceLocation::FilePosBits);
   }
   
   /// getCharacterData - Return a pointer to the start of the specified location
@@ -224,6 +232,14 @@ public:
   /// about to emit a diagnostic.
   unsigned getLineNumber(SourceLocation Loc);
   
+  /// getSourceFilePos - This method returns the *logical* offset from the start
+  /// of the file that the specified SourceLocation represents.  This returns
+  /// the location of the *logical* character data, not the physical file
+  /// position.  In the case of macros, for example, this returns where the
+  /// macro was instantiated, not where the characters for the macro can be
+  /// found.
+  unsigned getSourceFilePos(SourceLocation Loc) const;
+    
   /// getSourceName - This method returns the name of the file or buffer that
   /// the SourceLocation specifies.  This can be modified with #line directives,
   /// etc.
