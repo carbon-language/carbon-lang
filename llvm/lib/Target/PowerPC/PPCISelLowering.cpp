@@ -733,8 +733,8 @@ static SDOperand LowerVASTART(SDOperand Op, SelectionDAG &DAG,
                      Op.getOperand(1), Op.getOperand(2));
 }
 
-static SDOperand LowerFORMAL_ARGUMENTS_32(SDOperand Op, SelectionDAG &DAG,
-                                          int &VarArgsFrameIndex) {
+static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
+                                       int &VarArgsFrameIndex) {
   // TODO: add description of PPC stack frame format, or at least some docs.
   //
   MachineFunction &MF = DAG.getMachineFunction();
@@ -748,9 +748,14 @@ static SDOperand LowerFORMAL_ARGUMENTS_32(SDOperand Op, SelectionDAG &DAG,
   const unsigned Num_FPR_Regs = 13;
   const unsigned Num_VR_Regs  = 12;
   unsigned GPR_idx = 0, FPR_idx = 0, VR_idx = 0;
-  static const unsigned GPR[] = {
+  
+  static const unsigned GPR_32[] = {           // 32-bit registers.
     PPC::R3, PPC::R4, PPC::R5, PPC::R6,
     PPC::R7, PPC::R8, PPC::R9, PPC::R10,
+  };
+  static const unsigned GPR_64[] = {           // 64-bit registers.
+    PPC::X3, PPC::X4, PPC::X5, PPC::X6,
+    PPC::X7, PPC::X8, PPC::X9, PPC::X10,
   };
   static const unsigned FPR[] = {
     PPC::F1, PPC::F2, PPC::F3, PPC::F4, PPC::F5, PPC::F6, PPC::F7,
@@ -760,6 +765,10 @@ static SDOperand LowerFORMAL_ARGUMENTS_32(SDOperand Op, SelectionDAG &DAG,
     PPC::V2, PPC::V3, PPC::V4, PPC::V5, PPC::V6, PPC::V7, PPC::V8,
     PPC::V9, PPC::V10, PPC::V11, PPC::V12, PPC::V13
   };
+
+  MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+  bool isPPC64 = PtrVT == MVT::i64;
+  const unsigned *GPR = isPPC64 ? GPR_64 : GPR_32;
   
   // Add DAG nodes to load the arguments or copy them out of registers.  On
   // entry to a function on PPC, the arguments start at offset 24, although the
@@ -771,17 +780,29 @@ static SDOperand LowerFORMAL_ARGUMENTS_32(SDOperand Op, SelectionDAG &DAG,
     unsigned ObjSize = MVT::getSizeInBits(ObjectVT)/8;
 
     unsigned CurArgOffset = ArgOffset;
-    
     switch (ObjectVT) {
     default: assert(0 && "Unhandled argument type!");
     case MVT::i32:
       // All int arguments reserve stack space.
-      ArgOffset += 4;
+      ArgOffset += isPPC64 ? 8 : 4;
 
       if (GPR_idx != Num_GPR_Regs) {
         unsigned VReg = RegMap->createVirtualRegister(&PPC::GPRCRegClass);
         MF.addLiveIn(GPR[GPR_idx], VReg);
         ArgVal = DAG.getCopyFromReg(Root, VReg, MVT::i32);
+        ++GPR_idx;
+      } else {
+        needsLoad = true;
+      }
+      break;
+    case MVT::i64:  // PPC64
+      // All int arguments reserve stack space.
+      ArgOffset += 8;
+      
+      if (GPR_idx != Num_GPR_Regs) {
+        unsigned VReg = RegMap->createVirtualRegister(&PPC::G8RCRegClass);
+        MF.addLiveIn(GPR[GPR_idx], VReg);
+        ArgVal = DAG.getCopyFromReg(Root, VReg, MVT::i64);
         ++GPR_idx;
       } else {
         needsLoad = true;
@@ -838,7 +859,7 @@ static SDOperand LowerFORMAL_ARGUMENTS_32(SDOperand Op, SelectionDAG &DAG,
       // slot.
       if (!Op.Val->hasNUsesOfValue(0, ArgNo)) {
         int FI = MFI->CreateFixedObject(ObjSize, CurArgOffset);
-        SDOperand FIN = DAG.getFrameIndex(FI, MVT::i32);
+        SDOperand FIN = DAG.getFrameIndex(FI, PtrVT);
         ArgVal = DAG.getLoad(ObjectVT, Root, FIN,
                              DAG.getSrcValue(NULL));
       } else {
@@ -854,8 +875,9 @@ static SDOperand LowerFORMAL_ARGUMENTS_32(SDOperand Op, SelectionDAG &DAG,
   // the start of the first vararg value... for expansion of llvm.va_start.
   bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
   if (isVarArg) {
-    VarArgsFrameIndex = MFI->CreateFixedObject(4, ArgOffset);
-    SDOperand FIN = DAG.getFrameIndex(VarArgsFrameIndex, MVT::i32);
+    VarArgsFrameIndex = MFI->CreateFixedObject(MVT::getSizeInBits(PtrVT)/8,
+                                               ArgOffset);
+    SDOperand FIN = DAG.getFrameIndex(VarArgsFrameIndex, PtrVT);
     // If this function is vararg, store any remaining integer argument regs
     // to their spots on the stack so that they may be loaded by deferencing the
     // result of va_next.
@@ -863,13 +885,13 @@ static SDOperand LowerFORMAL_ARGUMENTS_32(SDOperand Op, SelectionDAG &DAG,
     for (; GPR_idx != Num_GPR_Regs; ++GPR_idx) {
       unsigned VReg = RegMap->createVirtualRegister(&PPC::GPRCRegClass);
       MF.addLiveIn(GPR[GPR_idx], VReg);
-      SDOperand Val = DAG.getCopyFromReg(Root, VReg, MVT::i32);
+      SDOperand Val = DAG.getCopyFromReg(Root, VReg, PtrVT);
       SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Val.getValue(1),
                                     Val, FIN, DAG.getSrcValue(NULL));
       MemOps.push_back(Store);
       // Increment the address by four for the next argument to store
-      SDOperand PtrOff = DAG.getConstant(4, MVT::i32);
-      FIN = DAG.getNode(ISD::ADD, MVT::i32, FIN, PtrOff);
+      SDOperand PtrOff = DAG.getConstant(MVT::getSizeInBits(PtrVT)/8, PtrVT);
+      FIN = DAG.getNode(ISD::ADD, PtrOff.getValueType(), FIN, PtrOff);
     }
     if (!MemOps.empty())
       Root = DAG.getNode(ISD::TokenFactor, MVT::Other, MemOps);
@@ -881,11 +903,6 @@ static SDOperand LowerFORMAL_ARGUMENTS_32(SDOperand Op, SelectionDAG &DAG,
   std::vector<MVT::ValueType> RetVT(Op.Val->value_begin(),
                                     Op.Val->value_end());
   return DAG.getNode(ISD::MERGE_VALUES, RetVT, ArgValues);
-}
-
-static SDOperand LowerFORMAL_ARGUMENTS_64(SDOperand Op, SelectionDAG &DAG,
-                                          int &VarArgsFrameIndex) {
-  return LowerFORMAL_ARGUMENTS_32(Op, DAG, VarArgsFrameIndex);
 }
 
 /// isCallCompatibleAddress - Return the immediate to use if the specified
@@ -911,14 +928,19 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   SDOperand Callee    = Op.getOperand(4);
   unsigned NumOps     = (Op.getNumOperands() - 5) / 2;
 
+  MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+  bool isPPC64 = PtrVT == MVT::i64;
+  unsigned PtrByteSize = isPPC64 ? 8 : 4;
+
+  
   // args_to_use will accumulate outgoing args for the PPCISD::CALL case in
   // SelectExpr to use to put the arguments in the appropriate registers.
   std::vector<SDOperand> args_to_use;
   
   // Count how many bytes are to be pushed on the stack, including the linkage
-  // area, and parameter passing area.  We start with 24 bytes, which is
+  // area, and parameter passing area.  We start with 24/48 bytes, which is
   // prereserved space for [SP][CR][LR][3 x unused].
-  unsigned NumBytes = 24;
+  unsigned NumBytes = 6*PtrByteSize;
   
   // Add up all the space actually used.
   for (unsigned i = 0; i != NumOps; ++i)
@@ -929,28 +951,36 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   // Because we cannot tell if this is needed on the caller side, we have to
   // conservatively assume that it is needed.  As such, make sure we have at
   // least enough stack space for the caller to store the 8 GPRs.
-  if (NumBytes < 24+8*4)
-    NumBytes = 24+8*4;
+  if (NumBytes < 6*PtrByteSize+8*PtrByteSize)
+    NumBytes = 6*PtrByteSize+8*PtrByteSize;
   
   // Adjust the stack pointer for the new arguments...
   // These operations are automatically eliminated by the prolog/epilog pass
   Chain = DAG.getCALLSEQ_START(Chain,
-                               DAG.getConstant(NumBytes, MVT::i32));
+                               DAG.getConstant(NumBytes, PtrVT));
   
   // Set up a copy of the stack pointer for use loading and storing any
   // arguments that may not fit in the registers available for argument
   // passing.
-  SDOperand StackPtr = DAG.getRegister(PPC::R1, MVT::i32);
+  SDOperand StackPtr;
+  if (isPPC64)
+    StackPtr = DAG.getRegister(PPC::X1, MVT::i64);
+  else
+    StackPtr = DAG.getRegister(PPC::R1, MVT::i32);
   
   // Figure out which arguments are going to go in registers, and which in
   // memory.  Also, if this is a vararg function, floating point operations
   // must be stored to our stack, and loaded into integer regs as well, if
   // any integer regs are available for argument passing.
-  unsigned ArgOffset = 24;
+  unsigned ArgOffset = 6*PtrByteSize;
   unsigned GPR_idx = 0, FPR_idx = 0, VR_idx = 0;
-  static const unsigned GPR[] = {
+  static const unsigned GPR_32[] = {           // 32-bit registers.
     PPC::R3, PPC::R4, PPC::R5, PPC::R6,
     PPC::R7, PPC::R8, PPC::R9, PPC::R10,
+  };
+  static const unsigned GPR_64[] = {           // 64-bit registers.
+    PPC::X3, PPC::X4, PPC::X5, PPC::X6,
+    PPC::X7, PPC::X8, PPC::X9, PPC::X10,
   };
   static const unsigned FPR[] = {
     PPC::F1, PPC::F2, PPC::F3, PPC::F4, PPC::F5, PPC::F6, PPC::F7,
@@ -960,10 +990,12 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     PPC::V2, PPC::V3, PPC::V4, PPC::V5, PPC::V6, PPC::V7, PPC::V8,
     PPC::V9, PPC::V10, PPC::V11, PPC::V12, PPC::V13
   };
-  const unsigned NumGPRs = sizeof(GPR)/sizeof(GPR[0]);
+  const unsigned NumGPRs = sizeof(GPR_32)/sizeof(GPR_32[0]);
   const unsigned NumFPRs = sizeof(FPR)/sizeof(FPR[0]);
   const unsigned NumVRs  = sizeof( VR)/sizeof( VR[0]);
   
+  const unsigned *GPR = isPPC64 ? GPR_64 : GPR_32;
+
   std::vector<std::pair<unsigned, SDOperand> > RegsToPass;
   std::vector<SDOperand> MemOpChains;
   for (unsigned i = 0; i != NumOps; ++i) {
@@ -972,17 +1004,27 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     // PtrOff will be used to store the current argument to the stack if a
     // register cannot be found for it.
     SDOperand PtrOff = DAG.getConstant(ArgOffset, StackPtr.getValueType());
-    PtrOff = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
+    PtrOff = DAG.getNode(ISD::ADD, PtrVT, StackPtr, PtrOff);
+
+    // On PPC64, promote integers to 64-bit values.
+    if (isPPC64 && Arg.getValueType() == MVT::i32) {
+      unsigned ExtOp = ISD::ZERO_EXTEND;
+      if (cast<ConstantSDNode>(Op.getOperand(5+2*i+1))->getValue())
+        ExtOp = ISD::SIGN_EXTEND;
+      Arg = DAG.getNode(ExtOp, MVT::i64, Arg);
+    }
+    
     switch (Arg.getValueType()) {
     default: assert(0 && "Unexpected ValueType for argument!");
     case MVT::i32:
+    case MVT::i64:
       if (GPR_idx != NumGPRs) {
         RegsToPass.push_back(std::make_pair(GPR[GPR_idx++], Arg));
       } else {
         MemOpChains.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
                                           Arg, PtrOff, DAG.getSrcValue(NULL)));
       }
-      ArgOffset += 4;
+      ArgOffset += PtrByteSize;
       break;
     case MVT::f32:
     case MVT::f64:
@@ -997,15 +1039,15 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
 
           // Float varargs are always shadowed in available integer registers
           if (GPR_idx != NumGPRs) {
-            SDOperand Load = DAG.getLoad(MVT::i32, Store, PtrOff,
+            SDOperand Load = DAG.getLoad(PtrVT, Store, PtrOff,
                                          DAG.getSrcValue(NULL));
             MemOpChains.push_back(Load.getValue(1));
             RegsToPass.push_back(std::make_pair(GPR[GPR_idx++], Load));
           }
           if (GPR_idx != NumGPRs && Arg.getValueType() == MVT::f64) {
             SDOperand ConstFour = DAG.getConstant(4, PtrOff.getValueType());
-            PtrOff = DAG.getNode(ISD::ADD, MVT::i32, PtrOff, ConstFour);
-            SDOperand Load = DAG.getLoad(MVT::i32, Store, PtrOff,
+            PtrOff = DAG.getNode(ISD::ADD, PtrVT, PtrOff, ConstFour);
+            SDOperand Load = DAG.getLoad(PtrVT, Store, PtrOff,
                                          DAG.getSrcValue(NULL));
             MemOpChains.push_back(Load.getValue(1));
             RegsToPass.push_back(std::make_pair(GPR[GPR_idx++], Load));
@@ -1016,14 +1058,17 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
           // GPRs.
           if (GPR_idx != NumGPRs)
             ++GPR_idx;
-          if (GPR_idx != NumGPRs && Arg.getValueType() == MVT::f64)
+          if (GPR_idx != NumGPRs && Arg.getValueType() == MVT::f64 && !isPPC64)
             ++GPR_idx;
         }
       } else {
         MemOpChains.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
                                           Arg, PtrOff, DAG.getSrcValue(NULL)));
       }
-      ArgOffset += (Arg.getValueType() == MVT::f32) ? 4 : 8;
+      if (isPPC64)
+        ArgOffset += 8;
+      else
+        ArgOffset += Arg.getValueType() == MVT::f32 ? 4 : 8;
       break;
     case MVT::v4f32:
     case MVT::v4i32:
@@ -1127,6 +1172,11 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     }
     NodeTys.push_back(MVT::i32);
     break;
+  case MVT::i64:
+    Chain = DAG.getCopyFromReg(Chain, PPC::X3, MVT::i64, InFlag).getValue(1);
+    ResultVals.push_back(Chain.getValue(0));
+    NodeTys.push_back(MVT::i64);
+    break;
   case MVT::f32:
   case MVT::f64:
     Chain = DAG.getCopyFromReg(Chain, PPC::F1, Op.Val->getValueType(0),
@@ -1146,7 +1196,7 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   }
   
   Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
-                      DAG.getConstant(NumBytes, MVT::i32));
+                      DAG.getConstant(NumBytes, PtrVT));
   NodeTys.push_back(MVT::Other);
   
   // If the function returns void, just return the chain.
@@ -2136,10 +2186,7 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::SETCC:              return LowerSETCC(Op, DAG);
   case ISD::VASTART:            return LowerVASTART(Op, DAG, VarArgsFrameIndex);
   case ISD::FORMAL_ARGUMENTS:
-    if (getPointerTy() == MVT::i32)
-      return LowerFORMAL_ARGUMENTS_32(Op, DAG, VarArgsFrameIndex);
-    else
-      return LowerFORMAL_ARGUMENTS_64(Op, DAG, VarArgsFrameIndex);
+      return LowerFORMAL_ARGUMENTS(Op, DAG, VarArgsFrameIndex);
   case ISD::CALL:               return LowerCALL(Op, DAG);
   case ISD::RET:                return LowerRET(Op, DAG);
     
