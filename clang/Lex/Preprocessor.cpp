@@ -424,79 +424,9 @@ void Preprocessor::HandleIdentifier(LexerToken &Identifier) {
   if (ITI.isPoisoned() && CurLexer)
     Diag(Identifier, diag::err_pp_used_poisoned_id);
   
-  if (MacroInfo *MI = ITI.getMacroInfo()) {
-    if (MI->isEnabled() && !DisableMacroExpansion) {
-      ++NumMacroExpanded;
-      // If we started lexing a macro, enter the macro expansion body.
-      // FIXME: Read/Validate the argument list here!
-      
-      // If this macro expands to no tokens, don't bother to push it onto the
-      // expansion stack, only to take it right back off.
-      if (MI->getNumTokens() == 0) {
-        // Ignore this macro use, just return the next token in the current
-        // buffer.
-        bool HadLeadingSpace = Identifier.hasLeadingSpace();
-        bool IsAtStartOfLine = Identifier.isAtStartOfLine();
-        
-        Lex(Identifier);
-        
-        // If the identifier isn't on some OTHER line, inherit the leading
-        // whitespace/first-on-a-line property of this token.  This handles
-        // stuff like "! XX," -> "! ," and "   XX," -> "    ,", when XX is
-        // empty.
-        if (!Identifier.isAtStartOfLine()) {
-          if (IsAtStartOfLine) Identifier.SetFlag(LexerToken::StartOfLine);
-          if (HadLeadingSpace) Identifier.SetFlag(LexerToken::LeadingSpace);
-        }
-        ++NumFastMacroExpanded;
-        return;
-        
-      } else if (MI->getNumTokens() == 1 &&
-                 // Don't handle identifiers if they need recursive expansion.
-                 (MI->getReplacementToken(0).getIdentifierInfo() == 0 ||
-             !MI->getReplacementToken(0).getIdentifierInfo()->getMacroInfo())) {
-        // FIXME: Function-style macros only if no arguments?
-
-        // Otherwise, if this macro expands into a single trivially-expanded
-        // token: expand it now.  This handles common cases like 
-        // "#define VAL 42".
-        
-        // Propagate the isAtStartOfLine/hasLeadingSpace markers of the macro
-        // identifier to the expanded token.
-        bool isAtStartOfLine = Identifier.isAtStartOfLine();
-        bool hasLeadingSpace = Identifier.hasLeadingSpace();
-
-        // Remember where the token is instantiated.
-        SourceLocation InstantiateLoc = Identifier.getLocation();
-        
-        // Replace the result token.
-        Identifier = MI->getReplacementToken(0);
-
-        // Restore the StartOfLine/LeadingSpace markers.
-        Identifier.SetFlagValue(LexerToken::StartOfLine , isAtStartOfLine);
-        Identifier.SetFlagValue(LexerToken::LeadingSpace, hasLeadingSpace);
-
-        // Update the tokens location to include both its logical and physical
-        // locations.
-        SourceLocation Loc =
-          MacroExpander::getInstantiationLoc(*this, Identifier.getLocation(),
-                                             InstantiateLoc);
-        Identifier.SetLocation(Loc);
-
-        // Since this is not an identifier token, it can't be macro expanded, so
-        // we're done.
-        ++NumFastMacroExpanded;
-        return;
-      }
-    
-      // Start expanding the macro (FIXME, pass arguments).
-      EnterMacro(Identifier);
-    
-      // Now that the macro is at the top of the include stack, ask the
-      // preprocessor to read the next token from it.
-      return Lex(Identifier);
-    }
-  }
+  if (MacroInfo *MI = ITI.getMacroInfo())
+    if (MI->isEnabled() && !DisableMacroExpansion)
+      return HandleMacroExpandedIdentifier(Identifier, MI);
 
   // Change the kind of this identifier to the appropriate token kind, e.g.
   // turning "for" into a keyword.
@@ -504,6 +434,81 @@ void Preprocessor::HandleIdentifier(LexerToken &Identifier) {
     
   // If this is an extension token, diagnose its use.
   if (ITI.isExtensionToken()) Diag(Identifier, diag::ext_token_used);
+}
+
+/// HandleMacroExpandedIdentifier - If an identifier token is read that is to be
+/// expanded as a macro, handle it and return the next token as 'Identifier'.
+void Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier, 
+                                                 MacroInfo *MI) {
+  ++NumMacroExpanded;
+  // If we started lexing a macro, enter the macro expansion body.
+  // FIXME: Read/Validate the argument list here!
+  
+  // If this macro expands to no tokens, don't bother to push it onto the
+  // expansion stack, only to take it right back off.
+  if (MI->getNumTokens() == 0) {
+    // Ignore this macro use, just return the next token in the current
+    // buffer.
+    bool HadLeadingSpace = Identifier.hasLeadingSpace();
+    bool IsAtStartOfLine = Identifier.isAtStartOfLine();
+    
+    Lex(Identifier);
+    
+    // If the identifier isn't on some OTHER line, inherit the leading
+    // whitespace/first-on-a-line property of this token.  This handles
+    // stuff like "! XX," -> "! ," and "   XX," -> "    ,", when XX is
+    // empty.
+    if (!Identifier.isAtStartOfLine()) {
+      if (IsAtStartOfLine) Identifier.SetFlag(LexerToken::StartOfLine);
+      if (HadLeadingSpace) Identifier.SetFlag(LexerToken::LeadingSpace);
+    }
+    ++NumFastMacroExpanded;
+    return;
+    
+  } else if (MI->getNumTokens() == 1 &&
+             // Don't handle identifiers if they need recursive expansion.
+             (MI->getReplacementToken(0).getIdentifierInfo() == 0 ||
+              !MI->getReplacementToken(0).getIdentifierInfo()->getMacroInfo())){
+    // FIXME: Function-style macros only if no arguments?
+    
+    // Otherwise, if this macro expands into a single trivially-expanded
+    // token: expand it now.  This handles common cases like 
+    // "#define VAL 42".
+    
+    // Propagate the isAtStartOfLine/hasLeadingSpace markers of the macro
+    // identifier to the expanded token.
+    bool isAtStartOfLine = Identifier.isAtStartOfLine();
+    bool hasLeadingSpace = Identifier.hasLeadingSpace();
+    
+    // Remember where the token is instantiated.
+    SourceLocation InstantiateLoc = Identifier.getLocation();
+    
+    // Replace the result token.
+    Identifier = MI->getReplacementToken(0);
+    
+    // Restore the StartOfLine/LeadingSpace markers.
+    Identifier.SetFlagValue(LexerToken::StartOfLine , isAtStartOfLine);
+    Identifier.SetFlagValue(LexerToken::LeadingSpace, hasLeadingSpace);
+    
+    // Update the tokens location to include both its logical and physical
+    // locations.
+    SourceLocation Loc =
+      MacroExpander::getInstantiationLoc(*this, Identifier.getLocation(),
+                                         InstantiateLoc);
+    Identifier.SetLocation(Loc);
+    
+    // Since this is not an identifier token, it can't be macro expanded, so
+    // we're done.
+    ++NumFastMacroExpanded;
+    return;
+  }
+  
+  // Start expanding the macro (FIXME, pass arguments).
+  EnterMacro(Identifier);
+  
+  // Now that the macro is at the top of the include stack, ask the
+  // preprocessor to read the next token from it.
+  return Lex(Identifier);
 }
 
 /// HandleEndOfFile - This callback is invoked when the lexer hits the end of

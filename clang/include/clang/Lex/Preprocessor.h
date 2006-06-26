@@ -343,6 +343,7 @@ public:
   /// 'for').
   void HandleIdentifier(LexerToken &Identifier);
 
+  
   /// HandleEndOfFile - This callback is invoked when the lexer hits the end of
   /// the current file.  This either returns the EOF token or pops a level off
   /// the include stack and keeps going.
@@ -399,6 +400,11 @@ private:
   /// RegisterBuiltinPragmas - Install the standard preprocessor pragmas:
   /// #pragma GCC poison/system_header/dependency and #pragma once.
   void RegisterBuiltinPragmas();
+  
+  
+  /// HandleMacroExpandedIdentifier - If an identifier token is read that is to
+  /// be expanded as a macro, handle it and return the next token as 'Tok'.
+  void HandleMacroExpandedIdentifier(LexerToken &Tok, MacroInfo *MI);
   
   //===--------------------------------------------------------------------===//
   /// Handle*Directive - implement the various preprocessor directives.  These
