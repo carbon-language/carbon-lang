@@ -423,12 +423,8 @@ def XORIS : DForm_4<27, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                     [(set GPRC:$dst, (xor GPRC:$src1,imm16ShiftedZExt:$src2))]>;
 def NOP   : DForm_4_zero<24, (ops), "nop", IntGeneral,
                          []>;
-def CMPI  : DForm_5<11, (ops CRRC:$crD, i1imm:$L, GPRC:$rA, s16imm:$imm),
-                    "cmpi $crD, $L, $rA, $imm", IntCompare>;
 def CMPWI : DForm_5_ext<11, (ops CRRC:$crD, GPRC:$rA, s16imm:$imm),
                         "cmpwi $crD, $rA, $imm", IntCompare>;
-def CMPLI  : DForm_6<10, (ops CRRC:$dst, i1imm:$size, GPRC:$src1, u16imm:$src2),
-                     "cmpli $dst, $size, $src1, $src2", IntCompare>;
 def CMPLWI : DForm_6_ext<10, (ops CRRC:$dst, GPRC:$src1, u16imm:$src2),
                          "cmplwi $dst, $src1, $src2", IntCompare>;
 }
