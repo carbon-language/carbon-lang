@@ -452,9 +452,9 @@ void Preprocessor::HandleIdentifier(LexerToken &Identifier) {
         return;
         
       } else if (MI->getNumTokens() == 1 &&
-                 // Don't handle identifiers, which might need recursive
-                 // expansion.
-                 MI->getReplacementToken(0).getIdentifierInfo() == 0) {
+                 // Don't handle identifiers if they need recursive expansion.
+                 (MI->getReplacementToken(0).getIdentifierInfo() == 0 ||
+             !MI->getReplacementToken(0).getIdentifierInfo()->getMacroInfo())) {
         // FIXME: Function-style macros only if no arguments?
 
         // Otherwise, if this macro expands into a single trivially-expanded
