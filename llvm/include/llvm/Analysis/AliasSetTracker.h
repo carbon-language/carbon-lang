@@ -228,6 +228,13 @@ private:
   void addPointer(AliasSetTracker &AST, HashNodePair &Entry, unsigned Size,
                   bool KnownMustAlias = false);
   void addCallSite(CallSite CS, AliasAnalysis &AA);
+  void removeCallSite(CallSite CS) {
+    for (unsigned i = 0, e = CallSites.size(); i != e; ++i)
+      if (CallSites[i].getInstruction() == CS.getInstruction()) {
+        CallSites[i] = CallSites.back();
+        CallSites.pop_back();
+      }
+  }
   void setVolatile() { Volatile = true; }
 
   /// aliasesPointer - Return true if the specified pointer "may" (or must)
