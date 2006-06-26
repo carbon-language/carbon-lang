@@ -31,6 +31,8 @@
 //
 // TODO: Implement the include guard optimization.
 //
+// Predefined Macros: _Pragma, __TIMESTAMP__, __TIME__, ...
+//
 //===----------------------------------------------------------------------===//
 
 #include "clang/Lex/Preprocessor.h"
