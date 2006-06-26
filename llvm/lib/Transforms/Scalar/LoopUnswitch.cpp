@@ -208,31 +208,6 @@ bool LoopUnswitch::visitLoop(Loop *L) {
   return Changed;
 }
 
-
-/// LoopValuesUsedOutsideLoop - Return true if there are any values defined in
-/// the loop that are used by instructions outside of it.
-static bool LoopValuesUsedOutsideLoop(Loop *L) {
-  // We will be doing lots of "loop contains block" queries.  Loop::contains is
-  // linear time, use a set to speed this up.
-  std::set<BasicBlock*> LoopBlocks;
-
-  for (Loop::block_iterator BB = L->block_begin(), E = L->block_end();
-       BB != E; ++BB)
-    LoopBlocks.insert(*BB);
-  
-  for (Loop::block_iterator BB = L->block_begin(), E = L->block_end();
-       BB != E; ++BB) {
-    for (BasicBlock::iterator I = (*BB)->begin(), E = (*BB)->end(); I != E; ++I)
-      for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;
-           ++UI) {
-        BasicBlock *UserBB = cast<Instruction>(*UI)->getParent();
-        if (!LoopBlocks.count(UserBB))
-          return true;
-      }
-  }
-  return false;
-}
-
 /// isTrivialLoopExitBlock - Check to see if all paths from BB either:
 ///   1. Exit the loop with no side effects.
 ///   2. Branch to the latch block with no side-effects.
@@ -391,17 +366,7 @@ bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val,Loop *L){
                     << L->getBlocks().size() << "\n");
     return false;
   }
-    
-  // If this loop has live-out values, we can't unswitch it. We need something
-  // like loop-closed SSA form in order to know how to insert PHI nodes for
-  // these values.
-  if (LoopValuesUsedOutsideLoop(L)) {
-    DEBUG(std::cerr << "NOT unswitching loop %" << L->getHeader()->getName()
-                    << ", a loop value is used outside loop!  Cost: "
-                    << Cost << "\n");
-    return false;
-  }
-   
+  
   // If this is a trivial condition to unswitch (which results in no code
   // duplication), do it now.
   Constant *CondVal;
@@ -456,18 +421,6 @@ BasicBlock *LoopUnswitch::SplitEdge(BasicBlock *BB, BasicBlock *Succ) {
     // If the successor only has a single pred, split the top of the successor
     // block.
     assert(SP == BB && "CFG broken");
-    
-    // If this block has a single predecessor, remove any phi nodes.  Unswitch
-    // expect that, after split the edges from inside the loop to the exit
-    // block, that there will be no phi nodes in the new exit block.  Single
-    // entry phi nodes break this assumption.
-    BasicBlock::iterator I = Succ->begin();
-    while (PHINode *PN = dyn_cast<PHINode>(I)) {
-      PN->replaceAllUsesWith(PN->getIncomingValue(0));
-      PN->eraseFromParent();
-      I = Succ->begin();
-    }
-    
     return SplitBlock(Succ, Succ->begin());
   } else {
     // Otherwise, if BB has a single successor, split it at the bottom of the
@@ -616,8 +569,8 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
   ExitBlocks.erase(std::unique(ExitBlocks.begin(), ExitBlocks.end()),
                    ExitBlocks.end());
   
-  // Split all of the edges from inside the loop to their exit blocks.  This
-  // unswitching trivial: no phi nodes to update.
+  // Split all of the edges from inside the loop to their exit blocks.  Update
+  // the appropriate Phi nodes as we do so.
   unsigned NumBlocks = L->getBlocks().size();
   
   for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
@@ -627,8 +580,42 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
     for (unsigned j = 0, e = Preds.size(); j != e; ++j) {
       assert(L->contains(Preds[j]) &&
              "All preds of loop exit blocks must be the same loop!");
-      SplitEdge(Preds[j], ExitBlock);
-    }
+      BasicBlock* MiddleBlock = SplitEdge(Preds[j], ExitBlock);
+      BasicBlock* StartBlock = Preds[j];
+      BasicBlock* EndBlock;
+      if (MiddleBlock->getSinglePredecessor() == ExitBlock) {
+        EndBlock = MiddleBlock;
+        MiddleBlock = EndBlock->getSinglePredecessor();;
+      } else {
+        EndBlock = ExitBlock;
+      }
+      
+      std::set<PHINode*> InsertedPHIs;
+      PHINode* OldLCSSA = 0;
+      for (BasicBlock::iterator I = EndBlock->begin();
+           (OldLCSSA = dyn_cast<PHINode>(I)); ++I) {
+        Value* OldValue = OldLCSSA->getIncomingValueForBlock(MiddleBlock);
+        PHINode* NewLCSSA = new PHINode(OldLCSSA->getType(),
+                                        OldLCSSA->getName() + ".us-lcssa",
+                                        MiddleBlock->getTerminator());
+        NewLCSSA->addIncoming(OldValue, StartBlock);
+        OldLCSSA->setIncomingValue(OldLCSSA->getBasicBlockIndex(MiddleBlock),
+                                   NewLCSSA);
+        InsertedPHIs.insert(NewLCSSA);
+      }
+
+      Instruction* InsertPt = EndBlock->begin();
+      while (dyn_cast<PHINode>(InsertPt)) ++InsertPt;
+      for (BasicBlock::iterator I = MiddleBlock->begin();
+         (OldLCSSA = dyn_cast<PHINode>(I)) && InsertedPHIs.count(OldLCSSA) == 0;
+         ++I) {
+        PHINode *NewLCSSA = new PHINode(OldLCSSA->getType(),
+                                        OldLCSSA->getName() + ".us-lcssa",
+                                        InsertPt);
+        OldLCSSA->replaceAllUsesWith(NewLCSSA);
+        NewLCSSA->addIncoming(OldLCSSA, MiddleBlock);
+      }
+    }    
   }
   
   // The exit blocks may have been changed due to edge splitting, recompute.
@@ -967,7 +954,30 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
               // Found a dead case value.  Don't remove PHI nodes in the 
               // successor if they become single-entry, those PHI nodes may
               // be in the Users list.
-              SI->getSuccessor(i)->removePredecessor(SI->getParent(), true);
+              
+              // FIXME: This is a hack.  We need to keep the successor around
+              // and hooked up so as to preserve the loop structure, because
+              // trying to update it is complicated.  So instead we preserve the
+              // loop structure and put the block on an dead code path.
+              
+              BasicBlock* Old = SI->getParent();
+              BasicBlock* Split = SplitBlock(Old, SI);
+              
+              Instruction* OldTerm = Old->getTerminator();
+              BranchInst* Branch = new BranchInst(Split,
+                                        SI->getSuccessor(i),
+                                        ConstantBool::True,
+                                        OldTerm);
+              
+              Old->getTerminator()->eraseFromParent();
+              
+              for (BasicBlock::iterator II = SI->getSuccessor(i)->begin(),
+                   IE = SI->getSuccessor(i)->end(); II != IE; ++II) {
+                if (isa<PHINode>(*II)) {
+                  (*II).replaceUsesOfWith(Split, Old);
+                }
+              }
+
               SI->removeCase(i);
               break;
             }
