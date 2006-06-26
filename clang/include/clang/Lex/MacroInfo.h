@@ -38,20 +38,6 @@ class MacroInfo {
   /// #define A A.
   bool isDisabled;
   
-#if 0
-  /* Number of tokens in expansion, or bytes for traditional macros.  */
-  unsigned int count;
-  /* Number of parameters.  */
-  unsigned short paramc;
-  /* If a function-like macro.  */
-  unsigned int fun_like : 1;
-  /* If a variadic macro.  */
-  unsigned int variadic : 1;
-  /* Nonzero if it has been expanded or had its existence tested.  */
-  unsigned int used     : 1;
-  /* Indicate which field of 'exp' is in use.  */
-  unsigned int traditional : 1;
-#endif
 public:
   MacroInfo(SourceLocation DefLoc) : Location(DefLoc) {
     isDisabled = false;
@@ -71,8 +57,6 @@ public:
   /// AddTokenToBody - Add the specified token to the replacement text for the
   /// macro.
   void AddTokenToBody(const LexerToken &Tok) {
-    // FIXME: Remember where this token came from, do something intelligent with
-    // its location.
     ReplacementTokens.push_back(Tok);
   }
   
@@ -89,9 +73,6 @@ public:
     assert(!isDisabled && "Cannot disable an already-disabled macro!");
     isDisabled = true;
   }
-  
-  // Todo:
-  // bool isDefinedInSystemHeader() { Look this up based on Location }
 };
     
 }  // end namespace llvm
