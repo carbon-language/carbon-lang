@@ -50,6 +50,13 @@ public:
   
   MacroInfo &getMacro() const { return Macro; }
 
+  /// getInstantiationLoc - Return a SourceLocation that specifies a macro
+  /// instantiation whose physical location is PhysLoc but the logical location
+  /// is InstantiationLoc.
+  static SourceLocation getInstantiationLoc(Preprocessor &PP,
+                                            SourceLocation PhysLoc,
+                                            SourceLocation InstantiationLoc);
+  
   /// Lex - Lex and return a token from this macro stream.
   void Lex(LexerToken &Tok);
 };

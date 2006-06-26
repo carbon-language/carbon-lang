@@ -466,15 +466,23 @@ void Preprocessor::HandleIdentifier(LexerToken &Identifier) {
         bool isAtStartOfLine = Identifier.isAtStartOfLine();
         bool hasLeadingSpace = Identifier.hasLeadingSpace();
 
+        // Remember where the token is instantiated.
+        SourceLocation InstantiateLoc = Identifier.getLocation();
+        
         // Replace the result token.
         Identifier = MI->getReplacementToken(0);
 
         // Restore the StartOfLine/LeadingSpace markers.
         Identifier.SetFlagValue(LexerToken::StartOfLine , isAtStartOfLine);
         Identifier.SetFlagValue(LexerToken::LeadingSpace, hasLeadingSpace);
-        
-        // FIXME: Get correct macro expansion stack location info!
-        
+
+        // Update the tokens location to include both its logical and physical
+        // locations.
+        SourceLocation Loc =
+          MacroExpander::getInstantiationLoc(*this, Identifier.getLocation(),
+                                             InstantiateLoc);
+        Identifier.SetLocation(Loc);
+
         // Since this is not an identifier token, it can't be macro expanded, so
         // we're done.
         ++NumFastMacroExpanded;
