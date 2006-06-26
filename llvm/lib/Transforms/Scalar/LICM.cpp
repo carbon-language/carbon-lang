@@ -335,7 +335,7 @@ void LICM::HoistRegion(DominatorTree::Node *N) {
       //
       if (isLoopInvariantInst(I) && canSinkOrHoistInst(I) &&
           isSafeToExecuteUnconditionally(I))
-          hoist(I);
+        hoist(I);
       }
 
   const std::vector<DominatorTree::Node*> &Children = N->getChildren();
@@ -386,8 +386,7 @@ bool LICM::canSinkOrHoistInst(Instruction &I) {
   }
 
   return isa<BinaryOperator>(I) || isa<ShiftInst>(I) || isa<CastInst>(I) ||
-         isa<SelectInst>(I) ||
-         isa<GetElementPtrInst>(I);
+         isa<SelectInst>(I) || isa<GetElementPtrInst>(I);
 }
 
 /// isNotUsedInLoop - Return true if the only users of this instruction are
@@ -448,11 +447,11 @@ void LICM::sink(Instruction &I) {
     if (!isExitBlockDominatedByBlockInLoop(ExitBlocks[0], I.getParent())) {
       // Instruction is not used, just delete it.
       CurAST->deleteValue(&I);
-      I.getParent()->getInstList().erase(&I);
+      I.eraseFromParent();
     } else {
       // Move the instruction to the start of the exit block, after any PHI
       // nodes in it.
-      I.getParent()->getInstList().remove(&I);
+      I.removeFromParent();
 
       BasicBlock::iterator InsertPt = ExitBlocks[0]->begin();
       while (isa<PHINode>(InsertPt)) ++InsertPt;
@@ -461,7 +460,7 @@ void LICM::sink(Instruction &I) {
   } else if (ExitBlocks.size() == 0) {
     // The instruction is actually dead if there ARE NO exit blocks.
     CurAST->deleteValue(&I);
-    I.getParent()->getInstList().erase(&I);
+    I.eraseFromParent();
   } else {
     // Otherwise, if we have multiple exits, use the PromoteMem2Reg function to
     // do all of the hard work of inserting PHI nodes as necessary.  We convert
@@ -526,7 +525,7 @@ void LICM::sink(Instruction &I) {
           // the copy.
           Instruction *New;
           if (InsertedBlocks.size() == 1) {
-            I.getParent()->getInstList().remove(&I);
+            I.removeFromParent();
             ExitBlock->getInstList().insert(InsertPt, &I);
             New = &I;
           } else {
@@ -546,7 +545,7 @@ void LICM::sink(Instruction &I) {
     // If the instruction doesn't dominate any exit blocks, it must be dead.
     if (InsertedBlocks.empty()) {
       CurAST->deleteValue(&I);
-      I.getParent()->getInstList().erase(&I);
+      I.eraseFromParent();
     }
 
     // Finally, promote the fine value to SSA form.
@@ -567,7 +566,7 @@ void LICM::hoist(Instruction &I) {
 
   // Remove the instruction from its current basic block... but don't delete the
   // instruction.
-  I.getParent()->getInstList().remove(&I);
+  I.removeFromParent();
 
   // Insert the new node in Preheader, before the terminator.
   Preheader->getInstList().insert(Preheader->getTerminator(), &I);
