@@ -60,6 +60,10 @@ def HI48_64 : SDNodeXForm<imm, [{
 def IMPLICIT_DEF_G8RC : Pseudo<(ops G8RC:$rD), "; $rD = IMPLICIT_DEF_G8RC",
                               [(set G8RC:$rD, (undef))]>;
 
+let Pattern = [(PPCmtctr G8RC:$rS)] in {
+def MTCTR8 : XFXForm_7_ext<31, 467, 9, (ops G8RC:$rS), "mtctr $rS", SprMTSPR>,
+            PPC970_DGroup_First, PPC970_Unit_FXU;
+}
 
 //===----------------------------------------------------------------------===//
 // Fixed point instructions.
