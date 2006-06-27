@@ -190,8 +190,10 @@ def EXTSW_32_64 : XForm_11<31, 986, (ops G8RC:$rA, GPRC:$rS),
                       "extsw $rA, $rS", IntGeneral,
                       [(set G8RC:$rA, (sext GPRC:$rS))]>, isPPC64;
 
-def SRADI  : XSForm_1<31, 413, (ops GPRC:$rA, GPRC:$rS, u6imm:$SH),
-                      "sradi $rA, $rS, $SH", IntRotateD>, isPPC64;
+def SRADI  : XSForm_1<31, 413, (ops G8RC:$rA, G8RC:$rS, u6imm:$SH),
+                      "sradi $rA, $rS, $SH", IntRotateD,
+                      [(set G8RC:$rA, (sra G8RC:$rS, (i32 imm:$SH)))]>, isPPC64;
+                      
 def DIVD  : XOForm_1<31, 489, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
                      "divd $rT, $rA, $rB", IntDivD,
                      [(set G8RC:$rT, (sdiv G8RC:$rA, G8RC:$rB))]>, isPPC64,

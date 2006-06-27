@@ -501,13 +501,14 @@ class XFXForm_7_ext<bits<6> opcode, bits<10> xo, bits<10> spr,
 
 // 1.7.10 XS-Form
 class XSForm_1<bits<6> opcode, bits<9> xo, dag OL, string asmstr,
-               InstrItinClass itin>
+               InstrItinClass itin, list<dag> pattern>
          : I<opcode, OL, asmstr, itin> {
   bits<5> RS;
   bits<5> A;
   bits<6> SH;
 
   bit RC = 0;    // set by isDOT
+  let Pattern = pattern;
 
   let Inst{6-10}  = RS;
   let Inst{11-15} = A;

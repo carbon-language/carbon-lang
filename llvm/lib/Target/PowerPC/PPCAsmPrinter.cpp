@@ -276,7 +276,7 @@ namespace {
       PrivateGlobalPrefix = "L";     // Marker for constant pool idxs
       ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
       if (isPPC64)
-        Data64bitsDirective = ".quad";       // we can't emit a 64-bit unit
+        Data64bitsDirective = ".quad\t";       // we can't emit a 64-bit unit
       else
         Data64bitsDirective = 0;       // we can't emit a 64-bit unit
       AlignmentIsInBytes = false;    // Alignment is by power of 2.
