@@ -251,7 +251,7 @@ def STD  : DSForm_2<62, 0, (ops G8RC:$rS, memrix:$dst),
                     [(store G8RC:$rS, ixaddr:$dst)]>, isPPC64;
 def STDX  : XForm_8<31, 149, (ops G8RC:$rS, memrr:$dst),
                    "stdx $rS, $dst", LdStSTD,
-                   [(store G8RC:$rS, iaddr:$dst)]>, isPPC64,
+                   [(store G8RC:$rS, xaddr:$dst)]>, isPPC64,
                    PPC970_DGroup_Cracked;
 def STDUX : XForm_8<31, 181, (ops G8RC:$rS, memrr:$dst),
                    "stdux $rS, $dst", LdStSTD,
