@@ -134,8 +134,6 @@ def XORIS8  : DForm_4<27, (ops G8RC:$dst, G8RC:$src1, u16imm:$src2),
                       "xoris $dst, $src1, $src2", IntGeneral,
                    [(set G8RC:$dst, (xor G8RC:$src1, imm16ShiftedZExt:$src2))]>;
 
-
-                   
 def ADD8  : XOForm_1<31, 266, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
                      "add $rT, $rA, $rB", IntGeneral,
                      [(set G8RC:$rT, (add G8RC:$rA, G8RC:$rB))]>;
