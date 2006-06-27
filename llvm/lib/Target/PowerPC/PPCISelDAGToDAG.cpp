@@ -63,6 +63,18 @@ namespace {
       return CurDAG->getTargetConstant(Imm, MVT::i32);
     }
 
+    /// getI64Imm - Return a target constant with the specified value, of type
+    /// i64.
+    inline SDOperand getI64Imm(uint64_t Imm) {
+      return CurDAG->getTargetConstant(Imm, MVT::i64);
+    }
+    
+    /// getSmallIPtrImm - Return a target constant of pointer type.
+    inline SDOperand getSmallIPtrImm(unsigned Imm) {
+      return CurDAG->getTargetConstant(Imm, PPCLowering.getPointerTy());
+    }
+    
+    
     /// getGlobalBaseReg - insert code into the entry mbb to materialize the PIC
     /// base register.  Return the virtual register that holds this value.
     SDOperand getGlobalBaseReg();
@@ -111,7 +123,7 @@ namespace {
       case 'o':   // offsetable
         if (!SelectAddrImm(Op, Op0, Op1)) {
           Select(Op0, Op);     // r+0.
-          Op1 = getI32Imm(0);
+          Op1 = getSmallIPtrImm(0);
         }
         break;
       case 'v':   // not offsetable
@@ -290,25 +302,72 @@ SDOperand PPCDAGToDAGISel::getGlobalBaseReg() {
     MachineBasicBlock &FirstMBB = BB->getParent()->front();
     MachineBasicBlock::iterator MBBI = FirstMBB.begin();
     SSARegMap *RegMap = BB->getParent()->getSSARegMap();
-    // FIXME: when we get to LP64, we will need to create the appropriate
-    // type of register here.
-    GlobalBaseReg = RegMap->createVirtualRegister(PPC::GPRCRegisterClass);
+
+    if (PPCLowering.getPointerTy() == MVT::i32)
+      GlobalBaseReg = RegMap->createVirtualRegister(PPC::GPRCRegisterClass);
+    else
+      GlobalBaseReg = RegMap->createVirtualRegister(PPC::G8RCRegisterClass);
+    
     BuildMI(FirstMBB, MBBI, PPC::MovePCtoLR, 0, PPC::LR);
     BuildMI(FirstMBB, MBBI, PPC::MFLR, 1, GlobalBaseReg);
   }
-  return CurDAG->getRegister(GlobalBaseReg, MVT::i32);
+  return CurDAG->getRegister(GlobalBaseReg, PPCLowering.getPointerTy());
+}
+
+/// isIntS16Immediate - This method tests to see if the node is either a 32-bit
+/// or 64-bit immediate, and if the value can be accurately represented as a
+/// sign extension from a 16-bit value.  If so, this returns true and the
+/// immediate.
+static bool isIntS16Immediate(SDNode *N, short &Imm) {
+  if (N->getOpcode() != ISD::Constant)
+    return false;
+
+  Imm = (short)cast<ConstantSDNode>(N)->getValue();
+  if (N->getValueType(0) == MVT::i32)
+    return Imm == (int32_t)cast<ConstantSDNode>(N)->getValue();
+  else
+    return Imm == (int64_t)cast<ConstantSDNode>(N)->getValue();
+}
+
+static bool isIntS16Immediate(SDOperand Op, short &Imm) {
+  return isIntS16Immediate(Op.Val, Imm);
 }
 
 
-// isIntImmediate - This method tests to see if a constant operand.
-// If so Imm will receive the 32 bit value.
-static bool isIntImmediate(SDNode *N, unsigned& Imm) {
-  if (N->getOpcode() == ISD::Constant) {
+/// isInt32Immediate - This method tests to see if the node is a 32-bit constant
+/// operand. If so Imm will receive the 32-bit value.
+static bool isInt32Immediate(SDNode *N, unsigned &Imm) {
+  if (N->getOpcode() == ISD::Constant && N->getValueType(0) == MVT::i32) {
     Imm = cast<ConstantSDNode>(N)->getValue();
     return true;
   }
   return false;
 }
+
+/// isInt64Immediate - This method tests to see if the node is a 64-bit constant
+/// operand.  If so Imm will receive the 64-bit value.
+static bool isInt64Immediate(SDNode *N, uint64_t &Imm) {
+  if (N->getOpcode() == ISD::Constant && N->getValueType(0) == MVT::i32) {
+    Imm = cast<ConstantSDNode>(N)->getValue();
+    return true;
+  }
+  return false;
+}
+
+// isInt32Immediate - This method tests to see if a constant operand.
+// If so Imm will receive the 32 bit value.
+static bool isInt32Immediate(SDOperand N, unsigned &Imm) {
+  return isInt32Immediate(N.Val, Imm);
+}
+
+
+// isOpcWithIntImmediate - This method tests to see if the node is a specific
+// opcode and that it has a immediate integer right operand.
+// If so Imm will receive the 32 bit value.
+static bool isOpcWithIntImmediate(SDNode *N, unsigned Opc, unsigned& Imm) {
+  return N->getOpcode() == Opc && isInt32Immediate(N->getOperand(1).Val, Imm);
+}
+
 
 // isRunOfOnes - Returns true iff Val consists of one contiguous run of 1s with
 // any number of 0s on either side.  The 1s are allowed to wrap from LSB to
@@ -348,7 +407,7 @@ static bool isRotateAndMask(SDNode *N, unsigned Mask, bool IsShiftMask,
   unsigned Indeterminant = ~0;  // bit mask marking indeterminant results
   unsigned Opcode = N->getOpcode();
   if (N->getNumOperands() != 2 ||
-      !isIntImmediate(N->getOperand(1).Val, Shift) || (Shift > 31))
+      !isInt32Immediate(N->getOperand(1).Val, Shift) || (Shift > 31))
     return false;
   
   if (Opcode == ISD::SHL) {
@@ -372,23 +431,6 @@ static bool isRotateAndMask(SDNode *N, unsigned Mask, bool IsShiftMask,
     SH = Shift & 31;
     // make sure the mask is still a mask (wrap arounds may not be)
     return isRunOfOnes(Mask, MB, ME);
-  }
-  return false;
-}
-
-// isOpcWithIntImmediate - This method tests to see if the node is a specific
-// opcode and that it has a immediate integer right operand.
-// If so Imm will receive the 32 bit value.
-static bool isOpcWithIntImmediate(SDNode *N, unsigned Opc, unsigned& Imm) {
-  return N->getOpcode() == Opc && isIntImmediate(N->getOperand(1).Val, Imm);
-}
-
-// isIntImmediate - This method tests to see if a constant operand.
-// If so Imm will receive the 32 bit value.
-static bool isIntImmediate(SDOperand N, unsigned& Imm) {
-  if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N)) {
-    Imm = (unsigned)CN->getSignExtended();
-    return true;
   }
   return false;
 }
@@ -440,14 +482,14 @@ SDNode *PPCDAGToDAGISel::SelectBitfieldInsert(SDNode *N) {
       bool DisjointMask = (TargetMask ^ InsertMask) == 0xFFFFFFFF;
 
       if ((Op1Opc == ISD::SHL || Op1Opc == ISD::SRL) &&
-          isIntImmediate(Op1.getOperand(1), Value)) {
+          isInt32Immediate(Op1.getOperand(1), Value)) {
         Op1 = Op1.getOperand(0);
         SH  = (Op1Opc == ISD::SHL) ? Value : 32 - Value;
       }
       if (Op1Opc == ISD::AND) {
         unsigned SHOpc = Op1.getOperand(0).getOpcode();
         if ((SHOpc == ISD::SHL || SHOpc == ISD::SRL) &&
-            isIntImmediate(Op1.getOperand(0).getOperand(1), Value)) {
+            isInt32Immediate(Op1.getOperand(0).getOperand(1), Value)) {
           Op1 = Op1.getOperand(0).getOperand(0);
           SH  = (SHOpc == ISD::SHL) ? Value : 32 - Value;
         } else {
@@ -475,11 +517,11 @@ bool PPCDAGToDAGISel::SelectAddrImm(SDOperand N, SDOperand &Disp,
     return false;
 
   if (N.getOpcode() == ISD::ADD) {
-    unsigned imm = 0;
-    if (isIntImmediate(N.getOperand(1), imm) && isInt16(imm)) {
-      Disp = getI32Imm(imm & 0xFFFF);
+    short imm = 0;
+    if (isIntS16Immediate(N.getOperand(1), imm)) {
+      Disp = getI32Imm((int)imm & 0xFFFF);
       if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(N.getOperand(0))) {
-        Base = CurDAG->getTargetFrameIndex(FI->getIndex(), MVT::i32);
+        Base = CurDAG->getTargetFrameIndex(FI->getIndex(), N.getValueType());
       } else {
         Base = N.getOperand(0);
       }
@@ -496,43 +538,48 @@ bool PPCDAGToDAGISel::SelectAddrImm(SDOperand N, SDOperand &Disp,
       return true;  // [&g+r]
     }
   } else if (N.getOpcode() == ISD::OR) {
-    unsigned imm = 0;
-    if (isIntImmediate(N.getOperand(1), imm) && isInt16(imm)) {
+    short imm = 0;
+    if (isIntS16Immediate(N.getOperand(1), imm)) {
       // If this is an or of disjoint bitfields, we can codegen this as an add
       // (for better address arithmetic) if the LHS and RHS of the OR are
       // provably disjoint.
       uint64_t LHSKnownZero, LHSKnownOne;
       PPCLowering.ComputeMaskedBits(N.getOperand(0), ~0U,
                                     LHSKnownZero, LHSKnownOne);
-      if ((LHSKnownZero|~imm) == ~0U) {
+      if ((LHSKnownZero|~(unsigned)imm) == ~0U) {
         // If all of the bits are known zero on the LHS or RHS, the add won't
         // carry.
         Base = N.getOperand(0);
-        Disp = getI32Imm(imm & 0xFFFF);
+        Disp = getI32Imm((int)imm & 0xFFFF);
         return true;
       }
     }
   } else if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N)) {
     // Loading from a constant address.
-    int Addr = (int)CN->getValue();
-    
+
     // If this address fits entirely in a 16-bit sext immediate field, codegen
     // this as "d, 0"
-    if (Addr == (short)Addr) {
-      Disp = getI32Imm(Addr);
-      Base = CurDAG->getRegister(PPC::R0, MVT::i32);
+    short Imm;
+    if (isIntS16Immediate(CN, Imm)) {
+      Disp = CurDAG->getTargetConstant(Imm, CN->getValueType(0));
+      Base = CurDAG->getRegister(PPC::R0, CN->getValueType(0));
       return true;
     }
+
+    // FIXME: Handle small sext constant offsets in PPC64 mode also!
+    if (CN->getValueType(0) == MVT::i32) {
+      int Addr = (int)CN->getValue();
     
-    // Otherwise, break this down into an LIS + disp.
-    Disp = getI32Imm((short)Addr);
-    Base = CurDAG->getConstant(Addr - (signed short)Addr, MVT::i32);
-    return true;
+      // Otherwise, break this down into an LIS + disp.
+      Disp = getI32Imm((short)Addr);
+      Base = CurDAG->getConstant(Addr - (signed short)Addr, MVT::i32);
+      return true;
+    }
   }
   
-  Disp = getI32Imm(0);
+  Disp = getSmallIPtrImm(0);
   if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(N))
-    Base = CurDAG->getTargetFrameIndex(FI->getIndex(), MVT::i32);
+    Base = CurDAG->getTargetFrameIndex(FI->getIndex(), N.getValueType());
   else
     Base = N;
   return true;      // [r+0]
@@ -543,9 +590,9 @@ bool PPCDAGToDAGISel::SelectAddrImm(SDOperand N, SDOperand &Disp,
 /// be represented by [r+imm], which are preferred.
 bool PPCDAGToDAGISel::SelectAddrIdx(SDOperand N, SDOperand &Base, 
                                     SDOperand &Index) {
-  unsigned imm = 0;
+  short imm = 0;
   if (N.getOpcode() == ISD::ADD) {
-    if (isIntImmediate(N.getOperand(1), imm) && isInt16(imm))
+    if (isIntS16Immediate(N.getOperand(1), imm))
       return false;    // r+i
     if (N.getOperand(1).getOpcode() == PPCISD::Lo)
       return false;    // r+i
@@ -554,7 +601,7 @@ bool PPCDAGToDAGISel::SelectAddrIdx(SDOperand N, SDOperand &Base,
     Index = N.getOperand(1);
     return true;
   } else if (N.getOpcode() == ISD::OR) {
-    if (isIntImmediate(N.getOperand(1), imm) && isInt16(imm))
+    if (isIntS16Immediate(N.getOperand(1), imm))
       return false;    // r+i can fold it if we can.
     
     // If this is an or of disjoint bitfields, we can codegen this as an add
@@ -601,7 +648,7 @@ bool PPCDAGToDAGISel::SelectAddrIdxOnly(SDOperand N, SDOperand &Base,
   }
   
   // Otherwise, do it the hard way, using R0 as the base register.
-  Base = CurDAG->getRegister(PPC::R0, MVT::i32);
+  Base = CurDAG->getRegister(PPC::R0, N.getValueType());
   Index = N;
   return true;
 }
@@ -616,12 +663,11 @@ bool PPCDAGToDAGISel::SelectAddrImmShift(SDOperand N, SDOperand &Disp,
     return false;
   
   if (N.getOpcode() == ISD::ADD) {
-    unsigned imm = 0;
-    if (isIntImmediate(N.getOperand(1), imm) && isInt16(imm) &&
-        (imm & 3) == 0) {
-      Disp = getI32Imm((imm & 0xFFFF) >> 2);
+    short imm = 0;
+    if (isIntS16Immediate(N.getOperand(1), imm) && (imm & 3) == 0) {
+      Disp = getI32Imm(((int)imm & 0xFFFF) >> 2);
       if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(N.getOperand(0))) {
-        Base = CurDAG->getTargetFrameIndex(FI->getIndex(), MVT::i32);
+        Base = CurDAG->getTargetFrameIndex(FI->getIndex(), N.getValueType());
       } else {
         Base = N.getOperand(0);
       }
@@ -638,34 +684,37 @@ bool PPCDAGToDAGISel::SelectAddrImmShift(SDOperand N, SDOperand &Disp,
       return true;  // [&g+r]
     }
   } else if (N.getOpcode() == ISD::OR) {
-    unsigned imm = 0;
-    if (isIntImmediate(N.getOperand(1), imm) && isInt16(imm) &&
-        (imm & 3) == 0) {
+    short imm = 0;
+    if (isIntS16Immediate(N.getOperand(1), imm) && (imm & 3) == 0) {
       // If this is an or of disjoint bitfields, we can codegen this as an add
       // (for better address arithmetic) if the LHS and RHS of the OR are
       // provably disjoint.
       uint64_t LHSKnownZero, LHSKnownOne;
       PPCLowering.ComputeMaskedBits(N.getOperand(0), ~0U,
                                     LHSKnownZero, LHSKnownOne);
-      if ((LHSKnownZero|~imm) == ~0U) {
+      if ((LHSKnownZero|~(unsigned)imm) == ~0U) {
         // If all of the bits are known zero on the LHS or RHS, the add won't
         // carry.
         Base = N.getOperand(0);
-        Disp = getI32Imm((imm & 0xFFFF) >> 2);
+        Disp = getI32Imm(((int)imm & 0xFFFF) >> 2);
         return true;
       }
     }
   } else if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N)) {
     // Loading from a constant address.
-    int Addr = (int)CN->getValue();
-    if ((Addr & 3) == 0) {
-      // If this address fits entirely in a 16-bit sext immediate field, codegen
-      // this as "d, 0"
-      if (Addr == (short)Addr) {
-        Disp = getI32Imm(Addr >> 2);
-        Base = CurDAG->getRegister(PPC::R0, MVT::i32);
-        return true;
-      }
+    
+    // If this address fits entirely in a 14-bit sext immediate field, codegen
+    // this as "d, 0"
+    short Imm;
+    if (isIntS16Immediate(CN, Imm)) {
+      Disp = getSmallIPtrImm((unsigned short)Imm >> 2);
+      Base = CurDAG->getRegister(PPC::R0, CN->getValueType(0));
+      return true;
+    }
+    
+    // FIXME: Handle small sext constant offsets in PPC64 mode also!
+    if (CN->getValueType(0) == MVT::i32) {
+      int Addr = (int)CN->getValue();
       
       // Otherwise, break this down into an LIS + disp.
       Disp = getI32Imm((short)Addr >> 2);
@@ -674,9 +723,9 @@ bool PPCDAGToDAGISel::SelectAddrImmShift(SDOperand N, SDOperand &Disp,
     }
   }
   
-  Disp = getI32Imm(0);
+  Disp = getSmallIPtrImm(0);
   if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(N))
-    Base = CurDAG->getTargetFrameIndex(FI->getIndex(), MVT::i32);
+    Base = CurDAG->getTargetFrameIndex(FI->getIndex(), N.getValueType());
   else
     Base = N;
   return true;      // [r+0]
@@ -689,25 +738,47 @@ SDOperand PPCDAGToDAGISel::SelectCC(SDOperand LHS, SDOperand RHS,
                                     ISD::CondCode CC) {
   // Always select the LHS.
   Select(LHS, LHS);
-
-  // Use U to determine whether the SETCC immediate range is signed or not.
-  if (MVT::isInteger(LHS.getValueType())) {
-    bool U = ISD::isUnsignedIntSetCC(CC);
-    unsigned Imm;
-    if (isIntImmediate(RHS, Imm) && 
-        ((U && isUInt16(Imm)) || (!U && isInt16(Imm))))
-      return SDOperand(CurDAG->getTargetNode(U ? PPC::CMPLWI : PPC::CMPWI,
-                                    MVT::i32, LHS, getI32Imm(Imm & 0xFFFF)), 0);
-    Select(RHS, RHS);
-    return SDOperand(CurDAG->getTargetNode(U ? PPC::CMPLW : PPC::CMPW, MVT::i32,
-                                           LHS, RHS), 0);
+  unsigned Opc;
+  
+  if (LHS.getValueType() == MVT::i32) {
+    unsigned Imm, Opc;
+    if (ISD::isUnsignedIntSetCC(CC)) {
+      if (isInt32Immediate(RHS, Imm) && isUInt16(Imm))
+        return SDOperand(CurDAG->getTargetNode(PPC::CMPLWI, MVT::i32, LHS,
+                                               getI32Imm(Imm & 0xFFFF)), 0);
+      Opc = PPC::CMPLW;
+    } else {
+      short SImm;
+      if (isIntS16Immediate(RHS, SImm))
+        return SDOperand(CurDAG->getTargetNode(PPC::CMPWI, MVT::i32, LHS,
+                                               getI32Imm((int)SImm & 0xFFFF)),
+                         0);
+      Opc = PPC::CMPW;
+    }
+  } else if (LHS.getValueType() == MVT::i64) {
+    uint64_t Imm;
+    unsigned Opc;
+    if (ISD::isUnsignedIntSetCC(CC)) {
+      if (isInt64Immediate(RHS.Val, Imm) && isUInt16(Imm))
+        return SDOperand(CurDAG->getTargetNode(PPC::CMPLDI, MVT::i64, LHS,
+                                               getI64Imm(Imm & 0xFFFF)), 0);
+      Opc = PPC::CMPLD;
+    } else {
+      short SImm;
+      if (isIntS16Immediate(RHS, SImm))
+        return SDOperand(CurDAG->getTargetNode(PPC::CMPDI, MVT::i64, LHS,
+                                               getI64Imm((int)SImm & 0xFFFF)),
+                         0);
+      Opc = PPC::CMPD;
+    }
   } else if (LHS.getValueType() == MVT::f32) {
-    Select(RHS, RHS);
-    return SDOperand(CurDAG->getTargetNode(PPC::FCMPUS, MVT::i32, LHS, RHS), 0);
+    Opc = PPC::FCMPUS;
   } else {
-    Select(RHS, RHS);
-    return SDOperand(CurDAG->getTargetNode(PPC::FCMPUD, MVT::i32, LHS, RHS), 0);
+    assert(LHS.getValueType() == MVT::f64 && "Unknown vt!");
+    Opc = PPC::FCMPUD;
   }
+  Select(RHS, RHS);
+  return SDOperand(CurDAG->getTargetNode(Opc, MVT::i32, LHS, RHS), 0);
 }
 
 /// getBCCForSetCC - Returns the PowerPC condition branch mnemonic corresponding
@@ -774,7 +845,7 @@ SDOperand PPCDAGToDAGISel::SelectSETCC(SDOperand Op) {
   SDNode *N = Op.Val;
   unsigned Imm;
   ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(2))->get();
-  if (isIntImmediate(N->getOperand(1), Imm)) {
+  if (isInt32Immediate(N->getOperand(1), Imm)) {
     // We can codegen setcc op, imm very efficiently compared to a brcond.
     // Check for those cases here.
     // setcc op, 0
@@ -901,16 +972,16 @@ void PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     
   case ISD::FrameIndex: {
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
+    SDOperand TFI = CurDAG->getTargetFrameIndex(FI, Op.getValueType());
+    unsigned Opc = Op.getValueType() == MVT::i32 ? PPC::ADDI : PPC::ADDI8;
     if (N->hasOneUse()) {
-      Result = CurDAG->SelectNodeTo(N, PPC::ADDI, MVT::i32,
-                                    CurDAG->getTargetFrameIndex(FI, MVT::i32),
-                                    getI32Imm(0));
+      Result = CurDAG->SelectNodeTo(N, Opc, Op.getValueType(), TFI,
+                                    getSmallIPtrImm(0));
       return;
     }
     Result = CodeGenMap[Op] = 
-      SDOperand(CurDAG->getTargetNode(PPC::ADDI, MVT::i32,
-                                      CurDAG->getTargetFrameIndex(FI, MVT::i32),
-                                      getI32Imm(0)), 0);
+      SDOperand(CurDAG->getTargetNode(Opc, Op.getValueType(), TFI,
+                                      getSmallIPtrImm(0)), 0);
     return;
   }
 
@@ -934,7 +1005,7 @@ void PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     //        srl/add/sra pattern the dag combiner will generate for this as
     //        sra/addze rather than having to handle sdiv ourselves.  oh well.
     unsigned Imm;
-    if (isIntImmediate(N->getOperand(1), Imm)) {
+    if (isInt32Immediate(N->getOperand(1), Imm)) {
       SDOperand N0;
       Select(N0, N->getOperand(0));
       if ((signed)Imm > 0 && isPowerOf2_32(Imm)) {
@@ -963,8 +1034,8 @@ void PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     unsigned Imm, Imm2;
     // If this is an and of a value rotated between 0 and 31 bits and then and'd
     // with a mask, emit rlwinm
-    if (isIntImmediate(N->getOperand(1), Imm) && (isShiftedMask_32(Imm) ||
-                                                  isShiftedMask_32(~Imm))) {
+    if (isInt32Immediate(N->getOperand(1), Imm) &&
+        (isShiftedMask_32(Imm) || isShiftedMask_32(~Imm))) {
       SDOperand Val;
       unsigned SH, MB, ME;
       if (isRotateAndMask(N->getOperand(0).Val, Imm, false, SH, MB, ME)) {
@@ -985,9 +1056,9 @@ void PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     }
     // ISD::OR doesn't get all the bitfield insertion fun.
     // (and (or x, c1), c2) where isRunOfOnes(~(c1^c2)) is a bitfield insert
-    if (isIntImmediate(N->getOperand(1), Imm) && 
+    if (isInt32Immediate(N->getOperand(1), Imm) && 
         N->getOperand(0).getOpcode() == ISD::OR &&
-        isIntImmediate(N->getOperand(0).getOperand(1), Imm2)) {
+        isInt32Immediate(N->getOperand(0).getOperand(1), Imm2)) {
       unsigned MB, ME;
       Imm = ~(Imm^Imm2);
       if (isRunOfOnes(Imm, MB, ME)) {
@@ -1046,12 +1117,14 @@ void PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
   case ISD::SELECT_CC: {
     ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(4))->get();
     
-    // handle the setcc cases here.  select_cc lhs, 0, 1, 0, cc
+    // Handle the setcc cases here.  select_cc lhs, 0, 1, 0, cc
     if (ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N->getOperand(1)))
       if (ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N->getOperand(2)))
         if (ConstantSDNode *N3C = dyn_cast<ConstantSDNode>(N->getOperand(3)))
           if (N1C->isNullValue() && N3C->isNullValue() &&
-              N2C->getValue() == 1ULL && CC == ISD::SETNE) {
+              N2C->getValue() == 1ULL && CC == ISD::SETNE &&
+              // FIXME: Implement this optzn for PPC64.
+              N->getValueType(0) == MVT::i32) {
             SDOperand LHS;
             Select(LHS, N->getOperand(0));
             SDNode *Tmp =
@@ -1068,8 +1141,10 @@ void PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
 
     bool isFP = MVT::isFloatingPoint(N->getValueType(0));
     unsigned SelectCCOp;
-    if (MVT::isInteger(N->getValueType(0)))
-      SelectCCOp = PPC::SELECT_CC_Int;
+    if (N->getValueType(0) == MVT::i32)
+      SelectCCOp = PPC::SELECT_CC_I4;
+    else if (N->getValueType(0) == MVT::i64)
+      SelectCCOp = PPC::SELECT_CC_I8;
     else if (N->getValueType(0) == MVT::f32)
       SelectCCOp = PPC::SELECT_CC_F4;
     else if (N->getValueType(0) == MVT::f64)
@@ -1188,8 +1263,10 @@ void PPCDAGToDAGISel::MySelect_PPCcall(SDOperand &Result, SDOperand N) {
     
     Chain = SDOperand(ResNode, 0);
     InFlag = SDOperand(ResNode, 1);
-    SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 0, Chain.Val, Chain.ResNo);
-    SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 1, InFlag.Val, InFlag.ResNo);
+    SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 0, Chain.Val, 
+                                     Chain.ResNo);
+    SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 1, InFlag.Val, 
+                                     InFlag.ResNo);
     Result = SDOperand(ResNode, N.ResNo);
     return;
   }
@@ -1220,8 +1297,10 @@ void PPCDAGToDAGISel::MySelect_PPCcall(SDOperand &Result, SDOperand N) {
     
     Chain = SDOperand(ResNode, 0);
     InFlag = SDOperand(ResNode, 1);
-    SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 0, Chain.Val, Chain.ResNo);
-    SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 1, InFlag.Val, InFlag.ResNo);
+    SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 0, Chain.Val,
+                                     Chain.ResNo);
+    SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 1, InFlag.Val, 
+                                     InFlag.ResNo);
     Result = SDOperand(ResNode, N.ResNo);
     return;
   }
@@ -1252,8 +1331,10 @@ void PPCDAGToDAGISel::MySelect_PPCcall(SDOperand &Result, SDOperand N) {
 
     Chain = SDOperand(ResNode, 0);
     InFlag = SDOperand(ResNode, 1);
-    SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 0, Chain.Val, Chain.ResNo);
-    SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 1, InFlag.Val, InFlag.ResNo);
+    SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 0, Chain.Val,
+                                     Chain.ResNo);
+    SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 1, InFlag.Val,
+                                     InFlag.ResNo);
     Result = SDOperand(ResNode, N.ResNo);
     return;
   }

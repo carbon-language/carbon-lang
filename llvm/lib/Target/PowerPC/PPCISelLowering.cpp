@@ -249,6 +249,7 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::BUILD_VECTOR, MVT::v4f32, Custom);
   }
   
+  setSetCCResultType(MVT::i32);
   setSetCCResultContents(ZeroOrOneSetCCResult);
   setStackPointerRegisterToSaveRestore(PPC::R1);
   
@@ -2216,7 +2217,8 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
 MachineBasicBlock *
 PPCTargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
                                            MachineBasicBlock *BB) {
-  assert((MI->getOpcode() == PPC::SELECT_CC_Int ||
+  assert((MI->getOpcode() == PPC::SELECT_CC_I4 ||
+          MI->getOpcode() == PPC::SELECT_CC_I8 ||
           MI->getOpcode() == PPC::SELECT_CC_F4 ||
           MI->getOpcode() == PPC::SELECT_CC_F8 ||
           MI->getOpcode() == PPC::SELECT_CC_VRRC) &&

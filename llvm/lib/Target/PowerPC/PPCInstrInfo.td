@@ -263,7 +263,9 @@ def IMPLICIT_DEF_F4  : Pseudo<(ops F4RC:$rD), "; $rD = IMPLICIT_DEF_F4",
 // scheduler into a branch sequence.
 let usesCustomDAGSchedInserter = 1,    // Expanded by the scheduler.
     PPC970_Single = 1 in {
-  def SELECT_CC_Int : Pseudo<(ops GPRC:$dst, CRRC:$cond, GPRC:$T, GPRC:$F,
+  def SELECT_CC_I4 : Pseudo<(ops GPRC:$dst, CRRC:$cond, GPRC:$T, GPRC:$F,
+                              i32imm:$BROPC), "; SELECT_CC PSEUDO!", []>;
+  def SELECT_CC_I8 : Pseudo<(ops G8RC:$dst, CRRC:$cond, G8RC:$T, G8RC:$F,
                               i32imm:$BROPC), "; SELECT_CC PSEUDO!", []>;
   def SELECT_CC_F4  : Pseudo<(ops F4RC:$dst, CRRC:$cond, F4RC:$T, F4RC:$F,
                               i32imm:$BROPC), "; SELECT_CC PSEUDO!", []>;
