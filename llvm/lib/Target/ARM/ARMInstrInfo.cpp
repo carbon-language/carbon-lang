@@ -27,7 +27,19 @@ ARMInstrInfo::ARMInstrInfo()
 ///
 bool ARMInstrInfo::isMoveInstr(const MachineInstr &MI,
                                  unsigned &SrcReg, unsigned &DstReg) const {
-  return false;
+  MachineOpCode oc = MI.getOpcode();
+  switch (oc) {
+  default:
+    return false;
+  case ARM::movrr:
+    assert(MI.getNumOperands() == 2 &&
+	   MI.getOperand(0).isRegister() &&
+	   MI.getOperand(1).isRegister() &&
+	   "Invalid ARM MOV instruction");
+    SrcReg = MI.getOperand(1).getReg();;
+    DstReg = MI.getOperand(0).getReg();;
+    return true;
+  }
 }
 
 /// isLoadFromStackSlot - If the specified machine instruction is a direct

@@ -183,10 +183,12 @@ void ARMDAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   ScheduleAndEmitDAG(DAG);
 }
 
-static void SelectFrameIndex(SelectionDAG *CurDAG, SDOperand &Result, SDNode *N) {
+static void SelectFrameIndex(SelectionDAG *CurDAG, SDOperand &Result, SDNode *N, SDOperand Op) {
   int FI = cast<FrameIndexSDNode>(N)->getIndex();
-  Result = CurDAG->SelectNodeTo(N, ARM::movrr, MVT::i32,
-				CurDAG->getTargetFrameIndex(FI, MVT::i32));
+
+  SDOperand TFI = CurDAG->getTargetFrameIndex(FI, Op.getValueType());
+
+  Result = CurDAG->SelectNodeTo(N, ARM::movri, Op.getValueType(), TFI);
 }
 
 void ARMDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
@@ -198,7 +200,7 @@ void ARMDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     break;
 
   case ISD::FrameIndex:
-    SelectFrameIndex(CurDAG, Result, N);
+    SelectFrameIndex(CurDAG, Result, N, Op);
     break;
   }
 }
