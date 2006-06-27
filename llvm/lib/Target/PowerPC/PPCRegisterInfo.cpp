@@ -390,9 +390,27 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
   // Take into account whether it's an add or mem instruction
   unsigned OffIdx = (i == 2) ? 1 : 2;
 
+  // Figure out if the offset in the instruction is shifted right two bits. This
+  // is true for instructions like "STD", which the machine implicitly adds two
+  // low zeros to.
+  bool isIXAddr = false;
+  switch (MI.getOpcode()) {
+  case PPC::LWA:
+  case PPC::LD:
+  case PPC::STD:
+  case PPC::STD_32:
+    isIXAddr = true;
+    break;
+  }
+  
+  
   // Now add the frame object offset to the offset from r1.
-  int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex) +
-               MI.getOperand(OffIdx).getImmedValue();
+  int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
+  
+  if (!isIXAddr)
+    Offset += MI.getOperand(OffIdx).getImmedValue();
+  else
+    Offset += MI.getOperand(OffIdx).getImmedValue() << 2;
 
   // If we're not using a Frame Pointer that has been set to the value of the
   // SP before having the stack size subtracted from it, then add the stack size
@@ -415,14 +433,9 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
     MI.getOperand(1).ChangeToRegister(MI.getOperand(i).getReg());
     MI.getOperand(2).ChangeToRegister(PPC::R0);
   } else {
-    switch (MI.getOpcode()) {
-    case PPC::LWA:
-    case PPC::LD:
-    case PPC::STD:
-    case PPC::STD_32:
+    if (isIXAddr) {
       assert((Offset & 3) == 0 && "Invalid frame offset!");
       Offset >>= 2;    // The actual encoded value has the low two bits zero.
-      break;
     }
     MI.getOperand(OffIdx).ChangeToImmediate(Offset);
   }
