@@ -218,7 +218,7 @@ void GenerateBytecode(Module* M, const std::string& FileName) {
 /// specified bytecode file.
 ///
 /// Inputs:
-///  InputFilename  - The name of the output bytecode file.
+///  InputFilename  - The name of the input bytecode file.
 ///  OutputFilename - The name of the file to generate.
 ///  llc            - The pathname to use for LLC.
 ///  envp           - The environment to use when running LLC.
@@ -240,8 +240,7 @@ static int GenerateAssembly(const std::string &OutputFilename,
   return sys::Program::ExecuteAndWait(llc,&args[0]);
 }
 
-/// GenerateAssembly - generates a native assembly language source file from the
-/// specified bytecode file.
+/// GenerateCFile - generates a C source file from the specified bytecode file.
 static int GenerateCFile(const std::string &OutputFile,
                          const std::string &InputFile,
                          const sys::Path &llc) {
@@ -257,11 +256,11 @@ static int GenerateCFile(const std::string &OutputFile,
   return sys::Program::ExecuteAndWait(llc, &args[0]);
 }
 
-/// GenerateNative - generates a native assembly language source file from the
-/// specified assembly source file.
+/// GenerateNative - generates a native object file from the
+/// specified bytecode file.
 ///
 /// Inputs:
-///  InputFilename  - The name of the output bytecode file.
+///  InputFilename  - The name of the input bytecode file.
 ///  OutputFilename - The name of the file to generate.
 ///  Libraries      - The list of libraries with which to link.
 ///  LibPaths       - The list of directories in which to find libraries.
