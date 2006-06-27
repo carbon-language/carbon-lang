@@ -268,13 +268,17 @@ namespace {
   
     DarwinDwarfWriter DW;
 
-    DarwinAsmPrinter(std::ostream &O, TargetMachine &TM)
+    DarwinAsmPrinter(std::ostream &O, PPCTargetMachine &TM)
       : PPCAsmPrinter(O, TM), DW(O, this) {
+      bool isPPC64 = TM.getSubtargetImpl()->isPPC64();
       CommentString = ";";
       GlobalPrefix = "_";
       PrivateGlobalPrefix = "L";     // Marker for constant pool idxs
       ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
-      Data64bitsDirective = 0;       // we can't emit a 64-bit unit
+      if (isPPC64)
+        Data64bitsDirective = ".quad";       // we can't emit a 64-bit unit
+      else
+        Data64bitsDirective = 0;       // we can't emit a 64-bit unit
       AlignmentIsInBytes = false;    // Alignment is by power of 2.
       ConstantPoolSection = "\t.const\t";
       // FIXME: Conditionalize jump table section based on PIC
@@ -625,13 +629,15 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
     }
   }
 
+  bool isPPC64 = TD->getPointerSizeInBits() == 64;
+
   // Output stubs for dynamically-linked functions
   if (TM.getRelocationModel() == Reloc::PIC) {
     for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end();
          i != e; ++i) {
       SwitchToTextSection(".section __TEXT,__picsymbolstub1,symbol_stubs,"
                           "pure_instructions,32", 0);
-      EmitAlignment(2);
+      EmitAlignment(4);
       O << "L" << *i << "$stub:\n";
       O << "\t.indirect_symbol " << *i << "\n";
       O << "\tmflr r0\n";
@@ -640,13 +646,19 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
       O << "\tmflr r11\n";
       O << "\taddis r11,r11,ha16(L" << *i << "$lazy_ptr-L0$" << *i << ")\n";
       O << "\tmtlr r0\n";
-      O << "\tlwzu r12,lo16(L" << *i << "$lazy_ptr-L0$" << *i << ")(r11)\n";
+      if (isPPC64)
+        O << "\tldu r12,lo16(L" << *i << "$lazy_ptr-L0$" << *i << ")(r11)\n";
+      else
+        O << "\tlwzu r12,lo16(L" << *i << "$lazy_ptr-L0$" << *i << ")(r11)\n";
       O << "\tmtctr r12\n";
       O << "\tbctr\n";
       SwitchToDataSection(".lazy_symbol_pointer", 0);
       O << "L" << *i << "$lazy_ptr:\n";
       O << "\t.indirect_symbol " << *i << "\n";
-      O << "\t.long dyld_stub_binding_helper\n";
+      if (isPPC64)
+        O << "\t.quad dyld_stub_binding_helper\n";
+      else
+        O << "\t.long dyld_stub_binding_helper\n";
     }
   } else {
     for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end();
@@ -657,13 +669,19 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
       O << "L" << *i << "$stub:\n";
       O << "\t.indirect_symbol " << *i << "\n";
       O << "\tlis r11,ha16(L" << *i << "$lazy_ptr)\n";
-      O << "\tlwzu r12,lo16(L" << *i << "$lazy_ptr)(r11)\n";
+      if (isPPC64)
+        O << "\tldu r12,lo16(L" << *i << "$lazy_ptr)(r11)\n";
+      else
+        O << "\tlwzu r12,lo16(L" << *i << "$lazy_ptr)(r11)\n";
       O << "\tmtctr r12\n";
       O << "\tbctr\n";
       SwitchToDataSection(".lazy_symbol_pointer", 0);
       O << "L" << *i << "$lazy_ptr:\n";
       O << "\t.indirect_symbol " << *i << "\n";
-      O << "\t.long dyld_stub_binding_helper\n";
+      if (isPPC64)
+        O << "\t.quad dyld_stub_binding_helper\n";
+      else
+        O << "\t.long dyld_stub_binding_helper\n";
     }
   }
 
