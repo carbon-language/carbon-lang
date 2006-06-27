@@ -277,12 +277,6 @@ def i32immSExt8  : PatLeaf<(i32 imm), [{
   return (int32_t)N->getValue() == (int8_t)N->getValue();
 }]>;
 
-def i16immZExt8  : PatLeaf<(i16 imm), [{
-  // i16immZExt8 predicate - True if the 16-bit immediate fits in a 8-bit zero
-  // extended field.
-  return (uint16_t)N->getValue() == (uint8_t)N->getValue();
-}]>;
-
 // Helper fragments for loads.
 def loadiPTR : PatFrag<(ops node:$ptr), (iPTR (load node:$ptr))>;
 
