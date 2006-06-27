@@ -64,6 +64,8 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   
   setOperationAction(ISD::TRUNCSTORE, MVT::i1, Promote);
 
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
+
   setOperationAction(ISD::FREM, MVT::f32, Expand);
   setOperationAction(ISD::FREM, MVT::f64, Expand);
   
