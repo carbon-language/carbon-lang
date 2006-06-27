@@ -741,7 +741,7 @@ SDOperand PPCDAGToDAGISel::SelectCC(SDOperand LHS, SDOperand RHS,
   unsigned Opc;
   
   if (LHS.getValueType() == MVT::i32) {
-    unsigned Imm, Opc;
+    unsigned Imm;
     if (ISD::isUnsignedIntSetCC(CC)) {
       if (isInt32Immediate(RHS, Imm) && isUInt16(Imm))
         return SDOperand(CurDAG->getTargetNode(PPC::CMPLWI, MVT::i32, LHS,
@@ -757,7 +757,6 @@ SDOperand PPCDAGToDAGISel::SelectCC(SDOperand LHS, SDOperand RHS,
     }
   } else if (LHS.getValueType() == MVT::i64) {
     uint64_t Imm;
-    unsigned Opc;
     if (ISD::isUnsignedIntSetCC(CC)) {
       if (isInt64Immediate(RHS.Val, Imm) && isUInt16(Imm))
         return SDOperand(CurDAG->getTargetNode(PPC::CMPLDI, MVT::i64, LHS,
