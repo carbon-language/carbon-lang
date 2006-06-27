@@ -27,8 +27,6 @@
 #include "llvm/Instructions.h"
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/GraphWriter.h"
-#include "llvm/System/Path.h"
-#include "llvm/System/Program.h"
 #include "llvm/Config/config.h"
 #include <fstream>
 #include <iostream>
@@ -220,97 +218,11 @@ namespace llvm {
 void MachineFunction::viewCFG() const
 {
 #ifndef NDEBUG
-  char pathsuff[9];
-
-  sprintf(pathsuff, "%06u", unsigned(rand()));
-
-  sys::Path TempDir = sys::Path::GetTemporaryDirectory();
-  sys::Path Filename = TempDir;
-  Filename.appendComponent("mf" + getFunction()->getName() + "." + pathsuff + ".dot");
-  std::cerr << "Writing '" << Filename << "'... ";
-  std::ofstream F(Filename.c_str());
-
-  if (!F) {
-    std::cerr << "  error opening file for writing!\n";
-    return;
-  }
-
-  WriteGraph(F, this);
-  F.close();
-  std::cerr << "\n";
-
-#if HAVE_GRAPHVIZ
-  sys::Path Graphviz(LLVM_PATH_GRAPHVIZ);
-  std::vector<const char*> args;
-  args.push_back(Graphviz.c_str());
-  args.push_back(Filename.c_str());
-  args.push_back(0);
-  
-  std::cerr << "Running 'Graphviz' program... " << std::flush;
-  if (sys::Program::ExecuteAndWait(Graphviz, &args[0])) {
-    std::cerr << "Error viewing graph: 'Graphviz' not in path?\n";
-  } else {
-    Filename.eraseFromDisk();
-    return;
-  }
-#elif (HAVE_GV && HAVE_DOT)
-  sys::Path PSFilename = TempDir;
-  PSFilename.appendComponent(std::string("mf.tempgraph") + "." + pathsuff + ".ps");
-
-  sys::Path dot(LLVM_PATH_DOT);
-  std::vector<const char*> args;
-  args.push_back(dot.c_str());
-  args.push_back("-Tps");
-  args.push_back("-Nfontname=Courier");
-  args.push_back("-Gsize=7.5,10");
-  args.push_back(Filename.c_str());
-  args.push_back("-o");
-  args.push_back(PSFilename.c_str());
-  args.push_back(0);
-  
-  std::cerr << "Running 'dot' program... " << std::flush;
-  if (sys::Program::ExecuteAndWait(dot, &args[0])) {
-    std::cerr << "Error viewing graph: 'dot' not in path?\n";
-  } else {
-    std::cerr << "\n";
-
-    sys::Path gv(LLVM_PATH_GV);
-    args.clear();
-    args.push_back(gv.c_str());
-    args.push_back(PSFilename.c_str());
-    args.push_back(0);
-    
-    sys::Program::ExecuteAndWait(gv, &args[0]);
-  }
-  Filename.eraseFromDisk();
-  PSFilename.eraseFromDisk();
-  return;
-#elif HAVE_DOTTY
-  sys::Path dotty(LLVM_PATH_DOTTY);
-  std::vector<const char*> args;
-  args.push_back(dotty.c_str());
-  args.push_back(Filename.c_str());
-  args.push_back(0);
-  
-  std::cerr << "Running 'dotty' program... " << std::flush;
-  if (sys::Program::ExecuteAndWait(dotty, &args[0])) {
-    std::cerr << "Error viewing graph: 'dotty' not in path?\n";
-  } else {
-#ifndef __MINGW32__ // Dotty spawns another app and doesn't wait until it returns
-    Filename.eraseFromDisk();
-#endif
-    return;
-  }
-#endif
-
-#endif  // NDEBUG
-  std::cerr << "MachineFunction::viewCFG is only available in debug builds on "
+  ViewGraph(this, "mf" + getFunction()->getName());
+#else
+  std::cerr << "SelectionDAG::viewGraph is only available in debug builds on "
             << "systems with Graphviz or gv!\n";
-
-#ifndef NDEBUG
-  Filename.eraseFromDisk();
-  TempDir.eraseFromDisk(true);
-#endif
+#endif // NDEBUG
 }
 
 void MachineFunction::viewCFGOnly() const

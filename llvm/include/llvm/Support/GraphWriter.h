@@ -25,8 +25,10 @@
 
 #include "llvm/Support/DOTGraphTraits.h"
 #include "llvm/ADT/GraphTraits.h"
+#include "llvm/System/Path.h"
 #include <vector>
 #include <iostream>
+#include <fstream>
 
 namespace llvm {
 
@@ -59,6 +61,8 @@ namespace DOT {  // Private functions...
   }
 }
 
+void DisplayGraph(const sys::Path& Filename);
+  
 template<typename GraphType>
 class GraphWriter {
   std::ostream &O;
@@ -234,6 +238,60 @@ std::ostream &WriteGraph(std::ostream &O, const GraphType &G,
   // Output the end of the graph
   W.writeFooter();
   return O;
+}
+
+template<typename GraphType>
+sys::Path WriteGraph(const GraphType &G,
+                     const std::string& Name, 
+                     const std::string& Title = "") {
+  sys::Path Filename = sys::Path::GetTemporaryDirectory();;  
+  Filename.appendComponent(Name + ".dot");
+  Filename.makeUnique();
+  std::cerr << "Writing '" << Filename << "'... ";
+  
+  std::ofstream O(Filename.c_str());
+
+  if (O.good()) {
+    // Start the graph emission process...
+    GraphWriter<GraphType> W(O, G);
+
+    // Output the header for the graph...
+    W.writeHeader(Title);
+
+    // Emit all of the nodes in the graph...
+    W.writeNodes();
+
+    // Output any customizations on the graph
+    DOTGraphTraits<GraphType>::addCustomGraphFeatures(G, W);
+
+    // Output the end of the graph
+    W.writeFooter();
+    std::cerr << " done. \n";
+
+    O.close();
+    
+  } else {
+    std::cerr << "error opening file for writing!\n";
+    Filename.clear();
+  }
+  
+  return Filename;
+}
+  
+/// ViewGraph - Emit a dot graph, run 'dot', run gv on the postscript file,
+/// then cleanup.  For use from the debugger.
+///
+template<typename GraphType>
+void ViewGraph(const GraphType& G, 
+               const std::string& Name, 
+               const std::string& Title = "") {
+  sys::Path Filename =  WriteGraph(G, Name, Title);
+
+  if (Filename.isEmpty()) {
+    return;
+  }
+  
+  DisplayGraph(Filename);
 }
 
 } // End llvm namespace
