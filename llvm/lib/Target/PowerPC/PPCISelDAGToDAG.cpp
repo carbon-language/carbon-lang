@@ -1173,7 +1173,8 @@ void PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     SDOperand Chain, Target;
     Select(Chain, N->getOperand(0));
     Select(Target,N->getOperand(1));
-    Chain = SDOperand(CurDAG->getTargetNode(PPC::MTCTR, MVT::Other, Target,
+    unsigned Opc = Target.getValueType() == MVT::i32 ? PPC::MTCTR : PPC::MTCTR8;
+    Chain = SDOperand(CurDAG->getTargetNode(Opc, MVT::Other, Target,
                                             Chain), 0);
     Result = CurDAG->SelectNodeTo(N, PPC::BCTR, MVT::Other, Chain);
     return;
