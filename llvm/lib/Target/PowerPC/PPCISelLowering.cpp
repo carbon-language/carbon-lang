@@ -82,12 +82,16 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::BSWAP, MVT::i32  , Expand);
   setOperationAction(ISD::CTPOP, MVT::i32  , Expand);
   setOperationAction(ISD::CTTZ , MVT::i32  , Expand);
+  setOperationAction(ISD::BSWAP, MVT::i64  , Expand);
+  setOperationAction(ISD::CTPOP, MVT::i64  , Expand);
+  setOperationAction(ISD::CTTZ , MVT::i64  , Expand);
   
   // PowerPC does not have ROTR
   setOperationAction(ISD::ROTR, MVT::i32   , Expand);
   
   // PowerPC does not have Select
   setOperationAction(ISD::SELECT, MVT::i32, Expand);
+  setOperationAction(ISD::SELECT, MVT::i64, Expand);
   setOperationAction(ISD::SELECT, MVT::f32, Expand);
   setOperationAction(ISD::SELECT, MVT::f64, Expand);
   
