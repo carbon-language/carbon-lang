@@ -971,11 +971,12 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
               
               Old->getTerminator()->eraseFromParent();
               
-              for (BasicBlock::iterator II = SI->getSuccessor(i)->begin(),
-                   IE = SI->getSuccessor(i)->end(); II != IE; ++II) {
-                if (isa<PHINode>(*II)) {
-                  (*II).replaceUsesOfWith(Split, Old);
-                }
+              
+              PHINode *PN;
+              for (BasicBlock::iterator II = SI->getSuccessor(i)->begin();
+                   (PN = dyn_cast<PHINode>(II)); ++II) {
+                Value *InVal = PN->removeIncomingValue(Split, false);
+                PN->addIncoming(InVal, Old);
               }
 
               SI->removeCase(i);
