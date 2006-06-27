@@ -334,7 +334,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
     $MAKEOPTS = "$MAKEOPTS $ARGV[0]"; shift; next;
   }
   if (/^-extraflags/)      {
-    $PROGTESTOPTS .= " EXTRA_OPTIONS=\'$ARGV[0]\'"; shift; next;
+    $CONFIGUREARGS .= " --with-extra-options=\'$ARGV[0]\'"; shift; next;
   }
   if (/^-noexternals$/)    { $NOEXTERNALS = 1; next; }
   if (/^-nodejagnu$/)      { $NODEJAGNU = 1; next; }
