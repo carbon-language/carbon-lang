@@ -250,6 +250,7 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   }
   
   setSetCCResultType(MVT::i32);
+  setShiftAmountType(MVT::i32);
   setSetCCResultContents(ZeroOrOneSetCCResult);
   setStackPointerRegisterToSaveRestore(PPC::R1);
   
