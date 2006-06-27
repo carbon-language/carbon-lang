@@ -110,6 +110,8 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
 
   setOperationAction(ISD::BIT_CONVERT, MVT::f32, Expand);
   setOperationAction(ISD::BIT_CONVERT, MVT::i32, Expand);
+  setOperationAction(ISD::BIT_CONVERT, MVT::i64, Expand);
+  setOperationAction(ISD::BIT_CONVERT, MVT::f64, Expand);
 
   // PowerPC does not have truncstore for i1.
   setOperationAction(ISD::TRUNCSTORE, MVT::i1, Promote);
