@@ -288,7 +288,7 @@ std::string BugDriver::compileSharedObject(const std::string &BytecodeFile) {
 
   std::string SharedObjectFile;
   if (gcc->MakeSharedObject(OutputCFile.toString(), GCC::CFile,
-                            SharedObjectFile))
+                            SharedObjectFile, AdditionalLinkerArgs))
     exit(1);
 
   // Remove the intermediate C file
@@ -308,7 +308,7 @@ bool BugDriver::diffProgram(const std::string &BytecodeFile,
   bool ProgramExitedNonzero;
 
   // Execute the program, generating an output file...
-  sys::Path Output (executeProgram("", BytecodeFile, SharedObject, 0,
+  sys::Path Output(executeProgram("", BytecodeFile, SharedObject, 0,
                                       &ProgramExitedNonzero));
 
   // If we're checking the program exit code, assume anything nonzero is bad.

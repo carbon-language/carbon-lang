@@ -48,7 +48,7 @@ class GCC {
 public:
   enum FileType { AsmFile, CFile };
 
-  static GCC* create(const std::string &ProgramPath, std::string &Message);
+  static GCC *create(const std::string &ProgramPath, std::string &Message);
 
   /// ExecuteProgram - Execute the program specified by "ProgramFile" (which is
   /// either a .s file, or a .c file, specified by FileType), with the specified
@@ -70,7 +70,8 @@ public:
   /// file or a .s file) into a shared object.
   ///
   int MakeSharedObject(const std::string &InputFile, FileType fileType,
-                       std::string &OutputFile);
+                       std::string &OutputFile,
+                       const std::vector<std::string> &ArgsForGCC);
 };
 
 

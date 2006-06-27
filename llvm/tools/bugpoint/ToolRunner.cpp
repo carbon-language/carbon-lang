@@ -459,44 +459,63 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
 }
 
 int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
-                          std::string &OutputFile) {
+                          std::string &OutputFile,
+                          const std::vector<std::string> &ArgsForGCC) {
   sys::Path uniqueFilename(InputFile+LTDL_SHLIB_EXT);
   uniqueFilename.makeUnique();
   OutputFile = uniqueFilename.toString();
 
+  std::vector<const char*> GCCArgs;
+  
+  GCCArgs.push_back(GCCPath.c_str());
+  
+  
   // Compile the C/asm file into a shared object
-  const char* GCCArgs[] = {
-    GCCPath.c_str(),
-    "-x", (fileType == AsmFile) ? "assembler" : "c",
-    "-fno-strict-aliasing",
-    InputFile.c_str(),           // Specify the input filename...
+  GCCArgs.push_back("-x");
+  GCCArgs.push_back(fileType == AsmFile ? "assembler" : "c");
+  GCCArgs.push_back("-fno-strict-aliasing");
+  GCCArgs.push_back(InputFile.c_str());   // Specify the input filename.
 #if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
-    "-G",                        // Compile a shared library, `-G' for Sparc
+  GCCArgs.push_back("-G");       // Compile a shared library, `-G' for Sparc
 #elif defined(__APPLE__)
-    "-single_module",            // link all source files into a single module
-    "-dynamiclib",               // `-dynamiclib' for MacOS X/PowerPC
-    "-undefined",                // in data segment, rather than generating
-    "dynamic_lookup",            // blocks. dynamic_lookup requires that you set
-                                 // MACOSX_DEPLOYMENT_TARGET=10.3 in your env.
+  // link all source files into a single module in data segment, rather than
+  // generating blocks. dynamic_lookup requires that you set 
+  // MACOSX_DEPLOYMENT_TARGET=10.3 in your env.  FIXME: it would be better for
+  // bugpoint to just pass that in the environment of GCC.
+  GCCArgs.push_back("-single_module");
+  GCCArgs.push_back("-dynamiclib");   // `-dynamiclib' for MacOS X/PowerPC
+  GCCArgs.push_back("-undefined");
+  GCCArgs.push_back("dynamic_lookup");
 #else
-    "-shared",                   // `-shared' for Linux/X86, maybe others
+  GCCArgs.push_back("-shared");  // `-shared' for Linux/X86, maybe others
 #endif
 
 #if defined(__ia64__) || defined(__alpha__)
-    "-fPIC",                     // IA64 requires shared objs to contain PIC
+  GCCArgs.push_back("-fPIC");   // Requires shared objs to contain PIC
 #endif
 #ifdef __sparc__
-    "-mcpu=v9",
+  GCCArgs.push_back("-mcpu=v9");
 #endif
-    "-o", OutputFile.c_str(),    // Output to the right filename...
-    "-O2",                       // Optimize the program a bit...
-    0
-  };
+  GCCArgs.push_back("-o");
+  GCCArgs.push_back(OutputFile.c_str()); // Output to the right filename.
+  GCCArgs.push_back("-O2");              // Optimize the program a bit.
+
+  
+  
+  // Add any arguments intended for GCC. We locate them here because this is
+  // most likely -L and -l options that need to come before other libraries but
+  // after the source. Other options won't be sensitive to placement on the
+  // command line, so this should be safe.
+  for (unsigned i = 0, e = ArgsForGCC.size(); i != e; ++i)
+    GCCArgs.push_back(ArgsForGCC[i].c_str());
+  GCCArgs.push_back(0);                    // NULL terminator
+
+  
 
   std::cout << "<gcc>" << std::flush;
-  if (RunProgramWithTimeout(GCCPath, GCCArgs, sys::Path(), sys::Path(),
+  if (RunProgramWithTimeout(GCCPath, &GCCArgs[0], sys::Path(), sys::Path(),
                             sys::Path())) {
-    ProcessFailure(GCCPath, GCCArgs);
+    ProcessFailure(GCCPath, &GCCArgs[0]);
     return 1;
   }
   return 0;
