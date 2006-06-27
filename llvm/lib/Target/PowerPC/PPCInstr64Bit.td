@@ -228,6 +228,9 @@ def LWAX : XForm_1<31, 341, (ops G8RC:$rD, memrr:$src),
 def LDX  : XForm_1<31,  21, (ops G8RC:$rD, memrr:$src),
                    "ldx $rD, $src", LdStLD,
                    [(set G8RC:$rD, (load xaddr:$src))]>, isPPC64;
+def LWZ8 : DForm_1<32, (ops G8RC:$rD, memri:$src),
+                  "lwz $rD, $src", LdStGeneral,
+                  [(set G8RC:$rD, (zextload iaddr:$src, i32))]>, isPPC64;
 }
 let isStore = 1, noResults = 1, PPC970_Unit = 2 in {
 def STD  : DSForm_2<62, 0, (ops G8RC:$rS, memrix:$dst),
