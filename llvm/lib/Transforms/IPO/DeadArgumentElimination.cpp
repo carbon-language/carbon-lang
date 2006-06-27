@@ -19,15 +19,15 @@
 
 #define DEBUG_TYPE "deadargelim"
 #include "llvm/Transforms/IPO.h"
+#include "llvm/CallingConv.h"
+#include "llvm/Constant.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Constant.h"
-#include "llvm/Instructions.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/iterator"
 #include <iostream>
 #include <set>
 using namespace llvm;
@@ -128,7 +128,13 @@ static inline bool CallPassesValueThoughVararg(Instruction *Call,
 // (used in a computation), MaybeLive (only passed as an argument to a call), or
 // Dead (not used).
 DAE::Liveness DAE::getArgumentLiveness(const Argument &A) {
-  if (A.use_empty()) return Dead;  // First check, directly dead?
+  // If this is the return value of a csret function, it's not really dead.
+  if (A.getParent()->getCallingConv() == CallingConv::CSRet &&
+      &*A.getParent()->arg_begin() == &A)
+    return Live;
+  
+  if (A.use_empty())  // First check, directly dead?
+    return Dead;
 
   // Scan through all of the uses, looking for non-argument passing uses.
   for (Value::use_const_iterator I = A.use_begin(), E = A.use_end(); I!=E;++I) {
