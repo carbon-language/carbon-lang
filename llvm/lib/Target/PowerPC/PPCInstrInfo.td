@@ -252,7 +252,7 @@ def ADJCALLSTACKUP   : Pseudo<(ops u16imm:$amt),
 def UPDATE_VRSAVE    : Pseudo<(ops GPRC:$rD, GPRC:$rS),
                               "UPDATE_VRSAVE $rD, $rS", []>;
 }
-def IMPLICIT_DEF_GPR : Pseudo<(ops GPRC:$rD), "; $rD = IMPLICIT_DEF_GPRC",
+def IMPLICIT_DEF_GPRC: Pseudo<(ops GPRC:$rD), "; $rD = IMPLICIT_DEF_GPRC",
                               [(set GPRC:$rD, (undef))]>;
 def IMPLICIT_DEF_F8  : Pseudo<(ops F8RC:$rD), "; $rD = IMPLICIT_DEF_F8",
                               [(set F8RC:$rD, (undef))]>;

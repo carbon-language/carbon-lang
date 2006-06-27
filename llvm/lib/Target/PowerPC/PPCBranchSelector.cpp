@@ -52,7 +52,8 @@ static unsigned getNumBytesForInstruction(MachineInstr *MI) {
     // minor pessimization that saves us from having to worry about
     // keeping the offsets up to date later when we emit long branch glue.
     return 8;
-  case PPC::IMPLICIT_DEF_GPR: // no asm emitted
+  case PPC::IMPLICIT_DEF_GPRC: // no asm emitted
+  case PPC::IMPLICIT_DEF_G8RC: // no asm emitted
   case PPC::IMPLICIT_DEF_F4: // no asm emitted
   case PPC::IMPLICIT_DEF_F8: // no asm emitted
     return 0;

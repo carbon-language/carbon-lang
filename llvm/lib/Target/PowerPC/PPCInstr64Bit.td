@@ -54,6 +54,14 @@ def HI48_64 : SDNodeXForm<imm, [{
 
 
 //===----------------------------------------------------------------------===//
+// Pseudo instructions.
+//
+
+def IMPLICIT_DEF_G8RC : Pseudo<(ops G8RC:$rD), "; $rD = IMPLICIT_DEF_G8RC",
+                              [(set G8RC:$rD, (undef))]>;
+
+
+//===----------------------------------------------------------------------===//
 // Fixed point instructions.
 //
 
@@ -134,7 +142,12 @@ def ADDIS8 : DForm_2<15, (ops G8RC:$rD, G8RC:$rA, symbolHi64:$imm),
                      "addis $rD, $rA, $imm", IntGeneral,
                      [(set G8RC:$rD, (add G8RC:$rA, imm16ShiftedSExt:$imm))]>;
 
-
+def SUBFIC8: DForm_2< 8, (ops G8RC:$rD, G8RC:$rA, s16imm64:$imm),
+                     "subfic $rD, $rA, $imm", IntGeneral,
+                     [(set G8RC:$rD, (subc immSExt16:$imm, G8RC:$rA))]>;
+def SUBF8 : XOForm_1<31, 40, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
+                     "subf $rT, $rA, $rB", IntGeneral,
+                     [(set G8RC:$rT, (sub G8RC:$rB, G8RC:$rA))]>;
 
 
 def MULHD : XOForm_1<31, 73, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
@@ -326,9 +339,9 @@ def : Pat<(i32 (trunc G8RC:$in)),
           (OR8To4 G8RC:$in, G8RC:$in)>;
 
 // SHL/SRL
-def : Pat<(shl G8RC:$in, (i64 imm:$imm)),
+def : Pat<(shl G8RC:$in, (i32 imm:$imm)),
           (RLDICR G8RC:$in, imm:$imm, (SHL64 imm:$imm))>;
-def : Pat<(srl G8RC:$in, (i64 imm:$imm)),
+def : Pat<(srl G8RC:$in, (i32 imm:$imm)),
           (RLDICL G8RC:$in, (SRL64 imm:$imm), imm:$imm)>;
 
 // Hi and Lo for Darwin Global Addresses.

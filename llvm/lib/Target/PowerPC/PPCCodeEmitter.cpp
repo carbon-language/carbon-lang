@@ -125,7 +125,8 @@ void PPCCodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
     default:
       MCE.emitWordBE(getBinaryCodeForInstr(*I));
       break;
-    case PPC::IMPLICIT_DEF_GPR:
+    case PPC::IMPLICIT_DEF_GPRC:
+    case PPC::IMPLICIT_DEF_G8RC:
     case PPC::IMPLICIT_DEF_F8:
     case PPC::IMPLICIT_DEF_F4:
     case PPC::IMPLICIT_DEF_VRRC:
