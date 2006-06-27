@@ -378,9 +378,9 @@ void AliasSetTracker::remove(AliasSet &AS) {
   }
   
   // Stop using the alias set, removing it.
-  assert(AS.RefCount == NumRefs);
-  AS.RefCount = 0;
-  AS.removeFromTracker(*this);
+  AS.RefCount -= NumRefs;
+  if (AS.RefCount == 0)
+    AS.removeFromTracker(*this);
 }
 
 bool AliasSetTracker::remove(Value *Ptr, unsigned Size) {
