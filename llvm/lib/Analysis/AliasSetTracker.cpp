@@ -359,16 +359,28 @@ void AliasSetTracker::add(const AliasSetTracker &AST) {
 /// remove - Remove the specified (potentially non-empty) alias set from the
 /// tracker.
 void AliasSetTracker::remove(AliasSet &AS) {
-  bool SetDead;
-  do {
-    AliasSet::iterator I = AS.begin();
-    Value *Ptr = I.getPointer(); ++I;
+  // Drop all call sites.
+  AS.CallSites.clear();
+  
+  // Clear the alias set.
+  unsigned NumRefs = 0;
+  while (!AS.empty()) {
+    AliasSet::HashNodePair *P = AS.PtrList;
+    
+    // Unlink from the list of values.
+    P->second.removeFromList();
+    
+    // Remember how many references need to be dropped.
+    ++NumRefs;
 
-    // deleteValue will delete the set automatically when the last pointer
-    // reference is destroyed.  "Predict" when this will happen.
-    SetDead = I == AS.end();
-    deleteValue(Ptr);  // Delete all of the pointers from the set
-  } while (!SetDead);
+    // Finally, remove the entry.
+    PointerMap.erase(P->first);
+  }
+  
+  // Stop using the alias set, removing it.
+  assert(AS.RefCount == NumRefs);
+  AS.RefCount = 0;
+  AS.removeFromTracker(*this);
 }
 
 bool AliasSetTracker::remove(Value *Ptr, unsigned Size) {
