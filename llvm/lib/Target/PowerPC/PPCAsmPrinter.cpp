@@ -694,7 +694,11 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
          E = GVStubs.end(); I != E; ++I) {
       O << "L" << *I << "$non_lazy_ptr:\n";
       O << "\t.indirect_symbol " << *I << "\n";
-      O << "\t.long\t0\n";
+      if (isPPC64)
+        O << "\t.quad\t0\n";
+      else
+        O << "\t.long\t0\n";
+        
     }
   }
 
