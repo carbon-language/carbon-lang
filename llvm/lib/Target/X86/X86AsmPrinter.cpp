@@ -222,6 +222,58 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
   return false; // success
 }
 
+void X86SharedAsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
+  if (!Subtarget->TargetType == X86Subtarget::isDarwin) {
+    AsmPrinter::EmitConstantPool(MCP);
+    return;
+  }
+
+  const std::vector<MachineConstantPoolEntry> &CP = MCP->getConstants();
+  if (CP.empty()) return;
+
+  std::vector<MachineConstantPoolEntry> FloatCPs;
+  std::vector<MachineConstantPoolEntry> DoubleCPs;
+  std::vector<MachineConstantPoolEntry> OtherCPs;
+  //  const TargetData *TD = TM.getTargetData();
+  //  unsigned Align = MCP->getConstantPoolAlignment();
+  for (unsigned i = 0, e = CP.size(); i != e; ++i) {
+    MachineConstantPoolEntry CPE = CP[i];
+    const Constant *CV = CPE.Val;
+    const Type *Ty = CV->getType();
+    if (Ty->getTypeID() == Type::FloatTyID)
+      FloatCPs.push_back(CPE);
+    else if (Ty->getTypeID() == Type::DoubleTyID)
+      DoubleCPs.push_back(CPE);
+    else
+      OtherCPs.push_back(CPE);
+  }
+  EmitConstantPool(MCP, FloatCPs,  "\t.literal4");
+  EmitConstantPool(MCP, DoubleCPs, "\t.literal8");
+  EmitConstantPool(MCP, OtherCPs,  ConstantPoolSection);
+}
+
+void
+X86SharedAsmPrinter::EmitConstantPool(MachineConstantPool *MCP,
+                                      std::vector<MachineConstantPoolEntry> &CP,
+                                      const char *Section) {
+  if (CP.empty()) return;
+
+  SwitchToDataSection(Section, 0);
+  EmitAlignment(MCP->getConstantPoolAlignment());
+  for (unsigned i = 0, e = CP.size(); i != e; ++i) {
+    O << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << '_' << i
+      << ":\t\t\t\t\t" << CommentString << " ";
+    WriteTypeSymbolic(O, CP[i].Val->getType(), 0) << '\n';
+    EmitGlobalConstant(CP[i].Val);
+    if (i != e-1) {
+      unsigned EntSize = TM.getTargetData()->getTypeSize(CP[i].Val->getType());
+      unsigned ValEnd = CP[i].Offset + EntSize;
+      // Emit inter-object padding for alignment.
+      EmitZeros(CP[i+1].Offset-ValEnd);
+    }
+  }
+}
+
 /// createX86CodePrinterPass - Returns a pass that prints the X86 assembly code
 /// for a MachineFunction to the given output stream, using the given target
 /// machine description.
