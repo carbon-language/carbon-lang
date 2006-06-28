@@ -36,12 +36,26 @@ class MacroInfo {
   /// isDisabled - True if we have started an expansion of this macro already.
   /// This disbles recursive expansion, which would be quite bad for things like
   /// #define A A.
-  bool isDisabled;
+  bool IsDisabled : 1;
   
+  /// isBuiltinMacro - True if this is a builtin macro, such as __LINE__, and if
+  /// it has not yet been redefined or undefined.
+  bool IsBuiltinMacro : 1;
 public:
   MacroInfo(SourceLocation DefLoc) : Location(DefLoc) {
-    isDisabled = false;
+    IsDisabled = false;
+    IsBuiltinMacro = false;
   }
+  
+  /// setIsBuiltinMacro - Set or clear the isBuiltinMacro flag.
+  ///
+  void setIsBuiltinMacro(bool Val = true) {
+    IsBuiltinMacro = Val;
+  }
+  
+  /// isBuiltinMacro - Return true if this macro is a builtin macro, such as
+  /// __LINE__, which requires processing before expansion.
+  bool isBuiltinMacro() const { return IsBuiltinMacro; }
 
   /// getNumTokens - Return the number of tokens that this macro expands to.
   ///
@@ -62,16 +76,16 @@ public:
   
   /// isEnabled - Return true if this macro is enabled: in other words, that we
   /// are not currently in an expansion of this macro.
-  bool isEnabled() const { return !isDisabled; }
+  bool isEnabled() const { return !IsDisabled; }
   
   void EnableMacro() {
-    assert(isDisabled && "Cannot enable an already-enabled macro!");
-    isDisabled = false;
+    assert(IsDisabled && "Cannot enable an already-enabled macro!");
+    IsDisabled = false;
   }
 
   void DisableMacro() {
-    assert(!isDisabled && "Cannot disable an already-disabled macro!");
-    isDisabled = true;
+    assert(!IsDisabled && "Cannot disable an already-disabled macro!");
+    IsDisabled = true;
   }
 };
     

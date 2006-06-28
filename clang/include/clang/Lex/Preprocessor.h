@@ -401,6 +401,9 @@ private:
   /// #pragma GCC poison/system_header/dependency and #pragma once.
   void RegisterBuiltinPragmas();
   
+  /// RegisterBuiltinMacros - Register builtin macros, such as __LINE__ with the
+  /// identifier table.
+  void RegisterBuiltinMacros();
   
   /// HandleMacroExpandedIdentifier - If an identifier token is read that is to
   /// be expanded as a macro, handle it and return the next token as 'Tok'.

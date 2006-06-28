@@ -69,6 +69,9 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
   // Initialize the pragma handlers.
   PragmaHandlers = new PragmaNamespace(0);
   RegisterBuiltinPragmas();
+  
+  // Initialize builtin macros like __LINE__ and friends.
+  RegisterBuiltinMacros();
 }
 
 Preprocessor::~Preprocessor() {
@@ -402,39 +405,24 @@ void Preprocessor::EnterMacro(LexerToken &Tok) {
   CurMacroExpander = new MacroExpander(Tok, *this);
 }
 
-
 //===----------------------------------------------------------------------===//
-// Lexer Event Handling.
+// Macro Expansion Handling.
 //===----------------------------------------------------------------------===//
 
-/// HandleIdentifier - This callback is invoked when the lexer reads an
-/// identifier.  This callback looks up the identifier in the map and/or
-/// potentially macro expands it or turns it into a named token (like 'for').
-void Preprocessor::HandleIdentifier(LexerToken &Identifier) {
-  if (Identifier.getIdentifierInfo() == 0) {
-    // If we are skipping tokens (because we are in a #if 0 block), there will
-    // be no identifier info, just return the token.
-    assert(isSkipping() && "Token isn't an identifier?");
-    return;
-  }
-  IdentifierTokenInfo &ITI = *Identifier.getIdentifierInfo();
+/// RegisterBuiltinMacros - Register builtin macros, such as __LINE__ with the
+/// identifier table.
+void Preprocessor::RegisterBuiltinMacros() {
+  // Do this for each thing.
+  MacroInfo *MI = new MacroInfo(SourceLocation());
+  MI->setIsBuiltinMacro();
+  getIdentifierInfo("__LINE__")->setMacroInfo(MI);
 
-  // If this identifier was poisoned, and if it was not produced from a macro
-  // expansion, emit an error.
-  if (ITI.isPoisoned() && CurLexer)
-    Diag(Identifier, diag::err_pp_used_poisoned_id);
-  
-  if (MacroInfo *MI = ITI.getMacroInfo())
-    if (MI->isEnabled() && !DisableMacroExpansion)
-      return HandleMacroExpandedIdentifier(Identifier, MI);
-
-  // Change the kind of this identifier to the appropriate token kind, e.g.
-  // turning "for" into a keyword.
-  Identifier.SetKind(ITI.getTokenID());
-    
-  // If this is an extension token, diagnose its use.
-  if (ITI.isExtensionToken()) Diag(Identifier, diag::ext_token_used);
+  // FIXME: Warn on #undef / #define of a builtin macro.
+  // FIXME: make HandleMacroExpandedIdentifier handle this case.
+  // FIXME: implement them all, including _Pragma.
+  //MacroInfo *MI = new MacroInfo(MacroNameTok.getLocation());
 }
+
 
 /// HandleMacroExpandedIdentifier - If an identifier token is read that is to be
 /// expanded as a macro, handle it and return the next token as 'Identifier'.
@@ -509,6 +497,40 @@ void Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier,
   // Now that the macro is at the top of the include stack, ask the
   // preprocessor to read the next token from it.
   return Lex(Identifier);
+}
+
+
+//===----------------------------------------------------------------------===//
+// Lexer Event Handling.
+//===----------------------------------------------------------------------===//
+
+/// HandleIdentifier - This callback is invoked when the lexer reads an
+/// identifier.  This callback looks up the identifier in the map and/or
+/// potentially macro expands it or turns it into a named token (like 'for').
+void Preprocessor::HandleIdentifier(LexerToken &Identifier) {
+  if (Identifier.getIdentifierInfo() == 0) {
+    // If we are skipping tokens (because we are in a #if 0 block), there will
+    // be no identifier info, just return the token.
+    assert(isSkipping() && "Token isn't an identifier?");
+    return;
+  }
+  IdentifierTokenInfo &ITI = *Identifier.getIdentifierInfo();
+
+  // If this identifier was poisoned, and if it was not produced from a macro
+  // expansion, emit an error.
+  if (ITI.isPoisoned() && CurLexer)
+    Diag(Identifier, diag::err_pp_used_poisoned_id);
+  
+  if (MacroInfo *MI = ITI.getMacroInfo())
+    if (MI->isEnabled() && !DisableMacroExpansion)
+      return HandleMacroExpandedIdentifier(Identifier, MI);
+
+  // Change the kind of this identifier to the appropriate token kind, e.g.
+  // turning "for" into a keyword.
+  Identifier.SetKind(ITI.getTokenID());
+    
+  // If this is an extension token, diagnose its use.
+  if (ITI.isExtensionToken()) Diag(Identifier, diag::ext_token_used);
 }
 
 /// HandleEndOfFile - This callback is invoked when the lexer hits the end of
@@ -790,9 +812,6 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
           DiscardUntilEndOfDirective();
           ShouldEnter = false;
         } else {
-          // Evaluate the #elif condition!
-          const char *Start = CurLexer->BufferPtr;
-
           // Restore the value of SkippingContents so that identifiers are
           // looked up, etc, inside the #elif expression.
           assert(SkippingContents && "We have to be skipping here!");
@@ -1096,6 +1115,10 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
   // Finally, if this identifier already had a macro defined for it, verify that
   // the macro bodies are identical and free the old definition.
   if (MacroInfo *OtherMI = MacroNameTok.getIdentifierInfo()->getMacroInfo()) {
+    if (OtherMI->isBuiltinMacro())
+      Diag(MacroNameTok, diag::pp_redef_builtin_macro);
+    
+    
     // FIXME: Verify the definition is the same.
     // Macros must be identical.  This means all tokes and whitespace separation
     // must be the same.
@@ -1125,6 +1148,9 @@ void Preprocessor::HandleUndefDirective(LexerToken &UndefTok) {
   
   // If the macro is not defined, this is a noop undef, just return.
   if (MI == 0) return;
+
+  if (MI->isBuiltinMacro())
+    Diag(MacroNameTok, diag::pp_undef_builtin_macro);
   
 #if 0 // FIXME: implement warn_unused_macros.
   if (CPP_OPTION (pfile, warn_unused_macros))
@@ -1175,8 +1201,6 @@ void Preprocessor::HandleIfdefDirective(LexerToken &Result, bool isIfndef) {
 ///
 void Preprocessor::HandleIfDirective(LexerToken &IfToken) {
   ++NumIf;
-  const char *Start = CurLexer->BufferPtr;
-
   bool ConditionalTrue = EvaluateDirectiveExpression();
   
   // Should we include the stuff contained by this directive?

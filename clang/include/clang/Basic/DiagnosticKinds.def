@@ -94,6 +94,10 @@ DIAG(pp_poisoning_existing_macro, WARNING,
      "poisoning existing macro")
 DIAG(pp_out_of_date_dependency, WARNING,
      "current file is older than dependency %s")
+DIAG(pp_undef_builtin_macro, WARNING,
+     "undefining builtin macro")
+DIAG(pp_redef_builtin_macro, WARNING,
+     "redefining builtin macro")
 
 DIAG(ext_pp_import_directive, EXTENSION,
      "#import is a language extension")
