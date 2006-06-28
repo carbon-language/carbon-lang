@@ -20,6 +20,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Visibility.h"
 #include "llvm/ADT/Statistic.h"
 #include <algorithm>
 #include <iostream>
@@ -31,7 +32,7 @@ namespace {
   /// LowerSwitch Pass - Replace all SwitchInst instructions with chained branch
   /// instructions.  Note that this cannot be a BasicBlock pass because it
   /// modifies the CFG!
-  class LowerSwitch : public FunctionPass {
+  class VISIBILITY_HIDDEN LowerSwitch : public FunctionPass {
   public:
     virtual bool runOnFunction(Function &F);
     

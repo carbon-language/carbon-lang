@@ -44,6 +44,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Visibility.h"
 #include <csetjmp>
 using namespace llvm;
 
@@ -55,7 +56,7 @@ namespace {
   cl::opt<bool> ExpensiveEHSupport("enable-correct-eh-support",
  cl::desc("Make the -lowerinvoke pass insert expensive, but correct, EH code"));
 
-  class LowerInvoke : public FunctionPass {
+  class VISIBILITY_HIDDEN LowerInvoke : public FunctionPass {
     // Used for both models.
     Function *WriteFn;
     Function *AbortFn;

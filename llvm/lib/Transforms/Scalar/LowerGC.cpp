@@ -26,10 +26,11 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/Visibility.h"
 using namespace llvm;
 
 namespace {
-  class LowerGC : public FunctionPass {
+  class VISIBILITY_HIDDEN LowerGC : public FunctionPass {
     /// GCRootInt, GCReadInt, GCWriteInt - The function prototypes for the
     /// llvm.gcread/llvm.gcwrite/llvm.gcroot intrinsics.
     Function *GCRootInt, *GCReadInt, *GCWriteInt;

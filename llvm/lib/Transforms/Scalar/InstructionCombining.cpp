@@ -48,6 +48,7 @@
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/PatternMatch.h"
+#include "llvm/Support/Visibility.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
@@ -62,8 +63,9 @@ namespace {
   Statistic<> NumDeadStore("instcombine", "Number of dead stores eliminated");
   Statistic<> NumSunkInst ("instcombine", "Number of instructions sunk");
 
-  class InstCombiner : public FunctionPass,
-                       public InstVisitor<InstCombiner, Instruction*> {
+  class VISIBILITY_HIDDEN InstCombiner
+    : public FunctionPass,
+      public InstVisitor<InstCombiner, Instruction*> {
     // Worklist of all of the instructions that need to be simplified.
     std::vector<Instruction*> WorkList;
     TargetData *TD;

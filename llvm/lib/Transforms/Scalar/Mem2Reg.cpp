@@ -20,12 +20,13 @@
 #include "llvm/Function.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/Visibility.h"
 using namespace llvm;
 
 namespace {
   Statistic<> NumPromoted("mem2reg", "Number of alloca's promoted");
 
-  struct PromotePass : public FunctionPass {
+  struct VISIBILITY_HIDDEN PromotePass : public FunctionPass {
     // runOnFunction - To run this pass, first we calculate the alloca
     // instructions that are safe for promotion, then we promote each one.
     //
