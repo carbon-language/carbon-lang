@@ -20,6 +20,7 @@
 #include "llvm/Module.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/Visibility.h"
 #include <algorithm>
 #include <iostream>
 using namespace llvm;
@@ -308,12 +309,14 @@ ConstantPacked::~ConstantPacked() {
 
 /// UnaryConstantExpr - This class is private to Constants.cpp, and is used
 /// behind the scenes to implement unary constant exprs.
-class UnaryConstantExpr : public ConstantExpr {
+namespace {
+class VISIBILITY_HIDDEN UnaryConstantExpr : public ConstantExpr {
   Use Op;
 public:
   UnaryConstantExpr(unsigned Opcode, Constant *C, const Type *Ty)
     : ConstantExpr(Ty, Opcode, &Op, 1), Op(C, this) {}
 };
+}
 
 static bool isSetCC(unsigned Opcode) {
   return Opcode == Instruction::SetEQ || Opcode == Instruction::SetNE ||
@@ -323,7 +326,8 @@ static bool isSetCC(unsigned Opcode) {
 
 /// BinaryConstantExpr - This class is private to Constants.cpp, and is used
 /// behind the scenes to implement binary constant exprs.
-class BinaryConstantExpr : public ConstantExpr {
+namespace {
+class VISIBILITY_HIDDEN BinaryConstantExpr : public ConstantExpr {
   Use Ops[2];
 public:
   BinaryConstantExpr(unsigned Opcode, Constant *C1, Constant *C2)
@@ -333,10 +337,12 @@ public:
     Ops[1].init(C2, this);
   }
 };
+}
 
 /// SelectConstantExpr - This class is private to Constants.cpp, and is used
 /// behind the scenes to implement select constant exprs.
-class SelectConstantExpr : public ConstantExpr {
+namespace {
+class VISIBILITY_HIDDEN SelectConstantExpr : public ConstantExpr {
   Use Ops[3];
 public:
   SelectConstantExpr(Constant *C1, Constant *C2, Constant *C3)
@@ -346,11 +352,13 @@ public:
     Ops[2].init(C3, this);
   }
 };
+}
 
 /// ExtractElementConstantExpr - This class is private to
 /// Constants.cpp, and is used behind the scenes to implement
 /// extractelement constant exprs.
-class ExtractElementConstantExpr : public ConstantExpr {
+namespace {
+class VISIBILITY_HIDDEN ExtractElementConstantExpr : public ConstantExpr {
   Use Ops[2];
 public:
   ExtractElementConstantExpr(Constant *C1, Constant *C2)
@@ -360,11 +368,13 @@ public:
     Ops[1].init(C2, this);
   }
 };
+}
 
 /// InsertElementConstantExpr - This class is private to
 /// Constants.cpp, and is used behind the scenes to implement
 /// insertelement constant exprs.
-class InsertElementConstantExpr : public ConstantExpr {
+namespace {
+class VISIBILITY_HIDDEN InsertElementConstantExpr : public ConstantExpr {
   Use Ops[3];
 public:
   InsertElementConstantExpr(Constant *C1, Constant *C2, Constant *C3)
@@ -375,11 +385,13 @@ public:
     Ops[2].init(C3, this);
   }
 };
+}
 
 /// ShuffleVectorConstantExpr - This class is private to
 /// Constants.cpp, and is used behind the scenes to implement
 /// shufflevector constant exprs.
-class ShuffleVectorConstantExpr : public ConstantExpr {
+namespace {
+class VISIBILITY_HIDDEN ShuffleVectorConstantExpr : public ConstantExpr {
   Use Ops[3];
 public:
   ShuffleVectorConstantExpr(Constant *C1, Constant *C2, Constant *C3)
@@ -390,10 +402,12 @@ public:
     Ops[2].init(C3, this);
   }
 };
+}
 
 /// GetElementPtrConstantExpr - This class is private to Constants.cpp, and is
 /// used behind the scenes to implement getelementpr constant exprs.
-struct GetElementPtrConstantExpr : public ConstantExpr {
+namespace {
+struct VISIBILITY_HIDDEN GetElementPtrConstantExpr : public ConstantExpr {
   GetElementPtrConstantExpr(Constant *C, const std::vector<Constant*> &IdxList,
                             const Type *DestTy)
     : ConstantExpr(DestTy, Instruction::GetElementPtr,
@@ -406,6 +420,7 @@ struct GetElementPtrConstantExpr : public ConstantExpr {
     delete [] OperandList;
   }
 };
+}
 
 /// ConstantExpr::get* - Return some common constants without having to
 /// specify the full Instruction::OPCODE identifier.
@@ -541,14 +556,14 @@ bool ConstantFP::isValueValidForType(const Type *Ty, double Val) {
 //
 namespace llvm {
   template<class ConstantClass, class TypeClass, class ValType>
-  struct ConstantCreator {
+  struct VISIBILITY_HIDDEN ConstantCreator {
     static ConstantClass *create(const TypeClass *Ty, const ValType &V) {
       return new ConstantClass(Ty, V);
     }
   };
 
   template<class ConstantClass, class TypeClass>
-  struct ConvertConstantType {
+  struct VISIBILITY_HIDDEN ConvertConstantType {
     static void convert(ConstantClass *OldC, const TypeClass *NewTy) {
       assert(0 && "This type cannot be converted!\n");
       abort();
@@ -559,7 +574,7 @@ namespace llvm {
 namespace {
   template<class ValType, class TypeClass, class ConstantClass,
            bool HasLargeKey = false  /*true for arrays and structs*/ >
-  class ValueMap : public AbstractTypeUser {
+  class VISIBILITY_HIDDEN ValueMap : public AbstractTypeUser {
   public:
     typedef std::pair<const TypeClass*, ValType> MapKey;
     typedef std::map<MapKey, ConstantClass *> MapTy;

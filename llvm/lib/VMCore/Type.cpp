@@ -20,6 +20,7 @@
 #include "llvm/ADT/SCCIterator.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/Visibility.h"
 #include <algorithm>
 #include <iostream>
 using namespace llvm;
@@ -366,7 +367,7 @@ const Type *StructType::getTypeAtIndex(const Value *V) const {
 //===----------------------------------------------------------------------===//
 
 namespace {
-  struct PrimType : public Type {
+  struct VISIBILITY_HIDDEN PrimType : public Type {
     PrimType(const char *S, TypeID ID) : Type(S, ID) {}
   };
 }

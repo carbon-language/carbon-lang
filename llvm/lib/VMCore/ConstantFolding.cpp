@@ -25,12 +25,13 @@
 #include "llvm/Function.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/Visibility.h"
 #include <limits>
 #include <cmath>
 using namespace llvm;
 
 namespace {
-  struct ConstRules {
+  struct VISIBILITY_HIDDEN ConstRules {
     ConstRules() {}
     virtual ~ConstRules() {}
 
@@ -88,7 +89,7 @@ namespace {
 //
 namespace {
 template<class ArgType, class SubClassName>
-class TemplateRules : public ConstRules {
+class VISIBILITY_HIDDEN TemplateRules : public ConstRules {
 
 
   //===--------------------------------------------------------------------===//
@@ -221,7 +222,8 @@ public:
 // EmptyRules provides a concrete base class of ConstRules that does nothing
 //
 namespace {
-struct EmptyRules : public TemplateRules<Constant, EmptyRules> {
+struct VISIBILITY_HIDDEN EmptyRules
+  : public TemplateRules<Constant, EmptyRules> {
   static Constant *EqualTo(const Constant *V1, const Constant *V2) {
     if (V1 == V2) return ConstantBool::True;
     return 0;
@@ -238,7 +240,8 @@ struct EmptyRules : public TemplateRules<Constant, EmptyRules> {
 // BoolRules provides a concrete base class of ConstRules for the 'bool' type.
 //
 namespace {
-struct BoolRules : public TemplateRules<ConstantBool, BoolRules> {
+struct VISIBILITY_HIDDEN BoolRules
+  : public TemplateRules<ConstantBool, BoolRules> {
 
   static Constant *LessThan(const ConstantBool *V1, const ConstantBool *V2) {
     return ConstantBool::get(V1->getValue() < V2->getValue());
@@ -290,8 +293,8 @@ struct BoolRules : public TemplateRules<ConstantBool, BoolRules> {
 // pointers.
 //
 namespace {
-struct NullPointerRules : public TemplateRules<ConstantPointerNull,
-                                               NullPointerRules> {
+struct VISIBILITY_HIDDEN NullPointerRules
+  : public TemplateRules<ConstantPointerNull, NullPointerRules> {
   static Constant *EqualTo(const Constant *V1, const Constant *V2) {
     return ConstantBool::True;  // Null pointers are always equal
   }
@@ -357,7 +360,7 @@ static Constant *EvalVectorOp(const ConstantPacked *V1,
 /// ConstantPacked operands.
 ///
 namespace {
-struct ConstantPackedRules
+struct VISIBILITY_HIDDEN ConstantPackedRules
   : public TemplateRules<ConstantPacked, ConstantPackedRules> {
   
   static Constant *Add(const ConstantPacked *V1, const ConstantPacked *V2) {
@@ -417,7 +420,8 @@ struct ConstantPackedRules
 /// cause for this is that one operand is a ConstantAggregateZero.
 ///
 namespace {
-struct GeneralPackedRules : public TemplateRules<Constant, GeneralPackedRules> {
+struct VISIBILITY_HIDDEN GeneralPackedRules
+  : public TemplateRules<Constant, GeneralPackedRules> {
 };
 }  // end anonymous namespace
 
@@ -432,7 +436,8 @@ struct GeneralPackedRules : public TemplateRules<Constant, GeneralPackedRules> {
 //
 namespace {
 template<class ConstantClass, class BuiltinType, Type **Ty, class SuperClass>
-struct DirectRules : public TemplateRules<ConstantClass, SuperClass> {
+struct VISIBILITY_HIDDEN DirectRules
+  : public TemplateRules<ConstantClass, SuperClass> {
   static Constant *Add(const ConstantClass *V1, const ConstantClass *V2) {
     BuiltinType R = (BuiltinType)V1->getValue() + (BuiltinType)V2->getValue();
     return ConstantClass::get(*Ty, R);
@@ -502,7 +507,7 @@ struct DirectRules : public TemplateRules<ConstantClass, SuperClass> {
 //
 namespace {
 template <class ConstantClass, class BuiltinType, Type **Ty>
-struct DirectIntRules
+struct VISIBILITY_HIDDEN DirectIntRules
   : public DirectRules<ConstantClass, BuiltinType, Ty,
                        DirectIntRules<ConstantClass, BuiltinType, Ty> > {
 
@@ -560,7 +565,7 @@ struct DirectIntRules
 ///
 namespace {
 template <class ConstantClass, class BuiltinType, Type **Ty>
-struct DirectFPRules
+struct VISIBILITY_HIDDEN DirectFPRules
   : public DirectRules<ConstantClass, BuiltinType, Ty,
                        DirectFPRules<ConstantClass, BuiltinType, Ty> > {
   static Constant *Rem(const ConstantClass *V1, const ConstantClass *V2) {
@@ -1472,7 +1477,7 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
           dyn_cast<PointerType>(CE->getOperand(0)->getType()))
         if (const ArrayType *SAT = dyn_cast<ArrayType>(SPT->getElementType()))
           if (const ArrayType *CAT =
-              dyn_cast<ArrayType>(cast<PointerType>(C->getType())->getElementType()))
+        dyn_cast<ArrayType>(cast<PointerType>(C->getType())->getElementType()))
             if (CAT->getElementType() == SAT->getElementType())
               return ConstantExpr::getGetElementPtr(
                       (Constant*)CE->getOperand(0), IdxList);

@@ -57,6 +57,7 @@
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/Visibility.h"
 #include <algorithm>
 #include <iostream>
 #include <sstream>
@@ -65,7 +66,8 @@ using namespace llvm;
 
 namespace {  // Anonymous namespace for class
 
-  struct Verifier : public FunctionPass, InstVisitor<Verifier> {
+  struct VISIBILITY_HIDDEN
+     Verifier : public FunctionPass, InstVisitor<Verifier> {
     bool Broken;          // Is this module found to be broken?
     bool RealPass;        // Are we not being run by a PassManager?
     VerifierFailureAction action;
