@@ -57,6 +57,13 @@ public:
   static SourceBuffer *getMemBuffer(const char *StartPtr, const char *EndPtr,
                                     const char *BufferName = "");
   
+  /// getNewMemBuffer - Allocate a new SourceBuffer of the specified size that
+  /// is completely initialized to zeros.  Note that the caller should
+  /// initialize the memory allocated by this method.  The memory is owned by
+  /// the SourceBuffer object.
+  static SourceBuffer *getNewMemBuffer(unsigned Size,
+                                       const char *BufferName = "");
+  
   /// getSTDIN - Read all of stdin into a file buffer, and return it.  This
   /// fails if stdin is empty.
   static SourceBuffer *getSTDIN();

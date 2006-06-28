@@ -77,6 +77,20 @@ SourceBuffer *SourceBuffer::getMemBuffer(const char *StartPtr,
   return new SourceBufferMem(StartPtr, EndPtr, BufferName);
 }
 
+/// getNewMemBuffer - Allocate a new SourceBuffer of the specified size that
+/// is completely initialized to zeros.  Note that the caller should
+/// initialize the memory allocated by this method.  The memory is owned by
+/// the SourceBuffer object.
+SourceBuffer *SourceBuffer::getNewMemBuffer(unsigned Size,
+                                            const char *BufferName) {
+  char *Buf = new char[Size+1];
+  memset(Buf, 0, Size+1);
+  SourceBufferMem *SB = new SourceBufferMem(Buf, Buf+Size, BufferName);
+  // The memory for this buffer is owned by the SourceBuffer.
+  SB->MustDeleteBuffer = true;
+  return SB;
+}
+
 
 //===----------------------------------------------------------------------===//
 // SourceBufferFile implementation.
