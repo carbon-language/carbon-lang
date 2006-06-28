@@ -28,6 +28,7 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/Visibility.h"
 #include <iostream>
 #include <set>
 using namespace llvm;
@@ -39,7 +40,7 @@ namespace {
   /// PPCDAGToDAGISel - PPC specific code to select PPC machine
   /// instructions for SelectionDAG operations.
   ///
-  class PPCDAGToDAGISel : public SelectionDAGISel {
+  class VISIBILITY_HIDDEN PPCDAGToDAGISel : public SelectionDAGISel {
     PPCTargetMachine &TM;
     PPCTargetLowering PPCLowering;
     unsigned GlobalBaseReg;

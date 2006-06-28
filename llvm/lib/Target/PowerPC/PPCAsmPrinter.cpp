@@ -33,6 +33,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Visibility.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetOptions.h"
@@ -45,7 +46,7 @@ using namespace llvm;
 namespace {
   Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
 
-  class PPCAsmPrinter : public AsmPrinter {
+  class VISIBILITY_HIDDEN PPCAsmPrinter : public AsmPrinter {
   public:
     std::set<std::string> FnStubs, GVStubs;
     
