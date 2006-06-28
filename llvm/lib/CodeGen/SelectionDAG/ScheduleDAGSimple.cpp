@@ -20,6 +20,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Visibility.h"
 #include <algorithm>
 #include <iostream>
 using namespace llvm;
@@ -389,7 +390,7 @@ public:
 ///
 /// ScheduleDAGSimple - Simple two pass scheduler.
 ///
-class ScheduleDAGSimple : public ScheduleDAG {
+class VISIBILITY_HIDDEN ScheduleDAGSimple : public ScheduleDAG {
 private:
   bool NoSched;                         // Just do a BFS schedule, nothing fancy
   bool NoItins;                         // Don't use itineraries?

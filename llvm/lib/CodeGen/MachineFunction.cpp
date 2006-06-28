@@ -27,6 +27,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/GraphWriter.h"
+#include "llvm/Support/Visibility.h"
 #include "llvm/Config/config.h"
 #include <fstream>
 #include <iostream>
@@ -39,7 +40,7 @@ static AnnotationID MF_AID(
 
 
 namespace {
-  struct Printer : public MachineFunctionPass {
+  struct VISIBILITY_HIDDEN Printer : public MachineFunctionPass {
     std::ostream *OS;
     const std::string Banner;
 
@@ -69,7 +70,7 @@ FunctionPass *llvm::createMachineFunctionPrinterPass(std::ostream *OS,
 }
 
 namespace {
-  struct Deleter : public MachineFunctionPass {
+  struct VISIBILITY_HIDDEN Deleter : public MachineFunctionPass {
     const char *getPassName() const { return "Machine Code Deleter"; }
 
     bool runOnMachineFunction(MachineFunction &MF) {

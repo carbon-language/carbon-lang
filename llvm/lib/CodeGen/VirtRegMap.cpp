@@ -26,6 +26,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Visibility.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
@@ -130,7 +131,7 @@ void VirtRegMap::dump() const { print(std::cerr); }
 Spiller::~Spiller() {}
 
 namespace {
-  struct SimpleSpiller : public Spiller {
+  struct VISIBILITY_HIDDEN SimpleSpiller : public Spiller {
     bool runOnMachineFunction(MachineFunction& mf, VirtRegMap &VRM);
   };
 }
@@ -204,7 +205,7 @@ namespace {
   /// block to attempt to keep spills in registers as much as possible for
   /// blocks that have low register pressure (the vreg may be spilled due to
   /// register pressure in other blocks).
-  class LocalSpiller : public Spiller {
+  class VISIBILITY_HIDDEN LocalSpiller : public Spiller {
     const MRegisterInfo *MRI;
     const TargetInstrInfo *TII;
   public:
@@ -240,7 +241,8 @@ namespace {
 /// per-stack-slot basis as the low bit in the value of the SpillSlotsAvailable
 /// entries.  The predicate 'canClobberPhysReg()' checks this bit and
 /// addAvailable sets it if.
-class AvailableSpills {
+namespace {
+class VISIBILITY_HIDDEN AvailableSpills {
   const MRegisterInfo *MRI;
   const TargetInstrInfo *TII;
 
@@ -304,6 +306,7 @@ public:
   /// for this slot lives in (as the previous value is dead now).
   void ModifyStackSlot(int Slot);
 };
+}
 
 /// ClobberPhysRegOnly - This is called when the specified physreg changes
 /// value.  We use this to invalidate any info about stuff we thing lives in it.
@@ -379,7 +382,7 @@ namespace {
   
   /// ReuseInfo - This maintains a collection of ReuseOp's for each operand that
   /// is reused instead of reloaded.
-  class ReuseInfo {
+  class VISIBILITY_HIDDEN ReuseInfo {
     MachineInstr &MI;
     std::vector<ReusedOp> Reuses;
   public:

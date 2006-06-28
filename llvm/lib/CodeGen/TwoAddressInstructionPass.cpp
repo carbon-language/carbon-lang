@@ -38,6 +38,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Visibility.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <iostream>
@@ -51,7 +52,8 @@ namespace {
   Statistic<> NumConvertedTo3Addr("twoaddressinstruction",
                                 "Number of instructions promoted to 3-address");
 
-  struct TwoAddressInstructionPass : public MachineFunctionPass {
+  struct VISIBILITY_HIDDEN TwoAddressInstructionPass
+   : public MachineFunctionPass {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 
     /// runOnMachineFunction - pass entry point

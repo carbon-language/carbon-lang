@@ -24,10 +24,11 @@
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Support/Visibility.h"
 using namespace llvm;
 
 namespace {
-  struct PEI : public MachineFunctionPass {
+  struct VISIBILITY_HIDDEN PEI : public MachineFunctionPass {
     const char *getPassName() const {
       return "Prolog/Epilog Insertion & Frame Finalization";
     }

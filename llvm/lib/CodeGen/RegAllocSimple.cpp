@@ -23,6 +23,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Visibility.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <iostream>
@@ -32,7 +33,7 @@ namespace {
   Statistic<> NumStores("ra-simple", "Number of stores added");
   Statistic<> NumLoads ("ra-simple", "Number of loads added");
 
-  class RegAllocSimple : public MachineFunctionPass {
+  class VISIBILITY_HIDDEN RegAllocSimple : public MachineFunctionPass {
     MachineFunction *MF;
     const TargetMachine *TM;
     const MRegisterInfo *RegInfo;

@@ -26,6 +26,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Visibility.h"
 #include <algorithm>
 #include <cmath>
 #include <iostream>
@@ -43,7 +44,7 @@ namespace {
   static unsigned numIterations = 0;
   static unsigned numIntervals = 0;
 
-  struct RA : public MachineFunctionPass {
+  struct VISIBILITY_HIDDEN RA : public MachineFunctionPass {
     typedef std::pair<LiveInterval*, LiveInterval::iterator> IntervalPtr;
     typedef std::vector<IntervalPtr> IntervalPtrs;
   private:

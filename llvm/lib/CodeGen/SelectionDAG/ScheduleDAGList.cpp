@@ -26,6 +26,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Visibility.h"
 #include "llvm/ADT/Statistic.h"
 #include <climits>
 #include <iostream>
@@ -42,7 +43,7 @@ namespace {
 /// ScheduleDAGList - The actual list scheduler implementation.  This supports
 /// top-down scheduling.
 ///
-class ScheduleDAGList : public ScheduleDAG {
+class VISIBILITY_HIDDEN ScheduleDAGList : public ScheduleDAG {
 private:
   /// AvailableQueue - The priority queue to use for the available SUnits.
   ///
