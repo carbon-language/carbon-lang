@@ -38,6 +38,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/Pragma.h"
+#include "clang/Lex/ScratchBuffer.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
@@ -52,6 +53,8 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
   : Diags(diags), Features(opts), FileMgr(FM), SourceMgr(SM),
     SystemDirIdx(0), NoCurDirSearch(false),
     CurLexer(0), CurDirLookup(0), CurMacroExpander(0) {
+  ScratchBuf = new ScratchBuffer(SourceMgr);
+      
   // Clear stats.
   NumDirectives = NumIncluded = NumDefined = NumUndefined = NumPragma = 0;
   NumIf = NumElse = NumEndif = 0;
@@ -85,6 +88,9 @@ Preprocessor::~Preprocessor() {
   
   // Release pragma information.
   delete PragmaHandlers;
+
+  // Delete the scratch buffer info.
+  delete ScratchBuf;
 }
 
 /// getFileInfo - Return the PerFileInfo structure for the specified
@@ -409,18 +415,25 @@ void Preprocessor::EnterMacro(LexerToken &Tok) {
 // Macro Expansion Handling.
 //===----------------------------------------------------------------------===//
 
+/// RegisterBuiltinMacro - Register the specified identifier in the identifier
+/// table and mark it as a builtin macro to be expanded.
+IdentifierTokenInfo *Preprocessor::RegisterBuiltinMacro(const char *Name) {
+  // Get the identifier.
+  IdentifierTokenInfo *Id = getIdentifierInfo(Name);
+  
+  // Mark it as being a macro that is builtin.
+  MacroInfo *MI = new MacroInfo(SourceLocation());
+  MI->setIsBuiltinMacro();
+  Id->setMacroInfo(MI);
+  return Id;
+}
+
+
 /// RegisterBuiltinMacros - Register builtin macros, such as __LINE__ with the
 /// identifier table.
 void Preprocessor::RegisterBuiltinMacros() {
-  // Do this for each thing.
-  MacroInfo *MI = new MacroInfo(SourceLocation());
-  MI->setIsBuiltinMacro();
-  getIdentifierInfo("__LINE__")->setMacroInfo(MI);
-
-  // FIXME: Warn on #undef / #define of a builtin macro.
-  // FIXME: make HandleMacroExpandedIdentifier handle this case.
   // FIXME: implement them all, including _Pragma.
-  //MacroInfo *MI = new MacroInfo(MacroNameTok.getLocation());
+  Ident__LINE__ = RegisterBuiltinMacro("__LINE__");
 }
 
 
@@ -431,6 +444,10 @@ void Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier,
   ++NumMacroExpanded;
   // If we started lexing a macro, enter the macro expansion body.
   // FIXME: Read/Validate the argument list here!
+
+  // If this is a builtin macro, like __LINE__ or _Pragma, handle it specially.
+  if (MI->isBuiltinMacro())
+    return ExpandBuiltinMacro(Identifier, MI);
   
   // If this macro expands to no tokens, don't bother to push it onto the
   // expansion stack, only to take it right back off.
@@ -499,6 +516,27 @@ void Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier,
   return Lex(Identifier);
 }
 
+/// ExpandBuiltinMacro - If an identifier token is read that is to be expanded
+/// as a builtin macro, handle it and return the next token as 'Tok'.
+void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok, MacroInfo *MI) {
+  // Figure out which token this is.
+  IdentifierTokenInfo *ITI = Tok.getIdentifierInfo();
+  assert(ITI && "Can't be a macro without id info!");
+  char TmpBuffer[100];
+  
+  if (ITI == Ident__LINE__) {
+    // __LINE__ expands to a simple numeric value.
+    sprintf(TmpBuffer, "%u", SourceMgr.getLineNumber(Tok.getLocation()));
+    unsigned Length = strlen(TmpBuffer);
+    Tok.SetKind(tok::numeric_constant);
+    Tok.SetLength(Length);
+    Tok.SetLocation(ScratchBuf->getToken(TmpBuffer, Length, Tok.getLocation()));
+    Tok.ClearFlag(LexerToken::NeedsCleaning);
+    return;
+  } else {
+    assert(0 && "Unknown identifier!");
+  }  
+}
 
 //===----------------------------------------------------------------------===//
 // Lexer Event Handling.

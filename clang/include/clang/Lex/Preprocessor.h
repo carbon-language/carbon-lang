@@ -30,6 +30,7 @@ class DirectoryEntry;
 class FileEntry;
 class PragmaNamespace;
 class PragmaHandler;
+class ScratchBuffer;
 
 /// DirectoryLookup - This class is used to specify the search order for
 /// directories in #include directives.
@@ -79,6 +80,7 @@ class Preprocessor {
   const LangOptions &Features;
   FileManager   &FileMgr;
   SourceManager &SourceMgr;
+  ScratchBuffer *ScratchBuf;
   
   // #include search path information.  Requests for #include "x" search the
   /// directory of the #including file first, then each directory in SearchDirs
@@ -89,6 +91,9 @@ class Preprocessor {
   std::vector<DirectoryLookup> SearchDirs;
   unsigned SystemDirIdx;
   bool NoCurDirSearch;
+  
+  /// Identifiers for builtin macros.
+  IdentifierTokenInfo *Ident__LINE__; // __LINE__
 public:
   enum FileChangeReason {
     EnterFile, ExitFile, SystemHeaderPragma, RenameFile
@@ -404,10 +409,15 @@ private:
   /// RegisterBuiltinMacros - Register builtin macros, such as __LINE__ with the
   /// identifier table.
   void RegisterBuiltinMacros();
+  IdentifierTokenInfo *RegisterBuiltinMacro(const char *Name);
   
   /// HandleMacroExpandedIdentifier - If an identifier token is read that is to
   /// be expanded as a macro, handle it and return the next token as 'Tok'.
   void HandleMacroExpandedIdentifier(LexerToken &Tok, MacroInfo *MI);
+
+  /// ExpandBuiltinMacro - If an identifier token is read that is to be expanded
+  /// as a builtin macro, handle it and return the next token as 'Tok'.
+  void ExpandBuiltinMacro(LexerToken &Tok, MacroInfo *MI);
   
   //===--------------------------------------------------------------------===//
   /// Handle*Directive - implement the various preprocessor directives.  These
