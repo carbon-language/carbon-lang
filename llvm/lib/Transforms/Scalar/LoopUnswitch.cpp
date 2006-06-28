@@ -333,11 +333,11 @@ unsigned LoopUnswitch::getLoopUnswitchCost(Loop *L, Value *LIC) {
   if (IsTrivialUnswitchCondition(L, LIC))
     return 0;
   
-  // If the loop is really large (over twice our threshold) don't even consider
-  // unswitching it.  This will produce a really large loop with lots of empty
-  // blocks.
-  if (L->getBlocks().size() > 2*Threshold)
-    return 2*Threshold;
+  // FIXME: This is really overly conservative.  However, more liberal 
+  // estimations have thus far resulted in excessive unswitching, which is bad
+  // both in compile time and in code size.  This should be replaced once
+  // someone figures out how a good estimation.
+  return L->getBlocks().size();
   
   unsigned Cost = 0;
   // FIXME: this is brain dead.  It should take into consideration code
