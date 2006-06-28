@@ -28,12 +28,12 @@ namespace clang {
 /// variable or function name).  The preprocessor keeps this information in a
 /// set, and all tok::identifier tokens have a pointer to one of these.  
 class IdentifierTokenInfo {
-  unsigned NameLen;        // String that is the identifier.
-  MacroInfo *Macro;        // Set if this identifier is #define'd.
-  tok::TokenKind TokenID:8;// Front-end token ID or tok::identifier.
-  bool IsExtension : 1;    // True if this identifier is a language extension.
-  bool IsPoisoned  : 1;    // True if this identifier is poisoned.
-  void *FETokenInfo;       // Managed by the language front-end.
+  unsigned NameLen;         // String that is the identifier.
+  MacroInfo *Macro;         // Set if this identifier is #define'd.
+  tok::TokenKind TokenID:8; // Front-end token ID or tok::identifier.
+  bool IsExtension    : 1;  // True if this identifier is a language extension.
+  bool IsPoisoned     : 1;  // True if this identifier is poisoned.
+  void *FETokenInfo;        // Managed by the language front-end.
   friend class IdentifierTable;
 public:
   /// getName - Return the actual string for this identifier.  The length of
