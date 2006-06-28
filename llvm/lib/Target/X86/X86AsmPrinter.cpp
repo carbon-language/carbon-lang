@@ -231,21 +231,19 @@ void X86SharedAsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
   const std::vector<MachineConstantPoolEntry> &CP = MCP->getConstants();
   if (CP.empty()) return;
 
-  std::vector<MachineConstantPoolEntry> FloatCPs;
-  std::vector<MachineConstantPoolEntry> DoubleCPs;
-  std::vector<MachineConstantPoolEntry> OtherCPs;
-  //  const TargetData *TD = TM.getTargetData();
-  //  unsigned Align = MCP->getConstantPoolAlignment();
+  std::vector<std::pair<MachineConstantPoolEntry,unsigned> > FloatCPs;
+  std::vector<std::pair<MachineConstantPoolEntry,unsigned> > DoubleCPs;
+  std::vector<std::pair<MachineConstantPoolEntry,unsigned> > OtherCPs;
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     MachineConstantPoolEntry CPE = CP[i];
     const Constant *CV = CPE.Val;
     const Type *Ty = CV->getType();
     if (Ty->getTypeID() == Type::FloatTyID)
-      FloatCPs.push_back(CPE);
+      FloatCPs.push_back(std::make_pair(CPE, i));
     else if (Ty->getTypeID() == Type::DoubleTyID)
-      DoubleCPs.push_back(CPE);
+      DoubleCPs.push_back(std::make_pair(CPE, i));
     else
-      OtherCPs.push_back(CPE);
+      OtherCPs.push_back(std::make_pair(CPE, i));
   }
   EmitConstantPool(MCP, FloatCPs,  "\t.literal4");
   EmitConstantPool(MCP, DoubleCPs, "\t.literal8");
@@ -254,22 +252,23 @@ void X86SharedAsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
 
 void
 X86SharedAsmPrinter::EmitConstantPool(MachineConstantPool *MCP,
-                                      std::vector<MachineConstantPoolEntry> &CP,
+                 std::vector<std::pair<MachineConstantPoolEntry,unsigned> > &CP,
                                       const char *Section) {
   if (CP.empty()) return;
 
   SwitchToDataSection(Section, 0);
   EmitAlignment(MCP->getConstantPoolAlignment());
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
-    O << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << '_' << i
-      << ":\t\t\t\t\t" << CommentString << " ";
-    WriteTypeSymbolic(O, CP[i].Val->getType(), 0) << '\n';
-    EmitGlobalConstant(CP[i].Val);
+    O << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << '_'
+      << CP[i].second << ":\t\t\t\t\t" << CommentString << " ";
+    WriteTypeSymbolic(O, CP[i].first.Val->getType(), 0) << '\n';
+    EmitGlobalConstant(CP[i].first.Val);
     if (i != e-1) {
-      unsigned EntSize = TM.getTargetData()->getTypeSize(CP[i].Val->getType());
-      unsigned ValEnd = CP[i].Offset + EntSize;
+      unsigned EntSize =
+        TM.getTargetData()->getTypeSize(CP[i].first.Val->getType());
+      unsigned ValEnd = CP[i].first.Offset + EntSize;
       // Emit inter-object padding for alignment.
-      EmitZeros(CP[i+1].Offset-ValEnd);
+      EmitZeros(CP[i+1].first.Offset-ValEnd);
     }
   }
 }

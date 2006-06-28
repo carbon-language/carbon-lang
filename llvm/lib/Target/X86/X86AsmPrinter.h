@@ -96,7 +96,7 @@ struct X86SharedAsmPrinter : public AsmPrinter {
 
   virtual void EmitConstantPool(MachineConstantPool *MCP);
   void EmitConstantPool(MachineConstantPool *MCP,
-                        std::vector<MachineConstantPoolEntry> &CP,
+                std::vector<std::pair<MachineConstantPoolEntry, unsigned> > &CP,
                         const char *Section);
 };
 
