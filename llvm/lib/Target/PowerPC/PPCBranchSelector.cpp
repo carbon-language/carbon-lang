@@ -19,11 +19,12 @@
 #include "PPCInstrBuilder.h"
 #include "PPCInstrInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/Support/Visibility.h"
 #include <map>
 using namespace llvm;
 
 namespace {
-  struct PPCBSel : public MachineFunctionPass {
+  struct VISIBILITY_HIDDEN PPCBSel : public MachineFunctionPass {
     // OffsetMap - Mapping between BB and byte offset from start of function
     std::map<MachineBasicBlock*, unsigned> OffsetMap;
 

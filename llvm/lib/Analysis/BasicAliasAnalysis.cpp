@@ -23,6 +23,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
+#include "llvm/Support/Visibility.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -32,7 +33,7 @@ namespace {
   /// implementations, in that it does not chain to a previous analysis.  As
   /// such it doesn't follow many of the rules that other alias analyses must.
   ///
-  struct NoAA : public ImmutablePass, public AliasAnalysis {
+  struct VISIBILITY_HIDDEN NoAA : public ImmutablePass, public AliasAnalysis {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<TargetData>();
     }
@@ -84,7 +85,7 @@ namespace {
   /// BasicAliasAnalysis - This is the default alias analysis implementation.
   /// Because it doesn't chain to a previous alias analysis (like -no-aa), it
   /// derives from the NoAA class.
-  struct BasicAliasAnalysis : public NoAA {
+  struct VISIBILITY_HIDDEN BasicAliasAnalysis : public NoAA {
     AliasResult alias(const Value *V1, unsigned V1Size,
                       const Value *V2, unsigned V2Size);
 

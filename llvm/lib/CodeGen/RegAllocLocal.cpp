@@ -23,6 +23,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Visibility.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Statistic.h"
 #include <algorithm>
@@ -34,7 +35,7 @@ namespace {
   Statistic<> NumLoads ("ra-local", "Number of loads added");
   Statistic<> NumFolded("ra-local", "Number of loads/stores folded into "
                         "instructions");
-  class RA : public MachineFunctionPass {
+  class VISIBILITY_HIDDEN RA : public MachineFunctionPass {
     const TargetMachine *TM;
     MachineFunction *MF;
     const MRegisterInfo *RegInfo;

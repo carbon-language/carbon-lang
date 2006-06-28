@@ -23,6 +23,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/Visibility.h"
 #include <set>
 #include <algorithm>
 using namespace llvm;
@@ -31,7 +32,7 @@ namespace {
   Statistic<> NumAtomic("phielim", "Number of atomic phis lowered");
   Statistic<> NumSimple("phielim", "Number of simple phis lowered");
   
-  struct PNE : public MachineFunctionPass {
+  struct VISIBILITY_HIDDEN PNE : public MachineFunctionPass {
     bool runOnMachineFunction(MachineFunction &Fn) {
       bool Changed = false;
 

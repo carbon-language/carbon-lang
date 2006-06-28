@@ -430,7 +430,8 @@ namespace {
 
 namespace {
   template<class SF>
-  class RegReductionPriorityQueue : public SchedulingPriorityQueue {
+  class VISIBILITY_HIDDEN RegReductionPriorityQueue
+   : public SchedulingPriorityQueue {
     std::priority_queue<SUnit*, std::vector<SUnit*>, SF> Queue;
 
   public:
@@ -463,7 +464,8 @@ namespace {
   };
 
   template<class SF>
-  class BURegReductionPriorityQueue : public RegReductionPriorityQueue<SF> {
+  class VISIBILITY_HIDDEN BURegReductionPriorityQueue
+   : public RegReductionPriorityQueue<SF> {
     // SUnits - The SUnits for the current graph.
     const std::vector<SUnit> *SUnits;
     

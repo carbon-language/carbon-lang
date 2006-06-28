@@ -21,6 +21,7 @@
 #include "llvm/Pass.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Support/Visibility.h"
 using namespace llvm;
 
 namespace {
@@ -29,7 +30,7 @@ namespace {
   /// LowerAllocations - Turn malloc and free instructions into %malloc and
   /// %free calls.
   ///
-  class LowerAllocations : public BasicBlockPass {
+  class VISIBILITY_HIDDEN LowerAllocations : public BasicBlockPass {
     Function *MallocFunc;   // Functions in the module we are processing
     Function *FreeFunc;     // Initialized by doInitialization
     bool LowerMallocArgToInteger;

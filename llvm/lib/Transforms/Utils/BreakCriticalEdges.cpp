@@ -24,13 +24,14 @@
 #include "llvm/Instructions.h"
 #include "llvm/Type.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/Visibility.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
 namespace {
   Statistic<> NumBroken("break-crit-edges", "Number of blocks inserted");
 
-  struct BreakCriticalEdges : public FunctionPass {
+  struct VISIBILITY_HIDDEN BreakCriticalEdges : public FunctionPass {
     virtual bool runOnFunction(Function &F);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {

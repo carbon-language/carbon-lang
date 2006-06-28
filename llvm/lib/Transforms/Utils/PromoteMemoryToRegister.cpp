@@ -26,6 +26,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/StableBasicBlockNumbering.h"
+#include "llvm/Support/Visibility.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -52,7 +53,7 @@ bool llvm::isAllocaPromotable(const AllocaInst *AI, const TargetData &TD) {
 }
 
 namespace {
-  struct PromoteMem2Reg {
+  struct VISIBILITY_HIDDEN PromoteMem2Reg {
     /// Allocas - The alloca instructions being promoted.
     ///
     std::vector<AllocaInst*> Allocas;

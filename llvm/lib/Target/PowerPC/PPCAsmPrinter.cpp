@@ -241,7 +241,7 @@ namespace {
 
   /// DarwinDwarfWriter - Dwarf debug info writer customized for Darwin/Mac OS X
   ///
-  struct DarwinDwarfWriter : public DwarfWriter {
+  struct VISIBILITY_HIDDEN DarwinDwarfWriter : public DwarfWriter {
     // Ctor.
     DarwinDwarfWriter(std::ostream &o, AsmPrinter *ap)
     : DwarfWriter(o, ap)
@@ -265,7 +265,7 @@ namespace {
 
   /// DarwinAsmPrinter - PowerPC assembly printer, customized for Darwin/Mac OS
   /// X
-  struct DarwinAsmPrinter : public PPCAsmPrinter {
+  struct VISIBILITY_HIDDEN DarwinAsmPrinter : public PPCAsmPrinter {
   
     DarwinDwarfWriter DW;
 
@@ -309,7 +309,7 @@ namespace {
 
   /// AIXAsmPrinter - PowerPC assembly printer, customized for AIX
   ///
-  struct AIXAsmPrinter : public PPCAsmPrinter {
+  struct VISIBILITY_HIDDEN AIXAsmPrinter : public PPCAsmPrinter {
     /// Map for labels corresponding to global variables
     ///
     std::map<const GlobalVariable*,std::string> GVToLabelMap;

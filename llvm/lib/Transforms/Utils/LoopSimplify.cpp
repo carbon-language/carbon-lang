@@ -41,6 +41,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/Visibility.h"
 #include "llvm/ADT/SetOperations.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -53,7 +54,7 @@ namespace {
   Statistic<>
   NumNested("loopsimplify", "Number of nested loops split out");
 
-  struct LoopSimplify : public FunctionPass {
+  struct VISIBILITY_HIDDEN LoopSimplify : public FunctionPass {
     // AA - If we have an alias analysis object to update, this is it, otherwise
     // this is null.
     AliasAnalysis *AA;

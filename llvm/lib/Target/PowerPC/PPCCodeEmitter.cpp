@@ -22,12 +22,13 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Visibility.h"
 #include "llvm/Target/TargetOptions.h"
 #include <iostream>
 using namespace llvm;
 
 namespace {
-  class PPCCodeEmitter : public MachineFunctionPass {
+  class VISIBILITY_HIDDEN PPCCodeEmitter : public MachineFunctionPass {
     TargetMachine &TM;
     MachineCodeEmitter &MCE;
 

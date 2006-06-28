@@ -27,11 +27,12 @@
 #include "llvm/Pass.h"
 #include "llvm/Type.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/Visibility.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 using namespace llvm;
 
 namespace {
-  class UnreachableBlockElim : public FunctionPass {
+  class VISIBILITY_HIDDEN UnreachableBlockElim : public FunctionPass {
     virtual bool runOnFunction(Function &F);
   };
   RegisterOpt<UnreachableBlockElim>

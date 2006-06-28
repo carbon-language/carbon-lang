@@ -31,6 +31,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Visibility.h"
 #include "llvm/Target/TargetLowering.h"
 #include <algorithm>
 #include <iostream>
@@ -104,7 +105,7 @@ namespace {
     }
   };
 
-  class LoopStrengthReduce : public FunctionPass {
+  class VISIBILITY_HIDDEN LoopStrengthReduce : public FunctionPass {
     LoopInfo *LI;
     ETForest *EF;
     ScalarEvolution *SE;

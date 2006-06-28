@@ -42,6 +42,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Visibility.h"
 #include <map>
 #include <set>
 #include <iostream>
@@ -101,7 +102,7 @@ namespace {
   /// particular value is assigned and the type information about the value.
   /// This is needed because values can be promoted into larger registers and
   /// expanded into multiple smaller registers than the value.
-  struct RegsForValue {
+  struct VISIBILITY_HIDDEN RegsForValue {
     /// Regs - This list hold the register (for legal and promoted values)
     /// or register set (for expanded values) that the value should be assigned
     /// to.

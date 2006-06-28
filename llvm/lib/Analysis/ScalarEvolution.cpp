@@ -69,9 +69,10 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/InstIterator.h"
-#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Visibility.h"
 #include "llvm/ADT/Statistic.h"
 #include <cmath>
 #include <iostream>
@@ -393,7 +394,7 @@ namespace {
   /// SCEVComplexityCompare - Return true if the complexity of the LHS is less
   /// than the complexity of the RHS.  This comparator is used to canonicalize
   /// expressions.
-  struct SCEVComplexityCompare {
+  struct VISIBILITY_HIDDEN SCEVComplexityCompare {
     bool operator()(SCEV *LHS, SCEV *RHS) {
       return LHS->getSCEVType() < RHS->getSCEVType();
     }
@@ -1062,7 +1063,7 @@ SCEVHandle SCEVUnknown::get(Value *V) {
 /// evolution code.
 ///
 namespace {
-  struct ScalarEvolutionsImpl {
+  struct VISIBILITY_HIDDEN ScalarEvolutionsImpl {
     /// F - The function we are analyzing.
     ///
     Function &F;
