@@ -591,6 +591,8 @@ void GraphBuilder::visitCallSite(CallSite CS) {
           }
         }
 
+	//gets select localtime ioctl
+
         if ((F->isExternal() && F->getName() == "calloc") 
             || F->getName() == "posix_memalign"
             || F->getName() == "memalign" || F->getName() == "valloc") {
@@ -627,7 +629,8 @@ void GraphBuilder::visitCallSite(CallSite CS) {
                    F->getName() == "puts" || F->getName() == "write" ||
                    F->getName() == "open" || F->getName() == "create" ||
                    F->getName() == "truncate" || F->getName() == "chdir" ||
-                   F->getName() == "mkdir" || F->getName() == "rmdir") {
+                   F->getName() == "mkdir" || F->getName() == "rmdir" ||
+		   F->getName() == "strlen") {
           // These functions read all of their pointer operands.
           for (CallSite::arg_iterator AI = CS.arg_begin(), E = CS.arg_end();
                AI != E; ++AI) {
@@ -636,7 +639,7 @@ void GraphBuilder::visitCallSite(CallSite CS) {
                 N->setReadMarker();
           }
           return;
-        } else if (F->getName() == "memchr") {
+	} else if (F->getName() == "memchr") {
           DSNodeHandle RetNH = getValueDest(**CS.arg_begin());
           DSNodeHandle Result = getValueDest(*CS.getInstruction());
           RetNH.mergeWith(Result);
@@ -644,7 +647,8 @@ void GraphBuilder::visitCallSite(CallSite CS) {
             N->setReadMarker();
           return;
         } else if (F->getName() == "read" || F->getName() == "pipe" ||
-                   F->getName() == "wait" || F->getName() == "time") {
+                   F->getName() == "wait" || F->getName() == "time" ||
+		   F->getName() == "getrusage") {
           // These functions write all of their pointer operands.
           for (CallSite::arg_iterator AI = CS.arg_begin(), E = CS.arg_end();
                AI != E; ++AI) {
@@ -998,6 +1002,17 @@ void GraphBuilder::visitCallSite(CallSite CS) {
           RetNH.mergeWith(getValueDest(**CS.arg_begin()));
           if (DSNode *N = RetNH.getNode())
             N->setHeapNodeMarker()->setModifiedMarker()->setReadMarker();
+          //and read second pointer
+          if (DSNode *N = getValueDest(**(CS.arg_begin() + 1)).getNode())
+            N->setReadMarker();
+          return;
+        } else if (F->getName() == "strcpy" || F->getName() == "strncpy") {
+          //This might be making unsafe assumptions about usage
+          //Merge return and first arg
+          DSNodeHandle RetNH = getValueDest(*CS.getInstruction());
+          RetNH.mergeWith(getValueDest(**CS.arg_begin()));
+          if (DSNode *N = RetNH.getNode())
+            N->setHeapNodeMarker()->setModifiedMarker();
           //and read second pointer
           if (DSNode *N = getValueDest(**(CS.arg_begin() + 1)).getNode())
             N->setReadMarker();
