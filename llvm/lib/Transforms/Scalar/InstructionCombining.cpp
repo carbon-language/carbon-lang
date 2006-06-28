@@ -6048,7 +6048,15 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   CallSite::arg_iterator AI = CS.arg_begin();
   for (unsigned i = 0, e = NumCommonArgs; i != e; ++i, ++AI) {
     const Type *ParamTy = FT->getParamType(i);
-    bool isConvertible = (*AI)->getType()->isLosslesslyConvertibleTo(ParamTy);
+    const Type *ActTy = (*AI)->getType();
+    ConstantSInt* c = dyn_cast<ConstantSInt>(*AI);
+    //Either we can cast directly, or we can upconvert the argument
+    bool isConvertible = ActTy->isLosslesslyConvertibleTo(ParamTy) ||
+      (ParamTy->isIntegral() && ActTy->isIntegral() &&
+       ParamTy->isSigned() == ActTy->isSigned() &&
+       ParamTy->getPrimitiveSize() >= ActTy->getPrimitiveSize()) ||
+      (c && ParamTy->getPrimitiveSize() >= ActTy->getPrimitiveSize() &&
+       c->getValue() > 0);
     if (Callee->isExternal() && !isConvertible) return false;
   }
 
