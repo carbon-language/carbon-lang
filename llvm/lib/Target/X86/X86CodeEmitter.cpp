@@ -22,6 +22,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Function.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/Visibility.h"
 #include "llvm/Target/TargetOptions.h"
 #include <iostream>
 using namespace llvm;
@@ -32,7 +33,7 @@ namespace {
 }
 
 namespace {
-  class Emitter : public MachineFunctionPass {
+  class VISIBILITY_HIDDEN Emitter : public MachineFunctionPass {
     const X86InstrInfo  *II;
     MachineCodeEmitter  &MCE;
     std::vector<std::pair<MachineBasicBlock *, unsigned> > BBRefs;

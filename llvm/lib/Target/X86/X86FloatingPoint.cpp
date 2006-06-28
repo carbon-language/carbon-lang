@@ -38,6 +38,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Visibility.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
@@ -50,7 +51,7 @@ namespace {
   Statistic<> NumFXCH("x86-codegen", "Number of fxch instructions inserted");
   Statistic<> NumFP  ("x86-codegen", "Number of floating point instructions");
 
-  struct FPS : public MachineFunctionPass {
+  struct VISIBILITY_HIDDEN FPS : public MachineFunctionPass {
     virtual bool runOnMachineFunction(MachineFunction &MF);
 
     virtual const char *getPassName() const { return "X86 FP Stackifier"; }

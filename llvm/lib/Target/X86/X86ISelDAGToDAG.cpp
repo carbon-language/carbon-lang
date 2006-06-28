@@ -31,6 +31,7 @@
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Visibility.h"
 #include "llvm/ADT/Statistic.h"
 #include <iostream>
 #include <set>
@@ -77,7 +78,7 @@ namespace {
   /// ISel - X86 specific code to select X86 machine instructions for
   /// SelectionDAG operations.
   ///
-  class X86DAGToDAGISel : public SelectionDAGISel {
+  class VISIBILITY_HIDDEN X86DAGToDAGISel : public SelectionDAGISel {
     /// ContainsFPCode - Every instruction we select that uses or defines a FP
     /// register should set this to true.
     bool ContainsFPCode;

@@ -16,10 +16,11 @@
 #include "X86TargetMachine.h"
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/ELFWriter.h"
+#include "llvm/Support/Visibility.h"
 using namespace llvm;
 
 namespace {
-  class X86ELFWriter : public ELFWriter {
+  class VISIBILITY_HIDDEN X86ELFWriter : public ELFWriter {
   public:
     X86ELFWriter(std::ostream &O, X86TargetMachine &TM) : ELFWriter(O, TM) {
       e_machine = 3;   // EM_386
