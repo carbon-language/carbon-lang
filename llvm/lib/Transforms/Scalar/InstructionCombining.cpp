@@ -4934,6 +4934,12 @@ static bool CanEvaluateInDifferentType(Value *V, const Type *Ty,
     // If this is a cast from the destination type, we can trivially eliminate
     // it, and this will remove a cast overall.
     if (I->getOperand(0)->getType() == Ty) {
+      // If the first operand is itself a cast, and is eliminable, do not count
+      // this as an eliminable cast.  We would prefer to eliminate those two
+      // casts first.
+      if (CastInst *OpCast = dyn_cast<CastInst>(I->getOperand(0)))
+        return true;
+      
       ++NumCastsRemoved;
       return true;
     }
