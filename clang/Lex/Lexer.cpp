@@ -736,7 +736,6 @@ void Lexer::SkipBlockComment(LexerToken &Result, const char *CurPtr) {
       C = *CurPtr++;
     
     if (C == '/') {
-      char T;
       if (CurPtr[-2] == '*')  // We found the final */.  We're done!
         break;
       
