@@ -223,7 +223,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
 }
 
 void X86SharedAsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
-  if (!Subtarget->TargetType == X86Subtarget::isDarwin) {
+  if (Subtarget->TargetType != X86Subtarget::isDarwin) {
     AsmPrinter::EmitConstantPool(MCP);
     return;
   }
