@@ -243,12 +243,10 @@ ISD::CondCode ISD::getSetCCAndOperation(ISD::CondCode Op1, ISD::CondCode Op2,
   if (isInteger) {
     switch (Result) {
     default: break;
-    case ISD::SETUO:   // e.g. SETUGT & SETULT
-      Result = ISD::SETFALSE;
-      break;
-    case ISD::SETUEQ:  // e.g. SETUGE & SETULE
-      Result = ISD::SETEQ;
-      break;
+    case ISD::SETUO : Result = ISD::SETFALSE; break;  // SETUGT & SETULT
+    case ISD::SETUEQ: Result = ISD::SETEQ   ; break;  // SETUGE & SETULE
+    case ISD::SETOLT: Result = ISD::SETULT  ; break;  // SETULT & SETNE
+    case ISD::SETOGT: Result = ISD::SETUGT  ; break;  // SETUGT & SETNE
     }
   }
   
