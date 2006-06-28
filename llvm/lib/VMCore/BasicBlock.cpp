@@ -17,6 +17,7 @@
 #include "llvm/Type.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/LeakDetector.h"
+#include "llvm/Support/Visibility.h"
 #include "SymbolTableListTraitsImpl.h"
 #include <algorithm>
 using namespace llvm;
@@ -24,7 +25,7 @@ using namespace llvm;
 namespace {
   /// DummyInst - An instance of this class is used to mark the end of the
   /// instruction list.  This is not a real instruction.
-  struct DummyInst : public Instruction {
+  struct VISIBILITY_HIDDEN DummyInst : public Instruction {
     DummyInst() : Instruction(Type::VoidTy, OtherOpsEnd, 0, 0) {
       // This should not be garbage monitored.
       LeakDetector::removeGarbageObject(this);

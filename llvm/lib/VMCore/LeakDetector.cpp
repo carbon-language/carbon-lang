@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/LeakDetector.h"
+#include "llvm/Support/Visibility.h"
 #include "llvm/Value.h"
 #include <iostream>
 #include <set>
@@ -19,17 +20,17 @@ using namespace llvm;
 
 namespace {
   template <class T>
-  struct PrinterTrait {
+  struct VISIBILITY_HIDDEN PrinterTrait {
     static void print(const T* P) { std::cerr << P; }
   };
 
   template<>
-  struct PrinterTrait<Value> {
+  struct VISIBILITY_HIDDEN PrinterTrait<Value> {
     static void print(const Value* P) { std::cerr << *P; }
   };
 
   template <typename T>
-  struct LeakDetectorImpl {
+  struct VISIBILITY_HIDDEN LeakDetectorImpl {
     LeakDetectorImpl(const char* const name) : Cache(0), Name(name) { }
 
     // Because the most common usage pattern, by far, is to add a
