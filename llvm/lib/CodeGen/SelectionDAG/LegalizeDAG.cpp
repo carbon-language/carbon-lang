@@ -21,6 +21,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Visibility.h"
 #include <iostream>
 #include <map>
 using namespace llvm;
@@ -46,7 +47,7 @@ static const bool ViewLegalizeDAGs = 0;
 /// will attempt merge setcc and brc instructions into brcc's.
 ///
 namespace {
-class SelectionDAGLegalize {
+class VISIBILITY_HIDDEN SelectionDAGLegalize {
   TargetLowering &TLI;
   SelectionDAG &DAG;
 

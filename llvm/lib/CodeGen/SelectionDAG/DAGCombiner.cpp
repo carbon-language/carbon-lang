@@ -35,6 +35,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetLowering.h"
+#include "llvm/Support/Visibility.h"
 #include <algorithm>
 #include <cmath>
 #include <iostream>
@@ -43,7 +44,7 @@ using namespace llvm;
 namespace {
   Statistic<> NodesCombined ("dagcombiner", "Number of dag nodes combined");
 
-  class DAGCombiner {
+  class VISIBILITY_HIDDEN DAGCombiner {
     SelectionDAG &DAG;
     TargetLowering &TLI;
     bool AfterLegalize;
