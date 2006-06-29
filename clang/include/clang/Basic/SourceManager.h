@@ -252,6 +252,17 @@ public:
     return FileIDs[FileID-1].getNormalBufferInfo()->first;
   }
   
+  /// Given a SourceLocation object, return the logical location referenced by
+  /// the ID.  This logical location is subject to #line directives, etc.
+  SourceLocation getLogicalLoc(SourceLocation Loc) const {
+    if (Loc.getFileID() == 0) return Loc;
+    
+    const SrcMgr::FileIDInfo *FIDInfo = getFIDInfo(Loc.getFileID());
+    if (FIDInfo->IDType == SrcMgr::FileIDInfo::MacroExpansion)
+      return FIDInfo->IncludeLoc;
+    return Loc;
+  }
+  
   /// PrintStats - Print statistics to stderr.
   ///
   void PrintStats() const;
