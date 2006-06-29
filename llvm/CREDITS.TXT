@@ -15,7 +15,7 @@ D: The Sparc64 backend, provider of much wisdom, and motivator for LLVM
 
 N: Owen Anderson
 E: resistor@mac.com
-D: LCSSA pass, TargetData refactoring, random improvements
+D: LCSSA pass and related LoopUnswitch work, TargetData refactoring, random improvements
 
 N: Henrik Bach
 D: MingW Win32 API portability layer
