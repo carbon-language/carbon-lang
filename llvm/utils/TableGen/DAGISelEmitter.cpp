@@ -2450,14 +2450,16 @@ public:
           emitCode("if (!Match) {");
           for (std::vector<std::string>::iterator AI = InflightNodes.begin(),
                  AE = InflightNodes.end(); AI != AE; ++AI)
-            emitCode("  InFlightSet.erase(" + *AI + ".Val);");
+            emitCode("  SelectionDAG::RemoveInFlightSetEntry(InFlightSet, " +
+                     *AI + ".Val);");
           emitCode("}");
         }
 
         emitCheck("Match");
 
         for (unsigned i = 0; i < NumRes; ++i) {
-          emitCode("InFlightSet.insert(CPTmp" + utostr(i+ResNo) + ".Val);");
+          emitCode("SelectionDAG::InsertInFlightSetEntry(InFlightSet, CPTmp" +
+                   utostr(i+ResNo) + ".Val);");
           InflightNodes.push_back("CPTmp" + utostr(i+ResNo));
         }
         for (unsigned i = 0; i < NumRes; ++i) {
@@ -2579,7 +2581,8 @@ public:
           assert(!Val.empty() &&
                  "Variable referenced but not defined and not caught earlier!");
           if (Child->isLeaf() && !NodeGetComplexPattern(Child, ISE)) {
-            emitCode("InFlightSet.insert(" + Val + ".Val);");
+            emitCode("SelectionDAG::InsertInFlightSetEntry(InFlightSet, " +
+                     Val + ".Val);");
             InflightNodes.push_back(Val);
           }
         }
@@ -2616,7 +2619,8 @@ public:
         // The operands have been selected. Remove them from InFlightSet.
         for (std::vector<std::string>::iterator AI = InflightNodes.begin(),
                AE = InflightNodes.end(); AI != AE; ++AI)
-          emitCode("InFlightSet.erase(" + *AI + ".Val);");
+          emitCode("SelectionDAG::RemoveInFlightSetEntry(InFlightSet, " +
+                   *AI + ".Val);");
       }
 
       unsigned NumResults = Inst.getNumResults();    
