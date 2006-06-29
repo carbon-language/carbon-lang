@@ -1394,6 +1394,14 @@ def SHL32ri  : Ii8<0xC1, MRM4r, (ops GR32:$dst, GR32:$src1, i8imm:$src2),
                    [(set GR32:$dst, (shl GR32:$src1, (i8 imm:$src2)))]>;
 }
 
+// Shift left by one. Not used because (add x, x) is slightly cheaper.
+def SHL8r1   : I<0xD0, MRM4r, (ops GR8 :$dst, GR8 :$src1),
+                 "shl{b} {$dst|$dst}", []>;
+def SHL16r1  : I<0xD1, MRM4r, (ops GR16:$dst, GR16:$src1),
+                 "shl{w} {$dst|$dst}", []>, OpSize;
+def SHL32r1  : I<0xD1, MRM4r, (ops GR32:$dst, GR32:$src1),
+                 "shl{l} {$dst|$dst}", []>;
+
 let isTwoAddress = 0 in {
   def SHL8mCL  : I<0xD2, MRM4m, (ops i8mem :$dst),
                    "shl{b} {%cl, $dst|$dst, %CL}",
@@ -1417,6 +1425,18 @@ let isTwoAddress = 0 in {
   def SHL32mi  : Ii8<0xC1, MRM4m, (ops i32mem:$dst, i8imm:$src),
                      "shl{l} {$src, $dst|$dst, $src}",
                  [(store (shl (loadi32 addr:$dst), (i8 imm:$src)), addr:$dst)]>;
+
+  // Shift by 1
+  def SHL8m1   : I<0xD0, MRM4m, (ops i8mem :$dst),
+                   "shl{b} $dst",
+                  [(store (shl (loadi8 addr:$dst), (i8 1)), addr:$dst)]>;
+  def SHL16m1  : I<0xD1, MRM4m, (ops i16mem:$dst),
+                   "shl{w} $dst",
+                 [(store (shl (loadi16 addr:$dst), (i8 1)), addr:$dst)]>,
+                     OpSize;
+  def SHL32m1  : I<0xD1, MRM4m, (ops i32mem:$dst),
+                   "shl{l} $dst",
+                 [(store (shl (loadi32 addr:$dst), (i8 1)), addr:$dst)]>;
 }
 
 def SHR8rCL  : I<0xD2, MRM5r, (ops GR8 :$dst, GR8 :$src),
@@ -1438,6 +1458,17 @@ def SHR16ri  : Ii8<0xC1, MRM5r, (ops GR16:$dst, GR16:$src1, i8imm:$src2),
 def SHR32ri  : Ii8<0xC1, MRM5r, (ops GR32:$dst, GR32:$src1, i8imm:$src2),
                    "shr{l} {$src2, $dst|$dst, $src2}",
                    [(set GR32:$dst, (srl GR32:$src1, (i8 imm:$src2)))]>;
+
+// Shift by 1
+def SHR8r1   : I<0xD0, MRM5r, (ops GR8:$dst, GR8:$src1),
+                 "shr{b} $dst",
+                 [(set GR8:$dst, (srl GR8:$src1, (i8 1)))]>;
+def SHR16r1  : I<0xD1, MRM5r, (ops GR16:$dst, GR16:$src1),
+                 "shr{w} $dst",
+                 [(set GR16:$dst, (srl GR16:$src1, (i8 1)))]>, OpSize;
+def SHR32r1  : I<0xD1, MRM5r, (ops GR32:$dst, GR32:$src1),
+                 "shr{l} $dst",
+                 [(set GR32:$dst, (srl GR32:$src1, (i8 1)))]>;
 
 let isTwoAddress = 0 in {
   def SHR8mCL  : I<0xD2, MRM5m, (ops i8mem :$dst),
@@ -1462,6 +1493,17 @@ let isTwoAddress = 0 in {
   def SHR32mi  : Ii8<0xC1, MRM5m, (ops i32mem:$dst, i8imm:$src),
                      "shr{l} {$src, $dst|$dst, $src}",
                  [(store (srl (loadi32 addr:$dst), (i8 imm:$src)), addr:$dst)]>;
+
+  // Shift by 1
+  def SHR8m1   : I<0xD0, MRM5m, (ops i8mem :$dst),
+                   "shr{b} $dst",
+                  [(store (srl (loadi8 addr:$dst), (i8 1)), addr:$dst)]>;
+  def SHR16m1  : I<0xD1, MRM5m, (ops i16mem:$dst),
+                   "shr{w} $dst",
+                 [(store (srl (loadi16 addr:$dst), (i8 1)), addr:$dst)]>,OpSize;
+  def SHR32m1  : I<0xD1, MRM5m, (ops i32mem:$dst),
+                   "shr{l} $dst",
+                 [(store (srl (loadi32 addr:$dst), (i8 1)), addr:$dst)]>;
 }
 
 def SAR8rCL  : I<0xD2, MRM7r, (ops GR8 :$dst, GR8 :$src),
@@ -1484,6 +1526,18 @@ def SAR16ri  : Ii8<0xC1, MRM7r, (ops GR16:$dst, GR16:$src1, i8imm:$src2),
 def SAR32ri  : Ii8<0xC1, MRM7r, (ops GR32:$dst, GR32:$src1, i8imm:$src2),
                    "sar{l} {$src2, $dst|$dst, $src2}",
                    [(set GR32:$dst, (sra GR32:$src1, (i8 imm:$src2)))]>;
+
+// Shift by 1
+def SAR8r1   : I<0xD0, MRM7r, (ops GR8 :$dst, GR8 :$src1),
+                 "sar{b} $dst",
+                 [(set GR8:$dst, (sra GR8:$src1, (i8 1)))]>;
+def SAR16r1  : I<0xD1, MRM7r, (ops GR16:$dst, GR16:$src1),
+                 "sar{w} $dst",
+                 [(set GR16:$dst, (sra GR16:$src1, (i8 1)))]>, OpSize;
+def SAR32r1  : I<0xD1, MRM7r, (ops GR32:$dst, GR32:$src1),
+                 "sar{l} $dst",
+                 [(set GR32:$dst, (sra GR32:$src1, (i8 1)))]>;
+
 let isTwoAddress = 0 in {
   def SAR8mCL  : I<0xD2, MRM7m, (ops i8mem :$dst),
                    "sar{b} {%cl, $dst|$dst, %CL}",
@@ -1507,6 +1561,18 @@ let isTwoAddress = 0 in {
   def SAR32mi  : Ii8<0xC1, MRM7m, (ops i32mem:$dst, i8imm:$src),
                      "sar{l} {$src, $dst|$dst, $src}",
                  [(store (sra (loadi32 addr:$dst), (i8 imm:$src)), addr:$dst)]>;
+
+  // Shift by 1
+  def SAR8m1   : I<0xD0, MRM7m, (ops i8mem :$dst),
+                   "sar{b} $dst",
+                  [(store (sra (loadi8 addr:$dst), (i8 1)), addr:$dst)]>;
+  def SAR16m1  : I<0xD1, MRM7m, (ops i16mem:$dst),
+                   "sar{w} $dst",
+                 [(store (sra (loadi16 addr:$dst), (i8 1)), addr:$dst)]>,
+                     OpSize;
+  def SAR32m1  : I<0xD1, MRM7m, (ops i32mem:$dst),
+                   "sar{l} $dst",
+                 [(store (sra (loadi32 addr:$dst), (i8 1)), addr:$dst)]>;
 }
 
 // Rotate instructions
@@ -1531,6 +1597,17 @@ def ROL32ri  : Ii8<0xC1, MRM0r, (ops GR32:$dst, GR32:$src1, i8imm:$src2),
                    "rol{l} {$src2, $dst|$dst, $src2}",
                    [(set GR32:$dst, (rotl GR32:$src1, (i8 imm:$src2)))]>;
 
+// Rotate by 1
+def ROL8r1   : I<0xD0, MRM0r, (ops GR8 :$dst, GR8 :$src1),
+                 "rol{b} $dst",
+                 [(set GR8:$dst, (rotl GR8:$src1, (i8 1)))]>;
+def ROL16r1  : I<0xD1, MRM0r, (ops GR16:$dst, GR16:$src1),
+                 "rol{w} $dst",
+                 [(set GR16:$dst, (rotl GR16:$src1, (i8 1)))]>, OpSize;
+def ROL32r1  : I<0xD1, MRM0r, (ops GR32:$dst, GR32:$src1),
+                 "rol{l} $dst",
+                 [(set GR32:$dst, (rotl GR32:$src1, (i8 1)))]>;
+
 let isTwoAddress = 0 in {
   def ROL8mCL  : I<0xD2, MRM0m, (ops i8mem :$dst),
                    "rol{b} {%cl, $dst|$dst, %CL}",
@@ -1554,6 +1631,18 @@ let isTwoAddress = 0 in {
   def ROL32mi  : Ii8<0xC1, MRM0m, (ops i32mem:$dst, i8imm:$src),
                      "rol{l} {$src, $dst|$dst, $src}",
                 [(store (rotl (loadi32 addr:$dst), (i8 imm:$src)), addr:$dst)]>;
+
+  // Rotate by 1
+  def ROL8m1   : I<0xD0, MRM0m, (ops i8mem :$dst),
+                   "rol{b} $dst",
+                 [(store (rotl (loadi8 addr:$dst), (i8 1)), addr:$dst)]>;
+  def ROL16m1  : I<0xD1, MRM0m, (ops i16mem:$dst),
+                   "rol{w} $dst",
+                [(store (rotl (loadi16 addr:$dst), (i8 1)), addr:$dst)]>,
+                     OpSize;
+  def ROL32m1  : I<0xD1, MRM0m, (ops i32mem:$dst),
+                   "rol{l} $dst",
+                [(store (rotl (loadi32 addr:$dst), (i8 1)), addr:$dst)]>;
 }
 
 def ROR8rCL  : I<0xD2, MRM1r, (ops GR8 :$dst, GR8 :$src),
@@ -1575,6 +1664,18 @@ def ROR16ri  : Ii8<0xC1, MRM1r, (ops GR16:$dst, GR16:$src1, i8imm:$src2),
 def ROR32ri  : Ii8<0xC1, MRM1r, (ops GR32:$dst, GR32:$src1, i8imm:$src2),
                    "ror{l} {$src2, $dst|$dst, $src2}",
                    [(set GR32:$dst, (rotr GR32:$src1, (i8 imm:$src2)))]>;
+
+// Rotate by 1
+def ROR8r1   : I<0xD0, MRM1r, (ops GR8 :$dst, GR8 :$src1),
+                 "ror{b} $dst",
+                 [(set GR8:$dst, (rotr GR8:$src1, (i8 1)))]>;
+def ROR16r1  : I<0xD1, MRM1r, (ops GR16:$dst, GR16:$src1),
+                 "ror{w} $dst",
+                 [(set GR16:$dst, (rotr GR16:$src1, (i8 1)))]>, OpSize;
+def ROR32r1  : I<0xD1, MRM1r, (ops GR32:$dst, GR32:$src1),
+                 "ror{l} $dst",
+                 [(set GR32:$dst, (rotr GR32:$src1, (i8 1)))]>;
+
 let isTwoAddress = 0 in {
   def ROR8mCL  : I<0xD2, MRM1m, (ops i8mem :$dst),
                    "ror{b} {%cl, $dst|$dst, %CL}",
@@ -1598,6 +1699,18 @@ let isTwoAddress = 0 in {
   def ROR32mi  : Ii8<0xC1, MRM1m, (ops i32mem:$dst, i8imm:$src),
                      "ror{l} {$src, $dst|$dst, $src}",
                 [(store (rotr (loadi32 addr:$dst), (i8 imm:$src)), addr:$dst)]>;
+
+  // Rotate by 1
+  def ROR8m1   : I<0xD0, MRM1m, (ops i8mem :$dst),
+                   "ror{b} $dst",
+                 [(store (rotr (loadi8 addr:$dst), (i8 1)), addr:$dst)]>;
+  def ROR16m1  : I<0xD1, MRM1m, (ops i16mem:$dst),
+                   "ror{w} $dst",
+                [(store (rotr (loadi16 addr:$dst), (i8 1)), addr:$dst)]>,
+                     OpSize;
+  def ROR32m1  : I<0xD1, MRM1m, (ops i32mem:$dst),
+                   "ror{l} $dst",
+                [(store (rotr (loadi32 addr:$dst), (i8 1)), addr:$dst)]>;
 }
 
 
