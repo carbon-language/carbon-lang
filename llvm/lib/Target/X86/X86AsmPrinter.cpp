@@ -59,6 +59,8 @@ bool X86SharedAsmPrinter::doInitialization(Module &M) {
     PrivateGlobalPrefix = "L";     // Marker for constant pool idxs
     ConstantPoolSection = "\t.const\n";
     JumpTableSection = "\t.const\n"; // FIXME: depends on PIC mode
+    FourByteConstantSection = "\t.literal4\n";
+    EightByteConstantSection = "\t.literal8\n";
     LCOMMDirective = "\t.lcomm\t";
     COMMDirectiveTakesAlignment = false;
     HasDotTypeDotSizeDirective = false;
@@ -220,57 +222,6 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
 
   AsmPrinter::doFinalization(M);
   return false; // success
-}
-
-void X86SharedAsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
-  if (Subtarget->TargetType != X86Subtarget::isDarwin) {
-    AsmPrinter::EmitConstantPool(MCP);
-    return;
-  }
-
-  const std::vector<MachineConstantPoolEntry> &CP = MCP->getConstants();
-  if (CP.empty()) return;
-
-  std::vector<std::pair<MachineConstantPoolEntry,unsigned> > FloatCPs;
-  std::vector<std::pair<MachineConstantPoolEntry,unsigned> > DoubleCPs;
-  std::vector<std::pair<MachineConstantPoolEntry,unsigned> > OtherCPs;
-  for (unsigned i = 0, e = CP.size(); i != e; ++i) {
-    MachineConstantPoolEntry CPE = CP[i];
-    const Constant *CV = CPE.Val;
-    const Type *Ty = CV->getType();
-    if (Ty->getTypeID() == Type::FloatTyID)
-      FloatCPs.push_back(std::make_pair(CPE, i));
-    else if (Ty->getTypeID() == Type::DoubleTyID)
-      DoubleCPs.push_back(std::make_pair(CPE, i));
-    else
-      OtherCPs.push_back(std::make_pair(CPE, i));
-  }
-  EmitConstantPool(MCP, FloatCPs,  "\t.literal4");
-  EmitConstantPool(MCP, DoubleCPs, "\t.literal8");
-  EmitConstantPool(MCP, OtherCPs,  ConstantPoolSection);
-}
-
-void
-X86SharedAsmPrinter::EmitConstantPool(MachineConstantPool *MCP,
-                 std::vector<std::pair<MachineConstantPoolEntry,unsigned> > &CP,
-                                      const char *Section) {
-  if (CP.empty()) return;
-
-  SwitchToDataSection(Section, 0);
-  EmitAlignment(MCP->getConstantPoolAlignment());
-  for (unsigned i = 0, e = CP.size(); i != e; ++i) {
-    O << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << '_'
-      << CP[i].second << ":\t\t\t\t\t" << CommentString << " ";
-    WriteTypeSymbolic(O, CP[i].first.Val->getType(), 0) << '\n';
-    EmitGlobalConstant(CP[i].first.Val);
-    if (i != e-1) {
-      unsigned EntSize =
-        TM.getTargetData()->getTypeSize(CP[i].first.Val->getType());
-      unsigned ValEnd = CP[i].first.Offset + EntSize;
-      // Emit inter-object padding for alignment.
-      EmitZeros(CP[i+1].first.Offset-ValEnd);
-    }
-  }
 }
 
 /// createX86CodePrinterPass - Returns a pass that prints the X86 assembly code

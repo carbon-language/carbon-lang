@@ -20,7 +20,6 @@
 #include "X86TargetMachine.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/DwarfWriter.h"
-#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineDebugInfo.h"
 #include "llvm/ADT/Statistic.h"
 #include <set>
@@ -93,11 +92,6 @@ struct X86SharedAsmPrinter : public AsmPrinter {
        MI->getOperand(Op+3).isGlobalAddress() ||
        MI->getOperand(Op+3).isConstantPoolIndex());
   }
-
-  virtual void EmitConstantPool(MachineConstantPool *MCP);
-  void EmitConstantPool(MachineConstantPool *MCP,
-                std::vector<std::pair<MachineConstantPoolEntry, unsigned> > &CP,
-                        const char *Section);
 };
 
 } // end namespace llvm
