@@ -2116,7 +2116,7 @@ def V_SET0_PS : PSI<0x57, MRMInitReg, (ops VR128:$dst),
                     "xorps $dst, $dst",
                     [(set VR128:$dst, (v4f32 immAllZerosV))]>;
 def V_SET0_PD : PDI<0x57, MRMInitReg, (ops VR128:$dst),
-                    "xorpd $dst, $dst",
+                    "xorps $dst, $dst",
                     [(set VR128:$dst, (v2f64 immAllZerosV))]>;
 
 def V_SETALLONES : PDI<0x76, MRMInitReg, (ops VR128:$dst),
