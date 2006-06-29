@@ -64,6 +64,10 @@ extern "C" {
 #if defined(__APPLE__)
     "andl    $-16, %esp\n"    // Align ESP on 16-byte boundary
 #endif
+    "subl    $16, %esp\n"
+    "movl    4(%ebp), %eax\n" // Pass prev frame and return address
+    "movl    %eax, 4(%esp)\n"
+    "movl    %ebp, (%esp)\n"
 #if defined(__CYGWIN__) || defined(__MINGW32__) || defined(__APPLE__)
     "call    _X86CompilationCallback2\n"
 #else
@@ -108,22 +112,15 @@ extern "C" {
 /// function stub when we did not know the real target of a call.  This function
 /// must locate the start of the stub or call site and pass it into the JIT
 /// compiler function.
-extern "C" void X86CompilationCallback2() {
 #ifdef _MSC_VER
+extern "C" void X86CompilationCallback2() {
   assert(sizeof(size_t) == 4); // FIXME: handle Win64
   unsigned *RetAddrLoc = (unsigned *)_AddressOfReturnAddress();
   RetAddrLoc += 3;  // skip over ret addr, edx, eax
   unsigned RetAddr = *RetAddrLoc;
 #else
-  unsigned *StackPtr = (unsigned*)__builtin_frame_address(1);
-  unsigned RetAddr = (unsigned)(intptr_t)__builtin_return_address(1);
-  unsigned *RetAddrLoc = &StackPtr[1];
-
-  // NOTE: __builtin_frame_address doesn't work if frame pointer elimination has
-  // been performed.  Having a variable sized alloca disables frame pointer
-  // elimination currently, even if it's dead.  This is a gross hack.
-  alloca(10+(RetAddr >> 31));
-
+extern "C" void X86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr) {
+  intptr_t *RetAddrLoc = &StackPtr[1];
 #endif
   assert(*RetAddrLoc == RetAddr &&
          "Could not find return address on the stack!");
