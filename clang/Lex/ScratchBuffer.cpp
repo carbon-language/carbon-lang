@@ -39,12 +39,13 @@ SourceLocation ScratchBuffer::getToken(const char *Buf, unsigned Len,
   // Copy the token data into the buffer.
   memcpy(CurBuffer+BytesUsed, Buf, Len);
 
+  unsigned InstantiationFileID =
+    SourceMgr.createFileIDForMacroExp(SourceLoc, FileID);
+  
   // Create the initial SourceLocation.
-  SourceLocation Loc(FileID, BytesUsed);
+  SourceLocation Loc(InstantiationFileID, BytesUsed);
   assert(BytesUsed < (1 << SourceLocation::FilePosBits) &&
          "Out of range file position!");
-  
-  // FIXME: Merge SourceLoc into it.
   
   // Remember that we used these bytes.
   BytesUsed += Len;

@@ -531,6 +531,7 @@ void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok, MacroInfo *MI) {
     Tok.SetKind(tok::numeric_constant);
     Tok.SetLength(Length);
     Tok.SetLocation(ScratchBuf->getToken(TmpBuffer, Length, Tok.getLocation()));
+    Tok.SetIdentifierInfo(0);
     Tok.ClearFlag(LexerToken::NeedsCleaning);
     return;
   } else {
