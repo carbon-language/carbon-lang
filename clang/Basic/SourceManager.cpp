@@ -135,7 +135,7 @@ SourceLocation SourceManager::getIncludeLoc(unsigned FileID) const {
   const SrcMgr::FileIDInfo *FIDInfo = getFIDInfo(FileID);
 
   // For Macros, the physical loc is specified by the MacroTokenFileID.
-  if (FIDInfo->IDType == SrcMgr::FileIDInfo::MacroExpansion)
+  while (FIDInfo->IDType == SrcMgr::FileIDInfo::MacroExpansion)
     FIDInfo = &FileIDs[FIDInfo->u.MacroTokenFileID-1];
   
   return FIDInfo->IncludeLoc;
@@ -151,9 +151,10 @@ unsigned SourceManager::getColumnNumber(SourceLocation Loc) const {
   
   // If this is a macro, we need to get the instantiation location.
   const SrcMgr::FileIDInfo *FIDInfo = getFIDInfo(FileID);
-  if (FIDInfo->IDType == SrcMgr::FileIDInfo::MacroExpansion) {
+  while (FIDInfo->IDType == SrcMgr::FileIDInfo::MacroExpansion) {
     Loc = FIDInfo->IncludeLoc;
     FileID = Loc.getFileID();
+    FIDInfo = getFIDInfo(FileID);
   }
   
   unsigned FilePos = getFilePos(Loc);
@@ -175,7 +176,7 @@ std::string SourceManager::getSourceName(SourceLocation Loc) {
   
   // If this is a macro, we need to get the instantiation location.
   const SrcMgr::FileIDInfo *FIDInfo = getFIDInfo(FileID);
-  if (FIDInfo->IDType == SrcMgr::FileIDInfo::MacroExpansion) {
+  while (FIDInfo->IDType == SrcMgr::FileIDInfo::MacroExpansion) {
     Loc = FIDInfo->IncludeLoc;
     FIDInfo = getFIDInfo(Loc.getFileID());
   }
@@ -192,7 +193,7 @@ unsigned SourceManager::getLineNumber(SourceLocation Loc) {
   unsigned FileID = Loc.getFileID();
   // If this is a macro, we need to get the instantiation location.
   const SrcMgr::FileIDInfo *FIDInfo = getFIDInfo(FileID);
-  if (FIDInfo->IDType == SrcMgr::FileIDInfo::MacroExpansion) {
+  while (FIDInfo->IDType == SrcMgr::FileIDInfo::MacroExpansion) {
     Loc = FIDInfo->IncludeLoc;
     FileID = Loc.getFileID();
     FIDInfo = getFIDInfo(FileID);
@@ -270,8 +271,10 @@ unsigned SourceManager::getSourceFilePos(SourceLocation Loc) const {
  
   // If this is a macro, we need to get the instantiation location.
   const SrcMgr::FileIDInfo *FIDInfo = getFIDInfo(Loc.getFileID());
-  if (FIDInfo->IDType == SrcMgr::FileIDInfo::MacroExpansion)
-    return getFilePos(FIDInfo->IncludeLoc);
+  while (FIDInfo->IDType == SrcMgr::FileIDInfo::MacroExpansion) {
+    Loc = FIDInfo->IncludeLoc;
+    FIDInfo = getFIDInfo(Loc.getFileID());
+  }
   
   return getFilePos(Loc);
 }
