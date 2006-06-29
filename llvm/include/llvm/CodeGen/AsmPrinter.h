@@ -24,6 +24,7 @@ namespace llvm {
   class ConstantArray;
   class Mangler;
   class GlobalVariable;
+  class MachineConstantPoolEntry;
 
   class AsmPrinter : public MachineFunctionPass {
     /// FunctionNumber - This provides a unique ID for each function emitted in
@@ -168,6 +169,13 @@ namespace llvm {
     /// a section to emit the static destructor list.
     /// Defaults to "\t.section .dtors,\"aw\",@progbits".
     const char *StaticDtorsSection;
+
+    /// FourByteConstantSection, EightByteConstantSection,
+    /// SixteenByteConstantSection - These are special sections where we place
+    /// 4-, 8-, and 16- byte constant literals.
+    const char *FourByteConstantSection;
+    const char *EightByteConstantSection;
+    const char *SixteenByteConstantSection;
     
     //===--- Global Variable Emission Directives --------------------------===//
     
@@ -265,7 +273,7 @@ namespace llvm {
     /// used to print out constants which have been "spilled to memory" by
     /// the code generator.
     ///
-    virtual void EmitConstantPool(MachineConstantPool *MCP);
+    void EmitConstantPool(MachineConstantPool *MCP);
 
     /// EmitJumpTableInfo - Print assembly representations of the jump tables 
     /// used by the current function to the current output stream.  
@@ -311,6 +319,8 @@ namespace llvm {
     
   private:
     void EmitXXStructorList(Constant *List);
+    void EmitConstantPool(unsigned Alignment, const char *Section,
+                std::vector<std::pair<MachineConstantPoolEntry,unsigned> > &CP);
 
   };
 }

@@ -55,6 +55,9 @@ AsmPrinter::AsmPrinter(std::ostream &o, TargetMachine &tm)
   JumpTableSection("\t.section .rodata\n"),
   StaticCtorsSection("\t.section .ctors,\"aw\",@progbits"),
   StaticDtorsSection("\t.section .dtors,\"aw\",@progbits"),
+  FourByteConstantSection(0),
+  EightByteConstantSection(0),
+  SixteenByteConstantSection(0),
   LCOMMDirective(0),
   COMMDirective("\t.comm\t"),
   COMMDirectiveTakesAlignment(true),
@@ -147,19 +150,54 @@ void AsmPrinter::SetupMachineFunction(MachineFunction &MF) {
 void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
   const std::vector<MachineConstantPoolEntry> &CP = MCP->getConstants();
   if (CP.empty()) return;
-  
-  SwitchToDataSection(ConstantPoolSection, 0);
-  EmitAlignment(MCP->getConstantPoolAlignment());
+
+  // Some targets require 4-, 8-, and 16- byte constant literals to be placed
+  // in special sections.
+  std::vector<std::pair<MachineConstantPoolEntry,unsigned> > FourByteCPs;
+  std::vector<std::pair<MachineConstantPoolEntry,unsigned> > EightByteCPs;
+  std::vector<std::pair<MachineConstantPoolEntry,unsigned> > SixteenByteCPs;
+  std::vector<std::pair<MachineConstantPoolEntry,unsigned> > OtherCPs;
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
-    O << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << '_' << i
-      << ":\t\t\t\t\t" << CommentString << " ";
-    WriteTypeSymbolic(O, CP[i].Val->getType(), 0) << '\n';
-    EmitGlobalConstant(CP[i].Val);
+    MachineConstantPoolEntry CPE = CP[i];
+    const Constant *CV = CPE.Val;
+    const Type *Ty = CV->getType();
+    if (FourByteConstantSection &&
+        TM.getTargetData()->getTypeSize(Ty) == 4)
+      FourByteCPs.push_back(std::make_pair(CPE, i));
+    else if (EightByteConstantSection &&
+             TM.getTargetData()->getTypeSize(Ty) == 8)
+      EightByteCPs.push_back(std::make_pair(CPE, i));
+    else if (SixteenByteConstantSection &&
+             TM.getTargetData()->getTypeSize(Ty) == 16)
+      SixteenByteCPs.push_back(std::make_pair(CPE, i));
+    else
+      OtherCPs.push_back(std::make_pair(CPE, i));
+  }
+
+  unsigned Alignment = MCP->getConstantPoolAlignment();
+  EmitConstantPool(Alignment, FourByteConstantSection,    FourByteCPs);
+  EmitConstantPool(Alignment, EightByteConstantSection,   EightByteCPs);
+  EmitConstantPool(Alignment, SixteenByteConstantSection, SixteenByteCPs);
+  EmitConstantPool(Alignment, ConstantPoolSection,        OtherCPs);
+}
+
+void AsmPrinter::EmitConstantPool(unsigned Alignment, const char *Section,
+               std::vector<std::pair<MachineConstantPoolEntry,unsigned> > &CP) {
+  if (CP.empty()) return;
+
+  SwitchToDataSection(Section, 0);
+  EmitAlignment(Alignment);
+  for (unsigned i = 0, e = CP.size(); i != e; ++i) {
+    O << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << '_'
+      << CP[i].second << ":\t\t\t\t\t" << CommentString << " ";
+    WriteTypeSymbolic(O, CP[i].first.Val->getType(), 0) << '\n';
+    EmitGlobalConstant(CP[i].first.Val);
     if (i != e-1) {
-      unsigned EntSize = TM.getTargetData()->getTypeSize(CP[i].Val->getType());
-      unsigned ValEnd = CP[i].Offset + EntSize;
+      unsigned EntSize =
+        TM.getTargetData()->getTypeSize(CP[i].first.Val->getType());
+      unsigned ValEnd = CP[i].first.Offset + EntSize;
       // Emit inter-object padding for alignment.
-      EmitZeros(CP[i+1].Offset-ValEnd);
+      EmitZeros(CP[i+1].first.Offset-ValEnd);
     }
   }
 }
