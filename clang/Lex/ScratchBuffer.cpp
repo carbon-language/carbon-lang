@@ -27,30 +27,38 @@ ScratchBuffer::ScratchBuffer(SourceManager &SM) : SourceMgr(SM), CurBuffer(0) {
   FileID = 0;
 }
 
+/// getToken - Splat the specified text into a temporary SourceBuffer and
+/// return a SourceLocation that refers to the token.  This is just like the
+/// method below, but returns a location that indicates the physloc of the
+/// token.
+SourceLocation ScratchBuffer::getToken(const char *Buf, unsigned Len) {
+  if (BytesUsed+Len > ScratchBufSize)
+    AllocScratchBuffer(Len);
+  
+  // Copy the token data into the buffer.
+  memcpy(CurBuffer+BytesUsed, Buf, Len);
+
+  // Remember that we used these bytes.
+  BytesUsed += Len;
+
+  assert(BytesUsed-Len < (1 << SourceLocation::FilePosBits) &&
+         "Out of range file position!");
+  
+  return SourceLocation(FileID, BytesUsed-Len);
+}
+
 
 /// getToken - Splat the specified text into a temporary SourceBuffer and
 /// return a SourceLocation that refers to the token.  The SourceLoc value
 /// gives a virtual location that the token will appear to be from.
 SourceLocation ScratchBuffer::getToken(const char *Buf, unsigned Len,
                                        SourceLocation SourceLoc) {
-  if (BytesUsed+Len > ScratchBufSize)
-    AllocScratchBuffer(Len);
+  SourceLocation PhysLoc = getToken(Buf, Len);
 
-  // Copy the token data into the buffer.
-  memcpy(CurBuffer+BytesUsed, Buf, Len);
-
+  // Map the physloc to the specified sourceloc.
   unsigned InstantiationFileID =
-    SourceMgr.createFileIDForMacroExp(SourceLoc, FileID);
-  
-  // Create the initial SourceLocation.
-  SourceLocation Loc(InstantiationFileID, BytesUsed);
-  assert(BytesUsed < (1 << SourceLocation::FilePosBits) &&
-         "Out of range file position!");
-  
-  // Remember that we used these bytes.
-  BytesUsed += Len;
-  
-  return Loc;
+    SourceMgr.createFileIDForMacroExp(SourceLoc, PhysLoc.getFileID());
+  return SourceLocation(InstantiationFileID, PhysLoc.getRawFilePos());
 }
 
 void ScratchBuffer::AllocScratchBuffer(unsigned RequestLen) {

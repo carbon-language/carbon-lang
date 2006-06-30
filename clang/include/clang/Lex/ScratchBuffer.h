@@ -37,6 +37,12 @@ public:
   SourceLocation getToken(const char *Buf, unsigned Len,
                           SourceLocation SourceLoc);
   
+  /// getToken - Splat the specified text into a temporary SourceBuffer and
+  /// return a SourceLocation that refers to the token.  This is just like the
+  /// previous method, but returns a location that indicates the physloc of the
+  /// token.
+  SourceLocation getToken(const char *Buf, unsigned Len);
+                          
 private:
   void AllocScratchBuffer(unsigned RequestLen);
 };
