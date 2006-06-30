@@ -110,27 +110,19 @@ unsigned SourceManager::createFileID(const InfoRec *File,
   return Result;
 }
 
-/// createFileIDForMacroExp - Return a new FileID for a macro expansion at
-/// SourcePos, where the macro token character came from PhysicalFileID.
-///
-unsigned SourceManager::createFileIDForMacroExp(SourceLocation SourcePos, 
-                                                unsigned PhysicalFileID) {
-  SourcePos = getLogicalLoc(SourcePos);
-  FileIDs.push_back(FileIDInfo::getMacroExpansion(SourcePos, PhysicalFileID));
-  return FileIDs.size();
-}
-
 /// getInstantiationLoc - Return a new SourceLocation that encodes the fact
 /// that a token from physloc PhysLoc should actually be referenced from
 /// InstantiationLoc.
 SourceLocation SourceManager::getInstantiationLoc(SourceLocation PhysLoc,
                                                   SourceLocation InstantLoc) {
-  unsigned CharFilePos = PhysLoc.getRawFilePos();
-  unsigned CharFileID  = PhysLoc.getFileID();
-  
-  unsigned InstantiationFileID =
-    createFileIDForMacroExp(InstantLoc, CharFileID);
-  return SourceLocation(InstantiationFileID, CharFilePos);
+  // Resolve InstantLoc down to a real logical location.
+  InstantLoc = getLogicalLoc(InstantLoc);
+
+  // Add a FileID for this.  FIXME: should cache these!
+  FileIDs.push_back(FileIDInfo::getMacroExpansion(InstantLoc,
+                                                  PhysLoc.getFileID()));
+  unsigned InstantiationFileID = FileIDs.size();
+  return SourceLocation(InstantiationFileID, PhysLoc.getRawFilePos());
 }
 
 

@@ -190,12 +190,6 @@ public:
   SourceLocation getInstantiationLoc(SourceLocation PhysLoc,
                                      SourceLocation InstantiationLoc);
   
-  /// createFileIDForMacroExp - Return a new FileID for a macro expansion at
-  /// SourcePos, where the macro token character came from PhysicalFileID.
-  ///
-  unsigned createFileIDForMacroExp(SourceLocation SourcePos, 
-                                   unsigned PhysicalFileID);
-  
   /// getBuffer - Return the buffer for the specified FileID.
   ///
   const SourceBuffer *getBuffer(unsigned FileID) const {
