@@ -184,6 +184,12 @@ public:
     return createFileID(createMemBufferInfoRec(Buffer), SourceLocation());
   }
   
+  /// getInstantiationLoc - Return a new SourceLocation that encodes the fact
+  /// that a token from physloc PhysLoc should actually be referenced from
+  /// InstantiationLoc.
+  SourceLocation getInstantiationLoc(SourceLocation PhysLoc,
+                                     SourceLocation InstantiationLoc);
+  
   /// createFileIDForMacroExp - Return a new FileID for a macro expansion at
   /// SourcePos, where the macro token character came from PhysicalFileID.
   ///

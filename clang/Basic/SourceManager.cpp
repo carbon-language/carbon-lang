@@ -120,6 +120,20 @@ unsigned SourceManager::createFileIDForMacroExp(SourceLocation SourcePos,
   return FileIDs.size();
 }
 
+/// getInstantiationLoc - Return a new SourceLocation that encodes the fact
+/// that a token from physloc PhysLoc should actually be referenced from
+/// InstantiationLoc.
+SourceLocation SourceManager::getInstantiationLoc(SourceLocation PhysLoc,
+                                                  SourceLocation InstantLoc) {
+  unsigned CharFilePos = PhysLoc.getRawFilePos();
+  unsigned CharFileID  = PhysLoc.getFileID();
+  
+  unsigned InstantiationFileID =
+    createFileIDForMacroExp(InstantLoc, CharFileID);
+  return SourceLocation(InstantiationFileID, CharFilePos);
+}
+
+
 
 /// getCharacterData - Return a pointer to the start of the specified location
 /// in the appropriate SourceBuffer.  This returns null if it cannot be
