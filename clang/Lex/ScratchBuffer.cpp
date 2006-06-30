@@ -53,12 +53,8 @@ SourceLocation ScratchBuffer::getToken(const char *Buf, unsigned Len) {
 /// gives a virtual location that the token will appear to be from.
 SourceLocation ScratchBuffer::getToken(const char *Buf, unsigned Len,
                                        SourceLocation SourceLoc) {
-  SourceLocation PhysLoc = getToken(Buf, Len);
-
   // Map the physloc to the specified sourceloc.
-  unsigned InstantiationFileID =
-    SourceMgr.createFileIDForMacroExp(SourceLoc, PhysLoc.getFileID());
-  return SourceLocation(InstantiationFileID, PhysLoc.getRawFilePos());
+  return SourceMgr.getInstantiationLoc(getToken(Buf, Len), SourceLoc);
 }
 
 void ScratchBuffer::AllocScratchBuffer(unsigned RequestLen) {
