@@ -434,6 +434,8 @@ IdentifierTokenInfo *Preprocessor::RegisterBuiltinMacro(const char *Name) {
 void Preprocessor::RegisterBuiltinMacros() {
   // FIXME: implement them all, including _Pragma.
   Ident__LINE__ = RegisterBuiltinMacro("__LINE__");
+  Ident__DATE__ = RegisterBuiltinMacro("__DATE__");
+  Ident__TIME__ = RegisterBuiltinMacro("__TIME__");
 }
 
 
@@ -498,8 +500,7 @@ void Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier,
     // Update the tokens location to include both its logical and physical
     // locations.
     SourceLocation Loc =
-      MacroExpander::getInstantiationLoc(*this, Identifier.getLocation(),
-                                         InstantiateLoc);
+      SourceMgr.getInstantiationLoc(Identifier.getLocation(), InstantiateLoc);
     Identifier.SetLocation(Loc);
     
     // Since this is not an identifier token, it can't be macro expanded, so
@@ -516,6 +517,27 @@ void Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier,
   return Lex(Identifier);
 }
 
+/// ComputeDATE_TIME - Compute the current time, enter it into the specified
+/// scratch buffer, then return DATELoc/TIMELoc locations with the position of
+/// the identifier tokens inserted.
+static void ComputeDATE_TIME(SourceLocation &DATELoc, SourceLocation &TIMELoc,
+                             ScratchBuffer *ScratchBuf) {
+  time_t TT = time(0);
+  struct tm *TM = localtime(&TT);
+  
+  static const char * const Months[] = {
+    "Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"
+  };
+  
+  char TmpBuffer[100];
+  sprintf(TmpBuffer, "\"%s %2d %4d\"", Months[TM->tm_mon], TM->tm_mday, 
+          TM->tm_year+1900);
+  DATELoc = ScratchBuf->getToken(TmpBuffer, strlen(TmpBuffer));
+
+  sprintf(TmpBuffer, "\"%02d:%02d:%02d\"", TM->tm_hour, TM->tm_min, TM->tm_sec);
+  TIMELoc = ScratchBuf->getToken(TmpBuffer, strlen(TmpBuffer));
+}
+
 /// ExpandBuiltinMacro - If an identifier token is read that is to be expanded
 /// as a builtin macro, handle it and return the next token as 'Tok'.
 void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok, MacroInfo *MI) {
@@ -523,6 +545,7 @@ void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok, MacroInfo *MI) {
   IdentifierTokenInfo *ITI = Tok.getIdentifierInfo();
   assert(ITI && "Can't be a macro without id info!");
   char TmpBuffer[100];
+  
   
   if (ITI == Ident__LINE__) {
     // __LINE__ expands to a simple numeric value.
@@ -533,7 +556,24 @@ void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok, MacroInfo *MI) {
     Tok.SetLocation(ScratchBuf->getToken(TmpBuffer, Length, Tok.getLocation()));
     Tok.SetIdentifierInfo(0);
     Tok.ClearFlag(LexerToken::NeedsCleaning);
-    return;
+  } else if (ITI == Ident__DATE__) {
+    if (!DATELoc.isValid())
+      ComputeDATE_TIME(DATELoc, TIMELoc, ScratchBuf);
+    Tok.SetKind(tok::string_literal);
+    Tok.SetLength(strlen("\"Mmm dd yyyy\""));
+    Tok.SetLocation(SourceMgr.getInstantiationLoc(DATELoc, Tok.getLocation()));
+    Tok.SetIdentifierInfo(0);
+    Tok.ClearFlag(LexerToken::NeedsCleaning);
+    
+  } else if (ITI == Ident__TIME__) {
+    if (!TIMELoc.isValid())
+      ComputeDATE_TIME(DATELoc, TIMELoc, ScratchBuf);
+    Tok.SetKind(tok::string_literal);
+    Tok.SetLength(strlen("\"hh:mm:ss\""));
+    Tok.SetLocation(SourceMgr.getInstantiationLoc(TIMELoc, Tok.getLocation()));
+    Tok.SetIdentifierInfo(0);
+    Tok.ClearFlag(LexerToken::NeedsCleaning);
+   
   } else {
     assert(0 && "Unknown identifier!");
   }  

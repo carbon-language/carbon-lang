@@ -26,26 +26,6 @@ MacroExpander::MacroExpander(LexerToken &Tok, Preprocessor &pp)
 }
 
 
-/// getInstantiationLoc - Return a SourceLocation that specifies a macro
-/// instantiation whose physical location is PhysLoc but the logical location
-/// is InstantiationLoc.
-SourceLocation MacroExpander::
-getInstantiationLoc(Preprocessor &PP,
-                    SourceLocation PhysLoc, SourceLocation InstantiationLoc) {
-  // The token's current location indicate where the token was lexed from.  We
-  // need this information to compute the spelling of the token, but any
-  // diagnostics for the expanded token should appear as if they came from
-  // InstantiationLoc.  Pull this information together into a new SourceLocation
-  // that captures all of this.
-  unsigned CharFilePos = PhysLoc.getRawFilePos();
-  unsigned CharFileID  = PhysLoc.getFileID();
-  
-  unsigned InstantiationFileID =
-    PP.getSourceManager().createFileIDForMacroExp(InstantiationLoc, CharFileID);
-  return SourceLocation(InstantiationFileID, CharFilePos);
-}
-
-
 /// Lex - Lex and return a token from this macro stream.
 ///
 void MacroExpander::Lex(LexerToken &Tok) {
@@ -56,9 +36,13 @@ void MacroExpander::Lex(LexerToken &Tok) {
   // Get the next token to return.
   Tok = Macro.getReplacementToken(CurToken++);
 
-  // Update the tokens location to include both its logical and physical
-  // locations.
-  Tok.SetLocation(getInstantiationLoc(PP, Tok.getLocation(), InstantiateLoc));
+  // The token's current location indicate where the token was lexed from.  We
+  // need this information to compute the spelling of the token, but any
+  // diagnostics for the expanded token should appear as if they came from
+  // InstantiationLoc.  Pull this information together into a new SourceLocation
+  // that captures all of this.
+  Tok.SetLocation(PP.getSourceManager().getInstantiationLoc(Tok.getLocation(),
+                                                            InstantiateLoc));
 
   // If this is the first token, set the lexical properties of the token to
   // match the lexical properties of the macro identifier.

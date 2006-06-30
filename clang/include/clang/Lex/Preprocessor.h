@@ -94,6 +94,8 @@ class Preprocessor {
   
   /// Identifiers for builtin macros.
   IdentifierTokenInfo *Ident__LINE__; // __LINE__
+  IdentifierTokenInfo *Ident__DATE__, *Ident__TIME__; // __DATE__, __TIME__
+  SourceLocation DATELoc, TIMELoc;
 public:
   enum FileChangeReason {
     EnterFile, ExitFile, SystemHeaderPragma, RenameFile
