@@ -434,6 +434,7 @@ IdentifierTokenInfo *Preprocessor::RegisterBuiltinMacro(const char *Name) {
 void Preprocessor::RegisterBuiltinMacros() {
   // FIXME: implement them all, including _Pragma.
   Ident__LINE__ = RegisterBuiltinMacro("__LINE__");
+  Ident__FILE__ = RegisterBuiltinMacro("__FILE__");
   Ident__DATE__ = RegisterBuiltinMacro("__DATE__");
   Ident__TIME__ = RegisterBuiltinMacro("__TIME__");
 }
@@ -547,6 +548,9 @@ void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok, MacroInfo *MI) {
   char TmpBuffer[100];
   
   
+  Tok.SetIdentifierInfo(0);
+  Tok.ClearFlag(LexerToken::NeedsCleaning);
+  
   if (ITI == Ident__LINE__) {
     // __LINE__ expands to a simple numeric value.
     sprintf(TmpBuffer, "%u", SourceMgr.getLineNumber(Tok.getLocation()));
@@ -554,26 +558,24 @@ void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok, MacroInfo *MI) {
     Tok.SetKind(tok::numeric_constant);
     Tok.SetLength(Length);
     Tok.SetLocation(ScratchBuf->getToken(TmpBuffer, Length, Tok.getLocation()));
-    Tok.SetIdentifierInfo(0);
-    Tok.ClearFlag(LexerToken::NeedsCleaning);
+  } else if (ITI == Ident__FILE__) {
+    // FIXME: Escape this correctly.
+    std::string FN = '"' + SourceMgr.getSourceName(Tok.getLocation()) + '"';
+    Tok.SetKind(tok::string_literal);
+    Tok.SetLength(FN.size());
+    Tok.SetLocation(ScratchBuf->getToken(&FN[0], FN.size(), Tok.getLocation()));
   } else if (ITI == Ident__DATE__) {
     if (!DATELoc.isValid())
       ComputeDATE_TIME(DATELoc, TIMELoc, ScratchBuf);
     Tok.SetKind(tok::string_literal);
     Tok.SetLength(strlen("\"Mmm dd yyyy\""));
     Tok.SetLocation(SourceMgr.getInstantiationLoc(DATELoc, Tok.getLocation()));
-    Tok.SetIdentifierInfo(0);
-    Tok.ClearFlag(LexerToken::NeedsCleaning);
-    
   } else if (ITI == Ident__TIME__) {
     if (!TIMELoc.isValid())
       ComputeDATE_TIME(DATELoc, TIMELoc, ScratchBuf);
     Tok.SetKind(tok::string_literal);
     Tok.SetLength(strlen("\"hh:mm:ss\""));
     Tok.SetLocation(SourceMgr.getInstantiationLoc(TIMELoc, Tok.getLocation()));
-    Tok.SetIdentifierInfo(0);
-    Tok.ClearFlag(LexerToken::NeedsCleaning);
-   
   } else {
     assert(0 && "Unknown identifier!");
   }  

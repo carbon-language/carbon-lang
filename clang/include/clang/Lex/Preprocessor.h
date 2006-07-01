@@ -93,7 +93,7 @@ class Preprocessor {
   bool NoCurDirSearch;
   
   /// Identifiers for builtin macros.
-  IdentifierTokenInfo *Ident__LINE__; // __LINE__
+  IdentifierTokenInfo *Ident__LINE__, *Ident__FILE__; // __LINE__, __FILE__
   IdentifierTokenInfo *Ident__DATE__, *Ident__TIME__; // __DATE__, __TIME__
   SourceLocation DATELoc, TIMELoc;
 public:
