@@ -31,7 +31,7 @@
 //
 // TODO: Implement the include guard optimization.
 //
-// Predefined Macros: _Pragma, __TIMESTAMP__, __TIME__, ...
+// Predefined Macros: _Pragma, __TIMESTAMP__, ...
 //
 //===----------------------------------------------------------------------===//
 
@@ -437,6 +437,18 @@ void Preprocessor::RegisterBuiltinMacros() {
   Ident__FILE__ = RegisterBuiltinMacro("__FILE__");
   Ident__DATE__ = RegisterBuiltinMacro("__DATE__");
   Ident__TIME__ = RegisterBuiltinMacro("__TIME__");
+  
+  // GCC Extensions.
+  Ident__BASE_FILE__     = RegisterBuiltinMacro("__BASE_FILE__");
+  Ident__INCLUDE_LEVEL__ = RegisterBuiltinMacro("__INCLUDE_LEVEL__");
+  // __TIMESTAMP__
+  // _Pragma
+  
+//Pseudo #defines.
+  // __STDC__    1 if !stdc_0_in_system_headers and "std"
+  // __STDC_VERSION__
+  // __STDC_HOSTED__
+  // __OBJC__
 }
 
 
@@ -558,9 +570,19 @@ void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok, MacroInfo *MI) {
     Tok.SetKind(tok::numeric_constant);
     Tok.SetLength(Length);
     Tok.SetLocation(ScratchBuf->getToken(TmpBuffer, Length, Tok.getLocation()));
-  } else if (ITI == Ident__FILE__) {
-    // FIXME: Escape this correctly.
-    std::string FN = '"' + SourceMgr.getSourceName(Tok.getLocation()) + '"';
+  } else if (ITI == Ident__FILE__ || ITI == Ident__BASE_FILE__) {
+    SourceLocation Loc = Tok.getLocation();
+    if (ITI == Ident__BASE_FILE__) {
+      Diag(Tok, diag::ext_pp_base_file);
+      SourceLocation NextLoc = SourceMgr.getIncludeLoc(Loc.getFileID());
+      while (NextLoc.getFileID() != 0) {
+        Loc = NextLoc;
+        NextLoc = SourceMgr.getIncludeLoc(Loc.getFileID());
+      }
+    }
+    
+    // FIXME: Escape this filename correctly.
+    std::string FN = '"' + SourceMgr.getSourceName(Loc) + '"';
     Tok.SetKind(tok::string_literal);
     Tok.SetLength(FN.size());
     Tok.SetLocation(ScratchBuf->getToken(&FN[0], FN.size(), Tok.getLocation()));
@@ -576,6 +598,21 @@ void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok, MacroInfo *MI) {
     Tok.SetKind(tok::string_literal);
     Tok.SetLength(strlen("\"hh:mm:ss\""));
     Tok.SetLocation(SourceMgr.getInstantiationLoc(TIMELoc, Tok.getLocation()));
+  } else if (ITI == Ident__INCLUDE_LEVEL__) {
+    Diag(Tok, diag::ext_pp_include_level);
+
+    // Compute the include depth of this token.
+    unsigned Depth = 0;
+    SourceLocation Loc = SourceMgr.getIncludeLoc(Tok.getLocation().getFileID());
+    for (; Loc.getFileID() != 0; ++Depth)
+      Loc = SourceMgr.getIncludeLoc(Loc.getFileID());
+    
+    // __INCLUDE_LEVEL__ expands to a simple numeric value.
+    sprintf(TmpBuffer, "%u", Depth);
+    unsigned Length = strlen(TmpBuffer);
+    Tok.SetKind(tok::numeric_constant);
+    Tok.SetLength(Length);
+    Tok.SetLocation(ScratchBuf->getToken(TmpBuffer, Length, Tok.getLocation()));
   } else {
     assert(0 && "Unknown identifier!");
   }  

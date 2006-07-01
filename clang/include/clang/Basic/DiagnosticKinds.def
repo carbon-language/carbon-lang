@@ -109,6 +109,11 @@ DIAG(ext_pp_extra_tokens_at_eol, EXTENSION,
      "extra tokens at end of %s directive")
 DIAG(ext_pp_comma_expr, EXTENSION,
      "comma operator in operand of #if")
+     
+DIAG(ext_pp_base_file, EXTENSION,
+     "__BASE_FILE__ is a language extension")
+DIAG(ext_pp_include_level, EXTENSION,
+     "__INCLUDE_LEVEL__ is a language extension")
 
 DIAG(err_pp_invalid_directive, ERROR,
      "invalid preprocessing directive")
