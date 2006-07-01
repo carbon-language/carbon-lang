@@ -97,6 +97,7 @@ class Preprocessor {
   IdentifierTokenInfo *Ident__DATE__, *Ident__TIME__; // __DATE__, __TIME__
   IdentifierTokenInfo *Ident__INCLUDE_LEVEL__;        // __INCLUDE_LEVEL__
   IdentifierTokenInfo *Ident__BASE_FILE__;            // __BASE_FILE__
+  IdentifierTokenInfo *Ident__TIMESTAMP__;            // __TIMESTAMP__
   
   SourceLocation DATELoc, TIMELoc;
 public:

@@ -31,7 +31,7 @@
 //
 // TODO: Implement the include guard optimization.
 //
-// Predefined Macros: _Pragma, __TIMESTAMP__, ...
+// Predefined Macros: _Pragma, ...
 //
 //===----------------------------------------------------------------------===//
 
@@ -441,7 +441,7 @@ void Preprocessor::RegisterBuiltinMacros() {
   // GCC Extensions.
   Ident__BASE_FILE__     = RegisterBuiltinMacro("__BASE_FILE__");
   Ident__INCLUDE_LEVEL__ = RegisterBuiltinMacro("__INCLUDE_LEVEL__");
-  // __TIMESTAMP__
+  Ident__TIMESTAMP__     = RegisterBuiltinMacro("__TIMESTAMP__");
   // _Pragma
   
 //Pseudo #defines.
@@ -613,6 +613,37 @@ void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok, MacroInfo *MI) {
     Tok.SetKind(tok::numeric_constant);
     Tok.SetLength(Length);
     Tok.SetLocation(ScratchBuf->getToken(TmpBuffer, Length, Tok.getLocation()));
+  } else if (ITI == Ident__TIMESTAMP__) {
+    // MSVC, ICC, GCC, VisualAge C++ extension.  The generated string should be
+    // of the form "Ddd Mmm dd hh::mm::ss yyyy", which is returned by asctime.
+    Diag(Tok, diag::ext_pp_timestamp);
+
+    // Get the file that we are lexing out of.  If we're currently lexing from
+    // a macro, dig into the include stack.
+    const FileEntry *CurFile = 0;
+    Lexer *TheLexer = CurLexer;
+    if (TheLexer == 0 && !IncludeStack.empty())
+      TheLexer = IncludeStack.back().TheLexer;
+    
+    if (TheLexer)
+      CurFile = SourceMgr.getFileEntryForFileID(TheLexer->getCurFileID());
+    
+    // If this file is older than the file it depends on, emit a diagnostic.
+    const char *Result;
+    if (CurFile) {
+      time_t TT = CurFile->getModificationTime();
+      struct tm *TM = localtime(&TT);
+      Result = asctime(TM);
+    } else {
+      Result = "??? ??? ?? ??:??:?? ????\n";
+    }
+    TmpBuffer[0] = '"';
+    strcpy(TmpBuffer+1, Result);
+    unsigned Len = strlen(TmpBuffer);
+    TmpBuffer[Len-1] = '"';  // Replace the newline with a quote.
+    Tok.SetKind(tok::string_literal);
+    Tok.SetLength(Len);
+    Tok.SetLocation(ScratchBuf->getToken(TmpBuffer, Len, Tok.getLocation()));
   } else {
     assert(0 && "Unknown identifier!");
   }  
