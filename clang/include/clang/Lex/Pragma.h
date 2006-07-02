@@ -54,11 +54,8 @@ class PragmaNamespace : public PragmaHandler {
   std::vector<PragmaHandler*> Handlers;
 public:
   PragmaNamespace(const IdentifierTokenInfo *Name) : PragmaHandler(Name) {}
-  ~PragmaNamespace() {
-    for (unsigned i = 0, e = Handlers.size(); i != e; ++i)
-      delete Handlers[i];
-  }
-
+  virtual ~PragmaNamespace();
+  
   /// FindHandler - Check to see if there is already a handler for the
   /// specified name.  If not, return the handler for the null identifier if it
   /// exists, otherwise return null.  If IgnoreNull is true (the default) then

@@ -38,6 +38,11 @@ void PragmaNamespace::HandlePragma(Preprocessor &PP, LexerToken &Tok) {
   Handler->HandlePragma(PP, Tok);
 }
 
+PragmaNamespace::~PragmaNamespace() {
+  for (unsigned i = 0, e = Handlers.size(); i != e; ++i)
+    delete Handlers[i];
+}
+
 
 //===----------------------------------------------------------------------===//
 // Preprocessor Pragma Directive Handling.

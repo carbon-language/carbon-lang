@@ -18,7 +18,6 @@
 // Options to support:
 //   -H       - Print the name of each header file used.
 //   -C -CC   - Do not discard comments for cpp.
-//   -P       - Do not emit #line directives.
 //   -d[MDNI] - Dump various things.
 //   -fworking-directory - #line's with preprocessor's working dir.
 //   -fpreprocessed
