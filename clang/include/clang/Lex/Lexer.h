@@ -58,6 +58,7 @@ class Lexer {
   unsigned CurFileID;            // FileID for the current input file.
   Preprocessor &PP;              // Preprocessor object controlling lexing.
   LangOptions Features;          // Features enabled by this language (cache).
+  bool Is_PragmaLexer;           // True if lexer for _Pragma handling.
   
   // Context-specific lexing flags.
   bool IsAtStartOfLine;          // True if sitting at start of line.

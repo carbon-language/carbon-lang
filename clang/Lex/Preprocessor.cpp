@@ -348,6 +348,39 @@ const FileEntry *Preprocessor::LookupFile(const std::string &Filename,
   return 0;
 }
 
+/// isInPrimaryFile - Return true if we're in the top-level file, not in a
+/// #include.
+bool Preprocessor::isInPrimaryFile() const {
+  unsigned NumLexersFound = 0;
+  if (CurLexer && !CurLexer->Is_PragmaLexer)
+    ++NumLexersFound;
+  
+  /// If there are any stacked lexers, we're in a #include.
+  for (unsigned i = 0, e = IncludeMacroStack.size(); i != e; ++i)
+    if (IncludeMacroStack[i].TheLexer) {
+      if (!IncludeMacroStack[i].TheLexer->Is_PragmaLexer)
+        if (++NumLexersFound > 1)
+          return false;
+    }
+  return NumLexersFound < 2;
+}
+
+/// getCurrentLexer - Return the current file lexer being lexed from.  Note
+/// that this ignores any potentially active macro expansions and _Pragma
+/// expansions going on at the time.
+Lexer *Preprocessor::getCurrentFileLexer() const {
+  if (CurLexer && !CurLexer->Is_PragmaLexer) return CurLexer;
+  
+  // Look for a stacked lexer.
+  for (unsigned i = IncludeMacroStack.size(); i != 0; --i) {
+    Lexer *L = IncludeMacroStack[i].TheLexer;
+    if (L && !L->Is_PragmaLexer) // Ignore macro & _Pragma expansions.
+      return L;
+  }
+  return 0;
+}
+
+
 /// EnterSourceFile - Add a source file to the top of the include stack and
 /// start lexing tokens from it instead of the current buffer.  Return true
 /// on failure.
@@ -630,7 +663,7 @@ void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok) {
     // Get the file that we are lexing out of.  If we're currently lexing from
     // a macro, dig into the include stack.
     const FileEntry *CurFile = 0;
-    Lexer *TheLexer = getCurrentLexer();
+    Lexer *TheLexer = getCurrentFileLexer();
     
     if (TheLexer)
       CurFile = SourceMgr.getFileEntryForFileID(TheLexer->getCurFileID());
@@ -1510,6 +1543,9 @@ void Preprocessor::Handle_Pragma(LexerToken &Tok) {
   // return an EOM token.
   TL->ParsingPreprocessorDirective = true;
   
+  // This lexer really is for _Pragma.
+  TL->Is_PragmaLexer = true;
+  
   // With everything set up, lex this as a #pragma directive.
   HandlePragmaDirective();
   
@@ -1619,7 +1655,7 @@ void Preprocessor::HandlePragmaDependency(LexerToken &DependencyTok) {
   if (File == 0)
     return Diag(FilenameTok, diag::err_pp_file_not_found);
   
-  Lexer *TheLexer = getCurrentLexer();
+  Lexer *TheLexer = getCurrentFileLexer();
   const FileEntry *CurFile =
     SourceMgr.getFileEntryForFileID(TheLexer->getCurFileID());
 

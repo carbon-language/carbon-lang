@@ -212,26 +212,13 @@ public:
   
   /// isInPrimaryFile - Return true if we're in the top-level file, not in a
   /// #include.
-  ///
-  bool isInPrimaryFile() const {
-    /// If there are any stacked lexers, we're in a #include.
-    for (unsigned i = 0, e = IncludeMacroStack.size(); i != e; ++i)
-      if (IncludeMacroStack[i].TheLexer)
-        return false;
-    return true;
-  }
+  bool isInPrimaryFile() const;
   
-  /// getCurrentLexer - Return the current lexer being lexed from.  Note that
-  /// this ignores any potentially active macro expansions going on at the time.
-  Lexer *getCurrentLexer() const {
-    if (CurLexer) return CurLexer;
-    
-    // Look for a stacked lexer.
-    for (unsigned i = IncludeMacroStack.size(); i != 0; --i)
-      if (IncludeMacroStack[i].TheLexer)  // Ignore macro expansions.
-        return IncludeMacroStack[i].TheLexer;
-    return 0;
-  }
+  /// getCurrentLexer - Return the current file lexer being lexed from.  Note
+  /// that this ignores any potentially active macro expansions and _Pragma
+  /// expansions going on at the time.
+  Lexer *getCurrentFileLexer() const;
+  
   
   /// SetSearchPaths - Interface for setting the file search paths.
   ///

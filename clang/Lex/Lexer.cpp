@@ -43,6 +43,7 @@ Lexer::Lexer(const SourceBuffer *File, unsigned fileid, Preprocessor &pp,
     BufferStart(BufferPtr),
     BufferEnd(BufEnd ? BufEnd : File->getBufferEnd()),
     InputFile(File), CurFileID(fileid), PP(pp), Features(PP.getLangOptions()) {
+  Is_PragmaLexer = false;
   InitCharacterInfo();
       
   assert(BufferEnd[0] == 0 &&
