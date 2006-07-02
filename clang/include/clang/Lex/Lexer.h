@@ -78,7 +78,8 @@ public:
   /// with the specified preprocessor managing the lexing process.  This lexer
   /// assumes that the specified SourceBuffer and Preprocessor objects will
   /// outlive it, but doesn't take ownership of either pointer.
-  Lexer(const SourceBuffer *InBuffer, unsigned CurFileID, Preprocessor &PP);
+  Lexer(const SourceBuffer *InBuffer, unsigned CurFileID, Preprocessor &PP,
+        const char *BufStart = 0, const char *BufEnd = 0);
   
   /// getFeatures - Return the language features currently enabled.  NOTE: this
   /// lexer modifies features as a file is parsed!

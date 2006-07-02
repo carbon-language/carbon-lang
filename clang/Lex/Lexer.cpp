@@ -37,10 +37,12 @@ using namespace clang;
 
 static void InitCharacterInfo();
 
-Lexer::Lexer(const SourceBuffer *File, unsigned fileid, Preprocessor &pp)
-  : BufferPtr(File->getBufferStart()), BufferStart(BufferPtr),
-    BufferEnd(File->getBufferEnd()), InputFile(File), CurFileID(fileid), PP(pp),
-    Features(PP.getLangOptions()) {
+Lexer::Lexer(const SourceBuffer *File, unsigned fileid, Preprocessor &pp,
+             const char *BufStart, const char *BufEnd)
+  : BufferPtr(BufStart ? BufStart : File->getBufferStart()),
+    BufferStart(BufferPtr),
+    BufferEnd(BufEnd ? BufEnd : File->getBufferEnd()),
+    InputFile(File), CurFileID(fileid), PP(pp), Features(PP.getLangOptions()) {
   InitCharacterInfo();
       
   assert(BufferEnd[0] == 0 &&
@@ -127,9 +129,9 @@ static inline bool isNumberBody(unsigned char c) {
 /// getSourceLocation - Return a source location identifier for the specified
 /// offset in the current file.
 SourceLocation Lexer::getSourceLocation(const char *Loc) const {
-  assert(Loc >= InputFile->getBufferStart() && Loc <= InputFile->getBufferEnd()
-         && "Location out of range for this buffer!");
-  return SourceLocation(CurFileID, Loc-InputFile->getBufferStart());
+  assert(Loc >= BufferStart && Loc <= BufferEnd &&
+         "Location out of range for this buffer!");
+  return SourceLocation(CurFileID, Loc-BufferStart);
 }
 
 
