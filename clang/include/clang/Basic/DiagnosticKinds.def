@@ -171,6 +171,8 @@ DIAG(err_pp_invalid_poison, ERROR,
      "can only poison identifier tokens")
 DIAG(err_pp_used_poisoned_id, ERROR,
      "attempt to use a poisoned identifier")
+DIAG(err__Pragma_malformed, ERROR,
+     "_Pragma takes a parenthesized string literal")
 
 // Should be a sorry?
 DIAG(err_pp_I_dash_not_supported, ERROR,

@@ -31,8 +31,6 @@
 //
 // TODO: Implement the include guard optimization.
 //
-// Predefined Macros: _Pragma, ...
-//
 //===----------------------------------------------------------------------===//
 
 #include "clang/Lex/Preprocessor.h"
@@ -59,7 +57,7 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
   NumDirectives = NumIncluded = NumDefined = NumUndefined = NumPragma = 0;
   NumIf = NumElse = NumEndif = 0;
   NumEnteredSourceFiles = NumMacroExpanded = NumFastMacroExpanded = 0;
-  MaxIncludeStackDepth = MaxMacroStackDepth = 0;
+  MaxIncludeStackDepth = 0;
   NumSkipped = 0;
     
   // Macro expansion is enabled.
@@ -81,9 +79,10 @@ Preprocessor::~Preprocessor() {
   // Free any active lexers.
   delete CurLexer;
   
-  while (!IncludeStack.empty()) {
-    delete IncludeStack.back().TheLexer;
-    IncludeStack.pop_back();
+  while (!IncludeMacroStack.empty()) {
+    delete IncludeMacroStack.back().TheLexer;
+    delete IncludeMacroStack.back().TheMacroExpander;
+    IncludeMacroStack.pop_back();
   }
   
   // Release pragma information.
@@ -206,8 +205,6 @@ void Preprocessor::PrintStats() {
 
   std::cerr << NumMacroExpanded << " macros expanded, "
             << NumFastMacroExpanded << " on the fast path.\n";
-  if (MaxMacroStackDepth > 1)
-    std::cerr << "  " << MaxMacroStackDepth << " max macroexpand stack depth\n";
 }
 
 //===----------------------------------------------------------------------===//
@@ -356,22 +353,30 @@ const FileEntry *Preprocessor::LookupFile(const std::string &Filename,
 /// on failure.
 void Preprocessor::EnterSourceFile(unsigned FileID,
                                    const DirectoryLookup *CurDir) {
+  assert(CurMacroExpander == 0 && "Cannot #include a file inside a macro!");
   ++NumEnteredSourceFiles;
   
-  // Add the current lexer to the include stack.
-  if (CurLexer) {
-    IncludeStack.push_back(IncludeStackInfo(CurLexer, CurDirLookup));
-  } else {
-    assert(CurMacroExpander == 0 && "Cannot #include a file inside a macro!");
-  }
+  if (MaxIncludeStackDepth < IncludeMacroStack.size())
+    MaxIncludeStackDepth = IncludeMacroStack.size();
 
-  if (MaxIncludeStackDepth < IncludeStack.size())
-    MaxIncludeStackDepth = IncludeStack.size();
-  
   const SourceBuffer *Buffer = SourceMgr.getBuffer(FileID);
+  Lexer *TheLexer = new Lexer(Buffer, FileID, *this);
+  EnterSourceFileWithLexer(TheLexer, CurDir);
+}  
   
-  CurLexer     = new Lexer(Buffer, FileID, *this);
+/// EnterSourceFile - Add a source file to the top of the include stack and
+/// start lexing tokens from it instead of the current buffer.
+void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer, 
+                                            const DirectoryLookup *CurDir) {
+    
+  // Add the current lexer to the include stack.
+  if (CurLexer || CurMacroExpander)
+    IncludeMacroStack.push_back(IncludeStackInfo(CurLexer, CurDirLookup,
+                                                 CurMacroExpander));
+  
+  CurLexer = TheLexer;
   CurDirLookup = CurDir;
+  CurMacroExpander = 0;
   
   // Notify the client, if desired, that we are in a new source file.
   if (FileChangeHandler) {
@@ -387,21 +392,17 @@ void Preprocessor::EnterSourceFile(unsigned FileID,
   }
 }
 
+
+
 /// EnterMacro - Add a Macro to the top of the include stack and start lexing
 /// tokens from it instead of the current buffer.
 void Preprocessor::EnterMacro(LexerToken &Tok) {
   IdentifierTokenInfo *Identifier = Tok.getIdentifierInfo();
   MacroInfo &MI = *Identifier->getMacroInfo();
-  if (CurLexer) {
-    IncludeStack.push_back(IncludeStackInfo(CurLexer, CurDirLookup));
-    CurLexer     = 0;
-    CurDirLookup = 0;
-  } else if (CurMacroExpander) {
-    MacroStack.push_back(CurMacroExpander);
-  }
-
-  if (MaxMacroStackDepth < MacroStack.size())
-    MaxMacroStackDepth = MacroStack.size();
+  IncludeMacroStack.push_back(IncludeStackInfo(CurLexer, CurDirLookup,
+                                               CurMacroExpander));
+  CurLexer     = 0;
+  CurDirLookup = 0;
   
   // TODO: Figure out arguments.
   
@@ -432,18 +433,18 @@ IdentifierTokenInfo *Preprocessor::RegisterBuiltinMacro(const char *Name) {
 /// RegisterBuiltinMacros - Register builtin macros, such as __LINE__ with the
 /// identifier table.
 void Preprocessor::RegisterBuiltinMacros() {
-  // FIXME: implement them all, including _Pragma.
   Ident__LINE__ = RegisterBuiltinMacro("__LINE__");
   Ident__FILE__ = RegisterBuiltinMacro("__FILE__");
   Ident__DATE__ = RegisterBuiltinMacro("__DATE__");
   Ident__TIME__ = RegisterBuiltinMacro("__TIME__");
+  Ident_Pragma  = RegisterBuiltinMacro("_Pragma");
   
   // GCC Extensions.
   Ident__BASE_FILE__     = RegisterBuiltinMacro("__BASE_FILE__");
   Ident__INCLUDE_LEVEL__ = RegisterBuiltinMacro("__INCLUDE_LEVEL__");
   Ident__TIMESTAMP__     = RegisterBuiltinMacro("__TIMESTAMP__");
-  // _Pragma
   
+  // FIXME: implement them all:
 //Pseudo #defines.
   // __STDC__    1 if !stdc_0_in_system_headers and "std"
   // __STDC_VERSION__
@@ -457,12 +458,14 @@ void Preprocessor::RegisterBuiltinMacros() {
 void Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier, 
                                                  MacroInfo *MI) {
   ++NumMacroExpanded;
-  // If we started lexing a macro, enter the macro expansion body.
-  // FIXME: Read/Validate the argument list here!
 
   // If this is a builtin macro, like __LINE__ or _Pragma, handle it specially.
   if (MI->isBuiltinMacro())
-    return ExpandBuiltinMacro(Identifier, MI);
+    return ExpandBuiltinMacro(Identifier);
+  
+  // If we started lexing a macro, enter the macro expansion body.
+  // FIXME: Read/Validate the argument list here!
+  
   
   // If this macro expands to no tokens, don't bother to push it onto the
   // expansion stack, only to take it right back off.
@@ -553,13 +556,19 @@ static void ComputeDATE_TIME(SourceLocation &DATELoc, SourceLocation &TIMELoc,
 
 /// ExpandBuiltinMacro - If an identifier token is read that is to be expanded
 /// as a builtin macro, handle it and return the next token as 'Tok'.
-void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok, MacroInfo *MI) {
+void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok) {
   // Figure out which token this is.
   IdentifierTokenInfo *ITI = Tok.getIdentifierInfo();
   assert(ITI && "Can't be a macro without id info!");
+  
+  // If this is an _Pragma directive, expand it, invoke the pragma handler, then
+  // lex the token after it.
+  if (ITI == Ident_Pragma)
+    return Handle_Pragma(Tok);
+  
   char TmpBuffer[100];
-  
-  
+
+  // Set up the return result.
   Tok.SetIdentifierInfo(0);
   Tok.ClearFlag(LexerToken::NeedsCleaning);
   
@@ -621,9 +630,7 @@ void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok, MacroInfo *MI) {
     // Get the file that we are lexing out of.  If we're currently lexing from
     // a macro, dig into the include stack.
     const FileEntry *CurFile = 0;
-    Lexer *TheLexer = CurLexer;
-    if (TheLexer == 0 && !IncludeStack.empty())
-      TheLexer = IncludeStack.back().TheLexer;
+    Lexer *TheLexer = getCurrentLexer();
     
     if (TheLexer)
       CurFile = SourceMgr.getFileEntryForFileID(TheLexer->getCurFileID());
@@ -703,15 +710,16 @@ void Preprocessor::HandleEndOfFile(LexerToken &Result, bool isEndOfMacro) {
   
   // If this is a #include'd file, pop it off the include stack and continue
   // lexing the #includer file.
-  if (!IncludeStack.empty()) {
+  if (!IncludeMacroStack.empty()) {
     // We're done with the #included file.
     delete CurLexer;
-    CurLexer     = IncludeStack.back().TheLexer;
-    CurDirLookup = IncludeStack.back().TheDirLookup;
-    IncludeStack.pop_back();
+    CurLexer         = IncludeMacroStack.back().TheLexer;
+    CurDirLookup     = IncludeMacroStack.back().TheDirLookup;
+    CurMacroExpander = IncludeMacroStack.back().TheMacroExpander;
+    IncludeMacroStack.pop_back();
 
     // Notify the client, if desired, that we are in a new source file.
-    if (FileChangeHandler && !isEndOfMacro) {
+    if (FileChangeHandler && !isEndOfMacro && CurLexer) {
       DirectoryLookup::DirType FileType = DirectoryLookup::NormalHeaderDir;
       
       // Get the file entry for the current file.
@@ -746,16 +754,9 @@ void Preprocessor::HandleEndOfMacro(LexerToken &Result) {
   CurMacroExpander->getMacro().EnableMacro();
   delete CurMacroExpander;
 
-  if (!MacroStack.empty()) {
-    // In a nested macro invocation, continue lexing from the macro.
-    CurMacroExpander = MacroStack.back();
-    MacroStack.pop_back();
-    return Lex(Result);
-  } else {
-    CurMacroExpander = 0;
-    // Handle this like a #include file being popped off the stack.
-    return HandleEndOfFile(Result, true);
-  }
+  // Handle this like a #include file being popped off the stack.
+  CurMacroExpander = 0;
+  return HandleEndOfFile(Result, true);
 }
 
 
@@ -831,7 +832,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
                                                 bool FoundNonSkipPortion,
                                                 bool FoundElse) {
   ++NumSkipped;
-  assert(MacroStack.empty() && CurMacroExpander == 0 && CurLexer &&
+  assert(CurMacroExpander == 0 && CurLexer &&
          "Lexing a macro, not a file?");
 
   CurLexer->pushConditionalLevel(IfTokenLoc, /*isSkipping*/false,
@@ -1059,7 +1060,7 @@ void Preprocessor::HandleDirective(LexerToken &Result) {
       if (Directive[0] == 'i' && !strcmp(Directive, "import"))
         return HandleImportDirective(Result);
       if (Directive[0] == 'p' && !strcmp(Directive, "pragma"))
-        return HandlePragmaDirective(Result);
+        return HandlePragmaDirective();
       if (Directive[0] == 'a' && !strcmp(Directive, "assert"))
         isExtension = true;  // FIXME: implement #assert
       break;
@@ -1132,7 +1133,7 @@ void Preprocessor::HandleIncludeDirective(LexerToken &IncludeTok,
   CheckEndOfDirective("#include");
 
   // Check that we don't have infinite #include recursion.
-  if (IncludeStack.size() == MaxAllowedIncludeStackDepth-1)
+  if (IncludeMacroStack.size() == MaxAllowedIncludeStackDepth-1)
     return Diag(FilenameTok, diag::err_pp_include_too_deep);
   
   // Find out whether the filename is <x> or "x".
@@ -1187,7 +1188,7 @@ void Preprocessor::HandleIncludeNextDirective(LexerToken &IncludeNextTok) {
   // the current found directory.  If we can't do this, issue a
   // diagnostic.
   const DirectoryLookup *Lookup = CurDirLookup;
-  if (IncludeStack.empty()) {
+  if (isInPrimaryFile()) {
     Lookup = 0;
     Diag(IncludeNextTok, diag::pp_include_next_in_primary);
   } else if (Lookup == 0) {
@@ -1425,10 +1426,9 @@ void Preprocessor::HandleElifDirective(LexerToken &ElifToken) {
 // Preprocessor Pragma Directive Handling.
 //===----------------------------------------------------------------------===//
 
-/// HandlePragmaDirective - The "#pragma" directive has been parsed with
-/// PragmaTok containing the "pragma" identifier.  Lex the rest of the pragma,
-/// passing it to the registered pragma handlers.
-void Preprocessor::HandlePragmaDirective(LexerToken &PragmaTok) {
+/// HandlePragmaDirective - The "#pragma" directive has been parsed.  Lex the
+/// rest of the pragma, passing it to the registered pragma handlers.
+void Preprocessor::HandlePragmaDirective() {
   ++NumPragma;
   
   // Invoke the first level of pragma handlers which reads the namespace id.
@@ -1440,10 +1440,89 @@ void Preprocessor::HandlePragmaDirective(LexerToken &PragmaTok) {
     DiscardUntilEndOfDirective();
 }
 
+/// Handle_Pragma - Read a _Pragma directive, slice it up, process it, then
+/// return the first token after the directive.  The _Pragma token has just
+/// been read into 'Tok'.
+void Preprocessor::Handle_Pragma(LexerToken &Tok) {
+  // Remember the pragma token location.
+  SourceLocation PragmaLoc = Tok.getLocation();
+  
+  // Read the '('.
+  Lex(Tok);
+  if (Tok.getKind() != tok::l_paren)
+    return Diag(PragmaLoc, diag::err__Pragma_malformed);
+
+  // Read the '"..."'.
+  Lex(Tok);
+  if (Tok.getKind() != tok::string_literal)
+    return Diag(PragmaLoc, diag::err__Pragma_malformed);
+  
+  // Remember the string.
+  std::string StrVal = getSpelling(Tok);
+  SourceLocation StrLoc = Tok.getLocation();
+
+  // Read the ')'.
+  Lex(Tok);
+  if (Tok.getKind() != tok::r_paren)
+    return Diag(PragmaLoc, diag::err__Pragma_malformed);
+  
+  // The _Pragma is lexically sound.  Destringize according to C99 6.10.9.1.
+  if (StrVal[0] == 'L')  // Remove L prefix.
+    StrVal.erase(StrVal.begin());
+  assert(StrVal[0] == '"' && StrVal[StrVal.size()-1] == '"' &&
+         "Invalid string token!");
+  
+  // Remove the front quote, replacing it with a space, so that the pragma
+  // contents appear to have a space before them.
+  StrVal[0] = ' ';
+  
+  // Replace the terminating quote with a \n\0.
+  StrVal[StrVal.size()-1] = '\n';
+  StrVal += '\0';
+  
+  // Remove escaped quotes and escapes.
+  for (unsigned i = 0, e = StrVal.size(); i != e-1; ++i) {
+    if (StrVal[i] == '\\' &&
+        (StrVal[i+1] == '\\' || StrVal[i+1] == '"')) {
+      // \\ -> '\' and \" -> '"'.
+      StrVal.erase(StrVal.begin()+i);
+      --e;
+    }
+  }
+  
+  // Plop the string (including the trailing null) into a buffer where we can
+  // lex it.
+  SourceLocation TokLoc = ScratchBuf->getToken(&StrVal[0], StrVal.size());
+  const char *StrData = SourceMgr.getCharacterData(TokLoc);
+
+  // FIXME: Create appropriate mapping info for this FileID, so that we know the
+  // tokens are coming out of the input string (StrLoc).
+  unsigned FileID = TokLoc.getFileID();
+  assert(FileID && "Could not create FileID for predefines?");
+
+  // Make and enter a lexer object so that we lex and expand the tokens just
+  // like any others.
+  Lexer *TL = new Lexer(SourceMgr.getBuffer(FileID), FileID, *this,
+                        StrData, StrData+StrVal.size()-1 /* no null */);
+  EnterSourceFileWithLexer(TL, 0);
+  
+  // Ensure that the lexer thinks it is inside a directive, so that end \n will
+  // return an EOM token.
+  TL->ParsingPreprocessorDirective = true;
+  
+  // With everything set up, lex this as a #pragma directive.
+  HandlePragmaDirective();
+  
+  // Finally, return whatever came after the pragma directive.
+  return Lex(Tok);
+}
+
+
+
 /// HandlePragmaOnce - Handle #pragma once.  OnceTok is the 'once'.
 ///
 void Preprocessor::HandlePragmaOnce(LexerToken &OnceTok) {
-  if (IncludeStack.empty()) {
+  if (isInPrimaryFile()) {
     Diag(OnceTok, diag::pp_pragma_once_in_main_file);
     return;
   }
@@ -1501,7 +1580,7 @@ void Preprocessor::HandlePragmaPoison(LexerToken &PoisonTok) {
 /// HandlePragmaSystemHeader - Implement #pragma GCC system_header.  We know
 /// that the whole directive has been parsed.
 void Preprocessor::HandlePragmaSystemHeader(LexerToken &SysHeaderTok) {
-  if (IncludeStack.empty()) {
+  if (isInPrimaryFile()) {
     Diag(SysHeaderTok, diag::pp_pragma_sysheader_in_main_file);
     return;
   }
@@ -1540,11 +1619,7 @@ void Preprocessor::HandlePragmaDependency(LexerToken &DependencyTok) {
   if (File == 0)
     return Diag(FilenameTok, diag::err_pp_file_not_found);
   
-  Lexer *TheLexer = CurLexer;
-  if (TheLexer == 0) {
-    assert(!IncludeStack.empty() && "No current lexer?");
-    TheLexer = IncludeStack.back().TheLexer;
-  }
+  Lexer *TheLexer = getCurrentLexer();
   const FileEntry *CurFile =
     SourceMgr.getFileEntryForFileID(TheLexer->getCurFileID());
 

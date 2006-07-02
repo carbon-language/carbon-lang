@@ -98,6 +98,7 @@ class Preprocessor {
   IdentifierTokenInfo *Ident__INCLUDE_LEVEL__;        // __INCLUDE_LEVEL__
   IdentifierTokenInfo *Ident__BASE_FILE__;            // __BASE_FILE__
   IdentifierTokenInfo *Ident__TIMESTAMP__;            // __TIMESTAMP__
+  IdentifierTokenInfo *Ident_Pragma;                  // _Pragma
   
   SourceLocation DATELoc, TIMELoc;
 public:
@@ -138,25 +139,23 @@ private:
   /// FileEntry, if CurLexer is non-null and if applicable.  This allows us to
   /// implement #include_next and find directory-specific properties.
   const DirectoryLookup *CurDirLookup;
-  
-  /// IncludeStack - This keeps track of the stack of files currently #included,
-  /// not counting CurLexer.
-  struct IncludeStackInfo {
-    Lexer *TheLexer;
-    const DirectoryLookup *TheDirLookup;
-    IncludeStackInfo(Lexer *L, const DirectoryLookup *D)
-      : TheLexer(L), TheDirLookup(D) {
-    }
-  };
-  std::vector<IncludeStackInfo> IncludeStack;
-  
+
   /// CurMacroExpander - This is the current macro we are expanding, if we are
   /// expanding a macro.  One of CurLexer and CurMacroExpander must be null.
   MacroExpander *CurMacroExpander;
   
-  /// MacroStack - This keeps track of the macros that are recursively being
-  /// expanded.
-  std::vector<MacroExpander*> MacroStack;
+  /// IncludeMacroStack - This keeps track of the stack of files currently
+  /// #included, and macros currently being expanded from, not counting
+  /// CurLexer/CurMacroExpander.
+  struct IncludeStackInfo {
+    Lexer *TheLexer;
+    const DirectoryLookup *TheDirLookup;
+    MacroExpander *TheMacroExpander;
+    IncludeStackInfo(Lexer *L, const DirectoryLookup *D, MacroExpander *M)
+      : TheLexer(L), TheDirLookup(D), TheMacroExpander(M) {
+    }
+  };
+  std::vector<IncludeStackInfo> IncludeMacroStack;
   
   
   /// PreFileInfo - The preprocessor keeps track of this information for each
@@ -187,7 +186,7 @@ private:
   unsigned NumDirectives, NumIncluded, NumDefined, NumUndefined, NumPragma;
   unsigned NumIf, NumElse, NumEndif;
   unsigned NumEnteredSourceFiles, MaxIncludeStackDepth;
-  unsigned NumMacroExpanded, NumFastMacroExpanded, MaxMacroStackDepth;
+  unsigned NumMacroExpanded, NumFastMacroExpanded;
   unsigned NumSkipped;
 public:
   Preprocessor(Diagnostic &diags, const LangOptions &opts, FileManager &FM,
@@ -209,6 +208,29 @@ public:
   /// lexer.
   bool isCurrentLexer(const Lexer *L) const {
     return CurLexer == L;
+  }
+  
+  /// isInPrimaryFile - Return true if we're in the top-level file, not in a
+  /// #include.
+  ///
+  bool isInPrimaryFile() const {
+    /// If there are any stacked lexers, we're in a #include.
+    for (unsigned i = 0, e = IncludeMacroStack.size(); i != e; ++i)
+      if (IncludeMacroStack[i].TheLexer)
+        return false;
+    return true;
+  }
+  
+  /// getCurrentLexer - Return the current lexer being lexed from.  Note that
+  /// this ignores any potentially active macro expansions going on at the time.
+  Lexer *getCurrentLexer() const {
+    if (CurLexer) return CurLexer;
+    
+    // Look for a stacked lexer.
+    for (unsigned i = IncludeMacroStack.size(); i != 0; --i)
+      if (IncludeMacroStack[i].TheLexer)  // Ignore macro expansions.
+        return IncludeMacroStack[i].TheLexer;
+    return 0;
   }
   
   /// SetSearchPaths - Interface for setting the file search paths.
@@ -423,7 +445,17 @@ private:
 
   /// ExpandBuiltinMacro - If an identifier token is read that is to be expanded
   /// as a builtin macro, handle it and return the next token as 'Tok'.
-  void ExpandBuiltinMacro(LexerToken &Tok, MacroInfo *MI);
+  void ExpandBuiltinMacro(LexerToken &Tok);
+  
+  /// Handle_Pragma - Read a _Pragma directive, slice it up, process it, then
+  /// return the first token after the directive.  The _Pragma token has just
+  /// been read into 'Tok'.
+  void Handle_Pragma(LexerToken &Tok);
+  
+  
+  /// EnterSourceFile - Add a source file to the top of the include stack and
+  /// start lexing tokens from it instead of the current buffer.
+  void EnterSourceFileWithLexer(Lexer *TheLexer, const DirectoryLookup *Dir);
   
   //===--------------------------------------------------------------------===//
   /// Handle*Directive - implement the various preprocessor directives.  These
@@ -453,7 +485,7 @@ private:
   void HandleElifDirective(LexerToken &Tok);
   
   // Pragmas.
-  void HandlePragmaDirective(LexerToken &Result);
+  void HandlePragmaDirective();
 public:
   void HandlePragmaOnce(LexerToken &OnceTok);
   void HandlePragmaPoison(LexerToken &PoisonTok);
