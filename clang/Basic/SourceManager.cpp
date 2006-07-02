@@ -184,7 +184,9 @@ std::string SourceManager::getSourceName(SourceLocation Loc) {
 /// about to emit a diagnostic.
 unsigned SourceManager::getLineNumber(SourceLocation Loc) {
   Loc = getLogicalLoc(Loc);
-  FileInfo *FileInfo = getFileInfo(Loc.getFileID());
+  unsigned FileID = Loc.getFileID();
+  if (FileID == 0) return 0;
+  FileInfo *FileInfo = getFileInfo(FileID);
   
   // If this is the first use of line information for this buffer, compute the
   /// SourceLineCache for it on demand. 
