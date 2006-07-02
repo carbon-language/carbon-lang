@@ -1563,13 +1563,11 @@ void Preprocessor::HandlePragmaOnce(LexerToken &OnceTok) {
     return;
   }
   
-  // FIXME: implement the _Pragma thing.
-  assert(CurLexer && "Cannot have a pragma in a macro expansion yet!");
+  // Get the current file lexer we're looking at.  Ignore _Pragma 'files' etc.
+  unsigned FileID = getCurrentFileLexer()->getCurFileID();
   
   // Mark the file as a once-only file now.
-  const FileEntry *File = 
-    SourceMgr.getFileEntryForFileID(CurLexer->getCurFileID());
-  getFileInfo(File).isImport = true;
+  getFileInfo(SourceMgr.getFileEntryForFileID(FileID)).isImport = true;
 }
 
 /// HandlePragmaPoison - Handle #pragma GCC poison.  PoisonTok is the 'poison'.
@@ -1621,15 +1619,17 @@ void Preprocessor::HandlePragmaSystemHeader(LexerToken &SysHeaderTok) {
     return;
   }
   
+  // Get the current file lexer we're looking at.  Ignore _Pragma 'files' etc.
+  Lexer *TheLexer = getCurrentFileLexer();
+  
   // Mark the file as a system header.
   const FileEntry *File = 
-    SourceMgr.getFileEntryForFileID(CurLexer->getCurFileID());
+    SourceMgr.getFileEntryForFileID(TheLexer->getCurFileID());
   getFileInfo(File).DirInfo = DirectoryLookup::SystemHeaderDir;
-  
   
   // Notify the client, if desired, that we are in a new source file.
   if (FileChangeHandler)
-    FileChangeHandler(CurLexer->getSourceLocation(CurLexer->BufferPtr),
+    FileChangeHandler(TheLexer->getSourceLocation(TheLexer->BufferPtr),
                       SystemHeaderPragma, DirectoryLookup::SystemHeaderDir);
 }
 
@@ -1655,9 +1655,8 @@ void Preprocessor::HandlePragmaDependency(LexerToken &DependencyTok) {
   if (File == 0)
     return Diag(FilenameTok, diag::err_pp_file_not_found);
   
-  Lexer *TheLexer = getCurrentFileLexer();
-  const FileEntry *CurFile =
-    SourceMgr.getFileEntryForFileID(TheLexer->getCurFileID());
+  unsigned FileID = getCurrentFileLexer()->getCurFileID();
+  const FileEntry *CurFile = SourceMgr.getFileEntryForFileID(FileID);
 
   // If this file is older than the file it depends on, emit a diagnostic.
   if (CurFile && CurFile->getModificationTime() < File->getModificationTime()) {
