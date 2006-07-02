@@ -130,9 +130,9 @@ static inline bool isNumberBody(unsigned char c) {
 /// getSourceLocation - Return a source location identifier for the specified
 /// offset in the current file.
 SourceLocation Lexer::getSourceLocation(const char *Loc) const {
-  assert(Loc >= BufferStart && Loc <= BufferEnd &&
+  assert(Loc >= InputFile->getBufferStart() && Loc <= BufferEnd &&
          "Location out of range for this buffer!");
-  return SourceLocation(CurFileID, Loc-BufferStart);
+  return SourceLocation(CurFileID, Loc-InputFile->getBufferStart());
 }
 
 
