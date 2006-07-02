@@ -420,7 +420,7 @@ void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer,
           SourceMgr.getFileEntryForFileID(CurLexer->getCurFileID()))
       FileType = getFileInfo(FE).DirInfo;
     
-    FileChangeHandler(CurLexer->getSourceLocation(CurLexer->BufferStart),
+    FileChangeHandler(SourceLocation(CurLexer->getCurFileID(), 0),
                       EnterFile, FileType);
   }
 }

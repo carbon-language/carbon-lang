@@ -52,7 +52,6 @@ struct LangOptions {
 /// on the specified Preprocessor object to handle preprocessor directives, etc.
 class Lexer {
   const char *BufferPtr;         // Current pointer into the buffer.
-  const char * const BufferStart;// Start of the buffer.
   const char * const BufferEnd;  // End of the buffer.
   const SourceBuffer *InputFile; // The file we are reading from.
   unsigned CurFileID;            // FileID for the current input file.
