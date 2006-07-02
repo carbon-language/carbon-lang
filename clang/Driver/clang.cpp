@@ -720,7 +720,7 @@ struct UnknownPragmaHandler : public PragmaHandler {
       if (PragmaTok.hasLeadingSpace())
         std::cout << ' ';
       std::cout << PP.getSpelling(PragmaTok);
-      PP.Lex(PragmaTok);
+      PP.LexUnexpandedToken(PragmaTok);
     }
     std::cout << "\n";
   }
