@@ -411,7 +411,7 @@ void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer,
   CurMacroExpander = 0;
   
   // Notify the client, if desired, that we are in a new source file.
-  if (FileChangeHandler) {
+  if (FileChangeHandler && !CurLexer->Is_PragmaLexer) {
     DirectoryLookup::DirType FileType = DirectoryLookup::NormalHeaderDir;
     
     // Get the file entry for the current file.

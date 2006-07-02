@@ -114,11 +114,10 @@ void Preprocessor::Handle_Pragma(LexerToken &Tok) {
   
   // Plop the string (including the trailing null) into a buffer where we can
   // lex it.
-  SourceLocation TokLoc = ScratchBuf->getToken(&StrVal[0], StrVal.size());
+  SourceLocation TokLoc = ScratchBuf->getToken(&StrVal[0], StrVal.size(), 
+                                               PragmaLoc);
   const char *StrData = SourceMgr.getCharacterData(TokLoc);
 
-  // FIXME: Create appropriate mapping info for this FileID, so that we know the
-  // tokens are coming out of the input string (StrLoc).
   unsigned FileID = TokLoc.getFileID();
   assert(FileID && "Could not create FileID for predefines?");
 
@@ -126,7 +125,6 @@ void Preprocessor::Handle_Pragma(LexerToken &Tok) {
   // like any others.
   Lexer *TL = new Lexer(SourceMgr.getBuffer(FileID), FileID, *this,
                         StrData, StrData+StrVal.size()-1 /* no null */);
-  EnterSourceFileWithLexer(TL, 0);
   
   // Ensure that the lexer thinks it is inside a directive, so that end \n will
   // return an EOM token.
@@ -134,7 +132,9 @@ void Preprocessor::Handle_Pragma(LexerToken &Tok) {
   
   // This lexer really is for _Pragma.
   TL->Is_PragmaLexer = true;
-  
+
+  EnterSourceFileWithLexer(TL, 0);
+
   // With everything set up, lex this as a #pragma directive.
   HandlePragmaDirective();
   
