@@ -51,7 +51,6 @@ struct LangOptions {
 /// or buffering/seeking of tokens, only forward lexing is supported.  It relies
 /// on the specified Preprocessor object to handle preprocessor directives, etc.
 class Lexer {
-  char PeekCharacter;            // The current char we are peeking ahead.
   const char *BufferPtr;         // Current pointer into the buffer.
   const char * const BufferStart;// Start of the buffer.
   const char * const BufferEnd;  // End of the buffer.
