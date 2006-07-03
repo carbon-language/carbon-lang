@@ -25,6 +25,33 @@ using namespace clang;
 PragmaHandler::~PragmaHandler() {
 }
 
+//===----------------------------------------------------------------------===//
+// PragmaNamespace Implementation.
+//===----------------------------------------------------------------------===//
+
+
+PragmaNamespace::~PragmaNamespace() {
+  for (unsigned i = 0, e = Handlers.size(); i != e; ++i)
+    delete Handlers[i];
+}
+
+/// FindHandler - Check to see if there is already a handler for the
+/// specified name.  If not, return the handler for the null identifier if it
+/// exists, otherwise return null.  If IgnoreNull is true (the default) then
+/// the null handler isn't returned on failure to match.
+PragmaHandler *PragmaNamespace::FindHandler(const IdentifierTokenInfo *Name,
+                                            bool IgnoreNull) const {
+  PragmaHandler *NullHandler = 0;
+  for (unsigned i = 0, e = Handlers.size(); i != e; ++i) {
+    if (Handlers[i]->getName() == Name) 
+      return Handlers[i];
+    
+    if (Handlers[i]->getName() == 0)
+      NullHandler = Handlers[i];
+  }
+  return IgnoreNull ? 0 : NullHandler;
+}
+
 void PragmaNamespace::HandlePragma(Preprocessor &PP, LexerToken &Tok) {
   // Read the 'namespace' that the directive is in, e.g. STDC.  Do not macro
   // expand it, the user can have a STDC #define, that should not affect this.
@@ -37,12 +64,6 @@ void PragmaNamespace::HandlePragma(Preprocessor &PP, LexerToken &Tok) {
   // Otherwise, pass it down.
   Handler->HandlePragma(PP, Tok);
 }
-
-PragmaNamespace::~PragmaNamespace() {
-  for (unsigned i = 0, e = Handlers.size(); i != e; ++i)
-    delete Handlers[i];
-}
-
 
 //===----------------------------------------------------------------------===//
 // Preprocessor Pragma Directive Handling.
