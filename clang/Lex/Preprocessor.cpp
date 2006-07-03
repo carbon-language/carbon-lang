@@ -1390,8 +1390,13 @@ void Preprocessor::HandleIfdefDirective(LexerToken &Result, bool isIfndef) {
   // Check to see if this is the last token on the #if[n]def line.
   CheckEndOfDirective("#ifdef");
   
+  MacroInfo *MI = MacroNameTok.getIdentifierInfo()->getMacroInfo();
+
+  // If there is a macro, mark it used.
+  if (MI) MI->setIsUsed(true);
+  
   // Should we include the stuff contained by this directive?
-  if (!MacroNameTok.getIdentifierInfo()->getMacroInfo() == isIfndef) {
+  if (!MI == isIfndef) {
     // Yes, remember that we are inside a conditional, then lex the next token.
     CurLexer->pushConditionalLevel(DirectiveTok.getLocation(), /*wasskip*/false,
                                    /*foundnonskip*/true, /*foundelse*/false);

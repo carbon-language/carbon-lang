@@ -19,6 +19,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Lex/Preprocessor.h"
+#include "clang/Lex/MacroInfo.h"
 #include "clang/Basic/TokenKinds.h"
 #include "clang/Basic/Diagnostic.h"
 using namespace llvm;
@@ -98,6 +99,9 @@ bool Preprocessor::EvaluateValue(int &Result, LexerToken &PeekTok) {
     
     // Otherwise, we got an identifier, is it defined to something?
     Result = II->getMacroInfo() != 0;
+    
+    // If there is a macro, mark it used.
+    if (Result) II->getMacroInfo()->setIsUsed(true);
 
     // Consume identifier.
     Lex(PeekTok);
