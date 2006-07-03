@@ -188,7 +188,7 @@ static char DecodeTrigraphChar(const char *CP, Lexer *L) {
 ///   2. If this is an escaped newline (potentially with whitespace between
 ///      the backslash and newline), implicitly skip the newline and return
 ///      the char after it.
-///   3. If this is a UCN, return it.  FIXME: for C++?
+///   3. If this is a UCN, return it.  FIXME: C++ UCN's?
 ///
 /// This handles the slow/uncommon case of the getCharAndSize method.  Here we
 /// know that we can accumulate into Size, and that we have already incremented
@@ -333,7 +333,7 @@ void Lexer::LexIdentifier(LexerToken &Result, const char *CurPtr) {
 
   // Fast path, no $,\,? in identifier found.  '\' might be an escaped newline
   // or UCN, and ? might be a trigraph for '\', an escaped newline or UCN.
-  // FIXME: universal chars.
+  // FIXME: UCNs.
   if (C != '\\' && C != '?' && (C != '$' || !Features.DollarIdents)) {
 FinishIdentifier:
     const char *IdStart = BufferPtr, *IdEnd = CurPtr;
@@ -371,7 +371,7 @@ FinishIdentifier:
       CurPtr = ConsumeChar(CurPtr, Size, Result);
       C = getCharAndSize(CurPtr, Size);
       continue;
-    } else if (!isIdentifierBody(C)) { // FIXME: universal chars.
+    } else if (!isIdentifierBody(C)) { // FIXME: UCNs.
       // Found end of identifier.
       goto FinishIdentifier;
     }
@@ -380,7 +380,7 @@ FinishIdentifier:
     CurPtr = ConsumeChar(CurPtr, Size, Result);
 
     C = getCharAndSize(CurPtr, Size);
-    while (isIdentifierBody(C)) { // FIXME: universal chars.
+    while (isIdentifierBody(C)) { // FIXME: UCNs.
       CurPtr = ConsumeChar(CurPtr, Size, Result);
       C = getCharAndSize(CurPtr, Size);
     }
@@ -395,7 +395,7 @@ void Lexer::LexNumericConstant(LexerToken &Result, const char *CurPtr) {
   unsigned Size;
   char C = getCharAndSize(CurPtr, Size);
   char PrevCh = 0;
-  while (isNumberBody(C)) { // FIXME: universal chars?
+  while (isNumberBody(C)) { // FIXME: UCNs?
     CurPtr = ConsumeChar(CurPtr, Size, Result);
     PrevCh = C;
     C = getCharAndSize(CurPtr, Size);
@@ -589,9 +589,9 @@ void Lexer::SkipBCPLComment(LexerToken &Result, const char *CurPtr) {
   char C;
   do {
     C = *CurPtr;
-    // FIXME: just scan for a \n or \r character.  If we find a \n character,
-    // scan backwards, checking to see if it's an escaped newline, like we do
-    // for block comments.
+    // FIXME: Speedup BCPL comment lexing.  Just scan for a \n or \r character.
+    // If we find a \n character, scan backwards, checking to see if it's an
+    // escaped newline, like we do for block comments.
     
     // Skip over characters in the fast loop.
     while (C != 0 &&                // Potentially EOF.
@@ -1288,7 +1288,7 @@ LexNextToken:
       // We parsed a # character.  If this occurs at the start of the line,
       // it's actually the start of a preprocessing directive.  Callback to
       // the preprocessor to handle it.
-      // FIXME: not in preprocessed mode??
+      // FIXME: -fpreprocessed mode??
       if (Result.isAtStartOfLine() && !PP.isSkipping()) {
         BufferPtr = CurPtr;
         PP.HandleDirective(Result);
@@ -1311,7 +1311,7 @@ LexNextToken:
     break;
 
   case '\\':
-    // FIXME: handle UCN's.
+    // FIXME: UCN's.
     // FALL THROUGH.
   default:
     // Objective C support.
