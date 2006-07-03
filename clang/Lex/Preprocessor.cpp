@@ -808,8 +808,10 @@ void Preprocessor::DiscardUntilEndOfDirective() {
 
 /// ReadMacroName - Lex and validate a macro name, which occurs after a
 /// #define or #undef.  This sets the token kind to eom and discards the rest
-/// of the macro line if the macro name is invalid.
-void Preprocessor::ReadMacroName(LexerToken &MacroNameTok) {
+/// of the macro line if the macro name is invalid.  isDefineUndef is true if
+/// this is due to a a #define or #undef directive, false if it is something
+/// else (e.g. #ifdef).
+void Preprocessor::ReadMacroName(LexerToken &MacroNameTok, bool isDefineUndef) {
   // Read the token, don't allow macro expansion on it.
   LexUnexpandedToken(MacroNameTok);
   
@@ -824,16 +826,18 @@ void Preprocessor::ReadMacroName(LexerToken &MacroNameTok) {
   } else if (0) {
     // FIXME: C++.  Error if defining a C++ named operator.
     
-  } else if (ITI->getName()[0] == 'd' &&      // defined
+  } else if (isDefineUndef && ITI->getName()[0] == 'd' &&      // defined
              !strcmp(ITI->getName()+1, "efined")) {
-    // Error if defining "defined": C99 6.10.8.4.  Predefined macros (like
-    // __LINE__) are handled in the undef/define handlers.
+    // Error if defining "defined": C99 6.10.8.4.
     Diag(MacroNameTok, diag::err_defined_macro_name);
+  } else if (isDefineUndef && ITI->getMacroInfo() &&
+             ITI->getMacroInfo()->isBuiltinMacro()) {
+    // Error if defining "__LINE__" and other builtins: C99 6.10.8.4.
+    Diag(MacroNameTok, diag::pp_undef_builtin_macro);
   } else {
     // Okay, we got a good identifier node.  Return it.
     return;
   }
-  
   
   // Invalid macro name, read and discard the rest of the line.  Then set the
   // token kind to tok::eom.
@@ -1255,7 +1259,7 @@ void Preprocessor::HandleImportDirective(LexerToken &ImportTok) {
 void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
   ++NumDefined;
   LexerToken MacroNameTok;
-  ReadMacroName(MacroNameTok);
+  ReadMacroName(MacroNameTok, true);
   
   // Error reading macro name?  If so, diagnostic already issued.
   if (MacroNameTok.getKind() == tok::eom)
@@ -1301,9 +1305,6 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
   // Finally, if this identifier already had a macro defined for it, verify that
   // the macro bodies are identical and free the old definition.
   if (MacroInfo *OtherMI = MacroNameTok.getIdentifierInfo()->getMacroInfo()) {
-    if (OtherMI->isBuiltinMacro())       // C99 6.10.8.4
-      Diag(MacroNameTok, diag::pp_redef_builtin_macro);
-    
     
     // FIXME: Verify the definition is the same.
     // Macros must be identical.  This means all tokes and whitespace separation
@@ -1320,7 +1321,7 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
 void Preprocessor::HandleUndefDirective(LexerToken &UndefTok) {
   ++NumUndefined;
   LexerToken MacroNameTok;
-  ReadMacroName(MacroNameTok);
+  ReadMacroName(MacroNameTok, true);
   
   // Error reading macro name?  If so, diagnostic already issued.
   if (MacroNameTok.getKind() == tok::eom)
@@ -1335,9 +1336,6 @@ void Preprocessor::HandleUndefDirective(LexerToken &UndefTok) {
   // If the macro is not defined, this is a noop undef, just return.
   if (MI == 0) return;
 
-  if (MI->isBuiltinMacro())       // C99 6.10.8.4
-    Diag(MacroNameTok, diag::pp_undef_builtin_macro);
-  
 #if 0 // FIXME: implement warn_unused_macros.
   if (CPP_OPTION (pfile, warn_unused_macros))
     _cpp_warn_if_unused_macro (pfile, node, NULL);

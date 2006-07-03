@@ -394,7 +394,7 @@ private:
   /// ReadMacroName - Lex and validate a macro name, which occurs after a
   /// #define or #undef.  This emits a diagnostic, sets the token kind to eom,
   /// and discards the rest of the macro line if the macro name is invalid.
-  void ReadMacroName(LexerToken &MacroNameTok);
+  void ReadMacroName(LexerToken &MacroNameTok, bool isDefineUndef = false);
   
   /// SkipExcludedConditionalBlock - We just read a #if or related directive and
   /// decided that the subsequent tokens are in the #if'd out portion of the
