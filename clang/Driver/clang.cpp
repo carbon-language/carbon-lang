@@ -856,7 +856,7 @@ int main(int argc, char **argv) {
   }
   
   // Start parsing the specified input file.
-  PP.EnterSourceFile(MainFileID, 0);
+  PP.EnterSourceFile(MainFileID, 0, true);
   
   switch (ProgAction) {
   case RunPreprocessorOnly: {        // Just lex as fast as we can, no output.
