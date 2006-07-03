@@ -644,8 +644,7 @@ static void HandleFileChange(SourceLocation Loc,
   }
   
   EModeCurLine = SourceMgr.getLineNumber(Loc);
-  // FIXME: escape filename right.
-  EModeCurFilename = '"' + SourceMgr.getSourceName(Loc) + '"';
+  EModeCurFilename = Lexer::Stringify(SourceMgr.getSourceName(Loc));
   EmodeFileType = FileType;
   
   if (EmodeEmittedTokensOnThisLine) {
