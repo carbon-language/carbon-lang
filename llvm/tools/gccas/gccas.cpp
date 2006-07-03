@@ -186,17 +186,15 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    // In addition to just parsing the input from GCC, we also want to spiff it up
-    // a little bit.  Do this now.
-    //
+    // In addition to just parsing the input from GCC, we also want to spiff 
+    // it up a little bit.  Do this now.
     PassManager Passes;
 
     // Add an appropriate TargetData instance for this module...
     Passes.add(new TargetData(M.get()));
 
-    // Add all of the transformation passes to the pass manager to do the cleanup
-    // and optimization of the GCC output.
-    //
+    // Add all of the transformation passes to the pass manager to do the 
+    // cleanup and optimization of the GCC output.
     AddConfiguredTransformationPasses(Passes);
 
     // Make sure everything is still good.
