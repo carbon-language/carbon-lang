@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the IdentifierTokenInfo and IdentifierTable interfaces.
+// This file implements the IdentifierTokenInfo, IdentifierVisitor, and
+// IdentifierTable interfaces.
 //
 //===----------------------------------------------------------------------===//
 
@@ -25,6 +26,12 @@ void IdentifierTokenInfo::Destroy() {
   delete Macro;
 }
 
+//===----------------------------------------------------------------------===//
+// IdentifierVisitor Implementation
+//===----------------------------------------------------------------------===//
+
+IdentifierVisitor::~IdentifierVisitor() {
+}
 
 //===----------------------------------------------------------------------===//
 // Memory Allocation Support
@@ -212,7 +219,15 @@ IdentifierTokenInfo &IdentifierTable::get(const std::string &Name) {
   return get(NameBytes, NameBytes+Size);
 }
 
-
+/// VisitIdentifiers - This method walks through all of the identifiers,
+/// invoking IV->VisitIdentifier for each of them.
+void IdentifierTable::VisitIdentifiers(const IdentifierVisitor &IV) {
+  IdentifierBucket **TableArray = (IdentifierBucket**)TheTable;
+  for (unsigned i = 0, e = HASH_TABLE_SIZE; i != e; ++i) {
+    for (IdentifierBucket *Id = TableArray[i]; Id; Id = Id->Next)
+      IV.VisitIdentifier(Id->TokInfo);
+  }
+}
 
 /// PrintStats - Print statistics about how well the identifier table is doing
 /// at hashing identifiers.

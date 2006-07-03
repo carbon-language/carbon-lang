@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the IdentifierTokenInfo and IdentifierTable interfaces.
+// This file defines the IdentifierTokenInfo, IdentifierVisitor, and
+// IdentifierTable interfaces.
 //
 //===----------------------------------------------------------------------===//
 
@@ -84,6 +85,14 @@ private:
   void Destroy();
 };
 
+/// IdentifierVisitor - Subclasses of this class may be implemented to walk all
+/// of the defined identifiers.
+class IdentifierVisitor {
+public:
+  virtual ~IdentifierVisitor();
+  virtual void VisitIdentifier(IdentifierTokenInfo &ITI) const = 0;
+};
+
 /// IdentifierTable - This table implements an efficient mapping from strings to
 /// IdentifierTokenInfo nodes.  It has no other purpose, but this is an
 /// extremely performance-critical piece of the code, as each occurrance of
@@ -95,10 +104,15 @@ class IdentifierTable {
 public:
   IdentifierTable();
   ~IdentifierTable();
+  
   /// get - Return the identifier token info for the specified named identifier.
   ///
   IdentifierTokenInfo &get(const char *NameStart, const char *NameEnd);
   IdentifierTokenInfo &get(const std::string &Name);
+  
+  /// VisitIdentifiers - This method walks through all of the identifiers,
+  /// invoking IV->VisitIdentifier for each of them.
+  void VisitIdentifiers(const IdentifierVisitor &IV);
   
   /// PrintStats - Print some statistics to stderr that indicate how well the
   /// hashing is doing.
