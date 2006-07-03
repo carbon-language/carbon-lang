@@ -33,19 +33,29 @@ class MacroInfo {
   /// to.
   std::vector<LexerToken> ReplacementTokens;
   
-  /// isDisabled - True if we have started an expansion of this macro already.
+  /// IsDisabled - True if we have started an expansion of this macro already.
   /// This disbles recursive expansion, which would be quite bad for things like
   /// #define A A.
   bool IsDisabled : 1;
   
-  /// isBuiltinMacro - True if this is a builtin macro, such as __LINE__, and if
+  /// IsBuiltinMacro - True if this is a builtin macro, such as __LINE__, and if
   /// it has not yet been redefined or undefined.
   bool IsBuiltinMacro : 1;
+  
+  /// IsUsed - True if this macro is either defined in the main file and has
+  /// been used, or if it is not defined in the main file.  This is used to 
+  /// emit -Wunused-macros diagnostics.
+  bool IsUsed : 1;
 public:
   MacroInfo(SourceLocation DefLoc) : Location(DefLoc) {
     IsDisabled = false;
     IsBuiltinMacro = false;
+    IsUsed = true;
   }
+  
+  /// getDefinitionLoc - Return the location that the macro was defined at.
+  ///
+  SourceLocation getDefinitionLoc() const { return Location; }
   
   /// setIsBuiltinMacro - Set or clear the isBuiltinMacro flag.
   ///
@@ -53,10 +63,20 @@ public:
     IsBuiltinMacro = Val;
   }
   
+  /// setIsUsed - Set the value of the IsUsed flag.
+  ///
+  void setIsUsed(bool Val) {
+    IsUsed = Val;
+  }
+  
   /// isBuiltinMacro - Return true if this macro is a builtin macro, such as
   /// __LINE__, which requires processing before expansion.
   bool isBuiltinMacro() const { return IsBuiltinMacro; }
 
+  /// isUsed - Return false if this macro is defined in the main file and has
+  /// not yet been used.
+  bool isUsed() const { return IsUsed; }
+  
   /// getNumTokens - Return the number of tokens that this macro expands to.
   ///
   unsigned getNumTokens() const {

@@ -352,16 +352,14 @@ const FileEntry *Preprocessor::LookupFile(const std::string &Filename,
 bool Preprocessor::isInPrimaryFile() const {
   unsigned NumLexersFound = 0;
   if (CurLexer && !CurLexer->Is_PragmaLexer)
-    ++NumLexersFound;
+    return CurLexer->isMainFile();
   
-  /// If there are any stacked lexers, we're in a #include.
+  // If there are any stacked lexers, we're in a #include.
   for (unsigned i = 0, e = IncludeMacroStack.size(); i != e; ++i)
-    if (IncludeMacroStack[i].TheLexer) {
-      if (!IncludeMacroStack[i].TheLexer->Is_PragmaLexer)
-        if (++NumLexersFound > 1)
-          return false;
-    }
-  return NumLexersFound < 2;
+    if (IncludeMacroStack[i].TheLexer &&
+        !IncludeMacroStack[i].TheLexer->Is_PragmaLexer)
+      return IncludeMacroStack[i].TheLexer->isMainFile();
+  return false;
 }
 
 /// getCurrentLexer - Return the current file lexer being lexed from.  Note
@@ -384,7 +382,8 @@ Lexer *Preprocessor::getCurrentFileLexer() const {
 /// start lexing tokens from it instead of the current buffer.  Return true
 /// on failure.
 void Preprocessor::EnterSourceFile(unsigned FileID,
-                                   const DirectoryLookup *CurDir) {
+                                   const DirectoryLookup *CurDir,
+                                   bool isMainFile) {
   assert(CurMacroExpander == 0 && "Cannot #include a file inside a macro!");
   ++NumEnteredSourceFiles;
   
@@ -393,6 +392,7 @@ void Preprocessor::EnterSourceFile(unsigned FileID,
 
   const SourceBuffer *Buffer = SourceMgr.getBuffer(FileID);
   Lexer *TheLexer = new Lexer(Buffer, FileID, *this);
+  if (isMainFile) TheLexer->setIsMainFile();
   EnterSourceFileWithLexer(TheLexer, CurDir);
 }  
   
@@ -490,6 +490,9 @@ void Preprocessor::RegisterBuiltinMacros() {
 void Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier, 
                                                  MacroInfo *MI) {
   ++NumMacroExpanded;
+  
+  // Notice that this macro has been used.
+  MI->setIsUsed(true);
 
   // If this is a builtin macro, like __LINE__ or _Pragma, handle it specially.
   if (MI->isBuiltinMacro())
@@ -689,6 +692,18 @@ void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok) {
   }  
 }
 
+namespace {
+struct UnusedIdentifierReporter : public IdentifierVisitor {
+  Preprocessor &PP;
+  UnusedIdentifierReporter(Preprocessor &pp) : PP(pp) {}
+
+  void VisitIdentifier(IdentifierTokenInfo &ITI) const {
+    if (ITI.getMacroInfo() && !ITI.getMacroInfo()->isUsed())
+      PP.Diag(ITI.getMacroInfo()->getDefinitionLoc(), diag::pp_macro_not_used);
+  }
+};
+}
+
 //===----------------------------------------------------------------------===//
 // Lexer Event Handling.
 //===----------------------------------------------------------------------===//
@@ -775,6 +790,9 @@ void Preprocessor::HandleEndOfFile(LexerToken &Result, bool isEndOfMacro) {
   // We're done with the #included file.
   delete CurLexer;
   CurLexer = 0;
+
+  // This is the end of the top-level file.
+  IdentifierInfo.VisitIdentifiers(UnusedIdentifierReporter(*this));
 }
 
 /// HandleEndOfMacro - This callback is invoked when the lexer hits the end of
@@ -1302,10 +1320,17 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
     LexUnexpandedToken(Tok);
   }
   
+  // If this is the primary source file, remember that this macro hasn't been
+  // used yet.
+  if (isInPrimaryFile())
+    MI->setIsUsed(false);
+  
   // Finally, if this identifier already had a macro defined for it, verify that
   // the macro bodies are identical and free the old definition.
   if (MacroInfo *OtherMI = MacroNameTok.getIdentifierInfo()->getMacroInfo()) {
-    
+    if (!OtherMI->isUsed())
+      Diag(OtherMI->getDefinitionLoc(), diag::pp_macro_not_used);
+
     // FIXME: Verify the definition is the same.
     // Macros must be identical.  This means all tokes and whitespace separation
     // must be the same.
@@ -1336,10 +1361,8 @@ void Preprocessor::HandleUndefDirective(LexerToken &UndefTok) {
   // If the macro is not defined, this is a noop undef, just return.
   if (MI == 0) return;
 
-#if 0 // FIXME: implement warn_unused_macros.
-  if (CPP_OPTION (pfile, warn_unused_macros))
-    _cpp_warn_if_unused_macro (pfile, node, NULL);
-#endif
+  if (!MI->isUsed())
+    Diag(MI->getDefinitionLoc(), diag::pp_macro_not_used);
   
   // Free macro definition.
   delete MI;

@@ -297,8 +297,10 @@ public:
                               const DirectoryLookup *&CurDir);
   
   /// EnterSourceFile - Add a source file to the top of the include stack and
-  /// start lexing tokens from it instead of the current buffer.
-  void EnterSourceFile(unsigned CurFileID, const DirectoryLookup *Dir);
+  /// start lexing tokens from it instead of the current buffer.  If isMainFile
+  /// is true, this is the main file for the translation unit.
+  void EnterSourceFile(unsigned CurFileID, const DirectoryLookup *Dir,
+                       bool isMainFile = false);
 
   /// EnterMacro - Add a Macro to the top of the include stack and start lexing
   /// tokens from it instead of the current buffer.
@@ -440,7 +442,7 @@ private:
   void Handle_Pragma(LexerToken &Tok);
   
   
-  /// EnterSourceFile - Add a source file to the top of the include stack and
+  /// EnterSourceFileWithLexer - Add a lexer to the top of the include stack and
   /// start lexing tokens from it instead of the current buffer.
   void EnterSourceFileWithLexer(Lexer *TheLexer, const DirectoryLookup *Dir);
   
