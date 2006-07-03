@@ -65,6 +65,7 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
 
   // There is no file-change handler yet.
   FileChangeHandler = 0;
+  IdentHandler = 0;
   
   // Initialize the pragma handlers.
   PragmaHandlers = new PragmaNamespace(0);
@@ -1082,10 +1083,8 @@ void Preprocessor::HandleDirective(LexerToken &Result) {
         ;  // FIXME: implement #line
       if (Directive[0] == 'e' && !strcmp(Directive, "elif"))
         return HandleElifDirective(Result);
-      if (Directive[0] == 's' && !strcmp(Directive, "sccs")) {
-        isExtension = true;  // FIXME: implement #sccs
-        // SCCS is the same as #ident.
-      }
+      if (Directive[0] == 's' && !strcmp(Directive, "sccs"))
+        return HandleIdentSCCSDirective(Result);
       break;
     case 5:
       if (Directive[0] == 'e' && !strcmp(Directive, "endif"))
@@ -1097,7 +1096,7 @@ void Preprocessor::HandleDirective(LexerToken &Result) {
       if (Directive[0] == 'e' && !strcmp(Directive, "error"))
         return HandleUserDiagnosticDirective(Result, false);
       if (Directive[0] == 'i' && !strcmp(Directive, "ident"))
-        isExtension = true;  // FIXME: implement #ident
+        return HandleIdentSCCSDirective(Result);
       break;
     case 6:
       if (Directive[0] == 'd' && !strcmp(Directive, "define"))
@@ -1143,7 +1142,7 @@ void Preprocessor::HandleDirective(LexerToken &Result) {
   // Okay, we're done parsing the directive.
 }
 
-void Preprocessor::HandleUserDiagnosticDirective(LexerToken &Result, 
+void Preprocessor::HandleUserDiagnosticDirective(LexerToken &Tok, 
                                                  bool isWarning) {
   // Read the rest of the line raw.  We do this because we don't want macros
   // to be expanded and we don't require that the tokens be valid preprocessing
@@ -1153,7 +1152,26 @@ void Preprocessor::HandleUserDiagnosticDirective(LexerToken &Result,
   std::string Message = CurLexer->ReadToEndOfLine();
 
   unsigned DiagID = isWarning ? diag::pp_hash_warning : diag::err_pp_hash_error;
-  return Diag(Result, DiagID, Message);
+  return Diag(Tok, DiagID, Message);
+}
+
+/// HandleIdentSCCSDirective - Handle a #ident/#sccs directive.
+///
+void Preprocessor::HandleIdentSCCSDirective(LexerToken &Tok) {
+  Diag(Tok, diag::ext_pp_ident_directive);
+  
+  LexerToken StrTok;
+  Lex(StrTok);
+  
+  // If the token kind isn't a string, it's a malformed directive.
+  if (StrTok.getKind() != tok::string_literal)
+    return Diag(StrTok, diag::err_pp_malformed_ident);
+  
+  // Verify that there is nothing after the string, other than EOM.
+  CheckEndOfDirective("#ident");
+
+  if (IdentHandler)
+    IdentHandler(Tok.getLocation(), getSpelling(StrTok));
 }
 
 //===----------------------------------------------------------------------===//

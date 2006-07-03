@@ -103,6 +103,8 @@ DIAG(pp_macro_not_used, WARNING,    // -Wunused-macros
 
 DIAG(ext_pp_import_directive, EXTENSION,
      "#import is a language extension")
+DIAG(ext_pp_ident_directive, EXTENSION,
+     "#ident is a language extension")
 DIAG(ext_pp_include_next_directive, EXTENSION,
      "#include_next is a language extension")
 DIAG(ext_pp_warning_directive, EXTENSION,
@@ -135,6 +137,8 @@ DIAG(err_pp_macro_not_identifier, ERROR,
      "macro names must be identifiers")
 DIAG(err_pp_missing_macro_name, ERROR,
      "macro name missing")
+DIAG(err_pp_malformed_ident, ERROR,
+     "invalid #ident directive")
 DIAG(err_pp_unterminated_conditional, ERROR,
      "unterminated conditional directive")
 DIAG(pp_err_else_after_else, ERROR,

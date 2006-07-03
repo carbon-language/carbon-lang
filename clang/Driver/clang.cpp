@@ -674,6 +674,13 @@ static void HandleFileChange(SourceLocation Loc,
   std::cout << "\n";
 }
 
+static void HandleIdent(SourceLocation Loc, const std::string &Val) {
+  SourceManager &SourceMgr = EModePP->getSourceManager();
+  MoveToLine(SourceMgr.getLineNumber(Loc));
+
+  std::cout << "#ident " << Val;
+  EmodeEmittedTokensOnThisLine = true;
+}
 
 /// HandleFirstTokOnLine - When emitting a preprocessed file in -E mode, this
 /// is called for the first token on each new line.
@@ -733,6 +740,7 @@ void DoPrintPreprocessedInput(Preprocessor &PP) {
   EModeCurLine = 0;
   EModeCurFilename = "\"<uninit>\"";
   PP.setFileChangeHandler(HandleFileChange);
+  PP.setIdentHandler(HandleIdent);
   EModePP = &PP;
   EmodeEmittedTokensOnThisLine = false;
   

@@ -105,14 +105,22 @@ public:
   enum FileChangeReason {
     EnterFile, ExitFile, SystemHeaderPragma, RenameFile
   };
+  typedef void (*FileChangeHandler_t)(SourceLocation Loc, 
+                                      FileChangeReason Reason,
+                                      DirectoryLookup::DirType FileType);
+  typedef void (*IdentHandler_t)(SourceLocation Loc, const std::string &str);
+  
 private:
   /// FileChangeHandler - This callback is invoked whenever a source file is
   /// entered or exited.  The SourceLocation indicates the new location, and
   /// EnteringFile indicates whether this is because we are entering a new
   /// #include'd file (when true) or whether we're exiting one because we ran
   /// off the end (when false).
-  void (*FileChangeHandler)(SourceLocation Loc, FileChangeReason Reason,
-                            DirectoryLookup::DirType FileType);
+  FileChangeHandler_t FileChangeHandler;
+  
+  /// IdentHandler - This is called whenever a #ident or #sccs directive is
+  /// found.
+  IdentHandler_t IdentHandler;
   
   enum {
     /// MaxIncludeStackDepth - Maximum depth of #includes.
@@ -234,11 +242,15 @@ public:
   /// EnteringFile indicates whether this is because we are entering a new
   /// #include'd file (when true) or whether we're exiting one because we ran
   /// off the end (when false).
-  void setFileChangeHandler(void (*Handler)(SourceLocation, FileChangeReason,
-                                            DirectoryLookup::DirType)) {
+  void setFileChangeHandler(FileChangeHandler_t Handler) {
     FileChangeHandler = Handler;
   }
-  
+
+  /// setIdentHandler - Set the callback invoked whenever a #ident/#sccs
+  /// directive is found.
+  void setIdentHandler(IdentHandler_t Handler) {
+    IdentHandler = Handler;
+  }
   
   /// getIdentifierInfo - Return information about the specified preprocessor
   /// identifier token.  The version of this method that takes two character
@@ -453,7 +465,8 @@ private:
   /// should side-effect the current preprocessor object so that the next call
   /// to Lex() will return the appropriate token next.
   
-  void HandleUserDiagnosticDirective(LexerToken &Result, bool isWarning);
+  void HandleUserDiagnosticDirective(LexerToken &Tok, bool isWarning);
+  void HandleIdentSCCSDirective(LexerToken &Tok);
   
   // File inclusion.
   void HandleIncludeDirective(LexerToken &Tok,
