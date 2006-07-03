@@ -302,8 +302,8 @@ const FileEntry *Preprocessor::LookupFile(const std::string &Filename,
   // Step #0, unless disabled, check to see if the file is in the #includer's
   // directory.  This search is not done for <> headers.
   if (!isAngled && !FromDir && !NoCurDirSearch) {
-    const FileEntry *CurFE = 
-      SourceMgr.getFileEntryForFileID(CurLexer->getCurFileID());
+    unsigned TheFileID = getCurrentFileLexer()->getCurFileID();
+    const FileEntry *CurFE = SourceMgr.getFileEntryForFileID(TheFileID);
     if (CurFE) {
       // Concatenate the requested file onto the directory.
       // FIXME: Portability.  Should be in sys::Path.
@@ -370,7 +370,7 @@ Lexer *Preprocessor::getCurrentFileLexer() const {
   
   // Look for a stacked lexer.
   for (unsigned i = IncludeMacroStack.size(); i != 0; --i) {
-    Lexer *L = IncludeMacroStack[i].TheLexer;
+    Lexer *L = IncludeMacroStack[i-1].TheLexer;
     if (L && !L->Is_PragmaLexer) // Ignore macro & _Pragma expansions.
       return L;
   }
