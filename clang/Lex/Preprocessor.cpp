@@ -817,14 +817,18 @@ void Preprocessor::ReadMacroName(LexerToken &MacroNameTok) {
   if (MacroNameTok.getKind() == tok::eom)
     return Diag(MacroNameTok, diag::err_pp_missing_macro_name);
   
-  if (MacroNameTok.getIdentifierInfo() == 0) {
+  IdentifierTokenInfo *ITI = MacroNameTok.getIdentifierInfo();
+  if (ITI == 0) {
     Diag(MacroNameTok, diag::err_pp_macro_not_identifier);
     // Fall through on error.
   } else if (0) {
     // FIXME: C++.  Error if defining a C++ named operator.
     
-  } else if (0) {
-    // FIXME: Error if defining "defined" in C99 6.10.8.4.
+  } else if (ITI->getName()[0] == 'd' &&      // defined
+             !strcmp(ITI->getName()+1, "efined")) {
+    // Error if defining "defined": C99 6.10.8.4.  Predefined macros (like
+    // __LINE__) are handled in the undef/define handlers.
+    Diag(MacroNameTok, diag::err_defined_macro_name);
   } else {
     // Okay, we got a good identifier node.  Return it.
     return;
