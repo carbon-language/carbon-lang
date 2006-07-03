@@ -350,7 +350,6 @@ const FileEntry *Preprocessor::LookupFile(const std::string &Filename,
 /// isInPrimaryFile - Return true if we're in the top-level file, not in a
 /// #include.
 bool Preprocessor::isInPrimaryFile() const {
-  unsigned NumLexersFound = 0;
   if (CurLexer && !CurLexer->Is_PragmaLexer)
     return CurLexer->isMainFile();
   
