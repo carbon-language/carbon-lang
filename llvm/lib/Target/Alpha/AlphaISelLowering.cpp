@@ -101,10 +101,6 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   setOperationAction(ISD::FSQRT, MVT::f64, Expand);
   setOperationAction(ISD::FSQRT, MVT::f32, Expand);
   
-  // FIXME: Alpha supports fcopysign natively!?
-  setOperationAction(ISD::FCOPYSIGN, MVT::f64, Expand);
-  setOperationAction(ISD::FCOPYSIGN, MVT::f32, Expand);
-
   setOperationAction(ISD::SETCC, MVT::f32, Promote);
 
   // We don't have line number support yet.
