@@ -288,6 +288,8 @@ bool AlphaAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 					    const char *ExtraCode) {
   if (ExtraCode && ExtraCode[0])
     return true; // Unknown modifier.
+  O << "0(";
   printOperand(MI, OpNo);
+  O << ")";
   return false;
 }
