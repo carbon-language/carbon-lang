@@ -47,7 +47,10 @@ public:
   virtual PragmaNamespace *getIfNamespace() { return 0; }
 };
 
-
+/// PragmaNamespace - This PragmaHandler subdivides the namespace of pragmas,
+/// allowing hierarchical pragmas to be defined.  Common examples of namespaces
+/// are "#pragma GCC", "#pragma STDC", and "#pragma omp", but any namespaces may
+/// be (potentially recursively) defined.
 class PragmaNamespace : public PragmaHandler {
   /// Handlers - This is the list of handlers in this namespace.
   ///
@@ -61,17 +64,7 @@ public:
   /// exists, otherwise return null.  If IgnoreNull is true (the default) then
   /// the null handler isn't returned on failure to match.
   PragmaHandler *FindHandler(const IdentifierTokenInfo *Name,
-                             bool IgnoreNull = true) const {
-    PragmaHandler *NullHandler = 0;
-    for (unsigned i = 0, e = Handlers.size(); i != e; ++i) {
-      if (Handlers[i]->getName() == Name) 
-        return Handlers[i];
-      
-      if (Handlers[i]->getName() == 0)
-        NullHandler = Handlers[i];
-    }
-    return IgnoreNull ? 0 : NullHandler;
-  }
+                             bool IgnoreNull = true) const;
   
   /// AddPragma - Add a pragma to this namespace.
   ///
