@@ -289,8 +289,8 @@ const FileEntry *Preprocessor::LookupFile(const std::string &Filename,
   CurDir = 0;
   
   // If 'Filename' is absolute, check to see if it exists and no searching.
-  // FIXME: this should be a sys::Path interface, this doesn't handle things
-  // like C:\foo.txt right, nor win32 \\network\device\blah.
+  // FIXME: Portability.  This should be a sys::Path interface, this doesn't
+  // handle things like C:\foo.txt right, nor win32 \\network\device\blah.
   if (Filename[0] == '/') {
     // If this was an #include_next "/absolute/file", fail.
     if (FromDir) return 0;
@@ -306,7 +306,7 @@ const FileEntry *Preprocessor::LookupFile(const std::string &Filename,
       SourceMgr.getFileEntryForFileID(CurLexer->getCurFileID());
     if (CurFE) {
       // Concatenate the requested file onto the directory.
-      // FIXME: should be in sys::Path.
+      // FIXME: Portability.  Should be in sys::Path.
       if (const FileEntry *FE = 
             FileMgr.getFile(CurFE->getDir()->getName()+"/"+Filename)) {
         if (CurDirLookup)
@@ -332,9 +332,9 @@ const FileEntry *Preprocessor::LookupFile(const std::string &Filename,
   // Check each directory in sequence to see if it contains this file.
   for (; i != SearchDirs.size(); ++i) {
     // Concatenate the requested file onto the directory.
-    // FIXME: should be in sys::Path.
-    if (const FileEntry *FE = 
-          FileMgr.getFile(SearchDirs[i].getDir()->getName()+"/"+Filename)) {
+    // FIXME: Portability.  Adding file to dir should be in sys::Path.
+    std::string SearchDir = SearchDirs[i].getDir()->getName()+"/"+Filename;
+    if (const FileEntry *FE = FileMgr.getFile(SearchDir)) {
       CurDir = &SearchDirs[i];
       
       // This file is a system header or C++ unfriendly if the dir is.
@@ -820,11 +820,10 @@ void Preprocessor::ReadMacroName(LexerToken &MacroNameTok) {
     Diag(MacroNameTok, diag::err_pp_macro_not_identifier);
     // Fall through on error.
   } else if (0) {
-    // FIXME: Error if defining a C++ named operator.
+    // FIXME: C++.  Error if defining a C++ named operator.
     
   } else if (0) {
-    // FIXME: Error if defining "defined", "__DATE__", and other predef macros
-    // in C99 6.10.8.4.
+    // FIXME: Error if defining "defined" in C99 6.10.8.4.
   } else {
     // Okay, we got a good identifier node.  Return it.
     return;
@@ -1031,7 +1030,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
 /// lexer/preprocessor state, and advances the lexer(s) so that the next token
 /// read is the correct one.
 void Preprocessor::HandleDirective(LexerToken &Result) {
-  // FIXME: TRADITIONAL: # with whitespace before it not recognized by K&R?
+  // FIXME: Traditional: # with whitespace before it not recognized by K&R?
   
   // We just parsed a # character at the start of a line, so we're in directive
   // mode.  Tell the lexer this so any newlines we see will be converted into an
@@ -1288,7 +1287,7 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
   while (Tok.getKind() != tok::eom) {
     MI->AddTokenToBody(Tok);
     
-    // FIXME: See create_iso_definition.
+    // FIXME: Read macro body.  See create_iso_definition.
     
     // Get the next token of the macro.
     LexUnexpandedToken(Tok);
@@ -1297,7 +1296,7 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
   // Finally, if this identifier already had a macro defined for it, verify that
   // the macro bodies are identical and free the old definition.
   if (MacroInfo *OtherMI = MacroNameTok.getIdentifierInfo()->getMacroInfo()) {
-    if (OtherMI->isBuiltinMacro())
+    if (OtherMI->isBuiltinMacro())       // C99 6.10.8.4
       Diag(MacroNameTok, diag::pp_redef_builtin_macro);
     
     
@@ -1331,7 +1330,7 @@ void Preprocessor::HandleUndefDirective(LexerToken &UndefTok) {
   // If the macro is not defined, this is a noop undef, just return.
   if (MI == 0) return;
 
-  if (MI->isBuiltinMacro())
+  if (MI->isBuiltinMacro())       // C99 6.10.8.4
     Diag(MacroNameTok, diag::pp_undef_builtin_macro);
   
 #if 0 // FIXME: implement warn_unused_macros.
