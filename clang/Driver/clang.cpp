@@ -136,12 +136,12 @@ void DiagnosticPrinterSTDERR::HandleDiagnostic(Diagnostic::Level Level,
   
   if (Pos.isValid()) {
     LineNo = SourceMgr.getLineNumber(Pos);
-    FileID  = Pos.getFileID();
+    FileID  = SourceMgr.getLogicalLoc(Pos).getFileID();
     
     // First, if this diagnostic is not in the main file, print out the
     // "included from" lines.
-    if (LastWarningLoc != SourceMgr.getIncludeLoc(Pos.getFileID())) {
-      LastWarningLoc = SourceMgr.getIncludeLoc(Pos.getFileID());
+    if (LastWarningLoc != SourceMgr.getIncludeLoc(FileID)) {
+      LastWarningLoc = SourceMgr.getIncludeLoc(FileID);
       PrintIncludeStack(LastWarningLoc);
     }
   
