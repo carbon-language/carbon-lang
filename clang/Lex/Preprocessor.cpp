@@ -622,8 +622,16 @@ void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok) {
       }
     }
     
-    // FIXME: Escape this filename correctly.
-    std::string FN = '"' + SourceMgr.getSourceName(Loc) + '"';
+    // Escape this filename.  Turn '\' -> '\\' '"' -> '\"'
+    std::string FN = SourceMgr.getSourceName(Loc);
+    for (unsigned i = 0, e = FN.size(); i != e; ++i)
+      if (FN[i] == '\\' || FN[i] == '"') {
+        FN.insert(FN.begin()+i, '\\');
+        ++i; ++e;
+      }
+    
+    // Add quotes.
+    FN = '"' + FN + '"';
     Tok.SetKind(tok::string_literal);
     Tok.SetLength(FN.size());
     Tok.SetLocation(ScratchBuf->getToken(&FN[0], FN.size(), Tok.getLocation()));
