@@ -59,9 +59,21 @@ Lexer::Lexer(const SourceBuffer *File, unsigned fileid, Preprocessor &pp,
   ParsingFilename = false;
 }
 
-//===----------------------------------------------------------------------===//
-// LexerToken implementation.
-//===----------------------------------------------------------------------===//
+/// Stringify - Convert the specified string into a C string, with surrounding
+/// ""'s, and with escaped \ and " characters.
+std::string Lexer::Stringify(const std::string &Str) {
+  std::string Result = Str;
+  for (unsigned i = 0, e = Result.size(); i != e; ++i) {
+    if (Result[i] == '\\' || Result[i] == '"') {
+      Result.insert(Result.begin()+i, '\\');
+      ++i; ++e;
+    }
+  }
+
+  // Add quotes.
+  return '"' + Result + '"';
+}
+
 
 //===----------------------------------------------------------------------===//
 // Character information.

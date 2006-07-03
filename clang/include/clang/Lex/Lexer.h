@@ -121,6 +121,10 @@ public:
   /// offset in the current file.
   SourceLocation getSourceLocation(const char *Loc) const;
   
+  /// Stringify - Convert the specified string into a C string, with surrounding
+  /// ""'s, and with escaped \ and " characters.
+  static std::string Stringify(const std::string &Str);
+  
   //===--------------------------------------------------------------------===//
   // Internal implementation interfaces.
 private:

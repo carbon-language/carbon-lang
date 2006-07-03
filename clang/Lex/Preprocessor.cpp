@@ -624,14 +624,7 @@ void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok) {
     
     // Escape this filename.  Turn '\' -> '\\' '"' -> '\"'
     std::string FN = SourceMgr.getSourceName(Loc);
-    for (unsigned i = 0, e = FN.size(); i != e; ++i)
-      if (FN[i] == '\\' || FN[i] == '"') {
-        FN.insert(FN.begin()+i, '\\');
-        ++i; ++e;
-      }
-    
-    // Add quotes.
-    FN = '"' + FN + '"';
+    FN = Lexer::Stringify(FN);
     Tok.SetKind(tok::string_literal);
     Tok.SetLength(FN.size());
     Tok.SetLocation(ScratchBuf->getToken(&FN[0], FN.size(), Tok.getLocation()));
