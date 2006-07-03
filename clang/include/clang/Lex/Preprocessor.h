@@ -332,8 +332,10 @@ public:
   /// Diag - Forwarding function for diagnostics.  This emits a diagnostic at
   /// the specified LexerToken's location, translating the token's start
   /// position in the current buffer into a SourcePosition object for rendering.
-  void Diag(const LexerToken &Tok, unsigned DiagID, const std::string &Msg="");  
   void Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg="");  
+  void Diag(const LexerToken &Tok, unsigned DiagID, const std::string &Msg="") {
+    Diag(Tok.getLocation(), DiagID, Msg);
+  }
   
   /// getSpelling() - Return the 'spelling' of the Tok token.  The spelling of a
   /// token is the characters used to represent the token in the source file

@@ -139,16 +139,6 @@ void Preprocessor::Diag(SourceLocation Loc, unsigned DiagID,
   
   Diags.Report(Loc, DiagID, Msg);
 }
-void Preprocessor::Diag(const LexerToken &Tok, unsigned DiagID,
-                        const std::string &Msg) {
-  // If we are in a '#if 0' block, don't emit any diagnostics for notes,
-  // warnings or extensions.
-  if (isSkipping() && Diagnostic::isNoteWarningOrExtension(DiagID))
-    return;
-  
-  Diag(Tok.getLocation(), DiagID, Msg);
-}
-
 
 void Preprocessor::DumpToken(const LexerToken &Tok, bool DumpFlags) const {
   std::cerr << tok::getTokenName(Tok.getKind()) << " '"
