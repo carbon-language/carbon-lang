@@ -217,8 +217,7 @@ public:
   }
   
   /// getCharacterData - Return a pointer to the start of the specified location
-  /// in the appropriate SourceBuffer.  This returns null if it cannot be
-  /// computed (e.g. invalid SourceLocation).
+  /// in the appropriate SourceBuffer.
   const char *getCharacterData(SourceLocation SL) const;
   
   /// getColumnNumber - Return the column # for the specified include position.

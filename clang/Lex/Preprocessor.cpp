@@ -214,7 +214,6 @@ std::string Preprocessor::getSpelling(const LexerToken &Tok) const {
   
   // If this token contains nothing interesting, return it directly.
   const char *TokStart = SourceMgr.getCharacterData(Tok.getLocation());
-  assert(TokStart && "Token has invalid location!");
   if (!Tok.needsCleaning())
     return std::string(TokStart, TokStart+Tok.getLength());
   
@@ -247,8 +246,15 @@ unsigned Preprocessor::getSpelling(const LexerToken &Tok,
                                    const char *&Buffer) const {
   assert((int)Tok.getLength() >= 0 && "Token character range is bogus!");
   
+  // If this token is an identifier, just return the string from the identifier
+  // table, which is very quick.
+  if (const IdentifierInfo *II = Tok.getIdentifierInfo()) {
+    Buffer = II->getName();
+    return Tok.getLength();
+  }
+  
+  // Otherwise, compute the start of the token in the input lexer buffer.
   const char *TokStart = SourceMgr.getCharacterData(Tok.getLocation());
-  assert(TokStart && "Token has invalid location!");
 
   // If this token contains nothing interesting, return it directly.
   if (!Tok.needsCleaning()) {

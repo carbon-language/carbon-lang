@@ -128,12 +128,14 @@ SourceLocation SourceManager::getInstantiationLoc(SourceLocation PhysLoc,
 
 
 /// getCharacterData - Return a pointer to the start of the specified location
-/// in the appropriate SourceBuffer.  This returns null if it cannot be
-/// computed (e.g. invalid SourceLocation).
+/// in the appropriate SourceBuffer.
 const char *SourceManager::getCharacterData(SourceLocation SL) const {
-  if (unsigned FileID = SL.getFileID())
-    return getFileInfo(FileID)->Buffer->getBufferStart() + getFilePos(SL);
-  return 0;
+  // Note that this is a hot function in the getSpelling() path, which is
+  // heavily used by -E mode.
+  unsigned FileID = SL.getFileID();
+  assert(FileID && "Invalid source location!");
+  
+  return getFileInfo(FileID)->Buffer->getBufferStart() + getFilePos(SL);
 }
 
 /// getIncludeLoc - Return the location of the #include for the specified
