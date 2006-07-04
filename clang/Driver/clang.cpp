@@ -255,16 +255,22 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   stdc_0_in_system_headers is true (set by target config), and
   (c) we are not in strictly conforming mode, then it has the
   value 0.  (b) and (c) are already checked in cpp_init_builtins.  */
-{
-  case BT_STDC:
+  //case BT_STDC:
     if (cpp_in_system_header (pfile))
       number = 0;
     else
       number = 1;
     break;
-}
 #endif    
+  // FIXME: These should all be defined in the preprocessor according to the
+  // current language configuration.
   DefineBuiltinMacro(Buf, "__STDC__=1");
+  //DefineBuiltinMacro(Buf, "__cplusplus=1");
+  //DefineBuiltinMacro(Buf, "__ASSEMBLER__=1");
+  //DefineBuiltinMacro(Buf, "__STDC_VERSION__=199409L");
+  DefineBuiltinMacro(Buf, "__STDC_VERSION__=199901L");
+  DefineBuiltinMacro(Buf, "__STDC_HOSTED__=1");
+  //DefineBuiltinMacro(Buf, "__OBJC__=1");
   
   // FIXME: This is obviously silly.  It should be more like gcc/c-cppbuiltin.c.
   // Macros predefined by GCC 4.0.1.
@@ -341,7 +347,6 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   DefineBuiltinMacro(Buf, "__SCHAR_MAX__=127");
   DefineBuiltinMacro(Buf, "__SHRT_MAX__=32767");
   DefineBuiltinMacro(Buf, "__SIZE_TYPE__=long unsigned int");
-  DefineBuiltinMacro(Buf, "__STDC_HOSTED__=1");
   DefineBuiltinMacro(Buf, "__UINTMAX_TYPE__=long long unsigned int");
   DefineBuiltinMacro(Buf, "__USER_LABEL_PREFIX__=_");
   DefineBuiltinMacro(Buf, "__VERSION__=\"4.0.1 (Apple Computer, Inc. "
