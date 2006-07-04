@@ -432,11 +432,6 @@ private:
   /// may occur after a #if or #elif directive and return it as a bool.  If the
   /// expression is equivalent to "!defined(X)" return X in IfNDefMacro.
   bool EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro);
-  /// EvaluateValue/EvaluateDirectiveSubExpr - Used to implement
-  /// EvaluateDirectiveExpression, see PPExpressions.cpp.
-  bool EvaluateValue(int &Result, LexerToken &PeekTok);
-  bool EvaluateDirectiveSubExpr(int &LHS, unsigned MinPrec,
-                                LexerToken &PeekTok);
   
   /// RegisterBuiltinPragmas - Install the standard preprocessor pragmas:
   /// #pragma GCC poison/system_header/dependency and #pragma once.
