@@ -17,7 +17,8 @@
 #include "clang/Lex/Pragma.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/CommandLine.h"
-#include <iostream>
+// NOTE: we use stdio because it is empirically much faster than iostreams.
+#include <cstdio>
 using namespace llvm;
 using namespace clang;
 
@@ -34,24 +35,27 @@ static void MoveToLine(unsigned LineNo) {
   // If this line is "close enough" to the original line, just print newlines,
   // otherwise print a #line directive.
   if (LineNo-EModeCurLine < 8) {
-    for (; EModeCurLine != LineNo; ++EModeCurLine)
-      std::cout << "\n";
+    unsigned CurLine = EModeCurLine;
+    //static const char Newlines[] = "\n\n\n\n\n\n\n\n";
+    for (; CurLine != LineNo; ++CurLine)
+      putchar_unlocked('\n');
+    EModeCurLine = CurLine;
   } else {
     if (EmodeEmittedTokensOnThisLine) {
-      std::cout << "\n";
+      putchar_unlocked('\n');
       EmodeEmittedTokensOnThisLine = false;
     }
     
     EModeCurLine = LineNo;
     if (DisableLineMarkers) return;
     
-    std::cout << "# " << LineNo << " " << EModeCurFilename;
+    printf("# %d %s", LineNo, EModeCurFilename.c_str());
     
     if (EmodeFileType == DirectoryLookup::SystemHeaderDir)
-      std::cout << " 3";
+      printf(" 3");
     else if (EmodeFileType == DirectoryLookup::ExternCSystemHeaderDir)
-      std::cout << " 3 4";
-    std::cout << "\n";
+      printf(" 3 4");
+    putchar_unlocked('\n');
   } 
 }
 
@@ -80,37 +84,37 @@ static void HandleFileChange(SourceLocation Loc,
   EmodeFileType = FileType;
   
   if (EmodeEmittedTokensOnThisLine) {
-    std::cout << "\n";
+    putchar_unlocked('\n');
     EmodeEmittedTokensOnThisLine = false;
   }
   
   if (DisableLineMarkers) return;
   
-  std::cout << "# " << EModeCurLine << " " << EModeCurFilename;
+  printf("# %d %s", EModeCurLine, EModeCurFilename.c_str());
   switch (Reason) {
     case Preprocessor::EnterFile:
-      std::cout << " 1";
+      printf(" 1");
       break;
     case Preprocessor::ExitFile:
-      std::cout << " 2";
+      printf(" 2");
       break;
     case Preprocessor::SystemHeaderPragma: break;
     case Preprocessor::RenameFile: break;
   }
   
   if (FileType == DirectoryLookup::SystemHeaderDir)
-    std::cout << " 3";
+    printf(" 3");
   else if (FileType == DirectoryLookup::ExternCSystemHeaderDir)
-    std::cout << " 3 4";
+    printf(" 3 4");
   
-  std::cout << "\n";
+  putchar_unlocked('\n');
 }
 
 static void HandleIdent(SourceLocation Loc, const std::string &Val) {
   SourceManager &SourceMgr = EModePP->getSourceManager();
   MoveToLine(SourceMgr.getLineNumber(Loc));
   
-  std::cout << "#ident " << Val;
+  printf("#ident %s", Val.c_str());
   EmodeEmittedTokensOnThisLine = true;
 }
 
@@ -137,11 +141,11 @@ static void HandleFirstTokOnLine(LexerToken &Tok, Preprocessor &PP) {
   // is not handled as a #define next time through the preprocessor if in
   // -fpreprocessed mode.
   if (ColNo <= 1 && Tok.getKind() == tok::hash)
-    std::cout << ' ';
+    putchar_unlocked(' ');
   
   // Otherwise, indent the appropriate number of spaces.
   for (; ColNo > 1; --ColNo)
-    std::cout << ' ';
+    putchar_unlocked(' ');
 }
 
 namespace {
@@ -152,16 +156,16 @@ struct UnknownPragmaHandler : public PragmaHandler {
     // Figure out what line we went to and insert the appropriate number of
     // newline characters.
     MoveToLine(PP.getSourceManager().getLineNumber(PragmaTok.getLocation()));
-    std::cout << Prefix;
+    printf(Prefix);
     
     // Read and print all of the pragma tokens.
     while (PragmaTok.getKind() != tok::eom) {
       if (PragmaTok.hasLeadingSpace())
-        std::cout << ' ';
-      std::cout << PP.getSpelling(PragmaTok);
+        putchar_unlocked(' ');
+      printf("%s", PP.getSpelling(PragmaTok).c_str());
       PP.LexUnexpandedToken(PragmaTok);
     }
-    std::cout << "\n";
+    putchar_unlocked('\n');
   }
 };
 } // end anonymous namespace
@@ -190,18 +194,19 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP) {
     if (Tok.isAtStartOfLine()) {
       HandleFirstTokOnLine(Tok, PP);
     } else if (Tok.hasLeadingSpace()) {
-      std::cout << ' ';
+      putchar_unlocked(' ');
     }
     
     if (Tok.getLength() < 256) {
       unsigned Len = PP.getSpelling(Tok, Buffer);
       Buffer[Len] = 0;
-      std::cout << Buffer;
+      fwrite(Buffer, Len, 1, stdout);
     } else {
-      std::cout << PP.getSpelling(Tok);
+      std::string S = PP.getSpelling(Tok);
+      fwrite(&S[0], S.size(), 1, stdout);
     }
     EmodeEmittedTokensOnThisLine = true;
   } while (Tok.getKind() != tok::eof);
-  std::cout << "\n";
+  putchar_unlocked('\n');
 }
 
