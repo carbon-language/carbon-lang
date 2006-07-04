@@ -218,10 +218,10 @@ std::string Preprocessor::getSpelling(const LexerToken &Tok) const {
   if (!Tok.needsCleaning())
     return std::string(TokStart, TokStart+Tok.getLength());
   
-  // Otherwise, hard case, relex the characters into the string.
   std::string Result;
   Result.reserve(Tok.getLength());
   
+  // Otherwise, hard case, relex the characters into the string.
   for (const char *Ptr = TokStart, *End = TokStart+Tok.getLength();
        Ptr != End; ) {
     unsigned CharSize;
@@ -237,7 +237,14 @@ std::string Preprocessor::getSpelling(const LexerToken &Tok) const {
 /// preallocated buffer, instead of as an std::string.  The caller is required
 /// to allocate enough space for the token, which is guaranteed to be at least
 /// Tok.getLength() bytes long.  The actual length of the token is returned.
-unsigned Preprocessor::getSpelling(const LexerToken &Tok, char *Buffer) const {
+///
+/// Note that this method may do two possible things: it may either fill in
+/// the buffer specified with characters, or it may *change the input pointer*
+/// to point to a constant buffer with the data already in it (avoiding a
+/// copy).  The caller is not allowed to modify the returned buffer pointer
+/// if an internal buffer is returned.
+unsigned Preprocessor::getSpelling(const LexerToken &Tok,
+                                   const char *&Buffer) const {
   assert((int)Tok.getLength() >= 0 && "Token character range is bogus!");
   
   const char *TokStart = SourceMgr.getCharacterData(Tok.getLocation());
@@ -245,15 +252,11 @@ unsigned Preprocessor::getSpelling(const LexerToken &Tok, char *Buffer) const {
 
   // If this token contains nothing interesting, return it directly.
   if (!Tok.needsCleaning()) {
-    unsigned Size = Tok.getLength();
-    memcpy(Buffer, TokStart, Size);
-    return Size;
+    Buffer = TokStart;
+    return Tok.getLength();
   }
   // Otherwise, hard case, relex the characters into the string.
-  std::string Result;
-  Result.reserve(Tok.getLength());
-  
-  char *OutBuf = Buffer;
+  char *OutBuf = const_cast<char*>(Buffer);
   for (const char *Ptr = TokStart, *End = TokStart+Tok.getLength();
        Ptr != End; ) {
     unsigned CharSize;

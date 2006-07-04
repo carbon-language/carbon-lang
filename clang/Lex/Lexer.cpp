@@ -360,7 +360,7 @@ FinishIdentifier:
       II = PP.getIdentifierInfo(IdStart, IdEnd);
     } else {
       // Cleaning needed, alloca a buffer, clean into it, then use the buffer.
-      char *TmpBuf = (char*)alloca(Result.getLength());
+      const char *TmpBuf = (char*)alloca(Result.getLength());
       unsigned Size = PP.getSpelling(Result, TmpBuf);
       II = PP.getIdentifierInfo(TmpBuf, TmpBuf+Size);
     }

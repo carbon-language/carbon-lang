@@ -365,7 +365,13 @@ public:
   /// preallocated buffer, instead of as an std::string.  The caller is required
   /// to allocate enough space for the token, which is guaranteed to be at least
   /// Tok.getLength() bytes long.  The length of the actual result is returned.
-  unsigned getSpelling(const LexerToken &Tok, char *Buffer) const;
+  ///
+  /// Note that this method may do two possible things: it may either fill in
+  /// the buffer specified with characters, or it may *change the input pointer*
+  /// to point to a constant buffer with the data already in it (avoiding a
+  /// copy).  The caller is not allowed to modify the returned buffer pointer
+  /// if an internal buffer is returned.
+  unsigned getSpelling(const LexerToken &Tok, const char *&Buffer) const;
   
   /// DumpToken - Print the token to stderr, used for debugging.
   ///

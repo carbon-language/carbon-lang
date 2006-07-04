@@ -297,9 +297,9 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP) {
     }
     
     if (Tok.getLength() < 256) {
-      unsigned Len = PP.getSpelling(Tok, Buffer);
-      Buffer[Len] = 0;
-      OutputString(Buffer, Len);
+      const char *TokPtr = Buffer;
+      unsigned Len = PP.getSpelling(Tok, TokPtr);
+      OutputString(TokPtr, Len);
     } else {
       std::string S = PP.getSpelling(Tok);
       OutputString(&S[0], S.size());
