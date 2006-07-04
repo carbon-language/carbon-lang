@@ -206,7 +206,7 @@ unsigned SourceManager::getLineNumber(SourceLocation Loc) {
     while (1) {
       // Skip over the contents of the line.
       // TODO: Vectorize this?  This is very performance sensitive for programs
-      // with lots of diagnostics.
+      // with lots of diagnostics and in -E mode.
       const unsigned char *NextBuf = (const unsigned char *)Buf;
       while (*NextBuf != '\n' && *NextBuf != '\r' && *NextBuf != '\0')
         ++NextBuf;
