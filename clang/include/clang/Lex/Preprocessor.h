@@ -482,7 +482,8 @@ private:
   // HandleUnassertDirective(LexerToken &Tok);
   
   // Conditional Inclusion.
-  void HandleIfdefDirective(LexerToken &Tok, bool isIfndef);
+  void HandleIfdefDirective(LexerToken &Tok, bool isIfndef,
+                            bool ReadAnyTokensBeforeDirective);
   void HandleIfDirective(LexerToken &Tok);
   void HandleEndifDirective(LexerToken &Tok);
   void HandleElseDirective(LexerToken &Tok);

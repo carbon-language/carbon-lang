@@ -979,6 +979,8 @@ LexNextToken:
     goto LexNextToken;   // GCC isn't tail call eliminating.
 
   case 'L':
+    // Notify MIOpt that we read a non-whitespace/non-comment token.
+    MIOpt.ReadToken();
     Char = getCharAndSize(CurPtr, SizeTmp);
 
     // Wide string literal.
@@ -1000,20 +1002,28 @@ LexNextToken:
   case 'o': case 'p': case 'q': case 'r': case 's': case 't': case 'u':
   case 'v': case 'w': case 'x': case 'y': case 'z':
   case '_':
+    // Notify MIOpt that we read a non-whitespace/non-comment token.
+    MIOpt.ReadToken();
     return LexIdentifier(Result, CurPtr);
     
   // C99 6.4.4.1: Integer Constants.
   // C99 6.4.4.2: Floating Constants.
   case '0': case '1': case '2': case '3': case '4':
   case '5': case '6': case '7': case '8': case '9':
+    // Notify MIOpt that we read a non-whitespace/non-comment token.
+    MIOpt.ReadToken();
     return LexNumericConstant(Result, CurPtr);
     
   // C99 6.4.4: Character Constants.
   case '\'':
+    // Notify MIOpt that we read a non-whitespace/non-comment token.
+    MIOpt.ReadToken();
     return LexCharConstant(Result, CurPtr);
 
   // C99 6.4.5: String Literals.
   case '"':
+    // Notify MIOpt that we read a non-whitespace/non-comment token.
+    MIOpt.ReadToken();
     return LexStringLiteral(Result, CurPtr);
 
   // C99 6.4.6: Punctuators.
@@ -1041,6 +1051,9 @@ LexNextToken:
   case '.':
     Char = getCharAndSize(CurPtr, SizeTmp);
     if (Char >= '0' && Char <= '9') {
+      // Notify MIOpt that we read a non-whitespace/non-comment token.
+      MIOpt.ReadToken();
+
       return LexNumericConstant(Result, ConsumeChar(CurPtr, SizeTmp, Result));
     } else if (Features.CPlusPlus && Char == '*') {
       Result.SetKind(tok::periodstar);
@@ -1333,6 +1346,8 @@ LexNextToken:
       break;
     } else if (CurPtr[-1] == '$' && Features.DollarIdents) {// $ in identifiers.
       Diag(CurPtr-1, diag::ext_dollar_in_identifier);
+      // Notify MIOpt that we read a non-whitespace/non-comment token.
+      MIOpt.ReadToken();
       return LexIdentifier(Result, CurPtr);
     }
     
@@ -1341,6 +1356,9 @@ LexNextToken:
     goto LexNextToken;   // GCC isn't tail call eliminating.
   }
   
+  // Notify MIOpt that we read a non-whitespace/non-comment token.
+  MIOpt.ReadToken();
+
   // Update the location of token as well as BufferPtr.
   FormTokenWithChars(Result, CurPtr);
 }

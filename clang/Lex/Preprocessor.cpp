@@ -739,6 +739,14 @@ void Preprocessor::HandleEndOfFile(LexerToken &Result, bool isEndOfMacro) {
     return;
   }
   
+  // See if this file had a controlling macro.
+  if (CurLexer) {  // Not ending a macro...
+    if (const IdentifierTokenInfo *ControllingMacro = 
+          CurLexer->MIOpt.GetControllingMacroAtEndOfFile()) {
+      ;
+    }
+  }
+  
   // If this is a #include'd file, pop it off the include stack and continue
   // lexing the #includer file.
   if (!IncludeMacroStack.empty()) {
@@ -1049,6 +1057,11 @@ void Preprocessor::HandleDirective(LexerToken &Result) {
   
   ++NumDirectives;
   
+  // We are about to read a token.  For the multiple-include optimization FA to
+  // work, we have to remember if we had read any tokens *before* this 
+  // pp-directive.
+  bool ReadAnyTokensBeforeDirective = CurLexer->MIOpt.getHasReadAnyTokensVal();
+  
   // Read the next token, the directive flavor.
   LexUnexpandedToken(Result);
   
@@ -1059,6 +1072,7 @@ void Preprocessor::HandleDirective(LexerToken &Result) {
 
 #if 0
   case tok::numeric_constant:
+    MIOpt.ReadDirective();
     // FIXME: implement # 7 line numbers!
     break;
 #endif
@@ -1073,7 +1087,7 @@ void Preprocessor::HandleDirective(LexerToken &Result) {
     switch (Result.getIdentifierInfo()->getNameLength()) {
     case 4:
       if (Directive[0] == 'l' && !strcmp(Directive, "line"))
-        ;  // FIXME: implement #line
+        CurLexer->MIOpt.ReadDirective();  // FIXME: implement #line
       if (Directive[0] == 'e' && !strcmp(Directive, "elif"))
         return HandleElifDirective(Result);
       if (Directive[0] == 's' && !strcmp(Directive, "sccs"))
@@ -1083,7 +1097,7 @@ void Preprocessor::HandleDirective(LexerToken &Result) {
       if (Directive[0] == 'e' && !strcmp(Directive, "endif"))
         return HandleEndifDirective(Result);
       if (Directive[0] == 'i' && !strcmp(Directive, "ifdef"))
-        return HandleIfdefDirective(Result, false);
+        return HandleIfdefDirective(Result, false, true/*not valid for miopt*/);
       if (Directive[0] == 'u' && !strcmp(Directive, "undef"))
         return HandleUndefDirective(Result);
       if (Directive[0] == 'e' && !strcmp(Directive, "error"))
@@ -1095,7 +1109,7 @@ void Preprocessor::HandleDirective(LexerToken &Result) {
       if (Directive[0] == 'd' && !strcmp(Directive, "define"))
         return HandleDefineDirective(Result);
       if (Directive[0] == 'i' && !strcmp(Directive, "ifndef"))
-        return HandleIfdefDirective(Result, true);
+        return HandleIfdefDirective(Result, true, ReadAnyTokensBeforeDirective);
       if (Directive[0] == 'i' && !strcmp(Directive, "import"))
         return HandleImportDirective(Result);
       if (Directive[0] == 'p' && !strcmp(Directive, "pragma"))
@@ -1128,9 +1142,7 @@ void Preprocessor::HandleDirective(LexerToken &Result) {
   Diag(Result, diag::err_pp_invalid_directive);
   
   // Read the rest of the PP line.
-  do {
-    Lex(Result);
-  } while (Result.getKind() != tok::eom);
+  DiscardUntilEndOfDirective();
   
   // Okay, we're done parsing the directive.
 }
@@ -1151,8 +1163,13 @@ void Preprocessor::HandleUserDiagnosticDirective(LexerToken &Tok,
 /// HandleIdentSCCSDirective - Handle a #ident/#sccs directive.
 ///
 void Preprocessor::HandleIdentSCCSDirective(LexerToken &Tok) {
+  // Inform MIOpt that we found a side-effect of parsing this file.
+  CurLexer->MIOpt.ReadDirective();
+  
+  // Yes, this directive is an extension.
   Diag(Tok, diag::ext_pp_ident_directive);
   
+  // Read the string argument.
   LexerToken StrTok;
   Lex(StrTok);
   
@@ -1179,6 +1196,10 @@ void Preprocessor::HandleIncludeDirective(LexerToken &IncludeTok,
                                           const DirectoryLookup *LookupFrom,
                                           bool isImport) {
   ++NumIncluded;
+
+  // Inform MIOpt that we found a side-effect of parsing this file.
+  CurLexer->MIOpt.ReadDirective();
+
   LexerToken FilenameTok;
   std::string Filename = CurLexer->LexIncludeFilename(FilenameTok);
   
@@ -1225,8 +1246,7 @@ void Preprocessor::HandleIncludeDirective(LexerToken &IncludeTok,
   }
 
   // Look up the file, create a File ID for it.
-  unsigned FileID = 
-    SourceMgr.createFileID(File, FilenameTok.getLocation());
+  unsigned FileID = SourceMgr.createFileID(File, FilenameTok.getLocation());
   if (FileID == 0)
     return Diag(FilenameTok, diag::err_pp_file_not_found);
 
@@ -1276,6 +1296,10 @@ void Preprocessor::HandleImportDirective(LexerToken &ImportTok) {
 ///
 void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
   ++NumDefined;
+
+  // Inform MIOpt that we found a side-effect of parsing this file.
+  CurLexer->MIOpt.ReadDirective();
+
   LexerToken MacroNameTok;
   ReadMacroName(MacroNameTok, true);
   
@@ -1345,6 +1369,10 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
 ///
 void Preprocessor::HandleUndefDirective(LexerToken &UndefTok) {
   ++NumUndefined;
+
+  // Inform MIOpt that we found a side-effect of parsing this file.
+  CurLexer->MIOpt.ReadDirective();
+
   LexerToken MacroNameTok;
   ReadMacroName(MacroNameTok, true);
   
@@ -1375,12 +1403,15 @@ void Preprocessor::HandleUndefDirective(LexerToken &UndefTok) {
 //===----------------------------------------------------------------------===//
 
 /// HandleIfdefDirective - Implements the #ifdef/#ifndef directive.  isIfndef is
-/// true when this is a #ifndef directive.
+/// true when this is a #ifndef directive.  ReadAnyTokensBeforeDirective is true
+/// if any tokens have been returned or pp-directives activated before this
+/// #ifndef has been lexed.
 ///
-void Preprocessor::HandleIfdefDirective(LexerToken &Result, bool isIfndef) {
+void Preprocessor::HandleIfdefDirective(LexerToken &Result, bool isIfndef,
+                                        bool ReadAnyTokensBeforeDirective) {
   ++NumIf;
   LexerToken DirectiveTok = Result;
-  
+
   LexerToken MacroNameTok;
   ReadMacroName(MacroNameTok);
   
@@ -1389,7 +1420,14 @@ void Preprocessor::HandleIfdefDirective(LexerToken &Result, bool isIfndef) {
     return;
   
   // Check to see if this is the last token on the #if[n]def line.
-  CheckEndOfDirective("#ifdef");
+  CheckEndOfDirective(isIfndef ? "#ifndef" : "#ifdef");
+  
+  // If the start of a top-level #ifdef, inform MIOpt.
+  if (!ReadAnyTokensBeforeDirective &&
+      CurLexer->getConditionalStackDepth() == 0) {
+    assert(isIfndef && "#ifdef shouldn't reach here");
+    CurLexer->MIOpt.EnterTopLevelIFNDEF(MacroNameTok.getIdentifierInfo());
+  }
   
   MacroInfo *MI = MacroNameTok.getIdentifierInfo()->getMacroInfo();
 
@@ -1413,6 +1451,11 @@ void Preprocessor::HandleIfdefDirective(LexerToken &Result, bool isIfndef) {
 ///
 void Preprocessor::HandleIfDirective(LexerToken &IfToken) {
   ++NumIf;
+  
+  // FIXME: Detect "#if !defined(X)" for the MIOpt.
+  CurLexer->MIOpt.ReadDirective();
+
+  // Parse and evaluation the conditional expression.
   bool ConditionalTrue = EvaluateDirectiveExpression();
   
   // Should we include the stuff contained by this directive?
@@ -1431,6 +1474,7 @@ void Preprocessor::HandleIfDirective(LexerToken &IfToken) {
 ///
 void Preprocessor::HandleEndifDirective(LexerToken &EndifToken) {
   ++NumEndif;
+  
   // Check that this is the whole directive.
   CheckEndOfDirective("#endif");
   
@@ -1440,6 +1484,10 @@ void Preprocessor::HandleEndifDirective(LexerToken &EndifToken) {
     return Diag(EndifToken, diag::err_pp_endif_without_if);
   }
   
+  // If this the end of a top-level #endif, inform MIOpt.
+  if (CurLexer->getConditionalStackDepth() == 0)
+    CurLexer->MIOpt.ExitTopLevelConditional();
+  
   assert(!CondInfo.WasSkipping && !isSkipping() &&
          "This code should only be reachable in the non-skipping case!");
 }
@@ -1447,12 +1495,17 @@ void Preprocessor::HandleEndifDirective(LexerToken &EndifToken) {
 
 void Preprocessor::HandleElseDirective(LexerToken &Result) {
   ++NumElse;
+  
   // #else directive in a non-skipping conditional... start skipping.
   CheckEndOfDirective("#else");
   
   PPConditionalInfo CI;
   if (CurLexer->popConditionalLevel(CI))
     return Diag(Result, diag::pp_err_else_without_if);
+  
+  // If this is a top-level #else, inform the MIOpt.
+  if (CurLexer->getConditionalStackDepth() == 0)
+    CurLexer->MIOpt.FoundTopLevelElse();
 
   // If this is a #else with a #else before it, report the error.
   if (CI.FoundElse) Diag(Result, diag::pp_err_else_after_else);
@@ -1465,6 +1518,7 @@ void Preprocessor::HandleElseDirective(LexerToken &Result) {
 
 void Preprocessor::HandleElifDirective(LexerToken &ElifToken) {
   ++NumElse;
+  
   // #elif directive in a non-skipping conditional... start skipping.
   // We don't care what the condition is, because we will always skip it (since
   // the block immediately before it was included).
@@ -1473,6 +1527,10 @@ void Preprocessor::HandleElifDirective(LexerToken &ElifToken) {
   PPConditionalInfo CI;
   if (CurLexer->popConditionalLevel(CI))
     return Diag(ElifToken, diag::pp_err_elif_without_if);
+  
+  // If this is a top-level #elif, inform the MIOpt.
+  if (CurLexer->getConditionalStackDepth() == 0)
+    CurLexer->MIOpt.FoundTopLevelElse();
   
   // If this is a #elif with a #else before it, report the error.
   if (CI.FoundElse) Diag(ElifToken, diag::pp_err_elif_after_else);

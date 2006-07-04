@@ -74,6 +74,9 @@ void PragmaNamespace::HandlePragma(Preprocessor &PP, LexerToken &Tok) {
 void Preprocessor::HandlePragmaDirective() {
   ++NumPragma;
   
+  // Inform MIOpt that we found a side-effect of parsing this file.
+  CurLexer->MIOpt.ReadDirective();
+  
   // Invoke the first level of pragma handlers which reads the namespace id.
   LexerToken Tok;
   PragmaHandlers->HandlePragma(*this, Tok);

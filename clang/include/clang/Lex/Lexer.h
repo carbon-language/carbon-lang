@@ -15,6 +15,7 @@
 #define LLVM_CLANG_LEXER_H
 
 #include "clang/Lex/LexerToken.h"
+#include "clang/Lex/MultipleIncludeOpt.h"
 #include <string>
 #include <vector>
 
@@ -66,7 +67,11 @@ class Lexer {
   bool ParsingFilename;          // True after #include: turn <xx> into string.
   
   // Context that changes as the file is lexed.
-    
+  
+  /// MIOpt - This is a state machine that detects the #ifndef-wrapping a file 
+  /// idiom for the multiple-include optimization.
+  MultipleIncludeOpt MIOpt;
+  
   /// ConditionalStack - Information about the set of #if/#ifdef/#ifndef blocks
   /// we are currently in.
   std::vector<PPConditionalInfo> ConditionalStack;
@@ -114,7 +119,8 @@ public:
       IsAtStartOfLine = false;
     }
    
-    // Get a token.
+    // Get a token.  Note that this may delete the current lexer if the end of
+    // file is reached.
     LexTokenInternal(Result);
   }
   
