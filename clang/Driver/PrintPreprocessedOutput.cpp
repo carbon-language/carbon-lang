@@ -285,11 +285,7 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP) {
   do {
     PP.Lex(Tok);
     
-    // If this token is at the start of a line.  Emit the \n and indentation.
-    // FIXME: this shouldn't use the isAtStartOfLine flag.  This should use a
-    // "newline callback" from the lexer.
-    // FIXME: For some tests, this fails just because there is no col# info from
-    // macro expansions!
+    // If this token is at the start of a line, emit newlines if needed.
     if (Tok.isAtStartOfLine()) {
       HandleFirstTokOnLine(Tok, PP);
     } else if (Tok.hasLeadingSpace()) {
