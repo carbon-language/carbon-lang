@@ -71,6 +71,7 @@ static void HandleFileChange(SourceLocation Loc,
 
   // Unless we are exiting a #include, make sure to skip ahead to the line the
   // #include directive was at.
+  SourceManager &SourceMgr = EModePP->getSourceManager();
   if (Reason == Preprocessor::EnterFile) {
     MoveToLine(SourceMgr.getIncludeLoc(Loc.getFileID()));
   } else if (Reason == Preprocessor::SystemHeaderPragma) {
@@ -81,7 +82,6 @@ static void HandleFileChange(SourceLocation Loc,
     // strange behavior.
   }
   
-  SourceManager &SourceMgr = EModePP->getSourceManager();
   EModeCurLine = SourceMgr.getLineNumber(Loc);
   EModeCurFilename = Lexer::Stringify(SourceMgr.getSourceName(Loc));
   EmodeFileType = FileType;
