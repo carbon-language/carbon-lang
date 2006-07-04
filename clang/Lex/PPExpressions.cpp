@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file implements the Preprocessor::EvaluateDirectiveExpression method.
+// This file implements the Preprocessor::EvaluateDirectiveExpression method,
+// which parses and evaluates integer constant expressions for #if directives.
 //
 //===----------------------------------------------------------------------===//
 //
@@ -26,8 +27,8 @@ using namespace llvm;
 using namespace clang;
 
 /// EvaluateDirectiveExpression - Evaluate an integer constant expression that
-/// may occur after a #if or #elif directive.  If the
-/// expression is equivalent to "!defined(X)" return X in IfNDefMacro.
+/// may occur after a #if or #elif directive.  If the expression is equivalent
+/// to "!defined(X)" return X in IfNDefMacro.
 bool Preprocessor::
 EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro) {
   // Peek ahead one token.
@@ -35,9 +36,24 @@ EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro) {
   Lex(Tok);
 
   int ResVal = 0;
-  if (EvaluateValue(ResVal, Tok) ||
-      EvaluateDirectiveSubExpr(ResVal, 1, Tok)) {
-    // Skip the rest of the macro line.
+  if (EvaluateValue(ResVal, Tok)) {
+    // Parse error, skip the rest of the macro line.
+    if (Tok.getKind() != tok::eom)
+      DiscardUntilEndOfDirective();
+    return false;
+  }
+  
+  // If we are at the end of the expression after just parsing a value, there
+  // must be no (unparenthesized) binary operators involved, so we can exit
+  // directly.
+  if (Tok.getKind() == tok::eom) {
+    return ResVal != 0;
+  }
+  
+  // Otherwise, we must have a binary operator (e.g. "#if 1 < 2"), so parse the
+  // operator and the stuff after it.
+  if (EvaluateDirectiveSubExpr(ResVal, 1, Tok)) {
+    // Parse error, skip the rest of the macro line.
     if (Tok.getKind() != tok::eom)
       DiscardUntilEndOfDirective();
     return false;
