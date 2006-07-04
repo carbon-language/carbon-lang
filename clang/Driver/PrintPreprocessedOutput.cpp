@@ -31,6 +31,11 @@ static Preprocessor *EModePP;
 static bool EmodeEmittedTokensOnThisLine;
 static DirectoryLookup::DirType EmodeFileType =DirectoryLookup::NormalHeaderDir;
 
+
+
+/// MoveToLine - Move the output to the source line specified by the location
+/// object.  We can do this by emitting some number of \n's, or be emitting a
+/// #line directive.
 static void MoveToLine(SourceLocation Loc) {
   if (DisableLineMarkers) return;
 
@@ -113,6 +118,8 @@ static void HandleFileChange(SourceLocation Loc,
   putchar_unlocked('\n');
 }
 
+/// HandleIdent - Handle #ident directives when read by the preprocessor.
+///
 static void HandleIdent(SourceLocation Loc, const std::string &Val) {
   MoveToLine(Loc);
   
@@ -169,6 +176,7 @@ struct UnknownPragmaHandler : public PragmaHandler {
 } // end anonymous namespace
 
 /// DoPrintPreprocessedInput - This implements -E mode.
+///
 void clang::DoPrintPreprocessedInput(Preprocessor &PP) {
   LexerToken Tok;
   char Buffer[256];
