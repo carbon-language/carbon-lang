@@ -31,7 +31,11 @@ static Preprocessor *EModePP;
 static bool EmodeEmittedTokensOnThisLine;
 static DirectoryLookup::DirType EmodeFileType =DirectoryLookup::NormalHeaderDir;
 
-static void MoveToLine(unsigned LineNo) {
+static void MoveToLine(SourceLocation Loc) {
+  if (DisableLineMarkers) return;
+
+  unsigned LineNo = EModePP->getSourceManager().getLineNumber(Loc);
+  
   // If this line is "close enough" to the original line, just print newlines,
   // otherwise print a #line directive.
   if (LineNo-EModeCurLine < 8) {
@@ -66,8 +70,6 @@ static void HandleFileChange(SourceLocation Loc,
   SourceManager &SourceMgr = EModePP->getSourceManager();
   
   if (DisableLineMarkers) {
-    EModeCurLine = SourceMgr.getLineNumber(Loc);
-    EModeCurFilename = Lexer::Stringify(SourceMgr.getSourceName(Loc));
     EmodeFileType = FileType;
     return;
   }
@@ -75,10 +77,9 @@ static void HandleFileChange(SourceLocation Loc,
   // Unless we are exiting a #include, make sure to skip ahead to the line the
   // #include directive was at.
   if (Reason == Preprocessor::EnterFile) {
-    SourceLocation IncludeLoc = SourceMgr.getIncludeLoc(Loc.getFileID());
-    MoveToLine(SourceMgr.getLineNumber(IncludeLoc));
+    MoveToLine(SourceMgr.getIncludeLoc(Loc.getFileID()));
   } else if (Reason == Preprocessor::SystemHeaderPragma) {
-    MoveToLine(SourceMgr.getLineNumber(Loc));
+    MoveToLine(Loc);
     
     // TODO GCC emits the # directive for this directive on the line AFTER the
     // directive and emits a bunch of spaces that aren't needed.  Emulate this
@@ -98,14 +99,14 @@ static void HandleFileChange(SourceLocation Loc,
   
   printf("# %d %s", EModeCurLine, EModeCurFilename.c_str());
   switch (Reason) {
-    case Preprocessor::EnterFile:
-      printf(" 1");
-      break;
-    case Preprocessor::ExitFile:
-      printf(" 2");
-      break;
-    case Preprocessor::SystemHeaderPragma: break;
-    case Preprocessor::RenameFile: break;
+  case Preprocessor::EnterFile:
+    printf(" 1");
+    break;
+  case Preprocessor::ExitFile:
+    printf(" 2");
+    break;
+  case Preprocessor::SystemHeaderPragma: break;
+  case Preprocessor::RenameFile: break;
   }
   
   if (FileType == DirectoryLookup::SystemHeaderDir)
@@ -117,8 +118,7 @@ static void HandleFileChange(SourceLocation Loc,
 }
 
 static void HandleIdent(SourceLocation Loc, const std::string &Val) {
-  SourceManager &SourceMgr = EModePP->getSourceManager();
-  MoveToLine(SourceMgr.getLineNumber(Loc));
+  MoveToLine(Loc);
   
   printf("#ident %s", Val.c_str());
   EmodeEmittedTokensOnThisLine = true;
@@ -129,11 +129,7 @@ static void HandleIdent(SourceLocation Loc, const std::string &Val) {
 static void HandleFirstTokOnLine(LexerToken &Tok, Preprocessor &PP) {
   // Figure out what line we went to and insert the appropriate number of
   // newline characters.
-  unsigned LineNo = PP.getSourceManager().getLineNumber(Tok.getLocation());
-  
-  // Move to the specified line.
-  MoveToLine(LineNo);
-  
+  MoveToLine(Tok.getLocation());
   
   // Print out space characters so that the first token on a line is
   // indented for easy reading.
@@ -161,7 +157,7 @@ struct UnknownPragmaHandler : public PragmaHandler {
   virtual void HandlePragma(Preprocessor &PP, LexerToken &PragmaTok) {
     // Figure out what line we went to and insert the appropriate number of
     // newline characters.
-    MoveToLine(PP.getSourceManager().getLineNumber(PragmaTok.getLocation()));
+    MoveToLine(PragmaTok.getLocation());
     printf(Prefix);
     
     // Read and print all of the pragma tokens.
