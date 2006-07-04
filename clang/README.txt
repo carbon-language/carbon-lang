@@ -43,9 +43,9 @@ Lexer:
  * -fpreprocessed mode.
 
 Preprocessor:
- * #line / #file directives
- * Detection of "atomic" headers (#ifndef/#define).
  * Function-style #define & macro expansion
+ * #line / #file directives
+ * Detection of "atomic" headers: #if !defined.
  * -C output mode in -E mode.
 
 Traditional Preprocessor:
