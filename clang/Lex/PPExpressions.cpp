@@ -29,17 +29,41 @@ using namespace clang;
 static bool EvaluateDirectiveSubExpr(int &LHS, unsigned MinPrec,
                                      LexerToken &PeekTok, Preprocessor &PP);
 
+/// DefinedTracker - This struct is used while parsing expressions to keep track
+/// of whether !defined(X) has been seen.
+///
+/// With this simple scheme, we handle the basic forms:
+///    !defined(X)   and !defined X
+/// but we also trivially handle (silly) stuff like:
+///    !!!defined(X) and +!defined(X) and !+!+!defined(X) and !(defined(X)).
+struct DefinedTracker {
+  /// Each time a Value is evaluated, it returns information about whether the
+  /// parsed value is of the form defined(X), !defined(X) or is something else.
+  enum TrackerState {
+    DefinedMacro,        // defined(X)
+    NotDefinedMacro,     // !defined(X)
+    Unknown              // Something else.
+  } State;
+  /// TheMacro - When the state is DefinedMacro or NotDefinedMacro, this
+  /// indicates the macro that was checked.
+  IdentifierInfo *TheMacro;
+};
+
+
 
 /// EvaluateValue - Evaluate the token PeekTok (and any others needed) and
 /// return the computed value in Result.  Return true if there was an error
-/// parsing.
-static bool EvaluateValue(int &Result, LexerToken &PeekTok, Preprocessor &PP) {
+/// parsing.  This function also returns information about the form of the
+/// expression in DT.  See above for information on what DT means.
+static bool EvaluateValue(int &Result, LexerToken &PeekTok, DefinedTracker &DT,
+                          Preprocessor &PP) {
   Result = 0;
+  DT.State = DefinedTracker::Unknown;
   
   // If this token's spelling is a pp-identifier, check to see if it is
   // 'defined' or if it is a macro.  Note that we check here because many
   // keywords are pp-identifiers, so we can't check the kind.
-  if (const IdentifierInfo *II = PeekTok.getIdentifierInfo()) {
+  if (IdentifierInfo *II = PeekTok.getIdentifierInfo()) {
     // If this identifier isn't 'defined' and it wasn't macro expanded, it turns
     // into a simple 0.
     if (strcmp(II->getName(), "defined")) {
@@ -85,6 +109,10 @@ static bool EvaluateValue(int &Result, LexerToken &PeekTok, Preprocessor &PP) {
       // Consume the ).
       PP.Lex(PeekTok);
     }
+    
+    // Success, remember that we saw defined(X).
+    DT.State = DefinedTracker::DefinedMacro;
+    DT.TheMacro = II;
     return false;
   }
   
@@ -109,13 +137,20 @@ static bool EvaluateValue(int &Result, LexerToken &PeekTok, Preprocessor &PP) {
     PP.Lex(PeekTok);  // Eat the (.
     // Parse the value and if there are any binary operators involved, parse
     // them.
-    if (EvaluateValue(Result, PeekTok, PP) ||
-        EvaluateDirectiveSubExpr(Result, 1, PeekTok, PP))
-      return true;
+    if (EvaluateValue(Result, PeekTok, DT, PP)) return true;
 
-    if (PeekTok.getKind() != tok::r_paren) {
-      PP.Diag(PeekTok, diag::err_pp_expected_rparen);
-      return true;
+    // If this is a silly value like (X), which doesn't need parens, check for
+    // !(defined X).
+    if (PeekTok.getKind() == tok::r_paren) {
+      // Just use DT unmodified as our result.
+    } else {
+      if (EvaluateDirectiveSubExpr(Result, 1, PeekTok, PP)) return true;
+      
+      if (PeekTok.getKind() != tok::r_paren) {
+        PP.Diag(PeekTok, diag::err_pp_expected_rparen);
+        return true;
+      }
+      DT.State = DefinedTracker::Unknown;
     }
     PP.Lex(PeekTok);  // Eat the ).
     return false;
@@ -123,23 +158,30 @@ static bool EvaluateValue(int &Result, LexerToken &PeekTok, Preprocessor &PP) {
   case tok::plus:
     // Unary plus doesn't modify the value.
     PP.Lex(PeekTok);
-    return EvaluateValue(Result, PeekTok, PP);
+    return EvaluateValue(Result, PeekTok, DT, PP);
   case tok::minus:
     PP.Lex(PeekTok);
-    if (EvaluateValue(Result, PeekTok, PP)) return true;
+    if (EvaluateValue(Result, PeekTok, DT, PP)) return true;
     Result = -Result;
+    DT.State = DefinedTracker::Unknown;
     return false;
     
   case tok::tilde:
     PP.Lex(PeekTok);
-    if (EvaluateValue(Result, PeekTok, PP)) return true;
+    if (EvaluateValue(Result, PeekTok, DT, PP)) return true;
     Result = ~Result;
+    DT.State = DefinedTracker::Unknown;
     return false;
     
   case tok::exclaim:
     PP.Lex(PeekTok);
-    if (EvaluateValue(Result, PeekTok, PP)) return true;
+    if (EvaluateValue(Result, PeekTok, DT, PP)) return true;
     Result = !Result;
+    
+    if (DT.State == DefinedTracker::DefinedMacro)
+      DT.State = DefinedTracker::NotDefinedMacro;
+    else if (DT.State == DefinedTracker::NotDefinedMacro)
+      DT.State = DefinedTracker::DefinedMacro;
     return false;
     
   // FIXME: Handle #assert
@@ -222,7 +264,8 @@ static bool EvaluateDirectiveSubExpr(int &LHS, unsigned MinPrec,
 
     int RHS;
     // Parse the RHS of the operator.
-    if (EvaluateValue(RHS, PeekTok, PP)) return true;
+    DefinedTracker DT;
+    if (EvaluateValue(RHS, PeekTok, DT, PP)) return true;
 
     // Remember the precedence of this operator and get the precedence of the
     // operator immediately to the right of the RHS.
@@ -300,7 +343,8 @@ static bool EvaluateDirectiveSubExpr(int &LHS, unsigned MinPrec,
 
       // Evaluate the value after the :.
       int AfterColonVal = 0;
-      if (EvaluateValue(AfterColonVal, PeekTok, PP)) return true;
+      DefinedTracker DT;
+      if (EvaluateValue(AfterColonVal, PeekTok, DT, PP)) return true;
 
       // Parse anything after the : RHS that has a higher precedence than ?.
       if (EvaluateDirectiveSubExpr(AfterColonVal, ThisPrec+1,
@@ -334,7 +378,8 @@ EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro) {
   Lex(Tok);
   
   int ResVal = 0;
-  if (EvaluateValue(ResVal, Tok, *this)) {
+  DefinedTracker DT;
+  if (EvaluateValue(ResVal, Tok, DT, *this)) {
     // Parse error, skip the rest of the macro line.
     if (Tok.getKind() != tok::eom)
       DiscardUntilEndOfDirective();
@@ -345,6 +390,11 @@ EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro) {
   // must be no (unparenthesized) binary operators involved, so we can exit
   // directly.
   if (Tok.getKind() == tok::eom) {
+    // If the expression we parsed was of the form !defined(macro), return the
+    // macro in IfNDefMacro.
+    if (DT.State == DefinedTracker::NotDefinedMacro)
+      IfNDefMacro = DT.TheMacro;
+    
     return ResVal != 0;
   }
   
