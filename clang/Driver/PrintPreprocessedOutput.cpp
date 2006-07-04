@@ -36,7 +36,6 @@ static void MoveToLine(unsigned LineNo) {
   // otherwise print a #line directive.
   if (LineNo-EModeCurLine < 8) {
     unsigned CurLine = EModeCurLine;
-    //static const char Newlines[] = "\n\n\n\n\n\n\n\n";
     for (; CurLine != LineNo; ++CurLine)
       putchar_unlocked('\n');
     EModeCurLine = CurLine;
@@ -66,6 +65,13 @@ static void HandleFileChange(SourceLocation Loc,
                              DirectoryLookup::DirType FileType) {
   SourceManager &SourceMgr = EModePP->getSourceManager();
   
+  if (DisableLineMarkers) {
+    EModeCurLine = SourceMgr.getLineNumber(Loc);
+    EModeCurFilename = Lexer::Stringify(SourceMgr.getSourceName(Loc));
+    EmodeFileType = FileType;
+    return;
+  }
+
   // Unless we are exiting a #include, make sure to skip ahead to the line the
   // #include directive was at.
   if (Reason == Preprocessor::EnterFile) {
