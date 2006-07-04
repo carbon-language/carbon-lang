@@ -465,13 +465,6 @@ void Preprocessor::RegisterBuiltinMacros() {
   Ident__BASE_FILE__     = RegisterBuiltinMacro("__BASE_FILE__");
   Ident__INCLUDE_LEVEL__ = RegisterBuiltinMacro("__INCLUDE_LEVEL__");
   Ident__TIMESTAMP__     = RegisterBuiltinMacro("__TIMESTAMP__");
-  
-  // FIXME: implement them all:
-//Pseudo #defines.
-  // __STDC__    1 if !stdc_0_in_system_headers and "std"
-  // __STDC_VERSION__
-  // __STDC_HOSTED__
-  // __OBJC__
 }
 
 
@@ -489,7 +482,7 @@ void Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier,
     return ExpandBuiltinMacro(Identifier);
   
   // If we started lexing a macro, enter the macro expansion body.
-  // FIXME: Read/Validate the argument list here!
+  // FIXME: Fn-Like Macros: Read/Validate the argument list here!
   
   
   // If this macro expands to no tokens, don't bother to push it onto the
@@ -517,7 +510,7 @@ void Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier,
              // Don't handle identifiers if they need recursive expansion.
              (MI->getReplacementToken(0).getIdentifierInfo() == 0 ||
               !MI->getReplacementToken(0).getIdentifierInfo()->getMacroInfo())){
-    // FIXME: Function-style macros only if no arguments?
+    // FIXME: Fn-Like Macros: Function-style macros only if no arguments?
     
     // Otherwise, if this macro expands into a single trivially-expanded
     // token: expand it now.  This handles common cases like 
@@ -550,7 +543,7 @@ void Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier,
     return;
   }
   
-  // Start expanding the macro (FIXME, pass arguments).
+  // Start expanding the macro (FIXME: Fn-Like Macros: pass arguments).
   EnterMacro(Identifier);
   
   // Now that the macro is at the top of the include stack, ask the
