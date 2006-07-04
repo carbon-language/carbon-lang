@@ -67,12 +67,7 @@ static void MoveToLine(SourceLocation Loc) {
 static void HandleFileChange(SourceLocation Loc,
                              Preprocessor::FileChangeReason Reason,
                              DirectoryLookup::DirType FileType) {
-  SourceManager &SourceMgr = EModePP->getSourceManager();
-  
-  if (DisableLineMarkers) {
-    EmodeFileType = FileType;
-    return;
-  }
+  if (DisableLineMarkers) return;
 
   // Unless we are exiting a #include, make sure to skip ahead to the line the
   // #include directive was at.
@@ -86,6 +81,7 @@ static void HandleFileChange(SourceLocation Loc,
     // strange behavior.
   }
   
+  SourceManager &SourceMgr = EModePP->getSourceManager();
   EModeCurLine = SourceMgr.getLineNumber(Loc);
   EModeCurFilename = Lexer::Stringify(SourceMgr.getSourceName(Loc));
   EmodeFileType = FileType;
