@@ -56,7 +56,7 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
   NumDirectives = NumIncluded = NumDefined = NumUndefined = NumPragma = 0;
   NumIf = NumElse = NumEndif = 0;
   NumEnteredSourceFiles = NumMacroExpanded = NumFastMacroExpanded = 0;
-  MaxIncludeStackDepth = 0;
+  MaxIncludeStackDepth = 0; NumMultiIncludeFileOptzn = 0;
   NumSkipped = 0;
     
   // Macro expansion is enabled.
@@ -185,6 +185,8 @@ void Preprocessor::PrintStats() {
   std::cerr << "  " << NumDefined << " #define.\n";
   std::cerr << "  " << NumUndefined << " #undef.\n";
   std::cerr << "  " << NumIncluded << " #include/#include_next/#import.\n";
+  std::cerr << "    " << NumMultiIncludeFileOptzn << " #includes skipped due to"
+                      << " the multi-include optimization.\n";
   std::cerr << "    " << NumEnteredSourceFiles << " source files entered.\n";
   std::cerr << "    " << MaxIncludeStackDepth << " max include stack depth\n";
   std::cerr << "  " << NumIf << " #if/#ifndef/#ifdef.\n";
@@ -740,10 +742,13 @@ void Preprocessor::HandleEndOfFile(LexerToken &Result, bool isEndOfMacro) {
   }
   
   // See if this file had a controlling macro.
-  if (CurLexer) {  // Not ending a macro...
+  if (CurLexer) {  // Not ending a macro, ignore it.
     if (const IdentifierTokenInfo *ControllingMacro = 
           CurLexer->MIOpt.GetControllingMacroAtEndOfFile()) {
-      ;
+      // Okay, this has a controlling macro, remember in PerFileInfo.
+      if (const FileEntry *FE = 
+          SourceMgr.getFileEntryForFileID(CurLexer->getCurFileID()))
+        getFileInfo(FE).ControllingMacro = ControllingMacro;
     }
   }
   
@@ -1244,6 +1249,14 @@ void Preprocessor::HandleIncludeDirective(LexerToken &IncludeTok,
     if (FileInfo.isImport)
       return;
   }
+  
+  // Next, check to see if the file is wrapped with #ifndef guards.  If so, and
+  // if the macro that guards it is defined, we know the #include has no effect.
+  if (FileInfo.ControllingMacro && FileInfo.ControllingMacro->getMacroInfo()) {
+    ++NumMultiIncludeFileOptzn;
+    return;
+  }
+  
 
   // Look up the file, create a File ID for it.
   unsigned FileID = SourceMgr.createFileID(File, FilenameTok.getLocation());

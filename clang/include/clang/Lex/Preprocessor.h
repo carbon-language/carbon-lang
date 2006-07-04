@@ -181,8 +181,13 @@ private:
     /// already.
     unsigned short NumIncludes;
     
+    /// ControllingMacro - If this file has a #ifndef XXX (or equivalent) guard
+    /// that protects the entire contents of the file, this is the identifier
+    /// for the macro that controls whether or not it has any effect.
+    const IdentifierTokenInfo *ControllingMacro;
+    
     PerFileInfo() : isImport(false), DirInfo(DirectoryLookup::NormalHeaderDir),
-                    NumIncludes(0) {}
+                    NumIncludes(0), ControllingMacro(0) {}
   };
   
   /// FileInfo - This contains all of the preprocessor-specific data about files
@@ -193,7 +198,7 @@ private:
   // Various statistics we track for performance analysis.
   unsigned NumDirectives, NumIncluded, NumDefined, NumUndefined, NumPragma;
   unsigned NumIf, NumElse, NumEndif;
-  unsigned NumEnteredSourceFiles, MaxIncludeStackDepth;
+  unsigned NumEnteredSourceFiles, MaxIncludeStackDepth,NumMultiIncludeFileOptzn;
   unsigned NumMacroExpanded, NumFastMacroExpanded;
   unsigned NumSkipped;
 public:
