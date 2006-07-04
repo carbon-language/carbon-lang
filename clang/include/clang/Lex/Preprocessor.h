@@ -429,9 +429,9 @@ private:
                                     bool FoundNonSkipPortion, bool FoundElse);
   
   /// EvaluateDirectiveExpression - Evaluate an integer constant expression that
-  /// may occur after a #if or #elif directive.  Sets Result to the result of
-  /// the expression.
-  bool EvaluateDirectiveExpression();
+  /// may occur after a #if or #elif directive and return it as a bool.  If the
+  /// expression is equivalent to "!defined(X)" return X in IfNDefMacro.
+  bool EvaluateDirectiveExpression(IdentifierTokenInfo *&IfNDefMacro);
   /// EvaluateValue/EvaluateDirectiveSubExpr - Used to implement
   /// EvaluateDirectiveExpression, see PPExpressions.cpp.
   bool EvaluateValue(int &Result, LexerToken &PeekTok);
@@ -489,7 +489,7 @@ private:
   // Conditional Inclusion.
   void HandleIfdefDirective(LexerToken &Tok, bool isIfndef,
                             bool ReadAnyTokensBeforeDirective);
-  void HandleIfDirective(LexerToken &Tok);
+  void HandleIfDirective(LexerToken &Tok, bool ReadAnyTokensBeforeDirective);
   void HandleEndifDirective(LexerToken &Tok);
   void HandleElseDirective(LexerToken &Tok);
   void HandleElifDirective(LexerToken &Tok);

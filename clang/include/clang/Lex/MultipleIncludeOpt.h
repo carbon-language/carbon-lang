@@ -51,10 +51,8 @@ public:
   /// the "ifndef x" would count as reading tokens.
   bool getHasReadAnyTokensVal() const { return ReadAnyTokens; }
   
-  // If a token or directive is read, remember that we have seen a side-effect
-  // in this file.
-  void ReadToken()     { ReadAnyTokens = true; }
-  void ReadDirective() { ReadAnyTokens = true; } 
+  // If a token is read, remember that we have seen a side-effect in this file.
+  void ReadToken() { ReadAnyTokens = true; }
   
   /// EnterTopLevelIFNDEF - When entering a top-level #ifndef directive (or the
   /// "#if !defined" equivalent) without any preceding tokens, this method is

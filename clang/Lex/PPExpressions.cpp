@@ -26,12 +26,10 @@ using namespace llvm;
 using namespace clang;
 
 /// EvaluateDirectiveExpression - Evaluate an integer constant expression that
-/// may occur after a #if or #elif directive.  Sets Result to the result of
-/// the expression.  Returns false normally, true if lexing must be aborted.
-///
-/// MinPrec is the minimum precedence that this range of the expression is
-/// allowed to include.
-bool Preprocessor::EvaluateDirectiveExpression() {
+/// may occur after a #if or #elif directive.  If the
+/// expression is equivalent to "!defined(X)" return X in IfNDefMacro.
+bool Preprocessor::
+EvaluateDirectiveExpression(IdentifierTokenInfo *&IfNDefMacro) {
   // Peek ahead one token.
   LexerToken Tok;
   Lex(Tok);

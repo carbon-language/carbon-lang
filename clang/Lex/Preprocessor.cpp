@@ -1020,7 +1020,8 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
           // looked up, etc, inside the #elif expression.
           assert(SkippingContents && "We have to be skipping here!");
           SkippingContents = false;
-          ShouldEnter = EvaluateDirectiveExpression();
+          IdentifierTokenInfo *IfNDefMacro = 0;
+          ShouldEnter = EvaluateDirectiveExpression(IfNDefMacro);
           SkippingContents = true;
         }
         
@@ -1077,14 +1078,13 @@ void Preprocessor::HandleDirective(LexerToken &Result) {
 
 #if 0
   case tok::numeric_constant:
-    MIOpt.ReadDirective();
     // FIXME: implement # 7 line numbers!
     break;
 #endif
   case tok::kw_else:
     return HandleElseDirective(Result);
   case tok::kw_if:
-    return HandleIfDirective(Result);
+    return HandleIfDirective(Result, ReadAnyTokensBeforeDirective);
   case tok::identifier:
     // Get the identifier name without trigraphs or embedded newlines.
     const char *Directive = Result.getIdentifierInfo()->getName();
@@ -1092,7 +1092,7 @@ void Preprocessor::HandleDirective(LexerToken &Result) {
     switch (Result.getIdentifierInfo()->getNameLength()) {
     case 4:
       if (Directive[0] == 'l' && !strcmp(Directive, "line"))
-        CurLexer->MIOpt.ReadDirective();  // FIXME: implement #line
+        ;  // FIXME: implement #line
       if (Directive[0] == 'e' && !strcmp(Directive, "elif"))
         return HandleElifDirective(Result);
       if (Directive[0] == 's' && !strcmp(Directive, "sccs"))
@@ -1168,9 +1168,6 @@ void Preprocessor::HandleUserDiagnosticDirective(LexerToken &Tok,
 /// HandleIdentSCCSDirective - Handle a #ident/#sccs directive.
 ///
 void Preprocessor::HandleIdentSCCSDirective(LexerToken &Tok) {
-  // Inform MIOpt that we found a side-effect of parsing this file.
-  CurLexer->MIOpt.ReadDirective();
-  
   // Yes, this directive is an extension.
   Diag(Tok, diag::ext_pp_ident_directive);
   
@@ -1201,9 +1198,6 @@ void Preprocessor::HandleIncludeDirective(LexerToken &IncludeTok,
                                           const DirectoryLookup *LookupFrom,
                                           bool isImport) {
   ++NumIncluded;
-
-  // Inform MIOpt that we found a side-effect of parsing this file.
-  CurLexer->MIOpt.ReadDirective();
 
   LexerToken FilenameTok;
   std::string Filename = CurLexer->LexIncludeFilename(FilenameTok);
@@ -1310,9 +1304,6 @@ void Preprocessor::HandleImportDirective(LexerToken &ImportTok) {
 void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
   ++NumDefined;
 
-  // Inform MIOpt that we found a side-effect of parsing this file.
-  CurLexer->MIOpt.ReadDirective();
-
   LexerToken MacroNameTok;
   ReadMacroName(MacroNameTok, true);
   
@@ -1382,9 +1373,6 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
 ///
 void Preprocessor::HandleUndefDirective(LexerToken &UndefTok) {
   ++NumUndefined;
-
-  // Inform MIOpt that we found a side-effect of parsing this file.
-  CurLexer->MIOpt.ReadDirective();
 
   LexerToken MacroNameTok;
   ReadMacroName(MacroNameTok, true);
@@ -1462,17 +1450,22 @@ void Preprocessor::HandleIfdefDirective(LexerToken &Result, bool isIfndef,
 
 /// HandleIfDirective - Implements the #if directive.
 ///
-void Preprocessor::HandleIfDirective(LexerToken &IfToken) {
+void Preprocessor::HandleIfDirective(LexerToken &IfToken,
+                                     bool ReadAnyTokensBeforeDirective) {
   ++NumIf;
   
-  // FIXME: Detect "#if !defined(X)" for the MIOpt.
-  CurLexer->MIOpt.ReadDirective();
-
   // Parse and evaluation the conditional expression.
-  bool ConditionalTrue = EvaluateDirectiveExpression();
+  IdentifierTokenInfo *IfNDefMacro = 0;
+  bool ConditionalTrue = EvaluateDirectiveExpression(IfNDefMacro);
   
   // Should we include the stuff contained by this directive?
   if (ConditionalTrue) {
+    // If this condition is equivalent to #ifndef X, and if this is the first
+    // directive seen, handle it for the multiple-include optimization.
+    if (!ReadAnyTokensBeforeDirective &&
+        CurLexer->getConditionalStackDepth() == 0 && IfNDefMacro)
+      CurLexer->MIOpt.EnterTopLevelIFNDEF(IfNDefMacro);
+    
     // Yes, remember that we are inside a conditional, then lex the next token.
     CurLexer->pushConditionalLevel(IfToken.getLocation(), /*wasskip*/false,
                                    /*foundnonskip*/true, /*foundelse*/false);
