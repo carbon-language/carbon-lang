@@ -171,7 +171,7 @@ static unsigned HashString(const char *Start, const char *End) {
 }
 
 IdentifierInfo &IdentifierTable::get(const char *NameStart,
-                                          const char *NameEnd) {
+                                     const char *NameEnd) {
   IdentifierBucket **TableArray = (IdentifierBucket**)TheTable;
 
   unsigned Hash = HashString(NameStart, NameEnd) % HASH_TABLE_SIZE;
