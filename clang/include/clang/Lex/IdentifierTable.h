@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the IdentifierTokenInfo, IdentifierVisitor, and
+// This file defines the IdentifierInfo, IdentifierVisitor, and
 // IdentifierTable interfaces.
 //
 //===----------------------------------------------------------------------===//
@@ -23,12 +23,12 @@ namespace clang {
   class IdentifierTable;
   class MacroInfo;
   
-/// IdentifierTokenInfo - One of these records is kept for each identifier that
+/// IdentifierInfo - One of these records is kept for each identifier that
 /// is lexed.  This contains information about whether the token was #define'd,
 /// is a language keyword, or if it is a front-end token of some sort (e.g. a
 /// variable or function name).  The preprocessor keeps this information in a
 /// set, and all tok::identifier tokens have a pointer to one of these.  
-class IdentifierTokenInfo {
+class IdentifierInfo {
   unsigned NameLen;         // String that is the identifier.
   MacroInfo *Macro;         // Set if this identifier is #define'd.
   tok::TokenKind TokenID:8; // Front-end token ID or tok::identifier.
@@ -42,7 +42,7 @@ public:
   /// terminated.
   ///
   const char *getName() const {
-    // String data is stored immediately after the IdentifierTokenInfo object.
+    // String data is stored immediately after the IdentifierInfo object.
     return (const char*)(this+1);
   }
   
@@ -90,11 +90,11 @@ private:
 class IdentifierVisitor {
 public:
   virtual ~IdentifierVisitor();
-  virtual void VisitIdentifier(IdentifierTokenInfo &ITI) const = 0;
+  virtual void VisitIdentifier(IdentifierInfo &II) const = 0;
 };
 
 /// IdentifierTable - This table implements an efficient mapping from strings to
-/// IdentifierTokenInfo nodes.  It has no other purpose, but this is an
+/// IdentifierInfo nodes.  It has no other purpose, but this is an
 /// extremely performance-critical piece of the code, as each occurrance of
 /// every identifier goes through here when lexed.
 class IdentifierTable {
@@ -107,8 +107,8 @@ public:
   
   /// get - Return the identifier token info for the specified named identifier.
   ///
-  IdentifierTokenInfo &get(const char *NameStart, const char *NameEnd);
-  IdentifierTokenInfo &get(const std::string &Name);
+  IdentifierInfo &get(const char *NameStart, const char *NameEnd);
+  IdentifierInfo &get(const std::string &Name);
   
   /// VisitIdentifiers - This method walks through all of the identifiers,
   /// invoking IV->VisitIdentifier for each of them.

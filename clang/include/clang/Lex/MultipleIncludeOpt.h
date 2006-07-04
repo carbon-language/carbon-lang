@@ -16,7 +16,7 @@
 
 namespace llvm {
 namespace clang {
-class IdentifierTokenInfo;
+class IdentifierInfo;
 
 /// MultipleIncludeOpt - This class implements the simple state machine that the
 /// Lexer class uses to detect files subject to the 'multiple-include'
@@ -33,7 +33,7 @@ class MultipleIncludeOpt {
   
   /// TheMacro - The controlling macro for a file, if valid.
   ///
-  const IdentifierTokenInfo *TheMacro;
+  const IdentifierInfo *TheMacro;
 public:
   MultipleIncludeOpt() : ReadAnyTokens(false), TheMacro(0) {}
   
@@ -57,7 +57,7 @@ public:
   /// EnterTopLevelIFNDEF - When entering a top-level #ifndef directive (or the
   /// "#if !defined" equivalent) without any preceding tokens, this method is
   /// called.
-  void EnterTopLevelIFNDEF(const IdentifierTokenInfo *M) {
+  void EnterTopLevelIFNDEF(const IdentifierInfo *M) {
     // Note, we don't care about the input value of 'ReadAnyTokens'.  The caller
     // ensures that this is only called if there are no tokens read before the
     // #ifndef.
@@ -94,7 +94,7 @@ public:
   
   /// GetControllingMacroAtEndOfFile - Once the entire file has been lexed, if
   /// there is a controlling macro, return it.
-  const IdentifierTokenInfo *GetControllingMacroAtEndOfFile() const {
+  const IdentifierInfo *GetControllingMacroAtEndOfFile() const {
     // If we haven't read any tokens after the #endif, return the controlling
     // macro if it's valid (if it isn't, it will be null).
     if (!ReadAnyTokens)

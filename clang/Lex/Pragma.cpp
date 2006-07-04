@@ -39,7 +39,7 @@ PragmaNamespace::~PragmaNamespace() {
 /// specified name.  If not, return the handler for the null identifier if it
 /// exists, otherwise return null.  If IgnoreNull is true (the default) then
 /// the null handler isn't returned on failure to match.
-PragmaHandler *PragmaNamespace::FindHandler(const IdentifierTokenInfo *Name,
+PragmaHandler *PragmaNamespace::FindHandler(const IdentifierInfo *Name,
                                             bool IgnoreNull) const {
   PragmaHandler *NullHandler = 0;
   for (unsigned i = 0, e = Handlers.size(); i != e; ++i) {
@@ -206,8 +206,7 @@ void Preprocessor::HandlePragmaPoison(LexerToken &PoisonTok) {
     
     // Look up the identifier info for the token.
     std::string TokStr = getSpelling(Tok);
-    IdentifierTokenInfo *II = 
-      getIdentifierInfo(&TokStr[0], &TokStr[0]+TokStr.size());
+    IdentifierInfo *II =getIdentifierInfo(&TokStr[0], &TokStr[0]+TokStr.size());
     
     // Already poisoned.
     if (II->isPoisoned()) continue;
@@ -293,7 +292,7 @@ void Preprocessor::AddPragmaHandler(const char *Namespace,
   
   // If this is specified to be in a namespace, step down into it.
   if (Namespace) {
-    IdentifierTokenInfo *NSID = getIdentifierInfo(Namespace);
+    IdentifierInfo *NSID = getIdentifierInfo(Namespace);
     
     // If there is already a pragma handler with the name of this namespace,
     // we either have an error (directive with the same name as a namespace) or
@@ -318,7 +317,7 @@ void Preprocessor::AddPragmaHandler(const char *Namespace,
 
 namespace {
 struct PragmaOnceHandler : public PragmaHandler {
-  PragmaOnceHandler(const IdentifierTokenInfo *OnceID) : PragmaHandler(OnceID){}
+  PragmaOnceHandler(const IdentifierInfo *OnceID) : PragmaHandler(OnceID) {}
   virtual void HandlePragma(Preprocessor &PP, LexerToken &OnceTok) {
     PP.CheckEndOfDirective("#pragma once");
     PP.HandlePragmaOnce(OnceTok);
@@ -326,21 +325,21 @@ struct PragmaOnceHandler : public PragmaHandler {
 };
 
 struct PragmaPoisonHandler : public PragmaHandler {
-  PragmaPoisonHandler(const IdentifierTokenInfo *ID) : PragmaHandler(ID) {}
+  PragmaPoisonHandler(const IdentifierInfo *ID) : PragmaHandler(ID) {}
   virtual void HandlePragma(Preprocessor &PP, LexerToken &PoisonTok) {
     PP.HandlePragmaPoison(PoisonTok);
   }
 };
 
 struct PragmaSystemHeaderHandler : public PragmaHandler {
-  PragmaSystemHeaderHandler(const IdentifierTokenInfo *ID) : PragmaHandler(ID){}
+  PragmaSystemHeaderHandler(const IdentifierInfo *ID) : PragmaHandler(ID) {}
   virtual void HandlePragma(Preprocessor &PP, LexerToken &SHToken) {
     PP.HandlePragmaSystemHeader(SHToken);
     PP.CheckEndOfDirective("#pragma");
   }
 };
 struct PragmaDependencyHandler : public PragmaHandler {
-  PragmaDependencyHandler(const IdentifierTokenInfo *ID) : PragmaHandler(ID) {}
+  PragmaDependencyHandler(const IdentifierInfo *ID) : PragmaHandler(ID) {}
   virtual void HandlePragma(Preprocessor &PP, LexerToken &DepToken) {
     PP.HandlePragmaDependency(DepToken);
   }

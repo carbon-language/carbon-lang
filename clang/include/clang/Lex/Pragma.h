@@ -21,7 +21,7 @@ namespace llvm {
 namespace clang {
   class Preprocessor;
   class LexerToken;
-  class IdentifierTokenInfo;
+  class IdentifierInfo;
   class PragmaNamespace;
 
 /// PragmaHandler - Instances of this interface defined to handle the various
@@ -34,12 +34,12 @@ namespace clang {
 /// we treat "#pragma STDC" and "#pragma GCC" as namespaces that contain other
 /// pragmas.
 class PragmaHandler {
-  const IdentifierTokenInfo *Name;
+  const IdentifierInfo *Name;
 public:
-  PragmaHandler(const IdentifierTokenInfo *name) : Name(name) {}
+  PragmaHandler(const IdentifierInfo *name) : Name(name) {}
   virtual ~PragmaHandler();
   
-  const IdentifierTokenInfo *getName() const { return Name; }
+  const IdentifierInfo *getName() const { return Name; }
   virtual void HandlePragma(Preprocessor &PP, LexerToken &FirstToken) = 0;
   
   /// getIfNamespace - If this is a namespace, return it.  This is equivalent to
@@ -56,14 +56,14 @@ class PragmaNamespace : public PragmaHandler {
   ///
   std::vector<PragmaHandler*> Handlers;
 public:
-  PragmaNamespace(const IdentifierTokenInfo *Name) : PragmaHandler(Name) {}
+  PragmaNamespace(const IdentifierInfo *Name) : PragmaHandler(Name) {}
   virtual ~PragmaNamespace();
   
   /// FindHandler - Check to see if there is already a handler for the
   /// specified name.  If not, return the handler for the null identifier if it
   /// exists, otherwise return null.  If IgnoreNull is true (the default) then
   /// the null handler isn't returned on failure to match.
-  PragmaHandler *FindHandler(const IdentifierTokenInfo *Name,
+  PragmaHandler *FindHandler(const IdentifierInfo *Name,
                              bool IgnoreNull = true) const;
   
   /// AddPragma - Add a pragma to this namespace.

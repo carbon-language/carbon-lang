@@ -354,7 +354,7 @@ FinishIdentifier:
     Result.SetKind(tok::identifier);
     
     // Look up this token, see if it is a macro, or if it is a language keyword.
-    IdentifierTokenInfo *II;
+    IdentifierInfo *II;
     if (!Result.needsCleaning()) {
       // No cleaning needed, just use the characters from the lexed buffer.
       II = PP.getIdentifierInfo(IdStart, IdEnd);

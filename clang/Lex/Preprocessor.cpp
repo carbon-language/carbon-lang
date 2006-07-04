@@ -421,7 +421,7 @@ void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer,
 /// EnterMacro - Add a Macro to the top of the include stack and start lexing
 /// tokens from it instead of the current buffer.
 void Preprocessor::EnterMacro(LexerToken &Tok) {
-  IdentifierTokenInfo *Identifier = Tok.getIdentifierInfo();
+  IdentifierInfo *Identifier = Tok.getIdentifierInfo();
   MacroInfo &MI = *Identifier->getMacroInfo();
   IncludeMacroStack.push_back(IncludeStackInfo(CurLexer, CurDirLookup,
                                                CurMacroExpander));
@@ -442,9 +442,9 @@ void Preprocessor::EnterMacro(LexerToken &Tok) {
 
 /// RegisterBuiltinMacro - Register the specified identifier in the identifier
 /// table and mark it as a builtin macro to be expanded.
-IdentifierTokenInfo *Preprocessor::RegisterBuiltinMacro(const char *Name) {
+IdentifierInfo *Preprocessor::RegisterBuiltinMacro(const char *Name) {
   // Get the identifier.
-  IdentifierTokenInfo *Id = getIdentifierInfo(Name);
+  IdentifierInfo *Id = getIdentifierInfo(Name);
   
   // Mark it as being a macro that is builtin.
   MacroInfo *MI = new MacroInfo(SourceLocation());
@@ -578,12 +578,12 @@ static void ComputeDATE_TIME(SourceLocation &DATELoc, SourceLocation &TIMELoc,
 /// as a builtin macro, handle it and return the next token as 'Tok'.
 void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok) {
   // Figure out which token this is.
-  IdentifierTokenInfo *ITI = Tok.getIdentifierInfo();
-  assert(ITI && "Can't be a macro without id info!");
+  IdentifierInfo *II = Tok.getIdentifierInfo();
+  assert(II && "Can't be a macro without id info!");
   
   // If this is an _Pragma directive, expand it, invoke the pragma handler, then
   // lex the token after it.
-  if (ITI == Ident_Pragma)
+  if (II == Ident_Pragma)
     return Handle_Pragma(Tok);
   
   char TmpBuffer[100];
@@ -592,16 +592,16 @@ void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok) {
   Tok.SetIdentifierInfo(0);
   Tok.ClearFlag(LexerToken::NeedsCleaning);
   
-  if (ITI == Ident__LINE__) {
+  if (II == Ident__LINE__) {
     // __LINE__ expands to a simple numeric value.
     sprintf(TmpBuffer, "%u", SourceMgr.getLineNumber(Tok.getLocation()));
     unsigned Length = strlen(TmpBuffer);
     Tok.SetKind(tok::numeric_constant);
     Tok.SetLength(Length);
     Tok.SetLocation(ScratchBuf->getToken(TmpBuffer, Length, Tok.getLocation()));
-  } else if (ITI == Ident__FILE__ || ITI == Ident__BASE_FILE__) {
+  } else if (II == Ident__FILE__ || II == Ident__BASE_FILE__) {
     SourceLocation Loc = Tok.getLocation();
-    if (ITI == Ident__BASE_FILE__) {
+    if (II == Ident__BASE_FILE__) {
       Diag(Tok, diag::ext_pp_base_file);
       SourceLocation NextLoc = SourceMgr.getIncludeLoc(Loc.getFileID());
       while (NextLoc.getFileID() != 0) {
@@ -616,19 +616,19 @@ void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok) {
     Tok.SetKind(tok::string_literal);
     Tok.SetLength(FN.size());
     Tok.SetLocation(ScratchBuf->getToken(&FN[0], FN.size(), Tok.getLocation()));
-  } else if (ITI == Ident__DATE__) {
+  } else if (II == Ident__DATE__) {
     if (!DATELoc.isValid())
       ComputeDATE_TIME(DATELoc, TIMELoc, ScratchBuf);
     Tok.SetKind(tok::string_literal);
     Tok.SetLength(strlen("\"Mmm dd yyyy\""));
     Tok.SetLocation(SourceMgr.getInstantiationLoc(DATELoc, Tok.getLocation()));
-  } else if (ITI == Ident__TIME__) {
+  } else if (II == Ident__TIME__) {
     if (!TIMELoc.isValid())
       ComputeDATE_TIME(DATELoc, TIMELoc, ScratchBuf);
     Tok.SetKind(tok::string_literal);
     Tok.SetLength(strlen("\"hh:mm:ss\""));
     Tok.SetLocation(SourceMgr.getInstantiationLoc(TIMELoc, Tok.getLocation()));
-  } else if (ITI == Ident__INCLUDE_LEVEL__) {
+  } else if (II == Ident__INCLUDE_LEVEL__) {
     Diag(Tok, diag::ext_pp_include_level);
 
     // Compute the include depth of this token.
@@ -643,7 +643,7 @@ void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok) {
     Tok.SetKind(tok::numeric_constant);
     Tok.SetLength(Length);
     Tok.SetLocation(ScratchBuf->getToken(TmpBuffer, Length, Tok.getLocation()));
-  } else if (ITI == Ident__TIMESTAMP__) {
+  } else if (II == Ident__TIMESTAMP__) {
     // MSVC, ICC, GCC, VisualAge C++ extension.  The generated string should be
     // of the form "Ddd Mmm dd hh::mm::ss yyyy", which is returned by asctime.
     Diag(Tok, diag::ext_pp_timestamp);
@@ -682,9 +682,9 @@ struct UnusedIdentifierReporter : public IdentifierVisitor {
   Preprocessor &PP;
   UnusedIdentifierReporter(Preprocessor &pp) : PP(pp) {}
 
-  void VisitIdentifier(IdentifierTokenInfo &ITI) const {
-    if (ITI.getMacroInfo() && !ITI.getMacroInfo()->isUsed())
-      PP.Diag(ITI.getMacroInfo()->getDefinitionLoc(), diag::pp_macro_not_used);
+  void VisitIdentifier(IdentifierInfo &II) const {
+    if (II.getMacroInfo() && !II.getMacroInfo()->isUsed())
+      PP.Diag(II.getMacroInfo()->getDefinitionLoc(), diag::pp_macro_not_used);
   }
 };
 }
@@ -703,23 +703,23 @@ void Preprocessor::HandleIdentifier(LexerToken &Identifier) {
     assert(isSkipping() && "Token isn't an identifier?");
     return;
   }
-  IdentifierTokenInfo &ITI = *Identifier.getIdentifierInfo();
+  IdentifierInfo &II = *Identifier.getIdentifierInfo();
 
   // If this identifier was poisoned, and if it was not produced from a macro
   // expansion, emit an error.
-  if (ITI.isPoisoned() && CurLexer)
+  if (II.isPoisoned() && CurLexer)
     Diag(Identifier, diag::err_pp_used_poisoned_id);
   
-  if (MacroInfo *MI = ITI.getMacroInfo())
+  if (MacroInfo *MI = II.getMacroInfo())
     if (MI->isEnabled() && !DisableMacroExpansion)
       return HandleMacroExpandedIdentifier(Identifier, MI);
 
   // Change the kind of this identifier to the appropriate token kind, e.g.
   // turning "for" into a keyword.
-  Identifier.SetKind(ITI.getTokenID());
+  Identifier.SetKind(II.getTokenID());
     
   // If this is an extension token, diagnose its use.
-  if (ITI.isExtensionToken()) Diag(Identifier, diag::ext_token_used);
+  if (II.isExtensionToken()) Diag(Identifier, diag::ext_token_used);
 }
 
 /// HandleEndOfFile - This callback is invoked when the lexer hits the end of
@@ -743,7 +743,7 @@ void Preprocessor::HandleEndOfFile(LexerToken &Result, bool isEndOfMacro) {
   
   // See if this file had a controlling macro.
   if (CurLexer) {  // Not ending a macro, ignore it.
-    if (const IdentifierTokenInfo *ControllingMacro = 
+    if (const IdentifierInfo *ControllingMacro = 
           CurLexer->MIOpt.GetControllingMacroAtEndOfFile()) {
       // Okay, this has a controlling macro, remember in PerFileInfo.
       if (const FileEntry *FE = 
@@ -788,7 +788,7 @@ void Preprocessor::HandleEndOfFile(LexerToken &Result, bool isEndOfMacro) {
   CurLexer = 0;
 
   // This is the end of the top-level file.
-  IdentifierInfo.VisitIdentifiers(UnusedIdentifierReporter(*this));
+  Identifiers.VisitIdentifiers(UnusedIdentifierReporter(*this));
 }
 
 /// HandleEndOfMacro - This callback is invoked when the lexer hits the end of
@@ -833,19 +833,19 @@ void Preprocessor::ReadMacroName(LexerToken &MacroNameTok, bool isDefineUndef) {
   if (MacroNameTok.getKind() == tok::eom)
     return Diag(MacroNameTok, diag::err_pp_missing_macro_name);
   
-  IdentifierTokenInfo *ITI = MacroNameTok.getIdentifierInfo();
-  if (ITI == 0) {
+  IdentifierInfo *II = MacroNameTok.getIdentifierInfo();
+  if (II == 0) {
     Diag(MacroNameTok, diag::err_pp_macro_not_identifier);
     // Fall through on error.
   } else if (0) {
     // FIXME: C++.  Error if defining a C++ named operator.
     
-  } else if (isDefineUndef && ITI->getName()[0] == 'd' &&      // defined
-             !strcmp(ITI->getName()+1, "efined")) {
+  } else if (isDefineUndef && II->getName()[0] == 'd' &&      // defined
+             !strcmp(II->getName()+1, "efined")) {
     // Error if defining "defined": C99 6.10.8.4.
     Diag(MacroNameTok, diag::err_defined_macro_name);
-  } else if (isDefineUndef && ITI->getMacroInfo() &&
-             ITI->getMacroInfo()->isBuiltinMacro()) {
+  } else if (isDefineUndef && II->getMacroInfo() &&
+             II->getMacroInfo()->isBuiltinMacro()) {
     // Error if defining "__LINE__" and other builtins: C99 6.10.8.4.
     Diag(MacroNameTok, diag::pp_undef_builtin_macro);
   } else {
@@ -1020,7 +1020,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
           // looked up, etc, inside the #elif expression.
           assert(SkippingContents && "We have to be skipping here!");
           SkippingContents = false;
-          IdentifierTokenInfo *IfNDefMacro = 0;
+          IdentifierInfo *IfNDefMacro = 0;
           ShouldEnter = EvaluateDirectiveExpression(IfNDefMacro);
           SkippingContents = true;
         }
@@ -1455,7 +1455,7 @@ void Preprocessor::HandleIfDirective(LexerToken &IfToken,
   ++NumIf;
   
   // Parse and evaluation the conditional expression.
-  IdentifierTokenInfo *IfNDefMacro = 0;
+  IdentifierInfo *IfNDefMacro = 0;
   bool ConditionalTrue = EvaluateDirectiveExpression(IfNDefMacro);
   
   // Should we include the stuff contained by this directive?

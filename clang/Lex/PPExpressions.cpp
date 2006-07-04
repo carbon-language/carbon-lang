@@ -29,7 +29,7 @@ using namespace clang;
 /// may occur after a #if or #elif directive.  If the
 /// expression is equivalent to "!defined(X)" return X in IfNDefMacro.
 bool Preprocessor::
-EvaluateDirectiveExpression(IdentifierTokenInfo *&IfNDefMacro) {
+EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro) {
   // Peek ahead one token.
   LexerToken Tok;
   Lex(Tok);
@@ -62,7 +62,7 @@ bool Preprocessor::EvaluateValue(int &Result, LexerToken &PeekTok) {
   // If this token's spelling is a pp-identifier, check to see if it is
   // 'defined' or if it is a macro.  Note that we check here because many
   // keywords are pp-identifiers, so we can't check the kind.
-  if (const IdentifierTokenInfo *II = PeekTok.getIdentifierInfo()) {
+  if (const IdentifierInfo *II = PeekTok.getIdentifierInfo()) {
     // If this identifier isn't 'defined' and it wasn't macro expanded, it turns
     // into a simple 0.
     if (strcmp(II->getName(), "defined")) {

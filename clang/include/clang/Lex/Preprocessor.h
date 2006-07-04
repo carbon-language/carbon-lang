@@ -93,12 +93,12 @@ class Preprocessor {
   bool NoCurDirSearch;
   
   /// Identifiers for builtin macros.
-  IdentifierTokenInfo *Ident__LINE__, *Ident__FILE__; // __LINE__, __FILE__
-  IdentifierTokenInfo *Ident__DATE__, *Ident__TIME__; // __DATE__, __TIME__
-  IdentifierTokenInfo *Ident__INCLUDE_LEVEL__;        // __INCLUDE_LEVEL__
-  IdentifierTokenInfo *Ident__BASE_FILE__;            // __BASE_FILE__
-  IdentifierTokenInfo *Ident__TIMESTAMP__;            // __TIMESTAMP__
-  IdentifierTokenInfo *Ident_Pragma;                  // _Pragma
+  IdentifierInfo *Ident__LINE__, *Ident__FILE__; // __LINE__, __FILE__
+  IdentifierInfo *Ident__DATE__, *Ident__TIME__; // __DATE__, __TIME__
+  IdentifierInfo *Ident__INCLUDE_LEVEL__;        // __INCLUDE_LEVEL__
+  IdentifierInfo *Ident__BASE_FILE__;            // __BASE_FILE__
+  IdentifierInfo *Ident__TIMESTAMP__;            // __TIMESTAMP__
+  IdentifierInfo *Ident_Pragma;                  // _Pragma
   
   SourceLocation DATELoc, TIMELoc;
 public:
@@ -131,9 +131,9 @@ private:
   bool DisableMacroExpansion;    // True if macro expansion is disabled.
   bool SkippingContents;         // True if in a #if 0 block.
 
-  /// IdentifierInfo - This is mapping/lookup information for all identifiers in
+  /// Identifiers - This is mapping/lookup information for all identifiers in
   /// the program, including program keywords.
-  IdentifierTable IdentifierInfo;
+  IdentifierTable Identifiers;
   
   /// PragmaHandlers - This tracks all of the pragmas that the client registered
   /// with this preprocessor.
@@ -184,7 +184,7 @@ private:
     /// ControllingMacro - If this file has a #ifndef XXX (or equivalent) guard
     /// that protects the entire contents of the file, this is the identifier
     /// for the macro that controls whether or not it has any effect.
-    const IdentifierTokenInfo *ControllingMacro;
+    const IdentifierInfo *ControllingMacro;
     
     PerFileInfo() : isImport(false), DirInfo(DirectoryLookup::NormalHeaderDir),
                     NumIncludes(0), ControllingMacro(0) {}
@@ -211,7 +211,7 @@ public:
   FileManager &getFileManager() const { return FileMgr; }
   SourceManager &getSourceManager() const { return SourceMgr; }
 
-  IdentifierTable &getIdentifierTable() { return IdentifierInfo; }
+  IdentifierTable &getIdentifierTable() { return Identifiers; }
 
   /// isSkipping - Return true if we're lexing a '#if 0' block.  This causes
   /// lexer errors/warnings to get ignored.
@@ -262,13 +262,13 @@ public:
   /// pointers is preferred unless the identifier is already available as a
   /// string (this avoids allocation and copying of memory to construct an
   /// std::string).
-  IdentifierTokenInfo *getIdentifierInfo(const char *NameStart,
-                                         const char *NameEnd) {
+  IdentifierInfo *getIdentifierInfo(const char *NameStart,
+                                    const char *NameEnd) {
     // If we are in a "#if 0" block, don't bother lookup up identifiers.
     if (SkippingContents) return 0;
-    return &IdentifierInfo.get(NameStart, NameEnd);
+    return &Identifiers.get(NameStart, NameEnd);
   }
-  IdentifierTokenInfo *getIdentifierInfo(const char *NameStr) {
+  IdentifierInfo *getIdentifierInfo(const char *NameStr) {
     return getIdentifierInfo(NameStr, NameStr+strlen(NameStr));
   }
   
@@ -288,7 +288,7 @@ public:
     if (Flags+Features.NoExtensions >= 2) return;
     
     const char *Str = &Keyword[0];
-    IdentifierTokenInfo &Info = *getIdentifierInfo(Str, Str+Keyword.size());
+    IdentifierInfo &Info = *getIdentifierInfo(Str, Str+Keyword.size());
     Info.setTokenID(TokenCode);
     Info.setIsExtensionToken(Flags == 1);
   }
@@ -431,7 +431,7 @@ private:
   /// EvaluateDirectiveExpression - Evaluate an integer constant expression that
   /// may occur after a #if or #elif directive and return it as a bool.  If the
   /// expression is equivalent to "!defined(X)" return X in IfNDefMacro.
-  bool EvaluateDirectiveExpression(IdentifierTokenInfo *&IfNDefMacro);
+  bool EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro);
   /// EvaluateValue/EvaluateDirectiveSubExpr - Used to implement
   /// EvaluateDirectiveExpression, see PPExpressions.cpp.
   bool EvaluateValue(int &Result, LexerToken &PeekTok);
@@ -445,7 +445,7 @@ private:
   /// RegisterBuiltinMacros - Register builtin macros, such as __LINE__ with the
   /// identifier table.
   void RegisterBuiltinMacros();
-  IdentifierTokenInfo *RegisterBuiltinMacro(const char *Name);
+  IdentifierInfo *RegisterBuiltinMacro(const char *Name);
   
   /// HandleMacroExpandedIdentifier - If an identifier token is read that is to
   /// be expanded as a macro, handle it and return the next token as 'Tok'.

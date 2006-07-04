@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the IdentifierTokenInfo, IdentifierVisitor, and
+// This file implements the IdentifierInfo, IdentifierVisitor, and
 // IdentifierTable interfaces.
 //
 //===----------------------------------------------------------------------===//
@@ -19,10 +19,10 @@ using namespace llvm;
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
-// IdentifierTokenInfo Implementation
+// IdentifierInfo Implementation
 //===----------------------------------------------------------------------===//
 
-void IdentifierTokenInfo::Destroy() {
+void IdentifierInfo::Destroy() {
   delete Macro;
 }
 
@@ -57,7 +57,7 @@ public:
     NextPtr = (char*)(this+1);
     
     // FIXME: uses GCC extension.
-    unsigned Alignment = __alignof__(IdentifierTokenInfo);
+    unsigned Alignment = __alignof__(IdentifierInfo);
     NextPtr = (char*)((intptr_t)(NextPtr+Alignment-1) &
                       ~(intptr_t)(Alignment-1));
   }
@@ -71,7 +71,7 @@ public:
   ///
   void *Allocate(unsigned AllocSize, MemRegion **RegPtr) {
     // FIXME: uses GCC extension.
-    unsigned Alignment = __alignof__(IdentifierTokenInfo);
+    unsigned Alignment = __alignof__(IdentifierInfo);
     // Round size up to an even multiple of the alignment.
     AllocSize = (AllocSize+Alignment-1) & ~(Alignment-1);
     
@@ -112,13 +112,13 @@ public:
 //===----------------------------------------------------------------------===//
 
 
-/// IdentifierLink - There is one of these allocated by IdentifierTokenInfo.
+/// IdentifierLink - There is one of these allocated by IdentifierInfo.
 /// These form the linked list of buckets for the hash table.
 struct IdentifierBucket {
   /// Next - This is the next bucket in the linked list.
   IdentifierBucket *Next;
   
-  IdentifierTokenInfo TokInfo;
+  IdentifierInfo TokInfo;
   // NOTE: TokInfo must be the last element in this structure, as the string
   // information for the identifier is allocated right after it.
 };
@@ -170,7 +170,7 @@ static unsigned HashString(const char *Start, const char *End) {
   return Result;
 }
 
-IdentifierTokenInfo &IdentifierTable::get(const char *NameStart,
+IdentifierInfo &IdentifierTable::get(const char *NameStart,
                                           const char *NameEnd) {
   IdentifierBucket **TableArray = (IdentifierBucket**)TheTable;
 
@@ -212,7 +212,7 @@ IdentifierTokenInfo &IdentifierTable::get(const char *NameStart,
   return Identifier->TokInfo;
 }
 
-IdentifierTokenInfo &IdentifierTable::get(const std::string &Name) {
+IdentifierInfo &IdentifierTable::get(const std::string &Name) {
   // Don't use c_str() here: no need to be null terminated.
   const char *NameBytes = &Name[0];
   unsigned Size = Name.size();

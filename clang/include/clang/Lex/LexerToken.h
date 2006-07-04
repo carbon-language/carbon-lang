@@ -20,7 +20,7 @@
 namespace llvm {
 namespace clang {
 
-class IdentifierTokenInfo;
+class IdentifierInfo;
 
 /// LexerToken - This structure provides full information about a lexed token.
 /// it is not intended to be space efficient, it is intended to return as much
@@ -33,7 +33,7 @@ class LexerToken {
   
   /// IdentifierInfo - If this was an identifier, this points to the uniqued
   /// information about this identifier.
-  IdentifierTokenInfo *IdentifierInfo;
+  IdentifierInfo *IdentInfo;
 
   /// Kind - The actual flavor of token this is.
   ///
@@ -67,13 +67,13 @@ public:
   ///
   void StartToken() {
     Flags = 0;
-    IdentifierInfo = 0;
+    IdentInfo = 0;
     Loc = SourceLocation();
   }
   
-  IdentifierTokenInfo *getIdentifierInfo() const { return IdentifierInfo; }
-  void SetIdentifierInfo(IdentifierTokenInfo *II) {
-    IdentifierInfo = II;
+  IdentifierInfo *getIdentifierInfo() const { return IdentInfo; }
+  void SetIdentifierInfo(IdentifierInfo *II) {
+    IdentInfo = II;
   }
 
   /// SetFlag - Set the specified flag.
