@@ -17,10 +17,85 @@
 #include "clang/Lex/Pragma.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/CommandLine.h"
-// NOTE: we use stdio because it is empirically much faster than iostreams.
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/Config/config.h"
 #include <cstdio>
 using namespace llvm;
 using namespace clang;
+
+//===----------------------------------------------------------------------===//
+// Simple buffered I/O
+//===----------------------------------------------------------------------===//
+//
+// Empirically, iostream is over 30% slower than stdio for this workload, and
+// stdio itself isn't very well suited.  The problem with stdio is use of
+// putchar_unlocked.  We have many newline characters that need to be emitted,
+// but stdio needs to do extra checks to handle line buffering mode.  These
+// extra checks make putchar_unlocked fall off its inlined code path, hitting
+// slow system code.  In practice, using 'write' directly makes 'clang -E -P'
+// about 10% faster than using the stdio path on darwin.
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#else
+#define USE_STDIO 1
+#endif
+
+static char *OutBufStart = 0, *OutBufEnd, *OutBufCur;
+
+/// InitOutputBuffer - Initialize our output buffer.
+///
+static void InitOutputBuffer() {
+#ifndef USE_STDIO
+  OutBufStart = new char[64*1024];
+  OutBufEnd = OutBufStart+64*1024;
+  OutBufCur = OutBufStart;
+#endif
+}
+
+/// FlushBuffer - Write the accumulated bytes to the output stream.
+///
+static void FlushBuffer() {
+#ifndef USE_STDIO
+  write(STDOUT_FILENO, OutBufStart, OutBufCur-OutBufStart);
+  OutBufCur = OutBufStart;
+#endif
+}
+
+/// CleanupOutputBuffer - Finish up output.
+///
+static void CleanupOutputBuffer() {
+#ifndef USE_STDIO
+  FlushBuffer();
+  delete [] OutBufStart;
+#endif
+}
+
+static void OutputChar(char c) {
+#ifdef USE_STDIO
+  putchar_unlocked(c);
+#else
+  if (OutBufCur >= OutBufEnd)
+    FlushBuffer();
+  *OutBufCur++ = c;
+#endif
+}
+
+static void OutputString(const char *Ptr, unsigned Size) {
+#ifdef USE_STDIO
+  fwrite(Ptr, Size, 1, stdout);
+#else
+  if (OutBufCur+Size >= OutBufEnd)
+    FlushBuffer();
+  memcpy(OutBufCur, Ptr, Size);
+  OutBufCur += Size;
+#endif
+}
+
+
+//===----------------------------------------------------------------------===//
+// Preprocessed token printer
+//===----------------------------------------------------------------------===//
 
 static cl::opt<bool>
 DisableLineMarkers("P", cl::desc("Disable linemarker output in -E mode"));
@@ -31,13 +106,17 @@ static Preprocessor *EModePP;
 static bool EmodeEmittedTokensOnThisLine;
 static DirectoryLookup::DirType EmodeFileType =DirectoryLookup::NormalHeaderDir;
 
-
-
 /// MoveToLine - Move the output to the source line specified by the location
 /// object.  We can do this by emitting some number of \n's, or be emitting a
 /// #line directive.
 static void MoveToLine(SourceLocation Loc) {
-  if (DisableLineMarkers) return;
+  if (DisableLineMarkers) {
+    if (EmodeEmittedTokensOnThisLine) {
+      OutputChar('\n');
+      EmodeEmittedTokensOnThisLine = false;
+    }
+    return;
+  }
 
   unsigned LineNo = EModePP->getSourceManager().getLineNumber(Loc);
   
@@ -46,24 +125,28 @@ static void MoveToLine(SourceLocation Loc) {
   if (LineNo-EModeCurLine < 8) {
     unsigned CurLine = EModeCurLine;
     for (; CurLine != LineNo; ++CurLine)
-      putchar_unlocked('\n');
+      OutputChar('\n');
     EModeCurLine = CurLine;
   } else {
     if (EmodeEmittedTokensOnThisLine) {
-      putchar_unlocked('\n');
+      OutputChar('\n');
       EmodeEmittedTokensOnThisLine = false;
     }
     
     EModeCurLine = LineNo;
-    if (DisableLineMarkers) return;
     
-    printf("# %d %s", LineNo, EModeCurFilename.c_str());
+    OutputChar('#');
+    OutputChar(' ');
+    std::string Num = utostr_32(LineNo);
+    OutputString(&Num[0], Num.size());
+    OutputChar(' ');
+    OutputString(&EModeCurFilename[0], EModeCurFilename.size());
     
     if (EmodeFileType == DirectoryLookup::SystemHeaderDir)
-      printf(" 3");
+      OutputString(" 3", 2);
     else if (EmodeFileType == DirectoryLookup::ExternCSystemHeaderDir)
-      printf(" 3 4");
-    putchar_unlocked('\n');
+      OutputString(" 3 4", 4);
+    OutputChar('\n');
   } 
 }
 
@@ -92,30 +175,36 @@ static void HandleFileChange(SourceLocation Loc,
   EmodeFileType = FileType;
   
   if (EmodeEmittedTokensOnThisLine) {
-    putchar_unlocked('\n');
+    OutputChar('\n');
     EmodeEmittedTokensOnThisLine = false;
   }
   
   if (DisableLineMarkers) return;
   
-  printf("# %d %s", EModeCurLine, EModeCurFilename.c_str());
+  OutputChar('#');
+  OutputChar(' ');
+  std::string Num = utostr_32(EModeCurLine);
+  OutputString(&Num[0], Num.size());
+  OutputChar(' ');
+  OutputString(&EModeCurFilename[0], EModeCurFilename.size());
+  
   switch (Reason) {
   case Preprocessor::EnterFile:
-    printf(" 1");
+    OutputString(" 1", 2);
     break;
   case Preprocessor::ExitFile:
-    printf(" 2");
+    OutputString(" 2", 2);
     break;
   case Preprocessor::SystemHeaderPragma: break;
   case Preprocessor::RenameFile: break;
   }
   
   if (FileType == DirectoryLookup::SystemHeaderDir)
-    printf(" 3");
+    OutputString(" 3", 2);
   else if (FileType == DirectoryLookup::ExternCSystemHeaderDir)
-    printf(" 3 4");
+    OutputString(" 3 4", 4);
   
-  putchar_unlocked('\n');
+  OutputChar('\n');
 }
 
 /// HandleIdent - Handle #ident directives when read by the preprocessor.
@@ -123,7 +212,8 @@ static void HandleFileChange(SourceLocation Loc,
 static void HandleIdent(SourceLocation Loc, const std::string &Val) {
   MoveToLine(Loc);
   
-  printf("#ident %s", Val.c_str());
+  OutputString("#ident ", strlen("#ident "));
+  OutputString(&Val[0], Val.size());
   EmodeEmittedTokensOnThisLine = true;
 }
 
@@ -146,11 +236,11 @@ static void HandleFirstTokOnLine(LexerToken &Tok, Preprocessor &PP) {
   // is not handled as a #define next time through the preprocessor if in
   // -fpreprocessed mode.
   if (ColNo <= 1 && Tok.getKind() == tok::hash)
-    putchar_unlocked(' ');
+    OutputChar(' ');
   
   // Otherwise, indent the appropriate number of spaces.
   for (; ColNo > 1; --ColNo)
-    putchar_unlocked(' ');
+    OutputChar(' ');
 }
 
 namespace {
@@ -161,16 +251,17 @@ struct UnknownPragmaHandler : public PragmaHandler {
     // Figure out what line we went to and insert the appropriate number of
     // newline characters.
     MoveToLine(PragmaTok.getLocation());
-    printf(Prefix);
+    OutputString(Prefix, strlen(Prefix));
     
     // Read and print all of the pragma tokens.
     while (PragmaTok.getKind() != tok::eom) {
       if (PragmaTok.hasLeadingSpace())
-        putchar_unlocked(' ');
-      printf("%s", PP.getSpelling(PragmaTok).c_str());
+        OutputChar(' ');
+      std::string TokSpell = PP.getSpelling(PragmaTok);
+      OutputString(&TokSpell[0], TokSpell.size());
       PP.LexUnexpandedToken(PragmaTok);
     }
-    putchar_unlocked('\n');
+    OutputChar('\n');
   }
 };
 } // end anonymous namespace
@@ -178,6 +269,8 @@ struct UnknownPragmaHandler : public PragmaHandler {
 /// DoPrintPreprocessedInput - This implements -E mode.
 ///
 void clang::DoPrintPreprocessedInput(Preprocessor &PP) {
+  InitOutputBuffer();
+  
   LexerToken Tok;
   char Buffer[256];
   EModeCurLine = 0;
@@ -200,19 +293,21 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP) {
     if (Tok.isAtStartOfLine()) {
       HandleFirstTokOnLine(Tok, PP);
     } else if (Tok.hasLeadingSpace()) {
-      putchar_unlocked(' ');
+      OutputChar(' ');
     }
     
     if (Tok.getLength() < 256) {
       unsigned Len = PP.getSpelling(Tok, Buffer);
       Buffer[Len] = 0;
-      fwrite(Buffer, Len, 1, stdout);
+      OutputString(Buffer, Len);
     } else {
       std::string S = PP.getSpelling(Tok);
-      fwrite(&S[0], S.size(), 1, stdout);
+      OutputString(&S[0], S.size());
     }
     EmodeEmittedTokensOnThisLine = true;
   } while (Tok.getKind() != tok::eof);
-  putchar_unlocked('\n');
+  OutputChar('\n');
+  
+  CleanupOutputBuffer();
 }
 
