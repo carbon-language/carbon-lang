@@ -144,6 +144,7 @@ static void HandleFirstTokOnLine(LexerToken &Tok, Preprocessor &PP) {
     std::cout << ' ';
 }
 
+namespace {
 struct UnknownPragmaHandler : public PragmaHandler {
   const char *Prefix;
   UnknownPragmaHandler(const char *prefix) : PragmaHandler(0), Prefix(prefix) {}
@@ -163,7 +164,7 @@ struct UnknownPragmaHandler : public PragmaHandler {
     std::cout << "\n";
   }
 };
-
+} // end anonymous namespace
 
 /// DoPrintPreprocessedInput - This implements -E mode.
 void clang::DoPrintPreprocessedInput(Preprocessor &PP) {
