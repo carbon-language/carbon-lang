@@ -78,12 +78,21 @@ static cl::opt<bool>
 ErrorOnExtensions("pedantic-errors",
                   cl::desc("Issue an error on uses of GCC extensions"));
 
+static cl::opt<bool>
+WarnUnusedMacros("Wunused_macros",
+               cl::desc("Warn for unused macros in the main translation unit"));
+
+
 /// InitializeDiagnostics - Initialize the diagnostic object, based on the
 /// current command line option settings.
 static void InitializeDiagnostics(Diagnostic &Diags) {
   Diags.setWarningsAsErrors(WarningsAsErrors);
   Diags.setWarnOnExtensions(WarnOnExtensions);
   Diags.setErrorOnExtensions(ErrorOnExtensions);
+
+  // Silence the "macro is not used" warning unless requested.
+  if (!WarnUnusedMacros)
+    Diags.setDiagnosticMapping(diag::pp_macro_not_used, diag::MAP_IGNORE);
 }
 
 static cl::opt<bool>

@@ -51,6 +51,14 @@ static const char * const DiagnosticText[] = {
   0
 };
 
+Diagnostic::Diagnostic(DiagnosticClient &client) : Client(client) {
+  WarningsAsErrors = false;
+  WarnOnExtensions = false;
+  ErrorOnExtensions = false;
+  // Clear all mappings, setting them to MAP_DEFAULT.
+  memset(DiagMappings, 0, sizeof(DiagMappings));
+}
+
 /// isNoteWarningOrExtension - Return true if the unmapped diagnostic level of
 /// the specified diagnostic ID is a Note, Warning, or Extension.
 bool Diagnostic::isNoteWarningOrExtension(unsigned DiagID) {
@@ -71,8 +79,16 @@ const char *Diagnostic::getDescription(unsigned DiagID) {
 Diagnostic::Level Diagnostic::getDiagnosticLevel(unsigned DiagID) const {
   unsigned DiagClass = getDiagClass(DiagID);
   
-  // TODO: specific diagnostics may be enabled or disabled.  Filter those based
-  // on their DiagID.
+  // Specific non-error diagnostics may be mapped to various levels from ignored
+  // to error.
+  if (DiagClass < ERROR) {
+    switch (getDiagnosticMapping((diag::kind)DiagID)) {
+    case diag::MAP_DEFAULT: break;
+    case diag::MAP_IGNORE:  return Ignored;
+    case diag::MAP_WARNING: DiagClass = WARNING; break;
+    case diag::MAP_ERROR:   DiagClass = ERROR; break;
+    }
+  }
   
   // Map diagnostic classes based on command line argument settings.
   if (DiagClass == EXTENSION) {

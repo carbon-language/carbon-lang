@@ -23,11 +23,12 @@ II. Current advantages over GCC:
  * All languages supported linked into same library (no cc1,cc1obj, ...).
  * mmap's code in read-only, does not dirty the pages like GCC (mem footprint).
  * BSD License, can be linked into non-GPL projects.
+ * Full diagnostic control, per diagnostic.
+ * Faster than GCC at lexing and preprocessing.
  
 Future Features:
- * Full diagnostic control, per diagnostic (use enums).
- * Fine grained control within the source (#pragma enable/disable warning)
- * Faster than GCC, preprocessing, parsing, IR generation.
+ * Fine grained diag control within the source (#pragma enable/disable warning).
+ * Faster than GCC at parsing, IR generation.
  * Better token tracking within macros?  (Token came from this line, which is
    a macro argument instantiated here, recursively instantiated here).
  * Fast #import!!
@@ -118,4 +119,5 @@ Cocoa GUI Front-end:
  * Tight integration with compiler components.
  * Primary advantage: batch compiles, keeping digests in memory, dependency mgmt
    between app frameworks, building code/digests in the background, etc.
+ * Interesting idea: http://nickgravgaard.com/elastictabstops/
  

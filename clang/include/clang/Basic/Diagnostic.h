@@ -24,10 +24,21 @@ namespace clang {
   
   // Import the diagnostic enums themselves.
   namespace diag {
+    /// diag::kind - All of the diagnostics that can be emitted by the frontend.
     enum kind {
 #define DIAG(ENUM,FLAGS,DESC) ENUM,
 #include "DiagnosticKinds.def"
       NUM_DIAGNOSTICS
+    };
+    
+    /// Enum values that allow the client to map NOTEs, WARNINGs, and EXTENSIONs
+    /// to either MAP_IGNORE (nothing), MAP_WARNING (emit a warning), MAP_ERROR
+    /// (emit as an error), or MAP_DEFAULT (handle the default way).
+    enum Mapping {
+      MAP_DEFAULT = 0,     //< Do not map this diagnostic.
+      MAP_IGNORE  = 1,     //< Map this diagnostic to nothing, ignore it.
+      MAP_WARNING = 2,     //< Map this diagnostic to a warning.
+      MAP_ERROR   = 3      //< Map this diagnostic to an error.
     };
   }
   
@@ -40,12 +51,12 @@ class Diagnostic {
   bool WarnOnExtensions;      // Enables warnings for gcc extensions: -pedantic.
   bool ErrorOnExtensions;     // Error on extensions: -pedantic-errors.
   DiagnosticClient &Client;
+
+  /// DiagMappings - Mapping information for diagnostics.  Mapping info is
+  /// packed into two bits per diagnostic.
+  unsigned char DiagMappings[(diag::NUM_DIAGNOSTICS+3)/4];
 public:
-  Diagnostic(DiagnosticClient &client) : Client(client) {
-    WarningsAsErrors = false;
-    WarnOnExtensions = false;
-    ErrorOnExtensions = false;
-  }
+  Diagnostic(DiagnosticClient &client);
   
   //===--------------------------------------------------------------------===//
   //  Diagnostic characterization methods, used by a client to customize how
@@ -66,6 +77,22 @@ public:
   void setErrorOnExtensions(bool Val) { ErrorOnExtensions = Val; }
   bool getErrorOnExtensions() const { return ErrorOnExtensions; }
 
+  /// setDiagnosticMapping - This allows the client to specify that certain
+  /// warnings are ignored.  Only NOTEs, WARNINGs, and EXTENSIONs can be mapped.
+  void setDiagnosticMapping(diag::kind Diag, diag::Mapping Map) {
+    assert(isNoteWarningOrExtension(Diag) && "Cannot map errors!");
+    unsigned char &Slot = DiagMappings[Diag/4];
+    unsigned Bits = (Diag & 3)*2;
+    Slot &= ~(3 << Bits);
+    Slot |= Map << Bits;
+  }
+
+  /// getDiagnosticMapping - Return the mapping currently set for the specified
+  /// diagnostic.
+  diag::Mapping getDiagnosticMapping(diag::kind Diag) const {
+    return (diag::Mapping)((DiagMappings[Diag/4] >> (Diag & 3)*2) & 3);
+  }
+  
   
   //===--------------------------------------------------------------------===//
   // Diagnostic classification and reporting interfaces.
@@ -77,7 +104,6 @@ public:
   
   /// Level - The level of the diagnostic 
   enum Level {
-    // FIXME: Anachronism?
     Ignored, Note, Warning, Error, Fatal, Sorry
   };
   
