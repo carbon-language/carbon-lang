@@ -163,3 +163,7 @@ D: C++ bugs filed, and C++ front-end bug fixes.
 N: Bill Wendling
 E: wendling@isanbard.org
 D: The `Lower Setjmp/Longjmp' pass, improvements to the -lowerswitch pass.
+
+N: Patrick Jenkins
+E: patjenk@wam.umd.edu
+D: Nightly Tester
