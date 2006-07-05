@@ -73,13 +73,9 @@ extern "C" {
 #else
     "call    X86CompilationCallback2\n"
 #endif
-#if defined(__APPLE__)
     "movl    %ebp, %esp\n"    // Restore ESP
-#endif
 #if FASTCC_NUM_INT_ARGS_INREGS > 0
-#if defined(__APPLE__)
     "subl    $8, %esp\n"
-#endif
     "popl    %edx\n"
     "popl    %eax\n"
 #endif
