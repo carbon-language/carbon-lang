@@ -932,6 +932,7 @@ void Lexer::LexTokenInternal(LexerToken &Result) {
 LexNextToken:
   // New token, can't need cleaning yet.
   Result.ClearFlag(LexerToken::NeedsCleaning);
+  Result.SetIdentifierInfo(0);
   
   // CurPtr - Cache BufferPtr in an automatic variable.
   const char *CurPtr = BufferPtr;
