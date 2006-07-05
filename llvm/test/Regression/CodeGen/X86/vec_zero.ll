@@ -1,5 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep xorps &&
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep pxor
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep xorps | wc -l | grep 2
 
 void %foo(<4 x float> *%P) {
 	%T = load <4 x float> * %P
