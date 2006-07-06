@@ -46,7 +46,7 @@ unsigned PPC32TargetMachine::getJITMatchQuality() {
 unsigned PPC64TargetMachine::getJITMatchQuality() {
 #if defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)
   if (sizeof(void*) == 8)
-    return 10 * 0/*FIXME: not PPC64-JIT support yet! */;
+    return 10;
 #endif
   return 0;
 }
