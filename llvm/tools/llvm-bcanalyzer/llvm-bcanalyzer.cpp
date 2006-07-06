@@ -73,22 +73,9 @@ main(int argc, char **argv) {
 
     if ( M && Verify ) {
       std::string verificationMsg;
-      try {
-        verifyModule( *M, ThrowExceptionAction );
-      } catch (std::string& errmsg ) {
-        verificationMsg = errmsg;
-      }
-      if ( verificationMsg.length() > 0 )
+      if (verifyModule(*M, ReturnStatusAction, &verificationMsg))
         std::cerr << "Final Verification Message: " << verificationMsg << "\n";
     }
-
-
-    // If there was an error, print it and stop.
-    if ( ErrorMessage.size() ) {
-      std::cerr << argv[0] << ": " << ErrorMessage << "\n";
-      return 1;
-    }
-
 
     if (Out != &std::cout) {
       ((std::ofstream*)Out)->close();

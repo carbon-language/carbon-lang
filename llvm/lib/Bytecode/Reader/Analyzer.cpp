@@ -117,12 +117,10 @@ public:
     bca.functionDensity = double(bca.BlockSizes[BytecodeFormat::FunctionBlockID]) /
       double(bca.numFunctions);
 
-    if ( bca.progressiveVerify ) {
-      try {
-        verifyModule(*M, ThrowExceptionAction);
-      } catch ( std::string& msg ) {
+    if (bca.progressiveVerify) {
+      std::string msg;
+      if (verifyModule(*M, ReturnStatusAction, &msg))
         bca.VerifyInfo += "Verify@Finish: " + msg + "\n";
-      }
     }
   }
 
@@ -135,12 +133,10 @@ public:
   virtual void handleModuleEnd(const std::string& id) {
     if (os)
       *os << "  } End Module " << id << "\n";
-    if ( bca.progressiveVerify ) {
-      try {
-        verifyModule(*M, ThrowExceptionAction);
-      } catch ( std::string& msg ) {
+    if (bca.progressiveVerify) {
+      std::string msg;
+      if (verifyModule(*M, ReturnStatusAction, &msg))
         bca.VerifyInfo += "Verify@EndModule: " + msg + "\n";
-      }
     }
   }
 
@@ -232,12 +228,10 @@ public:
   virtual void handleModuleGlobalsEnd() {
     if (os)
       *os << "    } END BLOCK: ModuleGlobalInfo\n";
-    if ( bca.progressiveVerify ) {
-      try {
-        verifyModule(*M, ThrowExceptionAction);
-      } catch ( std::string& msg ) {
+    if (bca.progressiveVerify) {
+      std::string msg;
+      if (verifyModule(*M, ReturnStatusAction, &msg))
         bca.VerifyInfo += "Verify@EndModuleGlobalInfo: " + msg + "\n";
-      }
     }
   }
 
@@ -346,12 +340,10 @@ public:
     currFunc->density = double(currFunc->byteSize) /
       double(currFunc->numInstructions);
 
-    if ( bca.progressiveVerify ) {
-      try {
-        verifyModule(*M, ThrowExceptionAction);
-      } catch ( std::string& msg ) {
+    if (bca.progressiveVerify) {
+      std::string msg;
+      if (verifyModule(*M, ReturnStatusAction, &msg))
         bca.VerifyInfo += "Verify@EndFunction: " + msg + "\n";
-      }
     }
   }
 
@@ -522,12 +514,10 @@ public:
     if (os)
       *os << "    } END BLOCK: GlobalConstants\n";
 
-    if ( bca.progressiveVerify ) {
-      try {
-        verifyModule(*M, ThrowExceptionAction);
-      } catch ( std::string& msg ) {
+    if (bca.progressiveVerify) {
+      std::string msg;
+      if (verifyModule(*M, ReturnStatusAction, &msg))
         bca.VerifyInfo += "Verify@EndGlobalConstants: " + msg + "\n";
-      }
     }
   }
 

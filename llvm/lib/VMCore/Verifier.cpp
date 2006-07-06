@@ -152,18 +152,13 @@ namespace {  // Anonymous namespace for class
     /// this condition, do so.
     ///
     void abortIfBroken() {
-      if (Broken)
-      {
+      if (Broken) {
         msgs << "Broken module found, ";
-        switch (action)
-        {
+        switch (action) {
           case AbortProcessAction:
             msgs << "compilation aborted!\n";
             std::cerr << msgs.str();
             abort();
-          case ThrowExceptionAction:
-            msgs << "verification terminated.\n";
-            throw msgs.str();
           case PrintMessageAction:
             msgs << "verification continues.\n";
             std::cerr << msgs.str();
@@ -799,11 +794,15 @@ bool llvm::verifyFunction(const Function &f, VerifierFailureAction action) {
 /// verifyModule - Check a module for errors, printing messages on stderr.
 /// Return true if the module is corrupt.
 ///
-bool llvm::verifyModule(const Module &M, VerifierFailureAction action) {
+bool llvm::verifyModule(const Module &M, VerifierFailureAction action,
+                        std::string *ErrorInfo) {
   PassManager PM;
   Verifier *V = new Verifier(action);
   PM.add(V);
   PM.run((Module&)M);
+  
+  if (ErrorInfo && V->Broken)
+    *ErrorInfo = V->msgs.str();
   return V->Broken;
 }
 

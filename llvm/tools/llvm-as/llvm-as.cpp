@@ -63,14 +63,14 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    try {
-      if (!DisableVerify)
-        verifyModule(*M.get(), ThrowExceptionAction);
-    } catch (const std::string &Err) {
-      std::cerr << argv[0]
-                << ": assembly parsed, but does not verify as correct!\n";
-      std::cerr << Err;
-      return 1;
+    if (!DisableVerify) {
+      std::string Err;
+      if (verifyModule(*M.get(), ReturnStatusAction, &Err)) {
+        std::cerr << argv[0]
+                  << ": assembly parsed, but does not verify as correct!\n";
+        std::cerr << Err;
+        return 1;
+      } 
     }
 
     if (DumpAsm) std::cerr << "Here's the assembly:\n" << *M.get();
