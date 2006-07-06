@@ -21,6 +21,8 @@
 #ifndef LLVM_ANALYSIS_VERIFIER_H
 #define LLVM_ANALYSIS_VERIFIER_H
 
+#include <string>
+
 namespace llvm {
 
 class FunctionPass;
@@ -35,7 +37,6 @@ class Function;
 /// actions are listed below.
 enum VerifierFailureAction {
   AbortProcessAction,   ///< verifyModule will print to stderr and abort()
-  ThrowExceptionAction, ///< verifyModule will throw errors as std::string
   PrintMessageAction,   ///< verifyModule will print to stderr and return true
   ReturnStatusAction    ///< verifyModule will just return true
 };
@@ -58,7 +59,8 @@ FunctionPass *createVerifierPass(
 
 bool verifyModule(
   const Module &M,  ///< The module to be verified
-  VerifierFailureAction action = AbortProcessAction ///< Action to take
+  VerifierFailureAction action = AbortProcessAction, ///< Action to take
+  std::string *ErrorInfo = 0      ///< Information about failures.
 );
 
 // verifyFunction - Check a function for errors, useful for use when debugging a
