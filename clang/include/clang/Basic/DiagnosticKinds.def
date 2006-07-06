@@ -61,7 +61,7 @@ DIAG(ext_dollar_in_identifier, EXTENSION,
      "'$' in identifier")
 
 DIAG(ext_token_used, EXTENSION,
-     "Extension used")
+     "extension used")
 
 DIAG(err_unterminated_string, ERROR,
      "missing terminating \" character")
@@ -113,6 +113,8 @@ DIAG(ext_pp_extra_tokens_at_eol, EXTENSION,
      "extra tokens at end of %s directive")
 DIAG(ext_pp_comma_expr, EXTENSION,
      "comma operator in operand of #if")
+DIAG(ext_pp_bad_vaargs_use, EXTENSION,
+     "__VA_ARGS__ can only appear in the expansion of a C99 variadic macro")
      
 DIAG(ext_pp_base_file, EXTENSION,
      "__BASE_FILE__ is a language extension")

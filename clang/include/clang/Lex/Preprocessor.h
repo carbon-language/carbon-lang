@@ -92,13 +92,13 @@ class Preprocessor {
   unsigned SystemDirIdx;
   bool NoCurDirSearch;
   
-  /// Identifiers for builtin macros.
-  IdentifierInfo *Ident__LINE__, *Ident__FILE__; // __LINE__, __FILE__
-  IdentifierInfo *Ident__DATE__, *Ident__TIME__; // __DATE__, __TIME__
-  IdentifierInfo *Ident__INCLUDE_LEVEL__;        // __INCLUDE_LEVEL__
-  IdentifierInfo *Ident__BASE_FILE__;            // __BASE_FILE__
-  IdentifierInfo *Ident__TIMESTAMP__;            // __TIMESTAMP__
-  IdentifierInfo *Ident_Pragma;                  // _Pragma
+  /// Identifiers for builtin macros and other builtins.
+  IdentifierInfo *Ident__LINE__, *Ident__FILE__;   // __LINE__, __FILE__
+  IdentifierInfo *Ident__DATE__, *Ident__TIME__;   // __DATE__, __TIME__
+  IdentifierInfo *Ident__INCLUDE_LEVEL__;          // __INCLUDE_LEVEL__
+  IdentifierInfo *Ident__BASE_FILE__;              // __BASE_FILE__
+  IdentifierInfo *Ident__TIMESTAMP__;              // __TIMESTAMP__
+  IdentifierInfo *Ident_Pragma, *Ident__VA_ARGS__; // _Pragma, __VA_ARGS__
   
   SourceLocation DATELoc, TIMELoc;
 public:

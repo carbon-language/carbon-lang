@@ -67,6 +67,10 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
   FileChangeHandler = 0;
   IdentHandler = 0;
   
+  // "Poison" __VA_ARGS__, which can only appear in the expansion of a macro.
+  // This gets unpoisoned where it is allowed.
+  (Ident__VA_ARGS__ = getIdentifierInfo("__VA_ARGS__"))->setIsPoisoned();
+  
   // Initialize the pragma handlers.
   PragmaHandlers = new PragmaNamespace(0);
   RegisterBuiltinPragmas();
@@ -716,8 +720,12 @@ void Preprocessor::HandleIdentifier(LexerToken &Identifier) {
 
   // If this identifier was poisoned, and if it was not produced from a macro
   // expansion, emit an error.
-  if (II.isPoisoned() && CurLexer)
-    Diag(Identifier, diag::err_pp_used_poisoned_id);
+  if (II.isPoisoned() && CurLexer) {
+    if (&II != Ident__VA_ARGS__)   // We warn about __VA_ARGS__ with poisoning.
+      Diag(Identifier, diag::err_pp_used_poisoned_id);
+    else
+      Diag(Identifier, diag::ext_pp_bad_vaargs_use);
+  }
   
   if (MacroInfo *MI = II.getMacroInfo())
     if (MI->isEnabled() && !DisableMacroExpansion)
