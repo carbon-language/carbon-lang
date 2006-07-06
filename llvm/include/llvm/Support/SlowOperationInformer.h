@@ -17,9 +17,7 @@
 // appears on the screen (ie, the cursor should be at the start of the line).
 //
 // If the user presses CTRL-C during the operation, the next invocation of the
-// progress method with throw an std::string object indicating that the
-// operation was cancelled.  As such, client code must be exception safe around
-// the progress method.
+// progress method return true indicating that the operation was cancelled.
 //
 // Because SlowOperationInformers fiddle around with signals, they cannot be
 // nested, and interact poorly with threads.  The SIGALRM handler is set back to
@@ -46,19 +44,20 @@ namespace llvm {
     SlowOperationInformer(const std::string &Name);
     ~SlowOperationInformer();
 
-    /// progress - Clients should periodically call this method when they are in
-    /// an exception-safe state.  The Amount variable should indicate how far
+    /// progress - Clients should periodically call this method when they can
+    /// handle cancellation.  The Amount variable should indicate how far
     /// along the operation is, given in 1/10ths of a percent (in other words,
-    /// Amount should range from 0 to 1000).
-    void progress(unsigned Amount);
+    /// Amount should range from 0 to 1000).  If the user cancels the operation,
+    /// this returns true, false otherwise.
+    bool progress(unsigned Amount);
 
     /// progress - Same as the method above, but this performs the division for
     /// you, and helps you avoid overflow if you are dealing with largish
     /// numbers.
-    void progress(unsigned Current, unsigned Maximum) {
+    bool progress(unsigned Current, unsigned Maximum) {
       assert(Maximum != 0 &&
              "Shouldn't be doing work if there is nothing to do!");
-      progress(Current*uint64_t(1000UL)/Maximum);
+      return progress(Current*uint64_t(1000UL)/Maximum);
     }
   };
 } // end namespace llvm

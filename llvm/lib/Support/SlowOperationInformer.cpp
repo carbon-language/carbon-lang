@@ -37,18 +37,18 @@ SlowOperationInformer::~SlowOperationInformer() {
 /// an exception-safe state.  The Amount variable should indicate how far
 /// along the operation is, given in 1/10ths of a percent (in other words,
 /// Amount should range from 0 to 1000).
-void SlowOperationInformer::progress(unsigned Amount) {
+bool SlowOperationInformer::progress(unsigned Amount) {
   int status = sys::AlarmStatus();
   if (status == -1) {
     std::cout << "\n";
     LastPrintAmount = 0;
-    throw "While " + OperationName + ", operation cancelled.";
+    return true;
   }
 
   // If we haven't spent enough time in this operation to warrant displaying the
   // progress bar, don't do so yet.
   if (status == 0)
-    return;
+    return false;
 
   // Delete whatever we printed last time.
   std::string ToPrint = std::string(LastPrintAmount, '\b');
@@ -62,4 +62,5 @@ void SlowOperationInformer::progress(unsigned Amount) {
 
   LastPrintAmount = OS.str().size();
   std::cout << ToPrint+OS.str() << std::flush;
+  return false;
 }

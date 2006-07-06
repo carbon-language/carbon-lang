@@ -280,7 +280,8 @@ ProgramInfo::getSourceFiles(bool RequiresCompleteMap) {
   // mapping.
   for (unsigned i = 0, e = TranslationUnits.size(); i != e; ++i) {
     getSourceFile(TranslationUnits[i]);
-    SOI.progress(i+1, e);
+    if (SOI.progress(i+1, e))
+      throw "While building source files index, operation cancelled.";
   }
 
   // Ok, if we got this far, then we indexed the whole program.
@@ -361,7 +362,8 @@ ProgramInfo::getSourceFunctions(bool RequiresCompleteMap) {
   // Loop over all of the functions found, building the SourceFunctions mapping.
   for (unsigned i = 0, e = Functions.size(); i != e; ++i) {
     getFunction(Functions[i]);
-    SOI.progress(i+1, e);
+    if (SOI.progress(i+1, e))
+      throw "While functions index, operation cancelled.";
   }
 
   // Ok, if we got this far, then we indexed the whole program.
