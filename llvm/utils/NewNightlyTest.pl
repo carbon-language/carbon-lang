@@ -697,7 +697,7 @@ $WarningsFile =~ s/:[0-9]+:/::/g;
 
 # Emit the warnings file, so we can diff...
 WriteFile "$WebDir/$DATE-Warnings.txt", $WarningsFile . "\n";
-my ($WarningsAdded, $WarningsRemoved) = DiffFiles "$Prefix-Warnings.txt";
+my ($WarningsAdded, $WarningsRemoved) = DiffFiles "-Warnings.txt";
 
 # Output something to stdout if something has changed
 #print "ADDED   WARNINGS:\n$WarningsAdded\n\n" if (length $WarningsAdded);
@@ -812,7 +812,7 @@ if ($TestError) {
     $TestsFixed   = "<b>error testing</b><br>";
     $TestsBroken  = "<b>error testing</b><br>";
 } else {
-    my ($RTestsAdded, $RTestsRemoved) = DiffFiles "$Prefix-Tests.txt";
+    my ($RTestsAdded, $RTestsRemoved) = DiffFiles "-Tests.txt";
 
     my @RawTestsAddedArray = split '\n', $RTestsAdded;
     my @RawTestsRemovedArray = split '\n', $RTestsRemoved;
