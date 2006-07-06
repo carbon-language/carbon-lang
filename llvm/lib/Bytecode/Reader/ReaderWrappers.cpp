@@ -170,7 +170,8 @@ static ModuleProvider* CheckVarargs(ModuleProvider* MP) {
 
   // If we get to this point, we know that we have an old-style module.
   // Materialize the whole thing to perform the rewriting.
-  MP->materializeModule();
+  if (MP->materializeModule() == 0)
+    return 0;
 
   if(Function* F = M->getNamedFunction("llvm.va_start")) {
     assert(F->arg_size() == 0 && "Obsolete va_start takes 0 argument!");
@@ -376,22 +377,18 @@ static void getSymbols(Module*M, std::vector<std::string>& symbols) {
 // Get just the externally visible defined symbols from the bytecode
 bool llvm::GetBytecodeSymbols(const sys::Path& fName,
                               std::vector<std::string>& symbols) {
-  try {
-    std::auto_ptr<ModuleProvider> AMP(
-        getBytecodeModuleProvider(fName.toString()));
+  std::auto_ptr<ModuleProvider> AMP(
+      getBytecodeModuleProvider(fName.toString()));
 
-    // Get the module from the provider
-    Module* M = AMP->materializeModule();
+  // Get the module from the provider
+  Module* M = AMP->materializeModule();
+  if (M == 0) return false;
 
-    // Get the symbols
-    getSymbols(M, symbols);
+  // Get the symbols
+  getSymbols(M, symbols);
 
-    // Done with the module
-    return true;
-
-  } catch (...) {
-    return false;
-  }
+  // Done with the module
+  return true;
 }
 
 ModuleProvider*
@@ -406,6 +403,7 @@ llvm::GetBytecodeSymbols(const unsigned char*Buffer, unsigned Length,
 
     // Get the module from the provider
     Module* M = MP->materializeModule();
+    if (M == 0) return 0;
 
     // Get the symbols
     getSymbols(M, symbols);

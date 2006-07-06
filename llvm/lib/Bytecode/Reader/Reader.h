@@ -153,18 +153,33 @@ public:
   /// implementation is identical to the ParseFunction method.
   /// @see ParseFunction
   /// @brief Make a specific function materialize.
-  virtual void materializeFunction(Function *F) {
+  virtual bool materializeFunction(Function *F, std::string *ErrInfo = 0) {
     LazyFunctionMap::iterator Fi = LazyFunctionLoadMap.find(F);
-    if (Fi == LazyFunctionLoadMap.end()) return;
-    ParseFunction(F);
+    if (Fi == LazyFunctionLoadMap.end()) return false;
+    try {
+      ParseFunction(F);
+    } catch (std::string &ErrStr) {
+      if (ErrInfo) *ErrInfo = ErrStr;
+      return true;
+    } catch (...) {
+      return true;
+    }
+    return false;
   }
 
   /// This method is abstract in the parent ModuleProvider class. Its
   /// implementation is identical to ParseAllFunctionBodies.
   /// @see ParseAllFunctionBodies
   /// @brief Make the whole module materialize
-  virtual Module* materializeModule() {
-    ParseAllFunctionBodies();
+  virtual Module* materializeModule(std::string *ErrInfo = 0) {
+    try {
+      ParseAllFunctionBodies();
+    } catch (std::string &ErrStr) {
+      if (ErrInfo) *ErrInfo = ErrStr;
+      return 0;
+    } catch (...) {
+      return 0;
+    }
     return TheModule;
   }
 

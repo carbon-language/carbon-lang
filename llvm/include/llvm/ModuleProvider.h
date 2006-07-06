@@ -18,6 +18,8 @@
 #ifndef MODULEPROVIDER_H
 #define MODULEPROVIDER_H
 
+#include <string>
+
 namespace llvm {
 
 class Function;
@@ -35,22 +37,24 @@ public:
   ///
   Module* getModule() { return TheModule; }
 
-  /// materializeFunction - make sure the given function is fully read.  Note
-  /// that this can throw an exception if the module is corrupt!
+  /// materializeFunction - make sure the given function is fully read.  If the
+  /// module is corrupt, this returns true and fills in the optional string
+  /// with information about the problem.  If successful, this returns false.
   ///
-  virtual void materializeFunction(Function *F) = 0;
+  virtual bool materializeFunction(Function *F, std::string *ErrInfo = 0) = 0;
 
   /// materializeModule - make sure the entire Module has been completely read.
-  /// Note that this can throw an exception if the module is corrupt!
+  /// On error, return null and fill in the error string if specified.
   ///
-  virtual Module* materializeModule() = 0;
+  virtual Module* materializeModule(std::string *ErrInfo = 0) = 0;
 
   /// releaseModule - no longer delete the Module* when provider is destroyed.
-  /// Note that this can throw an exception if the module is corrupt!
+  /// On error, return null and fill in the error string if specified.
   ///
-  virtual Module* releaseModule() {
+  virtual Module* releaseModule(std::string *ErrInfo = 0) {
     // Since we're losing control of this Module, we must hand it back complete
-    materializeModule();
+    if (materializeModule(ErrInfo))
+      return 0;
     Module *tempM = TheModule;
     TheModule = 0;
     return tempM;
@@ -66,8 +70,10 @@ struct ExistingModuleProvider : public ModuleProvider {
   ExistingModuleProvider(Module *M) {
     TheModule = M;
   }
-  void materializeFunction(Function *F) {}
-  Module* materializeModule() { return TheModule; }
+  bool materializeFunction(Function *F, std::string *ErrInfo = 0) {
+    return false;
+  }
+  Module* materializeModule(std::string *ErrInfo = 0) { return TheModule; }
 };
 
 } // End llvm namespace

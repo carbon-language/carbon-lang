@@ -95,13 +95,9 @@ FunctionPassManager::~FunctionPassManager() { delete PM; }
 void FunctionPassManager::add(FunctionPass *P) { PM->add(P); }
 void FunctionPassManager::add(ImmutablePass *IP) { PM->add(IP); }
 bool FunctionPassManager::run(Function &F) {
-  try {
-    MP->materializeFunction(&F);
-  } catch (std::string& errstr) {
+  std::string errstr;
+  if (MP->materializeFunction(&F, &errstr)) {
     std::cerr << "Error reading bytecode file: " << errstr << "\n";
-    abort();
-  } catch (...) {
-    std::cerr << "Error reading bytecode file!\n";
     abort();
   }
   return PM->run(F);
