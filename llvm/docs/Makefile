@@ -10,6 +10,15 @@
 LEVEL      := ..
 DIRS       := CommandGuide
 
+ifdef BUILD_FOR_WEBSITE
+PROJ_OBJ_DIR = .
+DOXYGEN = doxygen
+
+doxygen.cfg: doxygen.cfg.in
+	cat $< | sed 's/@abs_top_srcdir@/../g' | sed 's/@DOT@/dot/g' | \
+        sed 's/@PACKAGE_VERSION@/CVS/g' | sed 's/@abs_top_builddir@/../g' > $@
+endif
+
 include $(LEVEL)/Makefile.common
 
 HTML       := $(wildcard $(PROJ_SRC_DIR)/*.html) \
