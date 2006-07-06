@@ -972,13 +972,21 @@ public:
   void operator=(bool OptionWasSpecified) {
     if (OptionWasSpecified) {
       if (OverrideVersionPrinter == 0) {
-        std::cout << "Low Level Virtual Machine (" << PACKAGE_NAME << ") "
-                  << PACKAGE_VERSION << " (see http://llvm.org/)";
-#ifndef NDEBUG
-        std::cout << " ASSERTIONS ENABLED\n";
-#else
-        std::cout << "\n";
+        std::cout << "Low Level Virtual Machine (http://llvm.org/):\n";
+        std::cout << "  " << PACKAGE_NAME << " version " << PACKAGE_VERSION;
+#ifdef LLVM_VERSION_INFO
+        std::cout << LLVM_VERSION_INFO;
 #endif
+        std::cout << "\n  ";
+#ifndef __OPTIMIZE__
+        std::cout << "DEBUG build";
+#else
+        std::cout << "Optimized build";
+#endif
+#ifndef NDEBUG
+        std::cout << " with assertions";
+#endif
+        std::cout << ".\n";
         getOpts().clear();  // Don't bother making option dtors remove from map.
         exit(1);
       } else {
