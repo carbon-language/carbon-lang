@@ -1,4 +1,4 @@
-##===- tools/llvm-as/Makefile ------------------------------*- Makefile -*-===##
+##===- tools/llvm2cpp/Makefile -----------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -8,8 +8,7 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
 TOOLNAME = llvm2cpp
-USEDLIBS = LLVMAsmParser.a LLVMBCWriter.a LLVMCore.a \
-           LLVMSupport.a LLVMbzip2.a LLVMSystem.a
+USEDLIBS = LLVMBCReader.a LLVMCore.a LLVMSupport.a LLVMbzip2.a LLVMSystem.a
 
 include $(LEVEL)/Makefile.common
 
