@@ -1041,7 +1041,7 @@ Optional Features:
   --enable-jit            Enable Just In Time Compiling (default is YES)
   --enable-doxygen        Build doxygen documentation (default is NO)
   --enable-threads        Use threads if available (default is YES)
-  --enable-target         Build specific host targets:
+  --enable-targets        Build specific host targets:
                           all,host-only,{target-name} (default=all)
   --enable-ltdl-install   install libltdl
   --enable-shared[=PKGS]

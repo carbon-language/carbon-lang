@@ -282,7 +282,7 @@ AC_DEFINE_UNQUOTED([ENABLE_THREADS],$ENABLE_THREADS,[Define if threads enabled])
 
 dnl Allow specific targets to be specified for building (or not)
 TARGETS_TO_BUILD=""
-AC_ARG_ENABLE([targets],AS_HELP_STRING([--enable-target],
+AC_ARG_ENABLE([targets],AS_HELP_STRING([--enable-targets],
     [Build specific host targets: all,host-only,{target-name} (default=all)]),,
     enableval=all)
 case "$enableval" in
