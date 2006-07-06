@@ -181,6 +181,10 @@ DIAG(err__Pragma_malformed, ERROR,
      "_Pragma takes a parenthesized string literal")
 DIAG(err_defined_macro_name, ERROR,
      "\"defined\" cannot be used as a macro name")
+DIAG(err_paste_at_start, ERROR,
+     "\"##\" cannot appear at start of macro expansion")
+DIAG(err_paste_at_end, ERROR,
+     "\"##\" cannot appear at end of macro expansion")
 
 // Should be a sorry?
 DIAG(err_pp_I_dash_not_supported, ERROR,

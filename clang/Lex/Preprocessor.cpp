@@ -1330,6 +1330,7 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
   } else if (Tok.getKind() == tok::l_paren && !Tok.hasLeadingSpace()) {
     // This is a function-like macro definition.
     //assert(0 && "Function-like macros not implemented!");
+    delete MI;
     return DiscardUntilEndOfDirective();
 
   } else if (!Tok.hasLeadingSpace()) {
@@ -1351,11 +1352,30 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
   while (Tok.getKind() != tok::eom) {
     MI->AddTokenToBody(Tok);
     
-    // FIXME: Read macro body.  See create_iso_definition.
-    
+    // FIXME: Check for #'s that aren't followed by argument names.
+    // See create_iso_definition.
+
     // Get the next token of the macro.
     LexUnexpandedToken(Tok);
   }
+
+  unsigned NumTokens = MI->getNumTokens();
+
+  // Check that there is no paste (##) operator at the begining or end of the
+  // replacement list.
+  if (NumTokens != 0) {
+    if (MI->getReplacementToken(0).getKind() == tok::hashhash) {
+      SourceLocation Loc = MI->getReplacementToken(0).getLocation();
+      delete MI;
+      return Diag(Loc, diag::err_paste_at_start);
+    }
+    if (MI->getReplacementToken(NumTokens-1).getKind() == tok::hashhash) {
+      SourceLocation Loc = MI->getReplacementToken(NumTokens-1).getLocation();
+      delete MI;
+      return Diag(Loc, diag::err_paste_at_end);
+    }
+  }
+  
   
   // If this is the primary source file, remember that this macro hasn't been
   // used yet.
