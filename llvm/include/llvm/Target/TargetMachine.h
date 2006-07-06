@@ -44,6 +44,17 @@ namespace Reloc {
   };
 }
 
+// Code model types.
+namespace CodeModel {
+  enum Model {
+    Default,
+    Small,
+    Kernel,
+    Medium,
+    Large
+  };
+}
+
 //===----------------------------------------------------------------------===//
 ///
 /// TargetMachine - Primary interface to the complete machine description for
@@ -131,6 +142,13 @@ public:
 
   /// setRelocationModel - Sets the code generation relocation model.
   static void setRelocationModel(Reloc::Model Model);
+
+  /// getCodeModel - Returns the code model. The choices are small, kernel,
+  /// medium, large, and target default.
+  static CodeModel::Model getCodeModel();
+
+  /// setCodeModel - Sets the code model.
+  static void setCodeModel(CodeModel::Model Model);
 
   /// CodeGenFileType - These enums are meant to be passed into
   /// addPassesToEmitFile to indicate what type of file to emit.

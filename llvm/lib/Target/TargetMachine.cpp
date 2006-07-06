@@ -28,6 +28,7 @@ namespace llvm {
   bool UnsafeFPMath;
   bool FiniteOnlyFPMathOption;
   Reloc::Model RelocationModel;
+  CodeModel::Model CMModel;
 }
 namespace {
   cl::opt<bool, true> PrintCode("print-machineinstrs",
@@ -70,6 +71,24 @@ namespace {
       clEnumValN(Reloc::DynamicNoPIC, "dynamic-no-pic",
                  "Relocatable external references, non-relocatable code"),
       clEnumValEnd));
+  cl::opt<llvm::CodeModel::Model, true>
+  DefCodeModel(
+    "code-model",
+    cl::desc("Choose relocation model"),
+    cl::location(CMModel),
+    cl::init(CodeModel::Default),
+    cl::values(
+      clEnumValN(CodeModel::Default, "default",
+                 "Target default code model"),
+      clEnumValN(CodeModel::Small, "small",
+                 "Small code model"),
+      clEnumValN(CodeModel::Kernel, "kernel",
+                 "Kernel code model"),
+      clEnumValN(CodeModel::Medium, "medium",
+                 "Medium code model"),
+      clEnumValN(CodeModel::Large, "large",
+                 "Large code model"),
+      clEnumValEnd));
 }
 
 //---------------------------------------------------------------------------
@@ -92,6 +111,17 @@ Reloc::Model TargetMachine::getRelocationModel() {
 /// setRelocationModel - Sets the code generation relocation model.
 void TargetMachine::setRelocationModel(Reloc::Model Model) {
   RelocationModel = Model;
+}
+
+/// getCodeModel - Returns the code model. The choices are small, kernel,
+/// medium, large, and target default.
+CodeModel::Model TargetMachine::getCodeModel() {
+  return CMModel;
+}
+
+/// setCodeModel - Sets the code model.
+void TargetMachine::setCodeModel(CodeModel::Model Model) {
+  CMModel = Model;
 }
 
 namespace llvm {
