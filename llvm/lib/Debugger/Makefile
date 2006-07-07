@@ -10,5 +10,6 @@
 LEVEL = ../..
 LIBRARYNAME = LLVMDebugger
 EXTRA_DIST = README.txt
+REQUIRES_EH := 1
 
 include $(LEVEL)/Makefile.common
