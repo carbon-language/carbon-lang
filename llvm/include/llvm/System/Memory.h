@@ -14,6 +14,8 @@
 #ifndef LLVM_SYSTEM_MEMORY_H
 #define LLVM_SYSTEM_MEMORY_H
 
+#include <string>
+
 namespace llvm {
 namespace sys {
 
@@ -24,10 +26,10 @@ namespace sys {
   /// @brief Memory block abstraction.
   class MemoryBlock {
   public:
-    void* base() const { return Address; }
+    void *base() const { return Address; }
     unsigned size() const { return Size; }
   private:
-    void * Address;   ///< Address of first byte of memory area
+    void *Address;    ///< Address of first byte of memory area
     unsigned Size;    ///< Size, in bytes of the memory area
     friend class Memory;
   };
@@ -45,21 +47,27 @@ namespace sys {
       /// attempt to allocate \p NumBytes bytes of virtual memory is made.
       /// \p NearBlock may point to an existing allocation in which case
       /// an attempt is made to allocate more memory near the existing block.
-      /// @throws std::string if an error occurred.
+      ///
+      /// On success, this returns a non-null memory block, otherwise it returns
+      /// a null memory block and fills in *ErrMsg.
+      /// 
       /// @brief Allocate Read/Write/Execute memory.
-      static MemoryBlock AllocateRWX(unsigned NumBytes, const MemoryBlock* NearBlock);
+      static MemoryBlock AllocateRWX(unsigned NumBytes,
+                                     const MemoryBlock *NearBlock,
+                                     std::string *ErrMsg = 0);
 
       /// This method releases a block of Read/Write/Execute memory that was
       /// allocated with the AllocateRWX method. It should not be used to
       /// release any memory block allocated any other way.
+      ///
+      /// On success, this returns false, otherwise it returns true and fills
+      /// in *ErrMsg.
       /// @throws std::string if an error occurred.
       /// @brief Release Read/Write/Execute memory.
-      static void ReleaseRWX(MemoryBlock& block);
-
+      static bool ReleaseRWX(MemoryBlock &block, std::string *ErrMsg = 0);
     /// @}
   };
 }
 }
-
 
 #endif

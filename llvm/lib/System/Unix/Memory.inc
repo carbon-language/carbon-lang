@@ -18,14 +18,14 @@
 #include <sys/mman.h>
 #endif
 
-namespace llvm {
-
 /// AllocateRWXMemory - Allocate a slab of memory with read/write/execute
 /// permissions.  This is typically used for JIT applications where we want
 /// to emit code to the memory then jump to it.  Getting this type of memory
 /// is very OS specific.
 ///
-MemoryBlock Memory::AllocateRWX(unsigned NumBytes, const MemoryBlock* NearBlock) {
+llvm::sys::MemoryBlock 
+llvm::sys::Memory::AllocateRWX(unsigned NumBytes, const MemoryBlock* NearBlock,
+                               std::string *ErrMsg) {
   if (NumBytes == 0) return MemoryBlock();
 
   long pageSize = Process::GetPageSize();
@@ -35,7 +35,8 @@ MemoryBlock Memory::AllocateRWX(unsigned NumBytes, const MemoryBlock* NearBlock)
 #ifdef NEED_DEV_ZERO_FOR_MMAP
   static int zero_fd = open("/dev/zero", O_RDWR);
   if (zero_fd == -1) {
-    ThrowErrno("Can't open /dev/zero device");
+    GetErrno("Can't open /dev/zero device", ErrMsg);
+    return MemoryBlock();
   }
   fd = zero_fd;
 #endif
@@ -48,15 +49,17 @@ MemoryBlock Memory::AllocateRWX(unsigned NumBytes, const MemoryBlock* NearBlock)
 #endif
   ;
 
-  void* start = NearBlock ? (unsigned char*) NearBlock->base() + NearBlock->size() : 0;
+  void* start = NearBlock ? (unsigned char*)NearBlock->base() + 
+                            NearBlock->size() : 0;
 
   void *pa = ::mmap(start, pageSize*NumPages, PROT_READ|PROT_WRITE|PROT_EXEC,
                     flags, fd, 0);
   if (pa == MAP_FAILED) {
     if (NearBlock) //Try again without a near hint
       return AllocateRWX(NumBytes, 0);
-    else
-      ThrowErrno("Can't allocate RWX Memory");
+
+    GetErrno("Can't allocate RWX Memory", ErrMsg);
+    return MemoryBlock();
   }
   MemoryBlock result;
   result.Address = pa;
@@ -64,12 +67,10 @@ MemoryBlock Memory::AllocateRWX(unsigned NumBytes, const MemoryBlock* NearBlock)
   return result;
 }
 
-void Memory::ReleaseRWX(MemoryBlock& M) {
-  if (M.Address == 0 || M.Size == 0) return;
-  if (0 != ::munmap(M.Address, M.Size)) {
-    ThrowErrno("Can't release RWX Memory");
-  }
-}
-
+bool llvm::sys::Memory::ReleaseRWX(MemoryBlock &M, std::string *ErrMsg) {
+  if (M.Address == 0 || M.Size == 0) return false;
+  if (0 != ::munmap(M.Address, M.Size))
+    return GetErrno("Can't release RWX Memory", ErrMsg);
+  return false;
 }
 

@@ -66,28 +66,57 @@
 # define WIFEXITED(stat_val) (((stat_val) & 255) == 0)
 #endif
 
-inline void ThrowErrno(const std::string& prefix, int errnum = -1) {
-    char buffer[MAXPATHLEN];
-    buffer[0] = 0;
-    if (errnum == -1)
-      errnum = errno;
+inline bool GetErrno(const std::string &prefix, std::string *ErrDest,
+                     int errnum = -1) {
+  char buffer[MAXPATHLEN];
+  
+  if (ErrDest == 0) return true;
+  
+  buffer[0] = 0;
+  if (errnum == -1)
+    errnum = errno;
 #ifdef HAVE_STRERROR_R
-    // strerror_r is thread-safe.
-    if (errnum)
-      strerror_r(errnum,buffer,MAXPATHLEN-1);
+  // strerror_r is thread-safe.
+  if (errnum)
+    strerror_r(errnum, buffer, MAXPATHLEN-1);
 #elif HAVE_STRERROR
-    // Copy the thread un-safe result of strerror into
-    // the buffer as fast as possible to minimize impact
-    // of collision of strerror in multiple threads.
-    if (errnum)
-      strncpy(buffer,strerror(errnum),MAXPATHLEN-1);
-    buffer[MAXPATHLEN-1] = 0;
+  // Copy the thread un-safe result of strerror into
+  // the buffer as fast as possible to minimize impact
+  // of collision of strerror in multiple threads.
+  if (errnum)
+    strncpy(buffer, strerror(errnum), MAXPATHLEN-1);
+  buffer[MAXPATHLEN-1] = 0;
 #else
-    // Strange that this system doesn't even have strerror
-    // but, oh well, just use a generic message
-    sprintf(buffer, "Error #%d", errnum);
+  // Strange that this system doesn't even have strerror
+  // but, oh well, just use a generic message
+  sprintf(buffer, "Error #%d", errnum);
 #endif
-    throw prefix + ": " + buffer;
+  *ErrDest = prefix + ": " + buffer;
+  return true;
+}
+
+inline void ThrowErrno(const std::string& prefix, int errnum = -1) {
+  char buffer[MAXPATHLEN];
+  buffer[0] = 0;
+  if (errnum == -1)
+    errnum = errno;
+#ifdef HAVE_STRERROR_R
+  // strerror_r is thread-safe.
+  if (errnum)
+    strerror_r(errnum,buffer,MAXPATHLEN-1);
+#elif HAVE_STRERROR
+  // Copy the thread un-safe result of strerror into
+  // the buffer as fast as possible to minimize impact
+  // of collision of strerror in multiple threads.
+  if (errnum)
+    strncpy(buffer,strerror(errnum),MAXPATHLEN-1);
+  buffer[MAXPATHLEN-1] = 0;
+#else
+  // Strange that this system doesn't even have strerror
+  // but, oh well, just use a generic message
+  sprintf(buffer, "Error #%d", errnum);
+#endif
+  throw prefix + ": " + buffer;
 }
 
 #endif

@@ -23,7 +23,9 @@ using namespace sys;
 //===          and must not be UNIX code
 //===----------------------------------------------------------------------===//
 
-MemoryBlock Memory::AllocateRWX(unsigned NumBytes, const MemoryBlock* NearBlock) {
+MemoryBlock Memory::AllocateRWX(unsigned NumBytes,
+                                const MemoryBlock *NearBlock,
+                                std::string *ErrMsg) {
   if (NumBytes == 0) return MemoryBlock();
 
   static const long pageSize = Process::GetPageSize();
@@ -34,7 +36,8 @@ MemoryBlock Memory::AllocateRWX(unsigned NumBytes, const MemoryBlock* NearBlock)
   void *pa = VirtualAlloc(NULL, NumPages*pageSize, MEM_COMMIT,
                   PAGE_EXECUTE_READWRITE);
   if (pa == NULL) {
-    ThrowError("Can't allocate RWX Memory: ");
+    GetError("Can't allocate RWX Memory: ", ErrMsg);
+    return MemoryBlock();
   }
 
   MemoryBlock result;
@@ -43,11 +46,10 @@ MemoryBlock Memory::AllocateRWX(unsigned NumBytes, const MemoryBlock* NearBlock)
   return result;
 }
 
-void Memory::ReleaseRWX(MemoryBlock& M) {
+bool Memory::ReleaseRWX(MemoryBlock &M, std::string *ErrMsg) {
   if (M.Address == 0 || M.Size == 0) return;
-  if (!VirtualFree(M.Address, 0, MEM_RELEASE)) {
-    ThrowError("Can't release RWX Memory: ");
-  }
+  if (!VirtualFree(M.Address, 0, MEM_RELEASE))
+    return GetError("Can't release RWX Memory: ", ErrMsg);
 }
 
 }
