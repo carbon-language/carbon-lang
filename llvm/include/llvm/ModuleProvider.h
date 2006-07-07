@@ -53,7 +53,7 @@ public:
   ///
   virtual Module* releaseModule(std::string *ErrInfo = 0) {
     // Since we're losing control of this Module, we must hand it back complete
-    if (materializeModule(ErrInfo))
+    if (!materializeModule(ErrInfo))
       return 0;
     Module *tempM = TheModule;
     TheModule = 0;
