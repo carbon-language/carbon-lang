@@ -14,14 +14,19 @@
 #include "llvm/System/Path.h"
 #include "llvm/Config/config.h"
 #include <cassert>
-
-namespace llvm {
+#include <ostream>
+using namespace llvm;
 using namespace sys;
 
 //===----------------------------------------------------------------------===//
 //=== WARNING: Implementation here must contain only TRULY operating system
 //===          independent code.
 //===----------------------------------------------------------------------===//
+
+std::ostream& llvm::operator<<(std::ostream &strm, const sys::Path &aPath) {
+  strm << aPath.toString();
+  return strm;
+}
 
 Path
 Path::GetLLVMConfigDir() {
@@ -91,19 +96,14 @@ Path::FindLibrary(std::string& name) {
   return sys::Path();
 }
 
-std::string
-Path::GetDLLSuffix() {
+std::string Path::GetDLLSuffix() {
   return LTDL_SHLIB_EXT;
 }
 
-}
-
 // Include the truly platform-specific parts of this class.
-
 #if defined(LLVM_ON_UNIX)
 #include "Unix/Path.inc"
 #endif
 #if defined(LLVM_ON_WIN32)
 #include "Win32/Path.inc"
 #endif
-
