@@ -15,6 +15,7 @@ LLVMLIBS = LLVMAsmParser.a LLVMBCWriter.a LLVMipo.a LLVMScalarOpts.a \
 CONFIG_FILES = st
 EXTRA_DIST = st
 USEDLIBS=stkr_compiler 
+REQUIRES_EH := 1
 
 
 ifdef PARSE_DEBUG

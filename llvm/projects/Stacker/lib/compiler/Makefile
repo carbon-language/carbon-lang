@@ -4,6 +4,7 @@ LEVEL := ../..
 LIBRARYNAME := stkr_compiler
 EXTRA_DIST := Lexer.cpp.cvs Lexer.l.cvs \
 	      StackerParser.cpp.cvs StackerParser.h.cvs StackerParser.y.cvs
+REQUIRES_EH := 1
 
 include $(LEVEL)/Makefile.common
 
