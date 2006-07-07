@@ -441,7 +441,7 @@ sub SendData{
 
     my $sentdata="";
     foreach $x(keys(%hash_of_data)){
-        $senddata.= "$x  => $hash_of_data{$x}\n";
+        $sentdata.= "$x  => $hash_of_data{$x}\n";
     }
     WriteFile "$Prefix-sentdata.txt", $sentdata;
 
