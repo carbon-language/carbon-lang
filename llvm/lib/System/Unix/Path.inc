@@ -453,14 +453,11 @@ Path::getDirectoryContents(std::set<Path>& result) const {
   for ( ; de != 0; de = ::readdir(direntries)) {
     if (de->d_name[0] != '.') {
       Path aPath(dirPath + (const char*)de->d_name);
-      struct stat buf;
-      if (0 != stat(aPath.path.c_str(), &buf)) {
-        int stat_errno = errno;
-        struct stat st;
-        if (0 == lstat(aPath.path.c_str(), &st) && S_ISLNK(st.st_mode))
+      struct stat st;
+      if (0 != lstat(aPath.path.c_str(), &st)) {
+        if (S_ISLNK(st.st_mode))
           continue; // dangling symlink -- ignore
-        ThrowErrno(aPath.path + 
-          ": can't determine file object type", stat_errno);
+        ThrowErrno(aPath.path +  ": can't determine file object type");
       }
       result.insert(aPath);
     }
