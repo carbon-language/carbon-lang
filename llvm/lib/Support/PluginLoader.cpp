@@ -16,42 +16,28 @@
 #include "llvm/System/DynamicLibrary.h"
 #include <iostream>
 #include <vector>
-
 using namespace llvm;
 
-static std::vector<std::string>* plugins;
+static std::vector<std::string> *Plugins;
 
 void PluginLoader::operator=(const std::string &Filename) {
-  std::string ErrorMessage;
+  if (!Plugins)
+    Plugins = new std::vector<std::string>();
 
-  if (!plugins)
-    plugins = new std::vector<std::string>();
-
-  try {
-    sys::DynamicLibrary::LoadLibraryPermanently(Filename.c_str());
-    plugins->push_back(Filename);
-  } catch (const std::string& errmsg) {
-    if (errmsg.empty()) {
-      ErrorMessage = "Unknown";
-    } else {
-      ErrorMessage = errmsg;
-    }
-  }
-  if (!ErrorMessage.empty())
-    std::cerr << "Error opening '" << Filename << "': " << ErrorMessage
+  std::string Error;
+  if (sys::DynamicLibrary::LoadLibraryPermanently(Filename.c_str(), &Error)) {
+    std::cerr << "Error opening '" << Filename << "': " << Error
               << "\n  -load request ignored.\n";
+  } else {
+    Plugins->push_back(Filename);
+  }
 }
 
-unsigned PluginLoader::getNumPlugins()
-{
-  if(plugins)
-    return plugins->size();
-  else 
-    return 0;
+unsigned PluginLoader::getNumPlugins() {
+  return Plugins ? Plugins->size() : 0;
 }
 
-std::string& PluginLoader::getPlugin(unsigned num)
-{
-  assert(plugins && num < plugins->size() && "Asking for an out of bounds plugin");
-  return (*plugins)[num];
+std::string &PluginLoader::getPlugin(unsigned num) {
+  assert(Plugins && num < Plugins->size() && "Asking for an out of bounds plugin");
+  return (*Plugins)[num];
 }
