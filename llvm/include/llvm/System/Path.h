@@ -18,7 +18,7 @@
 #include <set>
 #include <string>
 #include <vector>
-#include <ostream>
+#include <iosfwd>
 
 namespace llvm {
 namespace sys {
@@ -567,10 +567,7 @@ namespace sys {
   void CopyFile(const Path& Dest, const Path& Src);
 }
 
-inline std::ostream& operator<<(std::ostream& strm, const sys::Path& aPath) {
-  strm << aPath.toString();
-  return strm;
-}
+std::ostream& operator<<(std::ostream& strm, const sys::Path& aPath);
 
 }
 
