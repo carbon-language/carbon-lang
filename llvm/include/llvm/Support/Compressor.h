@@ -49,7 +49,8 @@ namespace llvm {
       static size_t compressToNewBuffer(
         const char* in,           ///< The buffer to be compressed
         size_t size,              ///< The size of the buffer to be compressed
-        char*&out                 ///< The returned output buffer
+        char*&out,                ///< The returned output buffer
+        std::string* error = 0    ///< Optional error message
       );
 
       /// This method compresses a block of memory pointed to by \p in with
@@ -57,38 +58,38 @@ namespace llvm {
       /// writing when this method is called. The stream will not be closed by
       /// this method.  The \p hint argument indicates which type of
       /// compression the caller would *prefer*.
-      /// @throws std::string explaining error if a compression error occurs
       /// @returns The amount of data written to \p out.
       /// @brief Compress memory to a file.
       static size_t compressToStream(
         const char*in,            ///< The buffer to be compressed
         size_t size,              ///< The size of the buffer to be compressed
-        std::ostream& out         ///< The output stream to write data on
+        std::ostream& out,        ///< The output stream to write data on
+        std::string* error = 0    ///< Optional error message buffer
       );
 
       /// This method decompresses a block of memory pointed to by \p in with
       /// size \p size to a new block of memory, \p out, \p that was allocated
       /// by malloc. It is the caller's responsibility to free \p out.
-      /// @throws std::string explaining error if a decompression error occurs
       /// @returns The size of the output buffer \p out.
       /// @brief Decompress memory to a new memory buffer.
       static size_t decompressToNewBuffer(
         const char *in,           ///< The buffer to be decompressed
         size_t size,              ///< Size of the buffer to be decompressed
-        char*&out                 ///< The returned output buffer
+        char*&out,                ///< The returned output buffer
+        std::string* error = 0    ///< Optional error message buffer
       );
 
       /// This method decompresses a block of memory pointed to by \p in with
       /// size \p size to a stream. The stream \p out must be open and ready for
       /// writing when this method is called. The stream will not be closed by
       /// this method.
-      /// @throws std::string explaining error if a decompression error occurs
       /// @returns The amount of data written to \p out.
       /// @brief Decompress memory to a stream.
       static size_t decompressToStream(
         const char *in,           ///< The buffer to be decompressed
         size_t size,              ///< Size of the buffer to be decompressed
-        std::ostream& out         ///< The stream to write write data on
+        std::ostream& out,        ///< The stream to write write data on
+        std::string* error = 0    ///< Optional error message buffer
       );
 
     /// @}
@@ -106,7 +107,6 @@ namespace llvm {
       /// It is recommended that \p size be chosen based on the some multiple or
       /// fraction of the object being decompressed or compressed, respetively.
       /// @returns 0 for success, 1 for failure
-      /// @throws nothing
       /// @brief Output callback function type
       typedef size_t (OutputDataCallback)(char*& buffer, size_t& size,
                                             void* context);
@@ -123,14 +123,14 @@ namespace llvm {
       /// the callback are made. The \p hint parameter tells the function which
       /// kind of compression to start with. However, if its not available on
       /// the platform, the algorithm "falls back" from bzip2 -> zlib -> simple.
-      /// @throws std::string if an error occurs
       /// @returns the total size of the compressed data
       /// @brief Compress a block of memory.
       static size_t compress(
         const char* in,            ///< The buffer to be compressed
         size_t size,               ///< The size of the buffer to be compressed
         OutputDataCallback* cb,    ///< Call back for memory allocation
-        void* context = 0          ///< Context for callback
+        void* context = 0,         ///< Context for callback
+        std::string* error = 0     ///< Optional error message
       );
 
       /// This function does the decompression work. The block of memory
@@ -143,14 +143,14 @@ namespace llvm {
       /// total size will generally be greater than \p size. It is a good idea
       /// to provide as large a value to the callback's \p size parameter as
       /// possible so that fewer calls to the callback are made.
-      /// @throws std::string if an error occurs
       /// @returns the total size of the decompressed data
       /// @brief Decompress a block of memory.
       static size_t decompress(
         const char *in,              ///< The buffer to be decompressed
         size_t size,                 ///< Size of the buffer to be decompressed
         OutputDataCallback* cb,      ///< Call back for memory allocation
-        void* context = 0            ///< Context for callback
+        void* context = 0,           ///< Context for callback
+        std::string* error = 0       ///< Optional error message
       );
 
     /// @}

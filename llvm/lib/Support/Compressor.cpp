@@ -261,7 +261,8 @@ struct WriterContext {
 
 // Compress in one of three ways
 size_t Compressor::compress(const char* in, size_t size,
-                            OutputDataCallback* cb, void* context) {
+                            OutputDataCallback* cb, void* context,
+                            std::string* error ) {
   assert(in && "Can't compress null buffer");
   assert(size && "Can't compress empty buffer");
   assert(cb && "Can't compress without a callback function");
@@ -282,9 +283,18 @@ size_t Compressor::compress(const char* in, size_t size,
     bzdata.next_out = 0;
     bzdata.avail_out = 0;
     switch ( BZ2_bzCompressInit(&bzdata, 5, 0, 100) ) {
-      case BZ_CONFIG_ERROR: throw std::string("bzip2 library mis-compiled");
-      case BZ_PARAM_ERROR:  throw std::string("Compressor internal error");
-      case BZ_MEM_ERROR:    throw std::string("Out of memory");
+      case BZ_CONFIG_ERROR: 
+        if (error)
+          *error = "bzip2 library mis-compiled";
+        return result;
+      case BZ_PARAM_ERROR:  
+        if (error)
+          *error = "Compressor internal error";
+        return result;
+      case BZ_MEM_ERROR:    
+        if (error)
+          *error = "Out of memory";
+        return result;
       case BZ_OK:
       default:
         break;
@@ -293,7 +303,9 @@ size_t Compressor::compress(const char* in, size_t size,
     // Get a block of memory
     if (0 != getdata_uns(bzdata.next_out, bzdata.avail_out,cb,context)) {
       BZ2_bzCompressEnd(&bzdata);
-      throw std::string("Can't allocate output buffer");
+      if (error)
+        *error = "Can't allocate output buffer";
+      return result;
     }
 
     // Put compression code in first byte
@@ -305,15 +317,23 @@ size_t Compressor::compress(const char* in, size_t size,
     while (BZ_FINISH_OK == (bzerr = BZ2_bzCompress(&bzdata, BZ_FINISH))) {
       if (0 != getdata_uns(bzdata.next_out, bzdata.avail_out,cb,context)) {
         BZ2_bzCompressEnd(&bzdata);
-        throw std::string("Can't allocate output buffer");
+        if (error)
+          *error = "Can't allocate output buffer";
+        return result;
       }
     }
     switch (bzerr) {
       case BZ_SEQUENCE_ERROR:
-      case BZ_PARAM_ERROR: throw std::string("Param/Sequence error");
+      case BZ_PARAM_ERROR: 
+        if (error)
+          *error = "Param/Sequence error";
+        return result;
       case BZ_FINISH_OK:
       case BZ_STREAM_END: break;
-      default: throw std::string("Oops: ") + utostr(unsigned(bzerr));
+      default:
+        if (error)
+          *error = "BZip2 Error: " + utostr(unsigned(bzerr));
+        return result;
     }
 
     // Finish
@@ -330,7 +350,9 @@ size_t Compressor::compress(const char* in, size_t size,
     NULLCOMP_init(&sdata);
 
     if (0 != getdata(sdata.next_out, sdata.avail_out,cb,context)) {
-      throw std::string("Can't allocate output buffer");
+      if (error)
+        *error = "Can't allocate output buffer";
+      return result;
     }
 
     *(sdata.next_out++) = COMP_TYPE_NONE;
@@ -338,7 +360,9 @@ size_t Compressor::compress(const char* in, size_t size,
 
     while (!NULLCOMP_compress(&sdata)) {
       if (0 != getdata(sdata.next_out, sdata.avail_out,cb,context)) {
-        throw std::string("Can't allocate output buffer");
+        if (error)
+          *error = "Can't allocate output buffer";
+        return result;
       }
     }
 
@@ -348,24 +372,26 @@ size_t Compressor::compress(const char* in, size_t size,
   return result;
 }
 
-size_t Compressor::compressToNewBuffer(const char* in, size_t size, char*&out) {
+size_t Compressor::compressToNewBuffer(const char* in, size_t size, char*&out,
+                                       std::string* error) {
   BufferContext bc(size);
-  size_t result = compress(in,size,BufferContext::callback,(void*)&bc);
+  size_t result = compress(in,size,BufferContext::callback,(void*)&bc,error);
   bc.trimTo(result);
   out = bc.buff;
   return result;
 }
 
 size_t
-Compressor::compressToStream(const char*in, size_t size, std::ostream& out) {
+Compressor::compressToStream(const char*in, size_t size, std::ostream& out,
+                             std::string* error) {
   // Set up the context and writer
   WriterContext ctxt(&out, size / 2);
 
   // Compress everything after the magic number (which we'll alter).
   size_t zipSize = Compressor::compress(in,size,
-    WriterContext::callback, (void*)&ctxt);
+    WriterContext::callback, (void*)&ctxt,error);
 
-  if (ctxt.chunk) {
+  if (zipSize && ctxt.chunk) {
     ctxt.write(zipSize - ctxt.written);
   }
   return zipSize;
@@ -373,7 +399,8 @@ Compressor::compressToStream(const char*in, size_t size, std::ostream& out) {
 
 // Decompress in one of three ways
 size_t Compressor::decompress(const char *in, size_t size,
-                              OutputDataCallback* cb, void* context) {
+                              OutputDataCallback* cb, void* context,
+                              std::string* error) {
   assert(in && "Can't decompress null buffer");
   assert(size > 1 && "Can't decompress empty buffer");
   assert(cb && "Can't decompress without a callback function");
@@ -392,9 +419,18 @@ size_t Compressor::decompress(const char *in, size_t size,
       bzdata.next_out = 0;
       bzdata.avail_out = 0;
       switch ( BZ2_bzDecompressInit(&bzdata, 0, 0) ) {
-        case BZ_CONFIG_ERROR: throw std::string("bzip2 library mis-compiled");
-        case BZ_PARAM_ERROR:  throw std::string("Compressor internal error");
-        case BZ_MEM_ERROR:    throw std::string("Out of memory");
+        case BZ_CONFIG_ERROR: 
+          if (error)
+            *error = "bzip2 library mis-compiled";
+          return result;
+        case BZ_PARAM_ERROR:  
+          if (error)
+            *error = "Compressor internal error";
+          return result;
+        case BZ_MEM_ERROR:    
+          if (error)
+            *error = "Out of memory";
+          return result;
         case BZ_OK:
         default:
           break;
@@ -403,7 +439,9 @@ size_t Compressor::decompress(const char *in, size_t size,
       // Get a block of memory
       if (0 != getdata_uns(bzdata.next_out, bzdata.avail_out,cb,context)) {
         BZ2_bzDecompressEnd(&bzdata);
-        throw std::string("Can't allocate output buffer");
+        if (error)
+          *error = "Can't allocate output buffer";
+        return result;
       }
 
       // Decompress it
@@ -412,20 +450,45 @@ size_t Compressor::decompress(const char *in, size_t size,
               bzdata.avail_in != 0 ) {
         if (0 != getdata_uns(bzdata.next_out, bzdata.avail_out,cb,context)) {
           BZ2_bzDecompressEnd(&bzdata);
-          throw std::string("Can't allocate output buffer");
+          if (error)
+            *error = "Can't allocate output buffer";
+          return result;
         }
       }
 
       switch (bzerr) {
-        case BZ_PARAM_ERROR:  throw std::string("Compressor internal error");
-        case BZ_MEM_ERROR:    throw std::string("Out of memory");
-        case BZ_DATA_ERROR:   throw std::string("Data integrity error");
-        case BZ_DATA_ERROR_MAGIC:throw std::string("Data is not BZIP2");
-        case BZ_OK:           throw std::string("Insufficient input for bzip2");
+          BZ2_bzDecompressEnd(&bzdata);
+        case BZ_PARAM_ERROR:  
+          if (error)
+            *error = "Compressor internal error";
+          return result;
+        case BZ_MEM_ERROR:    
+          BZ2_bzDecompressEnd(&bzdata);
+          if (error)
+            *error = "Out of memory";
+          return result;
+        case BZ_DATA_ERROR:   
+          BZ2_bzDecompressEnd(&bzdata);
+          if (error)
+            *error = "Data integrity error";
+          return result;
+        case BZ_DATA_ERROR_MAGIC:
+          BZ2_bzDecompressEnd(&bzdata);
+          if (error)
+            *error = "Data is not BZIP2";
+          return result;
+        case BZ_OK:           
+          BZ2_bzDecompressEnd(&bzdata);
+          if (error)
+            *error = "Insufficient input for bzip2";
+          return result;
         case BZ_STREAM_END: break;
-        default: throw("Ooops");
+        default: 
+          BZ2_bzDecompressEnd(&bzdata);
+          if (error)
+            *error = "Unknown result code from bzDecompress";
+          return result;
       }
-
 
       // Finish
       result = bzdata.total_out_lo32;
@@ -442,12 +505,16 @@ size_t Compressor::decompress(const char *in, size_t size,
       NULLCOMP_init(&sdata);
 
       if (0 != getdata(sdata.next_out, sdata.avail_out,cb,context)) {
-        throw std::string("Can't allocate output buffer");
+        if (error)
+          *error = "Can't allocate output buffer";
+        return result;
       }
 
       while (!NULLCOMP_decompress(&sdata)) {
         if (0 != getdata(sdata.next_out, sdata.avail_out,cb,context)) {
-          throw std::string("Can't allocate output buffer");
+          if (error)
+            *error = "Can't allocate output buffer";
+          return result;
         }
       }
 
@@ -457,33 +524,35 @@ size_t Compressor::decompress(const char *in, size_t size,
     }
 
     default:
-      throw std::string("Unknown type of compressed data");
+      if (error)
+        *error = "Unknown type of compressed data";
+      return result;
   }
 
   return result;
 }
 
 size_t
-Compressor::decompressToNewBuffer(const char* in, size_t size, char*&out) {
+Compressor::decompressToNewBuffer(const char* in, size_t size, char*&out,
+                                  std::string* error) {
   BufferContext bc(size);
-  size_t result = decompress(in,size,BufferContext::callback,(void*)&bc);
+  size_t result = decompress(in,size,BufferContext::callback,(void*)&bc,error);
   out = bc.buff;
   return result;
 }
 
 size_t
-Compressor::decompressToStream(const char*in, size_t size, std::ostream& out){
+Compressor::decompressToStream(const char*in, size_t size, std::ostream& out,
+                               std::string* error) {
   // Set up the context and writer
   WriterContext ctxt(&out,size / 2);
 
   // Decompress everything after the magic number (which we'll alter)
   size_t zipSize = Compressor::decompress(in,size,
-    WriterContext::callback, (void*)&ctxt);
+    WriterContext::callback, (void*)&ctxt,error);
 
-  if (ctxt.chunk) {
+  if (zipSize && ctxt.chunk) {
     ctxt.write(zipSize - ctxt.written);
   }
   return zipSize;
 }
-
-// vim: sw=2 ai
