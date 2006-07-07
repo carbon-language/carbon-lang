@@ -1,6 +1,6 @@
-;RUN: llvm-as < %s | llc -march=alpha
+; RUN: llvm-as < %s | llc -march=alpha
+; XFAIL: *
 
-; ModuleID = 'atomicity.cc'
 target endian = little
 target pointersize = 64
 target triple = "alphaev67-unknown-linux-gnu"
