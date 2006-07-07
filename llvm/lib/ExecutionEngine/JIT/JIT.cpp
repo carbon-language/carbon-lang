@@ -256,18 +256,14 @@ void *JIT::getPointerToFunction(Function *F) {
     return Addr;   // Check if function already code gen'd
 
   // Make sure we read in the function if it exists in this Module
-  if (F->hasNotBeenReadFromBytecode())
-    try {
-      MP->materializeFunction(F);
-    } catch ( std::string& errmsg ) {
+  if (F->hasNotBeenReadFromBytecode()) {
+    std::string ErrorMsg;
+    if (MP->materializeFunction(F, &ErrorMsg)) {
       std::cerr << "Error reading function '" << F->getName()
-                << "' from bytecode file: " << errmsg << "\n";
-      abort();
-    } catch (...) {
-      std::cerr << "Error reading function '" << F->getName()
-                << "from bytecode file!\n";
+                << "' from bytecode file: " << ErrorMsg << "\n";
       abort();
     }
+  }
 
   if (F->isExternal()) {
     void *Addr = getPointerToNamedFunction(F->getName());
