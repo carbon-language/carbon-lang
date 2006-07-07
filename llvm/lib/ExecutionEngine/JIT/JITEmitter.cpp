@@ -414,17 +414,17 @@ unsigned char *JITMemoryManager::allocateStub(unsigned StubSize) {
 }
 
 sys::MemoryBlock JITMemoryManager::getNewMemoryBlock(unsigned size) {
-  try {
-    // Allocate a new block close to the last one.
-    const sys::MemoryBlock *BOld = Blocks.empty() ? 0 : &Blocks.front();
-    sys::MemoryBlock B = sys::Memory::AllocateRWX(size, BOld);
-    Blocks.push_back(B);
-    return B;
-  } catch (std::string &err) {
+  // Allocate a new block close to the last one.
+  const sys::MemoryBlock *BOld = Blocks.empty() ? 0 : &Blocks.front();
+  std::string ErrMsg;
+  sys::MemoryBlock B = sys::Memory::AllocateRWX(size, BOld, &ErrMsg);
+  if (B.base() == 0) {
     std::cerr << "Allocation failed when allocating new memory in the JIT\n";
-    std::cerr << err << "\n";
+    std::cerr << ErrMsg << "\n";
     abort();
   }
+  Blocks.push_back(B);
+  return B;
 }
 
 //===----------------------------------------------------------------------===//
