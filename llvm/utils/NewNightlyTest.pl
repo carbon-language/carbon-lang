@@ -20,6 +20,7 @@ use Socket;
 #  -nocheckout      Do not create, checkout, update, or configure
 #                   the source tree.
 #  -noremove        Do not remove the BUILDDIR after it has been built.
+#  -noremoveresults Do not remove the WEBDIR after it has been built.
 #  -nobuild         Do not build llvm. If tests are enabled perform them
 #                   on the llvm build specified in the build directory
 #  -notest          Do not even attempt to run the test programs. Implies
@@ -119,6 +120,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
     if (/^-nocheckout$/)     { $NOCHECKOUT = 1; next; }
     if (/^-nocvsstats$/)     { $NOCVSSTATS = 1; next; }
     if (/^-noremove$/)       { $NOREMOVE = 1; next; }
+    if (/^-noremoveresults$/) { $NOREMOVERESULTS = 1; next; }
     if (/^-notest$/)         { $NOTEST = 1; $NORUNNINGTESTS = 1; next; }
     if (/^-norunningtests$/) { $NORUNNINGTESTS = 1; next; }
     if (/^-parallel$/)       { $MAKEOPTS = "$MAKEOPTS -j2 -l3.0"; next; }
@@ -1020,5 +1022,6 @@ else{
 #
 ##############################################################
 system ( "$NICE rm -rf $BuildDir") if (!$NOCHECKOUT and !$NOREMOVE);
+system ( "$NICE rm -rf $WebDir") if (!$NOCHECKOUT and !$NOREMOVE and !NOREMOVERESULTS);
 
 
