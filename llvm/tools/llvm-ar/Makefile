@@ -11,6 +11,7 @@ LEVEL = ../..
 TOOLNAME = llvm-ar
 USEDLIBS = LLVMArchive.a LLVMBCReader.a \
 	   LLVMCore.a LLVMSupport.a LLVMbzip2.a LLVMSystem.a
+REQUIRES_EH := 1
 
 include $(LEVEL)/Makefile.common
 

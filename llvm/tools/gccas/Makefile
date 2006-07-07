@@ -12,5 +12,6 @@ TOOLNAME = gccas
 USEDLIBS = LLVMAsmParser.a LLVMBCWriter.a LLVMTransforms.a LLVMipo.a LLVMipa.a \
            LLVMScalarOpts.a LLVMAnalysis.a LLVMTarget.a LLVMTransformUtils.a \
            LLVMCore.a LLVMSupport.a LLVMbzip2.a LLVMSystem.a
+REQUIRES_EH := 1
 
 include $(LEVEL)/Makefile.common

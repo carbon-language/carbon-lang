@@ -17,5 +17,6 @@ USEDLIBS = LLVMipo.a LLVMScalarOpts.a $(OPTLIBS) $(ANALIBS) LLVMAnalysis.a \
 	   LLVMTransformUtils.a \
 	   LLVMAsmParser.a LLVMLinker.a LLVMBCReader.a LLVMBCWriter.a \
 	   LLVMCore.a LLVMSupport.a LLVMbzip2.a LLVMSystem.a
+REQUIRES_EH := 1
 
 include $(LEVEL)/Makefile.common

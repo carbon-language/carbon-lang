@@ -11,6 +11,7 @@ TOOLNAME = llvmc
 USEDLIBS = LLVMCore.a LLVMSupport.a LLVMSystem.a
 CONFIG_FILES = c cpp ll
 EXTRA_DIST = c cpp ll ConfigLexer.cpp.cvs ConfigLexer.l.cvs
+REQUIRES_EH := 1
 
 # The CompilerDriver needs to know the locations of several configured
 # directories and paths. We define these as preprocessor symbols so they can 

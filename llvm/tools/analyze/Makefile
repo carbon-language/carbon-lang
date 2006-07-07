@@ -12,5 +12,6 @@ USEDLIBS = LLVMAsmParser.a LLVMBCReader.a LLVMAnalysis.a LLVMipa.a \
            LLVMDataStructure \
 	   LLVMScalarOpts.a LLVMTransforms.a LLVMTarget.a LLVMScalarOpts.a \
 	   LLVMTransformUtils.a LLVMCore.a LLVMSupport.a LLVMbzip2.a LLVMSystem.a
+REQUIRES_EH := 1
 
 include $(LEVEL)/Makefile.common

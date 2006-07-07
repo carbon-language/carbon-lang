@@ -8,6 +8,7 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
 TOOLNAME = opt
+REQUIRES_EH := 1
 
 USEDLIBS = LLVMBCReader.a LLVMBCWriter.a LLVMInstrumentation.a \
 	   LLVMScalarOpts.a LLVMipo.a LLVMipa.a LLVMDataStructure LLVMTransforms.a \

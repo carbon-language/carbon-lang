@@ -9,6 +9,7 @@
 LEVEL    := ../..
 TOOLNAME := lli
 LLVMLIBS := JIT
+REQUIRES_EH := 1
 
 # Enable JIT support
 include $(LEVEL)/Makefile.common

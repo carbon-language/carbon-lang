@@ -10,6 +10,7 @@
 LEVEL = ../..
 
 EXTRA_DIST = LibDeps.txt FinalLibDeps.txt llvm-config.in.in find-cycles.pl
+REQUIRES_EH := 1
 
 include $(LEVEL)/Makefile.common
 
