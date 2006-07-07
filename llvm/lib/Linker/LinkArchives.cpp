@@ -137,7 +137,9 @@ Linker::LinkInArchive(const sys::Path &Filename) {
 
     // Find the modules we need to link into the target module
     std::set<ModuleProvider*> Modules;
-    arch->findModulesDefiningSymbols(UndefinedSymbols, Modules);
+    if (!arch->findModulesDefiningSymbols(UndefinedSymbols, Modules, &ErrMsg))
+      return error("Cannot find symbols in '" + Filename.toString() + 
+                   "': " + ErrMsg);
 
     // If we didn't find any more modules to link this time, we are done
     // searching this archive.

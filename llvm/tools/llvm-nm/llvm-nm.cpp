@@ -134,7 +134,8 @@ void DumpSymbolNamesFromFile (std::string &Filename) {
       return;
     }
   } else if (aPath.isArchive()) {
-    Archive* archive = Archive::OpenAndLoad(sys::Path(Filename));
+    std::string ErrMsg;
+    Archive* archive = Archive::OpenAndLoad(sys::Path(Filename),&ErrorMessage);
     if (!archive)
       std::cerr << ToolName << ": " << Filename << ": " << ErrorMessage << "\n";
     std::vector<Module *> Modules;

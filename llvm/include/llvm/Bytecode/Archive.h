@@ -307,8 +307,8 @@ class Archive {
     /// printing).
     /// @brief Open and load an archive file
     static Archive* OpenAndLoad(
-      const sys::Path& filePath,    ///< The file path to open and load
-      std::string* ErrorMessage = 0 ///< An optional error string
+      const sys::Path& filePath,  ///< The file path to open and load
+      std::string* ErrorMessage   ///< An optional error string
     );
 
     /// This method opens an existing archive file from \p Filename and reads in
@@ -398,7 +398,8 @@ class Archive {
     /// contain a module that defines the \p symbol.
     /// @brief Look up a module by symbol name.
     ModuleProvider* findModuleDefiningSymbol(
-      const std::string& symbol        ///< Symbol to be sought
+      const std::string& symbol,  ///< Symbol to be sought
+      std::string* ErrMessage     ///< Error message storage, if non-zero
     );
 
     /// This method is similar to findModuleDefiningSymbol but allows lookup of
@@ -410,9 +411,10 @@ class Archive {
     /// symbols to ensure they are not re-searched on a subsequent call. If
     /// you need to retain the list of symbols, make a copy.
     /// @brief Look up multiple symbols in the archive.
-    void findModulesDefiningSymbols(
+    bool findModulesDefiningSymbols(
       std::set<std::string>& symbols,     ///< Symbols to be sought
-      std::set<ModuleProvider*>& modules  ///< The modules matching \p symbols
+      std::set<ModuleProvider*>& modules, ///< The modules matching \p symbols
+      std::string* ErrMessage             ///< Error msg storage, if non-zero
     );
 
     /// This method determines whether the archive is a properly formed llvm
@@ -445,7 +447,7 @@ class Archive {
       bool CreateSymbolTable=false,   ///< Create Symbol table
       bool TruncateNames=false,       ///< Truncate the filename to 15 chars
       bool Compress=false,            ///< Compress files
-      std::string* error = 0          ///< If non-null, where error msg is set
+      std::string* ErrMessage=0       ///< If non-null, where error msg is set
     );
 
     /// This method adds a new file to the archive. The \p filename is examined
@@ -465,20 +467,33 @@ class Archive {
     /// into memory.
     Archive(const sys::Path& filename, bool map = false );
 
+    /// @param error Set to address of a std::string to get error messages
+    /// @returns false on error
     /// @brief Parse the symbol table at \p data.
-    void parseSymbolTable(const void* data,unsigned len);
+    bool parseSymbolTable(const void* data,unsigned len,std::string* error);
 
+    /// @returns A fully populated ArchiveMember or 0 if an error occurred.
     /// @brief Parse the header of a member starting at \p At
-    ArchiveMember* parseMemberHeader(const char*&At,const char*End);
+    ArchiveMember* parseMemberHeader(
+      const char*&At,    ///< The pointer to the location we're parsing
+      const char*End,    ///< The pointer to the end of the archive
+      std::string* error ///< Optional error message catcher
+    );
 
+    /// @param error Set to address of a std::string to get error messages
+    /// @returns false on error
     /// @brief Check that the archive signature is correct
-    void checkSignature();
+    bool checkSignature(std::string* ErrMessage);
 
+    /// @param error Set to address of a std::string to get error messages
+    /// @returns false on error
     /// @brief Load the entire archive.
-    void loadArchive();
+    bool loadArchive(std::string* ErrMessage);
 
+    /// @param error Set to address of a std::string to get error messages
+    /// @returns false on error
     /// @brief Load just the symbol table.
-    void loadSymbolTable();
+    bool loadSymbolTable(std::string* ErrMessage);
 
     /// @brief Write the symbol table to an ofstream.
     void writeSymbolTable(std::ofstream& ARFile);
@@ -494,7 +509,7 @@ class Archive {
       bool CreateSymbolTable,      ///< Should symbol table be created?
       bool TruncateNames,          ///< Should names be truncated to 11 chars?
       bool ShouldCompress,         ///< Should the member be compressed?
-      std::string* error = 0       ///< If non-null, place were error msg is set
+      std::string* ErrMessage      ///< If non-null, place were error msg is set
     );
 
     /// @brief Fill in an ArchiveMemberHeader from ArchiveMember.

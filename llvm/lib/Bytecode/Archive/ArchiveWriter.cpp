@@ -463,7 +463,12 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
     // compatibility with other ar(1) implementations as well as allowing the
     // archive to store both native .o and LLVM .bc files, both indexed.
     if (foreignST) {
-      writeMember(*foreignST, FinalFile, false, false, false);
+      if (!writeMember(*foreignST, FinalFile, false, false, false, error)) {
+        FinalFile.close();
+        if (TmpArchive.exists())
+          TmpArchive.eraseFromDisk();
+        return false;
+      }
     }
 
     // Put out the LLVM symbol table now.
