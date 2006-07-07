@@ -349,6 +349,9 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   // We want to custom lower some of our intrinsics.
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
 
+  // We have target-specific dag combine patterns for the following nodes:
+  setTargetDAGCombine(ISD::VECTOR_SHUFFLE);
+
   computeRegisterProperties();
 
   // FIXME: These should be based on subtarget info. Plus, the values should
@@ -3751,6 +3754,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::REP_STOS:           return "X86ISD::REP_STOS";
   case X86ISD::REP_MOVS:           return "X86ISD::REP_MOVS";
   case X86ISD::LOAD_PACK:          return "X86ISD::LOAD_PACK";
+  case X86ISD::LOAD_UA:            return "X86ISD::LOAD_UA";
   case X86ISD::GlobalBaseReg:      return "X86ISD::GlobalBaseReg";
   case X86ISD::Wrapper:            return "X86ISD::Wrapper";
   case X86ISD::S2VEC:              return "X86ISD::S2VEC";
@@ -3970,6 +3974,154 @@ void X86TargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
     KnownZero |= (MVT::getIntVTBitMask(Op.getValueType()) ^ 1ULL);
     break;
   }
+}
+
+/// getShuffleScalarElt - Returns the scalar element that will make up the ith
+/// element of the result of the vector shuffle.
+static SDOperand getShuffleScalarElt(SDNode *N, unsigned i, SelectionDAG &DAG) {
+  MVT::ValueType VT = N->getValueType(0);
+  SDOperand PermMask = N->getOperand(2);
+  unsigned NumElems = PermMask.getNumOperands();
+  SDOperand V = (i < NumElems) ? N->getOperand(0) : N->getOperand(1);
+  i %= NumElems;
+  if (V.getOpcode() == ISD::SCALAR_TO_VECTOR) {
+    return (i == 0)
+      ? V.getOperand(0) : DAG.getNode(ISD::UNDEF, MVT::getVectorBaseType(VT));
+  } else if (V.getOpcode() == ISD::VECTOR_SHUFFLE) {
+    SDOperand Idx = PermMask.getOperand(i);
+    if (Idx.getOpcode() == ISD::UNDEF)
+      return DAG.getNode(ISD::UNDEF, MVT::getVectorBaseType(VT));
+    return getShuffleScalarElt(V.Val,cast<ConstantSDNode>(Idx)->getValue(),DAG);
+  }
+  return SDOperand();
+}
+
+/// isGAPlusOffset - Returns true (and the GlobalValue and the offset) if the
+/// node is a GlobalAddress + an offset.
+static bool isGAPlusOffset(SDNode *N, GlobalValue* &GA, int64_t &Offset) {
+  if (N->getOpcode() == X86ISD::Wrapper) {
+    if (dyn_cast<GlobalAddressSDNode>(N->getOperand(0))) {
+      GA = cast<GlobalAddressSDNode>(N->getOperand(0))->getGlobal();
+      return true;
+    }
+  } else if (N->getOpcode() == ISD::ADD) {
+    SDOperand N1 = N->getOperand(0);
+    SDOperand N2 = N->getOperand(1);
+    if (isGAPlusOffset(N1.Val, GA, Offset)) {
+      ConstantSDNode *V = dyn_cast<ConstantSDNode>(N2);
+      if (V) {
+        Offset += V->getSignExtended();
+        return true;
+      }
+    } else if (isGAPlusOffset(N2.Val, GA, Offset)) {
+      ConstantSDNode *V = dyn_cast<ConstantSDNode>(N1);
+      if (V) {
+        Offset += V->getSignExtended();
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/// isConsecutiveLoad - Returns true if N is loading from an address of Base
+/// + Dist * Size.
+static bool isConsecutiveLoad(SDNode *N, SDNode *Base, int Dist, int Size,
+                              MachineFrameInfo *MFI) {
+  if (N->getOperand(0).Val != Base->getOperand(0).Val)
+    return false;
+
+  SDOperand Loc = N->getOperand(1);
+  SDOperand BaseLoc = Base->getOperand(1);
+  if (Loc.getOpcode() == ISD::FrameIndex) {
+    if (BaseLoc.getOpcode() != ISD::FrameIndex)
+      return false;
+    int FI  = dyn_cast<FrameIndexSDNode>(Loc)->getIndex();
+    int BFI = dyn_cast<FrameIndexSDNode>(BaseLoc)->getIndex();
+    int FS  = MFI->getObjectSize(FI);
+    int BFS = MFI->getObjectSize(BFI);
+    if (FS != BFS || FS != Size) return false;
+    return MFI->getObjectOffset(FI) == (MFI->getObjectOffset(BFI) + Dist*Size);
+  } else {
+    GlobalValue *GV1 = NULL;
+    GlobalValue *GV2 = NULL;
+    int64_t Offset1 = 0;
+    int64_t Offset2 = 0;
+    bool isGA1 = isGAPlusOffset(Loc.Val, GV1, Offset1);
+    bool isGA2 = isGAPlusOffset(BaseLoc.Val, GV2, Offset2);
+    if (isGA1 && isGA2 && GV1 == GV2)
+      return Offset1 == (Offset2 + Dist*Size);
+  }
+
+  return false;
+}
+
+bool isBaseAlignment16(SDNode *Base, MachineFrameInfo *MFI) {
+  GlobalValue *GV;
+  int64_t Offset;
+  if (isGAPlusOffset(Base, GV, Offset))
+    return (GV->getAlignment() >= 16 && (Offset % 16) == 0);
+  else {
+    assert(Base->getOpcode() == ISD::FrameIndex && "Unexpected base node!");
+    int BFI = dyn_cast<FrameIndexSDNode>(Base)->getIndex();
+    return MFI->getObjectAlignment(BFI) >= 16;
+  }
+  return false;
+}
+
+
+/// PerformShuffleCombine - Combine a vector_shuffle that is equal to
+/// build_vector load1, load2, load3, load4, <0, 1, 2, 3> into a 128-bit load
+/// if the load addresses are consecutive, non-overlapping, and in the right
+/// order.
+static SDOperand PerformShuffleCombine(SDNode *N, SelectionDAG &DAG) {
+  MachineFunction &MF = DAG.getMachineFunction();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  MVT::ValueType VT = N->getValueType(0);
+  MVT::ValueType EVT = MVT::getVectorBaseType(VT);
+  SDOperand PermMask = N->getOperand(2);
+  int NumElems = (int)PermMask.getNumOperands();
+  SDNode *Base = NULL;
+  for (int i = 0; i < NumElems; ++i) {
+    SDOperand Idx = PermMask.getOperand(i);
+    if (Idx.getOpcode() == ISD::UNDEF) {
+      if (!Base) return SDOperand();
+    } else {
+      SDOperand Arg =
+        getShuffleScalarElt(N, cast<ConstantSDNode>(Idx)->getValue(), DAG);
+      if (!Arg.Val || Arg.getOpcode() != ISD::LOAD)
+        return SDOperand();
+      if (!Base)
+        Base = Arg.Val;
+      else if (!isConsecutiveLoad(Arg.Val, Base,
+                                  i, MVT::getSizeInBits(EVT)/8,MFI))
+        return SDOperand();
+    }
+  }
+
+  bool isAlign16 = isBaseAlignment16(Base->getOperand(1).Val, MFI);
+  if (isAlign16)
+    return DAG.getLoad(VT, Base->getOperand(0), Base->getOperand(1),
+                       Base->getOperand(2));
+  else
+    // Just use movups, it's shorter.
+    return DAG.getNode(ISD::BIT_CONVERT, VT,
+                       DAG.getNode(X86ISD::LOAD_UA, MVT::v4f32,
+                                   Base->getOperand(0), Base->getOperand(1),
+                                   Base->getOperand(2)));
+}
+
+SDOperand X86TargetLowering::PerformDAGCombine(SDNode *N, 
+                                               DAGCombinerInfo &DCI) const {
+  TargetMachine &TM = getTargetMachine();
+  SelectionDAG &DAG = DCI.DAG;
+  switch (N->getOpcode()) {
+  default: break;
+  case ISD::VECTOR_SHUFFLE:
+    return PerformShuffleCombine(N, DAG);
+  }
+
+  return SDOperand();
 }
 
 //===----------------------------------------------------------------------===//

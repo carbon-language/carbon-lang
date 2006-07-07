@@ -138,6 +138,10 @@ namespace llvm {
       /// operands as a normal load.
       LOAD_PACK,
 
+      /// LOAD_UA Load an unaligned 128-bit value. It has the same operands as
+      /// a normal load.
+      LOAD_UA,
+
       /// GlobalBaseReg - On Darwin, this node represents the result of the popl
       /// at function entry, used for PIC code.
       GlobalBaseReg,
@@ -285,6 +289,8 @@ namespace llvm {
     virtual std::pair<SDOperand, SDOperand>
     LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain, unsigned Depth,
                             SelectionDAG &DAG);
+
+    virtual SDOperand PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
 
     virtual MachineBasicBlock *InsertAtEndOfBasicBlock(MachineInstr *MI,
                                                        MachineBasicBlock *MBB);

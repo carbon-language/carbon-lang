@@ -19,6 +19,8 @@
 
 def X86loadp   : SDNode<"X86ISD::LOAD_PACK", SDTLoad, 
                         [SDNPHasChain]>;
+def X86loadu   : SDNode<"X86ISD::LOAD_UA",   SDTLoad, 
+                        [SDNPHasChain]>;
 def X86fand    : SDNode<"X86ISD::FAND",      SDTFPBinOp,
                         [SDNPCommutative, SDNPAssociative]>;
 def X86fxor    : SDNode<"X86ISD::FXOR",      SDTFPBinOp,
@@ -2563,3 +2565,7 @@ def : Pat<(v2i64 (and (xor VR128:$src1, (bc_v2i64 (v8i16 immAllOnesV))),
 def : Pat<(v2i64 (and (xor VR128:$src1, (bc_v2i64 (v16i8 immAllOnesV))),
                   (load addr:$src2))),
           (PANDNrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
+
+// Unaligned load
+def : Pat<(v4f32 (X86loadu addr:$src)), (MOVUPSrm addr:$src)>,
+      Requires<[HasSSE1]>;
