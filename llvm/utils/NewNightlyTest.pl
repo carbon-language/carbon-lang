@@ -27,9 +27,6 @@ use Socket;
 #                   -norunningtests.
 #  -norunningtests  Do not run the Olden benchmark suite with
 #                   LARGE_PROBLEM_SIZE enabled.
-#  -noexternals     Do not run the external tests (for cases where povray
-#                   or SPEC are not installed)
-#  -with-externals  Specify a directory where the external tests are located.
 #  -nodejagnu       Do not run feature or regression tests
 #  -parallel        Run two parallel jobs with GNU Make.
 #  -release         Build an LLVM Release version
@@ -54,14 +51,15 @@ use Socket;
 #                   override the default.
 #  -ldflags         Next argument specifies that linker options that override
 #                   the default.
-#  -extraflags      Next argument specifies extra options that are passed to
-#                   compile the tests.
+#  -compileflags    Next argument specifies extra options passed to make when
+#                   building LLVM.
 #
 #  ---------------- Options to configure llvm-test ----------------------------
-#  -spec2000path    Path to the benchspec directory in the SPEC 2000 distro
-#  -spec95path      Path to the benchspec directory in the SPEC 95 distro.
-#  -povraypath      Path to the povray sources
-#  -namdpath        Path to the namd sources
+#  -extraflags      Next argument specifies extra options that are passed to
+#                   compile the tests.
+#  -noexternals     Do not run the external tests (for cases where povray
+#                   or SPEC are not installed)
+#  -with-externals  Specify a directory where the external tests are located.
 #
 # CVSROOT is the CVS repository from which the tree will be checked out,
 #  specified either in the full :method:user@host:/dir syntax, or
@@ -451,6 +449,12 @@ sub SendData{
     return $result;
 }
 
+##############################################################
+#
+# Getting Start timestamp
+#
+##############################################################
+$starttime = `date`;
 
 ##############################################################
 #
@@ -912,6 +916,13 @@ if (!$BuildError) {
     #AddRecord($BytecodeSize, "running_Olden_bytecode.txt", $WebDir);
 }
 
+##############################################################
+#
+# Getting end timestamp
+#
+##############################################################
+$endtime = `date`;
+
 
 ##############################################################
 #
@@ -1001,7 +1012,9 @@ my %hash_of_data = ('machine_data' => $machine_data,
                'removed_tests' => $TestsRemoved,
 	       'unexpfail_tests' => $unexpfail_tests,
 	       'dejagnutests_log' => $dejagnutests_log,
-	       'dejagnutests_sum' => $dejagnutests_sum);
+	       'dejagnutests_sum' => $dejagnutests_sum
+	       'starttime' => $starttime,
+	       'endtime' => $endtime);
 
 $TESTING = 0;
 
