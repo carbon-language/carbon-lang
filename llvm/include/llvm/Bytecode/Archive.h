@@ -438,12 +438,14 @@ class Archive {
     /// name will be truncated at 15 characters. If \p Compress is specified,
     /// all archive members will be compressed before being written. If
     /// \p PrintSymTab is true, the symbol table will be printed to std::cout.
-    /// @throws std::string if an error occurs
+    /// @returns false if an error occurred, \p error set to error message
+    /// @returns true if the writing succeeded.
     /// @brief Write (possibly modified) archive contents to disk
-    void writeToDisk(
+    bool writeToDisk(
       bool CreateSymbolTable=false,   ///< Create Symbol table
       bool TruncateNames=false,       ///< Truncate the filename to 15 chars
-      bool Compress=false             ///< Compress files
+      bool Compress=false,            ///< Compress files
+      std::string* error = 0          ///< If non-null, where error msg is set
     );
 
     /// This method adds a new file to the archive. The \p filename is examined
@@ -481,9 +483,19 @@ class Archive {
     /// @brief Write the symbol table to an ofstream.
     void writeSymbolTable(std::ofstream& ARFile);
 
-    /// @brief Write one ArchiveMember to an ofstream.
-    void writeMember(const ArchiveMember& member, std::ofstream& ARFile,
-        bool CreateSymbolTable, bool TruncateNames, bool ShouldCompress);
+    /// Writes one ArchiveMember to an ofstream. If an error occurs, returns
+    /// false, otherwise true. If an error occurs and error is non-null then 
+    /// it will be set to an error message.
+    /// @returns true Writing member succeeded
+    /// @returns false Writing member failed, \p error set to error message
+    bool writeMember(
+      const ArchiveMember& member, ///< The member to be written
+      std::ofstream& ARFile,       ///< The file to write member onto
+      bool CreateSymbolTable,      ///< Should symbol table be created?
+      bool TruncateNames,          ///< Should names be truncated to 11 chars?
+      bool ShouldCompress,         ///< Should the member be compressed?
+      std::string* error = 0       ///< If non-null, place were error msg is set
+    );
 
     /// @brief Fill in an ArchiveMemberHeader from ArchiveMember.
     bool fillHeader(const ArchiveMember&mbr,

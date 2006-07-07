@@ -74,7 +74,8 @@ int main(int argc, char **argv) {
     if (!TheArchive)
       throw err_msg;
 
-    TheArchive->writeToDisk(true, false, false );
+    if (!TheArchive->writeToDisk(true, false, false, &err_msg ))
+      throw err_msg;
 
     if (Verbose)
       printSymbolTable(TheArchive);

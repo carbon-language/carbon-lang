@@ -484,7 +484,9 @@ void doDelete() {
   }
 
   // We're done editting, reconstruct the archive.
-  TheArchive->writeToDisk(SymTable,TruncateNames,Compression);
+  std::string errmsg;
+  if (!TheArchive->writeToDisk(SymTable,TruncateNames,Compression,&errmsg))
+    throw errmsg;
   if (ReallyVerbose)
     printSymbolTable();
 }
@@ -536,7 +538,9 @@ void doMove() {
   }
 
   // We're done editting, reconstruct the archive.
-  TheArchive->writeToDisk(SymTable,TruncateNames,Compression);
+  std::string errmsg;
+  if (!TheArchive->writeToDisk(SymTable,TruncateNames,Compression,&errmsg))
+    throw errmsg;
   if (ReallyVerbose)
     printSymbolTable();
 }
@@ -555,7 +559,9 @@ void doQuickAppend() {
   }
 
   // We're done editting, reconstruct the archive.
-  TheArchive->writeToDisk(SymTable,TruncateNames,Compression);
+  std::string errmsg;
+  if (!TheArchive->writeToDisk(SymTable,TruncateNames,Compression,&errmsg))
+    throw errmsg;
   if (ReallyVerbose)
     printSymbolTable();
 }
@@ -642,7 +648,9 @@ void doReplaceOrInsert() {
   }
 
   // We're done editting, reconstruct the archive.
-  TheArchive->writeToDisk(SymTable,TruncateNames,Compression);
+  std::string errmsg;
+  if (!TheArchive->writeToDisk(SymTable,TruncateNames,Compression,&errmsg))
+    throw errmsg;
   if (ReallyVerbose)
     printSymbolTable();
 }
