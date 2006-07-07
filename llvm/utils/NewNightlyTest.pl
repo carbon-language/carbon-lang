@@ -161,18 +161,6 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
     if (/^-noexternals$/)    { $NOEXTERNALS = 1; next; }
     if (/^-nodejagnu$/)      { $NODEJAGNU = 1; next; }
     if (/^-nobuild$/)        { $NOBUILD = 1; next; }
-    if (/^-spec2000path$/)   {
-	$LLVMTESTCONFIGARGS .= " --enable-spec2000=$ARGV[0]"; shift; next;
-    } else{ $LLVMTESTCONFIGARGS=""; }
-    if (/^-spec95path$/)     {
-	$LLVMTESTCONFIGARGS .= " --enable-spec95=$ARGV[0]"; shift; next;
-    }
-    if (/^-povraypath$/)     {
-	$LLVMTESTCONFIGARGS .= " --enable-povray=$ARGV[0]"; shift; next;
-    }
-    if (/^-namdpath$/)       {
-	$LLVMTESTCONFIGARGS .= " --enable-namd=$ARGV[0]"; shift; next;
-    }
     print "Unknown option: $_ : ignoring!\n";
 }
 
@@ -440,11 +428,11 @@ sub SendData{
     close(SOCK);
 
     my $sentdata="";
-    foreach $x(keys(%hash_of_data)){
+    foreach $x (keys (%$variables)){
         $sentdata.= "$x  => $hash_of_data{$x}\n";
     }
     WriteFile "$Prefix-sentdata.txt", $sentdata;
-
+    
 
     return $result;
 }
@@ -1002,7 +990,7 @@ my %hash_of_data = ('machine_data' => $machine_data,
 	       'buildstatus' => $BuildStatus,
 	       'singlesource_programstable' => $SingleSourceProgramsTable,
                'multisource_programstable' => $MultiSourceProgramsTable,
-               'externalsource_programstable' => $ExternalSourceProgramsTable,
+               'externalsource_programstable' => $ExternalProgramsTable,
 	       'llcbeta_options' => $multisource_llcbeta_options,
                'warnings_removed' => $WarningsRemoved,
                'warnings_added' => $WarningsAdded,
