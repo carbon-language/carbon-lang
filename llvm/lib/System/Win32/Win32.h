@@ -25,7 +25,7 @@
 #include <string>
 
 inline bool GetError(const std::string &Prefix, std::string *Dest) {
-  if (Dest == 0) return;
+  if (Dest == 0) return true;
   char *buffer = NULL;
   FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,
       NULL, GetLastError(), 0, (LPSTR)&buffer, 1, NULL);
