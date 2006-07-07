@@ -988,7 +988,7 @@ void TargetLowering::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
         KnownZero = ~((1ULL << (64-NLZ2))-1) & Mask;  // Top bits known zero.
         KnownOne = 0;   // No one bits known.
       } else {
-        KnownOne = KnownOne = 0;  // Otherwise, nothing known.
+        KnownZero = KnownOne = 0;  // Otherwise, nothing known.
       }
     }
     return;
