@@ -1450,6 +1450,9 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
                                               AI->getName()));
       InstResult = AllocaTmps.back();     
     } else if (CallInst *CI = dyn_cast<CallInst>(CurInst)) {
+      // Cannot handle inline asm.
+      if (isa<InlineAsm>(CI->getOperand(0))) return false;
+
       // Resolve function pointers.
       Function *Callee = dyn_cast<Function>(getVal(Values, CI->getOperand(0)));
       if (!Callee) return false;  // Cannot resolve.
