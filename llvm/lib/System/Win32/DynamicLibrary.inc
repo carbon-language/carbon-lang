@@ -94,12 +94,13 @@ DynamicLibrary::~DynamicLibrary() {
   }
 }
 
-void DynamicLibrary::LoadLibraryPermanently(const char* filename) {
+bool DynamicLibrary::LoadLibraryPermanently(const char *filename,
+                                            std::string *ErrMsg) {
   if (filename) {
     HMODULE a_handle = LoadLibrary(filename);
 
     if (a_handle == 0)
-      ThrowError(std::string(filename) + ": Can't open : ");
+      return GetError(std::string(filename) + ": Can't open : ", ErrMsg);
 
     OpenedHandles.push_back(a_handle);
   } else {
@@ -110,6 +111,7 @@ void DynamicLibrary::LoadLibraryPermanently(const char* filename) {
 
   // Because we don't remember the handle, we will never free it; hence,
   // it is loaded permanently.
+  return false;
 }
 
 void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {

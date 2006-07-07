@@ -65,10 +65,11 @@ namespace sys {
     public:
       /// This function allows a library to be loaded without instantiating a
       /// DynamicLibrary object. Consequently, it is marked as being permanent
-      /// and will only be unloaded when the program terminates.
-      /// @throws std::string on error.
+      /// and will only be unloaded when the program terminates.  This returns
+      /// false on success or returns true and fills in *ErrMsg on failure.
       /// @brief Open a dynamic library permanently.
-      static void LoadLibraryPermanently(const char* filename);
+      static bool LoadLibraryPermanently(const char* filename,
+                                         std::string *ErrMsg = 0);
 
       /// This function will search through all previously loaded dynamic
       /// libraries for the symbol \p symbolName. If it is found, the addressof

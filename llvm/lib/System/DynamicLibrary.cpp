@@ -18,7 +18,8 @@
 // Collection of symbol name/value pairs to be searched prior to any libraries.
 static std::map<std::string, void *> g_symbols;
 
-void llvm::sys::DynamicLibrary::AddSymbol(const char* symbolName, void *symbolValue) {
+void llvm::sys::DynamicLibrary::AddSymbol(const char* symbolName,
+                                          void *symbolValue) {
   g_symbols[symbolName] = symbolValue;
 }
 
@@ -99,20 +100,25 @@ DynamicLibrary::~DynamicLibrary() {
   }
 }
 
-void DynamicLibrary::LoadLibraryPermanently(const char* filename) {
+bool DynamicLibrary::LoadLibraryPermanently(const char *Filename,
+                                            std::string *ErrMsg) {
   check_ltdl_initialization();
-  lt_dlhandle a_handle = lt_dlopen(filename);
+  lt_dlhandle a_handle = lt_dlopen(Filename);
 
   if (a_handle == 0)
-    a_handle = lt_dlopenext(filename);
+    a_handle = lt_dlopenext(Filename);
 
-  if (a_handle == 0)
-    throw std::string("Can't open :") +
-          (filename ? filename : "<current process>") + ": " + lt_dlerror();
+  if (a_handle == 0) {
+    if (ErrMsg)
+      *ErrMsg = std::string("Can't open :") +
+          (Filename ? Filename : "<current process>") + ": " + lt_dlerror();
+    return true;
+  }
 
   lt_dlmakeresident(a_handle);
 
   OpenedHandles.push_back(a_handle);
+  return false;
 }
 
 void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
