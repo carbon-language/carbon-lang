@@ -9,6 +9,7 @@
 LEVEL = ../../..
 LIBRARYNAME = LLVMBCReader
 BUILD_ARCHIVE = 1
+REQUIRES_EH := 1
 
 include $(LEVEL)/Makefile.common
 
