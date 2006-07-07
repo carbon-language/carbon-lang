@@ -1000,7 +1000,7 @@ my %hash_of_data = ('machine_data' => $machine_data,
                'removed_tests' => $TestsRemoved,
 	       'unexpfail_tests' => $unexpfail_tests,
 	       'dejagnutests_log' => $dejagnutests_log,
-	       'dejagnutests_sum' => $dejagnutests_sum
+	       'dejagnutests_sum' => $dejagnutests_sum,
 	       'starttime' => $starttime,
 	       'endtime' => $endtime);
 
