@@ -57,6 +57,11 @@ public:
   ///
   SourceLocation getDefinitionLoc() const { return Location; }
   
+  /// isEqualTo - Return true if the specified macro definition is equal to this
+  /// macro in spelling, arguments, and whitespace.  This is used to emit
+  /// duplicate definition warnings.
+  bool isEqualTo(const MacroInfo &Other) const;
+  
   /// setIsBuiltinMacro - Set or clear the isBuiltinMacro flag.
   ///
   void setIsBuiltinMacro(bool Val = true) {

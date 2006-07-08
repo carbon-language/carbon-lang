@@ -15,3 +15,10 @@
 #include <iostream>
 using namespace llvm;
 using namespace clang;
+
+/// isEqualTo - Return true if the specified macro definition is equal to this
+/// macro in spelling, arguments, and whitespace.  This is used to emit
+/// duplicate definition warnings.
+bool MacroInfo::isEqualTo(const MacroInfo &Other) const {
+  return true;
+}

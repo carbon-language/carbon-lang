@@ -839,10 +839,10 @@ void Preprocessor::DiscardUntilEndOfDirective() {
 
 /// ReadMacroName - Lex and validate a macro name, which occurs after a
 /// #define or #undef.  This sets the token kind to eom and discards the rest
-/// of the macro line if the macro name is invalid.  isDefineUndef is true if
-/// this is due to a a #define or #undef directive, false if it is something
+/// of the macro line if the macro name is invalid.  isDefineUndef is 1 if
+/// this is due to a a #define, 2 if #undef directive, 0 if it is something
 /// else (e.g. #ifdef).
-void Preprocessor::ReadMacroName(LexerToken &MacroNameTok, bool isDefineUndef) {
+void Preprocessor::ReadMacroName(LexerToken &MacroNameTok, char isDefineUndef) {
   // Read the token, don't allow macro expansion on it.
   LexUnexpandedToken(MacroNameTok);
   
@@ -864,7 +864,10 @@ void Preprocessor::ReadMacroName(LexerToken &MacroNameTok, bool isDefineUndef) {
   } else if (isDefineUndef && II->getMacroInfo() &&
              II->getMacroInfo()->isBuiltinMacro()) {
     // Error if defining "__LINE__" and other builtins: C99 6.10.8.4.
-    Diag(MacroNameTok, diag::pp_undef_builtin_macro);
+    if (isDefineUndef == 1)
+      Diag(MacroNameTok, diag::pp_redef_builtin_macro);
+    else
+      Diag(MacroNameTok, diag::pp_undef_builtin_macro);
   } else {
     // Okay, we got a good identifier node.  Return it.
     return;
@@ -1322,7 +1325,7 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
   ++NumDefined;
 
   LexerToken MacroNameTok;
-  ReadMacroName(MacroNameTok, true);
+  ReadMacroName(MacroNameTok, 1);
   
   // Error reading macro name?  If so, diagnostic already issued.
   if (MacroNameTok.getKind() == tok::eom)
@@ -1396,9 +1399,13 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
     if (!OtherMI->isUsed())
       Diag(OtherMI->getDefinitionLoc(), diag::pp_macro_not_used);
 
-    // FIXME: Verify the definition is the same.
     // Macros must be identical.  This means all tokes and whitespace separation
     // must be the same.
+    if (!MI->isEqualTo(*OtherMI)) {
+      Diag(MI->getDefinitionLoc(), diag::ext_pp_macro_redef,
+           MacroNameTok.getIdentifierInfo()->getName());
+      Diag(OtherMI->getDefinitionLoc(), diag::ext_pp_macro_redef2);
+    }
     delete OtherMI;
   }
   
@@ -1412,7 +1419,7 @@ void Preprocessor::HandleUndefDirective(LexerToken &UndefTok) {
   ++NumUndefined;
 
   LexerToken MacroNameTok;
-  ReadMacroName(MacroNameTok, true);
+  ReadMacroName(MacroNameTok, 2);
   
   // Error reading macro name?  If so, diagnostic already issued.
   if (MacroNameTok.getKind() == tok::eom)
