@@ -1455,6 +1455,8 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
       return;
     }
 
+    // Read the first token after the arg list for down below.
+    LexUnexpandedToken(Tok);
   } else if (!Tok.hasLeadingSpace()) {
     // C99 requires whitespace between the macro definition and the body.  Emit
     // a diagnostic for something like "#define X+".
@@ -1473,9 +1475,29 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
   // Read the rest of the macro body.
   while (Tok.getKind() != tok::eom) {
     MI->AddTokenToBody(Tok);
+
+    // Check C99 6.10.3.2p1: ensure that # operators are followed by macro
+    // parameters.
+    if (Tok.getKind() != tok::hash) {
+      // Get the next token of the macro.
+      LexUnexpandedToken(Tok);
+      continue;
+    }
     
-    // FIXME: Check for #'s that aren't followed by argument names.
-    // See create_iso_definition.
+    // Get the next token of the macro.
+    LexUnexpandedToken(Tok);
+   
+    // Not a macro arg identifier?
+    if (!Tok.getIdentifierInfo() || !Tok.getIdentifierInfo()->isMacroArg()) {
+      Diag(Tok, diag::err_pp_stringize_not_parameter);
+      // Clear the "isMacroArg" flags from all the macro arguments.
+      MI->SetIdentifierIsMacroArgFlags(false);
+      delete MI;
+      return;
+    }
+    
+    // Things look ok, add the param name token to the macro.
+    MI->AddTokenToBody(Tok);
 
     // Get the next token of the macro.
     LexUnexpandedToken(Tok);
@@ -1487,21 +1509,20 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
   // replacement list.
   if (NumTokens != 0) {
     if (MI->getReplacementToken(0).getKind() == tok::hashhash) {
-      SourceLocation Loc = MI->getReplacementToken(0).getLocation();
+      Diag(MI->getReplacementToken(0), diag::err_paste_at_start);
       // Clear the "isMacroArg" flags from all the macro arguments.
       MI->SetIdentifierIsMacroArgFlags(false);
       delete MI;
-      return Diag(Loc, diag::err_paste_at_start);
+      return;
     }
     if (MI->getReplacementToken(NumTokens-1).getKind() == tok::hashhash) {
-      SourceLocation Loc = MI->getReplacementToken(NumTokens-1).getLocation();
+      Diag(MI->getReplacementToken(NumTokens-1), diag::err_paste_at_end);
       // Clear the "isMacroArg" flags from all the macro arguments.
       MI->SetIdentifierIsMacroArgFlags(false);
       delete MI;
-      return Diag(Loc, diag::err_paste_at_end);
+      return;
     }
   }
-  
   
   // If this is the primary source file, remember that this macro hasn't been
   // used yet.
