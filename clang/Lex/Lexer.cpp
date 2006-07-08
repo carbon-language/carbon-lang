@@ -349,22 +349,13 @@ void Lexer::LexIdentifier(LexerToken &Result, const char *CurPtr) {
   // FIXME: UCNs.
   if (C != '\\' && C != '?' && (C != '$' || !Features.DollarIdents)) {
 FinishIdentifier:
-    const char *IdStart = BufferPtr, *IdEnd = CurPtr;
+    const char *IdStart = BufferPtr;
     FormTokenWithChars(Result, CurPtr);
     Result.SetKind(tok::identifier);
     
-    // Look up this token, see if it is a macro, or if it is a language keyword.
-    IdentifierInfo *II;
-    if (!Result.needsCleaning()) {
-      // No cleaning needed, just use the characters from the lexed buffer.
-      II = PP.getIdentifierInfo(IdStart, IdEnd);
-    } else {
-      // Cleaning needed, alloca a buffer, clean into it, then use the buffer.
-      const char *TmpBuf = (char*)alloca(Result.getLength());
-      unsigned Size = PP.getSpelling(Result, TmpBuf);
-      II = PP.getIdentifierInfo(TmpBuf, TmpBuf+Size);
-    }
-    Result.SetIdentifierInfo(II);
+    // Fill in Result.IdentifierInfo, looking up the identifier in the
+    // identifier table.
+    PP.LookUpIdentifierInfo(Result, IdStart);
     
     // Finally, now that we know we have an identifier, pass this off to the
     // preprocessor, which may macro expand it or something.

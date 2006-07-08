@@ -24,6 +24,9 @@ namespace clang {
 /// MacroInfo - Each identifier that is #define'd has an instance of this class
 /// associated with it, used to implement macro expansion.
 class MacroInfo {
+  //===--------------------------------------------------------------------===//
+  // State set when the macro is defined.
+
   /// Location - This is the place the macro is defined.
   SourceLocation Location;
 
@@ -33,26 +36,40 @@ class MacroInfo {
   /// ReplacementTokens - This is the list of tokens that the macro is defined
   /// to.
   std::vector<LexerToken> ReplacementTokens;
+
+  /// IsFunctionLike - True if this macro is a function-like macro, false if it
+  /// is an object-like macro.
+  bool IsFunctionLike : 1;
   
-  /// IsDisabled - True if we have started an expansion of this macro already.
-  /// This disbles recursive expansion, which would be quite bad for things like
-  /// #define A A.
-  bool IsDisabled : 1;
+  /// IsC99Varargs - True if this macro is of the form "#define X(...)" or
+  /// "#define X(Y,Z,...)".  The __VA_ARGS__ token should be replaced with the
+  /// contents of "..." in an invocation.
+  bool IsC99Varargs : 1;
+  
+  /// IsGNUVarargs -  True if this macro is of the form "#define X(a...)".  The
+  /// "a" identifier in th replacement list will be replaced with all arguments
+  /// of the macro starting with the specified one.
+  bool IsGNUVarargs : 1;
   
   /// IsBuiltinMacro - True if this is a builtin macro, such as __LINE__, and if
   /// it has not yet been redefined or undefined.
   bool IsBuiltinMacro : 1;
+  
+private:
+  //===--------------------------------------------------------------------===//
+  // State that changes as the macro is used.
+
+  /// IsDisabled - True if we have started an expansion of this macro already.
+  /// This disbles recursive expansion, which would be quite bad for things like
+  /// #define A A.
+  bool IsDisabled : 1;
   
   /// IsUsed - True if this macro is either defined in the main file and has
   /// been used, or if it is not defined in the main file.  This is used to 
   /// emit -Wunused-macros diagnostics.
   bool IsUsed : 1;
 public:
-  MacroInfo(SourceLocation DefLoc) : Location(DefLoc) {
-    IsDisabled = false;
-    IsBuiltinMacro = false;
-    IsUsed = true;
-  }
+  MacroInfo(SourceLocation DefLoc);
   
   /// getDefinitionLoc - Return the location that the macro was defined at.
   ///
@@ -74,6 +91,18 @@ public:
   void setIsUsed(bool Val) {
     IsUsed = Val;
   }
+  
+  /// Function/Object-likeness.  Keep track of whether this macro has formal
+  /// parameters.
+  void setIsFunctionLike() { IsFunctionLike = true; }
+  bool isFunctionLike() const { return IsFunctionLike; }
+  bool isObjectLike() const { return !IsFunctionLike; }
+  
+  /// Varargs querying methods.  This can only be set for function-like macros.
+  void setIsC99Varargs() { IsC99Varargs = true; }
+  void setIsGNUVarargs() { IsGNUVarargs = true; }
+  bool isC99Varargs() const { return IsC99Varargs; }
+  bool isGNUVarargs() const { return IsGNUVarargs; }
   
   /// isBuiltinMacro - Return true if this macro is a builtin macro, such as
   /// __LINE__, which requires processing before expansion.

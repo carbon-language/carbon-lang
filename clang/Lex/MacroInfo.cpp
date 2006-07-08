@@ -17,14 +17,27 @@
 using namespace llvm;
 using namespace clang;
 
+MacroInfo::MacroInfo(SourceLocation DefLoc) : Location(DefLoc) {
+  IsFunctionLike = false;
+  IsC99Varargs = false;
+  IsGNUVarargs = false;
+  IsBuiltinMacro = false;
+  IsDisabled = false;
+  IsUsed = true;
+}
+
+
 /// isIdenticalTo - Return true if the specified macro definition is equal to
 /// this macro in spelling, arguments, and whitespace.  This is used to emit
 /// duplicate definition warnings.  This implements the rules in C99 6.10.3.
 bool MacroInfo::isIdenticalTo(const MacroInfo &Other, Preprocessor &PP) const {
-  // TODO: Check param count, variadic, function likeness.
+  // TODO: Check param count.
   
   // Check # tokens in replacement match.
-  if (ReplacementTokens.size() != Other.ReplacementTokens.size())
+  if (ReplacementTokens.size() != Other.ReplacementTokens.size() ||
+      isFunctionLike() != Other.isFunctionLike() ||
+      isC99Varargs() != Other.isC99Varargs() ||
+      isGNUVarargs() != Other.isGNUVarargs())
     return false;
   
   // Check all the tokens.

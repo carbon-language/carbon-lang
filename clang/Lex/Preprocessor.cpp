@@ -706,6 +706,29 @@ struct UnusedIdentifierReporter : public IdentifierVisitor {
 // Lexer Event Handling.
 //===----------------------------------------------------------------------===//
 
+/// LookUpIdentifierInfo - Given a tok::identifier token, look up the
+/// identifier information for the token and install it into the token.
+IdentifierInfo *Preprocessor::LookUpIdentifierInfo(LexerToken &Identifier,
+                                                   const char *BufPtr) {
+  assert(Identifier.getKind() == tok::identifier && "Not an identifier!");
+  assert(Identifier.getIdentifierInfo() == 0 && "Identinfo already exists!");
+  
+  // Look up this token, see if it is a macro, or if it is a language keyword.
+  IdentifierInfo *II;
+  if (BufPtr && !Identifier.needsCleaning()) {
+    // No cleaning needed, just use the characters from the lexed buffer.
+    II = getIdentifierInfo(BufPtr, BufPtr+Identifier.getLength());
+  } else {
+    // Cleaning needed, alloca a buffer, clean into it, then use the buffer.
+    const char *TmpBuf = (char*)alloca(Identifier.getLength());
+    unsigned Size = getSpelling(Identifier, TmpBuf);
+    II = getIdentifierInfo(TmpBuf, TmpBuf+Size);
+  }
+  Identifier.SetIdentifierInfo(II);
+  return II;
+}
+
+
 /// HandleIdentifier - This callback is invoked when the lexer reads an
 /// identifier.  This callback looks up the identifier in the map and/or
 /// potentially macro expands it or turns it into a named token (like 'for').
@@ -1318,6 +1341,78 @@ void Preprocessor::HandleImportDirective(LexerToken &ImportTok) {
 // Preprocessor Macro Directive Handling.
 //===----------------------------------------------------------------------===//
 
+/// ReadMacroDefinitionArgList - The ( starting an argument list of a macro
+/// definition has just been read.  Lex the rest of the arguments and the
+/// closing ), updating MI with what we learn.  Return true if an error occurs
+/// parsing the arg list.
+bool Preprocessor::ReadMacroDefinitionArgList(MacroInfo *MI) {
+  LexerToken Tok;
+  bool isFirst = true;
+  while (1) {
+    LexUnexpandedToken(Tok);
+    switch (Tok.getKind()) {
+    case tok::r_paren:
+      // Found the end of the argument list.
+      if (isFirst) return false;  // #define FOO()
+      // Otherwise we have #define FOO(A,)
+      Diag(Tok, diag::err_pp_expected_ident_in_arg_list);
+      return true;
+    case tok::ellipsis:  // #define X(... -> C99 varargs
+      // Warn if use of C99 feature in non-C99 mode.
+      if (!Features.C99) Diag(Tok, diag::ext_variadic_macro);
+
+      // Lex the token after the identifier.
+      LexUnexpandedToken(Tok);
+      if (Tok.getKind() != tok::r_paren) {
+        Diag(Tok, diag::err_pp_missing_rparen_in_macro_def);
+        return true;
+      }
+      MI->setIsC99Varargs();
+      return false;
+    case tok::eom:  // #define X(
+      Diag(Tok, diag::err_pp_missing_rparen_in_macro_def);
+      return true;
+    default:        // #define X(1
+      Diag(Tok, diag::err_pp_invalid_tok_in_arg_list);
+      return true;
+    case tok::identifier:
+      isFirst = false;
+      
+      // Fill in Result.IdentifierInfo, looking up the identifier in the
+      // identifier table.
+      IdentifierInfo *II = LookUpIdentifierInfo(Tok);
+      
+      assert(0 && "FIXME: lookup/add identifier, check for conflicts");
+      
+      // Lex the token after the identifier.
+      LexUnexpandedToken(Tok);
+      
+      switch (Tok.getKind()) {
+      default:          // #define X(A B
+        Diag(Tok, diag::err_pp_expected_comma_in_arg_list);
+        return true;
+      case tok::r_paren: // #define X(A)
+        return false;
+      case tok::comma:  // #define X(A,
+        break;
+      case tok::ellipsis:  // #define X(A... -> GCC extension
+        // Diagnose extension.
+        Diag(Tok, diag::ext_named_variadic_macro);
+        
+        // Lex the token after the identifier.
+        LexUnexpandedToken(Tok);
+        if (Tok.getKind() != tok::r_paren) {
+          Diag(Tok, diag::err_pp_missing_rparen_in_macro_def);
+          return true;
+        }
+          
+        MI->setIsGNUVarargs();
+        return false;
+      }
+    }
+  }
+}
+
 /// HandleDefineDirective - Implements #define.  This consumes the entire macro
 /// line then lets the caller lex the next real token.
 ///
@@ -1339,10 +1434,14 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
   if (Tok.getKind() == tok::eom) {
     // If there is no body to this macro, we have no special handling here.
   } else if (Tok.getKind() == tok::l_paren && !Tok.hasLeadingSpace()) {
-    // This is a function-like macro definition.
-    //assert(0 && "Function-like macros not implemented!");
-    delete MI;
-    return DiscardUntilEndOfDirective();
+    // This is a function-like macro definition.  Read the argument list.
+    MI->setIsFunctionLike();
+    if (ReadMacroDefinitionArgList(MI)) {
+      delete MI;
+      if (CurLexer->ParsingPreprocessorDirective)
+        DiscardUntilEndOfDirective();
+      return;
+    }
 
   } else if (!Tok.hasLeadingSpace()) {
     // C99 requires whitespace between the macro definition and the body.  Emit

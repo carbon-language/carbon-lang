@@ -384,6 +384,11 @@ public:
   // Preprocessor callback methods.  These are invoked by a lexer as various
   // directives and events are found.
 
+  /// LookUpIdentifierInfo - Given a tok::identifier token, look up the
+  /// identifier information for the token and install it into the token.
+  IdentifierInfo *LookUpIdentifierInfo(LexerToken &Identifier,
+                                       const char *BufPtr = 0);
+  
   /// HandleIdentifier - This callback is invoked when the lexer reads an
   /// identifier and has filled in the tokens IdentifierInfo member.  This
   /// callback potentially macro expands it or turns it into a named token (like
@@ -422,6 +427,12 @@ private:
   /// #define or #undef.  This emits a diagnostic, sets the token kind to eom,
   /// and discards the rest of the macro line if the macro name is invalid.
   void ReadMacroName(LexerToken &MacroNameTok, char isDefineUndef = 0);
+  
+  /// ReadMacroDefinitionArgList - The ( starting an argument list of a macro
+  /// definition has just been read.  Lex the rest of the arguments and the
+  /// closing ), updating MI with what we learn.  Return true if an error occurs
+  /// parsing the arg list.
+  bool ReadMacroDefinitionArgList(MacroInfo *MI);
   
   /// SkipExcludedConditionalBlock - We just read a #if or related directive and
   /// decided that the subsequent tokens are in the #if'd out portion of the

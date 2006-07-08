@@ -204,10 +204,9 @@ void Preprocessor::HandlePragmaPoison(LexerToken &PoisonTok) {
       return;
     }
     
-    // Look up the identifier info for the token.  Note that this can't use
-    // Tok.getIdentifierInfo() directly because we disabled identifier lookup.
-    std::string TokStr = getSpelling(Tok);
-    IdentifierInfo *II =getIdentifierInfo(&TokStr[0], &TokStr[0]+TokStr.size());
+    // Look up the identifier info for the token.  We disabled identifier lookup
+    // by saying we're skipping contents, so we need to do this manually.
+    IdentifierInfo *II = LookUpIdentifierInfo(Tok);
     
     // Already poisoned.
     if (II->isPoisoned()) continue;

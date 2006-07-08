@@ -119,6 +119,10 @@ DIAG(ext_pp_macro_redef, EXTENSION,
      "\"%s\" macro redefined")
 DIAG(ext_pp_macro_redef2, EXTENSION,
      "this is previous definition")
+DIAG(ext_variadic_macro, EXTENSION,
+     "variadic macros were introduced in C99")
+DIAG(ext_named_variadic_macro, EXTENSION,
+     "named variadic macros are a GNU extension")
 
 DIAG(ext_pp_base_file, EXTENSION,
      "__BASE_FILE__ is a language extension")
@@ -143,6 +147,14 @@ DIAG(err_pp_macro_not_identifier, ERROR,
      "macro names must be identifiers")
 DIAG(err_pp_missing_macro_name, ERROR,
      "macro name missing")
+DIAG(err_pp_missing_rparen_in_macro_def, ERROR,
+     "missing ')' in macro parameter list")
+DIAG(err_pp_invalid_tok_in_arg_list, ERROR,
+     "invalid token in macro parameter list")
+DIAG(err_pp_expected_ident_in_arg_list, ERROR,
+     "expected identifier in macro parameter list")
+DIAG(err_pp_expected_comma_in_arg_list, ERROR,
+     "expected comma in macro parameter list")
 DIAG(err_pp_malformed_ident, ERROR,
      "invalid #ident directive")
 DIAG(err_pp_unterminated_conditional, ERROR,
