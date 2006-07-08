@@ -1400,8 +1400,8 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
       Diag(OtherMI->getDefinitionLoc(), diag::pp_macro_not_used);
 
     // Macros must be identical.  This means all tokes and whitespace separation
-    // must be the same.
-    if (!MI->isEqualTo(*OtherMI)) {
+    // must be the same.  C99 6.10.3.2.
+    if (!MI->isIdenticalTo(*OtherMI, *this)) {
       Diag(MI->getDefinitionLoc(), diag::ext_pp_macro_redef,
            MacroNameTok.getIdentifierInfo()->getName());
       Diag(OtherMI->getDefinitionLoc(), diag::ext_pp_macro_redef2);

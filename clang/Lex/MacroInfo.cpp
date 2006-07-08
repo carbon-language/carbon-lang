@@ -12,13 +12,41 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Lex/MacroInfo.h"
+#include "clang/Lex/Preprocessor.h"
 #include <iostream>
 using namespace llvm;
 using namespace clang;
 
-/// isEqualTo - Return true if the specified macro definition is equal to this
-/// macro in spelling, arguments, and whitespace.  This is used to emit
-/// duplicate definition warnings.
-bool MacroInfo::isEqualTo(const MacroInfo &Other) const {
+/// isIdenticalTo - Return true if the specified macro definition is equal to
+/// this macro in spelling, arguments, and whitespace.  This is used to emit
+/// duplicate definition warnings.  This implements the rules in C99 6.10.3.
+bool MacroInfo::isIdenticalTo(const MacroInfo &Other, Preprocessor &PP) const {
+  // TODO: Check param count, variadic, function likeness.
+  
+  // Check # tokens in replacement match.
+  if (ReplacementTokens.size() != Other.ReplacementTokens.size())
+    return false;
+  
+  // Check all the tokens.
+  for (unsigned i = 0, e = ReplacementTokens.size(); i != e; ++i) {
+    const LexerToken &A = ReplacementTokens[i];
+    const LexerToken &B = Other.ReplacementTokens[i];
+    if (A.getKind() != B.getKind() || 
+        A.isAtStartOfLine() != B.isAtStartOfLine() ||
+        A.hasLeadingSpace() != B.hasLeadingSpace())
+      return false;
+    
+    // If this is an identifier, it is easy.
+    if (A.getIdentifierInfo() || B.getIdentifierInfo()) {
+      if (A.getIdentifierInfo() != B.getIdentifierInfo())
+        return false;
+      continue;
+    }
+    
+    // Otherwise, check the spelling.
+    if (PP.getSpelling(A) != PP.getSpelling(B))
+      return false;
+  }
+  
   return true;
 }

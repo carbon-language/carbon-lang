@@ -19,6 +19,7 @@
 
 namespace llvm {
 namespace clang {
+  class Preprocessor;
     
 /// MacroInfo - Each identifier that is #define'd has an instance of this class
 /// associated with it, used to implement macro expansion.
@@ -57,10 +58,10 @@ public:
   ///
   SourceLocation getDefinitionLoc() const { return Location; }
   
-  /// isEqualTo - Return true if the specified macro definition is equal to this
-  /// macro in spelling, arguments, and whitespace.  This is used to emit
-  /// duplicate definition warnings.
-  bool isEqualTo(const MacroInfo &Other) const;
+  /// isIdenticalTo - Return true if the specified macro definition is equal to
+  /// this macro in spelling, arguments, and whitespace.  This is used to emit
+  /// duplicate definition warnings.  This implements the rules in C99 6.10.3.
+  bool isIdenticalTo(const MacroInfo &Other, Preprocessor &PP) const;
   
   /// setIsBuiltinMacro - Set or clear the isBuiltinMacro flag.
   ///
