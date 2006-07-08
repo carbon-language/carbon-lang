@@ -155,6 +155,8 @@ DIAG(err_pp_expected_ident_in_arg_list, ERROR,
      "expected identifier in macro parameter list")
 DIAG(err_pp_expected_comma_in_arg_list, ERROR,
      "expected comma in macro parameter list")
+DIAG(err_pp_duplicate_name_in_arg_list, ERROR,
+     "duplicate macro parameter name \"%s\"")
 DIAG(err_pp_malformed_ident, ERROR,
      "invalid #ident directive")
 DIAG(err_pp_unterminated_conditional, ERROR,

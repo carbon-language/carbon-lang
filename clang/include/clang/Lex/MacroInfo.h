@@ -14,7 +14,7 @@
 #ifndef LLVM_CLANG_MACROINFO_H
 #define LLVM_CLANG_MACROINFO_H
 
-#include "clang/Lex/Lexer.h"
+#include "clang/Lex/LexerToken.h"
 #include <vector>
 
 namespace llvm {
@@ -30,8 +30,9 @@ class MacroInfo {
   /// Location - This is the place the macro is defined.
   SourceLocation Location;
 
-  // TODO: Parameter list
-  // TODO: # parameters
+  /// Arguments - The list of arguments for a function-like macro.  This can be
+  /// empty, for, e.g. "#define X()".
+  std::vector<IdentifierInfo*> Arguments;
   
   /// ReplacementTokens - This is the list of tokens that the macro is defined
   /// to.
@@ -91,6 +92,19 @@ public:
   void setIsUsed(bool Val) {
     IsUsed = Val;
   }
+
+  /// addArgument - Add an argument to the list of formal arguments for this
+  /// function-like macro.
+  void addArgument(IdentifierInfo *Arg) {
+    Arguments.push_back(Arg);
+  }
+
+  /// Arguments - The list of arguments for a function-like macro.  This can be
+  /// empty, for, e.g. "#define X()".
+  typedef std::vector<IdentifierInfo*>::const_iterator arg_iterator;
+  arg_iterator arg_begin() const { return Arguments.begin(); }
+  arg_iterator arg_end() const { return Arguments.end(); }
+  
   
   /// Function/Object-likeness.  Keep track of whether this macro has formal
   /// parameters.
@@ -142,6 +156,10 @@ public:
     assert(!IsDisabled && "Cannot disable an already-disabled macro!");
     IsDisabled = true;
   }
+  
+  /// SetIdentifierIsMacroArgFlags - Set or clear the "isMacroArg" flags on the
+  /// identifiers that make up the argument list for this macro.
+  void SetIdentifierIsMacroArgFlags(bool Val) const;
 };
     
 }  // end namespace llvm

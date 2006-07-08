@@ -26,20 +26,30 @@ MacroInfo::MacroInfo(SourceLocation DefLoc) : Location(DefLoc) {
   IsUsed = true;
 }
 
+/// SetIdentifierIsMacroArgFlags - Set or clear the "isMacroArg" flags on the
+/// identifiers that make up the argument list for this macro.
+void MacroInfo::SetIdentifierIsMacroArgFlags(bool Val) const {
+  for (arg_iterator I = arg_begin(), E = arg_end(); I != E; ++I)
+    (*I)->setIsMacroArg(Val);
+}
 
 /// isIdenticalTo - Return true if the specified macro definition is equal to
 /// this macro in spelling, arguments, and whitespace.  This is used to emit
 /// duplicate definition warnings.  This implements the rules in C99 6.10.3.
 bool MacroInfo::isIdenticalTo(const MacroInfo &Other, Preprocessor &PP) const {
-  // TODO: Check param count.
-  
-  // Check # tokens in replacement match.
+  // Check # tokens in replacement, number of args, and various flags all match.
   if (ReplacementTokens.size() != Other.ReplacementTokens.size() ||
+      Arguments.size() != Other.Arguments.size() ||
       isFunctionLike() != Other.isFunctionLike() ||
       isC99Varargs() != Other.isC99Varargs() ||
       isGNUVarargs() != Other.isGNUVarargs())
     return false;
-  
+
+  // Check arguments.
+  for (arg_iterator I = arg_begin(), OI = Other.arg_begin(), E = arg_end();
+       I != E; ++I, ++OI)
+    if (*I != *OI) return false;
+       
   // Check all the tokens.
   for (unsigned i = 0, e = ReplacementTokens.size(); i != e; ++i) {
     const LexerToken &A = ReplacementTokens[i];

@@ -1347,13 +1347,12 @@ void Preprocessor::HandleImportDirective(LexerToken &ImportTok) {
 /// parsing the arg list.
 bool Preprocessor::ReadMacroDefinitionArgList(MacroInfo *MI) {
   LexerToken Tok;
-  bool isFirst = true;
   while (1) {
     LexUnexpandedToken(Tok);
     switch (Tok.getKind()) {
     case tok::r_paren:
       // Found the end of the argument list.
-      if (isFirst) return false;  // #define FOO()
+      if (MI->arg_begin() == MI->arg_end()) return false;  // #define FOO()
       // Otherwise we have #define FOO(A,)
       Diag(Tok, diag::err_pp_expected_ident_in_arg_list);
       return true;
@@ -1376,13 +1375,19 @@ bool Preprocessor::ReadMacroDefinitionArgList(MacroInfo *MI) {
       Diag(Tok, diag::err_pp_invalid_tok_in_arg_list);
       return true;
     case tok::identifier:
-      isFirst = false;
-      
-      // Fill in Result.IdentifierInfo, looking up the identifier in the
-      // identifier table.
-      IdentifierInfo *II = LookUpIdentifierInfo(Tok);
-      
-      assert(0 && "FIXME: lookup/add identifier, check for conflicts");
+      IdentifierInfo *II = Tok.getIdentifierInfo();
+
+      // If this is already used as an argument, it is used multiple times (e.g.
+      // #define X(A,A.
+      if (II->isMacroArg()) {  // C99 6.10.3p6
+        Diag(Tok, diag::err_pp_duplicate_name_in_arg_list, II->getName());
+        return true;
+      }
+        
+      // Add the argument to the macro info.
+      MI->addArgument(II);
+      // Remember it is an argument now.
+      II->setIsMacroArg(true);
       
       // Lex the token after the identifier.
       LexUnexpandedToken(Tok);
@@ -1431,13 +1436,20 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
   LexerToken Tok;
   LexUnexpandedToken(Tok);
   
+  // If this is a function-like macro definition, parse the argument list,
+  // marking each of the identifiers as being used as macro arguments.  Also,
+  // check other constraints on the first token of the macro body.
   if (Tok.getKind() == tok::eom) {
     // If there is no body to this macro, we have no special handling here.
   } else if (Tok.getKind() == tok::l_paren && !Tok.hasLeadingSpace()) {
     // This is a function-like macro definition.  Read the argument list.
     MI->setIsFunctionLike();
     if (ReadMacroDefinitionArgList(MI)) {
+      // Clear the "isMacroArg" flags from all the macro arguments parsed.
+      MI->SetIdentifierIsMacroArgFlags(false);
+      // Forget about MI.
       delete MI;
+      // Throw away the rest of the line.
       if (CurLexer->ParsingPreprocessorDirective)
         DiscardUntilEndOfDirective();
       return;
@@ -1476,11 +1488,15 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
   if (NumTokens != 0) {
     if (MI->getReplacementToken(0).getKind() == tok::hashhash) {
       SourceLocation Loc = MI->getReplacementToken(0).getLocation();
+      // Clear the "isMacroArg" flags from all the macro arguments.
+      MI->SetIdentifierIsMacroArgFlags(false);
       delete MI;
       return Diag(Loc, diag::err_paste_at_start);
     }
     if (MI->getReplacementToken(NumTokens-1).getKind() == tok::hashhash) {
       SourceLocation Loc = MI->getReplacementToken(NumTokens-1).getLocation();
+      // Clear the "isMacroArg" flags from all the macro arguments.
+      MI->SetIdentifierIsMacroArgFlags(false);
       delete MI;
       return Diag(Loc, diag::err_paste_at_end);
     }
@@ -1509,6 +1525,9 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
   }
   
   MacroNameTok.getIdentifierInfo()->setMacroInfo(MI);
+  
+  // Clear the "isMacroArg" flags from all the macro arguments.
+  MI->SetIdentifierIsMacroArgFlags(false);
 }
 
 

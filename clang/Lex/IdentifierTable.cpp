@@ -199,6 +199,7 @@ IdentifierInfo &IdentifierTable::get(const char *NameStart,
   Identifier->TokInfo.TokenID = tok::identifier;
   Identifier->TokInfo.IsExtension = false;
   Identifier->TokInfo.IsPoisoned = false;
+  Identifier->TokInfo.IsMacroArg = false;
   Identifier->TokInfo.FETokenInfo = 0;
 
   // Copy the string information.

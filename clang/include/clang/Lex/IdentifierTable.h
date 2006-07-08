@@ -34,6 +34,7 @@ class IdentifierInfo {
   tok::TokenKind TokenID:8; // Front-end token ID or tok::identifier.
   bool IsExtension    : 1;  // True if this identifier is a language extension.
   bool IsPoisoned     : 1;  // True if this identifier is poisoned.
+  bool IsMacroArg     : 1;  // True if currently used as a macro argument.
   void *FETokenInfo;        // Managed by the language front-end.
   friend class IdentifierTable;
 public:
@@ -75,6 +76,12 @@ public:
   
   /// isPoisoned - Return true if this token has been poisoned.
   bool isPoisoned() const { return IsPoisoned; }
+  
+  /// IsMacroArg accessors - These indicate if the identifier is currently in
+  /// use as a macro argument identifier.  This is a transient property only
+  /// used during macro definition and expansion.
+  bool isMacroArg() const { return IsMacroArg; }
+  void setIsMacroArg(bool Val) { IsMacroArg = Val; }
   
   /// getFETokenInfo/setFETokenInfo - The language front-end is allowed to
   /// associate arbitrary metadata with this token.
