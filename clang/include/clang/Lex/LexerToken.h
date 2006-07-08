@@ -48,8 +48,6 @@ public:
     StartOfLine   = 0x01,  // At start of line or only after whitespace.
     LeadingSpace  = 0x02,  // Whitespace exists before this token.
     NeedsCleaning = 0x04   // Contained an escaped newline or trigraph.
-    //#define STRINGIFY_ARG   (1 << 2) /* If macro argument to be stringified.
-    //#define PASTE_LEFT      (1 << 3) /* If on LHS of a ## operator.
   };
 
   tok::TokenKind getKind() const { return Kind; }
