@@ -281,7 +281,7 @@ SetVector<Instruction*> LCSSA::getLoopValuesUsedOutsideLoop(Loop *L) {
 /// map that dominates the given block.
 Value *LCSSA::getValueDominatingDTNode(DominatorTree::Node *Node,
                               std::map<BasicBlock*, Value*>& PotDoms) {
-  // FIXME: The following insertion should be in place rather than the if
+  // FIXME: The following assertion should be in place rather than the if
   // statement.  Currently, this is due to the fact that LCSSA isn't smart 
   // enough to avoid inserting IDF Phis that don't dominate any uses.  In some 
   // of those cases, it could ask us to provide a dominating value for a block
