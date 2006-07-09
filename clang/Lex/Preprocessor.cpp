@@ -478,6 +478,32 @@ void Preprocessor::RegisterBuiltinMacros() {
   Ident__TIMESTAMP__     = RegisterBuiltinMacro("__TIMESTAMP__");
 }
 
+/// isTrivialSingleTokenExpansion - Return true if MI, which has a single token
+/// in its expansion, currently expands to that token literally.
+static bool isTrivialSingleTokenExpansion(const MacroInfo *MI) {
+  IdentifierInfo *II = MI->getReplacementToken(0).getIdentifierInfo();
+
+  // If the token isn't an identifier, it's always literally expanded.
+  if (II == 0) return true;
+  
+  // If the identifier is a macro, and if that macro is enabled, it may be
+  // expanded so it's not a trivial expansion.
+  if (II->getMacroInfo() && II->getMacroInfo()->isEnabled())
+    return false;
+  
+  // If this is an object-like macro invocation, it is safe to trivially expand
+  // it.
+  if (MI->isObjectLike()) return true;
+
+  // If this is a function-like macro invocation, it's safe to trivially expand
+  // as long as the identifier is not a macro argument.
+  for (MacroInfo::arg_iterator I = MI->arg_begin(), E = MI->arg_end();
+       I != E; ++I)
+    if (*I == II)
+      return false;   // Identifier is a macro argument.
+  return true;
+}  
+
 
 /// HandleMacroExpandedIdentifier - If an identifier token is read that is to be
 /// expanded as a macro, handle it and return the next token as 'Identifier'.
@@ -556,12 +582,7 @@ bool Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier,
     ++NumFastMacroExpanded;
     return false;
     
-  } else if (MI->getNumTokens() == 1 &&
-             // FIXME: Fn-Like Macros: Fast if arg not used.
-             FormalArgs == 0 &&
-             // Don't handle identifiers if they need recursive expansion.
-             (MI->getReplacementToken(0).getIdentifierInfo() == 0 ||
-              !MI->getReplacementToken(0).getIdentifierInfo()->getMacroInfo())){
+  } else if (MI->getNumTokens() == 1 && isTrivialSingleTokenExpansion(MI)) {
     
     // Otherwise, if this macro expands into a single trivially-expanded
     // token: expand it now.  This handles common cases like 
@@ -675,9 +696,9 @@ ReadFunctionLikeMacroFormalArgs(LexerToken &MacroName, MacroInfo *MI) {
   unsigned MinArgsExpected = MI->getNumArgs();
   
   // C99 expects us to pass at least one vararg arg (but as an extension, we
-  // don't require this).
-  if (MI->isC99Varargs())
-    ++MinArgsExpected;
+  // don't require this).  GNU-style varargs already include the 'rest' name in
+  // the count.
+  MinArgsExpected += MI->isC99Varargs();
   
   if (NumFormals < MinArgsExpected) {
     // There are several cases where too few arguments is ok, handle them now.
