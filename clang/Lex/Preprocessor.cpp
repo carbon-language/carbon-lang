@@ -480,7 +480,8 @@ void Preprocessor::RegisterBuiltinMacros() {
 
 /// isTrivialSingleTokenExpansion - Return true if MI, which has a single token
 /// in its expansion, currently expands to that token literally.
-static bool isTrivialSingleTokenExpansion(const MacroInfo *MI) {
+static bool isTrivialSingleTokenExpansion(const MacroInfo *MI,
+                                          const IdentifierInfo *MacroIdent) {
   IdentifierInfo *II = MI->getReplacementToken(0).getIdentifierInfo();
 
   // If the token isn't an identifier, it's always literally expanded.
@@ -488,7 +489,9 @@ static bool isTrivialSingleTokenExpansion(const MacroInfo *MI) {
   
   // If the identifier is a macro, and if that macro is enabled, it may be
   // expanded so it's not a trivial expansion.
-  if (II->getMacroInfo() && II->getMacroInfo()->isEnabled())
+  if (II->getMacroInfo() && II->getMacroInfo()->isEnabled() &&
+      // Fast expanding "#define X X" is ok, because X would be disabled.
+      II != MacroIdent)
     return false;
   
   // If this is an object-like macro invocation, it is safe to trivially expand
@@ -582,8 +585,8 @@ bool Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier,
     ++NumFastMacroExpanded;
     return false;
     
-  } else if (MI->getNumTokens() == 1 && isTrivialSingleTokenExpansion(MI)) {
-    
+  } else if (MI->getNumTokens() == 1 &&
+             isTrivialSingleTokenExpansion(MI, Identifier.getIdentifierInfo())){
     // Otherwise, if this macro expands into a single trivially-expanded
     // token: expand it now.  This handles common cases like 
     // "#define VAL 42".
