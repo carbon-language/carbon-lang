@@ -130,6 +130,7 @@ private:
   // State that changes while the preprocessor runs:
   bool DisableMacroExpansion;    // True if macro expansion is disabled.
   bool SkippingContents;         // True if in a #if 0 block.
+  bool InMacroFormalArgs;        // True if parsing fn macro invocation args.
 
   /// Identifiers - This is mapping/lookup information for all identifiers in
   /// the program, including program keywords.
@@ -199,7 +200,8 @@ private:
   unsigned NumDirectives, NumIncluded, NumDefined, NumUndefined, NumPragma;
   unsigned NumIf, NumElse, NumEndif;
   unsigned NumEnteredSourceFiles, MaxIncludeStackDepth,NumMultiIncludeFileOptzn;
-  unsigned NumMacroExpanded, NumFastMacroExpanded;
+  unsigned NumMacroExpanded, NumFnMacroExpanded, NumBuiltinMacroExpanded;
+  unsigned NumFastMacroExpanded;
   unsigned NumSkipped;
 public:
   Preprocessor(Diagnostic &diags, const LangOptions &opts, FileManager &FM,
@@ -320,8 +322,9 @@ public:
                        bool isMainFile = false);
 
   /// EnterMacro - Add a Macro to the top of the include stack and start lexing
-  /// tokens from it instead of the current buffer.
-  void EnterMacro(LexerToken &Identifier);
+  /// tokens from it instead of the current buffer.  Formals specifies the
+  /// tokens input to a function-like macro.
+  void EnterMacro(LexerToken &Identifier, MacroFormalArgs *Formals);
   
   
   /// Lex - To lex a token from the preprocessor, just pull a token from the
@@ -460,8 +463,15 @@ private:
   IdentifierInfo *RegisterBuiltinMacro(const char *Name);
   
   /// HandleMacroExpandedIdentifier - If an identifier token is read that is to
-  /// be expanded as a macro, handle it and return the next token as 'Tok'.
-  void HandleMacroExpandedIdentifier(LexerToken &Tok, MacroInfo *MI);
+  /// be expanded as a macro, handle it and return the next token as 'Tok'.  If
+  /// the macro should not be expanded return true, otherwise return false.
+  bool HandleMacroExpandedIdentifier(LexerToken &Tok, MacroInfo *MI);
+  
+  /// ReadFunctionLikeMacroFormalArgs - After reading "MACRO(", this method is
+  /// invoked to read all of the formal arguments specified for the macro
+  /// invocation.  This returns null on error.
+  MacroFormalArgs *ReadFunctionLikeMacroFormalArgs(LexerToken &MacroName,
+                                                   MacroInfo *MI);
 
   /// ExpandBuiltinMacro - If an identifier token is read that is to be expanded
   /// as a builtin macro, handle it and return the next token as 'Tok'.

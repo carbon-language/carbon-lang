@@ -104,7 +104,7 @@ public:
   typedef std::vector<IdentifierInfo*>::const_iterator arg_iterator;
   arg_iterator arg_begin() const { return Arguments.begin(); }
   arg_iterator arg_end() const { return Arguments.end(); }
-  
+  unsigned getNumArgs() const { return Arguments.size(); }
   
   /// Function/Object-likeness.  Keep track of whether this macro has formal
   /// parameters.
@@ -117,6 +117,7 @@ public:
   void setIsGNUVarargs() { IsGNUVarargs = true; }
   bool isC99Varargs() const { return IsC99Varargs; }
   bool isGNUVarargs() const { return IsGNUVarargs; }
+  bool isVariadic() const { return IsC99Varargs | IsGNUVarargs; }
   
   /// isBuiltinMacro - Return true if this macro is a builtin macro, such as
   /// __LINE__, which requires processing before expansion.

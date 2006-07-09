@@ -123,6 +123,10 @@ DIAG(ext_variadic_macro, EXTENSION,
      "variadic macros were introduced in C99")
 DIAG(ext_named_variadic_macro, EXTENSION,
      "named variadic macros are a GNU extension")
+DIAG(ext_embedded_directive, EXTENSION,
+     "embedding a directive within macro arguments is not portable")
+DIAG(ext_missing_varargs_arg, EXTENSION,
+     "varargs argument missing, but tolerated as an extension")
 
 DIAG(ext_pp_base_file, EXTENSION,
      "__BASE_FILE__ is a language extension")
@@ -207,6 +211,13 @@ DIAG(err_paste_at_start, ERROR,
      "\"##\" cannot appear at start of macro expansion")
 DIAG(err_paste_at_end, ERROR,
      "\"##\" cannot appear at end of macro expansion")
+DIAG(err_unterm_macro_invoc, ERROR,
+     "unterminated function-like macro invocation")
+DIAG(err_too_many_formals_in_macro_invoc, ERROR,
+     "too many arguments provided to function-like macro invocation")
+DIAG(err_too_few_formals_in_macro_invoc, ERROR,
+     "too few arguments provided to function-like macro invocation")
+
 
 // Should be a sorry?
 DIAG(err_pp_I_dash_not_supported, ERROR,

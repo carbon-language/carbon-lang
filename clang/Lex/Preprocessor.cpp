@@ -11,10 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO: GCC Diagnostics emitted by the lexer:
-//
-// ERROR  : __VA_ARGS__ can only appear in the expansion of a C99 variadic macro
-//
 // Options to support:
 //   -H       - Print the name of each header file used.
 //   -C -CC   - Do not discard comments for cpp.
@@ -27,8 +23,6 @@
 //
 // Messages to emit:
 //   "Multiple include guards may be useful for:\n"
-//
-// TODO: Implement the include guard optimization.
 //
 //===----------------------------------------------------------------------===//
 
@@ -55,13 +49,16 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
   // Clear stats.
   NumDirectives = NumIncluded = NumDefined = NumUndefined = NumPragma = 0;
   NumIf = NumElse = NumEndif = 0;
-  NumEnteredSourceFiles = NumMacroExpanded = NumFastMacroExpanded = 0;
+  NumEnteredSourceFiles = 0;
+  NumMacroExpanded = NumFnMacroExpanded = NumBuiltinMacroExpanded = 0;
+  NumFastMacroExpanded = 0;
   MaxIncludeStackDepth = 0; NumMultiIncludeFileOptzn = 0;
   NumSkipped = 0;
     
   // Macro expansion is enabled.
   DisableMacroExpansion = false;
   SkippingContents = false;
+  InMacroFormalArgs = false;
 
   // There is no file-change handler yet.
   FileChangeHandler = 0;
@@ -199,7 +196,8 @@ void Preprocessor::PrintStats() {
   std::cerr << "  " << NumPragma << " #pragma.\n";
   std::cerr << NumSkipped << " #if/#ifndef#ifdef regions skipped\n";
 
-  std::cerr << NumMacroExpanded << " macros expanded, "
+  std::cerr << NumMacroExpanded << "/" << NumFnMacroExpanded << "/"
+            << NumBuiltinMacroExpanded << " obj/fn/builtin macros expanded, "
             << NumFastMacroExpanded << " on the fast path.\n";
 }
 
@@ -433,7 +431,7 @@ void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer,
 
 /// EnterMacro - Add a Macro to the top of the include stack and start lexing
 /// tokens from it instead of the current buffer.
-void Preprocessor::EnterMacro(LexerToken &Tok) {
+void Preprocessor::EnterMacro(LexerToken &Tok, MacroFormalArgs *Formals) {
   IdentifierInfo *Identifier = Tok.getIdentifierInfo();
   MacroInfo &MI = *Identifier->getMacroInfo();
   IncludeMacroStack.push_back(IncludeStackInfo(CurLexer, CurDirLookup,
@@ -441,12 +439,10 @@ void Preprocessor::EnterMacro(LexerToken &Tok) {
   CurLexer     = 0;
   CurDirLookup = 0;
   
-  // TODO: Figure out arguments.
-  
   // Mark the macro as currently disabled, so that it is not recursively
   // expanded.
   MI.DisableMacro();
-  CurMacroExpander = new MacroExpander(Tok, *this);
+  CurMacroExpander = new MacroExpander(Tok, Formals, *this);
 }
 
 //===----------------------------------------------------------------------===//
@@ -485,24 +481,63 @@ void Preprocessor::RegisterBuiltinMacros() {
 
 /// HandleMacroExpandedIdentifier - If an identifier token is read that is to be
 /// expanded as a macro, handle it and return the next token as 'Identifier'.
-void Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier, 
+bool Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier, 
                                                  MacroInfo *MI) {
-  ++NumMacroExpanded;
+  
+  // If this is a builtin macro, like __LINE__ or _Pragma, handle it specially.
+  if (MI->isBuiltinMacro()) {
+    ExpandBuiltinMacro(Identifier);
+    return false;
+  }
+  
+  /// FormalArgs - If this is a function-like macro expansion, this contains,
+  /// for each macro argument, the list of tokens that were provided to the
+  /// invocation.
+  MacroFormalArgs *FormalArgs = 0;
+  
+  // If this is a function-like macro, read the arguments.
+  if (MI->isFunctionLike()) {
+    // FIXME: We need to query to see if the ( exists without reading it.
+    
+    // C99 6.10.3p10: If the preprocessing token immediately after the the macro
+    // name isn't a '(', this macro should not be expanded.
+    bool isFunctionInvocation = true;
+    if (!isFunctionInvocation)
+      return true;
+    
+    LexerToken Tok;
+    LexUnexpandedToken(Tok);
+    assert(Tok.getKind() == tok::l_paren &&
+           "not a function-like macro invocation!");
+
+    // Remember that we are now parsing the arguments to a macro invocation.
+    // Preprocessor directives used inside macro arguments are not portable, and
+    // this enables the warning.
+    InMacroFormalArgs = true;
+    FormalArgs = ReadFunctionLikeMacroFormalArgs(Identifier, MI);
+    
+    // Finished parsing args.
+    InMacroFormalArgs = false;
+    
+    // If there was an error parsing the arguments, bail out.
+    if (FormalArgs == 0) return false;
+    
+    ++NumFnMacroExpanded;
+  } else {
+    ++NumMacroExpanded;
+  }
   
   // Notice that this macro has been used.
   MI->setIsUsed(true);
-
-  // If this is a builtin macro, like __LINE__ or _Pragma, handle it specially.
-  if (MI->isBuiltinMacro())
-    return ExpandBuiltinMacro(Identifier);
   
   // If we started lexing a macro, enter the macro expansion body.
-  // FIXME: Fn-Like Macros: Read/Validate the argument list here!
-  
   
   // If this macro expands to no tokens, don't bother to push it onto the
   // expansion stack, only to take it right back off.
   if (MI->getNumTokens() == 0) {
+    // No need for formal arg info.
+    delete FormalArgs;
+    
     // Ignore this macro use, just return the next token in the current
     // buffer.
     bool HadLeadingSpace = Identifier.hasLeadingSpace();
@@ -519,13 +554,14 @@ void Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier,
       if (HadLeadingSpace) Identifier.SetFlag(LexerToken::LeadingSpace);
     }
     ++NumFastMacroExpanded;
-    return;
+    return false;
     
   } else if (MI->getNumTokens() == 1 &&
+             // FIXME: Fn-Like Macros: Fast if arg not used.
+             FormalArgs == 0 &&
              // Don't handle identifiers if they need recursive expansion.
              (MI->getReplacementToken(0).getIdentifierInfo() == 0 ||
               !MI->getReplacementToken(0).getIdentifierInfo()->getMacroInfo())){
-    // FIXME: Fn-Like Macros: Function-style macros only if no arguments?
     
     // Otherwise, if this macro expands into a single trivially-expanded
     // token: expand it now.  This handles common cases like 
@@ -555,15 +591,115 @@ void Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier,
     // Since this is not an identifier token, it can't be macro expanded, so
     // we're done.
     ++NumFastMacroExpanded;
-    return;
+    return false;
   }
   
-  // Start expanding the macro (FIXME: Fn-Like Macros: pass arguments).
-  EnterMacro(Identifier);
+  // Start expanding the macro.
+  EnterMacro(Identifier, FormalArgs);
   
   // Now that the macro is at the top of the include stack, ask the
   // preprocessor to read the next token from it.
-  return Lex(Identifier);
+  Lex(Identifier);
+  return false;
+}
+
+/// ReadFunctionLikeMacroFormalArgs - After reading "MACRO(", this method is
+/// invoked to read all of the formal arguments specified for the macro
+/// invocation.  This returns null on error.
+MacroFormalArgs *Preprocessor::
+ReadFunctionLikeMacroFormalArgs(LexerToken &MacroName, MacroInfo *MI) {
+  // Use an auto_ptr here so that the MacroFormalArgs object is deleted on
+  // all error paths.
+  std::auto_ptr<MacroFormalArgs> Args(new MacroFormalArgs(MI));
+  
+  // The number of fixed arguments to parse.
+  unsigned NumFixedArgsLeft = MI->getNumArgs();
+  bool isVariadic = MI->isVariadic();
+  
+  // If this is a C99-style varargs macro invocation, add an extra expected
+  // argument, which will catch all of the varargs formals in one argument.
+  if (MI->isC99Varargs())
+    ++NumFixedArgsLeft;
+  
+  // Outer loop, while there are more arguments, keep reading them.
+  LexerToken Tok;
+  Tok.SetKind(tok::comma);
+  --NumFixedArgsLeft;  // Start reading the first arg.
+  
+  while (Tok.getKind() == tok::comma) {
+    // ArgTokens - Build up a list of tokens that make up this argument.
+    std::vector<LexerToken> ArgTokens;
+    // C99 6.10.3p11: Keep track of the number of l_parens we have seen.
+    unsigned NumParens = 0;
+
+    while (1) {
+      LexUnexpandedToken(Tok);
+      
+      if (Tok.getKind() == tok::eof) {
+        Diag(MacroName, diag::err_unterm_macro_invoc);
+        // Do not lose the EOF.  Return it to the client.
+        MacroName = Tok;
+        return 0;
+      } else if (Tok.getKind() == tok::r_paren) {
+        // If we found the ) token, the macro arg list is done.
+        if (NumParens-- == 0)
+          break;
+      } else if (Tok.getKind() == tok::l_paren) {
+        ++NumParens;
+      } else if (Tok.getKind() == tok::comma && NumParens == 0) {
+        // Comma ends this argument if there are more fixed arguments expected.
+        if (NumFixedArgsLeft)
+          break;
+        
+        // If this is not a variadic macro, too many formals were specified.
+        if (!isVariadic) {
+          // Emit the diagnostic at the macro name in case there is a missing ).
+          // Emitting it at the , could be far away from the macro name.
+          Diag(MacroName, diag::err_too_many_formals_in_macro_invoc);
+          return 0;
+        }
+        // Otherwise, continue to add the tokens to this variable argument.
+      }
+  
+      ArgTokens.push_back(Tok);
+    }
+
+    // Remember the tokens that make up this argument.  This destroys ArgTokens.
+    Args->addArgument(ArgTokens);
+    --NumFixedArgsLeft;
+  };
+  
+  // Okay, we either found the r_paren.  Check to see if we parsed too few
+  // arguments.
+  unsigned NumFormals = Args->getNumArguments();
+  unsigned MinArgsExpected = MI->getNumArgs();
+  
+  // C99 expects us to pass at least one vararg arg (but as an extension, we
+  // don't require this).
+  if (MI->isC99Varargs())
+    ++MinArgsExpected;
+  
+  if (NumFormals < MinArgsExpected) {
+    // There are several cases where too few arguments is ok, handle them now.
+    if (NumFormals+1 == MinArgsExpected && MI->isVariadic()) {
+      // Varargs where the named vararg parameter is missing: ok as extension.
+      // #define A(x, ...)
+      // A("blah")
+      Diag(Tok, diag::ext_missing_varargs_arg);
+    } else if (MI->getNumArgs() == 1) {
+      // #define A(x)
+      //   A()
+      // is ok.  Add an empty argument.
+      std::vector<LexerToken> ArgTokens;
+      Args->addArgument(ArgTokens);
+    } else {
+      // Otherwise, emit the error.
+      Diag(Tok, diag::err_too_few_formals_in_macro_invoc);
+      return 0;
+    }
+  }
+  
+  return Args.release();
 }
 
 /// ComputeDATE_TIME - Compute the current time, enter it into the specified
@@ -599,6 +735,8 @@ void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok) {
   if (II == Ident_Pragma)
     return Handle_Pragma(Tok);
   
+  ++NumBuiltinMacroExpanded;
+
   char TmpBuffer[100];
 
   // Set up the return result.
@@ -750,9 +888,11 @@ void Preprocessor::HandleIdentifier(LexerToken &Identifier) {
       Diag(Identifier, diag::ext_pp_bad_vaargs_use);
   }
   
+  // If this is a macro to be expanded, do it.
   if (MacroInfo *MI = II.getMacroInfo())
     if (MI->isEnabled() && !DisableMacroExpansion)
-      return HandleMacroExpandedIdentifier(Identifier, MI);
+      if (!HandleMacroExpandedIdentifier(Identifier, MI))
+        return;
 
   // Change the kind of this identifier to the appropriate token kind, e.g.
   // turning "for" into a keyword.
@@ -1101,7 +1241,7 @@ void Preprocessor::HandleDirective(LexerToken &Result) {
   
   // We just parsed a # character at the start of a line, so we're in directive
   // mode.  Tell the lexer this so any newlines we see will be converted into an
-  // EOM token (this terminates the macro).
+  // EOM token (which terminates the directive).
   CurLexer->ParsingPreprocessorDirective = true;
   
   ++NumDirectives;
@@ -1111,8 +1251,18 @@ void Preprocessor::HandleDirective(LexerToken &Result) {
   // pp-directive.
   bool ReadAnyTokensBeforeDirective = CurLexer->MIOpt.getHasReadAnyTokensVal();
   
-  // Read the next token, the directive flavor.
+  // Read the next token, the directive flavor.  This isn't expanded due to
+  // C99 6.10.3p8.
   LexUnexpandedToken(Result);
+  
+  // C99 6.10.3p11: Is this preprocessor directive in macro invocation?  e.g.:
+  //   #define A(x) #x
+  //   A(abc
+  //     #warning blah
+  //   def)
+  // If so, the user is relying on non-portable behavior, emit a diagnostic.
+  if (InMacroFormalArgs)
+    Diag(Result, diag::ext_embedded_directive);
   
   switch (Result.getKind()) {
   default: break;
@@ -1436,6 +1586,8 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
   LexerToken Tok;
   LexUnexpandedToken(Tok);
   
+  // FIXME: Enable __VA_ARGS__.
+
   // If this is a function-like macro definition, parse the argument list,
   // marking each of the identifiers as being used as macro arguments.  Also,
   // check other constraints on the first token of the macro body.
@@ -1503,22 +1655,20 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
     LexUnexpandedToken(Tok);
   }
 
-  unsigned NumTokens = MI->getNumTokens();
-
+  // Clear the "isMacroArg" flags from all the macro arguments.
+  MI->SetIdentifierIsMacroArgFlags(false);
+  
   // Check that there is no paste (##) operator at the begining or end of the
   // replacement list.
+  unsigned NumTokens = MI->getNumTokens();
   if (NumTokens != 0) {
     if (MI->getReplacementToken(0).getKind() == tok::hashhash) {
       Diag(MI->getReplacementToken(0), diag::err_paste_at_start);
-      // Clear the "isMacroArg" flags from all the macro arguments.
-      MI->SetIdentifierIsMacroArgFlags(false);
       delete MI;
       return;
     }
     if (MI->getReplacementToken(NumTokens-1).getKind() == tok::hashhash) {
       Diag(MI->getReplacementToken(NumTokens-1), diag::err_paste_at_end);
-      // Clear the "isMacroArg" flags from all the macro arguments.
-      MI->SetIdentifierIsMacroArgFlags(false);
       delete MI;
       return;
     }
@@ -1546,9 +1696,6 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
   }
   
   MacroNameTok.getIdentifierInfo()->setMacroInfo(MI);
-  
-  // Clear the "isMacroArg" flags from all the macro arguments.
-  MI->SetIdentifierIsMacroArgFlags(false);
 }
 
 

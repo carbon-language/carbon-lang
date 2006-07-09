@@ -18,8 +18,29 @@
 using namespace llvm;
 using namespace clang;
 
-MacroExpander::MacroExpander(LexerToken &Tok, Preprocessor &pp)
-  : Macro(*Tok.getIdentifierInfo()->getMacroInfo()), PP(pp), CurToken(0),
+//===----------------------------------------------------------------------===//
+// MacroFormalArgs Implementation
+//===----------------------------------------------------------------------===//
+
+MacroFormalArgs::MacroFormalArgs(const MacroInfo *MI) {
+  assert(MI->isFunctionLike() &&
+         "Can't have formal args for an object-like macro!");
+  // Reserve space for arguments to avoid reallocation.
+  unsigned NumArgs = MI->getNumArgs();
+  if (MI->isC99Varargs() || MI->isGNUVarargs())
+    NumArgs += 3;    // Varargs can have more than this, just some guess.
+  
+  ArgTokens.reserve(NumArgs);
+}
+
+//===----------------------------------------------------------------------===//
+// MacroExpander Implementation
+//===----------------------------------------------------------------------===//
+
+MacroExpander::MacroExpander(LexerToken &Tok, MacroFormalArgs *Formals,
+                             Preprocessor &pp)
+  : Macro(*Tok.getIdentifierInfo()->getMacroInfo()), FormalArgs(Formals),
+    PP(pp), CurToken(0),
     InstantiateLoc(Tok.getLocation()),
     AtStartOfLine(Tok.isAtStartOfLine()),
     HasLeadingSpace(Tok.hasLeadingSpace()) {
