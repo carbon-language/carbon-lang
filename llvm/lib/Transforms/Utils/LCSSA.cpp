@@ -28,6 +28,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Constants.h"
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
@@ -73,12 +74,12 @@ namespace {
     }
   private:
     SetVector<Instruction*> getLoopValuesUsedOutsideLoop(Loop *L);
-    Instruction *getValueDominatingBlock(BasicBlock *BB,
-                                 std::map<BasicBlock*, Instruction*>& PotDoms) {
+    Value *getValueDominatingBlock(BasicBlock *BB,
+                                 std::map<BasicBlock*, Value*>& PotDoms) {
       return getValueDominatingDTNode(DT->getNode(BB), PotDoms);
     }
-    Instruction *getValueDominatingDTNode(DominatorTree::Node *Node,
-                                  std::map<BasicBlock*, Instruction*>& PotDoms);
+    Value *getValueDominatingDTNode(DominatorTree::Node *Node,
+                                  std::map<BasicBlock*, Value*>& PotDoms);
                                       
     /// inLoop - returns true if the given block is within the current loop
     const bool inLoop(BasicBlock* B) {
@@ -149,7 +150,7 @@ void LCSSA::processInstruction(Instruction* Instr,
 {
   ++NumLCSSA; // We are applying the transformation
   
-  std::map<BasicBlock*, Instruction*> Phis;
+  std::map<BasicBlock*, Value*> Phis;
   
   // Add the base instruction to the Phis list.  This makes tracking down
   // the dominating values easier when we're filling in Phi nodes.  This will
@@ -161,7 +162,7 @@ void LCSSA::processInstruction(Instruction* Instr,
   
   for (std::vector<BasicBlock*>::const_iterator BBI = exitBlocks.begin(),
       BBE = exitBlocks.end(); BBI != BBE; ++BBI) {
-    Instruction*& phi = Phis[*BBI];
+    Value*& phi = Phis[*BBI];
     if (phi == 0 &&
         DT->getNode(Instr->getParent())->dominates(DT->getNode(*BBI))) {
       phi = new PHINode(Instr->getType(), Instr->getName()+".lcssa",
@@ -191,7 +192,7 @@ void LCSSA::processInstruction(Instruction* Instr,
       for (DominanceFrontier::DomSetType::const_iterator P = S.begin(),
            PE = S.end(); P != PE; ++P) {
         if (DT->getNode(Instr->getParent())->dominates(DT->getNode(*P))) {
-          Instruction *&Phi = Phis[*P];
+          Value *&Phi = Phis[*P];
           if (Phi == 0) {
             // Still doesn't have operands...
             Phi = new PHINode(Instr->getType(), Instr->getName()+".lcssa",
@@ -206,12 +207,11 @@ void LCSSA::processInstruction(Instruction* Instr,
   
   // Fill in all Phis we've inserted that need their incoming values filled in.
   for (std::vector<PHINode*>::iterator IVI = needIncomingValues.begin(),
-       IVE = needIncomingValues.end(); IVI != IVE; ++IVI) {
+       IVE = needIncomingValues.end(); IVI != IVE; ++IVI)
     for (pred_iterator PI = pred_begin((*IVI)->getParent()),
          E = pred_end((*IVI)->getParent()); PI != E; ++PI)
       (*IVI)->addIncoming(getValueDominatingBlock(*PI, Phis),
                           *PI);
-  }
   
   // Find all uses of the affected value, and replace them with the
   // appropriate Phi.
@@ -235,7 +235,7 @@ void LCSSA::processInstruction(Instruction* Instr,
     if (PHINode* phi = dyn_cast<PHINode>(*II)) {
       for (unsigned int i = 0; i < phi->getNumIncomingValues(); ++i) {
         if (phi->getIncomingValue(i) == Instr) {
-          Instruction* dominator = 
+          Value* dominator = 
                         getValueDominatingBlock(phi->getIncomingBlock(i), Phis);
           phi->setIncomingValue(i, dominator);
         }
@@ -279,10 +279,17 @@ SetVector<Instruction*> LCSSA::getLoopValuesUsedOutsideLoop(Loop *L) {
 
 /// getValueDominatingBlock - Return the value within the potential dominators
 /// map that dominates the given block.
-Instruction *LCSSA::getValueDominatingDTNode(DominatorTree::Node *Node,
-                              std::map<BasicBlock*, Instruction*>& PotDoms) {
-  assert(Node != 0 && "Didn't find dom value?");
-  Instruction *&CacheSlot = PotDoms[Node->getBlock()];
+Value *LCSSA::getValueDominatingDTNode(DominatorTree::Node *Node,
+                              std::map<BasicBlock*, Value*>& PotDoms) {
+  // FIXME: The following insertion should be in place rather than the if
+  // statement.  Currently, this is due to the fact that LCSSA isn't smart 
+  // enough to avoid inserting IDF Phis that don't dominate any uses.  In some 
+  // of those cases, it could ask us to provide a dominating value for a block
+  // that has none, so we need to return undef.
+  //assert(Node != 0 && "Didn't find dom value?");
+  if (Node == 0) return UndefValue::get(PotDoms.begin()->second->getType());
+  
+  Value *&CacheSlot = PotDoms[Node->getBlock()];
   if (CacheSlot) return CacheSlot;
   
   // Otherwise, return the value of the idom and remember this for next time.
