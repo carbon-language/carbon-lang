@@ -2,4 +2,11 @@
 
 To time GCC preprocessing speed without output, use:
    "time gcc -MM file"
+
+Interesting fact:
+  clang -Eonly INPUTS/carbon-header-C-E.c
+
+is faster than:
+  wc -w INPUTS/carbon-header-C-E.c
+!!
    
