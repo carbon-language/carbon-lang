@@ -178,6 +178,7 @@ getHazardType(SDNode *Node) {
     case PPC::LHZ:
     case PPC::LHZX:
     case PPC::LVEHX:
+    case PPC::LHBRX:
       LoadSize = 2;
       break;
     case PPC::LFS:
@@ -188,6 +189,7 @@ getHazardType(SDNode *Node) {
     case PPC::LWA:
     case PPC::LWAX:
     case PPC::LVEWX:
+    case PPC::LWBRX:
       LoadSize = 4;
       break;
     case PPC::LFD:
@@ -233,6 +235,7 @@ void PPCHazardRecognizer970::EmitInstruction(SDNode *Node) {
     case PPC::STHX:
     case PPC::STH:
     case PPC::STVEHX:
+    case PPC::STHBRX:
       ThisStoreSize = 2;
       break;
     case PPC::STFS:
@@ -243,6 +246,7 @@ void PPCHazardRecognizer970::EmitInstruction(SDNode *Node) {
     case PPC::STW:
     case PPC::STVEWX:
     case PPC::STFIWX:
+    case PPC::STWBRX:
       ThisStoreSize = 4;
       break;
     case PPC::STD_32:

@@ -37,6 +37,13 @@ def SDT_PPCcondbr : SDTypeProfile<0, 3, [
   SDTCisVT<1, i32>, SDTCisVT<2, OtherVT>
 ]>;
 
+def SDT_PPClbrx : SDTypeProfile<1, 3, [
+  SDTCisVT<0, i32>, SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>, SDTCisVT<3, OtherVT>
+]>;
+def SDT_PPCstbrx : SDTypeProfile<0, 4, [
+  SDTCisVT<0, i32>, SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>, SDTCisVT<3, OtherVT>
+]>;
+
 //===----------------------------------------------------------------------===//
 // PowerPC specific DAG Nodes.
 //
@@ -87,6 +94,9 @@ def PPCvcmp_o     : SDNode<"PPCISD::VCMPo", SDT_PPCvcmp, [SDNPOutFlag]>;
 
 def PPCcondbranch : SDNode<"PPCISD::COND_BRANCH", SDT_PPCcondbr,
                            [SDNPHasChain, SDNPOptInFlag]>;
+
+def PPClbrx       : SDNode<"PPCISD::LBRX", SDT_PPClbrx, [SDNPHasChain]>;
+def PPCstbrx      : SDNode<"PPCISD::STBRX", SDT_PPCstbrx, [SDNPHasChain]>;
 
 //===----------------------------------------------------------------------===//
 // PowerPC specific transformation functions and pattern fragments.
@@ -464,6 +474,15 @@ def LHZX : XForm_1<31, 279, (ops GPRC:$rD, memrr:$src),
 def LWZX : XForm_1<31,  23, (ops GPRC:$rD, memrr:$src),
                    "lwzx $rD, $src", LdStGeneral,
                    [(set GPRC:$rD, (load xaddr:$src))]>;
+                   
+                   
+def LHBRX : XForm_1<31, 790, (ops GPRC:$rD, memrr:$src),
+                   "lhbrx $rD, $src", LdStGeneral,
+                   [(set GPRC:$rD, (PPClbrx xaddr:$src,srcvalue:$dummy, i16))]>;
+def LWBRX : XForm_1<31,  534, (ops GPRC:$rD, memrr:$src),
+                   "lwbrx $rD, $src", LdStGeneral,
+                   [(set GPRC:$rD, (PPClbrx xaddr:$src,srcvalue:$dummy, i32))]>;
+
 }
 
 let PPC970_Unit = 1 in {  // FXU Operations.
@@ -517,6 +536,14 @@ def STWX  : XForm_8<31, 151, (ops GPRC:$rS, memrr:$dst),
 def STWUX : XForm_8<31, 183, (ops GPRC:$rS, GPRC:$rA, GPRC:$rB),
                    "stwux $rS, $rA, $rB", LdStGeneral,
                    []>;
+def STHBRX: XForm_8<31, 918, (ops GPRC:$rS, memrr:$dst),
+                   "sthbrx $rS, $dst", LdStGeneral,
+                   [(PPCstbrx GPRC:$rS, xaddr:$dst, srcvalue:$dummy, i16)]>, 
+                   PPC970_DGroup_Cracked;
+def STWBRX: XForm_8<31, 662, (ops GPRC:$rS, memrr:$dst),
+                   "stwbrx $rS, $dst", LdStGeneral,
+                   [(PPCstbrx GPRC:$rS, xaddr:$dst, srcvalue:$dummy, i32)]>,
+                   PPC970_DGroup_Cracked;
 }
 let PPC970_Unit = 1 in {  // FXU Operations.
 def SRAWI : XForm_10<31, 824, (ops GPRC:$rA, GPRC:$rS, u5imm:$SH), 

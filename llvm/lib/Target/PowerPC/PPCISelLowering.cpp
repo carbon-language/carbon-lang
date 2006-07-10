@@ -266,6 +266,7 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   setTargetDAGCombine(ISD::SINT_TO_FP);
   setTargetDAGCombine(ISD::STORE);
   setTargetDAGCombine(ISD::BR_CC);
+  setTargetDAGCombine(ISD::BSWAP);
   
   computeRegisterProperties();
 }
@@ -296,6 +297,8 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::MFCR:          return "PPCISD::MFCR";
   case PPCISD::VCMP:          return "PPCISD::VCMP";
   case PPCISD::VCMPo:         return "PPCISD::VCMPo";
+  case PPCISD::LBRX:          return "PPCISD::LBRX";
+  case PPCISD::STBRX:         return "PPCISD::STBRX";
   case PPCISD::COND_BRANCH:   return "PPCISD::COND_BRANCH";
   }
 }
@@ -2344,6 +2347,56 @@ SDOperand PPCTargetLowering::PerformDAGCombine(SDNode *N,
       DCI.AddToWorklist(Val.Val);
       return Val;
     }
+    
+    // Turn STORE (BSWAP) -> sthbrx/stwbrx.
+    if (N->getOperand(1).getOpcode() == ISD::BSWAP &&
+        N->getOperand(1).Val->hasOneUse() &&
+        (N->getOperand(1).getValueType() == MVT::i32 ||
+         N->getOperand(1).getValueType() == MVT::i16)) {
+      SDOperand BSwapOp = N->getOperand(1).getOperand(0);
+      // Do an any-extend to 32-bits if this is a half-word input.
+      if (BSwapOp.getValueType() == MVT::i16)
+        BSwapOp = DAG.getNode(ISD::ANY_EXTEND, MVT::i32, BSwapOp);
+
+      return DAG.getNode(PPCISD::STBRX, MVT::Other, N->getOperand(0), BSwapOp,
+                         N->getOperand(2), N->getOperand(3),
+                         DAG.getValueType(N->getOperand(1).getValueType()));
+    }
+    break;
+  case ISD::BSWAP:
+    // Turn BSWAP (LOAD) -> lhbrx/lwbrx.
+    if (N->getOperand(0).getOpcode() == ISD::LOAD &&
+        N->getOperand(0).hasOneUse() &&
+        (N->getValueType(0) == MVT::i32 || N->getValueType(0) == MVT::i16)) {
+      SDOperand Load = N->getOperand(0);
+      // Create the byte-swapping load.
+      std::vector<MVT::ValueType> VTs;
+      VTs.push_back(MVT::i32);
+      VTs.push_back(MVT::Other);
+      std::vector<SDOperand> Ops;
+      Ops.push_back(Load.getOperand(0));   // Chain
+      Ops.push_back(Load.getOperand(1));   // Ptr
+      Ops.push_back(Load.getOperand(2));   // SrcValue
+      Ops.push_back(DAG.getValueType(N->getValueType(0))); // VT
+      SDOperand BSLoad = DAG.getNode(PPCISD::LBRX, VTs, Ops);
+
+      // If this is an i16 load, insert the truncate.  
+      SDOperand ResVal = BSLoad;
+      if (N->getValueType(0) == MVT::i16)
+        ResVal = DAG.getNode(ISD::TRUNCATE, MVT::i16, BSLoad);
+      
+      // First, combine the bswap away.  This makes the value produced by the
+      // load dead.
+      DCI.CombineTo(N, ResVal);
+
+      // Next, combine the load away, we give it a bogus result value but a real
+      // chain result.  The result value is dead because the bswap is dead.
+      DCI.CombineTo(Load.Val, ResVal, BSLoad.getValue(1));
+      
+      // Return N so it doesn't get rechecked!
+      return SDOperand(N, 0);
+    }
+    
     break;
   case PPCISD::VCMP: {
     // If a VCMPo node already exists with exactly the same operands as this
@@ -2477,6 +2530,12 @@ void PPCTargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
   KnownOne = 0;
   switch (Op.getOpcode()) {
   default: break;
+  case PPCISD::LBRX: {
+    // lhbrx is known to have the top bits cleared out.
+    if (cast<VTSDNode>(Op.getOperand(3))->getVT() == MVT::i16)
+      KnownZero = 0xFFFF0000;
+    break;
+  }
   case ISD::INTRINSIC_WO_CHAIN: {
     switch (cast<ConstantSDNode>(Op.getOperand(0))->getValue()) {
     default: break;

@@ -3,7 +3,6 @@
 TODO:
 * gpr0 allocation
 * implement do-loop -> bdnz transform
-* implement powerpc-64 for darwin
 
 ===-------------------------------------------------------------------------===
 
@@ -235,10 +234,6 @@ http://gcc.gnu.org/ml/gcc/2005-10/msg01036.html
 
 This is an extension of "interprocedural CC unmunging" that can't be done with
 just fastcc.
-
-===-------------------------------------------------------------------------===
-
-Generate lwbrx and other byteswapping load/store instructions when reasonable.
 
 ===-------------------------------------------------------------------------===
 

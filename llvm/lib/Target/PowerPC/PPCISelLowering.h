@@ -111,7 +111,19 @@ namespace llvm {
       /// condition register to branch on, OPC is the branch opcode to use (e.g.
       /// PPC::BLE), DESTBB is the destination block to branch to, and INFLAG is
       /// an optional input flag argument.
-      COND_BRANCH
+      COND_BRANCH,
+      
+      /// CHAIN = STBRX CHAIN, GPRC, Ptr, SRCVALUE, Type - This is a 
+      /// byte-swapping store instruction.  It byte-swaps the low "Type" bits of
+      /// the GPRC input, then stores it through Ptr.  Type can be either i16 or
+      /// i32.
+      STBRX, 
+      
+      /// GPRC, CHAIN = LBRX CHAIN, Ptr, SRCVALUE, Type - This is a 
+      /// byte-swapping load instruction.  It loads "Type" bits, byte swaps it,
+      /// then puts it in the bottom bits of the GPRC.  TYPE can be either i16
+      /// or i32.
+      LBRX
     };
   }
 
