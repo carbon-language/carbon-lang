@@ -991,8 +991,11 @@ void Preprocessor::HandleEndOfFile(LexerToken &Result, bool isEndOfMacro) {
   delete CurLexer;
   CurLexer = 0;
 
-  // This is the end of the top-level file.
-  Identifiers.VisitIdentifiers(UnusedIdentifierReporter(*this));
+  // This is the end of the top-level file.  If the diag::pp_macro_not_used
+  // diagnostic is enabled, walk all of the identifiers, looking for macros that
+  // have not been used.
+  if (Diags.getDiagnosticLevel(diag::pp_macro_not_used) != Diagnostic::Ignored)
+    Identifiers.VisitIdentifiers(UnusedIdentifierReporter(*this));
 }
 
 /// HandleEndOfMacro - This callback is invoked when the lexer hits the end of
