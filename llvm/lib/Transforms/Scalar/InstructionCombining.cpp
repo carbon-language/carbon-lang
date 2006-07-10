@@ -6255,59 +6255,58 @@ static bool DeadPHICycle(PHINode *PN, std::set<PHINode*> &PotentiallyDeadPHIs) {
 // PHINode simplification
 //
 Instruction *InstCombiner::visitPHINode(PHINode &PN) {
-  // If LCSSA is around, don't nuke PHIs.
-  if (!mustPreserveAnalysisID(LCSSAID)) {
-    if (Value *V = PN.hasConstantValue())
-      return ReplaceInstUsesWith(PN, V);
-
-    // If the only user of this instruction is a cast instruction, and all of
-    //the incoming values are constants, change this PHI to merge together the 
-    // casted constants.
-    if (PN.hasOneUse())
-      if (CastInst *CI = dyn_cast<CastInst>(PN.use_back()))
-        if (CI->getType() != PN.getType()) {  // noop casts will be folded
-          bool AllConstant = true;
-          for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
-            if (!isa<Constant>(PN.getIncomingValue(i))) {
-              AllConstant = false;
-              break;
-            }
-          if (AllConstant) {
-            // Make a new PHI with all casted values.
-            PHINode *New = new PHINode(CI->getType(), PN.getName(), &PN);
-            for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i) {
-              Constant *OldArg = cast<Constant>(PN.getIncomingValue(i));
-              New->addIncoming(ConstantExpr::getCast(OldArg, New->getType()),
-                               PN.getIncomingBlock(i));
-            }
-
-            // Update the cast instruction.
-            CI->setOperand(0, New);
-            WorkList.push_back(CI);    // revisit the cast instruction to fold.
-            WorkList.push_back(New);   // Make sure to revisit the new Phi
-            return &PN;                // PN is now dead!
-          }
-        }
-
-    // If all PHI operands are the same operation, pull them through the PHI,
-    // reducing code size.
-    if (isa<Instruction>(PN.getIncomingValue(0)) &&
-        PN.getIncomingValue(0)->hasOneUse())
-      if (Instruction *Result = FoldPHIArgOpIntoPHI(PN))
-        return Result;
-
-    // If this is a trivial cycle in the PHI node graph, remove it.  Basically,
-    // if this PHI only has a single use (a PHI), and if that PHI only has one 
-    // use (a PHI)... break the cycle.
-    if (PN.hasOneUse())
-      if (PHINode *PU = dyn_cast<PHINode>(PN.use_back())) {
-        std::set<PHINode*> PotentiallyDeadPHIs;
-        PotentiallyDeadPHIs.insert(&PN);
-        if (DeadPHICycle(PU, PotentiallyDeadPHIs))
-          return ReplaceInstUsesWith(PN, UndefValue::get(PN.getType()));
-      }
-  }
+  if (mustPreservePassID(LCSSAID)) return 0;
   
+  if (Value *V = PN.hasConstantValue())
+    return ReplaceInstUsesWith(PN, V);
+
+  // If the only user of this instruction is a cast instruction, and all of the
+  // incoming values are constants, change this PHI to merge together the casted
+  // constants.
+  if (PN.hasOneUse())
+    if (CastInst *CI = dyn_cast<CastInst>(PN.use_back()))
+      if (CI->getType() != PN.getType()) {  // noop casts will be folded
+        bool AllConstant = true;
+        for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
+          if (!isa<Constant>(PN.getIncomingValue(i))) {
+            AllConstant = false;
+            break;
+          }
+        if (AllConstant) {
+          // Make a new PHI with all casted values.
+          PHINode *New = new PHINode(CI->getType(), PN.getName(), &PN);
+          for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i) {
+            Constant *OldArg = cast<Constant>(PN.getIncomingValue(i));
+            New->addIncoming(ConstantExpr::getCast(OldArg, New->getType()),
+                             PN.getIncomingBlock(i));
+          }
+
+          // Update the cast instruction.
+          CI->setOperand(0, New);
+          WorkList.push_back(CI);    // revisit the cast instruction to fold.
+          WorkList.push_back(New);   // Make sure to revisit the new Phi
+          return &PN;                // PN is now dead!
+        }
+      }
+
+  // If all PHI operands are the same operation, pull them through the PHI,
+  // reducing code size.
+  if (isa<Instruction>(PN.getIncomingValue(0)) &&
+      PN.getIncomingValue(0)->hasOneUse())
+    if (Instruction *Result = FoldPHIArgOpIntoPHI(PN))
+      return Result;
+
+  // If this is a trivial cycle in the PHI node graph, remove it.  Basically, if
+  // this PHI only has a single use (a PHI), and if that PHI only has one use (a
+  // PHI)... break the cycle.
+  if (PN.hasOneUse())
+    if (PHINode *PU = dyn_cast<PHINode>(PN.use_back())) {
+      std::set<PHINode*> PotentiallyDeadPHIs;
+      PotentiallyDeadPHIs.insert(&PN);
+      if (DeadPHICycle(PU, PotentiallyDeadPHIs))
+        return ReplaceInstUsesWith(PN, UndefValue::get(PN.getType()));
+    }
+
   return 0;
 }
 
