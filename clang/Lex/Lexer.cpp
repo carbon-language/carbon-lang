@@ -928,6 +928,15 @@ LexNextToken:
   // CurPtr - Cache BufferPtr in an automatic variable.
   const char *CurPtr = BufferPtr;
 
+  // Small amounts of horizontal whitespace is very common between tokens.
+  if ((*CurPtr == ' ') || (*CurPtr == '\t')) {
+    ++CurPtr;
+    while ((*CurPtr == ' ') || (*CurPtr == '\t'))
+      ++CurPtr;
+    BufferPtr = CurPtr;
+    Result.SetFlag(LexerToken::LeadingSpace);
+  }
+  
   unsigned SizeTmp, SizeTmp2;   // Temporaries for use in cases below.
   
   // Read a character, advancing over it.
