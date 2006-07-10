@@ -6255,7 +6255,8 @@ static bool DeadPHICycle(PHINode *PN, std::set<PHINode*> &PotentiallyDeadPHIs) {
 // PHINode simplification
 //
 Instruction *InstCombiner::visitPHINode(PHINode &PN) {
-  if (mustPreservePassID(LCSSAID)) return 0;
+  // If LCSSA is around, don't mess with Phi nodes
+  if (mustPreserveAnalysisID(LCSSAID)) return 0;
   
   if (Value *V = PN.hasConstantValue())
     return ReplaceInstUsesWith(PN, V);
