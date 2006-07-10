@@ -2976,9 +2976,12 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     if (A == Op0 || B == Op0)    // A | (A & ?)  --> A
       return ReplaceInstUsesWith(I, Op0);
 
-  // (A | B) | C  and  A | (B | C)  -> bswap if possible.
+  // (A | B) | C  and  A | (B | C)                  -> bswap if possible.
+  // (A >> B) | (C << D)  and  (A << B) | (B >> C)  -> bswap if possible.
   if (match(Op0, m_Or(m_Value(), m_Value())) ||
-      match(Op1, m_Or(m_Value(), m_Value()))) {
+      match(Op1, m_Or(m_Value(), m_Value())) ||
+      (match(Op0, m_Shift(m_Value(), m_Value())) &&
+       match(Op1, m_Shift(m_Value(), m_Value())))) {
     if (Instruction *BSwap = MatchBSwap(I))
       return BSwap;
   }
