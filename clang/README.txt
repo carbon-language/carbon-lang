@@ -34,7 +34,7 @@ Future Features:
  * Fast #import!!
 
 
-III. Critical Missing Functionality
+III. Missing Functionality
 
 Lexer:
  * Source character mapping.  GCC supports ASCII and UTF-8.
@@ -47,6 +47,9 @@ Preprocessor:
  * Function-style #define & macro expansion
  * #line / #file directives
  * -C output mode in -E mode.
+ * MSExtension: #@param 'stringizes' into a character (charize?):
+    #define A(x) #@x   / A(z) -> 'z'
+ * MSExtension: "L#param" stringizes to a wide string literal.
 
 Traditional Preprocessor:
  * All.
