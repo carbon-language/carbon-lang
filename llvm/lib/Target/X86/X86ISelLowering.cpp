@@ -4056,7 +4056,7 @@ static bool isConsecutiveLoad(SDNode *N, SDNode *Base, int Dist, int Size,
   return false;
 }
 
-bool isBaseAlignment16(SDNode *Base, MachineFrameInfo *MFI) {
+static bool isBaseAlignment16(SDNode *Base, MachineFrameInfo *MFI) {
   GlobalValue *GV;
   int64_t Offset;
   if (isGAPlusOffset(Base, GV, Offset))
