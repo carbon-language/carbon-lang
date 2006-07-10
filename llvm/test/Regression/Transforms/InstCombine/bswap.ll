@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep 'call.*llvm.bswap' | wc -l | grep 2
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep 'call.*llvm.bswap' | wc -l | grep 4
 
 uint %test1(uint %i) {
         %tmp1 = shr uint %i, ubyte 24           ; <uint> [#uses=1]
@@ -24,5 +24,19 @@ uint %test2(uint %arg) {
         %tmp12 = shr uint %arg, ubyte 24                ; <uint> [#uses=1]
         %tmp14 = or uint %tmp10, %tmp12         ; <uint> [#uses=1]
         ret uint %tmp14
+}
+
+ushort %test3(ushort %s) {
+        %tmp2 = shr ushort %s, ubyte 8
+        %tmp4 = shl ushort %s, ubyte 8
+        %tmp5 = or ushort %tmp2, %tmp4
+	ret ushort %tmp5
+}
+
+ushort %test4(ushort %s) {
+        %tmp2 = shr ushort %s, ubyte 8
+        %tmp4 = shl ushort %s, ubyte 8
+        %tmp5 = or ushort %tmp4, %tmp2
+	ret ushort %tmp5
 }
 
