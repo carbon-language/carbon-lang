@@ -1,4 +1,6 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movups | wc -l | grep 3
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movapd | wc -l | grep 1
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movaps | wc -l | grep 1
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movups | wc -l | grep 2
 
 %x = global [4 x int] [ int 1, int 2, int 3, int 4 ]
 
@@ -15,7 +17,7 @@
 	ret <2 x long> %tmp16
 }
 
-<4 x float> %test2(float %a, float %b, float %c, float %d) {
+<4 x float> %test2(int %dummy, float %a, float %b, float %c, float %d) {
 	%tmp = insertelement <4 x float> undef, float %a, uint 0
 	%tmp11 = insertelement <4 x float> %tmp, float %b, uint 1
 	%tmp12 = insertelement <4 x float> %tmp11, float %c, uint 2
@@ -23,7 +25,15 @@
 	ret <4 x float> %tmp13
 }
 
-<2 x double> %test3(double %a, double %b) {
+<4 x float> %test3(float %a, float %b, float %c, float %d) {
+	%tmp = insertelement <4 x float> undef, float %a, uint 0
+	%tmp11 = insertelement <4 x float> %tmp, float %b, uint 1
+	%tmp12 = insertelement <4 x float> %tmp11, float %c, uint 2
+	%tmp13 = insertelement <4 x float> %tmp12, float %d, uint 3
+	ret <4 x float> %tmp13
+}
+
+<2 x double> %test4(double %a, double %b) {
 	%tmp = insertelement <2 x double> undef, double %a, uint 0
 	%tmp7 = insertelement <2 x double> %tmp, double %b, uint 1
 	ret <2 x double> %tmp7
