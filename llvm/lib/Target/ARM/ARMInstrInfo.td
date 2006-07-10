@@ -12,7 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-
+// Define ARM specific addressing mode.
+ //register or frame index
+def raddr  : ComplexPattern<iPTR, 1, "SelectAddrReg", []>;
 
 //===----------------------------------------------------------------------===//
 // Instructions
@@ -42,7 +44,7 @@ def bxr: InstARM<(ops IntRegs:$dst), "bx $dst", [(brind IntRegs:$dst)]>;
 
 def ldr   : InstARM<(ops IntRegs:$dst, IntRegs:$addr),
                      "ldr $dst, [$addr]",
-                     [(set IntRegs:$dst, (load IntRegs:$addr))]>;
+                     [(set IntRegs:$dst, (load raddr:$addr))]>;
 
 def str  : InstARM<(ops IntRegs:$src, IntRegs:$addr),
                     "str $src, [$addr]",
