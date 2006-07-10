@@ -281,7 +281,7 @@ sub ReadFile {
 	$/ = '\n';
 	return $Ret;
     } else {
-	print "Could not open file '$_[0]' for reading!";
+	print "Could not open file '$_[0]' for reading!\n";
 	return "";
     }
 }
@@ -289,7 +289,7 @@ sub ReadFile {
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 sub WriteFile {  # (filename, contents)
-    open (FILE, ">$_[0]") or die "Could not open file '$_[0]' for writing!";
+    open (FILE, ">$_[0]") or die "Could not open file '$_[0]' for writing!\n";
     print FILE $_[1];
     close FILE;
 }
@@ -429,7 +429,8 @@ sub SendData{
 
     my $sentdata="";
     foreach $x (keys (%$variables)){
-        $sentdata.= "$x  => $hash_of_data{$x}\n";
+        $value = $variables->{$x};
+        $sentdata.= "$x  => $value\n";
     }
     WriteFile "$Prefix-sentdata.txt", $sentdata;
     
