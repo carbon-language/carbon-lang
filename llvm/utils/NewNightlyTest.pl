@@ -777,6 +777,7 @@ if (!$BuildError && $patrickjenkins) {
 	    print "External TEST STAGE\n";
 	}
 	($ExternalProgramsTable, $externalsource_llcbeta_options) = TestDirectory("External");
+	WriteFile "$Prefix-externalprogramstable.txt", $ExternalProgramsTable;
 	system "cat $Prefix-singlesourceprogramstable.txt $Prefix-multisourceprogramstable.txt ".
 	    " $Prefix-externalprogramstable.txt | sort > $Prefix-Tests.txt";
     } else {
