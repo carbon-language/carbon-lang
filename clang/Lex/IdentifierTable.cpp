@@ -178,11 +178,21 @@ IdentifierInfo &IdentifierTable::get(const char *NameStart,
   unsigned Length = NameEnd-NameStart;
   
   IdentifierBucket *IdentHead = TableArray[Hash];
-  for (IdentifierBucket *Identifier = IdentHead; Identifier; 
-       Identifier = Identifier->Next) {
+  for (IdentifierBucket *Identifier = IdentHead, *LastID = 0; Identifier; 
+       LastID = Identifier, Identifier = Identifier->Next) {
     if (Identifier->TokInfo.getNameLength() == Length &&
-        memcmp(Identifier->TokInfo.getName(), NameStart, Length) == 0)
+        memcmp(Identifier->TokInfo.getName(), NameStart, Length) == 0) {
+      // If found identifier wasn't at start of bucket, move it there so
+      // that frequently searched for identifiers are found earlier, even if
+      // they first occur late in the source file.
+      if (LastID) {
+        LastID->Next = Identifier->Next;
+        Identifier->Next = IdentHead;
+        TableArray[Hash] = Identifier;
+      }
+      
       return Identifier->TokInfo;
+    }
   }
 
   // Allocate a new identifier, with space for the null-terminated string at the
@@ -207,7 +217,9 @@ IdentifierInfo &IdentifierTable::get(const char *NameStart,
   memcpy(StrBuffer, NameStart, Length);
   StrBuffer[Length] = 0;  // Null terminate string.
   
-  // Link it into the hash table.
+  // Link it into the hash table.  Adding it to the start of the hash table is
+  // useful for buckets with lots of entries.  This means that more recently
+  // referenced identifiers will be near the head of the bucket.
   Identifier->Next = IdentHead;
   TableArray[Hash] = Identifier;
   return Identifier->TokInfo;
