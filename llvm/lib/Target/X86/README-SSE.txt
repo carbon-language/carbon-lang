@@ -693,3 +693,6 @@ void test4(vectorfloat *F, float *f) {
 }
 
 //===---------------------------------------------------------------------===//
+
+Apply the same transformation that merged four float into a single 128-bit load
+to loads from constant pool.
