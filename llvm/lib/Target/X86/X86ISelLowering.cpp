@@ -4056,7 +4056,8 @@ static bool isConsecutiveLoad(SDNode *N, SDNode *Base, int Dist, int Size,
   return false;
 }
 
-static bool isBaseAlignment16(SDNode *Base, MachineFrameInfo *MFI) {
+static bool isBaseAlignment16(SDNode *Base, MachineFrameInfo *MFI,
+                              const X86Subtarget *Subtarget) {
   GlobalValue *GV;
   int64_t Offset;
   if (isGAPlusOffset(Base, GV, Offset))
@@ -4064,7 +4065,12 @@ static bool isBaseAlignment16(SDNode *Base, MachineFrameInfo *MFI) {
   else {
     assert(Base->getOpcode() == ISD::FrameIndex && "Unexpected base node!");
     int BFI = dyn_cast<FrameIndexSDNode>(Base)->getIndex();
-    return MFI->getObjectAlignment(BFI) >= 16;
+    if (BFI < 0)
+      // Fixed objects do not specify alignment, however the offsets are known.
+      return ((Subtarget->getStackAlignment() % 16) == 0 &&
+              (MFI->getObjectOffset(BFI) % 16) == 0);
+    else
+      return MFI->getObjectAlignment(BFI) >= 16;
   }
   return false;
 }
@@ -4074,7 +4080,8 @@ static bool isBaseAlignment16(SDNode *Base, MachineFrameInfo *MFI) {
 /// build_vector load1, load2, load3, load4, <0, 1, 2, 3> into a 128-bit load
 /// if the load addresses are consecutive, non-overlapping, and in the right
 /// order.
-static SDOperand PerformShuffleCombine(SDNode *N, SelectionDAG &DAG) {
+static SDOperand PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
+                                       const X86Subtarget *Subtarget) {
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MVT::ValueType VT = N->getValueType(0);
@@ -4099,7 +4106,7 @@ static SDOperand PerformShuffleCombine(SDNode *N, SelectionDAG &DAG) {
     }
   }
 
-  bool isAlign16 = isBaseAlignment16(Base->getOperand(1).Val, MFI);
+  bool isAlign16 = isBaseAlignment16(Base->getOperand(1).Val, MFI, Subtarget);
   if (isAlign16)
     return DAG.getLoad(VT, Base->getOperand(0), Base->getOperand(1),
                        Base->getOperand(2));
@@ -4118,7 +4125,7 @@ SDOperand X86TargetLowering::PerformDAGCombine(SDNode *N,
   switch (N->getOpcode()) {
   default: break;
   case ISD::VECTOR_SHUFFLE:
-    return PerformShuffleCombine(N, DAG);
+    return PerformShuffleCombine(N, DAG, Subtarget);
   }
 
   return SDOperand();
