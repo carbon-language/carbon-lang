@@ -652,10 +652,16 @@ void Verifier::visitInstruction(Instruction &I) {
   }
 
   for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
-    // Check to make sure that the "address of" an intrinsic function is never
-    // taken.
     Assert1(I.getOperand(i) != 0, "Instruction has null operand!", &I);
+
+    // Check to make sure that only first-class-values are operands to
+    // instructions.
+    Assert1(I.getOperand(i)->getType()->isFirstClassType(),
+            "Instruction operands must be first-class values!", &I);
+  
     if (Function *F = dyn_cast<Function>(I.getOperand(i))) {
+      // Check to make sure that the "address of" an intrinsic function is never
+      // taken.
       Assert1(!F->isIntrinsic() || (i == 0 && isa<CallInst>(I)),
               "Cannot take the address of an intrinsic!", &I);
     } else if (BasicBlock *OpBB = dyn_cast<BasicBlock>(I.getOperand(i))) {
