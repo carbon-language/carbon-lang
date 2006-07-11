@@ -303,7 +303,7 @@ void AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
       bool rev = false;
       bool isNE = false;
       switch(CC) {
-      default: N->dump(); assert(0 && "Unknown FP comparison!");
+      default: DEBUG(N->dump()); assert(0 && "Unknown FP comparison!");
       case ISD::SETEQ: case ISD::SETOEQ: case ISD::SETUEQ: Opc = Alpha::CMPTEQ; break;
       case ISD::SETLT: case ISD::SETOLT: case ISD::SETULT: Opc = Alpha::CMPTLT; break;
       case ISD::SETLE: case ISD::SETOLE: case ISD::SETULE: Opc = Alpha::CMPTLE; break;

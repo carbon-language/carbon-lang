@@ -160,7 +160,7 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
       Reloc = PPC::reloc_pcrel_bx;
     else {
       switch (MI.getOpcode()) {
-      default: MI.dump(); assert(0 && "Unknown instruction for relocation!");
+      default: DEBUG(MI.dump()); assert(0 && "Unknown instruction for relocation!");
       case PPC::LIS:
         Reloc = PPC::reloc_absolute_high;       // Pointer to symbol
         break;

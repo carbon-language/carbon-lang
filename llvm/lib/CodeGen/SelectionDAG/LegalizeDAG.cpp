@@ -540,7 +540,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       return Result.getValue(Op.ResNo);
     }
     // Otherwise this is an unhandled builtin node.  splat.
+#ifndef NDEBUG
     std::cerr << "NODE: "; Node->dump(); std::cerr << "\n";
+#endif
     assert(0 && "Do not know how to legalize this operator!");
     abort();
   case ISD::GlobalAddress:
@@ -2865,7 +2867,9 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   case ISD::CopyFromReg:
     assert(0 && "CopyFromReg must be legal!");
   default:
+#ifndef NDEBUG
     std::cerr << "NODE: "; Node->dump(); std::cerr << "\n";
+#endif
     assert(0 && "Do not know how to promote this operator!");
     abort();
   case ISD::UNDEF:
@@ -4205,7 +4209,9 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   case ISD::CopyFromReg:
     assert(0 && "CopyFromReg must be legal!");
   default:
+#ifndef NDEBUG
     std::cerr << "NODE: "; Node->dump(); std::cerr << "\n";
+#endif
     assert(0 && "Do not know how to expand this operator!");
     abort();
   case ISD::UNDEF:
@@ -4703,7 +4709,11 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
   }
   
   switch (Node->getOpcode()) {
-  default: Node->dump(); assert(0 && "Unhandled operation in SplitVectorOp!");
+  default: 
+#ifndef NDEBUG
+    Node->dump();
+#endif
+    assert(0 && "Unhandled operation in SplitVectorOp!");
   case ISD::VBUILD_VECTOR: {
     std::vector<SDOperand> LoOps(Node->op_begin(), Node->op_begin()+NewNumElts);
     LoOps.push_back(NewNumEltsNode);
@@ -4820,7 +4830,9 @@ SDOperand SelectionDAGLegalize::PackVectorOp(SDOperand Op,
   SDOperand Result;
   switch (Node->getOpcode()) {
   default: 
+#ifndef NDEBUG
     Node->dump(); std::cerr << "\n";
+#endif
     assert(0 && "Unknown vector operation in PackVectorOp!");
   case ISD::VADD:
   case ISD::VSUB:

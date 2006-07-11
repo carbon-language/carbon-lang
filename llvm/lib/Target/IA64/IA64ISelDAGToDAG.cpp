@@ -511,7 +511,7 @@ void IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
       N->getValueType(0) : cast<VTSDNode>(N->getOperand(3))->getVT();
     unsigned Opc;
     switch (TypeBeingLoaded) {
-    default: N->dump(); assert(0 && "Cannot load this type!");
+    default: DEBUG(N->dump()); assert(0 && "Cannot load this type!");
     case MVT::i1: { // this is a bool
       Opc = IA64::LD1; // first we load a byte, then compare for != 0
       if(N->getValueType(0) == MVT::i1) { // XXX: early exit!
