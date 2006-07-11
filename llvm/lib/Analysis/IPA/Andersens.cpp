@@ -260,7 +260,9 @@ namespace {
 
       std::map<Value*, unsigned>::iterator I = ValueNodes.find(V);
       if (I == ValueNodes.end()) {
-        DEBUG(V->dump());
+#ifndef NDEBUG
+        V->dump();
+#endif
         assert(0 && "Value does not have a node in the points-to graph!");
       }
       return &GraphNodes[I->second];

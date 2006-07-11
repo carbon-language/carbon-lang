@@ -2136,7 +2136,9 @@ public:
         if (DefInit *Pred = dynamic_cast<DefInit*>(Predicates->getElement(i))) {
           Record *Def = Pred->getDef();
           if (!Def->isSubClassOf("Predicate")) {
-            DEBUG(Def->dump());
+#ifndef NDEBUG
+            Def->dump();
+#endif
             assert(0 && "Unknown predicate type!");
           }
           if (!PredicateCheck.empty())
@@ -2344,8 +2346,10 @@ public:
             emitCheck("cast<CondCodeSDNode>(" + RootName + utostr(OpNo) +
                       ")->get() == ISD::" + LeafRec->getName());
           } else {
-            DEBUG(Child->dump());
+#ifndef NDEBUG
+            Child->dump();
             std::cerr << " ";
+#endif
             assert(0 && "Unknown leaf type!");
           }
         } else if (IntInit *II =
@@ -2357,7 +2361,9 @@ public:
 
           emitCheck("CN" + utostr(CTmp) + " == " +itostr(II->getValue()));
         } else {
-          DEBUG(Child->dump());
+#ifndef NDEBUG
+          Child->dump();
+#endif
           assert(0 && "Unknown leaf type!");
         }
       }
@@ -2510,7 +2516,9 @@ public:
         return std::make_pair(1, ResNo);
       }
     
-      DEBUG(N->dump());
+#ifndef NDEBUG
+      N->dump();
+#endif
       assert(0 && "Unknown leaf type!");
       return std::make_pair(1, ~0U);
     }
