@@ -208,9 +208,9 @@ endif
 
 ifdef ENABLE_PROFILING
   BuildMode := Profile
-  CXX.Flags := $(OPTIMIZE_OPTION) -pg
-  C.Flags   := $(OPTIMIZE_OPTION) -pg
-  LD.Flags  := $(OPTIMIZE_OPTION) -pg 
+  CXX.Flags := $(OPTIMIZE_OPTION) -pg -g
+  C.Flags   := $(OPTIMIZE_OPTION) -pg -g
+  LD.Flags  := $(OPTIMIZE_OPTION) -pg -g
 else
   ifdef ENABLE_OPTIMIZED
     BuildMode := Release
