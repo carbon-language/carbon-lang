@@ -19,7 +19,8 @@
       <li><a href="#aix">Building under AIX</a></li>
     </ul>
   </li>
-  <li><a href="#instructions">Instructions</a></li>
+  <li><a href="#instructions">llvm-gcc4 Instructions</a></li>
+  <li><a href="#llvm-gcc3-instructions">llvm-gcc3 Instructions</a></li>
   <li><a href="#license">License Information</a></li>
 </ol>
 
@@ -36,9 +37,10 @@
 
 <div class="doc_text">
 <p>This document is intended to explain the process of building the
-LLVM C/C++ front-end, based on GCC 3.4, from its source code. You
-would have to do this, for example, if you are porting LLVM to a new
-architecture or operating system.</p>
+LLVM C/C++ front-end from its source code. You have to do this, for example, if
+you are porting LLVM to a new architecture or operating system, if you are
+working from Top-Of-Tree CVS/SVN, or if there is no precompiled snapshot
+available.</p>
 
 <p><b>NOTE:</b> This is currently a somewhat fragile, error-prone
 process, and you should <b>only</b> try to do it if:</p>
@@ -71,7 +73,8 @@ and Settings" directory).  We welcome patches to fix this issue.
 versions is incapable of compiling the LLVM GCC front-end correctly. If your
 Cygwin
 installation includes GCC 3.3.3, we <i>strongly</i> recommend that you download
-GCC 3.4.3, build it separately, and use it for compiling the LLVM GCC front-end. This has been
+GCC 3.4.3, build it separately, and use it for compiling the LLVM GCC front-end.
+ This has been
 shown to work correctly.</p>
 <p>Some versions of Cygwin utilize an experimental version of GNU binutils that
 will cause the GNU <tt>ld</tt> linker to fail an assertion when linking
@@ -94,18 +97,24 @@ invalid code.  Instead, use the system assembler and linker.
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
-  <a name="instructions">Instructions</a>
+  <a name="instructions">llvm-gcc4 Instructions</a>
 </div>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
-<p>
+
+<p>This section describes how to aquire and build llvm-gcc4, which is based on
+the GCC 4.0.1 front-end.  This front-end supports C, C++, Objective-C, and 
+Objective-C++.  Note that the instructions for building this front-end are
+completely different than those for building llvm-gcc3.
+</p>
+
 <ol>
 <li>
 <p>Retrieve the appropriate llvm-gcc4-x.y.source.tar.gz archive from the llvm
 web site.</p>
 <p>It is also possible to download the sources of the llvm-gcc4 front end from
-a read-only mirror using subversion.  To check out the code the first time use;
+a read-only mirror using subversion.  To check out the code the first time use:
 </p>
 
 <tt>svn co svn://anonsvn.opensource.apple.com/svn/llvm <i>dst-directory</i></tt>
@@ -117,6 +126,23 @@ a read-only mirror using subversion.  To check out the code the first time use;
 
 <p>The mirror is brought up to date every evening.</p>
 </li>
+
+<li>Follow the directions in the top-level README.LLVM file for up-to-date
+    instructions on how to build llvm-gcc4.</li>
+</ol>
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="llvm-gcc3-instructions">llvm-gcc3 Instructions</a>
+</div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+<ol>
+<li>Aquire llvm-gcc3 from <a href="GettingStarted.html#checkout">LLVM CVS</a> or
+from a <a href="http://llvm.org/releases/">release tarball</a>.</li>
+
 <li><p>Configure and build the LLVM libraries and tools. There are two ways to
 do this: either with <i>objdir</i> == <i>srcdir</i> or
 <i>objdir</i> != <i>srcdir</i>. It is recommended 
@@ -314,51 +340,8 @@ COPYING.LIB for more details.
 </p>
 
 <p>
-The software also has the following additional copyrights:
+More information is <a href="FAQ.html#license">available in the FAQ</a>.
 </p>
-
-<pre>
-
-Copyright (c) 2003, 2004, 2005 University of Illinois at Urbana-Champaign.
-All rights reserved.
-
-Developed by:
-
-    LLVM Team
-
-    University of Illinois at Urbana-Champaign
-
-    http://llvm.org
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
-CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE
-SOFTWARE.
-
-Copyright (c) 1994
-Hewlett-Packard Company
-
-Permission to use, copy, modify, distribute and sell this software
-and its documentation for any purpose is hereby granted without fee,
-provided that the above copyright notice appear in all copies and
-that both that copyright notice and this permission notice appear
-in supporting documentation.  Hewlett-Packard Company makes no
-representations about the suitability of this software for any
-purpose.  It is provided "as is" without express or implied warranty.
-
-Copyright (c) 1996, 1997, 1998, 1999
-Silicon Graphics Computer Systems, Inc.
-
-Permission to use, copy, modify, distribute and sell this software
-and its documentation for any purpose is hereby granted without fee,
-provided that the above copyright notice appear in all copies and
-that both that copyright notice and this permission notice appear
-in supporting documentation.  Silicon Graphics makes no
-representations about the suitability of this software for any
-purpose.  It is provided "as is" without express or implied warranty.
 </pre>
 </div>
 
