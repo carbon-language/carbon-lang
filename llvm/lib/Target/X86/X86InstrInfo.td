@@ -1095,9 +1095,9 @@ let isTwoAddress = 0 in {
 def INC8r  : I<0xFE, MRM0r, (ops GR8 :$dst, GR8 :$src), "inc{b} $dst",
                [(set GR8:$dst, (add GR8:$src, 1))]>;
 let isConvertibleToThreeAddress = 1 in {   // Can transform into LEA.
-def INC16r : I<0xFF, MRM0r, (ops GR16:$dst, GR16:$src), "inc{w} $dst",
+def INC16r : I<0x40, AddRegFrm, (ops GR16:$dst, GR16:$src), "inc{w} $dst",
                [(set GR16:$dst, (add GR16:$src, 1))]>, OpSize;
-def INC32r : I<0xFF, MRM0r, (ops GR32:$dst, GR32:$src), "inc{l} $dst",
+def INC32r : I<0x40, AddRegFrm, (ops GR32:$dst, GR32:$src), "inc{l} $dst",
                [(set GR32:$dst, (add GR32:$src, 1))]>;
 }
 let isTwoAddress = 0 in {
@@ -1112,9 +1112,9 @@ let isTwoAddress = 0 in {
 def DEC8r  : I<0xFE, MRM1r, (ops GR8 :$dst, GR8 :$src), "dec{b} $dst",
                [(set GR8:$dst, (add GR8:$src, -1))]>;
 let isConvertibleToThreeAddress = 1 in {   // Can transform into LEA.
-def DEC16r : I<0xFF, MRM1r, (ops GR16:$dst, GR16:$src), "dec{w} $dst",
+def DEC16r : I<0x48, AddRegFrm, (ops GR16:$dst, GR16:$src), "dec{w} $dst",
                [(set GR16:$dst, (add GR16:$src, -1))]>, OpSize;
-def DEC32r : I<0xFF, MRM1r, (ops GR32:$dst, GR32:$src), "dec{l} $dst",
+def DEC32r : I<0x48, AddRegFrm, (ops GR32:$dst, GR32:$src), "dec{l} $dst",
                [(set GR32:$dst, (add GR32:$src, -1))]>;
 }
 
