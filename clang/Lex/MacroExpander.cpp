@@ -79,18 +79,13 @@ void MacroExpander::Lex(LexerToken &Tok) {
   // Otherwise, return a normal token.
 }
 
-/// NextTokenIsKnownNotLParen - If the next token lexed will pop this macro
-/// off the expansion stack, return false and set RanOffEnd to true.
-/// Otherwise, return true if we know for sure that the next token returned
-/// will not be a '(' token.  Return false if it is a '(' token or if we are
-/// not sure.  This is used when determining whether to expand a function-like
-/// macro.
-bool MacroExpander::NextTokenIsKnownNotLParen(bool &RanOffEnd) const {
+/// isNextTokenLParen - If the next token lexed will pop this macro off the
+/// expansion stack, return 2.  If the next unexpanded token is a '(', return
+/// 1, otherwise return 0.
+unsigned MacroExpander::isNextTokenLParen() const {
   // Out of tokens?
-  if (CurToken == Macro.getNumTokens()) {
-    RanOffEnd = true;
-    return false;
-  }
+  if (CurToken == Macro.getNumTokens())
+    return 2;
 
-  return Macro.getReplacementToken(CurToken).getKind() != tok::l_paren;
+  return Macro.getReplacementToken(CurToken).getKind() == tok::l_paren;
 }

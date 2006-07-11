@@ -505,52 +505,72 @@ static bool isTrivialSingleTokenExpansion(const MacroInfo *MI,
     if (*I == II)
       return false;   // Identifier is a macro argument.
   return true;
-}  
+}
+
+/// isNextPPTokenLParen - Return 1 if the next unexpanded token lexed from
+/// the specified lexer will return a tok::l_paren token, 0 if it is something
+/// else and 2 if there are no more tokens in the buffer controlled by the
+/// lexer.
+unsigned Preprocessor::isNextPPTokenLParen(Lexer *L) {
+  assert(!isSkipping() && "How can we expand a macro from a skipping buffer?");
+  
+  // Set the lexer to 'skipping' mode.  This will ensure that we can lex a token
+  // without emitting diagnostics, disables macro expansion, and will cause EOF
+  // to return an EOF token instead of popping the include stack.
+  SkippingContents = true;
+  
+  // Save state that can be changed while lexing so that we can restore it.
+  const char *BufferPtr = L->BufferPtr;
+  
+  LexerToken Tok;
+  Tok.StartToken();
+  L->LexTokenInternal(Tok);
+
+  // Restore state that may have changed.
+  L->BufferPtr = BufferPtr;
+  
+  // Restore the lexer back to non-skipping mode.
+  SkippingContents = false;
+  
+  if (Tok.getKind() == tok::eof)
+    return 2;
+  return Tok.getKind() == tok::l_paren;
+}
+
 
 /// isNextPPTokenLParen - Determine whether the next preprocessor token to be
 /// lexed is a '('.  If so, consume the token and return true, if not, this
 /// method should have no observable side-effect on the lexed tokens.
 bool Preprocessor::isNextPPTokenLParen() {
-  bool RanOffEnd = false;
   // Do some quick tests for rejection cases.
-  if (CurLexer) {
-#if 0
-    if (!CurLexer->NextTokenIsKnownNotLParen(RanOffEnd))
-      return false;
-#endif
-  } else {
-    assert(CurMacroExpander && "No token source?");
-    if (CurMacroExpander->NextTokenIsKnownNotLParen(RanOffEnd))
-      return false;
+  unsigned Val;
+  if (CurLexer)
+    Val = isNextPPTokenLParen(CurLexer);
+  else
+    Val = CurMacroExpander->isNextTokenLParen();
+  
+  if (Val == 2) {
+    // If we ran off the end of the lexer or macro expander, walk the include
+    // stack, looking for whatever will return the next token.
+    for (unsigned i = IncludeMacroStack.size(); Val == 2 && i != 0; --i) {
+      IncludeStackInfo &Entry = IncludeMacroStack[i-1];
+      if (Entry.TheLexer)
+        Val = isNextPPTokenLParen(Entry.TheLexer);
+      else
+        Val = Entry.TheMacroExpander->isNextTokenLParen();
+    }
   }
 
-  // If we ran off the end of the lexer or macro expander, walk the include
-  // stack, looking for whatever will return the next token.
-  for (unsigned i = IncludeMacroStack.size(); RanOffEnd && i != 0; --i) {
-    IncludeStackInfo &Entry = IncludeMacroStack[i-1];
-    RanOffEnd = false;
-    if (Entry.TheLexer) {
-#if 0
-      if (!Entry.TheLexer->NextTokenIsKnownNotLParen(RanOffEnd))
-        return false;
-#endif
-    } else if (Entry.TheMacroExpander->NextTokenIsKnownNotLParen(RanOffEnd))
-      return false;
-  }
-
-  // Okay, if we get here we either know that the next token definitely IS a '('
-  // token, or we don't know what it is.  In either case we will speculatively
-  // read the next token.  If it turns out that it isn't a '(', then we create a
-  // new macro context with just that token on it so that the token gets
-  // reprocessed.
+  // Okay, if we know that the token is a '(', lex it and return.  Otherwise we
+  // have found something that isn't a '(' or we found the end of the
+  // translation unit.  In either case, return false.
+  if (Val != 1)
+    return false;
   
   LexerToken Tok;
   LexUnexpandedToken(Tok);
-  if (Tok.getKind() == tok::l_paren)
-    return true;
-  
-  // FIXME: push a fake macro context, push Tok onto it.
-  assert(0 && "FIXME: implement speculation failure code!");
+  assert(Tok.getKind() == tok::l_paren && "Error computing l-paren-ness?");
+  return true;
 }
 
 /// HandleMacroExpandedIdentifier - If an identifier token is read that is to be
@@ -984,8 +1004,9 @@ void Preprocessor::HandleEndOfFile(LexerToken &Result, bool isEndOfMacro) {
   
   // If we are in a #if 0 block skipping tokens, and we see the end of the file,
   // this is an error condition.  Just return the EOF token up to
-  // SkipExcludedConditionalBlock.  The Lexer will have already have issued
-  // errors for the unterminated #if's on the conditional stack.
+  // SkipExcludedConditionalBlock.  The code that enabled skipping will issue
+  // errors for the unterminated #if's on the conditional stack if it is
+  // interested.
   if (isSkipping()) {
     Result.StartToken();
     CurLexer->BufferPtr = CurLexer->BufferEnd;
@@ -1165,10 +1186,19 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
   while (1) {
     CurLexer->Lex(Tok);
     
-    // If this is the end of the buffer, we have an error.  The lexer will have
-    // already handled this error condition, so just return and let the caller
-    // lex after this #include.
-    if (Tok.getKind() == tok::eof) break;
+    // If this is the end of the buffer, we have an error.
+    if (Tok.getKind() == tok::eof) {
+      // Emit errors for each unterminated conditional on the stack, including
+      // the current one.
+      while (!CurLexer->ConditionalStack.empty()) {
+        Diag(CurLexer->ConditionalStack.back().IfLoc,
+             diag::err_pp_unterminated_conditional);
+        CurLexer->ConditionalStack.pop_back();
+      }  
+      
+      // Just return and let the caller lex after this #include.
+      break;
+    }
     
     // If this token is not a preprocessor directive, just skip it.
     if (Tok.getKind() != tok::hash || !Tok.isAtStartOfLine())

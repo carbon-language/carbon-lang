@@ -896,16 +896,21 @@ void Lexer::LexEndOfFile(LexerToken &Result, const char *CurPtr) {
     return;
   }        
 
-  // If we are in a #if directive, emit an error.
-  while (!ConditionalStack.empty()) {
-    PP.Diag(ConditionalStack.back().IfLoc,
-            diag::err_pp_unterminated_conditional);
-    ConditionalStack.pop_back();
-  }  
+  // If we aren't skipping, issue diagnostics.  If we are skipping, let the
+  // skipping code do this: there are multiple possible reasons for skipping,
+  // and not all want these diagnostics.
+  if (!PP.isSkipping()) {
+    // If we are in a #if directive, emit an error.
+    while (!ConditionalStack.empty()) {
+      PP.Diag(ConditionalStack.back().IfLoc,
+              diag::err_pp_unterminated_conditional);
+      ConditionalStack.pop_back();
+    }  
   
-  // If the file was empty or didn't end in a newline, issue a pedwarn.
-  if (CurPtr[-1] != '\n' && CurPtr[-1] != '\r')
-    Diag(BufferEnd, diag::ext_no_newline_eof);
+    // If the file was empty or didn't end in a newline, issue a pedwarn.
+    if (CurPtr[-1] != '\n' && CurPtr[-1] != '\r')
+      Diag(BufferEnd, diag::ext_no_newline_eof);
+  }
   
   BufferPtr = CurPtr;
   PP.HandleEndOfFile(Result);

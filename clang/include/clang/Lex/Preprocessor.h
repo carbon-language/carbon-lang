@@ -467,6 +467,12 @@ private:
   /// the macro should not be expanded return true, otherwise return false.
   bool HandleMacroExpandedIdentifier(LexerToken &Tok, MacroInfo *MI);
   
+  /// isNextPPTokenLParen - Return 1 if the next unexpanded token lexed from
+  /// the specified lexer will return a tok::l_paren token, 0 if it is something
+  /// else and 2 if there are no more tokens in the buffer controlled by the
+  /// lexer.
+  unsigned isNextPPTokenLParen(Lexer *L);
+  
   /// isNextPPTokenLParen - Determine whether the next preprocessor token to be
   /// lexed is a '('.  If so, consume the token and return true, if not, this
   /// method should have no observable side-effect on the lexed tokens.

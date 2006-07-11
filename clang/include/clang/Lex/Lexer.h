@@ -62,12 +62,14 @@ class Lexer {
   bool IsMainFile;               // True if top-level file.
   
   // Context-specific lexing flags.
-  bool IsAtStartOfLine;          // True if sitting at start of line.
   bool ParsingPreprocessorDirective; // True if parsing #XXX
   bool ParsingFilename;          // True after #include: turn <xx> into string.
   
-  // Context that changes as the file is lexed.
-  
+  // Context that changes as the file is lexed.  NOTE: any state that mutates as
+  // the file is lexed should be added to Preprocessor::isNextPPTokenLParen.
+
+  bool IsAtStartOfLine;          // True if sitting at start of line.
+
   /// MIOpt - This is a state machine that detects the #ifndef-wrapping a file 
   /// idiom for the multiple-include optimization.
   MultipleIncludeOpt MIOpt;
