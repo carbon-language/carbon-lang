@@ -82,6 +82,13 @@ public:
     delete FormalArgs;
   }
   
+  /// NextTokenIsKnownNotLParen - If the next token lexed will pop this macro
+  /// off the expansion stack, return false and set RanOffEnd to true.
+  /// Otherwise, return true if we know for sure that the next token returned
+  /// will not be a '(' token.  Return false if it is a '(' token or if we are
+  /// not sure.
+  bool NextTokenIsKnownNotLParen(bool &RanOffEnd) const;
+  
   MacroInfo &getMacro() const { return Macro; }
 
   /// Lex - Lex and return a token from this macro stream.
