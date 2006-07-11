@@ -310,6 +310,8 @@ namespace llvm {
     
     SDOperand getReturnAddressFrameIndex(SelectionDAG &DAG);
 
+    ConstraintType getConstraintType(char ConstraintLetter) const;
+     
     std::vector<unsigned> 
       getRegClassForInlineAsmConstraint(const std::string &Constraint,
                                         MVT::ValueType VT) const;

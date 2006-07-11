@@ -4135,6 +4135,16 @@ SDOperand X86TargetLowering::PerformDAGCombine(SDNode *N,
 //                           X86 Inline Assembly Support
 //===----------------------------------------------------------------------===//
 
+/// getConstraintType - Given a constraint letter, return the type of
+/// constraint it is for this target.
+X86TargetLowering::ConstraintType
+X86TargetLowering::getConstraintType(char ConstraintLetter) const {
+  switch (ConstraintLetter) {
+  case 'A': return C_RegisterClass;
+  default: return TargetLowering::getConstraintType(ConstraintLetter);
+  }
+}
+
 std::vector<unsigned> X86TargetLowering::
 getRegClassForInlineAsmConstraint(const std::string &Constraint,
                                   MVT::ValueType VT) const {
@@ -4142,7 +4152,11 @@ getRegClassForInlineAsmConstraint(const std::string &Constraint,
     // FIXME: not handling fp-stack yet!
     // FIXME: not handling MMX registers yet ('y' constraint).
     switch (Constraint[0]) {      // GCC X86 Constraint Letters
-    default: break;  // Unknown constriant letter
+    default: break;  // Unknown constraint letter
+    case 'A':   // EAX/EDX
+      if (VT == MVT::i32 || VT == MVT::i64)
+        return make_vector<unsigned>(X86::EAX, X86::EDX, 0);
+      break;
     case 'r':   // GENERAL_REGS
     case 'R':   // LEGACY_REGS
       if (VT == MVT::i32)
