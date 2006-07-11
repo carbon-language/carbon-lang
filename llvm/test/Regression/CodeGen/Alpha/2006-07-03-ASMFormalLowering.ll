@@ -1,5 +1,4 @@
 ; RUN: llvm-as < %s | llc -march=alpha
-; XFAIL: *
 
 target endian = little
 target pointersize = 64
