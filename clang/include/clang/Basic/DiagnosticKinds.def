@@ -127,6 +127,8 @@ DIAG(ext_embedded_directive, EXTENSION,
      "embedding a directive within macro arguments is not portable")
 DIAG(ext_missing_varargs_arg, EXTENSION,
      "varargs argument missing, but tolerated as an extension")
+DIAG(ext_empty_fnmacro_arg, EXTENSION,
+     "empty macro arguments were standardized in C99")
 
 DIAG(ext_pp_base_file, EXTENSION,
      "__BASE_FILE__ is a language extension")

@@ -727,7 +727,10 @@ ReadFunctionLikeMacroFormalArgs(LexerToken &MacroName, MacroInfo *MI) {
       ArgTokens.push_back(Tok);
     }
 
-    // FIXME: If not in C99 mode, empty arguments should be ext-warned about!
+    // Empty arguments are standard in C99 and supported as an extension in
+    // other modes.
+    if (ArgTokens.empty() && !Features.C99)
+      Diag(Tok, diag::ext_empty_fnmacro_arg);
     
     // Remember the tokens that make up this argument.  This destroys ArgTokens.
     Args->addArgument(ArgTokens);
@@ -757,7 +760,11 @@ ReadFunctionLikeMacroFormalArgs(LexerToken &MacroName, MacroInfo *MI) {
       // is ok because it is an empty argument.  Add it explicitly.
       std::vector<LexerToken> ArgTokens;
       Args->addArgument(ArgTokens);
-      // FIXME: Ext-Warn in C90 mode.
+      
+      // Empty arguments are standard in C99 and supported as an extension in
+      // other modes.
+      if (ArgTokens.empty() && !Features.C99)
+        Diag(Tok, diag::ext_empty_fnmacro_arg);
     } else {
       // Otherwise, emit the error.
       Diag(Tok, diag::err_too_few_formals_in_macro_invoc);
