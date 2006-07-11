@@ -19,7 +19,8 @@
 using namespace llvm;
 
 PPCInstrInfo::PPCInstrInfo(PPCTargetMachine &tm)
-  : TargetInstrInfo(PPCInsts, sizeof(PPCInsts)/sizeof(PPCInsts[0])), TM(tm) {}
+  : TargetInstrInfo(PPCInsts, sizeof(PPCInsts)/sizeof(PPCInsts[0])), TM(tm),
+    RI(*TM.getSubtargetImpl()) {}
 
 /// getPointerRegClass - Return the register class to use to hold pointers.
 /// This is used for addressing modes.

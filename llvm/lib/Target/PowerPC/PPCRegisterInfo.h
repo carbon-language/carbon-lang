@@ -19,13 +19,14 @@
 #include <map>
 
 namespace llvm {
-
+class PPCSubtarget;
 class Type;
 
 class PPCRegisterInfo : public PPCGenRegisterInfo {
   std::map<unsigned, unsigned> ImmToIdxMap;
+  const PPCSubtarget &Subtarget;
 public:
-  PPCRegisterInfo();
+  PPCRegisterInfo(const PPCSubtarget &SubTarget);
   
   /// getRegisterNumbering - Given the enum value for some register, e.g.
   /// PPC::F14, return the number that it corresponds to (e.g. 14).

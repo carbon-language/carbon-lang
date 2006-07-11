@@ -15,6 +15,7 @@
 #include "PPC.h"
 #include "PPCInstrBuilder.h"
 #include "PPCRegisterInfo.h"
+#include "PPCSubtarget.h"
 #include "llvm/Constants.h"
 #include "llvm/Type.h"
 #include "llvm/CodeGen/ValueTypes.h"
@@ -78,8 +79,9 @@ unsigned PPCRegisterInfo::getRegisterNumbering(unsigned RegEnum) {
   }
 }
 
-PPCRegisterInfo::PPCRegisterInfo()
-  : PPCGenRegisterInfo(PPC::ADJCALLSTACKDOWN, PPC::ADJCALLSTACKUP) {
+PPCRegisterInfo::PPCRegisterInfo(const PPCSubtarget &ST)
+  : PPCGenRegisterInfo(PPC::ADJCALLSTACKDOWN, PPC::ADJCALLSTACKUP),
+    Subtarget(ST) {
   ImmToIdxMap[PPC::LD]   = PPC::LDX;    ImmToIdxMap[PPC::STD]  = PPC::STDX;
   ImmToIdxMap[PPC::LBZ]  = PPC::LBZX;   ImmToIdxMap[PPC::STB]  = PPC::STBX;
   ImmToIdxMap[PPC::LHZ]  = PPC::LHZX;   ImmToIdxMap[PPC::LHA]  = PPC::LHAX;
@@ -207,70 +209,103 @@ void PPCRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
 }
 
 const unsigned* PPCRegisterInfo::getCalleeSaveRegs() const {
-  static const unsigned CalleeSaveRegs[] = {
-    PPC::R1, PPC::R13,
-    PPC::R14, PPC::R15,
-    PPC::R16, PPC::R17,
-    PPC::R18, PPC::R19,
-    PPC::R20, PPC::R21,
-    PPC::R22, PPC::R23,
-    PPC::R24, PPC::R25,
-    PPC::R26, PPC::R27,
-    PPC::R28, PPC::R29,
-    PPC::R30, PPC::R31,
-    PPC::F14, PPC::F15,
-    PPC::F16, PPC::F17,
-    PPC::F18, PPC::F19,
-    PPC::F20, PPC::F21,
-    PPC::F22, PPC::F23,
-    PPC::F24, PPC::F25,
-    PPC::F26, PPC::F27,
-    PPC::F28, PPC::F29,
+  // 32-bit Darwin calling convention. 
+  static const unsigned Darwin32_CalleeSaveRegs[] = {
+    PPC::R1 , PPC::R13, PPC::R14, PPC::R15,
+    PPC::R16, PPC::R17, PPC::R18, PPC::R19,
+    PPC::R20, PPC::R21, PPC::R22, PPC::R23,
+    PPC::R24, PPC::R25, PPC::R26, PPC::R27,
+    PPC::R28, PPC::R29, PPC::R30, PPC::R31,
+
+    PPC::F14, PPC::F15, PPC::F16, PPC::F17,
+    PPC::F18, PPC::F19, PPC::F20, PPC::F21,
+    PPC::F22, PPC::F23, PPC::F24, PPC::F25,
+    PPC::F26, PPC::F27, PPC::F28, PPC::F29,
     PPC::F30, PPC::F31,
-    PPC::CR2, PPC::CR3,
-    PPC::CR4, PPC::V20,
-    PPC::V21, PPC::V22,
-    PPC::V23, PPC::V24,
-    PPC::V25, PPC::V26,
-    PPC::V27, PPC::V28,
-    PPC::V29, PPC::V30,
-    PPC::V31, PPC::LR,  0
+    
+    PPC::CR2, PPC::CR3, PPC::CR4,
+    PPC::V20, PPC::V21, PPC::V22, PPC::V23,
+    PPC::V24, PPC::V25, PPC::V26, PPC::V27,
+    PPC::V28, PPC::V29, PPC::V30, PPC::V31,
+    
+    PPC::LR,  0
   };
-  return CalleeSaveRegs;
+  // 64-bit Darwin calling convention. 
+  static const unsigned Darwin64_CalleeSaveRegs[] = {
+    PPC::X1 , PPC::X13, PPC::X14, PPC::X15,
+    PPC::X16, PPC::X17, PPC::X18, PPC::X19,
+    PPC::X20, PPC::X21, PPC::X22, PPC::X23,
+    PPC::X24, PPC::X25, PPC::X26, PPC::X27,
+    PPC::X28, PPC::X29, PPC::X30, PPC::X31,
+    
+    PPC::F14, PPC::F15, PPC::F16, PPC::F17,
+    PPC::F18, PPC::F19, PPC::F20, PPC::F21,
+    PPC::F22, PPC::F23, PPC::F24, PPC::F25,
+    PPC::F26, PPC::F27, PPC::F28, PPC::F29,
+    PPC::F30, PPC::F31,
+    
+    PPC::CR2, PPC::CR3, PPC::CR4,
+    PPC::V20, PPC::V21, PPC::V22, PPC::V23,
+    PPC::V24, PPC::V25, PPC::V26, PPC::V27,
+    PPC::V28, PPC::V29, PPC::V30, PPC::V31,
+    
+    PPC::LR,  0
+  };
+  
+  return Subtarget.isPPC64() ? Darwin64_CalleeSaveRegs :
+                               Darwin32_CalleeSaveRegs;
 }
 
 const TargetRegisterClass* const*
 PPCRegisterInfo::getCalleeSaveRegClasses() const {
-  static const TargetRegisterClass * const CalleeSaveRegClasses[] = {
-    &PPC::GPRCRegClass, &PPC::GPRCRegClass,
-    &PPC::GPRCRegClass, &PPC::GPRCRegClass,
-    &PPC::GPRCRegClass, &PPC::GPRCRegClass,
-    &PPC::GPRCRegClass, &PPC::GPRCRegClass,
-    &PPC::GPRCRegClass, &PPC::GPRCRegClass,
-    &PPC::GPRCRegClass, &PPC::GPRCRegClass,
-    &PPC::GPRCRegClass, &PPC::GPRCRegClass,
-    &PPC::GPRCRegClass, &PPC::GPRCRegClass,
-    &PPC::GPRCRegClass, &PPC::GPRCRegClass,
-    &PPC::GPRCRegClass, &PPC::GPRCRegClass,
-    &PPC::F8RCRegClass, &PPC::F8RCRegClass,
-    &PPC::F8RCRegClass, &PPC::F8RCRegClass,
-    &PPC::F8RCRegClass, &PPC::F8RCRegClass,
-    &PPC::F8RCRegClass, &PPC::F8RCRegClass,
-    &PPC::F8RCRegClass, &PPC::F8RCRegClass,
-    &PPC::F8RCRegClass, &PPC::F8RCRegClass,
-    &PPC::F8RCRegClass, &PPC::F8RCRegClass,
-    &PPC::F8RCRegClass, &PPC::F8RCRegClass,
-    &PPC::F8RCRegClass, &PPC::F8RCRegClass,
-    &PPC::CRRCRegClass, &PPC::CRRCRegClass,
-    &PPC::CRRCRegClass, &PPC::VRRCRegClass,
-    &PPC::VRRCRegClass, &PPC::VRRCRegClass,
-    &PPC::VRRCRegClass, &PPC::VRRCRegClass,
-    &PPC::VRRCRegClass, &PPC::VRRCRegClass,
-    &PPC::VRRCRegClass, &PPC::VRRCRegClass,
-    &PPC::VRRCRegClass, &PPC::VRRCRegClass,
-    &PPC::VRRCRegClass, &PPC::GPRCRegClass,  0
+  // 32-bit Darwin calling convention. 
+  static const TargetRegisterClass * const Darwin32_CalleeSaveRegClasses[] = {
+    &PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,
+    &PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,
+    &PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,
+    &PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,
+    &PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,
+
+    &PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,
+    &PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,
+    &PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,
+    &PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,
+    &PPC::F8RCRegClass,&PPC::F8RCRegClass,
+    
+    &PPC::CRRCRegClass,&PPC::CRRCRegClass,&PPC::CRRCRegClass,
+    
+    &PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,
+    &PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,
+    &PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,
+    
+    &PPC::GPRCRegClass, 0
   };
-  return CalleeSaveRegClasses;
+  
+  // 64-bit Darwin calling convention. 
+  static const TargetRegisterClass * const Darwin64_CalleeSaveRegClasses[] = {
+    &PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,
+    &PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,
+    &PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,
+    &PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,
+    &PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,
+    
+    &PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,
+    &PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,
+    &PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,
+    &PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,&PPC::F8RCRegClass,
+    &PPC::F8RCRegClass,&PPC::F8RCRegClass,
+    
+    &PPC::CRRCRegClass,&PPC::CRRCRegClass,&PPC::CRRCRegClass,
+    
+    &PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,
+    &PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,
+    &PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,&PPC::VRRCRegClass,
+    
+    &PPC::GPRCRegClass, 0
+  };
+ 
+  return Subtarget.isPPC64() ? Darwin64_CalleeSaveRegClasses :
+                               Darwin32_CalleeSaveRegClasses;
 }
 
 /// foldMemoryOperand - PowerPC (like most RISC's) can only fold spills into
