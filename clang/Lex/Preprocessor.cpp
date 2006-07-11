@@ -506,37 +506,6 @@ static bool isTrivialSingleTokenExpansion(const MacroInfo *MI,
   return true;
 }
 
-/// isNextPPTokenLParen - Return 1 if the next unexpanded token lexed from
-/// the specified lexer will return a tok::l_paren token, 0 if it is something
-/// else and 2 if there are no more tokens in the buffer controlled by the
-/// lexer.
-unsigned Preprocessor::isNextPPTokenLParen(Lexer *L) {
-  assert(!L->LexingRawMode &&
-         "How can we expand a macro from a skipping buffer?");
-  
-  // Set the lexer to 'skipping' mode.  This will ensure that we can lex a token
-  // without emitting diagnostics, disables macro expansion, and will cause EOF
-  // to return an EOF token instead of popping the include stack.
-  L->LexingRawMode = true;
-  
-  // Save state that can be changed while lexing so that we can restore it.
-  const char *BufferPtr = L->BufferPtr;
-  
-  LexerToken Tok;
-  Tok.StartToken();
-  L->LexTokenInternal(Tok);
-
-  // Restore state that may have changed.
-  L->BufferPtr = BufferPtr;
-  
-  // Restore the lexer back to non-skipping mode.
-  L->LexingRawMode = false;
-  
-  if (Tok.getKind() == tok::eof)
-    return 2;
-  return Tok.getKind() == tok::l_paren;
-}
-
 
 /// isNextPPTokenLParen - Determine whether the next preprocessor token to be
 /// lexed is a '('.  If so, consume the token and return true, if not, this
@@ -545,7 +514,7 @@ bool Preprocessor::isNextPPTokenLParen() {
   // Do some quick tests for rejection cases.
   unsigned Val;
   if (CurLexer)
-    Val = isNextPPTokenLParen(CurLexer);
+    Val = CurLexer->isNextPPTokenLParen();
   else
     Val = CurMacroExpander->isNextTokenLParen();
   
@@ -555,7 +524,7 @@ bool Preprocessor::isNextPPTokenLParen() {
     for (unsigned i = IncludeMacroStack.size(); Val == 2 && i != 0; --i) {
       IncludeStackInfo &Entry = IncludeMacroStack[i-1];
       if (Entry.TheLexer)
-        Val = isNextPPTokenLParen(Entry.TheLexer);
+        Val = Entry.TheLexer->isNextPPTokenLParen();
       else
         Val = Entry.TheMacroExpander->isNextTokenLParen();
     }

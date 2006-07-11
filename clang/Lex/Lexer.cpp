@@ -39,8 +39,7 @@ static void InitCharacterInfo();
 
 Lexer::Lexer(const SourceBuffer *File, unsigned fileid, Preprocessor &pp,
              const char *BufStart, const char *BufEnd)
-  : BufferPtr(BufStart ? BufStart : File->getBufferStart()),
-    BufferEnd(BufEnd ? BufEnd : File->getBufferEnd()),
+  : BufferEnd(BufEnd ? BufEnd : File->getBufferEnd()),
     InputFile(File), CurFileID(fileid), PP(pp), Features(PP.getLangOptions()) {
   Is_PragmaLexer = false;
   IsMainFile = false;
@@ -49,7 +48,9 @@ Lexer::Lexer(const SourceBuffer *File, unsigned fileid, Preprocessor &pp,
   assert(BufferEnd[0] == 0 &&
          "We assume that the input buffer has a null character at the end"
          " to simplify lexing!");
-      
+    
+  BufferPtr = BufStart ? BufStart : File->getBufferStart();
+
   // Start of the file is a start of line.
   IsAtStartOfLine = true;
 
@@ -920,6 +921,36 @@ void Lexer::LexEndOfFile(LexerToken &Result, const char *CurPtr) {
   
   BufferPtr = CurPtr;
   PP.HandleEndOfFile(Result);
+}
+
+/// isNextPPTokenLParen - Return 1 if the next unexpanded token lexed from
+/// the specified lexer will return a tok::l_paren token, 0 if it is something
+/// else and 2 if there are no more tokens in the buffer controlled by the
+/// lexer.
+unsigned Lexer::isNextPPTokenLParen() {
+  assert(!LexingRawMode && "How can we expand a macro from a skipping buffer?");
+  
+  // Switch to 'skipping' mode.  This will ensure that we can lex a token
+  // without emitting diagnostics, disables macro expansion, and will cause EOF
+  // to return an EOF token instead of popping the include stack.
+  LexingRawMode = true;
+  
+  // Save state that can be changed while lexing so that we can restore it.
+  const char *TmpBufferPtr = BufferPtr;
+  
+  LexerToken Tok;
+  Tok.StartToken();
+  LexTokenInternal(Tok);
+  
+  // Restore state that may have changed.
+  BufferPtr = TmpBufferPtr;
+  
+  // Restore the lexer back to non-skipping mode.
+  LexingRawMode = false;
+  
+  if (Tok.getKind() == tok::eof)
+    return 2;
+  return Tok.getKind() == tok::l_paren;
 }
 
 

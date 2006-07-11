@@ -86,8 +86,9 @@ class Lexer {
   bool LexingRawMode;
   
   //===--------------------------------------------------------------------===//
-  // Context that changes as the file is lexed.  NOTE: any state that mutates as
-  // the file is lexed should be added to Preprocessor::isNextPPTokenLParen.
+  // Context that changes as the file is lexed.
+  // NOTE: any state that mutates when in raw mode must have save/restore code
+  // in Lexer::isNextPPTokenLParen.
 
   // BufferPtr - Current pointer into the buffer.  This is the next character
   // to be lexed.
@@ -191,7 +192,11 @@ private:
     BufferPtr = TokEnd;
   }
   
-  
+  /// isNextPPTokenLParen - Return 1 if the next unexpanded token will return a
+  /// tok::l_paren token, 0 if it is something else and 2 if there are no more
+  /// tokens in the buffer controlled by this lexer.
+  unsigned isNextPPTokenLParen();
+
   //===--------------------------------------------------------------------===//
   // Lexer character reading interfaces.
   
