@@ -2902,7 +2902,7 @@ Instruction *InstCombiner::MatchBSwap(BinaryOperator &I) {
   // If they do then *success* we can turn this into a bswap.  Figure out what
   // bswap to make it into.
   Module *M = I.getParent()->getParent()->getParent();
-  const char *FnName;
+  const char *FnName = 0;
   if (I.getType() == Type::UShortTy)
     FnName = "llvm.bswap.i16";
   else if (I.getType() == Type::UIntTy)
