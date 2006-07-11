@@ -1735,8 +1735,8 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
     MI->AddTokenToBody(Tok);
 
     // Check C99 6.10.3.2p1: ensure that # operators are followed by macro
-    // parameters.
-    if (Tok.getKind() != tok::hash) {
+    // parameters in function-like macro expansions.
+    if (Tok.getKind() != tok::hash || MI->isObjectLike()) {
       // Get the next token of the macro.
       LexUnexpandedToken(Tok);
       continue;
