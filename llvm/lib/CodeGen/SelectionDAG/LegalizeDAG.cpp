@@ -1163,25 +1163,42 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     AddLegalizedOperand(SDOperand(Node, 1), Tmp2);
     return Op.ResNo ? Tmp2 : Tmp1;
   }
-  case ISD::INLINEASM:
-    Tmp1 = LegalizeOp(Node->getOperand(0));   // Legalize Chain.
-    Tmp2 = Node->getOperand(Node->getNumOperands()-1);
-    if (Tmp2.getValueType() == MVT::Flag)     // Legalize Flag if it exists.
-      Tmp2 = Tmp3 = SDOperand(0, 0);
-    else
-      Tmp3 = LegalizeOp(Tmp2);
-    
-    if (Tmp1 != Node->getOperand(0) || Tmp2 != Tmp3) {
-      std::vector<SDOperand> Ops(Node->op_begin(), Node->op_end());
-      Ops[0] = Tmp1;
-      if (Tmp3.Val) Ops.back() = Tmp3;
-      Result = DAG.UpdateNodeOperands(Result, Ops);
+  case ISD::INLINEASM: {
+    std::vector<SDOperand> Ops(Node->op_begin(), Node->op_end());
+    bool Changed = false;
+    // Legalize all of the operands of the inline asm, in case they are nodes
+    // that need to be expanded or something.  Note we skip the asm string and
+    // all of the TargetConstant flags.
+    SDOperand Op = LegalizeOp(Ops[0]);
+    Changed = Op != Ops[0];
+    Ops[0] = Op;
+
+    bool HasInFlag = Ops.back().getValueType() == MVT::Flag;
+    for (unsigned i = 2, e = Ops.size()-HasInFlag; i < e; ) {
+      unsigned NumVals = cast<ConstantSDNode>(Ops[i])->getValue() >> 3;
+      for (++i; NumVals; ++i, --NumVals) {
+        SDOperand Op = LegalizeOp(Ops[i]);
+        if (Op != Ops[i]) {
+          Changed = true;
+          Ops[i] = Op;
+        }
+      }
     }
+
+    if (HasInFlag) {
+      Op = LegalizeOp(Ops.back());
+      Changed |= Op != Ops.back();
+      Ops.back() = Op;
+    }
+    
+    if (Changed)
+      Result = DAG.UpdateNodeOperands(Result, Ops);
       
     // INLINE asm returns a chain and flag, make sure to add both to the map.
     AddLegalizedOperand(SDOperand(Node, 0), Result.getValue(0));
     AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
     return Result.getValue(Op.ResNo);
+  }
   case ISD::BR:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     // Ensure that libcalls are emitted before a branch.
