@@ -671,6 +671,7 @@ TypeDesc::TypeDesc(unsigned T)
 , Size(0)
 , Align(0)
 , Offset(0)
+, Flags(0)
 {}
 
 /// ApplyToFields - Target the visitor to the fields of the TypeDesc.
@@ -685,6 +686,7 @@ void TypeDesc::ApplyToFields(DIVisitor *Visitor) {
   Visitor->Apply(Size);
   Visitor->Apply(Align);
   Visitor->Apply(Offset);
+  if (getVersion() > LLVMDebugVersion4) Visitor->Apply(Flags);
 }
 
 /// getDescString - Return a string used to compose global names and labels.
@@ -710,7 +712,8 @@ void TypeDesc::dump() {
             << "Line(" << Line << "), "
             << "Size(" << Size << "), "
             << "Align(" << Align << "), "
-            << "Offset(" << Offset << ")\n";
+            << "Offset(" << Offset << "), "
+            << "Flags(" << Flags << ")\n";
 }
 #endif
 
@@ -1029,6 +1032,7 @@ GlobalDesc::GlobalDesc(unsigned T)
 : AnchoredDesc(T)
 , Context(0)
 , Name("")
+, DisplayName("")
 , File(NULL)
 , Line(0)
 , TyDesc(NULL)
@@ -1043,6 +1047,7 @@ void GlobalDesc::ApplyToFields(DIVisitor *Visitor) {
 
   Visitor->Apply(Context);
   Visitor->Apply(Name);
+  if (getVersion() > LLVMDebugVersion4) Visitor->Apply(DisplayName);
   Visitor->Apply(File);
   Visitor->Apply(Line);
   Visitor->Apply(TyDesc);
@@ -1096,6 +1101,7 @@ void GlobalVariableDesc::dump() {
             << "Tag(" << getTag() << "), "
             << "Anchor(" << getAnchor() << "), "
             << "Name(\"" << getName() << "\"), "
+            << "DisplayName(\"" << getDisplayName() << "\"), "
             << "File(" << getFile() << "),"
             << "Line(" << getLine() << "),"
             << "Type(\"" << getType() << "\"), "
@@ -1148,6 +1154,7 @@ void SubprogramDesc::dump() {
             << "Tag(" << getTag() << "), "
             << "Anchor(" << getAnchor() << "), "
             << "Name(\"" << getName() << "\"), "
+            << "DisplayName(\"" << getDisplayName() << "\"), "
             << "File(" << getFile() << "),"
             << "Line(" << getLine() << "),"
             << "Type(\"" << getType() << "\"), "

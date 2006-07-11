@@ -57,7 +57,8 @@ class StructType;
 // Debug info constants.
 
 enum {
-  LLVMDebugVersion = (4 << 16),         // Current version of debug information.
+  LLVMDebugVersion = (5 << 16),         // Current version of debug information.
+  LLVMDebugVersion4 = (4 << 16),        // Constant for version 4.
   LLVMDebugVersionMask = 0xffff0000     // Mask for version number.
 };
 
@@ -276,6 +277,10 @@ public:
 ///
 class TypeDesc : public DebugInfoDesc {
 private:
+  enum {
+    FlagPrivate    = 1 << 0,
+    FlagProtected  = 1 << 1
+  };
   DebugInfoDesc *Context;               // Context debug descriptor.
   std::string Name;                     // Type name (may be empty.)
   DebugInfoDesc *File;                  // Defined compile unit (may be NULL.)
@@ -283,6 +288,7 @@ private:
   uint64_t Size;                        // Type bit size (may be zero.)
   uint64_t Align;                       // Type bit alignment (may be zero.)
   uint64_t Offset;                      // Type bit offset (may be zero.)
+  unsigned Flags;                       // Miscellaneous flags.
 
 public:
   TypeDesc(unsigned T);
@@ -297,6 +303,12 @@ public:
   uint64_t getSize()                         const { return Size; }
   uint64_t getAlign()                        const { return Align; }
   uint64_t getOffset()                       const { return Offset; }
+  bool isPrivate() const {
+    return (Flags & FlagPrivate) != 0;
+  }
+  bool isProtected() const {
+    return (Flags & FlagProtected) != 0;
+  }
   void setContext(DebugInfoDesc *C)                { Context = C; }
   void setName(const std::string &N)               { Name = N; }
   void setFile(CompileUnitDesc *U) {
@@ -306,6 +318,8 @@ public:
   void setSize(uint64_t S)                         { Size = S; }
   void setAlign(uint64_t A)                        { Align = A; }
   void setOffset(uint64_t O)                       { Offset = O; }
+  void setIsPrivate()                              { Flags |= FlagPrivate; }
+  void setIsProtected()                            { Flags |= FlagProtected; }
   
   /// ApplyToFields - Target the visitor to the fields of the TypeDesc.
   ///
@@ -572,6 +586,7 @@ class GlobalDesc : public AnchoredDesc {
 private:
   DebugInfoDesc *Context;               // Context debug descriptor.
   std::string Name;                     // Global name.
+  std::string DisplayName;              // C++ unmangled name.
   DebugInfoDesc *File;                  // Defined compile unit (may be NULL.)
   unsigned Line;                        // Defined line# (may be zero.)
   DebugInfoDesc *TyDesc;                // Type debug descriptor.
@@ -585,6 +600,7 @@ public:
   // Accessors
   DebugInfoDesc *getContext()                const { return Context; }
   const std::string &getName()               const { return Name; }
+  const std::string &getDisplayName()        const { return DisplayName; }
   CompileUnitDesc *getFile() const {
     return static_cast<CompileUnitDesc *>(File);
   }
@@ -596,6 +612,7 @@ public:
   bool isDefinition()                        const { return IsDefinition; }
   void setContext(DebugInfoDesc *C)                { Context = C; }
   void setName(const std::string &N)               { Name = N; }
+  void setDisplayName(const std::string &N)        { DisplayName = N; }
   void setFile(CompileUnitDesc *U) {
     File = static_cast<DebugInfoDesc *>(U);
   }

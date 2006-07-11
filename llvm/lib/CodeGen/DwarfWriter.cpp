@@ -1383,6 +1383,12 @@ DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc, CompileUnit *Unit) {
         Block->AddUInt(DW_FORM_udata, FieldOffset >> 3);
         Block->ComputeSize(*this);
         Member->AddBlock(DW_AT_data_member_location, 0, Block);
+
+        if (MemberDesc->isProtected()) {
+          Member->AddUInt(DW_AT_accessibility, 0, DW_ACCESS_protected);
+        } else if (MemberDesc->isPrivate()) {
+          Member->AddUInt(DW_AT_accessibility, 0, DW_ACCESS_private);
+        }
         
         Ty->AddChild(Member);
       }
