@@ -82,7 +82,6 @@ void CodeEmitterGen::run(std::ostream &o) {
   o << "unsigned " << Target.getName() << "CodeEmitter::"
     << "getBinaryCodeForInstr(MachineInstr &MI) {\n"
     << "  unsigned Value = 0;\n"
-    << "  DEBUG(std::cerr << MI);\n"
     << "  switch (MI.getOpcode()) {\n";
 
   // Emit a case statement for each opcode
@@ -91,8 +90,7 @@ void CodeEmitterGen::run(std::ostream &o) {
     Record *R = *I;
     if (R->getName() == "PHI" || R->getName() == "INLINEASM") continue;
     
-    o << "    case " << Namespace << R->getName() << ": {\n"
-      << "      DEBUG(std::cerr << \"Emitting " << R->getName() << "\\n\");\n";
+    o << "    case " << Namespace << R->getName() << ": {\n";
 
     BitsInit *BI = R->getValueAsBitsInit("Inst");
 
