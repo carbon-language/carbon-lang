@@ -57,7 +57,6 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
     
   // Macro expansion is enabled.
   DisableMacroExpansion = false;
-  SkippingContents = false;
   InMacroFormalArgs = false;
 
   // There is no file-change handler yet.
@@ -512,12 +511,13 @@ static bool isTrivialSingleTokenExpansion(const MacroInfo *MI,
 /// else and 2 if there are no more tokens in the buffer controlled by the
 /// lexer.
 unsigned Preprocessor::isNextPPTokenLParen(Lexer *L) {
-  assert(!isSkipping() && "How can we expand a macro from a skipping buffer?");
+  assert(!L->LexingRawMode &&
+         "How can we expand a macro from a skipping buffer?");
   
   // Set the lexer to 'skipping' mode.  This will ensure that we can lex a token
   // without emitting diagnostics, disables macro expansion, and will cause EOF
   // to return an EOF token instead of popping the include stack.
-  SkippingContents = true;
+  L->LexingRawMode = true;
   
   // Save state that can be changed while lexing so that we can restore it.
   const char *BufferPtr = L->BufferPtr;
@@ -530,7 +530,7 @@ unsigned Preprocessor::isNextPPTokenLParen(Lexer *L) {
   L->BufferPtr = BufferPtr;
   
   // Restore the lexer back to non-skipping mode.
-  SkippingContents = false;
+  L->LexingRawMode = false;
   
   if (Tok.getKind() == tok::eof)
     return 2;
@@ -1172,16 +1172,9 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
   CurLexer->pushConditionalLevel(IfTokenLoc, /*isSkipping*/false,
                                  FoundNonSkipPortion, FoundElse);
   
-  // Know that we are going to be skipping tokens.  Set this flag to indicate
-  // this, which has a couple of effects:
-  //  1. If EOF of the current lexer is found, the include stack isn't popped.
-  //  2. Identifier information is not looked up for identifier tokens.  As an
-  //     effect of this, implicit macro expansion is naturally disabled.
-  //  3. "#" tokens at the start of a line are treated as normal tokens, not
-  //     implicitly transformed by the lexer.
-  //  4. All notes, warnings, and extension messages are disabled.
-  //
-  SkippingContents = true;
+  // Enter raw mode to disable identifier lookup (and thus macro expansion),
+  // disabling warnings, etc.
+  CurLexer->LexingRawMode = true;
   LexerToken Tok;
   while (1) {
     CurLexer->Lex(Tok);
@@ -1305,13 +1298,13 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
           DiscardUntilEndOfDirective();
           ShouldEnter = false;
         } else {
-          // Restore the value of SkippingContents so that identifiers are
+          // Restore the value of LexingRawMode so that identifiers are
           // looked up, etc, inside the #elif expression.
-          assert(SkippingContents && "We have to be skipping here!");
-          SkippingContents = false;
+          assert(CurLexer->LexingRawMode && "We have to be skipping here!");
+          CurLexer->LexingRawMode = false;
           IdentifierInfo *IfNDefMacro = 0;
           ShouldEnter = EvaluateDirectiveExpression(IfNDefMacro);
-          SkippingContents = true;
+          CurLexer->LexingRawMode = true;
         }
         
         // If this is a #elif with a #else before it, report the error.
@@ -1331,7 +1324,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
   // Finally, if we are out of the conditional (saw an #endif or ran off the end
   // of the file, just stop skipping and return to lexing whatever came after
   // the #if block.
-  SkippingContents = false;
+  CurLexer->LexingRawMode = false;
 }
 
 //===----------------------------------------------------------------------===//

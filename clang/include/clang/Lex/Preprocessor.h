@@ -129,7 +129,6 @@ private:
 
   // State that changes while the preprocessor runs:
   bool DisableMacroExpansion;    // True if macro expansion is disabled.
-  bool SkippingContents;         // True if in a #if 0 block.
   bool InMacroFormalArgs;        // True if parsing fn macro invocation args.
 
   /// Identifiers - This is mapping/lookup information for all identifiers in
@@ -217,7 +216,7 @@ public:
 
   /// isSkipping - Return true if we're lexing a '#if 0' block.  This causes
   /// lexer errors/warnings to get ignored.
-  bool isSkipping() const { return SkippingContents; }
+  bool isSkipping() const { return CurLexer && CurLexer->LexingRawMode; }
   
   /// isCurrentLexer - Return true if we are lexing directly from the specified
   /// lexer.
@@ -267,7 +266,7 @@ public:
   IdentifierInfo *getIdentifierInfo(const char *NameStart,
                                     const char *NameEnd) {
     // If we are in a "#if 0" block, don't bother lookup up identifiers.
-    if (SkippingContents) return 0;
+    if (isSkipping()) return 0;
     return &Identifiers.get(NameStart, NameEnd);
   }
   IdentifierInfo *getIdentifierInfo(const char *NameStr) {

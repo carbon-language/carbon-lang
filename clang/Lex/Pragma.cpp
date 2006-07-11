@@ -184,16 +184,16 @@ void Preprocessor::HandlePragmaOnce(LexerToken &OnceTok) {
 ///
 void Preprocessor::HandlePragmaPoison(LexerToken &PoisonTok) {
   LexerToken Tok;
-  assert(!SkippingContents && "Why are we handling pragmas while skipping?");
+  assert(!isSkipping() && "Why are we handling pragmas while skipping?");
   while (1) {
     // Read the next token to poison.  While doing this, pretend that we are
     // skipping while reading the identifier to poison.
     // This avoids errors on code like:
     //   #pragma GCC poison X
     //   #pragma GCC poison X
-    SkippingContents = true;
+    if (CurLexer) CurLexer->LexingRawMode = true;
     LexUnexpandedToken(Tok);
-    SkippingContents = false;
+    if (CurLexer) CurLexer->LexingRawMode = false;
     
     // If we reached the end of line, we're done.
     if (Tok.getKind() == tok::eom) return;

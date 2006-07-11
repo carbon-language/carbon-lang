@@ -52,7 +52,8 @@ struct LangOptions {
 /// or buffering/seeking of tokens, only forward lexing is supported.  It relies
 /// on the specified Preprocessor object to handle preprocessor directives, etc.
 class Lexer {
-  const char *BufferPtr;         // Current pointer into the buffer.
+  //===--------------------------------------------------------------------===//
+  // Constant configuration values for this lexer.
   const char * const BufferEnd;  // End of the buffer.
   const SourceBuffer *InputFile; // The file we are reading from.
   unsigned CurFileID;            // FileID for the current input file.
@@ -61,14 +62,40 @@ class Lexer {
   bool Is_PragmaLexer;           // True if lexer for _Pragma handling.
   bool IsMainFile;               // True if top-level file.
   
-  // Context-specific lexing flags.
-  bool ParsingPreprocessorDirective; // True if parsing #XXX
-  bool ParsingFilename;          // True after #include: turn <xx> into string.
+  //===--------------------------------------------------------------------===//
+  // Context-specific lexing flags set by the preprocessor.
+  //
   
+  /// ParsingPreprocessorDirective - This is true when parsing #XXX.  This turns
+  /// '\n' into a tok::eom token.
+  bool ParsingPreprocessorDirective;
+  
+  /// ParsingFilename - True after #include: this turns <xx> into a
+  /// tok::angle_string_literal token.
+  bool ParsingFilename;
+  
+  /// LexingRawMode - True if in raw mode:  This flag disables interpretation of
+  /// tokens and is a far faster mode to lex in than non-raw-mode.  This flag:
+  ///  1. If EOF of the current lexer is found, the include stack isn't popped.
+  ///  2. Identifier information is not looked up for identifier tokens.  As an
+  ///     effect of this, implicit macro expansion is naturally disabled.
+  ///  3. "#" tokens at the start of a line are treated as normal tokens, not
+  ///     implicitly transformed by the lexer.
+  ///  4. All notes, warnings, and extension messages are disabled.
+  ///
+  bool LexingRawMode;
+  
+  //===--------------------------------------------------------------------===//
   // Context that changes as the file is lexed.  NOTE: any state that mutates as
   // the file is lexed should be added to Preprocessor::isNextPPTokenLParen.
 
-  bool IsAtStartOfLine;          // True if sitting at start of line.
+  // BufferPtr - Current pointer into the buffer.  This is the next character
+  // to be lexed.
+  const char *BufferPtr;
+
+  // IsAtStartOfLine - True if the next lexed token should get the "start of
+  // line" flag set on it.
+  bool IsAtStartOfLine;
 
   /// MIOpt - This is a state machine that detects the #ifndef-wrapping a file 
   /// idiom for the multiple-include optimization.

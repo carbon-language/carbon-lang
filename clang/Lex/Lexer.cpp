@@ -58,6 +58,12 @@ Lexer::Lexer(const SourceBuffer *File, unsigned fileid, Preprocessor &pp,
 
   // We are not after parsing #include.
   ParsingFilename = false;
+
+  // We are not in raw mode.  Raw mode disables diagnostics and interpretation
+  // of tokens (e.g. identifiers, thus disabling macro expansion).  It is used
+  // to quickly lex the tokens of the buffer, e.g. when handling a "#if 0" block
+  // or otherwise skipping over tokens.
+  LexingRawMode = false;
 }
 
 /// Stringify - Convert the specified string into a C string, with surrounding
@@ -896,10 +902,10 @@ void Lexer::LexEndOfFile(LexerToken &Result, const char *CurPtr) {
     return;
   }        
 
-  // If we aren't skipping, issue diagnostics.  If we are skipping, let the
-  // skipping code do this: there are multiple possible reasons for skipping,
-  // and not all want these diagnostics.
-  if (!PP.isSkipping()) {
+  // If we aren't in raw mode, issue diagnostics. If we are in raw mode, let the
+  // code that put us into raw mode do this: there are multiple possible reasons
+  // for raw mode, and not all want these diagnostics.
+  if (!LexingRawMode) {
     // If we are in a #if directive, emit an error.
     while (!ConditionalStack.empty()) {
       PP.Diag(ConditionalStack.back().IfLoc,
@@ -1176,7 +1182,7 @@ LexNextToken:
         // it's actually the start of a preprocessing directive.  Callback to
         // the preprocessor to handle it.
         // FIXME: -fpreprocessed mode??
-        if (Result.isAtStartOfLine() && !PP.isSkipping()) {
+        if (Result.isAtStartOfLine() && !LexingRawMode) {
           BufferPtr = CurPtr;
           PP.HandleDirective(Result);
           
@@ -1321,7 +1327,7 @@ LexNextToken:
       // it's actually the start of a preprocessing directive.  Callback to
       // the preprocessor to handle it.
       // FIXME: -fpreprocessed mode??
-      if (Result.isAtStartOfLine() && !PP.isSkipping()) {
+      if (Result.isAtStartOfLine() && !LexingRawMode) {
         BufferPtr = CurPtr;
         PP.HandleDirective(Result);
         
@@ -1357,7 +1363,7 @@ LexNextToken:
       return LexIdentifier(Result, CurPtr);
     }
     
-    if (!PP.isSkipping()) Diag(CurPtr-1, diag::err_stray_character);
+    if (!LexingRawMode) Diag(CurPtr-1, diag::err_stray_character);
     BufferPtr = CurPtr;
     goto LexNextToken;   // GCC isn't tail call eliminating.
   }
