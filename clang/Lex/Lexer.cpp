@@ -1394,9 +1394,8 @@ LexNextToken:
       return LexIdentifier(Result, CurPtr);
     }
     
-    if (!LexingRawMode) Diag(CurPtr-1, diag::err_stray_character);
-    BufferPtr = CurPtr;
-    goto LexNextToken;   // GCC isn't tail call eliminating.
+    Result.SetKind(tok::unknown);
+    break;
   }
   
   // Notify MIOpt that we read a non-whitespace/non-comment token.

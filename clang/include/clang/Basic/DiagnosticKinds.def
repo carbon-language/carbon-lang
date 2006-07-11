@@ -71,8 +71,6 @@ DIAG(err_empty_character, ERROR,
      "empty character constant")
 DIAG(err_unterminated_block_comment, ERROR,
      "unterminated /* comment")
-DIAG(err_stray_character, ERROR,
-     "stray character in program")
 
 //===----------------------------------------------------------------------===//
 // Preprocessor Diagnostics
