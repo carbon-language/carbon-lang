@@ -86,7 +86,8 @@ public:
   /// off the expansion stack, return false and set RanOffEnd to true.
   /// Otherwise, return true if we know for sure that the next token returned
   /// will not be a '(' token.  Return false if it is a '(' token or if we are
-  /// not sure.
+  /// not sure.  This is used when determining whether to expand a function-like
+  /// macro.
   bool NextTokenIsKnownNotLParen(bool &RanOffEnd) const;
   
   MacroInfo &getMacro() const { return Macro; }
