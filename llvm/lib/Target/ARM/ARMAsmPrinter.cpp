@@ -58,6 +58,12 @@ namespace {
       return "ARM Assembly Printer";
     }
 
+    void printMemRegImm(const MachineInstr *MI, unsigned OpNo) {
+      printOperand(MI, OpNo + 1);
+      O << ", ";
+      printOperand(MI, OpNo);
+    }
+
     void printOperand(const MachineInstr *MI, int opNum);
     void printMemOperand(const MachineInstr *MI, int opNum,
                          const char *Modifier = 0);

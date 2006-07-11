@@ -12,9 +12,18 @@
 //
 //===----------------------------------------------------------------------===//
 
+// Address operands
+def memri : Operand<iPTR> {
+  let PrintMethod = "printMemRegImm";
+  let NumMIOperands = 2;
+  let MIOperandInfo = (ops i32imm, ptr_rc);
+}
+
 // Define ARM specific addressing mode.
- //register or frame index
-def raddr  : ComplexPattern<iPTR, 1, "SelectAddrReg", []>;
+//register plus/minus 12 bit offset
+def iaddr  : ComplexPattern<iPTR, 2, "SelectAddrRegImm", []>;
+//register plus scaled register
+//def raddr  : ComplexPattern<iPTR, 2, "SelectAddrRegReg", []>;
 
 //===----------------------------------------------------------------------===//
 // Instructions
@@ -42,9 +51,9 @@ def ADJCALLSTACKDOWN : InstARM<(ops i32imm:$amt),
 
 def bxr: InstARM<(ops IntRegs:$dst), "bx $dst", [(brind IntRegs:$dst)]>;
 
-def ldr   : InstARM<(ops IntRegs:$dst, IntRegs:$addr),
+def ldr   : InstARM<(ops IntRegs:$dst, memri:$addr),
                      "ldr $dst, [$addr]",
-                     [(set IntRegs:$dst, (load raddr:$addr))]>;
+                     [(set IntRegs:$dst, (load iaddr:$addr))]>;
 
 def str  : InstARM<(ops IntRegs:$src, IntRegs:$addr),
                     "str $src, [$addr]",
