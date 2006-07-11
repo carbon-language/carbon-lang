@@ -507,6 +507,51 @@ static bool isTrivialSingleTokenExpansion(const MacroInfo *MI,
   return true;
 }  
 
+/// isNextPPTokenLParen - Determine whether the next preprocessor token to be
+/// lexed is a '('.  If so, consume the token and return true, if not, this
+/// method should have no observable side-effect on the lexed tokens.
+bool Preprocessor::isNextPPTokenLParen() {
+  bool RanOffEnd = false;
+  // Do some quick tests for rejection cases.
+  if (CurLexer) {
+#if 0
+    if (!CurLexer->NextTokenIsKnownNotLParen(RanOffEnd))
+      return false;
+#endif
+  } else {
+    assert(CurMacroExpander && "No token source?");
+    if (CurMacroExpander->NextTokenIsKnownNotLParen(RanOffEnd))
+      return false;
+  }
+
+  // If we ran off the end of the lexer or macro expander, walk the include
+  // stack, looking for whatever will return the next token.
+  for (unsigned i = IncludeMacroStack.size(); RanOffEnd && i != 0; --i) {
+    IncludeStackInfo &Entry = IncludeMacroStack[i-1];
+    RanOffEnd = false;
+    if (Entry.TheLexer) {
+#if 0
+      if (!Entry.TheLexer->NextTokenIsKnownNotLParen(RanOffEnd))
+        return false;
+#endif
+    } else if (Entry.TheMacroExpander->NextTokenIsKnownNotLParen(RanOffEnd))
+      return false;
+  }
+
+  // Okay, if we get here we either know that the next token definitely IS a '('
+  // token, or we don't know what it is.  In either case we will speculatively
+  // read the next token.  If it turns out that it isn't a '(', then we create a
+  // new macro context with just that token on it so that the token gets
+  // reprocessed.
+  
+  LexerToken Tok;
+  LexUnexpandedToken(Tok);
+  if (Tok.getKind() == tok::l_paren)
+    return true;
+  
+  // FIXME: push a fake macro context, push Tok onto it.
+  assert(0 && "FIXME: implement speculation failure code!");
+}
 
 /// HandleMacroExpandedIdentifier - If an identifier token is read that is to be
 /// expanded as a macro, handle it and return the next token as 'Identifier'.
@@ -526,19 +571,11 @@ bool Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier,
   
   // If this is a function-like macro, read the arguments.
   if (MI->isFunctionLike()) {
-    // FIXME: We need to query to see if the ( exists without reading it.
-    
     // C99 6.10.3p10: If the preprocessing token immediately after the the macro
     // name isn't a '(', this macro should not be expanded.
-    bool isFunctionInvocation = true;
-    if (!isFunctionInvocation)
+    if (!isNextPPTokenLParen())
       return true;
     
-    LexerToken Tok;
-    LexUnexpandedToken(Tok);
-    assert(Tok.getKind() == tok::l_paren &&
-           "not a function-like macro invocation!");
-
     // Remember that we are now parsing the arguments to a macro invocation.
     // Preprocessor directives used inside macro arguments are not portable, and
     // this enables the warning.
@@ -657,6 +694,8 @@ ReadFunctionLikeMacroFormalArgs(LexerToken &MacroName, MacroInfo *MI) {
     unsigned NumParens = 0;
 
     while (1) {
+      // Read arguments as unexpanded tokens.  This avoids issues, e.g., where
+      // an argument value in a macro could expand to ',' or '(' or ')'.
       LexUnexpandedToken(Tok);
       
       if (Tok.getKind() == tok::eof) {
@@ -688,6 +727,8 @@ ReadFunctionLikeMacroFormalArgs(LexerToken &MacroName, MacroInfo *MI) {
       ArgTokens.push_back(Tok);
     }
 
+    // FIXME: If not in C99 mode, empty arguments should be ext-warned about!
+    
     // Remember the tokens that make up this argument.  This destroys ArgTokens.
     Args->addArgument(ArgTokens);
     --NumFixedArgsLeft;
@@ -713,9 +754,10 @@ ReadFunctionLikeMacroFormalArgs(LexerToken &MacroName, MacroInfo *MI) {
     } else if (MI->getNumArgs() == 1) {
       // #define A(x)
       //   A()
-      // is ok.  Add an empty argument.
+      // is ok because it is an empty argument.  Add it explicitly.
       std::vector<LexerToken> ArgTokens;
       Args->addArgument(ArgTokens);
+      // FIXME: Ext-Warn in C90 mode.
     } else {
       // Otherwise, emit the error.
       Diag(Tok, diag::err_too_few_formals_in_macro_invoc);
@@ -999,7 +1041,7 @@ void Preprocessor::HandleEndOfFile(LexerToken &Result, bool isEndOfMacro) {
 }
 
 /// HandleEndOfMacro - This callback is invoked when the lexer hits the end of
-/// the current macro line.
+/// the current macro expansion.
 void Preprocessor::HandleEndOfMacro(LexerToken &Result) {
   assert(CurMacroExpander && !CurLexer &&
          "Ending a macro when currently in a #include file!");
