@@ -2,6 +2,8 @@
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movaps | wc -l | grep 1
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movups | wc -l | grep 2
 
+target triple = "i686-apple-darwin"
+
 %x = global [4 x int] [ int 1, int 2, int 3, int 4 ]
 
 <2 x long> %test1() {
