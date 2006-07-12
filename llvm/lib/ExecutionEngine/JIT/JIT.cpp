@@ -309,11 +309,7 @@ void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
       // space.
       Ptr = malloc(S+A);
       unsigned MisAligned = ((intptr_t)Ptr & (A-1));
-      unsigned Offset = MisAligned ? (A-MisAligned) : 0;
-      
-      // Trim the tail off the memory block.
-      realloc(Ptr, S+Offset);
-      Ptr = (char*)Ptr + Offset;
+      Ptr = (char*)Ptr + (MisAligned ? (A-MisAligned) : 0);
     }
     state.getPendingGlobals(locked).push_back(GV);
   }
