@@ -4140,7 +4140,15 @@ SDOperand X86TargetLowering::PerformDAGCombine(SDNode *N,
 X86TargetLowering::ConstraintType
 X86TargetLowering::getConstraintType(char ConstraintLetter) const {
   switch (ConstraintLetter) {
-  case 'A': return C_RegisterClass;
+  case 'A':
+  case 'r':
+  case 'R':
+  case 'l':
+  case 'q':
+  case 'Q':
+  case 'x':
+  case 'Y':
+    return C_RegisterClass;
   default: return TargetLowering::getConstraintType(ConstraintLetter);
   }
 }
