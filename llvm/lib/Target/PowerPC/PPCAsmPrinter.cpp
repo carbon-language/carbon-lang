@@ -125,7 +125,7 @@ namespace {
       O << (unsigned short)MI->getOperand(OpNo).getImmedValue();
     }
     void printS16X4ImmOperand(const MachineInstr *MI, unsigned OpNo) {
-      O << (short)MI->getOperand(OpNo).getImmedValue()*4;
+      O << (short)(MI->getOperand(OpNo).getImmedValue()*4);
     }
     void printBranchOperand(const MachineInstr *MI, unsigned OpNo) {
       // Branches can take an immediate operand.  This is used by the branch
