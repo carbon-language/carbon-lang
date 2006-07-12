@@ -157,7 +157,8 @@ static void UpdateCallGraphAfterInlining(const Function *Caller,
     const Instruction *OrigCall = I->first.getInstruction();
     
     std::map<const Value*, Value*>::iterator VMI = ValueMap.find(OrigCall);
-    if (VMI != ValueMap.end()) { // Only copy the edge if the call was inlined!
+    // Only copy the edge if the call was inlined!
+    if (VMI != ValueMap.end() && VMI->second) {
       // If the call was inlined, but then constant folded, there is no edge to
       // add.  Check for this case.
       if (Instruction *NewCall = dyn_cast<Instruction>(VMI->second))
