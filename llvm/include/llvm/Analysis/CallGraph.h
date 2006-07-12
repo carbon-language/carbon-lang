@@ -54,6 +54,7 @@
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/CallSite.h"
 
 namespace llvm {
 
@@ -167,7 +168,8 @@ protected:
 //
 class CallGraphNode {
   Function *F;
-  std::vector<CallGraphNode*> CalledFunctions;
+  typedef std::pair<CallSite,CallGraphNode*> CallRecord;
+  std::vector<CallRecord> CalledFunctions;
 
   CallGraphNode(const CallGraphNode &);           // Do not implement
 public:
@@ -175,8 +177,8 @@ public:
   // Accessor methods...
   //
 
-  typedef std::vector<CallGraphNode*>::iterator iterator;
-  typedef std::vector<CallGraphNode*>::const_iterator const_iterator;
+  typedef std::vector<CallRecord>::iterator iterator;
+  typedef std::vector<CallRecord>::const_iterator const_iterator;
 
   // getFunction - Return the function that this call graph node represents...
   Function *getFunction() const { return F; }
@@ -189,7 +191,9 @@ public:
 
   // Subscripting operator - Return the i'th called function...
   //
-  CallGraphNode *operator[](unsigned i) const { return CalledFunctions[i];}
+  CallGraphNode *operator[](unsigned i) const {
+    return CalledFunctions[i].second;
+  }
 
   /// dump - Print out this call graph node.
   ///
@@ -209,8 +213,8 @@ public:
 
   /// addCalledFunction add a function to the list of functions called by this
   /// one.
-  void addCalledFunction(CallGraphNode *M) {
-    CalledFunctions.push_back(M);
+  void addCalledFunction(CallSite CS, CallGraphNode *M) {
+    CalledFunctions.push_back(std::make_pair(CS, M));
   }
 
   /// removeCallEdgeTo - This method removes a *single* edge to the specified
@@ -225,24 +229,38 @@ public:
 
   friend class CallGraph;
 
-  // CallGraphNode ctor - Create a node for the specified function...
+  // CallGraphNode ctor - Create a node for the specified function.
   inline CallGraphNode(Function *f) : F(f) {}
 };
 
 //===----------------------------------------------------------------------===//
 // GraphTraits specializations for call graphs so that they can be treated as
-// graphs by the generic graph algorithms...
+// graphs by the generic graph algorithms.
 //
 
 // Provide graph traits for tranversing call graphs using standard graph
 // traversals.
 template <> struct GraphTraits<CallGraphNode*> {
   typedef CallGraphNode NodeType;
-  typedef NodeType::iterator ChildIteratorType;
 
+  typedef std::pair<CallSite, CallGraphNode*> CGNPairTy;
+  typedef std::pointer_to_unary_function<CGNPairTy, CallGraphNode*> CGNDerefFun;
+  
   static NodeType *getEntryNode(CallGraphNode *CGN) { return CGN; }
-  static inline ChildIteratorType child_begin(NodeType *N) { return N->begin();}
-  static inline ChildIteratorType child_end  (NodeType *N) { return N->end(); }
+  
+  typedef mapped_iterator<NodeType::iterator, CGNDerefFun> ChildIteratorType;
+  
+  static inline ChildIteratorType child_begin(NodeType *N) {
+    return map_iterator(N->begin(), CGNDerefFun(CGNDeref));
+  }
+  static inline ChildIteratorType child_end  (NodeType *N) {
+    return map_iterator(N->end(), CGNDerefFun(CGNDeref));
+  }
+  
+  static CallGraphNode *CGNDeref(CGNPairTy P) {
+    return P.second;
+  }
+  
 };
 
 template <> struct GraphTraits<const CallGraphNode*> {
@@ -270,8 +288,7 @@ template<> struct GraphTraits<CallGraph*> : public GraphTraits<CallGraphNode*> {
     return map_iterator(CG->end(), DerefFun(CGdereference));
   }
 
-  static CallGraphNode &CGdereference (std::pair<const Function*,
-                                       CallGraphNode*> P) {
+  static CallGraphNode &CGdereference(PairTy P) {
     return *P.second;
   }
 };

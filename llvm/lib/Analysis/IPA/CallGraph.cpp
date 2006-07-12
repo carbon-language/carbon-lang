@@ -112,9 +112,9 @@ private:
   void addToCallGraph(Function *F) {
     CallGraphNode *Node = getOrInsertFunction(F);
 
-    // If this function has external linkage, anything could call it...
+    // If this function has external linkage, anything could call it.
     if (!F->hasInternalLinkage()) {
-      ExternalCallingNode->addCalledFunction(Node);
+      ExternalCallingNode->addCalledFunction(CallSite(), Node);
 
       // Found the entry point?
       if (F->getName() == "main") {
@@ -128,27 +128,29 @@ private:
     // If this function is not defined in this translation unit, it could call
     // anything.
     if (F->isExternal() && !F->getIntrinsicID())
-      Node->addCalledFunction(CallsExternalNode);
+      Node->addCalledFunction(CallSite(), CallsExternalNode);
 
     // Loop over all of the users of the function... looking for callers...
     //
     bool isUsedExternally = false;
     for (Value::use_iterator I = F->use_begin(), E = F->use_end(); I != E; ++I){
       if (Instruction *Inst = dyn_cast<Instruction>(*I)) {
-        if (isOnlyADirectCall(F, CallSite::get(Inst)))
+        CallSite CS = CallSite::get(Inst);
+        if (isOnlyADirectCall(F, CS))
           getOrInsertFunction(Inst->getParent()->getParent())
-              ->addCalledFunction(Node);
+              ->addCalledFunction(CS, Node);
         else
           isUsedExternally = true;
       } else if (GlobalValue *GV = dyn_cast<GlobalValue>(*I)) {
         for (Value::use_iterator I = GV->use_begin(), E = GV->use_end();
              I != E; ++I)
           if (Instruction *Inst = dyn_cast<Instruction>(*I)) {
-          if (isOnlyADirectCall(F, CallSite::get(Inst)))
-            getOrInsertFunction(Inst->getParent()->getParent())
-                ->addCalledFunction(Node);
-          else
-            isUsedExternally = true;
+            CallSite CS = CallSite::get(Inst);
+            if (isOnlyADirectCall(F, CS))
+              getOrInsertFunction(Inst->getParent()->getParent())
+                ->addCalledFunction(CS, Node);
+            else
+              isUsedExternally = true;
           } else {
             isUsedExternally = true;
           }
@@ -157,15 +159,15 @@ private:
       }
     }
     if (isUsedExternally)
-      ExternalCallingNode->addCalledFunction(Node);
+      ExternalCallingNode->addCalledFunction(CallSite(), Node);
 
-  // Look for an indirect function call...
+    // Look for an indirect function call.
     for (Function::iterator BB = F->begin(), BBE = F->end(); BB != BBE; ++BB)
       for (BasicBlock::iterator II = BB->begin(), IE = BB->end();
            II != IE; ++II) {
       CallSite CS = CallSite::get(II);
       if (CS.getInstruction() && !CS.getCalledFunction())
-        Node->addCalledFunction(CallsExternalNode);
+        Node->addCalledFunction(CS, CallsExternalNode);
       }
   }
 
@@ -261,8 +263,8 @@ void CallGraphNode::print(std::ostream &OS) const {
     OS << "Call graph node <<null function: 0x" << this << ">>:\n";
 
   for (const_iterator I = begin(), E = end(); I != E; ++I)
-    if ((*I)->getFunction())
-      OS << "  Calls function '" << (*I)->getFunction()->getName() << "'\n";
+    if (I->second->getFunction())
+      OS << "  Calls function '" << I->second->getFunction()->getName() <<"'\n";
   else
     OS << "  Calls external node\n";
   OS << "\n";
@@ -273,7 +275,7 @@ void CallGraphNode::dump() const { print(std::cerr); }
 void CallGraphNode::removeCallEdgeTo(CallGraphNode *Callee) {
   for (unsigned i = CalledFunctions.size(); ; --i) {
     assert(i && "Cannot find callee to remove!");
-    if (CalledFunctions[i-1] == Callee) {
+    if (CalledFunctions[i-1].second == Callee) {
       CalledFunctions.erase(CalledFunctions.begin()+i-1);
       return;
     }
@@ -285,7 +287,7 @@ void CallGraphNode::removeCallEdgeTo(CallGraphNode *Callee) {
 // removeCallEdgeTo, so it should not be used unless necessary.
 void CallGraphNode::removeAnyCallEdgeTo(CallGraphNode *Callee) {
   for (unsigned i = 0, e = CalledFunctions.size(); i != e; ++i)
-    if (CalledFunctions[i] == Callee) {
+    if (CalledFunctions[i].second == Callee) {
       CalledFunctions[i] = CalledFunctions.back();
       CalledFunctions.pop_back();
       --i; --e;

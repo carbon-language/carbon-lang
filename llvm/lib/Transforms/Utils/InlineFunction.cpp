@@ -136,22 +136,32 @@ static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
   InvokeDest->removePredecessor(II->getParent());
 }
 
-/// UpdateCallGraphAfterInlining - Once we have finished inlining a call from
-/// caller to callee, update the specified callgraph to reflect the changes we
-/// made.
-static void UpdateCallGraphAfterInlining(const Function *Caller, 
+/// UpdateCallGraphAfterInlining - Once we have cloned code over from a callee
+/// into the caller, update the specified callgraph to reflect the changes we
+/// made.  Note that it's possible that not all code was copied over, so only
+/// some edges of the callgraph will be remain.
+static void UpdateCallGraphAfterInlining(const Function *Caller,
                                          const Function *Callee,
+                                         Function::iterator FirstNewBlock,
+                                       std::map<const Value*, Value*> &ValueMap,
                                          CallGraph &CG) {
   // Update the call graph by deleting the edge from Callee to Caller
   CallGraphNode *CalleeNode = CG[Callee];
   CallGraphNode *CallerNode = CG[Caller];
   CallerNode->removeCallEdgeTo(CalleeNode);
   
-  // Since we inlined all uninlined call sites in the callee into the caller,
+  // Since we inlined some uninlined call sites in the callee into the caller,
   // add edges from the caller to all of the callees of the callee.
   for (CallGraphNode::iterator I = CalleeNode->begin(),
-       E = CalleeNode->end(); I != E; ++I)
-    CallerNode->addCalledFunction(*I);
+       E = CalleeNode->end(); I != E; ++I) {
+    const Instruction *OrigCall = I->first.getInstruction();
+    
+    std::map<const Value*, Value*>::iterator VMI = ValueMap.find(OrigCall);
+    if (VMI != ValueMap.end()) { // Only copy the edge if the call was inlined!
+      Instruction *NewCall = cast<Instruction>(VMI->second);
+      CallerNode->addCalledFunction(CallSite::get(NewCall), I->second);
+    }
+  }
 }
 
 
@@ -192,6 +202,8 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG) {
   // function.
   std::vector<ReturnInst*> Returns;
   ClonedCodeInfo InlinedFunctionInfo;
+  Function::iterator FirstNewBlock;
+  
   { // Scope to destroy ValueMap after cloning.
     std::map<const Value*, Value*> ValueMap;
 
@@ -211,11 +223,16 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG) {
     // happy with whatever the cloner can do.
     CloneAndPruneFunctionInto(Caller, CalledFunc, ValueMap, Returns, ".i",
                               &InlinedFunctionInfo);
+    
+    // Remember the first block that is newly cloned over.
+    FirstNewBlock = LastBlock; ++FirstNewBlock;
+    
+    // Update the callgraph if requested.
+    if (CG)
+      UpdateCallGraphAfterInlining(Caller, CalledFunc, FirstNewBlock, ValueMap,
+                                   *CG);
   }
-
-  // Remember the first block that is newly cloned over.
-  Function::iterator FirstNewBlock = LastBlock; ++FirstNewBlock;
-
+ 
   // If there are any alloca instructions in the block that used to be the entry
   // block for the callee, move them to the entry block of the caller.  First
   // calculate which instruction they should be inserted before.  We insert the
@@ -252,15 +269,27 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG) {
     StackSave    = M->getOrInsertFunction("llvm.stacksave", SBytePtr, NULL);
     StackRestore = M->getOrInsertFunction("llvm.stackrestore", Type::VoidTy,
                                           SBytePtr, NULL);
-    
+
+    // If we are preserving the callgraph, add edges to the stacksave/restore
+    // functions for the calls we insert.
+    CallGraphNode *StackSaveCGN, *StackRestoreCGN, *CallerNode;
+    if (CG) {
+      StackSaveCGN    = CG->getOrInsertFunction(StackSave);
+      StackRestoreCGN = CG->getOrInsertFunction(StackRestore);
+      CallerNode = (*CG)[Caller];
+    }
+      
     // Insert the llvm.stacksave.
-    Value *SavedPtr = new CallInst(StackSave, "savedstack", 
-                                   FirstNewBlock->begin());
-    
+    CallInst *SavedPtr = new CallInst(StackSave, "savedstack", 
+                                      FirstNewBlock->begin());
+    if (CG) CallerNode->addCalledFunction(SavedPtr, StackSaveCGN);
+      
     // Insert a call to llvm.stackrestore before any return instructions in the
     // inlined function.
-    for (unsigned i = 0, e = Returns.size(); i != e; ++i)
-      new CallInst(StackRestore, SavedPtr, "", Returns[i]);
+    for (unsigned i = 0, e = Returns.size(); i != e; ++i) {
+      CallInst *CI = new CallInst(StackRestore, SavedPtr, "", Returns[i]);
+      if (CG) CallerNode->addCalledFunction(CI, StackRestoreCGN);
+    }
 
     // Count the number of StackRestore calls we insert.
     unsigned NumStackRestores = Returns.size();
@@ -274,20 +303,6 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG) {
           new CallInst(StackRestore, SavedPtr, "", UI);
           ++NumStackRestores;
         }
-    }
-      
-    // If we are supposed to update the callgraph, do so now.
-    if (CG) {
-      CallGraphNode *StackSaveCGN    = CG->getOrInsertFunction(StackSave);
-      CallGraphNode *StackRestoreCGN = CG->getOrInsertFunction(StackRestore);
-      CallGraphNode *CallerNode = (*CG)[Caller];
-
-      // 'Caller' now calls llvm.stacksave one more time.
-      CallerNode->addCalledFunction(StackSaveCGN);
-      
-      // 'Caller' now calls llvm.stackrestore the appropriate number of times.
-      for (unsigned i = 0; i != NumStackRestores; ++i)
-        CallerNode->addCalledFunction(StackRestoreCGN);
     }
   }
 
@@ -334,9 +349,6 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG) {
     // Since we are now done with the return instruction, delete it also.
     Returns[0]->getParent()->getInstList().erase(Returns[0]);
 
-    // Update the callgraph if requested.
-    if (CG) UpdateCallGraphAfterInlining(Caller, CalledFunc, *CG);
-    
     // We are now done with the inlining.
     return true;
   }
@@ -463,8 +475,5 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG) {
   // Now we can remove the CalleeEntry block, which is now empty.
   Caller->getBasicBlockList().erase(CalleeEntry);
   
-  // Update the callgraph if requested.
-  if (CG) UpdateCallGraphAfterInlining(Caller, CalledFunc, *CG);
-
   return true;
 }

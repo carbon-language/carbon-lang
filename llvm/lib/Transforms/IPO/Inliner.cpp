@@ -54,7 +54,7 @@ static bool InlineCallIfPossible(CallSite CS, CallGraph &CG,
     // Remove any call graph edges from the callee to its callees.
     CallGraphNode *CalleeNode = CG[Callee];
     while (CalleeNode->begin() != CalleeNode->end())
-      CalleeNode->removeCallEdgeTo(*(CalleeNode->end()-1));
+      CalleeNode->removeCallEdgeTo((CalleeNode->end()-1)->second);
 
     // Removing the node for callee from the call graph and delete it.
     delete CG.removeFunctionFromModule(CalleeNode);
@@ -168,7 +168,7 @@ bool Inliner::doFinalization(CallGraph &CG) {
 
         // Remove any call graph edges from the function to its callees.
         while (CGN->begin() != CGN->end())
-          CGN->removeCallEdgeTo(*(CGN->end()-1));
+          CGN->removeCallEdgeTo((CGN->end()-1)->second);
 
         // Remove any edges from the external node to the function's call graph
         // node.  These edges might have been made irrelegant due to

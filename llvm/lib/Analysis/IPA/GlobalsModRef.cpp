@@ -263,7 +263,7 @@ void GlobalsModRef::AnalyzeSCC(std::vector<CallGraphNode *> &SCC) {
   for (unsigned i = 0, e = SCC.size(); i != e && !CallsExternal; ++i)
     for (CallGraphNode::iterator CI = SCC[i]->begin(), E = SCC[i]->end();
          CI != E; ++CI)
-      if (Function *Callee = (*CI)->getFunction()) {
+      if (Function *Callee = CI->second->getFunction()) {
         if (FunctionRecord *CalleeFR = getFunctionInfo(Callee)) {
           // Propagate function effect up.
           FunctionEffect |= CalleeFR->FunctionEffect;
