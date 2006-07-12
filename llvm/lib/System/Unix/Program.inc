@@ -208,12 +208,12 @@ Program::ExecuteAndWait(const Path& path,
   // Return the proper exit status. 0=success, >0 is programs' exit status,
   // <0 means a signal was returned, -9999999 means the program dumped core.
   int result = 0;
-  if (WIFEXITED (status))
+  if (WIFEXITED(status))
     result = WEXITSTATUS(status);
   else if (WIFSIGNALED(status))
     result = 0 - WTERMSIG(status);
 #ifdef WCOREDUMP
-  if (WCOREDUMP(status))
+  else if (WCOREDUMP(status))
     result |= 0x01000000;
 #endif
   return result;
