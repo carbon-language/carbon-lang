@@ -162,22 +162,36 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
       switch (MI.getOpcode()) {
       default: DEBUG(MI.dump()); assert(0 && "Unknown instruction for relocation!");
       case PPC::LIS:
+      case PPC::LIS8:
+      case PPC::ADDIS8:
         Reloc = PPC::reloc_absolute_high;       // Pointer to symbol
         break;
       case PPC::LI:
+      case PPC::LI8:
       case PPC::LA:
+      // Loads.
       case PPC::LBZ:
       case PPC::LHA:
       case PPC::LHZ:
       case PPC::LWZ:
       case PPC::LFS:
       case PPC::LFD:
+      case PPC::LWZ8:
+      
+      // Stores.
       case PPC::STB:
       case PPC::STH:
       case PPC::STW:
       case PPC::STFS:
       case PPC::STFD:
         Reloc = PPC::reloc_absolute_low;
+        break;
+
+      case PPC::LWA:
+      case PPC::LD:
+      case PPC::STD:
+      case PPC::STD_32:
+        Reloc = PPC::reloc_absolute_low_ix;
         break;
       }
     }
@@ -197,16 +211,19 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
       rv = MCE.getJumpTableEntryAddress(MO.getJumpTableIndex());
 
     unsigned Opcode = MI.getOpcode();
-    if (Opcode == PPC::LIS || Opcode == PPC::ADDIS) {
+    if (Opcode == PPC::LIS || Opcode == PPC::LIS8 ||
+        Opcode == PPC::ADDIS || Opcode == PPC::ADDIS8) {
       // lis wants hi16(addr)
       if ((short)rv < 0) rv += 1 << 16;
       rv >>= 16;
-    } else if (Opcode == PPC::LWZ || Opcode == PPC::LA ||
-               Opcode == PPC::LI ||
+    } else if (Opcode == PPC::LWZ || Opcode == PPC::LWZ8 ||
+               Opcode == PPC::LA ||
+               Opcode == PPC::LI  || Opcode == PPC::LI8 ||
                Opcode == PPC::LFS || Opcode == PPC::LFD) {
       // These load opcodes want lo16(addr)
       rv &= 0xffff;
     } else {
+      MI.dump();
       assert(0 && "Unknown constant pool or jump table using instruction!");
     }
   } else {

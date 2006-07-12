@@ -207,7 +207,7 @@ void PPCJITInfo::relocate(void *Function, MachineRelocation *MR,
     case PPC::reloc_absolute_ptr_high: // Pointer relocations.
     case PPC::reloc_absolute_ptr_low:
     case PPC::reloc_absolute_high:     // high bits of ref -> low 16 of instr
-    case PPC::reloc_absolute_low:      // low bits of ref  -> low 16 of instr
+    case PPC::reloc_absolute_low: {    // low bits of ref  -> low 16 of instr
       ResultPtr += MR->getConstantVal();
 
       // If this is a high-part access, get the high-part.
@@ -226,6 +226,16 @@ void PPCJITInfo::relocate(void *Function, MachineRelocation *MR,
       unsigned HighBits = *RelocPos & ~65535;
       *RelocPos = LowBits | HighBits;  // Slam into low 16-bits
       break;
+    }
+    case PPC::reloc_absolute_low_ix: {  // low bits of ref  -> low 14 of instr
+      ResultPtr += MR->getConstantVal();
+      // Do the addition then mask, so the addition does not overflow the 16-bit
+      // immediate section of the instruction.
+      unsigned LowBits  = (*RelocPos + ResultPtr) & 0xFFFC;
+      unsigned HighBits = *RelocPos & 0xFFFF0003;
+      *RelocPos = LowBits | HighBits;  // Slam into low 14-bits.
+      break;
+    }
     }
   }
 }

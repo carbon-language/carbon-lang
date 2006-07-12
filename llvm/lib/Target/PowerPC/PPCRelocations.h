@@ -34,9 +34,13 @@ namespace llvm {
       reloc_absolute_high,
 
       // reloc_absolute_low - Absolute relocation, for the la instruction (which
-      // is really an addi).  Add the low 16-bits of teh specified global
+      // is really an addi).  Add the low 16-bits of the specified global
       // address into the low 16-bits of the instruction.
       reloc_absolute_low,
+      
+      // reloc_absolute_low_ix - Absolute relocation for the 64-bit load/store
+      // instruction which have two implicit zero bits.
+      reloc_absolute_low_ix,
 
       // reloc_absolute_ptr_high - Absolute relocation for references to lazy
       // pointer stubs.  In this case, the relocated instruction should be
