@@ -77,21 +77,30 @@ void CodeEmitterGen::run(std::ostream &o) {
 
   EmitSourceFileHeader("Machine Code Emitter", o);
   std::string Namespace = Insts[0]->getValueAsString("Namespace") + "::";
+  
+  std::vector<const CodeGenInstruction*> NumberedInstructions;
+  Target.getInstructionsByEnumValue(NumberedInstructions);
 
   // Emit function declaration
   o << "unsigned " << Target.getName() << "CodeEmitter::"
-    << "getBinaryCodeForInstr(MachineInstr &MI) {\n"
-    << "  unsigned Value = 0;\n"
-    << "  switch (MI.getOpcode()) {\n";
+    << "getBinaryCodeForInstr(MachineInstr &MI) {\n";
 
-  // Emit a case statement for each opcode
-  for (std::vector<Record*>::iterator I = Insts.begin(), E = Insts.end();
-       I != E; ++I) {
-    Record *R = *I;
-    if (R->getName() == "PHI" || R->getName() == "INLINEASM") continue;
+  // Emit instruction base values
+  o << "  static const unsigned InstBits[] = {\n";
+  for (std::vector<const CodeGenInstruction*>::iterator
+          IN = NumberedInstructions.begin(),
+          EN = NumberedInstructions.end();
+       IN != EN; ++IN) {
+    const CodeGenInstruction *CGI = *IN;
+    Record *R = CGI->TheDef;
     
-    o << "    case " << Namespace << R->getName() << ": {\n";
-
+    if (IN != NumberedInstructions.begin()) o << ",\n";
+    
+    if (R->getName() == "PHI" || R->getName() == "INLINEASM") {
+      o << "    0U";
+      continue;
+    }
+    
     BitsInit *BI = R->getValueAsBitsInit("Inst");
 
     // For little-endian instruction bit encodings, reverse the bit order
@@ -119,20 +128,31 @@ void CodeEmitterGen::run(std::ostream &o) {
     unsigned Value = 0;
     const std::vector<RecordVal> &Vals = R->getValues();
 
-    DEBUG(o << "      // prefilling: ");
     // Start by filling in fixed values...
     for (unsigned i = 0, e = BI->getNumBits(); i != e; ++i) {
       if (BitInit *B = dynamic_cast<BitInit*>(BI->getBit(e-i-1))) {
         Value |= B->getValue() << (e-i-1);
-        DEBUG(o << B->getValue());
-      } else {
-        DEBUG(o << "0");
       }
     }
-    DEBUG(o << "\n");
+    o << "    " << Value << "U";
+  }
+  o << "\n  };\n";
 
-    DEBUG(o << "      // " << *R->getValue("Inst") << "\n");
-    o << "      Value = " << Value << "U;\n\n";
+  // Emit initial function code
+  o << "  const unsigned opcode = MI.getOpcode();\n"
+    << "  unsigned Value = InstBits[opcode];\n"
+    << "  switch (opcode) {\n";
+
+  // Emit a case statement for each opcode
+  for (std::vector<Record*>::iterator I = Insts.begin(), E = Insts.end();
+       I != E; ++I) {
+    Record *R = *I;
+    if (R->getName() == "PHI" || R->getName() == "INLINEASM") continue;
+    
+    o << "    case " << Namespace << R->getName() << ": {\n";
+
+    BitsInit *BI = R->getValueAsBitsInit("Inst");
+    const std::vector<RecordVal> &Vals = R->getValues();
 
     // Loop over all of the fields in the instruction, determining which are the
     // operands to the instruction.
