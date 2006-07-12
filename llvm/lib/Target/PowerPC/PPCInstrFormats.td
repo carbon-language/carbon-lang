@@ -619,10 +619,10 @@ class MDForm_1<bits<6> opcode, bits<3> xo, dag OL, string asmstr,
 
   let Inst{6-10}  = RS;
   let Inst{11-15} = RA;
-  let Inst{16-20} = SH{1-5};
-  let Inst{21-26} = MBE;
+  let Inst{16-20} = { SH{4}, SH{3}, SH{2}, SH{1}, SH{0} };
+  let Inst{21-26} = { MBE{4}, MBE{3}, MBE{2}, MBE{1}, MBE{0}, MBE{5} };
   let Inst{27-29} = xo;
-  let Inst{30}    = SH{0};
+  let Inst{30}    = SH{5};
   let Inst{31}    = RC;
 }
 
