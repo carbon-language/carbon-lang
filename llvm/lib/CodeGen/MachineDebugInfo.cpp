@@ -223,16 +223,21 @@ public:
     Field = getGlobalVariable(C);
   }
   virtual void Apply(std::vector<DebugInfoDesc *> &Field) {
+    Field.resize(0);
     Constant *C = CI->getOperand(I++);
     GlobalVariable *GV = getGlobalVariable(C);
-    Field.resize(0);
-    // Have to be able to deal with the empty array case (zero initializer)
-    if (!GV->hasInitializer()) return;
-    if (ConstantArray *CA = dyn_cast<ConstantArray>(GV->getInitializer())) {
-      for (unsigned i = 0, N = CA->getNumOperands(); i < N; ++i) {
-        GlobalVariable *GVE = getGlobalVariable(CA->getOperand(i));
-        DebugInfoDesc *DE = DR.Deserialize(GVE);
-        Field.push_back(DE);
+    if (GV->hasInitializer()) {
+      if (ConstantArray *CA = dyn_cast<ConstantArray>(GV->getInitializer())) {
+        for (unsigned i = 0, N = CA->getNumOperands(); i < N; ++i) {
+          GlobalVariable *GVE = getGlobalVariable(CA->getOperand(i));
+          DebugInfoDesc *DE = DR.Deserialize(GVE);
+          Field.push_back(DE);
+        }
+      } else if (GV->getInitializer()->isNullValue()) {
+        if (const ArrayType *T =
+            dyn_cast<ArrayType>(GV->getType()->getElementType())) {
+          Field.resize(T->getNumElements());
+        }
       }
     }
   }
@@ -305,9 +310,13 @@ public:
     std::vector<Constant *> ArrayElements;
 
     for (unsigned i = 0, N = Field.size(); i < N; ++i) {
-      GlobalVariable *GVE = SR.Serialize(Field[i]);
-      Constant *CE = ConstantExpr::getCast(GVE, EmptyTy);
-      ArrayElements.push_back(cast<Constant>(CE));
+      if (DebugInfoDesc *Element = Field[i]) {
+        GlobalVariable *GVE = SR.Serialize(Element);
+        Constant *CE = ConstantExpr::getCast(GVE, EmptyTy);
+        ArrayElements.push_back(cast<Constant>(CE));
+      } else {
+        ArrayElements.push_back(ConstantPointerNull::get(EmptyTy));
+      }
     }
     
     Constant *CA = ConstantArray::get(AT, ArrayElements);

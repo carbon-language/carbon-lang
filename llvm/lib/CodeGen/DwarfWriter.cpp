@@ -1413,7 +1413,7 @@ DIE *DwarfWriter::NewType(DIE *Context, TypeDesc *TyDesc, CompileUnit *Unit) {
       Ty->AddUInt(DW_AT_prototyped, DW_FORM_flag, 1);
       // Add return type.
       Ty->AddDIEntry(DW_AT_type, DW_FORM_ref4,
-                     NewType(Context, cast<TypeDesc>(Elements[0]), Unit));
+                     NewType(Context, dyn_cast<TypeDesc>(Elements[0]), Unit));
       
       // Add arguments.
       for(unsigned i = 1, N = Elements.size(); i < N; ++i) {
