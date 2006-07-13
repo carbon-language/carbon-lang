@@ -608,8 +608,8 @@ class MForm_2<bits<6> opcode, dag OL, string asmstr,
 class MDForm_1<bits<6> opcode, bits<3> xo, dag OL, string asmstr,
                InstrItinClass itin, list<dag> pattern>
     : I<opcode, OL, asmstr, itin> {
-  bits<5> RS;
   bits<5> RA;
+  bits<5> RS;
   bits<6> SH;
   bits<6> MBE;
 
