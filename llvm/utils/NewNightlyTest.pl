@@ -542,7 +542,7 @@ foreach $File (@CVSHistory) {
 	    $ModifiedFiles{$Filename} = 1;
 	    $UsersCommitted{$UID} = 1;
 	} elsif ($Type eq 'A') {   # Added
-	    $Addediles{$Filename} = 1;
+	    $AddedFiles{$Filename} = 1;
 	    $UsersCommitted{$UID} = 1;
 	} elsif ($Type eq 'R') {   # Removed
 	    $RemovedFiles{$Filename} = 1;
@@ -569,7 +569,7 @@ my $UserUpdateList = join "\n", sort keys %UsersUpdated;
 #
 ##############################################################
 if (!$NOCHECKOUT && !$NOBUILD) {
-    my $EXTRAFLAGS = "--enable-spec --with-objroot=.$LLVMTESTCONFIGARGS";
+    my $EXTRAFLAGS = "--enable-spec --with-objroot=.";
     if ( $VERBOSE )
     {
         print "CONFIGURE STAGE:\n";
@@ -766,18 +766,18 @@ if (!$BuildError && $patrickjenkins) {
     if ( $VERBOSE ) {
 	print "SingleSource TEST STAGE\n";
     }
-    ($SingleSourceProgramsTable, $singlesource_llcbeta_options) = TestDirectory("SingleSource");
+    ($SingleSourceProgramsTable, $llcbeta_options) = TestDirectory("SingleSource");
     WriteFile "$Prefix-singlesourceprogramstable.txt", $SingleSourceProgramsTable;
     if ( $VERBOSE ) {
 	print "MultiSource TEST STAGE\n";
     }
-    ($MultiSourceProgramsTable, $multisource_llcbeta_options) = TestDirectory("MultiSource");
+    ($MultiSourceProgramsTable, $llcbeta_options) = TestDirectory("MultiSource");
     WriteFile "$Prefix-multisourceprogramstable.txt", $MultiSourceProgramsTable;
     if ( ! $NOEXTERNALS ) {
 	if ( $VERBOSE ) {
 	    print "External TEST STAGE\n";
 	}
-	($ExternalProgramsTable, $externalsource_llcbeta_options) = TestDirectory("External");
+	($ExternalProgramsTable, llcbeta_options) = TestDirectory("External");
 	WriteFile "$Prefix-externalprogramstable.txt", $ExternalProgramsTable;
 	system "cat $Prefix-singlesourceprogramstable.txt $Prefix-multisourceprogramstable.txt ".
 	    " $Prefix-externalprogramstable.txt | sort > $Prefix-Tests.txt";
@@ -1025,6 +1025,6 @@ else{
 #
 ##############################################################
 system ( "$NICE rm -rf $BuildDir") if (!$NOCHECKOUT and !$NOREMOVE);
-system ( "$NICE rm -rf $WebDir") if (!$NOCHECKOUT and !$NOREMOVE and !NOREMOVERESULTS);
+system ( "$NICE rm -rf $WebDir") if (!$NOCHECKOUT and !$NOREMOVE and !$NOREMOVERESULTS);
 
 
