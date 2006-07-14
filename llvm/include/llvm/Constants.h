@@ -614,6 +614,11 @@ public:
   /// getOpcodeName - Return a string representation for an opcode.
   const char *getOpcodeName() const;
 
+  /// getWithOperandReplaced - Return a constant expression identical to this
+  /// one, but with the specified operand set to the specified value.
+  Constant *getWithOperandReplaced(unsigned OpNo, Constant *Op) const;
+  
+  
   virtual void destroyConstant();
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);
 
