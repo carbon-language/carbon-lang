@@ -44,6 +44,10 @@ AsmWriterFlavor("x86-asm-syntax",
 #endif
                 );
 
+// Out of line virtual function to home classes.
+void X86DwarfWriter::virtfn() {}
+
+
 /// doInitialization
 bool X86SharedAsmPrinter::doInitialization(Module &M) {
   PrivateGlobalPrefix = ".L";

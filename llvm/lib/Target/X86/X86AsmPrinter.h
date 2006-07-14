@@ -32,25 +32,23 @@ extern Statistic<> EmittedInsts;
 /// X86DwarfWriter - Dwarf debug info writer customized for Darwin/Mac OS X
 ///
 struct X86DwarfWriter : public DwarfWriter {
- // Ctor.
-X86DwarfWriter(std::ostream &o, AsmPrinter *ap)
-  : DwarfWriter(o, ap)
-    {
-      needsSet = true;
-      DwarfAbbrevSection = ".section __DWARFA,__debug_abbrev";
-      DwarfInfoSection = ".section __DWARFA,__debug_info";
-      DwarfLineSection = ".section __DWARFA,__debug_line";
-      DwarfFrameSection = ".section __DWARFA,__debug_frame";
-      DwarfPubNamesSection = ".section __DWARFA,__debug_pubnames";
-      DwarfPubTypesSection = ".section __DWARFA,__debug_pubtypes";
-      DwarfStrSection = ".section __DWARFA,__debug_str";
-      DwarfLocSection = ".section __DWARFA,__debug_loc";
-      DwarfARangesSection = ".section __DWARFA,__debug_aranges";
-      DwarfRangesSection = ".section __DWARFA,__debug_ranges";
-      DwarfMacInfoSection = ".section __DWARFA,__debug_macinfo";
-      TextSection = ".text";
-       DataSection = ".data";
-    }
+  X86DwarfWriter(std::ostream &o, AsmPrinter *ap) : DwarfWriter(o, ap) {
+    needsSet = true;
+    DwarfAbbrevSection = ".section __DWARFA,__debug_abbrev";
+    DwarfInfoSection = ".section __DWARFA,__debug_info";
+    DwarfLineSection = ".section __DWARFA,__debug_line";
+    DwarfFrameSection = ".section __DWARFA,__debug_frame";
+    DwarfPubNamesSection = ".section __DWARFA,__debug_pubnames";
+    DwarfPubTypesSection = ".section __DWARFA,__debug_pubtypes";
+    DwarfStrSection = ".section __DWARFA,__debug_str";
+    DwarfLocSection = ".section __DWARFA,__debug_loc";
+    DwarfARangesSection = ".section __DWARFA,__debug_aranges";
+    DwarfRangesSection = ".section __DWARFA,__debug_ranges";
+    DwarfMacInfoSection = ".section __DWARFA,__debug_macinfo";
+    TextSection = ".text";
+    DataSection = ".data";
+  }
+  virtual void virtfn();  // out of line virtual fn.
 };
 
 struct X86SharedAsmPrinter : public AsmPrinter {
