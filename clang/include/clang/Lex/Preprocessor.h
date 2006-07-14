@@ -375,6 +375,13 @@ public:
   /// if an internal buffer is returned.
   unsigned getSpelling(const LexerToken &Tok, const char *&Buffer) const;
   
+  
+  /// CreateString - Plop the specified string into a scratch buffer and return
+  /// a location for it.  If specified, the source location provides a source
+  /// location for the token.
+  SourceLocation CreateString(const char *Buf, unsigned Len,
+                              SourceLocation SourceLoc = SourceLocation());
+  
   /// DumpToken - Print the token to stderr, used for debugging.
   ///
   void DumpToken(const LexerToken &Tok, bool DumpFlags = false) const;
