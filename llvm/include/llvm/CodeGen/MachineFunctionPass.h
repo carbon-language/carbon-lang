@@ -33,10 +33,11 @@ struct MachineFunctionPass : public FunctionPass {
 
   // FIXME: This pass should declare that the pass does not invalidate any LLVM
   // passes.
-
   virtual bool runOnFunction(Function &F) {
     return runOnMachineFunction(MachineFunction::get(&F));
   }
+  
+  virtual void virtfn();  // out of line virtual fn to give class a home.
 };
 
 } // End llvm namespace

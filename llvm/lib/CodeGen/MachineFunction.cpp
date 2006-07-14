@@ -38,6 +38,8 @@ using namespace llvm;
 static AnnotationID MF_AID(
   AnnotationManager::getID("CodeGen::MachineCodeForFunction"));
 
+// Out of line virtual function to home classes.
+void MachineFunctionPass::virtfn() {}
 
 namespace {
   struct VISIBILITY_HIDDEN Printer : public MachineFunctionPass {
