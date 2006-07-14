@@ -98,6 +98,14 @@ public:
   void addArgument(IdentifierInfo *Arg) {
     Arguments.push_back(Arg);
   }
+  
+  /// getArgumentNum - Return the argument number of the specified identifier,
+  /// or -1 if the identifier is not a formal argument identifier.
+  int getArgumentNum(IdentifierInfo *Arg) {
+    for (unsigned i = 0, e = Arguments.size(); i != e; ++i)
+      if (Arguments[i] == Arg) return i;
+    return -1;
+  }
 
   /// Arguments - The list of arguments for a function-like macro.  This can be
   /// empty, for, e.g. "#define X()".
@@ -136,6 +144,10 @@ public:
   const LexerToken &getReplacementToken(unsigned Tok) const {
     assert(Tok < ReplacementTokens.size() && "Invalid token #");
     return ReplacementTokens[Tok];
+  }
+  
+  const std::vector<LexerToken> &getReplacementTokens() const {
+    return ReplacementTokens;
   }
 
   /// AddTokenToBody - Add the specified token to the replacement text for the

@@ -27,6 +27,10 @@ namespace clang {
 /// the formal arguments specified to a function-like macro invocation.
 class MacroFormalArgs {
   std::vector<std::vector<LexerToken> > ArgTokens;
+  
+  /// StringifiedArgs - This contains arguments in 'stringified' form.  If the
+  /// stringified form of an argument has not yet been computed, this is empty.
+  std::vector<LexerToken> StringifiedArgs;
 public:
   MacroFormalArgs(const MacroInfo *MI);
   
@@ -36,6 +40,10 @@ public:
     ArgTokens.push_back(std::vector<LexerToken>());
     ArgTokens.back().swap(ArgToks);
   }
+  
+  /// getStringifiedArgument - Compute, cache, and return the specified argument
+  /// that has been 'stringified' as required by the # operator.
+  const LexerToken &getStringifiedArgument(unsigned ArgNo, Preprocessor &PP);
   
   /// getNumArguments - Return the number of arguments passed into this macro
   /// invocation.
@@ -50,7 +58,7 @@ class MacroExpander {
   /// Macro - The macro we are expanding from.
   ///
   MacroInfo &Macro;
-  
+
   /// FormalArgs - The formal arguments specified for a function-like macro, or
   /// null.  The MacroExpander owns the pointed-to object.
   MacroFormalArgs *FormalArgs;
@@ -58,8 +66,13 @@ class MacroExpander {
   /// PP - The current preprocessor object we are expanding for.
   ///
   Preprocessor &PP;
+
+  /// MacroTokens - This is the pointer to the list of tokens that the macro is
+  /// defined to, with arguments expanded for function-like macros.
+  const std::vector<LexerToken> *MacroTokens;
   
   /// CurToken - This is the next token that Lex will return.
+  ///
   unsigned CurToken;
   
   /// InstantiateLoc - The source location where this macro was instantiated.
@@ -77,10 +90,7 @@ public:
   /// arguments.  Note that this ctor takes ownership of the FormalArgs pointer.
   MacroExpander(LexerToken &Tok, MacroFormalArgs *FormalArgs,
                 Preprocessor &pp);
-  ~MacroExpander() {
-    // MacroExpander owns its formal arguments.
-    delete FormalArgs;
-  }
+  ~MacroExpander();
   
   /// isNextTokenLParen - If the next token lexed will pop this macro off the
   /// expansion stack, return 2.  If the next unexpanded token is a '(', return
@@ -91,6 +101,17 @@ public:
 
   /// Lex - Lex and return a token from this macro stream.
   void Lex(LexerToken &Tok);
+  
+private:
+  /// isAtEnd - Return true if the next lex call will pop this macro off the
+  /// include stack.
+  bool isAtEnd() const {
+    return CurToken == MacroTokens->size();
+  }
+  
+  /// Expand the arguments of a function-like macro so that we can quickly
+  /// return preexpanded tokens from MacroTokens.
+  void ExpandFunctionArguments();
 };
 
 }  // end namespace llvm
