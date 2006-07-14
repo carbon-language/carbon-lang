@@ -358,8 +358,36 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L) {
 
                 // Rewrite any users of the computed value outside of the loop
                 // with the newly computed value.
-                for (unsigned i = 0, e = ExtraLoopUsers.size(); i != e; ++i)
-                  ExtraLoopUsers[i]->replaceUsesOfWith(I, NewVal);
+                for (unsigned i = 0, e = ExtraLoopUsers.size(); i != e; ++i) {
+                  PHINode* PN = dyn_cast<PHINode>(ExtraLoopUsers[i]);
+                  if (PN && PN->getNumOperands() == 2 &&
+                      !L->contains(PN->getParent())) {
+                    // We're dealing with an LCSSA Phi.  Handle it specially.
+                    Instruction* LCSSAInsertPt = BlockToInsertInto->begin();
+                    
+                    Instruction* NewInstr = dyn_cast<Instruction>(NewVal);
+                    if (NewInstr && !isa<PHINode>(NewInstr) &&
+                        !L->contains(NewInstr->getParent()))
+                      for (unsigned j = 0; j < NewInstr->getNumOperands(); ++j){
+                        Instruction* PredI = 
+                                 dyn_cast<Instruction>(NewInstr->getOperand(j));
+                        if (PredI && L->contains(PredI->getParent())) {
+                          PHINode* NewLCSSA = new PHINode(PredI->getType(),
+                                                    PredI->getName() + ".lcssa",
+                                                    LCSSAInsertPt);
+                          NewLCSSA->addIncoming(PredI, 
+                                     BlockToInsertInto->getSinglePredecessor());
+                        
+                          NewInstr->replaceUsesOfWith(PredI, NewLCSSA);
+                        }
+                      }
+                    
+                    PN->replaceAllUsesWith(NewVal);
+                    PN->eraseFromParent();
+                  } else {
+                    ExtraLoopUsers[i]->replaceUsesOfWith(I, NewVal);
+                  }
+                }
 
                 // If this instruction is dead now, schedule it to be removed.
                 if (I->use_empty())
