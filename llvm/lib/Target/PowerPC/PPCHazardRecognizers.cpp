@@ -170,6 +170,8 @@ getHazardType(SDNode *Node) {
     default: assert(0 && "Unknown load!");
     case PPC::LBZ:
     case PPC::LBZX:
+    case PPC::LBZ8:
+    case PPC::LBZX8:
     case PPC::LVEBX:
       LoadSize = 1;
       break;
@@ -179,6 +181,10 @@ getHazardType(SDNode *Node) {
     case PPC::LHZX:
     case PPC::LVEHX:
     case PPC::LHBRX:
+    case PPC::LHA8:
+    case PPC::LHAX8:
+    case PPC::LHZ8:
+    case PPC::LHZX8:
       LoadSize = 2;
       break;
     case PPC::LFS:
@@ -190,6 +196,8 @@ getHazardType(SDNode *Node) {
     case PPC::LWAX:
     case PPC::LVEWX:
     case PPC::LWBRX:
+    case PPC::LWZ8:
+    case PPC::LWZX8:
       LoadSize = 4;
       break;
     case PPC::LFD:
@@ -227,13 +235,17 @@ void PPCHazardRecognizer970::EmitInstruction(SDNode *Node) {
     unsigned ThisStoreSize;
     switch (Opcode) {
     default: assert(0 && "Unknown store instruction!");
-    case PPC::STBX:
     case PPC::STB:
+    case PPC::STBX:
+    case PPC::STB8:
+    case PPC::STBX8:
     case PPC::STVEBX:
       ThisStoreSize = 1;
       break;
-    case PPC::STHX:
     case PPC::STH:
+    case PPC::STHX:
+    case PPC::STH8:
+    case PPC::STHX8:
     case PPC::STVEHX:
     case PPC::STHBRX:
       ThisStoreSize = 2;
@@ -244,6 +256,8 @@ void PPCHazardRecognizer970::EmitInstruction(SDNode *Node) {
     case PPC::STWX:
     case PPC::STWUX:
     case PPC::STW:
+    case PPC::STW8:
+    case PPC::STWX8:
     case PPC::STVEWX:
     case PPC::STFIWX:
     case PPC::STWBRX:
