@@ -71,41 +71,10 @@ Value *llvm::MapValue(const Value *V, std::map<const Value*, Value*> &VM) {
       return VMSlot = C;
 
     } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
-      if (CE->getOpcode() == Instruction::Cast) {
-        Constant *MV = cast<Constant>(MapValue(CE->getOperand(0), VM));
-        return VMSlot = ConstantExpr::getCast(MV, CE->getType());
-      } else if (CE->getOpcode() == Instruction::GetElementPtr) {
-        std::vector<Constant*> Idx;
-        Constant *MV = cast<Constant>(MapValue(CE->getOperand(0), VM));
-        for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i)
-          Idx.push_back(cast<Constant>(MapValue(CE->getOperand(i), VM)));
-        return VMSlot = ConstantExpr::getGetElementPtr(MV, Idx);
-      } else if (CE->getOpcode() == Instruction::Select) {
-        Constant *MV1 = cast<Constant>(MapValue(CE->getOperand(0), VM));
-        Constant *MV2 = cast<Constant>(MapValue(CE->getOperand(1), VM));
-        Constant *MV3 = cast<Constant>(MapValue(CE->getOperand(2), VM));
-        return VMSlot = ConstantExpr::getSelect(MV1, MV2, MV3);
-      } else if (CE->getOpcode() == Instruction::InsertElement) {
-        Constant *MV1 = cast<Constant>(MapValue(CE->getOperand(0), VM));
-        Constant *MV2 = cast<Constant>(MapValue(CE->getOperand(1), VM));
-        Constant *MV3 = cast<Constant>(MapValue(CE->getOperand(2), VM));
-        return VMSlot = ConstantExpr::getInsertElement(MV1, MV2, MV3);
-      } else if (CE->getOpcode() == Instruction::ExtractElement) {
-        Constant *MV1 = cast<Constant>(MapValue(CE->getOperand(0), VM));
-        Constant *MV2 = cast<Constant>(MapValue(CE->getOperand(1), VM));
-        return VMSlot = ConstantExpr::getExtractElement(MV1, MV2);
-      } else if (CE->getOpcode() == Instruction::ShuffleVector) {
-        Constant *MV1 = cast<Constant>(MapValue(CE->getOperand(0), VM));
-        Constant *MV2 = cast<Constant>(MapValue(CE->getOperand(1), VM));
-        Constant *MV3 = cast<Constant>(CE->getOperand(2));
-        return VMSlot = ConstantExpr::getShuffleVector(MV1, MV2, MV3);
-      } else {
-        assert(CE->getNumOperands() == 2 && "Must be binary operator?");
-        Constant *MV1 = cast<Constant>(MapValue(CE->getOperand(0), VM));
-        Constant *MV2 = cast<Constant>(MapValue(CE->getOperand(1), VM));
-        return VMSlot = ConstantExpr::get(CE->getOpcode(), MV1, MV2);
-      }
-
+      std::vector<Constant*> Ops;
+      for (unsigned i = 0, e = CE->getNumOperands(); i != e; ++i)
+        Ops.push_back(cast<Constant>(MapValue(CE->getOperand(i), VM)));
+      return VMSlot = CE->getWithOperands(Ops);
     } else if (ConstantPacked *CP = dyn_cast<ConstantPacked>(C)) {
       for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i) {
         Value *MV = MapValue(CP->getOperand(i), VM);

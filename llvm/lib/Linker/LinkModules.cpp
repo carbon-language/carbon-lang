@@ -295,57 +295,10 @@ static Value *RemapOperand(const Value *In,
         Operands[i] = cast<Constant>(RemapOperand(CP->getOperand(i), ValueMap));
       Result = ConstantPacked::get(Operands);
     } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CPV)) {
-      if (CE->getOpcode() == Instruction::GetElementPtr) {
-        Value *Ptr = RemapOperand(CE->getOperand(0), ValueMap);
-        std::vector<Constant*> Indices;
-        Indices.reserve(CE->getNumOperands()-1);
-        for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i)
-          Indices.push_back(cast<Constant>(RemapOperand(CE->getOperand(i),
-                                                        ValueMap)));
-
-        Result = ConstantExpr::getGetElementPtr(cast<Constant>(Ptr), Indices);
-      } else if (CE->getOpcode() == Instruction::ExtractElement) {
-        Value *Ptr = RemapOperand(CE->getOperand(0), ValueMap);
-        Value *Idx = RemapOperand(CE->getOperand(1), ValueMap);
-        Result = ConstantExpr::getExtractElement(cast<Constant>(Ptr),
-                                                 cast<Constant>(Idx));
-      } else if (CE->getOpcode() == Instruction::InsertElement) {
-        Value *Ptr = RemapOperand(CE->getOperand(0), ValueMap);
-        Value *Elt = RemapOperand(CE->getOperand(1), ValueMap);
-        Value *Idx = RemapOperand(CE->getOperand(2), ValueMap);
-        Result = ConstantExpr::getInsertElement(cast<Constant>(Ptr),
-                                                cast<Constant>(Elt),
-                                                cast<Constant>(Idx));
-      } else if (CE->getOpcode() == Instruction::ShuffleVector) {
-        Value *V1 = RemapOperand(CE->getOperand(0), ValueMap);
-        Value *V2 = RemapOperand(CE->getOperand(1), ValueMap);
-        Result = ConstantExpr::getShuffleVector(cast<Constant>(V1),
-                                                cast<Constant>(V2),
-                                             cast<Constant>(CE->getOperand(2)));
-      } else if (CE->getNumOperands() == 1) {
-        // Cast instruction
-        assert(CE->getOpcode() == Instruction::Cast);
-        Value *V = RemapOperand(CE->getOperand(0), ValueMap);
-        Result = ConstantExpr::getCast(cast<Constant>(V), CE->getType());
-      } else if (CE->getNumOperands() == 3) {
-        // Select instruction
-        assert(CE->getOpcode() == Instruction::Select);
-        Value *V1 = RemapOperand(CE->getOperand(0), ValueMap);
-        Value *V2 = RemapOperand(CE->getOperand(1), ValueMap);
-        Value *V3 = RemapOperand(CE->getOperand(2), ValueMap);
-        Result = ConstantExpr::getSelect(cast<Constant>(V1), cast<Constant>(V2),
-                                         cast<Constant>(V3));
-      } else if (CE->getNumOperands() == 2) {
-        // Binary operator...
-        Value *V1 = RemapOperand(CE->getOperand(0), ValueMap);
-        Value *V2 = RemapOperand(CE->getOperand(1), ValueMap);
-
-        Result = ConstantExpr::get(CE->getOpcode(), cast<Constant>(V1),
-                                   cast<Constant>(V2));
-      } else {
-        assert(0 && "Unknown constant expr type!");
-      }
-
+      std::vector<Constant*> Ops;
+      for (unsigned i = 0, e = CE->getNumOperands(); i != e; ++i)
+        Ops.push_back(cast<Constant>(RemapOperand(CE->getOperand(i),ValueMap)));
+      Result = CE->getWithOperands(Ops);
     } else {
       assert(0 && "Unknown type of derived type constant value!");
     }
