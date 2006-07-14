@@ -530,3 +530,12 @@ _foo:
         or r2, r2, r4
         stw r2, 0(r3)
         blr
+
+===-------------------------------------------------------------------------===
+
+On PPC64, this results in a truncate followed by a truncstore.  These should
+be folded together.
+
+unsigned short G;
+void foo(unsigned long H) { G = H; }
+
