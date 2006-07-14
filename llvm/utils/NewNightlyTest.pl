@@ -138,7 +138,10 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
 	$CONFIGUREARGS .= "--with-externals=$ARGV[0]"; shift; next;
     }
     if (/^-nickname$/)   	{ $nickname = "$ARGV[0]"; shift; next; }
-    if (/^-gccpath/)         { $CONFIGUREARGS .= " CC=$ARGV[0]/gcc CXX=$ARGV[0]/g++"; shift; next;}
+    if (/^-gccpath/)         { $CONFIGUREARGS .= " CC=$ARGV[0]/gcc CXX=$ARGV[0]/g++"; 
+                               $GCCPATH=$ARGV[0]; 
+                               shift;  
+                               next;}
     if (/^-cvstag/)          { $CVSCOOPT .= " -r $ARGV[0]"; shift; next; } else{ $CVSCOOPT="";}
     if (/^-target/)          {
 	$CONFIGUREARGS .= " --target=$ARGV[0]"; shift; next;
@@ -953,7 +956,12 @@ my $dejagnulog_full;
 @DEJAGNULOG_FULL = ReadFile "$DejagnuTestsLog";
 $dejagnulog_full = join("\n", @DEJAGNULOG_FULL);
 
-my $gcc_version_long = `gcc --version`;
+if($GCCPATH){
+  my $gcc_version_long = `$ARGV[0]/gcc --version`;
+}
+else{
+  my $gcc_version_long = `gcc --version`;
+}
 @GCC_VERSION = split "\n", $gcc_version_long;
 my $gcc_version = $GCC_VERSION[0];
 
