@@ -61,6 +61,9 @@ Parser Actions:
  * All.
  * Need some way to effeciently either work in 'callback'/devkit mode or in
    default AST building mode.
+ * Would like to either lazily resolve types [refactoring] or aggressively
+   resolve them [c compiler].  Need to know whether something is a type or not
+   to compile, but don't need to know what it is.
 
 Fast #Import:
  * All.
