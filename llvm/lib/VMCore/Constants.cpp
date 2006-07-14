@@ -504,11 +504,32 @@ Constant *ConstantExpr::getWithOperandReplaced(unsigned OpNo,
   assert(OpNo < getNumOperands() && "Operand num is out of range!");
   assert(Op->getType() == getOperand(OpNo)->getType() &&
          "Replacing operand with value of different type!");
-  if (getOperand(OpNo) == Op) return const_cast<ConstantExpr*>(this);
+  if (getOperand(OpNo) == Op)
+    return const_cast<ConstantExpr*>(this);
   
+  Constant *Op0, *Op1, *Op2;
   switch (getOpcode()) {
   case Instruction::Cast:
     return ConstantExpr::getCast(Op, getType());
+  case Instruction::Select:
+    Op0 = (OpNo == 0) ? Op : getOperand(0);
+    Op1 = (OpNo == 1) ? Op : getOperand(1);
+    Op2 = (OpNo == 2) ? Op : getOperand(2);
+    return ConstantExpr::getSelect(Op0, Op1, Op2);
+  case Instruction::InsertElement:
+    Op0 = (OpNo == 0) ? Op : getOperand(0);
+    Op1 = (OpNo == 1) ? Op : getOperand(1);
+    Op2 = (OpNo == 2) ? Op : getOperand(2);
+    return ConstantExpr::getInsertElement(Op0, Op1, Op2);
+  case Instruction::ExtractElement:
+    Op0 = (OpNo == 0) ? Op : getOperand(0);
+    Op1 = (OpNo == 1) ? Op : getOperand(1);
+    return ConstantExpr::getExtractElement(Op0, Op1);
+  case Instruction::ShuffleVector:
+    Op0 = (OpNo == 0) ? Op : getOperand(0);
+    Op1 = (OpNo == 1) ? Op : getOperand(1);
+    Op2 = (OpNo == 2) ? Op : getOperand(2);
+    return ConstantExpr::getShuffleVector(Op0, Op1, Op2);
   case Instruction::GetElementPtr: {
     std::vector<Constant*> Ops;
     for (unsigned i = 1, e = getNumOperands(); i != e; ++i)
@@ -518,33 +539,47 @@ Constant *ConstantExpr::getWithOperandReplaced(unsigned OpNo,
     Ops[OpNo-1] = Op;
     return ConstantExpr::getGetElementPtr(getOperand(0), Ops);
   }
-  case Instruction::Select:
-    if (OpNo == 0)
-      return ConstantExpr::getSelect(Op, getOperand(1), getOperand(2));
-    if (OpNo == 1)
-      return ConstantExpr::getSelect(getOperand(0), Op, getOperand(2));
-    return ConstantExpr::getSelect(getOperand(0), getOperand(1), Op);
-  case Instruction::InsertElement:
-    if (OpNo == 0)
-      return ConstantExpr::getInsertElement(Op, getOperand(1), getOperand(2));
-    if (OpNo == 1)
-      return ConstantExpr::getInsertElement(getOperand(0), Op, getOperand(2));
-    return ConstantExpr::getInsertElement(getOperand(0), getOperand(1), Op);
-  case Instruction::ExtractElement:
-    if (OpNo == 0)
-      return ConstantExpr::getExtractElement(Op, getOperand(1));
-    return ConstantExpr::getExtractElement(getOperand(0), Op);
-  case Instruction::ShuffleVector:
-    if (OpNo == 0)
-      return ConstantExpr::getShuffleVector(Op, getOperand(1), getOperand(2));
-    if (OpNo == 1)
-      return ConstantExpr::getShuffleVector(getOperand(0), Op, getOperand(2));
-    return ConstantExpr::getShuffleVector(getOperand(0), getOperand(1), Op);
   default:
     assert(getNumOperands() == 2 && "Must be binary operator?");
-    if (OpNo == 0)
-      return ConstantExpr::get(getOpcode(), Op, getOperand(1));
-    return ConstantExpr::get(getOpcode(), getOperand(0), Op);
+    Op0 = (OpNo == 0) ? Op : getOperand(0);
+    Op1 = (OpNo == 1) ? Op : getOperand(1);
+    return ConstantExpr::get(getOpcode(), Op0, Op1);
+  }
+}
+
+/// getWithOperands - This returns the current constant expression with the
+/// operands replaced with the specified values.  The specified operands must
+/// match count and type with the existing ones.
+Constant *ConstantExpr::
+getWithOperands(const std::vector<Constant*> &Ops) const {
+  assert(Ops.size() == getNumOperands() && "Operand count mismatch!");
+  bool AnyChange = false;
+  for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
+    assert(Ops[i]->getType() == getOperand(i)->getType() &&
+           "Operand type mismatch!");
+    AnyChange |= Ops[i] != getOperand(i);
+  }
+  if (!AnyChange)  // No operands changed, return self.
+    return const_cast<ConstantExpr*>(this);
+
+  switch (getOpcode()) {
+  case Instruction::Cast:
+    return ConstantExpr::getCast(Ops[0], getType());
+  case Instruction::Select:
+    return ConstantExpr::getSelect(Ops[0], Ops[1], Ops[2]);
+  case Instruction::InsertElement:
+    return ConstantExpr::getInsertElement(Ops[0], Ops[1], Ops[2]);
+  case Instruction::ExtractElement:
+    return ConstantExpr::getExtractElement(Ops[0], Ops[1]);
+  case Instruction::ShuffleVector:
+    return ConstantExpr::getShuffleVector(Ops[0], Ops[1], Ops[2]);
+  case Instruction::GetElementPtr: {
+    std::vector<Constant*> ActualOps(Ops.begin()+1, Ops.end());
+    return ConstantExpr::getGetElementPtr(Ops[0], ActualOps);
+  }
+  default:
+    assert(getNumOperands() == 2 && "Must be binary operator?");
+    return ConstantExpr::get(getOpcode(), Ops[0], Ops[1]);
   }
 }
 
