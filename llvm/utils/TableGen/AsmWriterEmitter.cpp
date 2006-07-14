@@ -15,6 +15,7 @@
 #include "AsmWriterEmitter.h"
 #include "CodeGenTarget.h"
 #include "Record.h"
+#include "llvm/ADT/StringExtras.h"
 #include <algorithm>
 #include <ostream>
 using namespace llvm;
@@ -346,49 +347,81 @@ void AsmWriterEmitter::run(std::ostream &O) {
     if (!I->second.AsmString.empty())
       Instructions.push_back(AsmWriterInst(I->second, Variant));
 
-  // If all of the instructions start with a constant string (a very very common
-  // occurance), emit all of the constant strings as a big table lookup instead
-  // of requiring a switch for them.
-  bool AllStartWithString = true;
-
-  for (unsigned i = 0, e = Instructions.size(); i != e; ++i)
-    if (Instructions[i].Operands.empty() ||
-        Instructions[i].Operands[0].OperandType !=
-                          AsmWriterOperand::isLiteralTextOperand) {
-      AllStartWithString = false;
-      break;
-    }
-
   std::vector<const CodeGenInstruction*> NumberedInstructions;
   Target.getInstructionsByEnumValue(NumberedInstructions);
   
-  if (AllStartWithString) {
-    // Compute the CodeGenInstruction -> AsmWriterInst mapping.  Note that not
-    // all machine instructions are necessarily being printed, so there may be
-    // target instructions not in this map.
-    std::map<const CodeGenInstruction*, AsmWriterInst*> CGIAWIMap;
-    for (unsigned i = 0, e = Instructions.size(); i != e; ++i)
-      CGIAWIMap.insert(std::make_pair(Instructions[i].CGI, &Instructions[i]));
+  // Compute the CodeGenInstruction -> AsmWriterInst mapping.  Note that not
+  // all machine instructions are necessarily being printed, so there may be
+  // target instructions not in this map.
+  std::map<const CodeGenInstruction*, AsmWriterInst*> CGIAWIMap;
+  for (unsigned i = 0, e = Instructions.size(); i != e; ++i)
+    CGIAWIMap.insert(std::make_pair(Instructions[i].CGI, &Instructions[i]));
 
-    // Emit a table of constant strings.
-    O << "  static const char * const OpStrs[] = {\n";
-    for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i) {
-      AsmWriterInst *AWI = CGIAWIMap[NumberedInstructions[i]];
-      if (AWI == 0) {
-        // Something not handled by the asmwriter printer.
-        O << "    0,\t// ";
-      } else {
-        O << "    \"" << AWI->Operands[0].Str << "\",\t// ";
-        // Nuke the string from the operand list.  It is now handled!
-        AWI->Operands.erase(AWI->Operands.begin());
+  // Build an aggregate string, and build a table of offsets into it.
+  std::map<std::string, unsigned> StringOffset;
+  std::string AggregateString;
+  AggregateString += '\0';
+  
+  O << "  static unsigned short OpStrIdxs[] = {\n";
+  for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i) {
+    AsmWriterInst *AWI = CGIAWIMap[NumberedInstructions[i]];
+    unsigned Idx;
+    if (AWI == 0 || AWI->Operands[0].Str.empty()) {
+      // Something not handled by the asmwriter printer.
+      Idx = 0;
+    } else {
+      unsigned &Entry = StringOffset[AWI->Operands[0].Str];
+      if (Entry == 0) {
+        // Add the string to the aggregate if this is the first time found.
+        Entry = AggregateString.size();
+        std::string Str = AWI->Operands[0].Str;
+        UnescapeString(Str);
+        AggregateString += Str;
+        AggregateString += '\0';
       }
-      O << NumberedInstructions[i]->TheDef->getName() << "\n";
+      Idx = Entry;
+      assert(Entry < 65536 && "Must not use unsigned short for table idx!");
+
+      // Nuke the string from the operand list.  It is now handled!
+      AWI->Operands.erase(AWI->Operands.begin());
     }
-    O << "  };\n\n"
-      << "  // Emit the opcode for the instruction.\n"
-      << "  if (const char *AsmStr = OpStrs[MI->getOpcode()])\n"
-      << "    O << AsmStr;\n\n";
+    O << "    " << Idx << ",\t// " << NumberedInstructions[i]->TheDef->getName()
+      << "\n";
   }
+  O << "  };\n\n";
+  
+  // Emit the string itself.
+  O << "  const char *AsmStrs = \n    \"";
+  unsigned CharsPrinted = 0;
+  EscapeString(AggregateString);
+  for (unsigned i = 0, e = AggregateString.size(); i != e; ++i) {
+    if (CharsPrinted > 70) {
+      O << "\"\n    \"";
+      CharsPrinted = 0;
+    }
+    O << AggregateString[i];
+    ++CharsPrinted;
+    
+    // Print escape sequences all together.
+    if (AggregateString[i] == '\\') {
+      assert(i+1 < AggregateString.size() && "Incomplete escape sequence!");
+      if (isdigit(AggregateString[i+1])) {
+        assert(isdigit(AggregateString[i+2]) && isdigit(AggregateString[i+3]) &&
+               "Expected 3 digit octal escape!");
+        O << AggregateString[++i];
+        O << AggregateString[++i];
+        O << AggregateString[++i];
+        CharsPrinted += 3;
+      } else {
+        O << AggregateString[++i];
+        ++CharsPrinted;
+      }
+    }
+  }
+  O << "\";\n\n";
+
+  O << "  // Emit the opcode for the instruction.\n"
+    << "  O << AsmStrs+OpStrIdxs[MI->getOpcode()];\n\n";
 
   // Because this is a vector we want to emit from the end.  Reverse all of the
   // elements in the vector.
