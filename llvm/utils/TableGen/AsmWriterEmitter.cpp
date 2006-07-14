@@ -362,7 +362,7 @@ void AsmWriterEmitter::run(std::ostream &O) {
   std::string AggregateString;
   AggregateString += '\0';
   
-  O << "  static unsigned short OpStrIdxs[] = {\n";
+  O << "  static const unsigned short OpStrIdxs[] = {\n";
   for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i) {
     AsmWriterInst *AWI = CGIAWIMap[NumberedInstructions[i]];
     unsigned Idx;
