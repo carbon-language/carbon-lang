@@ -129,6 +129,15 @@ static inline bool StringsEqualNoCase(const std::string &LHS,
 std::string getToken(std::string &Source,
                      const char *Delimiters = " \t\n\v\f\r");
 
+/// UnescapeString - Modify the argument string, turning two character sequences
+/// like '\\' 'n' into '\n'.  This handles: \e \a \b \f \n \r \t \v \' \\ and
+/// \num (where num is a 1-3 byte octal value).
+void UnescapeString(std::string &Str);
+
+/// EscapeString - Modify the argument string, turning '\\' and anything that
+/// doesn't satisfy std::isprint into an escape sequence.
+void EscapeString(std::string &Str);
+
 } // End llvm namespace
 
 #endif
