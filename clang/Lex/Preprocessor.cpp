@@ -1609,15 +1609,13 @@ bool Preprocessor::ReadMacroDefinitionArgList(MacroInfo *MI) {
 
       // If this is already used as an argument, it is used multiple times (e.g.
       // #define X(A,A.
-      if (II->isMacroArg()) {  // C99 6.10.3p6
+      if (MI->getArgumentNum(II) != -1) {  // C99 6.10.3p6
         Diag(Tok, diag::err_pp_duplicate_name_in_arg_list, II->getName());
         return true;
       }
         
       // Add the argument to the macro info.
       MI->addArgument(II);
-      // Remember it is an argument now.
-      II->setIsMacroArg(true);
       
       // Lex the token after the identifier.
       LexUnexpandedToken(Tok);
@@ -1677,8 +1675,6 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
     // This is a function-like macro definition.  Read the argument list.
     MI->setIsFunctionLike();
     if (ReadMacroDefinitionArgList(MI)) {
-      // Clear the "isMacroArg" flags from all the macro arguments parsed.
-      MI->SetIdentifierIsMacroArgFlags(false);
       // Forget about MI.
       delete MI;
       // Throw away the rest of the line.
@@ -1720,10 +1716,9 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
     LexUnexpandedToken(Tok);
    
     // Not a macro arg identifier?
-    if (!Tok.getIdentifierInfo() || !Tok.getIdentifierInfo()->isMacroArg()) {
+    if (!Tok.getIdentifierInfo() ||
+        MI->getArgumentNum(Tok.getIdentifierInfo()) == -1) {
       Diag(Tok, diag::err_pp_stringize_not_parameter);
-      // Clear the "isMacroArg" flags from all the macro arguments.
-      MI->SetIdentifierIsMacroArgFlags(false);
       delete MI;
       return;
     }
@@ -1735,9 +1730,6 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
     LexUnexpandedToken(Tok);
   }
 
-  // Clear the "isMacroArg" flags from all the macro arguments.
-  MI->SetIdentifierIsMacroArgFlags(false);
-  
   // Check that there is no paste (##) operator at the begining or end of the
   // replacement list.
   unsigned NumTokens = MI->getNumTokens();

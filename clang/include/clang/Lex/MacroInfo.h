@@ -169,10 +169,6 @@ public:
     assert(!IsDisabled && "Cannot disable an already-disabled macro!");
     IsDisabled = true;
   }
-  
-  /// SetIdentifierIsMacroArgFlags - Set or clear the "isMacroArg" flags on the
-  /// identifiers that make up the argument list for this macro.
-  void SetIdentifierIsMacroArgFlags(bool Val) const;
 };
     
 }  // end namespace llvm

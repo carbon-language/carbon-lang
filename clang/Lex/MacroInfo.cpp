@@ -26,13 +26,6 @@ MacroInfo::MacroInfo(SourceLocation DefLoc) : Location(DefLoc) {
   IsUsed = true;
 }
 
-/// SetIdentifierIsMacroArgFlags - Set or clear the "isMacroArg" flags on the
-/// identifiers that make up the argument list for this macro.
-void MacroInfo::SetIdentifierIsMacroArgFlags(bool Val) const {
-  for (arg_iterator I = arg_begin(), E = arg_end(); I != E; ++I)
-    (*I)->setIsMacroArg(Val);
-}
-
 /// isIdenticalTo - Return true if the specified macro definition is equal to
 /// this macro in spelling, arguments, and whitespace.  This is used to emit
 /// duplicate definition warnings.  This implements the rules in C99 6.10.3.
