@@ -2094,11 +2094,15 @@ private:
   /// GeneratedDecl - This is the set of all SDOperand declarations needed for
   /// the set of patterns for each top-level opcode.
   std::set<std::pair<bool, std::string> > &GeneratedDecl;
+  /// TargetOpcodes - The target specific opcodes used by the resulting
+  /// instructions.
+  std::vector<std::string> &TargetOpcodes;
 
   std::string ChainName;
   bool NewTF;
   bool DoReplace;
   unsigned TmpNo;
+  unsigned OpcNo;
   
   void emitCheck(const std::string &S) {
     if (!S.empty())
@@ -2112,15 +2116,20 @@ private:
     assert(!S.empty() && "Invalid declaration");
     GeneratedDecl.insert(std::make_pair(isSDNode, S));
   }
+  void emitOpcode(const std::string &Opc) {
+    TargetOpcodes.push_back(Opc);
+    OpcNo++;
+  }
 public:
   PatternCodeEmitter(DAGISelEmitter &ise, ListInit *preds,
                      TreePatternNode *pattern, TreePatternNode *instr,
                      std::vector<std::pair<bool, std::string> > &gc,
                      std::set<std::pair<bool, std::string> > &gd,
+                     std::vector<std::string> &to,
                      bool dorep)
   : ISE(ise), Predicates(preds), Pattern(pattern), Instruction(instr),
-    GeneratedCode(gc), GeneratedDecl(gd),
-    NewTF(false), DoReplace(dorep), TmpNo(0) {}
+    GeneratedCode(gc), GeneratedDecl(gd), TargetOpcodes(to),
+    NewTF(false), DoReplace(dorep), TmpNo(0), OpcNo(0) {}
 
   /// EmitMatchCode - Emit a matcher for N, going to the label for PatternNo
   /// if the match fails. At this point, we already know that the opcode for N
@@ -2403,12 +2412,11 @@ public:
         case MVT::i32: CastType = "unsigned"; break;
         case MVT::i64: CastType = "uint64_t"; break;
         }
-        emitCode(CastType + " Tmp" + utostr(ResNo) + "C = (" + CastType + 
-                 ")cast<ConstantSDNode>(" + Val + ")->getValue();");
         emitDecl("Tmp" + utostr(ResNo));
         emitCode("Tmp" + utostr(ResNo) + 
-                 " = CurDAG->getTargetConstant(Tmp" + utostr(ResNo) + 
-                 "C, " + getEnumName(N->getTypeNum(0)) + ");");
+                 " = CurDAG->getTargetConstant(((" + CastType +
+                 ") cast<ConstantSDNode>(" + Val + ")->getValue()), " +
+                 getEnumName(N->getTypeNum(0)) + ");");
       } else if (!N->isLeaf() && N->getOperator()->getName() == "texternalsym"){
         Record *Op = OperatorMap[N->getName()];
         // Transform ExternalSymbol to TargetExternalSymbol
@@ -2551,9 +2559,13 @@ public:
 
       if (NodeHasInFlag || NodeHasOutFlag || NodeHasOptInFlag || HasImpInputs)
         emitDecl("InFlag");
-      if (NodeHasOptInFlag)
-        emitCode("bool HasInFlag = "
-             "N.getOperand(N.getNumOperands()-1).getValueType() == MVT::Flag;");
+      if (NodeHasOptInFlag) {
+        // FIXME: This is ugly. We are using a SDNode* in place of a bool.
+        emitDecl("HasInFlag", true);
+        emitCode("HasInFlag = "
+                 "(N.getOperand(N.getNumOperands()-1).getValueType() == MVT::Flag) "
+                 "? (SDNode*)1 : (SDNode*)0;");
+      }
       if (HasVarOps)
         emitCode("std::vector<SDOperand> Ops;");
 
@@ -2647,8 +2659,8 @@ public:
           emitDecl(NodeName, true);
           Code2 = NodeName + " = ";
         }
-        Code = "CurDAG->getTargetNode(" +
-          II.Namespace + "::" + II.TheDef->getName();
+        Code = "CurDAG->getTargetNode(Opc" + utostr(OpcNo);
+        emitOpcode(II.Namespace + "::" + II.TheDef->getName());
 
         // Output order: results, chain, flags
         // Result types.
@@ -2672,8 +2684,8 @@ public:
             emitCode("for (unsigned i = 2, e = N.getNumOperands()-1; "
                      "i != e; ++i) {");
           else if (NodeHasOptInFlag) 
-            emitCode("for (unsigned i = 2, e = N.getNumOperands()-HasInFlag; "
-                     "i != e; ++i) {");
+            emitCode("for (unsigned i = 2, e = N.getNumOperands()-"
+                     "(HasInFlag?1:0); i != e; ++i) {");
           else
             emitCode("for (unsigned i = 2, e = N.getNumOperands(); "
                      "i != e; ++i) {");
@@ -2800,8 +2812,8 @@ public:
         // If this instruction is the root, and if there is only one use of it,
         // use SelectNodeTo instead of getTargetNode to avoid an allocation.
         emitCode("if (N.Val->hasOneUse()) {");
-        std::string Code = "  Result = CurDAG->SelectNodeTo(N.Val, " +
-          II.Namespace + "::" + II.TheDef->getName();
+        std::string Code = "  Result = CurDAG->SelectNodeTo(N.Val, Opc" +
+          utostr(OpcNo);
         if (N->getTypeNum(0) != MVT::isVoid)
           Code += ", " + getEnumName(N->getTypeNum(0));
         if (NodeHasOutFlag)
@@ -2813,8 +2825,8 @@ public:
         emitCode(Code + ");");
         emitCode("} else {");
         emitDecl("ResNode", true);
-        Code = "  ResNode = CurDAG->getTargetNode(" +
-               II.Namespace + "::" + II.TheDef->getName();
+        Code = "  ResNode = CurDAG->getTargetNode(Opc" + utostr(OpcNo);
+        emitOpcode(II.Namespace + "::" + II.TheDef->getName());
         if (N->getTypeNum(0) != MVT::isVoid)
           Code += ", " + getEnumName(N->getTypeNum(0));
         if (NodeHasOutFlag)
@@ -2955,8 +2967,8 @@ private:
               ChainEmitted = true;
               ChainName = "Chain";
             }
-            emitCode("ResNode = CurDAG->getCopyFromReg(" + ChainName + ", " +
-                     ISE.getQualifiedName(RR) + ", " + getEnumName(RVT) +
+            emitCode("ResNode = CurDAG->getCopyFromReg(" + ChainName +
+                     ", " + ISE.getQualifiedName(RR) + ", " + getEnumName(RVT) +
                      ", InFlag).Val;");
             emitCode(ChainName + " = SDOperand(ResNode, 1);");
             emitCode("InFlag = SDOperand(ResNode, 2);");
@@ -2975,10 +2987,12 @@ private:
 void DAGISelEmitter::GenerateCodeForPattern(PatternToMatch &Pattern,
                       std::vector<std::pair<bool, std::string> > &GeneratedCode,
                          std::set<std::pair<bool, std::string> > &GeneratedDecl,
+                                        std::vector<std::string> &TargetOpcodes,
                                             bool DoReplace) {
   PatternCodeEmitter Emitter(*this, Pattern.getPredicates(),
                              Pattern.getSrcPattern(), Pattern.getDstPattern(),
-                             GeneratedCode, GeneratedDecl, DoReplace);
+                             GeneratedCode, GeneratedDecl, TargetOpcodes,
+                             DoReplace);
 
   // Emit the matcher, capturing named arguments in VariableMap.
   bool FoundChain = false;
@@ -3173,6 +3187,8 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
   // Group the patterns by their top-level opcodes.
   std::map<Record*, std::vector<PatternToMatch*>,
     CompareByRecordName> PatternsByOpcode;
+  // All unique target node emission functions.
+  std::map<std::string, unsigned> EmitFunctions;
   for (unsigned i = 0, e = PatternsToMatch.size(); i != e; ++i) {
     TreePatternNode *Node = PatternsToMatch[i].getSrcPattern();
     if (!Node->isLeaf()) {
@@ -3207,27 +3223,10 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
        CompareByRecordName>::iterator PBOI = PatternsByOpcode.begin(),
        E = PatternsByOpcode.end(); PBOI != E; ++PBOI) {
     const std::string &OpName = PBOI->first->getName();
-    OS << "void Select_" << OpName << "(SDOperand &Result, SDOperand N) {\n";
-    
     const SDNodeInfo &OpcodeInfo = getSDNodeInfo(PBOI->first);
     bool OptSlctOrder = 
       (OpcodeInfo.hasProperty(SDNodeInfo::SDNPHasChain) &&
        OpcodeInfo.getNumResults() > 0);
-
-    if (OptSlctOrder) {
-      OS << "  if (N.ResNo == " << OpcodeInfo.getNumResults()
-         << " && N.getValue(0).hasOneUse()) {\n"
-         << "    SDOperand Dummy = "
-         << "CurDAG->getNode(ISD::HANDLENODE, MVT::Other, N);\n"
-         << "    SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, "
-         << OpcodeInfo.getNumResults() << ", Dummy.Val, 0);\n"
-         << "    SelectionDAG::InsertISelMapEntry(HandleMap, N.Val, "
-         << OpcodeInfo.getNumResults() << ", Dummy.Val, 0);\n"
-         << "    Result = Dummy;\n"
-         << "    return;\n"
-         << "  }\n";
-    }
-
     std::vector<PatternToMatch*> &Patterns = PBOI->second;
     assert(!Patterns.empty() && "No patterns but map has entry?");
     
@@ -3238,15 +3237,24 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
                      PatternSortingPredicate(*this));
 
     typedef std::vector<std::pair<bool, std::string> > CodeList;
-    typedef std::set<std::string> DeclSet;
+    typedef std::vector<std::pair<bool, std::string> >::iterator CodeListI;
     
     std::vector<std::pair<PatternToMatch*, CodeList> > CodeForPatterns;
-    std::set<std::pair<bool, std::string> > GeneratedDecl;
+    std::vector<std::vector<std::string> > PatternOpcodes;
+    std::vector<std::set<std::pair<bool, std::string> > > PatternDecls;
+    std::set<std::pair<bool, std::string> > AllGenDecls;
     for (unsigned i = 0, e = Patterns.size(); i != e; ++i) {
       CodeList GeneratedCode;
+      std::set<std::pair<bool, std::string> > GeneratedDecl;
+      std::vector<std::string> TargetOpcodes;
       GenerateCodeForPattern(*Patterns[i], GeneratedCode, GeneratedDecl,
-                             OptSlctOrder);
+                             TargetOpcodes, OptSlctOrder);
+      for (std::set<std::pair<bool, std::string> >::iterator
+             si = GeneratedDecl.begin(), se = GeneratedDecl.end(); si!=se; ++si)
+        AllGenDecls.insert(*si);
       CodeForPatterns.push_back(std::make_pair(Patterns[i], GeneratedCode));
+      PatternDecls.push_back(GeneratedDecl);
+      PatternOpcodes.push_back(TargetOpcodes);
     }
     
     // Scan the code to see if all of the patterns are reachable and if it is
@@ -3273,11 +3281,94 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
       }
     }
 
+    // Factor target node emission code (emitted by EmitResultCode) into
+    // separate functions. Uniquing and share them among all instruction
+    // selection routines.
+    for (unsigned i = 0, e = CodeForPatterns.size(); i != e; ++i) {
+      CodeList &GeneratedCode = CodeForPatterns[i].second;
+      std::vector<std::string> &TargetOpcodes = PatternOpcodes[i];
+      std::set<std::pair<bool, std::string> > Decls = PatternDecls[i];
+      int CodeSize = (int)GeneratedCode.size();
+      int LastPred = -1;
+      for (int j = CodeSize-1; j >= 0; --j) {
+        if (GeneratedCode[j].first) {
+          LastPred = j;
+          break;
+        }
+      }
+
+      std::string CalleeDecls;
+      std::string CalleeCode = "(SDOperand &Result, SDOperand &N";
+      std::string CallerCode = "(Result, N";
+      for (unsigned j = 0, e = TargetOpcodes.size(); j != e; ++j) {
+        CalleeCode += ", unsigned Opc" + utostr(j);
+        CallerCode += ", " + TargetOpcodes[j];
+      }
+      for (std::set<std::pair<bool, std::string> >::iterator
+             I = Decls.begin(), E = Decls.end(); I != E; ++I) {
+        std::string Name = I->second;
+        if (I->first) {
+          CalleeCode += ", SDNode *" + Name;
+          CallerCode += ", " + Name;
+        } else {
+          CalleeCode += ", SDOperand &" + Name;
+          CallerCode += ", " + Name;
+        }
+      }
+      CallerCode += ");";
+      CalleeCode += ") ";
+#ifndef _MSC_VER
+      // Prevent emission routines from being inlined to reduce selection
+      // routines stack frame sizes.
+      CalleeCode += "__attribute__((noinline)) ";
+#endif
+      CalleeCode += "{\n" + CalleeDecls;
+      for (int j = LastPred+1; j < CodeSize; ++j)
+        CalleeCode += "  " + GeneratedCode[j].second + '\n';
+      for (int j = LastPred+1; j < CodeSize; ++j)
+        GeneratedCode.pop_back();
+      CalleeCode += "}\n";
+
+      // Uniquing the emission routines.
+      unsigned EmitFuncNum;
+      std::map<std::string, unsigned>::iterator EFI =
+        EmitFunctions.find(CalleeCode);
+      if (EFI != EmitFunctions.end()) {
+        EmitFuncNum = EFI->second;
+      } else {
+        EmitFuncNum = EmitFunctions.size();
+        EmitFunctions.insert(std::make_pair(CalleeCode, EmitFuncNum));
+        OS << "void " << "Emit_" << utostr(EmitFuncNum) << CalleeCode;
+      }
+
+      // Replace the emission code within selection routines with calls to the
+      // emission functions.
+      CallerCode = "Emit_" + utostr(EmitFuncNum) + CallerCode;
+      GeneratedCode.push_back(std::make_pair(false, CallerCode));
+      GeneratedCode.push_back(std::make_pair(false, "return;"));
+    }
+
+    // Print function.
+    OS << "void Select_" << OpName << "(SDOperand &Result, SDOperand N) {\n";    
+    if (OptSlctOrder) {
+      OS << "  if (N.ResNo == " << OpcodeInfo.getNumResults()
+         << " && N.getValue(0).hasOneUse()) {\n"
+         << "    SDOperand Dummy = "
+         << "CurDAG->getNode(ISD::HANDLENODE, MVT::Other, N);\n"
+         << "    SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, "
+         << OpcodeInfo.getNumResults() << ", Dummy.Val, 0);\n"
+         << "    SelectionDAG::InsertISelMapEntry(HandleMap, N.Val, "
+         << OpcodeInfo.getNumResults() << ", Dummy.Val, 0);\n"
+         << "    Result = Dummy;\n"
+         << "    return;\n"
+         << "  }\n";
+    }
+
     // Print all declarations.
     for (std::set<std::pair<bool, std::string> >::iterator
-         I = GeneratedDecl.begin(), E = GeneratedDecl.end(); I != E; ++I)
+           I = AllGenDecls.begin(), E = AllGenDecls.end(); I != E; ++I)
       if (I->first)
-        OS << "  SDNode *" << I->second << ";\n";
+        OS << "  SDNode *" << I->second << " = NULL;\n";
       else
         OS << "  SDOperand " << I->second << "(0, 0);\n";
 

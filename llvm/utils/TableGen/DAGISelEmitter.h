@@ -522,7 +522,8 @@ private:
   void GenerateCodeForPattern(PatternToMatch &Pattern,
                       std::vector<std::pair<bool, std::string> > &GeneratedCode,
                          std::set<std::pair<bool, std::string> > &GeneratedDecl,
-                              bool UseGoto);
+                              std::vector<std::string> &TargetOpcodes,
+                              bool DoReplace);
   void EmitPatterns(std::vector<std::pair<PatternToMatch*, 
                     std::vector<std::pair<bool, std::string> > > > &Patterns, 
                     unsigned Indent, std::ostream &OS);
