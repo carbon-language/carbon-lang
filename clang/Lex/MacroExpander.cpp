@@ -49,7 +49,25 @@ void MacroArgs::addArgument(std::vector<LexerToken> &ArgToks,
   EOFTok.StartToken();
   EOFTok.SetKind(tok::eof);
   EOFTok.SetLocation(Loc);
+  EOFTok.SetLength(0);
   UnexpArgTokens.back().push_back(EOFTok);
+}
+
+/// ArgNeedsPreexpansion - If we can prove that the argument won't be affected
+/// by pre-expansion, return false.  Otherwise, conservatively return true.
+bool MacroArgs::ArgNeedsPreexpansion(unsigned ArgNo) const {
+  const std::vector<LexerToken> &ArgTokens = getUnexpArgument(ArgNo);
+  
+  // If there are no identifiers in the argument list, or if the identifiers are
+  // known to not be macros, pre-expansion won't modify it.
+  for (unsigned i = 0, e = ArgTokens.size()-1; i != e; ++i)
+    if (IdentifierInfo *II = ArgTokens[i].getIdentifierInfo()) {
+      if (II->getMacroInfo() && II->getMacroInfo()->isEnabled())
+        // Return true even though the macro could be a function-like macro
+        // without a following '(' token.
+        return true;
+    }
+  return false;
 }
 
 
@@ -206,6 +224,55 @@ void MacroExpander::ExpandFunctionArguments() {
       MadeChange = true;
       ++i;  // Skip arg name.
     } else {
+      // Otherwise, if this is not an argument token, just add the token to the
+      // output buffer.
+      IdentifierInfo *II = CurTok.getIdentifierInfo();
+      int ArgNo = II ? Macro.getArgumentNum(II) : -1;
+      if (ArgNo == -1) {
+        ResultToks.push_back(CurTok);
+        continue;
+      }
+      
+      // An argument is expanded somehow, the result is different than the
+      // input.
+      MadeChange = true;
+
+      // Otherwise, this is a use of the argument.  Find out if there is a paste
+      // (##) operator before or after the argument.
+      bool PasteBefore = 
+        !ResultToks.empty() && ResultToks.back().getKind() == tok::hashhash;
+      bool PasteAfter =
+        i+1 != e && (*MacroTokens)[i+1].getKind() == tok::hashhash;
+      
+      // If it is not the LHS/RHS of a ## operator, we must pre-expand the
+      // argument and substitute the expanded tokens into the result.  This is
+      // C99 6.10.3.1p1.
+      if (!PasteBefore && !PasteAfter) {
+        const std::vector<LexerToken> *ArgToks;
+        // Only preexpand the argument if it could possibly need it.  This
+        // avoids some work in common cases.
+        if (ActualArgs->ArgNeedsPreexpansion(ArgNo)) {
+          // FIXME: WRONG
+          ArgToks = &ActualArgs->getUnexpArgument(ArgNo);
+        } else {
+          // If we don't need to pre-expand the argument, just substitute in the
+          // unexpanded tokens.
+          ArgToks = &ActualArgs->getUnexpArgument(ArgNo);
+        }
+        
+        unsigned FirstTok = ResultToks.size();
+        ResultToks.insert(ResultToks.end(), ArgToks->begin(), ArgToks->end()-1);
+        
+        // If any tokens were substituted from the argument, the whitespace
+        // before the first token should match the whitespace of the arg
+        // identifier.
+        if (FirstTok != ResultToks.size())
+          ResultToks[FirstTok].SetFlagValue(LexerToken::LeadingSpace,
+                                            CurTok.hasLeadingSpace());
+        continue;
+      }
+      
+      // FIXME: handle pasted args.      
       ResultToks.push_back(CurTok);
     }
   }

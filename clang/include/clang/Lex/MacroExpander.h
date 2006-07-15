@@ -46,6 +46,10 @@ public:
   /// location at the end of the argument, e.g. the ',' token or the ')'.
   void addArgument(std::vector<LexerToken> &ArgToks, SourceLocation Loc);
   
+  /// ArgNeedsPreexpansion - If we can prove that the argument won't be affected
+  /// by pre-expansion, return false.  Otherwise, conservatively return true.
+  bool ArgNeedsPreexpansion(unsigned ArgNo) const;
+  
   /// getUnexpArgument - Return the unexpanded tokens for the specified formal.
   ///
   const std::vector<LexerToken> &getUnexpArgument(unsigned Arg) const {
