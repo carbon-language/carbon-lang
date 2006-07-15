@@ -217,12 +217,20 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI) {
   
   SwitchToDataSection(JumpTableSection, 0);
   EmitAlignment(Log2_32(TD->getPointerAlignment()));
+  
+  // Pick the directive to use based on the pointer size. FIXME: when we support
+  // PIC jumptables, this should always use the 32-bit directive for label
+  // differences. 
+  const char *PtrDataDirective = Data32bitsDirective;
+  if (TD->getPointerSize() == 8)
+    PtrDataDirective = Data64bitsDirective;
+
   for (unsigned i = 0, e = JT.size(); i != e; ++i) {
     O << PrivateGlobalPrefix << "JTI" << getFunctionNumber() << '_' << i 
       << ":\n";
     const std::vector<MachineBasicBlock*> &JTBBs = JT[i].MBBs;
     for (unsigned ii = 0, ee = JTBBs.size(); ii != ee; ++ii) {
-      O << Data32bitsDirective << ' ';
+      O << PtrDataDirective << ' ';
       printBasicBlockLabel(JTBBs[ii]);
       O << '\n';
     }
