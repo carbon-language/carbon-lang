@@ -66,7 +66,6 @@ PPCSubtarget::PPCSubtarget(const Module &M, const std::string &FS, bool is64Bit)
   , HasAltivec(false)
   , HasFSQRT(false)
   , HasSTFIWX(false)
-  , IsAIX(false)
   , IsDarwin(false) {
 
   // Determine default and user specified characteristics
@@ -102,12 +101,8 @@ PPCSubtarget::PPCSubtarget(const Module &M, const std::string &FS, bool is64Bit)
   const std::string& TT = M.getTargetTriple();
   if (TT.length() > 5) {
     IsDarwin = TT.find("-darwin") != std::string::npos;
-    if (!IsDarwin)
-      IsAIX = TT.find("-aix") != std::string::npos;
   } else if (TT.empty()) {
-#if defined(_POWER)
-    IsAIX = true;
-#elif defined(__APPLE__)
+#if defined(__APPLE__)
     IsDarwin = true;
 #endif
   }

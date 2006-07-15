@@ -39,7 +39,6 @@ protected:
   bool HasAltivec;
   bool HasFSQRT;
   bool HasSTFIWX;
-  bool IsAIX;
   bool IsDarwin;
 public:
   /// This constructor initializes the data members to match that
@@ -86,7 +85,6 @@ public:
   bool hasAltivec() const { return HasAltivec; }
   bool isGigaProcessor() const { return IsGigaProcessor; }
   
-  bool isAIX() const { return IsAIX; }
   bool isDarwin() const { return IsDarwin; }
 };
 } // End llvm namespace

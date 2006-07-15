@@ -24,7 +24,6 @@ class PPCTargetMachine;
 FunctionPass *createPPCBranchSelectionPass();
 FunctionPass *createPPCISelDag(PPCTargetMachine &TM);
 FunctionPass *createDarwinAsmPrinter(std::ostream &OS, PPCTargetMachine &TM);
-FunctionPass *createAIXAsmPrinter(std::ostream &OS, PPCTargetMachine &TM);
 } // end namespace llvm;
 
 // GCC #defines PPC on Linux but we use it as our namespace name

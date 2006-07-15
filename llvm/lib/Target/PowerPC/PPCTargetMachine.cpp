@@ -146,12 +146,7 @@ bool PPCTargetMachine::addPassesToEmitFile(PassManager &PM,
   // Must run branch selection immediately preceding the asm printer
   PM.add(createPPCBranchSelectionPass());
 
-  // Decide which asm printer to use.  If the user has not specified one on
-  // the command line, choose whichever one matches the default (current host).
-  if (Subtarget.isAIX())
-    PM.add(createAIXAsmPrinter(Out, *this));
-  else
-    PM.add(createDarwinAsmPrinter(Out, *this));
+  PM.add(createDarwinAsmPrinter(Out, *this));
 
   PM.add(createMachineCodeDeleter());
   return false;

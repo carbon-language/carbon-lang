@@ -306,32 +306,6 @@ namespace {
     }
 
   };
-
-  /// AIXAsmPrinter - PowerPC assembly printer, customized for AIX
-  ///
-  struct VISIBILITY_HIDDEN AIXAsmPrinter : public PPCAsmPrinter {
-    /// Map for labels corresponding to global variables
-    ///
-    std::map<const GlobalVariable*,std::string> GVToLabelMap;
-
-    AIXAsmPrinter(std::ostream &O, TargetMachine &TM)
-      : PPCAsmPrinter(O, TM) {
-      CommentString = "#";
-      GlobalPrefix = ".";
-      ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
-      Data64bitsDirective = 0;       // we can't emit a 64-bit unit
-      AlignmentIsInBytes = false;    // Alignment is by power of 2.
-      ConstantPoolSection = "\t.const\t";
-    }
-
-    virtual const char *getPassName() const {
-      return "AIX PPC Assembly Printer";
-    }
-
-    bool runOnMachineFunction(MachineFunction &F);
-    bool doInitialization(Module &M);
-    bool doFinalization(Module &M);
-  };
 } // end of anonymous namespace
 
 /// createDarwinAsmPrinterPass - Returns a pass that prints the PPC assembly
@@ -341,14 +315,6 @@ namespace {
 FunctionPass *llvm::createDarwinAsmPrinter(std::ostream &o,
                                            PPCTargetMachine &tm) {
   return new DarwinAsmPrinter(o, tm);
-}
-
-/// createAIXAsmPrinterPass - Returns a pass that prints the PPC assembly code
-/// for a MachineFunction to the given output stream, in a format that the
-/// AIX 5L assembler can deal with.
-///
-FunctionPass *llvm::createAIXAsmPrinter(std::ostream &o, PPCTargetMachine &tm) {
-  return new AIXAsmPrinter(o, tm);
 }
 
 // Include the auto-generated portion of the assembly writer
@@ -717,123 +683,3 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
   return false; // success
 }
 
-/// runOnMachineFunction - This uses the printMachineInstruction()
-/// method to print assembly for each instruction.
-///
-bool AIXAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  SetupMachineFunction(MF);
-  
-  // Print out constants referenced by the function
-  EmitConstantPool(MF.getConstantPool());
-
-  // Print out header for the function.
-  O << "\t.csect .text[PR]\n"
-    << "\t.align 2\n"
-    << "\t.globl "  << CurrentFnName << '\n'
-    << "\t.globl ." << CurrentFnName << '\n'
-    << "\t.csect "  << CurrentFnName << "[DS],3\n"
-    << CurrentFnName << ":\n"
-    << "\t.llong ." << CurrentFnName << ", TOC[tc0], 0\n"
-    << "\t.csect .text[PR]\n"
-    << '.' << CurrentFnName << ":\n";
-
-  // Print out code for the function.
-  for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
-       I != E; ++I) {
-    printBasicBlockLabel(I);
-    O << '\n';
-    for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
-      II != E; ++II) {
-      // Print the assembly for the instruction.
-      O << "\t";
-      printMachineInstruction(II);
-    }
-  }
-
-  O << "LT.." << CurrentFnName << ":\n"
-    << "\t.long 0\n"
-    << "\t.byte 0,0,32,65,128,0,0,0\n"
-    << "\t.long LT.." << CurrentFnName << "-." << CurrentFnName << '\n'
-    << "\t.short 3\n"
-    << "\t.byte \"" << CurrentFnName << "\"\n"
-    << "\t.align 2\n";
-
-  // We didn't modify anything.
-  return false;
-}
-
-bool AIXAsmPrinter::doInitialization(Module &M) {
-  SwitchToDataSection("", 0);
-
-  O << "\t.machine \"ppc64\"\n"
-    << "\t.toc\n"
-    << "\t.csect .text[PR]\n";
-
-  // Print out module-level global variables
-  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I) {
-    if (!I->hasInitializer())
-      continue;
-
-    std::string Name = I->getName();
-    Constant *C = I->getInitializer();
-    // N.B.: We are defaulting to writable strings
-    if (I->hasExternalLinkage()) {
-      O << "\t.globl " << Name << '\n'
-        << "\t.csect .data[RW],3\n";
-    } else {
-      O << "\t.csect _global.rw_c[RW],3\n";
-    }
-    O << Name << ":\n";
-    EmitGlobalConstant(C);
-  }
-
-  // Output labels for globals
-  if (M.global_begin() != M.global_end()) O << "\t.toc\n";
-  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I) {
-    const GlobalVariable *GV = I;
-    // Do not output labels for unused variables
-    if (GV->isExternal() && GV->use_begin() == GV->use_end())
-      continue;
-
-    IncrementFunctionNumber();
-    std::string Name = GV->getName();
-    std::string Label = "LC.." + utostr(getFunctionNumber());
-    GVToLabelMap[GV] = Label;
-    O << Label << ":\n"
-      << "\t.tc " << Name << "[TC]," << Name;
-    if (GV->isExternal()) O << "[RW]";
-    O << '\n';
-   }
-
-  AsmPrinter::doInitialization(M);
-  return false; // success
-}
-
-bool AIXAsmPrinter::doFinalization(Module &M) {
-  const TargetData *TD = TM.getTargetData();
-  // Print out module-level global variables
-  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I) {
-    if (I->hasInitializer() || I->hasExternalLinkage())
-      continue;
-
-    std::string Name = I->getName();
-    if (I->hasInternalLinkage()) {
-      O << "\t.lcomm " << Name << ",16,_global.bss_c";
-    } else {
-      O << "\t.comm " << Name << "," << TD->getTypeSize(I->getType())
-        << "," << Log2_32((unsigned)TD->getTypeAlignment(I->getType()));
-    }
-    O << "\t\t" << CommentString << " ";
-    WriteAsOperand(O, I, false, true, &M);
-    O << "\n";
-  }
-
-  O << "_section_.text:\n"
-    << "\t.csect .data[RW],3\n"
-    << "\t.llong _section_.text\n";
-  AsmPrinter::doFinalization(M);
-  return false; // success
-}
