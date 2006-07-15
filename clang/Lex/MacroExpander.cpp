@@ -115,9 +115,9 @@ static LexerToken StringifyArgument(const std::vector<LexerToken> &Toks,
     }
     
     if (isBad) {
-      assert(!Toks.empty() && "No tokens to charize?");
+      assert(!Toks.empty() && "No eof token at least?");
       PP.Diag(Toks[0], diag::err_invalid_character_to_charify);
-      Result = "' '";
+      Result = "' '";  // Use something arbitrary, but legal.
     }
   }
   
