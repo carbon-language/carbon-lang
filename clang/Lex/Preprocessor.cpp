@@ -57,7 +57,7 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
     
   // Macro expansion is enabled.
   DisableMacroExpansion = false;
-  InMacroFormalArgs = false;
+  InMacroArgs = false;
 
   // There is no file-change handler yet.
   FileChangeHandler = 0;
@@ -442,7 +442,7 @@ void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer,
 
 /// EnterMacro - Add a Macro to the top of the include stack and start lexing
 /// tokens from it instead of the current buffer.
-void Preprocessor::EnterMacro(LexerToken &Tok, MacroFormalArgs *Formals) {
+void Preprocessor::EnterMacro(LexerToken &Tok, MacroArgs *Args) {
   IdentifierInfo *Identifier = Tok.getIdentifierInfo();
   MacroInfo &MI = *Identifier->getMacroInfo();
   IncludeMacroStack.push_back(IncludeStackInfo(CurLexer, CurDirLookup,
@@ -453,7 +453,7 @@ void Preprocessor::EnterMacro(LexerToken &Tok, MacroFormalArgs *Formals) {
   // Mark the macro as currently disabled, so that it is not recursively
   // expanded.
   MI.DisableMacro();
-  CurMacroExpander = new MacroExpander(Tok, Formals, *this);
+  CurMacroExpander = new MacroExpander(Tok, Args, *this);
 }
 
 //===----------------------------------------------------------------------===//
@@ -565,10 +565,10 @@ bool Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier,
     return false;
   }
   
-  /// FormalArgs - If this is a function-like macro expansion, this contains,
+  /// Args - If this is a function-like macro expansion, this contains,
   /// for each macro argument, the list of tokens that were provided to the
   /// invocation.
-  MacroFormalArgs *FormalArgs = 0;
+  MacroArgs *Args = 0;
   
   // If this is a function-like macro, read the arguments.
   if (MI->isFunctionLike()) {
@@ -580,14 +580,14 @@ bool Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier,
     // Remember that we are now parsing the arguments to a macro invocation.
     // Preprocessor directives used inside macro arguments are not portable, and
     // this enables the warning.
-    InMacroFormalArgs = true;
-    FormalArgs = ReadFunctionLikeMacroFormalArgs(Identifier, MI);
+    InMacroArgs = true;
+    Args = ReadFunctionLikeMacroArgs(Identifier, MI);
     
     // Finished parsing args.
-    InMacroFormalArgs = false;
+    InMacroArgs = false;
     
     // If there was an error parsing the arguments, bail out.
-    if (FormalArgs == 0) return false;
+    if (Args == 0) return false;
     
     ++NumFnMacroExpanded;
   } else {
@@ -603,7 +603,7 @@ bool Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier,
   // expansion stack, only to take it right back off.
   if (MI->getNumTokens() == 0) {
     // No need for formal arg info.
-    delete FormalArgs;
+    delete Args;
     
     // Ignore this macro use, just return the next token in the current
     // buffer.
@@ -657,7 +657,7 @@ bool Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier,
   }
   
   // Start expanding the macro.
-  EnterMacro(Identifier, FormalArgs);
+  EnterMacro(Identifier, Args);
   
   // Now that the macro is at the top of the include stack, ask the
   // preprocessor to read the next token from it.
@@ -665,14 +665,14 @@ bool Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier,
   return false;
 }
 
-/// ReadFunctionLikeMacroFormalArgs - After reading "MACRO(", this method is
+/// ReadFunctionLikeMacroArgs - After reading "MACRO(", this method is
 /// invoked to read all of the formal arguments specified for the macro
 /// invocation.  This returns null on error.
-MacroFormalArgs *Preprocessor::
-ReadFunctionLikeMacroFormalArgs(LexerToken &MacroName, MacroInfo *MI) {
-  // Use an auto_ptr here so that the MacroFormalArgs object is deleted on
+MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(LexerToken &MacroName,
+                                                   MacroInfo *MI) {
+  // Use an auto_ptr here so that the MacroArgs object is deleted on
   // all error paths.
-  std::auto_ptr<MacroFormalArgs> Args(new MacroFormalArgs(MI));
+  std::auto_ptr<MacroArgs> Args(new MacroArgs(MI));
   
   // The number of fixed arguments to parse.
   unsigned NumFixedArgsLeft = MI->getNumArgs();
@@ -734,7 +734,7 @@ ReadFunctionLikeMacroFormalArgs(LexerToken &MacroName, MacroInfo *MI) {
       Diag(Tok, diag::ext_empty_fnmacro_arg);
     
     // Remember the tokens that make up this argument.  This destroys ArgTokens.
-    Args->addArgument(ArgTokens);
+    Args->addArgument(ArgTokens, Tok.getLocation());
     --NumFixedArgsLeft;
   };
   
@@ -760,7 +760,7 @@ ReadFunctionLikeMacroFormalArgs(LexerToken &MacroName, MacroInfo *MI) {
       //   A()
       // is ok because it is an empty argument.  Add it explicitly.
       std::vector<LexerToken> ArgTokens;
-      Args->addArgument(ArgTokens);
+      Args->addArgument(ArgTokens, Tok.getLocation());
       
       // Empty arguments are standard in C99 and supported as an extension in
       // other modes.
@@ -1341,7 +1341,7 @@ void Preprocessor::HandleDirective(LexerToken &Result) {
   //     #warning blah
   //   def)
   // If so, the user is relying on non-portable behavior, emit a diagnostic.
-  if (InMacroFormalArgs)
+  if (InMacroArgs)
     Diag(Result, diag::ext_embedded_directive);
   
   switch (Result.getKind()) {

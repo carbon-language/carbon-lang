@@ -129,7 +129,7 @@ private:
 
   // State that changes while the preprocessor runs:
   bool DisableMacroExpansion;    // True if macro expansion is disabled.
-  bool InMacroFormalArgs;        // True if parsing fn macro invocation args.
+  bool InMacroArgs;              // True if parsing fn macro invocation args.
 
   /// Identifiers - This is mapping/lookup information for all identifiers in
   /// the program, including program keywords.
@@ -321,9 +321,9 @@ public:
                        bool isMainFile = false);
 
   /// EnterMacro - Add a Macro to the top of the include stack and start lexing
-  /// tokens from it instead of the current buffer.  Formals specifies the
+  /// tokens from it instead of the current buffer.  Args specifies the
   /// tokens input to a function-like macro.
-  void EnterMacro(LexerToken &Identifier, MacroFormalArgs *Formals);
+  void EnterMacro(LexerToken &Identifier, MacroArgs *Args);
   
   
   /// Lex - To lex a token from the preprocessor, just pull a token from the
@@ -478,11 +478,10 @@ private:
   /// method should have no observable side-effect on the lexed tokens.
   bool isNextPPTokenLParen();
   
-  /// ReadFunctionLikeMacroFormalArgs - After reading "MACRO(", this method is
+  /// ReadFunctionLikeMacroArgs - After reading "MACRO(", this method is
   /// invoked to read all of the formal arguments specified for the macro
   /// invocation.  This returns null on error.
-  MacroFormalArgs *ReadFunctionLikeMacroFormalArgs(LexerToken &MacroName,
-                                                   MacroInfo *MI);
+  MacroArgs *ReadFunctionLikeMacroArgs(LexerToken &MacroName, MacroInfo *MI);
 
   /// ExpandBuiltinMacro - If an identifier token is read that is to be expanded
   /// as a builtin macro, handle it and return the next token as 'Tok'.

@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the MacroExpander interface.
+// This file defines the MacroExpander and MacroArgs interfaces.
 //
 //===----------------------------------------------------------------------===//
 
@@ -23,29 +23,34 @@ namespace clang {
   class Preprocessor;
   class LexerToken;
 
-/// MacroFormalArgs - An instance of this class captures information about
+/// MacroArgs - An instance of this class captures information about
 /// the formal arguments specified to a function-like macro invocation.
-class MacroFormalArgs {
-  std::vector<std::vector<LexerToken> > ArgTokens;
-  
+class MacroArgs {
+  /// UnexpArgTokens - Raw, unexpanded tokens for the arguments.  This includes
+  /// an 'EOF' marker at the end of each argument.
+  std::vector<std::vector<LexerToken> > UnexpArgTokens;
+
+  /// ExpArgTokens - Pre-expanded tokens for arguments that need them.  Empty if
+  /// not yet computed.  This includes the EOF marker at the end of the stream.
+  std::vector<std::vector<LexerToken> > ExpArgTokens;
+
   /// StringifiedArgs - This contains arguments in 'stringified' form.  If the
   /// stringified form of an argument has not yet been computed, this is empty.
   std::vector<LexerToken> StringifiedArgs;
 public:
-  MacroFormalArgs(const MacroInfo *MI);
+  MacroArgs(const MacroInfo *MI);
   
   /// addArgument - Add an argument for this invocation.  This method destroys
-  /// the vector passed in to avoid extraneous memory copies.
-  void addArgument(std::vector<LexerToken> &ArgToks) {
-    ArgTokens.push_back(std::vector<LexerToken>());
-    ArgTokens.back().swap(ArgToks);
-  }
+  /// the vector passed in to avoid extraneous memory copies.  This adds the EOF
+  /// token to the end of the argument list as a marker.  'Loc' specifies a
+  /// location at the end of the argument, e.g. the ',' token or the ')'.
+  void addArgument(std::vector<LexerToken> &ArgToks, SourceLocation Loc);
   
   /// getUnexpArgument - Return the unexpanded tokens for the specified formal.
   ///
   const std::vector<LexerToken> &getUnexpArgument(unsigned Arg) const {
-    assert(Arg < ArgTokens.size() && "Invalid ArgNo");
-    return ArgTokens[Arg];
+    assert(Arg < UnexpArgTokens.size() && "Invalid ArgNo");
+    return UnexpArgTokens[Arg];
   }
   
   /// getStringifiedArgument - Compute, cache, and return the specified argument
@@ -54,7 +59,7 @@ public:
   
   /// getNumArguments - Return the number of arguments passed into this macro
   /// invocation.
-  unsigned getNumArguments() const { return ArgTokens.size(); }
+  unsigned getNumArguments() const { return UnexpArgTokens.size(); }
 };
 
   
@@ -66,9 +71,9 @@ class MacroExpander {
   ///
   MacroInfo &Macro;
 
-  /// FormalArgs - The formal arguments specified for a function-like macro, or
+  /// ActualArgs - The actual arguments specified for a function-like macro, or
   /// null.  The MacroExpander owns the pointed-to object.
-  MacroFormalArgs *FormalArgs;
+  MacroArgs *ActualArgs;
 
   /// PP - The current preprocessor object we are expanding for.
   ///
@@ -93,10 +98,9 @@ class MacroExpander {
   MacroExpander(const MacroExpander&);  // DO NOT IMPLEMENT
   void operator=(const MacroExpander&); // DO NOT IMPLEMENT
 public:
-  /// Create a macro expander of the specified macro with the specified formal
-  /// arguments.  Note that this ctor takes ownership of the FormalArgs pointer.
-  MacroExpander(LexerToken &Tok, MacroFormalArgs *FormalArgs,
-                Preprocessor &pp);
+  /// Create a macro expander of the specified macro with the specified actual
+  /// arguments.  Note that this ctor takes ownership of the ActualArgs pointer.
+  MacroExpander(LexerToken &Tok, MacroArgs *ActualArgs, Preprocessor &PP);
   ~MacroExpander();
   
   /// isNextTokenLParen - If the next token lexed will pop this macro off the

@@ -20,19 +20,38 @@ using namespace llvm;
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
-// MacroFormalArgs Implementation
+// MacroArgs Implementation
 //===----------------------------------------------------------------------===//
 
-MacroFormalArgs::MacroFormalArgs(const MacroInfo *MI) {
+MacroArgs::MacroArgs(const MacroInfo *MI) {
   assert(MI->isFunctionLike() &&
-         "Can't have formal args for an object-like macro!");
+         "Can't have args for an object-like macro!");
   // Reserve space for arguments to avoid reallocation.
   unsigned NumArgs = MI->getNumArgs();
   if (MI->isC99Varargs() || MI->isGNUVarargs())
     NumArgs += 3;    // Varargs can have more than this, just some guess.
   
-  ArgTokens.reserve(NumArgs);
+  UnexpArgTokens.reserve(NumArgs);
 }
+
+/// addArgument - Add an argument for this invocation.  This method destroys
+/// the vector passed in to avoid extraneous memory copies.  This adds the EOF
+/// token to the end of the argument list as a marker.  'Loc' specifies a
+/// location at the end of the argument, e.g. the ',' token or the ')'.
+void MacroArgs::addArgument(std::vector<LexerToken> &ArgToks,
+                            SourceLocation Loc) {
+  UnexpArgTokens.push_back(std::vector<LexerToken>());
+  UnexpArgTokens.back().swap(ArgToks);
+  
+  // Add a marker EOF token to the end of the argument list, useful for handling
+  // empty arguments and macro pre-expansion.
+  LexerToken EOFTok;
+  EOFTok.StartToken();
+  EOFTok.SetKind(tok::eof);
+  EOFTok.SetLocation(Loc);
+  UnexpArgTokens.back().push_back(EOFTok);
+}
+
 
 /// StringifyArgument - Implement C99 6.10.3.2p2, converting a sequence of
 /// tokens into the literal string token that should be produced by the C #
@@ -111,15 +130,16 @@ static LexerToken StringifyArgument(const std::vector<LexerToken> &Toks,
 
 /// getStringifiedArgument - Compute, cache, and return the specified argument
 /// that has been 'stringified' as required by the # operator.
-const LexerToken &MacroFormalArgs::getStringifiedArgument(unsigned ArgNo,
-                                                          Preprocessor &PP) {
-  assert(ArgNo < ArgTokens.size() && "Invalid argument number!");
+const LexerToken &MacroArgs::getStringifiedArgument(unsigned ArgNo,
+                                                    Preprocessor &PP) {
+  assert(ArgNo < ExpArgTokens.size() && "Invalid argument number!");
   if (StringifiedArgs.empty()) {
-    StringifiedArgs.resize(ArgTokens.size());
-    memset(&StringifiedArgs[0], 0, sizeof(StringifiedArgs[0])*ArgTokens.size());
+    StringifiedArgs.resize(ExpArgTokens.size());
+    memset(&StringifiedArgs[0], 0,
+           sizeof(StringifiedArgs[0])*getNumArguments());
   }
   if (StringifiedArgs[ArgNo].getKind() != tok::string_literal)
-    StringifiedArgs[ArgNo] = StringifyArgument(ArgTokens[ArgNo], PP);
+    StringifiedArgs[ArgNo] = StringifyArgument(ExpArgTokens[ArgNo], PP);
   return StringifiedArgs[ArgNo];
 }
 
@@ -127,10 +147,10 @@ const LexerToken &MacroFormalArgs::getStringifiedArgument(unsigned ArgNo,
 // MacroExpander Implementation
 //===----------------------------------------------------------------------===//
 
-MacroExpander::MacroExpander(LexerToken &Tok, MacroFormalArgs *Formals,
+MacroExpander::MacroExpander(LexerToken &Tok, MacroArgs *Actuals,
                              Preprocessor &pp)
   : Macro(*Tok.getIdentifierInfo()->getMacroInfo()),
-    FormalArgs(Formals), PP(pp), CurToken(0),
+    ActualArgs(Actuals), PP(pp), CurToken(0),
     InstantiateLoc(Tok.getLocation()),
     AtStartOfLine(Tok.isAtStartOfLine()),
     HasLeadingSpace(Tok.hasLeadingSpace()) {
@@ -149,8 +169,10 @@ MacroExpander::~MacroExpander() {
     delete MacroTokens;
   
   // MacroExpander owns its formal arguments.
-  delete FormalArgs;
+  delete ActualArgs;
 }
+
+
 
 /// Expand the arguments of a function-like macro so that we can quickly
 /// return preexpanded tokens from MacroTokens.
@@ -171,11 +193,11 @@ void MacroExpander::ExpandFunctionArguments() {
       assert(ArgNo != -1 && "Token following # is not an argument?");
       
       if (CurTok.getKind() == tok::hash)  // Stringify
-        ResultToks.push_back(FormalArgs->getStringifiedArgument(ArgNo, PP));
+        ResultToks.push_back(ActualArgs->getStringifiedArgument(ArgNo, PP));
       else {
         // 'charify': don't bother caching these.
         ResultToks.push_back(StringifyArgument(
-                               FormalArgs->getUnexpArgument(ArgNo), PP, true));
+                               ActualArgs->getUnexpArgument(ArgNo), PP, true));
       }
       
       // The stringified/charified string leading space flag gets set to match
