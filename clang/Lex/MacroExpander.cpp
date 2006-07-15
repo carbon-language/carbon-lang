@@ -15,6 +15,7 @@
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Basic/Diagnostic.h"
 using namespace llvm;
 using namespace clang;
 
@@ -33,16 +34,54 @@ MacroFormalArgs::MacroFormalArgs(const MacroInfo *MI) {
   ArgTokens.reserve(NumArgs);
 }
 
-/// StringifyArgument - Implement C99 6.10.3.2p2.
+/// StringifyArgument - Implement C99 6.10.3.2p2, converting a sequence of
+/// tokens into the literal string token that should be produced by the C #
+/// preprocessor operator.
+///
 static LexerToken StringifyArgument(const std::vector<LexerToken> &Toks,
                                     Preprocessor &PP) {
   LexerToken Tok;
   Tok.StartToken();
   Tok.SetKind(tok::string_literal);
+
+  // Stringify all the tokens.
+  std::string Result = "\"";
+  for (unsigned i = 0, e = Toks.size(); i != e; ++i) {
+    const LexerToken &Tok = Toks[i];
+    // FIXME: Optimize this.
+    if (i != 0 && Tok.hasLeadingSpace())
+      Result += ' ';
+    
+    // If this is a string or character constant, escape the token as specified
+    // by 6.10.3.2p2.
+    if (Tok.getKind() == tok::string_literal ||  // "foo" and L"foo".
+        Tok.getKind() == tok::char_constant) {   // 'x' and L'x'.
+      Result += Lexer::Stringify(PP.getSpelling(Tok));
+    } else {
+      // Otherwise, just append the token.
+      Result += PP.getSpelling(Tok);
+    }
+  }
   
-  std::string Val = "\"XXYZLAKSDFJAS\"";
-  Tok.SetLength(Val.size());
-  Tok.SetLocation(PP.CreateString(&Val[0], Val.size()));
+  // If the last character of the string is a \, and if it isn't escaped, this
+  // is an invalid string literal, diagnose it as specified in C99.
+  if (Result[Result.size()-1] == '\\') {
+    // Count the number of consequtive \ characters.  If even, then they are
+    // just escaped backslashes, otherwise it's an error.
+    unsigned FirstNonSlash = Result.size()-2;
+    // Guaranteed to find the starting " if nothing else.
+    while (Result[FirstNonSlash] == '\\')
+      --FirstNonSlash;
+    if ((Result.size()-1-FirstNonSlash) & 1) {
+      PP.Diag(Toks.back(), diag::pp_invalid_string_literal);
+      Result.erase(Result.end()-1);  // remove one of the \'s.
+    }
+  }
+  
+  Result += '"';
+  
+  Tok.SetLength(Result.size());
+  Tok.SetLocation(PP.CreateString(&Result[0], Result.size()));
   return Tok;
 }
 
