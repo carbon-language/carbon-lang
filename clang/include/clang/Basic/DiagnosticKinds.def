@@ -219,9 +219,9 @@ DIAG(err_paste_at_end, ERROR,
      "\"##\" cannot appear at end of macro expansion")
 DIAG(err_unterm_macro_invoc, ERROR,
      "unterminated function-like macro invocation")
-DIAG(err_too_many_formals_in_macro_invoc, ERROR,
+DIAG(err_too_many_args_in_macro_invoc, ERROR,
      "too many arguments provided to function-like macro invocation")
-DIAG(err_too_few_formals_in_macro_invoc, ERROR,
+DIAG(err_too_few_args_in_macro_invoc, ERROR,
      "too few arguments provided to function-like macro invocation")
 
 

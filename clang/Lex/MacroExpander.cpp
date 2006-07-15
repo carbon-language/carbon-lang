@@ -65,7 +65,7 @@ static LexerToken StringifyArgument(const std::vector<LexerToken> &Toks,
 
   // Stringify all the tokens.
   std::string Result = "\"";
-  for (unsigned i = 0, e = Toks.size(); i != e; ++i) {
+  for (unsigned i = 0, e = Toks.size()-1 /*no eof*/; i != e; ++i) {
     const LexerToken &Tok = Toks[i];
     // FIXME: Optimize this.
     if (i != 0 && Tok.hasLeadingSpace())
@@ -108,9 +108,7 @@ static LexerToken StringifyArgument(const std::vector<LexerToken> &Toks,
     
     // Check for bogus character.
     bool isBad = false;
-    if (Result.size() == 2) {
-      Result = "' '";            // #@empty -> ' '.
-    } else if (Result.size() == 3) {
+    if (Result.size() == 3) {
       isBad = Result[1] == '\'';   // ''' is not legal. '\' already fixed above.
     } else {
       isBad = (Result.size() != 4 || Result[1] != '\\');  // Not '\x'
@@ -132,14 +130,14 @@ static LexerToken StringifyArgument(const std::vector<LexerToken> &Toks,
 /// that has been 'stringified' as required by the # operator.
 const LexerToken &MacroArgs::getStringifiedArgument(unsigned ArgNo,
                                                     Preprocessor &PP) {
-  assert(ArgNo < ExpArgTokens.size() && "Invalid argument number!");
+  assert(ArgNo < UnexpArgTokens.size() && "Invalid argument number!");
   if (StringifiedArgs.empty()) {
-    StringifiedArgs.resize(ExpArgTokens.size());
+    StringifiedArgs.resize(getNumArguments());
     memset(&StringifiedArgs[0], 0,
            sizeof(StringifiedArgs[0])*getNumArguments());
   }
   if (StringifiedArgs[ArgNo].getKind() != tok::string_literal)
-    StringifiedArgs[ArgNo] = StringifyArgument(ExpArgTokens[ArgNo], PP);
+    StringifiedArgs[ArgNo] = StringifyArgument(UnexpArgTokens[ArgNo], PP);
   return StringifiedArgs[ArgNo];
 }
 

@@ -602,7 +602,7 @@ bool Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier,
   // If this macro expands to no tokens, don't bother to push it onto the
   // expansion stack, only to take it right back off.
   if (MI->getNumTokens() == 0) {
-    // No need for formal arg info.
+    // No need for arg info.
     delete Args;
     
     // Ignore this macro use, just return the next token in the current
@@ -666,7 +666,7 @@ bool Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier,
 }
 
 /// ReadFunctionLikeMacroArgs - After reading "MACRO(", this method is
-/// invoked to read all of the formal arguments specified for the macro
+/// invoked to read all of the actual arguments specified for the macro
 /// invocation.  This returns null on error.
 MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(LexerToken &MacroName,
                                                    MacroInfo *MI) {
@@ -679,7 +679,7 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(LexerToken &MacroName,
   bool isVariadic = MI->isVariadic();
   
   // If this is a C99-style varargs macro invocation, add an extra expected
-  // argument, which will catch all of the varargs formals in one argument.
+  // argument, which will catch all of the vararg args in one argument.
   if (MI->isC99Varargs())
     ++NumFixedArgsLeft;
   
@@ -715,11 +715,11 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(LexerToken &MacroName,
         if (NumFixedArgsLeft)
           break;
         
-        // If this is not a variadic macro, too many formals were specified.
+        // If this is not a variadic macro, too many args were specified.
         if (!isVariadic) {
           // Emit the diagnostic at the macro name in case there is a missing ).
           // Emitting it at the , could be far away from the macro name.
-          Diag(MacroName, diag::err_too_many_formals_in_macro_invoc);
+          Diag(MacroName, diag::err_too_many_args_in_macro_invoc);
           return 0;
         }
         // Otherwise, continue to add the tokens to this variable argument.
@@ -740,7 +740,7 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(LexerToken &MacroName,
   
   // Okay, we either found the r_paren.  Check to see if we parsed too few
   // arguments.
-  unsigned NumFormals = Args->getNumArguments();
+  unsigned NumActuals = Args->getNumArguments();
   unsigned MinArgsExpected = MI->getNumArgs();
   
   // C99 expects us to pass at least one vararg arg (but as an extension, we
@@ -748,9 +748,9 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(LexerToken &MacroName,
   // the count.
   MinArgsExpected += MI->isC99Varargs();
   
-  if (NumFormals < MinArgsExpected) {
+  if (NumActuals < MinArgsExpected) {
     // There are several cases where too few arguments is ok, handle them now.
-    if (NumFormals+1 == MinArgsExpected && MI->isVariadic()) {
+    if (NumActuals+1 == MinArgsExpected && MI->isVariadic()) {
       // Varargs where the named vararg parameter is missing: ok as extension.
       // #define A(x, ...)
       // A("blah")
@@ -768,7 +768,7 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(LexerToken &MacroName,
         Diag(Tok, diag::ext_empty_fnmacro_arg);
     } else {
       // Otherwise, emit the error.
-      Diag(Tok, diag::err_too_few_formals_in_macro_invoc);
+      Diag(Tok, diag::err_too_few_args_in_macro_invoc);
       return 0;
     }
   }
