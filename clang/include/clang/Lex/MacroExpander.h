@@ -41,6 +41,13 @@ public:
     ArgTokens.back().swap(ArgToks);
   }
   
+  /// getUnexpArgument - Return the unexpanded tokens for the specified formal.
+  ///
+  const std::vector<LexerToken> &getUnexpArgument(unsigned Arg) const {
+    assert(Arg < ArgTokens.size() && "Invalid ArgNo");
+    return ArgTokens[Arg];
+  }
+  
   /// getStringifiedArgument - Compute, cache, and return the specified argument
   /// that has been 'stringified' as required by the # operator.
   const LexerToken &getStringifiedArgument(unsigned ArgNo, Preprocessor &PP);

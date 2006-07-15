@@ -47,8 +47,6 @@ Preprocessor:
  * Function-style #define & macro expansion
  * #line / #file directives
  * -C output mode in -E mode.
- * MSExtension: #@param 'stringizes' into a character (charize?):
-    #define A(x) #@x   / A(z) -> 'z'
  * MSExtension: "L#param" stringizes to a wide string literal.
 
 Traditional Preprocessor:

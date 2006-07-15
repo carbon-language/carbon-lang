@@ -39,7 +39,7 @@ MacroFormalArgs::MacroFormalArgs(const MacroInfo *MI) {
 /// preprocessor operator.
 ///
 static LexerToken StringifyArgument(const std::vector<LexerToken> &Toks,
-                                    Preprocessor &PP) {
+                                    Preprocessor &PP, bool Charify = false) {
   LexerToken Tok;
   Tok.StartToken();
   Tok.SetKind(tok::string_literal);
@@ -78,8 +78,31 @@ static LexerToken StringifyArgument(const std::vector<LexerToken> &Toks,
       Result.erase(Result.end()-1);  // remove one of the \'s.
     }
   }
-  
   Result += '"';
+  
+  // If this is the charify operation and the result is not a legal character
+  // constant, diagnose it.
+  if (Charify) {
+    // First step, turn double quotes into single quotes:
+    Result[0] = '\'';
+    Result[Result.size()-1] = '\'';
+    
+    // Check for bogus character.
+    bool isBad = false;
+    if (Result.size() == 2) {
+      Result = "' '";            // #@empty -> ' '.
+    } else if (Result.size() == 3) {
+      isBad = Result[1] == '\'';   // ''' is not legal. '\' already fixed above.
+    } else {
+      isBad = (Result.size() != 4 || Result[1] != '\\');  // Not '\x'
+    }
+    
+    if (isBad) {
+      assert(!Toks.empty() && "No tokens to charize?");
+      PP.Diag(Toks[0], diag::err_invalid_character_to_charify);
+      Result = "' '";
+    }
+  }
   
   Tok.SetLength(Result.size());
   Tok.SetLocation(PP.CreateString(&Result[0], Result.size()));
@@ -143,11 +166,17 @@ void MacroExpander::ExpandFunctionArguments() {
     // preprocessor already verified that the following token is a macro name
     // when the #define was parsed.
     const LexerToken &CurTok = (*MacroTokens)[i];
-    if (CurTok.getKind() == tok::hash) {
+    if (CurTok.getKind() == tok::hash || CurTok.getKind() == tok::hashat) {
       int ArgNo = Macro.getArgumentNum((*MacroTokens)[i+1].getIdentifierInfo());
       assert(ArgNo != -1 && "Token following # is not an argument?");
       
-      ResultToks.push_back(FormalArgs->getStringifiedArgument(ArgNo, PP));
+      if (CurTok.getKind() == tok::hash)  // Stringify
+        ResultToks.push_back(FormalArgs->getStringifiedArgument(ArgNo, PP));
+      else {
+        // 'charify': don't bother caching these.
+        ResultToks.push_back(StringifyArgument(
+                               FormalArgs->getUnexpArgument(ArgNo), PP, true));
+      }
       
       // FIXME: Should the stringified string leading space flag get set to
       // match the # or the identifier?
