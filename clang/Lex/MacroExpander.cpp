@@ -178,14 +178,14 @@ void MacroExpander::ExpandFunctionArguments() {
                                FormalArgs->getUnexpArgument(ArgNo), PP, true));
       }
       
-      // FIXME: Should the stringified string leading space flag get set to
-      // match the # or the identifier?
+      // The stringified/charified string leading space flag gets set to match
+      // the #/#@ operator.
+      if (CurTok.hasLeadingSpace())
+        ResultToks.back().SetFlag(LexerToken::LeadingSpace);
       
       MadeChange = true;
       ++i;  // Skip arg name.
     } else {
-      // FIXME: handle microsoft charize extension.
-      
       ResultToks.push_back(CurTok);
     }
   }
