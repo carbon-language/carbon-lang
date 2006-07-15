@@ -171,7 +171,7 @@ static void HandleFileChange(SourceLocation Loc,
   }
   
   EModeCurLine = SourceMgr.getLineNumber(Loc);
-  EModeCurFilename = Lexer::Stringify(SourceMgr.getSourceName(Loc));
+  EModeCurFilename = '"' + Lexer::Stringify(SourceMgr.getSourceName(Loc)) + '"';
   EmodeFileType = FileType;
   
   if (EmodeEmittedTokensOnThisLine) {

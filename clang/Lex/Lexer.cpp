@@ -69,17 +69,16 @@ Lexer::Lexer(const SourceBuffer *File, unsigned fileid, Preprocessor &pp,
 
 /// Stringify - Convert the specified string into a C string, with surrounding
 /// ""'s, and with escaped \ and " characters.
-std::string Lexer::Stringify(const std::string &Str) {
+std::string Lexer::Stringify(const std::string &Str, bool Charify) {
   std::string Result = Str;
+  char Quote = Charify ? '\'' : '"';
   for (unsigned i = 0, e = Result.size(); i != e; ++i) {
-    if (Result[i] == '\\' || Result[i] == '"') {
+    if (Result[i] == '\\' || Result[i] == Quote) {
       Result.insert(Result.begin()+i, '\\');
       ++i; ++e;
     }
   }
-
-  // Add quotes.
-  return '"' + Result + '"';
+  return Result;
 }
 
 

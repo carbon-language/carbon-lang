@@ -837,7 +837,7 @@ void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok) {
     
     // Escape this filename.  Turn '\' -> '\\' '"' -> '\"'
     std::string FN = SourceMgr.getSourceName(Loc);
-    FN = Lexer::Stringify(FN);
+    FN = '"' + Lexer::Stringify(FN) + '"';
     Tok.SetKind(tok::string_literal);
     Tok.SetLength(FN.size());
     Tok.SetLocation(CreateString(&FN[0], FN.size(), Tok.getLocation()));

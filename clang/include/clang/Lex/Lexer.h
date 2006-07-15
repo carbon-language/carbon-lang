@@ -168,9 +168,10 @@ public:
   /// offset in the current file.
   SourceLocation getSourceLocation(const char *Loc) const;
   
-  /// Stringify - Convert the specified string into a C string, with surrounding
-  /// ""'s, and with escaped \ and " characters.
-  static std::string Stringify(const std::string &Str);
+  /// Stringify - Convert the specified string into a C string by escaping '\'
+  /// and " characters.  This does not add surrounding ""'s to the string.
+  /// If Charify is true, this escapes the ' character instead of ".
+  static std::string Stringify(const std::string &Str, bool Charify = false);
   
   //===--------------------------------------------------------------------===//
   // Internal implementation interfaces.
