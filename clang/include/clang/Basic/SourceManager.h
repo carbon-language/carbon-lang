@@ -271,7 +271,7 @@ private:
   /// file or some other input source.
   unsigned createFileID(const SrcMgr::InfoRec *File, SourceLocation IncludePos);
     
-  /// getFileInfo - Create or return a cached FileInfo for the specified file.
+  /// getInfoRec - Create or return a cached FileInfo for the specified file.
   /// This returns null on failure.
   const SrcMgr::InfoRec *getInfoRec(const FileEntry *SourceFile);
   
