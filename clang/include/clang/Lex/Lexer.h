@@ -32,6 +32,7 @@ struct LangOptions {
   unsigned Digraphs     : 1;  // When added to C?  C99?
   unsigned HexFloats    : 1;  // C99 Hexadecimal float constants.
   unsigned C99          : 1;  // C99 Support
+  unsigned Microsoft    : 1;  // Microsoft extensions.
   unsigned CPlusPlus    : 1;  // C++ Support
   unsigned CPPMinMax    : 1;  // C++ <?=, >?= tokens.
   unsigned NoExtensions : 1;  // All extensions are disabled, strict mode.
@@ -41,7 +42,7 @@ struct LangOptions {
   
   LangOptions() {
     Trigraphs = BCPLComment = DollarIdents = Digraphs = ObjC1 = ObjC2 = 0;
-    C99 = CPlusPlus = CPPMinMax = NoExtensions = 0;
+    C99 = Microsoft = CPlusPlus = CPPMinMax = NoExtensions = 0;
   }
 };
 

@@ -1200,11 +1200,15 @@ LexNextToken:
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else if (Features.Digraphs && Char == ':') {
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
-      if (getCharAndSize(CurPtr, SizeTmp) == '%' &&
-          getCharAndSize(CurPtr+SizeTmp, SizeTmp2) == ':') {
+      Char = getCharAndSize(CurPtr, SizeTmp);
+      if (Char == '%' && getCharAndSize(CurPtr+SizeTmp, SizeTmp2) == ':') {
         Result.SetKind(tok::hashhash);   // '%:%:' -> '##'
         CurPtr = ConsumeChar(ConsumeChar(CurPtr, SizeTmp, Result),
                              SizeTmp2, Result);
+      } else if (Char == '@' && Features.Microsoft) {  // %:@ -> #@ -> Charize
+        Result.SetKind(tok::hashat);
+        CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
+        Diag(BufferPtr, diag::charize_microsoft_ext);
       } else {
         Result.SetKind(tok::hash);       // '%:' -> '#'
         
@@ -1350,6 +1354,10 @@ LexNextToken:
     Char = getCharAndSize(CurPtr, SizeTmp);
     if (Char == '#') {
       Result.SetKind(tok::hashhash);
+      CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
+    } else if (Char == '@' && Features.Microsoft) {  // #@ -> Charize
+      Result.SetKind(tok::hashat);
+      Diag(BufferPtr, diag::charize_microsoft_ext);
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
     } else {
       Result.SetKind(tok::hash);

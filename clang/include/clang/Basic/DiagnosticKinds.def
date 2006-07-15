@@ -59,6 +59,8 @@ DIAG(ext_backslash_newline_eof, EXTENSION,
      "backslash-newline at end of file")
 DIAG(ext_dollar_in_identifier, EXTENSION,
      "'$' in identifier")
+DIAG(charize_microsoft_ext, EXTENSION,
+     "@# is a microsoft extension")
 
 DIAG(ext_token_used, EXTENSION,
      "extension used")

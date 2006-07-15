@@ -91,6 +91,7 @@ TOK(equalequal)          // ==
 TOK(comma)               // ,
 TOK(hash)                // #
 TOK(hashhash)            // ##
+TOK(hashat)              // #@
 
 // C++ Support
 TOK(periodstar)          // .*
