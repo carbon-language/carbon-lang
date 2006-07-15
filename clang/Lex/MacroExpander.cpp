@@ -73,6 +73,7 @@ static LexerToken StringifyArgument(const std::vector<LexerToken> &Toks,
     while (Result[FirstNonSlash] == '\\')
       --FirstNonSlash;
     if ((Result.size()-1-FirstNonSlash) & 1) {
+      // Diagnose errors for things like: #define F(X) #X   /   F(\)
       PP.Diag(Toks.back(), diag::pp_invalid_string_literal);
       Result.erase(Result.end()-1);  // remove one of the \'s.
     }
