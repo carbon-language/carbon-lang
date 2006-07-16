@@ -30,9 +30,10 @@ class MacroArgs {
   /// an 'EOF' marker at the end of each argument.
   std::vector<std::vector<LexerToken> > UnexpArgTokens;
 
-  /// ExpArgTokens - Pre-expanded tokens for arguments that need them.  Empty if
-  /// not yet computed.  This includes the EOF marker at the end of the stream.
-  std::vector<std::vector<LexerToken> > ExpArgTokens;
+  /// PreExpArgTokens - Pre-expanded tokens for arguments that need them.  Empty
+  /// if not yet computed.  This includes the EOF marker at the end of the
+  /// stream.
+  std::vector<std::vector<LexerToken> > PreExpArgTokens;
 
   /// StringifiedArgs - This contains arguments in 'stringified' form.  If the
   /// stringified form of an argument has not yet been computed, this is empty.
@@ -57,6 +58,11 @@ public:
     return UnexpArgTokens[Arg];
   }
   
+  /// getPreExpArgument - Return the pre-expanded form of the specified
+  /// argument.
+  const std::vector<LexerToken> &
+    getPreExpArgument(unsigned Arg, Preprocessor &PP);  
+  
   /// getStringifiedArgument - Compute, cache, and return the specified argument
   /// that has been 'stringified' as required by the # operator.
   const LexerToken &getStringifiedArgument(unsigned ArgNo, Preprocessor &PP);
@@ -68,12 +74,13 @@ public:
 
   
 /// MacroExpander - This implements a lexer that returns token from a macro body
-/// instead of lexing from a character buffer.
+/// or token stream instead of lexing from a character buffer.
 ///
 class MacroExpander {
-  /// Macro - The macro we are expanding from.
+  /// Macro - The macro we are expanding from.  This is null if expanding a
+  /// token stream.
   ///
-  MacroInfo &Macro;
+  MacroInfo *Macro;
 
   /// ActualArgs - The actual arguments specified for a function-like macro, or
   /// null.  The MacroExpander owns the pointed-to object.
@@ -84,7 +91,8 @@ class MacroExpander {
   Preprocessor &PP;
 
   /// MacroTokens - This is the pointer to the list of tokens that the macro is
-  /// defined to, with arguments expanded for function-like macros.
+  /// defined to, with arguments expanded for function-like macros.  If this is
+  /// a token stream, this are the tokens we are returning.
   const std::vector<LexerToken> *MacroTokens;
   
   /// CurToken - This is the next token that Lex will return.
@@ -102,9 +110,13 @@ class MacroExpander {
   MacroExpander(const MacroExpander&);  // DO NOT IMPLEMENT
   void operator=(const MacroExpander&); // DO NOT IMPLEMENT
 public:
-  /// Create a macro expander of the specified macro with the specified actual
+  /// Create a macro expander for the specified macro with the specified actual
   /// arguments.  Note that this ctor takes ownership of the ActualArgs pointer.
   MacroExpander(LexerToken &Tok, MacroArgs *ActualArgs, Preprocessor &PP);
+  
+  /// Create a macro expander for the specified token stream.  This does not
+  /// take ownership of the specified token vector.
+  MacroExpander(const std::vector<LexerToken> &TokStream, Preprocessor &PP);
   ~MacroExpander();
   
   /// isNextTokenLParen - If the next token lexed will pop this macro off the
@@ -112,8 +124,6 @@ public:
   /// 1, otherwise return 0.
   unsigned isNextTokenLParen() const;
   
-  MacroInfo &getMacro() const { return Macro; }
-
   /// Lex - Lex and return a token from this macro stream.
   void Lex(LexerToken &Tok);
   

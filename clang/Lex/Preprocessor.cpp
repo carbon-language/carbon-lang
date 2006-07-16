@@ -450,10 +450,36 @@ void Preprocessor::EnterMacro(LexerToken &Tok, MacroArgs *Args) {
   CurLexer     = 0;
   CurDirLookup = 0;
   
-  // Mark the macro as currently disabled, so that it is not recursively
-  // expanded.
-  MI.DisableMacro();
   CurMacroExpander = new MacroExpander(Tok, Args, *this);
+}
+
+/// EnterTokenStream - Add a "macro" context to the top of the include stack,
+/// which will cause the lexer to start returning the specified tokens.  Note
+/// that these tokens will be re-macro-expanded when/if expansion is enabled.
+/// This method assumes that the specified stream of tokens has a permanent
+/// owner somewhere, so they do not need to be copied.
+void Preprocessor::EnterTokenStream(const std::vector<LexerToken> &Stream) {
+  // Save our current state.
+  IncludeMacroStack.push_back(IncludeStackInfo(CurLexer, CurDirLookup,
+                                               CurMacroExpander));
+  CurLexer     = 0;
+  CurDirLookup = 0;
+
+  // Create a macro expander to expand from the specified token stream.
+  CurMacroExpander = new MacroExpander(Stream, *this);
+}
+
+/// RemoveTopOfLexerStack - Pop the current lexer/macro exp off the top of the
+/// lexer stack.  This should only be used in situations where the current
+/// state of the top-of-stack lexer is known.
+void Preprocessor::RemoveTopOfLexerStack() {
+  assert(!IncludeMacroStack.empty() && "Ran out of stack entries to load");
+  delete CurLexer;
+  delete CurMacroExpander;
+  CurLexer         = IncludeMacroStack.back().TheLexer;
+  CurDirLookup     = IncludeMacroStack.back().TheDirLookup;
+  CurMacroExpander = IncludeMacroStack.back().TheMacroExpander;
+  IncludeMacroStack.pop_back();
 }
 
 //===----------------------------------------------------------------------===//
@@ -1011,11 +1037,7 @@ void Preprocessor::HandleEndOfFile(LexerToken &Result, bool isEndOfMacro) {
   // lexing the #includer file.
   if (!IncludeMacroStack.empty()) {
     // We're done with the #included file.
-    delete CurLexer;
-    CurLexer         = IncludeMacroStack.back().TheLexer;
-    CurDirLookup     = IncludeMacroStack.back().TheDirLookup;
-    CurMacroExpander = IncludeMacroStack.back().TheMacroExpander;
-    IncludeMacroStack.pop_back();
+    RemoveTopOfLexerStack();
 
     // Notify the client, if desired, that we are in a new source file.
     if (FileChangeHandler && !isEndOfMacro && CurLexer) {
@@ -1050,13 +1072,11 @@ void Preprocessor::HandleEndOfFile(LexerToken &Result, bool isEndOfMacro) {
 }
 
 /// HandleEndOfMacro - This callback is invoked when the lexer hits the end of
-/// the current macro expansion.
+/// the current macro expansion or token stream expansion.
 void Preprocessor::HandleEndOfMacro(LexerToken &Result) {
   assert(CurMacroExpander && !CurLexer &&
          "Ending a macro when currently in a #include file!");
 
-  // Mark macro not ignored now that it is no longer being expanded.
-  CurMacroExpander->getMacro().EnableMacro();
   delete CurMacroExpander;
 
   // Handle this like a #include file being popped off the stack.

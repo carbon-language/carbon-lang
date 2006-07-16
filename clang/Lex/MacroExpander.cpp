@@ -70,6 +70,40 @@ bool MacroArgs::ArgNeedsPreexpansion(unsigned ArgNo) const {
   return false;
 }
 
+/// getPreExpArgument - Return the pre-expanded form of the specified
+/// argument.
+const std::vector<LexerToken> &
+MacroArgs::getPreExpArgument(unsigned Arg, Preprocessor &PP) {
+  assert(Arg < UnexpArgTokens.size() && "Invalid argument number!");
+  
+  // If we have already computed this, return it.
+  if (PreExpArgTokens.empty())
+    PreExpArgTokens.resize(UnexpArgTokens.size());
+
+  std::vector<LexerToken> &Result = PreExpArgTokens[Arg];
+  if (!Result.empty()) return Result;
+
+  // Otherwise, we have to pre-expand this argument, populating Result.  To do
+  // this, we set up a fake MacroExpander to lex from the unexpanded argument
+  // list.  With this installed, we lex expanded tokens until we hit the EOF
+  // token at the end of the unexp list.
+  PP.EnterTokenStream(UnexpArgTokens[Arg]);
+
+  // Lex all of the macro-expanded tokens into Result.
+  do {
+    Result.push_back(LexerToken());
+    PP.Lex(Result.back());
+  } while (Result.back().getKind() != tok::eof);
+  
+  // Pop the token stream off the top of the stack.  We know that the internal
+  // pointer inside of it is to the "end" of the token stream, but the stack
+  // will not otherwise be popped until the next token is lexed.  The problem is
+  // that the token may be lexed sometime after the vector of tokens itself is
+  // destroyed, which would be badness.
+  PP.RemoveTopOfLexerStack();
+  return Result;
+}
+
 
 /// StringifyArgument - Implement C99 6.10.3.2p2, converting a sequence of
 /// tokens into the literal string token that should be produced by the C #
@@ -83,9 +117,9 @@ static LexerToken StringifyArgument(const std::vector<LexerToken> &Toks,
 
   // Stringify all the tokens.
   std::string Result = "\"";
+  // FIXME: Optimize this loop to not use std::strings.
   for (unsigned i = 0, e = Toks.size()-1 /*no eof*/; i != e; ++i) {
     const LexerToken &Tok = Toks[i];
-    // FIXME: Optimize this.
     if (i != 0 && Tok.hasLeadingSpace())
       Result += ' ';
     
@@ -163,25 +197,49 @@ const LexerToken &MacroArgs::getStringifiedArgument(unsigned ArgNo,
 // MacroExpander Implementation
 //===----------------------------------------------------------------------===//
 
+/// Create a macro expander for the specified macro with the specified actual
+/// arguments.  Note that this ctor takes ownership of the ActualArgs pointer.
 MacroExpander::MacroExpander(LexerToken &Tok, MacroArgs *Actuals,
                              Preprocessor &pp)
-  : Macro(*Tok.getIdentifierInfo()->getMacroInfo()),
+  : Macro(Tok.getIdentifierInfo()->getMacroInfo()),
     ActualArgs(Actuals), PP(pp), CurToken(0),
     InstantiateLoc(Tok.getLocation()),
     AtStartOfLine(Tok.isAtStartOfLine()),
     HasLeadingSpace(Tok.hasLeadingSpace()) {
-  MacroTokens = &Macro.getReplacementTokens();
+  MacroTokens = &Macro->getReplacementTokens();
 
   // If this is a function-like macro, expand the arguments and change
   // MacroTokens to point to the expanded tokens.
-  if (Macro.isFunctionLike() && Macro.getNumArgs())
+  if (Macro->isFunctionLike() && Macro->getNumArgs())
     ExpandFunctionArguments();
+  
+  // Mark the macro as currently disabled, so that it is not recursively
+  // expanded.  The macro must be disabled only after argument pre-expansion of
+  // function-like macro arguments occurs.
+  Macro->DisableMacro();
 }
+
+/// Create a macro expander for the specified token stream.  This does not
+/// take ownership of the specified token vector.
+MacroExpander::MacroExpander(const std::vector<LexerToken> &TokStream, 
+                             Preprocessor &pp)
+  : Macro(0), ActualArgs(0), PP(pp), MacroTokens(&TokStream), CurToken(0),
+    InstantiateLoc(SourceLocation()), AtStartOfLine(false), 
+    HasLeadingSpace(false) {
+      
+  // Set HasLeadingSpace/AtStartOfLine so that the first token will be
+  // returned unmodified.
+  if (!TokStream.empty()) {
+    AtStartOfLine   = TokStream[0].isAtStartOfLine();
+    HasLeadingSpace = TokStream[0].hasLeadingSpace();
+  }
+}
+
 
 MacroExpander::~MacroExpander() {
   // If this was a function-like macro that actually uses its arguments, delete
   // the expanded tokens.
-  if (MacroTokens != &Macro.getReplacementTokens())
+  if (Macro && MacroTokens != &Macro->getReplacementTokens())
     delete MacroTokens;
   
   // MacroExpander owns its formal arguments.
@@ -205,7 +263,7 @@ void MacroExpander::ExpandFunctionArguments() {
     // when the #define was parsed.
     const LexerToken &CurTok = (*MacroTokens)[i];
     if (CurTok.getKind() == tok::hash || CurTok.getKind() == tok::hashat) {
-      int ArgNo = Macro.getArgumentNum((*MacroTokens)[i+1].getIdentifierInfo());
+      int ArgNo =Macro->getArgumentNum((*MacroTokens)[i+1].getIdentifierInfo());
       assert(ArgNo != -1 && "Token following # is not an argument?");
       
       if (CurTok.getKind() == tok::hash)  // Stringify
@@ -227,7 +285,7 @@ void MacroExpander::ExpandFunctionArguments() {
       // Otherwise, if this is not an argument token, just add the token to the
       // output buffer.
       IdentifierInfo *II = CurTok.getIdentifierInfo();
-      int ArgNo = II ? Macro.getArgumentNum(II) : -1;
+      int ArgNo = II ? Macro->getArgumentNum(II) : -1;
       if (ArgNo == -1) {
         ResultToks.push_back(CurTok);
         continue;
@@ -251,14 +309,10 @@ void MacroExpander::ExpandFunctionArguments() {
         const std::vector<LexerToken> *ArgToks;
         // Only preexpand the argument if it could possibly need it.  This
         // avoids some work in common cases.
-        if (ActualArgs->ArgNeedsPreexpansion(ArgNo)) {
-          // FIXME: WRONG
+        if (ActualArgs->ArgNeedsPreexpansion(ArgNo))
+          ArgToks = &ActualArgs->getPreExpArgument(ArgNo, PP);
+        else
           ArgToks = &ActualArgs->getUnexpArgument(ArgNo);
-        } else {
-          // If we don't need to pre-expand the argument, just substitute in the
-          // unexpanded tokens.
-          ArgToks = &ActualArgs->getUnexpArgument(ArgNo);
-        }
         
         unsigned FirstTok = ResultToks.size();
         ResultToks.insert(ResultToks.end(), ArgToks->begin(), ArgToks->end()-1);
@@ -272,7 +326,12 @@ void MacroExpander::ExpandFunctionArguments() {
         continue;
       }
       
-      // FIXME: handle pasted args.      
+      // Okay, we have a token that is either the LHS or RHS of a paste (##)
+      // argument.
+      
+      // FIXME: Handle comma swallowing GNU extension.
+      
+      // FIXME: handle pasted args.  Handle 'placemarker' stuff.
       ResultToks.push_back(CurTok);
     }
   }
@@ -290,8 +349,15 @@ void MacroExpander::ExpandFunctionArguments() {
 ///
 void MacroExpander::Lex(LexerToken &Tok) {
   // Lexing off the end of the macro, pop this macro off the expansion stack.
-  if (isAtEnd())
+  if (isAtEnd()) {
+    // If this is a macro (not a token stream), mark the macro enabled now
+    // that it is no longer being expanded.
+    if (Macro) Macro->EnableMacro();
+
+    // Pop this context off the preprocessors lexer stack and get the next
+    // token.
     return PP.HandleEndOfMacro(Tok);
+  }
   
   // Get the next token to return.
   Tok = (*MacroTokens)[CurToken++];
@@ -301,9 +367,15 @@ void MacroExpander::Lex(LexerToken &Tok) {
   // diagnostics for the expanded token should appear as if they came from
   // InstantiationLoc.  Pull this information together into a new SourceLocation
   // that captures all of this.
-  Tok.SetLocation(PP.getSourceManager().getInstantiationLoc(Tok.getLocation(),
-                                                            InstantiateLoc));
-
+  if (InstantiateLoc.isValid()) {   // Don't do this for token streams.
+    SourceManager &SrcMgr = PP.getSourceManager();
+    // The token could have come from a prior macro expansion.  In that case,
+    // ignore the macro expand part to get to the physloc.  This happens for
+    // stuff like:  #define A(X) X    A(A(X))    A(1)
+    SourceLocation PhysLoc = SrcMgr.getPhysicalLoc(Tok.getLocation());
+    Tok.SetLocation(SrcMgr.getInstantiationLoc(PhysLoc, InstantiateLoc));
+  }
+  
   // If this is the first token, set the lexical properties of the token to
   // match the lexical properties of the macro identifier.
   if (CurToken == 1) {

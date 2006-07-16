@@ -262,6 +262,19 @@ public:
     return Loc;
   }
   
+  /// getPhysicalLoc - Given a SourceLocation object, return the physical
+  /// location referenced by the ID.
+  SourceLocation getPhysicalLoc(SourceLocation Loc) const {
+    if (Loc.getFileID() == 0) return Loc;
+    
+    // For Macros, the physical loc is specified by the MacroTokenFileID.
+    const SrcMgr::FileIDInfo *FIDInfo = getFIDInfo(Loc.getFileID());
+    if (FIDInfo->IDType == SrcMgr::FileIDInfo::MacroExpansion)
+      return SourceLocation(FIDInfo->u.MacroTokenFileID,
+                            Loc.getRawFilePos());
+    return Loc;
+  }
+  
   /// PrintStats - Print statistics to stderr.
   ///
   void PrintStats() const;

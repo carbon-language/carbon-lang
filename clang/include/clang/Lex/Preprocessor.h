@@ -325,6 +325,17 @@ public:
   /// tokens input to a function-like macro.
   void EnterMacro(LexerToken &Identifier, MacroArgs *Args);
   
+  /// EnterTokenStream - Add a "macro" context to the top of the include stack,
+  /// which will cause the lexer to start returning the specified tokens.  Note
+  /// that these tokens will be re-macro-expanded when/if expansion is enabled.
+  /// This method assumes that the specified stream of tokens has a permanent
+  /// owner somewhere, so they do not need to be copied.
+  void EnterTokenStream(const std::vector<LexerToken> &Stream);
+  
+  /// RemoveTopOfLexerStack - Pop the current lexer/macro exp off the top of the
+  /// lexer stack.  This should only be used in situations where the current
+  /// state of the top-of-stack lexer is known.
+  void RemoveTopOfLexerStack();
   
   /// Lex - To lex a token from the preprocessor, just pull a token from the
   /// current lexer or macro object.
