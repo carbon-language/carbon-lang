@@ -3349,7 +3349,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
       }
       CallerCode += ");";
       CalleeCode += ") ";
-#ifndef _MSC_VER
+#ifdef __GNUC__
       // Prevent emission routines from being inlined to reduce selection
       // routines stack frame sizes.
       CalleeCode += "__attribute__((noinline)) ";
