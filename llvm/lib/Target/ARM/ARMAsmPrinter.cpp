@@ -156,9 +156,11 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     assert(0 && "not implemented");
     abort();
     return;
-  case MachineOperand::MO_GlobalAddress:
-    assert(0 && "not implemented");
-    abort();
+  case MachineOperand::MO_GlobalAddress: {
+    GlobalValue *GV = MO.getGlobal();
+    std::string Name = Mang->getValueName(GV);
+    O << Name;
+  }
     break;
   case MachineOperand::MO_ExternalSymbol:
     assert(0 && "not implemented");

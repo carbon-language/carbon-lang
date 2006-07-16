@@ -41,6 +41,10 @@ def SDT_ARMCallSeq : SDTypeProfile<0, 1, [ SDTCisVT<0, i32> ]>;
 def callseq_start  : SDNode<"ISD::CALLSEQ_START", SDT_ARMCallSeq, [SDNPHasChain]>;
 def callseq_end    : SDNode<"ISD::CALLSEQ_END",   SDT_ARMCallSeq, [SDNPHasChain]>;
 
+def SDT_ARMcall    : SDTypeProfile<0, -1, [SDTCisInt<0>]>;
+def ARMcall        : SDNode<"ARMISD::CALL", SDT_ARMcall,
+                           [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+
 def ADJCALLSTACKUP : InstARM<(ops i32imm:$amt),
                             "!ADJCALLSTACKUP $amt",
                             [(callseq_end imm:$amt)]>;
@@ -50,6 +54,8 @@ def ADJCALLSTACKDOWN : InstARM<(ops i32imm:$amt),
                                [(callseq_start imm:$amt)]>;
 
 def bxr: InstARM<(ops IntRegs:$dst), "bx $dst", [(brind IntRegs:$dst)]>;
+
+def bl: InstARM<(ops i32imm:$func, variable_ops), "bl $func", [(ARMcall tglobaladdr:$func)]>;
 
 def ldr   : InstARM<(ops IntRegs:$dst, memri:$addr),
                      "ldr $dst, [$addr]",

@@ -13,6 +13,7 @@
 
 #include "ARM.h"
 #include "ARMTargetMachine.h"
+#include "llvm/CallingConv.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Intrinsics.h"
@@ -33,6 +34,7 @@ namespace {
   public:
     ARMTargetLowering(TargetMachine &TM);
     virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
+    virtual const char *getTargetNodeName(unsigned Opcode) const;
   };
 
 }
@@ -42,9 +44,73 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::RET, MVT::Other, Custom);
 }
 
+namespace llvm {
+  namespace ARMISD {
+    enum NodeType {
+      // Start the numbering where the builting ops and target ops leave off.
+      FIRST_NUMBER = ISD::BUILTIN_OP_END+ARM::INSTRUCTION_LIST_END,
+      /// CALL - A direct function call.
+      CALL
+    };
+  }
+}
+
+const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
+  switch (Opcode) {
+  default: return 0;
+  case ARMISD::CALL:          return "ARMISD::CALL";
+  }
+}
+
+// This transforms a ISD::CALL node into a
+// callseq_star <- ARMISD:CALL <- callseq_end
+// chain
 static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
-  assert(0 && "Not implemented");
-  abort();
+  SDOperand Chain    = Op.getOperand(0);
+  unsigned CallConv  = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
+  assert(CallConv == CallingConv::C && "unknown calling convention");
+  bool isVarArg      = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
+  assert(isVarArg == false && "VarArg not supported");
+  bool isTailCall    = cast<ConstantSDNode>(Op.getOperand(3))->getValue() != 0;
+  assert(isTailCall == false && "tail call not supported");
+  SDOperand Callee   = Op.getOperand(4);
+  unsigned NumOps    = (Op.getNumOperands() - 5) / 2;
+  assert(NumOps == 0);
+
+  // Count how many bytes are to be pushed on the stack. Initially
+  // only the link register.
+  unsigned NumBytes = 4;
+
+  // Adjust the stack pointer for the new arguments...
+  // These operations are automatically eliminated by the prolog/epilog pass
+  Chain = DAG.getCALLSEQ_START(Chain,
+                               DAG.getConstant(NumBytes, MVT::i32));
+
+  std::vector<MVT::ValueType> NodeTys;
+  NodeTys.push_back(MVT::Other);   // Returns a chain
+  NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
+
+  // If the callee is a GlobalAddress/ExternalSymbol node (quite common, every
+  // direct call is) turn it into a TargetGlobalAddress/TargetExternalSymbol
+  // node so that legalize doesn't hack it.
+  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
+    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), Callee.getValueType());
+
+  // If this is a direct call, pass the chain and the callee.
+  assert (Callee.Val);
+  std::vector<SDOperand> Ops;
+  Ops.push_back(Chain);
+  Ops.push_back(Callee);
+
+  unsigned CallOpc = ARMISD::CALL;
+  Chain = DAG.getNode(CallOpc, NodeTys, Ops);
+
+  assert(Op.Val->getValueType(0) == MVT::Other);
+
+  Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
+                      DAG.getConstant(NumBytes, MVT::i32));
+
+  return Chain;
 }
 
 static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
