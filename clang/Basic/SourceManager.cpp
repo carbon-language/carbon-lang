@@ -115,6 +115,10 @@ unsigned SourceManager::createFileID(const InfoRec *File,
 /// InstantiationLoc.
 SourceLocation SourceManager::getInstantiationLoc(SourceLocation PhysLoc,
                                                   SourceLocation InstantLoc) {
+  assert(getFIDInfo(PhysLoc.getFileID())->IDType !=
+         SrcMgr::FileIDInfo::MacroExpansion &&
+         "Location instantiated in a macro?");
+  
   // Resolve InstantLoc down to a real logical location.
   InstantLoc = getLogicalLoc(InstantLoc);
 
