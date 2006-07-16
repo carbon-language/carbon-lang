@@ -44,7 +44,7 @@ Lexer:
  * -fpreprocessed mode.
 
 Preprocessor:
- * Function-style #define & macro expansion
+ * Function-style macro expansion, token pasting
  * #line / #file directives
  * -C output mode in -E mode.
  * MSExtension: "L#param" stringizes to a wide string literal.
