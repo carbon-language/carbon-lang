@@ -655,16 +655,15 @@ namespace llvm {
       abort();
     }
   };
-}
 
-namespace {
   template<class ValType, class TypeClass, class ConstantClass,
            bool HasLargeKey = false  /*true for arrays and structs*/ >
   class VISIBILITY_HIDDEN ValueMap : public AbstractTypeUser {
   public:
-    typedef std::pair<const TypeClass*, ValType> MapKey;
-    typedef std::map<MapKey, ConstantClass *> MapTy;
-    typedef typename MapTy::iterator MapIterator;
+    typedef std::pair<const Type*, ValType> MapKey;
+    typedef std::map<MapKey, Constant *> MapTy;
+    typedef std::map<Constant*, typename MapTy::iterator> InverseMapTy;
+    typedef std::map<const Type*, typename MapTy::iterator> AbstractTypeMapTy;
   private:
     /// Map - This is the main map from the element descriptor to the Constants.
     /// This is the primary way we avoid creating two of the same shape
@@ -675,15 +674,16 @@ namespace {
     /// from the constants to their element in Map.  This is important for
     /// removal of constants from the array, which would otherwise have to scan
     /// through the map with very large keys.
-    std::map<ConstantClass*, MapIterator> InverseMap;
+    InverseMapTy InverseMap;
 
-    typedef std::map<const TypeClass*, MapIterator> AbstractTypeMapTy;
+    /// AbstractTypeMap - Map for abstract type constants.
+    ///
     AbstractTypeMapTy AbstractTypeMap;
 
     friend void Constant::clearAllValueMaps();
   private:
     void clear(std::vector<Constant *> &Constants) {
-      for(MapIterator I = Map.begin(); I != Map.end(); ++I)
+      for(typename MapTy::iterator I = Map.begin(); I != Map.end(); ++I)
         Constants.push_back(I->second);
       Map.clear();
       AbstractTypeMap.clear();
@@ -691,32 +691,32 @@ namespace {
     }
 
   public:
-    MapIterator map_end() { return Map.end(); }
+    typename MapTy::iterator map_end() { return Map.end(); }
     
     /// InsertOrGetItem - Return an iterator for the specified element.
     /// If the element exists in the map, the returned iterator points to the
     /// entry and Exists=true.  If not, the iterator points to the newly
     /// inserted entry and returns Exists=false.  Newly inserted entries have
     /// I->second == 0, and should be filled in.
-    MapIterator InsertOrGetItem(std::pair<MapKey, ConstantClass *> &InsertVal,
+    typename MapTy::iterator InsertOrGetItem(std::pair<MapKey, Constant *>
+                                   &InsertVal,
                                    bool &Exists) {
-      std::pair<MapIterator, bool> IP = Map.insert(InsertVal);
+      std::pair<typename MapTy::iterator, bool> IP = Map.insert(InsertVal);
       Exists = !IP.second;
       return IP.first;
     }
     
 private:
-    MapIterator FindExistingElement(ConstantClass *CP) {
+    typename MapTy::iterator FindExistingElement(ConstantClass *CP) {
       if (HasLargeKey) {
-        typename std::map<ConstantClass*, MapIterator>::iterator
-            IMI = InverseMap.find(CP);
+        typename InverseMapTy::iterator IMI = InverseMap.find(CP);
         assert(IMI != InverseMap.end() && IMI->second != Map.end() &&
                IMI->second->second == CP &&
                "InverseMap corrupt!");
         return IMI->second;
       }
       
-      MapIterator I =
+      typename MapTy::iterator I =
         Map.find(MapKey((TypeClass*)CP->getRawType(), getValType(CP)));
       if (I == Map.end() || I->second != CP) {
         // FIXME: This should not use a linear scan.  If this gets to be a
@@ -732,9 +732,9 @@ public:
     /// necessary.
     ConstantClass *getOrCreate(const TypeClass *Ty, const ValType &V) {
       MapKey Lookup(Ty, V);
-      MapIterator I = Map.lower_bound(Lookup);
+      typename MapTy::iterator I = Map.lower_bound(Lookup);
       if (I != Map.end() && I->first == Lookup)
-        return I->second;  // Is it in the map?
+        return static_cast<ConstantClass *>(I->second);  // Is it in the map?
 
       // If no preexisting value, create one now...
       ConstantClass *Result =
@@ -764,7 +764,7 @@ public:
     }
 
     void remove(ConstantClass *CP) {
-      MapIterator I = FindExistingElement(CP);
+      typename MapTy::iterator I = FindExistingElement(CP);
       assert(I != Map.end() && "Constant not found in constant table!");
       assert(I->second == CP && "Didn't find correct element?");
 
@@ -773,15 +773,15 @@ public:
       
       // Now that we found the entry, make sure this isn't the entry that
       // the AbstractTypeMap points to.
-      const TypeClass *Ty = I->first.first;
+      const TypeClass *Ty = static_cast<const TypeClass *>(I->first.first);
       if (Ty->isAbstract()) {
         assert(AbstractTypeMap.count(Ty) &&
                "Abstract type not in AbstractTypeMap?");
-        MapIterator &ATMEntryIt = AbstractTypeMap[Ty];
+        typename MapTy::iterator &ATMEntryIt = AbstractTypeMap[Ty];
         if (ATMEntryIt == I) {
           // Yes, we are removing the representative entry for this type.
           // See if there are any other entries of the same type.
-          MapIterator TmpIt = ATMEntryIt;
+          typename MapTy::iterator TmpIt = ATMEntryIt;
 
           // First check the entry before this one...
           if (TmpIt != Map.begin()) {
@@ -817,9 +817,9 @@ public:
     /// MoveConstantToNewSlot - If we are about to change C to be the element
     /// specified by I, update our internal data structures to reflect this
     /// fact.
-    void MoveConstantToNewSlot(ConstantClass *C, MapIterator I) {
+    void MoveConstantToNewSlot(ConstantClass *C, typename MapTy::iterator I) {
       // First, remove the old location of the specified constant in the map.
-      MapIterator OldI = FindExistingElement(C);
+      typename MapTy::iterator OldI = FindExistingElement(C);
       assert(OldI != Map.end() && "Constant not found in constant table!");
       assert(OldI->second == C && "Didn't find correct element?");
       
@@ -847,7 +847,7 @@ public:
     
     void refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
       typename AbstractTypeMapTy::iterator I =
-        AbstractTypeMap.find(cast<TypeClass>(OldTy));
+        AbstractTypeMap.find(cast<Type>(OldTy));
 
       assert(I != AbstractTypeMap.end() &&
              "Abstract type not in AbstractTypeMap?");
@@ -857,10 +857,11 @@ public:
       // eliminated eventually.
       do {
         ConvertConstantType<ConstantClass,
-                            TypeClass>::convert(I->second->second,
+                            TypeClass>::convert(
+                                static_cast<ConstantClass *>(I->second->second),
                                                 cast<TypeClass>(NewTy));
 
-        I = AbstractTypeMap.find(cast<TypeClass>(OldTy));
+        I = AbstractTypeMap.find(cast<Type>(OldTy));
       } while (I != AbstractTypeMap.end());
     }
 
@@ -1630,7 +1631,7 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
   unsigned OperandToUpdate = U-OperandList;
   assert(getOperand(OperandToUpdate) == From && "ReplaceAllUsesWith broken!");
 
-  std::pair<ArrayConstantsTy::MapKey, ConstantArray*> Lookup;
+  std::pair<ArrayConstantsTy::MapKey, Constant*> Lookup;
   Lookup.first.first = getType();
   Lookup.second = this;
 
@@ -1659,7 +1660,7 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
   } else {
     // Check to see if we have this array type already.
     bool Exists;
-    ArrayConstantsTy::MapIterator I =
+    ArrayConstantsTy::MapTy::iterator I =
       ArrayConstants.InsertOrGetItem(Lookup, Exists);
     
     if (Exists) {
@@ -1695,7 +1696,7 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
   unsigned OperandToUpdate = U-OperandList;
   assert(getOperand(OperandToUpdate) == From && "ReplaceAllUsesWith broken!");
 
-  std::pair<StructConstantsTy::MapKey, ConstantStruct*> Lookup;
+  std::pair<StructConstantsTy::MapKey, Constant*> Lookup;
   Lookup.first.first = getType();
   Lookup.second = this;
   std::vector<Constant*> &Values = Lookup.first.second;
@@ -1724,7 +1725,7 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
   } else {
     // Check to see if we have this array type already.
     bool Exists;
-    StructConstantsTy::MapIterator I =
+    StructConstantsTy::MapTy::iterator I =
       StructConstants.InsertOrGetItem(Lookup, Exists);
     
     if (Exists) {
