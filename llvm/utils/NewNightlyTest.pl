@@ -122,7 +122,8 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
     if (/^-notest$/)         { $NOTEST = 1; $NORUNNINGTESTS = 1; next; }
     if (/^-norunningtests$/) { $NORUNNINGTESTS = 1; next; }
     if (/^-parallel$/)       { $MAKEOPTS = "$MAKEOPTS -j2 -l3.0"; next; }
-    if (/^-release$/)        { $MAKEOPTS = "$MAKEOPTS ENABLE_OPTIMIZED=1 OPTIMIZE_OPTION=-O2"; next; }
+    if (/^-release$/)        { $MAKEOPTS = "$MAKEOPTS ENABLE_OPTIMIZED=1 ".
+    																		   "OPTIMIZE_OPTION=-O2"; next; }
     if (/^-enable-llcbeta$/) { $PROGTESTOPTS .= " ENABLE_LLCBETA=1"; next; }
     if (/^-disable-llc$/)    { $PROGTESTOPTS .= " DISABLE_LLC=1";
 			       $CONFIGUREARGS .= " --disable-llc_diffs"; next; } 
@@ -138,11 +139,13 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
 	$CONFIGUREARGS .= "--with-externals=$ARGV[0]"; shift; next;
     }
     if (/^-nickname$/)   	{ $nickname = "$ARGV[0]"; shift; next; }
-    if (/^-gccpath/)         { $CONFIGUREARGS .= " CC=$ARGV[0]/gcc CXX=$ARGV[0]/g++"; 
+    if (/^-gccpath/)         { $CONFIGUREARGS .= 
+    													   " CC=$ARGV[0]/gcc CXX=$ARGV[0]/g++"; 
                                $GCCPATH=$ARGV[0]; 
                                shift;  
                                next;}
-    if (/^-cvstag/)          { $CVSCOOPT .= " -r $ARGV[0]"; shift; next; } else{ $CVSCOOPT="";}
+    if (/^-cvstag/)          { $CVSCOOPT .= " -r $ARGV[0]"; shift; next; } 
+    else{ $CVSCOOPT="";}
     if (/^-target/)          {
 	$CONFIGUREARGS .= " --target=$ARGV[0]"; shift; next;
     }
@@ -404,7 +407,8 @@ sub SendData{
 
     $port=80;
     $socketaddr= sockaddr_in $port, inet_aton $host or die "Bad hostname\n";
-    socket SOCK, PF_INET, SOCK_STREAM, getprotobyname('tcp') or die "Bad socket\n";
+    socket SOCK, PF_INET, SOCK_STREAM, getprotobyname('tcp') or 
+    			 die "Bad socket\n";
     connect SOCK, $socketaddr or die "Bad connection\n";
     select((select(SOCK), $| = 1)[0]);
 
@@ -957,7 +961,7 @@ my $dejagnulog_full;
 $dejagnulog_full = join("\n", @DEJAGNULOG_FULL);
 
 if($GCCPATH){
-  my $gcc_version_long = `$ARGV[0]/gcc --version`;
+  my $gcc_version_long = `$GCCPATH/gcc --version`;
 }
 else{
   my $gcc_version_long = `gcc --version`;
