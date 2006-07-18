@@ -345,12 +345,14 @@ FindUniqueOperandCommands(std::vector<std::string> &UniqueOperandCommands,
     if (Inst == 0) continue;  // PHI, INLINEASM, etc.
     
     std::string Command;
-    if (Op > Inst->Operands.size())
+    if (Op >= Inst->Operands.size())
       continue;   // Instruction already done.
-    else if (Op == Inst->Operands.size())
-      Command = "    return true;\n";
-    else
-      Command = "    " + Inst->Operands[Op].getCode() + "\n";
+
+    Command = "    " + Inst->Operands[Op].getCode() + "\n";
+
+    // If this is the last operand, emit a return.
+    if (Op == Inst->Operands.size()-1)
+      Command += "    return true;\n";
     
     // Check to see if we already have 'Command' in UniqueOperandCommands.
     // If not, add it.
