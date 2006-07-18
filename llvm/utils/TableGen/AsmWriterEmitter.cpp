@@ -330,15 +330,16 @@ static void EmitInstructions(std::vector<AsmWriterInst> &Insts,
 
 void AsmWriterEmitter::
 FindUniqueOperandCommands(std::vector<std::string> &UniqueOperandCommands, 
-                          std::vector<unsigned> &InstIdxs) const {
-  InstIdxs.clear();
-  InstIdxs.resize(NumberedInstructions.size());
+                          std::vector<unsigned> &InstIdxs,
+                          std::vector<unsigned> &InstOpsUsed) const {
+  InstIdxs.assign(NumberedInstructions.size(), 0);
   
   // This vector parallels UniqueOperandCommands, keeping track of which
   // instructions each case are used for.  It is a comma separated string of
   // enums.
   std::vector<std::string> InstrsForCase;
   InstrsForCase.resize(UniqueOperandCommands.size());
+  InstOpsUsed.assign(UniqueOperandCommands.size(), 0);
   
   for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i) {
     const AsmWriterInst *Inst = getAsmWriterInstByID(i);
@@ -369,6 +370,61 @@ FindUniqueOperandCommands(std::vector<std::string> &UniqueOperandCommands,
       InstIdxs[i] = UniqueOperandCommands.size();
       UniqueOperandCommands.push_back(Command);
       InstrsForCase.push_back(Inst->CGI->TheDef->getName());
+
+      // This command matches one operand so far.
+      InstOpsUsed.push_back(1);
+    }
+  }
+  
+  // For each entry of UniqueOperandCommands, there is a set of instructions
+  // that uses it.  If the next command of all instructions in the set are
+  // identical, fold it into the command.
+  for (unsigned CommandIdx = 0, e = UniqueOperandCommands.size();
+       CommandIdx != e; ++CommandIdx) {
+    
+    for (unsigned Op = 1; ; ++Op) {
+      // Scan for the first instruction in the set.
+      std::vector<unsigned>::iterator NIT =
+        std::find(InstIdxs.begin(), InstIdxs.end(), CommandIdx);
+      if (NIT == InstIdxs.end()) break;  // No commonality.
+
+      // If this instruction has no more operands, we isn't anything to merge
+      // into this command.
+      const AsmWriterInst *FirstInst = 
+        getAsmWriterInstByID(NIT-InstIdxs.begin());
+      if (!FirstInst || FirstInst->Operands.size() == Op)
+        break;
+
+      // Otherwise, scan to see if all of the other instructions in this command
+      // set share the operand.
+      bool AllSame = true;
+      
+      NIT = std::find(NIT+1, InstIdxs.end(), CommandIdx);
+      for (NIT = std::find(NIT+1, InstIdxs.end(), CommandIdx);
+           NIT != InstIdxs.end();
+           NIT = std::find(NIT+1, InstIdxs.end(), CommandIdx)) {
+        // Okay, found another instruction in this command set.  If the operand
+        // matches, we're ok, otherwise bail out.
+        const AsmWriterInst *OtherInst = 
+          getAsmWriterInstByID(NIT-InstIdxs.begin());
+        if (!OtherInst || OtherInst->Operands.size() == Op ||
+            OtherInst->Operands[Op] != FirstInst->Operands[Op]) {
+          AllSame = false;
+          break;
+        }
+      }
+      if (!AllSame) break;
+      
+      // Okay, everything in this command set has the same next operand.  Add it
+      // to UniqueOperandCommands and remember that it was consumed.
+      std::string Command = "    " + FirstInst->Operands[Op].getCode() + "\n";
+      
+      // If this is the last operand, emit a return after the code.
+      if (FirstInst->Operands.size() == Op+1)
+        Command += "    return true;\n";
+      
+      UniqueOperandCommands[CommandIdx] += Command;
+      InstOpsUsed[CommandIdx]++;
     }
   }
   
@@ -475,13 +531,13 @@ void AsmWriterEmitter::run(std::ostream &O) {
     }
     
     std::vector<unsigned> InstIdxs;
-    FindUniqueOperandCommands(UniqueOperandCommands, InstIdxs);
+    std::vector<unsigned> NumInstOpsHandled;
+    FindUniqueOperandCommands(UniqueOperandCommands, InstIdxs,
+                              NumInstOpsHandled);
     
     // If we ran out of operands to print, we're done.
     if (UniqueOperandCommands.empty()) break;
     
-    // FIXME: GROW THEM MAXIMALLY.
-
     // Compute the number of bits we need to represent these cases, this is
     // ceil(log2(numentries)).
     unsigned NumBits = Log2_32_Ceil(UniqueOperandCommands.size());
@@ -501,8 +557,11 @@ void AsmWriterEmitter::run(std::ostream &O) {
     // Remove the info about this operand.
     for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i) {
       if (AsmWriterInst *Inst = getAsmWriterInstByID(i))
-        if (!Inst->Operands.empty())
-          Inst->Operands.erase(Inst->Operands.begin());
+        if (!Inst->Operands.empty()) {
+          unsigned NumOps = NumInstOpsHandled[InstIdxs[i]];
+          Inst->Operands.erase(Inst->Operands.begin(),
+                               Inst->Operands.begin()+NumOps);
+        }
     }
     
     // Remember the handlers for this set of operands.
@@ -575,10 +634,7 @@ void AsmWriterEmitter::run(std::ostream &O) {
     O << "\n  // Fragment " << i << " encoded into " << NumBits
       << " bits for " << Commands.size() << " unique commands.\n";
     
-    if (Commands.size() == 1) {
-      // Only one possibility, just emit it.
-      O << Commands[0];
-    } else if (Commands.size() == 2) {
+    if (Commands.size() == 2) {
       // Emit two possibilitys with if/else.
       O << "  if ((Bits >> " << (BitsLeft+AsmStrBits) << ") & "
         << ((1 << NumBits)-1) << ") {\n"
