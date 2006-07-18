@@ -35,8 +35,8 @@ namespace llvm {
 using namespace sys;
 
 struct sys::MappedFileInfo {
-  int fd_;
-  struct stat sbuf_;
+  int   FD;
+  off_t Size;
 };
 
 void MappedFile::initialize() {
@@ -62,14 +62,14 @@ void MappedFile::initialize() {
     ThrowErrno(std::string("Can't stat file: ") + path_.toString());
   }
   info_ = new MappedFileInfo;
-  info_->fd_ = FD;
-  info_->sbuf_ = sbuf;
+  info_->FD = FD;
+  info_->Size = sbuf.st_size;
 }
 
 void MappedFile::terminate() {
   assert(info_ && "MappedFile not initialized");
-  if (info_->fd_ >= 0)
-    ::close(info_->fd_);
+  if (info_->FD >= 0)
+    ::close(info_->FD);
   delete info_;
   info_ = 0;
 }
@@ -78,8 +78,8 @@ void MappedFile::unmap() {
   assert(info_ && "MappedFile not initialized");
   if (isMapped()) {
     if (options_ & WRITE_ACCESS)
-      ::msync(base_, info_->sbuf_.st_size, MS_SYNC);
-    ::munmap(base_, info_->sbuf_.st_size);
+      ::msync(base_, info_->Size, MS_SYNC);
+    ::munmap(base_, info_->Size);
   }
 }
 
@@ -106,10 +106,10 @@ void* MappedFile::map() {
       else
         flags |= MAP_PRIVATE;
     }
-    size_t map_size = ((info_->sbuf_.st_size / Process::GetPageSize())+1) *
+    size_t map_size = ((info_->Size / Process::GetPageSize())+1) *
       Process::GetPageSize();
 
-    base_ = ::mmap(0, map_size, prot, flags, info_->fd_, 0);
+    base_ = ::mmap(0, map_size, prot, flags, info_->FD, 0);
     if (base_ == MAP_FAILED)
       ThrowErrno(std::string("Can't map file:") + path_.toString());
   }
@@ -118,7 +118,7 @@ void* MappedFile::map() {
 
 size_t MappedFile::size() const {
   assert(info_ && "MappedFile not initialized");
-  return info_->sbuf_.st_size;
+  return info_->Size;
 }
 
 void MappedFile::size(size_t new_size) {
@@ -128,7 +128,7 @@ void MappedFile::size(size_t new_size) {
   this->unmap();
 
   // Adjust the current size to a page boundary
-  size_t cur_size = ((info_->sbuf_.st_size / Process::GetPageSize())+1) *
+  size_t cur_size = ((info_->Size / Process::GetPageSize())+1) *
     Process::GetPageSize();
 
   // Adjust the new_size to a page boundary
@@ -139,8 +139,8 @@ void MappedFile::size(size_t new_size) {
   if (new_size > cur_size) {
     // Ensure we can allocate at least the idodes necessary to handle the
     // file size requested. 
-    ::lseek(info_->fd_, new_size, SEEK_SET);
-    ::write(info_->fd_, "\0", 1);
+    ::lseek(info_->FD, new_size, SEEK_SET);
+    ::write(info_->FD, "\0", 1);
   }
 
   // Seek to current end of file. 
