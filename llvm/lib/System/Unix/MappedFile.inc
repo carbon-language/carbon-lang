@@ -40,9 +40,6 @@ struct sys::MappedFileInfo {
 };
 
 void MappedFile::initialize() {
-  if (!path_.exists())
-    throw std::string("Can't open file: ") + path_.toString();
-  
   int mode = 0;
   if (options_ & READ_ACCESS) 
     if (options_ & WRITE_ACCESS)
