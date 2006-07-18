@@ -332,7 +332,7 @@ void AsmWriterEmitter::
 FindUniqueOperandCommands(std::vector<std::string> &UniqueOperandCommands, 
                           std::vector<unsigned> &InstIdxs,
                           std::vector<unsigned> &InstOpsUsed) const {
-  InstIdxs.assign(NumberedInstructions.size(), 0);
+  InstIdxs.assign(NumberedInstructions.size(), ~0U);
   
   // This vector parallels UniqueOperandCommands, keeping track of which
   // instructions each case are used for.  It is a comma separated string of
@@ -551,7 +551,8 @@ void AsmWriterEmitter::run(std::ostream &O) {
     // Otherwise, we can include this in the initial lookup table.  Add it in.
     BitsLeft -= NumBits;
     for (unsigned i = 0, e = InstIdxs.size(); i != e; ++i)
-      OpcodeInfo[i] |= InstIdxs[i] << (BitsLeft+AsmStrBits);
+      if (InstIdxs[i] != ~0U)
+        OpcodeInfo[i] |= InstIdxs[i] << (BitsLeft+AsmStrBits);
     
     // Remove the info about this operand.
     for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i) {
