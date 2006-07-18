@@ -961,15 +961,16 @@ my $dejagnulog_full;
 @DEJAGNULOG_FULL = ReadFile "$DejagnuTestsLog";
 $dejagnulog_full = join("\n", @DEJAGNULOG_FULL);
 
+my $gcc_version_long="";
 if($GCCPATH ne ""){
-  my $gcc_version_long = `$GCCPATH/gcc --version`;
+  $gcc_version_long = `$GCCPATH/gcc --version`;
   print "$GCCPATH/gcc --version\n";
 }
 else{
-  my $gcc_version_long = `gcc --version`;
+  $gcc_version_long = `gcc --version`;
   print "gcc --version\n";
 }
-@GCC_VERSION = split "\n", $gcc_version_long;
+@GCC_VERSION = split '\n', $gcc_version_long;
 my $gcc_version = $GCC_VERSION[0];
 
 ##############################################################
