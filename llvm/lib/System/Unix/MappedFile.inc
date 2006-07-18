@@ -44,12 +44,12 @@ void MappedFile::initialize() {
     throw std::string("Can't open file: ") + path_.toString();
   
   int mode = 0;
-  if (options_&READ_ACCESS) 
-    if (options_&WRITE_ACCESS)
+  if (options_ & READ_ACCESS) 
+    if (options_ & WRITE_ACCESS)
       mode = O_RDWR;
     else
       mode = O_RDONLY;
-  else if (options_&WRITE_ACCESS)
+  else if (options_ & WRITE_ACCESS)
     mode = O_WRONLY;
 
   int FD = ::open(path_.c_str(), mode);
@@ -68,8 +68,7 @@ void MappedFile::initialize() {
 
 void MappedFile::terminate() {
   assert(info_ && "MappedFile not initialized");
-  if (info_->FD >= 0)
-    ::close(info_->FD);
+  ::close(info_->FD);
   delete info_;
   info_ = 0;
 }
