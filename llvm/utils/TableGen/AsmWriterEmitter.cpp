@@ -423,10 +423,11 @@ void AsmWriterEmitter::run(std::ostream &O) {
   std::string AggregateString;
   AggregateString += '\0';
   
-  /// OpcodeInfo - The first value in the pair is the index into the string, the
-  /// second is an index used for operand printing information.
-  std::vector<std::pair<unsigned short, unsigned short> > OpcodeInfo;
+  /// OpcodeInfo - Theis encodes the index of the string to use for the first
+  /// chunk of the output as well as indices used for operand printing.
+  std::vector<unsigned> OpcodeInfo;
   
+  unsigned MaxStringIdx = 0;
   for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i) {
     AsmWriterInst *AWI = CGIAWIMap[NumberedInstructions[i]];
     unsigned Idx;
@@ -437,20 +438,22 @@ void AsmWriterEmitter::run(std::ostream &O) {
       unsigned &Entry = StringOffset[AWI->Operands[0].Str];
       if (Entry == 0) {
         // Add the string to the aggregate if this is the first time found.
-        Entry = AggregateString.size();
+        MaxStringIdx = Entry = AggregateString.size();
         std::string Str = AWI->Operands[0].Str;
         UnescapeString(Str);
         AggregateString += Str;
         AggregateString += '\0';
       }
       Idx = Entry;
-      assert(Entry < 65536 && "Must not use unsigned short for table idx!");
 
       // Nuke the string from the operand list.  It is now handled!
       AWI->Operands.erase(AWI->Operands.begin());
     }
-    OpcodeInfo.push_back(std::pair<unsigned short, unsigned short>(Idx,0));
+    OpcodeInfo.push_back(Idx);
   }
+  
+  // Figure out how many bits we used for the string index.
+  unsigned AsmStrBits = Log2_32_Ceil(MaxStringIdx);
   
   // To reduce code size, we compactify common instructions into a few bits
   // in the opcode-indexed table.
@@ -489,20 +492,20 @@ void AsmWriterEmitter::run(std::ostream &O) {
     // Otherwise, we can include this in the initial lookup table.  Add it in.
     BitsLeft -= NumBits;
     for (unsigned i = 0, e = InstIdxs.size(); i != e; ++i)
-      OpcodeInfo[i].second |= InstIdxs[i] << BitsLeft;
+      OpcodeInfo[i] |= InstIdxs[i] << (BitsLeft+AsmStrBits);
     
     TableDrivenOperandPrinters.push_back(UniqueOperandCommands);
   }
   
   
   
-  O<<"  static const struct { unsigned short StrIdx, Bits; } OpInfo[] = {\n";
+  O<<"  static const unsigned OpInfo[] = {\n";
   for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i) {
-    O << "    { " << OpcodeInfo[i].first << ", " << OpcodeInfo[i].second
-      << " },\t// " << NumberedInstructions[i]->TheDef->getName() << "\n";
+    O << "    " << OpcodeInfo[i] << ",\t// "
+      << NumberedInstructions[i]->TheDef->getName() << "\n";
   }
   // Add a dummy entry so the array init doesn't end with a comma.
-  O << "    { 65535, 65535 }\n";
+  O << "    0U\n";
   O << "  };\n\n";
   
   // Emit the string itself.
@@ -541,11 +544,10 @@ void AsmWriterEmitter::run(std::ostream &O) {
     << "  }\n\n";
   
   O << "  // Emit the opcode for the instruction.\n"
-    << "  O << AsmStrs+OpInfo[MI->getOpcode()].StrIdx;\n\n";
+    << "  unsigned Bits = OpInfo[MI->getOpcode()];\n"
+    << "  O << AsmStrs+(Bits & " << (1 << AsmStrBits)-1 << ");\n\n";
 
   // Output the table driven operand information.
-  O << "  unsigned short Bits = OpInfo[MI->getOpcode()].Bits;\n";
-
   BitsLeft = 16;
   for (unsigned i = 0, e = TableDrivenOperandPrinters.size(); i != e; ++i) {
     std::vector<std::string> &Commands = TableDrivenOperandPrinters[i];
@@ -560,8 +562,8 @@ void AsmWriterEmitter::run(std::ostream &O) {
     
     O << "\n  // Fragment " << i << " encoded into " << NumBits
       << " bits for " << Commands.size() << " unique commands.\n"
-      << "  switch ((Bits >> " << BitsLeft << ") & " << ((1 << NumBits)-1)
-      << ") {\n"
+      << "  switch ((Bits >> " << (BitsLeft+AsmStrBits) << ") & "
+      << ((1 << NumBits)-1) << ") {\n"
       << "  default:   // unreachable.\n";
     
     // Print out all the cases.
