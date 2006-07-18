@@ -275,7 +275,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG) {
 
     // If we are preserving the callgraph, add edges to the stacksave/restore
     // functions for the calls we insert.
-    CallGraphNode *StackSaveCGN, *StackRestoreCGN, *CallerNode;
+    CallGraphNode *StackSaveCGN = 0, *StackRestoreCGN = 0, *CallerNode = 0;
     if (CG) {
       StackSaveCGN    = CG->getOrInsertFunction(StackSave);
       StackRestoreCGN = CG->getOrInsertFunction(StackRestore);
