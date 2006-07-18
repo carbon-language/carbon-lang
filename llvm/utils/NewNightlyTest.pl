@@ -144,6 +144,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
                                $GCCPATH=$ARGV[0]; 
                                shift;  
                                next;}
+    else{ $GCCPATH=""; }
     if (/^-cvstag/)          { $CVSCOOPT .= " -r $ARGV[0]"; shift; next; } 
     else{ $CVSCOOPT="";}
     if (/^-target/)          {
@@ -960,11 +961,13 @@ my $dejagnulog_full;
 @DEJAGNULOG_FULL = ReadFile "$DejagnuTestsLog";
 $dejagnulog_full = join("\n", @DEJAGNULOG_FULL);
 
-if($GCCPATH){
+if($GCCPATH ne ""){
   my $gcc_version_long = `$GCCPATH/gcc --version`;
+  print "$GCCPATH/gcc --version\n";
 }
 else{
   my $gcc_version_long = `gcc --version`;
+  print "gcc --version\n";
 }
 @GCC_VERSION = split "\n", $gcc_version_long;
 my $gcc_version = $GCC_VERSION[0];
