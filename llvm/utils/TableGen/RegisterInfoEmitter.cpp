@@ -127,7 +127,8 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
     std::string Name = RC.TheDef->getName();
   
     // Emit the register list now.
-    OS << "  // " << Name << " Register Class...\n  const unsigned " << Name
+    OS << "  // " << Name << " Register Class...\n"
+       << "  static const unsigned " << Name
        << "[] = {\n    ";
     for (unsigned i = 0, e = RC.Elements.size(); i != e; ++i) {
       Record *Reg = RC.Elements[i];
@@ -180,7 +181,8 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
       }
 
       OS << "  // " << Name 
-         << " Register Class sub-classes...\n  const TargetRegisterClass* "
+         << " Register Class sub-classes...\n"
+         << "  static const TargetRegisterClass* "
          << Name << "Subclasses [] = {\n    ";
 
       bool Empty = true;
@@ -214,7 +216,8 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
       std::string Name = RC.TheDef->getName();
 
       OS << "  // " << Name 
-         << " Register Class super-classes...\n  const TargetRegisterClass* "
+         << " Register Class super-classes...\n"
+         << "  static const TargetRegisterClass* "
          << Name << "Superclasses [] = {\n    ";
 
       bool Empty = true;
