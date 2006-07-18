@@ -187,7 +187,7 @@ private:
 
     void OptimizeIndvars(Loop *L);
 
-    unsigned CheckForIVReuse(const SCEVHandle &Stride, IVExpr &IV);
+    unsigned CheckForIVReuse(const SCEVHandle&, IVExpr&, const Type*);
 
     void StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
                                       IVUsersOfOneStride &Uses,
@@ -872,7 +872,7 @@ static bool isZero(SCEVHandle &V) {
 /// mode scale component. This allows the users of this stride to be rewritten
 /// as prev iv * factor. It returns 0 if no reuse is possible.
 unsigned LoopStrengthReduce::CheckForIVReuse(const SCEVHandle &Stride,
-                                             IVExpr &IV) {
+                                             IVExpr &IV, const Type *Ty) {
   if (!TLI) return 0;
 
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(Stride)) {
@@ -892,7 +892,9 @@ unsigned LoopStrengthReduce::CheckForIVReuse(const SCEVHandle &Stride,
       for (std::vector<IVExpr>::iterator II = SI->second.IVs.begin(),
              IE = SI->second.IVs.end(); II != IE; ++II)
         // FIXME: Only handle base == 0 for now.
-        if (isZero(II->Base)) {
+        // Only reuse previous IV if it would not require a type conversion.
+        if (isZero(II->Base) &&
+            II->Base->getType()->isLosslesslyConvertibleTo(Ty)) {
           IV = *II;
           return Scale;
         }
@@ -929,20 +931,6 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
            "Base value is not loop invariant!");
   }
 
-  // Check if it is possible to reuse a IV with stride that is factor of this
-  // stride. And the multiple is a number that can be encoded in the scale
-  // field of the target addressing mode.
-  PHINode *NewPHI = NULL;
-  Value   *IncV   = NULL;
-  IVExpr   ReuseIV;
-  unsigned RewriteFactor = CheckForIVReuse(Stride, ReuseIV);
-  if (RewriteFactor != 0) {
-    DEBUG(std::cerr << "BASED ON IV of STRIDE " << *ReuseIV.Stride
-          << " and BASE " << *ReuseIV.Base << " :\n");
-    NewPHI = ReuseIV.PHI;
-    IncV   = ReuseIV.IncV;
-  }
-
   // We now have a whole bunch of uses of like-strided induction variables, but
   // they might all have different bases.  We want to emit one PHI node for this
   // stride which we fold as many common expressions (between the IVs) into as
@@ -953,6 +941,21 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
   SCEVHandle CommonExprs =
     RemoveCommonExpressionsFromUseBases(UsersToProcess);
   
+  // Check if it is possible to reuse a IV with stride that is factor of this
+  // stride. And the multiple is a number that can be encoded in the scale
+  // field of the target addressing mode.
+  PHINode *NewPHI = NULL;
+  Value   *IncV   = NULL;
+  IVExpr   ReuseIV;
+  unsigned RewriteFactor = CheckForIVReuse(Stride, ReuseIV,
+                                           CommonExprs->getType());
+  if (RewriteFactor != 0) {
+    DEBUG(std::cerr << "BASED ON IV of STRIDE " << *ReuseIV.Stride
+          << " and BASE " << *ReuseIV.Base << " :\n");
+    NewPHI = ReuseIV.PHI;
+    IncV   = ReuseIV.IncV;
+  }
+
   // Next, figure out what we can represent in the immediate fields of
   // instructions.  If we can represent anything there, move it to the imm
   // fields of the BasedUsers.  We do this so that it increases the commonality
