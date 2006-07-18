@@ -399,7 +399,6 @@ FindUniqueOperandCommands(std::vector<std::string> &UniqueOperandCommands,
       // set share the operand.
       bool AllSame = true;
       
-      NIT = std::find(NIT+1, InstIdxs.end(), CommandIdx);
       for (NIT = std::find(NIT+1, InstIdxs.end(), CommandIdx);
            NIT != InstIdxs.end();
            NIT = std::find(NIT+1, InstIdxs.end(), CommandIdx)) {
@@ -559,6 +558,8 @@ void AsmWriterEmitter::run(std::ostream &O) {
       if (AsmWriterInst *Inst = getAsmWriterInstByID(i))
         if (!Inst->Operands.empty()) {
           unsigned NumOps = NumInstOpsHandled[InstIdxs[i]];
+          assert(NumOps <= Inst->Operands.size() &&
+                 "Can't remove this many ops!");
           Inst->Operands.erase(Inst->Operands.begin(),
                                Inst->Operands.begin()+NumOps);
         }
@@ -679,8 +680,8 @@ void AsmWriterEmitter::run(std::ostream &O) {
       EmitInstructions(Instructions, O);
 
     O << "  }\n";
+    O << "  return true;\n";
   }
   
-  O << "  return true;\n"
-       "}\n";
+  O << "}\n";
 }
