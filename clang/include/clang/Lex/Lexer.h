@@ -336,7 +336,7 @@ private:
   void LexStringLiteral      (LexerToken &Result, const char *CurPtr);
   void LexAngledStringLiteral(LexerToken &Result, const char *CurPtr);
   void LexCharConstant       (LexerToken &Result, const char *CurPtr);
-  void LexEndOfFile          (LexerToken &Result, const char *CurPtr);
+  bool LexEndOfFile          (LexerToken &Result, const char *CurPtr);
   
   void SkipWhitespace        (LexerToken &Result, const char *CurPtr);
   void SkipBCPLComment       (LexerToken &Result, const char *CurPtr);

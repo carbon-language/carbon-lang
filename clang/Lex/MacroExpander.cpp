@@ -326,9 +326,6 @@ void MacroExpander::ExpandFunctionArguments() {
         continue;
       }
       
-      // Okay, we have a token that is either the LHS or RHS of a paste (##)
-      // argument.
-      
       // FIXME: Handle comma swallowing GNU extension.
       
       // FIXME: handle pasted args.  Handle 'placemarker' stuff.
@@ -355,8 +352,14 @@ void MacroExpander::Lex(LexerToken &Tok) {
     if (Macro) Macro->EnableMacro();
 
     // Pop this context off the preprocessors lexer stack and get the next
-    // token.
-    return PP.HandleEndOfMacro(Tok);
+    // token.  This will delete "this" so remember the PP instance var.
+    Preprocessor &PPCache = PP;
+    if (PP.HandleEndOfMacro(Tok))
+      return;
+
+    // HandleEndOfMacro may not return a token.  If it doesn't, lex whatever is
+    // next.
+    return PPCache.Lex(Tok);
   }
   
   // Get the next token to return.

@@ -889,7 +889,9 @@ std::string Lexer::ReadToEndOfLine() {
 
 /// LexEndOfFile - CurPtr points to the end of this file.  Handle this
 /// condition, reporting diagnostics and handling other edge cases as required.
-void Lexer::LexEndOfFile(LexerToken &Result, const char *CurPtr) {
+/// This returns true if Result contains a token, false if PP.Lex should be
+/// called again.
+bool Lexer::LexEndOfFile(LexerToken &Result, const char *CurPtr) {
   // If we hit the end of the file while parsing a preprocessor directive,
   // end the preprocessor directive first.  The next token returned will
   // then be the end of file.
@@ -899,7 +901,7 @@ void Lexer::LexEndOfFile(LexerToken &Result, const char *CurPtr) {
     Result.SetKind(tok::eom);
     // Update the location of token as well as BufferPtr.
     FormTokenWithChars(Result, CurPtr);
-    return;
+    return true;  // Have a token.
   }        
 
   // If we aren't in raw mode, issue diagnostics. If we are in raw mode, let the
@@ -919,7 +921,7 @@ void Lexer::LexEndOfFile(LexerToken &Result, const char *CurPtr) {
   }
   
   BufferPtr = CurPtr;
-  PP.HandleEndOfFile(Result);
+  return PP.HandleEndOfFile(Result);
 }
 
 /// isNextPPTokenLParen - Return 1 if the next unexpanded token lexed from
@@ -985,8 +987,14 @@ LexNextToken:
   switch (Char) {
   case 0:  // Null.
     // Found end of file?
-    if (CurPtr-1 == BufferEnd)
-      return LexEndOfFile(Result, CurPtr-1);  // Retreat back into the file.
+    if (CurPtr-1 == BufferEnd) {
+      // Read the PP instance variable into an automatic variable, because
+      // LexEndOfFile will often delete 'this'.
+      Preprocessor &PPCache = PP;
+      if (LexEndOfFile(Result, CurPtr-1))  // Retreat back into the file.
+        return;   // Got a token to return.
+      return PPCache.Lex(Result);
+    }
     
     Diag(CurPtr-1, diag::null_in_file);
     Result.SetFlag(LexerToken::LeadingSpace);

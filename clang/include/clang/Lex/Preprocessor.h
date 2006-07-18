@@ -417,13 +417,15 @@ public:
 
   
   /// HandleEndOfFile - This callback is invoked when the lexer hits the end of
-  /// the current file.  This either returns the EOF token or pops a level off
-  /// the include stack and keeps going.
-  void HandleEndOfFile(LexerToken &Result, bool isEndOfMacro = false);
+  /// the current file.  This either returns the EOF token and returns true, or
+  /// pops a level off the include stack and returns false, at which point the
+  /// client should call lex again.
+  bool HandleEndOfFile(LexerToken &Result, bool isEndOfMacro = false);
   
   /// HandleEndOfMacro - This callback is invoked when the lexer hits the end of
-  /// the current macro line.
-  void HandleEndOfMacro(LexerToken &Result);
+  /// the current macro line.  It returns true if Result is filled in with a
+  /// token, or false if Lex should be called again.
+  bool HandleEndOfMacro(LexerToken &Result);
   
   /// HandleDirective - This callback is invoked when the lexer sees a # token
   /// at the start of a line.  This consumes the directive, modifies the 

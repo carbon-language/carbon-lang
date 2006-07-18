@@ -1005,7 +1005,7 @@ void Preprocessor::HandleIdentifier(LexerToken &Identifier) {
 /// HandleEndOfFile - This callback is invoked when the lexer hits the end of
 /// the current file.  This either returns the EOF token or pops a level off
 /// the include stack and keeps going.
-void Preprocessor::HandleEndOfFile(LexerToken &Result, bool isEndOfMacro) {
+bool Preprocessor::HandleEndOfFile(LexerToken &Result, bool isEndOfMacro) {
   assert(!CurMacroExpander &&
          "Ending a file when currently in a macro!");
   
@@ -1019,7 +1019,7 @@ void Preprocessor::HandleEndOfFile(LexerToken &Result, bool isEndOfMacro) {
     CurLexer->BufferPtr = CurLexer->BufferEnd;
     CurLexer->FormTokenWithChars(Result, CurLexer->BufferEnd);
     Result.SetKind(tok::eof);
-    return;
+    return true;
   }
   
   // See if this file had a controlling macro.
@@ -1051,8 +1051,9 @@ void Preprocessor::HandleEndOfFile(LexerToken &Result, bool isEndOfMacro) {
       FileChangeHandler(CurLexer->getSourceLocation(CurLexer->BufferPtr),
                         ExitFile, FileType);
     }
-    
-    return Lex(Result);
+
+    // Client should lex another token.
+    return false;
   }
   
   Result.StartToken();
@@ -1069,11 +1070,13 @@ void Preprocessor::HandleEndOfFile(LexerToken &Result, bool isEndOfMacro) {
   // have not been used.
   if (Diags.getDiagnosticLevel(diag::pp_macro_not_used) != Diagnostic::Ignored)
     Identifiers.VisitIdentifiers(UnusedIdentifierReporter(*this));
+  
+  return true;
 }
 
 /// HandleEndOfMacro - This callback is invoked when the lexer hits the end of
 /// the current macro expansion or token stream expansion.
-void Preprocessor::HandleEndOfMacro(LexerToken &Result) {
+bool Preprocessor::HandleEndOfMacro(LexerToken &Result) {
   assert(CurMacroExpander && !CurLexer &&
          "Ending a macro when currently in a #include file!");
 
