@@ -262,11 +262,11 @@ def ADJCALLSTACKUP   : Pseudo<(ops u16imm:$amt),
 def UPDATE_VRSAVE    : Pseudo<(ops GPRC:$rD, GPRC:$rS),
                               "UPDATE_VRSAVE $rD, $rS", []>;
 }
-def IMPLICIT_DEF_GPRC: Pseudo<(ops GPRC:$rD), "; $rD = IMPLICIT_DEF_GPRC",
+def IMPLICIT_DEF_GPRC: Pseudo<(ops GPRC:$rD), "; IMPLICIT_DEF_GPRC $rD",
                               [(set GPRC:$rD, (undef))]>;
-def IMPLICIT_DEF_F8  : Pseudo<(ops F8RC:$rD), "; $rD = IMPLICIT_DEF_F8",
+def IMPLICIT_DEF_F8  : Pseudo<(ops F8RC:$rD), "; IMPLICIT_DEF_F8 $rD",
                               [(set F8RC:$rD, (undef))]>;
-def IMPLICIT_DEF_F4  : Pseudo<(ops F4RC:$rD), "; $rD = IMPLICIT_DEF_F4",
+def IMPLICIT_DEF_F4  : Pseudo<(ops F4RC:$rD), "; IMPLICIT_DEF_F4 $rD",
                               [(set F4RC:$rD, (undef))]>;
 
 // SELECT_CC_* - Used to implement the SELECT_CC DAG operation.  Expanded by the

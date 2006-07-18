@@ -157,7 +157,7 @@ class VX2_Int<bits<11> xo, string opc, Intrinsic IntID>
 //===----------------------------------------------------------------------===//
 // Instruction Definitions.
 
-def IMPLICIT_DEF_VRRC : Pseudo<(ops VRRC:$rD), "; $rD = IMPLICIT_DEF_VRRC",
+def IMPLICIT_DEF_VRRC : Pseudo<(ops VRRC:$rD), "; IMPLICIT_DEF_VRRC $rD",
                                [(set VRRC:$rD, (v4i32 (undef)))]>;
 
 let noResults = 1 in {

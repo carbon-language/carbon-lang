@@ -57,7 +57,7 @@ def HI48_64 : SDNodeXForm<imm, [{
 // Pseudo instructions.
 //
 
-def IMPLICIT_DEF_G8RC : Pseudo<(ops G8RC:$rD), "; $rD = IMPLICIT_DEF_G8RC",
+def IMPLICIT_DEF_G8RC : Pseudo<(ops G8RC:$rD), "; IMPLICIT_DEF_G8RC $rD",
                               [(set G8RC:$rD, (undef))]>;
 
 let Pattern = [(PPCmtctr G8RC:$rS)] in {
