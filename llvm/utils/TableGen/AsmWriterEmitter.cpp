@@ -330,7 +330,7 @@ static void EmitInstructions(std::vector<AsmWriterInst> &Insts,
 
 void AsmWriterEmitter::
 FindUniqueOperandCommands(std::vector<std::string> &UniqueOperandCommands, 
-                          std::vector<unsigned> &InstIdxs, unsigned Op) const {
+                          std::vector<unsigned> &InstIdxs) const {
   InstIdxs.clear();
   InstIdxs.resize(NumberedInstructions.size());
   
@@ -345,13 +345,13 @@ FindUniqueOperandCommands(std::vector<std::string> &UniqueOperandCommands,
     if (Inst == 0) continue;  // PHI, INLINEASM, etc.
     
     std::string Command;
-    if (Op >= Inst->Operands.size())
+    if (Inst->Operands.empty())
       continue;   // Instruction already done.
 
-    Command = "    " + Inst->Operands[Op].getCode() + "\n";
+    Command = "    " + Inst->Operands[0].getCode() + "\n";
 
     // If this is the last operand, emit a return.
-    if (Op == Inst->Operands.size()-1)
+    if (Inst->Operands.size() == 1)
       Command += "    return true;\n";
     
     // Check to see if we already have 'Command' in UniqueOperandCommands.
@@ -463,16 +463,19 @@ void AsmWriterEmitter::run(std::ostream &O) {
 
   std::vector<std::vector<std::string> > TableDrivenOperandPrinters;
   
-  for (unsigned i = 0; ; ++i) {
+  bool isFirst = true;
+  while (1) {
     std::vector<std::string> UniqueOperandCommands;
 
     // For the first operand check, add a default value that unhandled
     // instructions will use.
-    if (i == 0)
+    if (isFirst) {
       UniqueOperandCommands.push_back("    return false;\n");
+      isFirst = false;
+    }
     
     std::vector<unsigned> InstIdxs;
-    FindUniqueOperandCommands(UniqueOperandCommands, InstIdxs, i);
+    FindUniqueOperandCommands(UniqueOperandCommands, InstIdxs);
     
     // If we ran out of operands to print, we're done.
     if (UniqueOperandCommands.empty()) break;
@@ -495,6 +498,14 @@ void AsmWriterEmitter::run(std::ostream &O) {
     for (unsigned i = 0, e = InstIdxs.size(); i != e; ++i)
       OpcodeInfo[i] |= InstIdxs[i] << (BitsLeft+AsmStrBits);
     
+    // Remove the info about this operand.
+    for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i) {
+      if (AsmWriterInst *Inst = getAsmWriterInstByID(i))
+        if (!Inst->Operands.empty())
+          Inst->Operands.erase(Inst->Operands.begin());
+    }
+    
+    // Remember the handlers for this set of operands.
     TableDrivenOperandPrinters.push_back(UniqueOperandCommands);
   }
   
@@ -590,18 +601,13 @@ void AsmWriterEmitter::run(std::ostream &O) {
     }
   }
   
-  // Okay, go through and strip out the operand information that we just
-  // emitted.
-  unsigned NumOpsToRemove = TableDrivenOperandPrinters.size();
+  // Okay, delete instructions with no operand info left.
   for (unsigned i = 0, e = Instructions.size(); i != e; ++i) {
     // Entire instruction has been emitted?
     AsmWriterInst &Inst = Instructions[i];
-    if (Inst.Operands.size() <= NumOpsToRemove) {
+    if (Inst.Operands.empty()) {
       Instructions.erase(Instructions.begin()+i);
-      --i; --e;      
-    } else {
-      Inst.Operands.erase(Inst.Operands.begin(),
-                          Inst.Operands.begin()+NumOpsToRemove);
+      --i; --e;
     }
   }
 

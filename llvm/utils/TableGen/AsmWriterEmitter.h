@@ -43,8 +43,7 @@ private:
       return I->second;
     }
     void FindUniqueOperandCommands(std::vector<std::string> &UOC,
-                                   std::vector<unsigned> &InstIdxs, 
-                                   unsigned Op) const;
+                                   std::vector<unsigned> &InstIdxs) const;
   };
 }
 #endif
