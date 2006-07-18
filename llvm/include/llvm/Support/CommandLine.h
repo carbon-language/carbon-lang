@@ -150,6 +150,9 @@ class Option {
     return NormalFormatting;
   }
 
+  // Out of line virtual function to provide home for the class.
+  virtual void anchor();
+  
   int NumOccurrences;   // The number of times specified
   int Flags;            // Flags for the argument
   unsigned Position;    // Position of last occurrence of the option

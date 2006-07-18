@@ -607,6 +607,10 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
 // Option Base class implementation
 //
 
+// Out of line virtual function to provide home for the class.
+void Option::anchor() {
+}
+
 bool Option::error(std::string Message, const char *ArgName) {
   if (ArgName == 0) ArgName = ArgStr;
   if (ArgName[0] == 0)
