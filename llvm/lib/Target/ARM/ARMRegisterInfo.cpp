@@ -116,10 +116,30 @@ void ARMRegisterInfo::
 processFunctionBeforeFrameFinalized(MachineFunction &MF) const {}
 
 void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
+  MachineBasicBlock &MBB = MF.front();
+  MachineFrameInfo  *MFI = MF.getFrameInfo();
+  int           NumBytes = (int) MFI->getStackSize();
+
+  //hack
+  assert(NumBytes == 0);
+
+  //add a sp = sp - 4
+  BuildMI(MBB, MBB.begin(), ARM::str, 1, ARM::R14).addReg(ARM::R13);
 }
 
 void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
 				   MachineBasicBlock &MBB) const {
+  MachineBasicBlock::iterator MBBI = prior(MBB.end());
+  assert(MBBI->getOpcode() == ARM::bx &&
+         "Can only insert epilog into returning blocks");
+
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  int          NumBytes = (int) MFI->getStackSize();
+  //hack
+  assert(NumBytes == 0);
+
+  BuildMI(MBB, MBBI, ARM::ldr, 2, ARM::R14).addImm(0).addReg(ARM::R13);
+  //add a sp = sp + 4
 }
 
 unsigned ARMRegisterInfo::getRARegister() const {

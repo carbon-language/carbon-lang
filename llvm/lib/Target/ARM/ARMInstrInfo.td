@@ -53,7 +53,9 @@ def ADJCALLSTACKDOWN : InstARM<(ops i32imm:$amt),
                                "!ADJCALLSTACKDOWN $amt",
                                [(callseq_start imm:$amt)]>;
 
-def bxr: InstARM<(ops IntRegs:$dst), "bx $dst", [(brind IntRegs:$dst)]>;
+let isReturn = 1 in {
+  def bx: InstARM<(ops IntRegs:$dst), "bx $dst", [(brind IntRegs:$dst)]>;
+}
 
 def bl: InstARM<(ops i32imm:$func, variable_ops), "bl $func", [(ARMcall tglobaladdr:$func)]>;
 
