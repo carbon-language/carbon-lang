@@ -228,7 +228,7 @@ inline unsigned CountPopulation_64(uint64_t Value) {
 
 // Log2_32 - This function returns the floor log base 2 of the specified value, 
 // -1 if the value is zero. (32 bit edition.)
-// Ex. Log2_32(32) == 5, Log2_32(1) == 0, Log2_32(0) == -1
+// Ex. Log2_32(32) == 5, Log2_32(1) == 0, Log2_32(0) == -1, Log2_32(6) == 2
 inline unsigned Log2_32(unsigned Value) {
     return 31 - CountLeadingZeros_32(Value);
 }
@@ -237,6 +237,19 @@ inline unsigned Log2_32(unsigned Value) {
 // -1 if the value is zero. (64 bit edition.)
 inline unsigned Log2_64(uint64_t Value) {
     return 63 - CountLeadingZeros_64(Value);
+}
+
+// Log2_32_Ceil - This function returns the ceil log base 2 of the specified
+// value, 32 if the value is zero. (32 bit edition).
+// Ex. Log2_32_Ceil(32) == 5, Log2_32_Ceil(1) == 0, Log2_32_Ceil(6) == 3
+inline unsigned Log2_32_Ceil(unsigned Value) {
+  return 32-CountLeadingZeros_32(Value-1);
+}
+
+// Log2_64 - This function returns the ceil log base 2 of the specified value, 
+// 64 if the value is zero. (64 bit edition.)
+inline unsigned Log2_64_Ceil(uint64_t Value) {
+  return 64-CountLeadingZeros_64(Value-1);
 }
 
 // BitsToDouble - This function takes a 64-bit integer and returns the bit
