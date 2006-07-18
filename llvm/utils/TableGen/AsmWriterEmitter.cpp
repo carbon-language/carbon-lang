@@ -560,18 +560,32 @@ void AsmWriterEmitter::run(std::ostream &O) {
     BitsLeft -= NumBits;
     
     O << "\n  // Fragment " << i << " encoded into " << NumBits
-      << " bits for " << Commands.size() << " unique commands.\n"
-      << "  switch ((Bits >> " << (BitsLeft+AsmStrBits) << ") & "
-      << ((1 << NumBits)-1) << ") {\n"
-      << "  default:   // unreachable.\n";
+      << " bits for " << Commands.size() << " unique commands.\n";
     
-    // Print out all the cases.
-    for (unsigned i = 0, e = Commands.size(); i != e; ++i) {
-      O << "  case " << i << ":\n";
-      O << Commands[i];
-      O << "    break;\n";
+    if (Commands.size() == 1) {
+      // Only one possibility, just emit it.
+      O << Commands[0];
+    } else if (Commands.size() == 2) {
+      // Emit two possibilitys with if/else.
+      O << "  if ((Bits >> " << (BitsLeft+AsmStrBits) << ") & "
+        << ((1 << NumBits)-1) << ") {\n"
+        << Commands[1]
+        << "  } else {\n"
+        << Commands[0]
+        << "  }\n\n";
+    } else {
+      O << "  switch ((Bits >> " << (BitsLeft+AsmStrBits) << ") & "
+        << ((1 << NumBits)-1) << ") {\n"
+        << "  default:   // unreachable.\n";
+      
+      // Print out all the cases.
+      for (unsigned i = 0, e = Commands.size(); i != e; ++i) {
+        O << "  case " << i << ":\n";
+        O << Commands[i];
+        O << "    break;\n";
+      }
+      O << "  }\n\n";
     }
-    O << "  }\n\n";
   }
   
   // Okay, go through and strip out the operand information that we just
