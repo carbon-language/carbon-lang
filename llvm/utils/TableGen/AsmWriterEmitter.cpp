@@ -457,8 +457,7 @@ void AsmWriterEmitter::run(std::ostream &O) {
   
   // To reduce code size, we compactify common instructions into a few bits
   // in the opcode-indexed table.
-  // 16 bits to play with.
-  unsigned BitsLeft = 16;
+  unsigned BitsLeft = 32-AsmStrBits;
 
   std::vector<std::vector<std::string> > TableDrivenOperandPrinters;
   
@@ -501,7 +500,7 @@ void AsmWriterEmitter::run(std::ostream &O) {
   
   O<<"  static const unsigned OpInfo[] = {\n";
   for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i) {
-    O << "    " << OpcodeInfo[i] << ",\t// "
+    O << "    " << OpcodeInfo[i] << "U,\t// "
       << NumberedInstructions[i]->TheDef->getName() << "\n";
   }
   // Add a dummy entry so the array init doesn't end with a comma.
@@ -548,7 +547,7 @@ void AsmWriterEmitter::run(std::ostream &O) {
     << "  O << AsmStrs+(Bits & " << (1 << AsmStrBits)-1 << ");\n\n";
 
   // Output the table driven operand information.
-  BitsLeft = 16;
+  BitsLeft = 32-AsmStrBits;
   for (unsigned i = 0, e = TableDrivenOperandPrinters.size(); i != e; ++i) {
     std::vector<std::string> &Commands = TableDrivenOperandPrinters[i];
 
@@ -595,12 +594,15 @@ void AsmWriterEmitter::run(std::ostream &O) {
   // elements in the vector.
   std::reverse(Instructions.begin(), Instructions.end());
   
-  // Find the opcode # of inline asm
-  O << "  switch (MI->getOpcode()) {\n";
-  while (!Instructions.empty())
-    EmitInstructions(Instructions, O);
+  if (!Instructions.empty()) {
+    // Find the opcode # of inline asm.
+    O << "  switch (MI->getOpcode()) {\n";
+    while (!Instructions.empty())
+      EmitInstructions(Instructions, O);
 
-  O << "  }\n"
-       "  return true;\n"
+    O << "  }\n";
+  }
+  
+  O << "  return true;\n"
        "}\n";
 }
