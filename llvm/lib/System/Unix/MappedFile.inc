@@ -40,32 +40,31 @@ struct sys::MappedFileInfo {
 };
 
 void MappedFile::initialize() {
-  if (path_.exists()) {
-    info_ = new MappedFileInfo;
-    int mode = 0;
-    if (options_&READ_ACCESS) 
-      if (options_&WRITE_ACCESS)
-        mode = O_RDWR;
-      else
-        mode = O_RDONLY;
-    else if (options_&WRITE_ACCESS)
-      mode = O_WRONLY;
-    info_->fd_ = ::open(path_.c_str(),mode);
-
-    if (info_->fd_ < 0) {
-      delete info_;
-      info_ = 0;
-      ThrowErrno(std::string("Can't open file: ") + path_.toString());
-    }
-    struct stat sbuf;
-    if(::fstat(info_->fd_, &info_->sbuf_) < 0) {
-      ::close(info_->fd_);
-      delete info_;
-      info_ = 0;
-      ThrowErrno(std::string("Can't stat file: ") + path_.toString());
-    }
-  } else {
+  if (!path_.exists())
     throw std::string("Can't open file: ") + path_.toString();
+  
+  info_ = new MappedFileInfo;
+  int mode = 0;
+  if (options_&READ_ACCESS) 
+    if (options_&WRITE_ACCESS)
+      mode = O_RDWR;
+    else
+      mode = O_RDONLY;
+  else if (options_&WRITE_ACCESS)
+    mode = O_WRONLY;
+  info_->fd_ = ::open(path_.c_str(),mode);
+
+  if (info_->fd_ < 0) {
+    delete info_;
+    info_ = 0;
+    ThrowErrno(std::string("Can't open file: ") + path_.toString());
+  }
+  struct stat sbuf;
+  if(::fstat(info_->fd_, &info_->sbuf_) < 0) {
+    ::close(info_->fd_);
+    delete info_;
+    info_ = 0;
+    ThrowErrno(std::string("Can't stat file: ") + path_.toString());
   }
 }
 
