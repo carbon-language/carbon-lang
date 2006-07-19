@@ -199,10 +199,15 @@ static MachineInstr *MakeRMIInst(unsigned Opcode, unsigned FrameIndex,
 //===----------------------------------------------------------------------===//
 
 namespace {
+  /// TableEntry - Maps the 'from' opcode to a fused form of the 'to' opcode.
+  ///
   struct TableEntry {
-    unsigned from;
-    unsigned to;
-    unsigned make;
+    unsigned from;                      // Original opcode.
+    unsigned to;                        // New opcode.
+    unsigned make;                      // Form of make required to produce the
+                                        // new instruction.
+                                        
+    // less operators used by STL search.                                    
     bool operator<(const TableEntry &TE) const { return from < TE.from; }
     friend bool operator<(const TableEntry &TE, unsigned V) {
       return TE.from < V;
@@ -213,20 +218,26 @@ namespace {
   };
 }
 
+/// TableIsSorted - Return true if the table is in 'from' opcode order.
+///
 static bool TableIsSorted(const TableEntry *Table, unsigned NumEntries) {
-  for (unsigned i = 0; i != NumEntries-1; ++i)
-    if (!(Table[i] < Table[i+1])) return false;
+  for (unsigned i = 1; i != NumEntries; ++i)
+    if (!(Table[i-1] < Table[i])) {
+      std::cerr << "Entries out of order" << Table[i-1].from
+                << " " << Table[i].from << "\n";
+      return false;
+    }
   return true;
 }
 
-static int Lookup(const TableEntry *Table, unsigned N, unsigned Opcode,
-                  unsigned &make) {
+/// TableLookup - Return the table entry matching the specified opcode.
+/// Otherwise return NULL.
+static const TableEntry *TableLookup(const TableEntry *Table, unsigned N,
+                                unsigned Opcode) {
   const TableEntry *I = std::lower_bound(Table, Table+N, Opcode);
-  if (I != Table+N && I->from == Opcode) {
-    make = I->make;
-    return I->to;
-  }
-  return -1;
+  if (I != Table+N && I->from == Opcode)
+    return I;
+  return NULL;
 }
 
 #define ARRAY_SIZE(TABLE)  \
@@ -237,9 +248,11 @@ static int Lookup(const TableEntry *Table, unsigned N, unsigned Opcode,
 #else
 #define ASSERT_SORTED(TABLE)                                              \
   { static bool TABLE##Checked = false;                                   \
-    if (!TABLE##Checked)                                                  \
+    if (!TABLE##Checked) {                                                \
        assert(TableIsSorted(TABLE, ARRAY_SIZE(TABLE)) &&                  \
               "All lookup tables must be sorted for efficient access!");  \
+       TABLE##Checked = true;                                             \
+    }                                                                     \
   }
 #endif
 
@@ -474,9 +487,9 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr* MI,
       { X86::CMOVNS16rr,      X86::CMOVNS16rm,      makeRMInst },
       { X86::CMOVNS32rr,      X86::CMOVNS32rm,      makeRMInst },
       { X86::CMOVP16rr,       X86::CMOVP16rm,       makeRMInst },
+      { X86::CMOVP32rr,       X86::CMOVP32rm,       makeRMInst },
       { X86::CMOVS16rr,       X86::CMOVS16rm,       makeRMInst },
       { X86::CMOVS32rr,       X86::CMOVS32rm,       makeRMInst },
-      { X86::CMOVP32rr,       X86::CMOVP32rm,       makeRMInst },
       { X86::CMP16ri,         X86::CMP16mi,         makeMIInst },
       { X86::CMP16ri8,        X86::CMP16mi8,        makeMIInst },
       { X86::CMP16rr,         X86::CMP16rm,         makeRMInst },
@@ -660,23 +673,26 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr* MI,
       { X86::XORPDrr,         X86::XORPDrm,         makeRMInst },
       { X86::XORPSrr,         X86::XORPSrm,         makeRMInst }
     };
+    ASSERT_SORTED(OpcodeTable);
     OpcodeTablePtr = OpcodeTable;
     OpcodeTableSize = ARRAY_SIZE(OpcodeTable);
   }
   
   // If table selected
   if (OpcodeTablePtr) {
-    // Opcode to translate
+    // Opcode to fuse
     unsigned fromOpcode = MI->getOpcode();
-    // Type of make to use
-    unsigned make;
     // Lookup fromOpcode in table
-    int toOpcode = Lookup(OpcodeTablePtr, OpcodeTableSize, fromOpcode, make);
+    const TableEntry *entry = TableLookup(OpcodeTablePtr, OpcodeTableSize,
+                                          fromOpcode);
     
     // If opcode found in table
-    if (toOpcode != -1) {
+    if (entry) {
+      // Fused opcode
+      unsigned toOpcode = entry->to;
+      
       // Make new instruction
-      switch (make) {
+      switch (entry->make) {
       case makeM0Inst:  return MakeM0Inst(toOpcode, FrameIndex, MI);
       case makeMIInst:  return MakeMIInst(toOpcode, FrameIndex, MI);
       case makeMInst:   return MakeMInst(toOpcode, FrameIndex, MI);
