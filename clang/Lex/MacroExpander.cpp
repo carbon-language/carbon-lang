@@ -372,6 +372,10 @@ void MacroExpander::Lex(LexerToken &Tok) {
     return PPCache.Lex(Tok);
   }
   
+  // If this is the first token of the expanded result, we inherit spacing
+  // properties later.
+  bool isFirstToken = CurToken == 0;
+  
   // Get the next token to return.
   Tok = (*MacroTokens)[CurToken++];
   
@@ -395,7 +399,7 @@ void MacroExpander::Lex(LexerToken &Tok) {
   
   // If this is the first token, set the lexical properties of the token to
   // match the lexical properties of the macro identifier.
-  if (CurToken == 1) {
+  if (isFirstToken) {
     Tok.SetFlagValue(LexerToken::StartOfLine , AtStartOfLine);
     Tok.SetFlagValue(LexerToken::LeadingSpace, HasLeadingSpace);
   }
