@@ -22,9 +22,7 @@ class MMXI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
 class MMX2I<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
       : I<o, F, ops, asm, pattern>, TB, OpSize, Requires<[HasSSE2]>;
 class MMXIi8<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
-      : X86Inst<o, F, Imm8, ops, asm>, TB, Requires<[HasMMX]> {
-  let Pattern = pattern;
-}
+      : Ii8<o, F, ops, asm, pattern>, TB, Requires<[HasMMX]>;
 
 // Some 'special' instructions
 def IMPLICIT_DEF_VR64 : I<0, Pseudo, (ops VR64:$dst),

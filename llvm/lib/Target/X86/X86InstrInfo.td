@@ -314,18 +314,22 @@ def extloadi32i16  : PatFrag<(ops node:$ptr), (i32 (extload node:$ptr, i16))>;
 class I<bits<8> o, Format f, dag ops, string asm, list<dag> pattern>
   : X86Inst<o, f, NoImm, ops, asm> {
   let Pattern = pattern;
+  let CodeSize = 3;
 }
 class Ii8 <bits<8> o, Format f, dag ops, string asm, list<dag> pattern>
   : X86Inst<o, f, Imm8 , ops, asm> {
   let Pattern = pattern;
+  let CodeSize = 3;
 }
 class Ii16<bits<8> o, Format f, dag ops, string asm, list<dag> pattern>
   : X86Inst<o, f, Imm16, ops, asm> {
   let Pattern = pattern;
+  let CodeSize = 3;
 }
 class Ii32<bits<8> o, Format f, dag ops, string asm, list<dag> pattern>
   : X86Inst<o, f, Imm32, ops, asm> {
   let Pattern = pattern;
+  let CodeSize = 3;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1060,6 +1064,7 @@ def CMOVNP32rm : I<0x4B, MRMSrcMem,       // if !parity, GR32 = [mem32]
 
 
 // unary instructions
+let CodeSize = 2 in {
 def NEG8r  : I<0xF6, MRM3r, (ops GR8 :$dst, GR8 :$src), "neg{b} $dst",
                [(set GR8:$dst, (ineg GR8:$src))]>;
 def NEG16r : I<0xF7, MRM3r, (ops GR16:$dst, GR16:$src), "neg{w} $dst",
@@ -1090,17 +1095,19 @@ let isTwoAddress = 0 in {
   def NOT32m : I<0xF7, MRM2m, (ops i32mem:$dst), "not{l} $dst",
                  [(store (not (loadi32 addr:$dst)), addr:$dst)]>;
 }
+} // CodeSize
 
 // TODO: inc/dec is slow for P4, but fast for Pentium-M.
+let CodeSize = 2 in
 def INC8r  : I<0xFE, MRM0r, (ops GR8 :$dst, GR8 :$src), "inc{b} $dst",
                [(set GR8:$dst, (add GR8:$src, 1))]>;
-let isConvertibleToThreeAddress = 1 in {   // Can transform into LEA.
+let isConvertibleToThreeAddress = 1, CodeSize = 1 in {  // Can xform into LEA.
 def INC16r : I<0x40, AddRegFrm, (ops GR16:$dst, GR16:$src), "inc{w} $dst",
                [(set GR16:$dst, (add GR16:$src, 1))]>, OpSize;
 def INC32r : I<0x40, AddRegFrm, (ops GR32:$dst, GR32:$src), "inc{l} $dst",
                [(set GR32:$dst, (add GR32:$src, 1))]>;
 }
-let isTwoAddress = 0 in {
+let isTwoAddress = 0, CodeSize = 2 in {
   def INC8m  : I<0xFE, MRM0m, (ops i8mem :$dst), "inc{b} $dst",
                [(store (add (loadi8 addr:$dst), 1), addr:$dst)]>;
   def INC16m : I<0xFF, MRM0m, (ops i16mem:$dst), "inc{w} $dst",
@@ -1109,16 +1116,17 @@ let isTwoAddress = 0 in {
                [(store (add (loadi32 addr:$dst), 1), addr:$dst)]>;
 }
 
+let CodeSize = 2 in
 def DEC8r  : I<0xFE, MRM1r, (ops GR8 :$dst, GR8 :$src), "dec{b} $dst",
                [(set GR8:$dst, (add GR8:$src, -1))]>;
-let isConvertibleToThreeAddress = 1 in {   // Can transform into LEA.
+let isConvertibleToThreeAddress = 1, CodeSize = 1 in {   // Can xform into LEA.
 def DEC16r : I<0x48, AddRegFrm, (ops GR16:$dst, GR16:$src), "dec{w} $dst",
                [(set GR16:$dst, (add GR16:$src, -1))]>, OpSize;
 def DEC32r : I<0x48, AddRegFrm, (ops GR32:$dst, GR32:$src), "dec{l} $dst",
                [(set GR32:$dst, (add GR32:$src, -1))]>;
 }
 
-let isTwoAddress = 0 in {
+let isTwoAddress = 0, CodeSize = 2 in {
   def DEC8m  : I<0xFE, MRM1m, (ops i8mem :$dst), "dec{b} $dst",
                [(store (add (loadi8 addr:$dst), -1), addr:$dst)]>;
   def DEC16m : I<0xFF, MRM1m, (ops i16mem:$dst), "dec{w} $dst",
