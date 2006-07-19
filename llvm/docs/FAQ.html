@@ -79,6 +79,8 @@
     How can I disable all optimizations when compiling code using the LLVM GCC front end?
     </li>
 
+    <li><a href="#translatec++">Can I use LLVM to convert C++ code to C code?</a></li>
+
   </ol>
   </li>
 
@@ -500,6 +502,61 @@ optimizations done at the llvm level, leaving you with the truly horrible
 code that you desire.
 </p>
 </div>
+
+
+<div class="question">
+<p>
+<a name="translatec++">Can I use LLVM to convert C++ code to C code?</a>
+</p>
+</div>
+
+<div class="answer">
+<p>Yes, you can use LLVM to convert code from any language LLVM supports to C.
+Note that the generated C code will be very low level (all loops are lowered
+to gotos, etc) and not very pretty (comments are stripped, original source
+formatting is totally lost, variables are renamed, expressions are regrouped), 
+so this may not be what you're looking for.  However, this is a good way to add
+C++ support for a processor that does not otherwise have a C++ compiler.
+</p>
+
+<p>Use commands like this:</p>
+
+<ol>
+<li><p>Compile your program as normal with llvm-g++:</p></li>
+
+<div class="doc_code">$ llvm-g++ x.cpp -o program</div>
+
+<p>or:</p>
+
+<div class="doc_code">
+ llvm-g++ a.cpp -c
+ llvm-g++ b.cpp -c
+ llvm-g++ a.o b.o -o program
+</div>
+
+<p>With llvm-gcc3, this will generate program and program.bc.  The .bc file is 
+the LLVM version of the program all linked together.</p>
+
+<li><p>Convert the LLVM code to C code, using the LLC tool with the C
+backend:</p></li>
+
+<div class="doc_code">$ llc -march=c program.bc -o program.c</div>
+
+<li><p>Finally, compile the c file:</p></li>
+
+<div class="doc_code">$ cc x.c</div>
+
+</ol>
+
+<p>Note that, by default, the C backend does not support exception handling.
+If you want/need it for a certain program, you can enable it by passing
+"-enable-correct-eh-support" to the llc program.  The resultant code will
+use setjmp/longjmp to implement exception support that is correct but
+relatively slow.
+</p>
+</div>
+
+
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
