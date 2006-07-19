@@ -610,7 +610,7 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
         InsertedPHIs.insert(NewLCSSA);
       }
 
-      Instruction* InsertPt = EndBlock->begin();
+      BasicBlock::iterator InsertPt = EndBlock->begin();
       while (dyn_cast<PHINode>(InsertPt)) ++InsertPt;
       for (BasicBlock::iterator I = MiddleBlock->begin();
          (OldLCSSA = dyn_cast<PHINode>(I)) && InsertedPHIs.count(OldLCSSA) == 0;
