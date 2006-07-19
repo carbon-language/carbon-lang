@@ -155,6 +155,17 @@ public:
     LexTokenInternal(Result);
   }
   
+  /// LexRawToken - Switch the lexer to raw mode, lex a token into Result and
+  /// switch it back.  Return true if the 'next character to read' pointer
+  /// points and the end of the lexer buffer, false otherwise.
+  bool LexRawToken(LexerToken &Result) {
+    assert(!LexingRawMode && "Already in raw mode!");
+    LexingRawMode = true;
+    Lex(Result);
+    LexingRawMode = false;
+    return BufferPtr == BufferEnd; 
+  }
+  
   /// ReadToEndOfLine - Read the rest of the current preprocessor line as an
   /// uninterpreted string.  This switches the lexer out of directive mode.
   std::string ReadToEndOfLine();

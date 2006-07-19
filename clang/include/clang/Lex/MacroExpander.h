@@ -134,6 +134,12 @@ private:
     return CurToken == MacroTokens->size();
   }
   
+  /// PasteTokens - Tok is the LHS of a ## operator, and CurToken is the ##
+  /// operator.  Read the ## and RHS, and paste the LHS/RHS together.  If there
+  /// are is another ## after it, chomp it iteratively.  Return the result as
+  /// Tok.
+  void PasteTokens(LexerToken &Tok);
+  
   /// Expand the arguments of a function-like macro so that we can quickly
   /// return preexpanded tokens from MacroTokens.
   void ExpandFunctionArguments();

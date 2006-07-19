@@ -16,6 +16,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/Diagnostic.h"
+#include "llvm/Config/Alloca.h"
 using namespace llvm;
 using namespace clang;
 
@@ -373,6 +374,10 @@ void MacroExpander::Lex(LexerToken &Tok) {
   
   // Get the next token to return.
   Tok = (*MacroTokens)[CurToken++];
+  
+  // If this token is followed by a token paste (##) operator, paste the tokens!
+  if (!isAtEnd() && (*MacroTokens)[CurToken].getKind() == tok::hashhash)
+    PasteTokens(Tok);
 
   // The token's current location indicate where the token was lexed from.  We
   // need this information to compute the spelling of the token, but any
@@ -400,6 +405,100 @@ void MacroExpander::Lex(LexerToken &Tok) {
     return PP.HandleIdentifier(Tok);
 
   // Otherwise, return a normal token.
+}
+
+/// PasteTokens - Tok is the LHS of a ## operator, and CurToken is the ##
+/// operator.  Read the ## and RHS, and paste the LHS/RHS together.  If there
+/// are is another ## after it, chomp it iteratively.  Return the result as Tok.
+void MacroExpander::PasteTokens(LexerToken &Tok) {
+  do {
+    // Consume the ## operator.
+    SourceLocation PasteOpLoc = (*MacroTokens)[CurToken].getLocation();
+    ++CurToken;
+    assert(!isAtEnd() && "No token on the RHS of a paste operator!");
+  
+    // Get the RHS token.
+    const LexerToken &RHS = (*MacroTokens)[CurToken];
+  
+    bool isInvalid = false;
+
+    // TODO: Avoid // and /*, as the lexer would think it is the start of a
+    // comment and emit warnings that don't make sense.
+    
+    // Allocate space for the result token.  This is guaranteed to be enough for
+    // the two tokens and a null terminator.
+    char *Buffer = (char*)alloca(Tok.getLength() + RHS.getLength() + 1);
+    
+    // Get the spelling of the LHS token in Buffer.
+    const char *BufPtr = Buffer;
+    unsigned LHSLen = PP.getSpelling(Tok, BufPtr);
+    if (BufPtr != Buffer)   // Really, we want the chars in Buffer!
+      memcpy(Buffer, BufPtr, LHSLen);
+    
+    BufPtr = Buffer+LHSLen;
+    unsigned RHSLen = PP.getSpelling(RHS, BufPtr);
+    if (BufPtr != Buffer+LHSLen)   // Really, we want the chars in Buffer!
+      memcpy(Buffer+LHSLen, BufPtr, RHSLen);
+    
+    // Add null terminator.
+    Buffer[LHSLen+RHSLen] = '\0';
+    
+    // Plop the pasted result (including the trailing newline and null) into a
+    // scratch buffer where we can lex it.
+    SourceLocation ResultTokLoc = PP.CreateString(Buffer, LHSLen+RHSLen+1);
+    
+    // Lex the resultant pasted token into Result.
+    LexerToken Result;
+    
+    // FIXME: Handle common cases: ident+ident, ident+simplenumber here.
+
+    // Make a lexer to lex this string from.
+    SourceManager &SourceMgr = PP.getSourceManager();
+    const char *ResultStrData = SourceMgr.getCharacterData(ResultTokLoc);
+    
+    unsigned FileID = ResultTokLoc.getFileID();
+    assert(FileID && "Could not get FileID for paste?");
+    
+    // Make and enter a lexer object so that we lex and expand the paste result.
+    Lexer *TL = new Lexer(SourceMgr.getBuffer(FileID), FileID, PP,
+                          ResultStrData, 
+                          ResultStrData+LHSLen+RHSLen /*don't include null*/);
+    
+    // Lex a token in raw mode.  This way it won't look up identifiers
+    // automatically, lexing off the end will return an eof token, and warnings
+    // are disabled.  This returns true if the result token is the entire
+    // buffer.
+    bool IsComplete = TL->LexRawToken(Result);
+    
+    // If we got an EOF token, we didn't form even ONE token.  For example, we
+    // did "/ ## /" to get "//".
+    IsComplete &= Result.getKind() != tok::eof;
+
+    // We're now done with the temporary lexer.
+    delete TL;
+    
+    // If pasting the two tokens didn't form a full new token, this is an error.
+    // This occurs with "x ## +"  and other stuff.
+    if (!IsComplete) {
+      // If not in assembler language mode.
+      PP.Diag(PasteOpLoc, diag::err_pp_bad_paste, 
+              std::string(Buffer, Buffer+LHSLen+RHSLen));
+      return;
+    }
+    
+    // Turn ## into 'other' to avoid # ## # from looking like a paste operator.
+    if (Result.getKind() == tok::hashhash)
+      Result.SetKind(tok::unknown);
+    // FIXME: Turn __VARRGS__ into "not a token"?
+    
+    // Transfer properties of the LHS over the the Result.
+    Result.SetFlagValue(LexerToken::StartOfLine , Tok.isAtStartOfLine());
+    Result.SetFlagValue(LexerToken::LeadingSpace, Tok.hasLeadingSpace());
+    
+    // Finally, replace LHS with the result, consume the RHS, and iterate.
+    ++CurToken;
+    Tok = Result;
+  } while (!isAtEnd() && (*MacroTokens)[CurToken].getKind() == tok::hashhash);
 }
 
 /// isNextTokenLParen - If the next token lexed will pop this macro off the
