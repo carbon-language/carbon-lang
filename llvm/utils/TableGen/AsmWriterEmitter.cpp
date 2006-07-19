@@ -478,7 +478,7 @@ void AsmWriterEmitter::run(std::ostream &O) {
   // Build an aggregate string, and build a table of offsets into it.
   std::map<std::string, unsigned> StringOffset;
   std::string AggregateString;
-  AggregateString += '\0';
+  AggregateString += "\0\0";
   
   /// OpcodeInfo - Theis encodes the index of the string to use for the first
   /// chunk of the output as well as indices used for operand printing.
@@ -488,9 +488,14 @@ void AsmWriterEmitter::run(std::ostream &O) {
   for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i) {
     AsmWriterInst *AWI = CGIAWIMap[NumberedInstructions[i]];
     unsigned Idx;
-    if (AWI == 0 || AWI->Operands[0].Str.empty()) {
+    if (AWI == 0) {
       // Something not handled by the asmwriter printer.
       Idx = 0;
+    } else if (AWI->Operands[0].OperandType != 
+                        AsmWriterOperand::isLiteralTextOperand ||
+               AWI->Operands[0].Str.empty()) {
+      // Something handled by the asmwriter printer, but with no leading string.
+      Idx = 1;
     } else {
       unsigned &Entry = StringOffset[AWI->Operands[0].Str];
       if (Entry == 0) {
@@ -522,10 +527,10 @@ void AsmWriterEmitter::run(std::ostream &O) {
   while (1) {
     std::vector<std::string> UniqueOperandCommands;
 
-    // For the first operand check, add a default value that unhandled
-    // instructions will use.
+    // For the first operand check, add a default value for instructions with
+    // just opcode strings to use.
     if (isFirst) {
-      UniqueOperandCommands.push_back("    return false;\n");
+      UniqueOperandCommands.push_back("    return true;\n");
       isFirst = false;
     }
     
@@ -618,6 +623,7 @@ void AsmWriterEmitter::run(std::ostream &O) {
   
   O << "  // Emit the opcode for the instruction.\n"
     << "  unsigned Bits = OpInfo[MI->getOpcode()];\n"
+    << "  if (Bits == 0) return false;\n"
     << "  O << AsmStrs+(Bits & " << (1 << AsmStrBits)-1 << ");\n\n";
 
   // Output the table driven operand information.
