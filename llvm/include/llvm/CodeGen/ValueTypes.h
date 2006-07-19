@@ -120,36 +120,8 @@ namespace MVT {  // MVT = Machine Value Types
   /// NumElements in length, where each element is of type VT.  If there is no
   /// ValueType that represents this vector, a ValueType of Other is returned.
   ///
-  static inline ValueType getVectorType(ValueType VT, unsigned NumElements) {
-    switch (VT) {
-    default: 
-      break;
-    case MVT::i8:
-      if (NumElements == 8)  return MVT::v8i8;
-      if (NumElements == 16) return MVT::v16i8;
-        break;
-    case MVT::i16:
-      if (NumElements == 4)  return MVT::v4i16;
-      if (NumElements == 8)  return MVT::v8i16;
-        break;
-    case MVT::i32:
-      if (NumElements == 2)  return MVT::v2i32;
-      if (NumElements == 4)  return MVT::v4i32;
-        break;
-    case MVT::i64:
-      if (NumElements == 2)  return MVT::v2i64;
-      break;
-    case MVT::f32:
-      if (NumElements == 2)  return MVT::v2f32;
-      if (NumElements == 4)  return MVT::v4f32;
-        break;
-    case MVT::f64:
-      if (NumElements == 2)  return MVT::v2f64;
-      break;
-    }
-    return MVT::Other;
-  }
-  
+  ValueType getVectorType(ValueType VT, unsigned NumElements);
+    
   /// MVT::getVectorBaseType - Given a packed vector type, return the type of
   /// each element.
   static inline ValueType getVectorBaseType(ValueType VT) {

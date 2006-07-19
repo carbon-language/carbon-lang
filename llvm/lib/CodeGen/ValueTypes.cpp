@@ -46,6 +46,40 @@ const char *MVT::getValueTypeString(MVT::ValueType VT) {
   }
 }
 
+/// MVT::getVectorType - Returns the ValueType that represents a vector
+/// NumElements in length, where each element is of type VT.  If there is no
+/// ValueType that represents this vector, a ValueType of Other is returned.
+///
+MVT::ValueType MVT::getVectorType(ValueType VT, unsigned NumElements) {
+  switch (VT) {
+  default: 
+    break;
+  case MVT::i8:
+    if (NumElements == 8)  return MVT::v8i8;
+    if (NumElements == 16) return MVT::v16i8;
+    break;
+  case MVT::i16:
+    if (NumElements == 4)  return MVT::v4i16;
+    if (NumElements == 8)  return MVT::v8i16;
+    break;
+  case MVT::i32:
+    if (NumElements == 2)  return MVT::v2i32;
+    if (NumElements == 4)  return MVT::v4i32;
+    break;
+  case MVT::i64:
+    if (NumElements == 2)  return MVT::v2i64;
+    break;
+  case MVT::f32:
+    if (NumElements == 2)  return MVT::v2f32;
+    if (NumElements == 4)  return MVT::v4f32;
+    break;
+  case MVT::f64:
+    if (NumElements == 2)  return MVT::v2f64;
+    break;
+  }
+  return MVT::Other;
+}
+
 /// MVT::getTypeForValueType - This method returns an LLVM type corresponding
 /// to the specified ValueType.  For integer types, this returns an unsigned
 /// type.  Note that this will abort for types that cannot be represented.
