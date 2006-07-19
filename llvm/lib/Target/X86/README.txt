@@ -709,3 +709,28 @@ Use cpuid to auto-detect CPU features such as SSE, SSE2, and SSE3.
 
 JIT should resolve __cxa_atexit on Mac OS X. In a non-jit environment, the
 symbol is a dynamically resolved by the linker.
+
+//===---------------------------------------------------------------------===//
+
+u32 to float conversion improvement:
+
+float uint32_2_float( unsigned u ) {
+  float fl = (int) (u & 0xffff);
+  float fh = (int) (u >> 16);
+  fh *= 0x1.0p16f;
+  return fh + fl;
+}
+
+00000000        subl    $0x04,%esp
+00000003        movl    0x08(%esp,1),%eax
+00000007        movl    %eax,%ecx
+00000009        shrl    $0x10,%ecx
+0000000c        cvtsi2ss        %ecx,%xmm0
+00000010        andl    $0x0000ffff,%eax
+00000015        cvtsi2ss        %eax,%xmm1
+00000019        mulss   0x00000078,%xmm0
+00000021        addss   %xmm1,%xmm0
+00000025        movss   %xmm0,(%esp,1)
+0000002a        flds    (%esp,1)
+0000002d        addl    $0x04,%esp
+00000030        ret
