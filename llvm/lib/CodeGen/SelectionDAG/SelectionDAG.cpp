@@ -2702,6 +2702,10 @@ void SelectionDAG::ReplaceAllUsesOfValueWith(SDOperand From, SDOperand To,
 //                              SDNode Class
 //===----------------------------------------------------------------------===//
 
+// Out-of-line virtual method to give class a home.
+void SDNode::ANCHOR() {
+}
+
 
 /// getValueTypeList - Return a pointer to the specified value type.
 ///

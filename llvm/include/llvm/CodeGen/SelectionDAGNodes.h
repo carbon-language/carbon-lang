@@ -713,6 +713,9 @@ class SDNode {
   /// Uses - These are all of the SDNode's that use a value produced by this
   /// node.
   std::vector<SDNode*> Uses;
+  
+  // Out-of-line virtual method to give class a home.
+  virtual void ANCHOR();
 public:
   virtual ~SDNode() {
     assert(NumOperands == 0 && "Operand list not cleared before deletion");
