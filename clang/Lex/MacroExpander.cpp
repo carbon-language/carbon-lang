@@ -246,8 +246,6 @@ MacroExpander::~MacroExpander() {
   delete ActualArgs;
 }
 
-
-
 /// Expand the arguments of a function-like macro so that we can quickly
 /// return preexpanded tokens from MacroTokens.
 void MacroExpander::ExpandFunctionArguments() {
@@ -326,10 +324,21 @@ void MacroExpander::ExpandFunctionArguments() {
         continue;
       }
       
-      // FIXME: Handle comma swallowing GNU extension.
+      // Okay, we have a token that is either the LHS or RHS of a paste (##)
+      // argument.  It gets substituted as its non-pre-expanded tokens.
+      const std::vector<LexerToken> &ArgToks =
+        ActualArgs->getUnexpArgument(ArgNo);
+      assert(ArgToks.back().getKind() == tok::eof && "Bad argument!");
+
+      if (ArgToks.size() != 1) {  // Not just an EOF token?
+        ResultToks.insert(ResultToks.end(), ArgToks.begin(), ArgToks.end()-1);
+        continue;
+      }
       
-      // FIXME: handle pasted args.  Handle 'placemarker' stuff.
-      ResultToks.push_back(CurTok);
+      // FIXME: Handle comma swallowing GNU extension.
+      // FIXME: Handle 'placemarker' stuff.
+      assert(0 && "FIXME: handle empty arguments!");
+      //ResultToks.push_back(CurTok);
     }
   }
   
