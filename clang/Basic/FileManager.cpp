@@ -102,14 +102,18 @@ const FileEntry *FileManager::getFile(const std::string &Filename) {
   
   // Nope, there isn't.  Check to see if the file exists.
   struct stat StatBuf;
+  //std::cerr << "STATING: " << Filename;
   if (stat(Filename.c_str(), &StatBuf) ||   // Error stat'ing.
-      S_ISDIR(StatBuf.st_mode))             // A directory?
+      S_ISDIR(StatBuf.st_mode)) {           // A directory?
+    // If this file doesn't exist, we leave a null in FileEntries for this path.
+    //std::cerr << ": Not existing\n";
     return 0;
+  }
+  //std::cerr << ": exists\n";
   
   // It exists.  See if we have already opened a directory with the same inode.
   // This occurs when one dir is symlinked to another, for example.
-  FileEntry *&UFE = 
-    UniqueFiles[std::make_pair(StatBuf.st_dev, StatBuf.st_ino)];
+  FileEntry *&UFE = UniqueFiles[std::make_pair(StatBuf.st_dev, StatBuf.st_ino)];
   
   if (UFE)  // Already have an entry with this inode, return it.
     return Ent = UFE;
