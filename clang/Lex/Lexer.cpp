@@ -904,23 +904,32 @@ bool Lexer::LexEndOfFile(LexerToken &Result, const char *CurPtr) {
     return true;  // Have a token.
   }        
 
-  // If we aren't in raw mode, issue diagnostics. If we are in raw mode, let the
-  // code that put us into raw mode do this: there are multiple possible reasons
-  // for raw mode, and not all want these diagnostics.
-  if (!LexingRawMode) {
-    // If we are in a #if directive, emit an error.
-    while (!ConditionalStack.empty()) {
-      PP.Diag(ConditionalStack.back().IfLoc,
-              diag::err_pp_unterminated_conditional);
-      ConditionalStack.pop_back();
-    }  
-  
-    // If the file was empty or didn't end in a newline, issue a pedwarn.
-    if (CurPtr[-1] != '\n' && CurPtr[-1] != '\r')
-      Diag(BufferEnd, diag::ext_no_newline_eof);
+  // If we are in raw mode, return this event as an EOF token.  Let the caller
+  // that put us in raw mode handle the event.
+  if (LexingRawMode) {
+    Result.StartToken();
+    BufferPtr = BufferEnd;
+    FormTokenWithChars(Result, BufferEnd);
+    Result.SetKind(tok::eof);
+    return true;
   }
   
+  // Otherwise, issue diagnostics for unterminated #if and missing newline.
+
+  // If we are in a #if directive, emit an error.
+  while (!ConditionalStack.empty()) {
+    PP.Diag(ConditionalStack.back().IfLoc,
+            diag::err_pp_unterminated_conditional);
+    ConditionalStack.pop_back();
+  }
+  
+  // If the file was empty or didn't end in a newline, issue a pedwarn.
+  if (CurPtr[-1] != '\n' && CurPtr[-1] != '\r')
+    Diag(BufferEnd, diag::ext_no_newline_eof);
+  
   BufferPtr = CurPtr;
+
+  // Finally, let the preprocessor handle this.
   return PP.HandleEndOfFile(Result);
 }
 

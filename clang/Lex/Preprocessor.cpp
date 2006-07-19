@@ -1009,19 +1009,6 @@ bool Preprocessor::HandleEndOfFile(LexerToken &Result, bool isEndOfMacro) {
   assert(!CurMacroExpander &&
          "Ending a file when currently in a macro!");
   
-  // If we are in a #if 0 block skipping tokens, and we see the end of the file,
-  // this is an error condition.  Just return the EOF token up to
-  // SkipExcludedConditionalBlock.  The code that enabled skipping will issue
-  // errors for the unterminated #if's on the conditional stack if it is
-  // interested.
-  if (isSkipping()) {
-    Result.StartToken();
-    CurLexer->BufferPtr = CurLexer->BufferEnd;
-    CurLexer->FormTokenWithChars(Result, CurLexer->BufferEnd);
-    Result.SetKind(tok::eof);
-    return true;
-  }
-  
   // See if this file had a controlling macro.
   if (CurLexer) {  // Not ending a macro, ignore it.
     if (const IdentifierInfo *ControllingMacro = 
