@@ -14,7 +14,6 @@
 
 #include "clang/Lex/Pragma.h"
 #include "clang/Lex/Preprocessor.h"
-#include "clang/Lex/ScratchBuffer.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
@@ -135,8 +134,7 @@ void Preprocessor::Handle_Pragma(LexerToken &Tok) {
   
   // Plop the string (including the trailing null) into a buffer where we can
   // lex it.
-  SourceLocation TokLoc = ScratchBuf->getToken(&StrVal[0], StrVal.size(), 
-                                               StrLoc);
+  SourceLocation TokLoc = CreateString(&StrVal[0], StrVal.size(), StrLoc);
   const char *StrData = SourceMgr.getCharacterData(TokLoc);
 
   unsigned FileID = TokLoc.getFileID();
