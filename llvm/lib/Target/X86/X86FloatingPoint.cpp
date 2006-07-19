@@ -312,9 +312,11 @@ static int Lookup(const TableEntry *Table, unsigned N, unsigned Opcode) {
 #else
 #define ASSERT_SORTED(TABLE)                                              \
   { static bool TABLE##Checked = false;                                   \
-    if (!TABLE##Checked)                                                  \
+    if (!TABLE##Checked) {                                                \
        assert(TableIsSorted(TABLE, ARRAY_SIZE(TABLE)) &&                  \
               "All lookup tables must be sorted for efficient access!");  \
+       TABLE##Checked = true;                                             \
+    }                                                                     \
   }
 #endif
 
