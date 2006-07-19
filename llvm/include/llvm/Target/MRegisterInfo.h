@@ -47,7 +47,7 @@ public:
   typedef const unsigned* const_iterator;
 
   typedef const MVT::ValueType* vt_iterator;
-  typedef const TargetRegisterClass** sc_iterator;
+  typedef const TargetRegisterClass* const * sc_iterator;
 private:
   bool  isSubClass;
   const vt_iterator VTs;
@@ -57,8 +57,8 @@ private:
   const iterator RegsBegin, RegsEnd;
 public:
   TargetRegisterClass(const MVT::ValueType *vts,
-                      const TargetRegisterClass **subcs,
-                      const TargetRegisterClass **supcs,
+                      const TargetRegisterClass * const *subcs,
+                      const TargetRegisterClass * const *supcs,
                       unsigned RS, unsigned Al, iterator RB, iterator RE)
     : VTs(vts), SubClasses(subcs), SuperClasses(supcs),
     RegSize(RS), Alignment(Al), RegsBegin(RB), RegsEnd(RE) {}

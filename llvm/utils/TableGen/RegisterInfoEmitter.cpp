@@ -149,8 +149,9 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
     
     // Emit the register list now.
     OS << "  // " << Name 
-      << " Register Class Value Types...\n  const MVT::ValueType " << Name
-      << "[] = {\n    ";
+       << " Register Class Value Types...\n"
+       << "  static const MVT::ValueType " << Name
+       << "[] = {\n    ";
     for (unsigned i = 0, e = RC.VTs.size(); i != e; ++i)
       OS << RC.VTs[i] << ", ";
     OS << "MVT::Other\n  };\n\n";
@@ -182,7 +183,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
 
       OS << "  // " << Name 
          << " Register Class sub-classes...\n"
-         << "  static const TargetRegisterClass* "
+         << "  static const TargetRegisterClass* const "
          << Name << "Subclasses [] = {\n    ";
 
       bool Empty = true;
@@ -217,7 +218,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
 
       OS << "  // " << Name 
          << " Register Class super-classes...\n"
-         << "  static const TargetRegisterClass* "
+         << "  static const TargetRegisterClass* const "
          << Name << "Superclasses [] = {\n    ";
 
       bool Empty = true;
