@@ -798,7 +798,6 @@ if (!$BuildError && $patrickjenkins) {
 	    " | sort > $Prefix-Tests.txt";
     }
     WriteFile "$Prefix-externalprogramstable.txt", $ExternalProgramsTable;
-
 }
 
 ##############################################################
@@ -808,49 +807,68 @@ if (!$BuildError && $patrickjenkins) {
 #
 #
 ##############################################################
-my ($TestsAdded, $TestsRemoved, $TestsFixed, $TestsBroken) = ("","","","");
+$dejagnu = ReadFile $DejagnuSum;
+@DEJAGNU = split "\n", $dejagnu;
 
-if ($TestError) {
-    $TestsAdded   = "<b>error testing</b><br>";
-    $TestsRemoved = "<b>error testing</b><br>";
-    $TestsFixed   = "<b>error testing</b><br>";
-    $TestsBroken  = "<b>error testing</b><br>";
-} else {
-    my ($RTestsAdded, $RTestsRemoved) = DiffFiles "-Tests.txt";
+my $passes="",
+my $fails="";
+my $xfails="";
 
-    my @RawTestsAddedArray = split '\n', $RTestsAdded;
-    my @RawTestsRemovedArray = split '\n', $RTestsRemoved;
-
-    my %OldTests = map {GetRegex('TEST-....: (.+)', $_)=>$_}
-    @RawTestsRemovedArray;
-    my %NewTests = map {GetRegex('TEST-....: (.+)', $_)=>$_}
-    @RawTestsAddedArray;
-
-    foreach $Test (keys %NewTests) {
-	if (!exists $OldTests{$Test}) {  # TestAdded if in New but not old
-	    $TestsAdded = "$TestsAdded$Test\n";
-	} else {
-	    if ($OldTests{$Test} =~ /TEST-PASS/) {  # Was the old one a pass?
-		$TestsBroken = "$TestsBroken$Test\n";  # New one must be a failure
-	    } else {
-		$TestsFixed = "$TestsFixed$Test\n";    # No, new one is a pass.
-	    }
+for($x=0; $x<@DEJAGNU; $x++){
+	if($DEJAGNU[$x] =~ m/^PASS:/){
+		$passes.="$x\n";
 	}
-    }
-    foreach $Test (keys %OldTests) {  # TestRemoved if in Old but not New
-	$TestsRemoved = "$TestsRemoved$Test\n" if (!exists $NewTests{$Test});
-    }
-
-    #print "\nTESTS ADDED:  \n\n$TestsAdded\n\n"   if (length $TestsAdded);
-    #print "\nTESTS REMOVED:\n\n$TestsRemoved\n\n" if (length $TestsRemoved);
-    #print "\nTESTS FIXED:  \n\n$TestsFixed\n\n"   if (length $TestsFixed);
-    #print "\nTESTS BROKEN: \n\n$TestsBroken\n\n"  if (length $TestsBroken);
-
-    #$TestsAdded   = AddPreTag $TestsAdded;
-    #$TestsRemoved = AddPreTag $TestsRemoved;
-    #$TestsFixed   = AddPreTag $TestsFixed;
-    #$TestsBroken  = AddPreTag $TestsBroken;
+	elsif($DEJAGNU[$x] =~ m/^FAIL:/){
+		$fails.="$x\n";
+	}
+	elsif($DEJAGNU[$x] =~ m/^XFAIL:/){
+		$xfails.="$x\n";
+	}
 }
+
+# my ($TestsAdded, $TestsRemoved, $TestsFixed, $TestsBroken) = ("","","","");
+# 
+# if ($TestError) {
+#     $TestsAdded   = "<b>error testing</b><br>";
+#     $TestsRemoved = "<b>error testing</b><br>";
+#     $TestsFixed   = "<b>error testing</b><br>";
+#     $TestsBroken  = "<b>error testing</b><br>";
+# } else {
+#     my ($RTestsAdded, $RTestsRemoved) = DiffFiles "-Tests.txt";
+# 
+#     my @RawTestsAddedArray = split '\n', $RTestsAdded;
+#     my @RawTestsRemovedArray = split '\n', $RTestsRemoved;
+# 
+#     my %OldTests = map {GetRegex('TEST-....: (.+)', $_)=>$_}
+#     @RawTestsRemovedArray;
+#     my %NewTests = map {GetRegex('TEST-....: (.+)', $_)=>$_}
+#     @RawTestsAddedArray;
+# 
+#     foreach $Test (keys %NewTests) {
+# 			if (!exists $OldTests{$Test}) {  # TestAdded if in New but not old
+# 	    	$TestsAdded = "$TestsAdded$Test\n";
+# 			} else {
+# 	    if ($OldTests{$Test} =~ /TEST-PASS/) {  # Was the old one a pass?
+# 				$TestsBroken = "$TestsBroken$Test\n";  # New one must be a failure
+# 	    } else {
+# 				$TestsFixed = "$TestsFixed$Test\n";    # No, new one is a pass.
+# 	    }
+# 		}
+# 	}
+# 	foreach $Test (keys %OldTests) {  # TestRemoved if in Old but not New
+# 		$TestsRemoved = "$TestsRemoved$Test\n" if (!exists $NewTests{$Test});
+# 	}
+# 
+#     #print "\nTESTS ADDED:  \n\n$TestsAdded\n\n"   if (length $TestsAdded);
+#     #print "\nTESTS REMOVED:\n\n$TestsRemoved\n\n" if (length $TestsRemoved);
+#     #print "\nTESTS FIXED:  \n\n$TestsFixed\n\n"   if (length $TestsFixed);
+#     #print "\nTESTS BROKEN: \n\n$TestsBroken\n\n"  if (length $TestsBroken);
+# 
+#     #$TestsAdded   = AddPreTag $TestsAdded;
+#     #$TestsRemoved = AddPreTag $TestsRemoved;
+#     #$TestsFixed   = AddPreTag $TestsFixed;
+#     #$TestsBroken  = AddPreTag $TestsBroken;
+# }
 
 ##############################################################
 #
@@ -961,7 +979,7 @@ my $dejagnulog_full;
 @DEJAGNULOG_FULL = ReadFile "$DejagnuTestsLog";
 $dejagnulog_full = join("\n", @DEJAGNULOG_FULL);
 
-my $gcc_version_long="";
+newmy $gcc_version_long="";
 if($GCCPATH ne ""){
   $gcc_version_long = `$GCCPATH/gcc --version`;
   print "$GCCPATH/gcc --version\n";
@@ -972,6 +990,8 @@ else{
 }
 @GCC_VERSION = split '\n', $gcc_version_long;
 my $gcc_version = $GCC_VERSION[0];
+
+$all_tests = ReadFile, "$Prefix-Tests.txt";
 
 ##############################################################
 #
@@ -985,42 +1005,43 @@ if ( $VERBOSE ) { print "SEND THE DATA VIA THE POST REQUEST\n"; }
 my $host = "llvm.org";
 my $file = "/nightlytest/NightlyTestAccept.cgi";
 my %hash_of_data = ('machine_data' => $machine_data,
-	       'build_data' => $build_data,
-               'gcc_version' => $gcc_version,
-	       'nickname' => $nickname,
-	       'dejagnutime_wall' => $DejagnuWallTime,
-	       'dejagnutime_cpu' => $DejagnuTime,
-	       'cvscheckouttime_wall' => $CVSCheckoutTime_Wall,
-	       'cvscheckouttime_cpu' => $CVSCheckoutTime_CPU,
-	       'configtime_wall' => $ConfigWallTime,
-	       'configtime_cpu'=> $ConfigTime,
-	       'buildtime_wall' => $BuildWallTime,
-	       'buildtime_cpu' => $BuildTime,
-	       'warnings' => $WarningsFile,
-	       'cvsusercommitlist' => $UserCommitList,
-	       'cvsuserupdatelist' => $UserUpdateList,
-	       'cvsaddedfiles' => $CVSAddedFiles,
-	       'cvsmodifiedfiles' => $CVSModifiedFiles,
-	       'cvsremovedfiles' => $CVSRemovedFiles,
-	       'lines_of_code' => $LOC,
-	       'cvs_file_count' => $NumFilesInCVS,
-	       'cvs_dir_count' => $NumDirsInCVS,
-	       'buildstatus' => $BuildStatus,
-	       'singlesource_programstable' => $SingleSourceProgramsTable,
-               'multisource_programstable' => $MultiSourceProgramsTable,
-               'externalsource_programstable' => $ExternalProgramsTable,
-	       'llcbeta_options' => $multisource_llcbeta_options,
-               'warnings_removed' => $WarningsRemoved,
-               'warnings_added' => $WarningsAdded,
-	       'newly_passing_tests' => $TestsFixed,
-               'newly_failing_tests' => $TestsBroken,
-               'new_tests' => $TestsAdded,
-               'removed_tests' => $TestsRemoved,
-	       'unexpfail_tests' => $unexpfail_tests,
-	       'dejagnutests_log' => $dejagnutests_log,
-	       'dejagnutests_sum' => $dejagnutests_sum,
-	       'starttime' => $starttime,
-	       'endtime' => $endtime);
+	       						'build_data' => $build_data,
+               			'gcc_version' => $gcc_version,
+						        'nickname' => $nickname,
+	       						'dejagnutime_wall' => $DejagnuWallTime,
+										'dejagnutime_cpu' => $DejagnuTime,
+										'cvscheckouttime_wall' => $CVSCheckoutTime_Wall,
+										'cvscheckouttime_cpu' => $CVSCheckoutTime_CPU,
+										'configtime_wall' => $ConfigWallTime,
+										'configtime_cpu'=> $ConfigTime,
+										'buildtime_wall' => $BuildWallTime,
+										'buildtime_cpu' => $BuildTime,
+										'warnings' => $WarningsFile,
+										'cvsusercommitlist' => $UserCommitList,
+										'cvsuserupdatelist' => $UserUpdateList,
+										'cvsaddedfiles' => $CVSAddedFiles,
+										'cvsmodifiedfiles' => $CVSModifiedFiles,
+										'cvsremovedfiles' => $CVSRemovedFiles,
+										'lines_of_code' => $LOC,
+										'cvs_file_count' => $NumFilesInCVS,
+										'cvs_dir_count' => $NumDirsInCVS,
+										'buildstatus' => $BuildStatus,
+										'singlesource_programstable' => $SingleSourceProgramsTable,
+										'multisource_programstable' => $MultiSourceProgramsTable,
+										'externalsource_programstable' => $ExternalProgramsTable,
+										'llcbeta_options' => $multisource_llcbeta_options,
+										'warnings_removed' => $WarningsRemoved,
+										'warnings_added' => $WarningsAdded,
+										'passing_tests' => $passes,
+										'expfail_tests' => $xfails,
+										'unexpfail_tests' => $fails,
+										'all_tests' => $all_tests,
+										'new_tests' => "",
+										'removed_tests' => "",
+										'dejagnutests_log' => $dejagnutests_log,
+										'dejagnutests_sum' => $dejagnutests_sum,
+										'starttime' => $starttime,
+										'endtime' => $endtime);
 
 $TESTING = 0;
 
