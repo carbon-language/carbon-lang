@@ -36,6 +36,27 @@ Future Features:
 
 III. Missing Functionality
 
+File Manager:
+ * We currently do a lot of stat'ing for files that don't exist, particularly
+   when lots of -I paths exist (e.g. see the <iostream> example, check for
+   failures in stat in FileManager::getFile).  It would be far better to make
+   the following changes:
+     1. FileEntry contains a sys::Path instead of a std::string for Name.
+     2. sys::Path contains timestamp and size, lazily computed.  Eliminate from
+        FileEntry.
+     3. File UIDs are created on request, not when files are opened.
+   These changes make it possible to efficiently have FileEntry objects for
+   files that exist on the file system, but have not been used yet.
+   
+   Once this is done:
+     1. DirectoryEntry gets a boolean value "has read entries".  When false, not
+        all entries in the directory are in the file mgr, when true, they are.
+     2. Instead of stat'ing the file in FileManager::getFile, check to see if 
+        the dir has been read.  If so, fail immediately, if not, read the dir,
+        then retry.
+     3. Reading the dir uses the getdirentries syscall, creating an FileEntry
+        for all files found.
+
 Lexer:
  * Source character mapping.  GCC supports ASCII and UTF-8.
    See GCC options: -ftarget-charset and -ftarget-wide-charset.
