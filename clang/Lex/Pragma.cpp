@@ -138,7 +138,7 @@ void Preprocessor::Handle_Pragma(LexerToken &Tok) {
   const char *StrData = SourceMgr.getCharacterData(TokLoc);
 
   unsigned FileID = TokLoc.getFileID();
-  assert(FileID && "Could not create FileID for predefines?");
+  assert(FileID && "Could not get FileID for _Pragma?");
 
   // Make and enter a lexer object so that we lex and expand the tokens just
   // like any others.
