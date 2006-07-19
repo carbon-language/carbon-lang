@@ -1986,6 +1986,21 @@ static unsigned getResultPatternCost(TreePatternNode *P, DAGISelEmitter &ISE) {
   return Cost;
 }
 
+/// getResultPatternCodeSize - Compute the code size of instructions for this
+/// pattern.
+static unsigned getResultPatternSize(TreePatternNode *P, DAGISelEmitter &ISE) {
+  if (P->isLeaf()) return 0;
+
+  unsigned Cost = 0;
+  Record *Op = P->getOperator();
+  if (Op->isSubClassOf("Instruction")) {
+    Cost += Op->getValueAsInt("CodeSize");
+  }
+  for (unsigned i = 0, e = P->getNumChildren(); i != e; ++i)
+    Cost += getResultPatternSize(P->getChild(i), ISE);
+  return Cost;
+}
+
 // PatternSortingPredicate - return true if we prefer to match LHS before RHS.
 // In particular, we want to match maximal patterns first and lowest cost within
 // a particular complexity first.
@@ -2003,8 +2018,13 @@ struct PatternSortingPredicate {
     if (LHSSize < RHSSize) return false;
     
     // If the patterns have equal complexity, compare generated instruction cost
-    return getResultPatternCost(LHS->getDstPattern(), ISE) <
-      getResultPatternCost(RHS->getDstPattern(), ISE);
+    unsigned LHSCost = getResultPatternCost(LHS->getDstPattern(), ISE);
+    unsigned RHSCost = getResultPatternCost(RHS->getDstPattern(), ISE);
+    if (LHSCost < RHSCost) return true;
+    if (LHSCost > RHSCost) return false;
+
+    return getResultPatternSize(LHS->getDstPattern(), ISE) <
+      getResultPatternSize(RHS->getDstPattern(), ISE);
   }
 };
 
@@ -3105,7 +3125,9 @@ void DAGISelEmitter::EmitPatterns(std::vector<std::pair<PatternToMatch*,
       OS << std::string(Indent, ' ') << "// Pattern complexity = "
          << getPatternSize(Pattern.getSrcPattern(), *this) + AddedComplexity
          << "  cost = "
-         << getResultPatternCost(Pattern.getDstPattern(), *this) << "\n";
+         << getResultPatternCost(Pattern.getDstPattern(), *this)
+         << "  size = "
+         << getResultPatternSize(Pattern.getDstPattern(), *this) << "\n";
     }
     if (!FirstCodeLine.first) {
       OS << std::string(Indent, ' ') << "{\n";

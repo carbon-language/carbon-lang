@@ -147,6 +147,9 @@ class Instruction {
   // code.
   list<Predicate> Predicates = [];
 
+  // Code size.
+  int CodeSize = 0;
+
   // Added complexity passed onto matching pattern.
   int AddedComplexity  = 0;
 
