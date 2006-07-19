@@ -478,10 +478,10 @@ def LWZX : XForm_1<31,  23, (ops GPRC:$rD, memrr:$src),
                    
 def LHBRX : XForm_1<31, 790, (ops GPRC:$rD, memrr:$src),
                    "lhbrx $rD, $src", LdStGeneral,
-                   [(set GPRC:$rD, (PPClbrx xaddr:$src,srcvalue:$dummy, i16))]>;
+                   [(set GPRC:$rD, (PPClbrx xoaddr:$src, srcvalue:$sv, i16))]>;
 def LWBRX : XForm_1<31,  534, (ops GPRC:$rD, memrr:$src),
                    "lwbrx $rD, $src", LdStGeneral,
-                   [(set GPRC:$rD, (PPClbrx xaddr:$src,srcvalue:$dummy, i32))]>;
+                   [(set GPRC:$rD, (PPClbrx xoaddr:$src, srcvalue:$sv, i32))]>;
 
 }
 
@@ -538,11 +538,11 @@ def STWUX : XForm_8<31, 183, (ops GPRC:$rS, GPRC:$rA, GPRC:$rB),
                    []>;
 def STHBRX: XForm_8<31, 918, (ops GPRC:$rS, memrr:$dst),
                    "sthbrx $rS, $dst", LdStGeneral,
-                   [(PPCstbrx GPRC:$rS, xaddr:$dst, srcvalue:$dummy, i16)]>, 
+                   [(PPCstbrx GPRC:$rS, xoaddr:$dst, srcvalue:$dummy, i16)]>, 
                    PPC970_DGroup_Cracked;
 def STWBRX: XForm_8<31, 662, (ops GPRC:$rS, memrr:$dst),
                    "stwbrx $rS, $dst", LdStGeneral,
-                   [(PPCstbrx GPRC:$rS, xaddr:$dst, srcvalue:$dummy, i32)]>,
+                   [(PPCstbrx GPRC:$rS, xoaddr:$dst, srcvalue:$dummy, i32)]>,
                    PPC970_DGroup_Cracked;
 }
 let PPC970_Unit = 1 in {  // FXU Operations.
