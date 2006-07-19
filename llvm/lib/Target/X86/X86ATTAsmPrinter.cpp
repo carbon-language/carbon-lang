@@ -26,9 +26,11 @@ using namespace llvm;
 /// method to print assembly for each instruction.
 ///
 bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  // Let PassManager know we need debug information and relay
-  // the MachineDebugInfo address on to DwarfWriter.
-  DW.SetDebugInfo(&getAnalysis<MachineDebugInfo>());
+  if (Subtarget->TargetType == X86Subtarget::isDarwin) {
+    // Let PassManager know we need debug information and relay
+    // the MachineDebugInfo address on to DwarfWriter.
+    DW.SetDebugInfo(&getAnalysis<MachineDebugInfo>());
+  }
 
   SetupMachineFunction(MF);
   O << "\n\n";
