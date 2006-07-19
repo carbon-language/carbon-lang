@@ -272,6 +272,8 @@ bool LoopUnroll::visitLoop(Loop *L) {
   // Remove LCSSA Phis from the exit block
   for (BasicBlock::iterator ExitInstr = LoopExit->begin();
        PHINode* PN = dyn_cast<PHINode>(ExitInstr); ++ExitInstr) {
+    assert(PN->getNumIncomingValues() == 1
+           && "Block should only have one pred, so Phi's must be LCSSA");
     PN->replaceAllUsesWith(PN->getOperand(0));
     PN->eraseFromParent();
   }
