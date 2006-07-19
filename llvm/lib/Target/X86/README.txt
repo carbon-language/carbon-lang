@@ -704,3 +704,8 @@ Smells like a register coallescing/reassociation issue.
 //===---------------------------------------------------------------------===//
 
 Use cpuid to auto-detect CPU features such as SSE, SSE2, and SSE3.
+
+//===---------------------------------------------------------------------===//
+
+JIT should resolve __cxa_atexit on Mac OS X. In a non-jit environment, the
+symbol is a dynamically resolved by the linker.
