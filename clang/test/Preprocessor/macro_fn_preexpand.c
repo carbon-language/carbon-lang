@@ -1,5 +1,12 @@
-// clang %s -E | grep '1 1 X'
-/* Preexpansion of argument.*/
+// RUN: clang %s -E | grep 'pre: 1 1 X' &&
+// RUN: clang %s -E | grep 'nopre: 1A(X)'
+
+/* Preexpansion of argument. */
 #define A(X) 1 X
-A(A(X))
+pre: A(A(X))
+
+/* The ## operator disables preexpansion. */
+#undef A
+#define A(X) 1 ## X
+nopre: A(A(X))
 
