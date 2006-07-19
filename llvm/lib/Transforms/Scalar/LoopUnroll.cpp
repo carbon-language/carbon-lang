@@ -269,6 +269,12 @@ bool LoopUnroll::visitLoop(Loop *L) {
 
   // FIXME: Should update dominator analyses
 
+  // Remove LCSSA Phis from the exit block
+  for (BasicBlock::iterator ExitInstr = LoopExit->begin();
+       PHINode* PN = dyn_cast<PHINode>(ExitInstr); ++ExitInstr) {
+    PN->replaceAllUsesWith(PN->getOperand(0));
+    PN->eraseFromParent();
+  }
 
   // Now that everything is up-to-date that will be, we fold the loop block into
   // the preheader and exit block, updating our analyses as we go.
