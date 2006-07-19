@@ -426,9 +426,6 @@ void MacroExpander::PasteTokens(LexerToken &Tok) {
   
     bool isInvalid = false;
 
-    // TODO: Avoid // and /*, as the lexer would think it is the start of a
-    // comment and emit warnings that don't make sense.
-    
     // Allocate space for the result token.  This is guaranteed to be enough for
     // the two tokens and a null terminator.
     char *Buffer = (char*)alloca(Tok.getLength() + RHS.getLength() + 1);
@@ -454,36 +451,44 @@ void MacroExpander::PasteTokens(LexerToken &Tok) {
     // Lex the resultant pasted token into Result.
     LexerToken Result;
     
-    // FIXME: Handle common cases: ident+ident, ident+simplenumber here.
+    // Avoid testing /*, as the lexer would think it is the start of a comment
+    // and emit an error that it is unterminated.
+    if (Tok.getKind() == tok::slash && RHS.getKind() == tok::star) {
+      isInvalid = true;
+    } else {
+      // FIXME: Handle common cases: ident+ident, ident+simplenumber here.
 
-    // Make a lexer to lex this string from.
-    SourceManager &SourceMgr = PP.getSourceManager();
-    const char *ResultStrData = SourceMgr.getCharacterData(ResultTokLoc);
-    
-    unsigned FileID = ResultTokLoc.getFileID();
-    assert(FileID && "Could not get FileID for paste?");
-    
-    // Make and enter a lexer object so that we lex and expand the paste result.
-    Lexer *TL = new Lexer(SourceMgr.getBuffer(FileID), FileID, PP,
-                          ResultStrData, 
-                          ResultStrData+LHSLen+RHSLen /*don't include null*/);
-    
-    // Lex a token in raw mode.  This way it won't look up identifiers
-    // automatically, lexing off the end will return an eof token, and warnings
-    // are disabled.  This returns true if the result token is the entire
-    // buffer.
-    bool IsComplete = TL->LexRawToken(Result);
-    
-    // If we got an EOF token, we didn't form even ONE token.  For example, we
-    // did "/ ## /" to get "//".
-    IsComplete &= Result.getKind() != tok::eof;
-
-    // We're now done with the temporary lexer.
-    delete TL;
+      // Make a lexer to lex this string from.
+      SourceManager &SourceMgr = PP.getSourceManager();
+      const char *ResultStrData = SourceMgr.getCharacterData(ResultTokLoc);
+      
+      unsigned FileID = ResultTokLoc.getFileID();
+      assert(FileID && "Could not get FileID for paste?");
+      
+      // Make a lexer object so that we lex and expand the paste result.
+      Lexer *TL = new Lexer(SourceMgr.getBuffer(FileID), FileID, PP,
+                            ResultStrData, 
+                            ResultStrData+LHSLen+RHSLen /*don't include null*/);
+      
+      // Lex a token in raw mode.  This way it won't look up identifiers
+      // automatically, lexing off the end will return an eof token, and
+      // warnings are disabled.  This returns true if the result token is the
+      // entire buffer.
+      bool IsComplete = TL->LexRawToken(Result);
+      
+      // If we got an EOF token, we didn't form even ONE token.  For example, we
+      // did "/ ## /" to get "//".
+      IsComplete &= Result.getKind() != tok::eof;
+      isInvalid = !IsComplete;
+      
+      // We're now done with the temporary lexer.
+      delete TL;
+    }
     
     // If pasting the two tokens didn't form a full new token, this is an error.
-    // This occurs with "x ## +"  and other stuff.
-    if (!IsComplete) {
+    // This occurs with "x ## +"  and other stuff.  Return with Tok unmodified
+    // and with RHS as the next token to lex.
+    if (isInvalid) {
       // If not in assembler language mode.
       PP.Diag(PasteOpLoc, diag::err_pp_bad_paste, 
               std::string(Buffer, Buffer+LHSLen+RHSLen));
