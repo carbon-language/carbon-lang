@@ -51,7 +51,7 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
   NumIf = NumElse = NumEndif = 0;
   NumEnteredSourceFiles = 0;
   NumMacroExpanded = NumFnMacroExpanded = NumBuiltinMacroExpanded = 0;
-  NumFastMacroExpanded = 0;
+  NumFastMacroExpanded = NumTokenPaste = NumFastTokenPaste = 0;
   MaxIncludeStackDepth = 0; NumMultiIncludeFileOptzn = 0;
   NumSkipped = 0;
     
@@ -193,6 +193,9 @@ void Preprocessor::PrintStats() {
   std::cerr << NumMacroExpanded << "/" << NumFnMacroExpanded << "/"
             << NumBuiltinMacroExpanded << " obj/fn/builtin macros expanded, "
             << NumFastMacroExpanded << " on the fast path.\n";
+  std::cerr << (NumFastTokenPaste+NumTokenPaste)
+            << " token paste (##) operations performed, "
+            << NumFastTokenPaste << " on the fast path.\n";
 }
 
 //===----------------------------------------------------------------------===//

@@ -200,7 +200,7 @@ private:
   unsigned NumIf, NumElse, NumEndif;
   unsigned NumEnteredSourceFiles, MaxIncludeStackDepth,NumMultiIncludeFileOptzn;
   unsigned NumMacroExpanded, NumFnMacroExpanded, NumBuiltinMacroExpanded;
-  unsigned NumFastMacroExpanded;
+  unsigned NumFastMacroExpanded, NumTokenPaste, NumFastTokenPaste;
   unsigned NumSkipped;
 public:
   Preprocessor(Diagnostic &diags, const LangOptions &opts, FileManager &FM,
@@ -391,6 +391,17 @@ public:
   ///
   void DumpToken(const LexerToken &Tok, bool DumpFlags = false) const;
   void DumpMacro(const MacroInfo &MI) const;
+  
+  /// IncrementPasteCounter - Increment the counters for the number of token
+  /// paste operations performed.  If fast was specified, this is a 'fast paste'
+  /// case we handled.
+  /// 
+  void IncrementPasteCounter(bool isFast) {
+    if (isFast)
+      ++NumFastTokenPaste;
+    else
+      ++NumTokenPaste;
+  }
   
   void PrintStats();
 

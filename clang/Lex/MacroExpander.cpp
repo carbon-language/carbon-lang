@@ -455,9 +455,18 @@ void MacroExpander::PasteTokens(LexerToken &Tok) {
     // and emit an error that it is unterminated.
     if (Tok.getKind() == tok::slash && RHS.getKind() == tok::star) {
       isInvalid = true;
+    } else if (Tok.getKind() == tok::identifier && 
+               Tok.getKind() == tok::identifier) {
+      // Common paste case: identifier+identifier = identifier.  Avoid creating
+      // a lexer and other overhead.
+      PP.IncrementPasteCounter(true);
+      Result.StartToken();
+      Result.SetKind(tok::identifier);
+      Result.SetLocation(ResultTokLoc);
+      Result.SetLength(LHSLen+RHSLen);
     } else {
-      // FIXME: Handle common cases: ident+ident, ident+simplenumber here.
-
+      PP.IncrementPasteCounter(false);
+      
       // Make a lexer to lex this string from.
       SourceManager &SourceMgr = PP.getSourceManager();
       const char *ResultStrData = SourceMgr.getCharacterData(ResultTokLoc);
