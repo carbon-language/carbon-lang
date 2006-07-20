@@ -223,7 +223,7 @@ namespace {
 static bool TableIsSorted(const TableEntry *Table, unsigned NumEntries) {
   for (unsigned i = 1; i != NumEntries; ++i)
     if (!(Table[i-1] < Table[i])) {
-      std::cerr << "Entries out of order" << Table[i-1].from
+      std::cerr << "Entries out of order " << Table[i-1].from
                 << " " << Table[i].from << "\n";
       return false;
     }
