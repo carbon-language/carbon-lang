@@ -456,7 +456,7 @@ void MacroExpander::PasteTokens(LexerToken &Tok) {
     if (Tok.getKind() == tok::slash && RHS.getKind() == tok::star) {
       isInvalid = true;
     } else if (Tok.getKind() == tok::identifier && 
-               Tok.getKind() == tok::identifier) {
+               RHS.getKind() == tok::identifier) {
       // Common paste case: identifier+identifier = identifier.  Avoid creating
       // a lexer and other overhead.
       PP.IncrementPasteCounter(true);
