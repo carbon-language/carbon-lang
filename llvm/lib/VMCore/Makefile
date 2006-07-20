@@ -19,9 +19,12 @@ GENFILE:=$(PROJ_SRC_ROOT)/include/llvm/Intrinsics.gen
 INTRINSICTD  := $(PROJ_SRC_ROOT)/include/llvm/Intrinsics.td
 INTRINSICTDS := $(wildcard $(PROJ_SRC_ROOT)/include/llvm/Intrinsics*.td)
 
-$(GENFILE): $(INTRINSICTDS) $(TBLGEN)
-	$(Echo) Building Intrinsics.gen from Intrinsics.td
+$(ObjDir)/Intrinsics.gen.tmp: $(INTRINSICTDS) $(TBLGEN)
+	$(Echo) Building Intrinsics.gen.tmp from Intrinsics.td
 	$(Verb) $(TableGen) $(INTRINSICTD) -o $@ -gen-intrinsic
+
+$(GENFILE): $(ObjDir)/Intrinsics.gen.tmp
+	$(Verb) $(CMP) -s $@ $< || $(CP) $< $@
 
 install-local:: $(GENFILE)
 	$(Echo) Installing $(PROJ_includedir)/llvm/Intrinsics.gen
