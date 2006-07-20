@@ -29,8 +29,8 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumAtomic("phielim", "Number of atomic phis lowered");
-  Statistic<> NumSimple("phielim", "Number of simple phis lowered");
+  static Statistic<> NumAtomic("phielim", "Number of atomic phis lowered");
+  static Statistic<> NumSimple("phielim", "Number of simple phis lowered");
   
   struct VISIBILITY_HIDDEN PNE : public MachineFunctionPass {
     bool runOnMachineFunction(MachineFunction &Fn) {

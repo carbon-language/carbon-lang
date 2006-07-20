@@ -40,22 +40,22 @@ using namespace llvm;
 namespace {
   RegisterAnalysis<LiveIntervals> X("liveintervals", "Live Interval Analysis");
 
-  Statistic<> numIntervals
+  static Statistic<> numIntervals
   ("liveintervals", "Number of original intervals");
 
-  Statistic<> numIntervalsAfter
+  static Statistic<> numIntervalsAfter
   ("liveintervals", "Number of intervals after coalescing");
 
-  Statistic<> numJoins
+  static Statistic<> numJoins
   ("liveintervals", "Number of interval joins performed");
 
-  Statistic<> numPeep
+  static Statistic<> numPeep
   ("liveintervals", "Number of identity moves eliminated after coalescing");
 
-  Statistic<> numFolded
+  static Statistic<> numFolded
   ("liveintervals", "Number of loads/stores folded into instructions");
 
-  cl::opt<bool>
+  static cl::opt<bool>
   EnableJoining("join-liveintervals",
                 cl::desc("Join compatible live intervals"),
                 cl::init(true));

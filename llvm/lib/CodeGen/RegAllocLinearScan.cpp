@@ -37,9 +37,10 @@ using namespace llvm;
 
 namespace {
 
-  Statistic<double> efficiency
+  static Statistic<double> efficiency
   ("regalloc", "Ratio of intervals processed over total intervals");
-  Statistic<> NumBacktracks("regalloc", "Number of times we had to backtrack");
+  static Statistic<> NumBacktracks
+  ("regalloc", "Number of times we had to backtrack");
 
   static unsigned numIterations = 0;
   static unsigned numIntervals = 0;

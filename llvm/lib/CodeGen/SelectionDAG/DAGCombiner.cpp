@@ -42,7 +42,7 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NodesCombined ("dagcombiner", "Number of dag nodes combined");
+  static Statistic<> NodesCombined ("dagcombiner", "Number of dag nodes combined");
 
   class VISIBILITY_HIDDEN DAGCombiner {
     SelectionDAG &DAG;

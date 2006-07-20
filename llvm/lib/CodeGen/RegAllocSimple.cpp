@@ -30,8 +30,8 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumStores("ra-simple", "Number of stores added");
-  Statistic<> NumLoads ("ra-simple", "Number of loads added");
+  static Statistic<> NumStores("ra-simple", "Number of stores added");
+  static Statistic<> NumLoads ("ra-simple", "Number of loads added");
 
   class VISIBILITY_HIDDEN RegAllocSimple : public MachineFunctionPass {
     MachineFunction *MF;

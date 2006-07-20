@@ -34,16 +34,16 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumSpills("spiller", "Number of register spills");
-  Statistic<> NumStores("spiller", "Number of stores added");
-  Statistic<> NumLoads ("spiller", "Number of loads added");
-  Statistic<> NumReused("spiller", "Number of values reused");
-  Statistic<> NumDSE   ("spiller", "Number of dead stores elided");
-  Statistic<> NumDCE   ("spiller", "Number of copies elided");
+  static Statistic<> NumSpills("spiller", "Number of register spills");
+  static Statistic<> NumStores("spiller", "Number of stores added");
+  static Statistic<> NumLoads ("spiller", "Number of loads added");
+  static Statistic<> NumReused("spiller", "Number of values reused");
+  static Statistic<> NumDSE   ("spiller", "Number of dead stores elided");
+  static Statistic<> NumDCE   ("spiller", "Number of copies elided");
 
   enum SpillerName { simple, local };
 
-  cl::opt<SpillerName>
+  static cl::opt<SpillerName>
   SpillerOpt("spiller",
              cl::desc("Spiller to use: (default: local)"),
              cl::Prefix,

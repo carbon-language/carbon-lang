@@ -34,8 +34,8 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> NumNoops ("scheduler", "Number of noops inserted");
-  Statistic<> NumStalls("scheduler", "Number of pipeline stalls");
+  static Statistic<> NumNoops ("scheduler", "Number of noops inserted");
+  static Statistic<> NumStalls("scheduler", "Number of pipeline stalls");
 }
 
 namespace {
