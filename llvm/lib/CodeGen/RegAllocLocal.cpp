@@ -33,8 +33,8 @@ using namespace llvm;
 namespace {
   static Statistic<> NumStores("ra-local", "Number of stores added");
   static Statistic<> NumLoads ("ra-local", "Number of loads added");
-  static Statistic<> NumFolded("ra-local", "Number of loads/stores folded into "
-                               "instructions");
+  static Statistic<> NumFolded("ra-local", "Number of loads/stores folded "
+			       "into instructions");
   class VISIBILITY_HIDDEN RA : public MachineFunctionPass {
     const TargetMachine *TM;
     MachineFunction *MF;
