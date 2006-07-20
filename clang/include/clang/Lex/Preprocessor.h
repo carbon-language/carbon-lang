@@ -265,8 +265,6 @@ public:
   /// std::string).
   IdentifierInfo *getIdentifierInfo(const char *NameStart,
                                     const char *NameEnd) {
-    // If we are in a "#if 0" block, don't bother lookup up identifiers.
-    if (isSkipping()) return 0;
     return &Identifiers.get(NameStart, NameEnd);
   }
   IdentifierInfo *getIdentifierInfo(const char *NameStr) {
