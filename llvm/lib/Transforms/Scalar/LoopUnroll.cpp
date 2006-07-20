@@ -266,18 +266,17 @@ bool LoopUnroll::visitLoop(Loop *L) {
   else
     delete LI->removeLoop(std::find(LI->begin(), LI->end(), L));
 
-
-  // FIXME: Should update dominator analyses
-
-  // Remove LCSSA Phis from the exit block
+  // Remove single-entry Phis from the exit block.
   for (BasicBlock::iterator ExitInstr = LoopExit->begin();
        PHINode* PN = dyn_cast<PHINode>(ExitInstr); ++ExitInstr) {
     assert(PN->getNumIncomingValues() == 1
-           && "Block should only have one pred, so Phi's must be LCSSA");
+           && "Block should only have one pred, so Phi's must be single entry");
     PN->replaceAllUsesWith(PN->getOperand(0));
     PN->eraseFromParent();
   }
-
+  
+  // FIXME: Should update dominator analyses
+  
   // Now that everything is up-to-date that will be, we fold the loop block into
   // the preheader and exit block, updating our analyses as we go.
   LoopExit->getInstList().splice(LoopExit->begin(), BB->getInstList(),
