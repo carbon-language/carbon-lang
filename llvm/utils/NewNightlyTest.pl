@@ -139,6 +139,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
 	$CONFIGUREARGS .= "--with-externals=$ARGV[0]"; shift; next;
     }
     if (/^-nickname$/)   	{ $nickname = "$ARGV[0]"; shift; next; }
+    else{ $nickname=""; }
     if (/^-gccpath/)         { $CONFIGUREARGS .= 
     													   " CC=$ARGV[0]/gcc CXX=$ARGV[0]/g++"; 
                                $GCCPATH=$ARGV[0]; 
@@ -184,6 +185,10 @@ if (@ARGV == 3) {
     $CVSRootDir = $ARGV[0];
     $BuildDir   = $ARGV[1];
     $WebDir     = $ARGV[2];
+}
+
+if($nickname eq ""){
+	die ("Please invoke NewNightlyTest.pl with command line option \"-nickname <nickname>\"");
 }
 
 ##############################################################
@@ -461,6 +466,9 @@ $starttime = `date`;
 if (!$NOCHECKOUT) {
     if (-d $BuildDir) {
 	if (!$NOREMOVE) {
+		if ( $VERBOSE ){
+			print "Build directory exists! Removing it\n";
+		}
 	    system "rm -rf $BuildDir";
 	} else {
 	    die "CVS checkout directory $BuildDir already exists!";
