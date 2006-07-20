@@ -253,8 +253,8 @@ LibTool.Flags := --tag=CXX
 
 #Make Floating point ieee complient on alpha
 ifeq ($(ARCH),Alpha)
-  CXX.Flags     += -mieee
-  CPP.BaseFlags += -mieee
+  CXX.Flags     += -mieee -fPIC
+  CPP.BaseFlags += -mieee -fPIC
 endif
 
 #--------------------------------------------------------------------
@@ -609,7 +609,7 @@ ifeq ($(LLVMLIBS),JIT)
 Link += -dlopen self
 
 # Generic JIT libraries
-JIT_LIBS := LLVMInterpreter LLVMJIT LLVMCodeGen LLVMExecutionEngine
+JIT_LIBS := LLVMInterpreter LLVMJIT LLVMCodeGen.a LLVMExecutionEngine
 
 # You can enable the X86 JIT on a non-X86 host by setting the flag
 # ENABLE_X86_JIT on the make command line. If not, it will still be

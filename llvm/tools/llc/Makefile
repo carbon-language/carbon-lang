@@ -56,7 +56,7 @@ endif
 
 USEDLIBS += \
 	LLVMSelectionDAG \
-	LLVMCodeGen \
+	LLVMCodeGen.a \
 	LLVMTarget.a \
 	LLVMipa.a \
 	LLVMTransforms.a \
