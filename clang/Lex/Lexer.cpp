@@ -453,14 +453,16 @@ void Lexer::LexStringLiteral(LexerToken &Result, const char *CurPtr) {
     } else if (C == '\n' || C == '\r' ||             // Newline.
                (C == 0 && CurPtr-1 == BufferEnd)) {  // End of file.
       Diag(BufferPtr, diag::err_unterminated_string);
-      BufferPtr = CurPtr-1;
-      return LexTokenInternal(Result);
+      Result.SetKind(tok::unknown);
+      FormTokenWithChars(Result, CurPtr-1);
+      return;
     } else if (C == 0) {
       NulCharacter = CurPtr-1;
     }
     C = getAndAdvanceChar(CurPtr, Result);
   }
   
+  // If a nul character existed in the string, warn about it.
   if (NulCharacter) Diag(NulCharacter, diag::null_in_string);
 
   Result.SetKind(tok::string_literal);
@@ -483,14 +485,16 @@ void Lexer::LexAngledStringLiteral(LexerToken &Result, const char *CurPtr) {
     } else if (C == '\n' || C == '\r' ||             // Newline.
                (C == 0 && CurPtr-1 == BufferEnd)) {  // End of file.
       Diag(BufferPtr, diag::err_unterminated_string);
-      BufferPtr = CurPtr-1;
-      return LexTokenInternal(Result);
+      Result.SetKind(tok::unknown);
+      FormTokenWithChars(Result, CurPtr-1);
+      return;
     } else if (C == 0) {
       NulCharacter = CurPtr-1;
     }
     C = getAndAdvanceChar(CurPtr, Result);
   }
   
+  // If a nul character existed in the string, warn about it.
   if (NulCharacter) Diag(NulCharacter, diag::null_in_string);
   
   Result.SetKind(tok::angle_string_literal);
@@ -509,8 +513,9 @@ void Lexer::LexCharConstant(LexerToken &Result, const char *CurPtr) {
   char C = getAndAdvanceChar(CurPtr, Result);
   if (C == '\'') {
     Diag(BufferPtr, diag::err_empty_character);
-    BufferPtr = CurPtr;
-    return LexTokenInternal(Result);
+    Result.SetKind(tok::unknown);
+    FormTokenWithChars(Result, CurPtr);
+    return;
   } else if (C == '\\') {
     // Skip the escaped character.
     // FIXME: UCN's.
@@ -529,8 +534,9 @@ void Lexer::LexCharConstant(LexerToken &Result, const char *CurPtr) {
       } else if (C == '\n' || C == '\r' ||               // Newline.
                  (C == 0 && CurPtr-1 == BufferEnd)) {    // End of file.
         Diag(BufferPtr, diag::err_unterminated_char);
-        BufferPtr = CurPtr-1;
-        return LexTokenInternal(Result);
+        Result.SetKind(tok::unknown);
+        FormTokenWithChars(Result, CurPtr-1);
+        return;
       } else if (C == 0) {
         NulCharacter = CurPtr-1;
       }
