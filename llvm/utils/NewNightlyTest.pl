@@ -979,7 +979,7 @@ my $dejagnulog_full;
 @DEJAGNULOG_FULL = ReadFile "$DejagnuTestsLog";
 $dejagnulog_full = join("\n", @DEJAGNULOG_FULL);
 
-newmy $gcc_version_long="";
+my $gcc_version_long="";
 if($GCCPATH ne ""){
   $gcc_version_long = `$GCCPATH/gcc --version`;
   print "$GCCPATH/gcc --version\n";
