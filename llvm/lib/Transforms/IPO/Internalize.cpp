@@ -45,6 +45,7 @@ namespace {
     bool DontInternalize;
   public:
     InternalizePass(bool InternalizeEverything = true);
+    InternalizePass(const std::vector <const char *>& exportList);
     void LoadFile(const char *Filename);
     virtual bool runOnModule(Module &M);
   };
@@ -60,6 +61,13 @@ InternalizePass::InternalizePass(bool InternalizeEverything)
   else if (!InternalizeEverything)
     // Finally, if we're allowed to, internalize all but main.
     DontInternalize = true;
+}
+
+InternalizePass::InternalizePass(const std::vector<const char *>&exportList) {
+  for(std::vector<const char *>::const_iterator itr = exportList.begin();
+	itr != exportList.end(); itr++) {
+    ExternalNames.insert(*itr);
+  }
 }
 
 void InternalizePass::LoadFile(const char *Filename) {
@@ -150,4 +158,8 @@ bool InternalizePass::runOnModule(Module &M) {
 
 ModulePass *llvm::createInternalizePass(bool InternalizeEverything) {
   return new InternalizePass(InternalizeEverything);
+}
+
+ModulePass *llvm::createInternalizePass(const std::vector <const char *> &exportList) {
+  return new InternalizePass(exportList);
 }

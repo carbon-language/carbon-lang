@@ -117,6 +117,7 @@ ModulePass *createPruneEHPass();
 /// the main function is found, all other globals are marked as internal.
 ///
 ModulePass *createInternalizePass(bool InternalizeEverything);
+ModulePass *createInternalizePass(const std::vector<const char *> &exportList);
 
 //===----------------------------------------------------------------------===//
 /// createDeadArgEliminationPass - This pass removes arguments from functions
