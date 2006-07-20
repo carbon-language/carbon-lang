@@ -359,6 +359,10 @@ FinishIdentifier:
     FormTokenWithChars(Result, CurPtr);
     Result.SetKind(tok::identifier);
     
+    // If we are in raw mode, return this identifier raw.  There is no need to
+    // look up identifier information or attempt to macro expand it.
+    if (LexingRawMode) return;
+    
     // Fill in Result.IdentifierInfo, looking up the identifier in the
     // identifier table.
     PP.LookUpIdentifierInfo(Result, IdStart);

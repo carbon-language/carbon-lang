@@ -971,12 +971,9 @@ IdentifierInfo *Preprocessor::LookUpIdentifierInfo(LexerToken &Identifier,
 /// identifier.  This callback looks up the identifier in the map and/or
 /// potentially macro expands it or turns it into a named token (like 'for').
 void Preprocessor::HandleIdentifier(LexerToken &Identifier) {
-  if (Identifier.getIdentifierInfo() == 0) {
-    // If we are skipping tokens (because we are in a #if 0 block), there will
-    // be no identifier info, just return the token.
-    assert(isSkipping() && "Token isn't an identifier?");
-    return;
-  }
+  assert(Identifier.getIdentifierInfo() &&
+         "Can't handle identifiers without identifier info!");
+  
   IdentifierInfo &II = *Identifier.getIdentifierInfo();
 
   // If this identifier was poisoned, and if it was not produced from a macro

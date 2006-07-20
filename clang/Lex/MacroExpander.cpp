@@ -508,6 +508,15 @@ void MacroExpander::PasteTokens(LexerToken &Tok) {
     ++CurToken;
     Tok = Result;
   } while (!isAtEnd() && (*MacroTokens)[CurToken].getKind() == tok::hashhash);
+  
+  // Now that we got the result token, it will be subject to expansion.  Since
+  // token pasting re-lexes the result token in raw mode, identifier information
+  // isn't looked up.  As such, if the result is an identifier, look up id info.
+  if (Tok.getKind() == tok::identifier) {
+    // Look up the identifier info for the token.  We disabled identifier lookup
+    // by saying we're skipping contents, so we need to do this manually.
+    Tok.SetIdentifierInfo(PP.LookUpIdentifierInfo(Tok));
+  }
 }
 
 /// isNextTokenLParen - If the next token lexed will pop this macro off the
