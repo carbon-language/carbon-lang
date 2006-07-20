@@ -2597,10 +2597,33 @@ SDOperand DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
     }
   }
   if (isIdentity) return N->getOperand(1);
-  
-  // If the LHS and the RHS are the same node, turn the RHS into an undef.
-  if (N->getOperand(0) == N->getOperand(1)) {
-    if (N->getOperand(0).getOpcode() == ISD::UNDEF)
+
+  // Check if the shuffle is a unary shuffle, i.e. one of the vectors is not
+  // needed at all.
+  bool isUnary = true;
+  int VecNum = -1;
+  for (unsigned i = 0; i != NumElts; ++i)
+    if (ShufMask.getOperand(i).getOpcode() != ISD::UNDEF) {
+      unsigned Idx = cast<ConstantSDNode>(ShufMask.getOperand(i))->getValue();
+      int V = (Idx < NumElts) ? 0 : 1;
+      if (VecNum == -1)
+        VecNum = V;
+      else if (VecNum != V) {
+        isUnary = false;
+        break;
+      }
+    }
+
+  SDOperand N0 = N->getOperand(0);
+  SDOperand N1 = N->getOperand(1);
+  // Normalize unary shuffle so the RHS is undef.
+  if (isUnary && VecNum == 1)
+    std::swap(N0, N1);
+
+  // If it is a unary or the LHS and the RHS are the same node, turn the RHS
+  // into an undef.
+  if (isUnary || N0 == N1) {
+    if (N0.getOpcode() == ISD::UNDEF)
       return DAG.getNode(ISD::UNDEF, N->getValueType(0));
     // Check the SHUFFLE mask, mapping any inputs from the 2nd operand into the
     // first operand.
@@ -2619,7 +2642,7 @@ SDOperand DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
                            MappedOps);
     AddToWorkList(ShufMask.Val);
     return DAG.getNode(ISD::VECTOR_SHUFFLE, N->getValueType(0),
-                       N->getOperand(0), 
+                       N0, 
                        DAG.getNode(ISD::UNDEF, N->getValueType(0)),
                        ShufMask);
   }
@@ -2653,8 +2676,31 @@ SDOperand DAGCombiner::visitVVECTOR_SHUFFLE(SDNode *N) {
   }
   if (isIdentity) return N->getOperand(1);
 
-  // If the LHS and the RHS are the same node, turn the RHS into an undef.
-  if (N->getOperand(0) == N->getOperand(1)) {
+  // Check if the shuffle is a unary shuffle, i.e. one of the vectors is not
+  // needed at all.
+  bool isUnary = true;
+  int VecNum = -1;
+  for (unsigned i = 0; i != NumElts; ++i)
+    if (ShufMask.getOperand(i).getOpcode() != ISD::UNDEF) {
+      unsigned Idx = cast<ConstantSDNode>(ShufMask.getOperand(i))->getValue();
+      int V = (Idx < NumElts) ? 0 : 1;
+      if (VecNum == -1)
+        VecNum = V;
+      else if (VecNum != V) {
+        isUnary = false;
+        break;
+      }
+    }
+
+  SDOperand N0 = N->getOperand(0);
+  SDOperand N1 = N->getOperand(1);
+  // Normalize unary shuffle so the RHS is undef.
+  if (isUnary && VecNum == 1)
+    std::swap(N0, N1);
+
+  // If it is a unary or the LHS and the RHS are the same node, turn the RHS
+  // into an undef.
+  if (isUnary || N0 == N1) {
     // Check the SHUFFLE mask, mapping any inputs from the 2nd operand into the
     // first operand.
     std::vector<SDOperand> MappedOps;
@@ -2680,12 +2726,12 @@ SDOperand DAGCombiner::visitVVECTOR_SHUFFLE(SDNode *N) {
     SDOperand UDVal = DAG.getNode(ISD::UNDEF, MappedOps[0].getValueType());
     for (unsigned i = 0; i != NumElts; ++i)
       MappedOps[i] = UDVal;
-    MappedOps[NumElts  ] = *(N->getOperand(0).Val->op_end()-2);
-    MappedOps[NumElts+1] = *(N->getOperand(0).Val->op_end()-1);
+    MappedOps[NumElts  ] = *(N0.Val->op_end()-2);
+    MappedOps[NumElts+1] = *(N0.Val->op_end()-1);
     UDVal = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, MappedOps);
     
     return DAG.getNode(ISD::VVECTOR_SHUFFLE, MVT::Vector, 
-                       N->getOperand(0), UDVal, ShufMask,
+                       N0, UDVal, ShufMask,
                        MappedOps[NumElts], MappedOps[NumElts+1]);
   }
   
