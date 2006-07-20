@@ -1404,11 +1404,11 @@ def SHL32ri  : Ii8<0xC1, MRM4r, (ops GR32:$dst, GR32:$src1, i8imm:$src2),
 
 // Shift left by one. Not used because (add x, x) is slightly cheaper.
 def SHL8r1   : I<0xD0, MRM4r, (ops GR8 :$dst, GR8 :$src1),
-                 "shl{b} {$dst|$dst}", []>;
+                 "shl{b} $dst", []>;
 def SHL16r1  : I<0xD1, MRM4r, (ops GR16:$dst, GR16:$src1),
-                 "shl{w} {$dst|$dst}", []>, OpSize;
+                 "shl{w} $dst", []>, OpSize;
 def SHL32r1  : I<0xD1, MRM4r, (ops GR32:$dst, GR32:$src1),
-                 "shl{l} {$dst|$dst}", []>;
+                 "shl{l} $dst", []>;
 
 let isTwoAddress = 0 in {
   def SHL8mCL  : I<0xD2, MRM4m, (ops i8mem :$dst),
