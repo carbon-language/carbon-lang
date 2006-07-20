@@ -165,7 +165,14 @@ class SourceManager {
   /// FileIDs - Information about each FileID.  FileID #0 is not valid, so all
   /// entries are off by one.
   std::vector<SrcMgr::FileIDInfo> FileIDs;
+  
+  /// LastInstantiationLoc_* - Cache the last instantiation request for fast
+  /// lookup.  Macros often want many tokens instantated at the same location.
+  SourceLocation LastInstantiationLoc_InstantLoc;
+  unsigned       LastInstantiationLoc_MacroFID;
+  unsigned       LastInstantiationLoc_Result;
 public:
+  SourceManager() { LastInstantiationLoc_MacroFID = ~0U; }
   ~SourceManager();
   
   /// createFileID - Create a new FileID that represents the specified file

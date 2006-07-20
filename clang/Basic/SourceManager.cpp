@@ -121,11 +121,24 @@ SourceLocation SourceManager::getInstantiationLoc(SourceLocation PhysLoc,
   
   // Resolve InstantLoc down to a real logical location.
   InstantLoc = getLogicalLoc(InstantLoc);
-
-  // Add a FileID for this.  FIXME: should cache these!
-  FileIDs.push_back(FileIDInfo::getMacroExpansion(InstantLoc,
-                                                  PhysLoc.getFileID()));
-  unsigned InstantiationFileID = FileIDs.size();
+  
+  unsigned InstantiationFileID;
+  // If this is the same instantiation as was requested last time, return this
+  // immediately.
+  if (PhysLoc.getFileID() == LastInstantiationLoc_MacroFID &&
+      InstantLoc == LastInstantiationLoc_InstantLoc) {
+    InstantiationFileID = LastInstantiationLoc_Result;
+  } else {
+    // Add a FileID for this.  FIXME: should cache these!
+    FileIDs.push_back(FileIDInfo::getMacroExpansion(InstantLoc,
+                                                    PhysLoc.getFileID()));
+    InstantiationFileID = FileIDs.size();
+    
+    // Remember this in the single-entry cache for next time.
+    LastInstantiationLoc_MacroFID   = PhysLoc.getFileID();
+    LastInstantiationLoc_InstantLoc = InstantLoc;
+    LastInstantiationLoc_Result     = InstantiationFileID;
+  }
   return SourceLocation(InstantiationFileID, PhysLoc.getRawFilePos());
 }
 
