@@ -1,5 +1,6 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movapd | wc -l | grep 1
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movaps | wc -l | grep 1
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 &&
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movapd | wc -l | grep 1 &&
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movaps | wc -l | grep 1 &&
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movups | wc -l | grep 2
 
 target triple = "i686-apple-darwin"
