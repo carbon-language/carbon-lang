@@ -742,8 +742,11 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
     
     assert(NumResults <= 1 &&
            "Only supports zero or one result instrs!");
+
+    CodeGenInstruction &InstInfo =
+      ISE.getTargetInfo().getInstruction(getOperator()->getName());
     // Apply the result type to the node
-    if (NumResults == 0) {
+    if (NumResults == 0 || InstInfo.noResults) { // FIXME: temporary hack...
       MadeChange = UpdateNodeType(MVT::isVoid, TP);
     } else {
       Record *ResultNode = Inst.getResult(0);
