@@ -160,6 +160,6 @@ ModulePass *llvm::createInternalizePass(bool InternalizeEverything) {
   return new InternalizePass(InternalizeEverything);
 }
 
-ModulePass *llvm::createInternalizePass(const std::vector <const char *> &exportList) {
-  return new InternalizePass(exportList);
+ModulePass *llvm::createInternalizePass(const std::vector <const char *> &el) {
+  return new InternalizePass(el);
 }
