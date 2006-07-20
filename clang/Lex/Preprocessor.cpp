@@ -133,11 +133,6 @@ void Preprocessor::AddKeywords() {
 /// position in the current buffer into a SourcePosition object for rendering.
 void Preprocessor::Diag(SourceLocation Loc, unsigned DiagID, 
                         const std::string &Msg) {
-  // If we are in a '#if 0' block, don't emit any diagnostics for notes,
-  // warnings or extensions.
-  if (isSkipping() && Diagnostic::isNoteWarningOrExtension(DiagID))
-    return;
-  
   Diags.Report(Loc, DiagID, Msg);
 }
 
@@ -1903,7 +1898,7 @@ void Preprocessor::HandleEndifDirective(LexerToken &EndifToken) {
   if (CurLexer->getConditionalStackDepth() == 0)
     CurLexer->MIOpt.ExitTopLevelConditional();
   
-  assert(!CondInfo.WasSkipping && !isSkipping() &&
+  assert(!CondInfo.WasSkipping && !CurLexer->LexingRawMode &&
          "This code should only be reachable in the non-skipping case!");
 }
 

@@ -158,8 +158,17 @@ SourceLocation Lexer::getSourceLocation(const char *Loc) const {
 /// position in the current buffer into a SourceLocation object for rendering.
 void Lexer::Diag(const char *Loc, unsigned DiagID,
                  const std::string &Msg) const {
+  if (LexingRawMode && Diagnostic::isNoteWarningOrExtension(DiagID))
+    return;
   PP.Diag(getSourceLocation(Loc), DiagID, Msg);
 }
+void Lexer::Diag(SourceLocation Loc, unsigned DiagID,
+                 const std::string &Msg) const {
+  if (LexingRawMode && Diagnostic::isNoteWarningOrExtension(DiagID))
+    return;
+  PP.Diag(Loc, DiagID, Msg);
+}
+
 
 //===----------------------------------------------------------------------===//
 // Trigraph and Escaped Newline Handling Code.
@@ -814,7 +823,7 @@ std::string Lexer::LexIncludeFilename(LexerToken &FilenameTok) {
 
   // No filename?
   if (FilenameTok.getKind() == tok::eom) {
-    PP.Diag(FilenameTok, diag::err_pp_expects_filename);
+    Diag(FilenameTok.getLocation(), diag::err_pp_expects_filename);
     return "";
   }
   
@@ -825,25 +834,25 @@ std::string Lexer::LexIncludeFilename(LexerToken &FilenameTok) {
   // Make sure the filename is <x> or "x".
   if (Filename[0] == '<') {
     if (Filename[Filename.size()-1] != '>') {
-      PP.Diag(FilenameTok, diag::err_pp_expects_filename);
+      Diag(FilenameTok.getLocation(), diag::err_pp_expects_filename);
       FilenameTok.SetKind(tok::eom);
       return "";
     }
   } else if (Filename[0] == '"') {
     if (Filename[Filename.size()-1] != '"') {
-      PP.Diag(FilenameTok, diag::err_pp_expects_filename);
+      Diag(FilenameTok.getLocation(), diag::err_pp_expects_filename);
       FilenameTok.SetKind(tok::eom);
       return "";
     }
   } else {
-    PP.Diag(FilenameTok, diag::err_pp_expects_filename);
+    Diag(FilenameTok.getLocation(), diag::err_pp_expects_filename);
     FilenameTok.SetKind(tok::eom);
     return "";
   }
   
   // Diagnose #include "" as invalid.
   if (Filename.size() == 2) {
-    PP.Diag(FilenameTok, diag::err_pp_empty_filename);
+    Diag(FilenameTok.getLocation(), diag::err_pp_empty_filename);
     FilenameTok.SetKind(tok::eom);
     return "";
   }
@@ -922,8 +931,7 @@ bool Lexer::LexEndOfFile(LexerToken &Result, const char *CurPtr) {
 
   // If we are in a #if directive, emit an error.
   while (!ConditionalStack.empty()) {
-    PP.Diag(ConditionalStack.back().IfLoc,
-            diag::err_pp_unterminated_conditional);
+    Diag(ConditionalStack.back().IfLoc, diag::err_pp_unterminated_conditional);
     ConditionalStack.pop_back();
   }
   

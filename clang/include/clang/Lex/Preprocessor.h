@@ -214,10 +214,6 @@ public:
 
   IdentifierTable &getIdentifierTable() { return Identifiers; }
 
-  /// isSkipping - Return true if we're lexing a '#if 0' block.  This causes
-  /// lexer errors/warnings to get ignored.
-  bool isSkipping() const { return CurLexer && CurLexer->LexingRawMode; }
-  
   /// isCurrentLexer - Return true if we are lexing directly from the specified
   /// lexer.
   bool isCurrentLexer(const Lexer *L) const {

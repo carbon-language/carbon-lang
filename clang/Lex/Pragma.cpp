@@ -182,7 +182,7 @@ void Preprocessor::HandlePragmaOnce(LexerToken &OnceTok) {
 ///
 void Preprocessor::HandlePragmaPoison(LexerToken &PoisonTok) {
   LexerToken Tok;
-  assert(!isSkipping() && "Why are we handling pragmas while skipping?");
+
   while (1) {
     // Read the next token to poison.  While doing this, pretend that we are
     // skipping while reading the identifier to poison.

@@ -83,6 +83,7 @@ class Lexer {
   ///  3. "#" tokens at the start of a line are treated as normal tokens, not
   ///     implicitly transformed by the lexer.
   ///  4. All notes, warnings, and extension messages are disabled.
+  ///  5. The only callback made into the preprocessor is to report hard errors.
   ///
   bool LexingRawMode;
   
@@ -174,6 +175,8 @@ public:
   /// Diag - Forwarding function for diagnostics.  This translate a source
   /// position in the current buffer into a SourceLocation object for rendering.
   void Diag(const char *Loc, unsigned DiagID,
+            const std::string &Msg = "") const;
+  void Diag(SourceLocation Loc, unsigned DiagID,
             const std::string &Msg = "") const;
 
   /// getSourceLocation - Return a source location identifier for the specified
