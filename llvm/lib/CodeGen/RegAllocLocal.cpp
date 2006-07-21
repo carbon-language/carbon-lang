@@ -525,9 +525,11 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
 
     // Loop over the implicit uses, making sure that they are at the head of the
     // use order list, so they don't get reallocated.
-    for (const unsigned *ImplicitUses = TID.ImplicitUses;
-         *ImplicitUses; ++ImplicitUses)
-      MarkPhysRegRecentlyUsed(*ImplicitUses);
+    if (TID.ImplicitUses) {
+      for (const unsigned *ImplicitUses = TID.ImplicitUses;
+           *ImplicitUses; ++ImplicitUses)
+        MarkPhysRegRecentlyUsed(*ImplicitUses);
+    }
 
     // Get the used operands into registers.  This has the potential to spill
     // incoming values if we are out of registers.  Note that we completely
@@ -587,19 +589,21 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
     }
 
     // Loop over the implicit defs, spilling them as well.
-    for (const unsigned *ImplicitDefs = TID.ImplicitDefs;
-         *ImplicitDefs; ++ImplicitDefs) {
-      unsigned Reg = *ImplicitDefs;
-      spillPhysReg(MBB, MI, Reg, true);
-      PhysRegsUseOrder.push_back(Reg);
-      PhysRegsUsed[Reg] = 0;            // It is free and reserved now
-      PhysRegsEverUsed[Reg] = true;
+    if (TID.ImplicitDefs) {
+      for (const unsigned *ImplicitDefs = TID.ImplicitDefs;
+           *ImplicitDefs; ++ImplicitDefs) {
+        unsigned Reg = *ImplicitDefs;
+        spillPhysReg(MBB, MI, Reg, true);
+        PhysRegsUseOrder.push_back(Reg);
+        PhysRegsUsed[Reg] = 0;            // It is free and reserved now
+        PhysRegsEverUsed[Reg] = true;
 
-      for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
-           *AliasSet; ++AliasSet) {
-        PhysRegsUseOrder.push_back(*AliasSet);
-        PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
-        PhysRegsEverUsed[*AliasSet] = true;
+        for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
+             *AliasSet; ++AliasSet) {
+          PhysRegsUseOrder.push_back(*AliasSet);
+          PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
+          PhysRegsEverUsed[*AliasSet] = true;
+        }
       }
     }
 

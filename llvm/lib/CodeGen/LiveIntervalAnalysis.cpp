@@ -639,8 +639,10 @@ void LiveIntervals::computeIntervals()
       DEBUG(std::cerr << getInstructionIndex(mi) << "\t" << *mi);
 
       // handle implicit defs
-      for (const unsigned* id = tid.ImplicitDefs; *id; ++id)
-        handleRegisterDef(mbb, mi, *id);
+      if (tid.ImplicitDefs) {
+        for (const unsigned* id = tid.ImplicitDefs; *id; ++id)
+          handleRegisterDef(mbb, mi, *id);
+      }
 
       // handle explicit defs
       for (int i = mi->getNumOperands() - 1; i >= 0; --i) {

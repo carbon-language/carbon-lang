@@ -239,9 +239,11 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
         NumOperandsToProcess = 1;
 
       // Loop over implicit uses, using them.
-      for (const unsigned *ImplicitUses = MID.ImplicitUses;
-           *ImplicitUses; ++ImplicitUses)
-        HandlePhysRegUse(*ImplicitUses, MI);
+      if (MID.ImplicitUses) {
+        for (const unsigned *ImplicitUses = MID.ImplicitUses;
+             *ImplicitUses; ++ImplicitUses)
+          HandlePhysRegUse(*ImplicitUses, MI);
+      }
 
       // Process all explicit uses...
       for (unsigned i = 0; i != NumOperandsToProcess; ++i) {
@@ -257,9 +259,11 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
       }
 
       // Loop over implicit defs, defining them.
-      for (const unsigned *ImplicitDefs = MID.ImplicitDefs;
-           *ImplicitDefs; ++ImplicitDefs)
-        HandlePhysRegDef(*ImplicitDefs, MI);
+      if (MID.ImplicitDefs) {
+        for (const unsigned *ImplicitDefs = MID.ImplicitDefs;
+             *ImplicitDefs; ++ImplicitDefs)
+          HandlePhysRegDef(*ImplicitDefs, MI);
+      }
 
       // Process all explicit defs...
       for (unsigned i = 0; i != NumOperandsToProcess; ++i) {

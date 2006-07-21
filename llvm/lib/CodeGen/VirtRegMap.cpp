@@ -671,10 +671,12 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
 
     // Loop over all of the implicit defs, clearing them from our available
     // sets.
-    for (const unsigned *ImpDef = TII->getImplicitDefs(MI.getOpcode());
-         *ImpDef; ++ImpDef) {
-      PhysRegsUsed[*ImpDef] = true;
-      Spills.ClobberPhysReg(*ImpDef);
+    const unsigned *ImpDef = TII->getImplicitDefs(MI.getOpcode());
+    if (ImpDef) {
+      for ( ; *ImpDef; ++ImpDef) {
+        PhysRegsUsed[*ImpDef] = true;
+        Spills.ClobberPhysReg(*ImpDef);
+      }
     }
 
     DEBUG(std::cerr << '\t' << MI);

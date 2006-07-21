@@ -166,12 +166,16 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
     unsigned Opcode = MI->getOpcode();
     const TargetInstrDescriptor &Desc = TM->getInstrInfo()->get(Opcode);
     const unsigned *Regs;
-    for (Regs = Desc.ImplicitUses; *Regs; ++Regs)
-      RegsUsed[*Regs] = true;
+    if (Desc.ImplicitUses) {
+      for (Regs = Desc.ImplicitUses; *Regs; ++Regs)
+        RegsUsed[*Regs] = true;
+    }
 
-    for (Regs = Desc.ImplicitDefs; *Regs; ++Regs) {
-      RegsUsed[*Regs] = true;
-      PhysRegsEverUsed[*Regs] = true;
+    if (Desc.ImplicitDefs) {
+      for (Regs = Desc.ImplicitDefs; *Regs; ++Regs) {
+        RegsUsed[*Regs] = true;
+        PhysRegsEverUsed[*Regs] = true;
+      }
     }
 
     // Loop over uses, move from memory into registers.

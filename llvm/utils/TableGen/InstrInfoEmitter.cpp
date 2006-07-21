@@ -97,9 +97,6 @@ void InstrInfoEmitter::run(std::ostream &OS) {
   const std::string &TargetName = Target.getName();
   Record *InstrInfo = Target.getInstructionSet();
 
-  // Emit empty implicit uses and defs lists
-  OS << "static const unsigned EmptyImpList[] = { 0 };\n";
-
   // Keep track of all of the def lists we have emitted already.
   std::map<std::vector<Record*>, unsigned> EmittedLists;
   unsigned ListNumber = 0;
@@ -239,13 +236,13 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   // Emit the implicit uses and defs lists...
   std::vector<Record*> UseList = Inst.TheDef->getValueAsListOfDefs("Uses");
   if (UseList.empty())
-    OS << "EmptyImpList, ";
+    OS << "NULL, ";
   else
     OS << "ImplicitList" << EmittedLists[UseList] << ", ";
 
   std::vector<Record*> DefList = Inst.TheDef->getValueAsListOfDefs("Defs");
   if (DefList.empty())
-    OS << "EmptyImpList, ";
+    OS << "NULL, ";
   else
     OS << "ImplicitList" << EmittedLists[DefList] << ", ";
 
