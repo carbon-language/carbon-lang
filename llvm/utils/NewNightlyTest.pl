@@ -824,13 +824,13 @@ my $xfails="";
 
 for($x=0; $x<@DEJAGNU; $x++){
 	if($DEJAGNU[$x] =~ m/^PASS:/){
-		$passes.="$x\n";
+		$passes.="$DEJAGNU[$x]\n";
 	}
 	elsif($DEJAGNU[$x] =~ m/^FAIL:/){
-		$fails.="$x\n";
+		$fails.="$DEJAGNU[$x]\n";
 	}
 	elsif($DEJAGNU[$x] =~ m/^XFAIL:/){
-		$xfails.="$x\n";
+		$xfails.="$DEJAGNU[$x]\n";
 	}
 }
 
