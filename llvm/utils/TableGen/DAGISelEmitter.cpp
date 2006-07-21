@@ -2123,7 +2123,6 @@ private:
   std::vector<std::string> &TargetVTs;
 
   std::string ChainName;
-  bool NewTF;
   bool DoReplace;
   unsigned TmpNo;
   unsigned OpcNo;
@@ -2159,7 +2158,7 @@ public:
                      bool dorep)
   : ISE(ise), Predicates(preds), Pattern(pattern), Instruction(instr),
     GeneratedCode(gc), GeneratedDecl(gd), TargetOpcodes(to), TargetVTs(tv),
-    NewTF(false), DoReplace(dorep), TmpNo(0), OpcNo(0), VTNo(0) {}
+    DoReplace(dorep), TmpNo(0), OpcNo(0), VTNo(0) {}
 
   /// EmitMatchCode - Emit a matcher for N, going to the label for PatternNo
   /// if the match fails. At this point, we already know that the opcode for N
@@ -2293,19 +2292,14 @@ public:
       }
 
       if (NodeHasChain) {
+        if (FoundChain)
+          emitCheck("Chain.Val == " + RootName + ".Val");
+        else
+          FoundChain = true;
         ChainName = "Chain" + ChainSuffix;
         emitDecl(ChainName);
-        if (FoundChain) {
-         // FIXME: temporary workaround for a common case where chain
-         // is a TokenFactor and the previous "inner" chain is an operand.
-          NewTF = true;
-          emitDecl("OldTF", 1);
-          emitCheck("(" + ChainName + " = UpdateFoldedChain(CurDAG, " +
-                    RootName + ".Val, Chain.Val, OldTF)).Val");
-        } else {
-          FoundChain = true;
-          emitCode(ChainName + " = " + RootName + ".getOperand(0);");
-        }
+        emitCode(ChainName + " = " + RootName +
+                 ".getOperand(0);");
       }
     }
 
@@ -2761,11 +2755,6 @@ public:
 
         if (!isRoot)
           return std::make_pair(1, ResNo);
-
-        if (NewTF)
-          emitCode("if (OldTF) "
-                   "SelectionDAG::InsertISelMapEntry(CodeGenMap, OldTF, 0, " +
-                   ChainName + ".Val, 0);");
 
         for (unsigned i = 0; i < NumResults; i++)
           emitCode("SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, " +
@@ -3737,40 +3726,6 @@ void DAGISelEmitter::run(std::ostream &OS) {
   OS << "      CurDAG->UpdateNodeOperands(U, Ops);\n";
   OS << "    }\n";
   OS << "  }\n";
-  OS << "}\n";
-
-  OS << "\n";
-  OS << "// UpdateFoldedChain - return a SDOperand of the new chain created\n";
-  OS << "// if the folding were to happen. This is called when, for example,\n";
-  OS << "// a load is folded into a store. If the store's chain is the load,\n";
-  OS << "// then the resulting node's input chain would be the load's input\n";
-  OS << "// chain. If the store's chain is a TokenFactor and the load's\n";
-  OS << "// output chain feeds into in, then the new chain is a TokenFactor\n";
-  OS << "// with the other operands along with the input chain of the load.\n";
-  OS << "SDOperand UpdateFoldedChain(SelectionDAG *DAG, SDNode *N, "
-     << "SDNode *Chain, SDNode* &OldTF) {\n";
-  OS << "  OldTF = NULL;\n";
-  OS << "  if (N == Chain) {\n";
-  OS << "    return N->getOperand(0);\n";
-  OS << "  } else if (Chain->getOpcode() == ISD::TokenFactor &&\n";
-  OS << "             N->isOperand(Chain)) {\n";
-  OS << "    SDOperand Ch = SDOperand(Chain, 0);\n";
-  OS << "    std::map<SDOperand, SDOperand>::iterator CGMI = "
-     << "CodeGenMap.find(Ch);\n";
-  OS << "    if (CGMI != CodeGenMap.end())\n";
-  OS << "      return SDOperand(0, 0);\n";
-  OS << "    OldTF = Chain;\n";
-  OS << "    std::vector<SDOperand> Ops;\n";
-  OS << "    for (unsigned i = 0; i < Chain->getNumOperands(); ++i) {\n";
-  OS << "      SDOperand Op = Chain->getOperand(i);\n";
-  OS << "      if (Op.Val == N)\n";
-  OS << "        Ops.push_back(N->getOperand(0));\n";
-  OS << "      else\n";
-  OS << "        Ops.push_back(Op);\n";
-  OS << "    }\n";
-  OS << "    return DAG->getNode(ISD::TokenFactor, MVT::Other, Ops);\n";
-  OS << "  }\n";
-  OS << "  return SDOperand(0, 0);\n";
   OS << "}\n";
 
   OS << "\n";
