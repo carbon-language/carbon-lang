@@ -1,5 +1,4 @@
 #!/usr/bin/perl
-
 use POSIX qw(strftime);
 use File::Copy;
 use Socket;
@@ -455,7 +454,7 @@ sub SendData{
 # Getting Start timestamp
 #
 ##############################################################
-$starttime = `date`;
+$starttime = `date "+20%y-%m-%d %H:%M:%S"`;
 
 ##############################################################
 #
@@ -612,6 +611,8 @@ if (!$NOCHECKOUT && !$NOBUILD) {
 #my $NumLibraries   = scalar(grep(!/executable/, @Linked));
 #my $NumObjects     = `grep ']\: Compiling ' $BuildLog | wc -l` + 0;
 
+my $a_file_sizes="";
+my $o_file_sizes="";
 if(!$BuildError){
 	ChangeDir( "$BuildDir", "Build Directory" );
 	$afiles = `find . -iname '*.a' -ls`;
@@ -621,7 +622,8 @@ if(!$BuildError){
 	foreach $x (@AFILES){
 	  $x =~ m/.+\s+.+\s+.+\s+.+\s+.+\s+.+\s+(.+)\s+.+\s+.+\s+.+\s+(.+)/;
 	  $a_file_sizes.="$1 $2\n";
-	}	@OFILES = split "\n", $ofiles;
+	}	
+	@OFILES = split "\n", $ofiles;
 	$o_file_sizes="";
 	foreach $x (@OFILES){
 	  $x =~ m/.+\s+.+\s+.+\s+.+\s+.+\s+.+\s+(.+)\s+.+\s+.+\s+.+\s+(.+)/;
@@ -960,7 +962,7 @@ if (!$BuildError) {
 # Getting end timestamp
 #
 ##############################################################
-$endtime = `date`;
+$endtime = `date "+20%y-%m-%d %H:%M:%S"`;
 
 
 ##############################################################
