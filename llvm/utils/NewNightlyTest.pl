@@ -832,22 +832,24 @@ if (!$BuildError && $patrickjenkins) {
 #
 #
 ##############################################################
-$dejagnu = ReadFile $DejagnuSum;
-@DEJAGNU = split "\n", $dejagnu;
+my $dejagnu = ReadFile $DejagnuSum;
+my @DEJAGNU = split "\n", $dejagnu;
 
 my $passes="",
 my $fails="";
 my $xfails="";
 
-for($x=0; $x<@DEJAGNU; $x++){
-	if($DEJAGNU[$x] =~ m/^PASS:/){
-		$passes.="$DEJAGNU[$x]\n";
-	}
-	elsif($DEJAGNU[$x] =~ m/^FAIL:/){
-		$fails.="$DEJAGNU[$x]\n";
-	}
-	elsif($DEJAGNU[$x] =~ m/^XFAIL:/){
-		$xfails.="$DEJAGNU[$x]\n";
+if(!$NODEJAGNU) {
+	for($x=0; $x<@DEJAGNU; $x++){
+		if($DEJAGNU[$x] =~ m/^PASS:/){
+			$passes.="$DEJAGNU[$x]\n";
+		}
+		elsif($DEJAGNU[$x] =~ m/^FAIL:/){
+			$fails.="$DEJAGNU[$x]\n";
+		}
+		elsif($DEJAGNU[$x] =~ m/^XFAIL:/){
+			$xfails.="$DEJAGNU[$x]\n";
+		}
 	}
 }
 
