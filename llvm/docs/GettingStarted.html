@@ -239,12 +239,12 @@ software you will need.</p>
 </tr>
 <tr>
   <td>Cygwin/Win32</td>
-  <td>x86<sup><a href="#pf_1">1</a></sup></td>
+  <td>x86<sup><a href="#pf_1">1</a>,<a href="#pf_8">8</a></sup></td>
   <td>GCC 3.4.X, binutils 2.15</td>
 </tr>
 <tr>
   <td>MinGW/Win32</td>
-  <td>x86<sup><a href="#pf_1">1</a>,<a href="#pf_6">6</a></sup></td>
+  <td>x86<sup><a href="#pf_1">1</a>,<a href="#pf_6">6</a>,<a href="#pf_8">8</a></sup></td>
   <td>GCC 3.4.X, binutils 2.15</td>
 </tr>
 <tr>
@@ -306,9 +306,15 @@ up</a></li>
 <li><a name="pf_5">The GCC-based C/C++ frontend does not build</a></li>
 <li><a name="pf_6">The port is done using the MSYS shell. 
 <a href="http://www.mingw.org/MinGWiki/">Download</a> and install 
-bison (excl. M4.exe) and flex in that order.  Build binutils-2.15 from source,
-if necessary.</li>
+bison (excl. M4.exe) and flex in that order. Build binutils-2.15 from source,
+if necessary. Bison & flex can be also grabbed from GNUWin32 sf.net project</li>
 <li><a name="pf_7">Native code generation exists but is not complete.</a></li>
+<li><a name="pf_8">Binutils up to post-2.17 has bug in bfd/cofflink.c
+    preventing LLVM from building correctly. Several workarounds have been
+    introduced into LLVM build system, but the bug can occur anytime in the
+    future. It's highly recommended to rebuild your current binutils with the
+    patch from <a href="http://sourceware.org/bugzilla/show_bug.cgi?id=2659">
+    Binutils bugzilla</a>, if it's wasn't already applied. </a></li>
 </ol>
 </div>
 
