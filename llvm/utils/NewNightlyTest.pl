@@ -612,6 +612,22 @@ if (!$NOCHECKOUT && !$NOBUILD) {
 #my $NumLibraries   = scalar(grep(!/executable/, @Linked));
 #my $NumObjects     = `grep ']\: Compiling ' $BuildLog | wc -l` + 0;
 
+if(!$BuildError){
+	ChangeDir( "$BuildDir", "Build Directory" );
+	$afiles = `find . -iname '*.a' -ls`;
+	$ofiles = `find . -iname '*.o' -ls`;
+	@AFILES = split "\n", $afiles;
+	$a_file_sizes="";
+	foreach $x (@AFILES){
+	  $x =~ m/.+\s+.+\s+.+\s+.+\s+.+\s+.+\s+(.+)\s+.+\s+.+\s+.+\s+(.+)/;
+	  $a_file_sizes.="$1 $2\n";
+	}	@OFILES = split "\n", $ofiles;
+	$o_file_sizes="";
+	foreach $x (@OFILES){
+	  $x =~ m/.+\s+.+\s+.+\s+.+\s+.+\s+.+\s+(.+)\s+.+\s+.+\s+.+\s+(.+)/;
+	  $o_file_sizes.="$1 $2\n";
+	}
+}
 
 my $ConfigTimeU = GetRegexNum "^user", 0, "([0-9.]+)", "$BuildLog";
 my $ConfigTimeS = GetRegexNum "^sys", 0, "([0-9.]+)", "$BuildLog";
@@ -1048,7 +1064,9 @@ my %hash_of_data = ('machine_data' => $machine_data,
 										'dejagnutests_log' => $dejagnutests_log,
 										'dejagnutests_sum' => $dejagnutests_sum,
 										'starttime' => $starttime,
-										'endtime' => $endtime);
+										'endtime' => $endtime,
+										'o_file_sizes' => $o_file_sizes,
+										'a_file_sizes' => $a_file_sizes);
 
 $TESTING = 0;
 
