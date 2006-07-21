@@ -90,10 +90,10 @@ const unsigned M_LOOK_UP_PTR_REG_CLASS = 1 << 0;
 ///
 class TargetOperandInfo {
 public:
-  /// RegClass - This specifies the register class of the operand if the
-  /// operand is a register.  If not, this contains null.
-  const TargetRegisterClass *RegClass;
-  unsigned Flags;
+  /// RegClass - This specifies the register class enumeration of the operand 
+  /// if the operand is a register.  If not, this contains 0.
+  unsigned short RegClass;
+  unsigned short Flags;
   /// Currently no other information.
 };
 
@@ -144,17 +144,6 @@ public:
 
   const char *getName(MachineOpCode Opcode) const {
     return get(Opcode).Name;
-  }
-
-  const TargetRegisterClass
-  *getInstrOperandRegClass(const TargetInstrDescriptor *II, unsigned Op) const {
-    if (Op >= II->numOperands) {
-      assert((II->Flags & M_VARIABLE_OPS)&& "Invalid operand # of instruction");
-      return NULL;
-    }
-    const TargetOperandInfo &toi = II->OpInfo[Op];
-    return (toi.Flags & M_LOOK_UP_PTR_REG_CLASS)
-           ? getPointerRegClass() : toi.RegClass;
   }
 
   int getNumOperands(MachineOpCode Opcode) const {

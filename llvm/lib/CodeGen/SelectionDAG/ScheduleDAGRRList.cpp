@@ -152,7 +152,7 @@ static const TargetRegisterClass *getRegClass(SUnit *SU,
   if (SU->Node->isTargetOpcode()) {
     unsigned Opc = SU->Node->getTargetOpcode();
     const TargetInstrDescriptor &II = TII->get(Opc);
-    return II.OpInfo->RegClass;
+    return MRI->getRegClass(II.OpInfo->RegClass);
   } else {
     assert(SU->Node->getOpcode() == ISD::CopyFromReg);
     unsigned SrcReg = cast<RegisterSDNode>(SU->Node->getOperand(1))->getReg();

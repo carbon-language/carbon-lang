@@ -137,7 +137,7 @@ void InstrInfoEmitter::run(std::ostream &OS) {
         Record *RC = OperandInfo[i];
         // FIXME: We only care about register operands for now.
         if (RC && RC->isSubClassOf("RegisterClass"))
-          OS << "{ &" << getQualifiedName(RC) << "RegClass, 0 }, ";
+          OS << "{ " << getQualifiedName(RC) << "RegClassID, 0 }, ";
         else if (RC && RC->getName() == "ptr_rc")
           // Ptr value whose register class is resolved via callback.
           OS << "{ 0, 1 }, ";

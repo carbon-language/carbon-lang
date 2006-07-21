@@ -68,6 +68,15 @@ void RegisterInfoEmitter::runHeader(std::ostream &OS) {
   if (!RegisterClasses.empty()) {
     OS << "namespace " << RegisterClasses[0].Namespace
        << " { // Register classes\n";
+       
+    OS << "  enum {\n";
+    for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
+      if (i) OS << ",\n";
+      OS << "    " << RegisterClasses[i].getName() << "RegClassID";
+      if (!i) OS << " = 1";
+    }
+    OS << "\n  };\n\n";
+
     for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
       const std::string &Name = RegisterClasses[i].getName();
 
@@ -165,7 +174,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
     for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i)
       OS << "  " << RegisterClasses[i].getName()  << "Class\t"
          << RegisterClasses[i].getName() << "RegClass;\n";
-
+         
     std::map<unsigned, std::set<unsigned> > SuperClassMap;
     OS << "\n";
     // Emit the sub-classes array for each RegisterClass
@@ -244,6 +253,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
       OS << RC.MethodBodies << "\n";
       OS << RC.getName() << "Class::" << RC.getName() 
          << "Class()  : TargetRegisterClass("
+         << RC.getName() + "RegClassID" << ", "
          << RC.getName() + "VTs" << ", "
          << RC.getName() + "Subclasses" << ", "
          << RC.getName() + "Superclasses" << ", "

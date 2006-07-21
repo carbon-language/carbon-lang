@@ -49,6 +49,7 @@ public:
   typedef const MVT::ValueType* vt_iterator;
   typedef const TargetRegisterClass* const * sc_iterator;
 private:
+  unsigned ID;
   bool  isSubClass;
   const vt_iterator VTs;
   const sc_iterator SubClasses;
@@ -56,14 +57,18 @@ private:
   const unsigned RegSize, Alignment;    // Size & Alignment of register in bytes
   const iterator RegsBegin, RegsEnd;
 public:
-  TargetRegisterClass(const MVT::ValueType *vts,
+  TargetRegisterClass(unsigned id,
+                      const MVT::ValueType *vts,
                       const TargetRegisterClass * const *subcs,
                       const TargetRegisterClass * const *supcs,
                       unsigned RS, unsigned Al, iterator RB, iterator RE)
-    : VTs(vts), SubClasses(subcs), SuperClasses(supcs),
+    : ID(id), VTs(vts), SubClasses(subcs), SuperClasses(supcs),
     RegSize(RS), Alignment(Al), RegsBegin(RB), RegsEnd(RE) {}
   virtual ~TargetRegisterClass() {}     // Allow subclasses
-
+  
+  // getID() - Return the register class ID number.
+  unsigned getID() const { return ID; }
+  
   // begin/end - Return all of the registers in this class.
   iterator       begin() const { return RegsBegin; }
   iterator         end() const { return RegsEnd; }
@@ -299,6 +304,13 @@ public:
 
   unsigned getNumRegClasses() const {
     return regclass_end()-regclass_begin();
+  }
+  
+  /// getRegClass - Returns the register class associated with the enumeration
+  /// value.  See class TargetOperandInfo.
+  const TargetRegisterClass *getRegClass(unsigned i) const {
+    assert(i <= getNumRegClasses() && "Register Class ID out of range");
+    return i ? RegClassBegin[i - 1] : NULL;
   }
 
   //===--------------------------------------------------------------------===//
