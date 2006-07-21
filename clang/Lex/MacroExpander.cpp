@@ -24,45 +24,34 @@ using namespace clang;
 // MacroArgs Implementation
 //===----------------------------------------------------------------------===//
 
-MacroArgs::MacroArgs(const MacroInfo *MI) {
+MacroArgs::MacroArgs(const MacroInfo *MI, std::vector<LexerToken> &UnexpArgs) {
   assert(MI->isFunctionLike() &&
          "Can't have args for an object-like macro!");
-  // Reserve space for arguments to avoid reallocation.
-  unsigned NumArgs = MI->getNumArgs();
-  if (MI->isC99Varargs() || MI->isGNUVarargs())
-    NumArgs += 3;    // Varargs can have more than this, just some guess.
-  
-  UnexpArgTokens.reserve(NumArgs);
+  UnexpArgTokens.swap(UnexpArgs);
 }
 
-/// addArgument - Add an argument for this invocation.  This method destroys
-/// the vector passed in to avoid extraneous memory copies.  This adds the EOF
-/// token to the end of the argument list as a marker.  'Loc' specifies a
-/// location at the end of the argument, e.g. the ',' token or the ')'.
-void MacroArgs::addArgument(std::vector<LexerToken> &ArgToks,
-                            SourceLocation Loc) {
-  UnexpArgTokens.push_back(std::vector<LexerToken>());
-  UnexpArgTokens.back().swap(ArgToks);
-  
-  // Add a marker EOF token to the end of the argument list, useful for handling
-  // empty arguments and macro pre-expansion.
-  LexerToken EOFTok;
-  EOFTok.StartToken();
-  EOFTok.SetKind(tok::eof);
-  EOFTok.SetLocation(Loc);
-  EOFTok.SetLength(0);
-  UnexpArgTokens.back().push_back(EOFTok);
+/// getUnexpArgument - Return the unexpanded tokens for the specified formal.
+///
+const LexerToken *MacroArgs::getUnexpArgument(unsigned Arg) const {
+  // Scan to find Arg.
+  const LexerToken *Start = &UnexpArgTokens[0];
+  const LexerToken *Result = Start;
+  for (; Arg; ++Result) {
+    assert(Result < Start+UnexpArgTokens.size() && "Invalid arg #");
+    if (Result->getKind() == tok::eof)
+      --Arg;
+  }
+  return Result;
 }
+
 
 /// ArgNeedsPreexpansion - If we can prove that the argument won't be affected
 /// by pre-expansion, return false.  Otherwise, conservatively return true.
-bool MacroArgs::ArgNeedsPreexpansion(unsigned ArgNo) const {
-  const std::vector<LexerToken> &ArgTokens = getUnexpArgument(ArgNo);
-  
+bool MacroArgs::ArgNeedsPreexpansion(const LexerToken *ArgTok) const {
   // If there are no identifiers in the argument list, or if the identifiers are
   // known to not be macros, pre-expansion won't modify it.
-  for (unsigned i = 0, e = ArgTokens.size()-1; i != e; ++i)
-    if (IdentifierInfo *II = ArgTokens[i].getIdentifierInfo()) {
+  for (; ArgTok->getKind() != tok::eof; ++ArgTok)
+    if (IdentifierInfo *II = ArgTok->getIdentifierInfo()) {
       if (II->getMacroInfo() && II->getMacroInfo()->isEnabled())
         // Return true even though the macro could be a function-like macro
         // without a following '(' token.
@@ -84,11 +73,21 @@ MacroArgs::getPreExpArgument(unsigned Arg, Preprocessor &PP) {
   std::vector<LexerToken> &Result = PreExpArgTokens[Arg];
   if (!Result.empty()) return Result;
 
+  // FIXME
+  // FIXME: Don't require copying into a temporary vector!!!
+  // FIXME
+
+  std::vector<LexerToken> UnexpArgToks;
+  const LexerToken *AT = getUnexpArgument(Arg);
+  for (; AT->getKind() != tok::eof; ++AT)
+    UnexpArgToks.push_back(*AT);
+  UnexpArgToks.push_back(*AT);   // push the EOF too.
+  
   // Otherwise, we have to pre-expand this argument, populating Result.  To do
   // this, we set up a fake MacroExpander to lex from the unexpanded argument
   // list.  With this installed, we lex expanded tokens until we hit the EOF
   // token at the end of the unexp list.
-  PP.EnterTokenStream(UnexpArgTokens[Arg]);
+  PP.EnterTokenStream(UnexpArgToks);
 
   // Lex all of the macro-expanded tokens into Result.
   do {
@@ -110,19 +109,23 @@ MacroArgs::getPreExpArgument(unsigned Arg, Preprocessor &PP) {
 /// tokens into the literal string token that should be produced by the C #
 /// preprocessor operator.
 ///
-static LexerToken StringifyArgument(const std::vector<LexerToken> &Toks,
+static LexerToken StringifyArgument(const LexerToken *ArgToks,
                                     Preprocessor &PP, bool Charify = false) {
   LexerToken Tok;
   Tok.StartToken();
   Tok.SetKind(tok::string_literal);
 
+  const LexerToken *ArgTokStart = ArgToks;
+  
   // Stringify all the tokens.
   std::string Result = "\"";
   // FIXME: Optimize this loop to not use std::strings.
-  for (unsigned i = 0, e = Toks.size()-1 /*no eof*/; i != e; ++i) {
-    const LexerToken &Tok = Toks[i];
-    if (i != 0 && Tok.hasLeadingSpace())
+  bool isFirst = true;
+  for (; ArgToks->getKind() != tok::eof; ++ArgToks) {
+    const LexerToken &Tok = *ArgToks;
+    if (!isFirst && Tok.hasLeadingSpace())
       Result += ' ';
+    isFirst = false;
     
     // If this is a string or character constant, escape the token as specified
     // by 6.10.3.2p2.
@@ -146,7 +149,7 @@ static LexerToken StringifyArgument(const std::vector<LexerToken> &Toks,
       --FirstNonSlash;
     if ((Result.size()-1-FirstNonSlash) & 1) {
       // Diagnose errors for things like: #define F(X) #X   /   F(\)
-      PP.Diag(Toks.back(), diag::pp_invalid_string_literal);
+      PP.Diag(ArgToks[-1], diag::pp_invalid_string_literal);
       Result.erase(Result.end()-1);  // remove one of the \'s.
     }
   }
@@ -168,8 +171,7 @@ static LexerToken StringifyArgument(const std::vector<LexerToken> &Toks,
     }
     
     if (isBad) {
-      assert(!Toks.empty() && "No eof token at least?");
-      PP.Diag(Toks[0], diag::err_invalid_character_to_charify);
+      PP.Diag(ArgTokStart[0], diag::err_invalid_character_to_charify);
       Result = "' '";  // Use something arbitrary, but legal.
     }
   }
@@ -190,7 +192,7 @@ const LexerToken &MacroArgs::getStringifiedArgument(unsigned ArgNo,
            sizeof(StringifiedArgs[0])*getNumArguments());
   }
   if (StringifiedArgs[ArgNo].getKind() != tok::string_literal)
-    StringifiedArgs[ArgNo] = StringifyArgument(UnexpArgTokens[ArgNo], PP);
+    StringifiedArgs[ArgNo] = StringifyArgument(getUnexpArgument(ArgNo), PP);
   return StringifiedArgs[ArgNo];
 }
 
@@ -305,34 +307,37 @@ void MacroExpander::ExpandFunctionArguments() {
       // argument and substitute the expanded tokens into the result.  This is
       // C99 6.10.3.1p1.
       if (!PasteBefore && !PasteAfter) {
-        const std::vector<LexerToken> *ArgToks;
+        const LexerToken *ResultArgToks;
+
         // Only preexpand the argument if it could possibly need it.  This
         // avoids some work in common cases.
-        if (ActualArgs->ArgNeedsPreexpansion(ArgNo))
-          ArgToks = &ActualArgs->getPreExpArgument(ArgNo, PP);
+        const LexerToken *ArgTok = ActualArgs->getUnexpArgument(ArgNo);
+        if (ActualArgs->ArgNeedsPreexpansion(ArgTok))
+          ResultArgToks = &ActualArgs->getPreExpArgument(ArgNo, PP)[0];
         else
-          ArgToks = &ActualArgs->getUnexpArgument(ArgNo);
+          ResultArgToks = ArgTok;  // Use non-preexpanded tokens.
         
-        unsigned FirstTok = ResultToks.size();
-        ResultToks.insert(ResultToks.end(), ArgToks->begin(), ArgToks->end()-1);
+        if (ResultArgToks->getKind() != tok::eof) {
+          unsigned FirstResult = ResultToks.size();
+          for (; ResultArgToks->getKind() != tok::eof; ++ResultArgToks)
+            ResultToks.push_back(*ResultArgToks);
         
-        // If any tokens were substituted from the argument, the whitespace
-        // before the first token should match the whitespace of the arg
-        // identifier.
-        if (FirstTok != ResultToks.size())
-          ResultToks[FirstTok].SetFlagValue(LexerToken::LeadingSpace,
-                                            CurTok.hasLeadingSpace());
+          // If any tokens were substituted from the argument, the whitespace
+          // before the first token should match the whitespace of the arg
+          // identifier.
+          ResultToks[FirstResult].SetFlagValue(LexerToken::LeadingSpace,
+                                               CurTok.hasLeadingSpace());
+        }
         continue;
       }
       
       // Okay, we have a token that is either the LHS or RHS of a paste (##)
       // argument.  It gets substituted as its non-pre-expanded tokens.
-      const std::vector<LexerToken> &ArgToks =
-        ActualArgs->getUnexpArgument(ArgNo);
-      assert(ArgToks.back().getKind() == tok::eof && "Bad argument!");
+      const LexerToken *ArgToks = ActualArgs->getUnexpArgument(ArgNo);
 
-      if (ArgToks.size() != 1) {  // Not just an EOF token?
-        ResultToks.insert(ResultToks.end(), ArgToks.begin(), ArgToks.end()-1);
+      if (ArgToks->getKind() != tok::eof) {  // Not an empty argument?
+        for (; ArgToks->getKind() != tok::eof; ++ArgToks)
+          ResultToks.push_back(*ArgToks);
         continue;
       }
       

@@ -694,10 +694,6 @@ bool Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier,
 /// invocation.  This returns null on error.
 MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(LexerToken &MacroName,
                                                    MacroInfo *MI) {
-  // Use an auto_ptr here so that the MacroArgs object is deleted on
-  // all error paths.
-  std::auto_ptr<MacroArgs> Args(new MacroArgs(MI));
-  
   // The number of fixed arguments to parse.
   unsigned NumFixedArgsLeft = MI->getNumArgs();
   bool isVariadic = MI->isVariadic();
@@ -711,13 +707,16 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(LexerToken &MacroName,
   LexerToken Tok;
   Tok.SetKind(tok::comma);
   --NumFixedArgsLeft;  // Start reading the first arg.
-  
+
+  // ArgTokens - Build up a list of tokens that make up each argument.  Each
+  // argument is separated by an EOF token.
+  std::vector<LexerToken> ArgTokens;
+
+  unsigned NumActuals = 0;
   while (Tok.getKind() == tok::comma) {
-    // ArgTokens - Build up a list of tokens that make up this argument.
-    std::vector<LexerToken> ArgTokens;
     // C99 6.10.3p11: Keep track of the number of l_parens we have seen.
     unsigned NumParens = 0;
-
+    
     while (1) {
       // Read arguments as unexpanded tokens.  This avoids issues, e.g., where
       // an argument value in a macro could expand to ',' or '(' or ')'.
@@ -757,14 +756,19 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(LexerToken &MacroName,
     if (ArgTokens.empty() && !Features.C99)
       Diag(Tok, diag::ext_empty_fnmacro_arg);
     
-    // Remember the tokens that make up this argument.  This destroys ArgTokens.
-    Args->addArgument(ArgTokens, Tok.getLocation());
+    // Add a marker EOF token to the end of the token list for this argument.
+    LexerToken EOFTok;
+    EOFTok.StartToken();
+    EOFTok.SetKind(tok::eof);
+    EOFTok.SetLocation(Tok.getLocation());
+    EOFTok.SetLength(0);
+    ArgTokens.push_back(EOFTok);
+    ++NumActuals;
     --NumFixedArgsLeft;
   };
   
   // Okay, we either found the r_paren.  Check to see if we parsed too few
   // arguments.
-  unsigned NumActuals = Args->getNumArguments();
   unsigned MinArgsExpected = MI->getNumArgs();
   
   // C99 expects us to pass at least one vararg arg (but as an extension, we
@@ -783,8 +787,15 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(LexerToken &MacroName,
       // #define A(x)
       //   A()
       // is ok because it is an empty argument.  Add it explicitly.
-      std::vector<LexerToken> ArgTokens;
-      Args->addArgument(ArgTokens, Tok.getLocation());
+      
+      
+      // Add a marker EOF token to the end of the token list for this argument.
+      SourceLocation EndLoc = Tok.getLocation();
+      Tok.StartToken();
+      Tok.SetKind(tok::eof);
+      Tok.SetLocation(EndLoc);
+      Tok.SetLength(0);
+      ArgTokens.push_back(Tok);
       
       // Empty arguments are standard in C99 and supported as an extension in
       // other modes.
@@ -797,7 +808,7 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(LexerToken &MacroName,
     }
   }
   
-  return Args.release();
+  return new MacroArgs(MI, ArgTokens);
 }
 
 /// ComputeDATE_TIME - Compute the current time, enter it into the specified

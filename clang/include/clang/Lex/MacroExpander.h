@@ -26,9 +26,10 @@ namespace clang {
 /// MacroArgs - An instance of this class captures information about
 /// the formal arguments specified to a function-like macro invocation.
 class MacroArgs {
-  /// UnexpArgTokens - Raw, unexpanded tokens for the arguments.  This includes
-  /// an 'EOF' marker at the end of each argument.
-  std::vector<std::vector<LexerToken> > UnexpArgTokens;
+  /// UnexpArgTokens - Raw, unexpanded tokens for the arguments.  This is all of
+  /// the arguments concatenated together, with 'EOF' markers at the end of each
+  /// argument.
+  std::vector<LexerToken> UnexpArgTokens;
 
   /// PreExpArgTokens - Pre-expanded tokens for arguments that need them.  Empty
   /// if not yet computed.  This includes the EOF marker at the end of the
@@ -39,24 +40,18 @@ class MacroArgs {
   /// stringified form of an argument has not yet been computed, this is empty.
   std::vector<LexerToken> StringifiedArgs;
 public:
-  MacroArgs(const MacroInfo *MI);
+  /// MacroArgs ctor - This destroys the vector passed in.
+  MacroArgs(const MacroInfo *MI, std::vector<LexerToken> &UnexpArgTokens);
   
-  /// addArgument - Add an argument for this invocation.  This method destroys
-  /// the vector passed in to avoid extraneous memory copies.  This adds the EOF
-  /// token to the end of the argument list as a marker.  'Loc' specifies a
-  /// location at the end of the argument, e.g. the ',' token or the ')'.
-  void addArgument(std::vector<LexerToken> &ArgToks, SourceLocation Loc);
   
   /// ArgNeedsPreexpansion - If we can prove that the argument won't be affected
   /// by pre-expansion, return false.  Otherwise, conservatively return true.
-  bool ArgNeedsPreexpansion(unsigned ArgNo) const;
+  bool ArgNeedsPreexpansion(const LexerToken *ArgTok) const;
   
-  /// getUnexpArgument - Return the unexpanded tokens for the specified formal.
+  /// getUnexpArgument - Return a pointer to the first token of the unexpanded
+  /// token list for the specified formal.
   ///
-  const std::vector<LexerToken> &getUnexpArgument(unsigned Arg) const {
-    assert(Arg < UnexpArgTokens.size() && "Invalid ArgNo");
-    return UnexpArgTokens[Arg];
-  }
+  const LexerToken *getUnexpArgument(unsigned Arg) const;
   
   /// getPreExpArgument - Return the pre-expanded form of the specified
   /// argument.
