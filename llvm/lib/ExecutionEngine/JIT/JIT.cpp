@@ -30,6 +30,11 @@
 #include <iostream>
 using namespace llvm;
 
+#ifdef __APPLE__
+// __dso_handle is resolved by Mac OS X dynamic linker.
+extern void *__dso_handle __attribute__ ((__visibility__ ("hidden")));
+#endif
+
 static struct RegisterJIT {
   RegisterJIT() { JIT::Register(); }
 } JITRegistrator;
@@ -289,6 +294,9 @@ void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
 
   // If the global is external, just remember the address.
   if (GV->isExternal()) {
+    // __dso_handle is resolved by the Mac OS X dynamic linker.
+    if (GV->getName() == "__dso_handle")
+      return (void*)&__dso_handle;
     Ptr = sys::DynamicLibrary::SearchForAddressOfSymbol(GV->getName().c_str());
     if (Ptr == 0) {
       std::cerr << "Could not resolve external global address: "
