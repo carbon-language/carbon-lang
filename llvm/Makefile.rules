@@ -620,7 +620,7 @@ endif
 
 # What the X86 JIT requires
 ifdef ENABLE_X86_JIT
-  JIT_LIBS += LLVMX86 LLVMSelectionDAG
+  JIT_LIBS += LLVMX86 LLVMSelectionDAG.a
 endif
 
 # You can enable the PowerPC JIT on a non-PowerPC host by setting the flag
@@ -632,7 +632,7 @@ endif
 
 # What the PowerPC JIT requires
 ifdef ENABLE_PPC_JIT
-  JIT_LIBS += LLVMPowerPC LLVMSelectionDAG
+  JIT_LIBS += LLVMPowerPC LLVMSelectionDAG.a
 endif
 
 # You can enable the Alpha JIT on a non-Alpha host by setting the flag
@@ -644,7 +644,7 @@ endif
 
 # What the Alpha JIT requires
 ifdef ENABLE_ALPHA_JIT
-  JIT_LIBS += LLVMAlpha LLVMSelectionDAG
+  JIT_LIBS += LLVMAlpha LLVMSelectionDAG.a
 endif
 
 LLVMLIBS := $(JIT_LIBS) LLVMScalarOpts.a LLVMTransformUtils.a LLVMAnalysis.a \

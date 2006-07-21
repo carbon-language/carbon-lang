@@ -9,7 +9,7 @@
 
 LEVEL = ../..
 TOOLNAME = llvm-db
-USEDLIBS = LLVMDebugger LLVMBCReader.a LLVMCore.a LLVMSupport.a \
+USEDLIBS = LLVMDebugger.a LLVMBCReader.a LLVMCore.a LLVMSupport.a \
 	  LLVMbzip2.a LLVMSystem.a
 REQUIRES_EH := 1
 

@@ -55,7 +55,7 @@ USEDLIBS += LLVMARM
 endif
 
 USEDLIBS += \
-	LLVMSelectionDAG \
+	LLVMSelectionDAG.a \
 	LLVMCodeGen.a \
 	LLVMTarget.a \
 	LLVMipa.a \
