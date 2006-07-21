@@ -228,7 +228,7 @@ else
     BuildMode := Debug
     CXX.Flags := -g
     C.Flags   := -g
-    LD.Flags  := -g 
+    LD.Flags  := -g
     KEEP_SYMBOLS := 1
   endif
 endif
@@ -393,11 +393,6 @@ ifdef UNIVERSAL
 
   # Building universal cannot compute dependencies automatically.
   DISABLE_AUTO_DEPENDENCIES=1
-endif
-
-# Temporary workaround for a Mac OSX compatibility issue.
-ifeq ($(OS),Darwin)
-  CXX.Flags += -fno-use-cxa-atexit
 endif
 
 LD.Flags      += -L$(LibDir) -L$(LLVMLibDir) 
