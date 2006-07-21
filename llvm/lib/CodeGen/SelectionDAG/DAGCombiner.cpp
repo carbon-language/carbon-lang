@@ -2601,16 +2601,23 @@ SDOperand DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
   // Check if the shuffle is a unary shuffle, i.e. one of the vectors is not
   // needed at all.
   bool isUnary = true;
+  bool isSplat = true;
   int VecNum = -1;
+  unsigned BaseIdx;
   for (unsigned i = 0; i != NumElts; ++i)
     if (ShufMask.getOperand(i).getOpcode() != ISD::UNDEF) {
       unsigned Idx = cast<ConstantSDNode>(ShufMask.getOperand(i))->getValue();
       int V = (Idx < NumElts) ? 0 : 1;
-      if (VecNum == -1)
+      if (VecNum == -1) {
         VecNum = V;
-      else if (VecNum != V) {
-        isUnary = false;
-        break;
+        BaseIdx = Idx;
+      } else {
+        if (BaseIdx != Idx)
+          isSplat = false;
+        if (VecNum != V) {
+          isUnary = false;
+          break;
+        }
       }
     }
 
@@ -2619,6 +2626,40 @@ SDOperand DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
   // Normalize unary shuffle so the RHS is undef.
   if (isUnary && VecNum == 1)
     std::swap(N0, N1);
+
+  // If it is a splat, check if the argument vector is a build_vector with
+  // all scalar elements the same.
+  if (isSplat) {
+    SDNode *V = N0.Val;
+    if (V->getOpcode() == ISD::BIT_CONVERT)
+      V = V->getOperand(0).Val;
+    if (V->getOpcode() == ISD::BUILD_VECTOR) {
+      unsigned NumElems = V->getNumOperands()-2;
+      if (NumElems > BaseIdx) {
+        SDOperand Base;
+        bool AllSame = true;
+        for (unsigned i = 0; i != NumElems; ++i) {
+          if (V->getOperand(i).getOpcode() != ISD::UNDEF) {
+            Base = V->getOperand(i);
+            break;
+          }
+        }
+        // Splat of <u, u, u, u>, return <u, u, u, u>
+        if (!Base.Val)
+          return N0;
+        for (unsigned i = 0; i != NumElems; ++i) {
+          if (V->getOperand(i).getOpcode() != ISD::UNDEF &&
+              V->getOperand(i) != Base) {
+            AllSame = false;
+            break;
+          }
+        }
+        // Splat of <x, x, x, x>, return <x, x, x, x>
+        if (AllSame)
+          return N0;
+      }
+    }
+  }
 
   // If it is a unary or the LHS and the RHS are the same node, turn the RHS
   // into an undef.
@@ -2679,16 +2720,23 @@ SDOperand DAGCombiner::visitVVECTOR_SHUFFLE(SDNode *N) {
   // Check if the shuffle is a unary shuffle, i.e. one of the vectors is not
   // needed at all.
   bool isUnary = true;
+  bool isSplat = true;
   int VecNum = -1;
+  unsigned BaseIdx;
   for (unsigned i = 0; i != NumElts; ++i)
     if (ShufMask.getOperand(i).getOpcode() != ISD::UNDEF) {
       unsigned Idx = cast<ConstantSDNode>(ShufMask.getOperand(i))->getValue();
       int V = (Idx < NumElts) ? 0 : 1;
-      if (VecNum == -1)
+      if (VecNum == -1) {
         VecNum = V;
-      else if (VecNum != V) {
-        isUnary = false;
-        break;
+        BaseIdx = Idx;
+      } else {
+        if (BaseIdx != Idx)
+          isSplat = false;
+        if (VecNum != V) {
+          isUnary = false;
+          break;
+        }
       }
     }
 
@@ -2697,6 +2745,40 @@ SDOperand DAGCombiner::visitVVECTOR_SHUFFLE(SDNode *N) {
   // Normalize unary shuffle so the RHS is undef.
   if (isUnary && VecNum == 1)
     std::swap(N0, N1);
+
+  // If it is a splat, check if the argument vector is a build_vector with
+  // all scalar elements the same.
+  if (isSplat) {
+    SDNode *V = N0.Val;
+    if (V->getOpcode() == ISD::VBIT_CONVERT)
+      V = V->getOperand(0).Val;
+    if (V->getOpcode() == ISD::VBUILD_VECTOR) {
+      unsigned NumElems = V->getNumOperands()-2;
+      if (NumElems > BaseIdx) {
+        SDOperand Base;
+        bool AllSame = true;
+        for (unsigned i = 0; i != NumElems; ++i) {
+          if (V->getOperand(i).getOpcode() != ISD::UNDEF) {
+            Base = V->getOperand(i);
+            break;
+          }
+        }
+        // Splat of <u, u, u, u>, return <u, u, u, u>
+        if (!Base.Val)
+          return N0;
+        for (unsigned i = 0; i != NumElems; ++i) {
+          if (V->getOperand(i).getOpcode() != ISD::UNDEF &&
+              V->getOperand(i) != Base) {
+            AllSame = false;
+            break;
+          }
+        }
+        // Splat of <x, x, x, x>, return <x, x, x, x>
+        if (AllSame)
+          return N0;
+      }
+    }
+  }
 
   // If it is a unary or the LHS and the RHS are the same node, turn the RHS
   // into an undef.
