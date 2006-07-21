@@ -2393,8 +2393,6 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
   bool V2IsUndef = V2.getOpcode() == ISD::UNDEF;
 
   if (isSplatMask(PermMask.Val)) {
-    if (ISD::isBuildVectorAllZeros(V1.Val) || ISD::isBuildVectorAllOnes(V1.Val))
-      return V1;
     if (NumElems <= 4) return Op;
     // Promote it to a v4i32 splat.
     return PromoteSplat(Op, DAG);
