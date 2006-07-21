@@ -106,7 +106,7 @@ my $TestStartTime = gmtime() . "GMT<br>" . localtime() . " (local)";
 #
 ##############################################################
 $CONFIGUREARGS="";
-
+$nickname="";
 $NOTEST=0;
 $NORUNNINGTESTS=0;
 
@@ -139,7 +139,6 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
 	$CONFIGUREARGS .= "--with-externals=$ARGV[0]"; shift; next;
     }
     if (/^-nickname$/)   	{ $nickname = "$ARGV[0]"; shift; next; }
-    else{ $nickname=""; }
     if (/^-gccpath/)         { $CONFIGUREARGS .= 
     													   " CC=$ARGV[0]/gcc CXX=$ARGV[0]/g++"; 
                                $GCCPATH=$ARGV[0]; 
