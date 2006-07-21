@@ -76,3 +76,7 @@ def movri   : InstARM<(ops IntRegs:$dst, i32imm:$src),
 def addri   : InstARM<(ops IntRegs:$dst, IntRegs:$a, i32imm:$b),
                        "add $dst, $a, $b",
 		       [(set IntRegs:$dst, (add IntRegs:$a, imm:$b))]>;
+
+def subri   : InstARM<(ops IntRegs:$dst, IntRegs:$a, i32imm:$b),
+                       "sub $dst, $a, $b",
+		       [(set IntRegs:$dst, (sub IntRegs:$a, imm:$b))]>;

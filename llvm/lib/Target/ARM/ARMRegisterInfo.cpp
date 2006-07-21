@@ -117,14 +117,17 @@ processFunctionBeforeFrameFinalized(MachineFunction &MF) const {}
 
 void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();
+  MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo  *MFI = MF.getFrameInfo();
   int           NumBytes = (int) MFI->getStackSize();
 
   //hack
   assert(NumBytes == 0);
 
-  //add a sp = sp - 4
-  BuildMI(MBB, MBB.begin(), ARM::str, 1, ARM::R14).addReg(ARM::R13);
+  //sub sp, sp, #4
+  BuildMI(MBB, MBBI, ARM::subri, 2, ARM::R13).addReg(ARM::R13).addImm(4);
+  //str lr, [sp]
+  BuildMI(MBB, MBBI, ARM::str, 1, ARM::R14).addReg(ARM::R13);
 }
 
 void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
@@ -138,8 +141,10 @@ void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
   //hack
   assert(NumBytes == 0);
 
+  //ldr lr, [sp]
   BuildMI(MBB, MBBI, ARM::ldr, 2, ARM::R14).addImm(0).addReg(ARM::R13);
-  //add a sp = sp + 4
+  //add sp, sp, #4
+  BuildMI(MBB, MBBI, ARM::addri, 2, ARM::R13).addReg(ARM::R13).addImm(4);
 }
 
 unsigned ARMRegisterInfo::getRARegister() const {
