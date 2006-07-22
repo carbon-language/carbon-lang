@@ -294,9 +294,11 @@ void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
 
   // If the global is external, just remember the address.
   if (GV->isExternal()) {
+#ifdef __APPLE__
     // __dso_handle is resolved by the Mac OS X dynamic linker.
     if (GV->getName() == "__dso_handle")
       return (void*)&__dso_handle;
+#endif
     Ptr = sys::DynamicLibrary::SearchForAddressOfSymbol(GV->getName().c_str());
     if (Ptr == 0) {
       std::cerr << "Could not resolve external global address: "
