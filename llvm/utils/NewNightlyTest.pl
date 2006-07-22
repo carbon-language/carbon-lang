@@ -584,8 +584,7 @@ my $UserUpdateList = join "\n", sort keys %UsersUpdated;
 ##############################################################
 if (!$NOCHECKOUT && !$NOBUILD) {
     my $EXTRAFLAGS = "--enable-spec --with-objroot=.";
-    if ( $VERBOSE )
-    {
+    if ( $VERBOSE ){
         print "CONFIGURE STAGE:\n";
         print "(time -p $NICE ./configure $CONFIGUREARGS $EXTRAFLAGS) > $BuildLog 2>&1\n";
     }
@@ -614,6 +613,9 @@ if (!$NOCHECKOUT && !$NOBUILD) {
 my $a_file_sizes="";
 my $o_file_sizes="";
 if(!$BuildError){
+	if ( $VERBOSE ){
+        print "Organizing size of .o and .a files\n";
+    }
 	ChangeDir( "$BuildDir", "Build Directory" );
 	$afiles = `find . -iname '*.a' -ls`;
 	$ofiles = `find . -iname '*.o' -ls`;
