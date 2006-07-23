@@ -200,7 +200,7 @@ my $CVSLog = "$Prefix-CVS-Log.txt";
 my $OldenTestsLog = "$Prefix-Olden-tests.txt";
 my $SingleSourceLog = "$Prefix-SingleSource-ProgramTest.txt.gz";
 my $MultiSourceLog = "$Prefix-MultiSource-ProgramTest.txt.gz";
-my $ExternalLog = "$Prefix-External-ProgramTest.txt.gz";
+my $ExternalLog = "$Prefix-External-ProgramTest.txt.gz"
 my $DejagnuLog = "$Prefix-Dejagnu-testrun.log";
 my $DejagnuSum = "$Prefix-Dejagnu-testrun.sum";
 my $DejagnuTestsLog = "$Prefix-DejagnuTests-Log.txt";
@@ -278,7 +278,8 @@ sub ChangeDir { # directory, logical name
     my ($dir,$name) = @_;
     chomp($dir);
     if ( $VERBOSE ) { print "Changing To: $name ($dir)\n"; }
-    chdir($dir) || die "Cannot change directory to: $name ($dir) ";
+    chdir($dir) || (print "Cannot change directory to: $name ($dir) " && return -1);
+    return 0;
 }
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -610,28 +611,6 @@ if (!$NOCHECKOUT && !$NOBUILD) {
 #my $NumLibraries   = scalar(grep(!/executable/, @Linked));
 #my $NumObjects     = `grep ']\: Compiling ' $BuildLog | wc -l` + 0;
 
-my $a_file_sizes="";
-my $o_file_sizes="";
-if(!$BuildError){
-	if ( $VERBOSE ){
-        print "Organizing size of .o and .a files\n";
-    }
-	ChangeDir( "$BuildDir", "Build Directory" );
-	$afiles = `find . -iname '*.a' -ls`;
-	$ofiles = `find . -iname '*.o' -ls`;
-	@AFILES = split "\n", $afiles;
-	$a_file_sizes="";
-	foreach $x (@AFILES){
-	  $x =~ m/.+\s+.+\s+.+\s+.+\s+.+\s+.+\s+(.+)\s+.+\s+.+\s+.+\s+(.+)/;
-	  $a_file_sizes.="$1 $2\n";
-	}	
-	@OFILES = split "\n", $ofiles;
-	$o_file_sizes="";
-	foreach $x (@OFILES){
-	  $x =~ m/.+\s+.+\s+.+\s+.+\s+.+\s+.+\s+(.+)\s+.+\s+.+\s+.+\s+(.+)/;
-	  $o_file_sizes.="$1 $2\n";
-	}
-}
 
 my $ConfigTimeU = GetRegexNum "^user", 0, "([0-9.]+)", "$BuildLog";
 my $ConfigTimeS = GetRegexNum "^sys", 0, "([0-9.]+)", "$BuildLog";
@@ -661,6 +640,34 @@ elsif (`grep '^make[^:]*: .*Error' $BuildLog | wc -l` + 0 ||
     print  "\n***ERROR BUILDING TREE\n\n";
 }
 if ($BuildError) { $NODEJAGNU=1; }
+
+my $a_file_sizes="";
+my $o_file_sizes="";
+if(!$BuildError){
+	if ( $VERBOSE ){
+        print "Organizing size of .o and .a files\n";
+    }
+	ChangeDir( "$BuildDir/llvm", "Build Directory" );
+	$afiles = `find . -iname '*.a' -ls`;
+	$ofiles = `find . -iname '*.o' -ls`;
+	@AFILES = split "\n", $afiles;
+	$a_file_sizes="";
+	foreach $x (@AFILES){
+	  $x =~ m/.+\s+.+\s+.+\s+.+\s+.+\s+.+\s+(.+)\s+.+\s+.+\s+.+\s+(.+)/;
+	  $a_file_sizes.="$1 $2\n";
+	}	
+	@OFILES = split "\n", $ofiles;
+	$o_file_sizes="";
+	foreach $x (@OFILES){
+	  $x =~ m/.+\s+.+\s+.+\s+.+\s+.+\s+.+\s+(.+)\s+.+\s+.+\s+.+\s+(.+)/;
+	  $o_file_sizes.="$1 $2\n";
+	}
+}
+else{
+	$a_file_sizes="No data due to a bad build.";
+	$o_file_sizes="No data due to a bad build.";
+}
+
 
 ##############################################################
 #
@@ -748,7 +755,7 @@ my ($WarningsAdded, $WarningsRemoved) = DiffFiles "-Warnings.txt";
 sub TestDirectory {
     my $SubDir = shift;
     
-    ChangeDir( "projects/llvm-test/$SubDir", "Programs Test Subdirectory" );
+    ChangeDir( "projects/llvm-test/$SubDir", "Programs Test Subdirectory" ) || return ("", "");
 
     my $ProgramTestLog = "$Prefix-$SubDir-ProgramTest.txt";
     #my $ProgramTestLog = "$Prefix-MultiSource-ProgramTest.txt"; #CHANGE ME!
