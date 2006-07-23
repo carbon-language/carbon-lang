@@ -122,7 +122,8 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
     if (/^-norunningtests$/) { $NORUNNINGTESTS = 1; next; }
     if (/^-parallel$/)       { $MAKEOPTS = "$MAKEOPTS -j2 -l3.0"; next; }
     if (/^-release$/)        { $MAKEOPTS = "$MAKEOPTS ENABLE_OPTIMIZED=1 ".
-    																		   "OPTIMIZE_OPTION=-O2"; next; }
+    						   "OPTIMIZE_OPTION=-O2"; 
+    						   $BUILDTYPE="release"; next; }
     if (/^-enable-llcbeta$/) { $PROGTESTOPTS .= " ENABLE_LLCBETA=1"; next; }
     if (/^-disable-llc$/)    { $PROGTESTOPTS .= " DISABLE_LLC=1";
 			       $CONFIGUREARGS .= " --disable-llc_diffs"; next; } 
@@ -188,6 +189,9 @@ if (@ARGV == 3) {
 if($nickname eq ""){
 	die ("Please invoke NewNightlyTest.pl with command line option \"-nickname <nickname>\"");
 }
+if($BUILDTYPE ne "releaese"){
+	$BUILDTYPE = "debug";
+}
 
 ##############################################################
 #
@@ -200,7 +204,7 @@ my $CVSLog = "$Prefix-CVS-Log.txt";
 my $OldenTestsLog = "$Prefix-Olden-tests.txt";
 my $SingleSourceLog = "$Prefix-SingleSource-ProgramTest.txt.gz";
 my $MultiSourceLog = "$Prefix-MultiSource-ProgramTest.txt.gz";
-my $ExternalLog = "$Prefix-External-ProgramTest.txt.gz"
+my $ExternalLog = "$Prefix-External-ProgramTest.txt.gz";
 my $DejagnuLog = "$Prefix-Dejagnu-testrun.log";
 my $DejagnuSum = "$Prefix-Dejagnu-testrun.sum";
 my $DejagnuTestsLog = "$Prefix-DejagnuTests-Log.txt";
@@ -654,13 +658,13 @@ if(!$BuildError){
 	$a_file_sizes="";
 	foreach $x (@AFILES){
 	  $x =~ m/.+\s+.+\s+.+\s+.+\s+.+\s+.+\s+(.+)\s+.+\s+.+\s+.+\s+(.+)/;
-	  $a_file_sizes.="$1 $2\n";
+	  $a_file_sizes.="$1 $2 $BUILDTYPE\n";
 	}	
 	@OFILES = split "\n", $ofiles;
 	$o_file_sizes="";
 	foreach $x (@OFILES){
 	  $x =~ m/.+\s+.+\s+.+\s+.+\s+.+\s+.+\s+(.+)\s+.+\s+.+\s+.+\s+(.+)/;
-	  $o_file_sizes.="$1 $2\n";
+	  $o_file_sizes.="$1 $2 $BUILDTYPE\n";
 	}
 }
 else{
