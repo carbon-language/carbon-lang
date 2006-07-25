@@ -2603,7 +2603,7 @@ SDOperand DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
   bool isUnary = true;
   bool isSplat = true;
   int VecNum = -1;
-  unsigned BaseIdx;
+  unsigned BaseIdx = 0;
   for (unsigned i = 0; i != NumElts; ++i)
     if (ShufMask.getOperand(i).getOpcode() != ISD::UNDEF) {
       unsigned Idx = cast<ConstantSDNode>(ShufMask.getOperand(i))->getValue();
@@ -2722,7 +2722,7 @@ SDOperand DAGCombiner::visitVVECTOR_SHUFFLE(SDNode *N) {
   bool isUnary = true;
   bool isSplat = true;
   int VecNum = -1;
-  unsigned BaseIdx;
+  unsigned BaseIdx = 0;
   for (unsigned i = 0; i != NumElts; ++i)
     if (ShufMask.getOperand(i).getOpcode() != ISD::UNDEF) {
       unsigned Idx = cast<ConstantSDNode>(ShufMask.getOperand(i))->getValue();
