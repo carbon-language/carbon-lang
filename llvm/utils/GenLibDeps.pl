@@ -10,12 +10,15 @@
 #
 
 # Parse arguments... 
+my $FLAT = 0;
+my $WHY = 0;
 while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   shift;
   last if /^--$/;  # Stop processing arguments on --
 
   # List command line options here...
   if (/^-flat$/)     { $FLAT = 1; next; }
+  if (/^-why/)       { $WHY = 1; $FLAT = 1; next; }
   print "Unknown option: $_ : ignoring!\n";
 }
 
@@ -76,46 +79,54 @@ sub gen_one_entry {
   $lib_ns =~ s/(.*)\.[oa]/$1/;
   if ($FLAT) {
     print "$lib:";
+    if ($WHY) { print "\n"; }
   } else {
     print "  <dt><b>$lib</b</dt><dd><ul>\n";
   }
   open UNDEFS, 
     "$nmPath -g -u $Directory/$lib | sed -e 's/^  *U //' | sort | uniq |";
-  open DEPENDS,
-    "| sort | uniq > GenLibDeps.out";
+  my %DepLibs;
   while (<UNDEFS>) {
     chomp;
+    my $lib_printed = 0;
     if (defined($libdefs{$_}) && $libdefs{$_} ne $lib) {
-      print DEPENDS "$libdefs{$_}\n";
+      $DepLibs{$libdefs{$_}} = [] unless exists $DepLibs{$libdefs{$_}};
+      push(@{$DepLibs{$libdefs{$_}}}, $_);
     } elsif (defined($objdefs{$_}) && $objdefs{$_} ne $lib) {
       $libroot = $lib;
       $libroot =~ s/lib(.*).a/$1/;
       if ($objdefs{$_} ne "$libroot.o") {
-        print DEPENDS "$objdefs{$_}\n";
+        $DepLibs{$objdefs{$_}} = [] unless exists $DepLibs{$objdefs{$_}};
+        push(@{$DepLibs{$objdefs{$_}}}, $_);
       }
     }
   }
   close UNDEFS;
-  close DEPENDS;
-  open DF, "<GenLibDeps.out";
-  while (<DF>) {
-    chomp;
+  for my $key (sort keys %DepLibs) {
     if ($FLAT) {
-      print " $_";
+      print " $key";
+      if ($WHY) {
+        print "\n";
+        my @syms = @{$DepLibs{$key}};
+        foreach $sym (@syms) {
+          print "  $sym\n";
+        }
+      }
     } else {
-      print "    <li>$_</li>\n";
+      print "    <li>$key</li>\n";
     }
-    $suffix = substr($_,length($_)-1,1);
-    $_ =~ s/(.*)\.[oa]/$1/;
+    $suffix = substr($key,length($key)-1,1);
+    $key =~ s/(.*)\.[oa]/$1/;
     if ($suffix eq "a") {
-      if (!$FLAT) { print DOT "$lib_ns -> $_ [ weight=0 ];\n" };
+      if (!$FLAT) { print DOT "$lib_ns -> $key [ weight=0 ];\n" };
     } else {
-      if (!$FLAT) { print DOT "$lib_ns -> $_ [ weight=10];\n" };
+      if (!$FLAT) { print DOT "$lib_ns -> $key [ weight=10];\n" };
     }
   }
-  close DF;
   if ($FLAT) {
-    print "\n";
+    if (!$WHY) {
+      print "\n";
+    }
   } else {
     print "  </ul></dd>\n";
   }
