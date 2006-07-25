@@ -207,24 +207,6 @@ MachineInstr *X86InstrInfo::convertToThreeAddress(MachineInstr *MI) const {
 ///
 MachineInstr *X86InstrInfo::commuteInstruction(MachineInstr *MI) const {
   switch (MI->getOpcode()) {
-  case X86::SHUFPSrri: { // A = SHUFPSrri B,C, M -> A = SHUFPSrri C,B, rotl(M,4)
-    unsigned A = MI->getOperand(0).getReg();
-    unsigned B = MI->getOperand(1).getReg();
-    unsigned C = MI->getOperand(2).getReg();
-    unsigned M = MI->getOperand(3).getImmedValue();
-    if (B == C) return 0;
-    return BuildMI(X86::SHUFPSrri, 3, A).addReg(C).addReg(B).
-      addImm(((M & 0xF) << 4) | ((M & 0xF0) >> 4));
-  }
-  case X86::SHUFPDrri: { // A = SHUFPDrri B,C, M -> A = SHUFPDrri C,B, rotl(M,1)
-    unsigned A = MI->getOperand(0).getReg();
-    unsigned B = MI->getOperand(1).getReg();
-    unsigned C = MI->getOperand(2).getReg();
-    unsigned M = MI->getOperand(3).getImmedValue();
-    if (B == C) return 0;
-    return BuildMI(X86::SHUFPDrri, 3, A).addReg(C).addReg(B).
-      addImm(((M & 0x1) << 1) | ((M & 0x2) >> 1));
-  }
   case X86::SHRD16rri8: // A = SHRD16rri8 B, C, I -> A = SHLD16rri8 C, B, (16-I)
   case X86::SHLD16rri8: // A = SHLD16rri8 B, C, I -> A = SHRD16rri8 C, B, (16-I)
   case X86::SHRD32rri8: // A = SHRD32rri8 B, C, I -> A = SHLD32rri8 C, B, (32-I)
