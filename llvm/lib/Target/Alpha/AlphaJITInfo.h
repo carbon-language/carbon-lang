@@ -47,6 +47,7 @@ namespace llvm {
     ///
     virtual void replaceMachineCodeForFunction(void *Old, void *New);
 
+    virtual void resolveBBRefs(MachineCodeEmitter &MCE);
   private:
     static const unsigned GOToffset = 4096;
 

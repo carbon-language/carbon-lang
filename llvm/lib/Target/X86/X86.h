@@ -44,7 +44,8 @@ FunctionPass *createX86CodePrinterPass(std::ostream &o, X86TargetMachine &tm);
 
 /// createX86CodeEmitterPass - Return a pass that emits the collected X86 code
 /// to the specified MCE object.
-FunctionPass *createX86CodeEmitterPass(MachineCodeEmitter &MCE);
+FunctionPass *createX86CodeEmitterPass(X86TargetMachine &TM,
+                                       MachineCodeEmitter &MCE);
 
 /// addX86ELFObjectWriterPass - Add passes to the FPM that output the generated
 /// code as an ELF object file.

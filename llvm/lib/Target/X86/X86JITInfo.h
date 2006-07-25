@@ -51,6 +51,8 @@ namespace llvm {
     /// referenced global symbols.
     virtual void relocate(void *Function, MachineRelocation *MR,
                           unsigned NumRelocs, unsigned char* GOTBase);
+
+    virtual void resolveBBRefs(MachineCodeEmitter &MCE);
   };
 }
 

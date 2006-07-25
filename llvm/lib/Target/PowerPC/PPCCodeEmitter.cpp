@@ -32,9 +32,6 @@ namespace {
     TargetMachine &TM;
     MachineCodeEmitter &MCE;
 
-    // Tracks which instruction references which BasicBlock
-    std::vector<std::pair<MachineBasicBlock*, unsigned*> > BBRefs;
-    
     /// getMachineOpValue - evaluates the MachineOperand of a given MachineInstr
     ///
     int getMachineOpValue(MachineInstr &MI, MachineOperand &MO);
@@ -80,38 +77,19 @@ bool PPCTargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
   return false;
 }
 
+#ifdef __APPLE__ 
+extern "C" void sys_icache_invalidate(const void *Addr, size_t len);
+#endif
+
 bool PPCCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
   assert((MF.getTarget().getRelocationModel() != Reloc::Default ||
           MF.getTarget().getRelocationModel() != Reloc::Static) &&
          "JIT relocation model must be set to static or default!");
   do {
-    BBRefs.clear();
-
     MCE.startFunction(MF);
     for (MachineFunction::iterator BB = MF.begin(), E = MF.end(); BB != E; ++BB)
       emitBasicBlock(*BB);
   } while (MCE.finishFunction(MF));
-
-  // Resolve branches to BasicBlocks for the entire function
-  for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {
-    intptr_t Location = MCE.getMachineBasicBlockAddress(BBRefs[i].first);
-    unsigned *Ref = BBRefs[i].second;
-    DEBUG(std::cerr << "Fixup @ " << (void*)Ref << " to " << (void*)Location
-                    << "\n");
-    unsigned Instr = *Ref;
-    intptr_t BranchTargetDisp = (Location - (intptr_t)Ref) >> 2;
-
-    switch (Instr >> 26) {
-    default: assert(0 && "Unknown branch user!");
-    case 18:  // This is B or BL
-      *Ref |= (BranchTargetDisp & ((1 << 24)-1)) << 2;
-      break;
-    case 16:  // This is BLT,BLE,BEQ,BGE,BGT,BNE, or other bcx instruction
-      *Ref |= (BranchTargetDisp & ((1 << 14)-1)) << 2;
-      break;
-    }
-  }
-  BBRefs.clear();
 
   return false;
 }
@@ -203,7 +181,7 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
                                           Reloc, MO.getSymbolName(), 0));
   } else if (MO.isMachineBasicBlock()) {
     unsigned* CurrPC = (unsigned*)(intptr_t)MCE.getCurrentPCValue();
-    BBRefs.push_back(std::make_pair(MO.getMachineBasicBlock(), CurrPC));
+    TM.getJITInfo()->addBBRef(MO.getMachineBasicBlock(), (intptr_t)CurrPC);
   } else if (MO.isConstantPoolIndex() || MO.isJumpTableIndex()) {
     if (MO.isConstantPoolIndex())
       rv = MCE.getConstantPoolEntryAddress(MO.getConstantPoolIndex());

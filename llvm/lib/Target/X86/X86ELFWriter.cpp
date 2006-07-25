@@ -35,5 +35,5 @@ void llvm::addX86ELFObjectWriterPass(PassManager &FPM,
                                      std::ostream &O, X86TargetMachine &TM) {
   X86ELFWriter *EW = new X86ELFWriter(O, TM);
   FPM.add(EW);
-  FPM.add(createX86CodeEmitterPass(EW->getMachineCodeEmitter()));
+  FPM.add(createX86CodeEmitterPass(TM, EW->getMachineCodeEmitter()));
 }

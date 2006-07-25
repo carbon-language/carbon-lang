@@ -35,12 +35,14 @@ namespace {
 namespace {
   class VISIBILITY_HIDDEN Emitter : public MachineFunctionPass {
     const X86InstrInfo  *II;
+    TargetMachine &TM;
     MachineCodeEmitter  &MCE;
-    std::vector<std::pair<MachineBasicBlock *, unsigned> > BBRefs;
   public:
-    explicit Emitter(MachineCodeEmitter &mce) : II(0), MCE(mce) {}
-    Emitter(MachineCodeEmitter &mce, const X86InstrInfo& ii)
-        : II(&ii), MCE(mce) {}
+    explicit Emitter(TargetMachine &tm, MachineCodeEmitter &mce)
+      : II(0), TM(tm), MCE(mce) {}
+    Emitter(TargetMachine &tm, MachineCodeEmitter &mce,
+            const X86InstrInfo& ii)
+      : II(&ii), TM(tm), MCE(mce) {}
 
     bool runOnMachineFunction(MachineFunction &MF);
 
@@ -71,8 +73,9 @@ namespace {
 
 /// createX86CodeEmitterPass - Return a pass that emits the collected X86 code
 /// to the specified MCE object.
-FunctionPass *llvm::createX86CodeEmitterPass(MachineCodeEmitter &MCE) {
-  return new Emitter(MCE);
+FunctionPass *llvm::createX86CodeEmitterPass(X86TargetMachine &TM,
+                                             MachineCodeEmitter &MCE) {
+  return new Emitter(TM, MCE);
 }
 
 bool Emitter::runOnMachineFunction(MachineFunction &MF) {
@@ -82,8 +85,6 @@ bool Emitter::runOnMachineFunction(MachineFunction &MF) {
   II = ((X86TargetMachine&)MF.getTarget()).getInstrInfo();
 
   do {
-    BBRefs.clear();
-
     MCE.startFunction(MF);
     for (MachineFunction::iterator MBB = MF.begin(), E = MF.end(); 
          MBB != E; ++MBB) {
@@ -94,13 +95,6 @@ bool Emitter::runOnMachineFunction(MachineFunction &MF) {
     }
   } while (MCE.finishFunction(MF));
 
-  // Resolve all forward branches now.
-  for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {
-    unsigned Location = MCE.getMachineBasicBlockAddress(BBRefs[i].first);
-    unsigned Ref = BBRefs[i].second;
-    *((unsigned*)(intptr_t)Ref) = Location-Ref-4;
-  }
-  BBRefs.clear();
   return false;
 }
 
@@ -117,7 +111,7 @@ void Emitter::emitPCRelativeValue(unsigned Address) {
 void Emitter::emitPCRelativeBlockAddress(MachineBasicBlock *MBB) {
   // Remember where this reference was and where it is to so we can
   // deal with it later.
-  BBRefs.push_back(std::make_pair(MBB, MCE.getCurrentPCValue()));
+  TM.getJITInfo()->addBBRef(MBB, MCE.getCurrentPCValue());
   MCE.emitWordLE(0);
 }
 

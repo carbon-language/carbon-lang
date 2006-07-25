@@ -19,6 +19,7 @@
 
 namespace llvm {
 
+  class AlphaTargetMachine;
   class FunctionPass;
   class TargetMachine;
   class MachineCodeEmitter;
@@ -28,7 +29,8 @@ namespace llvm {
   FunctionPass *createAlphaCodePrinterPass(std::ostream &OS,
                                              TargetMachine &TM);
   FunctionPass *createAlphaPatternInstructionSelector(TargetMachine &TM);
-  FunctionPass *createAlphaCodeEmitterPass(MachineCodeEmitter &MCE);
+  FunctionPass *createAlphaCodeEmitterPass(AlphaTargetMachine &TM,
+                                           MachineCodeEmitter &MCE);
 } // end namespace llvm;
 
 // Defines symbolic names for Alpha registers.  This defines a mapping from

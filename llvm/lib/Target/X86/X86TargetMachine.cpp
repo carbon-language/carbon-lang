@@ -194,7 +194,7 @@ void X86JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
 
 bool X86TargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
                                                   MachineCodeEmitter &MCE) {
-  PM.add(createX86CodeEmitterPass(MCE));
+  PM.add(createX86CodeEmitterPass(*this, MCE));
   // Delete machine code for this function
   PM.add(createMachineCodeDeleter());
   return false;

@@ -138,7 +138,7 @@ void AlphaJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
 
 bool AlphaTargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
                                                     MachineCodeEmitter &MCE) {
-  PM.add(createAlphaCodeEmitterPass(MCE));
+  PM.add(createAlphaCodeEmitterPass(*this, MCE));
   // Delete machine code for this function
   PM.add(createMachineCodeDeleter());
   return false;

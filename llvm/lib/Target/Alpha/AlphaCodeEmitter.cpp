@@ -34,17 +34,19 @@ namespace {
 namespace {
   class AlphaCodeEmitter : public MachineFunctionPass {
     const AlphaInstrInfo  *II;
+    TargetMachine &TM;
     MachineCodeEmitter  &MCE;
-    std::vector<std::pair<MachineBasicBlock *, unsigned*> > BBRefs;
 
     /// getMachineOpValue - evaluates the MachineOperand of a given MachineInstr
     ///
     int getMachineOpValue(MachineInstr &MI, MachineOperand &MO);
 
   public:
-    explicit AlphaCodeEmitter(MachineCodeEmitter &mce) : II(0), MCE(mce) {}
-    AlphaCodeEmitter(MachineCodeEmitter &mce, const AlphaInstrInfo& ii)
-        : II(&ii), MCE(mce) {}
+    explicit AlphaCodeEmitter(TargetMachine &tm, MachineCodeEmitter &mce)
+      : II(0), TM(tm), MCE(mce) {}
+    AlphaCodeEmitter(TargetMachine &tm, MachineCodeEmitter &mce,
+                     const AlphaInstrInfo& ii)
+      : II(&ii), TM(tm), MCE(mce) {}
 
     bool runOnMachineFunction(MachineFunction &MF);
 
@@ -68,34 +70,20 @@ namespace {
 
 /// createAlphaCodeEmitterPass - Return a pass that emits the collected Alpha code
 /// to the specified MCE object.
-FunctionPass *llvm::createAlphaCodeEmitterPass(MachineCodeEmitter &MCE) {
-  return new AlphaCodeEmitter(MCE);
+FunctionPass *llvm::createAlphaCodeEmitterPass(AlphaTargetMachine &TM,
+                                               MachineCodeEmitter &MCE) {
+  return new AlphaCodeEmitter(TM, MCE);
 }
 
 bool AlphaCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
   II = ((AlphaTargetMachine&)MF.getTarget()).getInstrInfo();
 
   do {
-    BBRefs.clear();
-    
     MCE.startFunction(MF);
     for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
       emitBasicBlock(*I);
   } while (MCE.finishFunction(MF));
 
-  // Resolve all forward branches now...
-  for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {
-    unsigned* Location =
-      (unsigned*)MCE.getMachineBasicBlockAddress(BBRefs[i].first);
-    unsigned* Ref = (unsigned*)BBRefs[i].second;
-    intptr_t BranchTargetDisp = 
-      (((unsigned char*)Location  - (unsigned char*)Ref) >> 2) - 1;
-    DEBUG(std::cerr << "Fixup @ " << (void*)Ref << " to " << (void*)Location
-          << " Disp " << BranchTargetDisp 
-          << " using " <<  (BranchTargetDisp & ((1 << 22)-1)) << "\n");
-    *Ref |= (BranchTargetDisp & ((1 << 21)-1));
-  }
-  BBRefs.clear();
   return false;
 }
 
@@ -227,8 +215,8 @@ int AlphaCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
                                           Reloc, MO.getConstantPoolIndex(),
                                           Offset));
   } else if (MO.isMachineBasicBlock()) {
-    unsigned* CurrPC = (unsigned*)(intptr_t)MCE.getCurrentPCValue();
-    BBRefs.push_back(std::make_pair(MO.getMachineBasicBlock(), CurrPC));
+    TM.getJITInfo()->addBBRef(MO.getMachineBasicBlock(),
+                              MCE.getCurrentPCValue());
   }else {
     std::cerr << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
     abort();

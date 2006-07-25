@@ -542,6 +542,10 @@ void *JITResolver::getFunctionStub(Function *F) {
     TheJIT->updateGlobalMapping(F, Stub);
   }
 
+  // Invalidate the icache if necessary.
+  TheJIT->getJITInfo().
+    synchronizeICache(Stub, MCE.getCurrentPCValue()-(intptr_t)Stub);
+
   DEBUG(std::cerr << "JIT: Stub emitted at [" << Stub << "] for function '"
                   << F->getName() << "'\n");
 
@@ -559,6 +563,11 @@ void *JITResolver::getExternalFunctionStub(void *FnAddr) {
   if (Stub) return Stub;
 
   Stub = TheJIT->getJITInfo().emitFunctionStub(FnAddr, MCE);
+
+  // Invalidate the icache if necessary.
+  TheJIT->getJITInfo().
+    synchronizeICache(Stub, MCE.getCurrentPCValue()-(intptr_t)Stub);
+
   DEBUG(std::cerr << "JIT: Stub emitted at [" << Stub
         << "] for external function at '" << FnAddr << "'\n");
   return Stub;
@@ -747,7 +756,7 @@ void JITEmitter::startFunction(MachineFunction &F) {
   // About to start emitting the machine code for the function.
   emitAlignment(std::max(F.getFunction()->getAlignment(), 8U));
   TheJIT->updateGlobalMapping(F.getFunction(), CurBufferPtr);
-  
+
   MBBLocations.clear();
 }
 
@@ -824,6 +833,12 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
       ((void**)MemMgr.getGOTBase())[idx] = (void*)BufferBegin;
     }
   }
+
+  // Resolve BasicaBlock references.
+  TheJIT->getJITInfo().resolveBBRefs(*this);
+
+  // Invalidate the icache if necessary.
+  TheJIT->getJITInfo().synchronizeICache(FnStart, FnEnd-FnStart);
 
   DEBUG(std::cerr << "JIT: Finished CodeGen of [" << (void*)FnStart
                   << "] Function: " << F.getFunction()->getName()

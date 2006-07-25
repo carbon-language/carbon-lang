@@ -304,3 +304,19 @@ void AlphaJITInfo::relocate(void *Function, MachineRelocation *MR,
     }
   }
 }
+
+void AlphaJITInfo::resolveBBRefs(MachineCodeEmitter &MCE) {
+  // Resolve all forward branches now...
+  for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {
+    unsigned* Location =
+      (unsigned*)MCE.getMachineBasicBlockAddress(BBRefs[i].first);
+    unsigned* Ref = (unsigned*)BBRefs[i].second;
+    intptr_t BranchTargetDisp = 
+      (((unsigned char*)Location  - (unsigned char*)Ref) >> 2) - 1;
+    DEBUG(std::cerr << "Fixup @ " << (void*)Ref << " to " << (void*)Location
+          << " Disp " << BranchTargetDisp 
+          << " using " <<  (BranchTargetDisp & ((1 << 22)-1)) << "\n");
+    *Ref |= (BranchTargetDisp & ((1 << 21)-1));
+  }
+  BBRefs.clear();
+}

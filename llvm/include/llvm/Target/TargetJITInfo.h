@@ -18,10 +18,12 @@
 #define LLVM_TARGET_TARGETJITINFO_H
 
 #include <cassert>
+#include <vector>
 
 namespace llvm {
   class Function;
   class FunctionPassManager;
+  class MachineBasicBlock;
   class MachineCodeEmitter;
   class MachineRelocation;
 
@@ -81,6 +83,20 @@ namespace llvm {
       assert(NumRelocs == 0 && "This target does not have relocations!");
     }
 
+    /// resolveBBRefs - Resolve branches to BasicBlocks for the JIT emitted
+    /// function.
+    virtual void resolveBBRefs(MachineCodeEmitter &MCE) {}
+
+    /// synchronizeICache - On some targets, the JIT emitted code must be
+    /// explicitly refetched to ensure correct execution.
+    virtual void synchronizeICache(const void *Addr, size_t len) {}
+
+    /// addBBRef - Add a BasicBlock reference to be resolved after the function
+    /// is emitted.
+    void addBBRef(MachineBasicBlock *BB, intptr_t PC) {
+      BBRefs.push_back(std::make_pair(BB, PC));
+    }
+
     /// needsGOT - Allows a target to specify that it would like the
     // JIT to manage a GOT for it.
     bool needsGOT() const { return useGOT; }
@@ -88,6 +104,9 @@ namespace llvm {
   protected:
     bool useGOT;
 
+    // Tracks which instruction references which BasicBlock
+    std::vector<std::pair<MachineBasicBlock*, intptr_t> > BBRefs;
+    
   };
 } // End llvm namespace
 
