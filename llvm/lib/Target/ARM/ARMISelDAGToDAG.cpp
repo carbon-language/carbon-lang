@@ -75,16 +75,37 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   assert(isTailCall == false && "tail call not supported");
   SDOperand Callee   = Op.getOperand(4);
   unsigned NumOps    = (Op.getNumOperands() - 5) / 2;
-  assert(NumOps == 0);
 
   // Count how many bytes are to be pushed on the stack. Initially
   // only the link register.
   unsigned NumBytes = 4;
 
+  assert(NumOps <= 4); //no args on the stack
+
   // Adjust the stack pointer for the new arguments...
   // These operations are automatically eliminated by the prolog/epilog pass
   Chain = DAG.getCALLSEQ_START(Chain,
                                DAG.getConstant(NumBytes, MVT::i32));
+
+  static const unsigned regs[] = {
+    ARM::R0, ARM::R1, ARM::R2, ARM::R3
+  };
+
+  std::vector<std::pair<unsigned, SDOperand> > RegsToPass;
+
+  for (unsigned i = 0; i != NumOps; ++i) {
+    SDOperand Arg = Op.getOperand(5+2*i);
+    RegsToPass.push_back(std::make_pair(regs[i], Arg));
+  }
+
+  // Build a sequence of copy-to-reg nodes chained together with token chain
+  // and flag operands which copy the outgoing args into the appropriate regs.
+  SDOperand InFlag;
+  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
+    Chain = DAG.getCopyToReg(Chain, RegsToPass[i].first, RegsToPass[i].second,
+                             InFlag);
+    InFlag = Chain.getValue(1);
+  }
 
   std::vector<MVT::ValueType> NodeTys;
   NodeTys.push_back(MVT::Other);   // Returns a chain
@@ -103,14 +124,35 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   Ops.push_back(Callee);
 
   unsigned CallOpc = ARMISD::CALL;
+  if (InFlag.Val)
+    Ops.push_back(InFlag);
   Chain = DAG.getNode(CallOpc, NodeTys, Ops);
+  InFlag = Chain.getValue(1);
 
-  assert(Op.Val->getValueType(0) == MVT::Other);
+  std::vector<SDOperand> ResultVals;
+  NodeTys.clear();
+
+  // If the call has results, copy the values out of the ret val registers.
+  switch (Op.Val->getValueType(0)) {
+  default: assert(0 && "Unexpected ret value!");
+  case MVT::Other:
+    break;
+  case MVT::i32:
+    Chain = DAG.getCopyFromReg(Chain, ARM::R0, MVT::i32, InFlag).getValue(1);
+    ResultVals.push_back(Chain.getValue(0));
+    NodeTys.push_back(MVT::i32);
+  }
 
   Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
                       DAG.getConstant(NumBytes, MVT::i32));
+  NodeTys.push_back(MVT::Other);
 
-  return Chain;
+  if (ResultVals.empty())
+    return Chain;
+
+  ResultVals.push_back(Chain);
+  SDOperand Res = DAG.getNode(ISD::MERGE_VALUES, NodeTys, ResultVals);
+  return Res.getValue(Op.ResNo);
 }
 
 static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
