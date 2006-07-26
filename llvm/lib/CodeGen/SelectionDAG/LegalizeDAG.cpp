@@ -177,7 +177,8 @@ private:
   /// build_vector Mask.  If it's not a legal shuffle, it returns null.
   SDNode *isShuffleLegal(MVT::ValueType VT, SDOperand Mask) const;
   
-  bool LegalizeAllNodesNotLeadingTo(SDNode *N, SDNode *Dest);
+  bool LegalizeAllNodesNotLeadingTo(SDNode *N, SDNode *Dest,
+                                    std::set<SDNode*> &NodesLeadingTo);
 
   void LegalizeSetCCOperands(SDOperand &LHS, SDOperand &RHS, SDOperand &CC);
     
@@ -406,9 +407,17 @@ static SDNode *FindCallStartFromCallEnd(SDNode *Node) {
 /// LegalizeAllNodesNotLeadingTo - Recursively walk the uses of N, looking to
 /// see if any uses can reach Dest.  If no dest operands can get to dest, 
 /// legalize them, legalize ourself, and return false, otherwise, return true.
-bool SelectionDAGLegalize::LegalizeAllNodesNotLeadingTo(SDNode *N, 
-                                                        SDNode *Dest) {
+///
+/// Keep track of the nodes we fine that actually do lead to Dest in
+/// NodesLeadingTo.  This avoids retraversing them exponential number of times.
+///
+bool SelectionDAGLegalize::LegalizeAllNodesNotLeadingTo(SDNode *N, SDNode *Dest,
+                                            std::set<SDNode*> &NodesLeadingTo) {
   if (N == Dest) return true;  // N certainly leads to Dest :)
+  
+  // If we've already processed this node and it does lead to Dest, there is no
+  // need to reprocess it.
+  if (NodesLeadingTo.count(N)) return true;
   
   // If the first result of this node has been already legalized, then it cannot
   // reach N.
@@ -429,9 +438,12 @@ bool SelectionDAGLegalize::LegalizeAllNodesNotLeadingTo(SDNode *N,
   bool OperandsLeadToDest = false;
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
     OperandsLeadToDest |=     // If an operand leads to Dest, so do we.
-      LegalizeAllNodesNotLeadingTo(N->getOperand(i).Val, Dest);
+      LegalizeAllNodesNotLeadingTo(N->getOperand(i).Val, Dest, NodesLeadingTo);
 
-  if (OperandsLeadToDest) return true;
+  if (OperandsLeadToDest) {
+    NodesLeadingTo.insert(N);
+    return true;
+  }
 
   // Okay, this node looks safe, legalize it and return false.
   HandleOp(SDOperand(N, 0));
@@ -1043,8 +1055,11 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     // Recursively Legalize all of the inputs of the call end that do not lead
     // to this call start.  This ensures that any libcalls that need be inserted
     // are inserted *before* the CALLSEQ_START.
+    {std::set<SDNode*> NodesLeadingTo;
     for (unsigned i = 0, e = CallEnd->getNumOperands(); i != e; ++i)
-      LegalizeAllNodesNotLeadingTo(CallEnd->getOperand(i).Val, Node);
+      LegalizeAllNodesNotLeadingTo(CallEnd->getOperand(i).Val, Node,
+                                   NodesLeadingTo);
+    }
 
     // Now that we legalized all of the inputs (which may have inserted
     // libcalls) create the new CALLSEQ_START node.
