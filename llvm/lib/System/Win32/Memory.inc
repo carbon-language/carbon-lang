@@ -47,9 +47,10 @@ MemoryBlock Memory::AllocateRWX(unsigned NumBytes,
 }
 
 bool Memory::ReleaseRWX(MemoryBlock &M, std::string *ErrMsg) {
-  if (M.Address == 0 || M.Size == 0) return;
+  if (M.Address == 0 || M.Size == 0) return false;
   if (!VirtualFree(M.Address, 0, MEM_RELEASE))
     return GetError("Can't release RWX Memory: ", ErrMsg);
+  return false;
 }
 
 }
