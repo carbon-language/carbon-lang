@@ -53,6 +53,11 @@ public:
   ///
   const LexerToken *getUnexpArgument(unsigned Arg) const;
   
+  /// getArgLength - Given a pointer to an expanded or unexpanded argument,
+  /// return the number of tokens, not counting the EOF, that make up the
+  /// argument.
+  static unsigned getArgLength(const LexerToken *ArgPtr);
+  
   /// getPreExpArgument - Return the pre-expanded form of the specified
   /// argument.
   const std::vector<LexerToken> &

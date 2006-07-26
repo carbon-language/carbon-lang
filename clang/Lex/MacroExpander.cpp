@@ -30,6 +30,17 @@ MacroArgs::MacroArgs(const MacroInfo *MI, std::vector<LexerToken> &UnexpArgs) {
   UnexpArgTokens.swap(UnexpArgs);
 }
 
+/// getArgLength - Given a pointer to an expanded or unexpanded argument,
+/// return the number of tokens, not counting the EOF, that make up the
+/// argument.
+unsigned MacroArgs::getArgLength(const LexerToken *ArgPtr) {
+  unsigned NumArgTokens = 0;
+  for (; ArgPtr->getKind() != tok::eof; ++ArgPtr)
+    ++NumArgTokens;
+  return NumArgTokens;
+}
+
+
 /// getUnexpArgument - Return the unexpanded tokens for the specified formal.
 ///
 const LexerToken *MacroArgs::getUnexpArgument(unsigned Arg) const {
@@ -74,10 +85,7 @@ MacroArgs::getPreExpArgument(unsigned Arg, Preprocessor &PP) {
   if (!Result.empty()) return Result;
 
   const LexerToken *AT = getUnexpArgument(Arg);
-  unsigned NumToks = 0;
-  for (const LexerToken *I = AT; I->getKind() != tok::eof; ++I)
-    ++NumToks;
-  ++NumToks;   // push the EOF too.
+  unsigned NumToks = getArgLength(AT)+1;  // Include the EOF.
   
   // Otherwise, we have to pre-expand this argument, populating Result.  To do
   // this, we set up a fake MacroExpander to lex from the unexpanded argument
@@ -265,19 +273,20 @@ void MacroExpander::ExpandFunctionArguments() {
       int ArgNo = Macro->getArgumentNum(MacroTokens[i+1].getIdentifierInfo());
       assert(ArgNo != -1 && "Token following # is not an argument?");
       
+      LexerToken Res;
       if (CurTok.getKind() == tok::hash)  // Stringify
-        ResultToks.push_back(ActualArgs->getStringifiedArgument(ArgNo, PP));
+        Res = ActualArgs->getStringifiedArgument(ArgNo, PP);
       else {
         // 'charify': don't bother caching these.
-        ResultToks.push_back(StringifyArgument(
-                               ActualArgs->getUnexpArgument(ArgNo), PP, true));
+        Res = StringifyArgument(ActualArgs->getUnexpArgument(ArgNo), PP, true);
       }
       
       // The stringified/charified string leading space flag gets set to match
       // the #/#@ operator.
       if (CurTok.hasLeadingSpace())
-        ResultToks.back().SetFlag(LexerToken::LeadingSpace);
+        Res.SetFlag(LexerToken::LeadingSpace);
       
+      ResultToks.push_back(Res);
       MadeChange = true;
       ++i;  // Skip arg name.
     } else {
@@ -317,8 +326,9 @@ void MacroExpander::ExpandFunctionArguments() {
         
         if (ResultArgToks->getKind() != tok::eof) {
           unsigned FirstResult = ResultToks.size();
-          for (; ResultArgToks->getKind() != tok::eof; ++ResultArgToks)
-            ResultToks.push_back(*ResultArgToks);
+          unsigned NumToks = MacroArgs::getArgLength(ResultArgToks);
+          ResultToks.insert(ResultToks.end(), ResultArgToks, 
+                            ResultArgToks+NumToks);
         
           // If any tokens were substituted from the argument, the whitespace
           // before the first token should match the whitespace of the arg
@@ -333,9 +343,9 @@ void MacroExpander::ExpandFunctionArguments() {
       // argument.  It gets substituted as its non-pre-expanded tokens.
       const LexerToken *ArgToks = ActualArgs->getUnexpArgument(ArgNo);
 
-      if (ArgToks->getKind() != tok::eof) {  // Not an empty argument?
-        for (; ArgToks->getKind() != tok::eof; ++ArgToks)
-          ResultToks.push_back(*ArgToks);
+      unsigned NumToks = MacroArgs::getArgLength(ArgToks);
+      if (NumToks) {  // Not an empty argument?
+        ResultToks.insert(ResultToks.end(), ArgToks, ArgToks+NumToks);
         continue;
       }
       
