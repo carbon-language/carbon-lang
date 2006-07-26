@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/Dwarf.h"
+#include "llvm/System/IncludeFile.h"
 
 #include <cassert>
 
@@ -580,3 +581,5 @@ const char *CallFrameString(unsigned Encoding) {
 } // End of namespace dwarf.
 
 } // End of namespace llvm.
+
+DEFINING_FILE_FOR(SupportDwarf)

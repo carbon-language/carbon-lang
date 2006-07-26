@@ -16,6 +16,8 @@
 #ifndef LLVM_SUPPORT_DWARF_H
 #define LLVM_SUPPORT_DWARF_H
 
+#include "llvm/System/IncludeFile.h"
+
 namespace llvm {
 
 namespace dwarf {
@@ -545,5 +547,7 @@ const char *CallFrameString(unsigned Encoding);
 } // End of namespace dwarf
 
 } // End of namespace llvm
+
+FORCE_DEFINING_FILE_TO_BE_LINKED(SupportDwarf)
 
 #endif

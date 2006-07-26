@@ -14,6 +14,7 @@
 
 #include "llvm/System/Memory.h"
 #include "llvm/Config/config.h"
+#include "llvm/System/IncludeFile.h"
 
 namespace llvm {
 using namespace sys;
@@ -33,3 +34,4 @@ using namespace sys;
 #include "Win32/Memory.inc"
 #endif
 
+DEFINING_FILE_FOR(SystemMemory)

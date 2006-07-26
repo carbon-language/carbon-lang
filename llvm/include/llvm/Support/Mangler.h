@@ -14,7 +14,7 @@
 #ifndef LLVM_SUPPORT_MANGLER_H
 #define LLVM_SUPPORT_MANGLER_H
 
-#include "llvm/Support/IncludeFile.h"
+#include "llvm/System/IncludeFile.h"
 #include <map>
 #include <set>
 #include <string>

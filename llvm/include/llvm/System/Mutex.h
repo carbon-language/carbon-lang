@@ -14,6 +14,8 @@
 #ifndef LLVM_SYSTEM_MUTEX_H
 #define LLVM_SYSTEM_MUTEX_H
 
+#include "llvm/System/IncludeFile.h"
+
 namespace llvm
 {
   namespace sys
@@ -80,5 +82,7 @@ namespace llvm
     };
   }
 }
+
+FORCE_DEFINING_FILE_TO_BE_LINKED(SystemMutex)
 
 #endif

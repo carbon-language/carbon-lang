@@ -13,6 +13,7 @@
 
 #include "llvm/Config/config.h"
 #include "llvm/System/Mutex.h"
+#include "llvm/System/IncludeFile.h"
 
 //===----------------------------------------------------------------------===//
 //=== WARNING: Implementation here must contain only TRULY operating system
@@ -157,3 +158,5 @@ Mutex::tryacquire()
 #warning Neither LLVM_ON_UNIX nor LLVM_ON_WIN32 was set in System/Mutex.cpp
 #endif
 #endif
+
+DEFINING_FILE_FOR(SystemMutex)

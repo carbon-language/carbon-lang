@@ -16,13 +16,19 @@
 #ifndef LLVM_LINKALLVMCORE_H
 #define LLVM_LINKALLVMCORE_H
 
-#include "llvm/Support/IncludeFile.h"
-#include "llvm/Support/Mangler.h"
+#include "llvm/System/IncludeFile.h"
+
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Analysis/Verifier.h"
+#include "llvm/System/Memory.h"
+#include "llvm/System/Mutex.h"
+#include "llvm/Support/Dwarf.h"
+#include "llvm/Support/Mangler.h"
+#include "llvm/Support/MathExtras.h"
+#include "llvm/Support/SlowOperationInformer.h"
 
 namespace {
   struct ForceVMCoreLinking {

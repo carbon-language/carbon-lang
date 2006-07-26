@@ -105,7 +105,7 @@ namespace {  // Anonymous namespace for class
       // returning back to the pass manager, or else the pass manager may try to
       // run other passes on the broken module.
       if (RealPass)
-        abortIfBroken();
+        return abortIfBroken();
       return false;
     }
 
@@ -119,7 +119,7 @@ namespace {  // Anonymous namespace for class
       // returning back to the pass manager, or else the pass manager may try to
       // run other passes on the broken module.
       if (RealPass)
-        abortIfBroken();
+        return abortIfBroken();
 
       return false;
     }
@@ -138,8 +138,7 @@ namespace {  // Anonymous namespace for class
         visitGlobalVariable(*I);
 
       // If the module is broken, abort at this time.
-      abortIfBroken();
-      return false;
+      return abortIfBroken();
     }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -151,7 +150,7 @@ namespace {  // Anonymous namespace for class
     /// abortIfBroken - If the module is broken and we are supposed to abort on
     /// this condition, do so.
     ///
-    void abortIfBroken() {
+    bool abortIfBroken() {
       if (Broken) {
         msgs << "Broken module found, ";
         switch (action) {
@@ -162,11 +161,13 @@ namespace {  // Anonymous namespace for class
           case PrintMessageAction:
             msgs << "verification continues.\n";
             std::cerr << msgs.str();
-            break;
+            return false;
           case ReturnStatusAction:
-            break;
+            msgs << "compilation terminated.\n";
+            return Broken;
         }
       }
+      return false;
     }
 
 

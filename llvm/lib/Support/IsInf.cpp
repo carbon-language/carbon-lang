@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Config/config.h"
+#include "llvm/System/IncludeFile.h"
 
 #if HAVE_ISINF_IN_MATH_H
 # include <math.h>
@@ -43,3 +44,5 @@ int IsInf (float f)  { return isinf (f); }
 int IsInf (double d) { return isinf (d); }
 
 } // end namespace llvm;
+
+DEFINING_FILE_FOR(SupportIsInf)

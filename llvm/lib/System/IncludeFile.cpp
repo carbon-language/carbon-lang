@@ -1,4 +1,4 @@
-//===- lib/Support/IncludeFile.cpp - Ensure Linking Of Implementation -----===//
+//===- lib/System/IncludeFile.cpp - Ensure Linking Of Implementation -----===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,10 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Support/IncludeFile.h"
+#include "llvm/System/IncludeFile.h"
 
 using namespace llvm;
 
 // This constructor is used to ensure linking of other modules. See the
-// llvm/Support/IncludeFile.h header for details. 
+// llvm/System/IncludeFile.h header for details. 
 IncludeFile::IncludeFile(void*) {}

@@ -31,7 +31,7 @@
 #define LLVM_ANALYSIS_ALIAS_ANALYSIS_H
 
 #include "llvm/Support/CallSite.h"
-#include "llvm/Support/IncludeFile.h"
+#include "llvm/System/IncludeFile.h"
 
 namespace llvm {
 

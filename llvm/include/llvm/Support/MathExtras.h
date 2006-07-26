@@ -15,6 +15,7 @@
 #define LLVM_SUPPORT_MATHEXTRAS_H
 
 #include "llvm/Support/DataTypes.h"
+#include "llvm/System/IncludeFile.h"
 
 namespace llvm {
 
@@ -305,5 +306,8 @@ int IsInf (float f);
 int IsInf (double d);
 
 } // End llvm namespace
+
+FORCE_DEFINING_FILE_TO_BE_LINKED(SupportIsInf)
+FORCE_DEFINING_FILE_TO_BE_LINKED(SupportIsNAN)
 
 #endif
