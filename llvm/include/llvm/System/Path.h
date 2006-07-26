@@ -15,6 +15,7 @@
 #define LLVM_SYSTEM_PATH_H
 
 #include "llvm/System/TimeValue.h"
+#include "llvm/System/IncludeFile.h"
 #include <set>
 #include <string>
 #include <vector>
@@ -571,4 +572,5 @@ std::ostream& operator<<(std::ostream& strm, const sys::Path& aPath);
 
 }
 
+FORCE_DEFINING_FILE_TO_BE_LINKED(SystemPath)
 #endif

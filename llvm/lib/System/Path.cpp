@@ -107,3 +107,5 @@ std::string Path::GetDLLSuffix() {
 #if defined(LLVM_ON_WIN32)
 #include "Win32/Path.inc"
 #endif
+
+DEFINING_FILE_FOR(SystemPath)

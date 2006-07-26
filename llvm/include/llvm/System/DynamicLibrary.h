@@ -15,6 +15,7 @@
 #define LLVM_SYSTEM_DYNAMIC_LIBRARY_H
 
 #include "llvm/System/Path.h"
+#include "llvm/System/IncludeFile.h"
 #include <string>
 
 namespace llvm {
@@ -124,5 +125,7 @@ namespace sys {
 
 } // End sys namespace
 } // End llvm namespace
+
+FORCE_DEFINING_FILE_TO_BE_LINKED(SystemDynamicLibrary)
 
 #endif // LLVM_SYSTEM_DYNAMIC_LIBRARY_H

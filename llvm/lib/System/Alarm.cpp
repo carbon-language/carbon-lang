@@ -32,3 +32,4 @@ using namespace sys;
 #include "Win32/Alarm.inc"
 #endif
 
+DEFINING_FILE_FOR(SystemAlarm)

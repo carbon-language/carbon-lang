@@ -17,6 +17,8 @@
 #ifndef LLVM_SYSTEM_ALARM_H
 #define LLVM_SYSTEM_ALARM_H
 
+#include "llvm/System/IncludeFile.h"
+
 namespace llvm {
 namespace sys {
 
@@ -41,5 +43,7 @@ namespace sys {
 
 } // End sys namespace
 } // End llvm namespace
+
+FORCE_DEFINING_FILE_TO_BE_LINKED(SystemAlarm)
 
 #endif

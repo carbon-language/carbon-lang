@@ -56,3 +56,4 @@ TimeValue::normalize( void ) {
 #include "Win32/TimeValue.inc"
 #endif
 
+DEFINING_FILE_FOR(SystemTimeValue)

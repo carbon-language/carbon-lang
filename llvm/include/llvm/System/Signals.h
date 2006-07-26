@@ -16,6 +16,7 @@
 #define LLVM_SYSTEM_SIGNALS_H
 
 #include "llvm/System/Path.h"
+#include "llvm/System/IncludeFile.h"
 
 namespace llvm {
 namespace sys {
@@ -48,5 +49,7 @@ namespace sys {
   void SetInterruptFunction(void (*IF)());
 } // End sys namespace
 } // End llvm namespace
+
+FORCE_DEFINING_FILE_TO_BE_LINKED(SystemSignals)
 
 #endif

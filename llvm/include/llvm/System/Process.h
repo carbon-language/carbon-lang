@@ -15,6 +15,7 @@
 #define LLVM_SYSTEM_PROCESS_H
 
 #include "llvm/System/TimeValue.h"
+#include "llvm/System/IncludeFile.h"
 
 namespace llvm {
 namespace sys {
@@ -99,5 +100,6 @@ namespace sys {
 }
 }
 
+FORCE_DEFINING_FILE_TO_BE_LINKED(SystemProcess)
 
 #endif

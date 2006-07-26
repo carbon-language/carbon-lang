@@ -33,3 +33,4 @@ using namespace sys;
 #include "Win32/Signals.inc"
 #endif
 
+DEFINING_FILE_FOR(SystemSignals)

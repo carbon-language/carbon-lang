@@ -32,3 +32,4 @@ using namespace sys;
 #include "Win32/Program.inc"
 #endif
 
+DEFINING_FILE_FOR(SystemProgram)

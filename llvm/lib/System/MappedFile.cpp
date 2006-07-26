@@ -32,3 +32,4 @@ using namespace sys;
 #include "Win32/MappedFile.inc"
 #endif
 
+DEFINING_FILE_FOR(SystemMappedFile)

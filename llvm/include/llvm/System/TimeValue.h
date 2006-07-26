@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/DataTypes.h"
+#include "llvm/System/IncludeFile.h"
 #include <string>
 
 #ifndef LLVM_SYSTEM_TIMEVALUE_H
@@ -379,5 +380,7 @@ inline TimeValue operator - (const TimeValue &tv1, const TimeValue &tv2) {
 
 }
 }
+
+FORCE_DEFINING_FILE_TO_BE_LINKED(SystemTimeValue)
 
 #endif
