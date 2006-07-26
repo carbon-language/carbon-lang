@@ -26,12 +26,12 @@ using namespace clang;
 
 /// MacroArgs ctor function - This destroys the vector passed in.
 MacroArgs *MacroArgs::create(const MacroInfo *MI,
-                             const std::vector<LexerToken> &UnexpArgTokens) {
+                             const LexerToken *UnexpArgTokens,
+                             unsigned NumToks) {
   assert(MI->isFunctionLike() &&
          "Can't have args for an object-like macro!");
 
   // Allocate memory for the MacroArgs object with the lexer tokens at the end.
-  unsigned NumToks = UnexpArgTokens.size();
   MacroArgs *Result = (MacroArgs*)malloc(sizeof(MacroArgs) +
                                          NumToks*sizeof(LexerToken));
   // Construct the macroargs object.
@@ -40,7 +40,7 @@ MacroArgs *MacroArgs::create(const MacroInfo *MI,
   // Copy the actual unexpanded tokens to immediately after the result ptr.
   if (NumToks)
     memcpy(const_cast<LexerToken*>(Result->getUnexpArgument(0)),
-           &UnexpArgTokens[0], NumToks*sizeof(LexerToken));
+           UnexpArgTokens, NumToks*sizeof(LexerToken));
   
   return Result;
 }

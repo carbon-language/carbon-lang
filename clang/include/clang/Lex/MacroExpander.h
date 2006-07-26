@@ -47,7 +47,8 @@ public:
   /// MacroArgs ctor function - Create a new MacroArgs object with the specified
   /// macro and argument info.
   static MacroArgs *create(const MacroInfo *MI,
-                           const std::vector<LexerToken> &UnexpArgTokens);
+                           const LexerToken *UnexpArgTokens,
+                           unsigned NumArgTokens);
   
   /// destroy - Destroy and deallocate the memory for this object.
   ///

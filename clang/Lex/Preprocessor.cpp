@@ -33,6 +33,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
+#include "llvm/ADT/SmallVector.h"
 #include <iostream>
 using namespace llvm;
 using namespace clang;
@@ -709,8 +710,9 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(LexerToken &MacroName,
   --NumFixedArgsLeft;  // Start reading the first arg.
 
   // ArgTokens - Build up a list of tokens that make up each argument.  Each
-  // argument is separated by an EOF token.
-  std::vector<LexerToken> ArgTokens;
+  // argument is separated by an EOF token.  Use a SmallVector so we can avoid
+  // heap allocations in the common case.
+  SmallVector<LexerToken, 64> ArgTokens;
 
   unsigned NumActuals = 0;
   while (Tok.getKind() == tok::comma) {
@@ -808,7 +810,7 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(LexerToken &MacroName,
     }
   }
   
-  return MacroArgs::create(MI, ArgTokens);
+  return MacroArgs::create(MI, &ArgTokens[0], ArgTokens.size());
 }
 
 /// ComputeDATE_TIME - Compute the current time, enter it into the specified
