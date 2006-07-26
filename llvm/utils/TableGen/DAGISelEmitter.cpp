@@ -3363,11 +3363,9 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
       }
       CallerCode += ");";
       CalleeCode += ") ";
-#ifdef __GNUC__
       // Prevent emission routines from being inlined to reduce selection
       // routines stack frame sizes.
-      CalleeCode += "__attribute__((noinline)) ";
-#endif
+      CalleeCode += "NOINLINE ";
       CalleeCode += "{\n" + CalleeDecls;
       for (int j = LastPred+1; j < CodeSize; ++j)
         CalleeCode += "  " + GeneratedCode[j].second + '\n';
@@ -3632,6 +3630,11 @@ void DAGISelEmitter::run(std::ostream &OS) {
      << "// *** instruction selector class.  These functions are really "
      << "methods.\n\n";
   
+  OS << "#if defined(__GNUC__) && \\\n";
+  OS << "    ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 4)))\n";
+  OS << "#define NOINLINE __attribute__((noinline))\n";
+  OS << "#endif\n\n";
+
   OS << "// Instance var to keep track of multiply used nodes that have \n"
      << "// already been selected.\n"
      << "std::map<SDOperand, SDOperand> CodeGenMap;\n";
