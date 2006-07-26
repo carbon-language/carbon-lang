@@ -26,10 +26,11 @@ namespace clang {
 /// MacroArgs - An instance of this class captures information about
 /// the formal arguments specified to a function-like macro invocation.
 class MacroArgs {
-  /// UnexpArgTokens - Raw, unexpanded tokens for the arguments.  This is all of
-  /// the arguments concatenated together, with 'EOF' markers at the end of each
-  /// argument.
-  std::vector<LexerToken> UnexpArgTokens;
+  /// NumUnexpArgTokens - The number of raw, unexpanded tokens for the
+  /// arguments.  All of the actual argument tokens are allocated immediately
+  /// after the MacroArgs object in memory.  This is all of the arguments
+  /// concatenated together, with 'EOF' markers at the end of each argument.
+  unsigned NumUnexpArgTokens;
 
   /// PreExpArgTokens - Pre-expanded tokens for arguments that need them.  Empty
   /// if not yet computed.  This includes the EOF marker at the end of the
@@ -39,10 +40,18 @@ class MacroArgs {
   /// StringifiedArgs - This contains arguments in 'stringified' form.  If the
   /// stringified form of an argument has not yet been computed, this is empty.
   std::vector<LexerToken> StringifiedArgs;
-public:
-  /// MacroArgs ctor - This destroys the vector passed in.
-  MacroArgs(const MacroInfo *MI, std::vector<LexerToken> &UnexpArgTokens);
   
+  MacroArgs(unsigned NumToks) : NumUnexpArgTokens(NumToks) {}
+  ~MacroArgs() {}
+public:
+  /// MacroArgs ctor function - Create a new MacroArgs object with the specified
+  /// macro and argument info.
+  static MacroArgs *create(const MacroInfo *MI,
+                           const std::vector<LexerToken> &UnexpArgTokens);
+  
+  /// destroy - Destroy and deallocate the memory for this object.
+  ///
+  void destroy();
   
   /// ArgNeedsPreexpansion - If we can prove that the argument won't be affected
   /// by pre-expansion, return false.  Otherwise, conservatively return true.
@@ -69,7 +78,7 @@ public:
   
   /// getNumArguments - Return the number of arguments passed into this macro
   /// invocation.
-  unsigned getNumArguments() const { return UnexpArgTokens.size(); }
+  unsigned getNumArguments() const { return NumUnexpArgTokens; }
 };
 
   

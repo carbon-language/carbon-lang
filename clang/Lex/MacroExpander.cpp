@@ -24,11 +24,36 @@ using namespace clang;
 // MacroArgs Implementation
 //===----------------------------------------------------------------------===//
 
-MacroArgs::MacroArgs(const MacroInfo *MI, std::vector<LexerToken> &UnexpArgs) {
+/// MacroArgs ctor function - This destroys the vector passed in.
+MacroArgs *MacroArgs::create(const MacroInfo *MI,
+                             const std::vector<LexerToken> &UnexpArgTokens) {
   assert(MI->isFunctionLike() &&
          "Can't have args for an object-like macro!");
-  UnexpArgTokens.swap(UnexpArgs);
+
+  // Allocate memory for the MacroArgs object with the lexer tokens at the end.
+  unsigned NumToks = UnexpArgTokens.size();
+  MacroArgs *Result = (MacroArgs*)malloc(sizeof(MacroArgs) +
+                                         NumToks*sizeof(LexerToken));
+  // Construct the macroargs object.
+  new (Result) MacroArgs(NumToks);
+  
+  // Copy the actual unexpanded tokens to immediately after the result ptr.
+  if (NumToks)
+    memcpy(const_cast<LexerToken*>(Result->getUnexpArgument(0)),
+           &UnexpArgTokens[0], NumToks*sizeof(LexerToken));
+  
+  return Result;
 }
+
+/// destroy - Destroy and deallocate the memory for this object.
+///
+void MacroArgs::destroy() {
+  // Run the dtor to deallocate the vectors.
+  this->~MacroArgs();
+  // Release the memory for the object.
+  free(this);
+}
+
 
 /// getArgLength - Given a pointer to an expanded or unexpanded argument,
 /// return the number of tokens, not counting the EOF, that make up the
@@ -44,11 +69,13 @@ unsigned MacroArgs::getArgLength(const LexerToken *ArgPtr) {
 /// getUnexpArgument - Return the unexpanded tokens for the specified formal.
 ///
 const LexerToken *MacroArgs::getUnexpArgument(unsigned Arg) const {
-  // Scan to find Arg.
-  const LexerToken *Start = &UnexpArgTokens[0];
+  // The unexpanded argument tokens start immediately after the MacroArgs object
+  // in memory.
+  const LexerToken *Start = (const LexerToken *)(this+1);
   const LexerToken *Result = Start;
+  // Scan to find Arg.
   for (; Arg; ++Result) {
-    assert(Result < Start+UnexpArgTokens.size() && "Invalid arg #");
+    assert(Result < Start+NumUnexpArgTokens && "Invalid arg #");
     if (Result->getKind() == tok::eof)
       --Arg;
   }
@@ -75,11 +102,11 @@ bool MacroArgs::ArgNeedsPreexpansion(const LexerToken *ArgTok) const {
 /// argument.
 const std::vector<LexerToken> &
 MacroArgs::getPreExpArgument(unsigned Arg, Preprocessor &PP) {
-  assert(Arg < UnexpArgTokens.size() && "Invalid argument number!");
+  assert(Arg < NumUnexpArgTokens && "Invalid argument number!");
   
   // If we have already computed this, return it.
   if (PreExpArgTokens.empty())
-    PreExpArgTokens.resize(UnexpArgTokens.size());
+    PreExpArgTokens.resize(NumUnexpArgTokens);
 
   std::vector<LexerToken> &Result = PreExpArgTokens[Arg];
   if (!Result.empty()) return Result;
@@ -189,7 +216,7 @@ static LexerToken StringifyArgument(const LexerToken *ArgToks,
 /// that has been 'stringified' as required by the # operator.
 const LexerToken &MacroArgs::getStringifiedArgument(unsigned ArgNo,
                                                     Preprocessor &PP) {
-  assert(ArgNo < UnexpArgTokens.size() && "Invalid argument number!");
+  assert(ArgNo < NumUnexpArgTokens && "Invalid argument number!");
   if (StringifiedArgs.empty()) {
     StringifiedArgs.resize(getNumArguments());
     memset(&StringifiedArgs[0], 0,
@@ -252,7 +279,7 @@ MacroExpander::~MacroExpander() {
     delete [] MacroTokens;
   
   // MacroExpander owns its formal arguments.
-  delete ActualArgs;
+  if (ActualArgs) ActualArgs->destroy();
 }
 
 /// Expand the arguments of a function-like macro so that we can quickly

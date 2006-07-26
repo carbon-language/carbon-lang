@@ -627,7 +627,7 @@ bool Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier,
   // expansion stack, only to take it right back off.
   if (MI->getNumTokens() == 0) {
     // No need for arg info.
-    delete Args;
+    if (Args) Args->destroy();
     
     // Ignore this macro use, just return the next token in the current
     // buffer.
@@ -808,7 +808,7 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(LexerToken &MacroName,
     }
   }
   
-  return new MacroArgs(MI, ArgTokens);
+  return MacroArgs::create(MI, ArgTokens);
 }
 
 /// ComputeDATE_TIME - Compute the current time, enter it into the specified
