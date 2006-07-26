@@ -39,7 +39,7 @@ $(LibDeps): $(GenLibDeps) $(LibDir) $(wildcard $(LibDir)/*.a $(LibDir)/*.o)
 # don't have to process them at runtime.
 $(FinalLibDeps): find-cycles.pl $(LibDeps)
 	$(Echo) "Finding cyclic dependencies between LLVM libraries."
-	$(Verb) $(PERL) $< < $(LibDeps) > $@
+	-$(Verb) $(PERL) $< < $(LibDeps) > $@
 
 # Rerun our configure substitutions as needed.
 ConfigInIn = $(PROJ_SRC_DIR)/llvm-config.in.in

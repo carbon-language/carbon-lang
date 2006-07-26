@@ -40,6 +40,7 @@ find_all_cycles();
 
 # Print out the finished cycles, with their dependencies.
 my @output;
+my $cycles_found = 0;
 foreach my $cycle (@CYCLES) {
     my @modules = sort keys %{$cycle};
 
@@ -57,6 +58,7 @@ foreach my $cycle (@CYCLES) {
     # Warn about possible linker problems.
     my @archives = grep(/\.a$/, @modules);
     if (@archives > 1) {
+        $cycles_found = $cycles_found + 1;
         print STDERR "find-cycles.pl: Circular dependency between *.a files:\n";
         print STDERR "find-cycles.pl:   ", join(' ', @archives), "\n";
         print STDERR "find-cycles.pl: Some linkers may have problems.\n";
@@ -68,7 +70,7 @@ foreach my $cycle (@CYCLES) {
                    join(' ', sort keys %dependencies) . "\n");
 }
 print sort @output;
-
+exit $cycles_found;
 
 #==========================================================================
 #  Depedency Cycle Support
