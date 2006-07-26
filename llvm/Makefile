@@ -7,38 +7,34 @@
 # 
 #===------------------------------------------------------------------------===#
 
-LEVEL = .
-DIRS = lib/System lib/Support utils lib/VMCore lib
+LEVEL := .
+DIRS := lib/System lib/Support utils lib/VMCore lib tools runtime docs
+OPTIONAL_DIRS := examples projects
+EXTRA_DIST := test llvm.spec include win32 Xcode
 
 include $(LEVEL)/Makefile.config 
 
-
-ifeq ($(MAKECMDGOALS),tools-only)
-  DIRS += tools
-else
-  ifneq ($(MAKECMDGOALS),libs-only)
-    DIRS += tools
-    ifneq ($(LLVMGCC_MAJVERS),4)
-      DIRS += runtime
-    else
-      $(warning Skipping runtime libraries, llvm-gcc 4 detected.)
-    endif
-
-    DIRS += docs
-  endif
+# llvm-gcc4 doesn't need runtime libs.
+ifeq ($(LLVMGCC_MAJVERS),4)
+  DIRS := $(filter-out runtime, $(DIRS))
 endif
 
-# Don't install utils, they are only used to build LLVM.
-#
-ifeq ($(MAKECMDGOALS),install)
-  DIRS := $(filter-out utils, $(DIRS))
-
-  # Don't install examples or projects.
+ifeq ($(MAKECMDGOALS),libs-only)
+  DIRS := $(filter-out tools runtime docs, $(DIRS))
   OPTIONAL_DIRS :=
 endif
 
+ifeq ($(MAKECMDGOALS),tools-only)
+  DIRS := $(filter-out runtime docs, $(DIRS))
+  OPTIONAL_DIRS :=
+endif
 
-EXTRA_DIST := test llvm.spec include win32 Xcode
+# Don't install utils, examples, or projects they are only used to 
+# build LLVM.
+ifeq ($(MAKECMDGOALS),install)
+  DIRS := $(filter-out utils, $(DIRS))
+  OPTIONAL_DIRS :=
+endif
 
 # Include the main makefile machinery.
 include $(LLVM_SRC_ROOT)/Makefile.rules
@@ -103,3 +99,4 @@ endif
 
 check-llvm2cpp:
 	$(MAKE) check TESTSUITE=Feature RUNLLVM2CPP=1
+
