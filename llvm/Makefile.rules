@@ -487,6 +487,8 @@ $(PROJ_etcdir): $(PROJ_etcdir)/.dir
 SubDirs := 
 ifdef DIRS
 SubDirs += $(DIRS)
+
+ifneq ($(PROJ_SRC_ROOT),$(PROJ_OBJ_ROOT))
 $(RecursiveTargets)::
 	$(Verb) for dir in $(DIRS); do \
 	  if [ ! -f $$dir/Makefile ]; then \
@@ -495,6 +497,13 @@ $(RecursiveTargets)::
 	  fi; \
 	  ($(MAKE) -C $$dir $@ ) || exit 1; \
 	done
+else
+$(RecursiveTargets)::
+	$(Verb) for dir in $(DIRS); do \
+	  ($(MAKE) -C $$dir $@ ) || exit 1; \
+	done
+endif
+
 endif
 
 #---------------------------------------------------------
@@ -545,6 +554,7 @@ ifdef OPTIONAL_DIRS
 
 SubDirs += $(OPTIONAL_DIRS)
 
+ifneq ($(PROJ_SRC_ROOT),$(PROJ_OBJ_ROOT))
 $(RecursiveTargets)::
 	$(Verb) for dir in $(OPTIONAL_DIRS); do \
 	  if [ -d $(PROJ_SRC_DIR)/$$dir ]; then\
@@ -555,6 +565,12 @@ $(RecursiveTargets)::
 	    ($(MAKE) -C$$dir $@ ) || exit 1; \
 	  fi \
 	done
+else
+$(RecursiveTargets)::
+	$(Verb) for dir in $(OPTIONAL_DIRS); do \
+	  ($(MAKE) -C$$dir $@ ) || exit 1; \
+	done
+endif
 endif
 
 #---------------------------------------------------------
