@@ -85,10 +85,14 @@ class MacroExpander {
   ///
   Preprocessor &PP;
 
-  /// MacroTokens - This is the pointer to the list of tokens that the macro is
+  /// MacroTokens - This is the pointer to an array of tokens that the macro is
   /// defined to, with arguments expanded for function-like macros.  If this is
-  /// a token stream, this are the tokens we are returning.
-  const std::vector<LexerToken> *MacroTokens;
+  /// a token stream, these are the tokens we are returning.
+  const LexerToken *MacroTokens;
+  
+  /// NumMacroTokens - This is the length of the MacroTokens array.
+  ///
+  unsigned NumMacroTokens;
   
   /// CurToken - This is the next token that Lex will return.
   ///
@@ -111,7 +115,7 @@ public:
   
   /// Create a macro expander for the specified token stream.  This does not
   /// take ownership of the specified token vector.
-  MacroExpander(const std::vector<LexerToken> &TokStream, Preprocessor &PP);
+  MacroExpander(const LexerToken *TokArray, unsigned NumToks, Preprocessor &PP);
   ~MacroExpander();
   
   /// isNextTokenLParen - If the next token lexed will pop this macro off the
@@ -126,7 +130,7 @@ private:
   /// isAtEnd - Return true if the next lex call will pop this macro off the
   /// include stack.
   bool isAtEnd() const {
-    return CurToken == MacroTokens->size();
+    return CurToken == NumMacroTokens;
   }
   
   /// PasteTokens - Tok is the LHS of a ## operator, and CurToken is the ##

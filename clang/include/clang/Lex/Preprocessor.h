@@ -324,7 +324,7 @@ public:
   /// that these tokens will be re-macro-expanded when/if expansion is enabled.
   /// This method assumes that the specified stream of tokens has a permanent
   /// owner somewhere, so they do not need to be copied.
-  void EnterTokenStream(const std::vector<LexerToken> &Stream);
+  void EnterTokenStream(const LexerToken *Toks, unsigned NumToks);
   
   /// RemoveTopOfLexerStack - Pop the current lexer/macro exp off the top of the
   /// lexer stack.  This should only be used in situations where the current

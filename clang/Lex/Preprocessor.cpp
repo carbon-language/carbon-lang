@@ -456,7 +456,7 @@ void Preprocessor::EnterMacro(LexerToken &Tok, MacroArgs *Args) {
 /// that these tokens will be re-macro-expanded when/if expansion is enabled.
 /// This method assumes that the specified stream of tokens has a permanent
 /// owner somewhere, so they do not need to be copied.
-void Preprocessor::EnterTokenStream(const std::vector<LexerToken> &Stream) {
+void Preprocessor::EnterTokenStream(const LexerToken *Toks, unsigned NumToks) {
   // Save our current state.
   IncludeMacroStack.push_back(IncludeStackInfo(CurLexer, CurDirLookup,
                                                CurMacroExpander));
@@ -464,7 +464,7 @@ void Preprocessor::EnterTokenStream(const std::vector<LexerToken> &Stream) {
   CurDirLookup = 0;
 
   // Create a macro expander to expand from the specified token stream.
-  CurMacroExpander = new MacroExpander(Stream, *this);
+  CurMacroExpander = new MacroExpander(Toks, NumToks, *this);
 }
 
 /// RemoveTopOfLexerStack - Pop the current lexer/macro exp off the top of the
