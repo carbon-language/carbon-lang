@@ -619,7 +619,7 @@ static SDOperand LowerConstantPool(SDOperand Op, SelectionDAG &DAG) {
     return DAG.getNode(ISD::ADD, PtrVT, Hi, Lo);
   }
   
-  if (TM.getRelocationModel() == Reloc::PIC) {
+  if (TM.getRelocationModel() == Reloc::PIC_) {
     // With PIC, the first instruction is actually "GR+hi(&G)".
     Hi = DAG.getNode(ISD::ADD, PtrVT,
                      DAG.getNode(PPCISD::GlobalBaseReg, PtrVT), Hi);
@@ -649,7 +649,7 @@ static SDOperand LowerJumpTable(SDOperand Op, SelectionDAG &DAG) {
     return DAG.getNode(ISD::ADD, PtrVT, Hi, Lo);
   }
   
-  if (TM.getRelocationModel() == Reloc::PIC) {
+  if (TM.getRelocationModel() == Reloc::PIC_) {
     // With PIC, the first instruction is actually "GR+hi(&G)".
     Hi = DAG.getNode(ISD::ADD, PtrVT,
                      DAG.getNode(PPCISD::GlobalBaseReg, MVT::i32), Hi);
@@ -680,7 +680,7 @@ static SDOperand LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG) {
     return DAG.getNode(ISD::ADD, PtrVT, Hi, Lo);
   }
   
-  if (TM.getRelocationModel() == Reloc::PIC) {
+  if (TM.getRelocationModel() == Reloc::PIC_) {
     // With PIC, the first instruction is actually "GR+hi(&G)".
     Hi = DAG.getNode(ISD::ADD, PtrVT,
                      DAG.getNode(PPCISD::GlobalBaseReg, PtrVT), Hi);

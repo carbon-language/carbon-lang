@@ -78,7 +78,7 @@ X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS)
     if (Subtarget.isTargetDarwin())
       setRelocationModel(Reloc::DynamicNoPIC);
     else
-      setRelocationModel(Reloc::PIC);
+      setRelocationModel(Reloc::PIC_);
 }
 
 

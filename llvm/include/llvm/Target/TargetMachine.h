@@ -39,7 +39,7 @@ namespace Reloc {
   enum Model {
     Default,
     Static,
-    PIC,
+    PIC_,         // Cannot be named PIC due to collision with -DPIC
     DynamicNoPIC
   };
 }

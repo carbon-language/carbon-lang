@@ -2746,7 +2746,7 @@ X86TargetLowering::LowerConstantPool(SDOperand Op, SelectionDAG &DAG) {
                                                       CP->getAlignment()));
   if (Subtarget->isTargetDarwin()) {
     // With PIC, the address is actually $g + Offset.
-    if (getTargetMachine().getRelocationModel() == Reloc::PIC)
+    if (getTargetMachine().getRelocationModel() == Reloc::PIC_)
       Result = DAG.getNode(ISD::ADD, getPointerTy(),
                     DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()), Result);
   }
@@ -2762,7 +2762,7 @@ X86TargetLowering::LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG) {
                                                             getPointerTy()));
   if (Subtarget->isTargetDarwin()) {
     // With PIC, the address is actually $g + Offset.
-    if (getTargetMachine().getRelocationModel() == Reloc::PIC)
+    if (getTargetMachine().getRelocationModel() == Reloc::PIC_)
       Result = DAG.getNode(ISD::ADD, getPointerTy(),
                            DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()),
                            Result);
@@ -2788,7 +2788,7 @@ X86TargetLowering::LowerExternalSymbol(SDOperand Op, SelectionDAG &DAG) {
                                                              getPointerTy()));
   if (Subtarget->isTargetDarwin()) {
     // With PIC, the address is actually $g + Offset.
-    if (getTargetMachine().getRelocationModel() == Reloc::PIC)
+    if (getTargetMachine().getRelocationModel() == Reloc::PIC_)
       Result = DAG.getNode(ISD::ADD, getPointerTy(),
                            DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()),
                            Result);
@@ -3173,7 +3173,7 @@ SDOperand X86TargetLowering::LowerJumpTable(SDOperand Op, SelectionDAG &DAG) {
                                                         getPointerTy()));
   if (Subtarget->isTargetDarwin()) {
     // With PIC, the address is actually $g + Offset.
-    if (getTargetMachine().getRelocationModel() == Reloc::PIC)
+    if (getTargetMachine().getRelocationModel() == Reloc::PIC_)
       Result = DAG.getNode(ISD::ADD, getPointerTy(),
                            DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy()),
                            Result);    

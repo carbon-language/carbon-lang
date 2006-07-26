@@ -66,7 +66,7 @@ namespace {
                  "Target default relocation model"),
       clEnumValN(Reloc::Static, "static",
                  "Non-relocatable code"),
-      clEnumValN(Reloc::PIC, "pic",
+      clEnumValN(Reloc::PIC_, "pic",
                  "Fully relocatable, position independent code"),
       clEnumValN(Reloc::DynamicNoPIC, "dynamic-no-pic",
                  "Relocatable external references, non-relocatable code"),

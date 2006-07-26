@@ -173,7 +173,7 @@ namespace {
       } else {
         O << "ha16(";
         printOp(MI->getOperand(OpNo));
-        if (TM.getRelocationModel() == Reloc::PIC)
+        if (TM.getRelocationModel() == Reloc::PIC_)
           O << "-\"L" << getFunctionNumber() << "$pb\")";
         else
           O << ')';
@@ -185,7 +185,7 @@ namespace {
       } else {
         O << "lo16(";
         printOp(MI->getOperand(OpNo));
-        if (TM.getRelocationModel() == Reloc::PIC)
+        if (TM.getRelocationModel() == Reloc::PIC_)
           O << "-\"L" << getFunctionNumber() << "$pb\")";
         else
           O << ')';
@@ -599,7 +599,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
   bool isPPC64 = TD->getPointerSizeInBits() == 64;
 
   // Output stubs for dynamically-linked functions
-  if (TM.getRelocationModel() == Reloc::PIC) {
+  if (TM.getRelocationModel() == Reloc::PIC_) {
     for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end();
          i != e; ++i) {
       SwitchToTextSection(".section __TEXT,__picsymbolstub1,symbol_stubs,"

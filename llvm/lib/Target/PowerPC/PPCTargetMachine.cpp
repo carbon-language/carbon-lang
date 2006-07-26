@@ -94,7 +94,7 @@ PPCTargetMachine::PPCTargetMachine(const Module &M, const std::string &FS,
     if (Subtarget.isDarwin())
       setRelocationModel(Reloc::DynamicNoPIC);
     else
-      setRelocationModel(Reloc::PIC);
+      setRelocationModel(Reloc::PIC_);
 }
 
 PPC32TargetMachine::PPC32TargetMachine(const Module &M, const std::string &FS) 

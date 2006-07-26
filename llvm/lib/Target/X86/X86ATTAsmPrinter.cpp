@@ -152,7 +152,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     O << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << "_"
       << MO.getConstantPoolIndex();
     if (Subtarget->TargetType == X86Subtarget::isDarwin && 
-        TM.getRelocationModel() == Reloc::PIC)
+        TM.getRelocationModel() == Reloc::PIC_)
       O << "-\"L" << getFunctionNumber() << "$pb\"";
     int Offset = MO.getOffset();
     if (Offset > 0)
@@ -185,7 +185,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       } else {
         O << Mang->getValueName(GV);
       } 
-      if (!isCallOp && TM.getRelocationModel() == Reloc::PIC)
+      if (!isCallOp && TM.getRelocationModel() == Reloc::PIC_)
         O << "-\"L" << getFunctionNumber() << "$pb\"";
    } else
       O << Mang->getValueName(MO.getGlobal());
