@@ -38,9 +38,6 @@ AbstractTypeUser::~AbstractTypeUser() {}
 //                         Type PATypeHolder Implementation
 //===----------------------------------------------------------------------===//
 
-// This routine was moved here to resolve a cyclic dependency caused by
-// inline heuristics.
-
 /// get - This implements the forwarding part of the union-find algorithm for
 /// abstract types.  Before every access to the Type*, we check to see if the
 /// type we are pointing to is forwarding to a new type.  If so, we drop our
