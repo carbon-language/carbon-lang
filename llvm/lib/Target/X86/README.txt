@@ -729,3 +729,8 @@ float uint32_2_float( unsigned u ) {
 0000002a        flds    (%esp,1)
 0000002d        addl    $0x04,%esp
 00000030        ret
+
+//===---------------------------------------------------------------------===//
+
+When using fastcc abi, align stack slot of argument of type double on 8 byte
+boundary to improve performance.
