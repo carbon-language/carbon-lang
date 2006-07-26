@@ -281,7 +281,11 @@ ifndef LLVMAS
 LLVMAS   := $(LLVMToolDir)/llvm-as$(EXEEXT)
 endif
 ifndef TBLGEN
-TBLGEN   := $(LLVMToolDir)/tblgen$(EXEEXT)
+  ifeq ($(LLVM_CROSS_COMPILING),1)
+    TBLGEN   := $(LLVMToolDir)/tblgen$(BUILD_EXEEXT)
+  else
+    TBLGEN   := $(LLVMToolDir)/tblgen$(EXEEXT)
+  endif
 endif
 ifndef GCCAS
 GCCAS    := $(LLVMToolDir)/gccas$(EXEEXT)

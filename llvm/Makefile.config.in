@@ -97,6 +97,13 @@ OS=@OS@
 # Target hardware architecture
 ARCH=@ARCH@
 
+# Indicates, whether we're cross-compiling LLVM or not
+LLVM_CROSS_COMPILING=@LLVM_CROSS_COMPILING@
+
+# Executable file extension for build platform (mainly for
+# tablegen call if we're cross-compiling).
+BUILD_EXEEXT=@BUILD_EXEEXT@
+
 # Target triple (cpu-vendor-os) for which we should generate code
 TARGET_TRIPLE=@target@
 
@@ -214,10 +221,10 @@ ENABLE_THREADS := @ENABLE_THREADS@
 # Enable JIT for this platform
 TARGET_HAS_JIT = @TARGET_HAS_JIT@
 
-# Shared library extension for this platform.
+# Shared library extension for host platform.
 SHLIBEXT = @SHLIBEXT@
 
-# Executable file extension for this platform.
+# Executable file extension for host platform.
 EXEEXT = @EXEEXT@
 
 # Things we just assume are "there"

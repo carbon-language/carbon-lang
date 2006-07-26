@@ -98,9 +98,9 @@ AC_CANONICAL_TARGET
 
 dnl Determine the platform type and cache its value. This helps us configure
 dnl the System library to the correct build platform.
-AC_CACHE_CHECK([type of operating system we're on],
+AC_CACHE_CHECK([type of operating system we're going to host on],
                [llvm_cv_os_type],
-[case $build in
+[case $host in
   *-*-aix*) 
     llvm_cv_os_type="AIX" 
     llvm_cv_platform_type="Unix" ;;
@@ -187,6 +187,14 @@ AC_SUBST(ARCH,$llvm_cv_target_arch)
 
 dnl Check for the endianness of the target
 AC_C_BIGENDIAN(AC_SUBST([ENDIAN],[big]),AC_SUBST([ENDIAN],[little]))
+
+dnl Check for build platform executable suffix if we're crosscompiling
+if test "$cross_compiling" = yes; then
+  AC_SUBST(LLVM_CROSS_COMPILING, [1])  
+  AC_BUILD_EXEEXT
+else
+  AC_SUBST(LLVM_CROSS_COMPILING, [0])
+fi
 
 dnl Check to see if there's a "CVS" directory indicating that this build is
 dnl being done from a CVS checkout. This sets up several defaults for the

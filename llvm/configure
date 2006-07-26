@@ -477,7 +477,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS LLVM_COPYRIGHT subdirs build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os OS LLVM_ON_UNIX LLVM_ON_WIN32 ARCH ENDIAN CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CVSBUILD ENABLE_OPTIMIZED DISABLE_ASSERTIONS DEBUG_RUNTIME JIT TARGET_HAS_JIT ENABLE_DOXYGEN ENABLE_THREADS TARGETS_TO_BUILD EXTRA_OPTIONS CPP CXX CXXFLAGS ac_ct_CXX LEX LEXLIB LEX_OUTPUT_ROOT FLEX YACC BISON ifGNUmake LN_S CMP CP DATE FIND GREP MKDIR MV RANLIB ac_ct_RANLIB RM SED TAR GRAPHVIZ DOT GV DOTTY PERL HAVE_PERL INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA BZIP2 DOXYGEN ETAGS GROFF GZIP POD2HTML POD2MAN RUNTEST TCLSH ZIP EGREP INSTALL_LTDL_TRUE INSTALL_LTDL_FALSE CONVENIENCE_LTDL_TRUE CONVENIENCE_LTDL_FALSE LIBADD_DL ECHO AR ac_ct_AR STRIP ac_ct_STRIP CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL ETAGSFLAGS LLVMGCC LLVMGXX ALLOCA MMAP_FILE LLVMCC1 LLVMCC1PLUS LLVMGCCDIR LLVMGCC_VERSION LLVMGCC_MAJVERS SHLIBEXT LLVM_PREFIX LLVM_BINDIR LLVM_LIBDIR LLVM_DATADIR LLVM_DOCSDIR LLVM_ETCDIR LLVM_INCLUDEDIR LLVM_INFODIR LLVM_MANDIR LLVM_CONFIGTIME LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS LLVM_COPYRIGHT subdirs build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os OS LLVM_ON_UNIX LLVM_ON_WIN32 ARCH ENDIAN CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT LLVM_CROSS_COMPILING BUILD_CC BUILD_EXEEXT CVSBUILD ENABLE_OPTIMIZED DISABLE_ASSERTIONS DEBUG_RUNTIME JIT TARGET_HAS_JIT ENABLE_DOXYGEN ENABLE_THREADS TARGETS_TO_BUILD EXTRA_OPTIONS CPP CXX CXXFLAGS ac_ct_CXX LEX LEXLIB LEX_OUTPUT_ROOT FLEX YACC BISON ifGNUmake LN_S CMP CP DATE FIND GREP MKDIR MV RANLIB ac_ct_RANLIB RM SED TAR GRAPHVIZ DOT GV DOTTY PERL HAVE_PERL INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA BZIP2 DOXYGEN ETAGS GROFF GZIP POD2HTML POD2MAN RUNTEST TCLSH ZIP EGREP INSTALL_LTDL_TRUE INSTALL_LTDL_FALSE CONVENIENCE_LTDL_TRUE CONVENIENCE_LTDL_FALSE LIBADD_DL ECHO AR ac_ct_AR STRIP ac_ct_STRIP CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL ETAGSFLAGS LLVMGCC LLVMGXX ALLOCA MMAP_FILE LLVMCC1 LLVMCC1PLUS LLVMGCCDIR LLVMGCC_VERSION LLVMGCC_MAJVERS SHLIBEXT LLVM_PREFIX LLVM_BINDIR LLVM_LIBDIR LLVM_DATADIR LLVM_DOCSDIR LLVM_ETCDIR LLVM_INCLUDEDIR LLVM_INFODIR LLVM_MANDIR LLVM_CONFIGTIME LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1710,12 +1710,12 @@ test -n "$target_alias" &&
     NONENONEs,x,x, &&
   program_prefix=${target_alias}-
 
-echo "$as_me:$LINENO: checking type of operating system we're on" >&5
-echo $ECHO_N "checking type of operating system we're on... $ECHO_C" >&6
+echo "$as_me:$LINENO: checking type of operating system we're going to host on" >&5
+echo $ECHO_N "checking type of operating system we're going to host on... $ECHO_C" >&6
 if test "${llvm_cv_os_type+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  case $build in
+  case $host in
   *-*-aix*)
     llvm_cv_os_type="AIX"
     llvm_cv_platform_type="Unix" ;;
@@ -2977,6 +2977,185 @@ presetting ac_cv_c_bigendian=no (or yes) will help" >&2;}
 esac
 
 
+if test "$cross_compiling" = yes; then
+  LLVM_CROSS_COMPILING=1
+
+
+echo "$as_me:$LINENO: checking for executable suffix on build platform" >&5
+echo $ECHO_N "checking for executable suffix on build platform... $ECHO_C" >&6
+if test "${ac_cv_build_exeext+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test "$CYGWIN" = yes || test "$MINGW32" = yes; then
+  ac_cv_build_exeext=.exe
+else
+  ac_build_prefix=${build_alias}-
+
+  # Extract the first word of "${ac_build_prefix}gcc", so it can be a program name with args.
+set dummy ${ac_build_prefix}gcc; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_BUILD_CC+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$BUILD_CC"; then
+  ac_cv_prog_BUILD_CC="$BUILD_CC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_BUILD_CC="${ac_build_prefix}gcc"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+fi
+fi
+BUILD_CC=$ac_cv_prog_BUILD_CC
+if test -n "$BUILD_CC"; then
+  echo "$as_me:$LINENO: result: $BUILD_CC" >&5
+echo "${ECHO_T}$BUILD_CC" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  if test -z "$BUILD_CC"; then
+     # Extract the first word of "gcc", so it can be a program name with args.
+set dummy gcc; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_BUILD_CC+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$BUILD_CC"; then
+  ac_cv_prog_BUILD_CC="$BUILD_CC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_BUILD_CC="gcc"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+fi
+fi
+BUILD_CC=$ac_cv_prog_BUILD_CC
+if test -n "$BUILD_CC"; then
+  echo "$as_me:$LINENO: result: $BUILD_CC" >&5
+echo "${ECHO_T}$BUILD_CC" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+     if test -z "$BUILD_CC"; then
+       # Extract the first word of "cc", so it can be a program name with args.
+set dummy cc; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_BUILD_CC+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$BUILD_CC"; then
+  ac_cv_prog_BUILD_CC="$BUILD_CC" # Let the user override the test.
+else
+  ac_prog_rejected=no
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    if test "$as_dir/$ac_word$ac_exec_ext" = "/usr/ucb/cc"; then
+       ac_prog_rejected=yes
+       continue
+     fi
+    ac_cv_prog_BUILD_CC="cc"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+if test $ac_prog_rejected = yes; then
+  # We found a bogon in the path, so make sure we never use it.
+  set dummy $ac_cv_prog_BUILD_CC
+  shift
+  if test $# != 0; then
+    # We chose a different compiler from the bogus one.
+    # However, it has the same basename, so the bogon will be chosen
+    # first if we set BUILD_CC to just the basename; use the full file name.
+    shift
+    ac_cv_prog_BUILD_CC="$as_dir/$ac_word${1+' '}$@"
+  fi
+fi
+fi
+fi
+BUILD_CC=$ac_cv_prog_BUILD_CC
+if test -n "$BUILD_CC"; then
+  echo "$as_me:$LINENO: result: $BUILD_CC" >&5
+echo "${ECHO_T}$BUILD_CC" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+     fi
+  fi
+  test -z "$BUILD_CC" && { { echo "$as_me:$LINENO: error: no acceptable cc found in \$PATH" >&5
+echo "$as_me: error: no acceptable cc found in \$PATH" >&2;}
+   { (exit 1); exit 1; }; }
+  ac_build_link='${BUILD_CC-cc} -o conftest $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS 1>&5'
+  rm -f conftest*
+  echo 'int main () { return 0; }' > conftest.$ac_ext
+  ac_cv_build_exeext=
+  if { (eval echo "$as_me:$LINENO: \"$ac_build_link\"") >&5
+  (eval $ac_build_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; then
+    for file in conftest.*; do
+      case $file in
+      *.c | *.o | *.obj) ;;
+      *) ac_cv_build_exeext=`echo $file | sed -e s/conftest//` ;;
+      esac
+    done
+  else
+    { { echo "$as_me:$LINENO: error: installation or configuration problem: compiler cannot create executables." >&5
+echo "$as_me: error: installation or configuration problem: compiler cannot create executables." >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+  rm -f conftest*
+  test x"${ac_cv_build_exeext}" = x && ac_cv_build_exeext=blank
+fi
+fi
+
+BUILD_EXEEXT=""
+test x"${ac_cv_build_exeext}" != xblank && BUILD_EXEEXT=${ac_cv_build_exeext}
+echo "$as_me:$LINENO: result: ${ac_cv_build_exeext}" >&5
+echo "${ECHO_T}${ac_cv_build_exeext}" >&6
+ac_build_exeext=$BUILD_EXEEXT
+
+else
+  LLVM_CROSS_COMPILING=0
+
+fi
+
 if test -d "CVS" -o -d "${srcdir}/CVS"; then
   cvsbuild="yes"
   optimize="no"
@@ -3163,10 +3342,9 @@ echo "$as_me: error: Invalid path for --with-llvmgccdir. Provide full path" >&2;
 esac
 
 
-
 # Check whether --with-extra-options or --without-extra-options was given.
 if test "${with_extra_options+set}" = set; then
-  extraopts="$with_extra_options"
+  withval="$with_extra_options"
 
 else
   extraopts=default
@@ -8571,7 +8749,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 8558 "configure"
+#line 8752 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10562,7 +10740,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 10549 "configure"' > conftest.$ac_ext
+  echo '#line 10743 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -11047,7 +11225,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:11034:" \
+echo "$as_me:11228:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -12104,11 +12282,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:12091: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:12285: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:12095: \$? = $ac_status" >&5
+   echo "$as_me:12289: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -12347,11 +12525,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:12334: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:12528: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:12338: \$? = $ac_status" >&5
+   echo "$as_me:12532: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -12407,11 +12585,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:12394: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:12588: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:12398: \$? = $ac_status" >&5
+   echo "$as_me:12592: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -14592,7 +14770,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 14579 "configure"
+#line 14773 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -14690,7 +14868,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 14677 "configure"
+#line 14871 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -16883,11 +17061,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:16870: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:17064: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:16874: \$? = $ac_status" >&5
+   echo "$as_me:17068: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -16943,11 +17121,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:16930: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:17124: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:16934: \$? = $ac_status" >&5
+   echo "$as_me:17128: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -18304,7 +18482,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 18291 "configure"
+#line 18485 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -18402,7 +18580,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 18389 "configure"
+#line 18583 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -19239,11 +19417,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:19226: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:19420: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:19230: \$? = $ac_status" >&5
+   echo "$as_me:19424: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -19299,11 +19477,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:19286: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:19480: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:19290: \$? = $ac_status" >&5
+   echo "$as_me:19484: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -21338,11 +21516,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:21325: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:21519: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:21329: \$? = $ac_status" >&5
+   echo "$as_me:21523: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -21581,11 +21759,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:21568: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:21762: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:21572: \$? = $ac_status" >&5
+   echo "$as_me:21766: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -21641,11 +21819,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:21628: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:21822: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:21632: \$? = $ac_status" >&5
+   echo "$as_me:21826: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -23826,7 +24004,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 23813 "configure"
+#line 24007 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -23924,7 +24102,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 23911 "configure"
+#line 24105 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -31898,6 +32076,9 @@ s,@CPPFLAGS@,$CPPFLAGS,;t t
 s,@ac_ct_CC@,$ac_ct_CC,;t t
 s,@EXEEXT@,$EXEEXT,;t t
 s,@OBJEXT@,$OBJEXT,;t t
+s,@LLVM_CROSS_COMPILING@,$LLVM_CROSS_COMPILING,;t t
+s,@BUILD_CC@,$BUILD_CC,;t t
+s,@BUILD_EXEEXT@,$BUILD_EXEEXT,;t t
 s,@CVSBUILD@,$CVSBUILD,;t t
 s,@ENABLE_OPTIMIZED@,$ENABLE_OPTIMIZED,;t t
 s,@DISABLE_ASSERTIONS@,$DISABLE_ASSERTIONS,;t t
