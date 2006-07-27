@@ -914,8 +914,6 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
     double Density = (double)Cases.size() / (double)((Last - First) + 1ULL);
     
     if (Density >= 0.3125) {
-      Reloc::Model Relocs = TLI.getTargetMachine().getRelocationModel();
-      
       // Create a new basic block to hold the code for loading the address
       // of the jump table, and jumping to it.  Update successor information;
       // we will either branch to the default case for the switch, or the jump

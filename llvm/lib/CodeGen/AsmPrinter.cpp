@@ -210,7 +210,11 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI) {
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   if (JT.empty()) return;
   const TargetData *TD = TM.getTargetData();
-  const char *PtrDataDirective = Data32bitsDirective;
+  
+  // JTEntryDirective is a string to print sizeof(ptr) for non-PIC jump tables,
+  // and 32 bits for PIC since PIC jump table entries are differences, not
+  // pointers to blocks.
+  const char *JTEntryDirective = Data32bitsDirective;
   
   // Pick the directive to use to print the jump table entries, and switch to 
   // the appropriate section.
@@ -219,7 +223,7 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI) {
   } else {
     SwitchToDataSection(JumpTableDataSection, 0);
     if (TD->getPointerSize() == 8)
-      PtrDataDirective = Data64bitsDirective;
+      JTEntryDirective = Data64bitsDirective;
   }
   EmitAlignment(Log2_32(TD->getPointerAlignment()));
   
@@ -228,7 +232,7 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI) {
       << ":\n";
     const std::vector<MachineBasicBlock*> &JTBBs = JT[i].MBBs;
     for (unsigned ii = 0, ee = JTBBs.size(); ii != ee; ++ii) {
-      O << PtrDataDirective << ' ';
+      O << JTEntryDirective << ' ';
       printBasicBlockLabel(JTBBs[ii], false, false);
       if (TM.getRelocationModel() == Reloc::PIC_) {
         O << '-' << PrivateGlobalPrefix << "JTI" << getFunctionNumber() 
