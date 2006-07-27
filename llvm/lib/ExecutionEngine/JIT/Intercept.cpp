@@ -52,14 +52,14 @@ static void runAtExitHandlers() {
 #include <sys/stat.h>
 #endif
 void *FunctionPointers[] = {
-  (void *) stat,
-  (void *) fstat,
-  (void *) lstat,
-  (void *) stat64,
-  (void *) fstat64,
-  (void *) lstat64,
-  (void *) atexit,
-  (void *) mknod
+  (void *)(intptr_t) stat,
+  (void *)(intptr_t) fstat,
+  (void *)(intptr_t) lstat,
+  (void *)(intptr_t) stat64,
+  (void *)(intptr_t) fstat64,
+  (void *)(intptr_t) lstat64,
+  (void *)(intptr_t) atexit,
+  (void *)(intptr_t) mknod
 };
 #endif // __linux__
 
