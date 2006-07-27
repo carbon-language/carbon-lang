@@ -3644,35 +3644,6 @@ void DAGISelEmitter::run(std::ostream &OS) {
   OS << "std::set<SDNode*> InFlightSet;\n";
 
   OS << "\n";
-  OS << "static void findNonImmUse(SDNode* Use, SDNode* Def, bool &found, "
-     << "std::set<SDNode *> &Visited) {\n";
-  OS << "  if (found || !Visited.insert(Use).second) return;\n";
-  OS << "  for (unsigned i = 0, e = Use->getNumOperands(); i != e; ++i) {\n";
-  OS << "    SDNode *N = Use->getOperand(i).Val;\n";
-  OS << "    if (N != Def) {\n";
-  OS << "      findNonImmUse(N, Def, found, Visited);\n";
-  OS << "    } else {\n";
-  OS << "      found = true;\n";
-  OS << "      break;\n";
-  OS << "    }\n";
-  OS << "  }\n";
-  OS << "}\n";
-
-  OS << "\n";
-  OS << "static bool isNonImmUse(SDNode* Use, SDNode* Def) {\n";
-  OS << "  std::set<SDNode *> Visited;\n";
-  OS << "  bool found = false;\n";
-  OS << "  for (unsigned i = 0, e = Use->getNumOperands(); i != e; ++i) {\n";
-  OS << "    SDNode *N = Use->getOperand(i).Val;\n";
-  OS << "    if (N != Def) {\n";
-  OS << "      findNonImmUse(N, Def, found, Visited);\n";
-  OS << "      if (found) break;\n";
-  OS << "    }\n";
-  OS << "  }\n";
-  OS << "  return found;\n";
-  OS << "}\n";
-
-  OS << "\n";
   OS << "// AddHandleReplacement - Note the pending replacement node for a\n"
      << "// handle node in ReplaceMap.\n";
   OS << "void AddHandleReplacement(SDNode *H, unsigned HNum, SDNode *R, "
