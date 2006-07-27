@@ -64,7 +64,7 @@ struct X86SharedAsmPrinter : public AsmPrinter {
 
   void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
-    if (Subtarget->TargetType == X86Subtarget::isDarwin) {
+    if (Subtarget->isTargetDarwin()) {
       AU.addRequired<MachineDebugInfo>();
     }
     MachineFunctionPass::getAnalysisUsage(AU);

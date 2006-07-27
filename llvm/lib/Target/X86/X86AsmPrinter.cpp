@@ -87,7 +87,7 @@ bool X86SharedAsmPrinter::doInitialization(Module &M) {
   default: break;
   }
   
-  if (Subtarget->TargetType == X86Subtarget::isDarwin) {
+  if (Subtarget->isTargetDarwin()) {
     // Emit initial debug information.
     DW.BeginModule(&M);
   }
@@ -118,7 +118,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     if (C->isNullValue() && /* FIXME: Verify correct */
         (I->hasInternalLinkage() || I->hasWeakLinkage() ||
          I->hasLinkOnceLinkage() ||
-         (Subtarget->TargetType == X86Subtarget::isDarwin && 
+         (Subtarget->isTargetDarwin() && 
           I->hasExternalLinkage() && !I->hasSection()))) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
       if (I->hasExternalLinkage()) {
@@ -130,7 +130,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
         if (LCOMMDirective != NULL) {
           if (I->hasInternalLinkage()) {
             O << LCOMMDirective << name << "," << Size;
-            if (Subtarget->TargetType == X86Subtarget::isDarwin)
+            if (Subtarget->isTargetDarwin())
               O << "," << (AlignmentIsInBytes ? (1 << Align) : Align);
           } else
             O << COMMDirective  << name << "," << Size;
@@ -149,7 +149,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
       switch (I->getLinkage()) {
       case GlobalValue::LinkOnceLinkage:
       case GlobalValue::WeakLinkage:
-        if (Subtarget->TargetType == X86Subtarget::isDarwin) {
+        if (Subtarget->isTargetDarwin()) {
           O << "\t.globl " << name << "\n"
             << "\t.weak_definition " << name << "\n";
           SwitchToDataSection(".section __DATA,__const_coal,coalesced", I);
@@ -186,7 +186,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     }
   }
   
-  if (Subtarget->TargetType == X86Subtarget::isDarwin) {
+  if (Subtarget->isTargetDarwin()) {
     SwitchToDataSection("", 0);
 
     // Output stubs for dynamically-linked functions

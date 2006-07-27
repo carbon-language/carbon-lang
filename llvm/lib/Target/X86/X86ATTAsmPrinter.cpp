@@ -26,7 +26,7 @@ using namespace llvm;
 /// method to print assembly for each instruction.
 ///
 bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  if (Subtarget->TargetType == X86Subtarget::isDarwin) {
+  if (Subtarget->isTargetDarwin()) {
     // Let PassManager know we need debug information and relay
     // the MachineDebugInfo address on to DwarfWriter.
     DW.SetDebugInfo(&getAnalysis<MachineDebugInfo>());
@@ -56,7 +56,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     break;
   case Function::WeakLinkage:
   case Function::LinkOnceLinkage:
-    if (Subtarget->TargetType == X86Subtarget::isDarwin) {
+    if (Subtarget->isTargetDarwin()) {
       SwitchToTextSection(
                 ".section __TEXT,__textcoal_nt,coalesced,pure_instructions", F);
       O << "\t.globl\t" << CurrentFnName << "\n";
@@ -78,7 +78,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   }
   O << CurrentFnName << ":\n";
 
-  if (Subtarget->TargetType == X86Subtarget::isDarwin) {
+  if (Subtarget->isTargetDarwin()) {
     // Emit pre-function debug information.
     DW.BeginFunction(&MF);
   }
@@ -101,7 +101,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   if (HasDotTypeDotSizeDirective)
     O << "\t.size " << CurrentFnName << ", .-" << CurrentFnName << "\n";
 
-  if (Subtarget->TargetType == X86Subtarget::isDarwin) {
+  if (Subtarget->isTargetDarwin()) {
     // Emit post-function debug information.
     DW.EndFunction();
   }
@@ -143,7 +143,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     if (!isMemOp) O << '$';
     O << PrivateGlobalPrefix << "JTI" << getFunctionNumber() << "_"
       << MO.getJumpTableIndex();
-    if (Subtarget->TargetType == X86Subtarget::isDarwin && 
+    if (Subtarget->isTargetDarwin() && 
         TM.getRelocationModel() == Reloc::PIC_)
       O << "-\"L" << getFunctionNumber() << "$pb\"";
     return;
@@ -153,7 +153,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     if (!isMemOp) O << '$';
     O << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << "_"
       << MO.getConstantPoolIndex();
-    if (Subtarget->TargetType == X86Subtarget::isDarwin && 
+    if (Subtarget->isTargetDarwin() && 
         TM.getRelocationModel() == Reloc::PIC_)
       O << "-\"L" << getFunctionNumber() << "$pb\"";
     int Offset = MO.getOffset();
@@ -168,7 +168,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     if (!isMemOp && !isCallOp) O << '$';
     // Darwin block shameless ripped from PPCAsmPrinter.cpp
-    if (Subtarget->TargetType == X86Subtarget::isDarwin && 
+    if (Subtarget->isTargetDarwin() && 
         TM.getRelocationModel() != Reloc::Static) {
       GlobalValue *GV = MO.getGlobal();
       std::string Name = Mang->getValueName(GV);
@@ -201,7 +201,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   case MachineOperand::MO_ExternalSymbol: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
     if (isCallOp && 
-        Subtarget->TargetType == X86Subtarget::isDarwin && 
+        Subtarget->isTargetDarwin() && 
         TM.getRelocationModel() != Reloc::Static) {
       std::string Name(GlobalPrefix);
       Name += MO.getSymbolName();
@@ -344,7 +344,7 @@ bool X86ATTAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   ++EmittedInsts;
   // This works around some Darwin assembler bugs.
-  if (Subtarget->TargetType == X86Subtarget::isDarwin) {
+  if (Subtarget->isTargetDarwin()) {
     switch (MI->getOpcode()) {
     case X86::REP_MOVSB:
       O << "rep/movsb (%esi),(%edi)\n";
