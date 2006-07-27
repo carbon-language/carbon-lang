@@ -14,7 +14,9 @@
 #ifndef LLVM_ADT_SMALLVECTOR_H
 #define LLVM_ADT_SMALLVECTOR_H
 
+#include <algorithm>
 #include <cassert>
+#include <iterator>
 #include <memory>
 
 namespace llvm {
@@ -113,6 +115,20 @@ public:
     goto Retry;
   }
   
+  /// append - Add the specified range to the end of the SmallVector.
+  ///
+  template<typename in_iter>
+  void append(in_iter in_start, in_iter in_end) {
+    unsigned NumInputs = std::distance(in_start, in_end);
+    // Grow allocated space if needed.
+    if (End+NumInputs > Capacity)
+      grow(size()+NumInputs);
+
+    // Copy the new elements over.
+    std::uninitialized_copy(in_start, in_end, End);
+    End += NumInputs;
+  }
+  
   const SmallVector &operator=(const SmallVector &RHS) {
     // Avoid self-assignment.
     if (this == &RHS) return *this;
@@ -123,8 +139,7 @@ public:
     unsigned CurSize = size();
     if (CurSize >= RHSSize) {
       // Assign common elements.
-      for (unsigned i = 0; i != RHSSize; ++i)
-        Begin[i] = RHS.Begin[i];
+      std::copy(RHS.Begin, RHS.Begin+RHSSize, Begin);
       
       // Destroy excess elements.
       for (unsigned i = RHSSize; i != CurSize; ++i)
@@ -144,10 +159,9 @@ public:
       End = Begin;
       CurSize = 0;
       grow(RHSSize);
-    } else {
+    } else if (CurSize) {
       // Otherwise, use assignment for the already-constructed elements.
-      for (unsigned i = 0; i != CurSize; ++i)
-        Begin[i] = RHS.Begin[i];
+      std::copy(RHS.Begin, RHS.Begin+CurSize, Begin);
     }
     
     // Copy construct the new elements in place.
