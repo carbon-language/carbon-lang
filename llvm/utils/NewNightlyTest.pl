@@ -1043,7 +1043,6 @@ if($GCCPATH ne ""){
 }
 else{
   $gcc_version_long = `gcc --version`;
-  print "gcc --version\n";
 }
 @GCC_VERSION = split '\n', $gcc_version_long;
 my $gcc_version = $GCC_VERSION[0];
