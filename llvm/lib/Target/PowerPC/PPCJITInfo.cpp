@@ -268,13 +268,3 @@ void PPCJITInfo::resolveBBRefs(MachineCodeEmitter &MCE) {
   }
   BBRefs.clear();
 }
-
-#ifdef __APPLE__ 
-extern "C" void sys_icache_invalidate(const void *Addr, size_t len);
-#endif
-
-void PPCJITInfo::synchronizeICache(const void *Addr, size_t Len) {
-#ifdef __APPLE__
-  sys_icache_invalidate(Addr, Len);
-#endif
-}

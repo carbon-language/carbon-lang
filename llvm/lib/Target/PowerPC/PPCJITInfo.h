@@ -44,7 +44,6 @@ namespace llvm {
     virtual void replaceMachineCodeForFunction(void *Old, void *New);
 
     virtual void resolveBBRefs(MachineCodeEmitter &MCE);
-    virtual void synchronizeICache(const void *Addr, size_t Len);
   };
 }
 
