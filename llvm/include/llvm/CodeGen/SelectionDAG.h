@@ -421,7 +421,11 @@ public:
   /// DeleteNode - Remove the specified node from the system.  This node must
   /// have no referrers.
   void DeleteNode(SDNode *N);
-  
+
+  /// AssignNodeIds - Assign a unique node id for each node in the DAG. It
+  /// returns the maximum id.
+  int AssignNodeIds();
+
   void dump() const;
 
   /// InsertISelMapEntry - A helper function to insert a key / element pair

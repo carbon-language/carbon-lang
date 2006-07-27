@@ -654,7 +654,6 @@ public:
 
   // Forwarding methods - These forward to the corresponding methods in SDNode.
   inline unsigned getOpcode() const;
-  inline unsigned getNodeDepth() const;
   inline unsigned getNumOperands() const;
   inline const SDOperand &getOperand(unsigned i) const;
   inline bool isTargetOpcode() const;
@@ -689,10 +688,8 @@ class SDNode {
   ///
   unsigned short NodeType;
 
-  /// NodeDepth - Node depth is defined as MAX(Node depth of children)+1.  This
-  /// means that leaves have a depth of 1, things that use only leaves have a
-  /// depth of 2, etc.
-  unsigned short NodeDepth;
+  /// NodeId - Unique id per SDNode in the DAG.
+  int NodeId;
 
   /// OperandList - The values that are used by this operation.
   ///
@@ -736,9 +733,9 @@ public:
   bool use_empty() const { return Uses.empty(); }
   bool hasOneUse() const { return Uses.size() == 1; }
 
-  /// getNodeDepth - Return the distance from this node to the leaves in the
-  /// graph.  The leaves have a depth of 1.
-  unsigned getNodeDepth() const { return NodeDepth; }
+  /// getNodeId - Return the unique node id.
+  ///
+  int getNodeId() const { return NodeId; }
 
   typedef std::vector<SDNode*>::const_iterator use_iterator;
   use_iterator use_begin() const { return Uses.begin(); }
@@ -799,14 +796,14 @@ protected:
   ///
   static MVT::ValueType *getValueTypeList(MVT::ValueType VT);
 
-  SDNode(unsigned NT, MVT::ValueType VT) : NodeType(NT), NodeDepth(1) {
+  SDNode(unsigned NT, MVT::ValueType VT) : NodeType(NT), NodeId(-1) {
     OperandList = 0; NumOperands = 0;
     ValueList = getValueTypeList(VT);
     NumValues = 1;
     Prev = 0; Next = 0;
   }
   SDNode(unsigned NT, SDOperand Op)
-    : NodeType(NT), NodeDepth(Op.Val->getNodeDepth()+1) {
+    : NodeType(NT), NodeId(-1) {
     OperandList = new SDOperand[1];
     OperandList[0] = Op;
     NumOperands = 1;
@@ -816,11 +813,7 @@ protected:
     Prev = 0; Next = 0;
   }
   SDNode(unsigned NT, SDOperand N1, SDOperand N2)
-    : NodeType(NT) {
-    if (N1.Val->getNodeDepth() > N2.Val->getNodeDepth())
-      NodeDepth = N1.Val->getNodeDepth()+1;
-    else
-      NodeDepth = N2.Val->getNodeDepth()+1;
+    : NodeType(NT), NodeId(-1) {
     OperandList = new SDOperand[2];
     OperandList[0] = N1;
     OperandList[1] = N2;
@@ -831,14 +824,7 @@ protected:
     Prev = 0; Next = 0;
   }
   SDNode(unsigned NT, SDOperand N1, SDOperand N2, SDOperand N3)
-    : NodeType(NT) {
-    unsigned ND = N1.Val->getNodeDepth();
-    if (ND < N2.Val->getNodeDepth())
-      ND = N2.Val->getNodeDepth();
-    if (ND < N3.Val->getNodeDepth())
-      ND = N3.Val->getNodeDepth();
-    NodeDepth = ND+1;
-
+    : NodeType(NT), NodeId(-1) {
     OperandList = new SDOperand[3];
     OperandList[0] = N1;
     OperandList[1] = N2;
@@ -852,16 +838,7 @@ protected:
     Prev = 0; Next = 0;
   }
   SDNode(unsigned NT, SDOperand N1, SDOperand N2, SDOperand N3, SDOperand N4)
-    : NodeType(NT) {
-    unsigned ND = N1.Val->getNodeDepth();
-    if (ND < N2.Val->getNodeDepth())
-      ND = N2.Val->getNodeDepth();
-    if (ND < N3.Val->getNodeDepth())
-      ND = N3.Val->getNodeDepth();
-    if (ND < N4.Val->getNodeDepth())
-      ND = N4.Val->getNodeDepth();
-    NodeDepth = ND+1;
-
+    : NodeType(NT), NodeId(-1) {
     OperandList = new SDOperand[4];
     OperandList[0] = N1;
     OperandList[1] = N2;
@@ -875,18 +852,16 @@ protected:
     NumValues = 0;
     Prev = 0; Next = 0;
   }
-  SDNode(unsigned Opc, const std::vector<SDOperand> &Nodes) : NodeType(Opc) {
+  SDNode(unsigned Opc, const std::vector<SDOperand> &Nodes)
+    : NodeType(Opc), NodeId(-1) {
     NumOperands = Nodes.size();
     OperandList = new SDOperand[NumOperands];
     
-    unsigned ND = 0;
     for (unsigned i = 0, e = Nodes.size(); i != e; ++i) {
       OperandList[i] = Nodes[i];
       SDNode *N = OperandList[i].Val;
       N->Uses.push_back(this);
-      if (ND < N->getNodeDepth()) ND = N->getNodeDepth();
     }
-    NodeDepth = ND+1;
     ValueList = 0;
     NumValues = 0;
     Prev = 0; Next = 0;
@@ -1035,6 +1010,10 @@ protected:
       }
     }
   }
+
+  void setNodeId(int Id) {
+    NodeId = Id;
+  }
 };
 
 
@@ -1042,9 +1021,6 @@ protected:
 
 inline unsigned SDOperand::getOpcode() const {
   return Val->getOpcode();
-}
-inline unsigned SDOperand::getNodeDepth() const {
-  return Val->getNodeDepth();
 }
 inline MVT::ValueType SDOperand::getValueType() const {
   return Val->getValueType(ResNo);
