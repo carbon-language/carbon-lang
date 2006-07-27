@@ -6,7 +6,7 @@
 #           libraries. The output of this script should periodically replace 
 #           the similar content in the UsingLibraries.html document.
 #
-# Syntax:   GenLibDeps.pl [-flat] <directory_with_libraries_in_it>
+# Syntax:   GenLibDeps.pl [-flat] <directory_with_libraries_in_it> [path_to_nm_binary]
 #
 
 # Parse arguments... 
@@ -24,6 +24,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
 
 # Give first option a name.
 my $Directory = $ARGV[0];
+my $nmPath = $ARGV[1];
 
 # Find the "dot" program
 my $DotPath="";
@@ -32,8 +33,10 @@ if (!$FLAT) {
   die "Can't find 'dot'" if (! -x "$DotPath");
 }
 
-chomp(my $nmPath=`which nm`);
-die "Can't find 'nm'" if (! -x "$nmPath");
+if ($nmPath eq "") {
+    chomp($nmPath=`which nm`);
+    die "Can't find 'nm'" if (! -x "$nmPath");
+}
 
 # Open the directory and read its contents, sorting by name and differentiating
 # by whether its a library (.a) or an object file (.o)

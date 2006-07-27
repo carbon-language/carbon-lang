@@ -8,6 +8,8 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
 TOOLNAME = analyze
+#TOOLLINKOPTS = $(LINKALL)
+#TOOLLINKOPTSB = $(NOLINKALL)
 USEDLIBS = LLVMAsmParser.a LLVMBCReader.a LLVMAnalysis.a LLVMipa.a \
            LLVMDataStructure \
 	   LLVMScalarOpts.a LLVMTransforms.a LLVMTarget.a LLVMScalarOpts.a \

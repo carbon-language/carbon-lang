@@ -357,6 +357,9 @@ AC_PROG_CXX(g++)
 AC_PROG_FLEX
 AC_PROG_BISON
 
+AC_PROG_NM
+AC_SUBST(NM)
+
 dnl Check for the tools that the makefiles require
 AC_CHECK_GNU_MAKE
 AC_PROG_LN_S

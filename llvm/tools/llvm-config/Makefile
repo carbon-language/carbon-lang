@@ -33,7 +33,7 @@ GenLibDeps   = $(PROJ_SRC_ROOT)/utils/GenLibDeps.pl
 
 $(LibDeps): $(GenLibDeps) $(LibDir) $(wildcard $(LibDir)/*.a $(LibDir)/*.o)
 	$(Echo) "Regenerating LibDeps.txt"
-	$(Verb) $(GenLibDeps) -flat $(LibDir) | sort > $(LibDeps)
+	$(Verb) $(GenLibDeps) -flat $(LibDir) $(NM_PATH) | sort > $(LibDeps)
 
 # Find all the cyclic dependencies between various LLVM libraries, so we
 # don't have to process them at runtime.

@@ -129,6 +129,9 @@ LDFLAGS+=@LDFLAGS@
 # Path to the library archiver program.
 AR_PATH = @AR@
 
+# Path to the nm program
+NM_PATH = @NM@
+
 # The pathnames of the programs we require to build
 BISON      := @BISON@
 CMP        := @CMP@
