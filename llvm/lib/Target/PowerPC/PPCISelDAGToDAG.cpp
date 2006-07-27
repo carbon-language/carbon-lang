@@ -191,12 +191,7 @@ void PPCDAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   while (!Worklist.empty()) {
     SDOperand Node = Worklist.back();
     Worklist.pop_back();
-    
-    // Chose from the least deep of the top two nodes.
-    if (!Worklist.empty() &&
-        Worklist.back().Val->getNodeDepth() < Node.Val->getNodeDepth())
-      std::swap(Worklist.back(), Node);
-    
+
     if ((Node.Val->getOpcode() >= ISD::BUILTIN_OP_END &&
          Node.Val->getOpcode() < PPCISD::FIRST_NUMBER) ||
         CodeGenMap.count(Node)) continue;
