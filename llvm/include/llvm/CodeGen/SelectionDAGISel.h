@@ -62,6 +62,10 @@ public:
                                             SelectionDAG &DAG) {
     return true;
   }
+
+  /// IsFoldableBy - Returns true if the specific operand node N of U can be
+  /// folded during instruction selection?
+  virtual bool IsFoldableBy(SDNode *N, SDNode *U) { return true; }
   
   /// CreateTargetHazardRecognizer - Return a newly allocated hazard recognizer
   /// to use for this target when scheduling the DAG.
@@ -111,7 +115,7 @@ protected:
   /// by tblgen.  Others should not call it.
   void SelectInlineAsmMemoryOperands(std::vector<SDOperand> &Ops,
                                      SelectionDAG &DAG);
-  
+
 private:
   SDOperand CopyValueToVirtualRegister(SelectionDAGLowering &SDL,
                                        Value *V, unsigned Reg);
