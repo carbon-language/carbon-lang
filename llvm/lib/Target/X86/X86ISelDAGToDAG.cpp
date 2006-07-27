@@ -640,7 +640,7 @@ bool X86DAGToDAGISel::TryFoldLoad(SDOperand P, SDOperand N,
   if (N.getOpcode() == ISD::LOAD &&
       N.hasOneUse() &&
       !CodeGenMap.count(N.getValue(0)) &&
-      (P.getNumOperands() == 1 || !isNonImmUse(P.Val, N.Val)))
+      !IsFoldableBy(N.Val, P.Val))
     return SelectAddr(N.getOperand(1), Base, Scale, Index, Disp);
   return false;
 }
