@@ -178,7 +178,13 @@ if ($CONFIGUREARGS !~ /--disable-jit/) {
     $CONFIGUREARGS .= " --enable-jit";
 }
 
-die "Must specify 0 or 3 options!" if (@ARGV != 0 and @ARGV != 3);
+
+if (@ARGV != 0 and @ARGV != 3){
+	foreach $x (@ARGV){
+		print "$x\n";
+	}
+	print "Must specify 0 or 3 options!";
+}
 
 if (@ARGV == 3) {
     $CVSRootDir = $ARGV[0];
@@ -186,12 +192,28 @@ if (@ARGV == 3) {
     $WebDir     = $ARGV[2];
 }
 
+if($CVSRootDir eq "" or
+   $BuildDir   eq "" or
+   $WebDir     eq ""){
+   die("please specify a cvs root directory, a build directory, and a ".
+       "web directory");
+ }
+ 
 if($nickname eq ""){
 	die ("Please invoke NewNightlyTest.pl with command line option \"-nickname <nickname>\"");
 }
 if($BUILDTYPE ne "releaese"){
 	$BUILDTYPE = "debug";
 }
+
+#FIXME: this is a hack for SunOS, there must be a better way
+if(`uname` eq "SunOS"){
+	$MAKECMD = "gmake";
+}
+else {
+	$MAKECMD="make";
+}
+
 
 ##############################################################
 #
@@ -596,11 +618,11 @@ if (!$NOCHECKOUT && !$NOBUILD) {
     system "(time -p $NICE ./configure $CONFIGUREARGS $EXTRAFLAGS) > $BuildLog 2>&1";
     if ( $VERBOSE ) 
     { 
-	print "BUILD STAGE:\n";
-	print "(time -p $NICE make $MAKEOPTS) >> $BuildLog 2>&1\n";
+			print "BUILD STAGE:\n";
+			print "(time -p $NICE $MAKECMD $MAKEOPTS) >> $BuildLog 2>&1\n";
     }
     # Build the entire tree, capturing the output into $BuildLog
-    system "(time -p $NICE make $MAKEOPTS) >> $BuildLog 2>&1";
+    system "(time -p $NICE $MAKECMD $MAKEOPTS) >> $BuildLog 2>&1";
 }
 
 
@@ -637,8 +659,8 @@ if($NOBUILD){
     $BuildStatus = "Skipped by user";
     $BuildError = 1;
 }
-elsif (`grep '^make[^:]*: .*Error' $BuildLog | wc -l` + 0 ||
-    `grep '^make: \*\*\*.*Stop.' $BuildLog | wc -l`+0) {
+elsif (`grep '^$MAKECMD\[^:]*: .*Error' $BuildLog | wc -l` + 0 ||
+    `grep '^$MAKECMD: \*\*\*.*Stop.' $BuildLog | wc -l`+0) {
     $BuildStatus = "Error: compilation aborted";
     $BuildError = 1;
     print  "\n***ERROR BUILDING TREE\n\n";
@@ -683,13 +705,13 @@ my $dejagnu_output = "$DejagnuTestsLog";
 if(!$NODEJAGNU) {
     if($VERBOSE) 
     { 
-	print "DEJAGNU FEATURE/REGRESSION TEST STAGE:\n"; 
-	print "(time -p make $MAKEOPTS check) > $dejagnu_output 2>&1\n";
+			print "DEJAGNU FEATURE/REGRESSION TEST STAGE:\n"; 
+			print "(time -p $MAKECMD $MAKEOPTS check) > $dejagnu_output 2>&1\n";
     }
 
     #Run the feature and regression tests, results are put into testrun.sum
     #Full log in testrun.log
-    system "(time -p make $MAKEOPTS check) > $dejagnu_output 2>&1";
+    system "(time -p $MAKECMD $MAKEOPTS check) > $dejagnu_output 2>&1";
     
     #Copy the testrun.log and testrun.sum to our webdir
     CopyFile("test/testrun.log", $DejagnuLog);
@@ -766,19 +788,19 @@ sub TestDirectory {
     
     # Run the programs tests... creating a report.nightly.csv file
     if (!$NOTEST) {
-	print "make -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv "
+	print "$MAKECMD -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv "
 	    . "TEST=nightly > $ProgramTestLog 2>&1\n";
-	system "make -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv "
+	system "$MAKECMD -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv "
 	    . "TEST=nightly > $ProgramTestLog 2>&1";
-	$llcbeta_options=`make print-llcbeta-option`;
+	$llcbeta_options=`$MAKECMD print-llcbeta-option`;
     } 
     
     my $ProgramsTable;
-    if (`grep '^make[^:]: .*Error' $ProgramTestLog | wc -l` + 0){
+    if (`grep '^$MAKECMD\[^:]: .*Error' $ProgramTestLog | wc -l` + 0){
 	$TestError = 1;
 	$ProgramsTable="Error running test $SubDir\n";
 	print "ERROR TESTING\n";
-    } elsif (`grep '^make[^:]: .*No rule to make target' $ProgramTestLog | wc -l` + 0) {
+    } elsif (`grep '^$MAKECMD\[^:]: .*No rule to make target' $ProgramTestLog | wc -l` + 0) {
 	$TestError = 1;
 	$ProgramsTable="Makefile error running tests $SubDir!\n";
 	print "ERROR TESTING\n";
@@ -925,13 +947,13 @@ if (!$BuildError) {
 		   "Olden Test Directory");
 
 	# Clean out previous results...
-	system "$NICE make $MAKEOPTS clean > /dev/null 2>&1";
+	system "$NICE $MAKECMD $MAKEOPTS clean > /dev/null 2>&1";
 	
 	# Run the nightly test in this directory, with LARGE_PROBLEM_SIZE and
 	# GET_STABLE_NUMBERS enabled!
-	if( $VERBOSE ) { print "make -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv.out TEST=nightly " .
+	if( $VERBOSE ) { print "$MAKECMD -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv.out TEST=nightly " .
 			     " LARGE_PROBLEM_SIZE=1 GET_STABLE_NUMBERS=1 > /dev/null 2>&1\n"; }
-	system "make -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv.out TEST=nightly " .
+	system "$MAKECMD -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv.out TEST=nightly " .
 	    " LARGE_PROBLEM_SIZE=1 GET_STABLE_NUMBERS=1 > /dev/null 2>&1";
 	system "cp report.nightly.csv $OldenTestsLog";
     } #else {
