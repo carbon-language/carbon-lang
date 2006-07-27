@@ -424,7 +424,7 @@ public:
 
   /// AssignNodeIds - Assign a unique node id for each node in the DAG. It
   /// returns the maximum id.
-  int AssignNodeIds();
+  unsigned AssignNodeIds();
 
   void dump() const;
 
