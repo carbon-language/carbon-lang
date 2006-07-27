@@ -307,7 +307,6 @@ sub ChangeDir { # directory, logical name
     	print "ERROR!!! Cannot change directory to: $name ($dir) because $!"; 
     	return -1;
     }
-    return 0;
 }
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -783,7 +782,7 @@ my ($WarningsAdded, $WarningsRemoved) = DiffFiles "-Warnings.txt";
 sub TestDirectory {
 	my $SubDir = shift;
 	
-	ChangeDir( "projects/llvm-test/$SubDir", "Programs Test Subdirectory" ) || return ("", "");
+	ChangeDir( "$BuildDir/llvm/projects/llvm-test/$SubDir", "Programs Test Subdirectory" ) || return ("", "");
 	
 	my $ProgramTestLog = "$Prefix-$SubDir-ProgramTest.txt";
 	
