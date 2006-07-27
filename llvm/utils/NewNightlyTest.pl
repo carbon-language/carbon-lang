@@ -302,7 +302,11 @@ sub ChangeDir { # directory, logical name
     my ($dir,$name) = @_;
     chomp($dir);
     if ( $VERBOSE ) { print "Changing To: $name ($dir)\n"; }
-    chdir($dir) || (print "Cannot change directory to: $name ($dir) " && return -1);
+    $result = chdir($dir);
+    if(!$result){
+    	print "ERROR!!! Cannot change directory to: $name ($dir) because $!"; 
+    	return -1;
+    }
     return 0;
 }
 
@@ -777,57 +781,44 @@ my ($WarningsAdded, $WarningsRemoved) = DiffFiles "-Warnings.txt";
 #
 ##############################################################
 sub TestDirectory {
-    my $SubDir = shift;
+	my $SubDir = shift;
+	
+	ChangeDir( "projects/llvm-test/$SubDir", "Programs Test Subdirectory" ) || return ("", "");
+	
+	my $ProgramTestLog = "$Prefix-$SubDir-ProgramTest.txt";
+	
+	# Run the programs tests... creating a report.nightly.csv file
+	if (!$NOTEST) {
+		print "$MAKECMD -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv ".
+          "TEST=nightly > $ProgramTestLog 2>&1\n";
+		system "$MAKECMD -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv ".
+           "TEST=nightly > $ProgramTestLog 2>&1";
+	  $llcbeta_options=`$MAKECMD print-llcbeta-option`;
+	} 
     
-    ChangeDir( "projects/llvm-test/$SubDir", "Programs Test Subdirectory" ) || return ("", "");
+  my $ProgramsTable;
+  if (`grep '^$MAKECMD\[^:]: .*Error' $ProgramTestLog | wc -l` + 0){
+    $TestError = 1;
+    $ProgramsTable="Error running test $SubDir\n";
+    print "ERROR TESTING\n";
+  } elsif (`grep '^$MAKECMD\[^:]: .*No rule to make target' $ProgramTestLog | wc -l` + 0) {
+    $TestError = 1;
+    $ProgramsTable="Makefile error running tests $SubDir!\n";
+    print "ERROR TESTING\n";
+  } else {
+    $TestError = 0;
+    #
+    # Create a list of the tests which were run...
+    #
+    system "egrep 'TEST-(PASS|FAIL)' < $ProgramTestLog ".
+           "| sort > $Prefix-multisourceprogramstable.txt";
+  }
+  $ProgramsTable = ReadFile "report.nightly.csv";
 
-    my $ProgramTestLog = "$Prefix-$SubDir-ProgramTest.txt";
-    #my $ProgramTestLog = "$Prefix-MultiSource-ProgramTest.txt"; #CHANGE ME!
-    
-    # Run the programs tests... creating a report.nightly.csv file
-    if (!$NOTEST) {
-	print "$MAKECMD -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv "
-	    . "TEST=nightly > $ProgramTestLog 2>&1\n";
-	system "$MAKECMD -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv "
-	    . "TEST=nightly > $ProgramTestLog 2>&1";
-	$llcbeta_options=`$MAKECMD print-llcbeta-option`;
-    } 
-    
-    my $ProgramsTable;
-    if (`grep '^$MAKECMD\[^:]: .*Error' $ProgramTestLog | wc -l` + 0){
-	$TestError = 1;
-	$ProgramsTable="Error running test $SubDir\n";
-	print "ERROR TESTING\n";
-    } elsif (`grep '^$MAKECMD\[^:]: .*No rule to make target' $ProgramTestLog | wc -l` + 0) {
-	$TestError = 1;
-	$ProgramsTable="Makefile error running tests $SubDir!\n";
-	print "ERROR TESTING\n";
-    } else {
-	$TestError = 0;
-
-	#
-	# Create a list of the tests which were run...
-	#
-	system "egrep 'TEST-(PASS|FAIL)' < $ProgramTestLog "
-	. "| sort > $Prefix-multisourceprogramstable.txt";
-    }
-    $ProgramsTable = ReadFile "report.nightly.csv";
-    
-    ChangeDir( "../../..", "Programs Test Parent Directory" );
-    return ($ProgramsTable, $llcbeta_options);
+  ChangeDir( "../../..", "Programs Test Parent Directory" );
+  return ($ProgramsTable, $llcbeta_options);
 }
 
-$patrickjenkins=1;
-if(!$patrickjenkins){
-    if ( $VERBOSE ) {
-        print "Modified Multisource Olden test stage\n";
-    }
-    ($MultiSourceProgramsTable, $multisource_llcbeta_options) = TestDirectory("MultiSource/");
-    ChangeDir( "../../..", "Programs Test Parent Directory" );
-    
-
-    WriteFile "$WebDir/multisourceprogramstable.txt", $MultiSourceProgramsTable;
-}
 if (!$BuildError && $patrickjenkins) {
     if ( $VERBOSE ) {
 	print "SingleSource TEST STAGE\n";
