@@ -305,8 +305,9 @@ sub ChangeDir { # directory, logical name
     $result = chdir($dir);
     if(!$result){
     	print "ERROR!!! Cannot change directory to: $name ($dir) because $!"; 
-    	return -1;
+    	return false;
     }
+    return true;
 }
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
