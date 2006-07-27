@@ -526,7 +526,7 @@ extern "C" void sys_icache_invalidate(const void *Addr, size_t len);
 static void synchronizeICache(const void *Addr, size_t len) {
 #if (defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)) && \
     defined(__APPLE__)
-  sys_icache_invalidate(Addr, Len);
+  sys_icache_invalidate(Addr, len);
 #endif
 }
 
