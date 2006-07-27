@@ -156,9 +156,15 @@ namespace llvm {
     /// before emitting the constant pool for a function.
     const char *ConstantPoolSection;     // Defaults to "\t.section .rodata\n"
 
-    /// JumpTableSection - This is the section that we SwitchToSection right
-    /// before emitting the jump tables for a function.
-    const char *JumpTableSection;     // Defaults to "\t.section .rodata\n"
+    /// JumpTableDataSection - This is the section that we SwitchToSection right
+    /// before emitting the jump tables for a function when the relocation model
+    /// is not PIC.
+    const char *JumpTableDataSection;     // Defaults to "\t.section .rodata\n"
+    
+    /// JumpTableTextSection - This is the section that we SwitchToSection right
+    /// before emitting the jump tables for a function when the relocation model
+    /// is PIC.
+    const char *JumpTableTextSection;     // Defaults to "\t.text\n"
     
     /// StaticCtorsSection - This is the directive that is emitted to switch to
     /// a section to emit the static constructor list.

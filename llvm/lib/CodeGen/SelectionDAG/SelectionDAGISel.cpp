@@ -850,9 +850,15 @@ void SelectionDAGLowering::visitJumpTable(SelectionDAGISel::JumpTable &JT) {
   SDOperand Copy = DAG.getCopyFromReg(getRoot(), JT.Reg, PTy);
   SDOperand IDX = DAG.getNode(ISD::MUL, PTy, Copy,
                               DAG.getConstant(PTyBytes, PTy));
-  SDOperand ADD = DAG.getNode(ISD::ADD, PTy, IDX, DAG.getJumpTable(JT.JTI,PTy));
+  SDOperand TAB = DAG.getJumpTable(JT.JTI,PTy);
+  SDOperand ADD = DAG.getNode(ISD::ADD, PTy, IDX, TAB);
   SDOperand LD  = DAG.getLoad(PTy, Copy.getValue(1), ADD, DAG.getSrcValue(0));
-  DAG.setRoot(DAG.getNode(ISD::BRIND, MVT::Other, LD.getValue(1), LD));
+  if (TLI.getTargetMachine().getRelocationModel() == Reloc::PIC_) {
+    ADD = DAG.getNode(ISD::ADD, PTy, LD.getValue(0), TAB);
+    DAG.setRoot(DAG.getNode(ISD::BRIND, MVT::Other, LD.getValue(1), ADD));
+  } else {
+    DAG.setRoot(DAG.getNode(ISD::BRIND, MVT::Other, LD.getValue(1), LD));
+  }
 }
 
 void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
@@ -896,20 +902,20 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &I) {
   // to represent the switch.
   MachineFunction *CurMF = CurMBB->getParent();
   const BasicBlock *LLVMBB = CurMBB->getBasicBlock();
-  Reloc::Model Relocs = TLI.getTargetMachine().getRelocationModel();
 
   // If the switch has more than 5 blocks, and at least 31.25% dense, and the 
   // target supports indirect branches, then emit a jump table rather than 
   // lowering the switch to a binary tree of conditional branches.
   // FIXME: Make this work with PIC code
   if (TLI.isOperationLegal(ISD::BRIND, TLI.getPointerTy()) &&
-      (Relocs == Reloc::Static || Relocs == Reloc::DynamicNoPIC) &&
       Cases.size() > 5) {
     uint64_t First = cast<ConstantIntegral>(Cases.front().first)->getRawValue();
     uint64_t Last  = cast<ConstantIntegral>(Cases.back().first)->getRawValue();
     double Density = (double)Cases.size() / (double)((Last - First) + 1ULL);
     
     if (Density >= 0.3125) {
+      Reloc::Model Relocs = TLI.getTargetMachine().getRelocationModel();
+      
       // Create a new basic block to hold the code for loading the address
       // of the jump table, and jumping to it.  Update successor information;
       // we will either branch to the default case for the switch, or the jump

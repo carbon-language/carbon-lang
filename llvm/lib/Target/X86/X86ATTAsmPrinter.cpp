@@ -143,7 +143,9 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     if (!isMemOp) O << '$';
     O << PrivateGlobalPrefix << "JTI" << getFunctionNumber() << "_"
       << MO.getJumpTableIndex();
-    // FIXME: PIC relocation model
+    if (Subtarget->TargetType == X86Subtarget::isDarwin && 
+        TM.getRelocationModel() == Reloc::PIC_)
+      O << "-\"L" << getFunctionNumber() << "$pb\"";
     return;
   }
   case MachineOperand::MO_ConstantPoolIndex: {

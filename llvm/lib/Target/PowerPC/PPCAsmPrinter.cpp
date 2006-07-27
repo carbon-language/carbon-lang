@@ -282,8 +282,8 @@ namespace {
         Data64bitsDirective = 0;       // we can't emit a 64-bit unit
       AlignmentIsInBytes = false;    // Alignment is by power of 2.
       ConstantPoolSection = "\t.const\t";
-      // FIXME: Conditionalize jump table section based on PIC
-      JumpTableSection = ".const";
+      JumpTableDataSection = ".const";
+      JumpTableTextSection = "\t.text";
       LCOMMDirective = "\t.lcomm\t";
       StaticCtorsSection = ".mod_init_func";
       StaticDtorsSection = ".mod_term_func";

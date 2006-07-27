@@ -52,7 +52,8 @@ AsmPrinter::AsmPrinter(std::ostream &o, TargetMachine &tm)
   DataSectionStartSuffix(""),
   SectionEndDirectiveSuffix(0),
   ConstantPoolSection("\t.section .rodata\n"),
-  JumpTableSection("\t.section .rodata\n"),
+  JumpTableDataSection("\t.section .rodata\n"),
+  JumpTableTextSection("\t.text\n"),
   StaticCtorsSection("\t.section .ctors,\"aw\",@progbits"),
   StaticDtorsSection("\t.section .dtors,\"aw\",@progbits"),
   FourByteConstantSection(0),
@@ -89,7 +90,7 @@ void AsmPrinter::SwitchToTextSection(const char *NewSection,
     O << CurrentSection << TextSectionStartSuffix << '\n';
 }
 
-/// SwitchToTextSection - Switch to the specified text section of the executable
+/// SwitchToDataSection - Switch to the specified data section of the executable
 /// if we are not already in it!
 ///
 void AsmPrinter::SwitchToDataSection(const char *NewSection,
@@ -209,29 +210,30 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI) {
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   if (JT.empty()) return;
   const TargetData *TD = TM.getTargetData();
+  const char *PtrDataDirective = Data32bitsDirective;
   
-  // FIXME: someday we need to handle PIC jump tables
-  assert((TM.getRelocationModel() == Reloc::Static ||
-          TM.getRelocationModel() == Reloc::DynamicNoPIC) &&
-         "Unhandled relocation model emitting jump table information!");
-  
-  SwitchToDataSection(JumpTableSection, 0);
+  // Pick the directive to use to print the jump table entries, and switch to 
+  // the appropriate section.
+  if (TM.getRelocationModel() == Reloc::PIC_) {
+    SwitchToTextSection(JumpTableTextSection, 0);
+  } else {
+    SwitchToDataSection(JumpTableDataSection, 0);
+    if (TD->getPointerSize() == 8)
+      PtrDataDirective = Data64bitsDirective;
+  }
   EmitAlignment(Log2_32(TD->getPointerAlignment()));
   
-  // Pick the directive to use based on the pointer size. FIXME: when we support
-  // PIC jumptables, this should always use the 32-bit directive for label
-  // differences. 
-  const char *PtrDataDirective = Data32bitsDirective;
-  if (TD->getPointerSize() == 8)
-    PtrDataDirective = Data64bitsDirective;
-
   for (unsigned i = 0, e = JT.size(); i != e; ++i) {
     O << PrivateGlobalPrefix << "JTI" << getFunctionNumber() << '_' << i 
       << ":\n";
     const std::vector<MachineBasicBlock*> &JTBBs = JT[i].MBBs;
     for (unsigned ii = 0, ee = JTBBs.size(); ii != ee; ++ii) {
       O << PtrDataDirective << ' ';
-      printBasicBlockLabel(JTBBs[ii]);
+      printBasicBlockLabel(JTBBs[ii], false, false);
+      if (TM.getRelocationModel() == Reloc::PIC_) {
+        O << '-' << PrivateGlobalPrefix << "JTI" << getFunctionNumber() 
+          << '_' << i;
+      }
       O << '\n';
     }
   }

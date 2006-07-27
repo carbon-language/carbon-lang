@@ -62,7 +62,7 @@ bool X86SharedAsmPrinter::doInitialization(Module &M) {
     ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
     PrivateGlobalPrefix = "L";     // Marker for constant pool idxs
     ConstantPoolSection = "\t.const\n";
-    JumpTableSection = "\t.const\n"; // FIXME: depends on PIC mode
+    JumpTableDataSection = "\t.const\n"; // FIXME: depends on PIC mode
     FourByteConstantSection = "\t.literal4\n";
     EightByteConstantSection = "\t.literal8\n";
     LCOMMDirective = "\t.lcomm\t";
