@@ -124,7 +124,7 @@ namespace {
 
   private:
     void DetermineTopologicalOrdering();
-    void DeterminReachibility();
+    void DeterminReachibility(SDNode *f, SDNode *t);
 
     void Select(SDOperand &Result, SDOperand N);
 
@@ -186,7 +186,15 @@ namespace {
 
     /// TopOrder - Topological ordering of all nodes in the DAG.
     ///
-    std::vector<SDNode*> TopOrder;
+    SDNode* *TopOrder;
+
+    /// IdToOrder - Node id to topological order map.
+    ///
+    unsigned *IdToOrder;
+
+    /// RMRange - The range of reachibility information available for the
+    /// particular source node.
+    unsigned *RMRange;
 
     /// ReachibilityMatrix - A N x N matrix representing all pairs reachibility
     /// information. One bit per potential edge.
@@ -221,8 +229,7 @@ bool X86DAGToDAGISel::IsFoldableBy(SDNode *N, SDNode *U) {
   //      /        [X]
   //      |         ^
   //     [U]--------|
-  if (!ReachibilityMatrix)
-    DeterminReachibility();
+  DeterminReachibility(U, N);
   assert(isReachable(U, N) && "Attempting to fold a non-operand node?");
   for (SDNode::op_iterator I = U->op_begin(), E = U->op_end(); I != E; ++I) {
     SDNode *P = I->Val;
@@ -236,7 +243,11 @@ bool X86DAGToDAGISel::IsFoldableBy(SDNode *N, SDNode *U) {
 /// in the DAG.
 void X86DAGToDAGISel::DetermineTopologicalOrdering() {
   DAGSize = CurDAG->AssignNodeIds();
-  TopOrder.reserve(DAGSize);
+  TopOrder = new SDNode*[DAGSize];
+  IdToOrder = new unsigned[DAGSize];
+  memset(IdToOrder, 0, DAGSize * sizeof(unsigned));
+  RMRange = new unsigned[DAGSize];
+  memset(RMRange, 0, DAGSize * sizeof(unsigned));
 
   std::vector<unsigned> InDegree(DAGSize);
   std::list<SDNode*> Sources;
@@ -254,6 +265,7 @@ void X86DAGToDAGISel::DetermineTopologicalOrdering() {
     SDNode *N = Sources.front();
     Sources.pop_front();
     TopOrder[Order] = N;
+    IdToOrder[N->getNodeId()] = Order;
     Order++;
     for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); I != E; ++I) {
       SDNode *P = I->Val;
@@ -266,19 +278,31 @@ void X86DAGToDAGISel::DetermineTopologicalOrdering() {
   }
 }
 
-void X86DAGToDAGISel::DeterminReachibility() {
-  DetermineTopologicalOrdering();
-  ReachibilityMatrix = new unsigned char[DAGSize * DAGSize];
-  memset(ReachibilityMatrix, 0, DAGSize * DAGSize * sizeof(unsigned char));
+void X86DAGToDAGISel::DeterminReachibility(SDNode *f, SDNode *t) {
+  if (!ReachibilityMatrix) {
+    DetermineTopologicalOrdering();
+    ReachibilityMatrix = new unsigned char[DAGSize * DAGSize];
+    memset(ReachibilityMatrix, 0, DAGSize * DAGSize * sizeof(unsigned char));
+  }
 
-  for (unsigned i = 0; i < DAGSize; ++i) {
+  int Idf = f->getNodeId();
+  int Idt = t->getNodeId();
+  unsigned Orderf = IdToOrder[Idf];
+  unsigned Ordert = IdToOrder[Idt];
+  unsigned Range = RMRange[Idf];
+  if (Range >= Ordert)
+    return;
+  if (Range < Orderf)
+    Range = Orderf;
+
+  for (unsigned i = Range; i < Ordert; ++i) {
     SDNode *N = TopOrder[i];
     setReachable(N, N);
     // If N is a leaf node, there is nothing more to do.
     if (N->getNumOperands() == 0)
       continue;
 
-    for (unsigned i2 = 0; ; ++i2) {
+    for (unsigned i2 = Orderf; ; ++i2) {
       SDNode *M = TopOrder[i2];
       if (isReachable(M, N)) {
         // Update reachibility from M to N's operands.
@@ -288,6 +312,8 @@ void X86DAGToDAGISel::DeterminReachibility() {
       if (M == N) break;
     }
   }
+
+  RMRange[Idf] = Ordert;
 }
 
 /// InstructionSelectBasicBlock - This callback is invoked by SelectionDAGISel
@@ -308,7 +334,12 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
 #endif
   if (ReachibilityMatrix) {
     delete[] ReachibilityMatrix;
+    delete[] TopOrder;
+    delete[] IdToOrder;
+    delete[] RMRange;
     ReachibilityMatrix = NULL;
+    TopOrder = NULL;
+    IdToOrder = RMRange = NULL;
   }
   CodeGenMap.clear();
   HandleMap.clear();
