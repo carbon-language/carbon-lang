@@ -52,6 +52,8 @@ use Socket;
 #                   the default.
 #  -compileflags    Next argument specifies extra options passed to make when
 #                   building LLVM.
+#  -use-gmake    		Use gmake instead of the default make command to build
+#                   llvm and run tests.
 #
 #  ---------------- Options to configure llvm-test ----------------------------
 #  -extraflags      Next argument specifies extra options that are passed to
@@ -108,6 +110,7 @@ $CONFIGUREARGS="";
 $nickname="";
 $NOTEST=0;
 $NORUNNINGTESTS=0;
+$MAKECMD="make";
 
 while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
     shift;
@@ -122,8 +125,8 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
     if (/^-norunningtests$/) { $NORUNNINGTESTS = 1; next; }
     if (/^-parallel$/)       { $MAKEOPTS = "$MAKEOPTS -j2 -l3.0"; next; }
     if (/^-release$/)        { $MAKEOPTS = "$MAKEOPTS ENABLE_OPTIMIZED=1 ".
-    						   "OPTIMIZE_OPTION=-O2"; 
-    						   $BUILDTYPE="release"; next; }
+    						   						             "OPTIMIZE_OPTION=-O2"; 
+    						               $BUILDTYPE="release"; next; }
     if (/^-enable-llcbeta$/) { $PROGTESTOPTS .= " ENABLE_LLCBETA=1"; next; }
     if (/^-disable-llc$/)    { $PROGTESTOPTS .= " DISABLE_LLC=1";
 			       $CONFIGUREARGS .= " --disable-llc_diffs"; next; } 
@@ -161,6 +164,9 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
     }
     if (/^-compileflags/)    {
 	$MAKEOPTS = "$MAKEOPTS $ARGV[0]"; shift; next;
+    }
+    if (/^-use-gmake/)    {
+			$MAKECMD = "ARGV[0]"; shift; next;
     }
     if (/^-extraflags/)      {
 	$PROGTESTOPTS .= " EXTRA_FLAGS=\'$ARGV[0]\'"; shift; next;
@@ -202,18 +208,10 @@ if($CVSRootDir eq "" or
 if($nickname eq ""){
 	die ("Please invoke NewNightlyTest.pl with command line option \"-nickname <nickname>\"");
 }
-if($BUILDTYPE ne "releaese"){
+
+if($BUILDTYPE ne "release"){
 	$BUILDTYPE = "debug";
 }
-
-#FIXME: this is a hack for SunOS, there must be a better way
-if(`uname` eq "SunOS"){
-	$MAKECMD = "gmake";
-}
-else {
-	$MAKECMD="make";
-}
-
 
 ##############################################################
 #
