@@ -2698,6 +2698,18 @@ void SelectionDAG::ReplaceAllUsesOfValueWith(SDOperand From, SDOperand To,
 }
 
 
+/// AssignNodeIds - Assign a unique node id for each node in the DAG. It returns
+/// the maximum id.
+int SelectionDAG::AssignNodeIds() {
+  int Id = 0;
+  for (allnodes_iterator I = allnodes_begin(), E = allnodes_end(); I != E; ++I){
+    SDNode *N = I;
+    N->setNodeId(Id++);
+  }
+  return Id;
+}
+
+
 //===----------------------------------------------------------------------===//
 //                              SDNode Class
 //===----------------------------------------------------------------------===//
