@@ -819,34 +819,40 @@ sub TestDirectory {
   return ($ProgramsTable, $llcbeta_options);
 }
 
-if (!$BuildError && $patrickjenkins) {
-    if ( $VERBOSE ) {
-	print "SingleSource TEST STAGE\n";
-    }
-    ($SingleSourceProgramsTable, $llcbeta_options) = TestDirectory("SingleSource");
-    WriteFile "$Prefix-singlesourceprogramstable.txt", $SingleSourceProgramsTable;
-    if ( $VERBOSE ) {
-	print "MultiSource TEST STAGE\n";
-    }
-    ($MultiSourceProgramsTable, $llcbeta_options) = TestDirectory("MultiSource");
-    WriteFile "$Prefix-multisourceprogramstable.txt", $MultiSourceProgramsTable;
-    if ( ! $NOEXTERNALS ) {
+if (!$BuildError) {
 	if ( $VERBOSE ) {
-	    print "External TEST STAGE\n";
+    print "SingleSource TEST STAGE\n";
 	}
-	($ExternalProgramsTable, $llcbeta_options) = TestDirectory("External");
+	($SingleSourceProgramsTable, $llcbeta_options) = TestDirectory("SingleSource");
+	if ( $VERBOSE ) {
+    print "SingleSource returned $SingleSourceProgramsTable\n";
+	}
+	WriteFile "$Prefix-singlesourceprogramstable.txt", $SingleSourceProgramsTable;
+	if ( $VERBOSE ) {
+	  print "MultiSource TEST STAGE\n";
+	}
+	($MultiSourceProgramsTable, $llcbeta_options) = TestDirectory("MultiSource");
+	WriteFile "$Prefix-multisourceprogramstable.txt", $MultiSourceProgramsTable;
+	if ( $VERBOSE ) {
+	  print "MultiSource returned $MultiSourceProgramsTable\n";
+	}
+	if ( ! $NOEXTERNALS ) {
+	  if ( $VERBOSE ) {
+		  print "External TEST STAGE\n";
+	  }
+	  ($ExternalProgramsTable, $llcbeta_options) = TestDirectory("External");
+	  WriteFile "$Prefix-externalprogramstable.txt", $ExternalProgramsTable;
+	  system "cat $Prefix-singlesourceprogramstable.txt $Prefix-multisourceprogramstable.txt ".
+		       " $Prefix-externalprogramstable.txt | sort > $Prefix-Tests.txt";
+	} else {
+	  $ExternalProgramsTable = "External TEST STAGE SKIPPED\n";
+	  if ( $VERBOSE ) {
+		  print "External TEST STAGE SKIPPED\n";
+	  }
+	  system "cat $Prefix-singlesourceprogramstable.txt $Prefix-multisourceprogramstable.txt ".
+		       " | sort > $Prefix-Tests.txt";
+	}
 	WriteFile "$Prefix-externalprogramstable.txt", $ExternalProgramsTable;
-	system "cat $Prefix-singlesourceprogramstable.txt $Prefix-multisourceprogramstable.txt ".
-	    " $Prefix-externalprogramstable.txt | sort > $Prefix-Tests.txt";
-    } else {
-	$ExternalProgramsTable = "External TEST STAGE SKIPPED\n";
-	if ( $VERBOSE ) {
-	    print "External TEST STAGE SKIPPED\n";
-	}
-	system "cat $Prefix-singlesourceprogramstable.txt $Prefix-multisourceprogramstable.txt ".
-	    " | sort > $Prefix-Tests.txt";
-    }
-    WriteFile "$Prefix-externalprogramstable.txt", $ExternalProgramsTable;
 }
 
 ##############################################################
