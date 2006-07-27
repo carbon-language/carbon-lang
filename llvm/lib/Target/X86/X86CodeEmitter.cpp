@@ -111,7 +111,8 @@ void Emitter::emitPCRelativeValue(unsigned Address) {
 void Emitter::emitPCRelativeBlockAddress(MachineBasicBlock *MBB) {
   // Remember where this reference was and where it is to so we can
   // deal with it later.
-  TM.getJITInfo()->addBBRef(MBB, MCE.getCurrentPCValue());
+  MCE.addRelocation(MachineRelocation::getBB(MCE.getCurrentPCOffset(),
+                                             X86::reloc_pcrel_word, MBB));
   MCE.emitWordLE(0);
 }
 

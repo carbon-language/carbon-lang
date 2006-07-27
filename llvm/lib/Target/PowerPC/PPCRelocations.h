@@ -28,6 +28,10 @@ namespace llvm {
       // reloc_pcrel_bx - PC relative relocation, for the b or bl instructions.
       reloc_pcrel_bx,
 
+      // reloc_pcrel_bcx - PC relative relocation, for BLT,BLE,BEQ,BGE,BGT,BNE,
+      // and other bcx instructions.
+      reloc_pcrel_bcx,
+
       // reloc_absolute_high - Absolute relocation, for the loadhi instruction
       // (which is really addis).  Add the high 16-bits of the specified global
       // address into the low 16-bits of the instruction.

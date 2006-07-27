@@ -83,26 +83,12 @@ namespace llvm {
       assert(NumRelocs == 0 && "This target does not have relocations!");
     }
 
-    /// resolveBBRefs - Resolve branches to BasicBlocks for the JIT emitted
-    /// function.
-    virtual void resolveBBRefs(MachineCodeEmitter &MCE) {}
-
-    /// addBBRef - Add a BasicBlock reference to be resolved after the function
-    /// is emitted.
-    void addBBRef(MachineBasicBlock *BB, intptr_t PC) {
-      BBRefs.push_back(std::make_pair(BB, PC));
-    }
-
     /// needsGOT - Allows a target to specify that it would like the
     // JIT to manage a GOT for it.
     bool needsGOT() const { return useGOT; }
 
   protected:
     bool useGOT;
-
-    // Tracks which instruction references which BasicBlock
-    std::vector<std::pair<MachineBasicBlock*, intptr_t> > BBRefs;
-    
   };
 } // End llvm namespace
 

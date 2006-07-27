@@ -206,6 +206,14 @@ void PPCJITInfo::relocate(void *Function, MachineRelocation *MR,
              "Relocation out of range!");
       *RelocPos |= (ResultPtr & ((1 << 24)-1))  << 2;
       break;
+    case PPC::reloc_pcrel_bcx:
+      // PC-relative relocation for BLT,BLE,BEQ,BGE,BGT,BNE, or other
+      // bcx instructions.
+      ResultPtr = (ResultPtr-(intptr_t)RelocPos) >> 2;
+      assert(ResultPtr >= -(1 << 13) && ResultPtr < (1 << 13) &&
+             "Relocation out of range!");
+      *RelocPos |= (ResultPtr & ((1 << 14)-1))  << 2;
+      break;
     case PPC::reloc_absolute_ptr_high: // Pointer relocations.
     case PPC::reloc_absolute_ptr_low:
     case PPC::reloc_absolute_high:     // high bits of ref -> low 16 of instr
@@ -244,27 +252,4 @@ void PPCJITInfo::relocate(void *Function, MachineRelocation *MR,
 
 void PPCJITInfo::replaceMachineCodeForFunction(void *Old, void *New) {
   EmitBranchToAt(Old, New, false);
-}
-
-void PPCJITInfo::resolveBBRefs(MachineCodeEmitter &MCE) {
-  // Resolve branches to BasicBlocks for the entire function
-  for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {
-    intptr_t Location = MCE.getMachineBasicBlockAddress(BBRefs[i].first);
-    unsigned *Ref = (unsigned *)BBRefs[i].second;
-    DEBUG(std::cerr << "Fixup @ " << (void*)Ref << " to " << (void*)Location
-                    << "\n");
-    unsigned Instr = *Ref;
-    intptr_t BranchTargetDisp = (Location - (intptr_t)Ref) >> 2;
-
-    switch (Instr >> 26) {
-    default: assert(0 && "Unknown branch user!");
-    case 18:  // This is B or BL
-      *Ref |= (BranchTargetDisp & ((1 << 24)-1)) << 2;
-      break;
-    case 16:  // This is BLT,BLE,BEQ,BGE,BGT,BNE, or other bcx instruction
-      *Ref |= (BranchTargetDisp & ((1 << 14)-1)) << 2;
-      break;
-    }
-  }
-  BBRefs.clear();
 }

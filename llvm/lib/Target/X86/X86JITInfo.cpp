@@ -203,13 +203,3 @@ void X86JITInfo::relocate(void *Function, MachineRelocation *MR,
     }
   }
 }
-
-void X86JITInfo::resolveBBRefs(MachineCodeEmitter &MCE) {
-  // Resolve all forward branches now.
-  for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {
-    unsigned Location = MCE.getMachineBasicBlockAddress(BBRefs[i].first);
-    intptr_t Ref = BBRefs[i].second;
-    *((unsigned*)Ref) = Location-Ref-4;
-  }
-  BBRefs.clear();
-}

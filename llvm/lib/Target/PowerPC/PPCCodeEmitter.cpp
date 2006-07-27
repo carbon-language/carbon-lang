@@ -180,8 +180,16 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
       MCE.addRelocation(MachineRelocation::getExtSym(MCE.getCurrentPCOffset(),
                                           Reloc, MO.getSymbolName(), 0));
   } else if (MO.isMachineBasicBlock()) {
-    unsigned* CurrPC = (unsigned*)(intptr_t)MCE.getCurrentPCValue();
-    TM.getJITInfo()->addBBRef(MO.getMachineBasicBlock(), (intptr_t)CurrPC);
+    unsigned Reloc = 0;
+    unsigned Opcode = MI.getOpcode();
+    if (Opcode == PPC::B || Opcode == PPC::BL || Opcode == PPC::BLA)
+      Reloc = PPC::reloc_pcrel_bx;
+    else
+      // BLT,BLE,BEQ,BGE,BGT,BNE, or other bcx instruction
+      Reloc = PPC::reloc_pcrel_bcx;
+    MCE.addRelocation(MachineRelocation::getBB(MCE.getCurrentPCOffset(),
+                                               Reloc,
+                                               MO.getMachineBasicBlock()));
   } else if (MO.isConstantPoolIndex() || MO.isJumpTableIndex()) {
     if (MO.isConstantPoolIndex())
       rv = MCE.getConstantPoolEntryAddress(MO.getConstantPoolIndex());

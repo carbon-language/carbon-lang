@@ -215,8 +215,9 @@ int AlphaCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
                                           Reloc, MO.getConstantPoolIndex(),
                                           Offset));
   } else if (MO.isMachineBasicBlock()) {
-    TM.getJITInfo()->addBBRef(MO.getMachineBasicBlock(),
-                              MCE.getCurrentPCValue());
+    MCE.addRelocation(MachineRelocation::getBB(MCE.getCurrentPCOffset(),
+                                               Alpha::reloc_bsr,
+                                               MO.getMachineBasicBlock()));
   }else {
     std::cerr << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
     abort();

@@ -807,13 +807,13 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
         ResultPtr = getPointerToGlobal(MR.getGlobalValue(),
                                        BufferBegin+MR.getMachineCodeOffset(),
                                        MR.doesntNeedFunctionStub());
+      } else if (MR.isBasicBlock()) {
+        ResultPtr = (void*)getMachineBasicBlockAddress(MR.getBasicBlock());
       } else if (MR.isConstantPoolIndex()){
-        assert(MR.isConstantPoolIndex());
         ResultPtr=(void*)getConstantPoolEntryAddress(MR.getConstantPoolIndex());
       } else {
         assert(MR.isJumpTableIndex());
         ResultPtr=(void*)getJumpTableEntryAddress(MR.getJumpTableIndex());
-
       }
 
       MR.setResultPointer(ResultPtr);
@@ -845,9 +845,6 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
       ((void**)MemMgr.getGOTBase())[idx] = (void*)BufferBegin;
     }
   }
-
-  // Resolve BasicaBlock references.
-  TheJIT->getJITInfo().resolveBBRefs(*this);
 
   // Invalidate the icache if necessary.
   synchronizeICache(FnStart, FnEnd-FnStart);
