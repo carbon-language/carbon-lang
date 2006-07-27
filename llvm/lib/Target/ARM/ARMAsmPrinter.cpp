@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/ADT/Statistic.h"
@@ -190,6 +191,34 @@ bool ARMAsmPrinter::doInitialization(Module &M) {
 }
 
 bool ARMAsmPrinter::doFinalization(Module &M) {
+  const TargetData *TD = TM.getTargetData();
+
+  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
+       I != E; ++I) {
+    if (!I->hasInitializer())   // External global require no code
+      continue;
+
+    if (EmitSpecialLLVMGlobal(I))
+      continue;
+
+    O << "\n\n";
+    std::string name = Mang->getValueName(I);
+    Constant *C = I->getInitializer();
+    unsigned Size = TD->getTypeSize(C->getType());
+    unsigned Align = TD->getTypeAlignment(C->getType());
+
+    assert (I->getLinkage() == GlobalValue::ExternalLinkage);
+    O << "\t.globl " << name << "\n";
+
+    assert (!C->isNullValue());
+    SwitchToDataSection(".data", I);
+
+    EmitAlignment(Align, I);
+    O << "\t.type " << name << ", %object\n";
+    O << "\t.size " << name << ", " << Size << "\n";
+    O << name << ":\n";
+    EmitGlobalConstant(C);
+  }
   AsmPrinter::doFinalization(M);
   return false; // success
 }
