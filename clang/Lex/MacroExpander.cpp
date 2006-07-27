@@ -16,6 +16,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/Diagnostic.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Config/Alloca.h"
 using namespace llvm;
 using namespace clang;
@@ -285,7 +286,7 @@ MacroExpander::~MacroExpander() {
 /// Expand the arguments of a function-like macro so that we can quickly
 /// return preexpanded tokens from MacroTokens.
 void MacroExpander::ExpandFunctionArguments() {
-  std::vector<LexerToken> ResultToks;
+  SmallVector<LexerToken, 128> ResultToks;
   
   // Loop through the MacroTokens tokens, expanding them into ResultToks.  Keep
   // track of whether we change anything.  If not, no need to keep them.  If so,
@@ -354,8 +355,7 @@ void MacroExpander::ExpandFunctionArguments() {
         if (ResultArgToks->getKind() != tok::eof) {
           unsigned FirstResult = ResultToks.size();
           unsigned NumToks = MacroArgs::getArgLength(ResultArgToks);
-          ResultToks.insert(ResultToks.end(), ResultArgToks, 
-                            ResultArgToks+NumToks);
+          ResultToks.append(ResultArgToks, ResultArgToks+NumToks);
         
           // If any tokens were substituted from the argument, the whitespace
           // before the first token should match the whitespace of the arg
@@ -372,7 +372,7 @@ void MacroExpander::ExpandFunctionArguments() {
 
       unsigned NumToks = MacroArgs::getArgLength(ArgToks);
       if (NumToks) {  // Not an empty argument?
-        ResultToks.insert(ResultToks.end(), ArgToks, ArgToks+NumToks);
+        ResultToks.append(ArgToks, ArgToks+NumToks);
         continue;
       }
       
