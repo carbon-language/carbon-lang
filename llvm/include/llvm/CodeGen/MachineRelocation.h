@@ -19,6 +19,7 @@
 
 namespace llvm {
 class GlobalValue;
+class MachineBasicBlock;
 
 /// MachineRelocation - This represents a target-specific relocation value,
 /// produced by the code emitter.  This relocation is resolved after the has
@@ -38,6 +39,7 @@ class MachineRelocation {
   enum AddressType {
     isResult,         // Relocation has be transformed into its result pointer.
     isGV,             // The Target.GV field is valid.
+    isBB,             // Relocation of BB address.
     isExtSym,         // The Target.ExtSym field is valid.
     isConstPool,      // Relocation of constant pool address.
     isJumpTable,      // Relocation of jump table address.
@@ -52,11 +54,12 @@ class MachineRelocation {
   intptr_t ConstantVal;
 
   union {
-    void *Result;        // If this has been resolved to a resolved pointer
-    GlobalValue *GV;     // If this is a pointer to an LLVM global
-    const char *ExtSym;  // If this is a pointer to a named symbol
-    unsigned Index;      // Constant pool / jump table index
-    unsigned GOTIndex;   // Index in the GOT of this symbol/global
+    void *Result;           // If this has been resolved to a resolved pointer
+    GlobalValue *GV;        // If this is a pointer to an LLVM global
+    MachineBasicBlock *MBB; // If this is a pointer to a LLVM BB
+    const char *ExtSym;     // If this is a pointer to a named symbol
+    unsigned Index;         // Constant pool / jump table index
+    unsigned GOTIndex;      // Index in the GOT of this symbol/global
   } Target;
 
   unsigned TargetReloType : 6; // The target relocation ID.
@@ -80,6 +83,22 @@ public:
     Result.DoesntNeedFnStub = DoesntNeedFunctionStub;
     Result.GOTRelative = GOTrelative;
     Result.Target.GV = GV;
+    return Result;
+  }
+
+  /// MachineRelocation::getBB - Return a relocation entry for a BB.
+  ///
+  static MachineRelocation getBB(intptr_t offset,unsigned RelocationType,
+                                 MachineBasicBlock *MBB, intptr_t cst = 0) {
+    assert((RelocationType & ~63) == 0 && "Relocation type too large!");
+    MachineRelocation Result;
+    Result.Offset = offset;
+    Result.ConstantVal = cst;
+    Result.TargetReloType = RelocationType;
+    Result.AddrType = isBB;
+    Result.DoesntNeedFnStub = false;
+    Result.GOTRelative = false;
+    Result.Target.MBB = MBB;
     return Result;
   }
 
@@ -160,6 +179,12 @@ public:
     return AddrType == isGV;
   }
 
+  /// isBasicBlock - Return true if this relocation is a basic block reference.
+  ///
+  bool isBasicBlock() const {
+    return AddrType == isBB;
+  }
+
   /// isString - Return true if this is a constant string.
   ///
   bool isString() const {
@@ -198,6 +223,11 @@ public:
   GlobalValue *getGlobalValue() const {
     assert(isGlobalValue() && "This is not a global value reference!");
     return Target.GV;
+  }
+
+  MachineBasicBlock *getBasicBlock() const {
+    assert(isBasicBlock() && "This is not a basic block reference!");
+    return Target.MBB;
   }
 
   /// getString - If this is a string value, return the string reference.
