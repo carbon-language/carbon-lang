@@ -281,9 +281,7 @@ void X86DAGToDAGISel::DetermineTopologicalOrdering() {
 void X86DAGToDAGISel::DeterminReachibility(SDNode *f, SDNode *t) {
   if (!ReachibilityMatrix) {
     DetermineTopologicalOrdering();
-    unsigned RMSize = DAGSize * DAGSize / 8;
-    if ((DAGSize * DAGSize) % 8)
-      RMSize++;
+    unsigned RMSize = (DAGSize * DAGSize + 7) / 8;
     ReachibilityMatrix = new unsigned char[RMSize];
     memset(ReachibilityMatrix, 0, RMSize);
   }
