@@ -47,7 +47,8 @@ public:
   enum TokenFlags {
     StartOfLine   = 0x01,  // At start of line or only after whitespace.
     LeadingSpace  = 0x02,  // Whitespace exists before this token.
-    NeedsCleaning = 0x04   // Contained an escaped newline or trigraph.
+    DisableExpand = 0x04,  // This identifier may never be macro expanded.
+    NeedsCleaning = 0x08   // Contained an escaped newline or trigraph.
   };
 
   tok::TokenKind getKind() const { return Kind; }
@@ -100,6 +101,10 @@ public:
   ///
   bool hasLeadingSpace() const { return Flags & LeadingSpace; }
   
+  /// isExpandDisabled - Return true if this identifier token should never
+  /// be expanded in the future, due to C99 6.10.3.4p2.
+  bool isExpandDisabled() const { return Flags & DisableExpand; }
+    
   /// needsCleaning - Return true if this token has trigraphs or escaped
   /// newlines in it.
   ///

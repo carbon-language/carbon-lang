@@ -147,6 +147,8 @@ void Preprocessor::DumpToken(const LexerToken &Tok, bool DumpFlags) const {
     std::cerr << " [StartOfLine]";
   if (Tok.hasLeadingSpace())
     std::cerr << " [LeadingSpace]";
+  if (Tok.isExpandDisabled())
+    std::cerr << " [ExpandDisabled]";
   if (Tok.needsCleaning()) {
     const char *Start = SourceMgr.getCharacterData(Tok.getLocation());
     std::cerr << " [UnClean='" << std::string(Start, Start+Tok.getLength())
@@ -675,6 +677,11 @@ bool Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier,
       SourceMgr.getInstantiationLoc(Identifier.getLocation(), InstantiateLoc);
     Identifier.SetLocation(Loc);
     
+    // If this is #define X X, we must mark the result as unexpandible.
+    if (IdentifierInfo *NewII = Identifier.getIdentifierInfo())
+      if (NewII->getMacroInfo() == MI)
+        Identifier.SetFlag(LexerToken::DisableExpand);
+    
     // Since this is not an identifier token, it can't be macro expanded, so
     // we're done.
     ++NumFastMacroExpanded;
@@ -998,9 +1005,17 @@ void Preprocessor::HandleIdentifier(LexerToken &Identifier) {
   
   // If this is a macro to be expanded, do it.
   if (MacroInfo *MI = II.getMacroInfo())
-    if (MI->isEnabled() && !DisableMacroExpansion)
-      if (!HandleMacroExpandedIdentifier(Identifier, MI))
-        return;
+    if (!DisableMacroExpansion && !Identifier.isExpandDisabled()) {
+      if (MI->isEnabled()) {
+        if (!HandleMacroExpandedIdentifier(Identifier, MI))
+          return;
+      } else {
+        // C99 6.10.3.4p2 says that a disabled macro may never again be
+        // expanded, even if it's in a context where it could be expanded in the
+        // future.
+        Identifier.SetFlag(LexerToken::DisableExpand);
+      }
+    }
 
   // Change the kind of this identifier to the appropriate token kind, e.g.
   // turning "for" into a keyword.
