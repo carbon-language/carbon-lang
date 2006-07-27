@@ -214,13 +214,18 @@ ifdef ENABLE_PROFILING
 else
   ifdef ENABLE_OPTIMIZED
     BuildMode := Release
-    # Don't use -fomit-frame-pointer on FreeBSD
+    # Don't use -fomit-frame-pointer on Darwin or FreeBSD.
     ifneq ($(OS),FreeBSD)
-    # Don't use -fomit-frame-pointer on Darwin, it breaks backtraces.
     ifneq ($(OS),Darwin)
       OmitFramePointer := -fomit-frame-pointer
     endif
     endif
+
+    # Darwin requires -fstrict-aliasing to be explicitly enabled.
+    ifeq ($(OS),Darwin)
+      EXTRA_OPTIONS += -fstrict-aliasing
+    endif
+
     CXX.Flags := $(OPTIMIZE_OPTION) $(OmitFramePointer)
     C.Flags   := $(OPTIMIZE_OPTION) $(OmitFramePointer)
     LD.Flags  := $(OPTIMIZE_OPTION)
@@ -251,7 +256,7 @@ LD.Flags      += $(LDFLAGS)
 AR.Flags      := cru
 LibTool.Flags := --tag=CXX
 
-#Make Floating point ieee complient on alpha
+# Make Floating point IEEE compliant on Alpha.
 ifeq ($(ARCH),Alpha)
   CXX.Flags     += -mieee -fPIC
   CPP.BaseFlags += -mieee -fPIC
