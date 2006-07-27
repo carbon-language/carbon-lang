@@ -166,7 +166,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
 	$MAKEOPTS = "$MAKEOPTS $ARGV[0]"; shift; next;
     }
     if (/^-use-gmake/)    {
-			$MAKECMD = "ARGV[0]"; shift; next;
+			$MAKECMD = "gmake"; shift; next;
     }
     if (/^-extraflags/)      {
 	$PROGTESTOPTS .= " EXTRA_FLAGS=\'$ARGV[0]\'"; shift; next;
