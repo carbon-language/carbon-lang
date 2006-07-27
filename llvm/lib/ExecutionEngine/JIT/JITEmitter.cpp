@@ -516,6 +516,20 @@ static JITResolver &getJITResolver(MachineCodeEmitter *MCE = 0) {
   return TheJITResolver;
 }
 
+#if (defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)) && \
+    defined(__APPLE__)
+extern "C" void sys_icache_invalidate(const void *Addr, size_t len);
+#endif
+
+/// synchronizeICache - On some targets, the JIT emitted code must be
+/// explicitly refetched to ensure correct execution.
+static void synchronizeICache(const void *Addr, size_t len) {
+#if (defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)) && \
+    defined(__APPLE__)
+  sys_icache_invalidate(Addr, Len);
+#endif
+}
+
 /// getFunctionStub - This returns a pointer to a function stub, creating
 /// one on demand as needed.
 void *JITResolver::getFunctionStub(Function *F) {
@@ -543,8 +557,7 @@ void *JITResolver::getFunctionStub(Function *F) {
   }
 
   // Invalidate the icache if necessary.
-  TheJIT->getJITInfo().
-    synchronizeICache(Stub, MCE.getCurrentPCValue()-(intptr_t)Stub);
+  synchronizeICache(Stub, MCE.getCurrentPCValue()-(intptr_t)Stub);
 
   DEBUG(std::cerr << "JIT: Stub emitted at [" << Stub << "] for function '"
                   << F->getName() << "'\n");
@@ -565,8 +578,7 @@ void *JITResolver::getExternalFunctionStub(void *FnAddr) {
   Stub = TheJIT->getJITInfo().emitFunctionStub(FnAddr, MCE);
 
   // Invalidate the icache if necessary.
-  TheJIT->getJITInfo().
-    synchronizeICache(Stub, MCE.getCurrentPCValue()-(intptr_t)Stub);
+  synchronizeICache(Stub, MCE.getCurrentPCValue()-(intptr_t)Stub);
 
   DEBUG(std::cerr << "JIT: Stub emitted at [" << Stub
         << "] for external function at '" << FnAddr << "'\n");
@@ -838,7 +850,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
   TheJIT->getJITInfo().resolveBBRefs(*this);
 
   // Invalidate the icache if necessary.
-  TheJIT->getJITInfo().synchronizeICache(FnStart, FnEnd-FnStart);
+  synchronizeICache(FnStart, FnEnd-FnStart);
 
   DEBUG(std::cerr << "JIT: Finished CodeGen of [" << (void*)FnStart
                   << "] Function: " << F.getFunction()->getName()

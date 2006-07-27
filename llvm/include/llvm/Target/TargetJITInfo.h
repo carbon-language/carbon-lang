@@ -87,10 +87,6 @@ namespace llvm {
     /// function.
     virtual void resolveBBRefs(MachineCodeEmitter &MCE) {}
 
-    /// synchronizeICache - On some targets, the JIT emitted code must be
-    /// explicitly refetched to ensure correct execution.
-    virtual void synchronizeICache(const void *Addr, size_t len) {}
-
     /// addBBRef - Add a BasicBlock reference to be resolved after the function
     /// is emitted.
     void addBBRef(MachineBasicBlock *BB, intptr_t PC) {
