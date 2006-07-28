@@ -333,11 +333,12 @@ Path::getLast() const {
   return path.substr(pos+1);
 }
 
-void
-Path::getStatusInfo(StatusInfo& info) const {
+bool
+Path::getStatusInfo(FileStatus &info, std::string *ErrStr) const {
   WIN32_FILE_ATTRIBUTE_DATA fi;
   if (!GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi))
-    ThrowError("getStatusInfo():" + std::string(path) + ": Can't get status: ");
+    return GetError("getStatusInfo():" + std::string(path) +
+                    ": Can't get status: ", ErrStr);
 
   info.fileSize = fi.nFileSizeHigh;
   info.fileSize <<= sizeof(fi.nFileSizeHigh)*8;
@@ -351,6 +352,7 @@ Path::getStatusInfo(StatusInfo& info) const {
   info.modTime.fromWin32Time(ft);
 
   info.isDir = fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
+  return false;
 }
 
 static bool AddPermissionBits(const std::string& Filename, int bits) {
@@ -691,7 +693,7 @@ Path::renamePathOnDisk(const Path& newName) {
 }
 
 bool
-Path::setStatusInfoOnDisk(const StatusInfo& si) const {
+Path::setStatusInfoOnDisk(const FileStatus &si) const {
   // FIXME: should work on directories also.
   if (!isFile()) return false;
 
