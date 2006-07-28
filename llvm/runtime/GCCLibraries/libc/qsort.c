@@ -21,7 +21,7 @@
    Engineering a sort function; Jon Bentley and M. Douglas McIlroy;
    Software - Practice and Experience; Vol. 23 (11), 1249-1265, 1993.  */
 
-#if 0
+#if 1
 
 #include <limits.h>
 #include <stdlib.h>
