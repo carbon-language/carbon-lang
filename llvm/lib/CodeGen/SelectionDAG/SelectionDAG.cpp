@@ -3115,17 +3115,3 @@ void SelectionDAG::InsertISelMapEntry(std::map<SDOperand, SDOperand> &Map,
   Map.insert(std::make_pair(SDOperand(Key, KeyResNo),
                             SDOperand(Element, ElementResNo)));
 }
-
-/// InsertInFlightSetEntry - A helper function to insert a SDNode* to a
-/// SDNode* set. This is added to avoid the set insertion operator from being
-/// inlined.
-void SelectionDAG::InsertInFlightSetEntry(std::set<SDNode*> &Set, SDNode *N) {
-  Set.insert(N);
-}
-
-/// RemoveInFlightSetEntry - A helper function to remove a SDNode* from a
-/// SDNode* set. This is added to avoid the set removal operator from being
-/// inlined.
-void SelectionDAG::RemoveInFlightSetEntry(std::set<SDNode*> &Set, SDNode *N) {
-  Set.erase(N);
-}

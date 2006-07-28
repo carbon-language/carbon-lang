@@ -435,16 +435,6 @@ public:
                                  SDNode *Key, unsigned KeyResNo,
                                  SDNode *Element, unsigned ElementResNo);
 
-  /// InsertInFlightSetEntry - A helper function to insert a SDNode* to a
-  /// SDNode* set. This is added to avoid the set insertion operator from being
-  /// inlined.
-  static void InsertInFlightSetEntry(std::set<SDNode*> &Set, SDNode *N);
-
-  /// RemoveInFlightSetEntry - A helper function to remove a SDNode* from a
-  /// SDNode* set. This is added to avoid the set removal operator from being
-  /// inlined.
-  static void RemoveInFlightSetEntry(std::set<SDNode*> &Set, SDNode *N);
-  
 private:
   void RemoveNodeFromCSEMaps(SDNode *N);
   SDNode *AddNonLeafNodeToCSEMaps(SDNode *N);

@@ -2106,8 +2106,6 @@ private:
   // Names of all the folded nodes which produce chains.
   std::vector<std::pair<std::string, unsigned> > FoldedChains;
   std::set<std::string> Duplicates;
-  /// These nodes are being marked "in-flight" so they cannot be folded.
-  std::vector<std::string> InflightNodes;
 
   /// GeneratedCode - This is the buffer that we emit code to.  The first bool
   /// indicates whether this is an exit predicate (something that should be
@@ -2231,8 +2229,6 @@ public:
         OpNo = 1;
       if (!isRoot) {
         const SDNodeInfo &CInfo = ISE.getSDNodeInfo(N->getOperator());
-        // Not in flight?
-        emitCheck("InFlightSet.count(" + RootName + ".Val) == 0");
         // Multiple uses of actual result?
         emitCheck(RootName + ".hasOneUse()");
         EmittedUseCheck = true;
@@ -2477,23 +2473,8 @@ public:
         for (unsigned i = 0; i < NumRes; i++)
           Code += ", CPTmp" + utostr(i + ResNo);
         emitCode(Code + ");");
-        if (InflightNodes.size()) {
-          // Remove the in-flight nodes if the ComplexPattern does not match!
-          emitCode("if (!Match) {");
-          for (std::vector<std::string>::iterator AI = InflightNodes.begin(),
-                 AE = InflightNodes.end(); AI != AE; ++AI)
-            emitCode("  SelectionDAG::RemoveInFlightSetEntry(InFlightSet, " +
-                     *AI + ".Val);");
-          emitCode("}");
-        }
-
         emitCheck("Match");
 
-        for (unsigned i = 0; i < NumRes; ++i) {
-          emitCode("SelectionDAG::InsertInFlightSetEntry(InFlightSet, CPTmp" +
-                   utostr(i+ResNo) + ".Val);");
-          InflightNodes.push_back("CPTmp" + utostr(i+ResNo));
-        }
         for (unsigned i = 0; i < NumRes; ++i) {
           emitDecl("Tmp" + utostr(i+ResNo));
           emitCode("Select(Tmp" + utostr(i+ResNo) + ", CPTmp" +
@@ -2608,22 +2589,6 @@ public:
         }
       }
 
-      // Make sure these operands which would be selected won't be folded while
-      // the isel traverses the DAG upward.
-      for (unsigned i = 0, e = EmitOrder.size(); i != e; ++i) {
-        TreePatternNode *Child = EmitOrder[i].second;
-        if (!Child->getName().empty()) {
-          std::string &Val = VariableMap[Child->getName()];
-          assert(!Val.empty() &&
-                 "Variable referenced but not defined and not caught earlier!");
-          if (Child->isLeaf() && !NodeGetComplexPattern(Child, ISE)) {
-            emitCode("SelectionDAG::InsertInFlightSetEntry(InFlightSet, " +
-                     Val + ".Val);");
-            InflightNodes.push_back(Val);
-          }
-        }
-      }
-
       // Emit all of the operands.
       std::vector<std::pair<unsigned, unsigned> > NumTemps(EmitOrder.size());
       for (unsigned i = 0, e = EmitOrder.size(); i != e; ++i) {
@@ -2649,14 +2614,6 @@ public:
       if (NodeHasOptInFlag) {
         emitCode("if (HasInFlag)");
         emitCode("  Select(InFlag, N.getOperand(N.getNumOperands()-1));");
-      }
-
-      if (isRoot) {
-        // The operands have been selected. Remove them from InFlightSet.
-        for (std::vector<std::string>::iterator AI = InflightNodes.begin(),
-               AE = InflightNodes.end(); AI != AE; ++AI)
-          emitCode("SelectionDAG::RemoveInFlightSetEntry(InFlightSet, " +
-                   *AI + ".Val);");
       }
 
       unsigned NumResults = Inst.getNumResults();    
@@ -3639,9 +3596,6 @@ void DAGISelEmitter::run(std::ostream &OS) {
   OS << "// Instance var to keep track of mapping of place handle nodes\n"
      << "// and their replacement nodes.\n";
   OS << "std::map<SDOperand, SDOperand> ReplaceMap;\n";
-  OS << "// Keep track of nodes that are currently being selecte and therefore\n"
-     << "// should not be folded.\n";
-  OS << "std::set<SDNode*> InFlightSet;\n";
 
   OS << "\n";
   OS << "// AddHandleReplacement - Note the pending replacement node for a\n"
