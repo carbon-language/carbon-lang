@@ -11,5 +11,6 @@ LEVEL = ../..
 PARALLEL_DIRS=bzip2
 LIBRARYNAME = LLVMSupport
 BUILD_ARCHIVE = 1
+REQUIRES_EH := 1
 
 include $(LEVEL)/Makefile.common
