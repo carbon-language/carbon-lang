@@ -921,6 +921,7 @@ static void generateCompilerSpecificCode(std::ostream& Out) {
                               "__builtin_prefetch(addr,rw,locality)\n"
       << "#define __ATTRIBUTE_CTOR__ __attribute__((constructor))\n"
       << "#define __ATTRIBUTE_DTOR__ __attribute__((destructor))\n"
+      << "#define LLVM_ASM           __asm__\n"
       << "#else\n"
       << "#define LLVM_NAN(NanStr)   ((double)0.0)           /* Double */\n"
       << "#define LLVM_NANF(NanStr)  0.0F                    /* Float */\n"
@@ -931,6 +932,7 @@ static void generateCompilerSpecificCode(std::ostream& Out) {
       << "#define LLVM_PREFETCH(addr,rw,locality)            /* PREFETCH */\n"
       << "#define __ATTRIBUTE_CTOR__\n"
       << "#define __ATTRIBUTE_DTOR__\n"
+      << "#define LLVM_ASM(X)\n"
       << "#endif\n\n";
 
   // Output target-specific code that should be inserted into main.
@@ -1072,6 +1074,10 @@ bool CWriter::doInitialization(Module &M) {
         Out << " __ATTRIBUTE_CTOR__";
       if (StaticDtors.count(I))
         Out << " __ATTRIBUTE_DTOR__";
+      
+      if (I->hasName() && I->getName()[0] == 1)
+        Out << " LLVM_ASM(\"" << I->getName().c_str()+1 << "\")";
+          
       Out << ";\n";
     }
   }
