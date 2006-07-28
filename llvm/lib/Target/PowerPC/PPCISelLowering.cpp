@@ -652,7 +652,7 @@ static SDOperand LowerJumpTable(SDOperand Op, SelectionDAG &DAG) {
   if (TM.getRelocationModel() == Reloc::PIC_) {
     // With PIC, the first instruction is actually "GR+hi(&G)".
     Hi = DAG.getNode(ISD::ADD, PtrVT,
-                     DAG.getNode(PPCISD::GlobalBaseReg, MVT::i32), Hi);
+                     DAG.getNode(PPCISD::GlobalBaseReg, PtrVT), Hi);
   }
   
   Lo = DAG.getNode(ISD::ADD, PtrVT, Hi, Lo);
@@ -741,7 +741,8 @@ static SDOperand LowerVASTART(SDOperand Op, SelectionDAG &DAG,
                               unsigned VarArgsFrameIndex) {
   // vastart just stores the address of the VarArgsFrameIndex slot into the
   // memory location argument.
-  SDOperand FR = DAG.getFrameIndex(VarArgsFrameIndex, MVT::i32);
+  MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+  SDOperand FR = DAG.getFrameIndex(VarArgsFrameIndex, PtrVT);
   return DAG.getNode(ISD::STORE, MVT::Other, Op.getOperand(0), FR, 
                      Op.getOperand(1), Op.getOperand(2));
 }
@@ -1388,7 +1389,8 @@ static SDOperand LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
   // then lfd it and fcfid it.
   MachineFrameInfo *FrameInfo = DAG.getMachineFunction().getFrameInfo();
   int FrameIdx = FrameInfo->CreateStackObject(8, 8);
-  SDOperand FIdx = DAG.getFrameIndex(FrameIdx, MVT::i32);
+  MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+  SDOperand FIdx = DAG.getFrameIndex(FrameIdx, PtrVT);
   
   SDOperand Ext64 = DAG.getNode(PPCISD::EXTSW_32, MVT::i32,
                                 Op.getOperand(0));
@@ -2119,7 +2121,8 @@ static SDOperand LowerSCALAR_TO_VECTOR(SDOperand Op, SelectionDAG &DAG) {
   // Create a stack slot that is 16-byte aligned.
   MachineFrameInfo *FrameInfo = DAG.getMachineFunction().getFrameInfo();
   int FrameIdx = FrameInfo->CreateStackObject(16, 16);
-  SDOperand FIdx = DAG.getFrameIndex(FrameIdx, MVT::i32);
+  MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+  SDOperand FIdx = DAG.getFrameIndex(FrameIdx, PtrVT);
   
   // Store the input value into Value#0 of the stack slot.
   SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
