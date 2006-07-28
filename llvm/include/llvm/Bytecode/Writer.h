@@ -7,17 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This functionality is implemented by the lib/BytecodeWriter library.
-// This library is used to write VM bytecode files to an iostream.  First, you
-// have to make a BytecodeStream object, which you can then put a class into
-// by using operator <<.
-//
-// This library uses the Analysis library to figure out offsets for
-// variables in the method tables...
-//
-// Note that performance of this library is not as crucial as performance of the
-// bytecode reader (which is to be used in JIT type applications), so we have
-// designed the bytecode format to support quick reading.
+// This functionality is implemented by the lib/Bytecode/Writer library.
+// This library is used to write bytecode files to an iostream.
 //
 //===----------------------------------------------------------------------===//
 
@@ -30,8 +21,7 @@ namespace llvm {
   class Module;
   /// WriteBytecodeToFile - Write the specified module to the specified output
   /// stream.  If compress is set to true, try to use compression when writing
-  /// out the file.  This throws an std::string if there is an error writing
-  /// the file.
+  /// out the file.  This can never fail if M is a well-formed module.
   void WriteBytecodeToFile(const Module *M, std::ostream &Out,
                            bool compress = true);
 } // End llvm namespace
