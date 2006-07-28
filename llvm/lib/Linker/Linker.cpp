@@ -119,31 +119,27 @@ static inline sys::Path IsLibrary(const std::string& Name,
 
   sys::Path FullPath(Directory);
 
-  // Make sure the directory actually is a directory in the file system.
-  if (FullPath.isDirectory())
-  {
-    // Try the libX.a form
-    FullPath.appendComponent("lib" + Name);
-    FullPath.appendSuffix("a");
-    if (FullPath.isArchive())
-      return FullPath;
+  // Try the libX.a form
+  FullPath.appendComponent("lib" + Name);
+  FullPath.appendSuffix("a");
+  if (FullPath.isArchive())
+    return FullPath;
 
-    // Try the libX.bca form
-    FullPath.eraseSuffix();
-    FullPath.appendSuffix("bca");
-    if (FullPath.isArchive())
-      return FullPath;
+  // Try the libX.bca form
+  FullPath.eraseSuffix();
+  FullPath.appendSuffix("bca");
+  if (FullPath.isArchive())
+    return FullPath;
 
-    // Try the libX.so (or .dylib) form
-    FullPath.eraseSuffix();
-    FullPath.appendSuffix(&(LTDL_SHLIB_EXT[1]));
-    if (FullPath.isDynamicLibrary())  // Native shared library?
-      return FullPath;
-    if (FullPath.isBytecodeFile())    // .so file containing bytecode?
-      return FullPath;
+  // Try the libX.so (or .dylib) form
+  FullPath.eraseSuffix();
+  FullPath.appendSuffix(&(LTDL_SHLIB_EXT[1]));
+  if (FullPath.isDynamicLibrary())  // Native shared library?
+    return FullPath;
+  if (FullPath.isBytecodeFile())    // .so file containing bytecode?
+    return FullPath;
 
-    // Not found .. fall through
-  }
+  // Not found .. fall through
 
   // Indicate that the library was not found in the directory.
   FullPath.clear();
