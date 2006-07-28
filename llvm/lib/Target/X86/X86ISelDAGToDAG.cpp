@@ -33,8 +33,8 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Visibility.h"
 #include "llvm/ADT/Statistic.h"
+#include <deque>
 #include <iostream>
-#include <list>
 #include <set>
 using namespace llvm;
 
@@ -125,7 +125,7 @@ namespace {
 
   private:
     void DetermineTopologicalOrdering();
-    void DeterminReachibility(SDNode *f, SDNode *t);
+    void DetermineReachibility(SDNode *f, SDNode *t);
 
     void Select(SDOperand &Result, SDOperand N);
 
@@ -239,7 +239,7 @@ bool X86DAGToDAGISel::CanBeFoldedBy(SDNode *N, SDNode *U) {
 
   // If U use can somehow reach N through another path then U can't fold N or
   // it will create a cycle. e.g. In the following diagram, U can reach N
-  // through X. If N is foled into into U, then X is both a predecessor and
+  // through X. If N is foledd into into U, then X is both a predecessor and
   // a successor of U.
   //
   //         [ N ]
@@ -249,7 +249,7 @@ bool X86DAGToDAGISel::CanBeFoldedBy(SDNode *N, SDNode *U) {
   //      /        [X]
   //      |         ^
   //     [U]--------|
-  DeterminReachibility(U, N);
+  DetermineReachibility(U, N);
   assert(isReachable(U, N) && "Attempting to fold a non-operand node?");
   for (SDNode::op_iterator I = U->op_begin(), E = U->op_end(); I != E; ++I) {
     SDNode *P = I->Val;
@@ -269,7 +269,7 @@ void X86DAGToDAGISel::DetermineTopologicalOrdering() {
   memset(RMRange, 0, DAGSize * sizeof(unsigned));
 
   std::vector<unsigned> InDegree(DAGSize);
-  std::list<SDNode*> Sources;
+  std::deque<SDNode*> Sources;
   for (SelectionDAG::allnodes_iterator I = CurDAG->allnodes_begin(),
          E = CurDAG->allnodes_end(); I != E; ++I) {
     SDNode *N = I;
@@ -297,7 +297,9 @@ void X86DAGToDAGISel::DetermineTopologicalOrdering() {
   }
 }
 
-void X86DAGToDAGISel::DeterminReachibility(SDNode *f, SDNode *t) {
+/// DetermineReachibility - Determine reachibility between all pairs of nodes
+/// between f and t in topological order.
+void X86DAGToDAGISel::DetermineReachibility(SDNode *f, SDNode *t) {
   if (!ReachibilityMatrix) {
     unsigned RMSize = (DAGSize * DAGSize + 7) / 8;
     ReachibilityMatrix = new unsigned char[RMSize];
