@@ -2276,7 +2276,7 @@ public:
               PInfo.hasProperty(SDNodeInfo::SDNPHasChain) ||
               PInfo.hasProperty(SDNodeInfo::SDNPInFlag) ||
               PInfo.hasProperty(SDNodeInfo::SDNPOptInFlag))
-            emitCheck("IsFoldableBy(" + RootName + ".Val, " + ParentName +
+            emitCheck("CanBeFoldedBy(" + RootName + ".Val, " + ParentName +
                       ".Val)");
         }
       }

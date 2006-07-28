@@ -63,9 +63,9 @@ public:
     return true;
   }
 
-  /// IsFoldableBy - Returns true if the specific operand node N of U can be
+  /// CanBeFoldedBy - Returns true if the specific operand node N of U can be
   /// folded during instruction selection?
-  virtual bool IsFoldableBy(SDNode *N, SDNode *U) { return true; }
+  virtual bool CanBeFoldedBy(SDNode *N, SDNode *U) { return true; }
   
   /// CreateTargetHazardRecognizer - Return a newly allocated hazard recognizer
   /// to use for this target when scheduling the DAG.
