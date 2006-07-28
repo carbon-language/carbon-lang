@@ -377,9 +377,23 @@ void MacroExpander::ExpandFunctionArguments() {
       }
       
       // FIXME: Handle comma swallowing GNU extension.
-      // FIXME: Handle 'placemarker' stuff.
-      assert(0 && "FIXME: handle empty arguments!");
-      //ResultToks.push_back(CurTok);
+      
+      // If an empty argument is on the LHS or RHS of a paste, the standard (C99
+      // 6.10.3.3p2,3) calls for a bunch of placemarker stuff to occur.  We
+      // implement this by eating ## operators when a LHS or RHS expands to
+      // empty.
+      if (PasteAfter) {
+        // Discard the argument token and skip (don't copy to the expansion
+        // buffer) the paste operator after it.
+        ++i;
+        continue;
+      }
+      
+      // If this is on the RHS of a paste operator, we've already copied the
+      // paste operator to the ResultToks list.  Remove it.
+      assert(PasteBefore && ResultToks.back().getKind() == tok::hashhash);
+      ResultToks.pop_back();
+      continue;
     }
   }
   
