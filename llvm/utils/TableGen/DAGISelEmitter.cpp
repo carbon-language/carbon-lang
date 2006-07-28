@@ -2469,11 +2469,10 @@ public:
         for (unsigned i = 0; i < NumRes; ++i)
           emitDecl("CPTmp" + utostr(i+ResNo));
 
-        std::string Code = "bool Match = " + Fn + "(" + Val;
+        std::string Code = Fn + "(" + Val;
         for (unsigned i = 0; i < NumRes; i++)
           Code += ", CPTmp" + utostr(i + ResNo);
-        emitCode(Code + ");");
-        emitCheck("Match");
+        emitCheck(Code + ")");
 
         for (unsigned i = 0; i < NumRes; ++i) {
           emitDecl("Tmp" + utostr(i+ResNo));
