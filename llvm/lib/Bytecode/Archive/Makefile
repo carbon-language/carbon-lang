@@ -9,6 +9,7 @@
 
 LEVEL = ../../..
 LIBRARYNAME = LLVMArchive
+REQUIRES_EH := 1
 
 # We only want an archive so only those modules actually used by a tool are 
 # included.
