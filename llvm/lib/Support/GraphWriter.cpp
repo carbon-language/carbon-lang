@@ -11,18 +11,14 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Support/GraphWriter.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Program.h"
 #include "llvm/Config/config.h"
-
 #include <iostream>
-
 using namespace llvm;
 
-namespace llvm {
-
-void DisplayGraph(const sys::Path& Filename)
-{
+void llvm::DisplayGraph(const sys::Path &Filename) {
 #if HAVE_GRAPHVIZ
   sys::Path Graphviz(LLVM_PATH_GRAPHVIZ);
 
@@ -85,5 +81,3 @@ void DisplayGraph(const sys::Path& Filename)
   
   Filename.eraseFromDisk();
 }
-
-} // End llvm namespace
