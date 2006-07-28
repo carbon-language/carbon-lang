@@ -824,13 +824,7 @@ if (!$BuildError) {
     print "SingleSource TEST STAGE\n";
 	}
 	($SingleSourceProgramsTable, $llcbeta_options) = TestDirectory("SingleSource");
-	if ( $VERBOSE ) {
-    print "SingleSource returned $SingleSourceProgramsTable\n";
-	}
 	WriteFile "$Prefix-singlesourceprogramstable.txt", $SingleSourceProgramsTable;
-	if ( $VERBOSE ) {
-	  print "MultiSource TEST STAGE\n";
-	}
 	($MultiSourceProgramsTable, $llcbeta_options) = TestDirectory("MultiSource");
 	WriteFile "$Prefix-multisourceprogramstable.txt", $MultiSourceProgramsTable;
 	if ( $VERBOSE ) {
