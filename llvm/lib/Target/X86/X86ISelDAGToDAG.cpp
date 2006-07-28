@@ -211,6 +211,21 @@ namespace {
       return ReachibilityMatrix[Idx / 8] & (1 << (Idx % 8));
     }
 
+    /// UnfoldableSet - An boolean array representing nodes which have been
+    /// folded into addressing modes and therefore should not be folded in
+    /// another operation.
+    unsigned char *UnfoldableSet;
+
+    inline void setUnfoldable(SDNode *N) {
+      unsigned Id = N->getNodeId();
+      UnfoldableSet[Id / 8] |= 1 << (Id % 8);
+    }
+
+    inline bool isUnfoldable(SDNode *N) {
+      unsigned Id = N->getNodeId();
+      return UnfoldableSet[Id / 8] & (1 << (Id % 8));
+    }
+
 #ifndef NDEBUG
     unsigned Indent;
 #endif
@@ -218,6 +233,10 @@ namespace {
 }
 
 bool X86DAGToDAGISel::IsFoldableBy(SDNode *N, SDNode *U) {
+  // Is it already folded by SelectAddr / SelectLEAAddr?
+  if (isUnfoldable(N))
+    return false;
+
   // If U use can somehow reach N through another path then U can't fold N or
   // it will create a cycle. e.g. In the following diagram, U can reach N
   // through X. If N is foled into into U, then X is both a predecessor and
@@ -323,6 +342,10 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   MachineFunction::iterator FirstMBB = BB;
 
   DAGSize = DAG.AssignNodeIds();
+  unsigned NumBytes = (DAGSize+7) / 8;
+  UnfoldableSet = new unsigned char[NumBytes];
+  memset(UnfoldableSet, 0, NumBytes);
+
   DetermineTopologicalOrdering();
 
   // Codegen the basic block.
@@ -339,9 +362,11 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   delete[] TopOrder;
   delete[] IdToOrder;
   delete[] RMRange;
+  delete[] UnfoldableSet;
   ReachibilityMatrix = NULL;
   TopOrder = NULL;
   IdToOrder = RMRange = NULL;
+  UnfoldableSet = NULL;
   CodeGenMap.clear();
   HandleMap.clear();
   ReplaceMap.clear();
@@ -615,6 +640,13 @@ bool X86DAGToDAGISel::SelectAddr(SDOperand N, SDOperand &Base, SDOperand &Scale,
 
   getAddressOperands(AM, Base, Scale, Index, Disp);
 
+  int Id = Base.Val ? Base.Val->getNodeId() : -1;
+  if (Id != -1)
+    setUnfoldable(Base.Val);
+  Id = Index.Val ? Index.Val->getNodeId() : -1;
+  if (Id != -1)
+    setUnfoldable(Index.Val);
+
   return true;
 }
 
@@ -662,6 +694,13 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDOperand N, SDOperand &Base,
     getAddressOperands(AM, Base, Scale, Index, Disp);
     return true;
   }
+
+  int Id = Base.Val ? Base.Val->getNodeId() : -1;
+  if (Id != -1)
+    setUnfoldable(Base.Val);
+  Id = Index.Val ? Index.Val->getNodeId() : -1;
+  if (Id != -1)
+    setUnfoldable(Index.Val);
 
   return false;
 }
