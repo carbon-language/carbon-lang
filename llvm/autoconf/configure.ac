@@ -337,10 +337,10 @@ dnl Specify extra build options
 AC_ARG_WITH(extra-options,
   AS_HELP_STRING([--with-extra-options],
                  [Specify addtional options to compile LLVM with]),,
-                 extraopts=default)
-case "$extraopts" in
+                 withval=default)
+case "$withval" in
   default) EXTRA_OPTIONS= ;;
-  *) EXTRA_OPTIONS=$extraopts ;;
+  *) EXTRA_OPTIONS=$withval ;;
 esac
 AC_SUBST(EXTRA_OPTIONS,$EXTRA_OPTIONS)
 
