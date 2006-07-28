@@ -131,7 +131,7 @@ inline void BytecodeWriter::output_vbr(int i) {
 
 inline void BytecodeWriter::output(const std::string &s) {
   unsigned Len = s.length();
-  output_vbr(Len );             // Strings may have an arbitrary length...
+  output_vbr(Len);             // Strings may have an arbitrary length.
   Out.insert(Out.end(), s.begin(), s.end());
 }
 
@@ -143,8 +143,8 @@ inline void BytecodeWriter::output_float(float& FloatVal) {
   /// FIXME: This isn't optimal, it has size problems on some platforms
   /// where FP is not IEEE.
   uint32_t i = FloatToBits(FloatVal);
-  Out.push_back( static_cast<unsigned char>( (i & 0xFF )));
-  Out.push_back( static_cast<unsigned char>( (i >> 8) & 0xFF));
+  Out.push_back( static_cast<unsigned char>( (i      ) & 0xFF));
+  Out.push_back( static_cast<unsigned char>( (i >> 8 ) & 0xFF));
   Out.push_back( static_cast<unsigned char>( (i >> 16) & 0xFF));
   Out.push_back( static_cast<unsigned char>( (i >> 24) & 0xFF));
 }
@@ -153,8 +153,8 @@ inline void BytecodeWriter::output_double(double& DoubleVal) {
   /// FIXME: This isn't optimal, it has size problems on some platforms
   /// where FP is not IEEE.
   uint64_t i = DoubleToBits(DoubleVal);
-  Out.push_back( static_cast<unsigned char>( (i & 0xFF )));
-  Out.push_back( static_cast<unsigned char>( (i >> 8) & 0xFF));
+  Out.push_back( static_cast<unsigned char>( (i      ) & 0xFF));
+  Out.push_back( static_cast<unsigned char>( (i >> 8 ) & 0xFF));
   Out.push_back( static_cast<unsigned char>( (i >> 16) & 0xFF));
   Out.push_back( static_cast<unsigned char>( (i >> 24) & 0xFF));
   Out.push_back( static_cast<unsigned char>( (i >> 32) & 0xFF));
@@ -800,7 +800,7 @@ BytecodeWriter::BytecodeWriter(std::vector<unsigned char> &o, const Module *M)
   : Out(o), Table(M) {
 
   // Emit the signature...
-  static const unsigned char *Sig =  (const unsigned char*)"llvm";
+  static const unsigned char *Sig = (const unsigned char*)"llvm";
   output_data(Sig, Sig+4);
 
   // Emit the top level CLASS block.
@@ -820,8 +820,8 @@ BytecodeWriter::BytecodeWriter(std::vector<unsigned char> &o, const Module *M)
 
   // The Global type plane comes first
   {
-      BytecodeBlock CPool(BytecodeFormat::GlobalTypePlaneBlockID, *this );
-      outputTypes(Type::FirstDerivedTyID);
+    BytecodeBlock CPool(BytecodeFormat::GlobalTypePlaneBlockID, *this);
+    outputTypes(Type::FirstDerivedTyID);
   }
 
   // The ModuleInfoBlock follows directly after the type information
@@ -1133,7 +1133,7 @@ void BytecodeWriter::outputCompactionTypes(unsigned StartNo) {
 
   // The compaction types may have been uncompactified back to the
   // global types. If so, we just write an empty table
-  if (CTypes.size() == 0 ) {
+  if (CTypes.size() == 0) {
     output_vbr(0U);
     return;
   }
@@ -1180,7 +1180,7 @@ void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
 
   // Write each of the types
   for (SymbolTable::type_const_iterator TI = MST.type_begin(),
-       TE = MST.type_end(); TI != TE; ++TI ) {
+       TE = MST.type_end(); TI != TE; ++TI) {
     // Symtab entry:[def slot #][name]
     output_typeid((unsigned)Table.getSlot(TI->second));
     output(TI->first);
@@ -1215,7 +1215,7 @@ void BytecodeWriter::outputSymbolTable(const SymbolTable &MST) {
 }
 
 void llvm::WriteBytecodeToFile(const Module *M, std::ostream &Out,
-                               bool compress ) {
+                               bool compress) {
   assert(M && "You can't write a null module!!");
 
   // Make sure that std::cout is put into binary mode for systems
@@ -1271,4 +1271,3 @@ void llvm::WriteBytecodeToFile(const Module *M, std::ostream &Out,
   // make sure it hits disk now
   Out.flush();
 }
-
