@@ -374,6 +374,7 @@ AC_PROG_RANLIB
 AC_PATH_PROG(RM,   [rm],   [rm])
 AC_PATH_PROG(SED,  [sed],  [sed])
 AC_PATH_PROG(TAR,  [tar],  [gtar])
+AC_PATH_PROG(BINPWD,[pwd],  [pwd])
 
 dnl Looking for misc. graph plotting software
 AC_PATH_PROG(GRAPHVIZ, [Graphviz], [echo Graphviz])

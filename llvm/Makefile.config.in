@@ -33,19 +33,20 @@ LLVM_CONFIGTIME   := @LLVM_CONFIGTIME@
 #
 ###########################################################################
 
+PWD := @BINPWD@
 # Set the project name to LLVM if its not defined
 ifndef PROJECT_NAME
 PROJECT_NAME := LLVM
 endif
 
-PROJ_OBJ_DIR  := $(shell pwd)
-PROJ_OBJ_ROOT := $(subst //,/,$(shell cd $(PROJ_OBJ_DIR)/$(LEVEL); pwd))
+PROJ_OBJ_DIR  := $(shell $(PWD))
+PROJ_OBJ_ROOT := $(shell cd $(PROJ_OBJ_DIR)/$(LEVEL); $(PWD))
 
 ifeq ($(PROJECT_NAME),LLVM)
-LLVM_SRC_ROOT   := @abs_top_srcdir@
-LLVM_OBJ_ROOT   := @abs_top_builddir@
-PROJ_SRC_ROOT   := $(LLVM_SRC_ROOT)
-PROJ_SRC_DIR    := $(subst //,/,$(LLVM_SRC_ROOT)/$(patsubst $(PROJ_OBJ_ROOT)%,%,$(PROJ_OBJ_DIR)))
+LLVM_SRC_ROOT   := $(shell cd @abs_top_srcdir@; $(PWD))
+LLVM_OBJ_ROOT   := $(shell cd @abs_top_builddir@; $(PWD))
+PROJ_SRC_ROOT   := $(shell cd $(LLVM_SRC_ROOT); $(PWD))
+PROJ_SRC_DIR    := $(shell cd $(LLVM_SRC_ROOT)/$(patsubst $(PROJ_OBJ_ROOT)%,%,$(PROJ_OBJ_DIR)); $(PWD))
 PROJ_prefix     := @prefix@
 PROJ_bindir     := @prefix@/bin
 PROJ_libdir     := @prefix@/lib
@@ -72,7 +73,7 @@ endif
 ifndef LLVM_OBJ_ROOT
 $(error Projects must define LLVM_OBJ_ROOT)
 endif
-PROJ_SRC_DIR := $(subst //,/,$(PROJ_SRC_ROOT)/$(patsubst $(PROJ_OBJ_ROOT)%,%,$(PROJ_OBJ_DIR)))
+PROJ_SRC_DIR := $(shell cd $(PROJ_SRC_ROOT)/$(patsubst $(PROJ_OBJ_ROOT)%,%,$(PROJ_OBJ_DIR)); $(PWD))
 PROJ_prefix     := $(PROJ_INSTALL_ROOT)
 PROJ_bindir     := $(PROJ_INSTALL_ROOT)/bin
 PROJ_libdir     := $(PROJ_INSTALL_ROOT)/lib
