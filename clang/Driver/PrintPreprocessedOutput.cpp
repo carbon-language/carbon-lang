@@ -266,12 +266,101 @@ struct UnknownPragmaHandler : public PragmaHandler {
 };
 } // end anonymous namespace
 
+/// AvoidConcat - If printing PrevTok immediately followed by Tok would cause
+/// the two individual tokens to be lexed as a single token, return true (which
+/// causes a space to be printed between them).  This allows the output of -E
+/// mode to be lexed to the same token stream as lexing the input directly
+/// would.
+///
+/// This code must conservatively return true if it doesn't want to be 100%
+/// accurate.  This will cause the output to include extra space characters, but
+/// the resulting output won't have incorrect concatenations going on.  Examples
+/// include "..", which we print with a space between, because we don't want to
+/// track enough to tell "x.." from "...".
+static bool AvoidConcat(const LexerToken &PrevTok, const LexerToken &Tok,
+                        Preprocessor &PP) {
+  char Buffer[256];
+  
+  // If we haven't emitted a token on this line yet, PrevTok isn't useful to
+  // look at and no concatenation could happen anyway.
+  if (!EmodeEmittedTokensOnThisLine)
+    return false;
+
+  // Basic algorithm: we look at the first character of the second token, and
+  // determine whether it, if appended to the first token, would form (or would
+  // contribute) to a larger token if concatenated.
+  char FirstChar;
+  if (IdentifierInfo *II = Tok.getIdentifierInfo()) {
+    // Avoid spelling identifiers, the most common form of token.
+    FirstChar = II->getName()[0];
+  } else if (Tok.getLength() < 256) {
+    const char *TokPtr = Buffer;
+    unsigned Len = PP.getSpelling(Tok, TokPtr);
+    FirstChar = TokPtr[0];
+  } else {
+    FirstChar = PP.getSpelling(Tok)[0];
+  }
+  
+  tok::TokenKind PrevKind = PrevTok.getKind();
+  if (PrevTok.getIdentifierInfo())  // Language keyword or named operator.
+    PrevKind = tok::identifier;
+  
+  switch (PrevKind) {
+  default: return false;
+  case tok::identifier:   // id+id or id+number or id+L"foo".
+    return isalnum(FirstChar) || FirstChar == '_';
+  case tok::numeric_constant:
+    return isalnum(FirstChar) || Tok.getKind() == tok::numeric_constant ||
+           FirstChar == '+' || FirstChar == '-' || FirstChar == '.';
+  case tok::period:          // ..., .*, .1234
+    return FirstChar == '.' || FirstChar == '*' || isdigit(FirstChar);
+  case tok::amp:             // &&, &=
+    return FirstChar == '&' || FirstChar == '=';
+  case tok::plus:            // ++, +=
+    return FirstChar == '+' || FirstChar == '=';
+  case tok::minus:           // --, ->, -=, ->*
+    return FirstChar == '-' || FirstChar == '>' || FirstChar == '=';
+  case tok::slash:           // /=, /*, //
+    return FirstChar == '=' || FirstChar == '*' || FirstChar == '/';
+  case tok::less:            // <<, <<=, <=, <?=, <?, <:, <%
+    return FirstChar == '<' || FirstChar == '?' || FirstChar == '=' ||
+           FirstChar == ':' || FirstChar == '%';
+  case tok::greater:         // >>, >=, >>=, >?=, >?, ->*
+    return FirstChar == '>' || FirstChar == '?' || FirstChar == '=' || 
+           FirstChar == '*';
+  case tok::pipe:            // ||, |=
+    return FirstChar == '|' || FirstChar == '=';
+  case tok::percent:         // %=, %>, %:
+    return FirstChar == '=' || FirstChar == '>' || FirstChar == ':';
+  case tok::colon:           // ::, :>
+    return FirstChar == ':' || FirstChar == '>';
+  case tok::hash:            // ##, #@, %:%:
+    return FirstChar == '#' || FirstChar == '@' || FirstChar == '%';
+  case tok::question:        // <?=, >?=, ??x -> trigraphs.
+    // Have to check for <?= in case <? is disabled.
+    return FirstChar == '?' || FirstChar == '=';
+  case tok::arrow:           // ->*
+    return FirstChar == '*';
+    
+  case tok::star:            // *=
+  case tok::exclaim:         // !=
+  case tok::lessless:        // <<=
+  case tok::greaterequal:    // >>=
+  case tok::caret:           // ^=
+  case tok::equal:           // ==
+  case tok::lessquestion:    // <?=
+  case tok::greaterquestion: // >?=
+    // Cases that concatenate only if the next char is =.
+    return FirstChar == '=';
+  }
+}
+
 /// DoPrintPreprocessedInput - This implements -E mode.
 ///
 void clang::DoPrintPreprocessedInput(Preprocessor &PP) {
   InitOutputBuffer();
   
-  LexerToken Tok;
+  LexerToken Tok, PrevTok;
   char Buffer[256];
   EModeCurLine = 0;
   EModeCurFilename = "\"<uninit>\"";
@@ -283,12 +372,15 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP) {
   PP.AddPragmaHandler(0, new UnknownPragmaHandler("#pragma"));
   PP.AddPragmaHandler("GCC", new UnknownPragmaHandler("#pragma GCC"));
   do {
+    PrevTok = Tok;
     PP.Lex(Tok);
     
     // If this token is at the start of a line, emit newlines if needed.
     if (Tok.isAtStartOfLine()) {
       HandleFirstTokOnLine(Tok, PP);
-    } else if (Tok.hasLeadingSpace()) {
+    } else if (Tok.hasLeadingSpace() || 
+               // Don't print "-" next to "-", it would form "--".
+               AvoidConcat(PrevTok, Tok, PP)) {
       OutputChar(' ');
     }
     

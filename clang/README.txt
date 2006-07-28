@@ -66,7 +66,6 @@ Lexer:
 
 Preprocessor:
  * Comma swallowing GNU token-pasting extension.
- * Paste avoidance in -E output mode.
  * #line / #file directives
  * -C output mode in -E mode.
  * MSExtension: "L#param" stringizes to a wide string literal.
