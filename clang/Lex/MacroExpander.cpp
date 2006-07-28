@@ -317,84 +317,84 @@ void MacroExpander::ExpandFunctionArguments() {
       ResultToks.push_back(Res);
       MadeChange = true;
       ++i;  // Skip arg name.
-    } else {
-      // Otherwise, if this is not an argument token, just add the token to the
-      // output buffer.
-      IdentifierInfo *II = CurTok.getIdentifierInfo();
-      int ArgNo = II ? Macro->getArgumentNum(II) : -1;
-      if (ArgNo == -1) {
-        ResultToks.push_back(CurTok);
-        continue;
-      }
-      
-      // An argument is expanded somehow, the result is different than the
-      // input.
-      MadeChange = true;
-
-      // Otherwise, this is a use of the argument.  Find out if there is a paste
-      // (##) operator before or after the argument.
-      bool PasteBefore = 
-        !ResultToks.empty() && ResultToks.back().getKind() == tok::hashhash;
-      bool PasteAfter =
-        i+1 != e && MacroTokens[i+1].getKind() == tok::hashhash;
-      
-      // If it is not the LHS/RHS of a ## operator, we must pre-expand the
-      // argument and substitute the expanded tokens into the result.  This is
-      // C99 6.10.3.1p1.
-      if (!PasteBefore && !PasteAfter) {
-        const LexerToken *ResultArgToks;
-
-        // Only preexpand the argument if it could possibly need it.  This
-        // avoids some work in common cases.
-        const LexerToken *ArgTok = ActualArgs->getUnexpArgument(ArgNo);
-        if (ActualArgs->ArgNeedsPreexpansion(ArgTok))
-          ResultArgToks = &ActualArgs->getPreExpArgument(ArgNo, PP)[0];
-        else
-          ResultArgToks = ArgTok;  // Use non-preexpanded tokens.
-        
-        if (ResultArgToks->getKind() != tok::eof) {
-          unsigned FirstResult = ResultToks.size();
-          unsigned NumToks = MacroArgs::getArgLength(ResultArgToks);
-          ResultToks.append(ResultArgToks, ResultArgToks+NumToks);
-        
-          // If any tokens were substituted from the argument, the whitespace
-          // before the first token should match the whitespace of the arg
-          // identifier.
-          ResultToks[FirstResult].SetFlagValue(LexerToken::LeadingSpace,
-                                               CurTok.hasLeadingSpace());
-        }
-        continue;
-      }
-      
-      // Okay, we have a token that is either the LHS or RHS of a paste (##)
-      // argument.  It gets substituted as its non-pre-expanded tokens.
-      const LexerToken *ArgToks = ActualArgs->getUnexpArgument(ArgNo);
-
-      unsigned NumToks = MacroArgs::getArgLength(ArgToks);
-      if (NumToks) {  // Not an empty argument?
-        ResultToks.append(ArgToks, ArgToks+NumToks);
-        continue;
-      }
-      
-      // FIXME: Handle comma swallowing GNU extension.
-      
-      // If an empty argument is on the LHS or RHS of a paste, the standard (C99
-      // 6.10.3.3p2,3) calls for a bunch of placemarker stuff to occur.  We
-      // implement this by eating ## operators when a LHS or RHS expands to
-      // empty.
-      if (PasteAfter) {
-        // Discard the argument token and skip (don't copy to the expansion
-        // buffer) the paste operator after it.
-        ++i;
-        continue;
-      }
-      
-      // If this is on the RHS of a paste operator, we've already copied the
-      // paste operator to the ResultToks list.  Remove it.
-      assert(PasteBefore && ResultToks.back().getKind() == tok::hashhash);
-      ResultToks.pop_back();
       continue;
     }
+    
+    // Otherwise, if this is not an argument token, just add the token to the
+    // output buffer.
+    IdentifierInfo *II = CurTok.getIdentifierInfo();
+    int ArgNo = II ? Macro->getArgumentNum(II) : -1;
+    if (ArgNo == -1) {
+      ResultToks.push_back(CurTok);
+      continue;
+    }
+      
+    // An argument is expanded somehow, the result is different than the
+    // input.
+    MadeChange = true;
+
+    // Otherwise, this is a use of the argument.  Find out if there is a paste
+    // (##) operator before or after the argument.
+    bool PasteBefore = 
+      !ResultToks.empty() && ResultToks.back().getKind() == tok::hashhash;
+    bool PasteAfter = i+1 != e && MacroTokens[i+1].getKind() == tok::hashhash;
+    
+    // If it is not the LHS/RHS of a ## operator, we must pre-expand the
+    // argument and substitute the expanded tokens into the result.  This is
+    // C99 6.10.3.1p1.
+    if (!PasteBefore && !PasteAfter) {
+      const LexerToken *ResultArgToks;
+
+      // Only preexpand the argument if it could possibly need it.  This
+      // avoids some work in common cases.
+      const LexerToken *ArgTok = ActualArgs->getUnexpArgument(ArgNo);
+      if (ActualArgs->ArgNeedsPreexpansion(ArgTok))
+        ResultArgToks = &ActualArgs->getPreExpArgument(ArgNo, PP)[0];
+      else
+        ResultArgToks = ArgTok;  // Use non-preexpanded tokens.
+      
+      // If the arg token expanded into anything, append it.
+      if (ResultArgToks->getKind() != tok::eof) {
+        unsigned FirstResult = ResultToks.size();
+        unsigned NumToks = MacroArgs::getArgLength(ResultArgToks);
+        ResultToks.append(ResultArgToks, ResultArgToks+NumToks);
+      
+        // If any tokens were substituted from the argument, the whitespace
+        // before the first token should match the whitespace of the arg
+        // identifier.
+        ResultToks[FirstResult].SetFlagValue(LexerToken::LeadingSpace,
+                                             CurTok.hasLeadingSpace());
+      }
+      continue;
+    }
+    
+    // Okay, we have a token that is either the LHS or RHS of a paste (##)
+    // argument.  It gets substituted as its non-pre-expanded tokens.
+    const LexerToken *ArgToks = ActualArgs->getUnexpArgument(ArgNo);
+    unsigned NumToks = MacroArgs::getArgLength(ArgToks);
+    if (NumToks) {  // Not an empty argument?
+      ResultToks.append(ArgToks, ArgToks+NumToks);
+      continue;
+    }
+    
+    // FIXME: Handle comma swallowing GNU extension.
+    
+    // If an empty argument is on the LHS or RHS of a paste, the standard (C99
+    // 6.10.3.3p2,3) calls for a bunch of placemarker stuff to occur.  We
+    // implement this by eating ## operators when a LHS or RHS expands to
+    // empty.
+    if (PasteAfter) {
+      // Discard the argument token and skip (don't copy to the expansion
+      // buffer) the paste operator after it.
+      ++i;
+      continue;
+    }
+    
+    // If this is on the RHS of a paste operator, we've already copied the
+    // paste operator to the ResultToks list.  Remove it.
+    assert(PasteBefore && ResultToks.back().getKind() == tok::hashhash);
+    ResultToks.pop_back();
+    continue;
   }
   
   // If anything changed, install this as the new MacroTokens list.
