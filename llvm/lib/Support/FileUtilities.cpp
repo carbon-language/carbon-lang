@@ -146,19 +146,23 @@ int llvm::DiffFilesWithTolerance(const sys::Path &FileA,
                                  const sys::Path &FileB,
                                  double AbsTol, double RelTol,
                                  std::string *Error) {
+  sys::FileStatus FileAStat, FileBStat;
+  if (FileA.getFileStatus(FileAStat, Error) ||
+      FileB.getFileStatus(FileBStat, Error))
+    return 2;
+  // Check for zero length files because some systems croak when you try to
+  // mmap an empty file.
+  size_t A_size = FileAStat.getSize();
+  size_t B_size = FileBStat.getSize();
+
+  // If they are both zero sized then they're the same
+  if (A_size == 0 && B_size == 0)
+    return 0;
+  // If only one of them is zero sized then they can't be the same
+  if ((A_size == 0 || B_size == 0))
+    return 1;
+
   try {
-    // Check for zero length files because some systems croak when you try to
-    // mmap an empty file.
-    size_t A_size = FileA.getSize();
-    size_t B_size = FileB.getSize();
-
-    // If they are both zero sized then they're the same
-    if (A_size == 0 && B_size == 0)
-      return 0;
-    // If only one of them is zero sized then they can't be the same
-    if ((A_size == 0 || B_size == 0))
-      return 1;
-
     // Now its safe to mmap the files into memory becasue both files
     // have a non-zero size.
     sys::MappedFile F1(FileA);

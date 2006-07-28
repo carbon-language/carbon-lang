@@ -386,21 +386,22 @@ Path::getLast() const {
   return path.substr(pos+1);
 }
 
-void
-Path::getStatusInfo(StatusInfo& info) const {
+bool
+Path::getFileStatus(FileStatus &info, std::string *ErrStr) const {
   struct stat buf;
-  if (0 != stat(path.c_str(), &buf)) {
-    ThrowErrno(path + ": can't determine type of path object: ");
-  }
+  if (0 != stat(path.c_str(), &buf))
+    return GetErrno(path + ": can't determine type of path object: ", ErrStr);
   info.fileSize = buf.st_size;
   info.modTime.fromEpochTime(buf.st_mtime);
   info.mode = buf.st_mode;
   info.user = buf.st_uid;
   info.group = buf.st_gid;
-  info.isDir = S_ISDIR(buf.st_mode);
+  info.isDir  = S_ISDIR(buf.st_mode);
+  info.isFile = S_ISREG(buf.st_mode);
+  return false;
 }
 
-static bool AddPermissionBits(const std::string& Filename, int bits) {
+static bool AddPermissionBits(const Path &File, int bits) {
   // Get the umask value from the operating system.  We want to use it
   // when changing the file's permissions. Since calling umask() sets
   // the umask and returns its old value, we must call it a second
@@ -409,30 +410,29 @@ static bool AddPermissionBits(const std::string& Filename, int bits) {
   umask(mask);            // Restore the umask.
 
   // Get the file's current mode.
-  struct stat st;
-  if ((stat(Filename.c_str(), &st)) == -1)
-    return false;
+  FileStatus Stat;
+  if (File.getFileStatus(Stat)) return false;
 
   // Change the file to have whichever permissions bits from 'bits'
   // that the umask would not disable.
-  if ((chmod(Filename.c_str(), (st.st_mode | (bits & ~mask)))) == -1)
+  if ((chmod(File.c_str(), (Stat.getMode() | (bits & ~mask)))) == -1)
     return false;
 
   return true;
 }
 
 void Path::makeReadableOnDisk() {
-  if (!AddPermissionBits(path,0444))
+  if (!AddPermissionBits(*this, 0444))
     ThrowErrno(path + ": can't make file readable");
 }
 
 void Path::makeWriteableOnDisk() {
-  if (!AddPermissionBits(path,0222))
+  if (!AddPermissionBits(*this, 0222))
     ThrowErrno(path + ": can't make file writable");
 }
 
 void Path::makeExecutableOnDisk() {
-  if (!AddPermissionBits(path,0111))
+  if (!AddPermissionBits(*this, 0111))
     ThrowErrno(path + ": can't make file executable");
 }
 
@@ -642,7 +642,7 @@ Path::renamePathOnDisk(const Path& newName) {
 }
 
 bool
-Path::setStatusInfoOnDisk(const StatusInfo& si) const {
+Path::setStatusInfoOnDisk(const FileStatus &si) const {
   struct utimbuf utb;
   utb.actime = si.modTime.toPosixTime();
   utb.modtime = utb.actime;

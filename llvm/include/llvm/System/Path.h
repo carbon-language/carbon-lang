@@ -24,6 +24,35 @@
 namespace llvm {
 namespace sys {
 
+  /// This structure provides basic file system information about a file. It
+  /// is patterned after the stat(2) Unix operating system call but made
+  /// platform independent and eliminates many of the unix-specific fields.
+  /// However, to support llvm-ar, the mode, user, and group fields are
+  /// retained. These pertain to unix security and may not have a meaningful
+  /// value on non-Unix platforms. However, the fileSize and modTime fields
+  /// should always be applicable on all platforms.  The structure is
+  /// filled in by the Path::getFileStatus method.
+  /// @brief File status structure
+  class FileStatus {
+  public:
+    uint64_t    fileSize;   ///< Size of the file in bytes
+    TimeValue   modTime;    ///< Time of file's modification
+    uint32_t    mode;       ///< Mode of the file, if applicable
+    uint32_t    user;       ///< User ID of owner, if applicable
+    uint32_t    group;      ///< Group ID of owner, if applicable
+    bool        isDir  : 1; ///< True if this is a directory.
+    bool        isFile : 1; ///< True if this is a file.
+
+    FileStatus() : fileSize(0), modTime(0,0), mode(0777), user(999),
+                   group(999), isDir(false) { }
+    
+    TimeValue getTimestamp() const { return modTime; }
+    size_t getSize() const { return fileSize; }
+    uint32_t getMode() const { return mode; }
+    uint32_t getUser() const { return user; }
+    uint32_t getGroup() const { return group; }
+  };
+
   /// This class provides an abstraction for the path to a file or directory
   /// in the operating system's filesystem and provides various basic operations
   /// on it.  Note that this class only represents the name of a path to a file
@@ -53,30 +82,6 @@ namespace sys {
   /// @since 1.4
   /// @brief An abstraction for operating system paths.
   class Path {
-    /// @name Types
-    /// @{
-    public:
-      /// This structure provides basic file system information about a file. It
-      /// is patterned after the stat(2) Unix operating system call but made
-      /// platform independent and eliminates many of the unix-specific fields.
-      /// However, to support llvm-ar, the mode, user, and group fields are
-      /// retained. These pertain to unix security and may not have a meaningful
-      /// value on non-Unix platforms. However, the fileSize and modTime fields
-      /// should always be applicabe on all platforms.  The structure is
-      /// filled in by the getStatusInfo method.
-      /// @brief File status structure
-      struct StatusInfo {
-        StatusInfo() : fileSize(0), modTime(0,0), mode(0777), user(999),
-                       group(999), isDir(false) { }
-        uint64_t    fileSize;   ///< Size of the file in bytes
-        TimeValue   modTime;    ///< Time of file's modification
-        uint32_t    mode;       ///< Mode of the file, if applicable
-        uint32_t    user;       ///< User ID of owner, if applicable
-        uint32_t    group;      ///< Group ID of owner, if applicable
-        bool        isDir;      ///< True if this is a directory.
-      };
-
-    /// @}
     /// @name Constructors
     /// @{
     public:
@@ -175,7 +180,7 @@ namespace sys {
       /// Makes a copy of \p that to \p this.
       /// @returns \p this
       /// @brief Assignment Operator
-      Path & operator = ( const Path & that ) {
+      Path &operator=(const Path &that) {
         path = that.path;
         return *this;
       }
@@ -183,15 +188,15 @@ namespace sys {
       /// Compares \p this Path with \p that Path for equality.
       /// @returns true if \p this and \p that refer to the same thing.
       /// @brief Equality Operator
-      bool operator == (const Path& that) const {
-        return 0 == path.compare(that.path) ;
+      bool operator==(const Path &that) const {
+        return 0 == path.compare(that.path);
       }
 
       /// Compares \p this Path with \p that Path for inequality.
       /// @returns true if \p this and \p that refer to different things.
       /// @brief Inequality Operator
-      bool operator !=( const Path & that ) const {
-        return 0 != path.compare( that.path );
+      bool operator!=(const Path &that) const {
+        return 0 != path.compare(that.path);
       }
 
       /// Determines if \p this Path is less than \p that Path. This is required
@@ -200,8 +205,8 @@ namespace sys {
       /// the std::string::compare method.
       /// @returns true if \p this path is lexicographically less than \p that.
       /// @brief Less Than Operator
-      bool operator< (const Path& that) const {
-        return 0 > path.compare( that.path );
+      bool operator<(const Path& that) const {
+        return 0 > path.compare(that.path);
       }
 
     /// @}
@@ -228,7 +233,7 @@ namespace sys {
       /// std::string. This allows the underlying path string to be manipulated.
       /// @returns std::string containing the path name.
       /// @brief Returns the path as a std::string.
-      const std::string& toString() const { return path; }
+      const std::string &toString() const { return path; }
 
       /// This function returns the last component of the path name. The last
       /// component is the file or directory name occuring after the last
@@ -248,7 +253,7 @@ namespace sys {
       /// Obtain a 'C' string for the path name.
       /// @returns a 'C' string containing the path name.
       /// @brief Returns the path as a C string.
-      const char* const c_str() const { return path.c_str(); }
+      const char *const c_str() const { return path.c_str(); }
 
     /// @}
     /// @name Disk Accessors
@@ -362,31 +367,14 @@ namespace sys {
       /// @returns false if \p this is not a directory, true otherwise
       /// @throws std::string if the directory cannot be searched
       /// @brief Build a list of directory's contents.
-      bool getDirectoryContents(std::set<Path>& paths) const;
+      bool getDirectoryContents(std::set<Path> &paths) const;
 
       /// This function returns status information about the file. The type of
       /// path (file or directory) is updated to reflect the actual contents
-      /// of the file system. If the file does not exist, false is returned.
-      /// For other (hard I/O) errors, a std::string is thrown indicating the
-      /// problem.
-      /// @throws std::string if an error occurs.
+      /// of the file system.  This returns false on success, or true on error
+      /// and fills in the specified error string if specified.
       /// @brief Get file status.
-      void getStatusInfo(StatusInfo& info) const;
-
-      /// This function returns the last modified time stamp for the file
-      /// referenced by this path. The Path may reference a file or a directory.
-      /// If the file does not exist, a ZeroTime timestamp is returned.
-      /// @returns last modified timestamp of the file/directory or ZeroTime
-      /// @brief Get file timestamp.
-      inline TimeValue getTimestamp() const {
-        StatusInfo info; getStatusInfo(info); return info.modTime;
-      }
-
-      /// This function returns the size of the file referenced by this path.
-      /// @brief Get file size.
-      inline size_t getSize() const {
-        StatusInfo info; getStatusInfo(info); return info.fileSize;
-      }
+      bool getFileStatus(FileStatus &Status, std::string *Error = 0) const;
 
     /// @}
     /// @name Path Mutators
@@ -475,7 +463,7 @@ namespace sys {
       /// @throws std::string if an error occurs.
       /// @returns true
       /// @brief Set the status information.
-      bool setStatusInfoOnDisk(const StatusInfo& si) const;
+      bool setStatusInfoOnDisk(const FileStatus &SI) const;
 
       /// This method attempts to create a directory in the file system with the
       /// same name as the Path object. The \p create_parents parameter controls
@@ -538,7 +526,7 @@ namespace sys {
       /// refers to something that is neither a file nor a directory.
       /// @throws std::string if there is an error.
       /// @brief Removes the file or directory from the filesystem.
-      bool eraseFromDisk( bool destroy_contents = false ) const;
+      bool eraseFromDisk(bool destroy_contents = false) const;
 
     /// @}
     /// @name Data

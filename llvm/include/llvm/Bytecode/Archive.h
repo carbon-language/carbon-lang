@@ -40,7 +40,6 @@ class ArchiveMemberHeader; // Internal implementation class
 /// of the Archive class instead.
 /// @brief This class represents a single archive member.
 class ArchiveMember {
-
   /// @name Types
   /// @{
   public:
@@ -75,28 +74,28 @@ class ArchiveMember {
     /// have any applicability on non-Unix systems but is a required component
     /// of the "ar" file format.
     /// @brief Get the user associated with this archive member.
-    unsigned getUser() const             { return info.user; }
+    unsigned getUser() const             { return info.getUser(); }
 
     /// The "group" is the owning group of the file per Unix security. This
     /// may not have any applicability on non-Unix systems but is a required
     /// component of the "ar" file format.
     /// @brief Get the group associated with this archive member.
-    unsigned getGroup() const            { return info.group; }
+    unsigned getGroup() const            { return info.getGroup(); }
 
     /// The "mode" specifies the access permissions for the file per Unix
     /// security. This may not have any applicabiity on non-Unix systems but is
     /// a required component of the "ar" file format.
     /// @brief Get the permission mode associated with this archive member.
-    unsigned getMode() const             { return info.mode; }
+    unsigned getMode() const             { return info.getMode(); }
 
     /// This method returns the time at which the archive member was last
     /// modified when it was not in the archive.
     /// @brief Get the time of last modification of the archive member.
-    sys::TimeValue getModTime() const    { return info.modTime; }
+    sys::TimeValue getModTime() const    { return info.getTimestamp(); }
 
     /// @returns the size of the archive member in bytes.
     /// @brief Get the size of the archive member.
-    unsigned getSize() const             { return info.fileSize; }
+    unsigned getSize() const             { return info.getSize(); }
 
     /// This method returns the total size of the archive member as it
     /// appears on disk. This includes the file content, the header, the
@@ -162,14 +161,14 @@ class ArchiveMember {
     /// systems.
     /// @returns the status info for the archive member
     /// @brief Obtain the status info for the archive member
-    const sys::Path::StatusInfo& getStatusInfo() const { return info; }
+    const sys::FileStatus &getFileStatus() const { return info; }
 
     /// This method causes the archive member to be replaced with the contents
     /// of the file specified by \p File. The contents of \p this will be
     /// updated to reflect the new data from \p File. The \p File must exist and
     /// be readable on entry to this method.
     /// @brief Replace contents of archive member with a new file.
-    void replaceWith(const sys::Path& aFile);
+    void replaceWith(const sys::Path &aFile);
 
   /// @}
   /// @name ilist methods - do not use
@@ -190,7 +189,7 @@ class ArchiveMember {
     ArchiveMember* prev;        ///< Pointer to previous archive member
     Archive*       parent;      ///< Pointer to parent archive
     sys::Path      path;        ///< Path of file containing the member
-    sys::Path::StatusInfo info; ///< Status info (size,mode,date)
+    sys::FileStatus info;       ///< Status info (size,mode,date)
     unsigned       flags;       ///< Flags about the archive member
     const void*    data;        ///< Data for the member
 
@@ -205,7 +204,7 @@ class ArchiveMember {
   private:
     /// Used internally by the Archive class to construct an ArchiveMember.
     /// The contents of the ArchiveMember are filled out by the Archive class.
-    ArchiveMember( Archive* PAR );
+    ArchiveMember(Archive *PAR);
 
     // So Archive can construct an ArchiveMember
     friend class llvm::Archive;

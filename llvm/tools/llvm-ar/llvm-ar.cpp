@@ -299,8 +299,10 @@ void buildPaths(bool checkExistence = true) {
     if (checkExistence) {
       if (!aPath.exists())
         throw std::string("File does not exist: ") + Members[i];
-      sys::Path::StatusInfo si;
-      aPath.getStatusInfo(si);
+      sys::FileStatus si;
+      std::string Err;
+      if (aPath.getFileStatus(si, &Err))
+        throw Err;
       if (si.isDir) {
         std::set<sys::Path> dirpaths = recurseDirectories(aPath);
         Paths.insert(dirpaths.begin(),dirpaths.end());
@@ -456,7 +458,7 @@ void doExtract() {
       // If we're supposed to retain the original modification times, etc. do so
       // now.
       if (OriginalDates)
-        I->getPath().setStatusInfoOnDisk(I->getStatusInfo());
+        I->getPath().setStatusInfoOnDisk(I->getFileStatus());
     }
   }
 }
@@ -610,8 +612,10 @@ void doReplaceOrInsert() {
     }
 
     if (found != remaining.end()) {
-      sys::Path::StatusInfo si;
-      found->getStatusInfo(si);
+      sys::FileStatus si;
+      std::string Err;
+      if (found->getFileStatus(si, &Err))
+        throw Err;
       if (si.isDir) {
         if (OnlyUpdate) {
           // Replace the item only if it is newer.

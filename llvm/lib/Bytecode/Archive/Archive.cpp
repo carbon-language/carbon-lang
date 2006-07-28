@@ -104,12 +104,14 @@ void ArchiveMember::replaceWith(const sys::Path& newFile) {
     flags &= ~HasLongFilenameFlag;
 
   // Get the signature and status info
-  std::string magic;
   const char* signature = (const char*) data;
+  std::string magic;
   if (!signature) {
     path.getMagicNumber(magic,4);
     signature = magic.c_str();
-    path.getStatusInfo(info);
+    std::string err;
+    if (path.getFileStatus(info, &err))
+      throw err;
   }
 
   // Determine what kind of file it is

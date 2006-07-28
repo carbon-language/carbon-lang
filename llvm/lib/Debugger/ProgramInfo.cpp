@@ -196,8 +196,9 @@ void SourceFunctionInfo::getSourceLocation(unsigned &RetLineNo,
 
 ProgramInfo::ProgramInfo(Module *m) : M(m), ProgramTimeStamp(0,0) {
   assert(M && "Cannot create program information with a null module!");
-  sys::Path modulePath(M->getModuleIdentifier());
-  ProgramTimeStamp = modulePath.getTimestamp();
+  sys::FileStatus Stat;
+  if (!sys::Path(M->getModuleIdentifier()).getFileStatus(Stat))
+    ProgramTimeStamp = Stat.getTimestamp();
 
   SourceFilesIsComplete = false;
   SourceFunctionsIsComplete = false;
