@@ -99,7 +99,8 @@ namespace {
       : SelectionDAGISel(X86Lowering),
         X86Lowering(*TM.getTargetLowering()),
         Subtarget(&TM.getSubtarget<X86Subtarget>()),
-        DAGSize(0), ReachibilityMatrix(NULL) {}
+        DAGSize(0), TopOrder(NULL), IdToOrder(NULL),
+        RMRange(NULL), ReachibilityMatrix(NULL) {}
 
     virtual bool runOnFunction(Function &Fn) {
       // Make sure we re-emit a set of the global base reg if necessary
@@ -242,7 +243,6 @@ bool X86DAGToDAGISel::IsFoldableBy(SDNode *N, SDNode *U) {
 /// DetermineTopologicalOrdering - Determine topological ordering of the nodes
 /// in the DAG.
 void X86DAGToDAGISel::DetermineTopologicalOrdering() {
-  DAGSize = CurDAG->AssignNodeIds();
   TopOrder = new SDNode*[DAGSize];
   IdToOrder = new unsigned[DAGSize];
   memset(IdToOrder, 0, DAGSize * sizeof(unsigned));
@@ -280,7 +280,6 @@ void X86DAGToDAGISel::DetermineTopologicalOrdering() {
 
 void X86DAGToDAGISel::DeterminReachibility(SDNode *f, SDNode *t) {
   if (!ReachibilityMatrix) {
-    DetermineTopologicalOrdering();
     unsigned RMSize = (DAGSize * DAGSize + 7) / 8;
     ReachibilityMatrix = new unsigned char[RMSize];
     memset(ReachibilityMatrix, 0, RMSize);
@@ -323,25 +322,26 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   DEBUG(BB->dump());
   MachineFunction::iterator FirstMBB = BB;
 
+  DAGSize = DAG.AssignNodeIds();
+  DetermineTopologicalOrdering();
+
   // Codegen the basic block.
 #ifndef NDEBUG
   DEBUG(std::cerr << "===== Instruction selection begins:\n");
   Indent = 0;
 #endif
   DAG.setRoot(SelectRoot(DAG.getRoot()));
-  assert(InFlightSet.empty() && "ISel InFlightSet has not been emptied!");
 #ifndef NDEBUG
   DEBUG(std::cerr << "===== Instruction selection ends:\n");
 #endif
-  if (ReachibilityMatrix) {
-    delete[] ReachibilityMatrix;
-    delete[] TopOrder;
-    delete[] IdToOrder;
-    delete[] RMRange;
-    ReachibilityMatrix = NULL;
-    TopOrder = NULL;
-    IdToOrder = RMRange = NULL;
-  }
+
+  delete[] ReachibilityMatrix;
+  delete[] TopOrder;
+  delete[] IdToOrder;
+  delete[] RMRange;
+  ReachibilityMatrix = NULL;
+  TopOrder = NULL;
+  IdToOrder = RMRange = NULL;
   CodeGenMap.clear();
   HandleMap.clear();
   ReplaceMap.clear();
