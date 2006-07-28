@@ -100,7 +100,7 @@ namespace {
         X86Lowering(*TM.getTargetLowering()),
         Subtarget(&TM.getSubtarget<X86Subtarget>()),
         DAGSize(0), TopOrder(NULL), IdToOrder(NULL),
-        RMRange(NULL), ReachibilityMatrix(NULL) {}
+        RMRange(NULL), ReachabilityMatrix(NULL) {}
 
     virtual bool runOnFunction(Function &Fn) {
       // Make sure we re-emit a set of the global base reg if necessary
@@ -125,7 +125,7 @@ namespace {
 
   private:
     void DetermineTopologicalOrdering();
-    void DetermineReachibility(SDNode *f, SDNode *t);
+    void DetermineReachability(SDNode *f, SDNode *t);
 
     void Select(SDOperand &Result, SDOperand N);
 
@@ -197,18 +197,18 @@ namespace {
     /// particular source node.
     unsigned *RMRange;
 
-    /// ReachibilityMatrix - A N x N matrix representing all pairs reachibility
+    /// ReachabilityMatrix - A N x N matrix representing all pairs reachibility
     /// information. One bit per potential edge.
-    unsigned char *ReachibilityMatrix;
+    unsigned char *ReachabilityMatrix;
 
     inline void setReachable(SDNode *f, SDNode *t) {
       unsigned Idx = f->getNodeId() * DAGSize + t->getNodeId();
-      ReachibilityMatrix[Idx / 8] |= 1 << (Idx % 8);
+      ReachabilityMatrix[Idx / 8] |= 1 << (Idx % 8);
     }
 
     inline bool isReachable(SDNode *f, SDNode *t) {
       unsigned Idx = f->getNodeId() * DAGSize + t->getNodeId();
-      return ReachibilityMatrix[Idx / 8] & (1 << (Idx % 8));
+      return ReachabilityMatrix[Idx / 8] & (1 << (Idx % 8));
     }
 
     /// UnfoldableSet - An boolean array representing nodes which have been
@@ -239,7 +239,7 @@ bool X86DAGToDAGISel::CanBeFoldedBy(SDNode *N, SDNode *U) {
 
   // If U use can somehow reach N through another path then U can't fold N or
   // it will create a cycle. e.g. In the following diagram, U can reach N
-  // through X. If N is foledd into into U, then X is both a predecessor and
+  // through X. If N is folded into into U, then X is both a predecessor and
   // a successor of U.
   //
   //         [ N ]
@@ -249,7 +249,7 @@ bool X86DAGToDAGISel::CanBeFoldedBy(SDNode *N, SDNode *U) {
   //      /        [X]
   //      |         ^
   //     [U]--------|
-  DetermineReachibility(U, N);
+  DetermineReachability(U, N);
   assert(isReachable(U, N) && "Attempting to fold a non-operand node?");
   for (SDNode::op_iterator I = U->op_begin(), E = U->op_end(); I != E; ++I) {
     SDNode *P = I->Val;
@@ -297,13 +297,13 @@ void X86DAGToDAGISel::DetermineTopologicalOrdering() {
   }
 }
 
-/// DetermineReachibility - Determine reachibility between all pairs of nodes
+/// DetermineReachability - Determine reachibility between all pairs of nodes
 /// between f and t in topological order.
-void X86DAGToDAGISel::DetermineReachibility(SDNode *f, SDNode *t) {
-  if (!ReachibilityMatrix) {
+void X86DAGToDAGISel::DetermineReachability(SDNode *f, SDNode *t) {
+  if (!ReachabilityMatrix) {
     unsigned RMSize = (DAGSize * DAGSize + 7) / 8;
-    ReachibilityMatrix = new unsigned char[RMSize];
-    memset(ReachibilityMatrix, 0, RMSize);
+    ReachabilityMatrix = new unsigned char[RMSize];
+    memset(ReachabilityMatrix, 0, RMSize);
   }
 
   int Idf = f->getNodeId();
@@ -360,12 +360,12 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   DEBUG(std::cerr << "===== Instruction selection ends:\n");
 #endif
 
-  delete[] ReachibilityMatrix;
+  delete[] ReachabilityMatrix;
   delete[] TopOrder;
   delete[] IdToOrder;
   delete[] RMRange;
   delete[] UnfoldableSet;
-  ReachibilityMatrix = NULL;
+  ReachabilityMatrix = NULL;
   TopOrder = NULL;
   IdToOrder = RMRange = NULL;
   UnfoldableSet = NULL;
