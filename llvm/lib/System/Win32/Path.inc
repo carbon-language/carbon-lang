@@ -693,9 +693,9 @@ Path::renamePathOnDisk(const Path& newName) {
 }
 
 bool
-Path::setStatusInfoOnDisk(const FileStatus &si) const {
+Path::setStatusInfoOnDisk(const FileStatus &si, std::string *ErrStr) const {
   // FIXME: should work on directories also.
-  if (!isFile()) return false;
+  if (!isFile()) return true;
 
   HANDLE h = CreateFile(path.c_str(),
                         FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES,
@@ -705,14 +705,14 @@ Path::setStatusInfoOnDisk(const FileStatus &si) const {
                         FILE_ATTRIBUTE_NORMAL,
                         NULL);
   if (h == INVALID_HANDLE_VALUE)
-    return false;
+    return true;
 
   BY_HANDLE_FILE_INFORMATION bhfi;
   if (!GetFileInformationByHandle(h, &bhfi)) {
     DWORD err = GetLastError();
     CloseHandle(h);
     SetLastError(err);
-    ThrowError(path + ": GetFileInformationByHandle: ");
+    return GetError(path + ": GetFileInformationByHandle: ", ErrStr);
   }
 
   FILETIME ft;
@@ -722,7 +722,7 @@ Path::setStatusInfoOnDisk(const FileStatus &si) const {
   CloseHandle(h);
   if (!ret) {
     SetLastError(err);
-    ThrowError(path + ": SetFileTime: ");
+    return GetError(path + ": SetFileTime: ", ErrStr);
   }
 
   // Best we can do with Unix permission bits is to interpret the owner
@@ -731,17 +731,17 @@ Path::setStatusInfoOnDisk(const FileStatus &si) const {
     if (bhfi.dwFileAttributes & FILE_ATTRIBUTE_READONLY) {
       if (!SetFileAttributes(path.c_str(),
               bhfi.dwFileAttributes & ~FILE_ATTRIBUTE_READONLY))
-        ThrowError(path + ": SetFileAttributes: ");
+        return GetError(path + ": SetFileAttributes: ", ErrStr);
     }
   } else {
     if (!(bhfi.dwFileAttributes & FILE_ATTRIBUTE_READONLY)) {
       if (!SetFileAttributes(path.c_str(),
               bhfi.dwFileAttributes | FILE_ATTRIBUTE_READONLY))
-        ThrowError(path + ": SetFileAttributes: ");
+        return GetError(path + ": SetFileAttributes: ", ErrStr);
     }
   }
 
-  return true;
+  return false;
 }
 
 void

@@ -461,9 +461,10 @@ namespace sys {
       /// This method allows the last modified time stamp and permission bits
       /// to be set on the disk object referenced by the Path.
       /// @throws std::string if an error occurs.
-      /// @returns true
+      /// @returns true on error.
       /// @brief Set the status information.
-      bool setStatusInfoOnDisk(const FileStatus &SI) const;
+      bool setStatusInfoOnDisk(const FileStatus &SI,
+                               std::string *ErrStr = 0) const;
 
       /// This method attempts to create a directory in the file system with the
       /// same name as the Path object. The \p create_parents parameter controls

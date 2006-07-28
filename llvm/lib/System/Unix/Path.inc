@@ -647,15 +647,15 @@ Path::renamePathOnDisk(const Path& newName) {
 }
 
 bool
-Path::setStatusInfoOnDisk(const FileStatus &si) const {
+Path::setStatusInfoOnDisk(const FileStatus &si, std::string *ErrStr) const {
   struct utimbuf utb;
   utb.actime = si.modTime.toPosixTime();
   utb.modtime = utb.actime;
   if (0 != ::utime(path.c_str(),&utb))
-    ThrowErrno(path + ": can't set file modification time");
+    return GetErrno(path + ": can't set file modification time", ErrStr);
   if (0 != ::chmod(path.c_str(),si.mode))
-    ThrowErrno(path + ": can't set mode");
-  return true;
+    return GetErrno(path + ": can't set mode", ErrStr);
+  return false;
 }
 
 void 
