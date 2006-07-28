@@ -100,9 +100,20 @@ void *JIT::getPointerToNamedFunction(const std::string &Name) {
   // but print a warning.
   if (Name == "__main") return (void*)(intptr_t)&__mainFunc;
 
+  const char *NameStr = Name.c_str();
+  // If this is an asm specifier, skip the sentinal.
+  if (NameStr[0] == 1) ++NameStr;
+  
   // If it's an external function, look it up in the process image...
-  void *Ptr = sys::DynamicLibrary::SearchForAddressOfSymbol(Name);
+  void *Ptr = sys::DynamicLibrary::SearchForAddressOfSymbol(NameStr);
   if (Ptr) return Ptr;
+  
+  // If it wasn't found and if it starts with an underscore ('_') character, and
+  // has an asm specifier, try again without the underscore.
+  if (Name[0] == 1 && NameStr[0] == '_') {
+    Ptr = sys::DynamicLibrary::SearchForAddressOfSymbol(NameStr+1);
+    if (Ptr) return Ptr;
+  }
 
   std::cerr << "ERROR: Program used external function '" << Name
             << "' which could not be resolved!\n";
