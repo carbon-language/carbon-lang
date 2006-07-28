@@ -615,7 +615,6 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
 /// printInlineAsm - This method formats and prints the specified machine
 /// instruction that is an inline asm.
 void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
-  O << InlineAsmStart << "\n\t";
   unsigned NumOperands = MI->getNumOperands();
   
   // Count the number of register definitions.
@@ -627,6 +626,14 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
 
   // Disassemble the AsmStr, printing out the literal pieces, the operands, etc.
   const char *AsmStr = MI->getOperand(NumDefs).getSymbolName();
+
+  // If this asmstr is empty, don't bother printing the #APP/#NOAPP markers.
+  if (AsmStr[0] == 0) {
+    O << "\n";  // Tab already printed, avoid double indenting next instr.
+    return;
+  }
+  
+  O << InlineAsmStart << "\n\t";
 
   // The variant of the current asmprinter: FIXME: change.
   int AsmPrinterVariant = 0;
