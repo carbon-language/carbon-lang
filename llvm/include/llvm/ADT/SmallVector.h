@@ -66,6 +66,10 @@ public:
     std::uninitialized_copy(RHS.begin(), RHS.end(), Begin);
   }
   ~SmallVector() {
+    // Destroy the constructed elements in the vector.
+    for (iterator I = Begin, E = End; I != E; ++I)
+      I->~T();
+
     // If this wasn't grown from the inline copy, deallocate the old space.
     if ((void*)Begin != (void*)InlineElts)
       delete[] (char*)Begin;
@@ -115,6 +119,12 @@ public:
     goto Retry;
   }
   
+  void pop_back() {
+    assert(!empty() && "SmallVector is empty!");
+    --End;
+    End->~T();
+  }
+  
   /// append - Add the specified range to the end of the SmallVector.
   ///
   template<typename in_iter>
@@ -154,7 +164,7 @@ public:
     // This allows us to avoid copying them during the grow.
     if (Capacity-Begin < RHSSize) {
       // Destroy current elements.
-      for (T *I = Begin, E = End; I != E; ++I)
+      for (iterator I = Begin, E = End; I != E; ++I)
         I->~T();
       End = Begin;
       CurSize = 0;
@@ -192,7 +202,7 @@ private:
     std::uninitialized_copy(Begin, End, NewElts);
     
     // Destroy the original elements.
-    for (T *I = Begin, *E = End; I != E; ++I)
+    for (iterator I = Begin, E = End; I != E; ++I)
       I->~T();
     
     // If this wasn't grown from the inline copy, deallocate the old space.
