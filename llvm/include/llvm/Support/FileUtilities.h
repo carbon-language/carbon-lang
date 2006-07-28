@@ -43,10 +43,10 @@ namespace llvm {
       : Filename(filename), DeleteIt(deleteIt) {}
 
     ~FileRemover() {
-      if (DeleteIt)
-        try {
-          Filename.eraseFromDisk();
-        } catch (...) {}             // Ignore problems deleting the file.
+      if (DeleteIt) {
+        // Ignore problems deleting the file.
+        Filename.eraseFromDisk();
+      }
     }
 
     /// releaseFile - Take ownership of the file away from the FileRemover so it

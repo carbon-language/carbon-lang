@@ -522,17 +522,15 @@ namespace sys {
       /// \p destroy_contents parameter is ignored.
       /// @param destroy_contents Indicates whether the contents of a destroyed
       /// directory should also be destroyed (recursively).
-      /// @returns true if the file/directory was destroyed, false if the path
-      /// refers to something that is neither a file nor a directory.
-      /// @throws std::string if there is an error.
+      /// @returns false if the file/directory was destroyed, true on error.
       /// @brief Removes the file or directory from the filesystem.
-      bool eraseFromDisk(bool destroy_contents = false) const;
-
+      bool eraseFromDisk(bool destroy_contents = false,
+                         std::string *Err = 0) const;
     /// @}
     /// @name Data
     /// @{
     private:
-        mutable std::string path;   ///< Storage for the path name.
+      mutable std::string path;   ///< Storage for the path name.
 
     /// @}
   };

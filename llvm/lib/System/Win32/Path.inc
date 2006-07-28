@@ -571,19 +571,19 @@ Path::createFileOnDisk() {
 }
 
 bool
-Path::eraseFromDisk(bool remove_contents) const {
+Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
   if (isFile()) {
     DWORD attr = GetFileAttributes(path.c_str());
 
     // If it doesn't exist, we're done.
     if (attr == INVALID_FILE_ATTRIBUTES)
-      return true;
+      return false;
 
     // Read-only files cannot be deleted on Windows.  Must remove the read-only
     // attribute first.
     if (attr & FILE_ATTRIBUTE_READONLY) {
       if (!SetFileAttributes(path.c_str(), attr & ~FILE_ATTRIBUTE_READONLY))
-        ThrowError(path + ": Can't destroy file: ");
+        return GetError(path + ": Can't destroy file: ", ErrStr);
     }
 
     if (!DeleteFile(path.c_str()))
@@ -592,7 +592,7 @@ Path::eraseFromDisk(bool remove_contents) const {
   } else if (isDirectory()) {
     // If it doesn't exist, we're done.
     if (!exists())
-      return true;
+      return false;
 
     char *pathname = reinterpret_cast<char *>(_alloca(path.length()+3));
     int lastchar = path.length() - 1 ;
@@ -629,7 +629,7 @@ Path::eraseFromDisk(bool remove_contents) const {
         FindClose(h);
         if (err != ERROR_NO_MORE_FILES) {
           SetLastError(err);
-          ThrowError(path + ": Can't read directory: ");
+          return GetError(path + ": Can't read directory: ", ErrStr);
         }
 
         for (std::vector<Path>::iterator I = list.begin(); I != list.end();
@@ -639,17 +639,18 @@ Path::eraseFromDisk(bool remove_contents) const {
         }
       } else {
         if (GetLastError() != ERROR_FILE_NOT_FOUND)
-          ThrowError(path + ": Can't read directory: ");
+          return GetError(path + ": Can't read directory: ", ErrStr);
       }
     }
 
     pathname[lastchar] = 0;
     if (!RemoveDirectory(pathname))
-      ThrowError(std::string(pathname) + ": Can't destroy directory: ");
-    return true;
+      return GetError(std::string(pathname) + ": Can't destroy directory: ",
+                      ErrStr);
+    return false;
   } else {
     // It appears the path doesn't exist.
-    return false;
+    return true;
   }
 }
 
@@ -789,5 +790,3 @@ Path::createTemporaryFileOnDisk(bool reuse_current) {
 
 }
 }
-
-

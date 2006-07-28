@@ -604,33 +604,38 @@ Path::createTemporaryFileOnDisk(bool reuse_current) {
 }
 
 bool
-Path::eraseFromDisk(bool remove_contents) const {
-  // Make sure we're dealing with a directory
+Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
+  // Make sure we're dealing with a directory.
   if (isFile()) {
-    if (0 != unlink(path.c_str()))
-      ThrowErrno(path + ": can't destroy file");
-  } else if (isDirectory()) {
-    if (remove_contents) {
-      // Recursively descend the directory to remove its content
-      std::string cmd("/bin/rm -rf ");
-      cmd += path;
-      system(cmd.c_str());
-    } else {
-      // Otherwise, try to just remove the one directory
-      char pathname[MAXPATHLEN];
-      path.copy(pathname,MAXPATHLEN);
-      int lastchar = path.length() - 1 ; 
-      if (pathname[lastchar] == '/') 
-        pathname[lastchar] = 0;
-      else
-        pathname[lastchar+1] = 0;
-      if ( 0 != rmdir(pathname))
-        ThrowErrno(std::string(pathname) + ": can't destroy directory");
-    }
-  }
-  else
+    if (unlink(path.c_str()) != 0)
+      return GetErrno(path + ": can't destroy file", ErrStr);
     return false;
-  return true;
+  }
+  
+  if (!isDirectory()) {
+    if (ErrStr) *ErrStr = "not a file or directory";
+    return true;
+  }
+  if (remove_contents) {
+    // Recursively descend the directory to remove its contents.
+    std::string cmd = "/bin/rm -rf " + path;
+    system(cmd.c_str());
+    return false;
+  }
+
+  // Otherwise, try to just remove the one directory.
+  char pathname[MAXPATHLEN];
+  path.copy(pathname, MAXPATHLEN);
+  int lastchar = path.length() - 1 ; 
+  if (pathname[lastchar] == '/') 
+    pathname[lastchar] = 0;
+  else
+    pathname[lastchar+1] = 0;
+    
+  if (rmdir(pathname) != 0)
+    return GetErrno(std::string(pathname) + ": can't destroy directory",
+                    ErrStr);
+  return false;
 }
 
 bool

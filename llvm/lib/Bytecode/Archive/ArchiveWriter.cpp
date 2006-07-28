@@ -396,7 +396,7 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
   std::ofstream ArchiveFile(TmpArchive.c_str(), io_mode);
 
   // Check for errors opening or creating archive file.
-  if ( !ArchiveFile.is_open() || ArchiveFile.bad() ) {
+  if (!ArchiveFile.is_open() || ArchiveFile.bad()) {
     if (TmpArchive.exists())
       TmpArchive.eraseFromDisk();
     if (error)
@@ -415,10 +415,9 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
 
   // Loop over all member files, and write them out. Note that this also
   // builds the symbol table, symTab.
-  for ( MembersList::iterator I = begin(), E = end(); I != E; ++I) {
-    if (!writeMember(*I,ArchiveFile,CreateSymbolTable,
-                     TruncateNames,Compress,error))
-    {
+  for (MembersList::iterator I = begin(), E = end(); I != E; ++I) {
+    if (!writeMember(*I, ArchiveFile, CreateSymbolTable,
+                     TruncateNames, Compress, error)) {
       if (TmpArchive.exists())
         TmpArchive.eraseFromDisk();
       ArchiveFile.close();
@@ -448,7 +447,7 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
     sys::RemoveFileOnSignal(FinalFilePath);
 
     std::ofstream FinalFile(FinalFilePath.c_str(), io_mode);
-    if ( !FinalFile.is_open() || FinalFile.bad() ) {
+    if (!FinalFile.is_open() || FinalFile.bad()) {
       if (TmpArchive.exists())
         TmpArchive.eraseFromDisk();
       if (error)
