@@ -65,16 +65,18 @@ Lexer:
  * -fpreprocessed mode.
 
 Preprocessor:
- * Function-style macro expansion, token pasting
+ * Comma swallowing GNU token-pasting extension.
+ * Paste avoidance in -E output mode.
  * #line / #file directives
  * -C output mode in -E mode.
  * MSExtension: "L#param" stringizes to a wide string literal.
 
 Traditional Preprocessor:
  * All.
-    
+
 Parser Callbacks:
  * All.
+ * Enough to do devkit-style "indexing".
  
 Parser Actions:
  * All.
