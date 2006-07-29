@@ -542,6 +542,11 @@ static bool isTrivialSingleTokenExpansion(const MacroInfo *MI,
        I != E; ++I)
     if (*I == II)
       return false;   // Identifier is a macro argument.
+  
+  // If the argument is the __VA_ARGS__ token, we can't fast expand it.
+  if (!strcmp(II->getName(), "__VA_ARGS__"))
+    return false;     // Identifier is macro argument.
+  
   return true;
 }
 
