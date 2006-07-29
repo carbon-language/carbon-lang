@@ -649,6 +649,24 @@ int main(int argc, char **argv) {
   // Set up keywords.
   PP.AddKeywords();
   
+  // Figure out where to get and map in the main file.
+  unsigned MainFileID = 0;
+  if (InputFilename != "-") {
+    const FileEntry *File = FileMgr.getFile(InputFilename);
+    if (File) MainFileID = SourceMgr.createFileID(File, SourceLocation());
+    if (MainFileID == 0) {
+      std::cerr << "Error reading '" << InputFilename << "'!\n";
+      return 1;
+    }
+  } else {
+    SourceBuffer *SB = SourceBuffer::getSTDIN();
+    if (SB) MainFileID = SourceMgr.createFileIDForMemBuffer(SB);
+    if (MainFileID == 0) {
+      std::cerr << "Error reading standard input!  Empty?\n";
+      return 1;
+    }
+  }
+  
   // Now that we have emitted the predefined macros, #includes, etc into
   // PrologMacros, preprocess it to populate the initial preprocessor state.
   {
@@ -673,29 +691,11 @@ int main(int argc, char **argv) {
     // Once we've read this, we're done.
   }
   
-  unsigned MainFileID = 0;
-  if (InputFilename != "-") {
-    const FileEntry *File = FileMgr.getFile(InputFilename);
-    if (File) MainFileID = SourceMgr.createFileID(File, SourceLocation());
-    if (MainFileID == 0) {
-      std::cerr << "Error reading '" << InputFilename << "'!\n";
-      return 1;
-    }
-  } else {
-    SourceBuffer *SB = SourceBuffer::getSTDIN();
-    if (SB) MainFileID = SourceMgr.createFileIDForMemBuffer(SB);
-    if (MainFileID == 0) {
-      std::cerr << "Error reading standard input!  Empty?\n";
-      return 1;
-    }
-  }
-  
-  // Start parsing the specified input file.
-  PP.EnterSourceFile(MainFileID, 0, true);
-  
   switch (ProgAction) {
   case RunPreprocessorOnly: {        // Just lex as fast as we can, no output.
     LexerToken Tok;
+    // Start parsing the specified input file.
+    PP.EnterSourceFile(MainFileID, 0, true);
     do {
       PP.Lex(Tok);
     } while (Tok.getKind() != tok::eof);
@@ -703,11 +703,13 @@ int main(int argc, char **argv) {
   }
     
   case PrintPreprocessedInput:       // -E mode.
-    DoPrintPreprocessedInput(PP, Options);
+    DoPrintPreprocessedInput(MainFileID, PP, Options);
     break;
                   
   case DumpTokens: {                 // Token dump mode.
     LexerToken Tok;
+    // Start parsing the specified input file.
+    PP.EnterSourceFile(MainFileID, 0, true);
     do {
       PP.Lex(Tok);
       PP.DumpToken(Tok, true);

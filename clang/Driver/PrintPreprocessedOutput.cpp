@@ -362,7 +362,8 @@ static bool AvoidConcat(const LexerToken &PrevTok, const LexerToken &Tok,
 
 /// DoPrintPreprocessedInput - This implements -E mode.
 ///
-void clang::DoPrintPreprocessedInput(Preprocessor &PP, LangOptions &Options) {
+void clang::DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP,
+                                     LangOptions &Options) {
   if (EnableCommentOutput)          // -C specified?
     Options.KeepComments = 1;
   if (EnableMacroCommentOutput)     // -CC specified?
@@ -381,6 +382,12 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP, LangOptions &Options) {
   
   PP.AddPragmaHandler(0, new UnknownPragmaHandler("#pragma"));
   PP.AddPragmaHandler("GCC", new UnknownPragmaHandler("#pragma GCC"));
+
+  // After we have configured the preprocessor, enter the main file.
+  
+  // Start parsing the specified input file.
+  PP.EnterSourceFile(MainFileID, 0, true);
+  
   do {
     PrevTok = Tok;
     PP.Lex(Tok);
