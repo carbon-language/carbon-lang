@@ -447,7 +447,8 @@ void MacroExpander::ExpandFunctionArguments() {
     // This is deleted in the dtor.
     NumMacroTokens = ResultToks.size();
     LexerToken *Res = new LexerToken[ResultToks.size()];
-    memcpy(Res, &ResultToks[0], NumMacroTokens*sizeof(LexerToken));
+    if (NumMacroTokens)
+      memcpy(Res, &ResultToks[0], NumMacroTokens*sizeof(LexerToken));
     MacroTokens = Res;
   }
 }
