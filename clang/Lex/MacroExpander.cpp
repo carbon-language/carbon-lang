@@ -246,7 +246,7 @@ MacroExpander::MacroExpander(LexerToken &Tok, MacroArgs *Actuals,
 
   // If this is a function-like macro, expand the arguments and change
   // MacroTokens to point to the expanded tokens.
-  if (Macro->isFunctionLike() && Macro->getNumArgs() || Macro->isC99Varargs())
+  if (Macro->isFunctionLike() && (Macro->getNumArgs() || Macro->isC99Varargs()))
     ExpandFunctionArguments();
   
   // Mark the macro as currently disabled, so that it is not recursively
