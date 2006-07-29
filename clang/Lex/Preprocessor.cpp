@@ -795,16 +795,7 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(LexerToken &MacroName,
     } else if (MI->getNumArgs() == 1) {
       // #define A(x)
       //   A()
-      // is ok because it is an empty argument.  Add it explicitly.
-      
-      
-      // Add a marker EOF token to the end of the token list for this argument.
-      SourceLocation EndLoc = Tok.getLocation();
-      Tok.StartToken();
-      Tok.SetKind(tok::eof);
-      Tok.SetLocation(EndLoc);
-      Tok.SetLength(0);
-      ArgTokens.push_back(Tok);
+      // is ok because it is an empty argument.
       
       // Empty arguments are standard in C99 and supported as an extension in
       // other modes.
@@ -815,6 +806,14 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(LexerToken &MacroName,
       Diag(Tok, diag::err_too_few_args_in_macro_invoc);
       return 0;
     }
+    
+    // Add a marker EOF token to the end of the token list for this argument.
+    SourceLocation EndLoc = Tok.getLocation();
+    Tok.StartToken();
+    Tok.SetKind(tok::eof);
+    Tok.SetLocation(EndLoc);
+    Tok.SetLength(0);
+    ArgTokens.push_back(Tok);
   }
   
   return MacroArgs::create(MI, &ArgTokens[0], ArgTokens.size());
