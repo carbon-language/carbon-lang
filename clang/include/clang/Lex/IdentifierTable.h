@@ -71,7 +71,7 @@ public:
   
   /// setIsPoisoned - Mark this identifier as poisoned.  After poisoning, the
   /// Preprocessor will emit an error every time this token is used.
-  void setIsPoisoned() { IsPoisoned = true; }
+  void setIsPoisoned(bool Value = true) { IsPoisoned = Value; }
   
   /// isPoisoned - Return true if this token has been poisoned.
   bool isPoisoned() const { return IsPoisoned; }
