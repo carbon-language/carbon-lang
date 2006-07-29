@@ -307,7 +307,13 @@ void MacroExpander::ExpandFunctionArguments() {
     const LexerToken &CurTok = MacroTokens[i];
     if (CurTok.getKind() == tok::hash || CurTok.getKind() == tok::hashat) {
       int ArgNo = Macro->getArgumentNum(MacroTokens[i+1].getIdentifierInfo());
-      assert(ArgNo != -1 && "Token following # is not an argument?");
+      if (ArgNo == -1) {
+        // Otherwise, this must be #__VA_ARGS__.
+        assert(MacroTokens[i+1].getIdentifierInfo() == 
+                   PP.get__VA_ARGS__Identifier() &&
+               "Token following # is not an argument?");
+        ArgNo = Macro->getNumArgs();
+      }
       
       LexerToken Res;
       if (CurTok.getKind() == tok::hash)  // Stringify

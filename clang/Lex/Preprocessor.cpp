@@ -1781,7 +1781,8 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
    
     // Not a macro arg identifier?
     if (!Tok.getIdentifierInfo() ||
-        MI->getArgumentNum(Tok.getIdentifierInfo()) == -1) {
+        (MI->getArgumentNum(Tok.getIdentifierInfo()) == -1 &&
+         Tok.getIdentifierInfo() != Ident__VA_ARGS__)) {
       Diag(Tok, diag::err_pp_stringize_not_parameter);
       delete MI;
       
