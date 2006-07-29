@@ -1696,8 +1696,6 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
   LexerToken Tok;
   LexUnexpandedToken(Tok);
   
-  // FIXME: Enable __VA_ARGS__.
-
   // If this is a function-like macro definition, parse the argument list,
   // marking each of the identifiers as being used as macro arguments.  Also,
   // check other constraints on the first token of the macro body.
@@ -1732,6 +1730,15 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
     Tok.ClearFlag(LexerToken::LeadingSpace);
   }
   
+  // If this is a definition of a variadic C99 function-like macro, not using
+  // the GNU named varargs extension, enabled __VA_ARGS__.
+  
+  // "Poison" __VA_ARGS__, which can only appear in the expansion of a macro.
+  // This gets unpoisoned where it is allowed.
+  assert(Ident__VA_ARGS__->isPoisoned() && "__VA_ARGS__ should be poisoned!");
+  if (MI->isC99Varargs())
+    Ident__VA_ARGS__->setIsPoisoned(false);
+  
   // Read the rest of the macro body.
   while (Tok.getKind() != tok::eom) {
     MI->AddTokenToBody(Tok);
@@ -1752,6 +1759,9 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
         MI->getArgumentNum(Tok.getIdentifierInfo()) == -1) {
       Diag(Tok, diag::err_pp_stringize_not_parameter);
       delete MI;
+      
+      // Disable __VA_ARGS__ again.
+      Ident__VA_ARGS__->setIsPoisoned(true);
       return;
     }
     
@@ -1761,6 +1771,9 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
     // Get the next token of the macro.
     LexUnexpandedToken(Tok);
   }
+  
+  // Disable __VA_ARGS__ again.
+  Ident__VA_ARGS__->setIsPoisoned(true);
 
   // Check that there is no paste (##) operator at the begining or end of the
   // replacement list.
