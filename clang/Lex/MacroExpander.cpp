@@ -294,6 +294,12 @@ void MacroExpander::ExpandFunctionArguments() {
   // track of whether we change anything.  If not, no need to keep them.  If so,
   // we install the newly expanded sequence as MacroTokens.
   bool MadeChange = false;
+  
+  // NextTokGetsSpace - When this is true, the next token appended to the
+  // output list will get a leading space, regardless of whether it had one to
+  // begin with or not.  This is used for placemarker support.
+  bool NextTokGetsSpace = false;
+  
   for (unsigned i = 0, e = NumMacroTokens; i != e; ++i) {
     // If we found the stringify operator, get the argument stringified.  The
     // preprocessor already verified that the following token is a macro name
@@ -313,12 +319,13 @@ void MacroExpander::ExpandFunctionArguments() {
       
       // The stringified/charified string leading space flag gets set to match
       // the #/#@ operator.
-      if (CurTok.hasLeadingSpace())
+      if (CurTok.hasLeadingSpace() || NextTokGetsSpace)
         Res.SetFlag(LexerToken::LeadingSpace);
       
       ResultToks.push_back(Res);
       MadeChange = true;
       ++i;  // Skip arg name.
+      NextTokGetsSpace = false;
       continue;
     }
     
@@ -330,6 +337,11 @@ void MacroExpander::ExpandFunctionArguments() {
       if (II != VAARGSii || !Macro->isC99Varargs()) {
         // This isn't an argument and isn't __VA_ARGS__.  Just add it.
         ResultToks.push_back(CurTok);
+
+        if (NextTokGetsSpace) {
+          ResultToks.back().SetFlag(LexerToken::LeadingSpace);
+          NextTokGetsSpace = false;
+        }
         continue;
       }
       
@@ -371,7 +383,13 @@ void MacroExpander::ExpandFunctionArguments() {
         // before the first token should match the whitespace of the arg
         // identifier.
         ResultToks[FirstResult].SetFlagValue(LexerToken::LeadingSpace,
-                                             CurTok.hasLeadingSpace());
+                                             CurTok.hasLeadingSpace() ||
+                                             NextTokGetsSpace);
+        NextTokGetsSpace = false;
+      } else {
+        // If this is an empty argument, and if there was whitespace before the
+        // formal token, make sure the next token gets whitespace before it.
+        NextTokGetsSpace = CurTok.hasLeadingSpace();
       }
       continue;
     }
@@ -382,6 +400,13 @@ void MacroExpander::ExpandFunctionArguments() {
     unsigned NumToks = MacroArgs::getArgLength(ArgToks);
     if (NumToks) {  // Not an empty argument?
       ResultToks.append(ArgToks, ArgToks+NumToks);
+      
+      // If the next token was supposed to get leading whitespace, ensure it has
+      // it now.
+      if (NextTokGetsSpace) {
+        ResultToks[ResultToks.size()-NumToks].SetFlag(LexerToken::LeadingSpace);
+        NextTokGetsSpace = false;
+      }
       continue;
     }
     
@@ -391,9 +416,11 @@ void MacroExpander::ExpandFunctionArguments() {
     // 6.10.3.3p2,3) calls for a bunch of placemarker stuff to occur.  We
     // implement this by eating ## operators when a LHS or RHS expands to
     // empty.
+    NextTokGetsSpace |= CurTok.hasLeadingSpace();
     if (PasteAfter) {
       // Discard the argument token and skip (don't copy to the expansion
       // buffer) the paste operator after it.
+      NextTokGetsSpace |= MacroTokens[i+1].hasLeadingSpace();
       ++i;
       continue;
     }
@@ -401,6 +428,7 @@ void MacroExpander::ExpandFunctionArguments() {
     // If this is on the RHS of a paste operator, we've already copied the
     // paste operator to the ResultToks list.  Remove it.
     assert(PasteBefore && ResultToks.back().getKind() == tok::hashhash);
+    NextTokGetsSpace |= ResultToks.back().hasLeadingSpace();
     ResultToks.pop_back();
     continue;
   }
