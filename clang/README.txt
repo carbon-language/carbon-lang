@@ -65,7 +65,6 @@ Lexer:
  * -fpreprocessed mode.
 
 Preprocessor:
- * Comma swallowing GNU token-pasting extension.
  * #line / #file directives
  * -C output mode in -E mode.
  * MSExtension: "L#param" stringizes to a wide string literal.
