@@ -246,7 +246,7 @@ MacroExpander::MacroExpander(LexerToken &Tok, MacroArgs *Actuals,
 
   // If this is a function-like macro, expand the arguments and change
   // MacroTokens to point to the expanded tokens.
-  if (Macro->isFunctionLike() && Macro->getNumArgs())
+  if (Macro->isFunctionLike() && Macro->getNumArgs() || Macro->isC99Varargs())
     ExpandFunctionArguments();
   
   // Mark the macro as currently disabled, so that it is not recursively
@@ -288,6 +288,8 @@ MacroExpander::~MacroExpander() {
 void MacroExpander::ExpandFunctionArguments() {
   SmallVector<LexerToken, 128> ResultToks;
   
+  IdentifierInfo *VAARGSii = PP.get__VA_ARGS__Identifier();
+  
   // Loop through the MacroTokens tokens, expanding them into ResultToks.  Keep
   // track of whether we change anything.  If not, no need to keep them.  If so,
   // we install the newly expanded sequence as MacroTokens.
@@ -325,8 +327,14 @@ void MacroExpander::ExpandFunctionArguments() {
     IdentifierInfo *II = CurTok.getIdentifierInfo();
     int ArgNo = II ? Macro->getArgumentNum(II) : -1;
     if (ArgNo == -1) {
-      ResultToks.push_back(CurTok);
-      continue;
+      if (II != VAARGSii || !Macro->isC99Varargs()) {
+        // This isn't an argument and isn't __VA_ARGS__.  Just add it.
+        ResultToks.push_back(CurTok);
+        continue;
+      }
+      
+      // Otherwise, this *is* __VA_ARGS__.  Set ArgNo to the last argument.
+      ArgNo = Macro->getNumArgs();
     }
       
     // An argument is expanded somehow, the result is different than the
