@@ -40,15 +40,23 @@ class MacroArgs {
   /// StringifiedArgs - This contains arguments in 'stringified' form.  If the
   /// stringified form of an argument has not yet been computed, this is empty.
   std::vector<LexerToken> StringifiedArgs;
+
+  /// VarargsElided - True if this is a C99 style varargs macro invocation and
+  /// there was no argument specified for the "..." argument.  If the argument
+  /// was specified (even empty) or this isn't a C99 style varargs function, or
+  /// if in strict mode and the C99 varargs macro had only a ... argument, this
+  /// is false.
+  bool VarargsElided;
   
-  MacroArgs(unsigned NumToks) : NumUnexpArgTokens(NumToks) {}
+  MacroArgs(unsigned NumToks, bool varargsElided)
+    : NumUnexpArgTokens(NumToks), VarargsElided(varargsElided) {}
   ~MacroArgs() {}
 public:
   /// MacroArgs ctor function - Create a new MacroArgs object with the specified
   /// macro and argument info.
   static MacroArgs *create(const MacroInfo *MI,
                            const LexerToken *UnexpArgTokens,
-                           unsigned NumArgTokens);
+                           unsigned NumArgTokens, bool VarargsElided);
   
   /// destroy - Destroy and deallocate the memory for this object.
   ///
@@ -80,6 +88,14 @@ public:
   /// getNumArguments - Return the number of arguments passed into this macro
   /// invocation.
   unsigned getNumArguments() const { return NumUnexpArgTokens; }
+  
+  
+  /// isVarargsElidedUse - Return true if this is a C99 style varargs macro
+  /// invocation and there was no argument specified for the "..." argument.  If
+  /// the argument was specified (even empty) or this isn't a C99 style varargs
+  /// function, or if in strict mode and the C99 varargs macro had only a ...
+  /// argument, this returns false.
+  bool isVarargsElidedUse() const { return VarargsElided; }
 };
 
   

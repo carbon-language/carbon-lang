@@ -28,7 +28,7 @@ using namespace clang;
 /// MacroArgs ctor function - This destroys the vector passed in.
 MacroArgs *MacroArgs::create(const MacroInfo *MI,
                              const LexerToken *UnexpArgTokens,
-                             unsigned NumToks) {
+                             unsigned NumToks, bool VarargsElided) {
   assert(MI->isFunctionLike() &&
          "Can't have args for an object-like macro!");
 
@@ -36,7 +36,7 @@ MacroArgs *MacroArgs::create(const MacroInfo *MI,
   MacroArgs *Result = (MacroArgs*)malloc(sizeof(MacroArgs) +
                                          NumToks*sizeof(LexerToken));
   // Construct the macroargs object.
-  new (Result) MacroArgs(NumToks);
+  new (Result) MacroArgs(NumToks, VarargsElided);
   
   // Copy the actual unexpanded tokens to immediately after the result ptr.
   if (NumToks)
@@ -410,8 +410,6 @@ void MacroExpander::ExpandFunctionArguments() {
       continue;
     }
     
-    // FIXME: Handle comma swallowing GNU extension.
-    
     // If an empty argument is on the LHS or RHS of a paste, the standard (C99
     // 6.10.3.3p2,3) calls for a bunch of placemarker stuff to occur.  We
     // implement this by eating ## operators when a LHS or RHS expands to
@@ -430,6 +428,17 @@ void MacroExpander::ExpandFunctionArguments() {
     assert(PasteBefore && ResultToks.back().getKind() == tok::hashhash);
     NextTokGetsSpace |= ResultToks.back().hasLeadingSpace();
     ResultToks.pop_back();
+    
+    // If this is the __VA_ARGS__ token, and if the argument wasn't provided,
+    // and if the macro had at least one real argument, and if the token before
+    // the ## was a comma, remove the comma.
+    if ((unsigned)ArgNo == Macro->getNumArgs() && // is __VA_ARGS__
+        ActualArgs->isVarargsElidedUse() &&       // Argument elided.
+        !ResultToks.empty() && ResultToks.back().getKind() == tok::comma) {
+      // Never add a space, even if the comma, ##, or arg had a space.
+      NextTokGetsSpace = false;
+      ResultToks.pop_back();
+    }
     continue;
   }
   

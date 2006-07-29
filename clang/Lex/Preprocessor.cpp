@@ -785,6 +785,9 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(LexerToken &MacroName,
   // the count.
   MinArgsExpected += MI->isC99Varargs();
   
+  // See MacroArgs instance var for description of this.
+  bool isVarargsElided = false;
+  
   if (NumActuals < MinArgsExpected) {
     // There are several cases where too few arguments is ok, handle them now.
     if (NumActuals+1 == MinArgsExpected && MI->isVariadic()) {
@@ -792,6 +795,10 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(LexerToken &MacroName,
       // #define A(x, ...)
       // A("blah")
       Diag(Tok, diag::ext_missing_varargs_arg);
+
+      // Remember this occurred if this is a C99 macro invocation with at least
+      // one actual argument.
+      isVarargsElided = (MI->isC99Varargs() && MI->getNumArgs());
     } else if (MI->getNumArgs() == 1) {
       // #define A(x)
       //   A()
@@ -816,7 +823,7 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(LexerToken &MacroName,
     ArgTokens.push_back(Tok);
   }
   
-  return MacroArgs::create(MI, &ArgTokens[0], ArgTokens.size());
+  return MacroArgs::create(MI, &ArgTokens[0], ArgTokens.size(),isVarargsElided);
 }
 
 /// ComputeDATE_TIME - Compute the current time, enter it into the specified
