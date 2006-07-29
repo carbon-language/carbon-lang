@@ -341,9 +341,6 @@ static bool AvoidConcat(const LexerToken &PrevTok, const LexerToken &Tok,
     return FirstChar == ':' || FirstChar == '>';
   case tok::hash:            // ##, #@, %:%:
     return FirstChar == '#' || FirstChar == '@' || FirstChar == '%';
-  case tok::question:        // <?=, >?=, ??x -> trigraphs.
-    // Have to check for <?= in case <? is disabled.
-    return FirstChar == '?' || FirstChar == '=';
   case tok::arrow:           // ->*
     return FirstChar == '*';
     
@@ -355,6 +352,7 @@ static bool AvoidConcat(const LexerToken &PrevTok, const LexerToken &Tok,
   case tok::equal:           // ==
   case tok::lessquestion:    // <?=
   case tok::greaterquestion: // >?=
+  case tok::question:        // <?=, >?=, check for <?= in case <? is disabled.
     // Cases that concatenate only if the next char is =.
     return FirstChar == '=';
   }
