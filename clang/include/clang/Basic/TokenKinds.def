@@ -160,7 +160,6 @@ KEYWORD(__Complex                    , NOTC90)         // C99/C++
 KEYWORD(__Imaginary                  , NOTC90|NOTCPP)  // C90 only
 
 // Special tokens to the compiler.
-KEYWORD(___VA_ARGS__                 , EXTC90|EXTCPP) // Only in C99.
 KEYWORD(___func__                    , EXTC90|EXTCPP) // Only in C99.
 KEYWORD(___FUNCTION__                , EXTC90|EXTC99|EXTCPP) // GCC Extension.
 KEYWORD(___PRETTY_FUNCTION__         , EXTC90|EXTC99|EXTCPP) // GCC Extension.
