@@ -120,7 +120,7 @@ void Preprocessor::AddKeywords() {
 
   // Add keywords and tokens for the current language.
 #define KEYWORD(NAME, FLAGS) \
-  AddKeyword(#NAME+1, tok::kw##NAME,     \
+  AddKeyword(#NAME+1, tok::kw_ ## NAME,  \
              (FLAGS >> C90Shift) & Mask, \
              (FLAGS >> C99Shift) & Mask, \
              (FLAGS >> CPPShift) & Mask);
