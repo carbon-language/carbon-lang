@@ -67,7 +67,6 @@ Lexer:
 Preprocessor:
  * #assert/#unassert
  * #line / #file directives
- * -C output mode in -E mode.
  * MSExtension: "L#param" stringizes to a wide string literal.
 
 Traditional Preprocessor:

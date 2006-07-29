@@ -16,10 +16,11 @@
 
 namespace llvm {
 namespace clang {
-class Preprocessor;    
+class Preprocessor;
+class LangOptions;
 
 /// DoPrintPreprocessedInput - Implement -E mode.
-void DoPrintPreprocessedInput(Preprocessor &PP);
+void DoPrintPreprocessedInput(Preprocessor &PP, LangOptions &Options);
 
 }  // end namespace clang
 }  // end namespace llvm

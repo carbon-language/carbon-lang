@@ -703,7 +703,7 @@ int main(int argc, char **argv) {
   }
     
   case PrintPreprocessedInput:       // -E mode.
-    DoPrintPreprocessedInput(PP);
+    DoPrintPreprocessedInput(PP, Options);
     break;
                   
   case DumpTokens: {                 // Token dump mode.

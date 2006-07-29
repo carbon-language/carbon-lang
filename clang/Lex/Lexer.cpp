@@ -65,6 +65,9 @@ Lexer::Lexer(const SourceBuffer *File, unsigned fileid, Preprocessor &pp,
   // to quickly lex the tokens of the buffer, e.g. when handling a "#if 0" block
   // or otherwise skipping over tokens.
   LexingRawMode = false;
+  
+  // Default to keeping comments if requested.
+  KeepCommentMode = Features.KeepComments;
 }
 
 /// Stringify - Convert the specified string into a C string, with surrounding
@@ -587,13 +590,15 @@ void Lexer::SkipWhitespace(LexerToken &Result, const char *CurPtr) {
 
   // If the next token is obviously a // or /* */ comment, skip it efficiently
   // too (without going through the big switch stmt).
-  if (Char == '/' && CurPtr[1] == '/') {
+  if (Char == '/' && CurPtr[1] == '/' && !KeepCommentMode) {
     BufferPtr = CurPtr;
-    return SkipBCPLComment(Result, CurPtr+1);
+    SkipBCPLComment(Result, CurPtr+1);
+    return;
   }
-  if (Char == '/' && CurPtr[1] == '*') {
+  if (Char == '/' && CurPtr[1] == '*' && !KeepCommentMode) {
     BufferPtr = CurPtr;
-    return SkipBlockComment(Result, CurPtr+2);
+    SkipBlockComment(Result, CurPtr+2);
+    return;
   }
   BufferPtr = CurPtr;
 }
@@ -601,7 +606,7 @@ void Lexer::SkipWhitespace(LexerToken &Result, const char *CurPtr) {
 // SkipBCPLComment - We have just read the // characters from input.  Skip until
 // we find the newline character thats terminate the comment.  Then update
 /// BufferPtr and return.
-void Lexer::SkipBCPLComment(LexerToken &Result, const char *CurPtr) {
+bool Lexer::SkipBCPLComment(LexerToken &Result, const char *CurPtr) {
   // If BCPL comments aren't explicitly enabled for this language, emit an
   // extension warning.
   if (!Features.BCPLComment) {
@@ -648,16 +653,20 @@ void Lexer::SkipBCPLComment(LexerToken &Result, const char *CurPtr) {
         }
     }
     
-    if (CurPtr == BufferEnd+1) goto FoundEOF;
+    if (CurPtr == BufferEnd+1) { --CurPtr; break; }
   } while (C != '\n' && C != '\r');
 
-  // Found and did not consume a newline.
+  // Found but did not consume the newline.
+    
+  // If we are returning comments as tokens, return this comment as a token.
+  if (KeepCommentMode)
+    return SaveBCPLComment(Result, CurPtr);
 
   // If we are inside a preprocessor directive and we see the end of line,
   // return immediately, so that the lexer can return this as an EOM token.
-  if (ParsingPreprocessorDirective) {
+  if (ParsingPreprocessorDirective || CurPtr == BufferEnd) {
     BufferPtr = CurPtr;
-    return;
+    return true;
   }
   
   // Otherwise, eat the \n character.  We don't care if this is a \n\r or
@@ -674,15 +683,33 @@ void Lexer::SkipBCPLComment(LexerToken &Result, const char *CurPtr) {
   // big switch, handle it efficiently now.
   if (isWhitespace(*CurPtr)) {
     Result.SetFlag(LexerToken::LeadingSpace);
-    return SkipWhitespace(Result, CurPtr+1);
+    SkipWhitespace(Result, CurPtr+1);
+    return true;
   }
 
   BufferPtr = CurPtr;
-  return;
+  return true;
+}
 
-FoundEOF:   // If we ran off the end of the buffer, return EOF.
-  BufferPtr = CurPtr-1;
-  return;
+/// SaveBCPLComment - If in save-comment mode, package up this BCPL comment in
+/// an appropriate way and return it.
+bool Lexer::SaveBCPLComment(LexerToken &Result, const char *CurPtr) {
+  Result.SetKind(tok::comment);
+  FormTokenWithChars(Result, CurPtr);
+  
+  // If this BCPL-style comment is in a macro definition, transmogrify it into
+  // a C-style block comment.
+  if (ParsingPreprocessorDirective) {
+    std::string Spelling = PP.getSpelling(Result);
+    assert(Spelling[0] == '/' && Spelling[1] == '/' && "Not bcpl comment?");
+    Spelling[1] = '*';   // Change prefix to "/*".
+    Spelling += "*/";    // add suffix.
+    
+    Result.SetLocation(PP.CreateString(&Spelling[0], Spelling.size(),
+                                       Result.getLocation()));
+    Result.SetLength(Spelling.size());
+  }
+  return false;
 }
 
 /// isBlockCommentEndOfEscapedNewLine - Return true if the specified newline
@@ -748,7 +775,7 @@ static bool isEndOfBlockCommentWithEscapedNewLine(const char *CurPtr,
 /// because they cannot cause the comment to end.  The only thing that can
 /// happen is the comment could end with an escaped newline between the */ end
 /// of comment.
-void Lexer::SkipBlockComment(LexerToken &Result, const char *CurPtr) {
+bool Lexer::SkipBlockComment(LexerToken &Result, const char *CurPtr) {
   // Scan one character past where we should, looking for a '/' character.  Once
   // we find it, check to see if it was preceeded by a *.  This common
   // optimization helps people who like to put a lot of * characters in their
@@ -757,7 +784,7 @@ void Lexer::SkipBlockComment(LexerToken &Result, const char *CurPtr) {
   if (C == 0 && CurPtr == BufferEnd+1) {
     Diag(BufferPtr, diag::err_unterminated_block_comment);
     BufferPtr = CurPtr-1;
-    return;
+    return true;
   }
   
   while (1) {
@@ -789,9 +816,16 @@ void Lexer::SkipBlockComment(LexerToken &Result, const char *CurPtr) {
       // after the /*, but this would involve lexing a lot of what really is the
       // comment, which surely would confuse the parser.
       BufferPtr = CurPtr-1;
-      return;
+      return true;
     }
     C = *CurPtr++;
+  }
+  
+  // If we are returning comments as tokens, return this comment as a token.
+  if (KeepCommentMode) {
+    Result.SetKind(tok::comment);
+    FormTokenWithChars(Result, CurPtr);
+    return false;
   }
 
   // It is common for the tokens immediately after a /**/ comment to be
@@ -799,12 +833,14 @@ void Lexer::SkipBlockComment(LexerToken &Result, const char *CurPtr) {
   // efficiently now.
   if (isHorizontalWhitespace(*CurPtr)) {
     Result.SetFlag(LexerToken::LeadingSpace);
-    return SkipWhitespace(Result, CurPtr+1);
+    SkipWhitespace(Result, CurPtr+1);
+    return true;
   }
 
   // Otherwise, just return so that the next character will be lexed as a token.
   BufferPtr = CurPtr;
   Result.SetFlag(LexerToken::LeadingSpace);
+  return true;
 }
 
 //===----------------------------------------------------------------------===//
@@ -920,6 +956,9 @@ bool Lexer::LexEndOfFile(LexerToken &Result, const char *CurPtr) {
     Result.SetKind(tok::eom);
     // Update the location of token as well as BufferPtr.
     FormTokenWithChars(Result, CurPtr);
+    
+    // Restore comment saving mode, in case it was disabled for directive.
+    KeepCommentMode = Features.KeepComments;
     return true;  // Have a token.
   }        
 
@@ -1034,6 +1073,9 @@ LexNextToken:
     if (ParsingPreprocessorDirective) {
       // Done parsing the "line".
       ParsingPreprocessorDirective = false;
+      
+      // Restore comment saving mode, in case it was disabled for directive.
+      KeepCommentMode = Features.KeepComments;
       
       // Since we consumed a newline, we are back at the start of a line.
       IsAtStartOfLine = true;
@@ -1211,13 +1253,13 @@ LexNextToken:
     // 6.4.9: Comments
     Char = getCharAndSize(CurPtr, SizeTmp);
     if (Char == '/') {         // BCPL comment.
-      Result.SetFlag(LexerToken::LeadingSpace);
-      SkipBCPLComment(Result, ConsumeChar(CurPtr, SizeTmp, Result));
-      goto LexNextToken;   // GCC isn't tail call eliminating.
+      if (SkipBCPLComment(Result, ConsumeChar(CurPtr, SizeTmp, Result)))
+        goto LexNextToken;   // GCC isn't tail call eliminating.
+      return; // KeepCommentMode
     } else if (Char == '*') {  // /**/ comment.
-      Result.SetFlag(LexerToken::LeadingSpace);
-      SkipBlockComment(Result, ConsumeChar(CurPtr, SizeTmp, Result));
-      goto LexNextToken;   // GCC isn't tail call eliminating.
+      if (SkipBlockComment(Result, ConsumeChar(CurPtr, SizeTmp, Result)))
+        goto LexNextToken;   // GCC isn't tail call eliminating.
+      return; // KeepCommentMode
     } else if (Char == '=') {
       Result.SetKind(tok::slashequal);
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);

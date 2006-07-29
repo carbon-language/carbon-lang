@@ -26,23 +26,27 @@ class Preprocessor;
 class SourceBuffer;
 
 struct LangOptions {
-  unsigned Trigraphs    : 1;  // Trigraphs in source files.
-  unsigned BCPLComment  : 1;  // BCPL-style // comments.
-  unsigned DollarIdents : 1;  // '$' allowed in identifiers.
-  unsigned Digraphs     : 1;  // When added to C?  C99?
-  unsigned HexFloats    : 1;  // C99 Hexadecimal float constants.
-  unsigned C99          : 1;  // C99 Support
-  unsigned Microsoft    : 1;  // Microsoft extensions.
-  unsigned CPlusPlus    : 1;  // C++ Support
-  unsigned CPPMinMax    : 1;  // C++ <?=, >?= tokens.
-  unsigned NoExtensions : 1;  // All extensions are disabled, strict mode.
+  unsigned Trigraphs         : 1;  // Trigraphs in source files.
+  unsigned BCPLComment       : 1;  // BCPL-style // comments.
+  unsigned DollarIdents      : 1;  // '$' allowed in identifiers.
+  unsigned Digraphs          : 1;  // When added to C?  C99?
+  unsigned HexFloats         : 1;  // C99 Hexadecimal float constants.
+  unsigned C99               : 1;  // C99 Support
+  unsigned Microsoft         : 1;  // Microsoft extensions.
+  unsigned CPlusPlus         : 1;  // C++ Support
+  unsigned CPPMinMax         : 1;  // C++ <?=, >?= tokens.
+  unsigned NoExtensions      : 1;  // All extensions are disabled, strict mode.
   
-  unsigned ObjC1        : 1;  // Objective C 1 support enabled.
-  unsigned ObjC2        : 1;  // Objective C 2 support enabled (implies ObjC1).
+  unsigned ObjC1             : 1;  // Objective C 1 support enabled.
+  unsigned ObjC2             : 1;  // Objective C 2 support enabled.
+  
+  unsigned KeepComments      : 1;  // Keep comments ("-C") mode.
+  unsigned KeepMacroComments : 1;  // Keep macro-exp comments ("-CC") mode.
   
   LangOptions() {
     Trigraphs = BCPLComment = DollarIdents = Digraphs = ObjC1 = ObjC2 = 0;
     C99 = Microsoft = CPlusPlus = CPPMinMax = NoExtensions = 0;
+    KeepComments = KeepMacroComments = 0;
   }
 };
 
@@ -86,6 +90,10 @@ class Lexer {
   ///  5. The only callback made into the preprocessor is to report a hard error
   ///     on an unterminated '/*' comment.
   bool LexingRawMode;
+  
+  /// KeepCommentMode - The lexer can optionally keep C & BCPL-style comments,
+  /// and return them as tokens.  This is used for -C and -CC modes.
+  bool KeepCommentMode;
   
   //===--------------------------------------------------------------------===//
   // Context that changes as the file is lexed.
@@ -353,9 +361,9 @@ private:
   bool LexEndOfFile          (LexerToken &Result, const char *CurPtr);
   
   void SkipWhitespace        (LexerToken &Result, const char *CurPtr);
-  void SkipBCPLComment       (LexerToken &Result, const char *CurPtr);
-  void SkipBlockComment      (LexerToken &Result, const char *CurPtr);
-  
+  bool SkipBCPLComment       (LexerToken &Result, const char *CurPtr);
+  bool SkipBlockComment      (LexerToken &Result, const char *CurPtr);
+  bool SaveBCPLComment       (LexerToken &Result, const char *CurPtr);
   
   /// LexIncludeFilename - After the preprocessor has parsed a #include, lex and
   /// (potentially) macro expand the filename.  If the sequence parsed is not

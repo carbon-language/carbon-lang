@@ -99,6 +99,11 @@ static void OutputString(const char *Ptr, unsigned Size) {
 
 static cl::opt<bool>
 DisableLineMarkers("P", cl::desc("Disable linemarker output in -E mode"));
+static cl::opt<bool>
+EnableCommentOutput("C", cl::desc("Enable comment output in -E mode"));
+static cl::opt<bool>
+EnableMacroCommentOutput("CC", cl::desc("Enable comment output in -E mode, "
+                                        "even from macro expansions"));
 
 static unsigned EModeCurLine;
 static std::string EModeCurFilename;
@@ -357,7 +362,12 @@ static bool AvoidConcat(const LexerToken &PrevTok, const LexerToken &Tok,
 
 /// DoPrintPreprocessedInput - This implements -E mode.
 ///
-void clang::DoPrintPreprocessedInput(Preprocessor &PP) {
+void clang::DoPrintPreprocessedInput(Preprocessor &PP, LangOptions &Options) {
+  if (EnableCommentOutput)          // -C specified?
+    Options.KeepComments = 1;
+  if (EnableMacroCommentOutput)     // -CC specified?
+    Options.KeepComments = Options.KeepMacroComments = 1;
+  
   InitOutputBuffer();
   
   LexerToken Tok, PrevTok;
