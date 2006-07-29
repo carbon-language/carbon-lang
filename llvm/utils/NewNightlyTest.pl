@@ -138,8 +138,8 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
     if (/^-f2c$/)            {
 	$CONFIGUREARGS .= " --with-f2c=$ARGV[0]"; shift; next;
     }
-    if (/^-with-externals/)  {
-	$CONFIGUREARGS .= "--with-externals=$ARGV[0]"; shift; next;
+    if (/^-with-externals$/)  {
+	$CONFIGUREARGS .= " --with-externals=$ARGV[0]"; shift; next;
     }
     if (/^-nickname$/)   	{ $nickname = "$ARGV[0]"; shift; next; }
     if (/^-gccpath/)         { $CONFIGUREARGS .= 
