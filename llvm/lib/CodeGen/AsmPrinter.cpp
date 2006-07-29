@@ -385,23 +385,29 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
       break;
     }
     case Instruction::Cast: {
-      // Support only non-converting or widening casts for now, that is, ones
-      // that do not involve a change in value.  This assertion is really gross,
-      // and may not even be a complete check.
+      // Support only foldable casts to/from pointers that can be eliminated by
+      // changing the pointer to the appropriately sized integer type.
       Constant *Op = CE->getOperand(0);
       const Type *OpTy = Op->getType(), *Ty = CE->getType();
 
-      // Remember, kids, pointers can be losslessly converted back and forth
-      // into 32-bit or wider integers, regardless of signedness. :-P
-      assert(((isa<PointerType>(OpTy)
-               && (Ty == Type::LongTy || Ty == Type::ULongTy
-                   || Ty == Type::IntTy || Ty == Type::UIntTy))
-              || (isa<PointerType>(Ty)
-                  && (OpTy == Type::LongTy || OpTy == Type::ULongTy
-                      || OpTy == Type::IntTy || OpTy == Type::UIntTy))
-              || (((TD->getTypeSize(Ty) >= TD->getTypeSize(OpTy))
-                   && OpTy->isLosslesslyConvertibleTo(Ty))))
-             && "FIXME: Don't yet support this kind of constant cast expr");
+      // Handle casts to pointers by changing them into casts to the appropriate
+      // integer type.  This promotes constant folding and simplifies this code.
+      if (isa<PointerType>(Ty)) {
+        const Type *IntPtrTy = TD->getIntPtrType();
+        Op = ConstantExpr::getCast(Op, IntPtrTy);
+        return EmitConstantValueOnly(Op);
+      }
+      
+      // We know the dest type is not a pointer.  Is the src value a pointer or
+      // integral?
+      if (isa<PointerType>(OpTy) || OpTy->isIntegral()) {
+        // We can emit the pointer value into this slot if the slot is an
+        // integer slot greater or equal to the size of the pointer.
+        if (Ty->isIntegral() && TD->getTypeSize(Ty) >= TD->getTypeSize(OpTy))
+          return EmitConstantValueOnly(Op);
+      }
+      
+      assert(0 && "FIXME: Don't yet support this kind of constant cast expr");
       EmitConstantValueOnly(Op);
       break;
     }
