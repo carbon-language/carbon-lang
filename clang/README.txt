@@ -65,6 +65,7 @@ Lexer:
  * -fpreprocessed mode.
 
 Preprocessor:
+ * Know enough about darwin filesystem to search frameworks.
  * #assert/#unassert
  * #line / #file directives
  * MSExtension: "L#param" stringizes to a wide string literal.
@@ -73,8 +74,8 @@ Traditional Preprocessor:
  * All.
 
 Parser Callbacks:
- * All.
  * Enough to do devkit-style "indexing".
+ * All.
  
 Parser Actions:
  * All.
