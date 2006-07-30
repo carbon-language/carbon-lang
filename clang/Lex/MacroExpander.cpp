@@ -246,7 +246,7 @@ MacroExpander::MacroExpander(LexerToken &Tok, MacroArgs *Actuals,
 
   // If this is a function-like macro, expand the arguments and change
   // MacroTokens to point to the expanded tokens.
-  if (Macro->isFunctionLike() && (Macro->getNumArgs() || Macro->isC99Varargs()))
+  if (Macro->isFunctionLike() && Macro->getNumArgs())
     ExpandFunctionArguments();
   
   // Mark the macro as currently disabled, so that it is not recursively
@@ -288,8 +288,6 @@ MacroExpander::~MacroExpander() {
 void MacroExpander::ExpandFunctionArguments() {
   SmallVector<LexerToken, 128> ResultToks;
   
-  IdentifierInfo *VAARGSii = PP.get__VA_ARGS__Identifier();
-  
   // Loop through the MacroTokens tokens, expanding them into ResultToks.  Keep
   // track of whether we change anything.  If not, no need to keep them.  If so,
   // we install the newly expanded sequence as MacroTokens.
@@ -307,14 +305,8 @@ void MacroExpander::ExpandFunctionArguments() {
     const LexerToken &CurTok = MacroTokens[i];
     if (CurTok.getKind() == tok::hash || CurTok.getKind() == tok::hashat) {
       int ArgNo = Macro->getArgumentNum(MacroTokens[i+1].getIdentifierInfo());
-      if (ArgNo == -1) {
-        // Otherwise, this must be #__VA_ARGS__.
-        assert(MacroTokens[i+1].getIdentifierInfo() == 
-                   PP.get__VA_ARGS__Identifier() &&
-               "Token following # is not an argument?");
-        ArgNo = Macro->getNumArgs();
-      }
-      
+      assert(ArgNo != -1 && "Token following # is not an argument?");
+    
       LexerToken Res;
       if (CurTok.getKind() == tok::hash)  // Stringify
         Res = ActualArgs->getStringifiedArgument(ArgNo, PP);
@@ -340,19 +332,14 @@ void MacroExpander::ExpandFunctionArguments() {
     IdentifierInfo *II = CurTok.getIdentifierInfo();
     int ArgNo = II ? Macro->getArgumentNum(II) : -1;
     if (ArgNo == -1) {
-      if (II != VAARGSii || !Macro->isC99Varargs()) {
-        // This isn't an argument and isn't __VA_ARGS__.  Just add it.
-        ResultToks.push_back(CurTok);
+      // This isn't an argument, just add it.
+      ResultToks.push_back(CurTok);
 
-        if (NextTokGetsSpace) {
-          ResultToks.back().SetFlag(LexerToken::LeadingSpace);
-          NextTokGetsSpace = false;
-        }
-        continue;
+      if (NextTokGetsSpace) {
+        ResultToks.back().SetFlag(LexerToken::LeadingSpace);
+        NextTokGetsSpace = false;
       }
-      
-      // Otherwise, this *is* __VA_ARGS__.  Set ArgNo to the last argument.
-      ArgNo = Macro->getNumArgs();
+      continue;
     }
       
     // An argument is expanded somehow, the result is different than the
@@ -438,7 +425,7 @@ void MacroExpander::ExpandFunctionArguments() {
     // If this is the __VA_ARGS__ token, and if the argument wasn't provided,
     // and if the macro had at least one real argument, and if the token before
     // the ## was a comma, remove the comma.
-    if ((unsigned)ArgNo == Macro->getNumArgs() && // is __VA_ARGS__
+    if ((unsigned)ArgNo == Macro->getNumArgs()-1 && // is __VA_ARGS__
         ActualArgs->isVarargsElidedUse() &&       // Argument elided.
         !ResultToks.empty() && ResultToks.back().getKind() == tok::comma) {
       // Never add a space, even if the comma, ##, or arg had a space.

@@ -387,12 +387,6 @@ public:
   SourceLocation CreateString(const char *Buf, unsigned Len,
                               SourceLocation SourceLoc = SourceLocation());
   
-  /// get__VA_ARGS__Identifier - Return the identifier info for the __VA_ARGS__
-  /// identifier.
-  IdentifierInfo *get__VA_ARGS__Identifier() const {
-    return Ident__VA_ARGS__;
-  }
-  
   /// DumpToken - Print the token to stderr, used for debugging.
   ///
   void DumpToken(const LexerToken &Tok, bool DumpFlags = false) const;

@@ -31,7 +31,8 @@ class MacroInfo {
   SourceLocation Location;
 
   /// Arguments - The list of arguments for a function-like macro.  This can be
-  /// empty, for, e.g. "#define X()".
+  /// empty, for, e.g. "#define X()".  In a C99-style variadic macro, this
+  /// includes the __VA_ARGS__ identifier on the list.
   std::vector<IdentifierInfo*> Arguments;
   
   /// ReplacementTokens - This is the list of tokens that the macro is defined

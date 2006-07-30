@@ -13,7 +13,6 @@
 //
 // Options to support:
 //   -H       - Print the name of each header file used.
-//   -C -CC   - Do not discard comments for cpp.
 //   -d[MDNI] - Dump various things.
 //   -fworking-directory - #line's with preprocessor's working dir.
 //   -fpreprocessed
@@ -543,10 +542,6 @@ static bool isTrivialSingleTokenExpansion(const MacroInfo *MI,
     if (*I == II)
       return false;   // Identifier is a macro argument.
   
-  // If the argument is the __VA_ARGS__ token, we can't fast expand it.
-  if (!strcmp(II->getName(), "__VA_ARGS__"))
-    return false;     // Identifier is macro argument.
-  
   return true;
 }
 
@@ -711,11 +706,6 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(LexerToken &MacroName,
   unsigned NumFixedArgsLeft = MI->getNumArgs();
   bool isVariadic = MI->isVariadic();
   
-  // If this is a C99-style varargs macro invocation, add an extra expected
-  // argument, which will catch all of the vararg args in one argument.
-  if (MI->isC99Varargs())
-    ++NumFixedArgsLeft;
-  
   // Outer loop, while there are more arguments, keep reading them.
   LexerToken Tok;
   Tok.SetKind(tok::comma);
@@ -789,11 +779,6 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(LexerToken &MacroName,
   // arguments.
   unsigned MinArgsExpected = MI->getNumArgs();
   
-  // C99 expects us to pass at least one vararg arg (but as an extension, we
-  // don't require this).  GNU-style varargs already include the 'rest' name in
-  // the count.
-  MinArgsExpected += MI->isC99Varargs();
-  
   // See MacroArgs instance var for description of this.
   bool isVarargsElided = false;
   
@@ -807,7 +792,7 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(LexerToken &MacroName,
 
       // Remember this occurred if this is a C99 macro invocation with at least
       // one actual argument.
-      isVarargsElided = (MI->isC99Varargs() && MI->getNumArgs());
+      isVarargsElided = MI->isC99Varargs() && MI->getNumArgs() > 1;
     } else if (MI->getNumArgs() == 1) {
       // #define A(x)
       //   A()
@@ -1654,6 +1639,8 @@ bool Preprocessor::ReadMacroDefinitionArgList(MacroInfo *MI) {
         Diag(Tok, diag::err_pp_missing_rparen_in_macro_def);
         return true;
       }
+      // Add the __VA_ARGS__ identifier as an argument.
+      MI->addArgument(Ident__VA_ARGS__);
       MI->setIsC99Varargs();
       return false;
     case tok::eom:  // #define X(
@@ -1786,8 +1773,7 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok) {
    
     // Not a macro arg identifier?
     if (!Tok.getIdentifierInfo() ||
-        (MI->getArgumentNum(Tok.getIdentifierInfo()) == -1 &&
-         Tok.getIdentifierInfo() != Ident__VA_ARGS__)) {
+        MI->getArgumentNum(Tok.getIdentifierInfo()) == -1) {
       Diag(Tok, diag::err_pp_stringize_not_parameter);
       delete MI;
       
