@@ -1829,9 +1829,22 @@ static void GenerateVariantsOf(TreePatternNode *N,
   // If this node is commutative, consider the commuted order.
   if (NodeInfo.hasProperty(SDNodeInfo::SDNPCommutative)) {
     assert(N->getNumChildren()==2 &&"Commutative but doesn't have 2 children!");
+    // Don't count childrean which are actually
+    unsigned NC = 0;
+    for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i) {
+      TreePatternNode *Child = N->getChild(i);
+      if (Child->isLeaf())
+        if (DefInit *DI = dynamic_cast<DefInit*>(Child->getLeafValue())) {
+          Record *RR = DI->getDef();
+          if (RR->isSubClassOf("Register"))
+            continue;
+        }
+      NC++;
+    }
     // Consider the commuted order.
-    CombineChildVariants(N, ChildVariants[1], ChildVariants[0],
-                         OutVariants, ISE);
+    if (NC == 2)
+      CombineChildVariants(N, ChildVariants[1], ChildVariants[0],
+                           OutVariants, ISE);
   }
 }
 
@@ -2845,13 +2858,15 @@ public:
   /// 'Pat' may be missing types.  If we find an unresolved type to add a check
   /// for, this returns true otherwise false if Pat has all types.
   bool InsertOneTypeCheck(TreePatternNode *Pat, TreePatternNode *Other,
-                          const std::string &Prefix) {
+                          const std::string &Prefix, bool isRoot = false) {
     // Did we find one?
     if (Pat->getExtTypes() != Other->getExtTypes()) {
       // Move a type over from 'other' to 'pat'.
       Pat->setTypes(Other->getExtTypes());
-      emitCheck(Prefix + ".Val->getValueType(0) == " +
-                getName(Pat->getTypeNum(0)));
+      // The top level node type is checked outside of the select function.
+      if (!isRoot)
+        emitCheck(Prefix + ".Val->getValueType(0) == " +
+                  getName(Pat->getTypeNum(0)));
       return true;
     }
   
@@ -3005,7 +3020,7 @@ void DAGISelEmitter::GenerateCodeForPattern(PatternToMatch &Pattern,
     // Insert a check for an unresolved type and add it to the tree.  If we find
     // an unresolved type to add a check for, this returns true and we iterate,
     // otherwise we are done.
-  } while (Emitter.InsertOneTypeCheck(Pat, Pattern.getSrcPattern(), "N"));
+  } while (Emitter.InsertOneTypeCheck(Pat, Pattern.getSrcPattern(), "N", true));
 
   Emitter.EmitResultCode(Pattern.getDstPattern(), false, true /*the root*/);
   delete Pat;
@@ -3282,7 +3297,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
         // patterns after it CANNOT ever match.  Error out.
         if (mightNotMatch == false && i != CodeForPatterns.size()-1) {
           std::cerr << "Pattern '";
-          CodeForPatterns[i+1].first->getSrcPattern()->print(OS);
+          CodeForPatterns[i+1].first->getSrcPattern()->print(std::cerr);
           std::cerr << "' is impossible to select!\n";
           exit(1);
         }
