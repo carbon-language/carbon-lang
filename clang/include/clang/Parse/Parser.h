@@ -60,14 +60,21 @@ public:
     return Tok.getKind();
   }
   
-  
 private:
   //===--------------------------------------------------------------------===//
-
-  // Top level forms.
+  // C99 6.9: External Definitions.
   void ParseExternalDeclaration();
   void ParseDeclarationOrFunctionDefinition();
-    
+
+  
+  //===--------------------------------------------------------------------===//
+  // C99 6.7: Declarations.
+  void ParseDeclarationSpecifiers();
+  
+  void ParseDeclarator();
+  void ParseTypeQualifierListOpt();
+  void ParseDirectDeclarator();
+  
 };
 
 }  // end namespace clang
