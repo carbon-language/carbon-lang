@@ -229,4 +229,14 @@ DIAG(err_pp_bad_paste, ERROR,
 // Should be a sorry?
 DIAG(err_pp_I_dash_not_supported, ERROR,
      "-I- not supported, please use -iquote instead")
+     
+//===----------------------------------------------------------------------===//
+// Parser Diagnostics
+//===----------------------------------------------------------------------===//
+
+DIAG(ext_empty_source_file, EXTENSION,
+     "ISO C forbids an empty source file")
+DIAG(ext_top_level_semi, EXTENSION,
+     "ISO C does not allow extra ';' outside of a function")
+
 #undef DIAG

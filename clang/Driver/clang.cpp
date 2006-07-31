@@ -23,7 +23,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang.h"
-#include "clang/Lex/Preprocessor.h"
+#include "clang/Parse/Parser.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceBuffer.h"
@@ -45,13 +45,16 @@ static cl::opt<bool>
 Stats("stats", cl::desc("Print performance metrics and statistics"));
 
 enum ProgActions {
+  ParsePrintCallbacks,          // Parse and print each callback.
+  ParseNoop,                    // Parse with noop callbacks.
   RunPreprocessorOnly,          // Just lex, no output.
   PrintPreprocessedInput,       // -E mode.
   DumpTokens                    // Token dump mode.
 };
 
 static cl::opt<ProgActions> 
-ProgAction(cl::desc("Choose output type:"), cl::ZeroOrMore,cl::init(DumpTokens),
+ProgAction(cl::desc("Choose output type:"), cl::ZeroOrMore,
+           cl::init(ParseNoop),
            cl::values(
              clEnumValN(RunPreprocessorOnly, "Eonly",
                         "Just run preprocessor, no output (for timings)"),
@@ -59,6 +62,11 @@ ProgAction(cl::desc("Choose output type:"), cl::ZeroOrMore,cl::init(DumpTokens),
                         "Run preprocessor, emit preprocessed file"),
              clEnumValN(DumpTokens, "dumptokens",
                         "Run preprocessor, dump internal rep of tokens"),
+             clEnumValN(ParsePrintCallbacks, "parse-print-callbacks",
+                        "Run parser and print each callback invoked"),
+             clEnumValN(ParseNoop, "parse-noop",
+                        "Run parser with noop callbacks (for timings)"),
+             // TODO: NULL PARSER.
              clEnumValEnd));
 
 
@@ -598,6 +606,25 @@ static void ReadPrologFiles(Preprocessor &PP, std::vector<char> &Buf) {
   // FIXME: IMPLEMENT
 }
 
+//===----------------------------------------------------------------------===//
+// Parser driver
+//===----------------------------------------------------------------------===//
+
+static void ParseFile(Preprocessor &PP, ParserActions *PA, unsigned MainFileID){
+  Parser P(PP, *PA);
+
+  PP.EnterSourceFile(MainFileID, 0, true);
+  
+  // Prime the lexer look-ahead.
+  P.ConsumeToken();
+  
+  P.ParseTranslationUnit();
+
+  // Start parsing the specified input file.
+
+  
+  delete PA;
+}
 
 //===----------------------------------------------------------------------===//
 // Main driver
@@ -692,6 +719,17 @@ int main(int argc, char **argv) {
   }
   
   switch (ProgAction) {
+  case DumpTokens: {                 // Token dump mode.
+    LexerToken Tok;
+    // Start parsing the specified input file.
+    PP.EnterSourceFile(MainFileID, 0, true);
+    do {
+      PP.Lex(Tok);
+      PP.DumpToken(Tok, true);
+      std::cerr << "\n";
+    } while (Tok.getKind() != tok::eof);
+    break;
+  }
   case RunPreprocessorOnly: {        // Just lex as fast as we can, no output.
     LexerToken Tok;
     // Start parsing the specified input file.
@@ -705,18 +743,13 @@ int main(int argc, char **argv) {
   case PrintPreprocessedInput:       // -E mode.
     DoPrintPreprocessedInput(MainFileID, PP, Options);
     break;
-                  
-  case DumpTokens: {                 // Token dump mode.
-    LexerToken Tok;
-    // Start parsing the specified input file.
-    PP.EnterSourceFile(MainFileID, 0, true);
-    do {
-      PP.Lex(Tok);
-      PP.DumpToken(Tok, true);
-      std::cerr << "\n";
-    } while (Tok.getKind() != tok::eof);
+
+  case ParseNoop:                    // -parse-noop
+    ParseFile(PP, new ParserActions(), MainFileID);
     break;
-  }
+  case ParsePrintCallbacks:
+    //ParseFile(PP, new ParserPrintActions(PP), MainFileID);
+    break;
   }
   
   if (Stats) {

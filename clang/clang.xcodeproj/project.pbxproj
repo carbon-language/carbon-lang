@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		DE1F22030A7D852A00FBF588 /* Parser.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE1F22020A7D852A00FBF588 /* Parser.h */; };
+		DE1F22200A7D879000FBF588 /* ParserActions.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE1F221F0A7D879000FBF588 /* ParserActions.h */; };
+		DE1F22730A7D8D5800FBF588 /* Parser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE1F22710A7D8D5800FBF588 /* Parser.cpp */; };
+		DE1F22740A7D8D5800FBF588 /* ParserActions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE1F22720A7D8D5800FBF588 /* ParserActions.cpp */; };
 		DEAEE98B0A5A2B970045101B /* MultipleIncludeOpt.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEAEE98A0A5A2B970045101B /* MultipleIncludeOpt.h */; };
 		DEAEECAD0A5AF0E30045101B /* clang.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEAEECAC0A5AF0E30045101B /* clang.h */; };
 		DEAEECD50A5AF1FE0045101B /* PrintPreprocessedOutput.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEAEECD40A5AF1FE0045101B /* PrintPreprocessedOutput.cpp */; };
@@ -86,6 +90,8 @@
 				DEAEE98B0A5A2B970045101B /* MultipleIncludeOpt.h in CopyFiles */,
 				DEAEECAD0A5AF0E30045101B /* clang.h in CopyFiles */,
 				DEAEED4B0A5AF89A0045101B /* NOTES.txt in CopyFiles */,
+				DE1F22030A7D852A00FBF588 /* Parser.h in CopyFiles */,
+				DE1F22200A7D879000FBF588 /* ParserActions.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
@@ -93,6 +99,10 @@
 
 /* Begin PBXFileReference section */
 		8DD76F6C0486A84900D96B5E /* clang */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = clang; sourceTree = BUILT_PRODUCTS_DIR; };
+		DE1F22020A7D852A00FBF588 /* Parser.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Parser.h; path = clang/Parse/Parser.h; sourceTree = "<group>"; };
+		DE1F221F0A7D879000FBF588 /* ParserActions.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ParserActions.h; path = clang/Parse/ParserActions.h; sourceTree = "<group>"; };
+		DE1F22710A7D8D5800FBF588 /* Parser.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Parser.cpp; path = Parse/Parser.cpp; sourceTree = "<group>"; };
+		DE1F22720A7D8D5800FBF588 /* ParserActions.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ParserActions.cpp; path = Parse/ParserActions.cpp; sourceTree = "<group>"; };
 		DEAEE98A0A5A2B970045101B /* MultipleIncludeOpt.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MultipleIncludeOpt.h; sourceTree = "<group>"; };
 		DEAEECAC0A5AF0E30045101B /* clang.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = clang.h; sourceTree = "<group>"; };
 		DEAEECD40A5AF1FE0045101B /* PrintPreprocessedOutput.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = PrintPreprocessedOutput.cpp; sourceTree = "<group>"; };
@@ -158,6 +168,7 @@
 			children = (
 				DED7D7500A5242C7003AD0FB /* Basic */,
 				DED7D78C0A5242E6003AD0FB /* Lex */,
+				DE1F22600A7D8C9B00FBF588 /* Parse */,
 			);
 			name = Source;
 			sourceTree = "<group>";
@@ -179,6 +190,24 @@
 			name = Documentation;
 			sourceTree = "<group>";
 		};
+		DE1F21F20A7D84E800FBF588 /* Parse */ = {
+			isa = PBXGroup;
+			children = (
+				DE1F22020A7D852A00FBF588 /* Parser.h */,
+				DE1F221F0A7D879000FBF588 /* ParserActions.h */,
+			);
+			name = Parse;
+			sourceTree = "<group>";
+		};
+		DE1F22600A7D8C9B00FBF588 /* Parse */ = {
+			isa = PBXGroup;
+			children = (
+				DE1F22710A7D8D5800FBF588 /* Parser.cpp */,
+				DE1F22720A7D8D5800FBF588 /* ParserActions.cpp */,
+			);
+			name = Parse;
+			sourceTree = "<group>";
+		};
 		DEAEECAE0A5AF0FA0045101B /* Driver */ = {
 			isa = PBXGroup;
 			children = (
@@ -194,6 +223,7 @@
 			children = (
 				DED7D7300A524295003AD0FB /* Basic */,
 				DED7D7390A524295003AD0FB /* Lex */,
+				DE1F21F20A7D84E800FBF588 /* Parse */,
 			);
 			path = include;
 			sourceTree = "<group>";
@@ -322,6 +352,8 @@
 				DED7D7C90A5242E6003AD0FB /* Preprocessor.cpp in Sources */,
 				DED7D9E50A5257F6003AD0FB /* ScratchBuffer.cpp in Sources */,
 				DEAEECD50A5AF1FE0045101B /* PrintPreprocessedOutput.cpp in Sources */,
+				DE1F22730A7D8D5800FBF588 /* Parser.cpp in Sources */,
+				DE1F22740A7D8D5800FBF588 /* ParserActions.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
