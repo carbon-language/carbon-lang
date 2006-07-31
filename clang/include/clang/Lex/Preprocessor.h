@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_PREPROCESSOR_H
-#define LLVM_CLANG_PREPROCESSOR_H
+#ifndef LLVM_CLANG_LEX_PREPROCESSOR_H
+#define LLVM_CLANG_LEX_PREPROCESSOR_H
 
 #include "clang/Lex/Lexer.h"
 #include "clang/Lex/MacroExpander.h"
@@ -22,8 +22,6 @@
 namespace llvm {
 namespace clang {
   
-class Lexer;
-class LexerToken;
 class SourceManager;
 class FileManager;
 class DirectoryEntry;
