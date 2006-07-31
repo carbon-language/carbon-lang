@@ -316,6 +316,14 @@ namespace llvm {
       getRegClassForInlineAsmConstraint(const std::string &Constraint,
                                         MVT::ValueType VT) const;
 
+    /// getRegForInlineAsmConstraint - Given a physical register constraint (e.g.
+    /// {edx}), return the register number and the register class for the
+    /// register.  This should only be used for C_Register constraints.  On error,
+    /// this returns a register number of 0.
+    std::pair<unsigned, const TargetRegisterClass*> 
+      getRegForInlineAsmConstraint(const std::string &Constraint,
+                                   MVT::ValueType VT) const;
+    
     /// isLegalAddressImmediate - Return true if the integer value or
     /// GlobalValue can be used as the offset of the target addressing mode.
     virtual bool isLegalAddressImmediate(int64_t V) const;
