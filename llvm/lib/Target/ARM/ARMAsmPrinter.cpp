@@ -207,8 +207,16 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
     unsigned Size = TD->getTypeSize(C->getType());
     unsigned Align = TD->getTypeAlignment(C->getType());
 
-    assert (I->getLinkage() == GlobalValue::ExternalLinkage);
-    O << "\t.globl " << name << "\n";
+    switch (I->getLinkage()) {
+    default:
+      assert(0 && "Unknown linkage type!");
+      break;
+    case GlobalValue::ExternalLinkage:
+      O << "\t.globl " << name << "\n";
+      break;
+    case GlobalValue::InternalLinkage:
+      break;
+    }
 
     assert (!C->isNullValue());
     SwitchToDataSection(".data", I);
