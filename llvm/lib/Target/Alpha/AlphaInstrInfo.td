@@ -1021,9 +1021,6 @@ def : Pat<(i64 immConst2PartInt:$imm),
 def : Pat<(sext_inreg GPRC:$RB, i32),
           (ADDLi GPRC:$RB, 0)>;
 
-def : Pat<(select GPRC:$which, GPRC:$src1, GPRC:$src2),
-          (CMOVEQ GPRC:$src1, GPRC:$src2, GPRC:$which)>; //may be CMOVNE
-
 def : Pat<(fabs F8RC:$RB),
           (CPYST F31, F8RC:$RB)>;
 def : Pat<(fabs F4RC:$RB),
