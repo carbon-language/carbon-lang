@@ -21,6 +21,7 @@
 #if HAVE_SIGNAL_H
 #include <signal.h>
 #endif
+using namespace llvm;
 
 namespace {
 
@@ -30,7 +31,7 @@ bool StackTraceRequested = false;
 void (*InterruptFunction)() = 0;
 
 std::vector<std::string> *FilesToRemove = 0 ;
-std::vector<llvm::sys::Path> *DirectoriesToRemove = 0;
+std::vector<sys::Path> *DirectoriesToRemove = 0;
 
 // IntSigs - Signals that may interrupt the program at any time.
 const int IntSigs[] = {
@@ -146,7 +147,6 @@ void RegisterHandler(int Signal) {
 
 }
 
-namespace llvm {
 
 void sys::SetInterruptFunction(void (*IF)()) {
   InterruptFunction = IF;
@@ -165,8 +165,10 @@ void sys::RemoveFileOnSignal(const sys::Path &Filename) {
 }
 
 // RemoveDirectoryOnSignal - The public API
-void sys::RemoveDirectoryOnSignal(const llvm::sys::Path& path) {
-  if (!path.isDirectory())
+void sys::RemoveDirectoryOnSignal(const sys::Path& path) {
+  // Not a directory?
+  sys::FileStatus Status;
+  if (path.getFileStatus(Status) || !Status.isDir)
     return;
 
   if (DirectoriesToRemove == 0)
@@ -184,6 +186,3 @@ void sys::PrintStackTraceOnErrorSignal() {
   StackTraceRequested = true;
   std::for_each(KillSigs, KillSigsEnd, RegisterHandler);
 }
-
-}
-

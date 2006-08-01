@@ -96,17 +96,19 @@ void sys::RemoveFileOnSignal(const sys::Path &Filename) {
 
 // RemoveDirectoryOnSignal - The public API
 void sys::RemoveDirectoryOnSignal(const sys::Path& path) {
+  // Not a directory?
+  sys::FileStatus Status;
+  if (path.getFileStatus(Status) || !Status.isDir)
+    return;
+
   RegisterHandler();
 
   if (CleanupExecuted)
     throw std::string("Process terminating -- cannot register for removal");
 
-  if (path.isDirectory()) {
-    if (DirectoriesToRemove == NULL)
-      DirectoriesToRemove = new std::vector<sys::Path>;
-
-    DirectoriesToRemove->push_back(path);
-  }
+  if (DirectoriesToRemove == NULL)
+    DirectoriesToRemove = new std::vector<sys::Path>;
+  DirectoriesToRemove->push_back(path);
 
   LeaveCriticalSection(&CriticalSection);
 }
