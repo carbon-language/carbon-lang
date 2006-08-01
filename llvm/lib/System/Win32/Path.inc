@@ -216,39 +216,6 @@ Path::GetUserHomeDirectory() {
 }
 // FIXME: the above set of functions don't map to Windows very well.
 
-bool
-Path::isFile() const {
-  WIN32_FILE_ATTRIBUTE_DATA fi;
-  BOOL rc = GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi);
-  if (rc)
-    return !(fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
-  else if (GetLastError() != ERROR_FILE_NOT_FOUND) {
-    ThrowError("isFile(): " + std::string(path) + ": Can't get status: ");
-  }
-  return false;
-}
-
-bool
-Path::isDirectory() const {
-  WIN32_FILE_ATTRIBUTE_DATA fi;
-  BOOL rc = GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi);
-  if (rc)
-    return fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
-  else if (GetLastError() != ERROR_FILE_NOT_FOUND)
-    ThrowError("isDirectory(): " + std::string(path) + ": Can't get status: ");
-  return false;
-}
-
-bool
-Path::isHidden() const {
-  WIN32_FILE_ATTRIBUTE_DATA fi;
-  BOOL rc = GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi);
-  if (rc)
-    return fi.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN;
-  else if (GetLastError() != ERROR_FILE_NOT_FOUND)
-    ThrowError("isHidden(): " + std::string(path) + ": Can't get status: ");
-  return false;
-}
 
 bool
 Path::isRootDirectory() const {

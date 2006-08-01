@@ -236,38 +236,6 @@ Path::GetUserHomeDirectory() {
   return GetRootDirectory();
 }
 
-bool
-Path::isFile() const {
-  if (!exists())
-    return false;
-  struct stat buf;
-  if (stat(path.c_str(), &buf) != 0) {
-    ThrowErrno(path + ": can't determine type of path object: ");
-  }
-  return S_ISREG(buf.st_mode);
-}
-
-bool
-Path::isDirectory() const {
-  if (!exists())
-    return false;
-  struct stat buf;
-  if (0 != stat(path.c_str(), &buf)) {
-    ThrowErrno(path + ": can't determine type of path object: ");
-  }
-  return S_ISDIR(buf.st_mode);
-}
-
-bool
-Path::isHidden() const {
-  if (!exists())
-    return false;
-  size_t slash = path.rfind('/');
-  return (slash != std::string::npos && 
-          slash < path.length()-1 && 
-          path[slash+1] == '.') || 
-         (!path.empty() && slash == std::string::npos && path[0] == '.');
-}
 
 std::string
 Path::getBasename() const {
@@ -432,8 +400,6 @@ void Path::makeExecutableOnDisk() {
 
 bool
 Path::getDirectoryContents(std::set<Path>& result) const {
-  if (!isDirectory())
-    return false;
   DIR* direntries = ::opendir(path.c_str());
   if (direntries == 0)
     ThrowErrno(path + ": can't open directory");

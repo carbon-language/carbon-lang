@@ -259,28 +259,6 @@ namespace sys {
     /// @name Disk Accessors
     /// @{
     public:
-      /// This function determines if the object referenced by this path is
-      /// a file or not. This function accesses the underlying file system to
-      /// determine the type of entity referenced by the path.
-      /// @returns true if this path name references a file.
-      /// @brief Determines if the path name references a file.
-      bool isFile() const;
-
-      /// This function determines if the object referenced by this path is a
-      /// directory or not. This function accesses the underlying file system to
-      /// determine the type of entity referenced by the path.
-      /// @returns true if the path name references a directory
-      /// @brief Determines if the path name references a directory.
-      bool isDirectory() const;
-
-      /// This function determines if the path refers to a hidden file. The
-      /// notion of hidden files is defined by  the underlying system. The
-      /// system may not support hidden files in which case this function always
-      /// returns false on such systems. Hidden files have the "hidden"
-      /// attribute set on Win32. On Unix, hidden files start with a period.
-      /// @brief Determines if the path name references a hidden file.
-      bool isHidden() const;
-
       /// This function determines if the path name in this object references
       /// the root (top level directory) of the file system. The details of what
       /// is considered the "root" may vary from system to system so this method
