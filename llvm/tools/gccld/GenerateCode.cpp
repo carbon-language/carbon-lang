@@ -151,12 +151,9 @@ static bool isBytecodeLPath(const std::string &LibPath) {
   sys::Path LPath(LibPath);
 
   // Make sure it exists and is a directory
-  try {
-    if (!LPath.exists() || !LPath.isDirectory())
-      return false;
-  } catch (std::string& xcptn) {
+  sys::FileStatus Status;
+  if (LPath.getFileStatus(Status) || !Status.isDir)
     return false;
-  }
   
   // Grab the contents of the -L path
   std::set<sys::Path> Files;
@@ -169,12 +166,13 @@ static bool isBytecodeLPath(const std::string &LibPath) {
   std::string dllsuffix = sys::Path::GetDLLSuffix();
   for (; File != Files.end(); ++File) {
 
-    if ( File->isDirectory() )
+    // Not a file?
+    if (File->getFileStatus(Status) || Status.isDir)
       continue;
 
     std::string path = File->toString();
 
-    // Check for an ending '.dll,.so' or '.a' suffix as all
+    // Check for an ending '.dll', '.so' or '.a' suffix as all
     // other files are not of interest to us here
     if (path.find(dllsuffix, path.size()-dllsuffix.size()) == std::string::npos
         && path.find(".a", path.size()-2) == std::string::npos)
