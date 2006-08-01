@@ -24,6 +24,9 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
 
 # Give first option a name.
 my $Directory = $ARGV[0];
+if (!defined($Directory)) {
+  die "First argument must be the directory containing LLVM libs\n";
+}
 my $nmPath = $ARGV[1];
 
 # Find the "dot" program
@@ -33,9 +36,9 @@ if (!$FLAT) {
   die "Can't find 'dot'" if (! -x "$DotPath");
 }
 
-if ($nmPath eq "") {
-    chomp($nmPath=`which nm`);
-    die "Can't find 'nm'" if (! -x "$nmPath");
+if (!defined($nmPath) || $nmPath eq "") {
+  chomp($nmPath=`which nm`);
+  die "Can't find 'nm'" if (! -x "$nmPath");
 }
 
 # Open the directory and read its contents, sorting by name and differentiating
@@ -145,9 +148,23 @@ if (!$FLAT) {
 
   open DOT, "| $DotPath -Tgif > libdeps.gif";
 
-  print DOT "digraph LibDeps {size=\"40,15\"; ratio=\"1.33333\"; margin=\"0.25\"; rankdir=\"LR\"; mclimit=\"50.0\"; ordering=\"out\"; center=\"1\";\n";
-  print DOT "node [shape=\"box\",color=\"#000088\",fillcolor=\"#FFFACD\",fontcolor=\"#5577DD\",style=\"filled\",fontsize=\"24\"];\n";
-  print DOT "edge [style=\"solid\",color=\"#000088\"];\n";
+  print DOT "digraph LibDeps {\n";
+  print DOT "  size=\"40,15\"; \n";
+  print DOT "  ratio=\"1.33333\"; \n";
+  print DOT "  margin=\"0.25\"; \n";
+  print DOT "  rankdir=\"LR\"; \n";
+  print DOT "  mclimit=\"50.0\"; \n";
+  print DOT "  ordering=\"out\"; \n";
+  print DOT "  center=\"1\";\n";
+  print DOT "node [shape=\"box\",\n";
+  print DOT "      color=\"#000088\",\n";
+  print DOT "      fillcolor=\"#FFFACD\",\n";
+  print DOT "      fontcolor=\"#3355BB\",\n";
+  print DOT "      style=\"filled\",\n";
+  print DOT "      fontname=\"sans\",\n";
+  print DOT "      fontsize=\"24\"\n";
+  print DOT "];\n";
+  print DOT "edge [dir=\"forward\",style=\"solid\",color=\"#000088\"];\n";
 }
 
 # Print libraries first
@@ -159,9 +176,22 @@ if (!$FLAT) {
   print DOT "}\n";
   close DOT;
   open DOT, "| $DotPath -Tgif > objdeps.gif";
-  print DOT "digraph ObjDeps {size=\"40,15\"; ratio=\"1.33333\"; margin=\"0.25\"; rankdir=\"LR\"; mclimit=\"50.0\"; ordering=\"out\"; center=\"1\";\n";
-  print DOT "node [shape=\"box\",color=\"#000088\",fillcolor=\"#FFFACD\",fontcolor=\"#5577DD\",style=\"filled\",fontsize=\"24\"];\n";
-  print DOT "edge [style=\"solid\",color=\"#000088\"];\n";
+  print DOT "digraph ObjDeps {\n";
+  print DOT "  size=\"8,10\";\n";
+  print DOT "  margin=\"0.25\";\n";
+  print DOT "  rankdir=\"LR\";\n";
+  print DOT "  mclimit=\"50.0\";\n";
+  print DOT "  ordering=\"out\";\n";
+  print DOT "  center=\"1\";\n";
+  print DOT "node [shape=\"box\",\n";
+  print DOT "      color=\"#000088\",\n";
+  print DOT "      fillcolor=\"#FFFACD\",\n";
+  print DOT "      fontcolor=\"#3355BB\",\n";
+  print DOT "      fontname=\"sans\",\n";
+  print DOT "      style=\"filled\",\n";
+  print DOT "      fontsize=\"24\"\n";
+  print DOT "];\n";
+  print DOT "edge [dir=\"forward\",style=\"solid\",color=\"#000088\"];\n";
 }
 
 # Print objects second
