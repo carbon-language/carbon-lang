@@ -334,7 +334,7 @@ Path::getLast() const {
 }
 
 bool
-Path::getStatusInfo(FileStatus &info, std::string *ErrStr) const {
+Path::getFileStatus(FileStatus &info, std::string *ErrStr) const {
   WIN32_FILE_ATTRIBUTE_DATA fi;
   if (!GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi))
     return GetError("getStatusInfo():" + std::string(path) +
