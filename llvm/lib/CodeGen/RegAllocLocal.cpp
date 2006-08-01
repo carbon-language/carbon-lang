@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachinePassRegistry.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -35,6 +36,12 @@ namespace {
   static Statistic<> NumLoads ("ra-local", "Number of loads added");
   static Statistic<> NumFolded("ra-local", "Number of loads/stores folded "
 			       "into instructions");
+
+  static RegisterRegAlloc
+    localRegAlloc("local", "  local register allocator",
+                  createLocalRegisterAllocator);
+
+
   class VISIBILITY_HIDDEN RA : public MachineFunctionPass {
     const TargetMachine *TM;
     MachineFunction *MF;

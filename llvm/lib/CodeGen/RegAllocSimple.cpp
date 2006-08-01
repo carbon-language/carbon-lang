@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachinePassRegistry.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Debug.h"
@@ -32,6 +33,10 @@ using namespace llvm;
 namespace {
   static Statistic<> NumStores("ra-simple", "Number of stores added");
   static Statistic<> NumLoads ("ra-simple", "Number of loads added");
+
+  static RegisterRegAlloc
+    simpleRegAlloc("simple", "  simple register allocator",
+                   createSimpleRegisterAllocator);
 
   class VISIBILITY_HIDDEN RegAllocSimple : public MachineFunctionPass {
     MachineFunction *MF;

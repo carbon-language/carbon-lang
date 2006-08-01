@@ -221,29 +221,35 @@ namespace llvm {
                     std::map<SDNode*, unsigned> &VRBaseMap);
   };
 
-  ScheduleDAG *createBFS_DAGScheduler(SelectionDAG &DAG, MachineBasicBlock *BB);
+  /// createBFS_DAGScheduler - This creates a simple breadth first instruction
+  /// scheduler.
+  ScheduleDAG *createBFS_DAGScheduler(SelectionDAG *DAG, MachineBasicBlock *BB);
   
   /// createSimpleDAGScheduler - This creates a simple two pass instruction
-  /// scheduler.
-  ScheduleDAG* createSimpleDAGScheduler(bool NoItins, SelectionDAG &DAG,
+  /// scheduler using instruction itinerary.
+  ScheduleDAG* createSimpleDAGScheduler(SelectionDAG *DAG,
                                         MachineBasicBlock *BB);
+
+  /// createNoItinsDAGScheduler - This creates a simple two pass instruction
+  /// scheduler without using instruction itinerary.
+  ScheduleDAG* createNoItinsDAGScheduler(SelectionDAG *DAG,
+                                         MachineBasicBlock *BB);
 
   /// createBURRListDAGScheduler - This creates a bottom up register usage
   /// reduction list scheduler.
-  ScheduleDAG* createBURRListDAGScheduler(SelectionDAG &DAG,
+  ScheduleDAG* createBURRListDAGScheduler(SelectionDAG *DAG,
                                           MachineBasicBlock *BB);
   
   /// createTDRRListDAGScheduler - This creates a top down register usage
   /// reduction list scheduler.
-  ScheduleDAG* createTDRRListDAGScheduler(SelectionDAG &DAG,
+  ScheduleDAG* createTDRRListDAGScheduler(SelectionDAG *DAG,
                                           MachineBasicBlock *BB);
   
   /// createTDListDAGScheduler - This creates a top-down list scheduler with
-  /// the specified hazard recognizer.  This takes ownership of the hazard
-  /// recognizer and deletes it when done.
-  ScheduleDAG* createTDListDAGScheduler(SelectionDAG &DAG,
-                                        MachineBasicBlock *BB,
-                                        HazardRecognizer *HR);
+  /// a hazard recognizer.
+  ScheduleDAG* createTDListDAGScheduler(SelectionDAG *DAG,
+                                        MachineBasicBlock *BB);
+                                        
 }
 
 #endif

@@ -110,7 +110,7 @@ namespace {
       (void) llvm::createRSProfilingPass();
       (void) llvm::createIndMemRemPass();
     }
-  } ForcePassLinking;
+  } ForcePassLinking; // Force link by creating a global definition.
 }
 
 #endif

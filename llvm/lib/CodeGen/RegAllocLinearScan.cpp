@@ -18,6 +18,7 @@
 #include "llvm/Function.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachinePassRegistry.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/MRegisterInfo.h"
@@ -41,6 +42,10 @@ namespace {
   ("regalloc", "Ratio of intervals processed over total intervals");
   static Statistic<> NumBacktracks
   ("regalloc", "Number of times we had to backtrack");
+
+  static RegisterRegAlloc
+    linearscanRegAlloc("linearscan", "  linear scan register allocator",
+                       createLinearScanRegisterAllocator);
 
   static unsigned numIterations = 0;
   static unsigned numIntervals = 0;

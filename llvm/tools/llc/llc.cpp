@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Bytecode/Reader.h"
+#include "llvm/Codegen/LinkAllCodegenComponents.h"
 #include "llvm/Target/SubtargetFeature.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"

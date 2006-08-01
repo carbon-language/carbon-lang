@@ -16,6 +16,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "sched"
+#include "llvm/CodeGen/MachinePassRegistry.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/MRegisterInfo.h"
@@ -30,6 +31,15 @@
 #include <queue>
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
+
+static RegisterScheduler
+  burrListDAGScheduler("list-burr",
+                       "  Bottom-up register reduction list scheduling",
+                       createBURRListDAGScheduler);
+static RegisterScheduler
+  tdrListrDAGScheduler("list-tdrr",
+                       "  Top-down register reduction list scheduling",
+                       createTDRRListDAGScheduler);
 
 namespace {
 //===----------------------------------------------------------------------===//
@@ -876,15 +886,15 @@ void TDRegReductionPriorityQueue<SF>::CalculatePriorities() {
 //                         Public Constructor Functions
 //===----------------------------------------------------------------------===//
 
-llvm::ScheduleDAG* llvm::createBURRListDAGScheduler(SelectionDAG &DAG,
+llvm::ScheduleDAG* llvm::createBURRListDAGScheduler(SelectionDAG *DAG,
                                                     MachineBasicBlock *BB) {
-  return new ScheduleDAGRRList(DAG, BB, DAG.getTarget(), true,
+  return new ScheduleDAGRRList(*DAG, BB, DAG->getTarget(), true,
                                new BURegReductionPriorityQueue<bu_ls_rr_sort>());
 }
 
-llvm::ScheduleDAG* llvm::createTDRRListDAGScheduler(SelectionDAG &DAG,
+llvm::ScheduleDAG* llvm::createTDRRListDAGScheduler(SelectionDAG *DAG,
                                                     MachineBasicBlock *BB) {
-  return new ScheduleDAGRRList(DAG, BB, DAG.getTarget(), false,
+  return new ScheduleDAGRRList(*DAG, BB, DAG->getTarget(), false,
                                new TDRegReductionPriorityQueue<td_ls_rr_sort>());
 }
 

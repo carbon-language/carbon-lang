@@ -17,6 +17,7 @@
 #include "llvm/ModuleProvider.h"
 #include "llvm/Type.h"
 #include "llvm/Bytecode/Reader.h"
+#include "llvm/Codegen/LinkAllCodegenComponents.h"
 #include "llvm/ExecutionEngine/JIT.h"
 #include "llvm/ExecutionEngine/Interpreter.h"
 #include "llvm/ExecutionEngine/GenericValue.h"

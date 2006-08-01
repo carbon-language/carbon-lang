@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "sched"
+#include "llvm/CodeGen/MachinePassRegistry.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Target/TargetData.h"
@@ -25,7 +26,23 @@
 #include <iostream>
 using namespace llvm;
 
+
 namespace {
+
+static RegisterScheduler
+  bfsDAGScheduler("none", "  No scheduling: breadth first sequencing",
+                  createBFS_DAGScheduler);
+static RegisterScheduler
+  simpleDAGScheduler("simple",
+                     "  Simple two pass scheduling: minimize critical path "
+                     "and maximize processor utilization",
+                      createSimpleDAGScheduler);
+static RegisterScheduler
+  noitinDAGScheduler("simple-noitin",
+                     "  Simple two pass scheduling: Same as simple "
+                     "except using generic latency",
+                     createNoItinsDAGScheduler);
+                     
 class NodeInfo;
 typedef NodeInfo *NodeInfoPtr;
 typedef std::vector<NodeInfoPtr>           NIVector;
@@ -1102,14 +1119,22 @@ void ScheduleDAGSimple::Schedule() {
 
 
 /// createSimpleDAGScheduler - This creates a simple two pass instruction
-/// scheduler.
-llvm::ScheduleDAG* llvm::createSimpleDAGScheduler(bool NoItins,
-                                                  SelectionDAG &DAG,
+/// scheduler using instruction itinerary.
+llvm::ScheduleDAG* llvm::createSimpleDAGScheduler(SelectionDAG *DAG,
                                                   MachineBasicBlock *BB) {
-  return new ScheduleDAGSimple(false, NoItins, DAG, BB, DAG.getTarget());
+  return new ScheduleDAGSimple(false, false, *DAG, BB, DAG->getTarget());
 }
 
-llvm::ScheduleDAG* llvm::createBFS_DAGScheduler(SelectionDAG &DAG,
+/// createNoItinsDAGScheduler - This creates a simple two pass instruction
+/// scheduler without using instruction itinerary.
+llvm::ScheduleDAG* llvm::createNoItinsDAGScheduler(SelectionDAG *DAG,
+                                                   MachineBasicBlock *BB) {
+  return new ScheduleDAGSimple(false, true, *DAG, BB, DAG->getTarget());
+}
+
+/// createBFS_DAGScheduler - This creates a simple breadth first instruction
+/// scheduler.
+llvm::ScheduleDAG* llvm::createBFS_DAGScheduler(SelectionDAG *DAG,
                                                 MachineBasicBlock *BB) {
-  return new ScheduleDAGSimple(true, false, DAG, BB,  DAG.getTarget());
+  return new ScheduleDAGSimple(true, false, *DAG, BB,  DAG->getTarget());
 }

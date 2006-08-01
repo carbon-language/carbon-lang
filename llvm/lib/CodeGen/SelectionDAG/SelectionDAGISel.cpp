@@ -29,6 +29,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachinePassRegistry.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/MRegisterInfo.h"
@@ -60,41 +61,14 @@ ViewSchedDAGs("view-sched-dags", cl::Hidden,
 static const bool ViewISelDAGs = 0, ViewSchedDAGs = 0;
 #endif
 
-// Scheduling heuristics
-enum SchedHeuristics {
-  defaultScheduling,      // Let the target specify its preference.
-  noScheduling,           // No scheduling, emit breadth first sequence.
-  simpleScheduling,       // Two pass, min. critical path, max. utilization.
-  simpleNoItinScheduling, // Same as above exact using generic latency.
-  listSchedulingBURR,     // Bottom-up reg reduction list scheduling.
-  listSchedulingTDRR,     // Top-down reg reduction list scheduling.
-  listSchedulingTD        // Top-down list scheduler.
-};
-
 namespace {
-  cl::opt<SchedHeuristics>
-  ISHeuristic(
-    "sched",
-    cl::desc("Choose scheduling style"),
-    cl::init(defaultScheduling),
-    cl::values(
-      clEnumValN(defaultScheduling, "default",
-                 "Target preferred scheduling style"),
-      clEnumValN(noScheduling, "none",
-                 "No scheduling: breadth first sequencing"),
-      clEnumValN(simpleScheduling, "simple",
-                 "Simple two pass scheduling: minimize critical path "
-                 "and maximize processor utilization"),
-      clEnumValN(simpleNoItinScheduling, "simple-noitin",
-                 "Simple two pass scheduling: Same as simple "
-                 "except using generic latency"),
-      clEnumValN(listSchedulingBURR, "list-burr",
-                 "Bottom-up register reduction list scheduling"),
-      clEnumValN(listSchedulingTDRR, "list-tdrr",
-                 "Top-down register reduction list scheduling"),
-      clEnumValN(listSchedulingTD, "list-td",
-                 "Top-down list scheduler"),
-      clEnumValEnd));
+  cl::opt<const char *, false, RegisterPassParser<RegisterScheduler> >
+  ISHeuristic("sched",
+              cl::init("default"),
+              cl::desc("Instruction schedulers available:"));
+
+  RegisterScheduler
+  defaultListDAGScheduler("default", "  Best scheduler for the target", NULL);
 } // namespace
 
 namespace {
@@ -3629,50 +3603,41 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
   }
 }
 
+
 //===----------------------------------------------------------------------===//
 /// ScheduleAndEmitDAG - Pick a safe ordering and emit instructions for each
 /// target node in the graph.
 void SelectionDAGISel::ScheduleAndEmitDAG(SelectionDAG &DAG) {
   if (ViewSchedDAGs) DAG.viewGraph();
-  ScheduleDAG *SL = NULL;
 
-  switch (ISHeuristic) {
-  default: assert(0 && "Unrecognized scheduling heuristic");
-  case defaultScheduling:
-    if (TLI.getSchedulingPreference() == TargetLowering::SchedulingForLatency)
-      SL = createTDListDAGScheduler(DAG, BB, CreateTargetHazardRecognizer());
-    else {
-      assert(TLI.getSchedulingPreference() ==
+  static RegisterScheduler::FunctionPassCtor Ctor =
+                                                  RegisterScheduler::getCache();
+  
+  if (!Ctor) {
+    if (std::string("default") == std::string(ISHeuristic)) {
+      if (TLI.getSchedulingPreference() == TargetLowering::SchedulingForLatency)
+        Ctor = RegisterScheduler::FindCtor("list-td");
+      else {
+        assert(TLI.getSchedulingPreference() ==
              TargetLowering::SchedulingForRegPressure && "Unknown sched type!");
-      SL = createBURRListDAGScheduler(DAG, BB);
+        Ctor = RegisterScheduler::FindCtor("list-burr");
+      }
+
+      assert(Ctor && "Default instruction scheduler not present");
+      if (!Ctor) Ctor = RegisterScheduler::FindCtor("none");
+    } else {
+      Ctor = RegisterScheduler::FindCtor(ISHeuristic);
     }
-    break;
-  case noScheduling:
-    SL = createBFS_DAGScheduler(DAG, BB);
-    break;
-  case simpleScheduling:
-    SL = createSimpleDAGScheduler(false, DAG, BB);
-    break;
-  case simpleNoItinScheduling:
-    SL = createSimpleDAGScheduler(true, DAG, BB);
-    break;
-  case listSchedulingBURR:
-    SL = createBURRListDAGScheduler(DAG, BB);
-    break;
-  case listSchedulingTDRR:
-    SL = createTDRRListDAGScheduler(DAG, BB);
-    break;
-  case listSchedulingTD:
-    SL = createTDListDAGScheduler(DAG, BB, CreateTargetHazardRecognizer());
-    break;
+    
+     RegisterScheduler::setCache(Ctor);
   }
+  
+  assert(Ctor && "No instruction scheduler found");
+  ScheduleDAG *SL = Ctor(&DAG, BB);
   BB = SL->Run();
   delete SL;
 }
 
-HazardRecognizer *SelectionDAGISel::CreateTargetHazardRecognizer() {
-  return new HazardRecognizer();
-}
 
 /// SelectInlineAsmMemoryOperands - Calls to this are automatically generated
 /// by tblgen.  Others should not call it.

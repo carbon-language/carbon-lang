@@ -19,6 +19,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "sched"
+#include "llvm/CodeGen/MachinePassRegistry.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/MRegisterInfo.h"
@@ -38,6 +39,10 @@ namespace {
   static Statistic<> NumStalls("scheduler", "Number of pipeline stalls");
 }
 
+static RegisterScheduler
+  tdListDAGScheduler("list-td", "  Top-down list scheduler",
+                     createTDListDAGScheduler);
+   
 namespace {
 //===----------------------------------------------------------------------===//
 /// ScheduleDAGList - The actual list scheduler implementation.  This supports
@@ -511,12 +516,12 @@ void LatencyPriorityQueue::AdjustPriorityOfUnscheduledPreds(SUnit *SU) {
 //                         Public Constructor Functions
 //===----------------------------------------------------------------------===//
 
-/// createTDListDAGScheduler - This creates a top-down list scheduler with the
-/// specified hazard recognizer.
-ScheduleDAG* llvm::createTDListDAGScheduler(SelectionDAG &DAG,
-                                            MachineBasicBlock *BB,
-                                            HazardRecognizer *HR) {
-  return new ScheduleDAGList(DAG, BB, DAG.getTarget(),
+/// createTDListDAGScheduler - This creates a top-down list scheduler with a
+/// new hazard recognizer. This scheduler takes ownership of the hazard
+/// recognizer and deletes it when done.
+ScheduleDAG* llvm::createTDListDAGScheduler(SelectionDAG *DAG,
+                                            MachineBasicBlock *BB) {
+  return new ScheduleDAGList(*DAG, BB, DAG->getTarget(),
                              new LatencyPriorityQueue(),
-                             HR);
+                             new HazardRecognizer());
 }
