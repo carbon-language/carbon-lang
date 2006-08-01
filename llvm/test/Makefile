@@ -31,9 +31,14 @@ ifndef RUNLLVM2CPP
 RUNTESTFLAGS += --ignore llvm2cpp.exp
 endif
 
+ifneq ($(RUNTEST),)
 check-local:: site.exp
 	PATH="$(LLVMToolDir):$(LLVMExmplDir):$(LLVM_SRC_ROOT)/test/Scripts:$(PATH)" \
 	$(RUNTEST) $(RUNTESTFLAGS)
+else
+check-local:: site.exp
+	@echo "*** dejagnu not found.  Make sure runtest is in your PATH, then reconfigure llvm."
+endif
 
 clean::
 	$(RM) -rf `find $(LLVM_OBJ_ROOT)/test/Regression -name Output -type d -print`
