@@ -270,19 +270,22 @@ ArchiveOperation parseCommandLine() {
 // finds with all the files in that directory (recursively). It uses the
 // sys::Path::getDirectoryContent method to perform the actual directory scans.
 std::set<sys::Path> recurseDirectories(const sys::Path& path) {
-  assert(path.isDirectory() && "Oops, can't recurse a file");
   std::set<sys::Path> result;
   if (RecurseDirectories) {
     std::set<sys::Path> content;
     path.getDirectoryContents(content);
     for (std::set<sys::Path>::iterator I = content.begin(), E = content.end();
          I != E; ++I) {
-      if (I->isDirectory()) {
-        std::set<sys::Path> moreResults = recurseDirectories(*I);
-        result.insert(moreResults.begin(), moreResults.end());
-      } else {
-        result.insert(*I);
-      }
+       // Make sure it exists and is a directory
+       sys::FileStatus Status;
+       if (!I->getFileStatus(Status)) {
+         if (Status.isDir) {
+           std::set<sys::Path> moreResults = recurseDirectories(*I);
+           result.insert(moreResults.begin(), moreResults.end());
+         } else {
+           result.insert(*I);
+         }
+       }
     }
   }
   return result;
