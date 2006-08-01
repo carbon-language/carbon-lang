@@ -93,6 +93,10 @@ N: Eric Kidd
 W: http://randomhacks.net/
 D: llvm-config script
 
+N: Anton Korobeynikov
+E: asl@math.spbu.ru
+D: Mingw32 fixes, cross-compiling support, minor changes here and there
+
 N: Sumant Kowshik
 E: kowshik@uiuc.edu
 D: Author of the original C backend
