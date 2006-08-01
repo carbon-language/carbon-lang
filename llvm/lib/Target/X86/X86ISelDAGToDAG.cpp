@@ -99,8 +99,7 @@ namespace {
       : SelectionDAGISel(X86Lowering),
         X86Lowering(*TM.getTargetLowering()),
         Subtarget(&TM.getSubtarget<X86Subtarget>()),
-        DAGSize(0), TopOrder(NULL), IdToOrder(NULL),
-        RMRange(NULL), ReachabilityMatrix(NULL) {}
+        DAGSize(0) {}
 
     virtual bool runOnFunction(Function &Fn) {
       // Make sure we re-emit a set of the global base reg if necessary
@@ -124,7 +123,6 @@ namespace {
 #include "X86GenDAGISel.inc"
 
   private:
-    void DetermineTopologicalOrdering();
     void DetermineReachability(SDNode *f, SDNode *t);
 
     void Select(SDOperand &Result, SDOperand N);
@@ -187,43 +185,37 @@ namespace {
 
     /// TopOrder - Topological ordering of all nodes in the DAG.
     ///
-    SDNode* *TopOrder;
+    std::vector<SDNode*> TopOrder;
 
-    /// IdToOrder - Node id to topological order map.
-    ///
-    unsigned *IdToOrder;
-
-    /// RMRange - The range of reachibility information available for the
-    /// particular source node.
-    unsigned *RMRange;
-
-    /// ReachabilityMatrix - A N x N matrix representing all pairs reachibility
+    /// ReachabilityMatrix - A N x N matrix representing all pairs reachability
     /// information. One bit per potential edge.
-    unsigned char *ReachabilityMatrix;
+    std::vector<bool> ReachabilityMatrix;
+
+    /// RMRange - The range of reachability information available for the
+    /// particular source node.
+    std::vector<unsigned> ReachMatrixRange;
 
     inline void setReachable(SDNode *f, SDNode *t) {
       unsigned Idx = f->getNodeId() * DAGSize + t->getNodeId();
-      ReachabilityMatrix[Idx / 8] |= 1 << (Idx % 8);
+      ReachabilityMatrix[Idx] = true;
     }
 
     inline bool isReachable(SDNode *f, SDNode *t) {
       unsigned Idx = f->getNodeId() * DAGSize + t->getNodeId();
-      return ReachabilityMatrix[Idx / 8] & (1 << (Idx % 8));
+      return ReachabilityMatrix[Idx];
     }
 
     /// UnfoldableSet - An boolean array representing nodes which have been
     /// folded into addressing modes and therefore should not be folded in
     /// another operation.
-    unsigned char *UnfoldableSet;
+    std::vector<bool> UnfoldableSet;
 
     inline void setUnfoldable(SDNode *N) {
-      unsigned Id = N->getNodeId();
-      UnfoldableSet[Id / 8] |= 1 << (Id % 8);
+      UnfoldableSet[N->getNodeId()] = true;
     }
 
     inline bool isUnfoldable(SDNode *N) {
-      unsigned Id = N->getNodeId();
-      return UnfoldableSet[Id / 8] & (1 << (Id % 8));
+      return UnfoldableSet[N->getNodeId()];
     }
 
 #ifndef NDEBUG
@@ -259,58 +251,12 @@ bool X86DAGToDAGISel::CanBeFoldedBy(SDNode *N, SDNode *U) {
   return true;
 }
 
-/// DetermineTopologicalOrdering - Determine topological ordering of the nodes
-/// in the DAG.
-void X86DAGToDAGISel::DetermineTopologicalOrdering() {
-  TopOrder = new SDNode*[DAGSize];
-  IdToOrder = new unsigned[DAGSize];
-  memset(IdToOrder, 0, DAGSize * sizeof(unsigned));
-  RMRange = new unsigned[DAGSize];
-  memset(RMRange, 0, DAGSize * sizeof(unsigned));
-
-  std::vector<unsigned> InDegree(DAGSize);
-  std::deque<SDNode*> Sources;
-  for (SelectionDAG::allnodes_iterator I = CurDAG->allnodes_begin(),
-         E = CurDAG->allnodes_end(); I != E; ++I) {
-    SDNode *N = I;
-    unsigned Degree = N->use_size();
-    InDegree[N->getNodeId()] = Degree;
-    if (Degree == 0)
-      Sources.push_back(I);
-  }
-
-  unsigned Order = 0;
-  while (!Sources.empty()) {
-    SDNode *N = Sources.front();
-    Sources.pop_front();
-    TopOrder[Order] = N;
-    IdToOrder[N->getNodeId()] = Order;
-    Order++;
-    for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); I != E; ++I) {
-      SDNode *P = I->Val;
-      int PId = P->getNodeId();
-      unsigned Degree = InDegree[PId] - 1;
-      if (Degree == 0)
-        Sources.push_back(P);
-      InDegree[PId] = Degree;
-    }
-  }
-}
-
-/// DetermineReachability - Determine reachibility between all pairs of nodes
+/// DetermineReachability - Determine reachability between all pairs of nodes
 /// between f and t in topological order.
 void X86DAGToDAGISel::DetermineReachability(SDNode *f, SDNode *t) {
-  if (!ReachabilityMatrix) {
-    unsigned RMSize = (DAGSize * DAGSize + 7) / 8;
-    ReachabilityMatrix = new unsigned char[RMSize];
-    memset(ReachabilityMatrix, 0, RMSize);
-  }
-
-  int Idf = f->getNodeId();
-  int Idt = t->getNodeId();
-  unsigned Orderf = IdToOrder[Idf];
-  unsigned Ordert = IdToOrder[Idt];
-  unsigned Range = RMRange[Idf];
+  unsigned Orderf = f->getNodeId();
+  unsigned Ordert = t->getNodeId();
+  unsigned Range = ReachMatrixRange[Orderf];
   if (Range >= Ordert)
     return;
   if (Range < Orderf)
@@ -326,7 +272,7 @@ void X86DAGToDAGISel::DetermineReachability(SDNode *f, SDNode *t) {
     for (unsigned i2 = Orderf; ; ++i2) {
       SDNode *M = TopOrder[i2];
       if (isReachable(M, N)) {
-        // Update reachibility from M to N's operands.
+        // Update reachability from M to N's operands.
         for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); I != E;++I)
           setReachable(M, I->Val);
       }
@@ -334,7 +280,7 @@ void X86DAGToDAGISel::DetermineReachability(SDNode *f, SDNode *t) {
     }
   }
 
-  RMRange[Idf] = Ordert;
+  ReachMatrixRange[Orderf] = Ordert;
 }
 
 /// InstructionSelectBasicBlock - This callback is invoked by SelectionDAGISel
@@ -343,12 +289,11 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   DEBUG(BB->dump());
   MachineFunction::iterator FirstMBB = BB;
 
-  DAGSize = DAG.AssignNodeIds();
-  unsigned NumBytes = (DAGSize+7) / 8;
-  UnfoldableSet = new unsigned char[NumBytes];
-  memset(UnfoldableSet, 0, NumBytes);
-
-  DetermineTopologicalOrdering();
+  TopOrder = DAG.AssignTopologicalOrder();
+  DAGSize = TopOrder.size();
+  ReachabilityMatrix.assign(DAGSize*DAGSize, false);
+  ReachMatrixRange.assign(DAGSize, 0);
+  UnfoldableSet.assign(DAGSize, false);
 
   // Codegen the basic block.
 #ifndef NDEBUG
@@ -360,15 +305,6 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   DEBUG(std::cerr << "===== Instruction selection ends:\n");
 #endif
 
-  delete[] ReachabilityMatrix;
-  delete[] TopOrder;
-  delete[] IdToOrder;
-  delete[] RMRange;
-  delete[] UnfoldableSet;
-  ReachabilityMatrix = NULL;
-  TopOrder = NULL;
-  IdToOrder = RMRange = NULL;
-  UnfoldableSet = NULL;
   CodeGenMap.clear();
   HandleMap.clear();
   ReplaceMap.clear();
