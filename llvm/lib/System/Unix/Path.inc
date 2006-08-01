@@ -241,7 +241,7 @@ Path::isFile() const {
   if (!exists())
     return false;
   struct stat buf;
-  if (0 != stat(path.c_str(), &buf)) {
+  if (stat(path.c_str(), &buf) != 0) {
     ThrowErrno(path + ": can't determine type of path object: ");
   }
   return S_ISREG(buf.st_mode);
@@ -286,12 +286,10 @@ Path::getBasename() const {
 }
 
 bool Path::hasMagicNumber(const std::string &Magic) const {
-  if (!isFile())
-    return false;
   size_t len = Magic.size();
   assert(len < 1024 && "Request for magic string too long");
   char* buf = (char*) alloca(1 + len);
-  int fd = ::open(path.c_str(),O_RDONLY);
+  int fd = ::open(path.c_str(), O_RDONLY);
   if (fd < 0)
     return false;
   size_t read_len = ::read(fd, buf, len);
@@ -303,11 +301,9 @@ bool Path::hasMagicNumber(const std::string &Magic) const {
 }
 
 bool Path::getMagicNumber(std::string& Magic, unsigned len) const {
-  if (!isFile())
-    return false;
   assert(len < 1024 && "Request for magic string too long");
   char* buf = (char*) alloca(1 + len);
-  int fd = ::open(path.c_str(),O_RDONLY);
+  int fd = ::open(path.c_str(), O_RDONLY);
   if (fd < 0)
     return false;
   ssize_t bytes_read = ::read(fd, buf, len);
@@ -322,11 +318,9 @@ bool Path::getMagicNumber(std::string& Magic, unsigned len) const {
 
 bool 
 Path::isBytecodeFile() const {
-  if (!isFile())
-    return false;
-  char buffer[ 4];
+  char buffer[4];
   buffer[0] = 0;
-  int fd = ::open(path.c_str(),O_RDONLY);
+  int fd = ::open(path.c_str(), O_RDONLY);
   if (fd < 0)
     return false;
   ssize_t bytes_read = ::read(fd, buffer, 4);
@@ -335,7 +329,7 @@ Path::isBytecodeFile() const {
     return false;
 
   return (buffer[0] == 'l' && buffer[1] == 'l' && buffer[2] == 'v' &&
-      (buffer[3] == 'c' || buffer[3] == 'm'));
+         (buffer[3] == 'c' || buffer[3] == 'm'));
 }
 
 bool
@@ -605,14 +599,17 @@ Path::createTemporaryFileOnDisk(bool reuse_current) {
 
 bool
 Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
-  // Make sure we're dealing with a directory.
-  if (isFile()) {
+  FileStatus Status;
+  if (getFileStatus(Status, ErrStr))
+    return true;
+    
+  if (Status.isFile) {
     if (unlink(path.c_str()) != 0)
       return GetErrno(path + ": can't destroy file", ErrStr);
     return false;
   }
   
-  if (!isDirectory()) {
+  if (!Status.isDir) {
     if (ErrStr) *ErrStr = "not a file or directory";
     return true;
   }

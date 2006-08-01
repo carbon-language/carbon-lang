@@ -281,8 +281,6 @@ bool Path::hasMagicNumber(const std::string &Magic) const {
 
 bool
 Path::isBytecodeFile() const {
-  if (!isFile())
-    return false;
   std::string actualMagic;
   if (!getMagicNumber(actualMagic, 4))
     return false;
@@ -574,12 +572,16 @@ Path::createFileOnDisk() {
 
 bool
 Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
-  if (isFile()) {
+  FileStatus Status;
+  if (getFileStatus(Status, ErrStr))
+    return true;
+    
+  if (Status.isFile) {
     DWORD attr = GetFileAttributes(path.c_str());
 
     // If it doesn't exist, we're done.
     if (attr == INVALID_FILE_ATTRIBUTES)
-      return false;
+      return true;
 
     // Read-only files cannot be deleted on Windows.  Must remove the read-only
     // attribute first.
@@ -590,8 +592,8 @@ Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
 
     if (!DeleteFile(path.c_str()))
       ThrowError(path + ": Can't destroy file: ");
-    return true;
-  } else if (isDirectory()) {
+    return false;
+  } else if (Status.isDir) {
     // If it doesn't exist, we're done.
     if (!exists())
       return false;
@@ -657,8 +659,6 @@ Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
 }
 
 bool Path::getMagicNumber(std::string& Magic, unsigned len) const {
-  if (!isFile())
-    return false;
   assert(len < 1024 && "Request for magic string too long");
   char* buf = (char*) alloca(1 + len);
 
