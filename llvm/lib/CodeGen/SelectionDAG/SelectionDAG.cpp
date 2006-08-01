@@ -28,6 +28,7 @@
 #include <set>
 #include <cmath>
 #include <algorithm>
+#include <deque>
 using namespace llvm;
 
 static bool isCommutativeBinOp(unsigned Opcode) {
@@ -2698,8 +2699,8 @@ void SelectionDAG::ReplaceAllUsesOfValueWith(SDOperand From, SDOperand To,
 }
 
 
-/// AssignNodeIds - Assign a unique node id for each node in the DAG. It returns
-/// the maximum id.
+/// AssignNodeIds - Assign a unique node id for each node in the DAG based on
+/// their allnodes order. It returns the maximum id.
 unsigned SelectionDAG::AssignNodeIds() {
   unsigned Id = 0;
   for (allnodes_iterator I = allnodes_begin(), E = allnodes_end(); I != E; ++I){
@@ -2708,6 +2709,41 @@ unsigned SelectionDAG::AssignNodeIds() {
   }
   return Id;
 }
+
+/// AssignTopologicalOrder - Assign a unique node id for each node in the DAG
+/// based on their topological order. It returns a vector of the SDNodes* in
+/// assigned order.
+std::vector<SDNode*> SelectionDAG::AssignTopologicalOrder() {
+  unsigned DAGSize = AllNodes.size();
+  std::vector<SDNode*> TopOrder;
+  std::map<SDNode*, unsigned> InDegree;
+  std::deque<SDNode*> Sources;
+  for (allnodes_iterator I = allnodes_begin(),E = allnodes_end(); I != E; ++I){
+    SDNode *N = I;
+    unsigned Degree = N->use_size();
+    InDegree[N] = Degree;
+    if (Degree == 0)
+      Sources.push_back(I);
+  }
+
+  int Id = 0;
+  while (!Sources.empty()) {
+    SDNode *N = Sources.front();
+    Sources.pop_front();
+    TopOrder.push_back(N);
+    N->setNodeId(Id++);
+    for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); I != E; ++I) {
+      SDNode *P = I->Val;
+      unsigned Degree = InDegree[P] - 1;
+      if (Degree == 0)
+        Sources.push_back(P);
+      InDegree[P] = Degree;
+    }
+  }
+
+  return TopOrder;
+}
+
 
 
 //===----------------------------------------------------------------------===//

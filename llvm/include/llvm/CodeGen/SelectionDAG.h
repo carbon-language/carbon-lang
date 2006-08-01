@@ -422,9 +422,14 @@ public:
   /// have no referrers.
   void DeleteNode(SDNode *N);
 
-  /// AssignNodeIds - Assign a unique node id for each node in the DAG. It
-  /// returns the maximum id.
+  /// AssignNodeIds - Assign a unique node id for each node in the DAG based on
+  /// their allnodes order. It returns the maximum id.
   unsigned AssignNodeIds();
+
+  /// AssignTopologicalOrder - Assign a unique node id for each node in the DAG
+  /// based on their topological order. It returns a vector of the SDNodes* in
+  /// assigned order.
+  std::vector<SDNode*> AssignTopologicalOrder();
 
   void dump() const;
 
