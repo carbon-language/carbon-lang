@@ -43,8 +43,8 @@ namespace {
       Data32bitsDirective = "\t.word\t";
       Data64bitsDirective = 0;
       ZeroDirective = "\t.skip\t";
-      CommentString = "!";
-      ConstantPoolSection = "\t.section \".rodata\",#alloc\n";
+      CommentString = "#";
+      ConstantPoolSection = "\t.text\n";
       AlignmentIsInBytes = false;
     }
 
@@ -60,9 +60,21 @@ namespace {
     }
 
     void printMemRegImm(const MachineInstr *MI, unsigned OpNo) {
-      printOperand(MI, OpNo + 1);
-      O << ", ";
-      printOperand(MI, OpNo);
+      const MachineOperand &MO1 = MI->getOperand(OpNo);
+      const MachineOperand &MO2 = MI->getOperand(OpNo + 1);
+      assert(MO1.isImmediate());
+
+      if (MO2.isConstantPoolIndex()) {
+	printOperand(MI, OpNo + 1);
+      } else if (MO2.isRegister()) {
+	O << '[';
+	printOperand(MI, OpNo + 1);
+	O << ", ";
+	printOperand(MI, OpNo);
+	O << ']';
+      } else {
+	assert(0 && "Invalid Operand Type");
+      }
     }
 
     void printOperand(const MachineInstr *MI, int opNum);

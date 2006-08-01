@@ -57,10 +57,12 @@ let isReturn = 1 in {
   def bx: InstARM<(ops IntRegs:$dst), "bx $dst", [(brind IntRegs:$dst)]>;
 }
 
-def bl: InstARM<(ops i32imm:$func, variable_ops), "bl $func", [(ARMcall tglobaladdr:$func)]>;
+let  Defs = [R0, R1, R2, R3] in {
+  def bl: InstARM<(ops i32imm:$func, variable_ops), "bl $func", [(ARMcall tglobaladdr:$func)]>;
+}
 
 def ldr   : InstARM<(ops IntRegs:$dst, memri:$addr),
-                     "ldr $dst, [$addr]",
+                     "ldr $dst, $addr",
                      [(set IntRegs:$dst, (load iaddr:$addr))]>;
 
 def str  : InstARM<(ops IntRegs:$src, IntRegs:$addr),
