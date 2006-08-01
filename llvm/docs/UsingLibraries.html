@@ -154,7 +154,7 @@
 <!-- ======================================================================= -->
 <div class="doc_section"><a name="dependencies"></a>Using llvm-config</div>
 <div class="doc_text">
-  <p>The <p>llvm-config</p> tool is a perl script that produces on its output
+  <p>The <tt>llvm-config</tt> tool is a perl script that produces on its output
   various kinds of information. For example, the source or object directories 
   used to build LLVM can be accessed by passing options to <tt>llvm-config</tt>.
   For complete details on this tool, please see the
@@ -167,15 +167,15 @@
     <li><tt>--ldflags</tt>. This generates the command line options necessary to
     be passed to the <tt>ld</tt> tool in order to link with LLVM. Most notably,
     the <tt>-L</tt> option is provided to specify a library search directory 
-    that contains the LLVM libraries.
+    that contains the LLVM libraries.</li>
     <li><tt>--libs</tt>. This generates command line options suitable for
     use with a gcc-style linker. That is, libraries are given with a -l option
     and object files are given with a full path.</li>
     <li><tt>--libnames</tt>. This generates a list of just the library file
     names. If you know the directory in which these files reside (see --ldflags)
     then you can find the libraries there.</li>
-    <li><tt>--libfiles</tt></li>. This generates the full path names of the
-    LLVM library files.
+    <li><tt>--libfiles</tt>. This generates the full path names of the
+    LLVM library files.</li>
   </ol>
   <p>If you wish to delve further into how <tt>llvm-config</tt> generates the
   correct order (based on library dependencies), please see the tool named
@@ -277,8 +277,7 @@
     <li>libLLVMSystem.a</li>
     <li>libLLVMbzip2.a</li>
   </ul></dd>
-  <dt><b>libLLVMSystem.a</b</dt><dd><ul>
-  </ul></dd>
+  <dt><b>libLLVMSystem.a</b</dt><dd></dd>
   <dt><b>libLLVMTarget.a</b</dt><dd><ul>
     <li>libLLVMCodeGen.a</li>
     <li>libLLVMCore.a</li>
@@ -300,8 +299,7 @@
     <li>libLLVMTarget.a</li>
     <li>libLLVMTransformUtils.a</li>
   </ul></dd>
-  <dt><b>libLLVMbzip2.a</b</dt><dd><ul>
-  </ul></dd>
+  <dt><b>libLLVMbzip2.a</b</dt><dd></dd>
   <dt><b>libLLVMipa.a</b</dt><dd><ul>
     <li>libLLVMAnalysis.a</li>
     <li>libLLVMCore.a</li>
