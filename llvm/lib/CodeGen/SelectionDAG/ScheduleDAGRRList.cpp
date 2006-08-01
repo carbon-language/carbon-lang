@@ -886,13 +886,15 @@ void TDRegReductionPriorityQueue<SF>::CalculatePriorities() {
 //                         Public Constructor Functions
 //===----------------------------------------------------------------------===//
 
-llvm::ScheduleDAG* llvm::createBURRListDAGScheduler(SelectionDAG *DAG,
+llvm::ScheduleDAG* llvm::createBURRListDAGScheduler(SelectionDAGISel *IS,
+                                                    SelectionDAG *DAG,
                                                     MachineBasicBlock *BB) {
   return new ScheduleDAGRRList(*DAG, BB, DAG->getTarget(), true,
                                new BURegReductionPriorityQueue<bu_ls_rr_sort>());
 }
 
-llvm::ScheduleDAG* llvm::createTDRRListDAGScheduler(SelectionDAG *DAG,
+llvm::ScheduleDAG* llvm::createTDRRListDAGScheduler(SelectionDAGISel *IS,
+                                                    SelectionDAG *DAG,
                                                     MachineBasicBlock *BB) {
   return new ScheduleDAGRRList(*DAG, BB, DAG->getTarget(), false,
                                new TDRegReductionPriorityQueue<td_ls_rr_sort>());

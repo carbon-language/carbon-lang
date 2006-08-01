@@ -1120,21 +1120,24 @@ void ScheduleDAGSimple::Schedule() {
 
 /// createSimpleDAGScheduler - This creates a simple two pass instruction
 /// scheduler using instruction itinerary.
-llvm::ScheduleDAG* llvm::createSimpleDAGScheduler(SelectionDAG *DAG,
+llvm::ScheduleDAG* llvm::createSimpleDAGScheduler(SelectionDAGISel *IS,
+                                                  SelectionDAG *DAG,
                                                   MachineBasicBlock *BB) {
   return new ScheduleDAGSimple(false, false, *DAG, BB, DAG->getTarget());
 }
 
 /// createNoItinsDAGScheduler - This creates a simple two pass instruction
 /// scheduler without using instruction itinerary.
-llvm::ScheduleDAG* llvm::createNoItinsDAGScheduler(SelectionDAG *DAG,
+llvm::ScheduleDAG* llvm::createNoItinsDAGScheduler(SelectionDAGISel *IS,
+                                                   SelectionDAG *DAG,
                                                    MachineBasicBlock *BB) {
   return new ScheduleDAGSimple(false, true, *DAG, BB, DAG->getTarget());
 }
 
 /// createBFS_DAGScheduler - This creates a simple breadth first instruction
 /// scheduler.
-llvm::ScheduleDAG* llvm::createBFS_DAGScheduler(SelectionDAG *DAG,
+llvm::ScheduleDAG* llvm::createBFS_DAGScheduler(SelectionDAGISel *IS,
+                                                SelectionDAG *DAG,
                                                 MachineBasicBlock *BB) {
   return new ScheduleDAGSimple(true, false, *DAG, BB,  DAG->getTarget());
 }

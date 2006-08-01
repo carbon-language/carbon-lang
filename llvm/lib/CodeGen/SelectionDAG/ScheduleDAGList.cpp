@@ -21,6 +21,7 @@
 #define DEBUG_TYPE "sched"
 #include "llvm/CodeGen/MachinePassRegistry.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
+#include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
@@ -519,9 +520,10 @@ void LatencyPriorityQueue::AdjustPriorityOfUnscheduledPreds(SUnit *SU) {
 /// createTDListDAGScheduler - This creates a top-down list scheduler with a
 /// new hazard recognizer. This scheduler takes ownership of the hazard
 /// recognizer and deletes it when done.
-ScheduleDAG* llvm::createTDListDAGScheduler(SelectionDAG *DAG,
+ScheduleDAG* llvm::createTDListDAGScheduler(SelectionDAGISel *IS,
+                                            SelectionDAG *DAG,
                                             MachineBasicBlock *BB) {
   return new ScheduleDAGList(*DAG, BB, DAG->getTarget(),
                              new LatencyPriorityQueue(),
-                             new HazardRecognizer());
+                             IS->CreateTargetHazardRecognizer());
 }

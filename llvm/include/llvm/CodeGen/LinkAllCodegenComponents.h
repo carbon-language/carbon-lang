@@ -32,12 +32,12 @@ namespace {
       (void) llvm::createLocalRegisterAllocator();
       (void) llvm::createLinearScanRegisterAllocator();
       
-      (void) llvm::createBFS_DAGScheduler(NULL, NULL);
-      (void) llvm::createSimpleDAGScheduler(NULL, NULL);
-      (void) llvm::createNoItinsDAGScheduler(NULL, NULL);
-      (void) llvm::createBURRListDAGScheduler(NULL, NULL);
-      (void) llvm::createTDRRListDAGScheduler(NULL, NULL);
-      (void) llvm::createTDListDAGScheduler(NULL, NULL);
+      (void) llvm::createBFS_DAGScheduler(NULL, NULL, NULL);
+      (void) llvm::createSimpleDAGScheduler(NULL, NULL, NULL);
+      (void) llvm::createNoItinsDAGScheduler(NULL, NULL, NULL);
+      (void) llvm::createBURRListDAGScheduler(NULL, NULL, NULL);
+      (void) llvm::createTDRRListDAGScheduler(NULL, NULL, NULL);
+      (void) llvm::createTDListDAGScheduler(NULL, NULL, NULL);
 
     }
   } ForceCodegenLinking; // Force link by creating a global definition.

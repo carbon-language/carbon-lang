@@ -26,6 +26,7 @@ namespace llvm {
   class MachineInstr;
   class MRegisterInfo;
   class SelectionDAG;
+  class SelectionDAGISel;
   class SSARegMap;
   class TargetInstrInfo;
   class TargetInstrDescriptor;
@@ -223,31 +224,38 @@ namespace llvm {
 
   /// createBFS_DAGScheduler - This creates a simple breadth first instruction
   /// scheduler.
-  ScheduleDAG *createBFS_DAGScheduler(SelectionDAG *DAG, MachineBasicBlock *BB);
+  ScheduleDAG *createBFS_DAGScheduler(SelectionDAGISel *IS,
+                                      SelectionDAG *DAG,
+                                      MachineBasicBlock *BB);
   
   /// createSimpleDAGScheduler - This creates a simple two pass instruction
   /// scheduler using instruction itinerary.
-  ScheduleDAG* createSimpleDAGScheduler(SelectionDAG *DAG,
+  ScheduleDAG* createSimpleDAGScheduler(SelectionDAGISel *IS,
+                                        SelectionDAG *DAG,
                                         MachineBasicBlock *BB);
 
   /// createNoItinsDAGScheduler - This creates a simple two pass instruction
   /// scheduler without using instruction itinerary.
-  ScheduleDAG* createNoItinsDAGScheduler(SelectionDAG *DAG,
+  ScheduleDAG* createNoItinsDAGScheduler(SelectionDAGISel *IS,
+                                         SelectionDAG *DAG,
                                          MachineBasicBlock *BB);
 
   /// createBURRListDAGScheduler - This creates a bottom up register usage
   /// reduction list scheduler.
-  ScheduleDAG* createBURRListDAGScheduler(SelectionDAG *DAG,
+  ScheduleDAG* createBURRListDAGScheduler(SelectionDAGISel *IS,
+                                          SelectionDAG *DAG,
                                           MachineBasicBlock *BB);
   
   /// createTDRRListDAGScheduler - This creates a top down register usage
   /// reduction list scheduler.
-  ScheduleDAG* createTDRRListDAGScheduler(SelectionDAG *DAG,
+  ScheduleDAG* createTDRRListDAGScheduler(SelectionDAGISel *IS,
+                                          SelectionDAG *DAG,
                                           MachineBasicBlock *BB);
   
   /// createTDListDAGScheduler - This creates a top-down list scheduler with
   /// a hazard recognizer.
-  ScheduleDAG* createTDListDAGScheduler(SelectionDAG *DAG,
+  ScheduleDAG* createTDListDAGScheduler(SelectionDAGISel *IS,
+                                        SelectionDAG *DAG,
                                         MachineBasicBlock *BB);
                                         
 }

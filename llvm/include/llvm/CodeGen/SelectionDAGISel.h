@@ -67,6 +67,10 @@ public:
   /// folded during instruction selection?
   virtual bool CanBeFoldedBy(SDNode *N, SDNode *U) { return true; }
   
+  /// CreateTargetHazardRecognizer - Return a newly allocated hazard recognizer
+  /// to use for this target when scheduling the DAG.
+  virtual HazardRecognizer *CreateTargetHazardRecognizer();
+  
   /// CaseBlock - This structure is used to communicate between SDLowering and
   /// SDISel for the code generation of additional basic blocks needed by multi-
   /// case switch statements.

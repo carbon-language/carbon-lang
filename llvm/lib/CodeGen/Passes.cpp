@@ -27,13 +27,13 @@ namespace {
 }
 
 FunctionPass *llvm::createRegisterAllocator() {
-  RegisterRegAlloc::FunctionPassCtor Ctor = RegisterRegAlloc::getCache();
+  RegisterRegAlloc::FunctionPassCtor Ctor = RegisterRegAlloc::getDefault();
   
   if (!Ctor) {
     Ctor = RegisterRegAlloc::FindCtor(RegAlloc);
     assert(Ctor && "No register allocator found");
     if (!Ctor) Ctor = RegisterRegAlloc::FirstCtor();
-    RegisterRegAlloc::setCache(Ctor);
+    RegisterRegAlloc::setDefault(Ctor);
   }
   
   assert(Ctor && "No register allocator found");

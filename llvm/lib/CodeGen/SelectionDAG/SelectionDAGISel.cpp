@@ -67,7 +67,7 @@ namespace {
               cl::init("default"),
               cl::desc("Instruction schedulers available:"));
 
-  RegisterScheduler
+  static RegisterScheduler
   defaultListDAGScheduler("default", "  Best scheduler for the target", NULL);
 } // namespace
 
@@ -3611,7 +3611,7 @@ void SelectionDAGISel::ScheduleAndEmitDAG(SelectionDAG &DAG) {
   if (ViewSchedDAGs) DAG.viewGraph();
 
   static RegisterScheduler::FunctionPassCtor Ctor =
-                                                  RegisterScheduler::getCache();
+                                                RegisterScheduler::getDefault();
   
   if (!Ctor) {
     if (std::string("default") == std::string(ISHeuristic)) {
@@ -3629,13 +3629,18 @@ void SelectionDAGISel::ScheduleAndEmitDAG(SelectionDAG &DAG) {
       Ctor = RegisterScheduler::FindCtor(ISHeuristic);
     }
     
-     RegisterScheduler::setCache(Ctor);
+     RegisterScheduler::setDefault(Ctor);
   }
   
   assert(Ctor && "No instruction scheduler found");
-  ScheduleDAG *SL = Ctor(&DAG, BB);
+  ScheduleDAG *SL = Ctor(this, &DAG, BB);
   BB = SL->Run();
   delete SL;
+}
+
+
+HazardRecognizer *SelectionDAGISel::CreateTargetHazardRecognizer() {
+  return new HazardRecognizer();
 }
 
 

@@ -2,8 +2,16 @@
 //
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by the LLVM research group and is distributed under
+// This file was developed by the James M. Laskey and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file contains the mechanics for machine function pass registries.  A
+// function pass registry (MachinePassRegistry) is auto filled by the static
+// constructors of MachinePassRegistryNode.  Further there is a command line
+// parser (RegisterPassParser) which listens to each registry for additions
+// and deletions, so that the appropriate command option is updated.
 //
 //===----------------------------------------------------------------------===//
 
@@ -13,8 +21,6 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/Support/CommandLine.h"
-
-#include <iostream>
 
 namespace llvm {
 
@@ -83,7 +89,7 @@ private:
 
   MachinePassRegistryNode<FunctionPassCtor> *List;
                                         // List of registry nodes.
-  FunctionPassCtor Cache;               // Cached function pass creator.
+  FunctionPassCtor Default;             // Default function pass creator.
   MachinePassRegistryListener* Listener;// Listener for list adds are removes.
   
 public:
@@ -94,8 +100,8 @@ public:
   // Accessors.
   //
   MachinePassRegistryNode<FunctionPassCtor> *getList()  { return List; }
-  FunctionPassCtor getCache()                           { return Cache; }
-  void setCache(FunctionPassCtor C)                     { Cache = C; }
+  FunctionPassCtor getDefault()                         { return Default; }
+  void setDefault(FunctionPassCtor C)                   { Default = C; }
   void setListener(MachinePassRegistryListener *L)      { Listener = L; }
 
   /// Add - Adds a function pass to the registration list.
@@ -113,10 +119,8 @@ public:
     for (MachinePassRegistryNode<FunctionPassCtor> **I = &List;
          *I; I = (*I)->getNextAddress()) {
       if (*I == Node) {
-#if 0 // FIXME: Command opt needs to call a termination routine.
         if (Listener) Listener->NotifyRemove(Node->getName(),
                                              Node->getDescription());
-#endif
         *I = (*I)->getNext();
         break;
       }
@@ -166,11 +170,11 @@ public:
   static RegisterRegAlloc *getList() {
     return (RegisterRegAlloc *)Registry.getList();
   }
-  static FunctionPassCtor getCache() {
-    return Registry.getCache();
+  static FunctionPassCtor getDefault() {
+    return Registry.getDefault();
   }
-  static void setCache(FunctionPassCtor C) {
-    Registry.setCache(C);
+  static void setDefault(FunctionPassCtor C) {
+    Registry.setDefault(C);
   }
   static void setListener(MachinePassRegistryListener *L) {
     Registry.setListener(L);
@@ -200,16 +204,19 @@ public:
 ///
 //===----------------------------------------------------------------------===//
 
+class SelectionDAGISel;
 class ScheduleDAG;
 class SelectionDAG;
 class MachineBasicBlock;
 
 class RegisterScheduler : public
-  MachinePassRegistryNode<ScheduleDAG *(*)(SelectionDAG*, MachineBasicBlock*)> {
+  MachinePassRegistryNode<
+       ScheduleDAG *(*)(SelectionDAGISel*, SelectionDAG*, MachineBasicBlock*)> {
 
 public:
 
-  typedef ScheduleDAG *(*FunctionPassCtor)(SelectionDAG*, MachineBasicBlock*);
+  typedef ScheduleDAG *(*FunctionPassCtor)(SelectionDAGISel*, SelectionDAG*,
+                                           MachineBasicBlock*);
 
   static MachinePassRegistry<FunctionPassCtor> Registry;
 
@@ -228,11 +235,11 @@ public:
   static RegisterScheduler *getList() {
     return (RegisterScheduler *)Registry.getList();
   }
-  static FunctionPassCtor getCache() {
-    return Registry.getCache();
+  static FunctionPassCtor getDefault() {
+    return Registry.getDefault();
   }
-  static void setCache(FunctionPassCtor C) {
-    Registry.setCache(C);
+  static void setDefault(FunctionPassCtor C) {
+    Registry.setDefault(C);
   }
   static void setListener(MachinePassRegistryListener *L) {
     Registry.setListener(L);
@@ -267,6 +274,7 @@ class RegisterPassParser : public MachinePassRegistryListener,
                            public cl::parser<const char *> {
 public:
   RegisterPassParser() {}
+  ~RegisterPassParser() { RegistryClass::setListener(NULL); }
 
   void initialize(cl::Option &O) {
     cl::parser<const char *>::initialize(O);

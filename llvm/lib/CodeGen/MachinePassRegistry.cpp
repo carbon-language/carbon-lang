@@ -1,4 +1,4 @@
-//===-- MachineInstr.cpp --------------------------------------------------===//
+//===-- CodeGen/MachineInstr.cpp ------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,9 +6,13 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+// This file contains the machine function pass registry for register allocators
+// and instruction schedulers.
+//
+//===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/MachinePassRegistry.h"
-#include <iostream>
 
 using namespace llvm;
 
