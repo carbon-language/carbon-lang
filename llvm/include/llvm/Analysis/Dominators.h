@@ -101,7 +101,17 @@ public:
   inline BasicBlock *operator[](BasicBlock *BB) const {
     return get(BB);
   }
+  
+  /// dominates - Return true if A dominates B.
+  ///
+  bool dominates(BasicBlock *A, BasicBlock *B) const;
 
+  /// properlyDominates - Return true if A dominates B and A != B.
+  ///
+  bool properlyDominates(BasicBlock *A, BasicBlock *B) const {
+    return A != B || properlyDominates(A, B);
+  }
+  
   /// get() - Synonym for operator[].
   ///
   inline BasicBlock *get(BasicBlock *BB) const {

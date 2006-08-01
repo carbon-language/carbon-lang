@@ -211,6 +211,17 @@ bool ImmediateDominators::runOnFunction(Function &F) {
   return false;
 }
 
+/// dominates - Return true if A dominates B.
+///
+bool ImmediateDominatorsBase::dominates(BasicBlock *A, BasicBlock *B) const {
+  assert(A && B && "Null pointers?");
+  
+  // Walk up the dominator tree from B to determine if A dom B.
+  while (A != B && B)
+    B = get(B);
+  return A == B;
+}
+
 void ImmediateDominatorsBase::print(std::ostream &o, const Module* ) const {
   Function *F = getRoots()[0]->getParent();
   for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
