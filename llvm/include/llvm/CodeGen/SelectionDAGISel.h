@@ -41,6 +41,8 @@ public:
   MachineBasicBlock *BB;
 
   SelectionDAGISel(TargetLowering &tli) : TLI(tli), JT(0,0,0,0) {}
+  
+  TargetLowering &getTargetLowering() { return TLI; }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 

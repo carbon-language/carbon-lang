@@ -258,6 +258,11 @@ namespace llvm {
                                         SelectionDAG *DAG,
                                         MachineBasicBlock *BB);
                                         
+  /// createDefaultScheduler - This creates an instruction scheduler appropriate
+  /// for the target.
+  ScheduleDAG* createDefaultScheduler(SelectionDAGISel *IS,
+                                      SelectionDAG *DAG,
+                                      MachineBasicBlock *BB);
 }
 
 #endif

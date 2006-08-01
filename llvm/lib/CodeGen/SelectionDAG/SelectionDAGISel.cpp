@@ -68,7 +68,8 @@ namespace {
               cl::desc("Instruction schedulers available:"));
 
   static RegisterScheduler
-  defaultListDAGScheduler("default", "  Best scheduler for the target", NULL);
+  defaultListDAGScheduler("default", "  Best scheduler for the target",
+                          createDefaultScheduler);
 } // namespace
 
 namespace {
@@ -123,6 +124,24 @@ namespace {
 }
 
 namespace llvm {
+  //===--------------------------------------------------------------------===//
+  /// createDefaultScheduler - This creates an instruction scheduler appropriate
+  /// for the target.
+  ScheduleDAG* createDefaultScheduler(SelectionDAGISel *IS,
+                                      SelectionDAG *DAG,
+                                      MachineBasicBlock *BB) {
+    TargetLowering &TLI = IS->getTargetLowering();
+    
+    if (TLI.getSchedulingPreference() == TargetLowering::SchedulingForLatency) {
+      return createTDListDAGScheduler(IS, DAG, BB);
+    } else {
+      assert(TLI.getSchedulingPreference() ==
+           TargetLowering::SchedulingForRegPressure && "Unknown sched type!");
+      return createBURRListDAGScheduler(IS, DAG, BB);
+    }
+  }
+
+
   //===--------------------------------------------------------------------===//
   /// FunctionLoweringInfo - This contains information that is global to a
   /// function that is used when lowering a region of the function.
@@ -3614,22 +3633,8 @@ void SelectionDAGISel::ScheduleAndEmitDAG(SelectionDAG &DAG) {
                                                 RegisterScheduler::getDefault();
   
   if (!Ctor) {
-    if (std::string("default") == std::string(ISHeuristic)) {
-      if (TLI.getSchedulingPreference() == TargetLowering::SchedulingForLatency)
-        Ctor = RegisterScheduler::FindCtor("list-td");
-      else {
-        assert(TLI.getSchedulingPreference() ==
-             TargetLowering::SchedulingForRegPressure && "Unknown sched type!");
-        Ctor = RegisterScheduler::FindCtor("list-burr");
-      }
-
-      assert(Ctor && "Default instruction scheduler not present");
-      if (!Ctor) Ctor = RegisterScheduler::FindCtor("none");
-    } else {
-      Ctor = RegisterScheduler::FindCtor(ISHeuristic);
-    }
-    
-     RegisterScheduler::setDefault(Ctor);
+    Ctor = RegisterScheduler::FindCtor(ISHeuristic);
+    RegisterScheduler::setDefault(Ctor);
   }
   
   assert(Ctor && "No instruction scheduler found");

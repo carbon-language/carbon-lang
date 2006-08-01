@@ -38,6 +38,7 @@ namespace {
       (void) llvm::createBURRListDAGScheduler(NULL, NULL, NULL);
       (void) llvm::createTDRRListDAGScheduler(NULL, NULL, NULL);
       (void) llvm::createTDListDAGScheduler(NULL, NULL, NULL);
+      (void) llvm::createDefaultScheduler(NULL, NULL, NULL);
 
     }
   } ForceCodegenLinking; // Force link by creating a global definition.
