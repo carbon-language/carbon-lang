@@ -168,8 +168,8 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     abort();
     break;
   case MachineOperand::MO_ConstantPoolIndex:
-    assert(0 && "not implemented");
-    abort();
+    O << PrivateGlobalPrefix << "CPI" << getFunctionNumber()
+      << '_' << MO.getConstantPoolIndex();
     break;
   default:
     O << "<unknown operand type>"; abort (); break;

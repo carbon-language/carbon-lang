@@ -41,7 +41,9 @@ namespace {
 
 ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   : TargetLowering(TM) {
-  setOperationAction(ISD::RET, MVT::Other, Custom);
+  setOperationAction(ISD::RET,           MVT::Other, Custom);
+  setOperationAction(ISD::GlobalAddress, MVT::i32,   Custom);
+  setOperationAction(ISD::ConstantPool,  MVT::i32,   Custom);
 }
 
 namespace llvm {
@@ -218,6 +220,23 @@ static SDOperand LowerFORMAL_ARGUMENT(SDOperand Op, SelectionDAG &DAG,
   }
 }
 
+static SDOperand LowerConstantPool(SDOperand Op, SelectionDAG &DAG) {
+  MVT::ValueType PtrVT = Op.getValueType();
+  ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);
+  Constant *C = CP->get();
+  SDOperand CPI = DAG.getTargetConstantPool(C, PtrVT, CP->getAlignment());
+
+  return CPI;
+}
+
+static SDOperand LowerGlobalAddress(SDOperand Op,
+				    SelectionDAG &DAG) {
+  GlobalValue  *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
+  SDOperand CPAddr = DAG.getConstantPool(GV, MVT::i32, 2);
+  return DAG.getLoad(MVT::i32, DAG.getEntryNode(), CPAddr,
+		     DAG.getSrcValue(NULL));
+}
+
 static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
   std::vector<SDOperand> ArgValues;
   SDOperand Root = Op.getOperand(0);
@@ -244,6 +263,10 @@ SDOperand ARMTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   default:
     assert(0 && "Should not custom lower this!");
     abort();
+  case ISD::ConstantPool:
+    return LowerConstantPool(Op, DAG);
+  case ISD::GlobalAddress:
+    return LowerGlobalAddress(Op, DAG);
   case ISD::FORMAL_ARGUMENTS:
     return LowerFORMAL_ARGUMENTS(Op, DAG);
   case ISD::CALL:
