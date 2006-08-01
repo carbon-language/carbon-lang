@@ -1829,7 +1829,7 @@ static void GenerateVariantsOf(TreePatternNode *N,
   // If this node is commutative, consider the commuted order.
   if (NodeInfo.hasProperty(SDNodeInfo::SDNPCommutative)) {
     assert(N->getNumChildren()==2 &&"Commutative but doesn't have 2 children!");
-    // Don't count childrean which are actually
+    // Don't count children which are actually register references.
     unsigned NC = 0;
     for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i) {
       TreePatternNode *Child = N->getChild(i);
@@ -3321,7 +3321,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
         }
 
         std::string CalleeDecls;
-        std::string CalleeCode = "(SDOperand &Result, SDOperand &N";
+        std::string CalleeCode = "(SDOperand &Result, const SDOperand &N";
         std::string CallerCode = "(Result, N";
         for (unsigned j = 0, e = TargetOpcodes.size(); j != e; ++j) {
           CalleeCode += ", unsigned Opc" + utostr(j);
@@ -3399,7 +3399,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
         OpVTI->second.push_back(OpVTStr);
 
       OS << "void Select_" << OpName << (OpVTStr != "" ? "_" : "")
-         << OpVTStr << "(SDOperand &Result, SDOperand N) {\n";    
+         << OpVTStr << "(SDOperand &Result, const SDOperand &N) {\n";    
       if (OptSlctOrder) {
         OS << "  if (N.ResNo == " << OpcodeInfo.getNumResults()
            << " && N.getValue(0).hasOneUse()) {\n"
