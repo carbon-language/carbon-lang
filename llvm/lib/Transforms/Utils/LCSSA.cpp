@@ -177,7 +177,7 @@ void LCSSA::ProcessInstruction(Instruction *Instr,
     }
     
     // If the user is in the loop, don't rewrite it!
-    if (inLoop(UserBB)) {
+    if (UserBB == Instr->getParent() || inLoop(UserBB)) {
       ++UI;
       continue;
     }
@@ -215,7 +215,7 @@ SetVector<Instruction*> LCSSA::getLoopValuesUsedOutsideLoop(Loop *L) {
           UserBB = p->getIncomingBlock(OperandNo/2);
         }
         
-        if (!inLoop(UserBB)) {
+        if (*BB != UserBB && !inLoop(UserBB)) {
           AffectedValues.insert(I);
           break;
         }
