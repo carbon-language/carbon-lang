@@ -28,7 +28,7 @@
 #include <set>
 #include <cmath>
 #include <algorithm>
-#include <deque>
+#include <queue>
 using namespace llvm;
 
 static bool isCommutativeBinOp(unsigned Opcode) {
@@ -2711,37 +2711,43 @@ unsigned SelectionDAG::AssignNodeIds() {
 }
 
 /// AssignTopologicalOrder - Assign a unique node id for each node in the DAG
-/// based on their topological order. It returns a vector of the SDNodes* in
-/// assigned order.
-std::vector<SDNode*> SelectionDAG::AssignTopologicalOrder() {
+/// based on their topological order. It returns the maximum id and a vector
+/// of the SDNodes* in assigned order by reference.
+unsigned SelectionDAG::AssignTopologicalOrder(std::vector<SDNode*> &TopOrder) {
   unsigned DAGSize = AllNodes.size();
-  std::vector<SDNode*> TopOrder;
-  std::map<SDNode*, unsigned> InDegree;
-  std::deque<SDNode*> Sources;
+  std::vector<unsigned> InDegree(DAGSize);
+  std::vector<SDNode*> Sources;
+
+  // Use a two pass approach to avoid using a std::map which is slow.
+  unsigned Id = 0;
   for (allnodes_iterator I = allnodes_begin(),E = allnodes_end(); I != E; ++I){
     SDNode *N = I;
+    N->setNodeId(Id++);
     unsigned Degree = N->use_size();
-    InDegree[N] = Degree;
+    InDegree[N->getNodeId()] = Degree;
     if (Degree == 0)
-      Sources.push_back(I);
+      Sources.push_back(N);
   }
 
-  int Id = 0;
   while (!Sources.empty()) {
-    SDNode *N = Sources.front();
-    Sources.pop_front();
+    SDNode *N = Sources.back();
+    Sources.pop_back();
     TopOrder.push_back(N);
-    N->setNodeId(Id++);
     for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); I != E; ++I) {
       SDNode *P = I->Val;
-      unsigned Degree = InDegree[P] - 1;
+      unsigned Degree = --InDegree[P->getNodeId()];
       if (Degree == 0)
         Sources.push_back(P);
-      InDegree[P] = Degree;
     }
   }
 
-  return TopOrder;
+  // Second pass, assign the actual topological order as node ids.
+  Id = 0;
+  for (std::vector<SDNode*>::iterator TI = TopOrder.begin(),TE = TopOrder.end();
+       TI != TE; ++TI)
+    (*TI)->setNodeId(Id++);
+
+  return Id;
 }
 
 
