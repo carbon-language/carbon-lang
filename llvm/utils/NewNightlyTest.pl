@@ -837,14 +837,14 @@ if (!$BuildError) {
 	  ($ExternalProgramsTable, $llcbeta_options) = TestDirectory("External");
 	  WriteFile "$Prefix-externalprogramstable.txt", $ExternalProgramsTable;
 	  system "cat $Prefix-singlesourceprogramstable.txt $Prefix-multisourceprogramstable.txt ".
-		       " $Prefix-externalprogramstable.txt | sort > $Prefix-Tests.txt";
+		     " $Prefix-externalprogramstable.txt | sort > $Prefix-Tests.txt";
 	} else {
 	  $ExternalProgramsTable = "External TEST STAGE SKIPPED\n";
 	  if ( $VERBOSE ) {
 		  print "External TEST STAGE SKIPPED\n";
 	  }
 	  system "cat $Prefix-singlesourceprogramstable.txt $Prefix-multisourceprogramstable.txt ".
-		       " | sort > $Prefix-Tests.txt";
+		     " | sort > $Prefix-Tests.txt";
 	}
 	WriteFile "$Prefix-externalprogramstable.txt", $ExternalProgramsTable;
 }
@@ -877,50 +877,6 @@ if(!$NODEJAGNU) {
 	}
 }
 
-# my ($TestsAdded, $TestsRemoved, $TestsFixed, $TestsBroken) = ("","","","");
-# 
-# if ($TestError) {
-#     $TestsAdded   = "<b>error testing</b><br>";
-#     $TestsRemoved = "<b>error testing</b><br>";
-#     $TestsFixed   = "<b>error testing</b><br>";
-#     $TestsBroken  = "<b>error testing</b><br>";
-# } else {
-#     my ($RTestsAdded, $RTestsRemoved) = DiffFiles "-Tests.txt";
-# 
-#     my @RawTestsAddedArray = split '\n', $RTestsAdded;
-#     my @RawTestsRemovedArray = split '\n', $RTestsRemoved;
-# 
-#     my %OldTests = map {GetRegex('TEST-....: (.+)', $_)=>$_}
-#     @RawTestsRemovedArray;
-#     my %NewTests = map {GetRegex('TEST-....: (.+)', $_)=>$_}
-#     @RawTestsAddedArray;
-# 
-#     foreach $Test (keys %NewTests) {
-# 			if (!exists $OldTests{$Test}) {  # TestAdded if in New but not old
-# 	    	$TestsAdded = "$TestsAdded$Test\n";
-# 			} else {
-# 	    if ($OldTests{$Test} =~ /TEST-PASS/) {  # Was the old one a pass?
-# 				$TestsBroken = "$TestsBroken$Test\n";  # New one must be a failure
-# 	    } else {
-# 				$TestsFixed = "$TestsFixed$Test\n";    # No, new one is a pass.
-# 	    }
-# 		}
-# 	}
-# 	foreach $Test (keys %OldTests) {  # TestRemoved if in Old but not New
-# 		$TestsRemoved = "$TestsRemoved$Test\n" if (!exists $NewTests{$Test});
-# 	}
-# 
-#     #print "\nTESTS ADDED:  \n\n$TestsAdded\n\n"   if (length $TestsAdded);
-#     #print "\nTESTS REMOVED:\n\n$TestsRemoved\n\n" if (length $TestsRemoved);
-#     #print "\nTESTS FIXED:  \n\n$TestsFixed\n\n"   if (length $TestsFixed);
-#     #print "\nTESTS BROKEN: \n\n$TestsBroken\n\n"  if (length $TestsBroken);
-# 
-#     #$TestsAdded   = AddPreTag $TestsAdded;
-#     #$TestsRemoved = AddPreTag $TestsRemoved;
-#     #$TestsFixed   = AddPreTag $TestsFixed;
-#     #$TestsBroken  = AddPreTag $TestsBroken;
-# }
-
 ##############################################################
 #
 # If we built the tree successfully, runs of the Olden suite with
@@ -928,59 +884,24 @@ if(!$NODEJAGNU) {
 #
 ##############################################################
 if (!$BuildError) {
-    if ( $VERBOSE ) { print "OLDEN TEST SUITE STAGE\n"; }
-    my ($NATTime, $CBETime, $LLCTime, $JITTime, $OptTime, $BytecodeSize,
-	$MachCodeSize) = ("","","","","","","");
-    if (!$NORUNNINGTESTS) {
-	ChangeDir( "$BuildDir/llvm/projects/llvm-test/MultiSource/Benchmarks/Olden",
+  if ( $VERBOSE ) { print "OLDEN TEST SUITE STAGE\n"; }
+  my ($NATTime, $CBETime, $LLCTime, $JITTime, $OptTime, $BytecodeSize,
+  $MachCodeSize) = ("","","","","","","");
+  if (!$NORUNNINGTESTS) {
+    ChangeDir( "$BuildDir/llvm/projects/llvm-test/MultiSource/Benchmarks/Olden",
 		   "Olden Test Directory");
 
-	# Clean out previous results...
-	system "$NICE $MAKECMD $MAKEOPTS clean > /dev/null 2>&1";
+    # Clean out previous results...
+    system "$NICE $MAKECMD $MAKEOPTS clean > /dev/null 2>&1";
 	
-	# Run the nightly test in this directory, with LARGE_PROBLEM_SIZE and
-	# GET_STABLE_NUMBERS enabled!
-	if( $VERBOSE ) { print "$MAKECMD -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv.out TEST=nightly " .
+    # Run the nightly test in this directory, with LARGE_PROBLEM_SIZE and
+    # GET_STABLE_NUMBERS enabled!
+    if( $VERBOSE ) { print "$MAKECMD -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv.out TEST=nightly " .
 			     " LARGE_PROBLEM_SIZE=1 GET_STABLE_NUMBERS=1 > /dev/null 2>&1\n"; }
 	system "$MAKECMD -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv.out TEST=nightly " .
 	    " LARGE_PROBLEM_SIZE=1 GET_STABLE_NUMBERS=1 > /dev/null 2>&1";
 	system "cp report.nightly.csv $OldenTestsLog";
-    } #else {
-	#system "gunzip ${OldenTestsLog}.gz";
-    #}
-    
-    # Now we know we have $OldenTestsLog as the raw output file.  Split
-    # it up into records and read the useful information.
-    #my @Records = split />>> ========= /, ReadFile "$OldenTestsLog";
-    #shift @Records;  # Delete the first (garbage) record
-    
-    # Loop over all of the records, summarizing them into rows for the running
-    # totals file.
-    #my $WallTimeRE = "Time: ([0-9.]+) seconds \\([0-9.]+ wall clock";
-    #foreach $Rec (@Records) {
-	#my $rNATTime = GetRegex 'TEST-RESULT-nat-time: program\s*([.0-9m]+)', $Rec;
-	#my $rCBETime = GetRegex 'TEST-RESULT-cbe-time: program\s*([.0-9m]+)', $Rec;
-	#my $rLLCTime = GetRegex 'TEST-RESULT-llc-time: program\s*([.0-9m]+)', $Rec;
-	#my $rJITTime = GetRegex 'TEST-RESULT-jit-time: program\s*([.0-9m]+)', $Rec;
-	#my $rOptTime = GetRegex "TEST-RESULT-compile: .*$WallTimeRE", $Rec;
-	#my $rBytecodeSize = GetRegex 'TEST-RESULT-compile: *([0-9]+)', $Rec;
-	
-	#$NATTime .= " " . FormatTime($rNATTime);
-	#$CBETime .= " " . FormatTime($rCBETime);
-	#$LLCTime .= " " . FormatTime($rLLCTime);
-	#$JITTime .= " " . FormatTime($rJITTime);
-	#$OptTime .= " $rOptTime";
-	#$BytecodeSize .= " $rBytecodeSize";
-    #}
-    #
-    # Now that we have all of the numbers we want, add them to the running totals
-    # files.
-    #AddRecord($NATTime, "running_Olden_nat_time.txt", $WebDir);
-    #AddRecord($CBETime, "running_Olden_cbe_time.txt", $WebDir);
-    #AddRecord($LLCTime, "running_Olden_llc_time.txt", $WebDir);
-    #AddRecord($JITTime, "running_Olden_jit_time.txt", $WebDir);
-    #AddRecord($OptTime, "running_Olden_opt_time.txt", $WebDir);
-    #AddRecord($BytecodeSize, "running_Olden_bytecode.txt", $WebDir);
+  }  
 }
 
 ##############################################################
@@ -1041,7 +962,7 @@ else{
 @GCC_VERSION = split '\n', $gcc_version_long;
 my $gcc_version = $GCC_VERSION[0];
 
-$all_tests = ReadFile, "$Prefix-Tests.txt";
+my $all_tests = ReadFile, "$Prefix-Tests.txt";
 
 ##############################################################
 #
@@ -1055,45 +976,45 @@ if ( $VERBOSE ) { print "SEND THE DATA VIA THE POST REQUEST\n"; }
 my $host = "llvm.org";
 my $file = "/nightlytest/NightlyTestAccept.cgi";
 my %hash_of_data = ('machine_data' => $machine_data,
-	       						'build_data' => $build_data,
-               			'gcc_version' => $gcc_version,
-						        'nickname' => $nickname,
-	       						'dejagnutime_wall' => $DejagnuWallTime,
-										'dejagnutime_cpu' => $DejagnuTime,
-										'cvscheckouttime_wall' => $CVSCheckoutTime_Wall,
-										'cvscheckouttime_cpu' => $CVSCheckoutTime_CPU,
-										'configtime_wall' => $ConfigWallTime,
-										'configtime_cpu'=> $ConfigTime,
-										'buildtime_wall' => $BuildWallTime,
-										'buildtime_cpu' => $BuildTime,
-										'warnings' => $WarningsFile,
-										'cvsusercommitlist' => $UserCommitList,
-										'cvsuserupdatelist' => $UserUpdateList,
-										'cvsaddedfiles' => $CVSAddedFiles,
-										'cvsmodifiedfiles' => $CVSModifiedFiles,
-										'cvsremovedfiles' => $CVSRemovedFiles,
-										'lines_of_code' => $LOC,
-										'cvs_file_count' => $NumFilesInCVS,
-										'cvs_dir_count' => $NumDirsInCVS,
-										'buildstatus' => $BuildStatus,
-										'singlesource_programstable' => $SingleSourceProgramsTable,
-										'multisource_programstable' => $MultiSourceProgramsTable,
-										'externalsource_programstable' => $ExternalProgramsTable,
-										'llcbeta_options' => $multisource_llcbeta_options,
-										'warnings_removed' => $WarningsRemoved,
-										'warnings_added' => $WarningsAdded,
-										'passing_tests' => $passes,
-										'expfail_tests' => $xfails,
-										'unexpfail_tests' => $fails,
-										'all_tests' => $all_tests,
-										'new_tests' => "",
-										'removed_tests' => "",
-										'dejagnutests_log' => $dejagnutests_log,
-										'dejagnutests_sum' => $dejagnutests_sum,
-										'starttime' => $starttime,
-										'endtime' => $endtime,
-										'o_file_sizes' => $o_file_sizes,
-										'a_file_sizes' => $a_file_sizes);
+	'build_data' => $build_data,
+	'gcc_version' => $gcc_version,
+	'nickname' => $nickname,
+	'dejagnutime_wall' => $DejagnuWallTime,
+	'dejagnutime_cpu' => $DejagnuTime,
+	'cvscheckouttime_wall' => $CVSCheckoutTime_Wall,
+	'cvscheckouttime_cpu' => $CVSCheckoutTime_CPU,
+	'configtime_wall' => $ConfigWallTime,
+	'configtime_cpu'=> $ConfigTime,
+	'buildtime_wall' => $BuildWallTime,
+	'buildtime_cpu' => $BuildTime,
+	'warnings' => $WarningsFile,
+	'cvsusercommitlist' => $UserCommitList,
+	'cvsuserupdatelist' => $UserUpdateList,
+	'cvsaddedfiles' => $CVSAddedFiles,
+	'cvsmodifiedfiles' => $CVSModifiedFiles,
+	'cvsremovedfiles' => $CVSRemovedFiles,
+	'lines_of_code' => $LOC,
+	'cvs_file_count' => $NumFilesInCVS,
+	'cvs_dir_count' => $NumDirsInCVS,
+	'buildstatus' => $BuildStatus,
+	'singlesource_programstable' => $SingleSourceProgramsTable,
+	'multisource_programstable' => $MultiSourceProgramsTable,
+	'externalsource_programstable' => $ExternalProgramsTable,
+	'llcbeta_options' => $multisource_llcbeta_options,
+	'warnings_removed' => $WarningsRemoved,
+	'warnings_added' => $WarningsAdded,
+	'passing_tests' => $passes,
+	'expfail_tests' => $xfails,
+	'unexpfail_tests' => $fails,
+	'all_tests' => $all_tests,
+	'new_tests' => "",
+	'removed_tests' => "",
+	'dejagnutests_log' => $dejagnutests_log,
+	'dejagnutests_sum' => $dejagnutests_sum,
+	'starttime' => $starttime,
+	'endtime' => $endtime,
+	'o_file_sizes' => $o_file_sizes,
+	'a_file_sizes' => $a_file_sizes);
 
 $TESTING = 0;
 
