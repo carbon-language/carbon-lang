@@ -12,31 +12,46 @@
 //
 //===---------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/MachinePassRegistry.h"
+#include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/Support/CommandLine.h"
 #include <iostream>
 
 using namespace llvm;
 
+//===---------------------------------------------------------------------===//
+///
+/// RegisterRegAlloc class - Track the registration of register allocators.
+///
+//===---------------------------------------------------------------------===//
+MachinePassRegistry RegisterRegAlloc::Registry;
+
+
+//===---------------------------------------------------------------------===//
+///
+/// RegAlloc command line options.
+///
+//===---------------------------------------------------------------------===//
 namespace {
-  cl::opt<const char *, false, RegisterPassParser<RegisterRegAlloc> >
+  cl::opt<RegisterRegAlloc::FunctionPassCtor, false,
+          RegisterPassParser<RegisterRegAlloc> >
   RegAlloc("regalloc",
-           cl::init("linearscan"),
+           cl::init(createLinearScanRegisterAllocator),
            cl::desc("Register allocator to use: (default = linearscan)")); 
 }
 
+
+//===---------------------------------------------------------------------===//
+///
+/// createRegisterAllocator - choose the appropriate register allocator.
+///
+//===---------------------------------------------------------------------===//
 FunctionPass *llvm::createRegisterAllocator() {
   RegisterRegAlloc::FunctionPassCtor Ctor = RegisterRegAlloc::getDefault();
   
   if (!Ctor) {
-    Ctor = RegisterRegAlloc::FindCtor(RegAlloc);
-    assert(Ctor && "No register allocator found");
-    if (!Ctor) Ctor = RegisterRegAlloc::FirstCtor();
-    RegisterRegAlloc::setDefault(Ctor);
+    Ctor = RegAlloc;
+    RegisterRegAlloc::setDefault(RegAlloc);
   }
-  
-  assert(Ctor && "No register allocator found");
   
   return Ctor();
 }

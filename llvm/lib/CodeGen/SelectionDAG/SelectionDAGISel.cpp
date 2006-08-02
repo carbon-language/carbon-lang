@@ -29,7 +29,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "llvm/CodeGen/MachinePassRegistry.h"
+#include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/MRegisterInfo.h"
@@ -40,7 +40,6 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Visibility.h"
@@ -61,10 +60,24 @@ ViewSchedDAGs("view-sched-dags", cl::Hidden,
 static const bool ViewISelDAGs = 0, ViewSchedDAGs = 0;
 #endif
 
+
+//===---------------------------------------------------------------------===//
+///
+/// RegisterScheduler class - Track the registration of instruction schedulers.
+///
+//===---------------------------------------------------------------------===//
+MachinePassRegistry RegisterScheduler::Registry;
+
+//===---------------------------------------------------------------------===//
+///
+/// ISHeuristic command line option for instruction schedulers.
+///
+//===---------------------------------------------------------------------===//
 namespace {
-  cl::opt<const char *, false, RegisterPassParser<RegisterScheduler> >
+  cl::opt<RegisterScheduler::FunctionPassCtor, false,
+          RegisterPassParser<RegisterScheduler> >
   ISHeuristic("sched",
-              cl::init("default"),
+              cl::init(createDefaultScheduler),
               cl::desc("Instruction schedulers available:"));
 
   static RegisterScheduler
@@ -3629,15 +3642,13 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
 void SelectionDAGISel::ScheduleAndEmitDAG(SelectionDAG &DAG) {
   if (ViewSchedDAGs) DAG.viewGraph();
 
-  static RegisterScheduler::FunctionPassCtor Ctor =
-                                                RegisterScheduler::getDefault();
+  RegisterScheduler::FunctionPassCtor Ctor = RegisterScheduler::getDefault();
   
   if (!Ctor) {
-    Ctor = RegisterScheduler::FindCtor(ISHeuristic);
+    Ctor = ISHeuristic;
     RegisterScheduler::setDefault(Ctor);
   }
   
-  assert(Ctor && "No instruction scheduler found");
   ScheduleDAG *SL = Ctor(this, &DAG, BB);
   BB = SL->Run();
   delete SL;

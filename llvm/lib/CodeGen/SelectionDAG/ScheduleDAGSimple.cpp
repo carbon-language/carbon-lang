@@ -14,8 +14,8 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "sched"
-#include "llvm/CodeGen/MachinePassRegistry.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
+#include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"

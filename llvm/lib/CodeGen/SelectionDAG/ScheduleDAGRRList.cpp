@@ -16,8 +16,8 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "sched"
-#include "llvm/CodeGen/MachinePassRegistry.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
+#include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
