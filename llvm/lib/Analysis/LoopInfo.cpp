@@ -480,10 +480,15 @@ Value *Loop::getTripCount() const {
 }
 
 /// isLCSSAForm - Return true if the Loop is in LCSSA form
-bool Loop::isLCSSAForm() const {  
-  for (Loop::block_iterator BB = block_begin(), E = block_end();
-       BB != E; ++BB) {
-    for (BasicBlock::iterator I = (*BB)->begin(), E = (*BB)->end(); I != E; ++I)
+bool Loop::isLCSSAForm() const { 
+  // Sort the blocks vector so that we can use binary search to do quick
+  // lookups.
+  std::vector<BasicBlock*> LoopBBs(block_begin(), block_end());
+  std::sort(LoopBBs.begin(), LoopBBs.end());
+  
+  for (unsigned i = 0, e = LoopBBs.size(); i != e; ++i) {
+    BasicBlock *BB = LoopBBs[i];
+    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
       for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;
            ++UI) {
         BasicBlock *UserBB = cast<Instruction>(*UI)->getParent();
@@ -492,9 +497,12 @@ bool Loop::isLCSSAForm() const {
           UserBB = p->getIncomingBlock(OperandNo/2);
         }
         
-        if (!contains(UserBB)) {
+        // Check the current block, as a fast-path.  Most values are used in the
+        // same block they are defined in.
+        if (UserBB != BB &&
+            // Otherwise, binary search LoopBBs for this block.
+            !std::binary_search(LoopBBs.begin(), LoopBBs.end(), UserBB))
           return false;
-        }
       }
   }
   
