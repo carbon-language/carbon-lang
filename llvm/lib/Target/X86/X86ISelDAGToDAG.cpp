@@ -99,7 +99,7 @@ namespace {
       : SelectionDAGISel(X86Lowering),
         X86Lowering(*TM.getTargetLowering()),
         Subtarget(&TM.getSubtarget<X86Subtarget>()),
-        DAGSize(0) {}
+        DAGSize(0), ReachabilityMatrix(NULL), ReachMatrixRange(NULL) {}
 
     virtual bool runOnFunction(Function &Fn) {
       // Make sure we re-emit a set of the global base reg if necessary
@@ -189,33 +189,35 @@ namespace {
 
     /// ReachabilityMatrix - A N x N matrix representing all pairs reachability
     /// information. One bit per potential edge.
-    std::vector<bool> ReachabilityMatrix;
+    unsigned char *ReachabilityMatrix;
 
-    /// RMRange - The range of reachability information available for the
-    /// particular source node.
-    std::vector<unsigned> ReachMatrixRange;
+    /// ReachMatrixRange - The range of reachability information available for
+    /// the particular source node.
+    unsigned *ReachMatrixRange;
 
     inline void setReachable(SDNode *f, SDNode *t) {
       unsigned Idx = f->getNodeId() * DAGSize + t->getNodeId();
-      ReachabilityMatrix[Idx] = true;
+      ReachabilityMatrix[Idx / 8] |= 1 << (Idx % 8);
     }
 
     inline bool isReachable(SDNode *f, SDNode *t) {
       unsigned Idx = f->getNodeId() * DAGSize + t->getNodeId();
-      return ReachabilityMatrix[Idx];
+      return ReachabilityMatrix[Idx / 8] & (1 << (Idx % 8));
     }
 
     /// UnfoldableSet - An boolean array representing nodes which have been
     /// folded into addressing modes and therefore should not be folded in
     /// another operation.
-    std::vector<bool> UnfoldableSet;
+    unsigned char *UnfoldableSet;
 
     inline void setUnfoldable(SDNode *N) {
-      UnfoldableSet[N->getNodeId()] = true;
+      unsigned Id = N->getNodeId();
+      UnfoldableSet[Id / 8] |= 1 << (Id % 8);
     }
 
     inline bool isUnfoldable(SDNode *N) {
-      return UnfoldableSet[N->getNodeId()];
+      unsigned Id = N->getNodeId();
+      return UnfoldableSet[Id / 8] & (1 << (Id % 8));
     }
 
 #ifndef NDEBUG
@@ -291,9 +293,14 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
 
   TopOrder = DAG.AssignTopologicalOrder();
   DAGSize = TopOrder.size();
-  ReachabilityMatrix.assign(DAGSize*DAGSize, false);
-  ReachMatrixRange.assign(DAGSize, 0);
-  UnfoldableSet.assign(DAGSize, false);
+  unsigned RMSize = (DAGSize * DAGSize + 7) / 8;
+  ReachabilityMatrix = new unsigned char[RMSize];
+  memset(ReachabilityMatrix, 0, RMSize);
+  ReachMatrixRange = new unsigned[DAGSize];
+  memset(ReachMatrixRange, 0, DAGSize * sizeof(unsigned));
+  unsigned NumBytes = (DAGSize + 7) / 8;
+  UnfoldableSet = new unsigned char[NumBytes];
+  memset(UnfoldableSet, 0, NumBytes);
 
   // Codegen the basic block.
 #ifndef NDEBUG
@@ -305,6 +312,12 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   DEBUG(std::cerr << "===== Instruction selection ends:\n");
 #endif
 
+  delete[] ReachabilityMatrix;
+  delete[] ReachMatrixRange;
+  delete[] UnfoldableSet;
+  ReachabilityMatrix = NULL;
+  ReachMatrixRange = NULL;
+  UnfoldableSet = NULL;
   CodeGenMap.clear();
   HandleMap.clear();
   ReplaceMap.clear();
