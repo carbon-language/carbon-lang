@@ -427,9 +427,9 @@ public:
   unsigned AssignNodeIds();
 
   /// AssignTopologicalOrder - Assign a unique node id for each node in the DAG
-  /// based on their topological order. It returns a vector of the SDNodes* in
-  /// assigned order.
-  std::vector<SDNode*> AssignTopologicalOrder();
+  /// based on their topological order. It returns the maximum id and a vector
+  /// of the SDNodes* in assigned order by reference.
+  unsigned AssignTopologicalOrder(std::vector<SDNode*> &TopOrder);
 
   void dump() const;
 
