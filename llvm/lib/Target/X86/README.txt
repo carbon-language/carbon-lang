@@ -198,7 +198,7 @@ on some processors (which ones?), it is more efficient to do this:
 
 _test:
         movl 8(%esp), %ebx
-	xor %eax, %eax
+	    xor  %eax, %eax
         cmpl %ebx, 4(%esp)
         setl %al
         ret
@@ -337,22 +337,6 @@ It would be better to emit "cmp %al, 1" than a xor and test.
 //===---------------------------------------------------------------------===//
 
 Enable X86InstrInfo::convertToThreeAddress().
-
-//===---------------------------------------------------------------------===//
-
-Investigate whether it is better to codegen the following
-
-        %tmp.1 = mul int %x, 9
-to
-
-	movl	4(%esp), %eax
-	leal	(%eax,%eax,8), %eax
-
-as opposed to what llc is currently generating:
-
-	imull $9, 4(%esp), %eax
-
-Currently the load folding imull has a higher complexity than the LEA32 pattern.
 
 //===---------------------------------------------------------------------===//
 
@@ -671,35 +655,26 @@ We should handle __attribute__ ((__visibility__ ("hidden"))).
 
 //===---------------------------------------------------------------------===//
 
-Consider:
-int foo(int *a, int t) {
-int x;
-for (x=0; x<40; ++x)
-   t = t + a[x] + x;
-return t;
+int %foo(int* %a, int %t) {
+entry:
+        br label %cond_true
+
+cond_true:              ; preds = %cond_true, %entry
+        %x.0.0 = phi int [ 0, %entry ], [ %tmp9, %cond_true ]           ; <int> [#uses=3]
+        %t_addr.0.0 = phi int [ %t, %entry ], [ %tmp7, %cond_true ]             ; <int> [#uses=1]
+        %tmp2 = getelementptr int* %a, int %x.0.0               ; <int*> [#uses=1]
+        %tmp3 = load int* %tmp2         ; <int> [#uses=1]
+        %tmp5 = add int %t_addr.0.0, %x.0.0             ; <int> [#uses=1]
+        %tmp7 = add int %tmp5, %tmp3            ; <int> [#uses=2]
+        %tmp9 = add int %x.0.0, 1               ; <int> [#uses=2]
+        %tmp = setgt int %tmp9, 39              ; <bool> [#uses=1]
+        br bool %tmp, label %bb12, label %cond_true
+
+bb12:           ; preds = %cond_true
+        ret int %tmp7
 }
 
-We generate:
-LBB1_1: #cond_true
-        movl %ecx, %esi
-        movl (%edx,%eax,4), %edi
-        movl %esi, %ecx
-        addl %edi, %ecx
-        addl %eax, %ecx
-        incl %eax
-        cmpl $40, %eax
-        jne LBB1_1      #cond_true
-
-GCC generates:
-
-L2:
-        addl    (%ecx,%edx,4), %eax
-        addl    %edx, %eax
-        addl    $1, %edx
-        cmpl    $40, %edx
-        jne     L2
-
-Smells like a register coallescing/reassociation issue.
+is pessimized by -loop-reduce and -indvars
 
 //===---------------------------------------------------------------------===//
 
