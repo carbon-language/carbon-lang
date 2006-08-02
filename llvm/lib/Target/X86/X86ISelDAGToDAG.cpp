@@ -271,12 +271,15 @@ void X86DAGToDAGISel::DetermineReachability(SDNode *f, SDNode *t) {
     if (N->getNumOperands() == 0)
       continue;
 
-    for (unsigned i2 = Orderf; ; ++i2) {
+    for (unsigned i2 = Range; ; ++i2) {
       SDNode *M = TopOrder[i2];
       if (isReachable(M, N)) {
         // Update reachability from M to N's operands.
-        for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); I != E;++I)
-          setReachable(M, I->Val);
+        for (SDNode::op_iterator I = N->op_begin(),E = N->op_end(); I != E;++I){
+          SDNode *P = I->Val;
+          if (P->getNodeId() >= 0)
+            setReachable(M, P);
+        }
       }
       if (M == N) break;
     }
@@ -291,8 +294,7 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   DEBUG(BB->dump());
   MachineFunction::iterator FirstMBB = BB;
 
-  TopOrder = DAG.AssignTopologicalOrder();
-  DAGSize = TopOrder.size();
+  DAGSize = DAG.AssignTopologicalOrder(TopOrder);
   unsigned RMSize = (DAGSize * DAGSize + 7) / 8;
   ReachabilityMatrix = new unsigned char[RMSize];
   memset(ReachabilityMatrix, 0, RMSize);
@@ -318,6 +320,7 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   ReachabilityMatrix = NULL;
   ReachMatrixRange = NULL;
   UnfoldableSet = NULL;
+  TopOrder.clear();
   CodeGenMap.clear();
   HandleMap.clear();
   ReplaceMap.clear();
