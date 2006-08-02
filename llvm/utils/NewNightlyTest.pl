@@ -676,8 +676,27 @@ if(!$BuildError){
         print "Organizing size of .o and .a files\n";
     }
 	ChangeDir( "$BuildDir/llvm", "Build Directory" );
-	$afiles = `find . -iname '*.a' -ls`;
-	$ofiles = `find . -iname '*.o' -ls`;
+	$afiles.= `find utils/ -iname '*.a' -ls`;
+	$afiles.= `find libs/ -iname '*.a' -ls`;
+	$afiles.= `find tools/ -iname '*.a' -ls`;
+	if($BUILDTYPE eq "release"){
+		$afiles.= `find Release/ -iname '*.a' -ls`;
+	}
+	else{
+		$afiles.= `find Debug/ -iname '*.a' -ls`;
+	}
+	
+	
+	$ofiles.= `find utils/ -iname '*.o' -ls`;
+	$ofiles.= `find libs/ -iname '*.o' -ls`;
+	$ofiles.= `find tools/ -iname '*.o' -ls`;
+	if($BUILDTYPE eq "release"){
+		$ofiles.= `find Release/ -iname '*.o' -ls`;
+	}
+	else{
+		$ofiles.= `find Debug/ -iname '*.o' -ls`;
+	}
+	
 	@AFILES = split "\n", $afiles;
 	$a_file_sizes="";
 	foreach $x (@AFILES){
@@ -962,7 +981,7 @@ else{
 @GCC_VERSION = split '\n', $gcc_version_long;
 my $gcc_version = $GCC_VERSION[0];
 
-my $all_tests = ReadFile, "$Prefix-Tests.txt";
+my $all_tests = ReadFile "$Prefix-Tests.txt";
 
 ##############################################################
 #
