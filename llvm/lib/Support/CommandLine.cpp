@@ -616,7 +616,9 @@ bool Option::error(std::string Message, const char *ArgName) {
   if (ArgName[0] == 0)
     std::cerr << HelpStr;  // Be nice for positional arguments
   else
-    std::cerr << ProgramName << ": for the -" << ArgName;
+    std::cerr << (ProgramName ? ProgramName : "***")
+              << ": for the -" << ArgName;
+  
   std::cerr << " option: " << Message << "\n";
   return true;
 }
