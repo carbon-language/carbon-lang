@@ -91,7 +91,7 @@ bool X86TargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
       FileType != TargetMachine::ObjectFile) return true;
 
   // Run loop strength reduction before anything else.
-  PM.add(createLoopStrengthReducePass(&TLInfo));
+  if (!Fast) PM.add(createLoopStrengthReducePass(&TLInfo));
 
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
