@@ -46,18 +46,15 @@ namespace {
   static Statistic<> NumLCSSA("lcssa",
                               "Number of live out of a loop variables");
   
-  class LCSSA : public FunctionPass {
-  public:
-    
-  
-    LoopInfo *LI;  // Loop information
-    DominatorTree *DT;       // Dominator Tree for the current Function...
-    DominanceFrontier *DF;   // Current Dominance Frontier
+  struct LCSSA : public FunctionPass {
+    // Cached analysis information for the current function.
+    LoopInfo *LI;
+    DominatorTree *DT;
     std::vector<BasicBlock*> LoopBlocks;
     
     virtual bool runOnFunction(Function &F);
     bool visitSubloop(Loop* L);
-    void processInstruction(Instruction* Instr,
+    void ProcessInstruction(Instruction* Instr,
                             const std::vector<BasicBlock*>& exitBlocks);
     
     /// This transformation requires natural loop information & requires that
@@ -70,17 +67,13 @@ namespace {
       AU.addPreservedID(LoopSimplifyID);
       AU.addRequired<LoopInfo>();
       AU.addRequired<DominatorTree>();
-      AU.addRequired<DominanceFrontier>();
     }
   private:
     SetVector<Instruction*> getLoopValuesUsedOutsideLoop(Loop *L);
-    Value *getValueDominatingBlock(BasicBlock *BB,
-                                 std::map<BasicBlock*, Value*>& PotDoms) {
-      return getValueDominatingDTNode(DT->getNode(BB), PotDoms);
-    }
-    Value *getValueDominatingDTNode(DominatorTree::Node *Node,
-                                  std::map<BasicBlock*, Value*>& PotDoms);
-                                      
+
+    PHINode *GetValueForBlock(DominatorTree::Node *BB, Instruction *OrigInst,
+                              std::map<DominatorTree::Node*, PHINode*> &Phis);
+
     /// inLoop - returns true if the given block is within the current loop
     const bool inLoop(BasicBlock* B) {
       return std::binary_search(LoopBlocks.begin(), LoopBlocks.end(), B);
@@ -98,12 +91,10 @@ bool LCSSA::runOnFunction(Function &F) {
   bool changed = false;
   
   LI = &getAnalysis<LoopInfo>();
-  DF = &getAnalysis<DominanceFrontier>();
   DT = &getAnalysis<DominatorTree>();
     
-  for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I) {
+  for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I)
     changed |= visitSubloop(*I);
-  }
       
   return changed;
 }
@@ -134,9 +125,8 @@ bool LCSSA::visitSubloop(Loop* L) {
   // for them in the appropriate exit blocks
   
   for (SetVector<Instruction*>::iterator I = AffectedValues.begin(),
-       E = AffectedValues.end(); I != E; ++I) {
-    processInstruction(*I, exitBlocks);
-  }
+       E = AffectedValues.end(); I != E; ++I)
+    ProcessInstruction(*I, exitBlocks);
   
   assert(L->isLCSSAForm());
   
@@ -145,105 +135,62 @@ bool LCSSA::visitSubloop(Loop* L) {
 
 /// processInstruction - Given a live-out instruction, insert LCSSA Phi nodes,
 /// eliminate all out-of-loop uses.
-void LCSSA::processInstruction(Instruction* Instr,
-                               const std::vector<BasicBlock*>& exitBlocks)
-{
+void LCSSA::ProcessInstruction(Instruction *Instr,
+                               const std::vector<BasicBlock*>& exitBlocks) {
   ++NumLCSSA; // We are applying the transformation
-  
-  std::map<BasicBlock*, Value*> Phis;
-  
-  // Add the base instruction to the Phis list.  This makes tracking down
-  // the dominating values easier when we're filling in Phi nodes.  This will
-  // be removed later, before we perform use replacement.
-  Phis[Instr->getParent()] = Instr;
-  
-  // Phi nodes that need to be IDF-processed
-  std::vector<PHINode*> workList;
-  
+
+  // Keep track of the blocks that have the value available already.
+  std::map<DominatorTree::Node*, PHINode*> Phis;
+
+  DominatorTree::Node *InstrNode = DT->getNode(Instr->getParent());
+
+  // Insert the LCSSA phi's into the exit blocks (dominated by the value), and
+  // add them to the Phi's map.
   for (std::vector<BasicBlock*>::const_iterator BBI = exitBlocks.begin(),
       BBE = exitBlocks.end(); BBI != BBE; ++BBI) {
-    Value*& phi = Phis[*BBI];
-    if (phi == 0 &&
-        DT->getNode(Instr->getParent())->dominates(DT->getNode(*BBI))) {
-      phi = new PHINode(Instr->getType(), Instr->getName()+".lcssa",
-                                 (*BBI)->begin());
-      workList.push_back(cast<PHINode>(phi));
+    BasicBlock *BB = *BBI;
+    DominatorTree::Node *ExitBBNode = DT->getNode(BB);
+    PHINode *&Phi = Phis[ExitBBNode];
+    if (!Phi && InstrNode->dominates(ExitBBNode)) {
+      Phi = new PHINode(Instr->getType(), Instr->getName()+".lcssa",
+                        BB->begin());
+      Phi->reserveOperandSpace(std::distance(pred_begin(BB), pred_end(BB)));
+
+      // Add inputs from inside the loop for this PHI.
+      for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
+        Phi->addIncoming(Instr, *PI);
+      
+      // Remember that this phi makes the value alive in this block.
+      Phis[ExitBBNode] = Phi;
     }
   }
   
-  // Phi nodes that need to have their incoming values filled.
-  std::vector<PHINode*> needIncomingValues;
   
-  // Calculate the IDF of these LCSSA Phi nodes, inserting new Phi's where
-  // necessary.  Keep track of these new Phi's in the "Phis" map.
-  while (!workList.empty()) {
-    PHINode *CurPHI = workList.back();
-    workList.pop_back();
-    
-    // Even though we've removed this Phi from the work list, we still need
-    // to fill in its incoming values.
-    needIncomingValues.push_back(CurPHI);
-    
-    // Get the current Phi's DF, and insert Phi nodes.  Add these new
-    // nodes to our worklist.
-    DominanceFrontier::const_iterator it = DF->find(CurPHI->getParent());
-    if (it != DF->end()) {
-      const DominanceFrontier::DomSetType &S = it->second;
-      for (DominanceFrontier::DomSetType::const_iterator P = S.begin(),
-           PE = S.end(); P != PE; ++P) {
-        if (DT->getNode(Instr->getParent())->dominates(DT->getNode(*P))) {
-          Value *&Phi = Phis[*P];
-          if (Phi == 0) {
-            // Still doesn't have operands...
-            Phi = new PHINode(Instr->getType(), Instr->getName()+".lcssa",
-                              (*P)->begin());
-          
-            workList.push_back(cast<PHINode>(Phi));
-          }
-        }
-      }
-    }
-  }
-  
-  // Fill in all Phis we've inserted that need their incoming values filled in.
-  for (std::vector<PHINode*>::iterator IVI = needIncomingValues.begin(),
-       IVE = needIncomingValues.end(); IVI != IVE; ++IVI)
-    for (pred_iterator PI = pred_begin((*IVI)->getParent()),
-         E = pred_end((*IVI)->getParent()); PI != E; ++PI)
-      (*IVI)->addIncoming(getValueDominatingBlock(*PI, Phis),
-                          *PI);
-  
-  // Find all uses of the affected value, and replace them with the
-  // appropriate Phi.
-  std::vector<Instruction*> Uses;
-  for (Instruction::use_iterator UI = Instr->use_begin(), UE = Instr->use_end();
-       UI != UE; ++UI) {
-    Instruction* use = cast<Instruction>(*UI);
-    BasicBlock* UserBB = use->getParent();
-    if (PHINode* p = dyn_cast<PHINode>(use)) {
+  // Record all uses of Instr outside the loop.  We need to rewrite these.  The
+  // LCSSA phis won't be included because they use the value in the loop.
+  for (Value::use_iterator UI = Instr->use_begin(), E = Instr->use_end();
+       UI != E;) {
+    BasicBlock *UserBB = cast<Instruction>(*UI)->getParent();
+    if (PHINode *P = dyn_cast<PHINode>(*UI)) {
       unsigned OperandNo = UI.getOperandNo();
-      UserBB = p->getIncomingBlock(OperandNo/2);
+      UserBB = P->getIncomingBlock(OperandNo/2);
     }
     
-    // Don't need to update uses within the loop body.
-    if (!inLoop(use->getParent()))
-      Uses.push_back(use);
-  }
-  
-  for (std::vector<Instruction*>::iterator II = Uses.begin(), IE = Uses.end();
-       II != IE; ++II) {
-    if (PHINode* phi = dyn_cast<PHINode>(*II)) {
-      for (unsigned int i = 0; i < phi->getNumIncomingValues(); ++i) {
-        if (phi->getIncomingValue(i) == Instr) {
-          Value* dominator = 
-                        getValueDominatingBlock(phi->getIncomingBlock(i), Phis);
-          phi->setIncomingValue(i, dominator);
-        }
-      }
-    } else {
-      Value *NewVal = getValueDominatingBlock((*II)->getParent(), Phis);
-      (*II)->replaceUsesOfWith(Instr, NewVal);
+    // If the user is in the loop, don't rewrite it!
+    if (inLoop(UserBB)) {
+      ++UI;
+      continue;
     }
+    
+    // Otherwise, patch up uses of the value with the appropriate LCSSA Phi,
+    // inserting PHI nodes into join points where needed.
+    Value *Val = GetValueForBlock(DT->getNode(UserBB), Instr, Phis);
+    
+    // Preincrement the iterator to avoid invalidating it when we change the
+    // value.
+    Use &U = UI.getUse();
+    ++UI;
+    U.set(Val);
   }
 }
 
@@ -277,21 +224,44 @@ SetVector<Instruction*> LCSSA::getLoopValuesUsedOutsideLoop(Loop *L) {
   return AffectedValues;
 }
 
-/// getValueDominatingBlock - Return the value within the potential dominators
-/// map that dominates the given block.
-Value *LCSSA::getValueDominatingDTNode(DominatorTree::Node *Node,
-                              std::map<BasicBlock*, Value*>& PotDoms) {
-  // FIXME: The following assertion should be in place rather than the if
-  // statement.  Currently, this is due to the fact that LCSSA isn't smart 
-  // enough to avoid inserting IDF Phis that don't dominate any uses.  In some 
-  // of those cases, it could ask us to provide a dominating value for a block
-  // that has none, so we need to return undef.
-  //assert(Node != 0 && "Didn't find dom value?");
-  if (Node == 0) return UndefValue::get(PotDoms.begin()->second->getType());
+/// GetValueForBlock - Get the value to use within the specified basic block.
+/// available values are in Phis.
+PHINode *LCSSA::GetValueForBlock(DominatorTree::Node *BB, Instruction *OrigInst,
+                               std::map<DominatorTree::Node*, PHINode*> &Phis) {
+  // If we have already computed this value, return the previously computed val.
+  PHINode *&V = Phis[BB];
+  if (V) return V;
+
+  DominatorTree::Node *IDom = BB->getIDom();
+
+  // Otherwise, there are two cases: we either have to insert a PHI node or we
+  // don't.  We need to insert a PHI node if this block is not dominated by one
+  // of the exit nodes from the loop (the loop could have multiple exits, and
+  // though the value defined *inside* the loop dominated all its uses, each
+  // exit by itself may not dominate all the uses).
+  //
+  // The simplest way to check for this condition is by checking to see if the
+  // idom is in the loop.  If so, we *know* that none of the exit blocks
+  // dominate this block.  Note that we *know* that the block defining the
+  // original instruction is in the idom chain, because if it weren't, then the
+  // original value didn't dominate this use.
+  if (!inLoop(IDom->getBlock())) {
+    // Idom is not in the loop, we must still be "below" the exit block and must
+    // be fully dominated by the value live in the idom.
+    return V = GetValueForBlock(IDom, OrigInst, Phis);
+  }
   
-  Value *&CacheSlot = PotDoms[Node->getBlock()];
-  if (CacheSlot) return CacheSlot;
+  BasicBlock *BBN = BB->getBlock();
   
-  // Otherwise, return the value of the idom and remember this for next time.
-  return CacheSlot = getValueDominatingDTNode(Node->getIDom(), PotDoms);
+  // Otherwise, the idom is the loop, so we need to insert a PHI node.  Do so
+  // now, then get values to fill in the incoming values for the PHI.
+  V = new PHINode(OrigInst->getType(), OrigInst->getName()+".lcssa",
+                  BBN->begin());
+  V->reserveOperandSpace(std::distance(pred_begin(BBN), pred_end(BBN)));
+
+  // Fill in the incoming values for the block.
+  for (pred_iterator PI = pred_begin(BBN), E = pred_end(BBN); PI != E; ++PI)
+    V->addIncoming(GetValueForBlock(DT->getNode(*PI), OrigInst, Phis), *PI);
+  return V;
 }
+
