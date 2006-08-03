@@ -53,12 +53,6 @@ ifneq ($(strip $(filter IA64,$(TARGETS_TO_BUILD))),)
 USEDLIBS += LLVMIA64
 endif
 
-#Check for ARM Target
-ifneq ($(strip $(filter ARM,$(TARGETS_TO_BUILD))),)
-USEDLIBS += LLVMARM
-endif
-
-
 USEDLIBS += LLVMSelectionDAG.a LLVMCodeGen.a LLVMipo.a \
 LLVMTransforms.a LLVMScalarOpts.a LLVMipa.a LLVMTransformUtils.a LLVMAnalysis.a \
 LLVMTarget.a LLVMBCReader.a LLVMBCWriter.a LLVMSystem.a LLVMLinker.a LLVMCore.a \
