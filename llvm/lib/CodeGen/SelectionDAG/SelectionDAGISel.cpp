@@ -77,7 +77,7 @@ namespace {
   cl::opt<RegisterScheduler::FunctionPassCtor, false,
           RegisterPassParser<RegisterScheduler> >
   ISHeuristic("sched",
-              cl::init(createDefaultScheduler),
+              cl::init(&createDefaultScheduler),
               cl::desc("Instruction schedulers available:"));
 
   static RegisterScheduler
