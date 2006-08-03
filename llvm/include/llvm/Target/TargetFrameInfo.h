@@ -75,31 +75,6 @@ public:
     NumEntries = 0;
     return 0;
   }
-
-  //===--------------------------------------------------------------------===//
-  // These methods provide details of the stack frame used by Sparc, thus they
-  // are Sparc specific.
-  //===--------------------------------------------------------------------===//
-
-  // This method adjusts a stack offset to meet alignment rules of target.
-  virtual int adjustAlignment(int unalignedOffset, bool growUp,
-                              unsigned align) const;
-
-  // These methods compute offsets using the frame contents for a particular
-  // function.  The frame contents are obtained from the MachineFunction object
-  // for the given function.  The rest must be implemented by the
-  // machine-specific subclass.
-  //
-  virtual int getIncomingArgOffset(MachineFunction& mcInfo,
-                                   unsigned argNum) const;
-  virtual int getOutgoingArgOffset(MachineFunction& mcInfo,
-                                   unsigned argNum) const;
-  virtual int getFirstAutomaticVarOffset(MachineFunction& mcInfo,
-                                         bool& growUp) const;
-  virtual int getRegSpillAreaOffset(MachineFunction& mcInfo,
-                                    bool& growUp) const;
-  virtual int getTmpAreaOffset(MachineFunction& mcInfo, bool& growUp) const;
-  virtual int getDynamicAreaOffset(MachineFunction& mcInfo, bool& growUp) const;
 };
 
 } // End llvm namespace
