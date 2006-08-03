@@ -52,7 +52,10 @@ namespace llvm {
       // Start the numbering where the builting ops and target ops leave off.
       FIRST_NUMBER = ISD::BUILTIN_OP_END+ARM::INSTRUCTION_LIST_END,
       /// CALL - A direct function call.
-      CALL
+      CALL,
+
+      /// Return with a flag operand.
+      RET_FLAG
     };
   }
 }
@@ -61,6 +64,7 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
   default: return 0;
   case ARMISD::CALL:          return "ARMISD::CALL";
+  case ARMISD::RET_FLAG:      return "ARMISD::RET_FLAG";
   }
 }
 
@@ -175,13 +179,8 @@ static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
     break;
   }
 
-  SDOperand LR = DAG.getRegister(ARM::R14, MVT::i32);
-
-  //bug: the copy and branch should be linked with a flag so that the
-  //scheduller can't move an instruction that destroys R0 in between them
-  //return DAG.getNode(ISD::BRIND, MVT::Other, Copy, LR, Copy.getValue(1));
-
-  return DAG.getNode(ISD::BRIND, MVT::Other, Copy, LR);
+  //We must use RET_FLAG instead of BRIND because BRIND doesn't have a flag
+  return DAG.getNode(ARMISD::RET_FLAG, MVT::Other, Copy, Copy.getValue(1));
 }
 
 static SDOperand LowerFORMAL_ARGUMENT(SDOperand Op, SelectionDAG &DAG,

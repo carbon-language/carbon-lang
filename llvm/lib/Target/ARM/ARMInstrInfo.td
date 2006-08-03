@@ -44,6 +44,8 @@ def callseq_end    : SDNode<"ISD::CALLSEQ_END",   SDT_ARMCallSeq, [SDNPHasChain]
 def SDT_ARMcall    : SDTypeProfile<0, -1, [SDTCisInt<0>]>;
 def ARMcall        : SDNode<"ARMISD::CALL", SDT_ARMcall,
                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+def retflag        : SDNode<"ARMISD::RET_FLAG", SDTRet,
+	                   [SDNPHasChain, SDNPOptInFlag]>;
 
 def ADJCALLSTACKUP : InstARM<(ops i32imm:$amt),
                             "!ADJCALLSTACKUP $amt",
@@ -54,7 +56,7 @@ def ADJCALLSTACKDOWN : InstARM<(ops i32imm:$amt),
                                [(callseq_start imm:$amt)]>;
 
 let isReturn = 1 in {
-  def bx: InstARM<(ops IntRegs:$dst), "bx $dst", [(brind IntRegs:$dst)]>;
+  def bx: InstARM<(ops), "bx r14", [(retflag)]>;
 }
 
 let  Defs = [R0, R1, R2, R3] in {
