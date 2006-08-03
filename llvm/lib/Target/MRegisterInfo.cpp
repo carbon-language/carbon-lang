@@ -11,7 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MRegisterInfo.h"
+#include "llvm/Target/TargetFrameInfo.h"
 
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -50,9 +52,12 @@ std::vector<bool> MRegisterInfo::getAllocatableSet(MachineFunction &MF) const {
 /// variables and then call MRegisterInfo::getLocation for the default action.
 void MRegisterInfo::getLocation(MachineFunction &MF, unsigned Index,
                         MachineLocation &ML) const {
+  const TargetFrameInfo &TFI = *MF.getTarget().getFrameInfo();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   ML.set(getFrameRegister(MF),
-         MFI->getObjectOffset(Index) + MFI->getStackSize());
+         MFI->getObjectOffset(Index) +
+         MFI->getStackSize() -
+         TFI.getOffsetOfLocalArea());
 }
 
 /// getInitialFrameState - Returns a list of machine moves that are assumed
