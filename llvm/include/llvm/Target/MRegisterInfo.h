@@ -208,20 +208,14 @@ protected:
 public:
 
   enum {                        // Define some target independent constants
-    /// NoRegister - This 'hard' register is a 'noop' register for all backends.
-    /// This is used as the destination register for instructions that do not
-    /// produce a value.  Some frontends may use this as an operand register to
-    /// mean special things, for example, the Sparc backend uses R0 to mean %g0
-    /// which always PRODUCES the value 0.  The X86 backend does not use this
-    /// value as an operand register, except for memory references.
-    ///
+    /// NoRegister - This physical register is not a real target register.  It
+    /// is useful as a sentinal.
     NoRegister = 0,
 
     /// FirstVirtualRegister - This is the first register number that is
     /// considered to be a 'virtual' register, which is part of the SSA
     /// namespace.  This must be the same for all targets, which means that each
     /// target is limited to 1024 registers.
-    ///
     FirstVirtualRegister = 1024
   };
 
