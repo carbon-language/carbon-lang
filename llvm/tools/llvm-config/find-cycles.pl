@@ -71,9 +71,7 @@ foreach my $cycle (@CYCLES) {
 }
 print sort @output;
 
-### FIXME: reenable this after 1.8.
-#exit $cycles_found;
-exit 0;
+exit $cycles_found;
 
 #==========================================================================
 #  Depedency Cycle Support
