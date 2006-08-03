@@ -170,7 +170,7 @@ static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
     abort();
   case 1: {
     SDOperand LR = DAG.getRegister(ARM::R14, MVT::i32);
-    return DAG.getNode(ISD::BRIND, MVT::Other, Chain, LR);
+    return DAG.getNode(ARMISD::RET_FLAG, MVT::Other, Chain);
   }
   case 3:
     Copy = DAG.getCopyToReg(Chain, ARM::R0, Op.getOperand(1), SDOperand());
