@@ -459,12 +459,31 @@ static bool GatherValueComparisons(Instruction *Cond, Value *&CompVal,
 /// has no side effects, nuke it.  If it uses any instructions that become dead
 /// because the instruction is now gone, nuke them too.
 static void ErasePossiblyDeadInstructionTree(Instruction *I) {
-  if (isInstructionTriviallyDead(I)) {
-    std::vector<Value*> Operands(I->op_begin(), I->op_end());
-    I->getParent()->getInstList().erase(I);
-    for (unsigned i = 0, e = Operands.size(); i != e; ++i)
-      if (Instruction *OpI = dyn_cast<Instruction>(Operands[i]))
-        ErasePossiblyDeadInstructionTree(OpI);
+  if (!isInstructionTriviallyDead(I)) return;
+  
+  std::vector<Instruction*> InstrsToInspect;
+  InstrsToInspect.push_back(I);
+
+  while (!InstrsToInspect.empty()) {
+    I = InstrsToInspect.back();
+    InstrsToInspect.pop_back();
+
+    if (!isInstructionTriviallyDead(I)) continue;
+
+    // If I is in the work list multiple times, remove previous instances.
+    for (unsigned i = 0, e = InstrsToInspect.size(); i != e; ++i)
+      if (InstrsToInspect[i] == I) {
+        InstrsToInspect.erase(InstrsToInspect.begin()+i);
+        --i, --e;
+      }
+
+    // Add operands of dead instruction to worklist.
+    for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
+      if (Instruction *OpI = dyn_cast<Instruction>(I->getOperand(i)))
+        InstrsToInspect.push_back(OpI);
+
+    // Remove dead instruction.
+    I->eraseFromParent();
   }
 }
 
