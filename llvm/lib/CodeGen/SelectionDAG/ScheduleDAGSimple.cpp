@@ -14,9 +14,11 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "sched"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -669,6 +671,18 @@ void ScheduleDAGSimple::dump() const {
 /// EmitAll - Emit all nodes in schedule sorted order.
 ///
 void ScheduleDAGSimple::EmitAll() {
+  // If this is the first basic block in the function, and if it has live ins
+  // that need to be copied into vregs, emit the copies into the top of the
+  // block before emitting the code for the block.
+  MachineFunction &MF = DAG.getMachineFunction();
+  if (&MF.front() == BB && MF.livein_begin() != MF.livein_end()) {
+    for (MachineFunction::livein_iterator LI = MF.livein_begin(),
+         E = MF.livein_end(); LI != E; ++LI)
+      if (LI->second)
+        MRI->copyRegToReg(*MF.begin(), MF.begin()->end(), LI->second,
+                          LI->first, RegMap->getRegClass(LI->second));
+  }
+  
   std::map<SDNode*, unsigned> VRBaseMap;
   
   // For each node in the ordering
