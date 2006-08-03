@@ -44,7 +44,7 @@ namespace llvm {
     LTOInternalLinkage  // Rename collisions when linking (static functions)
   };
 
-  /// This class representes LLVM symbol information without exposing details
+  /// This class represents LLVM symbol information without exposing details
   /// of LLVM global values. It encapsulates symbol linkage information. This
   /// is typically used in hash_map where associated name identifies the 
   /// the symbol name.
