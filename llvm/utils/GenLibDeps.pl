@@ -24,9 +24,10 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
 
 # Give first option a name.
 my $Directory = $ARGV[0];
-if (!defined($Directory)) {
-  die "First argument must be the directory containing LLVM libs\n";
+if (!defined($Directory) || ! -d "$Directory") {
+  die "First argument must specify the directory containing LLVM libs\n";
 }
+
 my $nmPath = $ARGV[1];
 
 # Find the "dot" program
