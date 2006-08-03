@@ -677,7 +677,7 @@ if(!$BuildError){
     }
 	ChangeDir( "$BuildDir/llvm", "Build Directory" );
 	$afiles.= `find utils/ -iname '*.a' -ls`;
-	$afiles.= `find libs/ -iname '*.a' -ls`;
+	$afiles.= `find lib/ -iname '*.a' -ls`;
 	$afiles.= `find tools/ -iname '*.a' -ls`;
 	if($BUILDTYPE eq "release"){
 		$afiles.= `find Release/ -iname '*.a' -ls`;
@@ -688,7 +688,7 @@ if(!$BuildError){
 	
 	
 	$ofiles.= `find utils/ -iname '*.o' -ls`;
-	$ofiles.= `find libs/ -iname '*.o' -ls`;
+	$ofiles.= `find lib/ -iname '*.o' -ls`;
 	$ofiles.= `find tools/ -iname '*.o' -ls`;
 	if($BUILDTYPE eq "release"){
 		$ofiles.= `find Release/ -iname '*.o' -ls`;
