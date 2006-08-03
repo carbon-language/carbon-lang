@@ -84,7 +84,7 @@ if ($ABS_RUN_DIR eq $ABS_OBJ_ROOT) {
 sub usage;
 sub fix_library_names (@);
 sub fix_library_files (@);
-sub expand_dependecies (@);
+sub expand_dependencies (@);
 sub name_map_entries;
 
 # Parse our command-line arguments.
@@ -145,7 +145,7 @@ if (@components == 0) {
 
 # Handle any arguments which require building our dependency graph.
 if ($want_libs || $want_libnames || $want_libfiles) {
-    my @libs = expand_dependecies(@components);
+    my @libs = expand_dependencies(@components);
     print join(' ', fix_library_names(@libs)), "\n" if ($want_libs);
     print join(' ',  @libs), "\n" if ($want_libnames);
     print join(' ', fix_library_files(@libs)), "\n" if ($want_libfiles);
@@ -257,7 +257,7 @@ my $DEPENDENCIES_LOADED = 0;
 
 # Given a list of human-friendly component names, translate them into a
 # complete set of linker arguments.
-sub expand_dependecies (@) {
+sub expand_dependencies (@) {
     my @libs = @_;
     load_dependencies;
     my @required_sets = find_all_required_sets(expand_names(@libs));
@@ -275,7 +275,7 @@ sub load_dependencies {
     $DEPENDENCIES_LOADED = 1;
     while (<DATA>) {
         # Parse our line.
-        my ($libs, $deps) = /^(^[^:]+): ?(.*)$/;
+        my ($libs, $deps) = /^\s*([^:]+):\s+(.*)\s*$/;
         die "Malformed dependency data" unless defined $deps;
         my @libs = split(' ', $libs);
         my @deps = split(' ', $deps);
