@@ -750,9 +750,9 @@ static void MoveImmediateValues(const TargetLowering *TLI,
 }
 
 
-/// IncrementAddExprUses - Decompose the specified expression into its added
-/// subexpressions, and increment SubExpressionUseCounts for each of these
-/// decomposed parts.
+/// SeparateSubExprs - Decompose Expr into all of the subexpressions that are
+/// added together.  This is used to reassociate common addition subexprs
+/// together for maximal sharing when rewriting bases.
 static void SeparateSubExprs(std::vector<SCEVHandle> &SubExprs,
                              SCEVHandle Expr) {
   if (SCEVAddExpr *AE = dyn_cast<SCEVAddExpr>(Expr)) {
@@ -904,6 +904,11 @@ unsigned LoopStrengthReduce::CheckForIVReuse(const SCEVHandle &Stride,
   return 0;
 }
 
+/// PartitionByIsUseOfPostIncrementedValue - Simple boolean predicate that
+/// returns true if Val's isUseOfPostIncrementedValue is true.
+static bool PartitionByIsUseOfPostIncrementedValue(const BasedUser &Val) {
+  return Val.isUseOfPostIncrementedValue;
+}
 
 /// StrengthReduceStridedIVUsers - Strength reduce all of the users of a single
 /// stride of IV.  All of the users may have different starting values, and this
@@ -1039,8 +1044,38 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
                                  "commonbase", PreInsertPt);
   }
 
-  // Sort by the base value, so that all IVs with identical bases are next to
-  // each other.
+  // We want to emit code for users inside the loop first.  To do this, we
+  // rearrange BasedUser so that the entries at the end have
+  // isUseOfPostIncrementedValue = false, because we pop off the end of the
+  // vector (so we handle them first).
+  std::partition(UsersToProcess.begin(), UsersToProcess.end(),
+                 PartitionByIsUseOfPostIncrementedValue);
+  
+  // Sort this by base, so that things with the same base are handled
+  // together.  By partitioning first and stable-sorting later, we are
+  // guaranteed that within each base we will pop off users from within the
+  // loop before users outside of the loop with a particular base.
+  //
+  // We would like to use stable_sort here, but we can't.  The problem is that
+  // SCEVHandle's don't have a deterministic ordering w.r.t to each other, so
+  // we don't have anything to do a '<' comparison on.  Because we think the
+  // number of uses is small, do a horrible bubble sort which just relies on
+  // ==.
+  for (unsigned i = 0, e = UsersToProcess.size(); i != e; ++i) {
+    // Get a base value.
+    SCEVHandle Base = UsersToProcess[i].Base;
+    
+    // Compact everything with this base to be consequetive with this one.
+    for (unsigned j = i+1; j != e; ++j) {
+      if (UsersToProcess[j].Base == Base) {
+        std::swap(UsersToProcess[i+1], UsersToProcess[j]);
+        ++i;
+      }
+    }
+  }
+
+  // Process all the users now.  This outer loop handles all bases, the inner
+  // loop handles all users of a particular base.
   while (!UsersToProcess.empty()) {
     SCEVHandle Base = UsersToProcess.back().Base;
 
@@ -1054,17 +1089,18 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
     // the preheader, instead of being forward substituted into the uses.  We do
     // this by forcing a noop cast to be inserted into the preheader in this
     // case.
-    if (Constant *C = dyn_cast<Constant>(BaseV))
+    if (Constant *C = dyn_cast<Constant>(BaseV)) {
       if (!C->isNullValue() && !isTargetConstant(Base, TLI)) {
         // We want this constant emitted into the preheader!
         BaseV = new CastInst(BaseV, BaseV->getType(), "preheaderinsert",
                              PreInsertPt);       
       }
-    
+    }
+
     // Emit the code to add the immediate offset to the Phi value, just before
     // the instructions that we identified as using this stride and base.
-    unsigned ScanPos = 0;
     do {
+      // FIXME: Use emitted users to emit other users.
       BasedUser &User = UsersToProcess.back();
 
       // If this instruction wants to use the post-incremented value, move it
@@ -1119,15 +1155,8 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
       UsersToProcess.pop_back();
       ++NumReduced;
 
-      // If there are any more users to process with the same base, move one of
-      // them to the end of the list so that we will process it.
-      if (!UsersToProcess.empty()) {
-        for (unsigned e = UsersToProcess.size(); ScanPos != e; ++ScanPos)
-          if (UsersToProcess[ScanPos].Base == Base) {
-            std::swap(UsersToProcess[ScanPos], UsersToProcess.back());
-            break;
-          }
-      }
+      // If there are any more users to process with the same base, process them
+      // now.  We sorted by base above, so we just have to check the last elt.
     } while (!UsersToProcess.empty() && UsersToProcess.back().Base == Base);
     // TODO: Next, find out which base index is the most common, pull it out.
   }
