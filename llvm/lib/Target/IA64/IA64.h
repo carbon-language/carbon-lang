@@ -20,7 +20,6 @@ namespace llvm {
 
 class IA64TargetMachine;
 class FunctionPass;
-class IntrinsicLowering;
 
 /// createIA64DAGToDAGInstructionSelector - This pass converts an LLVM
 /// function into IA64 machine code in a sane, DAG->DAG transform.
