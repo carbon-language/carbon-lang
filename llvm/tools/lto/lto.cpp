@@ -275,7 +275,7 @@ LinkTimeOptimizer::optimizeModules(const std::string &OutputFilename,
 #endif
 
   // Strip leading underscore because it was added to match names
-  // seen by liner.
+  // seen by linker.
   for (unsigned i = 0, e = exportList.size(); i != e; ++i) {
     const char *name = exportList[i];
     if (strlen(name) > 2 && name[0] == '_')
