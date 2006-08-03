@@ -1,4 +1,4 @@
-##===- tools/lto/Makefile -----------------------------------*- Makefile -*-===##
+##===- tools/lto/Makefile ----------------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
