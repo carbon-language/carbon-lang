@@ -1,9 +1,9 @@
-; RUN: llvm-as -f %s -o - | llc -sched=none
-; RUN: llvm-as -f %s -o - | llc -sched=default
-; RUN: llvm-as -f %s -o - | llc -sched=simple
-; RUN: llvm-as -f %s -o - | llc -sched=simple-noitin
-; RUN: llvm-as -f %s -o - | llc -sched=list-td
-; RUN: llvm-as -f %s -o - | llc -sched=list-tdrr
+; RUN: llvm-as -f %s -o - | llc -sched=none &&
+; RUN: llvm-as -f %s -o - | llc -sched=default &&
+; RUN: llvm-as -f %s -o - | llc -sched=simple &&
+; RUN: llvm-as -f %s -o - | llc -sched=simple-noitin &&
+; RUN: llvm-as -f %s -o - | llc -sched=list-td &&
+; RUN: llvm-as -f %s -o - | llc -sched=list-tdrr &&
 ; RUN: llvm-as -f %s -o - | llc -sched=list-burr
 ; PR859
 
