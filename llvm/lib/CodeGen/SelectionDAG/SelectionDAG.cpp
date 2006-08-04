@@ -23,6 +23,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/SetVector.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include <iostream>
 #include <set>
@@ -263,67 +264,48 @@ const TargetMachine &SelectionDAG::getTarget() const {
 //===----------------------------------------------------------------------===//
 
 /// RemoveDeadNodes - This method deletes all unreachable nodes in the
-/// SelectionDAG, including nodes (like loads) that have uses of their token
-/// chain but no other uses and no side effect.  If a node is passed in as an
-/// argument, it is used as the seed for node deletion.
-void SelectionDAG::RemoveDeadNodes(SDNode *N) {
+/// SelectionDAG.
+void SelectionDAG::RemoveDeadNodes() {
   // Create a dummy node (which is not added to allnodes), that adds a reference
   // to the root node, preventing it from being deleted.
   HandleSDNode Dummy(getRoot());
 
-  bool MadeChange = false;
+  SmallVector<SDNode*, 128> DeadNodes;
   
-  // If we have a hint to start from, use it.
-  if (N && N->use_empty()) {
-    DestroyDeadNode(N);
-    MadeChange = true;
-  }
-
+  // Add all obviously-dead nodes to the DeadNodes worklist.
   for (allnodes_iterator I = allnodes_begin(), E = allnodes_end(); I != E; ++I)
-    if (I->use_empty() && I->getOpcode() != 65535) {
-      // Node is dead, recursively delete newly dead uses.
-      DestroyDeadNode(I);
-      MadeChange = true;
+    if (I->use_empty())
+      DeadNodes.push_back(I);
+
+  // Process the worklist, deleting the nodes and adding their uses to the
+  // worklist.
+  while (!DeadNodes.empty()) {
+    SDNode *N = DeadNodes.back();
+    DeadNodes.pop_back();
+    
+    // Take the node out of the appropriate CSE map.
+    RemoveNodeFromCSEMaps(N);
+
+    // Next, brutally remove the operand list.  This is safe to do, as there are
+    // no cycles in the graph.
+    for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); I != E; ++I) {
+      SDNode *Operand = I->Val;
+      Operand->removeUser(N);
+      
+      // Now that we removed this operand, see if there are no uses of it left.
+      if (Operand->use_empty())
+        DeadNodes.push_back(Operand);
     }
-  
-  // Walk the nodes list, removing the nodes we've marked as dead.
-  if (MadeChange) {
-    for (allnodes_iterator I = allnodes_begin(), E = allnodes_end(); I != E; ) {
-      SDNode *N = I++;
-      if (N->use_empty())
-        AllNodes.erase(N);
-    }
+    delete[] N->OperandList;
+    N->OperandList = 0;
+    N->NumOperands = 0;
+    
+    // Finally, remove N itself.
+    AllNodes.erase(N);
   }
   
   // If the root changed (e.g. it was a dead load, update the root).
   setRoot(Dummy.getValue());
-}
-
-/// DestroyDeadNode - We know that N is dead.  Nuke it from the CSE maps for the
-/// graph.  If it is the last user of any of its operands, recursively process
-/// them the same way.
-/// 
-void SelectionDAG::DestroyDeadNode(SDNode *N) {
-  // Okay, we really are going to delete this node.  First take this out of the
-  // appropriate CSE map.
-  RemoveNodeFromCSEMaps(N);
-  
-  // Next, brutally remove the operand list.  This is safe to do, as there are
-  // no cycles in the graph.
-  for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); I != E; ++I) {
-    SDNode *O = I->Val;
-    O->removeUser(N);
-    
-    // Now that we removed this operand, see if there are no uses of it left.
-    if (O->use_empty())
-      DestroyDeadNode(O);
-  }
-  delete[] N->OperandList;
-  N->OperandList = 0;
-  N->NumOperands = 0;
-
-  // Mark the node as dead.
-  N->MorphNodeTo(65535);
 }
 
 void SelectionDAG::DeleteNode(SDNode *N) {

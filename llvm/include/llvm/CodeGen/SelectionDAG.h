@@ -105,10 +105,8 @@ public:
   void Legalize();
 
   /// RemoveDeadNodes - This method deletes all unreachable nodes in the
-  /// SelectionDAG, including nodes (like loads) that have uses of their token
-  /// chain but no other uses and no side effect.  If a node is passed in as an
-  /// argument, it is used as the seed for node deletion.
-  void RemoveDeadNodes(SDNode *N = 0);
+  /// SelectionDAG.
+  void RemoveDeadNodes();
 
   SDOperand getString(const std::string &Val);
   SDOperand getConstant(uint64_t Val, MVT::ValueType VT);
@@ -447,7 +445,6 @@ private:
   SDNode **FindModifiedNodeSlot(SDNode *N, SDOperand Op1, SDOperand Op2);
   SDNode **FindModifiedNodeSlot(SDNode *N, const std::vector<SDOperand> &Ops);
 
-  void DestroyDeadNode(SDNode *N);
   void DeleteNodeNotInCSEMaps(SDNode *N);
   void setNodeValueTypes(SDNode *N, std::vector<MVT::ValueType> &RetVals);
   void setNodeValueTypes(SDNode *N, MVT::ValueType VT1, MVT::ValueType VT2);

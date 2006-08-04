@@ -349,7 +349,7 @@ void SelectionDAGLegalize::LegalizeDAG() {
   PackedNodes.clear();
 
   // Remove dead nodes now.
-  DAG.RemoveDeadNodes(OldRoot.Val);
+  DAG.RemoveDeadNodes();
 }
 
 
