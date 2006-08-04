@@ -204,4 +204,14 @@ void DeclSpec::Finish(SourceLocation Loc, Diagnostic &D,
       TypeSpecComplex = TSC_unspecified;
     }
   }
+  
+  // If this is C99, require that at least one specifier is present!
+  if (Lang.C99 && (getParsedSpecifiers() & PQ_TypeSpecifier) == 0) {
+    D.Report(Loc, diag::w_type_defaults_to_int);
+    TypeSpecType = TST_int;
+  }
+  
+  // Okay, now we can infer the real type.
+  
+  // 'data definition has no type or storage class'?
 }

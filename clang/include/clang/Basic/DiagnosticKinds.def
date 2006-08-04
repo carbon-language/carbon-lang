@@ -234,6 +234,9 @@ DIAG(err_pp_I_dash_not_supported, ERROR,
 // Parser Diagnostics
 //===----------------------------------------------------------------------===//
 
+DIAG(w_type_defaults_to_int, WARNING,
+     "type defaults to 'int'")
+
 DIAG(ext_empty_source_file, EXTENSION,
      "ISO C forbids an empty source file")
 DIAG(ext_top_level_semi, EXTENSION,
