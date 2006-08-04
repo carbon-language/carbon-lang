@@ -120,9 +120,9 @@ void Preprocessor::AddKeywords() {
   // Add keywords and tokens for the current language.
 #define KEYWORD(NAME, FLAGS) \
   AddKeyword(#NAME, tok::kw_ ## NAME,  \
-             (FLAGS >> C90Shift) & Mask, \
-             (FLAGS >> C99Shift) & Mask, \
-             (FLAGS >> CPPShift) & Mask);
+             ((FLAGS) >> C90Shift) & Mask, \
+             ((FLAGS) >> C99Shift) & Mask, \
+             ((FLAGS) >> CPPShift) & Mask);
 #define ALIAS(NAME, TOK) \
   AddKeyword(NAME, tok::kw_ ## TOK, 0, 0, 0);
 #include "clang/Basic/TokenKinds.def"
