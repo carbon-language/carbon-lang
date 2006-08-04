@@ -665,7 +665,7 @@ elsif (`grep '^$MAKECMD\[^:]*: .*Error' $BuildLog | wc -l` + 0 ||
     `grep '^$MAKECMD: \*\*\*.*Stop.' $BuildLog | wc -l`+0) {
     $BuildStatus = "Error: compilation aborted";
     $BuildError = 1;
-    print  "\n***ERROR BUILDING TREE\n\n";
+    if( $VERBOSE) { print  "\n***ERROR BUILDING TREE\n\n"; }
 }
 if ($BuildError) { $NODEJAGNU=1; }
 
@@ -750,10 +750,6 @@ $DejagnuTestResults = "Dejagnu skipped by user choice." unless $DejagnuTestResul
 $DejagnuTime     = "0.0" unless $DejagnuTime;
 $DejagnuWallTime = "0.0" unless $DejagnuWallTime;
 
-if ($DEBUG) {
-    print $DejagnuTestResults;
-}    
-
 ##############################################################
 #
 # Get warnings from the build
@@ -808,8 +804,10 @@ sub TestDirectory {
 	
 	# Run the programs tests... creating a report.nightly.csv file
 	if (!$NOTEST) {
-		print "$MAKECMD -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv ".
-          "TEST=nightly > $ProgramTestLog 2>&1\n";
+		if( $VERBOSE) { 
+		  print "$MAKECMD -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv ".
+                "TEST=nightly > $ProgramTestLog 2>&1\n"; 
+        }
 		system "$MAKECMD -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv ".
            "TEST=nightly > $ProgramTestLog 2>&1";
 	  $llcbeta_options=`$MAKECMD print-llcbeta-option`;
@@ -840,7 +838,7 @@ sub TestDirectory {
 
 if (!$BuildError) {
 	if ( $VERBOSE ) {
-    print "SingleSource TEST STAGE\n";
+     print "SingleSource TEST STAGE\n";
 	}
 	($SingleSourceProgramsTable, $llcbeta_options) = TestDirectory("SingleSource");
 	WriteFile "$Prefix-singlesourceprogramstable.txt", $SingleSourceProgramsTable;
@@ -977,7 +975,6 @@ $dejagnulog_full = join("\n", @DEJAGNULOG_FULL);
 my $gcc_version_long="";
 if($GCCPATH ne ""){
   $gcc_version_long = `$GCCPATH/gcc --version`;
-  print "$GCCPATH/gcc --version\n";
 }
 else{
   $gcc_version_long = `gcc --version`;
@@ -1049,7 +1046,7 @@ if($TESTING){
 }
 else{
     my $response = SendData $host,$file,\%hash_of_data;
-    print "============================\n$response";
+    if( $VERBOSE) { print "============================\n$response"; }
 }
 
 ##############################################################
