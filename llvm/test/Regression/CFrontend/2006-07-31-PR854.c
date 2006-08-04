@@ -1,4 +1,4 @@
-// RUN: llvm-gcc %s -S -o -
+// RUN: %llvmgcc% %s -S -o -
 // PR854
   struct kernel_symbol {
     unsigned long value;
