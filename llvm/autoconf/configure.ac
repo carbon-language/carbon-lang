@@ -102,39 +102,63 @@ AC_CACHE_CHECK([type of operating system we're going to host on],
                [llvm_cv_os_type],
 [case $host in
   *-*-aix*) 
+    llvm_cv_link_all_option="-Wl,--whole-archive"
+    llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
     llvm_cv_os_type="AIX" 
     llvm_cv_platform_type="Unix" ;;
   *-*-cygwin*) 
+    llvm_cv_link_all_option="-Wl,--whole-archive"
+    llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
     llvm_cv_os_type="Cygwin" 
     llvm_cv_platform_type="Unix" ;;
   *-*-darwin*) 
+    llvm_cv_link_all_option="-Wl,-all_load"
+    llvm_cv_link_all_option="-Wl,-noall_load"
     llvm_cv_os_type="Darwin"
     llvm_cv_platform_type="Unix" ;;
   *-*-freebsd*) 
+    llvm_cv_link_all_option="-Wl,--whole-archive"
+    llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
     llvm_cv_os_type="FreeBSD" 
     llvm_cv_platform_type="Unix" ;;
   *-*-openbsd*) 
+    llvm_cv_link_all_option="-Wl,--whole-archive"
+    llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
     llvm_cv_os_type="OpenBSD" 
     llvm_cv_platform_type="Unix" ;;
   *-*-hpux*) 
+    llvm_cv_link_all_option="-Wl,--whole-archive"
+    llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
     llvm_cv_os_type="HP-UX" 
     llvm_cv_platform_type="Unix" ;;
   *-*-interix*) 
+    llvm_cv_link_all_option="-Wl,--whole-archive"
+    llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
     llvm_cv_os_type="Interix"
     llvm_cv_platform_type="Unix" ;;
   *-*-linux*) 
+    llvm_cv_link_all_option="-Wl,--whole-archive"
+    llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
     llvm_cv_os_type="Linux"
     llvm_cv_platform_type="Unix" ;;
   *-*-solaris*) 
+    llvm_cv_link_all_option="-Wl,-z,allextract"
+    llvm_cv_no_link_all_option="-Wl,-z,defaultextract"
     llvm_cv_os_type="SunOS"
     llvm_cv_platform_type="Unix" ;;
   *-*-win32*) 
+    llvm_cv_link_all_option="-Wl,--whole-archive"
+    llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
     llvm_cv_os_type="Win32"
     llvm_cv_platform_type="Win32" ;;
   *-*-mingw*) 
+    llvm_cv_link_all_option="-Wl,--whole-archive"
+    llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
     llvm_cv_os_type="MingW" 
     llvm_cv_platform_type="Win32" ;;
   *) 
+    llvm_cv_link_all_option="" 
+    llvm_cv_no_link_all_option=""
     llvm_cv_os_type="Unknown" 
     llvm_cv_platform_type="Unknown" ;;
 esac])
@@ -147,6 +171,10 @@ fi
 dnl Set the "OS" Makefile variable based on the platform type so the
 dnl makefile can configure itself to specific build hosts
 AC_SUBST(OS,$llvm_cv_os_type)
+
+dnl Set the LINKALL and NOLINKALL Makefile variables based on the platform
+AC_SUBST(LINKALL,$llvm_cv_link_all_option)
+AC_SUBST(NOLINKALL,$llvm_cv_no_link_all_option)
 
 dnl Set the "LLVM_ON_*" variables based on llvm_cvs_platform_type
 dnl This is used by lib/System to determine the basic kind of implementation

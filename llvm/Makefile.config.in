@@ -233,3 +233,10 @@ EXEEXT = @EXEEXT@
 
 # Things we just assume are "there"
 ECHO := echo
+
+# Get the options for causing archives to link all their content instead of
+# just missing symbols, and the inverse of that. This is used for certain LLVM
+# tools that permit loadable modules. It ensures that the LLVM symbols will be
+# available to those loadable modules.
+LINKALL := @LINKALL@
+NOLINKALL := @NOLINKALL@
