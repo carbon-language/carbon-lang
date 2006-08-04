@@ -157,7 +157,7 @@ KEYWORD(unsigned                    , 0)
 KEYWORD(void                        , 0)
 KEYWORD(volatile                    , 0)
 KEYWORD(while                       , 0)
-KEYWORD(_Bool                       , NOTC90|NOTCPP)  // C99 only
+KEYWORD(_Bool                       , NOTC90|EXTCPP)  // C99 only
 KEYWORD(_Complex                    , NOTC90)         // C99/C++
 KEYWORD(_Imaginary                  , NOTC90|NOTCPP)  // C90 only
 
