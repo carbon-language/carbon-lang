@@ -85,15 +85,16 @@ getLTOLinkageType(GlobalValue *v)
 // Find exeternal symbols referenced by VALUE. This is a recursive function.
 static void
 findExternalRefs(Value *value, std::set<const char *> &references) {
-  
-  if (ConstantExpr *ce = dyn_cast<ConstantExpr>(value))
-    for (unsigned i = 0, e = ce->getNumOperands(); i != e; ++i)
-      findExternalRefs(ce->getOperand(i), references);
-  else if (GlobalValue *gv = dyn_cast<GlobalValue>(value)) {
+
+  if (GlobalValue *gv = dyn_cast<GlobalValue>(value)) {
     LTOLinkageTypes lt = getLTOLinkageType(gv);
     if (lt != LTOInternalLinkage && strncmp (gv->getName().c_str(), "llvm.", 5))
       references.insert(addUnderscore(gv->getName().c_str()));
   }
+  else if (Constant *c = dyn_cast<Constant>(value))
+    // Handle ConstantExpr, ConstantStruct, ConstantArry etc..
+    for (unsigned i = 0, e = c->getNumOperands(); i != e; ++i)
+      findExternalRefs(c->getOperand(i), references);
 }
 
 /// InputFilename is a LLVM bytecode file. Read it using bytecode reader.
@@ -140,6 +141,11 @@ LinkTimeOptimizer::readLLVMObjectFile(const std::string &InputFilename,
       const char *name = addUnderscore(v->getName().c_str());
       LLVMSymbol *newSymbol = new LLVMSymbol(lt,v);
       symbols[name] = newSymbol;
+
+      for (unsigned count = 0, total = v->getNumOperands(); 
+	   count != total; ++count)
+	findExternalRefs(v->getOperand(count), references);
+
     }
   }
   
