@@ -38,6 +38,8 @@ class Parser {
 public:
   Parser(Preprocessor &PP, ParserActions &Actions);
 
+  const LangOptions &getLang() const { return PP.getLangOptions(); }
+  
   // Type forwarding.  All of these are statically 'void*', but they may all be
   // different actual classes based on the actions in place.
   typedef ParserActions::ExprTy ExprTy;

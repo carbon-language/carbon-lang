@@ -22,12 +22,19 @@ using namespace clang;
 
 /// ParseDeclarationSpecifiers
 ///       declaration-specifiers: [C99 6.7]
-///         storage-class-specifier declaration-specifiers [opt] [TODO]
-///             //__thread
+///         storage-class-specifier declaration-specifiers [opt]
 ///         type-specifier declaration-specifiers [opt]
-///         type-qualifier declaration-specifiers [opt]          [TODO]
-/// [C99]   function-specifier declaration-specifiers [opt]      [TODO]
+///         type-qualifier declaration-specifiers [opt]
+/// [C99]   function-specifier declaration-specifiers [opt]
+/// [GNU]   attributes declaration-specifiers [opt]                [TODO]
 ///
+///       storage-class-specifier: [C99 6.7.1]
+///         'typedef'
+///         'extern'
+///         'static'
+///         'auto'
+///         'register'
+/// [GNU]   '__thread'
 ///       type-specifier: [C99 6.7.2]
 ///         'void'
 ///         'char'
@@ -40,23 +47,33 @@ using namespace clang;
 ///         'unsigned'
 /// [C99]   '_Bool'
 /// [C99]   '_Complex'
-/// [C99]   '_Imaginary'
-///         struct-or-union-specifier [TODO]
-///         enum-specifier [TODO]
-///         typedef-name [TODO]
+/// [C99]   '_Imaginary'  // Removed in TC2?
+/// [GNU]   '_Decimal32'
+/// [GNU]   '_Decimal64'
+/// [GNU]   '_Decimal128'
+/// [OBJC]  class-name objc-protocol-refs [opt]   [TODO]
+/// [OBJC]  typedef-name objc-protocol-refs       [TODO]
+/// [OBJC]  objc-protocol-refs                    [TODO]
+///         struct-or-union-specifier             [TODO]
+///         enum-specifier                        [TODO]
+///         typedef-name                          [TODO]
+///       type-qualifier:
+///         const
+///         volatile
+/// [C99]   restrict
 ///       function-specifier: [C99 6.7.4]
 /// [C99]   inline
 ///
 void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
   SourceLocation StartLoc = Tok.getLocation();
   while (1) {
-    bool isInvalid = false;
+    int isInvalid = false;
     const char *PrevSpec = 0;
     switch (Tok.getKind()) {
     default:
       // If this is not a declaration specifier token, we're done reading decl
       // specifiers.  First verify that DeclSpec's are consistent.
-      diag::kind Res = DS.Finish();
+      diag::kind Res = DS.Finish(getLang());
       if (Res != diag::NUM_DIAGNOSTICS)
         Diag(StartLoc, Res);
       return;
@@ -115,6 +132,17 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
     //case tok::kw_struct:
     //case tok::kw_union:
     //case tok::kw_enum:
+    
+    // type-qualifier
+    case tok::kw_const:
+      isInvalid = DS.SetTypeQual(DeclSpec::TQ_const   , PrevSpec, getLang())*2;
+      break;
+    case tok::kw_volatile:
+      isInvalid = DS.SetTypeQual(DeclSpec::TQ_volatile, PrevSpec, getLang())*2;
+      break;
+    case tok::kw_restrict:
+      isInvalid = DS.SetTypeQual(DeclSpec::TQ_restrict, PrevSpec, getLang())*2;
+      break;
       
     // function-specifier
     case tok::kw_inline:
@@ -124,7 +152,10 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
     // If the specifier combination wasn't legal, issue a diagnostic.
     if (isInvalid) {
       assert(PrevSpec && "Method did not return previous specifier!");
-      Diag(Tok, diag::err_invalid_decl_spec_combination, PrevSpec);
+      if (isInvalid == 1)  // Error.
+        Diag(Tok, diag::err_invalid_decl_spec_combination, PrevSpec);
+      else                 // extwarn.
+        Diag(Tok, diag::ext_duplicate_declspec, PrevSpec);
     }
     ConsumeToken();
   }

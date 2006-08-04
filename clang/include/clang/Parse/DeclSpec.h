@@ -18,6 +18,7 @@
 
 namespace llvm {
 namespace clang {
+  class LangOptions;
   
 /// DeclSpec - This class captures information about "declaration specifiers",
 /// which encompases storage-class-specifiers, type-specifiers, type-qualifiers,
@@ -118,11 +119,13 @@ public:
   bool SetTypeSpecType(TST T, const char *&PrevSpec);
   bool SetFuncSpec(FS F, const char *&PrevSpec);
   
+  bool SetTypeQual(TQ T, const char *&PrevSpec, const LangOptions &Lang);
+  
   /// Finish - This does final analysis of the declspec, rejecting things like
   /// "_Imaginary" (lacking an FP type).  This returns a diagnostic to issue or
   /// diag::NUM_DIAGNOSTICS if there is no error.  After calling this method,
   /// DeclSpec is guaranteed self-consistent, even if an error occurred.
-  diag::kind Finish();
+  diag::kind Finish(const LangOptions &Lang);
 };
   
 }  // end namespace clang

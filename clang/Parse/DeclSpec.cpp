@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Parse/Declarations.h"
+#include "clang/Basic/LangOptions.h"
 using namespace llvm;
 using namespace clang;
 
@@ -82,6 +83,15 @@ static bool BadSpecifier(DeclSpec::TST T, const char *&PrevSpec) {
   return true;
 }
 
+static bool BadSpecifier(DeclSpec::TQ T, const char *&PrevSpec) {
+  switch (T) {
+  case DeclSpec::TQ_unspecified: PrevSpec = "unspecified"; break;
+  case DeclSpec::TQ_const:       PrevSpec = "const"; break;
+  case DeclSpec::TQ_restrict:    PrevSpec = "restrict"; break;
+  case DeclSpec::TQ_volatile:    PrevSpec = "volatile"; break;
+  }
+  return true;
+}
 
 /// These methods set the specified attribute of the DeclSpec, but return true
 /// and ignore the request if invalid (e.g. "extern" then "auto" is
@@ -112,6 +122,14 @@ bool DeclSpec::SetTypeSpecType(TST T, const char *&PrevSpec) {
   return false;
 }
 
+bool DeclSpec::SetTypeQual(TQ T, const char *&PrevSpec,
+                           const LangOptions &Lang) {
+  // Duplicates turn into warnings pre-C99.
+  if ((TypeQualifiers & T) && !Lang.C99)
+    return BadSpecifier(T, PrevSpec);
+  TypeQualifiers |= T;
+  return false;
+}
 
 bool DeclSpec::SetFuncSpec(FS F, const char *&PrevSpec) {
   // 'inline inline' is ok.
@@ -123,7 +141,7 @@ bool DeclSpec::SetFuncSpec(FS F, const char *&PrevSpec) {
 /// "_Imaginary" (lacking an FP type).  This returns a diagnostic to issue or
 /// diag::NUM_DIAGNOSTICS if there is no error.  After calling this method,
 /// DeclSpec is guaranteed self-consistent, even if an error occurred.
-diag::kind DeclSpec::Finish() {
+diag::kind DeclSpec::Finish(const LangOptions &Lang) {
   // FIXME: implement this.
   
   return diag::NUM_DIAGNOSTICS;
