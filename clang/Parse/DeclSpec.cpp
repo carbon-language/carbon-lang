@@ -13,6 +13,7 @@
 
 #include "clang/Parse/Declarations.h"
 #include "clang/Basic/LangOptions.h"
+#include "clang/Basic/SourceLocation.h"
 using namespace llvm;
 using namespace clang;
 
@@ -67,19 +68,24 @@ static bool BadSpecifier(DeclSpec::TSS S, const char *&PrevSpec) {
   return true;
 }
 
-static bool BadSpecifier(DeclSpec::TST T, const char *&PrevSpec) {
+static const char *getSpecifierName(DeclSpec::TST T) {
   switch (T) {
-  case DeclSpec::TST_unspecified: PrevSpec = "unspecified"; break;
-  case DeclSpec::TST_void:        PrevSpec = "void"; break;
-  case DeclSpec::TST_char:        PrevSpec = "char"; break;
-  case DeclSpec::TST_int:         PrevSpec = "int"; break;
-  case DeclSpec::TST_float:       PrevSpec = "float"; break;
-  case DeclSpec::TST_double:      PrevSpec = "double"; break;
-  case DeclSpec::TST_bool:        PrevSpec = "_Bool"; break;
-  case DeclSpec::TST_decimal32:   PrevSpec = "_Decimal32"; break;
-  case DeclSpec::TST_decimal64:   PrevSpec = "_Decimal64"; break;
-  case DeclSpec::TST_decimal128:  PrevSpec = "_Decimal128"; break;
+  default: assert(0 && "Unknown typespec!");
+  case DeclSpec::TST_unspecified: return "unspecified";
+  case DeclSpec::TST_void:        return "void";
+  case DeclSpec::TST_char:        return "char";
+  case DeclSpec::TST_int:         return "int";
+  case DeclSpec::TST_float:       return "float";
+  case DeclSpec::TST_double:      return "double";
+  case DeclSpec::TST_bool:        return "_Bool";
+  case DeclSpec::TST_decimal32:   return "_Decimal32";
+  case DeclSpec::TST_decimal64:   return "_Decimal64";
+  case DeclSpec::TST_decimal128:  return "_Decimal128";
   }
+}
+
+static bool BadSpecifier(DeclSpec::TST T, const char *&PrevSpec) {
+  PrevSpec = getSpecifierName(T);
   return true;
 }
 
@@ -143,8 +149,38 @@ bool DeclSpec::SetFuncSpec(FS F, const char *&PrevSpec) {
 /// "_Imaginary" (lacking an FP type).  This returns a diagnostic to issue or
 /// diag::NUM_DIAGNOSTICS if there is no error.  After calling this method,
 /// DeclSpec is guaranteed self-consistent, even if an error occurred.
-diag::kind DeclSpec::Finish(const LangOptions &Lang) {
-  // FIXME: implement this.
+void DeclSpec::Finish(SourceLocation Loc, Diagnostic &D,
+                      const LangOptions &Lang) {
+  // signed/unsigned are not valid with void,float,double,bool,decimal*.
+  if (TypeSpecSign != TSS_unspecified) {
+    if (TypeSpecType == TST_void      || TypeSpecType == TST_float     ||
+        TypeSpecType == TST_double    || TypeSpecType == TST_bool      ||
+        TypeSpecType == TST_decimal32 || TypeSpecType == TST_decimal64 ||
+        TypeSpecType == TST_decimal128) {
+      D.Report(Loc, diag::err_invalid_sign_spec,getSpecifierName(TypeSpecType));
+      TypeSpecSign = TSS_unspecified;
+    }
+  }
   
-  return diag::NUM_DIAGNOSTICS;
+  // Validate the width of the type.
+  switch (TypeSpecWidth) {
+  case TSW_unspecified: break;
+  case TSW_short:    // short int
+  case TSW_longlong: // long long int
+    if (TypeSpecType != TST_unspecified && TypeSpecType != TST_int) {
+      D.Report(Loc, TypeSpecWidth == TSW_short ? diag::err_invalid_short_spec :
+               diag::err_invalid_longlong_spec,
+               getSpecifierName(TypeSpecType));
+      TypeSpecType = TST_int;
+    }
+    break;
+  case TSW_long:  // long double, long int
+    if (TypeSpecType != TST_unspecified && TypeSpecType != TST_int &&
+        TypeSpecType != TST_double) {
+      D.Report(Loc, diag::err_invalid_long_spec,
+               getSpecifierName(TypeSpecType));
+      TypeSpecType = TST_int;
+    }
+  }
+  
 }

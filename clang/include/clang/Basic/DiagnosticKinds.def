@@ -243,5 +243,13 @@ DIAG(ext_duplicate_declspec, EXTENSION,
 
 DIAG(err_invalid_decl_spec_combination, ERROR,
      "cannot combine declaration specifier with previous '%s' specifier")
+DIAG(err_invalid_sign_spec, ERROR,
+     "'%s' cannot be signed or unsigned")
+DIAG(err_invalid_short_spec, ERROR,
+     "'short %s' is invalid")
+DIAG(err_invalid_long_spec, ERROR,
+     "'long %s' is invalid")
+DIAG(err_invalid_longlong_spec, ERROR,
+     "'long long %s' is invalid")
 
 #undef DIAG

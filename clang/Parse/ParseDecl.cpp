@@ -28,7 +28,7 @@ using namespace clang;
 /// [C99]   function-specifier declaration-specifiers [opt]
 /// [GNU]   attributes declaration-specifiers [opt]                [TODO]
 ///
-///       storage-class-specifier: [C99 6.7.1]
+///       storage-class-specifier: [C99 6.7.1]   [TODO]
 ///         'typedef'
 ///         'extern'
 ///         'static'
@@ -73,9 +73,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
     default:
       // If this is not a declaration specifier token, we're done reading decl
       // specifiers.  First verify that DeclSpec's are consistent.
-      diag::kind Res = DS.Finish(getLang());
-      if (Res != diag::NUM_DIAGNOSTICS)
-        Diag(StartLoc, Res);
+      DS.Finish(StartLoc, Diags, getLang());
       return;
     // type-specifiers
     case tok::kw_short:
