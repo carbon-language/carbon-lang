@@ -877,6 +877,7 @@ if (!$BuildError) {
 ##############################################################
 my $dejagnu = ReadFile $DejagnuSum;
 my @DEJAGNU = split "\n", $dejagnu;
+my $dejagnu_test_list="";
 
 my $passes="",
 my $fails="";
@@ -886,12 +887,15 @@ if(!$NODEJAGNU) {
 	for($x=0; $x<@DEJAGNU; $x++){
 		if($DEJAGNU[$x] =~ m/^PASS:/){
 			$passes.="$DEJAGNU[$x]\n";
+			$dejagnu_test_list="$DEJAGNU[$x]\n";
 		}
 		elsif($DEJAGNU[$x] =~ m/^FAIL:/){
 			$fails.="$DEJAGNU[$x]\n";
+			$dejagnu_test_list="$DEJAGNU[$x]\n";
 		}
 		elsif($DEJAGNU[$x] =~ m/^XFAIL:/){
 			$xfails.="$DEJAGNU[$x]\n";
+			$dejagnu_test_list="$DEJAGNU[$x]\n";
 		}
 	}
 }
@@ -1025,7 +1029,7 @@ my %hash_of_data = ('machine_data' => $machine_data,
 	'passing_tests' => $passes,
 	'expfail_tests' => $xfails,
 	'unexpfail_tests' => $fails,
-	'all_tests' => $all_tests,
+	'all_tests' => $dejagnu_test_list,
 	'new_tests' => "",
 	'removed_tests' => "",
 	'dejagnutests_log' => $dejagnutests_log,
