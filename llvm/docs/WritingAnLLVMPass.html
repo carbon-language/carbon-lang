@@ -83,6 +83,11 @@
     <ul>
     <li><a href="#releaseMemory">The <tt>releaseMemory</tt> method</a></li>
     </ul></li>
+  <li><a href="#registering">Registering dynamically loaded passes</a>
+    <ul>
+      <li><a href="#registering_existing">Using existing registries</a></li>
+      <li><a href="#registering_new">Creating new registries</a></li>
+    </ul></li>
   <li><a href="#debughints">Using GDB with dynamically loaded passes</a>
     <ul>
     <li><a href="#breakpoint">Setting a breakpoint in your pass</a></li>
@@ -97,7 +102,8 @@
 </ol>
 
 <div class="doc_author">
-  <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a></p>
+  <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a>, 
+  <a href="mailto:jlaskey@apple.com">Jim Laskey</a></p>
 </div>
 
 <!-- *********************************************************************** -->
@@ -163,7 +169,7 @@ source tree in the <tt>lib/Transforms/Hello</tt> directory.</p>
   copy the following into <tt>Makefile</tt>:</p>
   <hr/>
 
-<pre>
+<div class="doc_code"><pre>
 # Makefile for hello pass
 
 # Path to top level of LLVM heirarchy
@@ -181,7 +187,7 @@ LOADABLE_MODULE = 1
 
 # Include the makefile implementation stuff
 include $(LEVEL)/Makefile.common
-</pre>
+</pre></div>
 
 <p>This makefile specifies that all of the <tt>.cpp</tt> files in the current
 directory are to be compiled and linked together into a
@@ -205,10 +211,10 @@ the pass itself.</p>
 <p>Now that we have a way to compile our new pass, we just have to write it.
 Start out with:</p>
 
-<pre>
+<div class="doc_code"><pre>
 <b>#include</b> "<a href="http://llvm.org/doxygen/Pass_8h-source.html">llvm/Pass.h</a>"
 <b>#include</b> "<a href="http://llvm.org/doxygen/Function_8h-source.html">llvm/Function.h</a>"
-</pre>
+</pre></div>
 
 <p>Which are needed because we are writing a <tt><a
 href="http://llvm.org/doxygen/classllvm_1_1Pass.html">Pass</a></tt>, and
@@ -216,18 +222,18 @@ we are operating on <tt><a
 href="http://llvm.org/doxygen/classllvm_1_1Function.html">Function</a></tt>'s.</p>
 
 <p>Next we have:</p>
-<pre>
+<div class="doc_code"><pre>
 <b>using namespace llvm;</b>
-</pre>
+</pre></div>
 <p>... which is required because the functions from the include files 
 live in the llvm namespace.
 </p>
 
 <p>Next we have:</p>
 
-<pre>
+<div class="doc_code"><pre>
 <b>namespace</b> {
-</pre>
+</pre></div>
 
 <p>... which starts out an anonymous namespace.  Anonymous namespaces are to C++
 what the "<tt>static</tt>" keyword is to C (at global scope).  It makes the
@@ -237,9 +243,9 @@ information.</p>
 
 <p>Next, we declare our pass itself:</p>
 
-<pre>
+<div class="doc_code"><pre>
   <b>struct</b> Hello : <b>public</b> <a href="#FunctionPass">FunctionPass</a> {
-</pre><p>
+</pre></div><p>
 
 <p>This declares a "<tt>Hello</tt>" class that is a subclass of <tt><a
 href="http://llvm.org/doxygen/classllvm_1_1FunctionPass.html">FunctionPass</a></tt>.
@@ -248,13 +254,13 @@ href="#passtype">later</a>, but for now, know that <a
 href="#FunctionPass"><tt>FunctionPass</tt></a>'s operate a function at a
 time.</p>
 
-<pre>
+<div class="doc_code"><pre>
     <b>virtual bool</b> <a href="#runOnFunction">runOnFunction</a>(Function &amp;F) {
       std::cerr &lt;&lt; "<i>Hello: </i>" &lt;&lt; F.getName() &lt;&lt; "\n";
       <b>return false</b>;
     }
   };  <i>// end of struct Hello</i>
-</pre>
+</pre></div>
 
 <p>We declare a "<a href="#runOnFunction"><tt>runOnFunction</tt></a>" method,
 which overloads an abstract virtual method inherited from <a
@@ -262,10 +268,10 @@ href="#FunctionPass"><tt>FunctionPass</tt></a>.  This is where we are supposed
 to do our thing, so we just print out our message with the name of each
 function.</p>
 
-<pre>
+<div class="doc_code"><pre>
   RegisterOpt&lt;Hello&gt; X("<i>hello</i>", "<i>Hello World Pass</i>");
 }  <i>// end of anonymous namespace</i>
-</pre>
+</pre></div>
 
 <p>Lastly, we register our class <tt>Hello</tt>, giving it a command line
 argument "<tt>hello</tt>", and a name "<tt>Hello World Pass</tt>".  There are
@@ -275,7 +281,7 @@ depending on what it is to be used for.  For "optimizations" we use the
 
 <p>As a whole, the <tt>.cpp</tt> file looks like:</p>
 
-<pre>
+<div class="doc_code"><pre>
 <b>#include</b> "<a href="http://llvm.org/doxygen/Pass_8h-source.html">llvm/Pass.h</a>"
 <b>#include</b> "<a href="http://llvm.org/doxygen/Function_8h-source.html">llvm/Function.h</a>"
 
@@ -291,7 +297,7 @@ depending on what it is to be used for.  For "optimizations" we use the
   
   RegisterOpt&lt;Hello&gt; X("<i>hello</i>", "<i>Hello World Pass</i>");
 }
-</pre>
+</pre></div>
 
 <p>Now that it's all together, compile the file with a simple "<tt>gmake</tt>"
 command in the local directory and you should get a new
@@ -320,12 +326,12 @@ LLVM.  We can now run the bytecode file (<tt>hello.bc</tt>) for the program
 through our transformation like this (or course, any bytecode file will
 work):</p>
 
-<pre>
+<div class="doc_code"><pre>
 $ opt -load ../../../Debug/lib/Hello.so -hello &lt; hello.bc &gt; /dev/null
 Hello: __main
 Hello: puts
 Hello: main
-</pre>
+</pre></div>
 
 <p>The '<tt>-load</tt>' option specifies that '<tt>opt</tt>' should load your
 pass as a shared object, which makes '<tt>-hello</tt>' a valid command line
@@ -337,7 +343,7 @@ interesting way, we just throw away the result of <tt>opt</tt> (sending it to
 <p>To see what happened to the other string you registered, try running
 <tt>opt</tt> with the <tt>--help</tt> option:</p>
 
-<pre>
+<div class="doc_code"><pre>
 $ opt -load ../../../Debug/lib/Hello.so --help
 OVERVIEW: llvm .bc -&gt; .bc modular optimizer
 
@@ -354,7 +360,7 @@ OPTIONS:
     -inline         - Function Integration/Inlining
     -instcombine    - Combine redundant instructions
 ...
-</pre>
+</pre></div>
 
 <p>The pass name get added as the information string for your pass, giving some
 documentation to users of <tt>opt</tt>.  Now that you have a working pass, you
@@ -365,7 +371,7 @@ line option (<tt>--time-passes</tt>) that allows you to get information about
 the execution time of your pass along with the other passes you queue up.  For
 example:</p>
 
-<pre>
+<div class="doc_code"><pre>
 $ opt -load ../../../Debug/lib/Hello.so -hello -time-passes &lt; hello.bc &gt; /dev/null
 Hello: __main
 Hello: puts
@@ -381,7 +387,7 @@ Hello: main
    0.0000 (  0.0%)   0.0000 (  0.0%)   0.0000 (  0.0%)   0.0013 (  2.7%)  Module Verifier
  <b>  0.0000 (  0.0%)   0.0000 (  0.0%)   0.0000 (  0.0%)   0.0033 (  6.9%)  Hello World Pass</b>
    0.0100 (100.0%)   0.0100 (100.0%)   0.0200 (100.0%)   0.0479 (100.0%)  TOTAL
-</pre>
+</pre></div>
 
 <p>As you can see, our implementation above is pretty fast :).  The additional
 passes listed are automatically inserted by the '<tt>opt</tt>' tool to verify
@@ -467,9 +473,9 @@ following signature:</p>
 
 <div class="doc_text">
 
-<pre>
+<div class="doc_code"><pre>
   <b>virtual bool</b> runOnModule(Module &amp;M) = 0;
-</pre>
+</pre></div>
 
 <p>The <tt>runOnModule</tt> method performs the interesting work of the pass.
 It should return true if the module was modified by the transformation and
@@ -535,9 +541,9 @@ false if they didn't.</p>
 
 <div class="doc_text">
 
-<pre>
+<div class="doc_code"><pre>
   <b>virtual bool</b> doInitialization(Module &amp;M);
-</pre>
+</pre></div>
 
 <p>The <tt>doIninitialize</tt> method is allowed to do most of the things that
 <tt>CallGraphSCCPass</tt>'s are not allowed to do.  They can add and remove
@@ -556,9 +562,9 @@ fast).</p>
 
 <div class="doc_text">
 
-<pre>
+<div class="doc_code"><pre>
   <b>virtual bool</b> runOnSCC(const std::vector&lt;CallGraphNode *&gt; &amp;SCCM) = 0;
-</pre>
+</pre></div>
 
 <p>The <tt>runOnSCC</tt> method performs the interesting work of the pass, and
 should return true if the module was modified by the transformation, false
@@ -574,9 +580,9 @@ otherwise.</p>
 
 <div class="doc_text">
 
-<pre>
+<div class="doc_code"><pre>
   <b>virtual bool</b> doFinalization(Module &amp;M);
-</pre>
+</pre></div>
 
 <p>The <tt>doFinalization</tt> method is an infrequently used method that is
 called when the pass framework has finished calling <a
@@ -625,9 +631,9 @@ should return true if they modified the program, or false if they didn't.</p>
 
 <div class="doc_text">
 
-<pre>
+<div class="doc_code"><pre>
   <b>virtual bool</b> doInitialization(Module &amp;M);
-</pre>
+</pre></div>
 
 <p>The <tt>doIninitialize</tt> method is allowed to do most of the things that
 <tt>FunctionPass</tt>'s are not allowed to do.  They can add and remove
@@ -653,9 +659,9 @@ free functions that it needs, adding prototypes to the module if necessary.</p>
 
 <div class="doc_text">
 
-<pre>
+<div class="doc_code"><pre>
   <b>virtual bool</b> runOnFunction(Function &amp;F) = 0;
-</pre><p>
+</pre></div><p>
 
 <p>The <tt>runOnFunction</tt> method must be implemented by your subclass to do
 the transformation or analysis work of your pass.  As usual, a true value should
@@ -671,9 +677,9 @@ be returned if the function is modified.</p>
 
 <div class="doc_text">
 
-<pre>
+<div class="doc_code"><pre>
   <b>virtual bool</b> doFinalization(Module &amp;M);
-</pre>
+</pre></div>
 
 <p>The <tt>doFinalization</tt> method is an infrequently used method that is
 called when the pass framework has finished calling <a
@@ -719,9 +725,9 @@ href="#FunctionPass"><tt>FunctionPass</tt></a>'s have, but also have the followi
 
 <div class="doc_text">
 
-<pre>
+<div class="doc_code"><pre>
   <b>virtual bool</b> doInitialization(Function &amp;F);
-</pre>
+</pre></div>
 
 <p>The <tt>doIninitialize</tt> method is allowed to do most of the things that
 <tt>BasicBlockPass</tt>'s are not allowed to do, but that
@@ -740,9 +746,9 @@ fast).</p>
 
 <div class="doc_text">
 
-<pre>
+<div class="doc_code"><pre>
   <b>virtual bool</b> runOnBasicBlock(BasicBlock &amp;BB) = 0;
-</pre>
+</pre></div>
 
 <p>Override this function to do the work of the <tt>BasicBlockPass</tt>.  This
 function is not allowed to inspect or modify basic blocks other than the
@@ -759,9 +765,9 @@ if the basic block is modified.</p>
 
 <div class="doc_text">
 
-<pre>
+<div class="doc_code"><pre>
   <b>virtual bool</b> doFinalization(Function &amp;F);
-</pre>
+</pre></div>
 
 <p>The <tt>doFinalization</tt> method is an infrequently used method that is
 called when the pass framework has finished calling <a
@@ -805,9 +811,9 @@ data)</li>
 
 <div class="doc_text">
 
-<pre>
+<div class="doc_code"><pre>
   <b>virtual bool</b> runOnMachineFunction(MachineFunction &amp;MF) = 0;
-</pre>
+</pre></div>
 
 <p><tt>runOnMachineFunction</tt> can be considered the main entry point of a
 <tt>MachineFunctionPass</tt>; that is, you should override this method to do the
@@ -877,9 +883,9 @@ should implement the virtual <tt>print</tt> method:</p>
 
 <div class="doc_text">
 
-<pre>
+<div class="doc_code"><pre>
   <b>virtual void</b> print(std::ostream &amp;O, <b>const</b> Module *M) <b>const</b>;
-</pre>
+</pre></div>
 
 <p>The <tt>print</tt> method must be implemented by "analyses" in order to print
 a human readable version of the analysis results.  This is useful for debugging
@@ -927,9 +933,9 @@ having any prerequisite passes, and invalidating <b>all</b> other passes.</p>
 
 <div class="doc_text">
 
-<pre>
+<div class="doc_code"><pre>
   <b>virtual void</b> getAnalysisUsage(AnalysisUsage &amp;Info) <b>const</b>;
-</pre>
+</pre></div>
 
 <p>By implementing the <tt>getAnalysisUsage</tt> method, the required and
 invalidated sets may be specified for your transformation.  The implementation
@@ -1008,24 +1014,24 @@ the fact that it hacks on the CFG.
 
 <div class="doc_text">
 
-<pre>
+<div class="doc_code"><pre>
   <i>// This is an example implementation from an analysis, which does not modify
   // the program at all, yet has a prerequisite.</i>
   <b>void</b> <a href="http://llvm.org/doxygen/classllvm_1_1PostDominanceFrontier.html">PostDominanceFrontier</a>::getAnalysisUsage(AnalysisUsage &amp;AU) <b>const</b> {
     AU.setPreservesAll();
     AU.addRequired&lt;<a href="http://llvm.org/doxygen/classllvm_1_1PostDominatorTree.html">PostDominatorTree</a>&gt;();
   }
-</pre>
+</pre></div>
 
 <p>and:</p>
 
-<pre>
+<div class="doc_code"><pre>
   <i>// This example modifies the program, but does not modify the CFG</i>
   <b>void</b> <a href="http://llvm.org/doxygen/structLICM.html">LICM</a>::getAnalysisUsage(AnalysisUsage &amp;AU) <b>const</b> {
     AU.setPreservesCFG();
     AU.addRequired&lt;<a href="http://llvm.org/doxygen/classllvm_1_1LoopInfo.html">LoopInfo</a>&gt;();
   }
-</pre>
+</pre></div>
 
 </div>
 
@@ -1042,12 +1048,12 @@ required with the <a href="#getAnalysisUsage"><tt>getAnalysisUsage</tt></a>
 method.  It takes a single template argument that specifies which pass class you
 want, and returns a reference to that pass.  For example:</p>
 
-<pre>
+<div class="doc_code"><pre>
    bool LICM::runOnFunction(Function &amp;F) {
      LoopInfo &amp;LI = getAnalysis&lt;LoopInfo&gt;();
      ...
    }
-</pre>
+</pre></div>
 
 <p>This method call returns a reference to the pass desired.  You may get a
 runtime assertion failure if you attempt to get an analysis that you did not
@@ -1062,13 +1068,13 @@ If your pass is capable of updating analyses if they exist (e.g.,
 <tt>getAnalysisToUpdate</tt> method, which returns a pointer to the analysis if
 it is active.  For example:</p>
 
-<pre>
+<div class="doc_code"><pre>
   ...
   if (DominatorSet *DS = getAnalysisToUpdate&lt;DominatorSet&gt;()) {
     <i>// A DominatorSet is active.  This code will update it.</i>
   }
   ...
-</pre>
+</pre></div>
 
 </div>
 
@@ -1163,14 +1169,14 @@ an analysis should be registered, with a human readable name provided for it.
 Unlike registration of passes, there is no command line argument to be specified
 for the Analysis Group Interface itself, because it is "abstract":</p>
 
-<pre>
+<div class="doc_code"><pre>
   <b>static</b> RegisterAnalysisGroup&lt;<a href="http://llvm.org/doxygen/classllvm_1_1AliasAnalysis.html">AliasAnalysis</a>&gt; A("<i>Alias Analysis</i>");
-</pre>
+</pre></div>
 
 <p>Once the analysis is registered, passes can declare that they are valid
 implementations of the interface by using the following code:</p>
 
-<pre>
+<div class="doc_code"><pre>
 <b>namespace</b> {
   //<i> Analysis Group implementations <b>must</b> be registered normally...</i>
   RegisterOpt&lt;FancyAA&gt;
@@ -1179,7 +1185,7 @@ implementations of the interface by using the following code:</p>
   //<i> Declare that we implement the AliasAnalysis interface</i>
   RegisterAnalysisGroup&lt;<a href="http://llvm.org/doxygen/classllvm_1_1AliasAnalysis.html">AliasAnalysis</a>, FancyAA&gt; C;
 }
-</pre>
+</pre></div>
 
 <p>This just shows a class <tt>FancyAA</tt> that is registered normally, then
 uses the <tt>RegisterAnalysisGroup</tt> template to "join" the <tt><a
@@ -1188,7 +1194,7 @@ analysis group.  Every implementation of an analysis group should join using
 this template.  A single pass may join multiple different analysis groups with
 no problem.</p>
 
-<pre>
+<div class="doc_code"><pre>
 <b>namespace</b> {
   //<i> Analysis Group implementations <b>must</b> be registered normally...</i>
   RegisterOpt&lt;<a href="http://llvm.org/doxygen/structBasicAliasAnalysis.html">BasicAliasAnalysis</a>&gt;
@@ -1197,7 +1203,7 @@ no problem.</p>
   //<i> Declare that we implement the AliasAnalysis interface</i>
   RegisterAnalysisGroup&lt;<a href="http://llvm.org/doxygen/classllvm_1_1AliasAnalysis.html">AliasAnalysis</a>, <a href="http://llvm.org/doxygen/structBasicAliasAnalysis.html">BasicAliasAnalysis</a>, <b>true</b>&gt; E;
 }
-</pre>
+</pre></div>
 
 <p>Here we show how the default implementation is specified (using the extra
 argument to the <tt>RegisterAnalysisGroup</tt> template).  There must be exactly
@@ -1290,7 +1296,7 @@ option, just type '<tt>opt --help-hidden</tt>').</p>
 how our <a href="#basiccode">Hello World</a> pass interacts with other passes.
 Lets try it out with the <tt>gcse</tt> and <tt>licm</tt> passes:</p>
 
-<pre>
+<div class="doc_code"><pre>
 $ opt -load ../../../Debug/lib/Hello.so -gcse -licm --debug-pass=Structure &lt; hello.bc &gt; /dev/null
 Module Pass Manager
   Function Pass Manager
@@ -1308,7 +1314,7 @@ Module Pass Manager
 --  Module Verifier
   Bytecode Writer
 --Bytecode Writer
-</pre>
+</pre></div>
 
 <p>This output shows us when passes are constructed and when the analysis
 results are known to be dead (prefixed with '<tt>--</tt>').  Here we see that
@@ -1327,7 +1333,7 @@ passes.</p>
 <p>Lets see how this changes when we run the <a href="#basiccode">Hello
 World</a> pass in between the two passes:</p>
 
-<pre>
+<div class="doc_code"><pre>
 $ opt -load ../../../Debug/lib/Hello.so -gcse -hello -licm --debug-pass=Structure &lt; hello.bc &gt; /dev/null
 Module Pass Manager
   Function Pass Manager
@@ -1352,23 +1358,23 @@ Module Pass Manager
 Hello: __main
 Hello: puts
 Hello: main
-</pre>
+</pre></div>
 
 <p>Here we see that the <a href="#basiccode">Hello World</a> pass has killed the
 Dominator Set pass, even though it doesn't modify the code at all!  To fix this,
 we need to add the following <a
 href="#getAnalysisUsage"><tt>getAnalysisUsage</tt></a> method to our pass:</p>
 
-<pre>
+<div class="doc_code"><pre>
     <i>// We don't modify the program, so we preserve all analyses</i>
     <b>virtual void</b> getAnalysisUsage(AnalysisUsage &amp;AU) <b>const</b> {
       AU.setPreservesAll();
     }
-</pre>
+</pre></div>
 
 <p>Now when we run our pass, we get this output:</p>
 
-<pre>
+<div class="doc_code"><pre>
 $ opt -load ../../../Debug/lib/Hello.so -gcse -hello -licm --debug-pass=Structure &lt; hello.bc &gt; /dev/null
 Pass Arguments:  -gcse -hello -licm
 Module Pass Manager
@@ -1392,7 +1398,7 @@ Module Pass Manager
 Hello: __main
 Hello: puts
 Hello: main
-</pre>
+</pre></div>
 
 <p>Which shows that we don't accidentally invalidate dominator information
 anymore, and therefore do not have to compute it twice.</p>
@@ -1406,9 +1412,9 @@ anymore, and therefore do not have to compute it twice.</p>
 
 <div class="doc_text">
 
-<pre>
+<div class="doc_code"><pre>
   <b>virtual void</b> releaseMemory();
-</pre>
+</pre></div>
 
 <p>The <tt>PassManager</tt> automatically determines when to compute analysis
 results, and how long to keep them around for.  Because the lifetime of the pass
@@ -1422,6 +1428,139 @@ amount of state (for use by another pass which "requires" your pass and uses the
 <tt>releaseMEmory</tt> to, well, release the memory allocated to maintain this
 internal state.  This method is called after the <tt>run*</tt> method for the
 class, before the next call of <tt>run*</tt> in your pass.</p>
+
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="registering">Registering dynamically loaded passes</a>
+</div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p><i>Size matters</i> when constructing production quality tools using llvm, 
+both for the purposes of distribution, and for regulating the resident code size
+when running on the target system. Therefore, it becomes desirable to
+selectively use some passes, while omitting others and maintain the flexibility
+to change configurations later on. You want to be able to do all this, and,
+provide feedback to the user. This is where pass registration comes into
+play.</p>
+
+<p>The fundamental mechanisms for pass registration are the
+<tt>MachinePassRegistry</tt> class and subclasses of
+<tt>MachinePassRegistryNode</tt>.</p>
+
+<p>An instance of <tt>MachinePassRegistry</tt> is used to maintain a list of
+<tt>MachinePassRegistryNode</tt> objects.  This instance maintains the list and
+communicates additions and deletions to the command line interface.</p>
+
+<p>An instance of <tt>MachinePassRegistryNode</tt> subclass is used to maintain
+information provided about a particular pass.  This information includes the
+command line name, the command help string and the address of the function used
+to create an instance of the pass.  A global static constructor of one of these
+instances <i>registers</i> with a corresponding <tt>MachinePassRegistry</tt>,
+the static destructor <i>unregisters</i>. Thus a pass that is statically linked
+in the tool will be registered at start up. A dynamically loaded pass will
+register on load and unregister at unload.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsection">
+  <a name="registering_existing">Using existing registries</a>
+</div>
+
+<div class="doc_text">
+
+<p>There are predefined registries to track instruction scheduling
+(<tt>RegisterScheduler</tt>) and register allocation (<tt>RegisterRegAlloc</tt>)
+machine passes.  Here we will describe how to <i>register</i> a register
+allocator machine pass.</p>
+
+<p>Implement your register allocator machine pass.  In your register allocator
+.cpp file add the following include;</p>
+
+<div class="doc_code"><pre>
+  #include ""llvm/CodeGen/RegAllocRegistry.h""
+</pre></div>
+
+<p>Also in your register allocator .cpp file, define a creator function in the
+form; </p>
+
+<div class="doc_code"><pre>
+  FunctionPass *createMyRegisterAllocator() {
+    return new MyRegisterAllocator();
+  }
+</pre></div>
+
+<p>Note that the signature of this function should match the type of
+<tt>RegisterRegAlloc::FunctionPassCtor</tt>.  In the same file add the
+"installing" declaration, in the form;</p>
+
+<div class="doc_code"><pre>
+  static RegisterRegAlloc myRegAlloc("myregalloc",
+    "  my register allocator help string",
+    createMyRegisterAllocator);
+</pre></div>
+
+<p>Note the two spaces prior to the help string produces a tidy result on the
+--help query.</p>
+
+<div class="doc_code"><pre>
+$ llc --help
+  ...
+  -regalloc                    - Register allocator to use: (default = linearscan)
+    =linearscan                -   linear scan register allocator
+    =local                     -   local register allocator
+    =simple                    -   simple register allocator
+    =myregalloc                -   my register allocator help string
+  ...
+</pre></div>
+
+<p>And that's it.  The user is now free to use <tt>-regalloc=myregalloc</tt> as
+an option.  Registering instruction schedulers is similar except use the
+<tt>RegisterRegAlloc</tt> class.  Note that the
+<tt>RegisterRegAlloc::FunctionPassCtor</tt> is significantly different from
+<tt>RegisterRegAlloc::FunctionPassCtor</tt>.</p>
+
+<p>To force the load/linking of your register allocator into the llc/lli tools,
+add your creator function's global declaration to "Passes.h" and add a "pseudo"
+call line to <tt>llvm/Codegen/LinkAllCodegenComponents.h</tt>.</p>
+
+</div>
+
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsection">
+  <a name="registering_new">Creating new registries</a>
+</div>
+
+<div class="doc_text">
+
+<p>The easiest way to get started is to clone one of the existing registries; we
+recommend <tt>llvm/CodeGen/RegAllocRegistry.h</tt>.  The key things to modify
+are the class name and the <tt>FunctionPassCtor</tt> type.</p>
+
+<p>Then you need to declare the registry.  Example: if your pass registry is
+<tt>RegisterMyPasses</tt> then define;</p>
+
+<div class="doc_code"><pre>
+MachinePassRegistry RegisterMyPasses::Registry;
+</pre></div>
+
+<p>And finally, declare the command line option for your passes.  Example:</p> 
+
+<div class="doc_code"><pre>
+  cl::opt&lt;RegisterMyPasses::FunctionPassCtor, false,
+          RegisterPassParser&lt;RegisterMyPasses&gt &gt
+  MyPassOpt("mypass",
+            cl::init(&amp;createDefaultMyPass),
+            cl::desc("my pass option help")); 
+</pre></div>
+
+<p>Here the command option is "mypass", with createDefaultMyPass as the default
+creator.</p>
 
 </div>
 
@@ -1454,7 +1593,7 @@ on that.</p>
 
 <p>First thing you do is start <tt>gdb</tt> on the <tt>opt</tt> process:</p>
 
-<pre>
+<div class="doc_code"><pre>
 $ <b>gdb opt</b>
 GNU gdb 5.0
 Copyright 2000 Free Software Foundation, Inc.
@@ -1464,7 +1603,7 @@ Type "show copying" to see the conditions.
 There is absolutely no warranty for GDB.  Type "show warranty" for details.
 This GDB was configured as "sparc-sun-solaris2.6"...
 (gdb)
-</pre>
+</pre></div>
 
 <p>Note that <tt>opt</tt> has a lot of debugging information in it, so it takes
 time to load.  Be patient.  Since we cannot set a breakpoint in our pass yet
@@ -1474,7 +1613,7 @@ object.  The most foolproof way of doing this is to set a breakpoint in
 <tt>PassManager::run</tt> and then run the process with the arguments you
 want:</p>
 
-<pre>
+<div class="doc_code"><pre>
 (gdb) <b>break PassManager::run</b>
 Breakpoint 1 at 0x2413bc: file Pass.cpp, line 70.
 (gdb) <b>run test.bc -load $(LLVMTOP)/llvm/Debug/lib/[libname].so -[passoption]</b>
@@ -1482,7 +1621,7 @@ Starting program: opt test.bc -load $(LLVMTOP)/llvm/Debug/lib/[libname].so -[pas
 Breakpoint 1, PassManager::run (this=0xffbef174, M=@0x70b298) at Pass.cpp:70
 70      bool PassManager::run(Module &amp;M) { return PM-&gt;run(M); }
 (gdb)
-</pre>
+</pre></div>
 
 <p>Once the <tt>opt</tt> stops in the <tt>PassManager::run</tt> method you are
 now free to set breakpoints in your pass so that you can trace through execution
