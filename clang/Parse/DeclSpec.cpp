@@ -113,12 +113,14 @@ bool DeclSpec::SetTypeSpecComplex(TSC C, const char *&PrevSpec) {
 bool DeclSpec::SetTypeSpecSign(TSS S, const char *&PrevSpec) {
   if (TypeSpecSign != TSS_unspecified)
     return BadSpecifier(TypeSpecSign, PrevSpec);
+  TypeSpecSign = S;
   return false;
 }
 
 bool DeclSpec::SetTypeSpecType(TST T, const char *&PrevSpec) {
   if (TypeSpecType != TST_unspecified)
     return BadSpecifier(TypeSpecType, PrevSpec);
+  TypeSpecType = T;
   return false;
 }
 
