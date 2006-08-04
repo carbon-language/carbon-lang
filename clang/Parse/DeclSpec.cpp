@@ -207,7 +207,7 @@ void DeclSpec::Finish(SourceLocation Loc, Diagnostic &D,
   
   // If this is C99, require that at least one specifier is present!
   if (Lang.C99 && (getParsedSpecifiers() & PQ_TypeSpecifier) == 0) {
-    D.Report(Loc, diag::w_type_defaults_to_int);
+    D.Report(Loc, diag::w_type_defaults_to_int);    // C99 2.7.2p2.
     TypeSpecType = TST_int;
   }
   
