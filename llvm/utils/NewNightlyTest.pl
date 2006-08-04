@@ -885,15 +885,15 @@ if(!$NODEJAGNU) {
 	for($x=0; $x<@DEJAGNU; $x++){
 		if($DEJAGNU[$x] =~ m/^PASS:/){
 			$passes.="$DEJAGNU[$x]\n";
-			$dejagnu_test_list="$DEJAGNU[$x]\n";
+			$dejagnu_test_list.="$DEJAGNU[$x]\n";
 		}
 		elsif($DEJAGNU[$x] =~ m/^FAIL:/){
 			$fails.="$DEJAGNU[$x]\n";
-			$dejagnu_test_list="$DEJAGNU[$x]\n";
+			$dejagnu_test_list.="$DEJAGNU[$x]\n";
 		}
 		elsif($DEJAGNU[$x] =~ m/^XFAIL:/){
 			$xfails.="$DEJAGNU[$x]\n";
-			$dejagnu_test_list="$DEJAGNU[$x]\n";
+			$dejagnu_test_list.="$DEJAGNU[$x]\n";
 		}
 	}
 }
