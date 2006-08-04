@@ -185,7 +185,7 @@ if ($CONFIGUREARGS !~ /--disable-jit/) {
 }
 
 
-if (@ARGV != 0 and @ARGV != 3){
+if (@ARGV != 0 and @ARGV != 3 and $VERBOSE){
 	foreach $x (@ARGV){
 		print "$x\n";
 	}
@@ -376,7 +376,7 @@ sub GetDejagnuTestResults { # (filename, log)
     my $firstline;
     $/ = "\n"; #Make sure we're going line at a time.
 
-    print "DEJAGNU TEST RESULTS:\n";
+    if( $VERBOSE) { print "DEJAGNU TEST RESULTS:\n"; }
 
     if (open SRCHFILE, $filename) {
     # Process test results
@@ -394,10 +394,10 @@ sub GetDejagnuTestResults { # (filename, log)
 			$first_list = 0;
 			$should_break = 1;
 			push(@lines, "$_\n");
-			print "  $_\n";
+			if( $VERBOSE) { print "  $_\n"; }
 		    } else {
 			push(@lines, "$_\n");
-			print "  $_\n";
+			if( $VERBOSE) { print "  $_\n"; }
 		    }
 		} #elsif ( m/Summary/ ) {
 		#    if ( $first_list ) {
@@ -414,7 +414,7 @@ sub GetDejagnuTestResults { # (filename, log)
 		#} 
 		elsif ( $readingsum ) {
 		    push(@lines,"$_\n");
-		    print "  $_\n";
+		    if( $VERBOSE) { print "  $_\n"; }
 		}
 
 	    }
@@ -460,7 +460,7 @@ sub SendData{
     $send.= "Content-length: $length\n\n";
     $send.= "$content";
 
-    print SOCK $send;
+    #print SOCK $send;
     my $result;
     while(<SOCK>){
         $result  .= $_;
