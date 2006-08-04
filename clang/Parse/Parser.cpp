@@ -1,4 +1,4 @@
-//===--- Parser.cpp - C Language Family Parser ----------------------------===//
+//===--- Parse.cpp - C Language Family Parser -----------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,16 +12,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Parse/Parser.h"
-#include "clang/Basic/Diagnostic.h"
+#include "clang/Parse/Declarations.h"
 using namespace llvm;
 using namespace clang;
 
 Parser::Parser(Preprocessor &pp, ParserActions &actions)
   : PP(pp), Actions(actions), Diags(PP.getDiagnostics()) {}
 
-void Parser::Diag(const LexerToken &Tok, unsigned DiagID,
+void Parser::Diag(SourceLocation Loc, unsigned DiagID,
                   const std::string &Msg) {
-  Diags.Report(Tok.getLocation(), DiagID, Msg);
+  Diags.Report(Loc, DiagID, Msg);
 }
 
 //===----------------------------------------------------------------------===//
@@ -89,8 +89,9 @@ void Parser::ParseExternalDeclaration() {
 ///
 void Parser::ParseDeclarationOrFunctionDefinition() {
   // Parse the common declaration-specifiers piece.
-  // NOTE: this can not be missing for C99 declaration's.
-  ParseDeclarationSpecifiers();
+  // NOTE: this can not be missing for C99 'declaration's.
+  DeclSpec DS;
+  ParseDeclarationSpecifiers(DS);
   
   // Parse the common declarator piece.
   ParseDeclarator();

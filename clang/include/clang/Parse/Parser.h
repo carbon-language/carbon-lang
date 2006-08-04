@@ -20,6 +20,7 @@
 namespace llvm {
 namespace clang {
   class ParserActions;
+  class DeclSpec;
 
 /// Parser - This implements a parser for the C family of languages.  After
 /// parsing units of the grammar, productions are invoked to handle whatever has
@@ -47,11 +48,13 @@ public:
   
 
   // Diagnostics.
-  void Diag(const LexerToken &Tok, unsigned DiagID, const std::string &Msg="");
-  void Diag(unsigned DiagID, const std::string &Msg="") {
+  void Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg = "");
+  void Diag(const LexerToken &Tok, unsigned DiagID, const std::string &M = "") {
+    Diag(Tok.getLocation(), DiagID, M);
+  }
+  void Diag(unsigned DiagID, const std::string &Msg = "") {
     Diag(Tok, DiagID, Msg);
   }
-
   
   /// ConsumeToken - Consume the current 'peek token', lexing a new one and
   /// returning the token kind.
@@ -69,7 +72,7 @@ private:
   
   //===--------------------------------------------------------------------===//
   // C99 6.7: Declarations.
-  void ParseDeclarationSpecifiers();
+  void ParseDeclarationSpecifiers(DeclSpec &DS);
   
   void ParseDeclarator();
   void ParseTypeQualifierListOpt();

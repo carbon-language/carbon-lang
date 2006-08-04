@@ -1,4 +1,4 @@
-//===--- ParserActions.cpp - C Language Family Default Parser Actions -----===//
+//===--- Actions.cpp - C Language Family Default Parser Actions -----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

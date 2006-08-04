@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Parse/Parser.h"
+#include "clang/Parse/Declarations.h"
 using namespace llvm;
 using namespace clang;
 
@@ -22,6 +23,7 @@ using namespace clang;
 /// ParseDeclarationSpecifiers
 ///       declaration-specifiers: [C99 6.7]
 ///         storage-class-specifier declaration-specifiers [opt] [TODO]
+///             //__thread
 ///         type-specifier declaration-specifiers [opt]
 ///         type-qualifier declaration-specifiers [opt]          [TODO]
 /// [C99]   function-specifier declaration-specifiers [opt]      [TODO]
@@ -42,34 +44,92 @@ using namespace clang;
 ///         struct-or-union-specifier [TODO]
 ///         enum-specifier [TODO]
 ///         typedef-name [TODO]
-
-void Parser::ParseDeclarationSpecifiers() {
+///       function-specifier: [C99 6.7.4]
+/// [C99]   inline
+///
+void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
+  SourceLocation StartLoc = Tok.getLocation();
   while (1) {
+    bool isInvalid = false;
+    const char *PrevSpec = 0;
     switch (Tok.getKind()) {
-    default: return;  // Not a declaration specifier token.
+    default:
+      // If this is not a declaration specifier token, we're done reading decl
+      // specifiers.  First verify that DeclSpec's are consistent.
+      diag::kind Res = DS.Finish();
+      if (Res != diag::NUM_DIAGNOSTICS)
+        Diag(StartLoc, Res);
+      return;
     // type-specifiers
-    case tok::kw_void:       //  SetTypeSpecifier(); break;
+    case tok::kw_short:
+      isInvalid = DS.SetTypeSpecWidth(DeclSpec::TSW_short, PrevSpec);
+      break;
+    case tok::kw_long:
+      if (DS.TypeSpecWidth != DeclSpec::TSW_long) {
+        isInvalid = DS.SetTypeSpecWidth(DeclSpec::TSW_long, PrevSpec);
+      } else {
+        DS.TypeSpecWidth = DeclSpec::TSW_unspecified;
+        isInvalid = DS.SetTypeSpecWidth(DeclSpec::TSW_longlong, PrevSpec);
+      }
+      break;
+    case tok::kw_signed:
+      isInvalid = DS.SetTypeSpecSign(DeclSpec::TSS_signed, PrevSpec);
+      break;
+    case tok::kw_unsigned:
+      isInvalid = DS.SetTypeSpecSign(DeclSpec::TSS_unsigned, PrevSpec);
+      break;
+    case tok::kw__Complex:
+      isInvalid = DS.SetTypeSpecComplex(DeclSpec::TSC_complex, PrevSpec);
+      break;
+    case tok::kw__Imaginary:
+      isInvalid = DS.SetTypeSpecComplex(DeclSpec::TSC_imaginary, PrevSpec);
+      break;
+    case tok::kw_void:
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_void, PrevSpec);
+      break;
     case tok::kw_char:
-    case tok::kw_short:     // Width
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_char, PrevSpec);
+      break;
     case tok::kw_int:
-    case tok::kw_long:      // Width
-    case tok::kw_float:     // Type specifier
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_int, PrevSpec);
+      break;
+    case tok::kw_float:
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_float, PrevSpec);
+      break;
     case tok::kw_double:
-    case tok::kw_signed:    // Signedness
-    case tok::kw_unsigned:  // Signedness
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_double, PrevSpec);
+      break;
     case tok::kw__Bool:
-    case tok::kw__Complex:   // Complexity
-    case tok::kw__Imaginary: // Complexity
-                             // FIXME: Read these, handle them!
-      ConsumeToken();
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_bool, PrevSpec);
+      break;
+    case tok::kw__Decimal32:
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_decimal32, PrevSpec);
+      break;
+    case tok::kw__Decimal64:
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_decimal64, PrevSpec);
+      break;
+    case tok::kw__Decimal128:
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_decimal128, PrevSpec);
       break;
       
     //case tok::kw_struct:
     //case tok::kw_union:
     //case tok::kw_enum:
+      
+    // function-specifier
+    case tok::kw_inline:
+      isInvalid = DS.SetFuncSpec(DeclSpec::FS_inline, PrevSpec);
+      break;
     }
+    // If the specifier combination wasn't legal, issue a diagnostic.
+    if (isInvalid) {
+      assert(PrevSpec && "Method did not return previous specifier!");
+      Diag(Tok, diag::err_invalid_decl_spec_combination, PrevSpec);
+    }
+    ConsumeToken();
   }
 }
+
 
 /// ParseDeclarator
 ///       declarator: [C99 6.7.5]

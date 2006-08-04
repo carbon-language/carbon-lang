@@ -239,4 +239,8 @@ DIAG(ext_empty_source_file, EXTENSION,
 DIAG(ext_top_level_semi, EXTENSION,
      "ISO C does not allow extra ';' outside of a function")
 
+
+DIAG(err_invalid_decl_spec_combination, ERROR,
+     "cannot combine declaration specifier with previous '%s' specifier")
+
 #undef DIAG
