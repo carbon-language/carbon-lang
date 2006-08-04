@@ -240,6 +240,10 @@ DIAG(ext_top_level_semi, EXTENSION,
      "ISO C does not allow extra ';' outside of a function")
 DIAG(ext_duplicate_declspec, EXTENSION,
      "duplicate '%s' declaration specifier")
+DIAG(ext_plain_complex, EXTENSION,
+     "ISO C does not support plain '_Complex' meaning '_Complex double'")
+DIAG(ext_integer_complex, EXTENSION,
+     "ISO C does not support complex integer types")
 
 DIAG(err_invalid_decl_spec_combination, ERROR,
      "cannot combine declaration specifier with previous '%s' specifier")
@@ -251,5 +255,7 @@ DIAG(err_invalid_long_spec, ERROR,
      "'long %s' is invalid")
 DIAG(err_invalid_longlong_spec, ERROR,
      "'long long %s' is invalid")
+DIAG(err_invalid_complex_spec, ERROR,
+     "'_Complex %s' is invalid")
 
 #undef DIAG

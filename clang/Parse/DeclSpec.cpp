@@ -151,23 +151,27 @@ bool DeclSpec::SetFuncSpec(FS F, const char *&PrevSpec) {
 /// DeclSpec is guaranteed self-consistent, even if an error occurred.
 void DeclSpec::Finish(SourceLocation Loc, Diagnostic &D,
                       const LangOptions &Lang) {
-  // signed/unsigned are not valid with void,float,double,bool,decimal*.
+  // Check the type specifier components first.
+
+  // signed/unsigned are only valid with int/char.
   if (TypeSpecSign != TSS_unspecified) {
-    if (TypeSpecType == TST_void      || TypeSpecType == TST_float     ||
-        TypeSpecType == TST_double    || TypeSpecType == TST_bool      ||
-        TypeSpecType == TST_decimal32 || TypeSpecType == TST_decimal64 ||
-        TypeSpecType == TST_decimal128) {
+    if (TypeSpecType == TST_unspecified)
+      TypeSpecType = TST_int; // unsigned -> unsigned int, signed -> signed int.
+    else if (TypeSpecType != TST_int && TypeSpecType != TST_char) {
       D.Report(Loc, diag::err_invalid_sign_spec,getSpecifierName(TypeSpecType));
+      // signed double -> double.
       TypeSpecSign = TSS_unspecified;
     }
   }
-  
+
   // Validate the width of the type.
   switch (TypeSpecWidth) {
   case TSW_unspecified: break;
   case TSW_short:    // short int
   case TSW_longlong: // long long int
-    if (TypeSpecType != TST_unspecified && TypeSpecType != TST_int) {
+    if (TypeSpecType == TST_unspecified)
+      TypeSpecType = TST_int; // short -> short int, long long -> long long int.
+    else if (TypeSpecType != TST_int) {
       D.Report(Loc, TypeSpecWidth == TSW_short ? diag::err_invalid_short_spec :
                diag::err_invalid_longlong_spec,
                getSpecifierName(TypeSpecType));
@@ -175,12 +179,29 @@ void DeclSpec::Finish(SourceLocation Loc, Diagnostic &D,
     }
     break;
   case TSW_long:  // long double, long int
-    if (TypeSpecType != TST_unspecified && TypeSpecType != TST_int &&
-        TypeSpecType != TST_double) {
+    if (TypeSpecType == TST_unspecified)
+      TypeSpecType = TST_int;  // long -> long int.
+    else if (TypeSpecType != TST_int && TypeSpecType != TST_double) {
       D.Report(Loc, diag::err_invalid_long_spec,
                getSpecifierName(TypeSpecType));
       TypeSpecType = TST_int;
     }
+    break;
   }
   
+  // FIXME: if the implementation does not implement _Complex or _Imaginary,
+  // disallow their use.  Need information about the backend.
+  if (TypeSpecComplex != TSC_unspecified) {
+    if (TypeSpecType == TST_unspecified) {
+      D.Report(Loc, diag::ext_plain_complex);
+      TypeSpecType = TST_double;   // _Complex -> _Complex double.
+    } else if (TypeSpecType == TST_int || TypeSpecType == TST_char) {
+      // Note that GCC doesn't support _Complex _Bool.
+      D.Report(Loc, diag::ext_integer_complex);
+    } else if (TypeSpecType != TST_float && TypeSpecType != TST_double) {
+      D.Report(Loc, diag::err_invalid_complex_spec, 
+               getSpecifierName(TypeSpecType));
+      TypeSpecComplex = TSC_unspecified;
+    }
+  }
 }
