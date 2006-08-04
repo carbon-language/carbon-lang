@@ -29,7 +29,7 @@ sub find_all_cycles;
 # Read our dependency information.
 while (<>) {
     chomp;
-    my ($module, $dependency_str) = /^([^:]*): ?(.*)$/;
+    my ($module, $dependency_str) = /^\s*([^:]+):\s*(.*)\s*$/;
     die "Malformed data: $_" unless defined $dependency_str;
     my @dependencies = split(/ /, $dependency_str);
     $DEPS{$module} = \@dependencies;

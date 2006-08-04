@@ -275,7 +275,7 @@ sub load_dependencies {
     $DEPENDENCIES_LOADED = 1;
     while (<DATA>) {
         # Parse our line.
-        my ($libs, $deps) = /^\s*([^:]+):\s+(.*)\s*$/;
+        my ($libs, $deps) = /^\s*([^:]+):\s*(.*)\s*$/;
         die "Malformed dependency data" unless defined $deps;
         my @libs = split(' ', $libs);
         my @deps = split(' ', $deps);
