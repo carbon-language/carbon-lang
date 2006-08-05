@@ -201,7 +201,9 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
 void Parser::ParseDeclarator() {
   while (Tok.getKind() == tok::star) {  // '*' -> pointer.
     ConsumeToken();  // Eat the *.
-    ParseTypeQualifierListOpt();
+    DeclSpec DS;
+    ParseTypeQualifierListOpt(DS);
+    // TODO: do something with DS.
   }
   
   ParseDirectDeclarator();
@@ -214,17 +216,39 @@ void Parser::ParseDeclarator() {
 ///         type-qualifier-list type-qualifier
 /// [GNU]   type-qualifier-list attributes     [TODO]
 ///
-void Parser::ParseTypeQualifierListOpt() {
+void Parser::ParseTypeQualifierListOpt(DeclSpec &DS) {
+  SourceLocation StartLoc = Tok.getLocation();
   while (1) {
+    int isInvalid = false;
+    const char *PrevSpec = 0;
+
     switch (Tok.getKind()) {
-    default: break;
+    default:
+      // If this is not a declaration specifier token, we're done reading decl
+      // specifiers.  First verify that DeclSpec's are consistent.
+      DS.Finish(StartLoc, Diags, getLang());
+      return;
       // TODO: attributes.
     case tok::kw_const:
+      isInvalid = DS.SetTypeQual(DeclSpec::TQ_const   , PrevSpec, getLang())*2;
+      break;
     case tok::kw_volatile:
+      isInvalid = DS.SetTypeQual(DeclSpec::TQ_volatile, PrevSpec, getLang())*2;
+      break;
     case tok::kw_restrict:
-      ConsumeToken();
+      isInvalid = DS.SetTypeQual(DeclSpec::TQ_restrict, PrevSpec, getLang())*2;
       break;
     }
+    
+    // If the specifier combination wasn't legal, issue a diagnostic.
+    if (isInvalid) {
+      assert(PrevSpec && "Method did not return previous specifier!");
+      if (isInvalid == 1)  // Error.
+        Diag(Tok, diag::err_invalid_decl_spec_combination, PrevSpec);
+      else                 // extwarn.
+        Diag(Tok, diag::ext_duplicate_declspec, PrevSpec);
+    }
+    ConsumeToken();
   }
 }
 
@@ -234,7 +258,11 @@ void Parser::ParseTypeQualifierListOpt() {
 ///         identifier
 ///         '(' declarator ')'
 /// [GNU]   '(' attributes declarator ')'
-///         direct-declarator array-declarator
+/// [C90]   direct-declarator [ constant-expression[opt] ] 
+/// [C99]   direct-declarator [ type-qual-list[opt] assignment-expr[opt] ]
+/// [C99]   direct-declarator [ 'static' type-qual-list[opt] assignment-expr ]
+/// [C99]   direct-declarator [ type-qual-list 'static' assignment-expr ]
+/// [C99]   direct-declarator [ type-qual-list[opt] * ]
 ///         direct-declarator '(' parameter-type-list ')'
 ///         direct-declarator '(' identifier-list[opt] ')'
 /// [GNU]   direct-declarator '(' parameter-forward-declarations
@@ -259,10 +287,22 @@ void Parser::ParseTypeQualifierListOpt() {
 ///         identifier-list ',' identifier
 ///
 void Parser::ParseDirectDeclarator() {
+  // Parse the first direct-declarator seen.
   if (Tok.getKind() == tok::identifier) {
     ConsumeToken();
-    return;
+  } else if (0 && Tok.getKind() == tok::l_paren) {
+    //char (*X);
+    //int (*XX)(void);
   }
-  // FIXME: missing most stuff.
-  assert(0 && "Unknown token!");
+  
+  while (1) {
+    if (Tok.getKind() == tok::l_paren) {
+      assert(0 && "Unimp!");
+    } else if (Tok.getKind() == tok::l_square) {
+      assert(0 && "Unimp!");
+    } else {
+      break;
+    }
+  }
+  
 }

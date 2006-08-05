@@ -77,7 +77,7 @@ void Parser::ParseExternalDeclaration() {
 ///                 compound-statement                           [TODO]
 ///       declaration: [C99 6.7]
 ///         declaration-specifiers init-declarator-list[opt] ';' [TODO]
-/// [!C99]  init-declarator-list ';' [TODO]
+/// [!C99]  init-declarator-list ';'                             [TODO]
 /// [OMP]   threadprivate-directive                              [TODO]
 ///
 ///       init-declarator-list: [C99 6.7]
@@ -96,10 +96,33 @@ void Parser::ParseDeclarationOrFunctionDefinition() {
   // Parse the common declarator piece.
   ParseDeclarator();
 
-  // If the declarator was a function type...
-  
+  // If the declarator was a function type... handle it.
+
+  // must be: decl-spec[opt] declarator init-declarator-list
+  // Parse declarator '=' initializer.
+  if (Tok.getKind() == tok::equal)
+    assert(0 && "cannot handle initializer yet!");
+
+  while (Tok.getKind() != tok::semi) {
+    if (Tok.getKind() != tok::comma && Tok.getKind() != tok::semi) {
+      // FIXME: skip toe nd of block or statement
+      Diag(Tok, diag::err_parse_error);
+      ConsumeToken();
+    }
+    
+    // Consume the comma.
+    ConsumeToken();
+    
+    // Parse the common declarator piece.
+    ParseDeclarator();
+    
+    // declarator '=' initializer
+    if (Tok.getKind() == tok::equal)
+      assert(0 && "cannot handle initializer yet!");
+    
+    
+  }
   switch (Tok.getKind()) {
-  case tok::equal:   // must be: decl-spec[opt] declarator init-declarator-list
   case tok::comma:   // must be: decl-spec[opt] declarator init-declarator-list
   default:
     assert(0 && "unimp!");

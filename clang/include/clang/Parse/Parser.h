@@ -77,7 +77,7 @@ private:
   void ParseDeclarationSpecifiers(DeclSpec &DS);
   
   void ParseDeclarator();
-  void ParseTypeQualifierListOpt();
+  void ParseTypeQualifierListOpt(DeclSpec &DS);
   void ParseDirectDeclarator();
   
 };

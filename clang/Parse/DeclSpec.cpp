@@ -224,12 +224,6 @@ void DeclSpec::Finish(SourceLocation Loc, Diagnostic &D,
     }
   }
   
-  // If this is C99, require that at least one specifier is present!
-  if (Lang.C99 && (getParsedSpecifiers() & PQ_TypeSpecifier) == 0) {
-    D.Report(Loc, diag::w_type_defaults_to_int);    // C99 2.7.2p2.
-    TypeSpecType = TST_int;
-  }
-  
   // Verify __thread.
   if (SCS_thread_specified) {
     if (StorageClassSpec == SCS_unspecified) {

@@ -250,6 +250,8 @@ DIAG(ext_integer_complex, EXTENSION,
 DIAG(ext_thread_before, EXTENSION,
      "'__thread' before 'static'")
 
+DIAG(err_parse_error, ERROR,
+     "parse error")
 DIAG(err_invalid_decl_spec_combination, ERROR,
      "cannot combine with previous '%s' declaration specifier")
 DIAG(err_invalid_sign_spec, ERROR,
