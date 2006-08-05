@@ -21,22 +21,24 @@ namespace llvm {
 namespace clang {
   class ParserActions;
   class DeclSpec;
+  class Scope;
 
 /// Parser - This implements a parser for the C family of languages.  After
 /// parsing units of the grammar, productions are invoked to handle whatever has
 /// been read.
 ///
 class Parser {
-  // SYMBOL TABLE
   Preprocessor &PP;
   ParserActions &Actions;
   Diagnostic &Diags;
+  Scope *CurScope;
   
   /// Tok - The current token we are peeking head.  All parsing methods assume
   /// that this is valid.
   LexerToken Tok;
 public:
   Parser(Preprocessor &PP, ParserActions &Actions);
+  ~Parser();
 
   const LangOptions &getLang() const { return PP.getLangOptions(); }
   

@@ -13,11 +13,20 @@
 
 #include "clang/Parse/Parser.h"
 #include "clang/Parse/Declarations.h"
+#include "clang/Parse/Scope.h"
 using namespace llvm;
 using namespace clang;
 
 Parser::Parser(Preprocessor &pp, ParserActions &actions)
-  : PP(pp), Actions(actions), Diags(PP.getDiagnostics()) {}
+  : PP(pp), Actions(actions), Diags(PP.getDiagnostics()) {
+  // Create the global scope, install it as the current scope.
+  CurScope = new Scope(0);
+}
+
+Parser::~Parser() {
+  delete CurScope;
+}
+
 
 void Parser::Diag(SourceLocation Loc, unsigned DiagID,
                   const std::string &Msg) {
