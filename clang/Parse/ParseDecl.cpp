@@ -28,7 +28,7 @@ using namespace clang;
 /// [C99]   function-specifier declaration-specifiers [opt]
 /// [GNU]   attributes declaration-specifiers [opt]                [TODO]
 ///
-///       storage-class-specifier: [C99 6.7.1]   [TODO]
+///       storage-class-specifier: [C99 6.7.1]
 ///         'typedef'
 ///         'extern'
 ///         'static'
@@ -51,6 +51,7 @@ using namespace clang;
 /// [GNU]   '_Decimal32'
 /// [GNU]   '_Decimal64'
 /// [GNU]   '_Decimal128'
+/// [GNU]   typeof-specifier                      [TODO]
 /// [OBJC]  class-name objc-protocol-refs [opt]   [TODO]
 /// [OBJC]  typedef-name objc-protocol-refs       [TODO]
 /// [OBJC]  objc-protocol-refs                    [TODO]
@@ -75,6 +76,34 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       // specifiers.  First verify that DeclSpec's are consistent.
       DS.Finish(StartLoc, Diags, getLang());
       return;
+      
+    // storage-class-specifier
+    case tok::kw_typedef:
+      isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_typedef, PrevSpec);
+      break;
+    case tok::kw_extern:
+      if (DS.SCS_thread_specified)
+        Diag(Tok, diag::ext_thread_before, "extern");
+      isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_extern, PrevSpec);
+      break;
+    case tok::kw_static:
+      if (DS.SCS_thread_specified)
+        Diag(Tok, diag::ext_thread_before, "static");
+      isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_static, PrevSpec);
+      break;
+    case tok::kw_auto:
+      isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_auto, PrevSpec);
+      break;
+    case tok::kw_register:
+      isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_register, PrevSpec);
+      break;
+    case tok::kw___thread:
+      if (DS.SCS_thread_specified)
+        isInvalid = 2, PrevSpec = "__thread";
+      else
+        DS.SCS_thread_specified = true;
+      break;
+      
     // type-specifiers
     case tok::kw_short:
       isInvalid = DS.SetTypeSpecWidth(DeclSpec::TSW_short, PrevSpec);
@@ -144,7 +173,8 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       
     // function-specifier
     case tok::kw_inline:
-      isInvalid = DS.SetFuncSpec(DeclSpec::FS_inline, PrevSpec);
+      // 'inline inline' is ok.
+      DS.FS_inline_specified = true;
       break;
     }
     // If the specifier combination wasn't legal, issue a diagnostic.

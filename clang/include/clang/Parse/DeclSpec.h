@@ -36,6 +36,9 @@ public:
     SCS_register
   } StorageClassSpec : 3;
   
+  // storage-class-specifier
+  bool SCS_thread_specified : 1;
+  
   // type-specifier
   enum TSW {
     TSW_unspecified,
@@ -79,10 +82,7 @@ public:
   unsigned TypeQualifiers : 3;  // Bitwise OR of typequals.
   
   // function-specifier
-  enum FS {
-    FS_unspecified,
-    FS_inline
-  } FuncSpec : 1;
+  bool FS_inline_specified : 1;
   
   // attributes.
   // FIXME: implement declspec attributes.
@@ -98,12 +98,13 @@ public:
   
   DeclSpec()
     : StorageClassSpec(SCS_unspecified),
+      SCS_thread_specified(false),
       TypeSpecWidth(TSW_unspecified),
       TypeSpecComplex(TSC_unspecified),
       TypeSpecSign(TSS_unspecified),
       TypeSpecType(TST_unspecified),
       TypeQualifiers(TSS_unspecified),
-      FuncSpec(FS_unspecified) {
+      FS_inline_specified(false) {
   }
   
   /// getParsedSpecifiers - Return a bitmask of which flavors of specifiers this
@@ -114,11 +115,11 @@ public:
   /// These methods set the specified attribute of the DeclSpec, but return true
   /// and ignore the request if invalid (e.g. "extern" then "auto" is
   /// specified).  The name of the previous specifier is returned in prevspec.
+  bool SetStorageClassSpec(SCS S, const char *&PrevSpec);
   bool SetTypeSpecWidth(TSW W, const char *&PrevSpec);
   bool SetTypeSpecComplex(TSC C, const char *&PrevSpec);
   bool SetTypeSpecSign(TSS S, const char *&PrevSpec);
   bool SetTypeSpecType(TST T, const char *&PrevSpec);
-  bool SetFuncSpec(FS F, const char *&PrevSpec);
   
   bool SetTypeQual(TQ T, const char *&PrevSpec, const LangOptions &Lang);
   

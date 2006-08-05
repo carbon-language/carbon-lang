@@ -21,7 +21,8 @@ using namespace clang;
 ///
 unsigned DeclSpec::getParsedSpecifiers() const {
   unsigned Res = 0;
-  if (StorageClassSpec != SCS_unspecified)
+  if (StorageClassSpec != SCS_unspecified ||
+      SCS_thread_specified)
     Res |= PQ_StorageClassSpecifier;
   
   if (TypeQualifiers   != TQ_unspecified)
@@ -33,11 +34,27 @@ unsigned DeclSpec::getParsedSpecifiers() const {
       TypeSpecType     != TST_unspecified)
     Res |= PQ_TypeSpecifier;
   
-  if (FuncSpec         != FS_unspecified)
+  if (FS_inline_specified)
     Res |= PQ_FunctionSpecifier;
   return Res;
 }
 
+static const char *getSpecifierName(DeclSpec::SCS S) {
+  switch (S) {
+  default: assert(0 && "Unknown typespec!");
+  case DeclSpec::SCS_unspecified: return "unspecified";
+  case DeclSpec::SCS_typedef:     return "typedef";
+  case DeclSpec::SCS_extern:      return "extern";
+  case DeclSpec::SCS_static:      return "static";
+  case DeclSpec::SCS_auto:        return "auto";
+  case DeclSpec::SCS_register:    return "register";
+  }
+}
+
+static bool BadSpecifier(DeclSpec::SCS S, const char *&PrevSpec) {
+  PrevSpec = getSpecifierName(S);
+  return true;
+}
 
 static bool BadSpecifier(DeclSpec::TSW W, const char *&PrevSpec) {
   switch (W) {
@@ -99,6 +116,14 @@ static bool BadSpecifier(DeclSpec::TQ T, const char *&PrevSpec) {
   return true;
 }
 
+bool DeclSpec::SetStorageClassSpec(SCS S, const char *&PrevSpec) {
+  if (StorageClassSpec != SCS_unspecified)
+    return BadSpecifier(StorageClassSpec, PrevSpec);
+  StorageClassSpec = S;
+  return false;
+}
+
+
 /// These methods set the specified attribute of the DeclSpec, but return true
 /// and ignore the request if invalid (e.g. "extern" then "auto" is
 /// specified).
@@ -136,12 +161,6 @@ bool DeclSpec::SetTypeQual(TQ T, const char *&PrevSpec,
   if ((TypeQualifiers & T) && !Lang.C99)
     return BadSpecifier(T, PrevSpec);
   TypeQualifiers |= T;
-  return false;
-}
-
-bool DeclSpec::SetFuncSpec(FS F, const char *&PrevSpec) {
-  // 'inline inline' is ok.
-  FuncSpec = F;
   return false;
 }
 
@@ -196,7 +215,7 @@ void DeclSpec::Finish(SourceLocation Loc, Diagnostic &D,
       D.Report(Loc, diag::ext_plain_complex);
       TypeSpecType = TST_double;   // _Complex -> _Complex double.
     } else if (TypeSpecType == TST_int || TypeSpecType == TST_char) {
-      // Note that GCC doesn't support _Complex _Bool.
+      // Note that this intentionally doesn't include _Complex _Bool.
       D.Report(Loc, diag::ext_integer_complex);
     } else if (TypeSpecType != TST_float && TypeSpecType != TST_double) {
       D.Report(Loc, diag::err_invalid_complex_spec, 
@@ -212,6 +231,19 @@ void DeclSpec::Finish(SourceLocation Loc, Diagnostic &D,
   }
   
   // Okay, now we can infer the real type.
+  
+  
+  // Verify __thread.
+  if (SCS_thread_specified) {
+    if (StorageClassSpec == SCS_unspecified) {
+      StorageClassSpec = SCS_extern; // '__thread int' -> 'extern __thread int'
+    } else if (StorageClassSpec != SCS_extern &&
+               StorageClassSpec != SCS_static) {
+      D.Report(Loc, diag::err_invalid_thread_spec,
+               getSpecifierName(StorageClassSpec));
+      SCS_thread_specified = false;
+    }
+  }
   
   // 'data definition has no type or storage class'?
 }

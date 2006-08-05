@@ -247,6 +247,8 @@ DIAG(ext_plain_complex, EXTENSION,
      "ISO C does not support plain '_Complex' meaning '_Complex double'")
 DIAG(ext_integer_complex, EXTENSION,
      "ISO C does not support complex integer types")
+DIAG(ext_thread_before, EXTENSION,
+     "'__thread' before 'static'")
 
 DIAG(err_invalid_decl_spec_combination, ERROR,
      "cannot combine with previous '%s' declaration specifier")
@@ -260,5 +262,7 @@ DIAG(err_invalid_longlong_spec, ERROR,
      "'long long %s' is invalid")
 DIAG(err_invalid_complex_spec, ERROR,
      "'_Complex %s' is invalid")
+DIAG(err_invalid_thread_spec, ERROR,
+     "'__thread %s' is invalid")
 
 #undef DIAG
