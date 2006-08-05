@@ -230,9 +230,6 @@ void DeclSpec::Finish(SourceLocation Loc, Diagnostic &D,
     TypeSpecType = TST_int;
   }
   
-  // Okay, now we can infer the real type.
-  
-  
   // Verify __thread.
   if (SCS_thread_specified) {
     if (StorageClassSpec == SCS_unspecified) {
@@ -244,6 +241,11 @@ void DeclSpec::Finish(SourceLocation Loc, Diagnostic &D,
       SCS_thread_specified = false;
     }
   }
+
+  // Okay, now we can infer the real type.
+  // FIXME: infer real type.
+  
+  // FIXME: return "auto function" and other bad things based on the real type.
   
   // 'data definition has no type or storage class'?
 }

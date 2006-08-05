@@ -45,6 +45,9 @@ using namespace clang;
 ///         'double'
 ///         'signed'
 ///         'unsigned'
+///         struct-or-union-specifier             [TODO]
+///         enum-specifier                        [TODO]
+///         typedef-name                          [TODO]
 /// [C99]   '_Bool'
 /// [C99]   '_Complex'
 /// [C99]   '_Imaginary'  // Removed in TC2?
@@ -55,9 +58,6 @@ using namespace clang;
 /// [OBJC]  class-name objc-protocol-refs [opt]   [TODO]
 /// [OBJC]  typedef-name objc-protocol-refs       [TODO]
 /// [OBJC]  objc-protocol-refs                    [TODO]
-///         struct-or-union-specifier             [TODO]
-///         enum-specifier                        [TODO]
-///         typedef-name                          [TODO]
 ///       type-qualifier:
 ///         const
 ///         volatile
