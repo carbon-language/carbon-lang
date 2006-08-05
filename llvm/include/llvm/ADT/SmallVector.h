@@ -211,7 +211,7 @@ private:
     
     Begin = NewElts;
     End = NewElts+CurSize;
-    Capacity = Begin+NewCapacity*2;
+    Capacity = Begin+NewCapacity;
   }
 };
 
