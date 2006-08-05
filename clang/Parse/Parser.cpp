@@ -92,10 +92,16 @@ void Parser::ParseDeclarationOrFunctionDefinition() {
   // NOTE: this can not be missing for C99 'declaration's.
   DeclSpec DS;
   ParseDeclarationSpecifiers(DS);
+
+  // C99 6.7.2.3p6: Handle "struct-or-union identifier;", "enum { X };"
+  if (Tok.getKind() == tok::semi)
+    assert(0 && "Unimp!");
+  
   
   // Parse the common declarator piece.
   ParseDeclarator();
 
+  
   // If the declarator was a function type... handle it.
 
   // must be: decl-spec[opt] declarator init-declarator-list
@@ -103,13 +109,7 @@ void Parser::ParseDeclarationOrFunctionDefinition() {
   if (Tok.getKind() == tok::equal)
     assert(0 && "cannot handle initializer yet!");
 
-  while (Tok.getKind() != tok::semi) {
-    if (Tok.getKind() != tok::comma && Tok.getKind() != tok::semi) {
-      // FIXME: skip toe nd of block or statement
-      Diag(Tok, diag::err_parse_error);
-      ConsumeToken();
-    }
-    
+  while (Tok.getKind() == tok::comma) {
     // Consume the comma.
     ConsumeToken();
     
@@ -122,13 +122,16 @@ void Parser::ParseDeclarationOrFunctionDefinition() {
     
     
   }
-  switch (Tok.getKind()) {
-  case tok::comma:   // must be: decl-spec[opt] declarator init-declarator-list
-  default:
-    assert(0 && "unimp!");
-  case tok::semi:
+  
+  if (Tok.getKind() == tok::semi) {
     ConsumeToken();
-    break;
+  } else {
+    Diag(Tok, diag::err_parse_error);
+    // FIXME: skip to end of block or statement
+    while (Tok.getKind() != tok::semi && Tok.getKind() != tok::eof)
+      ConsumeToken();
+    if (Tok.getKind() == tok::semi)
+      ConsumeToken();
   }
 }
 
