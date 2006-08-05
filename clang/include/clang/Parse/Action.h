@@ -17,10 +17,7 @@
 namespace llvm {
 namespace clang {
 
-/// Parser - This implements a parser for the C family of languages.  After
-/// parsing units of the grammar, productions are invoked to handle whatever has
-/// been read.  The default parser actions are all noops.
-///
+/// ParserActions - 
 class ParserActions {
   // SYMBOL TABLE
 public:
