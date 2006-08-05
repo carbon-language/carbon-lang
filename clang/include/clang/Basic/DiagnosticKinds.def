@@ -249,7 +249,7 @@ DIAG(ext_integer_complex, EXTENSION,
      "ISO C does not support complex integer types")
 
 DIAG(err_invalid_decl_spec_combination, ERROR,
-     "cannot combine declaration specifier with previous '%s' specifier")
+     "cannot combine with previous '%s' declaration specifier")
 DIAG(err_invalid_sign_spec, ERROR,
      "'%s' cannot be signed or unsigned")
 DIAG(err_invalid_short_spec, ERROR,
