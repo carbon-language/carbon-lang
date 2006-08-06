@@ -557,16 +557,33 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
   }
   
   // Handle "direct-declarator [ type-qual-list[opt] * ]".
-  // Check that the ']' token is present to avoid incorrectly parsing
-  // expressions starting with '*' as [*].
   bool isStar = false;
-  if (Tok.getKind() == tok::star /*FIXME: && nexttok == tok::r_square*/) {
-    if (StaticLoc.isValid())
-      Diag(StaticLoc, diag::err_unspecified_vla_size_with_static);
-    StaticLoc = SourceLocation();  // Drop the static.
-    isStar = true;
+  if (Tok.getKind() == tok::star) {
+    // Remember the '*' token, in case we have to un-get it.
+    LexerToken StarTok = Tok;
     ConsumeToken();
-  } else if (Tok.getKind() != tok::r_square) {
+
+    // Check that the ']' token is present to avoid incorrectly parsing
+    // expressions starting with '*' as [*].
+    if (Tok.getKind() == tok::r_square) {
+      if (StaticLoc.isValid())
+        Diag(StaticLoc, diag::err_unspecified_vla_size_with_static);
+      StaticLoc = SourceLocation();  // Drop the static.
+      isStar = true;
+      ConsumeToken();
+    } else {
+      // Otherwise, the * must have been some expression (such as '*ptr') that
+      // started an assign-expr.  We already consumed the token, but now we need
+      // to reparse it.
+      // FIXME: There are two options here: first, we could push 'StarTok' and
+      // Tok back into the preprocessor as a macro expansion context, so they
+      // will be read again.  Second, we could parse the rest of the assign-expr
+      // then apply the dereference.
+      assert(0 && "FIXME: int X[*p] unimplemented");
+    }
+  }
+  
+  if (!isStar && Tok.getKind() != tok::r_square) {
     // Parse the assignment-expression now.
     assert(0 && "expr parsing not impl yet!");
   }
