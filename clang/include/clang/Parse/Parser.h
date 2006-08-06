@@ -68,6 +68,8 @@ public:
     assert(Tok.getKind() != tok::string_literal &&
            Tok.getKind() != tok::l_paren &&
            Tok.getKind() != tok::r_paren &&
+           Tok.getKind() != tok::l_square &&
+           Tok.getKind() != tok::r_square &&
            "Should consume special tokens with Consume*Token");
     PP.Lex(Tok);
   }
@@ -80,6 +82,14 @@ public:
     PP.Lex(Tok);
   }
 
+  /// ConsumeSquare -  This consume method keeps the bracket count up-to-date.
+  ///
+  void ConsumeSquare() {
+    assert((Tok.getKind() == tok::l_square ||
+            Tok.getKind() == tok::r_square) && "wrong consume method");
+    PP.Lex(Tok);
+  }
+  
 private:
   //===--------------------------------------------------------------------===//
   // C99 6.9: External Definitions.
@@ -96,7 +106,7 @@ private:
   void ParseTypeQualifierListOpt(DeclSpec &DS);
   void ParseDirectDeclarator(Declarator &D);
   void ParseParenDeclarator(Declarator &D);
-  
+  void ParseBracketDeclarator(Declarator &D);
 };
 
 }  // end namespace clang

@@ -311,11 +311,11 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS) {
 ///         identifier
 ///         '(' declarator ')'
 /// [GNU]   '(' attributes declarator ')'
-/// [C90]   direct-declarator [ constant-expression[opt] ] 
-/// [C99]   direct-declarator [ type-qual-list[opt] assignment-expr[opt] ]
-/// [C99]   direct-declarator [ 'static' type-qual-list[opt] assignment-expr ]
-/// [C99]   direct-declarator [ type-qual-list 'static' assignment-expr ]
-/// [C99]   direct-declarator [ type-qual-list[opt] * ]
+/// [C90]   direct-declarator '[' constant-expression[opt] ']'
+/// [C99]   direct-declarator '[' type-qual-list[opt] assignment-expr[opt] ']'
+/// [C99]   direct-declarator '[' 'static' type-qual-list[opt] assign-expr ']'
+/// [C99]   direct-declarator '[' type-qual-list 'static' assignment-expr ']'
+/// [C99]   direct-declarator '[' type-qual-list[opt] '*' ']'
 ///         direct-declarator '(' parameter-type-list ')'
 ///         direct-declarator '(' identifier-list[opt] ')'
 /// [GNU]   direct-declarator '(' parameter-forward-declarations
@@ -357,7 +357,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     if (Tok.getKind() == tok::l_paren) {
       ParseParenDeclarator(D);
     } else if (Tok.getKind() == tok::l_square) {
-      assert(0 && "Unimp!");
+      ParseBracketDeclarator(D);
     } else {
       break;
     }
@@ -486,8 +486,8 @@ void Parser::ParseParenDeclarator(Declarator &D) {
 
         // Check to see if this is "void(...)" which is not allowed.
         if (!ReadArg) {
-          // Otherwise, parse parameter type list.  If it starts with an ellipsis, 
-          // diagnose the malformed function.
+          // Otherwise, parse parameter type list.  If it starts with an
+          // ellipsis,  diagnose the malformed function.
           Diag(Tok, diag::err_ellipsis_first_arg);
           isVariadic = false;       // Treat this like 'void()'.
         }
@@ -525,5 +525,58 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   if (Tok.getKind() != tok::r_paren)
     assert(0 && "Recover!");
   ConsumeParen();
+}
+
+
+/// [C90]   direct-declarator '[' constant-expression[opt] ']'
+/// [C99]   direct-declarator '[' type-qual-list[opt] assignment-expr[opt] ']'
+/// [C99]   direct-declarator '[' 'static' type-qual-list[opt] assign-expr ']'
+/// [C99]   direct-declarator '[' type-qual-list 'static' assignment-expr ']'
+/// [C99]   direct-declarator '[' type-qual-list[opt] '*' ']'
+void Parser::ParseBracketDeclarator(Declarator &D) {
+  SourceLocation StartLoc = Tok.getLocation();
+  ConsumeSquare();
+  
+  // If valid, this location is the position where we read the 'static' keyword.
+  SourceLocation StaticLoc;
+  if (Tok.getKind() == tok::kw_static) {
+    StaticLoc = Tok.getLocation();
+    ConsumeToken();
+  }
+  
+  // If there is a type-qualifier-list, read it now.
+  DeclSpec DS;
+  ParseTypeQualifierListOpt(DS);
+  // TODO: do something with DS.
+  
+  // If we haven't already read 'static', check to see if there is one after the
+  // type-qualifier-list.
+  if (!StaticLoc.isValid() && Tok.getKind() == tok::kw_static) {
+    StaticLoc = Tok.getLocation();
+    ConsumeToken();
+  }
+  
+  // Handle "direct-declarator [ type-qual-list[opt] * ]".
+  // Check that the ']' token is present to avoid incorrectly parsing
+  // expressions starting with '*' as [*].
+  bool isStar = false;
+  if (Tok.getKind() == tok::star /*FIXME: && nexttok == tok::r_square*/) {
+    if (StaticLoc.isValid())
+      Diag(StaticLoc, diag::err_unspecified_vla_size_with_static);
+    StaticLoc = SourceLocation();  // Drop the static.
+    isStar = true;
+    ConsumeToken();
+  } else if (Tok.getKind() != tok::r_square) {
+    // Parse the assignment-expression now.
+    assert(0 && "expr parsing not impl yet!");
+  }
+  
+  ConsumeSquare();
+  
+  // If C99 isn't enabled, emit an ext-warn if the arg list wasn't empty and if
+  // it was not a constant expression.
+  if (!getLang().C99) {
+    // TODO: check C90 array constant exprness.
+  }
 }
 

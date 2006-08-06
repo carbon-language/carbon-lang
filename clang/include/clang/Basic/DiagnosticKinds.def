@@ -271,5 +271,7 @@ DIAG(err_invalid_thread_spec, ERROR,
      "'__thread %s' is invalid")
 DIAG(err_ellipsis_first_arg, ERROR,
      "ISO C requires a named argument before '...'")
+DIAG(err_unspecified_vla_size_with_static, ERROR,
+     "'static' may not be used with an unspecified variable length array size")
 
 #undef DIAG
