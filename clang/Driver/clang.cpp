@@ -47,6 +47,7 @@ Stats("stats", cl::desc("Print performance metrics and statistics"));
 enum ProgActions {
   ParsePrintCallbacks,          // Parse and print each callback.
   ParseNoop,                    // Parse with noop callbacks.
+  ParseSyntaxOnly,              // Parse and perform semantic analysis.
   RunPreprocessorOnly,          // Just lex, no output.
   PrintPreprocessedInput,       // -E mode.
   DumpTokens                    // Token dump mode.
@@ -54,7 +55,7 @@ enum ProgActions {
 
 static cl::opt<ProgActions> 
 ProgAction(cl::desc("Choose output type:"), cl::ZeroOrMore,
-           cl::init(ParseNoop),
+           cl::init(ParseSyntaxOnly),
            cl::values(
              clEnumValN(RunPreprocessorOnly, "Eonly",
                         "Just run preprocessor, no output (for timings)"),
@@ -62,6 +63,8 @@ ProgAction(cl::desc("Choose output type:"), cl::ZeroOrMore,
                         "Run preprocessor, emit preprocessed file"),
              clEnumValN(DumpTokens, "dumptokens",
                         "Run preprocessor, dump internal rep of tokens"),
+             clEnumValN(ParseSyntaxOnly, "fsyntax-only",
+                        "Run parser and perform semantic analysis"),
              clEnumValN(ParsePrintCallbacks, "parse-print-callbacks",
                         "Run parser and print each callback invoked"),
              clEnumValN(ParseNoop, "parse-noop",
@@ -745,10 +748,11 @@ int main(int argc, char **argv) {
     break;
 
   case ParseNoop:                    // -parse-noop
-    ParseFile(PP, new ParserActions(), MainFileID);
-    break;
   case ParsePrintCallbacks:
     //ParseFile(PP, new ParserPrintActions(PP), MainFileID);
+    break;
+  case ParseSyntaxOnly:              // -fsyntax-only
+    ParseFile(PP, new ParserActions(), MainFileID);
     break;
   }
   
