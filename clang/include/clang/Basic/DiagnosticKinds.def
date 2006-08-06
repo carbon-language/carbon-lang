@@ -255,8 +255,22 @@ DIAG(ext_ident_list_in_param, EXTENSION,
 DIAG(ext_c99_array_usage, EXTENSION,
      "use of c99-specific array features")
 
+// Generic errors.
 DIAG(err_parse_error, ERROR,
      "parse error")
+DIAG(err_expected_ident_lparen, ERROR,
+     "expected identifier or '('")
+DIAG(err_expected_rparen, ERROR,
+     "expected ')'")
+
+/// err_matching - this is used as a continuation of a previous error, e.g. to 
+/// specify the '(' when we expected a ')'.  This should probably be some
+/// special sort of diagnostic kind to indicate that it is the second half of
+/// the previous diagnostic.
+DIAG(err_matching, ERROR,
+     "to match")
+
+     
 DIAG(err_invalid_decl_spec_combination, ERROR,
      "cannot combine with previous '%s' declaration specifier")
 DIAG(err_invalid_sign_spec, ERROR,

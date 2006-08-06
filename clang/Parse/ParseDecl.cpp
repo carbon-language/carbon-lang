@@ -332,22 +332,14 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     // direct-declarator: '(' attributes declarator ')'   [TODO]
     // Example: 'char (*X)'   or 'int (*XX)(void)'
     ParseParenDeclarator(D);
-  } else if (Tok.getKind() == tok::l_square &&
-             D.mayOmitIdentifier()) {
-    // direct-abstract-declarator[opt] '[' assignment-expression[opt] ']'
-    // direct-abstract-declarator[opt] '[' '*' ']'
-    
-    // direct-abstract-declarator was not specified.  Remember that this is the
-    // place where the identifier would have been.
-    D.SetIdentifier(0, Tok.getLocation());
-    // Don't consume the '[', handle it below.
   } else if (D.mayOmitIdentifier()) {
     // This could be something simple like "int" (in which case the declarator
     // portion is empty), if an abstract-declarator is allowed.
     D.SetIdentifier(0, Tok.getLocation());
   } else {
-    // expected identifier or '(' or '['.
-    assert(0 && "ERROR: should recover!");
+    // Expected identifier or '('.
+    Diag(Tok, diag::err_expected_ident_lparen);
+    D.SetIdentifier(0, Tok.getLocation());
   }
   
   assert(D.isPastIdentifier() &&
@@ -389,6 +381,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
 ///         identifier-list ',' identifier
 ///
 void Parser::ParseParenDeclarator(Declarator &D) {
+  SourceLocation LParenLoc = Tok.getLocation();
   ConsumeParen();
   
   // If we haven't past the identifier yet (or where the identifier would be
@@ -418,10 +411,14 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     // direct-declarator: '(' attributes declarator ')'   [TODO]
     if (isGrouping) {
       ParseDeclarator(D);
-      // expected ')': skip until we find ')'.
-     if (Tok.getKind() != tok::r_paren)
-        assert(0 && "Recover!");
-      ConsumeParen();
+      if (Tok.getKind() == tok::r_paren) {
+        ConsumeParen();
+      } else {
+        // expected ')': skip until we find ')'.
+        Diag(Tok, diag::err_expected_rparen);
+        Diag(LParenLoc, diag::err_matching);
+        SkipUntil(tok::r_paren);
+      }
       return;
     }
     
@@ -520,6 +517,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     HasPrototype = true;
   }
   
+  // FIXME: pop the scope.  
   
   // expected ')': skip until we find ')'.
   if (Tok.getKind() != tok::r_paren)
@@ -535,7 +533,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
 /// [C99]   direct-declarator '[' type-qual-list[opt] '*' ']'
 void Parser::ParseBracketDeclarator(Declarator &D) {
   SourceLocation StartLoc = Tok.getLocation();
-  ConsumeSquare();
+  ConsumeBracket();
   
   // If valid, this location is the position where we read the 'static' keyword.
   SourceLocation StaticLoc;
@@ -570,15 +568,13 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
         Diag(StaticLoc, diag::err_unspecified_vla_size_with_static);
       StaticLoc = SourceLocation();  // Drop the static.
       isStar = true;
-      ConsumeToken();
     } else {
       // Otherwise, the * must have been some expression (such as '*ptr') that
       // started an assign-expr.  We already consumed the token, but now we need
       // to reparse it.
-      // FIXME: There are two options here: first, we could push 'StarTok' and
-      // Tok back into the preprocessor as a macro expansion context, so they
-      // will be read again.  Second, we could parse the rest of the assign-expr
-      // then apply the dereference.
+      // FIXME: We must push 'StarTok' and Tok back into the preprocessor as a
+      // macro expansion context, so they will be read again. It is basically
+      // impossible to refudge the * in otherwise, due to cases like X[*p + 4].
       assert(0 && "FIXME: int X[*p] unimplemented");
     }
   }
@@ -588,7 +584,7 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
     assert(0 && "expr parsing not impl yet!");
   }
   
-  ConsumeSquare();
+  ConsumeBracket();
   
   // If C99 isn't enabled, emit an ext-warn if the arg list wasn't empty and if
   // it was not a constant expression.
