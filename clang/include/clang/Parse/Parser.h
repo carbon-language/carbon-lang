@@ -147,7 +147,7 @@ private:
   /// 
   /// If SkipUntil finds the specified token, it returns true, otherwise it
   /// returns false.  
-  bool SkipUntil(tok::TokenKind T, bool StopAtSemi = false,
+  bool SkipUntil(tok::TokenKind T, bool StopAtSemi = true,
                  bool DontConsume = false);
     
   //===--------------------------------------------------------------------===//
