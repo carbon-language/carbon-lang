@@ -160,6 +160,9 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
     //case tok::kw_union:
     //case tok::kw_enum:
     
+    //case tok::identifier:
+    // TODO: handle typedef names.
+      
     // type-qualifier
     case tok::kw_const:
       isInvalid = DS.SetTypeQual(DeclSpec::TQ_const   , PrevSpec, getLang())*2;
@@ -186,6 +189,56 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
         Diag(Tok, diag::ext_duplicate_declspec, PrevSpec);
     }
     ConsumeToken();
+  }
+}
+
+/// isDeclarationSpecifier() - Return true if the current token is part of a
+/// declaration specifier.
+bool Parser::isDeclarationSpecifier() const {
+  switch (Tok.getKind()) {
+  default: return false;
+    // storage-class-specifier
+  case tok::kw_typedef:
+  case tok::kw_extern:
+  case tok::kw_static:
+  case tok::kw_auto:
+  case tok::kw_register:
+  case tok::kw___thread:
+    
+    // type-specifiers
+  case tok::kw_short:
+  case tok::kw_long:
+  case tok::kw_signed:
+  case tok::kw_unsigned:
+  case tok::kw__Complex:
+  case tok::kw__Imaginary:
+  case tok::kw_void:
+  case tok::kw_char:
+  case tok::kw_int:
+  case tok::kw_float:
+  case tok::kw_double:
+  case tok::kw__Bool:
+  case tok::kw__Decimal32:
+  case tok::kw__Decimal64:
+  case tok::kw__Decimal128:
+  
+    // struct-or-union-specifier
+  case tok::kw_struct:
+  case tok::kw_union:
+    // enum-specifier
+  case tok::kw_enum:
+    // type-qualifier
+  case tok::kw_const:
+  case tok::kw_volatile:
+  case tok::kw_restrict:
+    // function-specifier
+  case tok::kw_inline:
+    return true;
+    // typedef-name
+  case tok::identifier:
+    // FIXME: if this is a typedef return true.
+    return false;
+    // TODO: Attributes.
   }
 }
 
@@ -268,6 +321,55 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS) {
 /// [GNU]   direct-declarator '(' parameter-forward-declarations
 ///                    parameter-type-list[opt] ')'
 ///
+void Parser::ParseDirectDeclarator(Declarator &D) {
+  // Parse the first direct-declarator seen.
+  if (Tok.getKind() == tok::identifier && D.mayHaveIdentifier()) {
+    assert(Tok.getIdentifierInfo() && "Not an identifier?");
+    D.SetIdentifier(Tok.getIdentifierInfo(), Tok.getLocation());
+    ConsumeToken();
+  } else if (Tok.getKind() == tok::l_paren) {
+    // direct-declarator: '(' declarator ')'
+    // direct-declarator: '(' attributes declarator ')'   [TODO]
+    // Example: 'char (*X)'   or 'int (*XX)(void)'
+    ParseParenDeclarator(D);
+  } else if (Tok.getKind() == tok::l_square &&
+             D.mayOmitIdentifier()) {
+    // direct-abstract-declarator[opt] '[' assignment-expression[opt] ']'
+    // direct-abstract-declarator[opt] '[' '*' ']'
+    
+    // direct-abstract-declarator was not specified.  Remember that this is the
+    // place where the identifier would have been.
+    D.SetIdentifier(0, Tok.getLocation());
+    // Don't consume the '[', handle it below.
+  } else if (D.mayOmitIdentifier()) {
+    // This could be something simple like "int" (in which case the declarator
+    // portion is empty), if an abstract-declarator is allowed.
+    D.SetIdentifier(0, Tok.getLocation());
+  } else {
+    // expected identifier or '(' or '['.
+    assert(0 && "ERROR: should recover!");
+  }
+  
+  assert(D.isPastIdentifier() &&
+         "Haven't past the location of the identifier yet?");
+  
+  while (1) {
+    if (Tok.getKind() == tok::l_paren) {
+      ParseParenDeclarator(D);
+    } else if (Tok.getKind() == tok::l_square) {
+      assert(0 && "Unimp!");
+    } else {
+      break;
+    }
+  }
+}
+
+/// ParseParenDeclarator - We parsed the declarator D up to a paren.  This may
+/// either be before the identifier (in which case these are just grouping
+/// parens for precedence) or it may be after the identifier, in which case
+/// these are function arguments.
+///
+/// This method also handles this portion of the grammar:
 ///       parameter-type-list: [C99 6.7.5]
 ///         parameter-list
 ///         parameter-list ',' '...'
@@ -278,33 +380,150 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS) {
 ///
 ///       parameter-declaration: [C99 6.7.5]
 ///         declaration-specifiers declarator
-/// [GNU]   declaration-specifiers declarator attributes
+/// [GNU]   declaration-specifiers declarator attributes               [TODO]
 ///         declaration-specifiers abstract-declarator[opt] 
-/// [GNU]   declaration-specifiers abstract-declarator[opt] attributes
+/// [GNU]   declaration-specifiers abstract-declarator[opt] attributes [TODO]
 ///
 ///       identifier-list: [C99 6.7.5]
 ///         identifier
 ///         identifier-list ',' identifier
 ///
-void Parser::ParseDirectDeclarator(Declarator &D) {
-  // Parse the first direct-declarator seen.
-  if (Tok.getKind() == tok::identifier) {
-    assert(Tok.getIdentifierInfo() && "Not an identifier?");
-    D.SetIdentifier(Tok.getIdentifierInfo());
-    ConsumeToken();
-  } else if (0 && Tok.getKind() == tok::l_paren) {
-    //char (*X);
-    //int (*XX)(void);
-  }
+void Parser::ParseParenDeclarator(Declarator &D) {
+  ConsumeParen();
   
-  while (1) {
-    if (Tok.getKind() == tok::l_paren) {
-      assert(0 && "Unimp!");
-    } else if (Tok.getKind() == tok::l_square) {
-      assert(0 && "Unimp!");
+  // If we haven't past the identifier yet (or where the identifier would be
+  // stored, if this is an abstract declarator), then this is probably just
+  // grouping parens.
+  if (!D.isPastIdentifier()) {
+    // Okay, this is probably a grouping paren.  However, if this could be an
+    // abstract-declarator, then this could also be the start of function
+    // arguments (consider 'void()').
+    bool isGrouping;
+    
+    if (!D.mayOmitIdentifier()) {
+      // If this can't be an abstract-declarator, this *must* be a grouping
+      // paren, because we haven't seen the identifier yet.
+      isGrouping = true;
+    } else if (Tok.getKind() == tok::r_paren ||  // 'int()' is a function.
+               isDeclarationSpecifier()) {       // 'int(int)' is a function.
+      
+      isGrouping = false;
     } else {
-      break;
+      // Otherwise, 'int (*X)', this is a grouping paren.
+      isGrouping = true;
     }
+    
+    // If this is a grouping paren, handle:
+    // direct-declarator: '(' declarator ')'
+    // direct-declarator: '(' attributes declarator ')'   [TODO]
+    if (isGrouping) {
+      ParseDeclarator(D);
+      // expected ')': skip until we find ')'.
+     if (Tok.getKind() != tok::r_paren)
+        assert(0 && "Recover!");
+      ConsumeParen();
+      return;
+    }
+    
+    // Okay, if this wasn't a grouping paren, it must be the start of a function
+    // argument list.  Recognize that this will never have an identifier (and
+    // where it would be), then fall through to the handling of argument lists.
+    D.SetIdentifier(0, Tok.getLocation());
   }
   
+  // Okay, this is the parameter list of a function definition, or it is an
+  // identifier list of a K&R-style function.
+
+  // FIXME: enter function-declaration scope, limiting any declarators for
+  // arguments to the function scope.
+  // NOTE: better to only create a scope if not '()'
+  bool isVariadic;
+  bool HasPrototype;
+  if (Tok.getKind() == tok::r_paren) {
+    // int() -> no prototype, no '...'.
+    isVariadic   = false;
+    HasPrototype = false;
+  } else if (Tok.getKind() == tok::identifier &&
+             0/*TODO: !isatypedefname(Tok.getIdentifierInfo())*/) {
+    // Identifier list.  Note that '(' identifier-list ')' is only allowed for
+    // normal declarators, not for abstract-declarators.
+    assert(D.isPastIdentifier() && "Identifier (if present) must be passed!");
+    
+    // If there was no identifier specified, either we are in an
+    // abstract-declarator, or we are in a parameter declarator which was found
+    // to be abstract.  In abstract-declarators, identifier lists are not valid,
+    // diagnose this.
+    if (!D.getIdentifier())
+      Diag(Tok, diag::ext_ident_list_in_param);
+    
+    // FIXME: Remember token.
+    ConsumeToken();
+    while (Tok.getKind() == tok::comma) {
+      // Eat the comma.
+      ConsumeToken();
+      
+      // FIXME: if not identifier, consume until ')' then break.
+      assert(Tok.getKind() == tok::identifier);
+
+      // Eat the id.
+      // FIXME: remember it!
+      ConsumeToken();
+    }
+    
+    // FIXME: if not identifier, consume until ')' then break.
+    assert(Tok.getKind() == tok::r_paren);
+
+    // K&R 'prototype'.
+    isVariadic = false;
+    HasPrototype = false;
+  } else {
+    isVariadic = false;
+    bool ReadArg = false;
+    // Finally, a normal, non-empty parameter type list.
+    while (1) {
+      if (Tok.getKind() == tok::ellipsis) {
+        isVariadic = true;
+
+        // Check to see if this is "void(...)" which is not allowed.
+        if (!ReadArg) {
+          // Otherwise, parse parameter type list.  If it starts with an ellipsis, 
+          // diagnose the malformed function.
+          Diag(Tok, diag::err_ellipsis_first_arg);
+          isVariadic = false;       // Treat this like 'void()'.
+        }
+
+        // Consume the ellipsis.
+        ConsumeToken();
+        break;
+      }
+      
+      ReadArg = true;
+
+      // Parse the declaration-specifiers.
+      DeclSpec DS;
+      ParseDeclarationSpecifiers(DS);
+
+      // Parse the declarator.  This is "PrototypeContext", because we must
+      // accept either 'declarator' or 'abstract-declarator' here.
+      Declarator DeclaratorInfo(DS, Declarator::PrototypeContext);
+      ParseDeclarator(DeclaratorInfo);
+
+      // TODO: do something with the declarator, if it is valid.
+      
+      // If the next token is a comma, consume it and keep reading arguments.
+      if (Tok.getKind() != tok::comma) break;
+      
+      // Consume the comma.
+      ConsumeToken();
+    }
+    
+    HasPrototype = true;
+  }
+  
+  
+  // expected ')': skip until we find ')'.
+  if (Tok.getKind() != tok::r_paren)
+    assert(0 && "Recover!");
+  ConsumeParen();
 }
+

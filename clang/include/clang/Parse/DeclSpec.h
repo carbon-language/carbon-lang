@@ -15,11 +15,11 @@
 #define LLVM_CLANG_PARSE_DECLARATIONS_H
 
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/SourceLocation.h"
 
 namespace llvm {
 namespace clang {
   class LangOptions;
-  class SourceLocation;
   class IdentifierInfo;
   
 /// DeclSpec - This class captures information about "declaration specifiers",
@@ -134,16 +134,58 @@ public:
 /// DeclaratorInfo - Information about one declarator, including the parsed type
 /// information and the identifier.  When the declarator is fully formed, this
 /// is turned into the appropriate Decl object.
+///
+/// Declarators come in two types: normal declarators and abstract declarators.
+/// Abstract declarators are used when parsing types, and don't have an
+/// identifier.  Normal declarators do have ID's.  One strange case s 
 class Declarator {
   const DeclSpec &DS;
   IdentifierInfo *Identifier;
+  SourceLocation IdentifierLoc;
+  
 public:
-  Declarator(const DeclSpec &ds) : DS(ds) {
-    Identifier = 0;
+  enum TheContext {
+    FileContext,         // File scope declaration.
+    PrototypeContext,    // Within a function prototype.
+    KNRTypeListContext,  // K&R type definition list for formals.
+    TypeNameContext,     // Abstract declarator for types.
+    MemberContext,       // Struct/Union field.
+    BlockContext,        // Declaration within a block in a function.
+    ForContext           // Declaration within first part of a for loop.
+  };
+private:
+  /// Context - Where we are parsing this declarator.
+  ///
+  TheContext Context;
+public:
+  Declarator(const DeclSpec &ds, TheContext C)
+    : DS(ds), Identifier(0), Context(C) {
   }
   
+  /// mayOmitIdentifier - Return true if the identifier is either optional or
+  /// not allowed.  This is true for typenames and prototypes.
+  bool mayOmitIdentifier() const {
+    return Context == TypeNameContext || Context == PrototypeContext;
+  }
+
+  /// mayHaveIdentifier - Return true if the identifier is either optional or
+  /// required.  This is true for normal declarators and prototypes, but not
+  /// typenames.
+  bool mayHaveIdentifier() const {
+    return Context != TypeNameContext;
+  }
+  
+  /// isPastIdentifier - Return true if we have parsed beyond the point where
+  /// the
+  bool isPastIdentifier() const { return IdentifierLoc.isValid(); }
+  
   IdentifierInfo *getIdentifier() const { return Identifier; }
-  void SetIdentifier(IdentifierInfo *ID) { Identifier = ID; }
+  SourceLocation getIdentifierLoc() const { return IdentifierLoc; }
+  
+  void SetIdentifier(IdentifierInfo *ID, SourceLocation Loc) {
+    Identifier = ID;
+    IdentifierLoc = Loc;
+  }
 };
 
   

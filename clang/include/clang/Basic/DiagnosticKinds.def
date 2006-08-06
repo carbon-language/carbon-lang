@@ -250,6 +250,9 @@ DIAG(ext_integer_complex, EXTENSION,
 DIAG(ext_thread_before, EXTENSION,
      "'__thread' before 'static'")
 
+DIAG(ext_ident_list_in_param, EXTENSION,
+     "type-less parameter names in function declaration")
+
 DIAG(err_parse_error, ERROR,
      "parse error")
 DIAG(err_invalid_decl_spec_combination, ERROR,
@@ -266,5 +269,7 @@ DIAG(err_invalid_complex_spec, ERROR,
      "'_Complex %s' is invalid")
 DIAG(err_invalid_thread_spec, ERROR,
      "'__thread %s' is invalid")
+DIAG(err_ellipsis_first_arg, ERROR,
+     "ISO C requires a named argument before '...'")
 
 #undef DIAG

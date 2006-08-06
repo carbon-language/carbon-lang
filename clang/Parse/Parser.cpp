@@ -21,6 +21,7 @@ Parser::Parser(Preprocessor &pp, ParserActions &actions)
   : PP(pp), Actions(actions), Diags(PP.getDiagnostics()) {
   // Create the global scope, install it as the current scope.
   CurScope = new Scope(0);
+  Tok.SetKind(tok::eof);
 }
 
 Parser::~Parser() {
@@ -109,7 +110,7 @@ void Parser::ParseDeclarationOrFunctionDefinition() {
   
   // Parse the declarator.
   {
-    Declarator DeclaratorInfo(DS);
+    Declarator DeclaratorInfo(DS, Declarator::FileContext);
     ParseDeclarator(DeclaratorInfo);
 
     // If the declarator was a function type... handle it.
@@ -125,7 +126,7 @@ void Parser::ParseDeclarationOrFunctionDefinition() {
     ConsumeToken();
     
     // Parse the declarator.
-    Declarator DeclaratorInfo(DS);
+    Declarator DeclaratorInfo(DS, Declarator::FileContext);
     ParseDeclarator(DeclaratorInfo);
     
     // declarator '=' initializer

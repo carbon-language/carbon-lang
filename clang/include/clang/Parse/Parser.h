@@ -62,12 +62,24 @@ public:
   }
   
   /// ConsumeToken - Consume the current 'peek token', lexing a new one and
-  /// returning the token kind.
-  tok::TokenKind ConsumeToken() {
+  /// returning the token kind.  This does not work will all kinds of tokens,
+  /// strings and parens must be consumed with custom methods below.
+  void ConsumeToken() {
+    assert(Tok.getKind() != tok::string_literal &&
+           Tok.getKind() != tok::l_paren &&
+           Tok.getKind() != tok::r_paren &&
+           "Should consume special tokens with Consume*Token");
     PP.Lex(Tok);
-    return Tok.getKind();
   }
   
+  /// ConsumeParen -  This consume method keeps the paren count up-to-date.
+  ///
+  void ConsumeParen() {
+    assert((Tok.getKind() == tok::l_paren ||
+            Tok.getKind() == tok::r_paren) && "wrong consume method");
+    PP.Lex(Tok);
+  }
+
 private:
   //===--------------------------------------------------------------------===//
   // C99 6.9: External Definitions.
@@ -78,10 +90,12 @@ private:
   //===--------------------------------------------------------------------===//
   // C99 6.7: Declarations.
   void ParseDeclarationSpecifiers(DeclSpec &DS);
+  bool isDeclarationSpecifier() const;
   
   void ParseDeclarator(Declarator &D);
   void ParseTypeQualifierListOpt(DeclSpec &DS);
   void ParseDirectDeclarator(Declarator &D);
+  void ParseParenDeclarator(Declarator &D);
   
 };
 
