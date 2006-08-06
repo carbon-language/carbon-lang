@@ -118,7 +118,7 @@ class scc_iterator
           do {
             CurrentSCC.push_back(SCCNodeStack.back());
             SCCNodeStack.pop_back();
-            nodeVisitNumbers[CurrentSCC.back()] = ~0UL;
+            nodeVisitNumbers[CurrentSCC.back()] = ~0U;
           } while (CurrentSCC.back() != visitingN);
           return;
         }
