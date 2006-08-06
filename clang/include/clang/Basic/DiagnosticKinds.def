@@ -258,6 +258,8 @@ DIAG(ext_c99_array_usage, EXTENSION,
 // Generic errors.
 DIAG(err_parse_error, ERROR,
      "parse error")
+DIAG(err_expected_ident, ERROR,
+     "expected identifier")
 DIAG(err_expected_ident_lparen, ERROR,
      "expected identifier or '('")
 DIAG(err_expected_rparen, ERROR,

@@ -436,6 +436,8 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   // NOTE: better to only create a scope if not '()'
   bool isVariadic;
   bool HasPrototype;
+  bool ErrorEmitted = false;
+
   if (Tok.getKind() == tok::r_paren) {
     // int() -> no prototype, no '...'.
     isVariadic   = false;
@@ -459,17 +461,18 @@ void Parser::ParseParenDeclarator(Declarator &D) {
       // Eat the comma.
       ConsumeToken();
       
-      // FIXME: if not identifier, consume until ')' then break.
-      assert(Tok.getKind() == tok::identifier);
+      if (Tok.getKind() != tok::identifier) {
+        // If not identifier, diagnose the error.
+        Diag(Tok, diag::err_expected_ident);
+        ErrorEmitted = true;
+        break;
+      }
 
       // Eat the id.
       // FIXME: remember it!
       ConsumeToken();
     }
     
-    // FIXME: if not identifier, consume until ')' then break.
-    assert(Tok.getKind() == tok::r_paren);
-
     // K&R 'prototype'.
     isVariadic = false;
     HasPrototype = false;
@@ -519,10 +522,17 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   
   // FIXME: pop the scope.  
   
-  // expected ')': skip until we find ')'.
-  if (Tok.getKind() != tok::r_paren)
-    assert(0 && "Recover!");
-  ConsumeParen();
+  
+  // If we have the closing ')', eat it and we're done.
+  if (Tok.getKind() == tok::r_paren) {
+    ConsumeParen();
+  } else {
+    // If an error happened earlier parsing something else in the proto, don't
+    // issue another error.
+    if (!ErrorEmitted)
+      Diag(Tok, diag::err_expected_rparen);
+    SkipUntil(tok::r_paren);
+  }
 }
 
 
