@@ -577,6 +577,8 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
   // it was not a constant expression.
   if (!getLang().C99) {
     // TODO: check C90 array constant exprness.
+    if (isStar || StaticLoc.isValid() || 0/*constantexpr*/)
+      Diag(StartLoc, diag::ext_c99_array_usage);
   }
 }
 

@@ -252,6 +252,8 @@ DIAG(ext_thread_before, EXTENSION,
 
 DIAG(ext_ident_list_in_param, EXTENSION,
      "type-less parameter names in function declaration")
+DIAG(ext_c99_array_usage, EXTENSION,
+     "use of c99-specific array features")
 
 DIAG(err_parse_error, ERROR,
      "parse error")
