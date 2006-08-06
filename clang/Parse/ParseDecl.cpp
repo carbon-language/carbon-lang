@@ -198,7 +198,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
 ///         '*' type-qualifier-list[opt]
 ///         '*' type-qualifier-list[opt] pointer
 ///
-void Parser::ParseDeclarator() {
+void Parser::ParseDeclarator(Declarator &D) {
   while (Tok.getKind() == tok::star) {  // '*' -> pointer.
     ConsumeToken();  // Eat the *.
     DeclSpec DS;
@@ -206,7 +206,7 @@ void Parser::ParseDeclarator() {
     // TODO: do something with DS.
   }
   
-  ParseDirectDeclarator();
+  ParseDirectDeclarator(D);
 }
 
 /// ParseTypeQualifierListOpt
@@ -286,9 +286,11 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS) {
 ///         identifier
 ///         identifier-list ',' identifier
 ///
-void Parser::ParseDirectDeclarator() {
+void Parser::ParseDirectDeclarator(Declarator &D) {
   // Parse the first direct-declarator seen.
   if (Tok.getKind() == tok::identifier) {
+    assert(Tok.getIdentifierInfo() && "Not an identifier?");
+    D.SetIdentifier(Tok.getIdentifierInfo());
     ConsumeToken();
   } else if (0 && Tok.getKind() == tok::l_paren) {
     //char (*X);

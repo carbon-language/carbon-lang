@@ -107,23 +107,26 @@ void Parser::ParseDeclarationOrFunctionDefinition() {
     assert(0 && "Unimp!");
   
   
-  // Parse the common declarator piece.
-  ParseDeclarator();
+  // Parse the declarator.
+  {
+    Declarator DeclaratorInfo(DS);
+    ParseDeclarator(DeclaratorInfo);
 
-  
-  // If the declarator was a function type... handle it.
+    // If the declarator was a function type... handle it.
 
-  // must be: decl-spec[opt] declarator init-declarator-list
-  // Parse declarator '=' initializer.
-  if (Tok.getKind() == tok::equal)
-    assert(0 && "cannot handle initializer yet!");
+    // must be: decl-spec[opt] declarator init-declarator-list
+    // Parse declarator '=' initializer.
+    if (Tok.getKind() == tok::equal)
+      assert(0 && "cannot handle initializer yet!");
+  }
 
   while (Tok.getKind() == tok::comma) {
     // Consume the comma.
     ConsumeToken();
     
-    // Parse the common declarator piece.
-    ParseDeclarator();
+    // Parse the declarator.
+    Declarator DeclaratorInfo(DS);
+    ParseDeclarator(DeclaratorInfo);
     
     // declarator '=' initializer
     if (Tok.getKind() == tok::equal)

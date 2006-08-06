@@ -18,7 +18,7 @@
 
 namespace llvm {
 namespace clang {
-
+class IdentifierInfo;
   
 /// Decl - This represents one declaration (or definition), e.g. a variable, 
 /// typedef, function, struct, etc.  

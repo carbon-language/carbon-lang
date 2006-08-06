@@ -21,6 +21,7 @@ namespace llvm {
 namespace clang {
   class ParserActions;
   class DeclSpec;
+  class Declarator;
   class Scope;
 
 /// Parser - This implements a parser for the C family of languages.  After
@@ -78,9 +79,9 @@ private:
   // C99 6.7: Declarations.
   void ParseDeclarationSpecifiers(DeclSpec &DS);
   
-  void ParseDeclarator();
+  void ParseDeclarator(Declarator &D);
   void ParseTypeQualifierListOpt(DeclSpec &DS);
-  void ParseDirectDeclarator();
+  void ParseDirectDeclarator(Declarator &D);
   
 };
 

@@ -20,6 +20,7 @@ namespace llvm {
 namespace clang {
   class LangOptions;
   class SourceLocation;
+  class IdentifierInfo;
   
 /// DeclSpec - This class captures information about "declaration specifiers",
 /// which encompases storage-class-specifiers, type-specifiers, type-qualifiers,
@@ -128,6 +129,23 @@ public:
   /// DeclSpec is guaranteed self-consistent, even if an error occurred.
   void Finish(SourceLocation Loc, Diagnostic &D,const LangOptions &Lang);
 };
+
+
+/// DeclaratorInfo - Information about one declarator, including the parsed type
+/// information and the identifier.  When the declarator is fully formed, this
+/// is turned into the appropriate Decl object.
+class Declarator {
+  const DeclSpec &DS;
+  IdentifierInfo *Identifier;
+public:
+  Declarator(const DeclSpec &ds) : DS(ds) {
+    Identifier = 0;
+  }
+  
+  IdentifierInfo *getIdentifier() const { return Identifier; }
+  void SetIdentifier(IdentifierInfo *ID) { Identifier = ID; }
+};
+
   
 }  // end namespace clang
 }  // end namespace llvm
