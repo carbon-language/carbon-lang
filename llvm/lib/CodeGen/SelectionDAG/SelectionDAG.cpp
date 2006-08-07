@@ -474,6 +474,7 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
   if (!Erased && N->getValueType(N->getNumValues()-1) != MVT::Flag &&
       !N->isTargetOpcode()) {
     N->dump();
+    std::cerr << "\n";
     assert(0 && "Node is not in map!");
   }
 #endif
@@ -2497,7 +2498,7 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT1,
   return getNode(ISD::BUILTIN_OP_END+Opcode, ResultTys, Ops).Val;
 }
 
-// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
+/// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
 /// This can cause recursive merging of nodes in the DAG.
 ///
 /// This version assumes From/To have a single result value.
@@ -2711,6 +2712,7 @@ unsigned SelectionDAG::AssignTopologicalOrder(std::vector<SDNode*> &TopOrder) {
       Sources.push_back(N);
   }
 
+  TopOrder.clear();
   while (!Sources.empty()) {
     SDNode *N = Sources.back();
     Sources.pop_back();
