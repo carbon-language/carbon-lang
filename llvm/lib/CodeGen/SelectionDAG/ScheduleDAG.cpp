@@ -55,11 +55,16 @@ void ScheduleDAG::BuildSchedUnits() {
     
     // Scan up, adding flagged preds to FlaggedNodes.
     SDNode *N = NI;
-    while (N->getNumOperands() &&
-           N->getOperand(N->getNumOperands()-1).getValueType() == MVT::Flag) {
-      N = N->getOperand(N->getNumOperands()-1).Val;
-      NodeSUnit->FlaggedNodes.push_back(N);
-      SUnitMap[N] = NodeSUnit;
+    if (N->getNumOperands() &&
+        N->getOperand(N->getNumOperands()-1).getValueType() == MVT::Flag) {
+      do {
+        N = N->getOperand(N->getNumOperands()-1).Val;
+        NodeSUnit->FlaggedNodes.push_back(N);
+        SUnitMap[N] = NodeSUnit;
+      } while (N->getNumOperands() &&
+               N->getOperand(N->getNumOperands()-1).getValueType()== MVT::Flag);
+      std::reverse(NodeSUnit->FlaggedNodes.begin(),
+                   NodeSUnit->FlaggedNodes.end());
     }
     
     // Scan down, adding this node and any flagged succs to FlaggedNodes if they
