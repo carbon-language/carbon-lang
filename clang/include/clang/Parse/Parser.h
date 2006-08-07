@@ -154,7 +154,7 @@ private:
   // C99 6.9: External Definitions.
   void ParseExternalDeclaration();
   void ParseDeclarationOrFunctionDefinition();
-
+  void ParseFunctionDefinition(Declarator &D);
   
   //===--------------------------------------------------------------------===//
   // C99 6.7: Declarations.

@@ -261,6 +261,13 @@ public:
     : DS(ds), Identifier(0), Context(C) {
   }
   
+  /// clear - Reset the contents of this Declarator.
+  void clear() {
+    Identifier = 0;
+    IdentifierLoc = SourceLocation();
+    DeclTypeInfo.clear();
+  }
+  
   /// mayOmitIdentifier - Return true if the identifier is either optional or
   /// not allowed.  This is true for typenames and prototypes.
   bool mayOmitIdentifier() const {
@@ -288,6 +295,16 @@ public:
   
   void AddTypeInfo(const DeclaratorTypeInfo &TI) {
     DeclTypeInfo.push_back(TI);
+  }
+  
+  /// getNumTypeObjects() - Return the number of types applied to this
+  /// declarator.
+  unsigned getNumTypeObjects() const { return DeclTypeInfo.size(); }
+  
+  /// Return the specified TypeInfo from this declarator.  TypeInfo #0 is
+  /// closest to the identifier.
+  const DeclaratorTypeInfo &getTypeObject(unsigned i) const {
+    return DeclTypeInfo[i];
   }
   
   /// isInnermostFunctionType - Once this declarator is fully parsed and formed,
