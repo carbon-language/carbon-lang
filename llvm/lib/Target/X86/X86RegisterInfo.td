@@ -54,14 +54,14 @@ let Namespace = "X86" in {
   def BH : RegisterGroup<"BH", [BX,EBX]>, DwarfRegNum<3>;
 
   // MMX Registers. These are actually aliased to ST0 .. ST7
-  def MM0 : Register<"MM0">, DwarfRegNum<41>;
-  def MM1 : Register<"MM1">, DwarfRegNum<42>;
-  def MM2 : Register<"MM2">, DwarfRegNum<43>;
-  def MM3 : Register<"MM3">, DwarfRegNum<44>;
-  def MM4 : Register<"MM4">, DwarfRegNum<45>;
-  def MM5 : Register<"MM5">, DwarfRegNum<46>;
-  def MM6 : Register<"MM6">, DwarfRegNum<47>;
-  def MM7 : Register<"MM7">, DwarfRegNum<48>;
+  def MM0 : Register<"MM0">, DwarfRegNum<29>;
+  def MM1 : Register<"MM1">, DwarfRegNum<30>;
+  def MM2 : Register<"MM2">, DwarfRegNum<31>;
+  def MM3 : Register<"MM3">, DwarfRegNum<32>;
+  def MM4 : Register<"MM4">, DwarfRegNum<33>;
+  def MM5 : Register<"MM5">, DwarfRegNum<34>;
+  def MM6 : Register<"MM6">, DwarfRegNum<35>;
+  def MM7 : Register<"MM7">, DwarfRegNum<36>;
   
   // Pseudo Floating Point registers
   def FP0 : Register<"FP0">, DwarfRegNum<-1>;
@@ -73,24 +73,24 @@ let Namespace = "X86" in {
   def FP6 : Register<"FP6">, DwarfRegNum<-1>; 
 
   // XMM Registers, used by the various SSE instruction set extensions
-  def XMM0: Register<"XMM0">, DwarfRegNum<32>;
-  def XMM1: Register<"XMM1">, DwarfRegNum<33>;
-  def XMM2: Register<"XMM2">, DwarfRegNum<34>;
-  def XMM3: Register<"XMM3">, DwarfRegNum<35>;
-  def XMM4: Register<"XMM4">, DwarfRegNum<36>;
-  def XMM5: Register<"XMM5">, DwarfRegNum<37>;
-  def XMM6: Register<"XMM6">, DwarfRegNum<38>;
-  def XMM7: Register<"XMM7">, DwarfRegNum<39>;
+  def XMM0: Register<"XMM0">, DwarfRegNum<21>;
+  def XMM1: Register<"XMM1">, DwarfRegNum<22>;
+  def XMM2: Register<"XMM2">, DwarfRegNum<23>;
+  def XMM3: Register<"XMM3">, DwarfRegNum<24>;
+  def XMM4: Register<"XMM4">, DwarfRegNum<25>;
+  def XMM5: Register<"XMM5">, DwarfRegNum<26>;
+  def XMM6: Register<"XMM6">, DwarfRegNum<27>;
+  def XMM7: Register<"XMM7">, DwarfRegNum<28>;
 
   // Floating point stack registers
-  def ST0 : Register<"ST(0)">, DwarfRegNum<16>;
-  def ST1 : Register<"ST(1)">, DwarfRegNum<17>;
-  def ST2 : Register<"ST(2)">, DwarfRegNum<18>;
-  def ST3 : Register<"ST(3)">, DwarfRegNum<19>;
-  def ST4 : Register<"ST(4)">, DwarfRegNum<20>;
-  def ST5 : Register<"ST(5)">, DwarfRegNum<21>;
-  def ST6 : Register<"ST(6)">, DwarfRegNum<22>;
-  def ST7 : Register<"ST(7)">, DwarfRegNum<23>; 
+  def ST0 : Register<"ST(0)">, DwarfRegNum<11>;
+  def ST1 : Register<"ST(1)">, DwarfRegNum<12>;
+  def ST2 : Register<"ST(2)">, DwarfRegNum<13>;
+  def ST3 : Register<"ST(3)">, DwarfRegNum<14>;
+  def ST4 : Register<"ST(4)">, DwarfRegNum<15>;
+  def ST5 : Register<"ST(5)">, DwarfRegNum<16>;
+  def ST6 : Register<"ST(6)">, DwarfRegNum<17>;
+  def ST7 : Register<"ST(7)">, DwarfRegNum<18>; 
 }
 
 //===----------------------------------------------------------------------===//
