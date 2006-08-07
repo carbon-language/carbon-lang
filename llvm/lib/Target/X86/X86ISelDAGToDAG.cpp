@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "isel"
+#define DEBUG_TYPE "x86-isel"
 #include "X86.h"
 #include "X86InstrBuilder.h"
 #include "X86ISelLowering.h"
@@ -35,6 +35,7 @@
 #include "llvm/ADT/Statistic.h"
 #include <deque>
 #include <iostream>
+#include <queue>
 #include <set>
 using namespace llvm;
 
@@ -99,7 +100,7 @@ namespace {
       : SelectionDAGISel(X86Lowering),
         X86Lowering(*TM.getTargetLowering()),
         Subtarget(&TM.getSubtarget<X86Subtarget>()),
-        DAGSize(0), ReachabilityMatrix(NULL), ReachMatrixRange(NULL) {}
+        ReachabilityMatrix(NULL) {}
 
     virtual bool runOnFunction(Function &Fn) {
       // Make sure we re-emit a set of the global base reg if necessary
@@ -123,7 +124,7 @@ namespace {
 #include "X86GenDAGISel.inc"
 
   private:
-    void DetermineReachability(SDNode *f, SDNode *t);
+    void DetermineReachability();
 
     void Select(SDOperand &Result, SDOperand N);
 
@@ -135,6 +136,18 @@ namespace {
     bool TryFoldLoad(SDOperand P, SDOperand N,
                      SDOperand &Base, SDOperand &Scale,
                      SDOperand &Index, SDOperand &Disp);
+
+    virtual void SelectRootInit() {
+      DAGSize = CurDAG->AssignTopologicalOrder(TopOrder);
+      unsigned NumBytes = (DAGSize + 7) / 8;
+      UnfoldableSet = new unsigned char[NumBytes];
+      memset(UnfoldableSet, 0, NumBytes);
+      unsigned RMSize = (DAGSize * DAGSize + 7) / 8;
+      ReachabilityMatrix = new unsigned char[RMSize];
+      memset(ReachabilityMatrix, 0, RMSize);
+      DetermineReachability();
+    }
+
     /// SelectInlineAsmMemoryOperand - Implement addressing mode selection for
     /// inline asm expressions.
     virtual bool SelectInlineAsmMemoryOperand(const SDOperand &Op,
@@ -179,21 +192,9 @@ namespace {
     /// base register.  Return the virtual register that holds this value.
     SDOperand getGlobalBaseReg();
 
-    /// DAGSize - Number of nodes in the DAG.
-    ///
-    unsigned DAGSize;
-
-    /// TopOrder - Topological ordering of all nodes in the DAG.
-    ///
-    std::vector<SDNode*> TopOrder;
-
     /// ReachabilityMatrix - A N x N matrix representing all pairs reachability
     /// information. One bit per potential edge.
     unsigned char *ReachabilityMatrix;
-
-    /// ReachMatrixRange - The range of reachability information available for
-    /// the particular source node.
-    unsigned *ReachMatrixRange;
 
     inline void setReachable(SDNode *f, SDNode *t) {
       unsigned Idx = f->getNodeId() * DAGSize + t->getNodeId();
@@ -243,7 +244,6 @@ bool X86DAGToDAGISel::CanBeFoldedBy(SDNode *N, SDNode *U) {
   //      /        [X]
   //      |         ^
   //     [U]--------|
-  DetermineReachability(U, N);
   assert(isReachable(U, N) && "Attempting to fold a non-operand node?");
   for (SDNode::op_iterator I = U->op_begin(), E = U->op_end(); I != E; ++I) {
     SDNode *P = I->Val;
@@ -255,23 +255,15 @@ bool X86DAGToDAGISel::CanBeFoldedBy(SDNode *N, SDNode *U) {
 
 /// DetermineReachability - Determine reachability between all pairs of nodes
 /// between f and t in topological order.
-void X86DAGToDAGISel::DetermineReachability(SDNode *f, SDNode *t) {
-  unsigned Orderf = f->getNodeId();
-  unsigned Ordert = t->getNodeId();
-  unsigned Range = ReachMatrixRange[Orderf];
-  if (Range >= Ordert)
-    return;
-  if (Range < Orderf)
-    Range = Orderf;
-
-  for (unsigned i = Range; i < Ordert; ++i) {
+void X86DAGToDAGISel::DetermineReachability() {
+  for (unsigned i = 0; i < DAGSize; ++i) {
     SDNode *N = TopOrder[i];
     setReachable(N, N);
     // If N is a leaf node, there is nothing more to do.
     if (N->getNumOperands() == 0)
       continue;
 
-    for (unsigned i2 = Range; ; ++i2) {
+    for (unsigned i2 = 0; ; ++i2) {
       SDNode *M = TopOrder[i2];
       if (isReachable(M, N)) {
         // Update reachability from M to N's operands.
@@ -284,8 +276,6 @@ void X86DAGToDAGISel::DetermineReachability(SDNode *f, SDNode *t) {
       if (M == N) break;
     }
   }
-
-  ReachMatrixRange[Orderf] = Ordert;
 }
 
 /// InstructionSelectBasicBlock - This callback is invoked by SelectionDAGISel
@@ -293,16 +283,6 @@ void X86DAGToDAGISel::DetermineReachability(SDNode *f, SDNode *t) {
 void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   DEBUG(BB->dump());
   MachineFunction::iterator FirstMBB = BB;
-
-  DAGSize = DAG.AssignTopologicalOrder(TopOrder);
-  unsigned RMSize = (DAGSize * DAGSize + 7) / 8;
-  ReachabilityMatrix = new unsigned char[RMSize];
-  memset(ReachabilityMatrix, 0, RMSize);
-  ReachMatrixRange = new unsigned[DAGSize];
-  memset(ReachMatrixRange, 0, DAGSize * sizeof(unsigned));
-  unsigned NumBytes = (DAGSize + 7) / 8;
-  UnfoldableSet = new unsigned char[NumBytes];
-  memset(UnfoldableSet, 0, NumBytes);
 
   // Codegen the basic block.
 #ifndef NDEBUG
@@ -315,15 +295,9 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
 #endif
 
   delete[] ReachabilityMatrix;
-  delete[] ReachMatrixRange;
   delete[] UnfoldableSet;
   ReachabilityMatrix = NULL;
-  ReachMatrixRange = NULL;
   UnfoldableSet = NULL;
-  TopOrder.clear();
-  CodeGenMap.clear();
-  HandleMap.clear();
-  ReplaceMap.clear();
   DAG.RemoveDeadNodes();
 
   // Emit machine code to BB. 
@@ -414,13 +388,8 @@ void X86DAGToDAGISel::EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {
 /// addressing mode
 bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
                                    bool isRoot) {
-  bool Available = false;
-  // If N has already been selected, reuse the result unless in some very
-  // specific cases.
-  std::map<SDOperand, SDOperand>::iterator CGMI= CodeGenMap.find(N.getValue(0));
-  if (CGMI != CodeGenMap.end()) {
-    Available = true;
-  }
+  int id = N.Val->getNodeId();
+  bool Available = isSelected(id);
 
   switch (N.getOpcode()) {
   default: break;
@@ -664,7 +633,6 @@ bool X86DAGToDAGISel::TryFoldLoad(SDOperand P, SDOperand N,
                                   SDOperand &Index, SDOperand &Disp) {
   if (N.getOpcode() == ISD::LOAD &&
       N.hasOneUse() &&
-      !CodeGenMap.count(N.getValue(0)) &&
       !CanBeFoldedBy(N.Val, P.Val))
     return SelectAddr(N.getOperand(1), Base, Scale, Index, Disp);
   return false;
@@ -727,23 +695,11 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
     return;   // Already selected.
   }
 
-  std::map<SDOperand, SDOperand>::iterator CGMI = CodeGenMap.find(N);
-  if (CGMI != CodeGenMap.end()) {
-    Result = CGMI->second;
-#ifndef NDEBUG
-    DEBUG(std::cerr << std::string(Indent-2, ' '));
-    DEBUG(std::cerr << "== ");
-    DEBUG(Result.Val->dump(CurDAG));
-    DEBUG(std::cerr << "\n");
-    Indent -= 2;
-#endif
-    return;
-  }
-  
   switch (Opcode) {
     default: break;
     case X86ISD::GlobalBaseReg: 
       Result = getGlobalBaseReg();
+      ReplaceUses(N, Result);
       return;
 
     case ISD::ADD: {
@@ -774,7 +730,8 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
             Result = CurDAG->SelectNodeTo(N.Val, X86::MOV32ri, MVT::i32, C);
           } else {
             SDNode *ResNode = CurDAG->getTargetNode(X86::MOV32ri, MVT::i32, C);
-            Result = CodeGenMap[N] = SDOperand(ResNode, 0);
+            Result = SDOperand(ResNode, 0);
+            ReplaceUses(N, Result);
           }
           return;
         }
@@ -826,42 +783,40 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
 
       SDOperand Chain;
       if (foldedLoad)
-        Select(Chain, N1.getOperand(0));
+        AddToQueue(Chain, N1.getOperand(0));
       else
         Chain = CurDAG->getEntryNode();
 
       SDOperand InFlag(0, 0);
-      Select(N0, N0);
+      AddToQueue(N0, N0);
       Chain  = CurDAG->getCopyToReg(Chain, CurDAG->getRegister(LoReg, NVT),
                                     N0, InFlag);
       InFlag = Chain.getValue(1);
 
       if (foldedLoad) {
-        Select(Tmp0, Tmp0);
-        Select(Tmp1, Tmp1);
-        Select(Tmp2, Tmp2);
-        Select(Tmp3, Tmp3);
+        AddToQueue(Tmp0, Tmp0);
+        AddToQueue(Tmp1, Tmp1);
+        AddToQueue(Tmp2, Tmp2);
+        AddToQueue(Tmp3, Tmp3);
         SDNode *CNode =
           CurDAG->getTargetNode(MOpc, MVT::Other, MVT::Flag, Tmp0, Tmp1,
                                 Tmp2, Tmp3, Chain, InFlag);
         Chain  = SDOperand(CNode, 0);
         InFlag = SDOperand(CNode, 1);
       } else {
-        Select(N1, N1);
+        AddToQueue(N1, N1);
         InFlag =
           SDOperand(CurDAG->getTargetNode(Opc, MVT::Flag, N1, InFlag), 0);
       }
 
       Result = CurDAG->getCopyFromReg(Chain, HiReg, NVT, InFlag);
-      CodeGenMap[N.getValue(0)] = Result;
-      if (foldedLoad) {
-        CodeGenMap[N1.getValue(1)] = Result.getValue(1);
-        AddHandleReplacement(N1.Val, 1, Result.Val, 1);
-      }
+      ReplaceUses(N.getValue(0), Result);
+      if (foldedLoad)
+        ReplaceUses(N1.getValue(1), Result.getValue(1));
 
 #ifndef NDEBUG
       DEBUG(std::cerr << std::string(Indent-2, ' '));
-      DEBUG(std::cerr << "== ");
+      DEBUG(std::cerr << "=> ");
       DEBUG(Result.Val->dump(CurDAG));
       DEBUG(std::cerr << "\n");
       Indent -= 2;
@@ -919,12 +874,12 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
       foldedLoad = TryFoldLoad(N, N1, Tmp0, Tmp1, Tmp2, Tmp3);
       SDOperand Chain;
       if (foldedLoad)
-        Select(Chain, N1.getOperand(0));
+        AddToQueue(Chain, N1.getOperand(0));
       else
         Chain = CurDAG->getEntryNode();
 
       SDOperand InFlag(0, 0);
-      Select(N0, N0);
+      AddToQueue(N0, N0);
       Chain  = CurDAG->getCopyToReg(Chain, CurDAG->getRegister(LoReg, NVT),
                                     N0, InFlag);
       InFlag = Chain.getValue(1);
@@ -942,32 +897,30 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
       }
 
       if (foldedLoad) {
-        Select(Tmp0, Tmp0);
-        Select(Tmp1, Tmp1);
-        Select(Tmp2, Tmp2);
-        Select(Tmp3, Tmp3);
+        AddToQueue(Tmp0, Tmp0);
+        AddToQueue(Tmp1, Tmp1);
+        AddToQueue(Tmp2, Tmp2);
+        AddToQueue(Tmp3, Tmp3);
         SDNode *CNode =
           CurDAG->getTargetNode(MOpc, MVT::Other, MVT::Flag, Tmp0, Tmp1,
                                 Tmp2, Tmp3, Chain, InFlag);
         Chain  = SDOperand(CNode, 0);
         InFlag = SDOperand(CNode, 1);
       } else {
-        Select(N1, N1);
+        AddToQueue(N1, N1);
         InFlag =
           SDOperand(CurDAG->getTargetNode(Opc, MVT::Flag, N1, InFlag), 0);
       }
 
       Result = CurDAG->getCopyFromReg(Chain, isDiv ? LoReg : HiReg,
                                       NVT, InFlag);
-      CodeGenMap[N.getValue(0)] = Result;
-      if (foldedLoad) {
-        CodeGenMap[N1.getValue(1)] = Result.getValue(1);
-        AddHandleReplacement(N1.Val, 1, Result.Val, 1);
-      }
+      ReplaceUses(N.getValue(0), Result);
+      if (foldedLoad)
+        ReplaceUses(N1.getValue(1), Result.getValue(1));
 
 #ifndef NDEBUG
       DEBUG(std::cerr << std::string(Indent-2, ' '));
-      DEBUG(std::cerr << "== ");
+      DEBUG(std::cerr << "=> ");
       DEBUG(Result.Val->dump(CurDAG));
       DEBUG(std::cerr << "\n");
       Indent -= 2;
@@ -994,14 +947,14 @@ void X86DAGToDAGISel::Select(SDOperand &Result, SDOperand N) {
         }
 
         SDOperand Tmp0, Tmp1;
-        Select(Tmp0, Node->getOperand(0));
+        AddToQueue(Tmp0, Node->getOperand(0));
         Tmp1 = SDOperand(CurDAG->getTargetNode(Opc, VT, Tmp0), 0);
-        Result = CodeGenMap[N] =
-          SDOperand(CurDAG->getTargetNode(Opc2, NVT, Tmp1), 0);
+        Result = SDOperand(CurDAG->getTargetNode(Opc2, NVT, Tmp1), 0);
+        ReplaceUses(N, Result);
       
 #ifndef NDEBUG
         DEBUG(std::cerr << std::string(Indent-2, ' '));
-        DEBUG(std::cerr << "== ");
+        DEBUG(std::cerr << "=> ");
         DEBUG(Result.Val->dump(CurDAG));
         DEBUG(std::cerr << "\n");
         Indent -= 2;
@@ -1038,10 +991,10 @@ SelectInlineAsmMemoryOperand(const SDOperand &Op, char ConstraintCode,
   }
   
   OutOps.resize(4);
-  Select(OutOps[0], Op0);
-  Select(OutOps[1], Op1);
-  Select(OutOps[2], Op2);
-  Select(OutOps[3], Op3);
+  AddToQueue(OutOps[0], Op0);
+  AddToQueue(OutOps[1], Op1);
+  AddToQueue(OutOps[2], Op2);
+  AddToQueue(OutOps[3], Op3);
   return false;
 }
 

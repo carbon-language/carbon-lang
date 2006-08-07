@@ -30,6 +30,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Visibility.h"
 #include <iostream>
+#include <queue>
 #include <set>
 using namespace llvm;
 
@@ -123,7 +124,7 @@ namespace {
         break;
       case 'o':   // offsetable
         if (!SelectAddrImm(Op, Op0, Op1)) {
-          Select(Op0, Op);     // r+0.
+          AddToQueue(Op0, Op);     // r+0.
           Op1 = getSmallIPtrImm(0);
         }
         break;
@@ -174,50 +175,9 @@ private:
 /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
 void PPCDAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   DEBUG(BB->dump());
-  
-  // The selection process is inherently a bottom-up recursive process (users
-  // select their uses before themselves).  Given infinite stack space, we
-  // could just start selecting on the root and traverse the whole graph.  In
-  // practice however, this causes us to run out of stack space on large basic
-  // blocks.  To avoid this problem, select the entry node, then all its uses,
-  // iteratively instead of recursively.
-  std::vector<SDOperand> Worklist;
-  Worklist.push_back(DAG.getEntryNode());
-  
-  // Note that we can do this in the PPC target (scanning forward across token
-  // chain edges) because no nodes ever get folded across these edges.  On a
-  // target like X86 which supports load/modify/store operations, this would
-  // have to be more careful.
-  while (!Worklist.empty()) {
-    SDOperand Node = Worklist.back();
-    Worklist.pop_back();
 
-    if ((Node.Val->getOpcode() >= ISD::BUILTIN_OP_END &&
-         Node.Val->getOpcode() < PPCISD::FIRST_NUMBER) ||
-        CodeGenMap.count(Node)) continue;
-    
-    for (SDNode::use_iterator UI = Node.Val->use_begin(),
-         E = Node.Val->use_end(); UI != E; ++UI) {
-      // Scan the values.  If this use has a value that is a token chain, add it
-      // to the worklist.
-      SDNode *User = *UI;
-      for (unsigned i = 0, e = User->getNumValues(); i != e; ++i)
-        if (User->getValueType(i) == MVT::Other) {
-          Worklist.push_back(SDOperand(User, i));
-          break; 
-        }
-    }
-
-    // Finally, legalize this node.
-    SDOperand Dummy;
-    Select(Dummy, Node);
-  }
-    
   // Select target instructions for the DAG.
   DAG.setRoot(SelectRoot(DAG.getRoot()));
-  CodeGenMap.clear();
-  HandleMap.clear();
-  ReplaceMap.clear();
   DAG.RemoveDeadNodes();
   
   // Emit machine code to BB.
@@ -493,8 +453,8 @@ SDNode *PPCDAGToDAGISel::SelectBitfieldInsert(SDNode *N) {
       }
       
       Tmp3 = (Op0Opc == ISD::AND && DisjointMask) ? Op0.getOperand(0) : Op0;
-      Select(Tmp1, Tmp3);
-      Select(Tmp2, Op1);
+      AddToQueue(Tmp1, Tmp3);
+      AddToQueue(Tmp2, Op1);
       SH &= 31;
       return CurDAG->getTargetNode(PPC::RLWIMI, MVT::i32, Tmp1, Tmp2,
                                    getI32Imm(SH), getI32Imm(MB), getI32Imm(ME));
@@ -732,7 +692,7 @@ bool PPCDAGToDAGISel::SelectAddrImmShift(SDOperand N, SDOperand &Disp,
 SDOperand PPCDAGToDAGISel::SelectCC(SDOperand LHS, SDOperand RHS,
                                     ISD::CondCode CC) {
   // Always select the LHS.
-  Select(LHS, LHS);
+  AddToQueue(LHS, LHS);
   unsigned Opc;
   
   if (LHS.getValueType() == MVT::i32) {
@@ -771,7 +731,7 @@ SDOperand PPCDAGToDAGISel::SelectCC(SDOperand LHS, SDOperand RHS,
     assert(LHS.getValueType() == MVT::f64 && "Unknown vt!");
     Opc = PPC::FCMPUD;
   }
-  Select(RHS, RHS);
+  AddToQueue(RHS, RHS);
   return SDOperand(CurDAG->getTargetNode(Opc, MVT::i32, LHS, RHS), 0);
 }
 
@@ -845,7 +805,7 @@ SDOperand PPCDAGToDAGISel::SelectSETCC(SDOperand Op) {
     // setcc op, 0
     if (Imm == 0) {
       SDOperand Op;
-      Select(Op, N->getOperand(0));
+      AddToQueue(Op, N->getOperand(0));
       switch (CC) {
       default: break;
       case ISD::SETEQ:
@@ -872,7 +832,7 @@ SDOperand PPCDAGToDAGISel::SelectSETCC(SDOperand Op) {
       }
     } else if (Imm == ~0U) {        // setcc op, -1
       SDOperand Op;
-      Select(Op, N->getOperand(0));
+      AddToQueue(Op, N->getOperand(0));
       switch (CC) {
       default: break;
       case ISD::SETEQ:
@@ -948,13 +908,6 @@ void PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     return;   // Already selected.
   }
 
-  // If this has already been converted, use it.
-  std::map<SDOperand, SDOperand>::iterator CGMI = CodeGenMap.find(Op);
-  if (CGMI != CodeGenMap.end()) {
-    Result = CGMI->second;
-    return;
-  }
-  
   switch (N->getOpcode()) {
   default: break;
   case ISD::SETCC:
@@ -962,6 +915,7 @@ void PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     return;
   case PPCISD::GlobalBaseReg:
     Result = getGlobalBaseReg();
+    ReplaceUses(Op, Result);
     return;
     
   case ISD::FrameIndex: {
@@ -973,22 +927,23 @@ void PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
                                     getSmallIPtrImm(0));
       return;
     }
-    Result = CodeGenMap[Op] = 
+    Result =
       SDOperand(CurDAG->getTargetNode(Opc, Op.getValueType(), TFI,
                                       getSmallIPtrImm(0)), 0);
+    ReplaceUses(Op, Result);
     return;
   }
 
   case PPCISD::MFCR: {
     SDOperand InFlag;
-    Select(InFlag, N->getOperand(1));
+    AddToQueue(InFlag, N->getOperand(1));
     // Use MFOCRF if supported.
     if (TLI.getTargetMachine().getSubtarget<PPCSubtarget>().isGigaProcessor())
       Result = SDOperand(CurDAG->getTargetNode(PPC::MFOCRF, MVT::i32,
                                                N->getOperand(0), InFlag), 0);
     else
       Result = SDOperand(CurDAG->getTargetNode(PPC::MFCR, MVT::i32, InFlag), 0);
-    CodeGenMap[Op] = Result;
+    ReplaceUses(Op, Result);
     return;
   }
     
@@ -1001,7 +956,7 @@ void PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     unsigned Imm;
     if (isInt32Immediate(N->getOperand(1), Imm)) {
       SDOperand N0;
-      Select(N0, N->getOperand(0));
+      AddToQueue(N0, N->getOperand(0));
       if ((signed)Imm > 0 && isPowerOf2_32(Imm)) {
         SDNode *Op =
           CurDAG->getTargetNode(PPC::SRAWI, MVT::i32, MVT::Flag,
@@ -1033,13 +988,13 @@ void PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
       SDOperand Val;
       unsigned SH, MB, ME;
       if (isRotateAndMask(N->getOperand(0).Val, Imm, false, SH, MB, ME)) {
-        Select(Val, N->getOperand(0).getOperand(0));
+        AddToQueue(Val, N->getOperand(0).getOperand(0));
       } else if (Imm == 0) {
         // AND X, 0 -> 0, not "rlwinm 32".
-        Select(Result, N->getOperand(1));
+        AddToQueue(Result, N->getOperand(1));
         return ;
       } else {        
-        Select(Val, N->getOperand(0));
+        AddToQueue(Val, N->getOperand(0));
         isRunOfOnes(Imm, MB, ME);
         SH = 0;
       }
@@ -1057,12 +1012,13 @@ void PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
       Imm = ~(Imm^Imm2);
       if (isRunOfOnes(Imm, MB, ME)) {
         SDOperand Tmp1, Tmp2;
-        Select(Tmp1, N->getOperand(0).getOperand(0));
-        Select(Tmp2, N->getOperand(0).getOperand(1));
+        AddToQueue(Tmp1, N->getOperand(0).getOperand(0));
+        AddToQueue(Tmp2, N->getOperand(0).getOperand(1));
         Result = SDOperand(CurDAG->getTargetNode(PPC::RLWIMI, MVT::i32,
                                                  Tmp1, Tmp2,
                                                  getI32Imm(0), getI32Imm(MB),
                                                  getI32Imm(ME)), 0);
+        ReplaceUses(Op, Result);
         return;
       }
     }
@@ -1073,7 +1029,8 @@ void PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
   case ISD::OR:
     if (N->getValueType(0) == MVT::i32)
       if (SDNode *I = SelectBitfieldInsert(N)) {
-        Result = CodeGenMap[Op] = SDOperand(I, 0);
+        Result = SDOperand(I, 0);
+        ReplaceUses(Op, Result);
         return;
       }
       
@@ -1084,7 +1041,7 @@ void PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     if (isOpcWithIntImmediate(N->getOperand(0).Val, ISD::AND, Imm) &&
         isRotateAndMask(N, Imm, true, SH, MB, ME)) {
       SDOperand Val;
-      Select(Val, N->getOperand(0).getOperand(0));
+      AddToQueue(Val, N->getOperand(0).getOperand(0));
       Result = CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, 
                                     Val, getI32Imm(SH), getI32Imm(MB),
                                     getI32Imm(ME));
@@ -1099,7 +1056,7 @@ void PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     if (isOpcWithIntImmediate(N->getOperand(0).Val, ISD::AND, Imm) &&
         isRotateAndMask(N, Imm, true, SH, MB, ME)) { 
       SDOperand Val;
-      Select(Val, N->getOperand(0).getOperand(0));
+      AddToQueue(Val, N->getOperand(0).getOperand(0));
       Result = CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, 
                                     Val, getI32Imm(SH), getI32Imm(MB),
                                     getI32Imm(ME));
@@ -1121,7 +1078,7 @@ void PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
               // FIXME: Implement this optzn for PPC64.
               N->getValueType(0) == MVT::i32) {
             SDOperand LHS;
-            Select(LHS, N->getOperand(0));
+            AddToQueue(LHS, N->getOperand(0));
             SDNode *Tmp =
               CurDAG->getTargetNode(PPC::ADDIC, MVT::i32, MVT::Flag,
                                     LHS, getI32Imm(~0U));
@@ -1148,15 +1105,15 @@ void PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
       SelectCCOp = PPC::SELECT_CC_VRRC;
 
     SDOperand N2, N3;
-    Select(N2, N->getOperand(2));
-    Select(N3, N->getOperand(3));
+    AddToQueue(N2, N->getOperand(2));
+    AddToQueue(N3, N->getOperand(3));
     Result = CurDAG->SelectNodeTo(N, SelectCCOp, N->getValueType(0), CCReg,
                                   N2, N3, getI32Imm(BROpc));
     return;
   }
   case ISD::BR_CC: {
     SDOperand Chain;
-    Select(Chain, N->getOperand(0));
+    AddToQueue(Chain, N->getOperand(0));
     ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(1))->get();
     SDOperand CondCode = SelectCC(N->getOperand(2), N->getOperand(3), CC);
     Result = CurDAG->SelectNodeTo(N, PPC::COND_BRANCH, MVT::Other, 
@@ -1167,8 +1124,8 @@ void PPCDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
   case ISD::BRIND: {
     // FIXME: Should custom lower this.
     SDOperand Chain, Target;
-    Select(Chain, N->getOperand(0));
-    Select(Target,N->getOperand(1));
+    AddToQueue(Chain, N->getOperand(0));
+    AddToQueue(Target,N->getOperand(1));
     unsigned Opc = Target.getValueType() == MVT::i32 ? PPC::MTCTR : PPC::MTCTR8;
     Chain = SDOperand(CurDAG->getTargetNode(Opc, MVT::Other, Target,
                                             Chain), 0);
@@ -1198,25 +1155,23 @@ void PPCDAGToDAGISel::MySelect_PPCbctrl(SDOperand &Result, SDOperand N) {
   std::vector<SDOperand> Ops;
   // Push varargs arguments, including optional flag.
   for (unsigned i = 1, e = N.getNumOperands()-hasFlag; i != e; ++i) {
-    Select(Chain, N.getOperand(i));
+    AddToQueue(Chain, N.getOperand(i));
     Ops.push_back(Chain);
   }
 
-  Select(Chain, N.getOperand(0));
+  AddToQueue(Chain, N.getOperand(0));
   Ops.push_back(Chain);
 
   if (hasFlag) {
-    Select(Chain, N.getOperand(N.getNumOperands()-1));
+    AddToQueue(Chain, N.getOperand(N.getNumOperands()-1));
     Ops.push_back(Chain);
   }
   
   ResNode = CurDAG->getTargetNode(PPC::BCTRL, MVT::Other, MVT::Flag, Ops);
   Chain = SDOperand(ResNode, 0);
   InFlag = SDOperand(ResNode, 1);
-  SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 0, Chain.Val,
-                                   Chain.ResNo);
-  SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 1, InFlag.Val,
-                                   InFlag.ResNo);
+  ReplaceUses(SDOperand(N.Val, 0), Chain);
+  ReplaceUses(SDOperand(N.Val, 1), InFlag);
   Result = SDOperand(ResNode, N.ResNo);
   return;
 }
@@ -1246,23 +1201,21 @@ void PPCDAGToDAGISel::MySelect_PPCcall(SDOperand &Result, SDOperand N) {
     
     // Push varargs arguments, not including optional flag.
     for (unsigned i = 2, e = N.getNumOperands()-hasFlag; i != e; ++i) {
-      Select(Chain, N.getOperand(i));
+      AddToQueue(Chain, N.getOperand(i));
       Ops.push_back(Chain);
     }
-    Select(Chain, N.getOperand(0));
+    AddToQueue(Chain, N.getOperand(0));
     Ops.push_back(Chain);
     if (hasFlag) {
-      Select(Chain, N.getOperand(N.getNumOperands()-1));
+      AddToQueue(Chain, N.getOperand(N.getNumOperands()-1));
       Ops.push_back(Chain);
     }
     ResNode = CurDAG->getTargetNode(PPC::BLA, MVT::Other, MVT::Flag, Ops);
     
     Chain = SDOperand(ResNode, 0);
     InFlag = SDOperand(ResNode, 1);
-    SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 0, Chain.Val, 
-                                     Chain.ResNo);
-    SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 1, InFlag.Val, 
-                                     InFlag.ResNo);
+    ReplaceUses(SDOperand(N.Val, 0), Chain);
+    ReplaceUses(SDOperand(N.Val, 1), InFlag);
     Result = SDOperand(ResNode, N.ResNo);
     return;
   }
@@ -1279,13 +1232,13 @@ void PPCDAGToDAGISel::MySelect_PPCcall(SDOperand &Result, SDOperand N) {
 
     // Push varargs arguments, not including optional flag.
     for (unsigned i = 2, e = N.getNumOperands()-hasFlag; i != e; ++i) {
-      Select(Chain, N.getOperand(i));
+      AddToQueue(Chain, N.getOperand(i));
       Ops.push_back(Chain);
     }
-    Select(Chain, N.getOperand(0));
+    AddToQueue(Chain, N.getOperand(0));
     Ops.push_back(Chain);
     if (hasFlag) {
-      Select(Chain, N.getOperand(N.getNumOperands()-1));
+      AddToQueue(Chain, N.getOperand(N.getNumOperands()-1));
       Ops.push_back(Chain);
     }
     
@@ -1293,10 +1246,8 @@ void PPCDAGToDAGISel::MySelect_PPCcall(SDOperand &Result, SDOperand N) {
     
     Chain = SDOperand(ResNode, 0);
     InFlag = SDOperand(ResNode, 1);
-    SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 0, Chain.Val,
-                                     Chain.ResNo);
-    SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 1, InFlag.Val, 
-                                     InFlag.ResNo);
+    ReplaceUses(SDOperand(N.Val, 0), Chain);
+    ReplaceUses(SDOperand(N.Val, 1), InFlag);
     Result = SDOperand(ResNode, N.ResNo);
     return;
   }
@@ -1313,13 +1264,13 @@ void PPCDAGToDAGISel::MySelect_PPCcall(SDOperand &Result, SDOperand N) {
 
     // Push varargs arguments, not including optional flag.
     for (unsigned i = 2, e = N.getNumOperands()-hasFlag; i != e; ++i) {
-      Select(Chain, N.getOperand(i));
+      AddToQueue(Chain, N.getOperand(i));
       Ops.push_back(Chain);
     }
-    Select(Chain, N.getOperand(0));
+    AddToQueue(Chain, N.getOperand(0));
     Ops.push_back(Chain);
     if (hasFlag) {
-      Select(Chain, N.getOperand(N.getNumOperands()-1));
+      AddToQueue(Chain, N.getOperand(N.getNumOperands()-1));
       Ops.push_back(Chain);
     }
     
@@ -1327,10 +1278,8 @@ void PPCDAGToDAGISel::MySelect_PPCcall(SDOperand &Result, SDOperand N) {
 
     Chain = SDOperand(ResNode, 0);
     InFlag = SDOperand(ResNode, 1);
-    SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 0, Chain.Val,
-                                     Chain.ResNo);
-    SelectionDAG::InsertISelMapEntry(CodeGenMap, N.Val, 1, InFlag.Val,
-                                     InFlag.ResNo);
+    ReplaceUses(SDOperand(N.Val, 0), Chain);
+    ReplaceUses(SDOperand(N.Val, 1), InFlag);
     Result = SDOperand(ResNode, N.ResNo);
     return;
   }

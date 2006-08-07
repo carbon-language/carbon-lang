@@ -25,6 +25,7 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Support/Debug.h"
 #include <iostream>
+#include <queue>
 #include <set>
 using namespace llvm;
 
@@ -1001,9 +1002,6 @@ void SparcDAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   
   // Select target instructions for the DAG.
   DAG.setRoot(SelectRoot(DAG.getRoot()));
-  CodeGenMap.clear();
-  HandleMap.clear();
-  ReplaceMap.clear();
   DAG.RemoveDeadNodes();
   
   // Emit machine code to BB. 
@@ -1083,21 +1081,14 @@ void SparcDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     return;   // Already selected.
   }
 
-                 // If this has already been converted, use it.
-  std::map<SDOperand, SDOperand>::iterator CGMI = CodeGenMap.find(Op);
-  if (CGMI != CodeGenMap.end()) {
-    Result = CGMI->second;
-    return;
-  }
-  
   switch (N->getOpcode()) {
   default: break;
   case ISD::SDIV:
   case ISD::UDIV: {
     // FIXME: should use a custom expander to expose the SRA to the dag.
     SDOperand DivLHS, DivRHS;
-    Select(DivLHS, N->getOperand(0));
-    Select(DivRHS, N->getOperand(1));
+    AddToQueue(DivLHS, N->getOperand(0));
+    AddToQueue(DivRHS, N->getOperand(1));
     
     // Set the Y register to the high-part.
     SDOperand TopPart;
@@ -1119,8 +1110,8 @@ void SparcDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
   case ISD::MULHS: {
     // FIXME: Handle mul by immediate.
     SDOperand MulLHS, MulRHS;
-    Select(MulLHS, N->getOperand(0));
-    Select(MulRHS, N->getOperand(1));
+    AddToQueue(MulLHS, N->getOperand(0));
+    AddToQueue(MulRHS, N->getOperand(1));
     unsigned Opcode = N->getOpcode() == ISD::MULHU ? SP::UMULrr : SP::SMULrr;
     SDNode *Mul = CurDAG->getTargetNode(Opcode, MVT::i32, MVT::Flag,
                                         MulLHS, MulRHS);

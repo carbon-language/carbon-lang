@@ -30,6 +30,7 @@
 #include "llvm/Support/MathExtras.h"
 #include <algorithm>
 #include <iostream>
+#include <queue>
 #include <set>
 using namespace llvm;
 
@@ -129,7 +130,7 @@ namespace {
       switch (ConstraintCode) {
       default: return true;
       case 'm':   // memory
-	Select(Op0, Op);
+	AddToQueue(Op0, Op);
         break;
       }
       
@@ -172,9 +173,6 @@ void AlphaDAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   
   // Select target instructions for the DAG.
   DAG.setRoot(SelectRoot(DAG.getRoot()));
-  CodeGenMap.clear();
-  HandleMap.clear();
-  ReplaceMap.clear();
   DAG.RemoveDeadNodes();
   
   // Emit machine code to BB. 
@@ -189,13 +187,6 @@ void AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
       N->getOpcode() < AlphaISD::FIRST_NUMBER) {
     Result = Op;
     return;   // Already selected.
-  }
-
-  // If this has already been converted, use it.
-  std::map<SDOperand, SDOperand>::iterator CGMI = CodeGenMap.find(Op);
-  if (CGMI != CodeGenMap.end()) {
-    Result = CGMI->second;
-    return;
   }
 
   switch (N->getOpcode()) {
@@ -213,17 +204,19 @@ void AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
   }
   case AlphaISD::GlobalBaseReg: 
     Result = getGlobalBaseReg();
+    ReplaceUses(Op, Result);
     return;
   case AlphaISD::GlobalRetAddr:
     Result = getGlobalRetAddr();
+    ReplaceUses(Op, Result);
     return;
   
   case AlphaISD::DivCall: {
     SDOperand Chain = CurDAG->getEntryNode();
     SDOperand N0, N1, N2;
-    Select(N0, Op.getOperand(0));
-    Select(N1, Op.getOperand(1));
-    Select(N2, Op.getOperand(2));
+    AddToQueue(N0, Op.getOperand(0));
+    AddToQueue(N1, Op.getOperand(1));
+    AddToQueue(N2, Op.getOperand(2));
     Chain = CurDAG->getCopyToReg(Chain, Alpha::R24, N1, 
 				 SDOperand(0,0));
     Chain = CurDAG->getCopyToReg(Chain, Alpha::R25, N2, 
@@ -241,8 +234,11 @@ void AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
 
   case ISD::READCYCLECOUNTER: {
     SDOperand Chain;
-    Select(Chain, N->getOperand(0)); //Select chain
-    Result = CurDAG->SelectNodeTo(N, Alpha::RPCC, MVT::i64, Chain);
+    AddToQueue(Chain, N->getOperand(0)); //Select chain
+    Result = SDOperand(CurDAG->getTargetNode(Alpha::RPCC, MVT::i64, MVT::Other,
+                                             Chain), Op.ResNo);
+    ReplaceUses(Op.getValue(0), Result.getValue(0));
+    ReplaceUses(Op.getValue(1), Result.getValue(1));
     return;
   }
 
@@ -252,6 +248,7 @@ void AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     if (uval == 0) {
       Result = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), Alpha::R31,
                                       MVT::i64);
+      ReplaceUses(Op, Result);
       return;
     }
 
@@ -311,8 +308,8 @@ void AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
       case ISD::SETNE: case ISD::SETONE: case ISD::SETUNE: Opc = Alpha::CMPTEQ; isNE = true; break;
       };
       SDOperand tmp1, tmp2;
-      Select(tmp1, N->getOperand(0));
-      Select(tmp2, N->getOperand(1));
+      AddToQueue(tmp1, N->getOperand(0));
+      AddToQueue(tmp2, N->getOperand(1));
       SDNode *cmp = CurDAG->getTargetNode(Opc, MVT::f64, 
                                           rev?tmp2:tmp1,
                                           rev?tmp1:tmp2);
@@ -338,6 +335,7 @@ void AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
       Result = SDOperand(CurDAG->getTargetNode(Alpha::CMPULT, MVT::i64, 
                                                CurDAG->getRegister(Alpha::R31, MVT::i64),
                                                LD), 0);
+      ReplaceUses(Op, Result);
       return;
     }
     break;
@@ -352,9 +350,9 @@ void AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
       //move int to fp
       bool isDouble = N->getValueType(0) == MVT::f64;
       SDOperand LD, cond, TV, FV;
-      Select(cond, N->getOperand(0));
-      Select(TV, N->getOperand(1));
-      Select(FV, N->getOperand(2));
+      AddToQueue(cond, N->getOperand(0));
+      AddToQueue(TV, N->getOperand(1));
+      AddToQueue(FV, N->getOperand(2));
       
       if (AlphaLowering.hasITOF()) {
 	LD = CurDAG->getNode(AlphaISD::ITOFT_, MVT::f64, cond);
@@ -371,6 +369,7 @@ void AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
       }
       Result = SDOperand(CurDAG->getTargetNode(isDouble?Alpha::FCMOVNET:Alpha::FCMOVNES,
                                                MVT::f64, FV, TV, LD), 0);
+      ReplaceUses(Op, Result);
       return;
     }
     break;
@@ -396,12 +395,13 @@ void AlphaDAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
 
 	if (get_zapImm(mask)) {
 	  SDOperand Src;
-	  Select(Src, N->getOperand(0).getOperand(0));
+	  AddToQueue(Src, N->getOperand(0).getOperand(0));
 	  SDOperand Z = 
 	    SDOperand(CurDAG->getTargetNode(Alpha::ZAPNOTi, MVT::i64, Src, 
 					    getI64Imm(get_zapImm(mask))), 0);
 	  Result = SDOperand(CurDAG->getTargetNode(Alpha::SRL, MVT::i64, Z, 
 						   getI64Imm(sval)), 0);
+          ReplaceUses(Op, Result);
 	  return;
 	}
       }
@@ -420,7 +420,7 @@ SDOperand AlphaDAGToDAGISel::SelectCALL(SDOperand Op) {
   SDOperand Chain;
   SDOperand Addr = N->getOperand(1);
   SDOperand InFlag(0,0);  // Null incoming flag value.
-  Select(Chain, N->getOperand(0));
+  AddToQueue(Chain, N->getOperand(0));
 
    std::vector<SDOperand> CallOperands;
    std::vector<MVT::ValueType> TypeOperands;
@@ -429,7 +429,7 @@ SDOperand AlphaDAGToDAGISel::SelectCALL(SDOperand Op) {
    for(int i = 2, e = N->getNumOperands(); i < e; ++i) {
      SDOperand Tmp;
      TypeOperands.push_back(N->getOperand(i).getValueType());
-     Select(Tmp, N->getOperand(i));
+     AddToQueue(Tmp, N->getOperand(i));
      CallOperands.push_back(Tmp);
    }
    int count = N->getNumOperands() - 2;
@@ -474,7 +474,7 @@ SDOperand AlphaDAGToDAGISel::SelectCALL(SDOperand Op) {
      Chain = SDOperand(CurDAG->getTargetNode(Alpha::BSR, MVT::Other, MVT::Flag, 
                                              Addr.getOperand(0), Chain, InFlag), 0);
    } else {
-     Select(Addr, Addr);
+     AddToQueue(Addr, Addr);
      Chain = CurDAG->getCopyToReg(Chain, Alpha::R27, Addr, InFlag);
      InFlag = Chain.getValue(1);
      Chain = SDOperand(CurDAG->getTargetNode(Alpha::JSR, MVT::Other, MVT::Flag, 
@@ -503,7 +503,7 @@ SDOperand AlphaDAGToDAGISel::SelectCALL(SDOperand Op) {
 
    CallResults.push_back(Chain);
    for (unsigned i = 0, e = CallResults.size(); i != e; ++i)
-     CodeGenMap[Op.getValue(i)] = CallResults[i];
+     ReplaceUses(Op.getValue(i), CallResults[i]);
    return CallResults[Op.ResNo];
 }
 

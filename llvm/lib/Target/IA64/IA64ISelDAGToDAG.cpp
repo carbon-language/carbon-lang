@@ -28,6 +28,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include <iostream>
+#include <queue>
 #include <set>
 using namespace llvm;
 
@@ -101,50 +102,9 @@ private:
 /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
 void IA64DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   DEBUG(BB->dump());
-  
-  // The selection process is inherently a bottom-up recursive process (users
-  // select their uses before themselves).  Given infinite stack space, we
-  // could just start selecting on the root and traverse the whole graph.  In
-  // practice however, this causes us to run out of stack space on large basic
-  // blocks.  To avoid this problem, select the entry node, then all its uses,
-  // iteratively instead of recursively.
-  std::vector<SDOperand> Worklist;
-  Worklist.push_back(DAG.getEntryNode());
-  
-  // Note that we can do this in the IA64 target (scanning forward across token
-  // chain edges) because no nodes ever get folded across these edges.  On a
-  // target like X86 which supports load/modify/store operations, this would
-  // have to be more careful.
-  while (!Worklist.empty()) {
-    SDOperand Node = Worklist.back();
-    Worklist.pop_back();
 
-    if ((Node.Val->getOpcode() >= ISD::BUILTIN_OP_END &&
-         Node.Val->getOpcode() < IA64ISD::FIRST_NUMBER) ||
-        CodeGenMap.count(Node)) continue;
-    
-    for (SDNode::use_iterator UI = Node.Val->use_begin(),
-         E = Node.Val->use_end(); UI != E; ++UI) {
-      // Scan the values.  If this use has a value that is a token chain, add it
-      // to the worklist.
-      SDNode *User = *UI;
-      for (unsigned i = 0, e = User->getNumValues(); i != e; ++i)
-        if (User->getValueType(i) == MVT::Other) {
-          Worklist.push_back(SDOperand(User, i));
-          break; 
-        }
-    }
-
-    // Finally, legalize this node.
-    SDOperand Dummy;
-    Select(Dummy, Node);
-  }
-    
   // Select target instructions for the DAG.
   DAG.setRoot(SelectRoot(DAG.getRoot()));
-  CodeGenMap.clear();
-  HandleMap.clear();
-  ReplaceMap.clear();
   DAG.RemoveDeadNodes();
   
   // Emit machine code to BB. 
@@ -154,10 +114,10 @@ void IA64DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
 SDOperand IA64DAGToDAGISel::SelectDIV(SDOperand Op) {
   SDNode *N = Op.Val;
   SDOperand Chain, Tmp1, Tmp2;
-  Select(Chain, N->getOperand(0));
+  AddToQueue(Chain, N->getOperand(0));
 
-  Select(Tmp1, N->getOperand(0));
-  Select(Tmp2, N->getOperand(1));
+  AddToQueue(Tmp1, N->getOperand(0));
+  AddToQueue(Tmp2, N->getOperand(1));
 
   bool isFP=false;
 
@@ -344,13 +304,6 @@ void IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     return;   // Already selected.
   }
 
-  // If this has already been converted, use it.
-  std::map<SDOperand, SDOperand>::iterator CGMI = CodeGenMap.find(Op);
-  if (CGMI != CodeGenMap.end()) {
-    Result = CGMI->second;
-    return;
-  }
-  
   switch (N->getOpcode()) {
   default: break;
 
@@ -358,9 +311,9 @@ void IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     SDOperand Chain;
     SDOperand InFlag;  // Null incoming flag value.
 
-    Select(Chain, N->getOperand(0));
+    AddToQueue(Chain, N->getOperand(0));
     if(N->getNumOperands()==3) // we have an incoming chain, callee and flag
-      Select(InFlag, N->getOperand(2));
+      AddToQueue(InFlag, N->getOperand(2));
 
     unsigned CallOpcode;
     SDOperand CallOperand;
@@ -382,7 +335,7 @@ void IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     // load the branch target (function)'s entry point and GP,
     // branch (call) then restore the GP
     SDOperand FnDescriptor;
-    Select(FnDescriptor, N->getOperand(1));
+    AddToQueue(FnDescriptor, N->getOperand(1));
    
     // load the branch target's entry point [mem] and 
     // GP value [mem+8]
@@ -421,16 +374,16 @@ void IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
    CallResults.push_back(InFlag);
 
    for (unsigned i = 0, e = CallResults.size(); i != e; ++i)
-     CodeGenMap[Op.getValue(i)] = CallResults[i];
+     ReplaceUses(Op.getValue(i), CallResults[i]);
    Result = CallResults[Op.ResNo];
    return;
   }
   
   case IA64ISD::GETFD: {
     SDOperand Input;
-    Select(Input, N->getOperand(0));
+    AddToQueue(Input, N->getOperand(0));
     Result = SDOperand(CurDAG->getTargetNode(IA64::GETFD, MVT::i64, Input), 0);
-    CodeGenMap[Op] = Result;
+    ReplaceUses(Op, Result);
     return;
   } 
   
@@ -440,6 +393,7 @@ void IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
   case ISD::SREM:
   case ISD::UREM:
     Result = SelectDIV(Op);
+    ReplaceUses(Op, Result);
     return;
  
   case ISD::TargetConstantFP: {
@@ -459,9 +413,11 @@ void IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     if (N->hasOneUse())
       Result = CurDAG->SelectNodeTo(N, IA64::MOV, MVT::i64,
                                   CurDAG->getTargetFrameIndex(FI, MVT::i64));
-    else
-      Result = CodeGenMap[Op] = SDOperand(CurDAG->getTargetNode(IA64::MOV, MVT::i64,
+    else {
+      Result = SDOperand(CurDAG->getTargetNode(IA64::MOV, MVT::i64,
                                 CurDAG->getTargetFrameIndex(FI, MVT::i64)), 0);
+      ReplaceUses(Op, Result);
+    }
     return;
   }
 
@@ -473,6 +429,7 @@ void IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
                                                   CP->getAlignment());
     Result = SDOperand(CurDAG->getTargetNode(IA64::ADDL_GA, MVT::i64, // ?
 	                      CurDAG->getRegister(IA64::r1, MVT::i64), CPI), 0);
+    ReplaceUses(Op, Result);
     return;
   }
 
@@ -482,6 +439,7 @@ void IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     SDOperand Tmp = SDOperand(CurDAG->getTargetNode(IA64::ADDL_GA, MVT::i64, 
 	                          CurDAG->getRegister(IA64::r1, MVT::i64), GA), 0);
     Result = SDOperand(CurDAG->getTargetNode(IA64::LD8, MVT::i64, Tmp), 0);
+    ReplaceUses(Op, Result);
     return;
   }
   
@@ -498,8 +456,8 @@ void IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
   case ISD::EXTLOAD: // FIXME: load -1, not 1, for bools?
   case ISD::ZEXTLOAD: {
     SDOperand Chain, Address;
-    Select(Chain, N->getOperand(0));
-    Select(Address, N->getOperand(1));
+    AddToQueue(Chain, N->getOperand(0));
+    AddToQueue(Address, N->getOperand(1));
 
     MVT::ValueType TypeBeingLoaded = (N->getOpcode() == ISD::LOAD) ?
       N->getValueType(0) : cast<VTSDNode>(N->getOperand(3))->getVT();
@@ -540,8 +498,8 @@ void IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
   case ISD::TRUNCSTORE:
   case ISD::STORE: {
     SDOperand Address, Chain;
-    Select(Address, N->getOperand(2));
-    Select(Chain, N->getOperand(0));
+    AddToQueue(Address, N->getOperand(2));
+    AddToQueue(Chain, N->getOperand(0));
    
     unsigned Opc;
     if (N->getOpcode() == ISD::STORE) {
@@ -554,7 +512,7 @@ void IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
 	Chain = Initial.getValue(1);
 	// then load 1 into the same reg iff the predicate to store is 1
         SDOperand Tmp;
-        Select(Tmp, N->getOperand(1));
+        AddToQueue(Tmp, N->getOperand(1));
         Tmp = SDOperand(CurDAG->getTargetNode(IA64::TPCADDS, MVT::i64, Initial,
                                               CurDAG->getConstant(1, MVT::i64),
                                               Tmp), 0);
@@ -575,16 +533,16 @@ void IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     }
     
     SDOperand N1, N2;
-    Select(N1, N->getOperand(1));
-    Select(N2, N->getOperand(2));
+    AddToQueue(N1, N->getOperand(1));
+    AddToQueue(N2, N->getOperand(2));
     Result = CurDAG->SelectNodeTo(N, Opc, MVT::Other, N2, N1, Chain);
     return;
   }
 
   case ISD::BRCOND: {
     SDOperand Chain, CC;
-    Select(Chain, N->getOperand(0));
-    Select(CC, N->getOperand(1));
+    AddToQueue(Chain, N->getOperand(0));
+    AddToQueue(CC, N->getOperand(1));
     MachineBasicBlock *Dest =
       cast<BasicBlockSDNode>(N->getOperand(2))->getBasicBlock();
     //FIXME - we do NOT need long branches all the time
@@ -599,7 +557,7 @@ void IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
     unsigned Opc = N->getOpcode() == ISD::CALLSEQ_START ?
                        IA64::ADJUSTCALLSTACKDOWN : IA64::ADJUSTCALLSTACKUP;
     SDOperand N0;
-    Select(N0, N->getOperand(0));
+    AddToQueue(N0, N->getOperand(0));
     Result = CurDAG->SelectNodeTo(N, Opc, MVT::Other, getI64Imm(Amt), N0);
     return;
   }
@@ -607,7 +565,7 @@ void IA64DAGToDAGISel::Select(SDOperand &Result, SDOperand Op) {
   case ISD::BR:
 		 // FIXME: we don't need long branches all the time!
     SDOperand N0;
-    Select(N0, N->getOperand(0));
+    AddToQueue(N0, N->getOperand(0));
     Result = CurDAG->SelectNodeTo(N, IA64::BRL_NOTCALL, MVT::Other, 
                                 N->getOperand(1), N0);
     return;

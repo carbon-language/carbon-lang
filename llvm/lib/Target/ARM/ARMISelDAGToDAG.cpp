@@ -26,6 +26,7 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Support/Debug.h"
 #include <iostream>
+#include <queue>
 #include <set>
 using namespace llvm;
 
@@ -306,9 +307,6 @@ void ARMDAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   DEBUG(BB->dump());
 
   DAG.setRoot(SelectRoot(DAG.getRoot()));
-  CodeGenMap.clear();
-  HandleMap.clear();
-  ReplaceMap.clear();
   DAG.RemoveDeadNodes();
 
   ScheduleAndEmitDAG(DAG);
