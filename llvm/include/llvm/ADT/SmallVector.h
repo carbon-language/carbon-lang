@@ -125,6 +125,13 @@ public:
     End->~T();
   }
   
+  void clear() {
+    while (End != Begin) {
+      End->~T();
+      --End;
+    }
+  }
+  
   /// append - Add the specified range to the end of the SmallVector.
   ///
   template<typename in_iter>
