@@ -15,7 +15,6 @@
 #include "Unix.h"
 #include <vector>
 #include <algorithm>
-#include <iostream>
 #if HAVE_EXECINFO_H
 # include <execinfo.h>         // For backtrace().
 #endif
