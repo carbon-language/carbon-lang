@@ -153,19 +153,25 @@ struct DeclaratorTypeInfo {
     unsigned TypeQuals : 3;
     
     /// True if this dimension included the 'static' keyword.
-    bool Static : 1;
+    bool hasStatic : 1;
     
     /// True if this dimension was [*].  In this case, NumElts is null.
-    bool Star : 1;
+    bool isStar : 1;
     
     /// This is the size of the array, or null if [] or [*] was specified.
     /// FIXME: make this be an expression* when we have expressions.
     void *NumElts;
   };
+  struct FunctionTypeInfo {
+    bool hasPrototype : 1;
+    bool isVariadic : 1;
+    // TODO: capture argument info.
+  };
   
   union {
     PointerTypeInfo Ptr;
     ArrayTypeInfo Arr;
+    FunctionTypeInfo Fun;
   };
   
   
@@ -178,6 +184,7 @@ struct DeclaratorTypeInfo {
     I.Ptr.TypeQuals = TypeQuals;
     return I;
   }
+  
   /// getArray - Return a DeclaratorTypeInfo for an array.
   ///
   static DeclaratorTypeInfo getArray(unsigned TypeQuals, bool isStatic,
@@ -187,9 +194,21 @@ struct DeclaratorTypeInfo {
     I.Kind          = Array;
     I.Loc           = Loc;
     I.Arr.TypeQuals = TypeQuals;
-    I.Arr.Static    = isStatic;
-    I.Arr.Star      = isStar;
+    I.Arr.hasStatic = isStatic;
+    I.Arr.isStar    = isStar;
     I.Arr.NumElts   = NumElts;
+    return I;
+  }
+  
+  /// getFunction - Return a DeclaratorTypeInfo for a function.
+  ///
+  static DeclaratorTypeInfo getFunction(bool hasProto, bool isVariadic,
+                                        SourceLocation Loc) {
+    DeclaratorTypeInfo I;
+    I.Kind             = Function;
+    I.Loc              = Loc;
+    I.Fun.hasPrototype = hasProto;
+    I.Fun.isVariadic   = isVariadic;
     return I;
   }
 };

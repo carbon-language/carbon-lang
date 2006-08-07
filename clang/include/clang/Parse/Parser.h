@@ -161,7 +161,9 @@ private:
   void ParseDeclarationSpecifiers(DeclSpec &DS);
   bool isDeclarationSpecifier() const;
   
+  /// ParseDeclarator - Parse and verify a newly-initialized declarator.
   void ParseDeclarator(Declarator &D);
+  void ParseDeclaratorInternal(Declarator &D);
   void ParseTypeQualifierListOpt(DeclSpec &DS);
   void ParseDirectDeclarator(Declarator &D);
   void ParseParenDeclarator(Declarator &D);

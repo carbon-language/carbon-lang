@@ -286,7 +286,20 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS) {
   }
 }
 
-/// ParseDeclarator
+
+/// ParseDeclarator - Parse and verify a newly-initialized declarator.
+///
+void Parser::ParseDeclarator(Declarator &D) {
+  /// This implements the 'declarator' production in the C grammar, then checks
+  /// for well-formedness and issues diagnostics.
+  ParseDeclaratorInternal(D);
+  
+  // FIXME: validate D.
+  
+  
+}
+
+/// ParseDeclaratorInternal
 ///       declarator: [C99 6.7.5]
 ///         pointer[opt] direct-declarator
 ///
@@ -294,7 +307,7 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS) {
 ///         '*' type-qualifier-list[opt]
 ///         '*' type-qualifier-list[opt] pointer
 ///
-void Parser::ParseDeclarator(Declarator &D) {
+void Parser::ParseDeclaratorInternal(Declarator &D) {
   if (Tok.getKind() != tok::star)
     return ParseDirectDeclarator(D);
   
@@ -305,7 +318,7 @@ void Parser::ParseDeclarator(Declarator &D) {
   ParseTypeQualifierListOpt(DS);
   
   // Recursively parse the declarator.
-  ParseDeclarator(D);
+  ParseDeclaratorInternal(D);
   
   // Remember that we parsed a pointer type, and remember the type-quals.
   D.AddTypeInfo(DeclaratorTypeInfo::getPointer(DS.TypeQualifiers, Loc));
@@ -387,7 +400,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
 ///         identifier-list ',' identifier
 ///
 void Parser::ParseParenDeclarator(Declarator &D) {
-  SourceLocation LParenLoc = Tok.getLocation();
+  SourceLocation StartLoc = Tok.getLocation();
   ConsumeParen();
   
   // If we haven't past the identifier yet (or where the identifier would be
@@ -416,13 +429,13 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     // direct-declarator: '(' declarator ')'
     // direct-declarator: '(' attributes declarator ')'   [TODO]
     if (isGrouping) {
-      ParseDeclarator(D);
+      ParseDeclaratorInternal(D);
       if (Tok.getKind() == tok::r_paren) {
         ConsumeParen();
       } else {
         // expected ')': skip until we find ')'.
         Diag(Tok, diag::err_expected_rparen);
-        Diag(LParenLoc, diag::err_matching);
+        Diag(StartLoc, diag::err_matching);
         SkipUntil(tok::r_paren);
       }
       return;
@@ -441,13 +454,13 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   // FIXME: enter function-declaration scope, limiting any declarators for
   // arguments to the function scope.
   // NOTE: better to only create a scope if not '()'
-  bool isVariadic;
+  bool IsVariadic;
   bool HasPrototype;
   bool ErrorEmitted = false;
 
   if (Tok.getKind() == tok::r_paren) {
     // int() -> no prototype, no '...'.
-    isVariadic   = false;
+    IsVariadic   = false;
     HasPrototype = false;
   } else if (Tok.getKind() == tok::identifier &&
              0/*TODO: !isatypedefname(Tok.getIdentifierInfo())*/) {
@@ -481,22 +494,22 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     }
     
     // K&R 'prototype'.
-    isVariadic = false;
+    IsVariadic = false;
     HasPrototype = false;
   } else {
-    isVariadic = false;
+    IsVariadic = false;
     bool ReadArg = false;
     // Finally, a normal, non-empty parameter type list.
     while (1) {
       if (Tok.getKind() == tok::ellipsis) {
-        isVariadic = true;
+        IsVariadic = true;
 
         // Check to see if this is "void(...)" which is not allowed.
         if (!ReadArg) {
           // Otherwise, parse parameter type list.  If it starts with an
           // ellipsis,  diagnose the malformed function.
           Diag(Tok, diag::err_ellipsis_first_arg);
-          isVariadic = false;       // Treat this like 'void()'.
+          IsVariadic = false;       // Treat this like 'void()'.
         }
 
         // Consume the ellipsis.
@@ -528,8 +541,13 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   }
   
   // FIXME: pop the scope.  
+
+  // FIXME: capture argument info.
   
-  // FIXME: Add the function declarator.
+  // Remember that we parsed a function type, and remember the attributes.
+  D.AddTypeInfo(DeclaratorTypeInfo::getFunction(HasPrototype, IsVariadic,
+                                                StartLoc));
+  
   
   // If we have the closing ')', eat it and we're done.
   if (Tok.getKind() == tok::r_paren) {
