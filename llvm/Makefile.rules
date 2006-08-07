@@ -323,12 +323,17 @@ LLVMGXXWITHPATH  := PATH="$(LLVMToolDir):$(PATH)" $(LLVMGXX)
 
 # Adjust LD.Flags and Libtool.Flags depending on the kind of library that is
 # to be built. Note that if LOADABLE_MODULE is specified then the resulting
-# shared library can be opened with dlopen
+# shared library can be opened with dlopen. Also, LOADABLE_MODULE implies 
+# several other things so we force them to be defined/on.
+ifdef LOADABLE_MODULE
+  SHARED_LIBRARY := 1
+  DONT_BUILD_RELINKED := 1
+  LINK_LIBS_IN_SHARED := 1
+  LD.Flags += -module
+endif
+
 ifdef SHARED_LIBRARY
   LD.Flags += -rpath $(LibDir)
-  ifdef LOADABLE_MODULE
-    LD.Flags += -module
-  endif
 else
   LibTool.Flags += --tag=disable-shared
 endif
@@ -425,10 +430,12 @@ LTCompile.CXX = $(LIBTOOL) $(LibTool.Flags) --mode=compile $(Compile.CXX)
 BCCompile.CXX = $(LLVMGXXWITHPATH) $(CPP.Flags) $(CompileCommonOpts) \
                 $(CXX.Flags)
 Preprocess.CXX= $(CXX) $(CPP.Flags) $(CompileCommonOpts) $(CXX.Flags) -E
-Link          = $(LIBTOOL) $(LibTool.Flags) --mode=link $(CXX) $(CPP.Flags) \
-	        $(CXX.Flags) $(CompileCommonOpts) $(LD.Flags) $(Strip)
-Relink        = $(LIBTOOL) $(LibTool.Flags) --mode=link $(CXX) $(CPP.Flags) \
-                $(CXX.Flags) $(CompileCommonOpts) $(Relink.Flags)
+Link          = $(CXX) $(CPP.Flags) $(CXX.Flags) $(CompileCommonOpts) \
+		$(LD.Flags) $(Strip)
+LTLink        = $(LIBTOOL) $(LibTool.Flags) --mode=link $(Link)
+Relink        = $(CXX) $(CPP.Flags) $(CXX.Flags) $(CompileCommonOpts) \
+		$(Relink.Flags)
+LTRelink      = $(LIBTOOL) $(LibTool.Flags) --mode=link $(Relink)
 LTInstall     = $(LIBTOOL) $(LibTool.Flags) --mode=install $(INSTALL) \
 		$(Install.Flags)
 ProgInstall   = $(INSTALL) $(Install.StripFlag) -m 0755 
@@ -772,15 +779,21 @@ ifdef SHARED_LIBRARY
 all-local:: $(LibName.LA)
 
 ifdef LINK_LIBS_IN_SHARED
+ifdef LOADABLE_MODULE
+SharedLibKindMessage := "Lodable Module"
+else
+SharedLibKindMessage := "Shared Library"
+endif
 $(LibName.LA): $(ObjectsLO) $(LibDir)/.dir
-	$(Echo) Linking $(BuildMode) Shared Library $(LIBRARYNAME)$(SHLIBEXT)
-	$(Verb) $(Link) -o $@ $(ObjectsLO) \
-         $(ProjLibsOptions) $(LLVMLibsOptions)
+	$(Echo) Linking $(BuildMode) $(SharedLibKindMessage) \
+	  $(LIBRARYNAME)$(SHLIBEXT)
+	$(Verb) $(LTLink) -o $@ $(ObjectsLO) $(ProjLibsOptions) \
+	  $(LLVMLibsOptions)
 	$(Verb) $(LTInstall) $@ $(LibDir)
 else
 $(LibName.LA): $(ObjectsLO) $(LibDir)/.dir
 	$(Echo) Linking $(BuildMode) Shared Library $(LIBRARYNAME)$(SHLIBEXT)
-	$(Verb) $(Link) -o $@ $(ObjectsLO)
+	$(Verb) $(LTLink) -o $@ $(ObjectsLO)
 	$(Verb) $(LTInstall) $@ $(LibDir)
 endif
 
@@ -884,7 +897,7 @@ all-local:: $(LibName.O)
 
 $(LibName.O): $(ObjectsO) $(LibDir)/.dir
 	$(Echo) Linking $(BuildMode) Object Library $(notdir $@)
-	$(Verb) $(Relink) -o $@ $(ObjectsO)
+	$(Verb) $(LTRelink) -o $@ $(ObjectsO)
 
 clean-local::
 ifneq ($(strip $(LibName.O)),)
@@ -983,7 +996,7 @@ endif
 
 $(ToolBuildPath): $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths)
 	$(Echo) Linking $(BuildMode) executable $(TOOLNAME) $(StripWarnMsg)
-	$(Verb) $(Link) -o $@ $(TOOLLINKOPTS) $(ObjectsO) $(ProjLibsOptions) \
+	$(Verb) $(LTLink) -o $@ $(TOOLLINKOPTS) $(ObjectsO) $(ProjLibsOptions) \
 	$(LLVMLibsOptions) $(ExtraLibs) $(TOOLLINKOPTSB) $(LIBS)
 	$(Echo) ======= Finished Linking $(BuildMode) Executable $(TOOLNAME) \
           $(StripWarnMsg) 

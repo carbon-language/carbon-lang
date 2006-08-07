@@ -30,7 +30,8 @@
     <ol>
       <li><a href="#libraries">Libraries</a>
         <ol>
-	  <li><a href="#Modules">Bytecode Modules</a></li>
+	  <li><a href="#BCModules">Bytecode Modules</a></li>
+	  <li><a href="#LoadableModules">Loadable Modules</a></li>
 	</ol>
       </li>
       <li><a href="#tools">Tools</a>
@@ -259,7 +260,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection"><a name="Modules">Bytecode Modules</a></div>
+<div class="doc_subsubsection"><a name="BCModules">Bytecode Modules</a></div>
 <div class="doc_text">
   <p>In some situations, it is desireable to build a single bytecode module from
   a variety of sources, instead of an archive, shared library, or bytecode 
@@ -277,6 +278,40 @@
   containing a bytecode module for each compiled source file. The difference is
   subtle, but important depending on how the module or library is to be linked.
   </p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsubsection">
+  <a name="LodableModules">Loadable Modules</a>
+</div>
+<div class="doc_text">
+  <p>In some situations, you need to create a loadable module. Loadable modules
+  can be loaded into programs like <tt>opt</tt> or <tt>llc</tt> to specify
+  additional passes to run or targets to support.  Loadable modules are also
+  useful for debugging a pass or providing a pass with another package if that
+  pass can't be included in LLVM.</p>
+  <p>LLVM provides complete support for building such a module. All you need to
+  do is use the LOADABLE_MODULE variable in your Makefile. For example, to 
+  build a loadable module named <tt>MyMod</tt> that uses the LLVM libraries
+  <tt>LLVMSupport.a</tt> and <tt>LLVMSystem.a</tt>, you would specify:</p>
+  <pre><tt>
+     LIBRARYNAME := MyMod
+     LOADABLE_MODULE := 1
+     USEDLIBS := LLVMSupport.a LLVMSystem.a
+  </tt></pre>
+  <p>Use of the <tt>LOADABLE_MODULE</tt> facility implies several things:</p>
+  <ol>
+    <li>There will be no "lib" prefix on the module. This differentiates it from
+    a standard shared library of the same name.</li>
+    <li>The <a href="#SHARED_LIBRARY">SHARED_LIBRARY</a> variable is turned 
+    on.</li>
+    <li>The <a href="#LINK_LIBS_IN_SHARED">LINK_LIBS_IN_SHARED</a> variable
+    is turned on.</li>
+    <li>The <a href="#DONT_BUILD_RELINKED">DONT_BUILD_RELINKED</a> variable
+    is turned on.</li>
+  </ol>
+  <p>A loadable module is loaded by LLVM via the facilities of libtool's libltdl
+  library which is part of <tt>lib/System</tt> implementation.</p>
 </div>
 
 <!-- ======================================================================= -->

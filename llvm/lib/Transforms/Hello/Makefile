@@ -9,8 +9,8 @@
 
 LEVEL = ../../..
 LIBRARYNAME = LLVMHello
-SHARED_LIBRARY = 1
 LOADABLE_MODULE = 1
+USEDLIBS = LLVMSupport.a LLVMSystem.a
 
 include $(LEVEL)/Makefile.common
 

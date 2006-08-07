@@ -14,7 +14,7 @@ TOOLNAME=sample
 # List libraries that we'll need
 # We use LIBS because sample is a dynamic library.
 #
-USEDLIBS = sample
+USEDLIBS = sample.a
 
 #
 # Include Makefile.common so we know what to do.
