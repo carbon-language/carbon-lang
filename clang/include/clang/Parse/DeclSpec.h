@@ -16,6 +16,7 @@
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceLocation.h"
+#include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
 namespace clang {
@@ -131,13 +132,79 @@ public:
 };
 
 
+/// DeclaratorTypeInfo - One instance of this struct is used for each type in a
+/// declarator that is parsed.
+///
+/// This is intended to be a small value object.
+struct DeclaratorTypeInfo {
+  enum {
+    Pointer, Array, Function
+  } Kind;
+  
+  /// Loc - The place where this type was defined.
+  SourceLocation Loc;
+  
+  struct PointerTypeInfo {
+    /// The type qualifiers: const/volatile/restrict.
+    unsigned TypeQuals : 3;
+  };
+  struct ArrayTypeInfo {
+    /// The type qualifiers for the array: const/volatile/restrict.
+    unsigned TypeQuals : 3;
+    
+    /// True if this dimension included the 'static' keyword.
+    bool Static : 1;
+    
+    /// True if this dimension was [*].  In this case, NumElts is null.
+    bool Star : 1;
+    
+    /// This is the size of the array, or null if [] or [*] was specified.
+    /// FIXME: make this be an expression* when we have expressions.
+    void *NumElts;
+  };
+  
+  union {
+    PointerTypeInfo Ptr;
+    ArrayTypeInfo Arr;
+  };
+  
+  
+  /// getPointer - Return a DeclaratorTypeInfo for a pointer.
+  ///
+  static DeclaratorTypeInfo getPointer(unsigned TypeQuals, SourceLocation Loc) {
+    DeclaratorTypeInfo I;
+    I.Kind          = Pointer;
+    I.Loc           = Loc;
+    I.Ptr.TypeQuals = TypeQuals;
+    return I;
+  }
+  /// getArray - Return a DeclaratorTypeInfo for an array.
+  ///
+  static DeclaratorTypeInfo getArray(unsigned TypeQuals, bool isStatic,
+                                     bool isStar, void *NumElts,
+                                     SourceLocation Loc) {
+    DeclaratorTypeInfo I;
+    I.Kind          = Array;
+    I.Loc           = Loc;
+    I.Arr.TypeQuals = TypeQuals;
+    I.Arr.Static    = isStatic;
+    I.Arr.Star      = isStar;
+    I.Arr.NumElts   = NumElts;
+    return I;
+  }
+};
+
+
 /// DeclaratorInfo - Information about one declarator, including the parsed type
 /// information and the identifier.  When the declarator is fully formed, this
 /// is turned into the appropriate Decl object.
 ///
 /// Declarators come in two types: normal declarators and abstract declarators.
 /// Abstract declarators are used when parsing types, and don't have an
-/// identifier.  Normal declarators do have ID's.  One strange case s 
+/// identifier.  Normal declarators do have ID's.
+///
+/// This is NOT intended to be a small value object: this should be a transient
+/// object that lives on the stack.
 class Declarator {
   const DeclSpec &DS;
   IdentifierInfo *Identifier;
@@ -157,6 +224,11 @@ private:
   /// Context - Where we are parsing this declarator.
   ///
   TheContext Context;
+  
+  /// DeclTypeInfo - The final pieces of information is information about each
+  /// type parsed as we parse it.
+  SmallVector<DeclaratorTypeInfo, 8> DeclTypeInfo;
+  
 public:
   Declarator(const DeclSpec &ds, TheContext C)
     : DS(ds), Identifier(0), Context(C) {
@@ -185,6 +257,10 @@ public:
   void SetIdentifier(IdentifierInfo *ID, SourceLocation Loc) {
     Identifier = ID;
     IdentifierLoc = Loc;
+  }
+  
+  void AddTypeInfo(const DeclaratorTypeInfo &TI) {
+    DeclTypeInfo.push_back(TI);
   }
 };
 

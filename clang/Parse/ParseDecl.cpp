@@ -243,25 +243,6 @@ bool Parser::isDeclarationSpecifier() const {
 }
 
 
-/// ParseDeclarator
-///       declarator: [C99 6.7.5]
-///         pointer[opt] direct-declarator
-///
-///       pointer: [C99 6.7.5]
-///         '*' type-qualifier-list[opt]
-///         '*' type-qualifier-list[opt] pointer
-///
-void Parser::ParseDeclarator(Declarator &D) {
-  while (Tok.getKind() == tok::star) {  // '*' -> pointer.
-    ConsumeToken();  // Eat the *.
-    DeclSpec DS;
-    ParseTypeQualifierListOpt(DS);
-    // TODO: do something with DS.
-  }
-  
-  ParseDirectDeclarator(D);
-}
-
 /// ParseTypeQualifierListOpt
 ///       type-qualifier-list: [C99 6.7.5]
 ///         type-qualifier
@@ -303,6 +284,31 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS) {
     }
     ConsumeToken();
   }
+}
+
+/// ParseDeclarator
+///       declarator: [C99 6.7.5]
+///         pointer[opt] direct-declarator
+///
+///       pointer: [C99 6.7.5]
+///         '*' type-qualifier-list[opt]
+///         '*' type-qualifier-list[opt] pointer
+///
+void Parser::ParseDeclarator(Declarator &D) {
+  if (Tok.getKind() != tok::star)
+    return ParseDirectDeclarator(D);
+  
+  // Otherwise, '*' -> pointer.
+  SourceLocation Loc = Tok.getLocation();
+  ConsumeToken();  // Eat the *.
+  DeclSpec DS;
+  ParseTypeQualifierListOpt(DS);
+  
+  // Recursively parse the declarator.
+  ParseDeclarator(D);
+  
+  // Remember that we parsed a pointer type, and remember the type-quals.
+  D.AddTypeInfo(DeclaratorTypeInfo::getPointer(DS.TypeQualifiers, Loc));
 }
 
 
@@ -555,7 +561,6 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
   // If there is a type-qualifier-list, read it now.
   DeclSpec DS;
   ParseTypeQualifierListOpt(DS);
-  // TODO: do something with DS.
   
   // If we haven't already read 'static', check to see if there is one after the
   // type-qualifier-list.
@@ -589,8 +594,10 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
     }
   }
   
+  void *NumElts = 0;
   if (!isStar && Tok.getKind() != tok::r_square) {
     // Parse the assignment-expression now.
+    NumElts = /*FIXME: parse array size expr*/0;
     assert(0 && "expr parsing not impl yet!");
   }
   
@@ -600,8 +607,13 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
   // it was not a constant expression.
   if (!getLang().C99) {
     // TODO: check C90 array constant exprness.
-    if (isStar || StaticLoc.isValid() || 0/*constantexpr*/)
+    if (isStar || StaticLoc.isValid() || 0/*NumElts is constantexpr*/)
       Diag(StartLoc, diag::ext_c99_array_usage);
   }
+  
+  // Remember that we parsed a pointer type, and remember the type-quals.
+  D.AddTypeInfo(DeclaratorTypeInfo::getArray(DS.TypeQualifiers,
+                                             StaticLoc.isValid(), isStar,
+                                             NumElts, StartLoc));
 }
 
