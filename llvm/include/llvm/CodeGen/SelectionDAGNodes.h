@@ -707,6 +707,9 @@ class SDNode {
   SDNode *Prev, *Next;
   friend struct ilist_traits<SDNode>;
 
+  /// NextInBucket - This is used by the SelectionDAGCSEMap.
+  void *NextInBucket;
+  
   /// Uses - These are all of the SDNode's that use a value produced by this
   /// node.
   std::vector<SDNode*> Uses;
@@ -789,6 +792,11 @@ public:
 
   static bool classof(const SDNode *) { return true; }
 
+  
+  /// NextInBucket accessors, these are private to SelectionDAGCSEMap.
+  void *getNextInBucket() const { return NextInBucket; }
+  void SetNextInBucket(void *N) { NextInBucket = N; }
+  
 protected:
   friend class SelectionDAG;
   
@@ -801,6 +809,7 @@ protected:
     ValueList = getValueTypeList(VT);
     NumValues = 1;
     Prev = 0; Next = 0;
+    NextInBucket = 0;
   }
   SDNode(unsigned NT, SDOperand Op)
     : NodeType(NT), NodeId(-1) {
@@ -811,6 +820,7 @@ protected:
     ValueList = 0;
     NumValues = 0;
     Prev = 0; Next = 0;
+    NextInBucket = 0;
   }
   SDNode(unsigned NT, SDOperand N1, SDOperand N2)
     : NodeType(NT), NodeId(-1) {
@@ -822,6 +832,7 @@ protected:
     ValueList = 0;
     NumValues = 0;
     Prev = 0; Next = 0;
+    NextInBucket = 0;
   }
   SDNode(unsigned NT, SDOperand N1, SDOperand N2, SDOperand N3)
     : NodeType(NT), NodeId(-1) {
@@ -836,6 +847,7 @@ protected:
     ValueList = 0;
     NumValues = 0;
     Prev = 0; Next = 0;
+    NextInBucket = 0;
   }
   SDNode(unsigned NT, SDOperand N1, SDOperand N2, SDOperand N3, SDOperand N4)
     : NodeType(NT), NodeId(-1) {
@@ -851,6 +863,7 @@ protected:
     ValueList = 0;
     NumValues = 0;
     Prev = 0; Next = 0;
+    NextInBucket = 0;
   }
   SDNode(unsigned Opc, const std::vector<SDOperand> &Nodes)
     : NodeType(Opc), NodeId(-1) {
@@ -865,6 +878,7 @@ protected:
     ValueList = 0;
     NumValues = 0;
     Prev = 0; Next = 0;
+    NextInBucket = 0;
   }
 
   /// MorphNodeTo - This clears the return value and operands list, and sets the
@@ -884,11 +898,6 @@ protected:
     NumOperands = 0;
   }
   
-  void setValueTypes(MVT::ValueType VT) {
-    assert(NumValues == 0 && "Should not have values yet!");
-    ValueList = getValueTypeList(VT);
-    NumValues = 1;
-  }
   void setValueTypes(MVT::ValueType *List, unsigned NumVal) {
     assert(NumValues == 0 && "Should not have values yet!");
     ValueList = List;

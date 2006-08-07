@@ -16,6 +16,7 @@
 #define LLVM_CODEGEN_SELECTIONDAG_H
 
 #include "llvm/CodeGen/SelectionDAGNodes.h"
+#include "llvm/CodeGen/SelectionDAGCSEMap.h"
 #include "llvm/ADT/ilist"
 
 #include <list>
@@ -441,13 +442,16 @@ public:
 private:
   void RemoveNodeFromCSEMaps(SDNode *N);
   SDNode *AddNonLeafNodeToCSEMaps(SDNode *N);
-  SDNode **FindModifiedNodeSlot(SDNode *N, SDOperand Op);
-  SDNode **FindModifiedNodeSlot(SDNode *N, SDOperand Op1, SDOperand Op2);
-  SDNode **FindModifiedNodeSlot(SDNode *N, const std::vector<SDOperand> &Ops);
+  SDNode *FindModifiedNodeSlot(SDNode *N, SDOperand Op, void *&InsertPos);
+  SDNode *FindModifiedNodeSlot(SDNode *N, SDOperand Op1, SDOperand Op2,
+                               void *&InsertPos);
+  SDNode *FindModifiedNodeSlot(SDNode *N, const std::vector<SDOperand> &Ops,
+                               void *&InsertPos);
 
   void DeleteNodeNotInCSEMaps(SDNode *N);
-  void setNodeValueTypes(SDNode *N, std::vector<MVT::ValueType> &RetVals);
-  void setNodeValueTypes(SDNode *N, MVT::ValueType VT1, MVT::ValueType VT2);
+  MVT::ValueType *getNodeValueTypes(MVT::ValueType VT1);
+  MVT::ValueType *getNodeValueTypes(MVT::ValueType VT1, MVT::ValueType VT2);
+  MVT::ValueType *getNodeValueTypes(std::vector<MVT::ValueType> &RetVals);
   
   
   /// SimplifySetCC - Try to simplify a setcc built with the specified operands 
@@ -460,16 +464,9 @@ private:
   
   // Maps to auto-CSE operations.
   std::map<std::pair<unsigned, MVT::ValueType>, SDNode *> NullaryOps;
-  std::map<std::pair<unsigned, std::pair<SDOperand, MVT::ValueType> >,
-           SDNode *> UnaryOps;
-  std::map<std::pair<unsigned, std::pair<SDOperand, SDOperand> >,
-           SDNode *> BinaryOps;
 
   std::map<std::pair<unsigned, MVT::ValueType>, RegisterSDNode*> RegNodes;
   std::vector<CondCodeSDNode*> CondCodeNodes;
-
-  std::map<std::pair<SDOperand, std::pair<SDOperand, MVT::ValueType> >,
-           SDNode *> Loads;
 
   std::map<std::pair<const GlobalValue*, int>, SDNode*> GlobalValues;
   std::map<std::pair<const GlobalValue*, int>, SDNode*> TargetGlobalValues;
@@ -488,13 +485,7 @@ private:
   std::map<std::string, SDNode*> ExternalSymbols;
   std::map<std::string, SDNode*> TargetExternalSymbols;
   std::map<std::string, StringSDNode*> StringNodes;
-  std::map<std::pair<unsigned,
-                     std::pair<MVT::ValueType, std::vector<SDOperand> > >,
-           SDNode*> OneResultNodes;
-  std::map<std::pair<unsigned,
-                     std::pair<std::vector<MVT::ValueType>,
-                               std::vector<SDOperand> > >,
-           SDNode*> ArbitraryNodes;
+  SelectionDAGCSEMap CSEMap;
 };
 
 template <> struct GraphTraits<SelectionDAG*> : public GraphTraits<SDNode*> {
