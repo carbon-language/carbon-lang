@@ -264,6 +264,12 @@ DIAG(err_expected_ident_lparen, ERROR,
      "expected identifier or '('")
 DIAG(err_expected_rparen, ERROR,
      "expected ')'")
+DIAG(err_expected_semi_knr_fn_body, ERROR,
+     "expected ';' at end of K&R-style function argument declaration list")
+DIAG(err_expected_fn_body, ERROR,
+     "expected function body after function declarator")
+DIAG(err_expected_after_declarator, ERROR,
+     "expected '=', ',', ';', 'asm', or '__attribute__' after declarator")
 
 /// err_matching - this is used as a continuation of a previous error, e.g. to 
 /// specify the '(' when we expected a ')'.  This should probably be some

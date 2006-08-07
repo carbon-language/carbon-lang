@@ -172,6 +172,7 @@ struct DeclaratorTypeInfo {
     /// with ',...)', this is true.
     bool isVariadic : 1;
     // TODO: capture argument info.
+    bool isEmpty : 1;
   };
   
   union {
@@ -209,12 +210,14 @@ struct DeclaratorTypeInfo {
   /// getFunction - Return a DeclaratorTypeInfo for a function.
   ///
   static DeclaratorTypeInfo getFunction(bool hasProto, bool isVariadic,
+                                        bool isEmpty /*fixme arg info*/,
                                         SourceLocation Loc) {
     DeclaratorTypeInfo I;
     I.Kind             = Function;
     I.Loc              = Loc;
     I.Fun.hasPrototype = hasProto;
     I.Fun.isVariadic   = isVariadic;
+    I.Fun.isEmpty      = isEmpty;
     return I;
   }
 };

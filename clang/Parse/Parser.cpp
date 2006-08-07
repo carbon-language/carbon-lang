@@ -187,7 +187,6 @@ void Parser::ParseExternalDeclaration() {
 ///
 void Parser::ParseDeclarationOrFunctionDefinition() {
   // Parse the common declaration-specifiers piece.
-  // NOTE: this can not be missing for C99 'declaration's.
   DeclSpec DS;
   ParseDeclarationSpecifiers(DS);
 
@@ -196,41 +195,63 @@ void Parser::ParseDeclarationOrFunctionDefinition() {
     assert(0 && "Unimp!");
   
   
-  // Parse the declarator.
-  {
-    Declarator DeclaratorInfo(DS, Declarator::FileContext);
-    ParseDeclarator(DeclaratorInfo);
+  // Parse the first declarator.
+  Declarator DeclaratorInfo(DS, Declarator::FileContext);
+  ParseDeclarator(DeclaratorInfo);
+  // Error parsing the declarator?
+  if (DeclaratorInfo.getIdentifier() == 0) {
+    // If so, skip until the semi-colon or a }.
+    SkipUntil(tok::r_brace, true);
+    if (Tok.getKind() == tok::semi)
+      ConsumeToken();
+    return;
+  }
 
-    // If the declarator was the start of a function definition, handle it.
-    if (Tok.getKind() != tok::equal &&  // int X()=  -> not a function def
-        Tok.getKind() != tok::comma &&  // int X(),  -> not a function def
-        Tok.getKind() != tok::semi &&   // int X();  -> not a function def
-        DS.StorageClassSpec != DeclSpec::SCS_typedef && // typedef int X()
-        DeclaratorInfo.isInnermostFunctionType()) {  // int *X -> not a fn def.
-      assert(0 && "unimp");
-      
-      
-    }
+  // If the declarator is the start of a function definition, handle it.
+  if (Tok.getKind() == tok::equal ||  // int X()=  -> not a function def
+      Tok.getKind() == tok::comma ||  // int X(),  -> not a function def
+      Tok.getKind() == tok::semi ||   // int X();  -> not a function def
+      Tok.getKind() == tok::kw_asm || // int X() __asm__ -> not a fn def
+      Tok.getKind() == tok::kw___attribute) {// int X() __attr__ -> not a fn def
+    // FALL THROUGH.
+  } else if (DeclaratorInfo.isInnermostFunctionType() &&
+             (Tok.getKind() == tok::l_brace ||  // int X() {}
+              isDeclarationSpecifier())) {      // int X(f) int f; {}
+    ParseFunctionDefinition(DeclaratorInfo);
+    return;
+  } else {
+    if (DeclaratorInfo.isInnermostFunctionType())
+      Diag(Tok, diag::err_expected_fn_body);
+    else
+      Diag(Tok, diag::err_expected_after_declarator);
+    SkipUntil(tok::r_brace, true);
+    if (Tok.getKind() == tok::semi)
+      ConsumeToken();
+    return;
+  }
 
+  // At this point, we know that it is not a function definition.  Parse the
+  // rest of the init-declarator-list.
+  while (1) {
     // must be: decl-spec[opt] declarator init-declarator-list
     // Parse declarator '=' initializer.
     if (Tok.getKind() == tok::equal)
       assert(0 && "cannot handle initializer yet!");
-  }
 
-  while (Tok.getKind() == tok::comma) {
+    
+    // TODO: install declarator.
+    
+    // If we don't have a comma, it is either the end of the list (a ';') or an
+    // error, bail out.
+    if (Tok.getKind() != tok::comma)
+      break;
+
     // Consume the comma.
     ConsumeToken();
     
-    // Parse the declarator.
-    Declarator DeclaratorInfo(DS, Declarator::FileContext);
+    // Parse the next declarator.
+    DeclaratorInfo.clear();
     ParseDeclarator(DeclaratorInfo);
-    
-    // declarator '=' initializer
-    if (Tok.getKind() == tok::equal)
-      assert(0 && "cannot handle initializer yet!");
-    
-    
   }
   
   if (Tok.getKind() == tok::semi) {
@@ -242,5 +263,62 @@ void Parser::ParseDeclarationOrFunctionDefinition() {
     if (Tok.getKind() == tok::semi)
       ConsumeToken();
   }
+}
+
+/// ParseFunctionDefinition - We parsed and verified that the specified
+/// Declarator is well formed.  If this is a K&R-style function, read the
+/// parameters declaration-list, then start the compound-statement.
+///
+///         declaration-specifiers[opt] declarator declaration-list[opt] 
+///                 compound-statement                           [TODO]
+///
+void Parser::ParseFunctionDefinition(Declarator &D) {
+  const DeclaratorTypeInfo &FnTypeInfo = D.getTypeObject(0);
+  assert(FnTypeInfo.Kind == DeclaratorTypeInfo::Function &&
+         "This isn't a function declarator!");
+  
+  // If this declaration was formed with a K&R-style identifier list for the
+  // arguments, parse declarations for all of the args next.
+  // int foo(a,b) int a; float b; {}
+  if (!FnTypeInfo.Fun.hasPrototype && !FnTypeInfo.Fun.isEmpty) {
+    // Read all the argument declarations.
+    while (isDeclarationSpecifier()) {
+      // Parse the common declaration-specifiers piece.
+      DeclSpec DS;
+      ParseDeclarationSpecifiers(DS);
+      
+      Declarator DeclaratorInfo(DS, Declarator::FileContext);
+      ParseDeclarator(DeclaratorInfo);
+
+      while (Tok.getKind() == tok::comma) {
+        // Consume the comma.
+        ConsumeToken();
+      
+        // Parse the next declarator.
+        DeclaratorInfo.clear();
+        ParseDeclarator(DeclaratorInfo);
+      }
+      
+      if (Tok.getKind() == tok::semi) {
+        ConsumeToken();
+      } else {
+        Diag(Tok, diag::err_expected_semi_knr_fn_body);
+        // Skip to end of block or statement
+        SkipUntil(tok::l_brace, true);
+        if (Tok.getKind() == tok::semi)
+          ConsumeToken();
+      }
+    }
+    
+    // Note, check that we got them all.
+  } else {
+    //if (isDeclarationSpecifier())
+    //  Diag('k&r declspecs with prototype?');
+    
+    // FIXME: Install the arguments into the current scope.
+  }
+
+  
+  
 }
 

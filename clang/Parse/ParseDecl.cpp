@@ -455,12 +455,14 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   // NOTE: better to only create a scope if not '()'
   bool IsVariadic;
   bool HasPrototype;
+  bool IsEmpty = false;
   bool ErrorEmitted = false;
 
   if (Tok.getKind() == tok::r_paren) {
     // int() -> no prototype, no '...'.
     IsVariadic   = false;
     HasPrototype = false;
+    IsEmpty      = true;
   } else if (Tok.getKind() == tok::identifier &&
              0/*TODO: !isatypedefname(Tok.getIdentifierInfo())*/) {
     // Identifier list.  Note that '(' identifier-list ')' is only allowed for
@@ -545,7 +547,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   
   // Remember that we parsed a function type, and remember the attributes.
   D.AddTypeInfo(DeclaratorTypeInfo::getFunction(HasPrototype, IsVariadic,
-                                                StartLoc));
+                                                IsEmpty, StartLoc));
   
   
   // If we have the closing ')', eat it and we're done.
