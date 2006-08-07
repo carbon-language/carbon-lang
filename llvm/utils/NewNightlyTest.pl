@@ -460,7 +460,7 @@ sub SendData{
     $send.= "Content-length: $length\n\n";
     $send.= "$content";
 
-    #print SOCK $send;
+    print SOCK $send;
     my $result;
     while(<SOCK>){
         $result  .= $_;
@@ -1026,7 +1026,7 @@ my %hash_of_data = ('machine_data' => $machine_data,
 	'passing_tests' => $passes,
 	'expfail_tests' => $xfails,
 	'unexpfail_tests' => $fails,
-	'all_tests' => "", #$dejagnu_test_list,
+	'all_tests' => $dejagnu_test_list,
 	'new_tests' => "",
 	'removed_tests' => "",
 	'dejagnutests_log' => $dejagnutests_log,
