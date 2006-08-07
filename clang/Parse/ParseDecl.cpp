@@ -408,7 +408,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
       
       isGrouping = false;
     } else {
-      // Otherwise, 'int (*X)', this is a grouping paren.
+      // Otherwise, this is a grouping paren, e.g. 'int (*X)'.
       isGrouping = true;
     }
     
@@ -429,8 +429,9 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     }
     
     // Okay, if this wasn't a grouping paren, it must be the start of a function
-    // argument list.  Recognize that this will never have an identifier (and
-    // where it would be), then fall through to the handling of argument lists.
+    // argument list.  Recognize that this declarator will never have an
+    // identifier (and remember where it would have been), then fall through to
+    // the handling of argument lists.
     D.SetIdentifier(0, Tok.getLocation());
   }
   
@@ -528,6 +529,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   
   // FIXME: pop the scope.  
   
+  // FIXME: Add the function declarator.
   
   // If we have the closing ')', eat it and we're done.
   if (Tok.getKind() == tok::r_paren) {
