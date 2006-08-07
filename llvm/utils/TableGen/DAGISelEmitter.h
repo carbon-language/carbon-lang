@@ -523,8 +523,7 @@ private:
                       std::vector<std::pair<bool, std::string> > &GeneratedCode,
                      std::set<std::pair<unsigned, std::string> > &GeneratedDecl,
                               std::vector<std::string> &TargetOpcodes,
-                              std::vector<std::string> &TargetVTs,
-                              bool DoReplace);
+                              std::vector<std::string> &TargetVTs);
   void EmitPatterns(std::vector<std::pair<PatternToMatch*, 
                     std::vector<std::pair<bool, std::string> > > > &Patterns, 
                     unsigned Indent, std::ostream &OS);
