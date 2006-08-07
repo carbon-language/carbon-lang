@@ -15,6 +15,7 @@
 #include "Unix.h"
 #include <vector>
 #include <algorithm>
+#include <iostream>
 #if HAVE_EXECINFO_H
 # include <execinfo.h>         // For backtrace().
 #endif
@@ -30,7 +31,7 @@ bool StackTraceRequested = false;
 /// InterruptFunction - The function to call if ctrl-c is pressed.
 void (*InterruptFunction)() = 0;
 
-std::vector<std::string> *FilesToRemove = 0 ;
+std::vector<sys::Path> *FilesToRemove = 0 ;
 std::vector<sys::Path> *DirectoriesToRemove = 0;
 
 // IntSigs - Signals that may interrupt the program at any time.
@@ -112,7 +113,7 @@ void PrintStackTrace() {
 RETSIGTYPE SignalHandler(int Sig) {
   if (FilesToRemove != 0)
     while (!FilesToRemove->empty()) {
-      std::remove(FilesToRemove->back().c_str());
+      FilesToRemove->back().eraseFromDisk(true);
       FilesToRemove->pop_back();
     }
 
@@ -156,9 +157,9 @@ void sys::SetInterruptFunction(void (*IF)()) {
 // RemoveFileOnSignal - The public API
 void sys::RemoveFileOnSignal(const sys::Path &Filename) {
   if (FilesToRemove == 0)
-    FilesToRemove = new std::vector<std::string>;
+    FilesToRemove = new std::vector<sys::Path>;
 
-  FilesToRemove->push_back(Filename.toString());
+  FilesToRemove->push_back(Filename);
 
   std::for_each(IntSigs, IntSigsEnd, RegisterHandler);
   std::for_each(KillSigs, KillSigsEnd, RegisterHandler);
