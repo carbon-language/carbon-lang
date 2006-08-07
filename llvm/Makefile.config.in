@@ -36,13 +36,13 @@ LLVM_CONFIGTIME   := @LLVM_CONFIGTIME@
 PWD := @BINPWD@
 # Set the project name to LLVM if its not defined
 ifndef PROJECT_NAME
-PROJECT_NAME := LLVM
+PROJECT_NAME := $(LLVMPackageName)
 endif
 
 PROJ_OBJ_DIR  := $(shell $(PWD))
 PROJ_OBJ_ROOT := $(shell cd $(PROJ_OBJ_DIR)/$(LEVEL); $(PWD))
 
-ifeq ($(PROJECT_NAME),LLVM)
+ifeq ($(PROJECT_NAME),llvm)
 LLVM_SRC_ROOT   := $(shell cd @abs_top_srcdir@; $(PWD))
 LLVM_OBJ_ROOT   := $(shell cd @abs_top_builddir@; $(PWD))
 PROJ_SRC_ROOT   := $(shell cd $(LLVM_SRC_ROOT); $(PWD))
