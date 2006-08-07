@@ -15,7 +15,6 @@
 #define LLVM_ADT_SMALLVECTOR_H
 
 #include <algorithm>
-#include <cassert>
 #include <iterator>
 #include <memory>
 
@@ -91,20 +90,16 @@ public:
   const_iterator end() const { return End; }
   
   reference operator[](unsigned idx) {
-    assert(idx < size() && "out of range reference!");
     return Begin[idx];
   }
   const_reference operator[](unsigned idx) const {
-    assert(idx < size() && "out of range reference!");
     return Begin[idx];
   }
   
   reference back() {
-    assert(!empty() && "SmallVector is empty!");
     return end()[-1];
   }
   const_reference back() const {
-    assert(!empty() && "SmallVector is empty!");
     return end()[-1];
   }
   
@@ -120,7 +115,6 @@ public:
   }
   
   void pop_back() {
-    assert(!empty() && "SmallVector is empty!");
     --End;
     End->~T();
   }
