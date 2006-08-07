@@ -569,6 +569,11 @@ Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
   if (getFileStatus(Status, ErrStr))
     return true;
     
+  // Note: this check catches strange situations. In all cases, LLVM should only
+  // be involved in the creation and deletion of regular files.  This check 
+  // ensures that what we're trying to erase is a regular file. It effectively
+  // prevents LLVM from erasing things like /dev/null, any block special file,
+  // or other things that aren't "regular" files. 
   if (Status.isFile) {
     if (unlink(path.c_str()) != 0)
       return GetErrno(path + ": can't destroy file", ErrStr);
