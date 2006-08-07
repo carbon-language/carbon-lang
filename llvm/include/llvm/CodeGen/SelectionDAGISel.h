@@ -17,10 +17,10 @@
 
 #include "llvm/Pass.h"
 #include "llvm/Constant.h"
+#include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 
 namespace llvm {
-  class SelectionDAG;
   class SelectionDAGLowering;
   class SDOperand;
   class SSARegMap;
@@ -39,8 +39,10 @@ public:
   SSARegMap *RegMap;
   SelectionDAG *CurDAG;
   MachineBasicBlock *BB;
+  std::vector<SDNode*> TopOrder;
+  unsigned DAGSize;
 
-  SelectionDAGISel(TargetLowering &tli) : TLI(tli), JT(0,0,0,0) {}
+  SelectionDAGISel(TargetLowering &tli) : TLI(tli), DAGSize(0), JT(0,0,0,0) {}
   
   TargetLowering &getTargetLowering() { return TLI; }
 
@@ -52,6 +54,9 @@ public:
 
   virtual void EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {}
   virtual void InstructionSelectBasicBlock(SelectionDAG &SD) = 0;
+  virtual void SelectRootInit() {
+    DAGSize = CurDAG->AssignTopologicalOrder(TopOrder);
+  }
 
   /// SelectInlineAsmMemoryOperand - Select the specified address as a target
   /// addressing mode, according to the specified constraint code.  If this does
