@@ -32,7 +32,6 @@
 #include <string>
 #include <cassert>
 #include "llvm/Support/DataTypes.h"
-#include "llvm/System/IncludeFile.h"
 
 namespace llvm {
   class SlowOperationInformer {
@@ -64,5 +63,3 @@ namespace llvm {
 } // end namespace llvm
 
 #endif /* SLOW_OPERATION_INFORMER_H */
-
-FORCE_DEFINING_FILE_TO_BE_LINKED(SupportSlowOperationInformer)

@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/SlowOperationInformer.h"
-#include "llvm/System/IncludeFile.h"
 #include "llvm/System/Alarm.h"
 #include <iostream>
 #include <sstream>
@@ -65,5 +64,3 @@ bool SlowOperationInformer::progress(unsigned Amount) {
   std::cout << ToPrint+OS.str() << std::flush;
   return false;
 }
-
-DEFINING_FILE_FOR(SupportSlowOperationInformer)
