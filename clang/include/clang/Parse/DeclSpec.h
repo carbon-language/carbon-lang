@@ -163,7 +163,13 @@ struct DeclaratorTypeInfo {
     void *NumElts;
   };
   struct FunctionTypeInfo {
+    /// hasPrototype - This is true if the function had at least one typed
+    /// argument.  If the function is () or (a,b,c), then it has no prototype,
+    /// and is treated as a K&R-style function.
     bool hasPrototype : 1;
+    
+    /// isVariadic - If this function has a prototype, and if that proto ends
+    /// with ',...)', this is true.
     bool isVariadic : 1;
     // TODO: capture argument info.
   };
@@ -244,8 +250,10 @@ private:
   ///
   TheContext Context;
   
-  /// DeclTypeInfo - The final pieces of information is information about each
-  /// type parsed as we parse it.
+  /// DeclTypeInfo - This holds each type that the declarator includes as it is
+  /// parsed.  This is pushed from the identifier out, which means that element
+  /// #0 will be the most closely bound to the identifier, and
+  /// DeclTypeInfo.back() will be the least closely bound.
   SmallVector<DeclaratorTypeInfo, 8> DeclTypeInfo;
   
 public:
@@ -280,6 +288,13 @@ public:
   
   void AddTypeInfo(const DeclaratorTypeInfo &TI) {
     DeclTypeInfo.push_back(TI);
+  }
+  
+  /// isInnermostFunctionType - Once this declarator is fully parsed and formed,
+  /// this method returns true if the identifier is a function declarator.
+  bool isInnermostFunctionType() const {
+    return !DeclTypeInfo.empty() &&
+           DeclTypeInfo[0].Kind == DeclaratorTypeInfo::Function;
   }
 };
 

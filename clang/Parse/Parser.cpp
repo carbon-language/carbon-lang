@@ -201,7 +201,16 @@ void Parser::ParseDeclarationOrFunctionDefinition() {
     Declarator DeclaratorInfo(DS, Declarator::FileContext);
     ParseDeclarator(DeclaratorInfo);
 
-    // If the declarator was a function type... handle it.
+    // If the declarator was the start of a function definition, handle it.
+    if (Tok.getKind() != tok::equal &&  // int X()=  -> not a function def
+        Tok.getKind() != tok::comma &&  // int X(),  -> not a function def
+        Tok.getKind() != tok::semi &&   // int X();  -> not a function def
+        DS.StorageClassSpec != DeclSpec::SCS_typedef && // typedef int X()
+        DeclaratorInfo.isInnermostFunctionType()) {  // int *X -> not a fn def.
+      assert(0 && "unimp");
+      
+      
+    }
 
     // must be: decl-spec[opt] declarator init-declarator-list
     // Parse declarator '=' initializer.

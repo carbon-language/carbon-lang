@@ -295,8 +295,7 @@ void Parser::ParseDeclarator(Declarator &D) {
   ParseDeclaratorInternal(D);
   
   // FIXME: validate D.
-  
-  
+
 }
 
 /// ParseDeclaratorInternal
