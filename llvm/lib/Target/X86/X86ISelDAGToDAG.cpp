@@ -99,8 +99,7 @@ namespace {
     X86DAGToDAGISel(X86TargetMachine &TM)
       : SelectionDAGISel(X86Lowering),
         X86Lowering(*TM.getTargetLowering()),
-        Subtarget(&TM.getSubtarget<X86Subtarget>()),
-        ReachabilityMatrix(NULL) {}
+        Subtarget(&TM.getSubtarget<X86Subtarget>()) {}
 
     virtual bool runOnFunction(Function &Fn) {
       // Make sure we re-emit a set of the global base reg if necessary
@@ -124,8 +123,6 @@ namespace {
 #include "X86GenDAGISel.inc"
 
   private:
-    void DetermineReachability();
-
     void Select(SDOperand &Result, SDOperand N);
 
     bool MatchAddress(SDOperand N, X86ISelAddressMode &AM, bool isRoot = true);
@@ -142,10 +139,6 @@ namespace {
       unsigned NumBytes = (DAGSize + 7) / 8;
       UnfoldableSet = new unsigned char[NumBytes];
       memset(UnfoldableSet, 0, NumBytes);
-      unsigned RMSize = (DAGSize * DAGSize + 7) / 8;
-      ReachabilityMatrix = new unsigned char[RMSize];
-      memset(ReachabilityMatrix, 0, RMSize);
-      DetermineReachability();
     }
 
     /// SelectInlineAsmMemoryOperand - Implement addressing mode selection for
@@ -192,20 +185,6 @@ namespace {
     /// base register.  Return the virtual register that holds this value.
     SDOperand getGlobalBaseReg();
 
-    /// ReachabilityMatrix - A N x N matrix representing all pairs reachability
-    /// information. One bit per potential edge.
-    unsigned char *ReachabilityMatrix;
-
-    inline void setReachable(SDNode *f, SDNode *t) {
-      unsigned Idx = f->getNodeId() * DAGSize + t->getNodeId();
-      ReachabilityMatrix[Idx / 8] |= 1 << (Idx % 8);
-    }
-
-    inline bool isReachable(SDNode *f, SDNode *t) {
-      unsigned Idx = f->getNodeId() * DAGSize + t->getNodeId();
-      return ReachabilityMatrix[Idx / 8] & (1 << (Idx % 8));
-    }
-
     /// UnfoldableSet - An boolean array representing nodes which have been
     /// folded into addressing modes and therefore should not be folded in
     /// another operation.
@@ -227,6 +206,38 @@ namespace {
   };
 }
 
+static void findNonImmUse(SDNode* Use, SDNode* Def, bool &found,
+                          std::set<SDNode *> &Visited) {
+  if (found ||
+      Use->getNodeId() > Def->getNodeId() ||
+      !Visited.insert(Use).second)
+    return;
+
+  for (unsigned i = 0, e = Use->getNumOperands(); i != e; ++i) {
+    SDNode *N = Use->getOperand(i).Val;
+    if (N != Def) {
+      findNonImmUse(N, Def, found, Visited);
+    } else {
+      found = true;
+      break;
+    }
+  }
+}
+
+static inline bool isNonImmUse(SDNode* Use, SDNode* Def) {
+  std::set<SDNode *> Visited;
+  bool found = false;
+  for (unsigned i = 0, e = Use->getNumOperands(); i != e; ++i) {
+    SDNode *N = Use->getOperand(i).Val;
+    if (N != Def) {
+      findNonImmUse(N, Def, found, Visited);
+      if (found) break;
+    }
+  }
+  return found;
+}
+
+
 bool X86DAGToDAGISel::CanBeFoldedBy(SDNode *N, SDNode *U) {
   // Is it already folded by SelectAddr / SelectLEAAddr?
   if (isUnfoldable(N))
@@ -244,38 +255,7 @@ bool X86DAGToDAGISel::CanBeFoldedBy(SDNode *N, SDNode *U) {
   //      /        [X]
   //      |         ^
   //     [U]--------|
-  assert(isReachable(U, N) && "Attempting to fold a non-operand node?");
-  for (SDNode::op_iterator I = U->op_begin(), E = U->op_end(); I != E; ++I) {
-    SDNode *P = I->Val;
-    if (P != N && isReachable(P, N))
-      return false;
-  }
-  return true;
-}
-
-/// DetermineReachability - Determine reachability between all pairs of nodes
-/// between f and t in topological order.
-void X86DAGToDAGISel::DetermineReachability() {
-  for (unsigned i = 0; i < DAGSize; ++i) {
-    SDNode *N = TopOrder[i];
-    setReachable(N, N);
-    // If N is a leaf node, there is nothing more to do.
-    if (N->getNumOperands() == 0)
-      continue;
-
-    for (unsigned i2 = 0; ; ++i2) {
-      SDNode *M = TopOrder[i2];
-      if (isReachable(M, N)) {
-        // Update reachability from M to N's operands.
-        for (SDNode::op_iterator I = N->op_begin(),E = N->op_end(); I != E;++I){
-          SDNode *P = I->Val;
-          if (P->getNodeId() >= 0)
-            setReachable(M, P);
-        }
-      }
-      if (M == N) break;
-    }
-  }
+  return !isNonImmUse(U, N);
 }
 
 /// InstructionSelectBasicBlock - This callback is invoked by SelectionDAGISel
@@ -294,9 +274,6 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   DEBUG(std::cerr << "===== Instruction selection ends:\n");
 #endif
 
-  delete[] ReachabilityMatrix;
-  delete[] UnfoldableSet;
-  ReachabilityMatrix = NULL;
   UnfoldableSet = NULL;
   DAG.RemoveDeadNodes();
 
