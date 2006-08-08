@@ -526,7 +526,7 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N,
 /// return null, otherwise return a pointer to the slot it would take.  If a
 /// node already exists with these operands, the slot will be non-null.
 SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N, 
-                                           const std::vector<SDOperand> &Ops,
+                                           const SDOperand *Ops,unsigned NumOps,
                                            void *&InsertPos) {
   if (N->getOpcode() == ISD::HANDLENODE || N->getValueType(0) == MVT::Flag)
     return 0;    // Never add these nodes.
@@ -539,7 +539,7 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N,
   SelectionDAGCSEMap::NodeID ID;
   ID.SetOpcode(N->getOpcode());
   ID.SetValueTypes(N->value_begin());
-  ID.SetOperands(&Ops[0], Ops.size());
+  ID.SetOperands(Ops, NumOps);
   return CSEMap.FindNodeOrInsertPos(ID, InsertPos);
 }
 
@@ -1498,26 +1498,15 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
                                 SDOperand N1, SDOperand N2, SDOperand N3,
                                 SDOperand N4) {
-  std::vector<SDOperand> Ops;
-  Ops.reserve(4);
-  Ops.push_back(N1);
-  Ops.push_back(N2);
-  Ops.push_back(N3);
-  Ops.push_back(N4);
-  return getNode(Opcode, VT, Ops);
+  SDOperand Ops[] = { N1, N2, N3, N4 };
+  return getNode(Opcode, VT, Ops, 4);
 }
 
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
                                 SDOperand N1, SDOperand N2, SDOperand N3,
                                 SDOperand N4, SDOperand N5) {
-  std::vector<SDOperand> Ops;
-  Ops.reserve(5);
-  Ops.push_back(N1);
-  Ops.push_back(N2);
-  Ops.push_back(N3);
-  Ops.push_back(N4);
-  Ops.push_back(N5);
-  return getNode(Opcode, VT, Ops);
+  SDOperand Ops[] = { N1, N2, N3, N4, N5 };
+  return getNode(Opcode, VT, Ops, 5);
 }
 
 SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
@@ -1539,17 +1528,12 @@ SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
 SDOperand SelectionDAG::getVecLoad(unsigned Count, MVT::ValueType EVT,
                                    SDOperand Chain, SDOperand Ptr,
                                    SDOperand SV) {
-  std::vector<SDOperand> Ops;
-  Ops.reserve(5);
-  Ops.push_back(Chain);
-  Ops.push_back(Ptr);
-  Ops.push_back(SV);
-  Ops.push_back(getConstant(Count, MVT::i32));
-  Ops.push_back(getValueType(EVT));
+  SDOperand Ops[] = { Chain, Ptr, SV, getConstant(Count, MVT::i32), 
+                      getValueType(EVT) };
   std::vector<MVT::ValueType> VTs;
   VTs.reserve(2);
   VTs.push_back(MVT::Vector); VTs.push_back(MVT::Other);  // Add token chain.
-  return getNode(ISD::VLOAD, VTs, Ops);
+  return getNode(ISD::VLOAD, VTs, Ops, 5);
 }
 
 SDOperand SelectionDAG::getExtLoad(unsigned Opcode, MVT::ValueType VT,
@@ -1593,8 +1577,8 @@ SDOperand SelectionDAG::getVAArg(MVT::ValueType VT,
 }
 
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
-                                std::vector<SDOperand> &Ops) {
-  switch (Ops.size()) {
+                                const SDOperand *Ops, unsigned NumOps) {
+  switch (NumOps) {
   case 0: return getNode(Opcode, VT);
   case 1: return getNode(Opcode, VT, Ops[0]);
   case 2: return getNode(Opcode, VT, Ops[0], Ops[1]);
@@ -1605,7 +1589,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   switch (Opcode) {
   default: break;
   case ISD::TRUNCSTORE: {
-    assert(Ops.size() == 5 && "TRUNCSTORE takes 5 operands!");
+    assert(NumOps == 5 && "TRUNCSTORE takes 5 operands!");
     MVT::ValueType EVT = cast<VTSDNode>(Ops[4])->getVT();
 #if 0 // FIXME: If the target supports EVT natively, convert to a truncate/store
     // If this is a truncating store of a constant, convert to the desired type
@@ -1625,7 +1609,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     break;
   }
   case ISD::SELECT_CC: {
-    assert(Ops.size() == 5 && "SELECT_CC takes 5 operands!");
+    assert(NumOps == 5 && "SELECT_CC takes 5 operands!");
     assert(Ops[0].getValueType() == Ops[1].getValueType() &&
            "LHS and RHS of condition must have same type!");
     assert(Ops[2].getValueType() == Ops[3].getValueType() &&
@@ -1635,7 +1619,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     break;
   }
   case ISD::BR_CC: {
-    assert(Ops.size() == 5 && "BR_CC takes 5 operands!");
+    assert(NumOps == 5 && "BR_CC takes 5 operands!");
     assert(Ops[2].getValueType() == Ops[3].getValueType() &&
            "LHS/RHS of comparison should match types!");
     break;
@@ -1646,15 +1630,15 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   SDNode *N;
   MVT::ValueType *VTs = getNodeValueTypes(VT);
   if (VT != MVT::Flag) {
-    SelectionDAGCSEMap::NodeID ID(Opcode, VTs, &Ops[0], Ops.size());
+    SelectionDAGCSEMap::NodeID ID(Opcode, VTs, Ops, NumOps);
     void *IP = 0;
     if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
       return SDOperand(E, 0);
-    N = new SDNode(Opcode, Ops);
+    N = new SDNode(Opcode, Ops, NumOps);
     N->setValueTypes(VTs, 1);
     CSEMap.InsertNode(N, IP);
   } else {
-    N = new SDNode(Opcode, Ops);
+    N = new SDNode(Opcode, Ops, NumOps);
     N->setValueTypes(VTs, 1);
   }
   AllNodes.push_back(N);
@@ -1663,16 +1647,16 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 
 SDOperand SelectionDAG::getNode(unsigned Opcode,
                                 std::vector<MVT::ValueType> &ResultTys,
-                                std::vector<SDOperand> &Ops) {
+                                const SDOperand *Ops, unsigned NumOps) {
   if (ResultTys.size() == 1)
-    return getNode(Opcode, ResultTys[0], Ops);
+    return getNode(Opcode, ResultTys[0], Ops, NumOps);
 
   switch (Opcode) {
   case ISD::EXTLOAD:
   case ISD::SEXTLOAD:
   case ISD::ZEXTLOAD: {
     MVT::ValueType EVT = cast<VTSDNode>(Ops[3])->getVT();
-    assert(Ops.size() == 4 && ResultTys.size() == 2 && "Bad *EXTLOAD!");
+    assert(NumOps == 4 && ResultTys.size() == 2 && "Bad *EXTLOAD!");
     // If they are asking for an extending load from/to the same thing, return a
     // normal load.
     if (ResultTys[0] == EVT)
@@ -1720,20 +1704,32 @@ SDOperand SelectionDAG::getNode(unsigned Opcode,
     SelectionDAGCSEMap::NodeID ID;
     ID.SetOpcode(Opcode);
     ID.SetValueTypes(VTs);
-    ID.SetOperands(&Ops[0], Ops.size());
+    ID.SetOperands(&Ops[0], NumOps);
     void *IP = 0;
     if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
       return SDOperand(E, 0);
-    N = new SDNode(Opcode, Ops);
+    N = new SDNode(Opcode, Ops, NumOps);
     N->setValueTypes(VTs, ResultTys.size());
     CSEMap.InsertNode(N, IP);
   } else {
-    N = new SDNode(Opcode, Ops);
+    N = new SDNode(Opcode, Ops, NumOps);
     N->setValueTypes(VTs, ResultTys.size());
   }
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
+
+SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
+                                std::vector<SDOperand> &Ops) {
+  return getNode(Opcode, VT, &Ops[0], Ops.size());
+}
+
+SDOperand SelectionDAG::getNode(unsigned Opcode, 
+                                std::vector<MVT::ValueType> &ResultTys,
+                                std::vector<SDOperand> &Ops) {
+  return getNode(Opcode, ResultTys, &Ops[0], Ops.size());
+}
+
 
 MVT::ValueType *SelectionDAG::getNodeValueTypes(MVT::ValueType VT) {
   return SDNode::getValueTypeList(VT);
@@ -1843,45 +1839,32 @@ UpdateNodeOperands(SDOperand InN, SDOperand Op1, SDOperand Op2) {
 
 SDOperand SelectionDAG::
 UpdateNodeOperands(SDOperand N, SDOperand Op1, SDOperand Op2, SDOperand Op3) {
-  std::vector<SDOperand> Ops;
-  Ops.push_back(Op1);
-  Ops.push_back(Op2);
-  Ops.push_back(Op3);
-  return UpdateNodeOperands(N, Ops);
+  SDOperand Ops[] = { Op1, Op2, Op3 };
+  return UpdateNodeOperands(N, Ops, 3);
 }
 
 SDOperand SelectionDAG::
 UpdateNodeOperands(SDOperand N, SDOperand Op1, SDOperand Op2, 
                    SDOperand Op3, SDOperand Op4) {
-  std::vector<SDOperand> Ops;
-  Ops.push_back(Op1);
-  Ops.push_back(Op2);
-  Ops.push_back(Op3);
-  Ops.push_back(Op4);
-  return UpdateNodeOperands(N, Ops);
+  SDOperand Ops[] = { Op1, Op2, Op3, Op4 };
+  return UpdateNodeOperands(N, Ops, 4);
 }
 
 SDOperand SelectionDAG::
 UpdateNodeOperands(SDOperand N, SDOperand Op1, SDOperand Op2,
                    SDOperand Op3, SDOperand Op4, SDOperand Op5) {
-  std::vector<SDOperand> Ops;
-  Ops.push_back(Op1);
-  Ops.push_back(Op2);
-  Ops.push_back(Op3);
-  Ops.push_back(Op4);
-  Ops.push_back(Op5);
-  return UpdateNodeOperands(N, Ops);
+  SDOperand Ops[] = { Op1, Op2, Op3, Op4, Op5 };
+  return UpdateNodeOperands(N, Ops, 5);
 }
 
 
 SDOperand SelectionDAG::
-UpdateNodeOperands(SDOperand InN, const std::vector<SDOperand> &Ops) {
+UpdateNodeOperands(SDOperand InN, SDOperand *Ops, unsigned NumOps) {
   SDNode *N = InN.Val;
-  assert(N->getNumOperands() == Ops.size() &&
+  assert(N->getNumOperands() == NumOps &&
          "Update with wrong number of operands");
   
   // Check to see if there is no change.
-  unsigned NumOps = Ops.size();
   bool AnyChange = false;
   for (unsigned i = 0; i != NumOps; ++i) {
     if (Ops[i] != N->getOperand(i)) {
@@ -1895,7 +1878,7 @@ UpdateNodeOperands(SDOperand InN, const std::vector<SDOperand> &Ops) {
   
   // See if the modified node already exists.
   void *InsertPos = 0;
-  if (SDNode *Existing = FindModifiedNodeSlot(N, Ops, InsertPos))
+  if (SDNode *Existing = FindModifiedNodeSlot(N, Ops, NumOps, InsertPos))
     return SDOperand(Existing, InN.ResNo);
   
   // Nope it doesn't.  Remove the node from it's current place in the maps.

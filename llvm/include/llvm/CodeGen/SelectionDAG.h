@@ -171,10 +171,8 @@ public:
     std::vector<MVT::ValueType> ResultTys;
     ResultTys.push_back(VT);
     ResultTys.push_back(MVT::Other);
-    std::vector<SDOperand> Ops;
-    Ops.push_back(Chain);
-    Ops.push_back(getRegister(Reg, VT));
-    return getNode(ISD::CopyFromReg, ResultTys, Ops);
+    SDOperand Ops[] = { Chain, getRegister(Reg, VT) };
+    return getNode(ISD::CopyFromReg, ResultTys, Ops, 2);
   }
   
   // This version of the getCopyFromReg method takes an extra operand, which
@@ -186,11 +184,8 @@ public:
     ResultTys.push_back(VT);
     ResultTys.push_back(MVT::Other);
     ResultTys.push_back(MVT::Flag);
-    std::vector<SDOperand> Ops;
-    Ops.push_back(Chain);
-    Ops.push_back(getRegister(Reg, VT));
-    if (Flag.Val) Ops.push_back(Flag);
-    return getNode(ISD::CopyFromReg, ResultTys, Ops);
+    SDOperand Ops[] = { Chain, getRegister(Reg, VT), Flag };
+    return getNode(ISD::CopyFromReg, ResultTys, Ops, Flag.Val ? 3 : 2);
   }
 
   SDOperand getCondCode(ISD::CondCode Cond);
@@ -205,10 +200,8 @@ public:
     std::vector<MVT::ValueType> ResultTys;
     ResultTys.push_back(MVT::Other);
     ResultTys.push_back(MVT::Flag);
-    std::vector<SDOperand> Ops;
-    Ops.push_back(Chain);
-    Ops.push_back(Op);
-    return getNode(ISD::CALLSEQ_START, ResultTys, Ops);
+    SDOperand Ops[] = { Chain,  Op };
+    return getNode(ISD::CALLSEQ_START, ResultTys, Ops, 2);
   }
 
   /// getNode - Gets or creates the specified node.
@@ -229,6 +222,12 @@ public:
   SDOperand getNode(unsigned Opcode, std::vector<MVT::ValueType> &ResultTys,
                     std::vector<SDOperand> &Ops);
 
+  SDOperand getNode(unsigned Opcode, MVT::ValueType VT,
+                    const SDOperand *Ops, unsigned NumOps);
+  SDOperand getNode(unsigned Opcode, std::vector<MVT::ValueType> &ResultTys,
+                    const SDOperand *Ops, unsigned NumOps);
+  
+  
   /// getSetCC - Helper function to make it easier to build SetCC's if you just
   /// have an ISD::CondCode instead of an SDOperand.
   ///
@@ -278,7 +277,7 @@ public:
                                SDOperand Op3, SDOperand Op4);
   SDOperand UpdateNodeOperands(SDOperand N, SDOperand Op1, SDOperand Op2,
                                SDOperand Op3, SDOperand Op4, SDOperand Op5);
-  SDOperand UpdateNodeOperands(SDOperand N, const std::vector<SDOperand> &Op);
+  SDOperand UpdateNodeOperands(SDOperand N, SDOperand *Ops, unsigned NumOps);
   
   /// SelectNodeTo - These are used for target selectors to *mutate* the
   /// specified node to have the specified return type, Target opcode, and
@@ -445,7 +444,7 @@ private:
   SDNode *FindModifiedNodeSlot(SDNode *N, SDOperand Op, void *&InsertPos);
   SDNode *FindModifiedNodeSlot(SDNode *N, SDOperand Op1, SDOperand Op2,
                                void *&InsertPos);
-  SDNode *FindModifiedNodeSlot(SDNode *N, const std::vector<SDOperand> &Ops,
+  SDNode *FindModifiedNodeSlot(SDNode *N, const SDOperand *Ops, unsigned NumOps,
                                void *&InsertPos);
 
   void DeleteNodeNotInCSEMaps(SDNode *N);

@@ -22,6 +22,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Visibility.h"
+#include "llvm/ADT/SmallVector.h"
 #include <iostream>
 #include <map>
 using namespace llvm;
@@ -541,11 +542,11 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     if (Node->getOpcode() >= ISD::BUILTIN_OP_END) {
       // If this is a target node, legalize it by legalizing the operands then
       // passing it through.
-      std::vector<SDOperand> Ops;
+      SmallVector<SDOperand, 8> Ops;
       for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i)
         Ops.push_back(LegalizeOp(Node->getOperand(i)));
 
-      Result = DAG.UpdateNodeOperands(Result.getValue(0), Ops);
+      Result = DAG.UpdateNodeOperands(Result.getValue(0), &Ops[0], Ops.size());
 
       for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
         AddLegalizedOperand(Op.getValue(i), Result.getValue(i));
@@ -621,10 +622,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::INTRINSIC_W_CHAIN:
   case ISD::INTRINSIC_WO_CHAIN:
   case ISD::INTRINSIC_VOID: {
-    std::vector<SDOperand> Ops;
+    SmallVector<SDOperand, 8> Ops;
     for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i)
       Ops.push_back(LegalizeOp(Node->getOperand(i)));
-    Result = DAG.UpdateNodeOperands(Result, Ops);
+    Result = DAG.UpdateNodeOperands(Result, &Ops[0], Ops.size());
     
     // Allow the target to custom lower its intrinsics if it wants to.
     if (TLI.getOperationAction(Node->getOpcode(), MVT::Other) == 
@@ -690,7 +691,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case TargetLowering::Legal:
       if (Tmp1 != Node->getOperand(0) ||
           getTypeAction(Node->getOperand(1).getValueType()) == Promote) {
-        std::vector<SDOperand> Ops;
+        SmallVector<SDOperand, 8> Ops;
         Ops.push_back(Tmp1);
         if (getTypeAction(Node->getOperand(1).getValueType()) == Legal) {
           Ops.push_back(Node->getOperand(1));  // line # must be legal.
@@ -702,7 +703,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         }
         Ops.push_back(Node->getOperand(3));  // filename must be legal.
         Ops.push_back(Node->getOperand(4));  // working dir # must be legal.
-        Result = DAG.UpdateNodeOperands(Result, Ops);
+        Result = DAG.UpdateNodeOperands(Result, &Ops[0], Ops.size());
       }
       break;
     }
@@ -815,11 +816,11 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Tmp3 = LegalizeOp(Node->getOperand(2));
       Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3);
     } else {
-      std::vector<SDOperand> Ops;
+      SmallVector<SDOperand, 8> Ops;
       // Legalize the operands.
       for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i)
         Ops.push_back(LegalizeOp(Node->getOperand(i)));
-      Result = DAG.UpdateNodeOperands(Result, Ops);
+      Result = DAG.UpdateNodeOperands(Result, &Ops[0], Ops.size());
     }
     break;
     
@@ -1074,9 +1075,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       
     // Do not try to legalize the target-specific arguments (#1+).
     if (Tmp1 != Node->getOperand(0)) {
-      std::vector<SDOperand> Ops(Node->op_begin(), Node->op_end());
+      SmallVector<SDOperand, 8> Ops(Node->op_begin(), Node->op_end());
       Ops[0] = Tmp1;
-      Result = DAG.UpdateNodeOperands(Result, Ops);
+      Result = DAG.UpdateNodeOperands(Result, &Ops[0], Ops.size());
     }
     
     // Remember that the CALLSEQ_START is legalized.
@@ -1117,18 +1118,18 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     // an optional flag input.
     if (Node->getOperand(Node->getNumOperands()-1).getValueType() != MVT::Flag){
       if (Tmp1 != Node->getOperand(0)) {
-        std::vector<SDOperand> Ops(Node->op_begin(), Node->op_end());
+        SmallVector<SDOperand, 8> Ops(Node->op_begin(), Node->op_end());
         Ops[0] = Tmp1;
-        Result = DAG.UpdateNodeOperands(Result, Ops);
+        Result = DAG.UpdateNodeOperands(Result, &Ops[0], Ops.size());
       }
     } else {
       Tmp2 = LegalizeOp(Node->getOperand(Node->getNumOperands()-1));
       if (Tmp1 != Node->getOperand(0) ||
           Tmp2 != Node->getOperand(Node->getNumOperands()-1)) {
-        std::vector<SDOperand> Ops(Node->op_begin(), Node->op_end());
+        SmallVector<SDOperand, 8> Ops(Node->op_begin(), Node->op_end());
         Ops[0] = Tmp1;
         Ops.back() = Tmp2;
-        Result = DAG.UpdateNodeOperands(Result, Ops);
+        Result = DAG.UpdateNodeOperands(Result, &Ops[0], Ops.size());
       }
     }
     assert(IsLegalizingCall && "Call sequence imbalance between start/end?");
@@ -1181,7 +1182,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     return Op.ResNo ? Tmp2 : Tmp1;
   }
   case ISD::INLINEASM: {
-    std::vector<SDOperand> Ops(Node->op_begin(), Node->op_end());
+    SmallVector<SDOperand, 8> Ops(Node->op_begin(), Node->op_end());
     bool Changed = false;
     // Legalize all of the operands of the inline asm, in case they are nodes
     // that need to be expanded or something.  Note we skip the asm string and
@@ -1209,7 +1210,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     
     if (Changed)
-      Result = DAG.UpdateNodeOperands(Result, Ops);
+      Result = DAG.UpdateNodeOperands(Result, &Ops[0], Ops.size());
       
     // INLINE asm returns a chain and flag, make sure to add both to the map.
     AddLegalizedOperand(SDOperand(Node, 0), Result.getValue(0));
@@ -1545,7 +1546,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Result = DAG.UpdateNodeOperands(Result, Tmp1);
       break;
     default: { // ret <values>
-      std::vector<SDOperand> NewValues;
+      SmallVector<SDOperand, 8> NewValues;
       NewValues.push_back(Tmp1);
       for (unsigned i = 1, e = Node->getNumOperands(); i < e; i += 2)
         switch (getTypeAction(Node->getOperand(i).getValueType())) {
@@ -1569,9 +1570,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         }
           
       if (NewValues.size() == Node->getNumOperands())
-        Result = DAG.UpdateNodeOperands(Result, NewValues);
+        Result = DAG.UpdateNodeOperands(Result, &NewValues[0],NewValues.size());
       else
-        Result = DAG.getNode(ISD::RET, MVT::Other, NewValues);
+        Result = DAG.getNode(ISD::RET, MVT::Other,
+                             &NewValues[0], NewValues.size());
       break;
     }
     }
@@ -2069,14 +2071,14 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::SHL_PARTS:
   case ISD::SRA_PARTS:
   case ISD::SRL_PARTS: {
-    std::vector<SDOperand> Ops;
+    SmallVector<SDOperand, 8> Ops;
     bool Changed = false;
     for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
       Ops.push_back(LegalizeOp(Node->getOperand(i)));
       Changed |= Ops.back() != Node->getOperand(i);
     }
     if (Changed)
-      Result = DAG.UpdateNodeOperands(Result, Ops);
+      Result = DAG.UpdateNodeOperands(Result, &Ops[0], Ops.size());
 
     switch (TLI.getOperationAction(Node->getOpcode(),
                                    Node->getValueType(0))) {

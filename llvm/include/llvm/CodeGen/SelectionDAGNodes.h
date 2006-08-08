@@ -865,13 +865,13 @@ protected:
     Prev = 0; Next = 0;
     NextInBucket = 0;
   }
-  SDNode(unsigned Opc, const std::vector<SDOperand> &Nodes)
+  SDNode(unsigned Opc, const SDOperand *Ops, unsigned NumOps)
     : NodeType(Opc), NodeId(-1) {
-    NumOperands = Nodes.size();
+    NumOperands = NumOps;
     OperandList = new SDOperand[NumOperands];
     
-    for (unsigned i = 0, e = Nodes.size(); i != e; ++i) {
-      OperandList[i] = Nodes[i];
+    for (unsigned i = 0, e = NumOps; i != e; ++i) {
+      OperandList[i] = Ops[i];
       SDNode *N = OperandList[i].Val;
       N->Uses.push_back(this);
     }
