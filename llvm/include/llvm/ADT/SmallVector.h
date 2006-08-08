@@ -51,6 +51,12 @@ public:
   SmallVector() : Begin((T*)InlineElts), End(Begin), Capacity(Begin+N) {
   }
   
+  template<typename ItTy>
+  SmallVector(ItTy S, ItTy E)
+    : Begin((T*)InlineElts), End(Begin), Capacity(Begin+N) {
+    append(S, E);
+  }
+  
   SmallVector(const SmallVector &RHS) {
     unsigned RHSSize = RHS.size();
     Begin = (T*)InlineElts;
