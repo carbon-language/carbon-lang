@@ -22,6 +22,10 @@ ARMInstrInfo::ARMInstrInfo()
   : TargetInstrInfo(ARMInsts, sizeof(ARMInsts)/sizeof(ARMInsts[0])) {
 }
 
+const TargetRegisterClass *ARMInstrInfo::getPointerRegClass() const {
+  return &ARM::IntRegsRegClass;
+}
+
 /// Return true if the instruction is a register to register move and
 /// leave the source and dest operands in the passed parameters.
 ///

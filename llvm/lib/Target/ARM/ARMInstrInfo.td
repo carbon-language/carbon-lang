@@ -67,9 +67,9 @@ def ldr   : InstARM<(ops IntRegs:$dst, memri:$addr),
                      "ldr $dst, $addr",
                      [(set IntRegs:$dst, (load iaddr:$addr))]>;
 
-def str  : InstARM<(ops IntRegs:$src, IntRegs:$addr),
-                    "str $src, [$addr]",
-                    [(store IntRegs:$src, IntRegs:$addr)]>;
+def str  : InstARM<(ops IntRegs:$src, memri:$addr),
+                    "str $src, $addr",
+                    [(store IntRegs:$src, iaddr:$addr)]>;
 
 def movrr   : InstARM<(ops IntRegs:$dst, IntRegs:$src),
                        "mov $dst, $src", []>;

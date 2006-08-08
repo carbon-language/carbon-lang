@@ -135,10 +135,8 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
 
   //sub sp, sp, #NumBytes
   BuildMI(MBB, MBBI, ARM::subri, 2, ARM::R13).addReg(ARM::R13).addImm(NumBytes);
-  //add ip, sp, #NumBytes - 4
-  BuildMI(MBB, MBBI, ARM::addri, 2, ARM::R12).addReg(ARM::R13).addImm(NumBytes - 4);
-  //str lr, [ip]
-  BuildMI(MBB, MBBI, ARM::str, 1, ARM::R14).addReg(ARM::R12);
+  //str lr, [sp, #NumBytes - 4]
+  BuildMI(MBB, MBBI, ARM::str, 2, ARM::R14).addImm(NumBytes - 4).addReg(ARM::R13);
 }
 
 void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
