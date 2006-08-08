@@ -148,7 +148,7 @@ public:
   
   void assign(unsigned NumElts, const T &Elt) {
     clear();
-    if (NumElts > Capacity)
+    if (Begin+NumElts > Capacity)
       grow(NumElts);
     End = Begin+NumElts;
     for (; NumElts; --NumElts)
