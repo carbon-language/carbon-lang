@@ -437,7 +437,8 @@ public:
     }
 
     // Otherwise, we have to make a token factor node.
-    SDOperand Root = DAG.getNode(ISD::TokenFactor, MVT::Other, PendingLoads);
+    SDOperand Root = DAG.getNode(ISD::TokenFactor, MVT::Other,
+                                 &PendingLoads[0], PendingLoads.size());
     PendingLoads.clear();
     DAG.setRoot(Root);
     return Root;
@@ -598,13 +599,14 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
       unsigned NumElements = PTy->getNumElements();
       MVT::ValueType PVT = TLI.getValueType(PTy->getElementType());
 
-      std::vector<SDOperand> Ops;
+      SmallVector<SDOperand, 8> Ops;
       Ops.assign(NumElements, DAG.getNode(ISD::UNDEF, PVT));
       
       // Create a VConstant node with generic Vector type.
       Ops.push_back(DAG.getConstant(NumElements, MVT::i32));
       Ops.push_back(DAG.getValueType(PVT));
-      return N = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, Ops);
+      return N = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector,
+                             &Ops[0], Ops.size());
     } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
       return N = DAG.getConstantFP(CFP->getValue(), VT);
     } else if (const PackedType *PTy = dyn_cast<PackedType>(VTy)) {
@@ -614,7 +616,7 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
       // Now that we know the number and type of the elements, push a
       // Constant or ConstantFP node onto the ops list for each element of
       // the packed constant.
-      std::vector<SDOperand> Ops;
+      SmallVector<SDOperand, 8> Ops;
       if (ConstantPacked *CP = dyn_cast<ConstantPacked>(C)) {
         for (unsigned i = 0; i != NumElements; ++i)
           Ops.push_back(getValue(CP->getOperand(i)));
@@ -631,7 +633,7 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
       // Create a VBUILD_VECTOR node with generic Vector type.
       Ops.push_back(DAG.getConstant(NumElements, MVT::i32));
       Ops.push_back(DAG.getValueType(PVT));
-      return N = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, Ops);
+      return N = DAG.getNode(ISD::VBUILD_VECTOR,MVT::Vector,&Ops[0],Ops.size());
     } else {
       // Canonicalize all constant ints to be unsigned.
       return N = DAG.getConstant(cast<ConstantIntegral>(C)->getRawValue(),VT);
@@ -676,7 +678,7 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
                                              PTyLegalElementVT);
 
     // Build a VBUILD_VECTOR with the input registers.
-    std::vector<SDOperand> Ops;
+    SmallVector<SDOperand, 8> Ops;
     if (PTyElementVT == PTyLegalElementVT) {
       // If the value types are legal, just VBUILD the CopyFromReg nodes.
       for (unsigned i = 0; i != NE; ++i)
@@ -707,7 +709,7 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
     
     Ops.push_back(DAG.getConstant(NE, MVT::i32));
     Ops.push_back(DAG.getValueType(PTyLegalElementVT));
-    N = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, Ops);
+    N = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, &Ops[0], Ops.size());
     
     // Finally, use a VBIT_CONVERT to make this available as the appropriate
     // vector type.
@@ -726,7 +728,7 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
     DAG.setRoot(DAG.getNode(ISD::RET, MVT::Other, getRoot()));
     return;
   }
-  std::vector<SDOperand> NewValues;
+  SmallVector<SDOperand, 8> NewValues;
   NewValues.push_back(getRoot());
   for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
     SDOperand RetOp = getValue(I.getOperand(i));
@@ -753,7 +755,8 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
     NewValues.push_back(RetOp);
     NewValues.push_back(DAG.getConstant(isSigned, MVT::i32));
   }
-  DAG.setRoot(DAG.getNode(ISD::RET, MVT::Other, NewValues));
+  DAG.setRoot(DAG.getNode(ISD::RET, MVT::Other,
+                          &NewValues[0], NewValues.size()));
 }
 
 void SelectionDAGLowering::visitBr(BranchInst &I) {
@@ -1346,11 +1349,8 @@ void SelectionDAGLowering::visitAlloca(AllocaInst &I) {
   std::vector<MVT::ValueType> VTs;
   VTs.push_back(AllocSize.getValueType());
   VTs.push_back(MVT::Other);
-  std::vector<SDOperand> Ops;
-  Ops.push_back(getRoot());
-  Ops.push_back(AllocSize);
-  Ops.push_back(getIntPtrConstant(Align));
-  SDOperand DSA = DAG.getNode(ISD::DYNAMIC_STACKALLOC, VTs, Ops);
+  SDOperand Ops[] = { getRoot(), AllocSize, getIntPtrConstant(Align) };
+  SDOperand DSA = DAG.getNode(ISD::DYNAMIC_STACKALLOC, VTs, Ops, 3);
   DAG.setRoot(setValue(&I, DSA).getValue(1));
 
   // Inform the Frame Information that we have just allocated a variable-sized
@@ -1427,7 +1427,7 @@ void SelectionDAGLowering::visitTargetIntrinsic(CallInst &I,
   bool OnlyLoad = HasChain && IntrinsicOnlyReadsMemory(Intrinsic);
   
   // Build the operand list.
-  std::vector<SDOperand> Ops;
+  SmallVector<SDOperand, 8> Ops;
   if (HasChain) {  // If this intrinsic has side-effects, chainify it.
     if (OnlyLoad) {
       // We don't need to serialize loads against other loads.
@@ -1479,11 +1479,11 @@ void SelectionDAGLowering::visitTargetIntrinsic(CallInst &I,
   // Create the node.
   SDOperand Result;
   if (!HasChain)
-    Result = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, VTs, Ops);
+    Result = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, VTs, &Ops[0], Ops.size());
   else if (I.getType() != Type::VoidTy)
-    Result = DAG.getNode(ISD::INTRINSIC_W_CHAIN, VTs, Ops);
+    Result = DAG.getNode(ISD::INTRINSIC_W_CHAIN, VTs, &Ops[0], Ops.size());
   else
-    Result = DAG.getNode(ISD::INTRINSIC_VOID, VTs, Ops);
+    Result = DAG.getNode(ISD::INTRINSIC_VOID, VTs, &Ops[0], Ops.size());
 
   if (HasChain) {
     SDOperand Chain = Result.getValue(Result.Val->getNumValues()-1);
@@ -1541,20 +1541,20 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     MachineDebugInfo *DebugInfo = DAG.getMachineDebugInfo();
     DbgStopPointInst &SPI = cast<DbgStopPointInst>(I);
     if (DebugInfo && SPI.getContext() && DebugInfo->Verify(SPI.getContext())) {
-      std::vector<SDOperand> Ops;
+      SDOperand Ops[5];
 
-      Ops.push_back(getRoot());
-      Ops.push_back(getValue(SPI.getLineValue()));
-      Ops.push_back(getValue(SPI.getColumnValue()));
+      Ops[0] = getRoot();
+      Ops[1] = getValue(SPI.getLineValue());
+      Ops[2] = getValue(SPI.getColumnValue());
 
       DebugInfoDesc *DD = DebugInfo->getDescFor(SPI.getContext());
       assert(DD && "Not a debug information descriptor");
       CompileUnitDesc *CompileUnit = cast<CompileUnitDesc>(DD);
       
-      Ops.push_back(DAG.getString(CompileUnit->getFileName()));
-      Ops.push_back(DAG.getString(CompileUnit->getDirectory()));
+      Ops[3] = DAG.getString(CompileUnit->getFileName());
+      Ops[4] = DAG.getString(CompileUnit->getDirectory());
       
-      DAG.setRoot(DAG.getNode(ISD::LOCATION, MVT::Other, Ops));
+      DAG.setRoot(DAG.getNode(ISD::LOCATION, MVT::Other, Ops, 5));
     }
 
     return 0;
@@ -1563,14 +1563,9 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     MachineDebugInfo *DebugInfo = DAG.getMachineDebugInfo();
     DbgRegionStartInst &RSI = cast<DbgRegionStartInst>(I);
     if (DebugInfo && RSI.getContext() && DebugInfo->Verify(RSI.getContext())) {
-      std::vector<SDOperand> Ops;
-
       unsigned LabelID = DebugInfo->RecordRegionStart(RSI.getContext());
-      
-      Ops.push_back(getRoot());
-      Ops.push_back(DAG.getConstant(LabelID, MVT::i32));
-
-      DAG.setRoot(DAG.getNode(ISD::DEBUG_LABEL, MVT::Other, Ops));
+      DAG.setRoot(DAG.getNode(ISD::DEBUG_LABEL, MVT::Other, getRoot(),
+                              DAG.getConstant(LabelID, MVT::i32)));
     }
 
     return 0;
@@ -1579,14 +1574,9 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     MachineDebugInfo *DebugInfo = DAG.getMachineDebugInfo();
     DbgRegionEndInst &REI = cast<DbgRegionEndInst>(I);
     if (DebugInfo && REI.getContext() && DebugInfo->Verify(REI.getContext())) {
-      std::vector<SDOperand> Ops;
-
       unsigned LabelID = DebugInfo->RecordRegionEnd(REI.getContext());
-      
-      Ops.push_back(getRoot());
-      Ops.push_back(DAG.getConstant(LabelID, MVT::i32));
-
-      DAG.setRoot(DAG.getNode(ISD::DEBUG_LABEL, MVT::Other, Ops));
+      DAG.setRoot(DAG.getNode(ISD::DEBUG_LABEL, MVT::Other,
+                              getRoot(), DAG.getConstant(LabelID, MVT::i32)));
     }
 
     return 0;
@@ -1596,14 +1586,9 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     DbgFuncStartInst &FSI = cast<DbgFuncStartInst>(I);
     if (DebugInfo && FSI.getSubprogram() &&
         DebugInfo->Verify(FSI.getSubprogram())) {
-      std::vector<SDOperand> Ops;
-
       unsigned LabelID = DebugInfo->RecordRegionStart(FSI.getSubprogram());
-      
-      Ops.push_back(getRoot());
-      Ops.push_back(DAG.getConstant(LabelID, MVT::i32));
-
-      DAG.setRoot(DAG.getNode(ISD::DEBUG_LABEL, MVT::Other, Ops));
+      DAG.setRoot(DAG.getNode(ISD::DEBUG_LABEL, MVT::Other,
+                  getRoot(), DAG.getConstant(LabelID, MVT::i32)));
     }
 
     return 0;
@@ -1612,12 +1597,9 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     MachineDebugInfo *DebugInfo = DAG.getMachineDebugInfo();
     DbgDeclareInst &DI = cast<DbgDeclareInst>(I);
     if (DebugInfo && DI.getVariable() && DebugInfo->Verify(DI.getVariable())) {
-      std::vector<SDOperand> Ops;
-
       SDOperand AddressOp  = getValue(DI.getAddress());
-      if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(AddressOp)) {
+      if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(AddressOp))
         DebugInfo->RecordVariable(DI.getVariable(), FI->getIndex());
-      }
     }
 
     return 0;
@@ -1644,9 +1626,8 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     std::vector<MVT::ValueType> VTs;
     VTs.push_back(MVT::i64);
     VTs.push_back(MVT::Other);
-    std::vector<SDOperand> Ops;
-    Ops.push_back(getRoot());
-    SDOperand Tmp = DAG.getNode(ISD::READCYCLECOUNTER, VTs, Ops);
+    SDOperand Op = getRoot();
+    SDOperand Tmp = DAG.getNode(ISD::READCYCLECOUNTER, VTs, &Op, 1);
     setValue(&I, Tmp);
     DAG.setRoot(Tmp.getValue(1));
     return 0;
@@ -1686,9 +1667,8 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     std::vector<MVT::ValueType> VTs;
     VTs.push_back(TLI.getPointerTy());
     VTs.push_back(MVT::Other);
-    std::vector<SDOperand> Ops;
-    Ops.push_back(getRoot());
-    SDOperand Tmp = DAG.getNode(ISD::STACKSAVE, VTs, Ops);
+    SDOperand Op = getRoot();
+    SDOperand Tmp = DAG.getNode(ISD::STACKSAVE, VTs, &Op, 1);
     setValue(&I, Tmp);
     DAG.setRoot(Tmp.getValue(1));
     return 0;
@@ -2279,7 +2259,8 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
   std::vector<MVT::ValueType> VTs;
   VTs.push_back(MVT::Other);
   VTs.push_back(MVT::Flag);
-  Chain = DAG.getNode(ISD::INLINEASM, VTs, AsmNodeOperands);
+  Chain = DAG.getNode(ISD::INLINEASM, VTs,
+                      &AsmNodeOperands[0], AsmNodeOperands.size());
   Flag = Chain.getValue(1);
 
   // If this asm returns a register value, copy the result from that register
@@ -2299,14 +2280,15 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
   }
   
   // Emit the non-flagged stores from the physregs.
-  std::vector<SDOperand> OutChains;
+  SmallVector<SDOperand, 8> OutChains;
   for (unsigned i = 0, e = StoresToEmit.size(); i != e; ++i)
     OutChains.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain, 
                                     StoresToEmit[i].first,
                                     getValue(StoresToEmit[i].second),
                                     DAG.getSrcValue(StoresToEmit[i].second)));
   if (!OutChains.empty())
-    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, OutChains);
+    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other,
+                        &OutChains[0], OutChains.size());
   DAG.setRoot(Chain);
 }
 
@@ -2446,7 +2428,8 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   RetVals.push_back(MVT::Other);
   
   // Create the node.
-  SDNode *Result = DAG.getNode(ISD::FORMAL_ARGUMENTS, RetVals, Ops).Val;
+  SDNode *Result = DAG.getNode(ISD::FORMAL_ARGUMENTS, RetVals,
+                               &Ops[0], Ops.size()).Val;
   
   DAG.setRoot(SDOperand(Result, Result->getNumValues()-1));
 
@@ -2653,7 +2636,7 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
   RetTys.push_back(MVT::Other);  // Always has a chain.
   
   // Finally, create the CALL node.
-  SDOperand Res = DAG.getNode(ISD::CALL, RetTys, Ops);
+  SDOperand Res = DAG.getNode(ISD::CALL, RetTys, &Ops[0], Ops.size());
   
   // This returns a pair of operands.  The first element is the
   // return value for the function (if RetTy is not VoidTy).  The second
@@ -2862,7 +2845,7 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
 
     // Expand memset / memcpy to a series of load / store ops
     // if the size operand falls below a certain threshold.
-    std::vector<SDOperand> OutChains;
+    SmallVector<SDOperand, 8> OutChains;
     switch (Op) {
     default: break;  // Do nothing for now.
     case ISD::MEMSET: {
@@ -2944,18 +2927,13 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
     }
 
     if (!OutChains.empty()) {
-      DAG.setRoot(DAG.getNode(ISD::TokenFactor, MVT::Other, OutChains));
+      DAG.setRoot(DAG.getNode(ISD::TokenFactor, MVT::Other,
+                  &OutChains[0], OutChains.size()));
       return;
     }
   }
 
-  std::vector<SDOperand> Ops;
-  Ops.push_back(getRoot());
-  Ops.push_back(Op1);
-  Ops.push_back(Op2);
-  Ops.push_back(Op3);
-  Ops.push_back(Op4);
-  DAG.setRoot(DAG.getNode(Op, MVT::Other, Ops));
+  DAG.setRoot(DAG.getNode(Op, MVT::Other, getRoot(), Op1, Op2, Op3, Op4));
 }
 
 //===----------------------------------------------------------------------===//
@@ -3318,7 +3296,7 @@ CopyValueToVirtualRegister(SelectionDAGLowering &SDL, Value *V, unsigned Reg) {
     // Loop over all of the elements of the resultant vector,
     // VEXTRACT_VECTOR_ELT'ing them, converting them to PTyLegalElementVT, then
     // copying them into output registers.
-    std::vector<SDOperand> OutChains;
+    SmallVector<SDOperand, 8> OutChains;
     SDOperand Root = SDL.getRoot();
     for (unsigned i = 0; i != NE; ++i) {
       SDOperand Elt = DAG.getNode(ISD::VEXTRACT_VECTOR_ELT, PTyElementVT,
@@ -3344,7 +3322,8 @@ CopyValueToVirtualRegister(SelectionDAGLowering &SDL, Value *V, unsigned Reg) {
         OutChains.push_back(DAG.getCopyToReg(Root, Reg++, Hi));
       }
     }
-    return DAG.getNode(ISD::TokenFactor, MVT::Other, OutChains);
+    return DAG.getNode(ISD::TokenFactor, MVT::Other,
+                       &OutChains[0], OutChains.size());
   } else if (SrcVT < DestVT) {
     // The src value is promoted to the register.
     if (MVT::isFloatingPoint(SrcVT))
@@ -3500,7 +3479,8 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
       if (i == e)
         UnorderedChains.push_back(Root);
     }
-    DAG.setRoot(DAG.getNode(ISD::TokenFactor, MVT::Other, UnorderedChains));
+    DAG.setRoot(DAG.getNode(ISD::TokenFactor, MVT::Other,
+                            &UnorderedChains[0], UnorderedChains.size()));
   }
 
   // Lower the terminator after the copies are emitted.

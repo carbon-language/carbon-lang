@@ -444,7 +444,8 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   }
   
   if (!OutChains.empty())
-    DAG.setRoot(DAG.getNode(ISD::TokenFactor, MVT::Other, OutChains));
+    DAG.setRoot(DAG.getNode(ISD::TokenFactor, MVT::Other,
+                            &OutChains[0], OutChains.size()));
   
   // Finally, inform the code generator which regs we return values in.
   switch (getValueType(F.getReturnType())) {
@@ -596,7 +597,7 @@ SparcTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   
   // Emit all stores, make sure the occur before any copies into physregs.
   if (!Stores.empty())
-    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, Stores);
+    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, &Stores[0],Stores.size());
   
   static const unsigned ArgRegs[] = {
     SP::O0, SP::O1, SP::O2, SP::O3, SP::O4, SP::O5
@@ -621,12 +622,8 @@ SparcTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   std::vector<MVT::ValueType> NodeTys;
   NodeTys.push_back(MVT::Other);   // Returns a chain
   NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
-  std::vector<SDOperand> Ops;
-  Ops.push_back(Chain);
-  Ops.push_back(Callee);
-  if (InFlag.Val)
-    Ops.push_back(InFlag);
-  Chain = DAG.getNode(SPISD::CALL, NodeTys, Ops);
+  SDOperand Ops[] = { Chain, Callee, InFlag };
+  Chain = DAG.getNode(SPISD::CALL, NodeTys, Ops, InFlag.Val ? 3 : 2);
   InFlag = Chain.getValue(1);
   
   MVT::ValueType RetTyVT = getValueType(RetTy);
@@ -743,10 +740,8 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       std::vector<MVT::ValueType> VTs;
       VTs.push_back(MVT::i32);
       VTs.push_back(MVT::Flag);
-      std::vector<SDOperand> Ops;
-      Ops.push_back(LHS);
-      Ops.push_back(RHS);
-      CompareFlag = DAG.getNode(SPISD::CMPICC, VTs, Ops).getValue(1);
+      SDOperand Ops[2] = { LHS, RHS };
+      CompareFlag = DAG.getNode(SPISD::CMPICC, VTs, Ops, 2).getValue(1);
       if (SPCC == ~0U) SPCC = IntCondCCodeToICC(CC);
       Opc = SPISD::BRICC;
     } else {
@@ -774,10 +769,8 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       std::vector<MVT::ValueType> VTs;
       VTs.push_back(LHS.getValueType());   // subcc returns a value
       VTs.push_back(MVT::Flag);
-      std::vector<SDOperand> Ops;
-      Ops.push_back(LHS);
-      Ops.push_back(RHS);
-      CompareFlag = DAG.getNode(SPISD::CMPICC, VTs, Ops).getValue(1);
+      SDOperand Ops[2] = { LHS, RHS };
+      CompareFlag = DAG.getNode(SPISD::CMPICC, VTs, Ops, 2).getValue(1);
       Opc = SPISD::SELECT_ICC;
       if (SPCC == ~0U) SPCC = IntCondCCodeToICC(CC);
     } else {
@@ -821,11 +814,10 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       std::vector<MVT::ValueType> Tys;
       Tys.push_back(MVT::f64);
       Tys.push_back(MVT::Other);
-      std::vector<SDOperand> Ops;
       // Bit-Convert the value to f64.
-      Ops.push_back(DAG.getNode(ISD::BIT_CONVERT, MVT::f64, V));
-      Ops.push_back(V.getValue(1));
-      return DAG.getNode(ISD::MERGE_VALUES, Tys, Ops);
+      SDOperand Ops[2] = { DAG.getNode(ISD::BIT_CONVERT, MVT::f64, V),
+                           V.getValue(1) };
+      return DAG.getNode(ISD::MERGE_VALUES, Tys, Ops, 2);
     }
   }
   case ISD::DYNAMIC_STACKALLOC: {
@@ -844,10 +836,8 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     std::vector<MVT::ValueType> Tys;
     Tys.push_back(MVT::i32);
     Tys.push_back(MVT::Other);
-    std::vector<SDOperand> Ops;
-    Ops.push_back(NewVal);
-    Ops.push_back(Chain);
-    return DAG.getNode(ISD::MERGE_VALUES, Tys, Ops);
+    SDOperand Ops[2] = { NewVal, Chain };
+    return DAG.getNode(ISD::MERGE_VALUES, Tys, Ops, 2);
   }
   case ISD::RET: {
     SDOperand Copy;

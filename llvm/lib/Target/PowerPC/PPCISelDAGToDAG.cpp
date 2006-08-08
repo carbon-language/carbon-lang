@@ -1152,7 +1152,7 @@ void PPCDAGToDAGISel::MySelect_PPCbctrl(SDOperand &Result, SDOperand N) {
   bool hasFlag =
     N.getOperand(N.getNumOperands()-1).getValueType() == MVT::Flag;
 
-  std::vector<SDOperand> Ops;
+  SmallVector<SDOperand, 8> Ops;
   // Push varargs arguments, including optional flag.
   for (unsigned i = 1, e = N.getNumOperands()-hasFlag; i != e; ++i) {
     AddToQueue(Chain, N.getOperand(i));
@@ -1167,7 +1167,8 @@ void PPCDAGToDAGISel::MySelect_PPCbctrl(SDOperand &Result, SDOperand N) {
     Ops.push_back(Chain);
   }
   
-  ResNode = CurDAG->getTargetNode(PPC::BCTRL, MVT::Other, MVT::Flag, Ops);
+  ResNode = CurDAG->getTargetNode(PPC::BCTRL, MVT::Other, MVT::Flag,
+                                  &Ops[0], Ops.size());
   Chain = SDOperand(ResNode, 0);
   InFlag = SDOperand(ResNode, 1);
   ReplaceUses(SDOperand(N.Val, 0), Chain);
@@ -1193,7 +1194,7 @@ void PPCDAGToDAGISel::MySelect_PPCcall(SDOperand &Result, SDOperand N) {
   if (N1.getOpcode() == ISD::Constant) {
     unsigned Tmp0C = (unsigned)cast<ConstantSDNode>(N1)->getValue();
     
-    std::vector<SDOperand> Ops;
+    SmallVector<SDOperand, 8> Ops;
     Ops.push_back(CurDAG->getTargetConstant(Tmp0C, MVT::i32));
 
     bool hasFlag =
@@ -1210,7 +1211,8 @@ void PPCDAGToDAGISel::MySelect_PPCcall(SDOperand &Result, SDOperand N) {
       AddToQueue(Chain, N.getOperand(N.getNumOperands()-1));
       Ops.push_back(Chain);
     }
-    ResNode = CurDAG->getTargetNode(PPC::BLA, MVT::Other, MVT::Flag, Ops);
+    ResNode = CurDAG->getTargetNode(PPC::BLA, MVT::Other, MVT::Flag,
+                                    &Ops[0], Ops.size());
     
     Chain = SDOperand(ResNode, 0);
     InFlag = SDOperand(ResNode, 1);
@@ -1224,7 +1226,7 @@ void PPCDAGToDAGISel::MySelect_PPCcall(SDOperand &Result, SDOperand N) {
   // Emits: (BL:void (tglobaladdr:i32):$dst)
   // Pattern complexity = 4  cost = 1
   if (N1.getOpcode() == ISD::TargetGlobalAddress) {
-    std::vector<SDOperand> Ops;
+    SmallVector<SDOperand, 8> Ops;
     Ops.push_back(N1);
     
     bool hasFlag =
@@ -1242,7 +1244,8 @@ void PPCDAGToDAGISel::MySelect_PPCcall(SDOperand &Result, SDOperand N) {
       Ops.push_back(Chain);
     }
     
-    ResNode = CurDAG->getTargetNode(PPC::BL, MVT::Other, MVT::Flag, Ops);
+    ResNode = CurDAG->getTargetNode(PPC::BL, MVT::Other, MVT::Flag,
+                                    &Ops[0], Ops.size());
     
     Chain = SDOperand(ResNode, 0);
     InFlag = SDOperand(ResNode, 1);
@@ -1274,7 +1277,8 @@ void PPCDAGToDAGISel::MySelect_PPCcall(SDOperand &Result, SDOperand N) {
       Ops.push_back(Chain);
     }
     
-    ResNode = CurDAG->getTargetNode(PPC::BL, MVT::Other, MVT::Flag, Ops);
+    ResNode = CurDAG->getTargetNode(PPC::BL, MVT::Other, MVT::Flag,
+                                    &Ops[0], Ops.size());
 
     Chain = SDOperand(ResNode, 0);
     InFlag = SDOperand(ResNode, 1);

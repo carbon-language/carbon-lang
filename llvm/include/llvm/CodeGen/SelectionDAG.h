@@ -145,12 +145,8 @@ public:
     std::vector<MVT::ValueType> VTs;
     VTs.push_back(MVT::Other);
     VTs.push_back(MVT::Flag);
-    std::vector<SDOperand> Ops;
-    Ops.push_back(Chain);
-    Ops.push_back(getRegister(Reg, N.getValueType()));
-    Ops.push_back(N);
-    if (Flag.Val) Ops.push_back(Flag);
-    return getNode(ISD::CopyToReg, VTs, Ops);
+    SDOperand Ops[] = { Chain, getRegister(Reg, N.getValueType()), N, Flag };
+    return getNode(ISD::CopyToReg, VTs, Ops, Flag.Val ? 4 : 3);
   }
 
   // Similar to last getCopyToReg() except parameter Reg is a SDOperand
@@ -159,12 +155,8 @@ public:
     std::vector<MVT::ValueType> VTs;
     VTs.push_back(MVT::Other);
     VTs.push_back(MVT::Flag);
-    std::vector<SDOperand> Ops;
-    Ops.push_back(Chain);
-    Ops.push_back(Reg);
-    Ops.push_back(N);
-    if (Flag.Val) Ops.push_back(Flag);
-    return getNode(ISD::CopyToReg, VTs, Ops);
+    SDOperand Ops[] = { Chain, Reg, N, Flag };
+    return getNode(ISD::CopyToReg, VTs, Ops, Flag.Val ? 4 : 3);
   }
   
   SDOperand getCopyFromReg(SDOperand Chain, unsigned Reg, MVT::ValueType VT) {
@@ -218,14 +210,17 @@ public:
                     SDOperand N1, SDOperand N2, SDOperand N3, SDOperand N4,
                     SDOperand N5);
   SDOperand getNode(unsigned Opcode, MVT::ValueType VT,
-                    std::vector<SDOperand> &Children);
-  SDOperand getNode(unsigned Opcode, std::vector<MVT::ValueType> &ResultTys,
-                    std::vector<SDOperand> &Ops);
-
+                    const SDOperand *Ops, unsigned NumOps);
   SDOperand getNode(unsigned Opcode, MVT::ValueType VT,
-                    const SDOperand *Ops, unsigned NumOps);
+                    const std::vector<SDOperand> &Ops) {
+    return getNode(Opcode, VT, &Ops[0], Ops.size());
+  }
   SDOperand getNode(unsigned Opcode, std::vector<MVT::ValueType> &ResultTys,
                     const SDOperand *Ops, unsigned NumOps);
+  SDOperand getNode(unsigned Opcode, std::vector<MVT::ValueType> &ResultTys,
+                    const std::vector<SDOperand> &Ops) {
+    return getNode(Opcode, ResultTys, &Ops[0], Ops.size());
+  }
   
   
   /// getSetCC - Helper function to make it easier to build SetCC's if you just
@@ -351,7 +346,7 @@ public:
                         SDOperand Op4, SDOperand Op5, SDOperand Op6,
                         SDOperand Op7, SDOperand Op8);
   SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT,
-                        std::vector<SDOperand> &Ops);
+                        const SDOperand *Ops, unsigned NumOps);
   SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT1,
                         MVT::ValueType VT2, SDOperand Op1);
   SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT1,
@@ -391,7 +386,8 @@ public:
                         SDOperand Op3, SDOperand Op4, SDOperand Op5,
                         SDOperand Op6, SDOperand Op7);
   SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT1, 
-                        MVT::ValueType VT2, std::vector<SDOperand> &Ops);
+                        MVT::ValueType VT2,
+                        const SDOperand *Ops, unsigned NumOps);
   
   /// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
   /// This can cause recursive merging of nodes in the DAG.  Use the first

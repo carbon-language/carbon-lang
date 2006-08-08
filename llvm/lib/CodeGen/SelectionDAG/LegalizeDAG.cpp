@@ -241,7 +241,7 @@ SDNode *SelectionDAGLegalize::isShuffleLegal(MVT::ValueType VT,
     assert(NumEltsGrowth && "Cannot promote to vector type with fewer elts!");
     if (NumEltsGrowth > 1) {
       // Renumber the elements.
-      std::vector<SDOperand> Ops;
+      SmallVector<SDOperand, 8> Ops;
       for (unsigned i = 0, e = Mask.getNumOperands(); i != e; ++i) {
         SDOperand InOp = Mask.getOperand(i);
         for (unsigned j = 0; j != NumEltsGrowth; ++j) {
@@ -253,7 +253,7 @@ SDNode *SelectionDAGLegalize::isShuffleLegal(MVT::ValueType VT,
           }
         }
       }
-      Mask = DAG.getNode(ISD::BUILD_VECTOR, NVT, Ops);
+      Mask = DAG.getNode(ISD::BUILD_VECTOR, NVT, &Ops[0], Ops.size());
     }
     VT = NVT;
     break;
@@ -666,7 +666,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           cast<StringSDNode>(Node->getOperand(4))->getValue();
         unsigned SrcFile = DebugInfo->RecordSource(DirName, FName);
 
-        std::vector<SDOperand> Ops;
+        SmallVector<SDOperand, 8> Ops;
         Ops.push_back(Tmp1);  // chain
         SDOperand LineOp = Node->getOperand(1);
         SDOperand ColOp = Node->getOperand(2);
@@ -675,13 +675,13 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           Ops.push_back(LineOp);  // line #
           Ops.push_back(ColOp);  // col #
           Ops.push_back(DAG.getConstant(SrcFile, MVT::i32));  // source file id
-          Result = DAG.getNode(ISD::DEBUG_LOC, MVT::Other, Ops);
+          Result = DAG.getNode(ISD::DEBUG_LOC, MVT::Other, &Ops[0], Ops.size());
         } else {
           unsigned Line = cast<ConstantSDNode>(LineOp)->getValue();
           unsigned Col = cast<ConstantSDNode>(ColOp)->getValue();
           unsigned ID = DebugInfo->RecordLabel(Line, Col, SrcFile);
           Ops.push_back(DAG.getConstant(ID, MVT::i32));
-          Result = DAG.getNode(ISD::DEBUG_LABEL, MVT::Other, Ops);
+          Result = DAG.getNode(ISD::DEBUG_LABEL, MVT::Other,&Ops[0],Ops.size());
         }
       } else {
         Result = Tmp1;  // chain
@@ -889,14 +889,15 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         // We generate a shuffle of InVec and ScVec, so the shuffle mask should
         // be 0,1,2,3,4,5... with the appropriate element replaced with elt 0 of
         // the RHS.
-        std::vector<SDOperand> ShufOps;
+        SmallVector<SDOperand, 8> ShufOps;
         for (unsigned i = 0; i != NumElts; ++i) {
           if (i != InsertPos->getValue())
             ShufOps.push_back(DAG.getConstant(i, ShufMaskEltVT));
           else
             ShufOps.push_back(DAG.getConstant(NumElts, ShufMaskEltVT));
         }
-        SDOperand ShufMask = DAG.getNode(ISD::BUILD_VECTOR, ShufMaskVT,ShufOps);
+        SDOperand ShufMask = DAG.getNode(ISD::BUILD_VECTOR, ShufMaskVT,
+                                         &ShufOps[0], ShufOps.size());
         
         Result = DAG.getNode(ISD::VECTOR_SHUFFLE, Tmp1.getValueType(),
                              Tmp1, ScVec, ShufMask);
@@ -985,7 +986,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       MVT::ValueType PtrVT = TLI.getPointerTy();
       SDOperand Mask = Node->getOperand(2);
       unsigned NumElems = Mask.getNumOperands();
-      std::vector<SDOperand> Ops;
+      SmallVector<SDOperand,8> Ops;
       for (unsigned i = 0; i != NumElems; ++i) {
         SDOperand Arg = Mask.getOperand(i);
         if (Arg.getOpcode() == ISD::UNDEF) {
@@ -1001,7 +1002,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                                       DAG.getConstant(Idx - NumElems, PtrVT)));
         }
       }
-      Result = DAG.getNode(ISD::BUILD_VECTOR, VT, Ops);
+      Result = DAG.getNode(ISD::BUILD_VECTOR, VT, &Ops[0], Ops.size());
       break;
     }
     case TargetLowering::Promote: {
@@ -2149,7 +2150,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       assert(MVT::isVector(Node->getValueType(0)) &&
              "Cannot expand this binary operator!");
       // Expand the operation into a bunch of nasty scalar code.
-      std::vector<SDOperand> Ops;
+      SmallVector<SDOperand, 8> Ops;
       MVT::ValueType EltVT = MVT::getVectorBaseType(Node->getValueType(0));
       MVT::ValueType PtrVT = TLI.getPointerTy();
       for (unsigned i = 0, e = MVT::getVectorNumElements(Node->getValueType(0));
@@ -2159,7 +2160,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         SDOperand RHS = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, EltVT, Tmp2, Idx);
         Ops.push_back(DAG.getNode(Node->getOpcode(), EltVT, LHS, RHS));
       }
-      Result = DAG.getNode(ISD::BUILD_VECTOR, Node->getValueType(0), Ops);
+      Result = DAG.getNode(ISD::BUILD_VECTOR, Node->getValueType(0), 
+                           &Ops[0], Ops.size());
       break;
     }
     case TargetLowering::Promote: {
@@ -3556,7 +3558,8 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
       MVT::getIntVectorWithNumElements(NumElems);
     SDOperand Zero = DAG.getConstant(0, MVT::getVectorBaseType(MaskVT));
     std::vector<SDOperand> ZeroVec(NumElems, Zero);
-    SDOperand SplatMask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, ZeroVec);
+    SDOperand SplatMask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
+                                      &ZeroVec[0], ZeroVec.size());
 
     // If the target supports VECTOR_SHUFFLE and this shuffle mask, use it.
     if (isShuffleLegal(Node->getValueType(0), SplatMask)) {
@@ -3586,12 +3589,13 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
         MaskVec[*II] = DAG.getConstant(i, MVT::getVectorBaseType(MaskVT));
       i += NumElems;
     }
-    SDOperand ShuffleMask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, MaskVec);
+    SDOperand ShuffleMask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
+                                        &MaskVec[0], MaskVec.size());
 
     // If the target supports VECTOR_SHUFFLE and this shuffle mask, use it.
     if (TLI.isOperationLegal(ISD::SCALAR_TO_VECTOR, Node->getValueType(0)) &&
         isShuffleLegal(Node->getValueType(0), ShuffleMask)) {
-      std::vector<SDOperand> Ops;
+      SmallVector<SDOperand, 8> Ops;
       for(std::map<SDOperand,std::vector<unsigned> >::iterator I=Values.begin(),
             E = Values.end(); I != E; ++I) {
         SDOperand Op = DAG.getNode(ISD::SCALAR_TO_VECTOR, Node->getValueType(0),
@@ -3601,7 +3605,8 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
       Ops.push_back(ShuffleMask);
 
       // Return shuffle(LoValVec, HiValVec, <0,1,0,1>)
-      return DAG.getNode(ISD::VECTOR_SHUFFLE, Node->getValueType(0), Ops);
+      return DAG.getNode(ISD::VECTOR_SHUFFLE, Node->getValueType(0), 
+                         &Ops[0], Ops.size());
     }
   }
   
@@ -3613,7 +3618,7 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
   SDOperand FIPtr = CreateStackTemporary(VT);
   
   // Emit a store of each element to the stack slot.
-  std::vector<SDOperand> Stores;
+  SmallVector<SDOperand, 8> Stores;
   unsigned TypeByteSize = 
     MVT::getSizeInBits(Node->getOperand(0).getValueType())/8;
   unsigned VectorSize = MVT::getSizeInBits(VT)/8;
@@ -3634,7 +3639,8 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
   
   SDOperand StoreChain;
   if (!Stores.empty())    // Not all undef elements?
-    StoreChain = DAG.getNode(ISD::TokenFactor, MVT::Other, Stores);
+    StoreChain = DAG.getNode(ISD::TokenFactor, MVT::Other,
+                             &Stores[0], Stores.size());
   else
     StoreChain = DAG.getEntryNode();
   
@@ -3658,12 +3664,9 @@ void SelectionDAGLegalize::ExpandShiftParts(unsigned NodeOp,
   SDOperand LHSL, LHSH;
   ExpandOp(Op, LHSL, LHSH);
 
-  std::vector<SDOperand> Ops;
-  Ops.push_back(LHSL);
-  Ops.push_back(LHSH);
-  Ops.push_back(Amt);
+  SDOperand Ops[] = { LHSL, LHSH, Amt };
   std::vector<MVT::ValueType> VTs(2, LHSL.getValueType());
-  Lo = DAG.getNode(NodeOp, VTs, Ops);
+  Lo = DAG.getNode(NodeOp, VTs, Ops, 3);
   Hi = Lo.getValue(1);
 }
 
@@ -4634,21 +4637,21 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     ExpandOp(Node->getOperand(0), LHSL, LHSH);
     ExpandOp(Node->getOperand(1), RHSL, RHSH);
     std::vector<MVT::ValueType> VTs;
-    std::vector<SDOperand> LoOps, HiOps;
+    SDOperand LoOps[2], HiOps[2];
     VTs.push_back(LHSL.getValueType());
     VTs.push_back(MVT::Flag);
-    LoOps.push_back(LHSL);
-    LoOps.push_back(RHSL);
-    HiOps.push_back(LHSH);
-    HiOps.push_back(RHSH);
+    LoOps[0] = LHSL;
+    LoOps[1] = RHSL;
+    HiOps[0] = LHSH;
+    HiOps[1] = RHSH;
     if (Node->getOpcode() == ISD::ADD) {
-      Lo = DAG.getNode(ISD::ADDC, VTs, LoOps);
-      HiOps.push_back(Lo.getValue(1));
-      Hi = DAG.getNode(ISD::ADDE, VTs, HiOps);
+      Lo = DAG.getNode(ISD::ADDC, VTs, LoOps, 2);
+      HiOps[2] = Lo.getValue(1);
+      Hi = DAG.getNode(ISD::ADDE, VTs, HiOps, 3);
     } else {
-      Lo = DAG.getNode(ISD::SUBC, VTs, LoOps);
-      HiOps.push_back(Lo.getValue(1));
-      Hi = DAG.getNode(ISD::SUBE, VTs, HiOps);
+      Lo = DAG.getNode(ISD::SUBC, VTs, LoOps, 2);
+      HiOps[2] = Lo.getValue(1);
+      Hi = DAG.getNode(ISD::SUBE, VTs, HiOps, 3);
     }
     break;
   }
@@ -4732,15 +4735,17 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
 #endif
     assert(0 && "Unhandled operation in SplitVectorOp!");
   case ISD::VBUILD_VECTOR: {
-    std::vector<SDOperand> LoOps(Node->op_begin(), Node->op_begin()+NewNumElts);
+    SmallVector<SDOperand, 8> LoOps(Node->op_begin(), 
+                                    Node->op_begin()+NewNumElts);
     LoOps.push_back(NewNumEltsNode);
     LoOps.push_back(TypeNode);
-    Lo = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, LoOps);
+    Lo = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, &LoOps[0], LoOps.size());
 
-    std::vector<SDOperand> HiOps(Node->op_begin()+NewNumElts, Node->op_end()-2);
+    SmallVector<SDOperand, 8> HiOps(Node->op_begin()+NewNumElts, 
+                                    Node->op_end()-2);
     HiOps.push_back(NewNumEltsNode);
     HiOps.push_back(TypeNode);
-    Hi = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, HiOps);
+    Hi = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, &HiOps[0], HiOps.size());
     break;
   }
   case ISD::VADD:
@@ -4891,8 +4896,8 @@ SDOperand SelectionDAGLegalize::PackVectorOp(SDOperand Op,
       if (AllUndef) {
         Result = DAG.getNode(ISD::UNDEF, NewVT);
       } else {
-        std::vector<SDOperand> Ops(Node->op_begin(), Node->op_end()-2);
-        Result = DAG.getNode(ISD::BUILD_VECTOR, NewVT, Ops);
+        Result = DAG.getNode(ISD::BUILD_VECTOR, NewVT, Node->op_begin(),
+                             Node->getNumOperands()-2);
       }
     }
     break;
@@ -4920,7 +4925,9 @@ SDOperand SelectionDAGLegalize::PackVectorOp(SDOperand Op,
       std::vector<SDOperand> BuildVecIdx(Node->getOperand(2).Val->op_begin(),
                                          Node->getOperand(2).Val->op_end()-2);
       MVT::ValueType BVT = MVT::getIntVectorWithNumElements(BuildVecIdx.size());
-      SDOperand BV = DAG.getNode(ISD::BUILD_VECTOR, BVT, BuildVecIdx);
+      SDOperand BV = DAG.getNode(ISD::BUILD_VECTOR, BVT,
+                                 Node->getOperand(2).Val->op_begin(),
+                                 Node->getOperand(2).Val->getNumOperands()-2);
       
       Result = DAG.getNode(ISD::VECTOR_SHUFFLE, NewVT,
                            PackVectorOp(Node->getOperand(0), NewVT),

@@ -479,7 +479,7 @@ SDOperand X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG) 
   // Return the new list of results.
   std::vector<MVT::ValueType> RetVTs(Op.Val->value_begin(),
                                      Op.Val->value_end());
-  return DAG.getNode(ISD::MERGE_VALUES, RetVTs, ArgValues);
+  return DAG.getNode(ISD::MERGE_VALUES, RetVTs, &ArgValues[0],ArgValues.size());
 }
 
 
@@ -596,7 +596,8 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG) {
   }
 
   if (!MemOpChains.empty())
-    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, MemOpChains);
+    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other,
+                        &MemOpChains[0], MemOpChains.size());
 
   // Build a sequence of copy-to-reg nodes chained together with token chain
   // and flag operands which copy the outgoing args into registers.
@@ -631,7 +632,7 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG) {
     Ops.push_back(InFlag);
 
   Chain = DAG.getNode(isTailCall ? X86ISD::TAILCALL : X86ISD::CALL,
-                      NodeTys, Ops);
+                      NodeTys, &Ops[0], Ops.size());
   InFlag = Chain.getValue(1);
 
   // Create the CALLSEQ_END node.
@@ -651,7 +652,7 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG) {
   Ops.push_back(DAG.getConstant(NumBytes, getPointerTy()));
   Ops.push_back(DAG.getConstant(NumBytesForCalleeToPush, getPointerTy()));
   Ops.push_back(InFlag);
-  Chain = DAG.getNode(ISD::CALLSEQ_END, NodeTys, Ops);
+  Chain = DAG.getNode(ISD::CALLSEQ_END, NodeTys, &Ops[0], Ops.size());
   if (RetVT != MVT::Other)
     InFlag = Chain.getValue(1);
   
@@ -703,7 +704,8 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG) {
     std::vector<SDOperand> Ops;
     Ops.push_back(Chain);
     Ops.push_back(InFlag);
-    SDOperand RetVal = DAG.getNode(X86ISD::FP_GET_RESULT, Tys, Ops);
+    SDOperand RetVal = DAG.getNode(X86ISD::FP_GET_RESULT, Tys, 
+                                   &Ops[0], Ops.size());
     Chain  = RetVal.getValue(1);
     InFlag = RetVal.getValue(2);
     if (X86ScalarSSE) {
@@ -721,7 +723,7 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG) {
       Ops.push_back(StackSlot);
       Ops.push_back(DAG.getValueType(RetVT));
       Ops.push_back(InFlag);
-      Chain = DAG.getNode(X86ISD::FST, Tys, Ops);
+      Chain = DAG.getNode(X86ISD::FST, Tys, &Ops[0], Ops.size());
       RetVal = DAG.getLoad(RetVT, Chain, StackSlot,
                            DAG.getSrcValue(NULL));
       Chain = RetVal.getValue(1);
@@ -744,7 +746,8 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG) {
   // Otherwise, merge everything together with a MERGE_VALUES node.
   NodeTys.push_back(MVT::Other);
   ResultVals.push_back(Chain);
-  SDOperand Res = DAG.getNode(ISD::MERGE_VALUES, NodeTys, ResultVals);
+  SDOperand Res = DAG.getNode(ISD::MERGE_VALUES, NodeTys,
+                              &ResultVals[0], ResultVals.size());
   return Res.getValue(Op.ResNo);
 }
 
@@ -980,10 +983,10 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
   // Return the new list of results.
   std::vector<MVT::ValueType> RetVTs(Op.Val->value_begin(),
                                      Op.Val->value_end());
-  return DAG.getNode(ISD::MERGE_VALUES, RetVTs, ArgValues);
+  return DAG.getNode(ISD::MERGE_VALUES, RetVTs, &ArgValues[0],ArgValues.size());
 }
 
-SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG) {
+SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG){
   SDOperand Chain     = Op.getOperand(0);
   unsigned CallingConv= cast<ConstantSDNode>(Op.getOperand(1))->getValue();
   bool isVarArg       = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
@@ -1117,7 +1120,8 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG) 
   }
 
   if (!MemOpChains.empty())
-    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, MemOpChains);
+    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other,
+                        &MemOpChains[0], MemOpChains.size());
 
   // Build a sequence of copy-to-reg nodes chained together with token chain
   // and flag operands which copy the outgoing args into registers.
@@ -1153,7 +1157,7 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG) 
 
   // FIXME: Do not generate X86ISD::TAILCALL for now.
   Chain = DAG.getNode(isTailCall ? X86ISD::TAILCALL : X86ISD::CALL,
-                      NodeTys, Ops);
+                      NodeTys, &Ops[0], Ops.size());
   InFlag = Chain.getValue(1);
 
   NodeTys.clear();
@@ -1165,7 +1169,7 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG) 
   Ops.push_back(DAG.getConstant(NumBytes, getPointerTy()));
   Ops.push_back(DAG.getConstant(NumBytes, getPointerTy()));
   Ops.push_back(InFlag);
-  Chain = DAG.getNode(ISD::CALLSEQ_END, NodeTys, Ops);
+  Chain = DAG.getNode(ISD::CALLSEQ_END, NodeTys, &Ops[0], Ops.size());
   if (RetVT != MVT::Other)
     InFlag = Chain.getValue(1);
   
@@ -1217,7 +1221,8 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG) 
     std::vector<SDOperand> Ops;
     Ops.push_back(Chain);
     Ops.push_back(InFlag);
-    SDOperand RetVal = DAG.getNode(X86ISD::FP_GET_RESULT, Tys, Ops);
+    SDOperand RetVal = DAG.getNode(X86ISD::FP_GET_RESULT, Tys,
+                                   &Ops[0], Ops.size());
     Chain  = RetVal.getValue(1);
     InFlag = RetVal.getValue(2);
     if (X86ScalarSSE) {
@@ -1235,7 +1240,7 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG) 
       Ops.push_back(StackSlot);
       Ops.push_back(DAG.getValueType(RetVT));
       Ops.push_back(InFlag);
-      Chain = DAG.getNode(X86ISD::FST, Tys, Ops);
+      Chain = DAG.getNode(X86ISD::FST, Tys, &Ops[0], Ops.size());
       RetVal = DAG.getLoad(RetVT, Chain, StackSlot,
                            DAG.getSrcValue(NULL));
       Chain = RetVal.getValue(1);
@@ -1259,7 +1264,8 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG) 
   // Otherwise, merge everything together with a MERGE_VALUES node.
   NodeTys.push_back(MVT::Other);
   ResultVals.push_back(Chain);
-  SDOperand Res = DAG.getNode(ISD::MERGE_VALUES, NodeTys, ResultVals);
+  SDOperand Res = DAG.getNode(ISD::MERGE_VALUES, NodeTys,
+                              &ResultVals[0], ResultVals.size());
   return Res.getValue(Op.ResNo);
 }
 
@@ -1963,7 +1969,7 @@ static SDOperand CommuteVectorShuffle(SDOperand Op, SelectionDAG &DAG) {
       MaskVec.push_back(DAG.getConstant(Val - NumElems, EltVT));
   }
 
-  Mask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, MaskVec);
+  Mask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, &MaskVec[0], MaskVec.size());
   return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V2, V1, Mask);
 }
 
@@ -2049,7 +2055,8 @@ static SDOperand NormalizeMask(SDOperand Mask, SelectionDAG &DAG) {
   }
 
   if (Changed)
-    Mask = DAG.getNode(ISD::BUILD_VECTOR, Mask.getValueType(), MaskVec);
+    Mask = DAG.getNode(ISD::BUILD_VECTOR, Mask.getValueType(),
+                       &MaskVec[0], MaskVec.size());
   return Mask;
 }
 
@@ -2063,7 +2070,7 @@ static SDOperand getMOVLMask(unsigned NumElems, SelectionDAG &DAG) {
   MaskVec.push_back(DAG.getConstant(NumElems, BaseVT));
   for (unsigned i = 1; i != NumElems; ++i)
     MaskVec.push_back(DAG.getConstant(i, BaseVT));
-  return DAG.getNode(ISD::BUILD_VECTOR, MaskVT, MaskVec);
+  return DAG.getNode(ISD::BUILD_VECTOR, MaskVT, &MaskVec[0], MaskVec.size());
 }
 
 /// getUnpacklMask - Returns a vector_shuffle mask for an unpackl operation
@@ -2076,7 +2083,7 @@ static SDOperand getUnpacklMask(unsigned NumElems, SelectionDAG &DAG) {
     MaskVec.push_back(DAG.getConstant(i,            BaseVT));
     MaskVec.push_back(DAG.getConstant(i + NumElems, BaseVT));
   }
-  return DAG.getNode(ISD::BUILD_VECTOR, MaskVT, MaskVec);
+  return DAG.getNode(ISD::BUILD_VECTOR, MaskVT, &MaskVec[0], MaskVec.size());
 }
 
 /// getUnpackhMask - Returns a vector_shuffle mask for an unpackh operation
@@ -2090,7 +2097,7 @@ static SDOperand getUnpackhMask(unsigned NumElems, SelectionDAG &DAG) {
     MaskVec.push_back(DAG.getConstant(i + Half,            BaseVT));
     MaskVec.push_back(DAG.getConstant(i + NumElems + Half, BaseVT));
   }
-  return DAG.getNode(ISD::BUILD_VECTOR, MaskVT, MaskVec);
+  return DAG.getNode(ISD::BUILD_VECTOR, MaskVT, &MaskVec[0], MaskVec.size());
 }
 
 /// getZeroVector - Returns a vector of specified type with all zero elements.
@@ -2102,7 +2109,7 @@ static SDOperand getZeroVector(MVT::ValueType VT, SelectionDAG &DAG) {
   bool isFP = MVT::isFloatingPoint(EVT);
   SDOperand Zero = isFP ? DAG.getConstantFP(0.0, EVT) : DAG.getConstant(0, EVT);
   std::vector<SDOperand> ZeroVec(NumElems, Zero);
-  return DAG.getNode(ISD::BUILD_VECTOR, VT, ZeroVec);
+  return DAG.getNode(ISD::BUILD_VECTOR, VT, &ZeroVec[0], ZeroVec.size());
 }
 
 /// PromoteSplat - Promote a splat of v8i16 or v16i8 to v4i32.
@@ -2146,7 +2153,8 @@ static SDOperand getShuffleVectorZeroOrUndef(SDOperand V2, MVT::ValueType VT,
   SDOperand Zero = DAG.getConstant(0, EVT);
   std::vector<SDOperand> MaskVec(NumElems, Zero);
   MaskVec[Idx] = DAG.getConstant(NumElems, EVT);
-  SDOperand Mask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, MaskVec);
+  SDOperand Mask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
+                               &MaskVec[0], MaskVec.size());
   return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2, Mask);
 }
 
@@ -2281,7 +2289,8 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
       std::vector<SDOperand> MaskVec;
       for (unsigned i = 0; i < NumElems; i++)
         MaskVec.push_back(DAG.getConstant((i == Idx) ? 0 : 1, MaskEVT));
-      SDOperand Mask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT, MaskVec);
+      SDOperand Mask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
+                                   &MaskVec[0], MaskVec.size());
       return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, Item,
                          DAG.getNode(ISD::UNDEF, VT), Mask);
     }
@@ -2832,7 +2841,7 @@ SDOperand X86TargetLowering::LowerShift(SDOperand Op, SelectionDAG &DAG) {
       Ops.push_back(Tmp3);
       Ops.push_back(CC);
       Ops.push_back(InFlag);
-      Hi = DAG.getNode(X86ISD::CMOV, Tys, Ops);
+      Hi = DAG.getNode(X86ISD::CMOV, Tys, &Ops[0], Ops.size());
       InFlag = Hi.getValue(1);
 
       Ops.clear();
@@ -2840,13 +2849,13 @@ SDOperand X86TargetLowering::LowerShift(SDOperand Op, SelectionDAG &DAG) {
       Ops.push_back(Tmp1);
       Ops.push_back(CC);
       Ops.push_back(InFlag);
-      Lo = DAG.getNode(X86ISD::CMOV, Tys, Ops);
+      Lo = DAG.getNode(X86ISD::CMOV, Tys, &Ops[0], Ops.size());
     } else {
       Ops.push_back(Tmp2);
       Ops.push_back(Tmp3);
       Ops.push_back(CC);
       Ops.push_back(InFlag);
-      Lo = DAG.getNode(X86ISD::CMOV, Tys, Ops);
+      Lo = DAG.getNode(X86ISD::CMOV, Tys, &Ops[0], Ops.size());
       InFlag = Lo.getValue(1);
 
       Ops.clear();
@@ -2854,7 +2863,7 @@ SDOperand X86TargetLowering::LowerShift(SDOperand Op, SelectionDAG &DAG) {
       Ops.push_back(Tmp1);
       Ops.push_back(CC);
       Ops.push_back(InFlag);
-      Hi = DAG.getNode(X86ISD::CMOV, Tys, Ops);
+      Hi = DAG.getNode(X86ISD::CMOV, Tys, &Ops[0], Ops.size());
     }
 
     Tys.clear();
@@ -2863,7 +2872,7 @@ SDOperand X86TargetLowering::LowerShift(SDOperand Op, SelectionDAG &DAG) {
     Ops.clear();
     Ops.push_back(Lo);
     Ops.push_back(Hi);
-    return DAG.getNode(ISD::MERGE_VALUES, Tys, Ops);
+    return DAG.getNode(ISD::MERGE_VALUES, Tys, &Ops[0], Ops.size());
 }
 
 SDOperand X86TargetLowering::LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
@@ -2891,7 +2900,7 @@ SDOperand X86TargetLowering::LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
   Ops.push_back(StackSlot);
   Ops.push_back(DAG.getValueType(SrcVT));
   Result = DAG.getNode(X86ScalarSSE ? X86ISD::FILD_FLAG :X86ISD::FILD,
-                       Tys, Ops);
+                       Tys, &Ops[0], Ops.size());
 
   if (X86ScalarSSE) {
     Chain = Result.getValue(1);
@@ -2911,7 +2920,7 @@ SDOperand X86TargetLowering::LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
     Ops.push_back(StackSlot);
     Ops.push_back(DAG.getValueType(Op.getValueType()));
     Ops.push_back(InFlag);
-    Chain = DAG.getNode(X86ISD::FST, Tys, Ops);
+    Chain = DAG.getNode(X86ISD::FST, Tys, &Ops[0], Ops.size());
     Result = DAG.getLoad(Op.getValueType(), Chain, StackSlot,
                          DAG.getSrcValue(NULL));
   }
@@ -2950,7 +2959,7 @@ SDOperand X86TargetLowering::LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG) {
     Ops.push_back(Chain);
     Ops.push_back(StackSlot);
     Ops.push_back(DAG.getValueType(Op.getOperand(0).getValueType()));
-    Value = DAG.getNode(X86ISD::FLD, Tys, Ops);
+    Value = DAG.getNode(X86ISD::FLD, Tys, &Ops[0], Ops.size());
     Chain = Value.getValue(1);
     SSFI = MF.getFrameInfo()->CreateStackObject(MemSize, MemSize);
     StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
@@ -3040,7 +3049,7 @@ SDOperand X86TargetLowering::LowerSETCC(SDOperand Op, SelectionDAG &DAG) {
         Tys.push_back(MVT::Flag);
         Ops.push_back(DAG.getConstant(X86ISD::COND_NP, MVT::i8));
         Ops.push_back(Cond);
-        SDOperand Tmp1 = DAG.getNode(X86ISD::SETCC, Tys, Ops);
+        SDOperand Tmp1 = DAG.getNode(X86ISD::SETCC, Tys, &Ops[0], Ops.size());
         SDOperand Tmp2 = DAG.getNode(X86ISD::SETCC, MVT::i8,
                                      DAG.getConstant(X86ISD::COND_E, MVT::i8),
                                      Tmp1.getValue(1));
@@ -3051,7 +3060,7 @@ SDOperand X86TargetLowering::LowerSETCC(SDOperand Op, SelectionDAG &DAG) {
         Tys.push_back(MVT::Flag);
         Ops.push_back(DAG.getConstant(X86ISD::COND_P, MVT::i8));
         Ops.push_back(Cond);
-        SDOperand Tmp1 = DAG.getNode(X86ISD::SETCC, Tys, Ops);
+        SDOperand Tmp1 = DAG.getNode(X86ISD::SETCC, Tys, &Ops[0], Ops.size());
         SDOperand Tmp2 = DAG.getNode(X86ISD::SETCC, MVT::i8,
                                      DAG.getConstant(X86ISD::COND_NE, MVT::i8),
                                      Tmp1.getValue(1));
@@ -3087,7 +3096,7 @@ SDOperand X86TargetLowering::LowerSELECT(SDOperand Op, SelectionDAG &DAG) {
         std::vector<SDOperand> Ops;
         for (unsigned i = 0; i < Op0.getNumOperands(); ++i)
           Ops.push_back(Op0.getOperand(i));
-        Op0 = DAG.getNode(X86ISD::SETCC, Tys, Ops);
+        Op0 = DAG.getNode(X86ISD::SETCC, Tys, &Ops[0], Ops.size());
       }
 
       CC   = Op0.getOperand(0);

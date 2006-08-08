@@ -510,7 +510,7 @@ SDOperand DAGCombiner::visit(SDNode *N) {
 }
 
 SDOperand DAGCombiner::visitTokenFactor(SDNode *N) {
-  std::vector<SDOperand> Ops;
+  SmallVector<SDOperand, 8> Ops;
   bool Changed = false;
 
   // If the token factor has two operands and one is the entry token, replace
@@ -539,7 +539,7 @@ SDOperand DAGCombiner::visitTokenFactor(SDNode *N) {
     }
   }
   if (Changed)
-    return DAG.getNode(ISD::TokenFactor, MVT::Other, Ops);
+    return DAG.getNode(ISD::TokenFactor, MVT::Other, &Ops[0], Ops.size());
   return SDOperand();
 }
 
@@ -1284,7 +1284,7 @@ SDOperand DAGCombiner::visitXOR(SDNode *N) {
       // Produce a vector of zeros.
       SDOperand El = DAG.getConstant(0, MVT::getVectorBaseType(VT));
       std::vector<SDOperand> Ops(MVT::getVectorNumElements(VT), El);
-      return DAG.getNode(ISD::BUILD_VECTOR, VT, Ops);
+      return DAG.getNode(ISD::BUILD_VECTOR, VT, &Ops[0], Ops.size());
     }
   }
   
@@ -1953,14 +1953,14 @@ ConstantFoldVBIT_CONVERTofVBUILD_VECTOR(SDNode *BV, MVT::ValueType DstEltVT) {
   // If this is a conversion of N elements of one type to N elements of another
   // type, convert each element.  This handles FP<->INT cases.
   if (SrcBitSize == DstBitSize) {
-    std::vector<SDOperand> Ops;
+    SmallVector<SDOperand, 8> Ops;
     for (unsigned i = 0, e = BV->getNumOperands()-2; i != e; ++i) {
       Ops.push_back(DAG.getNode(ISD::BIT_CONVERT, DstEltVT, BV->getOperand(i)));
       AddToWorkList(Ops.back().Val);
     }
     Ops.push_back(*(BV->op_end()-2)); // Add num elements.
     Ops.push_back(DAG.getValueType(DstEltVT));
-    return DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, Ops);
+    return DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, &Ops[0], Ops.size());
   }
   
   // Otherwise, we're growing or shrinking the elements.  To avoid having to
@@ -1992,7 +1992,7 @@ ConstantFoldVBIT_CONVERTofVBUILD_VECTOR(SDNode *BV, MVT::ValueType DstEltVT) {
   if (SrcBitSize < DstBitSize) {
     unsigned NumInputsPerOutput = DstBitSize/SrcBitSize;
     
-    std::vector<SDOperand> Ops;
+    SmallVector<SDOperand, 8> Ops;
     for (unsigned i = 0, e = BV->getNumOperands()-2; i != e;
          i += NumInputsPerOutput) {
       bool isLE = TLI.isLittleEndian();
@@ -2016,13 +2016,13 @@ ConstantFoldVBIT_CONVERTofVBUILD_VECTOR(SDNode *BV, MVT::ValueType DstEltVT) {
 
     Ops.push_back(DAG.getConstant(Ops.size(), MVT::i32)); // Add num elements.
     Ops.push_back(DAG.getValueType(DstEltVT));            // Add element size.
-    return DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, Ops);
+    return DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, &Ops[0], Ops.size());
   }
   
   // Finally, this must be the case where we are shrinking elements: each input
   // turns into multiple outputs.
   unsigned NumOutputsPerInput = SrcBitSize/DstBitSize;
-  std::vector<SDOperand> Ops;
+  SmallVector<SDOperand, 8> Ops;
   for (unsigned i = 0, e = BV->getNumOperands()-2; i != e; ++i) {
     if (BV->getOperand(i).getOpcode() == ISD::UNDEF) {
       for (unsigned j = 0; j != NumOutputsPerInput; ++j)
@@ -2043,7 +2043,7 @@ ConstantFoldVBIT_CONVERTofVBUILD_VECTOR(SDNode *BV, MVT::ValueType DstEltVT) {
   }
   Ops.push_back(DAG.getConstant(Ops.size(), MVT::i32)); // Add num elements.
   Ops.push_back(DAG.getValueType(DstEltVT));            // Add element size.
-  return DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, Ops);
+  return DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, &Ops[0], Ops.size());
 }
 
 
@@ -2448,10 +2448,11 @@ SDOperand DAGCombiner::visitINSERT_VECTOR_ELT(SDNode *N) {
   // vector with the inserted element.
   if (InVec.getOpcode() == ISD::BUILD_VECTOR && isa<ConstantSDNode>(EltNo)) {
     unsigned Elt = cast<ConstantSDNode>(EltNo)->getValue();
-    std::vector<SDOperand> Ops(InVec.Val->op_begin(), InVec.Val->op_end());
+    SmallVector<SDOperand, 8> Ops(InVec.Val->op_begin(), InVec.Val->op_end());
     if (Elt < Ops.size())
       Ops[Elt] = InVal;
-    return DAG.getNode(ISD::BUILD_VECTOR, InVec.getValueType(), Ops);
+    return DAG.getNode(ISD::BUILD_VECTOR, InVec.getValueType(),
+                       &Ops[0], Ops.size());
   }
   
   return SDOperand();
@@ -2468,10 +2469,11 @@ SDOperand DAGCombiner::visitVINSERT_VECTOR_ELT(SDNode *N) {
   // vector with the inserted element.
   if (InVec.getOpcode() == ISD::VBUILD_VECTOR && isa<ConstantSDNode>(EltNo)) {
     unsigned Elt = cast<ConstantSDNode>(EltNo)->getValue();
-    std::vector<SDOperand> Ops(InVec.Val->op_begin(), InVec.Val->op_end());
+    SmallVector<SDOperand, 8> Ops(InVec.Val->op_begin(), InVec.Val->op_end());
     if (Elt < Ops.size()-2)
       Ops[Elt] = InVal;
-    return DAG.getNode(ISD::VBUILD_VECTOR, InVec.getValueType(), Ops);
+    return DAG.getNode(ISD::VBUILD_VECTOR, InVec.getValueType(),
+                       &Ops[0], Ops.size());
   }
   
   return SDOperand();
@@ -2524,7 +2526,7 @@ SDOperand DAGCombiner::visitVBUILD_VECTOR(SDNode *N) {
   
   // If everything is good, we can make a shuffle operation.
   if (VecIn1.Val) {
-    std::vector<SDOperand> BuildVecIndices;
+    SmallVector<SDOperand, 8> BuildVecIndices;
     for (unsigned i = 0; i != NumInScalars; ++i) {
       if (N->getOperand(i).getOpcode() == ISD::UNDEF) {
         BuildVecIndices.push_back(DAG.getNode(ISD::UNDEF, MVT::i32));
@@ -2549,10 +2551,10 @@ SDOperand DAGCombiner::visitVBUILD_VECTOR(SDNode *N) {
     BuildVecIndices.push_back(DAG.getValueType(MVT::i32));
     
     // Return the new VVECTOR_SHUFFLE node.
-    std::vector<SDOperand> Ops;
-    Ops.push_back(VecIn1);
+    SDOperand Ops[5];
+    Ops[0] = VecIn1;
     if (VecIn2.Val) {
-      Ops.push_back(VecIn2);
+      Ops[1] = VecIn2;
     } else {
        // Use an undef vbuild_vector as input for the second operand.
       std::vector<SDOperand> UnOps(NumInScalars,
@@ -2560,13 +2562,15 @@ SDOperand DAGCombiner::visitVBUILD_VECTOR(SDNode *N) {
                                            cast<VTSDNode>(EltType)->getVT()));
       UnOps.push_back(NumElts);
       UnOps.push_back(EltType);
-      Ops.push_back(DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, UnOps));
-      AddToWorkList(Ops.back().Val);
+      Ops[1] = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector,
+                           &UnOps[0], UnOps.size());
+      AddToWorkList(Ops[1].Val);
     }
-    Ops.push_back(DAG.getNode(ISD::VBUILD_VECTOR,MVT::Vector, BuildVecIndices));
-    Ops.push_back(NumElts);
-    Ops.push_back(EltType);
-    return DAG.getNode(ISD::VVECTOR_SHUFFLE, MVT::Vector, Ops);
+    Ops[2] = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector,
+                         &BuildVecIndices[0], BuildVecIndices.size());
+    Ops[3] = NumElts;
+    Ops[4] = EltType;
+    return DAG.getNode(ISD::VVECTOR_SHUFFLE, MVT::Vector, Ops, 5);
   }
   
   return SDOperand();
@@ -2668,7 +2672,7 @@ SDOperand DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
       return DAG.getNode(ISD::UNDEF, N->getValueType(0));
     // Check the SHUFFLE mask, mapping any inputs from the 2nd operand into the
     // first operand.
-    std::vector<SDOperand> MappedOps;
+    SmallVector<SDOperand, 8> MappedOps;
     for (unsigned i = 0, e = ShufMask.getNumOperands(); i != e; ++i) {
       if (ShufMask.getOperand(i).getOpcode() == ISD::UNDEF ||
           cast<ConstantSDNode>(ShufMask.getOperand(i))->getValue() < NumElts) {
@@ -2680,7 +2684,7 @@ SDOperand DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
       }
     }
     ShufMask = DAG.getNode(ISD::BUILD_VECTOR, ShufMask.getValueType(),
-                           MappedOps);
+                           &MappedOps[0], MappedOps.size());
     AddToWorkList(ShufMask.Val);
     return DAG.getNode(ISD::VECTOR_SHUFFLE, N->getValueType(0),
                        N0, 
@@ -2785,7 +2789,7 @@ SDOperand DAGCombiner::visitVVECTOR_SHUFFLE(SDNode *N) {
   if (isUnary || N0 == N1) {
     // Check the SHUFFLE mask, mapping any inputs from the 2nd operand into the
     // first operand.
-    std::vector<SDOperand> MappedOps;
+    SmallVector<SDOperand, 8> MappedOps;
     for (unsigned i = 0; i != NumElts; ++i) {
       if (ShufMask.getOperand(i).getOpcode() == ISD::UNDEF ||
           cast<ConstantSDNode>(ShufMask.getOperand(i))->getValue() < NumElts) {
@@ -2801,7 +2805,7 @@ SDOperand DAGCombiner::visitVVECTOR_SHUFFLE(SDNode *N) {
     MappedOps.push_back(ShufMask.getOperand(NumElts+1));
 
     ShufMask = DAG.getNode(ISD::VBUILD_VECTOR, ShufMask.getValueType(),
-                           MappedOps);
+                           &MappedOps[0], MappedOps.size());
     AddToWorkList(ShufMask.Val);
     
     // Build the undef vector.
@@ -2810,7 +2814,8 @@ SDOperand DAGCombiner::visitVVECTOR_SHUFFLE(SDNode *N) {
       MappedOps[i] = UDVal;
     MappedOps[NumElts  ] = *(N0.Val->op_end()-2);
     MappedOps[NumElts+1] = *(N0.Val->op_end()-1);
-    UDVal = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, MappedOps);
+    UDVal = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector,
+                        &MappedOps[0], MappedOps.size());
     
     return DAG.getNode(ISD::VVECTOR_SHUFFLE, MVT::Vector, 
                        N0, UDVal, ShufMask,
@@ -2863,13 +2868,16 @@ SDOperand DAGCombiner::XformToShuffleWithZero(SDNode *N) {
       std::vector<SDOperand> ZeroOps(NumElts, DAG.getConstant(0, EVT));
       ZeroOps.push_back(NumEltsNode);
       ZeroOps.push_back(EVTNode);
-      Ops.push_back(DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, ZeroOps));
+      Ops.push_back(DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector,
+                                &ZeroOps[0], ZeroOps.size()));
       IdxOps.push_back(NumEltsNode);
       IdxOps.push_back(EVTNode);
-      Ops.push_back(DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, IdxOps));
+      Ops.push_back(DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector,
+                                &IdxOps[0], IdxOps.size()));
       Ops.push_back(NumEltsNode);
       Ops.push_back(EVTNode);
-      SDOperand Result = DAG.getNode(ISD::VVECTOR_SHUFFLE, MVT::Vector, Ops);
+      SDOperand Result = DAG.getNode(ISD::VVECTOR_SHUFFLE, MVT::Vector,
+                                     &Ops[0], Ops.size());
       if (NumEltsNode != DstVecSize || EVTNode != DstVecEVT) {
         Result = DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, Result,
                              DstVecSize, DstVecEVT);
@@ -2896,7 +2904,7 @@ SDOperand DAGCombiner::visitVBinOp(SDNode *N, ISD::NodeType IntOp,
   // this operation.
   if (LHS.getOpcode() == ISD::VBUILD_VECTOR && 
       RHS.getOpcode() == ISD::VBUILD_VECTOR) {
-    std::vector<SDOperand> Ops;
+    SmallVector<SDOperand, 8> Ops;
     for (unsigned i = 0, e = LHS.getNumOperands()-2; i != e; ++i) {
       SDOperand LHSOp = LHS.getOperand(i);
       SDOperand RHSOp = RHS.getOperand(i);
@@ -2927,7 +2935,7 @@ SDOperand DAGCombiner::visitVBinOp(SDNode *N, ISD::NodeType IntOp,
     if (Ops.size() == LHS.getNumOperands()-2) {
       Ops.push_back(*(LHS.Val->op_end()-2));
       Ops.push_back(*(LHS.Val->op_end()-1));
-      return DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, Ops);
+      return DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, &Ops[0], Ops.size());
     }
   }
   

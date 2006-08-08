@@ -2683,7 +2683,7 @@ public:
         }
 
         if (HasVarOps)
-          Code += ", Ops";
+          Code += ", &Ops[0], Ops.size()";
         else if (NodeHasOptInFlag)
           Code = "HasInFlag ? " + Code + ", InFlag) : " + Code;
 
@@ -3420,7 +3420,8 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  std::vector<MVT::ValueType> VTs;\n"
      << "  VTs.push_back(MVT::Other);\n"
      << "  VTs.push_back(MVT::Flag);\n"
-     << "  SDOperand New = CurDAG->getNode(ISD::INLINEASM, VTs, Ops);\n"
+     << "  SDOperand New = CurDAG->getNode(ISD::INLINEASM, VTs, &Ops[0], "
+                 "Ops.size());\n"
      << "  ReplaceUses(SDOperand(N.Val, 0), New);\n"
      << "  ReplaceUses(SDOperand(N.Val, 1), SDOperand(New.Val, 1));\n"
      << "  Result = New.getValue(N.ResNo);\n"
