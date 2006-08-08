@@ -146,6 +146,15 @@ public:
     End += NumInputs;
   }
   
+  void assign(unsigned NumElts, const T &Elt) {
+    clear();
+    if (NumElts > Capacity)
+      grow(NumElts);
+    End = Begin+NumElts;
+    for (; NumElts; --NumElts)
+      new (Begin+NumElts-1) T(Elt);
+  }
+  
   const SmallVector &operator=(const SmallVector &RHS) {
     // Avoid self-assignment.
     if (this == &RHS) return *this;
