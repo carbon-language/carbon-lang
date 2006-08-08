@@ -842,11 +842,11 @@ if (!$BuildError) {
 	}
 	($SingleSourceProgramsTable, $llcbeta_options) = TestDirectory("SingleSource");
 	WriteFile "$Prefix-singlesourceprogramstable.txt", $SingleSourceProgramsTable;
+  if ( $VERBOSE ) {
+     print "MultiSource TEST STAGE\n";
+	}
 	($MultiSourceProgramsTable, $llcbeta_options) = TestDirectory("MultiSource");
 	WriteFile "$Prefix-multisourceprogramstable.txt", $MultiSourceProgramsTable;
-	if ( $VERBOSE ) {
-	  print "MultiSource returned $MultiSourceProgramsTable\n";
-	}
 	if ( ! $NOEXTERNALS ) {
 	  if ( $VERBOSE ) {
 		  print "External TEST STAGE\n";
