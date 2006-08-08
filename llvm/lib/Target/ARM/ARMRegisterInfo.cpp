@@ -124,10 +124,21 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
   //hack
   assert(NumBytes == 0);
 
-  //sub sp, sp, #4
-  BuildMI(MBB, MBBI, ARM::subri, 2, ARM::R13).addReg(ARM::R13).addImm(4);
-  //str lr, [sp]
-  BuildMI(MBB, MBBI, ARM::str, 1, ARM::R14).addReg(ARM::R13);
+  if (MFI->hasCalls()) {
+    // We reserve argument space for call sites in the function immediately on
+    // entry to the current function.  This eliminates the need for add/sub
+    // brackets around call sites.
+    NumBytes += MFI->getMaxCallFrameSize();
+  }
+
+  MFI->setStackSize(NumBytes);
+
+  //sub sp, sp, #NumBytes
+  BuildMI(MBB, MBBI, ARM::subri, 2, ARM::R13).addReg(ARM::R13).addImm(NumBytes);
+  //add ip, sp, #NumBytes - 4
+  BuildMI(MBB, MBBI, ARM::addri, 2, ARM::R12).addReg(ARM::R13).addImm(NumBytes - 4);
+  //str lr, [ip]
+  BuildMI(MBB, MBBI, ARM::str, 1, ARM::R14).addReg(ARM::R12);
 }
 
 void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
@@ -138,13 +149,11 @@ void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
 
   MachineFrameInfo *MFI = MF.getFrameInfo();
   int          NumBytes = (int) MFI->getStackSize();
-  //hack
-  assert(NumBytes == 0);
 
   //ldr lr, [sp]
   BuildMI(MBB, MBBI, ARM::ldr, 2, ARM::R14).addImm(0).addReg(ARM::R13);
-  //add sp, sp, #4
-  BuildMI(MBB, MBBI, ARM::addri, 2, ARM::R13).addReg(ARM::R13).addImm(4);
+  //add sp, sp, #NumBytes
+  BuildMI(MBB, MBBI, ARM::addri, 2, ARM::R13).addReg(ARM::R13).addImm(NumBytes);
 }
 
 unsigned ARMRegisterInfo::getRARegister() const {

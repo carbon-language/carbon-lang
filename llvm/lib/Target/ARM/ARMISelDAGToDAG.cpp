@@ -79,7 +79,6 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   unsigned CallConv  = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
   assert(CallConv == CallingConv::C && "unknown calling convention");
   bool isVarArg      = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
-  assert(isVarArg == false && "VarArg not supported");
   bool isTailCall    = cast<ConstantSDNode>(Op.getOperand(3))->getValue() != 0;
   assert(isTailCall == false && "tail call not supported");
   SDOperand Callee   = Op.getOperand(4);
@@ -89,23 +88,40 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   // only the link register.
   unsigned NumBytes = 4;
 
-  assert(NumOps <= 4); //no args on the stack
+  // Add up all the space actually used.
+  for (unsigned i = 4; i < NumOps; ++i)
+    NumBytes += MVT::getSizeInBits(Op.getOperand(5+2*i).getValueType())/8;
 
   // Adjust the stack pointer for the new arguments...
   // These operations are automatically eliminated by the prolog/epilog pass
   Chain = DAG.getCALLSEQ_START(Chain,
                                DAG.getConstant(NumBytes, MVT::i32));
 
-  static const unsigned regs[] = {
+  SDOperand StackPtr = DAG.getRegister(ARM::R13, MVT::i32);
+
+  static const unsigned int num_regs = 4;
+  static const unsigned regs[num_regs] = {
     ARM::R0, ARM::R1, ARM::R2, ARM::R3
   };
 
   std::vector<std::pair<unsigned, SDOperand> > RegsToPass;
+  std::vector<SDOperand> MemOpChains;
 
   for (unsigned i = 0; i != NumOps; ++i) {
     SDOperand Arg = Op.getOperand(5+2*i);
-    RegsToPass.push_back(std::make_pair(regs[i], Arg));
+    assert(Arg.getValueType() == MVT::i32);
+    if (i < num_regs)
+      RegsToPass.push_back(std::make_pair(regs[i], Arg));
+    else {
+      unsigned ArgOffset = (i - num_regs) * 4;
+      SDOperand PtrOff = DAG.getConstant(ArgOffset, StackPtr.getValueType());
+      PtrOff = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
+      MemOpChains.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                          Arg, PtrOff, DAG.getSrcValue(NULL)));
+    }
   }
+  if (!MemOpChains.empty())
+    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, MemOpChains);
 
   // Build a sequence of copy-to-reg nodes chained together with token chain
   // and flag operands which copy the outgoing args into the appropriate regs.
