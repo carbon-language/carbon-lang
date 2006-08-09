@@ -85,6 +85,10 @@ N: Paolo Invernizzi
 E: arathorn@fastwebnet.it
 D: Visual C++ compatibility fixes 
 
+N: Patrick Jenkins
+E: patjenk@wam.umd.edu
+D: Nightly Tester
+
 N: Brad Jones
 E: kungfoomaster@nondot.org
 D: Support for packed types
@@ -118,6 +122,7 @@ E: tonic@nondot.org
 W: http://nondot.org/~tonic/
 D: The initial llvm-ar tool, converted regression testsuite to dejagnu
 D: Modulo scheduling in the SparcV9 backend
+D: Release manager (1.7+)
 
 N: Andrew Lenharth
 E: alenhar2@cs.uiuc.edu
@@ -170,7 +175,3 @@ N: Bill Wendling
 E: isanbard@gmail.com
 D: The `Lower Setjmp/Longjmp' pass, improvements to the -lowerswitch pass.
 D: Bug hunter extraordinaire.
-
-N: Patrick Jenkins
-E: patjenk@wam.umd.edu
-D: Nightly Tester
