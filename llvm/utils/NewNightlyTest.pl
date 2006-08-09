@@ -132,6 +132,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
 			       $CONFIGUREARGS .= " --disable-llc_diffs"; next; } 
     if (/^-disable-jit$/)    { $PROGTESTOPTS .= " DISABLE_JIT=1";
 			       $CONFIGUREARGS .= " --disable-jit"; next; }
+    if (/^-disable-cbe$/)    { $PROGTESTOPTS .= " DISABLE_CBE=1"; next; }
     if (/^-verbose$/)        { $VERBOSE = 1; next; }
     if (/^-debug$/)          { $DEBUG = 1; next; }
     if (/^-nice$/)           { $NICE = "nice "; next; }
@@ -168,8 +169,11 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
     if (/^-use-gmake/)    {
 			$MAKECMD = "gmake"; shift; next;
     }
+    if (/^-compileflags/)    {
+        $MAKEOPTS = "$MAKEOPTS $ARGV[0]"; shift; next;
+    }
     if (/^-extraflags/)      {
-	$PROGTESTOPTS .= " EXTRA_FLAGS=\'$ARGV[0]\'"; shift; next;
+        $CONFIGUREARGS .= " --with-extra-options=\'$ARGV[0]\'"; shift; next;
     }
     if (/^-noexternals$/)    { $NOEXTERNALS = 1; next; }
     if (/^-nodejagnu$/)      { $NODEJAGNU = 1; next; }
