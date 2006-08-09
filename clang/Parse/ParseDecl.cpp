@@ -464,7 +464,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     HasPrototype = false;
     IsEmpty      = true;
   } else if (Tok.getKind() == tok::identifier &&
-             0/*TODO: !isatypedefname(Tok.getIdentifierInfo())*/) {
+             1/*TODO: !isatypedefname(Tok.getIdentifierInfo())*/) {
     // Identifier list.  Note that '(' identifier-list ')' is only allowed for
     // normal declarators, not for abstract-declarators.
     assert(D.isPastIdentifier() && "Identifier (if present) must be passed!");

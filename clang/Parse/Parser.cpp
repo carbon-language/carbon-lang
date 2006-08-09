@@ -318,7 +318,18 @@ void Parser::ParseFunctionDefinition(Declarator &D) {
     // FIXME: Install the arguments into the current scope.
   }
 
+  // We should have an opening brace now.
+  if (Tok.getKind() != tok::l_brace) {
+    Diag(Tok, diag::err_expected_fn_body);
+
+    // Skip over garbage, until we get to '{'.  Don't eat the '{'.
+    SkipUntil(tok::l_brace, true, true);
+    
+    // If we didn't find the '{', bail out.
+    if (Tok.getKind() != tok::l_brace)
+      return;
+  }
   
-  
+  ParseCompoundStatement();
 }
 

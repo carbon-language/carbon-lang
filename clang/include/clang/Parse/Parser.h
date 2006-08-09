@@ -155,7 +155,12 @@ private:
   void ParseExternalDeclaration();
   void ParseDeclarationOrFunctionDefinition();
   void ParseFunctionDefinition(Declarator &D);
-  
+
+  //===--------------------------------------------------------------------===//
+  // C99 6.8: Statements and Blocks.
+  void ParseStatementOrDeclaration();
+  void ParseCompoundStatement();
+
   //===--------------------------------------------------------------------===//
   // C99 6.7: Declarations.
   void ParseDeclarationSpecifiers(DeclSpec &DS);
