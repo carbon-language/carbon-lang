@@ -5,13 +5,12 @@
 # Synopsis: Generate a list of the libraries in which a symbol is defined or
 #           referenced.
 #
-# Syntax:   GenLibDeps.pl <directory_with_libraries_in_it> <symbol>
+# Syntax:   findsym.pl <directory_with_libraries_in_it> <symbol>
 #
 
 # Give first option a name.
 my $Directory = $ARGV[0];
 my $Symbol = $ARGV[1];
-
 
 # Open the directory and read its contents, sorting by name and differentiating
 # by whether its a library (.a) or an object file (.o)
