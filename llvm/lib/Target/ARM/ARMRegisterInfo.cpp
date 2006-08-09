@@ -31,9 +31,8 @@ void ARMRegisterInfo::
 storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                     unsigned SrcReg, int FI,
                     const TargetRegisterClass *RC) const {
-  // On the order of operands here: think "[FI + 0] = SrcReg".
   assert (RC == ARM::IntRegsRegisterClass);
-  BuildMI(MBB, I, ARM::str, 3).addFrameIndex(FI).addImm(0).addReg(SrcReg);
+  BuildMI(MBB, I, ARM::str, 3).addReg(SrcReg).addImm(0).addFrameIndex(FI);
 }
 
 void ARMRegisterInfo::
@@ -41,7 +40,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      unsigned DestReg, int FI,
                      const TargetRegisterClass *RC) const {
   assert (RC == ARM::IntRegsRegisterClass);
-  BuildMI(MBB, I, ARM::ldr, 2, DestReg).addFrameIndex(FI).addImm(0);
+  BuildMI(MBB, I, ARM::ldr, 2, DestReg).addImm(0).addFrameIndex(FI);
 }
 
 void ARMRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
@@ -81,7 +80,8 @@ ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
 
-  assert (MI.getOpcode() == ARM::ldr);
+  assert (MI.getOpcode() == ARM::ldr ||
+	  MI.getOpcode() == ARM::str);
 
   unsigned FrameIdx = 2;
   unsigned OffIdx = 1;
@@ -92,6 +92,11 @@ ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
   assert (MI.getOperand(OffIdx).getImmedValue() == 0);
 
   unsigned StackSize = MF.getFrameInfo()->getStackSize();
+
+  //<hack>
+  if (Offset < 0)
+    Offset -= 4;
+  //</hack>
 
   Offset += StackSize;
 
@@ -120,9 +125,6 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo  *MFI = MF.getFrameInfo();
   int           NumBytes = (int) MFI->getStackSize();
-
-  //hack
-  assert(NumBytes == 0);
 
   if (MFI->hasCalls()) {
     // We reserve argument space for call sites in the function immediately on

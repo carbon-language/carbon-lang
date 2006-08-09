@@ -148,6 +148,12 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   Ops.push_back(Chain);
   Ops.push_back(Callee);
 
+  // Add argument registers to the end of the list so that they are known live
+  // into the call.
+  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i)
+    Ops.push_back(DAG.getRegister(RegsToPass[i].first,
+                                  RegsToPass[i].second.getValueType()));
+
   unsigned CallOpc = ARMISD::CALL;
   if (InFlag.Val)
     Ops.push_back(InFlag);
