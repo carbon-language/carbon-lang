@@ -93,11 +93,6 @@ ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
 
   unsigned StackSize = MF.getFrameInfo()->getStackSize();
 
-  //<hack>
-  if (Offset < 0)
-    Offset -= 4;
-  //</hack>
-
   Offset += StackSize;
 
   assert (Offset >= 0);
