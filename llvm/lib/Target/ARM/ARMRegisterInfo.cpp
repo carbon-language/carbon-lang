@@ -129,6 +129,8 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
     // entry to the current function.  This eliminates the need for add/sub
     // brackets around call sites.
     NumBytes += MFI->getMaxCallFrameSize();
+  } else {
+    NumBytes += 4;
   }
 
   MFI->setStackSize(NumBytes);
@@ -149,7 +151,7 @@ void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
   int          NumBytes = (int) MFI->getStackSize();
 
   //ldr lr, [sp]
-  BuildMI(MBB, MBBI, ARM::ldr, 2, ARM::R14).addImm(0).addReg(ARM::R13);
+  BuildMI(MBB, MBBI, ARM::ldr, 2, ARM::R14).addImm(NumBytes - 4).addReg(ARM::R13);
   //add sp, sp, #NumBytes
   BuildMI(MBB, MBBI, ARM::addri, 2, ARM::R13).addReg(ARM::R13).addImm(NumBytes);
 }
