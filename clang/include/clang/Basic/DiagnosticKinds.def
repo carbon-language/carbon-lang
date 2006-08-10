@@ -254,6 +254,8 @@ DIAG(ext_ident_list_in_param, EXTENSION,
      "type-less parameter names in function declaration")
 DIAG(ext_c99_array_usage, EXTENSION,
      "use of c99-specific array features")
+DIAG(ext_c99_variable_decl_in_for_loop, EXTENSION,
+     "variable declaration in for loop is a c99-specific feature")
 
 // Generic errors.
 DIAG(err_parse_error, ERROR,
