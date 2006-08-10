@@ -14,6 +14,7 @@
 
 #include "clang/Parse/Parser.h"
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Parse/Declarations.h"
 using namespace llvm;
 using namespace clang;
 
@@ -262,20 +263,21 @@ void Parser::ParseForStatement() {
   
   // Parse the first part of the for specifier.
   if (Tok.getKind() == tok::semi) {  // for (;
-    // no first part.
+    // no first part, eat the ';'.
+    ConsumeToken();
   } else if (isDeclarationSpecifier()) {  // for (int X = 4;
-    // FIXME: Parse declaration.
-    assert(0);
+    // Parse declaration, which eats the ';'.
+    ParseDeclaration(Declarator::ForContext);
   } else {
     ParseExpression();
-  }
   
-  if (Tok.getKind() == tok::semi) {
-    ConsumeToken();
-  } else {
-    Diag(Tok, diag::err_expected_semi_for);
-    Diag(ForLoc, diag::err_matching);
-    SkipUntil(tok::semi);
+    if (Tok.getKind() == tok::semi) {
+      ConsumeToken();
+    } else {
+      Diag(Tok, diag::err_expected_semi_for);
+      Diag(ForLoc, diag::err_matching);
+      SkipUntil(tok::semi);
+    }
   }
   
   // Parse the second part of the for specifier.

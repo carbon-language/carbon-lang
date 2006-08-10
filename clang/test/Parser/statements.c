@@ -15,4 +15,5 @@ int test2() {
     for (;;)
       for (9;0;2)
         ;
+  for (int X = 0; 0; 0);
 }

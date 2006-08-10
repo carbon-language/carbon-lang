@@ -169,6 +169,9 @@ private:
   
   //===--------------------------------------------------------------------===//
   // C99 6.7: Declarations.
+
+  void ParseDeclaration(unsigned Context);
+  void ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D);
   void ParseDeclarationSpecifiers(DeclSpec &DS);
   bool isDeclarationSpecifier() const;
   

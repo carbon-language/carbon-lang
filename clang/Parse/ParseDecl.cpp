@@ -20,6 +20,60 @@ using namespace clang;
 // C99 6.7: Declarations.
 //===----------------------------------------------------------------------===//
 
+/// ParseDeclaration - Parse a full 'declaration', which consists of
+/// declaration-specifiers, some number of declarators, and a semicolon.
+/// 'Context' should be a Declarator::TheContext value.
+void Parser::ParseDeclaration(unsigned Context) {
+  // Parse the common declaration-specifiers piece.
+  DeclSpec DS;
+  ParseDeclarationSpecifiers(DS);
+  
+  Declarator DeclaratorInfo(DS, (Declarator::TheContext)Context);
+  ParseDeclarator(DeclaratorInfo);
+  
+  ParseInitDeclaratorListAfterFirstDeclarator(DeclaratorInfo);
+}
+
+void Parser::ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
+  // At this point, we know that it is not a function definition.  Parse the
+  // rest of the init-declarator-list.
+  while (1) {
+    // must be: decl-spec[opt] declarator init-declarator-list
+    // Parse declarator '=' initializer.
+    if (Tok.getKind() == tok::equal) {
+      ConsumeToken();
+      // FIXME: THIS IS WRONG!!
+      ParseExpression();
+    }
+    
+    
+    // TODO: install declarator.
+    
+    // If we don't have a comma, it is either the end of the list (a ';') or an
+    // error, bail out.
+    if (Tok.getKind() != tok::comma)
+      break;
+    
+    // Consume the comma.
+    ConsumeToken();
+    
+    // Parse the next declarator.
+    D.clear();
+    ParseDeclarator(D);
+  }
+  
+  if (Tok.getKind() == tok::semi) {
+    ConsumeToken();
+  } else {
+    Diag(Tok, diag::err_parse_error);
+    // Skip to end of block or statement
+    SkipUntil(tok::r_brace, true);
+    if (Tok.getKind() == tok::semi)
+      ConsumeToken();
+  }
+}
+
+
 /// ParseDeclarationSpecifiers
 ///       declaration-specifiers: [C99 6.7]
 ///         storage-class-specifier declaration-specifiers [opt]

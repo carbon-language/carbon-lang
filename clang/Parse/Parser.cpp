@@ -191,6 +191,7 @@ void Parser::ParseDeclarationOrFunctionDefinition() {
   ParseDeclarationSpecifiers(DS);
 
   // C99 6.7.2.3p6: Handle "struct-or-union identifier;", "enum { X };"
+  // declaration-specifiers init-declarator-list[opt] ';'
   if (Tok.getKind() == tok::semi)
     assert(0 && "Unimp!");
   
@@ -230,39 +231,8 @@ void Parser::ParseDeclarationOrFunctionDefinition() {
     return;
   }
 
-  // At this point, we know that it is not a function definition.  Parse the
-  // rest of the init-declarator-list.
-  while (1) {
-    // must be: decl-spec[opt] declarator init-declarator-list
-    // Parse declarator '=' initializer.
-    if (Tok.getKind() == tok::equal)
-      assert(0 && "cannot handle initializer yet!");
-
-    
-    // TODO: install declarator.
-    
-    // If we don't have a comma, it is either the end of the list (a ';') or an
-    // error, bail out.
-    if (Tok.getKind() != tok::comma)
-      break;
-
-    // Consume the comma.
-    ConsumeToken();
-    
-    // Parse the next declarator.
-    DeclaratorInfo.clear();
-    ParseDeclarator(DeclaratorInfo);
-  }
-  
-  if (Tok.getKind() == tok::semi) {
-    ConsumeToken();
-  } else {
-    Diag(Tok, diag::err_parse_error);
-    // Skip to end of block or statement
-    SkipUntil(tok::r_brace, true);
-    if (Tok.getKind() == tok::semi)
-      ConsumeToken();
-  }
+  // Parse the init-declarator-list for a normal declaration.
+  ParseInitDeclaratorListAfterFirstDeclarator(DeclaratorInfo);
 }
 
 /// ParseFunctionDefinition - We parsed and verified that the specified
@@ -282,33 +252,8 @@ void Parser::ParseFunctionDefinition(Declarator &D) {
   // int foo(a,b) int a; float b; {}
   if (!FnTypeInfo.Fun.hasPrototype && !FnTypeInfo.Fun.isEmpty) {
     // Read all the argument declarations.
-    while (isDeclarationSpecifier()) {
-      // Parse the common declaration-specifiers piece.
-      DeclSpec DS;
-      ParseDeclarationSpecifiers(DS);
-      
-      Declarator DeclaratorInfo(DS, Declarator::FileContext);
-      ParseDeclarator(DeclaratorInfo);
-
-      while (Tok.getKind() == tok::comma) {
-        // Consume the comma.
-        ConsumeToken();
-      
-        // Parse the next declarator.
-        DeclaratorInfo.clear();
-        ParseDeclarator(DeclaratorInfo);
-      }
-      
-      if (Tok.getKind() == tok::semi) {
-        ConsumeToken();
-      } else {
-        Diag(Tok, diag::err_expected_semi_knr_fn_body);
-        // Skip to end of block or statement
-        SkipUntil(tok::l_brace, true);
-        if (Tok.getKind() == tok::semi)
-          ConsumeToken();
-      }
-    }
+    while (isDeclarationSpecifier())
+      ParseDeclaration(Declarator::KNRTypeListContext);
     
     // Note, check that we got them all.
   } else {
