@@ -77,6 +77,9 @@ Preprocessor:
 Traditional Preprocessor:
  * All.
 
+Parser:
+ * C90/K&R modes.  Need to get C90 spec.
+
 Parser Callbacks:
  * Enough to do devkit-style "indexing".
  * All.
