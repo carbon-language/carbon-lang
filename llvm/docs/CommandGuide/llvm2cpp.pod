@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-llvm2xpp - LLVM assembler to LLVM C++ IR translator
+llvm2xpp - LLVM bytecode to LLVM C++ IR translator
 
 =head1 SYNOPSIS
 
@@ -10,18 +10,18 @@ B<llvm2cpp> [I<options>] [I<filename>]
 
 =head1 DESCRIPTION
 
-B<llvm2cpp> translates from human readable LLVM assembly (.ll files) to a 
+B<llvm2cpp> translates from LLVM bytecode (.bc files) to a 
 corresponding C++ source file that will make calls against the LLVM C++ API to
 build the same module as the input. By default, the C++ output is a complete
 program that builds the module, verifies it and then emits the module as
-LLVM assembly again. This technique assists with testing because the input to
+LLVM assembly. This technique assists with testing because the input to
 B<llvm2cpp> and the output of the generated C++ program should be identical.
 
 If F<filename> is omitted or is C<->, then B<llvm2cpp> reads its input from
 standard input.
 
 If an output file is not specified with the B<-o> option, then
-B<llvm-as> sends its output to a file or standard output by following
+B<llvm2cpp> sends its output to a file or standard output by following
 these rules:
 
 =over 
@@ -32,12 +32,12 @@ If the input is standard input, then the output is standard output.
 
 =item *
 
-If the input is a file that ends with C<.ll>, then the output file is of
+If the input is a file that ends with C<.bc>, then the output file is of
 the same name, except that the suffix is changed to C<.cpp>.
 
 =item *
 
-If the input is a file that does not end with the C<.ll> suffix, then the
+If the input is a file that does not end with the C<.bc> suffix, then the
 output file has the same name as the input file, except that the C<.cpp>
 suffix is appended.
 
