@@ -98,14 +98,83 @@ void Parser::ParsePostfixExpression() {
   case tok::string_literal:    // primary-expression: string-literal
     ParseStringLiteralExpression();
     break;
-  case tok::l_paren:          // primary-expression: '(' expression ')'
-    ParseParenExpression();
+  case tok::l_paren:           // primary-expression: '(' expression ')'
+                               // primary-expression: '(' compound-statement ')'
+    ParseParenExpression(false/*allow statement exprs, initializers */);
     break;
-    
+  case tok::kw___builtin_va_arg:
+  case tok::kw___builtin_offsetof:
+  case tok::kw___builtin_choose_expr:
+  case tok::kw___builtin_types_compatible_p:
+    assert(0 && "FIXME: UNIMP!");
   default:
     Diag(Tok, diag::err_expected_expression);
+    // Guarantee forward progress.
+    // FIXME: this dies on 'if ({1; });'.  Expression parsing should return a
+    // bool for failure.  This will cause higher-level parsing stuff to do the
+    // right thing.
+    ConsumeToken();
     return;
-  }  
+  }
+  
+  // Now that the primary-expression piece of the postfix-expression has been
+  // parsed, see if there are any postfix-expression pieces here.
+  SourceLocation Loc;
+  while (1) {
+    switch (Tok.getKind()) {
+    default:
+      return;
+    case tok::l_square:    // postfix-expression: p-e '[' expression ']'
+      Loc = Tok.getLocation();
+      ConsumeBracket();
+      ParseExpression();
+      if (Tok.getKind() == tok::r_square) {
+        ConsumeBracket();
+      } else {
+        Diag(Tok, diag::err_expected_rsquare);
+        Diag(Loc, diag::err_matching);
+        SkipUntil(tok::r_square);
+      }
+      break;
+      
+    case tok::l_paren:     // p-e: p-e '(' argument-expression-list[opt] ')'
+      Loc = Tok.getLocation();
+      ConsumeParen();
+
+      while (1) {
+        // FIXME: This should be argument-expression!
+        ParseAssignmentExpression();
+        
+        if (Tok.getKind() != tok::comma)
+          break;
+        ConsumeToken();  // Next argument.
+      }
+        
+      if (Tok.getKind() == tok::r_paren) {
+        ConsumeParen();
+      } else {
+        Diag(Tok, diag::err_expected_rparen);
+        Diag(Loc, diag::err_matching);
+        SkipUntil(tok::r_paren);
+      }
+      break;
+      
+    case tok::arrow:       // postfix-expression: p-e '->' identifier
+    case tok::period:      // postfix-expression: p-e '.' identifier
+      ConsumeToken();
+      if (Tok.getKind() != tok::identifier) {
+        Diag(Tok, diag::err_expected_ident);
+        return;
+      }
+      ConsumeToken();
+      break;
+      
+    case tok::plusplus:    // postfix-expression: postfix-expression '++'
+    case tok::minusminus:  // postfix-expression: postfix-expression '--'
+      ConsumeToken();
+      break;
+    }
+  }
 }
 
 /// ParseStringLiteralExpression - This handles the various token types that
@@ -125,15 +194,28 @@ void Parser::ParseStringLiteralExpression() {
 }
 
 
-/// ParseParenExpression - C99 c.5.1p5
+/// ParseParenExpression - C99 6.5.1p5
 ///       primary-expression:
 ///         '(' expression ')'
-void Parser::ParseParenExpression() {
+/// [GNU]   '(' compound-statement ')'      (if !ParenExprOnly)
+///       postfix-expression: [C99 6.5.2]
+///         '(' type-name ')' '{' initializer-list '}'
+///         '(' type-name ')' '{' initializer-list ',' '}'
+///
+void Parser::ParseParenExpression(bool ParenExprOnly) {
   assert(Tok.getKind() == tok::l_paren && "Not a paren expr!");
   SourceLocation OpenLoc = Tok.getLocation();
   ConsumeParen();
   
-  ParseExpression();
+  if (!ParenExprOnly && Tok.getKind() == tok::l_brace &&
+      !getLang().NoExtensions) {
+    Diag(Tok, diag::ext_gnu_statement_expr);
+    ParseCompoundStatement();
+  } else if (!ParenExprOnly && 0 /*type */) { 
+    // FIXME: Implement compound literals: C99 6.5.2.5.  Type-name: C99 6.7.6.
+  } else {
+    ParseExpression();
+  }
   
   if (Tok.getKind() == tok::r_paren) {
     ConsumeParen();

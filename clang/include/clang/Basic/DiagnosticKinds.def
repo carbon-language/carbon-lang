@@ -258,7 +258,9 @@ DIAG(ext_c99_variable_decl_in_for_loop, EXTENSION,
      "variable declaration in for loop is a c99-specific feature")
 DIAG(ext_gnu_indirect_goto, EXTENSION,
      "use of GNU indirect-goto extension")
-
+DIAG(ext_gnu_statement_expr, EXTENSION,
+     "use of GNU statement expression extension")
+     
 // Generic errors.
 DIAG(err_parse_error, ERROR,
      "parse error")
@@ -270,6 +272,8 @@ DIAG(err_expected_ident_lparen, ERROR,
      "expected identifier or '('")
 DIAG(err_expected_rparen, ERROR,
      "expected ')'")
+DIAG(err_expected_rsquare, ERROR,
+     "expected ']'")
 DIAG(err_expected_rbrace, ERROR,
      "expected '}' to end compound statement ('{}' block)")
 DIAG(err_expected_semi_decl_list, ERROR,

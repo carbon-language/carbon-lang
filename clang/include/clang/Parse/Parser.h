@@ -165,7 +165,7 @@ private:
   void ParseAssignmentExpression();  // Expr that doesn't include commas.
 
   void ParsePostfixExpression();
-  void ParseParenExpression();
+  void ParseParenExpression(bool ParenExprOnly = true);
   void ParseStringLiteralExpression();
   
   void ParseInitializer();   // C99 6.7.8
