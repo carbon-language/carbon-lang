@@ -191,9 +191,21 @@ void Parser::ParseIdentifierStatement(bool OnlyStatement) {
   // declaration
   if (!OnlyStatement && 0/*Is typedef name!*/) {
     // Handle this.  Warn/disable if in middle of block and !C99.
+    DeclSpec DS;
+    
+    // FIXME: Add the typedef name to the start of the decl-specs.
+    // ParseDeclarationSpecifiers will continue from there.
+    ParseDeclarationSpecifiers(DS);
+
+    // Parse all the declarators.
+    Declarator DeclaratorInfo(DS, Declarator::BlockContext);
+    ParseDeclarator(DeclaratorInfo);
+    
+    ParseInitDeclaratorListAfterFirstDeclarator(DeclaratorInfo);
+    return;
   }
   
-  // Otherwise, this is an expression.
+  // Otherwise, this is an expression.  Seed it with II.
   
   assert(0);
 }

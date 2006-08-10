@@ -37,3 +37,12 @@ int test4() {
   
 foo:  if (0);
 }
+
+typedef int t;
+void test5() {
+  if (0);
+
+  //t x = 0;      // FIXME: Enable when handling of typedef names is impl.
+
+  if (0);
+}
