@@ -5,6 +5,9 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <title>The Often Misunderstood GEP Instruction</title>
   <link rel="stylesheet" href="llvm.css" type="text/css">
+  <style type="text/css">
+    TABLE   { text-align: left; border: 1px solid black; border-collapse: collapse; margin: 0 0 0 0; }
+  </style>
 </head>
 <body>
 
@@ -233,6 +236,332 @@
     types of the pointers.</li>
   </ol>
 </div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section"><a name="discussion"><b>Appendix: Discussion</b></a></div>
+<!-- *********************************************************************** -->
+<div class="doc_text">
+  <p>The following is a real discussion from the 
+  <a href="irc://irc.oftc.net/#llvm">#llvm IRC channel</a> about the GEP
+  instruction. You may find this instructive as it was the basis for this
+  document.</p>
+  <table>
+    <tr><th>User</th><th>Comment</th></tr>
+    <tr><td>Yorion</td><td>If x &amp; y must alias, are  [ getelementptr x,0,0,1,2 ] and [ getelementptr x,1,2 ] aliased? (they obviously have different types, but they should alias...)</td></tr>
+    <tr><td>Yorion</td><td>oops, for the second one I meant [ getelementptr y,1,2 ]</td></tr>
+    <tr><td>Reid</td><td>I don't see how that could be, Yorion but I'm not the authority on this</td></tr>
+    <tr><td>Yorion</td><td>hmm.. </td></tr>
+    <tr><td>Reid</td><td>the two geps, by definition, are going to produce different pointers which are not aliased</td></tr>
+    <tr><td>Yorion</td><td>would [ GEP x,1,0 ] and [ GEP y,1 ] be aliased?</td></tr>
+    <tr><td>Reid</td><td>if the second gep was [gep y,0,0,1,2] then they should be aliased as well</td></tr>
+    <tr><td>Reid</td><td>no, I wouldn't expect that to work either :)</td></tr>
+    <tr><td>Reid</td><td>you can't just arbitrarily drop leading or trailing indices :)</td></tr>
+    <tr><td>Reid</td><td>(.. leading or trailing 0 indices, I mean)</td></tr>
+    <tr><td>Reid</td><td>this instruction walks through a data structure and generates a pointer to the resulting thing</td></tr>
+    <tr><td>Reid</td><td>if the number of indices are different, you're ending up at a different place and by definition they'll have different addresses</td></tr>
+    <tr><td>Yorion</td><td>oh, I see, because of different types, [ GEP x,0,1 ]
+        &amp; [ GEP x,1 ] actually might refer to different fields, but might also refer to the same ones... </td></tr>
+    <tr><td>Reid</td><td>or, at least, that's my crude understanding of it :)</td></tr>
+    <tr><td>Reid</td><td>no, they'll definitely refer to different fields</td></tr>
+    <tr><td>nicholas</td><td>GEP x,0,1 ==&gt; &amp;((*(x+0))+1)? vs. GEP x,1 ==&gt; &amp;(*(x+1))?</td></tr>
+    <tr><td>Reid</td><td>lemme grok that for a sec</td></tr>
+    <tr><td>Reid</td><td>that might be true in some limited definition of x, but it wouldn't be generally</td></tr>
+    <tr><td>nicholas</td><td>oh. fields of different sizes in a structure.</td></tr>
+    <tr><td>Reid</td><td>yup</td></tr>
+    <tr><td>Yorion</td><td>is perhaps the type unification the reason why [ GEP x,0,1 ] and [ GEP x,1 ] cannot alias?</td></tr>
+    <tr><td>Reid</td><td>no</td></tr>
+    <tr><td>Reid</td><td>they may or may not have the same type, but they are definitely different pointers</td></tr>
+    <tr><td>Reid</td><td>lets use a concrete example for "x"</td></tr>
+    <tr><td>Reid</td><td>suppose x is "struct {int a, float b} *"</td></tr>
+    <tr><td>Reid</td><td>GEP X,0,1 is going to return the address of b</td></tr>
+    <tr><td>Reid</td><td>GEP X,1 is going to return the address of the *second* "a" (after the first b)</td></tr>
+    <tr><td>Yorion</td><td>ah, I see... </td></tr>
+    <tr><td>Yorion</td><td>trailing zeros are still a bit confusing... </td></tr>
+    <tr><td>Reid</td><td>same thing .. you're just selecting the 0th member of an array or structure</td></tr>
+    <tr><td>Yorion</td><td>you don't move away from the pointer, only the type is changed</td></tr>
+    <tr><td>Reid</td><td>no, you still move away from the pointer .. the type might change, or not</td></tr>
+    <tr><td>Reid</td><td>the pointer definitely changes</td></tr>
+    <tr><td>Reid</td><td>lets look at an example for trailing zero</td></tr>
+    <tr><td>Reid</td><td>suppose x is "int x[10][10][10][10]" (in C)</td></tr>
+    <tr><td>Reid</td><td>GEP X,0,0 will yield you a 3 dimensional array</td></tr>
+    <tr><td>Reid</td><td>GEP X,0,0,0,0,0 will yield you an "int"</td></tr>
+    <tr><td>Reid</td><td>make sense?</td></tr>
+    <tr><td>Yorion</td><td>yes</td></tr>
+    <tr><td>Reid</td><td>so, I think there's a law here: if the number of indices in two GEP instructions are not equivalent, there is no way the resulting pointers can alias</td></tr>
+    <tr><td>Reid</td><td>(assuming the x and y alias)</td></tr>
+    <tr><td>Yorion</td><td>I was confused with some code in BasicAliasAnalysis that says that two pointers are equal if they differ only in trailing zeros</td></tr>
+    <tr><td>Yorion</td><td>BasicAliasAnalysis.cpp:504-518</td></tr>
+    <tr><td>Reid</td><td>lemme look</td></tr>
+    <tr><td>nicholas</td><td>if y1 = GEP X, 0, 0 and y2 = GEP X, 0, 0, 0, 0, 0 (from Reid's example)</td></tr>
+    <tr><td>nicholas</td><td>then doesn't *y1 and *y2 both refer to the same "int"?</td></tr>
+    <tr><td>Reid</td><td>they shouldn't</td></tr>
+    <tr><td>Reid</td><td>hmm .. actually, maybe you're right :)</td></tr>
+    <tr><td>Reid</td><td>they definitely have different *types*</td></tr>
+    <tr><td>Yorion</td><td>true</td></tr>
+    <tr><td>nicholas</td><td>different types just doesn't cut it. :)</td></tr>
+    <tr><td>Reid</td><td>.. thinking on this :)</td></tr>
+    <tr><td>nicholas</td><td>similarly, i could create a yucky with a struct that has a char *, then have you GEP right through the pointer into the pointed-to data. That could mean that the resulting point might alias anything.</td></tr>
+    <tr><td>Yorion</td><td>my theory (after reading BAA) is that all zeros can be omitted, and that the pointers alias if they have the same sequence of indices</td></tr>
+    <tr><td>Yorion</td><td>however, this screws the typing, so that's why zeros are for</td></tr>
+    <tr><td>Yorion</td><td>nicholas, does that match your hunch?</td></tr>
+    <tr><td>nicholas</td><td>I have to admit, I've had much grief with GEPIs already. I wish the semantics were plainly documented as part of their own language, instead of just relying on C aliasing rules and C semantics...</td></tr>
+    <tr><td>nicholas</td><td>Yorion: leading zeroes can't be omitted.</td></tr>
+    <tr><td>Reid</td><td>okay, if you have two GEPs and their leading indices are an exact match, if the one with more indices only has trailing 0s then they should alias</td></tr>
+    <tr><td>nicholas</td><td>must alias, i think.</td></tr>
+    <tr><td>Reid</td><td>yes, must alias, sorry</td></tr>
+    <tr><td>Yorion</td><td>okay</td></tr>
+    <tr><td>Yorion</td><td>I'm glad we cleared this up</td></tr>
+    <tr><td>Reid</td><td>so, if y1 = GEP X, 1,2,0  and if y2 = GEP X, 1,2,0,0,0  then y1 "must alias" y2 :)</td></tr>
+    <tr><td>Reid</td><td>but that doesn't work for leading 0s :)</td></tr>
+    <tr><td>Yorion</td><td>yes, true... I was wrong </td></tr>
+    <tr><td>Reid</td><td>I too have been having fun with GEP recently :)</td></tr>
+    <tr><td>Yorion</td><td>but, there're cases like    [a = GEP x,1,0; b = GEP a,1,0; c = GEP b,1,0], and that should be equivalent to GEP x,1,0,1,0,1</td></tr>
+    <tr><td>Reid</td><td>not quite</td></tr>
+    <tr><td>nicholas</td><td>I'm sure another rule can be written for GEPIs, but they would only apply to type-safe code.</td></tr>
+    <tr><td>nicholas</td><td>another *tautology</td></tr>
+    <tr><td>Yorion</td><td>Reid: why not, only the type should be different...</td></tr>
+    <tr><td>Reid</td><td>its should be equivalent to GEP x,1,0,1,0,1,0</td></tr>
+    <tr><td>Yorion</td><td>and that must alias GEP x,1,0,1,0,1</td></tr>
+    <tr><td>Reid</td><td>hmm, by the previous rule, I guess you're right :)</td></tr>
+    <tr><td>Yorion</td><td>I'm a bit scared that even you're a bit confused about GEP</td></tr>
+    <tr><td>Reid</td><td>I'm glad I'm not the only one that gets a little confused wrapping my head around this stuff :)</td></tr>
+    <tr><td>Reid</td><td>GEP has always confused me .. partly because I think its wrong :)</td></tr>
+    <tr><td>Reid</td><td>well, actually, not so much that GEP is wrong, but that gvars being pointers without storage</td></tr>
+    <tr><td>Reid</td><td>i.e. when you say "%x = global int" in LLVM, the type of X is int*</td></tr>
+    <tr><td>Reid</td><td>yet, there is no storage for that pointer</td></tr>
+    <tr><td>Reid</td><td>its magically deduced</td></tr>
+    <tr><td>nicholas</td><td>well, it makes no sense to have globals be SSA...</td></tr>
+    <tr><td>Reid</td><td>heh</td></tr>
+    <tr><td>Reid</td><td>yeah, well .. practicalities :)</td></tr>
+    <tr><td>Yorion</td><td>true</td></tr>
+    <tr><td>Yorion</td><td>sabre gave me a reference on how globals are handled in SSA</td></tr>
+    <tr><td>Reid</td><td>anyway, gotta run</td></tr>
+    <tr><td>Yorion</td><td>the paper was crappy, but I do understand now why is it implemented that way in LLVM</td></tr>
+    <tr><td>Yorion</td><td>thx for the interesting discussion Reid</td></tr>
+    <tr><td>Reid</td><td>heh .. its one that Chris and I keep having .. he just tells me that C has rotted my brain :)</td></tr>
+    <tr><td>nicholas</td><td>lol</td></tr>
+    <tr><td>Yorion</td><td>hehehe</td></tr>
+    <tr><td>Reid</td><td>he might be right :)</td></tr>
+    <tr><td>Yorion</td><td>sabre: have you seen the discussion on GEP?</td></tr>
+    <tr><td>sabre</td><td>no</td></tr>
+    <tr><td>sabre</td><td>I'll read the backlog, j/s</td></tr>
+    <tr><td>sabre</td><td>ok, there's a lot</td></tr>
+    <tr><td>sabre</td><td>what's the executive summary?</td></tr>
+    <tr><td>sabre</td><td>do you have a q?</td></tr>
+    <tr><td>Yorion</td><td>is it possible that GEP x,0,0,1 and GEP x,1 alias?</td></tr>
+    <tr><td>sabre</td><td>no</td></tr>
+    <tr><td>Yorion</td><td>and b) GEP x,1,0,0 and GEP x,1  should alias, right?</td></tr>
+    <tr><td>sabre</td><td>I assume you mean for size = 1 ?</td></tr>
+    <tr><td>sabre</td><td>b) yes</td></tr>
+    <tr><td>Yorion</td><td>although they have different types</td></tr>
+    <tr><td>sabre</td><td>right</td></tr>
+    <tr><td>Yorion</td><td>okay</td></tr>
+    <tr><td>Yorion</td><td>I'm still not 100% convinced that: a=GEP x,1,0; b=GEP a,1,0; c=GEP b,1,0 cannot alias  Z=GEP x,1,1,1</td></tr>
+    <tr><td>Yorion</td><td>(that c and z cannot alias)</td></tr>
+    <tr><td>sabre</td><td>that's becuse they do alias</td></tr>
+    <tr><td>sabre</td><td>mustalias in fact</td></tr>
+    <tr><td>Yorion</td><td>but then: GEP x,1,0,1,0,1,0 = GEP x,1,1,1</td></tr>
+    <tr><td>sabre</td><td>Yorion: no</td></tr>
+    <tr><td>sabre</td><td>c != GEP x,1,0,1,0,1,0</td></tr>
+    <tr><td>sabre</td><td>the first index doesn't work like that</td></tr>
+    <tr><td>Yorion</td><td>how does then the first index work? c and z must alias, but GEP x,1,0,1,0 != GEP x,1,1 ??</td></tr>
+    <tr><td>sabre</td><td>*sigh*</td></tr>
+    <tr><td>Reid</td><td>:)</td></tr>
+    <tr><td>Reid</td><td>we need an FAQ on this</td></tr>
+    <tr><td>sabre</td><td>Yorion: how did you get </td></tr>
+    <tr><td>sabre</td><td>"GEP x,1,0,1,0"? </td></tr>
+    <tr><td>Yorion</td><td>look</td></tr>
+    <tr><td>sabre</td><td>you can't just concatenate subscripts</td></tr>
+    <tr><td>Yorion</td><td>why?</td></tr>
+    <tr><td>sabre</td><td>because... it doesn't work that way?</td></tr>
+    <tr><td>sabre</td><td>consider C</td></tr>
+    <tr><td>Yorion</td><td>how does it work?</td></tr>
+    <tr><td>sabre</td><td>if I have blah* P</td></tr>
+    <tr><td>sabre</td><td>P[0][1][2][3][4]</td></tr>
+    <tr><td>sabre</td><td>this is *not* the same as:</td></tr>
+    <tr><td>sabre</td><td>t = &amp;P[0][1][2]   ... t[3][4]</td></tr>
+    <tr><td>sabre</td><td>Yorion: Consider: struct *P </td></tr>
+    <tr><td>sabre</td><td>P-&gt;X  == P[0].X</td></tr>
+    <tr><td>sabre</td><td>You're losing the 0.</td></tr>
+    <tr><td>sabre</td><td>P-&gt;X-&gt;Y == P[0].X[0].Y</td></tr>
+    <tr><td>sabre</td><td>Not P.X.Y</td></tr>
+    <tr><td>sabre</td><td>actually that's a bad analogy</td></tr>
+    <tr><td>sabre</td><td>because C dereferences in this case</td></tr>
+    <tr><td>sabre</td><td>Try: (&amp;(P-&gt;X))-&gt;Y</td></tr>
+    <tr><td>Yorion</td><td>so, a=GEP x,1,0; b=GEP a,1,0; c=GEP b,1,0, can you construct the definition of c in terms of x?</td></tr>
+    <tr><td>sabre</td><td>yes, but you're going out of bounds :)</td></tr>
+    <tr><td>sabre</td><td>consider this:</td></tr>
+    <tr><td>sabre</td><td>{ float, { double , { int } } } *P</td></tr>
+    <tr><td>sabre</td><td>int *X = gep P, 0, 1, 1, 0</td></tr>
+    <tr><td>sabre</td><td>do you understand the leading zero?</td></tr>
+    <tr><td>sabre</td><td>alternatively:</td></tr>
+    <tr><td>sabre</td><td>t = gep P, 0, 1</td></tr>
+    <tr><td>sabre</td><td>t2 = gep t, 0, 1</td></tr>
+    <tr><td>sabre</td><td>X = gep t, 0, 0</td></tr>
+    <tr><td>Yorion</td><td>what's t2 for?</td></tr>
+    <tr><td>sabre</td><td>oh</td></tr>
+    <tr><td>sabre</td><td>sorry :)</td></tr>
+    <tr><td>sabre</td><td>X = gep t2, 0, 0</td></tr>
+    <tr><td>Yorion</td><td>give me a minute please</td></tr>
+    <tr><td>sabre</td><td>ok</td></tr>
+    <tr><td>Yorion</td><td>sabre: shouldn't the type be: { float, { double, { int }* } }* P ?</td></tr>
+    <tr><td>sabre</td><td>nope</td></tr>
+    <tr><td>sabre</td><td>why the extra * ?</td></tr>
+    <tr><td>sabre</td><td>if it helps, the type of t is { double, {int}}* and  t2 is {int}* and X is int*</td></tr>
+    <tr><td>Yorion</td><td>wait... 0 represents dereference, natural number i
+        represents &amp;A[i] ?</td></tr>
+    <tr><td>sabre</td><td>gep does no dereferences, ever</td></tr>
+    <tr><td>sabre</td><td>gep P, 0, 1  is equivalent to &amp;P[0].X</td></tr>
+    <tr><td>sabre</td><td>aka &amp;P-&gt;X</td></tr>
+    <tr><td>sabre</td><td>gep P, 1  == &amp;P[1]  aka P+1</td></tr>
+    <tr><td>sabre</td><td>so gep P, 0, 1 can't alias gep P, 1  just like
+        &amp;P-&gt;Y can't alias P+1</td></tr>
+    <tr><td>sabre</td><td>assuming P is a pointer to struct {X, Y }</td></tr>
+    <tr><td>Yorion</td><td>sabre: is it possible to come up with a general rule for "arithmetic of GEP indices"? </td></tr>
+    <tr><td>sabre</td><td>Yorion: of course, it's very simple</td></tr>
+    <tr><td>sabre</td><td>just not what you're expecting :)</td></tr>
+    <tr><td>sabre</td><td>See langref.html</td></tr>
+    <tr><td>Yorion</td><td>for example,  a=GEP x,0,0,1 b=GEP a,0,0,1, c=GEP b,0,0,1, that should be equal to GEP x,0,1,1,0, right?</td></tr>
+    <tr><td>Yorion</td><td>I did</td></tr>
+    <tr><td>Yorion</td><td>oops, equal to GEP x,0,1,1,1,0</td></tr>
+    <tr><td>sabre</td><td>that would be:</td></tr>
+    <tr><td>sabre</td><td>GEP X, 0, 0, 1, 0, 1, 0, 1</td></tr>
+    <tr><td>Yorion</td><td>you're killing me</td></tr>
+    <tr><td>sabre</td><td>The basic rule when turning: A = GEP B, C    D = GEP A, 0, E</td></tr>
+    <tr><td>sabre</td><td>is that you drop the 0, turning it into</td></tr>
+    <tr><td>sabre</td><td>GEP B, C, E</td></tr>
+    <tr><td>Yorion</td><td>okay, that's good. any other rules?</td></tr>
+    <tr><td>nicholas</td><td>what if it isn't a 0?</td></tr>
+    <tr><td>sabre</td><td>more generally: A = GEP Ptr, B, C, ...   D = GEP A, 0, E, F, ... </td></tr>
+    <tr><td>sabre</td><td>D = GEP Ptr, B, C, ... E, F, ...</td></tr>
+    <tr><td>sabre</td><td>if it's not zero, you generally cannot concatenate them</td></tr>
+    <tr><td>sabre</td><td>unless the first gep has one subscript</td></tr>
+    <tr><td>sabre</td><td>in which case you drop the zero</td></tr>
+    <tr><td>sabre</td><td>if you look in InstCombiner::visitGetElementPtrInst, it should have this logic</td></tr>
+    <tr><td>Yorion</td><td>what if there is no zero? how can I compute the offset from the base pointer in that case?</td></tr>
+    <tr><td>Yorion</td><td>like A=GEP B,C   and D=GEP A,E,F</td></tr>
+    <tr><td>sabre</td><td>you don't have to combine them to compute an offset</td></tr>
+    <tr><td>sabre</td><td>are you *just* trying to get a byte offset from the pointer?</td></tr>
+    <tr><td>Yorion</td><td>I'm trying to get offset of D from B</td></tr>
+    <tr><td>sabre</td><td>why didn't you say so? :)</td></tr>
+    <tr><td>sabre</td><td>with all constant subscripts, it's trivial</td></tr>
+    <tr><td>sabre</td><td>look at SelectionDAGLowering::visitGetElementPtr</td></tr>
+    <tr><td>sabre</td><td>in CodeGen/SelectionDAG/SelectionDAGISel.cpp</td></tr>
+    <tr><td>sabre</td><td>basically the rule is that you multiply the index by the size of the thing indexed</td></tr>
+    <tr><td>sabre</td><td>there is also a Support/GetElementPtrIterator or something</td></tr>
+    <tr><td>sabre</td><td>that makes it trivial to see what type is indexed by which subscript</td></tr>
+    <tr><td>sabre</td><td>for each subscript it gives you a type</td></tr>
+    <tr><td>sabre</td><td>For an array subscript you multiply the index by the indexed type</td></tr>
+    <tr><td>sabre</td><td>for a struct subscript, you add the field offset</td></tr>
+    <tr><td>sabre</td><td>s/array/sequentialtype/ if you're in a pedantic mood</td></tr>
+    <tr><td>Yorion</td><td>let's focus on structs: in that case, the above given example would be: D = GEP B,C,E,F?</td></tr>
+    <tr><td>sabre</td><td>no</td></tr>
+    <tr><td>sabre</td><td>you drop the E if it's zero</td></tr>
+    <tr><td>sabre</td><td>if it's not you can't concat</td></tr>
+    <tr><td>sabre</td><td>are you trying to trick me into saying "yes, just append the indices"? :)</td></tr>
+    <tr><td>Yorion</td><td>okay, let's assume E is not zero, how do I compute offset from B for D for a struct?</td></tr>
+    <tr><td>sabre</td><td>Why are you framing this in terms of concatenation?</td></tr>
+    <tr><td>Yorion</td><td>no, I'm trying to understand it</td></tr>
+    <tr><td>sabre</td><td>computing an offset and concatenating are entirely different</td></tr>
+    <tr><td>sabre</td><td>Lets consider a specific example</td></tr>
+    <tr><td>Yorion</td><td>because I want to express certain properties in the terms of base pointers either globals or parameters</td></tr>
+    <tr><td>Yorion</td><td>I want to eliminate locals from my analysis</td></tr>
+    <tr><td>sabre</td><td>you realize that parmeters can point into the middle of structs?</td></tr>
+    <tr><td>Yorion</td><td>yes</td></tr>
+    <tr><td>sabre</td><td>you realize invalid access paths can be constructed with geps/</td></tr>
+    <tr><td>sabre</td><td>?</td></tr>
+    <tr><td>Yorion</td><td>what do you mean by invalid access paths? </td></tr>
+    <tr><td>Yorion</td><td>like offseting out of the struct which is passed to the function?</td></tr>
+    <tr><td>sabre</td><td>The case where the subscript isn't zero is invalid code</td></tr>
+    <tr><td>sabre</td><td>from a type-safety perspective</td></tr>
+    <tr><td>DannyB</td><td>he means untypesafe things that seem valid :)</td></tr>
+    <tr><td>DannyB</td><td>IE they point somewhere in the struct, but not to any particular field</td></tr>
+    <tr><td>DannyB</td><td>(or whatever)</td></tr>
+    <tr><td>sabre</td><td>right</td></tr>
+    <tr><td>Yorion</td><td>okay</td></tr>
+    <tr><td>sabre</td><td>or they might point in some other struct :)</td></tr>
+    <tr><td>sabre</td><td>It's the equivalent to saying:</td></tr>
+    <tr><td>sabre</td><td>struct Foo { int A, int B; }</td></tr>
+    <tr><td>sabre</td><td>Foo* P = </td></tr>
+    <tr><td>sabre</td><td>T = &amp;P-&gt;B;</td></tr>
+    <tr><td>sabre</td><td>S = T+1</td></tr>
+    <tr><td>sabre</td><td>that is:</td></tr>
+    <tr><td>sabre</td><td>T = gep 0, 1</td></tr>
+    <tr><td>sabre</td><td>S = gep T, 1</td></tr>
+    <tr><td>sabre</td><td>you can't concat those and get a type-safe access path</td></tr>
+    <tr><td>sabre</td><td>remember T = &amp;P-&gt;B  === T = &amp;P[0].B</td></tr>
+    <tr><td>sabre</td><td>understand?</td></tr>
+    <tr><td>Yorion</td><td>let me think for a minute</td></tr>
+    <tr><td>sabre</td><td>Consider what the C case does, it will be most clear if you're used to C</td></tr>
+    <tr><td>sabre</td><td>:)</td></tr>
+    <tr><td>sabre</td><td>Consider the byte offset and why it doesn't point into P-&gt; anything</td></tr>
+    <tr><td>sabre</td><td>it points into P[1] not P[0]</td></tr>
+    <tr><td>Yorion</td><td>it's perfectly fine if GEP offsets out of the type. I'd still need to express GEP in the terms of base pointers. Take the example above: T=GEP P,0,1; S=GEP T,1</td></tr>
+    <tr><td>Yorion</td><td>type safety is not crucial in my case</td></tr>
+    <tr><td>sabre</td><td>That specific example is GEP P, 1, 0</td></tr>
+    <tr><td>sabre</td><td>however, you can form geps that are NOT equivalent to anything else</td></tr>
+    <tr><td>sabre</td><td>for example, consider:</td></tr>
+    <tr><td>sabre</td><td>struct X { int, char}</td></tr>
+    <tr><td>Yorion</td><td>that is fine. they're equivalent to something in the calling context</td></tr>
+    <tr><td>sabre</td><td>the same sequence points into padding</td></tr>
+    <tr><td>sabre</td><td>and there is no gep that can do that</td></tr>
+    <tr><td>Yorion</td><td>the bottom line is: if the program is valid, interprocedural analysis will match that offset with something in one of the functions on the call stack</td></tr>
+    <tr><td>Yorion</td><td>and that's all I care about</td></tr>
+    <tr><td>Yorion</td><td>can you give me a formula for structs for computing
+        offsets that takes into account the case GEP T,&amp;lt:non_zeros&gt; and the size of the structs/fields?</td></tr>
+    <tr><td>sabre</td><td>yes, I did above</td></tr>
+    <tr><td>sabre</td><td>Two things:</td></tr>
+    <tr><td>sabre</td><td>GEP Ptr, A, X, Y, Z</td></tr>
+    <tr><td>sabre</td><td>The result is Ptr + A * sizeof(struct) + fieldoffs(X) + fieldoffs(Y) + fieldoffs(Z)</td></tr>
+    <tr><td>sabre</td><td>simple enough?</td></tr>
+    <tr><td>sabre</td><td>you see why "A" is special?</td></tr>
+    <tr><td>Yorion</td><td>give me a min, I'm constructing an example</td></tr>
+    <tr><td>Reid</td><td>sabre: I think I finally understand</td></tr>
+    <tr><td>Reid</td><td>your comment that GEP *never* dereferences makes a lot of sense</td></tr>
+    <tr><td>Reid</td><td>it is only doing address calculation, so the first one is taking the address of the var</td></tr>
+    <tr><td>sabre</td><td>If C didn't conflate lvalues and rvalues, GEP would be much easier to understand for people</td></tr>
+    <tr><td>Reid</td><td>yeah</td></tr>
+    <tr><td>Yorion</td><td>so, for example: M=GEP A,B,C; N=GEP M,D,E;   N = [ A + B*sizeof(struct) + fieldoffs(C) ]:(of type T) + D*sizeof(T) + fieldoffs(E)</td></tr>
+    <tr><td>Reid</td><td>I just remember learning a hard lesson about the difference between char* A and char A[] .. long time ago when I was learning C</td></tr>
+    <tr><td>sabre</td><td>of type T*</td></tr>
+    <tr><td>sabre</td><td>otherwise fine</td></tr>
+    <tr><td>Yorion</td><td>okay, I think I finally understand it</td></tr>
+    <tr><td>sabre</td><td>without the T* your D sizeof will be wrong</td></tr>
+    <tr><td>Yorion</td><td>a suggestion: the formula you gave above explains it all</td></tr>
+    <tr><td>Yorion</td><td>I'd suggest explaining it that way in documentation</td></tr>
+    <tr><td>sabre</td><td>That's not right though</td></tr>
+    <tr><td>sabre</td><td>it doesn't include arrays or packed types</td></tr>
+    <tr><td>sabre</td><td>so it is, at best, a half truth</td></tr>
+    <tr><td>Yorion</td><td>tell me, how to compute the fieldoffs for an index?</td></tr>
+    <tr><td>sabre</td><td>arrays can be in structs :)</td></tr>
+    <tr><td>Yorion</td><td>in bytes</td></tr>
+    <tr><td>sabre</td><td>idx * sizeof(arrayelt)</td></tr>
+    <tr><td>sabre</td><td>just like for pointers (the first index)</td></tr>
+    <tr><td>sabre</td><td>There are two cases: structs and sequentials</td></tr>
+    <tr><td>sabre</td><td>for sequentials you use idx*sizeof(sequenced type)</td></tr>
+    <tr><td>sabre</td><td>for structs you add their offset</td></tr>
+    <tr><td>sabre</td><td>it's really very simple :)</td></tr>
+    <tr><td>sabre</td><td>the first index of a gep is always over the pointer</td></tr>
+    <tr><td>Yorion</td><td>no I meant in LLVM, how do I convert the field offset into bytes?</td></tr>
+    <tr><td>sabre</td><td>which is why it's strange</td></tr>
+    <tr><td>sabre</td><td>if you only think about structs</td></tr>
+    <tr><td>sabre</td><td>TargetData::getFieldOffset </td></tr>
+    <tr><td>sabre</td><td>or something</td></tr>
+    <tr><td>sabre</td><td>look in SelectionDAGISel.cpp (visitGEP) as I suggested.</td></tr>
+    <tr><td>Yorion</td><td>do you still have the energy to go over sequential types? :-)</td></tr>
+    <tr><td>Yorion</td><td>what is the offset formula for sequential types?</td></tr>
+    <tr><td>Reid</td><td>we just went over that: idx * sizeof(elementType)</td></tr>
+    <tr><td>Yorion</td><td>so, if there's an array hidden somewhere in the struct, essentially I need to compute idx*sizeof() instead of fieldoffs() and that's it?</td></tr>
+    <tr><td>sabre</td><td>yes</td></tr>
+    <tr><td>Reid</td><td>yes</td></tr>
+    <tr><td>Yorion</td><td>excellent.</td></tr>
+    <tr><td>sabre</td><td>There are two cases: structs and sequentials</td></tr>
+    <tr><td>sabre</td><td>[9:17pm] sabre: for sequentials you use idx*sizeof(sequenced type)</td></tr>
+    <tr><td>sabre</td><td>[9:17pm] sabre: for structs you add their offset</td></tr>
+    <tr><td>sabre</td><td>[9:17pm] sabre: it's really very simple :)</td></tr>
+    <tr><td>Yorion</td><td>now when I understand it, it is simple... </td></tr>
+    <tr><td>Yorion</td><td>thx</td></tr>
+  </table>
 
 <!-- *********************************************************************** -->
 
