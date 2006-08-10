@@ -79,6 +79,8 @@ Traditional Preprocessor:
 
 Parser:
  * C90/K&R modes.  Need to get C90 spec.
+ * __extension__
+ * __attribute__
 
 Parser Callbacks:
  * Enough to do devkit-style "indexing".
