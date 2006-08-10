@@ -276,6 +276,8 @@ DIAG(err_expected_fn_body, ERROR,
      "expected function body after function declarator")
 DIAG(err_expected_after_declarator, ERROR,
      "expected '=', ',', ';', 'asm', or '__attribute__' after declarator")
+DIAG(err_expected_statement, ERROR,
+     "expected statement")
 DIAG(err_expected_statement_declaration, ERROR,
      "expected statement or declaration")
 DIAG(err_expected_lparen_after, ERROR,
@@ -286,6 +288,10 @@ DIAG(err_expected_semi_after, ERROR,
      "expected ';' after %s")
 DIAG(err_expected_semi_for, ERROR,
      "expected ';' in 'for' statement specifier")
+DIAG(err_expected_colon_after, ERROR,
+     "expected ':' after %s")
+DIAG(err_label_end_of_compound_statement, ERROR,
+     "label at end of compound statement: expected statement")
 
 /// err_matching - this is used as a continuation of a previous error, e.g. to 
 /// specify the '(' when we expected a ')'.  This should probably be some

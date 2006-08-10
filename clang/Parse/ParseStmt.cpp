@@ -71,15 +71,33 @@ using namespace clang;
 void Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
   const char *SemiError = 0;
   
+ParseNextStatement:
   // Cases in this switch statement should fall through if the parser expects
   // the token to end in a semicolon (in which case SemiError should be set),
   // or they directly 'return;' if not.
   switch (Tok.getKind()) {
   default:
-    Diag(Tok, diag::err_expected_statement_declaration);
+    Diag(Tok, OnlyStatement ? diag::err_expected_statement :
+                              diag::err_expected_statement_declaration);
     SkipUntil(tok::semi);
     return;
     
+  case tok::kw_case:                // C99 6.8.1: labeled-statement
+    ParseCaseStatement();
+    if (Tok.getKind() == tok::r_brace) {
+      Diag(Tok, diag::err_label_end_of_compound_statement);
+      return;
+    }
+    OnlyStatement = true;
+    goto ParseNextStatement;
+  case tok::kw_default:             // C99 6.8.1: labeled-statement
+    ParseDefaultStatement();
+    if (Tok.getKind() == tok::r_brace) {
+      Diag(Tok, diag::err_label_end_of_compound_statement);
+      return;
+    }
+    OnlyStatement = true;
+    goto ParseNextStatement;
     
   case tok::l_brace:                // C99 6.8.2: compound-statement
     ParseCompoundStatement();
@@ -134,6 +152,44 @@ void Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
     SkipUntil(tok::semi);
   }
 }
+
+/// ParseCaseStatement
+///       labeled-statement:
+///         'case' constant-expression ':' statement
+///
+/// Note that this does not parse the 'statement' at the end.
+///
+void Parser::ParseCaseStatement() {
+  assert(Tok.getKind() == tok::kw_case && "Not a case stmt!");
+  ConsumeToken();  // eat the 'case'.
+
+  ParseExpression();
+  
+  if (Tok.getKind() == tok::colon) {
+    ConsumeToken();
+  } else {
+    Diag(Tok, diag::err_expected_colon_after, "'case'");
+    SkipUntil(tok::colon);
+  }
+}
+
+/// ParseDefaultStatement
+///       labeled-statement:
+///         'default' ':' statement
+/// Note that this does not parse the 'statement' at the end.
+///
+void Parser::ParseDefaultStatement() {
+  assert(Tok.getKind() == tok::kw_default && "Not a default stmt!");
+  ConsumeToken();  // eat the 'default'.
+
+  if (Tok.getKind() == tok::colon) {
+    ConsumeToken();
+  } else {
+    Diag(Tok, diag::err_expected_colon_after, "'default'");
+    SkipUntil(tok::colon);
+  }
+}
+
 
 /// ParseCompoundStatement - Parse a "{}" block.
 ///

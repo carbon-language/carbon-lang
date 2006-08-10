@@ -160,6 +160,8 @@ private:
   // C99 6.8: Statements and Blocks.
   void ParseStatement() { ParseStatementOrDeclaration(true); }
   void ParseStatementOrDeclaration(bool OnlyStatement = false);
+  void ParseCaseStatement();
+  void ParseDefaultStatement();
   void ParseCompoundStatement();
   void ParseIfStatement();
   void ParseSwitchStatement();
