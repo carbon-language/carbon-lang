@@ -17,3 +17,15 @@ int test2() {
         ;
   for (int X = 0; 0; 0);
 }
+
+int test3() {
+    switch (0) {
+    
+    case 4:
+      if (0) {
+    case 6: ;
+      }
+    default:
+      ;     
+  }
+}
