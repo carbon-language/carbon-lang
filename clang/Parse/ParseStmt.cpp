@@ -67,19 +67,29 @@ using namespace clang;
 /// [OBC]   '@' 'throw' expression ';'    [TODO]
 /// [OBC]   '@' 'throw' ';'               [TODO]
 /// 
-void Parser::ParseStatementOrDeclaration() {
+void Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
   switch (Tok.getKind()) {
   default:
     Diag(Tok, diag::err_expected_statement_declaration);
     SkipUntil(tok::semi);
     break;
     
-  case tok::semi:  // expression[opt] ';'   -> expression isn't present.
-    ConsumeToken();
-    break;
-  case tok::l_brace:  // compound-statement -> '{}' block
+    // C99 6.8.2: compound-statement -> '{}' block
+  case tok::l_brace:
     ParseCompoundStatement();
     break;
+    // C99 6.8.3: expression[opt] ';'
+  case tok::semi:
+    ConsumeToken();
+    break;
+    
+    // C99 6.8.4.1: if-statement
+  case tok::kw_if:
+    ParseIfStatement();
+    break;
+    
+    
+    // TODO: Handle OnlyStatement..
   }
 }
 
@@ -114,7 +124,7 @@ void Parser::ParseCompoundStatement() {
   ConsumeBrace();  // eat the '{'.
   
   while (Tok.getKind() != tok::r_brace && Tok.getKind() != tok::eof)
-    ParseStatementOrDeclaration();
+    ParseStatementOrDeclaration(false);
   
   // We broke out of the while loop because we found a '}' or EOF.
   if (Tok.getKind() == tok::r_brace)
@@ -122,3 +132,33 @@ void Parser::ParseCompoundStatement() {
   else
     Diag(Tok, diag::err_expected_rbrace);
 }
+
+/// ParseIfStatement
+///       if-statement: [C99 6.8.4.1]
+///         'if' '(' expression ')' statement
+///         'if' '(' expression ')' statement 'else' statement
+void Parser::ParseIfStatement() {
+  assert(Tok.getKind() == tok::kw_if && "Not an if stmt!");
+  ConsumeToken();  // eat the 'if'.
+
+  if (Tok.getKind() != tok::l_paren) {
+    Diag(Tok, diag::err_expected_lparen_after_if, "if");
+    SkipUntil(tok::semi);
+    return;
+  }
+  
+  // Parse the condition.
+  ParseParenExpression();
+  
+  // Read the if condition.
+  ParseStatement();
+  
+  // If it has an else, parse it.
+  if (Tok.getKind() == tok::kw_else) {
+    ConsumeToken();
+    ParseStatement();
+  }
+  
+}
+
+

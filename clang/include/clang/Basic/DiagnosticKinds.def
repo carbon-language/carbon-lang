@@ -274,6 +274,8 @@ DIAG(err_expected_after_declarator, ERROR,
      "expected '=', ',', ';', 'asm', or '__attribute__' after declarator")
 DIAG(err_expected_statement_declaration, ERROR,
      "expected statement or declaration")
+DIAG(err_expected_lparen_after_if, ERROR,
+     "expected '(' after '%s'")
 
 /// err_matching - this is used as a continuation of a previous error, e.g. to 
 /// specify the '(' when we expected a ')'.  This should probably be some

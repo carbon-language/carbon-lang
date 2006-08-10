@@ -158,13 +158,20 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C99 6.8: Statements and Blocks.
-  void ParseStatementOrDeclaration();
+  void ParseStatement() { ParseStatementOrDeclaration(true); }
+  void ParseStatementOrDeclaration(bool OnlyStatement = false);
   void ParseCompoundStatement();
+  void ParseIfStatement();
 
   //===--------------------------------------------------------------------===//
   // C99 6.7: Declarations.
   void ParseDeclarationSpecifiers(DeclSpec &DS);
   bool isDeclarationSpecifier() const;
+  
+  //===--------------------------------------------------------------------===//
+  // C99 6.5: Expressions.
+  //ExprTy ParseExpression();  // Above.
+  void ParseParenExpression();
   
   /// ParseDeclarator - Parse and verify a newly-initialized declarator.
   void ParseDeclarator(Declarator &D);
