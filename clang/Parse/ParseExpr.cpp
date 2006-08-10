@@ -16,6 +16,14 @@
 using namespace llvm;
 using namespace clang;
 
+// C99 6.7.8
+void Parser::ParseInitializer() {
+  // FIXME: STUB.
+  ParseAssignmentExpression();
+}
+
+
+
 Parser::ExprTy Parser::ParseExpression() {
   if (Tok.getKind() == tok::numeric_constant) {
     ConsumeToken();
@@ -26,11 +34,17 @@ Parser::ExprTy Parser::ParseExpression() {
   return 0;
 }
 
-///primary-expression:
-///  identifier
-///  constant
-///  string-literal
-///  '(' expression ')'
+// Expr that doesn't include commas.
+void Parser::ParseAssignmentExpression() {
+  ParseExpression();
+}
+
+///       primary-expression:
+///         identifier
+///         constant
+///         string-literal
+///         '(' expression ')'
+
 
 /// ParseParenExpression - C99 c.5.1p5
 ///       primary-expression:

@@ -220,7 +220,7 @@ void Parser::ParseCaseStatement() {
   assert(Tok.getKind() == tok::kw_case && "Not a case stmt!");
   ConsumeToken();  // eat the 'case'.
 
-  ParseExpression();
+  ParseAssignmentExpression(); // Expr without commas.
   
   if (Tok.getKind() == tok::colon) {
     ConsumeToken();

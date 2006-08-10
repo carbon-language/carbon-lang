@@ -42,10 +42,8 @@ void Parser::ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
     // Parse declarator '=' initializer.
     if (Tok.getKind() == tok::equal) {
       ConsumeToken();
-      // FIXME: THIS IS WRONG: should ParseInitializer!!
-      ParseExpression();
+      ParseInitializer();
     }
-    
     
     // TODO: install declarator.
     

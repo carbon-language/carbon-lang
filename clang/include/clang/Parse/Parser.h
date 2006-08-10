@@ -157,6 +157,14 @@ private:
   void ParseFunctionDefinition(Declarator &D);
 
   //===--------------------------------------------------------------------===//
+  // C99 6.5: Expressions.
+  //ExprTy ParseExpression();  // Above.
+  void ParseAssignmentExpression();  // Expr that doesn't include commas.
+  void ParseParenExpression();
+  
+  void ParseInitializer();   // C99 6.7.8
+  
+  //===--------------------------------------------------------------------===//
   // C99 6.8: Statements and Blocks.
   void ParseStatement() { ParseStatementOrDeclaration(true); }
   void ParseStatementOrDeclaration(bool OnlyStatement = false);
@@ -174,16 +182,11 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C99 6.7: Declarations.
-
+  
   void ParseDeclaration(unsigned Context);
   void ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D);
   void ParseDeclarationSpecifiers(DeclSpec &DS);
   bool isDeclarationSpecifier() const;
-  
-  //===--------------------------------------------------------------------===//
-  // C99 6.5: Expressions.
-  //ExprTy ParseExpression();  // Above.
-  void ParseParenExpression();
   
   /// ParseDeclarator - Parse and verify a newly-initialized declarator.
   void ParseDeclarator(Declarator &D);
