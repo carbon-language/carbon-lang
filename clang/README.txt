@@ -31,7 +31,11 @@ Future Features:
  * Faster than GCC at parsing, IR generation.
  * Better token tracking within macros?  (Token came from this line, which is
    a macro argument instantiated here, recursively instantiated here).
- * Fast #import!!
+ * Fast #import!
+ * Dependency tracking: change to header file doesn't recompile every function
+   that texually depends on it: only recompile those that need to change.
+ * Defers exposing platform-specific stuff to as late as possible, tracks use of
+   platform-specific features (e.g. #ifdef PPC).
 
 
 III. Missing Functionality
